@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.45 2007/05/01 16:32:06 stevesk Exp $ */
+/*	$OpenBSD: lpd.c,v 1.46 2007/05/05 17:13:01 stevesk Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.45 2007/05/01 16:32:06 stevesk Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.46 2007/05/05 17:13:01 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,8 +106,6 @@ static const char rcsid[] = "$OpenBSD: lpd.c,v 1.45 2007/05/01 16:32:06 stevesk 
 #include "pathnames.h"
 #include "extern.h"
 
-#define	LPD_NOPORTCHK	0001		/* skip reserved-port check */
-
 int	lflag;				/* log requests flag */
 int	rflag;				/* allow 'of' for remote printers */
 int	sflag;				/* secure (no inet) flag */
@@ -122,7 +120,7 @@ static void		reapchild(int);
 static void		mcleanup(int);
 static void		doit(void);
 static void		startup(void);
-static void		chkhost(struct sockaddr *, int);
+static void		chkhost(struct sockaddr *);
 static int		ckqueue(char *);
 static __dead void	usage(void);
 static int		*socksetup(int, int, const char *);
@@ -142,7 +140,7 @@ main(int argc, char **argv)
 	struct sockaddr_storage frominet;
 	sigset_t mask, omask;
 	int lfd, i, f, funix, *finet;
-	int options, check_options, maxfd;
+	int options, maxfd;
 	long l;
 	long child_max = 32;	/* more than enough to hose the system */
 	struct servent *sp;
@@ -163,7 +161,6 @@ main(int argc, char **argv)
 	effective_gid = getegid();
 	PRIV_END;	/* run as daemon for most things */
 
-	check_options = LPD_NOPORTCHK;		/* XXX - lp* not setuid root */
 	options = 0;
 	gethostname(host, sizeof(host));
 
@@ -222,12 +219,7 @@ main(int argc, char **argv)
 			if (wait_time < 30)
 				warnx("warning: wait time less than 30 seconds");
 			break;
-		case 'W':
-			/*
-			 * Allow connections coming from a non-reserved port.
-			 * (done by some lpr-implementations for MS-Windows)
-			 */
-			check_options |= LPD_NOPORTCHK;
+		case 'W':	/* XXX deprecate */
 			break;
 		default:
 			usage();
@@ -432,7 +424,7 @@ main(int argc, char **argv)
 			if (domain == AF_INET) {
 				/* for both AF_INET and AF_INET6 */
 				from_remote = 1;
-				chkhost((struct sockaddr *)&frominet, check_options);
+				chkhost((struct sockaddr *)&frominet);
 			} else
 				from_remote = 0;
 			doit();
@@ -682,7 +674,7 @@ ckqueue(char *cap)
  * Check to see if the from host has access to the line printer.
  */
 static void
-chkhost(struct sockaddr *f, int check_opts)
+chkhost(struct sockaddr *f)
 {
 	struct addrinfo hints, *res, *r;
 	FILE *hostf;
@@ -696,10 +688,6 @@ chkhost(struct sockaddr *f, int check_opts)
 	    NI_NUMERICSERV);
 	if (error)
 		fatal("Malformed from address");
-
-	if (!(check_opts & LPD_NOPORTCHK) &&
-	    atoi(serv) >= IPPORT_RESERVED)
-		fatal("Connect from invalid port (%s)", serv);
 
 	/* Need real hostname for temporary filenames */
 	error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
@@ -769,7 +757,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dlrsW] [-b bind-address] [-n maxchild] "
+	fprintf(stderr, "usage: %s [-dlrs] [-b bind-address] [-n maxchild] "
 	    "[-w maxwait] [port]\n", __progname);
 	exit(1);
 }
