@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.23 2007/05/04 04:18:10 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.24 2007/05/05 01:54:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -29,14 +29,21 @@
  * Common definitions
  */
 
-#define NX_MAX_PORTS	4
+#define NX_MAX_PORTS		4
+#define NX_MAX_MTU		ETHER_MTU
 
-#define NX_MAX_MTU	ETHER_MTU
-#define NX_JUMBO_MTU	8000		/* less than 9k */
+#define NX_MAX_TX_DESC		128	/* XXX 4096 */
+#define NX_MAX_RX_DESC		128	/* XXX 32768 */
+#define NX_MAX_JUMBO_DESC	64	/* XXX 1024 */
+#define NX_MAX_TSO_DESC		32	/* XXX 64 */
+#define NX_MAX_STATUS_DESC	NX_MAX_RX_DESC
 
-#define NX_DMA_ALIGN	8		/* 64bit alignment */
+#define NX_JUMBO_MTU		8000	/* less than 9k */
+#define NX_DMA_ALIGN		8	/* 64bit alignment */
+#define NX_POLL_SENSOR		10	/* read temp sensor every 10s */
 
-#define NX_POLL_SENSOR	10		/* read temp sensor every 10s */
+#define NX_WAIT			1
+#define NX_NOWAIT		0
 
 /* This driver supported the 3.4.31 (3.4.xx) NIC firmware */
 #define NX_FIRMWARE_MAJOR	3
@@ -112,7 +119,8 @@ struct nx_rxdesc {
 	u_int16_t		rx_handle;	/* handle of the buffer */
 	u_int16_t		rx_reserved;
 	u_int32_t		rx_length;	/* length of the buffer */
-	u_int64_t		rx_addr;	/* address of the buffer */
+	u_int32_t		rx_addr_low;	/* low address of buffer */
+	u_int32_t		rx_addr_high;	/* high address of buffer */
 } __packed;
 
 struct nx_statusdesc {
@@ -140,32 +148,37 @@ struct nx_statusdesc {
 } __packed;
 
 struct nx_rxcontext {
-	u_int32_t		rc_ringaddr_low;
-	u_int32_t		rc_ringaddr_high;
-	u_int32_t		rc_ringsize;
-	u_int32_t		rc_reserved;
+	u_int32_t		rxc_ringaddr_low;
+	u_int32_t		rxc_ringaddr_high;
+	u_int32_t		rxc_ringsize;
+	u_int32_t		rxc_reserved;
 } __packed;
 
 #define NX_NRXCONTEXT		3
+#define NX_RX_CONTEXT		0
+#define NX_JUMBO_CONTEXT	1
+#define NX_TSO_CONTEXT		2
 
 /* DMA-mapped ring context for the Rx, Tx, and Status rings */
 struct nx_ringcontext {
-	u_int64_t		rc_txconsumer_off;
+	u_int32_t		rc_txconsumeroff_low;
+	u_int32_t		rc_txconsumeroff_high;
 	u_int32_t		rc_txringaddr_low;
 	u_int32_t		rc_txringaddr_high;
-
-	u_int32_t		rc_txring_size;
+	u_int32_t		rc_txringsize;
+	u_int32_t		rc_reserved;
 
 	struct nx_rxcontext	rc_rxcontext[NX_NRXCONTEXT];
 
 	u_int32_t		rc_statusringaddr_low;
 	u_int32_t		rc_statusringaddr_high;
-	u_int32_t		rc_statusring_size;
+	u_int32_t		rc_statusringsize;
 
 	u_int32_t		rc_id;		/* context identifier */
 
 	/* d3 state register, dummy dma address */
-	u_int64_t		rc_reserved[2];
+	u_int64_t		rc_reserved1;
+	u_int64_t		rc_reserved2;
 
 	u_int32_t		rc_txconsumer;
 } __packed;
@@ -270,6 +283,7 @@ struct nx_ringcontext {
 #define  NXISR_INT_VECTOR_TARGET2	(1<<9)	/* interrupt for function 2 */
 #define  NXISR_INT_VECTOR_TARGET1	(1<<8)	/* interrupt for function 1 */
 #define  NXISR_INT_VECTOR_TARGET0	(1<<7)	/* interrupt for function 0 */
+#define   NXISR_INT_VECTOR_PORT(_n)	(NXISR_INT_VECTOR_TARGET0 << (_n))
 #define  NXISR_INT_VECTOR_RC_INT	(1<<5)	/* root complex interrupt */
 
 /* Interrupt Mask */
@@ -278,7 +292,14 @@ struct nx_ringcontext {
 #define  NXISR_INT_MASK_TARGET2		(1<<9)	/* mask for function 2 */
 #define  NXISR_INT_MASK_TARGET1		(1<<8)	/* mask for function 1 */
 #define  NXISR_INT_MASK_TARGET0		(1<<7)	/* mask for function 0 */
+#define   NXISR_INT_MASK_PORT(_n)	(NXISR_INT_MASK_TARGET0 << (_n))
 #define  NXISR_INT_MASK_RC_INT		(1<<5)	/* root complex mask */
+#define NXISR_INT_MASK_ENABLE		0x0000077f
+
+/* Interrupt target mask and status */
+#define NXISR_TARGET_STATUS		NXPCIE(0x00010118)
+#define NXISR_TARGET_MASK		NXPCIE(0x00010128)
+#define  NXISR_TARGET_MASK_ENABLE	0x00000bff
 
 /* Memory windows */
 #define NXDDR_WINDOW(_f)		NXPCIE_FUNC(0x00010200, _f)
@@ -483,8 +504,11 @@ enum nxsw_portreg {
 	NXSW_STATUS_RING_SIZE,			/* Entries in the status ring */
 
 	NXSW_CONTEXT_ADDR_LO,			/* Low address of context */
+	NXSW_CONTEXT,				/* Context register */
+#define  NXSW_CONTEXT_M		0xffff		/* Context register mask */
+#define  NXSW_CONTEXT_SIG	0xdee0		/* Context signature */
+#define  NXSW_CONTEXT_RESET	0xbad0		/* Context reset */
 	NXSW_CONTEXT_ADDR_HI,			/* High address of context */
-	NXSW_CONTEXT_SIG,			/* Context signature */
 
 	NXSW_PORTREG_MAX
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.40 2007/05/04 04:18:10 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.41 2007/05/05 01:54:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -70,6 +70,7 @@
 #define NXDBG_CRBINIT	(1<<2)	/* SW register init from flash */
 #define NXDBG_STATE	(1<<3)	/* Firmware states */
 #define NXDBG_WINDOW	(1<<4)	/* Memory windows */
+#define NXDBG_INTR	(1<<5)	/* Interrupts */
 #define NXDBG_ALL	0xfffe	/* enable nearly all debugging messages */
 int nx_debug = 0;
 #define DPRINTF(_lvl, _arg...)	do {					\
@@ -112,6 +113,15 @@ struct nxb_port {
 	struct nx_softc		*nxp_nx;
 };
 
+struct nxb_dmamem {
+	bus_dmamap_t		 nxm_map;
+	bus_dma_segment_t	 nxm_seg;
+	int			 nxm_nsegs;
+	size_t			 nxm_size;
+	caddr_t			 nxm_kva;
+	const char		*nxm_name;
+};
+
 struct nxb_softc {
 	struct device		 sc_dev;
 
@@ -143,10 +153,6 @@ struct nxb_softc {
 	u_int32_t		 sc_fwmajor;	/* Load image major rev */
 	u_int32_t		 sc_fwminor;	/* Load image minor rev */
 	u_int32_t		 sc_fwbuild;	/* Load image build rev */
-
-	u_int32_t		 sc_nrxdesc;	/* Max Rx descriptors */
-	u_int32_t		 sc_nrxjdesc;	/* Max Jumbo Rx descriptors */
-	u_int32_t		 sc_ntxdesc;	/* Max Tx descriptors */
 	volatile u_int		 sc_txpending;
 
 	struct nxb_port		 sc_nxp[NX_MAX_PORTS];	/* The nx ports */
@@ -159,24 +165,41 @@ struct nxb_softc {
 	struct ksensordev	 sc_sensordev;
 };
 
+struct nx_buf {
+	bus_dmamap_t		 nb_dmamap;
+	struct mbuf		*nb_m;
+};
+
+struct nx_ringdata {
+	/* Rx and Rx status descriptors */
+	struct nxb_dmamem	 rd_rxdma;
+	struct nx_rxdesc	*rd_rxring;
+	struct nx_buf		 rd_rxbuf[NX_MAX_RX_DESC];
+	struct nxb_dmamem	 rd_statusdma;
+	struct nx_statusdesc	*rd_statusring;
+	struct nx_buf		 rd_statusbuf[NX_MAX_RX_DESC];
+
+	/* Tx descriptors */
+	struct nxb_dmamem	 rd_txdma;
+	struct nx_txdesc	*rd_txring;
+	struct nx_buf		 rd_txbuf[NX_MAX_TX_DESC];
+};
+
 struct nx_softc {
 	struct device		 nx_dev;
 	struct arpcom		 nx_ac;
 	struct mii_data		 nx_mii;
 
-	bus_space_tag_t		 nx_memt;		/* pointer to sc_memt */
 	bus_space_handle_t	 nx_memh;		/* port phy subregion */
 
-	bus_dmamap_t		 nx_dma_map;
-	bus_dma_segment_t	 nx_dma_seg;
-	size_t			 nx_dma_size;
-	caddr_t			 nx_dma_kva;
-
 	struct nx_ringcontext	*nx_rc;			/* Rx, Tx, Status */
+	struct nxb_dmamem	 nx_rcdma;
 
 	struct nxb_softc	*nx_sc;			/* The nxb board */
 	struct nxb_port		*nx_port;		/* Port information */
 	void			*nx_ih;
+
+	struct nx_ringdata	*nx_rings;
 
 	struct timeout		 nx_tick;
 };
@@ -205,6 +228,9 @@ int	 nxb_wait(struct nxb_softc *, bus_size_t, u_int32_t, u_int32_t,
 int	 nxb_read_rom(struct nxb_softc *, u_int32_t, u_int32_t *);
 
 void	 nxb_temp_sensor(void *);
+int	 nxb_dmamem_alloc(struct nxb_softc *, struct nxb_dmamem *,
+	    bus_size_t, const char *);
+void	 nxb_dmamem_free(struct nxb_softc *, struct nxb_dmamem *);
 
 int	 nx_match(struct device *, void *, void *);
 void	 nx_attach(struct device *, struct device *, void *);
@@ -226,8 +252,11 @@ void	 nx_writephy(struct nx_softc *, bus_size_t, u_int32_t);
 u_int32_t nx_readcrb(struct nx_softc *, enum nxsw_portreg);
 void	 nx_writecrb(struct nx_softc *, enum nxsw_portreg, u_int32_t);
 
-int	 nx_dma_alloc(struct nx_softc *);
-void	 nx_dma_free(struct nx_softc *);
+int	 nx_alloc(struct nx_softc *);
+void	 nx_free(struct nx_softc *);
+struct mbuf *nx_getbuf(struct nx_softc *, bus_dmamap_t, int);
+int	 nx_init_rings(struct nx_softc *);
+void	 nx_free_rings(struct nx_softc *);
 
 struct cfdriver nxb_cd = {
 	0, "nxb", DV_DULL
@@ -1215,6 +1244,49 @@ nxb_temp_sensor(void *arg)
 	sc->sc_sensor.flags = 0;
 }
 
+int
+nxb_dmamem_alloc(struct nxb_softc *sc, struct nxb_dmamem *nxm,
+    bus_size_t size, const char *mname)
+{
+	nxm->nxm_size = size;
+
+	if (bus_dmamap_create(sc->sc_dmat, nxm->nxm_size, 1,
+	    nxm->nxm_size, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+	    &nxm->nxm_map) != 0)
+		return (1);
+	if (bus_dmamem_alloc(sc->sc_dmat, nxm->nxm_size,
+	    NX_DMA_ALIGN, 0, &nxm->nxm_seg, 1, &nxm->nxm_nsegs,
+	    BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+	if (bus_dmamem_map(sc->sc_dmat, &nxm->nxm_seg, nxm->nxm_nsegs,
+	    nxm->nxm_size, &nxm->nxm_kva, BUS_DMA_NOWAIT) != 0)
+		goto free;
+	if (bus_dmamap_load(sc->sc_dmat, nxm->nxm_map, nxm->nxm_kva,
+	    nxm->nxm_size, NULL, BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	bzero(nxm->nxm_kva, nxm->nxm_size);
+	nxm->nxm_name = mname;
+
+	return (0);
+ unmap:
+	bus_dmamem_unmap(sc->sc_dmat, nxm->nxm_kva, nxm->nxm_size);
+ free:
+	bus_dmamem_free(sc->sc_dmat, &nxm->nxm_seg, 1);
+ destroy:
+	bus_dmamap_destroy(sc->sc_dmat, nxm->nxm_map);
+	return (1);
+}
+
+void
+nxb_dmamem_free(struct nxb_softc *sc, struct nxb_dmamem *nxm)
+{
+	bus_dmamap_unload(sc->sc_dmat, nxm->nxm_map);
+	bus_dmamem_unmap(sc->sc_dmat, nxm->nxm_kva, nxm->nxm_size);
+	bus_dmamem_free(sc->sc_dmat, &nxm->nxm_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, nxm->nxm_map);
+}
+
 /*
  * Routines handling the virtual ''nx'' ports
  */
@@ -1249,7 +1321,6 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 
 	nx->nx_sc = sc;
 	nx->nx_port = nxp;
-	nx->nx_memt = sc->sc_memt;
 	nxp->nxp_nx = nx;
 
 	if (bus_space_subregion(sc->sc_memt, sc->sc_memh,
@@ -1265,8 +1336,8 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (nx_dma_alloc(nx) != 0) {
-		printf(": unable to allocate dma memory\n");
+	if (nx_alloc(nx) != 0) {
+		printf(": unable to allocate ring or dma memory\n");
 		pci_intr_disestablish(sc->sc_pc, nx->nx_ih);
 		return;
 	}
@@ -1282,7 +1353,7 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = nx_watchdog;
 	ifp->if_hardmtu = NX_JUMBO_MTU;
 	strlcpy(ifp->if_xname, DEVNAME(nx), IFNAMSIZ);
-	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_ntxdesc - 1);
+	IFQ_SET_MAXLEN(&ifp->if_snd, NX_MAX_TX_DESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -1461,7 +1532,7 @@ nx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ENOTTY;
 	}
 
-        if (error == ENETRESET) {
+	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING))
 			nx_iff(nx);
@@ -1478,35 +1549,52 @@ nx_init(struct ifnet *ifp)
 {
 	struct nx_softc		*nx = (struct nx_softc *)ifp->if_softc;
 	struct nxb_softc	*sc = nx->nx_sc;
+	int			 s;
 
 	if (sc->sc_state != NX_S_READY)
 		return;
+
+	s = splnet();
 
 	if (nxb_wait(sc, NXSW_PORTREG(nx, NXSW_RCVPEG_STATE),
 	    NXSW_RCVPEG_INIT_DONE, NXSW_RCVPEG_STATE_M, 1, 2000) != 0) {
 		printf("%s: receive engine not ready, code 0x%x\n",
 		    DEVNAME(nx), nx_readcrb(nx, NXSW_RCVPEG_STATE));
-		return;
+		goto done;
 	}
 
 	nx_setlladdr(nx, LLADDR(ifp->if_sadl));
 
+	if (nx_init_rings(nx) != 0)
+		goto done;
+
+	/* Set and enable interrupts */
+	nxb_write(sc, NXISR_INT_MASK, NXISR_INT_MASK_ENABLE);
+	nxb_write(sc, NXISR_INT_VECTOR, 0);
+	nxb_write(sc, NXISR_TARGET_MASK, NXISR_TARGET_MASK_ENABLE);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	return;
-}
-
-void
-nx_start(struct ifnet *ifp)
-{
-	return;
+ done:
+	splx(s);
 }
 
 void
 nx_stop(struct ifnet *ifp)
 {
+	struct nx_softc		*nx = (struct nx_softc *)ifp->if_softc;
+	int			 s;
+
+	s = splnet();
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	nx_free_rings(nx);
+	splx(s);
+}
+
+void
+nx_start(struct ifnet *ifp)
+{
 	return;
 }
 
@@ -1535,10 +1623,20 @@ int
 nx_intr(void *arg)
 {
 	struct nx_softc		*nx = (struct nx_softc *)arg;
+	struct nxb_port		*nxp = nx->nx_port;
 	struct nxb_softc	*sc = nx->nx_sc;
+	u_int32_t		 inv;
 
 	if (sc->sc_state != NX_S_READY)
 		return (0);
+
+	/* Is the interrupt for us? */
+	inv = nxb_read(sc, NXISR_INT_VECTOR);
+	if ((inv & NXISR_INT_VECTOR_PORT(nxp->nxp_id)) == 0)
+		return (0);
+
+	DPRINTF(NXDBG_INTR, "%s(%s): int vector 0x%08x\n",
+	    DEVNAME(nx), __func__, isr);
 
 	return (1);
 }
@@ -1546,106 +1644,317 @@ nx_intr(void *arg)
 void
 nx_setlladdr(struct nx_softc *nx, u_int8_t *lladdr)
 {
-	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW0_START);
-	bus_space_write_region_1(nx->nx_memt, nx->nx_memh,
+	struct nxb_softc	*sc = nx->nx_sc;
+
+	nxb_set_crbwindow(sc, NXMEMMAP_WINDOW0_START);
+	bus_space_write_region_1(sc->sc_memt, nx->nx_memh,
 	    NX_XGE_STATION_ADDR_HI, lladdr, ETHER_ADDR_LEN);
-	bus_space_barrier(nx->nx_memt, nx->nx_memh,
+	bus_space_barrier(sc->sc_memt, nx->nx_memh,
 	    NX_XGE_STATION_ADDR_HI, ETHER_ADDR_LEN, BUS_SPACE_BARRIER_WRITE);
 }
 
 u_int32_t
 nx_readphy(struct nx_softc *nx, bus_size_t reg)
 {
-	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW0_START);
-	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
+	struct nxb_softc	*sc = nx->nx_sc;
+
+	nxb_set_crbwindow(sc, NXMEMMAP_WINDOW0_START);
+	bus_space_barrier(sc->sc_memt, nx->nx_memh, reg, 4,
 	    BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(nx->nx_memt, nx->nx_memh, reg));
+	return (bus_space_read_4(sc->sc_memt, nx->nx_memh, reg));
 }
 
 void
 nx_writephy(struct nx_softc *nx, bus_size_t reg, u_int32_t val)
 {
-	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW0_START);
-	bus_space_write_4(nx->nx_memt, nx->nx_memh, reg, val);
-	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
+	struct nxb_softc	*sc = nx->nx_sc;
+
+	nxb_set_crbwindow(sc, NXMEMMAP_WINDOW0_START);
+	bus_space_write_4(sc->sc_memt, nx->nx_memh, reg, val);
+	bus_space_barrier(sc->sc_memt, nx->nx_memh, reg, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
 u_int32_t
 nx_readcrb(struct nx_softc *nx, enum nxsw_portreg n)
 {
+	struct nxb_softc	*sc = nx->nx_sc;
 	u_int32_t		 reg;
 
 	reg = NXSW_PORTREG(nx, n);
-	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW1_START);
-	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
+	nxb_set_crbwindow(sc, NXMEMMAP_WINDOW1_START);
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, reg, 4,
 	    BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(nx->nx_memt, nx->nx_memh, reg));
+	return (bus_space_read_4(sc->sc_memt, sc->sc_memh, reg));
 }
 
 void
 nx_writecrb(struct nx_softc *nx, enum nxsw_portreg n, u_int32_t val)
 {
+	struct nxb_softc	*sc = nx->nx_sc;
 	u_int32_t		 reg;
 
 	reg = NXSW_PORTREG(nx, n);
-	nxb_set_crbwindow(nx->nx_sc, NXMEMMAP_WINDOW1_START);
-	bus_space_write_4(nx->nx_memt, nx->nx_memh, reg, val);
-	bus_space_barrier(nx->nx_memt, nx->nx_memh, reg, 4,
+	nxb_set_crbwindow(sc, NXMEMMAP_WINDOW1_START);
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, reg, val);
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, reg, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
 int
-nx_dma_alloc(struct nx_softc *nx)
+nx_alloc(struct nx_softc *nx)
 {
 	struct nxb_softc	*sc = nx->nx_sc;
-	int			 nsegs;
+	struct nxb_port		*nxp = nx->nx_port;
+	struct nxb_dmamem	*nxm;
+	struct nx_ringcontext	*rc;
+	u_int64_t		 addr;
 
 	/*
 	 * One DMA'ed ring context per virtual port
 	 */
+	nxm = &nx->nx_rcdma;
+	if (nxb_dmamem_alloc(sc, nxm, sizeof(*rc), "ringcontext") != 0)
+		return (1);
 
-	nx->nx_dma_size = sizeof(struct nx_ringcontext);
+	rc = (struct nx_ringcontext *)nxm->nxm_kva;
 
-	if (bus_dmamap_create(sc->sc_dmat, nx->nx_dma_size, 1,
-	    nx->nx_dma_size, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
-	    &nx->nx_dma_map) != 0)
+	/* Initialize the ring context */
+	rc->rc_id = htole32(nxp->nxp_id);
+	addr = nxm->nxm_map->dm_segs[0].ds_addr +	/* physaddr */
+	    offsetof(struct nx_ringcontext, rc_txconsumer);
+	rc->rc_txconsumeroff_low = htole32(addr & 0xffffffff);
+	rc->rc_txconsumeroff_high = htole32(addr >> 32);
+	nx->nx_rc = rc;
+
+	/*
+	 * Ring data used by the driver
+	 */
+	nx->nx_rings = (struct nx_ringdata *)
+	    malloc(sizeof(struct nx_ringdata), M_NOWAIT, M_DEVBUF);
+	if (nx->nx_rings == NULL) {
+		nxb_dmamem_free(sc, nxm);
+		return (1);
+	}
+	bzero(nx->nx_rings, sizeof(struct nx_ringdata));
+
+	return (0);
+}
+
+void
+nx_free(struct nx_softc *nx)
+{
+	struct nxb_softc	*sc = nx->nx_sc;
+	nxb_dmamem_free(sc, &nx->nx_rcdma);
+}
+
+struct mbuf *
+nx_getbuf(struct nx_softc *nx, bus_dmamap_t map, int wait)
+{
+	struct nxb_softc	*sc = nx->nx_sc;
+	struct mbuf		*m = NULL;
+
+	MGETHDR(m, wait ? M_WAIT : M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		goto merr;
+
+	MCLGET(m, wait ? M_WAIT : M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0)
+		goto merr;
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+	    wait ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
+		printf("%s: could not load mbuf dma map", DEVNAME(nx));
 		goto err;
+	}
 
-	if (bus_dmamem_alloc(sc->sc_dmat, nx->nx_dma_size,
-	    NX_DMA_ALIGN, 0, &nx->nx_dma_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0)
-		goto destroy;
+	return (m);
+ merr:
+	printf("%s: unable to allocate mbuf", DEVNAME(nx));
+ err:
+	if (m != NULL)
+		m_freem(m);
+	return (NULL);
+}
 
-	if (bus_dmamem_map(sc->sc_dmat, &nx->nx_dma_seg, nsegs,
-	    nx->nx_dma_size, &nx->nx_dma_kva, BUS_DMA_NOWAIT) != 0)
-		goto free;
+int
+nx_init_rings(struct nx_softc *nx)
+{
+	struct nxb_softc	*sc = nx->nx_sc;
+	struct nxb_port		*nxp = nx->nx_port;
+	struct nxb_dmamem	*nxm;
+	struct nx_ringcontext	*rc = nx->nx_rc;
+	struct nx_ringdata	*rd = nx->nx_rings;
+	struct nx_rxcontext	*rxc;
+	struct nx_buf		*nb;
+	struct nx_rxdesc	*rxd;
+	u_int64_t		 addr;
+	int			 i, size;
 
-	if (bus_dmamap_load(sc->sc_dmat, nx->nx_dma_map, nx->nx_dma_kva,
-	    nx->nx_dma_size, NULL, BUS_DMA_NOWAIT) != 0)
-		goto unmap;
+	nxm = &nx->nx_rcdma;
+	bus_dmamap_sync(sc->sc_dmat, nxm->nxm_map, 0, nxm->nxm_size,
+	    BUS_DMASYNC_PREWRITE);
 
-	bzero(nx->nx_dma_kva, nx->nx_dma_size);
-	nx->nx_rc = (struct nx_ringcontext *)nx->nx_dma_kva;
+	/*
+	 * Rx descriptors
+	 */
+	nxm = &rd->rd_rxdma;
+	size = NX_MAX_RX_DESC * sizeof(struct nx_rxdesc);
+	if (nxb_dmamem_alloc(sc, nxm, size, "rxdesc") != 0) {
+		printf("%s: failed to alloc rx dma memory\n",
+		    DEVNAME(nx));
+		return (1);
+	}
+
+	rd->rd_rxring = (struct nx_rxdesc *)nxm->nxm_kva;
+	addr = nxm->nxm_map->dm_segs[0].ds_addr;
+	rxc = &rc->rc_rxcontext[NX_RX_CONTEXT];
+	rxc->rxc_ringaddr_low = htole32(addr & 0xffffffff);
+	rxc->rxc_ringaddr_high = htole32(addr >> 32);
+	rxc->rxc_ringsize = htole32(NX_MAX_RX_DESC);
+
+	/* Rx buffers */
+	for (i = 0; i < NX_MAX_RX_DESC; i++) {
+		nb = &rd->rd_rxbuf[i];
+		rxd = rd->rd_rxring + i;
+
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &nb->nb_dmamap) != 0) {
+			printf("%s: unable to create dmamap for rx %d\n",
+			    DEVNAME(nx), i);
+			goto fail;
+		}
+
+		nb->nb_m = nx_getbuf(nx, nb->nb_dmamap, NX_NOWAIT);
+		if (nb->nb_m == NULL) {
+			bus_dmamap_destroy(sc->sc_dmat, nb->nb_dmamap);
+			goto fail;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, nb->nb_dmamap, 0,
+		    nb->nb_m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
+
+		addr = nb->nb_dmamap->dm_segs[0].ds_addr;
+		rxd->rx_addr_low = htole32(addr & 0xffffffff);
+		rxd->rx_addr_high = htole32(addr >> 32);
+		rxd->rx_length = htole32(nb->nb_m->m_pkthdr.len);
+		rxd->rx_handle = htole16(i);
+	}
+
+	/* XXX Jumbo Rx descriptors/buffers */
+
+	/*
+	 * Rx status descriptors
+	 */
+	nxm = &rd->rd_statusdma;
+	size = NX_MAX_STATUS_DESC * sizeof(struct nx_statusdesc);
+	if (nxb_dmamem_alloc(sc, nxm, size, "statusdesc") != 0) {
+		printf("%s: failed to alloc status dma memory\n",
+		    DEVNAME(nx));
+		return (1);
+	}
+
+	rd->rd_statusring = (struct nx_statusdesc *)nxm->nxm_kva;
+	addr = nxm->nxm_map->dm_segs[0].ds_addr;
+	rc->rc_statusringaddr_low = htole32(addr & 0xffffffff);
+	rc->rc_statusringaddr_high = htole32(addr >> 32);
+	rc->rc_statusringsize = htole32(NX_MAX_STATUS_DESC);
+
+	/*
+	 * Tx descriptors
+	 */
+	nxm = &rd->rd_txdma;
+	size = NX_MAX_TX_DESC * sizeof(struct nx_txdesc);
+	if (nxb_dmamem_alloc(sc, nxm, size, "txdesc") != 0) {
+		printf("%s: failed to alloc tx dma memory\n",
+		    DEVNAME(nx));
+		return (1);
+	}
+
+	rd->rd_txring = (struct nx_txdesc *)nxm->nxm_kva;
+	addr = nxm->nxm_map->dm_segs[0].ds_addr;
+	rc->rc_txringaddr_low = htole32(addr & 0xffffffff);
+	rc->rc_txringaddr_high = htole32(addr >> 32);
+	rc->rc_txringsize = htole32(NX_MAX_TX_DESC);
+
+	/* Tx buffers */
+	for (i = 0; i < NX_MAX_TX_DESC; i++) {
+		nb = &rd->rd_txbuf[i];
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &nb->nb_dmamap) != 0) {
+			printf("%s: unable to create dmamap for tx %d\n",
+			    DEVNAME(nx), i);
+			goto fail;
+		}
+		nb->nb_m = NULL;
+	}
+
+	/*
+	 * Sync DMA and write the ring context address to hardware
+	 */
+	nxm = &nx->nx_rcdma;
+	bus_dmamap_sync(sc->sc_dmat, nxm->nxm_map, 0, nxm->nxm_size,
+	    BUS_DMASYNC_POSTWRITE);
+
+	addr = nxm->nxm_map->dm_segs[0].ds_addr;
+	nx_writecrb(nx, NXSW_CONTEXT_ADDR_LO, addr & 0xffffffff);
+	nx_writecrb(nx, NXSW_CONTEXT_ADDR_HI, addr >> 32);
+	nx_writecrb(nx, NXSW_CONTEXT, nxp->nxp_id | NXSW_CONTEXT_SIG);
 
 	return (0);
 
- unmap:
-	bus_dmamem_unmap(sc->sc_dmat, nx->nx_dma_kva, nx->nx_dma_size);
- free:
-	bus_dmamem_free(sc->sc_dmat, &nx->nx_dma_seg, 1);
- destroy:
-	bus_dmamap_destroy(sc->sc_dmat, nx->nx_dma_map);
- err:
+ fail:
+	nx_free_rings(nx);
 	return (1);
 }
 
 void
-nx_dma_free(struct nx_softc *nx)
+nx_free_rings(struct nx_softc *nx)
 {
 	struct nxb_softc	*sc = nx->nx_sc;
+	struct nxb_port		*nxp = nx->nx_port;
+	struct nx_ringdata	*rd = nx->nx_rings;
+	struct nxb_dmamem	*nxm;
+	struct nx_buf		*nb;
+	int			 i;
 
-	bus_dmamap_unload(sc->sc_dmat, nx->nx_dma_map);
-	bus_dmamem_unmap(sc->sc_dmat, nx->nx_dma_kva, nx->nx_dma_size);
-	bus_dmamem_free(sc->sc_dmat, &nx->nx_dma_seg, 1);
-	bus_dmamap_destroy(sc->sc_dmat, nx->nx_dma_map);
+	for (i = 0; i < NX_MAX_RX_DESC; i++) {
+		nb = &rd->rd_rxbuf[i];
+		if (nb->nb_dmamap == NULL)
+			continue;
+		bus_dmamap_sync(sc->sc_dmat, nb->nb_dmamap, 0,
+		    nb->nb_m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, nb->nb_dmamap);
+		bus_dmamap_destroy(sc->sc_dmat, nb->nb_dmamap);
+		if (nb->nb_m != NULL)
+			m_freem(nb->nb_m);
+		nb->nb_m = NULL;
+	}
+
+	for (i = 0; i < NX_MAX_TX_DESC; i++) {
+		nb = &rd->rd_txbuf[i];
+		if (nb->nb_dmamap == NULL)
+			continue;
+		bus_dmamap_destroy(sc->sc_dmat, nb->nb_dmamap);
+		if (nb->nb_m != NULL)
+			m_freem(nb->nb_m);
+		nb->nb_m = NULL;
+	}
+
+	if (rd->rd_rxdma.nxm_size)
+		nxb_dmamem_free(sc, &rd->rd_rxdma);
+	if (rd->rd_statusdma.nxm_size)
+		nxb_dmamem_free(sc, &rd->rd_statusdma);
+	if (rd->rd_txdma.nxm_size)
+		nxb_dmamem_free(sc, &rd->rd_txdma);
+
+	nxm = &nx->nx_rcdma;
+	bzero(nx->nx_rc, sizeof(struct nx_ringcontext));
+	bus_dmamap_sync(sc->sc_dmat, nxm->nxm_map, 0, nxm->nxm_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	nx_writecrb(nx, NXSW_CONTEXT_ADDR_LO, 0);
+	nx_writecrb(nx, NXSW_CONTEXT_ADDR_HI, 0);
+	nx_writecrb(nx, NXSW_CONTEXT_SIG, nxp->nxp_id | NXSW_CONTEXT_RESET);
 }
