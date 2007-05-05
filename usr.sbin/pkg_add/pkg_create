@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.89 2007/05/04 19:40:37 espie Exp $
+# $OpenBSD: pkg_create,v 1.90 2007/05/05 10:40:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -321,15 +321,20 @@ sub dosubst
 	return $_;
 }
 
-sub copy_subst
+sub copy_subst_fh
 {
-	my ($srcname, $mode, $destname) = @_;
+	my ($srcname, $dest) = @_;
 	open my $src, '<', $srcname or die "can't open $srcname";
-	open my $dest, $mode, $destname or die "can't open $destname";
 	local $_;
 	while (<$src>) {
 		print $dest dosubst($_);
 	}
+}
+sub copy_subst
+{
+	my ($srcname, $mode, $destname) = @_;
+	open my $dest, $mode, $destname or die "can't open $destname";
+	copy_subst_fh($srcname, $dest);
 }
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
