@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.92 2007/05/05 10:48:39 espie Exp $
+# $OpenBSD: pkg_create,v 1.93 2007/05/05 10:50:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -332,8 +332,8 @@ sub copy_subst_fh
 }
 sub copy_subst
 {
-	my ($srcname, $mode, $destname) = @_;
-	open my $dest, $mode, $destname or die "can't open $destname";
+	my ($srcname, $destname) = @_;
+	open my $dest, '>', $destname or die "can't open $destname";
 	copy_subst_fh($srcname, $dest);
 }
 
@@ -423,7 +423,7 @@ sub add_special_file
 	my ($plist, $name, $infodir, $opt) = @_;
 	if (defined $opt) {
 	    OpenBSD::PackingElement::File->add($plist, $name);
-	    copy_subst($opt, '>', $infodir.$name) if defined $infodir;
+	    copy_subst($opt, $infodir.$name) if defined $infodir;
 	}
 }
 
