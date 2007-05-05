@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.22 2004/05/01 23:20:01 millert Exp $
+.\"	$OpenBSD: disk.9,v 1.23 2007/05/05 12:46:32 art Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -51,10 +51,6 @@
 .Fn disk_busy "struct disk *"
 .Ft void
 .Fn disk_unbusy "struct disk *" "long bcount" "int read"
-.Ft void
-.Fn disk_resetstat "struct disk *"
-.Ft struct disk *
-.Fn disk_find "char *"
 .Sh DESCRIPTION
 The
 .Ox
@@ -113,7 +109,7 @@ and
 pseudo-device drivers.
 .Pp
 The following is a brief description of each function in the framework:
-.Bl -tag -width "disk_resetstat()"
+.Bl -tag -width "disk_unbusy()"
 .It Fn disk_init
 Initialize the disklist and other data structures used by the framework.
 Called by
@@ -147,24 +143,14 @@ The third argument
 specifies the direction of I/O;
 if non-zero it means reading from the disk,
 otherwise it means writing to the disk.
-.It Fn disk_resetstat
-Reset the running byte, transfer, and time totals.
-.It Fn disk_find
-Return a pointer to the disk structure corresponding to the name provided, or
-.Dv NULL
-if the disk does not exist.
 .El
 .Pp
 The functions typically called by device drivers are
 .Fn disk_attach ,
 .Fn disk_detach ,
-.Fn disk_busy ,
-.Fn disk_unbusy ,
+.Fn disk_busy
 and
-.Fn disk_resetstat .
-The function
-.Fn disk_find
-is provided as a utility function.
+.Fn disk_unbusy .
 .Sh USING THE FRAMEWORK
 This section includes a description on basic use of the framework
 and example usage of its functions.
@@ -338,12 +324,6 @@ Like
 .Fn disk_unbusy
 must be called at
 .Fn splbio .
-.Pp
-At some point a driver may wish to reset the metrics data gathered on a
-particular disk.
-For this function, the
-.Fn disk_resetstat
-routine is provided.
 .Sh CODE REFERENCES
 The disk framework itself is implemented within the file
 .Pa sys/kern/subr_disk.c .
