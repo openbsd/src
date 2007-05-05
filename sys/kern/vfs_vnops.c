@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.55 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.56 2007/05/05 12:03:04 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -497,20 +497,6 @@ vn_kqfilter(struct file *fp, struct knote *kn)
 /*
  * Common code for vnode access operations.
  */
-int
-vn_access(struct vnode *vp, int mode)
-{
-	struct proc *p = curproc;
-	int error;
-
-	if ((error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p)))
-		return (error);
-
-	error = VOP_ACCESS(vp, mode, p->p_ucred, p);
-	VOP_UNLOCK(vp, 0, p);
-
-	return (error);
-}
 
 /* Check if a directory can be found inside another in the hierarchy */
 int

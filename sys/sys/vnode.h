@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.78 2007/04/14 23:17:00 bluhm Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.79 2007/05/05 12:03:04 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -453,7 +453,6 @@ int	vop_generic_revoke(void *);
 int	vop_generic_kqfilter(void *);
 
 /* vfs_vnops.c */
-int	vn_access(struct vnode *, int);
 int	vn_isunder(struct vnode *, struct vnode *, struct proc *);
 int	vn_close(struct vnode *, int, struct ucred *, struct proc *);
 int	vn_open(struct nameidata *, int, int);
