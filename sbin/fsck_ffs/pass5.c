@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.29 2007/04/23 10:18:30 pedro Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.30 2007/05/05 22:17:34 millert Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.29 2007/04/23 10:18:30 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.30 2007/05/05 22:17:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,12 +146,10 @@ pass5(void)
 			newcg->cg_iusedoff = newcg->cg_boff + fs->fs_cpg *
 			    fs->fs_nrpos * sizeof(int16_t);
 		}
-		newcg->cg_freeoff = newcg->cg_iusedoff +
-		    howmany(fs->fs_ipg, NBBY);
-		inomapsize = newcg->cg_freeoff - newcg->cg_iusedoff;
-		newcg->cg_nextfreeoff = newcg->cg_freeoff +
-		    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY);
-		blkmapsize = newcg->cg_nextfreeoff - newcg->cg_freeoff;
+		inomapsize = howmany(fs->fs_ipg, CHAR_BIT);
+		newcg->cg_freeoff = newcg->cg_iusedoff + inomapsize;
+		blkmapsize = howmany(fs->fs_fpg, CHAR_BIT);
+		newcg->cg_nextfreeoff = newcg->cg_freeoff + blkmapsize;
 		if (fs->fs_contigsumsize > 0) {
 			newcg->cg_clustersumoff = newcg->cg_nextfreeoff -
 			    sizeof(int32_t);
@@ -160,7 +158,7 @@ pass5(void)
 			newcg->cg_clusteroff = newcg->cg_clustersumoff +
 			    (fs->fs_contigsumsize + 1) * sizeof(int32_t);
 			newcg->cg_nextfreeoff = newcg->cg_clusteroff +
-			    howmany(fs->fs_cpg * fs->fs_spc / NSPB(fs), NBBY);
+			    howmany(fragstoblks(fs, fs->fs_fpg), CHAR_BIT);
 		}
 		newcg->cg_magic = CG_MAGIC;
 		basesize = sizeof(struct cg);
