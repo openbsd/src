@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.1 2007/03/22 19:26:28 kettenis Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.2 2007/05/05 12:06:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -45,8 +45,6 @@ struct mutex {
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 
-#if 0
-#define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
-#endif
+#define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldcpl
 
 #endif
