@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.67 2007/05/03 15:06:09 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.68 2007/05/05 14:41:14 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -287,7 +287,9 @@ int	malo_load_firmware(struct malo_softc *sc);
 int	malo_set_wepkey(struct malo_softc *sc);
 int	malo_set_slot(struct malo_softc *sc);
 void	malo_update_slot(struct ieee80211com *ic);
+#ifdef MALO_DEBUG
 void	malo_hexdump(void *buf, int len);
+#endif
 static char *
 	malo_cmd_string(uint16_t cmd);
 static char *
@@ -1994,6 +1996,7 @@ malo_update_slot(struct ieee80211com *ic)
 	}
 }
 
+#ifdef MALO_DEBUG
 void
 malo_hexdump(void *buf, int len)
 {
@@ -2008,6 +2011,7 @@ malo_hexdump(void *buf, int len)
 	}
 	printf("\n");
 }
+#endif
 
 static char *
 malo_cmd_string(uint16_t cmd)
