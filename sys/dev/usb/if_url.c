@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.34 2007/02/11 20:29:22 miod Exp $ */
+/*	$OpenBSD: if_url.c,v 1.35 2007/05/06 04:08:47 krw Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #if defined(__OpenBSD__)
@@ -210,7 +210,7 @@ USB_ATTACH(url)
 	}
 
 	usb_init_task(&sc->sc_tick_task, url_tick_task, sc);
-	lockinit(&sc->sc_mii_lock, PZERO, "urlmii", 0, 0);
+	rw_init(&sc->sc_mii_lock, "urlmii");
 	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) url_stop_task, sc);
 
 	/* get control interface */
@@ -1405,7 +1405,7 @@ url_lock_mii(struct url_softc *sc)
 			__func__));
 
 	sc->sc_refcnt++;
-	usb_lockmgr(&sc->sc_mii_lock, LK_EXCLUSIVE, NULL, curproc);
+	rw_enter_write(&sc->sc_mii_lock);
 }
 
 Static void
@@ -1414,7 +1414,7 @@ url_unlock_mii(struct url_softc *sc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),
 		       __func__));
 
-	usb_lockmgr(&sc->sc_mii_lock, LK_RELEASE, NULL, curproc);
+	rw_exit_write(&sc->sc_mii_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }

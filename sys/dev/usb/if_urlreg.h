@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urlreg.h,v 1.7 2006/03/07 04:41:19 krw Exp $ */
+/*	$OpenBSD: if_urlreg.h,v 1.8 2007/05/06 04:08:47 krw Exp $ */
 /*	$NetBSD: if_urlreg.h,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -178,7 +178,7 @@ struct url_softc {
 	struct arpcom		sc_ac; /* ethernet common */
 #endif
 	struct mii_data		sc_mii;
-	struct lock		sc_mii_lock;
+	struct rwlock		sc_mii_lock;
 	int			sc_link;
 #define	sc_media url_mii.mii_media
 	struct url_cdata	sc_cdata;

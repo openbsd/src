@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.21 2007/04/16 09:13:41 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.22 2007/05/06 04:08:47 krw Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -50,7 +50,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -196,7 +196,7 @@ USB_ATTACH(udav)
 	}
 
 	usb_init_task(&sc->sc_tick_task, udav_tick_task, sc);
-	lockinit(&sc->sc_mii_lock, PZERO, "udavmii", 0, 0);
+	rw_init(&sc->sc_mii_lock, "udavmii");
 	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) udav_stop_task, sc);
 
 	/* get control interface */
@@ -1495,7 +1495,7 @@ udav_lock_mii(struct udav_softc *sc)
 			__func__));
 
 	sc->sc_refcnt++;
-	usb_lockmgr(&sc->sc_mii_lock, LK_EXCLUSIVE, NULL, curproc);
+	rw_enter_write(&sc->sc_mii_lock);
 }
 
 Static void
@@ -1504,7 +1504,7 @@ udav_unlock_mii(struct udav_softc *sc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),
 		       __func__));
 
-	usb_lockmgr(&sc->sc_mii_lock, LK_RELEASE, NULL, curproc);
+	rw_exit_write(&sc->sc_mii_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }

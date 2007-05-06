@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.51 2007/02/23 23:03:04 jsg Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.52 2007/05/06 04:08:47 krw Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -82,7 +82,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -429,13 +429,13 @@ Static void
 aue_lock_mii(struct aue_softc *sc)
 {
 	sc->aue_refcnt++;
-	usb_lockmgr(&sc->aue_mii_lock, LK_EXCLUSIVE, NULL, curproc);
+	rw_enter_write(&sc->aue_mii_lock);
 }
 
 Static void
 aue_unlock_mii(struct aue_softc *sc)
 {
-	usb_lockmgr(&sc->aue_mii_lock, LK_RELEASE, NULL, curproc);
+	rw_exit_write(&sc->aue_mii_lock);
 	if (--sc->aue_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->aue_dev));
 }
@@ -744,7 +744,7 @@ USB_ATTACH(aue)
 
 	usb_init_task(&sc->aue_tick_task, aue_tick_task, sc);
 	usb_init_task(&sc->aue_stop_task, (void (*)(void *))aue_stop, sc);
-	lockinit(&sc->aue_mii_lock, PZERO, "auemii", 0, 0);
+	rw_init(&sc->aue_mii_lock, "auemii");
 
 	err = usbd_device2interface_handle(dev, AUE_IFACE_IDX, &iface);
 	if (err) {
