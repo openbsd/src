@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.10 2006/03/18 03:55:09 ray Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.11 2007/05/06 01:12:25 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.10 2006/03/18 03:55:09 ray Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.11 2007/05/06 01:12:25 ray Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -277,7 +277,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 					rp = record + pos;
 				}
 			}
-				/* loop invariant let's us do this */
+			/* loop invariant lets us do this */
 			*rp++ = '\0';
 				
 			/*
