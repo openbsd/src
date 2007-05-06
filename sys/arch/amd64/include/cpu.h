@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.26 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.27 2007/05/06 03:37:08 gwk Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -118,6 +118,12 @@ struct cpu_info {
 #define CI_DDB_STOPPED		2
 #define CI_DDB_ENTERDDB		3
 #define CI_DDB_INDDB		4
+
+	volatile int ci_setperf_state;
+#define CI_SETPERF_READY	0
+#define CI_SETPERF_SHOULDSTOP	1
+#define CI_SETPERF_INTRANSIT	2
+#define CI_SETPERF_DONE		3
 
 	struct x86_64_tss	ci_doubleflt_tss;
 
@@ -302,8 +308,13 @@ void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
 
 /* powernow-k8.c */
-void k8_powernow_init(void);
+void k8_powernow_init(struct cpu_info *);
 void k8_powernow_setperf(int);
+
+#ifdef MULTIPROCESSOR
+/* mp_setperf.c */
+void mp_setperf_init(void);
+#endif
 
 #endif /* _KERNEL */
 

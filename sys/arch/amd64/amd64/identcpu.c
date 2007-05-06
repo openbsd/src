@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.11 2007/02/17 17:35:43 tom Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.12 2007/05/06 03:37:08 gwk Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -109,6 +109,8 @@ cpu_amd64speed(int *freq)
 	return (0);
 }
 
+void (*setperf_setup)(struct cpu_info *);
+
 void
 identifycpu(struct cpu_info *ci)
 {
@@ -181,16 +183,14 @@ identifycpu(struct cpu_info *ci)
 
 	x86_print_cacheinfo(ci);
 
-#ifndef MULTIPROCESSOR
 	if (pnfeatset > 0x80000007) {
-		CPUID(0x80000007, dummy, dummy, dummy, pnfeatset);	
-		
+		CPUID(0x80000007, dummy, dummy, dummy, pnfeatset);
+
 		if (pnfeatset & 0x06) {
 			if ((ci->ci_signature & 0xF00) == 0xf00)
-				k8_powernow_init();
+				setperf_setup = k8_powernow_init;
 		}
 	}
-#endif
 
 	/* AuthenticAMD:    h t u A                    i t n e */
 	if (vendor[0] == 0x68747541 && vendor[1] == 0x69746e65 &&

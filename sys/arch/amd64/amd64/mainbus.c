@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.11 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.12 2007/05/06 03:37:08 gwk Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ union mainbus_attach_args {
 	struct apic_attach_args aaa_caa;
 #if NACPI > 0
 	struct acpi_attach_args mba_aaa;
-#endif	
+#endif
 #if NIPMI > 0
 	struct ipmi_attach_args mba_iaa;
 #endif
@@ -117,7 +117,7 @@ struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
 int mp_nintr;
- 
+
 struct mp_bus *mp_isa_bus;
 struct mp_bus *mp_eisa_bus;
 
@@ -150,6 +150,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #ifdef MPBIOS
 	int				mpbios_present = 0;
 #endif
+	extern void			(*setperf_setup)(struct cpu_info *);
 
 	printf("\n");
 
@@ -203,15 +204,27 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((cpu_info_primary.ci_flags & CPUF_PRESENT) == 0) {
 		struct cpu_attach_args caa;
-                        
+
 		memset(&caa, 0, sizeof(caa));
 		caa.caa_name = "cpu";
 		caa.cpu_number = 0;
 		caa.cpu_role = CPU_ROLE_SP;
 		caa.cpu_func = 0;
-                        
+
 		config_found(self, &caa, mainbus_print);
 	}
+
+#if NACPI > 0
+	if (!acpi_hasprocfvs)
+#endif
+	{
+		if (setperf_setup != NULL)
+			setperf_setup(&cpu_info_primary);
+	}
+
+#ifdef MULTIPROCESSOR
+	mp_setperf_init();
+#endif
 
 #if NPCI > 0
 	if (pci_mode != 0) {

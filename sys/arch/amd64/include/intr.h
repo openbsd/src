@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2006/03/12 02:34:39 brad Exp $	*/
+/*	$OpenBSD: intr.h,v 1.8 2007/05/06 03:37:08 gwk Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 
 struct intrstub {
 	void *ist_entry;
-	void *ist_recurse; 
+	void *ist_recurse;
 	void *ist_resume;
 };
 
@@ -231,6 +231,7 @@ void x86_intlock(struct intrframe);
 void x86_intunlock(struct intrframe);
 void x86_softintlock(void);
 void x86_softintunlock(void);
+void x86_setperf_ipi(struct cpu_info *);
 
 extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
 #endif
@@ -243,7 +244,7 @@ extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
 
 #define	X86_SOFTINTR_SOFTCLOCK		0
 #define	X86_SOFTINTR_SOFTNET		1
-#define	X86_SOFTINTR_SOFTSERIAL	2
+#define	X86_SOFTINTR_SOFTSERIAL		2
 #define	X86_NSOFTINTR			3
 
 #ifndef _LOCORE

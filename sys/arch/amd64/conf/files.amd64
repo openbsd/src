@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.26 2007/02/17 17:35:43 tom Exp $
+#	$OpenBSD: files.amd64,v 1.27 2007/05/06 03:37:08 gwk Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -31,6 +31,7 @@ file	arch/amd64/amd64/bus_dma.c
 file	arch/amd64/amd64/mptramp.S		multiprocessor
 file	arch/amd64/amd64/ipifuncs.c		multiprocessor
 file	arch/amd64/amd64/ipi.c			multiprocessor
+file	arch/amd64/amd64/mp_setperf.c		multiprocessor
 
 file	arch/amd64/amd64/apic.c			ioapic | lapic
 
