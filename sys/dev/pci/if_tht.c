@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.94 2007/05/04 22:54:42 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.95 2007/05/06 03:08:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -948,7 +948,7 @@ tht_up(struct tht_softc *sc)
 	    THT_REG_RDINTCM_RXF_TH(4) | THT_REG_RDINTCM_COAL_RC |
 	    THT_REG_RDINTCM_COAL(0x20));
 	tht_write(sc, THT_REG_TDINTCM(0), THT_REG_TDINTCM_PKT_TH(12) |
-	    THT_REG_TDINTCM_COAL_RC | THT_REG_RDINTCM_COAL(0x20));
+	    THT_REG_TDINTCM_COAL_RC | THT_REG_TDINTCM_COAL(0x20));
 
 	tht_write(sc, THT_REG_RX_FLT, THT_REG_RX_FLT_OSEN |
 	    THT_REG_RX_FLT_AM | THT_REG_RX_FLT_AB | THT_REG_RX_FLT_PRM_ALL);
