@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.95 2007/05/06 03:08:35 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.96 2007/05/06 08:58:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -106,12 +106,12 @@ int thtdebug = THT_D_TX | THT_D_RX | THT_D_INTR;
 #define THT_REG_HTB_ADDR	0x4100 /* HTB Addressing Mechanism enable */
 #define THT_REG_HTB_ADDR_HI	0x4110 /* High HTB Address */
 #define THT_REG_HTB_ST_TMR	0x3290 /* HTB Timer */
-#define THT_REG_RDINTCM(_q)	(0x0120 + _Q(_q)) /* RX DSC Intr Coalescing */
+#define THT_REG_RDINTCM(_q)	(0x5120 + _Q(_q)) /* RX DSC Intr Coalescing */
 #define  THT_REG_RDINTCM_PKT_TH(_c)	((_c)<<20) /* pkt count threshold */
 #define  THT_REG_RDINTCM_RXF_TH(_c)	((_c)<<16) /* rxf intr req thresh */
 #define  THT_REG_RDINTCM_COAL_RC	(1<<15) /* coalescing timer recharge */
 #define  THT_REG_RDINTCM_COAL(_c)	(_c) /* coalescing timer */
-#define THT_REG_TDINTCM(_q)	(0x0130 + _Q(_q)) /* TX DSC Intr Coalescing */
+#define THT_REG_TDINTCM(_q)	(0x5130 + _Q(_q)) /* TX DSC Intr Coalescing */
 #define  THT_REG_TDINTCM_PKT_TH(_c)	((_c)<<20) /* pkt count threshold */
 #define  THT_REG_TDINTCM_COAL_RC	(1<<15) /* coalescing timer recharge */
 #define  THT_REG_TDINTCM_COAL(_c)	(_c) /* coalescing timer */
