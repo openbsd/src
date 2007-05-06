@@ -5740,9 +5740,7 @@
 ./usr/share/man/cat9/disk_attach.0
 ./usr/share/man/cat9/disk_busy.0
 ./usr/share/man/cat9/disk_detatch.0
-./usr/share/man/cat9/disk_find.0
 ./usr/share/man/cat9/disk_init.0
-./usr/share/man/cat9/disk_resetstat.0
 ./usr/share/man/cat9/disk_unbusy.0
 ./usr/share/man/cat9/disklabel.0
 ./usr/share/man/cat9/dohooks.0
@@ -6162,7 +6160,6 @@
 ./usr/share/man/cat9/vgonel.0
 ./usr/share/man/cat9/vhold.0
 ./usr/share/man/cat9/vinvalbuf.0
-./usr/share/man/cat9/vn_access.0
 ./usr/share/man/cat9/vn_close.0
 ./usr/share/man/cat9/vn_default_error.0
 ./usr/share/man/cat9/vn_isunder.0
