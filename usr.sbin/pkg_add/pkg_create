@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.94 2007/05/05 11:18:18 espie Exp $
+# $OpenBSD: pkg_create,v 1.95 2007/05/06 15:41:47 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -464,9 +464,9 @@ sub add_description
 		copy_subst_fh($opt_d, $fh);
 	    }
 	    if (defined $comment) {
-	    	print $fh "\n", dosubst('Maintainer: ${MAINTAINER}'), "\n\n";
-	    	if (defined $defines{HOMEPAGE}) {
-			print $fh dosubst('WWW: ${HOMEPAGE}'), "\n";
+	    	print $fh "\n", dosubst('Maintainer: ${MAINTAINER}'), "\n";
+	    	if (defined $defines{HOMEPAGE} && $defines{HOMEPAGE} ne '') {
+			print $fh "\n", dosubst('WWW: ${HOMEPAGE}'), "\n";
 		}
 	    }
 	    close($fh);
