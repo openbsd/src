@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.136 2007/05/04 12:39:39 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.137 2007/05/06 12:20:04 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -400,7 +400,6 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			/* Remove the existing host route, if any */
 			bzero(&info, sizeof(info));
 			info.rti_info[RTAX_DST] = ifa->ifa_addr;
-			info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_flags = RTF_HOST;
 			error = rtrequest1(RTM_DELETE, &info, NULL, 0);
@@ -443,7 +442,6 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					    RTF_CLONING)) {
 						bzero(&info, sizeof(info));
 						info.rti_info[RTAX_DST] = &sa;
-						info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 						info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 						error = rtrequest1(RTM_DELETE, &info, NULL, 0);
 						rt_missmsg(RTM_DELETE, &info, info.rti_flags, NULL,
