@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.7 2006/09/19 14:25:04 naddy Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.8 2007/05/06 09:51:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -113,7 +113,7 @@ ip6_print(register const u_char *bp, register int length)
 
 	cp = (const u_char *)ip6;
 	nh = ip6->ip6_nxt;
-	while (cp < snapend) {
+	while (cp + hlen < snapend) {
 		cp += hlen;
 
 		if (cp == (u_char *)(ip6 + 1) &&
