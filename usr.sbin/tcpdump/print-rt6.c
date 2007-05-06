@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rt6.c,v 1.1 2000/04/26 21:35:42 jakob Exp $	*/
+/*	$OpenBSD: print-rt6.c,v 1.2 2007/05/06 09:56:45 claudio Exp $	*/
 
 
 /*
@@ -79,7 +79,7 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 
 	printf("srcrt (len=%d, ", dp->ip6r_len);
 	printf("type=%d, ", dp->ip6r_type);
-	printf("segleft=%d, ", dp->ip6r_segleft);
+	printf("segleft=%d", dp->ip6r_segleft);
 
 	switch (dp->ip6r_type) {
 	case IPV6_RTHDR_TYPE_0:
@@ -87,7 +87,7 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 
 		TCHECK(dp0->ip6r0_reserved);
 		if (dp0->ip6r0_reserved || vflag) {
-			printf("rsv=0x%0x, ",
+			printf(", rsv=0x%0x",
 				(u_int32_t)ntohl(dp0->ip6r0_reserved));
 		}
 
@@ -101,21 +101,19 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 			if ((u_char *)addr > ep - sizeof(*addr))
 				goto trunc;
 
-			printf("[%d]%s", i, ip6addr_string((u_char *)addr));
-			if (i != len - 1)
-				printf(", ");
-		   
+			printf(", [%d]%s", i, ip6addr_string((u_char *)addr));
 		}
 		printf(")");
 		return((dp0->ip6r0_len + 1) << 3);
-		break;
 	default:
-		goto trunc;
-		break;
+		if (bp + ((dp->ip6r_len + 1) << 3) > ep)
+			goto trunc;
+		printf(")");
+		return((dp->ip6r_len + 1) << 3);
 	}
 
  trunc:
-	fputs("[|srcrt]", stdout);
+	fputs(", [|srcrt]", stdout);
 	return 65535;		/* XXX */
 }
 #endif /* INET6 */
