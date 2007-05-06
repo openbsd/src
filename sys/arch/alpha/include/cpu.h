@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.29 2007/04/13 08:31:50 martin Exp $ */
+/* $OpenBSD: cpu.h,v 1.30 2007/05/06 19:05:11 martin Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -158,9 +158,6 @@ void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
 void	trap_init(void);
 void	enable_nsio_ide(bus_space_tag_t);
-
-void	release_fpu(int);
-void	synchronize_fpstate(struct proc *, int);
 
 /* Multiprocessor glue; cpu.c */
 struct cpu_info;
