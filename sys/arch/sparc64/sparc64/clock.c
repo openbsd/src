@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.32 2007/04/09 19:59:06 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.33 2007/05/06 14:52:36 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -567,8 +567,6 @@ cpu_initclocks()
 	 */
 
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
-		printf("No counter-timer -- using %%tick at %ldMHz as "
-		    "system clock.\n", (long)(cpu_clockrate/1000000));
 		/* We don't have a counter-timer -- use %tick */
 		level0.ih_clr = 0;
 		/* 
