@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.45 2007/05/06 05:01:19 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.46 2007/05/07 02:11:12 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -241,39 +241,19 @@ editit(const char *pathname)
 	sighup = signal(SIGHUP, SIG_IGN);
 	sigint = signal(SIGINT, SIG_IGN);
 	sigquit = signal(SIGQUIT, SIG_IGN);
- top:
-	if ((pid = fork()) == -1) {
-		saved_errno = errno;
-
-		if (saved_errno == EAGAIN) {
+	while ((pid = fork()) == -1)
+		if (errno == EAGAIN)
 			sleep(1);
-			goto top;
-		}
-		(void)signal(SIGHUP, sighup);
-		(void)signal(SIGINT, sigint);
-		(void)signal(SIGQUIT, sigquit);
-		free(p);
-		errno = saved_errno;
-		return (-1);
-	}
+		else
+			goto fail;
 	if (pid == 0) {
 		execv(_PATH_BSHELL, argp);
 		_exit(127);
 	}
+	while (waitpid(pid, &st, 0) == -1)
+		if (errno != EINTR)
+			goto fail;
 	free(p);
-	for (;;) {
-		if (waitpid(pid, &st, 0) == -1) {
-			if (errno != EINTR) {
-				saved_errno = errno;
-				(void)signal(SIGHUP, sighup);
-				(void)signal(SIGINT, sigint);
-				(void)signal(SIGQUIT, sigquit);
-				errno = saved_errno;
-				return (-1);
-			}
-		} else
-			break;
-	}
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
@@ -282,6 +262,15 @@ editit(const char *pathname)
 		return (-1);
 	}
 	return (0);
+
+ fail:
+	saved_errno = errno;
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	free(p);
+	errno = saved_errno;
+	return (-1);
 }
 
 int
