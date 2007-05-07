@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.39 2007/05/07 08:24:16 espie Exp $
+# $OpenBSD: Delete.pm,v 1.40 2007/05/07 08:34:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -24,6 +24,27 @@ use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
 use File::Basename;
 
+sub rename_file_to_temp
+{
+	my $i = shift;
+	require File::Temp;
+
+	my $n = $i->fullname();
+
+	my ($fh, $j) = File::Temp::mkstemp("$n.XXXXXXXX");
+	close $fh;
+	if (rename($n, $j)) {
+		print "Renaming old file $n to $j\n";
+		if ($i->{name} !~ m|^/| && $i->cwd() ne '.') {
+			my $c = $i->cwd();
+			$j =~ s|^\Q$c\E/||;
+		}
+		$i->{name} = $j;
+	} else {
+		print "Bad rename $n to $j: $!\n";
+	}
+}
+
 sub keep_old_files
 {
 	my ($state, $plist, $dir) = @_;
@@ -42,27 +63,13 @@ sub keep_old_files
 		if (defined $i->{stillaround}) {
 			delete $i->{stillaround};
 			if ($state->{replacing}) {
-				require File::Temp;
-
-				my $n = $i->fullname();
-
-				my ($fh, $j) = File::Temp::mkstemp("$n.XXXXXXXX");
-				close $fh;
-				if (rename($n, $j)) {
-					print "Renaming old file $n to $j\n";
-					if ($i->{name} !~ m|^/| && $i->cwd() ne '.') {
-						my $c = $i->cwd();
-						$j =~ s|^\Q$c\E/||;
-					}
-					$i->{name} = $j;
-				} else {
-					print "Bad rename $n to $j: $!\n";
-				}
+				rename_file_to_temp($i);
 			}
 			push(@{$p->{items}}, $i);
 		}
 	}
-	my $borked = borked_package($plist->pkgname());
+	my $borked = borked_package($plist->pkgname);
+	OpenBSD::PackingElement::Name->add($p, $borked);
 	$p->{name}->{name} = $borked;
 	my $dest = installed_info($borked);
 	mkdir($dest);
