@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.235 2007/05/07 13:51:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.236 2007/05/07 14:12:43 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -582,8 +582,6 @@ sub find_truenames
 {
 	my ($old, $new, $state) = @_;
 
-	my $allstems;
-
 	for my $pkgname (@$old) {
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
 		    my ($h, $path, $repo);
@@ -591,10 +589,7 @@ sub find_truenames
 			($repo, $path, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
 			$h = OpenBSD::PackageName::avail2stems($state, $repo->available);
 		    } else {
-			if (!defined $allstems) {
-			    $allstems = OpenBSD::PackageName::available_stems($state);
-			}
-			$h = $allstems;
+			$h = 'OpenBSD::PackageLocator';
 			$path = "";
 		    }
 		    my @l = $h->findstem($pkgname);

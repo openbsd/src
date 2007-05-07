@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.68 2007/05/07 13:51:58 espie Exp $
+# $OpenBSD: Update.pm,v 1.69 2007/05/07 14:12:43 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,6 @@ sub find
 		@list = OpenBSD::Requiring->compute_closure(@list);
 	}
 	my @cantupdate = ();
-	my $hash = OpenBSD::PackageName::available_stems($state);
 
 	OpenBSD::ProgressMeter::set_header("Looking for updates");
 	for my $pkgname (@list) {
@@ -48,7 +47,7 @@ sub find
 			next;
 		}
 		my $stem = OpenBSD::PackageName::splitstem($pkgname);
-		my @l = $hash->findstem($stem);
+		my @l = OpenBSD::PackageLocator->findstem($stem);
 		if (@l == 0) {
 			push(@cantupdate, $pkgname);
 			next;

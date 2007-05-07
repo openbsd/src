@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.58 2007/05/07 13:27:28 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.59 2007/05/07 14:12:43 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -128,5 +128,32 @@ sub match_spec
 	return OpenBSD::PkgSpec::match($spec);
 }
 
+my $stemlist;
+
+sub findstem
+{
+	my ($class, $stem) = @_;
+	if (!@avail) {
+		@avail = available();
+	}
+	require OpenBSD::PackageName;
+	if (!$stemlist) {
+		$stemlist = OpenBSD::PackageName::avail2stems(@avail);
+	}
+	return $stemlist->findstem($stem);
+}
+
+sub find_partialstem
+{
+	my ($class, $partial) = @_;
+	if (!@avail) {
+		@avail = available();
+	}
+	require OpenBSD::PackageName;
+	if (!$stemlist) {
+		$stemlist = OpenBSD::PackageName::avail2stems(@avail);
+	}
+	return $stemlist->find_partialstem($partial);
+}
 
 1;
