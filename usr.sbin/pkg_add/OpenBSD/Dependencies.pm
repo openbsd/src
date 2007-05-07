@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.17 2007/05/07 12:19:04 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.18 2007/05/07 13:12:11 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -32,10 +32,6 @@ sub available
 {
 	if (!@avail) {
 	    @avail = OpenBSD::PackageLocator::available();
-	    my $state = shift;
-	    if (!$state->{forced}->{allversions}) {
-		@avail = OpenBSD::PackageName::keep_most_recent(@avail);
-	    }
 	}
 	return @avail;
 }
@@ -96,6 +92,9 @@ sub solve
 	    }
 	    # try with list of available packages
 	    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, available());
+	    if (!$state->{forced}->{allversions}) {
+		@candidates = OpenBSD::PackageName::keep_most_recent(@candidates);
+	    }
 	    # one single choice
 	    if (@candidates == 1) {
 		push(@deps, $candidates[0]);
