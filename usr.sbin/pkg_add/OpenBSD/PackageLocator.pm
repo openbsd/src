@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.57 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.58 2007/05/07 13:27:28 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -115,10 +115,18 @@ sub cleanup
 	$pkgpath->cleanup;
 }
 
+my @avail;
+
 sub match_spec
 {
-	my $self = shift;
-	return $pkgpath->match_spec(@_);
+	my ($class, $spec) = @_;
+	if (!@avail) {
+	    @avail = available();
+	}
+	require OpenBSD::PkgSpec;
+
+	return OpenBSD::PkgSpec::match($spec);
 }
+
 
 1;
