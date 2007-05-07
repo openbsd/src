@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.139 2007/02/12 21:19:56 pedro Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.140 2007/05/07 21:57:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -141,7 +141,7 @@ int sk_intr(void *);
 void sk_intr_bcom(struct sk_if_softc *);
 void sk_intr_xmac(struct sk_if_softc *);
 void sk_intr_yukon(struct sk_if_softc *);
-__inline int sk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
+static __inline int sk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
 void sk_rxeof(struct sk_if_softc *);
 void sk_txeof(struct sk_if_softc *);
 int sk_encap(struct sk_if_softc *, struct mbuf *, u_int32_t *);
@@ -1701,7 +1701,7 @@ skc_shutdown(void *v)
 	sk_reset(sc);
 }
 
-__inline int
+static __inline int
 sk_rxvalid(struct sk_softc *sc, u_int32_t stat, u_int32_t len)
 {
 	if (sc->sk_type == SK_GENESIS) {
