@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2005/07/26 08:38:29 art Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2007/05/07 19:10:31 kettenis Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -101,7 +101,6 @@ member  CPU_INFO_CURPROC	ci_curproc
 member  CPU_INFO_CURPCB		ci_curpcb
 member  CPU_INFO_IDLE_PCB	ci_idle_pcb
 member  CPU_INFO_IDLE_TSS_SEL	ci_idle_tss_sel
-member  CPU_INFO_ASTPENDING	ci_astpending
 member	CPU_INFO_ILEVEL		ci_ilevel
 member	CPU_INFO_IDEPTH		ci_idepth
 member	CPU_INFO_ISOURCES	ci_isources
