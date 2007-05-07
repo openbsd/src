@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.18 2007/05/07 14:21:39 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.19 2007/05/07 14:29:24 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -237,9 +237,11 @@ package OpenBSD::PackageRepository::Installed;
 our @ISA=qw(OpenBSD::PackageRepository);
 use OpenBSD::PackageInfo;
 
+my $singleton = bless {}, __PACKAGE__;
+
 sub new
 {
-	bless {}, shift;
+	return $singleton;
 }
 
 sub find
