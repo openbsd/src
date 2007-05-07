@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.13 2007/05/07 08:06:47 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.14 2007/05/07 08:10:45 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -151,14 +151,14 @@ sub find_old_lib
 
 sub lookup_library
 {
-	my ($state, $lib, $plist, $dependencies, $harder, $done) = @_;
+	my ($state, $lib, $plist, $dependencies, $done) = @_;
 
 	my $r = check_lib_spec($plist->localbase, $lib, $dependencies);
 	if ($r) {
 	    print "found libspec $lib in $r\n" if $state->{very_verbose};
 	    return 1;
 	}
-	if ($harder && $lib !~ m|/|) {
+	if ($lib !~ m|/|) {
 
 		OpenBSD::SharedLibs::add_system_libs($state->{destdir});
 		for my $dir ("/usr", "/usr/X11R6") {
@@ -175,26 +175,25 @@ sub lookup_library
 			return 1;
 		}
     	}
-	if ($harder) {
-		# lookup through the full tree...
-		my @todo = keys %$dependencies;
-		while (my $dep = pop @todo) {
-			require OpenBSD::RequiredBy;
+	# lookup through the full tree...
+	my @todo = keys %$dependencies;
+	while (my $dep = pop @todo) {
+		require OpenBSD::RequiredBy;
 
-			next if $done->{$dep};
-			$done->{$dep} = 1;
-			for my $dep2 (OpenBSD::Requiring->new($dep)->list()) {
-				push(@todo, $dep2) unless $done->{$dep2};
-			}
-			next if $dependencies->{$dep};
-			OpenBSD::SharedLibs::add_package_libs($dep);
-			if (check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
-				print "found libspec $lib in dependent package $dep\n" if $state->{verbose};
-				$dependencies->{$dep} = 1;
-				return 1;
-			}
+		next if $done->{$dep};
+		$done->{$dep} = 1;
+		for my $dep2 (OpenBSD::Requiring->new($dep)->list()) {
+			push(@todo, $dep2) unless $done->{$dep2};
+		}
+		next if $dependencies->{$dep};
+		OpenBSD::SharedLibs::add_package_libs($dep);
+		if (check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
+			print "found libspec $lib in dependent package $dep\n" if $state->{verbose};
+			$dependencies->{$dep} = 1;
+			return 1;
 		}
 	}
+	
 	if ($state->{forced}->{boguslibs}) {
 		my $explored = {};
 		# lookup through the full tree...
