@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.24 2007/03/23 21:07:38 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.25 2007/05/07 18:42:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -277,7 +277,7 @@ softintr()
 
 	while ((sig = CURSIG(p)) != 0)		/* take pending signals */
 		postsig(sig);
-	curpriority = p->p_priority = p->p_usrpri;
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2005/12/20 07:06:29 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2007/05/07 18:42:13 kettenis Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -54,6 +54,9 @@ member	PCB_FPREGS	pcb_regs.f0
 member	pcb_context
 member	pcb_onfault
 member	pcb_segtab
+
+struct	cpu_info
+member	ci_curproc
 
 export	VM_MIN_KERNEL_ADDRESS
 export	SIGFPE

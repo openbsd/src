@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.17 2007/05/03 19:34:00 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.18 2007/05/07 18:42:12 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -330,6 +330,26 @@
 #define	cpu_wait(p)		/* nothing */
 
 #ifndef _LOCORE
+
+#include <sys/sched.h>
+
+struct cpu_info {
+	struct schedstate_percpu ci_schedstate;
+
+	struct proc *ci_curproc;
+};
+
+extern struct cpu_info cpu_info_primary;
+
+#define curcpu()	(&cpu_info_primary)
+
+#define CPU_IS_PRIMARY(ci)	1
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
+
+#define cpu_number()	0
+
 #include <machine/frame.h>
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

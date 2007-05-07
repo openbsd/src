@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.12 2007/04/26 17:04:32 miod Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.13 2007/05/07 18:42:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,6 +37,8 @@
 #include <machine/pte.h>
 
 #include "assym.h"
+
+#define curproc	(cpu_info_primary + CI_CURPROC)
 
 	.set	noreorder		# Noreorder is default style!
 

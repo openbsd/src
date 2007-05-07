@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.9 2005/12/20 07:06:26 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.10 2007/05/07 18:42:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,6 +37,8 @@
 #include <machine/pte.h>
 
 #include "assym.h"
+
+#define curproc	(cpu_info_primary + CI_CURPROC)
 
 	.set	mips3
 
