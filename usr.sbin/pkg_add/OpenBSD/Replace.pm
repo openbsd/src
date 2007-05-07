@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.8 2007/05/07 08:24:16 espie Exp $
+# $OpenBSD: Replace.pm,v 1.9 2007/05/07 09:32:51 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -53,7 +53,7 @@ sub unmark_lib
 }
 
 package OpenBSD::PackingElement::FileBase;
-use File::Temp qw/tempfile/;
+use OpenBSD::Temp;
 
 sub extract
 {
@@ -77,8 +77,7 @@ sub extract
 		if (!-e _) {
 			File::Path::mkpath($d);
 		}
-		my ($fh, $tempname) = tempfile('pkg.XXXXXXXXXX', 
-		    DIR => $d);
+		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
 
 		print "extracting $tempname\n" if $state->{very_verbose};
 		$file->{name} = $tempname;

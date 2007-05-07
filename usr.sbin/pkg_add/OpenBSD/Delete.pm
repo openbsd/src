@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.40 2007/05/07 08:34:09 espie Exp $
+# $OpenBSD: Delete.pm,v 1.41 2007/05/07 09:32:51 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -27,11 +27,11 @@ use File::Basename;
 sub rename_file_to_temp
 {
 	my $i = shift;
-	require File::Temp;
+	require OpenBSD::Temp;
 
 	my $n = $i->fullname();
 
-	my ($fh, $j) = File::Temp::mkstemp("$n.XXXXXXXX");
+	my ($fh, $j) = OpenBSD::Temp::permanent_file(undef, $n);
 	close $fh;
 	if (rename($n, $j)) {
 		print "Renaming old file $n to $j\n";
