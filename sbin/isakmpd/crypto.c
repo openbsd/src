@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.28 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: crypto.c,v 1.29 2007/05/07 18:25:30 cloder Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -338,18 +338,18 @@ crypto_init_iv(struct keystate *ks, u_int8_t *buf, size_t len)
 void
 crypto_encrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
 {
-	LOG_DBG_BUF((LOG_CRYPTO, 30, "crypto_encrypt: before encryption", buf,
+	LOG_DBG_BUF((LOG_CRYPTO, 70, "crypto_encrypt: before encryption", buf,
 	    len));
 	ks->xf->encrypt(ks, buf, len);
 	memcpy(ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
-	LOG_DBG_BUF((LOG_CRYPTO, 30, "crypto_encrypt: after encryption", buf,
+	LOG_DBG_BUF((LOG_CRYPTO, 70, "crypto_encrypt: after encryption", buf,
 	    len));
 }
 
 void
 crypto_decrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
 {
-	LOG_DBG_BUF((LOG_CRYPTO, 30, "crypto_decrypt: before decryption", buf,
+	LOG_DBG_BUF((LOG_CRYPTO, 70, "crypto_decrypt: before decryption", buf,
 	    len));
 	/*
 	 * XXX There is controversy about the correctness of updating the IV
@@ -357,7 +357,7 @@ crypto_decrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
          */
 	memcpy(ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
 	ks->xf->decrypt(ks, buf, len);
-	LOG_DBG_BUF((LOG_CRYPTO, 30, "crypto_decrypt: after decryption", buf,
+	LOG_DBG_BUF((LOG_CRYPTO, 70, "crypto_decrypt: after decryption", buf,
 	    len));
 }
 
