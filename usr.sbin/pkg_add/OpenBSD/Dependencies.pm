@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.14 2007/05/07 08:10:45 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.15 2007/05/07 08:14:51 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -194,26 +194,6 @@ sub lookup_library
 		}
 	}
 	
-	if ($state->{forced}->{boguslibs}) {
-		my $explored = {};
-		# lookup through the full tree...
-		my @todo = keys %$dependencies;
-		while (my $dep = pop @todo) {
-			require OpenBSD::RequiredBy;
-
-			next if $explored->{$dep};
-			$explored->{$dep} = 1;
-			for my $dep2 (OpenBSD::Requiring->new($dep)->list()) {
-				push(@todo, $dep2) unless $done->{$dep2};
-			}
-			OpenBSD::SharedLibs::add_bogus_package_libs($dep);
-			if (check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
-				print "found libspec $lib in dependent package $dep (unmarked library)\n" if $state->{verbose};
-				$dependencies->{$dep} = 1;
-				return 1;
-			}
-		}
-	}
 	print "libspec $lib not found\n" if $state->{very_verbose};
 	return;
 }

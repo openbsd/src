@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.62 2007/04/15 10:17:29 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.63 2007/05/07 08:14:51 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -208,9 +208,6 @@ proceed with an update even if
 can't find new packages for all installed packages.
 .It Ar arch
 architecture recorded in package may not match.
-.It Ar boguslibs
-not all shared libraries are marked with @lib.
-Inefficiently rescan package lists for non marked libraries.
 .It Ar conflicts
 force installation of package in the presence of conflicts.
 .It Ar installed
