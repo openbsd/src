@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.101 2007/03/01 20:30:09 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.102 2007/05/07 01:50:46 joel Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -439,6 +439,13 @@ Specify
 as
 .Sq -
 to match a Phase 1 SA.
+.Pp
+.It Ic M active
+.It Ic M passive
+Set
+.Nm
+to active or passive mode.
+In passive mode no packets are sent to peers.
 .Pp
 .It Xo
 .Ic p
