@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.236 2007/05/07 14:12:43 espie Exp $
+# $OpenBSD: pkg_add,v 1.237 2007/05/07 14:21:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -587,7 +587,7 @@ sub find_truenames
 		    my ($h, $path, $repo);
 		    if ($pkgname =~ m/\//) {
 			($repo, $path, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
-			$h = OpenBSD::PackageName::avail2stems($state, $repo->available);
+			$h = $repo;
 		    } else {
 			$h = 'OpenBSD::PackageLocator';
 			$path = "";

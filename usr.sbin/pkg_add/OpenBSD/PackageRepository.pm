@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.17 2007/05/07 09:32:51 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.18 2007/05/07 14:21:39 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -52,6 +52,17 @@ sub available
 	my $self = shift;
 
 	return @{$self->list};
+}
+
+sub findstem
+{
+	my ($self, $stem) = @_;
+	if (!defined $self->{stemlist}) {
+		require OpenBSD::PackageName;
+
+		$self->{stemlist} = OpenBSD::PackageName::avail2stems($self->available);
+	}
+	return $self->{stemlist}->findstem($stem);
 }
 
 sub wipe_info
