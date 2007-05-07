@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.16 2007/05/07 08:18:02 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.17 2007/05/07 12:19:04 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -51,9 +51,15 @@ sub find_candidate
 	    }
 }
 
+sub solver
+{
+	my $class = shift;
+	bless {}, $class;
+}
+
 sub solve
 {
-	my ($state, $handle, @extra) = @_;
+	my ($self, $state, $handle, @extra) = @_;
 	my $plist = $handle->{plist};
 	my $verbose = $state->{verbose};
 	my $to_register = $handle->{solved_dependencies} = {};

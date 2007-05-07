@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.233 2007/05/07 08:10:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.234 2007/05/07 12:19:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -531,7 +531,8 @@ sub install_package
 		}
 	}
 	if (!defined $handle->{solved_dependencies}) {
-		my @deps = OpenBSD::Dependencies::solve($state, $handle, @todo);
+		my $solver = OpenBSD::Dependencies->solver;
+		my @deps = $solver->solve($state, $handle, @todo);
 		if (@deps > 0) {
 			build_deptree($state, $pkg, @deps);
 			return (@deps, $pkg);
