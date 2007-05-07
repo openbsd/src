@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.95 2007/05/06 15:41:47 espie Exp $
+# $OpenBSD: pkg_create,v 1.96 2007/05/07 09:37:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -197,8 +197,6 @@ sub verify_checksum
 
 
 package OpenBSD::PackingElement::Cwd;
-use OpenBSD::Temp;
-
 sub archive
 {
 	my ($self, $arc, $base) = @_;

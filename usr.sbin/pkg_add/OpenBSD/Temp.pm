@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.8 2007/05/07 09:32:51 espie Exp $
+# $OpenBSD: Temp.pm,v 1.9 2007/05/07 09:37:30 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -83,11 +83,6 @@ sub file()
 		kill $caught, $$;
 	}
 	return $file;
-}
-
-sub list($)
-{
-	return File::Temp::tempfile("list.XXXXXXXXXXX", DIR => shift);
 }
 
 sub permanent_file
