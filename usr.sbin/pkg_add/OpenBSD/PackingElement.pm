@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.102 2007/05/07 09:03:44 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.103 2007/05/07 09:09:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1077,6 +1077,19 @@ sub restore_fontdir
 	}
 }
 
+sub run_if_exists
+{
+	my ($cmd, @l) = @_;
+
+	require OpenBSD::Error;
+
+	if (-x $cmd) {
+		OpenBSD::Error::System($cmd, @l);
+	} else {
+		OpenBSD::Error::Warn("$cmd not found\n");
+	}
+}
+
 sub finish_fontdirs
 {
 	my $state = shift;
@@ -1087,17 +1100,11 @@ sub finish_fontdirs
 		map { update_fontalias($_) } @l unless $state->{not};
 		print "You may wish to update your font path for ", join(' ', @l), "\n";
 		return if $state->{not};
-		if (-x "/usr/X11R6/bin/mkfontdir") {
-			OpenBSD::Error::System("/usr/X11R6/bin/mkfontdir", @l);
-		} else {
-			OpenBSD::Error::Warn("/usr/X11R6/bin/mkfontdir not found\n");
-		}
+		run_if_exists("/usr/X11R6/bin/mkfontdir");
+
 		map { restore_fontdir($_) } @l;
-		if (-x "/usr/X11R6/bin/fc-cache") {
-			OpenBSD::Error::System("/usr/X11R6/bin/fc-cache", @l);
-		} else {
-			OpenBSD::Error::Warn("/usr/X11R6/bin/fc-cache not found\n");
-		}
+
+		run_if_exists("/usr/X11R6/bin/fc-cache");
 	}
 }
 
