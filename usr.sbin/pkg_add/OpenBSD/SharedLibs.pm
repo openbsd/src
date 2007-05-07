@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.12 2007/05/07 08:14:51 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.13 2007/05/07 08:18:02 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -97,15 +97,20 @@ sub register_lib
 
 my $done_plist = {};
 
+sub system_dirs
+{
+	return ("/usr", "/usr/X11R6");
+}
+
 sub add_system_libs
 {
 	my ($destdir) = @_;
 	return if $done_plist->{'system'};
 	$done_plist->{'system'} = 1;
-	for my $dirname ("/usr/lib", "/usr/X11R6/lib") {
-		opendir(my $dir, $destdir.$dirname) or next;
+	for my $dirname (system_dirs()) {
+		opendir(my $dir, $destdir.$dirname."/lib") or next;
 		while (my $d = readdir($dir)) {
-			register_lib("$dirname/$d", 'system');
+			register_lib("$dirname/lib/$d", 'system');
 		}
 		closedir($dir);
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.15 2007/05/07 08:14:51 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.16 2007/05/07 08:18:02 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -161,7 +161,7 @@ sub lookup_library
 	if ($lib !~ m|/|) {
 
 		OpenBSD::SharedLibs::add_system_libs($state->{destdir});
-		for my $dir ("/usr", "/usr/X11R6") {
+		for my $dir (OpenBSD::SharedLibs::system_dirs()) {
 			if (check_lib_spec($dir, $lib, {system => 1})) {
 				print "found libspec $lib in $dir/lib\n" if $state->{very_verbose};
 				return 1;
