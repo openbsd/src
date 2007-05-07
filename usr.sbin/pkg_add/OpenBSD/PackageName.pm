@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.16 2007/05/07 13:51:58 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.17 2007/05/07 14:06:38 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -169,6 +169,17 @@ sub findstem
 {
 	my ($self, $stem) = @_;
 	return keys %{$self->{$stem}};
+}
+
+sub find_partialstem
+{
+	my ($self, $partial) = @_;
+	my @result = ();
+	while (my ($stem, $pkgs) = each %$self) {
+		next unless $stem =~ /\Q$partial\E/i;
+		push(@result, keys %$pkgs);
+	}
+	return @result;
 }
 	
 package OpenBSD::PackageName::version;
