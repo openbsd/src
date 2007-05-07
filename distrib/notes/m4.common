@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.72 2007/05/04 03:49:18 deraadt Exp $
+dnl	$OpenBSD: m4.common,v 1.73 2007/05/07 17:58:03 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -129,7 +129,7 @@ dnl are available.
 dnl
 define({:-OpenBSDcomp-:},
 {:-	comp{:--:}OSrev	 The OpenBSD/MACHINE Compiler tools.  All of the tools relating
-		 to C, C++, Objective-F and Fortran are supported.  This set
+		 to C, C++, Objective-C and Fortran are supported.  This set
 		 includes the system {:-include-:} files (/usr/{:-include-:}), the linker,
 		 the compiler tool chain, and the various system libraries{:--:}ifelse(X$3,Xshared,{:-
 		 (except the shared libraries, which are included as part of
