@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.67 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: Update.pm,v 1.68 2007/05/07 13:51:58 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -54,6 +54,9 @@ sub find
 			next;
 		}
 		my @l2 = ();
+		if (@l > 1 && !$state->{forced}->{allversions}) {
+		    @l = OpenBSD::PackageName::keep_most_recent(@l);
+		}
 		if (@l == 1 && $state->{forced}->{pkgpath}) {
 			OpenBSD::ProgressMeter::clear();
 			print "Directly updating $pkgname -> ", $l[0], "\n";

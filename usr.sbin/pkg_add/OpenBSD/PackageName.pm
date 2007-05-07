@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.15 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.16 2007/05/07 13:51:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -149,23 +149,18 @@ sub compile_stemlist
 
 sub avail2stems
 {
-	my $state = shift;
 	my @avail = @_;
 	if (@avail == 0) {
 		require OpenBSD::Error;
 
 		OpenBSD::Error::Warn("No packages available in the PKG_PATH\n");
 	}
-	unless ($state->{forced}->{allversions}) {
-	    @avail = OpenBSD::PackageName::keep_most_recent(@avail);
-	}
 	return OpenBSD::PackageName::compile_stemlist(@avail);
 }
 
 sub available_stems
 {
-	my $state = shift;
-	return avail2stems($state, OpenBSD::PackageLocator::available());
+	return avail2stems(OpenBSD::PackageLocator::available());
 }
 
 package OpenBSD::PackageLocator::_compiled_stemlist;
