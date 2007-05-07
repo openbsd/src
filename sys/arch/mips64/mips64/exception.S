@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.10 2007/04/24 16:47:36 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.11 2007/05/07 20:30:25 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -440,6 +440,20 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	jal	trap
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
+	lw	v0, astpending
+	beq	v0, zero, 4f
+	nop
+
+	PTR_L	t0, curprocpaddr
+	SAVE_CPU_SREG(t0, 0)
+
+	jal	softintr
+	nop
+
+	PTR_L	t0, curprocpaddr
+	RESTORE_CPU_SREG(t0, 0)
+
+4:
 #ifdef PERFCNTRS
 	lw	t0, cpu_is_rm7k
 	beqz	t0, 1f			# not an RM7K. Don't do perf setup.
@@ -460,8 +474,6 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	nop;nop;nop;nop
 1:
 #endif
-
-4:
 	mfc0	t0, COP_0_STATUS_REG	# dis int preserve settings.
 	li	t1, ~SR_INT_ENAB
 	and	t0, t0, t1
