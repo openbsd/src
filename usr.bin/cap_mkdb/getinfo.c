@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.11 2007/05/06 01:12:25 ray Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.12 2007/05/07 02:23:13 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.11 2007/05/06 01:12:25 ray Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.12 2007/05/07 02:23:13 ray Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 {
 	char *r_end, *rp, **db_p;
 	int myfd, eof, foundit;
-	char *record;
+	char *record, *s;
 	int tc_not_resolved;
 	
 	/*
@@ -266,13 +266,15 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 
 					pos = rp - record;
 					newsize = r_end - record + BFRAG;
-					record = realloc(record, newsize);
-					if (record == NULL) {
+					s = realloc(record, newsize);
+					if (s == NULL) {
+						free(record);
 						errno = ENOMEM;
 						if (myfd)
 							(void)close(fd);
 						return (-2);
 					}
+					record = s;
 					r_end = record + newsize;
 					rp = record + pos;
 				}
@@ -313,7 +315,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 	 * references in it ...
 	 */
 	{
-		char *newicap, *s;
+		char *newicap;
 		int newilen;
 		u_int ilen;
 		int diff, iret, tclen;
@@ -337,15 +339,11 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 			 * Find end of use=name and stomp on the trailing `,'
 			 * (if present) so we can use it to call ourselves.
 			 */
-			s = tc;
-			for (;;)
-				if (*s == '\0')
-					break;
-				else
-					if (*s++ == ',') {
-						*(s - 1) = '\0';
-						break;
-					}
+			s = tc + strcspn(tc, ",");
+			if (*s == ',') {
+				*s = '\0';
+				++s;
+			}
 			tcstart = tc - 4;
 			tclen = s - tcstart;
 			tcend = s;
@@ -373,13 +371,9 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 				}
 			}
 			/* not interested in name field of tc'ed record */
-			s = newicap;
-			for (;;)
-				if (*s == '\0')
-					break;
-				else
-					if (*s++ == ',')
-						break;
+			s = newicap + strcspn(newicap, ",");
+			if (*s == ',')
+				++s;
 			newilen -= s - newicap;
 			newicap = s;
 
@@ -403,14 +397,16 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 				newsize = r_end - record + diff + BFRAG;
 				tcpos = tcstart - record;
 				tcposend = tcend - record;
-				record = realloc(record, newsize);
-				if (record == NULL) {
+				s = realloc(record, newsize);
+				if (s == NULL) {
+					free(record);
 					errno = ENOMEM;
 					if (myfd)
 						(void)close(fd);
 					free(icap);
 					return (-2);
 				}
+				record = s;
 				r_end = record + newsize;
 				rp = record + pos;
 				tcstart = record + tcpos;
@@ -441,12 +437,15 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 	if (myfd)
 		(void)close(fd);
 	*len = rp - record - 1;	/* don't count NUL */
-	if (r_end > rp)
-		if ((record = 
+	if (r_end > rp) {
+		if ((s = 
 		     realloc(record, (size_t)(rp - record))) == NULL) {
+			free(record);
 			errno = ENOMEM;
 			return (-2);
-		}
+		} else
+			record = s;
+	}
 		
 	*cap = record;
 	if (tc_not_resolved)
