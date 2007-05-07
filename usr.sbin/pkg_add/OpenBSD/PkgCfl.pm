@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.14 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.15 2007/05/07 08:24:16 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -23,16 +23,6 @@ use OpenBSD::PackageName;
 use OpenBSD::PkgSpec;
 use OpenBSD::PackageInfo;
 
-sub glob2re
-{
-	local $_ = shift;
-	s/\./\\\./g;
-	s/\+/\\\+/g;
-	s/\*/\.\*/g;
-	s/\?/\./g;
-	return "^$_\$";
-}
-
 sub make_conflict_list
 {
 	my ($class, $plist, $pkg) = @_;
@@ -51,12 +41,6 @@ sub make_conflict_list
 		push(@$l, sub { my $a; grep { $a = $_; $a =~ s/p\d+$//; $a eq $pkgname || $a eq "partial-$pkgname"} @_;});
 	}
 	push(@$l, sub { OpenBSD::PkgSpec::match(".libs-$stem-*", @_); });
-	if (defined $plist->{pkgcfl}) {
-		for my $cfl (@{$plist->{pkgcfl}}) {
-			my $re = glob2re($cfl->{name});
-			push(@$l, sub { grep { m/$re/ } @_; });
-		}
-	}
 	if (defined $plist->{conflict}) {
 		for my $cfl (@{$plist->{conflict}}) {
 		    push(@$l, sub { OpenBSD::PkgSpec::match($cfl->{name}, @_); });

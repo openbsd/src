@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.7 2007/05/02 15:09:04 espie Exp $
+# $OpenBSD: Replace.pm,v 1.8 2007/05/07 08:24:16 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -343,11 +343,6 @@ sub split_libs
 	OpenBSD::PackingElement::Name->add($splitted, ".libs-".$plist->pkgname);
 	if (defined $plist->{conflict}) {
 		for my $item (@{$plist->{conflict}}) {
-			$item->clone()->add_object($splitted);
-		}
-	}
-	if (defined $plist->{pkgcfl}) {
-		for my $item (@{$plist->{pkgcfl}}) {
 			$item->clone()->add_object($splitted);
 		}
 	}
