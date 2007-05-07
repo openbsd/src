@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.28 2006/04/13 03:14:18 dhill Exp $	*/
+/*	$OpenBSD: ls.c,v 1.29 2007/05/07 18:39:28 millert Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.28 2006/04/13 03:14:18 dhill Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.29 2007/05/07 18:39:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ int f_accesstime;		/* use time of last access */
 int f_column;			/* columnated format */
 int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
+int f_grouponly;		/* long listing format without owner */
 int f_humanval;			/* show human-readable file sizes */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
@@ -145,8 +146,16 @@ ls_main(int argc, char *argv[])
 			f_column = 1;
 			f_longform = f_columnacross = f_singlecol = f_stream = 0;
 			break;
+		case 'g':
+			f_longform = 1;
+			if (f_grouponly != -1)
+				f_grouponly = 1;
+			f_numericonly = 0;
+			f_column = f_columnacross = f_singlecol = f_stream = 0;
+			break;
 		case 'l':
 			f_longform = 1;
+			f_grouponly = -1;	/* -l always overrides -g */
 			f_numericonly = 0;
 			f_column = f_columnacross = f_singlecol = f_stream = 0;
 			break;
@@ -197,8 +206,6 @@ ls_main(int argc, char *argv[])
 		case 'f':
 			f_nosort = 1;
 			break;
-		case 'g':		/* Compatibility with 4.3BSD. */
-			break;
 		case 'h':
 			f_humanval = 1;
 			break;
@@ -239,6 +246,13 @@ ls_main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	/*
+	 * If both -g and -l options, let -l take precedence.
+	 * This preserves compatibility with the historic BSD ls -lg.
+	 */
+	if (f_grouponly == -1)
+		f_grouponly = 0;
 
 	/*
 	 * If not -F, -i, -l, -p, -S, -s or -t options, don't require stat

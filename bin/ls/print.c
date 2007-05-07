@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.24 2005/06/15 17:47:17 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.25 2007/05/07 18:39:28 millert Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.24 2005/06/15 17:47:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.25 2007/05/07 18:39:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,9 +104,10 @@ printlong(DISPLAY *dp)
 			    dp->s_block, howmany(sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
-		(void)printf("%s %*u %-*s  %-*s  ", buf, dp->s_nlink,
-		    sp->st_nlink, dp->s_user, np->user, dp->s_group,
-		    np->group);
+                (void)printf("%s %*u ", buf, dp->s_nlink, sp->st_nlink);
+		if (!f_grouponly)
+			(void)printf("%-*s  ", dp->s_user, np->user);
+		(void)printf("%-*s  ", dp->s_group, np->group);
 		if (f_flags)
 			(void)printf("%-*s ", dp->s_flags, np->flags);
 		if (S_ISCHR(sp->st_mode) || S_ISBLK(sp->st_mode))
