@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.9 2007/05/07 09:37:30 espie Exp $
+# $OpenBSD: Temp.pm,v 1.10 2007/05/07 09:56:48 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -20,17 +20,40 @@ use warnings;
 package OpenBSD::Temp;
 
 use File::Temp;
-use File::Path;
 
 our $tempbase = $ENV{'PKG_TMPDIR'} || '/var/tmp';
 
 my $dirs = [];
 my $files = [];
 
+sub cleanup
+{
+	my $caught;
+	my $h = sub { $caught = shift; };
+	{
+	    require File::Path;
+
+	    local $SIG{'INT'} = $h;
+	    local $SIG{'QUIT'} = $h;
+	    local $SIG{'HUP'} = $h;
+	    local $SIG{'KILL'} = $h;
+	    local $SIG{'TERM'} = $h;
+
+	    unlink(@$files);
+	    File::Path::rmtree($dirs);
+	}
+	if (defined $caught) {
+		kill $caught, $$;
+	}
+}
+
+END {
+	cleanup();
+}
+
 my $handler = sub {
 	my ($sig) = @_;
-	File::Path::rmtree($dirs);
-	unlink(@$files);
+	cleanup();
 	$SIG{$sig} = 'DEFAULT';
 	kill $sig, $$;
 };
@@ -53,14 +76,13 @@ sub dir()
 	    local $SIG{'HUP'} = $h;
 	    local $SIG{'KILL'} = $h;
 	    local $SIG{'TERM'} = $h;
-	    $dir = File::Temp::tempdir("pkginfo.XXXXXXXXXXX", 
-	    	DIR => $tempbase, CLEANUP => 1).'/';
+	    $dir = permanent_dir($tempbase, "pkginfo");
 	    push(@$dirs, $dir);
 	}
 	if (defined $caught) {
 		kill $caught, $$;
 	}
-	return $dir;
+	return "$dir/";
 }
 
 sub file()
@@ -75,8 +97,7 @@ sub file()
 	    local $SIG{'HUP'} = $h;
 	    local $SIG{'KILL'} = $h;
 	    local $SIG{'TERM'} = $h;
-	    ($fh, $file) = File::Temp::tempfile("pkgout.XXXXXXXXXXX", 
-	    	DIR => $tempbase, CLEANUP => 1);
+	    ($fh, $file) = permanent_file($tempbase, "pkgout");
 	    push(@$files, $file);
 	}
 	if (defined $caught) {
@@ -93,6 +114,16 @@ sub permanent_file
 		$template = "$dir/$template";
 	}
 	return File::Temp::mkstemp($template);
+}
+
+sub permanent_dir
+{
+	my ($dir, $stem) = @_;
+	my $template = "$stem.XXXXXXXXXX";
+	if (defined $dir) {
+		$template = "$dir/$template";
+	}
+	return File::Temp::mkdtemp($template);
 }
 
 1;
