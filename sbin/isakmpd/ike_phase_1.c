@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.68 2007/04/22 11:32:30 moritz Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.69 2007/05/07 18:19:56 cloder Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -1255,11 +1255,11 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 	char           *str;
 	struct constant_map *map;
 	struct attr_node *node;
-	int             rv;
+	int             rv, dur = 0;
 
 	if (!tag) {
-		LOG_DBG((LOG_NEGOTIATION, 60, "attribute_unacceptable: "
-		    "attribute type %d not known", type));
+		log_print("attribute_unacceptable: "
+		    "attribute type %d not known", type);
 		return 1;
 	}
 	switch (type) {
@@ -1272,9 +1272,8 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 		str = conf_get_str(xf->field, tag);
 		if (!str) {
 			/* This attribute does not exist in this policy.  */
-			LOG_DBG((LOG_NEGOTIATION, 70,
-			    "attribute_unacceptable: attr %s does not exist "
-			    "in %s", tag, xf->field));
+			log_print("attribute_unacceptable: "
+			    "attr %s does not exist in %s", tag, xf->field);
 			return 1;
 		}
 		map = constant_link_lookup(ike_attr_cst, type);
@@ -1295,9 +1294,8 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 			LIST_INSERT_HEAD(&vs->attrs, node, link);
 			return 0;
 		}
-		LOG_DBG((LOG_NEGOTIATION, 70,
-		    "attribute_unacceptable: %s: got %s, expected %s", tag,
-		    constant_name(map, decode_16(value)), str));
+		log_print("attribute_unacceptable: %s: got %s, expected %s",
+		    tag, constant_name(map, decode_16(value)), str);
 		return 1;
 
 	case IKE_ATTR_GROUP_PRIME:
@@ -1306,6 +1304,8 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 	case IKE_ATTR_GROUP_CURVE_A:
 	case IKE_ATTR_GROUP_CURVE_B:
 		/* XXX Bignums not handled yet.  */
+		log_print("attribute_unacceptable: "
+		    "bignum type %d not supported", type);
 		return 1;
 
 	case IKE_ATTR_LIFE_TYPE:
@@ -1320,9 +1320,8 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 		rv = 1;
 		if (!life_conf) {
 			/* Life attributes given, but not in our policy.  */
-			LOG_DBG((LOG_NEGOTIATION, 70,
-			    "attribute_unacceptable: received unexpected life "
-			    "attribute"));
+			log_print("attribute_unacceptable: "
+			    "life attribute received, none in policy");
 			return 1;
 		}
 		/*
@@ -1337,10 +1336,9 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 			    life = TAILQ_NEXT(life, link)) {
 				str = conf_get_str(life->field, "LIFE_TYPE");
 				if (!str) {
-					LOG_DBG((LOG_NEGOTIATION, 70,
-					    "attribute_unacceptable: "
+					log_print("attribute_unacceptable: "
 					    "section [%s] has no LIFE_TYPE",
-					    life->field));
+					    life->field);
 					continue;
 				}
 
@@ -1355,16 +1353,15 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 					goto bail_out;
 				}
 			}
-			LOG_DBG((LOG_NEGOTIATION, 70, "attribute_unacceptable:"
-			    " unrecognized LIFE_TYPE %d", decode_16(value)));
+			log_print("attribute_unacceptable: "
+			    "unrecognized LIFE_TYPE %d", decode_16(value));
 			vs->life = 0;
 			break;
 
 		case IKE_ATTR_LIFE_DURATION:
 			if (!vs->life) {
-				LOG_DBG((LOG_NEGOTIATION, 70,
-				    "attribute_unacceptable: "
-				    "LIFE_DURATION without LIFE_TYPE"));
+				log_print("attribute_unacceptable: "
+				    "LIFE_DURATION without LIFE_TYPE");
 				rv = 1;
 				goto bail_out;
 			}
@@ -1373,14 +1370,19 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 				if (!strcmp(str, "ANY"))
 					rv = 0;
 				else
-					rv = !conf_match_num(vs->life,
-					    "LIFE_DURATION",
-					    len == 4 ? decode_32(value) :
-					    decode_16(value));
+					dur = (len == 4) ? decode_32(value) :
+					    decode_16(value);
+					if ((rv = !conf_match_num(vs->life,
+					    "LIFE_DURATION", dur))) {
+						log_print(
+						    "attribute_unacceptable: "
+						    "LIFE_DURATION: got %d, "
+						    " expected %s", dur, str);
+					}
 			} else {
-				LOG_DBG((LOG_NEGOTIATION, 70,
-				    "attribute_unacceptable: section [%s] has "
-				    "no LIFE_DURATION", vs->life));
+				log_print("attribute_unacceptable: "
+				    "section [%s] has no LIFE_DURATION",
+				    vs->life);
 				rv = 1;
 			}
 
@@ -1410,6 +1412,9 @@ bail_out:
 			return 0;
 		}
 		return 1;
+	default:
+		log_print("attribute_unacceptable: unexpected type %d",
+		    type);
 	}
 	return 1;
 }
