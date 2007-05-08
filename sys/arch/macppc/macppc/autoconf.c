@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 2007/05/08 02:16:29 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 2007/05/08 02:17:35 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.28 2007/05/08 02:16:29 deraadt Exp $
+ *      $Id: autoconf.c,v 1.29 2007/05/08 02:17:35 deraadt Exp $
  */
 
 /*
@@ -283,12 +283,6 @@ diskconf(void)
 
 	/* Lookup boot device from boot if not set by configuration */
 	bootdv = parsedisk(bootdev, strlen(bootdev), 0, &temp);
-	if (bootdv == NULL) {
-		printf("boot device: lookup '%s' failed.\n", bootdev);
-		boothowto |= RB_ASKNAME;	/* Don't Panic :-) */
-	} else
-		printf("boot device: %s\n", bootdv->dv_xname);
-
 	setroot(bootdv, part, RB_USERREQ);
 	dumpconf();
 }
