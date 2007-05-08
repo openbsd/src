@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ls.1,v 1.48 2007/05/07 18:39:28 millert Exp $
+.\"	$OpenBSD: ls.1,v 1.49 2007/05/08 13:36:34 jmc Exp $
 .\"	$NetBSD: ls.1,v 1.14 1995/12/05 02:44:01 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -88,7 +88,9 @@ Use time file's status was last changed instead of last modification
 time for sorting
 .Pq Fl t
 or printing
-.Pq Fl l , Fl n .
+.Pf ( Fl g , l ,
+or
+.Fl n ) .
 .It Fl d
 Directories are listed as plain files (not searched recursively) and
 symbolic links in the argument list are not indirected through.
@@ -149,7 +151,9 @@ List in long format as in
 but retain user and group IDs in a numeric format.
 .It Fl o
 Include the file flags in a long format
-.Pq Fl l , Fl n
+.Pf ( Fl g , l ,
+or
+.Fl n )
 output.
 .It Fl p
 Display a slash
@@ -179,7 +183,9 @@ environment variable.
 Display complete time information for the file, including
 month, day, hour, minute, second, and year.
 This option has no effect unless one of the long format
-.Pq Fl l , Fl n
+.Pf ( Fl g , l ,
+or
+.Fl n )
 options is also specified.
 .It Fl t
 Sort by time modified (most recently modified
@@ -191,7 +197,9 @@ instead of last modification time
 for sorting
 .Pq Fl t
 or printing
-.Pq Fl l , Fl n .
+.Pf ( Fl g , l ,
+or
+.Fl n ) .
 .It Fl x
 Multi-column output sorted across the page rather than down the page.
 .El
@@ -244,7 +252,8 @@ and
 options.
 .Ss The Long Format
 If the
-.Fl l
+.Fl g ,
+.Fl l ,
 or
 .Fl n
 options are given, the following information
@@ -252,7 +261,8 @@ is displayed for each file:
 mode,
 number of links,
 owner,
-group,
+group (though not for
+.Fl g ) ,
 size in bytes,
 time of last modification
 .Pq Dq mmm dd HH:MM ,
@@ -286,7 +296,8 @@ linked-to file is preceded by
 .Dq \-\*(Gt .
 .Pp
 The file mode printed under the
-.Fl l
+.Fl g ,
+.Fl l ,
 or
 .Fl n
 options consists of the entry type, owner permissions, group permissions,
