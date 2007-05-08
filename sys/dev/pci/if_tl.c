@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.42 2006/06/29 21:35:39 deraadt Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.43 2007/05/08 21:19:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -282,7 +282,9 @@ void tl_miibus_writereg(struct device *, int, int, int);
 void tl_miibus_statchg(struct device *);
 
 void tl_setmode(struct tl_softc *, int);
+#if 0
 int tl_calchash(caddr_t);
+#endif
 void tl_setmulti(struct tl_softc *);
 void tl_setfilt(struct tl_softc *, caddr_t, int);
 void tl_softreset(struct tl_softc *, int);
@@ -798,6 +800,7 @@ void tl_setmode(sc, media)
 	}
 }
 
+#if 0
 /*
  * Calculate the hash of a MAC address for programming the multicast hash
  * table.  This hash is simply the address split into 6-bit chunks
@@ -816,6 +819,7 @@ int tl_calchash(addr)
 		(addr[2] ^ addr[5]);
 	return ((t >> 18) ^ (t >> 12) ^ (t >> 6) ^ t) & 0x3f;
 }
+#endif
 
 /*
  * The ThunderLAN has a perfect MAC address filter in addition to
