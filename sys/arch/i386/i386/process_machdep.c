@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.21 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.22 2007/05/08 20:26:54 deraadt Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -132,40 +132,6 @@ process_xmm_to_s87(const struct savexmm *sxmm, struct save87 *s87)
 }
 
 void
-process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
-{
-	int i;
-
-	/* FPU control/status */
-	sxmm->sv_env.en_cw = s87->sv_env.en_cw;
-	sxmm->sv_env.en_sw = s87->sv_env.en_sw;
-	/* tag word handled below */
-	sxmm->sv_env.en_fip = s87->sv_env.en_fip;
-	sxmm->sv_env.en_fcs = s87->sv_env.en_fcs;
-	sxmm->sv_env.en_opcode = s87->sv_env.en_opcode;
-	sxmm->sv_env.en_foo = s87->sv_env.en_foo;
-	sxmm->sv_env.en_fos = s87->sv_env.en_fos;
-
-	/* Tag word and registers. */
-	for (i = 0; i < 8; i++) {
-		if (((s87->sv_env.en_tw >> (i * 2)) & 3) == 3)
-			sxmm->sv_env.en_tw &= ~(1U << i);
-		else
-			sxmm->sv_env.en_tw |= (1U << i);
-
-		if (((s87->sv_ex_tw >> (i * 2)) & 3) == 3)
-			sxmm->sv_ex_tw &= ~(1U << i);
-		else
-			sxmm->sv_ex_tw |= (1U << i);
-
-		memcpy(&sxmm->sv_ac[i].fp_bytes, &s87->sv_ac[i].fp_bytes,
-		    sizeof(sxmm->sv_ac[i].fp_bytes));
-	}
-
-	sxmm->sv_ex_sw = s87->sv_ex_sw;
-}
-
-void
 process_fninit_xmm(struct savexmm *sxmm)
 {
 	/*
@@ -260,6 +226,40 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 }
 
 #ifdef PTRACE
+
+void
+process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
+{
+	int i;
+
+	/* FPU control/status */
+	sxmm->sv_env.en_cw = s87->sv_env.en_cw;
+	sxmm->sv_env.en_sw = s87->sv_env.en_sw;
+	/* tag word handled below */
+	sxmm->sv_env.en_fip = s87->sv_env.en_fip;
+	sxmm->sv_env.en_fcs = s87->sv_env.en_fcs;
+	sxmm->sv_env.en_opcode = s87->sv_env.en_opcode;
+	sxmm->sv_env.en_foo = s87->sv_env.en_foo;
+	sxmm->sv_env.en_fos = s87->sv_env.en_fos;
+
+	/* Tag word and registers. */
+	for (i = 0; i < 8; i++) {
+		if (((s87->sv_env.en_tw >> (i * 2)) & 3) == 3)
+			sxmm->sv_env.en_tw &= ~(1U << i);
+		else
+			sxmm->sv_env.en_tw |= (1U << i);
+
+		if (((s87->sv_ex_tw >> (i * 2)) & 3) == 3)
+			sxmm->sv_ex_tw &= ~(1U << i);
+		else
+			sxmm->sv_ex_tw |= (1U << i);
+
+		memcpy(&sxmm->sv_ac[i].fp_bytes, &s87->sv_ac[i].fp_bytes,
+		    sizeof(sxmm->sv_ac[i].fp_bytes));
+	}
+
+	sxmm->sv_ex_sw = s87->sv_ex_sw;
+}
 
 int
 process_write_regs(struct proc *p, struct reg *regs)
