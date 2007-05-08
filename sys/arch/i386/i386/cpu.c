@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2007/04/24 12:58:50 tom Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.23 2007/05/08 18:51:59 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -323,6 +323,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
  * Initialize the processor appropriately.
  */
 
+#ifdef MULTIPROCESSOR
 void
 cpu_init(struct cpu_info *ci)
 {
@@ -356,9 +357,6 @@ cpu_init(struct cpu_info *ci)
 	}
 #endif /* I686_CPU */
 }
-
-
-#ifdef MULTIPROCESSOR
 
 void
 cpu_boot_secondary_processors()
