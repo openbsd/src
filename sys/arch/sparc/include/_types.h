@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.4 2007/02/03 20:08:50 miod Exp $	*/
+/*	$OpenBSD: _types.h,v 1.5 2007/05/08 07:23:18 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -116,5 +116,6 @@ typedef	void *			__wctype_t;
 
 #define	__HAVE_DEVICE_REGISTER
 #define __HAVE_MUTEX
+#define __HAVE_CPUINFO
 
 #endif	/* _SPARC__TYPES_H_ */

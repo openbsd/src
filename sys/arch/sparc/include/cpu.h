@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.29 2007/05/08 07:23:18 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -68,7 +68,9 @@
 
 #include <sys/evcount.h>
 #include <machine/psl.h>
+#include <machine/reg.h>
 #include <sparc/sparc/intreg.h>
+#include <sparc/sparc/cpuvar.h>
 
 /*
  * definitions of cpu-dependent requirements

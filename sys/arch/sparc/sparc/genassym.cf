@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.19 2005/04/17 18:47:50 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.20 2007/05/08 07:23:18 art Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -104,6 +104,7 @@ member  CPUINFO_GETSYNCFLT      get_syncflt
 member  CPUINFO_GETASYNCFLT     get_asyncflt
 member  CPUINFO_SYNCFLTDUMP     syncfltdump
 member	CPUINFO_PURE_VCACHE_FLS	pure_vcache_flush
+member	CPUINFO_CURPROC		ci.ci_curproc
 
 # PTE bits and related information
 export	PG_W

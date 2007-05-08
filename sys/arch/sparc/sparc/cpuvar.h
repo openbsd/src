@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.9 2003/11/03 07:01:33 david Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.10 2007/05/08 07:23:18 art Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -41,6 +41,7 @@
 #define _SPARC_CPUVAR_H
 
 #include <sys/device.h>
+#include <sys/sched.h>
 
 #include <sparc/sparc/cache.h>	/* for cacheinfo */
 
@@ -77,6 +78,23 @@ struct module_info {
 };
 
 
+struct cpu_softc;
+struct cpu_info {
+	struct cpu_softc *ci_softc;
+
+	struct proc *ci_curproc;
+	struct cpu_info *ci_next;
+
+	struct schedstate_percpu ci_schedstate;
+};
+
+#define curcpu() (&cpuinfo.ci)
+#define cpu_number() (cpuinfo.mid)
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_softc->master)
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci) \
+	for (cii = 0, ci = curcpu(); ci != NULL; ci = ci->ci_next)
+
 /*
  * The cpu_softc structure. This structure maintains information about one
  * currently installed CPU (there may be several of these if the machine
@@ -87,6 +105,8 @@ struct module_info {
 
 struct cpu_softc {
 	struct device	dv;		/* generic device info */
+
+	struct cpu_info ci;
 
 	int		node;		/* PROM node for this CPU */
 

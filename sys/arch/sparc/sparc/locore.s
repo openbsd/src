@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.70 2006/06/09 06:41:44 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.71 2007/05/08 07:23:18 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -183,6 +183,7 @@ _C_LABEL(kgdb_stack):
 	.globl	_C_LABEL(cpcb)
 _C_LABEL(cpcb):	.word	_C_LABEL(u0)
 
+curproc = CPUINFO_VA + CPUINFO_CURPROC
 /*
  * cputyp is the current cpu type, used to distinguish between
  * the many variations of different sun4* machines. It contains
@@ -6401,6 +6402,5 @@ _C_LABEL(proc0paddr):
 
 	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(promvec), 4
-	.comm	_C_LABEL(curproc), 4
 	.comm	_C_LABEL(qs), 32 * 8
 	.comm	_C_LABEL(whichqs), 4
