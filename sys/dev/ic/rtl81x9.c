@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.55 2007/02/02 04:21:40 jason Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.56 2007/05/08 18:49:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1341,33 +1341,6 @@ rl_attach(sc)
 
 	sc->sc_sdhook = shutdownhook_establish(rl_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(rl_powerhook, sc);
-
-	return (0);
-}
-
-int
-rl_detach(sc)
-	struct rl_softc *sc;
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	/* Unhook our tick handler. */
-	timeout_del(&sc->sc_tick_tmo);
-
-	/* Detach any PHYs we might have. */
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
-		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-
-	/* Delete any remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
-	if (sc->sc_pwrhook != NULL)
-		powerhook_disestablish(sc->sc_pwrhook);
 
 	return (0);
 }

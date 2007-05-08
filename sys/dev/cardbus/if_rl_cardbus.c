@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.15 2006/10/16 12:30:08 tom Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.16 2007/05/08 18:49:32 deraadt Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -210,6 +210,35 @@ rl_cardbus_attach(parent, self, aux)
 	sc->rl_type = RL_8139;
 
 	rl_attach(sc);
+}
+
+extern int rl_detach(struct rl_softc *);
+
+int
+rl_detach(sc)
+	struct rl_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	/* Unhook our tick handler. */
+	timeout_del(&sc->sc_tick_tmo);
+
+	/* Detach any PHYs we might have. */
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete any remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_pwrhook != NULL)
+		powerhook_disestablish(sc->sc_pwrhook);
+
+	return (0);
 }
 
 int 

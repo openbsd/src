@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.36 2006/12/12 10:24:38 reyk Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.37 2007/05/08 18:49:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -896,6 +896,5 @@ struct rl_softc {
 #define RL_PME_STATUS		0x8000
 
 extern int rl_attach(struct rl_softc *);
-extern int rl_detach(struct rl_softc *);
 extern int rl_intr(void *);
 extern void rl_setmulti(struct rl_softc *);
