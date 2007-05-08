@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.528 2007/05/08 23:31:20 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.529 2007/05/08 23:36:25 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6342,6 +6342,14 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 				    ("pf: IPv6 short rthdr\n"));
 				action = PF_DROP;
 				REASON_SET(&reason, PFRES_SHORT);
+				log = 1;
+				goto done;
+			}
+			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0) {
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: IPv6 rthdr0\n"));
+				action = PF_DROP;
+				REASON_SET(&reason, PFRES_IPOPTIONS);
 				log = 1;
 				goto done;
 			}
