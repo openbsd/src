@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.178 2007/04/26 11:39:33 bluhm Exp $	*/
+/*	$OpenBSD: ami.c,v 1.179 2007/05/08 13:11:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -938,7 +938,7 @@ ami_start_xs(struct ami_softc *sc, struct ami_ccb *ccb, struct scsi_xfer *xs)
 		return (COMPLETE);
 	}
  
-	timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
+	timeout_add(&xs->stimeout, 61 * hz);
 	ami_start(sc, ccb);
 
 	return (SUCCESSFULLY_QUEUED);
@@ -1084,19 +1084,23 @@ ami_stimeout(void *v)
 		/* command never ran, cleanup is easy */
 		TAILQ_REMOVE(&sc->sc_ccb_preq, ccb, ccb_link);
 		ccb->ccb_flags |= AMI_CCB_F_ERR;
+		ccb->ccb_done(sc, ccb);
 		break;
 
 	case AMI_CCB_QUEUED:
-		/* XXX create a list to save ccb to and print the whole list */
-		printf("%s: timeout ccb %d\n", DEVNAME(sc), cmd->acc_id);
-		TAILQ_REMOVE(&sc->sc_ccb_runq, ccb, ccb_link);
+		/*
+		 * ccb has taken more than a minute to finish. we can't take
+		 * it off the hardware in case it finishes later, but we can
+		 * warn the user to look at what is happening.
+		 */
+		printf("%s: stimeout ccb %d, check volume state\n",
+		    DEVNAME(sc), cmd->acc_id);
 		break;
 
 	default:
 		panic("%s: ami_stimeout(%d) botch", DEVNAME(sc), cmd->acc_id);
 	}
 
-	ccb->ccb_done(sc, ccb);
 	splx(s);
 }
 
