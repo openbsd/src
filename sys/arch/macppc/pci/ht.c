@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.10 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: ht.c,v 1.11 2007/05/08 03:22:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -120,7 +120,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	int len;
 
 	if (ca->ca_node == 0) {
-		printf("invalid node on ht config\n");
+		printf(": invalid node on ht config\n");
 		return;
 	}
 
@@ -193,7 +193,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	printf(": %d devices\n", sc->sc_maxdevs);
+	printf(", %d devices\n", sc->sc_maxdevs);
 
 	extern void fix_node_irq(int, struct pcibus_attach_args *);
 
