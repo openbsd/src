@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 2007/05/08 02:16:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.27 2007/05/04 19:30:55 deraadt Exp $
+ *      $Id: autoconf.c,v 1.28 2007/05/08 02:16:29 deraadt Exp $
  */
 
 /*
@@ -276,7 +276,7 @@ void
 diskconf(void)
 {
 	dev_t temp;
-	int part;
+	int part = 0;
 
 	printf("bootpath: %s\n", bootpath);
 	makebootdev(bootpath);
