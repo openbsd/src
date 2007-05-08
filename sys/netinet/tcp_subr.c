@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.93 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.94 2007/05/08 18:46:56 deraadt Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -109,9 +109,13 @@ int	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 
 /* values controllable via sysctl */
 int	tcp_do_rfc1323 = 1;
+#ifdef TCP_SACK
 int	tcp_do_sack = 1;	/* RFC 2018 selective ACKs */
+#endif
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
+#ifdef TCP_ECN
 int	tcp_do_ecn = 0;		/* RFC3168 ECN enabled/disabled? */
+#endif
 int	tcp_do_rfc3390 = 1;	/* RFC3390 Increasing TCP's Initial Window */
 
 u_int32_t	tcp_now = 1;
