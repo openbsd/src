@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.75 2007/03/18 23:23:17 mpf Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.76 2007/05/08 23:23:16 mcbride Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ int ip6_sourcecheck_interval;		/* XXX */
 struct ip6stat ip6stat;
 
 static void ip6_init2(void *);
+int ip6_check_rh0hdr(struct mbuf *);
 
 static int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
@@ -321,6 +322,15 @@ ip6_input(m)
 		goto bad;
 	}
 #endif
+
+	if (ip6_check_rh0hdr(m)) {
+		ip6stat.ip6s_badoptions++;
+		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_discard);
+		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
+		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_OPTION, 0);
+		/* m is allready freed */
+		return;
+	}
 
 #if NPF > 0 
         /*
@@ -705,6 +715,69 @@ ip6_input(m)
 	return;
  bad:
 	m_freem(m);
+}
+
+
+/* scan packet for RH0 routing header. Mostly stolen from pf.c:pf_test6() */
+int
+ip6_check_rh0hdr(struct mbuf *m)
+{
+	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct ip6_rthdr rthdr;
+	struct ip6_ext opt6;
+	u_int8_t proto = ip6->ip6_nxt;
+	int done = 0, lim, off, rh_cnt = 0;
+
+	off = ((caddr_t)ip6 - m->m_data) + sizeof(struct ip6_hdr);
+	lim = min(m->m_pkthdr.len, ntohs(ip6->ip6_plen) + sizeof(*ip6));
+	do {
+		switch (proto) {
+		case IPPROTO_ROUTING:
+			if (rh_cnt++)
+				/* more then one rh header present */
+				return (1);
+
+			if (off + sizeof(opt6) > lim)
+				/* packet to short to make sense */
+				return (1);
+
+			m_copydata(m, off, sizeof(rthdr), (caddr_t)&rthdr);
+
+			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0)
+				return (1);
+
+			off += (rthdr.ip6r_len + 1) * 8;
+			proto = rthdr.ip6r_nxt;
+			break;
+		case IPPROTO_AH:
+		case IPPROTO_HOPOPTS:
+		case IPPROTO_DSTOPTS:
+			/* get next header and header length */
+			if (off + sizeof(opt6) > lim)
+				/*
+				 * Packet to short to make sense, we could
+				 * reject the packet but as a router we 
+				 * should not do that so forward it.
+				 */
+				return (0);
+
+			m_copydata(m, off, sizeof(opt6), (caddr_t)&opt6);
+
+			if (proto == IPPROTO_AH)
+				off += (opt6.ip6e_len + 2) * 4;
+			else
+				off += (opt6.ip6e_len + 1) * 8;
+			proto = opt6.ip6e_nxt;
+			break;
+		case IPPROTO_FRAGMENT:
+		default:
+			/* end of header stack */
+			done = 1;
+			break;
+		}
+	} while (!done);
+
+	return (0);
 }
 
 /*
