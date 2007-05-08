@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.95 2007/05/08 16:01:52 deraadt Exp $     */
+/*      $OpenBSD: wdc.c,v 1.96 2007/05/08 16:07:03 deraadt Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -968,20 +968,6 @@ wdcdetach(chp, flags)
 
 	return (rv);
 }
-
-/* restart an interrupted I/O */
-void
-wdcrestart(v)
-	void *v;
-{
-	struct channel_softc *chp = v;
-	int s;
-
-	s = splbio();
-	wdcstart(chp);
-	splx(s);
-}
-
 
 /*
  * Interrupt routine for the controller.  Acknowledge the interrupt, check for
