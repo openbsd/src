@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.70 2007/05/05 12:10:57 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.71 2007/05/08 21:19:42 deraadt Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -158,7 +158,7 @@ int redebug = 0;
 #define DPRINTF(x)
 #endif
 
-inline void re_set_bufaddr(struct rl_desc *, bus_addr_t);
+static inline void re_set_bufaddr(struct rl_desc *, bus_addr_t);
 
 int	re_encap(struct rl_softc *, struct mbuf *, int *);
 
@@ -227,7 +227,7 @@ static const struct re_revision {
 };
 
 
-inline void
+static inline void
 re_set_bufaddr(struct rl_desc *d, bus_addr_t addr)
 {
 	d->rl_bufaddr_lo = htole32((uint32_t)addr);
