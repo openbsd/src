@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.44 2007/04/10 22:37:17 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.45 2007/05/08 20:38:20 robert Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -225,6 +225,8 @@ struct wskbd_map_data {
 struct wsmouse_calibcoords {
 	int minx, miny;		/* minimum value of X/Y */
 	int maxx, maxy;		/* maximum value of X/Y */
+	int swapxy;		/* swap X/Y axis */
+	int resx, resy;		/* X/Y resolution */
 	int samplelen;		/* number of samples available or
 				   WSMOUSE_CALIBCOORDS_RESET for raw mode */
 	struct wsmouse_calibcoord {
