@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.24 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.25 2007/05/08 16:03:20 deraadt Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -297,7 +297,10 @@ void ahb_print_active_ecb(struct ahb_softc *);
 int ahbprint(void *, const char *);
 
 #define	MAX_SLOTS	15
+
+#ifdef	AHBDEBUG
 int     ahb_debug = 0;
+#endif /* AHBDEBUG */
 #define AHB_SHOWECBS 0x01
 #define AHB_SHOWINTS 0x02
 #define AHB_SHOWCMDS 0x04
