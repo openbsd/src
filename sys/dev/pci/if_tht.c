@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.96 2007/05/06 08:58:02 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.97 2007/05/08 13:35:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -575,7 +575,8 @@ void			tht_fifo_post(struct tht_softc *,
 			    struct tht_fifo *);
 
 /* port operations */
-void			tht_read_lladdr(struct tht_softc *);
+void			tht_lladdr_read(struct tht_softc *);
+void			tht_lladdr_write(struct tht_softc *);
 int			tht_sw_reset(struct tht_softc *);
 int			tht_fw_load(struct tht_softc *);
 void			tht_fw_tick(void *arg);
@@ -764,7 +765,7 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	tht_read_lladdr(sc);
+	tht_lladdr_read(sc);
 	bcopy(sc->sc_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
 	ifp = &sc->sc_ac.ac_if;
@@ -949,6 +950,8 @@ tht_up(struct tht_softc *sc)
 	    THT_REG_RDINTCM_COAL(0x20));
 	tht_write(sc, THT_REG_TDINTCM(0), THT_REG_TDINTCM_PKT_TH(12) |
 	    THT_REG_TDINTCM_COAL_RC | THT_REG_TDINTCM_COAL(0x20));
+
+	tht_lladdr_write(sc);
 
 	tht_write(sc, THT_REG_RX_FLT, THT_REG_RX_FLT_OSEN |
 	    THT_REG_RX_FLT_AM | THT_REG_RX_FLT_AB | THT_REG_RX_FLT_PRM_ALL);
@@ -1513,16 +1516,26 @@ tht_fifo_post(struct tht_softc *sc, struct tht_fifo *tf)
 	    tf->tf_wptr, tf->tf_rptr);
 }
 
+const static bus_size_t tht_mac_regs[3] = {
+    THT_REG_RX_UNC_MAC2, THT_REG_RX_UNC_MAC1, THT_REG_RX_UNC_MAC0
+};
+
 void
-tht_read_lladdr(struct tht_softc *sc)
+tht_lladdr_read(struct tht_softc *sc)
 {
-	const static bus_size_t		r[3] = {
-	    THT_REG_RX_UNC_MAC2, THT_REG_RX_UNC_MAC1, THT_REG_RX_UNC_MAC0
-	};
 	int				i;
 
-	for (i = 0; i < sizeofa(r); i++)
-		sc->sc_lladdr[i] = swap16(tht_read(sc, r[i]));
+	for (i = 0; i < sizeofa(tht_mac_regs); i++)
+		sc->sc_lladdr[i] = swap16(tht_read(sc, tht_mac_regs[i]));
+}
+
+void
+tht_lladdr_write(struct tht_softc *sc)
+{
+	int				i;
+
+	for (i = 0; i < sizeofa(tht_mac_regs); i++)
+		tht_write(sc, tht_mac_regs[i], swap16(sc->sc_lladdr[i]));
 }
 
 #define tht_swrst_set(_s, _r) tht_write((_s), (_r), 0x1)
