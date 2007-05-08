@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.94 2007/04/16 18:18:21 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.95 2007/05/08 16:01:52 deraadt Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -439,18 +439,6 @@ wdprint(aux, pnp)
 		printf("drive at %s", pnp);
 	printf(" channel %d drive %d", aa_link->aa_channel,
 	    aa_link->aa_drv_data->drive);
-	return (UNCONF);
-}
-
-int
-atapi_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ata_atapi_attach *aa_link = aux;
-	if (pnp)
-		printf("atapiscsi at %s", pnp);
-	printf(" channel %d", aa_link->aa_channel);
 	return (UNCONF);
 }
 
