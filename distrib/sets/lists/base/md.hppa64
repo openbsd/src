@@ -1642,6 +1642,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/varargs.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/vmparam.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/_types.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/lock.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/inttypes.ph

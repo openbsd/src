@@ -151,6 +151,7 @@
 ./usr/include/g++/locale
 ./usr/include/g++/ostream
 ./usr/include/g++/streambuf
+./usr/include/hppa/lock.h
 ./usr/include/hppa64
 ./usr/include/hppa64/_types.h
 ./usr/include/hppa64/asm.h

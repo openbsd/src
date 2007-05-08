@@ -115,6 +115,8 @@
 ./usr/include/g++/type_traits.h
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
+./usr/include/macppc/lock.h
+./usr/include/mvmeppc/lock.h
 ./usr/include/powerpc
 ./usr/include/powerpc/_types.h
 ./usr/include/powerpc/asm.h

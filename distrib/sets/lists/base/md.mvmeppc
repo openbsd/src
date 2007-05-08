@@ -1638,6 +1638,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/specfs/specdev.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/mvmeppc/_types.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/mvmeppc/lock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net
@@ -1905,6 +1906,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/kcore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/link.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/lock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pio.ph
