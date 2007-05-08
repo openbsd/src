@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.27 2007/04/12 22:20:14 thib Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.28 2007/05/08 20:25:56 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -439,6 +439,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 	return (error);
 }
 
+#ifdef DIAGNOSTIC
 /*
  * Print out information about state of a lock. Used by VOP_PRINT
  * routines to display ststus about contained locks.
@@ -459,6 +460,7 @@ lockmgr_printinfo(__volatile struct lock *lkp)
 	if (lkp->lk_waitcount > 0)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
+#endif /* DIAGNOSTIC */
 
 #if defined(LOCKDEBUG)
 TAILQ_HEAD(, simplelock) simplelock_list =
