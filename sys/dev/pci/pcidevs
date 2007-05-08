@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1234 2007/05/03 10:12:02 jsg Exp $
+$OpenBSD: pcidevs,v 1.1235 2007/05/08 06:27:38 robert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -988,6 +988,8 @@ product ATI RADEON_X1300PRO_S	0x71a3	Radeon X1300 Pro Sec
 product ATI RADEON_X1600_M	0x71c5	Radeon Mobility X1600
 product ATI RADEON_X1600_PRO	0x71c2	Radeon X1600 PRO
 product ATI RADEON_X1600_PRO2	0x71e2	Radeon X1600 PRO (Secondary)
+product ATI RADEON_RX1650_XT	0x7291	Radeon RX1650 XT
+product ATI RADEON_RX1650_XT2	0x72b1	Radeon RX1650 XT (Secondary)
 product ATI RS100_AGP		0xcab0	RS100 AGP
 product ATI RS200_AGP		0xcab2	RS200 AGP
 product ATI RS250_AGP		0xcab3	RS250 AGP
@@ -1321,6 +1323,7 @@ product COROLLARY CCF		0x1117	Cache Coherency Filter
 product CREATIVELABS SBLIVE	0x0002	SoundBlaster Live
 product CREATIVELABS AWE64D	0x0003	SoundBlaster AWE64D
 product CREATIVELABS AUDIGY	0x0004	SoundBlaster Audigy
+product CREATIVELABS XFI	0x0005	SoundBlaster X-Fi
 product CREATIVELABS SBLIVE2	0x0006	SoundBlaster Live (Dell)
 product CREATIVELABS AUDIGYLS	0x0007	SoundBlaster Audigy LS
 product CREATIVELABS AUDIGY2	0x0008	SoundBlaster Audigy 2
