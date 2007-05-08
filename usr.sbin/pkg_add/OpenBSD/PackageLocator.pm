@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.59 2007/05/07 14:12:43 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.60 2007/05/08 08:42:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -125,7 +125,7 @@ sub match_spec
 	}
 	require OpenBSD::PkgSpec;
 
-	return OpenBSD::PkgSpec::match($spec);
+	return OpenBSD::PkgSpec::match($spec, @avail);
 }
 
 my $stemlist;
