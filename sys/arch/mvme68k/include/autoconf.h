@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.13 2005/11/27 14:19:09 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.14 2007/05/08 15:33:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -51,8 +51,6 @@ extern paddr_t	bootaddr;	/* PA of boot device */
 extern int	bootctrllun;	/* ctrl_lun of boot device */
 extern int	bootdevlun;	/* dev_lun of boot device */
 extern int	bootpart;	/* boot partition (disk) */
-
-extern struct	device *bootdv; /* boot device */
 
 vaddr_t	mapiodev(paddr_t, int);
 void	unmapiodev(vaddr_t, int);

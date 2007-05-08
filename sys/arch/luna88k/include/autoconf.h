@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.4 2004/11/08 16:47:00 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.5 2007/05/08 15:33:10 deraadt Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -40,10 +40,6 @@
 /* the following are from the prom/bootblocks */
 extern void	*bootaddr;	/* PA of boot device */
 extern int	bootpart;	/* boot partition (disk) */
-
-extern	struct device *bootdv; /* boot device */
-
-/* taken from NetBSD/luna68k */
 
 struct mainbus_attach_args {
         const char *ma_name;
