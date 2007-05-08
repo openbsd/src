@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.90 2007/05/08 11:16:31 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.91 2007/05/08 14:16:36 miod Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1167,6 +1167,9 @@ keep:
 void
 proc_stop(struct proc *p, int sw)
 {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	extern void *softclock_si;
+#endif
 #ifdef MULTIPROCESSOR
 	SCHED_ASSERT_LOCKED();
 #endif
