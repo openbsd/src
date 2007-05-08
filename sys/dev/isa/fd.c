@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.61 2007/04/27 22:20:01 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.62 2007/05/08 20:59:39 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -151,7 +151,7 @@ void fd_motor_off(void *arg);
 void fd_motor_on(void *arg);
 void fdfinish(struct fd_softc *fd, struct buf *bp);
 int fdformat(dev_t, struct fd_formb *, struct proc *);
-__inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static __inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 void fdretry(struct fd_softc *);
 void fdtimeout(void *);
 
@@ -327,7 +327,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 #endif
 }
 
-__inline struct fd_type *
+static __inline struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;
