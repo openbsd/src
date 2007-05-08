@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.81 2006/06/19 08:14:06 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.82 2007/05/08 18:46:37 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -254,6 +254,8 @@ rtable_exists(u_int id)	/* verify table with that ID exists */
 	return (1);
 }
 
+#include "pf.h"
+#if NPF > 0
 void
 rtalloc_noclone(struct route *ro, int howstrict)
 {
@@ -313,6 +315,7 @@ miss:
 	splx(s);
 	return (newrt);
 }
+#endif /* NPF > 0 */
 
 /*
  * Packet routing routines.
