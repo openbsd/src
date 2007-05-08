@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.16 2007/05/01 22:53:51 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.17 2007/05/08 23:54:37 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -117,7 +117,7 @@ TAILQ_HEAD(sr_wu_list, sr_workunit);
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
 #define SR_META_VERSION		1	/* bump when sr_metadata changes */
 struct sr_metadata {
-	/* do not change order of ssd_magic, ssd_version */
+	/* do not change order of ssd_magic, ssd_version & ssd_checksum */
 	u_int64_t		ssd_magic;	/* magic id */
 #define	SR_MAGIC		0x4d4152436372616dllu
 	u_int8_t		ssd_version;	/* meta data version */

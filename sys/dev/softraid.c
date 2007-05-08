@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.40 2007/05/02 03:51:26 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.41 2007/05/08 23:54:37 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -130,10 +130,17 @@ void			sr_raid1_startwu(struct sr_workunit *);
 
 /* utility functions */
 void			sr_get_uuid(struct sr_uuid *);
+void			sr_print_uuid(struct sr_uuid *, int);
 u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
 int			sr_save_metadata(struct sr_discipline *);
 void			sr_refresh_sensors(void *);
 int			sr_create_sensors(struct sr_discipline *);
+
+#ifdef SR_DEBUG
+void			sr_print_metadata(struct sr_metadata *);
+#else
+#define			sr_print_metadata(m)
+#endif
 
 struct scsi_adapter sr_switch = {
 	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
@@ -759,6 +766,12 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
 	bzero(sd->sd_meta, SR_META_SIZE  * 512);
 
+	/* we have a valid list now create an array index */
+	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *) * no_chunk,
+	    M_DEVBUF, M_WAITOK);
+	memset(sd->sd_vol.sv_chunks, 0,
+	    sizeof(struct sr_chunk *) * no_chunk);
+
 	if ((no_meta = sr_read_meta(sd)) == 0) {
 		/* no metadata available */
 		switch (bc->bc_level) {
@@ -770,6 +783,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 		default:
 			goto unwind;
 		}
+
+		/* fill out chunk array */
+		i = 0;
+		SLIST_FOREACH(ch_entry, cl, src_link)
+			sd->sd_vol.sv_chunks[i++] = ch_entry;
 
 		/* fill out all chunk metadata */
 		sr_create_chunk_meta(sc, cl);
@@ -795,24 +813,14 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 		updatemeta = 1;
 
 	} else if (no_meta == no_chunk) {
-		/* we got metadata, validate it */
-		printf("%s: METADATA BRINGUP IS NOT WORKING YET; "
-		    "TREATING AS VOLUME CREATION\n",
+		DNPRINTF(SR_D_META, "%s: disk assembled from metadata\n",
 		    DEVNAME(sc));
+		updatemeta = 0;
 	} else {
 		panic("not yet partial bringup");
 	}
 
 	/* XXX metadata SHALL be fully filled in at this point */
-
-	/* we have a valid list now create an array index into it */
-	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *) * no_chunk,
-	    M_DEVBUF, M_WAITOK);
-	memset(sd->sd_vol.sv_chunks, 0,
-	    sizeof(struct sr_chunk *) * no_chunk);
-	i = 0;
-	SLIST_FOREACH(ch_entry, cl, src_link)
-		sd->sd_vol.sv_chunks[i++] = ch_entry;
 
 	switch (bc->bc_level) {
 	case 1:
@@ -1088,13 +1096,19 @@ sr_read_meta(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_chunk_head	*cl = &sd->sd_vol.sv_chunk_list;
-	struct sr_metadata	*sm = sd->sd_meta;
+	struct sr_metadata	*sm = sd->sd_meta, *m;
 	struct sr_chunk		*ch_entry;
 	struct buf		b;
-	int			mc = 0;
+	struct sr_vol_meta	*mv;
+	struct sr_chunk_meta	*mc;
 	size_t			sz = SR_META_SIZE * 512;
+	int			no_chunk = 0;
+	u_int32_t		chk, volid;
 
 	DNPRINTF(SR_D_META, "%s: sr_read_meta\n", DEVNAME(sc));
+
+	m = malloc(sz , M_DEVBUF, M_WAITOK);
+	bzero(m, sz);
 
 	SLIST_FOREACH(ch_entry, cl, src_link) {
 		memset(&b, 0, sizeof(b));
@@ -1104,7 +1118,7 @@ sr_read_meta(struct sr_discipline *sd)
 		b.b_bcount = sz;
 		b.b_bufsize = sz;
 		b.b_resid = sz;
-		b.b_data = (void *)sm;
+		b.b_data = (void *)m;
 		b.b_error = 0;
 		b.b_proc = curproc;
 		b.b_dev = ch_entry->src_dev_mm;
@@ -1123,19 +1137,164 @@ sr_read_meta(struct sr_discipline *sd)
 			continue;
 		}
 
-		if (sm->ssd_magic != SR_MAGIC)
+		if (m->ssd_magic != SR_MAGIC)
 			continue;
 
+		/* validate metadata */
+		if (m->ssd_version != SR_META_VERSION) {
+			printf("%s: %s can not read metadata version %d, "
+			    "expected %d\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_version,
+			    SR_META_VERSION);
+			no_chunk = -1;
+			goto bad;
+		}
+		if (m->ssd_size != sizeof(struct sr_metadata)) {
+			printf("%s: %s invalid metadata size %d, "
+			    "expected %d\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_size,
+			    sizeof(struct sr_metadata));
+			no_chunk = -1;
+			goto bad;
+		}
+		chk = sr_checksum(DEVNAME(sc), (u_int32_t *)m, m->ssd_size);
+		/*
+		 * since the checksum value is part of the checksum a good
+		 * result equals 0
+		 */
+		if (chk != 0) {
+			printf("%s: %s invalid metadata checksum 0x%x, "
+			    "expected 0x%x\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_checksum, chk);
+			goto bad;
+		}
+
+		/* validate volume metadata */
+		if (m->ssd_vd_ver != SR_VOL_VERSION) {
+			printf("%s: %s can not read volume metadata version "
+			    "%d, expected %d\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_vd_ver,
+			    SR_VOL_VERSION);
+			no_chunk = -1;
+			goto bad;
+		}
+		if (m->ssd_vd_size != sizeof(struct sr_vol_meta)) {
+			printf("%s: %s invalid volume metadata size %d, "
+			    "expected %d\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_vd_size,
+			    sizeof(struct sr_vol_meta));
+			no_chunk = -1;
+			goto bad;
+		}
+		mv = (struct sr_vol_meta *)(m + 1);
+		chk = sr_checksum(DEVNAME(sc), (u_int32_t *)mv, m->ssd_vd_size);
+		if (chk != m->ssd_vd_chk) {
+			printf("%s: %s invalid volume metadata checksum 0x%x, "
+			    "expected 0x%x\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_vd_chk, chk);
+			no_chunk = -1;
+			goto bad;
+		}
+
+		/* validate chunk metadata */
+		if (m->ssd_chunk_ver != SR_CHUNK_VERSION) {
+			printf("%s: %s can not read chunk metadata version "
+			    "%d, expected %d\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_chunk_ver,
+			    SR_CHUNK_VERSION);
+			no_chunk = -1;
+			goto bad;
+		}
+		if (m->ssd_chunk_size != sizeof(struct sr_chunk_meta)) {
+			printf("%s: %s invalid chunk metadata size %d, "
+			    "expected %d\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_chunk_size,
+			    sizeof(struct sr_chunk_meta));
+			no_chunk = -1;
+			goto bad;
+		}
+		mc = (struct sr_chunk_meta *)(mv + 1);
+		/* checksum is calculated over ALL chunks */
+		chk = sr_checksum(DEVNAME(sc), (u_int32_t *)(mc),
+		    m->ssd_chunk_size * m->ssd_chunk_no);
+		if (chk != m->ssd_chunk_chk) {
+			printf("%s: %s invalid chunk metadata checksum 0x%x, "
+			    "expected 0x%x\n", DEVNAME(sc),
+			    ch_entry->src_devname, m->ssd_chunk_chk, chk);
+			no_chunk = -1;
+			goto bad;
+		}
+
+		/* we asssume that the first chunk has the initial metadata */
+		if (no_chunk++ == 0) {
+			bcopy(m, sm, sz);
+			bcopy(m, &sd->sd_meta, sizeof(sd->sd_meta));
+			bcopy(mv, &sd->sd_vol.sv_meta,
+			    sizeof(sd->sd_vol.sv_meta));
+
+			volid = m->ssd_vd_volid;
+		}
+
+		if (bcmp(&sm->ssd_uuid, &sd->sd_vol.sv_meta.svm_uuid,
+		    sizeof(struct sr_uuid))) {
+			printf("%s: %s invalid chunk uuid ",
+			    DEVNAME(sc), ch_entry->src_devname);
+			sr_print_uuid(&sm->ssd_uuid, 0);
+			printf(", expected ");
+			sr_print_uuid(&sd->sd_vol.sv_meta.svm_uuid, 1);
+			no_chunk = -1;
+			goto bad;
+		}
+
 		/* we have meta data on disk */
-		mc++;
 		ch_entry->src_meta_ondisk = 1;
+
+		/* make sure we are part of this vd */
+		if (volid != m->ssd_vd_volid) {
+			printf("%s: %s invalid volume id %d, expected %d\n",
+			    DEVNAME(sc), ch_entry->src_devname,
+			    volid, m->ssd_vd_volid);
+			no_chunk = -1;
+			goto bad;
+		}
+
+		if (m->ssd_chunk_id > m->ssd_chunk_no) {
+			printf("%s: %s chunk id out of range %d, expected "
+			    "lower than %d\n", DEVNAME(sc),
+			    ch_entry->src_devname,
+			    m->ssd_chunk_id, m->ssd_chunk_no);
+			no_chunk = -1;
+			goto bad;
+		}
+
+		if (sd->sd_vol.sv_chunks[m->ssd_chunk_id]) {
+			printf("%s: %s chunk id %d already in use\n ",
+			    DEVNAME(sc), ch_entry->src_devname,
+			    m->ssd_chunk_id);
+			no_chunk = -1;
+			goto bad;
+		}
+
+		sd->sd_vol.sv_chunks[m->ssd_chunk_id] = ch_entry;
+		bcopy(mc, &ch_entry->src_meta, sizeof(ch_entry->src_meta));
+	}
+
+	if (no_chunk != m->ssd_chunk_no) {
+		DNPRINTF(SR_D_META, "%s: not enough chunks supplied\n",
+		    DEVNAME(sc));
+		no_chunk = -1;
+		goto bad;
 	}
 
 	DNPRINTF(SR_D_META, "%s: sr_read_meta: found %d elements\n",
-	    DEVNAME(sc), mc);
+	    DEVNAME(sc), no_chunk);
 
+	sr_print_metadata(m);
+
+bad:
 	/* return nr of chunks that contain metadata */
-	return (mc);
+	free(m, M_DEVBUF);
+	return (no_chunk);
 }
 
 int
@@ -1191,6 +1350,7 @@ sr_create_chunk_meta(struct sr_softc *sc, struct sr_chunk_head *cl)
 
 	return (rv);
 }
+
 void
 sr_unwind_chunks(struct sr_softc *sc, struct sr_chunk_head *cl)
 {
@@ -1902,7 +2062,7 @@ die:
 u_int32_t
 sr_checksum(char *s, u_int32_t *p, u_int32_t size)
 {
-	u_int32_t		chk = 0;
+	u_int32_t		chk = 0xdeadbeef;
 	int			i;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_checksum %p %d\n", s, p, size);
@@ -1919,10 +2079,23 @@ sr_checksum(char *s, u_int32_t *p, u_int32_t size)
 void
 sr_get_uuid(struct sr_uuid *uuid)
 {
-	int i;
+	int			i;
 
 	for (i = 0; i < SR_UUID_MAX; i++)
 		uuid->sui_id[i] = arc4random();
+}
+
+void
+sr_print_uuid(struct sr_uuid *uuid, int cr)
+{
+	int			i;
+
+	for (i = 0; i < SR_UUID_MAX; i++)
+		printf("%x%s", uuid->sui_id[i],
+		    i < SR_UUID_MAX - 1 ? ":" : "");
+
+	if (cr)
+		printf("\n");
 }
 
 int
@@ -1994,60 +2167,7 @@ sr_save_metadata(struct sr_discipline *sd)
 		sm->ssd_chunk_chk ^= sr_checksum(DEVNAME(sc),
 		    (u_int32_t *)&im_sc[ch], sm->ssd_chunk_size);
 
-#ifdef SR_DEBUG
-	/* metadata */
-	DNPRINTF(SR_D_META, "\tmeta magic 0x%llx\n", sm->ssd_magic);
-	DNPRINTF(SR_D_META, "\tmeta version %d\n", sm->ssd_version);
-	DNPRINTF(SR_D_META, "\tmeta checksum 0x%x\n", sm->ssd_checksum);
-	DNPRINTF(SR_D_META, "\tmeta size %d\n", sm->ssd_size);
-	DNPRINTF(SR_D_META, "\tmeta on disk version %u\n", sm->ssd_ondisk);
-	DNPRINTF(SR_D_META, "\tmeta uuid ");
-	for (i = 0; i < SR_UUID_MAX; i++)
-		DNPRINTF(SR_D_META, "%x%s", sm->ssd_uuid.sui_id[i],
-		    i < SR_UUID_MAX - 1 ? ":" : "\n");
-	DNPRINTF(SR_D_META, "\tvd version %d\n", sm->ssd_vd_ver);
-	DNPRINTF(SR_D_META, "\tvd size %lu\n", sm->ssd_vd_size);
-	DNPRINTF(SR_D_META, "\tvd checksum 0x%x\n", sm->ssd_vd_chk);
-	DNPRINTF(SR_D_META, "\tchunk version %d\n", sm->ssd_chunk_ver);
-	DNPRINTF(SR_D_META, "\tchunks %d\n", sm->ssd_chunk_no);
-	DNPRINTF(SR_D_META, "\tchunk size %u\n", sm->ssd_chunk_size);
-	DNPRINTF(SR_D_META, "\tchunk checksum 0x%x\n", sm->ssd_chunk_chk);
-
-	DNPRINTF(SR_D_META, "\t\tvol id %d\n", im_sv->svm_volid);
-	DNPRINTF(SR_D_META, "\t\tvol status %d\n", im_sv->svm_status);
-	DNPRINTF(SR_D_META, "\t\tvol flags 0x%x\n", im_sv->svm_flags);
-	DNPRINTF(SR_D_META, "\t\tvol level %d\n", im_sv->svm_level);
-	DNPRINTF(SR_D_META, "\t\tvol size %llu\n", im_sv->svm_size);
-	DNPRINTF(SR_D_META, "\t\tvol name %s\n", im_sv->svm_devname);
-	DNPRINTF(SR_D_META, "\t\tvol vendor %s\n", im_sv->svm_vendor);
-	DNPRINTF(SR_D_META, "\t\tvol prod %s\n", im_sv->svm_product);
-	DNPRINTF(SR_D_META, "\t\tvol rev %s\n", im_sv->svm_revision);
-	DNPRINTF(SR_D_META, "\t\tvol no chunks %d\n", im_sv->svm_no_chunk);
-	DNPRINTF(SR_D_META, "\t\tvol uuid ");
-	for (i = 0; i < SR_UUID_MAX; i++)
-		DNPRINTF(SR_D_META, "%x%s", im_sv->svm_uuid.sui_id[i],
-		    i < SR_UUID_MAX - 1 ? ":" : "\n");
-
-	for (ch = 0; ch < im_sv->svm_no_chunk; ch++) {
-		DNPRINTF(SR_D_META, "\t\t\tchunk vol id %d\n",
-		    im_sc[ch].scm_volid);
-		DNPRINTF(SR_D_META, "\t\t\tchunk id %d\n",
-		    im_sc[ch].scm_chunk_id);
-		DNPRINTF(SR_D_META, "\t\t\tchunk status %d\n",
-		    im_sc[ch].scm_status);
-		DNPRINTF(SR_D_META, "\t\t\tchunk name %s\n",
-		    im_sc[ch].scm_devname);
-		DNPRINTF(SR_D_META, "\t\t\tchunk size %llu\n",
-		    im_sc[ch].scm_size);
-		DNPRINTF(SR_D_META, "\t\t\tchunk coerced size %llu\n",
-		    im_sc[ch].scm_coerced_size);
-		DNPRINTF(SR_D_META, "\t\t\tchunk uuid ");
-		for (i = 0; i < SR_UUID_MAX; i++)
-			DNPRINTF(SR_D_META, "%x%s",
-			    im_sc[ch].scm_uuid.sui_id[i],
-			    i < SR_UUID_MAX - 1 ? ":" : "\n");
-	}
-#endif
+	sr_print_metadata(sm);
 
 	for (i = 0; i < sm->ssd_chunk_no; i++) {
 		memset(&b, 0, sizeof(b));
@@ -2210,6 +2330,64 @@ sr_print_stats(void)
 		    sd->sd_vol.sv_meta.svm_devname,
 		    sd->sd_wu_pending + sd->sd_max_wu,
 		    sd->sd_wu_collisions);
+	}
+}
+#endif
+
+#ifdef SR_DEBUG
+void
+sr_print_metadata(struct sr_metadata *sm)
+{
+	struct sr_vol_meta	*im_sv;
+	struct sr_chunk_meta	*im_sc;
+	int			ch;
+
+	im_sv = (struct sr_vol_meta *)(sm + 1);
+	im_sc = (struct sr_chunk_meta *)(im_sv + 1);
+
+	DNPRINTF(SR_D_META, "\tmeta magic 0x%llx\n", sm->ssd_magic);
+	DNPRINTF(SR_D_META, "\tmeta version %d\n", sm->ssd_version);
+	DNPRINTF(SR_D_META, "\tmeta checksum 0x%x\n", sm->ssd_checksum);
+	DNPRINTF(SR_D_META, "\tmeta size %d\n", sm->ssd_size);
+	DNPRINTF(SR_D_META, "\tmeta on disk version %u\n", sm->ssd_ondisk);
+	DNPRINTF(SR_D_META, "\tmeta uuid ");
+	sr_print_uuid(&sm->ssd_uuid, 1);
+	DNPRINTF(SR_D_META, "\tvd version %d\n", sm->ssd_vd_ver);
+	DNPRINTF(SR_D_META, "\tvd size %lu\n", sm->ssd_vd_size);
+	DNPRINTF(SR_D_META, "\tvd checksum 0x%x\n", sm->ssd_vd_chk);
+	DNPRINTF(SR_D_META, "\tchunk version %d\n", sm->ssd_chunk_ver);
+	DNPRINTF(SR_D_META, "\tchunks %d\n", sm->ssd_chunk_no);
+	DNPRINTF(SR_D_META, "\tchunk size %u\n", sm->ssd_chunk_size);
+	DNPRINTF(SR_D_META, "\tchunk checksum 0x%x\n", sm->ssd_chunk_chk);
+
+	DNPRINTF(SR_D_META, "\t\tvol id %d\n", im_sv->svm_volid);
+	DNPRINTF(SR_D_META, "\t\tvol status %d\n", im_sv->svm_status);
+	DNPRINTF(SR_D_META, "\t\tvol flags 0x%x\n", im_sv->svm_flags);
+	DNPRINTF(SR_D_META, "\t\tvol level %d\n", im_sv->svm_level);
+	DNPRINTF(SR_D_META, "\t\tvol size %llu\n", im_sv->svm_size);
+	DNPRINTF(SR_D_META, "\t\tvol name %s\n", im_sv->svm_devname);
+	DNPRINTF(SR_D_META, "\t\tvol vendor %s\n", im_sv->svm_vendor);
+	DNPRINTF(SR_D_META, "\t\tvol prod %s\n", im_sv->svm_product);
+	DNPRINTF(SR_D_META, "\t\tvol rev %s\n", im_sv->svm_revision);
+	DNPRINTF(SR_D_META, "\t\tvol no chunks %d\n", im_sv->svm_no_chunk);
+	DNPRINTF(SR_D_META, "\t\tvol uuid ");
+	sr_print_uuid(& im_sv->svm_uuid, 1);
+
+	for (ch = 0; ch < im_sv->svm_no_chunk; ch++) {
+		DNPRINTF(SR_D_META, "\t\t\tchunk vol id %d\n",
+		    im_sc[ch].scm_volid);
+		DNPRINTF(SR_D_META, "\t\t\tchunk id %d\n",
+		    im_sc[ch].scm_chunk_id);
+		DNPRINTF(SR_D_META, "\t\t\tchunk status %d\n",
+		    im_sc[ch].scm_status);
+		DNPRINTF(SR_D_META, "\t\t\tchunk name %s\n",
+		    im_sc[ch].scm_devname);
+		DNPRINTF(SR_D_META, "\t\t\tchunk size %llu\n",
+		    im_sc[ch].scm_size);
+		DNPRINTF(SR_D_META, "\t\t\tchunk coerced size %llu\n",
+		    im_sc[ch].scm_coerced_size);
+		DNPRINTF(SR_D_META, "\t\t\tchunk uuid ");
+		sr_print_uuid(&im_sc[ch].scm_uuid, 1);
 	}
 }
 #endif
