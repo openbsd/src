@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.26 2006/10/12 16:35:51 grange Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.27 2007/05/08 20:33:07 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -370,6 +370,47 @@ com_cardbus_disable(struct com_softc *sc)
 	cardbus_intr_disestablish(cc, cf, csc->cc_ih);
 	Cardbus_function_disable(csc->cc_ct);
 }
+
+int
+com_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int maj, mn;
+
+	sc->sc_swflags |= COM_SW_DEAD;
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == comopen)
+			break;
+
+	/* Nuke the vnodes for any open instances. */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* XXX a symbolic constant for the cua bit would be nicer. */
+	mn |= 0x80;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* Detach and free the tty. */
+	if (sc->sc_tty) {
+		ttyfree(sc->sc_tty);
+	}
+
+	timeout_del(&sc->sc_dtr_tmo);
+	timeout_del(&sc->sc_diag_tmo);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	softintr_disestablish(sc->sc_si);
+#else
+	timeout_del(&sc->sc_comsoft_tmo);
+#endif
+
+	return (0);
+}
+
+int	com_detach(struct device *, int);
 
 int
 com_cardbus_detach(struct device *self, int flags)

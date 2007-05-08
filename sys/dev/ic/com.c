@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.112 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: com.c,v 1.113 2007/05/08 20:33:07 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -198,45 +198,6 @@ comprobe1(iot, ioh)
 	return 1;
 }
 #endif
-
-int
-com_detach(self, flags)
-	struct device *self;
-	int flags;
-{
-	struct com_softc *sc = (struct com_softc *)self;
-	int maj, mn;
-
-	sc->sc_swflags |= COM_SW_DEAD;
-
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == comopen)
-			break;
-
-	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
-	vdevgone(maj, mn, mn, VCHR);
-
-	/* XXX a symbolic constant for the cua bit would be nicer. */
-	mn |= 0x80;
-	vdevgone(maj, mn, mn, VCHR);
-
-	/* Detach and free the tty. */
-	if (sc->sc_tty) {
-		ttyfree(sc->sc_tty);
-	}
-
-	timeout_del(&sc->sc_dtr_tmo);
-	timeout_del(&sc->sc_diag_tmo);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_disestablish(sc->sc_si);
-#else
-	timeout_del(&sc->sc_comsoft_tmo);
-#endif
-
-	return (0);
-}
 
 int
 com_activate(self, act)
