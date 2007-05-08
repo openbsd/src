@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.58 2007/05/08 20:33:07 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.59 2007/05/08 21:18:18 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -153,7 +153,6 @@ tcflag_t comconscflag = TTYDEF_CFLAG;
 
 int	commajor;
 int	comsopen = 0;
-int	comevents = 0;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -412,38 +411,6 @@ comattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	com_attach_subr(sc);
-}
-
-int
-com_activate(struct device *self, enum devact act)
-{
-	struct com_softc *sc = (struct com_softc *)self;
-	int s, rv = 0;
-
-	/* XXX splserial, when we get that.  */
-	s = spltty();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
-	case DVACT_DEACTIVATE:
-#ifdef KGDB
-		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
-#else
-		if (sc->sc_hwflags & COM_HW_CONSOLE) {
-#endif /* KGDB */
-			rv = EBUSY;
-			break;
-		}
-
-		if (sc->disable != NULL && sc->enabled != 0) {
-			(*sc->disable)(sc);
-			sc->enabled = 0;
-		}
-		break;
-	}
-	splx(s);
-	return (rv);
 }
 
 int

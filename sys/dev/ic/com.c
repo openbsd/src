@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.113 2007/05/08 20:33:07 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.114 2007/05/08 21:18:18 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -198,39 +198,6 @@ comprobe1(iot, ioh)
 	return 1;
 }
 #endif
-
-int
-com_activate(self, act)
-	struct device *self;
-	enum devact act;
-{
-	struct com_softc *sc = (struct com_softc *)self;
-	int s, rv = 0;
-
-	s = spltty();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
-	case DVACT_DEACTIVATE:
-#ifdef KGDB
-		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
-#else
-		if (sc->sc_hwflags & COM_HW_CONSOLE) {
-#endif /* KGDB */
-			rv = EBUSY;
-			break;
-		}
-
-		if (sc->disable != NULL && sc->enabled != 0) {
-			(*sc->disable)(sc);
-			sc->enabled = 0;
-		}
-		break;
-	}
-	splx(s);
-	return (rv);
-}
 
 int
 comopen(dev, flag, mode, p)

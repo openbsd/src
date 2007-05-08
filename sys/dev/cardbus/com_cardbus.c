@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.28 2007/05/08 20:43:07 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.29 2007/05/08 21:18:18 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -114,6 +114,10 @@ void	com_cardbus_disable(struct com_softc *);
 struct csdev *com_cardbus_find_csdev(struct cardbus_attach_args *);
 int	com_cardbus_gofigure(struct cardbus_attach_args *,
     struct com_cardbus_softc *);
+
+int	com_activate(struct device *, enum devact);
+int	com_detach(struct device *, int);
+int	comopen(dev_t dev, int flag, int mode, struct proc *p);
 
 #if NCOM_CARDBUS
 struct cfattach com_cardbus_ca = {
@@ -386,9 +390,6 @@ com_cardbus_disable(struct com_softc *sc)
 	Cardbus_function_disable(csc->cc_ct);
 }
 
-int	com_detach(struct device *, int);
-int	comopen(dev_t dev, int flag, int mode, struct proc *p);
-
 int
 com_detach(self, flags)
 	struct device *self;
@@ -426,6 +427,39 @@ com_detach(self, flags)
 #endif
 
 	return (0);
+}
+
+int
+com_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int s, rv = 0;
+
+	s = spltty();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef KGDB
+		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
+#else
+		if (sc->sc_hwflags & COM_HW_CONSOLE) {
+#endif /* KGDB */
+			rv = EBUSY;
+			break;
+		}
+
+		if (sc->disable != NULL && sc->enabled != 0) {
+			(*sc->disable)(sc);
+			sc->enabled = 0;
+		}
+		break;
+	}
+	splx(s);
+	return (rv);
 }
 
 int
