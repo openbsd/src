@@ -126,6 +126,7 @@
 ./usr/include/m68k/internal_types.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
+./usr/include/m68k/lock.h
 ./usr/include/m68k/mutex.h
 ./usr/include/m68k/param.h
 ./usr/include/m68k/pcb.h
@@ -165,6 +166,7 @@
 ./usr/include/mvme68k/intr.h
 ./usr/include/mvme68k/kcore.h
 ./usr/include/mvme68k/limits.h
+./usr/include/mvme68k/lock.h
 ./usr/include/mvme68k/mioctl.h
 ./usr/include/mvme68k/mutex.h
 ./usr/include/mvme68k/nvram.h

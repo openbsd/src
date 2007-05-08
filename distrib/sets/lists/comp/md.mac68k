@@ -126,6 +126,7 @@
 ./usr/include/m68k/internal_types.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
+./usr/include/m68k/lock.h
 ./usr/include/m68k/mutex.h
 ./usr/include/m68k/param.h
 ./usr/include/m68k/pcb.h
@@ -166,6 +167,7 @@
 ./usr/include/mac68k/kcore.h
 ./usr/include/mac68k/keyboard.h
 ./usr/include/mac68k/limits.h
+./usr/include/mac68k/lock.h
 ./usr/include/mac68k/mutex.h
 ./usr/include/mac68k/param.h
 ./usr/include/mac68k/pcb.h
