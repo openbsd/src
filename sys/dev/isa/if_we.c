@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.18 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.19 2007/05/08 15:56:56 deraadt Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -135,7 +135,6 @@ struct cfdriver we_cd = {
 
 const char *we_params(bus_space_tag_t, bus_space_handle_t, u_int8_t *,
 	    bus_size_t *, int *, int *);
-void	we_set_media(struct we_softc *, int);
 
 void	we_media_init(struct dp8390_softc *);
 
@@ -143,7 +142,6 @@ int	we_mediachange(struct dp8390_softc *);
 void	we_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 
 void	we_recv_int(struct dp8390_softc *);
-void	we_init_card(struct dp8390_softc *);
 int	we_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
 int	we_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
 void	we_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
@@ -787,7 +785,7 @@ we_mediachange(struct dp8390_softc *sc)
 	/*
 	 * Current media is already set up.  Just reset the interface
 	 * to let the new value take hold.  The new media will be
-	 * set up in we_init_card() called via dp8390_init().
+	 * set up in dp8390_init().
 	 */
 	dp8390_reset(sc);
 	return (0);
@@ -802,47 +800,6 @@ we_mediastatus(struct dp8390_softc *sc, struct ifmediareq *ifmr)
 	 * The currently selected media is always the active media.
 	 */
 	ifmr->ifm_active = ifm->ifm_cur->ifm_media;
-}
-
-void
-we_init_card(struct dp8390_softc *sc)
-{
-	struct we_softc *wsc = (struct we_softc *)sc;
-	struct ifmedia *ifm = &sc->sc_media;
-
-	we_set_media(wsc, ifm->ifm_cur->ifm_media);
-}
-
-void
-we_set_media(struct we_softc *wsc, int media)
-{
-	struct dp8390_softc *sc = &wsc->sc_dp8390;
-	bus_space_tag_t asict = wsc->sc_asict;
-	bus_space_handle_t asich = wsc->sc_asich;
-	u_int8_t hwr, gcr, irr;
-
-	if (sc->is790) {
-		hwr = bus_space_read_1(asict, asich, WE790_HWR);
-		bus_space_write_1(asict, asich, WE790_HWR,
-		    hwr | WE790_HWR_SWH);
-		gcr = bus_space_read_1(asict, asich, WE790_GCR);
-		if (IFM_SUBTYPE(media) == IFM_10_2)
-			gcr |= WE790_GCR_GPOUT;
-		else
-			gcr &= ~WE790_GCR_GPOUT;
-		bus_space_write_1(asict, asich, WE790_GCR,
-		    gcr | WE790_GCR_LIT);
-		bus_space_write_1(asict, asich, WE790_HWR,
-		    hwr & ~WE790_HWR_SWH);
-		return;
-	}
-
-	irr = bus_space_read_1(wsc->sc_asict, wsc->sc_asich, WE_IRR);
-	if (IFM_SUBTYPE(media) == IFM_10_2)
-		irr |= WE_IRR_OUT2;
-	else
-		irr &= ~WE_IRR_OUT2;
-	bus_space_write_1(wsc->sc_asict, wsc->sc_asich, WE_IRR, irr);
 }
 
 const char *
