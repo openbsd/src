@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.98 2007/05/08 13:40:42 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.99 2007/05/08 14:07:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -600,6 +600,7 @@ void			tht_rxf_drain(struct tht_softc *);
 void			tht_rxd(struct tht_softc *);
 
 void			tht_up(struct tht_softc *);
+void			tht_iff(struct tht_softc *);
 void			tht_down(struct tht_softc *);
 
 /* ifmedia operations */
@@ -883,7 +884,7 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
-				/* multicast/promisc change */;
+				tht_iff(sc);
 			else
 				tht_up(sc);
 		} else {
@@ -958,11 +959,10 @@ tht_up(struct tht_softc *sc)
 
 	tht_lladdr_write(sc);
 
-	tht_write(sc, THT_REG_RX_FLT, THT_REG_RX_FLT_OSEN |
-	    THT_REG_RX_FLT_AM | THT_REG_RX_FLT_AB | THT_REG_RX_FLT_PRM_ALL);
-
 	/* populate rxf fifo */
 	tht_rxf_fill(sc, 1);
+
+	tht_iff(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -986,6 +986,20 @@ free_rx_list:
 	tht_pkt_free(sc, &sc->sc_rx_list);
 free_tx_list:
 	tht_pkt_free(sc, &sc->sc_tx_list);
+}
+
+void
+tht_iff(struct tht_softc *sc)
+{
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	u_int32_t			rxf;
+
+	rxf = THT_REG_RX_FLT_OSEN | THT_REG_RX_FLT_AM | THT_REG_RX_FLT_AB;
+
+	if (ifp->if_flags & IFF_PROMISC)
+		rxf |= THT_REG_RX_FLT_PRM_ALL;
+
+	tht_write(sc, THT_REG_RX_FLT, rxf);
 }
 
 void
