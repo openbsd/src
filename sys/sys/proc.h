@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.96 2007/04/14 11:06:43 espie Exp $	*/
+/*	$OpenBSD: proc.h,v 1.97 2007/05/08 11:16:31 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -311,13 +311,14 @@ struct proc {
 #define	P_THREAD	0x4000000	/* Only a thread, not a real process */
 #define	P_IGNEXITRV	0x8000000	/* For thread kills */
 #define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */
+#define P_STOPPED	0x20000000	/* Just stopped. */
 
 #define	P_BITS \
     ("\20\01ADVLOCK\02CTTY\04NOCLDSTOP\05PPWAIT\06PROFIL\07SELECT" \
      "\010SINTR\011SUGID\012SYSTEM\013TIMEOUT\014TRACED\015WAITED\016WEXIT" \
      "\017EXEC\020PWEUPC\022SSTEP\023SUGIDEXEC\024NOCLDWAIT" \
      "\025NOZOMBIE\026INEXEC\027SYSTRACE\030CONTINUED\032BIGLOCK" \
-     "\033THREAD\034IGNEXITRV\035SOFTDEP")
+     "\033THREAD\034IGNEXITRV\035SOFTDEP\036STOPPED")
 
 /* Macro to compute the exit signal to be delivered. */
 #define P_EXITSIG(p) \
