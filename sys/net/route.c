@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.82 2007/05/08 18:46:37 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.83 2007/05/08 20:57:19 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -138,7 +138,6 @@ u_int8_t		   rtafidx_max;
 u_int			   rtbl_id_max = 0;
 
 int			rttrash;	/* routes not in table but not freed */
-struct sockaddr		wildcard;	/* zero cookie for wildcard searches */
 
 struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
