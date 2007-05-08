@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.6 2002/12/17 07:10:25 mickey Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.7 2007/05/08 20:51:58 robert Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -51,6 +51,7 @@ struct field {
 #define FMT_DPYTYPE	103		/* display type */
 #define FMT_KBDENC	104		/* keyboard encoding */
 #define FMT_KBMAP	105		/* keyboard map */
+#define FMT_SCALE	106		/* wsmouse scale */
 	int format;
 #define FLG_RDONLY	0x0001		/* variable cannot be modified */
 #define FLG_WRONLY	0x0002		/* variable cannot be displayed */

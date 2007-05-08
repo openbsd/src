@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.34 2006/07/24 22:19:52 miod Exp $ */
+/*	$OpenBSD: util.c,v 1.35 2007/05/08 20:51:58 robert Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -41,6 +41,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>
 #include <err.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -50,6 +51,7 @@
 
 extern struct wskbd_map_data kbmap;	/* from keyboard.c */
 extern struct wskbd_map_data newkbmap;	/* from map_parse.y */
+extern struct wsmouse_calibcoords wmcoords; 	/* from mouse.c */
 
 struct nameint {
 	int value;
@@ -270,6 +272,11 @@ pr_field(const char *pre, struct field *f, const char *sep)
 	case FMT_KBMAP:
 		print_kmap((struct wskbd_map_data *) f->valp);
 		break;
+	case FMT_SCALE:
+		printf("%d,%d,%d,%d,%d,%d,%d", wmcoords.minx, wmcoords.maxx,
+		    wmcoords.miny, wmcoords.maxy, wmcoords.swapxy,
+		    wmcoords.resx, wmcoords.resy);
+		break;
 	default:
 		errx(1, "internal error: pr_field: no format %d", f->format);
 		break;
@@ -371,6 +378,55 @@ rd_field(struct field *f, char *val, int merge)
 		bcopy(newkbmap.map, kbmap.map,
 		      kbmap.maplen*sizeof(struct wscons_keymap));
 		break;
+	case FMT_SCALE:
+	{
+		const char *errstr = 0;
+
+		/* Unspecified values default to 0. */
+		bzero(&wmcoords, sizeof(wmcoords));
+		val = (void *)strtok(val, ",");
+		if (val != NULL) {
+			wmcoords.minx = (int)strtonum(val,
+			    0, 32768, &errstr);
+			val = (void *)strtok(NULL, ",");
+		}
+		if (!errstr && val != NULL) {
+			wmcoords.maxx = (int)strtonum(val,
+			    0, 32768, &errstr);
+			val = (void *)strtok(NULL, ",");
+		}
+		if (!errstr && val != NULL) {
+			wmcoords.miny = (int)strtonum(val,
+			    0, 32768, &errstr);
+			val = (void *)strtok(NULL, ",");
+		}
+		if (!errstr && val != NULL) {
+			wmcoords.maxy = (int)strtonum(val,
+			    0, 32768, &errstr);
+			val = (void *)strtok(NULL, ",");
+		}
+		if (!errstr && val != NULL) {
+			wmcoords.swapxy = (int)strtonum(val,
+			    0, 32768, &errstr);
+			val = (void *)strtok(NULL, ",");
+		}
+		if (!errstr && val != NULL) {
+			wmcoords.resx = (int)strtonum(val,
+			    0, 32768, &errstr);
+			val = (void *)strtok(NULL, ",");
+		}
+		if (!errstr && val != NULL) {
+			wmcoords.resy = (int)strtonum(val,
+			    0, 32768, &errstr);
+			val = (void *)strtok(NULL, ",");
+		}
+		if (errstr)
+			errx(1, "calibration value is %s", errstr);
+		if (val != NULL)
+			errx(1, "too many calibration values");
+
+		break;
+	}
 	default:
 		errx(1, "internal error: rd_field: no format %d", f->format);
 		break;
