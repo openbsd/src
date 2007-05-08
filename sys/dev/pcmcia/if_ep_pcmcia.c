@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.35 2006/06/17 18:01:52 brad Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.36 2007/05/08 20:25:17 deraadt Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -117,11 +117,13 @@ int	ep_pcmcia_detach(struct device *, int);
 int	ep_pcmcia_activate(struct device *, enum devact);
 
 int	ep_pcmcia_get_enaddr(struct pcmcia_tuple *, void *);
+#ifdef notyet
 int	ep_pcmcia_enable(struct ep_softc *);
 void	ep_pcmcia_disable(struct ep_softc *);
+void	ep_pcmcia_disable1(struct ep_softc *);
+#endif
 
 int	ep_pcmcia_enable1(struct ep_softc *);
-void	ep_pcmcia_disable1(struct ep_softc *);
 
 struct ep_pcmcia_softc {
 	struct ep_softc sc_ep;			/* real "ep" softc */
@@ -197,6 +199,7 @@ ep_pcmcia_match(parent, match, aux)
 	return (0);
 }
 
+#ifdef notdef
 int
 ep_pcmcia_enable(sc)
 	struct ep_softc *sc;
@@ -215,6 +218,7 @@ ep_pcmcia_enable(sc)
 
 	return (ep_pcmcia_enable1(sc));
 }
+#endif
 
 int
 ep_pcmcia_enable1(sc)
@@ -245,6 +249,7 @@ ep_pcmcia_enable1(sc)
 	return (ret);
 }
 
+#ifdef notyet
 void
 ep_pcmcia_disable(sc)
 	struct ep_softc *sc;
@@ -263,6 +268,7 @@ ep_pcmcia_disable1(sc)
 
 	pcmcia_function_disable(psc->sc_pf);
 }
+#endif
 
 void
 ep_pcmcia_attach(parent, self, aux)
