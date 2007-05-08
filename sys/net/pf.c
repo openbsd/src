@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.527 2007/02/22 15:23:23 pyr Exp $ */
+/*	$OpenBSD: pf.c,v 1.528 2007/05/08 23:31:20 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6248,7 +6248,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
-	int			 off, terminal = 0, dirndx;
+	int			 off, terminal = 0, dirndx, rh_cnt = 0;
 
 	if (!pf_status.running)
 		return (PF_PASS);
@@ -6327,60 +6327,23 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			goto done;
 		case IPPROTO_ROUTING: {
 			struct ip6_rthdr rthdr;
-			struct ip6_rthdr0 rthdr0;
-			struct in6_addr finaldst;
-			struct ip6_hdr *ip6;
 
+			if (rh_cnt++) {
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: IPv6 more than one rthdr\n"));
+				action = PF_DROP;
+				REASON_SET(&reason, PFRES_IPOPTIONS);
+				log = 1;
+				goto done;
+			}
 			if (!pf_pull_hdr(m, off, &rthdr, sizeof(rthdr), NULL,
 			    &reason, pd.af)) {
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: IPv6 short rthdr\n"));
 				action = PF_DROP;
+				REASON_SET(&reason, PFRES_SHORT);
 				log = 1;
 				goto done;
-			}
-			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0) {
-				if (!pf_pull_hdr(m, off, &rthdr0,
-				    sizeof(rthdr0), NULL, &reason, pd.af)) {
-					DPFPRINTF(PF_DEBUG_MISC,
-					    ("pf: IPv6 short rthdr0\n"));
-					action = PF_DROP;
-					log = 1;
-					goto done;
-				}
-				if (rthdr0.ip6r0_segleft != 0) {
-					if (!pf_pull_hdr(m, off +
-					    sizeof(rthdr0) +
-					    rthdr0.ip6r0_len * 8 -
-					    sizeof(finaldst), &finaldst,
-					    sizeof(finaldst), NULL,
-					    &reason, pd.af)) {
-						DPFPRINTF(PF_DEBUG_MISC,
-						    ("pf: IPv6 short rthdr0\n"));
-						action = PF_DROP;
-						log = 1;
-						goto done;
-					}
-
-					n = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
-					if (!n) {
-						DPFPRINTF(PF_DEBUG_MISC,
-						    ("pf: mbuf shortage\n"));
-						action = PF_DROP;
-						log = 1;
-						goto done;
-					}
-					n = m_pullup(n, sizeof(struct ip6_hdr));
-					if (!n) {
-						DPFPRINTF(PF_DEBUG_MISC,
-						    ("pf: mbuf shortage\n"));
-						action = PF_DROP;
-						log = 1;
-						goto done;
-					}
-					ip6 = mtod(n, struct ip6_hdr *);
-					ip6->ip6_dst = finaldst;
-				}
 			}
 			/* FALLTHROUGH */
 		}
@@ -6542,7 +6505,15 @@ done:
 		n = NULL;
 	}
 
-	/* XXX handle IPv6 options, if not allowed.  not implemented. */
+	/* handle dangerous IPv6 extension headers. */
+	if (action == PF_PASS && rh_cnt &&
+	    !((s && s->allow_opts) || r->allow_opts)) {
+		action = PF_DROP;
+		REASON_SET(&reason, PFRES_IPOPTIONS);
+		log = 1;
+		DPFPRINTF(PF_DEBUG_MISC,
+		    ("pf: dropping packet with dangerous v6 headers\n"));
+	}
 
 	if ((s && s->tag) || r->rtableid)
 		pf_tag_packet(m, pd.pf_mtag, s ? s->tag : 0, r->rtableid);
