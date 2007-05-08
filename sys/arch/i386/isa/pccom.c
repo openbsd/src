@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.59 2007/05/08 21:18:18 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.60 2007/05/08 21:28:11 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ tcflag_t comconscflag = TTYDEF_CFLAG;
 
 int	commajor;
 int	comsopen = 0;
+int	comevents = 0;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -411,6 +412,68 @@ comattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	com_attach_subr(sc);
+}
+
+int
+com_detach(struct device *self, int flags)
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int maj, mn;
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == comopen)
+			break;
+
+	/* Nuke the vnodes for any open instances. */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* XXX a symbolic constant for the cua bit would be nicer. */
+	mn |= 0x80;
+	vdevgone(maj, mn, mn, VCHR);
+
+	/* Detach and free the tty. */
+	if (sc->sc_tty) {
+		ttyfree(sc->sc_tty);
+	}
+
+	timeout_del(&sc->sc_dtr_tmo);
+	timeout_del(&sc->sc_diag_tmo);
+
+	return (0);
+}
+
+int
+com_activate(struct device *self, enum devact act)
+{
+	struct com_softc *sc = (struct com_softc *)self;
+	int s, rv = 0;
+
+	/* XXX splserial, when we get that.  */
+	s = spltty();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef KGDB
+		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
+#else
+		if (sc->sc_hwflags & COM_HW_CONSOLE) {
+#endif /* KGDB */
+			rv = EBUSY;
+			break;
+		}
+
+		if (sc->disable != NULL && sc->enabled != 0) {
+			(*sc->disable)(sc);
+			sc->enabled = 0;
+		}
+		break;
+	}
+	splx(s);
+	return (rv);
 }
 
 int

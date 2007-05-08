@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.29 2007/05/08 21:18:18 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.30 2007/05/08 21:28:11 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -48,33 +48,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/selinfo.h>
 #include <sys/tty.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/vnode.h>
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pcmcia/pcmciareg.h>
-
-#include <machine/bus.h>
-#if defined(__sparc64__) || !defined(__sparc__)
-#include <machine/intr.h>
-#endif
-
-#if !defined(__sparc__) || defined(__sparc64__)
-#define	COM_CONSOLE
-#include <dev/cons.h>
-#endif
 
 #include "com.h"
 #ifdef i386
@@ -82,7 +62,12 @@
 #endif
 
 #include <dev/ic/comreg.h>
+#if NPCCOM > 0
+#include <i386/isa/pccomvar.h>
+#endif
+#if NCOM > 0
 #include <dev/ic/comvar.h>
+#endif
 #include <dev/ic/ns16550reg.h>
 
 #define	com_lcr		com_cfcr
@@ -114,10 +99,6 @@ void	com_cardbus_disable(struct com_softc *);
 struct csdev *com_cardbus_find_csdev(struct cardbus_attach_args *);
 int	com_cardbus_gofigure(struct cardbus_attach_args *,
     struct com_cardbus_softc *);
-
-int	com_activate(struct device *, enum devact);
-int	com_detach(struct device *, int);
-int	comopen(dev_t dev, int flag, int mode, struct proc *p);
 
 #if NCOM_CARDBUS
 struct cfattach com_cardbus_ca = {
@@ -388,78 +369,6 @@ com_cardbus_disable(struct com_softc *sc)
 
 	cardbus_intr_disestablish(cc, cf, csc->cc_ih);
 	Cardbus_function_disable(csc->cc_ct);
-}
-
-int
-com_detach(self, flags)
-	struct device *self;
-	int flags;
-{
-	struct com_softc *sc = (struct com_softc *)self;
-	int maj, mn;
-
-	sc->sc_swflags |= COM_SW_DEAD;
-
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == comopen)
-			break;
-
-	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
-	vdevgone(maj, mn, mn, VCHR);
-
-	/* XXX a symbolic constant for the cua bit would be nicer. */
-	mn |= 0x80;
-	vdevgone(maj, mn, mn, VCHR);
-
-	/* Detach and free the tty. */
-	if (sc->sc_tty) {
-		ttyfree(sc->sc_tty);
-	}
-
-	timeout_del(&sc->sc_dtr_tmo);
-	timeout_del(&sc->sc_diag_tmo);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_disestablish(sc->sc_si);
-#else
-	timeout_del(&sc->sc_comsoft_tmo);
-#endif
-
-	return (0);
-}
-
-int
-com_activate(self, act)
-	struct device *self;
-	enum devact act;
-{
-	struct com_softc *sc = (struct com_softc *)self;
-	int s, rv = 0;
-
-	s = spltty();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
-	case DVACT_DEACTIVATE:
-#ifdef KGDB
-		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
-#else
-		if (sc->sc_hwflags & COM_HW_CONSOLE) {
-#endif /* KGDB */
-			rv = EBUSY;
-			break;
-		}
-
-		if (sc->disable != NULL && sc->enabled != 0) {
-			(*sc->disable)(sc);
-			sc->enabled = 0;
-		}
-		break;
-	}
-	splx(s);
-	return (rv);
 }
 
 int
