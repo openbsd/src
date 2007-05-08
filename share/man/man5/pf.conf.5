@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.378 2007/04/14 07:24:18 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.379 2007/05/08 23:38:12 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1688,13 +1688,14 @@ pass all tos 0x10
 pass all tos 16
 .Ed
 .It Ar allow-opts
-By default, packets which contain IP options are blocked.
+By default, IPv4 packets with IP options or IPv6 packets with routing
+extension headers are blocked.
 When
 .Ar allow-opts
 is specified for a
 .Ar pass
 rule, packets that pass the filter based on that rule (last matching)
-do so even if they contain IP options.
+do so even if they contain IP options or routing extension headers.
 For packets that match state, the rule that initially created the
 state is used.
 The implicit
