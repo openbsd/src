@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.124 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.125 2007/05/08 18:50:39 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -96,10 +96,12 @@ struct cfdriver scsibus_cd = {
 	NULL, "scsibus", DV_DULL
 };
 
+#ifdef SCSIDEBUG
 int scsidebug_buses = SCSIDEBUG_BUSES;
 int scsidebug_targets = SCSIDEBUG_TARGETS;
 int scsidebug_luns = SCSIDEBUG_LUNS;
 int scsidebug_level = SCSIDEBUG_LEVEL;
+#endif
 
 int scsi_autoconf = SCSI_AUTOCONF;
 
