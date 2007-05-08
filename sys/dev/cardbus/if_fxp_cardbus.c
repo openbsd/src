@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.19 2007/05/08 20:33:07 deraadt Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.20 2007/05/08 20:43:07 deraadt Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -226,6 +226,8 @@ fxp_cardbus_setup(struct fxp_softc *sc)
 	cardbus_conf_write(cc, cf, csc->ct_tag, CARDBUS_COMMAND_STATUS_REG, command);
 }
 
+int fxp_detach(struct fxp_softc *);
+
 int
 fxp_detach(struct fxp_softc *sc)
 {
@@ -251,8 +253,6 @@ fxp_detach(struct fxp_softc *sc)
 
 	return (0);
 }
-
-int fxp_detach(struct fxp_softc *);
 
 int
 fxp_cardbus_detach(struct device *self, int flags)

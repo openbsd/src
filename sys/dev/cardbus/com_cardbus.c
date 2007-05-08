@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.27 2007/05/08 20:33:07 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.28 2007/05/08 20:43:07 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -48,13 +48,33 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/selinfo.h>
 #include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pcmcia/pcmciareg.h>
+
+#include <machine/bus.h>
+#if defined(__sparc64__) || !defined(__sparc__)
+#include <machine/intr.h>
+#endif
+
+#if !defined(__sparc__) || defined(__sparc64__)
+#define	COM_CONSOLE
+#include <dev/cons.h>
+#endif
 
 #include "com.h"
 #ifdef i386
@@ -62,12 +82,7 @@
 #endif
 
 #include <dev/ic/comreg.h>
-#if NPCCOM > 0
-#include <i386/isa/pccomvar.h>
-#endif
-#if NCOM > 0
 #include <dev/ic/comvar.h>
-#endif
 #include <dev/ic/ns16550reg.h>
 
 #define	com_lcr		com_cfcr
@@ -371,6 +386,9 @@ com_cardbus_disable(struct com_softc *sc)
 	Cardbus_function_disable(csc->cc_ct);
 }
 
+int	com_detach(struct device *, int);
+int	comopen(dev_t dev, int flag, int mode, struct proc *p);
+
 int
 com_detach(self, flags)
 	struct device *self;
@@ -409,8 +427,6 @@ com_detach(self, flags)
 
 	return (0);
 }
-
-int	com_detach(struct device *, int);
 
 int
 com_cardbus_detach(struct device *self, int flags)
