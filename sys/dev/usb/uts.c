@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.5 2007/04/26 17:00:28 miod Exp $ */
+/*	$OpenBSD: uts.c,v 1.6 2007/05/08 20:48:03 robert Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -52,6 +51,15 @@
 
 #define UTS_CONFIG_INDEX 0
 
+struct tsscale {
+	int	minx, maxx;
+	int	miny, maxy;
+	int	swapxy;
+	int	resx, resy;
+} def_scale = {
+	67, 1931, 102, 1937, 0, 1024, 768
+};
+ 
 struct uts_softc {
 	USBBASEDEVICE		sc_dev;
 	usbd_device_handle	sc_udev;
@@ -72,20 +80,9 @@ struct uts_softc {
 	int	sc_dying;
 	int	sc_oldx;
 	int	sc_oldy;
-};
+	int	sc_rawmode;
 
-/* Settable via sysctl */
-int	uts_rawmode;
-struct utsscale {
-	int	ts_minx;
-	int	ts_maxx;
-	int	ts_miny;
-	int	ts_maxy;
-	int	ts_swapxy;
-	int	ts_resx;
-	int	ts_resy;
-} uts_scale = {
-	67, 1931, 102, 1937, 0, 1024, 768
+	struct tsscale sc_tsscale;
 };
 
 struct uts_pos {
@@ -141,6 +138,9 @@ USB_ATTACH(uts)
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
 	sc->sc_enabled = sc->sc_isize = 0;
+
+	/* Copy the default scalue values to each softc */
+	bcopy(&def_scale, &sc->sc_tsscale, sizeof(sc->sc_tsscale));
 
 	/* Display device info string */
 	USB_ATTACH_SETUP;
@@ -315,20 +315,59 @@ uts_disable(void *v)
 Static int
 uts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *l)
 {
+	int error = 0;
+	struct uts_softc *sc = v;
+	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
+
+	DPRINTF(("uts_ioctl(%d, '%c', %d)\n",
+	    IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd & 0xff));
+
 	switch (cmd) {
+	case WSMOUSEIO_SCALIBCOORDS:
+		if (!(wsmc->minx >= 0 && wsmc->maxx >= 0 &&
+		    wsmc->miny >= 0 && wsmc->maxy >= 0 &&
+		    wsmc->resx >= 0 && wsmc->resy >= 0 &&
+		    wsmc->minx < 32768 && wsmc->maxx < 32768 &&
+		    wsmc->miny < 32768 && wsmc->maxy < 32768 &&
+		    wsmc->resx < 32768 && wsmc->resy < 32768 &&
+		    wsmc->swapxy >= 0 && wsmc->swapxy < 1 &&
+		    wsmc->samplelen >= 0 && wsmc->samplelen <= 1))
+			return (EINVAL);
+
+		sc->sc_tsscale.minx = wsmc->minx;
+		sc->sc_tsscale.maxx = wsmc->maxx;
+		sc->sc_tsscale.miny = wsmc->miny;
+		sc->sc_tsscale.maxy = wsmc->maxy;
+		sc->sc_tsscale.swapxy = wsmc->swapxy;
+		sc->sc_tsscale.resx = wsmc->resx;
+		sc->sc_tsscale.resy = wsmc->resy;
+		sc->sc_rawmode = wsmc->samplelen; 
+		break;
+	case WSMOUSEIO_GCALIBCOORDS:
+		wsmc->minx = sc->sc_tsscale.minx;
+		wsmc->maxx = sc->sc_tsscale.maxx;
+		wsmc->miny = sc->sc_tsscale.miny;
+		wsmc->maxy = sc->sc_tsscale.maxy;
+		wsmc->swapxy = sc->sc_tsscale.swapxy;
+		wsmc->resx = sc->sc_tsscale.resx;
+		wsmc->resy = sc->sc_tsscale.resy;
+		wsmc->samplelen = sc->sc_rawmode;
+		break;
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		return (0);
+		break;
+	default:
+		error = ENOTTY;
+		break;
 	}
 
-	return (-1);
+	return (error);
 }
 
 struct uts_pos
 uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 {
 	struct uts_softc *sc = addr;
-	struct utsscale *tsp = &uts_scale;
 	u_char *p = sc->sc_ibuf;
 	int down, x, y;
 
@@ -353,7 +392,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 
 	/* x/y values are not reliable if there is no pressure */
 	if (down) {
-		if (tsp->ts_swapxy) {	/* Swap X/Y-Axis */
+		if (sc->sc_tsscale.swapxy) {	/* Swap X/Y-Axis */
 			tp.y = x;
 			tp.x = y;
 		} else {
@@ -361,12 +400,14 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 			tp.y = y;
 		}
 	
-		if (!uts_rawmode) {
+		if (!sc->sc_rawmode) {
 			/* Scale down to the screen resolution. */
-			tp.x = ((tp.x - tsp->ts_minx) * tsp->ts_resx) /
-			    (tsp->ts_maxx - tsp->ts_minx);
-			tp.y = ((tp.y - tsp->ts_miny) * tsp->ts_resy) /
-			    (tsp->ts_maxy - tsp->ts_miny);
+			tp.x = ((tp.x - sc->sc_tsscale.minx) *
+			    sc->sc_tsscale.resx) /
+			    (sc->sc_tsscale.maxx - sc->sc_tsscale.minx);
+			tp.y = ((tp.y - sc->sc_tsscale.miny) *
+			    sc->sc_tsscale.resy) /
+			    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny);
 		}
 		tp.z = 1;
 	} else {
