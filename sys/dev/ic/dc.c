@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.96 2006/08/10 20:52:54 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.97 2007/05/08 00:04:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1857,31 +1857,6 @@ hasmac:
 
 fail:
 	return;
-}
-
-int
-dc_detach(sc)
-	struct dc_softc *sc;
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
-		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-
-	if (sc->dc_srom)
-		free(sc->dc_srom, M_DEVBUF);
-
-	timeout_del(&sc->dc_tick_tmo);
-
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-
-	if (sc->sc_dhook != NULL)
-		shutdownhook_disestablish(sc->sc_dhook);
-	if (sc->sc_pwrhook != NULL)
-		powerhook_disestablish(sc->sc_pwrhook);
-
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.23 2006/10/12 16:35:52 grange Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.24 2007/05/08 00:04:47 deraadt Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,31 @@ dc_cardbus_attach(parent, self, aux)
 
 	sc->dc_revision = PCI_REVISION(ca->ca_class);
 	dc_attach(sc);
+}
+
+int
+dc_detach(sc)
+	struct dc_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	if (sc->dc_srom)
+		free(sc->dc_srom, M_DEVBUF);
+
+	timeout_del(&sc->dc_tick_tmo);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	if (sc->sc_dhook != NULL)
+		shutdownhook_disestablish(sc->sc_dhook);
+	if (sc->sc_pwrhook != NULL)
+		powerhook_disestablish(sc->sc_pwrhook);
+
+	return (0);
 }
 
 int
