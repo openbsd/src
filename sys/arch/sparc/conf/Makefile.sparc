@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.37 2007/05/08 07:23:18 art Exp $
+#	$OpenBSD: Makefile.sparc,v 1.38 2007/05/08 11:33:31 art Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -58,7 +58,7 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -e start -Ttext F8004000
 STRIPFLAGS=	-g -X -x
 
-HOSTCC?=	${CC}
+HOSTCC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
@@ -127,7 +127,7 @@ LINKFLAGS+=	-S -x
 %LOAD
 
 assym.h: $S/kern/genassym.sh ${SPARC}/sparc/genassym.cf Makefile
-	sh $S/kern/genassym.sh ${HOSTCC} ${CPPFLAGS} \
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
 	    ${PARAM} < ${SPARC}/sparc/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
