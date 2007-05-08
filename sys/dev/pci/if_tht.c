@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.97 2007/05/08 13:35:45 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.98 2007/05/08 13:40:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -232,6 +232,11 @@ int thtdebug = THT_D_TX | THT_D_RX | THT_D_INTR;
 #define THT_REG_RX_UNC_MAC0	0x1250 /* MAC Address low word */
 #define THT_REG_RX_UNC_MAC1	0x1260 /* MAC Address mid word */
 #define THT_REG_RX_UNC_MAC2	0x1270 /* MAC Address high word */
+#define THT_REG_RX_MAC_MCST0(_m) (0x1a80 + (_m)*8)
+#define THT_REG_RX_MAC_MCST1(_m) (0x1a84 + (_m)*8)
+#define  THT_REG_RX_MAC_MCST_CNT	15
+#define THT_REG_RX_MCST_HASH	0x1a00 /* imperfect multicast filter hash */
+#define  THT_REG_RX_MCST_HASH_SIZE	(256 / NBBY)
 /* OptiStrata Debug Registers */
 #define THT_REG_VPC		0x2300 /* Program Counter */
 #define THT_REG_VLI		0x2310 /* Last Interrupt */
