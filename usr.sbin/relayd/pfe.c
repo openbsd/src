@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.20 2007/03/17 22:46:41 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.21 2007/05/09 13:05:42 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -446,9 +446,9 @@ disable_service(struct ctl_conn *c, struct ctl_id *id)
 		service = service_findbyname(env, id->name);
 	else
 		service = service_find(env, id->id);
-	id->id = service->id;
 	if (service == NULL)
 		return (-1);
+	id->id = service->id;
 
 	if (service->flags & F_DISABLE)
 		return (0);
@@ -472,9 +472,9 @@ enable_service(struct ctl_conn *c, struct ctl_id *id)
 		service = service_findbyname(env, id->name);
 	else
 		service = service_find(env, id->id);
-	id->id = service->id;
 	if (service == NULL)
 		return (-1);
+	id->id = service->id;
 
 	if (!(service->flags & F_DISABLE))
 		return (0);
@@ -509,9 +509,9 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 		table = table_findbyname(env, id->name);
 	else
 		table = table_find(env, id->id);
-	id->id = table->id;
 	if (table == NULL)
 		return (-1);
+	id->id = table->id;
 	if ((service = service_find(env, table->serviceid)) == NULL)
 		fatalx("disable_table: desynchronised");
 
@@ -539,9 +539,9 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 		table = table_findbyname(env, id->name);
 	else
 		table = table_find(env, id->id);
-	id->id = table->id;
 	if (table == NULL)
 		return (-1);
+	id->id = table->id;
 
 	if ((service = service_find(env, table->serviceid)) == NULL)
 		fatalx("enable_table: desynchronised");
@@ -571,9 +571,9 @@ disable_host(struct ctl_conn *c, struct ctl_id *id)
 		host = host_findbyname(env, id->name);
 	else
 		host = host_find(env, id->id);
-	id->id = host->id;
 	if (host == NULL)
 		return (-1);
+	id->id = host->id;
 
 	if (host->flags & F_DISABLE)
 		return (0);
@@ -613,9 +613,9 @@ enable_host(struct ctl_conn *c, struct ctl_id *id)
 		host = host_findbyname(env, id->name);
 	else
 		host = host_find(env, id->id);
-	id->id = host->id;
 	if (host == NULL)
 		return (-1);
+	id->id = host->id;
 
 	if (!(host->flags & F_DISABLE))
 		return (0);
