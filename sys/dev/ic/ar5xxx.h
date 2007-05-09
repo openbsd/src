@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.40 2007/04/13 14:44:41 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.41 2007/05/09 16:41:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1941,9 +1941,6 @@ struct ath_hal		*ath_hal_attach(u_int16_t, void *, bus_space_tag_t,
 
 u_int16_t		 ath_hal_computetxtime(struct ath_hal *,
     const HAL_RATE_TABLE *, u_int32_t, u_int16_t, HAL_BOOL);
-
-u_int			 ath_hal_mhz2ieee(u_int, u_int);
-u_int			 ath_hal_ieee2mhz(u_int, u_int);
 
 HAL_BOOL		 ath_hal_init_channels(struct ath_hal *, HAL_CHANNEL *,
     u_int, u_int *, u_int16_t, HAL_BOOL, HAL_BOOL);

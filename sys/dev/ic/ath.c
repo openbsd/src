@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.62 2007/04/13 14:44:41 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.63 2007/05/09 16:41:14 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -3057,7 +3057,7 @@ ath_getchannels(struct ath_softc *sc, HAL_BOOL outdoor, HAL_BOOL xchanmode)
 	 */
 	for (i = 0; i < nchan; i++) {
 		HAL_CHANNEL *c = &chans[i];
-		ix = ath_hal_mhz2ieee(c->channel, c->channelFlags);
+		ix = ieee80211_mhz2ieee(c->channel, c->channelFlags);
 		if (ix > IEEE80211_CHAN_MAX) {
 			printf("%s: bad hal channel %u (%u/%x) ignored\n",
 				ifp->if_xname, ix, c->channel, c->channelFlags);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.40 2007/04/13 14:44:41 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.41 2007/05/09 16:41:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -367,18 +367,6 @@ ath_hal_computetxtime(struct ath_hal *hal, const HAL_RATE_TABLE *rates,
 	}
 
 	return (value);
-}
-
-u_int
-ath_hal_mhz2ieee(u_int mhz, u_int flags)
-{
-	return (ieee80211_mhz2ieee(mhz, flags));
-}
-
-u_int
-ath_hal_ieee2mhz(u_int ieee, u_int flags)
-{
-	return (ieee80211_ieee2mhz(ieee, flags));
 }
 
 HAL_BOOL
@@ -1224,7 +1212,7 @@ ar5k_ar5111_channel(struct ath_hal *hal, HAL_CHANNEL *channel)
 	 * Set the channel on the AR5111 radio
 	 */
 	data0 = data1 = 0;
-	ath_channel = ieee_channel = ath_hal_mhz2ieee(channel->c_channel,
+	ath_channel = ieee_channel = ieee80211_mhz2ieee(channel->c_channel,
 	    channel->c_channel_flags);
 
 	if (channel->c_channel_flags & IEEE80211_CHAN_2GHZ) {
