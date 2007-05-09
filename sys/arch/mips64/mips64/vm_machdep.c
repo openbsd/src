@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 2007/04/26 17:04:33 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 2007/05/09 19:21:49 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -98,7 +98,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb = &p2->p_addr->u_pcb;
 	*pcb = p1->p_addr->u_pcb;
 
-	pcb->pcb_context.val[11] = (register_t)pcb->pcb_regs.sr;
+	pcb->pcb_context.val[12] = idle_mask & IC_INT_MASK;
+	pcb->pcb_context.val[11] = (pcb->pcb_regs.sr & ~SR_INT_MASK) |
+	    ((idle_mask << 8) & SR_INT_MASK);
 	pcb->pcb_context.val[10] = (register_t)proc_trampoline;
 	pcb->pcb_context.val[8] = (register_t)(caddr_t)pcb + USPACE - 64;
 	pcb->pcb_context.val[0] = (register_t)func;
