@@ -1,4 +1,4 @@
-.\"	$OpenBSD: microtime.9,v 1.9 2007/04/03 06:37:37 jasper Exp $
+.\"	$OpenBSD: microtime.9,v 1.10 2007/05/09 19:31:14 claudio Exp $
 .\"     $NetBSD: microtime.9,v 1.2 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,9 +48,7 @@
 .Nm nanouptime ,
 .Nm getnanouptime ,
 .Nm bintime ,
-.Nm getbintime ,
 .Nm binuptime ,
-.Nm getbinuptime
 .Nd system clock
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
@@ -91,15 +89,7 @@
 .Fa "struct bintime *tv"
 .Fc
 .Ft void
-.Fo "getbintime"
-.Fa "struct bintime *tv"
-.Fc
-.Ft void
 .Fo "binuptime"
-.Fa "struct bintime *tv"
-.Fc
-.Ft void
-.Fo "getbinuptime"
 .Fa "struct bintime *tv"
 .Fc
 .Sh DESCRIPTION
