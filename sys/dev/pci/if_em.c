@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.168 2007/05/09 17:32:59 kettenis Exp $ */
+/* $OpenBSD: if_em.c,v 1.169 2007/05/09 18:02:46 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -156,8 +156,10 @@ int  em_allocate_transmit_structures(struct em_softc *);
 void em_rxeof(struct em_softc *, int);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
+#ifdef EM_CSUM_OFFLOAD
 void em_transmit_checksum_setup(struct em_softc *, struct mbuf *,
 				u_int32_t *, u_int32_t *);
+#endif
 void em_set_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
 void em_print_hw_stats(struct em_softc *);
@@ -2020,6 +2022,7 @@ em_free_transmit_structures(struct em_softc *sc)
 		sc->txtag = NULL;
 }
 
+#ifdef EM_CSUM_OFFLOAD
 /*********************************************************************
  *
  *  The offload context needs to be set when we transfer the first
@@ -2100,6 +2103,7 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
 	sc->num_tx_desc_avail--;
 	sc->next_avail_tx_desc = curr_txd;
 }
+#endif /* EM_CSUM_OFFLOAD */
 
 /**********************************************************************
  *
