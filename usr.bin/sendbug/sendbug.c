@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.46 2007/05/07 02:11:12 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.47 2007/05/09 02:36:56 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -46,7 +46,7 @@ char *version = "4.2";
 struct passwd *pw;
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ], details[BUFSIZ];
 char *fullname, *tmppath;
-int wantcleanup;
+int Dflag, wantcleanup;
 
 __dead void
 usage(void)
@@ -68,7 +68,7 @@ cleanup()
 int
 main(int argc, char *argv[])
 {
-	int ch, c, Dflag = 0, fd, ret = 1;
+	int ch, c, fd, ret = 1;
 	const char *tmpdir;
 	struct stat sb;
 	char *pr_form;
@@ -135,11 +135,8 @@ main(int argc, char *argv[])
 			}
 			fclose(frfp);
 		}
-	} else {
+	} else
 		template(fp);
-		if (!Dflag)
-			dmesg(fp);
-	}
 
 	if (fflush(fp) == EOF || fstat(fd, &sb) == -1 || fclose(fp) == EOF)
 		err(1, "error creating template");
@@ -576,4 +573,7 @@ template(FILE *fp)
 	fprintf(fp, ">Fix:\n");
 	fprintf(fp, "\t<how to correct or work around the problem,"
 	    " if known (multiple lines)>\n");
+
+	if (!Dflag)
+		dmesg(fp);
 }
