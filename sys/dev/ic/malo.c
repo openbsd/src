@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.68 2007/05/05 14:41:14 jsg Exp $ */
+/*	$OpenBSD: malo.c,v 1.69 2007/05/09 19:34:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -880,8 +880,6 @@ malo_init(struct ifnet *ifp)
 	if (sc->sc_enable)
 		sc->sc_enable(sc);
 
-	/* ???, what is this for, seems unnecessary */
-	/* malo_ctl_write4(sc, 0x0c38, 0x1f); */
 	/* disable interrupts */
 	malo_ctl_read4(sc, 0x0c30);
 	malo_ctl_write4(sc, 0x0c30, 0);
