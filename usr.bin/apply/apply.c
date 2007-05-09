@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.22 2005/11/14 15:30:54 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.23 2007/05/09 01:54:40 ray Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static const char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: apply.c,v 1.22 2005/11/14 15:30:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: apply.c,v 1.23 2007/05/09 01:54:40 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,8 +111,6 @@ main(int argc, char *argv[])
 	 * Allocate enough space to hold the maximum command.
 	 */
 	if (n == 0) {
-		int l;
-
 		len = sizeof("exec ") - 1 +
 		    strlen(argv[0]) + 9 * (sizeof(" %1") - 1) + 1;
 		if ((cmd = malloc(len)) == NULL)
