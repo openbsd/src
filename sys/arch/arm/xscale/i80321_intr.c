@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.9 2006/12/20 14:27:58 drahn Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.10 2007/05/09 19:24:54 miod Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -147,7 +147,7 @@ i80321intc_calc_mask(void)
 		/* Enable interrupts at lower levels */
 		for (i = 0; i < min; i++)
 			i80321intc_imask[i] |= (1 << irq);
-		/* Diable interrupts at upper levels */
+		/* Disable interrupts at upper levels */
 		for (;i <= IPL_HIGH; i++)
 			i80321intc_imask[i] &= ~(1 << irq);
 	}
