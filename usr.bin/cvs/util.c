@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.108 2007/04/20 08:36:00 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.109 2007/05/09 21:19:28 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -210,45 +210,6 @@ cvs_cksum(const char *file, char *dst, size_t len)
 	}
 
 	return (0);
-}
-
-/*
- * cvs_splitpath()
- *
- * Split a path <path> into the base portion and the filename portion.
- * The path is copied in <base> and the last delimiter is replaced by a NUL
- * byte.  The <file> pointer is set to point to the first character after
- * that delimiter.
- * Returns 0 on success, or -1 on failure.
- */
-void
-cvs_splitpath(const char *path, char *base, size_t blen, char **file)
-{
-	size_t rlen;
-	char *sp;
-
-	if ((rlen = strlcpy(base, path, blen)) >= blen)
-		fatal("cvs_splitpath: path truncation");
-
-	while (rlen > 0 && base[rlen - 1] == '/')
-		base[--rlen] = '\0';
-
-	sp = strrchr(base, '/');
-	if (sp == NULL) {
-		rlen = strlcpy(base, "./", blen);
-		if (rlen >= blen)
-			fatal("cvs_splitpath: path truncation");
-
-		rlen = strlcat(base, path, blen);
-		if (rlen >= blen)
-			fatal("cvs_splitpath: path truncation");
-
-		sp = base + 1;
-	}
-
-	*sp = '\0';
-	if (file != NULL)
-		*file = sp + 1;
 }
 
 /*
