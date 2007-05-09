@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2007/05/07 18:42:13 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2007/05/09 19:23:17 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -151,7 +151,7 @@ extern void MipsSwitchFPState(struct proc *, struct trap_frame *);
 extern void MipsSwitchFPState16(struct proc *, struct trap_frame *);
 extern void MipsFPTrap(u_int, u_int, u_int, union sigval);
 
-register_t trap(struct trap_frame *);
+void trap(struct trap_frame *);
 #ifdef PTRACE
 int cpu_singlestep(struct proc *);
 #endif
@@ -174,7 +174,7 @@ userret(struct proc *p)
  * In the case of a kernel trap, we return the pc where to resume if
  * pcb_onfault is set, otherwise, return old pc.
  */
-register_t
+void
 trap(trapframe)
 	struct trap_frame *trapframe;
 {
@@ -238,7 +238,7 @@ trap(trapframe)
 			if (pg == NULL)
 				panic("trap: ktlbmod: unmanaged page");
 			pmap_set_modify(pg);
-			return (trapframe->pc);
+			return;
 		}
 		/* FALLTHROUGH */
 
@@ -274,7 +274,7 @@ trap(trapframe)
 			panic("trap: utlbmod: unmanaged page");
 		pmap_set_modify(pg);
 		if (!USERMODE(trapframe->sr))
-			return (trapframe->pc);
+			return;
 		goto out;
 	    }
 
@@ -293,10 +293,11 @@ trap(trapframe)
 			rv = uvm_fault(kernel_map, trunc_page(va), 0, ftype);
 			p->p_addr->u_pcb.pcb_onfault = onfault;
 			if (rv == 0)
-				return (trapframe->pc);
+				return;
 			if (onfault != 0) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
-				return (onfault_table[onfault]);
+				trapframe->pc = onfault_table[onfault];
+				return;
 			}
 			goto err;
 		}
@@ -363,13 +364,14 @@ fault_common:
 		}
 		if (rv == 0) {
 			if (!USERMODE(trapframe->sr))
-				return (trapframe->pc);
+				return;
 			goto out;
 		}
 		if (!USERMODE(trapframe->sr)) {
 			if (onfault != 0) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
-				return (onfault_table[onfault]);
+				trapframe->pc =  onfault_table[onfault];
+				return;
 			}
 			goto err;
 		}
@@ -593,7 +595,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 #ifdef DDB
 	case T_BREAK:
 		kdb_trap(type, trapframe);
-		return(trapframe->pc);
+		return;
 #endif
 
 	case T_BREAK+T_USER:
@@ -693,7 +695,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		printf("watch exception @ %p\n", va);
 		if (rm7k_watchintr(trapframe)) {
 			/* Return to user, don't add any more overhead */
-			return (trapframe->pc);
+			return;
 		}
 		i = SIGTRAP;
 		typ = TRAP_BRKPT;
@@ -725,7 +727,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 						trapframe->a2, trapframe->a3);
 			locr0->v0 = -result;
 			/* Return to user, don't add any more overhead */
-			return (trapframe->pc);
+			return;
 		}
 		else {
 			i = SIGEMT;	/* Stuff it with something for now */
@@ -776,7 +778,8 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
 		if ((onfault = p->p_addr->u_pcb.pcb_onfault) != 0) {
 			p->p_addr->u_pcb.pcb_onfault = 0;
-			return (onfault_table[onfault]);
+			trapframe->pc = onfault_table[onfault];
+			return;
 		}
 		goto err;
 
@@ -787,7 +790,8 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		trapDump("trap");
 #endif
 		printf("\nTrap cause = %d Frame %p\n", type, trapframe);
-		printf("Trap PC %p RA %p\n", trapframe->pc, trapframe->ra);
+		printf("Trap PC %p RA %p fault %p\n",
+		    trapframe->pc, trapframe->ra, trapframe->badvaddr);
 #ifdef DDB
 		stacktrace(!USERMODE(trapframe->sr) ? trapframe : p->p_md.md_regs);
 		kdb_trap(type, trapframe);
@@ -804,7 +808,6 @@ out:
 	 * Note: we should only get here if returning to user mode.
 	 */
 	userret(p);
-	return (trapframe->pc);
 }
 
 void

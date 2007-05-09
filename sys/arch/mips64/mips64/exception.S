@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.11 2007/05/07 20:30:25 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.12 2007/05/09 19:23:17 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -383,12 +383,12 @@ NNON_LEAF(k_general, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	and	t0, t0, t1
 	mtc0	t0, COP_0_STATUS_REG
 
-	move	a0, v0
 	.set	noat
 #if 0
 	RESTORE_REG(t0, IC, sp, CF_RA_OFFS)
 	ctc0	t0, COP_0_ICR
 #endif
+	RESTORE_REG(a0, PC, sp, CF_RA_OFFS)
 	RESTORE_CPU(sp, CF_RA_OFFS)
 	PTR_ADDU sp, sp, FRAMESZ(KERN_EXC_FRAME_SIZE)
 	sync
