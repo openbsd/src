@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.60 2007/05/08 21:28:11 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.61 2007/05/09 14:32:17 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -153,7 +153,6 @@ tcflag_t comconscflag = TTYDEF_CFLAG;
 
 int	commajor;
 int	comsopen = 0;
-int	comevents = 0;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
