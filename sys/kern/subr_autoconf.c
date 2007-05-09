@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.49 2006/05/28 16:43:50 mk Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.50 2007/05/09 14:51:54 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ TAILQ_HEAD(, deferred_config) deferred_config_queue;
 void config_process_deferred_children(struct device *);
 
 struct devicelist alldevs;		/* list of all devices */
-struct evcntlist allevents;		/* list of all event counters */
 
 __volatile int config_pending;		/* semaphore for mountroot */
 
@@ -114,7 +113,6 @@ config_init(void)
 {
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&alldevs);
-	TAILQ_INIT(&allevents);
 	TAILQ_INIT(&allcftables);
 	TAILQ_INSERT_TAIL(&allcftables, &staticcftable, list);
 }
@@ -847,24 +845,4 @@ device_unref(struct device *dv)
 	if (dv->dv_ref == 0) {
 		free(dv, M_DEVBUF);
 	}
-}
-
-/*
- * Attach an event.  These must come from initially-zero space (see
- * commented-out assignments below), but that occurs naturally for
- * device instance variables.
- */
-void
-evcnt_attach(struct device *dev, const char *name, struct evcnt *ev)
-{
-
-#ifdef DIAGNOSTIC
-	if (strlen(name) >= sizeof(ev->ev_name))
-		panic("evcnt_attach");
-#endif
-	/* ev->ev_next = NULL; */
-	ev->ev_dev = dev;
-	/* ev->ev_count = 0; */
-	strlcpy(ev->ev_name, name, sizeof ev->ev_name);
-	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
 }
