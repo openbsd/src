@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.78 2007/04/13 17:09:22 thib Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.79 2007/05/09 17:04:22 deraadt Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -590,27 +590,6 @@ ufs_poll(void *v)
 	 * We should really check to see if I/O is possible.
 	 */
 	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
-}
-
-/*
- * Seek on a file
- *
- * Nothing to do, so just return.
- */
-/* ARGSUSED */
-int
-ufs_seek(void *v)
-{
-#if 0
-	struct vop_seek_args /* {
-		struct vnode *a_vp;
-		off_t  a_oldoff;
-		off_t  a_newoff;
-		struct ucred *a_cred;
-	} */ *ap = v;
-#endif
-
-	return (0);
 }
 
 int
