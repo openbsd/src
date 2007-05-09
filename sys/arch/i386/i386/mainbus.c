@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.36 2007/04/21 21:06:14 gwk Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.37 2007/05/09 23:13:16 todd Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -117,9 +117,6 @@ union mainbus_attach_args {
 #endif
 #if NESM > 0
 	struct esm_attach_args mba_eaa;
-#endif
-#if NSOFTRAID > 0
-	struct sr_attach_args mba_maa;
 #endif
 };
 
