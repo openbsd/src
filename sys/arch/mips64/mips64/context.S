@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.10 2007/05/07 18:42:13 kettenis Exp $ */
+/*	$OpenBSD: context.S,v 1.11 2007/05/09 19:19:26 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -157,7 +157,12 @@ LEAF(idle, 0)
 _idle:
 	PTR_S	zero, curproc		# set curproc NULL for stats
 	sw	zero, cpl		# lower to spl0
-
+	lw	t0, ipending
+	beqz	t0, 1f
+	nop
+	jal	setsoftintr0
+	nop
+1:
 	mfc0	a0, COP_0_STATUS_REG
 	li	a1, SR_INT_ENAB
 	or	a0, a0, a1
