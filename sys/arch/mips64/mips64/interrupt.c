@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.25 2007/05/07 18:42:13 kettenis Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.26 2007/05/09 19:20:09 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -148,7 +148,7 @@ interrupt(struct trap_frame *trapframe)
 	/*
 	 *  Paranoic? Perhaps. But if we got here with the enable
 	 *  bit reset a mtc0 COP_0_STATUS_REG may have been interrupted.
-	 *  If this was a disable and the pipleine had advanced long
+	 *  If this was a disable and the pipeline had advanced long
 	 *  enough... i don't know but better safe than sorry...
 	 *  The main effect is not the interrupts but the spl mechanism.
 	 */
@@ -183,12 +183,7 @@ interrupt(struct trap_frame *trapframe)
 			cause &= ~(*cpu_int_tab[i].int_hand)(active, trapframe);
 		}
 	}
-#if 0
-if ((pending & cause & ~(SOFT_INT_MASK_1|SOFT_INT_MASK_0)) != 0) {
-printf("Unhandled interrupt %x:%x\n", cause, pending);
-//Debugger();
-}
-#endif
+
 	/*
 	 *  Reenable all non served hardware levels.
 	 */
@@ -211,7 +206,7 @@ printf("Unhandled interrupt %x:%x\n", cause, pending);
 #include <net/netisr_dispatch.h>
 	}
 
-#ifdef NOTYET
+#ifdef notyet
 	if ((ipending & SINT_TTYMASK) & ~xcpl) {
 		atomic_clearbits_int(&ipending, SINT_TTYMASK);
 		compoll(NULL);
@@ -286,6 +281,8 @@ intrmask_t intrtype[INTMASKSIZE], intrmask[INTMASKSIZE], intrlevel[INTMASKSIZE];
 struct intrhand *intrhand[INTMASKSIZE];
 
 /*======================================================================*/
+
+#if 0
 
 /*
  *	Generic interrupt handling code.
@@ -519,6 +516,8 @@ generic_do_pending_int(int newcpl)
 	processing = 0;
 }
 
+#endif
+
 void
 dummy_do_pending_int(int newcpl)
 {
@@ -545,6 +544,8 @@ splinit()
 	hw_setintrmask(0);
 #endif
 }
+
+#if 0
 
 /*
  *  Process interrupts. The parameter pending has non-masked interrupts.
@@ -579,6 +580,8 @@ generic_iointr(intrmask_t pending, struct trap_frame *cf)
 	}
 	return caught;
 }
+
+#endif
 
 #ifndef INLINE_SPLRAISE
 int
