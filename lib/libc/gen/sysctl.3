@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.165 2007/02/21 05:55:21 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.166 2007/05/10 08:56:08 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1468,7 +1468,7 @@ has been set on a socket, then this value specifies how much time a
 connection needs to be idle before keepalives are sent.
 See also tcp.slowhz.
 .It Li tcp.keepinittime
-Unused.
+Time to keep alive the initial SYN packet of a TCP handshake.
 .It Li tcp.keepintvl
 Time after a keepalive probe is sent until, in the absence of any response,
 another probe is sent.
