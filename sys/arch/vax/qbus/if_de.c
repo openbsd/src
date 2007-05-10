@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.7 2006/03/25 22:41:42 djm Exp $ */
+/*	$OpenBSD: if_de.c,v 1.8 2007/05/10 17:59:26 deraadt Exp $ */
 /*	$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $	*/
 
 /*
@@ -112,7 +112,6 @@ struct	de_cdata {
  */
 struct	de_softc {
 	struct	device sc_dev;		/* Configuration common part */
-	struct	evcnt sc_intrcnt;	/* Interrupt counting */
 	struct	ethercom sc_ec;		/* Ethernet common part */
 #define sc_if	sc_ec.ec_if		/* network-visible interface */
 	bus_space_tag_t sc_iot;
@@ -225,8 +224,6 @@ deattach(struct device *parent, struct device *self, void *aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr, sc, 
 	    &sc->sc_intrcnt);
 	uba_reset_establish(dereset, &sc->sc_dev);
-	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
-	    sc->sc_dev.dv_xname, "intr");
 
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2006/10/23 19:44:54 drahn Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2007/05/10 17:59:26 deraadt Exp $	*/
 /*	$NetBSD: intr.h,v 1.22 2006/01/24 23:51:42 uwe Exp $	*/
 
 /*-
@@ -108,7 +108,6 @@ struct sh_soft_intrhand {
 
 struct sh_soft_intr {
 	TAILQ_HEAD(, sh_soft_intrhand) softintr_q;
-	struct evcnt softintr_evcnt;
 	struct simplelock softintr_slock;
 	unsigned long softintr_ipl;
 };

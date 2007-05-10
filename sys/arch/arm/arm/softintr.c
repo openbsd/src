@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.2 2004/02/15 17:21:30 drahn Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.3 2007/05/10 17:59:24 deraadt Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -60,19 +60,12 @@ void	netintr(void);
 void
 softintr_init(void)
 {
-#if 0
-	static const char *softintr_names[] = SI_QUEUENAMES;
-#endif
 	struct soft_intrq *siq;
 	int i;
 
 	for (i = 0; i < SI_NQUEUES; i++) {
 		siq = &soft_intrq[i];
 		TAILQ_INIT(&siq->siq_list);
-#if 0
-		evcnt_attach_dynamic(&siq->siq_evcnt, EVCNT_TYPE_INTR,
-		    NULL, "soft", softintr_names[i]);
-#endif
 		siq->siq_si = i;
 	}
 
@@ -97,7 +90,6 @@ softintr_dispatch(int si)
 	struct soft_intrhand *sih;
 	int oldirqstate;
 
-	siq->siq_evcnt.ev_count++;
 	for (;;) {
 		oldirqstate = disable_interrupts(I32_bit);
 		sih = TAILQ_FIRST(&siq->siq_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: softintr.h,v 1.2 2007/05/10 17:59:24 deraadt Exp $	*/
 /*	$NetBSD: softintr.h,v 1.1 2002/01/29 22:54:14 thorpej Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ struct soft_intrhand {
 
 struct soft_intrq {
 	TAILQ_HEAD(, soft_intrhand) siq_list;
-	struct evcnt siq_evcnt;
 	int siq_si;
 };
 

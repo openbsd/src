@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2007/05/07 19:10:31 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.29 2007/05/10 17:59:24 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -127,8 +127,6 @@ struct cpu_info {
 	struct x86_64_tss	ci_doubleflt_tss;
 
 	char *ci_doubleflt_stack;
-
-	struct evcnt ci_ipi_events[X86_NIPI];
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */

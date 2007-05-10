@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.20 2004/12/24 22:50:31 miod Exp $   */
+/*	$OpenBSD: intvec.s,v 1.21 2007/05/10 17:59:27 deraadt Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -302,8 +302,6 @@ ENTRY(netint)
 		.globl	hardclock
 hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		pushr	$0x3f
-	incl	_clock_intrcnt+EC_COUNT	# count the number of clock interrupts
-	adwc	$0,_clock_intrcnt+EC_COUNT+4
 #ifdef VAX46
 		cmpl	_vax_boardtype,$VAX_BTYP_46
 		bneq	1f

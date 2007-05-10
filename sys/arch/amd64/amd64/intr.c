@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.13 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.14 2007/05/10 17:59:23 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -232,10 +232,6 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		memset(isp, 0, sizeof(struct intrsource));
 		snprintf(isp->is_evname, sizeof (isp->is_evname),
 		    "pin %d", pin);
-#if notyet
-		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-		    pic->pic_dev.dv_xname, isp->is_evname);
-#endif
 		ci->ci_isources[slot] = isp;
 	}
 	simple_unlock(&ci->ci_slock);
@@ -286,10 +282,6 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 			snprintf(isp->is_evname, sizeof (isp->is_evname),
 			    "pin %d", pin);
 
-#if notyet
-			evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR,
-			    NULL, pic->pic_dev.dv_xname, isp->is_evname);
-#endif
 			simple_lock(&ci->ci_slock);
 			ci->ci_isources[slot] = isp;
 			simple_unlock(&ci->ci_slock);
@@ -528,9 +520,6 @@ intr_disestablish(struct intrhand *ih)
 #endif
 
 	if (source->is_handlers == NULL) {
-#if notyet
-		evcnt_detach(&source->is_evcnt);
-#endif
 		FREE(source, M_DEVBUF);
 		ci->ci_isources[ih->ih_slot] = NULL;
 		if (pic != &i8259_pic)
@@ -582,10 +571,6 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_softclock_intrhand;
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_CLOCK] = isp;
-#if notyet
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softclock");
-#endif
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
 	    M_WAITOK);
 	if (isp == NULL)
@@ -597,10 +582,6 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_softnet_intrhand;
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_NET] = isp;
-#if notyet
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softnet");
-#endif
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
 	    M_WAITOK);
 	if (isp == NULL)
@@ -612,10 +593,6 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_softserial_intrhand;
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_SERIAL] = isp;
-#if notyet
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softserial");
-#endif
 #if NLAPIC > 0
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
 	    M_WAITOK);
@@ -628,10 +605,6 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_timer_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_TIMER] = isp;
-#if notyet
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "timer");
-#endif
 #ifdef MULTIPROCESSOR
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
 	    M_WAITOK);
@@ -645,11 +618,6 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_IPI] = isp;
 
-#ifdef notyet
-	for (i = 0; i < X86_NIPI; i++)
-		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_INTR,
-		    NULL, ci->ci_dev->dv_xname, x86_ipi_names[i]);
-#endif
 #endif
 #endif
 

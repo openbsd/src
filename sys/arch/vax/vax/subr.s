@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.24 2006/11/06 21:31:37 miod Exp $     */
+/*	$OpenBSD: subr.s,v 1.25 2007/05/10 17:59:27 deraadt Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -130,12 +130,12 @@ _idsptch:	pushr	$0x3f
 		.long	_cmn_idsptch	# the absolute address
 		.long	0		# the callback interrupt routine
 		.long	0		# its argument
-		.long	0		# ptr to correspond evcnt struct
+		.long	0		# ptr to correspond evcount struct
 _eidsptch:
 
 _cmn_idsptch:
 		movl	(sp)+,r0	# get pointer to idspvec
-		movl	8(r0),r1	# get evcnt pointer
+		movl	8(r0),r1	# get evcount pointer
 		beql	1f		# no ptr, skip increment
 		incl	EC_COUNT(r1)	# increment low longword
 		adwc	$0,EC_COUNT+4(r1) # add any carry to hi longword

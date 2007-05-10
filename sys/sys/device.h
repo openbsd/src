@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.34 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.35 2007/05/10 17:59:27 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -84,15 +84,6 @@ struct device {
 #define	DVF_ACTIVE	0x0001		/* device is activated */
 
 TAILQ_HEAD(devicelist, device);
-
-/* `event' counters (use zero or more per device instance, as needed) */
-struct evcnt {
-	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
-	struct	device *ev_dev;		/* associated device */
-	int	ev_count;		/* how many have occurred */
-	char	ev_name[8];		/* what to call them (systat display) */
-};
-TAILQ_HEAD(evcntlist, evcnt);
 
 /*
  * Configuration data (i.e., data placed in ioconf.c).
@@ -181,7 +172,6 @@ struct cftable {
 TAILQ_HEAD(cftable_head, cftable);
 
 extern struct devicelist alldevs;	/* list of all devices */
-extern struct evcntlist allevents;	/* list of all event counters */
 
 extern int autoconf_verbose;
 extern __volatile int config_pending;	/* semaphore for mountroot */
@@ -202,7 +192,6 @@ int config_activate_children(struct device *, enum devact);
 struct device *config_make_softc(struct device *parent,
     struct cfdata *cf);
 void config_defer(struct device *, void (*)(struct device *));
-void evcnt_attach(struct device *, const char *, struct evcnt *);
 void config_pending_incr(void);
 void config_pending_decr(void);
 

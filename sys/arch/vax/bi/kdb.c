@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb.c,v 1.9 2006/01/17 20:26:14 miod Exp $ */
+/*	$OpenBSD: kdb.c,v 1.10 2007/05/10 17:59:26 deraadt Exp $ */
 /*	$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -76,7 +76,6 @@
  */
 struct	kdb_softc {
 	struct	device sc_dev;		/* Autoconfig info */
-	struct	evcnt sc_intrcnt;	/* Interrupt counting */
 	caddr_t	sc_kdb;			/* Struct for kdb communication */
 	struct	mscp_softc *sc_softc;	/* MSCP info (per mscpvar.h) */
 	bus_dma_tag_t sc_dmat;
@@ -151,10 +150,7 @@ kdbattach(parent, self, aux)
 	bus_dma_segment_t seg;
 
 	printf("\n");
-	bi_intr_establish(ba->ba_icookie, ba->ba_ivec,
-		kdbintr, sc, &sc->sc_intrcnt);
-	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		sc->sc_dev.dv_xname, "intr");
+	bi_intr_establish(ba->ba_icookie, ba->ba_ivec, kdbintr, sc);
 
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_ioh = ba->ba_ioh;

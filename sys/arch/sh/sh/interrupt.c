@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.4 2006/11/05 18:58:50 miod Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.5 2007/05/10 17:59:26 deraadt Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -578,9 +578,6 @@ intpri_intr_disable(int evtcode)
 void
 softintr_init(void)
 {
-#if 0
-	static const char *softintr_names[] = IPL_SOFTNAMES;
-#endif
 	struct sh_soft_intr *asi;
 	int i;
 
@@ -590,10 +587,6 @@ softintr_init(void)
 
 		asi->softintr_ipl = IPL_SOFT + i;
 		simple_lock_init(&asi->softintr_slock);
-#if 0
-		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
-		    NULL, "soft", softintr_names[i]);
-#endif
 	}
 
 	/* XXX Establish legacy soft interrupt handlers. */
@@ -617,9 +610,6 @@ softintr_dispatch(int ipl)
 	s = _cpu_intr_suspend();
 
 	asi = &sh_soft_intrs[ipl - IPL_SOFT];
-
-	if (TAILQ_FIRST(&asi->softintr_q) != NULL)
-		asi->softintr_evcnt.ev_count++;
 
 	while ((sih = TAILQ_FIRST(&asi->softintr_q)) != NULL) {
 		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);

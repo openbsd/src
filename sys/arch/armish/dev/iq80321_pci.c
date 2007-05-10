@@ -1,4 +1,4 @@
-/*	$OpenBSD: iq80321_pci.c,v 1.8 2006/06/16 06:24:12 drahn Exp $	*/
+/*	$OpenBSD: iq80321_pci.c,v 1.9 2007/05/10 17:59:24 deraadt Exp $	*/
 /*	$NetBSD: iq80321_pci.c,v 1.5 2005/12/11 12:17:09 christos Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 
 int	iq80321_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *iq80321_pci_intr_string(void *, pci_intr_handle_t);
-const struct evcnt *iq80321_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*iq80321_pci_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
 void	iq80321_pci_intr_disestablish(void *, void *);
@@ -265,14 +264,6 @@ iq80321_pci_intr_string(void *v, pci_intr_handle_t ih)
 
 	snprintf(irqname, sizeof irqname, "irq %d", ih);
 	return (irqname);
-}
-
-const struct evcnt *
-iq80321_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
-{
-
-	/* XXX For now. */
-	return (NULL);
 }
 
 void *

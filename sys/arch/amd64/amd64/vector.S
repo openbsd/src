@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.7 2005/10/09 17:09:34 fgsch Exp $	*/
+/*	$OpenBSD: vector.S,v 1.8 2007/05/10 17:59:23 deraadt Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -394,7 +394,6 @@ IDTVEC(intr_/**/name/**/num)						;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
 	incl	MY_COUNT+V_INTR		/* statistical info */		;\
-	incq	IS_EVCNT(%r14)						;\
 1:									\
 	pushq	%r13							;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
@@ -742,7 +741,6 @@ IDTVEC(softserial)
 	call	_C_LABEL(x86_softintlock)
 #endif
 	movq	CPUVAR(ISOURCES) + SIR_SERIAL * 8, %r12
-	incq	IS_EVCNT(%r12)
 	movl	$X86_SOFTINTR_SOFTSERIAL,%edi
 	call	_C_LABEL(softintr_dispatch)
 #ifdef MULTIPROCESSOR	
@@ -759,7 +757,6 @@ IDTVEC(softnet)
 	call	_C_LABEL(x86_softintlock)
 #endif
 	movq	CPUVAR(ISOURCES) + SIR_NET * 8, %r12
-	incq    IS_EVCNT(%r12)
 
 	xorq	%r12,%r12
 	xchgl	_C_LABEL(netisr),%r12d
@@ -789,7 +786,6 @@ IDTVEC(softclock)
 	call	_C_LABEL(x86_softintlock)
 #endif
 	movq	CPUVAR(ISOURCES) + SIR_CLOCK * 8, %r12
-	incq	IS_EVCNT(%r12)
 
 	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
 	call	_C_LABEL(softintr_dispatch)
