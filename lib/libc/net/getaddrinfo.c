@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.61 2007/02/18 19:03:11 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.62 2007/05/10 02:14:35 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1065,11 +1065,14 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				continue;
 			}
 		} else if (type != qtype) {
-			if (type != T_KEY && type != T_SIG)
-				syslog(LOG_NOTICE|LOG_AUTH,
+			if (type != T_KEY && type != T_SIG) {
+				struct syslog_data sdata = SYSLOG_DATA_INIT;
+
+				syslog_r(LOG_NOTICE|LOG_AUTH, &sdata,
 	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
 				       qname, p_class(C_IN), p_type(qtype),
 				       p_type(type));
+			}
 			cp += n;
 			continue;		/* XXX - had_error++ ? */
 		}
@@ -1077,7 +1080,9 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		case T_A:
 		case T_AAAA:
 			if (strcasecmp(canonname, bp) != 0) {
-				syslog(LOG_NOTICE|LOG_AUTH,
+				struct syslog_data sdata = SYSLOG_DATA_INIT;
+
+				syslog_r(LOG_NOTICE|LOG_AUTH, &sdata,
 				       AskedForGot, canonname, bp);
 				cp += n;
 				continue;	/* XXX - had_error++ ? */
