@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.38 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: log.c,v 1.39 2007/05/10 20:58:02 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -60,9 +60,7 @@ void
 cvs_vlog(u_int level, const char *fmt, va_list vap)
 {
 	int ecp;
-	char prefix[64], buf[1024], ebuf[255];
 	FILE *out;
-	char *cmdname;
 	struct cvs_cmd *cmdp;
 
 	if (cvs_trace != 1 && level == LP_TRACE)
@@ -72,37 +70,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		ecp = errno;
 	else
 		ecp = 0;
-
-	/* always use the command name in error messages, not aliases */
-	if (cvs_command == NULL)
-		cmdname = " ";
-	else {
-		cmdp = cvs_findcmd(cvs_command);
-		cmdname = cmdp->cmd_name;
-	}
-
-	/* The cvs program appends the command name to the program name */
-	if (level == LP_TRACE) {
-		strlcpy(prefix, " -> ", sizeof(prefix));
-		if (cvs_server_active)
-			prefix[0] = 'S';
-		else
-			prefix[0] = 'C';
-	} else if (cvs_command != NULL) {
-		if (level == LP_ABORT)
-			(void)xsnprintf(prefix, sizeof(prefix),
-			    "%s [%s aborted]", __progname, cmdname);
-		else
-			(void)xsnprintf(prefix, sizeof(prefix), "%s %s",
-			    __progname, cmdname);
-	} else /* just use the standard strlcpy */
-		strlcpy(prefix, __progname, sizeof(prefix));
-
-	vsnprintf(buf, sizeof(buf), fmt, vap);
-	if (level == LP_ERRNO) {
-		(void)xsnprintf(ebuf, sizeof(ebuf), ": %s", strerror(errno));
-		strlcat(buf, ebuf, sizeof(buf));
-	}
 
 	if (level == LP_NOTICE)
 		out = stdout;
@@ -120,15 +87,39 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		putc(' ', out);
 	}
 
-	fputs(prefix, out);
-	if (level != LP_TRACE)
-		fputs(": ", out);
-	fputs(buf, out);
-	fputc('\n', out);
+	/* The cvs program appends the command name to the program name */
+	if (level == LP_TRACE) {
+		if (cvs_server_active)
+			putc('S', out);
+		else
+			putc('C', out);
+		(void)fputs("-> ", out);
+	} else {
+		(void)fputs(__progname, out);
+		if (cvs_command != NULL) {
+			/*
+			 * always use the command name in error messages,
+			 * not aliases
+			 */
+			cmdp = cvs_findcmd(cvs_command);
+			putc(' ', out);
+			if (level == LP_ABORT)
+				(void)fprintf(out,
+				    "[%s aborted]", cmdp->cmd_name);
+			else
+				(void)fputs(cmdp->cmd_name, out);
+		}
+		(void)fputs(": ", out);
+	}
 
-	/* preserve it just in case we changed it? */
-	if (level == LP_ERRNO)
+	(void)vfprintf(out, fmt, vap);
+	if (level == LP_ERRNO) {
+		(void)fprintf(out, ": %s\n", strerror(ecp));
+
+		/* preserve it just in case we changed it? */
 		errno = ecp;
+	} else
+		fputc('\n', out);
 }
 
 /*
