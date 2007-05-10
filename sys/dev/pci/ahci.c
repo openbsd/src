@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.116 2007/04/22 05:08:34 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.117 2007/05/10 02:16:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -449,8 +449,10 @@ void			ahci_unmap_regs(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_map_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
+#ifdef notyet
 void			ahci_unmap_intr(struct ahci_softc *,
 			    struct pci_attach_args *);
+#endif
 
 int			ahci_init(struct ahci_softc *);
 int			ahci_port_alloc(struct ahci_softc *, u_int);
@@ -488,16 +490,12 @@ void			ahci_dmamem_free(struct ahci_softc *,
 
 u_int32_t		ahci_read(struct ahci_softc *, bus_size_t);
 void			ahci_write(struct ahci_softc *, bus_size_t, u_int32_t);
-int			ahci_wait_eq(struct ahci_softc *, bus_size_t,
-			    u_int32_t, u_int32_t);
 int			ahci_wait_ne(struct ahci_softc *, bus_size_t,
 			    u_int32_t, u_int32_t);
 
 u_int32_t		ahci_pread(struct ahci_port *, bus_size_t);
 void			ahci_pwrite(struct ahci_port *, bus_size_t, u_int32_t);
 int			ahci_pwait_eq(struct ahci_port *, bus_size_t,
-			    u_int32_t, u_int32_t);
-int			ahci_pwait_ne(struct ahci_port *, bus_size_t,
 			    u_int32_t, u_int32_t);
 
 /* Wait for all bits in _b to be cleared */
@@ -783,11 +781,14 @@ ahci_map_intr(struct ahci_softc *sc, struct pci_attach_args *pa)
 	return (0);
 }
 
+#ifdef notyet
+/* one day we'll have hotplug pci */
 void
 ahci_unmap_intr(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 }
+#endif
 
 int
 ahci_init(struct ahci_softc *sc)
@@ -2126,21 +2127,6 @@ ahci_write(struct ahci_softc *sc, bus_size_t r, u_int32_t v)
 }
 
 int
-ahci_wait_eq(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
-    u_int32_t target)
-{
-	int				i;
-
-	for (i = 0; i < 1000; i++) {
-		if ((ahci_read(sc, r) & mask) == target)
-			return (0);
-		delay(1000);
-	}
-
-	return (1);
-}
-
-int
 ahci_wait_ne(struct ahci_softc *sc, bus_size_t r, u_int32_t mask,
     u_int32_t target)
 {
@@ -2179,21 +2165,6 @@ ahci_pwait_eq(struct ahci_port *ap, bus_size_t r, u_int32_t mask,
 
 	for (i = 0; i < 1000; i++) {
 		if ((ahci_pread(ap, r) & mask) == target)
-			return (0);
-		delay(1000);
-	}
-
-	return (1);
-}
-
-int
-ahci_pwait_ne(struct ahci_port *ap, bus_size_t r, u_int32_t mask,
-    u_int32_t target)
-{
-	int				i;
-
-	for (i = 0; i < 1000; i++) {
-		if ((ahci_pread(ap, r) & mask) != target)
 			return (0);
 		delay(1000);
 	}
