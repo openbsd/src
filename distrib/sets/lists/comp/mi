@@ -5767,8 +5767,6 @@
 ./usr/share/man/cat9/fork1.0
 ./usr/share/man/cat9/free.0
 ./usr/share/man/cat9/get_random_bytes.0
-./usr/share/man/cat9/getbintime.0
-./usr/share/man/cat9/getbinuptime.0
 ./usr/share/man/cat9/getblk.0
 ./usr/share/man/cat9/getdevvp.0
 ./usr/share/man/cat9/geteblk.0
