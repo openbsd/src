@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.38 2007/05/05 12:43:35 art Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.39 2007/05/10 06:02:04 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -711,13 +711,13 @@ gotswap:
 			 */
 			rootdev = MAKEDISKDEV(majdev, rootdv->dv_unit, part);
 			nswapdev = MAKEDISKDEV(majdev, rootdv->dv_unit, 1);
-			dumpdev = nswapdev;
 		} else {
 			/*
 			 * Root and swap are on a net.
 			 */
-			nswapdev = dumpdev = NODEV;
+			nswapdev = NODEV;
 		}
+		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
 		/* swdevt[1].sw_dev = NODEV; */
 	} else {
@@ -742,12 +742,13 @@ gotswap:
 	case DV_DISK:
 		mountroot = dk_mountroot;
 		part = DISKPART(rootdev);
-		printf("root on %s%c\n", rootdv->dv_xname, 'a' + part);
 		break;
 	default:
 		printf("can't figure root, hope your kernel is right\n");
 		return;
 	}
+
+	printf("root on %s%c", rootdv->dv_xname, 'a' + part);
 
 	/*
 	 * Make the swap partition on the root drive the primary swap.
@@ -769,6 +770,14 @@ gotswap:
 		if (temp == dumpdev)
 			dumpdev = swdevt[0].sw_dev;
 	}
+	if (swdevt[0].sw_dev != NODEV)
+		printf(" swap on %s%d%c", findblkname(major(swdevt[0].sw_dev)),
+		    DISKUNIT(swdevt[0].sw_dev),
+		    'a' + DISKPART(swdevt[0].sw_dev));
+	if (dumpdev != NODEV)
+		printf(" dump on %s%d%c", findblkname(major(dumpdev)),
+		    DISKUNIT(dumpdev), 'a' + DISKPART(dumpdev));
+	printf("\n");
 }
 
 extern struct nam2blk nam2blk[];
