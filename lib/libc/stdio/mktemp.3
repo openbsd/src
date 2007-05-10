@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.39 2006/01/06 10:03:28 jmc Exp $
+.\"	$OpenBSD: mktemp.3,v 1.40 2007/05/10 22:46:36 espie Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,7 +85,7 @@ Because
 .Fn mktemp
 does not actually create the temporary file there is a window of
 opportunity during which another process can open the file instead.
-Because of this race condition the
+Because of this race condition,
 .Fn mktemp
 should not be used in new code.
 .Fn mktemp
