@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.1 2007/05/05 21:05:43 martin Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.2 2007/05/10 18:08:13 art Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -55,5 +55,7 @@ void mtx_init(struct mutex *, int);
 #define MUTEX_ASSERT_LOCKED(mtx) do { } while (0)
 #define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
 #endif
+
+#define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
 
 #endif	/* _ALPHA_MUTEX_H_ */
