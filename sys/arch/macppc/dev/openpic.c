@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.38 2007/04/22 22:31:14 deraadt Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.39 2007/05/10 15:28:09 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -139,6 +139,7 @@ void * openpic_intr_establish( void * lcv, int irq, int type, int level,
 	int (*ih_fun)(void *), void *ih_arg, char *name);
 void openpic_intr_disestablish( void *lcp, void *arg);
 void openpic_collect_preconf_intr(void);
+int openpic_big_endian;
 
 void
 openpic_attach(struct device *parent, struct device  *self, void *aux)
@@ -148,11 +149,17 @@ openpic_attach(struct device *parent, struct device  *self, void *aux)
 	extern intr_disestablish_t *intr_disestablish_func;
 	extern intr_establish_t *mac_intr_establish_func;
 	extern intr_disestablish_t *mac_intr_disestablish_func;
+	u_int32_t reg;
+
+	reg = 0;
+	if (OF_getprop(ca->ca_node, "big-endian", &reg, sizeof reg) == 0)
+		openpic_big_endian = 1;
 
 	openpic_base = (vaddr_t) mapiodev (ca->ca_baseaddr +
 			ca->ca_reg[0], 0x40000);
 
-	printf(": version 0x%x", openpic_read(OPENPIC_VENDOR_ID));
+	printf(": version 0x%x %s endian", openpic_read(OPENPIC_VENDOR_ID),
+		openpic_big_endian ? "big" : "little" );
 
 	openpic_init();
 
@@ -515,7 +522,10 @@ openpic_read(int reg)
 {
 	char *addr = (void *)(openpic_base + reg);
 
-	return in32rb(addr);
+	if (openpic_big_endian)
+		return in32(addr);
+	else
+		return in32rb(addr);
 }
 
 void
@@ -523,7 +533,10 @@ openpic_write(int reg, u_int val)
 {
 	char *addr = (void *)(openpic_base + reg);
 
-	out32rb(addr, val);
+	if (openpic_big_endian)
+		out32(addr, val);
+	else
+		out32rb(addr, val);
 }
 
 void
