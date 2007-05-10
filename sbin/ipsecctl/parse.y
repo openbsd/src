@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.122 2007/03/16 20:51:01 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.123 2007/05/10 06:10:04 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -495,6 +495,7 @@ host		: STRING			{
 				err(1, "host: calloc");
 			ipa->af = AF_UNSPEC;
 			ipa->netaddress = 1;
+			ipa->tail = ipa;
 			$$ = ipa;
 		}
 		| '{' host_list '}'		{ $$ = $2; }
