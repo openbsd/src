@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.266 2007/05/02 00:53:25 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.267 2007/05/10 17:41:50 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1493,9 +1493,6 @@ pciide_pci_intr(void *arg)
 
 		/* If a compat channel skip. */
 		if (cp->compat)
-			continue;
-		/* if this channel not waiting for intr, skip */
-		if ((wdc_cp->ch_flags & WDCF_IRQ_WAIT) == 0)
 			continue;
 
 		if (pciide_intr_flag(cp) == 0)
