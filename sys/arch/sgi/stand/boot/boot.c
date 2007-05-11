@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2005/08/01 19:58:13 kettenis Exp $ */
+/*	$OpenBSD: boot.c,v 1.8 2007/05/11 10:28:20 jj Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -336,7 +336,7 @@ loadsymtab32(int fd, Elf32_Ehdr *eh, int flags)
 	size = sh->sh_size;
 
 	/*
-	 *  Allocate tables in correct order so the kernel grooks it.
+	 *  Allocate tables in correct order so the kernel groks it.
 	 *  Then we read them in the order they are in the ELF file.
 	 */
 	shstrtab = gettable(shstrh->sh_size, "shstrtab", flags, sizeof(long));
@@ -457,7 +457,7 @@ loadsymtab64(int fd, Elf64_Ehdr *eh, int flags)
 	size = sh->sh_size;
 
 	/*
-	 *  Allocate tables in correct order so the kernel grooks it.
+	 *  Allocate tables in correct order so the kernel groks it.
 	 *  Then we read them in the order they are in the ELF file.
 	 */
 	shstrtab = gettable(shstrh->sh_size, "shstrtab", flags, sizeof(u_int64_t));
