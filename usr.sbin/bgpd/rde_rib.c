@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.94 2007/04/02 12:51:06 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.95 2007/05/11 11:27:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,7 @@
  * BGP RIB -- Routing Information Base
  *
  * The RIB is build with one aspect in mind. Speed -- actually update speed.
- * Therefor one thing needs to be absolutely avoided, long table walks.
+ * Therefore one thing needs to be absolutely avoided, long table walks.
  * This is achieved by heavily linking the different parts together.
  */
 
@@ -342,7 +342,7 @@ path_get(void)
 	return (asp);
 }
 
-/* free a unlinked element */
+/* free an unlinked element */
 void
 path_put(struct rde_aspath *asp)
 {
@@ -647,7 +647,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 		/*
 		 * If the prefix is the active one remove it first,
 		 * this has to be done because we can not detect when
-		 * the active prefix changes it's state. In this case
+		 * the active prefix changes its state. In this case
 		 * we know that this is a withdrawl and so the second
 		 * prefix_evaluate() will generate no update because
 		 * the nexthop is unreachable or ineligible.
@@ -776,7 +776,7 @@ struct nexthop		*nexthop_lookup(struct bgpd_addr *);
  * BGP and the true nexthop which is used in the FIB -- forward information
  * base a.k.a kernel routing table. When sending updates it is even more
  * confusing. In IBGP we pass the unmodified exit nexthop to the neighbors
- * while in EBGP normaly the address of the router is sent. The exit nexthop
+ * while in EBGP normally the address of the router is sent. The exit nexthop
  * may be passed to the external neighbor if the neighbor and the exit nexthop
  * reside in the same subnet -- directly connected.
  */

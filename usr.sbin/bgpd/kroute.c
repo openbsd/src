@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.153 2007/04/19 13:05:48 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.154 2007/05/11 11:27:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -442,7 +442,7 @@ kr_nexthop_add(struct bgpd_addr *addr)
 	struct knexthop_node	*h;
 
 	if ((h = knexthop_find(addr)) != NULL) {
-		/* should not happen... this is acctually an error path */
+		/* should not happen... this is actually an error path */
 		struct kroute_nexthop	 nh;
 		struct kroute_node	*k;
 		struct kroute6_node	*k6;
@@ -895,7 +895,7 @@ kroute_remove(struct kroute_node *kr)
 		return (-1);
 	}
 
-	/* check wether a nexthop depends on this kroute */
+	/* check whether a nexthop depends on this kroute */
 	if ((kr->r.flags & F_KERNEL) && (kr->r.flags & F_NEXTHOP))
 		RB_FOREACH(s, knexthop_tree, &knt)
 			if (s->kroute == kr)
@@ -978,7 +978,7 @@ kroute6_remove(struct kroute6_node *kr)
 		return (-1);
 	}
 
-	/* check wether a nexthop depends on this kroute */
+	/* check whether a nexthop depends on this kroute */
 	if ((kr->r.flags & F_KERNEL) && (kr->r.flags & F_NEXTHOP))
 		RB_FOREACH(s, knexthop_tree, &knt)
 			if (s->kroute == kr)
@@ -1420,7 +1420,7 @@ kroute_detach_nexthop(struct knexthop_node *kn)
 	struct kroute6_node	*k6;
 
 	/*
-	 * check wether there's another nexthop depending on this kroute
+	 * check whether there's another nexthop depending on this kroute
 	 * if not remove the flag
 	 */
 

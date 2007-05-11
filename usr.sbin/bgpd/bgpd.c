@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.143 2007/01/26 17:40:48 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.144 2007/05/11 11:27:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -514,7 +514,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		free(r);
 	}
 
-	/* singal both childs to replace their config */
+	/* signal both childs to replace their config */
 	if (imsg_compose(ibuf_se, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0) == -1 ||
 	    imsg_compose(ibuf_rde, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0) == -1)
 		return (-1);

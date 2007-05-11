@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.57 2007/04/23 13:04:24 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.58 2007/05/11 11:27:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -313,7 +313,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		break;
 	case ANNOUNCE_SELF:
 		/*
-		 * pass only prefix that have a aspath count
+		 * pass only prefix that have an aspath count
 		 * of zero this is equal to the ^$ regex.
 		 */
 		if (p->aspath->aspath->ascnt != 0)
@@ -541,7 +541,7 @@ up_get_nexthop(struct rde_peer *peer, struct rde_aspath *a)
 		/*
 		 * For ebgp multihop nh->flags should never have
 		 * NEXTHOP_CONNECTED set so it should be possible to unify the
-		 * two ebgp cases. But this is save and RFC compliant.
+		 * two ebgp cases. But this is safe and RFC compliant.
 		 */
 		return (peer->local_v4_addr.v4.s_addr);
 }
@@ -655,7 +655,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 
 	/*
 	 * The old MED from other peers MUST not be announced to others
-	 * unless the MED is originating from us or the peer is a IBGP one.
+	 * unless the MED is originating from us or the peer is an IBGP one.
 	 */
 	if (a->flags & F_ATTR_MED && (peer->conf.ebgp == 0 ||
 	    a->flags & F_ATTR_MED_ANNOUNCE)) {
@@ -865,7 +865,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	memcpy(buf, &attr_len, 2);
 	wpos = 2;
 
-	/* then the path attributes them self */
+	/* then the path attributes themselves */
 	memcpy(buf + wpos, upa->attr, upa->attr_len);
 	wpos += upa->attr_len;
 
@@ -873,7 +873,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	r = up_dump_prefix(buf + wpos, len - wpos, &upa->prefix_h, peer);
 	wpos += r;
 
-	/* now check if all prefixes where written */
+	/* now check if all prefixes were written */
 	if (TAILQ_EMPTY(&upa->prefix_h)) {
 		if (RB_REMOVE(uptree_attr, &peer->up_attrs, upa) == NULL)
 			log_warnx("dequeuing update failed.");
@@ -1015,7 +1015,7 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	wpos -= 2;
 	bzero(buf + wpos, 2);
 
-	/* now check if all prefixes where written */
+	/* now check if all prefixes were written */
 	if (TAILQ_EMPTY(&upa->prefix_h)) {
 		if (RB_REMOVE(uptree_attr, &peer->up_attrs, upa) == NULL)
 			log_warnx("dequeuing update failed.");

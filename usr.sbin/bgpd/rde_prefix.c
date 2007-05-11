@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.24 2007/02/22 08:34:18 henning Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.25 2007/05/11 11:27:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -30,12 +30,12 @@
  * Prefix Table functions:
  * pt_add:    create new prefix and link it into the prefix table
  * pt_remove: Checks if there is no bgp prefix linked to the prefix,
- *            unlinks form the prefix table and frees the pt_entry.
+ *            unlinks from the prefix table and frees the pt_entry.
  * pt_get:    get a prefix/prefixlen entry. While pt_lookup searches for the
  *            best matching prefix pt_get only finds the prefix/prefixlen
  *            entry. The speed of pt_get is important for the bgp updates.
  * pt_getaddr: convert the address into a struct bgpd_addr.
- * pt_lookup: lookup a IP in the prefix table. Manly for "show ip bgp".
+ * pt_lookup: lookup a IP in the prefix table. Mainly for "show ip bgp".
  * pt_empty:  returns true if there is no bgp prefix linked to the pt_entry.
  * pt_init:   initialize prefix table.
  * pt_alloc?: allocate a AF specific pt_entry. Internal function.
