@@ -1,10 +1,10 @@
-/*	$OpenBSD: sdmmcdevs.h,v 1.7 2006/12/20 19:33:58 deraadt Exp $	*/
+/*	$OpenBSD: sdmmcdevs.h,v 1.8 2007/05/11 17:16:35 mglocker Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: sdmmcdevs,v 1.7 2006/12/20 19:33:54 deraadt Exp 
+ *		OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp 
  */
 
 /*
@@ -35,10 +35,15 @@
 #define	SDMMC_VENDOR_SPECTEC	0x02fe	/* Spectec Computer Co., Ltd */
 #define	SDMMC_VENDOR_GLOBALSAT	0x0501	/* Globalsat Technology Co. */
 #define	SDMMC_VENDOR_MEDIATEK	0x037a	/* MediaTek Inc. */
+#define	SDMMC_VENDOR_ABOCOM	0x13d1	/* AboCom Systems, Inc. */
 
 /*
  * List of known products, grouped by vendor
  */
+
+/* AboCom Systems, Inc. */
+#define	SDMMC_CIS_ABOCOM_SDW11G	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_ABOCOM_SDW11G	0xac02
 
 /* Atheros */
 #define	SDMMC_CIS_ATHEROS_AR6001_8	{ NULL, NULL, NULL, NULL }
