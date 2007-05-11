@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.38 2007/05/11 06:32:02 xsa Exp $	*/
+/*	$OpenBSD: root.c,v 1.39 2007/05/11 11:29:26 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,7 +64,7 @@ static void cvsroot_free(struct cvsroot *);
  * Parse a CVS root string (as found in CVS/Root files or the CVSROOT
  * environment variable) and store the fields in a dynamically
  * allocated cvs_root structure.  The format of the string is as follows:
- *	[:method:][[user[:pass]@]host[:port]]:path
+ *	[:method:][[user[:pass]@]host[:port]:]path
  * Returns a pointer to the allocated information on success, or NULL
  * on failure.
  */
