@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.40 2007/05/11 02:37:31 ray Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.41 2007/05/11 02:43:24 ray Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -152,7 +152,7 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	logmsg = NULL;
 
 	for (;;) {
-		if (cvs_logmsg_edit(fpath) == -1 && errno != ECHILD)
+		if (cvs_logmsg_edit(fpath) == -1)
 			break;
 
 		if (fstat(fd, &st2) == -1) {
@@ -192,6 +192,12 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 	return (logmsg);
 }
 
+/*
+ * Execute an editor on the specified pathname, which is interpreted
+ * from the shell.  This means flags may be included.
+ *
+ * Returns -1 on error, or the exit value on success.
+ */
 int
 cvs_logmsg_edit(const char *pathname)
 {
