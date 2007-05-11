@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.39 2007/04/20 08:36:00 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.40 2007/05/11 02:37:31 ray Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -198,49 +198,39 @@ cvs_logmsg_edit(const char *pathname)
 	char *argp[] = {"sh", "-c", NULL, NULL}, *p;
 	sig_t sighup, sigint, sigquit;
 	pid_t pid;
-	int st;
+	int saved_errno, st;
 
 	(void)xasprintf(&p, "%s %s", cvs_editor, pathname);
 	argp[2] = p;
 
-top:
 	sighup = signal(SIGHUP, SIG_IGN);
 	sigint = signal(SIGINT, SIG_IGN);
 	sigquit = signal(SIGQUIT, SIG_IGN);
-	if ((pid = fork()) == -1) {
-		int saved_errno = errno;
-
-		(void)signal(SIGHUP, sighup);
-		(void)signal(SIGINT, sigint);
-		(void)signal(SIGQUIT, sigquit);
-		if (saved_errno == EAGAIN) {
-			sleep(1);
-			goto top;
-		}
-		xfree(p);
-		errno = saved_errno;
-		return (-1);
-	}
+	if ((pid = fork()) == -1)
+		goto fail;
 	if (pid == 0) {
 		execv(_PATH_BSHELL, argp);
 		_exit(127);
 	}
+	while (waitpid(pid, &st, 0) == -1)
+		if (errno != EINTR)
+			goto fail;
 	xfree(p);
-	for (;;) {
-		if (waitpid(pid, &st, WUNTRACED) == -1) {
-			if (errno != EINTR)
-				return (-1);
-		} else if (WIFSTOPPED(st))
-			raise(WSTOPSIG(st));
-		else
-			break;
-	}
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
-	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
-		errno = ECHILD;
+	if (!WIFEXITED(st)) {
+		errno = EINTR;
 		return (-1);
 	}
-	return (0);
+	return (WEXITSTATUS(st));
+
+ fail:
+	saved_errno = errno;
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	xfree(p);
+	errno = saved_errno;
+	return (-1);
 }
