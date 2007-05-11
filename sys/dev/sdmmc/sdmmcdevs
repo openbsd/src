@@ -1,4 +1,4 @@
-	$OpenBSD: sdmmcdevs,v 1.7 2006/12/20 19:33:54 deraadt Exp $
+	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -28,10 +28,14 @@ vendor SYCHIP			0x02db	SyChip Inc.
 vendor SPECTEC			0x02fe	Spectec Computer Co., Ltd
 vendor GLOBALSAT		0x0501	Globalsat Technology Co.
 vendor MEDIATEK			0x037a	MediaTek Inc.
+vendor ABOCOM			0x13d1	AboCom Systems, Inc.
 
 /*
  * List of known products, grouped by vendor
  */
+
+/* AboCom Systems, Inc. */
+product ABOCOM SDW11G		0xac02	SDW11G
 
 /* Atheros */
 product ATHEROS	AR6001_8	0x0108	AR6001
