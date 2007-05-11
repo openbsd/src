@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.70 2006/10/26 13:18:24 jmc Exp $	*/
+/*	$OpenBSD: systm.h,v 1.71 2007/05/11 10:06:56 pedro Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -314,13 +314,13 @@ void	user_config(void);
 
 #if defined(MULTIPROCESSOR)
 void	_kernel_lock_init(void);
-void	_kernel_lock(int);
+void	_kernel_lock(void);
 void	_kernel_unlock(void);
 void	_kernel_proc_lock(struct proc *);
 void	_kernel_proc_unlock(struct proc *);
 
 #define	KERNEL_LOCK_INIT()		_kernel_lock_init()
-#define	KERNEL_LOCK(flag)		_kernel_lock((flag))
+#define	KERNEL_LOCK()			_kernel_lock()
 #define	KERNEL_UNLOCK()			_kernel_unlock()
 #define	KERNEL_PROC_LOCK(p)		_kernel_proc_lock((p))
 #define	KERNEL_PROC_UNLOCK(p)		_kernel_proc_unlock((p))
@@ -328,7 +328,7 @@ void	_kernel_proc_unlock(struct proc *);
 #else /* ! MULTIPROCESSOR */
 
 #define	KERNEL_LOCK_INIT()		/* nothing */
-#define	KERNEL_LOCK(flag)		/* nothing */
+#define	KERNEL_LOCK()			/* nothing */
 #define	KERNEL_UNLOCK()			/* nothing */
 #define	KERNEL_PROC_LOCK(p)		/* nothing */
 #define	KERNEL_PROC_UNLOCK(p)		/* nothing */

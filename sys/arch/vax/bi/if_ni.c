@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.9 2007/05/10 17:59:26 deraadt Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.10 2007/05/11 10:06:55 pedro Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -596,7 +596,7 @@ niintr(void *arg)
 	if ((NI_RREG(NI_PSR) & PSR_ERR))
 		printf("%s: PSR %x\n", sc->sc_dev.dv_xname, NI_RREG(NI_PSR));
 
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK();
 	/* Got any response packets?  */
 	while ((NI_RREG(NI_PSR) & PSR_RSQ) && (data = REMQHI(&gvp->nc_forwr))) {
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb.c,v 1.10 2007/05/10 17:59:26 deraadt Exp $ */
+/*	$OpenBSD: kdb.c,v 1.11 2007/05/11 10:06:55 pedro Exp $ */
 /*	$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -301,7 +301,7 @@ kdbintr(void *arg)
 		kdbsaerror(&sc->sc_dev, 1);
 		return;
 	}
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK();
 	mscp_intr(sc->sc_softc);
 	KERNEL_UNLOCK();
 }

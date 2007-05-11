@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.28 2007/05/08 20:25:56 deraadt Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.29 2007/05/11 10:06:56 pedro Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -801,9 +801,8 @@ _kernel_lock_init(void)
  * and the lower half of the kernel.
  */
 
-/* XXX The flag should go, all callers want equal behaviour. */
 void
-_kernel_lock(int flag)
+_kernel_lock(void)
 {
 	SCHED_ASSERT_UNLOCKED();
 	__mp_lock(&kernel_lock);
