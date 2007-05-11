@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.20 2006/07/26 09:10:03 mglocker Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.21 2007/05/11 01:47:48 ray Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: tftp.c,v 1.20 2006/07/26 09:10:03 mglocker Exp $";
+    "$OpenBSD: tftp.c,v 1.21 2007/05/11 01:47:48 ray Exp $";
 #endif /* not lint */
 
 /*
@@ -135,8 +135,9 @@ sendfile(int fd, char *name, char *mode)
 	struct sockaddr_in	 from;
 	struct pollfd		 pfd[1];
 	unsigned long		 amount;
+	socklen_t		 fromlen;
 	int			 convert; /* true if converting crlf -> lf */
-	int			 n, nfds, error, fromlen, timeouts, block, size;
+	int			 n, nfds, error, timeouts, block, size;
 
 	startclock();		/* start stat's clock */
 	dp = r_init();		/* reset fillbuf/read-ahead code */
@@ -266,8 +267,9 @@ recvfile(int fd, char *name, char *mode)
 	struct sockaddr_in	 from;
 	struct pollfd		 pfd[1];
 	unsigned long		 amount;
+	socklen_t		 fromlen;
 	int			 convert; /* true if converting crlf -> lf */
-	int			 n, nfds, error, fromlen, timeouts, block, size;
+	int			 n, nfds, error, timeouts, block, size;
 	int			 firsttrip;
 
 	startclock();		/* start stat's clock */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2006/07/26 22:43:53 mglocker Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2007/05/11 01:47:48 ray Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: main.c,v 1.28 2006/07/26 22:43:53 mglocker Exp $";
+    "$OpenBSD: main.c,v 1.29 2007/05/11 01:47:48 ray Exp $";
 #endif /* not lint */
 
 /*
@@ -299,12 +299,14 @@ modecmd(int argc, char *argv[])
 	return;
 }
 
+/* ARGSUSED */
 void
 setbinary(int argc, char *argv[])
 {
 	settftpmode("octet");
 }
 
+/* ARGSUSED */
 void
 setascii(int argc, char *argv[])
 {
@@ -344,7 +346,6 @@ put(int argc, char *argv[])
 	}
 	targ = argv[argc - 1];
 	if (strchr(argv[argc - 1], ':')) {
-		char		*cp;
 		struct hostent	*hp;
 
 		for (n = 1; n < argc - 1; n++)
@@ -552,6 +553,7 @@ settimeout(int argc, char *argv[])
 		maxtimeout = t;
 }
 
+/* ARGSUSED */
 void
 status(int argc, char *argv[])
 {
@@ -565,6 +567,7 @@ status(int argc, char *argv[])
 	    rexmtval, maxtimeout);
 }
 
+/* ARGSUSED */
 void
 intr(int signo)
 {
@@ -683,6 +686,7 @@ makeargv(void)
 	return (ret);
 }
 
+/* ARGSUSED */
 void
 quit(int argc, char *argv[])
 {
@@ -716,6 +720,7 @@ help(int argc, char *argv[])
 	}
 }
 
+/* ARGSUSED */
 void
 settrace(int argc, char *argv[])
 {
@@ -723,6 +728,7 @@ settrace(int argc, char *argv[])
 	printf("Packet tracing %s.\n", trace ? "on" : "off");
 }
 
+/* ARGSUSED */
 void
 setverbose(int argc, char *argv[])
 {
@@ -730,6 +736,7 @@ setverbose(int argc, char *argv[])
 	printf("Verbose mode %s.\n", verbose ? "on" : "off");
 }
 
+/* ARGSUSED */
 void
 settsize(int argc, char *argv[])
 {
@@ -741,6 +748,7 @@ settsize(int argc, char *argv[])
 		has_options--;
 }
 
+/* ARGSUSED */
 void
 settout(int argc, char *argv[])
 {
