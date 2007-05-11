@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.267 2007/05/10 17:41:50 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.268 2007/05/11 13:26:20 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -255,7 +255,6 @@ int  hpt_pci_intr(void *);
 
 void acard_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void acard_setup_channel(struct channel_softc *);
-int  acard_pci_intr(void *);
 
 void serverworks_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void serverworks_setup_channel(struct channel_softc *);
@@ -7736,40 +7735,6 @@ acard_setup_channel(struct channel_softc *chp)
 		pci_conf_write(sc->sc_pc, sc->sc_tag, ATP860_IDETIME, idetime);
 		pci_conf_write(sc->sc_pc, sc->sc_tag, ATP860_UDMA, udma_mode);
 	}
-}
-
-int
-acard_pci_intr(void *arg)
-{
-	struct pciide_softc *sc = arg;
-	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
-	int rv = 0;
-	int dmastat, i, crv;
-
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
-		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL(i));
-		if ((dmastat & IDEDMA_CTL_INTR) == 0)
-			continue;
-		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
-		if ((wdc_cp->ch_flags & WDCF_IRQ_WAIT) == 0) {
-			(void)wdcintr(wdc_cp);
-			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-			    IDEDMA_CTL(i), dmastat);
-			continue;
-		}
-		crv = wdcintr(wdc_cp);
-		if (crv == 0)
-			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, i);
-		else if (crv == 1)
-			rv = 1;
-		else if (rv == 0)
-			rv = crv;
-	}
-	return (rv);
 }
 
 void
