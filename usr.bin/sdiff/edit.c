@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.16 2007/04/25 05:02:17 ray Exp $ */
+/*	$OpenBSD: edit.c,v 1.17 2007/05/11 02:47:52 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -24,7 +24,10 @@
 int editit(const char *);
 
 /*
- * Takes the name of a file and opens it with an editor.
+ * Execute an editor on the specified pathname, which is interpreted
+ * from the shell.  This means flags may be included.
+ *
+ * Returns -1 on error, or the exit value on success.
  */
 int
 editit(const char *pathname)
@@ -32,7 +35,7 @@ editit(const char *pathname)
 	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
 	sig_t sighup, sigint, sigquit;
 	pid_t pid;
-	int st;
+	int saved_errno, st;
 
 	ed = getenv("VISUAL");
 	if (ed == NULL || ed[0] == '\0')
@@ -43,44 +46,36 @@ editit(const char *pathname)
 		return (-1);
 	argp[2] = p;
 
- top:
 	sighup = signal(SIGHUP, SIG_IGN);
 	sigint = signal(SIGINT, SIG_IGN);
 	sigquit = signal(SIGQUIT, SIG_IGN);
-	if ((pid = fork()) == -1) {
-		int saved_errno = errno;
-
-		(void)signal(SIGHUP, sighup);
-		(void)signal(SIGINT, sigint);
-		(void)signal(SIGQUIT, sigquit);
-		if (saved_errno == EAGAIN) {
-			sleep(1);
-			goto top;
-		}
-		free(p);
-		errno = saved_errno;
-		return (-1);
-	}
+	if ((pid = fork()) == -1)
+		goto fail;
 	if (pid == 0) {
 		execv(_PATH_BSHELL, argp);
 		_exit(127);
 	}
+	while (waitpid(pid, &st, 0) == -1)
+		if (errno != EINTR)
+			goto fail;
 	free(p);
-	for (;;) {
-		if (waitpid(pid, &st, 0) == -1) {
-			if (errno != EINTR)
-				return (-1);
-		} else
-			break;
-	}
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
-	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
-		errno = ECHILD;
+	if (!WIFEXITED(st)) {
+		errno = EINTR;
 		return (-1);
 	}
-	return (0);
+	return (WEXITSTATUS(st));
+
+ fail:
+	saved_errno = errno;
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	free(p);
+	errno = saved_errno;
+	return (-1);
 }
 
 /*
@@ -166,10 +161,7 @@ RIGHT:
 
 	/* Edit temp file. */
 	if (editit(filename) == -1) {
-		if (errno == ECHILD)
-			warnx("editor terminated abnormally");
-		else
-			warn("error editing %s", filename);
+		warn("error editing %s", filename);
 		cleanup(filename);
 	}
 
