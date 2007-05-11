@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.47 2007/05/09 02:36:56 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.48 2007/05/11 02:00:49 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 	mtime = sb.st_mtime;
 
  edit:
-	if (editit(tmppath) == -1 && errno != ECHILD)
+	if (editit(tmppath) == -1)
 		err(1, "error running editor");
 
 	if (stat(tmppath, &sb) == -1)
@@ -218,6 +218,12 @@ dmesg(FILE *fp)
 	fclose(dfp);
 }
 
+/*
+ * Execute an editor on the specified pathname, which is interpreted
+ * from the shell.  This means flags may be included.
+ *
+ * Returns -1 on error, or the exit value on success.
+ */
 int
 editit(const char *pathname)
 {
@@ -254,11 +260,11 @@ editit(const char *pathname)
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
-	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
-		errno = ECHILD;
+	if (!WIFEXITED(st)) {
+		errno = EINTR;
 		return (-1);
 	}
-	return (0);
+	return (WEXITSTATUS(st));
 
  fail:
 	saved_errno = errno;
