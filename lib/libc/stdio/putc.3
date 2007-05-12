@@ -1,4 +1,4 @@
-.\"	$OpenBSD: putc.3,v 1.8 2005/07/26 03:30:25 jaredy Exp $
+.\"	$OpenBSD: putc.3,v 1.9 2007/05/12 22:35:34 ray Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,13 +92,27 @@ and
 return the character written.
 If an error occurs, the value
 .Dv EOF
-is returned.
+is returned and the global variable
+.Va errno
+is set to indicate the error.
 The
 .Fn putw
 function returns 0 on success;
 .Dv EOF
 is returned if a write error occurs,
 or if an attempt is made to write a read-only stream.
+The global variable
+.Va errno
+may be set to indicate the error.
+.Sh ERRORS
+The function
+.Fn putw
+may also fail and set
+.Va errno
+for any of the errors specified for the routines
+.Xr write 2
+or
+.Xr realloc 3 .
 .Sh SEE ALSO
 .Xr ferror 3 ,
 .Xr fopen 3 ,
