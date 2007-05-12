@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.185 2006/11/18 22:58:28 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.186 2007/05/12 20:03:25 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -791,6 +791,7 @@ secondary_main()
 	struct cpu_info *ci = curcpu();
 
 	cpu_configuration_print(0);
+	ncpus++;
 	__cpu_simple_unlock(&cpu_mutex);
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
