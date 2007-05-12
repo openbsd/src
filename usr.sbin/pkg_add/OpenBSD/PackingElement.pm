@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.103 2007/05/07 09:09:07 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.104 2007/05/12 14:48:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -716,7 +716,7 @@ sub add
 
 	require OpenBSD::PkgSpec;
 
-	my @candidates = OpenBSD::PkgSpec::match($args, installed_packages());
+	my @candidates = OpenBSD::PkgSpec->new($args)->match(installed_packages());
 	if (@candidates == 1) {
 		if (!defined $installed_modules->{$candidates[0]}) {
 			# pull in the module right here and now;
