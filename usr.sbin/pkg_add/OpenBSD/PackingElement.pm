@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.104 2007/05/12 14:48:45 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.105 2007/05/12 15:19:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -669,6 +669,16 @@ sub stringize($)
 {
 	my $self = $_[0];
 	return $self->{pkgpath}.':'.$self->{pattern}.':'.$self->{def};
+}
+
+sub spec
+{
+	my $self = shift;
+	if (!defined $self->{spec}) {
+		require OpenBSD::PkgSpec;
+		$self->{spec} = OpenBSD::PkgSpec->new($self->{pattern});
+	}
+	return $self->{spec};
 }
 
 package OpenBSD::PackingElement::Wantlib;

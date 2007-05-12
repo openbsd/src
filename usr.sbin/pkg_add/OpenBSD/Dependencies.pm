@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.20 2007/05/12 14:38:30 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.21 2007/05/12 15:19:00 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,6 @@ use warnings;
 package OpenBSD::Dependencies;
 
 use OpenBSD::PackageName;
-use OpenBSD::PkgSpec;
 use OpenBSD::PackageInfo;
 use OpenBSD::SharedLibs;
 use OpenBSD::Error;
@@ -59,7 +58,7 @@ sub solve
 	my @deps;
 
 	for my $dep (@{$plist->{depend}}) {
-	    my $spec = OpenBSD::PkgSpec->new($dep->{pattern});
+	    my $spec = $dep->spec;
 	    if ($state->{replace}) {
 	    	my $v = find_candidate($spec, keys %{$to_install});
 		if ($v) {
