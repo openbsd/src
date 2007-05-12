@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.15 2006/11/22 22:49:02 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.16 2007/05/12 19:59:52 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -260,6 +260,9 @@ ASLOCAL(cpu_switch_found)
 	st	r9,  r11, CI_CURPROC			/* curproc = p */
 	or	r2,  r0,  SONPROC
 	st.b	r2,  r9,  P_STAT
+#ifdef MULTIPROCESSOR
+	st	r11, r9,  P_CPU				/* p->p_cpu = curcpu */
+#endif
 
 	ld	r3,  r9,  P_ADDR
 	st	r0,  r9,  P_BACK			/* p->p_back = 0 */
