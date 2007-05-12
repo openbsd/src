@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.12 2006/05/08 14:36:10 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.13 2007/05/12 20:02:14 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -153,14 +153,13 @@ m197_startup()
 void
 m197_ext_int(u_int v, struct trapframe *eframe)
 {
-	int mask, level;
+	int level;
 	struct intrhand *intr;
 	intrhand_t *list;
 	int ret;
 	vaddr_t ivec;
 	u_int8_t vec;
 
-	mask = *(u_int8_t *)M197_IMASK & 0x07;
 	if (v == T_NON_MASK) {
 		/* This is the abort switch */
 		level = IPL_NMI;
@@ -220,13 +219,11 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 	}
 
 	if (v != T_NON_MASK || cold == 0) {
-		set_psr(get_psr() | PSR_IND);
-
 		/*
-		 * Restore the mask level to what it was when the interrupt
-		 * was taken.
+		 * Disable interrupts before returning to assembler,
+		 * the spl will be restored later.
 		 */
-		m197_setipl(mask);
+		set_psr(get_psr() | PSR_IND);
 	}
 }
 

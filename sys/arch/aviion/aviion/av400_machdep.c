@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.4 2006/05/21 12:22:01 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.5 2007/05/12 20:02:12 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat.
  *
@@ -417,26 +417,6 @@ av400_intr(u_int v, struct trapframe *eframe)
 	 */
 	do {
 		level = safe_level(cur_mask, old_spl);
-
-#ifdef DIAGNOSTIC
-		if (level != IPL_ABORT && level <= old_spl) {
-			int i;
-
-			printf("safe level %d <= old level %d\n", level, old_spl);
-			printf("cur_mask = 0x%b\n", cur_mask, IST_STRING);
-			for (i = 0; i < 4; i++)
-				printf("IEN%d = 0x%b\n", i, int_mask_reg[i], IST_STRING);
-			printf("\nCPU0 spl %d  CPU1 spl %d  CPU2 spl %d  CPU3 spl %d\n",
-			       av400_curspl[0], av400_curspl[1],
-			       av400_curspl[2], av400_curspl[3]);
-			for (i = 0; i < INT_LEVEL; i++)
-				printf("int_mask[%d] = 0x%08x\n", i, int_mask_val[i]);
-			printf("--CPU %d halted--\n", cpu_number());
-			setipl(IPL_ABORT);
-			for(;;) ;
-		}
-#endif
-
 		setipl(level);
 
 		/*
@@ -530,20 +510,19 @@ av400_intr(u_int v, struct trapframe *eframe)
 		problems = 0;
 #endif
 
+out:
 	/*
 	 * process any remaining data access exceptions before
 	 * returning to assembler
 	 */
-	set_psr(get_psr() | PSR_IND);
-out:
 	if (eframe->tf_dmt0 & DMT_VALID)
 		m88100_trap(T_DATAFLT, eframe);
 
 	/*
-	 * Restore the mask level to what it was when the interrupt
-	 * was taken.
+	 * Disable interrupts before returning to assembler, the spl will
+	 * be restored later.
 	 */
-	av400_setipl(eframe->tf_mask);
+	set_psr(get_psr() | PSR_IND);
 }
 
 /*

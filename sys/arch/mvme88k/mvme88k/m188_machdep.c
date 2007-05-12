@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.25 2007/03/22 18:52:39 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.26 2007/05/12 20:02:14 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -548,20 +548,19 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		problems = 0;
 #endif
 
+out:
 	/*
 	 * process any remaining data access exceptions before
 	 * returning to assembler
 	 */
-	set_psr(get_psr() | PSR_IND);
-out:
 	if (eframe->tf_dmt0 & DMT_VALID)
 		m88100_trap(T_DATAFLT, eframe);
 
 	/*
-	 * Restore the mask level to what it was when the interrupt
-	 * was taken.
+	 * Disable interrupts before returning to assembler, the spl will
+	 * be restored later.
 	 */
-	m188_setipl(eframe->tf_mask);
+	set_psr(get_psr() | PSR_IND);
 
 #ifdef MULTIPROCESSOR
 	if (eframe->tf_mask < IPL_SCHED)
