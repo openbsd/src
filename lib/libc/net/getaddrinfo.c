@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.63 2007/05/12 16:18:06 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.64 2007/05/12 21:38:14 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1004,17 +1004,19 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	}
 	cp += n + QFIXEDSZ;
 	if (qtype == T_A || qtype == T_AAAA || qtype == T_ANY) {
+		size_t len;
+
 		/* res_send() has already verified that the query name is the
 		 * same as the one we sent; this just gets the expanded name
 		 * (i.e., with the succeeding search-domain tacked on).
 		 */
-		n = strlen(bp) + 1;		/* for the \0 */
-		if (n >= MAXHOSTNAMELEN) {
+		len = strlen(bp) + 1;		/* for the \0 */
+		if (len >= MAXHOSTNAMELEN) {
 			h_errno = NO_RECOVERY;
 			return (NULL);
 		}
 		canonname = bp;
-		bp += n;
+		bp += len;
 		/* The qname can be abbreviated, but h_name is now absolute. */
 		qname = canonname;
 	}
