@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.6 2006/05/04 19:27:36 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.7 2007/05/12 19:59:01 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -66,9 +66,6 @@
 #define	MAXU_ADDR	U(0x40000000) 	/* size of user virtual space */
 #define MAXPHYSMEM	U(0x10000000) 	/* max physical memory */
 
-/* #define ILLADDRESS	U(0x0F000000) */ 	/* any faulty address */
-/* #define ILLADDRESS	U(0x3FFFFFF0) */	/* any faulty address for LUNA-88K2 */
-
 #define PROM_ADDR	U(0x41000000) 	/* PROM */
 #define PROM_SPACE	U(0x00040000) 
 #define NVRAM_ADDR	U(0x45000000) 	/* Non Volatile */
@@ -118,22 +115,6 @@
 #define  INT_SET_LV0	U(0xFC000000) 	/* enable interrupts */
 #define  INT_SLAVE_MASK	U(0x84000000) 	/* slave can only enable 6 and 1 */
 #define	 INT_CLOCK_MASK	0xBFFFFFFF 	/* mask clock */
-#define  INT_LV6	U(0x00800000) 	/* level 6 enabled */
-#define  INT_LV5	U(0x00400000) 	/* level 5 enabled */
-#define  INT_LV4	U(0x00200000) 	/* level 4 enabled */
-#define  INT_LV3	U(0x00100000) 	/* level 3 enabled */
-#define  INT_LV2	U(0x00080000) 	/* level 2 enabled */
-#define  INT_LV1	U(0x00040000) 	/* level 1 enabled */
-#define  INT_ST		U(0xE0000000) 	/* interrupt status */
-#define  INT_MASK_LV0	INT_LV6 | INT_LV5 | INT_LV4 | INT_LV3 | INT_LV2 | INT_LV1
-#define  INT_MASK_LV1	INT_LV6 | INT_LV5 | INT_LV4 | INT_LV3 | INT_LV2
-#define  INT_MASK_LV2	INT_LV6 | INT_LV5 | INT_LV4 | INT_LV3
-#define  INT_MASK_LV3	INT_LV6 | INT_LV5 | INT_LV4
-#define  INT_MASK_LV4	INT_LV6 | INT_LV5
-#define  INT_MASK_LV5	INT_LV6
-#define  INT_MASK_LV6	0
-#define  INT_MASK_LV7	0
-#define  SLAVE_MASK     INT_LV6 | INT_LV1
 
 #define NON_MASKABLE_LEVEL 7		/* non-maskable-interrupt (abort) */
 #define	CLOCK_INT_LEVEL	6		/* clock interrupt level */

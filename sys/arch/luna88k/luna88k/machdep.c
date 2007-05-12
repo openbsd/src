@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2007/02/09 14:26:09 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2007/05/12 19:59:02 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -111,7 +111,6 @@ int	getcpuspeed(void);
 u_int	getipl(void);
 void	identifycpu(void);
 void	luna88k_bootstrap(void);
-u_int	safe_level(u_int, u_int);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 void	secondary_pre_main(void);
@@ -137,17 +136,6 @@ unsigned int *volatile int_mask_reg[] = {
 };
 
 unsigned int luna88k_curspl[] = {0, 0, 0, 0};
-
-unsigned int int_mask_val[INT_LEVEL] = {
-	INT_MASK_LV0,
-	INT_MASK_LV1,
-	INT_MASK_LV2,
-	INT_MASK_LV3,
-	INT_MASK_LV4,
-	INT_MASK_LV5,
-	INT_MASK_LV6,
-	INT_MASK_LV7
-};
 
 unsigned int int_set_val[INT_LEVEL] = {
 	INT_SET_LV0,
@@ -916,7 +904,9 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 		 * Spurious interrupts - may be caused by debug output clearing
 		 * serial port interrupts.
 		 */
+#ifdef DEBUG
 		printf("luna88k_ext_int(): Spurious interrupts?\n");
+#endif
 		flush_pipeline();
 		goto out;
 	}
@@ -933,23 +923,6 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 	/* XXX: This is very rough. Should be considered more. (aoyama) */
 	do {
 		level = (cur_int > old_spl ? cur_int : old_spl);
-		if (level >= 8) {
-			register int i;
-
-			printf("safe level %d <= old level %d\n", level, old_spl);
-			printf("cur_int = 0x%x\n", cur_int);
-
-			for (i = 0; i < 4; i++)
-				printf("IEN%d = 0x%x  ", i, *int_mask_reg[i]);
-			printf("\nCPU0 spl %d  CPU1 spl %d  CPU2 spl %d  CPU3 spl %d\n",
-			       luna88k_curspl[0], luna88k_curspl[1],
-			       luna88k_curspl[2], luna88k_curspl[3]);
-			for (i = 0; i < 8; i++)
-				printf("int_mask[%d] = 0x%08x\n", i, int_mask_val[i]);
-			printf("--CPU %d halted--\n", cpu_number());
-			setipl(IPL_ABORT);
-			for(;;) ;
-		}
 
 #ifdef DEBUG
 		if (level > 7 || (char)level < 0) {
@@ -1331,23 +1304,6 @@ nvram_by_symbol(symbol)
 	}
 
 	return value;
-}
-
-/*
- * return next safe spl to reenable interrupts.
- */
-u_int
-safe_level(u_int mask, u_int curlevel)
-{
-	int i;
-
-	for (i = curlevel; i < 8; i++)
-		if (!(int_mask_val[i] & mask))
-			return i;
-
-	panic("safe_level: no safe level for mask 0x%08x level %d found",
-	       mask, curlevel);
-	/* NOTREACHED */
 }
 
 void
