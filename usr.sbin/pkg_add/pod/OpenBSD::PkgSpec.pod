@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PkgSpec.pod,v 1.3 2005/10/07 21:54:22 jmc Exp $
+$OpenBSD: OpenBSD::PkgSpec.pod,v 1.4 2007/05/12 14:54:46 espie Exp $
 
 =head1 NAME
 
@@ -7,7 +7,10 @@ OpenBSD::PkgSpec - C<packages-specs(7)> handling
 =head1 SYNOPSIS
 
    use OpenBSD::PkgSpec;
-   @sublist = OpenBSD::PkgSpec::match($pattern, @list);
+   my $spec = OpenBSD::PkgSpec->new($pattern);
+   @sublist = $spec->match(@list);
+   # alternatively
+   @sublist = $spec->match_ref(\@list);
 
 =head1 DESCRIPTION
 
