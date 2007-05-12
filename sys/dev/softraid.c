@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.41 2007/05/08 23:54:37 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.42 2007/05/12 02:50:22 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -34,6 +34,8 @@
 #include <sys/disklabel.h>
 #include <sys/mount.h>
 #include <sys/sensors.h>
+#include <sys/stat.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
 
@@ -135,6 +137,7 @@ u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
 int			sr_save_metadata(struct sr_discipline *);
 void			sr_refresh_sensors(void *);
 int			sr_create_sensors(struct sr_discipline *);
+int			sr_boot_assembly(struct sr_softc *);
 
 #ifdef SR_DEBUG
 void			sr_print_metadata(struct sr_metadata *);
@@ -169,6 +172,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: controller registration failed", DEVNAME(sc));
 	else
 		sc->sc_ioctl = sr_ioctl;
+
+	/* sr_boot_assembly(sc); */
 
 	printf("\n");
 }
@@ -2205,7 +2210,7 @@ sr_save_metadata(struct sr_discipline *sd)
 		VOP_STRATEGY(&b);
 		biowait(&b);
 
-		/* make sure in memor copy is clean */
+		/* make sure in memory copy is clean */
 		sm->ssd_vd_volid = 0;
 		sm->ssd_chunk_id = 0;
 		sm->ssd_checksum = 0;
@@ -2226,6 +2231,105 @@ sr_save_metadata(struct sr_discipline *sd)
 	rv = 0;
 bad:
 	return (rv);
+}
+
+int
+sr_boot_assembly(struct sr_softc *sc)
+{
+	struct device		*dv;
+	struct buf		*bp;
+	struct bdevsw		*bdsw;
+	struct disklabel	label;
+	struct sr_metadata	*sm;
+	dev_t			dev, devr;
+	int			error, majdev, i;
+	size_t			sz = SR_META_SIZE * 512;
+
+	DNPRINTF(SR_D_META, "%s: sr_boot_assembly\n", DEVNAME(sc));
+
+	bp = geteblk(sz);
+
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		if (dv->dv_class != DV_DISK)
+			continue;
+
+		majdev = findblkmajor(dv);
+		bp->b_dev = dev =  MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
+		bdsw = &bdevsw[major(dev)];
+
+		/* open device */
+		error = (*bdsw->d_open)(dev, FREAD, S_IFCHR, curproc);
+		if (error) {
+			DNPRINTF(SR_D_META, "%s: sr_boot_assembly open failed"
+			    "\n", DEVNAME(sc));
+			continue;
+		}
+
+		/* get disklabel */
+		error = (*bdsw->d_ioctl)(dev, DIOCGDINFO, (void *)&label,
+		    FREAD, curproc);
+		if (error) {
+			DNPRINTF(SR_D_META, "%s: sr_boot_assembly ioctl "
+			    "failed\n", DEVNAME(sc));
+			error = (*bdsw->d_close)(dev, FREAD, S_IFCHR, curproc);
+			continue;
+		}
+
+		/* we are done, close device */
+		error = (*bdsw->d_close)(dev, FREAD, S_IFCHR, curproc);
+		if (error) {
+			DNPRINTF(SR_D_META, "%s: sr_boot_assembly close "
+			    "failed\n", DEVNAME(sc));
+			continue;
+		}
+
+		/* are we a softraid partition? */
+		for (i = 0; i < MAXPARTITIONS; i++) {
+			if (label.d_partitions[i].p_fstype != FS_RAID) {
+				error = (*bdsw->d_close)(dev, FREAD, S_IFCHR,
+				    curproc);
+				continue;
+			}
+
+			/* open device */
+			bp->b_dev = devr = MAKEDISKDEV(majdev, dv->dv_unit, i);
+			error = (*bdsw->d_open)(devr, FREAD, S_IFCHR, curproc);
+			if (error) {
+				DNPRINTF(SR_D_META, "%s: sr_boot_assembly open "
+				    "failed, partition %d\n", DEVNAME(sc), i);
+				continue;
+			}
+			/* read metadat */
+			bp->b_flags = B_BUSY | B_READ;
+			bp->b_blkno = SR_META_OFFSET;
+			bp->b_cylinder = 0;
+			bp->b_bcount = sz;
+			bp->b_bufsize = sz;
+			bp->b_resid = sz;
+			(*bdsw->d_strategy)(bp);
+			if ((error = biowait(bp))) {
+				DNPRINTF(SR_D_META, "%s: sr_boot_assembly "
+				    "strategy failed, partition %d\n",
+				    DEVNAME(sc));
+				error = (*bdsw->d_close)(devr, 0, S_IFCHR,
+				    curproc);
+				continue;
+			}
+
+			sm = (struct sr_metadata *)bp->b_data;
+			/* printf("%s meta:\n", dv->dv_xname); */
+			sr_print_metadata(sm);
+
+			/* we are done, close device */
+			error = (*bdsw->d_close)(devr, FREAD, S_IFCHR, curproc);
+			if (error) {
+				DNPRINTF(SR_D_META, "%s: sr_boot_assembly close" 				    "failed\n", DEVNAME(sc));
+				continue;
+			}
+		}
+	}
+
+	return (0);
 }
 
 int
