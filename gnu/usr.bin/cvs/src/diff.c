@@ -869,7 +869,7 @@ diff_file_nodiff (finfo, vers, empty_file)
 	    /* The first revision does not exist.  If EMPTY_FILES is
                true, treat this as an added file.  Otherwise, warn
                about the missing tag.  */
-	    if (use_rev2 == NULL)
+	    if (use_rev2 == NULL || RCS_isdead( vers->srcfile, use_rev2 ) )
 		/* At least in the case where DIFF_REV1 and DIFF_REV2
 		   are both numeric, we should be returning some kind
 		   of error (see basicb-8a0 in testsuite).  The symbolic
