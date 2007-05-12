@@ -1,4 +1,4 @@
-/*	$OpenBSD: acu.c,v 1.13 2006/10/18 21:18:59 deraadt Exp $	*/
+/*	$OpenBSD: acu.c,v 1.14 2007/05/12 21:20:40 ray Exp $	*/
 /*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: acu.c,v 1.13 2006/10/18 21:18:59 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: acu.c,v 1.14 2007/05/12 21:20:40 ray Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -99,7 +99,7 @@ con(void)
 	if (*cp != '@') {
 		while (*cp) {
 			phnum = cp;
-			cp = strpbrk(cp, ",");
+			cp += strcspn(cp, ",");
 			if (*cp != '\0')
 				*cp++ = '\0';
 
