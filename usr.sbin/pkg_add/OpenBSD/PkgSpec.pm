@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.7 2007/05/12 15:00:30 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.8 2007/05/12 22:55:29 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -18,10 +18,6 @@
 use strict;
 use warnings;
 package OpenBSD::PkgSpec;
-
-# one useful function: 
-#   OpenBSD::PkgSpec::match($pattern, @list) -> @sublist
-# note that @sublist may contain duplicates
 
 # all the shit that does handle package specifications
 sub compare_pseudo_numbers
