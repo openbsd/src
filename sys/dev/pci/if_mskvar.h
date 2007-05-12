@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mskvar.h,v 1.4 2007/02/11 22:16:21 kettenis Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.5 2007/05/12 18:19:54 kettenis Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_mskvar.h,v 1.4 2007/02/11 22:16:21 kettenis Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.5 2007/05/12 18:19:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -198,7 +198,6 @@ struct sk_softc {
 	u_int8_t		sk_rev;
 	u_int8_t		sk_macs;	/* # of MACs */
 	char			*sk_name;
-	u_int32_t		sk_rboff;	/* RAMbuffer offset */
 	u_int32_t		sk_ramsize;	/* amount of RAM on NIC */
 	u_int32_t		sk_intrmask;
 	bus_dma_tag_t		sc_dmatag;

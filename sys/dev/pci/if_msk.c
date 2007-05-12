@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.50 2007/02/26 04:00:25 todd Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.51 2007/05/12 18:19:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -990,7 +990,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	caddr_t kva;
 	bus_dma_segment_t seg;
 	int i, rseg;
-	u_int32_t chunk, val;
+	u_int32_t chunk;
 	int mii_flags;
 
 	sc_if->sk_port = sa->skc_port;
@@ -1016,25 +1016,18 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	    ether_sprintf(sc_if->arpcom.ac_enaddr));
 
 	/*
-	 * Set up RAM buffer addresses. The NIC will have a certain
-	 * amount of SRAM on it, somewhere between 512K and 2MB. We
-	 * need to divide this up a) between the transmitter and
- 	 * receiver and b) between the two XMACs, if this is a
-	 * dual port NIC. Our algorithm is to divide up the memory
-	 * evenly so that everyone gets a fair share.
-	 *
-	 * Just to be contrary, Yukon2 appears to have separate memory
-	 * for each MAC.
+	 * Set up RAM buffer addresses. The Yukon2 has a small amount
+	 * of SRAM on it, somewhere between 4K and 48K.  We need to
+	 * divide this up between the transmitter and receiver.  We
+	 * give the receiver 2/3 of the memory (rounded down), and the
+	 * transmitter whatever remains.
 	 */
-	chunk = sc->sk_ramsize  - (sc->sk_ramsize + 2) / 3;
-	val = sc->sk_rboff / sizeof(u_int64_t);
-	sc_if->sk_rx_ramstart = val;
-	val += (chunk / sizeof(u_int64_t));
-	sc_if->sk_rx_ramend = val - 1;
-	chunk = sc->sk_ramsize - chunk;
-	sc_if->sk_tx_ramstart = val;
-	val += (chunk / sizeof(u_int64_t));
-	sc_if->sk_tx_ramend = val - 1;
+	chunk = (2 * (sc->sk_ramsize / sizeof(u_int64_t)) / 3) & ~0xff;
+	sc_if->sk_rx_ramstart = 0;
+	sc_if->sk_rx_ramend = sc_if->sk_rx_ramstart + chunk - 1;
+	chunk = (sc->sk_ramsize / sizeof(u_int64_t)) - chunk;
+	sc_if->sk_tx_ramstart = sc_if->sk_rx_ramend + 1;
+	sc_if->sk_tx_ramend = sc_if->sk_tx_ramstart + chunk - 1;
 
 	DPRINTFN(2, ("msk_attach: rx_ramstart=%#x rx_ramend=%#x\n"
 		     "           tx_ramstart=%#x tx_ramend=%#x\n",
@@ -1168,7 +1161,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t size;
-	u_int8_t hw, pmd, skrs;
+	u_int8_t hw, pmd;
 	char *revstr = NULL;
 	caddr_t kva;
 	bus_dma_segment_t seg;
@@ -1286,16 +1279,8 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	/* Reset the adapter. */
 	mskc_reset(sc);
 
-	skrs = sk_win_read_1(sc, SK_EPROM0);
-	if (skrs == 0x00)
-		sc->sk_ramsize = 0x20000;
-	else
-		sc->sk_ramsize = skrs * (1<<12);
-	sc->sk_rboff = SK_RBOFF_0;
-
-	DPRINTFN(2, ("mskc_attach: ramsize=%d (%dk), rboff=%d\n",
-		     sc->sk_ramsize, sc->sk_ramsize / 1024,
-		     sc->sk_rboff));
+	sc->sk_ramsize = sk_win_read_1(sc, SK_EPROM0) * 4096;
+	DPRINTFN(2, ("mskc_attach: ramsize=%dK\n", sc->sk_ramsize / 1024));
 
 	pmd = sk_win_read_1(sc, SK_PMDTYPE);
 	if (pmd == 'L' || pmd == 'S' || pmd == 'P')
