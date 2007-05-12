@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.62 2007/05/10 02:14:35 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.63 2007/05/12 16:18:06 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -239,38 +239,38 @@ static struct addrinfo *_dns_getaddrinfo(const char *, const struct addrinfo *);
 
 /* XXX macros that make external reference is BAD. */
 
-#define GET_AI(ai, afd, addr) \
-do { \
-	/* external reference: pai, error, and label free */ \
-	(ai) = get_ai(pai, (afd), (addr)); \
-	if ((ai) == NULL) { \
-		error = EAI_MEMORY; \
-		goto free; \
-	} \
+#define GET_AI(ai, afd, addr)						\
+do {									\
+	/* external reference: pai, error, and label free */		\
+	(ai) = get_ai(pai, (afd), (addr));				\
+	if ((ai) == NULL) {						\
+		error = EAI_MEMORY;					\
+		goto free;						\
+	}								\
 } while (/*CONSTCOND*/0)
 
-#define GET_PORT(ai, serv) \
-do { \
-	/* external reference: error and label free */ \
-	error = get_port((ai), (serv), 0); \
-	if (error != 0) \
-		goto free; \
+#define GET_PORT(ai, serv)						\
+do {									\
+	/* external reference: error and label free */			\
+	error = get_port((ai), (serv), 0);				\
+	if (error != 0)							\
+		goto free;						\
 } while (/*CONSTCOND*/0)
 
-#define GET_CANONNAME(ai, str) \
-do { \
-	/* external reference: pai, error and label free */ \
-	error = get_canonname(pai, (ai), (str)); \
-	if (error != 0) \
-		goto free; \
+#define GET_CANONNAME(ai, str)						\
+do {									\
+	/* external reference: pai, error and label free */		\
+	error = get_canonname(pai, (ai), (str));			\
+	if (error != 0)							\
+		goto free;						\
 } while (/*CONSTCOND*/0)
 
-#define ERR(err) \
-do { \
-	/* external reference: error, and label bad */ \
-	error = (err); \
-	goto bad; \
-	/*NOTREACHED*/ \
+#define ERR(err)							\
+do {									\
+	/* external reference: error, and label bad */			\
+	error = (err);							\
+	goto bad;							\
+	/*NOTREACHED*/							\
 } while (/*CONSTCOND*/0)
 
 #define MATCH_FAMILY(x, y, w) \
