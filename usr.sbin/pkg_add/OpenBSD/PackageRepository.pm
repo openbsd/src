@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.22 2007/05/12 14:16:38 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.23 2007/05/12 14:52:26 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -69,7 +69,7 @@ sub match_spec
 {
 	my ($self, $spec) = @_;
 	if (ref $spec) {
-		return $spec->match($self->list);
+		return $spec->match_ref($self->list);
 	} else {
 		require OpenBSD::PkgSpec;
 		return OpenBSD::PkgSpec::match_ref($spec, $self->list);
