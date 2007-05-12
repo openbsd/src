@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.19 2007/05/07 13:27:28 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.20 2007/05/12 14:38:30 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -29,8 +29,8 @@ use OpenBSD::Interactive;
 
 sub find_candidate
 {
-	    my $dep = shift;
-	    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, @_);
+	    my $spec = shift;
+	    my @candidates = $spec->match(@_);
 	    if (@candidates >= 1) {
 		    return $candidates[0];
 	    } else {
@@ -59,8 +59,9 @@ sub solve
 	my @deps;
 
 	for my $dep (@{$plist->{depend}}) {
+	    my $spec = OpenBSD::PkgSpec->new($dep->{pattern});
 	    if ($state->{replace}) {
-	    	my $v = find_candidate($dep, keys %{$to_install});
+	    	my $v = find_candidate($spec, keys %{$to_install});
 		if ($v) {
 		    push(@deps, $to_install->{$v});
 		    $to_register->{$v} = 1;
@@ -68,13 +69,13 @@ sub solve
 		}
 	    }
 
-	    my $v = find_candidate($dep, installed_packages());
+	    my $v = find_candidate($spec, installed_packages());
 	    if ($v) {
 		    $to_register->{$v} = 1;
 		    next;
 	    }
 	    if (!$state->{replace}) {
-	    	my $v = find_candidate($dep, keys %{$to_install});
+	    	my $v = find_candidate($spec, keys %{$to_install});
 		if ($v) {
 		    push(@deps, $to_install->{$v});
 		    $to_register->{$v} = 1;
@@ -84,7 +85,7 @@ sub solve
 	    require OpenBSD::PackageLocator;
 
 	    # try with list of available packages
-	    my @candidates = OpenBSD::PackageLocator->match_spec($dep->{pattern});
+	    my @candidates = OpenBSD::PackageLocator->match_spec($spec);
 	    if (!$state->{forced}->{allversions}) {
 		@candidates = OpenBSD::PackageName::keep_most_recent(@candidates);
 	    }
@@ -136,8 +137,8 @@ sub find_old_lib
 {
 	my ($state, $base, $pattern, $lib, $dependencies) = @_;
 
-	$pattern = ".libs-".$pattern;
-	for my $try (OpenBSD::PkgSpec::match($pattern, installed_packages())) {
+	my $spec = OpenBSD::PkgSpec->new(".libs-".$pattern);
+	for my $try ($spec->match(installed_packages())) {
 		OpenBSD::SharedLibs::add_package_libs($try);
 		if (check_lib_spec($base, $lib, {$try => 1})) {
 			$dependencies->{$try} = 1;
