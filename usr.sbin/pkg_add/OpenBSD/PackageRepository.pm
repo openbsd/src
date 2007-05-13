@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.27 2007/05/13 13:32:36 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.28 2007/05/13 13:37:00 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -63,24 +63,6 @@ sub stemlist
 		$self->{stemlist} = OpenBSD::PackageName::avail2stems($self->available);
 	}
 	return $self->{stemlist};
-}
-
-sub findstem
-{
-	my ($self, $stem) = @_;
-	return $self->stemlist->findstem($stem);
-}
-
-sub find_partialstem
-{
-	my ($self, $partial) = @_;
-	return $self->stemlist->find_partialstem($partial);
-}
-
-sub match_spec
-{
-	my ($self, $spec) = @_;
-	return $spec->match_repo($self);
 }
 
 sub match

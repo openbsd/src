@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.66 2007/05/13 13:12:21 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.67 2007/05/13 13:37:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -115,28 +115,10 @@ sub cleanup
 	$pkgpath->cleanup;
 }
 
-sub match_spec
-{
-	my ($class, $spec, $filter) = @_;
-	return $pkgpath->match_spec($spec, $filter);
-}
-
-sub findstem
-{
-	my ($class, $stem, $filter) = @_;
-	return $pkgpath->findstem($stem, $filter);
-}
-
-sub find_partialstem
-{
-	my ($class, $partial, $filter) = @_;
-	return $pkgpath->find_partialstem($partial, $filter);
-}
-
 sub match
 {
 	my ($class, $search, $filter) = @_;
-	return $pkgpath->match_repo($search, $filter);
+	return $pkgpath->match($search, $filter);
 }
 
 1;
