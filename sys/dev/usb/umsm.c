@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.7 2007/05/03 09:45:03 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.8 2007/05/13 12:17:30 fkr Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Driver for Qualcomm MSM EVDO devices */
+/* Driver for Qualcomm MSM EVDO and UMTS communication devices */
 
 #include <sys/param.h>
 #include <sys/systm.h>
