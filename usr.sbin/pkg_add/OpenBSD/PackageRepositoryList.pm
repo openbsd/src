@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.6 2007/05/13 09:31:24 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.7 2007/05/13 10:10:35 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -103,9 +103,12 @@ sub available
 
 sub _first_of
 {
-	my ($self, $method, @args) = @_;
+	my ($self, $method, $filter, @args) = @_;
 	for my $repo (@{$self->{list}}) {
 		my @l = $repo->$method(@args);
+		if (defined $filter) {
+			@l = &$filter(@l);
+		}
 		if (@l > 0) {
 			return @l;
 		}
@@ -115,20 +118,20 @@ sub _first_of
 
 sub find_partialstem
 {
-	my ($self, $partial) = @_;
-	return $self->_first_of('find_partialstem', $partial);
+	my ($self, $partial, $filter) = @_;
+	return $self->_first_of('find_partialstem', $filter, $partial);
 }
 
 sub findstem
 {
-	my ($self, $stem) = @_;
-	return $self->_first_of('findstem', $stem);
+	my ($self, $stem, $filter) = @_;
+	return $self->_first_of('findstem', $filter, $stem);
 }
 
 sub match_spec
 {
-	my ($self, $spec) = @_;
-	return $self->_first_of('match_spec', $spec);
+	my ($self, $spec, $filter) = @_;
+	return $self->_first_of('match_spec', $filter, $spec);
 }
 
 sub cleanup
