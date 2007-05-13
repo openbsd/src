@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.12 2007/05/04 13:21:03 art Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.13 2007/05/13 04:52:32 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -148,16 +148,19 @@ rw_enter_diag(struct rwlock *rwl, int flags)
 	case RW_WRITE:
 	case RW_READ:
 		if (RW_PROC(curproc) == RW_PROC(rwl->rwl_owner))
-			panic("rw_enter: locking against myself");
+			panic("rw_enter: %s locking against myself",
+			    rwl->rwl_name);
 		break;
 	case RW_DOWNGRADE:
 		/*
 		 * If we're downgrading, we must hold the write lock.
 		 */
 		if ((rwl->rwl_owner & RWLOCK_WRLOCK) == 0)
-			panic("rw_enter: downgrade of non-write lock");
+			panic("rw_enter: %s downgrade of non-write lock",
+			    rwl->rwl_name);
 		if (RW_PROC(curproc) != RW_PROC(rwl->rwl_owner))
-			panic("rw_enter: downgrade, not holder");
+			panic("rw_enter: %s downgrade, not holder",
+			    rwl->rwl_name);
 		break;
 
 	default:
