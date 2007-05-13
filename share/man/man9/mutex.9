@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.1 2005/02/18 16:15:32 pedro Exp $
+.\" $OpenBSD: mutex.9,v 1.2 2007/05/13 11:34:25 jsg Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@openbsd.org>
 .\" All rights reserved.
@@ -57,6 +57,7 @@ In case the acquisition of the mutex caused the interrupt level to be changed,
 it is then restored.
 .Sh SEE ALSO
 .Xr lockmgr 9 ,
+.Xr rwlock 9 ,
 .Xr spl 9
 .Sh HISTORY
 The
