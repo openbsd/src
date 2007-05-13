@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.384 2007/05/04 16:39:28 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.385 2007/05/13 08:18:11 gwk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1408,7 +1408,7 @@ amd_family5_setup(struct cpu_info *ci)
 	}
 }
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU) && !defined(MULTIPROCESSOR)
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void
 amd_family6_setperf_setup(struct cpu_info *ci)
 {
@@ -1423,7 +1423,7 @@ amd_family6_setperf_setup(struct cpu_info *ci)
 		break;
 	}
 }
-#endif /* !SMALL_KERNEL && I686_CPU && !MULTIPROCESSOR */
+#endif /* !SMALL_KERNEL && I686_CPU */
 
 void
 amd_family6_setup(struct cpu_info *ci)
@@ -1438,9 +1438,7 @@ amd_family6_setup(struct cpu_info *ci)
 	else
 		pagezero = i686_pagezero;
 
-#if !defined(MULTIPROCESSOR)
 	setperf_setup = amd_family6_setperf_setup;
-#endif
 #endif
 }
 
