@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.105 2007/05/12 15:19:00 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.106 2007/05/13 10:08:11 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -618,14 +618,29 @@ sub category() { 'extrainfo' }
 sub new
 {
 	my ($class, $subdir, $cdrom, $ftp) = @_;
+
+	$cdrom =~ s/^\"(.*)\"$/$1/;
+	$cdrom =~ s/^\'(.*)\'$/$1/;
+	$ftp =~ s/^\"(.*)\"$/$1/;
+	$ftp =~ s/^\'(.*)\'$/$1/;
 	bless { subdir => $subdir, cdrom => $cdrom, ftp => $ftp}, $class;
+}
+
+sub may_quote
+{
+	my $s = shift;
+	if ($s =~ m/\s/) {
+		return '"'.$s.'"';
+	} else {
+		return $s;
+	}
 }
 
 sub stringize($)
 {
 	my $self = $_[0];
-	return "subdir=".$self->{subdir}." cdrom=".$self->{cdrom}.
-	    " ftp=".$self->{ftp};
+	return "subdir=".$self->{subdir}." cdrom=".may_quote($self->{cdrom}).
+	    " ftp=".may_quote($self->{ftp});
 }
 
 package OpenBSD::PackingElement::Name;
