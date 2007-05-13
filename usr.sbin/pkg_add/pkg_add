@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.239 2007/05/13 10:43:33 espie Exp $
+# $OpenBSD: pkg_add,v 1.240 2007/05/13 13:32:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -591,7 +591,7 @@ sub find_truenames
 			$h = 'OpenBSD::PackageLocator';
 			$path = "";
 		    }
-		    my @l = $h->findstem($pkgname);
+		    my @l = $h->match(OpenBSD::PackageName::Stem->new($pkgname));
 		    if (@l > 1 && !$state->{forced}->{allversions}) {
 			@l = OpenBSD::PackageName::keep_most_recent(@l);
 		    }

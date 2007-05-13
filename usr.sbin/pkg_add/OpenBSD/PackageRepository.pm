@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.26 2007/05/13 12:58:54 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.27 2007/05/13 13:32:36 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -81,6 +81,12 @@ sub match_spec
 {
 	my ($self, $spec) = @_;
 	return $spec->match_repo($self);
+}
+
+sub match
+{
+	my ($self, $search) = @_;
+	return $search->match_repo($self);
 }
 
 sub wipe_info

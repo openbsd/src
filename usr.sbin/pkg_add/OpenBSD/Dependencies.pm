@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.21 2007/05/12 15:19:00 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.22 2007/05/13 13:32:36 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,7 +84,7 @@ sub solve
 	    require OpenBSD::PackageLocator;
 
 	    # try with list of available packages
-	    my @candidates = OpenBSD::PackageLocator->match_spec($spec);
+	    my @candidates = OpenBSD::PackageLocator->match($spec);
 	    if (!$state->{forced}->{allversions}) {
 		@candidates = OpenBSD::PackageName::keep_most_recent(@candidates);
 	    }

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.49 2007/05/12 14:48:45 espie Exp $
+# $OpenBSD: pkg_info,v 1.50 2007/05/13 13:32:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -78,7 +78,7 @@ sub find_pkg
 		return;
 	}
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
-		my @l = sort ($repo->findstem($pkgname));
+		my @l = sort ($repo->match(OpenBSD::PackageName::Stem->new($pkgname)));
 		if (@l != 0) {
 			for my $p (@l) {
 				&$code($p, $repo->find($p));
@@ -369,8 +369,9 @@ if ($opt_Q) {
 	require OpenBSD::PackageLocator;
 
 	print "PKG_PATH=$ENV{PKG_PATH}\n" if $opt_v;
+	my $partial = OpenBSD::PackageName::PartialStem->new($opt_Q);
 
-	for my $p (sort OpenBSD::PackageLocator->find_partialstem($opt_Q)) {
+	for my $p (sort OpenBSD::PackageLocator->match($partial)) {
 		print $p, is_installed($p) ? " (installed)" : "" , "\n";
 	}
 

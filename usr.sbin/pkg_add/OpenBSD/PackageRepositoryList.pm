@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.8 2007/05/13 13:12:21 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.9 2007/05/13 13:32:36 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -134,10 +134,10 @@ sub match_spec
 	return $self->_first_of('match_spec', $filter, $spec);
 }
 
-sub match_repo
+sub match
 {
 	my ($self, $spec, $filter) = @_;
-	return $self->_first_of('match_repo', $filter, $spec);
+	return $self->_first_of('match', $filter, $spec);
 }
 
 sub cleanup
