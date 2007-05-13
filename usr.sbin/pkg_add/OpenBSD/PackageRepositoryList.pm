@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.5 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.6 2007/05/13 09:31:24 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -99,6 +99,36 @@ sub available
 		$self->{avail} = $available_packages;
 	}
 	return keys %{$self->{avail}};
+}
+
+sub _first_of
+{
+	my ($self, $method, @args) = @_;
+	for my $repo (@{$self->{list}}) {
+		my @l = $repo->$method(@args);
+		if (@l > 0) {
+			return @l;
+		}
+	}
+	return ();
+}
+
+sub find_partialstem
+{
+	my ($self, $partial) = @_;
+	return $self->_first_of('find_partialstem', $partial);
+}
+
+sub findstem
+{
+	my ($self, $stem) = @_;
+	return $self->_first_of('findstem', $stem);
+}
+
+sub match_spec
+{
+	my ($self, $spec) = @_;
+	return $self->_first_of('match_spec', $spec);
 }
 
 sub cleanup
