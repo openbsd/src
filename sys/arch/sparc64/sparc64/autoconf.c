@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.65 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.66 2007/05/13 09:16:05 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -555,7 +555,7 @@ mbprint(aux, name)
 	struct mainbus_attach_args *ma = aux;
 
 	if (name)
-		printf("%s at %s", ma->ma_name, name);
+		printf("\"%s\" at %s", ma->ma_name, name);
 	if (ma->ma_address)
 		printf(" addr 0x%08lx", (u_long)ma->ma_address[0]);
 	if (ma->ma_pri)
