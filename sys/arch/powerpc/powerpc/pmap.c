@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.99 2007/05/03 18:40:21 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.100 2007/05/13 03:45:59 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -457,12 +457,7 @@ pmap_attr_save(paddr_t pa, u_int32_t bits)
 }
 
 int
-pmap_enter(pm, va, pa, prot, flags)
-	pmap_t pm;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct pte_desc *pted;
 	struct pted_pv_head *pvh;
@@ -750,7 +745,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	}
 
 	splx(s);
-
 }
 
 void
@@ -1756,10 +1750,7 @@ pmap_popusr(u_int32_t sr)
 }
 
 int
-copyin(udaddr, kaddr, len)
-	const void *udaddr;
-	void *kaddr;
-	size_t len;
+copyin(const void *udaddr, void *kaddr, size_t len)
 {
 	void *p;
 	size_t l;
@@ -1789,10 +1780,7 @@ copyin(udaddr, kaddr, len)
 }
 
 int
-copyout(kaddr, udaddr, len)
-	const void *kaddr;
-	void *udaddr;
-	size_t len;
+copyout(const void *kaddr, void *udaddr, size_t len)
 {
 	void *p;
 	size_t l;
