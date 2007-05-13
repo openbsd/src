@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.21 2007/05/13 13:32:36 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.22 2007/05/13 13:39:43 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -123,19 +123,6 @@ sub keep_most_recent
 	return @list;
 }
 
-sub findstem
-{
-	my ($k, @list) = @_;
-	my @r = ();
-	for my $n (@list) {
-		my $stem = splitstem($n);
-		if ($k eq $stem) {
-			push(@r, $n);
-		}
-	}
-	return @r;
-}
-
 sub compile_stemlist
 {
 	my $hash = {};
@@ -160,13 +147,13 @@ sub avail2stems
 
 package OpenBSD::PackageLocator::_compiled_stemlist;
 
-sub findstem
+sub find
 {
 	my ($self, $stem) = @_;
 	return keys %{$self->{$stem}};
 }
 
-sub find_partialstem
+sub find_partial
 {
 	my ($self, $partial) = @_;
 	my @result = ();
@@ -320,7 +307,7 @@ sub split
 sub match_repo
 {
 	my ($self, $o) = @_;
-	return $o->stemlist->findstem($self->{stem});
+	return $o->stemlist->find($self->{stem});
 }
 
 package OpenBSD::PackageName::PartialStem;
@@ -335,7 +322,7 @@ sub to_pattern
 sub match_repo
 {
 	my ($self, $o) = @_;
-	return $o->stemlist->find_partialstem($self->{stem});
+	return $o->stemlist->find_partial($self->{stem});
 }
 
 package OpenBSD::PackageName::Name;
