@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.67 2007/05/13 13:37:00 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.68 2007/05/13 17:00:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -117,8 +117,8 @@ sub cleanup
 
 sub match
 {
-	my ($class, $search, $filter) = @_;
-	return $pkgpath->match($search, $filter);
+	my ($class, @search) = @_;
+	return $pkgpath->match(@search);
 }
 
 1;
