@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.64 2007/05/13 10:16:06 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.65 2007/05/13 12:34:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -115,55 +115,22 @@ sub cleanup
 	$pkgpath->cleanup;
 }
 
-my @avail;
-
 sub match_spec
 {
 	my ($class, $spec, $filter) = @_;
-	if (!@avail) {
-	    @avail = available();
-	}
-	if (defined $filter) {
-		return &$filter($spec->match_ref(\@avail));
-	} else {
-		return $spec->match_ref(\@avail);
-	}
+	return $pkgpath->match_spec($spec, $filter);
 }
-
-my $stemlist;
 
 sub findstem
 {
 	my ($class, $stem, $filter) = @_;
-	if (!@avail) {
-		@avail = available();
-	}
-	require OpenBSD::PackageName;
-	if (!$stemlist) {
-		$stemlist = OpenBSD::PackageName::avail2stems(@avail);
-	}
-	if (defined $filter) {
-		return &$filter($stemlist->findstem($stem));
-	} else {
-		return $stemlist->findstem($stem);
-	}
+	return $pkgpath->findstem($stem, $filter);
 }
 
 sub find_partialstem
 {
 	my ($class, $partial, $filter) = @_;
-	if (!@avail) {
-		@avail = available();
-	}
-	require OpenBSD::PackageName;
-	if (!$stemlist) {
-		$stemlist = OpenBSD::PackageName::avail2stems(@avail);
-	}
-	if (defined $filter) {
-		return &$filter($stemlist->find_partialstem($partial));
-	} else {
-		return $stemlist->find_partialstem($partial);
-	}
+	return $pkgpath->find_partialstem($partial, $filter);
 }
 
 1;
