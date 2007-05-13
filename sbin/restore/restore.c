@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.c,v 1.14 2005/06/14 19:46:05 millert Exp $	*/
+/*	$OpenBSD: restore.c,v 1.15 2007/05/13 19:07:32 millert Exp $	*/
 /*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: restore.c,v 1.14 2005/06/14 19:46:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: restore.c,v 1.15 2007/05/13 19:07:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,8 +150,8 @@ static struct entry *removelist;
 void
 removeoldleaves(void)
 {
-	struct entry *ep, *nextep;
-	ino_t i, mydirino;
+	struct entry *ep;
+	ino_t i;
 
 	Vprintf(stdout, "Mark entries to be removed.\n");
 	for (i = ROOTINO + 1; i < maxino; i++) {
