@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.1 2007/05/14 11:02:15 espie Exp $
+# $OpenBSD: Search.pm,v 1.2 2007/05/14 11:22:00 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,7 @@ sub match
 	return $self->match_ref($o->list);
 }
 
-sub match_list
+sub filter
 {
 	my ($self, @list) = @_;
 	return $self->match_ref(\@list);
@@ -84,5 +84,28 @@ sub match
 	return $o->stemlist->find_partial($self->{stem});
 }
 
+package OpenBSD::Search::Filter;
+our @ISA=(qw(OpenBSD::Search));
+
+sub new
+{
+	my ($class, $code) = @_;
+
+	return bless {code => $code}, $class;
+}
+
+sub filter
+{
+	my ($self, @l) = @_;
+	return &{$self->{code}}(@l);
+}
+
+sub keep_most_recent
+{
+	my $class = shift;
+	require OpenBSD::PackageName;
+	
+	return $class->new(\&OpenBSD::PackageName::keep_most_recent);
+}
 
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.26 2007/05/14 11:02:14 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.27 2007/05/14 11:22:00 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,7 @@ use OpenBSD::Interactive;
 sub find_candidate
 {
 	    my $spec = shift;
-	    my @candidates = $spec->match_list(@_);
+	    my @candidates = $spec->filter(@_);
 	    if (@candidates >= 1) {
 		    return $candidates[0];
 	    } else {

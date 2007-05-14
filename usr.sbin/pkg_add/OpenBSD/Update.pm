@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.76 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: Update.pm,v 1.77 2007/05/14 11:22:00 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -63,18 +63,20 @@ sub process_package
 		print "Not updating $pkgname, remember to clean it\n";
 		return;
 	}
-	my $stem = OpenBSD::Search::Stem->split($pkgname);
+	my @search = ();
+	push(@search, OpenBSD::Search::Stem->split($pkgname));
+	if (!$state->{forced}->{allversions}) {
+		push(@search, OpenBSD::Search::Filter->keep_most_recent);
+	}
 
 	my $found;
 	my $plist;
 
-	my $filter = sub {
+	push(@search, OpenBSD::Search::Filter->new(
+	    sub {
 		my @l = @_;
 		if (@l == 0) {
 			return @l;
-		}
-		if (@l > 1 && !$state->{forced}->{allversions}) {
-		    @l = OpenBSD::PackageName::keep_most_recent(@l);
 		}
 		if (@l == 1 && $state->{forced}->{pkgpath}) {
 			return @l;
@@ -116,10 +118,10 @@ sub process_package
 		    }
 		}
 		return @l2;
-	};
+	    }));
 
 
-	my @l = OpenBSD::PackageLocator->match($stem, $filter);
+	my @l = OpenBSD::PackageLocator->match(@search);
 	if (@l == 0) {
 		$self->add2cant($pkgname);
 		return;
