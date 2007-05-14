@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.7 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: ast.c,v 1.8 2007/05/14 07:07:09 art Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ userret(struct proc *p)
 	while ((sig = (CURSIG(p))) != 0)
 		postsig(sig);
 
-	curpriority = p->p_priority = p->p_usrpri;
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 

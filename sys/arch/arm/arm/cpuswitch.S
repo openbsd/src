@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.6 2005/09/22 04:14:44 drahn Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.7 2007/05/14 07:07:09 art Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -253,22 +253,11 @@ ENTRY(remrunqueue)
  * This function has several entry points
  */
 
-#ifdef MULTIPROCESSOR
 .Lcpu_info_store:
 	.word	_C_LABEL(cpu_info_store)
 .Lcurproc:
-	/* FIXME: This is bogus in the general case. */
-	.word	_C_LABEL(cpu_info_store) + CI_CURLWP
+	.word	_C_LABEL(cpu_info_store) + CI_CURPROC
 
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
-#else
-.Lcurproc:
-	.word	_C_LABEL(curproc)
-
-.Lcurpcb:
-	.word	_C_LABEL(curpcb)
-#endif
 
 .Lwant_resched:
 	.word	_C_LABEL(want_resched)
@@ -277,11 +266,16 @@ ENTRY(remrunqueue)
 	.word	_C_LABEL(cpufuncs)
 	
 #ifndef MULTIPROCESSOR
+.Lcurpcb:
+	.word   _C_LABEL(curpcb)
 	.data
 	.global	_C_LABEL(curpcb)
 _C_LABEL(curpcb):
 	.word	0x00000000
 	.text
+#else
+.Lcurpcb:
+	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
 #endif
 
 .Lcpu_do_powersave:

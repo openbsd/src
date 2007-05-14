@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2006/03/07 20:20:28 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2007/05/14 07:07:09 art Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -162,10 +162,8 @@ member	cf_control
 
 struct	cpu_info
 #member	CI_CURPRIORITY		ci_schedstate.spc_curpriority
-ifdef MULTIPROCESSOR
-member	ci_curlwp
-member	ci_curpcb
-endif
+member	ci_curproc
+#member	ci_curpcb
 
 # Constants required for in_cksum() and friends.
 define	M_LEN			offsetof(struct mbuf, m_len)

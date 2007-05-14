@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.16 2007/05/14 07:07:09 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -199,13 +199,11 @@ void	arm32_vector_init(vaddr_t, int);
  */
 
 #include <sys/device.h>
-/*
 #include <sys/sched.h>
-*/
 struct cpu_info {
-#if 0 
+	struct proc *ci_curproc;
+
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#endif
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
@@ -224,6 +222,10 @@ struct cpu_info {
 extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #define cpu_number()	0
+#define CPU_IS_PRIMARY(ci)	1
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci) \
+	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 #endif
 
 #ifdef __PROG32
