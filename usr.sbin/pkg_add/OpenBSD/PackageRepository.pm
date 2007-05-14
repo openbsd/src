@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.29 2007/05/13 17:00:02 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.30 2007/05/14 10:00:08 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -282,6 +282,11 @@ sub list
 {
 	my @list = installed_packages();
 	return \@list;
+}
+
+sub stemlist
+{
+	return installed_stems();
 }
 
 sub wipe_info

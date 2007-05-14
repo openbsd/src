@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.22 2007/05/13 13:39:43 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.23 2007/05/14 10:00:08 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -151,6 +151,23 @@ sub find
 {
 	my ($self, $stem) = @_;
 	return keys %{$self->{$stem}};
+}
+
+sub add
+{
+	my ($self, $pkgname) = @_;
+	my $stem = OpenBSD::PackageName::splitstem($pkgname);
+	$self->{$stem}->{$pkgname} = 1;
+}
+
+sub delete
+{
+	my ($self, $pkgname) = @_;
+	my $stem = OpenBSD::PackageName::splitstem($pkgname);
+	delete $self->{$stem}->{$pkgname};
+	if(keys %{$self->{$stem}} == 0) {
+		delete $self->{$stem};
+	}
 }
 
 sub find_partial

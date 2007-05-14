@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.25 2007/05/14 09:49:27 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.26 2007/05/14 10:00:08 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -19,7 +19,7 @@ use strict;
 use warnings;
 package OpenBSD::PackageInfo;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name 
+our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name installed_stems
     lock_db unlock_db
     add_installed delete_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE MODULE
     REQUIRED_BY REQUIRING DISPLAY UNDISPLAY MTREE_DIRS);
@@ -42,7 +42,7 @@ use constant {
 use Fcntl qw/:flock/;
 my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
-my $list;
+my ($list, $stemlist);
 
 our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, REQUIRING, DISPLAY, UNDISPLAY, MTREE_DIRS, MODULE);
 
@@ -57,11 +57,12 @@ for my $i (@info) {
 sub _init_list
 {
 	$list = {};
+	$stemlist = OpenBSD::PackageName::compile_stemlist();
 
 	opendir(my $dir, $pkg_db) or die "Bad pkg_db: $!";
 	while (my $e = readdir($dir)) {
 		next if $e eq '.' or $e eq '..';
-		$list->{$e} = 1;
+		add_installed($e);
 	}
 	close($dir);
 }
@@ -73,6 +74,7 @@ sub add_installed
 	}
 	for my $p (@_) {
 		$list->{$p} = 1;
+		$stemlist->add($p);
 	}
 }
 
@@ -83,8 +85,14 @@ sub delete_installed
 	}
 	for my $p (@_) {
 		delete $list->{$p};
+		$stemlist->delete($p);
 
 	}
+}
+
+sub installed_stems
+{
+	return $stemlist;
 }
 
 sub installed_packages(;$)
