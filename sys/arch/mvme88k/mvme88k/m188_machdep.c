@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.26 2007/05/12 20:02:14 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.27 2007/05/14 16:57:43 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -686,7 +686,7 @@ m188_init_clocks(void)
 	statclock_ih.ih_fn = m188_statintr;
 	statclock_ih.ih_arg = 0;
 	statclock_ih.ih_wantframe = 1;
-	statclock_ih.ih_ipl = IPL_CLOCK;
+	statclock_ih.ih_ipl = IPL_STATCLOCK;
 	sysconintr_establish(SYSCV_TIMER1, &statclock_ih, "stat");
 }
 

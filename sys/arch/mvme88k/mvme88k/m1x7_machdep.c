@@ -1,4 +1,4 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.4 2006/05/02 21:43:09 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.5 2007/05/14 16:57:43 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -86,7 +86,7 @@ int	m1x7_clockintr(void *);
 int	m1x7_statintr(void *);
 
 #define	PROF_RESET	(IPL_CLOCK | PCC2_IRQ_IEN | PCC2_IRQ_ICLR)
-#define	STAT_RESET	(IPL_CLOCK | PCC2_IRQ_IEN | PCC2_IRQ_ICLR)
+#define	STAT_RESET	(IPL_STATCLOCK | PCC2_IRQ_IEN | PCC2_IRQ_ICLR)
 
 void
 m1x7_init_clocks(void)
@@ -145,7 +145,7 @@ m1x7_init_clocks(void)
 	statclock_ih.ih_fn = m1x7_statintr;
 	statclock_ih.ih_arg = 0;
 	statclock_ih.ih_wantframe = 1;
-	statclock_ih.ih_ipl = IPL_CLOCK;
+	statclock_ih.ih_ipl = IPL_STATCLOCK;
 	pcctwointr_establish(PCC2V_TIMER2, &statclock_ih, "stat");
 }
 
