@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.27 2007/05/14 11:22:00 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.28 2007/05/14 17:48:32 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -40,84 +40,104 @@ sub find_candidate
 sub solver
 {
 	my $class = shift;
-	bless {}, $class;
+	bless {to_install => {}, deplist => [], to_register => {} }, $class;
+}
+
+sub add_todo
+{
+	my ($self, @extra) = @_;
+	for my $fullname (@extra) {
+		$self->{to_install}->
+		    {OpenBSD::PackageName::url2pkgname($fullname)} = $fullname;
+	}
+}
+
+sub add_new_dep
+{
+	my ($self, $dep) = @_;
+	push(@{$self->{deplist}}, $dep);
+	$self->add_installed_dep($dep);
+}
+
+sub add_installed_dep
+{
+	my ($self, $dep) = @_;
+	$self->{to_register}->{$dep} = 1;
+}
+
+sub solve_dependency
+{
+	my ($self, $state, $dep) = @_;
+
+	my $spec = $dep->spec;
+	if ($state->{replace}) {
+	    my $v = find_candidate($spec, keys %{$self->{to_install}});
+	    if ($v) {
+		$self->add_new_dep($v);
+		return;
+	    }
+	}
+
+	my $v = find_candidate($spec, installed_packages());
+	if ($v) {
+		$self->add_installed_dep($v);
+		return;
+	}
+	if (!$state->{replace}) {
+	    my $v = find_candidate($spec, keys %{$self->{to_install}});
+	    if ($v) {
+		$self->add_new_dep($v);
+	    	return;
+	    }
+	}
+	require OpenBSD::PackageLocator;
+
+	# try with list of available packages
+	my @candidates = OpenBSD::PackageLocator->match($spec);
+	if (!$state->{forced}->{allversions}) {
+	    @candidates = OpenBSD::PackageName::keep_most_recent(@candidates);
+	}
+	# one single choice
+	if (@candidates == 1) {
+	    $self->add_new_dep($candidates[0]);
+	    return;
+	}
+	if (@candidates > 1) {
+	    # put default first if available
+	    @candidates = ((grep {$_ eq $dep->{def}} @candidates),
+			    (sort (grep {$_ ne $dep->{def}} @candidates)));
+	    my $choice = 
+		OpenBSD::Interactive::ask_list('Ambiguous: choose dependency for '.$self->{pkgname}.': ',
+		    $state->{interactive}, @candidates);
+	    $self->add_new_dep($choice);
+	    return;
+	}
+	# can't get a list of packages, assume default
+	# will be there.
+	$self->add_new_dep($dep->{def});
 }
 
 sub solve
 {
 	my ($self, $state, $handle, @extra) = @_;
 	my $plist = $handle->{plist};
-	my $verbose = $state->{verbose};
-	my $to_register = $handle->{solved_dependencies} = {};
-	my $to_install = {};
-	for my $fullname (@extra) {
-		$to_install->{OpenBSD::PackageName::url2pkgname($fullname)} = 
-		    $fullname;
-	}
 
-	my @deps;
+	$self->add_todo(@extra);
+	$self->{pkgname} = $plist->pkgname;
 
 	for my $dep (@{$plist->{depend}}) {
-	    my $spec = $dep->spec;
-	    if ($state->{replace}) {
-	    	my $v = find_candidate($spec, keys %{$to_install});
-		if ($v) {
-		    push(@deps, $to_install->{$v});
-		    $to_register->{$v} = 1;
-		    next;
-		}
-	    }
-
-	    my $v = find_candidate($spec, installed_packages());
-	    if ($v) {
-		    $to_register->{$v} = 1;
-		    next;
-	    }
-	    if (!$state->{replace}) {
-	    	my $v = find_candidate($spec, keys %{$to_install});
-		if ($v) {
-		    push(@deps, $to_install->{$v});
-		    $to_register->{$v} = 1;
-		    next;
-		}
-	    }
-	    require OpenBSD::PackageLocator;
-
-	    # try with list of available packages
-	    my @candidates = OpenBSD::PackageLocator->match($spec);
-	    if (!$state->{forced}->{allversions}) {
-		@candidates = OpenBSD::PackageName::keep_most_recent(@candidates);
-	    }
-	    # one single choice
-	    if (@candidates == 1) {
-		push(@deps, $candidates[0]);
-		$to_register->{$candidates[0]} = 1;
-		next;
-	    }
-	    if (@candidates > 1) {
-		# put default first if available
-		@candidates = ((grep {$_ eq $dep->{def}} @candidates),
-				(sort (grep {$_ ne $dep->{def}} @candidates)));
-		my $choice = 
-		    OpenBSD::Interactive::ask_list('Ambiguous: choose dependency for '.$plist->pkgname().': ',
-			$state->{interactive}, @candidates);
-		push(@deps, $choice);
-		$to_register->{$choice} = 1;
-		next;
-	    }
-	    # can't get a list of packages, assume default
-	    # will be there.
-	    push(@deps, $dep->{def});
-	    $to_register->{$dep->{def}} = 1;
+	    $self->solve_dependency($state, $dep);
 	}
 
-	if ($verbose && %$to_register) {
-	    print "Dependencies for ", $plist->pkgname, " resolve to: ", 
-	    	join(', ', keys %$to_register);
-	    print " (todo: ", join(',', @deps), ")" if @deps > 0;
+	if ($state->{verbose} && %{$self->{to_register}}) {
+	    print "Dependencies for ", $self->{pkgname}, " resolve to: ", 
+	    	join(', ', keys %{$self->{to_register}});
+	    print " (todo: ", join(',', @{$self->{deplist}}), ")" 
+	    	if @{$self->{deplist}} > 0;
 	    print "\n";
 	}
-	return @deps;
+	$handle->{solved_dependencies} = $self->{to_register};
+	return @{$self->{deplist}};
 }
 
 sub check_lib_spec
