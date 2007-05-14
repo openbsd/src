@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.385 2007/05/13 08:18:11 gwk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.386 2007/05/14 04:45:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -248,16 +248,21 @@ paddr_t avail_end;
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
-int kbd_reset;
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 int p4_model;
 int p3_early;
+void (*update_cpuspeed)(void) = NULL;
+#endif
+int kbd_reset;
+
+#if !defined(SMALL_KERNEL)
 int bus_clock;
+#endif
 void (*setperf_setup)(struct cpu_info *);
 int setperf_prio = 0;		/* for concurrent handlers */
 
 void (*delay_func)(int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
-void (*update_cpuspeed)(void) = NULL;
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
