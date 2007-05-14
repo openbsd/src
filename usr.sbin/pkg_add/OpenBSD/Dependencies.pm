@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.29 2007/05/14 17:52:08 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.30 2007/05/14 18:19:25 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -18,13 +18,9 @@
 use strict;
 use warnings;
 
-package OpenBSD::Dependencies;
+package OpenBSD::Dependencies::Solver;
 
-use OpenBSD::PackageName;
 use OpenBSD::PackageInfo;
-use OpenBSD::SharedLibs;
-use OpenBSD::Error;
-use OpenBSD::Interactive;
 
 sub find_candidate
 {
@@ -37,7 +33,7 @@ sub find_candidate
 	    }
 }
 
-sub solver
+sub new
 {
 	my $class = shift;
 	bless {to_install => {}, deplist => [], to_register => {} }, $class;
@@ -46,6 +42,9 @@ sub solver
 sub add_todo
 {
 	my ($self, @extra) = @_;
+
+	require OpenBSD::PackageName;
+
 	for my $fullname (@extra) {
 		$self->{to_install}->
 		    {OpenBSD::PackageName::url2pkgname($fullname)} = $fullname;
@@ -103,6 +102,8 @@ sub solve_dependency
 	    return;
 	}
 	if (@candidates > 1) {
+	    require OpenBSD::Interactive;
+
 	    # put default first if available
 	    @candidates = ((grep {$_ eq $dep->{def}} @candidates),
 			    (sort (grep {$_ ne $dep->{def}} @candidates)));
@@ -144,6 +145,10 @@ sub dump
 	    print "\n";
 	}
 }
+
+package OpenBSD::Dependencies;
+
+use OpenBSD::SharedLibs;
 
 sub check_lib_spec
 {
