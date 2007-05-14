@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.65 2007/05/05 13:43:25 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.66 2007/05/14 00:46:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -94,7 +94,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -208,13 +208,13 @@ Static void
 axe_lock_mii(struct axe_softc *sc)
 {
 	sc->axe_refcnt++;
-	usb_lockmgr(&sc->axe_mii_lock, LK_EXCLUSIVE, NULL, curproc);
+	rw_enter_write(&sc->axe_mii_lock);
 }
 
 Static void
 axe_unlock_mii(struct axe_softc *sc)
 {
-	usb_lockmgr(&sc->axe_mii_lock, LK_RELEASE, NULL, curproc);
+	rw_exit_write(&sc->axe_mii_lock);
 	if (--sc->axe_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->axe_dev));
 }
@@ -228,7 +228,6 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	if (sc->axe_dying)
 		return(0);
 
-	axe_lock_mii(sc);
 	if (AXE_CMD_DIR(cmd))
 		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	else
@@ -239,7 +238,6 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	USETW(req.wLength, AXE_CMD_LEN(cmd));
 
 	err = usbd_do_request(sc->axe_udev, &req, buf);
-	axe_unlock_mii(sc);
 
 	if (err)
 		return(-1);
@@ -588,7 +586,7 @@ USB_ATTACH(axe)
 	sc->axe_flags = axe_lookup(uaa->vendor, uaa->product)->axe_flags;
 
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
-	lockinit(&sc->axe_mii_lock, PZERO, "axemii", 0, LK_CANRECURSE);
+	rw_init(&sc->axe_mii_lock, "axemii");
 	usb_init_task(&sc->axe_stop_task, (void (*)(void *))axe_stop, sc);
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);

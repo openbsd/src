@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.14 2007/04/03 00:56:16 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.15 2007/05/14 00:46:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -223,7 +223,7 @@ struct axe_softc {
 	struct usb_task		axe_tick_task;
 	struct usb_task		axe_stop_task;
 
-	struct lock		axe_mii_lock;
+	struct rwlock		axe_mii_lock;
 
 	int			axe_link;
 	unsigned char		axe_ipgs[3];
