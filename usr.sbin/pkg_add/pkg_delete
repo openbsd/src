@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.97 2007/05/01 18:22:20 espie Exp $
+# $OpenBSD: pkg_delete,v 1.98 2007/05/14 09:49:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -172,9 +172,9 @@ eval {
 			next;
 		}
 		my $r = OpenBSD::RequiredBy->new($pkgname);
-		if ($r->list() > 0) {
+		if ($r->list > 0) {
 			if ($forced{baddepend}) {
-				for my $p ($r->list()) {
+				for my $p ($r->list) {
 					if ($done{$p}) {
 						$r->delete($p);
 					} else {

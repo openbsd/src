@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.13 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.14 2007/05/14 09:49:27 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -71,7 +71,7 @@ sub synch
 	}
 } 
 
-sub list($)
+sub list
 {
 	my $self = shift;
 

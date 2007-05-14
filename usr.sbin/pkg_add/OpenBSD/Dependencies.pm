@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.22 2007/05/13 13:32:36 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.23 2007/05/14 09:49:27 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -180,7 +180,7 @@ sub lookup_library
 
 		next if $done->{$dep};
 		$done->{$dep} = 1;
-		for my $dep2 (OpenBSD::Requiring->new($dep)->list()) {
+		for my $dep2 (OpenBSD::Requiring->new($dep)->list) {
 			push(@todo, $dep2) unless $done->{$dep2};
 		}
 		next if $dependencies->{$dep};

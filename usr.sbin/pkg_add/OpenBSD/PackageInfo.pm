@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.24 2007/05/13 13:32:36 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.25 2007/05/14 09:49:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -42,7 +42,7 @@ use constant {
 use Fcntl qw/:flock/;
 my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
-our $list;
+my $list;
 
 our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, REQUIRING, DISPLAY, UNDISPLAY, MTREE_DIRS, MODULE);
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.41 2007/05/07 09:32:51 espie Exp $
+# $OpenBSD: Delete.pm,v 1.42 2007/05/14 09:49:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -212,7 +212,7 @@ sub delete_plist
 	for my $item (@{$plist->{pkgdep}}) {
 		&$zap_dependency($item->{name});
 	}
-	for my $name (OpenBSD::Requiring->new($pkgname)->list()) {
+	for my $name (OpenBSD::Requiring->new($pkgname)->list) {
 		&$zap_dependency($name);
 	}
 		
