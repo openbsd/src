@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.30 2007/05/14 10:00:08 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.31 2007/05/14 10:12:24 espie Exp $
 #
-# Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,15 @@
 use strict;
 use warnings;
 
+# XXX load extra class, grab match from Base class, and tweak inheritance
+# to get all methods.
+
+use OpenBSD::PackageRepository::Installed;
+$OpenBSD::PackageRepository::Installed::ISA=(qw(OpenBSD::PackageRepository));
+
 package OpenBSD::PackageRepository;
+our @ISA=(qw(OpenBSD::PackageRepositoryBase));
+
 use OpenBSD::PackageLocation;
 
 sub _new
@@ -63,16 +71,6 @@ sub stemlist
 		$self->{stemlist} = OpenBSD::PackageName::avail2stems($self->available);
 	}
 	return $self->{stemlist};
-}
-
-sub match
-{
-	my ($self, $search, $filter) = @_;
-	if (defined $filter) {
-		return &$filter($search->match_repo($self));
-	} else {
-		return $search->match_repo($self);
-	}
 }
 
 sub wipe_info
@@ -241,62 +239,6 @@ sub parse_problems
 sub cleanup
 {
 	# nothing to do
-}
-
-package OpenBSD::PackageRepository::Installed;
-our @ISA=qw(OpenBSD::PackageRepository);
-use OpenBSD::PackageInfo;
-
-my $singleton = bless {}, __PACKAGE__;
-
-sub new
-{
-	return $singleton;
-}
-
-sub find
-{
-	my ($repository, $name, $arch, $srcpath) = @_;
-	my $self;
-
-	if (is_installed($name)) {
-		$self = OpenBSD::PackageLocation->new($repository, $name);
-		$self->{dir} = installed_info($name);
-	}
-	return $self;
-}
-
-sub grabPlist
-{
-	my ($repository, $name, $arch, $code) = @_;
-	require OpenBSD::PackingList;
-	return  OpenBSD::PackingList->from_installation($name, $code);
-}
-
-sub available
-{
-	return installed_packages();
-}
-
-sub list
-{
-	my @list = installed_packages();
-	return \@list;
-}
-
-sub stemlist
-{
-	return installed_stems();
-}
-
-sub wipe_info
-{
-}
-
-sub may_exist
-{
-	my ($self, $name) = @_;
-	return is_installed($name);
 }
 
 package OpenBSD::PackageRepository::Local;
