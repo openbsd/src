@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.19 2006/11/01 03:37:24 tedu Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.20 2007/05/14 09:03:34 tedu Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -40,6 +40,7 @@
 #include "wsmux.h"
 #include "wsdisplay.h"
 #include "wskbd.h"
+#include "wsmouse.h"
 
 /*
  * wscons mux device.
