@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.12 2007/05/14 09:49:27 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.13 2007/05/14 12:49:27 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -40,21 +40,7 @@ sub find
 	my ($self, $pkgname, $arch, $srcpath) = @_;
 
 	for my $repo (@{$self->{list}}) {
-		my $pkg;
-
-		for (my $retry = 5; $retry < 60; $retry *= 2) {
-			undef $repo->{lasterror};
-			$pkg = $repo->find($pkgname, $arch, $srcpath);
-			if (!defined $pkg && defined $repo->{lasterror} && 
-			    $repo->{lasterror} == 421 && 
-			    defined $self->{avail} &&
-			    $self->{avail}->{$pkgname} eq $repo) { 
-				print STDERR "Temporary error, sleeping $retry seconds\n";
-				sleep($retry);
-			} else {
-				last;
-			}
-		}
+		my $pkg = $repo->find($pkgname, $arch, $srcpath);
 		return $pkg if defined $pkg;
 	}
 	return;
@@ -65,21 +51,7 @@ sub grabPlist
 	my ($self, $pkgname, $arch, $code) = @_;
 
 	for my $repo (@{$self->{list}}) {
-		my $plist;
-
-		for (my $retry = 5; $retry < 60; $retry *= 2) {
-			undef $repo->{lasterror};
-			$plist = $repo->grabPlist($pkgname, $arch, $code);
-			if (!defined $plist && defined $repo->{lasterror} && 
-			    $repo->{lasterror} == 421 && 
-			    defined $self->{avail} &&
-			    $self->{avail}->{$pkgname} eq $repo) { 
-				print STDERR "Temporary error, sleeping $retry seconds\n";
-				sleep($retry);
-			} else {
-				last;
-			}
-		}
+		my $plist = $repo->grabPlist($pkgname, $arch, $code);
 		return $plist if defined $plist;
 	}
 	return;

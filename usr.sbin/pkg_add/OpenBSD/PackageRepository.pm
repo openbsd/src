@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.32 2007/05/14 12:18:49 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.33 2007/05/14 12:49:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -472,6 +472,54 @@ sub _new
 	    $distant_host = $&;
 	}
 	bless { baseurl => $baseurl, key => $distant_host }, $class;
+}
+
+sub should_have
+{
+	my ($self, $pkgname) = @_;
+	if (defined $self->{lasterror} && $self->{lasterror} == 421) {
+		return (defined $self->{list}) &&
+			grep { $_ eq $pkgname } @{$self->{list}};
+	} else {
+		return 0;
+	}
+}
+
+sub try_until_success
+{
+	my ($self, $pkgname, $code) = @_;
+
+	for (my $retry = 5; $retry < 60; $retry *= 2) {
+		undef $self->{lasterror};
+		my $o = &$code;
+		if (defined $o) {
+			return $o;
+		}
+		if ($self->should_have($pkgname)) {
+			print STDERR "Temporary error, sleeping $retry seconds\n";
+			sleep($retry);
+		}
+	}
+	return undef;
+}
+
+sub find
+{
+	my ($self, $pkgname, @extra) = @_;
+
+	return $self->try_until_success($pkgname, 
+	    sub { 
+	    	return $self->SUPER::find($pkgname, @extra); });
+
+}
+
+sub grabPlist
+{
+	my ($self, $pkgname, @extra) = @_;
+
+	return $self->try_until_success($pkgname, 
+	    sub { 
+	    	return $self->SUPER::grabPlist($pkgname, @extra); });
 }
 
 sub parse_problems
