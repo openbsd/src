@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.10 2007/05/12 22:50:31 espie Exp $
+# $OpenBSD: Replace.pm,v 1.11 2007/05/14 10:43:45 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -159,9 +159,9 @@ sub check_replacement_spec
 	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
 
 	# nothing to validate if old dependency doesn't concern us.
-	return unless $self->spec->match($toreplace);
+	return unless $self->spec->match_list($toreplace);
 	# nothing to do if new dependency just matches
-	return if $self->spec->match($replacement);
+	return if $self->spec->match_list($replacement);
 
 	if ($state->{forced}->{updatedepends}) {
 	    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";

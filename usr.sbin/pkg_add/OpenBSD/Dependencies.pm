@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.23 2007/05/14 09:49:27 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.24 2007/05/14 10:43:45 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,7 @@ use OpenBSD::Interactive;
 sub find_candidate
 {
 	    my $spec = shift;
-	    my @candidates = $spec->match(@_);
+	    my @candidates = $spec->match_list(@_);
 	    if (@candidates >= 1) {
 		    return $candidates[0];
 	    } else {
@@ -137,7 +137,9 @@ sub find_old_lib
 	my ($state, $base, $pattern, $lib, $dependencies) = @_;
 
 	my $spec = OpenBSD::PkgSpec->new(".libs-".$pattern);
-	for my $try ($spec->match(installed_packages())) {
+	require OpenBSD::PackageRepository::Installed;
+
+	for my $try (OpenBSD::PackageRepository::Installed->new->match($spec)) {
 		OpenBSD::SharedLibs::add_package_libs($try);
 		if (check_lib_spec($base, $lib, {$try => 1})) {
 			$dependencies->{$try} = 1;

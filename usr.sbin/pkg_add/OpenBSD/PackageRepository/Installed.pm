@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.3 2007/05/14 10:24:58 espie Exp $
+# $OpenBSD: Installed.pm,v 1.4 2007/05/14 10:43:45 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -30,9 +30,9 @@ sub match
 {
 	my ($self, $search, $filter) = @_;
 	if (defined $filter) {
-		return &$filter($search->match_repo($self));
+		return &$filter($search->match($self));
 	} else {
-		return $search->match_repo($self);
+		return $search->match($self);
 	}
 }
 
