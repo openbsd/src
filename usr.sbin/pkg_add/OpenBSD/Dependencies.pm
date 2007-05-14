@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.28 2007/05/14 17:48:32 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.29 2007/05/14 17:52:08 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -129,15 +129,20 @@ sub solve
 	    $self->solve_dependency($state, $dep);
 	}
 
-	if ($state->{verbose} && %{$self->{to_register}}) {
+	$handle->{solved_dependencies} = $self->{to_register};
+	return @{$self->{deplist}};
+}
+
+sub dump
+{
+	my $self = shift;
+	if (%{$self->{to_register}}) {
 	    print "Dependencies for ", $self->{pkgname}, " resolve to: ", 
 	    	join(', ', keys %{$self->{to_register}});
 	    print " (todo: ", join(',', @{$self->{deplist}}), ")" 
 	    	if @{$self->{deplist}} > 0;
 	    print "\n";
 	}
-	$handle->{solved_dependencies} = $self->{to_register};
-	return @{$self->{deplist}};
 }
 
 sub check_lib_spec
