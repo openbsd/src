@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.1 2007/05/14 10:12:24 espie Exp $
+# $OpenBSD: Installed.pm,v 1.2 2007/05/14 10:19:01 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -40,7 +40,8 @@ package OpenBSD::PackageRepository::Installed;
 
 our @ISA = (qw(OpenBSD::PackageRepositoryBase));
 
-use OpenBSD::PackageInfo;
+use OpenBSD::PackageInfo (qw(is_installed installed_info 
+    installed_packages installed_stems));
 
 my $singleton = bless {}, __PACKAGE__;
 
@@ -55,6 +56,8 @@ sub find
 	my $self;
 
 	if (is_installed($name)) {
+		require OpenBSD::PackageLocation;
+
 		$self = OpenBSD::PackageLocation->new($repository, $name);
 		$self->{dir} = installed_info($name);
 	}
