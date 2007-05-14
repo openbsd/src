@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.2 2007/05/14 10:19:01 espie Exp $
+# $OpenBSD: Installed.pm,v 1.3 2007/05/14 10:24:58 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -44,10 +44,11 @@ use OpenBSD::PackageInfo (qw(is_installed installed_info
     installed_packages installed_stems));
 
 my $singleton = bless {}, __PACKAGE__;
+my $s2 = bless {all => 1}, __PACKAGE__;
 
 sub new
 {
-	return $singleton;
+	return $_[1] ? $s2 : $singleton;
 }
 
 sub find
@@ -73,12 +74,14 @@ sub grabPlist
 
 sub available
 {
-	return installed_packages();
+	my $self = shift;
+	return installed_packages($self->{all});
 }
 
 sub list
 {
-	my @list = installed_packages();
+	my $self = shift;
+	my @list = installed_packages($self->{all});
 	return \@list;
 }
 
