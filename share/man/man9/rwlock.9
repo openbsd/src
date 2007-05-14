@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.5 2007/04/10 21:07:48 art Exp $
+.\" $OpenBSD: rwlock.9,v 1.6 2007/05/14 16:39:34 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@openbsd.org>
 .\" All rights reserved.
@@ -127,3 +127,6 @@ The
 functions were written by
 .An Artur Grabowski
 .Aq art@openbsd.org .
+.Sh CAVEATS
+While it is safe to sleep with an rwlock held, they cannot
+be used in an interrupt handler as an rwlock is bound to a process.
