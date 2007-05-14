@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.14 2007/05/12 20:02:14 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.15 2007/05/14 16:59:43 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -126,6 +126,11 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 	ivec = M187_IACK + (level << 2) + 0x03;
 	vec = *(volatile u_int8_t *)ivec;
 
+#ifdef MULTIPROCESSOR
+	if (eframe->tf_mask < IPL_SCHED)
+		__mp_lock(&kernel_lock);
+#endif
+
 	uvmexp.intrs++;
 
 	/* block interrupts at level or lower */
@@ -184,6 +189,11 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 	 * be restored later.
 	 */
 	set_psr(get_psr() | PSR_IND);
+
+#ifdef MULTIPROCESSOR
+	if (eframe->tf_mask < IPL_SCHED)
+		__mp_unlock(&kernel_lock);
+#endif
 }
 
 u_int

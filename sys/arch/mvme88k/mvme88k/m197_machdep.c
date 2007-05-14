@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.13 2007/05/12 20:02:14 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.14 2007/05/14 16:59:43 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -171,6 +171,11 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		vec = *(volatile u_int8_t *)ivec;
 	}
 
+#ifdef MULTIPROCESSOR
+	if (eframe->tf_mask < IPL_SCHED)
+		__mp_lock(&kernel_lock);
+#endif
+
 	uvmexp.intrs++;
 
 	if (v != T_NON_MASK || cold == 0) {
@@ -225,6 +230,11 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		 */
 		set_psr(get_psr() | PSR_IND);
 	}
+
+#ifdef MULTIPROCESSOR
+	if (eframe->tf_mask < IPL_SCHED)
+		__mp_unlock(&kernel_lock);
+#endif
 }
 
 u_int
