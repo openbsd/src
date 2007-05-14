@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.41 2007/05/03 21:03:06 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.42 2007/05/14 20:59:17 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -236,14 +236,16 @@ ppc_check_procid()
 void
 cpuattach(struct device *parent, struct device *dev, void *aux)
 {
+	struct confargs *ca = aux;
+	int *reg = ca->ca_reg;
 	u_int32_t cpu, pvr, hid0;
 	char name[32];
 	int qhandle, phandle;
 	u_int32_t clock_freq = 0;
 	struct cpu_info *ci;
 
-	ci = &cpu_info[dev->dv_unit];
-	ci->ci_cpuid = dev->dv_unit;
+	ci = &cpu_info[reg[0]];
+	ci->ci_cpuid = reg[0];
 	ci->ci_intrdepth = -1;
 	ci->ci_dev = dev;
 
