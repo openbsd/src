@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.7 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.8 2007/05/14 17:11:05 espie Exp $
 #
-# Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -62,8 +62,8 @@ sub grabInfoFiles
 		close $fh;
 	}
 
-	while (my $e = $self->intNext()) {
-		if ($e->isFile() && is_info_name($e->{name})) {
+	while (my $e = $self->intNext) {
+		if ($e->isFile && is_info_name($e->{name})) {
 			$e->{name}=$dir.$e->{name};
 			eval { $e->create(); };
 			if ($@) {
@@ -84,7 +84,7 @@ sub scanPackage
 {
 	my $self = shift;
 	while (my $e = $self->intNext) {
-		if ($e->isFile() && is_info_name($e->{name})) {
+		if ($e->isFile && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS && !defined $self->{dir}) {
 				$self->{contents} = $e->contents();
 				last;
