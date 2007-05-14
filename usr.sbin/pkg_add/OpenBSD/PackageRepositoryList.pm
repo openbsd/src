@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.13 2007/05/14 12:49:27 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.14 2007/05/14 12:52:53 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -23,16 +23,13 @@ package OpenBSD::PackageRepositoryList;
 sub new
 {
 	my $class = shift;
-	return bless {list => [], avail => undef }, $class;
+	return bless {list => [] }, $class;
 }
 
 sub add
 {
 	my $self = shift;
 	push @{$self->{list}}, @_;
-	if (@_ > 0) {
-		$self->{avail} = undef;
-	}
 }
 
 sub find
@@ -55,22 +52,6 @@ sub grabPlist
 		return $plist if defined $plist;
 	}
 	return;
-}
-
-sub available
-{
-	my $self = shift;
-
-	if (!defined $self->{avail}) {
-		my $available_packages = {};
-		foreach my $loc (reverse @{$self->{list}}) {
-		    foreach my $pkg (@{$loc->list}) {
-		    	$available_packages->{$pkg} = $loc;
-		    }
-		}
-		$self->{avail} = $available_packages;
-	}
-	return keys %{$self->{avail}};
 }
 
 sub match

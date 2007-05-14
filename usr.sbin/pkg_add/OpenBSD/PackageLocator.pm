@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.68 2007/05/13 17:00:02 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.69 2007/05/14 12:52:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -78,11 +78,6 @@ sub find
 	}
 	$packages{$_} = $package if defined($package);
 	return $package;
-}
-
-sub available
-{
-	return $pkgpath->available();
 }
 
 sub grabPlist
