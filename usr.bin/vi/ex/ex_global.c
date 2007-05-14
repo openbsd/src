@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_global.c,v 1.9 2006/04/22 03:09:15 ray Exp $	*/
+/*	$OpenBSD: ex_global.c,v 1.10 2007/05/14 12:32:29 pyr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -236,7 +236,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		}
 
 		/* If follows the last entry, extend the last entry's range. */
-		if ((rp = ecp->rq.cqh_last) != (void *)&ecp->rq &&
+		if ((rp = CIRCLEQ_LAST(&ecp->rq)) != CIRCLEQ_END(&ecp->rq) &&
 		    rp->stop == start - 1) {
 			++rp->stop;
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.7 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: line.c,v 1.8 2007/05/14 12:32:29 pyr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -466,7 +466,7 @@ db_exist(sp, lno)
 	 */
 	if (ep->c_nlines != OOBLNO)
 		return (lno <= (F_ISSET(sp, SC_TINPUT) ?
-		    ep->c_nlines + (((TEXT *)sp->tiq.cqh_last)->lno -
+		    ep->c_nlines + (((TEXT *)CIRCLEQ_LAST(&sp->tiq))->lno -
 		    ((TEXT *)CIRCLEQ_FIRST(&sp->tiq))->lno) : ep->c_nlines));
 
 	/* Go get the line. */
@@ -501,7 +501,7 @@ db_last(sp, lnop)
 	if (ep->c_nlines != OOBLNO) {
 		*lnop = ep->c_nlines;
 		if (F_ISSET(sp, SC_TINPUT))
-			*lnop += ((TEXT *)sp->tiq.cqh_last)->lno -
+			*lnop += ((TEXT *)CIRCLEQ_LAST(&sp->tiq))->lno -
 			    ((TEXT *)CIRCLEQ_FIRST(&sp->tiq))->lno;
 		return (0);
 	}
@@ -529,8 +529,8 @@ db_last(sp, lnop)
 
 	/* Return the value. */
 	*lnop = (F_ISSET(sp, SC_TINPUT) &&
-	    ((TEXT *)sp->tiq.cqh_last)->lno > lno ?
-	    ((TEXT *)sp->tiq.cqh_last)->lno : lno);
+	    ((TEXT *)CIRCLEQ_LAST(&sp->tiq))->lno > lno ?
+	    ((TEXT *)CIRCLEQ_LAST(&sp->tiq))->lno : lno);
 	return (0);
 }
 

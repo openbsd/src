@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.8 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: put.c,v 1.9 2007/05/14 12:32:29 pyr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -187,7 +187,7 @@ put(sp, cbp, namep, cp, rp, append)
 		 * Last part of original line; check for space, reset
 		 * the pointer into the buffer.
 		 */
-		ltp = cbp->textq.cqh_last;
+		ltp = CIRCLEQ_LAST(&cbp->textq);
 		len = t - bp;
 		ADD_SPACE_RET(sp, bp, blen, ltp->len + clen);
 		t = bp + len;

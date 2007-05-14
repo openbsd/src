@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2007/05/14 12:32:29 pyr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -464,7 +464,7 @@ v_end(gp)
 #if defined(DEBUG) || defined(PURIFY) || defined(LIBRARY)
 	{ FREF *frp;
 		/* Free FREF's. */
-		while ((frp = gp->frefq.cqh_first) != (FREF *)&gp->frefq) {
+		while ((frp = CIRCLEQ_FIRST(&gp)) != CIRCLEQ_END(&gp->frefq)) {
 			CIRCLEQ_REMOVE(&gp->frefq, frp, q);
 			if (frp->name != NULL)
 				free(frp->name);
