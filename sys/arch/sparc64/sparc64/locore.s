@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.73 2007/05/11 20:25:26 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.74 2007/05/14 19:20:11 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -88,21 +88,6 @@
 
 /* Let us use same syntax as C code */
 #define Debugger()	ta	1; nop
-
-#if 1
-/*
- * Try to issue an elf note to ask the Solaris
- * bootloader to align the kernel properly.
- */
-	.section	.note
-	.word	0x0d
-	.word	4		! Dunno why
-	.word	1
-0:	.asciz	"SUNW Solaris"
-1:
-	.align	4
-	.word	0x0400000
-#endif	/* 1 */
 
 /* use as needed to align things on longword boundaries */
 #define	_ALIGN	.align 8
@@ -3980,66 +3965,31 @@ dostart:
 	wrpr	%g0, 13, %pil
 	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
 	wr	%o0, FPRS_FEF, %fprs		! Turn on FPU
+
 #if defined(DDB) || NKSYMS > 0
 	/*
 	 * First, check for DDB arguments.  A pointer to an argument
 	 * is passed in %o1 who's length is passed in %o2.  Our
 	 * bootloader passes in a magic number as the first argument,
-	 * followed by esym as argument 2, so check that %o2 == 8,
-	 * then extract esym and check the magic number.
-	 *
-	 *  Oh, yeah, start of elf symtab is arg 3.
+	 * followed by esym as argument 2, and ssym as argument 3,
+	 * so check that %o3 >= 12.
 	 */
-	cmp	%o2, 8
+	cmp	%o2, 12
 	blt	1f			! Not enuff args
-
-	/*
-	 * First we'll see if we were loaded by a 64-bit bootloader
-	 */
-	 btst	0x7, %o1		! Check alignment
-	bne	0f
-	 set	0x44444230, %l3
-
+	 nop
+	
+	set	0x44444230, %l3
 	ldx	[%o1], %l4
 	cmp	%l3, %l4		! chk magic
-	bne	%xcc, 0f
+	bne	%xcc, 1f
 	 nop
 
 	ldx	[%o1+8], %l4
-	sethi	%hi(_C_LABEL(esym)), %l3	! store _esym
+	sethi	%hi(_C_LABEL(esym)), %l3	! store esym
 	stx	%l4, [%l3 + %lo(_C_LABEL(esym))]
-
-	cmp	%o2, 12
-	blt	1f
-	 nop
 
 	ldx	[%o1+16], %l4
-	sethi	%hi(_C_LABEL(ssym)), %l3	! store _esym
-	ba	1f
-	 stx	%l4, [%l3 + %lo(_C_LABEL(ssym))]
-0:
-	/*
-	 * Now we can try again with for a 32-bit bootloader
-	 */
-	cmp	%o2, 8
-	blt	1f			! Not enuff args
-
-	 set	0x44444230, %l3
-	ld	[%o1], %l4
-	cmp	%l3, %l4		! chk magic
-	bne	1f
-	 nop
-
-	ld	[%o1+4], %l4
-	sethi	%hi(_C_LABEL(esym)), %l3	! store _esym
-	stx	%l4, [%l3 + %lo(_C_LABEL(esym))]
-
-	cmp	%o2, 12
-	blt	1f
-	 nop
-
-	ld	[%o1+8], %l4
-	sethi	%hi(_C_LABEL(ssym)), %l3	! store _esym
+	sethi	%hi(_C_LABEL(ssym)), %l3	! store ssym
 	stx	%l4, [%l3 + %lo(_C_LABEL(ssym))]
 1:
 #endif	/* defined(DDB) || NKSYMS > 0 */
@@ -4050,36 +4000,6 @@ dostart:
 	mov	%o4, %g7	! save prom vector pointer
 	set	romp, %o5
 	stx	%o4, [%o5]	! It's initialized data, I hope
-
-	/*
-	 * Step 2: Set up a v8-like stack if we need to
-	 */
-
-	btst	1, %sp
-	bnz,pt	%icc, 0f
-	 nop
-	add	%sp, -BIAS, %sp
-0:
-	/*
-	 * Step 3: clear BSS.  This may just be paranoia; the boot
-	 * loader might already do it for us; but what the hell.
-	 */
-	set	_C_LABEL(edata), %o0		! bzero(edata, end - edata)
-	set	_C_LABEL(end), %o1
-	call	_C_LABEL(bzero)
-	 sub	%o1, %o0, %o1
-
-	/*
-	 * Step 4: compute number of windows and set up tables.
-	 * We could do some of this later.
-	 *
-	 * XXX I forget: why are we doing this?
-	 */
-	rdpr	%ver, %g1
-	and	%g1, 0x0f, %g1		! want just the CWP bits
-	add	%g1, 1, %o0		! compute nwindows
-	sethi	%hi(_C_LABEL(nwindows)), %o1	! may as well tell everyone
-	st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
 #if 0
 	/*
