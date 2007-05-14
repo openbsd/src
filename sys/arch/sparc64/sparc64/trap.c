@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2007/05/02 18:46:07 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2007/05/14 21:38:08 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -495,7 +495,7 @@ badtrap:
 		if (p->p_flag & P_OWEUPC) {
 			ADDUPROF(p);
 		}
-		if (want_resched)
+		if (curcpu()->ci_want_resched)
 			preempt(NULL);
 		break;
 

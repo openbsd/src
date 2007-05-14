@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.74 2007/05/14 19:20:11 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.75 2007/05/14 21:38:08 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5536,8 +5536,6 @@ Lcopyfault:
 
 	.data
 	_ALIGN
-	.comm	_C_LABEL(want_resched),4
-
 /*
  * Switch statistics (for later tweaking):
  *	nswitchdiff = p1 => p2 (i.e., chose different process)
@@ -5917,8 +5915,8 @@ Lsw_scan:
 #endif	/* defined(MULTIPROCESSOR) */
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
 	stb	%o0, [%l3 + P_STAT]
-	sethi	%hi(_C_LABEL(want_resched)), %o0
-	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
+	sethi	%hi(CPUINFO_VA+CI_WANT_RESCHED), %o0
+	st	%g0, [%o0 + %lo(CPUINFO_VA+CI_WANT_RESCHED)]	! want_resched = 0;
 	ldx	[%l3 + P_ADDR], %l1		! newpcb = p->p_addr;
 	stx	%g0, [%l3 + 8]		! p->p_back = NULL;
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
