@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.2 2007/05/14 11:22:00 espie Exp $
+# $OpenBSD: Search.pm,v 1.3 2007/05/14 11:31:10 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -75,6 +75,25 @@ sub match
 	return $o->stemlist->find($self->{stem});
 }
 
+sub _keep
+{
+	my ($self, $stem) = @_;
+	return $self->{stem} eq $stem;
+}
+
+sub filter
+{
+	my ($self, @l) = @_;
+	my @result = ();
+	require OpenBSD::PackageName;
+	for my $pkg (@l) {
+		if ($self->_keep(OpenBSD::PackageName::splitstem($pkgname))) {
+			push(@result, $pkg); 
+		}
+	}
+	return @result;
+}
+
 package OpenBSD::Search::PartialStem;
 our @ISA=(qw(OpenBSD::Search::Stem));
 
@@ -82,6 +101,13 @@ sub match
 {
 	my ($self, $o) = @_;
 	return $o->stemlist->find_partial($self->{stem});
+}
+
+sub _keep
+{
+	my ($self, $stem) = @_;
+	my $partial = $self->{stem};
+	return $stem =~ /\Q$partial\E/;
 }
 
 package OpenBSD::Search::Filter;
