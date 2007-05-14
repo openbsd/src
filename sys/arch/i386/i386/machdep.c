@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.386 2007/05/14 04:45:49 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.387 2007/05/14 04:46:02 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3968,17 +3968,6 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
-}
-
-/*
- * Common function for DMA map synchronization.  May be called
- * by bus-specific DMA map synchronization functions.
- */
-void
-_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
-    bus_size_t size, int op)
-{
-	/* Nothing to do here. */
 }
 
 /*
