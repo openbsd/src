@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.22 2006/03/04 19:33:21 miod Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.23 2007/05/14 01:37:49 deraadt Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.22 2006/03/04 19:33:21 miod Exp $
+ * $Id: aic7xxxvar.h,v 1.23 2007/05/14 01:37:49 deraadt Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -1178,7 +1178,6 @@ struct ahc_pci_identity {
 	ahc_device_setup_t	*setup;
 };
 extern struct ahc_pci_identity ahc_pci_ident_table[];
-extern const u_int ahc_num_pci_devs;
 
 /***************************** VL/EISA Declarations ***************************/
 struct aic7770_identity {
@@ -1227,11 +1226,7 @@ void			 ahc_controller_info(struct ahc_softc *, char *, size_t);
 int			 ahc_chip_init(struct ahc_softc *ahc);
 int			 ahc_init(struct ahc_softc *ahc);
 void			 ahc_intr_enable(struct ahc_softc *ahc, int enable);
-void			 ahc_pause_and_flushwork(struct ahc_softc *ahc);
-int			 ahc_suspend(struct ahc_softc *ahc); 
-int			 ahc_resume(struct ahc_softc *ahc);
 void			 ahc_softc_insert(struct ahc_softc *);
-struct ahc_softc	*ahc_find_softc(struct ahc_softc *ahc);
 void			 ahc_set_unit(struct ahc_softc *, int);
 void			 ahc_set_name(struct ahc_softc *, char *);
 void			 ahc_alloc_scbs(struct ahc_softc *ahc);

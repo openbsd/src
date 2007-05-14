@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_inline.h,v 1.13 2007/04/23 07:34:51 art Exp $	*/
+/*	$OpenBSD: aic7xxx_inline.h,v 1.14 2007/05/14 01:37:49 deraadt Exp $	*/
 /*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -173,13 +173,13 @@ IO_INLINE uint32_t
 					   struct ahc_dma_seg *sg);
 IO_INLINE uint32_t
 			ahc_hscb_busaddr(struct ahc_softc *ahc, u_int index);
-IO_INLINE void	ahc_sync_scb(struct ahc_softc *ahc,
-				     struct scb *scb, int op);
-IO_INLINE void	ahc_sync_sglist(struct ahc_softc *ahc,
-					struct scb *scb, int op);
+IO_INLINE void		ahc_sync_scb(struct ahc_softc *ahc,
+					   struct scb *scb, int op);
+#ifdef AHC_TARGET_MODE
 IO_INLINE uint32_t
 			ahc_targetcmd_offset(struct ahc_softc *ahc,
 					     u_int index);
+#endif
 
 #ifdef IO_EXPAND
 
@@ -222,23 +222,13 @@ ahc_sync_scb(struct ahc_softc *ahc, struct scb *scb, int op)
 			/*len*/sizeof(*scb->hscb), op);
 }
 
-IO_INLINE void
-ahc_sync_sglist(struct ahc_softc *ahc, struct scb *scb, int op)
-{
-	if (scb->sg_count == 0)
-		return;
-
-	ahc_dmamap_sync(ahc, ahc->parent_dmat, scb->sg_map->sg_dmamap,
-			/*offset*/(scb->sg_list - scb->sg_map->sg_vaddr)
-				* sizeof(struct ahc_dma_seg),
-			/*len*/sizeof(struct ahc_dma_seg) * scb->sg_count, op);
-}
-
+#ifdef AHC_TARGET_MODE
 IO_INLINE uint32_t
 ahc_targetcmd_offset(struct ahc_softc *ahc, u_int index)
 {
 	return (((uint8_t *)&ahc->targetcmds[index]) - ahc->qoutfifo);
 }
+#endif /* AHC_TARGET_MODE */
 #endif /* IO_EXPAND */
 
 /******************************** Debugging ***********************************/
@@ -268,10 +258,6 @@ IO_INLINE uint32_t
 			ahc_inl(struct ahc_softc *ahc, u_int port);
 IO_INLINE void	ahc_outl(struct ahc_softc *ahc, u_int port,
 				 uint32_t value);
-IO_INLINE uint64_t
-			ahc_inq(struct ahc_softc *ahc, u_int port);
-IO_INLINE void	ahc_outq(struct ahc_softc *ahc, u_int port,
-				 uint64_t value);
 IO_INLINE struct scb*
 			ahc_get_scb(struct ahc_softc *ahc);
 IO_INLINE void		ahc_free_scb(struct ahc_softc *ahc, struct scb *scb);
@@ -351,32 +337,6 @@ ahc_outl(struct ahc_softc *ahc, u_int port, uint32_t value)
 	ahc_outb(ahc, port+1, ((value) >> 8) & 0xFF);
 	ahc_outb(ahc, port+2, ((value) >> 16) & 0xFF);
 	ahc_outb(ahc, port+3, ((value) >> 24) & 0xFF);
-}
-
-IO_INLINE uint64_t
-ahc_inq(struct ahc_softc *ahc, u_int port)
-{
-	return ((ahc_inb(ahc, port))
-	      | (ahc_inb(ahc, port+1) << 8)
-	      | (ahc_inb(ahc, port+2) << 16)
-	      | (ahc_inb(ahc, port+3) << 24)
-	      | (((uint64_t)ahc_inb(ahc, port+4)) << 32)
-	      | (((uint64_t)ahc_inb(ahc, port+5)) << 40)
-	      | (((uint64_t)ahc_inb(ahc, port+6)) << 48)
-	      | (((uint64_t)ahc_inb(ahc, port+7)) << 56));
-}
-
-IO_INLINE void
-ahc_outq(struct ahc_softc *ahc, u_int port, uint64_t value)
-{
-	ahc_outb(ahc, port, value & 0xFF);
-	ahc_outb(ahc, port+1, (value >> 8) & 0xFF);
-	ahc_outb(ahc, port+2, (value >> 16) & 0xFF);
-	ahc_outb(ahc, port+3, (value >> 24) & 0xFF);
-	ahc_outb(ahc, port+4, (value >> 32) & 0xFF);
-	ahc_outb(ahc, port+5, (value >> 40) & 0xFF);
-	ahc_outb(ahc, port+6, (value >> 48) & 0xFF);
-	ahc_outb(ahc, port+7, (value >> 56) & 0xFF);
 }
 
 /*
@@ -536,7 +496,6 @@ ahc_get_sense_bufaddr(struct ahc_softc *ahc, struct scb *scb)
 
 /************************** Interrupt Processing ******************************/
 IO_INLINE void	ahc_sync_qoutfifo(struct ahc_softc *ahc, int op);
-IO_INLINE void	ahc_sync_qinfifo(struct ahc_softc *ahc, int op);
 IO_INLINE void	ahc_sync_tqinfifo(struct ahc_softc *ahc, int op);
 IO_INLINE u_int	ahc_check_cmdcmpltqueues(struct ahc_softc *ahc);
 IO_INLINE int	ahc_intr(struct ahc_softc *ahc);
@@ -547,13 +506,6 @@ ahc_sync_qoutfifo(struct ahc_softc *ahc, int op)
 {
 	ahc_dmamap_sync(ahc, ahc->parent_dmat, ahc->shared_data_dmamap,
 			/*offset*/0, /*len*/256, op);
-}
-
-IO_INLINE void
-ahc_sync_qinfifo(struct ahc_softc *ahc, int op)
-{
-	ahc_dmamap_sync(ahc, ahc->parent_dmat, ahc->shared_data_dmamap,
-			/*offset*/256, /*len*/256, op);
 }
 
 IO_INLINE void

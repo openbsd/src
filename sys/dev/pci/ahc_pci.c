@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.50 2006/07/11 18:48:27 kettenis Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.51 2007/05/14 01:37:50 deraadt Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.50 2006/07/11 18:48:27 kettenis Exp $
+ * $Id: ahc_pci.c,v 1.51 2007/05/14 01:37:50 deraadt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -593,8 +593,6 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 	}
 };
 
-const u_int ahc_num_pci_devs = NUM_ELEMENTS(ahc_pci_ident_table);
-		
 #define AHC_394X_SLOT_CHANNEL_A	4
 #define AHC_394X_SLOT_CHANNEL_B	5
 
@@ -677,7 +675,7 @@ ahc_find_pci_device(id, subid, func)
 	    && SUBID_9005_MFUNCENB(PCI_PRODUCT(subid)) == 0)
 		return (NULL);
 
-	for (i = 0; i < ahc_num_pci_devs; i++) {
+	for (i = 0; i < NUM_ELEMENTS(ahc_pci_ident_table); i++) {
 		entry = &ahc_pci_ident_table[i];
 		if (entry->full_id == (full_id & entry->id_mask))
 			return (entry);
