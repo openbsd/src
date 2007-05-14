@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.51 2007/05/12 18:19:54 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.52 2007/05/14 15:28:45 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1732,8 +1732,11 @@ msk_tick(void *xsc_if)
 {
 	struct sk_if_softc *sc_if = xsc_if;  
 	struct mii_data *mii = &sc_if->sk_mii;
+	int s;
 
+	s = splnet();
 	mii_tick(mii);
+	splx(s);
 	timeout_add(&sc_if->sk_tick_ch, hz);
 }
 
