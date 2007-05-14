@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.1 2007/05/01 18:59:40 miod Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.2 2007/05/14 17:32:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -45,7 +45,7 @@ mtx_init(struct mutex *mtx, int wantipl)
 	mtx->mtx_lock = 0;
 	/* We can't access imask[] here, since MUTEX_INITIALIZER can't. */
 	mtx->mtx_wantipl = wantipl;
-	mtx->mtx_oldcpl = 0;
+	mtx->mtx_oldcpl = IPL_NONE;
 }
 
 void
@@ -63,6 +63,6 @@ mtx_leave(struct mutex *mtx)
 {
 	MUTEX_ASSERT_LOCKED(mtx);
 	mtx->mtx_lock = 0;
-	if (mtx->mtx_wantipl != 0)
+	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(mtx->mtx_oldcpl);
 }
