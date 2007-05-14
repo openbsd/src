@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2007/04/18 21:21:19 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.21 2007/05/14 17:00:38 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -104,6 +104,13 @@ struct cpu_info {
 #define	CI_DDB_RUNNING	0
 #define	CI_DDB_ENTERDDB	1
 #define	CI_DDB_INDDB	2
+#define	CI_DDB_PAUSE	3
+
+	volatile int ci_ipi;			/* pending ipis */
+#define	CI_IPI_NOTIFY		0x00000001
+#define	CI_IPI_HARDCLOCK	0x00000002
+#define	CI_IPI_STATCLOCK	0x00000004
+#define	CI_IPI_DDB		0x00000008
 };
 
 extern cpuid_t master_cpu;
@@ -128,6 +135,8 @@ extern struct cpu_info m88k_cpus[MAX_CPUS];
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_primary != 0)
 
 void	cpu_boot_secondary_processors(void);
+void	m88k_send_ipi(int, cpuid_t);
+void	m88k_broadcast_ipi(int);
 
 #else	/* MULTIPROCESSOR */
 

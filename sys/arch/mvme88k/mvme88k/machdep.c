@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.186 2007/05/12 20:03:25 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.187 2007/05/14 17:00:40 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -125,6 +125,9 @@ void (*md_init_clocks)(void);
 u_int (*md_getipl)(void);
 u_int (*md_setipl)(u_int);
 u_int (*md_raiseipl)(u_int);
+#ifdef MULTIPROCESSOR
+void (*md_send_ipi)(int, cpuid_t);
+#endif
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -1211,3 +1214,32 @@ raiseipl(unsigned level)
 	set_psr(psr);
 	return curspl;
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+m88k_send_ipi(int ipi, cpuid_t cpu)
+{
+	struct cpu_info *ci;
+
+	ci = &m88k_cpus[cpu];
+	if (ci->ci_alive)
+		(*md_send_ipi)(ipi, cpu);
+}
+
+void
+m88k_broadcast_ipi(int ipi)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (ci == curcpu())
+			continue;
+
+		if (ci->ci_alive)
+			(*md_send_ipi)(ipi, ci->ci_cpuid);
+	}
+}
+
+#endif

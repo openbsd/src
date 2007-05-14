@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.27 2007/05/14 16:57:43 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.28 2007/05/14 17:00:40 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -137,8 +137,10 @@ void	m188_bootstrap(void);
 void	m188_ext_int(u_int, struct trapframe *);
 u_int	m188_getipl(void);
 void	m188_init_clocks(void);
+void	m188_ipi_handler(struct trapframe *);
 vaddr_t	m188_memsize(void);
 u_int	m188_raiseipl(u_int);
+void	m188_send_ipi(int, cpuid_t);
 u_int	m188_setipl(u_int);
 void	m188_startup(void);
 
@@ -219,6 +221,9 @@ m188_bootstrap()
 	md_setipl = m188_setipl;
 	md_raiseipl = m188_raiseipl;
 	md_init_clocks = m188_init_clocks;
+#ifdef MULTIPROCESSOR
+	md_send_ipi = m188_send_ipi;
+#endif
 
 	/* clear and disable all interrupts */
 	*(volatile u_int32_t *)MVME188_IENALL = 0;
@@ -259,6 +264,9 @@ safe_level(u_int mask, u_int curlevel)
 {
 	int i;
 
+#ifdef MULTIPROCESSOR
+	mask &= ~IPI_MASK;
+#endif
 	for (i = curlevel; i < INT_LEVEL; i++)
 		if ((int_mask_val[i] & mask) == 0)
 			return (i);
@@ -284,6 +292,7 @@ m188_setipl(u_int level)
 #ifdef MULTIPROCESSOR
 	if (cpu != master_cpu)
 		mask &= ~SLAVE_MASK;
+	mask |= IPI_BIT(cpu);
 #endif
 
 	*int_mask_reg[cpu] = mask;
@@ -304,6 +313,7 @@ m188_raiseipl(u_int level)
 #ifdef MULTIPROCESSOR
 		if (cpu != master_cpu)
 			mask &= ~SLAVE_MASK;
+		mask |= IPI_BIT(cpu);
 #endif
 
 		*int_mask_reg[cpu] = mask;
@@ -311,6 +321,42 @@ m188_raiseipl(u_int level)
 	}
 	return curspl;
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+m188_send_ipi(int ipi, cpuid_t cpu)
+{
+	struct cpu_info *ci = &m88k_cpus[cpu];
+
+	atomic_setbits_int(&ci->ci_ipi, ipi);
+	*(volatile u_int32_t *)MVME188_SETSWI = IPI_BIT(cpu);
+}
+
+/*
+ * Process inter-processor interrupts. Note that interrupts are disabled
+ * when this function is invoked.
+ */
+void
+m188_ipi_handler(struct trapframe *eframe)
+{
+	struct cpu_info *ci = curcpu();
+
+	if (ci->ci_ipi & CI_IPI_NOTIFY) {
+		atomic_clearbits_int(&ci->ci_ipi, CI_IPI_NOTIFY);
+		/* nothing to do */
+	}
+	if (ci->ci_ipi & CI_IPI_HARDCLOCK) {
+		atomic_clearbits_int(&ci->ci_ipi, CI_IPI_HARDCLOCK);
+		hardclock((struct clockframe *)eframe);
+	}
+	if (ci->ci_ipi & CI_IPI_STATCLOCK) {
+		atomic_clearbits_int(&ci->ci_ipi, CI_IPI_STATCLOCK);
+		statclock((struct clockframe *)eframe);
+	}
+}
+
+#endif
 
 /*
  * Device interrupt handler for MVME188
@@ -376,11 +422,10 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 
 	cur_mask = ISR_GET_CURRENT_MASK(cpu);
 	ign_mask = 0;
-	old_spl = m188_curspl[cpu];
-	eframe->tf_mask = old_spl;
+	old_spl = eframe->tf_mask;
 
 #ifdef MULTIPROCESSOR
-	if (eframe->tf_mask < IPL_SCHED)
+	if (old_spl < IPL_SCHED)
 		__mp_lock(&kernel_lock);
 #endif
 
@@ -402,27 +447,24 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	 * priority.
 	 */
 	do {
-		level = safe_level(cur_mask, old_spl);
+#ifdef MULTIPROCESSOR
+		/*
+		 * Check for IPIs first. We rely on the interrupt mask to
+		 * make sure that if we get an IPI, it's really for us and
+		 * no other processor.
+		 */
+		if (IPI_MASK & cur_mask) {
+			*(volatile u_int32_t *)MVME188_CLRSWI =
+			    cur_mask & IPI_MASK;
+			cur_mask &= ~IPI_MASK;
 
-#ifdef DIAGNOSTIC
-		if (level != IPL_ABORT && level <= old_spl) {
-			int i;
+			m188_ipi_handler(eframe);
 
-			printf("safe level %d <= old level %d\n", level, old_spl);
-			printf("cur_mask = 0x%b\n", cur_mask, IST_STRING);
-			for (i = 0; i < 4; i++)
-				printf("IEN%d = 0x%b  ", i, *int_mask_reg[i], IST_STRING);
-			printf("\nCPU0 spl %d  CPU1 spl %d  CPU2 spl %d  CPU3 spl %d\n",
-			       m188_curspl[0], m188_curspl[1],
-			       m188_curspl[2], m188_curspl[3]);
-			for (i = 0; i < INT_LEVEL; i++)
-				printf("int_mask[%d] = 0x%08x\n", i, int_mask_val[i]);
-			printf("--CPU %d halted--\n", cpu_number());
-			m188_setipl(IPL_ABORT);
-			for(;;) ;
+			if (cur_mask == 0)
+				break;
 		}
 #endif
-
+		level = safe_level(cur_mask, old_spl);
 		m188_setipl(level);
 
 		/*
@@ -563,7 +605,7 @@ out:
 	set_psr(get_psr() | PSR_IND);
 
 #ifdef MULTIPROCESSOR
-	if (eframe->tf_mask < IPL_SCHED)
+	if (old_spl < IPL_SCHED)
 		__mp_unlock(&kernel_lock);
 #endif
 }
@@ -579,10 +621,18 @@ void	write_cio(int, u_int);
 int	m188_clockintr(void *);
 int	m188_statintr(void *);
 
-struct simplelock m188_cio_lock;
+#if defined(MULTIPROCESSOR) && 0
+#include <machine/lock.h>
+__cpu_simple_lock_t m188_cio_lock;
 
-#define	CIO_LOCK	simple_lock(&m188_cio_lock)
-#define	CIO_UNLOCK	simple_unlock(&m188_cio_lock)
+#define	CIO_LOCK_INIT()	__cpu_simple_lock_init(&m188_cio_lock)
+#define	CIO_LOCK()	__cpu_simple_lock(&m188_cio_lock)
+#define	CIO_UNLOCK()	__cpu_simple_unlock(&m188_cio_lock)
+#else
+#define	CIO_LOCK_INIT()	do { } while (0)
+#define	CIO_LOCK()	do { } while (0)
+#define	CIO_UNLOCK()	do { } while (0)
+#endif
 
 /*
  * Notes on the MVME188 clock usage:
@@ -631,7 +681,7 @@ m188_init_clocks(void)
 	volatile u_int8_t imr;
 	int statint, minint;
 
-	simple_lock_init(&m188_cio_lock);
+	CIO_LOCK_INIT();
 
 #ifdef DIAGNOSTIC
 	if (1000000 % hz) {
@@ -693,14 +743,23 @@ m188_init_clocks(void)
 int
 m188_clockintr(void *eframe)
 {
-	CIO_LOCK;
+	CIO_LOCK();
 	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
 
 	hardclock(eframe);
 
 	/* restart counter */
 	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
-	CIO_UNLOCK;
+	CIO_UNLOCK();
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Send an IPI to all other processors, so they can get their
+	 * own ticks.
+	 */
+	if (CPU_IS_PRIMARY(curcpu()))
+		m88k_broadcast_ipi(CI_IPI_HARDCLOCK);
+#endif
 
 	return (1);
 }
@@ -717,21 +776,35 @@ m188_statintr(void *eframe)
 
 	statclock((struct clockframe *)eframe);
 
-	/*
-	 * Compute new randomized interval.  The intervals are uniformly
-	 * distributed on [statint - statvar / 2, statint + statvar / 2],
-	 * and therefore have mean statint, giving a stathz frequency clock.
-	 */
-	var = statvar;
-	do {
-		r = random() & (var - 1);
-	} while (r == 0);
-	newint = statmin + r;
+#ifdef MULTIPROCESSOR
+	if (CPU_IS_PRIMARY(curcpu())) {
+		/*
+		 * Send an IPI to all other processors as well.
+		 */
+		m88k_broadcast_ipi(CI_IPI_STATCLOCK);
+#endif
 
-	/* setup new value and restart counter */
-	*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
-	*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
-	tmp = *(volatile u_int8_t *)DART_STARTC;
+		/*
+		 * Compute new randomized interval.  The intervals are
+		 * uniformly distributed on
+		 * [statint - statvar / 2, statint + statvar / 2],
+		 * and therefore have mean statint, giving a stathz
+		 * frequency clock.
+		 */
+		var = statvar;
+		do {
+			r = random() & (var - 1);
+		} while (r == 0);
+		newint = statmin + r;
+
+		/* setup new value and restart counter */
+		*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
+		*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
+		tmp = *(volatile u_int8_t *)DART_STARTC;
+
+#ifdef MULTIPROCESSOR
+	}
+#endif
 
 	return (1);
 }
@@ -740,12 +813,8 @@ m188_statintr(void *eframe)
 void
 write_cio(int reg, u_int val)
 {
-	int s;
 	volatile int i;
 	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
-
-	s = splclock();
-	CIO_LOCK;
 
 	i = *cio_ctrl;				/* goto state 1 */
 	*cio_ctrl = 0;				/* take CIO out of RESET */
@@ -753,21 +822,15 @@ write_cio(int reg, u_int val)
 
 	*cio_ctrl = (reg & 0xff);		/* select register */
 	*cio_ctrl = (val & 0xff);		/* write the value */
-
-	CIO_UNLOCK;
-	splx(s);
 }
 
 /* Read CIO register */
 u_int
 read_cio(int reg)
 {
-	int c, s;
+	int c;
 	volatile int i;
 	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
-
-	s = splclock();
-	CIO_LOCK;
 
 	/* select register */
 	*cio_ctrl = (reg & 0xff);
@@ -776,8 +839,6 @@ read_cio(int reg)
 		;
 	/* read the value */
 	c = *cio_ctrl;
-	CIO_UNLOCK;
-	splx(s);
 	return (c & 0xff);
 }
 
@@ -789,8 +850,6 @@ void
 m188_cio_init(unsigned period)
 {
 	volatile int i;
-
-	CIO_LOCK;
 
 	/* Start by forcing chip into known state */
 	read_cio(CIO_MICR);
@@ -817,6 +876,4 @@ m188_cio_init(unsigned period)
 	/* enable counter #1 */
 	write_cio(CIO_MCCR, CIO_MCCR_CT1E | CIO_MCCR_PBE);
 	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
-
-	CIO_UNLOCK;
 }

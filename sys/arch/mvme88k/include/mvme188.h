@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.28 2006/11/18 22:53:11 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.29 2007/05/14 17:00:40 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -149,8 +149,9 @@
 /* hardware irq bits */
 #define HW_FAILURE_MASK		(IRQ_ABORT | IRQ_ACF | IRQ_ARBTO | IRQ_SF)
 /* software irq bits */
-#define SOFT_INTERRUPT_MASK	(IRQ_SWI7 | IRQ_SWI6 | IRQ_SWI5 | IRQ_SWI4 | \
-				 IRQ_SWI3 | IRQ_SWI2 | IRQ_SWI1 | IRQ_SWI0)
+#define SOFT_INTERRUPT_MASK	(IRQ_SWI7 | IRQ_SWI6 | IRQ_SWI5 | IRQ_SWI4)
+/* IPI bits (see below) */
+#define IPI_MASK		(IRQ_SWI3 | IRQ_SWI2 | IRQ_SWI1 | IRQ_SWI0)
 /* VME irq bits */
 #define VME_INTERRUPT_MASK	(IRQ_VME7 | IRQ_VME6 | IRQ_VME5 | IRQ_VME4 | \
 				 IRQ_VME3 | IRQ_VME2 | IRQ_VME1)
@@ -184,6 +185,13 @@
 #define INT_LEVEL	        8		/* # of interrupt level + 1 */
 #define ISR_GET_CURRENT_MASK(cpu) \
 	(*(volatile u_int *)MVME188_IST & *int_mask_reg[cpu])
+
+/*
+ * Software interrupts 0 to 3 are used to deliver IPIs to cpu0-3.
+ * We rely on the fact that the control bits for these interrupts are
+ * the same in the interrupt registers and the set/clear SWI registers.
+ */
+#define	IPI_BIT(cpuid)		(1 << (cpuid))
 
 /*
  * ISTATE and CLRINT register bits
