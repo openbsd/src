@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.31 2007/05/14 10:12:24 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.32 2007/05/14 12:18:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -195,44 +195,6 @@ sub grabPlist
 sub parse_problems
 {
 	my ($self, $filename, $hint) = @_;
-	CORE::open(my $fh, '<', $filename) or return;
-
-	my $baseurl = $self->{baseurl};
-	local $_;
-	my $notyet = 1;
-	while(<$fh>) {
-		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/;
-		next if m/^EPSV command not understood/;
-		next if m/^Trying [\da-f\.\:]+\.\.\./;
-		next if m/^Requesting \Q$baseurl\E/;
-		next if m/^Remote system type is\s+/;
-		next if m/^Connected to\s+/;
-		next if m/^remote\:\s+/;
-		next if m/^Using binary mode to transfer files/;
-		next if m/^Retrieving\s+/;
-		next if m/^Success?fully retrieved file/;
-		next if m/^\d+\s+bytes\s+received\s+in/;
-		next if m/^ftp: connect to address.*: No route to host/;
-
-		if (defined $hint && $hint == 0) {
-			next if m/^ftp: -: short write/;
-			next if m/^421\s+/;
-		}
-		if ($notyet) {
-			print STDERR "Error from $baseurl:\n" if $notyet;
-			$notyet = 0;
-		}
-		if (m/^421\s+/ ||
-		    m/^ftp: connect: Connection timed out/ ||
-		    m/^ftp: Can't connect or login to host/) {
-			$self->{lasterror} = 421;
-		}
-		if (m/^550\s+/) {
-			$self->{lasterror} = 550;
-		}
-		print STDERR  $_;
-	}
-	CORE::close($fh);
 	unlink $filename;
 }
 
@@ -510,6 +472,50 @@ sub _new
 	    $distant_host = $&;
 	}
 	bless { baseurl => $baseurl, key => $distant_host }, $class;
+}
+
+sub parse_problems
+{
+	my ($self, $filename, $hint) = @_;
+	CORE::open(my $fh, '<', $filename) or return;
+
+	my $baseurl = $self->{baseurl};
+	local $_;
+	my $notyet = 1;
+	while(<$fh>) {
+		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/;
+		next if m/^EPSV command not understood/;
+		next if m/^Trying [\da-f\.\:]+\.\.\./;
+		next if m/^Requesting \Q$baseurl\E/;
+		next if m/^Remote system type is\s+/;
+		next if m/^Connected to\s+/;
+		next if m/^remote\:\s+/;
+		next if m/^Using binary mode to transfer files/;
+		next if m/^Retrieving\s+/;
+		next if m/^Success?fully retrieved file/;
+		next if m/^\d+\s+bytes\s+received\s+in/;
+		next if m/^ftp: connect to address.*: No route to host/;
+
+		if (defined $hint && $hint == 0) {
+			next if m/^ftp: -: short write/;
+			next if m/^421\s+/;
+		}
+		if ($notyet) {
+			print STDERR "Error from $baseurl:\n" if $notyet;
+			$notyet = 0;
+		}
+		if (m/^421\s+/ ||
+		    m/^ftp: connect: Connection timed out/ ||
+		    m/^ftp: Can't connect or login to host/) {
+			$self->{lasterror} = 421;
+		}
+		if (m/^550\s+/) {
+			$self->{lasterror} = 550;
+		}
+		print STDERR  $_;
+	}
+	CORE::close($fh);
+	$self->SUPER::parse_problems($filename, $hint);
 }
 
 
