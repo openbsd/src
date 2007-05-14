@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.53 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: pkg_info,v 1.54 2007/05/14 11:02:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -139,7 +139,7 @@ sub find_by_spec
 {
 	my $pat = shift;
 
-	require OpenBSD::PkgSpec;
+	require OpenBSD::Search;
 	require OpenBSD::PackageRepository::Installed;
 
 	return sort(OpenBSD::PackageRepository::Installed->new->match(OpenBSD::Search::PkgSpec->new($pat)));
@@ -368,6 +368,7 @@ unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
 
 if ($opt_Q) {
 	require OpenBSD::PackageLocator;
+	require OpenBSD::Search;
 
 	print "PKG_PATH=$ENV{PKG_PATH}\n" if $opt_v;
 	my $partial = OpenBSD::Search::PartialStem->new($opt_Q);

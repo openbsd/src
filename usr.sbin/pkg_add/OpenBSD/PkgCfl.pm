@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.20 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.21 2007/05/14 11:02:15 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use warnings;
 
 package OpenBSD::PkgCfl;
 use OpenBSD::PackageName;
-use OpenBSD::PkgSpec;
+use OpenBSD::Search;
 use OpenBSD::PackageInfo;
 
 sub make_conflict_list

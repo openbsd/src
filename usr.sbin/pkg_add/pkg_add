@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.243 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: pkg_add,v 1.244 2007/05/14 11:02:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,6 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;
 use OpenBSD::PkgCfl;
-use OpenBSD::PkgSpec;
 use OpenBSD::Vstat;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
@@ -331,6 +330,7 @@ sub really_add($$)
 		for my $op (@toreplace) {
 			OpenBSD::ProgressMeter::set_header($op->pkgname." (deleting)");
 			$state->set_pkgname($op->pkgname);
+			require OpenBSD::Search;
 			if (OpenBSD::Search::PkgSpec->new("mozilla-thunderbird-<=1.0.2p0")->match_list($op->pkgname)) {
 			    	thunderbird_special_case($plist);
 			}

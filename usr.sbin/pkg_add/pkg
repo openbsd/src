@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg,v 1.7 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: pkg,v 1.8 2007/05/14 11:02:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -22,7 +22,7 @@ use Getopt::Std;
 
 sub check_dependencies($)
 {
-	require OpenBSD::PkgSpec;
+	require OpenBSD::Search;
 	require OpenBSD::PackageRepository::Installed;
 	my $dependency = shift;
 	my @m = OpenBSD::PackageRepository::Installed->new

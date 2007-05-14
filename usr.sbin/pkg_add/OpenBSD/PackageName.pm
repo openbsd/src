@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.25 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.26 2007/05/14 11:02:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -319,35 +319,6 @@ sub to_pattern
 {
 	my $o = shift;
 	return join('-', $o->{stem}, '*', @{$o->{flavors}});
-}
-
-package OpenBSD::Search::Stem;
-sub new
-{
-	my ($class, $stem) = @_;
-
-	return bless {stem => $stem}, $class;
-}
-
-sub split
-{
-	my ($class, $pkgname) = @_;
-	return $class->new(OpenBSD::PackageName::splitstem($pkgname));
-}
-
-sub match
-{
-	my ($self, $o) = @_;
-	return $o->stemlist->find($self->{stem});
-}
-
-package OpenBSD::Search::PartialStem;
-our @ISA=(qw(OpenBSD::Search::Stem));
-
-sub match
-{
-	my ($self, $o) = @_;
-	return $o->stemlist->find_partial($self->{stem});
 }
 
 1;

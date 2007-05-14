@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.108 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.109 2007/05/14 11:02:15 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -690,7 +690,7 @@ sub spec
 {
 	my $self = shift;
 	if (!defined $self->{spec}) {
-		require OpenBSD::PkgSpec;
+		require OpenBSD::Search;
 		$self->{spec} = OpenBSD::Search::PkgSpec->new($self->{pattern});
 	}
 	return $self->{spec};
@@ -739,7 +739,7 @@ sub add
 {
 	my ($class, $plist, $args) = @_;
 
-	require OpenBSD::PkgSpec;
+	require OpenBSD::Search;
 	require OpenBSD::PackageRepository::Installed;
 
 	my @candidates = OpenBSD::PackageRepository::Installed->new

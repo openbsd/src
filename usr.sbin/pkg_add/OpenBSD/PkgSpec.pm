@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.11 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.12 2007/05/14 11:02:15 espie Exp $
 #
-# Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -204,38 +204,6 @@ sub subpattern_match
 	}
 		
 	return @result;
-}
-
-package OpenBSD::Search::PkgSpec;
-
-sub match_ref
-{
-	my ($self, $r) = @_;
-	my @l = ();
-
-	for my $subpattern (@{$self->{patterns}}) {
-		push(@l, OpenBSD::PkgSpec::subpattern_match($subpattern, $r));
-	}
-	return @l;
-}
-
-sub match
-{
-	my ($self, $o) = @_;
-	return $self->match_ref($o->list);
-}
-
-sub match_list
-{
-	my ($self, @list) = @_;
-	return $self->match_ref(\@list);
-}
-
-sub new
-{
-	my ($class, $pattern) = @_;
-	my @l = split /\|/, $pattern;
-	bless { patterns => \@l }, $class;
 }
 
 1;
