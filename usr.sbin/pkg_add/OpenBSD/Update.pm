@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.75 2007/05/14 09:29:07 espie Exp $
+# $OpenBSD: Update.pm,v 1.76 2007/05/14 10:53:31 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -63,7 +63,7 @@ sub process_package
 		print "Not updating $pkgname, remember to clean it\n";
 		return;
 	}
-	my $stem = OpenBSD::PackageName::Stem->split($pkgname);
+	my $stem = OpenBSD::Search::Stem->split($pkgname);
 
 	my $found;
 	my $plist;

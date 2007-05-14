@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.24 2007/05/14 10:43:45 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.25 2007/05/14 10:53:31 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -136,7 +136,7 @@ sub find_old_lib
 {
 	my ($state, $base, $pattern, $lib, $dependencies) = @_;
 
-	my $spec = OpenBSD::PkgSpec->new(".libs-".$pattern);
+	my $spec = OpenBSD::Search::PkgSpec->new(".libs-".$pattern);
 	require OpenBSD::PackageRepository::Installed;
 
 	for my $try (OpenBSD::PackageRepository::Installed->new->match($spec)) {

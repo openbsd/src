@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.10 2007/05/14 10:43:45 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.11 2007/05/14 10:53:31 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -206,13 +206,15 @@ sub subpattern_match
 	return @result;
 }
 
+package OpenBSD::Search::PkgSpec;
+
 sub match_ref
 {
 	my ($self, $r) = @_;
 	my @l = ();
 
 	for my $subpattern (@{$self->{patterns}}) {
-		push(@l, subpattern_match($subpattern, $r));
+		push(@l, OpenBSD::PkgSpec::subpattern_match($subpattern, $r));
 	}
 	return @l;
 }

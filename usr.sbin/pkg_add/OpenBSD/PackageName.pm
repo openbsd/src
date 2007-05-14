@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.24 2007/05/14 10:43:45 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.25 2007/05/14 10:53:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -308,6 +308,20 @@ sub to_pattern
 	return $o->{stem}.'-*';
 }
 
+package OpenBSD::PackageName::Name;
+sub to_string
+{
+	my $o = shift;
+	return join('-', $o->{stem}, $o->{version}->to_string, @{$o->{flavors}});
+}
+
+sub to_pattern
+{
+	my $o = shift;
+	return join('-', $o->{stem}, '*', @{$o->{flavors}});
+}
+
+package OpenBSD::Search::Stem;
 sub new
 {
 	my ($class, $stem) = @_;
@@ -327,32 +341,13 @@ sub match
 	return $o->stemlist->find($self->{stem});
 }
 
-package OpenBSD::PackageName::PartialStem;
-our @ISA=(qw(OpenBSD::PackageName::Stem));
-
-sub to_pattern
-{
-	my $o = shift;
-	return '*.'.$o->{stem}.'*-*';
-}
+package OpenBSD::Search::PartialStem;
+our @ISA=(qw(OpenBSD::Search::Stem));
 
 sub match
 {
 	my ($self, $o) = @_;
 	return $o->stemlist->find_partial($self->{stem});
-}
-
-package OpenBSD::PackageName::Name;
-sub to_string
-{
-	my $o = shift;
-	return join('-', $o->{stem}, $o->{version}->to_string, @{$o->{flavors}});
-}
-
-sub to_pattern
-{
-	my $o = shift;
-	return join('-', $o->{stem}, '*', @{$o->{flavors}});
 }
 
 1;
