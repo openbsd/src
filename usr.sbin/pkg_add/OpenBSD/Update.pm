@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.74 2007/05/13 16:58:13 espie Exp $
+# $OpenBSD: Update.pm,v 1.75 2007/05/14 09:29:07 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -124,50 +124,40 @@ sub process_package
 		$self->add2cant($pkgname);
 		return;
 	}
-	if (@l == 1 && $state->{forced}->{pkgpath}) {
-		OpenBSD::ProgressMeter::clear();
-		print "Directly updating $pkgname -> ", $l[0], "\n";
+	if (@l == 1) {
+		if ($state->{forced}->{pkgpath}) {
+			OpenBSD::ProgressMeter::clear();
+			print "Directly updating $pkgname -> ", $l[0], "\n";
+			$self->add2updates($l[0]);
+			return;
+		}
+		if (defined $found && $found eq  $l[0] && 
+		    !$plist->uses_old_libs) {
+				my $msg = "No need to update $pkgname";
+				OpenBSD::ProgressMeter::message($msg);
+				print "$msg\n" if $state->{beverbose};
+				return;
+		}
+	}
+
+	OpenBSD::ProgressMeter::clear();
+	print "Candidates for updating $pkgname -> ", join(' ', @l), "\n";
+		
+	if (@l == 1) {
 		$self->add2updates($l[0]);
 		return;
 	}
-
-	if (defined $found && @l == 1 && $found eq  $l[0]) {
-		if (!$plist->uses_old_libs) {
-			my $msg = "No need to update $pkgname";
-			OpenBSD::ProgressMeter::message($msg);
-			print "$msg\n" if $state->{beverbose};
-			return;
-		}
-	}
-	OpenBSD::ProgressMeter::clear();
-	print "Candidates for updating $pkgname -> ", join(' ', @l), "\n";
-	# if all packages have the same version, but distinct p,
-	# grab the most recent.
-	if (@l > 1) {
-	    @l = OpenBSD::PackageName::keep_most_recent(@l);
-	}
-		
-	if (@l == 1) {
-		if (defined $found && $found eq  $l[0] && !$plist->uses_old_libs) {
-			my $msg = "No need to update $pkgname";
-			OpenBSD::ProgressMeter::message($msg);
-			print "$msg\n" if $state->{beverbose};
+	my $result = OpenBSD::Interactive::choose1($pkgname, 
+	    $state->{interactive}, sort @l);
+	if (defined $result) {
+		if (defined $found && $found eq $result && 
+		    !$plist->uses_old_libs) {
+			print "No need to update $pkgname\n";
 		} else {
-			$self->add2updates($l[0]);
+			$self->add2updates($result);
 		}
-	} elsif (@l == 0) {
-		$self->add2cant($pkgname);
 	} else {
-		my $result = OpenBSD::Interactive::choose1($pkgname, $state->{interactive}, sort @l);
-		if (defined $result) {
-			if (defined $found && $found eq  $result && !$plist->uses_old_libs) {
-				print "No need to update $pkgname\n";
-			} else {
-				$self->add2updates($result);
-			}
-		} else {
-			$state->{issues} = 1;
-		}
+		$state->{issues} = 1;
 	}
 }
 
