@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.29 2006/01/10 01:17:28 martin Exp $
+#	$OpenBSD: genassym.cf,v 1.30 2007/05/14 19:54:21 martin Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -158,6 +158,9 @@ member	page_idle_zero
 
 struct	uvmexp
 member	fpswtch
+
+struct	cpu_info
+member	ci_curproc
 
 # system calls
 export	SYSCALLGATE

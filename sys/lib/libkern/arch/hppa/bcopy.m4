@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.15 2005/08/01 12:10:26 miod Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.16 2007/05/14 19:54:21 martin Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -232,7 +232,11 @@ ifelse(NAME, `spcopy',
  * assumes that spaces do not clash, otherwise we lose
  */
 	.import	curproc, data
+	.import cpu_info_primary, data
 	.import	copy_on_fault, code
+
+#define curproc	(cpu_info_primary + CI_CURPROC)
+
 LEAF_ENTRY(spcopy)
 	ldw	HPPA_FRAME_ARG(4)(sp), ret0
 	sub,<>	r0, ret0, r0

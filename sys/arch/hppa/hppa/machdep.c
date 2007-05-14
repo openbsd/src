@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.151 2006/05/28 23:08:07 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.152 2007/05/14 19:54:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -124,6 +124,7 @@ int dcache_stride, dcache_line_mask;
  */
 volatile u_int8_t *machine_ledaddr;
 int machine_ledword, machine_leds;
+struct cpu_info cpu_info_primary;
 
 /*
  * CPU params (should be the same for all cpus in the system)

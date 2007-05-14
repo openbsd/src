@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.152 2006/01/10 01:17:28 martin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.153 2007/05/14 19:54:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -93,12 +93,15 @@
 	.import	bootdev, data
 	.import	esym, data
 	.import	curproc, data
+	.import cpu_info_primary, data
 	.import	want_resched, data
 	.import virtual_avail, data
 	.import	proc0, data
 	.import	proc0paddr, data
 	.import	kpsw, data
 	.import	panic, code
+
+#define curproc	(cpu_info_primary + CI_CURPROC)
 
 #define	EMRG_STACKSIZE	(1*NBPG)
 #define	FPEMU_STACKSIZE	(1*NBPG)

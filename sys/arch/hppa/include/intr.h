@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.21 2007/04/26 20:52:48 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.22 2007/05/14 19:54:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -114,6 +114,7 @@ splx(int ncpl)
 #define	splvm()		splraise(IPL_VM)
 #define	splaudio()	splraise(IPL_AUDIO)
 #define	splclock()	splraise(IPL_CLOCK)
+#define	splsched()	splraise(IPL_SCHED)
 #define	splstatclock()	splraise(IPL_STATCLOCK)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
