@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.42 2006/10/06 20:58:17 miod Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.43 2007/05/14 05:04:58 tedu Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -485,7 +485,7 @@ typedef struct {
  */
 #if defined(_KERNEL) || defined(_DYN_LOADER)
 
-#define ELF32_NO_ADDR	((u_long) ~0)	/* Indicates addr. not yet filled in */
+#define ELF32_NO_ADDR	((uint32_t) ~0)	/* Indicates addr. not yet filled in */
 #define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
 
 typedef struct {
