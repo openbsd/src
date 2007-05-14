@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.2 2007/05/14 07:05:49 art Exp $	*/
 /*	$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@ NENTRY(sh_vector_generic)
 2:	__EXCEPTION_RETURN
 	/* NOTREACHED */
 	.align	2
-_L.curproc:	.long	_C_LABEL(curproc)
+_L.curproc:	.long	_C_LABEL(cpu_info_store) + CI_CURPROC
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
 REG_SYMBOL(TEA)
@@ -188,7 +188,7 @@ NENTRY(sh3_vector_tlbmiss)
 	 mov	r14,	r5	/* 2nd arg */
 3:	__EXCEPTION_RETURN
 	.align	2
-2:		.long	_C_LABEL(curproc)
+2:		.long	_C_LABEL(cpu_info_store) + CI_CURPROC
 1:		.long	_C_LABEL(tlb_exception)
 __L.VPN_MASK:	.long	0xfffff000
 _L.CURUPTE:	.long	_C_LABEL(curupte)
@@ -224,7 +224,7 @@ NENTRY(sh4_vector_tlbmiss)
 	__EXCEPTION_RETURN
 	.align	2
 1:		.long	_C_LABEL(tlb_exception)
-2:		.long	_C_LABEL(curproc)
+2:		.long	_C_LABEL(cpu_info_store) + CI_CURPROC
 _L.EXPEVT4:	.long	SH4_EXPEVT
 _L.TEA4:	.long	SH4_TEA
 
@@ -265,7 +265,7 @@ NENTRY(sh_vector_interrupt)
 	 mov	r14,	r5	/* 2nd arg */
 	__EXCEPTION_RETURN
 	.align	2
-1:			.long	_C_LABEL(curproc)
+1:			.long	_C_LABEL(cpu_info_store) + CI_CURPROC
 __L.intc_intr:		.long	_C_LABEL(intc_intr)
 __L.ast:		.long	_C_LABEL(ast)
 __L.uvmexp.intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS

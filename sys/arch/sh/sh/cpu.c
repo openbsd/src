@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.2 2007/05/14 07:05:49 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.8 2006/01/02 23:16:20 uwe Exp $	*/
 
 /*-
@@ -54,6 +54,8 @@ struct cfattach cpu_ca = {
 struct cfdriver cpu_cd = {
 	0, "cpu", DV_DULL
 };
+
+struct cpu_info cpu_info_store;
 
 int
 cpu_match(struct device *parent, void *vcf, void *aux)

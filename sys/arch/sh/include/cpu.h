@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2007/04/29 17:53:37 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 2007/05/14 07:05:49 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -49,6 +49,26 @@
 #include <sh/frame.h>
 
 #ifdef _KERNEL
+
+/*
+ * Per-CPU information.
+ */
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct proc *ci_curproc;
+
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+};
+
+extern struct cpu_info cpu_info_store;
+#define	curcpu()	(&cpu_info_store)
+#define cpu_number()	0
+#define CPU_IS_PRIMARY(ci)	1
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci) \
+	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
+
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
