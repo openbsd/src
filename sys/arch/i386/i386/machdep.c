@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.387 2007/05/14 04:46:02 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.388 2007/05/15 16:27:38 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -4258,6 +4258,8 @@ splassert_check(int wantipl, const char *func)
 {
 	if (lapic_tpr < wantipl)
 		splassert_fail(wantipl, lapic_tpr, func);
+	if (wantipl == IPL_NONE && curcpu()->ci_idepth != 0)
+		splassert_fail(-1, curcpu()->ci_idepth, func);
 }
 #endif
 
@@ -4267,11 +4269,15 @@ i386_intlock(int ipl)
 {
 	if (ipl < IPL_SCHED)
 		__mp_lock(&kernel_lock);
+
+	curcpu()->ci_idepth++;
 }
 
 void
 i386_intunlock(int ipl)
 {
+	curcpu()->ci_idepth--;
+
 	if (ipl < IPL_SCHED)
 		__mp_unlock(&kernel_lock);
 }
@@ -4280,11 +4286,13 @@ void
 i386_softintlock(void)
 {
 	__mp_lock(&kernel_lock);
+	curcpu()->ci_idepth++;
 }
 
 void
 i386_softintunlock(void)
 {
+	curcpu()->ci_idepth--;
 	__mp_unlock(&kernel_lock);
 }
 #endif
