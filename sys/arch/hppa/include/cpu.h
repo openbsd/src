@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.49 2007/05/14 19:54:21 martin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.50 2007/05/15 16:03:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -63,6 +63,7 @@
 #define	HPPA_FTRS_W32B		0x00000008
 
 #ifndef _LOCORE
+#ifdef _KERNEL
 #include <sys/sched.h>
 
 struct cpu_info {
@@ -89,6 +90,7 @@ enum hppa_cpu_type {
 extern enum hppa_cpu_type cpu_type;
 extern const char *cpu_typename;
 extern int cpu_hvers;
+#endif
 #endif
 
 /*
