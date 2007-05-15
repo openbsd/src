@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.130 2006/07/28 17:13:43 brad Exp $
+	$OpenBSD: pcmciadevs,v 1.131 2007/05/15 17:39:51 mglocker Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -91,6 +91,7 @@ vendor IODATA2			0x028a	I-O DATA
 vendor ASUS			0x02aa	ASUS
 vendor SIEMENS			0x02ac	Siemens
 vendor MICROSOFT		0x02d2	Microsoft
+vendor AMBICOM			0x02df	AmbiCom, Inc.
 vendor NWN			0x0602	No Wires Needed
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
@@ -148,6 +149,9 @@ product AIRVAST WN_100		0x7300 AirVast WN-100
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
+
+/* AmbiCom, Inc. */
+product AMBICOM WL54CF		0x8103 WL54CF
 
 /* Archos */
 product	ARCHOS ARC_ATAPI	0x0043 MiniCD
@@ -411,7 +415,6 @@ product XIRCOM XIR_CEM_28	0x110b Xircom CEM-28
 /* Cards we know only by their cis */
 vendor ACCTON			-1	ACCTON
 vendor ADDTRON			-1	Addtron
-vendor AMBICOM			-1	AmbiCom
 vendor AMD			-1	AMD
 vendor AROWANA			-1	Arowana
 vendor BILLIONTON		-1	Billionton Systems Inc.
