@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.9 2006/12/24 20:30:35 miod Exp $	*/
+/*	$OpenBSD: fault.c,v 1.10 2007/05/15 16:02:18 drahn Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -621,18 +621,10 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 	(void) data_abort_fixup(tf, fsr, far, p);
 
 	/*
-	 * At this point, if the fault happened in kernel mode, we're toast
+	 * At this point, if the fault happened in kernel mode or user mode,
+	 * we're toast
 	 */
-	if (!TRAP_USERMODE(tf))
-		dab_fatal(tf, fsr, far, p, NULL);
-
-	/* Deliver a bus error signal to the process */
-	sd->signo = SIGBUS;
-	sd->code = BUS_ADRERR;
-	sd->addr = far;
-	sd->trap = fsr;
-
-	p->p_addr->u_pcb.pcb_tf = tf;
+	dab_fatal(tf, fsr, far, p, NULL);
 
 	return (1);
 }
