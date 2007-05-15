@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.62 2007/04/23 13:04:24 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.63 2007/05/15 11:07:46 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -273,6 +273,8 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tdescr \"%s\"\n", c, p->descr);
 	if (p->remote_as)
 		printf("%s\tremote-as %s\n", c, log_as(p->remote_as));
+	if (p->down)
+		printf("%s\tdown\n", c);
 	if (p->distance > 1)
 		printf("%s\tmultihop %u\n", c, p->distance);
 	if (p->passive)
