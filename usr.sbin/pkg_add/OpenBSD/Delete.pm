@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.42 2007/05/14 09:49:27 espie Exp $
+# $OpenBSD: Delete.pm,v 1.43 2007/05/15 09:32:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ sub keep_old_files
 {
 	my ($state, $plist, $dir) = @_;
 	my $p = new OpenBSD::PackingList;
-	for my $i (qw(cvstags name no-default-conflict conflict) ) {
+	for my $i (qw(cvstags no-default-conflict conflict) ) {
 		if (defined $plist->{$i}) {
 			$p->{$i} = $plist->{$i};
 		}
