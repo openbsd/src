@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.54 2007/05/14 11:02:14 espie Exp $
+# $OpenBSD: pkg_info,v 1.55 2007/05/15 19:02:26 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -68,7 +68,7 @@ my $pkgs = 0;
 sub find_pkg
 {
 	my ($pkgname, $code) = @_;
-	require OpenBSD::PackageLocator;
+	require OpenBSD::PackageRepository::Installed;
 	my $repo = OpenBSD::PackageRepository::Installed->new();
 	my $pkg;
 
@@ -78,6 +78,7 @@ sub find_pkg
 		return;
 	}
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
+		require OpenBSD::Search;
 		my @l = sort ($repo->match(OpenBSD::Search::Stem->new($pkgname)));
 		if (@l != 0) {
 			for my $p (@l) {
@@ -87,6 +88,8 @@ sub find_pkg
 		}
 	}
 				
+	require OpenBSD::PackageLocator;
+
 	$pkg = OpenBSD::PackageLocator->find($pkgname);
 	if (defined $pkg) {
 		&$code($pkgname, $pkg);
