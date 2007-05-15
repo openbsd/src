@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.16 2007/02/20 16:59:24 moritz Exp $	*/
+/*	$OpenBSD: value.c,v 1.17 2007/05/15 19:42:05 moritz Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: value.c,v 1.16 2007/02/20 16:59:24 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: value.c,v 1.17 2007/05/15 19:42:05 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -111,7 +111,7 @@ vassign(value_t *p, char *v)
 			return;
 		if (!(p->v_type&(ENVIRON|INIT)))
 			free(p->v_value);
-		if ((p->v_value = strdup(v)) == NOSTR) {
+		if ((p->v_value = strdup(v)) == NULL) {
 			printf("out of core\r\n");
 			return;
 		}
@@ -189,7 +189,7 @@ vtoken(char *s)
 			p = vlookup(s);
 		else
 			p = vlookup(s+1);
-		if (p != NOVAL) {
+		if (p != NULL) {
 			vassign(p, s);
 			return;
 		}

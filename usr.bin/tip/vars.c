@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.8 2006/08/18 03:06:18 jason Exp $	*/
+/*	$OpenBSD: vars.c,v 1.9 2007/05/15 19:42:05 moritz Exp $	*/
 /*	$NetBSD: vars.c,v 1.3 1994/12/08 09:31:19 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: vars.c,v 1.8 2006/08/18 03:06:18 jason Exp $";
+static const char rcsid[] = "$OpenBSD: vars.c,v 1.9 2007/05/15 19:42:05 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -55,7 +55,7 @@ value_t vtable[] = {
 	{ "eofwrite",	STRING|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
 	  "eofw",	(char *)&OE },
 	{ "eol",	STRING|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
-	  NOSTR,	(char *)&EL },
+	  NULL,		(char *)&EL },
 	{ "escape",	CHAR,			(READ|WRITE)<<PUBLIC,
 	  "es",		(char *)'~' },
 	{ "exceptions",	STRING|INIT|IREMOTE,	(READ|WRITE)<<PUBLIC,
@@ -67,19 +67,19 @@ value_t vtable[] = {
 	{ "host",	STRING|IREMOTE|INIT,	READ<<PUBLIC,
 	  "ho",		(char *)&HO },
 	{ "log",	STRING|INIT,		(READ|WRITE)<<ROOT,
-	  NOSTR,	_PATH_ACULOG },
+	  NULL,		_PATH_ACULOG },
 	{ "phones",	STRING|INIT|IREMOTE,	READ<<PUBLIC,
-	  NOSTR,	(char *)&PH },
+	  NULL,		(char *)&PH },
 	{ "prompt",	CHAR,			(READ|WRITE)<<PUBLIC,
 	  "pr",		(char *)'\n' },
 	{ "raise",	BOOL,			(READ|WRITE)<<PUBLIC,
 	  "ra",		(char *)FALSE },
 	{ "raisechar",	CHAR,			(READ|WRITE)<<PUBLIC,
-	  "rc",		NOSTR },
+	  "rc",		NULL },
 	{ "record",	STRING|INIT|IREMOTE,	(READ|WRITE)<<PUBLIC,
 	  "rec",	(char *)&RE },
 	{ "remote",	STRING|INIT|IREMOTE,	READ<<PUBLIC,
-	  NOSTR,	(char *)&RM },
+	  NULL,		(char *)&RM },
 	{ "script",	BOOL,			(READ|WRITE)<<PUBLIC,
 	  "sc",		(char *)FALSE },
 	{ "tabexpand",	BOOL,			(READ|WRITE)<<PUBLIC,
@@ -89,7 +89,7 @@ value_t vtable[] = {
 	{ "SHELL",	STRING|ENVIRON|INIT,	(READ|WRITE)<<PUBLIC,
 	  NULL,		_PATH_BSHELL },
 	{ "HOME",	STRING|ENVIRON,		(READ|WRITE)<<PUBLIC,
-	  NOSTR,	NOSTR },
+	  NULL,		NULL },
 	{ "echocheck",	BOOL,			(READ|WRITE)<<PUBLIC,
 	  "ec",		(char *)FALSE },
 	{ "disconnect",	STRING|IREMOTE|INIT,	(READ|WRITE)<<PUBLIC,
@@ -116,5 +116,5 @@ value_t vtable[] = {
 	  "ld",		(char *)&LD },
 	{ "direct",	BOOL,			(READ<<PUBLIC)|(WRITE<<ROOT),
 	  "dc",		(char *)FALSE },
-	{ NOSTR, NULL, NULL, NOSTR, NOSTR }
+	{ NULL, NULL, NULL, NULL, NULL }
 };

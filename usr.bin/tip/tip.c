@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.32 2006/11/27 23:19:41 mcbride Exp $	*/
+/*	$OpenBSD: tip.c,v 1.33 2007/05/15 19:42:05 moritz Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.32 2006/11/27 23:19:41 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.33 2007/05/15 19:42:05 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,7 @@ static int	escape(void);
 int
 main(int argc, char *argv[])
 {
-	char *sys = NOSTR, sbuf[12], *p;
+	char *sys = NULL, sbuf[12], *p;
 	int i;
 
 	/* XXX preserve previous braindamaged behavior */
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (sys == NOSTR)
+	if (sys == NULL)
 		goto notnumber;
 	if (isalpha(*sys))
 		goto notnumber;
@@ -165,7 +165,7 @@ notnumber:
 	 * Kludge, their's no easy way to get the initialization
 	 *   in the right order, so force it here
 	 */
-	if ((PH = getenv("PHONES")) == NOSTR)
+	if ((PH = getenv("PHONES")) == NULL)
 		PH = _PATH_PHONES;
 	vinit();				/* init variables */
 	setparity("none");			/* set the parity table */
@@ -589,7 +589,7 @@ setparity(char *defparity)
 	char *parity;
 	extern const unsigned char evenpartab[];
 
-	if (value(PARITY) == NOSTR)
+	if (value(PARITY) == NULL)
 		value(PARITY) = defparity;
 	parity = value(PARITY);
 	if (equal(parity, "none")) {

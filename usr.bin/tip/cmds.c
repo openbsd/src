@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.26 2006/06/06 23:24:52 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.27 2007/05/15 19:42:05 moritz Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.26 2006/06/06 23:24:52 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.27 2007/05/15 19:42:05 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -654,7 +654,7 @@ tipabort(char *msg)
 	signal(SIGTERM, SIG_IGN);
 	kill(tipout_pid, SIGTERM);
 	disconnect(msg);
-	if (msg != NOSTR)
+	if (msg != NULL)
 		printf("\r\n%s", msg);
 	printf("\r\n[EOT]\r\n");
 	daemon_uid();
@@ -669,11 +669,11 @@ finish(int c)
 {
 	char *dismsg;
 
-	if ((dismsg = value(DISCONNECT)) != NOSTR) {
+	if ((dismsg = value(DISCONNECT)) != NULL) {
 		write(FD, dismsg, strlen(dismsg));
 		sleep(5);
 	}
-	tipabort(NOSTR);
+	tipabort(NULL);
 }
 
 /*ARGSUSED*/
@@ -781,7 +781,7 @@ variable(int c)
 	}
 	if (vtable[PARITY].v_access&CHANGED) {
 		vtable[PARITY].v_access &= ~CHANGED;
-		setparity(NOSTR);
+		setparity(NULL);
 	}
 	if (vtable[HARDWAREFLOW].v_access&CHANGED) {
 		vtable[HARDWAREFLOW].v_access &= ~CHANGED;
@@ -792,7 +792,7 @@ variable(int c)
 	}
 	if (vtable[LINEDISC].v_access&CHANGED) {
 		vtable[LINEDISC].v_access &= ~CHANGED;
-		linedisc(NOSTR);
+		linedisc(NULL);
 	}
 }
 
@@ -925,7 +925,7 @@ expand(char name[])
 	(void)snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
 	if ((pid = vfork()) == 0) {
 		Shell = value(SHELL);
-		if (Shell == NOSTR)
+		if (Shell == NULL)
 			Shell = _PATH_BSHELL;
 		close(pivec[0]);
 		close(1);
@@ -940,7 +940,7 @@ expand(char name[])
 		perror("fork");
 		close(pivec[0]);
 		close(pivec[1]);
-		return(NOSTR);
+		return(NULL);
 	}
 	close(pivec[1]);
 	l = read(pivec[0], xname, BUFSIZ);
@@ -950,19 +950,19 @@ expand(char name[])
 	s &= 0377;
 	if (s != 0 && s != SIGPIPE) {
 		fprintf(stderr, "\"Echo\" failed\n");
-		return(NOSTR);
+		return(NULL);
 	}
 	if (l < 0) {
 		perror("read");
-		return(NOSTR);
+		return(NULL);
 	}
 	if (l == 0) {
 		fprintf(stderr, "\"%s\": No match\n", name);
-		return(NOSTR);
+		return(NULL);
 	}
 	if (l == BUFSIZ) {
 		fprintf(stderr, "Buffer overflow expanding \"%s\"\n", name);
-		return(NOSTR);
+		return(NULL);
 	}
 	xname[l] = 0;
 	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)

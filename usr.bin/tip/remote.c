@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.16 2006/06/06 23:24:52 deraadt Exp $	*/
+/*	$OpenBSD: remote.c,v 1.17 2007/05/15 19:42:05 moritz Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: remote.c,v 1.16 2006/06/06 23:24:52 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: remote.c,v 1.17 2007/05/15 19:42:05 moritz Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -130,17 +130,17 @@ getremcap(char *host)
 		DU = 0;
 	else
 		DU = cgetflag("du");
-	if (DV == NOSTR) {
+	if (DV == NULL) {
 		fprintf(stderr, "%s: missing device spec\n", host);
 		exit(3);
 	}
-	if (DU && CU == NOSTR)
+	if (DU && CU == NULL)
 		CU = DV;
-	if (DU && PN == NOSTR) {
+	if (DU && PN == NULL) {
 		fprintf(stderr, "%s: missing phone number\n", host);
 		exit(3);
 	}
-	if (DU && AT == NOSTR) {
+	if (DU && AT == NULL) {
 		fprintf(stderr, "%s: missing acu type\n", host);
 		exit(3);
 	}
@@ -152,7 +152,7 @@ getremcap(char *host)
 	 *   from the description file
 	 */
 	if (!HW)
-		HW = (CU == NOSTR) || (DU && equal(DV, CU));
+		HW = (CU == NULL) || (DU && equal(DV, CU));
 	HO = host;
 	/*
 	 * see if uppercase mode should be turned on initially
@@ -185,17 +185,17 @@ getremcap(char *host)
 		setboolean(value(DC), 1);
 	if (cgetflag("hf"))
 		setboolean(value(HARDWAREFLOW), 1);
-	if (RE == NOSTR)
+	if (RE == NULL)
 		RE = (char *)"tip.record";
-	if (EX == NOSTR)
+	if (EX == NULL)
 		EX = (char *)"\t\n\b\f";
-	if (ES != NOSTR)
+	if (ES != NULL)
 		vstring("es", ES);
-	if (FO != NOSTR)
+	if (FO != NULL)
 		vstring("fo", FO);
-	if (PR != NOSTR)
+	if (PR != NULL)
 		vstring("pr", PR);
-	if (RC != NOSTR)
+	if (RC != NULL)
 		vstring("rc", RC);
 	if (cgetnum(bp, "dl", &DL) == -1)
 		DL = 0;
@@ -213,7 +213,7 @@ getremote(char *host)
 	static int lookedup = 0;
 
 	if (!lookedup) {
-		if (host == NOSTR && (host = getenv("HOST")) == NOSTR) {
+		if (host == NULL && (host = getenv("HOST")) == NULL) {
 			fprintf(stderr, "%s: no host specified\n", __progname);
 			exit(3);
 		}
@@ -225,11 +225,11 @@ getremote(char *host)
 	 * We return a new device each time we're called (to allow
 	 *   a rotary action to be simulated)
 	 */
-	if (next == NOSTR)
-		return (NOSTR);
+	if (next == NULL)
+		return (NULL);
 	if ((cp = strchr(next, ',')) == NULL) {
 		DV = next;
-		next = NOSTR;
+		next = NULL;
 	} else {
 		*cp++ = '\0';
 		DV = next;

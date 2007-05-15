@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.8 2006/03/16 19:32:46 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.9 2007/05/15 19:42:05 moritz Exp $	*/
 /*	$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: log.c,v 1.8 2006/03/16 19:32:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: log.c,v 1.9 2007/05/15 19:42:05 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -58,8 +58,8 @@ logent(char *group, char *num, char *acu, char *message)
 		perror("flock");
 		return;
 	}
-	if ((user = getlogin()) == NOSTR) {
-		if ((pwd = getpwuid(getuid())) == NOPWD)
+	if ((user = getlogin()) == NULL) {
+		if ((pwd = getpwuid(getuid())) == NULL)
 			user = "???";
 		else
 			user = pwd->pw_name;

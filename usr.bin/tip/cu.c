@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.21 2006/11/07 07:16:15 ray Exp $	*/
+/*	$OpenBSD: cu.c,v 1.22 2007/05/15 19:42:05 moritz Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cu.c,v 1.21 2006/11/07 07:16:15 ray Exp $";
+static const char rcsid[] = "$OpenBSD: cu.c,v 1.22 2007/05/15 19:42:05 moritz Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -56,7 +56,7 @@ cumain(int argc, char *argv[])
 
 	if (argc < 2)
 		cuusage();
-	CU = DV = NOSTR;
+	CU = DV = NULL;
 	BR = DEFBR;
 	parity = 0;	/* none */
 
