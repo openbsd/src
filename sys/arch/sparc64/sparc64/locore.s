@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.76 2007/05/15 20:30:11 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.77 2007/05/15 21:00:05 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -9451,8 +9451,6 @@ _C_LABEL(ssym):
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):
 	.xword	_C_LABEL(u0)		! KVA of proc0 uarea
-
-	.comm	_C_LABEL(nwindows), 4
 
 #ifdef DEBUG
 	.comm	_C_LABEL(trapdebug), 4
