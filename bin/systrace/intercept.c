@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.53 2006/09/19 10:48:41 otto Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.54 2007/05/15 19:42:46 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -560,7 +560,7 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 			/* Did the current system call get interrupted? */
 			if (errno == EBUSY)
 				return (NULL);
-			if (errno != EINVAL || stride == 4) {
+			if (errno != EINVAL || stride == 1) {
 				warn("%s: ioctl", __func__);
 				return (NULL);
 			}
