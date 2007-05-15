@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.6 2007/05/15 01:56:47 deraadt Exp $	*/
+/*	$OpenBSD: _types.h,v 1.7 2007/05/15 15:23:36 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -114,7 +114,6 @@ typedef	int			__rune_t;
 typedef	void *			__wctrans_t;
 typedef	void *			__wctype_t;
 
-#define __HAVE_MUTEX
 #define __HAVE_CPUINFO
 
 #endif	/* _SPARC__TYPES_H_ */
