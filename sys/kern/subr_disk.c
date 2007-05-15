@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.39 2007/05/10 06:02:04 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.40 2007/05/15 01:58:06 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -388,8 +388,10 @@ dk_mountroot(void)
 
 	rrootdev = blktochr(rootdev);
 	rawdev = MAKEDISKDEV(major(rrootdev), DISKUNIT(rootdev), RAW_PART);
+#ifdef DEBUG
 	printf("rootdev=0x%x rrootdev=0x%x rawdev=0x%x\n", rootdev,
 	    rrootdev, rawdev);
+#endif
 
 	/*
 	 * open device, ioctl for the disklabel, and close it.
