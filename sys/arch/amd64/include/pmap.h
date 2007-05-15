@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 2006/03/15 20:01:58 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 2007/05/15 16:38:33 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -328,20 +328,15 @@ struct pmap {
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
 
 /*
- * for each managed physical page we maintain a list of <PMAP,VA>'s
- * which it is mapped at.  the list is headed by a pv_head structure.
- * there is one pv_head per managed phys page (allocated at boot time).
- * the pv_head structure points to a list of pv_entry structures (each
- * describes one mapping).
+ * We keep mod/ref flags in struct vm_page->pg_flags.
  */
+#define PG_PMAP_MOD	PG_PMAP0
+#define PG_PMAP_REF	PG_PMAP1
 
-struct pv_entry;
-
-struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
-	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
-};
-
+/*
+ * for each managed physical page we maintain a list of <PMAP,VA>'s
+ * which it is mapped at.
+ */
 struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pv_entry *pv_next;	/* next entry */
 	struct pmap *pv_pmap;		/* the pmap */
@@ -403,7 +398,7 @@ extern pd_entry_t *pdes[];
  */
 
 void		pmap_bootstrap(vaddr_t, paddr_t);
-boolean_t	pmap_clear_attrs(struct vm_page *, unsigned);
+boolean_t	pmap_clear_attrs(struct vm_page *, unsigned long);
 static void	pmap_page_protect(struct vm_page *, vm_prot_t);
 void		pmap_page_remove (struct vm_page *);
 static void	pmap_protect(struct pmap *, vaddr_t,

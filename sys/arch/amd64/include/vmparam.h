@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2007/03/29 03:17:31 weingart Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2007/05/15 16:38:33 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -107,13 +107,14 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST16	1
 
-/*
- * pmap specific data stored in the vm_physmem[] array
- */
-#define __HAVE_PMAP_PHYSSEG
-struct pmap_physseg {
-	struct pv_head *pvhead;		/* pv_head array */
-	unsigned char *attrs;		/* attrs array */
+#define __HAVE_VM_PAGE_MD
+struct pv_entry;
+struct vm_page_md {
+	struct pv_entry *pv_list;
 };
+
+#define VM_MDPAGE_INIT(pg) do {		\
+	(pg)->mdpage.pv_list = NULL;	\
+} while (0)
 
 #endif /* _VMPARAM_H_ */
