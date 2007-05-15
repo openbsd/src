@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.27 2007/05/14 10:53:31 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.28 2007/05/15 08:00:59 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -207,7 +207,8 @@ sub solve_installed_names
 		}
 	    } else {
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
-		    require OpenBSD::PackageRepository;
+		    require OpenBSD::PackageRepository::Installed;
+		    require OpenBSD::Search;
 
 		    my @l = OpenBSD::PackageRepository::Installed->new->match(OpenBSD::Search::Stem->new($pkgname));
 		    if (@l == 0) {
