@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.20 2007/03/18 20:53:10 uwe Exp $
+#	$OpenBSD: files.pxa2x0,v 1.21 2007/05/15 05:26:44 miod Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -22,6 +22,7 @@ file	arch/arm/xscale/pxa2x0_dma.c
 device	pxaintc
 attach	pxaintc at pxaip
 file	arch/arm/xscale/pxa2x0_intr.c		pxaintc needs-flag
+file	arch/arm/xscale/pxa2x0_mutex.c		pxaintc
 #defflag  opt_pxa2x0_gpio.h		PXAGPIO_HAS_GPION_INTRS
 
 # GPIO controller

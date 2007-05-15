@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_intr.h,v 1.2 2006/06/15 21:35:30 drahn Exp $ */
+/*	$OpenBSD: armish_intr.h,v 1.3 2007/05/15 05:26:44 miod Exp $ */
 /*	$NetBSD: i80321_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /*
@@ -45,7 +45,6 @@
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/intr.h>
 #include <arm/softintr.h>
 
 extern __volatile int current_ipl_level;
@@ -58,7 +57,6 @@ void i80321_splx(int new);
 int i80321_splraise(int ipl);
 int i80321_spllower(int ipl);
 void i80321_setsoftintr(int si);
-
 
 /*
  * An useful function for interrupt handlers.
@@ -96,6 +94,8 @@ void *i80321_intr_establish(int irqno, int level, int (*func)(void *),
     void *cookie, char *name);
 void i80321_intr_disestablish(void *cookie);
 const char *i80321_intr_string(void *cookie);
+
+#define splassert(wantipl) do { /* nada */ } while (0)
 
 #endif /* ! _LOCORE */
 

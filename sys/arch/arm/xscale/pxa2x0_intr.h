@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.h,v 1.9 2005/09/22 04:14:44 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.h,v 1.10 2007/05/15 05:26:44 miod Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -47,7 +47,6 @@
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/intr.h>
 #include <arm/softintr.h>
 
 extern vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
@@ -106,5 +105,6 @@ const char *pxa2x0_intr_string(void *cookie);
 
 #endif /* ! _LOCORE */
 
-#endif /* _PXA2X0_INTR_H_ */
+#define splassert(wantipl) do { /* nada */ } while (0)
 
+#endif /* _PXA2X0_INTR_H_ */

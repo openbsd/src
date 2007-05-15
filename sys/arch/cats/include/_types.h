@@ -1,4 +1,4 @@
-/* 	$OpenBSD: _types.h,v 1.1 2006/01/06 18:50:08 millert Exp $	*/
+/* 	$OpenBSD: _types.h,v 1.2 2007/05/15 05:26:44 miod Exp $	*/
 
 /* public domain */
 
@@ -8,5 +8,6 @@
 #include <arm/_types.h>
 
 #define __HAVE_GENERIC_SOFT_INTERRUPTS
+#define	__HAVE_MUTEX
 
 #endif /* _CATS__TYPES */

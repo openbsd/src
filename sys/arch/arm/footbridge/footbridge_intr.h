@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_intr.h,v 1.6 2006/03/12 03:14:36 brad Exp $	*/
+/*	$OpenBSD: footbridge_intr.h,v 1.7 2007/05/15 05:26:44 miod Exp $	*/
 /* 	$NetBSD: footbridge_intr.h,v 1.4 2003/01/03 00:56:00 thorpej Exp $	*/
 
 /*
@@ -207,5 +207,7 @@ struct intrq {
 };
 
 #endif /* _LOCORE */
+
+#define splassert(wantipl) do { /* nada */ } while (0)
 
 #endif	/* _FOOTBRIDGE_INTR_H */

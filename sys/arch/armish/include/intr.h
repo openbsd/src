@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2006/06/15 21:35:30 drahn Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2007/05/15 05:26:44 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -76,50 +76,6 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#if defined(_LKM)
-
-int	_splraise(int);
-int	_spllower(int);
-void	splx(int);
-void	_setsoftintr(int);
-
-#else	/* _LKM */
-
-/*
- * Each board needs to define the following functions:
- *
- * int	_splraise(int);
- * int	_spllower(int);
- * void	splx(int);
- * void	_setsoftintr(int);
- *
- * These may be defined as functions, static __inline functions, or macros,
- * but there must be a _spllower() and splx() defined as functions callable
- * from assembly language (for cpu_switch()).  However, since it's quite
- * useful to be able to inline splx(), you could do something like the
- * following:
- *
- * in <boardtype>_intr.h:
- * 	static __inline int
- *	boardtype_splx(int spl)
- *	{...}
- *
- *	#define splx(nspl)	boardtype_splx(nspl)
- *	...
- * and in boardtype's machdep code:
- *
- *	...
- *	#undef splx
- *	int
- *	splx(int spl)
- *	{
- *		return boardtype_splx(spl);
- *	}
- */
-
-
-#endif /* _LKM */
-
 #define	splhigh()	_splraise(IPL_HIGH)
 #define	splsoft()	_splraise(IPL_SOFT)
 #define	splsoftclock()	_splraise(IPL_SOFTCLOCK)
@@ -137,14 +93,9 @@ void	_setsoftintr(int);
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
 
-/* Use generic software interrupt support. */
-#include <arm/softintr.h>
-
 #endif /* ! _LOCORE */
 
 #include <machine/armish_intr.h>
-
-#define splassert(wantipl) do { /* nada */ } while (0)
 
 #endif /* _KERNEL */
 
