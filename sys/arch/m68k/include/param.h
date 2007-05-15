@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.20 2006/06/12 17:58:24 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.21 2007/05/15 13:46:22 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -159,6 +159,6 @@
 	((unsigned)(v) & ~HPMMMASK)
 #endif	/* COMPAT_HPUX */
 
-#include <machine/intr.h>	/* splXXX() */
+#include <machine/cpu.h>
 
 #endif	/* !_M68K_PARAM_H_ */

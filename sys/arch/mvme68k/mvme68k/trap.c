@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.66 2007/04/01 09:29:27 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.67 2007/05/15 13:46:22 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -182,7 +182,7 @@ userret(struct proc *p)
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	curpriority = p->p_priority = p->p_usrpri;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 #ifdef M68040
@@ -218,7 +218,7 @@ wb_userret(struct proc *p, struct frame *fp)
 			p->p_priority = p->p_usrpri;
 		}
 	}
-	curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 #endif
 

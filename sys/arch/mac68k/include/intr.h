@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.15 2006/06/11 20:46:50 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.16 2007/05/15 13:46:22 martin Exp $	*/
 /*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ extern u_short	mac68k_statclockipl;
 #define	splstatclock()		_splraise(mac68k_statclockipl)
 #define	splserial()		_splraise(PSL_S | PSL_IPL4)
 #define	splhigh()		_spl(PSL_S | PSL_IPL7)
+#define	splsched()		splhigh()
 
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	spladb()		splhigh()

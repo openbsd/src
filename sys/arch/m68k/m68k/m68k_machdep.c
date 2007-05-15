@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.10 2007/02/26 21:30:17 miod Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.11 2007/05/15 13:46:22 martin Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -48,6 +48,8 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
+
+struct cpu_info cpu_info_store;
 
 /*
  * Set registers on exec.

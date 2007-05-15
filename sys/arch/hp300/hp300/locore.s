@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.59 2006/08/17 06:33:59 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.60 2007/05/15 13:46:22 martin Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1036,7 +1036,7 @@ ENTRY_NOPROFILE(trap12)
 	movl	d1,sp@-			| push length
 	movl	a1,sp@-			| push addr
 	movl	d0,sp@-			| push command
-	movl	_C_LABEL(curproc),sp@-	| push proc pointer
+	movl	CURPROC,sp@-		| push proc pointer
 	jbsr	_C_LABEL(cachectl)	| do it
 	lea	sp@(16),sp		| pop args
 	jra	_ASM_LABEL(rei)		| all done
@@ -1403,9 +1403,9 @@ ENTRY(cpu_switch)
 	movl	_C_LABEL(curpcb),a0	| current pcb
 	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
 #ifdef notyet
-	movl	_C_LABEL(curproc),sp@-	| remember last proc running
+	movl	CURPROC,sp@-		| remember last proc running
 #endif
-	clrl	_C_LABEL(curproc)
+	clrl	CURPROC
 
 	/*
 	 * Find the highest-priority queue that isn't empty,
@@ -1437,7 +1437,7 @@ Lsw1:
 	bclr	d0,d1			| no, clear bit
 	movl	d1,_C_LABEL(whichqs)
 Lsw2:
-	movl	a0,_C_LABEL(curproc)
+	movl	a0,CURPROC
 	clrl	_C_LABEL(want_resched)
 #ifdef notyet
 	movl	sp@+,a1
