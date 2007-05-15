@@ -1,10 +1,10 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.4 2005/08/16 16:02:09 espie Exp $
+# $OpenBSD: check-name,v 1.5 2007/05/15 10:17:01 espie Exp $
 # Written by Marc Espie
 # Public domain
 
 use Test::Simple tests => 12;
-use OpenBSD::PkgSpec;
+use OpenBSD::Search;
 use OpenBSD::PackageName;
 
 sub check_list
@@ -22,25 +22,33 @@ sub check_list
 	return 1;
 }
 
+sub check_pkgspec
+{
+	my ($s, @list) = @_;
+
+	my $o = OpenBSD::Search::PkgSpec->new($s);
+	return $o->filter(@list);
+}
+
 @list = qw(py-MxDateTime-2.0.1-py2.1);
 ok(check_list(\@list, 
-    OpenBSD::PkgSpec::match('py-MxDateTime->=2.0-py2.1', @list)),
+    check_pkgspec('py-MxDateTime->=2.0-py2.1', @list)),
 	'flavor with number');
 # packages without a version number should work
 my @list = qw(hugs98-Nov2003);
 ok(check_list(\@list, 
-    OpenBSD::PkgSpec::match('hugs98-Nov2003', @list)),
+    check_pkgspec('hugs98-Nov2003', @list)),
 	'no version number');
 
 @list = qw(foo-1.0 foo-1.0p0 foo-1.0p25);
 ok(check_list([qw(foo-1.0)], 
-    OpenBSD::PkgSpec::match('foo-<1.0p0', @list)),
+    check_pkgspec('foo-<1.0p0', @list)),
 	'before 1.0p0 came 1.0');
 ok(check_list([qw(foo-1.0 foo-1.0p0)], 
-    OpenBSD::PkgSpec::match('foo-<=1.0p0', @list)),
+    check_pkgspec('foo-<=1.0p0', @list)),
 	'1.0 and 1.0p0 both match <=1.0p0'); 
 ok(check_list([qw(foo-1.0 foo-1.0p0 foo-1.0p25)],
-    OpenBSD::PkgSpec::match('foo-1.0', @list)),
+    check_pkgspec('foo-1.0', @list)),
 	'any 1.0p* matches 1.0');
 
 my @pkglist=qw(foo-1.0 bar-2.0 foo-2.5 foobar-2.3-pouet hugs-noversion baz-0.0 
@@ -49,23 +57,23 @@ my @pkglist=qw(foo-1.0 bar-2.0 foo-2.5 foobar-2.3-pouet hugs-noversion baz-0.0
 my $hash = OpenBSD::PackageName::compile_stemlist(@pkglist);
 
 ok(check_list([qw(bar-2.0)],
-    $hash->findstem('bar')),
+    $hash->find('bar')),
 	'simple stem lookup');
 ok(check_list([qw(foo-1.0 foo-2.5)],
-    $hash->findstem('foo')),
+    $hash->find('foo')),
 	'simple stem lookup with several results');
 ok(check_list([qw(baz-0.0 baz-1.1 baz-25.3)],
-    $hash->findstem('baz')),
+    $hash->find('baz')),
 	'stem lookup, no duplicates');
 ok(check_list([qw(foobar-2.3-pouet)],
-    $hash->findstem('foobar')),
+    $hash->find('foobar')),
 	'stem lookup with flavor');
 ok(check_list([qw(pouet-0.0-foo pouet-1.0)],
-    $hash->findstem('pouet')),
+    $hash->find('pouet')),
     	'complicated stem matching');
 ok(check_list([],
-    $hash->findstem('hugs')),
+    $hash->find('hugs')),
     	'bogus stem matching with no version');
 ok(check_list([qw(hugs-noversion)],
-    $hash->findstem('hugs-noversion')),
+    $hash->find('hugs-noversion')),
     	'stem matching with no version');
