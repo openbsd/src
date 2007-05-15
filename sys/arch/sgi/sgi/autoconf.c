@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2007/05/15 01:56:47 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -104,6 +104,11 @@ cpu_configure(void)
 
 	md_diskconf = diskconf;
 	cold = 0;
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
 }
 
 void

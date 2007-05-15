@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2007/05/15 01:56:47 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -105,6 +105,10 @@ diskconf()
 	timeout_add(&scoop_checkdisk, hz/25);
 }
 
+void
+device_register(struct device *dev, void *aux)
+{
+}
 
 /*
  * void cpu_configure()

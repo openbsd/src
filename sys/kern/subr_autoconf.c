@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.50 2007/05/09 14:51:54 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.51 2007/05/15 01:56:47 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -388,9 +388,7 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 					cf->cf_unit++;
 			}
 	}
-#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
-#endif
 	(*ca->ca_attach)(parent, dev, aux);
 	config_process_deferred_children(dev);
 #if NHOTPLUG > 0

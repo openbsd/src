@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2007/05/15 01:56:47 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -49,6 +49,11 @@
 int cold = 1;
 
 void	diskconf(void);
+
+void
+device_register(struct device *dev, void *aux)
+{
+}
 
 void
 cpu_configure(void)

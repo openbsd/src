@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2007/05/08 02:17:35 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 2007/05/15 01:56:47 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.29 2007/05/08 02:17:35 deraadt Exp $
+ *      $Id: autoconf.c,v 1.30 2007/05/15 01:56:47 deraadt Exp $
  */
 
 /*
@@ -240,6 +240,10 @@ getpno(char **cp)
 	return (val);
 }
 
+void
+device_register(struct device *dev, void *aux)
+{
+}
 
 /*
  * find a device matching "name" and unit number

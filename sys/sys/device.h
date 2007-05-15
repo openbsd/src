@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.35 2007/05/10 17:59:27 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.36 2007/05/15 01:56:47 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -209,10 +209,7 @@ char	*findblkname(int);
 void	setroot(struct device *, int, int);
 struct	device *getdisk(char *str, int len, int defpart, dev_t *devp);
 struct	device *parsedisk(char *str, int len, int defpart, dev_t *devp);
-
-#ifdef __HAVE_DEVICE_REGISTER
-void device_register(struct device *, void *);
-#endif
+void	device_register(struct device *, void *);
 
 int loadfirmware(const char *name, u_char **bufp, size_t *buflen);
 #define FIRMWARE_MAX	5*1024*1024

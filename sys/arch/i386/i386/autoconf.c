@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.73 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.74 2007/05/15 01:56:47 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -166,6 +166,11 @@ cpu_configure(void)
 		viac3_crypto_setup();
 #endif /* CRYPTO */
 #endif
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
 }
 
 /*
