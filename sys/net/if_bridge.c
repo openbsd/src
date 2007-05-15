@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.158 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.159 2007/05/15 20:14:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1715,7 +1715,8 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 			if (setflags) {
 				q->brt_if = ifp;
 				q->brt_flags = flags;
-			}
+			} else if (!(q->brt_flags & IFBAF_STATIC))
+				q->brt_if = ifp;
 
 			if (q->brt_if == ifp)
 				q->brt_age = 1;
