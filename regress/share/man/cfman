@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#	$OpenBSD: cfman,v 1.4 2003/12/16 01:08:50 deraadt Exp $
+#	$OpenBSD: cfman,v 1.5 2007/05/15 22:00:38 jmc Exp $
 
 #
 # cfman - make sure manpages have accurate SEE ALSOs
@@ -8,7 +8,7 @@
 use strict;
 
 my $VERSION = do { 
-    my @r = (q$Revision: 1.4 $ =~ /\d+/g); 
+    my @r = (q$Revision: 1.5 $ =~ /\d+/g); 
     sprintf "%d."."%02d" x $#r, @r;
 }; 
 
@@ -600,7 +600,7 @@ B<more> program or preferred pager.
 
 =head1 SEE ALSO
 
-In no particular order: catman(1), man(1), manpath(1), more(1), nroff(1),
+In no particular order: man(1), manpath(1), more(1), nroff(1),
 pod2man(1), pod2text(1), whatis(1), man.conf(5), man(7), and noman(8).
 
 =head1 NOTES
