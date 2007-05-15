@@ -1,0 +1,45 @@
+.\"	$OpenBSD: sli.4,v 1.1 2007/05/15 01:11:36 dlg Exp $
+.\"
+.\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" TORTIOUS ACTION, ARISING OUT OF
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 15, 2007
+.Dt SLI 4
+.Os
+.Sh NAME
+.Nm sli
+.Nd Emulex LightPulse Fibre Channel controller
+.Sh SYNOPSIS
+.Cd "sli* at pci?"
+.Cd "scsibus* at sli?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Emulex LightPulse Fibre Channel family of
+controllers using the Service Level Interface.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pci 4 ,
+.Xr scsi 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.2 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An David Gwynne Aq dlg@openbsd.org .
