@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.75 2007/05/14 21:38:08 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.76 2007/05/15 20:30:11 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4467,9 +4467,6 @@ dlflush2:
  * openfirmware(cell* param);
  *
  * OpenFirmware entry point
- *
- * If we're running in 32-bit mode we need to convert to a 64-bit stack
- * and 64-bit cells.  The cells we'll allocate off the stack for simplicity.
  */
 	.align 8
 	.globl	_C_LABEL(openfirmware)
@@ -4477,9 +4474,7 @@ dlflush2:
 	FTYPE(openfirmware)
 _C_LABEL(openfirmware):
 	sethi	%hi(romp), %o4
-	andcc	%sp, 1, %g0
-	bz,pt	%icc, 1f
-	 ldx	[%o4+%lo(romp)], %o4		! v9 stack, just load the addr and call it
+	ldx	[%o4+%lo(romp)], %o4
 	save	%sp, -CC64FSZ, %sp
 	rdpr	%pil, %i2
 	mov	PIL_HIGH, %i3
@@ -4506,39 +4501,6 @@ _C_LABEL(openfirmware):
 	mov	%l6, %g6
 	mov	%l7, %g7
 	wrpr	%i2, 0, %pil
-	ret
-	 restore	%o0, %g0, %o0
-
-1:	! v8 -- need to screw with stack & params
-	save	%sp, -CC64FSZ, %sp		! Get a new 64-bit stack frame
-	add	%sp, -BIAS, %sp
-	rdpr	%pstate, %l0
-	srl	%sp, 0, %sp
-	rdpr	%pil, %i2	! s = splx(level)
-	mov	%i0, %o0
-	mov	PIL_HIGH, %i3
-	mov	%g1, %l1
-	mov	%g2, %l2
-	cmp	%i3, %i2
-	mov	%g3, %l3
-	mov	%g4, %l4
-	mov	%g5, %l5
-	movle	%icc, %i2, %i3
-	mov	%g6, %l6
-	mov	%g7, %l7
-	wrpr	%i3, %g0, %pil
-	jmpl	%i4, %o7
-	! Enable 64-bit addresses for the prom
-	 wrpr	%g0, PSTATE_PROM, %pstate
-	wrpr	%l0, 0, %pstate
-	wrpr	%i2, 0, %pil
-	mov	%l1, %g1
-	mov	%l2, %g2
-	mov	%l3, %g3
-	mov	%l4, %g4
-	mov	%l5, %g5
-	mov	%l6, %g6
-	mov	%l7, %g7
 	ret
 	 restore	%o0, %g0, %o0
 
