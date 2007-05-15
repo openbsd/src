@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.59 2007/04/13 20:08:30 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.60 2007/05/15 09:35:47 thib Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct mntopt mopts[] = {
 };
 
 void	fatal(const char *fmt, ...);
-void	usage(void);
+__dead void	usage(void);
 void	mkfs(struct partition *, char *, int, int, mode_t, uid_t, gid_t);
 void	rewritelabel(char *, int, struct disklabel *);
 u_short	dkcksum(struct disklabel *);
@@ -652,7 +652,7 @@ fatal(const char *fmt, ...)
 	/*NOTREACHED*/
 }
 
-static void
+__dead void
 usage(void)
 {
 	extern char *__progname;
