@@ -352,6 +352,8 @@
 ./usr/include/dev/ic/siopreg.h
 ./usr/include/dev/ic/siopvar.h
 ./usr/include/dev/ic/siopvar_common.h
+./usr/include/dev/ic/slireg.h
+./usr/include/dev/ic/slivar.h
 ./usr/include/dev/ic/smc83c170reg.h
 ./usr/include/dev/ic/smc83c170var.h
 ./usr/include/dev/ic/smc91cxxreg.h

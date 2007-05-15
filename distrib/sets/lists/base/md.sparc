@@ -396,6 +396,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopvar_common.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/slireg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/slivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/smc83c170reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/smc83c170var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/smc91cxxreg.ph
