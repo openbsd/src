@@ -78,6 +78,7 @@
 ./usr/include/armish/limits.h
 ./usr/include/armish/loadfile_machdep.h
 ./usr/include/armish/lock.h
+./usr/include/armish/mutex.h
 ./usr/include/armish/param.h
 ./usr/include/armish/pcb.h
 ./usr/include/armish/pci_machdep.h

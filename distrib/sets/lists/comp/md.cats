@@ -78,6 +78,7 @@
 ./usr/include/cats/isa_machdep.h
 ./usr/include/cats/limits.h
 ./usr/include/cats/lock.h
+./usr/include/cats/mutex.h
 ./usr/include/cats/param.h
 ./usr/include/cats/pcb.h
 ./usr/include/cats/pio.h

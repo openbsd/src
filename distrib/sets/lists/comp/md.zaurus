@@ -229,6 +229,7 @@
 ./usr/include/zaurus/limits.h
 ./usr/include/zaurus/loadfile_machdep.h
 ./usr/include/zaurus/lock.h
+./usr/include/zaurus/mutex.h
 ./usr/include/zaurus/param.h
 ./usr/include/zaurus/pcb.h
 ./usr/include/zaurus/pio.h

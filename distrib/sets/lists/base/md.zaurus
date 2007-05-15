@@ -2106,6 +2106,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mtio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mutex.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/mutex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/pciio.ph
