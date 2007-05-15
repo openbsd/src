@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isp.4,v 1.20 2006/09/21 15:10:38 jmc Exp $
+.\"	$OpenBSD: isp.4,v 1.21 2007/05/15 11:02:23 jmc Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm isp
-.Nd Qlogic based SCSI or FibreChannel SCSI interface
+.Nd Qlogic based SCSI or Fibre Channel SCSI interface
 .Sh SYNOPSIS
 .Cd "isp* at pci?     " Pq PCI
 .Cd "isp* at sbus?    " Pq SBus
@@ -40,26 +40,19 @@
 .Sh DESCRIPTION
 This driver provides access to a
 .Tn SCSI
-bus or a
-.Tn FibreChannel
+bus or a Fibre Channel
 connected to
 .Tn Qlogic
 ISP1000 (SBus), ISP1020 (PCI), ISP1040 (PCI), ISP1080 (PCI), ISP12160 (PCI)
 .Tn SCSI
-host adapters or ISP2100 (PCI), ISP2200 (PCI)
-.Tn FibreChannel
-or ISP2300 (PCI) 2-Gigabit
-.Tn FibreChannel
-host adapters.
+host adapters or ISP2100 (PCI), ISP2200 (PCI) Fibre Channel
+or ISP2300 (PCI) 2-Gigabit Fibre Channel host adapters.
 .Pp
 Features include support for UltraSCSI and wide mode transactions for
 .Tn SCSI ,
 and Ultra2 LVD (for the ISP1080) and Ultra3 LVD (for the ISP12160)
-and the FCP SCSI (private loop, public loop or fabric) for
-.Tn FibreChannel .
-Command tagging is supported for all (in fact,
-.Tn FibreChannel
-requires tagging).
+and the FCP SCSI (private loop, public loop or fabric) for Fibre Channel.
+Command tagging is supported for all (in fact, Fibre Channel requires tagging).
 .Sh CONFIGURATION
 Adding
 .Tn option ISP_COMPILE_FW
