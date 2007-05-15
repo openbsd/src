@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.97 2007/05/12 14:00:35 espie Exp $
+# $OpenBSD: pkg_create,v 1.98 2007/05/15 10:36:34 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -181,6 +181,19 @@ sub verify_checksum
 {
 	my ($self, $base, $stash, $infodir) = @_;
 	$self->verify_checksum_filename($infodir, $self->{name}, $stash);
+}
+
+sub prepare_for_archival
+{
+	my ($self, $arc) = @_;
+
+	my $o = $arc->prepare_long($self);
+	$o->{uname} = 'root';
+	$o->{gname} = 'wheel';
+	$o->{uid} = 0;
+	$o->{gid} = 0;
+	$o->{mode} &= 0555; # zap all write and suid modes
+	return $o;
 }
 
 # override for CONTENTS: we cannot checksum this.
