@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.99 2007/05/08 14:07:14 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.100 2007/05/16 09:27:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -616,6 +616,8 @@ void			tht_dmamem_free(struct tht_softc *,
 /* bus space operations */
 u_int32_t		tht_read(struct tht_softc *, bus_size_t);
 void			tht_write(struct tht_softc *, bus_size_t, u_int32_t);
+void			tht_write_region(struct tht_softc *, bus_size_t,
+			    void *, size_t);
 int			tht_wait_eq(struct tht_softc *, bus_size_t, u_int32_t,
 			    u_int32_t, int);
 int			tht_wait_ne(struct tht_softc *, bus_size_t, u_int32_t,
@@ -893,13 +895,27 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		}
 		break;
 
+	case SIOCADDMULTI:
+		error = ether_addmulti(ifr, &sc->sc_ac);
+		break;
+	case SIOCDELMULTI:
+		error = ether_delmulti(ifr, &sc->sc_ac);
+		break;
+
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
+
 	default:
 		error = ENOTTY;
 		break;
+	}
+
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			tht_iff(sc);
+		error = 0;
 	}
 
 err:
@@ -992,13 +1008,61 @@ void
 tht_iff(struct tht_softc *sc)
 {
 	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	struct ether_multi		*enm;
+	struct ether_multistep		step;
 	u_int32_t			rxf;
+	u_int8_t			imf[THT_REG_RX_MCST_HASH_SIZE];
+	u_int8_t			hash;
+	int				i;
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	rxf = THT_REG_RX_FLT_OSEN | THT_REG_RX_FLT_AM | THT_REG_RX_FLT_AB;
+	for (i = 0; i < THT_REG_RX_MAC_MCST_CNT; i++) {
+		tht_write(sc, THT_REG_RX_MAC_MCST0(i), 0);
+		tht_write(sc, THT_REG_RX_MAC_MCST1(i), 0);
+	}
+	memset(imf, 0x00, sizeof(imf));
 
 	if (ifp->if_flags & IFF_PROMISC)
 		rxf |= THT_REG_RX_FLT_PRM_ALL;
+	else if (sc->sc_ac.ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		memset(imf, 0xff, sizeof(imf));
+	} else {
+		ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
 
+#if 0
+		/* fill the perfect multicast filters */
+		for (i = 0; i < THT_REG_RX_MAC_MCST_CNT; i++) {
+			if (enm == NULL)
+				break;
+
+			tht_write(sc, THT_REG_RX_MAC_MCST0(i),
+			    (enm->enm_addrlo[0] << 0) |
+			    (enm->enm_addrlo[1] << 8) |
+			    (enm->enm_addrlo[2] << 16) |
+			    (enm->enm_addrlo[3] << 24));
+			tht_write(sc, THT_REG_RX_MAC_MCST1(i),
+			    (enm->enm_addrlo[4] << 0) |
+			    (enm->enm_addrlo[5] << 8));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+#endif
+
+		/* fill the imperfect multicast filter with whats left */
+		while (enm != NULL) {
+			hash = 0x00;
+			for (i = 0; i < ETHER_ADDR_LEN; i++)
+				hash ^= enm->enm_addrlo[i];
+			setbit(imf, hash);
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
+	tht_write_region(sc, THT_REG_RX_MCST_HASH, imf, sizeof(imf));
 	tht_write(sc, THT_REG_RX_FLT, rxf);
 }
 
@@ -1715,6 +1779,15 @@ tht_write(struct tht_softc *sc, bus_size_t r, u_int32_t v)
 {
 	bus_space_write_4(sc->sc_thtc->sc_memt, sc->sc_memh, r, v);
 	bus_space_barrier(sc->sc_thtc->sc_memt, sc->sc_memh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+tht_write_region(struct tht_softc *sc, bus_size_t r, void *buf, size_t len)
+{
+	bus_space_write_raw_region_4(sc->sc_thtc->sc_memt, sc->sc_memh, r,
+	    buf, len);
+	bus_space_barrier(sc->sc_thtc->sc_memt, sc->sc_memh, r, len,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
