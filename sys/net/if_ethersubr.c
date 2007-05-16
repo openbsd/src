@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.106 2007/03/18 23:23:17 mpf Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.107 2007/05/16 09:24:07 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1103,6 +1103,8 @@ ether_addmulti(ifr, ac)
 	enm->enm_refcount = 1;
 	LIST_INSERT_HEAD(&ac->ac_multiaddrs, enm, enm_list);
 	ac->ac_multicnt++;
+	if (bcmp(addrlo, addrhi, ETHER_ADDR_LEN) != 0)
+		ac->ac_multirangecnt++;
 	splx(s);
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
@@ -1151,6 +1153,8 @@ ether_delmulti(ifr, ac)
 	LIST_REMOVE(enm, enm_list);
 	free(enm, M_IFMADDR);
 	ac->ac_multicnt--;
+	if (bcmp(addrlo, addrhi, ETHER_ADDR_LEN) != 0)
+		ac->ac_multirangecnt--;
 	splx(s);
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
