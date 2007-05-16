@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.75 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: entries.c,v 1.76 2007/05/16 20:51:22 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -159,7 +159,8 @@ cvs_ent_parse(const char *entry)
 		else {
 			if (strptime(fields[3], "%a %b %d %T %Y", &t) == NULL)
 				fatal("'%s' is not a valid date", fields[3]);
-			t.tm_isdst = 0;
+
+			t.tm_isdst = -1;	/* Figure out DST. */
 			t.tm_gmtoff = 0;
 			ent->ce_mtime = mktime(&t);
 			ent->ce_mtime += t.tm_gmtoff;
