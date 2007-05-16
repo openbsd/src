@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.159 2007/05/15 20:14:48 claudio Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.160 2007/05/16 20:27:58 michele Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1013,13 +1013,13 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	sc = (struct bridge_softc *)ifp->if_bridge;
 	if (sc == NULL) {
 		m_freem(m);
-		return (0);
+		return (EINVAL);
 	}
 
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));
 		if (m == NULL)
-			return (0);
+			return (ENOBUFS);
 	}
 	eh = mtod(m, struct ether_header *);
 	dst = (struct ether_addr *)&eh->ether_dhost[0];
@@ -1148,7 +1148,7 @@ sendunicast:
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
 		splx(s);
-		return (0);
+		return (ENETDOWN);
 	}
 	bridge_ifenqueue(sc, dst_if, m);
 	splx(s);

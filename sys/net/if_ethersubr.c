@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.107 2007/05/16 09:24:07 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.108 2007/05/16 20:27:58 michele Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ ether_output(ifp0, m0, dst, rt0)
 			}
 			bcopy(&ifp->if_bridge, mtag + 1, sizeof(caddr_t));
 			m_tag_prepend(m, mtag);
-			bridge_output(ifp, m, NULL, NULL);
+			error = bridge_output(ifp, m, NULL, NULL);
 			return (error);
 		}
 	}
