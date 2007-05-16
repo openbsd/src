@@ -695,6 +695,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/lock.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/armish/mutex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/pcb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/armish/pci_machdep.ph
@@ -2148,7 +2149,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mtio.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/mutex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mutex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/param.ph

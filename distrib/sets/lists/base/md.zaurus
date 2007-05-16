@@ -2106,7 +2106,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mtio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mutex.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/mutex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/pciio.ph
@@ -2293,6 +2292,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/lock.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/mutex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/pcb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/pio.ph
