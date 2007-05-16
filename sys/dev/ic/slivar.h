@@ -1,4 +1,4 @@
-/*	$OpenBSD: slivar.h,v 1.1 2007/05/15 01:00:15 dlg Exp $ */
+/*	$OpenBSD: slivar.h,v 1.2 2007/05/16 04:33:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -19,6 +19,13 @@
 struct sli_softc {
 	struct device		sc_dev;
 	struct scsi_link	sc_link;
+
+	bus_space_tag_t		sc_iot_slim;
+	bus_space_handle_t	sc_ioh_slim;
+	bus_size_t		sc_ios_slim;
+	bus_space_tag_t		sc_iot_reg;
+	bus_space_handle_t	sc_ioh_reg;
+	bus_size_t		sc_ios_reg;
 };
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 

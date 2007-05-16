@@ -1,4 +1,4 @@
-/*	$OpenBSD: sli_pci.c,v 1.1 2007/05/15 01:00:15 dlg Exp $ */
+/*	$OpenBSD: sli_pci.c,v 1.2 2007/05/16 04:33:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -70,8 +70,45 @@ sli_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sli_pci_softc		*psc = (struct sli_pci_softc *)self;
 	struct sli_softc		*sc = &psc->psc_sli;
+	struct pci_attach_args		*pa = aux;
+	pcireg_t			memtype;
 
-	sli_attach(sc);
+	psc->psc_pc = pa->pa_pc;
+	psc->psc_tag = pa->pa_tag;
+	sc->sc_ios_slim = 0;
+	sc->sc_ios_reg = 0;
+
+	memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag,
+	    SLI_PCI_BAR_SLIM);
+	if (pci_mapreg_map(pa, SLI_PCI_BAR_SLIM, memtype, 0,
+	    &sc->sc_iot_slim, &sc->sc_ioh_slim, NULL,
+	    &sc->sc_ios_slim, 0) != 0) {
+		printf(": unable to map SLIM bar\n");
+		return;
+	}
+
+	memtype = pci_mapreg_type(psc->psc_pc, psc->psc_tag,
+	    SLI_PCI_BAR_REGISTER);
+	if (pci_mapreg_map(pa, SLI_PCI_BAR_REGISTER, memtype, 0,
+	    &sc->sc_iot_reg, &sc->sc_ioh_reg, NULL,
+	    &sc->sc_ios_reg, 0) != 0) {
+		printf(": unable to map REGISTER bar\n");
+		goto unmap_slim;
+	}
+
+	if (sli_attach(sc) != 0) {
+		/* error already printed by sli_attach() */
+		goto unmap_reg;
+	}
+
+	return;
+
+unmap_reg:
+	bus_space_unmap(sc->sc_iot_reg, sc->sc_ioh_reg, sc->sc_ios_reg);
+	sc->sc_ios_reg = 0;
+unmap_slim:
+	bus_space_unmap(sc->sc_iot_slim, sc->sc_ioh_slim, sc->sc_ios_slim);
+	sc->sc_ios_slim = 0;
 }
 
 int

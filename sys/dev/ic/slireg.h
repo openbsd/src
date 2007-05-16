@@ -1,4 +1,4 @@
-/*	$OpenBSD: slireg.h,v 1.1 2007/05/15 01:00:15 dlg Exp $ */
+/*	$OpenBSD: slireg.h,v 1.2 2007/05/16 04:33:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -15,3 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define SLI_PCI_BAR_SLIM		0x10
+#define SLI_PCI_BAR_REGISTER		0x18
+#define SLI_PCI_BAR_BIU			0x20
+#define SLI_PCI_BAR_REGISTER_IO		0x24
