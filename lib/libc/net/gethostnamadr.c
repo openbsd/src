@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.70 2007/02/18 20:38:28 ray Exp $ */
+/*	$OpenBSD: gethostnamadr.c,v 1.71 2007/05/16 04:14:23 ray Exp $ */
 /*-
  * Copyright (c) 1985, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -499,7 +499,9 @@ gethostbyname2(const char *name, int af)
 	struct hostent *hp;
 	char lookups[MAXDNSLUS];
 	extern struct hostent *_gethtbyname2(const char *, int);
+#ifdef YP
 	extern struct hostent *_yp_gethtbyname(const char *);
+#endif
 
 	if (_res_init(0) == -1)
 		return (_gethtbyname2(name, af));
@@ -647,7 +649,9 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 	char lookups[MAXDNSLUS];
 	struct hostent *res;
 	extern struct hostent *_gethtbyaddr(const void *, socklen_t, int);
+#ifdef YP
 	extern struct hostent *_yp_gethtbyaddr(const void *);
+#endif
 	
 	if (_res_init(0) == -1) {
 		res = _gethtbyaddr(addr, len, af);

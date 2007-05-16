@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.24 2005/08/06 20:30:04 espie Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.25 2007/05/16 04:14:23 ray Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -318,7 +318,9 @@ res_querydomain(const char *name,
     u_char *answer,	/* buffer to put answer */
     int anslen)		/* size of answer */
 {
+#ifdef DEBUG
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
+#endif
 	char nbuf[MAXDNAME*2+1+1];
 	const char *longname = nbuf;
 	int n;

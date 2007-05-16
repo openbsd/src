@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.23 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.24 2007/05/16 04:14:23 ray Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -426,7 +426,9 @@ parse:
 		p_gr->gr_gid = ul;
 		if (search && name == NULL && p_gr->gr_gid != gid)
 			continue;
+#ifdef YP
 	found_it:
+#endif
 		cp = NULL;
 		if (bp == NULL)
 			continue;
