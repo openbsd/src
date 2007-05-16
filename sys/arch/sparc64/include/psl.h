@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.22 2006/12/14 15:10:32 kettenis Exp $	*/
+/*	$OpenBSD: psl.h,v 1.23 2007/05/16 19:37:06 thib Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -241,7 +241,7 @@ void splassert_fail(int, int, const char *);
 extern int splassert_ctl;
 void splassert_check(int, const char *);
 #define splassert(__wantipl) do {			\
-	if (__predict_false(splassert_ctl > 0)) {	\
+	if (splassert_ctl > 0) {			\
 		splassert_check(__wantipl, __func__);	\
 	}						\
 } while (0)

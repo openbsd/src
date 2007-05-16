@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2006/03/13 19:39:52 brad Exp $	*/
+/*	$OpenBSD: intr.h,v 1.8 2007/05/16 19:37:06 thib Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -45,7 +45,7 @@ void splassert_fail(int, int, const char *);
 extern int splassert_ctl;
 void splassert_check(int, const char *);
 #define splassert(__wantipl) do {			\
-	if (__predict_false(splassert_ctl > 0)) {	\
+	if (splassert_ctl > 0) {			\
 		splassert_check(__wantipl, __func__);	\
 	}						\
 } while (0)
