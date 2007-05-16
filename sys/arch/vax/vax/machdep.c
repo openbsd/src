@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.85 2007/05/16 05:19:15 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.86 2007/05/16 16:30:42 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -167,6 +167,8 @@ int iospace_inited = 0;
 #if NLED > 0
 int	vax_led_blink = 0;
 #endif
+
+struct cpu_info cpu_info_store;
 
 void cpu_dumpconf(void);
 
