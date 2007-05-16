@@ -1,4 +1,4 @@
-/*	$OpenBSD: hayes.c,v 1.13 2006/03/17 19:17:13 moritz Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.14 2007/05/16 03:14:41 ray Exp $	*/
 /*	$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: hayes.c,v 1.13 2006/03/17 19:17:13 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: hayes.c,v 1.14 2007/05/16 03:14:41 ray Exp $";
 #endif /* not lint */
 
 /*
@@ -248,10 +248,15 @@ static void
 goodbye(void)
 {
 	int len;
-	char c;
 
 	tcflush(FD, TCIOFLUSH);
 	if (hay_sync()) {
+#ifdef DEBUG
+		ssize_t rlen;
+#else
+		char c;
+#endif
+
 		sleep(1);
 #ifndef DEBUG
 		tcflush(FD, TCIOFLUSH);
@@ -270,7 +275,7 @@ goodbye(void)
 		printf("goodbye1: len=%d -- ", len);
 		rlen = read(FD, dumbuf, min(len, DUMBUFLEN));
 		dumbuf[rlen] = '\0';
-		printf("read (%d): %s\r\n", rlen, dumbuf);
+		printf("read (%zd): %s\r\n", rlen, dumbuf);
 #endif
 		write(FD, "ATv1\r", 5);
 		sleep(1);
@@ -279,7 +284,7 @@ goodbye(void)
 		printf("goodbye2: len=%d -- ", len);
 		rlen = read(FD, dumbuf, min(len, DUMBUFLEN));
 		dumbuf[rlen] = '\0';
-		printf("read (%d): %s\r\n", rlen, dumbuf);
+		printf("read (%zd): %s\r\n", rlen, dumbuf);
 #endif
 	}
 	tcflush(FD, TCIOFLUSH);
