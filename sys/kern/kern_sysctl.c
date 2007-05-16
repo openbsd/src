@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.151 2007/04/18 16:57:06 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.152 2007/05/16 17:27:30 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -433,7 +433,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_malloc(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen, p));
 	case KERN_CPTIME:
-#ifdef __HAVE_CPUINFO
 	{
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *ci;
@@ -445,10 +444,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			for (i = 0; i < CPUSTATES; i++)
 				cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
 		}
-	}
-#endif
+
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cp_time,
 		    sizeof(cp_time)));
+	}
 	case KERN_NCHSTATS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &nchstats,
 		    sizeof(struct nchstats)));
@@ -533,11 +532,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 	case KERN_MAXLOCKSPERUID:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxlocksperuid));
-#ifdef __HAVE_CPUINFO
 	case KERN_CPTIME2:
 		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
 		    newp, newlen));
-#endif
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1290,11 +1287,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_stat = p->p_stat;
 		ki->p_swtime = p->p_swtime;
 		ki->p_slptime = p->p_slptime;
-#ifdef __HAVE_CPUINFO
 		ki->p_schedflags = 0;
-#else
-		ki->p_schedflags = p->p_schedflags;
-#endif
 		ki->p_holdcnt = 1;
 		ki->p_priority = p->p_priority;
 		ki->p_usrpri = p->p_usrpri;
@@ -1873,7 +1866,6 @@ sysctl_emul(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 #endif	/* SMALL_KERNEL */
 
-#ifdef __HAVE_CPUINFO
 int
 sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
@@ -1898,4 +1890,3 @@ sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	    &ci->ci_schedstate.spc_cp_time,
 	    sizeof(ci->ci_schedstate.spc_cp_time)));
 }
-#endif

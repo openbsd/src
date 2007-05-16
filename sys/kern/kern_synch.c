@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.79 2007/04/03 08:05:43 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.80 2007/05/16 17:27:30 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -185,11 +185,7 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 #endif
 	}
 
-#ifdef __HAVE_CPUINFO
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
-#else
-	curpriority = p->p_usrpri;
-#endif
 	SCHED_UNLOCK(sls->sls_s);
 
 	/*
@@ -357,12 +353,8 @@ restart:
 				 * resched_proc().
 				 */
 				setrunqueue(p);
-#ifdef __HAVE_CPUINFO
 				KASSERT(p->p_cpu != NULL);
 				need_resched(p->p_cpu);
-#else
-				need_resched(NULL);
-#endif
 				/* END INLINE EXPANSION */
 
 				if (n != 0)

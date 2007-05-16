@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.139 2007/04/12 22:14:15 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.140 2007/05/16 17:27:30 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -113,9 +113,6 @@ struct	pcred cred0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
 struct	sigacts sigacts0;
-#if !defined(__HAVE_CPUINFO) && !defined(curproc)
-struct	proc *curproc;
-#endif
 struct	proc *initproc;
 
 int	cmask = CMASK;
@@ -125,9 +122,6 @@ void	(*md_diskconf)(void) = NULL;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 struct	timeval boottime;
-#ifndef __HAVE_CPUINFO
-struct	timeval runtime;
-#endif
 int	ncpus =  1;
 __volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -199,9 +193,7 @@ main(void *framep)
 	 * any possible traps/probes to simplify trap processing.
 	 */
 	curproc = p = &proc0;
-#ifdef __HAVE_CPUINFO
 	p->p_cpu = curcpu();
-#endif
 
 	/*
 	 * Initialize timeouts.
@@ -484,14 +476,9 @@ main(void *framep)
 #else
 	boottime = mono_time = time;	
 #endif
-#ifndef __HAVE_CPUINFO
-	microuptime(&runtime);
-#endif
 	LIST_FOREACH(p, &allproc, p_list) {
 		p->p_stats->p_start = boottime;
-#ifdef __HAVE_CPUINFO
 		microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
-#endif
 		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 	}
 

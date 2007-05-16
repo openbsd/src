@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.97 2007/05/08 11:16:31 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.98 2007/05/16 17:27:30 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -47,9 +47,7 @@
 #include <sys/event.h>			/* For struct klist */
 #include <machine/atomic.h>
 
-#ifdef __HAVE_CPUINFO
 #define curproc curcpu()->ci_curproc
-#endif
 #ifdef _KERNEL
 #define __need_process
 #endif
@@ -198,11 +196,7 @@ struct proc {
 	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
-#ifdef __HAVE_CPUINFO
 	struct	cpu_info * __volatile p_cpu; /* CPU we're running on. */
-#else
-	int	p_schedflags;	 /* PSCHED_* flags */
-#endif
 
 	struct	itimerval p_realtimer;	/* Alarm timer. */
 	struct	timeout p_realit_to;	/* Alarm timeout. */
@@ -324,17 +318,6 @@ struct proc {
 #define P_EXITSIG(p) \
     (((p)->p_flag & P_TRACED) ? SIGCHLD : (p)->p_exitsig)
 
-#ifndef __HAVE_CPUINFO
-/*
- * These flags are kept in p_schedflags.  p_schedflags may be modified
- * only at splstatclock().
- */
-#define PSCHED_SEENRR		0x0001	/* process has been in roundrobin() */
-#define PSCHED_SHOULDYIELD	0x0002	/* process should yield */
-
-#define PSCHED_SWITCHCLEAR	(PSCHED_SEENRR|PSCHED_SHOULDYIELD)
-#endif
-
 /*
  * MOVE TO ucred.h?
  *
@@ -403,9 +386,6 @@ extern u_long pidhash;
 extern LIST_HEAD(pgrphashhead, pgrp) *pgrphashtbl;
 extern u_long pgrphash;
 
-#if !defined(__HAVE_CPUINFO) && !defined(curproc)
-extern struct proc *curproc;		/* Current running proc. */
-#endif
 extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
 extern int randompid;			/* fork() should create random pid's */

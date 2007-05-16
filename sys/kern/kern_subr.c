@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.30 2005/11/28 00:14:29 jsg Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.31 2007/05/16 17:27:30 art Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -75,12 +75,8 @@ uiomove(void *cp, int n, struct uio *uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-#ifdef __HAVE_CPUINFO
 			if (curcpu()->ci_schedstate.spc_schedflags &
 			    SPCF_SHOULDYIELD)
-#else
-			if (p->p_schedflags & PSCHED_SHOULDYIELD)
-#endif
 				preempt(NULL);
 			if (uio->uio_rw == UIO_READ)
 				error = copyout(cp, iov->iov_base, cnt);

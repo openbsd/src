@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.4 2007/05/14 07:07:09 art Exp $	*/
+/*	$OpenBSD: _types.h,v 1.5 2007/05/16 17:27:30 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -118,7 +118,5 @@ typedef	void *			__wctype_t;
 #ifdef _KERNEL
 #define	__PROG32		/* indicate 32-bit mode */
 #endif
-
-#define __HAVE_CPUINFO
 
 #endif	/* _ARM__TYPES_H_ */

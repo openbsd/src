@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.7 2007/05/15 15:23:36 art Exp $	*/
+/*	$OpenBSD: _types.h,v 1.8 2007/05/16 17:27:30 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -113,7 +113,5 @@ typedef int			__wint_t;
 typedef	int			__rune_t;
 typedef	void *			__wctrans_t;
 typedef	void *			__wctype_t;
-
-#define __HAVE_CPUINFO
 
 #endif	/* _SPARC__TYPES_H_ */
