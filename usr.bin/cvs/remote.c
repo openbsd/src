@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.14 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: remote.c,v 1.15 2007/05/16 19:40:45 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -188,9 +188,8 @@ cvs_remote_send_file(const char *path)
 		if (rw != ret)
 			fatal("failed to write %zu bytes", ret);
 
-		if (cvs_server_active == 0 &&
-		    cvs_client_outlog_fd != -1)
-			(void)write(cvs_client_outlog_fd, data, ret);
+		if (cvs_server_active == 0 && cvs_client_inlog_fd != -1)
+			(void)write(cvs_client_inlog_fd, data, ret);
 
 		total += ret;
 	}
