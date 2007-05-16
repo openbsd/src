@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.24 2007/04/05 17:32:37 miod Exp $      */
+/*      $OpenBSD: cpu.h,v 1.25 2007/05/16 05:19:13 miod Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -48,7 +48,21 @@
 #include <machine/intr.h>
 
 #define	cpu_wait(p)
-#define	cpu_number()			0
+
+#include <sys/sched.h>
+struct cpu_info {
+	struct proc *ci_curproc;
+
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
+};
+
+extern struct cpu_info cpu_info_store;
+#define	curcpu()	(&cpu_info_store)
+#define cpu_number()	0
+#define CPU_IS_PRIMARY(ci)	1
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci) \
+	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 
 /*
  * All cpu-dependent info is kept in this struct. Pointer to the

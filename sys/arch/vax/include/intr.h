@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2007/04/05 17:31:47 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.7 2007/05/16 05:19:13 miod Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -93,6 +93,7 @@
 #define splclock()	_splraise(IPL_CLOCK)
 #define splstatclock()	_splraise(IPL_STATCLOCK)
 #define splhigh()	_splset(IPL_HIGH)
+#define	splsched()	splhigh()
 
 /* These are better to use when playing with VAX buses */
 #define	spl4()		_splraise(0x14)

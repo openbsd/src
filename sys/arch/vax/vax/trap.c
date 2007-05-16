@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2007/04/01 09:29:27 art Exp $     */
+/*	$OpenBSD: trap.c,v 1.39 2007/05/16 05:19:15 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -116,7 +116,7 @@ userret(struct proc *p)
 	while ((sig = CURSIG(p)) !=0)
 		postsig(sig);
 
-	curpriority = p->p_priority = p->p_usrpri;
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 void
