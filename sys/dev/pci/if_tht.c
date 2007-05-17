@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.100 2007/05/16 09:27:44 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.101 2007/05/17 09:30:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -784,7 +784,7 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = tht_ioctl;
 	ifp->if_start = tht_start;
 	ifp->if_watchdog = tht_watchdog;
-	ifp->if_hardmtu = 1500; /* XXX */
+	ifp->if_hardmtu = MCLBYTES - ETHER_HDR_LEN - ETHER_CRC_LEN; /* XXX */
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, 400);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -893,6 +893,13 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			if (ifp->if_flags & IFF_RUNNING)
 				tht_down(sc);
 		}
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ifp->if_hardmtu)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 
 	case SIOCADDMULTI:
