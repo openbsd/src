@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.30 2005/07/04 01:54:10 djm Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.31 2007/05/17 10:59:26 moritz Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.30 2005/07/04 01:54:10 djm Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.31 2007/05/17 10:59:26 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -362,15 +362,20 @@ main(int argc, char *argv[])
 			signal(SIGINT, onintr);
 
 		if (isatty(fileno(stdin))) {
-			ptr = getpwuid(uid)->pw_name;
+			struct passwd *pw;
+
+			if ((pw = getpwuid(uid)) == NULL) {
+				perror("getpwuid");
+				exit(1);
+			}
 			printf("Message %d:\nFrom %s %sSubject: ",
-			    nextmsg, ptr, ctime(&t));
+			    nextmsg, pw->pw_name, ctime(&t));
 			fflush(stdout);
 			fgets(inbuf, sizeof inbuf, stdin);
 			putchar('\n');
 			fflush(stdout);
 			fprintf(newmsg, "From %s %sSubject: %s\n",
-			    ptr, ctime(&t), inbuf);
+			    pw->pw_name, ctime(&t), inbuf);
 			blankline = seensubj = YES;
 		} else
 			blankline = seensubj = NO;

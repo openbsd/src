@@ -194,6 +194,8 @@ main(int argc, char **argv)
 	path = getenv("SHELL");
 	if(path == NULL){
 	    struct passwd *pw = k_getpwuid(geteuid());
+	    if (pw == NULL)
+	        errx(1, "effective user not found");
 	    path = strdup(pw->pw_shell);
 	}
     } else {
