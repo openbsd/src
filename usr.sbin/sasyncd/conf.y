@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.13 2007/01/08 15:31:01 markus Exp $	*/
+/*	$OpenBSD: conf.y,v 1.14 2007/05/17 11:01:36 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -322,10 +322,16 @@ conf_parse_file(char *cfgfile)
 	struct stat	st;
 	int		fd, r;
 	char		*buf, *s, *d;
-	struct passwd	*pw = getpwnam(SASYNCD_USER);
+	struct passwd	*pw;
 
 	if (stat(cfgfile, &st) != 0)
 		goto bad;
+
+	pw = getpwnam(SASYNCD_USER);
+	if (pw == NULL) {
+		log_err("getpwnam(%s) failed", SASYNCD_USER);
+		return 1;
+	}
 
 	/* Valid file? */
 	if ((st.st_uid && st.st_uid != pw->pw_uid) ||
