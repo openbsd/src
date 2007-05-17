@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.34 2007/05/17 15:35:58 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.35 2007/05/17 15:40:06 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -198,7 +198,10 @@ sub find_old_lib
 
 sub lookup_library
 {
-	my ($state, $lib, $plist, $dependencies, $done) = @_;
+	my ($self, $state, $lib, $done) = @_;
+
+	my $plist = $self->{plist};
+	my $dependencies = $self->{to_register};
 
 	my $r = check_lib_spec($plist->localbase, $lib, $dependencies);
 	if ($r) {
