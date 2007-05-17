@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.64 2007/05/12 21:38:14 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.65 2007/05/17 03:55:08 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -217,9 +217,8 @@ static const struct afd *find_afd(int);
 static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 #endif
 
-static void _sethtent(void);
-static void _endhtent(void);
-static struct addrinfo * _gethtent(const char *, const struct addrinfo *);
+static struct addrinfo * _gethtent(const char *, const struct addrinfo *,
+	FILE *);
 static struct addrinfo *_files_getaddrinfo(const char *,
 	const struct addrinfo *);
 
@@ -949,7 +948,6 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6, u_int32_t *scopeid)
 
 static const char AskedForGot[] =
 	"gethostby*.getanswer: asked for \"%s\", got \"%s\"";
-static FILE *hostf = NULL;
 
 static struct addrinfo *
 getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
@@ -1221,28 +1219,8 @@ _dns_getaddrinfo(const char *name, const struct addrinfo *pai)
 	return sentinel.ai_next;
 }
 
-static FILE *hostf;
-
-static void
-_sethtent(void)
-{
-	if (!hostf)
-		hostf = fopen(_PATH_HOSTS, "r" );
-	else
-		rewind(hostf);
-}
-
-static void
-_endhtent(void)
-{
-	if (hostf) {
-		(void) fclose(hostf);
-		hostf = NULL;
-	}
-}
-
 static struct addrinfo *
-_gethtent(const char *name, const struct addrinfo *pai)
+_gethtent(const char *name, const struct addrinfo *pai, FILE *hostf)
 {
 	char *p;
 	char *cp, *tname, *cname;
@@ -1251,8 +1229,6 @@ _gethtent(const char *name, const struct addrinfo *pai)
 	const char *addr;
 	char hostbuf[8*1024];
 
-	if (!hostf && !(hostf = fopen(_PATH_HOSTS, "r" )))
-		return (NULL);
  again:
 	if (!(p = fgets(hostbuf, sizeof hostbuf, hostf)))
 		return (NULL);
@@ -1308,17 +1284,21 @@ _files_getaddrinfo(const char *name, const struct addrinfo *pai)
 {
 	struct addrinfo sentinel, *cur;
 	struct addrinfo *p;
+	FILE *hostf;
+
+	hostf = fopen(_PATH_HOSTS, "r");
+	if (hostf == NULL)
+		return NULL;
 
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
 
-	_sethtent();
-	while ((p = _gethtent(name, pai)) != NULL) {
+	while ((p = _gethtent(name, pai, hostf)) != NULL) {
 		cur->ai_next = p;
 		while (cur && cur->ai_next)
 			cur = cur->ai_next;
 	}
-	_endhtent();
+	fclose(hostf);
 
 	return sentinel.ai_next;
 }
