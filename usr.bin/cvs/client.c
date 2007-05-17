@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.60 2007/05/16 09:52:47 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.61 2007/05/17 03:26:33 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -765,7 +765,7 @@ cvs_client_remove_entry(char *data)
 	rpath = cvs_remote_input();
 	if ((filename = strrchr(rpath, '/')) == NULL)
 		fatal("bad rpath in cvs_client_remove_entry: %s", rpath);
-	*filename++;
+	filename++;
 
 	entlist = cvs_ent_open(data);
 	cvs_ent_remove(entlist, filename);
