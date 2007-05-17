@@ -1,4 +1,4 @@
-/*	$OpenBSD: psignal.c,v 1.8 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: psignal.c,v 1.9 2007/05/17 04:57:31 ray Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,16 +46,13 @@ psignal(unsigned int sig, const char *s)
 {
 	static char buf[NL_TEXTMAX];
 	const char *c;
-	int n;
 	struct iovec iov[4];
 	int niov = 0;
 
 	c = __strsignal(sig, buf);
 	if (s && *s) {
-
-		n = strlen(s);
 		iov[0].iov_base = (void *)s;
-		iov[0].iov_len = n;
+		iov[0].iov_len = strlen(s);
 		iov[1].iov_base = ": ";
 		iov[1].iov_len = 2;
 		niov = 2;
