@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.35 2007/05/17 18:52:58 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.36 2007/05/17 18:59:38 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -39,17 +39,21 @@ sub new
 {
 	my ($class, $baseurl) = @_;
 	if ($baseurl =~ m/^ftp\:/i) {
-		return OpenBSD::PackageRepository::FTP->_new($baseurl);
+		return OpenBSD::PackageRepository::FTP->_new($');
 	} elsif ($baseurl =~ m/^http\:/i) {
-		return OpenBSD::PackageRepository::HTTP->_new($baseurl);
+		return OpenBSD::PackageRepository::HTTP->_new($');
 	} elsif ($baseurl =~ m/^scp\:/i) {
 		require OpenBSD::PackageRepository::SCP;
 
-		return OpenBSD::PackageRepository::SCP->_new($baseurl);
-	} elsif ($baseurl =~ m/src\:/i) {
+		return OpenBSD::PackageRepository::SCP->_new($');
+	} elsif ($baseurl =~ m/^src\:/i) {
 		require OpenBSD::PackageRepository::Source;
 
 		return OpenBSD::PackageRepository::Source->_new($baseurl);
+	} elsif ($baseurl =~ m/^file\:/i) {
+		return OpenBSD::PackageRepository::Local->_new($');
+	} elsif ($baseurl =~ m/^inst\:/i) {
+		return OpenBSD::PackageRepository::Installed->_new($');
 	} else {
 		return OpenBSD::PackageRepository::Local->_new($baseurl);
 	}
@@ -474,13 +478,6 @@ sub grab_object
 	or die "can't run ftp";
 }
 
-sub url
-{
-	my ($self, $name) = @_;
-
-	return $self->relative_url($name);
-}
-
 sub maxcount
 {
 	return 1;
@@ -500,7 +497,7 @@ sub _new
 {
 	my ($class, $baseurl) = @_;
 	my $distant_host;
-	if ($baseurl =~ m/^(http|ftp)\:\/\/(.*?)\//i) {
+	if ($baseurl =~ m/^\/\/(.*?)\//i) {
 	    $distant_host = $&;
 	}
 	bless { baseurl => $baseurl, key => $distant_host }, $class;
@@ -559,7 +556,7 @@ sub parse_problems
 	my ($self, $filename, $hint) = @_;
 	CORE::open(my $fh, '<', $filename) or return;
 
-	my $baseurl = $self->{baseurl};
+	my $baseurl = $self->url;
 	local $_;
 	my $notyet = 1;
 	while(<$fh>) {
