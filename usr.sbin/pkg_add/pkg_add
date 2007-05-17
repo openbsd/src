@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.249 2007/05/17 14:08:49 espie Exp $
+# $OpenBSD: pkg_add,v 1.250 2007/05/17 14:13:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -426,12 +426,12 @@ sub really_add($$)
 	$plist->to_cache;
 	my $dest = installed_info($pkgname);
 	OpenBSD::Add::register_installation($dir, $dest, $plist);
-	if (defined $handle->{solved_dependencies}) {
+	if (defined $handle->{solver}) {
 		require OpenBSD::RequiredBy;
 
 		my $r = OpenBSD::Requiring->new($pkgname);
 
-		for my $dep (keys %{$handle->{solved_dependencies}}) {
+		for my $dep ($handle->{solver}->dependencies) {
 			OpenBSD::RequiredBy->new($dep)->add($pkgname);
 			$r->add($dep);
 		}
@@ -529,7 +529,7 @@ sub install_package
 			return () unless $forced{arch};
 		}
 	}
-	if (!defined $handle->{solved_dependencies}) {
+	if (!defined $handle->{solver}) {
 		my $solver = OpenBSD::Dependencies::Solver->new($handle->{plist});
 		my @deps = $solver->solve($state, @todo);
 		$handle->{solver} = $solver;
@@ -545,7 +545,7 @@ sub install_package
 
 	# verify dependencies and register them
 
-	for my $dep (keys %{$handle->{solved_dependencies}}) {
+	for my $dep ($handle->{solver}->dependencies) {
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
 		$handle->close_now;
@@ -554,7 +554,7 @@ sub install_package
 	}
 
 	# grab libraries
-	for my $dep (keys %{$handle->{solved_dependencies}}) {
+	for my $dep ($handle->{solver}->dependencies) {
 		OpenBSD::SharedLibs::add_package_libs($dep);
 	}
 	my $okay = 1;
