@@ -1,4 +1,4 @@
-/*	$OpenBSD: asa.c,v 1.6 2006/03/19 19:06:40 robert Exp $	*/
+/*	$OpenBSD: asa.c,v 1.7 2007/05/17 10:55:16 moritz Exp $	*/
 /*	$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $	*/
 
 /*
@@ -32,11 +32,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: asa.c,v 1.6 2006/03/19 19:06:40 robert Exp $";
+static char rcsid[] = "$OpenBSD: asa.c,v 1.7 2007/05/17 10:55:16 moritz Exp $";
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <err.h>
 #include <unistd.h>
 
@@ -79,11 +80,19 @@ main(int argc, char *argv[])
 static void
 asa(FILE *f)
 {
-	char *buf;
+	char *buf, *lbuf = NULL;
 	size_t len;
 
 	if ((buf = fgetln (f, &len)) != NULL) {
-		buf[len - 1] = '\0';
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			if ((lbuf = malloc(len + 1)) == NULL)
+				err(1, NULL);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
 		/* special case the first line  */
 		switch (buf[0]) {
 		case '0':
@@ -99,7 +108,15 @@ asa(FILE *f)
 		}
 
 		while ((buf = fgetln(f, &len)) != NULL) {
-			buf[len - 1] = '\0';
+			if (buf[len - 1] == '\n')
+				buf[len - 1] = '\0';
+			else {
+				if ((lbuf = malloc(len + 1)) == NULL)
+					err(1, NULL);
+				memcpy(lbuf, buf, len);
+				lbuf[len] = '\0';
+				buf = lbuf;
+			}
 			switch (buf[0]) {
 			default:
 			case ' ':
@@ -121,6 +138,7 @@ asa(FILE *f)
 				fputs (&buf[1], stdout);
 			}
 		}
+		free(lbuf);
 
 		putchar ('\n');
 	}
