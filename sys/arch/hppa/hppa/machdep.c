@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.152 2007/05/14 19:54:21 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.153 2007/05/17 14:24:59 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -387,11 +387,11 @@ hppa_init(start)
 	if (nbuf == 0)
 		nbuf = bufpages < 16? 16 : bufpages;
 
-	/* Restrict to at most 70% filled kvm */
+	/* Restrict to at most 30% filled kvm */
 	if (nbuf * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 3 / 10)
 		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    MAXBSIZE * 7 / 10;
+		    MAXBSIZE * 3 / 10;
 
 	/* More buffer pages than fits into the buffers is senseless. */
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
@@ -658,8 +658,9 @@ cpu_startup(void)
 	    ctob(physmem), ctob(resvmem), ctob(resvphysmem - resvmem));
 
 	size = MAXBSIZE * nbuf;
+	minaddr = vm_map_min(kernel_map);
 	if (uvm_map(kernel_map, &minaddr, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
+	    NULL, UVM_UNKNOWN_OFFSET, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_NONE,
 	    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_NORMAL, 0)))
 		panic("cpu_startup: cannot allocate VM for buffers");
 	buffers = (caddr_t)minaddr;
