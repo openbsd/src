@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.33 2007/05/17 14:08:49 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.34 2007/05/17 15:35:58 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -47,6 +47,12 @@ sub dependencies
 	} else {
 		return scalar(%{$self->{to_register}});
 	}
+}
+
+sub has_dep
+{
+	my ($self, $dep) = @_;
+	return $self->{to_register}->{$dep};
 }
 
 sub pkgname
@@ -158,8 +164,6 @@ sub dump
 	    print "\n";
 	}
 }
-
-package OpenBSD::Dependencies;
 
 use OpenBSD::SharedLibs;
 
