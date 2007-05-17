@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.26 2007/05/14 11:02:14 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.27 2007/05/17 12:07:46 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -51,10 +51,11 @@ sub from_string
 		my $rest = $';
 		my @all = split /\-/, $rest;
 		my $version = OpenBSD::PackageName::version->from_string(shift @all);
+		my %flavors = map {($_,1)}  @all;
 		return bless {
 			stem => $stem,
 			version => $version,
-			flavors => \@all
+			flavors => \%flavors,
 		}, "OpenBSD::PackageName::Name";
 	} else {
 		return bless {
@@ -312,13 +313,13 @@ package OpenBSD::PackageName::Name;
 sub to_string
 {
 	my $o = shift;
-	return join('-', $o->{stem}, $o->{version}->to_string, @{$o->{flavors}});
+	return join('-', $o->{stem}, $o->{version}->to_string, sort keys %{$o->{flavors}});
 }
 
 sub to_pattern
 {
 	my $o = shift;
-	return join('-', $o->{stem}, '*', @{$o->{flavors}});
+	return join('-', $o->{stem}, '*', sort keys %{$o->{flavors}});
 }
 
 1;
