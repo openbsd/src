@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.109 2007/05/04 05:52:28 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.110 2007/05/17 15:17:02 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1561,6 +1561,7 @@ pmap_pinit(struct pmap *pmap)
 	pmap->pm_ptphint = NULL;
 	pmap->pm_hiexec = 0;
 	pmap->pm_flags = 0;
+	pmap->pm_cpus = 0;
 
 	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
