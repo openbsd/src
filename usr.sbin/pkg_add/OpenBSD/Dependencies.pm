@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.32 2007/05/17 13:58:44 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.33 2007/05/17 14:08:49 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -37,6 +37,16 @@ sub new
 {
 	my ($class, $plist) = @_;
 	bless {plist => $plist, to_install => {}, deplist => [], to_register => {} }, $class;
+}
+
+sub dependencies
+{
+	my $self = shift;
+	if (wantarray) {
+		return keys %{$self->{to_register}};
+	} else {
+		return scalar(%{$self->{to_register}});
+	}
 }
 
 sub pkgname
@@ -140,9 +150,9 @@ sub solve
 sub dump
 {
 	my $self = shift;
-	if (%{$self->{to_register}}) {
+	if ($self->dependencies) {
 	    print "Dependencies for ", $self->pkgname, " resolve to: ", 
-	    	join(', ', keys %{$self->{to_register}});
+	    	join(', ',  $self->dependencies);
 	    print " (todo: ", join(',', @{$self->{deplist}}), ")" 
 	    	if @{$self->{deplist}} > 0;
 	    print "\n";
