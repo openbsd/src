@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.31 2007/05/17 13:36:21 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.32 2007/05/17 13:58:44 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -59,15 +59,15 @@ sub add_todo
 
 sub add_new_dep
 {
-	my ($self, $dep) = @_;
-	push(@{$self->{deplist}}, $dep);
-	$self->add_installed_dep($dep);
+	my ($self, $pkgname, $satisfy) = @_;
+	push(@{$self->{deplist}}, $pkgname);
+	$self->add_installed_dep($pkgname, $satisfy);
 }
 
 sub add_installed_dep
 {
-	my ($self, $dep) = @_;
-	$self->{to_register}->{$dep} = 1;
+	my ($self, $pkgname, $satisfy) = @_;
+	$self->{to_register}->{$pkgname} = $satisfy;
 }
 
 sub solve_dependency
@@ -78,20 +78,20 @@ sub solve_dependency
 	if ($state->{replace}) {
 	    my $v = find_candidate($spec, keys %{$self->{to_install}});
 	    if ($v) {
-		$self->add_new_dep($v);
+		$self->add_new_dep($v, $dep);
 		return;
 	    }
 	}
 
 	my $v = find_candidate($spec, installed_packages());
 	if ($v) {
-		$self->add_installed_dep($v);
+		$self->add_installed_dep($v, $dep);
 		return;
 	}
 	if (!$state->{replace}) {
 	    my $v = find_candidate($spec, keys %{$self->{to_install}});
 	    if ($v) {
-		$self->add_new_dep($v);
+		$self->add_new_dep($v, $dep);
 	    	return;
 	    }
 	}
@@ -104,7 +104,7 @@ sub solve_dependency
 	}
 	# one single choice
 	if (@candidates == 1) {
-	    $self->add_new_dep($candidates[0]);
+	    $self->add_new_dep($candidates[0], $dep);
 	    return;
 	}
 	if (@candidates > 1) {
@@ -116,12 +116,12 @@ sub solve_dependency
 	    my $choice = 
 		OpenBSD::Interactive::ask_list('Ambiguous: choose dependency for '.$self->pkgname.': ',
 		    $state->{interactive}, @candidates);
-	    $self->add_new_dep($choice);
+	    $self->add_new_dep($choice, $dep);
 	    return;
 	}
 	# can't get a list of packages, assume default
 	# will be there.
-	$self->add_new_dep($dep->{def});
+	$self->add_new_dep($dep->{def}, $dep);
 }
 
 sub solve
