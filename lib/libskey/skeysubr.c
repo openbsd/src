@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.29 2006/04/10 08:06:08 deraadt Exp $
+ * $OpenBSD: skeysubr.c,v 1.30 2007/05/17 04:34:50 ray Exp $
  */
 
 #include <stdio.h>
@@ -284,7 +284,8 @@ readpass(char *buf, int n)
 	/* Catch SIGINT and save old signal handler */
 	old_handler = signal(SIGINT, trapped);
 
-	(void)fgets(buf, n, stdin);
+	if (fgets(buf, n, stdin) == NULL)
+		buf[0] = '\0';
 	rip(buf);
 
 	(void)putc('\n', stderr);
@@ -304,7 +305,8 @@ readpass(char *buf, int n)
 char *
 readskey(char *buf, int n)
 {
-	(void)fgets(buf, n, stdin);
+	if (fgets(buf, n, stdin) == NULL)
+		buf[0] = '\0';
 	rip(buf);
 
 	sevenbit(buf);
