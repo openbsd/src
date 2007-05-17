@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.30 2007/05/14 18:19:25 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.31 2007/05/17 13:36:21 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,8 +35,14 @@ sub find_candidate
 
 sub new
 {
-	my $class = shift;
-	bless {to_install => {}, deplist => [], to_register => {} }, $class;
+	my ($class, $plist) = @_;
+	bless {plist => $plist, to_install => {}, deplist => [], to_register => {} }, $class;
+}
+
+sub pkgname
+{
+	my $self = shift;
+	return $self->{plist}->pkgname;
 }
 
 sub add_todo
@@ -108,7 +114,7 @@ sub solve_dependency
 	    @candidates = ((grep {$_ eq $dep->{def}} @candidates),
 			    (sort (grep {$_ ne $dep->{def}} @candidates)));
 	    my $choice = 
-		OpenBSD::Interactive::ask_list('Ambiguous: choose dependency for '.$self->{pkgname}.': ',
+		OpenBSD::Interactive::ask_list('Ambiguous: choose dependency for '.$self->pkgname.': ',
 		    $state->{interactive}, @candidates);
 	    $self->add_new_dep($choice);
 	    return;
@@ -120,17 +126,14 @@ sub solve_dependency
 
 sub solve
 {
-	my ($self, $state, $handle, @extra) = @_;
-	my $plist = $handle->{plist};
+	my ($self, $state, @extra) = @_;
 
 	$self->add_todo(@extra);
-	$self->{pkgname} = $plist->pkgname;
 
-	for my $dep (@{$plist->{depend}}) {
+	for my $dep (@{$self->{plist}->{depend}}) {
 	    $self->solve_dependency($state, $dep);
 	}
 
-	$handle->{solved_dependencies} = $self->{to_register};
 	return @{$self->{deplist}};
 }
 
@@ -138,7 +141,7 @@ sub dump
 {
 	my $self = shift;
 	if (%{$self->{to_register}}) {
-	    print "Dependencies for ", $self->{pkgname}, " resolve to: ", 
+	    print "Dependencies for ", $self->pkgname, " resolve to: ", 
 	    	join(', ', keys %{$self->{to_register}});
 	    print " (todo: ", join(',', @{$self->{deplist}}), ")" 
 	    	if @{$self->{deplist}} > 0;
