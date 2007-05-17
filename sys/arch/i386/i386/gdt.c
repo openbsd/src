@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.25 2007/05/09 04:59:41 deraadt Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.26 2007/05/17 15:00:02 art Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -74,7 +74,6 @@ union descriptor bootstrap_gdt[NGDT];
 union descriptor *gdt = bootstrap_gdt;
 
 int gdt_size;		/* total number of GDT entries */
-int gdt_count;		/* number of GDT entries in use */
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
@@ -114,6 +113,8 @@ setgdt(int sel, void *base, size_t limit, int type, int dpl, int def32,
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
+	KASSERT(sel < gdt_size);
+
 	setsegment(sd, base, limit, type, dpl, def32, gran);
 	CPU_INFO_FOREACH(cii, ci)
 		if (ci->ci_gdt != NULL && ci->ci_gdt != gdt)
@@ -138,7 +139,6 @@ gdt_init()
 	min_len = MINGDTSIZ * sizeof(union descriptor);
 
 	gdt_size = MINGDTSIZ;
-	gdt_count = NGDT;
 	gdt_next = NGDT;
 	gdt_free = GNULL_SEL;
 
@@ -172,7 +172,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
 	    (vaddr_t)ci->ci_gdt + min_len, FALSE, FALSE);
 	bzero(ci->ci_gdt, min_len);
-	bcopy(gdt, ci->ci_gdt, gdt_count * sizeof(union descriptor));
+	bcopy(gdt, ci->ci_gdt, gdt_size * sizeof(union descriptor));
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 0, 0);
 }
@@ -244,8 +244,6 @@ gdt_get_slot()
 		slot = gdt_free;
 		gdt_free = gdt[slot].gd.gd_selector;
 	} else {
-		if (gdt_next != gdt_count)
-			panic("gdt_get_slot: gdt_next != gdt_count");
 		if (gdt_next >= gdt_size) {
 			if (gdt_size >= MAXGDTSIZ)
 				panic("gdt_get_slot: out of GDT descriptors");
@@ -254,7 +252,6 @@ gdt_get_slot()
 		slot = gdt_next++;
 	}
 
-	gdt_count++;
 	gdt_unlock();
 	return (slot);
 }
@@ -267,7 +264,6 @@ gdt_put_slot(int slot)
 {
 
 	gdt_lock();
-	gdt_count--;
 
 	gdt[slot].gd.gd_type = SDT_SYSNULL;
 	gdt[slot].gd.gd_selector = gdt_free;
