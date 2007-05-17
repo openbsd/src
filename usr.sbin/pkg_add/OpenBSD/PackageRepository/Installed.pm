@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.6 2007/05/17 18:17:20 espie Exp $
+# $OpenBSD: Installed.pm,v 1.7 2007/05/17 18:52:58 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -37,11 +37,17 @@ sub match
 	return @l;
 }
 
+sub url
+{
+	my ($self, $name) = @_;
+	return $self->urlscheme.':'.$self->relative_url($name);
+}
+
 package OpenBSD::PackageRepository::Installed;
 
 our @ISA = (qw(OpenBSD::PackageRepositoryBase));
 
-sub urlschem
+sub urlscheme
 {
 	return 'inst';
 }
@@ -55,6 +61,12 @@ my $s2 = bless {all => 1}, __PACKAGE__;
 sub new
 {
 	return $_[1] ? $s2 : $singleton;
+}
+
+sub relative_url
+{
+	my ($self, $name) = @_;
+	return $name or '';
 }
 
 sub find

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.34 2007/05/17 18:17:20 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.35 2007/05/17 18:52:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -203,6 +203,16 @@ sub cleanup
 	# nothing to do
 }
 
+sub relative_url
+{
+	my ($self, $name) = @_;
+	if (defined $name) {
+		return $self->{baseurl}.$name.".tgz";
+	} else {
+		return $self->{baseurl};
+	}
+}
+
 package OpenBSD::PackageRepository::Local;
 our @ISA=qw(OpenBSD::PackageRepository);
 
@@ -228,7 +238,7 @@ sub open_pipe
 		    "-c", 
 		    "-q", 
 		    "-f", 
-		    $self->{baseurl}.$object->{name}.".tgz"
+		    $self->relative_url($object->{name})
 		or die "Can't run gzip";
 	}
 }
@@ -236,7 +246,7 @@ sub open_pipe
 sub may_exist
 {
 	my ($self, $name) = @_;
-	return -r $self->{baseurl}.$name.".tgz";
+	return -r $self->relative_url($name);
 }
 
 sub list
@@ -260,6 +270,11 @@ our @ISA=qw(OpenBSD::PackageRepository::Local);
 sub urlscheme
 {
 	return 'pipe';
+}
+
+sub relative_url
+{
+	return '';
 }
 
 sub may_exist
@@ -455,8 +470,15 @@ sub grab_object
 	exec {$ftp} 
 	    "ftp", 
 	    "-o", 
-	    "-", $self->{baseurl}.$object->{name}.".tgz"
+	    "-", $self->url($object->{name})
 	or die "can't run ftp";
+}
+
+sub url
+{
+	my ($self, $name) = @_;
+
+	return $self->relative_url($name);
 }
 
 sub maxcount
@@ -591,7 +613,7 @@ sub list
 	if (!defined $self->{list}) {
 		my $error = OpenBSD::Temp::file();
 		$self->make_room;
-		my $fullname = $self->{baseurl};
+		my $fullname = $self->url;
 		my $l = $self->{list} = [];
 		local $_;
 		open(my $fh, '-|', "ftp -o - $fullname 2>$error") or return;
@@ -625,7 +647,7 @@ sub list
 
 		my $error = OpenBSD::Temp::file();
 		$self->make_room;
-		my $fullname = $self->{baseurl};
+		my $fullname = $self->url;
 		$self->{list} = $self->_list("echo 'nlist *.tgz'|ftp -o - $fullname 2>$error");
 		$self->parse_problems($error);
 	}
