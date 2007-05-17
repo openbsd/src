@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.5 2007/05/14 11:22:00 espie Exp $
+# $OpenBSD: Installed.pm,v 1.6 2007/05/17 18:17:20 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -40,6 +40,11 @@ sub match
 package OpenBSD::PackageRepository::Installed;
 
 our @ISA = (qw(OpenBSD::PackageRepositoryBase));
+
+sub urlschem
+{
+	return 'inst';
+}
 
 use OpenBSD::PackageInfo (qw(is_installed installed_info 
     installed_packages installed_stems));

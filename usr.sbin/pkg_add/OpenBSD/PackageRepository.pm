@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.33 2007/05/14 12:49:27 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.34 2007/05/17 18:17:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -206,6 +206,11 @@ sub cleanup
 package OpenBSD::PackageRepository::Local;
 our @ISA=qw(OpenBSD::PackageRepository);
 
+sub urlscheme
+{
+	return 'file';
+}
+
 sub open_pipe
 {
 	my ($self, $object) = @_;
@@ -251,6 +256,11 @@ sub list
 
 package OpenBSD::PackageRepository::Local::Pipe;
 our @ISA=qw(OpenBSD::PackageRepository::Local);
+
+sub urlscheme
+{
+	return 'pipe';
+}
 
 sub may_exist
 {
@@ -570,6 +580,11 @@ sub parse_problems
 package OpenBSD::PackageRepository::HTTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
 
+sub urlscheme
+{
+	return 'http';
+}
+
 sub list
 {
 	my ($self) = @_;
@@ -597,6 +612,10 @@ sub list
 package OpenBSD::PackageRepository::FTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
 
+sub urlscheme
+{
+	return 'ftp';
+}
 
 sub list
 {

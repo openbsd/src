@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.10 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: SCP.pm,v 1.11 2007/05/17 18:17:20 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -23,6 +23,11 @@ our @ISA=qw(OpenBSD::PackageRepository::Distant);
 
 use IPC::Open2;
 use IO::Handle;
+
+sub urlscheme
+{
+	return 'scp';
+}
 
 our %distant = ();
 
