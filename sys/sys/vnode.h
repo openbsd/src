@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.79 2007/05/05 12:03:04 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.80 2007/05/17 23:46:28 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -107,10 +107,7 @@ struct vnode {
 
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void	*v_data;			/* private data for fs */
-	struct {
-		struct	simplelock vsi_lock;	/* lock to protect below */
-		struct	selinfo vsi_selinfo;	/* identity of poller(s) */
-	} v_selectinfo;
+	struct	selinfo v_selectinfo;		/* identity of poller(s) */
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
@@ -252,7 +249,7 @@ vref(vp)
 
 #define	NULLVP	((struct vnode *)NULL)
 #define	VN_KNOTE(vp, b)					\
-	KNOTE(&vp->v_selectinfo.vsi_selinfo.si_note, (b))
+	KNOTE(&vp->v_selectinfo.si_note, (b))
 
 /*
  * Global vnode data.

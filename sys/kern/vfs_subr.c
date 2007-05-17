@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.145 2007/05/09 01:09:16 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.146 2007/05/17 23:46:28 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -998,9 +998,7 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	 * Done with purge, notify sleepers of the grim news.
 	 */
 	vp->v_op = dead_vnodeop_p;
-	simple_lock(&vp->v_selectinfo.vsi_lock);
 	VN_KNOTE(vp, NOTE_REVOKE);
-	simple_unlock(&vp->v_selectinfo.vsi_lock);
 	vp->v_tag = VT_NON;
 	vp->v_flag &= ~VXLOCK;
 #ifdef VFSDEBUG

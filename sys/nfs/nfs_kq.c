@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.4 2007/04/19 14:46:44 thib Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.5 2007/05/17 23:46:28 thib Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -193,10 +193,7 @@ filt_nfsdetach(struct knote *kn)
 	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
 #endif
 
-	simple_lock(&vp->v_selectinfo.vsi_lock);
-	SLIST_REMOVE(&vp->v_selectinfo.vsi_selinfo.si_note,
-	    kn, knote, kn_selnext);
-	simple_unlock(&vp->v_selectinfo.vsi_lock);
+	SLIST_REMOVE(&vp->v_selectinfo.si_note, kn, knote, kn_selnext);
 
 	/* Remove the vnode from watch list */
 	rw_enter_write(&nfskevq_lock);
@@ -344,9 +341,7 @@ nfs_kqfilter(void *v)
 	/* kick the poller */
 	wakeup(pnfskq);
 
-	simple_lock(&vp->v_selectinfo.vsi_lock);
-        SLIST_INSERT_HEAD(&vp->v_selectinfo.vsi_selinfo.si_note, kn, kn_selnext);
-        simple_unlock(&vp->v_selectinfo.vsi_lock);
+	SLIST_INSERT_HEAD(&vp->v_selectinfo.si_note, kn, kn_selnext);
 
 #ifdef notyet
 	/* XXXLUKEM lock the struct? */
