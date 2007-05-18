@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.56 2007/05/18 12:28:26 espie Exp $
+# $OpenBSD: pkg_info,v 1.57 2007/05/18 12:44:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -229,7 +229,7 @@ sub print_info
 		if ($terse) {
 			print $opt_l, $pkg, "\n" unless $opt_q;
 		} else {
-			print $opt_l, "Information for ", $pkg, "\n\n" unless $opt_q;
+			print $opt_l, "Information for ", $handle->url, "\n\n" unless $opt_q;
 		}
 		if ($opt_c) {
 			print $opt_l, "Comment:\n" unless $opt_q;
