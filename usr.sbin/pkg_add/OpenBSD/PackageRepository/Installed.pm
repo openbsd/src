@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.7 2007/05/17 18:52:58 espie Exp $
+# $OpenBSD: Installed.pm,v 1.8 2007/05/18 12:28:26 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -53,7 +53,7 @@ sub urlscheme
 }
 
 use OpenBSD::PackageInfo (qw(is_installed installed_info 
-    installed_packages installed_stems));
+    installed_packages installed_stems installed_name));
 
 my $singleton = bless {}, __PACKAGE__;
 my $s2 = bless {all => 1}, __PACKAGE__;
@@ -77,7 +77,7 @@ sub find
 	if (is_installed($name)) {
 		require OpenBSD::PackageLocation;
 
-		$self = OpenBSD::PackageLocation->new($repository, $name);
+		$self = OpenBSD::PackageLocation->new($repository, installed_name($name));
 		$self->{dir} = installed_info($name);
 	}
 	return $self;
