@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.18 2007/04/18 21:21:20 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.19 2007/05/18 16:35:02 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -359,7 +359,11 @@ int netisr;
 void
 dosoftint()
 {
-	if (ISSET(ssir, SIR_NET)) {
+	int sir = ssir;
+
+	atomic_clearbits_int(&ssir, sir);
+
+	if (ISSET(sir, SIR_NET)) {
 		uvmexp.softs++;
 #define DONETISR(bit, fn) \
 	do { \
@@ -370,13 +374,11 @@ dosoftint()
 	} while (0)
 #include <net/netisr_dispatch.h>
 #undef DONETISR
-		atomic_clearbits_int(&ssir, SIR_NET);
 	}
 
-	if (ISSET(ssir, SIR_CLOCK)) {
+	if (ISSET(sir, SIR_CLOCK)) {
 		uvmexp.softs++;
 		softclock();
-		atomic_clearbits_int(&ssir, SIR_CLOCK);
 	}
 }
 
@@ -385,12 +387,12 @@ spl0()
 {
 	int s;
 
-	s = splsoftclock();
+	s = setipl(IPL_SOFTCLOCK);
 
 	if (ssir)
 		dosoftint();
 
-	setipl(0);
+	setipl(IPL_NONE);
 	return (s);
 }
 
