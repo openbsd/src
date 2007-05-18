@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.43 2006/12/18 13:43:42 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.44 2007/05/18 15:57:35 kettenis Exp 
  */
 
 #define	HPPA_TYPE_NPROC	0x00
@@ -227,6 +227,7 @@
 #define	HPPA_CPU_PCXL2	0x0f
 #define	HPPA_CPU_PCXUP	0x10
 #define	HPPA_CPU_PCXW	0x11
+#define	HPPA_CPU_PCXW2	0x13
 #define	HPPA_FPU_SOFTEMU	0x01
 #define	HPPA_FPU_INDIGO	0x02
 #define	HPPA_FPU_TYCO	0x03
@@ -242,6 +243,7 @@
 #define	HPPA_FPU_PCXU	0x0e
 #define	HPPA_FPU_VR	0x0f
 #define	HPPA_FPU_PCXW	0x10
+#define	HPPA_FPU_PCXW2	0x13
 #define	HPPA_NPROC_HPPA	4
 #define	HPPA_MEMORY_ARCH	0x008
 #define	HPPA_MEMORY_PDEP	0x009
