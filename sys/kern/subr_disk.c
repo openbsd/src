@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.41 2007/05/18 07:37:18 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.42 2007/05/18 16:26:38 drahn Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -542,16 +542,15 @@ struct device *
 parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
 	struct device *dv;
-	char *cp, c;
+	char c;
 	int majdev, part;
 
 	if (len == 0)
 		return (NULL);
-	cp = str + len - 1;
-	c = *cp;
+	c = str[len-1];
 	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
 		part = c - 'a';
-		*cp = '\0';
+		len -= 1;
 	} else
 		part = defpart;
 
@@ -564,7 +563,8 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK &&
-		    strcmp(str, dv->dv_xname) == 0) {
+		    strncmp(str, dv->dv_xname, len) == 0 &&
+		    dv->dv_xname[len] == '\0') {
 #ifdef RAMDISK_HOOKS
 gotdisk:
 #endif
@@ -576,14 +576,14 @@ gotdisk:
 		}
 #if defined(NFSCLIENT)
 		if (dv->dv_class == DV_IFNET &&
-		    strcmp(str, dv->dv_xname) == 0) {
+		    strncmp(str, dv->dv_xname, len) == 0 &&
+		    dv->dv_xname[len] == '\0') {
 			*devp = NODEV;
 			break;
 		}
 #endif
 	}
 
-	*cp = c;
 	return (dv);
 }
 
