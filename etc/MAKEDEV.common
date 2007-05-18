@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -299,7 +299,7 @@ __devitem(vnd, vnd*, quote(file)pseudo-disk devices)dnl
 _mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)
 	dodisk svnd $U major_vnd_b major_vnd_c $U 2048{--}ifstep(vnd)-})dnl
 __devitem(ra, ra*, {-MSCP disks-})dnl
-__devitem(hp, hp*, {-MASSBUSS disks-})dnl
+__devitem(hp, hp*, {-MASSBUS disks-})dnl
 __devitem(hk, hk*, {-UNIBUS RK06 and RK07 disks-})dnl
 __devitem(up, up*, {-Other UNIBUS devices-})dnl
 __devitem(rb, rb*, {-730 IDC w/ RB80 and/or RB02-})dnl
