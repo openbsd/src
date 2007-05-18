@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.28 2007/05/15 08:00:59 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.29 2007/05/18 12:40:35 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -151,6 +151,7 @@ sub installed_name($)
 	my $name = shift;
 	$name =~ s|/$||;
 	$name =~ s|^\Q$pkg_db\E/?||;
+	$name =~ s|/\+CONTENTS$||;
 	return $name;
 }
 
