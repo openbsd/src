@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.11 2007/05/16 17:27:30 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.12 2007/05/18 16:10:15 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -241,7 +241,7 @@ schedcpu(void *arg)
 		 */
 		if (p->p_slptime > 1)
 			continue;
-		s = splstatclock();	/* prevent state changes */
+		SCHED_LOCK(s);
 		/*
 		 * p_pctcpu is only for ps.
 		 */
@@ -257,8 +257,6 @@ schedcpu(void *arg)
 		p->p_cpticks = 0;
 		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);
 		p->p_estcpu = newcpu;
-		splx(s);
-		SCHED_LOCK(s);
 		resetpriority(p);
 		if (p->p_priority >= PUSER) {
 			if ((p != curproc) &&
@@ -585,10 +583,10 @@ schedclock(struct proc *p)
 {
 	int s;
 
-	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);
 	SCHED_LOCK(s);
+	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);
 	resetpriority(p);
-	SCHED_UNLOCK(s);
 	if (p->p_priority >= PUSER)
 		p->p_priority = p->p_usrpri;
+	SCHED_UNLOCK(s);
 }
