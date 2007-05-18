@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.6 2007/05/08 20:48:03 robert Exp $ */
+/*	$OpenBSD: uts.c,v 1.7 2007/05/18 18:47:30 robert Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -330,7 +330,7 @@ uts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *l)
 		    wsmc->minx < 32768 && wsmc->maxx < 32768 &&
 		    wsmc->miny < 32768 && wsmc->maxy < 32768 &&
 		    wsmc->resx < 32768 && wsmc->resy < 32768 &&
-		    wsmc->swapxy >= 0 && wsmc->swapxy < 1 &&
+		    wsmc->swapxy >= 0 && wsmc->swapxy <= 1 &&
 		    wsmc->samplelen >= 0 && wsmc->samplelen <= 1))
 			return (EINVAL);
 
@@ -375,13 +375,15 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 	case USB_PRODUCT_FTDI_ITM_TOUCH:
 		down = (~p[7] & 0x20);
 		x = ((p[0] & 0x1f) << 7) | (p[3] & 0x7f);  
-		y = ((p[1] & 0x1f) << 7) | (p[4] & 0x7f);
+		/* Invert the Y coordinate */
+		y = 0x0fff - abs(((p[1] & 0x1f) << 7) | (p[4] & 0x7f));
 		sc->sc_pkts = 0x8;
 		break;
 	case USB_PRODUCT_EGALAX_TPANEL:
 	case USB_PRODUCT_EGALAX_TPANEL2:
 		down = (p[0] & 0x01);
-		x = ((p[3] & 0x0f) << 7) | (p[4] & 0x7f);
+		/* Invert the X coordiate */
+		x = 0x07ff - abs(((p[3] & 0x0f) << 7) | (p[4] & 0x7f));
 		y = ((p[1] & 0x0f) << 7) | (p[2] & 0x7f);
 		sc->sc_pkts = 0x5;
 		break;
@@ -399,7 +401,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 			tp.x = x;
 			tp.y = y;
 		}
-	
+
 		if (!sc->sc_rawmode) {
 			/* Scale down to the screen resolution. */
 			tp.x = ((tp.x - sc->sc_tsscale.minx) *
