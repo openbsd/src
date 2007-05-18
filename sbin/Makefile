@@ -1,7 +1,4 @@
-#	$OpenBSD: Makefile,v 1.81 2007/05/18 07:18:55 deraadt Exp $
-
-# Not ported: XNSrouted enpload scsiformat startslip
-# Missing: icheck
+#	$OpenBSD: Makefile,v 1.82 2007/05/18 16:08:12 deraadt Exp $
 
 SUBDIR=	atactl badsect bioctl brconfig ccdconfig clri dhclient \
 	disklabel dmesg dump dumpfs fdisk fsck fsck_ext2fs fsck_ffs  \
