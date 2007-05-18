@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.65 2007/05/17 03:55:08 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.66 2007/05/18 01:10:59 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -455,8 +455,6 @@ getaddrinfo(const char *hostname, const char *servname,
 	if (sentinel.ai_next)
 		error = 0;
 
-	if (error)
-		goto free;
 	if (error == 0) {
 		if (sentinel.ai_next) {
  good:
