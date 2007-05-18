@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.40 2007/05/15 01:58:06 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.41 2007/05/18 07:37:18 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -700,6 +700,7 @@ gotswap:
 		swdevt[1].sw_dev = NODEV;
 #if defined(NFSCLIENT)
 	} else if (mountroot == nfs_mountroot) {
+		rootdv = bootdv;
 		rootdev = dumpdev = swapdev = NODEV;
 #endif
 	} else if (mountroot == NULL) {
