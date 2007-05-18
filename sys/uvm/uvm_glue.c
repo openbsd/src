@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.45 2006/11/29 12:24:18 miod Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.46 2007/05/18 10:55:34 art Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -341,9 +341,8 @@ uvm_scheduler(void)
 	/*
 	 * Nothing to do, back to sleep
 	 */
-loop:
-	tsleep(&proc0, PVM, "scheduler", 0);
-	goto loop;
+	while (1)
+		tsleep(&proc0, PVM, "scheduler", 0);
 }
 
 /*
