@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.3 2007/05/14 16:58:42 miod Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.4 2007/05/18 16:34:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -48,24 +48,49 @@ ENTRY(mtx_init)
 ENTRY(mtx_enter)
 	subu	r31, r31, 8
 	st	r1,  r31, 4		/* save return address */
-	st	r2,  r31, 0		/* save mtx */
 
 #ifdef MULTIPROCESSOR
+
+	st	r2,  r31, 0		/* save mtx */
 enter_again:
+	ld	r2,  r2,  MTX_WANTIPL
+	bcnd	eq0, r2,  1f
+	bsr	_C_LABEL(raiseipl)	/* raiseipl(mtx->mtx_wantipl) */
+1:
+	ld	r4,  r31, 0
 	or	r3,  r0,  1
-	xmem	r3,  r2,  r0		/* attempt to claim the lock, old */
-	bcnd	eq0, r3,  enter_success	/* mtx->mtx_lock is 0 if successful */
+	xmem	r3,  r4,  r0		/* attempt to claim the lock, old */
+	bcnd	ne0, r3,  enter_failed	/* mtx->mtx_lock is 0 if successful */
+
+	ldcr	r3,  CPU
+	st	r2,  r4,  MTX_OLDIPL	/* save into mtx_oldipl */
+	st	r3,  r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+
+	ld	r1,  r31, 4
+	jmp.n	r1
+	 addu	r31, r31, 8
+
+enter_failed:	/* the lock is not ours... */
+	ld	r3,  r4,  MTX_WANTIPL
+	bcnd	eq0, r4,  2f
+	bcnd	ne0, r2,  1f		/* splx(oldipl) */
+	bsr.n	_C_LABEL(spl0)
+	 addu	r1,  r1,  2f - . - 4
+1:
+	bsr	_C_LABEL(setipl)
+2:
+	ld	r2,  r31, 0		/* restore mtx */
+enter_spin:
 #ifdef DIAGNOSTIC
 	ldcr	r3,  CPU
 	ld	r4,  r2,  MTX_CPU
 	cmp	r5,  r3,  r4
-	bcnd	eq0, r5,  enter_panic	/* ... unless it is, oops */
+	bcnd	eq0, r5,  enter_panic
 #endif
-enter_spin:
-	/* Avoid clogging the bus with xmem, wait until the mutex is released */
 	ld	r3,  r2,  MTX_LOCK
 	bcnd	eq0, r3,  enter_again
 	br	enter_spin
+
 #ifdef DIAGNOSTIC
 enter_panic:
 	or.u	r2,  r0,  hi16(9f)
@@ -73,27 +98,33 @@ enter_panic:
 	 or	r2,  r2,  lo16(9f)
 
 	data
-9:	string	"mtx_enter: humpaan itsekseni"
-	text
+9:
+	string	"mtx_enter: humpaan itsekseni"
 #endif
-enter_success:
-#else	/* MULTIPROCESSOR */
-	st	r2,  r2,  MTX_LOCK	/* locked! */
-#endif	/* MULTIPROCESSOR */
 
-	ldcr	r3,  CPU
-	st	r3,  r2,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+#else	/* MULTIPROCESSOR */
+
+	st	r2,  r31, 0		/* save mtx */
 	ld	r2,  r2,  MTX_WANTIPL
-	bcnd	eq0, r2,  1f		/* if mtx_wantipl == IPL_NONE, skip */
+	bcnd	eq0, r2,  1f
 	bsr	_C_LABEL(raiseipl)	/* raiseipl(mtx->mtx_wantipl) */
 1:
 	ld	r4,  r31, 0
+	ldcr	r3,  CPU
+	st	r3,  r4,  MTX_LOCK	/* locked! */
+
 	st	r2,  r4,  MTX_OLDIPL	/* save into mtx_oldipl */
+
+#ifdef DIAGNOSTIC	/* necessary for MUTEX_ASSERT_LOCKED */
+	st	r3,  r4,  MTX_CPU	/* mtx->mtx_cpu = curcpu() */
+#endif
 
 	ld	r1,  r31, 4
 	jmp.n	r1
 	 addu	r31, r31, 8
 
+#endif	/* MULTIPROCESSOR */
+	
 /*
  * void mtx_leave(struct mutex *mtx)
  */
