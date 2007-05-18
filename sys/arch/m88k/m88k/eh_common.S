@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.23 2007/05/12 20:02:14 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.24 2007/05/18 16:35:54 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2343,20 +2343,6 @@ ENTRY(proc_trampoline)
 
 #define	FPTR	r14
 
-/*
- * void proc_do_uret(struct proc *p)
- *
- * This is called as proc_do_uret(proc) from proc_trampoline(). This function
- * loads FPTR with a pointer to the trap frame for the given proc and continues
- * near the end of check_ast, bypassing soft interrupts and AST checks, to
- * load all the registers and do an RTE.
- */
-
-ENTRY(proc_do_uret)
-	ld	FPTR, r2,   P_ADDR		/* p->p_addr */
-	br.n	_ASM_LABEL(no_ast)
-	 addu	FPTR, FPTR, PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
-
 
 ASLOCAL(check_ast)
 	/*
@@ -2404,22 +2390,37 @@ ASLOCAL(no_softint)
 	/*
 	 * trap(AST,...) will service ast's.
 	 */
+	 or	r3, r0, FPTR
+	or	r2, r0, T_ASTFLT
 #if defined(M88110) && defined(M88100)
-	 or.u	r2, r0, hi16(_C_LABEL(cputyp))
-	ld	r3, r2, lo16(_C_LABEL(cputyp))
-	cmp	r2, r3, CPU_88110
-	bb0	eq, r2, 2f
+	or.u	r4, r0, hi16(_C_LABEL(cputyp))
+	ld	r5, r4, lo16(_C_LABEL(cputyp))
+	cmp	r4, r5, CPU_88110
+	bb0	eq, r4, 2f
 #endif
 #if defined(M88110)
-	CALL(m88110_trap, T_ASTFLT, FPTR)
+	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(no_ast))
 #endif
 #if defined(M88110) && defined(M88100)
-	br	_ASM_LABEL(no_ast)
 2:
 #endif
 #ifdef M88100
-	CALL(m88100_trap, T_ASTFLT, FPTR)
+	XCALL(_C_LABEL(m88100_trap), _ASM_LABEL(no_ast))
 #endif
+
+/*
+ * void proc_do_uret(struct proc *p)
+ *
+ * This is called as proc_do_uret(proc) from proc_trampoline(). This function
+ * loads FPTR with a pointer to the trap frame for the given proc and continues
+ * near the end of check_ast, bypassing soft interrupts and AST checks, to
+ * load all the registers and do an RTE.
+ */
+
+ENTRY(proc_do_uret)
+	ld	FPTR, r2,   P_ADDR		/* p->p_addr */
+	addu	FPTR, FPTR, PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
+	/* FALLTHROUGH */
 
 ASLOCAL(no_ast)
 	/* disable interrupts */
