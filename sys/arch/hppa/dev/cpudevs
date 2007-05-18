@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.43 2006/12/18 13:43:42 mickey Exp $
+$OpenBSD: cpudevs,v 1.44 2007/05/18 15:57:35 kettenis Exp $
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -322,7 +322,7 @@ cpu	PCXL2	0x0f	PCXL2 (Velociraptor)
 cpu	PCXUP	0x10	PCXU+ (Vulcan)
 cpu	PCXW	0x11	PCXW (Vulcan)
 #cpu	PCXWP	0x??	PCXW+ (Landshark)
-#cpu	PCXW2	0x??	PCXW2 (Piranha)
+cpu	PCXW2	0x13	PCXW2 (Piranha)
 #cpu	PCXM	0x??	Mako
 #cpu	PCXM2	0x??	Shortfin
 
@@ -341,6 +341,7 @@ fpu	PCXL	0x0d	PCXL (CMOS-26B)
 fpu	PCXU	0x0e	PCXU/PCXU+
 fpu	VR	0x0f	VR
 fpu	PCXW	0x10	PCXW
+fpu	PCXW2	0x13	PCXW2
 
 nproc	HPPA	4	PA-RISC
 
