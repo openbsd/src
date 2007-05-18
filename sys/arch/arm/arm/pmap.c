@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 2007/04/21 19:26:03 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 2007/05/18 14:41:55 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -198,6 +198,7 @@
 #include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/cdefs.h>
+#include <sys/sched.h>
  
 #include <uvm/uvm.h>
 
@@ -3340,7 +3341,7 @@ pmap_pageidlezero(struct vm_page *pg)
 
 	for (i = 0, ptr = (int *)cdstp;
 			i < (PAGE_SIZE / sizeof(int)); i++) {
-		if (whichqs != 0) {
+		if (!sched_is_idle()) {
 			/*
 			 * A process has become ready.  Abort now,
 			 * so we don't keep it waiting while we

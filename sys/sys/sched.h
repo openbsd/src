@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.15 2007/05/16 17:27:31 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.16 2007/05/18 14:41:55 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -125,6 +125,8 @@ struct proc;
 void schedclock(struct proc *);
 struct cpu_info;
 void roundrobin(struct cpu_info *);
+
+#define sched_is_idle() (whichqs == 0)
 
 /* Inherit the parent's scheduler history */
 #define scheduler_fork_hook(parent, child) do {				\

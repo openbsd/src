@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_c.c,v 1.3 2006/12/14 14:56:23 kettenis Exp $	*/
+/*	$OpenBSD: locore_c.c,v 1.4 2007/05/18 14:41:55 art Exp $	*/
 /*	$NetBSD: locore_c.c,v 1.13 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -186,7 +186,7 @@ cpu_switch_search(struct proc *oproc)
 	curproc = NULL;
 
 	SCHED_LOCK_IDLE();
-	while (whichqs == 0) {
+	while (sched_is_idle()) {
 		SCHED_UNLOCK_IDLE();
 		idle();
 		SCHED_LOCK_IDLE();

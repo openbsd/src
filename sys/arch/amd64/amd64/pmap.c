@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2007/05/15 16:38:33 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2007/05/18 14:41:55 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -116,6 +116,7 @@
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/sched.h>
 
 #include <uvm/uvm.h>
 
@@ -1574,7 +1575,7 @@ pmap_pageidlezero(struct vm_page *pg)
 	 *       with uncached mappings.
 	 */
 	for (i = 0, ptr = (long *) va; i < PAGE_SIZE / sizeof(long); i++) {
-		if (whichqs != 0) {
+		if (!sched_is_idle()) {
 
 			/*
 			 * A process has become ready.  Abort now,

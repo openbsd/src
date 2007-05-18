@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.59 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.60 2007/05/18 14:41:55 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1397,5 +1397,5 @@ uvm_pageidlezero()
 		uvmexp.free++;
 		uvmexp.zeropages++;
 		uvm_unlock_fpageq(s);
-	} while (whichqs == 0);
+	} while (sched_is_idle());
 }
