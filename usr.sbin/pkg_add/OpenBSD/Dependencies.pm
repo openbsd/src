@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.36 2007/05/18 09:45:18 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.37 2007/05/18 12:18:33 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -36,7 +36,8 @@ sub find_candidate
 sub new
 {
 	my ($class, $plist) = @_;
-	bless {plist => $plist, to_install => {}, deplist => [], to_register => {} }, $class;
+	bless {plist => $plist, to_install => {}, deplist => [], 
+	    to_register => {} }, $class;
 }
 
 sub dependencies
@@ -76,68 +77,68 @@ sub add_todo
 sub add_new_dep
 {
 	my ($self, $pkgname, $satisfy) = @_;
-	push(@{$self->{deplist}}, $pkgname);
-	$self->add_installed_dep($pkgname, $satisfy);
+	push(@{$self->{deplist}}, $pkgname) if !is_installed($pkgname);
+	$self->{to_register}->{$pkgname} = $satisfy;
 }
 
-sub add_installed_dep
+sub find_dep_in_repositories
 {
-	my ($self, $pkgname, $satisfy) = @_;
-	$self->{to_register}->{$pkgname} = $satisfy;
+	my ($self, $state, $dep) = @_;
+	require OpenBSD::PackageLocator;
+
+	my @candidates = OpenBSD::PackageLocator->match($dep->spec);
+	if (!$state->{forced}->{allversions}) {
+		@candidates = OpenBSD::PackageName::keep_most_recent(@candidates);
+	}
+	if (@candidates == 1) {
+		return $candidates[0];
+	} elsif (@candidates > 1) {
+		require OpenBSD::Interactive;
+
+		# put default first if available
+		@candidates = ((grep {$_ eq $dep->{def}} @candidates),
+		    (sort (grep {$_ ne $dep->{def}} @candidates)));
+		return OpenBSD::Interactive::ask_list(
+		    'Ambiguous: choose dependency for '.$self->pkgname.': ',
+		    $state->{interactive}, @candidates);
+	} else {
+		return;
+	}
+}
+
+sub find_dep_in_stuff_to_install
+{
+	my ($self, $state, $dep) = @_;
+
+	return find_candidate($dep->spec, keys %{$self->{to_install}});
 }
 
 sub solve_dependency
 {
 	my ($self, $state, $dep) = @_;
 
-	my $spec = $dep->spec;
+	my $v;
+
 	if ($state->{replace}) {
-	    my $v = find_candidate($spec, keys %{$self->{to_install}});
-	    if ($v) {
-		$self->add_new_dep($v, $dep);
-		return;
-	    }
+		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 	}
 
-	my $v = find_candidate($spec, installed_packages());
-	if ($v) {
-		$self->add_installed_dep($v, $dep);
-		return;
+	if (!$v) {
+		$v = find_candidate($dep->spec, installed_packages());
 	}
-	if (!$state->{replace}) {
-	    my $v = find_candidate($spec, keys %{$self->{to_install}});
-	    if ($v) {
-		$self->add_new_dep($v, $dep);
-	    	return;
-	    }
+	if (!$v && !$state->{replace}) {
+		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 	}
-	require OpenBSD::PackageLocator;
 
-	# try with list of available packages
-	my @candidates = OpenBSD::PackageLocator->match($spec);
-	if (!$state->{forced}->{allversions}) {
-	    @candidates = OpenBSD::PackageName::keep_most_recent(@candidates);
+	if (!$v) {
+		$v = $self->find_dep_in_repositories($state, $dep);
 	}
-	# one single choice
-	if (@candidates == 1) {
-	    $self->add_new_dep($candidates[0], $dep);
-	    return;
+	# resort to default if nothing else
+	if (!$v) {
+		$v = $dep->{def};
 	}
-	if (@candidates > 1) {
-	    require OpenBSD::Interactive;
 
-	    # put default first if available
-	    @candidates = ((grep {$_ eq $dep->{def}} @candidates),
-			    (sort (grep {$_ ne $dep->{def}} @candidates)));
-	    my $choice = 
-		OpenBSD::Interactive::ask_list('Ambiguous: choose dependency for '.$self->pkgname.': ',
-		    $state->{interactive}, @candidates);
-	    $self->add_new_dep($choice, $dep);
-	    return;
-	}
-	# can't get a list of packages, assume default
-	# will be there.
-	$self->add_new_dep($dep->{def}, $dep);
+	$self->add_new_dep($v, $dep);
 }
 
 sub solve
