@@ -817,6 +817,7 @@
 ./usr/libdata/perl5/OpenBSD/PackageRepository.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/Installed.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/SCP.pm
+./usr/libdata/perl5/OpenBSD/PackageRepository/Source.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepositoryList.pm
 ./usr/libdata/perl5/OpenBSD/PackingElement.pm
 ./usr/libdata/perl5/OpenBSD/PackingList.pm
