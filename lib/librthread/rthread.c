@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.33 2006/01/06 07:29:36 marc Exp $ */
+/*	$OpenBSD: rthread.c,v 1.34 2007/05/18 14:36:17 art Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -34,6 +34,7 @@
 #include <string.h>
 #include <err.h>
 #include <errno.h>
+#include <dlfcn.h>
 
 #include <pthread.h>
 
@@ -48,6 +49,11 @@ _spinlock_lock_t _thread_lock = _SPINLOCK_UNLOCKED;
 struct pthread _initial_thread;
 
 int rfork_thread(int, void *, void (*)(void *), void *);
+
+#if defined(__ELF__) && defined(PIC)
+static void rthread_dl_lock(int what);
+static void rthread_bind_lock(int what);
+#endif
 
 /*
  * internal support functions
@@ -113,6 +119,20 @@ _rthread_init(void)
 	_rthread_debug(1, "rthread init\n");
 	_threads_ready = 1;
 	__isthreaded = 1;
+
+#if defined(__ELF__) && defined(PIC)
+	/*
+	 * To avoid recursion problems in ld.so, we need to trigger the
+	 * functions once to fully bind them before registering them
+	 * for use.
+	 */
+	rthread_dl_lock(0);
+	rthread_dl_lock(1);
+	rthread_bind_lock(0);
+	rthread_bind_lock(1);
+	dlctl(NULL, DL_SETTHREADLCK, rthread_dl_lock);
+	dlctl(NULL, DL_SETBINDLCK, rthread_bind_lock);
+#endif
 
 	return (0);
 }
@@ -448,3 +468,27 @@ _thread_dump_info(void)
 		    thread->tid, thread->flags, thread->name);
 	_spinunlock(&_thread_lock);
 }
+
+#if defined(__ELF__) && defined(PIC)
+static void
+rthread_dl_lock(int what)
+{
+	static _spinlock_lock_t lock = _SPINLOCK_UNLOCKED;
+
+	if (what == 0)
+		_spinlock(&lock);
+	else
+		_spinunlock(&lock);
+}
+
+static void
+rthread_bind_lock(int what)
+{
+	static _spinlock_lock_t lock = _SPINLOCK_UNLOCKED;
+
+	if (what == 0)
+		_spinlock(&lock);
+	else
+		_spinunlock(&lock);
+}
+#endif
