@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.28 2007/05/14 17:00:40 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.29 2007/05/18 16:38:29 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -284,7 +284,12 @@ u_int
 m188_setipl(u_int level)
 {
 	u_int mask, curspl;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	int cpu = ci->ci_cpuid;
+#else
 	int cpu = cpu_number();
+#endif
 
 	curspl = m188_curspl[cpu];
 
@@ -298,6 +303,12 @@ m188_setipl(u_int level)
 	*int_mask_reg[cpu] = mask;
 	m188_curspl[cpu] = level;
 
+#ifdef MULTIPROCESSOR
+	/* need to resend myself the pending ipis */
+	if (ci->ci_ipi != 0)
+		*(volatile u_int32_t *)MVME188_SETSWI = IPI_BIT(cpu);
+#endif
+
 	return curspl;
 }
 
@@ -305,7 +316,12 @@ u_int
 m188_raiseipl(u_int level)
 {
 	u_int mask, curspl;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	int cpu = ci->ci_cpuid;
+#else
 	int cpu = cpu_number();
+#endif
 
 	curspl = m188_curspl[cpu];
 	if (curspl < level) {
@@ -318,6 +334,12 @@ m188_raiseipl(u_int level)
 
 		*int_mask_reg[cpu] = mask;
 		m188_curspl[cpu] = level;
+
+#ifdef MULTIPROCESSOR
+		/* need to resend myself the pending ipis */
+		if (ci->ci_ipi != 0)
+			*(volatile u_int32_t *)MVME188_SETSWI = IPI_BIT(cpu);
+#endif
 	}
 	return curspl;
 }
@@ -341,19 +363,30 @@ void
 m188_ipi_handler(struct trapframe *eframe)
 {
 	struct cpu_info *ci = curcpu();
+	int ipi = ci->ci_ipi;
+	int spl = m188_curspl[ci->ci_cpuid];
 
-	if (ci->ci_ipi & CI_IPI_NOTIFY) {
-		atomic_clearbits_int(&ci->ci_ipi, CI_IPI_NOTIFY);
+	if (ipi & CI_IPI_NOTIFY) {
 		/* nothing to do */
 	}
-	if (ci->ci_ipi & CI_IPI_HARDCLOCK) {
-		atomic_clearbits_int(&ci->ci_ipi, CI_IPI_HARDCLOCK);
-		hardclock((struct clockframe *)eframe);
+	if (ipi & CI_IPI_HARDCLOCK) {
+		if (spl < IPL_CLOCK) {
+			m188_setipl(IPL_CLOCK);
+			hardclock((struct clockframe *)eframe);
+			m188_setipl(spl);
+		} else
+			ipi &= ~CI_IPI_HARDCLOCK;	/* leave it pending */
 	}
-	if (ci->ci_ipi & CI_IPI_STATCLOCK) {
-		atomic_clearbits_int(&ci->ci_ipi, CI_IPI_STATCLOCK);
-		statclock((struct clockframe *)eframe);
+	if (ipi & CI_IPI_STATCLOCK) {
+		if (spl < IPL_STATCLOCK) {
+			m188_setipl(IPL_STATCLOCK);
+			statclock((struct clockframe *)eframe);
+			m188_setipl(spl);
+		} else
+			ipi &= ~CI_IPI_STATCLOCK;	/* leave it pending */
 	}
+
+	atomic_clearbits_int(&ci->ci_ipi, ipi);
 }
 
 #endif
@@ -438,6 +471,17 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		goto out;
 	}
 
+#ifdef MULTIPROCESSOR
+	/*
+	 * Clear IPIs immediately, so that we can re enable interrupts
+	 * before further processing. We rely on the interrupt mask to
+	 * make sure that if we get an IPI, it's really for us and
+	 * no other processor.
+	 */
+	if (IPI_MASK & cur_mask) {
+		*(volatile u_int32_t *)MVME188_CLRSWI = cur_mask & IPI_MASK;
+	}
+#endif
 	uvmexp.intrs++;
 
 	/*
@@ -447,15 +491,18 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	 * priority.
 	 */
 	do {
+		level = safe_level(cur_mask & ~IPI_MASK, old_spl);
+		m188_setipl(level);
+		if (unmasked == 0) {
+			set_psr(get_psr() & ~PSR_IND);
+			unmasked = 1;
+		}
+
 #ifdef MULTIPROCESSOR
 		/*
-		 * Check for IPIs first. We rely on the interrupt mask to
-		 * make sure that if we get an IPI, it's really for us and
-		 * no other processor.
+		 * Handle IPIs first.
 		 */
 		if (IPI_MASK & cur_mask) {
-			*(volatile u_int32_t *)MVME188_CLRSWI =
-			    cur_mask & IPI_MASK;
 			cur_mask &= ~IPI_MASK;
 
 			m188_ipi_handler(eframe);
@@ -464,20 +511,6 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 				break;
 		}
 #endif
-		level = safe_level(cur_mask, old_spl);
-		m188_setipl(level);
-
-		/*
-		 * Do not enable interrupts yet if we know, from cur_mask,
-		 * that we have not cleared enough conditions yet.
-		 * For now, only the timer interrupt requires its condition
-		 * to be cleared before interrupts are enabled.
-		 */
-		if (unmasked == 0 && (cur_mask & IRQ_DTI) == 0) {
-			set_psr(get_psr() & ~PSR_IND);
-			unmasked = 1;
-		}
-
 		/* generate IACK and get the vector */
 
 		/*
@@ -776,34 +809,30 @@ m188_statintr(void *eframe)
 
 	statclock((struct clockframe *)eframe);
 
+	/*
+	 * Compute new randomized interval.  The intervals are
+	 * uniformly distributed on
+	 * [statint - statvar / 2, statint + statvar / 2],
+	 * and therefore have mean statint, giving a stathz
+	 * frequency clock.
+	 */
+	var = statvar;
+	do {
+		r = random() & (var - 1);
+	} while (r == 0);
+	newint = statmin + r;
+
+	/* setup new value and restart counter */
+	*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
+	*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
+	tmp = *(volatile u_int8_t *)DART_STARTC;
+
 #ifdef MULTIPROCESSOR
-	if (CPU_IS_PRIMARY(curcpu())) {
-		/*
-		 * Send an IPI to all other processors as well.
-		 */
+	/*
+	 * Send an IPI to all other processors as well.
+	 */
+	if (CPU_IS_PRIMARY(curcpu()))
 		m88k_broadcast_ipi(CI_IPI_STATCLOCK);
-#endif
-
-		/*
-		 * Compute new randomized interval.  The intervals are
-		 * uniformly distributed on
-		 * [statint - statvar / 2, statint + statvar / 2],
-		 * and therefore have mean statint, giving a stathz
-		 * frequency clock.
-		 */
-		var = statvar;
-		do {
-			r = random() & (var - 1);
-		} while (r == 0);
-		newint = statmin + r;
-
-		/* setup new value and restart counter */
-		*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
-		*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
-		tmp = *(volatile u_int8_t *)DART_STARTC;
-
-#ifdef MULTIPROCESSOR
-	}
 #endif
 
 	return (1);
