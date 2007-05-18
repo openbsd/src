@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.29 2007/04/27 18:04:08 kurt Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.30 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -201,7 +201,7 @@ _thread_fd_init(void)
 	struct fs_flags *status_flags;
 
 	saved_errno = errno;
-	flags = calloc(_thread_init_fdtsize, sizeof *flags);
+	flags = calloc((size_t)_thread_init_fdtsize, sizeof *flags);
 	if (flags == NULL)
 		PANIC("Cannot allocate memory for flags table");
 

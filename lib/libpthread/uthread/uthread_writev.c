@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.12 2006/10/03 02:59:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.13 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <errno.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -51,7 +52,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 	int	blocking;
 	int	idx = 0;
 	int	type;
-	size_t num = 0;
+	ssize_t num = 0;
 	size_t cnt;
 	ssize_t n;
 	ssize_t	ret;
@@ -65,16 +66,20 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 	if (iovcnt > (int) (sizeof(liov) / sizeof(struct iovec))) {
 		/* Allocate memory for the local array: */
 		if ((p_iov = (struct iovec *)
-		    malloc(iovcnt * sizeof(struct iovec))) == NULL) {
+		    malloc((size_t)iovcnt * sizeof(struct iovec))) == NULL) {
 			/* Insufficient memory: */
 			errno = ENOMEM;
 			_thread_leave_cancellation_point();
 			return (-1);
 		}
+	} else if (iovcnt <= 0) {
+		errno = EINVAL;
+		_thread_leave_cancellation_point();
+		return (-1);
 	}
 
 	/* Copy the caller's array so that it can be modified locally: */
-	memcpy(p_iov,iov,iovcnt * sizeof(struct iovec));
+	memcpy(p_iov,iov,(size_t)iovcnt * sizeof(struct iovec));
 
 	/* Lock the file descriptor for write: */
 	if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) == 0) {
@@ -117,7 +122,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 				 * array entry where the short write
 				 * ended:
 				 */
-				cnt = n;
+				cnt = (size_t)n;
 				while (cnt > 0 && idx < iovcnt) {
 					/*
 					 * If the residual count exceeds
@@ -143,7 +148,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 						p_iov[idx].iov_len -= cnt;
 						p_iov[idx].iov_base =
 						    (char *)p_iov[idx].iov_base
-						    + cnt;
+						    + (ptrdiff_t)cnt;
 						cnt = 0;
 					}
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_stack.c,v 1.9 2006/09/26 14:50:37 kurt Exp $	*/
+/*	$OpenBSD: uthread_stack.c,v 1.10 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright 1999, David Leonard. All rights reserved.
  * <insert BSD-style license&disclaimer>
@@ -77,13 +77,13 @@ _thread_stack_alloc(base, size)
 	 */
 #if defined(MACHINE_STACK_GROWS_UP)
 	/* Red zone is the last page of the storage: */
-	stack->redzone = (void *)((caddr_t)stack->storage + (__ptrdiff_t)size);
+	stack->redzone = (void *)((caddr_t)stack->storage + (ptrdiff_t)size);
 	stack->base = stack->storage;
 	stack->size = size;
 #else
 	/* Red zone is the first page of the storage: */
 	stack->redzone = stack->storage; 
-	stack->base = (caddr_t)stack->redzone + (__ptrdiff_t)nbpg;
+	stack->base = (caddr_t)stack->redzone + (ptrdiff_t)nbpg;
 	stack->size = size;
 #endif
 	if (mprotect(stack->redzone, nbpg, PROT_NONE) == -1)

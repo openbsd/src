@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.36 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.37 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -350,11 +350,11 @@ _thread_init(void)
 	if (getrlimit(RLIMIT_NOFILE, &rl) != 0)
 		PANIC("getrlimit failed");
 
-	_thread_init_fdtsize = rl.rlim_cur;
-	_thread_max_fdtsize = rl.rlim_max;
+	_thread_init_fdtsize = (int)rl.rlim_cur;
+	_thread_max_fdtsize = (int)rl.rlim_max;
 
 	/* Allocate memory for the file descriptor table: */
-	_thread_fd_table = calloc(_thread_max_fdtsize,
+	_thread_fd_table = calloc((size_t)_thread_max_fdtsize,
 				  sizeof(struct fd_table_entry *));
 	if (_thread_fd_table == NULL) {
 		_thread_max_fdtsize = 0;
@@ -362,7 +362,7 @@ _thread_init(void)
 	}
 
 	/* Allocate memory for the pollfd table: */
-	_thread_pfd_table = calloc(_thread_max_fdtsize, sizeof(struct pollfd));
+	_thread_pfd_table = calloc((size_t)_thread_max_fdtsize, sizeof(struct pollfd));
 	if (_thread_pfd_table == NULL)
 		PANIC("Cannot allocate memory for pollfd table");
 

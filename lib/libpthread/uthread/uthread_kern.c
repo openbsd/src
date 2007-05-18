@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.34 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.35 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -622,7 +622,7 @@ _thread_kern_poll(int wait_reqd)
 			 * timeout:
 			 */
 			timeout_ms = ((pthread->wakeup_time.tv_sec - ts.tv_sec) *
-			    1000) + ((pthread->wakeup_time.tv_nsec - ts.tv_nsec) /
+			    1000) + (time_t)((pthread->wakeup_time.tv_nsec - ts.tv_nsec) /
 			    1000000);
 			/*
 			 * Don't allow negative timeouts:
@@ -1041,7 +1041,8 @@ void
 _dequeue_signals(void)
 {
 	char	bufr[128];
-	int	i, num;
+	int	i;
+	ssize_t num;
 
 	/*
 	 * Enter a loop to read and handle queued signals from the

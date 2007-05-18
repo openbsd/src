@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_write.c,v 1.12 2006/10/03 02:59:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_write.c,v 1.13 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <errno.h>
+#include <stddef.h>
 #include <unistd.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
@@ -58,9 +59,11 @@ write(int fd, const void *buf, size_t nbytes)
 	/* POSIX says to do just this: */
 	if (nbytes == 0)
 		ret = 0;
-
+	else if (nbytes > SSIZE_MAX) {
+		errno = EINVAL;
+		ret = -1;
 	/* Lock the file descriptor for write: */
-	else if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) == 0) {
+	} else if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) == 0) {
 		/* Get the read/write mode type: */
 		type = _thread_fd_table[fd]->status_flags->flags & O_ACCMODE;
 
@@ -81,7 +84,7 @@ write(int fd, const void *buf, size_t nbytes)
 		 */
 		while (ret == 0) {
 			/* Perform a non-blocking write syscall: */
-			n = _thread_sys_write(fd, (caddr_t)buf + num, 
+			n = _thread_sys_write(fd, (caddr_t)buf + (ptrdiff_t)num, 
 			    nbytes - num);
 
 			/* Check if one or more bytes were written: */
@@ -90,7 +93,7 @@ write(int fd, const void *buf, size_t nbytes)
 				 * Keep a count of the number of bytes
 				 * written:
 				 */
-				num += n;
+				num += (size_t)n;
 
 			/*
 			 * If performing a blocking write, check if the
@@ -117,7 +120,7 @@ write(int fd, const void *buf, size_t nbytes)
 				if (curthread->interrupted || curthread->closing_fd) {
 					if (num > 0) {
 						/* Return partial success: */
-						ret = num;
+						ret = (ssize_t)num;
 					} else {
 						/* Return an error: */
 						if (curthread->closing_fd)
@@ -143,7 +146,7 @@ write(int fd, const void *buf, size_t nbytes)
 			 */
 			} else if (n <= 0) {
 				if (num > 0)
-					ret = num;
+					ret = (ssize_t)num;
 				else
 					ret = n;
 				if (n == 0)                                                                            
@@ -152,7 +155,7 @@ write(int fd, const void *buf, size_t nbytes)
 			/* Check if the write has completed: */
 			} else if (num >= nbytes)
 				/* Return the number of bytes written: */
-				ret = num;
+				ret = (ssize_t)num;
 		}
 		}
 		_FD_UNLOCK(fd, FD_WRITE);

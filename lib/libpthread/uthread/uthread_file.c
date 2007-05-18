@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_file.c,v 1.12 2005/10/14 06:53:01 otto Exp $	*/
+/*	$OpenBSD: uthread_file.c,v 1.13 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -37,6 +37,7 @@
  * level too.
  *
  */
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,7 +77,7 @@ struct	file_lock {
  * structures. If there is a collision, a linear search of the
  * dynamic list of locks linked to each static lock is perfomed.
  */
-#define file_idx(_p)	((((u_long) _p) >> sizeof(void *)) % NUM_HEADS)
+#define file_idx(_p)	((int)((((uintptr_t) _p) >> sizeof(void *)) % NUM_HEADS))
 
 /*
  * Global array of file locks. The first lock for each hash bucket is

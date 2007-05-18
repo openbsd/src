@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sem.c,v 1.1 2002/01/18 22:07:27 fgsch Exp $	*/
+/*	$OpenBSD: uthread_sem.c,v 1.2 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
  * All rights reserved.
@@ -131,6 +131,7 @@ sem_destroy(sem_t *sem)
 	return retval;
 }
 
+/* ARGSUSED */
 sem_t *
 sem_open(const char *name, int oflag, ...)
 {
@@ -138,6 +139,7 @@ sem_open(const char *name, int oflag, ...)
 	return SEM_FAILED;
 }
 
+/* ARGSUSED */
 int
 sem_close(sem_t *sem)
 {
@@ -145,6 +147,7 @@ sem_close(sem_t *sem)
 	return -1;
 }
 
+/* ARGSUSED */
 int
 sem_unlink(const char *name)
 {

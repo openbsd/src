@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.23 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.24 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -128,7 +128,7 @@ _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 			 * that it will be ready to read when this signal
 			 * handler returns. 
 			 */
-			c = sig;
+			c = (char)sig;
 			_thread_sys_write(_thread_kern_pipe[1], &c, 1);
 			_sigq_check_reqd = 1;
 		} else {
@@ -166,6 +166,7 @@ _thread_clear_pending(int sig, pthread_t thread)
  * Process the given signal.   Returns 1 if the signal may be dispatched,
  * otherwise 0.   Signals MUST be defered when this function is called.
  */
+/* ARGSUSED */
 int
 _thread_sig_handle(int sig, struct sigcontext * scp)
 {

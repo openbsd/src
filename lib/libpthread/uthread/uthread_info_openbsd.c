@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.13 2007/05/01 18:16:37 kurt Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.14 2007/05/18 19:28:50 kurt Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -88,7 +88,7 @@ truncname(const char *name, int maxlen)
 
 	if (name == NULL)
 		name = "(null)";
-	len = strlen(name);
+	len = (int)strlen(name);
 	if (len > maxlen)
 		return name + len - maxlen;
 	else
@@ -416,6 +416,7 @@ _thread_dump_data(const void *addr, int len)
 {
 	int fd = -1;
 	unsigned char data[DUMP_BUFLEN];
+	const unsigned char hexdigits[] = "0123456789abcdef";
 
 	if (getenv("PTHREAD_DEBUG") != NULL)
 		fd = _thread_sys_open(_PATH_TTY, O_WRONLY | O_APPEND);
@@ -441,19 +442,19 @@ _thread_dump_data(const void *addr, int len)
 			}
 			addr = (char *)addr + 8;
 
-			snprintf(data, DUMP_BUFLEN, "%18p:   ", d);
+			snprintf((char *)data, DUMP_BUFLEN, "%18p:   ", d);
 			while (count--) {
 				if (isprint(*d))
 					*a++ = *d;
 				else
 					*a++ = '.';
-				*h++ = "0123456789abcdef"[(*d >> 4) & 0xf];
-				*h++ = "0123456789abcdef"[*d++ & 0xf];
+				*h++ = hexdigits[(*d >> 4) & 0xf];
+				*h++ = hexdigits[*d++ & 0xf];
 				*h++ = ' ';
 			}
 			*a++ = '\n';
 			*a = 0;
-			_thread_sys_write(fd, data, a - data);
+			_thread_sys_write(fd, data, (size_t)(a - data));
 		}
 		writestring(fd, "\n");
 		_thread_sys_close(fd);

@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_stackseg_np.c,v 1.4 2004/05/01 22:15:10 marc Exp $ */
+/* $OpenBSD: uthread_stackseg_np.c,v 1.5 2007/05/18 19:28:50 kurt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <pthread_np.h>
+#include <stddef.h>
 #include <unistd.h>
 
 #include <uvm/uvm_extern.h>
@@ -30,14 +31,14 @@ pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 	if (thread->stack) {
 		base = thread->stack->base;
 #if !defined(MACHINE_STACK_GROWS_UP)
-		base += thread->stack->size;
+		base += (ptrdiff_t)thread->stack->size;
 #endif
 		sinfo->ss_sp = base;
 		sinfo->ss_size = thread->stack->size;
 		sinfo->ss_flags = 0;
 		ret = 0;
 	} else if (thread == _thread_initial) {
-		pgsz = sysconf(_SC_PAGESIZE);
+		pgsz = (size_t)sysconf(_SC_PAGESIZE);
 		if (pgsz == (size_t)-1)
 			ret = EAGAIN;
 		else {

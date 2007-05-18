@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_priority_queue.c,v 1.4 2001/09/04 23:28:31 fgsch Exp $	*/
+/*	$OpenBSD: uthread_priority_queue.c,v 1.5 2007/05/18 19:28:50 kurt Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -89,12 +89,12 @@ _pq_alloc(pq_queue_t *pq, int minprio, int maxprio)
 	int ret = 0;
 	int prioslots = maxprio - minprio + 1;
 
-	if (pq == NULL)
+	if (pq == NULL || prioslots < 1)
 		ret = -1;
 
 	/* Create the priority queue with (maxprio - minprio + 1) slots: */
 	else if	((pq->pq_lists =
-	    (pq_list_t *) malloc(sizeof(pq_list_t) * prioslots)) == NULL)
+	    (pq_list_t *) malloc(sizeof(pq_list_t) * (size_t)prioslots)) == NULL)
 		ret = -1;
 
 	else {
