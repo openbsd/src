@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.252 2007/05/17 15:40:06 espie Exp $
+# $OpenBSD: pkg_add,v 1.253 2007/05/18 09:45:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -478,14 +478,6 @@ sub build_deptree
 	}
 }
 
-sub clue
-{
-	my $h = shift;
-	Warn "Even by looking in the dependency tree:\n";
-	Warn "\t", join(", ", keys %$h), "\n";
-}
-
-
 sub install_package
 {
 	my ($pkg, $state, @todo) = @_;
@@ -558,13 +550,13 @@ sub install_package
 	}
 	my $okay = 1;
 	for my $lib (@{$plist->{wantlib}}) {
-		my $extra = {};
-		if (!$handle->{solver}->lookup_library($state, $lib->{name}, $extra)) {
+		if (!$handle->{solver}->lookup_library($state, $lib->{name})) {
 		    	Warn "Can't install $pkg: lib not found ", $lib->{name}, "\n";
-			clue($extra) if $okay;
+			$handle->{solver}->dump if $okay;
 			$okay = 0;
 		}
 	}
+#	print "Didn't need to process: ", join(',', @{$handle->{solver}->{todo}}), "\n";
 	if (!$okay) {
 		$handle->close_now;
 		if (!$forced{libdepends}) {

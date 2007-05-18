@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.35 2007/05/17 15:40:06 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.36 2007/05/18 09:45:18 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -150,6 +150,12 @@ sub solve
 	    $self->solve_dependency($state, $dep);
 	}
 
+	# prepare for closure
+	my @todo = $self->dependencies;
+	$self->{todo} = \@todo;
+	$self->{done} = {};
+	$self->{known} = {};
+
 	return @{$self->{deplist}};
 }
 
@@ -162,6 +168,7 @@ sub dump
 	    print " (todo: ", join(',', @{$self->{deplist}}), ")" 
 	    	if @{$self->{deplist}} > 0;
 	    print "\n";
+	    print "Full dependency tree is ", join(',', keys %{$self->{done}}), "\n"	if %{$self->{done}};
 	}
 }
 
@@ -198,7 +205,7 @@ sub find_old_lib
 
 sub lookup_library
 {
-	my ($self, $state, $lib, $done) = @_;
+	my ($self, $state, $lib) = @_;
 
 	my $plist = $self->{plist};
 	my $dependencies = $self->{to_register};
@@ -207,6 +214,14 @@ sub lookup_library
 	if ($r) {
 	    print "found libspec $lib in $r\n" if $state->{very_verbose};
 	    return 1;
+	}
+	my $known = $self->{known};
+	$r = check_lib_spec($plist->localbase, $lib, $known);
+	if ($r) {
+		print "found libspec $lib in dependent package $r\n" if $state->{verbose};
+		delete $known->{$r};
+		$dependencies->{$r} = 1;
+		return 1;
 	}
 	if ($lib !~ m|/|) {
 
@@ -225,15 +240,15 @@ sub lookup_library
 			return 1;
 		}
     	}
-	# lookup through the full tree...
-	my @todo = keys %$dependencies;
-	while (my $dep = pop @todo) {
+	# lookup through the rest of the tree...
+	my $done = $self->{done};
+	while (my $dep = pop @{$self->{todo}}) {
 		require OpenBSD::RequiredBy;
 
 		next if $done->{$dep};
 		$done->{$dep} = 1;
 		for my $dep2 (OpenBSD::Requiring->new($dep)->list) {
-			push(@todo, $dep2) unless $done->{$dep2};
+			push(@{$self->{todo}}, $dep2) unless $done->{$dep2};
 		}
 		next if $dependencies->{$dep};
 		OpenBSD::SharedLibs::add_package_libs($dep);
@@ -241,6 +256,8 @@ sub lookup_library
 			print "found libspec $lib in dependent package $dep\n" if $state->{verbose};
 			$dependencies->{$dep} = 1;
 			return 1;
+		} else {
+			$known->{$dep} = 1;
 		}
 	}
 	
