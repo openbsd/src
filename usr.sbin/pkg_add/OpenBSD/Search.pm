@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.3 2007/05/14 11:31:10 espie Exp $
+# $OpenBSD: Search.pm,v 1.4 2007/05/18 13:22:06 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,6 +49,12 @@ sub new
 	my ($class, $pattern) = @_;
 	my @l = split /\|/, $pattern;
 	bless { patterns => \@l }, $class;
+}
+
+sub add_pkgpath_hint
+{
+	my ($self, $pkgpath) = @_;
+	$self->{pkgpath} = $pkgpath;
 }
 
 package OpenBSD::Search::Stem;

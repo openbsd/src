@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.36 2007/05/17 18:59:38 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.37 2007/05/18 13:22:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ sub new
 	} elsif ($baseurl =~ m/^src\:/i) {
 		require OpenBSD::PackageRepository::Source;
 
-		return OpenBSD::PackageRepository::Source->_new($baseurl);
+		return OpenBSD::PackageRepository::Source->_new($');
 	} elsif ($baseurl =~ m/^file\:/i) {
 		return OpenBSD::PackageRepository::Local->_new($');
 	} elsif ($baseurl =~ m/^inst\:/i) {
