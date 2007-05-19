@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.61 2007/05/19 21:11:02 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.62 2007/05/19 21:32:14 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -260,7 +260,7 @@ wi*	at pcmcia?
 
 dcphy*		at mii?		# Digital Clone PHYs
 amphy*		at mii?		# AMD 79C873 PHYs
-#exphy*		at mii?		# 3Com internal PHYs
+exphy*		at mii?		# 3Com internal PHYs
 inphy*		at mii?		# Intel 82555 PHYs
 #iophy*		at mii?		# Intel 82553 PHYs
 icsphy*		at mii?		# ICS1890 PHYs
@@ -271,7 +271,7 @@ nsphyter*	at mii?		# NS83843 PHYs
 #qsphy*		at mii?		# Quality Semi QS6612 PHYs
 #sqphy*		at mii?		# Seeq 8022[013] PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
-#tqphy*		at mii?		# TDK Semiconductor PHYs
+tqphy*		at mii?		# TDK Semiconductor PHYs
 #brgphy*	at mii?		# Broadcom 10/100/1000 PHYs
 bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
