@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.4 2007/05/18 13:22:06 espie Exp $
+# $OpenBSD: Search.pm,v 1.5 2007/05/19 09:45:33 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -16,6 +16,26 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 package OpenBSD::Search;
+sub match_locations
+{
+	my ($self, $o) = @_;
+	require OpenBSD::PackageLocation;
+
+	return map {OpenBSD::PackageLocation->new($o, $_)} $self->match($o);
+}
+
+# XXX this is not efficient
+sub filter_locations
+{
+	my $self = shift;
+	my @r = ();
+	while (my $loc = shift @_) {
+		if ($self->filter($loc->{name})) {
+			push(@r, $loc);
+		}
+	}
+	return @r;
+}
 
 package OpenBSD::Search::PkgSpec;
 our @ISA=(qw(OpenBSD::Search));
@@ -138,6 +158,21 @@ sub keep_most_recent
 	require OpenBSD::PackageName;
 	
 	return $class->new(\&OpenBSD::PackageName::keep_most_recent);
+}
+
+package OpenBSD::Search::FilterLocation;
+our @ISA=(qw(OpenBSD::Search));
+sub new
+{
+	my ($class, $code) = @_;
+
+	return bless {code => $code}, $class;
+}
+
+sub filter_locations
+{
+	my ($self, @l) = @_;
+	return &{$self->{code}}(@l);
 }
 
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.9 2007/05/19 09:18:55 espie Exp $
+# $OpenBSD: Installed.pm,v 1.10 2007/05/19 09:45:33 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -33,6 +33,17 @@ sub match
 	while (my $filter = (shift @filters)) {
 		last if @l == 0; # don't bother filtering empty list
 		@l = $filter->filter(@l);
+	}
+	return @l;
+}
+
+sub match_locations
+{
+	my ($self, $search, @filters) = @_;
+	my @l = $search->match_locations($self);
+	while (my $filter = (shift @filters)) {
+		last if @l == 0; # don't bother filtering empty list
+		@l = $filter->filter_locations(@l);
 	}
 	return @l;
 }
