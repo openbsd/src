@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.19 2007/05/18 16:35:02 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.20 2007/05/19 20:34:34 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -347,6 +347,20 @@ set_cpu_number(cpuid_t number)
 	}
 
 	ci->ci_alive = 1;
+}
+
+/*
+ * Notify the current process (p) that it has a signal pending,
+ * process as soon as possible.
+ */
+void
+signotify(struct proc *p)
+{
+	aston(p);
+#ifdef MULTIPROCESSOR
+	if (p->p_cpu != curcpu() && p->p_cpu != NULL)
+		m88k_send_ipi(CI_IPI_NOTIFY, p->p_cpu->ci_cpuid);
+#endif
 }
 
 /*
