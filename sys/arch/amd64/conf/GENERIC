@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.179 2007/05/18 01:21:03 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.180 2007/05/19 19:17:07 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -75,6 +75,7 @@ it2	at isa? port 0xd00
 viaenv*	at pci?			# VIA VT82C686A hardware monitor
 #viasio* at isa? port 0x2e flags 0x0000	# VIA VT1211 LPC Super I/O
 #viasio* at isa? port 0x4e flags 0x0000
+aps0	at isa? port 0x1600		# ThinkPad Active Protection System
 
 piixpm*	at pci?			# Intel PIIX PM
 iic*	at piixpm?
