@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.37 2007/05/18 13:22:06 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.38 2007/05/19 09:18:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -182,7 +182,7 @@ sub open
 
 sub find
 {
-	my ($repository, $name, $arch, $srcpath) = @_;
+	my ($repository, $name, $arch) = @_;
 	my $self = OpenBSD::PackageLocation->new($repository, $name, $arch);
 
 	return $self->openPackage;

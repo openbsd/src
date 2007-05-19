@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.14 2007/05/14 12:52:53 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.15 2007/05/19 09:18:55 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -34,10 +34,10 @@ sub add
 
 sub find
 {
-	my ($self, $pkgname, $arch, $srcpath) = @_;
+	my ($self, $pkgname, $arch) = @_;
 
 	for my $repo (@{$self->{list}}) {
-		my $pkg = $repo->find($pkgname, $arch, $srcpath);
+		my $pkg = $repo->find($pkgname, $arch);
 		return $pkg if defined $pkg;
 	}
 	return;

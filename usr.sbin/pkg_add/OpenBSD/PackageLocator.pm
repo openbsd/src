@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.69 2007/05/14 12:52:53 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.70 2007/05/19 09:18:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -56,11 +56,10 @@ sub find
 	my $class = shift;
 	local $_ = shift;
 	my $arch = shift;
-	my $srcpath = shift;
 
 	if ($_ eq '-') {
 		my $repository = OpenBSD::PackageRepository::Local::Pipe->_new('./');
-		my $package = $repository->find(undef, $arch, $srcpath);
+		my $package = $repository->find(undef, $arch);
 		return $package;
 	}
 	if (exists $packages{$_}) {
@@ -69,12 +68,12 @@ sub find
 	my $package;
 	if (m/\//) {
 		my ($repository, undef, $pkgname) = path_parse($_);
-		$package = $repository->find($pkgname, $arch, $srcpath);
+		$package = $repository->find($pkgname, $arch);
 		if (defined $package) {
 			$pkgpath->add($repository);
 		}
 	} else {
-		$package = $pkgpath->find($_, $arch, $srcpath);
+		$package = $pkgpath->find($_, $arch);
 	}
 	$packages{$_} = $package if defined($package);
 	return $package;
