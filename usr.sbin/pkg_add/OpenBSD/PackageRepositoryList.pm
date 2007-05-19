@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.15 2007/05/19 09:18:55 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.16 2007/05/19 09:50:31 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -59,6 +59,18 @@ sub match
 	my ($self, @search) = @_;
 	for my $repo (@{$self->{list}}) {
 		my @l = $repo->match(@search);
+		if (@l > 0) {
+			return @l;
+		}
+	}
+	return ();
+}
+
+sub match_locations
+{
+	my ($self, @search) = @_;
+	for my $repo (@{$self->{list}}) {
+		my @l = $repo->match_locations(@search);
 		if (@l > 0) {
 			return @l;
 		}
