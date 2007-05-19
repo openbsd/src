@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.37 2007/05/18 12:18:33 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.38 2007/05/19 23:40:46 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -170,6 +170,21 @@ sub dump
 	    	if @{$self->{deplist}} > 0;
 	    print "\n";
 	    print "Full dependency tree is ", join(',', keys %{$self->{done}}), "\n"	if %{$self->{done}};
+	}
+}
+
+sub register_dependencies
+{
+	my $self = shift;
+
+	require OpenBSD::RequiredBy;
+	my $pkgname = $self->pkgname;
+
+	my $r = OpenBSD::Requiring->new($pkgname);
+
+	for my $dep ($self->dependencies) {
+		OpenBSD::RequiredBy->new($dep)->add($pkgname);
+		$r->add($dep);
 	}
 }
 
