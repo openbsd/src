@@ -645,6 +645,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ieeefp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/internal_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/isa_machdep.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/kcore.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/lock.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/machdep.ph

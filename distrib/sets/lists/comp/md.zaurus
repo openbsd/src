@@ -28,6 +28,7 @@
 ./usr/include/arm/ieeefp.h
 ./usr/include/arm/internal_types.h
 ./usr/include/arm/isa_machdep.h
+./usr/include/arm/kcore.h
 ./usr/include/arm/limits.h
 ./usr/include/arm/lock.h
 ./usr/include/arm/machdep.h
