@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.60 2007/05/19 17:30:30 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.61 2007/05/19 21:11:02 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -231,7 +231,7 @@ scsibus* at siop?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
 #scsibus* at ahd?
 
-#em*	at pci?			# Intel Pro/1000 ethernet
+em*	at pci?			# Intel Pro/1000 ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
 #txp*	at pci?			# 3com 3CR990
 #epic*	at pci?			# SMC EPIC/100 ethernet
