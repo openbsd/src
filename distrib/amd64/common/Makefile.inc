@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2007/04/25 21:40:35 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2007/05/19 15:52:31 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,13 +21,13 @@ VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 BOOT=		${DESTDIR}/usr/mdec/boot
-FLOPPYSIZE?=	144
+FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy3
 
 all:	${FS}
 
 ${FS}:	bsd.gz
-	dd if=/dev/zero of=${REALIMAGE} bs=10k count=${FLOPPYSIZE}
+	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FLOPPYSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} ${FLOPPYTYPE}
 	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
