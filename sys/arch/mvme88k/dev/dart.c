@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.48 2006/05/08 14:36:10 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.49 2007/05/19 20:35:20 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -769,11 +769,14 @@ dartrint(struct dartsoftc *sc, int port)
 		} else {
 			if (sr & (FRERR|PERR|ROVRN)) { /* errors */
 				if (sr & ROVRN)
-					printf("dart0: receiver overrun port %c\n", 'A' + port);
+					printf("%s: receiver overrun port %c\n",
+					    sc->sc_dev.dv_xname, 'A' + port);
 				if (sr & FRERR)
-					printf("dart0: framing error port %c\n", 'A' + port);
+					printf("%s: framing error port %c\n",
+					    sc->sc_dev.dv_xname, 'A' + port);
 				if (sr & PERR)
-					printf("dart0: parity error port %c\n", 'A' + port);
+					printf("%s: parity error port %c\n",
+					    sc->sc_dev.dv_xname, 'A' + port);
 				/* clear error state */
 				dart_write(sc, ptaddr + DART_CRA, ERRRESET);
 			} else {
@@ -845,7 +848,7 @@ dartintr(void *arg)
 		 * ready change on a disabled port). This should not happen,
 		 * but we have to claim the interrupt anyway.
 		 */
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && !defined(MULTIPROCESSOR)
 		printf("dartintr: spurious interrupt, isr %x imr %x\n",
 		    isr, imr);
 #endif
