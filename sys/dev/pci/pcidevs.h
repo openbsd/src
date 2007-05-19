@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1234 2007/05/03 10:12:02 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1236 2007/05/19 16:28:56 moritz Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -982,6 +982,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV280_SE	0x5d44		/* Radeon 9200 SE */
 #define	PCI_PRODUCT_ATI_RADEON_X800_GTO	0x5d4f		/* Radeon X800 GTO */
 #define	PCI_PRODUCT_ATI_RADEON_X800_GTO_S	0x5d6f		/* Radeon X800 GTO Sec */
+#define	PCI_PRODUCT_ATI_RADEON_X700_PCIE	0x5e4d		/* Radeon X700 PCIE */
+#define	PCI_PRODUCT_ATI_RADEON_X700_PCIE_S	0x5e6d		/* Radeon X700 PCIE Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X700_SE	0x5e4f		/* Radeon X700 SE */
 #define	PCI_PRODUCT_ATI_RADEON_X700_SE_S	0x5e6f		/* Radeon X700 SE Sec */
 #define	PCI_PRODUCT_ATI_RS100_PCI	0x700f		/* RS100 PCI */
@@ -2453,6 +2455,7 @@
 #define	PCI_PRODUCT_MARVELL_88SX6081	0x6081		/* 88SX6081 SATA */
 #define	PCI_PRODUCT_MARVELL_88SE6101	0x6101		/* 88SE6101 IDE */
 #define	PCI_PRODUCT_MARVELL_SATA_2	0x6121		/* SATA */
+#define	PCI_PRODUCT_MARVELL_88SE6145	0x6145		/* 88SE6145 SATA */
 
 /* Matrox products */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (Atlas) */
