@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.61 2007/05/18 19:08:16 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.62 2007/05/19 01:28:15 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ int	sectorsize;		/* bytes/sector */
 int	realsectorsize;		/* bytes/sector in hardware */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
-int	maxfrgspercg = INT_MAX;	/* maximum fragments per cylinder group */
+int	maxblkspercg = INT_MAX;	/* maximum blocks per cylinder group */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	reqopt = -1;		/* opt preference has not been specified */
@@ -205,9 +205,9 @@ main(int argc, char *argv[])
 				fatal("block size is %s: %s", errstr, optarg);
 			break;
 		case 'c':
-			maxfrgspercg = strtonum(optarg, 1, INT_MAX, &errstr);
+			maxblkspercg = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
-				fatal("fragments per cylinder group is %s: %s",
+				fatal("blocks per cylinder group is %s: %s",
 				    errstr, optarg);
 			break;
 		case 'e':
@@ -668,7 +668,7 @@ usage(void)
 	} else {
 	    fprintf(stderr,
 	        "usage: %s [-Nq] [-b block-size] "
-		"[-c fragments-per-cylinder-group] [-e maxbpg]\n"
+		"[-c blocks-per-cylinder-group] [-e maxbpg]\n"
 		"\t[-f frag-size] [-g avgfilesize] [-h avgfpdir] [-i bytes]\n"
 		"\t[-m free-space] [-O filesystem-format] [-o optimization]\n"
 		"\t[-S sector-size] [-s size] [-t fstype] special\n",
