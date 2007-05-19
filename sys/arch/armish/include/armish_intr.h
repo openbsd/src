@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_intr.h,v 1.3 2007/05/15 05:26:44 miod Exp $ */
+/*	$OpenBSD: armish_intr.h,v 1.4 2007/05/19 15:47:18 miod Exp $ */
 /*	$NetBSD: i80321_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /*
@@ -95,7 +95,22 @@ void *i80321_intr_establish(int irqno, int level, int (*func)(void *),
 void i80321_intr_disestablish(void *cookie);
 const char *i80321_intr_string(void *cookie);
 
-#define splassert(wantipl) do { /* nada */ } while (0)
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void i80321_splassert_check(int, const char *);
+#define splassert(__wantipl) do {				\
+	if (splassert_ctl > 0) {				\
+		i80321_splassert_check(__wantipl, __func__);	\
+	}							\
+} while (0)
+#else
+#define	splassert(wantipl)	do { /* nothing */ } while (0)
+#endif
 
 #endif /* ! _LOCORE */
 
