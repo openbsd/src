@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.32 2007/03/20 20:59:53 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.33 2007/05/19 10:20:57 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -53,6 +53,7 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 #include <sys/evcount.h>
+#include <machine/atomic.h>
 
 #define PPC_NIRQ	66
 #define PPC_CLK_IRQ	64
@@ -66,7 +67,6 @@ void clearsoftnet(void);
 int  splsoftnet(void);
 
 void do_pending_int(void);
-
 
 extern int imask[IPL_NUM];
 
@@ -118,19 +118,7 @@ spllower(int newcpl)
 	return(oldcpl);
 }
 
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-static __inline void
-set_sint(int pending)
-{
-	struct cpu_info *ci = curcpu();
-	int	msrsave;
-
-	__asm__ ("mfmsr %0" : "=r"(msrsave));
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
-	ci->ci_ipending |= pending;
-	__asm__ volatile ("mtmsr %0" :: "r"(msrsave));
-}
+#define	set_sint(p)	atomic_setbits_int(&curcpu()->ci_ipending, p)
 
 #define	SINT_CLOCK	0x10000000
 #define	SINT_NET	0x20000000
