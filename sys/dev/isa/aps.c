@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.14 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -158,14 +158,14 @@ aps_match(struct device *parent, void *match, void *aux)
 	 */
 	for (i = 0; i < 10; i++) {
 		cr = bus_space_read_1(iot, ioh, APS_STATE);
-		if (cr > 0 && cr < 4)
+		if (cr > 0 && cr < 6)
 			break;
 		delay(5 * 1000);
 	}
 	
 	bus_space_unmap(iot, ioh, APS_ADDR_SIZE);
 	DPRINTF(("aps: state register 0x%x\n", cr));
-	if (cr < 1 || cr > 3) {
+	if (cr < 1 || cr > 5) {
 		DPRINTF(("aps0: unsupported state %d\n", cr));
 		return (0);
 	}
