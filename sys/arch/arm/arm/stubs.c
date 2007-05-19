@@ -1,4 +1,4 @@
-/*	$OpenBSD: stubs.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: stubs.c,v 1.3 2007/05/19 15:49:05 miod Exp $	*/
 /*	$NetBSD: stubs.c,v 1.14 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -47,11 +47,15 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/msgbuf.h>
+#include <sys/exec.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #include <uvm/uvm_extern.h>
+#include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/bootconfig.h>
 #include <machine/pcb.h>
+#include <arm/kcore.h>
 #include <arm/machdep.h>
 
 extern dev_t dumpdev;
@@ -62,7 +66,7 @@ extern dev_t dumpdev;
 u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
-
+cpu_kcore_hdr_t cpu_kcore_hdr;
 struct pcb dumppcb;
 
 /*
@@ -79,7 +83,7 @@ void
 dumpconf()
 {
 	const struct bdevsw *bdev;
-	int nblks;	/* size of dump area */
+	int block, nblks;
 
 	if (dumpdev == NODEV)
 		return;
@@ -99,10 +103,17 @@ dumpconf()
 		dumplo = ctod(1);
 
 	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+	if (dumpsize + 1 > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo) - 1;
+	if (dumplo < nblks - ctod(dumpsize) - 1)
+		dumplo = nblks - ctod(dumpsize) - 1;
+
+	for (block = 0; block < bootconfig.dramblocks; block++) {
+		cpu_kcore_hdr.ram_segs[block].start =
+		    bootconfig.dram[block].address;
+		cpu_kcore_hdr.ram_segs[block].size =
+		    ptoa(bootconfig.dram[block].pages);
+	}
 }
 
 /* This should be moved to machdep.c */
@@ -126,6 +137,9 @@ dumpsys()
 	int block;
 	int len;
 	vaddr_t dumpspace;
+	kcore_seg_t *kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	char dump_hdr[dbtob(1)];	/* assumes header fits in one block */
 
 	/* Save registers. */
 	savectx(&dumppcb);
@@ -160,9 +174,21 @@ dumpsys()
 		return;
 	}
 
-	error = 0;
-	len = 0;
+	/* Setup the dump header */
+	kseg_p = (kcore_seg_t *)dump_hdr;
+	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
+	bzero(dump_hdr, sizeof(dump_hdr));
 
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = sizeof(dump_hdr) - ALIGN(sizeof(*kseg_p));
+	*chdr_p = cpu_kcore_hdr;
+
+	error = (*bdev->d_dump)(dumpdev, blkno++, (caddr_t)dump_hdr,
+	    sizeof(dump_hdr));
+	if (error != 0)
+		goto abort;
+
+	len = 0;
 	for (block = 0; block < bootconfig.dramblocks && error == 0; ++block) {
 		addr = bootconfig.dram[block].address;
 		for (;addr < (bootconfig.dram[block].address
@@ -183,6 +209,7 @@ dumpsys()
 		}
 	}
 
+abort:
 	switch (error) {
 	case ENXIO:
 		printf("device bad\n");

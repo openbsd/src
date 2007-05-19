@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2007/05/15 01:56:47 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2007/05/19 15:49:05 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ struct device *bootdv = NULL;
 extern char *boot_file;
 
 void diskconf(void);
+void dumpconf(void);
 
 /*
  * Now that we are fully operational, we can checksum the
@@ -102,9 +103,7 @@ diskconf()
 	else
 		printf("boot device: %s\n", bootdv->dv_xname);
 	setroot(bootdv, 0, RB_USERREQ);
-#if 0
 	dumpconf();
-#endif
 }
 
 

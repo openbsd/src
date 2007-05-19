@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 2007/05/04 19:30:54 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 2007/05/19 15:49:05 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -86,9 +86,7 @@ diskconf()
 
 	printf("boot_file: '%s'\n", boot_file);
 	setroot(bootdv, 0, RB_USERREQ);
-#if 0
 	dumpconf();
-#endif
 }
 
 

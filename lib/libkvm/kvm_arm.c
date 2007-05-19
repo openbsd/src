@@ -1,5 +1,20 @@
-/*	$OpenBSD: kvm_arm.c,v 1.4 2006/03/20 15:11:48 mickey Exp $	*/
-
+/*	$OpenBSD: kvm_arm.c,v 1.5 2007/05/19 15:49:04 miod Exp $	*/
+/*
+ * Copyright (c) 2006 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice, this permission notice, and the disclaimer below
+ * appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
  * Copyright (C) 1996 TooLs GmbH.
@@ -36,13 +51,19 @@
  */
 
 #include <sys/param.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 
+#include <unistd.h>
 #include <stdlib.h>
-#include <db.h>
-#include <limits.h>
+#include <nlist.h>
 #include <kvm.h>
 
+#include <db.h>
+
 #include "kvm_private.h"
+
+#include <arm/kcore.h>
 
 void
 _kvm_freevtop(kvm_t *kd)
@@ -59,16 +80,53 @@ _kvm_initvtop(kvm_t *kd)
 	return (0);
 }
 
+/*
+ * Translate a kernel virtual address to a physical address by walking
+ * the kernels page table.
+ */
+
 int
 _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
-	_kvm_err(kd, 0, "vatop not yet implemented!");
+	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+
+	if (ISALIVE(kd)) {
+		_kvm_err(kd, 0, "vatop called in live kernel!");
+		return (0);
+	}
+
+	/*
+	 * This relies upon the kernel text and data being contiguous
+	 * in the first memory segment.
+	 * Other virtual addresses are not reachable yet.
+	 */
+
+	if (va >= cpup->kernelbase + cpup->kerneloffs &&
+	    va < cpup->kernelbase + cpup->kerneloffs + cpup->staticsize) {
+		*pa = (va - cpup->kernelbase) +
+		    (paddr_t)cpup->ram_segs[0].start;
+		return (int)(PAGE_SIZE - (va & PAGE_MASK));
+	}
+
+	_kvm_err(kd, 0, "kvm_vatop: va %x unreachable", va);
 	return (0);
 }
 
 off_t
 _kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
-	_kvm_err(kd, 0, "pa2off not yet implemented!");
-	return (0);
+	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+	phys_ram_seg_t *mp = cpup->ram_segs;
+	off_t off = 0;
+	int block;
+
+	for (block = 0; block < NPHYS_RAM_SEGS; block++, mp++) {
+		if (pa >= mp->start && pa < mp->start + mp->size)
+			return (kd->dump_off + off +
+			    (off_t)(pa - (paddr_t)mp->start));
+		off += (off_t)mp->size;
+	}
+	
+	_kvm_err(kd, 0, "not a physical address: %x", pa);
+	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_machdep.c,v 1.9 2006/08/01 22:22:20 kettenis Exp $ */
+/*	$OpenBSD: armish_machdep.c,v 1.10 2007/05/19 15:49:05 miod Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -89,6 +89,7 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -106,6 +107,7 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <arm/kcore.h>
 #include <arm/undefined.h>
 #include <arm/machdep.h>
 
@@ -340,6 +342,7 @@ u_int
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;
+	extern cpu_kcore_hdr_t cpu_kcore_hdr;
 	int loop;
 	int loop1;
 	u_int l1pagetable;
@@ -448,7 +451,7 @@ initarm(void *arg)
 	 * array.
 	 *
 	 * The kernel page directory must be on a 16K boundary.  The page
-	 * tables must be on 4K bounaries.  What we do is allocate the
+	 * tables must be on 4K boundaries.  What we do is allocate the
 	 * page directory on the first 16K boundary that we encounter, and
 	 * the page tables on 4K boundaries otherwise.  Since we allocate
 	 * at least 3 L2 page tables, we are guaranteed to encounter at
@@ -562,8 +565,10 @@ initarm(void *arg)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-//	pmap_link_l2pt(l1pagetable, IQ80321_IOPXS_VBASE,
-//	    &kernel_pt_table[KERNEL_PT_IOPXS]);
+#if 0
+	pmap_link_l2pt(l1pagetable, IQ80321_IOPXS_VBASE,
+	    &kernel_pt_table[KERNEL_PT_IOPXS]);
+#endif
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
@@ -576,17 +581,28 @@ initarm(void *arg)
 	/* Now we fill in the L2 pagetable for the kernel static code/data
 	 * and the symbol table. */
 	{
-		extern char etext[], _end[];
+		extern char etext[];
+#ifdef VERBOSE_INIT_ARM
+		extern char _end[];
+#endif
 		size_t textsize = (u_int32_t) etext - KERNEL_TEXT_BASE;
 		size_t totalsize = esym - KERNEL_TEXT_BASE;
 		u_int logical;
-printf("kernelsize text %x total %x end %xesym %x\n", textsize, totalsize,
- _end, esym);
+
+#ifdef VERBOSE_INIT_ARM
+		printf("kernelsize text %x total %x end %xesym %x\n",
+		    textsize, totalsize, _end, esym);
+#endif
 
 		textsize = round_page(textsize);
 		totalsize = round_page(totalsize);
 		
 		logical = 0x00200000;	/* offset of kernel in RAM */
+
+		/* Update dump information */
+		cpu_kcore_hdr.kernelbase = KERNEL_BASE;
+		cpu_kcore_hdr.kerneloffs = logical;
+		cpu_kcore_hdr.staticsize = totalsize;
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
@@ -658,8 +674,10 @@ printf("kernelsize text %x total %x end %xesym %x\n", textsize, totalsize,
 		free_pages =
 		    (physical_freeend - physical_freestart) / PAGE_SIZE;
 	}
+#ifdef VERBOSE_INIT_ARM
 	printf("physical_freestart %x end %x\n", physical_freestart,
 	    physical_freeend);
+#endif
 
 	/* be a client to all domains */
 	cpu_domains(0x55555555);
@@ -749,6 +767,10 @@ printf("kernelsize text %x total %x end %xesym %x\n", textsize, totalsize,
 #endif
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+
+	/* Update dump information */
+	cpu_kcore_hdr.pmap_kernel_l1 = (u_int32_t)pmap_kernel()->pm_l1;
+	cpu_kcore_hdr.pmap_kernel_l2 = (u_int32_t)&(pmap_kernel()->pm_l2);
 
 	/* Setup the IRQ system */
 #ifdef VERBOSE_INIT_ARM

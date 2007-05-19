@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.15 2007/04/10 16:43:34 miod Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.16 2007/05/19 15:49:06 miod Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
+#include <arm/kcore.h>
 #include <arm/undefined.h>
 #include <arm/machdep.h>
  
@@ -353,6 +354,7 @@ u_int
 initarm(bootargs)
 	void *bootargs;
 {
+	extern cpu_kcore_hdr_t cpu_kcore_hdr;
 	struct ebsaboot *bootinfo = bootargs;
 	int loop;
 	int loop1;
@@ -585,6 +587,11 @@ initarm(bootargs)
 		
 		textsize = round_page(textsize);
 		totalsize = round_page(totalsize);
+
+		/* Update dump information */
+		cpu_kcore_hdr.kernelbase = KERNEL_BASE;
+		cpu_kcore_hdr.kerneloffs = 0;
+		cpu_kcore_hdr.staticsize = totalsize;
 
 		logical = pmap_map_chunk(l1pagetable, KERNEL_BASE,
 		    physical_start, textsize,
@@ -863,6 +870,10 @@ initarm(bootargs)
 #endif
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+
+	/* Update dump information */
+	cpu_kcore_hdr.pmap_kernel_l1 = (u_int32_t)pmap_kernel()->pm_l1;
+	cpu_kcore_hdr.pmap_kernel_l2 = (u_int32_t)&(pmap_kernel()->pm_l2);
 
 	/* Setup the IRQ system */
 #ifdef VERBOSE_INIT_ARM
