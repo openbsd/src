@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.31 2007/05/19 20:33:50 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.32 2007/05/19 20:50:06 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -483,7 +483,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		if (cpu != master_cpu) {
 			if (++problems >= 10) {
 				printf("cpu%d: interrupt pin won't clear, "
-				    "disabling processor\n");
+				    "disabling processor\n", cpu);
 				set_psr(get_psr() | PSR_IND);
 				for (;;) ;
 			}
