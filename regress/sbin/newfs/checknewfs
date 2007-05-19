@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: checknewfs,v 1.1 2007/04/18 10:18:23 otto Exp $
+#	$OpenBSD: checknewfs,v 1.2 2007/05/19 19:11:08 otto Exp $
 # Written by Otto Moerbeek, 2007,  Public domain
 
 
@@ -15,13 +15,18 @@ dotest() {
 	dd if=/dev/prandom of=$image bs=512 count=$1 2>/dev/null &&
 	vnconfig svnd0 $image &&
 	disklabel -w -r svnd0 $2 &&
-	newfs $3 /dev/rsvnd0a &&
-	fsck -nf /dev/svnd0a | fgrep SALVAGE
-	if [ $? == 0 ]; then
+	newfs $3 /dev/rsvnd0a
+	if [ $? != 0 ]; then
 		ret=$(($ret + 1))
 		echo TEST $1 $2 \"$3\" failed
 	else
-		echo TEST $1 $2 \"$3\" OK
+		(fsck -nf /dev/svnd0a | fgrep SALVAGE)
+		if [ $? == 0 ]; then
+			ret=$(($ret + 1))
+			echo TEST $1 $2 \"$3\" failed
+		else
+			echo TEST $1 $2 \"$3\" OK
+		fi
 	fi
 	echo ==========================
 	if [ $clean = 1 ]; then
@@ -41,6 +46,7 @@ if [ $# == 0 ]; then
 	dotest 5760 floppy288 "-m 0 -o space -i 524288 -c 5761" 
 	dotest 2880 floppy3 "-m 0 -o space -i 81920"
 	dotest 2880 floppy3 "-m 0 -o space -i 81920 -c 2880"
+	dotest 2880 floppy3 "-m 0 -o space -i 524288 -c 2880"
 else
 	clean=0
 	dotest "${@}"
