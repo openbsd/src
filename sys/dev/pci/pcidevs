@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1235 2007/05/08 06:27:38 robert Exp $
+$OpenBSD: pcidevs,v 1.1236 2007/05/19 16:28:56 moritz Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -977,6 +977,8 @@ product ATI RADEON_M9PLUS	0x5c63	Radeon Mobility 9200 (M9+)
 product ATI RADEON_RV280_SE	0x5d44	Radeon 9200 SE
 product ATI RADEON_X800_GTO	0x5d4f	Radeon X800 GTO
 product ATI RADEON_X800_GTO_S	0x5d6f	Radeon X800 GTO Sec
+product ATI RADEON_X700_PCIE	0x5e4d	Radeon X700 PCIE
+product ATI RADEON_X700_PCIE_S	0x5e6d	Radeon X700 PCIE Sec
 product ATI RADEON_X700_SE	0x5e4f  Radeon X700 SE
 product ATI RADEON_X700_SE_S	0x5e6f  Radeon X700 SE Sec
 product ATI RS100_PCI		0x700f	RS100 PCI
@@ -2448,6 +2450,7 @@ product MARVELL 88SX6080	0x6080	88SX6080 SATA
 product MARVELL 88SX6081	0x6081	88SX6081 SATA
 product MARVELL 88SE6101	0x6101	88SE6101 IDE
 product MARVELL SATA_2		0x6121	SATA
+product MARVELL 88SE6145	0x6145	88SE6145 SATA
 
 /* Matrox products */
 product MATROX ATLAS		0x0518	MGA PX2085 (Atlas)
