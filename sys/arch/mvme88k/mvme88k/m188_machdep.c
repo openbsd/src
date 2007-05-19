@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.29 2007/05/18 16:38:29 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.30 2007/05/19 17:03:49 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -151,14 +151,9 @@ void	m188_startup(void);
  */
 
 /*
- * interrupt status register for each CPU.
+ * Copy of the interrupt enable register for each CPU.
  */
-unsigned int *volatile int_mask_reg[] = {
-	(unsigned int *)MVME188_IEN0,
-	(unsigned int *)MVME188_IEN1,
-	(unsigned int *)MVME188_IEN2,
-	(unsigned int *)MVME188_IEN3
-};
+unsigned int int_mask_reg[] = { 0, 0, 0, 0 };
 
 unsigned int m188_curspl[] = {0, 0, 0, 0};
 
@@ -283,7 +278,7 @@ m188_getipl(void)
 u_int
 m188_setipl(u_int level)
 {
-	u_int mask, curspl;
+	u_int curspl, mask;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 	int cpu = ci->ci_cpuid;
@@ -300,12 +295,16 @@ m188_setipl(u_int level)
 	mask |= IPI_BIT(cpu);
 #endif
 
-	*int_mask_reg[cpu] = mask;
+	*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
 	m188_curspl[cpu] = level;
 
 #ifdef MULTIPROCESSOR
-	/* need to resend myself the pending ipis */
-	if (ci->ci_ipi != 0)
+	/*
+	 * If we have pending IPIs and we are lowering the spl, inflict
+	 * ourselves an IPI trap so that we have a chance to process this
+	 * now.
+	 */
+	if (level < curspl && ci->ci_ipi != 0 && ci->ci_intrdepth <= 1)
 		*(volatile u_int32_t *)MVME188_SETSWI = IPI_BIT(cpu);
 #endif
 
@@ -332,14 +331,8 @@ m188_raiseipl(u_int level)
 		mask |= IPI_BIT(cpu);
 #endif
 
-		*int_mask_reg[cpu] = mask;
+		*(u_int32_t *)MVME188_IEN(cpu) = int_mask_reg[cpu] = mask;
 		m188_curspl[cpu] = level;
-
-#ifdef MULTIPROCESSOR
-		/* need to resend myself the pending ipis */
-		if (ci->ci_ipi != 0)
-			*(volatile u_int32_t *)MVME188_SETSWI = IPI_BIT(cpu);
-#endif
 	}
 	return curspl;
 }
@@ -350,6 +343,9 @@ void
 m188_send_ipi(int ipi, cpuid_t cpu)
 {
 	struct cpu_info *ci = &m88k_cpus[cpu];
+
+	if (ci->ci_ipi & ipi)
+		return;
 
 	atomic_setbits_int(&ci->ci_ipi, ipi);
 	*(volatile u_int32_t *)MVME188_SETSWI = IPI_BIT(cpu);
@@ -440,7 +436,12 @@ const unsigned int obio_vec[32] = {
 void
 m188_ext_int(u_int v, struct trapframe *eframe)
 {
+#ifdef MULTIPPROCESSOR
+	struct cpu_info *ci = curcpu();
+	int cpu = ci->ci_cpuid;
+#else
 	int cpu = cpu_number();
+#endif
 	unsigned int cur_mask, ign_mask;
 	unsigned int level, old_spl;
 	struct intrhand *intr;
@@ -467,9 +468,21 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		 * Spurious interrupts - may be caused by debug output clearing
 		 * DUART interrupts.
 		 */
+#ifdef MULTIPROCESSOR
+		if (cpu != master_cpu) {
+			if (++problems >= 10) {
+				printf("cpu%d: interrupt pin won't clear, "
+				    "disabling processor\n");
+				set_psr(get_psr() | PSR_IND);
+				for (;;) ;
+			}
+		}
+#endif
 		flush_pipeline();
 		goto out;
 	}
+
+	uvmexp.intrs++;
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -478,11 +491,11 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	 * make sure that if we get an IPI, it's really for us and
 	 * no other processor.
 	 */
-	if (IPI_MASK & cur_mask) {
+	if (cur_mask & IPI_MASK) {
 		*(volatile u_int32_t *)MVME188_CLRSWI = cur_mask & IPI_MASK;
+		cur_mask &= ~IPI_MASK;
 	}
 #endif
-	uvmexp.intrs++;
 
 	/*
 	 * We want to service all interrupts marked in the IST register
@@ -491,8 +504,9 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	 * priority.
 	 */
 	do {
-		level = safe_level(cur_mask & ~IPI_MASK, old_spl);
+		level = safe_level(cur_mask, old_spl);
 		m188_setipl(level);
+
 		if (unmasked == 0) {
 			set_psr(get_psr() & ~PSR_IND);
 			unmasked = 1;
@@ -502,24 +516,14 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		/*
 		 * Handle IPIs first.
 		 */
-		if (IPI_MASK & cur_mask) {
-			cur_mask &= ~IPI_MASK;
+		m188_ipi_handler(eframe);
 
-			m188_ipi_handler(eframe);
-
-			if (cur_mask == 0)
-				break;
-		}
+		if (cur_mask == 0)
+			break;
 #endif
+
 		/* generate IACK and get the vector */
 
-		/*
-		 * This is tricky.  If you don't catch all the
-		 * interrupts, you die. Game over. Insert coin...
-		 * XXX smurph
-		 */
-
-		/* find the first bit set in the current mask */
 		intbit = ff1(cur_mask);
 		if (OBIO_INTERRUPT_MASK & (1 << intbit)) {
 			vec = obio_vec[intbit];

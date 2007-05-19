@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.29 2007/05/14 17:00:40 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.30 2007/05/19 17:03:47 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -58,11 +58,13 @@
  */
 
 /* per-processor interrupt enable registers */
+#define	MVME188_IENBASE	0xfff84000
 #define MVME188_IEN0	0xfff84004	/* interrupt enable CPU 0 */
 #define MVME188_IEN1	0xfff84008	/* interrupt enable CPU 1 */
 #define MVME188_IEN2	0xfff84010	/* interrupt enable CPU 2 */
 #define MVME188_IEN3	0xfff84020	/* interrupt enable CPU 3 */
 #define	MVME188_IENALL	0xfff8403c	/* simultaneous write */
+#define	MVME188_IEN(cpu)	(MVME188_IENBASE + (4 << (cpu)))
 
 #define MVME188_IST	0xfff84040 	/* interrupt status register */
 
@@ -161,7 +163,7 @@
 
 /* groups by interrupt levels */
 
-#define LVL7			(IRQ_ABORT | IRQ_ACF | IRQ_VME7 | IRQ_SF)
+#define LVL7			(IRQ_ABORT | IRQ_ACF /* | IRQ_VME7 */ | IRQ_SF)
 #define LVL6			(IRQ_VME6)
 #define LVL5			(IRQ_VME5 | IRQ_DTI | IRQ_CIOI)
 #define LVL4			(IRQ_VME4)
@@ -171,7 +173,7 @@
 #define LVL0			(0x0)
 
 /* interrupts we want to process on the master CPU only */
-#define SLAVE_MASK		(HW_FAILURE_MASK | OBIO_INTERRUPT_MASK)
+#define SLAVE_MASK (HW_FAILURE_MASK | OBIO_INTERRUPT_MASK | VME_INTERRUPT_MASK)
 
 #define MASK_LVL_0		(LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2 | LVL1)
 #define MASK_LVL_1		(LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2)
@@ -184,7 +186,7 @@
 
 #define INT_LEVEL	        8		/* # of interrupt level + 1 */
 #define ISR_GET_CURRENT_MASK(cpu) \
-	(*(volatile u_int *)MVME188_IST & *int_mask_reg[cpu])
+	(*(volatile u_int *)MVME188_IST & int_mask_reg[cpu])
 
 /*
  * Software interrupts 0 to 3 are used to deliver IPIs to cpu0-3.
