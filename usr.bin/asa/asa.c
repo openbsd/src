@@ -1,4 +1,4 @@
-/*	$OpenBSD: asa.c,v 1.7 2007/05/17 10:55:16 moritz Exp $	*/
+/*	$OpenBSD: asa.c,v 1.8 2007/05/19 16:11:59 moritz Exp $	*/
 /*	$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $	*/
 
 /*
@@ -32,17 +32,17 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: asa.c,v 1.7 2007/05/17 10:55:16 moritz Exp $";
+static char rcsid[] = "$OpenBSD: asa.c,v 1.8 2007/05/19 16:11:59 moritz Exp $";
 #endif
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 #include <unistd.h>
 
-static void asa(FILE *);
-static void usage(void);
+void asa(FILE *);
+__dead void usage(void);
 
 int
 main(int argc, char *argv[])
@@ -60,30 +60,29 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	fp = stdin;
-	do {
-		if (*argv) {
-			if (!(fp = fopen(*argv, "r"))) {
-				warn ("%s", *argv);
+	if (!argc)
+		asa(stdin);
+	else
+		for (; *argv != NULL; argv++) {
+			if ((fp = fopen(*argv, "r")) == NULL) {
+				warn("%s", *argv);
 				continue;
 			}
+			asa(fp);
+			fclose(fp);
 		}
-		if (fp)
-			asa (fp);
-		if (fp && fp != stdin)
-			(void)fclose(fp);
-	} while (*argv++);
 
-	exit (0);
+	exit(0);
 }
 
-static void
+void
 asa(FILE *f)
 {
 	char *buf, *lbuf = NULL;
 	size_t len;
+	int firstline = 1;
 
-	if ((buf = fgetln (f, &len)) != NULL) {
+	while ((buf = fgetln(f, &len)) != NULL) {
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
 		else {
@@ -94,29 +93,17 @@ asa(FILE *f)
 			buf = lbuf;
 		}
 		/* special case the first line  */
-		switch (buf[0]) {
-		case '0':
-			putchar ('\n');
-			break;
-		case '1':
-			putchar ('\f');
-			break;
-		}
-
-		if (buf[0] && buf[1]) {
-			fputs (&buf[1], stdout);
-		}
-
-		while ((buf = fgetln(f, &len)) != NULL) {
-			if (buf[len - 1] == '\n')
-				buf[len - 1] = '\0';
-			else {
-				if ((lbuf = malloc(len + 1)) == NULL)
-					err(1, NULL);
-				memcpy(lbuf, buf, len);
-				lbuf[len] = '\0';
-				buf = lbuf;
+		if (firstline) {
+			firstline = 0;
+			switch (buf[0]) {
+			case '0':
+				putchar ('\n');
+				break;
+			case '1':
+				putchar ('\f');
+				break;
 			}
+		} else {
 			switch (buf[0]) {
 			default:
 			case ' ':
@@ -133,18 +120,18 @@ asa(FILE *f)
 				putchar ('\r');
 				break;
 			}
-
-			if (buf[0] && buf[1]) {
-				fputs (&buf[1], stdout);
-			}
 		}
-		free(lbuf);
-
-		putchar ('\n');
+		if (buf[0] && buf[1]) {
+			fputs (&buf[1], stdout);
+		}
 	}
+	free(lbuf);
+
+	if (!firstline)
+		putchar ('\n');
 }
 
-static void
+__dead void
 usage(void)
 {
 	extern char *__progname;
