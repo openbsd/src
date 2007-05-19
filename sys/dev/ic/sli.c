@@ -1,4 +1,4 @@
-/*	$OpenBSD: sli.c,v 1.1 2007/05/15 01:00:15 dlg Exp $ */
+/*	$OpenBSD: sli.c,v 1.2 2007/05/19 04:05:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -46,6 +46,12 @@ sli_attach(struct sli_softc *sc)
 
 int
 sli_detach(struct sli_softc *sc, int flags)
+{
+	return (0);
+}
+
+int
+sli_intr(void *arg)
 {
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sli_pci.c,v 1.2 2007/05/16 04:33:57 dlg Exp $ */
+/*	$OpenBSD: sli_pci.c,v 1.3 2007/05/19 04:05:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -72,9 +72,11 @@ sli_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct sli_softc		*sc = &psc->psc_sli;
 	struct pci_attach_args		*pa = aux;
 	pcireg_t			memtype;
+	pci_intr_handle_t		ih;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_tag = pa->pa_tag;
+	psc->psc_ih = NULL;
 	sc->sc_ios_slim = 0;
 	sc->sc_ios_reg = 0;
 
@@ -96,13 +98,28 @@ sli_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap_slim;
 	}
 
+	if (pci_intr_map(pa, &ih)) {
+		printf(": unable to map interrupt\n");
+		goto unmap_reg;
+	}
+	printf(": %s", pci_intr_string(psc->psc_pc, ih));
+
 	if (sli_attach(sc) != 0) {
 		/* error already printed by sli_attach() */
 		goto unmap_reg;
 	}
 
+	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_BIO,
+	    sli_intr, sc, DEVNAME(sc));
+	if (psc->psc_ih == NULL) {
+		printf("%s: unable to establish interrupt\n");
+		goto detach;
+	}
+
 	return;
 
+detach:
+	sli_detach(sc, DETACH_FORCE|DETACH_QUIET);
 unmap_reg:
 	bus_space_unmap(sc->sc_iot_reg, sc->sc_ioh_reg, sc->sc_ios_reg);
 	sc->sc_ios_reg = 0;
