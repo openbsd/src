@@ -1567,6 +1567,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/limits.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/lock.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/landisk/mutex.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/param.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/pcb.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/landisk/pci_machdep.ph
@@ -1967,6 +1968,7 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/mmu.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/mmu_sh3.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/mmu_sh4.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/sh/mutex.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/param.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/pcb.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/sh/pmap.ph
