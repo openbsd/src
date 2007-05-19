@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.62 2007/05/19 01:28:15 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.63 2007/05/19 20:12:50 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ extern int	fssize;		/* file system size */
 extern int	sectorsize;	/* bytes/sector */
 extern int	fsize;		/* fragment size */
 extern int	bsize;		/* block size */
-extern int	maxblkspercg;	/* maximum blocks per cylinder group */
+extern int	maxfrgspercg;	/* maximum fragments per cylinder group */
 extern int	minfree;	/* free space threshold */
 extern int	opt;		/* optimization preference (space or time) */
 extern int	density;	/* number of bytes per inode */
@@ -359,8 +359,8 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 * install media which needs to pack 2 files very tightly.
 	 */
 	mincylgrps = MINCYLGRPS;
-	if (maxblkspercg != INT_MAX) {
-		i = sblock.fs_size / maxblkspercg;
+	if (maxfrgspercg != INT_MAX) {
+		i = sblock.fs_size / maxfrgspercg;
 		if (i < MINCYLGRPS)
 			mincylgrps = i <= 0 ? 1 : i;
 	}
@@ -370,25 +370,21 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 * grow any larger, the number of cylinder groups drops below
 	 * mincylgrps, or we reach the requested size.
 	 */
-	for (; sblock.fs_fpg < maxblkspercg; sblock.fs_fpg += sblock.fs_frag) {
+	for (;;) {
+		sblock.fs_fpg += sblock.fs_frag;
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
 		    INOPB(&sblock));
 
-		if (sblock.fs_size / sblock.fs_fpg < mincylgrps)
+		if (sblock.fs_fpg > maxfrgspercg ||
+		    sblock.fs_size / sblock.fs_fpg < mincylgrps ||
+		    CGSIZE(&sblock) > (unsigned long)sblock.fs_bsize)
 			break;
-
-		if (CGSIZE(&sblock) < (unsigned long)sblock.fs_bsize)
-			continue;
-
-		if (CGSIZE(&sblock) == (unsigned long)sblock.fs_bsize)
-			break;
-
-		sblock.fs_fpg -= sblock.fs_frag;
-		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
-
-		break;
 	}
+	sblock.fs_fpg -= sblock.fs_frag;
+	sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
+	    INOPB(&sblock));
+	if (sblock.fs_fpg > maxfrgspercg)
+		warnx("can't honour -c: minimum is %d", sblock.fs_fpg);
 
 	/*
 	 * Check to be sure that the last cylinder group has enough blocks to
