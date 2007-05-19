@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.27 2005/12/07 12:02:08 jmc Exp $
+.\"	$OpenBSD: man.1,v 1.28 2007/05/19 16:31:45 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd March 9, 1998
+.Dd May 19, 2007
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -171,11 +171,13 @@ line in the
 .Nm
 configuration file.
 .It Fl S Ar subsection
-Specifies the machine-dependent subsection.
-This overrides the
+Restricts the directories that
+.Nm
+will search to those of a specific machine architecture.
+Overrides the
 .Ev MACHINE
 environment variable.
-See the
+See also the
 .Sx ENVIRONMENT
 section below.
 .It Fl s Ar section
@@ -196,7 +198,7 @@ The optional
 .Ar section
 argument restricts the directories that
 .Nm
-will search.
+will search to a specific section.
 The currently available sections are:
 .Pp
 .Bl -tag -width "3p " -offset indent -compact
@@ -226,15 +228,12 @@ Kernel internals.
 .Pp
 The
 .Nm
-configuration file (see
-.Xr man.conf 5 )
+configuration file,
+.Xr man.conf 5 ,
 specifies the possible
 .Ar section
 values, and their search order.
-If only a single argument is specified, or if the first argument is
-not a valid section,
-.Nm
-assumes that the argument is the name of a manual page to be displayed.
+Additional sections may also be specified.
 .Pp
 Guidelines for
 .Ox
@@ -254,7 +253,10 @@ Machine specific areas are checked before general areas.
 The current machine type may be overridden by setting the environment
 variable
 .Ev MACHINE
-to the name of a specific architecture.
+to the name of a specific architecture,
+or with the
+.Fl S
+option.
 .It Ev MANPAGER
 Any non-null value of the environment variable
 .Ev MANPAGER
