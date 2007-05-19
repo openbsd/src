@@ -1,4 +1,4 @@
-/*	$OpenBSD: sli_pci.c,v 1.3 2007/05/19 04:05:40 dlg Exp $ */
+/*	$OpenBSD: sli_pci.c,v 1.4 2007/05/19 04:10:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -77,6 +77,7 @@ sli_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_tag = pa->pa_tag;
 	psc->psc_ih = NULL;
+	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_ios_slim = 0;
 	sc->sc_ios_reg = 0;
 
