@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 2007/03/21 19:32:17 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 2007/05/19 20:33:49 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -409,6 +409,7 @@ m88k_db_trap(type, frame)
 	curcpu()->ci_ddb_state = CI_DDB_ENTERDDB;
 	__mp_lock(&ddb_mp_lock);
 	curcpu()->ci_ddb_state = CI_DDB_INDDB;
+	m88k_broadcast_ipi(CI_IPI_DDB);		/* pause other processors */
 #endif
 
 	ddb_regs = frame->tf_regs;

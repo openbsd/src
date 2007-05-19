@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.30 2007/05/19 17:03:49 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.31 2007/05/19 20:33:50 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -362,6 +362,17 @@ m188_ipi_handler(struct trapframe *eframe)
 	int ipi = ci->ci_ipi;
 	int spl = m188_curspl[ci->ci_cpuid];
 
+	if (ipi & CI_IPI_DDB) {
+#ifdef DDB
+		/*
+		 * Another processor has entered DDB. Spin on the ddb lock
+		 * until it is done.
+		 */
+		extern struct __mp_lock ddb_mp_lock;
+		__mp_lock(&ddb_mp_lock);
+		__mp_unlock(&ddb_mp_lock);
+#endif
+	}
 	if (ipi & CI_IPI_NOTIFY) {
 		/* nothing to do */
 	}
