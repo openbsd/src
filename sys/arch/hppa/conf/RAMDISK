@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.59 2007/05/01 15:22:23 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.60 2007/05/19 17:30:30 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -245,7 +245,7 @@ dc*	at pci?			# 21143, "tulip" clone ethernet
 #ep*	at pci?			# 3c59x ethernet
 #ep*	at eisa?		# 3c579 ethernet
 #ep*	at pcmcia?		# 3c589 ethernet
-#xl*	at pci?			# 3C9xx ethernet
+xl*	at pci?			# 3C9xx ethernet
 #xl*	at cardbus?
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 #fxp*	at cardbus?
