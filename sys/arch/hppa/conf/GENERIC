@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.91 2007/02/28 21:54:43 grange Exp $
+#	$OpenBSD: GENERIC,v 1.92 2007/05/19 17:00:09 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -252,7 +252,7 @@ dc*	at pci?			# 21143, "tulip" clone ethernet
 #ep*	at pci?			# 3c59x ethernet
 #ep*	at eisa?		# 3c579 ethernet
 #ep*	at pcmcia?		# 3c589 ethernet
-#xl*	at pci?			# 3C9xx ethernet
+xl*	at pci?			# 3C9xx ethernet
 #xl*	at cardbus?
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 #fxp*	at cardbus?
