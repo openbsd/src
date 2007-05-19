@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.27 2007/05/06 03:37:08 gwk Exp $
+#	$OpenBSD: files.amd64,v 1.28 2007/05/19 19:32:03 tedu Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -207,3 +207,11 @@ major	{rd = 17}
 major	{wd = 0}
 major	{wt = 3}
 major	{fd = 2}
+
+file	arch/i386/pci/agp_machdep.c		pciagp
+file	dev/pci/agp_ali.c			pciagp
+file	dev/pci/agp_amd.c			pciagp
+file	dev/pci/agp_i810.c			pciagp
+file	dev/pci/agp_intel.c			pciagp
+file	dev/pci/agp_sis.c			pciagp
+file	dev/pci/agp_via.c			pciagp
