@@ -665,8 +665,9 @@ END
     my @man_cmds;
     foreach my $section (qw(1 3)) {
         my $pods = $self->{"MAN${section}PODS"};
+	my $s = $section eq '3' ? '3p' : $section;
         push @man_cmds, $self->split_command(<<CMD, %$pods);
-	\$(NOECHO) \$(POD2MAN) --section=$section --perm_rw=\$(PERM_RW)
+	\$(NOECHO) \$(POD2MAN) --section=$s --perm_rw=\$(PERM_RW)
 CMD
     }
 
