@@ -1,4 +1,4 @@
-/*	$OpenBSD: kiicvar.h,v 1.1 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$OpenBSD: kiicvar.h,v 1.2 2007/05/20 23:38:52 thib Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/rwlock.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -90,7 +91,7 @@ struct kiic_softc {
 	u_char *sc_reg;
 	int sc_regstep;
 
-	struct lock sc_buslock;
+	struct rwlock sc_buslock;
 	struct kiic_bus {
 		struct kiic_softc *sc;
 		struct i2c_controller i2c_tag;

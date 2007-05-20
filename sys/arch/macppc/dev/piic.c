@@ -1,4 +1,4 @@
-/*	$OpenBSD: piic.c,v 1.1 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$OpenBSD: piic.c,v 1.2 2007/05/20 23:38:52 thib Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -19,7 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 
 #include <machine/autoconf.h>
@@ -32,7 +32,7 @@
 struct piic_softc {
 	struct device	sc_dev;
 
-	struct lock	sc_buslock;
+	struct rwlock	sc_buslock;
 	struct i2c_controller sc_i2c_tag;
 };
 
@@ -67,7 +67,7 @@ piic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	lockinit(&sc->sc_buslock, PZERO, sc->sc_dev.dv_xname, 0, 0);
+	rw_init(&sc->sc_buslock, sc->sc_dev.dv_xname);
 
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = piic_i2c_acquire_bus;
@@ -87,7 +87,7 @@ piic_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct piic_softc *sc = cookie;
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	return (rw_enter(&sc->sc_buslock, RW_WRITE));
 }
 
 void
@@ -95,7 +95,7 @@ piic_i2c_release_bus(void *cookie, int flags)
 {
 	struct piic_softc *sc = cookie;
 
-        lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_buslock);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kiic.c,v 1.1 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$OpenBSD: kiic.c,v 1.2 2007/05/20 23:38:52 thib Exp $	*/
 /*	$NetBSD: kiic.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ kiic_attach(struct device *parent, struct device *self, void *aux)
 	kiic_setmode(sc, I2C_STDSUBMODE, 0);
 	kiic_setspeed(sc, I2C_100kHz);		/* XXX rate */
 
-	lockinit(&sc->sc_buslock, PZERO, sc->sc_dev.dv_xname, 0, 0);
+	rw_init(&sc->sc_buslock, sc->sc_dev.dv_xname);
 	kiic_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 
 	for (node = OF_child(ca->ca_node); node; node = OF_peer(node)) {
@@ -354,7 +354,7 @@ kiic_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct kiic_bus *bus = cookie;
 
-	return (lockmgr(&bus->sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	return (rw_enter(&bus->sc->sc_buslock, RW_WRITE));
 }
 
 void
@@ -362,7 +362,7 @@ kiic_i2c_release_bus(void *cookie, int flags)
 {
 	struct kiic_bus *bus = cookie;
 
-	(void) lockmgr(&bus->sc->sc_buslock, LK_RELEASE, NULL);
+	(void) rw_exit(&bus->sc->sc_buslock);
 }
 
 int
