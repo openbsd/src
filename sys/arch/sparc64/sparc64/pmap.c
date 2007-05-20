@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2007/05/02 18:46:07 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.41 2007/05/20 15:11:27 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -172,18 +172,6 @@ static paddr_t pseg_find(struct pmap* pm, vaddr_t addr, paddr_t spare) {
 /* XXX - temporary workaround for pmap_{copy,zero}_page api change */
 void pmap_zero_phys(paddr_t pa);
 void pmap_copy_phys(paddr_t src, paddr_t dst);
-
-#ifdef DEBUG
-#ifdef __STDC__
-#define	ASSERT(x)	\
-	if (!(x)) panic("%s at line %d: assertion failed", #x, __LINE__);
-#else
-#define	ASSERT(x)	\
-	if (!(x)) panic("%s at line %d: assertion failed", "x", __LINE__);
-#endif
-#else
-#define ASSERT(x)
-#endif
 
 /*
  * Diatribe on ref/mod counting:
@@ -1749,41 +1737,6 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	pmap_copy_phys(src, dst);
 }
 
-#if 0
-/*
- * The two following routines are now in locore.s so I can code them in assembly
- * They can bypass the MMU or use VIS bcopy extensions for speed.
- */
-/*
- * Fill the given physical page with zeroes.
- */
-void
-pmap_zero_page(pa)
-	paddr_t pa;
-{
-	/* 
-	 * We don't need to worry about flushing caches
-	 * since all our virtual caches are write-through.
-	 * All we need to do is map the page in somewhere, bzero it,
-	 * and unmap it.  However, we need to be sure we don't
-	 * map it in anywhere near the kernel or we may lose, badly.
-	 */
-	bzero((caddr_t)pa, NBPG);
-}
-
-/*
- * Copy the given physical source page to its destination.
- *
- * I will code this in assembly RSN.
- */
-void
-pmap_copy_page(src, dst)
-	paddr_t src, dst;
-{
-	bcopy((caddr_t)src, (caddr_t)dst, NBPG);
-}
-#endif
-
 /*
  * Activate the address space for the specified process.  If the
  * process is the current process, load the new MMU context.
@@ -1839,8 +1792,8 @@ pmap_kenter_pa(va, pa, prot)
 	struct pmap *pm = pmap_kernel();
 	int s;
 
-	ASSERT(va < INTSTACK || va > EINTSTACK);
-	ASSERT(va < kdata || va > ekdata);
+	KDASSERT(va < INTSTACK || va > EINTSTACK);
+	KDASSERT(va < kdata || va > ekdata);
 
 #ifdef DIAGNOSTIC
 	if (pa & (PMAP_NVC|PMAP_NC|PMAP_LITTLE))
@@ -1866,7 +1819,7 @@ pmap_kenter_pa(va, pa, prot)
 	if (prot & VM_PROT_EXECUTE)
 		tte.data |= TLB_EXEC;
 	tte.data |= TLB_TSB_LOCK;	/* wired */
-	ASSERT((tte.data & TLB_NFO) == 0);
+	KDASSERT((tte.data & TLB_NFO) == 0);
 
 	/* Kernel page tables are pre-allocated. */
 	if (pseg_set(pmap_kernel(), va, tte.data, 0) != 0)
@@ -1883,15 +1836,6 @@ pmap_kenter_pa(va, pa, prot)
  *	Remove a mapping entered with pmap_kenter_pa() starting at va,
  *	for size bytes (assumed to be page rounded).
  */
-#if 0
-void
-pmap_kremove(va, size)
-	vaddr_t va;
-	vsize_t size;
-{
-	return pmap_remove(pmap_kernel(), va, va+size);
-}
-#else
 void
 pmap_kremove(va, size)
 	vaddr_t va;
@@ -1901,8 +1845,8 @@ pmap_kremove(va, size)
 	int64_t data;
 	int s, flush = 0;
 
-	ASSERT(va < INTSTACK || va > EINTSTACK);
-	ASSERT(va < kdata || va > ekdata);
+	KDASSERT(va < INTSTACK || va > EINTSTACK);
+	KDASSERT(va < kdata || va > ekdata);
 
 	s = splvm();
 	simple_lock(&pm->pm_lock);
@@ -1960,7 +1904,6 @@ pmap_kremove(va, size)
 	simple_unlock(&pm->pm_lock);
 	splx(s);
 }
-#endif
 
 /*
  * Insert physical page at pa into the given pmap at virtual address va.
@@ -1984,8 +1927,8 @@ pmap_enter(pm, va, pa, prot, flags)
 	/*
 	 * Is this part of the permanent mappings?
 	 */
-	ASSERT(pm != pmap_kernel() || va < INTSTACK || va > EINTSTACK);
-	ASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
+	KDASSERT(pm != pmap_kernel() || va < INTSTACK || va > EINTSTACK);
+	KDASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
 
 #ifdef DEBUG
 	/* Trap mapping of page zero */
@@ -2048,7 +1991,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		tte.data |= TLB_EXEC;
 	if (wired)
 		tte.data |= TLB_TSB_LOCK;
-	ASSERT((tte.data & TLB_NFO) == 0);
+	KDASSERT((tte.data & TLB_NFO) == 0);
 
 	pg = NULL;
 	while (pseg_set(pm, va, tte.data, pg) == 1) {
@@ -2095,8 +2038,8 @@ pmap_remove(pm, va, endva)
 	 * free it.  It's just that linear scans of 8K pages gets expensive.
 	 */
 
-	ASSERT(pm != pmap_kernel() || endva < INTSTACK || va > EINTSTACK);
-	ASSERT(pm != pmap_kernel() || endva < kdata || va > ekdata);
+	KDASSERT(pm != pmap_kernel() || endva < INTSTACK || va > EINTSTACK);
+	KDASSERT(pm != pmap_kernel() || endva < kdata || va > ekdata);
 
 	s = splvm();
 	simple_lock(&pm->pm_lock);
@@ -2184,8 +2127,8 @@ pmap_protect(pm, sva, eva, prot)
 	pv_entry_t pv;
 	int64_t data;
 	
-	ASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
-	ASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
+	KDASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
+	KDASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
 
 	if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
 	    (VM_PROT_WRITE|VM_PROT_EXECUTE))
@@ -2240,7 +2183,7 @@ pmap_protect(pm, sva, eva, prot)
 				data &= ~(TLB_W|TLB_REAL_W);
 			if ((prot & VM_PROT_EXECUTE) == 0)
 				data &= ~(TLB_EXEC);
-			ASSERT((data & TLB_NFO) == 0);
+			KDASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pm, sva, data, 0)) {
 				printf("pmap_protect: gotten pseg empty!\n");
 				Debugger();
@@ -2579,7 +2522,7 @@ pmap_clear_modify(pg)
 			if (data & (TLB_MODIFY))
 				changed |= 1;
 			data &= ~(TLB_MODIFY|TLB_W);
-			ASSERT((data & TLB_NFO) == 0);
+			KDASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, data, 0)) {
 				printf("pmap_clear_modify: gotten pseg empty!\n");
 				Debugger();
@@ -2662,7 +2605,7 @@ pmap_clear_reference(struct vm_page *pg)
 			if (data & TLB_ACCESS)
 				changed |= 1;
 			data &= ~TLB_ACCESS;
-			ASSERT((data & TLB_NFO) == 0);
+			KDASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pv->pv_pmap, pv->pv_va, data, 0)) {
 				printf("pmap_clear_reference: gotten pseg empty!\n");
 				Debugger();
@@ -2914,7 +2857,7 @@ pmap_page_protect(pg, prot)
 
 				data &= ~(clear);
 				data |= (set);
-				ASSERT((data & TLB_NFO) == 0);
+				KDASSERT((data & TLB_NFO) == 0);
 				if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, data, 0)) {
 					printf("pmap_page_protect: gotten pseg empty!\n");
 					Debugger();
@@ -3542,11 +3485,11 @@ pmap_testout()
 
 	/* Allocate a page */
 	va = (vaddr_t)(vmmap - NBPG);
-	ASSERT(va != NULL);
+	KDASSERT(va != NULL);
 	loc = (int *)va;
 
 	pmap_get_page(&pa, NULL, pmap_kernel());
-	pg = PHYS_TO_VM_PAGE(pg);
+	pg = PHYS_TO_VM_PAGE(pa);
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
 	    VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
@@ -3721,6 +3664,6 @@ pmap_testout()
 
 	pmap_remove(pmap_kernel(), va, va+1);
 	pmap_update(pmap_kernel());
-	pmap_free_page(pa, pm);
+	pmap_free_page(pa, pmap_kernel());
 }
 #endif
