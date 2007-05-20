@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: zmore,v 1.4 2003/07/29 07:42:45 otto Exp $
+# $OpenBSD: zmore,v 1.5 2007/05/20 00:27:27 jsg Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -39,15 +39,21 @@ while test $# -ne 0; do
 	esac
 done
 
+if [ `basename $0` == "zless" ] ; then
+	pager=${PAGER-less}
+else
+	pager=${PAGER-more}
+fi
+
 # No files means read from stdin
 if [ $# -eq 0 ]; then
-	compress -cdfq 2>&1 | ${PAGER-more} $flags
+	compress -cdfq 2>&1 | $pager $flags
 	exit 0
 fi
 
 oterm=`stty -g 2>/dev/null`
 while test $# -ne 0; do
-	compress -cdfq "$1" 2>&1 | ${PAGER-more} $flags
+	compress -cdfq "$1" 2>&1 | $pager $flags
 	prev="$1"
 	shift
 	if tty -s && test -n "$oterm" -a $# -gt 0; then

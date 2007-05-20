@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2007/01/24 10:53:43 jmc Exp $
+#	$OpenBSD: Makefile,v 1.21 2007/05/20 00:27:27 jsg Exp $
 
 PROG=	compress
 SRCS=	main.c zopen.c gzopen.c nullopen.c
@@ -8,11 +8,13 @@ LINKS=	${BINDIR}/compress ${BINDIR}/uncompress \
 	${BINDIR}/compress ${BINDIR}/gzip \
 	${BINDIR}/compress ${BINDIR}/gunzip \
 	${BINDIR}/compress ${BINDIR}/gzcat \
-	${BINDIR}/zdiff ${BINDIR}/zcmp
+	${BINDIR}/zdiff ${BINDIR}/zcmp \
+	${BINDIR}/zmore ${BINDIR}/zless
 
 MLINKS+=compress.1 uncompress.1 compress.1 zcat.1
 MLINKS+=gzip.1 gunzip.1 gzip.1 gzcat.1
 MLINKS+=zdiff.1 zcmp.1
+MLINKS+=zmore.1 zless.1
 
 LDADD=-lz
 DPADD=${LIBZ}
