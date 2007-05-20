@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.256 2007/05/20 14:04:39 espie Exp $
+# $OpenBSD: pkg_add,v 1.257 2007/05/20 14:21:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -41,8 +41,11 @@ my $bad = 0;
 our %forced = ();
 our $not;
 
+package OpenBSD::pkg_add::State;
+our @ISA=(qw(OpenBSD::Error));
 
 
+package main;
 sub can_install($$$)
 {
 	my ($plist, $state, $handle) = @_;
@@ -640,7 +643,7 @@ try {
 try {
 $opt_L = '/usr/local' unless defined $opt_L;
 
-my $state = new OpenBSD::Error;
+my $state = OpenBSD::pkg_add::State->new;
 $state->{cache} = {};
 $state->{installed} = {};
 $state->{deptree} = {};

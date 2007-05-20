@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.100 2007/05/20 14:04:39 espie Exp $
+# $OpenBSD: pkg_delete,v 1.101 2007/05/20 14:21:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -31,6 +31,11 @@ use OpenBSD::Vstat;
 
 our %forced = ();
 our $not;
+
+package OpenBSD::pkg_delete::State;
+our @ISA=(qw(OpenBSD::Error));
+
+package main;
 
 set_usage('pkg_delete [-cIinqvx] [-B pkg-destdir] [-F keywords] pkg-name [...]');
 our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_i, $opt_x);
@@ -78,7 +83,7 @@ my %done;
 my $removed;
 
 try {
-my $state = new OpenBSD::Error;
+my $state = OpenBSD::pkg_delete::State->new;
 $state->{not} = $opt_n;
 # XXX RequiredBy
 $not = $opt_n;
