@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.15 2007/05/20 10:48:48 espie Exp $
+# $OpenBSD: Replace.pm,v 1.16 2007/05/20 11:06:44 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -269,8 +269,6 @@ sub can_do
 		};
 	}
 
-	$plist->{wantlist} = \@wantlist;
-	
 	return $state->{okay} ? $plist : 0;
 }
 
