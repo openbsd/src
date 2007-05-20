@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.2 2004/08/10 19:16:18 deraadt Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.3 2007/05/20 14:22:35 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,11 +56,6 @@ struct mips_pci_chipset {
     int		(*pc_scsi_clock)(u_int8_t, u_int8_t);
     void	(*pc_sync_cache)(vaddr_t, int, int);
 };
-
-#define	NEED_PCI_SYNC_CACHE_FUNC
-
-#define	SYNC_R	0	/* Sync caches for reading data */
-#define	SYNC_W	1	/* Sync caches for writing data */
 
 /*
  * Functions provided to machine-independent PCI code.
