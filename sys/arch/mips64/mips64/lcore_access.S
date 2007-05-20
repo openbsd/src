@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.9 2005/12/20 07:06:26 miod Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.10 2007/05/20 14:34:23 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -57,7 +57,6 @@
 	.align	3
 onfault_table:
 	PTR_VAL	0		# invalid index number
-	PTR_VAL	baderr
 	PTR_VAL	_copyerr
 	PTR_VAL	_copyerr
 #if defined(DDB) || defined(DEBUG)
@@ -66,40 +65,6 @@ onfault_table:
 	PTR_VAL	0
 #endif
 	.text
-
-/*
- * See if access to addr with a len type instruction causes a machine check.
- * len is length of access (1=byte, 2=short, 4=long)
- *
- * badaddr(addr, len)
- *	char *addr;
- *	int len;
- */
-LEAF(badaddr, 0)
-	li	v0, KT_BADERR
-	PTR_L	t3, curprocpaddr
-	bne	a1, 1, 2f
-	sw	v0, PCB_ONFAULT(t3)
-	lbu	v0, (a0)		# don't put in bd-slot!
-	b	5f
-	nop
-2:
-	bne	a1, 2, 4f
-	nop
-	lhu	v0, (a0)		# don't put in bd-slot!
-	b	5f
-	nop
-4:
-	lw	v0, (a0)
-5:
-	sync
-	sw	zero, PCB_ONFAULT(t3)
-	j	ra
-	move	v0, zero		# made it w/o errors
-baderr:
-	j	ra
-	li	v0, 1			# trap sends us here
-END(badaddr)
 
 /*
  * This code is copied the user's stack for returning from signal handlers

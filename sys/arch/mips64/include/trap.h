@@ -1,4 +1,4 @@
-/*      $OpenBSD: trap.h,v 1.7 2006/06/06 17:42:28 miod Exp $	*/
+/*      $OpenBSD: trap.h,v 1.8 2007/05/20 14:34:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,11 +74,9 @@
 /*
  *  Defines for trap handler catching kernel accessng memory.
  */
-#define	KT_BADERR	1		/* Bad address */
-#define	KT_COPYERR	2		/* User space copy error */
-#define	KT_KCOPYERR	3		/* Kernel space copy error */
-#define	KT_DDBERR	4		/* DDB access error */
-
+#define	KT_COPYERR	1		/* User space copy error */
+#define	KT_KCOPYERR	2		/* Kernel space copy error */
+#define	KT_DDBERR	3		/* DDB access error */
 
 #ifndef _LOCORE
 
