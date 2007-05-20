@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.275 2007/05/03 09:43:03 jsg Exp $
+$OpenBSD: usbdevs,v 1.276 2007/05/20 14:11:56 robert Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -835,6 +835,7 @@ product BROADCOM BCM2033NF	0x2033	BCM2033 (no fw)
 
 /* Brother Industries products */
 product BROTHER HL1050		0x0002	HL-1050 laser printer
+product BROTHER MFC210C		0x0161	MFC 210C
 
 /* Behavior Technology Computer products */
 product BTC BTC7932		0x6782	Keyboard/Mouse
@@ -1495,6 +1496,7 @@ product LOGITECH QUICKCAMWEB	0x0801	QuickCam Web
 product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
 product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
 product LOGITECH QUICKCAM	0x0850	QuickCam
+product LOGITECH QUICKCAMDLXNB	0x08a9	QuickCam Notebook Deluxe
 product LOGITECH QUICKCAMPRO3k	0x08b0	QuickCam Pro 3000
 product LOGITECH QUICKCAMPRONB	0x08b1	QuickCam Notebook Pro
 product LOGITECH QUICKCAMPRO4K	0x08b2	QuickCam Pro 4000
