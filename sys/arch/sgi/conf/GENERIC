@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 2006/06/26 22:26:29 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.20 2007/05/20 14:10:46 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -33,9 +33,6 @@ option		USBVERBOSE
 
 # Define what targets to support
 option		TGT_O2
-
-# Control certain other stuff
-option		AHC_CTRL_ID=0	# SGI have scsi controllers at 0.
 
 # Specify storage configuration (its a joke..)
 config		bsd	swap generic

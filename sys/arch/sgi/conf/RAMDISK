@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.14 2006/10/18 19:11:54 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.15 2007/05/20 14:10:46 miod Exp $
 #
 
 machine		sgi mips64
@@ -34,10 +34,6 @@ option		RAMDISK_HOOKS
 
 # Define what targets to support
 option		TGT_O2
-
-# Control certain other stuff
-option		AHC_CTRL_ID=0	# SGI have scsi controllers at 0.
-
 
 # Specify storage configuration using ramdisk
 config		bsd	root on rd0a swap on rd0b
