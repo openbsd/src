@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.111 2007/05/18 13:22:06 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.112 2007/05/20 17:04:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -413,6 +413,46 @@ sub register_manpage
 		    unless defined $state->{mandirs}->{$d};
 		push(@{$state->{mandirs}->{$d}}, $fname);
     	}
+}
+
+sub is_source
+{
+	my $self = shift;
+	return $self->{name} =~ m/man\/man[^\/]+\/[^\/]+\.[\dln][^\/]?$/;
+}
+
+sub source_to_dest
+{
+	my $self = shift;
+	my $v = $self->{name};
+	$v =~ s/(man\/)man([^\/]+\/[^\/]+)\.[\dln][^\/]?$/$1cat$2.0/;
+	return $v;
+}
+
+# assumes the source is nroff, launches nroff
+sub format
+{
+	my ($self, $base, $out) = @_;
+	my $fname = $base."/".$self->fullname;
+	open(my $fh, '<', $fname) or die "Can't read $fname";
+	my $line = <$fh>;
+	close $fh;
+	my @extra = ();
+	# extra preprocessors as described in man.
+	if ($line =~ m/^\'\\\"\s+(.*)$/) {
+		for my $letter (split $1) {
+			if ($letter =~ m/[ept]/) {
+				push(@extra, "-$letter");
+			} elsif ($letter eq 'r') {
+				push(@extra, "-R");
+			}
+		}
+	}
+	open my $oldout, '>&STDOUT';
+	open STDOUT, '>', "$base/$out" or die "Can't write to $base/$out";
+	system('groff', '-Tascii', '-mandoc', '-Wall', '-mtty-char', 
+	    @extra, $fname);
+	open STDOUT, '>&', $oldout;
 }
 
 package OpenBSD::PackingElement::Lib;
