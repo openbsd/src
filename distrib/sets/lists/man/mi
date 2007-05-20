@@ -573,6 +573,7 @@
 ./usr/share/man/cat1/zfgrep.0
 ./usr/share/man/cat1/zforce.0
 ./usr/share/man/cat1/zgrep.0
+./usr/share/man/cat1/zless.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
 ./usr/share/man/cat2

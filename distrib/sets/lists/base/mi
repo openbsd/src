@@ -515,6 +515,7 @@
 ./usr/bin/zfgrep
 ./usr/bin/zforce
 ./usr/bin/zgrep
+./usr/bin/zless
 ./usr/bin/zmore
 ./usr/bin/znew
 ./usr/games
