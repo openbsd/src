@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.7 2007/05/20 14:17:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -1062,11 +1062,19 @@ int
 mavb_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
+	bus_space_handle_t ioh;
+	u_int64_t control;
 
 	if (ca->ca_sys != SGI_O2 || strcmp(ca->ca_name, mavb_cd.cd_name))
 		return (0);
 
-	return (1);
+	if (bus_space_map(ca->ca_iot, ca->ca_baseaddr, MAVB_NREGS, 0,
+	    &ioh) != 0)
+		return (0);
+	control = bus_space_read_8(ca->ca_iot, ioh, MAVB_CONTROL);
+	bus_space_unmap(ca->ca_iot, ioh, MAVB_NREGS);
+
+	return ((control & MAVB_CONTROL_CODEC_PRESENT) != 0);
 }
 
 void
@@ -1075,7 +1083,6 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	struct mavb_softc *sc = (void *)self;
 	struct confargs *ca = aux;
 	bus_dma_segment_t seg;
-	u_int64_t control;
 	u_int16_t value;
 	int rseg;
 
@@ -1125,12 +1132,6 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	/* Establish interrupt.  */
 	BUS_INTR_ESTABLISH(ca, NULL, ca->ca_intr, IST_EDGE, IPL_AUDIO,
 	    mavb_intr, sc, sc->sc_dev.dv_xname);
-
-	control = bus_space_read_8(sc->sc_st, sc->sc_sh, MAVB_CONTROL);
-	if (!(control & MAVB_CONTROL_CODEC_PRESENT)) {
-		printf(": no codec present\n");
-		return;
-	}
 
 	/* 2. Assert the RESET signal.  */
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CONTROL,
