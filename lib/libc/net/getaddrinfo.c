@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.66 2007/05/18 01:10:59 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.67 2007/05/20 03:54:52 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
  *   in the source code.  This is because RFC2553 is silent about which error
  *   code must be returned for which situation.
  * - IPv4 classful (shortened) form.  RFC2553 is silent about it.  XNET 5.2
- *   says to use inet_aton() to convert IPv4 numeric to binary (alows
+ *   says to use inet_aton() to convert IPv4 numeric to binary (allows
  *   classful form as a result).
  *   current code - disallow classful form for IPv4 (due to use of inet_pton).
  * - freeaddrinfo(NULL).  RFC2553 is silent about it.  XNET 5.2 says it is
@@ -420,7 +420,7 @@ getaddrinfo(const char *hostname, const char *servname,
 
 	/*
 	 * hostname as alphabetical name.
-	 * we would like to prefer AF_INET6 than AF_INET, so we'll make a
+	 * we would like to prefer AF_INET6 than AF_INET, so we'll make an
 	 * outer loop by AFs.
 	 */
 	for (ex = explore; ex->e_af >= 0; ex++) {
