@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.98 2007/05/14 09:49:27 espie Exp $
+# $OpenBSD: pkg_delete,v 1.99 2007/05/20 13:54:30 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,7 @@ use OpenBSD::ProgressMeter;
 use OpenBSD::Interactive;
 use OpenBSD::Delete;
 use OpenBSD::PackageInfo;
+use OpenBSD::Vstat;
 
 our %forced = ();
 our $not;
