@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.14 2007/05/20 10:38:50 espie Exp $
+# $OpenBSD: Replace.pm,v 1.15 2007/05/20 10:48:48 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -219,7 +219,6 @@ sub can_do
 	my ($toreplace, $replacement, $state, $ignore) = @_;
 
 	$state->{okay} = 1;
-	$state->{libs_to_check} = [];
 	my $plist = OpenBSD::PackingList->from_installation($toreplace);
 	if (!defined $plist) {
 		Fatal "Couldn't find packing-list for $toreplace\n";
@@ -271,7 +270,6 @@ sub can_do
 	}
 
 	$plist->{wantlist} = \@wantlist;
-	$plist->{libs_to_check} = $state->{libs_to_check};
 	
 	return $state->{okay} ? $plist : 0;
 }
