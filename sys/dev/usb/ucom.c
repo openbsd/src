@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.32 2006/08/29 08:15:10 mbalmer Exp $ */
+/*	$OpenBSD: ucom.c,v 1.33 2007/05/20 00:52:26 jsg Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
@@ -123,7 +124,7 @@ struct ucom_softc {
 
 	u_char			sc_cua;
 
-	struct lock		sc_lock;	/* lock during open */
+	struct rwlock		sc_lock;	/* lock during open */
 	int			sc_open;
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
@@ -153,13 +154,13 @@ Static void
 ucom_lock(struct ucom_softc *sc)
 {
 	sc->sc_refcnt++;
-	usb_lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	rw_enter_write(&sc->sc_lock);
 }
 
 Static void
 ucom_unlock(struct ucom_softc *sc)
 {
-	usb_lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	rw_exit_write(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }
@@ -198,7 +199,8 @@ USB_ATTACH(ucom)
 	sc->sc_tty = tp;
 	sc->sc_cua = 0;
 
-	lockinit(&sc->sc_lock, PZERO, "ucomlk", 0, LK_CANRECURSE);
+	rw_init(&sc->sc_lock, "ucomlk");
+
 	sc->sc_open = 0;
 
 	USB_ATTACH_SUCCESS_RETURN;

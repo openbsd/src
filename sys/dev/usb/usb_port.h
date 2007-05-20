@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.62 2006/09/18 10:55:51 dlg Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.63 2007/05/20 00:52:26 jsg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -161,8 +161,6 @@ typedef struct timeout usb_callout_t;
 	} while (0)
 #define usb_callout_pending(h)	timeout_pending(&(h))
 #define usb_uncallout(h, f, d) timeout_del(&(h))
-
-#define usb_lockmgr(l, f, sl, p) lockmgr((l), (f), (sl))
 
 #define USB_DECLARE_DRIVER_CLASS(dname, devclass)  \
 int __CONCAT(dname,_match)(struct device *, void *, void *); \

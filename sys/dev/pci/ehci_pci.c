@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.10 2006/08/25 04:17:00 pascoe Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.11 2007/05/20 00:52:26 jsg Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>

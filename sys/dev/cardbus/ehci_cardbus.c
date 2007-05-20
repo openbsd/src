@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.8 2006/10/12 16:35:52 grange Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.9 2007/05/20 00:52:26 jsg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 

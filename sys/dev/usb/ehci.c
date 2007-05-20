@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.67 2006/08/22 01:53:42 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.68 2007/05/20 00:52:25 jsg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/selinfo.h>
@@ -475,7 +476,7 @@ ehci_init(ehci_softc_t *sc)
 	usb_callout_init(sc->sc_tmo_pcd);
 	usb_callout_init(sc->sc_tmo_intrlist);
 
-	lockinit(&sc->sc_doorbell_lock, PZERO, "ehcidb", 0, 0);
+	rw_init(&sc->sc_doorbell_lock, "ehcidb");
 
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
@@ -1520,7 +1521,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 	}
 	DPRINTFN(2,("ehci_sync_hc: enter\n"));
 	/* get doorbell */
-	usb_lockmgr(&sc->sc_doorbell_lock, LK_EXCLUSIVE, NULL, curproc);
+	rw_enter_write(&sc->sc_doorbell_lock);
 	s = splhardusb();
 	do { 
 		/* ask for doorbell */
@@ -1535,7 +1536,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 	} while (error && ++tries < 10);
 	splx(s);
 	/* release doorbell */
-	usb_lockmgr(&sc->sc_doorbell_lock, LK_RELEASE, NULL, curproc);
+	rw_exit_write(&sc->sc_doorbell_lock);
 #ifdef DIAGNOSTIC
 	if (error)
 		printf("ehci_sync_hc: tsleep() = %d\n", error);
