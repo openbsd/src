@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2006/03/13 19:39:52 brad Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2007/05/20 17:22:51 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@ intr_init()
 		mac68k_statclockipl = (PSL_S | PSL_IPL2);
 
 		if (current_mac_model->class == MACH_CLASSAV)
-			mac68k_bioipl = mac68k_netipl = (PSL_S | PSL_IPL4);
+			mac68k_netipl = (PSL_S | PSL_IPL4);
 	}
 	
 	intr_computeipl();
