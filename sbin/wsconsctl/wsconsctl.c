@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.17 2006/04/01 23:13:53 miod Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.18 2007/05/20 15:22:23 robert Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -83,9 +83,9 @@ usage(char *msg)
 
 	fprintf(stderr,
 	    "usage: %s [-n] -a\n"
-	    "       %s [-n] name ...\n"
-	    "       %s [-n] name=value ...\n"
-	    "       %s [-n] name+=value ...\n",
+	    "       %s [-f file] [-n] name ...\n"
+	    "       %s [-f file] [-n] name=value ...\n"
+	    "       %s [-f file] [-n] name+=value ...\n",
 	    __progname, __progname, __progname, __progname);
 
 	exit(1);
@@ -97,12 +97,16 @@ main(int argc, char *argv[])
 	int i, ch, error = 0, aflag = 0, do_merge;
 	struct vartypesw *sw = NULL;
 	char *sep = "=", *p;
+	char *wdev = NULL;
 	struct field *f;
 
-	while ((ch = getopt(argc, argv, "anw")) != -1) {
+	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag = 1;
+			break;
+		case 'f':
+			wdev = optarg;
 			break;
 		case 'n':
 			sep = NULL;
@@ -150,6 +154,10 @@ main(int argc, char *argv[])
 				sw = tab_by_name(argv[i]);
 				if (!sw)
 					continue;
+
+				if (wdev != NULL)
+					sw->file = (const char *)wdev;
+
 				if (sw->fd < 0 &&
 				    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
 				    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
@@ -181,6 +189,10 @@ main(int argc, char *argv[])
 			sw = tab_by_name(argv[i]);
 			if (!sw)
 				continue;
+
+			if (wdev != NULL)
+				sw->file = (const char *)wdev;
+
 			if (sw->fd < 0 &&
 			    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
 			    (sw->fd = open(sw->file, O_RDONLY)) < 0) {

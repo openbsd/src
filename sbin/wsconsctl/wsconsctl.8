@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.18 2004/07/30 23:28:23 jmc Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.19 2007/05/20 15:22:22 robert Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,12 +46,15 @@
 .Op Fl n
 .Fl a
 .Nm wsconsctl
+.Op Fl f Ar file
 .Op Fl n
 .Ar name ...
 .Nm wsconsctl
+.Op Fl f Ar file
 .Op Fl n
 .Ar name Ns = Ns Ar value ...
 .Nm wsconsctl
+.Op Fl f Ar file
 .Op Fl n
 .Ar name Ns += Ns Ar value ...
 .Sh DESCRIPTION
@@ -66,6 +69,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Print all device variables and their current values.
+.It Fl f Ar file
+Specify an alternative control device.
 .It Fl n
 Suppress printing of the variable name in the output.
 .It Ar name Ns = Ns Ar value
