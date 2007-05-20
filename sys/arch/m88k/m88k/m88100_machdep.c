@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.2 2006/11/18 22:58:28 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.3 2007/05/20 20:12:31 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -271,7 +271,7 @@ void
 m88100_apply_patches()
 {
 #ifdef ERRATA__XXX_USR
-	if (((get_cpu_pid() & PID_VN) >> VN_SHIFT) >= 2) {
+	if (((get_cpu_pid() & PID_VN) >> VN_SHIFT) > 10) {
 		/*
 		 * Patch DAE helpers.
 		 *	    before		    after
