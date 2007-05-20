@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.49 2007/04/18 10:40:13 mpf Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.50 2007/05/20 18:54:15 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -2569,44 +2569,6 @@ sppp_ipcp_down(struct sppp *sp)
 HIDE void
 sppp_ipcp_open(struct sppp *sp)
 {
-	STDDCL;
-	u_int32_t myaddr, hisaddr;
-
-	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|
-	    IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
-	sp->ipcp.req_myaddr = 0;
-	sp->ipcp.req_hisaddr = 0;
-
-	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
-	/*
-	 * If we don't have his address, this probably means our
-	 * interface doesn't want to talk IP at all.  (This could
-	 * be the case if somebody wants to speak only IPX, for
-	 * example.)  Don't open IPCP in this case.
-	 */
-	if (hisaddr == 0) {
-		/* XXX this message should go away */
-		if (debug)
-			log(LOG_DEBUG, SPP_FMT "ipcp_open(): no IP interface\n",
-			    SPP_ARGS(ifp));
-		return;
-	}
-
-	if (myaddr == 0) {
-		/*
-		 * I don't have an assigned address, so i need to
-		 * negotiate my address.
-		 */
-		sp->ipcp.flags |= IPCP_MYADDR_DYN;
-		sp->ipcp.opts |= (1 << IPCP_OPT_ADDRESS);
-	}
-	if (hisaddr == 1) {
-		/*
-		 * XXX - remove this hack!
-		 * remote has no valid address, we need to get one assigned.
-		 */
-		sp->ipcp.flags |= IPCP_HISADDR_DYN;
-	}
 	sppp_open_event(&ipcp, sp);
 }
 
@@ -2614,11 +2576,6 @@ HIDE void
 sppp_ipcp_close(struct sppp *sp)
 {
 	sppp_close_event(&ipcp, sp);
-	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
-		/*
-		 * Some address was dynamic, clear it again.
-		 */
-		sppp_clear_ip_addrs(sp);
 }
 
 HIDE void
@@ -2936,6 +2893,45 @@ sppp_ipcp_tld(struct sppp *sp)
 HIDE void
 sppp_ipcp_tls(struct sppp *sp)
 {
+	STDDCL;
+	u_int32_t myaddr, hisaddr;
+
+	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|
+	    IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
+	sp->ipcp.req_myaddr = 0;
+	sp->ipcp.req_hisaddr = 0;
+
+	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
+	/*
+	 * If we don't have his address, this probably means our
+	 * interface doesn't want to talk IP at all.  (This could
+	 * be the case if somebody wants to speak only IPX, for
+	 * example.)  Don't open IPCP in this case.
+	 */
+	if (hisaddr == 0) {
+		/* XXX this message should go away */
+		if (debug)
+			log(LOG_DEBUG, SPP_FMT "ipcp_open(): no IP interface\n",
+			    SPP_ARGS(ifp));
+		return;
+	}
+
+	if (myaddr == 0) {
+		/*
+		 * I don't have an assigned address, so i need to
+		 * negotiate my address.
+		 */
+		sp->ipcp.flags |= IPCP_MYADDR_DYN;
+		sp->ipcp.opts |= (1 << IPCP_OPT_ADDRESS);
+	}
+	if (hisaddr == 1) {
+		/*
+		 * XXX - remove this hack!
+		 * remote has no valid address, we need to get one assigned.
+		 */
+		sp->ipcp.flags |= IPCP_HISADDR_DYN;
+	}
+
 	/* indicate to LCP that it must stay alive */
 	sp->lcp.protos |= (1 << IDX_IPCP);
 }
@@ -2943,6 +2939,10 @@ sppp_ipcp_tls(struct sppp *sp)
 HIDE void
 sppp_ipcp_tlf(struct sppp *sp)
 {
+	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
+		/* Some address was dynamic, clear it again. */
+		sppp_clear_ip_addrs(sp);
+
 	/* we no longer need LCP */
 	sp->lcp.protos &= ~(1 << IDX_IPCP);
 	sppp_lcp_check_and_close(sp);
