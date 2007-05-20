@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.61 2007/03/27 11:25:17 jmc Exp $ */
+/*	$OpenBSD: arc.c,v 1.62 2007/05/20 04:39:35 ray Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -576,10 +576,10 @@ arc_detach(struct device *self, int flags)
 	shutdownhook_disestablish(sc->sc_shutdownhook);
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
-		printf("%s: timeout waiting to stop bg rebuild\n");
+		printf("%s: timeout waiting to stop bg rebuild\n", DEVNAME(sc));
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
-		printf("%s: timeout waiting to flush cache\n");
+		printf("%s: timeout waiting to flush cache\n", DEVNAME(sc));
 
 	return (0);
 }
@@ -590,10 +590,10 @@ arc_shutdown(void *xsc)
 	struct arc_softc		*sc = xsc;
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
-		printf("%s: timeout waiting to stop bg rebuild\n");
+		printf("%s: timeout waiting to stop bg rebuild\n", DEVNAME(sc));
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
-		printf("%s: timeout waiting to flush cache\n");
+		printf("%s: timeout waiting to flush cache\n", DEVNAME(sc));
 }
 
 int
@@ -909,12 +909,12 @@ arc_query_firmware(struct arc_softc *sc)
 
 	if (arc_wait_eq(sc, ARC_REG_OUTB_ADDR1, ARC_REG_OUTB_ADDR1_FIRMWARE_OK,
 	    ARC_REG_OUTB_ADDR1_FIRMWARE_OK) != 0) {
-		printf("%s: timeout waiting for firmware ok\n");
+		printf("%s: timeout waiting for firmware ok\n", DEVNAME(sc));
 		return (1);
 	}
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_GET_CONFIG) != 0) {
-		printf("%s: timeout waiting for get config\n");
+		printf("%s: timeout waiting for get config\n", DEVNAME(sc));
 		return (1);
 	}
 
@@ -956,7 +956,8 @@ arc_query_firmware(struct arc_softc *sc)
 	sc->sc_req_count = letoh32(fwinfo.queue_len);
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_START_BGRB) != 0) {
-		printf("%s: timeout waiting to start bg rebuild\n");
+		printf("%s: timeout waiting to start bg rebuild\n",
+		    DEVNAME(sc));
 		return (1);
 	}
 
