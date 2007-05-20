@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.12 2007/05/14 11:22:00 espie Exp $
+# $OpenBSD: Replace.pm,v 1.13 2007/05/20 10:20:07 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -181,17 +181,6 @@ sub check_replacement_spec
 	}
 }
 
-package OpenBSD::PackingElement::LibDepend;
-sub validate_depend
-{
-	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
-
-	if (defined $self->{name}) {
-		return unless $self->{name} eq $wanting;
-	}
-	$self->check_replacement_spec($state, $wanting, $toreplace, $replacement);
-}
-
 package OpenBSD::PackingElement::Lib;
 sub mark_lib
 {
@@ -216,17 +205,6 @@ sub unmark_lib
 		}
 	}
 	delete $libs->{$libname};
-}
-
-package OpenBSD::PackingElement::NewDepend;
-sub validate_depend
-{
-	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
-
-	if (defined $self->{name}) {
-		return unless $self->{name} eq $wanting;
-	}
-	$self->check_replacement_spec($state, $wanting, $toreplace, $replacement);
 }
 
 package OpenBSD::PackingElement::Dependency;
