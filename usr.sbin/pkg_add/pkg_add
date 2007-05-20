@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.257 2007/05/20 14:21:33 espie Exp $
+# $OpenBSD: pkg_add,v 1.258 2007/05/20 14:40:50 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -44,7 +44,49 @@ our $not;
 package OpenBSD::pkg_add::State;
 our @ISA=(qw(OpenBSD::Error));
 
+# one-level dependencies tree, for nicer printouts
+sub build_deptree
+{
+	my ($state, $pkg, @deps) = @_;
 
+	my $tree = $state->{deptree};
+	$pkg = OpenBSD::PackageName::url2pkgname($pkg);
+	# flatten info
+	if (defined $tree->{$pkg}) {
+		$pkg = $tree->{$pkg};
+	}
+	for my $i (@deps) {
+		$tree->{$i} = $pkg unless defined $tree->{$i};
+	}
+}
+
+sub deptree_header
+{
+	my ($state, $pkg) = @_;
+	if (defined $state->{deptree}->{$pkg}) {
+		return $state->{deptree}->{$pkg}.':';
+	} else {
+		return '';
+	}
+}
+
+sub mark_installed
+{
+	my ($state, $pkg) = @_;
+	$state->{installed}->{$pkg} = 1;
+}
+
+sub is_installed
+{
+	my ($state, $pkg) = @_;
+	return $state->{installed}->{$pkg};
+}
+
+sub installed
+{
+	my $state = shift;
+	return keys %{$state->{installed}};
+}
 package main;
 sub can_install($$$)
 {
@@ -80,7 +122,7 @@ sub can_install($$$)
 		    !$plist->uses_old_libs) {
 			print "Not reinstalling $pkgname\n" if $state->{verbose};
 			OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
-			$state->{installed}->{$pkgname} = 1;
+			$state->mark_installed($pkgname);
 			return;
 		}
 		if ($state->{forced}->{conflicts}) {
@@ -104,7 +146,7 @@ sub can_install($$$)
 		if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
 			    print "Not reinstalling $pkgname\n" if $state->{verbose};
 			    OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
-			    $state->{installed}->{$pkgname} = 1;
+			    $state->mark_installed($pkgname);
 			    return;
 			}
 	}
@@ -121,7 +163,7 @@ sub can_install($$$)
 	}
 
 	for my $toreplace (@conflicts) {
-		if (defined $state->{installed}->{$toreplace}) {
+		if ($state->is_installed($toreplace)) {
 			Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
 			$errors++;
 			return;
@@ -149,9 +191,7 @@ sub pre_add($$)
 	
 	my $handle = OpenBSD::PackageLocator->find($pkg, $state->{arch});
 	if (!$handle) {
-		if (defined $state->{deptree}->{$pkg}) {
-			print $state->{deptree}->{$pkg}, ":";
-		}
+		print $state->deptree_header($pkg);
 		print "Can't find $pkg\n";
 		if (!$state->{forced}->{kitchensink}) {
 			$errors++;
@@ -182,9 +222,7 @@ sub pre_add($$)
 		}
 	}
 	if ($state->{verbose}) {
-		if (defined $state->{deptree}->{$pkg}) {
-		    print $state->{deptree}->{$pkg},":";
-		}
+		print $state->deptree_header($pkg);
 		print "parsing $pkgname\n";
 	}
 	if (can_install($plist, $state, $handle)) {
@@ -268,9 +306,7 @@ sub really_add($$)
 
 	my $header = $pkgname;
 
-	if (defined $state->{deptree}->{$pkgname}) {
-	    $header = $state->{deptree}->{$pkgname}.":".$header;
-	}
+	$header = $state->deptree_header($pkgname).$header;
 	if (@toreplace) {
 		$header.=" (replacing ". join(', ', (map {$_->pkgname} @toreplace)). ")";
 	}
@@ -461,22 +497,6 @@ sub really_add($$)
 	}
 }
 
-# one-level dependencies tree, for nicer printouts
-sub build_deptree
-{
-	my ($state, $pkg, @deps) = @_;
-
-	my $tree = $state->{deptree};
-	$pkg = OpenBSD::PackageName::url2pkgname($pkg);
-	# flatten info
-	if (defined $tree->{$pkg}) {
-		$pkg = $tree->{$pkg};
-	}
-	for my $i (@deps) {
-		$tree->{$i} = $pkg unless defined $tree->{$i};
-	}
-}
-
 sub install_package
 {
 	my ($pkg, $state, @todo) = @_;
@@ -494,7 +514,7 @@ sub install_package
 		return () unless defined $handle;
 	}
 
-	if (defined $state->{installed}->{$handle->{pkgname}}) {
+	if ($state->is_installed($handle->{pkgname})) {
 		$handle->close_now;
 		return ();
 	}
@@ -505,7 +525,7 @@ sub install_package
 		if ($state->{replace}) {
 			if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
 				OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
-				$state->{installed}->{$handle->{pkgname}} = 1;
+				$state->mark_installed($handle->{pkgname});
 				$handle->close_now;
 				return ();
 			}
@@ -528,7 +548,7 @@ sub install_package
 			$solver->dump;
 		}
 		if (@deps > 0) {
-			build_deptree($state, $pkg, @deps);
+			$state->build_deptree($pkg, @deps);
 			return (@deps, $pkg);
 		}
 	}
@@ -566,7 +586,7 @@ sub install_package
 	really_add($handle, $state);
 	$handle->wipe_info;
 	delete $handle->{plist};
-	$state->{installed}->{$handle->{pkgname}} = 1;
+	$state->mark_installed($handle->{pkgname});
 	return ();
 }
 
@@ -645,8 +665,6 @@ $opt_L = '/usr/local' unless defined $opt_L;
 
 my $state = OpenBSD::pkg_add::State->new;
 $state->{cache} = {};
-$state->{installed} = {};
-$state->{deptree} = {};
 $state->{do_faked} = 0;
 $state->{localbase} = $opt_L;
 $state->{arch} = $opt_A;
@@ -793,7 +811,7 @@ if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
 	    " may remain\n";
 }
 if (defined $state->{forced}->{kitchensink}) {
-	print "Added:\n", (map { "\t$_\n" } sort keys %{$state->{installed}}), "\n";
+	print "Added:\n", (map { "\t$_\n" } sort $state->installed), "\n";
 }
 rethrow $dielater;
 } catch {
