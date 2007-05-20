@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.24 2006/05/31 06:18:09 pascoe Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.25 2007/05/20 14:14:12 miod Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -140,7 +140,7 @@ struct usbd_bus {
 struct usbd_device {
 	struct usbd_bus	       *bus;           /* our controller */
 	struct usbd_pipe       *default_pipe;  /* pipe 0 */
-	u_int8_t		address;       /* device addess */
+	u_int8_t		address;       /* device address */
 	u_int8_t		config;	       /* current configuration # */
 	u_int8_t		depth;         /* distance from root hub */
 	u_int8_t		speed;         /* low/full/high speed */

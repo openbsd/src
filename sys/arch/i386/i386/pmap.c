@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.110 2007/05/17 15:17:02 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.111 2007/05/20 14:14:09 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1871,7 +1871,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 
 /*
  * pmap_virtual_space: used during bootup [pmap_steal_memory] to
- *	determine the bounds of the kernel virtual addess space.
+ *	determine the bounds of the kernel virtual address space.
  */
 
 void
