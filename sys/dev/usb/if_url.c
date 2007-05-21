@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.36 2007/05/21 05:18:56 jsg Exp $ */
+/*	$OpenBSD: if_url.c,v 1.37 2007/05/21 05:40:27 jsg Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -133,8 +133,8 @@ Static int url_mem(struct url_softc *, int, int, void *, int);
 
 /* Macros */
 #ifdef URL_DEBUG
-#define DPRINTF(x)	do { if (urldebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (urldebug >= (n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (urldebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (urldebug >= (n)) printf x; } while (0)
 int urldebug = 0;
 #else
 #define DPRINTF(x)

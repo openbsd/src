@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.8 2006/06/23 06:27:12 miod Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.9 2007/05/21 05:40:28 jsg Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -81,7 +81,7 @@ SYSCTL_INT(_debug_usb, OID_AUTO, uvscom, CTLFLAG_RW,
 
 #endif
 
-#define DPRINTFN(n, x)  do { if (uvscomdebug > (n)) logprintf x; } while (0)
+#define DPRINTFN(n, x)  do { if (uvscomdebug > (n)) printf x; } while (0)
 #else
 #define DPRINTFN(n, x)
 #endif

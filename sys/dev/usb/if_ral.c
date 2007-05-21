@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.89 2007/02/19 17:22:02 deraadt Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.90 2007/05/21 05:40:27 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -72,8 +72,8 @@
 #endif
 
 #ifdef URAL_DEBUG
-#define DPRINTF(x)	do { if (ural_debug) logprintf x; } while (0)
-#define DPRINTFN(n, x)	do { if (ural_debug >= (n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (ural_debug) printf x; } while (0)
+#define DPRINTFN(n, x)	do { if (ural_debug >= (n)) printf x; } while (0)
 int ural_debug = 0;
 #else
 #define DPRINTF(x)

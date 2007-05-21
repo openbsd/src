@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.76 2007/03/22 05:53:36 pascoe Exp $ */
+/*	$OpenBSD: ohci.c,v 1.77 2007/05/21 05:40:27 jsg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -72,8 +72,8 @@ struct cfdriver ohci_cd = {
 };
 
 #ifdef OHCI_DEBUG
-#define DPRINTF(x)	do { if (ohcidebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (ohcidebug>(n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (ohcidebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (ohcidebug>(n)) printf x; } while (0)
 int ohcidebug = 0;
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
 #else

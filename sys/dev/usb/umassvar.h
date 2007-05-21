@@ -1,4 +1,4 @@
-/*	$OpenBSD: umassvar.h,v 1.8 2005/04/01 06:41:13 pascoe Exp $ */
+/*	$OpenBSD: umassvar.h,v 1.9 2007/05/21 05:40:28 jsg Exp $ */
 /*	$NetBSD: umassvar.h,v 1.20 2003/09/08 19:31:01 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -31,7 +31,7 @@
 
 #ifdef UMASS_DEBUG
 #define DIF(m, x)	if (umassdebug & (m)) do { x ; } while (0)
-#define DPRINTF(m, x)	do { if (umassdebug & (m)) logprintf x; } while (0)
+#define DPRINTF(m, x)	do { if (umassdebug & (m)) printf x; } while (0)
 #define UDMASS_UPPER	0x00008000	/* upper layer */
 #define UDMASS_GEN	0x00010000	/* general */
 #define UDMASS_SCSI	0x00020000	/* scsi */

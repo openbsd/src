@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.65 2007/05/21 05:18:56 jsg Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.66 2007/05/21 05:40:28 jsg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -120,8 +120,6 @@ typedef int usb_malloc_type;
 
 #define if_deactivate(x)
 #define IF_INPUT(ifp, m) ether_input_mbuf((ifp), (m))
-
-#define logprintf printf
 
 #define swap_bytes_change_sign16_le swap_bytes_change_sign16
 #define change_sign16_swap_bytes_le change_sign16_swap_bytes

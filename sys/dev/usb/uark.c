@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.1 2006/08/14 08:30:22 jsg Exp $	*/
+/*	$OpenBSD: uark.c,v 1.2 2007/05/21 05:40:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -32,7 +32,7 @@
 #include <dev/usb/ucomvar.h>
 
 #ifdef UARK_DEBUG
-#define DPRINTFN(n, x)  do { if (uarkdebug > (n)) logprintf x; } while (0)
+#define DPRINTFN(n, x)  do { if (uarkdebug > (n)) printf x; } while (0)
 int	uarkebug = 0;
 #else
 #define DPRINTFN(n, x)

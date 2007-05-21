@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.17 2004/07/21 00:01:08 dlg Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.18 2007/05/21 05:40:28 jsg Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -57,8 +57,8 @@
 #include <dev/usb/usbdi_util.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	do { if (usbdebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (usbdebug>(n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (usbdebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (usbdebug>(n)) printf x; } while (0)
 extern int usbdebug;
 #else
 #define DPRINTF(x)

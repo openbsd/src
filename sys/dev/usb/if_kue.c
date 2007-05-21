@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.45 2007/05/21 05:18:56 jsg Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.46 2007/05/21 05:40:27 jsg Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -119,8 +119,8 @@
 #include <dev/usb/if_kuevar.h>
 
 #ifdef KUE_DEBUG
-#define DPRINTF(x)	do { if (kuedebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (kuedebug >= (n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (kuedebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (kuedebug >= (n)) printf x; } while (0)
 int	kuedebug = 0;
 #else
 #define DPRINTF(x)

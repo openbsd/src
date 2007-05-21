@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.23 2007/05/21 05:18:56 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.24 2007/05/21 05:40:27 jsg Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -127,8 +127,8 @@ Static int udav_mem_write1(struct udav_softc *, int, unsigned char);
 
 /* Macros */
 #ifdef UDAV_DEBUG
-#define DPRINTF(x)	do { if (udavdebug) logprintf x; } while(0)
-#define DPRINTFN(n,x)	do { if (udavdebug >= (n)) logprintf x; } while(0)
+#define DPRINTF(x)	do { if (udavdebug) printf x; } while(0)
+#define DPRINTFN(n,x)	do { if (udavdebug >= (n)) printf x; } while(0)
 int udavdebug = 0;
 #else
 #define DPRINTF(x)

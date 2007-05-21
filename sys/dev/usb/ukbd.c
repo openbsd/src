@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.27 2007/02/11 20:29:22 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.28 2007/05/21 05:40:28 jsg Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -76,8 +76,8 @@
 #include <dev/wscons/wsksymvar.h>
 
 #ifdef UKBD_DEBUG
-#define DPRINTF(x)	do { if (ukbddebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (ukbddebug>(n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (ukbddebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (ukbddebug>(n)) printf x; } while (0)
 int	ukbddebug = 0;
 #else
 #define DPRINTF(x)

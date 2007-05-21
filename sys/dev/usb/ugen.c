@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.36 2006/11/01 03:37:23 tedu Exp $ */
+/*	$OpenBSD: ugen.c,v 1.37 2007/05/21 05:40:28 jsg Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -69,8 +69,8 @@
 #include <dev/usb/usbdevs.h>
 
 #ifdef UGEN_DEBUG
-#define DPRINTF(x)	do { if (ugendebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (ugendebug>(n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (ugendebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (ugendebug>(n)) printf x; } while (0)
 int	ugendebug = 0;
 #else
 #define DPRINTF(x)

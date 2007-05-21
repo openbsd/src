@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.33 2007/05/21 05:18:56 jsg Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.34 2007/05/21 05:40:27 jsg Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -107,8 +107,8 @@
 #include <dev/usb/if_cuereg.h>
 
 #ifdef CUE_DEBUG
-#define DPRINTF(x)	do { if (cuedebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (cuedebug >= (n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (cuedebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (cuedebug >= (n)) printf x; } while (0)
 int	cuedebug = 0;
 #else
 #define DPRINTF(x)

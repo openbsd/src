@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.30 2006/11/01 03:37:24 tedu Exp $ */
+/*	$OpenBSD: uhid.c,v 1.31 2007/05/21 05:40:28 jsg Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -69,8 +69,8 @@
 #include <dev/usb/uhidev.h>
 
 #ifdef UHID_DEBUG
-#define DPRINTF(x)	do { if (uhiddebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (uhiddebug>(n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (uhiddebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uhiddebug>(n)) printf x; } while (0)
 int	uhiddebug = 0;
 #else
 #define DPRINTF(x)

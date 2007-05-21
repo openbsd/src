@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.19 2006/11/26 15:01:01 deraadt Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.20 2007/05/21 05:40:28 jsg Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -66,8 +66,8 @@
 #include <dev/usb/ugraphire_rdesc.h>
 
 #ifdef UHIDEV_DEBUG
-#define DPRINTF(x)	do { if (uhidevdebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (uhidevdebug>(n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (uhidevdebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uhidevdebug>(n)) printf x; } while (0)
 int	uhidevdebug = 0;
 #else
 #define DPRINTF(x)

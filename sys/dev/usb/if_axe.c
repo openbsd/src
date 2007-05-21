@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.67 2007/05/21 05:18:56 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.68 2007/05/21 05:40:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -132,8 +132,8 @@
 #include <dev/usb/if_axereg.h>
 
 #ifdef AXE_DEBUG
-#define DPRINTF(x)	do { if (axedebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (axedebug >= (n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (axedebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (axedebug >= (n)) printf x; } while (0)
 int	axedebug = 0;
 #else
 #define DPRINTF(x)

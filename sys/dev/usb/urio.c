@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.21 2006/06/23 06:27:12 miod Exp $	*/
+/*	$OpenBSD: urio.c,v 1.22 2007/05/21 05:40:28 jsg Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -73,8 +73,8 @@
 #include <dev/usb/urio.h>
 
 #ifdef URIO_DEBUG
-#define DPRINTF(x)	do { if (uriodebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (uriodebug>(n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (uriodebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uriodebug>(n)) printf x; } while (0)
 int	uriodebug = 0;
 #else
 #define DPRINTF(x)

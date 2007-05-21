@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.20 2007/02/27 11:02:34 fkr Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.21 2007/05/21 05:40:28 jsg Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -105,7 +105,7 @@ SYSCTL_INT(_hw_usb_ubsa, OID_AUTO, debug, CTLFLAG_RW,
 	   &ubsadebug, 0, "ubsa debug level");
 #endif
 
-#define	DPRINTFN(n, x)	do { if (ubsadebug > (n)) logprintf x; } while (0)
+#define	DPRINTFN(n, x)	do { if (ubsadebug > (n)) printf x; } while (0)
 #else
 #define	DPRINTFN(n, x)
 #endif

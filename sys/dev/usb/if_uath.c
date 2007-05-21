@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.17 2007/02/19 17:22:02 deraadt Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.18 2007/05/21 05:40:27 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -81,8 +81,8 @@
 #endif
 
 #ifdef UATH_DEBUG
-#define DPRINTF(x)	do { if (uath_debug) logprintf x; } while (0)
-#define DPRINTFN(n, x)	do { if (uath_debug >= (n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (uath_debug) printf x; } while (0)
+#define DPRINTFN(n, x)	do { if (uath_debug >= (n)) printf x; } while (0)
 int uath_debug = 1;
 #else
 #define DPRINTF(x)
