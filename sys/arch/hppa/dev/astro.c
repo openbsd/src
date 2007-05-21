@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.1 2007/05/21 19:33:09 kettenis Exp $	*/
+/*	$OpenBSD: astro.c,v 1.2 2007/05/21 21:43:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -310,7 +310,7 @@ iommu_dvmamap_destroy(void *v, bus_dmamap_t map)
 	 * map to be unloaded before it is destroyed.
 	 */
 	if (map->dm_nsegs)
-		bus_dmamap_unload(sc->sc_dmat, map);
+		iommu_dvmamap_unload(sc, map);
 
         if (map->_dm_cookie)
                 iommu_iomap_destroy(map->_dm_cookie);
@@ -439,14 +439,14 @@ iommu_dvmamap_unload(void *v, bus_dmamap_t map)
 	struct iommu_page_entry *e;
 	int err, i, s;
 
-	bus_dmamap_unload(sc->sc_dmat, map);
-
-	/* XXX */
-	if (ims->ims_dvmasize == 0)
-		return;
-
+	/* Remove the IOMMU entries. */
 	for (i = 0, e = ipm->ipm_map; i < ipm->ipm_pagecnt; ++i, ++e)
 		iommu_remove(sc, e->ipe_dva);
+
+	/* Clear the iomap. */
+	iommu_iomap_clear_pages(ims);
+
+	bus_dmamap_unload(sc->sc_dmat, map);
 
 	s = splhigh();
 	err = extent_free(sc->sc_dvmamap, ims->ims_dvmastart,
