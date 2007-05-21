@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.11 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.12 2007/05/21 22:10:45 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/ppbreg.h>
 
 #include "ioapic.h"
 
@@ -430,12 +431,9 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			return 0;
 		}
 		if (pa->pa_bridgetag) {
-			int bridgebus, bridgedev;
-
-			pci_decompose_tag(pc, *pa->pa_bridgetag,
-			    &bridgebus, &bridgedev, NULL);
-			mppin = (bridgedev << 2)|((rawpin + dev - 1) & 0x3);
-			if (intr_find_mpmapping(bridgebus, mppin, ihp) == 0) {
+			int pin = PPB_INTERRUPT_SWIZZLE(rawpin, dev);
+			if (pa->pa_bridgeih[pin - 1] != -1) {
+				*ihp = pa->pa_bridgeih[pin - 1];
 				*ihp |= line;
 				return 0;
 			}
@@ -461,20 +459,18 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * that the BIOS did its job, we also recognize that as meaning that
 	 * the BIOS has not configured the device.
 	 */
-	if (line == 0 || line == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
-		printf("pci_intr_map: no mapping for pin %c (line=%02x)\n",
-		       '@' + pin, line);
+	if (line == 0 || line == X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
 		goto bad;
-	} else {
-		if (line >= NUM_LEGACY_IRQS) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
-			goto bad;
-		}
-		if (line == 2) {
-			printf("pci_intr_map: changed line 2 to line 9\n");
-			line = 9;
-		}
+
+	if (line >= NUM_LEGACY_IRQS) {
+		printf("pci_intr_map: bad interrupt line %d\n", line);
+		goto bad;
 	}
+	if (line == 2) {
+		printf("pci_intr_map: changed line 2 to line 9\n");
+		line = 9;
+	}
+
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(mp_isa_bus->mb_idx, line, ihp) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.18 2007/02/13 18:35:32 tom Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.19 2007/05/21 22:10:45 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -45,6 +45,7 @@ struct ppb_softc {
 	struct device sc_dev;		/* generic device glue */
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
 	pcitag_t sc_tag;		/* ...and tag. */
+	pci_intr_handle_t sc_ih[4];
 };
 
 int	ppbmatch(struct device *, void *, void *);
@@ -91,6 +92,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
 	pcireg_t busdata;
+	int pin;
 
 	printf("\n");
 
@@ -103,6 +105,12 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		printf("%s: not configured by system firmware\n",
 		    self->dv_xname);
 		return;
+	}
+
+	for (pin = PCI_INTERRUPT_PIN_A; pin <= PCI_INTERRUPT_PIN_D; pin++) {
+		pa->pa_intrpin = pa->pa_rawintrpin = pin;
+		pa->pa_intrline = 0;
+		pci_intr_map(pa, &sc->sc_ih[pin - PCI_INTERRUPT_PIN_A]);
 	}
 
 #if 0
@@ -133,6 +141,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 #endif
 	pba.pba_domain = pa->pa_domain;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
+	pba.pba_bridgeih = sc->sc_ih;
 	pba.pba_bridgetag = &sc->sc_tag;
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;

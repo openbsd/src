@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.49 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.50 2007/05/21 22:10:45 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_domain = pba->pba_domain;
 	sc->sc_bus = pba->pba_bus;
 	sc->sc_bridgetag = pba->pba_bridgetag;
+	sc->sc_bridgeih = pba->pba_bridgeih;
 	sc->sc_maxndevs = pci_bus_maxdevs(pba->pba_pc, pba->pba_bus);
 	sc->sc_intrswiz = pba->pba_intrswiz;
 	sc->sc_intrtag = pba->pba_intrtag;
@@ -276,6 +277,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pa.pa_id = id;
 	pa.pa_class = class;
 	pa.pa_bridgetag = sc->sc_bridgetag;
+	pa.pa_bridgeih = sc->sc_bridgeih;
 
 	/* This is a simplification of the NetBSD code.
 	   We don't support turning off I/O or memory
