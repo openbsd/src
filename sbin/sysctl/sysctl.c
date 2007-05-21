@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.146 2007/02/20 00:02:56 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.147 2007/05/21 21:36:07 cnst Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.146 2007/02/20 00:02:56 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.147 2007/05/21 21:36:07 cnst Exp $";
 #endif
 #endif /* not lint */
 
@@ -307,7 +307,7 @@ parse(char *string, int flags)
 	int indx, type, state, intval, len;
 	size_t size, newsize = 0;
 	int lal = 0, special = 0;
-	void *newval = 0;
+	void *newval = NULL;
 	int64_t quadval;
 	struct list *lp;
 	int mib[CTL_MAXNAME];
@@ -629,7 +629,7 @@ parse(char *string, int flags)
 		if (mib[1] == CPU_ZTSSCALE) {
 			special |= ZTSSCALE;
 			if (newsize > 0) {
-				const char *errstr = 0;
+				const char *errstr = NULL;
 
 				/* Unspecified values default to 0. */
 				bzero(&tsbuf, sizeof tsbuf);
@@ -1708,7 +1708,8 @@ sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 				return (-1);
 			lp.size = stor + 2;
 			for (i = 1;
-			    (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL; i++) {
+			    (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
+			    i++) {
 				if (lp.list[i].ctl_name[0] == '\0') {
 					i--;
 					continue;
@@ -1842,7 +1843,7 @@ sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 	if (*typep == CTLTYPE_NODE) {
 		int tindx;
 
-		if (*bufpp == 0) {
+		if (*bufpp == NULL) {
 			listall(string, &ifqlist);
 			return(-1);
 		}
@@ -2333,6 +2334,8 @@ print_sensor(struct sensor *s)
 		printf(" (%s)", s->desc);
 
 	switch (s->status) {
+	case SENSOR_S_UNSPEC:
+		break;
 	case SENSOR_S_OK:
 		printf(", OK");
 		break;
