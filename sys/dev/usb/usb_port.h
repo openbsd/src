@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.66 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.67 2007/05/21 06:10:44 jsg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -103,16 +103,6 @@ typedef struct proc *usb_proc_ptr;
 #define UHIDBUSCF_REPORTID_DEFAULT	-1
 
 #define mstohz(ms) ((ms) * hz / 1000)
-
-/*
- * The UHCI/OHCI controllers are little endian, so on big endian machines
- * the data stored in memory needs to be swapped.
- */
-
-#if defined(letoh32)
-#define le32toh(x) letoh32(x)
-#define le16toh(x) letoh16(x)
-#endif
 
 #define sel_klist si_note
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.68 2007/05/20 00:52:25 jsg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.69 2007/05/21 06:10:43 jsg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -716,10 +716,10 @@ ehci_check_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	 * is a an error somewhere in the middle, or whether there was a
 	 * short packet (SPD and not ACTIVE).
 	 */
-	if (le32toh(lsqtd->qtd.qtd_status) & EHCI_QTD_ACTIVE) {
+	if (letoh32(lsqtd->qtd.qtd_status) & EHCI_QTD_ACTIVE) {
 		DPRINTFN(12, ("ehci_check_intr: active ex=%p\n", ex));
 		for (sqtd = ex->sqtdstart; sqtd != lsqtd; sqtd=sqtd->nextqtd) {
-			status = le32toh(sqtd->qtd.qtd_status);
+			status = letoh32(sqtd->qtd.qtd_status);
 			/* If there's an active QTD the xfer isn't done. */
 			if (status & EHCI_QTD_ACTIVE)
 				break;
@@ -788,7 +788,7 @@ ehci_idone(struct ehci_xfer *ex)
 	actlen = 0;
 	for (sqtd = ex->sqtdstart; sqtd != lsqtd->nextqtd;
 	    sqtd = sqtd->nextqtd) {
-		nstatus = le32toh(sqtd->qtd.qtd_status);
+		nstatus = letoh32(sqtd->qtd.qtd_status);
 		if (nstatus & EHCI_QTD_ACTIVE)
 			break;
 
@@ -1210,7 +1210,7 @@ ehci_dump()
 void
 ehci_dump_link(ehci_link_t link, int type)
 {
-	link = le32toh(link);
+	link = letoh32(link);
 	printf("0x%08x", link);
 	if (link & EHCI_LINK_TERMINATE)
 		printf("<T>");
@@ -1259,7 +1259,7 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 	printf("  next="); ehci_dump_link(qtd->qtd_next, 0);
 	printf(" altnext="); ehci_dump_link(qtd->qtd_altnext, 0);
 	printf("\n");
-	s = le32toh(qtd->qtd_status);
+	s = letoh32(qtd->qtd_status);
 	bitmask_snprintf(EHCI_QTD_GET_STATUS(s), "\20\10ACTIVE\7HALTED"
 	    "\6BUFERR\5BABBLE\4XACTERR\3MISSED\2SPLIT\1PING",
 	    sbuf, sizeof(sbuf));
@@ -1269,7 +1269,7 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 	printf("    cerr=%d pid=%d stat=0x%s\n", EHCI_QTD_GET_CERR(s),
 	    EHCI_QTD_GET_PID(s), sbuf);
 	for (s = 0; s < 5; s++)
-		printf("  buffer[%d]=0x%08x\n", s, le32toh(qtd->qtd_buffer[s]));
+		printf("  buffer[%d]=0x%08x\n", s, letoh32(qtd->qtd_buffer[s]));
 }
 
 void
@@ -1280,7 +1280,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 
 	printf("QH(%p) at 0x%08x:\n", sqh, sqh->physaddr);
 	printf("  link="); ehci_dump_link(qh->qh_link, 1); printf("\n");
-	endp = le32toh(qh->qh_endp);
+	endp = letoh32(qh->qh_endp);
 	printf("  endp=0x%08x\n", endp);
 	printf("    addr=0x%02x inact=%d endpt=%d eps=%d dtc=%d hrecl=%d\n",
 	    EHCI_QH_GET_ADDR(endp), EHCI_QH_GET_INACT(endp),
@@ -1289,7 +1289,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	printf("    mpl=0x%x ctl=%d nrl=%d\n",
 	    EHCI_QH_GET_MPL(endp), EHCI_QH_GET_CTL(endp),
 	    EHCI_QH_GET_NRL(endp));
-	endphub = le32toh(qh->qh_endphub);
+	endphub = letoh32(qh->qh_endphub);
 	printf("  endphub=0x%08x\n", endphub);
 	printf("    smask=0x%02x cmask=0x%02x huba=0x%02x port=%d mult=%d\n",
 	    EHCI_QH_GET_SMASK(endphub), EHCI_QH_GET_CMASK(endphub),
@@ -2401,7 +2401,7 @@ ehci_close_pipe(usbd_pipe_handle pipe, ehci_soft_qh_t *head)
 	ehci_rem_qh(sc, sqh, head);
 	splx(s);
 	pipe->endpoint->savedtoggle =
-	    EHCI_QTD_GET_TOGGLE(le32toh(sqh->qh.qh_qtd.qtd_status));
+	    EHCI_QTD_GET_TOGGLE(letoh32(sqh->qh.qh_qtd.qtd_status));
 	ehci_free_sqh(sc, epipe->sqh);
 }
 
@@ -2525,7 +2525,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * the aborting xfer.  (If there is something past us).
 	 * Hardware and software.
 	 */
-	cur = EHCI_LINK_ADDR(le32toh(sqh->qh.qh_curqtd));
+	cur = EHCI_LINK_ADDR(letoh32(sqh->qh.qh_curqtd));
 	hit = 0;
 
 	/* If they initially point here. */
@@ -2543,9 +2543,9 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	sqtd = sqh->sqtd;
 	while (sqtd && sqtd != exfer->sqtdstart) {
 		hit |= (cur == sqtd->physaddr);
-		if (EHCI_LINK_ADDR(le32toh(sqtd->qtd.qtd_next)) == us)
+		if (EHCI_LINK_ADDR(letoh32(sqtd->qtd.qtd_next)) == us)
 			sqtd->qtd.qtd_next = next;
-		if (EHCI_LINK_ADDR(le32toh(sqtd->qtd.qtd_altnext)) == us)
+		if (EHCI_LINK_ADDR(letoh32(sqtd->qtd.qtd_altnext)) == us)
 			sqtd->qtd.qtd_altnext = next;
 		psqtd = &sqtd->nextqtd;
 		sqtd = sqtd->nextqtd;

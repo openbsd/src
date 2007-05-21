@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.55 2007/05/21 05:40:27 jsg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.56 2007/05/21 06:10:43 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1857,7 +1857,7 @@ rum_read_eeprom(struct rum_softc *sc)
 	DPRINTF(("RF revision=%d\n", sc->rf_rev));
 
 	rum_eeprom_read(sc, RT2573_EEPROM_CONFIG2, &val, 2);
-	val = le16toh(val);
+	val = letoh16(val);
 	sc->ext_5ghz_lna = (val >> 6) & 0x1;
 	sc->ext_2ghz_lna = (val >> 4) & 0x1;
 
@@ -1878,7 +1878,7 @@ rum_read_eeprom(struct rum_softc *sc)
 	    sc->rssi_2ghz_corr, sc->rssi_5ghz_corr));
 
 	rum_eeprom_read(sc, RT2573_EEPROM_FREQ_OFFSET, &val, 2);
-	val = le16toh(val);
+	val = letoh16(val);
 	if ((val & 0xff) != 0xff)
 		sc->rffreq = val & 0xff;
 

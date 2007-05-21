@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.53 2007/05/21 04:55:14 jsg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.54 2007/05/21 06:10:43 jsg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -347,7 +347,7 @@ uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
 
 	for (; pqh->hlink != sqh; pqh = pqh->hlink) {
 #if defined(DIAGNOSTIC) || defined(UHCI_DEBUG)
-		if (le32toh(pqh->qh.qh_hlink) & UHCI_PTR_T) {
+		if (letoh32(pqh->qh.qh_hlink) & UHCI_PTR_T) {
 			printf("uhci_find_prev_qh: QH not found\n");
 			return (NULL);
 		}
@@ -762,35 +762,35 @@ uhci_dump_td(uhci_soft_td_t *p)
 	DPRINTFN(-1,("TD(%p) at %08lx = link=0x%08lx status=0x%08lx "
 		     "token=0x%08lx buffer=0x%08lx\n",
 		     p, (long)p->physaddr,
-		     (long)le32toh(p->td.td_link),
-		     (long)le32toh(p->td.td_status),
-		     (long)le32toh(p->td.td_token),
-		     (long)le32toh(p->td.td_buffer)));
+		     (long)letoh32(p->td.td_link),
+		     (long)letoh32(p->td.td_status),
+		     (long)letoh32(p->td.td_token),
+		     (long)letoh32(p->td.td_buffer)));
 
-	bitmask_snprintf((u_int32_t)le32toh(p->td.td_link), "\20\1T\2Q\3VF",
+	bitmask_snprintf((u_int32_t)letoh32(p->td.td_link), "\20\1T\2Q\3VF",
 			 sbuf, sizeof(sbuf));
-	bitmask_snprintf((u_int32_t)le32toh(p->td.td_status),
+	bitmask_snprintf((u_int32_t)letoh32(p->td.td_status),
 			 "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
 			 "STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
 			 sbuf2, sizeof(sbuf2));
 
 	DPRINTFN(-1,("  %s %s,errcnt=%d,actlen=%d pid=%02x,addr=%d,endpt=%d,"
 		     "D=%d,maxlen=%d\n", sbuf, sbuf2,
-		     UHCI_TD_GET_ERRCNT(le32toh(p->td.td_status)),
-		     UHCI_TD_GET_ACTLEN(le32toh(p->td.td_status)),
-		     UHCI_TD_GET_PID(le32toh(p->td.td_token)),
-		     UHCI_TD_GET_DEVADDR(le32toh(p->td.td_token)),
-		     UHCI_TD_GET_ENDPT(le32toh(p->td.td_token)),
-		     UHCI_TD_GET_DT(le32toh(p->td.td_token)),
-		     UHCI_TD_GET_MAXLEN(le32toh(p->td.td_token))));
+		     UHCI_TD_GET_ERRCNT(letoh32(p->td.td_status)),
+		     UHCI_TD_GET_ACTLEN(letoh32(p->td.td_status)),
+		     UHCI_TD_GET_PID(letoh32(p->td.td_token)),
+		     UHCI_TD_GET_DEVADDR(letoh32(p->td.td_token)),
+		     UHCI_TD_GET_ENDPT(letoh32(p->td.td_token)),
+		     UHCI_TD_GET_DT(letoh32(p->td.td_token)),
+		     UHCI_TD_GET_MAXLEN(letoh32(p->td.td_token))));
 }
 
 void
 uhci_dump_qh(uhci_soft_qh_t *sqh)
 {
 	DPRINTFN(-1,("QH(%p) at %08x: hlink=%08x elink=%08x\n", sqh,
-	    (int)sqh->physaddr, le32toh(sqh->qh.qh_hlink),
-	    le32toh(sqh->qh.qh_elink)));
+	    (int)sqh->physaddr, letoh32(sqh->qh.qh_hlink),
+	    letoh32(sqh->qh.qh_elink)));
 }
 
 
@@ -830,12 +830,12 @@ uhci_dump_qhs(uhci_soft_qh_t *sqh)
 	 */
 
 
-	if (sqh->hlink != NULL && !(le32toh(sqh->qh.qh_hlink) & UHCI_PTR_T))
+	if (sqh->hlink != NULL && !(letoh32(sqh->qh.qh_hlink) & UHCI_PTR_T))
 		uhci_dump_qhs(sqh->hlink);
 	else
 		DPRINTF(("No QH\n"));
 
-	if (sqh->elink != NULL && !(le32toh(sqh->qh.qh_elink) & UHCI_PTR_T))
+	if (sqh->elink != NULL && !(letoh32(sqh->qh.qh_elink) & UHCI_PTR_T))
 		uhci_dump_tds(sqh->elink);
 	else
 		DPRINTF(("No TD\n"));
@@ -854,8 +854,8 @@ uhci_dump_tds(uhci_soft_td_t *std)
 		 * printing the free list in case the queue/TD has
 		 * already been moved there (seatbelt).
 		 */
-		if (le32toh(td->td.td_link) & UHCI_PTR_T ||
-		    le32toh(td->td.td_link) == 0)
+		if (letoh32(td->td.td_link) & UHCI_PTR_T ||
+		    letoh32(td->td.td_link) == 0)
 			break;
 	}
 }
@@ -1293,10 +1293,10 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 	 * is an error somewhere in the middle, or whether there was a
 	 * short packet (SPD and not ACTIVE).
 	 */
-	if (le32toh(lstd->td.td_status) & UHCI_TD_ACTIVE) {
+	if (letoh32(lstd->td.td_status) & UHCI_TD_ACTIVE) {
 		DPRINTFN(12, ("uhci_check_intr: active ii=%p\n", ii));
 		for (std = ii->stdstart; std != lstd; std = std->link.std) {
-			status = le32toh(std->td.td_status);
+			status = letoh32(std->td.td_status);
 			/* If there's an active TD the xfer isn't done. */
 			if (status & UHCI_TD_ACTIVE)
 				break;
@@ -1306,7 +1306,7 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 			/* We want short packets, and it is short: it's done */
 			if ((status & UHCI_TD_SPD) &&
 			      UHCI_TD_GET_ACTLEN(status) <
-			      UHCI_TD_GET_MAXLEN(le32toh(std->td.td_token)))
+			      UHCI_TD_GET_MAXLEN(letoh32(std->td.td_token)))
 				goto done;
 		}
 		DPRINTFN(12, ("uhci_check_intr: ii=%p std=%p still active\n",
@@ -1368,7 +1368,7 @@ uhci_idone(uhci_intr_info_t *ii)
 #endif
 			if (++n >= UHCI_VFRAMELIST_COUNT)
 				n = 0;
-			status = le32toh(std->td.td_status);
+			status = letoh32(std->td.td_status);
 			len = UHCI_TD_GET_ACTLEN(status);
 			xfer->frlengths[i] = len;
 			actlen += len;
@@ -1389,12 +1389,12 @@ uhci_idone(uhci_intr_info_t *ii)
 	/* The transfer is done, compute actual length and status. */
 	actlen = 0;
 	for (std = ii->stdstart; std != NULL; std = std->link.std) {
-		nstatus = le32toh(std->td.td_status);
+		nstatus = letoh32(std->td.td_status);
 		if (nstatus & UHCI_TD_ACTIVE)
 			break;
 
 		status = nstatus;
-		if (UHCI_TD_GET_PID(le32toh(std->td.td_token)) !=
+		if (UHCI_TD_GET_PID(letoh32(std->td.td_token)) !=
 		    UHCI_TD_PID_SETUP)
 			actlen += UHCI_TD_GET_ACTLEN(status);
 		else {
@@ -1409,7 +1409,7 @@ uhci_idone(uhci_intr_info_t *ii)
 	}
 	/* If there are left over TDs we need to update the toggle. */
 	if (std != NULL)
-		upipe->nexttoggle = UHCI_TD_GET_DT(le32toh(std->td.td_token));
+		upipe->nexttoggle = UHCI_TD_GET_DT(letoh32(std->td.td_token));
 
 	status &= UHCI_TD_ERROR;
 	DPRINTFN(10, ("uhci_idone: actlen=%d, status=0x%x\n",
@@ -1618,7 +1618,7 @@ uhci_free_std(uhci_softc_t *sc, uhci_soft_td_t *std)
 {
 #ifdef DIAGNOSTIC
 #define TD_IS_FREE 0x12345678
-	if (le32toh(std->td.td_token) == TD_IS_FREE) {
+	if (letoh32(std->td.td_token) == TD_IS_FREE) {
 		printf("uhci_free_std: freeing free TD %p\n", std);
 		return;
 	}
@@ -2247,7 +2247,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 		for (std = sc->sc_vframes[0].htd, link = 0;
 		     (link & UHCI_PTR_QH) == 0;
 		     std = std->link.std) {
-			link = le32toh(std->td.td_link);
+			link = letoh32(std->td.td_link);
 			uhci_dump_td(std);
 		}
 		sxqh = (uhci_soft_qh_t *)std;
@@ -2446,7 +2446,7 @@ uhci_device_isoc_abort(usbd_xfer_handle xfer)
 	for (i = 0; i < nframes; i++) {
 		std = stds[n];
 		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
-		len = UHCI_TD_GET_MAXLEN(le32toh(std->td.td_token));
+		len = UHCI_TD_GET_MAXLEN(letoh32(std->td.td_token));
 		if (len > maxlen)
 			maxlen = len;
 		if (++n >= UHCI_VFRAMELIST_COUNT)
