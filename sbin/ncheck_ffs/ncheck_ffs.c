@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.27 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.28 2007/05/21 18:12:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -25,8 +25,37 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 1980, 1988, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.27 2007/03/19 13:27:47 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.28 2007/05/21 18:12:00 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,12 +75,16 @@ static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.27 2007/03/19 13:27:47 p
 #include <errno.h>
 #include <err.h>
 
-#define MAXINOPB	(MAXBSIZE / sizeof(struct ufs1_dinode))
+#define DIP(dp, field) \
+    ((sblock->fs_magic == FS_UFS1_MAGIC) ? \
+    ((struct ufs1_dinode *)(dp))->field : \
+    ((struct ufs2_dinode *)(dp))->field)
 
 char	*disk;		/* name of the disk file */
 int	diskfd;		/* disk file descriptor */
 struct	fs *sblock;	/* the file system super block */
 char	sblock_buf[MAXBSIZE];
+int	sblock_try[] = SBLOCKSEARCH; /* possible superblock locations */
 long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 ino_t	*ilist;		/* list of inodes to check */
@@ -64,22 +97,25 @@ char	*format;	/* output format */
 
 struct icache_s {
 	ino_t		ino;
-	struct ufs1_dinode	di;
+	union {
+		struct ufs1_dinode dp1;
+		struct ufs2_dinode dp2;
+	} di;
 } *icache;
 int	nicache;
 
 void addinode(ino_t inum);
-struct ufs1_dinode *getino(ino_t inum);
+void *getino(ino_t inum);
 void findinodes(ino_t);
-void bread(daddr_t, char *, int);
+void bread(ufs2_daddr_t, char *, int);
 __dead void usage(void);
 void scanonedir(ino_t, const char *);
-void dirindir(ino_t, daddr_t, int, long *, const char *);
-void searchdir(ino_t, daddr_t, long, long, const char *);
+void dirindir(ino_t, ufs2_daddr_t, int, off_t, const char *);
+void searchdir(ino_t, ufs2_daddr_t, long, off_t, const char *);
 int matchino(const void *, const void *);
 int matchcache(const void *, const void *);
-void cacheino(ino_t, struct ufs1_dinode *);
-struct ufs1_dinode *cached(ino_t);
+void cacheino(ino_t, void *);
+void *cached(ino_t);
 int main(int, char *[]);
 char *rawname(char *);
 void format_entry(const char *, struct direct *);
@@ -120,7 +156,7 @@ matchcache(const void *key, const void *val)
  * Add an inode to the cached entries
  */
 void
-cacheino(ino_t ino, struct ufs1_dinode *ip)
+cacheino(ino_t ino, void *dp)
 {
 	struct icache_s *newicache;
 
@@ -133,20 +169,30 @@ cacheino(ino_t ino, struct ufs1_dinode *ip)
 	}
 	icache = newicache;
 	icache[nicache].ino = ino;
-	icache[nicache++].di = *ip;
+	if (sblock->fs_magic == FS_UFS1_MAGIC)
+		icache[nicache++].di.dp1 = *(struct ufs1_dinode *)dp;
+	else
+		icache[nicache++].di.dp2 = *(struct ufs2_dinode *)dp;
 }
 
 /*
  * Get a cached inode
  */
-struct ufs1_dinode *
+void *
 cached(ino_t ino)
 {
 	struct icache_s *ic;
+	void *dp = NULL;
 
 	ic = (struct icache_s *)bsearch(&ino, icache, nicache,
 	    sizeof(struct icache_s), matchcache);
-	return ic ? &ic->di : NULL;
+	if (ic != NULL) {
+		if (sblock->fs_magic == FS_UFS1_MAGIC)
+			dp = &ic->di.dp1;
+		else
+			dp = &ic->di.dp2;
+	}
+	return (dp);
 }
 
 /*
@@ -158,19 +204,19 @@ void
 findinodes(ino_t maxino)
 {
 	ino_t ino;
-	struct ufs1_dinode *dp;
+	void *dp;
 	mode_t mode;
 
 	for (ino = ROOTINO; ino < maxino; ino++) {
 		dp = getino(ino);
-		mode = dp->di_mode & IFMT;
+		mode = DIP(dp, di_mode) & IFMT;
 		if (!mode)
 			continue;
 		if (mode == IFDIR)
 			cacheino(ino, dp);
 		if (iflag ||
 		    (sflag && (mode == IFDIR ||
-		     ((dp->di_mode & (ISGID | ISUID)) == 0 &&
+		     ((DIP(dp, di_mode) & (ISGID | ISUID)) == 0 &&
 		      (mode == IFREG || mode == IFLNK)))))
 			continue;
 		addinode(ino);
@@ -181,38 +227,44 @@ findinodes(ino_t maxino)
  * Get a specified inode from disk.  Attempt to minimize reads to once
  * per cylinder group
  */
-struct ufs1_dinode *
+void *
 getino(ino_t inum)
 {
-	static struct ufs1_dinode *itab = NULL;
+	static char *itab = NULL;
 	static daddr_t iblk = -1;
-	struct ufs1_dinode *ip;
+	void *dp;
+	size_t dsize;
 
 	if (inum < ROOTINO || inum >= sblock->fs_ncg * sblock->fs_ipg)
 		return NULL;
-	if ((ip = cached(inum)) != NULL)
-		return ip;
+	if ((dp = cached(inum)) != NULL)
+		return dp;
+	if (sblock->fs_magic == FS_UFS1_MAGIC)
+		dsize = sizeof(struct ufs1_dinode);
+	else
+		dsize = sizeof(struct ufs2_dinode);
 	if ((inum / sblock->fs_ipg) != iblk || itab == NULL) {
 		iblk = inum / sblock->fs_ipg;
 		if (itab == NULL &&
-		    (itab = calloc(sblock->fs_ipg, sizeof(struct ufs1_dinode))) == NULL)
+		    (itab = calloc(sblock->fs_ipg, dsize)) == NULL)
 			errx(1, "no memory for inodes");
-		bread(fsbtodb(sblock, cgimin(sblock, iblk)), (char *)itab,
-		      sblock->fs_ipg * sizeof(struct ufs1_dinode));
+		bread(fsbtodb(sblock, cgimin(sblock, iblk)), itab,
+		      sblock->fs_ipg * dsize);
 	}
-	return &itab[inum % sblock->fs_ipg];
+	return itab + (inum % sblock->fs_ipg) * dsize;
 }
 
 /*
- * Read a chunk of data from the disk. Try to recover from hard errors by
- * reading in sector sized pieces.  Error recovery is attempted at most
- * BREADEMAX times before seeking consent from the operator to continue.
+ * Read a chunk of data from the disk.
+ * Try to recover from hard errors by reading in sector sized pieces.
+ * Error recovery is attempted at most BREADEMAX times before seeking
+ * consent from the operator to continue.
  */
 int	breaderrors = 0;
 #define	BREADEMAX 32
 
 void
-bread(daddr_t blkno, char *buf, int size)
+bread(ufs2_daddr_t blkno, char *buf, int size)
 {
 	int cnt, i;
 
@@ -236,11 +288,11 @@ loop:
 		goto loop;
 	}
 	if (cnt == -1)
-		warnx("read error from %s: %s: [block %d]: count=%d",
-			disk, strerror(errno), blkno, size);
+		warnx("read error from %s: %s: [block %lld]: count=%d",
+		    disk, strerror(errno), (long long)blkno, size);
 	else
-		warnx("short read error from %s: [block %d]: count=%d, got=%d",
-			disk, blkno, size, cnt);
+		warnx("short read error from %s: [block %lld]: count=%d, got=%d",
+		    disk, (long long)blkno, size, cnt);
 	if (++breaderrors > BREADEMAX)
 		errx(1, "More than %d block read errors from %s", BREADEMAX, disk);
 	/*
@@ -253,12 +305,12 @@ loop:
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
-			warnx("read error from %s: %s: [sector %d]: count=%ld",
-			    disk, strerror(errno), blkno, dev_bsize);
+			warnx("read error from %s: %s: [sector %lld]: count=%ld",
+			    disk, strerror(errno), (long long)blkno, dev_bsize);
 			continue;
 		}
-		warnx("short read error from %s: [sector %d]: count=%ld, got=%d",
-		    disk, blkno, dev_bsize, cnt);
+		warnx("short read error from %s: [sector %lld]: count=%ld, got=%d",
+		    disk, (long long)blkno, dev_bsize, cnt);
 	}
 }
 
@@ -288,22 +340,24 @@ addinode(ino_t ino)
 void
 scanonedir(ino_t ino, const char *path)
 {
-	struct ufs1_dinode *dp;
-	long filesize;
+	void *dp;
+	off_t filesize;
 	int i;
 
 	if ((dp = cached(ino)) == NULL)
 		return;
-	filesize = dp->di_size;
+	filesize = (off_t)DIP(dp, di_size);
 	for (i = 0; filesize > 0 && i < NDADDR; i++) {
-		if (dp->di_db[i])
-			searchdir(ino, dp->di_db[i], dblksize(sblock, dp, i),
+		if (DIP(dp, di_db[i]) != 0) {
+			searchdir(ino, DIP(dp, di_db[i]),
+			    sblksize(sblock, DIP(dp, di_size), i),
 			    filesize, path);
+		}
 		filesize -= sblock->fs_bsize;
 	}
 	for (i = 0; filesize > 0 && i < NIADDR; i++) {
-		if (dp->di_ib[i])
-			dirindir(ino, dp->di_ib[i], i, &filesize, path);
+		if (DIP(dp, di_ib[i]))
+			dirindir(ino, DIP(dp, di_ib[i]), i, filesize, path);
 	}
 }
 
@@ -313,58 +367,67 @@ scanonedir(ino_t ino, const char *path)
  * require the directory to be dumped.
  */
 void
-dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
+dirindir(ino_t ino, ufs2_daddr_t blkno, int ind_level, off_t filesize,
     const char *path)
 {
-	daddr_t idblk[MAXBSIZE / sizeof(daddr_t)];
 	int i;
+	static void *idblk; 
 
-	bread(fsbtodb(sblock, blkno), (char *)idblk, (int)sblock->fs_bsize);
+	if (idblk == NULL && (idblk = malloc(sblock->fs_bsize)) == NULL)
+		errx(1, "dirindir: cannot allocate indirect memory.\n");
+	bread(fsbtodb(sblock, blkno), idblk, (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
-		for (i = 0; *filesize > 0 && i < NINDIR(sblock); i++) {
-			blkno = idblk[i];
-			if (blkno)
+		for (i = 0; filesize > 0 && i < NINDIR(sblock); i++) {
+			if (sblock->fs_magic == FS_UFS1_MAGIC)
+				blkno = ((ufs1_daddr_t *)idblk)[i];
+			else
+				blkno = ((ufs2_daddr_t *)idblk)[i];
+			if (blkno != 0)
 				searchdir(ino, blkno, sblock->fs_bsize,
-				    *filesize, path);
+				    filesize, path);
 		}
 		return;
 	}
 	ind_level--;
-	for (i = 0; *filesize > 0 && NINDIR(sblock); i++) {
-		blkno = idblk[i];
-		if (blkno)
+	for (i = 0; filesize > 0 && i < NINDIR(sblock); i++) {
+		if (sblock->fs_magic == FS_UFS1_MAGIC)
+			blkno = ((ufs1_daddr_t *)idblk)[i];
+		else
+			blkno = ((ufs2_daddr_t *)idblk)[i];
+		if (blkno != 0)
 			dirindir(ino, blkno, ind_level, filesize, path);
 	}
 }
 
 /*
  * Scan a disk block containing directory information looking to see if
- * any of the entries are on the inode list and to see if the directory
- * contains any subdirectories.  Display entries for marked inodes.
- * Pass inodes pointing to directories back to scanonedir().
+ * any of the entries are on the dump list and to see if the directory
+ * contains any subdirectories.
  */
 void
-searchdir(ino_t ino, daddr_t blkno, long size, long filesize,
+searchdir(ino_t ino, ufs2_daddr_t blkno, long size, off_t filesize,
     const char *path)
 {
-	char dblk[MAXBSIZE];
+	char *dblk;
 	struct direct *dp;
-	struct ufs1_dinode *di;
+	void *di;
 	mode_t mode;
 	char *npath;
 	long loc;
 
+	if ((dblk = malloc(sblock->fs_bsize)) == NULL)
+		errx(1, "searchdir: cannot allocate indirect memory.");
 	bread(fsbtodb(sblock, blkno), dblk, (int)size);
 	if (filesize < size)
 		size = filesize;
-	for (loc = 0; loc < size;) {
+	for (loc = 0; loc < size; ) {
 		dp = (struct direct *)(dblk + loc);
 		if (dp->d_reclen == 0) {
 			warnx("corrupted directory, inode %u", ino);
 			break;
 		}
 		loc += dp->d_reclen;
-		if (!dp->d_ino)
+		if (dp->d_ino == 0)
 			continue;
 		if (dp->d_name[0] == '.') {
 			if (!aflag && (dp->d_name[1] == '\0' ||
@@ -372,14 +435,15 @@ searchdir(ino_t ino, daddr_t blkno, long size, long filesize,
 				continue;
 		}
 		di = getino(dp->d_ino);
-		mode = di->di_mode & IFMT;
+		mode = DIP(di, di_mode) & IFMT;
 		if (bsearch(&dp->d_ino, ilist, ninodes, sizeof(*ilist), matchino)) {
 			if (format) {
 				format_entry(path, dp);
 			} else {
 				if (mflag)
 					printf("mode %-6o uid %-5u gid %-5u ino ",
-					    di->di_mode, di->di_uid, di->di_gid);
+					    DIP(di, di_mode), DIP(di, di_uid),
+					    DIP(di, di_gid));
 				printf("%-7u %s/%s%s\n", dp->d_ino, path,
 				    dp->d_name, mode == IFDIR ? "/." : "");
 			}
@@ -430,8 +494,9 @@ main(int argc, char *argv[])
 	struct stat stblock;
 	struct fstab *fsp;
 	unsigned long ulval;
+	ssize_t n;
 	char *ep;
-	int c;
+	int c, i;
 
 	while ((c = getopt(argc, argv, "af:i:ms")) != -1)
 		switch (c) {
@@ -495,9 +560,18 @@ main(int argc, char *argv[])
 	if ((diskfd = open(disk, O_RDONLY)) < 0)
 		err(1, "cannot open %s", disk);
 	sblock = (struct fs *)sblock_buf;
-	bread(SBOFF, (char *)sblock, SBSIZE);
-	if (sblock->fs_magic != FS_MAGIC)
-		errx(1, "not a file system");
+	for (i = 0; sblock_try[i] != -1; i++) {
+		n = pread(diskfd, sblock, SBLOCKSIZE, (off_t)sblock_try[i]);
+		if (n == SBLOCKSIZE && (sblock->fs_magic == FS_UFS1_MAGIC ||
+		     (sblock->fs_magic == FS_UFS2_MAGIC &&
+		      sblock->fs_sblockloc == sblock_try[i])) &&
+		    sblock->fs_bsize <= MAXBSIZE &&
+		    sblock->fs_bsize >= sizeof(struct fs))
+			break;
+	}
+	if (sblock_try[i] == -1)
+		errx(1, "cannot find filesystem superblock");
+
 	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
 	dev_bshift = ffs(dev_bsize) - 1;
 	if (dev_bsize != (1 << dev_bshift))
