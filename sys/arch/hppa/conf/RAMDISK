@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.62 2007/05/19 21:32:14 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.63 2007/05/21 20:35:04 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -257,6 +257,8 @@ ne*	at pcmcia?
 an*	at pcmcia?
 #wi*	at pci?			# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?
+mskc*	at pci?			# Marvell Yukon-2
+msk*	at mskc?		#  each port of above
 
 dcphy*		at mii?		# Digital Clone PHYs
 amphy*		at mii?		# AMD 79C873 PHYs
