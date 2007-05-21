@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.63 2007/05/20 00:52:26 jsg Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.64 2007/05/21 05:03:45 jsg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -101,9 +101,6 @@ typedef struct proc *usb_proc_ptr;
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
 #define UHIDBUSCF_REPORTID		0
 #define UHIDBUSCF_REPORTID_DEFAULT	-1
-
-#define bswap32(x)		swap32(x)
-#define bswap16(x)		swap16(x)
 
 #define mstohz(ms) ((ms) * hz / 1000)
 
