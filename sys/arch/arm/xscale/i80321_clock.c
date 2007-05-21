@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_clock.c,v 1.6 2007/01/11 07:24:52 robert Exp $ */
+/*	$OpenBSD: i80321_clock.c,v 1.7 2007/05/21 14:54:35 drahn Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 #include <dev/clock_subr.h>
 
 #include <machine/bus.h>
@@ -46,22 +47,28 @@ uint32_t ticks_per_second;
 uint32_t lastnow;
 uint32_t statvar, statmin;
 int i80321_timer_inited;
-
-u_int32_t tmr0_read(void);
-void tmr0_write(u_int32_t val);
-inline u_int32_t tcr0_read(void);
-void tcr0_write(u_int32_t val);
-u_int32_t trr0_read(void);
-void trr0_write(u_int32_t val);
-u_int32_t tmr1_read(void);
-void tmr1_write(u_int32_t val);
-u_int32_t tcr1_read(void);
-void tcr1_write(u_int32_t val);
-u_int32_t trr1_read(void);
-void trr1_write(u_int32_t val);
-u_int32_t tisr_read(void);
-void tisr_write(u_int32_t val);
+static inline u_int32_t tmr0_read(void);
+static inline void tmr0_write(u_int32_t val);
+static inline u_int32_t tcr0_read(void);
+static inline void tcr0_write(u_int32_t val);
+static inline u_int32_t trr0_read(void);
+static inline void trr0_write(u_int32_t val);
+static inline u_int32_t tmr1_read(void);
+static inline void tmr1_write(u_int32_t val);
+static inline u_int32_t tcr1_read(void);
+static inline void tcr1_write(u_int32_t val);
+static inline u_int32_t trr1_read(void);
+static inline void trr1_write(u_int32_t val);
+static inline u_int32_t tisr_read(void);
+static inline void tisr_write(u_int32_t val);
 int i80321_intr(void *frame);
+
+u_int tcr1_get_timecount(struct timecounter *tc);
+
+static struct timecounter tcr1_timecounter = {
+	tcr1_get_timecount, NULL, 0xffffffff, 0, "tcr1", 0, NULL
+};
+
 
 /* 
  * TMR0 is used in non-reload mode as it is used for both the clock
@@ -86,7 +93,7 @@ int i80321_intr(void *frame);
  */
 
 
-u_int32_t
+static inline u_int32_t
 tmr0_read(void)
 {
 	u_int32_t ret;
@@ -94,13 +101,13 @@ tmr0_read(void)
 	return ret;
 }
 
-void
+static inline void
 tmr0_write(u_int32_t val)
 {
 	__asm volatile ("mcr p6, 0, %0, c0, c1, 0" :: "r" (val));
 }
 
-inline u_int32_t
+static inline u_int32_t
 tcr0_read(void)
 {
 	u_int32_t ret;
@@ -108,13 +115,13 @@ tcr0_read(void)
 	return ret;
 }
 
-void
+static inline void
 tcr0_write(u_int32_t val)
 {
 	__asm volatile ("mcr p6, 0, %0, c2, c1, 0" :: "r" (val));
 }
 
-u_int32_t
+static inline u_int32_t
 trr0_read(void)
 {
 	u_int32_t ret;
@@ -122,13 +129,13 @@ trr0_read(void)
 	return ret;
 }
 
-void
+static inline void
 trr0_write(u_int32_t val)
 {
 	__asm volatile ("mcr p6, 0, %0, c4, c1, 0" :: "r" (val));
 }
 
-u_int32_t
+static inline u_int32_t
 tmr1_read(void)
 {
 	u_int32_t ret;
@@ -136,13 +143,13 @@ tmr1_read(void)
 	return ret;
 }
 
-void
+static inline void
 tmr1_write(u_int32_t val)
 {
 	__asm volatile ("mcr p6, 0, %0, c1, c1, 0" :: "r" (val));
 }
 
-u_int32_t
+inline u_int32_t
 tcr1_read(void)
 {
 	u_int32_t ret;
@@ -150,13 +157,13 @@ tcr1_read(void)
 	return ret;
 }
 
-void
+static inline void
 tcr1_write(u_int32_t val)
 {
 	__asm volatile ("mcr p6, 0, %0, c3, c1, 0" :: "r" (val));
 }
 
-u_int32_t
+static inline u_int32_t
 trr1_read(void)
 {
 	u_int32_t ret;
@@ -164,13 +171,13 @@ trr1_read(void)
 	return ret;
 }
 
-void
+static inline void
 trr1_write(u_int32_t val)
 {
 	__asm volatile ("mcr p6, 0, %0, c5, c1, 0" :: "r" (val));
 }
 
-u_int32_t
+static inline u_int32_t
 tisr_read()
 {
 	u_int32_t ret;
@@ -178,10 +185,17 @@ tisr_read()
 	return ret;
 }
 
-void
+static inline void
 tisr_write(u_int32_t val)
 {
 	__asm volatile ("mcr p6, 0, %0, c6, c1, 0" :: "r" (val));
+}
+
+/* counter counts down not up, so reverse the results by subtracting. */
+u_int
+tcr1_get_timecount(struct timecounter *tc)
+{
+	return UINT_MAX - tcr1_read();
 }
 
 /*
@@ -282,42 +296,11 @@ cpu_initclocks()
 	tmr0_write(TMRx_ENABLE|TMRx_PRIV|TMRx_CSEL_CORE);
 	tcr0_write(ticks_per_intr);
 
+	tcr1_timecounter.tc_frequency = ticks_per_second;
+	tc_init(&tcr1_timecounter);
+
+
 	i80321_timer_inited = 1;
-}
-
-void
-microtime(struct timeval *tvp)
-{
-	int s, deltacnt;
-	u_int32_t counter, expected;
-
-	if (i80321_timer_inited == 0) {
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
-		return;
-	}
-
-	s = splhigh();
-	counter = tcr1_read();
-	expected = nexttickevent;
-
-	*tvp = time;
-	splx (s);
-
-	deltacnt = ticks_per_intr -counter + expected;
-
-#if 0
-	/* low frequency timer algorithm */
-	tvp->tv_usec +_= deltacnt * 1000000ULL / TIMER_FREQUENCY;
-#else
-	/* high frequency timer algorithm - XXX */
-	tvp->tv_usec += deltacnt / (TIMER_FREQUENCY / 1000000ULL);
-#endif
-
-        while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
 }
 
 void
@@ -406,6 +389,7 @@ inittodr(time_t base)
 {
 	time_t deltat;
 	struct timeval rtctime;
+	struct timespec ts;
 	int badbase;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
@@ -423,30 +407,32 @@ inittodr(time_t base)
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
 		 */
-		time.tv_sec = base;
-		time.tv_usec = 0;
+		rtctime.tv_sec = base;
+		rtctime.tv_usec = 0;
 		if (todr_handle != NULL && !badbase) {
 			printf("WARNING: preposterous clock chip time\n");
 			resettodr();
 		}
 		goto bad;
-	} else {
-		time.tv_sec = rtctime.tv_sec;
-		time.tv_usec = rtctime.tv_usec;
 	}
+
+	ts.tv_sec = rtctime.tv_sec;
+	ts.tv_nsec = rtctime.tv_usec * 1000;
+	tc_setclock(&ts);
 
 	if (!badbase) {
 		/*
 		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
-		deltat = time.tv_sec - base;
+		deltat = rtctime.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;		/* all is well */
+
 		printf("WARNING: clock %s %ld days\n",
-		    time.tv_sec < base ? "lost" : "gained",
+		    rtctime.tv_sec < base ? "lost" : "gained",
 		    (long)deltat / SECDAY);
 	}
  bad:
@@ -463,11 +449,10 @@ resettodr(void)
 {
 	struct timeval rtctime;
 
-	if (time.tv_sec == 0)
+	if (time_second == 0)
 		return;
 
-	rtctime.tv_sec = time.tv_sec;
-	rtctime.tv_usec = time.tv_usec;
+	microtime(&rtctime);
 
 	if (todr_handle != NULL &&
 	   todr_settime(todr_handle, &rtctime) != 0)
