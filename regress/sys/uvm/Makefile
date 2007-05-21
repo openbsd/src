@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.5 2006/04/06 20:40:55 kurt Exp $
+#	$OpenBSD: Makefile,v 1.6 2007/05/21 07:28:16 art Exp $
 
-SUBDIR=misc mmap_4g mmap_size mmap_fixed
+SUBDIR=misc mmap_4g mmap_size mmap_fixed mmap_mod
 
 install:
 
