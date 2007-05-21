@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.52 2007/04/01 23:30:44 jsg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.53 2007/05/21 04:55:14 jsg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -53,17 +53,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/selinfo.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <machine/bus_pio.h>
-#if defined(DIAGNOSTIC) && defined(__i386__)
-#include <machine/cpu.h>
-#endif
-#endif
 #include <sys/proc.h>
 #include <sys/queue.h>
 
@@ -82,17 +73,9 @@
 /* Use bandwidth reclamation for control transfers. Some devices choke on it. */
 /*#define UHCI_CTL_LOOP */
 
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-
-#define delay(d)		DELAY(d)
-#endif
-
-#if defined(__OpenBSD__)
 struct cfdriver uhci_cd = {
 	NULL, "uhci", DV_DULL
 };
-#endif
 
 #ifdef UHCI_DEBUG
 uhci_softc_t *thesc;
@@ -100,9 +83,7 @@ uhci_softc_t *thesc;
 #define DPRINTFN(n,x)	if (uhcidebug>(n)) printf x
 int uhcidebug = 0;
 int uhcinoloop = 0;
-#ifndef __NetBSD__
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
-#endif
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -112,15 +93,6 @@ int uhcinoloop = 0;
  * The UHCI controller is little endian, so on big endian machines
  * the data stored in memory needs to be swapped.
  */
-#if defined(__FreeBSD__)
-#if BYTE_ORDER == BIG_ENDIAN
-#define htole32(x) (bswap32(x))
-#define le32toh(x) (bswap32(x))
-#else
-#define htole32(x) (x)
-#define le32toh(x) (x)
-#endif
-#endif
 
 struct uhci_pipe {
 	struct usbd_pipe pipe;
@@ -522,11 +494,9 @@ uhci_init(uhci_softc_t *sc)
 	sc->sc_bus.methods = &uhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(uhci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
-#endif
 
 	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
@@ -537,7 +507,6 @@ uhci_init(uhci_softc_t *sc)
 	return (uhci_run(sc, 1));		/* and here we go... */
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 uhci_activate(device_ptr_t self, enum devact act)
 {
@@ -568,12 +537,10 @@ uhci_detach(struct uhci_softc *sc, int flags)
 	if (rv != 0)
 		return (rv);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
 	if (sc->sc_shutdownhook != NULL)
 		shutdownhook_disestablish(sc->sc_shutdownhook);
-#endif
 
 	/* Free all xfers associated with this HC. */
 	for (;;) {
@@ -588,7 +555,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 
 	return (rv);
 }
-#endif
 
 usbd_status
 uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
@@ -767,12 +733,6 @@ uhci_power(int why, void *v)
 			uhci_dumpregs(sc);
 #endif
 		break;
-#if defined(__NetBSD__)
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-#endif
 	}
 	splx(s);
 }
