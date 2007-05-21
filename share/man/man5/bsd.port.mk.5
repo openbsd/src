@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.194 2007/04/20 22:15:40 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.195 2007/05/21 11:19:30 steven Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -141,7 +141,8 @@ can be used to avoid all checksumming steps.
 Clean ports contents.
 By default, it will clean the work directory.
 It can be invoked as
-make clean='[depends bulk work fake flavors dist install sub package packages]'.
+make clean='[depends bulk work fake flavors dist install sub package
+packages plist readme]'.
 .Bl -tag -width packages
 .It Va work
 Clean work directory.
@@ -149,14 +150,18 @@ Clean work directory.
 Clean bulk cookie.
 .It Va depends
 Recurse into dependencies.
-.It Va flavors
-Clean all work directories.
 .It Va dist
 Clean distribution files.
+.It Va fake
+Clean fake installation directory.
+.It Va flavors
+Clean all work directories.
 .It Va install
 Uninstall package.
 .It Va package
 Remove all copies of package file.
+.It Va plist
+Remove registered packing lists of all subpackages.
 .It Va readmes
 Clean files generated through the
 .Ar readme
