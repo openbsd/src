@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.48 2007/03/05 11:13:09 reyk Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.49 2007/05/21 10:05:03 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3942,7 +3942,8 @@ bnx_rx_intr(struct bnx_softc *sc)
 			 * If we received a packet with a vlan tag,
 			 * attach that information to the packet.
 			 */
-			if (status & L2_FHDR_STATUS_L2_VLAN_TAG) {
+			if ((status & L2_FHDR_STATUS_L2_VLAN_TAG) &&
+			    !(sc->rx_mode & BNX_EMAC_RX_MODE_KEEP_VLAN_TAG)) {
 #if NVLAN > 0
 				struct ether_vlan_header vh;
 
@@ -3957,7 +3958,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 				}
 				m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
 				vh.evl_proto = vh.evl_encap_proto;
-				vh.evl_tag = l2fhdr->l2_fhdr_vlan_tag;
+				vh.evl_tag = htons(l2fhdr->l2_fhdr_vlan_tag);
 				vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
 				m_adj(m, ETHER_HDR_LEN);
 				M_PREPEND(m, sizeof(vh), M_DONTWAIT);
