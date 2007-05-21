@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcfiic_ebus.c,v 1.6 2006/06/29 00:01:03 deraadt Exp $ */
+/*	$OpenBSD: pcfiic_ebus.c,v 1.7 2007/05/21 03:11:11 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 #include <machine/openfirm.h>

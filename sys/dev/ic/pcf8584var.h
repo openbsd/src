@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584var.h,v 1.3 2006/06/22 08:33:43 deraadt Exp $ */
+/*	$OpenBSD: pcf8584var.h,v 1.4 2007/05/21 03:11:11 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -30,7 +30,7 @@ struct pcfiic_softc {
 	int			sc_poll;
 
 	struct i2c_controller	sc_i2c;
-	struct lock		sc_lock;
+	struct rwlock		sc_lock;
 };
 
 /* clock divisor settings */

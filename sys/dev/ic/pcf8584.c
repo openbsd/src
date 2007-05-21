@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584.c,v 1.7 2006/06/22 08:33:43 deraadt Exp $ */
+/*	$OpenBSD: pcf8584.c,v 1.8 2007/05/21 03:11:11 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -21,7 +21,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -128,7 +128,7 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
 	if (sc->sc_master)
 		pcfiic_choose_bus(sc, 0);
 
-	lockinit(&sc->sc_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
+	rw_init(&sc->sc_lock, "iiclk");
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = pcfiic_i2c_acquire_bus;
 	sc->sc_i2c.ic_release_bus = pcfiic_i2c_release_bus;
@@ -156,7 +156,7 @@ pcfiic_i2c_acquire_bus(void *arg, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return (0);
 
-	return (lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL));
+	return (rw_enter(&sc->sc_lock, RW_WRITE | RW_INTR));
 }
 
 void
@@ -167,7 +167,7 @@ pcfiic_i2c_release_bus(void *arg, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_lock);
 }
 
 int
