@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.22 2007/05/05 22:11:56 millert Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.23 2007/05/21 16:00:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.22 2007/05/05 22:11:56 millert Exp $";
+static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.23 2007/05/21 16:00:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 int
 open_disk(const char *name)
 {
-	int fd;
+	int fd, i, sbtry[] = SBLOCKSEARCH;
 	ssize_t n;
 
 	/* XXX - should retry w/raw device on failure */
@@ -144,22 +144,18 @@ open_disk(const char *name)
 	}
 
 	/* Read superblock, could be UFS1 or UFS2. */
-	if (((n = pread(fd, &afs, SBSIZE, (off_t)SBLOCK_UFS1) != SBSIZE) ||
-	    afs.fs_magic != FS_UFS1_MAGIC) &&
-	    ((n = pread(fd, &afs, SBSIZE, (off_t)SBLOCK_UFS2) != SBSIZE) ||
-	    afs.fs_magic != FS_UFS2_MAGIC)) {
-		switch (n) {
-		case -1:
-			warn("%s", name);
+	for (i = 0; sbtry[i] != -1; i++) {
+		n = pread(fd, &afs, SBLOCKSIZE, (off_t)sbtry[i]);
+		if (n == SBLOCKSIZE && (afs.fs_magic == FS_UFS1_MAGIC ||
+		    (afs.fs_magic == FS_UFS2_MAGIC &&
+		    afs.fs_sblockloc == sbtry[i])) &&
+		    afs.fs_bsize <= MAXBSIZE &&
+		    afs.fs_bsize >= sizeof(struct fs))
 			break;
-		case SBSIZE:
-			warnx("%s: non-existent or truncated superblock, "
-			    "skipped", name);
-			break;
-		default:
-			warnx("%s: superblock has bad magic number, skipping.",
-			    name);
-		}
+	}
+	if (sbtry[i] == -1) {
+		warnx("cannot find filesystem superblock");
+		close(fd);
 		return (-1);
 	}
 
