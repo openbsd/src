@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.43 2007/04/19 09:28:40 claudio Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.44 2007/05/21 13:33:35 markus Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -217,6 +217,7 @@ gif_start(ifp)
 		m->m_flags &= ~(M_BCAST|M_MCAST);
 
 		/* extract address family */
+		family = AF_UNSPEC;
 		tp = *mtod(m, u_int8_t *);
 		tp = (tp >> 4) & 0xff;  /* Get the IP version number. */
 #ifdef INET
@@ -233,16 +234,10 @@ gif_start(ifp)
 		 * Check if the packet is comming via bridge and needs
 		 * etherip encapsulation or not.
 		 */
-		if (ifp->if_bridge)
-			for (mtag = m_tag_find(m, PACKET_TAG_BRIDGE, NULL);
-			    mtag;
-			    mtag = m_tag_find(m, PACKET_TAG_BRIDGE, mtag)) {
-				if (!bcmp(&ifp->if_bridge, mtag + 1,
-				    sizeof(caddr_t))) {
-					family = AF_LINK;
-					break;
-				}
-			}
+		if (ifp->if_bridge && (m->m_flags & M_PROTO1)) {
+			m->m_flags &= ~M_PROTO1;
+			family = AF_LINK;
+		}
 #endif
 
 #if NBPFILTER > 0

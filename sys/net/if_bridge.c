@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.160 2007/05/16 20:27:58 michele Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.161 2007/05/21 13:33:35 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2706,6 +2706,11 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 	int error, len;
 	short mflags;
 
+#if NGIF > 0
+	/* Packet needs etherip encapsulation. */
+	if (ifp->if_type == IFT_GIF)
+		m->m_flags |= M_PROTO1;
+#endif
 	len = m->m_pkthdr.len;
 	mflags = m->m_flags;
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
