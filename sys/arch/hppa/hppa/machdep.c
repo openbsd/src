@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.154 2007/05/21 23:00:19 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.155 2007/05/21 23:05:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -267,6 +267,10 @@ const struct hppa_cpu_typed {
 #endif
 #ifdef HP8500_CPU
 	{ "PCXW",  hpcxw, HPPA_CPU_PCXW, HPPA_FTRS_W32B,
+	  4, desidhash_u, ibtlb_u, NULL, pbtlb_u },
+#endif
+#ifdef HP8700_CPU
+	{ "PCXW2",  hpcxw, HPPA_CPU_PCXW2, HPPA_FTRS_W32B,
 	  4, desidhash_u, ibtlb_u, NULL, pbtlb_u },
 #endif
 	{ "", 0 }
