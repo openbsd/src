@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.19 2007/05/05 12:10:57 jsg Exp $ */
+/* $OpenBSD: if_bce.c,v 1.20 2007/05/21 10:30:10 reyk Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -210,7 +210,8 @@ struct cfdriver bce_cd = {
 
 const struct pci_matchid bce_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401B0 }
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401B0 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401B1 }
 };
 
 int
