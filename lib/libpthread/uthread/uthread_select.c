@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_select.c,v 1.15 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_select.c,v 1.16 2007/05/21 16:50:36 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -107,7 +107,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 	 * allocated or if previously allocated memory is insufficient.
 	 */
 	if ((curthread->poll_data.fds == NULL) ||
-	    (curthread->poll_data.nfds < fd_count)) {
+	    (curthread->poll_data.nfds < (nfds_t)fd_count)) {
 		data.fds = (struct pollfd *) realloc(curthread->poll_data.fds,
 		    sizeof(struct pollfd) * (size_t)MAX(POLLDATA_MIN, fd_count));
 		if (data.fds == NULL) {
@@ -121,13 +121,13 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 			 * currently being polled.
 			 */
 			curthread->poll_data.fds = data.fds;
-			curthread->poll_data.nfds = MAX(POLLDATA_MIN, fd_count);
+			curthread->poll_data.nfds = (nfds_t)MAX(POLLDATA_MIN, fd_count);
 		}
 	}
 	if (ret == 0) {
 		/* Setup the wait data. */
 		data.fds = curthread->poll_data.fds;
-		data.nfds = fd_count;
+		data.nfds = (nfds_t)fd_count;
 
 		/*
 		 * Setup the array of pollfds.  Optimize this by
@@ -173,7 +173,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 				data.nfds = 0;
 				ret = -1;
 			} else
-				ret = data.nfds;
+				ret = (int)data.nfds;
 		}
 	}
 

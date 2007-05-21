@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.65 2007/05/01 14:54:27 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.66 2007/05/21 16:50:36 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -52,6 +52,7 @@
  */
 #include <signal.h>
 #include <stdio.h>
+#include <sys/poll.h>
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -549,7 +550,7 @@ struct fd_table_entry {
 };
 
 struct pthread_poll_data {
-	int	nfds;
+	nfds_t	nfds;
 	struct pollfd *fds;
 };
 
@@ -993,7 +994,14 @@ SCLASS int    _thread_init_fdtsize	/* Initial fd/pfd table size.	*/
 ;
 #endif
 
-SCLASS int    _thread_max_fdtsize	/* Max fd/pfd table size.	*/
+SCLASS int    _thread_max_fdtsize	/* Max fd table size.	*/
+#ifdef GLOBAL_PTHREAD_PRIVATE
+= 0;
+#else
+;
+#endif
+
+SCLASS nfds_t _thread_max_pfdtsize	/* Max pfd table size.	*/
 #ifdef GLOBAL_PTHREAD_PRIVATE
 = 0;
 #else

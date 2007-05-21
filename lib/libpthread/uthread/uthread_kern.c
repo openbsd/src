@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.35 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.36 2007/05/21 16:50:36 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -585,9 +585,8 @@ void
 _thread_kern_poll(int wait_reqd)
 {
 	int             count = 0;
-	int             i, found;
 	int		kern_pipe_added = 0;
-	int             nfds = 0;
+	nfds_t		i, found, nfds = 0;
 	int		timeout_ms = 0;
 	struct pthread	*pthread, *next;
 	struct timespec ts;
@@ -704,7 +703,7 @@ _thread_kern_poll(int wait_reqd)
 				PTHREAD_WAITQ_SETACTIVE();
 			} else {
 				/* Limit number of polled files to table size: */
-				if (nfds < _thread_max_fdtsize) {
+				if (nfds < _thread_max_pfdtsize) {
 					_thread_pfd_table[nfds].events = POLLRDNORM;
 					_thread_pfd_table[nfds].fd = pthread->data.fd.fd;
 					nfds++;
@@ -723,7 +722,7 @@ _thread_kern_poll(int wait_reqd)
 				PTHREAD_WAITQ_SETACTIVE();
 			} else {
 				/* Limit number of polled files to table size: */
-				if (nfds < _thread_max_fdtsize) {
+				if (nfds < _thread_max_pfdtsize) {
 					_thread_pfd_table[nfds].events = POLLWRNORM;
 					_thread_pfd_table[nfds].fd = pthread->data.fd.fd;
 					nfds++;
@@ -736,7 +735,7 @@ _thread_kern_poll(int wait_reqd)
 		case PS_SELECT_WAIT:
 			/* Limit number of polled files to table size: */
 			if (pthread->data.poll_data->nfds + nfds <
-			    _thread_max_fdtsize) {
+			    _thread_max_pfdtsize) {
 				for (i = 0; i < pthread->data.poll_data->nfds; i++) {
 					_thread_pfd_table[nfds + i].fd =
 					    pthread->data.poll_data->fds[i].fd;
@@ -825,7 +824,7 @@ _thread_kern_poll(int wait_reqd)
 
 			/* File descriptor read wait: */
 			case PS_FDR_WAIT:
-				if ((nfds < _thread_max_fdtsize) &&
+				if ((nfds < _thread_max_pfdtsize) &&
 				    (_thread_pfd_table[nfds].revents
 				       & (POLLRDNORM|POLLERR|POLLHUP|POLLNVAL))
 				      != 0) {
@@ -839,7 +838,7 @@ _thread_kern_poll(int wait_reqd)
 
 			/* File descriptor write wait: */
 			case PS_FDW_WAIT:
-				if ((nfds < _thread_max_fdtsize) &&
+				if ((nfds < _thread_max_pfdtsize) &&
 				    (_thread_pfd_table[nfds].revents
 				       & (POLLWRNORM|POLLERR|POLLHUP|POLLNVAL))
 				      != 0) {
@@ -855,7 +854,7 @@ _thread_kern_poll(int wait_reqd)
 			case PS_POLL_WAIT:
 			case PS_SELECT_WAIT:
 				if (pthread->data.poll_data->nfds + nfds <
-				    _thread_max_fdtsize) {
+				    _thread_max_pfdtsize) {
 					/*
 					 * Enter a loop looking for I/O
 					 * readiness:

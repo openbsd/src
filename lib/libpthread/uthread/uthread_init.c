@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.37 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.38 2007/05/21 16:50:36 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -352,6 +352,7 @@ _thread_init(void)
 
 	_thread_init_fdtsize = (int)rl.rlim_cur;
 	_thread_max_fdtsize = (int)rl.rlim_max;
+	_thread_max_pfdtsize = (nfds_t)rl.rlim_max;
 
 	/* Allocate memory for the file descriptor table: */
 	_thread_fd_table = calloc((size_t)_thread_max_fdtsize,
@@ -362,7 +363,7 @@ _thread_init(void)
 	}
 
 	/* Allocate memory for the pollfd table: */
-	_thread_pfd_table = calloc((size_t)_thread_max_fdtsize, sizeof(struct pollfd));
+	_thread_pfd_table = calloc((size_t)_thread_max_pfdtsize, sizeof(struct pollfd));
 	if (_thread_pfd_table == NULL)
 		PANIC("Cannot allocate memory for pollfd table");
 

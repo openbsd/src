@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.14 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.15 2007/05/21 16:50:36 kurt Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -269,7 +269,7 @@ _thread_dump_entry(pthread_t pthread, int fd, int verbose)
 	case PS_SELECT_WAIT:
 	case PS_POLL_WAIT:
 		{
-			int i;
+			nfds_t i;
 
 			for (i = 0; i < pthread->data.poll_data->nfds; i++) 
 				snprintf(s, sizeof(s), "%s%d:%s%s",
