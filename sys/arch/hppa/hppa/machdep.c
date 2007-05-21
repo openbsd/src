@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.153 2007/05/17 14:24:59 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.154 2007/05/21 23:00:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1013,6 +1013,11 @@ boot(howto)
 	} else {
 		printf("rebooting...");
 		DELAY(2000000);
+
+		/* ask firmware to reset */
+                pdc_call((iodcio_t)pdc, 0, PDC_BROADCAST_RESET, PDC_DO_RESET);
+
+		/* forcably reset module if that fails */
 		__asm __volatile(".export hppa_reset, entry\n\t"
 		    ".label hppa_reset");
 		__asm __volatile("stwas %0, 0(%1)"

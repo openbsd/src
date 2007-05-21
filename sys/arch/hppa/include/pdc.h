@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.32 2005/05/24 22:26:16 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.33 2007/05/21 23:00:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -273,6 +273,11 @@
 #define	PDC_EEPROM_WRITE_WORD	1
 #define	PDC_EEPROM_READ_BYTE	2
 #define	PDC_EEPROM_WRITE_BYTE	3
+
+#define	PDC_BROADCAST_RESET	136
+#define	PDC_DO_RESET		0
+#define	PDC_DO_FIRM_TEST_RESET	1
+#define	PDC_BR_RECONFIGURATION	2
 
 #define	PDC_LAN_STATION_ID	138	/* Hversion dependent mechanism for */
 #define	PDC_LAN_STATION_ID_READ	0	/* getting the lan station address  */
