@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.32 2007/02/11 20:29:22 miod Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.33 2007/05/21 05:18:56 jsg Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -546,7 +546,7 @@ USB_ATTACH(cue)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	Ether_ifattach(ifp, eaddr);
+	ether_ifattach(ifp);
 
 	usb_callout_init(sc->cue_stat_ch);
 

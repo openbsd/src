@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.24 2007/04/05 02:32:45 tedu Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.25 2007/05/21 05:18:56 jsg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -257,7 +257,7 @@ USB_ATTACH(cdce)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
-	Ether_ifattach(ifp, sc->cdce_arpcom.ac_enaddr);
+	ether_ifattach(ifp);
 
 	sc->cdce_attached = 1;
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.35 2007/05/06 04:08:47 krw Exp $ */
+/*	$OpenBSD: if_url.c,v 1.36 2007/05/21 05:18:56 jsg Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -314,7 +314,7 @@ USB_ATTACH(url)
 
 	/* attach the interface */
 	if_attach(ifp);
-	Ether_ifattach(ifp, eaddr);
+	ether_ifattach(ifp);
 
 	usb_callout_init(sc->sc_stat_ch);
 	sc->sc_attached = 1;

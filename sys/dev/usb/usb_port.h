@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.64 2007/05/21 05:03:45 jsg Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.65 2007/05/21 05:18:56 jsg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -118,7 +118,6 @@ typedef struct proc *usb_proc_ptr;
 
 typedef int usb_malloc_type;
 
-#define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
 #define if_deactivate(x)
 #define IF_INPUT(ifp, m) ether_input_mbuf((ifp), (m))
 

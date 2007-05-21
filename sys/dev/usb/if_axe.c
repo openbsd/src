@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.66 2007/05/14 00:46:21 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.67 2007/05/21 05:18:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -709,7 +709,7 @@ USB_ATTACH(axe)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	Ether_ifattach(ifp, eaddr);
+	ether_ifattach(ifp);
 
 	usb_callout_init(sc->axe_stat_ch);
 

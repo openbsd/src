@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.44 2007/02/11 20:29:22 miod Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.45 2007/05/21 05:18:56 jsg Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -511,7 +511,7 @@ kue_attachhook(void *xsc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	Ether_ifattach(ifp, sc->kue_desc.kue_macaddr);
+	ether_ifattach(ifp);
 
 	sc->kue_attached = 1;
 	splx(s);

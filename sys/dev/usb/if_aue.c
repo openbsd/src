@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.52 2007/05/06 04:08:47 krw Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.53 2007/05/21 05:18:56 jsg Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -837,7 +837,7 @@ USB_ATTACH(aue)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	Ether_ifattach(ifp, eaddr);
+	ether_ifattach(ifp);
 
 	usb_callout_init(sc->aue_stat_ch);
 
