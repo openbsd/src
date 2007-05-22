@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.63 2007/05/22 19:37:13 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.64 2007/05/22 19:57:32 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -156,6 +156,13 @@ file	arch/hppa/dev/dino.c			dino
 
 attach	com at dinobus with com_dino
 file	arch/hppa/dev/com_dino.c		com_dino
+
+# Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
+# Mercury; QuickSilver is an AGP also
+device	elroy: pcibus
+attach	elroy at gedoens
+file	arch/hppa/dev/elroy.c		elroy
+file	arch/hppa/dev/apic.c		elroy
 
 # EPIC, Excalibur PCI Interface Chip. Integrated IOA
 # SAGA is a 64-bit data path EPIC
