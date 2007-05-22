@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.51 2007/05/22 16:51:34 jasper Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.52 2007/05/22 22:08:57 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -191,7 +191,8 @@ const struct pci_matchid bnx_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S }
 #if 0
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709 }
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709S }
 #endif
 };
 
