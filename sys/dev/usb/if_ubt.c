@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.8 2007/05/21 06:10:43 jsg Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.9 2007/05/22 07:01:19 matthieu Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.8 2007/05/21 06:10:43 jsg Exp $
+ * $Id: if_ubt.c,v 1.9 2007/05/22 07:01:19 matthieu Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -125,7 +125,8 @@ USB_MATCH(ubt)
 
 	Static struct usb_devno const	ubt_broken_devices[] = {
 		{ USB_VENDOR_CSR, USB_PRODUCT_CSR_BLUECORE },
-		{ USB_VENDOR_MSI, USB_PRODUCT_MSI_BLUETOOTH }
+		{ USB_VENDOR_MSI, USB_PRODUCT_MSI_BLUETOOTH },
+		{ USB_VENDOR_MSI, USB_PRODUCT_MSI_BLUETOOTH_2 }
 	};
 
 	USB_MATCH_START(ubt, uaa);
