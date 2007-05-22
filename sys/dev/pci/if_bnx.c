@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.49 2007/05/21 10:05:03 reyk Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.50 2007/05/22 04:22:57 ray Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4197,17 +4197,17 @@ bnx_init(void *xsc)
 	bnx_stop(sc);
 
 	if (bnx_reset(sc, BNX_DRV_MSG_CODE_RESET)) {
-		printf("%s: Controller reset failed!\n");
+		BNX_PRINTF(sc, "Controller reset failed!\n");
 		goto bnx_init_exit;
 	}
 
 	if (bnx_chipinit(sc)) {
-		printf("%s: Controller initialization failed!\n");
+		BNX_PRINTF(sc, "Controller initialization failed!\n");
 		goto bnx_init_exit;
 	}
 
 	if (bnx_blockinit(sc)) {
-		printf("%s: Block initialization failed!\n");
+		BNX_PRINTF(sc, "Block initialization failed!\n");
 		goto bnx_init_exit;
 	}
 
@@ -4702,7 +4702,7 @@ bnx_intr(void *xsc)
 		    ~STATUS_ATTN_BITS_LINK_STATE))) {
 			DBRUN(1, sc->unexpected_attentions++);
 
-			printf("%s: Fatal attention detected: 0x%08X\n", 
+			BNX_PRINTF(sc, "Fatal attention detected: 0x%08X\n",
 			    sc->status_block->status_attn_bits);
 
 			DBRUN(BNX_FATAL,
