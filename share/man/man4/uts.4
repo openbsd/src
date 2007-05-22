@@ -1,4 +1,4 @@
-.\" $OpenBSD: uts.4,v 1.6 2007/05/19 08:17:29 jmc Exp $
+.\" $OpenBSD: uts.4,v 1.7 2007/05/22 09:33:32 robert Exp $
 .\"
 .\" Copyright (c) 2005 Robert Nagy <robert@openbsd.org>
 .\"
@@ -33,6 +33,12 @@ framework.
 .Pp
 Touching the screen will emulate mouse button 0 being pressed.
 .Pp
+The touchscreen sensor is poorly aligned therefore
+.Xr xtsscale 1
+should be used to provide calibration results to the
+.Nm
+driver. 
+.Pp
 The
 .Nm
 driver works with the following touchscreens and panels:
@@ -46,6 +52,7 @@ LG L1510SF LCD Monitor
 Origin AE X15e HTPC case with 7" LCD
 .El
 .Sh SEE ALSO
+.Xr xtsscale 1 ,
 .Xr uhub 4 ,
 .Xr usb 4 ,
 .Xr wscons 4 ,
