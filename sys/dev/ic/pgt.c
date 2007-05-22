@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.41 2007/02/14 20:09:20 claudio Exp $  */
+/*	$OpenBSD: pgt.c,v 1.42 2007/05/22 04:29:16 ray Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -3059,7 +3059,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	    BUS_DMA_NOWAIT, &sc->sc_cbdmam);
 	if (error != 0) {
 		printf("%s: can not create DMA tag for control block\n",
-		    sc->sc_dev);
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 
@@ -3067,7 +3067,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	    0, &sc->sc_cbdmas, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: can not allocate DMA memory for control block\n",
-		    sc->sc_dev);
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 
@@ -3075,7 +3075,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	    size, (caddr_t *)&sc->sc_cb, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: can not map DMA memory for control block\n",
-		    sc->sc_dev);
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 	bzero(sc->sc_cb, size);
@@ -3084,7 +3084,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	    sc->sc_cb, size, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: can not load DMA map for control block\n",
-		    sc->sc_dev);
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 
@@ -3097,7 +3097,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	    BUS_DMA_ALLOCNOW, &sc->sc_psmdmam);
 	if (error != 0) {
 		printf("%s: can not create DMA tag for powersave\n",
-		    sc->sc_dev);
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 
@@ -3105,7 +3105,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	   0, &sc->sc_psmdmas, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: can not allocate DMA memory for powersave\n",
-		    sc->sc_dev);
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 
@@ -3113,7 +3113,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	    size, (caddr_t *)&sc->sc_psmbuf, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: can not map DMA memory for powersave\n",
-		    sc->sc_dev);
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 	bzero(sc->sc_psmbuf, size);
@@ -3122,7 +3122,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 	    sc->sc_psmbuf, size, NULL, BUS_DMA_WAITOK);
 	if (error != 0) {
 		printf("%s: can not load DMA map for powersave\n",
-		    sc->sc_dev);
+		    sc->sc_dev.dv_xname);
 		goto out;
 	}
 
@@ -3155,7 +3155,7 @@ pgt_dma_alloc(struct pgt_softc *sc)
 
 out:
 	if (error) {
-		printf("%s: error in DMA allocation\n", sc->sc_dev);
+		printf("%s: error in DMA allocation\n", sc->sc_dev.dv_xname);
 		pgt_dma_free(sc);
 	}
 
