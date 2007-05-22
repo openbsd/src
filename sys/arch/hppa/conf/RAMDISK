@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.63 2007/05/21 20:35:04 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.64 2007/05/22 19:37:13 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -53,6 +53,7 @@ cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
 phantomas0 at mainbus0		# Phantom PseudoBC GSC+ Port
 uturn0	at mainbus0		# U2/UTurn Runway IOA
 uturn1	at mainbus0
+astro*	at mainbus0		# Astro memory & I/O controller
 
 lasi0	at mainbus0 offset 0x100000 irq 28	# LASI host adapter
 lasi0	at mainbus0 offset 0xfd00000 irq 28	# LASI on C1[01]0, J2[01]0

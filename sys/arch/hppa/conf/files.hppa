@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.62 2007/05/05 12:00:53 miod Exp $
+#	$OpenBSD: files.hppa,v 1.63 2007/05/22 19:37:13 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -116,10 +116,15 @@ device	phantomas: gedoens
 attach	phantomas at gedoens
 file	arch/hppa/dev/phantomas.c		phantomas
 
-# U2/Uturn, Runway to GSC Bus bridge & IOA.
+# U2/Uturn, Runway to GSC Bus bridge & IOA
 device	uturn: gedoens
 attach	uturn at gedoens
 file	arch/hppa/dev/uturn.c			uturn
+
+# Astro memory & I/O controller
+device	astro: gedoens
+attach	astro at gedoens
+file	arch/hppa/dev/astro.c			astro
 
 # 1FT1-0002, 1FU2-0002
 # as goes w/ 7100LC, 7300LC, 7200 and some of 8000, 8200, 8500
