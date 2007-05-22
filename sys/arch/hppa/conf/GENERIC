@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.95 2007/05/22 19:37:13 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.96 2007/05/22 19:47:06 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,6 +22,7 @@ option		HP7300LC_CPU		# PCXL2
 option		HP8000_CPU		# PCXU  (in 32bit mode)
 option		HP8200_CPU		# PCXU2 (in 32bit mode)
 option		HP8500_CPU		# PCXW  (in 32bit mode)
+option		HP8700_CPU		# PCXW2 (in 32bit mode)
 #option		USE_HPT
 
 option		FPEMUL
