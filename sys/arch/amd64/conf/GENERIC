@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.181 2007/05/19 19:32:03 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.182 2007/05/22 09:18:45 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -168,6 +168,8 @@ atapiscsi* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
+uts*	at uhub?		# USB touchscreen
+wsmouse* at uts? mux 0
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 ucycom*	at uhidev?			# Cypress serial
