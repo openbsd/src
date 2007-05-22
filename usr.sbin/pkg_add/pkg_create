@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.100 2007/05/22 06:48:22 jmc Exp $
+# $OpenBSD: pkg_create,v 1.101 2007/05/22 14:06:30 jmc Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -491,7 +491,7 @@ my $regen_package = 0;
 
 set_usage(
 'pkg_create [-nQqv] [-A arches] [-B pkg-destdir] [-D name=value]',
-'[-i iscript] [-k dscript] [-L localbase] [-M module] [-M displayfile]',
+'[-i iscript] [-k dscript] [-L localbase] [-M displayfile]',
 '[-P pkg-dependency] [-p prefix] [-r rscript] [-S pkg-destdir]',
 '[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkg-name');
 
