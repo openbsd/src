@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.101 2007/05/20 14:21:33 espie Exp $
+# $OpenBSD: pkg_delete,v 1.102 2007/05/22 10:11:59 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,6 +84,7 @@ my $removed;
 
 try {
 my $state = OpenBSD::pkg_delete::State->new;
+$state->{recorder} = OpenBSD::SharedItemsRecorder->new;
 $state->{not} = $opt_n;
 # XXX RequiredBy
 $not = $opt_n;
@@ -208,12 +209,7 @@ my $dielater = $@;
 
 OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 # delayed directory/user/group removal
-if (defined $state->{dirs_to_rm} or defined $state->{users_to_rm} or
-	defined $state->{groups_to_rm}) {
-	require OpenBSD::SharedItems;
-
-	OpenBSD::SharedItems::cleanup($state) unless $state->{not};
-}
+$state->{recorder}->cleanup($state);
 
 OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
 

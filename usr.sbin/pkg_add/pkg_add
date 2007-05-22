@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.258 2007/05/20 14:40:50 espie Exp $
+# $OpenBSD: pkg_add,v 1.259 2007/05/22 10:11:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -87,6 +87,7 @@ sub installed
 	my $state = shift;
 	return keys %{$state->{installed}};
 }
+
 package main;
 sub can_install($$$)
 {
@@ -665,6 +666,7 @@ $opt_L = '/usr/local' unless defined $opt_L;
 
 my $state = OpenBSD::pkg_add::State->new;
 $state->{cache} = {};
+$state->{recorder} = OpenBSD::SharedItemsRecorder->new;
 $state->{do_faked} = 0;
 $state->{localbase} = $opt_L;
 $state->{arch} = $opt_A;
@@ -794,12 +796,7 @@ OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
 OpenBSD::Add::manpages_index($state);
 OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 # delayed directory/user/group removal
-if (defined $state->{dirs_to_rm} or defined $state->{users_to_rm} or
-	defined $state->{groups_to_rm}) {
-	require OpenBSD::SharedItems;
-
-	OpenBSD::SharedItems::cleanup($state) unless $state->{not};
-}
+$state->{recorder}->cleanup($state);
 
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();

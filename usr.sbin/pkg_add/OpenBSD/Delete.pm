@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.44 2007/05/22 09:39:23 espie Exp $
+# $OpenBSD: Delete.pm,v 1.45 2007/05/22 10:11:59 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -237,6 +237,10 @@ sub delete
 {
 }
 
+sub record_shared
+{
+}
+
 package OpenBSD::PackingElement::FileObject;
 use File::Basename;
 
@@ -303,13 +307,17 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	my $name = $self->{name};
-
 	if ($state->{beverbose}) {
-		print "rmuser: $name\n";
+		print "rmuser: $self->{name}\n";
 	}
 
-	$state->{users_to_rm}->{$name} = $state->{pkgname};
+	$self->record_shared($state->{recorder}, $state->{pkgname});
+}
+
+sub record_shared
+{
+	my ($self, $recorder, $pkgname) = @_;
+	$recorder->{users}->{$self->{name}} = $pkgname;
 }
 
 package OpenBSD::PackingElement::NewGroup;
@@ -317,13 +325,17 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	my $name = $self->{name};
-
 	if ($state->{beverbose}) {
-		print "rmgroup: $name\n";
+		print "rmgroup: $self->{name}\n";
 	}
 
-	$state->{groups_to_rm}->{$name} = $state->{pkgname};
+	$self->record_shared($state->{recorder}, $state->{pkgname});
+}
+
+sub record_shared
+{
+	my ($self, $recorder, $pkgname) = @_;
+	$recorder->{groups}->{$self->{name}} = $pkgname;
 }
 
 package OpenBSD::PackingElement::DirBase;
@@ -331,14 +343,18 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	my $name = $self->fullname;
-
 	if ($state->{very_verbose}) {
-		print "dirrm: $name\n";
+		print "dirrm: ", $self->fullname, "\n";
 	}
 
-	$self->{pkgname} = $state->{pkgname};
-	push(@{$state->{dirs_to_rm}->{$name}}, $self);
+	$self->record_shared($state->{recorder}, $state->{pkgname});
+}
+
+sub record_shared
+{
+	my ($self, $recorder, $pkgname) = @_;
+	$self->{pkgname} = $pkgname;
+	push(@{$recorder->{dirs}->{$self->fullname}} , $self);
 }
 
 package OpenBSD::PackingElement::DirRm;

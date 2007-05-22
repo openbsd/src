@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.9 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.10 2007/05/22 10:11:59 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,7 @@ use OpenBSD::PackingList;
 
 sub find_items_in_installed_packages
 {
-	my $db = {dirs=>{}, users=>{}, groups=>{}};
+	my $db = OpenBSD::SharedItemsRecorder->new;
 	my @list = installed_packages();
 	my $total = @list;
 	OpenBSD::ProgressMeter::set_header("Read shared items");
@@ -35,7 +35,7 @@ sub find_items_in_installed_packages
 		OpenBSD::ProgressMeter::show($done, $total);
 		my $plist = OpenBSD::PackingList->from_installation($e, 
 		    \&OpenBSD::PackingList::SharedItemsOnly) or next;
-		$plist->record_shared_item($e, $db);
+		$plist->record_shared($db, $e);
 		$done++;
 	}
 	return $db;
@@ -43,16 +43,15 @@ sub find_items_in_installed_packages
 
 sub cleanup
 {
-	my $state = shift;
+	my ($recorder, $state) = @_;
 
-	my $h = $state->{dirs_to_rm};
-	my $u = $state->{users_to_rm};
-	my $g = $state->{groups_to_rm};
-	return unless defined $h or defined $u or defined $g;
 	my $remaining = find_items_in_installed_packages();
 
 	OpenBSD::ProgressMeter::clear();
 	OpenBSD::ProgressMeter::set_header("Clean shared items");
+	my $h = $recorder->{dirs};
+	my $u = $recorder->{users};
+	my $g = $recorder->{groups};
 	my $total = 0;
 	$total += keys %$h if defined $h;
 	$total += keys %$u if defined $u;
@@ -111,46 +110,12 @@ sub cleanup
 }
 
 package OpenBSD::PackingElement;
-sub record_shared_item
-{
-}
-
 sub cleanup
 {
 }
 
 sub reload
 {
-}
-
-package OpenBSD::PackingElement::NewUser;
-sub record_shared_item
-{
-	my ($self, $pkgname, $db) = @_;
-	my $k = $self->{name};
-	$db->{users}->{$k} = $pkgname;
-}
-
-package OpenBSD::PackingElement::NewGroup;
-sub record_shared_item
-{
-	my ($self, $pkgname, $db) = @_;
-	my $k = $self->{name};
-	$db->{groups}->{$k} = $pkgname;
-}
-
-package OpenBSD::PackingElement::DirBase;
-sub record_shared_item
-{
-	my ($self, $pkgname, $db) = @_;
-	my $k = $self->fullname;
-	$db->{dirs}->{$k} = 1;
-}
-
-package OpenBSD::PackingElement::DirRm;
-sub record_shared_item
-{
-	&OpenBSD::PackingElement::DirBase::record_shared_item;
 }
 
 package OpenBSD::PackingElement::Mandir;
