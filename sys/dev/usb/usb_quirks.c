@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.27 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.28 2007/05/22 09:55:15 robert Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -66,6 +66,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502,	    0x0a2, { UQ_AU_NO_XU }},
  { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ADA70,	    0x103, { UQ_BAD_ADC }},
  { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ASC495,      0x000, { UQ_BAD_AUDIO }},
+ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMDLXNB,
+	0x100, { UQ_BAD_AUDIO }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRONB,
 	0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRO4K,
