@@ -1,4 +1,4 @@
-.\"	$OpenBSD: astro.4,v 1.1 2007/05/22 19:31:13 kettenis Exp $
+.\"	$OpenBSD: astro.4,v 1.2 2007/05/22 21:25:42 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm astro
-.Nd Astro Memory & I/O controller
+.Nd Astro Memory and I/O controller
 .Sh SYNOPSIS
 .Cd "astro* at mainbus?"
 .Cd "elroy* at astro?"
@@ -27,9 +27,9 @@
 The
 .Nm
 driver provides support for the Astro memory and I/O controller used
-on systems with PA-8500 and later 64-bit CPUs.  It functions as a
-bridge from the Runway bus to up to 8 I/O ropes that connect to Elroy
-chips.
+on systems with PA-8500 and later 64-bit CPUs.
+It functions as a bridge from the Runway bus to
+up to 8 I/O ropes that connect to Elroy chips.
 Astro contains an IOMMU and provides support for cache coherent DMA.
 .Sh SEE ALSO
 .Xr cpu 4 ,
