@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1237 2007/05/21 10:26:29 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1238 2007/05/22 02:29:17 dlg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3958,6 +3958,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP8000,
 	    "Light Pulse 8000",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP982,
+	    "Light Pulse 982",
 	},
 	{
 	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG35,
