@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.h,v 1.3 2006/12/27 18:54:02 miod Exp $	*/
+/*	$OpenBSD: p9000.h,v 1.4 2007/05/22 04:14:03 jsg Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -28,9 +28,7 @@
  * Weitek Power9000 and Power9100 definitions.
  *
  * Although the datasheet is not available anymore, a good source of
- * information is:
- * http://thorkildsen.no/faqsys/docs/weitek.txt
- * as well as several code examples in XFree86 3.x (vga256/p9x00) and the
+ * documentation is several code examples in XFree86 3.x (vga256/p9x00) and the
  * {Net,Open}BSD source trees.
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm700x.c,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
+/*	$OpenBSD: lm700x.c,v 1.3 2007/05/22 04:14:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -29,7 +29,6 @@
 
 /*
  * Sanyo LM7001 Direct PLL Frequency Synthesizer
- *    ??? See http://www.redsword.com/tjacobs/geeb/fmcard.htm
  *
  * The LM7001J and LM7001JM (used in Aztech/PackardBell cards) are PLL
  * frequency synthesizer LSIs for tuners. These LSIs are software compatible

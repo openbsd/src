@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc921x.h,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: tc921x.h,v 1.3 2007/05/22 04:14:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Vladimir Popov <jumbo@narod.ru>.
@@ -25,7 +25,6 @@
  */
 /*
  * Toshiba's High Speed PLL for DTS
- *   http://www.chipbook.co.kr/pdf/ic/toshiba/TC9216.pdf
  *
  * TC9216P, TC9217P, TC9217F are a high speed PLL-LSI with built-in 2 modulus
  * prescaler. Each function is controlled through 3 serial bus lines and high
