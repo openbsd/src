@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.98 2007/05/15 10:36:34 espie Exp $
+# $OpenBSD: pkg_create,v 1.99 2007/05/22 00:25:42 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -349,7 +349,7 @@ sub copy_subst
 }
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
-	$opt_S, $opt_h, $opt_s, $opt_O, $opt_A, $opt_L,
+	$opt_S, $opt_s, $opt_O, $opt_A, $opt_L,
 	$opt_m, $opt_M, $opt_U, $opt_P, $opt_W, $opt_n,
 	$opt_B, $opt_q, $opt_Q);
 
@@ -498,7 +498,7 @@ set_usage(
 my $plist = new OpenBSD::PackingList;
 OpenBSD::PackingElement::File->add($plist, CONTENTS);
 try { 
-	getopts('hp:f:c:d:vi:k:r:m:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
+	getopts('p:f:c:d:vi:k:r:m:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
 	{'D' => 
 		sub { 
 			local $_ = shift;

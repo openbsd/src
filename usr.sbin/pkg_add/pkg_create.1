@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.35 2007/04/30 08:43:19 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.36 2007/05/22 00:25:42 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -30,7 +30,7 @@
 .Sh SYNOPSIS
 .Nm pkg_create
 .Bk -words
-.Op Fl hnQqv
+.Op Fl nQqv
 .Op Fl A Ar arches
 .Op Fl B Ar pkg-destdir
 .Oo Fl D Ar name
@@ -120,11 +120,6 @@ for package from the file
 .Ar packinglist .
 Several packing-lists can be mentioned, in which case they will be
 concatenated together.
-.It Fl h
-Force
-.Xr tar 1
-to follow symbolic links, so that the files they point to
-are dumped, rather than the links themselves (deprecated).
 .It Fl i Ar iscript
 Set
 .Ar iscript
