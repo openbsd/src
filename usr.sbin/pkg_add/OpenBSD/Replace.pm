@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.16 2007/05/20 11:06:44 espie Exp $
+# $OpenBSD: Replace.pm,v 1.17 2007/05/22 11:02:57 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -336,23 +336,6 @@ sub split_libs
 	return $splitted;
 }
 
-sub convert_to_requiring
-{
-	my $pkg = shift;
-
-	my $plist = OpenBSD::PackingList->from_installation($pkg);
-	if (!defined $plist) {
-		Warn "Couldn't read plist for $pkg\n";
-		return;
-	}
-	my $r = OpenBSD::Requiring->new($pkg);
-	for my $item (@{$plist->{pkgdep}}) {
-		$r->add($item->{name});
-	}
-	delete $plist->{pkgdep};
-	$plist->to_installation;
-}
-
 sub walk_depends_closure
 {
 	my ($start, $plist, $state) = @_;
@@ -375,9 +358,6 @@ sub walk_depends_closure
 			$done->{$pkg2} = 1;
 			$write->add($pkg2);
 			my $l = OpenBSD::Requiring->new($pkg2);
-			if (!$l->list) {
-				convert_to_requiring($pkg2);
-			}
 			$l->add($name);
 			$depend = 1;
 		}
@@ -448,9 +428,6 @@ sub adjust_dependency
 	my ($dep, $from, $into) = @_;
 
 	my $l = OpenBSD::Requiring->new($dep);
-	if (!$l->list) {
-		convert_to_requiring($dep);
-	}
 	$l->delete($from);
 	$l->add($into);
 }

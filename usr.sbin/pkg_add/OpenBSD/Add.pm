@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.53 2007/05/02 15:05:29 espie Exp $
+# $OpenBSD: Add.pm,v 1.54 2007/05/22 11:02:57 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -112,7 +112,6 @@ sub borked_installation
 	OpenBSD::PackingElement::Cwd->add($plist, '.');
 	my $pkgname = $plist->pkgname;
 	$plist->{name}->{name} = $borked;
-	$plist->{pkgdep} = [];
 	my $dest = installed_info($borked);
 	register_installation($dir, $dest, $plist);
 	Fatal @msg, ", partial installation recorded as $borked";

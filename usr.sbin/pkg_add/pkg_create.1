@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.36 2007/05/22 00:25:42 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.37 2007/05/22 11:02:57 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -566,23 +566,6 @@ may use
 wildcards.
 Deprecated, use
 .Cm @conflict
-instead.
-.Pp
-.It Cm @pkgdep Ar pkgname
-Declare a dependency on the
-.Ar pkgname
-package.
-The
-.Ar pkgname
-package must be installed before this package may be
-installed, and this package must be deinstalled before the
-.Ar pkgname
-package is deinstalled.
-Multiple
-.Cm @pkgdep
-directives may be used if the package depends on multiple other packages.
-Deprecated, use
-.Cm @depend
 instead.
 .Pp
 .It Cm @pkgpath Ar pkgpath
