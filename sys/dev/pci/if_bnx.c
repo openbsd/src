@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.50 2007/05/22 04:22:57 ray Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.51 2007/05/22 16:51:34 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -1456,7 +1456,7 @@ bnx_nvram_erase_page(struct bnx_softc *sc, u_int32_t offset)
 	    BNX_NVM_COMMAND_DOIT;
 
 	/*
-	 * Clear the DONE bit separately, set the NVRAM adress to erase,
+	 * Clear the DONE bit separately, set the NVRAM address to erase,
 	 * and issue the erase command.
 	 */
 	REG_WR(sc, BNX_NVM_COMMAND, BNX_NVM_COMMAND_DONE);
