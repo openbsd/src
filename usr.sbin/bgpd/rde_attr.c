@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.74 2007/05/11 11:27:59 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.75 2007/05/22 14:03:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -594,7 +594,7 @@ aspath_merge(struct rde_aspath *a, struct attr *attr)
 	}
 
 	diff = a->aspath->ascnt - ascnt;
-	if (attr->len > 2 && attr->data[0] == AS_SEQUENCE)
+	if (diff && attr->len > 2 && attr->data[0] == AS_SEQUENCE)
 		hroom = attr->data[1];
 	difflen = aspath_countlength(a->aspath, diff, hroom);
 	nlen = attr->len + difflen;
