@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.47 2007/04/19 13:01:04 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.48 2007/05/22 14:08:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -72,11 +72,13 @@ int			 kroute_insert(struct kroute_node *);
 int			 kroute_remove(struct kroute_node *);
 void			 kroute_clear(void);
 
-struct kif_node		*kif_find(int);
-int			 kif_insert(struct kif_node *);
+struct kif_node		*kif_find(u_short);
+struct kif_node		*kif_insert(u_short);
 int			 kif_remove(struct kif_node *);
 void			 kif_clear(void);
-int			 kif_validate(int);
+struct kif		*kif_update(u_short, int, struct if_data *,
+			    struct sockaddr_dl *);
+int			 kif_validate(u_short);
 
 struct kroute_node	*kroute_match(in_addr_t);
 
@@ -84,12 +86,14 @@ int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
+void		if_newaddr(u_short, struct sockaddr_in *, struct sockaddr_in *, 
+		    struct sockaddr_in *);
 void		if_announce(void *);
 
 int		send_rtmsg(int, int, struct kroute *);
 int		dispatch_rtmsg(void);
 int		fetchtable(void);
-int		fetchifs(int);
+int		fetchifs(u_short);
 
 RB_HEAD(kroute_tree, kroute_node)	krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
@@ -626,7 +630,7 @@ kroute_clear(void)
 }
 
 struct kif_node *
-kif_find(int ifindex)
+kif_find(u_short ifindex)
 {
 	struct kif_node	s;
 
@@ -659,16 +663,21 @@ kif_findname(char *ifname, struct in_addr addr, struct kif_addr **kap)
 	return (NULL);
 }
 
-int
-kif_insert(struct kif_node *kif)
+struct kif_node *
+kif_insert(u_short ifindex)
 {
-	if (RB_INSERT(kif_tree, &kit, kif) != NULL) {
-		log_warnx("RB_INSERT(kif_tree, &kit, kif)");
-		free(kif);
-		return (-1);
-	}
+	struct kif_node	*kif;
 
-	return (0);
+	if ((kif = calloc(1, sizeof(struct kif_node))) == NULL)
+		return (NULL);
+
+	kif->k.ifindex = ifindex;
+	TAILQ_INIT(&kif->addrs);
+
+	if (RB_INSERT(kif_tree, &kit, kif) != NULL)
+		fatalx("kif_insert: RB_INSERT");
+
+	return (kif);
 }
 
 int
@@ -698,8 +707,37 @@ kif_clear(void)
 		kif_remove(kif);
 }
 
+struct kif *
+kif_update(u_short ifindex, int flags, struct if_data *ifd,
+    struct sockaddr_dl *sdl)
+{
+	struct kif_node		*kif;
+
+	if ((kif = kif_find(ifindex)) == NULL)
+		if ((kif = kif_insert(ifindex)) == NULL)
+			return (NULL);
+
+	kif->k.flags = flags;
+	kif->k.link_state = ifd->ifi_link_state;
+	kif->k.media_type = ifd->ifi_type;
+	kif->k.baudrate = ifd->ifi_baudrate;
+	kif->k.mtu = ifd->ifi_mtu;
+
+	if (sdl && sdl->sdl_family == AF_LINK) {
+		if (sdl->sdl_nlen >= sizeof(kif->k.ifname))
+			memcpy(kif->k.ifname, sdl->sdl_data,
+			    sizeof(kif->k.ifname) - 1);
+		else if (sdl->sdl_nlen > 0)
+			memcpy(kif->k.ifname, sdl->sdl_data,
+			    sdl->sdl_nlen);
+		/* string already terminated via calloc() */
+	}
+
+	return (&kif->k);
+}
+
 int
-kif_validate(int ifindex)
+kif_validate(u_short ifindex)
 {
 	struct kif_node		*kif;
 
@@ -806,30 +844,27 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 void
 if_change(u_short ifindex, int flags, struct if_data *ifd)
 {
-	struct kif_node		*kif;
 	struct kroute_node	*kr, *tkr;
+	struct kif		*kif;
 	u_int8_t		 reachable;
 
-	if ((kif = kif_find(ifindex)) == NULL) {
-		log_warnx("interface with index %u not found", ifindex);
+	if ((kif = kif_update(ifindex, flags, ifd, NULL)) == NULL) {
+		log_warn("if_change:  kif_update(%u)", ifindex);
 		return;
 	}
 
-	kif->k.flags = flags;
-	kif->k.link_state = ifd->ifi_link_state;
-	kif->k.media_type = ifd->ifi_type;
-	kif->k.baudrate = ifd->ifi_baudrate;
+	reachable = (kif->flags & IFF_UP) &&
+	    (LINK_STATE_IS_UP(kif->link_state) ||
+	    (kif->link_state == LINK_STATE_UNKNOWN &&
+	    kif->media_type != IFT_CARP));
 
-	if ((reachable = (flags & IFF_UP) &&
-	    (LINK_STATE_IS_UP(ifd->ifi_link_state) ||
-	    (ifd->ifi_link_state == LINK_STATE_UNKNOWN &&
-	    ifd->ifi_type != IFT_CARP))) == kif->k.nh_reachable)
+	if (reachable == kif->nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */
 
-	kif->k.nh_reachable = reachable;
+	kif->nh_reachable = reachable;
 
 	/* notify ospfe about interface link state */
-	main_imsg_compose_ospfe(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
+	main_imsg_compose_ospfe(IMSG_IFINFO, 0, kif, sizeof(struct kif));
 
 	/* update redistribute list */
 	RB_FOREACH(kr, kroute_tree, &krt) {
@@ -844,7 +879,33 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 		}
 		kr_redistribute(kr);
 	}
-			
+}
+
+void
+if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask, 
+    struct sockaddr_in *brd)
+{   
+	struct kif_node *kif;
+	struct kif_addr *ka;
+		     
+	if (ifa == NULL || ifa->sin_family != AF_INET)
+		return;
+	if ((kif = kif_find(ifindex)) == NULL) {
+		log_warnx("if_newaddr: corresponding if %i not found", ifindex);		return;
+	}
+	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
+		fatal("if_newaddr");
+	ka->addr = ifa->sin_addr;
+	if (mask)
+		ka->mask = mask->sin_addr;
+	else
+		ka->mask.s_addr = INADDR_NONE;
+	if (brd)
+		ka->dstbrd = brd->sin_addr;
+	else
+		ka->dstbrd.s_addr = INADDR_NONE;
+
+	TAILQ_INSERT_TAIL(&kif->addrs, ka, entry);
 }
 
 void
@@ -857,14 +918,8 @@ if_announce(void *msg)
 
 	switch (ifan->ifan_what) {
 	case IFAN_ARRIVAL:
-		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
-			log_warn("if_announce");
-			return;
-		}
-
-		kif->k.ifindex = ifan->ifan_index;
+		kif = kif_insert(ifan->ifan_index);
 		strlcpy(kif->k.ifname, ifan->ifan_name, sizeof(kif->k.ifname));
-		kif_insert(kif);
 		break;
 	case IFAN_DEPARTURE:
 		kif = kif_find(ifan->ifan_index);
@@ -1077,19 +1132,16 @@ fetchtable(void)
 }
 
 int
-fetchifs(int ifindex)
+fetchifs(u_short ifindex)
 {
 	size_t			 len;
 	int			 mib[6];
 	char			*buf, *next, *lim;
 	struct rt_msghdr	*rtm;
-	struct if_msghdr	*ifmp, ifm;
+	struct if_msghdr	 ifm;
 	struct ifa_msghdr	*ifam;
-	struct kif_node		*kif = NULL;
-	struct kif_addr		*kaddr;
+	struct kif		*kif = NULL;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
-	struct sockaddr_dl	*sdl;
-	struct sockaddr_in	*sain;
 
 	mib[0] = CTL_NET;
 	mib[1] = AF_ROUTE;
@@ -1119,80 +1171,33 @@ fetchifs(int ifindex)
 			continue;
 		switch (rtm->rtm_type) {
 		case RTM_IFINFO:
-			ifmp = (struct if_msghdr *)rtm;
-			bcopy(ifmp, &ifm, sizeof ifm);
+			bcopy(rtm, &ifm, sizeof ifm);
 			sa = (struct sockaddr *)(next + sizeof(ifm));
 			get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
 
-			if ((kif = calloc(1, sizeof(struct kif_node))) ==
-			    NULL) {
-				log_warn("fetchifs");
-				free(buf);
-				return (-1);
-			}
+			if ((kif = kif_update(ifm.ifm_index,
+			    ifm.ifm_flags, &ifm.ifm_data,
+			    (struct sockaddr_dl *)rti_info[RTAX_IFP])) == NULL)
+				fatal("fetchifs");
 
-			kif->k.ifindex = ifm.ifm_index;
-			kif->k.flags = ifm.ifm_flags;
-			kif->k.link_state = ifm.ifm_data.ifi_link_state;
-			kif->k.media_type = ifm.ifm_data.ifi_type;
-			kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
-			kif->k.mtu = ifm.ifm_data.ifi_mtu;
-			kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&
+			kif->nh_reachable = (kif->flags & IFF_UP) &&
 			    (LINK_STATE_IS_UP(ifm.ifm_data.ifi_link_state) ||
 			    (ifm.ifm_data.ifi_link_state ==
 			    LINK_STATE_UNKNOWN &&
 			    ifm.ifm_data.ifi_type != IFT_CARP));
-			TAILQ_INIT(&kif->addrs);
-			if ((sa = rti_info[RTAX_IFP]) != NULL &&
-			    sa->sa_family == AF_LINK) {
-				sdl = (struct sockaddr_dl *)sa;
-				if (sdl->sdl_nlen >= sizeof(kif->k.ifname))
-					memcpy(kif->k.ifname, sdl->sdl_data,
-					    sizeof(kif->k.ifname) - 1);
-				else if (sdl->sdl_nlen > 0)
-					memcpy(kif->k.ifname, sdl->sdl_data,
-					    sdl->sdl_nlen);
-				/* string already terminated via calloc() */
-			}
-
-			kif_insert(kif);
 			break;
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;
-			if (kif && ifam->ifam_index != kif->k.ifindex)
-				fatalx("fetchifs: bad interface table");
-			if (kif == NULL || (ifam->ifam_addrs &
-			    (RTA_NETMASK | RTA_IFA | RTA_BRD)) == 0)
+			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
+			    RTA_BRD)) == 0)
 				break;
-			sa = (struct sockaddr *)(next + sizeof(*ifam));
+			sa = (struct sockaddr *)(ifam + 1);
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
-			if ((sa = rti_info[RTAX_IFA]) != NULL &&
-			    sa->sa_family == AF_INET) {
-				if ((kaddr = calloc(1,
-				    sizeof(struct kif_addr))) == NULL) {
-					log_warn("fetchifs");
-					free(buf);
-					return (-1);
-				}
-
-				sain = (struct sockaddr_in *)sa;
-				kaddr->addr = sain->sin_addr;
-
-				if ((sa = rti_info[RTAX_NETMASK]) != NULL) {
-					sain = (struct sockaddr_in *)sa;
-					kaddr->mask = sain->sin_addr;
-				} else
-					kaddr->mask.s_addr = INADDR_NONE;
-
-				if ((sa = rti_info[RTAX_BRD]) != NULL) {
-					sain = (struct sockaddr_in *)sa;
-					kaddr->dstbrd = sain->sin_addr;
-				} else
-					kaddr->dstbrd.s_addr = INADDR_NONE;
-
-				TAILQ_INSERT_TAIL(&kif->addrs, kaddr, entry);
-			}
+			if_newaddr(ifam->ifam_index,
+			    (struct sockaddr_in *)rti_info[RTAX_IFA],
+			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
+			    (struct sockaddr_in *)rti_info[RTAX_BRD]);
 			break;
 		}
 	}
@@ -1208,6 +1213,7 @@ dispatch_rtmsg(void)
 	char			*next, *lim;
 	struct rt_msghdr	*rtm;
 	struct if_msghdr	 ifm;
+	struct ifa_msghdr	*ifam;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_rtlabel	*label;
@@ -1399,6 +1405,19 @@ add:
 			memcpy(&ifm, next, sizeof(ifm));
 			if_change(ifm.ifm_index, ifm.ifm_flags,
 			    &ifm.ifm_data);
+			break;
+		case RTM_NEWADDR:
+			ifam = (struct ifa_msghdr *)rtm;
+			if ((ifam->ifam_addrs & (RTA_NETMASK | RTA_IFA |
+			    RTA_BRD)) == 0)
+				break;
+			sa = (struct sockaddr *)(ifam + 1);
+			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
+
+			if_newaddr(ifam->ifam_index,
+			    (struct sockaddr_in *)rti_info[RTAX_IFA],
+			    (struct sockaddr_in *)rti_info[RTAX_NETMASK],
+			    (struct sockaddr_in *)rti_info[RTAX_BRD]);
 			break;
 		case RTM_IFANNOUNCE:
 			if_announce(next);
