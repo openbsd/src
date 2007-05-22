@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.52 2007/05/14 15:28:45 jsg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.53 2007/05/22 04:30:55 ray Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1042,8 +1042,8 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    sizeof(struct msk_ring_data), &kva, BUS_DMA_NOWAIT)) {
-		printf(": can't map dma buffers (%z bytes)\n",
-		       sizeof(struct msk_ring_data));
+		printf(": can't map dma buffers (%lu bytes)\n",
+		       (ulong)sizeof(struct msk_ring_data));
 		goto fail_1;
 	}
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct msk_ring_data), 1,
@@ -1255,8 +1255,8 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
 	    &kva, BUS_DMA_NOWAIT)) {
-		printf(": can't map dma buffers (%z bytes)\n",
-		    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
+		printf(": can't map dma buffers (%lu bytes)\n",
+		    (ulong)(MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc)));
 		goto fail_3;
 	}
 	if (bus_dmamap_create(sc->sc_dmatag,
