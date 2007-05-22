@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.43 2007/05/15 09:32:18 espie Exp $
+# $OpenBSD: Delete.pm,v 1.44 2007/05/22 09:39:23 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -309,10 +309,7 @@ sub delete
 		print "rmuser: $name\n";
 	}
 
-	$state->{users_to_rm} = {} unless defined $state->{users_to_rm};
-
-	my $h = $state->{users_to_rm};
-	$h->{$name} = $state->{pkgname};
+	$state->{users_to_rm}->{$name} = $state->{pkgname};
 }
 
 package OpenBSD::PackingElement::NewGroup;
@@ -326,10 +323,7 @@ sub delete
 		print "rmgroup: $name\n";
 	}
 
-	$state->{groups_to_rm} = {} unless defined $state->{groups_to_rm};
-
-	my $h = $state->{groups_to_rm};
-	$h->{$name} = $state->{pkgname};
+	$state->{groups_to_rm}->{$name} = $state->{pkgname};
 }
 
 package OpenBSD::PackingElement::DirBase;
@@ -343,12 +337,8 @@ sub delete
 		print "dirrm: $name\n";
 	}
 
-	$state->{dirs_to_rm} = {} unless defined $state->{dirs_to_rm};
-
-	my $h = $state->{dirs_to_rm};
-	$h->{$name} = [] unless defined $h->{$name};
 	$self->{pkgname} = $state->{pkgname};
-	push(@{$h->{$name}}, $self);
+	push(@{$state->{dirs_to_rm}->{$name}}, $self);
 }
 
 package OpenBSD::PackingElement::DirRm;

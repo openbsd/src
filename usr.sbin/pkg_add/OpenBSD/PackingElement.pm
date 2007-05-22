@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.112 2007/05/20 17:04:25 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.113 2007/05/22 09:39:24 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1413,7 +1413,7 @@ sub register_old_keyword
 }
 
 for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend 
-    libdepend)) {
+    libdepend digitalsignature)) {
 	__PACKAGE__->register_old_keyword($k);
 }
 
