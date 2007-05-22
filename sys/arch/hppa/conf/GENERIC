@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.96 2007/05/22 19:47:06 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.97 2007/05/22 20:33:21 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -301,14 +301,14 @@ wsmouse*	at hilms? mux 0
 #option	FD_DEBUG
 #fd*	at fdc?			# floppy drives
 
-#pciide*	at pci? flags 0x0000
+pciide*	at pci? flags 0x0000
 #wdc0	at isa? port 0x1f0 irq 14
 #wdc1	at isa? port 0x170 irq 15
 wdc*	at pcmcia?
 wd*	at wdc? flags 0x0000
-#wd*	at pciide? flags 0x0000
-#atapiscsi* at pciide?
-#scsibus* at atapiscsi?
+wd*	at pciide? flags 0x0000
+atapiscsi* at pciide?
+scsibus* at atapiscsi?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
