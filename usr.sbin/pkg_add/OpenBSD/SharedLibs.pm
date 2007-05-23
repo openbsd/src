@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.14 2007/05/14 23:16:41 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.15 2007/05/23 09:27:27 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -89,8 +89,6 @@ sub register_lib
 	my ($name, $pkgname) = @_;
 	if ($name =~ m/^(.*\/lib.*?\.so\.\d+)\.(\d+)$/) {
 		my ($stem, $minor) = ($1, $2);
-		$registered_libs->{$stem} = [] 
-		    unless defined $registered_libs->{$stem};
 		push(@{$registered_libs->{$stem}}, [$minor, $pkgname]);
 	}
 }
