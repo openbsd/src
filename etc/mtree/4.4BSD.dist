@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.185 2007/04/23 08:51:30 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.186 2007/05/23 07:28:15 hshoexer Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1043,17 +1043,6 @@ generate
 # ./usr/share/info
 info
 # ./usr/share/info
-..
-
-# ./usr/share/ipsec
-ipsec
-
-# ./usr/share/ipsec/isakmpd
-isakmpd		gname=bin uname=root
-# ./usr/share/ipsec/isakmpd
-..
-
-# ./usr/share/ipsec
 ..
 
 # ./usr/share/lkm

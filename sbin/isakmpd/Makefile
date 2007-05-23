@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.78 2006/07/02 13:19:00 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.79 2007/05/23 07:28:15 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -68,10 +68,6 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 #CFLAGS+=		-DUSE_BOEHM_GC -DGC_DEBUG
 # You can also use Boehm's garbage collector as a means to find leaks.
 #  # setenv GC_FIND_LEAK
-
-.if make(install)
-SUBDIR+=	samples
-.endif
 
 # Enable for DNSSEC use
 #CFLAGS+=	USE_DNSSEC
