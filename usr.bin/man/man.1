@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.29 2007/05/23 19:44:09 jmc Exp $
+.\"	$OpenBSD: man.1,v 1.30 2007/05/23 20:03:40 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,34 +81,32 @@ Copy the manual page to the standard output instead of using
 to paginate it.
 This is done by default if the standard output is not a terminal device.
 .It Fl f Ar command
-Locate man pages matching the
-.Ar command
-in much the same way
-.Xr whatis 1
-works.
+A synonym for
+.Xr whatis 1 .
+It looks up a given command and
+gives the header line from the manual page.
 .It Fl h
 Display only the
 .Dq SYNOPSIS
 lines of the requested manual pages.
 .It Fl k Ar keyword
-Locate man pages matching
+A synonym for
+.Xr apropos 1 .
+It shows which manual pages contain instances of any of the given
+keywords in their title line.
 .Ar keyword
-in much the same way as
-.Xr apropos 1
-works (in fact, it runs
-.Xr apropos 1 ) .
-This can be used to find which man page applies to a particular subsystem
-you are interested in.
-For instance:
+is case insensitive.
 .Pp
-.Dl $ man -k mount
-.Pp
-will list all man pages which contain
+For instance,
+to list all man pages which contain
 .Dq mount
 in the
 .Dq NAME
-line of the man page;
-in this case a list much like this:
+line of the man page:
+.Pp
+.Dl $ man -k mount
+.Pp
+Which would produce a list much like this:
 .Bd -literal
 amd (8) \(en automatically mount file systems
 amq (8) \(en automounter query tool
