@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.53 2007/04/23 16:38:55 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.54 2007/05/23 21:27:13 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -30,6 +30,8 @@
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsi_all.h>
 #include <dev/biovar.h>
@@ -46,39 +48,40 @@
 #include <util.h>
 
 struct locator {
-	int channel;
-	int target;
-	int lun;
+	int		channel;
+	int		target;
+	int		lun;
 };
 
-void usage(void);
-const char *str2locator(const char *, struct locator *);
-void cleanup(void);
+void			usage(void);
+const char 		*str2locator(const char *, struct locator *);
+void			cleanup(void);
+int			bio_parse_devlist(char *, dev_t *);
 
-void bio_inq(char *);
-void bio_alarm(char *);
-void bio_setstate(char *);
-void bio_setblink(char *, char *, int);
-void bio_blink(char *, int, int);
-void bio_createraid(u_int16_t, char *);
+void			bio_inq(char *);
+void			bio_alarm(char *);
+void			bio_setstate(char *);
+void			bio_setblink(char *, char *, int);
+void			bio_blink(char *, int, int);
+void			bio_createraid(u_int16_t, char *);
 
-int devh = -1;
-int human;
-int verbose;
+int			devh = -1;
+int			human;
+int			verbose;
 
-struct bio_locate bl;
+struct bio_locate	bl;
 
 int
 main(int argc, char *argv[])
 {
-	extern char *optarg;
-	u_int64_t func = 0;
+	extern char		*optarg;
+	u_int64_t		func = 0;
 	/* u_int64_t subfunc = 0; */
-	char *bioc_dev = NULL, *sd_dev = NULL;
-	char *realname = NULL, *al_arg = NULL;
-	char *bl_arg = NULL, *dev_list = NULL;
-	int ch, rv, blink = 0;
-	u_int16_t cr_level = 0;
+	char			*bioc_dev = NULL, *sd_dev = NULL;
+	char			*realname = NULL, *al_arg = NULL;
+	char			*bl_arg = NULL, *dev_list = NULL;
+	int			ch, rv, blink = 0;
+	u_int16_t		cr_level = 0;
 
 	if (argc < 2)
 		usage();
@@ -182,7 +185,7 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
-	extern char *__progname;
+	extern char		*__progname;
 
 	fprintf(stderr,
 		"usage: %s [-hiv] [-a alarm-function] "
@@ -197,8 +200,8 @@ usage(void)
 const char *
 str2locator(const char *string, struct locator *location)
 {
-	const char *errstr;
-	char parse[80], *targ, *lun;
+	const char		*errstr;
+	char			parse[80], *targ, *lun;
 
 	strlcpy(parse, string, sizeof parse);
 	targ = strchr(parse, ':');
@@ -227,13 +230,13 @@ str2locator(const char *string, struct locator *location)
 void
 bio_inq(char *name)
 {
-	char *status, size[64], scsiname[16], volname[32];
-	char percent[10], seconds[20];
-	int rv, i, d, volheader, hotspare, unused;
-	char encname[16], serial[32];
-	struct bioc_disk bd;
-	struct bioc_inq bi;
-	struct bioc_vol bv;
+	char 			*status, size[64], scsiname[16], volname[32];
+	char			percent[10], seconds[20];
+	int			rv, i, d, volheader, hotspare, unused;
+	char			encname[16], serial[32];
+	struct bioc_disk	bd;
+	struct bioc_inq		bi;
+	struct bioc_vol		bv;
 
 	memset(&bi, 0, sizeof(bi));
 
@@ -395,8 +398,8 @@ bio_inq(char *name)
 void
 bio_alarm(char *arg)
 {
-	int rv;
-	struct bioc_alarm ba;
+	int			rv;
+	struct bioc_alarm	ba;
 
 	ba.ba_cookie = bl.bl_cookie;
 
@@ -576,11 +579,19 @@ void
 bio_createraid(u_int16_t level, char *dev_list)
 {
 	struct bioc_createraid	create;
-	int			rv;
+	int			rv, no_dev;
+	dev_t			*dt;
 	u_int16_t		min_disks = 0;
 
 	if (!dev_list)
 		errx(1, "no devices specified");
+
+	dt = (dev_t *)malloc(BIOC_CRMAXLEN);
+	if (!dt)
+		err(1, "not enough memory for dev_t list");
+	memset(dt, 0, BIOC_CRMAXLEN);
+
+	no_dev = bio_parse_devlist(dev_list, dt);
 
 	switch (level) {
 	case 0:
@@ -593,25 +604,59 @@ bio_createraid(u_int16_t level, char *dev_list)
 		errx(1, "unsuported raid level");
 	}
 
-	/* XXX validate device list for real */
-#if 0
-	if (strncmp(dev_list, "sd", 2) == 0 && strlen(dev_list) > 2 &&
-	    isdigit(dev_list[2])) {
-	    	if (strlen(dev_list) != 3)
-			errx(1, "only one device supported");
-	} else
-		errx(1, "no sd device specified");
-#endif
-
 	memset(&create, 0, sizeof(create));
 	create.bc_cookie = bl.bl_cookie;
 	create.bc_level = level;
-	create.bc_dev_list_len = strlen(dev_list);
-	create.bc_dev_list = dev_list;
+	create.bc_dev_list_len = no_dev * sizeof(dev_t);
+	create.bc_dev_list = dt;
+	create.bc_flags = BIOC_SCDEVT;
 
+	printf("ioctl\n");
 	rv = ioctl(devh, BIOCCREATERAID, &create);
 	if (rv == -1) {
 		warn("BIOCCREATERAID");
-		return;
+		goto done;
 	}
+
+done:
+	free(dt);
+}
+
+int
+bio_parse_devlist(char *lst, dev_t *dt)
+{
+	char			*s, *e;
+	u_int32_t		sz = 0;
+	int			no_dev = 0, i, x;
+	struct stat		sb;
+	char			devname[MAXPATHLEN];
+
+	if (!lst)
+		errx(1, "invalid device list");
+
+	s = e = lst;
+	/* make sure we have a valid device list like /dev/sdNa,/dev/sdNNa */
+	while (*e != '\0') {
+		if (*e == ',')
+			s = e + 1;
+		else if (*(e + 1) == '\0' || *(e + 1) == ',') {
+			/* got one */
+			sz = e - s + 1;
+			strlcpy(devname, s, sz + 1);
+			if (stat(devname, &sb) == -1)
+				err(1, "could not stat %s", devname);
+			dt[no_dev] = sb.st_rdev;
+			no_dev++;
+			if (no_dev > (BIOC_CRMAXLEN / sizeof(dev_t)))
+				errx(1, "too many devices on device list");
+		}
+		e++;
+	}
+
+	for (i = 0; i < no_dev; i++)
+		for (x = 0; x < no_dev; x++)
+			if (dt[i] == dt[x] && x != i)
+				errx(1, "duplicate device in list");
+
+	return (no_dev);
 }

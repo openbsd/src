@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.27 2007/05/23 21:27:13 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -172,9 +172,13 @@ struct bioc_setstate {
 #define BIOCCREATERAID _IOWR('B', 38, struct bioc_createraid)
 struct bioc_createraid {
 	void		*bc_cookie;
-	char		*bc_dev_list;
+	void		*bc_dev_list;
 	u_int16_t	bc_dev_list_len;
+#define BIOC_CRMAXLEN		1024
 	u_int16_t	bc_level;
+	u_int32_t	bc_flags;
+#define BIOC_SCFORCE		0x01	/* do not assemble, force create */
+#define BIOC_SCDEVT		0x02	/* dev_t array or string in dev_list */
 };
 
 /* kernel and userspace defines */

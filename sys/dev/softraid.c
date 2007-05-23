@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.42 2007/05/12 02:50:22 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.43 2007/05/23 21:27:13 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -28,8 +28,6 @@
 #include <sys/disk.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
-#include <sys/vnode.h>
-#include <sys/namei.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/mount.h>
@@ -42,8 +40,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <scsi/scsi_disk.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <dev/softraidvar.h>
 #include <dev/rndvar.h>
@@ -92,10 +88,8 @@ int			sr_ioctl_setstate(struct sr_softc *,
 			    struct bioc_setstate *);
 int			sr_ioctl_createraid(struct sr_softc *,
 			    struct bioc_createraid *);
-int			sr_parse_chunks(struct sr_softc *, char *,
-			    struct sr_chunk_head *);
 int			sr_open_chunks(struct sr_softc *,
-			    struct sr_chunk_head *);
+			    struct sr_chunk_head *, dev_t *, int);
 int			sr_read_meta(struct sr_discipline *);
 int			sr_create_chunk_meta(struct sr_softc *,
 			    struct sr_chunk_head *);
@@ -735,10 +729,9 @@ done:
 int
 sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 {
-	char			*devl;
+	dev_t			*dt;
 	int			i, s, no_chunk, rv = EINVAL, sb = -1, vol;
 	int			no_meta, updatemeta = 0;
-	size_t			bytes = 0;
 	u_quad_t		vol_size;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
@@ -749,22 +742,21 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_createraid\n", DEVNAME(sc));
 
 	/* user input */
-	devl = malloc(bc->bc_dev_list_len + 1, M_DEVBUF, M_WAITOK);
-	memset(devl, 0, bc->bc_dev_list_len + 1);
-	copyinstr(bc->bc_dev_list, devl, bc->bc_dev_list_len, &bytes);
-	DNPRINTF(SR_D_IOCTL, "%s\n", devl);
+	if (bc->bc_dev_list_len > BIOC_CRMAXLEN)
+		goto unwind;
+
+	dt = malloc(bc->bc_dev_list_len, M_DEVBUF, M_WAITOK);
+	bzero(dt, bc->bc_dev_list_len);
+	copyin(bc->bc_dev_list, dt, bc->bc_dev_list_len);
 
 	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK);
 	memset(sd, 0, sizeof(struct sr_discipline));
 	sd->sd_sc = sc;
+
+	no_chunk = bc->bc_dev_list_len / sizeof(dev_t);
 	cl = &sd->sd_vol.sv_chunk_list;
-
-	/* check if we have valid user input */
 	SLIST_INIT(cl);
-	if ((no_chunk = sr_parse_chunks(sc, devl, cl)) == -1)
-		goto unwind;
-
-	if (sr_open_chunks(sc, cl))
+	if (sr_open_chunks(sc, cl, dt, no_chunk))
 		goto unwind;
 
 	/* in memory copy of metadata */
@@ -774,8 +766,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	/* we have a valid list now create an array index */
 	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *) * no_chunk,
 	    M_DEVBUF, M_WAITOK);
-	memset(sd->sd_vol.sv_chunks, 0,
-	    sizeof(struct sr_chunk *) * no_chunk);
+	bzero(sd->sd_vol.sv_chunks, sizeof(struct sr_chunk *) * no_chunk);
 
 	if ((no_meta = sr_read_meta(sd)) == 0) {
 		/* no metadata available */
@@ -931,168 +922,84 @@ unwind:
 }
 
 int
-sr_parse_chunks(struct sr_softc *sc, char *lst, struct sr_chunk_head *cl)
+sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
+    int no_chunk)
 {
-	struct sr_chunk		*ch_entry, *ch_next, *ch_prev;
-	char			*s, *e;
-	u_int32_t		sz = 0;
-	int			no_chunk = 0;
-
-	DNPRINTF(SR_D_IOCTL, "%s: sr_parse_chunks\n", DEVNAME(sc));
-
-	if (!lst)
-		goto bad;
-
-	s = e = lst;
-	ch_prev = NULL;
-	/* make sure we have a valid device list like /dev/sdNa,/dev/sdNNa */
-	while (*e != '\0') {
-		if (*e == ',')
-			s = e + 1;
-		else if (*(e + 1) == '\0' || *(e + 1) == ',') {
-			sz = e - s + 1;
-			/* got one */
-			ch_entry = malloc(sizeof(struct sr_chunk),
-			    M_DEVBUF, M_WAITOK);
-			memset(ch_entry, 0, sizeof(struct sr_chunk));
-
-			if (sz  + 1 > sizeof(ch_entry->src_devname))
-				goto unwind;
-
-			strlcpy(ch_entry->src_devname, s, sz + 1);
-
-			/* keep disks in user supplied order */
-			if (ch_prev)
-				SLIST_INSERT_AFTER(ch_prev, ch_entry, src_link);
-			else
-				SLIST_INSERT_HEAD(cl, ch_entry, src_link);
-			ch_prev = ch_entry;
-			no_chunk++;
-		}
-		e++;
-	}
-
-	/* check for dups */
-	SLIST_FOREACH(ch_entry, cl, src_link) {
-		SLIST_FOREACH(ch_next, cl, src_link) {
-			if (ch_next == ch_entry)
-				continue;
-
-			if (!strcmp(ch_next->src_devname,
-			    ch_entry->src_devname))
-				goto unwind;
-		}
-	}
-
-	return (no_chunk);
-unwind:
-	sr_unwind_chunks(sc, cl);
-bad:
-	printf("%s: invalid device list %s\n", DEVNAME(sc), lst);
-
-	return (-1);
-}
-
-int
-sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl)
-{
-	struct sr_chunk		*ch_entry;
-	struct nameidata	nd;
-	struct vattr		va;
-	struct disklabel	*label;
-	int			error;
-	char			*name, ss;
+	struct sr_chunk		*ch_entry, *ch_prev = NULL;
+	struct disklabel	label;
+	struct bdevsw		*bdsw;
+	char			*name;
+	int			maj, unit, part, i, error;
 	u_quad_t		size;
+	dev_t			dev;
 
-	DNPRINTF(SR_D_IOCTL, "%s: sr_open_chunks\n", DEVNAME(sc));
+	DNPRINTF(SR_D_IOCTL, "%s: sr_open_chunks(%d)\n", DEVNAME(sc), no_chunk);
 
 	/* fill out chunk list */
-	SLIST_FOREACH(ch_entry, cl, src_link) {
+	for (i = 0; i < no_chunk; i++) {
+		ch_entry = malloc(sizeof(struct sr_chunk), M_DEVBUF, M_WAITOK);
+		bzero(ch_entry, sizeof(struct sr_chunk));
+		/* keep disks in user supplied order */
+		if (ch_prev)
+			SLIST_INSERT_AFTER(ch_prev, ch_entry, src_link);
+		else
+			SLIST_INSERT_HEAD(cl, ch_entry, src_link);
+		ch_prev = ch_entry;
+
+		dev = dt[i];
+		maj = major(dev);
+		part = DISKPART(dev);
+		unit = DISKUNIT(dev);
+		bdsw = &bdevsw[maj];
+
+		name = findblkname(maj);
+		if (name == NULL)
+			goto unwind;
+
+		snprintf(ch_entry->src_devname, sizeof(ch_entry->src_devname),
+		    "%s%d%c", name, unit, part + 'a');
 		name = ch_entry->src_devname;
-		ch_entry->src_dev_vn = NULL;
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, curproc);
-
-		/* open disk */
-		error = vn_open(&nd, FREAD | FWRITE, 0);
-		if (error) {
-			printf("%s: could not open %s error %d\n", DEVNAME(sc),
-			    name, error);
-			goto unwind; /* open failed */
-		}
-		ch_entry->src_dev_vn = nd.ni_vp;
-
-		/* partition already in use? */
-		if (nd.ni_vp->v_usecount > 1) {
-			printf("%s: %s in use\n", DEVNAME(sc), name);
-			goto unlock;
-		}
-
-		/* get attributes */
-		error = VOP_GETATTR(nd.ni_vp, &va, curproc->p_ucred, curproc);
-		if (error) {
-			printf("%s: %s can't retrieve attributes\n",
-			    DEVNAME(sc), name);
-			goto unlock;
-		}
-
-		/* is partition VBLK? */
-		if (va.va_type != VBLK) {
-			printf("%s: %s not of VBLK type\n",
-			    DEVNAME(sc), name);
-			goto unlock;
-		}
-
-		/* make sure we are not a raw partition */
-		if (DISKPART(nd.ni_vp->v_rdev) == RAW_PART) {
-			printf("%s: %s can not use raw partitions\n",
-			    DEVNAME(sc), name);
-			goto unlock;
-		}
-
-		/* get disklabel */
-		label = &ch_entry->src_label;
-		error = VOP_IOCTL(nd.ni_vp, DIOCGDINFO, (caddr_t)label,
-		    FREAD, curproc->p_ucred, curproc);
-		if (error) {
-			printf("%s: %s could not read disklabel err %d\n",
-			    DEVNAME(sc), name, error);
-			goto unlock; /* disklabel failed */
-		}
 
 		/* get partition size */
-		ss = name[strlen(name) - 1];
-		size = label->d_partitions[ss - 'a'].p_size - SR_META_SIZE -
+		ch_entry->src_size = size = bdsw->d_psize(dev) - SR_META_SIZE -
 		    SR_META_OFFSET;
 		if (size <= 0) {
 			printf("%s: %s partition too small\n",
 			    DEVNAME(sc), name);
-			goto unlock;
+			goto unwind;
+		}
+
+		/* open device */
+		error = bdsw->d_open(dev, FREAD | FWRITE , S_IFBLK, curproc);
+
+		/* get disklabel */
+		error = bdsw->d_ioctl(dev, DIOCGDINFO, (void *)&label,
+		    0, NULL);
+		if (error) {
+			printf("%s: %s can't obtain disklabel\n",
+			    DEVNAME(sc), name);
+			error = bdsw->d_close(dev, FWRITE, S_IFBLK, curproc);
+			goto unwind;
 		}
 
 		/* make sure the partition is of the right type */
-		if (label->d_partitions[ss - 'a'].p_fstype != FS_RAID) {
+		if (label.d_partitions[part].p_fstype != FS_RAID) {
 			printf("%s: %s partition not of type RAID (%d)\n",
 			    DEVNAME(sc), name,
-			    label->d_partitions[ss - 'a'].p_fstype);
-			goto unlock;
+			    label.d_partitions[part].p_fstype);
+			error = bdsw->d_close(dev, FWRITE, S_IFBLK, curproc);
+			goto unwind;
 		}
 
-		ch_entry->src_dev_mm = nd.ni_vp->v_rdev; /* major/minor */
+		ch_entry->src_dev_mm = dev; /* major/minor */
 
 		DNPRINTF(SR_D_IOCTL, "%s: found %s size %d\n", DEVNAME(sc),
-		    name, label->d_partitions[ss - 'a'].p_size);
-
-		/* unlock the vnode */
-		VOP_UNLOCK(ch_entry->src_dev_vn, 0, curproc);
+		    name, size);
 	}
 
 	return (0);
-unlock:
-	VOP_UNLOCK(ch_entry->src_dev_vn, 0, curproc);
 unwind:
-	sr_unwind_chunks(sc, cl);
-	printf("%s: invalid device: %s\n", DEVNAME(sc), name);
-
+	printf("%s: invalid device: %s\n", DEVNAME(sc), name ? name : "nodev");
 	return (1);
 }
 
@@ -1127,11 +1034,10 @@ sr_read_meta(struct sr_discipline *sd)
 		b.b_error = 0;
 		b.b_proc = curproc;
 		b.b_dev = ch_entry->src_dev_mm;
-		b.b_vp = ch_entry->src_dev_vn;
+		b.b_vp = NULL;
 		b.b_iodone = NULL;
 		LIST_INIT(&b.b_dep);
-		b.b_vp->v_numoutput++;
-		VOP_STRATEGY(&b);
+		bdevsw_lookup(b.b_dev)->d_strategy(&b);
 		biowait(&b);
 
 		/* XXX mark chunk offline and restart metadata write */
@@ -1220,7 +1126,8 @@ sr_read_meta(struct sr_discipline *sd)
 		}
 		mc = (struct sr_chunk_meta *)(mv + 1);
 		/* checksum is calculated over ALL chunks */
-		chk = sr_checksum(DEVNAME(sc), (u_int32_t *)(mc),
+		chk = SR_META_CRCSEED;
+		chk ^= sr_checksum(DEVNAME(sc), (u_int32_t *)(mc),
 		    m->ssd_chunk_size * m->ssd_chunk_no);
 		if (chk != m->ssd_chunk_chk) {
 			printf("%s: %s invalid chunk metadata checksum 0x%x, "
@@ -1306,11 +1213,10 @@ int
 sr_create_chunk_meta(struct sr_softc *sc, struct sr_chunk_head *cl)
 {
 	struct sr_chunk		*ch_entry;
-	struct disklabel	*label;
 	struct sr_uuid		uuid;
 	int			rv = 1, cid = 0;
-	char			*name, ss;
-	u_quad_t		size, max_chunk_sz = 0, min_chunk_sz;
+	char			*name;
+	u_quad_t		max_chunk_sz = 0, min_chunk_sz;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_create_chunk_meta\n", DEVNAME(sc));
 
@@ -1318,12 +1224,8 @@ sr_create_chunk_meta(struct sr_softc *sc, struct sr_chunk_head *cl)
 
 	/* fill out stuff and get largest chunk size while looping */
 	SLIST_FOREACH(ch_entry, cl, src_link) {
-		label = &ch_entry->src_label;
 		name = ch_entry->src_devname;
-		ss = name[strlen(name) - 1];
-		size = label->d_partitions[ss - 'a'].p_size - SR_META_SIZE -
-		    SR_META_OFFSET;
-		ch_entry->src_meta.scm_size = size;
+		ch_entry->src_meta.scm_size = ch_entry->src_size;
 		ch_entry->src_meta.scm_chunk_id = cid++;
 		ch_entry->src_meta.scm_status = BIOC_SDONLINE;
 		strlcpy(ch_entry->src_meta.scm_devname, name,
@@ -1343,7 +1245,7 @@ sr_create_chunk_meta(struct sr_softc *sc, struct sr_chunk_head *cl)
 
 	/* equalize all sizes */
 	SLIST_FOREACH(ch_entry, cl, src_link)
-			ch_entry->src_meta.scm_coerced_size = min_chunk_sz;
+		ch_entry->src_meta.scm_coerced_size = min_chunk_sz;
 
 	/* whine if chunks are not the same size */
 	if (min_chunk_sz != max_chunk_sz)
@@ -1360,17 +1262,22 @@ void
 sr_unwind_chunks(struct sr_softc *sc, struct sr_chunk_head *cl)
 {
 	struct sr_chunk		*ch_entry, *ch_next;
+	dev_t dev;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_unwind_chunks\n", DEVNAME(sc));
+
+	if (!cl)
+		return;
 
 	for (ch_entry = SLIST_FIRST(cl);
 	    ch_entry != SLIST_END(cl); ch_entry = ch_next) {
 		ch_next = SLIST_NEXT(ch_entry, src_link);
 
-		if (ch_entry->src_dev_vn != NULL) {
-			vn_close(ch_entry->src_dev_vn, FREAD | FWRITE,
-			    curproc->p_ucred, curproc);
-		}
+		dev = ch_entry->src_dev_mm;
+
+		if (dev != NODEV)
+			bdevsw_lookup(dev)->d_close(dev, FWRITE, S_IFBLK,
+			    curproc);
 
 		free(ch_entry, M_DEVBUF);
 	}
@@ -1576,11 +1483,13 @@ sr_raid1_sync(struct sr_workunit *wu)
 		DNPRINTF(SR_D_DIS, "%s: %s: %s: sync\n", DEVNAME(sd->sd_sc),
 		    sd->sd_vol.sv_meta.svm_devname,
 		    ch_entry->src_meta.scm_devname);
+#if 0
 		vn_lock(ch_entry->src_dev_vn, LK_EXCLUSIVE | LK_RETRY, curproc);
 		/* XXX we want MNT_WAIT but that hangs in fdisk */
 		VOP_FSYNC(ch_entry->src_dev_vn, curproc->p_ucred,
 		    0 /* MNT_WAIT */, curproc);
 		VOP_UNLOCK(ch_entry->src_dev_vn, 0, curproc);
+#endif
 	}
 
 	return (0);
@@ -1711,7 +1620,7 @@ ragain:
 		}
 		ccb->ccb_target = x;
 		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[x]->src_dev_mm;
-		ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[x]->src_dev_vn;
+		ccb->ccb_buf.b_vp = NULL;
 
 		LIST_INIT(&ccb->ccb_buf.b_dep);
 
@@ -1787,8 +1696,7 @@ sr_raid1_startwu(struct sr_workunit *wu)
 	TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
 	/* start all individual ios */
 	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
-		ccb->ccb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&ccb->ccb_buf);
+		bdevsw_lookup(ccb->ccb_buf.b_dev)->d_strategy(&ccb->ccb_buf);
 	}
 }
 
@@ -2067,7 +1975,7 @@ die:
 u_int32_t
 sr_checksum(char *s, u_int32_t *p, u_int32_t size)
 {
-	u_int32_t		chk = 0xdeadbeef;
+	u_int32_t		chk = SR_META_CRCSEED;
 	int			i;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_checksum %p %d\n", s, p, size);
@@ -2139,7 +2047,7 @@ sr_save_metadata(struct sr_discipline *sd)
 		sm->ssd_magic = SR_MAGIC;
 		sm->ssd_version = SR_META_VERSION;
 		sm->ssd_size = sizeof(struct sr_metadata);
-		sm->ssd_ondisk = 1;
+		sm->ssd_ondisk = 0;
 		/* get uuid from chunk 0 */
 		bcopy(&sd->sd_vol.sv_chunks[0]->src_meta.scm_uuid,
 		    &sm->ssd_uuid,
@@ -2203,11 +2111,10 @@ sr_save_metadata(struct sr_discipline *sd)
 		b.b_error = 0;
 		b.b_proc = curproc;
 		b.b_dev = src->src_dev_mm;
-		b.b_vp = src->src_dev_vn;
+		b.b_vp = NULL;
 		b.b_iodone = NULL;
 		LIST_INIT(&b.b_dep);
-		b.b_vp->v_numoutput++;
-		VOP_STRATEGY(&b);
+		bdevsw_lookup(b.b_dev)->d_strategy(&b);
 		biowait(&b);
 
 		/* make sure in memory copy is clean */
@@ -2258,7 +2165,7 @@ sr_boot_assembly(struct sr_softc *sc)
 		bdsw = &bdevsw[major(dev)];
 
 		/* open device */
-		error = (*bdsw->d_open)(dev, FREAD, S_IFCHR, curproc);
+		error = (*bdsw->d_open)(dev, FREAD, S_IFBLK, curproc);
 		if (error) {
 			DNPRINTF(SR_D_META, "%s: sr_boot_assembly open failed"
 			    "\n", DEVNAME(sc));
@@ -2271,12 +2178,12 @@ sr_boot_assembly(struct sr_softc *sc)
 		if (error) {
 			DNPRINTF(SR_D_META, "%s: sr_boot_assembly ioctl "
 			    "failed\n", DEVNAME(sc));
-			error = (*bdsw->d_close)(dev, FREAD, S_IFCHR, curproc);
+			error = (*bdsw->d_close)(dev, FREAD, S_IFBLK, curproc);
 			continue;
 		}
 
 		/* we are done, close device */
-		error = (*bdsw->d_close)(dev, FREAD, S_IFCHR, curproc);
+		error = (*bdsw->d_close)(dev, FREAD, S_IFBLK, curproc);
 		if (error) {
 			DNPRINTF(SR_D_META, "%s: sr_boot_assembly close "
 			    "failed\n", DEVNAME(sc));
@@ -2286,14 +2193,14 @@ sr_boot_assembly(struct sr_softc *sc)
 		/* are we a softraid partition? */
 		for (i = 0; i < MAXPARTITIONS; i++) {
 			if (label.d_partitions[i].p_fstype != FS_RAID) {
-				error = (*bdsw->d_close)(dev, FREAD, S_IFCHR,
+				error = (*bdsw->d_close)(dev, FREAD, S_IFBLK,
 				    curproc);
 				continue;
 			}
 
 			/* open device */
 			bp->b_dev = devr = MAKEDISKDEV(majdev, dv->dv_unit, i);
-			error = (*bdsw->d_open)(devr, FREAD, S_IFCHR, curproc);
+			error = (*bdsw->d_open)(devr, FREAD, S_IFBLK, curproc);
 			if (error) {
 				DNPRINTF(SR_D_META, "%s: sr_boot_assembly open "
 				    "failed, partition %d\n", DEVNAME(sc), i);
@@ -2311,17 +2218,16 @@ sr_boot_assembly(struct sr_softc *sc)
 				DNPRINTF(SR_D_META, "%s: sr_boot_assembly "
 				    "strategy failed, partition %d\n",
 				    DEVNAME(sc));
-				error = (*bdsw->d_close)(devr, 0, S_IFCHR,
+				error = (*bdsw->d_close)(devr, FREAD, S_IFBLK,
 				    curproc);
 				continue;
 			}
 
 			sm = (struct sr_metadata *)bp->b_data;
-			/* printf("%s meta:\n", dv->dv_xname); */
 			sr_print_metadata(sm);
 
 			/* we are done, close device */
-			error = (*bdsw->d_close)(devr, FREAD, S_IFCHR, curproc);
+			error = (*bdsw->d_close)(devr, FREAD, S_IFBLK, curproc);
 			if (error) {
 				DNPRINTF(SR_D_META, "%s: sr_boot_assembly close" 				    "failed\n", DEVNAME(sc));
 				continue;
