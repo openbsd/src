@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930reg.h,v 1.4 2003/06/02 23:28:01 millert Exp $ */
+/*	$OpenBSD: am7930reg.h,v 1.5 2007/05/23 09:00:17 jmc Exp $ */
 /*	$NetBSD: am7930reg.h,v 1.1 1995/04/24 19:17:17 pk Exp $ */
 
 /*
@@ -49,8 +49,12 @@
  * Indirect register numbers (the value written into cr to select a given
  * chip registers) have the form AMDR_*.  Register fields look like AMD_*.
  *
- * Further documentation is available from AMD's website:
- *	http://www.amd.com/products/cpd/techdocs/techdocs.html
+ */
+
+/*
+ * Documentation for this chip:
+ *	PCnet-Mobile Single Chip Wireless LAN Media Access Controller
+ *	AMD Publication #: 20183, Rev B, Jan 1997
  */
 
 struct amd7930 {

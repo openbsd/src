@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990reg.h,v 1.7 2004/09/28 04:37:32 brad Exp $	*/
+/*	$OpenBSD: am7990reg.h,v 1.8 2007/05/23 09:00:17 jmc Exp $	*/
 /*	$NetBSD: am7990reg.h,v 1.1 1995/04/11 04:17:50 mycroft Exp $	*/
 
 /*-
@@ -37,8 +37,9 @@
  */
 
 /*
- * Documentation for this chip can be found on AMD's website:
- *	http://www.amd.com/products/npd/techdocs/techdocs.html
+ * Documentation for this chip:
+ *	Am79C90 CMOS Local Area Network Controller for Ethernet
+ *	AMD Publication #: 17881, Rev C, Jan 1997
  */
 
 #define	LEMINSIZE	60	/* should be 64 if mode DTCR is set */
