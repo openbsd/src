@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.47 2007/03/26 13:55:42 jmc Exp $	*/
+/*	$OpenBSD: at.c,v 1.48 2007/05/23 19:50:28 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.47 2007/03/26 13:55:42 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.48 2007/05/23 19:50:28 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -66,7 +66,7 @@ static void sigc(int);
 static void alarmc(int);
 static void writefile(const char *, time_t, char);
 static void list_jobs(int, char **, int, int);
-static time_t ttime(const char *);
+static time_t ttime(char *);
 static int check_permission(void);
 static __dead void panic(const char *);
 static void perr(const char *);
@@ -797,70 +797,80 @@ process_jobs(int argc, char **argv, int what)
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 /*
- * This is pretty much a copy of stime_arg1() from touch.c.
+ * Adapted from date(1)
  */
 static time_t
-ttime(const char *arg)
+ttime(char *arg)
 {
-	struct timeval tv[2];
-	time_t now;
-	struct tm *t;
+	time_t now, then;
+	struct tm *lt;
 	int yearset;
-	char *p;
+	char *dot, *p;
 
-	if (gettimeofday(&tv[0], NULL))
+	if (time(&now) == (time_t)-1 || (lt = localtime(&now)) == NULL)
 		panic("Cannot get current time");
 
-	/* Start with the current time. */
-	now = tv[0].tv_sec;
-	if ((t = localtime(&now)) == NULL)
-		panic("localtime");
-	/* [[CC]YY]MMDDhhmm[.SS] */
-	if ((p = strchr(arg, '.')) == NULL)
-		t->tm_sec = 0;		/* Seconds defaults to 0. */
-	else {
-		if (strlen(p + 1) != 2)
+	/* Valid date format is [[CC]YY]MMDDhhmm[.SS] */
+	for (p = arg, dot = NULL; *p != '\0'; p++) {
+		if (*p == '.' && dot != NULL)
+			dot = p;
+		else if (!isdigit((unsigned char)*p))
 			goto terr;
-		*p++ = '\0';
-		t->tm_sec = ATOI2(p);
+	}
+	if (dot != NULL) {
+		*dot++ = '\0';
+		if (strlen(dot) != 2)
+			goto terr;
+		lt->tm_sec = ATOI2(p);
+		if (lt->tm_sec > 61)	/* could be leap second */
+			goto terr;
 	}
 
 	yearset = 0;
 	switch(strlen(arg)) {
 	case 12:			/* CCYYMMDDhhmm */
-		t->tm_year = ATOI2(arg);
-		t->tm_year *= 100;
+		lt->tm_year = ATOI2(arg);
+		lt->tm_year *= 100;
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:			/* YYMMDDhhmm */
 		if (yearset) {
 			yearset = ATOI2(arg);
-			t->tm_year += yearset;
+			lt->tm_year += yearset;
 		} else {
 			yearset = ATOI2(arg);
-			t->tm_year = yearset + 2000;
+			lt->tm_year = yearset + 2000;
 		}
-		t->tm_year -= 1900;	/* Convert to UNIX time. */
+		lt->tm_year -= 1900;	/* Convert to Unix time */
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
-		t->tm_mon = ATOI2(arg);
-		--t->tm_mon;		/* Convert from 01-12 to 00-11 */
-		t->tm_mday = ATOI2(arg);
-		t->tm_hour = ATOI2(arg);
-		t->tm_min = ATOI2(arg);
+		lt->tm_mon = ATOI2(arg);
+		if (lt->tm_mon > 12 || lt->tm_mon == 0)
+			goto terr;
+		--lt->tm_mon;		/* Convert from 01-12 to 00-11 */
+		lt->tm_mday = ATOI2(arg);
+		if (lt->tm_mday > 31 || lt->tm_mday == 0)
+			goto terr;
+		lt->tm_hour = ATOI2(arg);
+		if (lt->tm_hour > 23)
+			goto terr;
+		lt->tm_min = ATOI2(arg);
+		if (lt->tm_min > 59)
+			goto terr;
 		break;
 	default:
 		goto terr;
 	}
 
-	t->tm_isdst = -1;		/* Figure out DST. */
-	tv[0].tv_sec = tv[1].tv_sec = mktime(t);
-	if (tv[0].tv_sec != -1)
-		return (tv[0].tv_sec);
-	else
+	lt->tm_isdst = -1;		/* mktime will deduce DST. */
+	then = mktime(lt);
+	if (then == (time_t)-1) {
     terr:
-		panic("out of range or illegal time specification: "
-		    "[[CC]YY]MMDDhhmm[.SS]");
+		panic("illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
+	}
+	if (then < now)
+		panic("cannot schedule jobs in the past");
+	return (then);
 }
 
 static int

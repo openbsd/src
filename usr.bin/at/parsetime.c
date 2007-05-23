@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.15 2006/04/26 03:01:48 cloder Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.16 2007/05/23 19:50:28 millert Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -141,7 +141,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.15 2006/04/26 03:01:48 cloder Exp $";
+static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.16 2007/05/23 19:50:28 millert Exp $";
 #endif
 
 /*
@@ -685,7 +685,7 @@ parsetime(int argc, char **argv)
 	}
 
 	if (nowtimer > runtimer) {
-		fprintf(stderr, "%s: Trying to travel back in time\n",
+		fprintf(stderr, "%s: cannot schedule jobs in the past\n",
 		    ProgramName);
 		return (-1);
 	}
