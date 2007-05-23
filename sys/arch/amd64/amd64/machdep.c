@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2007/02/17 23:59:03 marco Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2007/05/23 20:33:46 pvalchev Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -300,7 +300,8 @@ cpu_startup(void)
 
 	printf("%s", version);
 
-	printf("real mem = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024);
+	printf("real mem = %u (%uMB)\n", ctob(physmem),
+	    ctob(physmem)/1024/1024);
 
 	if (physmem >= btoc(1ULL << 32)) {
 		extern int amdgart_enable;
@@ -339,8 +340,8 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	printf("avail mem = %lu (%luK)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024);
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024/1024);
 	printf("using %u buffers containing %u bytes (%uK) of memory\n",
 	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 

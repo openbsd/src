@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2007/02/27 01:04:01 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2007/05/23 20:33:47 pvalchev Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -402,7 +402,8 @@ cpu_startup()
 
 	printf("%s", version);
 	
-	printf("real mem = %d (%dK)\n", ctob(physmem), ctob(physmem)/1024);
+	printf("real mem = %u (%uMB)\n", ctob(physmem),
+	    ctob(physmem)/1024/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -469,8 +470,8 @@ cpu_startup()
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 	ppc_malloc_ok = 1;
 	
-	printf("avail mem = %ld (%ldK)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free) / 1024);
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free) / 1024 / 1024);
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);
 	

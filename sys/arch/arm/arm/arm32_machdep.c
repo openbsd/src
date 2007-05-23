@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.22 2006/07/12 17:29:53 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.23 2007/05/23 20:33:46 pvalchev Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -312,8 +312,8 @@ cpu_startup()
 	 */
 	printf(version);
 
-	printf("real mem  = %u (%uK) %uMB\n", ctob(physmem),
-	    ctob(physmem)/1024, ctob(physmem)/1024/1024);
+	printf("real mem  = %u (%uMB)\n", ctob(physmem),
+	    ctob(physmem)/1024/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -390,8 +390,8 @@ cpu_startup()
 	 */
 	bufinit(); 
 
-	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024);
+	printf("avail mem = %lu (%uMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024/1024);
 	printf("using %d buffers containing %u bytes (%uK) of memory\n",
 	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 

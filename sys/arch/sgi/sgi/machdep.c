@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2007/05/03 19:34:01 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.39 2007/05/23 20:33:47 pvalchev Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -751,8 +751,10 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-	printf("real mem = %d\n", ptoa(physmem));
-	printf("rsvd mem = %d\n", ptoa(rsvdmem));
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem)/1024/1024);
+	printf("rsvd mem = %u (%uMB)\n", ptoa(rsvdmem),
+	    ptoa(physmem)/1024/1024);
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -806,7 +808,8 @@ cpu_startup()
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(uvmexp.free));
+	printf("avail mem = %u (%uMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024/1024);
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * PAGE_SIZE);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.86 2007/05/16 16:30:42 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.87 2007/05/23 20:33:47 pvalchev Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -195,7 +195,8 @@ cpu_startup()
         if (dep_call->cpu_conf)
                 (*dep_call->cpu_conf)();
 
-	printf("total memory = %d\n", avail_end);
+	printf("real mem = %u (%uMB)\n", avail_end,
+	    avail_end/1024/1024);
 	physmem = btoc(avail_end);
 	panicstr = NULL;
 	mtpr(AST_NO, PR_ASTLVL);
@@ -273,7 +274,8 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	printf("avail memory = %ld\n", ptoa(uvmexp.free));
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024/1024);
 	printf("using %d buffers containing %d bytes of memory\n", nbuf, bufpages * PAGE_SIZE);
 
 	/*

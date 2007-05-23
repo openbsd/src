@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2007/03/31 22:16:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.88 2007/05/23 20:33:47 pvalchev Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -255,7 +255,8 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	printf("total memory = %ld\n", (long)physmem * PAGE_SIZE);
+	printf("real mem = %lu (%luMB)\n", ctob(physmem),
+	    ctob(physmem)/1024/1024);
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
@@ -324,7 +325,8 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail memory = %ld\n", (long)uvmexp.free * PAGE_SIZE);
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024/1024);
 	printf("using %d buffers containing %ld bytes of memory\n", nbuf,
 		(long)bufpages * PAGE_SIZE);
 

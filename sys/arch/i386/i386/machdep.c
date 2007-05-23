@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.388 2007/05/15 16:27:38 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.389 2007/05/23 20:33:46 pvalchev Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -427,8 +427,8 @@ cpu_startup()
 	curcpu()->ci_feature_flags = cpu_feature;
 	identifycpu(curcpu());
 
-	printf("real mem  = %lu (%uK)\n", ctob((paddr_t)physmem),
-	    ctob((paddr_t)physmem)/1024U);
+	printf("real mem  = %llu (%lluMB)\n", ctob((unsigned long long)physmem),
+	    ctob((unsigned long long)physmem)/1024U/1024U);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -459,8 +459,9 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	printf("avail mem = %lu (%uK)\n", ptoa((paddr_t)uvmexp.free),
-	    ptoa((paddr_t)uvmexp.free) / 1024U);
+	printf("avail mem = %llu (%lluMB)\n",
+	    ptoa((unsigned long long)uvmexp.free),
+	    ptoa((unsigned long long)uvmexp.free)/1024U/1024U);
 	printf("using %d buffers containing %u bytes (%uK) of memory\n",
 	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
