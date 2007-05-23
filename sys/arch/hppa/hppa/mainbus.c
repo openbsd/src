@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.63 2005/10/26 18:35:44 martin Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.64 2007/05/23 18:07:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -252,6 +252,12 @@ void
 mbus_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int op)
 {
 	sync_caches();
+}
+
+void *
+mbus_vaddr(void *v, bus_space_handle_t h)
+{
+	return ((void *)h);
 }
 
 u_int8_t
@@ -576,7 +582,7 @@ const struct hppa_bus_space_tag hppa_bustag = {
 	NULL,
 
 	mbus_map, mbus_unmap, mbus_subregion, mbus_alloc, mbus_free,
-	mbus_barrier,
+	mbus_barrier, mbus_vaddr,
 	mbus_r1,    mbus_r2,   mbus_r4,   mbus_r8,
 	mbus_w1,    mbus_w2,   mbus_w4,   mbus_w8,
 	mbus_rm_1,  mbus_rm_2, mbus_rm_4, mbus_rm_8,

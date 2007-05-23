@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.21 2007/05/18 16:00:17 kettenis Exp $	*/
+/*	$OpenBSD: dino.c,v 1.22 2007/05/23 18:07:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -1475,7 +1475,7 @@ const struct hppa_bus_space_tag dino_iomemt = {
 	NULL,
 
 	NULL, dino_unmap, dino_subregion, NULL, dino_free,
-	dino_barrier,
+	dino_barrier, NULL,
 	dino_r1,    dino_r2,    dino_r4,    dino_r8,
 	dino_w1,    dino_w2,    dino_w4,    dino_w8,
 	dino_rm_1,  dino_rm_2,  dino_rm_4,  dino_rm_8,

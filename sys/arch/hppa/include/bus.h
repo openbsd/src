@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.24 2005/01/09 06:58:51 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.25 2007/05/23 18:07:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -56,6 +56,7 @@ struct hppa_bus_space_tag {
 	void (*hbt_free)(void *, bus_space_handle_t, bus_size_t);
 	void (*hbt_barrier)(void *v, bus_space_handle_t h,
 				 bus_size_t o, bus_size_t l, int op);
+	void *(*hbt_vaddr)(void *v, bus_space_handle_t h);
 
 	u_int8_t  (*hbt_r1)(void *, bus_space_handle_t, bus_size_t);
 	u_int16_t (*hbt_r2)(void *, bus_space_handle_t, bus_size_t);
@@ -287,8 +288,8 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 
 #define	bus_space_barrier(t,h,o,l,op) \
 	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
-#define	bus_space_vaddr(t,h,o,l,op) \
-	((t)->hbt_vaddr((t)->hbt_cookie, (h), (o), (l), (op)))
+#define	bus_space_vaddr(t,h) \
+	((t)->hbt_vaddr((t)->hbt_cookie, (h)))
 
 #define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
 #define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */

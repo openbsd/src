@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.1 2007/05/21 22:43:38 kettenis Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.2 2007/05/23 18:07:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -905,7 +905,7 @@ const struct hppa_bus_space_tag elroy_iomemt = {
 	NULL,
 
 	NULL, elroy_unmap, elroy_subregion, NULL, elroy_free,
-	elroy_barrier,
+	elroy_barrier, NULL,
 	elroy_r1,    elroy_r2,    elroy_r4,    elroy_r8,
 	elroy_w1,    elroy_w2,    elroy_w4,    elroy_w8,  
 	elroy_rm_1,  elroy_rm_2,  elroy_rm_4,  elroy_rm_8,
@@ -1088,7 +1088,7 @@ elroy_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_regs = r = (void *)bus_space_vaddr(sc->sc_bt, sc->sc_bh);
+	sc->sc_regs = r = bus_space_vaddr(sc->sc_bt, sc->sc_bh);
 	elroy_write32(&r->pci_cmdstat, htole32(PCI_COMMAND_IO_ENABLE |
 	    PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE));
 
