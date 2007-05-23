@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.69 2007/03/20 10:37:29 mickey Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.70 2007/05/23 11:53:45 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -277,7 +277,8 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				ad.pfra_fback = PFR_FB_NONE;
 		}
 		if (p == NULL && q == NULL) {
-			p = pfr_create_kentry(&ad, 0);
+			p = pfr_create_kentry(&ad,
+			    !(flags & PFR_FLAG_USERIOCTL));
 			if (p == NULL)
 				senderr(ENOMEM);
 			if (pfr_route_kentry(tmpkt, p)) {
@@ -457,7 +458,8 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 				ad.pfra_fback = PFR_FB_DUPLICATE;
 				goto _skip;
 			}
-			p = pfr_create_kentry(&ad, 0);
+			p = pfr_create_kentry(&ad,
+			    !(flags & PFR_FLAG_USERIOCTL));
 			if (p == NULL)
 				senderr(ENOMEM);
 			if (pfr_route_kentry(tmpkt, p)) {
