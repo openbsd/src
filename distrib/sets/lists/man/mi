@@ -1195,8 +1195,10 @@
 ./usr/share/man/cat4/hp300/tvrx.0
 ./usr/share/man/cat4/hppa
 ./usr/share/man/cat4/hppa/asp.0
+./usr/share/man/cat4/hppa/astro.0
 ./usr/share/man/cat4/hppa/cpu.0
 ./usr/share/man/cat4/hppa/dino.0
+./usr/share/man/cat4/hppa/elroy.0
 ./usr/share/man/cat4/hppa/gsc.0
 ./usr/share/man/cat4/hppa/gsckbc.0
 ./usr/share/man/cat4/hppa/gsckbd.0
