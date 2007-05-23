@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.38 2007/05/19 23:40:46 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.39 2007/05/23 10:33:45 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -210,7 +210,7 @@ sub find_old_lib
 	require OpenBSD::PackageRepository::Installed;
 
 	for my $try (OpenBSD::PackageRepository::Installed->new->match(OpenBSD::Search::PkgSpec->new(".libs-".$pattern))) {
-		OpenBSD::SharedLibs::add_package_libs($try);
+		OpenBSD::SharedLibs::add_libs_from_installed_package($try);
 		if (check_lib_spec($base, $lib, {$try => 1})) {
 			$dependencies->{$try} = 1;
 			return "$try($lib)";
@@ -241,7 +241,7 @@ sub lookup_library
 	}
 	if ($lib !~ m|/|) {
 
-		OpenBSD::SharedLibs::add_system_libs($state->{destdir});
+		OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
 		for my $dir (OpenBSD::SharedLibs::system_dirs()) {
 			if (check_lib_spec($dir, $lib, {system => 1})) {
 				print "found libspec $lib in $dir/lib\n" if $state->{very_verbose};
@@ -267,7 +267,7 @@ sub lookup_library
 			push(@{$self->{todo}}, $dep2) unless $done->{$dep2};
 		}
 		next if $dependencies->{$dep};
-		OpenBSD::SharedLibs::add_package_libs($dep);
+		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
 		if (check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
 			print "found libspec $lib in dependent package $dep\n" if $state->{verbose};
 			$dependencies->{$dep} = 1;

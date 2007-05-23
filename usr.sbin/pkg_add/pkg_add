@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.260 2007/05/22 10:47:40 espie Exp $
+# $OpenBSD: pkg_add,v 1.261 2007/05/23 10:33:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -76,6 +76,13 @@ sub mark_installed
 	$state->{installed}->{$pkg} = 1;
 }
 
+sub mark_as_already_installed
+{
+	my ($state, $pkg) = @_;
+	OpenBSD::SharedLibs::add_libs_from_installed_package($pkg);
+	$state->mark_installed($pkg);
+}
+
 sub is_installed
 {
 	my ($state, $pkg) = @_;
@@ -118,12 +125,11 @@ sub can_install($$$)
 	}
 
 	if (!$state->{replace}) {
-		if (@conflicts == 1 && is_installed($plist->pkgname) &&
+		if (@conflicts == 1 && is_installed($pkgname) &&
 		    !$plist->has_new_sig($state) && 
 		    !$plist->uses_old_libs) {
 			print "Not reinstalling $pkgname\n" if $state->{verbose};
-			OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
-			$state->mark_installed($pkgname);
+			$state->mark_as_already_installed($pkgname);
 			return;
 		}
 		if ($state->{forced}->{conflicts}) {
@@ -143,11 +149,10 @@ sub can_install($$$)
 
 	require OpenBSD::Replace;
 
-	if (is_installed($plist->pkgname) && !$state->{forced}->{installed}) {
+	if (is_installed($pkgname) && !$state->{forced}->{installed}) {
 		if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
 			    print "Not reinstalling $pkgname\n" if $state->{verbose};
-			    OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
-			    $state->mark_installed($pkgname);
+			    $state->mark_as_already_installed($pkgname);
 			    return;
 			}
 	}
@@ -466,7 +471,7 @@ sub really_add($$)
 	if ($interrupted || $errors) {
 		failed_install($handle, $state->{not}, $interrupted);
 	}
-	OpenBSD::SharedLibs::add_plist_libs($plist);
+	OpenBSD::SharedLibs::add_libs_from_plist($plist);
 	$plist->to_cache;
 	my $dest = installed_info($pkgname);
 	OpenBSD::Add::register_installation($dir, $dest, $plist);
@@ -525,8 +530,7 @@ sub install_package
 	if (is_installed($plist->pkgname) && !$state->{forced}->{installed}) {
 		if ($state->{replace}) {
 			if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
-				OpenBSD::SharedLibs::add_package_libs($plist->pkgname);
-				$state->mark_installed($handle->{pkgname});
+				$state->mark_as_already_installed($plist->pkgname);
 				$handle->close_now;
 				return ();
 			}
@@ -566,7 +570,7 @@ sub install_package
 
 	# grab libraries
 	for my $dep ($handle->{solver}->dependencies) {
-		OpenBSD::SharedLibs::add_package_libs($dep);
+		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
 	}
 	my $okay = 1;
 	for my $lib (@{$plist->{wantlib}}) {

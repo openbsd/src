@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.15 2007/05/23 09:27:27 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.16 2007/05/23 10:33:45 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -100,7 +100,7 @@ sub system_dirs
 	return ("/usr", "/usr/X11R6");
 }
 
-sub add_system_libs
+sub add_libs_from_system
 {
 	my ($destdir) = @_;
 	return if $done_plist->{'system'};
@@ -114,9 +114,9 @@ sub add_system_libs
 	}
 }
 
-sub add_package_libs
+sub add_libs_from_installed_package
 {
-	my ($pkgname, $wantpath) = @_;
+	my $pkgname = shift;
 	return if $done_plist->{$pkgname};
 	$done_plist->{$pkgname} = 1;
 	my $plist = OpenBSD::PackingList->from_installation($pkgname, 
@@ -125,18 +125,13 @@ sub add_package_libs
 		Warn "Can't read plist for $pkgname\n";
 		return;
 	}
-	if (defined $wantpath) {
-		if (defined $plist->{extrainfo}) {
-			$pkgname = $plist->{extrainfo}->{subdir};
-		}
-	}
 
 	$plist->mark_available_lib($pkgname);
 }
 
-sub add_plist_libs
+sub add_libs_from_plist
 {
-	my ($plist) = @_;
+	my $plist = shift;
 	my $pkgname = $plist->pkgname;
 	return if $done_plist->{$pkgname};
 	$done_plist->{$pkgname} = 1;
