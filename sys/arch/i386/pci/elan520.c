@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.12 2006/12/12 23:14:27 dim Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.13 2007/05/23 11:55:11 markus Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -48,6 +48,8 @@
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 
@@ -66,6 +68,9 @@ struct elansc_softc {
 	/* GPIO interface */
 	struct gpio_chipset_tag sc_gpio_gc;
 	gpio_pin_t sc_gpio_pins[ELANSC_PIO_NPINS];
+
+	/* GP timer */
+	struct timecounter	sc_tc;
 } *elansc;
 
 int	elansc_match(struct device *, void *, void *);
@@ -82,6 +87,8 @@ int	elansc_wdogctl_cb(void *, int);
 int	elansc_gpio_pin_read(void *, int);
 void	elansc_gpio_pin_write(void *, int, int);
 void	elansc_gpio_pin_ctl(void *, int, int);
+
+u_int	elansc_tc_read(struct timecounter *);
 
 struct cfattach elansc_ca = {
 	sizeof(struct elansc_softc), elansc_match, elansc_attach
@@ -120,11 +127,10 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	struct elansc_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
 	struct gpiobus_attach_args gba;
-	uint16_t rev;
-	uint8_t ressta, cpuctl;
-	int pin;
-	int reg, shift;
-	u_int16_t data;
+	struct timecounter *tc;
+	uint16_t rev, data;
+	uint8_t ressta, cpuctl, tmr;
+	int pin, reg, shift;
 
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, NBPG, 0,
@@ -198,6 +204,53 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach GPIO framework */
 	config_found(&sc->sc_dev, &gba, gpiobus_print);
+
+	/* Disable GP1/2, clear the current count, and set the period to max */
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, GPTMR1CTL,
+		GPTMRCTL_ENB_WR | GPTMRCTL_CONT_CMP |
+		GPTMRCTL_PSC_SEL | GPTMRCTL_RTG);
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, GPTMR1CNT, 0);
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, GPTMR1MAXCMPA, 0);
+
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, GPTMR2CTL,
+		GPTMRCTL_ENB_WR | GPTMRCTL_CONT_CMP);
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, GPTMR2CNT, 0);
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, GPTMR2MAXCMPA, 0);
+
+	tmr = bus_space_read_1(sc->sc_memt, sc->sc_memh, SWTMRCFG);
+
+	/* Enable GP1/2 */
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, GPTMR1CTL,
+		GPTMRCTL_ENB | GPTMRCTL_ENB_WR | GPTMRCTL_CONT_CMP |
+		GPTMRCTL_PSC_SEL | GPTMRCTL_RTG);
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, GPTMR2CTL,
+		GPTMRCTL_ENB | GPTMRCTL_ENB_WR | GPTMRCTL_CONT_CMP);
+
+	/* Attach timer */
+	tc = &sc->sc_tc;
+	tc->tc_get_timecount = elansc_tc_read;
+	tc->tc_poll_pps = NULL;
+	tc->tc_counter_mask = ~0;
+	tc->tc_frequency = (tmr & 1) ? (33000000 / 4) : (33333333 / 4);
+	tc->tc_name = sc->sc_dev.dv_xname;
+	tc->tc_quality = 1000;
+	tc->tc_priv = sc;
+	tc_init(tc);
+}
+
+u_int
+elansc_tc_read(struct timecounter *tc)
+{
+	struct elansc_softc *sc = tc->tc_priv;
+	u_int32_t m1, m2, l;
+
+	do {
+		m1 = bus_space_read_2(sc->sc_memt, sc->sc_memh, GPTMR1CNT);
+		l = bus_space_read_2(sc->sc_memt, sc->sc_memh, GPTMR2CNT);
+		m2 = bus_space_read_2(sc->sc_memt, sc->sc_memh, GPTMR1CNT);
+	} while (m1 != m2);
+
+	return ((m1 << 16) | l);
 }
 
 void

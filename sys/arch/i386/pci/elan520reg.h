@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520reg.h,v 1.2 2004/06/05 15:06:22 grange Exp $	*/
+/*	$OpenBSD: elan520reg.h,v 1.3 2007/05/23 11:55:11 markus Exp $	*/
 /*	$NetBSD: elan520reg.h,v 1.1 2002/08/12 01:03:14 thorpej Exp $	*/
 
 /*-
@@ -145,5 +145,26 @@
 #define	RESSTA_ICE_SRST_DET	0x10	/* AMDebug(tm) soft reset detect */
 #define	RESSTA_ICE_HRST_DET	0x20	/* AMDebug(tm) soft reset detect */
 #define	RESSTA_SCP_RST		0x40	/* SCP reset detect */
+
+/*
+ * General-Purpose Timers
+ */
+#define	SWTMRCFG		0xc64	/* Software Timer Configuration */
+#define	GPTMR0CTL		0xc72	/* GP Timer 0 mode/control */
+#define	GPTMR0CNT		0xc74	/* GP Timer 0 current count value */
+#define	GPTMR0MAXCMPA		0xc76	/* GP Timer 0 maxcount value A */
+#define	GPTMR0MAXCMPB		0xc78	/* GP Timer 0 maxcount value B */
+#define	GPTMR1CTL		0xc7a	/* GP Timer 1 mode/control */
+#define	GPTMR1CNT		0xc7c	/* GP Timer 1 current count value */
+#define	GPTMR1MAXCMPA		0xc7e	/* GP Timer 1 maxcount value A */
+#define	GPTMR1MAXCMPB		0xc80	/* GP Timer 1 maxcount value B */
+#define	GPTMR2CTL		0xc82	/* GP Timer 2 mode/control */
+#define	GPTMR2CNT		0xc84	/* GP Timer 2 current count value */
+#define	GPTMR2MAXCMPA		0xc8e	/* GP Timer 2 maxcount value A */
+#define	GPTMRCTL_CONT_CMP	0x0001	/* GP Timer continuous mode */
+#define	GPTMRCTL_RTG		0x0010	/* GP Timer retrigger */
+#define GPTMRCTL_PSC_SEL	0x0008	/* GP Timer prescaler */
+#define GPTMRCTL_ENB		0x8000	/* GP Timer enable */
+#define GPTMRCTL_ENB_WR		0x4000	/* GP Timer enable bit write */
 
 #endif /* _I386_PCI_ELAN520REG_H_ */
