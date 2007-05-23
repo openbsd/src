@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.30 2007/05/23 20:03:40 jmc Exp $
+.\"	$OpenBSD: man.1,v 1.31 2007/05/23 20:16:54 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -172,10 +172,14 @@ configuration file.
 Restricts the directories that
 .Nm
 will search to those of a specific machine architecture.
+By default manual pages for all architectures are installed.
+Therefore this option can be used to view pages for one
+architecture whilst using another.
+.Pp
 Overrides the
 .Ev MACHINE
-environment variable.
-See also the
+environment variable;
+see also the
 .Sx ENVIRONMENT
 section below.
 .It Fl s Ar section
