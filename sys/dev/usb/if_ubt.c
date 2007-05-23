@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.9 2007/05/22 07:01:19 matthieu Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.10 2007/05/23 01:32:25 ray Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.9 2007/05/22 07:01:19 matthieu Exp $
+ * $Id: if_ubt.c,v 1.10 2007/05/23 01:32:25 ray Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -769,9 +769,9 @@ ubt_request_start(struct ubt_softc * sc)
 
 	if (m->m_pkthdr.len > UBT_CTRL_BUFFER_SIZE)
 		panic(
-"%s: %s - HCI command frame too big, size=%zd, len=%d\n",
-			__func__, USBDEVNAME(sc->sc_dev), UBT_CTRL_BUFFER_SIZE,
-			m->m_pkthdr.len);
+"%s: %s - HCI command frame too big, size=%lu, len=%d\n",
+			__func__, USBDEVNAME(sc->sc_dev),
+			(ulong)UBT_CTRL_BUFFER_SIZE, m->m_pkthdr.len);
 
 	m_copydata(m, 0, m->m_pkthdr.len, sc->sc_ctrl_buffer);
 

@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.38 2007/04/10 17:47:55 miod Exp $ */
+/* 	$OpenBSD: isp.c,v 1.39 2007/05/23 01:32:25 ray Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -99,7 +99,7 @@ static const char topology[] =
 static const char swrej[] =
     "Fabric Nameserver rejected %s (Reason=0x%x Expl=0x%x) for Port ID 0x%x";
 static const char finmsg[] =
-    "(%d.%d.%d): FIN dl%d resid %zu STS 0x%x SKEY %c XS_ERR=0x%x";
+    "(%d.%d.%d): FIN dl%d resid %lu STS 0x%x SKEY %c XS_ERR=0x%x";
 static const char sc0[] =
     "%s CHAN %d FTHRSH %d IID %d RESETD %d RETRYC %d RETRYD %d ASD 0x%x";
 static const char sc1[] =
@@ -3880,7 +3880,8 @@ again:
 				skey = '.';
 			}
 			isp_prt(isp, ISP_LOGALL, finmsg, XS_CHANNEL(xs),
-			    XS_TGT(xs), XS_LUN(xs), XS_XFRLEN(xs), XS_RESID(xs),
+			    XS_TGT(xs), XS_LUN(xs), XS_XFRLEN(xs),
+			    (ulong)XS_RESID(xs),
 			    *XS_STSP(xs), skey, XS_ERR(xs));
 		}
 
