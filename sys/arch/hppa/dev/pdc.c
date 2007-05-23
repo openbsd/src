@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.28 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.29 2007/05/23 18:29:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -141,6 +141,13 @@ pdc_init()
 #endif
 		conaddr = (u_long)pzd->pz_hpa + IOMOD_DEVOFFSET;
 		conunit = 0;
+
+		/*
+		 * XXX Attaching the serial console on four-digit B/C/J
+		 * class workstations, so disable it for now.
+		 */
+		if (conaddr == 0xfee003f8 + IOMOD_DEVOFFSET)
+			conaddr = 0;
 
 		/* compute correct baud rate */
 		if (PZL_SPEED(pzd->pz_layers[0]) <
