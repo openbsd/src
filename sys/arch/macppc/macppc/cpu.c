@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.42 2007/05/14 20:59:17 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.43 2007/05/23 23:40:21 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -42,6 +42,8 @@
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
+#include <machine/bat.h>
+#include <machine/trap.h>
 
 /* only valid on 603(e,ev) and G3, G4 */
 #define HID0_DOZE	(1 << (31-8))
@@ -537,19 +539,225 @@ config_l2cr(int cpu)
 
 #ifdef MULTIPROCESSOR
 
+#define	INTSTK	(8*1024)		/* 8K interrupt stack */
+
+int cpu_spinup(struct device *, struct cpu_info *);
 void cpu_hatch(void);
 void cpu_spinup_trampoline(void);
 
+struct cpu_hatch_data {
+	struct cpu_info *ci;
+	int running;
+	int hid0;
+	int sdr1;
+	int tbu, tbl;
+};
+
+volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
+
+int
+cpu_spinup(struct device *self, struct cpu_info *ci)
+{
+	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
+	int i;
+	struct pcb *pcb;
+	struct pglist mlist;
+	struct vm_page *m;
+	int error;
+	int size = 0;
+	char *cp;
+	u_char *reset_cpu;
+
+        /*
+         * Allocate some contiguous pages for the idle PCB and stack
+         * from the lowest 256MB (because bat0 always maps it va == pa).
+         */
+        size += USPACE;
+        size += INTSTK;
+        size += 4096;   /* SPILLSTK */
+
+	TAILQ_INIT(&mlist);
+	error = uvm_pglistalloc(size, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
+	if (error) {
+		printf(": unable to allocate idle stack\n");
+		return -1;
+	}
+
+	m = TAILQ_FIRST(&mlist);
+	cp = (char *)VM_PAGE_TO_PHYS(m);
+	bzero(cp, size);
+
+        pcb = (struct pcb *)cp;
+        ci->ci_idle_pcb = pcb;
+        ci->ci_intstk = cp + USPACE + INTSTK;
+
+        /*
+         * Initialize the idle stack pointer, reserving space for an
+         * (empty) trapframe (XXX is the trapframe really necessary?)
+         */
+        pcb->pcb_sp = (paddr_t)pcb + USPACE - sizeof(struct trapframe);
+	cpu_hatch_stack = ci->ci_idle_pcb->pcb_sp;
+
+	h->ci = ci;
+	h->running = 0;
+	h->hid0 = ppc_mfhid0();
+	h->sdr1 = ppc_mfsdr1();
+	cpu_hatch_data = h;
+
+#ifdef notyet
+	ci->ci_lasttb = curcpu()->ci_lasttb;
+#endif
+
+	__asm volatile ("sync; isync");
+
+	/* XXX OpenPIC */
+	{
+		uint64_t tb;
+
+		*(u_int *)EXC_RST = 0x48000002 | (u_int)cpu_spinup_trampoline;
+		syncicache((void *)EXC_RST, 0x100);
+
+		h->running = -1;
+
+		/* Start secondary CPU. */
+		reset_cpu = mapiodev(0x80000000 + 0x5c, 1);
+		*reset_cpu = 0x4;
+		__asm volatile ("eieio" ::: "memory");
+		*reset_cpu = 0x5;
+		__asm volatile ("eieio" ::: "memory");
+
+		/* Sync timebase. */
+		tb = ppc_mftb();
+		tb += 100000;	/* 3ms @ 33MHz  */
+
+		h->tbu = tb >> 32;
+		h->tbl = tb & 0xffffffff;
+
+		while (tb > ppc_mftb())
+			;
+                __asm volatile ("sync; isync");
+                h->running = 0;
+
+                delay(500000);
+	}
+
+	printf("cpu%d: timebase %llx\n", cpu_number(), ppc_mftb());
+
+	for (i = 0; i < 0x3fffffff; i++)
+		if (h->running) {
+			printf("running\n");
+			break;
+		}
+
+	return 0;
+}
+
+volatile static int start_secondary_cpu;
 
 void
 cpu_boot_secondary_processors(void)
 {
+	struct cpu_info *ci;
+	int i;
+
+	for (i = 0; i < PPC_MAXPROCS; i++) {
+		ci = &cpu_info[i];
+		if (ci->ci_cpuid == 0)
+			continue;
+		cpu_spinup(NULL, ci);
+	}
+
+	start_secondary_cpu = 1;
+	__asm volatile ("sync");
 }
 
 void
 cpu_hatch(void)
 {
-}
+	volatile struct cpu_hatch_data *h = cpu_hatch_data;
+	int scratch, i;
 
+        /* Initialize timebase. */
+        __asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+
+	/* Initialize curcpu(). */
+	ppc_mtsprg0((u_int)h->ci);
+
+	/* Set PIR . */
+	ppc_mtpir(curcpu()->ci_cpuid);
+
+	/*
+	 * Initialize BAT registers to unmapped to not generate
+	 * overlapping mappings below.
+	 */
+	ppc_mtibat0u(0);
+	ppc_mtibat1u(0);
+	ppc_mtibat2u(0);
+	ppc_mtibat3u(0);
+	ppc_mtdbat0u(0);
+	ppc_mtdbat1u(0);
+	ppc_mtdbat2u(0);
+	ppc_mtdbat3u(0);
+
+	/*
+	 * Now setup fixed bat registers
+	 *
+	 * Note that we still run in real mode, and the BAT
+	 * registers were cleared above.
+	 */
+	/* IBAT0 used for initial 256 MB segment */
+	ppc_mtibat0l(battable[0].batl);
+	ppc_mtibat0u(battable[0].batu);
+
+	/* DBAT0 used similar */
+	ppc_mtdbat0l(battable[0].batl);
+	ppc_mtdbat0u(battable[0].batu);
+
+	/*
+	 * Initialize segment registers.
+	 */
+	for (i = 0; i < 16; i++)
+		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
+
+	ppc_mthid0(h->hid0);
+	ppc_mtsdr1(h->sdr1);
+
+	/*
+	 * Now enable translation (and machine checks/recoverable interrupts).
+	 */
+	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
+		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
+	/* XXX OpenPIC */
+	{
+		/* Sync timebase. */
+		u_int tbu = h->tbu;
+		u_int tbl = h->tbl;
+		while (h->running == -1)
+			;
+                __asm volatile ("sync; isync");
+                __asm volatile ("mttbl %0" :: "r"(0));
+                __asm volatile ("mttbu %0" :: "r"(tbu));
+                __asm volatile ("mttbl %0" :: "r"(tbl));
+	}
+
+	ncpus++;
+	h->running = 1;
+	__asm volatile ("eieio" ::: "memory");
+
+	while (start_secondary_cpu == 0)
+		;
+
+	__asm volatile ("sync; isync");
+
+	printf("cpu%d: running\n", cpu_number());
+	printf("cpu%d: timebase %llx\n", cpu_number(), ppc_mftb());
+#ifdef notyet
+	ppc_mtdec(ticks_per_intr);
+#endif
+
+	curcpu()->ci_ipending = 0;
+	curcpu()->ci_cpl = 0;
+}
 #endif
