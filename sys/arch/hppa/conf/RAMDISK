@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.66 2007/05/22 20:33:22 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.67 2007/05/23 18:24:25 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -75,6 +75,9 @@ pci*	at dino?
 option	PCIVERBOSE
 #pckbc0	at dino? irq 9
 com1	at dino? irq 11
+
+elroy*	at astro?
+pci*	at elroy?
 
 ppb*	at pci?
 pci*	at ppb?
