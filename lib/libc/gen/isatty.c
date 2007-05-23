@@ -1,4 +1,4 @@
-/*	$OpenBSD: isatty.c,v 1.6 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: isatty.c,v 1.7 2007/05/23 18:30:07 kurt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,20 +29,11 @@
  */
 
 #include <termios.h>
-#include <unistd.h>
-#include "thread_private.h"
 
 int
 isatty(int fd)
 {
-	int retval;
 	struct termios t;
 
-	if (_FD_LOCK(fd, FD_READ, NULL) == 0) {
-		retval = (tcgetattr(fd, &t) != -1);
-		_FD_UNLOCK(fd, FD_READ);
-	} else {
-		retval = 0;
-	}
-	return(retval);
+	return (tcgetattr(fd, &t) != -1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyname.c,v 1.12 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: ttyname.c,v 1.13 2007/05/23 18:30:07 kurt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,19 +43,6 @@
 
 static char buf[TTY_NAME_MAX];
 static int oldttyname(int, struct stat *, char *, size_t);
-static int __ttyname_r_basic(int, char *, size_t);
-
-int
-ttyname_r(int fd, char *buf, size_t buflen)
-{
-	int ret;
-
-	if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
-		ret = __ttyname_r_basic(fd, buf, buflen);
-		_FD_UNLOCK(fd, FD_READ);
-	}
-	return ret;
-}
 
 char *
 ttyname(int fd)
@@ -75,8 +62,8 @@ ttyname(int fd)
 	return bufp;
 }
 
-static int
-__ttyname_r_basic(int fd, char *buf, size_t len)
+int
+ttyname_r(int fd, char *buf, size_t len)
 {
 	struct stat sb;
 	struct termios ttyb;
