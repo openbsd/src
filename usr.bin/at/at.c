@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.49 2007/05/23 22:30:53 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.50 2007/05/23 22:34:03 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.49 2007/05/23 22:30:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.50 2007/05/23 22:34:03 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -823,7 +823,7 @@ ttime(char *arg)
 		*dot++ = '\0';
 		if (strlen(dot) != 2)
 			goto terr;
-		lt->tm_sec = ATOI2(p);
+		lt->tm_sec = ATOI2(dot);
 		if (lt->tm_sec > 61)	/* could be leap second */
 			goto terr;
 	}
