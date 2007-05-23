@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.32 2007/05/23 20:24:07 jmc Exp $
+.\"	$OpenBSD: man.1,v 1.33 2007/05/23 20:57:29 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,12 @@ displays the
 .Bx
 manual pages entitled
 .Ar name .
+Pages may be selected according to
+a specific category
+.Pq Ar section
+or
+machine architecture
+.Pq Ar subsection .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -182,23 +188,11 @@ environment variable;
 see also the
 .Sx ENVIRONMENT
 section below.
-.It Fl s Ar section
-Another way of specifying the section, for compatibility with
-.Nm
-on other operating systems.
-.It Fl w
-List the pathnames of the manual pages which
-.Nm
-would display for the specified
+.It Xo
+.Op Fl s
 .Ar section
-and
-.Ar name
-combination.
-.El
-.Pp
-The optional
-.Ar section
-argument restricts the directories that
+.Xc
+Restricts the directories that
 .Nm
 will search to a specific section.
 The currently available sections are:
@@ -243,6 +237,15 @@ specifies the possible
 .Ar section
 values, and their search order.
 Additional sections may be specified.
+.It Fl w
+List the pathnames of the manual pages which
+.Nm
+would display for the specified
+.Ar section
+and
+.Ar name
+combination.
+.El
 .Pp
 Guidelines for
 .Ox
