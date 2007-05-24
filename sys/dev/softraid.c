@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.43 2007/05/23 21:27:13 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.44 2007/05/24 13:15:31 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -132,6 +132,8 @@ int			sr_save_metadata(struct sr_discipline *);
 void			sr_refresh_sensors(void *);
 int			sr_create_sensors(struct sr_discipline *);
 int			sr_boot_assembly(struct sr_softc *);
+int			sr_validate_metadata(struct sr_softc *, dev_t,
+			    struct sr_metadata *);
 
 #ifdef SR_DEBUG
 void			sr_print_metadata(struct sr_metadata *);
@@ -1015,7 +1017,7 @@ sr_read_meta(struct sr_discipline *sd)
 	struct sr_chunk_meta	*mc;
 	size_t			sz = SR_META_SIZE * 512;
 	int			no_chunk = 0;
-	u_int32_t		chk, volid;
+	u_int32_t		volid;
 
 	DNPRINTF(SR_D_META, "%s: sr_read_meta\n", DEVNAME(sc));
 
@@ -1048,94 +1050,15 @@ sr_read_meta(struct sr_discipline *sd)
 			continue;
 		}
 
-		if (m->ssd_magic != SR_MAGIC)
-			continue;
-
 		/* validate metadata */
-		if (m->ssd_version != SR_META_VERSION) {
-			printf("%s: %s can not read metadata version %d, "
-			    "expected %d\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_version,
-			    SR_META_VERSION);
+		if (sr_validate_metadata(sc, ch_entry->src_dev_mm, m)) {
+			printf("%s: invalid metadatada\n", DEVNAME(sc));
 			no_chunk = -1;
-			goto bad;
-		}
-		if (m->ssd_size != sizeof(struct sr_metadata)) {
-			printf("%s: %s invalid metadata size %d, "
-			    "expected %d\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_size,
-			    sizeof(struct sr_metadata));
-			no_chunk = -1;
-			goto bad;
-		}
-		chk = sr_checksum(DEVNAME(sc), (u_int32_t *)m, m->ssd_size);
-		/*
-		 * since the checksum value is part of the checksum a good
-		 * result equals 0
-		 */
-		if (chk != 0) {
-			printf("%s: %s invalid metadata checksum 0x%x, "
-			    "expected 0x%x\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_checksum, chk);
 			goto bad;
 		}
 
-		/* validate volume metadata */
-		if (m->ssd_vd_ver != SR_VOL_VERSION) {
-			printf("%s: %s can not read volume metadata version "
-			    "%d, expected %d\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_vd_ver,
-			    SR_VOL_VERSION);
-			no_chunk = -1;
-			goto bad;
-		}
-		if (m->ssd_vd_size != sizeof(struct sr_vol_meta)) {
-			printf("%s: %s invalid volume metadata size %d, "
-			    "expected %d\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_vd_size,
-			    sizeof(struct sr_vol_meta));
-			no_chunk = -1;
-			goto bad;
-		}
 		mv = (struct sr_vol_meta *)(m + 1);
-		chk = sr_checksum(DEVNAME(sc), (u_int32_t *)mv, m->ssd_vd_size);
-		if (chk != m->ssd_vd_chk) {
-			printf("%s: %s invalid volume metadata checksum 0x%x, "
-			    "expected 0x%x\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_vd_chk, chk);
-			no_chunk = -1;
-			goto bad;
-		}
-
-		/* validate chunk metadata */
-		if (m->ssd_chunk_ver != SR_CHUNK_VERSION) {
-			printf("%s: %s can not read chunk metadata version "
-			    "%d, expected %d\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_chunk_ver,
-			    SR_CHUNK_VERSION);
-			no_chunk = -1;
-			goto bad;
-		}
-		if (m->ssd_chunk_size != sizeof(struct sr_chunk_meta)) {
-			printf("%s: %s invalid chunk metadata size %d, "
-			    "expected %d\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_chunk_size,
-			    sizeof(struct sr_chunk_meta));
-			no_chunk = -1;
-			goto bad;
-		}
 		mc = (struct sr_chunk_meta *)(mv + 1);
-		/* checksum is calculated over ALL chunks */
-		chk = SR_META_CRCSEED;
-		chk ^= sr_checksum(DEVNAME(sc), (u_int32_t *)(mc),
-		    m->ssd_chunk_size * m->ssd_chunk_no);
-		if (chk != m->ssd_chunk_chk) {
-			printf("%s: %s invalid chunk metadata checksum 0x%x, "
-			    "expected 0x%x\n", DEVNAME(sc),
-			    ch_entry->src_devname, m->ssd_chunk_chk, chk);
-			no_chunk = -1;
-			goto bad;
-		}
 
 		/* we asssume that the first chunk has the initial metadata */
 		if (no_chunk++ == 0) {
@@ -1975,7 +1898,7 @@ die:
 u_int32_t
 sr_checksum(char *s, u_int32_t *p, u_int32_t size)
 {
-	u_int32_t		chk = SR_META_CRCSEED;
+	u_int32_t		chk = 0;
 	int			i;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_checksum %p %d\n", s, p, size);
@@ -2155,6 +2078,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	DNPRINTF(SR_D_META, "%s: sr_boot_assembly\n", DEVNAME(sc));
 
 	bp = geteblk(sz);
+	bzero(bp->b_data, sz);
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class != DV_DISK)
@@ -2192,11 +2116,8 @@ sr_boot_assembly(struct sr_softc *sc)
 
 		/* are we a softraid partition? */
 		for (i = 0; i < MAXPARTITIONS; i++) {
-			if (label.d_partitions[i].p_fstype != FS_RAID) {
-				error = (*bdsw->d_close)(dev, FREAD, S_IFBLK,
-				    curproc);
+			if (label.d_partitions[i].p_fstype != FS_RAID)
 				continue;
-			}
 
 			/* open device */
 			bp->b_dev = devr = MAKEDISKDEV(majdev, dv->dv_unit, i);
@@ -2224,7 +2145,7 @@ sr_boot_assembly(struct sr_softc *sc)
 			}
 
 			sm = (struct sr_metadata *)bp->b_data;
-			sr_print_metadata(sm);
+			sr_validate_metadata(sc, devr, sm);
 
 			/* we are done, close device */
 			error = (*bdsw->d_close)(devr, FREAD, S_IFBLK, curproc);
@@ -2236,6 +2157,130 @@ sr_boot_assembly(struct sr_softc *sc)
 	}
 
 	return (0);
+}
+
+int
+sr_validate_metadata(struct sr_softc *sc, dev_t dev, struct sr_metadata *sm)
+{
+	struct sr_vol_meta	*mv;
+	struct sr_chunk_meta	*mc;
+	char			*name, devname[32];
+	int			maj, part, unit;
+	u_int32_t		chk;
+
+	DNPRINTF(SR_D_META, "%s: sr_validate_metadata(0x%x)\n",
+	    DEVNAME(sc), dev);
+
+	if (sm->ssd_magic != SR_MAGIC)
+		goto bad;
+
+	maj = major(dev);
+	part = DISKPART(dev);
+	unit = DISKUNIT(dev);
+
+	name = findblkname(maj);
+	if (name == NULL)
+		goto bad;
+
+	snprintf(devname, sizeof(devname),
+	    "%s%d%c", name, unit, part + 'a');
+	name = devname;
+
+	/* validate metadata */
+	if (sm->ssd_version != SR_META_VERSION) {
+		printf("%s: %s can not read metadata version %d, "
+		    "expected %d\n", DEVNAME(sc),
+		    devname, sm->ssd_version,
+		    SR_META_VERSION);
+		goto bad;
+	}
+	if (sm->ssd_size != sizeof(struct sr_metadata)) {
+		printf("%s: %s invalid metadata size %d, "
+		    "expected %d\n", DEVNAME(sc),
+		    devname, sm->ssd_size,
+		    sizeof(struct sr_metadata));
+		goto bad;
+	}
+	chk = sr_checksum(DEVNAME(sc), (u_int32_t *)sm, sm->ssd_size);
+	/*
+	 * since the checksum value is part of the checksum a good
+	 * result equals 0
+	 */
+	if (chk != 0) {
+		printf("%s: %s invalid metadata checksum 0x%x, "
+		    "expected 0x%x\n", DEVNAME(sc),
+		    devname, sm->ssd_checksum, chk);
+		goto bad;
+	}
+
+	/* validate volume metadata */
+	if (sm->ssd_vd_ver != SR_VOL_VERSION) {
+		printf("%s: %s can not read volume metadata version "
+		    "%d, expected %d\n", DEVNAME(sc),
+		    devname, sm->ssd_vd_ver,
+		    SR_VOL_VERSION);
+		goto bad;
+	}
+	if (sm->ssd_vd_size != sizeof(struct sr_vol_meta)) {
+		printf("%s: %s invalid volume metadata size %d, "
+		    "expected %d\n", DEVNAME(sc),
+		    devname, sm->ssd_vd_size,
+		    sizeof(struct sr_vol_meta));
+		goto bad;
+	}
+	mv = (struct sr_vol_meta *)(sm + 1);
+	chk = sr_checksum(DEVNAME(sc), (u_int32_t *)mv, sm->ssd_vd_size);
+	if (chk != sm->ssd_vd_chk) {
+		printf("%s: %s invalid volume metadata checksum 0x%x, "
+		    "expected 0x%x\n", DEVNAME(sc),
+		    devname, sm->ssd_vd_chk, chk);
+		goto bad;
+	}
+
+	/* validate chunk metadata */
+	if (sm->ssd_chunk_ver != SR_CHUNK_VERSION) {
+		printf("%s: %s can not read chunk metadata version "
+		    "%d, expected %d\n", DEVNAME(sc),
+		    devname, sm->ssd_chunk_ver,
+		    SR_CHUNK_VERSION);
+		goto bad;
+	}
+	if (sm->ssd_chunk_size != sizeof(struct sr_chunk_meta)) {
+		printf("%s: %s invalid chunk metadata size %d, "
+		    "expected %d\n", DEVNAME(sc),
+		    devname, sm->ssd_chunk_size,
+		    sizeof(struct sr_chunk_meta));
+		goto bad;
+	}
+
+	mc = (struct sr_chunk_meta *)(mv + 1);
+	/* checksum is calculated over ALL chunks */
+	chk = sr_checksum(DEVNAME(sc), (u_int32_t *)(mc),
+	    sm->ssd_chunk_size * sm->ssd_chunk_no);
+
+	if (chk != sm->ssd_chunk_chk) {
+		printf("%s: %s invalid chunk metadata checksum 0x%x, "
+		    "expected 0x%x\n", DEVNAME(sc),
+		    devname, sm->ssd_chunk_chk, chk);
+		goto bad;
+	}
+
+	/* warn if disk changed order */
+	if (strncmp(mc[sm->ssd_chunk_id].scm_devname, name,
+	    sizeof(mc[sm->ssd_chunk_id].scm_devname)))
+		printf("%s: roaming device %s -> %s\n", DEVNAME(sc),
+		    mc[sm->ssd_chunk_id].scm_devname, name);
+
+	/* we have meta data on disk */
+	DNPRINTF(SR_D_META, "%s: sr_validate_metadata valid metadata %s\n",
+	    DEVNAME(sc), devname);
+
+	return (0);
+bad:
+	DNPRINTF(SR_D_META, "%s: sr_validate_metadata invalid metadata %s\n",
+	    DEVNAME(sc), devname);
+
+	return (1);
 }
 
 int
@@ -2364,10 +2409,12 @@ sr_print_metadata(struct sr_metadata *sm)
 	sr_print_uuid(&sm->ssd_uuid, 1);
 	DNPRINTF(SR_D_META, "\tvd version %d\n", sm->ssd_vd_ver);
 	DNPRINTF(SR_D_META, "\tvd size %lu\n", sm->ssd_vd_size);
+	DNPRINTF(SR_D_META, "\tvd id %u\n", sm->ssd_vd_volid);
 	DNPRINTF(SR_D_META, "\tvd checksum 0x%x\n", sm->ssd_vd_chk);
 	DNPRINTF(SR_D_META, "\tchunk version %d\n", sm->ssd_chunk_ver);
 	DNPRINTF(SR_D_META, "\tchunks %d\n", sm->ssd_chunk_no);
 	DNPRINTF(SR_D_META, "\tchunk size %u\n", sm->ssd_chunk_size);
+	DNPRINTF(SR_D_META, "\tchunk id %u\n", sm->ssd_chunk_id);
 	DNPRINTF(SR_D_META, "\tchunk checksum 0x%x\n", sm->ssd_chunk_chk);
 
 	DNPRINTF(SR_D_META, "\t\tvol id %d\n", im_sv->svm_volid);
