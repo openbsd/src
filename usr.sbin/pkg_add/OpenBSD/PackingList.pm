@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.63 2007/05/03 14:47:29 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.64 2007/05/24 10:06:35 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -247,7 +247,15 @@ sub fromfile
 {
 	my ($a, $fname, $code) = @_;
 	open(my $fh, '<', $fname) or return;
-	my $plist = $a->read($fh, $code);
+	my $plist;
+	eval {
+		$plist = $a->read($fh, $code);
+	};
+	if ($@) {
+		chomp $@;
+		$@ =~ s/\.$/,/;
+		die "$@ in $fname, ";
+	}
 	close($fh);
 	return $plist;
 }

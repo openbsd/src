@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.113 2007/05/22 09:39:24 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.114 2007/05/24 10:06:35 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,8 +35,7 @@ sub create
 		if (defined $keyword{$1}) {
 			$keyword{$1}->add($plist, $2);
 		} else {
-			print STDERR "Unknown element: $line\n";
-			exit 1 ;
+			die "Unknown element: $line";
 		}
 	} else {
 		OpenBSD::PackingElement::File->add($plist, $line);
