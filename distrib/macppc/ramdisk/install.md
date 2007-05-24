@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.30 2007/02/11 18:59:31 krw Exp $
+#	$OpenBSD: install.md,v 1.31 2007/05/24 13:17:26 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,9 @@ __EOT
 		_resp=$resp
 		case $_resp in
 		m|mbr)	export disklabeltype=MBR
-			md_prep_MBR $_disk
+			md_prep_MBR $_disk || continue
+			disklabel -w -d $_disk
+			newfs -t msdos ${_disk}i
 			break
 			;;
 		h|hfs)	export disklabeltype=HFS
@@ -116,50 +118,15 @@ write
 quit
 __EOT
 		echo "done."
-
-		echo -n "Formatting 1MB MSDOS boot partition..."
-		gunzip </usr/mdec/msdos1mb.gz | \
-		    dd of=/dev/r${_disk}c bs=512 seek=1 >/dev/null 2>&1
-		echo "done."
-
-		return
+	else
+		fdisk $_disk ; fdisk -e $_disk
+		fdisk $_disk | grep -q "^..: 06 " || \
+			{ echo "No DOS (id 06) partition" ; return 1 ; }
+		fdisk $_disk | grep -q "^..: A6 " || \
+			{ echo "No OpenBSD (id A6) partition" ; return 1 ; }
 	fi
 
-	# Manual MBR setup. The user is basically on their own. Give a few
-	# hints and let the user rip.
-	cat <<__EOT
-
-**** NOTE ****
-
-A valid MBR for an OpenBSD bootable disk must contain at least:
-
-a) One DOS (id '06') partition at least 1MB in size. This is where Open
-Firmware will look for the 'ofwboot' program used to boot OpenBSD.
-Consult your PowerPC Open Firmware manual -and- the INSTALL.$ARCH file
-for directions on setting up this partition correctly.
-
-b) One OpenBSD (id 'A6') partition.
-
-**************
-
-Current partition information is:
-
-$(fdisk $_disk)
-
-__EOT
-
-	fdisk -e $_disk
-
-	cat <<__EOT
-Here is the MBR configuration you chose:
-
-$(fdisk $_disk)
-
-Please take note of the offsets and sizes of the DOS partition, the OpenBSD
-partition, and any other partitions you want to access from OpenBSD. You will
-need this information to fill in the OpenBSD disklabel.
-
-__EOT
+	return 0
 }
 
 md_prep_HFS() {
