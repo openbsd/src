@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.50 2007/05/23 22:34:03 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.51 2007/05/24 12:24:43 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.50 2007/05/23 22:34:03 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.51 2007/05/24 12:24:43 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -831,8 +831,8 @@ ttime(char *arg)
 	yearset = 0;
 	switch(strlen(arg)) {
 	case 12:			/* CCYYMMDDhhmm */
-		lt->tm_year = ATOI2(arg);
-		lt->tm_year *= 100;
+		lt->tm_year = ATOI2(arg) * 100;
+		lt->tm_year -= 1900;	/* Convert to Unix time */
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:			/* YYMMDDhhmm */
@@ -840,10 +840,11 @@ ttime(char *arg)
 			yearset = ATOI2(arg);
 			lt->tm_year += yearset;
 		} else {
+			/* current century + specified year */
 			yearset = ATOI2(arg);
-			lt->tm_year = yearset + 2000;
+			lt->tm_year = ((lt->tm_year / 100) * 100);
+			lt->tm_year += yearset;
 		}
-		lt->tm_year -= 1900;	/* Convert to Unix time */
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
 		lt->tm_mon = ATOI2(arg);
