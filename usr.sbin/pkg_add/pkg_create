@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.101 2007/05/22 14:06:30 jmc Exp $
+# $OpenBSD: pkg_create,v 1.102 2007/05/25 12:19:23 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -122,34 +122,14 @@ sub verify_checksum_filename
 	}
 }
 
-use POSIX;
 
 sub prepare_for_archival
 {
 	my ($self, $arc) = @_;
 
 	my $o = $arc->prepare_long($self);
-	if (!defined $self->{owner} && !$o->isSymLink) {
-	    if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
-		    print STDERR "Error: no \@owner for ",
-			$self->fullname, " (", $o->{uname}, ")\n";
-		    $main::errors++;
-	    }
-	}
-	if (!defined $self->{group} && !$o->isSymLink) {
-	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
-		    print STDERR "Warning: no \@group for ",
-			$self->fullname, " (", $o->{gname}, ")\n";
-#			$main::errors++;
-	    }
-	}
-	if (!defined $self->{mode} && $o->isFile) {
-	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
-		    print STDERR "Error: weird mode for ", 
-			$self->fullname, ": ", 
-			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
-		    $main::errors++;
-	    }
+	if (!$o->verify_modes($self)) {
+		$main::errors++;
 	}
 	return $o;
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.6 2007/05/02 15:05:29 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.7 2007/05/25 12:19:24 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -53,6 +53,37 @@ sub check_linkname
 		return 1;
 	}
 	return 0;
+}
+
+use POSIX;
+
+sub verify_modes
+{
+	my ($o, $item) = @_;
+	my $result = 1;
+
+	if (!defined $item->{owner} && !$o->isSymLink) {
+	    if ($o->{uname} ne 'root' && $o->{uname} ne 'bin') {
+		    print STDERR "Error: no \@owner for ",
+			$item->fullname, " (", $o->{uname}, ")\n";
+	    		$result = 0;
+	    }
+	}
+	if (!defined $item->{group} && !$o->isSymLink) {
+	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
+		    print STDERR "Warning: no \@group for ",
+			$item->fullname, " (", $o->{gname}, ")\n";
+	    }
+	}
+	if (!defined $item->{mode} && $o->isFile) {
+	    if (($o->{mode} & (S_ISUID | S_ISGID | S_IWOTH)) != 0) {
+		    print STDERR "Error: weird mode for ", 
+			$item->fullname, ": ", 
+			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
+	    		$result = 0;
+	    }
+	}
+	return $result;
 }
 
 # copy long items, avoiding duplicate long names.
