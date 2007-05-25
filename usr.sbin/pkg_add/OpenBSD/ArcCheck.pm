@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.7 2007/05/25 12:19:24 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.8 2007/05/25 22:32:47 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -71,8 +71,16 @@ sub verify_modes
 	}
 	if (!defined $item->{group} && !$o->isSymLink) {
 	    if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
+		if (($o->{mode} & (S_ISUID | S_ISGID | S_IWGRP)) != 0) {
+		    print STDERR "Error: no \@group for ",
+			$item->fullname, " (", $o->{uname}, 
+			"), which has mode ",
+			sprintf("%4o", $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID)), "\n";
+	    		$result = 0;
+		} else {
 		    print STDERR "Warning: no \@group for ",
 			$item->fullname, " (", $o->{gname}, ")\n";
+	    	}
 	    }
 	}
 	if (!defined $item->{mode} && $o->isFile) {
