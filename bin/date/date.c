@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.28 2007/04/12 16:27:47 naddy Exp $	*/
+/*	$OpenBSD: date.c,v 1.29 2007/05/25 20:18:00 millert Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.28 2007/04/12 16:27:47 naddy Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.29 2007/05/25 20:18:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,14 +150,13 @@ main(int argc, char *argv[])
 	exit(retval);
 }
 
-#define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
+#define	ATOI2(ar)	((ar) += 2, ((ar)[-2] - '0') * 10 + ((ar)[-1] - '0'))
 void
 setthetime(char *p)
 {
 	struct tm *lt;
 	struct timeval tv;
 	char *dot, *t;
-	int bigyear;
 	int yearset = 0;
 
 	for (t = p, dot = NULL; *t; ++t) {
@@ -186,20 +185,15 @@ setthetime(char *p)
 
 	switch (strlen(p)) {
 	case 12:				/* cc */
-		bigyear = ATOI2(p);
-		lt->tm_year = bigyear * 100 - TM_YEAR_BASE;
+		lt->tm_year = ATOI2(p) * 100 - TM_YEAR_BASE;
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:				/* yy */
-		if (yearset) {
-			lt->tm_year += ATOI2(p);
-		} else {
-			lt->tm_year = ATOI2(p);
-			if (lt->tm_year < 69)		/* hack for 2000 ;-} */
-				lt->tm_year += (2000 - TM_YEAR_BASE);
-			else
-				lt->tm_year += (1900 - TM_YEAR_BASE);
+		if (!yearset) {
+			/* mask out current year, leaving only century */
+			lt->tm_year = ((lt->tm_year / 100) * 100);
 		}
+		lt->tm_year += ATOI2(p);
 		/* FALLTHROUGH */
 	case 8:					/* mm */
 		lt->tm_mon = ATOI2(p);
