@@ -1224,6 +1224,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pcmcia/cfxgareg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pcmcia/gprio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pcmcia/if_cnwreg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pcmcia/if_maloreg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pcmcia/if_malovar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pcmcia/if_rayreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pcmcia/if_xereg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pcmcia/pcmciachip.ph
