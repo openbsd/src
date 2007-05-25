@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.56 2007/05/25 21:58:00 ray Exp $	*/
+/*	$OpenBSD: server.c,v 1.57 2007/05/25 22:27:02 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -166,7 +166,9 @@ cvs_server_validresp(char *data)
 	char *sp, *ep;
 	struct cvs_resp *resp;
 
-	sp = data;
+	if ((sp = data) == NULL)
+		fatal("Missing argument for Valid-responses");
+
 	do {
 		if ((ep = strchr(sp, ' ')) != NULL)
 			*ep = '\0';
@@ -241,6 +243,9 @@ cvs_server_sticky(char *data)
 	FILE *fp;
 	char tagpath[MAXPATHLEN];
 
+	if (data == NULL)
+		fatal("Missing argument for Sticky");
+
 	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s",
 	    server_currentdir, CVS_PATH_TAG);
 
@@ -256,6 +261,9 @@ cvs_server_sticky(char *data)
 void
 cvs_server_globalopt(char *data)
 {
+	if (data == NULL)
+		fatal("Missing argument for Global_option");
+
 	if (!strcmp(data, "-l"))
 		cvs_nolog = 1;
 
@@ -279,6 +287,9 @@ void
 cvs_server_set(char *data)
 {
 	char *ep;
+
+	if (data == NULL)
+		fatal("Missing argument for Set");
 
 	ep = strchr(data, '=');
 	if (ep == NULL)
@@ -344,6 +355,9 @@ cvs_server_entry(char *data)
 {
 	CVSENTRIES *entlist;
 
+	if (data == NULL)
+		fatal("Missing argument for Entry");
+
 	entlist = cvs_ent_open(server_currentdir);
 	cvs_ent_add(entlist, data);
 	cvs_ent_close(entlist, ENT_SYNC);
@@ -357,6 +371,9 @@ cvs_server_modified(char *data)
 	mode_t fmode;
 	const char *errstr;
 	char *mode, *len, fpath[MAXPATHLEN];
+
+	if (data == NULL)
+		fatal("Missing argument for Modified");
 
 	mode = cvs_remote_input();
 	len = cvs_remote_input();
@@ -396,6 +413,9 @@ cvs_server_unchanged(char *data)
 	struct cvs_ent *ent;
 	struct timeval tv[2];
 
+	if (data == NULL)
+		fatal("Missing argument for Unchanged");
+
 	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
 
 	if ((fd = open(fpath, O_RDWR | O_CREAT | O_TRUNC)) == -1)
@@ -431,6 +451,9 @@ cvs_server_argument(char *data)
 
 	if (server_argc > CVS_CMD_MAXARG)
 		fatal("cvs_server_argument: too many arguments sent");
+
+	if (data == NULL)
+		fatal("Missing argument for Argument");
 
 	server_argv[server_argc++] = xstrdup(data);
 }
