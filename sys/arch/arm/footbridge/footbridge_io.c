@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_io.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: footbridge_io.c,v 1.2 2007/05/25 16:22:27 krw Exp $	*/
 /*	$NetBSD: footbridge_io.c,v 1.6 2002/04/12 19:12:31 thorpej Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <arm/footbridge/dc21285mem.h>
 #include <uvm/uvm_extern.h>
 
-/* Proto types for all the bus_space structure functions */
+/* Prototypes for all the bus_space structure functions */
 
 bs_protos(footbridge);
 bs_protos(generic);
@@ -186,7 +186,7 @@ footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 	bus_addr_t startpa, endpa;
 	vaddr_t va;
 
-	/* Round the allocation to page boundries */
+	/* Round the allocation to page boundaries */
 	startpa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
 
@@ -213,8 +213,10 @@ footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
 	/* Store the bus space handle */
 	*bshp = va + (bpa & PGOFSET);
 
-	/* Now map the pages */
-	/* The cookie is the physical base address for the I/O area */
+	/*
+	 * Now map the pages. The cookie is the physical base address for the
+	 * I/O area.
+	 */
 	while (startpa < endpa) {
 		pmap_enter(pmap_kernel(), va, (bus_addr_t)t + startpa,
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
