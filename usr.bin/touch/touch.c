@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.14 2006/03/08 12:20:05 henning Exp $	*/
+/*	$OpenBSD: touch.c,v 1.15 2007/05/25 13:56:59 millert Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -170,55 +171,69 @@ main(int argc, char *argv[])
 void
 stime_arg1(char *arg, struct timeval *tvp)
 {
-	struct tm	*t;
+	struct tm	*lt;
 	time_t		 tmptime;
 	int		 yearset;
-	char		*p;
+	char		*dot, *p;
 					/* Start with the current time. */
 	tmptime = tvp[0].tv_sec;
-	if ((t = localtime(&tmptime)) == NULL)
+	if ((lt = localtime(&tmptime)) == NULL)
 		err(1, "localtime");
 					/* [[CC]YY]MMDDhhmm[.SS] */
-	if ((p = strchr(arg, '.')) == NULL)
-		t->tm_sec = 0;		/* Seconds defaults to 0. */
-	else {
-		if (strlen(p + 1) != 2)
+	for (p = arg, dot = NULL; *p != '\0'; p++) {
+		if (*p == '.' && dot != NULL)
+			dot = p;
+		else if (!isdigit((unsigned char)*p))
 			goto terr;
-		*p++ = '\0';
-		t->tm_sec = ATOI2(p);
+	}
+	if (dot == NULL)
+		lt->tm_sec = 0;		/* Seconds defaults to 0. */
+	else {
+		*dot++ = '\0';
+		if (strlen(dot) != 2)
+			goto terr;
+		lt->tm_sec = ATOI2(dot);
+		if (lt->tm_sec > 61)	/* Could be leap second. */
+			goto terr;
 	}
 
 	yearset = 0;
 	switch (strlen(arg)) {
 	case 12:			/* CCYYMMDDhhmm */
-		t->tm_year = ATOI2(arg) * 100 - TM_YEAR_BASE;
+		lt->tm_year = ATOI2(arg) * 100 - TM_YEAR_BASE;
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:			/* YYMMDDhhmm */
 		if (yearset) {
 			yearset = ATOI2(arg);
-			t->tm_year += yearset;
+			lt->tm_year += yearset;
 		} else {
 			yearset = ATOI2(arg);
-			if (yearset < 69)
-				t->tm_year = yearset + 2000 - TM_YEAR_BASE;
-			else
-				t->tm_year = yearset + 1900 - TM_YEAR_BASE;
+			/* Preserve current century. */
+			lt->tm_year = ((lt->tm_year / 100) * 100) + yearset;
 		}
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
-		t->tm_mon = ATOI2(arg);
-		--t->tm_mon;		/* Convert from 01-12 to 00-11 */
-		t->tm_mday = ATOI2(arg);
-		t->tm_hour = ATOI2(arg);
-		t->tm_min = ATOI2(arg);
+		lt->tm_mon = ATOI2(arg);
+		if (lt->tm_mon > 12 || lt->tm_mon == 0)
+			goto terr;
+		--lt->tm_mon;		/* Convert from 01-12 to 00-11 */
+		lt->tm_mday = ATOI2(arg);
+		if (lt->tm_mday > 31 || lt->tm_mday == 0)
+			goto terr;
+		lt->tm_hour = ATOI2(arg);
+		if (lt->tm_hour > 23)
+			goto terr;
+		lt->tm_min = ATOI2(arg);
+		if (lt->tm_min > 59)
+			goto terr;
 		break;
 	default:
 		goto terr;
 	}
 
-	t->tm_isdst = -1;		/* Figure out DST. */
-	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
+	lt->tm_isdst = -1;		/* Figure out DST. */
+	tvp[0].tv_sec = tvp[1].tv_sec = mktime(lt);
 	if (tvp[0].tv_sec == -1)
 terr:		errx(1,
 	"out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
@@ -229,31 +244,36 @@ terr:		errx(1,
 void
 stime_arg2(char *arg, int year, struct timeval *tvp)
 {
-	struct tm	*t;
+	struct tm	*lt;
 	time_t		 tmptime;
 					/* Start with the current time. */
 	tmptime = tvp[0].tv_sec;
-	if ((t = localtime(&tmptime)) == NULL)
+	if ((lt = localtime(&tmptime)) == NULL)
 		err(1, "localtime");
 
-	t->tm_mon = ATOI2(arg);		/* MMDDhhmm[YY] */
-	--t->tm_mon;			/* Convert from 01-12 to 00-11 */
-	t->tm_mday = ATOI2(arg);
-	t->tm_hour = ATOI2(arg);
-	t->tm_min = ATOI2(arg);
+	lt->tm_mon = ATOI2(arg);	/* MMDDhhmm[YY] */
+	if (lt->tm_mon > 12 || lt->tm_mon == 0)
+		goto terr;
+	--lt->tm_mon;			/* Convert from 01-12 to 00-11 */
+	lt->tm_mday = ATOI2(arg);
+	if (lt->tm_mday > 31 || lt->tm_mday == 0)
+		goto terr;
+	lt->tm_hour = ATOI2(arg);
+	if (lt->tm_hour > 23)
+		goto terr;
+	lt->tm_min = ATOI2(arg);
+	if (lt->tm_min > 59)
+		goto terr;
 	if (year) {
-		year = ATOI2(arg);
-		if (year < 69)
-			t->tm_year = year + 2000 - TM_YEAR_BASE;
-		else
-			t->tm_year = year + 1900 - TM_YEAR_BASE;
+		year = ATOI2(arg);	/* Preserve current century. */
+		lt->tm_year = ((lt->tm_year / 100) * 100) + year;
 	}
-	t->tm_sec = 0;
+	lt->tm_sec = 0;
 
-	t->tm_isdst = -1;		/* Figure out DST. */
-	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
+	lt->tm_isdst = -1;		/* Figure out DST. */
+	tvp[0].tv_sec = tvp[1].tv_sec = mktime(lt);
 	if (tvp[0].tv_sec == -1)
-		errx(1,
+terr:		errx(1,
 	"out of range or illegal time specification: MMDDhhmm[YY]");
 
 	tvp[0].tv_usec = tvp[1].tv_usec = 0;
