@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.261 2007/05/23 10:33:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.262 2007/05/25 09:50:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -194,9 +194,9 @@ sub can_install($$$)
 sub pre_add($$)
 {
 	my ($pkg, $state) = @_;
-	
-	my $handle = OpenBSD::PackageLocator->find($pkg, $state->{arch});
-	if (!$handle) {
+
+	my $location = OpenBSD::PackageLocator->find($pkg, $state->{arch});
+	if (!$location) {
 		print $state->deptree_header($pkg);
 		print "Can't find $pkg\n";
 		if (!$state->{forced}->{kitchensink}) {
@@ -204,10 +204,10 @@ sub pre_add($$)
 		}
 		return;
 	}
-	if ($handle->{finished}) {
+	if ($location->{finished}) {
 		return;
 	}
-    	my $plist = $handle->{plist} = $handle->plist;
+    	my $plist = $location->{plist} = $location->plist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$errors++;
@@ -218,7 +218,7 @@ sub pre_add($$)
 		$errors++;
 		return;
 	}
-	my $pkgname = $handle->{pkgname} = $plist->pkgname;
+	my $pkgname = $location->{pkgname} = $plist->pkgname;
 	if ($pkg ne '-') {
 		if (!defined $pkgname or 
 		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
@@ -231,13 +231,13 @@ sub pre_add($$)
 		print $state->deptree_header($pkg);
 		print "parsing $pkgname\n";
 	}
-	if (can_install($plist, $state, $handle)) {
-		return $handle;
+	if (can_install($plist, $state, $location)) {
+		return $location;
 	} else {
-		$handle->close_with_client_error;
-		$handle->wipe_info;
-		delete $handle->{plist};
-		$handle->{finished} = 1;
+		$location->close_with_client_error;
+		$location->wipe_info;
+		delete $location->{plist};
+		$location->{finished} = 1;
 		if ($state->{forced}->{kitchensink}) {
 			$errors = 0;
 		}
