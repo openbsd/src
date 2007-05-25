@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.15 2007/05/25 20:47:19 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.16 2007/05/25 20:58:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,6 +38,8 @@
 #include <machine/regnum.h>
 #include <machine/cpustate.h>
 
+#define	HAIRY_R5000_ERRATA
+
 #include "assym.h"
 
 	.set	mips3
@@ -57,6 +59,29 @@
 	.set	noat
 	.ent	tlb_miss, 0
 tlb_miss:
+#ifdef HAIRY_R5000_ERRATA
+	/*
+	 * R5000 errata: edge cases can trigger a TLB miss exception
+	 * instead of an invalid TLB exception. Servicing the TLB miss
+	 * exception would cause a duplicate TLB to be inserted, which
+	 * causes the processor operation to become unpredictable (but
+	 * very bad for the kernel's health, ten times out of nine).
+	 *
+	 * More details about the problem can be found in:
+	 *  http://www.linux-mips.org/archives/linux-mips/2000-02/msg00040.html
+	 *
+	 * We work around the issue by checking for an existing TLB entry,
+	 * and handling this as an invalid TLB exception (as it was intended
+	 * to be), in this case.
+	 */
+	tlbp
+	mfc0	k1, COP_0_TLB_INDEX
+	bltz	k1, 1f			# missing!
+	 nop
+	j	k_tlb_inv
+	 nop
+1:
+#endif
 	PTR_L	k1, curprocpaddr
 	dmfc0	k0, COP_0_BAD_VADDR
 	bltz	k0, _k_miss		# kernel address space
@@ -101,6 +126,16 @@ e_tlb_miss:
 	.set	noat
 	.ent	xtlb_miss, 0
 xtlb_miss:
+#ifdef HAIRY_R5000_ERRATA
+	/* See errata comments in tlb_miss above */
+	tlbp
+	mfc0	k1, COP_0_TLB_INDEX
+	bltz	k1, 1f			# missing!
+	 nop
+	j	k_tlb_inv
+	 nop
+1:
+#endif
 	dmfc0	k0, COP_0_BAD_VADDR
 	bltz	k0, _k_miss		# kernel address space
 	PTR_SRL	k0, k0, SEGSHIFT
