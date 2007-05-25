@@ -1,4 +1,4 @@
-/* $OpenBSD: tcdsreg.h,v 1.1 2002/05/02 22:56:06 miod Exp $ */
+/* $OpenBSD: tcdsreg.h,v 1.2 2007/05/25 21:27:16 krw Exp $ */
 /* $NetBSD: tcdsreg.h,v 1.1 2000/07/04 02:22:20 nisimura Exp $ */
 
 /*
@@ -157,11 +157,11 @@ void tcds_scsi_reset(int);
 #define SCSI_CIR_xxx0		0x00200000 /* RESERVED */
 #define SCSI_CIR_xxx1		0x00100000 /* RESERVED */
 #else
-#define SCSI_CIR_PREF1		0x00200000 /* 53C94 prefetch interupt */
-#define SCSI_CIR_PREF0		0x00100000 /* 53C94 prefetch interupt */
+#define SCSI_CIR_PREF1		0x00200000 /* 53C94 prefetch interrupt */
+#define SCSI_CIR_PREF0		0x00100000 /* 53C94 prefetch interrupt */
 #endif
-#define SCSI_CIR_53C94_INT1	0x00080000 /* SCSI[1] 53C94 Interupt */
-#define SCSI_CIR_53C94_INT0	0x00040000 /* SCSI[0] 53C94 Interupt */
+#define SCSI_CIR_53C94_INT1	0x00080000 /* SCSI[1] 53C94 Interrupt */
+#define SCSI_CIR_53C94_INT0	0x00040000 /* SCSI[0] 53C94 Interrupt */
 #define SCSI_CIR_53C94_DREQ1	0x00020000 /* SCSI[1] 53C94 DREQ */
 #define SCSI_CIR_53C94_DREQ0	0x00010000 /* SCSI[0] 53C94 DREQ */
 #define SCSI_CIR_TC_PAR_TEST	0x00008000 /* TC parity test mode */

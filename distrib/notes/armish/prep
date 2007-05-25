@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2007/03/08 05:21:29 david Exp $
+dnl	$OpenBSD: prep,v 1.6 2007/05/25 21:27:15 krw Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of RedBoot, the low-level
 process that controls the microprocessor after hardware initialization.
@@ -8,7 +8,7 @@ The enabled features between IOData HDL-G and Thecus N2100 vary so
 the same methods will not work on both machines.
 
 On the Thecus N2100, it is necessary to move jumper J3 to J4 to properly
-route the serial port interupt to allow serial to work under OpenBSD.
+route the serial port interrupt to allow serial to work under OpenBSD.
 
 Thecus cannot load a file from disk, but can load an image
 from flash or network.

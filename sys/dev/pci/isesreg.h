@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesreg.h,v 1.9 2003/06/07 11:31:24 ho Exp $ $	*/
+/*	$OpenBSD: isesreg.h,v 1.10 2007/05/25 21:27:16 krw Exp $ $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -64,8 +64,8 @@
 #define ISES_A(x)		(ISES_A_OFFSET + (x))
 
 #define ISES_A_STAT		ISES_A(0x00)	/* status register */
-#define ISES_A_INTS		ISES_A(0x04)	/* interupt status register */
-#define ISES_A_INTE		ISES_A(0x08)	/* interupt enable register */
+#define ISES_A_INTS		ISES_A(0x04)	/* interrupt status register */
+#define ISES_A_INTE		ISES_A(0x08)	/* interrupt enable register */
 #define ISES_A_SREQ		ISES_A(0x0C)	/* service request (read) */
 #define ISES_A_CTRL		ISES_A_SREQ	/* control register (write) */
 #define ISES_A_OQD		ISES_A(0x10)	/* Output Queue Data (read) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.24 2007/04/12 20:22:58 art Exp $	*/
+/*	$OpenBSD: icu.s,v 1.25 2007/05/25 21:27:15 krw Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 _C_LABEL(imen):
 	.long	0xffff		# interrupt mask enable (all off)
 _C_LABEL(ipending):
-	.long	0		# interupts pending
+	.long	0		# interrupts pending
 _C_LABEL(netisr):
 	.long	0		# scheduling bits for network
 

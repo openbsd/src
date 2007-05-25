@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.19 2007/05/15 13:46:22 martin Exp $	*/
+/*	$OpenBSD: intr.h,v 1.20 2007/05/25 21:27:15 krw Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ struct isr {
 
 /*
  * These four globals contain the appropriate PSL_S|PSL_IPL? values
- * to raise interupt priority to the requested level.
+ * to raise interrupt priority to the requested level.
  */
 extern	unsigned short hp300_bioipl;
 extern	unsigned short hp300_netipl;

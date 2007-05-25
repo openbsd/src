@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.12 2004/03/02 21:04:42 tedu Exp $	*/
+/*	$OpenBSD: invite.c,v 1.13 2007/05/25 21:27:16 krw Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: invite.c,v 1.12 2004/03/02 21:04:42 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: invite.c,v 1.13 2007/05/25 21:27:16 krw Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -140,7 +140,7 @@ invite_remote(void)
 }
 
 /*
- * Routine called on interupt to re-invite the callee
+ * Routine called on interrupt to re-invite the callee
  */
 void
 re_invite(int dummy)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.reg,v 1.5 2006/02/06 17:29:11 jmc Exp $	*/
+/*	$OpenBSD: aic79xx.reg,v 1.6 2007/05/25 21:27:15 krw Exp $	*/
 /*
  * Aic79xx register and scratch ram definitions.
  *
@@ -40,7 +40,7 @@
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.reg,v 1.18 2004/08/04 17:55:34 gibbs Exp $
  */
-VERSION = "$Id: aic79xx.reg,v 1.5 2006/02/06 17:29:11 jmc Exp $"
+VERSION = "$Id: aic79xx.reg,v 1.6 2007/05/25 21:27:15 krw Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -284,7 +284,7 @@ register HS_MAILBOX {
 }
 
 /*
- * Sequencer Interupt Status
+ * Sequencer Interrupt Status
  */
 register SEQINTSTAT {
 	address			0x00C

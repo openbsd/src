@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.7 2006/04/29 19:55:31 naddy Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.8 2007/05/25 21:27:15 krw Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*-
@@ -1055,7 +1055,7 @@ zsparam(tp, t)
 }
 
 /*
- * Compute interupt enable bits and set in the pending bits. Called both
+ * Compute interrupt enable bits and set in the pending bits. Called both
  * in zsparam() and when PPS (pulse per second timing) state changes.
  * Must be called at splzs().
  */

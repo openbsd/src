@@ -1,4 +1,4 @@
-/*	$OpenBSD: qdreg.h,v 1.4 2006/07/31 18:01:16 miod Exp $	*/
+/*	$OpenBSD: qdreg.h,v 1.5 2007/05/25 21:27:15 krw Exp $	*/
 /*	$NetBSD: qdreg.h,v 1.1 1998/03/21 10:02:39 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -319,7 +319,7 @@
 #define START_BREAK	0x60
 #define STOP_BREAK	0x70
 
-	/* interupt bit definitions */
+	/* interrupt bit definitions */
 
 #define EI_XMT_A	0x01
 #define EI_RCV_A	0x02

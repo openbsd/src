@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.29 2007/03/18 20:53:10 uwe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.30 2007/05/25 21:27:15 krw Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -705,7 +705,7 @@ struct pxa2x0_dma_desc {
 #define  MCCR_FSRIE		(1<<1)	/* FIFO Service Request Intr Enable */
 #define  MCCR_FEIE		(1<<3)	/* FIFO Error Intr Enable */
 #define AC97_GCR	0x000c	/* Global Control Register */
-#define  GCR_GPI_IE		(1<<0)	/* Codec GPI Interupt Enable */
+#define  GCR_GPI_IE		(1<<0)	/* Codec GPI Interrupt Enable */
 #define  GCR_nCRST		(1<<1)	/* AC '97 Cold Reset */
 #define  GCR_WRST		(1<<2)	/* AC '97 Warm Reset */
 #define  GCR_ACOFF		(1<<3)	/* AC-Link Shut Off */

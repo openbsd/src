@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.47 2007/03/30 09:54:19 pyr Exp $ */
+/* $OpenBSD: http_main.c,v 1.48 2007/05/25 21:27:16 krw Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1347,7 +1347,7 @@ static void reclaim_child_processes(int terminate)
 	/* don't want to hold up progress any more than 
 	 * necessary, but we need to allow children a few moments to exit.
 	 * Set delay with an exponential backoff. NOTE: if we get
- 	 * interupted, we'll wait longer than expected...
+ 	 * interrupted, we'll wait longer than expected...
 	 */
 	tv.tv_sec = waittime / 1000000;
 	tv.tv_usec = waittime % 1000000;

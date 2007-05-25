@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdreg.h,v 1.4 2004/04/12 22:12:32 jmc Exp $	*/
+/*	$OpenBSD: xdreg.h,v 1.5 2007/05/25 21:27:15 krw Exp $	*/
 /*	$NetBSD: xdreg.h,v 1.3 1996/03/31 22:38:54 pk Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ struct xd_iopb_drive {
 struct xd_iopb_format {
   volatile u_char same[6];       /* smae as xd_iopb */
                                  /* section 4.4.1: byte 6 */
-  volatile u_char interleave_ipl;/* (interleave << 4) | interupt level */
+  volatile u_char interleave_ipl;/* (interleave << 4) | interrupt level */
                                  /* interleave ratio 1:1 to 16:1 */
   volatile u_char same1;         /* byte 7: same */
                                  /* section 4.4.2: byte 8 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.17 2004/09/18 19:36:54 deraadt Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.18 2007/05/25 21:27:15 krw Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * Ignore keyboard interupt/suspend during database update.
+	 * Ignore keyboard interrupt/suspend during database update.
 	 */
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);

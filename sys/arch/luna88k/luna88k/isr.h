@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.h,v 1.2 2004/07/27 12:36:34 miod Exp $	*/
+/*	$OpenBSD: isr.h,v 1.3 2007/05/25 21:27:15 krw Exp $	*/
 /*	$NetBSD: isr.h,v 1.1 2000/01/05 08:49:04 nisimura Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #define NISRAUTOVEC	8
 
 /*
- * Autovectored interupt handler cookie.
+ * Autovectored interrupt handler cookie.
  */
 struct isr_autovec {
 	LIST_ENTRY(isr_autovec) isr_link;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ariareg.h,v 1.1 1996/05/04 13:29:33 deraadt Exp $ */
+/*	$OpenBSD: ariareg.h,v 1.2 2007/05/25 21:27:15 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -91,7 +91,7 @@
 #define	ARIADSPC_CDVOLUME	0x0007
 #define	ARIADSPC_MICVOLUME	0x0008
 #define	ARIADSPC_MIXERCONFIG	0x0009
-#define ARIADSPC_FORCEINTR	0x000a	/* Force an Interupt */
+#define ARIADSPC_FORCEINTR	0x000a	/* Force an Interrupt */
 #define ARIADSPC_TRANSCOMPLETE	0x0010	/* Transfer Complete */
 #define ARIADSPC_START_PLAY	0x0011
 #define ARIADSPC_STOP_PLAY	0x0012
