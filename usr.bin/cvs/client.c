@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.61 2007/05/17 03:26:33 ray Exp $	*/
+/*	$OpenBSD: client.c,v 1.62 2007/05/25 22:36:47 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -525,7 +525,9 @@ cvs_client_validreq(char *data)
 	char *sp, *ep;
 	struct cvs_req *req;
 
-	sp = data;
+	if ((sp = data) == NULL)
+		fatal("Missing argument for Valid-requests");
+
 	do {
 		if ((ep = strchr(sp, ' ')) != NULL)
 			*ep = '\0';
@@ -551,12 +553,18 @@ cvs_client_validreq(char *data)
 void
 cvs_client_e(char *data)
 {
+	if (data == NULL)
+		fatal("Missing argument for E");
+
 	cvs_printf("%s\n", data);
 }
 
 void
 cvs_client_m(char *data)
 {
+	if (data == NULL)
+		fatal("Missing argument for M");
+
 	cvs_printf("%s\n", data);
 }
 
@@ -567,6 +575,9 @@ cvs_client_checkedin(char *data)
 	struct cvs_ent *ent, *newent;
 	char *dir, *e, entry[CVS_ENT_MAXLINELEN], rev[16], timebuf[64];
 	char sticky[16];
+
+	if (data == NULL)
+		fatal("Missing argument for Checked-in");
 
 	dir = cvs_remote_input();
 	e = cvs_remote_input();
@@ -609,6 +620,9 @@ cvs_client_updated(char *data)
 	struct timeval tv[2];
 	char timebuf[32], repo[MAXPATHLEN], *rpath, entry[CVS_ENT_MAXLINELEN];
 	char *en, *mode, revbuf[32], *len, *fpath, *wdir;
+
+	if (data == NULL)
+		fatal("Missing argument for Updated");
 
 	client_check_directory(data);
 
@@ -689,6 +703,9 @@ cvs_client_merged(char *data)
 	char timebuf[32], *repo, *rpath, *entry, *mode;
 	char *len, *fpath, *wdir;
 
+	if (data == NULL)
+		fatal("Missing argument for Merged");
+
 	client_check_directory(data);
 
 	rpath = cvs_remote_input();
@@ -762,6 +779,9 @@ cvs_client_remove_entry(char *data)
 	CVSENTRIES *entlist;
 	char *filename, *rpath;
 
+	if (data == NULL)
+		fatal("Missing argument for Remove-entry");
+
 	rpath = cvs_remote_input();
 	if ((filename = strrchr(rpath, '/')) == NULL)
 		fatal("bad rpath in cvs_client_remove_entry: %s", rpath);
@@ -782,6 +802,9 @@ cvs_client_set_static_directory(char *data)
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
+
+	if (data == NULL)
+		fatal("Missing argument for Set-static-directory");
 
 	STRIP_SLASH(data);
 
@@ -806,6 +829,9 @@ cvs_client_clear_static_directory(char *data)
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
 
+	if (data == NULL)
+		fatal("Missing argument for Clear-static-directory");
+
 	STRIP_SLASH(data);
 
 	dir = cvs_remote_input();
@@ -825,6 +851,9 @@ cvs_client_set_sticky(char *data)
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
+
+	if (data == NULL)
+		fatal("Missing argument for Set-sticky");
 
 	STRIP_SLASH(data);
 
@@ -852,6 +881,9 @@ cvs_client_clear_sticky(char *data)
 
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
+
+	if (data == NULL)
+		fatal("Missing argument for Clear-sticky");
 
 	STRIP_SLASH(data);
 
