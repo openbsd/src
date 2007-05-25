@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.262 2007/05/25 09:50:31 espie Exp $
+# $OpenBSD: pkg_add,v 1.263 2007/05/25 10:08:12 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -512,30 +512,30 @@ sub install_package
 		$cache->{$pkg} = pre_add($pkg, $state);
 	}
 
-	my $handle = $cache->{$pkg};
+	my $location = $cache->{$pkg};
 	if ($errors > 0) {
 		$state->set_pkgname($pkg);
-		$state->fatal("Fatal error") unless defined $handle;
+		$state->fatal("Fatal error") unless defined $location;
 	} else {
-		return () unless defined $handle;
+		return () unless defined $location;
 	}
 
-	if ($state->is_installed($handle->{pkgname})) {
-		$handle->close_now;
+	if ($state->is_installed($location->{pkgname})) {
+		$location->close_now;
 		return ();
 	}
 
-	my $plist = $handle->{plist};
+	my $plist = $location->{plist};
 
 	if (is_installed($plist->pkgname) && !$state->{forced}->{installed}) {
 		if ($state->{replace}) {
 			if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
 				$state->mark_as_already_installed($plist->pkgname);
-				$handle->close_now;
+				$location->close_now;
 				return ();
 			}
 		} else {
-			$handle->close_now;
+			$location->close_now;
 			return ();
 		}
 	}
@@ -545,10 +545,10 @@ sub install_package
 			return () unless $forced{arch};
 		}
 	}
-	if (!defined $handle->{solver}) {
-		my $solver = OpenBSD::Dependencies::Solver->new($handle->{plist});
+	if (!defined $location->{solver}) {
+		my $solver = OpenBSD::Dependencies::Solver->new($location->{plist});
 		my @deps = $solver->solve($state, @todo);
-		$handle->{solver} = $solver;
+		$location->{solver} = $solver;
 		if ($state->{verbose}) {
 			$solver->dump;
 		}
@@ -560,38 +560,38 @@ sub install_package
 
 	# verify dependencies and register them
 
-	for my $dep ($handle->{solver}->dependencies) {
+	for my $dep ($location->{solver}->dependencies) {
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
-		$handle->close_now;
+		$location->close_now;
 		$bad++;
 		return ();
 	}
 
 	# grab libraries
-	for my $dep ($handle->{solver}->dependencies) {
+	for my $dep ($location->{solver}->dependencies) {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
 	}
 	my $okay = 1;
 	for my $lib (@{$plist->{wantlib}}) {
-		if (!$handle->{solver}->lookup_library($state, $lib->{name})) {
+		if (!$location->{solver}->lookup_library($state, $lib->{name})) {
 		    	Warn "Can't install $pkg: lib not found ", $lib->{name}, "\n";
-			$handle->{solver}->dump if $okay;
+			$location->{solver}->dump if $okay;
 			$okay = 0;
 		}
 	}
-#	print "Didn't need to process: ", join(',', @{$handle->{solver}->{todo}}), "\n";
+#	print "Didn't need to process: ", join(',', @{$location->{solver}->{todo}}), "\n";
 	if (!$okay) {
-		$handle->close_now;
+		$location->close_now;
 		if (!$forced{libdepends}) {
 			$bad++;
 			return ();
 		}
 	}
-	really_add($handle, $state);
-	$handle->wipe_info;
-	delete $handle->{plist};
-	$state->mark_installed($handle->{pkgname});
+	really_add($location, $state);
+	$location->wipe_info;
+	delete $location->{plist};
+	$state->mark_installed($location->{pkgname});
 	return ();
 }
 
