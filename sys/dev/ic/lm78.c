@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.15 2007/04/19 12:23:24 robert Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.16 2007/05/25 02:20:25 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -137,7 +137,7 @@ struct lm_sensor w83627ehf_sensors[] = {
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE / 2},
 	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56, 10) / 2 },
 	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT(34, 34) / 2 },
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 24) / 2 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 34) / 2 },
 	{ "-12V", SENSOR_VOLTS_DC, 0, 0x24, wb_w83627ehf_refresh_nvolt },
 	{ "", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_volt, RFACT_NONE / 2 },
 	{ "", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_volt, RFACT_NONE / 2 },
