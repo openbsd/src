@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malo.4,v 1.17 2007/05/12 16:38:07 sobrado Exp $
+.\"	$OpenBSD: malo.4,v 1.18 2007/05/25 05:33:51 mglocker Exp $
 .\"
 .\" Copyright (c) 2006 Theo de Raadt.
 .\"
@@ -35,11 +35,12 @@
 .Sh SYNOPSIS
 .Cd "malo* at cardbus?"
 .Cd "malo* at pci?"
+.Cd "malo* at pcmcia?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Marvell Libertas 88W8335/88W8310 based
-PCI/CardBus network adapters.
+driver provides support for Marvell Libertas 88W8335/88W8310/88W8385 based
+PCI/CardBus/PCMCIA network adapters.
 The second generation 88W8335/88W8310 chipsets support 802.11b/g.
 .Pp
 These are the modes the
@@ -217,6 +218,8 @@ The driver needs a set of firmware files which are loaded when
 an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/mrv8385-h.fw
+.It Pa /etc/firmware/mrv8385-m.fw
 .It Pa /etc/firmware/mrv8k-b.fw
 .It Pa /etc/firmware/mrv8k-f.fw
 .El
@@ -232,7 +235,7 @@ A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Bd -literal -offset indent
-http://www.nazgul.ch/malo/malo-firmware-1.0.tgz
+http://www.nazgul.ch/malo/malo-firmware-1.1.tgz
 .Ed
 .Sh HARDWARE
 The following cards are among those supported by the
@@ -241,6 +244,7 @@ driver:
 .Pp
 .Bl -column -compact "Microcom Travelcard" "MALO111" "CardBus" "a/b/g" -offset 6n
 .Em "Card	Chip	Bus	Standard"
+Ambicom WL54CF	88W8385	PCMCIA	b/g
 Netgear WG511v2	88W8310	CardBus	b/g
 Netgear WG311v3	88W8335	PCI	b/g
 Tenda TWL541C	88W8310	CardBus	b/g
