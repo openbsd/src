@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.20 2007/05/22 10:11:59 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.21 2007/05/25 13:18:57 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -228,6 +228,59 @@ sub cleanup
 
 	require OpenBSD::SharedItems;
 	OpenBSD::SharedItems::cleanup($self, $state);
+}
+
+# fairly non-descriptive name. Used to store various package information
+# during installs and updates.
+package OpenBSD::Handle;
+
+use constant {
+	NOT_FOUND => 0,
+	BAD_PACKAGE => 1,
+	CANT_INSTALL => 2
+};
+
+sub new
+{
+	my $class = shift;
+	return bless {}, $class;
+}
+
+sub set_error
+{
+	my ($self, $error) = @_;
+	$self->{error} = $error;
+}
+
+sub has_error
+{
+	my ($self, $error) = @_;
+	if (!defined $self->{error}) {
+		return 0;
+	}
+	if (defined $error) {
+		return $self->{error} eq $error;
+	}
+	return 1;
+}
+
+package OpenBSD::UpdateSet;
+sub new
+{
+	my $class = shift;
+	return bless {}, $class;
+}
+
+sub add_newer
+{
+	my ($self, @handles) = @_;
+	push(@{$self->{newer}}, @handles);
+}
+
+sub add_older
+{
+	my ($self, @handles) = @_;
+	push(@{$self->{older}}, @handles);
 }
 
 1;

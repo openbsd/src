@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.263 2007/05/25 10:08:12 espie Exp $
+# $OpenBSD: pkg_add,v 1.264 2007/05/25 13:18:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -191,30 +191,34 @@ sub can_install($$$)
 
 
 # This does pre_add a package: finding it and reading its package information
-sub pre_add($$)
+sub pre_add
 {
-	my ($pkg, $state) = @_;
+	my ($pkg, $state, $handle) = @_;
 
 	my $location = OpenBSD::PackageLocator->find($pkg, $state->{arch});
 	if (!$location) {
 		print $state->deptree_header($pkg);
 		print "Can't find $pkg\n";
+		$handle->set_error(OpenBSD::Handle::NOT_FOUND);
 		if (!$state->{forced}->{kitchensink}) {
 			$errors++;
 		}
 		return;
 	}
 	if ($location->{finished}) {
+		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		return;
 	}
     	my $plist = $location->{plist} = $location->plist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
+		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
 		$errors++;
 		return;
 	}
 	if ($plist->localbase ne $state->{localbase}) {
 		print "Localbase mismatch: package has: ", $plist->localbase, " , user wants: ", $state->{localbase}, "\n";
+		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
 		$errors++;
 		return;
 	}
@@ -223,6 +227,7 @@ sub pre_add($$)
 		if (!defined $pkgname or 
 		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
 			print "Package name is not consistent ???\n";
+			$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
 			$errors++;
 			return;
 		}
@@ -238,6 +243,7 @@ sub pre_add($$)
 		$location->wipe_info;
 		delete $location->{plist};
 		$location->{finished} = 1;
+		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		if ($state->{forced}->{kitchensink}) {
 			$errors = 0;
 		}
@@ -508,8 +514,10 @@ sub install_package
 	my ($pkg, $state, @todo) = @_;
 	my $cache = $state->{cache};
 
+	my $handle = OpenBSD::Handle->new;
+
 	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = pre_add($pkg, $state);
+		$cache->{$pkg} = pre_add($pkg, $state, $handle);
 	}
 
 	my $location = $cache->{$pkg};
