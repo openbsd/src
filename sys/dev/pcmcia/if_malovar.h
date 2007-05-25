@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.1 2007/05/25 05:33:51 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.2 2007/05/25 21:32:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -33,10 +33,13 @@
 	(size))
 
 /* miscellaneous */
-#define FW_HELPER_BSIZE		256	/* helper FW block size */
-#define FW_HELPER_OK		0x10	/* helper FW loaded */
-#define FW_MAIN_MAX_RETRY	20	/* main FW block resend max retry */
-#define CMD_BUFFER_SIZE		256	/* cmd buffer */
+#define MALO_FW_HELPER_BSIZE	256	/* helper FW block size */
+#define MALO_FW_HELPER_LOADED	0x10	/* helper FW loaded */
+#define MALO_FW_MAIN_MAXRETRY	20	/* main FW block resend max retry */
+#define MALO_CMD_BUFFER_SIZE	256	/* cmd buffer */
+
+/* device flags */
+#define MALO_FW_LOADED		(1 << 0)
 
 /* FW command header */
 struct malo_cmd_header {
@@ -64,11 +67,11 @@ struct malo_cmd_body_spec {
 
 struct malo_softc {
 	struct device		 sc_dev;
-
 	struct ieee80211com	 sc_ic;
-
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 
+	int			 sc_flags;
 	void			*sc_cmd;
+	uint8_t			 sc_cmd_running;
 };

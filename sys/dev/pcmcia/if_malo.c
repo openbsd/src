@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.2 2007/05/25 18:31:01 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.3 2007/05/25 21:32:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -66,13 +66,14 @@ int	cmalo_fw_load_helper(struct malo_softc *);
 int	cmalo_fw_load_main(struct malo_softc *);
 int	cmalo_init(struct ifnet *);
 void	cmalo_stop(struct malo_softc *);
-int	cmalo_detach(void *);
+void	cmalo_detach(void *);
 int	cmalo_intr(void *);
 void	cmalo_intr_mask(struct malo_softc *sc, int);
 
 void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
 int	cmalo_cmd_rsp_hwspec(struct malo_softc *);
+int	cmalo_cmd_set_reset(struct malo_softc *);
 int	cmalo_cmd_response(struct malo_softc *);
 
 /*
@@ -173,10 +174,8 @@ malo_pcmcia_detach(struct device *dev, int flags)
 {
 	struct malo_pcmcia_softc *psc = (struct malo_pcmcia_softc *)dev;
 	struct malo_softc *sc = &psc->sc_malo;
-	int error;
 
-	if ((error = cmalo_detach(sc)))
-		return (error);
+	cmalo_detach(sc);
 
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
@@ -233,16 +232,16 @@ cmalo_attach(void *arg)
 		return;
 	if (cmalo_fw_load_main(sc) != 0)
 		return;
+	sc->sc_flags |= MALO_FW_LOADED;
 
 	/* enable interrupts */
 	cmalo_intr_mask(sc, 1);
 
 	/* allocate command buffer */
-	sc->sc_cmd = malloc(CMD_BUFFER_SIZE, M_USBDEV, M_WAITOK);
+	sc->sc_cmd = malloc(MALO_CMD_BUFFER_SIZE, M_USBDEV, M_WAITOK);
 
 	/* get hardware specs */
 	cmalo_cmd_get_hwspec(sc);
-	delay(1000); /* XXX */
 
 	/* setup interface */
 	ifp->if_softc = sc;
@@ -349,8 +348,8 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 
 	/* download the helper firmware */
 	for (offset = 0; offset < usize; offset += bsize) {
-		if (usize - offset >= FW_HELPER_BSIZE)
-			bsize = FW_HELPER_BSIZE;
+		if (usize - offset >= MALO_FW_HELPER_BSIZE)
+			bsize = MALO_FW_HELPER_BSIZE;
 		else
 			bsize = usize - offset;
 
@@ -406,7 +405,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 
 	/* verify if the helper firmware has been loaded correctly */
 	for (i = 0; i < 10; i++) {
-		if (MALO_READ_1(sc, MALO_REG_RBAL) == FW_HELPER_OK)
+		if (MALO_READ_1(sc, MALO_REG_RBAL) == MALO_FW_HELPER_LOADED)
 			break;
 		delay(1000);
 	}
@@ -426,7 +425,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		 * block until we receive a good integer again, or give up.
 		 */
 		if (val16 & 0x0001) {
-			if (retry > FW_MAIN_MAX_RETRY) {
+			if (retry > MALO_FW_MAIN_MAXRETRY) {
 				printf("%s: main FW download failed!\n",
 				    sc->sc_dev.dv_xname);
 				free(ucode, M_DEVBUF);
@@ -485,7 +484,18 @@ cmalo_fw_load_main(struct malo_softc *sc)
 int
 cmalo_init(struct ifnet *ifp)
 {
-	//struct malo_softc *sc = ifp->if_softc;
+	struct malo_softc *sc = ifp->if_softc;
+
+	/* reload the firmware if necessary */
+	if (!(sc->sc_flags & MALO_FW_LOADED)) {
+		if (cmalo_fw_load_helper(sc) != 0)
+			return (EIO);
+		if (cmalo_fw_load_main(sc) != 0)
+			return (EIO);
+	}
+
+	/* device up */
+	ifp->if_flags |= IFF_RUNNING;
 
 	return (0);
 }
@@ -493,10 +503,20 @@ cmalo_init(struct ifnet *ifp)
 void
 cmalo_stop(struct malo_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+        struct ifnet *ifp = &ic->ic_if;
 
+	DPRINTF(1, "%s: device down\n", sc->sc_dev.dv_xname);
+
+	/* power cycle device */
+	cmalo_cmd_set_reset(sc);
+	sc->sc_flags &= ~MALO_FW_LOADED;
+
+	/* device down */
+	ifp->if_flags &= ~IFF_RUNNING;
 }
 
-int
+void
 cmalo_detach(void *arg)
 {
 	struct malo_softc *sc = arg;
@@ -509,8 +529,6 @@ cmalo_detach(void *arg)
 	/* detach inferface */
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
-
-	return (0);
 }
 
 int
@@ -535,7 +553,7 @@ cmalo_intr(void *arg)
 
 	if (intr & MALO_VAL_HOST_INTR_CMD) {
 		/* command response */
-		cmalo_cmd_response(sc);
+		sc->sc_cmd_running = 0;
 	}
 
 	/* acknowledge interrupt */
@@ -588,8 +606,9 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_spec *body;
+	int i;
 
-	bzero(sc->sc_cmd, CMD_BUFFER_SIZE);
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 
 	hdr->cmd = htole16(MALO_VAL_CMD_HWSPEC);
 	hdr->size = htole16(sizeof(*hdr) + sizeof(*body));
@@ -607,6 +626,22 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, hdr, hdr->size / 2);
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
+
+	/* wait for the command response */
+	sc->sc_cmd_running = 1;
+	for (i = 0; i < 50; i++) {
+		if (sc->sc_cmd_running == 0)
+			break;
+		delay(1000);
+	}
+	if (i == 50) {
+		printf("%s: timeout while waiting for cmd response!\n",
+		    sc->sc_dev.dv_xname);
+		return (EIO);
+	}
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
 
 	return (0);
 }
@@ -629,12 +664,33 @@ cmalo_cmd_rsp_hwspec(struct malo_softc *sc)
 }
 
 int
+cmalo_cmd_set_reset(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+
+	hdr->cmd = htole16(MALO_VAL_CMD_RESET);
+	hdr->size = htole16(sizeof(*hdr));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+
+	/* send command request */
+	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, hdr->size);
+	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, hdr, hdr->size / 2);
+	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
+	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
+
+	return (0);
+}
+
+int
 cmalo_cmd_response(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	int len;
 
-	bzero(sc->sc_cmd, CMD_BUFFER_SIZE);
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 
 	/* read the whole command answer */
 	len = MALO_READ_2(sc, MALO_REG_CMD_READ_LEN);
@@ -654,6 +710,9 @@ cmalo_cmd_response(struct malo_softc *sc)
 	switch (hdr->cmd) {
 	case MALO_VAL_CMD_HWSPEC:
 		cmalo_cmd_rsp_hwspec(sc);
+		break;
+	case MALO_VAL_CMD_RESET:
+		/* reset will not send back a response */
 		break;
 	default:
 		printf("%s: got unknown command response (0x%04x)!\n",
