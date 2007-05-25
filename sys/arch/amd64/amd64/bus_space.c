@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.4 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.5 2007/05/25 16:22:11 art Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -245,9 +245,8 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
     bus_space_handle_t *bshp)
 {
 	u_long pa, endpa;
-	vaddr_t va;
+	vaddr_t va, sva;
 	pt_entry_t *pte;
-	int32_t cpumask = 0;
 
 	pa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
@@ -260,6 +259,8 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 	va = uvm_km_valloc(kernel_map, endpa - pa);
 	if (va == 0)
 		return (ENOMEM);
+
+	sva = va;
 
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
@@ -286,12 +287,13 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 				*pte &= ~PG_N;
 			else
 				*pte |= PG_N;
-			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
-			    &cpumask);
 		}
 	}
+	if (!cacheable) {
+		pmap_tlb_shootrange(pmap_kernel(), sva, sva + size);
+		pmap_tlb_shootwait();
+	}
 
-	pmap_tlb_shootnow(cpumask);
 	pmap_update(pmap_kernel());
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 2006/11/29 12:26:13 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.9 2007/05/25 16:22:11 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -262,12 +262,18 @@ void
 pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	pt_entry_t *fpte, *tpte, ofpte, otpte;
-	int32_t cpumask = 0;
+	vaddr_t fsva, tsva, feva, teva;
 
 #ifdef DIAGNOSTIC
 	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
 #endif
+
+	fsva = (vaddr_t)from;
+	tsva = (vaddr_t)to;
+	feva = fsva + size;
+	teva = tsva + size;
+
 	fpte = kvtopte((vaddr_t)from);
 	tpte = kvtopte((vaddr_t)to);
 #ifdef LARGEPAGES
@@ -282,17 +288,13 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 		ofpte = *fpte;
 		*tpte++ = *fpte;
 		*fpte++ = 0;
-		if (otpte & PG_V)
-			pmap_tlb_shootdown(pmap_kernel(),
-			    (vaddr_t)to, otpte, &cpumask);
-		if (ofpte & PG_V)
-			pmap_tlb_shootdown(pmap_kernel(),
-			    (vaddr_t)from, ofpte, &cpumask);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_tlb_shootnow(cpumask);
+	pmap_tlb_shootrange(pmap_kernel(), fsva, feva);
+	pmap_tlb_shootrange(pmap_kernel(), tsva, teva);
+	pmap_tlb_shootwait();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.11 2007/05/15 16:38:33 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.12 2007/05/25 16:22:11 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -412,9 +412,15 @@ void		pmap_write_protect(struct pmap *, vaddr_t,
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, int32_t *);
-void	pmap_tlb_shootnow(int32_t);
-void	pmap_do_tlb_shootdown(struct cpu_info *);
+void	pmap_tlb_shootpage(struct pmap *, vaddr_t);
+void	pmap_tlb_shootrange(struct pmap *, vaddr_t, vaddr_t);
+void	pmap_tlb_shoottlb(void);
+#ifdef MULTIPROCESSOR
+void	pmap_tlb_shootwait(void);
+#else
+#define	pmap_tlb_shootwait()
+#endif
+
 void	pmap_prealloc_lowmem_ptps(void);
 
 void	pagezero(vaddr_t);

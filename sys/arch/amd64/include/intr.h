@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2007/05/16 19:37:06 thib Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2007/05/25 16:22:11 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -223,6 +223,7 @@ void intr_printconfig(void);
 
 #ifdef MULTIPROCESSOR
 int x86_send_ipi(struct cpu_info *, int);
+int x86_fast_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_multicast_ipi(int, int);
 void x86_ipi_handler(void);

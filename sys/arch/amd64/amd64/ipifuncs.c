@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.6 2007/05/06 03:37:08 gwk Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.7 2007/05/25 16:22:11 art Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -83,7 +83,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	x86_64_ipi_nop,
 	x86_64_ipi_flush_fpu,
 	x86_64_ipi_synch_fpu,
-	pmap_do_tlb_shootdown,
+	NULL,
 	x86_64_reload_mtrr,
 	gdt_reload_cpu,
 #ifdef DDB

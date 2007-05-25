@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.6 2007/05/10 17:59:23 deraadt Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.7 2007/05/25 16:22:11 art Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -72,6 +72,15 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 	}
 
 	return ret;
+}
+
+int
+x86_fast_ipi(struct cpu_info *ci, int ipi)
+{
+	if (!(ci->ci_flags & CPUF_RUNNING))
+		return (ENOENT);
+
+	return (x86_ipi(ipi, ci->ci_apicid, LAPIC_DLMODE_FIXED));
 }
 
 void

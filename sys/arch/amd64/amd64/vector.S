@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.8 2007/05/10 17:59:23 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.9 2007/05/25 16:22:11 art Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -317,6 +317,54 @@ IDTVEC(resume_lapic_ipi)
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
 	sti
 	INTRFASTEXIT
+
+IDTVEC(ipi_invltlb)
+	pushq	%rax
+
+	ioapic_asm_ack()
+
+	movq	%cr3, %rax
+	movq	%rax, %cr3
+
+	lock
+	decq	tlb_shoot_wait
+
+	popq	%rax
+	iretq
+
+IDTVEC(ipi_invlpg)
+	pushq	%rax
+
+	ioapic_asm_ack()
+
+	movq	tlb_shoot_addr1, %rax
+	invlpg	(%rax)
+
+	lock
+	decq	tlb_shoot_wait
+
+	popq	%rax
+	iretq
+
+IDTVEC(ipi_invlrange)
+	pushq	%rax
+	pushq	%rdx
+
+	ioapic_asm_ack()
+
+	movq	tlb_shoot_addr1, %rax
+	movq	tlb_shoot_addr2, %rdx
+1:	invlpg	(%rax)
+	addq	$PAGE_SIZE, %rax
+	cmpq	%rdx, %rax
+	jb	1b
+
+	lock
+	decq	tlb_shoot_wait
+
+	popq	%rdx
+	popq	%rax
+	iretq
 
 #endif /* MULTIPROCESSOR */
 	

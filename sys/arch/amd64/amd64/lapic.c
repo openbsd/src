@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.9 2007/02/19 11:59:00 tom Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.10 2007/05/25 16:22:11 art Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -210,6 +210,12 @@ lapic_boot_init(paddr_t lapic_base)
 #ifdef MULTIPROCESSOR
 	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
+	idt_allocmap[LAPIC_IPI_INVLTLB] = 1;
+	idt_vec_set(LAPIC_IPI_INVLTLB, Xipi_invltlb);
+	idt_allocmap[LAPIC_IPI_INVLPG] = 1;
+	idt_vec_set(LAPIC_IPI_INVLPG, Xipi_invlpg);
+	idt_allocmap[LAPIC_IPI_INVLRANGE] = 1;
+	idt_vec_set(LAPIC_IPI_INVLRANGE, Xipi_invlrange);
 #endif
 	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);

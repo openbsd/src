@@ -87,6 +87,18 @@ extern void Xresume_lapic_ipi(void);
 #define LAPIC_IPI_VECTOR			0xe0
 
 /*
+ * We take 0xf0-0xfe for fast IPI handlers.
+ */
+#define LAPIC_IPI_OFFSET			0xf0
+#define LAPIC_IPI_INVLTLB			(LAPIC_IPI_OFFSET + 0)
+#define LAPIC_IPI_INVLPG			(LAPIC_IPI_OFFSET + 1)
+#define LAPIC_IPI_INVLRANGE			(LAPIC_IPI_OFFSET + 2)
+
+extern void Xipi_invltlb(void);
+extern void Xipi_invlpg(void);
+extern void Xipi_invlrange(void);
+
+/*
  * Vector used for local apic timer interrupts.
  */
 
