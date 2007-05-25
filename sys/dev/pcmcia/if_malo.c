@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.1 2007/05/25 05:33:51 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.2 2007/05/25 18:31:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -323,7 +323,7 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 int
 cmalo_fw_load_helper(struct malo_softc *sc)
 {
-	const char *name = "mrv8385-h.fw";
+	const char *name = "malo8385-h";
 	size_t usize;
 	uint8_t *ucode, val8;
 	int offset, error, bsize, i;
@@ -391,7 +391,7 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 int
 cmalo_fw_load_main(struct malo_softc *sc)
 {
-	const char *name = "mrv8385-m.fw";
+	const char *name = "malo8385-m";
 	size_t usize;
 	uint8_t *ucode;
 	uint16_t val16;

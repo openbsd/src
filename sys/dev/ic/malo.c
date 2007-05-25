@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.69 2007/05/09 19:34:07 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.70 2007/05/25 18:31:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1801,7 +1801,7 @@ skip:
 int
 malo_load_bootimg(struct malo_softc *sc)
 {
-	char *name = "mrv8k-b.fw";
+	char *name = "malo8335-h";
 	uint8_t	*ucode;
 	size_t size;
 	int error, i;
@@ -1863,7 +1863,7 @@ int
 malo_load_firmware(struct malo_softc *sc)
 {
 	struct malo_cmdheader *hdr;
-	char *name = "mrv8k-f.fw";
+	char *name = "malo8335-m";
 	void *data;
 	uint8_t *ucode;
 	size_t size, count, bsize;
