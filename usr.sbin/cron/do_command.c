@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.31 2007/04/10 17:14:43 miod Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.32 2007/05/25 17:50:41 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.31 2007/04/10 17:14:43 miod Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.32 2007/05/25 17:50:41 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -63,8 +63,9 @@ do_command(entry *e, user *u) {
 
 static void
 child_process(entry *e, user *u) {
+	FILE *in;
 	int stdin_pipe[2], stdout_pipe[2];
-	char *input_data, *usernm, *mailto;
+	char *input_data, *usernm;
 	int children = 0;
 
 	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd))
@@ -75,7 +76,6 @@ child_process(entry *e, user *u) {
 	/* discover some useful and important environment settings
 	 */
 	usernm = e->pwd->pw_name;
-	mailto = env_get("MAILTO", e->envp);
 
 	/* our parent is watching for our death by catching SIGCHLD.  we
 	 * do not care to watch for our children's deaths this way -- we
@@ -367,12 +367,14 @@ child_process(entry *e, user *u) {
 	Debug(DPROC, ("[%ld] child reading output from grandchild\n",
 		      (long)getpid()))
 
-	/*local*/{
-		FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
+	(void) signal(SIGPIPE, SIG_IGN);
+	in = fdopen(stdout_pipe[READ_PIPE], "r");
+	if (in != NULL) {
 		int	ch = getc(in);
 
 		if (ch != EOF) {
-			FILE	*mail;
+			FILE	*mail = NULL;
+			char	*mailto;
 			int	bytes = 1;
 			int	status = 0;
 
@@ -383,6 +385,7 @@ child_process(entry *e, user *u) {
 			/* get name of recipient.  this is MAILTO if set to a
 			 * valid local username; USER otherwise.
 			 */
+			mailto = env_get("MAILTO", e->envp);
 			if (!mailto) {
 				/* MAILTO not present, set to USER.
 				 */
@@ -438,7 +441,7 @@ child_process(entry *e, user *u) {
 
 			while (EOF != (ch = getc(in))) {
 				bytes++;
-				if (mailto)
+				if (mail)
 					fputc(ch, mail);
 			}
 
@@ -446,7 +449,7 @@ child_process(entry *e, user *u) {
 			 * mailing...
 			 */
 
-			if (mailto) {
+			if (mail) {
 				Debug(DPROC, ("[%ld] closing pipe to mail\n",
 					      (long)getpid()))
 				/* Note: the pclose will probably see
@@ -462,7 +465,7 @@ child_process(entry *e, user *u) {
 			 * log the facts so the poor user can figure out
 			 * what's going on.
 			 */
-			if (mailto && status) {
+			if (mail && status) {
 				char buf[MAX_TEMPSTR];
 
 				snprintf(buf, sizeof buf,
