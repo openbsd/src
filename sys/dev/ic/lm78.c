@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.16 2007/05/25 02:20:25 cnst Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.17 2007/05/25 02:26:43 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -144,6 +144,35 @@ struct lm_sensor w83627ehf_sensors[] = {
 	{ "3.3VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(34, 34) / 2 },
 	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE / 2 },
 	{ "", SENSOR_VOLTS_DC, 5, 0x52, lm_refresh_volt, RFACT_NONE / 2 },
+
+	/* Temperature */
+	{ "", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+	{ "", SENSOR_TEMP, 2, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "", SENSOR_FANRPM, 0, 0x28, wb_refresh_fanrpm },
+	{ "", SENSOR_FANRPM, 0, 0x29, wb_refresh_fanrpm },
+	{ "", SENSOR_FANRPM, 0, 0x2a, wb_refresh_fanrpm },
+
+	{ NULL }
+};
+
+/* 
+ * w83627dhf is almost identical to w83627ehf, except that 
+ * it has 9 instead of 10 voltage sensors
+ */
+struct lm_sensor w83627dhf_sensors[] = {
+	/* Voltage */
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE / 2},
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56, 10) / 2 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x24, wb_w83627ehf_refresh_nvolt },
+	{ "", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_volt, RFACT_NONE / 2 },
+	{ "", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_volt, RFACT_NONE / 2 },
+	{ "3.3VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volt, RFACT(34, 34) / 2 },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volt, RFACT_NONE / 2 },
 
 	/* Temperature */
 	{ "", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
@@ -477,6 +506,10 @@ wb_match(struct lm_softc *sc)
 	case WB_CHIPID_W83627EHF:
 		printf(": W83627EHF\n");
 		lm_setup_sensors(sc, w83627ehf_sensors);
+		break;
+	case WB_CHIPID_W83627DHG:
+		printf(": W83627DHF\n");
+		lm_setup_sensors(sc, w83627dhf_sensors);
 		break;
 	case WB_CHIPID_W83637HF:
 		printf(": W83637HF\n");
