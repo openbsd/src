@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.12 2007/05/09 19:23:17 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.13 2007/05/25 20:47:19 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -134,25 +134,6 @@ u_exception_table:
 	.globl	exception
 exception:
 	.set	noat
-#ifdef TLB_TRACE
-	dmfc0	k0, COP_0_EXC_PC
-	PTR_L	k1, tlbtrcptr
-	PTR_S	k0, 0(k1)
-	dmfc0	k0, COP_0_BAD_VADDR
-        PTR_S   k0, REGSZ(k1)
-	mfc0	k0, COP_0_CAUSE_REG
-        PTR_S	k0, 2*REGSZ(k1)
-	mfc0	k0, COP_0_STATUS_REG
-        PTR_S	k0, 3*REGSZ(k1)
-
-        PTR_L   k1, tlbtrcptr
-        PTR_ADDU k1, 4*REGSZ
-        LI      k0, 0x100
-        not     k0, k0
-        and     k1, k0
-        LA      k0, tlbtrcptr
-        PTR_S   k1, 0(k0)
-#endif
 	mfc0	k0, COP_0_STATUS_REG
 	mfc0	k1, COP_0_CAUSE_REG
 	and	k0, k0, SR_KSU_USER

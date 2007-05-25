@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2007/05/09 19:23:17 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2007/05/25 20:47:19 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -860,23 +860,6 @@ trapDump(msg)
 
 		printf(" RA %p SP %p ADR %p\n", ptrp->ra, ptrp->sp, ptrp->vadr);
 	}
-
-#ifdef TLBTRACE
-	if (tlbtrcptr != NULL) {
-		register_t *next;
-
-		printf("tlbtrace:\n");
-		next = tlbtrcptr;
-		do {
-			if (next[0] != NULL) {
-				printf("pc %p, va %p segtab %p pte %p\n",
-				    next[0], next[1], next[2], next[3]);
-			}
-			next +=  4;
-			next = (register_t *)((long)next & ~0x100);
-		} while (next != tlbtrcptr);
-	}
-#endif
 
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.14 2007/05/01 20:40:18 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.15 2007/05/25 20:47:19 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -57,45 +57,6 @@
 	.set	noat
 	.ent	tlb_miss, 0
 tlb_miss:
-#ifdef TLB_TRACE
-	dmfc0	k0, COP_0_EXC_PC
-	PTR_L	k1, tlbtrcptr
-	PTR_S	k0, 0(k1)
-	dmfc0	k0, COP_0_BAD_VADDR
-	PTR_S	zero, 2*REGSZ(k1)
-	PTR_S	zero, 3*REGSZ(k1)
-	bltz	k0, 1f			# kernel address
-	PTR_S	k0, REGSZ(k1)
-
-	PTR_L	k1, curprocpaddr
-	PTR_L	k1, PCB_SEGTAB(k1)
-	PTR_SRL	k0, k0, SEGSHIFT - LOGREGSZ
-	andi	k0, k0, (PMAP_SEGTABSIZE - 1) << LOGREGSZ
-	PTR_ADDU k1, k1, k0
-	PTR_L	k0, 0(k1)		# get pointer to page table
-	PTR_L	k1, tlbtrcptr
-	PTR_S	k0, 2*REGSZ(k1)
-	beqz	k0, 1f
-	dmfc0	k1, COP_0_BAD_VADDR
-
-	PTR_SRL	k1, k1, PGSHIFT - 2
-	andi	k1, k1, ((NPTEPG/2) - 1) << 3
-	PTR_ADDU k1, k1, k0		# index into segment map
-	lwu	k0, 0(k1)		# get page PTE
-	dsll	k0, k0, 32
-	lwu	k1, 4(k1)
-	or	k0, k1
-	PTR_L	k1, tlbtrcptr
-	PTR_S	k0, 3*REGSZ(k1)
-1:
-	PTR_L	k1, tlbtrcptr
-	PTR_ADDU k1, 4*REGSZ
-	LI	k0, 0x100
-	nor	k0, zero, k0
-	and	k1, k0
-	LA	k0, tlbtrcptr
-	PTR_S	k1, 0(k0)
-#endif
 	PTR_L	k1, curprocpaddr
 	dmfc0	k0, COP_0_BAD_VADDR
 	bltz	k0, _k_miss		# kernel address space
