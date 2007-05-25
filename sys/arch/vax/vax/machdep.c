@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.87 2007/05/23 20:33:47 pvalchev Exp $ */
+/* $OpenBSD: machdep.c,v 1.88 2007/05/25 14:50:38 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -170,7 +170,7 @@ int	vax_led_blink = 0;
 
 struct cpu_info cpu_info_store;
 
-void cpu_dumpconf(void);
+void dumpconf(void);
 
 void
 cpu_startup()
@@ -306,7 +306,7 @@ long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
 void
-cpu_dumpconf()
+dumpconf()
 {
 	int nblks;
 
@@ -649,7 +649,7 @@ dumpsys()
 	 * configured...
 	 */
 	if (dumpsize == 0) {
-		cpu_dumpconf();
+		dumpconf();
 		if (dumpsize == 0)
 			return;
 	}

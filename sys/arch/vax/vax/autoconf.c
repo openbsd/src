@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.26 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.27 2007/05/25 14:50:38 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 
 #include <vax/bi/bireg.h>
 
-void	cpu_dumpconf(void);	/* machdep.c */
+void	dumpconf(void);	/* machdep.c */
 void	gencnslask(void);
 void    diskconf(void);
 
@@ -84,7 +84,7 @@ cpu_configure()
 	    bootdv ? bootdv->dv_xname : "<unknown>");
 
 	setroot(bootdv, booted_partition, RB_USERREQ);
-	cpu_dumpconf();
+	dumpconf();
 
 	/*
 	 * We're ready to start up. Clear CPU cold start flag.
