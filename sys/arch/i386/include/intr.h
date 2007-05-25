@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.31 2007/05/16 19:37:06 thib Exp $	*/
+/*	$OpenBSD: intr.h,v 1.32 2007/05/25 15:55:27 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -137,6 +137,7 @@ struct cpu_info;
 
 #ifdef MULTIPROCESSOR
 int i386_send_ipi(struct cpu_info *, int);
+int i386_fast_ipi(struct cpu_info *, int);
 void i386_broadcast_ipi(int);
 void i386_multicast_ipi(int, int);
 void i386_ipi_handler(void);

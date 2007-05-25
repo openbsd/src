@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.5 2007/02/19 17:18:42 deraadt Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.6 2007/05/25 15:55:27 art Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -90,6 +90,20 @@ i386_atomic_clearbits_l(volatile u_int32_t *ptr, unsigned long bits)
 {
 	bits = ~bits;
 	__asm __volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+}
+
+/*
+ * cas = compare and set
+ */
+static __inline int
+i486_atomic_cas_int(volatile u_int *ptr, u_int expect, u_int set)
+{
+	int res;
+
+	__asm volatile(LOCK " cmpxchgl %2, %1" : "=a" (res), "=m" (*ptr)
+	     : "r" (set), "a" (expect), "m" (*ptr) : "memory");
+
+	return (res);
 }
 
 #define atomic_setbits_int i386_atomic_setbits_l

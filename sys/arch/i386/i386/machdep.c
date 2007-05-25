@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.389 2007/05/23 20:33:46 pvalchev Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.390 2007/05/25 15:55:26 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2214,7 +2214,7 @@ aston(struct proc *p)
 #ifdef MULTIPROCESSOR
 	if (i386_atomic_testset_i(&p->p_md.md_astpending, 1) == 0 &&
 	    p->p_cpu != curcpu())
-		i386_ipi(LAPIC_IPI_AST, p->p_cpu->ci_cpuid, LAPIC_DLMODE_FIXED);
+		i386_fast_ipi(p->p_cpu, LAPIC_IPI_AST);
 #else
 	p->p_md.md_astpending = 1;
 #endif
@@ -3585,9 +3585,6 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 	vaddr_t va;
 	pt_entry_t *pte;
 	bus_size_t map_size;
-#ifdef MULTIPROCESSOR
-	u_int32_t cpumask = 0;
-#endif
 
 	pa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
@@ -3620,17 +3617,11 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 				*pte &= ~PG_N;
 			else
 				*pte |= PG_N;
-#ifdef MULTIPROCESSOR
-			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
-			    &cpumask);
-#else
-			pmap_update_pg(va);
-#endif
+			pmap_tlb_shootpage(pmap_kernel(), va);
 		}
 	}
-#ifdef MULTIPROCESSOR
-	pmap_tlb_shootnow(cpumask);
-#endif
+
+	pmap_tlb_shootwait();
 	pmap_update(pmap_kernel());
 
 	return 0;

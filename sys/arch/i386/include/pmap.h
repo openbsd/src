@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.45 2007/04/26 11:31:52 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.46 2007/05/25 15:55:27 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -383,9 +383,14 @@ int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, int32_t *);
-void	pmap_tlb_shootnow(int32_t);
-void	pmap_do_tlb_shootdown(struct cpu_info *);
+void	pmap_tlb_shootpage(struct pmap *, vaddr_t);
+void	pmap_tlb_shootrange(struct pmap *, vaddr_t, vaddr_t);
+void	pmap_tlb_shoottlb(void);
+#ifdef MULTIPROCESSOR
+void	pmap_tlb_shootwait(void);
+#else
+#define pmap_tlb_shootwait()
+#endif
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 

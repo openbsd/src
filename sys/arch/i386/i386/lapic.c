@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.15 2007/04/12 20:22:58 art Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.16 2007/05/25 15:55:26 art Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -179,7 +179,6 @@ lapic_set_lvt()
 void
 lapic_boot_init(paddr_t lapic_base)
 {
-	extern void Xintripi_ast(void);
 	static int clk_irq = 0;
 	static int ipi_irq = 0;
 
@@ -188,6 +187,9 @@ lapic_boot_init(paddr_t lapic_base)
 #ifdef MULTIPROCESSOR
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintripi);
 	idt_vec_set(LAPIC_IPI_AST, Xintripi_ast);
+	idt_vec_set(LAPIC_IPI_INVLTLB, Xintripi_invltlb);
+	idt_vec_set(LAPIC_IPI_INVLPG, Xintripi_invlpg);
+	idt_vec_set(LAPIC_IPI_INVLRANGE, Xintripi_invlrange);
 #endif
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);

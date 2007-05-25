@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.9 2007/04/12 20:22:58 art Exp $ */
+/* $OpenBSD: apicvec.s,v 1.10 2007/05/25 15:55:26 art Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -86,6 +86,73 @@ XINTR(ipi_ast):
 	popl	%ds
 	popl	%eax
 	iret
+
+	.globl	XINTR(ipi_invltlb)
+	.p2align 4,0x90
+XINTR(ipi_invltlb):
+	pushl	%eax
+	pushl	%ds
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	%eax, %ds
+
+	ioapic_asm_ack()
+
+	movl	%cr3, %eax
+	movl	%eax, %cr3
+
+	lock
+	decl	tlb_shoot_wait
+
+	popl	%ds
+	popl	%eax
+	iret
+
+	.globl	XINTR(ipi_invlpg)
+	.p2align 4,0x90
+XINTR(ipi_invlpg):
+	pushl	%eax
+	pushl	%ds
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	%eax, %ds
+
+	ioapic_asm_ack()
+
+	movl	tlb_shoot_addr1, %eax
+	invlpg	(%eax)
+
+	lock
+	decl	tlb_shoot_wait
+
+	popl	%ds
+	popl	%eax
+	iret
+
+	.globl	XINTR(ipi_invlrange)
+	.p2align 4,0x90
+XINTR(ipi_invlrange):
+	pushl	%eax
+	pushl	%edx
+	pushl	%ds
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	%eax, %ds
+
+	ioapic_asm_ack()
+
+	movl	tlb_shoot_addr1, %eax
+	movl	tlb_shoot_addr2, %edx
+1:	invlpg	(%eax)
+	addl	$PAGE_SIZE, %eax
+	cmpl	%edx, %eax
+	jb	1b
+
+	lock
+	decl	tlb_shoot_wait
+
+	popl	%ds
+	popl	%edx
+	popl	%eax
+	iret
+
 #endif
 
 	/*
