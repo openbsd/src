@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.55 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: server.c,v 1.56 2007/05/25 21:58:00 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -131,7 +131,8 @@ cvs_server_send_response(char *fmt, ...)
 	struct cvs_resp *resp;
 
 	va_start(ap, fmt);
-	vasprintf(&data, fmt, ap);
+	if (vasprintf(&data, fmt, ap) == -1)
+		fatal("vasprintf: %s", strerror(errno));
 	va_end(ap);
 
 	if ((s = strchr(data, ' ')) != NULL)
