@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus_io.c,v 1.2 2005/11/09 18:08:37 martin Exp $ */
+/*	$OpenBSD: mainbus_io.c,v 1.3 2007/05/25 16:45:59 krw Exp $ */
 /*	$NetBSD: mainbus_io.c,v 1.14 2003/12/06 22:05:33 bjh21 Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <machine/bus.h>
 #include <machine/pmap.h>
 
-/* Proto types for all the bus_space structure functions */
+/* Prototypes for all the bus_space structure functions */
 
 bs_protos(mainbus);
 bs_protos(bs_notimpl);
