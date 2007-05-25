@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.S,v 1.2 1996/09/27 06:47:47 mickey Exp $	*/
+/*	$OpenBSD: memset.S,v 1.3 2007/05/25 20:32:29 krw Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -19,7 +19,7 @@ ENTRY(memset)
 
 	/*
 	 * if the string is too short, it's really not worth the overhead
-	 * of aligning to word boundries, etc.  So we jump to a plain
+	 * of aligning to word boundaries, etc.  So we jump to a plain
 	 * unaligned set.
 	 */
 	cmpl	$0x0f,%ecx

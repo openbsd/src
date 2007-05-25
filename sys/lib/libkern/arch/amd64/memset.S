@@ -19,7 +19,7 @@ ENTRY(memset)
 
 	/*
 	 * if the string is too short, it's really not worth the overhead
-	 * of aligning to word boundries, etc.  So we jump to a plain
+	 * of aligning to word boundaries, etc.  So we jump to a plain
 	 * unaligned set.
 	 */
 	cmpq	$0x0f,%rcx

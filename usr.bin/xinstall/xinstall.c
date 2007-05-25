@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.44 2007/05/16 17:33:07 moritz Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.45 2007/05/25 20:32:29 krw Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.44 2007/05/16 17:33:07 moritz Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.45 2007/05/25 20:32:29 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -673,11 +673,11 @@ create_newfile(char *path, struct stat *sbp)
  *	uses lseek whenever it detects the input data is all 0 within that
  *	file block. In more detail, the strategy is as follows:
  *	While the input is all zero keep doing an lseek. Keep track of when we
- *	pass over file block boundries. Only write when we hit a non zero
+ *	pass over file block boundaries. Only write when we hit a non zero
  *	input. once we have written a file block, we continue to write it to
  *	the end (we stop looking at the input). When we reach the start of the
  *	next file block, start checking for zero blocks again. Working on file
- *	block boundries significantly reduces the overhead when copying files
+ *	block boundaries significantly reduces the overhead when copying files
  *	that are NOT very sparse. This overhead (when compared to a write) is
  *	almost below the measurement resolution on many systems. Without it,
  *	files with holes cannot be safely copied. It does has a side effect as

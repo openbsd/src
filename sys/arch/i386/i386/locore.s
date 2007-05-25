@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.108 2007/04/13 11:16:08 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.109 2007/05/25 20:32:29 krw Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -2183,7 +2183,7 @@ ENTRY(bzero)
 
 	/*
 	 * if the string is too short, it's really not worth the overhead
-	 * of aligning to word boundries, etc.  So we jump to a plain
+	 * of aligning to word boundaries, etc.  So we jump to a plain
 	 * unaligned set.
 	 */
 	cmpl	$16,%edx

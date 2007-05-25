@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdreg.h,v 1.5 2005/11/18 00:09:15 miod Exp $	*/
+/*	$OpenBSD: hdreg.h,v 1.6 2007/05/25 20:32:29 krw Exp $	*/
 /*	$NetBSD: rdreg.h,v 1.7 1996/02/09 18:00:37 scottr Exp $	*/
 
 /*
@@ -160,8 +160,8 @@ struct	hd_clearcmd {
  * Several HP drives have an odd number of 256 byte sectors per track.
  * This makes it rather difficult to break them into 512 and 1024 byte blocks.
  * So...we just do like HPUX and don't bother to respect hardware track/head
- * boundries -- we just mold the disk so that we use the entire capacity.
- * HPUX also sometimes doen't abide by cylinder boundries, we attempt to
+ * boundaries -- we just mold the disk so that we use the entire capacity.
+ * HPUX also sometimes doen't abide by cylinder boundaries, we attempt to
  * whenever possible.
  *
  * DISK		REAL (256 BPS)		HPUX (1024 BPS)		BSD (512 BPS)
