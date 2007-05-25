@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.264 2007/05/25 13:18:56 espie Exp $
+# $OpenBSD: pkg_add,v 1.265 2007/05/25 13:25:50 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -96,7 +96,7 @@ sub installed
 }
 
 package main;
-sub can_install($$$)
+sub can_install
 {
 	my ($plist, $state, $handle) = @_;
 	my $pkgname = $plist->pkgname;
@@ -137,12 +137,14 @@ sub can_install($$$)
 			return 1;
 		}
 		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
+		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		$errors++;
 		return;
 	}
 
 	if (@conflicts >  5) {
 		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
+		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		$errors++;
 		return;
 	}
@@ -158,12 +160,14 @@ sub can_install($$$)
 	}
 	if (!OpenBSD::Replace::is_safe($plist, $state)) {
 		print "Can't safely update to $pkgname (use -F update to force it)\n";
+		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		$errors++;
 		return;
 	}
 
 	if (!OpenBSD::Replace::figure_out_libs($plist, $state, @libs)) {
 		print "Can't update to $pkgname because of collision with old libs\n";
+		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		$errors++;
 		return;
 	}
@@ -171,6 +175,7 @@ sub can_install($$$)
 	for my $toreplace (@conflicts) {
 		if ($state->is_installed($toreplace)) {
 			Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
+			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			$errors++;
 			return;
 		}
@@ -179,6 +184,7 @@ sub can_install($$$)
 		    $state, \%conflicts);
 		if (!$rplist) {
 			print "Can't update $toreplace into $pkgname\n";
+			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			$errors++;
 			return;
 		}
