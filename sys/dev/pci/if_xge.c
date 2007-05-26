@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.38 2007/05/26 18:25:11 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.39 2007/05/26 18:29:11 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -176,7 +176,6 @@ static uint64_t herc_dtx_cfg[] = {
 struct xge_softc {
 	struct device sc_dev;
 	struct arpcom sc_arpcom;
-#define sc_if sc_arpcom.ac_if
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
@@ -821,7 +820,7 @@ xge_intr(void *pv)
 {
 	struct xge_softc *sc = pv;
 	struct txd *txd;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_dmamap_t dmp;
 	uint64_t val;
 	int i, lasttx, plen;
