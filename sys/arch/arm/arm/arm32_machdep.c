@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.24 2007/05/26 20:26:50 pedro Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.25 2007/05/26 20:56:49 drahn Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -353,8 +353,6 @@ cpu_startup()
 
 	printf("avail mem = %lu (%uMB)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024/1024);
-	printf("using %d buffers containing %u bytes (%uK) of memory\n",
-	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
