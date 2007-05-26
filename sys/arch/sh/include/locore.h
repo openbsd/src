@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.2 2006/11/05 18:59:58 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.3 2007/05/26 15:28:19 miod Exp $	*/
 /*	$NetBSD: locore.h,v 1.11 2006/01/23 22:32:50 uwe Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 
 /*
  * BANK1 r7 contains kernel stack top address.
- * BANK1 r6 conatins current frame pointer. (per process)
+ * BANK1 r6 contains current frame pointer. (per process)
  */
 /*
  * __EXCEPTION_ENTRY:
