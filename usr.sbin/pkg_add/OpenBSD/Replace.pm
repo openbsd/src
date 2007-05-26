@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.17 2007/05/22 11:02:57 espie Exp $
+# $OpenBSD: Replace.pm,v 1.18 2007/05/26 23:45:44 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -142,13 +142,7 @@ sub update_issue($$)
 	return if $_[1];
 	my $self = $_[0];
 
-	# those are deemed innocuous
-	if ($self->{expanded} =~ m|^/sbin/ldconfig\s+\-R\b| or
-	    $self->{expanded} =~ m|^install-info\s+\-\-delete\b|) {
-		return;
-	} else {
-		return '@unexec '.$self->{expanded};
-	}
+	return '@unexec '.$self->{expanded};
 }
 
 package OpenBSD::PackingElement::Dependency;

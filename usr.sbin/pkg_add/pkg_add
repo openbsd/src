@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.268 2007/05/26 12:25:29 espie Exp $
+# $OpenBSD: pkg_add,v 1.269 2007/05/26 23:45:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -194,29 +194,27 @@ sub can_install
 # package information
 sub prepare_to_add
 {
-	my ($pkg, $state, $handle) = @_;
+	my ($pkg, $state) = @_;
 
+	my $handle = OpenBSD::Handle->new;
 	my $location = OpenBSD::PackageLocator->find($pkg, $state->{arch});
 	if (!$location) {
 		print $state->deptree_header($pkg);
 		print "Can't find $pkg\n";
 		$handle->set_error(OpenBSD::Handle::NOT_FOUND);
-		return;
+		return $handle;
 	}
-	if ($location->{finished}) {
-		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
-		return;
-	}
+	$handle->{location} = $location;
     	my $plist = $location->{plist} = $location->plist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
-		return;
+		return $handle;
 	}
 	if ($plist->localbase ne $state->{localbase}) {
 		print "Localbase mismatch: package has: ", $plist->localbase, " , user wants: ", $state->{localbase}, "\n";
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
-		return;
+		return $handle;
 	}
 	my $pkgname = $location->{pkgname} = $plist->pkgname;
 	if ($pkg ne '-') {
@@ -224,23 +222,20 @@ sub prepare_to_add
 		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
 			print "Package name is not consistent ???\n";
 			$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
-			return;
+			return $handle;
 		}
 	}
 	if ($state->{verbose}) {
 		print $state->deptree_header($pkg);
 		print "parsing $pkgname\n";
 	}
-	if (can_install($plist, $state, $handle)) {
-		return $location;
-	} else {
+	if (!can_install($plist, $state, $handle)) {
 		$location->close_with_client_error;
 		$location->wipe_info;
 		delete $location->{plist};
-		$location->{finished} = 1;
 		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
-		return;
 	}
+	return $handle;
 }
 
 
@@ -506,29 +501,22 @@ sub install_package
 	my ($pkg, $state, @todo) = @_;
 	my $cache = $state->{cache};
 
-	my $handle = OpenBSD::Handle->new;
-
 	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = prepare_to_add($pkg, $state, $handle);
+		$cache->{$pkg} = prepare_to_add($pkg, $state);
 	}
 
-	my $location = $cache->{$pkg};
-	if ($state->{forced}->{kitchensink}) {
-		if ($handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
+	my $handle = $cache->{$pkg};
+	if ($handle->has_error) {
+		if (!$state->{forced}->{kitchensink} ||
+		    $handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
 			$state->set_pkgname($pkg);
-			$state->fatal("Fatal error") unless defined $location;
+			$state->fatal("Fatal error");
 		} else {
-			return () unless defined $location;
-		}
-	} else {
-		if ($handle->has_error) {
-			$state->set_pkgname($pkg);
-			$state->fatal("Fatal error") unless defined $location;
-		} else {
-			return () unless defined $location;
+			return ();
 		}
 	}
 
+	my $location = $handle->{location};
 	if ($state->is_installed($location->{pkgname})) {
 		$location->close_now;
 		return ();
