@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.47 2007/05/26 23:07:28 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.48 2007/05/26 23:59:09 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2134,8 +2134,9 @@ sr_boot_assembly(struct sr_softc *sc)
 			bp->b_dev = devr = MAKEDISKDEV(majdev, dv->dv_unit, i);
 			error = (*bdsw->d_open)(devr, FREAD, S_IFBLK, curproc);
 			if (error) {
-				DNPRINTF(SR_D_META, "%s: sr_boot_assembly open "
-				    "failed, partition %d\n", DEVNAME(sc), i);
+				DNPRINTF(SR_D_META, "%s: sr_boot_assembly "
+				    "open failed, partition %d\n",
+				    DEVNAME(sc), i);
 				continue;
 			}
 			/* read metadat */
@@ -2169,9 +2170,11 @@ sr_boot_assembly(struct sr_softc *sc)
 			}
 
 			/* we are done, close device */
-			error = (*bdsw->d_close)(devr, FREAD, S_IFBLK, curproc);
+			error = (*bdsw->d_close)(devr, FREAD, S_IFBLK,
+			    curproc);
 			if (error) {
-				DNPRINTF(SR_D_META, "%s: sr_boot_assembly close" 				    "failed\n", DEVNAME(sc));
+				DNPRINTF(SR_D_META, "%s: sr_boot_assembly "
+				    "close failed\n", DEVNAME(sc));
 				continue;
 			}
 		}
