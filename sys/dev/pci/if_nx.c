@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.44 2007/05/26 01:42:18 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.45 2007/05/26 01:47:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1622,6 +1622,7 @@ nx_start(struct ifnet *ifp)
 	struct nx_buf		*nb;
 	struct nx_txdesc	*txd;
 	bus_dmamap_t		 map;
+	u_int64_t		 port = nxp->nxp_id;
 	u_int32_t		 producer, len;
 	u_int			 i, idx, tx = 0;
 
@@ -1723,11 +1724,11 @@ nx_start(struct ifnet *ifp)
 		    ((len << NX_TXDESC0_LENGTH_S) & NX_TXDESC0_LENGTH_M);
 		txd->tx_word2 =
 		    ((idx << NX_TXDESC2_HANDLE_S) & NX_TXDESC2_HANDLE_M) |
-		    (((u_int64_t)nxp->nxp_id << NX_TXDESC2_PORT_S) & NX_TXDESC2_PORT_M) |
-		    (((u_int64_t)nxp->nxp_id << NX_TXDESC2_CTXID_S) & NX_TXDESC2_CTXID_M);
+		    ((port << NX_TXDESC2_PORT_S) & NX_TXDESC2_PORT_M) |
+		    ((port << NX_TXDESC2_CTXID_S) & NX_TXDESC2_CTXID_M);
 
-		DPRINTF(NXDBG_TX, "%s(%s): txd "
-		    "%016x w0 %016x w2 %016x a1 %016x a2 %016x a3 %016x a4 %016x l %016x\n",
+		DPRINTF(NXDBG_TX, "%s(%s): txd w0:%016x w2:%016x "
+		    "a1:%016x a2:%016x a3:%016x a4:%016x len:%016x\n",
 		    DEVNAME(nx), __func__, txd->tx_word0, txd->tx_word2,
 		    txd->tx_addr1, txd->tx_addr2, txd->tx_addr3, txd->tx_addr4,
 		    txd->tx_buflength);
@@ -1744,7 +1745,7 @@ nx_start(struct ifnet *ifp)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, txm->nxm_map, 0, txm->nxm_size,
-	   BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if (tx) {
 		DPRINTF(NXDBG_TX, "%s(%s): producer 0x%08x\n",
