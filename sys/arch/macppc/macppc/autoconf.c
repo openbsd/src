@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.30 2007/05/15 01:56:47 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.31 2007/05/26 15:24:21 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.30 2007/05/15 01:56:47 deraadt Exp $
+ *      $Id: autoconf.c,v 1.31 2007/05/26 15:24:21 drahn Exp $
  */
 
 /*
@@ -141,6 +141,7 @@ findtype(char **s)
 		{ "/disk@",		"sd", T_DISK },
 		{ "/disk",		"wd", T_DISK },
 		{ "/usb@",		"sd", T_SCSI },
+		{ "/ADPT,2940U2B@",	"sd", T_SCSI },
 		{ "/bcom5704@4",	"bge0", T_IFACE },
 		{ "/bcom5704@4,1",	"bge1", T_IFACE },
 		{ "/ethernet",		"gem0", T_IFACE },
