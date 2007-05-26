@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.101 2007/05/19 21:44:21 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.102 2007/05/26 23:35:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -439,14 +439,7 @@ value 10, a second IP address with MX of value 99 (a higher number, and
 therefore lower priority) would ensure that any RFC conformant client
 would attempt delivery to the IP address with the MX value of 10
 first, and should not attempt to deliver to the address with MX value 99.
-.Sh BLACKLISTING
-The normal way that spam has been dealt with in the past is to either
-accept and drop, or outright block.
-When configured to use 450 responses,
-.Nm
-takes neither of these actions: it rejects the mail back to the senders'
-queue.
-.Pp
+.Sh BLACKLIST-ONLY MODE
 When running in default mode, the
 .Xr pf.conf 5
 rules described above are sufficient.
