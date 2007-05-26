@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_maloreg.h,v 1.2 2007/05/25 21:32:02 mglocker Exp $ */
+/*	$OpenBSD: if_maloreg.h,v 1.3 2007/05/26 11:11:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -37,9 +37,11 @@
 #define MALO_VAL_DNLD_OVER		(1 << 2)
 
 /* interrupt reasons */
+#define MALO_VAL_HOST_INTR_RX		(1 << 0)
 #define MALO_VAL_HOST_INTR_CMD		(1 << 3)
 
 /* FW commands */
 #define MALO_VAL_CMD_RESP		0x8000
 #define MALO_VAL_CMD_HWSPEC		0x0003
 #define MALO_VAL_CMD_RESET		0x0005
+#define MALO_VAL_CMD_CHANNEL		0x001d

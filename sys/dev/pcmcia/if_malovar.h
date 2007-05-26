@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.2 2007/05/25 21:32:02 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.3 2007/05/26 11:11:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -63,7 +63,15 @@ struct malo_cmd_body_spec {
 	uint32_t	rxpdrdptr;
 	uint32_t	rxpdwrptr;
 	uint32_t	fw_capinfo;
-};
+} __packed;
+
+struct malo_cmd_body_channel {
+	uint16_t	action;
+	uint16_t	channel;
+	uint16_t	rftype;
+	uint16_t	reserved;
+	uint8_t		channel_list[32];
+} __packed;
 
 struct malo_softc {
 	struct device		 sc_dev;
