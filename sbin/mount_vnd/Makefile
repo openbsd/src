@@ -1,9 +1,13 @@
-# $OpenBSD: Makefile,v 1.1 2007/04/14 11:54:00 grunk Exp $
+# $OpenBSD: Makefile,v 1.2 2007/05/26 03:37:45 grunk Exp $
 
-MAN=mount_vnd.8
+PROG=	mount_vnd
+SRCS=	mount_vnd.c pkcs5_pbkdf2.c
+LDADD=	-lutil -lcrypto
+DPADD=	${LIBUTIL}
 
-beforeinstall:
-	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${.CURDIR}/mount_vnd ${DESTDIR}${BINDIR}/mount_vnd
+LINKS=	${BINDIR}/mount_vnd ${BINDIR}/vnconfig
+MLINKS=	mount_vnd.8 vnconfig.8
+
+MAN=	mount_vnd.8
 
 .include <bsd.prog.mk>
