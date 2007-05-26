@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.13 2007/01/11 21:58:04 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -64,7 +64,7 @@ sti_sgc_match(struct device *parent, void *match, void *aux)
 	struct sgc_attach_args *saa = aux;
 
 	/*
-	 * If we already probed it succesfully as a console device, go ahead,
+	 * If we already probed it successfully as a console device, go ahead,
 	 * since we will not be able to bus_space_map() again.
 	 */
 	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode)
@@ -84,7 +84,7 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 
 	/*
-	 * If we already probed it succesfully as a console device, go ahead,
+	 * If we already probed it successfully as a console device, go ahead,
 	 * since we will not be able to bus_space_map() again.
 	 */
 	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode) {

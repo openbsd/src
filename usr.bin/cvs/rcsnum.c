@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.43 2007/05/12 17:33:05 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.44 2007/05/26 00:36:04 krw Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -259,8 +259,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	 * rightside of the branch number, so instead of having an odd
 	 * number of dot-separated decimals, it will have an even number.
 	 *
-	 * Now, according to all the documentation i've found on the net
-	 * about this, cvs does this for "efficiency reasons", i'd like
+	 * Now, according to all the documentation I've found on the net
+	 * about this, cvs does this for "efficiency reasons", I'd like
 	 * to hear one.
 	 *
 	 * We just make sure we remove the .0. from in the branch number.

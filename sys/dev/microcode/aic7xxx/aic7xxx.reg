@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.reg,v 1.10 2004/08/01 01:36:23 krw Exp $ */
+/* $OpenBSD: aic7xxx.reg,v 1.11 2007/05/26 00:36:03 krw Exp $ */
 /*
  * Aic7xxx register and scratch ram definitions.
  *
@@ -40,7 +40,7 @@
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.reg,v 1.46 2003/12/17 00:02:09 gibbs Exp $
  */
-VERSION = "$Id: aic7xxx.reg,v 1.10 2004/08/01 01:36:23 krw Exp $"
+VERSION = "$Id: aic7xxx.reg,v 1.11 2007/05/26 00:36:03 krw Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -330,7 +330,7 @@ register SSTAT2 {
 	address			0x00d
 	access_mode RO
 	field	OVERRUN		0x80
-	field	SHVALID		0x40	/* Shaddow Layer non-zero */
+	field	SHVALID		0x40	/* Shadow Layer non-zero */
 	field	EXP_ACTIVE	0x10	/* SCSI Expander Active */
 	field	CRCVALERR	0x08	/* CRC doesn't match (U3 only) */
 	field	CRCENDERR	0x04	/* No terminal CRC packet (U3 only) */
@@ -950,7 +950,7 @@ register SCBCNT {
 
 /*
  * Queue In FIFO (p. 3-60)
- * Input queue for queued SCBs (commands that the seqencer has yet to start)
+ * Input queue for queued SCBs (commands that the sequencer has yet to start)
  */
 register QINFIFO {
 	address			0x09b

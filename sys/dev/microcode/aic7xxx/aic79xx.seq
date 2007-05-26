@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.seq,v 1.7 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: aic79xx.seq,v 1.8 2007/05/26 00:36:03 krw Exp $	*/
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
  *
@@ -41,7 +41,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.seq,v 1.17 2004/08/04 17:55:34 gibbs Exp $
  */
 
-VERSION = "$Id: aic79xx.seq,v 1.7 2007/04/10 17:47:55 miod Exp $"
+VERSION = "$Id: aic79xx.seq,v 1.8 2007/05/26 00:36:03 krw Exp $"
 PATCH_ARG_LIST = "struct ahd_softc *ahd"
 PREFIX = "ahd_"
 
@@ -168,7 +168,7 @@ gsfifo_complete_normally:
 
 	/*
 	 * Since this status did not consume a FIFO, we have to
-	 * be a bit more dilligent in how we check for FIFOs pertaining
+	 * be a bit more diligent in how we check for FIFOs pertaining
 	 * to this transaction.  There are two states that a FIFO still
 	 * transferring data may be in.
 	 *
@@ -218,7 +218,7 @@ BEGIN_CRITICAL;
 scbdma_tohost_done:
 	test	CCSCBCTL, CCARREN jz fill_qoutfifo_dmadone;
 	/*
-	 * An SCB has been succesfully uploaded to the host.
+	 * An SCB has been successfully uploaded to the host.
 	 * If the SCB was uploaded for some reason other than
 	 * bad SCSI status (currently only for underruns), we
 	 * queue the SCB for normal completion.  Otherwise, we
@@ -481,10 +481,10 @@ dma_complete_scb:
  * Either post or fetch an SCB from host memory.  The caller
  * is responsible for polling for transfer completion.
  *
- * Prerequisits: Mode == M_CCHAN
- *		 SINDEX contains CCSCBCTL flags
- *		 SCBHADDR set to Host SCB address
- *		 SCBPTR set to SCB src location on "push" operations
+ * Prerequisites: Mode == M_CCHAN
+ *		  SINDEX contains CCSCBCTL flags
+ *		  SCBHADDR set to Host SCB address
+ *		  SCBPTR set to SCB src location on "push" operations
  */
 SET_SRC_MODE	M_CCHAN;
 SET_DST_MODE	M_CCHAN;
@@ -704,7 +704,7 @@ BEGIN_CRITICAL;
 		test	LQOSTAT1, LQOBUSFREE jnz idle_loop;
 
 		/*
-		 * On a phase change oustside of packet boundaries,
+		 * On a phase change outside of packet boundaries,
 		 * LASTSCB points to the currently active SCB context
 		 * on the bus.
 		 */
@@ -949,7 +949,7 @@ p_status_okay:
 
 /*
  * Message out phase.  If MSG_OUT is MSG_IDENTIFYFLAG, build a full
- * indentify message sequence and send it to the target.  The host may
+ * identify message sequence and send it to the target.  The host may
  * override this behavior by setting the MK_MESSAGE bit in the SCB
  * control byte.  This will cause us to interrupt the host and allow
  * it to handle the message phase completely on its own.  If the bit
@@ -959,9 +959,9 @@ p_status_okay:
  * 
  * If MSG_OUT is == HOST_MSG, also interrupt the host and take a message.
  * This is done to allow the host to send messages outside of an identify
- * sequence while protecting the seqencer from testing the MK_MESSAGE bit
+ * sequence while protecting the sequencer from testing the MK_MESSAGE bit
  * on an SCB that might not be for the current nexus. (For example, a
- * BDR message in responce to a bad reselection would leave us pointed to
+ * BDR message in response to a bad reselection would leave us pointed to
  * an SCB that doesn't have anything to do with the current target).
  *
  * Otherwise, treat MSG_OUT as a 1 byte message to send (abort, abort tag,
@@ -1201,7 +1201,7 @@ mesgin_complete:
 	test	SEQ_FLAGS, NOT_IDENTIFIED jnz mesgin_proto_violation;
 
 	/*
-	 * If we recevied good status but never successfully sent the
+	 * If we received good status but never successfully sent the
 	 * cdb, abort the command.
 	 */
 	test	SCB_SCSI_STATUS,0xff	jnz complete_accepted;
@@ -1282,7 +1282,7 @@ END_CRITICAL;
  * Is it a disconnect message?  Set a flag in the SCB to remind us
  * and await the bus going free.  If this is an untagged transaction
  * store the SCB id for it in our untagged target table for lookup on
- * a reselction.
+ * a reselection.
  */
 mesgin_disconnect:
 	/*
@@ -1508,7 +1508,7 @@ service_fifo:
 		 * If the other FIFO needs loading, then it
 		 * must not have claimed the S/G cache yet
 		 * (SG_CACHE_AVAIL would have been cleared in
-		 * the orginal FIFO mode and we test this above).
+		 * the original FIFO mode and we test this above).
 		 * Return to the idle loop so we can process the
 		 * FIFO not currently on the bus first.
 		 */
@@ -1552,7 +1552,7 @@ idle_sg_avail:
 	test	DFSTATUS, PRELOAD_AVAIL jz return;
 	/*
 	 * On the A, preloading a segment before HDMAENACK
-	 * comes true can clobber the shaddow address of the
+	 * comes true can clobber the shadow address of the
 	 * first segment in the S/G FIFO.  Wait until it is
 	 * safe to proceed.
 	 */
@@ -1909,7 +1909,7 @@ main_isr:
 /*
  * There are two types of save pointers interrupts:
  * The first is a snapshot save pointers where the current FIFO is not
- * active and contains a snapshot of the current poniter information.
+ * active and contains a snapshot of the current pointer information.
  * This happens between packets in a stream for a single L_Q.  Since we
  * are not performing a pointer save, we can safely clear the channel
  * so it can be used for other transactions.  On RTI capable controllers,
@@ -2005,10 +2005,10 @@ pkt_handle_xfer:
 	 * Defer handling of this NONPACKREQ until we
 	 * can be sure it pertains to this FIFO.  SAVEPTRS
 	 * will not be asserted if the NONPACKREQ is for us,
-	 * so we must simulate it if shaddow is valid.  If
-	 * shaddow is not valid, keep running this FIFO until we
+	 * so we must simulate it if shadow is valid.  If
+	 * shadow is not valid, keep running this FIFO until we
 	 * have satisfied the transfer by loading segments and
-	 * waiting for either shaddow valid or last_seg_done.
+	 * waiting for either shadow valid or last_seg_done.
 	 */
 	test	MDFFSTAT, SHVALID jnz pkt_saveptrs;
 pkt_service_fifo:
@@ -2140,7 +2140,7 @@ BEGIN_CRITICAL;
 END_CRITICAL;
 pkt_status_check_overrun:
 	/*
-	 * Status PKT overruns are uncerimoniously recovered with a
+	 * Status PKT overruns are unceremoniously recovered with a
 	 * bus reset.  If we've overrun, let the host know so that
 	 * recovery can be performed.
 	 *

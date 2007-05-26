@@ -138,7 +138,7 @@ struct volser_status {
 struct destServer {
     long destHost;
     long destPort;
-    long destSSID;   /* currently allways set to 1 */
+    long destSSID;   /* currently always set to 1 */
 };
 
 struct volintInfo {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.153 2007/05/14 19:54:21 martin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.154 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -936,7 +936,7 @@ hpmc_v
 	STRAP(itlbna,T_ITLBMISSNA,DTLBPRE)/* 16. ITLB non-access miss fault */
 	STRAP(dtlbna,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
 	ATRAP(dprot,T_DPROT)		/* 18. data protection trap
-					      unalligned data reference trap */
+					      unaligned data reference trap */
 	ATRAP(dbrk,T_DBREAK)		/* 19. data break trap */
 	STRAP(tlbd,T_TLB_DIRTY,DTLBPRE)	/* 20. TLB dirty bit trap */
 	ATRAP(pgref,T_PAGEREF)		/* 21. page reference trap */

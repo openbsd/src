@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.37 2007/05/25 21:27:15 krw Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.38 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -69,7 +69,7 @@
  * closed ring.
  *
  * For transmission, the driver creates a linked list of 'super descriptors'
- * which each contain several individual descriptors linked toghether.
+ * which each contain several individual descriptors linked together.
  * Each 'super descriptor' contains WB_MAXFRAGS descriptors, which we
  * abuse as fragment pointers. This allows us to use a buffer management
  * scheme very similar to that used in the ThunderLAN and Etherlink XL
@@ -80,7 +80,7 @@
  *
  * Note: the author of the Linux driver for the Winbond chip alludes
  * to some sort of flaw in the chip's design that seems to mandate some
- * drastic workaround which signigicantly impairs transmit performance.
+ * drastic workaround which significantly impairs transmit performance.
  * I have no idea what he's on about: transmit performance with all
  * three of my test boards seems fine.
  */

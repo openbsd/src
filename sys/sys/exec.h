@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.23 2007/01/29 11:33:24 otto Exp $	*/
+/*	$OpenBSD: exec.h,v 1.24 2007/05/26 00:36:03 krw Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ struct exec_package {
 
 #ifdef _KERNEL
 /*
- * funtions used either by execve() or the various cpu-dependent execve()
+ * functions used either by execve() or the various cpu-dependent execve()
  * hooks.
  */
 int	exec_makecmds(struct proc *, struct exec_package *);

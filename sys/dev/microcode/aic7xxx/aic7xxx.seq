@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.seq,v 1.20 2007/04/10 17:47:55 miod Exp $ */
+/* $OpenBSD: aic7xxx.seq,v 1.21 2007/05/26 00:36:03 krw Exp $ */
 /*-
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
  *
@@ -41,7 +41,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.seq,v 1.128 2005/01/06 01:42:26 imp Exp $
  */
 
-VERSION = "$Id: aic7xxx.seq,v 1.20 2007/04/10 17:47:55 miod Exp $"
+VERSION = "$Id: aic7xxx.seq,v 1.21 2007/05/26 00:36:03 krw Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -1478,7 +1478,7 @@ p_status_okay:
 
 /*
  * Message out phase.  If MSG_OUT is MSG_IDENTIFYFLAG, build a full
- * indentify message sequence and send it to the target.  The host may
+ * identify message sequence and send it to the target.  The host may
  * override this behavior by setting the MK_MESSAGE bit in the SCB
  * control byte.  This will cause us to interrupt the host and allow
  * it to handle the message phase completely on its own.  If the bit
@@ -1488,9 +1488,9 @@ p_status_okay:
  * 
  * If MSG_OUT is == HOST_MSG, also interrupt the host and take a message.
  * This is done to allow the host to send messages outside of an identify
- * sequence while protecting the seqencer from testing the MK_MESSAGE bit
+ * sequence while protecting the sequencer from testing the MK_MESSAGE bit
  * on an SCB that might not be for the current nexus. (For example, a
- * BDR message in responce to a bad reselection would leave us pointed to
+ * BDR message in response to a bad reselection would leave us pointed to
  * an SCB that doesn't have anything to do with the current target).
  *
  * Otherwise, treat MSG_OUT as a 1 byte message to send (abort, abort tag,
@@ -1642,7 +1642,7 @@ mesgin_complete:
 	test	SEQ_FLAGS, NOT_IDENTIFIED jnz mesgin_proto_violation;
 
 	/*
-	 * If we recevied good status but never successfully sent the
+	 * If we received good status but never successfully sent the
 	 * cdb, abort the command.
 	 */
 	test	SCB_SCSI_STATUS,0xff	jnz complete_accepted;
@@ -1698,7 +1698,7 @@ if ((ahc->flags & AHC_INITIATORROLE) != 0) {
  * Is it a disconnect message?  Set a flag in the SCB to remind us
  * and await the bus going free.  If this is an untagged transaction
  * store the SCB id for it in our untagged target table for lookup on
- * a reselction.
+ * a reselection.
  */
 mesgin_disconnect:
 	/*

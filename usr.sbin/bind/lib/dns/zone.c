@@ -5633,7 +5633,7 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 		}
 
 		/*
-		 * This is not neccessary if we just performed a AXFR
+		 * This is not necessary if we just performed a AXFR
 		 * however it is necessary for an IXFR / UPTODATE and
 		 * won't hurt with an AXFR.
 		 */

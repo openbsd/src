@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.9 2007/05/25 21:27:15 krw Exp $ */
+/* $OpenBSD: auixp.c,v 1.10 2007/05/26 00:36:03 krw Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -346,7 +346,7 @@ auixp_commit_settings(void *hdl)
 		value &= ~ATI_REG_CMD_SPDF_CONFIG_MASK;
 		value |=  ATI_REG_CMD_SPDF_CONFIG_34; /* NetBSD AC'97 default */
 
-		/* XXX this prolly is not nessisary unless splitted XXX */
+		/* XXX this is probably not necessary unless splitted XXX */
 		value &= ~ATI_REG_CMD_INTERLEAVE_SPDF;
 		if (params->precision <= 16)
 			value |= ATI_REG_CMD_INTERLEAVE_SPDF;
@@ -816,7 +816,7 @@ auixp_program_dma_chain(struct auixp_softc *sc, struct auixp_dma *dma)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	/* get hardware start address of DMA chain and set valid-flag in it */
-	/* XXX allways at start? XXX */
+	/* XXX always at start? XXX */
 	value = DMAADDR(dma);
 	value = value | ATI_REG_LINKPTR_EN;
 
@@ -880,7 +880,7 @@ auixp_update_busbusy(struct auixp_softc *sc)
  * audio is refilled by calling the intr() function when space is available
  * again.
  */
-/* XXX allmost literaly a copy of trigger-input; could be factorised XXX */
+/* XXX almost literally a copy of trigger-input; could be factorised XXX */
 int
 auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, struct audio_params *param)
@@ -955,7 +955,7 @@ auixp_halt_output(void *hdl)
 }
 
 
-/* XXX allmost literaly a copy of trigger-output; could be factorised XXX */
+/* XXX almost literally a copy of trigger-output; could be factorised XXX */
 int
 auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, struct audio_params *param)
@@ -1034,8 +1034,8 @@ auixp_halt_input(void *hdl)
  * IXP audio interrupt handler
  *
  * note that we return the number of bits handled; the return value is not
- * documentated but i saw it implemented in other drivers. Prolly returning a
- * value > 0 means "i've dealt with it"
+ * documented but I saw it implemented in other drivers. Probably returning a
+ * value > 0 means "I've dealt with it"
  *
  */
 int
@@ -1662,7 +1662,7 @@ auixp_disable_dma(struct auixp_softc *sc, struct auixp_dma *dma)
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
-	/* lets not stress the DMA engine more than nessisary */
+	/* lets not stress the DMA engine more than necessary */
 	value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	if (value & dma->dma_enable_bit) {
 		value &= ~dma->dma_enable_bit;
@@ -1679,7 +1679,7 @@ auixp_enable_dma(struct auixp_softc *sc, struct auixp_dma *dma)
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
-	/* lets not stress the DMA engine more than nessisary */
+	/* lets not stress the DMA engine more than necesssary */
 	value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	if (!(value & dma->dma_enable_bit)) {
 		value |= dma->dma_enable_bit;

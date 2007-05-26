@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.19 2007/05/25 21:27:15 krw Exp $	*/
+/*	$OpenBSD: autri.c,v 1.20 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -308,7 +308,7 @@ autri_read_codec(sc_, index, data)
 	/* send Read Command to AC97 */
 	TWRITE4(sc, addr, (index & 0x7f) | cmd);
 
-	/* wait for 'Returned data is avalable' */
+	/* wait for 'Returned data is available' */
 	for (count=0; count < 0xffff; count++) {
 		status = TREAD4(sc, addr);
 		if ((status & busy) == 0)

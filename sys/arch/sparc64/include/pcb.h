@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.6 2007/05/02 18:46:06 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.7 2007/05/26 00:36:03 krw Exp $	*/
 /*	$NetBSD: pcb.h,v 1.7 2000/12/29 17:12:05 eeh Exp $ */
 
 /*
@@ -133,7 +133,7 @@ struct pcb {
 
 	/* The rest is probably not needed except for pcb_rw */
 	char	pcb_cwp;	/* %cwp when switch() was called */
-	char	pcb_pil;	/* %pil when switch() was called -- prolly not needed */
+	char	pcb_pil;	/* %pil when switch() was called -- probably not needed */
 
 	const char *lastcall;	/* DEBUG -- name of last system call */
 	u_int64_t	pcb_wcookie;
