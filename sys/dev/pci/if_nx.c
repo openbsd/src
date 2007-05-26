@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.48 2007/05/26 18:11:42 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.49 2007/05/26 18:56:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1692,39 +1692,47 @@ nx_start(struct ifnet *ifp)
 			len += map->dm_segs[i].ds_len;
 			switch (i) {
 			case 0:
-				txd->tx_buflength |= (map->dm_segs[i].ds_len <<
+				txd->tx_buflength |=
+				    htole64((map->dm_segs[i].ds_len <<
 				    NX_TXDESC_BUFLENGTH1_S) &
-				    NX_TXDESC_BUFLENGTH1_M;
-				txd->tx_addr1 = map->dm_segs[i].ds_addr;
+				    NX_TXDESC_BUFLENGTH1_M);
+				txd->tx_addr1 =
+				    htole64(map->dm_segs[i].ds_addr);
 				break;
 			case 1:
-				txd->tx_buflength |= (map->dm_segs[i].ds_len <<
+				txd->tx_buflength |=
+				    htole64((map->dm_segs[i].ds_len <<
 				    NX_TXDESC_BUFLENGTH2_S) &
-				    NX_TXDESC_BUFLENGTH2_M;
-				txd->tx_addr2 = map->dm_segs[i].ds_addr;
+				    NX_TXDESC_BUFLENGTH2_M);
+				txd->tx_addr2 =
+				    htole64(map->dm_segs[i].ds_addr);
 				break;
 			case 2:
-				txd->tx_buflength |= (map->dm_segs[i].ds_len <<
+				txd->tx_buflength |=
+				    htole64((map->dm_segs[i].ds_len <<
 				    NX_TXDESC_BUFLENGTH3_S) &
-				    NX_TXDESC_BUFLENGTH3_M;
-				txd->tx_addr3 = map->dm_segs[i].ds_addr;
+				    NX_TXDESC_BUFLENGTH3_M);
+				txd->tx_addr3 =
+				    htole64(map->dm_segs[i].ds_addr);
 				break;
 			case 3:
-				txd->tx_buflength |= (map->dm_segs[i].ds_len <<
+				txd->tx_buflength |=
+				    htole64((map->dm_segs[i].ds_len <<
 				    NX_TXDESC_BUFLENGTH4_S) &
-				    NX_TXDESC_BUFLENGTH4_M;
-				txd->tx_addr4 = map->dm_segs[i].ds_addr;
+				    NX_TXDESC_BUFLENGTH4_M);
+				txd->tx_addr4 =
+				    htole64(map->dm_segs[i].ds_addr);
 				break;
 			}
 		}
-		txd->tx_word0 =
+		txd->tx_word0 = htole64(
 		    ((NX_TXDESC0_OP_TX << NX_TXDESC0_OP_S) & NX_TXDESC0_OP_M) |
 		    ((nsegs << NX_TXDESC0_NBUF_S) & NX_TXDESC0_NBUF_M) |
-		    ((len << NX_TXDESC0_LENGTH_S) & NX_TXDESC0_LENGTH_M);
-		txd->tx_word2 =
+		    ((len << NX_TXDESC0_LENGTH_S) & NX_TXDESC0_LENGTH_M));
+		txd->tx_word2 = htole64(
 		    ((idx << NX_TXDESC2_HANDLE_S) & NX_TXDESC2_HANDLE_M) |
 		    ((port << NX_TXDESC2_PORT_S) & NX_TXDESC2_PORT_M) |
-		    ((port << NX_TXDESC2_CTXID_S) & NX_TXDESC2_CTXID_M);
+		    ((port << NX_TXDESC2_CTXID_S) & NX_TXDESC2_CTXID_M));
 
 		DPRINTF(NXDBG_TX, "%s(%s): txd w0:%016llx w2:%016llx "
 		    "a1:%016llx a2:%016llx a3:%016llx a4:%016llx len:%016llx\n",
