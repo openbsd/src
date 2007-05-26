@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.31 2006/08/28 21:04:04 tsi Exp 
-#	OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.32 2007/05/26 19:54:23 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -23,6 +23,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
@@ -67,6 +68,7 @@
 # Special purpose devices:
 #	apm	Power management device
 #	audio*	Audio devices
+#	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
@@ -278,6 +280,10 @@ fd)
 
 bpf*)
 	M bpf$U c 105 $U 600
+	;;
+
+bio)
+	M bio c 4 0 600
 	;;
 
 audio*)
@@ -510,7 +516,7 @@ all)
 	R sd1 sd2 sd3 sd4 cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2
 	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
-	R fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 cuaa cuab cuac cuad
+	R fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 bio cuaa cuab cuac cuad
 	R ttya ttyb ttyc ttyd ptm local wscons audio0 uk0 random lkm
 	R tty00 tty01 tty02 tty03 apm pf systrace xd0 xd1 xd2 xd3
 	R raid0 raid1 raid2 raid3 std st0 st1 fd

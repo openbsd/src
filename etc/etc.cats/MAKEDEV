@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.cats/MAKEDEV.md,v 1.15 2006/07/28 17:37:10 kettenis Exp 
-#	OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp 
+#	OpenBSD: etc.cats/MAKEDEV.md,v 1.16 2007/05/26 19:54:23 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -23,6 +23,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
@@ -63,6 +64,7 @@
 #	uscanner*	Scanners
 # Special purpose devices:
 #	audio*	Audio devices
+#	bio	ioctl tunnel pseudo-device
 #	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
@@ -302,6 +304,10 @@ bktr*)
 	M bktr$U c 75 $U 644
 	;;
 
+bio)
+	M bio c 52 0 600
+	;;
+
 audio*)
 	M sound$U	c 36 $U
 	M mixer$U	c 36 $(($U+16))
@@ -463,7 +469,7 @@ ramdisk)
 
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
-	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
+	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 ptm local
 	R wscons pci0 pci1 pci2 pci3 iop0 iop1 uall tuner0 radio0
 	R speaker audio0 uk0 random lkm tty00 tty01 tty02 tty03 crypto

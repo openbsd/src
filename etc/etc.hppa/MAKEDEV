@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.27 2006/04/16 02:49:52 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.28 2007/05/26 19:54:23 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -23,6 +23,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
@@ -65,6 +66,7 @@
 #	ttyU*	USB serial ports
 #	uscanner*	Scanners
 # Special purpose devices:
+#	bio	ioctl tunnel pseudo-device
 #	audio*	Audio devices
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
@@ -301,6 +303,10 @@ audio*)
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
+bio)
+	M bio c 37 0 600
+	;;
+
 uscanner*)
 	M uscanner$U c 46 $U 660
 	;;
@@ -487,10 +493,10 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
 	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0
-	R ss1 ch0 hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
-	R audio0 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00
-	R tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0
-	R st1 fd
+	R ss1 bio ch0 hotplug ptm local wscons pci0 pci1 pci2 pci3
+	R uall audio0 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm
+	R tty00 tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)

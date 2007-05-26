@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.4 2007/02/13 19:22:29 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.5 2007/05/26 19:54:23 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -23,6 +23,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
@@ -52,6 +53,7 @@
 # Pointing devices:
 #	wsmouse*	wscons mice
 # Special purpose devices:
+#	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
 #	fd	fd/* nodes
 #	lcd	front panel LCD display
@@ -259,6 +261,10 @@ bpf*)
 	M bpf$U c 22 $U 600
 	;;
 
+bio)
+	M bio c 7 0 600
+	;;
+
 wsmouse*)
 	M wsmouse$U c 15 $U 600
 	;;
@@ -365,9 +371,9 @@ ramdisk)
 
 all)
 	R lcd ttya ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
-	R sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2
-	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ch0 ptm
-	R local wscons uk0 random lkm pf systrace std st0 st1 fd
+	R sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1
+	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ch0
+	R ptm local wscons uk0 random lkm pf systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.22 2006/04/16 02:49:52 todd Exp 
-#	OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.23 2007/05/26 19:54:23 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -23,6 +23,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
@@ -53,6 +54,7 @@
 #	wsmouse*	wscons mice
 # Special purpose devices:
 #	asc*	ASC Audio device
+#	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
@@ -280,6 +282,10 @@ bpf*)
 	M bpf$U c 22 $U 600
 	;;
 
+bio)
+	M bio c 7 0 600
+	;;
+
 asc*)
 	M asc$U 36 0
 	;;
@@ -387,9 +393,9 @@ ramdisk)
 all)
 	R ccd0 ccd1 ccd2 ccd3 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0
-	R ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 ptm local
-	R wscons asc0 uk0 random lkm tty00 tty01 pf systrace std st0
-	R st1 fd
+	R ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 bio ptm
+	R local wscons asc0 uk0 random lkm tty00 tty01 pf systrace std
+	R st0 st1 fd
 	;;
 
 sd*|ccd*)
