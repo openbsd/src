@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_vnd.8,v 1.4 2007/05/26 20:46:40 grunk Exp $
+.\"	$OpenBSD: mount_vnd.8,v 1.5 2007/05/26 23:04:20 jmc Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -103,7 +103,6 @@ is being read from,
 to ensure consistency in the buffer cache.
 For normal operation this is not necessary.
 .Pp
-The
 .Nm mount_vnd
 works similarly to
 .Nm vnconfig ,
@@ -136,12 +135,6 @@ If successful, references to
 will access the contents of
 .Ar regular_file .
 This is the default operation.
-.It Fl k
-Associate an encryption key with the device.
-All data will be encrypted using the Blowfish cipher before it is
-written to the disk.
-Encryption only works with
-.Pa svnd .
 .It Fl K Ar rounds
 Associate an encryption key with the device.
 All data will be encrypted using the Blowfish cipher before it is
@@ -157,6 +150,12 @@ rounds to generate the actual key used.
 is a number between 1000 and
 .Dv INT_MAX .
 DO NOT LOSE THE SALT FILE.
+Encryption only works with
+.Pa svnd .
+.It Fl k
+Associate an encryption key with the device.
+All data will be encrypted using the Blowfish cipher before it is
+written to the disk.
 Encryption only works with
 .Pa svnd .
 .It Fl l
@@ -287,4 +286,4 @@ Checking filesystems within svnd images using
 at boot time, as well as mounting them at that point of time is not yet
 possible, because the mount option
 .Dq noauto
-still is necessary at the moment.
+is still necessary at the moment.
