@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdio.c,v 1.2 2006/11/29 01:03:45 uwe Exp $	*/
+/*	$OpenBSD: sdio.c,v 1.3 2007/05/26 19:19:47 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -21,10 +21,12 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <sys/ioctl.h>
 #include <sys/limits.h>
+#include <sys/param.h>
 
 #include <dev/biovar.h>
 
@@ -46,13 +48,10 @@ static int	sdio_open(const char *, struct sdio_hdl **);
 static void	sdio_close(struct sdio_hdl *);
 static int	sdio_debug(struct sdio_hdl *, int);
 static int	sdio_exec(struct sdio_hdl *, struct sdmmc_command *);
-static int	sdio_cmd52(struct sdio_hdl *, int, int, u_int8_t *, int);
-static int	sdio_cmd53(struct sdio_hdl *, int, int, u_char *, size_t,
-			   int);
+static int	sdio_command(struct sdio_hdl *, int, int, char *[]);
 
-int		sdio_read(struct sdio_hdl *, int, int, int *, int);
-int		sdio_write(struct sdio_hdl *, int, int, int, int);
 static int	strtoint(const char *, const char **);
+static int	strtorsp(const char *, const char **);
 static void	usage(void) __dead;
 
 static int
@@ -106,8 +105,8 @@ sdio_exec(struct sdio_hdl *hdl, struct sdmmc_command *cmd)
 	struct bio_sdmmc_command bcmd;
 
 	bcopy(cmd, &bcmd.cmd, sizeof *cmd);
-
 	bcmd.cookie = hdl->cookie;
+
 	if (ioctl(hdl->bio, SDIOCEXECMMC, &bcmd) == -1)
 		err(1, "ioctl");
 
@@ -120,102 +119,79 @@ sdio_exec(struct sdio_hdl *hdl, struct sdmmc_command *cmd)
 }
 
 static int
-sdio_cmd52(struct sdio_hdl *hdl, int fnum, int reg, u_int8_t *data, int arg)
+sdio_command(struct sdio_hdl *hdl, int datalen, int argc, char *argv[])
 {
 	struct sdmmc_command cmd;
-	int function;
+	const char *errstr;
+	u_char *buf = NULL;
 	int error;
+	int i;
 
-	arg &= SD_ARG_CMD52_READ | SD_ARG_CMD52_WRITE;
-
-	arg |= (fnum & SD_ARG_CMD52_FUNC_MASK) <<
-	    SD_ARG_CMD52_FUNC_SHIFT;
-	arg |= (reg & SD_ARG_CMD52_REG_MASK) <<
-	    SD_ARG_CMD52_REG_SHIFT;
-	arg |= (*data & SD_ARG_CMD52_DATA_MASK) <<
-	    SD_ARG_CMD52_DATA_SHIFT;
+	if (argc < 3)
+		errx(1, "sdio_command: wrong # args\n");
 
 	bzero(&cmd, sizeof cmd);
-	cmd.c_opcode = SD_IO_RW_DIRECT;
-	cmd.c_arg = arg;
-	cmd.c_flags = SCF_CMD_BC/* XXX */ | SCF_RSP_R5;
 
-	if (sdio_exec(hdl, &cmd) != 0)
-		return -1;
+	cmd.c_opcode = strtoint(argv[0], &errstr);
+	if (!errstr && cmd.c_opcode > 63)
+		errstr = "out of range";
+	if (errstr)
+		errx(1, "command index is %s: %s", argv[0]);
 
-	*data = SD_R5_DATA(cmd.c_resp);
+	cmd.c_arg = strtoint(argv[1], &errstr);
+	if (errstr)
+		errx(1, "command argument is %s: %s", argv[1]);
+
+	cmd.c_flags = strtorsp(argv[2], &errstr);
+	if (errstr)
+		errx(1, "response type is %s: %s", argv[2]);
+
+	argc -= 3;
+	argv += 3;
+
+	if (datalen > 0) {
+		if (argc == 0)
+			cmd.c_flags |= SCF_CMD_READ;
+
+		if (argc > 0 && argc < datalen)
+			errx(2, "expected %d more argument(s)",
+			    datalen - argc);
+
+		buf = (u_char *)malloc(datalen);
+		if (buf == NULL)
+			err(1, NULL);
+
+		for (i = 0; argc > 0 && i < datalen; i++) {
+			int ival = (u_int8_t)strtoint(argv[i], &errstr);
+			if (!errstr && (ival < 0 || ival > UCHAR_MAX))
+				errstr = "out of range";
+			if (errstr)
+				errx(1, "data byte at offset %d is %s: %s",
+				    i, errstr, argv[i]);
+			buf[i] = (u_int8_t)ival;
+		}
+
+		cmd.c_datalen = datalen;
+		cmd.c_data = (void *)buf;
+		/* XXX cmd.c_blklen = ??? */
+		cmd.c_blklen = MIN(cmd.c_datalen, 512);
+	}
+
+	error = sdio_exec(hdl, &cmd);
+	if (error)
+		err(1, "sdio_exec");
+
+	printf("0x%08x 0x%08x 0x%08x 0x%08x\n", (u_int)cmd.c_resp[0],
+	    (u_int)cmd.c_resp[1], (u_int)cmd.c_resp[2],
+	    (u_int)cmd.c_resp[3]);
+
+	if (datalen > 0) {
+		for (i = 0; argc == 0 && i < datalen; i++)
+			printf("0x%02x\n", buf[i]);
+		free(buf);
+	}
+
 	return 0;
-}
-
-static int
-sdio_cmd53(struct sdio_hdl *hdl, int fnum, int reg, u_char *data,
-    size_t datalen, int arg)
-{
-	struct sdmmc_command cmd;
-	int function;
-	int error;
-
-	arg &= SD_ARG_CMD53_READ | SD_ARG_CMD53_WRITE |
-	    SD_ARG_CMD53_INCREMENT;
-
-	arg |= (fnum & SD_ARG_CMD53_FUNC_MASK) <<
-	    SD_ARG_CMD53_FUNC_SHIFT;
-	arg |= (reg & SD_ARG_CMD53_REG_MASK) <<
-	    SD_ARG_CMD53_REG_SHIFT;
-	arg |= (datalen & SD_ARG_CMD53_LENGTH_MASK) <<
-	    SD_ARG_CMD53_LENGTH_SHIFT;
-
-	bzero(&cmd, sizeof cmd);
-	cmd.c_opcode = SD_IO_RW_EXTENDED;
-	cmd.c_arg = arg;
-	cmd.c_flags = SCF_CMD_ADTC/* XXX */ | SCF_RSP_R5;
-	cmd.c_data = data;
-	cmd.c_datalen = datalen;
-	cmd.c_blklen = datalen;
-
-	if (!(arg & SD_ARG_CMD53_WRITE))
-		cmd.c_flags |= SCF_CMD_READ;
-
-	return sdio_exec(hdl, &cmd);
-}
-
-int
-sdio_read(struct sdio_hdl *hdl, int fnum, int addr, int *ival, int width)
-{
-	u_int16_t v2 = 0;
-	u_int8_t v1 = 0;
-	int error;
-
-	switch (width) {
-	case 2:
-		error = sdio_cmd53(hdl, fnum, addr, (u_char *)&v2, 2,
-		    SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
-		if (!error)
-			*ival = (int)v2;
-		return error;
-	default:
-		error = sdio_cmd52(hdl, fnum, addr, &v1, SD_ARG_CMD52_READ);
-		if (!error)
-			*ival = (int)v1;
-		return error;
-	}
-}
-
-int
-sdio_write(struct sdio_hdl *hdl, int fnum, int addr, int ival, int width)
-{
-	u_int16_t v2 = 0;
-	u_int8_t v1 = 0;
-
-	switch (width) {
-	case 2:
-		v2 = (u_int16_t)ival;
-		return sdio_cmd53(hdl, fnum, addr, (u_char *)&v2,
-		    sizeof v2, SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT);
-	default:
-		v1 = (u_int8_t)ival;
-		return sdio_cmd52(hdl, fnum, addr, &v1, SD_ARG_CMD52_WRITE);
-	}
 }
 
 int
@@ -223,40 +199,25 @@ main(int argc, char *argv[])
 {
 	struct sdio_hdl *hdl;
 	const char *errstr;
-	int dflag = 0, debug;
-	int rflag = 0;
-	int wflag = 0;
-	int fnum = 0;
-	int width = 1;
+	int datalen = 0;
+	int dflag = 0;
+	int cflag = 0;
 	int c;
 
-	while ((c = getopt(argc, argv, "2d:f:rw")) != -1) {
+	while ((c = getopt(argc, argv, "cdl:")) != -1) {
 		switch (c) {
-		case '2':
-			width = 2;
+		case 'c':
+			cflag = 1;
 			break;
 
 		case 'd':
 			dflag = 1;
-			debug = strtoint(optarg, &errstr);
+			break;
+
+		case 'l':
+			datalen = strtoint(optarg, &errstr);
 			if (errstr)
-				errx(2, "argument is %s: %s",
-				    errstr, optarg);
-			break;
-
-		case 'f':
-			fnum = strtonum(optarg, 0, 7, &errstr);
-			if (errstr)
-				errx(2, "function number is %s: %s",
-				    errstr, optarg);
-			break;
-
-		case 'r':
-			rflag = 1;
-			break;
-
-		case 'w':
-			wflag = 1;
+				errx(2, "data length is %s: %s", optarg);
 			break;
 
 		default:
@@ -267,62 +228,24 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (rflag && wflag)
-		errx(2, "only one of -r or -w may be specified");
-
-	if ((rflag || wflag) && argc < 1)
-		errx(2, "address required for -r or -w");
-
-	if (wflag && argc < 2)
-		errx(2, "value required for -w");
-
-	if ((rflag && argc != 1) || (wflag && argc != 2) ||
-	    ((rflag|wflag) == 0 && argc > 0) ||
-	    (rflag|wflag|dflag) == 0)
+	if ((cflag + dflag) != 1 ||
+	    (cflag && argc < 3) ||
+	    (dflag && argc != 1))
 		usage();
 
 	if (sdio_open(DEVNAME, &hdl))
 		return 1;
 
-	if (dflag && sdio_debug(hdl, debug))
-		err(1, "unable to set debug flags");
-
-	if (rflag) {
-		int addr;
-		int val;
-
-		addr = strtoint(argv[0], &errstr);
-		if (!errstr && addr < 0 || addr > SDIO_ADDR_MAX)
-			errstr = "out of range";
+	if (dflag) {
+		int debug = strtoint(argv[0], &errstr);
 		if (errstr)
-			errx(1, "address is %s: %s", errstr, argv[0]);
-
-		if (sdio_read(hdl, fnum, addr, &val, width))
-			err(1, "unable to read");
-		printf("%u\n", (unsigned)val);
+			errx(2, "argument is %s: %s", errstr, argv[0]);
+		if (sdio_debug(hdl, debug))
+			err(1, "unable to set debug flags");
 	}
 
-	if (wflag) {
-		int addr;
-		int val;
-
-		addr = strtoint(argv[0], &errstr);
-		if (!errstr && addr < 0 || addr > SDIO_ADDR_MAX)
-			errstr = "out of range";
-		if (errstr)
-			errx(1, "address is %s: %s", errstr, argv[0]);
-
-		val = strtoint(argv[1], &errstr);
-		if (!errstr &&
-		    ((width == 1 && (val < 0 || val > UCHAR_MAX)) ||
-		     (width == 2 && (val < 0 || val > USHRT_MAX))))
-			errstr = "out of range";
-		if (errstr)
-			errx(1, "value is %s: %s", errstr, argv[1]);
-
-		if (sdio_write(hdl, fnum, addr, val, width))
-			err(1, "unable to write");
-	}
+	if (cflag && sdio_command(hdl, datalen, argc, argv))
+		errx(1, "unable to send command");
 
 	sdio_close(hdl);
 	return 0;
@@ -348,12 +271,37 @@ strtoint(const char *str, const char **errstr)
 	return (int)val;
 }
 
+static int
+strtorsp(const char *str, const char **errstr)
+{
+	*errstr = NULL;
+	if (!strcasecmp(str, "R1"))
+		return SCF_RSP_R1;
+	else if (!strcasecmp(str, "R1b"))
+		return SCF_RSP_R1B;
+	else if (!strcasecmp(str, "R2"))
+		return SCF_RSP_R2;
+	else if (!strcasecmp(str, "R3"))
+		return SCF_RSP_R3;
+	else if (!strcasecmp(str, "R4"))
+		return SCF_RSP_R4;
+	else if (!strcasecmp(str, "R5"))
+		return SCF_RSP_R5;
+	else if (!strcasecmp(str, "R5b"))
+		return SCF_RSP_R5B;
+	else if (!strcasecmp(str, "R6"))
+		return SCF_RSP_R6;
+
+	*errstr = "not valid";
+	return 0;
+}
+
 __dead static void
 usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-d flags] [-f fnum] "
-	    "[-r|-w addr [value]]\n", __progname);
+	fprintf(stderr, "usage:\t%s -d debug_flags\n", __progname);
+	fprintf(stderr, "\t%s -c index arg resp_type [data ...]\n", __progname);
 	exit(2);
 }
