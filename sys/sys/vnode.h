@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.80 2007/05/17 23:46:28 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.81 2007/05/26 18:42:21 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -227,7 +227,6 @@ extern int		vttoif_tab[];
 TAILQ_HEAD(freelst, vnode);
 extern struct freelst vnode_hold_list;	/* free vnodes referencing buffers */
 extern struct freelst vnode_free_list;	/* vnode free list */
-extern struct simplelock vnode_free_list_slock;
 
 #ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
@@ -326,11 +325,6 @@ struct vnodeop_desc {
  */
 extern struct vnodeop_desc *vnodeop_descs[];
 
-
-/*
- * Interlock for scanning list of vnodes attached to a mountpoint
- */
-extern struct simplelock mntvnode_slock;
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.32 2007/03/21 17:29:31 thib Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.33 2007/05/26 18:42:21 thib Exp $  */
 
 /*
  * Portions of this code are:
@@ -47,8 +47,6 @@
 #include <sys/event.h>
 #include <miscfs/specfs/specdev.h>
 
-extern struct simplelock spechash_slock;
-
 int filt_generic_readwrite(struct knote *, long);
 void filt_generic_detach(struct knote *);
 
@@ -92,16 +90,13 @@ vop_generic_revoke(void *v)
 		 */
 		vp->v_flag |= VXLOCK;
 		while (vp->v_flag & VALIASED) {
-			simple_lock(&spechash_slock);
 			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
 				    vq->v_type != vp->v_type || vp == vq)
 					continue;
-				simple_unlock(&spechash_slock);
 				vgone(vq);
 				break;
 			}
-			simple_unlock(&spechash_slock);
 		}
 
 		/*

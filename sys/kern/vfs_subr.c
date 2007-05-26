@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.146 2007/05/17 23:46:28 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.147 2007/05/26 18:42:21 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -92,10 +92,6 @@ struct freelst vnode_hold_list;	/* list of vnodes referencing buffers */
 struct freelst vnode_free_list;	/* vnode free list */
 
 struct mntlist mountlist;	/* mounted filesystem list */
-static struct simplelock mntid_slock;
-struct simplelock mntvnode_slock;
-struct simplelock vnode_free_list_slock;
-struct simplelock spechash_slock;
 
 void	vclean(struct vnode *, int, struct proc *);
 
@@ -128,12 +124,8 @@ vntblinit(void)
 	desiredvnodes = nbuf;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
 	    &pool_allocator_nointr);
-	simple_lock_init(&mntvnode_slock);
-	simple_lock_init(&mntid_slock);
-	simple_lock_init(&spechash_slock);
 	TAILQ_INIT(&vnode_hold_list);
 	TAILQ_INIT(&vnode_free_list);
-	simple_lock_init(&vnode_free_list_slock);
 	CIRCLEQ_INIT(&mountlist);
 	/*
 	 * Initialize the filesystem syncer.
@@ -279,7 +271,6 @@ vfs_getnewfsid(struct mount *mp)
 	fsid_t tfsid;
 	int mtype;
 
-	simple_lock(&mntid_slock);
 	mtype = mp->mnt_vfc->vfc_typenum;
 	mp->mnt_stat.f_fsid.val[0] = makedev(nblkdev + mtype, 0);
 	mp->mnt_stat.f_fsid.val[1] = mtype;
@@ -294,7 +285,6 @@ vfs_getnewfsid(struct mount *mp)
 		}
 	}
 	mp->mnt_stat.f_fsid.val[0] = tfsid.val[0];
-	simple_unlock(&mntid_slock);
 }
 
 /*
@@ -373,13 +363,11 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	if (numvnodes > 2 * desiredvnodes)
 		toggle = 0;
 
-	simple_lock(&vnode_free_list_slock);
 	s = splbio();
 	if ((numvnodes < desiredvnodes) ||
 	    ((TAILQ_FIRST(listhd = &vnode_free_list) == NULL) &&
 	    ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
 		splx(s);
-		simple_unlock(&vnode_free_list_slock);
 		vp = pool_get(&vnode_pool, PR_WAITOK);
 		bzero((char *)vp, sizeof *vp);
 		numvnodes++;
@@ -396,7 +384,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		 */
 		if (vp == NULL) {
 			splx(s);
-			simple_unlock(&vnode_free_list_slock);
 			tablefull("vnode");
 			*vpp = 0;
 			return (ENFILE);
@@ -413,7 +400,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		vp->v_bioflag &= ~VBIOONFREELIST;
 		splx(s);
 
-		simple_unlock(&vnode_free_list_slock);
 		if (vp->v_type != VBAD)
 			vgonel(vp, p);
 #ifdef DIAGNOSTIC
@@ -447,8 +433,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 void
 insmntque(struct vnode *vp, struct mount *mp)
 {
-	simple_lock(&mntvnode_slock);
-
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
@@ -459,8 +443,6 @@ insmntque(struct vnode *vp, struct mount *mp)
 	 */
 	if ((vp->v_mount = mp) != NULL)
 		LIST_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
-
-	simple_unlock(&mntvnode_slock);
 }
 
 /*
@@ -535,7 +517,6 @@ checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 
 	vpp = &speclisth[SPECHASH(nvp_rdev)];
 loop:
-	simple_lock(&spechash_slock);
 	for (vp = *vpp; vp; vp = vp->v_specnext) {
 		if (nvp_rdev != vp->v_rdev || nvp->v_type != vp->v_type) {
 			continue;
@@ -544,12 +525,10 @@ loop:
 		 * Alias, but not in use, so flush it out.
 		 */
 		if (vp->v_usecount == 0) {
-			simple_unlock(&spechash_slock);
 			vgonel(vp, p);
 			goto loop;
 		}
 		if (vget(vp, LK_EXCLUSIVE, p)) {
-			simple_unlock(&spechash_slock);
 			goto loop;
 		}
 		break;
@@ -567,7 +546,6 @@ loop:
 		nvp->v_specmountpoint = NULL;
 		nvp->v_speclockf = NULL;
 		bzero(nvp->v_specbitmap, sizeof(nvp->v_specbitmap));
-		simple_unlock(&spechash_slock);
 		*vpp = nvp;
 		if (vp != NULLVP) {
 			nvp->v_flag |= VALIASED;
@@ -588,7 +566,6 @@ loop:
 	 * The vnodes created by bdevvp should not be aliased (why?).
 	 */
 
-	simple_unlock(&spechash_slock);
 	VOP_UNLOCK(vp, 0, p);
 	vclean(vp, 0, p);
 	vp->v_op = nvp->v_op;
@@ -632,12 +609,10 @@ vget(struct vnode *vp, int flags, struct proc *p)
 	onfreelist = vp->v_bioflag & VBIOONFREELIST;
 	if (vp->v_usecount == 0 && onfreelist) {
 		s = splbio();
-		simple_lock(&vnode_free_list_slock);
 		if (vp->v_holdcnt > 0)
 			TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
 		else
 			TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
 		vp->v_bioflag &= ~VBIOONFREELIST;
 		splx(s);
 	}
@@ -797,10 +772,8 @@ vhold(struct vnode *vp)
 	 */
 	if ((vp->v_bioflag & VBIOONFREELIST) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
 		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
 	}
 	vp->v_holdcnt++;
 }
@@ -824,22 +797,17 @@ vfs_mount_foreach_vnode(struct mount *mp,
 	struct vnode *vp, *nvp;
 	int error = 0;
 
-	simple_lock(&mntvnode_slock);
 loop:
 	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
 		if (vp->v_mount != mp)
 			goto loop;
 		nvp = LIST_NEXT(vp, v_mntvnodes);
-		simple_unlock(&mntvnode_slock);
 
 		error = func(vp, arg);
-
-		simple_lock(&mntvnode_slock);
 
 		if (error != 0)
 			break;
 	}
-	simple_unlock(&mntvnode_slock);
 
 	return (error);
 }
@@ -1069,7 +1037,6 @@ vgonel(struct vnode *vp, struct proc *p)
 	 * if it is on one.
 	 */
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
-		simple_lock(&spechash_slock);
 		if (*vp->v_hashchain == vp) {
 			*vp->v_hashchain = vp->v_specnext;
 		} else {
@@ -1098,7 +1065,6 @@ vgonel(struct vnode *vp, struct proc *p)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
 		}
-		simple_unlock(&spechash_slock);
 
 		/*
 		 * If we have a mount point associated with the vnode, we must
@@ -1130,7 +1096,6 @@ vgonel(struct vnode *vp, struct proc *p)
 	    (vp->v_bioflag & VBIOONFREELIST)) {
 		int s;
 
-		simple_lock(&vnode_free_list_slock);
 		s = splbio();
 
 		if (vp->v_holdcnt > 0)
@@ -1141,7 +1106,6 @@ vgonel(struct vnode *vp, struct proc *p)
 			TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
 		}
 		splx(s);
-		simple_unlock(&vnode_free_list_slock);
 	}
 }
 
@@ -1154,7 +1118,6 @@ vfinddev(dev_t dev, enum vtype type, struct vnode **vpp)
 	struct vnode *vp;
 	int rc =0;
 
-	simple_lock(&spechash_slock);
 	for (vp = speclisth[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
 		if (dev != vp->v_rdev || type != vp->v_type)
 			continue;
@@ -1162,7 +1125,6 @@ vfinddev(dev_t dev, enum vtype type, struct vnode **vpp)
 		rc = 1;
 		break;
 	}
-	simple_unlock(&spechash_slock);
 	return (rc);
 }
 
@@ -1193,7 +1155,6 @@ vcount(struct vnode *vp)
 loop:
 	if ((vp->v_flag & VALIASED) == 0)
 		return (vp->v_usecount);
-	simple_lock(&spechash_slock);
 	for (count = 0, vq = *vp->v_hashchain; vq; vq = vnext) {
 		vnext = vq->v_specnext;
 		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
@@ -1202,13 +1163,11 @@ loop:
 		 * Alias, but not in use, so flush it out.
 		 */
 		if (vq->v_usecount == 0 && vq != vp) {
-			simple_unlock(&spechash_slock);
 			vgone(vq);
 			goto loop;
 		}
 		count += vq->v_usecount;
 	}
-	simple_unlock(&spechash_slock);
 	return (count);
 }
 
@@ -1385,7 +1344,6 @@ again:
 			 * recycled onto the same filesystem.
 			 */
 			if (vp->v_mount != mp) {
-				simple_unlock(&mntvnode_slock);
 				if (kinfo_vdebug)
 					printf("kinfo: vp changed\n");
 				bp = savebp;
@@ -1393,7 +1351,6 @@ again:
 			}
 			nvp = LIST_NEXT(vp, v_mntvnodes);
 			if (bp + sizeof(struct e_vnode) > ewhere) {
-				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
 				vfs_unbusy(mp);
 				return (ENOMEM);
@@ -1408,10 +1365,8 @@ again:
 				return (error);
 			}
 			bp += sizeof(struct e_vnode);
-			simple_lock(&mntvnode_slock);
 		}
 
-		simple_unlock(&mntvnode_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
@@ -1433,7 +1388,6 @@ vfs_mountedon(struct vnode *vp)
  	if (vp->v_specmountpoint != NULL)
 		return (EBUSY);
 	if (vp->v_flag & VALIASED) {
-		simple_lock(&spechash_slock);
 		for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 			if (vq->v_rdev != vp->v_rdev ||
 			    vq->v_type != vp->v_type)
@@ -1443,7 +1397,6 @@ vfs_mountedon(struct vnode *vp)
 				break;
 			}
  		}
-		simple_unlock(&spechash_slock);
 	}
 	return (error);
 }
@@ -2051,10 +2004,8 @@ brelvp(struct buf *bp)
 	 */
 	if ((vp->v_bioflag & VBIOONFREELIST) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
 		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
 	}
 }
 
