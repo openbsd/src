@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.210 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.211 2007/05/26 20:58:36 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -175,6 +175,7 @@ struct rcs_kw rcs_expkw[] =  {
 	{ "Revision",	RCS_KW_REVISION },
 	{ "Source",	RCS_KW_SOURCE   },
 	{ "State",	RCS_KW_STATE    },
+	{ "Mdocdate",	RCS_KW_MDOCDATE },
 };
 
 #define NB_COMTYPES	(sizeof(rcs_comments)/sizeof(rcs_comments[0]))
@@ -2982,7 +2983,17 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_line *line,
 				if (kwtype & RCS_KW_DATE) {
 					fmt = "%Y/%m/%d %H:%M:%S ";
 
-					strftime(buf, sizeof(buf), fmt, &rdp->rd_date);
+					if (strftime(buf, sizeof(buf), fmt, &rdp->rd_date) == 0)
+						fatal("rcs_kwexp_line: strftime failure");
+					if (strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(expbuf))
+						fatal("rcs_kwexp_line: string truncated");
+				}
+
+				if (kwtype & RCS_KW_MDOCDATE) {
+					fmt = "%B %e %Y ";
+
+					if (strftime(buf, sizeof(buf), fmt, &rdp->rd_date) == 0)
+						fatal("rcs_kwexp_line: strftime failure");
 					if (strlcat(expbuf, buf, sizeof(expbuf)) >= sizeof(expbuf))
 						fatal("rcs_kwexp_line: string truncated");
 				}
