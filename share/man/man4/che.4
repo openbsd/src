@@ -1,0 +1,75 @@
+.\"	$OpenBSD: che.4,v 1.1 2007/05/26 17:41:40 claudio Exp $
+.\"
+.\" Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" TORTIOUS ACTION, ARISING OUT OF
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 26, 2007
+.Dt CHE 4
+.Os
+.Sh NAME
+.Nm che ,
+.Nm cheg
+.Nd Chelsio Communications 10Gb Ethernet device
+.Sh SYNOPSIS
+.Cd "cheg* at pci?"
+.Cd "che* at cheg?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Chelsio Communications 10 Gigabit Ethernet
+controllers and adapters, including the following:
+.Pp
+.Bl -bullet -compact
+.It
+PE9000 10 GbE Dual Port Adapter
+.It
+T302E 10 GbE Dual Port Adapter
+.It
+T302X 10 GbE Dual Port Adapter
+.It
+T310E 10 GbE Single Port Adapter
+.It
+T310X 10 GbE Single Port Adapter
+.It
+T320E 10 GbE Dual Port Adapter
+.It
+T320X 10 GbE Dual Port Adapter
+.It
+T3B02 10 GbE Dual Port Adapter
+.It
+T3B10 10 GbE Single Port Adapter
+.It
+T3B20 10 GbE Dual Port Adapter
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr ifconfig 8
+.Pp
+Chelsio Communications:
+.Pa http://www.chelsio.com
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.2 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Claudio Jeker Aq claudio@openbsd.org .
