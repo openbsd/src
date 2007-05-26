@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.19 2007/05/24 13:15:31 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.20 2007/05/26 14:30:26 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -144,6 +144,16 @@ struct sr_metadata {
 	u_int32_t		ssd_chunk_chk;	/* chunk structure xor */
 	u_int32_t		ssd_pad3;
 } __packed;
+
+struct sr_metadata_list {
+	struct sr_metadata	*sml_metadata;
+	dev_t			sml_mm;
+	int			sml_used;
+
+	SLIST_ENTRY(sr_metadata_list) sml_link;
+};
+
+SLIST_HEAD(sr_metadata_list_head, sr_metadata_list);
 
 #define SR_CHUNK_VERSION	1	/* bump when sr_chunk_meta changes */
 struct sr_chunk_meta {

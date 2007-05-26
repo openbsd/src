@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.44 2007/05/24 13:15:31 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.45 2007/05/26 14:30:26 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -87,7 +87,7 @@ int			sr_ioctl_disk(struct sr_softc *, struct bioc_disk *);
 int			sr_ioctl_setstate(struct sr_softc *,
 			    struct bioc_setstate *);
 int			sr_ioctl_createraid(struct sr_softc *,
-			    struct bioc_createraid *);
+			    struct bioc_createraid *, int);
 int			sr_open_chunks(struct sr_softc *,
 			    struct sr_chunk_head *, dev_t *, int);
 int			sr_read_meta(struct sr_discipline *);
@@ -169,9 +169,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_ioctl = sr_ioctl;
 
-	/* sr_boot_assembly(sc); */
-
-	printf("\n");
+	if (sr_boot_assembly(sc) == 0)
+		printf("\n");
 }
 
 int
@@ -583,7 +582,7 @@ sr_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	case BIOCCREATERAID:
 		DNPRINTF(SR_D_IOCTL, "createraid\n");
-		rv = sr_ioctl_createraid(sc, (struct bioc_createraid *)addr);
+		rv = sr_ioctl_createraid(sc, (struct bioc_createraid *)addr, 1);
 		break;
 
 	default:
@@ -729,7 +728,7 @@ done:
 }
 
 int
-sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
+sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 {
 	dev_t			*dt;
 	int			i, s, no_chunk, rv = EINVAL, sb = -1, vol;
@@ -741,7 +740,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 	struct device		*dev, *dev2;
 	struct scsibus_attach_args saa;
 
-	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_createraid\n", DEVNAME(sc));
+	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_createraid(%d)\n",
+	    DEVNAME(sc), user);
 
 	/* user input */
 	if (bc->bc_dev_list_len > BIOC_CRMAXLEN)
@@ -749,7 +749,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc)
 
 	dt = malloc(bc->bc_dev_list_len, M_DEVBUF, M_WAITOK);
 	bzero(dt, bc->bc_dev_list_len);
-	copyin(bc->bc_dev_list, dt, bc->bc_dev_list_len);
+	if (user)
+		copyin(bc->bc_dev_list, dt, bc->bc_dev_list_len);
+	else
+		bcopy(bc->bc_dev_list, dt, bc->bc_dev_list_len);
 
 	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK);
 	memset(sd, 0, sizeof(struct sr_discipline));
@@ -2071,14 +2074,17 @@ sr_boot_assembly(struct sr_softc *sc)
 	struct bdevsw		*bdsw;
 	struct disklabel	label;
 	struct sr_metadata	*sm;
-	dev_t			dev, devr;
-	int			error, majdev, i;
+	struct sr_metadata_list_head mlh;
+	struct sr_metadata_list *mle, *mle2;
+	struct bioc_createraid	bc;
+	dev_t			dev, devr, *dt = NULL;
+	int			error, majdev, i, no_dev, rv = 0;
 	size_t			sz = SR_META_SIZE * 512;
 
 	DNPRINTF(SR_D_META, "%s: sr_boot_assembly\n", DEVNAME(sc));
 
+	SLIST_INIT(&mlh);
 	bp = geteblk(sz);
-	bzero(bp->b_data, sz);
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class != DV_DISK)
@@ -2145,7 +2151,17 @@ sr_boot_assembly(struct sr_softc *sc)
 			}
 
 			sm = (struct sr_metadata *)bp->b_data;
-			sr_validate_metadata(sc, devr, sm);
+			if (!sr_validate_metadata(sc, devr, sm)) {
+				/* we got one; save it off */
+				mle = malloc(sizeof(*mle), M_DEVBUF, M_WAITOK);
+				bzero(mle, sizeof(*mle));
+				mle->sml_metadata = malloc(sz, M_DEVBUF,
+				    M_WAITOK);
+				bzero(mle->sml_metadata, sz);
+				bcopy(sm, mle->sml_metadata, sz);
+				mle->sml_mm = devr;
+				SLIST_INSERT_HEAD(&mlh, mle, sml_link);
+			}
 
 			/* we are done, close device */
 			error = (*bdsw->d_close)(devr, FREAD, S_IFBLK, curproc);
@@ -2156,7 +2172,74 @@ sr_boot_assembly(struct sr_softc *sc)
 		}
 	}
 
-	return (0);
+	/*
+	 * XXX poor mans hack that doesn't keep disks in order and does not 
+	 * roam disks correctly.  replace this with something smarter that
+	 * orders disks by volid, chunkid and uuid.
+	 */
+	dt = malloc(BIOC_CRMAXLEN, M_DEVBUF, M_WAITOK);
+	SLIST_FOREACH(mle, &mlh, sml_link) {
+		/* chunk used already? */
+		if (mle->sml_used)
+			continue;
+
+		no_dev = 0;
+		bzero(dt, BIOC_CRMAXLEN);
+		SLIST_FOREACH(mle2, &mlh, sml_link) {
+			/* chunk used already? */
+			if (mle2->sml_used)
+				continue;
+
+			/* are we the same volume? */
+			if (mle->sml_metadata->ssd_vd_volid !=
+			    mle2->sml_metadata->ssd_vd_volid)
+				continue;
+
+			/* same uuid? */
+			if (bcmp(&mle->sml_metadata->ssd_uuid, 
+			    &mle2->sml_metadata->ssd_uuid,
+			    sizeof(mle->sml_metadata->ssd_uuid)))
+				continue;
+
+			/* sanity */
+			if (dt[mle2->sml_metadata->ssd_chunk_id]) {
+				printf("%s: chunk id already in use; can not "
+				    "assemble volume\n", DEVNAME(sc));
+				goto unwind;
+			}
+			dt[mle2->sml_metadata->ssd_chunk_id] = mle2->sml_mm;
+			no_dev++;
+			mle2->sml_used = 1;
+		}
+		if (mle->sml_metadata->ssd_chunk_no != no_dev) {
+			printf("%s: not assembling partial disk that used to "
+			    "be volume %d\n", DEVNAME(sc),
+			    mle->sml_metadata->ssd_vd_volid);
+			continue;
+		}
+
+		bzero(&bc, sizeof(bc));
+		bc.bc_level = 1;
+		bc.bc_dev_list_len = no_dev * sizeof(dev_t);
+		bc.bc_dev_list = dt;
+		bc.bc_flags = BIOC_SCDEVT;
+		sr_ioctl_createraid(sc, &bc, 0);
+		rv++;
+	}
+
+unwind:
+	if (dt)
+		free(dt, M_DEVBUF);
+
+	for (mle = SLIST_FIRST(&mlh); mle != SLIST_END(&mlh); mle = mle2) {
+		mle2 = SLIST_NEXT(mle, sml_link);
+
+		free(mle->sml_metadata, M_DEVBUF);
+		free(mle, M_DEVBUF);
+	}
+	SLIST_INIT(&mlh);
+
+	return (rv);
 }
 
 int
