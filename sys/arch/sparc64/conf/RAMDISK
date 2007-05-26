@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.63 2007/05/01 15:22:23 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.64 2007/05/26 16:52:10 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -76,6 +76,7 @@ bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 stge*	at pci?			# Sundance TC9021 GigE
 rl*	at pci?			# RealTek 81[23]9 ethernet
 vr*	at pci?			# VIA Rhine ethernet
+re*	at pci?			# RealTek 8169/8169S/8110S
 
 auxio*	at ebus?
 auxio*	at sbus?
@@ -159,6 +160,7 @@ inphy*	at mii?			# Intel 82555 PHYs
 lxtphy*	at mii?			# Level1 LXT970 PHYs
 rlphy*	at mii?			# RealTek 8139 internal PHYs
 urlphy*	at mii?			# Realtek RTL8150L internal PHY
+rgephy*	at mii?			# Realtek 8169S/8110S PHY
 ukphy*	at mii?			# Unknown PHYs
 
 # PCI USB Controllers
