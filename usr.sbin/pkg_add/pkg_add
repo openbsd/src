@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.265 2007/05/25 13:25:50 espie Exp $
+# $OpenBSD: pkg_add,v 1.266 2007/05/26 12:15:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -196,8 +196,9 @@ sub can_install
 }
 
 
-# This does pre_add a package: finding it and reading its package information
-sub pre_add
+# This does prepare_to_add a package: finding it and reading its 
+# package information
+sub prepare_to_add
 {
 	my ($pkg, $state, $handle) = @_;
 
@@ -523,7 +524,7 @@ sub install_package
 	my $handle = OpenBSD::Handle->new;
 
 	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = pre_add($pkg, $state, $handle);
+		$cache->{$pkg} = prepare_to_add($pkg, $state, $handle);
 	}
 
 	my $location = $cache->{$pkg};
