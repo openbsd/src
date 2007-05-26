@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.38 2007/04/12 14:45:45 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.39 2007/05/26 19:58:49 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -1358,12 +1358,13 @@ top:
 	return (c);
 }
 
-int
-parse_config(struct hoststated *x_conf, const char *filename, int opts)
+struct hoststated *
+parse_config(const char *filename, int opts)
 {
 	struct sym	*sym, *next;
 
-	conf = x_conf;
+	if ((conf = calloc(1, sizeof(*conf))) == NULL)
+		return (NULL);
 
 	TAILQ_INIT(&conf->services);
 	TAILQ_INIT(&conf->tables);
@@ -1396,7 +1397,8 @@ parse_config(struct hoststated *x_conf, const char *filename, int opts)
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		warn("%s", filename);
-		return (0);
+		free(conf);
+		return (NULL);
 	}
 	infile = filename;
 	setservent(1);
@@ -1450,11 +1452,11 @@ parse_config(struct hoststated *x_conf, const char *filename, int opts)
 	}
 
 	if (errors) {
-		bzero(&conf, sizeof (*conf));
-		return (-1);
+		free(conf);
+		return (NULL);
 	}
 
-	return (0);
+	return (conf);
 }
 
 int

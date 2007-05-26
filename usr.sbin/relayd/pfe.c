@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.21 2007/05/09 13:05:42 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.22 2007/05/26 19:58:49 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -63,7 +63,7 @@ pfe_sig_handler(int sig, short event, void *arg)
 
 pid_t
 pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
-    int pipe_parent2relay[2], int pipe_pfe2hce[2],
+    int pipe_parent2relay[RELAY_MAXPROC][2], int pipe_pfe2hce[2],
     int pipe_pfe2relay[RELAY_MAXPROC][2])
 {
 	pid_t		 pid;
@@ -120,10 +120,11 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	close(pipe_parent2pfe[0]);
 	close(pipe_parent2hce[0]);
 	close(pipe_parent2hce[1]);
-	close(pipe_parent2relay[0]);
-	close(pipe_parent2relay[1]);
-	for (i = 0; i < env->prefork_relay; i++)
+	for (i = 0; i < env->prefork_relay; i++) {
+		close(pipe_parent2relay[i][0]);
+		close(pipe_parent2relay[i][1]);
 		close(pipe_pfe2relay[i][0]);
+	}
 
 	size = sizeof(struct imsgbuf);
 	if ((ibuf_hce = calloc(1, size)) == NULL ||

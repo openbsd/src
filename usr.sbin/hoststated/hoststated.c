@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.21 2007/03/17 22:54:49 reyk Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.22 2007/05/26 19:58:49 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -45,11 +45,13 @@ void		 main_dispatch_pfe(int, short, void *);
 void		 main_dispatch_hce(int, short, void *);
 void		 main_dispatch_relay(int, short, void *);
 int		 check_child(pid_t, const char *);
+int		 send_all(struct hoststated *, enum imsg_type,
+		    void *, u_int16_t);
 
 int		 pipe_parent2pfe[2];
 int		 pipe_parent2hce[2];
-int		 pipe_parent2relay[2];
 int		 pipe_pfe2hce[2];
+int		 pipe_parent2relay[RELAY_MAXPROC][2];
 int		 pipe_pfe2relay[RELAY_MAXPROC][2];
 
 struct imsgbuf	*ibuf_pfe;
@@ -109,20 +111,20 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int		 c;
-	int		 debug;
-	u_int32_t	 opts;
-	struct hoststated	 env;
-	const char	*conffile;
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
-	struct event	 ev_sigchld;
-	struct event	 ev_sighup;
+	int			 c;
+	int			 debug;
+	u_int32_t		 opts;
+	struct hoststated	*env;
+	const char		*conffile;
+	struct event		 ev_sigint;
+	struct event		 ev_sigterm;
+	struct event		 ev_sigchld;
+	struct event		 ev_sighup;
+	struct imsgbuf		*ibuf;
 
 	opts = 0;
 	debug = 0;
 	conffile = CONF_FILE;
-	bzero(&env, sizeof (env));
 
 	for (;(c = getopt(argc, argv, "dD:nf:v")) != -1;) {
 		switch (c) {
@@ -150,15 +152,15 @@ main(int argc, char *argv[])
 
 	log_init(debug);
 
-	if (parse_config(&env, conffile, opts))
+	if ((env = parse_config(conffile, opts)) == NULL)
 		exit(1);
 
-	if (env.opts & HOSTSTATED_OPT_NOACTION) {
+	if (env->opts & HOSTSTATED_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
 	if (debug)
-		env.opts |= HOSTSTATED_OPT_LOGUPDATE;
+		env->opts |= HOSTSTATED_OPT_LOGUPDATE;
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -180,43 +182,43 @@ main(int argc, char *argv[])
 	    pipe_parent2hce) == -1)
 		fatal("socketpair");
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-	    pipe_parent2relay) == -1)
-		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
 	    pipe_pfe2hce) == -1)
 		fatal("socketpair");
-	for (c = 0; c < env.prefork_relay; c++) {
+	for (c = 0; c < env->prefork_relay; c++) {
+		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+		    pipe_parent2relay[c]) == -1)
+			fatal("socketpair");
 		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
 		    pipe_pfe2relay[c]) == -1)
 			fatal("socketpair");
 		session_socket_blockmode(pipe_pfe2relay[c][0], BM_NONBLOCK);
 		session_socket_blockmode(pipe_pfe2relay[c][1], BM_NONBLOCK);
+		session_socket_blockmode(pipe_parent2relay[c][0], BM_NONBLOCK);
+		session_socket_blockmode(pipe_parent2relay[c][1], BM_NONBLOCK);
 	}
 
 	session_socket_blockmode(pipe_parent2pfe[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_parent2pfe[1], BM_NONBLOCK);
 	session_socket_blockmode(pipe_parent2hce[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_parent2hce[1], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2relay[0], BM_NONBLOCK);
-	session_socket_blockmode(pipe_parent2relay[1], BM_NONBLOCK);
 	session_socket_blockmode(pipe_pfe2hce[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_pfe2hce[1], BM_NONBLOCK);
 
-	pfe_pid = pfe(&env, pipe_parent2pfe, pipe_parent2hce,
+	pfe_pid = pfe(env, pipe_parent2pfe, pipe_parent2hce,
 	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
-	hce_pid = hce(&env, pipe_parent2pfe, pipe_parent2hce,
+	hce_pid = hce(env, pipe_parent2pfe, pipe_parent2hce,
 	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
-	relay_pid = relay(&env, pipe_parent2pfe, pipe_parent2hce,
+	relay_pid = relay(env, pipe_parent2pfe, pipe_parent2hce,
 	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
 
 	setproctitle("parent");
 
 	event_init();
 
-	signal_set(&ev_sigint, SIGINT, main_sig_handler, &env);
-	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, &env);
-	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, &env);
-	signal_set(&ev_sighup, SIGHUP, main_sig_handler, &env);
+	signal_set(&ev_sigint, SIGINT, main_sig_handler, env);
+	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, env);
+	signal_set(&ev_sigchld, SIGCHLD, main_sig_handler, env);
+	signal_set(&ev_sighup, SIGHUP, main_sig_handler, env);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigchld, NULL);
@@ -225,22 +227,30 @@ main(int argc, char *argv[])
 
 	close(pipe_parent2pfe[1]);
 	close(pipe_parent2hce[1]);
-	close(pipe_parent2relay[1]);
 	close(pipe_pfe2hce[0]);
 	close(pipe_pfe2hce[1]);
-	for (c = 0; c < env.prefork_relay; c++) {
+	for (c = 0; c < env->prefork_relay; c++) {
 		close(pipe_pfe2relay[c][0]);
 		close(pipe_pfe2relay[c][1]);
+		close(pipe_parent2relay[c][0]);
 	}
 
 	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_relay = calloc(1, sizeof(struct imsgbuf))) == NULL)
+	    (ibuf_relay = calloc(env->prefork_relay,
+	    sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 
 	imsg_init(ibuf_pfe, pipe_parent2pfe[0], main_dispatch_pfe);
 	imsg_init(ibuf_hce, pipe_parent2hce[0], main_dispatch_hce);
-	imsg_init(ibuf_relay, pipe_parent2relay[0], main_dispatch_relay);
+	for (c = 0; c < env->prefork_relay; c++) {
+		ibuf = &ibuf_relay[c];
+		imsg_init(ibuf, pipe_parent2relay[c][1], main_dispatch_relay);
+		ibuf->events = EV_READ;
+		event_set(&ibuf->ev, ibuf->fd, ibuf->events,
+		    ibuf->handler, ibuf);
+		event_add(&ibuf->ev, NULL);
+	}
 
 	ibuf_pfe->events = EV_READ;
 	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
@@ -252,13 +262,8 @@ main(int argc, char *argv[])
 	    ibuf_hce->handler, ibuf_hce);
 	event_add(&ibuf_hce->ev, NULL);
 
-	ibuf_relay->events = EV_READ;
-	event_set(&ibuf_relay->ev, ibuf_relay->fd, ibuf_relay->events,
-	    ibuf_relay->handler, ibuf_relay);
-	event_add(&ibuf_relay->ev, NULL);
-
-	if (env.flags & F_DEMOTE)
-		carp_demote_reset(env.demote_group, 0);
+	if (env->flags & F_DEMOTE)
+		carp_demote_reset(env->demote_group, 0);
 
 	event_dispatch();
 
@@ -308,6 +313,22 @@ check_child(pid_t pid, const char *pname)
 		}
 	}
 
+	return (0);
+}
+
+int
+send_all(struct hoststated *env, enum imsg_type type, void *buf, u_int16_t len)
+{
+	int		 i;
+
+	if (imsg_compose(ibuf_pfe, type, 0, 0, buf, len) == -1)
+		return (-1);
+	if (imsg_compose(ibuf_hce, type, 0, 0, buf, len) == -1)
+		return (-1);
+	for (i = 0; i < env->prefork_relay; i++) {
+		if (imsg_compose(&ibuf_relay[i], type, 0, 0, buf, len) == -1)
+			return (-1);
+	}
 	return (0);
 }
 
@@ -451,6 +472,7 @@ main_dispatch_relay(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
+	imsg_event_add(ibuf);
 }
 
 struct host *

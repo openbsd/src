@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.41 2007/04/12 14:45:45 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.42 2007/05/26 19:58:49 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -117,7 +117,9 @@ enum imsg_type {
 	IMSG_SYNC,
 	IMSG_NATLOOK,
 	IMSG_DEMOTE,
-	IMSG_STATISTICS
+	IMSG_STATISTICS,
+	IMSG_RECONF,		/* reconfiguration notifies */
+	IMSG_RECONF_END
 };
 
 struct imsg_hdr {
@@ -567,8 +569,8 @@ void    session_socket_blockmode(int, enum blockmodes);
 extern  struct ctl_connlist ctl_conns;
 
 /* parse.y */
-int	parse_config(struct hoststated *, const char *, int);
-int	cmdline_symset(char *);
+struct hoststated	*parse_config(const char *, int);
+int			 cmdline_symset(char *);
 
 /* log.c */
 void	log_init(int);
@@ -607,8 +609,8 @@ void	 imsg_free(struct imsg *);
 void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 
 /* pfe.c */
-pid_t	 pfe(struct hoststated *, int [2], int [2], int [2], int [2],
-	    int [RELAY_MAXPROC][2]);
+pid_t	 pfe(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
+	    int [2], int [RELAY_MAXPROC][2]);
 void	 show(struct ctl_conn *);
 int	 enable_service(struct ctl_conn *, struct ctl_id *);
 int	 enable_table(struct ctl_conn *, struct ctl_id *);
@@ -627,13 +629,13 @@ void	 flush_rulesets(struct hoststated *);
 int	 natlook(struct hoststated *, struct ctl_natlook *);
 
 /* hce.c */
-pid_t	 hce(struct hoststated *, int [2], int [2], int [2], int [2],
-	    int [RELAY_MAXPROC][2]);
+pid_t	 hce(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
+	    int [2], int [RELAY_MAXPROC][2]);
 void	 hce_notify_done(struct host *, const char *);
 
 /* relay.c */
-pid_t	 relay(struct hoststated *, int [2], int [2], int [2], int [2],
-	    int [RELAY_MAXPROC][2]);
+pid_t	 relay(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
+	    int [2], int [RELAY_MAXPROC][2]);
 void	 relay_notify_done(struct host *, const char *);
 
 RB_PROTOTYPE(proto_tree, protonode, nodes, relay_proto_cmp);

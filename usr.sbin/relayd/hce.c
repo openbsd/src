@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.18 2007/03/07 17:40:32 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.19 2007/05/26 19:58:48 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -64,7 +64,7 @@ hce_sig_handler(int sig, short event, void *arg)
 
 pid_t
 hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
-    int pipe_parent2relay[2], int pipe_pfe2hce[2],
+    int pipe_parent2relay[RELAY_MAXPROC][2], int pipe_pfe2hce[2],
     int pipe_pfe2relay[RELAY_MAXPROC][2])
 {
 	pid_t		 pid;
@@ -118,9 +118,9 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	close(pipe_parent2hce[0]);
 	close(pipe_parent2pfe[0]);
 	close(pipe_parent2pfe[1]);
-	close(pipe_parent2relay[0]);
-	close(pipe_parent2relay[1]);
 	for (i = 0; i < env->prefork_relay; i++) {
+		close(pipe_parent2relay[i][0]);
+		close(pipe_parent2relay[i][1]);
 		close(pipe_pfe2relay[i][0]);
 		close(pipe_pfe2relay[i][1]);
 	}

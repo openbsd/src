@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.27 2007/05/02 09:07:28 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.28 2007/05/26 19:58:49 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -140,7 +140,7 @@ relay_sig_handler(int sig, short event, void *arg)
 
 pid_t
 relay(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
-    int pipe_parent2relay[2], int pipe_pfe2hce[2],
+    int pipe_parent2relay[RELAY_MAXPROC][2], int pipe_pfe2hce[2],
     int pipe_pfe2relay[RELAY_MAXPROC][2])
 {
 	pid_t		 pid;
@@ -210,20 +210,23 @@ relay(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	close(pipe_parent2hce[1]);
 	close(pipe_parent2pfe[0]);
 	close(pipe_parent2pfe[1]);
-	close(pipe_parent2relay[0]);
 	for (i = 0; i < env->prefork_relay; i++) {
 		if (i == proc_id)
 			continue;
+		close(pipe_parent2relay[i][0]);
+		close(pipe_parent2relay[i][1]);
 		close(pipe_pfe2relay[i][0]);
 		close(pipe_pfe2relay[i][1]);
 	}
+	close(pipe_parent2relay[proc_id][1]);
 	close(pipe_pfe2relay[proc_id][1]);
 
 	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
 		fatal("relay");
+	imsg_init(ibuf_main, pipe_parent2relay[proc_id][0],
+	    relay_dispatch_parent);
 	imsg_init(ibuf_pfe, pipe_pfe2relay[proc_id][0], relay_dispatch_pfe);
-	imsg_init(ibuf_main, pipe_parent2relay[1], relay_dispatch_parent);
 
 	ibuf_pfe->events = EV_READ;
 	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
@@ -1933,6 +1936,7 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
+	imsg_event_add(ibuf);
 }
 
 SSL_CTX *
