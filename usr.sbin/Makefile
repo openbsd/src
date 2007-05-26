@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.134 2007/05/18 16:08:12 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.135 2007/05/26 21:39:45 grunk Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ SUBDIR=	ac accton acpidump adduser amd apm apmd arp \
 	rmt route6d rpc.bootparamd rpc.lockd rtadvd rtsold rwhod sa \
 	sasyncd sensorsd sliplogin slstats spamdb spray syslogc syslogd \
 	tcpdrop tcpdump timed tokenadm tokeninit traceroute traceroute6 \
-	trpt usbdevs user vipw vnconfig watchdogd wsconscfg wsfontload \
+	trpt usbdevs user vipw watchdogd wsconscfg wsfontload \
 	wsmoused zdump zic ztsscale
 
 .if (${AFS:L} == "yes")

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.82 2007/05/18 16:08:12 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.83 2007/05/26 21:39:45 grunk Exp $
 
 SUBDIR=	atactl badsect bioctl brconfig ccdconfig clri dhclient \
 	disklabel dmesg dump dumpfs fdisk fsck fsck_ext2fs fsck_ffs  \
@@ -6,7 +6,7 @@ SUBDIR=	atactl badsect bioctl brconfig ccdconfig clri dhclient \
 	isakmpd kbd lmccontrol mknod modload modunload mount \
 	mount_ados mount_cd9660 mount_ext2fs mount_ffs mount_msdos \
 	mount_nfs mount_ntfs mount_portal mount_procfs mount_udf \
-	mount_xfs mountd ncheck_ffs newfs newfs_msdos \
+	mount_vnd mount_xfs mountd ncheck_ffs newfs newfs_msdos \
 	nfsd nmeaattach nologin pdisk pfctl pflogd ping ping6 quotacheck \
 	raidctl reboot restore route routed rtsol savecore scan_ffs \
 	scsi shutdown slattach swapctl sysctl ttyflags tunefs \
