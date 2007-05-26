@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2005/12/31 22:41:38 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 2007/05/26 19:54:24 todd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -82,6 +82,7 @@ struct bdevsw   bdevsw[] =
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 #include "audio.h"
+#include "bio.h"
 #include "pty.h"
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -161,7 +162,7 @@ struct cdevsw   cdevsw[] =
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
 	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */
-	cdev_notdef(),			/* 37 */
+	cdev_bio_init(NBIO,bio),	/* 37: ioctl tunnel */
 	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
 	cdev_disk_init(NWD,wd),		/* 39: ST506 disk */
 	cdev_lkm_dummy(),

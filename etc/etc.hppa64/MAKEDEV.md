@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.4 2006/04/16 02:49:52 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.5 2007/05/26 19:54:23 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -51,6 +51,7 @@ _TITLE(prn)
 _DEV(lpt, 26)
 _TITLE(spec)
 _DEV(au, 35)
+_DEV(bio, 37)
 _DEV(bpf, 17)
 _DEV(cry, 36)
 _DEV(fdesc, 16)
@@ -85,6 +86,7 @@ twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
 twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
 target(all, pty, 0)dnl
 target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
+target(all, bio)dnl
 target(all, tun, 0, 1, 2, 3)dnl
 target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl

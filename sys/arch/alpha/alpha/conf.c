@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.51 2005/11/15 14:36:48 robert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.52 2007/05/26 19:54:24 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@ cdev_decl(music);
 #include "spkr.h"
 cdev_decl(spkr);
 
+#include "bio.h"
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(prom);			/* XXX XXX XXX */
@@ -178,7 +179,7 @@ struct cdevsw	cdevsw[] =
 	cdev_midi_init(NMIDI,midi),     /* 41: MIDI I/O */
         cdev_midi_init(NSEQUENCER,sequencer),   /* 42: sequencer I/O */
 	cdev_disk_init(NRAID,raid),	/* 43: RAIDframe disk driver */
-	cdev_notdef(),			/* 44 */
+	cdev_bio_init(NBIO,bio),	/* 44: ioctl tunnel */
 	cdev_usb_init(NUSB,usb),	/* 45: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 46: USB generic HID */
 	cdev_ulpt_init(NULPT,ulpt),	/* 47: USB printer */

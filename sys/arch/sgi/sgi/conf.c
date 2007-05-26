@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2005/08/01 15:43:51 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.10 2007/05/26 19:54:24 todd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,6 +93,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 #define mmwrite mmrw
 dev_type_read(mmrw);
 cdev_decl(mm);
+#include "bio.h"
 #include "pty.h"
 cdev_decl(fd);
 #include "st.h"
@@ -141,7 +142,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 13: network tunnel */
-	cdev_notdef(),			/* 14: */
+	cdev_bio_init(NBIO,bio),	/* 14: ioctl tunnel */
 	cdev_notdef(),			/* 15: */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */

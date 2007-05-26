@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.128 2007/04/30 18:46:32 pedro Exp $
+#	$OpenBSD: GENERIC,v 1.129 2007/05/26 19:54:24 todd Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -103,5 +103,6 @@ pseudo-device	trunk		# Trunking support
 #pseudo-device	faith	1	# IPv[46] tcp relay translation i/f
 
 pseudo-device	pppoe	1	# PPP over Ethernet (RFC 2516)
+pseudo-device	bio	1	# ioctl multiplexing device
 
 option		BOOT_CONFIG	# add support for boot -c
