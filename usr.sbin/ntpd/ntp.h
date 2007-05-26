@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.11 2004/12/13 12:22:52 dtucker Exp $ */
+/*	$OpenBSD: ntp.h,v 1.12 2007/05/26 21:20:35 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -105,9 +105,7 @@ struct ntp_msg {
 	struct l_fixedpt orgtime;
 	struct l_fixedpt rectime;
 	struct l_fixedpt xmttime;
-	u_int32_t keyid;
-	u_int8_t digest[NTP_DIGESTSIZE];
-};
+} __packed;
 
 struct ntp_query {
 	int			fd;
