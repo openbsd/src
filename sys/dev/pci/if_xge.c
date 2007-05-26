@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.40 2007/05/26 18:38:26 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.41 2007/05/26 18:40:28 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -209,8 +209,8 @@ struct xge_softc {
 };
 
 #ifdef XGE_DEBUG
-#define DPRINTF(x)	if (xgedebug) printf x
-#define DPRINTFN(n,x)	if (xgedebug >= (n)) printf x
+#define DPRINTF(x)	do { if (xgedebug) printf x ; } while (0)
+#define DPRINTFN(n,x)	do { if (xgedebug >= (n)) printf x ; } while (0)
 int	xgedebug = 0;
 #else
 #define DPRINTF(x)
