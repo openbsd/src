@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.269 2007/05/26 23:45:44 espie Exp $
+# $OpenBSD: pkg_add,v 1.270 2007/05/26 23:55:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -98,7 +98,8 @@ sub installed
 package main;
 sub can_install
 {
-	my ($plist, $state, $handle) = @_;
+	my ($handle, $state) = @_;
+	my $plist = $handle->{plist};
 	my $pkgname = $plist->pkgname;
 	$plist->{replacing} = [];
 	my @conflicts = OpenBSD::PkgCfl::find_all($plist, $state);
@@ -205,7 +206,7 @@ sub prepare_to_add
 		return $handle;
 	}
 	$handle->{location} = $location;
-    	my $plist = $location->{plist} = $location->plist;
+    	my $plist = $handle->{plist} = $location->{plist} = $location->plist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
@@ -216,7 +217,7 @@ sub prepare_to_add
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
 		return $handle;
 	}
-	my $pkgname = $location->{pkgname} = $plist->pkgname;
+	my $pkgname = $handle->{pkgname} = $location->{pkgname} = $plist->pkgname;
 	if ($pkg ne '-') {
 		if (!defined $pkgname or 
 		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
@@ -229,7 +230,7 @@ sub prepare_to_add
 		print $state->deptree_header($pkg);
 		print "parsing $pkgname\n";
 	}
-	if (!can_install($plist, $state, $handle)) {
+	if (!can_install($handle, $state)) {
 		$location->close_with_client_error;
 		$location->wipe_info;
 		delete $location->{plist};
@@ -272,14 +273,15 @@ sub failed_install
 	OpenBSD::Add::borked_installation($plist, $handle->info, $not, $msg);
 }
 
-sub really_add($$)
+sub really_add
 {
 	my ($handle, $state) = @_;
+	my $location = $handle->{location};
 	my $destdir = $state->{destdir};
 	my $plist = $handle->{plist};
-	my $dir = $handle->info;
+	my $dir = $location->info;
 	my $pkgname = $plist->pkgname;
-	$state->{archive} = $handle;
+	$state->{archive} = $location;
 	$plist->{dir} = $dir;
 	$state->{dir} = $plist->{dir};
 	$state->set_pkgname($pkgname);
@@ -320,7 +322,7 @@ sub really_add($$)
 	my $totsize = OpenBSD::Add::validate_plist($plist, $state);
 	OpenBSD::Vstat::synchronize();
 
-	if (!defined $handle) {
+	if (!defined $location) {
 		Fatal "Archive in $pkgname broken";
 	}
 
@@ -363,7 +365,7 @@ sub really_add($$)
 		}
 		OpenBSD::ProgressMeter::next();
 		if ($interrupted || $errors) {
-			failed_install($handle, $state->{not}, $interrupted);
+			failed_install($location, $state->{not}, $interrupted);
 		}
 
 		for my $op (@toreplace) {
@@ -411,7 +413,7 @@ sub really_add($$)
 
 		if ($interrupted || $errors) {
 			# here we should remove links from the temp package
-			failed_install($handle, $state->{not}, $interrupted);
+			failed_install($location, $state->{not}, $interrupted);
 		}
 	} else {
 		do_script($plist, REQUIRE, $state, "INSTALL");
@@ -444,7 +446,7 @@ sub really_add($$)
 	}
 
 	try { 
-		$handle->finish_and_close; }
+		$location->finish_and_close; }
 	catchall {
 		Warn $_;
 		$errors++;
@@ -462,14 +464,14 @@ sub really_add($$)
 
 	unlink($dir.CONTENTS);
 	if ($interrupted || $errors) {
-		failed_install($handle, $state->{not}, $interrupted);
+		failed_install($location, $state->{not}, $interrupted);
 	}
 	OpenBSD::SharedLibs::add_libs_from_plist($plist);
 	$plist->to_cache;
 	my $dest = installed_info($pkgname);
 	OpenBSD::Add::register_installation($dir, $dest, $plist);
-	if (defined $handle->{solver}) {
-		$handle->{solver}->register_dependencies;
+	if (defined $location->{solver}) {
+		$location->{solver}->register_dependencies;
 	}
 	add_installed($pkgname);
 	OpenBSD::PkgCfl::register($plist, $state);
@@ -517,12 +519,12 @@ sub install_package
 	}
 
 	my $location = $handle->{location};
-	if ($state->is_installed($location->{pkgname})) {
+	if ($state->is_installed($handle->{pkgname})) {
 		$location->close_now;
 		return ();
 	}
 
-	my $plist = $location->{plist};
+	my $plist = $handle->{plist};
 
 	if (is_installed($plist->pkgname) && !$state->{forced}->{installed}) {
 		if ($state->{replace}) {
@@ -585,10 +587,10 @@ sub install_package
 			return ();
 		}
 	}
-	really_add($location, $state);
+	really_add($handle, $state);
 	$location->wipe_info;
-	delete $location->{plist};
-	$state->mark_installed($location->{pkgname});
+	delete $handle->{plist};
+	$state->mark_installed($handle->{pkgname});
 	return ();
 }
 
