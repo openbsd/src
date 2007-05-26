@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.26 2007/05/26 01:10:52 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.27 2007/05/26 18:11:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -90,9 +90,9 @@ struct nx_txdesc {
 #define   NX_TXDESC0_OP_TX	(1<<0)		/* raw Ethernet packet */
 #define  NX_TXDESC0_RES0_S	29		/* Reserved */
 #define  NX_TXDESC0_RES0_M	0x00000000e0000000ULL
-#define  NX_TXDESC0_NBUF_S	0		/* number of buffers */
+#define  NX_TXDESC0_NBUF_S	32		/* number of buffers */
 #define  NX_TXDESC0_NBUF_M	0x000000ff00000000ULL
-#define  NX_TXDESC0_LENGTH_S	8		/* length */
+#define  NX_TXDESC0_LENGTH_S	40		/* length */
 #define  NX_TXDESC0_LENGTH_M	0xffffff0000000000ULL
 	u_int64_t		tx_addr2;	/* address of buffer 2 */
 	u_int64_t		tx_word2;

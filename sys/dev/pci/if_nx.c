@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.47 2007/05/26 17:13:30 jason Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.48 2007/05/26 18:11:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1620,8 +1620,8 @@ nx_start(struct ifnet *ifp)
 	struct nx_buf		*nb;
 	struct nx_txdesc	*txd;
 	bus_dmamap_t		 map;
-	u_int64_t		 port = nxp->nxp_id;
-	u_int32_t		 producer, len;
+	u_int64_t		 port = nxp->nxp_id, nsegs, len;
+	u_int32_t		 producer;
 	u_int			 i, idx, tx = 0;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0||
@@ -1686,8 +1686,9 @@ nx_start(struct ifnet *ifp)
 #endif
 
 		len = 0;
+		nsegs = map->dm_nsegs;
 		txd->tx_buflength = 0;
-		for (i = 0; i < map->dm_nsegs; i++) {
+		for (i = 0; i < nsegs; i++) {
 			len += map->dm_segs[i].ds_len;
 			switch (i) {
 			case 0:
@@ -1718,15 +1719,15 @@ nx_start(struct ifnet *ifp)
 		}
 		txd->tx_word0 =
 		    ((NX_TXDESC0_OP_TX << NX_TXDESC0_OP_S) & NX_TXDESC0_OP_M) |
-		    ((map->dm_nsegs << NX_TXDESC0_NBUF_S) & NX_TXDESC0_NBUF_M) |
+		    ((nsegs << NX_TXDESC0_NBUF_S) & NX_TXDESC0_NBUF_M) |
 		    ((len << NX_TXDESC0_LENGTH_S) & NX_TXDESC0_LENGTH_M);
 		txd->tx_word2 =
 		    ((idx << NX_TXDESC2_HANDLE_S) & NX_TXDESC2_HANDLE_M) |
 		    ((port << NX_TXDESC2_PORT_S) & NX_TXDESC2_PORT_M) |
 		    ((port << NX_TXDESC2_CTXID_S) & NX_TXDESC2_CTXID_M);
 
-		DPRINTF(NXDBG_TX, "%s(%s): txd w0:%016x w2:%016x "
-		    "a1:%016x a2:%016x a3:%016x a4:%016x len:%016x\n",
+		DPRINTF(NXDBG_TX, "%s(%s): txd w0:%016llx w2:%016llx "
+		    "a1:%016llx a2:%016llx a3:%016llx a4:%016llx len:%016llx\n",
 		    DEVNAME(nx), __func__, txd->tx_word0, txd->tx_word2,
 		    txd->tx_addr1, txd->tx_addr2, txd->tx_addr3, txd->tx_addr4,
 		    txd->tx_buflength);
@@ -2071,7 +2072,7 @@ nx_init_rings(struct nx_softc *nx)
 	/* Tx buffers */
 	for (i = 0; i < NX_MAX_TX_DESC; i++) {
 		nb = &rd->rd_txbuf[i];
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 4,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &nb->nb_dmamap) != 0) {
 			printf("%s: unable to create dmamap for tx %d\n",
 			    DEVNAME(nx), i);
