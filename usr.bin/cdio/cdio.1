@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.41 2007/03/26 11:46:07 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.42 2007/05/26 03:00:03 mjc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -92,6 +92,26 @@ In case of multiple matches, reissue the command with
 .Ar n .
 .It Ic cdid
 Print the disc ID that will be used for matching with the CDDB.
+.It Ic cdrip
+.Op Ar track1-trackN ...
+Rip specified tracks from disk.
+Audio tracks are saved as WAVE sound files.
+All tracks will be saved in the current working directory.
+If parameters are omitted, all tracks are ripped.
+Both individual tracks and track ranges may be specified, in the same format as the
+.Ic cdplay
+command.
+.It Ic cdplay
+.Op Ar track1-trackN ...
+Play specified tracks from disk.
+Unlike
+.Ic cdrip
+it rips tracks from disk and outputs audio data to
+.Pa /dev/audio .
+Both individual tracks and track ranges may be specified.
+If range is specified in descending order tracks will be played in descending order.
+If the first value in the range is omitted, tracks from first track on disk to the specified one will be played.
+If the last value in the range is omitted, tracks from the specified track to the last track on disk will be played.
 .It Ic close
 Inject the disc.
 .It Ic debug Ar on | off

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.56 2006/08/25 04:38:32 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.57 2007/05/26 03:00:03 mjc Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -105,6 +105,8 @@
 #define CMD_CDDB	19
 #define CMD_CDID	20
 #define CMD_BLANK	21
+#define CMD_CDRIP	22
+#define CMD_CDPLAY	23
 
 struct cmdtab {
 	int command;
@@ -137,6 +139,8 @@ struct cmdtab {
 { CMD_CDID,	"cdid",		3, "" },
 { CMD_QUIT,	"exit",		2, "" },
 { CMD_BLANK,	"blank",	1, "" },
+{ CMD_CDRIP,	"cdrip",	1, "[[track1-trackN] ...]" },
+{ CMD_CDPLAY,	"cdplay",	1, "[[track1-trackN] ...]" },
 { 0, 0, 0, 0}
 };
 
@@ -572,6 +576,22 @@ run(int cmd, char *arg)
 			return 0;
 
 		return blank();
+	case CMD_CDRIP:
+		if (fd < 0 && ! open_cd(cdname, 0))
+			return (0);
+
+		while (isspace(*arg))
+			arg++;
+
+		return cdrip(arg);
+	case CMD_CDPLAY:
+		if (fd < 0 && ! open_cd(cdname, 0))
+			return (0);
+
+		while (isspace(*arg))
+			arg++;
+
+		return cdplay(arg);
 	default:
 	case CMD_HELP:
 		help();
