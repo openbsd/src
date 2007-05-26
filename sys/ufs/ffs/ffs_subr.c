@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.19 2007/01/06 23:30:42 tedu Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.20 2007/05/26 20:26:51 pedro Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -68,10 +68,11 @@ ffs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 	bsize = blksize(fs, ip, lbn);
 
 	*bpp = NULL;
-	if ((error = bread(vp, lbn, bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
+	bp->b_bcount = bsize;
 	if (res)
 		*res = (char *)bp->b_data + blkoff(fs, offset);
 	*bpp = bp;
@@ -122,14 +123,13 @@ ffs_fragacct(struct fs *fs, int fragmap, int32_t fraglist[], int cnt)
 void
 ffs_checkoverlap(struct buf *bp, struct inode *ip)
 {
-	struct buf *ebp, *ep;
 	daddr_t start, last;
 	struct vnode *vp;
+	struct buf *ep;
 
-	ebp = &buf[nbuf];
 	start = bp->b_blkno;
 	last = start + btodb(bp->b_bcount) - 1;
-	for (ep = buf; ep < ebp; ep++) {
+	LIST_FOREACH(ep, &bufhead, b_list) {
 		if (ep == bp || (ep->b_flags & B_INVAL) ||
 		    ep->b_vp == NULLVP)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.34 2007/04/11 16:08:50 thib Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.35 2007/05/26 20:26:51 pedro Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -315,8 +315,8 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		size = fs->e2fs_bsize;
 		uvm_vnp_setsize(ovp, length);
 		uvm_vnp_uncache(ovp);
-		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
-		allocbuf(bp, size);
+		bzero(bp->b_data + offset, (u_int)(size - offset));
+		bp->b_bcount = size;
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else

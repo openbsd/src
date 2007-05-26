@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.18 2006/10/16 11:27:53 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.19 2007/05/26 20:26:51 pedro Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -119,9 +119,6 @@ ext2fs_read(v)
 
 		if (lblktosize(fs, nextlbn) >= ext2fs_size(ip))
 			error = bread(vp, lbn, size, NOCRED, &bp);
-		else if (doclusterread)
-			error = cluster_read(vp, &ip->i_ci,
-				ext2fs_size(ip), lbn, size, NOCRED, &bp);
 		else if (lbn - 1 == ip->i_ci.ci_lastr) {
 			int nextsize = fs->e2fs_bsize;
 			error = breadn(vp, lbn,

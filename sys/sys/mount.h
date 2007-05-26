@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.79 2007/04/24 12:10:28 millert Exp $	*/
+/*	$OpenBSD: mount.h,v 1.80 2007/05/26 20:26:51 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -599,9 +599,7 @@ void	vfs_shutdown(void);	/* unmount and sync file systems */
 long	makefstype(char *);
 int	dounmount(struct mount *, int, struct proc *, struct vnode *);
 void	vfsinit(void);
-#ifdef DEBUG
 void	vfs_bufstats(void);
-#endif
 int	vfs_register(struct vfsconf *);
 int	vfs_unregister(struct vfsconf *);
 #else /* _KERNEL */

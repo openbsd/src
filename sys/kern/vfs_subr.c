@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.147 2007/05/26 18:42:21 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.148 2007/05/26 20:26:51 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -120,8 +120,7 @@ void
 vntblinit(void)
 {
 
-	/* every buffer needs its vnode! */
-	desiredvnodes = nbuf;
+	desiredvnodes = bufpages;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
 	    &pool_allocator_nointr);
 	TAILQ_INIT(&vnode_hold_list);
@@ -1694,7 +1693,7 @@ vfs_syncwait(int verbose)
 	dcount = 10000;
 	for (iter = 0; iter < 20; iter++) {
 		nbusy = 0;
-		for (bp = &buf[nbuf]; --bp >= buf; ) {
+		LIST_FOREACH(bp, &bufhead, b_list) {
 			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
 				nbusy++;
 			/*

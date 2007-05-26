@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.43 2007/04/13 17:09:22 thib Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.44 2007/05/26 20:26:51 pedro Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ ffs_read(void *v)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
-		size = blksize(fs, ip, lbn);
+		size = fs->fs_bsize;	/* WAS blksize(fs, ip, lbn); */
 		blkoffset = blkoff(fs, uio->uio_offset);
 		xfersize = fs->fs_bsize - blkoffset;
 		if (uio->uio_resid < xfersize)
@@ -224,13 +224,8 @@ ffs_read(void *v)
 
 		if (lblktosize(fs, nextlbn) >= DIP(ip, size))
 			error = bread(vp, lbn, size, NOCRED, &bp);
-		else if (doclusterread)
-			error = cluster_read(vp, &ip->i_ci,
-			    DIP(ip, size), lbn, size, NOCRED, &bp);
 		else if (lbn - 1 == ip->i_ci.ci_lastr) {
-			int nextsize = blksize(fs, ip, nextlbn);
-			error = breadn(vp, lbn,
-			    size, &nextlbn, &nextsize, 1, NOCRED, &bp);
+			error = bread_cluster(vp, lbn, size, &bp);
 		} else
 			error = bread(vp, lbn, size, NOCRED, &bp);
 

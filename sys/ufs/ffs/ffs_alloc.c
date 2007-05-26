@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.72 2007/04/29 17:58:09 deraadt Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.73 2007/05/26 20:26:51 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -211,9 +211,12 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	/*
 	 * Allocate the extra space in the buffer.
 	 */
-	if (bpp != NULL &&
-	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0)
-		goto error;
+	if (bpp != NULL) {
+		if ((error = bread(ITOV(ip), lbprev, fs->fs_bsize,
+		    NOCRED, &bp)) != 0)
+			goto error;
+		bp->b_bcount = osize;
+	}
 
 	if ((error = ufs_quota_alloc_blocks(ip, btodb(nsize - osize), cred))
 	    != 0)
@@ -231,9 +234,13 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		if (bpp != NULL) {
 			if (bp->b_blkno != fsbtodb(fs, bno))
 				panic("ffs_realloccg: bad blockno");
-			allocbuf(bp, nsize);
+#ifdef DIAGNOSTIC
+			if (nsize > bp->b_bufsize)
+				panic("ffs_realloccg: small buf");
+#endif
+			bp->b_bcount = nsize;
 			bp->b_flags |= B_DONE;
-			bzero((char *)bp->b_data + osize, (u_int)nsize - osize);
+			bzero(bp->b_data + osize, (u_int)nsize - osize);
 			*bpp = bp;
 		}
 		if (blknop != NULL) {
@@ -300,9 +307,13 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (bpp != NULL) {
 		bp->b_blkno = fsbtodb(fs, bno);
-		allocbuf(bp, nsize);
+#ifdef DIAGNOSTIC
+		if (nsize > bp->b_bufsize)
+			panic("ffs_realloccg: small buf 2");
+#endif
+		bp->b_bcount = nsize;
 		bp->b_flags |= B_DONE;
-		bzero((char *)bp->b_data + osize, (u_int)nsize - osize);
+		bzero(bp->b_data + osize, (u_int)nsize - osize);
 		*bpp = bp;
 	}
 	if (blknop != NULL) {

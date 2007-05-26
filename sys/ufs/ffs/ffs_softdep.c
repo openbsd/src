@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.86 2007/04/15 10:48:35 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.87 2007/05/26 20:26:51 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4655,11 +4655,11 @@ softdep_fsync(vp)
 		/*
 		 * Flush directory page containing the inode's name.
 		 */
-		error = bread(pvp, lbn, blksize(fs, pip, lbn), p->p_ucred,
-		    &bp);
-		if (error == 0)
+		error = bread(pvp, lbn, fs->fs_bsize, p->p_ucred, &bp);
+		if (error == 0) {
+			bp->b_bcount = blksize(fs, pip, lbn);
 			error = bwrite(bp);
-		else
+		} else
 			brelse(bp);
 		vput(pvp);
 		if (error != 0)

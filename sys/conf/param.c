@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.25 2007/03/12 19:25:58 mickey Exp $	*/
+/*	$OpenBSD: param.c,v 1.26 2007/05/26 20:26:51 pedro Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -154,11 +154,8 @@ struct	msginfo msginfo = {
 #endif
 
 /*
- * These have to be allocated somewhere; allocating
+ * This has to be allocated somewhere; allocating
  * them here forces loader errors if this file is omitted
  * (if they've been externed everywhere else; hah!).
  */
-struct	buf *buf;
-char	*buffers;
-
 struct	utsname utsname;

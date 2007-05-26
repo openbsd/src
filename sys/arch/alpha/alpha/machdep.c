@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.107 2007/04/23 10:07:43 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.108 2007/05/26 20:26:50 pedro Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -134,12 +134,6 @@ void	printregs(struct reg *);
 /*
  * Declare these as initialized data so we can patch them.
  */
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT 10
 #endif
@@ -172,12 +166,6 @@ int	cputype;		/* system type, from the RPB */
 int	alpha_cpus;
 
 int	bootdev_debug = 0;	/* patchable, or from DDB */
-
-/*
- * XXX We need an address to which we can assign things so that they
- * won't be optimized away because we didn't use the value.
- */
-u_int32_t no_optimize;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -842,20 +830,6 @@ allocsys(v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate 10% of memory for buffer space.  Insure a
-	 * minimum of 16 buffers.
-	 */
-	if (bufpages == 0)
-		bufpages = (physmem / (100/bufcachepercent));
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	valloc(buf, struct buf, nbuf);
-
 #undef valloc
 
 	return v;
@@ -878,10 +852,7 @@ consinit()
 void
 cpu_startup()
 {
-	register unsigned i;
-	int base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 #if defined(DEBUG)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -908,44 +879,12 @@ cpu_startup()
 	}
 
 	/*
-	 * Allocate virtual address space for file I/O buffers.
-	 * Note they are different than the array of headers, 'buf',
-	 * and usually occupy more virtual memory than physical.
+	 * Determine how many buffers to allocate.
+	 * We allocate bufcachepercent% of memory for buffer space.
 	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)))
-		panic("startup: cannot allocate VM for buffers");
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
+	if (bufpages == 0)
+		bufpages = physmem * bufcachepercent / 100;
 
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-					VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-		pmap_update(pmap_kernel());
-	}
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -972,8 +911,6 @@ cpu_startup()
 		printf("stolen memory for VM structures = %d\n", pmap_pages_stolen * PAGE_SIZE);
 	}
 #endif
-	printf("using %ld buffers containing %ld bytes (%ldK) of memory\n",
-	    (long)nbuf, (long)bufpages * PAGE_SIZE, (long)bufpages * (PAGE_SIZE / 1024));
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

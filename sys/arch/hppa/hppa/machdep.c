@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.155 2007/05/21 23:05:44 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.156 2007/05/26 20:26:50 pedro Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -88,12 +88,6 @@
 /*
  * Patchable buffer cache parameters
  */
-#ifdef NBUF
-int nbuf = NBUF;
-#else
-int nbuf = 0;
-#endif
-
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT 10
 #endif /* BUFCACHEPERCENT */
@@ -383,28 +377,8 @@ hppa_init(start)
 	 * Now allocate kernel dynamic variables
 	 */
 
-	/* buffer cache parameters */
-	if (bufpages == 0)
-		bufpages = physmem / 100 *
-		    (physmem <= 0x1000? 5 : bufcachepercent);
-
-	if (nbuf == 0)
-		nbuf = bufpages < 16? 16 : bufpages;
-
-	/* Restrict to at most 30% filled kvm */
-	if (nbuf * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 3 / 10)
-		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    MAXBSIZE * 3 / 10;
-
-	/* More buffer pages than fits into the buffers is senseless. */
-	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
-		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
-
 	v1 = v = round_page(start);
 #define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
-
-	valloc(buf, struct buf, nbuf);
 
 #ifdef SYSVMSG
 	valloc(msgpool, char, msginfo.msgmax);
@@ -646,8 +620,6 @@ void
 cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
-	int i, base, residual;
 
 	/*
 	 * i won't understand a friend of mine,
@@ -661,39 +633,18 @@ cpu_startup(void)
 	printf("real mem = %u (%u reserved for PROM, %u used by OpenBSD)\n",
 	    ctob(physmem), ctob(resvmem), ctob(resvphysmem - resvmem));
 
-	size = MAXBSIZE * nbuf;
-	minaddr = vm_map_min(kernel_map);
-	if (uvm_map(kernel_map, &minaddr, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_NONE,
-	    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_NORMAL, 0)))
-		panic("cpu_startup: cannot allocate VM for buffers");
-	buffers = (caddr_t)minaddr;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vaddr_t curbuf;
-		int cbpgs;
+	/*
+	 * Determine how many buffers to allocate.
+	 * We allocate bufcachepercent% of memory for buffer space.
+	 */
+	if (bufpages == 0)
+		bufpages = physmem * bufcachepercent / 100;
 
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-
-		for (cbpgs = base + (i < residual? 1 : 0); cbpgs--; ) {
-			struct vm_page *pg;
-
-			if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    UVM_PROT_RW);
-			curbuf += PAGE_SIZE;
-		}
-	}
+	/* Restrict to at most 25% filled kvm */
+	if (bufpages >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / PAGE_SIZE / 4) 
+		bufpages = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+		    PAGE_SIZE / 4;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -709,8 +660,6 @@ cpu_startup(void)
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	printf("avail mem = %lu\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %u bytes of memory\n",
-	    nbuf, (unsigned)bufpages * PAGE_SIZE);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

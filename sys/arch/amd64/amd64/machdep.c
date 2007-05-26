@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2007/05/23 20:33:46 pvalchev Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2007/05/26 20:26:50 pedro Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -178,12 +178,6 @@ int kbd_reset;
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
-#ifdef NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT 10
 #endif
@@ -248,7 +242,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
 vaddr_t	allocsys(vaddr_t);
-void	setup_buffers(vaddr_t *);
+void	setup_buffers(void);
 int	cpu_dump(void);
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
@@ -319,11 +313,7 @@ cpu_startup(void)
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
-	/*
-	 * Now allocate buffers proper. They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	setup_buffers(&maxaddr);
+	setup_buffers();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -342,8 +332,6 @@ cpu_startup(void)
 
 	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024/1024);
-	printf("using %u buffers containing %u bytes (%uK) of memory\n",
-	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
 	bufinit();
 
@@ -358,18 +346,6 @@ cpu_startup(void)
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
 }
-
-
-/*
- * The following defines are for the code in setup_buffers that tries to
- * ensure that enough ISA DMAable memory is still left after the buffercache
- * has been allocated.
- */
-#define CHUNKSZ		(3 * 1024 * 1024)
-#define ISADMA_LIMIT	(16 * 1024 * 1024)	/* XXX wrong place */
-#define ALLOC_PGS(sz, limit, pgs) \
-    uvm_pglistalloc((sz), 0, (limit), PAGE_SIZE, 0, &(pgs), 1, 0)
-#define FREE_PGS(pgs) uvm_pglistfree(&(pgs))
 
 /*
  * Allocate space for system data structures.  We are given
@@ -394,136 +370,24 @@ allocsys(vaddr_t v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-	/*
-	 * Determine how many buffers to allocate.  We use 10% of the
-	 * first 2MB of memory, and 10% of the rest, with a minimum of 16
-	 * buffers.  We allocate 1/2 as many swap buffer headers as file
-	 * i/o buffers.
-	 */
-	if (bufpages == 0) {
-		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-		    bufcachepercent / 100;
-	}
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-
-	/* Restrict to at most 35% filled kvm */
-	/* XXX - This needs UBC... */
-	if (nbuf >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 35 / 100) 
-		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    MAXBSIZE * 35 / 100;
-
-	/* More buffer pages than fits into the buffers is senseless.  */
-	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
-		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
-
-	valloc(buf, struct buf, nbuf);
 	return v;
 }
 
 void
-setup_buffers(vaddr_t *maxaddr)
+setup_buffers()
 {
-	vsize_t size;
-	vaddr_t addr;
-	int base, residual, left, chunk, i;
-	struct pglist pgs, saved_pgs;
-	struct vm_page *pg;
-	int rv;
-
-	size = MAXBSIZE * nbuf;
-	addr = vm_map_min(kernel_map);
-	if ((rv = uvm_map(kernel_map, &addr, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0))))
-		panic("cpu_startup: cannot allocate VM for buffers %d", rv);
-	buffers = (char *)addr;
-
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE / PAGE_SIZE) {
-		/* don't want to alloc more physical mem than needed */
-		base = MAXBSIZE / PAGE_SIZE;
-		residual = 0;
-	}
-
 	/*
-	 * In case we might need DMA bouncing we have to make sure there
-	 * is some memory below 16MB available.  On machines with many
-	 * pages reserved for the buffer cache we risk filling all of that
-	 * area with buffer pages.  We still want much of the buffers
-	 * reside there as that lowers the probability of them needing to
-	 * bounce, but we have to set aside some space for DMA buffers too.
-	 *
-	 * The current strategy is to grab hold of one 3MB chunk below 16MB
-	 * first, which we are saving for DMA buffers, then try to get
-	 * one chunk at a time for fs buffers, until that is not possible
-	 * anymore, at which point we get the rest wherever we may find it.
-	 * After that we give our saved area back. That will guarantee at
-	 * least 3MB below 16MB left for drivers' attach routines, among
-	 * them isadma.  However we still have a potential problem of PCI
-	 * devices attached earlier snatching that memory.  This can be
-	 * solved by making the PCI DMA memory allocation routines go for
-	 * memory above 16MB first.
+	 * Determine how many buffers to allocate.
+	 * We allocate bufcachepercent% of memory for buffer space.
 	 */
+	if (bufpages == 0)
+		bufpages = physmem * bufcachepercent / 100;
 
-	left = bufpages;
-
-	/*
-	 * First, save ISA DMA bounce buffer area so we won't lose that
-	 * capability.
-	 */
-	TAILQ_INIT(&saved_pgs);
-	TAILQ_INIT(&pgs);
-	if (!ALLOC_PGS(CHUNKSZ, ISADMA_LIMIT, saved_pgs)) {
-		/*
-		 * Then, grab as much ISA DMAable memory as possible
-		 * for the buffer cache as it is nice to not need to
-		 * bounce all buffer I/O.
-		 */
-		for (left = bufpages; left > 0; left -= chunk) {
-			chunk = min(left, CHUNKSZ / PAGE_SIZE);
-			if (ALLOC_PGS(chunk * PAGE_SIZE, ISADMA_LIMIT, pgs))
-				break;
-		}
-	}
-
-	/*
-	 * If we need more pages for the buffer cache, get them from anywhere.
-	 */
-	if (left > 0 && ALLOC_PGS(left * PAGE_SIZE, avail_end, pgs))
-		panic("cannot get physical memory for buffer cache");
-
-	/*
-	 * Finally, give back the ISA DMA bounce buffer area, so it can be
-	 * allocated by the isadma driver later.
-	 */
-	if (!TAILQ_EMPTY(&saved_pgs))
-		FREE_PGS(saved_pgs);
-
-	pg = TAILQ_FIRST(&pgs);
-	for (i = 0; i < nbuf; i++) {
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		addr = (vaddr_t)buffers + i * MAXBSIZE;
-		for (size = PAGE_SIZE * (i < residual ? base + 1 : base);
-		    size > 0; size -= PAGE_SIZE, addr += PAGE_SIZE) {
-			pmap_kenter_pa(addr, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			pg = TAILQ_NEXT(pg, pageq);
-		}
-	}
-	pmap_update(pmap_kernel());
+	/* Restrict to at most 25% filled kvm */
+	if (bufpages >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / PAGE_SIZE / 4) 
+		bufpages = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+		    PAGE_SIZE / 4;
 }
 
 /*
