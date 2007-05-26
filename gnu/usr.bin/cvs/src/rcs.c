@@ -9,6 +9,7 @@
  */
 
 #include <assert.h>
+#include <err.h>
 #include "cvs.h"
 #include "edit.h"
 #include "hardlink.h"
@@ -86,6 +87,7 @@ static char *RCS_addbranch PROTO ((RCSNode *, const char *));
 static char *truncate_revnum_in_place PROTO ((char *));
 static char *truncate_revnum PROTO ((const char *));
 static char *printable_date PROTO((const char *));
+static char *mdoc_date PROTO((const char *));
 static char *escape_keyword_value PROTO ((const char *, int *));
 static void expand_keywords PROTO((RCSNode *, RCSVers *, const char *,
 				   const char *, size_t, enum kflag, char *,
@@ -3355,6 +3357,7 @@ static struct rcs_keyword keywords[] =
     { KEYWORD_INIT ("Revision") },
     { KEYWORD_INIT ("Source") },
     { KEYWORD_INIT ("State") },
+    { KEYWORD_INIT ("Mdocdate") },
     { NULL, 0 },
     { NULL, 0 }
 };
@@ -3371,6 +3374,7 @@ enum keyword
     KEYWORD_REVISION,
     KEYWORD_SOURCE,
     KEYWORD_STATE,
+    KEYWORD_MDOCDATE,
     KEYWORD_LOCALID
 };
 
@@ -3390,6 +3394,24 @@ printable_date (rcs_date)
 	year += 1900;
     sprintf (buf, "%04d/%02d/%02d %02d:%02d:%02d", year, mon, mday,
 	     hour, min, sec);
+    return xstrdup (buf);
+}
+
+static char *
+mdoc_date (rcs_date)
+     const char *rcs_date;
+{
+    int year, mon, mday, hour, min, sec;
+    char buf[100];
+    char *months[] = { "January", "Febuary", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+    (void) sscanf (rcs_date, SDATEFORM, &year, &mon, &mday, &hour, &min,
+		   &sec);
+    if (mon < 1 || mon > 12)
+	errx(1, "mdoc_date: month index out of bounds");
+
+    if (year < 1900)
+	year += 1900;
+    sprintf (buf, "%s %d %04d", months[mon - 1], mday, year);
     return xstrdup (buf);
 }
 
@@ -3602,6 +3624,11 @@ expand_keywords (rcs, ver, name, log, loglen, expand, buf, len, retbuf, retlen)
 
 	    case KEYWORD_DATE:
 		value = printable_date (ver->date);
+		free_value = 1;
+		break;
+
+	    case KEYWORD_MDOCDATE:
+		value = mdoc_date (ver->date);
 		free_value = 1;
 		break;
 
