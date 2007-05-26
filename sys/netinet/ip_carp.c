@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.137 2007/05/06 12:20:04 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.138 2007/05/26 17:13:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -820,7 +820,6 @@ carp_clone_create(ifc, unit)
 	struct if_clone *ifc;
 	int unit;
 {
-	extern int ifqmaxlen;
 	struct carp_softc *sc;
 	struct ifnet *ifp;
 

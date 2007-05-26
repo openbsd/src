@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.73 2006/11/16 13:13:38 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.74 2007/05/26 17:13:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -106,7 +106,6 @@ void	pfsync_bulk_update(void *);
 void	pfsync_bulkfail(void *);
 
 int	pfsync_sync_ok;
-extern int ifqmaxlen;
 
 struct if_clone	pfsync_cloner =
     IF_CLONE_INITIALIZER("pfsync", pfsync_clone_create, pfsync_clone_destroy);

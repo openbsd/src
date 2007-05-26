@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.87 2007/05/26 00:36:03 krw Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.88 2007/05/26 17:13:31 jason Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -113,8 +113,6 @@ int	tundebug = TUN_DEBUG;
 
 /* Only these IFF flags are changeable by TUNSIFINFO */
 #define TUN_IFF_FLAGS (IFF_UP|IFF_POINTOPOINT|IFF_MULTICAST|IFF_BROADCAST)
-
-extern int ifqmaxlen;
 
 void	tunattach(int);
 int	tunopen(dev_t, int, int, struct proc *);

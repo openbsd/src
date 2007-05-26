@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.47 2007/05/04 05:08:55 deraadt Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.48 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -342,8 +342,6 @@ struct mbuf *vic_alloc_mbuf(struct vic_softc *, bus_dmamap_t);
 const struct pci_matchid vic_devices[] = {
 	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET }
 };
-
-extern int ifqmaxlen;
 
 int
 vic_match(struct device *parent, void *match, void *aux)

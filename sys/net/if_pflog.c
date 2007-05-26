@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.23 2007/03/19 09:40:13 henning Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.24 2007/05/26 17:13:30 jason Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -86,8 +86,6 @@ struct if_clone	pflog_cloner =
     IF_CLONE_INITIALIZER("pflog", pflog_clone_create, pflog_clone_destroy);
 
 struct ifnet	*pflogifs[PFLOGIFS_MAX];	/* for fast access */
-
-extern int ifqmaxlen;
 
 void
 pflogattach(int npflog)

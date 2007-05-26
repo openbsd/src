@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.46 2007/05/26 16:44:21 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.47 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -302,8 +302,6 @@ const struct nxb_board {
 /* Use mapping table, see if_nxreg.h for details */
 const u_int32_t nx_swportreg[NXSW_PORTREG_MAX][NX_MAX_PORTS] = NXSW_PORTREGS;
 #define NXSW_PORTREG(_p, _r)	(nx_swportreg[_r][nx->nx_port->nxp_id])
-
-extern int ifqmaxlen;
 
 /*
  * Routines handling the physical ''nxb'' board

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.48 2007/04/11 14:50:55 claudio Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.49 2007/05/26 17:13:31 jason Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -230,7 +230,6 @@ ppp_clone_create(ifc, unit)
     struct if_clone *ifc;
     int unit;
 {
-    extern int ifqmaxlen;
     struct ppp_softc *sc;
     int s;
 

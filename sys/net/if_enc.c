@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.45 2006/12/12 15:08:36 reyk Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.46 2007/05/26 17:13:30 jason Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -78,8 +78,6 @@ int	encoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 int	encioctl(struct ifnet *, u_long, caddr_t);
 void	encstart(struct ifnet *);
-
-extern int ifqmaxlen;
 
 void
 encattach(int nenc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.161 2007/05/21 13:33:35 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.162 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -107,8 +107,6 @@
 #ifndef	BRIDGE_RTABLE_TIMEOUT
 #define	BRIDGE_RTABLE_TIMEOUT	240
 #endif
-
-extern int ifqmaxlen;
 
 void	bridgeattach(int);
 int	bridge_ioctl(struct ifnet *, u_long, caddr_t);

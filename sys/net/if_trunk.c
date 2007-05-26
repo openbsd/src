@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.31 2007/04/26 08:57:59 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.32 2007/05/26 17:13:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -60,7 +60,6 @@
 SLIST_HEAD(__trhead, trunk_softc) trunk_list;	/* list of trunks */
 
 extern struct ifaddr **ifnet_addrs;
-extern int ifqmaxlen;
 
 void	 trunkattach(int);
 int	 trunk_clone_create(struct if_clone *, int);
