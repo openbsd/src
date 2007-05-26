@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.10 2007/03/24 00:44:26 uwe Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.11 2007/05/26 17:06:36 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -687,7 +687,7 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 		cmd.c_blklen = ucmd->c_blklen;
 
 		if (ucmd->c_data) {
-			data = malloc(ucmd->c_datalen, M_DEVBUF,
+			data = malloc(ucmd->c_datalen, M_TEMP,
 			    M_WAITOK | M_CANFAIL);
 			if (data == NULL)
 				return ENOMEM;
@@ -714,7 +714,7 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 			return EFAULT;
 
 		if (ucmd->c_data)
-			free(data, M_DEVBUF);
+			free(data, M_TEMP);
 		break;
 
 	default:
