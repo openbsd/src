@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.46 2007/05/26 14:49:50 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.47 2007/05/26 23:07:28 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -935,7 +935,7 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 	struct bdevsw		*bdsw;
 	char			*name;
 	int			maj, unit, part, i, error;
-	u_quad_t		size;
+	quad_t		size;
 	dev_t			dev;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_open_chunks(%d)\n", DEVNAME(sc), no_chunk);
@@ -965,15 +965,6 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 		    "%s%d%c", name, unit, part + 'a');
 		name = ch_entry->src_devname;
 
-		/* get partition size */
-		ch_entry->src_size = size = bdsw->d_psize(dev) - SR_META_SIZE -
-		    SR_META_OFFSET;
-		if (size <= 0) {
-			printf("%s: %s partition too small\n",
-			    DEVNAME(sc), name);
-			goto unwind;
-		}
-
 		/* open device */
 		error = bdsw->d_open(dev, FREAD | FWRITE , S_IFBLK, curproc);
 
@@ -983,7 +974,7 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 		if (error) {
 			printf("%s: %s can't obtain disklabel\n",
 			    DEVNAME(sc), name);
-			error = bdsw->d_close(dev, FWRITE, S_IFBLK, curproc);
+			bdsw->d_close(dev, FWRITE, S_IFBLK, curproc);
 			goto unwind;
 		}
 
@@ -992,9 +983,20 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 			printf("%s: %s partition not of type RAID (%d)\n",
 			    DEVNAME(sc), name,
 			    label.d_partitions[part].p_fstype);
-			error = bdsw->d_close(dev, FWRITE, S_IFBLK, curproc);
+			bdsw->d_close(dev, FWRITE, S_IFBLK, curproc);
 			goto unwind;
 		}
+		
+		/* get partition size */
+		ch_entry->src_size = size = label.d_partitions[part].p_size -
+		    SR_META_SIZE - SR_META_OFFSET;
+		if (size <= 0) {
+			printf("%s: %s partition too small\n",
+			    DEVNAME(sc), name);
+			bdsw->d_close(dev, FWRITE, S_IFBLK, curproc);
+			goto unwind;
+		}
+
 
 		ch_entry->src_dev_mm = dev; /* major/minor */
 
