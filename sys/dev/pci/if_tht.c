@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.102 2007/05/17 10:12:53 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.103 2007/05/26 20:22:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1617,7 +1617,7 @@ tht_lladdr_read(struct tht_softc *sc)
 	int				i;
 
 	for (i = 0; i < sizeofa(tht_mac_regs); i++)
-		sc->sc_lladdr[i] = swap16(tht_read(sc, tht_mac_regs[i]));
+		sc->sc_lladdr[i] = betoh16(tht_read(sc, tht_mac_regs[i]));
 }
 
 void
@@ -1626,7 +1626,7 @@ tht_lladdr_write(struct tht_softc *sc)
 	int				i;
 
 	for (i = 0; i < sizeofa(tht_mac_regs); i++)
-		tht_write(sc, tht_mac_regs[i], swap16(sc->sc_lladdr[i]));
+		tht_write(sc, tht_mac_regs[i], htobe16(sc->sc_lladdr[i]));
 }
 
 #define tht_swrst_set(_s, _r) tht_write((_s), (_r), 0x1)
