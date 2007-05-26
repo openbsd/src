@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.57 2007/05/25 22:27:02 ray Exp $	*/
+/*	$OpenBSD: server.c,v 1.58 2007/05/26 23:19:31 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -91,9 +91,8 @@ cvs_server(int argc, char **argv)
 
 	server_argv[0] = xstrdup("server");
 
-	cvs_server_path = xmalloc(MAXPATHLEN);
-	(void)xsnprintf(cvs_server_path, MAXPATHLEN, "%s/cvs-serv%d",
-	    cvs_tmpdir, getpid());
+	(void)xasprintf(&cvs_server_path, "%s/cvs-serv%d", cvs_tmpdir,
+	    getpid());
 
 	if (mkdir(cvs_server_path, 0700) == -1)
 		fatal("failed to create temporary server directory: %s, %s",
@@ -628,14 +627,12 @@ cvs_server_version(char *data)
 void
 cvs_server_update_entry(const char *resp, struct cvs_file *cf)
 {
-	char *p, response[MAXPATHLEN];
+	char *p;
 
 	if ((p = strrchr(cf->file_rpath, ',')) != NULL)
 		*p = '\0';
 
-	(void)xsnprintf(response, MAXPATHLEN, "%s %s/", resp, cf->file_wd);
-
-	cvs_server_send_response("%s", response);
+	cvs_server_send_response("%s %s/", resp, cf->file_wd);
 	cvs_remote_output(cf->file_rpath);
 
 	if (p != NULL)
