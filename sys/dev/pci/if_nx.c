@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.45 2007/05/26 01:47:50 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.46 2007/05/26 16:44:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1345,7 +1345,7 @@ nx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	bcopy(nxp->nxp_lladdr, nx->nx_ac.ac_enaddr, ETHER_ADDR_LEN);
-	printf(", address %s\n", ether_sprintf(nx->nx_ac.ac_enaddr));
+	printf(": address %s\n", ether_sprintf(nx->nx_ac.ac_enaddr));
 
 	ifp = &nx->nx_ac.ac_if;
 	ifp->if_softc = nx;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.53 2007/05/22 04:30:55 ray Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.54 2007/05/26 16:44:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1012,7 +1012,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 		sc_if->arpcom.ac_enaddr[i] =
 		    sk_win_read_1(sc, SK_MAC0_0 + (sa->skc_port * 8) + i);
 
-	printf(", address %s\n",
+	printf(": address %s\n",
 	    ether_sprintf(sc_if->arpcom.ac_enaddr));
 
 	/*
