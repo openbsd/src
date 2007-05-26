@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.266 2007/05/26 12:15:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.267 2007/05/26 12:22:38 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -528,11 +528,20 @@ sub install_package
 	}
 
 	my $location = $cache->{$pkg};
-	if ($errors > 0) {
-		$state->set_pkgname($pkg);
-		$state->fatal("Fatal error") unless defined $location;
+	if ($state->{forced}->{kitchensink}) {
+		if ($handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
+			$state->set_pkgname($pkg);
+			$state->fatal("Fatal error") unless defined $location;
+		} else {
+			return () unless defined $location;
+		}
 	} else {
-		return () unless defined $location;
+		if ($handle->has_error) {
+			$state->set_pkgname($pkg);
+			$state->fatal("Fatal error") unless defined $location;
+		} else {
+			return () unless defined $location;
+		}
 	}
 
 	if ($state->is_installed($location->{pkgname})) {

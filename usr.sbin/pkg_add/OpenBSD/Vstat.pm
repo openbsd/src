@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.21 2007/05/25 13:18:57 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.22 2007/05/26 12:22:38 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -256,12 +256,12 @@ sub has_error
 {
 	my ($self, $error) = @_;
 	if (!defined $self->{error}) {
-		return 0;
+		return undef;
 	}
 	if (defined $error) {
 		return $self->{error} eq $error;
 	}
-	return 1;
+	return $self->{error};
 }
 
 package OpenBSD::UpdateSet;
