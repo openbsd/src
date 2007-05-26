@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.37 2007/02/27 22:39:39 kettenis Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.38 2007/05/26 18:25:11 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -38,11 +38,6 @@
 /*
  * Driver for the Neterion Xframe Ten Gigabit Ethernet controller.
  */
-
-#include <sys/cdefs.h>
-#if 0
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $");
-#endif
 
 #include "bpfilter.h"
 #include "vlan.h"
