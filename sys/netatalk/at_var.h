@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_var.h,v 1.1 1997/07/23 03:39:52 denny Exp $	*/
+/*	$OpenBSD: at_var.h,v 1.2 2007/05/26 12:09:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -105,9 +105,9 @@ struct at_aliasreq {
 #define AFA_PHASE2	0x0004
 
 #ifdef _KERNEL
-struct at_ifaddr	*at_ifaddr;
-struct ifqueue		atintrq1, atintrq2;
-int			atdebug;
+extern struct at_ifaddr	*at_ifaddr;
+extern struct ifqueue	atintrq1, atintrq2;
+extern int		atdebug;
 #endif
 
 #endif /* _NETATALK_AT_VAR_H_ */
