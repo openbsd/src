@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.17 2007/05/25 02:26:43 cnst Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.18 2007/05/26 22:47:39 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -159,10 +159,10 @@ struct lm_sensor w83627ehf_sensors[] = {
 };
 
 /* 
- * w83627dhf is almost identical to w83627ehf, except that 
+ * w83627dhg is almost identical to w83627ehf, except that 
  * it has 9 instead of 10 voltage sensors
  */
-struct lm_sensor w83627dhf_sensors[] = {
+struct lm_sensor w83627dhg_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE / 2},
 	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56, 10) / 2 },
@@ -508,8 +508,8 @@ wb_match(struct lm_softc *sc)
 		lm_setup_sensors(sc, w83627ehf_sensors);
 		break;
 	case WB_CHIPID_W83627DHG:
-		printf(": W83627DHF\n");
-		lm_setup_sensors(sc, w83627dhf_sensors);
+		printf(": W83627DHG\n");
+		lm_setup_sensors(sc, w83627dhg_sensors);
 		break;
 	case WB_CHIPID_W83637HF:
 		printf(": W83637HF\n");
