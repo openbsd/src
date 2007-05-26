@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.18 2007/04/11 10:04:59 miod Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.19 2007/05/26 19:04:24 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -333,7 +333,9 @@ sdhc_host_reset(sdmmc_chipset_handle_t sch)
 	imask = SDHC_CARD_REMOVAL | SDHC_CARD_INSERTION |
 	    SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY |
 	    SDHC_DMA_INTERRUPT | SDHC_BLOCK_GAP_EVENT |
-	    SDHC_TRANSFER_COMPLETE | SDHC_COMMAND_COMPLETE;
+	    SDHC_TRANSFER_COMPLETE | SDHC_COMMAND_COMPLETE |
+	    SDHC_CARD_INTERRUPT;
+
 	HWRITE2(hp, SDHC_NINTR_STATUS_EN, imask);
 	HWRITE2(hp, SDHC_EINTR_STATUS_EN, SDHC_EINTR_STATUS_MASK);
 	HWRITE2(hp, SDHC_NINTR_SIGNAL_EN, imask);
@@ -608,7 +610,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 
 	/* Fragment the data into proper blocks. */
 	if (cmd->c_datalen > 0) {
-		blksize = cmd->c_blklen;
+		blksize = MIN(cmd->c_datalen, cmd->c_blklen);
 		blkcount = cmd->c_datalen / blksize;
 		if (cmd->c_datalen % blksize > 0) {
 			/* XXX: Split this command. (1.7.4) */
@@ -632,6 +634,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		mode |= SDHC_BLOCK_COUNT_ENABLE;
 		if (blkcount > 1) {
 			mode |= SDHC_MULTI_BLOCK_MODE;
+			/* XXX only for memory commands? */
 			mode |= SDHC_AUTO_CMD12_ENABLE;
 		}
 	}
@@ -680,10 +683,11 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	 * Start a CPU data transfer.  Writing to the high order byte
 	 * of the SDHC_COMMAND register triggers the SD command. (1.5)
 	 */
-	HWRITE2(hp, SDHC_BLOCK_SIZE, blksize);
-	HWRITE2(hp, SDHC_BLOCK_COUNT, blkcount);
-	HWRITE4(hp, SDHC_ARGUMENT, cmd->c_arg);
 	HWRITE2(hp, SDHC_TRANSFER_MODE, mode);
+	HWRITE2(hp, SDHC_BLOCK_SIZE, blksize);
+	if (blkcount > 1)
+		HWRITE2(hp, SDHC_BLOCK_COUNT, blkcount);
+	HWRITE4(hp, SDHC_ARGUMENT, cmd->c_arg);
 	HWRITE2(hp, SDHC_COMMAND, command);
 
 	splx(s);
@@ -705,6 +709,14 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 
 	DPRINTF(1,("%s: resp=%#x datalen=%d\n", HDEVNAME(hp),
 	    MMC_R1(cmd->c_resp), datalen));
+
+#ifdef SDHC_DEBUG
+	/* XXX I forgot why I wanted to know when this happens :-( */
+	if ((cmd->c_opcode == 52 || cmd->c_opcode == 53) &&
+	    ISSET(MMC_R1(cmd->c_resp), 0xcb00))
+		printf("%s: CMD52/53 error response flags %#x\n",
+		    HDEVNAME(hp), MMC_R1(cmd->c_resp) & 0xff00);
+#endif
 
 	while (datalen > 0) {
 		if (!sdhc_wait_intr(hp, SDHC_BUFFER_READ_READY|
@@ -741,39 +753,36 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 void
 sdhc_read_data(struct sdhc_host *hp, u_char *datap, int datalen)
 {
-	while (datalen > 0) {
-		if (datalen > 3) {
-			*((u_int32_t *)datap) = HREAD4(hp, SDHC_DATA);
-			datap += 4;
-			datalen -= 4;
-		} else if (datalen > 1) {
-			*((u_int16_t *)datap) = HREAD2(hp, SDHC_DATA);
-			datap += 2;
-			datalen -= 2;
-		} else {
-			*datap++ = HREAD1(hp, SDHC_DATA);
-			datalen -= 1;
-		}
+	while (datalen > 3) {
+		*(u_int32_t *)datap = HREAD4(hp, SDHC_DATA);
+		datap += 4;
+		datalen -= 4;
+	}
+	if (datalen > 0) {
+		u_int32_t rv = HREAD4(hp, SDHC_DATA);
+		do {
+			*datap++ = rv & 0xff;
+			rv = rv >> 8;
+		} while (--datalen > 0);
 	}
 }
 
 void
 sdhc_write_data(struct sdhc_host *hp, u_char *datap, int datalen)
 {
-	while (datalen > 0) {
-		if (datalen > 3) {
-			HWRITE4(hp, SDHC_DATA, *(u_int32_t *)datap);
-			datap += 4;
-			datalen -= 4;
-		} else if (datalen > 1) {
-			HWRITE2(hp, SDHC_DATA, *(u_int16_t *)datap);
-			datap += 2;
-			datalen -= 2;
-		} else {
-			HWRITE1(hp, SDHC_DATA, *datap);
-			datap++;
-			datalen -= 1;
-		}
+	while (datalen > 3) {
+		DPRINTF(3,("%08x\n", *(u_int32_t *)datap));
+		HWRITE4(hp, SDHC_DATA, *((u_int32_t *)datap)++);
+		datalen -= 4;
+	}
+	if (datalen > 0) {
+		u_int32_t rv = *datap++;
+		if (datalen > 1)
+			rv |= *datap++ << 8;
+		if (datalen > 2)
+			rv |= *datap++ << 16;
+		DPRINTF(3,("rv %08x\n", rv));
+		HWRITE4(hp, SDHC_DATA, rv);
 	}
 }
 
@@ -911,7 +920,9 @@ sdhc_intr(void *arg)
 			printf("%s: card interrupt\n", HDEVNAME(hp));
 			HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 			/* XXX service card interrupt */
+#ifdef notyet
 			HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
+#endif
 		}
 	}
 	return done;
