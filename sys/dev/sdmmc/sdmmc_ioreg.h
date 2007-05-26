@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_ioreg.h,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_ioreg.h,v 1.2 2007/05/26 18:37:44 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -63,6 +63,7 @@
 #define SD_IO_CCCR_START		0x00000
 #define SD_IO_CCCR_SIZE			0x100
 #define SD_IO_CCCR_FN_ENABLE		0x02
+#define SD_IO_CCCR_FN_READY		0x03
 #define SD_IO_CCCR_CTL			0x06
 #define  CCCR_CTL_RES			(1<<3)
 #define SD_IO_CCCR_BUS_WIDTH		0x07
