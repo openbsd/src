@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.39 2007/05/26 18:29:11 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.40 2007/05/26 18:38:26 dlg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -174,35 +174,38 @@ static uint64_t herc_dtx_cfg[] = {
 };
 
 struct xge_softc {
-	struct device sc_dev;
-	struct arpcom sc_arpcom;
-	bus_dma_tag_t sc_dmat;
-	bus_space_tag_t sc_st;
-	bus_space_handle_t sc_sh;
-	bus_space_tag_t sc_txt;
-	bus_space_handle_t sc_txh;
-	void *sc_ih;
-	int xge_type;			/* chip type */
-	int xge_if_flags;
-	void *sc_shutdownhook;
+	struct device		sc_dev;
+	struct arpcom		sc_arpcom;
+	struct ifmedia		xena_media;
 
-	struct ifmedia xena_media;
-	pcireg_t sc_pciregs[16];
+	void			*sc_ih;
+	void			*sc_shutdownhook;
+
+	bus_dma_tag_t		sc_dmat;
+	bus_space_tag_t		sc_st;
+	bus_space_handle_t	sc_sh;
+	bus_space_tag_t		sc_txt;
+	bus_space_handle_t	sc_txh;
+
+	pcireg_t		sc_pciregs[16];
+
+	int			xge_type; /* chip type */
+	int			xge_if_flags;
 
 	/* Transmit structures */
-	struct txd *sc_txd[NTXDESCS];	/* transmit frags array */
-	bus_addr_t sc_txdp[NTXDESCS];	/* bus address of transmit frags */
-	bus_dmamap_t sc_txm[NTXDESCS];	/* transmit frags map */
-	struct mbuf *sc_txb[NTXDESCS];	/* transmit mbuf pointer */
-	int sc_nexttx, sc_lasttx;
-	bus_dmamap_t sc_txmap;		/* transmit descriptor map */
+	struct txd		*sc_txd[NTXDESCS]; /* transmit frags array */
+	bus_addr_t		sc_txdp[NTXDESCS]; /* dva of transmit frags */
+	bus_dmamap_t		sc_txm[NTXDESCS]; /* transmit frags map */
+	struct mbuf		*sc_txb[NTXDESCS]; /* transmit mbuf pointer */
+	int			sc_nexttx, sc_lasttx;
+	bus_dmamap_t		sc_txmap; /* transmit descriptor map */
 
 	/* Receive data */
-	bus_dmamap_t sc_rxmap;		/* receive descriptor map */
-	struct rxd_4k *sc_rxd_4k[NRXPAGES]; /* receive desc pages */
-	bus_dmamap_t sc_rxm[NRXREAL];	/* receive buffer map */
-	struct mbuf *sc_rxb[NRXREAL];	/* mbufs on receive descriptors */
-	int sc_nextrx;			/* next descriptor to check */
+	bus_dmamap_t		sc_rxmap; /* receive descriptor map */
+	struct rxd_4k		*sc_rxd_4k[NRXPAGES]; /* receive desc pages */
+	bus_dmamap_t		sc_rxm[NRXREAL]; /* receive buffer map */
+	struct mbuf		*sc_rxb[NRXREAL]; /* mbufs on rx descriptors */
+	int			sc_nextrx; /* next descriptor to check */
 };
 
 #ifdef XGE_DEBUG
