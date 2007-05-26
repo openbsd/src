@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.45 2007/05/26 14:30:26 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.46 2007/05/26 14:49:50 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1053,9 +1053,12 @@ sr_read_meta(struct sr_discipline *sd)
 			continue;
 		}
 
+		if (m->ssd_magic != SR_MAGIC)
+			continue;
+
 		/* validate metadata */
 		if (sr_validate_metadata(sc, ch_entry->src_dev_mm, m)) {
-			printf("%s: invalid metadatada\n", DEVNAME(sc));
+			printf("%s: invalid metadata\n", DEVNAME(sc));
 			no_chunk = -1;
 			goto bad;
 		}
