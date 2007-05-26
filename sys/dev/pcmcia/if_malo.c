@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.4 2007/05/26 11:11:54 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.5 2007/05/26 21:16:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -207,7 +207,8 @@ malo_pcmcia_activate(struct device *dev, enum devact act)
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			cmalo_stop(sc);
-		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		if (psc->sc_ih != NULL)
+			pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 		pcmcia_function_disable(psc->sc_pf);
 		break;
 	}
@@ -282,6 +283,9 @@ cmalo_attach(void *arg)
 	/* second attach line */
 	printf("%s: address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr));
+
+	/* device attached */
+	sc->sc_flags |= MALO_DEVICE_ATTACHED;
 }
 
 int
@@ -360,8 +364,8 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 		DPRINTF(3, "%s: download helper FW block (%d bytes, %d off)\n",
 		    sc->sc_dev.dv_xname, bsize, offset);
 		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, bsize);
-		MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, (ucode + offset),
-		    bsize / 2);
+		MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE,
+		    (uint16_t *)(ucode + offset), bsize / 2);
 		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 		MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -445,8 +449,8 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		DPRINTF(3, "%s: download main FW block (%d bytes, %d off)\n",
 		    sc->sc_dev.dv_xname, bsize, offset);
 		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, bsize);
-		MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, (ucode + offset),
-		    bsize / 2);
+		MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE,
+		    (uint16_t *)(ucode + offset), bsize / 2);
 		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
                 MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -538,8 +542,13 @@ cmalo_detach(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 
+	if (!(sc->sc_flags & MALO_DEVICE_ATTACHED))
+		/* device was not properly attached */
+		return;
+
 	/* free command buffer */
-	free(sc->sc_cmd, M_DEVBUF);
+	if (sc->sc_cmd != NULL)
+		free(sc->sc_cmd, M_DEVBUF);
 
 	/* detach inferface */
 	ieee80211_ifdetach(ifp);
@@ -643,7 +652,7 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 
 	/* send command request */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, hdr, psize / 2);
+	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, (uint16_t *)hdr, psize / 2);
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -699,7 +708,7 @@ cmalo_cmd_set_reset(struct malo_softc *sc)
 
 	/* send command request */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, hdr, psize / 2);
+	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, (uint16_t *)hdr, psize / 2);
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -730,7 +739,7 @@ cmalo_cmd_set_channel(struct malo_softc *sc, uint16_t channel)
 
 	/* send command request */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, hdr, psize / 2);
+	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, (uint16_t *)hdr, psize / 2);
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 

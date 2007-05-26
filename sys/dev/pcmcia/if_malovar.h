@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.3 2007/05/26 11:11:54 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.4 2007/05/26 21:16:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -39,7 +39,8 @@
 #define MALO_CMD_BUFFER_SIZE	256	/* cmd buffer */
 
 /* device flags */
-#define MALO_FW_LOADED		(1 << 0)
+#define MALO_DEVICE_ATTACHED	(1 << 0)
+#define MALO_FW_LOADED		(1 << 1)
 
 /* FW command header */
 struct malo_cmd_header {
