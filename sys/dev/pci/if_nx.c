@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.42 2007/05/05 02:12:04 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.43 2007/05/26 01:10:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -71,6 +71,7 @@
 #define NXDBG_STATE	(1<<3)	/* Firmware states */
 #define NXDBG_WINDOW	(1<<4)	/* Memory windows */
 #define NXDBG_INTR	(1<<5)	/* Interrupts */
+#define NXDBG_TX	(1<<6)	/* Transmit */
 #define NXDBG_ALL	0xfffe	/* enable nearly all debugging messages */
 int nx_debug = 0;
 #define DPRINTF(_lvl, _arg...)	do {					\
@@ -153,7 +154,6 @@ struct nxb_softc {
 	u_int32_t		 sc_fwmajor;	/* Load image major rev */
 	u_int32_t		 sc_fwminor;	/* Load image minor rev */
 	u_int32_t		 sc_fwbuild;	/* Load image build rev */
-	volatile u_int		 sc_txpending;
 
 	struct nxb_port		 sc_nxp[NX_MAX_PORTS];	/* The nx ports */
 	int			 sc_nports;
@@ -183,6 +183,8 @@ struct nx_ringdata {
 	struct nxb_dmamem	 rd_txdma;
 	struct nx_txdesc	*rd_txring;
 	struct nx_buf		 rd_txbuf[NX_MAX_TX_DESC];
+	u_int32_t		 rd_txproducer;
+	volatile u_int		 rd_txpending;
 };
 
 struct nx_softc {
@@ -247,6 +249,7 @@ void	 nx_iff(struct nx_softc *);
 void	 nx_tick(void *);
 int	 nx_intr(void *);
 void	 nx_setlladdr(struct nx_softc *, u_int8_t *);
+void	 nx_doorbell(struct nx_softc *nx, u_int8_t, u_int8_t, u_int32_t);
 u_int32_t nx_readphy(struct nx_softc *, bus_size_t);
 void	 nx_writephy(struct nx_softc *, bus_size_t, u_int32_t);
 u_int32_t nx_readcrb(struct nx_softc *, enum nxsw_portreg);
@@ -631,7 +634,6 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 		 */
 		nxb_writecrb(sc, NXSW_CMD_PRODUCER_OFF, 0);
 		nxb_writecrb(sc, NXSW_CMD_CONSUMER_OFF, 0);
-		nxb_writecrb(sc, NXSW_CMD_ADDR_LO, 0);
 		nxb_writecrb(sc, NXSW_DRIVER_VER, NX_FIRMWARE_VER);
 		nxb_writecrb(sc, NXROMUSB_GLB_PEGTUNE,
 		    NXROMUSB_GLB_PEGTUNE_DONE);
@@ -656,7 +658,7 @@ nxb_newstate(struct nxb_softc *sc, int newstate)
 		/*
 		 * Wait for the device to become ready
 		 */
-		sc->sc_reloaded = 2000;
+		sc->sc_reloaded = 20000;
 		timeout_add(&sc->sc_reload, hz / 100);
 		break;
 	case NX_S_READY:
@@ -1569,9 +1571,14 @@ nx_init(struct ifnet *ifp)
 		goto done;
 
 	/* Set and enable interrupts */
+	nxb_writecrb(sc, NXSW_GLOBAL_INT_COAL, 0);	/* XXX */
+	nxb_writecrb(sc, NXSW_INT_COAL_MODE, 0);	/* XXX */
 	nxb_writecrb(sc, NXISR_INT_MASK, NXISR_INT_MASK_ENABLE);
 	nxb_writecrb(sc, NXISR_INT_VECTOR, 0);
 	nxb_writecrb(sc, NXISR_TARGET_MASK, NXISR_TARGET_MASK_ENABLE);
+
+	DPRINTF(NXDBG_INTR, "%s(%s) enabled interrupts\n",
+	    DEVNAME(nx), __func__);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1591,17 +1598,164 @@ nx_stop(struct ifnet *ifp)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	/* Disable interrupts */
-	nxb_writecrb(sc, NXISR_INT_MASK, NXISR_INT_MASK_DISABLE);
+	nxb_writecrb(sc, NXISR_INT_MASK, 0);
 	nxb_writecrb(sc, NXISR_INT_VECTOR, 0);
-	nxb_writecrb(sc, NXISR_TARGET_MASK, NXISR_TARGET_MASK_DISABLE);
+	nxb_writecrb(sc, NXISR_TARGET_MASK, 0);
 
 	nx_free_rings(nx);
 	splx(s);
 }
 
+#define NX_INC(_x, _y)		(_x) = ((_x) + 1) % (_y)
+#define NX_TXURN_WARN(_rd)	((_rd)->rd_txpending >= (NX_MAX_TX_DESC - 5))
+#define NX_TXURN(_rd)		((_rd)->rd_txpending >= NX_MAX_TX_DESC)
+
 void
 nx_start(struct ifnet *ifp)
 {
+	struct nx_softc		*nx = (struct nx_softc *)ifp->if_softc;
+	struct nxb_softc	*sc = nx->nx_sc;
+	struct nxb_port		*nxp = nx->nx_port;
+	struct nx_ringdata	*rd = nx->nx_rings;
+	struct nxb_dmamem	*txm;
+	struct mbuf		*m;
+	struct nx_buf		*nb;
+	struct nx_txdesc	*txd;
+	bus_dmamap_t		 map;
+	u_int32_t		 producer, len;
+	u_int			 i, idx, tx = 0;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0||
+	    (ifp->if_flags & IFF_OACTIVE) ||
+	    IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
+
+	txm = &rd->rd_txdma;
+	producer = rd->rd_txproducer;
+
+	for (;;) {
+		if (NX_TXURN(rd)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+
+		idx = rd->rd_txproducer;
+		if (idx >= NX_MAX_TX_DESC) {
+			printf("%s: tx idx is corrupt\n", DEVNAME(nx));
+			ifp->if_oerrors++;
+			break;
+		}
+
+		txd = &rd->rd_txring[idx];
+		bzero(txd, sizeof(*txd));
+
+		nb = &rd->rd_txbuf[idx];
+		if (nb->nb_m != NULL) {
+			printf("%s: tx ring is corrupt\n", DEVNAME(nx));
+			ifp->if_oerrors++;
+			break;
+		}
+
+		/*
+		 * we're committed to sending it now. if we cant map it into
+		 * dma memory then we drop it.
+		 */
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		map = nb->nb_dmamap;
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+		    BUS_DMA_NOWAIT) != 0) {
+			m_freem(m);
+			printf("%s: could not load mbuf dma map", DEVNAME(nx));
+			ifp->if_oerrors++;
+			break;
+		}
+		if (map->dm_nsegs > 4) {
+			m_freem(m);
+			printf("%s: too many segments for tx", DEVNAME(nx));
+			ifp->if_oerrors++;
+			break;
+		}
+		nb->nb_m = m;
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, nb->nb_m, BPF_DIRECTION_OUT);
+#endif
+
+		len = 0;
+		txd->tx_buflength = 0;
+		for (i = 0; i < map->dm_nsegs; i++) {
+			len += map->dm_segs[i].ds_len;
+			switch (i) {
+			case 0:
+				txd->tx_buflength |= (map->dm_segs[i].ds_len <<
+				    NX_TXDESC_BUFLENGTH1_S) &
+				    NX_TXDESC_BUFLENGTH1_M;
+				txd->tx_addr1 = map->dm_segs[i].ds_addr;
+				break;
+			case 1:
+				txd->tx_buflength |= (map->dm_segs[i].ds_len <<
+				    NX_TXDESC_BUFLENGTH2_S) &
+				    NX_TXDESC_BUFLENGTH2_M;
+				txd->tx_addr2 = map->dm_segs[i].ds_addr;
+				break;
+			case 2:
+				txd->tx_buflength |= (map->dm_segs[i].ds_len <<
+				    NX_TXDESC_BUFLENGTH3_S) &
+				    NX_TXDESC_BUFLENGTH3_M;
+				txd->tx_addr3 = map->dm_segs[i].ds_addr;
+				break;
+			case 3:
+				txd->tx_buflength |= (map->dm_segs[i].ds_len <<
+				    NX_TXDESC_BUFLENGTH4_S) &
+				    NX_TXDESC_BUFLENGTH4_M;
+				txd->tx_addr4 = map->dm_segs[i].ds_addr;
+				break;
+			}
+		}
+		txd->tx_word0 =
+		    ((NX_TXDESC0_OP_TX << NX_TXDESC0_OP_S) & NX_TXDESC0_OP_M) |
+		    ((map->dm_nsegs << NX_TXDESC0_NBUF_S) & NX_TXDESC0_NBUF_M) |
+		    ((len << NX_TXDESC0_LENGTH_S) & NX_TXDESC0_LENGTH_M);
+		txd->tx_word2 =
+		    ((idx << NX_TXDESC2_HANDLE_S) & NX_TXDESC2_HANDLE_M) |
+		    (((u_int64_t)nxp->nxp_id << NX_TXDESC2_PORT_S) & NX_TXDESC2_PORT_M) |
+		    (((u_int64_t)nxp->nxp_id << NX_TXDESC2_CTXID_S) & NX_TXDESC2_CTXID_M);
+
+		DPRINTF(NXDBG_TX, "%s(%s): txd "
+		    "%016x w0 %016x w2 %016x a1 %016x a2 %016x a3 %016x a4 %016x l %016x\n",
+		    DEVNAME(nx), __func__, txd->tx_word0, txd->tx_word2,
+		    txd->tx_addr1, txd->tx_addr2, txd->tx_addr3, txd->tx_addr4,
+		    txd->tx_buflength);
+
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		ifp->if_opackets++;
+		rd->rd_txpending++;
+
+		NX_INC(rd->rd_txproducer, NX_MAX_TX_DESC);
+
+		tx = 1;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, txm->nxm_map, 0, txm->nxm_size,
+	   BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	if (tx) {
+		DPRINTF(NXDBG_TX, "%s(%s): producer 0x%08x\n",
+		    DEVNAME(nx), __func__, producer);
+		nxb_writecrb(sc, NXSW_CMD_PRODUCER_OFF, producer);
+
+		/* Ring... */
+		nx_doorbell(nx, NXDB_PEGID_TX,
+		    NXDB_OPCODE_CMD_PROD, producer);
+	}
+
 	return;
 }
 
@@ -1633,6 +1787,7 @@ nx_intr(void *arg)
 	struct nxb_port		*nxp = nx->nx_port;
 	struct nxb_softc	*sc = nx->nx_sc;
 	u_int32_t		 inv;
+	u_int			 i;
 
 	if (sc->sc_state != NX_S_READY)
 		return (0);
@@ -1641,9 +1796,24 @@ nx_intr(void *arg)
 	inv = nxb_read(sc, NXISR_INT_VECTOR);
 	if ((inv & NXISR_INT_VECTOR_PORT(nxp->nxp_id)) == 0)
 		return (0);
-
 	DPRINTF(NXDBG_INTR, "%s(%s): int vector 0x%08x\n",
-	    DEVNAME(nx), __func__, isr);
+	    DEVNAME(nx), __func__, inv);
+
+	nxb_writecrb(sc, NXISR_INT_MASK, NXISR_INT_MASK_DISABLE);
+	for (i = 0; i < 32; i++) {
+		nxb_writecrb(sc, NXISR_TARGET_MASK, NXISR_TARGET_MASK_DISABLE);
+		inv = nxb_readcrb(sc, NXISR_INT_VECTOR);
+		if ((inv & NXISR_INT_VECTOR_PORT(nxp->nxp_id)) == 0)
+			break;
+	}
+	if (inv)
+		printf("%s: failed to disable interrupt\n", DEVNAME(nx));
+
+	/* Ring... */
+	DPRINTF(NXDBG_INTR, "%s(%s): consumer 0x%08x\n",
+	    DEVNAME(nx), __func__, nx->nx_rc->rc_txconsumer);
+
+	nxb_writecrb(sc, NXISR_INT_MASK, NXISR_INT_MASK_ENABLE);
 
 	return (1);
 }
@@ -1658,6 +1828,25 @@ nx_setlladdr(struct nx_softc *nx, u_int8_t *lladdr)
 	    NX_XGE_STATION_ADDR_HI, lladdr, ETHER_ADDR_LEN);
 	bus_space_barrier(sc->sc_memt, nx->nx_memh,
 	    NX_XGE_STATION_ADDR_HI, ETHER_ADDR_LEN, BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+nx_doorbell(struct nx_softc *nx, u_int8_t id, u_int8_t cmd, u_int32_t count)
+{
+	struct nxb_softc	*sc = nx->nx_sc;
+	struct nxb_port		*nxp = nx->nx_port;
+	u_int32_t		 data;
+
+	/* Create the doorbell message */
+	data = ((NXDB_PEGID_S << id) & NXDB_PEGID_M) |
+	    ((NXDB_COUNT_S << count) & NXDB_COUNT_M) |
+	    ((NXDB_CTXID_S << nxp->nxp_id) & NXDB_CTXID_M) |
+	    ((NXDB_OPCODE_S << cmd) & NXDB_OPCODE_M) |
+	    NXDB_PRIVID;
+
+	bus_space_write_4(sc->sc_dbmemt, sc->sc_dbmemh, 0, data);
+	bus_space_barrier(sc->sc_dbmemt, sc->sc_dbmemh, 0, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 u_int32_t
@@ -1730,8 +1919,7 @@ nx_alloc(struct nx_softc *nx)
 	rc->rc_id = htole32(nxp->nxp_id);
 	addr = nxm->nxm_map->dm_segs[0].ds_addr +	/* physaddr */
 	    offsetof(struct nx_ringcontext, rc_txconsumer);
-	rc->rc_txconsumeroff_low = htole32(addr & 0xffffffff);
-	rc->rc_txconsumeroff_high = htole32(addr >> 32);
+	rc->rc_txconsumeroff = htole64(addr);
 	nx->nx_rc = rc;
 
 	/*
@@ -1817,8 +2005,7 @@ nx_init_rings(struct nx_softc *nx)
 	rd->rd_rxring = (struct nx_rxdesc *)nxm->nxm_kva;
 	addr = nxm->nxm_map->dm_segs[0].ds_addr;
 	rxc = &rc->rc_rxcontext[NX_RX_CONTEXT];
-	rxc->rxc_ringaddr_low = htole32(addr & 0xffffffff);
-	rxc->rxc_ringaddr_high = htole32(addr >> 32);
+	rxc->rxc_ringaddr = htole64(addr);
 	rxc->rxc_ringsize = htole32(NX_MAX_RX_DESC);
 
 	/* Rx buffers */
@@ -1843,8 +2030,7 @@ nx_init_rings(struct nx_softc *nx)
 		    nb->nb_m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
 
 		addr = nb->nb_dmamap->dm_segs[0].ds_addr;
-		rxd->rx_addr_low = htole32(addr & 0xffffffff);
-		rxd->rx_addr_high = htole32(addr >> 32);
+		rxd->rx_addr = htole64(addr);
 		rxd->rx_length = htole32(nb->nb_m->m_pkthdr.len);
 		rxd->rx_handle = htole16(i);
 	}
@@ -1864,8 +2050,7 @@ nx_init_rings(struct nx_softc *nx)
 
 	rd->rd_statusring = (struct nx_statusdesc *)nxm->nxm_kva;
 	addr = nxm->nxm_map->dm_segs[0].ds_addr;
-	rc->rc_statusringaddr_low = htole32(addr & 0xffffffff);
-	rc->rc_statusringaddr_high = htole32(addr >> 32);
+	rc->rc_statusringaddr = htole64(addr);
 	rc->rc_statusringsize = htole32(NX_MAX_STATUS_DESC);
 
 	/*
@@ -1881,8 +2066,7 @@ nx_init_rings(struct nx_softc *nx)
 
 	rd->rd_txring = (struct nx_txdesc *)nxm->nxm_kva;
 	addr = nxm->nxm_map->dm_segs[0].ds_addr;
-	rc->rc_txringaddr_low = htole32(addr & 0xffffffff);
-	rc->rc_txringaddr_high = htole32(addr >> 32);
+	rc->rc_txringaddr = htole64(addr);
 	rc->rc_txringsize = htole32(NX_MAX_TX_DESC);
 
 	/* Tx buffers */

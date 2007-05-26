@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxreg.h,v 1.25 2007/05/05 02:12:04 reyk Exp $	*/
+/*	$OpenBSD: if_nxreg.h,v 1.26 2007/05/26 01:10:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -71,56 +71,63 @@ enum nx_state {
  */
 
 struct nx_txdesc {
-	u_int8_t		tx_tcpoff;	/* IP header offset for TSO */
-	u_int8_t		tx_ipoff;	/* TCP header offset for TSO */
-	u_int16_t		tx_flags;
-#define  NX_TXDESC_F_S		0		/* flags */
-#define  NX_TXDESC_F_M		0x007f
-#define   NX_TXDESC_F_VLAN	(1<<8)		/* VLAN tagged */
-#define   NX_TXDESC_F_TSO	(1<<1)		/* TSO enabled */
-#define   NX_TXDESC_F_CKSUM	(1<<0)		/* checksum enabled */
-#define  NX_TXDESC_OP_S		7		/* opcode */
-#define  NX_TXDESC_OP_M		0x1f80
-#define   NX_TXDESC_OP_STOPSTTS	(1<<9)		/* Stop statistics */
-#define   NX_TXDESC_OP_GETSTATS	(1<<8)		/* Get statistics */
-#define   NX_TXDESC_OP_TX_TSO	(1<<5)		/* TCP packet, do TSO */
-#define   NX_TXDESC_OP_TX_IP	(1<<4)		/* IP packet, compute cksum */
-#define   NX_TXDESC_OP_TX_UDP	(1<<3)		/* UDP packet, compute cksum */
-#define   NX_TXDESC_OP_TX_TCP	(1<<2)		/* TCP packet, compute cksum */
-#define   NX_TXDESC_OP_TX	(1<<1)		/* raw Ethernet packet */
-	u_int32_t		tx_length;
-#define  NX_TXDESC_NBUF_S	0		/* number of buffers */
-#define  NX_TXDESC_NBUG_M	0x000000ff
-#define  NX_TXDESC_LENGTH_S	8		/* length */
-#define  NX_TXDESC_LENGTH_M	0xffffff00
-	u_int32_t		tx_addr2_low;	/* low address of buffer 2 */
-	u_int32_t		tx_addr2_high;	/* high address of buffer 2 */
-	u_int16_t		tx_handle;	/* handle of the buffer */
-	u_int16_t		tx_mss;		/* MSS for the packet */
-	u_int8_t		tx_port;	/* interface port */
-#define  NX_TXDESC_PORT_S	0
-#define  NX_TXDESC_PORT_M	0x0f
-	u_int8_t		tx_hdrlength;	/* MAC+IP+TCP length for TSO */
-	u_int16_t		tx_reserved;
-	u_int32_t		tx_addr3_low;	/* low address of buffer 3 */
-	u_int32_t		tx_addr3_high;	/* high address of buffer 3 */
-	u_int32_t		tx_addr1_low;	/* low address of buffer 1 */
-	u_int32_t		tx_addr1_high;	/* high address of buffer 1 */
-	u_int16_t		tx_buf1_length;	/* length of buffer 1 */
-	u_int16_t		tx_buf2_length;	/* length of buffer 2 */
-	u_int16_t		tx_buf3_length;	/* length of buffer 3 */
-	u_int16_t		tx_buf4_length;	/* length of buffer 4 */
-	u_int32_t		tx_addr4_low;	/* low address of buffer 4 */
-	u_int32_t		tx_addr4_high;	/* high address of buffer 4 */
-	u_int64_t		tx_reserved1;
+	u_int64_t		tx_word0;
+#define  NX_TXDESC0_TCPHDROFF_S	0		/* TCP header offset */
+#define  NX_TXDESC0_TCPHDROFF_M	0x00000000000000ffULL
+#define  NX_TXDESC0_IPHDROFF_S	8		/* IP header offset */
+#define  NX_TXDESC0_IPHDROFF_M	0x000000000000ff00
+#define  NX_TXDESC0_F_S		16		/* flags */
+#define  NX_TXDESC0_F_M		0x00000000007f0000ULL
+#define   NX_TXDESC0_F_VLAN	(1<<8)		/* VLAN tagged */
+#define   NX_TXDESC0_F_TSO	(1<<1)		/* TSO enabled */
+#define   NX_TXDESC0_F_CKSUM	(1<<0)		/* checksum enabled */
+#define  NX_TXDESC0_OP_S	23		/* opcode */
+#define  NX_TXDESC0_OP_M	0x000000001f800000ULL
+#define   NX_TXDESC0_OP_TX_TSO	(1<<4)		/* TCP packet, do TSO */
+#define   NX_TXDESC0_OP_TX_IP	(1<<3)		/* IP packet, compute cksum */
+#define   NX_TXDESC0_OP_TX_UDP	(1<<2)		/* UDP packet, compute cksum */
+#define   NX_TXDESC0_OP_TX_TCP	(1<<1)		/* TCP packet, compute cksum */
+#define   NX_TXDESC0_OP_TX	(1<<0)		/* raw Ethernet packet */
+#define  NX_TXDESC0_RES0_S	29		/* Reserved */
+#define  NX_TXDESC0_RES0_M	0x00000000e0000000ULL
+#define  NX_TXDESC0_NBUF_S	0		/* number of buffers */
+#define  NX_TXDESC0_NBUF_M	0x000000ff00000000ULL
+#define  NX_TXDESC0_LENGTH_S	8		/* length */
+#define  NX_TXDESC0_LENGTH_M	0xffffff0000000000ULL
+	u_int64_t		tx_addr2;	/* address of buffer 2 */
+	u_int64_t		tx_word2;
+#define  NX_TXDESC2_HANDLE_S	0		/* handle of the buffer */
+#define  NX_TXDESC2_HANDLE_M	0x000000000000ffffULL
+#define  NX_TXDESC2_MSS_S	16		/* MSS for the packet */
+#define  NX_TXDESC2_MSS_M	0x00000000ffff0000ULL
+#define  NX_TXDESC2_PORT_S	32		/* interface port */
+#define  NX_TXDESC2_PORT_M	0x0000000f00000000ULL
+#define  NX_TXDESC2_CTXID_S	36		/* context ID */
+#define  NX_TXDESC2_CTXID_M	0x000000f000000000ULL
+#define  NX_TXDESC2_HDRLENGTH_S	40		/* MAC+IP+TCP length for TSO */
+#define  NX_TXDESC2_HDRLENGTH_M	0x0000ff0000000000ULL
+#define  NX_TXDESC2_IPSECID_S	48		/* IPsec offloading SA/ID */
+#define  NX_TXDESC2_IPSECID_M	0xffff000000000000ULL
+	u_int64_t		tx_addr3;	/* address of buffer 3 */
+	u_int64_t		tx_addr1;	/* address of buffer 1 */
+	u_int64_t		tx_buflength;
+#define  NX_TXDESC_BUFLENGTH1_S	0		/* length of buffer 1 */
+#define  NX_TXDESC_BUFLENGTH1_M	0x000000000000ffffULL
+#define  NX_TXDESC_BUFLENGTH2_S	16		/* length of buffer 2 */
+#define  NX_TXDESC_BUFLENGTH2_M	0x00000000ffff0000ULL
+#define  NX_TXDESC_BUFLENGTH3_S	32		/* length of buffer 3 */
+#define  NX_TXDESC_BUFLENGTH3_M	0x0000ffff00000000ULL
+#define  NX_TXDESC_BUFLENGTH4_S	48		/* length of buffer 4 */
+#define  NX_TXDESC_BUFLENGTH4_M	0xffff000000000000ULL
+	u_int64_t		tx_addr4;	/* address of buffer 4 */
+	u_int64_t		tx_word7;	/* reserved */
 } __packed;
 
 struct nx_rxdesc {
 	u_int16_t		rx_handle;	/* handle of the buffer */
 	u_int16_t		rx_reserved;
 	u_int32_t		rx_length;	/* length of the buffer */
-	u_int32_t		rx_addr_low;	/* low address of buffer */
-	u_int32_t		rx_addr_high;	/* high address of buffer */
+	u_int64_t		rx_addr;	/* address of buffer */
 } __packed;
 
 struct nx_statusdesc {
@@ -148,8 +155,7 @@ struct nx_statusdesc {
 } __packed;
 
 struct nx_rxcontext {
-	u_int32_t		rxc_ringaddr_low;
-	u_int32_t		rxc_ringaddr_high;
+	u_int64_t		rxc_ringaddr;
 	u_int32_t		rxc_ringsize;
 	u_int32_t		rxc_reserved;
 } __packed;
@@ -161,17 +167,14 @@ struct nx_rxcontext {
 
 /* DMA-mapped ring context for the Rx, Tx, and Status rings */
 struct nx_ringcontext {
-	u_int32_t		rc_txconsumeroff_low;
-	u_int32_t		rc_txconsumeroff_high;
-	u_int32_t		rc_txringaddr_low;
-	u_int32_t		rc_txringaddr_high;
+	u_int64_t		rc_txconsumeroff;
+	u_int64_t		rc_txringaddr;
 	u_int32_t		rc_txringsize;
 	u_int32_t		rc_reserved;
 
 	struct nx_rxcontext	rc_rxcontext[NX_NRXCONTEXT];
 
-	u_int32_t		rc_statusringaddr_low;
-	u_int32_t		rc_statusringaddr_high;
+	u_int64_t		rc_statusringaddr;
 	u_int32_t		rc_statusringsize;
 
 	u_int32_t		rc_id;		/* context identifier */
@@ -274,6 +277,30 @@ struct nx_ringcontext {
 #define NXFLASHMAP_CRBINIT_1	0x003f0000	/* backup of CRBINIT */
 
 /*
+ * Doorbell messages
+ */
+
+/* Register in the doorbell memory region */
+#define NXDB			0x00000000
+#define  NXDB_PEGID_M		0x00000003	/* Chipset unit */
+#define  NXDB_PEGID_S		0
+#define   NXDB_PEGID_RX		1		/* Rx unit */
+#define   NXDB_PEGID_TX		2		/* Tx unit */
+#define  NXDB_PRIVID		0x00000004	/* Must be set */
+#define  NXDB_COUNT_M		0x0003fff8	/* Doorbell count */
+#define  NXDB_COUNT_S		3
+#define  NXDB_CTXID_M		0x0ffc0000	/* Context ID */
+#define  NXDB_CTXID_S		18
+#define  NXDB_OPCODE_M		0xf0000000	/* Doorbell opcode */
+#define  NXDB_OPCODE_S		28
+#define   NXDB_OPCODE_RCV_PROD	0
+#define   NXDB_OPCODE_JRCV_PROD	1
+#define   NXDB_OPCODE_TSO_PROD	2
+#define   NXDB_OPCODE_CMD_PROD	3
+#define   NXDB_OPCODE_UPD_CONS	4
+#define   NXDB_OPCODE_RESET_CTX	5
+
+/*
  * PCI Express Registers
  */
 
@@ -295,13 +322,13 @@ struct nx_ringcontext {
 #define   NXISR_INT_MASK_PORT(_n)	(NXISR_INT_MASK_TARGET0 << (_n))
 #define  NXISR_INT_MASK_RC_INT		(1<<5)	/* root complex mask */
 #define NXISR_INT_MASK_ENABLE		0x0000077f
-#define NXISR_INT_MASK_DISABLE		0x00000000
+#define NXISR_INT_MASK_DISABLE		0x000007ff
 
 /* Interrupt target mask and status */
 #define NXISR_TARGET_STATUS		NXPCIE(0x00010118)
 #define NXISR_TARGET_MASK		NXPCIE(0x00010128)
 #define  NXISR_TARGET_MASK_ENABLE	0x00000bff
-#define  NXISR_TARGET_MASK_DISABLE	0x00000000
+#define  NXISR_TARGET_MASK_DISABLE	0xffffffff
 
 /* Memory windows */
 #define NXDDR_WINDOW(_f)		NXPCIE_FUNC(0x00010200, _f)
