@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.58 2007/05/26 23:19:31 ray Exp $	*/
+/*	$OpenBSD: server.c,v 1.59 2007/05/26 23:52:04 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -126,26 +126,12 @@ void
 cvs_server_send_response(char *fmt, ...)
 {
 	va_list ap;
-	char *data, *s;
-	struct cvs_resp *resp;
+	char *data;
 
 	va_start(ap, fmt);
 	if (vasprintf(&data, fmt, ap) == -1)
 		fatal("vasprintf: %s", strerror(errno));
 	va_end(ap);
-
-	if ((s = strchr(data, ' ')) != NULL)
-		*s = '\0';
-
-	resp = cvs_remote_get_response_info(data);
-	if (resp == NULL)
-		fatal("'%s' is an unknown response", data);
-
-	if (resp->supported != 1)
-		fatal("remote cvs client does not support '%s'", data);
-
-	if (s != NULL)
-		*s = ' ';
 
 	cvs_log(LP_TRACE, "%s", data);
 	cvs_remote_output(data);
