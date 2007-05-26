@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1239 2007/05/22 22:01:48 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1240 2007/05/26 01:09:06 claudio Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1178,6 +1178,16 @@
 
 /* Chelsio products */
 #define	PCI_PRODUCT_CHELSIO_Nx10	0x0006		/* Nx10 10GbE */
+#define	PCI_PRODUCT_CHELSIO_PE9000	0x0020		/* PE9000 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T302E	0x0021		/* T302E 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T310E	0x0022		/* T310E 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T320X	0x0023		/* T320X 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T302X	0x0024		/* T302X 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T320E	0x0025		/* T320E 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T310X	0x0026		/* T310X 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T3B10	0x0030		/* T3B10 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T3B20	0x0031		/* T3B20 10GbE */
+#define	PCI_PRODUCT_CHELSIO_T3B02	0x0032		/* T3B02 10GbE */
 
 /* Chips and Technologies products */
 #define	PCI_PRODUCT_CHIPS_64310	0x00b8		/* 64310 */
