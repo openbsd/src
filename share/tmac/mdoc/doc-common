@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.51 2007/02/12 13:10:02 henning Exp $
+.\"	$OpenBSD: doc-common,v 1.52 2007/05/26 21:10:04 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -290,24 +290,29 @@
 .de Dd
 .if !"\\*(dD"" .nr gX 1
 .ie \\n(.$>0 \{\
-.	ie \\n(.$==3 \{\
-.		ds dD \\$1 \\$2 \\$3
+.	ie "\\$1"$Mdocdate" \{\
+.		ds dD \\$2 \\$3, \\$4
 .	\}
 .	el \{\
-.		if "\\n(mo"1"  .ds dD January
-.		if "\\n(mo"2"  .ds dD February
-.		if "\\n(mo"3"  .ds dD March
-.		if "\\n(mo"4"  .ds dD April
-.		if "\\n(mo"5"  .ds dD May
-.		if "\\n(mo"6"  .ds dD June
-.		if "\\n(mo"7"  .ds dD July
-.		if "\\n(mo"8"  .ds dD August
-.		if "\\n(mo"9"  .ds dD September
-.		if "\\n(mo"10" .ds dD October
-.		if "\\n(mo"11" .ds dD November
-.		if "\\n(mo"12" .ds dD December
-.		nr *year \\n(yr+1900
-.		as dD \&\ \\n(dy, \\n[*year]
+.		ie \\n(.$==3 \{\
+.			ds dD \\$1 \\$2 \\$3
+.		\}
+.		el \{\
+.			if "\\n(mo"1"  .ds dD January
+.			if "\\n(mo"2"  .ds dD February
+.			if "\\n(mo"3"  .ds dD March
+.			if "\\n(mo"4"  .ds dD April
+.			if "\\n(mo"5"  .ds dD May
+.			if "\\n(mo"6"  .ds dD June
+.			if "\\n(mo"7"  .ds dD July
+.			if "\\n(mo"8"  .ds dD August
+.			if "\\n(mo"9"  .ds dD September
+.			if "\\n(mo"10" .ds dD October
+.			if "\\n(mo"11" .ds dD November
+.			if "\\n(mo"12" .ds dD December
+.			nr *year \\n(yr+1900
+.			as dD \&\ \\n(dy, \\n[*year]
+.		\}
 .	\}
 .\}
 .el \{\
