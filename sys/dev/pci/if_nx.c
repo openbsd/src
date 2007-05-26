@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.43 2007/05/26 01:10:52 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.44 2007/05/26 01:42:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1139,7 +1139,7 @@ nxb_wait(struct nxb_softc *sc, bus_size_t reg, u_int32_t val,
 			if (data != val)
 				goto done;
 		}
-		delay(1);
+		delay(10);
 	}
 
 	return (-1);
