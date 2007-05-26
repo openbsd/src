@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.234 2007/05/15 01:00:15 dlg Exp $
+#	$OpenBSD: files.pci,v 1.235 2007/05/26 17:39:53 claudio Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -357,6 +357,13 @@ attach	thtc at pci
 device	tht: ether, ifnet, ifmedia, firmload
 attach	tht at thtc   
 file	dev/pci/if_tht.c		thtc | tht
+
+# Chelsio 10Gb Ethernet
+device	cheg {}
+attach	cheg at pci
+device	che: ether, ifnet, ifmedia, firmload
+attach	che at cheg   
+file	dev/pci/if_che.c		cheg | che
 
 # DEC/Intel 21143 and "tulip" clone ethernet
 attach	dc at pci with dc_pci
