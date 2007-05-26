@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.103 2007/05/26 20:22:01 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.104 2007/05/26 20:28:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1287,7 +1287,8 @@ tht_rxf_fill(struct tht_softc *sc, int wait)
 		if (!ISSET(m->m_flags, M_EXT))
 			goto free_m;
 
-		m->m_len = m->m_pkthdr.len = MCLBYTES;
+		m->m_data += ETHER_ALIGN;
+		m->m_len = m->m_pkthdr.len = MCLBYTES - ETHER_ALIGN;
 
 		dmap = pkt->tp_dmap;
 		if (bus_dmamap_load_mbuf(dmat, dmap, m,
