@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.104 2007/05/26 20:28:22 claudio Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.105 2007/05/26 20:47:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -956,7 +956,7 @@ tht_up(struct tht_softc *sc)
 	if (tht_fifo_alloc(sc, &sc->sc_txf, &tht_txf_desc) != 0)
 		goto free_rxd;
 
-	tht_write(sc, THT_REG_10G_FRM_LEN, MCLBYTES);
+	tht_write(sc, THT_REG_10G_FRM_LEN, MCLBYTES - ETHER_ALIGN);
 	tht_write(sc, THT_REG_10G_PAUSE, 0x96);
 	tht_write(sc, THT_REG_10G_RX_SEC, THT_REG_10G_SEC_AVAIL(0x10) |
 	    THT_REG_10G_SEC_EMPTY(0x80));
@@ -972,7 +972,7 @@ tht_up(struct tht_softc *sc)
 
 	tht_write(sc, THT_REG_VGLB, 0);
 
-	tht_write(sc, THT_REG_RX_MAX_FRAME, MCLBYTES);
+	tht_write(sc, THT_REG_RX_MAX_FRAME, MCLBYTES - ETHER_ALIGN);
 
 	tht_write(sc, THT_REG_RDINTCM(0), THT_REG_RDINTCM_PKT_TH(12) |
 	    THT_REG_RDINTCM_RXF_TH(4) | THT_REG_RDINTCM_COAL_RC |
