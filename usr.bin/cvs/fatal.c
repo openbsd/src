@@ -1,4 +1,4 @@
-/*	$OpenBSD: fatal.c,v 1.10 2007/05/26 20:13:45 ray Exp $ */
+/*	$OpenBSD: fatal.c,v 1.11 2007/05/26 23:50:46 ray Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -48,9 +48,6 @@ fatal(const char *fmt,...)
 	va_end(args);
 
 	cvs_cleanup();
-
-	if (cvs_server_active)
-		cvs_server_send_response("error");
 
  end:
 	exit(1);
