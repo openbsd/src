@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.391 2007/05/26 20:26:50 pedro Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.392 2007/05/26 22:09:17 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2785,6 +2785,7 @@ init386(paddr_t first_avail)
 	bios_memmap_t *im;
 
 	proc0.p_addr = proc0paddr;
+	cpu_info_primary.ci_self = &cpu_info_primary;
 	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
 
 	/*

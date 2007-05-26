@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.109 2007/05/25 20:32:29 krw Exp $	*/
+/*	$OpenBSD: locore.s,v 1.110 2007/05/26 22:09:17 weingart Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -297,7 +297,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	pushl	$PSL_MBO
 	popfl
 
-	/* Clear segment registers; always null in proc0. */
+	/* Clear segment registers; null until proc0 setup */
 	xorl	%eax,%eax
 	movw	%ax,%fs
 	movw	%ax,%gs
@@ -1897,8 +1897,11 @@ ENTRY(switch_exit)
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%ecx,%ecx
-	movw	%cx,%fs
 	movw	%cx,%gs
+
+	/* Point to cpu_info */
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%ecx
+	movw	%cx,%fs
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -2083,7 +2086,7 @@ NENTRY(resume_pop_es)
 	movw	%ax,%gs
 NENTRY(resume_pop_gs)
 	pushl	%fs
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
 	movw	%ax,%fs
 NENTRY(resume_pop_fs)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)

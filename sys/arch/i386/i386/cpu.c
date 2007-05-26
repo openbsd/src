@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.23 2007/05/08 18:51:59 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.24 2007/05/26 22:09:17 weingart Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -151,7 +151,7 @@ void	cpu_copy_trampoline(void);
 void
 cpu_init_first()
 {
-	int cpunum = cpu_number();
+	int cpunum = lapic_cpu_number();
 
 	if (cpunum != 0) {
 		cpu_info[0] = NULL;
@@ -193,10 +193,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	struct pcb *pcb;
 
 	if (caa->cpu_role != CPU_ROLE_AP) {
-		if (cpunum != cpu_number()) {
+		if (cpunum != lapic_cpu_number()) {
 			panic("%s: running cpu is at apic %d"
 			    " instead of at expected %d",
-			    self->dv_xname, cpu_number(), cpunum);
+			    self->dv_xname, lapic_cpu_number(), cpunum);
 		}
 
 		ci = &cpu_info_primary;

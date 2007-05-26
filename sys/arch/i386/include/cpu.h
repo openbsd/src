@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.92 2007/04/21 21:06:15 gwk Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.93 2007/05/26 22:09:17 weingart Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -182,8 +182,20 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
-#define cpu_number()		(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
-#define	curcpu()		(cpu_info[cpu_number()])
+static struct cpu_info *curcpu(void);
+
+__inline static struct cpu_info *
+curcpu(void)
+{
+	struct cpu_info *ci;
+
+	/* Can't include sys/param.h for offsetof() since it includes us */
+	__asm __volatile("movl %%fs:%1, %0" :
+		"=r" (ci) : "m"
+		(*(struct cpu_info * const *)&((struct cpu_info *)0)->ci_self));
+	return ci;
+}
+#define cpu_number() 		(curcpu()->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
