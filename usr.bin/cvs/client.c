@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.62 2007/05/25 22:36:47 ray Exp $	*/
+/*	$OpenBSD: client.c,v 1.63 2007/05/26 02:50:46 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -574,7 +574,7 @@ cvs_client_checkedin(char *data)
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent, *newent;
 	char *dir, *e, entry[CVS_ENT_MAXLINELEN], rev[16], timebuf[64];
-	char sticky[16];
+	char sticky[CVS_ENT_MAXLINELEN];
 
 	if (data == NULL)
 		fatal("Missing argument for Checked-in");
