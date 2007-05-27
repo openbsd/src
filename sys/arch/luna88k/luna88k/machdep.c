@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2007/05/26 20:26:50 pedro Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2007/05/27 17:31:56 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -475,6 +475,7 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+	minaddr = vm_map_min(kernel_map);
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 

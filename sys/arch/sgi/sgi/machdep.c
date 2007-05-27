@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2007/05/27 14:26:44 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.42 2007/05/27 17:31:57 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -744,6 +744,7 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+	minaddr = vm_map_min(kernel_map);
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 	/* Allocate a submap for physio */
