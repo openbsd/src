@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.71 2007/04/04 14:36:05 jmc Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.72 2007/05/27 00:57:17 tom Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -260,11 +260,11 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 
 	/*
 	 * Use a bounce buffer to not cross 64k DMA boundary, and to
-	 * not access above 1 MB.
+	 * not access 1 MB or above.
 	 */
 	if (((((u_int32_t)buf) & ~0xffff) !=
 	    (((u_int32_t)buf + bbsize) & ~0xffff)) ||
-	    (((u_int32_t)buf) > 0x100000)) {
+	    (((u_int32_t)buf) >= 0x100000)) {
 		/*
 		 * XXX we believe that all the io is buffered
 		 * by fs routines, so no big reads anyway
