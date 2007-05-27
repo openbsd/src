@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.22 2007/05/26 12:22:38 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.23 2007/05/27 10:38:12 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -281,6 +281,17 @@ sub add_older
 {
 	my ($self, @handles) = @_;
 	push(@{$self->{older}}, @handles);
+}
+
+# temporary shortcut
+sub handle
+{
+	my $self = shift;
+	if (defined $self->{newer}) {
+		return $self->{newer}[0];
+	} else {
+		return undef;
+	}
 }
 
 1;
