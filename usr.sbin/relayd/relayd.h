@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.42 2007/05/26 19:58:49 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.43 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -273,23 +273,27 @@ TAILQ_HEAD(addresslist, address);
 #define F_NATLOOK		0x1000
 #define F_DEMOTE		0x2000
 #define F_LOOKUP_PATH		0x4000
+#define F_DEMOTED		0x8000
 
-struct host {
-	u_int16_t		 flags;
+struct host_config {
 	objid_t			 id;
 	objid_t			 tableid;
-	char			*tablename;
+	int			 retry;
 	char			 name[MAXHOSTNAMELEN];
+	struct sockaddr_storage	 ss;
+};
+
+struct host {
+	TAILQ_ENTRY(host)	 entry;
+	struct host_config	 conf;
+	u_int16_t		 flags;
+	char			*tablename;
 	int			 up;
 	int			 last_up;
 	u_long			 check_cnt;
 	u_long			 up_cnt;
 	int			 retry_cnt;
-	int			 retry;
-
-	struct sockaddr_storage	 ss;
 	struct ctl_tcp_event	 cte;
-	TAILQ_ENTRY(host)	 entry;
 };
 TAILQ_HEAD(hostlist, host);
 
@@ -300,25 +304,29 @@ enum host_status {
 };
 #define HOST_ISUP(x)	(x == HOST_UP)
 
-struct table {
+struct table_config {
 	objid_t			 id;
 	objid_t			 serviceid;
 	u_int16_t		 flags;
 	int			 check;
-	int			 up;
-	int			 demoted;
 	char			 demote_group[IFNAMSIZ];
+	struct timeval		 timeout;
 	in_port_t		 port;
 	int			 retcode;
-	struct timeval		 timeout;
 	char			 name[TABLE_NAME_SIZE];
 	char			 path[MAXPATHLEN];
-	char			*sendbuf;
 	char			 exbuf[64];
 	char			 digest[41]; /* length of sha1 digest * 2 */
-	SSL_CTX			*ssl_ctx;
-	struct hostlist		 hosts;
+};
+
+struct table {
 	TAILQ_ENTRY(table)	 entry;
+	struct table_config	 conf;
+	int			 up;
+	struct hostlist		 hosts;
+	SSL_CTX			*ssl_ctx;
+	int			 sendbuf_len;
+	char			*sendbuf;
 };
 TAILQ_HEAD(tablelist, table);
 
@@ -331,16 +339,22 @@ enum table_check {
 	CHECK_SEND_EXPECT	= 5
 };
 
-struct service {
+struct service_config {
 	objid_t			 id;
 	u_int16_t		 flags;
 	in_port_t		 port;
+	objid_t			 table_id;
+	objid_t			 backup_id;
 	char			 name[SRV_NAME_SIZE];
 	char			 tag[TAG_NAME_SIZE];
+};
+
+struct service {
+	TAILQ_ENTRY(service)	 entry;
+	struct service_config	 conf;
 	struct addresslist	 virts;
 	struct table		*table;
 	struct table		*backup; /* use this if no host up */
-	TAILQ_ENTRY(service)	 entry;
 };
 TAILQ_HEAD(servicelist, service);
 

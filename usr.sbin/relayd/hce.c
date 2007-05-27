@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.19 2007/05/26 19:58:48 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.20 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -150,7 +150,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	if (env->flags & F_SSL) {
 		ssl_init(env);
 		TAILQ_FOREACH(table, &env->tables, entry) {
-			if (!(table->flags & F_SSL))
+			if (!(table->conf.flags & F_SSL))
 				continue;
 			table->ssl_ctx = ssl_ctx_create(env);
 		}
@@ -185,15 +185,15 @@ hce_launch_checks(int fd, short event, void *arg)
 		fatal("hce_launch_checks: gettimeofday");
 
 	TAILQ_FOREACH(table, &env->tables, entry) {
-		if (table->flags & F_DISABLE)
+		if (table->conf.flags & F_DISABLE)
 			continue;
-		if (table->check == CHECK_NOCHECK)
+		if (table->conf.check == CHECK_NOCHECK)
 			fatalx("hce_launch_checks: unknown check type");
 
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if (host->flags & F_DISABLE)
 				continue;
-			if (table->check == CHECK_ICMP) {
+			if (table->conf.check == CHECK_ICMP) {
 				schedule_icmp(env, host);
 				continue;
 			}
@@ -225,23 +225,23 @@ hce_notify_done(struct host *host, const char *msg)
 
 	if (host->up == HOST_DOWN && host->retry_cnt) {
 		log_debug("hce_notify_done: host %s retry %d",
-		    host->name, host->retry_cnt);
+		    host->conf.name, host->retry_cnt);
 		host->up = host->last_up;
 		host->retry_cnt--;
 	} else
-		host->retry_cnt = host->retry;
+		host->retry_cnt = host->conf.retry;
 	if (host->up != HOST_UNKNOWN) {
 		host->check_cnt++;
 		if (host->up == HOST_UP)
 			host->up_cnt++;
 	}
-	st.id = host->id;
+	st.id = host->conf.id;
 	st.up = host->up;
 	st.check_cnt = host->check_cnt;
 	st.retry_cnt = host->retry_cnt;
 	host->flags |= (F_CHECK_SENT|F_CHECK_DONE);
 	if (msg)
-		log_debug("hce_notify_done: %s (%s)", host->name, msg);
+		log_debug("hce_notify_done: %s (%s)", host->conf.name, msg);
 
 	imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
 	if (host->up != host->last_up)
@@ -257,14 +257,14 @@ hce_notify_done(struct host *host, const char *msg)
 	else
 		duration = 0;
 
-	if ((table = table_find(env, host->tableid)) == NULL)
+	if ((table = table_find(env, host->conf.tableid)) == NULL)
 		fatalx("hce_notify_done: invalid table id");
 
 	if (env->opts & logopt) {
 		log_info("host %s, check %s%s (%lums), state %s -> %s, "
 		    "availability %s",
-		    host->name, table_check(table->check),
-		    (table->flags & F_SSL) ? " use ssl" : "", duration,
+		    host->conf.name, table_check(table->conf.check),
+		    (table->conf.flags & F_SSL) ? " use ssl" : "", duration,
 		    host_status(host->last_up), host_status(host->up),
 		    print_availability(host->check_cnt, host->up_cnt));
 	}
@@ -333,7 +333,7 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 			memcpy(&id, imsg.data, sizeof(id));
 			if ((table = table_find(env, id)) == NULL)
 				fatalx("hce_dispatch_imsg: desynchronized");
-			table->flags |= F_DISABLE;
+			table->conf.flags |= F_DISABLE;
 			TAILQ_FOREACH(host, &table->hosts, entry)
 				host->up = HOST_UNKNOWN;
 			break;
@@ -341,7 +341,7 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 			memcpy(&id, imsg.data, sizeof(id));
 			if ((table = table_find(env, id)) == NULL)
 				fatalx("hce_dispatch_imsg: desynchronized");
-			table->flags &= ~(F_DISABLE);
+			table->conf.flags &= ~(F_DISABLE);
 			TAILQ_FOREACH(host, &table->hosts, entry)
 				host->up = HOST_UNKNOWN;
 			break;

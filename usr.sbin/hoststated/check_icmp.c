@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.14 2007/02/23 00:28:06 deraadt Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.15 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -78,7 +78,7 @@ schedule_icmp(struct hoststated *env, struct host *host)
 	host->last_up = host->up;
 	host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 
-	if (((struct sockaddr *)&host->ss)->sa_family == AF_INET)
+	if (((struct sockaddr *)&host->conf.ss)->sa_family == AF_INET)
 		env->has_icmp = 1;
 	else
 		env->has_icmp6 = 1;
@@ -120,10 +120,11 @@ icmp_checks_done(struct ctl_icmp_event *cie)
 	struct host	*host;
 
 	TAILQ_FOREACH(table, &cie->env->tables, entry) {
-		if (table->flags & F_DISABLE || table->check != CHECK_ICMP)
+		if (table->conf.flags & F_DISABLE ||
+		    table->conf.check != CHECK_ICMP)
 			continue;
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			if (((struct sockaddr *)&host->ss)->sa_family !=
+			if (((struct sockaddr *)&host->conf.ss)->sa_family !=
 			    cie->af)
 				continue;
 			if (!(host->flags & F_CHECK_DONE))
@@ -140,10 +141,11 @@ icmp_checks_timeout(struct ctl_icmp_event *cie, const char *msg)
 	struct host	*host;
 
 	TAILQ_FOREACH(table, &cie->env->tables, entry) {
-		if (table->flags & F_DISABLE || table->check != CHECK_ICMP)
+		if (table->conf.flags & F_DISABLE ||
+		    table->conf.check != CHECK_ICMP)
 			continue;
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			if (((struct sockaddr *)&host->ss)->sa_family !=
+			if (((struct sockaddr *)&host->conf.ss)->sa_family !=
 			    cie->af)
 				continue;
 			if (!(host->flags & F_CHECK_DONE))
@@ -190,28 +192,29 @@ send_icmp(int s, short event, void *arg)
 	}
 
 	TAILQ_FOREACH(table, &cie->env->tables, entry) {
-		if (table->check != CHECK_ICMP || table->flags & F_DISABLE)
+		if (table->conf.check != CHECK_ICMP ||
+		    table->conf.flags & F_DISABLE)
 			continue;
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if (host->flags & (F_DISABLE | F_CHECK_SENT))
 				continue;
-			if (((struct sockaddr *)&host->ss)->sa_family !=
+			if (((struct sockaddr *)&host->conf.ss)->sa_family !=
 			    cie->af)
 				continue;
 			i++;
-			to = (struct sockaddr *)&host->ss;
+			to = (struct sockaddr *)&host->conf.ss;
 			if (cie->af == AF_INET) {
 				icp->icmp_seq = htons(i);
 				icp->icmp_cksum = 0;
-				memcpy(icp->icmp_data, &host->id,
-				    sizeof(host->id));
+				memcpy(icp->icmp_data, &host->conf.id,
+				    sizeof(host->conf.id));
 				icp->icmp_cksum = in_cksum((u_short *)icp,
 				    sizeof(packet));
 			} else {
 				icp6->icmp6_seq = htons(i);
 				icp6->icmp6_cksum = 0;
-				memcpy(packet + sizeof(*icp6), &host->id,
-				    sizeof(host->id));
+				memcpy(packet + sizeof(*icp6), &host->conf.id,
+				    sizeof(host->conf.id));
 				icp6->icmp6_cksum = in_cksum((u_short *)icp6,
 				    sizeof(packet));
 			}
@@ -281,7 +284,7 @@ recv_icmp(int s, short event, void *arg)
 		log_warn("recv_icmp: ping for unknown host received");
 		goto retry;
 	}
-	if (bcmp(&ss, &host->ss, slen)) {
+	if (bcmp(&ss, &host->conf.ss, slen)) {
 		log_warnx("recv_icmp: forged icmp packet?");
 		goto retry;
 	}

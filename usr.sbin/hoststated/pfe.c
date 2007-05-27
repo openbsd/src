@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.22 2007/05/26 19:58:49 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.23 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -228,7 +228,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			}
 			if (host->check_cnt != st.check_cnt) {
 				log_debug("pfe_dispatch_imsg: host %d => %d",
-				    host->id, host->up);
+				    host->conf.id, host->up);
 				fatalx("pfe_dispatch_imsg: desynchronized");
 			}
 
@@ -240,11 +240,12 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 				imsg_compose(&ibuf_relay[n],
 				    IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
 
-			if ((table = table_find(env, host->tableid)) == NULL)
+			if ((table = table_find(env, host->conf.tableid))
+			    == NULL)
 				fatalx("pfe_dispatch_imsg: invalid table id");
 
 			log_debug("pfe_dispatch_imsg: state %d for host %u %s",
-			    st.up, host->id, host->name);
+			    st.up, host->conf.id, host->conf.name);
 
 			if ((st.up == HOST_UNKNOWN && !HOST_ISUP(host->up)) ||
 			    (!HOST_ISUP(st.up) && host->up == HOST_UNKNOWN)) {
@@ -253,14 +254,14 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			}
 
 			if (st.up == HOST_UP) {
-				table->flags |= F_CHANGED;
+				table->conf.flags |= F_CHANGED;
 				table->up++;
 				host->flags |= F_ADD;
 				host->flags &= ~(F_DEL);
 				host->up = HOST_UP;
 			} else {
 				table->up--;
-				table->flags |= F_CHANGED;
+				table->conf.flags |= F_CHANGED;
 				host->flags |= F_DEL;
 				host->flags &= ~(F_ADD);
 			}
@@ -398,21 +399,21 @@ show(struct ctl_conn *c)
 	TAILQ_FOREACH(service, &env->services, entry) {
 		imsg_compose(&c->ibuf, IMSG_CTL_SERVICE, 0, 0,
 		    service, sizeof(*service));
-		if (service->flags & F_DISABLE)
+		if (service->conf.flags & F_DISABLE)
 			continue;
 
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0,
 		    service->table, sizeof(*service->table));
-		if (!(service->table->flags & F_DISABLE))
+		if (!(service->table->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &service->table->hosts, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0,
 				    host, sizeof(*host));
 
-		if (service->backup->id == EMPTY_TABLE)
+		if (service->backup->conf.id == EMPTY_TABLE)
 			continue;
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0,
 		    service->backup, sizeof(*service->backup));
-		if (!(service->backup->flags & F_DISABLE))
+		if (!(service->backup->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &service->backup->hosts, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0,
 				    host, sizeof(*host));
@@ -428,7 +429,7 @@ show(struct ctl_conn *c)
 			continue;
 		imsg_compose(&c->ibuf, IMSG_CTL_TABLE, 0, 0,
 		    rlay->dsttable, sizeof(*rlay->dsttable));
-		if (!(rlay->dsttable->flags & F_DISABLE))
+		if (!(rlay->dsttable->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rlay->dsttable->hosts, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_HOST, 0, 0,
 				    host, sizeof(*host));
@@ -449,16 +450,16 @@ disable_service(struct ctl_conn *c, struct ctl_id *id)
 		service = service_find(env, id->id);
 	if (service == NULL)
 		return (-1);
-	id->id = service->id;
+	id->id = service->conf.id;
 
-	if (service->flags & F_DISABLE)
+	if (service->conf.flags & F_DISABLE)
 		return (0);
 
-	service->flags |= F_DISABLE;
-	service->flags &= ~(F_ADD);
-	service->flags |= F_DEL;
-	service->table->flags |= F_DISABLE;
-	log_debug("disable_service: disabled service %d", service->id);
+	service->conf.flags |= F_DISABLE;
+	service->conf.flags &= ~(F_ADD);
+	service->conf.flags |= F_DEL;
+	service->table->conf.flags |= F_DISABLE;
+	log_debug("disable_service: disabled service %d", service->conf.id);
 	pfe_sync();
 	return (0);
 }
@@ -475,25 +476,25 @@ enable_service(struct ctl_conn *c, struct ctl_id *id)
 		service = service_find(env, id->id);
 	if (service == NULL)
 		return (-1);
-	id->id = service->id;
+	id->id = service->conf.id;
 
-	if (!(service->flags & F_DISABLE))
+	if (!(service->conf.flags & F_DISABLE))
 		return (0);
 
-	service->flags &= ~(F_DISABLE);
-	service->flags &= ~(F_DEL);
-	service->flags |= F_ADD;
-	log_debug("enable_service: enabled service %d", service->id);
+	service->conf.flags &= ~(F_DISABLE);
+	service->conf.flags &= ~(F_DEL);
+	service->conf.flags |= F_ADD;
+	log_debug("enable_service: enabled service %d", service->conf.id);
 
 	bzero(&eid, sizeof(eid));
 
 	/* XXX: we're syncing twice */
-	eid.id = service->table->id;
+	eid.id = service->table->conf.id;
 	if (enable_table(c, &eid) == -1)
 		return (-1);
-	if (service->backup->id == EMPTY_ID)
+	if (service->backup->conf.id == EMPTY_ID)
 		return (0);
-	eid.id = service->backup->id;
+	eid.id = service->backup->conf.id;
 	if (enable_table(c, &eid) == -1)
 		return (-1);
 	return (0);
@@ -512,19 +513,19 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 		table = table_find(env, id->id);
 	if (table == NULL)
 		return (-1);
-	id->id = table->id;
-	if ((service = service_find(env, table->serviceid)) == NULL)
+	id->id = table->conf.id;
+	if ((service = service_find(env, table->conf.serviceid)) == NULL)
 		fatalx("disable_table: desynchronised");
 
-	if (table->flags & F_DISABLE)
+	if (table->conf.flags & F_DISABLE)
 		return (0);
-	table->flags |= (F_DISABLE|F_CHANGED);
+	table->conf.flags |= (F_DISABLE|F_CHANGED);
 	table->up = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry)
 		host->up = HOST_UNKNOWN;
 	imsg_compose(ibuf_hce, IMSG_TABLE_DISABLE, 0, 0,
-	    &table->id, sizeof(table->id));
-	log_debug("disable_table: disabled table %d", table->id);
+	    &table->conf.id, sizeof(table->conf.id));
+	log_debug("disable_table: disabled table %d", table->conf.id);
 	pfe_sync();
 	return (0);
 }
@@ -542,21 +543,21 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 		table = table_find(env, id->id);
 	if (table == NULL)
 		return (-1);
-	id->id = table->id;
+	id->id = table->conf.id;
 
-	if ((service = service_find(env, table->serviceid)) == NULL)
+	if ((service = service_find(env, table->conf.serviceid)) == NULL)
 		fatalx("enable_table: desynchronised");
 
-	if (!(table->flags & F_DISABLE))
+	if (!(table->conf.flags & F_DISABLE))
 		return (0);
-	table->flags &= ~(F_DISABLE);
-	table->flags |= F_CHANGED;
+	table->conf.flags &= ~(F_DISABLE);
+	table->conf.flags |= F_CHANGED;
 	table->up = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry)
 		host->up = HOST_UNKNOWN;
 	imsg_compose(ibuf_hce, IMSG_TABLE_ENABLE, 0, 0,
-	    &table->id, sizeof(table->id));
-	log_debug("enable_table: enabled table %d", table->id);
+	    &table->conf.id, sizeof(table->conf.id));
+	log_debug("enable_table: enabled table %d", table->conf.id);
 	pfe_sync();
 	return (0);
 }
@@ -574,16 +575,16 @@ disable_host(struct ctl_conn *c, struct ctl_id *id)
 		host = host_find(env, id->id);
 	if (host == NULL)
 		return (-1);
-	id->id = host->id;
+	id->id = host->conf.id;
 
 	if (host->flags & F_DISABLE)
 		return (0);
 
 	if (host->up == HOST_UP) {
-		if ((table = table_find(env, host->tableid)) == NULL)
+		if ((table = table_find(env, host->conf.tableid)) == NULL)
 			fatalx("disable_host: invalid table id");
 		table->up--;
-		table->flags |= F_CHANGED;
+		table->conf.flags |= F_CHANGED;
 	}
 
 	host->up = HOST_UNKNOWN;
@@ -594,12 +595,13 @@ disable_host(struct ctl_conn *c, struct ctl_id *id)
 	host->up_cnt = 0;
 
 	imsg_compose(ibuf_hce, IMSG_HOST_DISABLE, 0, 0,
-	    &host->id, sizeof(host->id));
+	    &host->conf.id, sizeof(host->conf.id));
 	/* Forward to relay engine(s) */
 	for (n = 0; n < env->prefork_relay; n++)
 		imsg_compose(&ibuf_relay[n],
-		    IMSG_HOST_DISABLE, 0, 0, &host->id, sizeof(host->id));
-	log_debug("disable_host: disabled host %d", host->id);
+		    IMSG_HOST_DISABLE, 0, 0,
+		    &host->conf.id, sizeof(host->conf.id));
+	log_debug("disable_host: disabled host %d", host->conf.id);
 	pfe_sync();
 	return (0);
 }
@@ -616,7 +618,7 @@ enable_host(struct ctl_conn *c, struct ctl_id *id)
 		host = host_find(env, id->id);
 	if (host == NULL)
 		return (-1);
-	id->id = host->id;
+	id->id = host->conf.id;
 
 	if (!(host->flags & F_DISABLE))
 		return (0);
@@ -627,12 +629,13 @@ enable_host(struct ctl_conn *c, struct ctl_id *id)
 	host->flags &= ~(F_ADD);
 
 	imsg_compose(ibuf_hce, IMSG_HOST_ENABLE, 0, 0,
-	    &host->id, sizeof (host->id));
+	    &host->conf.id, sizeof (host->conf.id));
 	/* Forward to relay engine(s) */
 	for (n = 0; n < env->prefork_relay; n++)
 		imsg_compose(&ibuf_relay[n],
-		    IMSG_HOST_ENABLE, 0, 0, &host->id, sizeof(host->id));
-	log_debug("enable_host: enabled host %d", host->id);
+		    IMSG_HOST_ENABLE, 0, 0,
+		    &host->conf.id, sizeof(host->conf.id));
+	log_debug("enable_host: enabled host %d", host->conf.id);
 	pfe_sync();
 	return (0);
 }
@@ -650,23 +653,25 @@ pfe_sync(void)
 	bzero(&id, sizeof(id));
 	bzero(&imsg, sizeof(imsg));
 	TAILQ_FOREACH(service, &env->services, entry) {
-		service->flags &= ~(F_BACKUP);
-		service->flags &= ~(F_DOWN);
+		service->conf.flags &= ~(F_BACKUP);
+		service->conf.flags &= ~(F_DOWN);
 
-		if (service->flags & F_DISABLE ||
+		if (service->conf.flags & F_DISABLE ||
 		    (service->table->up == 0 && service->backup->up == 0)) {
-			service->flags |= F_DOWN;
+			service->conf.flags |= F_DOWN;
 			active = NULL;
 		} else if (service->table->up == 0 && service->backup->up > 0) {
-			service->flags |= F_BACKUP;
+			service->conf.flags |= F_BACKUP;
 			active = service->backup;
-			active->flags |= service->table->flags & F_CHANGED;
-			active->flags |= service->backup->flags & F_CHANGED;
+			active->conf.flags |=
+			    service->table->conf.flags & F_CHANGED;
+			active->conf.flags |=
+			    service->backup->conf.flags & F_CHANGED;
 		} else
 			active = service->table;
 
-		if (active != NULL && active->flags & F_CHANGED) {
-			id.id = active->id;
+		if (active != NULL && active->conf.flags & F_CHANGED) {
+			id.id = active->conf.id;
 			imsg.hdr.type = IMSG_CTL_TABLE_CHANGED;
 			imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 			imsg.data = &id;
@@ -674,25 +679,25 @@ pfe_sync(void)
 			control_imsg_forward(&imsg);
 		}
 
-		service->table->flags &= ~(F_CHANGED);
-		service->backup->flags &= ~(F_CHANGED);
+		service->table->conf.flags &= ~(F_CHANGED);
+		service->backup->conf.flags &= ~(F_CHANGED);
 
-		if (service->flags & F_DOWN) {
-			if (service->flags & F_ACTIVE_RULESET) {
+		if (service->conf.flags & F_DOWN) {
+			if (service->conf.flags & F_ACTIVE_RULESET) {
 				flush_table(env, service);
 				log_debug("pfe_sync: disabling ruleset");
-				service->flags &= ~(F_ACTIVE_RULESET);
-				id.id = service->id;
+				service->conf.flags &= ~(F_ACTIVE_RULESET);
+				id.id = service->conf.id;
 				imsg.hdr.type = IMSG_CTL_PULL_RULESET;
 				imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 				imsg.data = &id;
 				sync_ruleset(env, service, 0);
 				control_imsg_forward(&imsg);
 			}
-		} else if (!(service->flags & F_ACTIVE_RULESET)) {
+		} else if (!(service->conf.flags & F_ACTIVE_RULESET)) {
 			log_debug("pfe_sync: enabling ruleset");
-			service->flags |= F_ACTIVE_RULESET;
-			id.id = service->id;
+			service->conf.flags |= F_ACTIVE_RULESET;
+			id.id = service->conf.id;
 			imsg.hdr.type = IMSG_CTL_PUSH_RULESET;
 			imsg.hdr.len = sizeof(id) + IMSG_HEADER_SIZE;
 			imsg.data = &id;
@@ -702,22 +707,22 @@ pfe_sync(void)
 	}
 
 	TAILQ_FOREACH(table, &env->tables, entry) {
-		if ((table->flags & F_DEMOTE) == 0)
+		if ((table->conf.flags & F_DEMOTE) == 0)
 			continue;
 		demote.level = 0;
-		if (table->up && table->demoted) {
+		if (table->up && table->conf.flags & F_DEMOTED) {
 			demote.level = -1;
-			table->demoted = 0;
+			table->conf.flags &= ~F_DEMOTED;
 		}
-		else if (!table->up && !table->demoted) {
+		else if (!table->up && !(table->conf.flags & F_DEMOTED)) {
 			demote.level = 1;
-			table->demoted = 1;
+			table->conf.flags |= F_DEMOTED;
 		}
 		if (demote.level == 0)
 			continue;
 		log_debug("pfe_sync: demote %d table '%s' group '%s'",
-		    demote.level, table->name, table->demote_group);
-		(void)strlcpy(demote.group, table->demote_group,
+		    demote.level, table->conf.name, table->conf.demote_group);
+		(void)strlcpy(demote.group, table->conf.demote_group,
 		    sizeof(demote.group));
 		imsg_compose(ibuf_main, IMSG_DEMOTE, 0, 0,
 		    &demote, sizeof(demote));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.23 2007/02/22 05:58:06 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.24 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -56,20 +56,20 @@ check_tcp(struct ctl_tcp_event *cte)
 	struct timeval		 tv;
 	struct linger		 lng;
 
-	switch (cte->host->ss.ss_family) {
+	switch (cte->host->conf.ss.ss_family) {
 	case AF_INET:
-		((struct sockaddr_in *)&cte->host->ss)->sin_port =
-			cte->table->port;
+		((struct sockaddr_in *)&cte->host->conf.ss)->sin_port =
+			cte->table->conf.port;
 		break;
 	case AF_INET6:
-		((struct sockaddr_in6 *)&cte->host->ss)->sin6_port =
-			cte->table->port;
+		((struct sockaddr_in6 *)&cte->host->conf.ss)->sin6_port =
+			cte->table->conf.port;
 		break;
 	}
 
-	len = ((struct sockaddr *)&cte->host->ss)->sa_len;
+	len = ((struct sockaddr *)&cte->host->conf.ss)->sa_len;
 
-	if ((s = socket(cte->host->ss.ss_family, SOCK_STREAM, 0)) == -1)
+	if ((s = socket(cte->host->conf.ss.ss_family, SOCK_STREAM, 0)) == -1)
 		goto bad;
 
 	bzero(&lng, sizeof(lng));
@@ -83,8 +83,8 @@ check_tcp(struct ctl_tcp_event *cte)
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
 		goto bad;
 
-	bcopy(&cte->table->timeout, &tv, sizeof(tv));
-	if (connect(s, (struct sockaddr *)&cte->host->ss, len) == -1) {
+	bcopy(&cte->table->conf.timeout, &tv, sizeof(tv));
+	if (connect(s, (struct sockaddr *)&cte->host->conf.ss, len) == -1) {
 		if (errno != EINPROGRESS)
 			goto bad;
 	}
@@ -133,9 +133,9 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 {
 	cte->s = s;
 
-	switch (cte->table->check) {
+	switch (cte->table->conf.check) {
 	case CHECK_TCP:
-		if (cte->table->flags & F_SSL)
+		if (cte->table->conf.flags & F_SSL)
 			break;
 		close(s);
 		hce_notify_done(cte->host, "tcp_host_up: connect successful");
@@ -154,7 +154,7 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 		break;
 	}
 
-	if (cte->table->flags & F_SSL) {
+	if (cte->table->conf.flags & F_SSL) {
 		ssl_transaction(cte);
 		return;
 	}
@@ -162,14 +162,14 @@ tcp_host_up(int s, struct ctl_tcp_event *cte)
 	if (cte->table->sendbuf != NULL) {
 		cte->req = cte->table->sendbuf;
 		event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, tcp_send_req,
-		    &cte->tv_start, &cte->table->timeout, cte);
+		    &cte->tv_start, &cte->table->conf.timeout, cte);
 		return;
 	}
 
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("tcp_host_up: cannot create dynamic buffer");
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 }
 
 void
@@ -202,12 +202,12 @@ tcp_send_req(int s, short event, void *arg)
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("tcp_send_req: cannot create dynamic buffer");
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 	return;
 
  retry:
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_WRITE, tcp_send_req,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 }
 
 void
@@ -267,7 +267,7 @@ tcp_read_buf(int s, short event, void *arg)
 	}
 retry:
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 }
 
 int
@@ -282,7 +282,7 @@ check_send_expect(struct ctl_tcp_event *cte)
 	if (b == NULL)
 		fatal("out of memory");
 	*b = '\0';
-	if (fnmatch(cte->table->exbuf, cte->buf->buf, 0) == 0) {
+	if (fnmatch(cte->table->conf.exbuf, cte->buf->buf, 0) == 0) {
 		cte->host->up = HOST_UP;
 		return (0);
 	}
@@ -318,7 +318,7 @@ check_http_code(struct ctl_tcp_event *cte)
 	if (strncmp(head, "HTTP/1.1 ", strlen("HTTP/1.1 ")) &&
 	    strncmp(head, "HTTP/1.0 ", strlen("HTTP/1.0 "))) {
 		log_debug("check_http_code: %s failed "
-		    "(cannot parse HTTP version)", host->name);
+		    "(cannot parse HTTP version)", host->conf.name);
 		host->up = HOST_DOWN;
 		return (1);
 	}
@@ -331,13 +331,13 @@ check_http_code(struct ctl_tcp_event *cte)
 	code = strtonum(scode, 100, 999, &estr);
 	if (estr != NULL) {
 		log_debug("check_http_code: %s failed "
-		    "(cannot parse HTTP code)", host->name);
+		    "(cannot parse HTTP code)", host->conf.name);
 		host->up = HOST_DOWN;
 		return (1);
 	}
-	if (code != cte->table->retcode) {
+	if (code != cte->table->conf.retcode) {
 		log_debug("check_http_code: %s failed "
-		    "(invalid HTTP code returned)", host->name);
+		    "(invalid HTTP code returned)", host->conf.name);
 		host->up = HOST_DOWN;
 	} else
 		host->up = HOST_UP;
@@ -364,16 +364,16 @@ check_http_digest(struct ctl_tcp_event *cte)
 	host = cte->host;
 	if ((head = strstr(head, "\r\n\r\n")) == NULL) {
 		log_debug("check_http_digest: %s failed "
-		    "(no end of headers)", host->name);
+		    "(no end of headers)", host->conf.name);
 		host->up = HOST_DOWN;
 		return (1);
 	}
 	head += strlen("\r\n\r\n");
 	SHA1Data(head, strlen(head), digest);
 
-	if (strcmp(cte->table->digest, digest)) {
+	if (strcmp(cte->table->conf.digest, digest)) {
 		log_warnx("check_http_digest: %s failed "
-		    "(wrong digest)", host->name);
+		    "(wrong digest)", host->conf.name);
 		host->up = HOST_DOWN;
 	} else
 		host->up = HOST_UP;

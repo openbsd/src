@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.15 2007/02/22 05:58:06 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.16 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -82,10 +82,10 @@ init_tables(struct hoststated *env)
 		if (strlcpy(tables[i].pfrt_anchor, HOSTSTATED_ANCHOR "/",
 		    sizeof(tables[i].pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
-		if (strlcat(tables[i].pfrt_anchor, service->name,
+		if (strlcat(tables[i].pfrt_anchor, service->conf.name,
 		    sizeof(tables[i].pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
-		if (strlcpy(tables[i].pfrt_name, service->name,
+		if (strlcpy(tables[i].pfrt_name, service->conf.name,
 		    sizeof(tables[i].pfrt_name)) >=
 		    sizeof(tables[i].pfrt_name))
 			goto toolong;
@@ -131,7 +131,7 @@ kill_tables(struct hoststated *env) {
 		if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
 		    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
-		if (strlcat(io.pfrio_table.pfrt_anchor, service->name,
+		if (strlcat(io.pfrio_table.pfrt_anchor, service->conf.name,
 		    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
 		if (ioctl(env->pf->dev, DIOCRCLRTABLES, &io) == -1)
@@ -173,10 +173,10 @@ sync_table(struct hoststated *env, struct service *service, struct table *table)
 	if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
 	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 		goto toolong;
-	if (strlcat(io.pfrio_table.pfrt_anchor, service->name,
+	if (strlcat(io.pfrio_table.pfrt_anchor, service->conf.name,
 	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 		goto toolong;
-	if (strlcpy(io.pfrio_table.pfrt_name, service->name,
+	if (strlcpy(io.pfrio_table.pfrt_name, service->conf.name,
 	    sizeof(io.pfrio_table.pfrt_name)) >=
 	    sizeof(io.pfrio_table.pfrt_name))
 		goto toolong;
@@ -186,16 +186,16 @@ sync_table(struct hoststated *env, struct service *service, struct table *table)
 		if (host->up != HOST_UP)
 			continue;
 		memset(&(addlist[i]), 0, sizeof(addlist[i]));
-		switch (host->ss.ss_family) {
+		switch (host->conf.ss.ss_family) {
 		case AF_INET:
-			sain = (struct sockaddr_in *)&host->ss;
+			sain = (struct sockaddr_in *)&host->conf.ss;
 			addlist[i].pfra_af = AF_INET;
 			memcpy(&(addlist[i].pfra_ip4addr), &sain->sin_addr,
 			    sizeof(sain->sin_addr));
 			addlist[i].pfra_net = 32;
 			break;
 		case AF_INET6:
-			sain6 = (struct sockaddr_in6 *)&host->ss;
+			sain6 = (struct sockaddr_in6 *)&host->conf.ss;
 			addlist[i].pfra_af = AF_INET6;
 			memcpy(&(addlist[i].pfra_ip6addr), &sain6->sin6_addr,
 			    sizeof(sain6->sin6_addr));
@@ -233,16 +233,16 @@ flush_table(struct hoststated *env, struct service *service)
 	if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
 	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 		goto toolong;
-	if (strlcat(io.pfrio_table.pfrt_anchor, service->name,
+	if (strlcat(io.pfrio_table.pfrt_anchor, service->conf.name,
 	    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 		goto toolong;
-	if (strlcpy(io.pfrio_table.pfrt_name, service->name,
+	if (strlcpy(io.pfrio_table.pfrt_name, service->conf.name,
 	    sizeof(io.pfrio_table.pfrt_name)) >=
 	    sizeof(io.pfrio_table.pfrt_name))
 		goto toolong;
 	if (ioctl(env->pf->dev, DIOCRCLRADDRS, &io) == -1)
 		fatal("flush_table: cannot flush table");
-	log_debug("flush_table: flushed table %s", service->name);
+	log_debug("flush_table: flushed table %s", service->conf.name);
 	return;
 
  toolong:
@@ -287,7 +287,7 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 	if (strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor)) >=
 	    PF_ANCHOR_NAME_SIZE)
 		goto toolong;
-	if (strlcat(anchor, service->name, sizeof(anchor)) >=
+	if (strlcat(anchor, service->conf.name, sizeof(anchor)) >=
 	    PF_ANCHOR_NAME_SIZE)
 		goto toolong;
 	if (transaction_init(env, anchor) == -1) {
@@ -322,8 +322,8 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 		rio.rule.dst.port[0] = address->port;
 		rio.rule.rtableid = -1; /* stay in the main routing table */
 		rio.rule.action = PF_RDR;
-		if (strlen(service->tag))
-			(void)strlcpy(rio.rule.tagname, service->tag,
+		if (strlen(service->conf.tag))
+			(void)strlcpy(rio.rule.tagname, service->conf.tag,
 			    sizeof(rio.rule.tagname));
 		if (strlen(address->ifname))
 			(void)strlcpy(rio.rule.ifname, address->ifname,
@@ -346,17 +346,17 @@ sync_ruleset(struct hoststated *env, struct service *service, int enable)
 		}
 
 		pio.addr.addr.type = PF_ADDR_TABLE;
-		if (strlcpy(pio.addr.addr.v.tblname, service->name,
+		if (strlcpy(pio.addr.addr.v.tblname, service->conf.name,
 		    sizeof(pio.addr.addr.v.tblname)) >=
 		    sizeof(pio.addr.addr.v.tblname))
 			fatal("sync_ruleset: table name too long");
 		if (ioctl(env->pf->dev, DIOCADDADDR, &pio) == -1)
 			fatal("sync_ruleset: cannot add address to pool");
 
-		rio.rule.rpool.proxy_port[0] = ntohs(service->table->port);
+		rio.rule.rpool.proxy_port[0] = ntohs(service->table->conf.port);
 		rio.rule.rpool.port_op = PF_OP_EQ;
 		rio.rule.rpool.opts = PF_POOL_ROUNDROBIN;
-		if (service->flags & F_STICKY)
+		if (service->conf.flags & F_STICKY)
 			rio.rule.rpool.opts |= PF_POOL_STICKYADDR;
 
 		if (ioctl(env->pf->dev, DIOCADDRULE, &rio) == -1)
@@ -382,7 +382,7 @@ flush_rulesets(struct hoststated *env)
 		if (strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor)) >=
 		    PF_ANCHOR_NAME_SIZE)
 			goto toolong;
-		if (strlcat(anchor, service->name, sizeof(anchor)) >=
+		if (strlcat(anchor, service->conf.name, sizeof(anchor)) >=
 		    PF_ANCHOR_NAME_SIZE)
 			goto toolong;
 		if (transaction_init(env, anchor) == -1 ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.28 2007/05/26 19:58:49 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.29 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -391,7 +391,7 @@ relay_init(void)
 				rlay->dstkey =
 				    hash32_str(rlay->name, HASHINIT);
 				rlay->dstkey =
-				    hash32_str(rlay->dsttable->name,
+				    hash32_str(rlay->dsttable->conf.name,
 				    rlay->dstkey);
 				break;
 			}
@@ -403,7 +403,7 @@ relay_init(void)
 				rlay->dsthost[rlay->dstnhosts++] = host;
 			}
 			log_info("adding %d hosts from table %s%s",
-			    rlay->dstnhosts, rlay->dsttable->name,
+			    rlay->dstnhosts, rlay->dsttable->conf.name,
 			    rlay->dstcheck ? "" : " (no check)");
 		}
 	}
@@ -1594,15 +1594,15 @@ relay_from_table(struct session *con)
 	}
 	host = rlay->dsthost[idx];
 	DPRINTF("relay_from_table: host %s, p 0x%08x, idx %d",
-	    host->name, p, idx);
+	    host->conf.name, p, idx);
 	while (host != NULL) {
-		DPRINTF("relay_from_table: host %s", host->name);
+		DPRINTF("relay_from_table: host %s", host->conf.name);
 		if (!rlay->dstcheck || host->up == HOST_UP)
 			goto found;
 		host = TAILQ_NEXT(host, entry);
 	}
 	TAILQ_FOREACH(host, &rlay->dsttable->hosts, entry) {
-		DPRINTF("relay_from_table: next host %s", host->name);
+		DPRINTF("relay_from_table: next host %s", host->conf.name);
 		if (!rlay->dstcheck || host->up == HOST_UP)
 			goto found;
 	}
@@ -1611,9 +1611,9 @@ relay_from_table(struct session *con)
 	fatalx("relay_from_table: no active hosts, desynchronized");
 
  found:
-	con->retry = host->retry;
-	con->out.port = table->port;
-	bcopy(&host->ss, &con->out.ss, sizeof(con->out.ss));
+	con->retry = host->conf.retry;
+	con->out.port = table->conf.port;
+	bcopy(&host->conf.ss, &con->out.ss, sizeof(con->out.ss));
 
 	return (0);
 }
@@ -1829,7 +1829,8 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			memcpy(&id, imsg.data, sizeof(id));
 			if ((host = host_find(env, id)) == NULL)
 				fatalx("relay_dispatch_pfe: desynchronized");
-			if ((table = table_find(env, host->tableid)) == NULL)
+			if ((table = table_find(env, host->conf.tableid)) ==
+			    NULL)
 				fatalx("relay_dispatch_pfe: invalid table id");
 			if (host->up == HOST_UP)
 				table->up--;
@@ -1853,15 +1854,17 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 				break;
 			if (host->up == st.up) {
 				log_debug("relay_dispatch_pfe: host %d => %d",
-				    host->id, host->up);
+				    host->conf.id, host->up);
 				fatalx("relay_dispatch_pfe: desynchronized");
 			}
 
-			if ((table = table_find(env, host->tableid)) == NULL)
+			if ((table = table_find(env, host->conf.tableid))
+			    == NULL)
 				fatalx("relay_dispatch_pfe: invalid table id");
 
 			DPRINTF("relay_dispatch_pfe: [%d] state %d for "
-			    "host %u %s", proc_id, st.up, host->id, host->name);
+			    "host %u %s", proc_id, st.up,
+			    host->conf.id, host->conf.name);
 
 			if ((st.up == HOST_UNKNOWN && host->up == HOST_DOWN) ||
 			    (st.up == HOST_DOWN && host->up == HOST_UNKNOWN)) {

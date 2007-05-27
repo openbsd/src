@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.22 2007/05/26 19:58:49 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.23 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -483,7 +483,7 @@ host_find(struct hoststated *env, objid_t id)
 
 	TAILQ_FOREACH(table, &env->tables, entry)
 		TAILQ_FOREACH(host, &table->hosts, entry)
-			if (host->id == id)
+			if (host->conf.id == id)
 				return (host);
 	return (NULL);
 }
@@ -494,7 +494,7 @@ table_find(struct hoststated *env, objid_t id)
 	struct table	*table;
 
 	TAILQ_FOREACH(table, &env->tables, entry)
-		if (table->id == id)
+		if (table->conf.id == id)
 			return (table);
 	return (NULL);
 }
@@ -505,7 +505,7 @@ service_find(struct hoststated *env, objid_t id)
 	struct service	*service;
 
 	TAILQ_FOREACH(service, &env->services, entry)
-		if (service->id == id)
+		if (service->conf.id == id)
 			return (service);
 	return (NULL);
 }
@@ -542,7 +542,7 @@ host_findbyname(struct hoststated *env, const char *name)
 
 	TAILQ_FOREACH(table, &env->tables, entry)
 		TAILQ_FOREACH(host, &table->hosts, entry)
-			if (strcmp(host->name, name) == 0)
+			if (strcmp(host->conf.name, name) == 0)
 				return (host);
 	return (NULL);
 }
@@ -553,7 +553,7 @@ table_findbyname(struct hoststated *env, const char *name)
 	struct table	*table;
 
 	TAILQ_FOREACH(table, &env->tables, entry)
-		if (strcmp(table->name, name) == 0)
+		if (strcmp(table->conf.name, name) == 0)
 			return (table);
 	return (NULL);
 }
@@ -564,7 +564,7 @@ service_findbyname(struct hoststated *env, const char *name)
 	struct service	*service;
 
 	TAILQ_FOREACH(service, &env->services, entry)
-		if (strcmp(service->name, name) == 0)
+		if (strcmp(service->conf.name, name) == 0)
 			return (service);
 	return (NULL);
 }

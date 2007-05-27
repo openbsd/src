@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.8 2007/02/22 05:58:06 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.9 2007/05/27 20:53:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -88,7 +88,7 @@ ssl_read(int s, short event, void *arg)
 			/* FALLTHROUGH */
 		default:
 			cte->host->up = HOST_DOWN;
-			ssl_error(cte->host->name, "cannot read");
+			ssl_error(cte->host->conf.name, "cannot read");
 			ssl_cleanup(cte);
 			hce_notify_done(cte->host, "ssl_read: SSL error");
 			break;
@@ -111,7 +111,7 @@ ssl_read(int s, short event, void *arg)
 
 retry:
 	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_read,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 	return;
 }
 
@@ -146,7 +146,7 @@ ssl_write(int s, short event, void *arg)
 			goto retry;
 		default:
 			cte->host->up = HOST_DOWN;
-			ssl_error(cte->host->name, "cannot write");
+			ssl_error(cte->host->conf.name, "cannot write");
 			ssl_cleanup(cte);
 			hce_notify_done(cte->host, "ssl_write: SSL error");
 			return;
@@ -156,11 +156,11 @@ ssl_write(int s, short event, void *arg)
 		fatalx("ssl_write: cannot create dynamic buffer");
 
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, ssl_read,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 	return;
 retry:
 	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_write,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 }
 
 void
@@ -191,14 +191,14 @@ ssl_connect(int s, short event, void *arg)
 			goto retry;
 		default:
 			cte->host->up = HOST_DOWN;
-			ssl_error(cte->host->name, "cannot connect");
+			ssl_error(cte->host->conf.name, "cannot connect");
 			hce_notify_done(cte->host, "ssl_connect: SSL error");
 			ssl_cleanup(cte);
 			return;
 		}
 	}
 
-	if (cte->table->check == CHECK_TCP) {
+	if (cte->table->conf.check == CHECK_TCP) {
 		cte->host->up = HOST_UP;
 		hce_notify_done(cte->host, "ssl_connect: connect successful");
 		ssl_cleanup(cte);
@@ -206,19 +206,19 @@ ssl_connect(int s, short event, void *arg)
 	}
 	if (cte->table->sendbuf != NULL) {
 		event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_WRITE, ssl_write,
-		    &cte->tv_start, &cte->table->timeout, cte);
+		    &cte->tv_start, &cte->table->conf.timeout, cte);
 		return;
 	}
 
 	if ((cte->buf = buf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
 		fatalx("ssl_connect: cannot create dynamic buffer");
 	event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_READ, ssl_read,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 	return;
 
 retry:
 	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_connect,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 }
 
 void
@@ -262,13 +262,13 @@ ssl_transaction(struct ctl_tcp_event *cte)
 {
 	cte->ssl = SSL_new(cte->table->ssl_ctx);
 	if (cte->ssl == NULL) {
-		ssl_error(cte->host->name, "cannot create object");
+		ssl_error(cte->host->conf.name, "cannot create object");
 		fatal("cannot create SSL object");
 	}
 
 	if (SSL_set_fd(cte->ssl, cte->s) == 0) {
 		cte->host->up = HOST_UNKNOWN;
-		ssl_error(cte->host->name, "cannot set fd");
+		ssl_error(cte->host->conf.name, "cannot set fd");
 		ssl_cleanup(cte);
 		hce_notify_done(cte->host,
 		    "ssl_transaction: cannot set SSL fd");
@@ -277,7 +277,7 @@ ssl_transaction(struct ctl_tcp_event *cte)
 	SSL_set_connect_state(cte->ssl);
 
 	event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_WRITE, ssl_connect,
-	    &cte->tv_start, &cte->table->timeout, cte);
+	    &cte->tv_start, &cte->table->conf.timeout, cte);
 }
 
 SSL_CTX *
