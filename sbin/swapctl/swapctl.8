@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.26 2006/08/24 08:51:55 jmc Exp $
+.\"	$OpenBSD: swapctl.8,v 1.27 2007/05/27 04:17:17 grunk Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -210,9 +210,10 @@ server:/export/swap/client none swap sw,nfsmntpt=/swap
 .El
 .Sh SEE ALSO
 .Xr swapctl 2 ,
+.Xr vnd 4 ,
 .Xr fstab 5 ,
 .Xr mount_nfs 8 ,
-.Xr vnconfig 8
+.Xr mount_vnd 8
 .Sh HISTORY
 The
 .Nm
