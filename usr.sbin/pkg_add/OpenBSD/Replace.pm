@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.20 2007/05/27 21:43:06 espie Exp $
+# $OpenBSD: Replace.pm,v 1.21 2007/05/27 22:34:24 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -359,9 +359,11 @@ sub walk_depends_closure
 
 sub save_old_libraries
 {
-	my ($new_plist, $state) = @_;
+	my ($set, $state) = @_;
 
-	for my $old_plist (@{$new_plist->{replacing}}) {
+	my $new_plist = $set->handle->{plist};
+
+	for my $old_plist ($set->actual_replacements) {
 
 		my $libs = {};
 		my $p = {};
