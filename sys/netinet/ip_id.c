@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.13 2004/06/21 23:50:37 tholo Exp $ */
+/* $OpenBSD: ip_id.c,v 1.14 2007/05/27 19:59:11 dlg Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -78,8 +78,8 @@ static u_int16_t ru_msb = 0;
 static long ru_reseed;
 static u_int32_t tmp;		/* Storage for unused random */
 
-static u_int16_t pmod(u_int16_t, u_int16_t, u_int16_t);
-static void ip_initid(void);
+u_int16_t pmod(u_int16_t, u_int16_t, u_int16_t);
+void ip_initid(void);
 u_int16_t ip_randomid(void);
 
 /*
@@ -87,7 +87,7 @@ u_int16_t ip_randomid(void);
  * of 0 - (mod-1)
  */
 
-static u_int16_t
+u_int16_t
 pmod(u_int16_t gen, u_int16_t expo, u_int16_t mod)
 {
 	u_int16_t s, t, u;
@@ -113,7 +113,7 @@ pmod(u_int16_t gen, u_int16_t expo, u_int16_t mod)
  * This function is called from id_randomid() when needed, an
  * application does not have to worry about it.
  */
-static void
+void
 ip_initid(void)
 {
 	u_int16_t j, i;
