@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.3 2007/05/27 05:18:52 dlg Exp $ */
+/*	$OpenBSD: if_che.c,v 1.4 2007/05/27 05:52:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,7 @@
 #include <netinet/if_ether.h>
 
 /* registers & defines */
+
 #define CHE_PCI_BAR		0x10
 #define CHE_PCI_CAP_ID_VPD	0x03
 #define CHE_PCI_VPD_DATA	0x4
@@ -297,19 +298,26 @@ cheg_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-	printf(": %s", pci_intr_string(pa->pa_pc, caa.caa_ih));
 
 	sc->sc_rev = che_read(sc, CHE_REG_PL_REV);
 
 	/* reset the beast */
 	che_reset(sc);
 
-	che_read_flash_multi4(sc, FW_VERS_ADDR, &vers, 1);
-	printf(", rev %d, fw %s-%d.%d.%d\n", sc->sc_rev,
+	if (che_read_flash_multi4(sc, FW_VERS_ADDR, &vers, 1) != 0) {
+		printf(": unable to read flash version\n");
+		goto unmap;
+	}
+
+	if (che_get_vpd(sc, pa, &vpd, sizeof(vpd)/sizeof(u_int32_t)) != 0) {
+		printf(": unable to get vital product data\n");
+		goto unmap;
+	}
+
+	printf(": %s revision %d firmware %s-%d.%d.%d\n",
+	    pci_intr_string(pa->pa_pc, caa.caa_ih), sc->sc_rev,
 	    FW_VERS_TYPE(vers) ? "T" : "N",
 	    FW_VERS_MAJOR(vers), FW_VERS_MINOR(vers), FW_VERS_MICRO(vers));
-
-	che_get_vpd(sc, pa, &vpd, sizeof(vpd)/sizeof(u_int32_t));
 
 	caa.caa_pa = pa;
 	for (i = 0; i < cd->cd_nports; i++) {
@@ -349,37 +357,6 @@ che_attach(struct device *parent, struct device *self, void *aux)
 {
 	printf(": not done yet\n");
 	return;
-}
-
-u_int32_t
-che_read(struct cheg_softc *sc, bus_size_t r)
-{
-        bus_space_barrier(sc->sc_memt, sc->sc_memh, r, 4,
-	    BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_4(sc->sc_memt, sc->sc_memh, r));
-}
-
-void
-che_write(struct cheg_softc *sc, bus_size_t r, u_int32_t v)
-{
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, r, v);
-        bus_space_barrier(sc->sc_memt, sc->sc_memh, r, 4,
-	    BUS_SPACE_BARRIER_WRITE);
-}
-
-int
-che_waitfor(struct cheg_softc *sc, bus_size_t r, u_int32_t mask, int tries)
-{
-	u_int32_t v;
-	int i;
-
-	for (i = 0; i < tries; i++) {
-		v = che_read(sc, r);
-		if ((v & mask) == 0)
-			return (0);
-		delay(10);
-	}
-	return (EAGAIN);
 }
 
 int
@@ -482,17 +459,17 @@ che_get_vpd(struct cheg_softc *sc, struct pci_attach_args *pa,
 	 * cards had it at 0.
 	 */
 	if (che_read_eeprom(sc, pa, CHE_PCI_VPD_BASE, &dw0))
-		return -1;
+		return (1);
 
 	/* we compare the id_tag which is least significant byte */
 	addr = ((dw0 & 0xff) == 0x82) ? CHE_PCI_VPD_BASE : 0;
 
 	for (i = 0; i < dwords; i++) {
 		if (che_read_eeprom(sc, pa, addr + i * 4, &dw[i]))
-			return -1;
+			return (1);
 	}
 
-	return 0;
+	return (0);
 }
 
 void
@@ -503,4 +480,35 @@ che_reset(struct cheg_softc *sc)
 
 	/* Give the card some time to boot */
 	delay(500);
+}
+
+u_int32_t
+che_read(struct cheg_softc *sc, bus_size_t r)
+{
+        bus_space_barrier(sc->sc_memt, sc->sc_memh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_memt, sc->sc_memh, r));
+}
+
+void
+che_write(struct cheg_softc *sc, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, r, v);
+        bus_space_barrier(sc->sc_memt, sc->sc_memh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+che_waitfor(struct cheg_softc *sc, bus_size_t r, u_int32_t mask, int tries)
+{
+	u_int32_t v;
+	int i;
+
+	for (i = 0; i < tries; i++) {
+		v = che_read(sc, r);
+		if ((v & mask) == 0)
+			return (0);
+		delay(10);
+	}
+	return (EAGAIN);
 }
