@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.88 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.89 2007/05/27 01:25:56 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -942,7 +942,6 @@ getnewbuf(size_t size, int slpflag, int slptimeo, int *ep)
 	int s, error, queue, qs;
 
 #if 0		/* we would really like this but sblock update kills it */
-	/* some pricks are not allowed! */
 	KASSERT(curproc != syncerproc && curproc != cleanerproc);
 #endif
 
