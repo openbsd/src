@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.21 2007/05/27 22:34:24 espie Exp $
+# $OpenBSD: Replace.pm,v 1.22 2007/05/27 22:39:09 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -361,8 +361,6 @@ sub save_old_libraries
 {
 	my ($set, $state) = @_;
 
-	my $new_plist = $set->handle->{plist};
-
 	for my $old_plist ($set->actual_replacements) {
 
 		my $libs = {};
@@ -371,7 +369,9 @@ sub save_old_libraries
 		print "Looking for changes in shared libraries\n" 
 		    if $state->{beverbose};
 		$old_plist->mark_lib($libs, $p);
-		$new_plist->unmark_lib($libs, $p);
+		for my $n ($set->newer) {
+			$n->{plist}->unmark_lib($libs, $p);
+		}
 
 		if (%$libs) {
 			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
