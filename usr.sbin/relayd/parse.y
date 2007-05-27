@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2007/05/26 19:58:49 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.40 2007/05/27 19:21:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -91,6 +91,8 @@ int		 host_dns(const char *, struct addresslist *,
 int		 host(const char *, struct addresslist *,
 		    int, in_port_t, const char *);
 
+struct table	*table_inherit(const char *, in_port_t);
+
 typedef struct {
 	union {
 		u_int32_t	 number;
@@ -114,7 +116,7 @@ typedef struct {
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.string>	interface
-%type	<v.number>	number port http_type loglevel sslcache optssl
+%type	<v.number>	number port http_type loglevel sslcache optssl dstport
 %type	<v.number>	proto_type dstmode docheck retry log flag direction
 %type	<v.host>	host
 %type	<v.tv>		timeout
@@ -313,25 +315,26 @@ serviceopts_l	: serviceopts_l serviceoptsl nl
 		| serviceoptsl optnl
 		;
 
-serviceoptsl	: TABLE STRING	{
-			struct table *tb;
+serviceoptsl	: TABLE STRING dstport	{
+			struct table	*tb;
+			in_port_t	 port;
 
-			TAILQ_FOREACH(tb, &conf->tables, entry)
-				if (!strcmp(tb->name, $2))
-					break;
-			if (tb == NULL) {
-				yyerror("no such table: %s", $2);
+			port = $3;
+			if (port == 0)
+				port = service->port;
+			if ((tb = table_inherit($2, port)) == NULL) {
 				free($2);
 				YYERROR;
-			} else {
-				service->table = tb;
-				service->table->serviceid = service->id;
-				service->table->flags |= F_USED;
-				free($2);
 			}
+			free($2);
+
+			service->table = tb;
+			service->table->serviceid = service->id;
+			service->table->flags |= F_USED;
 		}
-		| BACKUP TABLE STRING	{
-			struct table *tb;
+		| BACKUP TABLE STRING dstport	{
+			struct table	*tb;
+			in_port_t	 port;
 
 			if (service->backup) {
 				yyerror("backup already specified");
@@ -339,20 +342,18 @@ serviceoptsl	: TABLE STRING	{
 				YYERROR;
 			}
 
-			TAILQ_FOREACH(tb, &conf->tables, entry)
-				if (!strcmp(tb->name, $3))
-					break;
-
-			if (tb == NULL) {
-				yyerror("no such table: %s", $3);
+			port = $4;
+			if (port == 0)
+				port = service->port;
+			if ((tb = table_inherit($3, port)) == NULL) {
 				free($3);
 				YYERROR;
-			} else {
-				service->backup = tb;
-				service->backup->serviceid = service->id;
-				service->backup->flags |= (F_USED|F_BACKUP);
-				free($3);
 			}
+			free($3);
+
+			service->backup = tb;
+			service->backup->serviceid = service->id;
+			service->backup->flags |= (F_USED|F_BACKUP);
 		}
 		| VIRTUAL HOST STRING port interface {
 			if (host($3, &service->virts,
@@ -364,6 +365,8 @@ serviceoptsl	: TABLE STRING	{
 			}
 			free($3);
 			free($5);
+			if (service->port == 0)
+				service->port = $4;
 		}
 		| DISABLE			{ service->flags |= F_DISABLE; }
 		| STICKYADDR			{ service->flags |= F_STICKY; }
@@ -408,10 +411,6 @@ table		: TABLE STRING	{
 			free($2);
 			table = tb;
 		} '{' optnl tableopts_l '}'	{
-			if (table->port == 0) {
-				yyerror("table %s has no port", table->name);
-				YYERROR;
-			}
 			if (TAILQ_EMPTY(&table->hosts)) {
 				yyerror("table %s has no hosts", table->name);
 				YYERROR;
@@ -937,19 +936,21 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			rlay->dstport = h->port;
 			rlay->dstretry = $3;
 		}
-		| TABLE STRING dstmode docheck {
-			struct table	*dsttable;
+		| TABLE STRING dstport dstmode docheck {
+			struct table	*tb;
 
-			if ((dsttable = table_findbyname(conf, $2)) == NULL) {
-				yyerror("relay %d for unknown table %s",
-				    rlay->name, $2);
+			rlay->dstport = $3;
+			if (rlay->dstport == 0)
+				rlay->dstport = rlay->port;
+
+			if ((tb = table_inherit($2, rlay->dstport)) == NULL) {
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			rlay->dsttable = dsttable;
-			rlay->dstmode = $3;
-			rlay->dstcheck = $4;
+			rlay->dsttable = tb;
+			rlay->dstmode = $4;
+			rlay->dstcheck = $5;
 			rlay->dsttable->flags |= F_USED;
 		}
 		| PROTO STRING {
@@ -987,6 +988,10 @@ docheck		: /* empty */		{ $$ = 1; }
 
 interface	: /*empty*/		{ $$ = NULL; }
 		| INTERFACE STRING	{ $$ = $2; }
+		;
+
+dstport		: /* empty */		{ $$ = 0; }
+		| port			{ $$ = $1; }
 		;
 
 host		: HOST STRING retry {
@@ -1362,6 +1367,8 @@ struct hoststated *
 parse_config(const char *filename, int opts)
 {
 	struct sym	*sym, *next;
+	struct table	*nexttb;
+	struct host	*h;
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL)
 		return (NULL);
@@ -1431,7 +1438,20 @@ parse_config(const char *filename, int opts)
 	}
 
 	/* Verify that every table is used */
-	TAILQ_FOREACH(table, &conf->tables, entry) {
+	for (table = TAILQ_FIRST(&conf->tables); table != NULL;
+	     table = nexttb) {
+		nexttb = TAILQ_NEXT(table, entry);
+		if (table->port == 0) {
+			TAILQ_REMOVE(&conf->tables, table, entry);
+			while ((h = TAILQ_FIRST(&table->hosts)) != NULL) {
+				TAILQ_REMOVE(&table->hosts, h, entry);
+				free(h);
+			}
+			if (table->sendbuf != NULL)
+				free(table->sendbuf);
+			free(table);
+			continue;
+		}
 		if (!(table->flags & F_USED)) {
 			log_warnx("unused table: %s", table->name);
 			errors++;
@@ -1662,4 +1682,75 @@ host(const char *s, struct addresslist *al, int max,
 	}
 
 	return (host_dns(s, al, max, port, ifname));
+}
+
+struct table *
+table_inherit(const char *name, in_port_t port)
+{
+	char		pname[TABLE_NAME_SIZE + 6];
+	struct host	*h, *dsth;
+	struct table	*dsttb, *tb;
+
+	/* Get the table or table template */
+	if ((dsttb = table_findbyname(conf, name)) == NULL) {
+		yyerror("unknown table or template %s", name);
+		return (NULL);
+	}
+	if (dsttb->port != 0)
+		return (dsttb);
+
+	if (port == 0) {
+		yyerror("invalid port");
+		return (NULL);
+	}
+
+	/* Check if a matching table already exists */
+	snprintf(pname, sizeof(pname), "%s:%u", name, ntohs(port));
+	if ((tb = table_findbyname(conf, pname)) != NULL) {
+		if (tb->port == 0) {
+			yyerror("invalid table");
+			return (NULL);
+		}
+		return (tb);
+	}
+
+	/* Create a new table */
+	if ((tb = calloc(1, sizeof (*tb))) == NULL)
+		fatal("out of memory");
+	bcopy(dsttb, tb, sizeof(*tb));
+	if (strlcpy(tb->name, pname, sizeof(tb->name)) >= sizeof(tb->name)) {
+		yyerror("table name truncated");
+		return (NULL);
+	}
+	if (dsttb->sendbuf != NULL &&
+	    (tb->sendbuf = strdup(dsttb->sendbuf)) == NULL)
+		fatal("out of memory");
+	tb->port = port;
+	tb->id = last_table_id++;
+	if (last_table_id == INT_MAX) {
+		yyerror("too many tables defined");
+		return (NULL);
+	}
+
+	/* Copy the associated hosts */
+	bzero(&tb->hosts, sizeof(tb->hosts));
+	TAILQ_FOREACH(dsth, &dsttb->hosts, entry) {
+		if ((h = (struct host *)
+		    calloc(1, sizeof (*h))) == NULL)
+			fatal("out of memory");
+		bcopy(dsth, h, sizeof(*h));
+		h->id = last_host_id++;
+		if (last_host_id == INT_MAX) {
+			yyerror("too many hosts defined");
+			return (NULL);
+		}
+		h->tableid = tb->id;
+		h->tablename = tb->name;
+		TAILQ_INSERT_HEAD(&tb->hosts, h, entry);
+	}
+
+	conf->tablecount++;
+	TAILQ_INSERT_HEAD(&conf->tables, tb, entry);
+
+	return (tb);
 }

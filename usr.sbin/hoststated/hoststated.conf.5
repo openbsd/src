@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.42 2007/04/12 14:45:45 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.43 2007/05/27 19:21:15 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -239,7 +239,10 @@ more times before setting the host state to down.
 When using the TCP or HTTP checking methods, use this
 .Ar port
 to connect to hosts.
-This parameter is mandatory.
+If this parameter is not specified,
+.Xr hoststated 8
+will create a template table which inherits the port from the
+referencing service or relay.
 Main and backup tables need to have the same real port.
 .It Ic timeout Ar number
 Set the timeout in milliseconds for each host that is checked using
