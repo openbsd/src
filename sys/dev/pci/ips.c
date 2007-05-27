@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.18 2007/05/27 20:06:40 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.19 2007/05/27 20:57:58 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -103,6 +103,9 @@ int ips_debug = IPS_D_ERR;
 #define IPS_REG_OQP		0x44	/* outbound queue port */
 
 #define IPS_REG_STAT_ID(x)	(((x) >> 8) & 0xff)
+#define IPS_REG_STAT_BASIC(x)	(((x) >> 16) & 0xff)
+#define IPS_REG_STAT_GSC(x)	(((x) >> 16) & 0x0f)
+#define IPS_REG_STAT_EXT(x)	(((x) >> 24) & 0xff)
 
 /* Command frame */
 struct ips_cmd {
@@ -174,6 +177,8 @@ struct ips_ccb {
 
 	bus_dmamap_t		c_dmam;		/* data buffer DMA map */
 	struct scsi_xfer *	c_xfer;		/* corresponding SCSI xfer */
+	int			c_stat;		/* status word copy */
+	int			c_estat;	/* ext status word copy */
 
 	TAILQ_ENTRY(ips_ccb)	c_link;		/* queue link */
 };
@@ -708,6 +713,8 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *c)
 			return (EBUSY);
 		}
 		ccb = &sc->sc_ccb[id];
+		ccb->c_stat = IPS_REG_STAT_GSC(status);
+		ccb->c_estat = IPS_REG_STAT_EXT(status);
 		ips_done(sc, ccb);
 	}
 
@@ -737,8 +744,19 @@ ips_done(struct ips_softc *sc, struct ips_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 	}
 
+	if (ccb->c_stat) {
+		printf("%s: ", sc->sc_dev.dv_xname);
+		if (ccb->c_stat == 1)
+			printf("recovered error\n");
+		else
+			printf("error\n");
+	}
+
 	if (xs != NULL) {
-		xs->resid = 0;
+		if (ccb->c_stat > 1)
+			xs->error = XS_DRIVER_STUFFUP;
+		else
+			xs->resid = 0;
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 	}
@@ -771,6 +789,8 @@ ips_intr(void *arg)
 			continue;
 		}
 		ccb = &sc->sc_ccb[id];
+		ccb->c_stat = IPS_REG_STAT_GSC(status);
+		ccb->c_estat = IPS_REG_STAT_EXT(status);
 		ips_done(sc, ccb);
 	}
 
