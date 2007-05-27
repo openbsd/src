@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sdio.8,v 1.2 2007/05/26 19:19:47 uwe Exp $
+.\"	$OpenBSD: sdio.8,v 1.3 2007/05/27 04:11:28 jmc Exp $
 .\"
 .\" Uwe Stuehler, 2006. Public Domain.
 .\"
@@ -10,10 +10,10 @@
 .Nd SD/MMC/SDIO interface
 .Sh SYNOPSIS
 .Nm sdio
-.Fl d Ar debug_flags
-.Nm sdio
-.Fl c Ar index Ar argument Ar response_type
+.Fl c Ar index argument response_type
 .Op Ar data ...
+.Nm sdio
+.Fl d Ar debug_flags
 .Sh DESCRIPTION
 The
 .Nm
@@ -21,9 +21,11 @@ program provides command-level access to SD/MMC and SDIO cards.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-The
-.Fl c
-option sends arbitrary commands to the card.
+.It Xo
+.Fl c Ar index argument response_type
+.Op Ar data ...
+.Xc
+Sends arbitrary commands to the card.
 .It Fl d Ar debug_flags
 The
 .Fl d

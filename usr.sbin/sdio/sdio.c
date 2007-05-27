@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdio.c,v 1.3 2007/05/26 19:19:47 uwe Exp $	*/
+/*	$OpenBSD: sdio.c,v 1.4 2007/05/27 04:11:28 jmc Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -301,7 +301,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage:\t%s -d debug_flags\n", __progname);
-	fprintf(stderr, "\t%s -c index arg resp_type [data ...]\n", __progname);
+	fprintf(stderr,
+		"usage: %s -c index argument response_type [data ...]\n",
+		__progname);
+	fprintf(stderr, "\t%s -d debug_flags\n", __progname);
 	exit(2);
 }
