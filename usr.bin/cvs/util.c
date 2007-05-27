@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.109 2007/05/09 21:19:28 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.110 2007/05/27 00:37:46 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -253,7 +253,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 				}
 
 				qbuf[i++] = *lp++;
-				if (i == sizeof(qbuf)) {
+				if (i == sizeof(qbuf) - 1) {
 					error++;
 					break;
 				}
