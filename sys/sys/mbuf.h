@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.86 2007/01/03 18:39:56 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.87 2007/05/27 20:54:25 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -197,47 +197,9 @@ struct mbuf {
  * allocates an mbuf and initializes it to contain a packet header
  * and internal data.
  */
-#define	_MGET(m, how, type) MBUFLOCK( \
-	(m) = pool_get(&mbpool, \
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0); \
-	if (m) { \
-		(m)->m_type = (type); \
-		mbstat.m_mtypes[type]++; \
-		(m)->m_next = (struct mbuf *)NULL; \
-		(m)->m_nextpkt = (struct mbuf *)NULL; \
-		(m)->m_data = (m)->m_dat; \
-		(m)->m_flags = 0; \
-	} \
-)
+#define MGET(m, how, type) m = m_get((how), (type))
 
-#ifdef SMALL_KERNEL
-struct mbuf *_sk_mget(int, int);
-#define MGET(m, how, type) { m = _sk_mget(how, type); }
-#else
-#define MGET(m, how, type) _MGET(m, how, type)
-#endif
-
-#define	_MGETHDR(m, how, type) MBUFLOCK( \
-	(m) = pool_get(&mbpool, \
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0); \
-	if (m) { \
-		(m)->m_type = (type); \
-		mbstat.m_mtypes[type]++; \
-		(m)->m_next = (struct mbuf *)NULL; \
-		(m)->m_nextpkt = (struct mbuf *)NULL; \
-		(m)->m_data = (m)->m_pktdat; \
-		(m)->m_flags = M_PKTHDR; \
-		SLIST_INIT(&(m)->m_pkthdr.tags); \
-		(m)->m_pkthdr.csum_flags = 0; \
-	} \
-)
-
-#ifdef SMALL_KERNEL
-struct mbuf *_sk_mgethdr(int, int);
-#define MGETHDR(m, how, type) { m = _sk_mgethdr(how, type); }
-#else
-#define MGETHDR(m, how, type) _MGETHDR(m, how, type)
-#endif
+#define MGETHDR(m, how, type) m = m_gethdr((how), (type))
 
 /*
  * Macros for tracking external storage associated with an mbuf.
@@ -295,21 +257,6 @@ struct mbuf *_sk_mgethdr(int, int);
  * MEXTADD adds pre-allocated external storage to
  * a normal mbuf; the flag M_EXT is set upon success.
  */
-#define	_MCLGET(m, how) do { \
-	MBUFLOCK( \
-		(m)->m_ext.ext_buf = pool_get(&mclpool, (how) == M_WAIT ? \
-		    (PR_WAITOK|PR_LIMITFAIL) : 0); \
-	); \
-	if ((m)->m_ext.ext_buf != NULL) { \
-		(m)->m_data = (m)->m_ext.ext_buf; \
-		(m)->m_flags |= M_EXT|M_CLUSTER; \
-		(m)->m_ext.ext_size = MCLBYTES;  \
-		(m)->m_ext.ext_free = NULL;  \
-		(m)->m_ext.ext_arg = NULL;  \
-		MCLINITREFERENCE(m); \
-	} \
-} while (/* CONSTCOND */ 0)
-
 #define	MEXTMALLOC(m, size, how) do { \
 	(m)->m_ext.ext_buf = \
 	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how)); \
@@ -367,12 +314,7 @@ do {									\
 		(m)->m_data = (m)->m_dat;				\
 } while (/* CONSTCOND */ 0)
 
-#ifdef SMALL_KERNEL
-void _sk_mclget(struct mbuf *, int);
-#define MCLGET(m, how) _sk_mclget(m, how)
-#else
-#define MCLGET(m, how) _MCLGET(m, how)
-#endif
+#define MCLGET(m, how) m_clget(m, how)
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
@@ -547,6 +489,7 @@ struct	mbuf *m_pullup2(struct mbuf *, int);
 struct	mbuf *m_split(struct mbuf *, int, int);
 struct  mbuf *m_inject(struct mbuf *, int, int, int);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);
+void	m_clget(struct mbuf *, int);
 void	m_adj(struct mbuf *, int);
 int	m_clalloc(int, int);
 void	m_copyback(struct mbuf *, int, int, const void *);

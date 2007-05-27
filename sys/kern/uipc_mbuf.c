@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.80 2007/03/15 11:48:09 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.81 2007/05/27 20:54:25 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -153,15 +153,24 @@ m_reclaim(void *arg, int flags)
 
 /*
  * Space allocation routines.
- * These are also available as macros
- * for critical paths.
  */
 struct mbuf *
 m_get(int nowait, int type)
 {
 	struct mbuf *m;
+	int s;
 
-	MGET(m, nowait, type);
+	s = splvm();
+	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);
+	if (m) {
+		m->m_type = type;
+		mbstat.m_mtypes[type]++;
+		m->m_next = (struct mbuf *)NULL;
+		m->m_nextpkt = (struct mbuf *)NULL;
+		m->m_data = m->m_dat;
+		m->m_flags = 0;
+	}
+	splx(s);
 	return (m);
 }
 
@@ -169,8 +178,21 @@ struct mbuf *
 m_gethdr(int nowait, int type)
 {
 	struct mbuf *m;
+	int s;
 
-	MGETHDR(m, nowait, type);
+	s = splvm();
+	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);
+	if (m) {
+		m->m_type = type;
+		mbstat.m_mtypes[type]++;
+		m->m_next = (struct mbuf *)NULL;
+		m->m_nextpkt = (struct mbuf *)NULL;
+		m->m_data = m->m_pktdat;
+		m->m_flags = M_PKTHDR;
+		SLIST_INIT(&m->m_pkthdr.tags);
+		m->m_pkthdr.csum_flags = 0;
+	}
+	splx(s);
 	return (m);
 }
 
@@ -184,6 +206,25 @@ m_getclr(int nowait, int type)
 		return (NULL);
 	memset(mtod(m, caddr_t), 0, MLEN);
 	return (m);
+}
+
+void
+m_clget(struct mbuf *m, int how)
+{
+	int s;
+
+	s = splvm();
+	m->m_ext.ext_buf =
+	    pool_get(&mclpool, how == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0);
+	splx(s);
+	if (m->m_ext.ext_buf != NULL) {
+		m->m_data = m->m_ext.ext_buf;
+		m->m_flags |= M_EXT|M_CLUSTER;
+		m->m_ext.ext_size = MCLBYTES;
+		m->m_ext.ext_free = NULL;
+		m->m_ext.ext_arg = NULL;
+		MCLINITREFERENCE(m);
+	}
 }
 
 struct mbuf *
@@ -944,31 +985,3 @@ m_apply(struct mbuf *m, int off, int len,
 
 	return (0);
 }
-
-#ifdef SMALL_KERNEL
-/*
- * The idea of adding code in a small kernel might look absurd, but this is
- * instead of macros.
- */
-struct mbuf *
-_sk_mget(int how, int type)
-{
-	struct mbuf *m;
-	_MGET(m, how, type);
-	return m;
-}
-
-struct mbuf *
-_sk_mgethdr(int how, int type)
-{
-	struct mbuf *m;
-	_MGETHDR(m, how, type);
-	return m;
-}
-
-void
-_sk_mclget(struct mbuf *m, int how)
-{
-	_MCLGET(m, how);
-}
-#endif /* SMALL_KERNEL */
