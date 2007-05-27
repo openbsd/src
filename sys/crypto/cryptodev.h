@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.44 2006/05/31 23:01:44 tedu Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.45 2007/05/27 05:33:47 tedu Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -165,7 +165,7 @@ struct cryptop {
 #define CRYPTO_F_NOQUEUE	0x0008	/* Don't use crypto queue/thread */
 #define CRYPTO_F_DONE	0x0010	/* request completed */
 
-	caddr_t		crp_buf;	/* Data to be processed */
+	void 		*crp_buf;	/* Data to be processed */
 	void 		*crp_opaque;	/* Opaque pointer, passed along */
 	struct cryptodesc *crp_desc;	/* Linked list of processing descriptors */
 
