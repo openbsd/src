@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.21 2007/05/27 05:33:39 henning Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.22 2007/05/27 13:53:56 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -48,7 +48,7 @@ These functions allow the manipulation of generic packet attributes.
 They are used by the kernel to keep track of operations done or
 scheduled to happen to packets.
 These attributes are attached to mbuf packet headers.
-.Dd
+.Pp
 Mbuf tags get allocated using
 .Xr malloc 9 ,
 thus, due to the performance impact, mbuf tags should be used with care.
