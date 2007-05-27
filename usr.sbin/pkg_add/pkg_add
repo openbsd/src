@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.270 2007/05/26 23:55:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.271 2007/05/27 09:48:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -470,8 +470,8 @@ sub really_add
 	$plist->to_cache;
 	my $dest = installed_info($pkgname);
 	OpenBSD::Add::register_installation($dir, $dest, $plist);
-	if (defined $location->{solver}) {
-		$location->{solver}->register_dependencies;
+	if (defined $handle->{solver}) {
+		$handle->{solver}->register_dependencies;
 	}
 	add_installed($pkgname);
 	OpenBSD::PkgCfl::register($plist, $state);
@@ -544,10 +544,10 @@ sub install_package
 			return () unless $forced{arch};
 		}
 	}
-	if (!defined $location->{solver}) {
+	if (!defined $handle->{solver}) {
 		my $solver = OpenBSD::Dependencies::Solver->new($location->{plist});
 		my @deps = $solver->solve($state, @todo);
-		$location->{solver} = $solver;
+		$handle->{solver} = $solver;
 		if ($state->{verbose}) {
 			$solver->dump;
 		}
@@ -559,7 +559,7 @@ sub install_package
 
 	# verify dependencies and register them
 
-	for my $dep ($location->{solver}->dependencies) {
+	for my $dep ($handle->{solver}->dependencies) {
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
 		$location->close_now;
@@ -568,18 +568,18 @@ sub install_package
 	}
 
 	# grab libraries
-	for my $dep ($location->{solver}->dependencies) {
+	for my $dep ($handle->{solver}->dependencies) {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
 	}
 	my $okay = 1;
 	for my $lib (@{$plist->{wantlib}}) {
-		if (!$location->{solver}->lookup_library($state, $lib->{name})) {
+		if (!$handle->{solver}->lookup_library($state, $lib->{name})) {
 		    	Warn "Can't install $pkg: lib not found ", $lib->{name}, "\n";
-			$location->{solver}->dump if $okay;
+			$handle->{solver}->dump if $okay;
 			$okay = 0;
 		}
 	}
-#	print "Didn't need to process: ", join(',', @{$location->{solver}->{todo}}), "\n";
+#	print "Didn't need to process: ", join(',', @{$handle->{solver}->{todo}}), "\n";
 	if (!$okay) {
 		$location->close_now;
 		if (!$forced{libdepends}) {
