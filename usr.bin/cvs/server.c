@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.59 2007/05/26 23:52:04 ray Exp $	*/
+/*	$OpenBSD: server.c,v 1.60 2007/05/27 00:06:42 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -433,8 +433,7 @@ cvs_server_questionable(char *data)
 void
 cvs_server_argument(char *data)
 {
-
-	if (server_argc > CVS_CMD_MAXARG)
+	if (server_argc >= CVS_CMD_MAXARG)
 		fatal("cvs_server_argument: too many arguments sent");
 
 	if (data == NULL)
