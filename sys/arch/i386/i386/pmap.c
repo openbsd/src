@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.112 2007/05/25 15:55:26 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.113 2007/05/27 21:33:25 tom Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -668,12 +668,8 @@ setcslimit(struct pmap *pm, struct trapframe *tf, struct pcb *pcb,
 	/* And update the GDT and LDT since we may be called by the
 	 * trap handler (cpu_switch won't get a chance).
 	 */
-#ifdef MULTIPROCESSOR
 	curcpu()->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
 	    pm->pm_codeseg;
-#else
-	gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd = pm->pm_codeseg;
-#endif
 
 	pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 }
@@ -1672,9 +1668,7 @@ pmap_activate(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
-#ifdef MULTIPROCESSOR
 	struct cpu_info *self = curcpu();
-#endif
 
 	pcb->pcb_pmap = pmap;
 	/* Get the LDT that this process will actually use */
@@ -1690,13 +1684,8 @@ pmap_activate(struct proc *p)
 		 * Set the correct descriptor value (i.e. with the
 		 * correct code segment X limit) in the GDT and the LDT.
 		 */
-#ifdef MULTIPROCESSOR
 		self->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
 		    pmap->pm_codeseg;
-#else
-		gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
-		    pmap->pm_codeseg;
-#endif
 
 		lcr3(pcb->pcb_cr3);
 		lldt(pcb->pcb_ldt_sel);

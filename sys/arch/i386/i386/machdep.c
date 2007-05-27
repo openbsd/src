@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.393 2007/05/27 17:31:56 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.394 2007/05/27 21:33:25 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2600,12 +2600,8 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	 * And update the GDT and LDT since we return to the user process
 	 * by leaving the syscall (we don't do another pmap_activate()).
 	 */
-#ifdef MULTIPROCESSOR
 	curcpu()->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
 	    pmap->pm_codeseg;
-#else
-	gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd = pmap->pm_codeseg;
-#endif
 
 	/*
 	 * And reset the hiexec marker in the pmap.
