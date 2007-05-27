@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.19 2007/05/27 21:33:55 espie Exp $
+# $OpenBSD: Replace.pm,v 1.20 2007/05/27 21:43:06 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -463,19 +463,20 @@ sub figure_out_libs
 		$p->{items} = $n;
 		if ($doit) {
 			print "some found\n" if $state->{verbose};
+			# XXX we don't use this code yet
 			my $dummy = {items => $delete};
 			push(@$result, 
 			    { plist => $p, 
 			      todelete => $dummy,
 			      empty => $empty});
-			require OpenBSD::Delete;
-			OpenBSD::Delete::validate_plist($p, $state);
+			#require OpenBSD::Delete;
+			#OpenBSD::Delete::validate_plist($p, $state);
 		} else {
 			print "none found\n" if $state->{verbose};
 		}
 	}
 	if (@$result) {
-		$plist->{old_libs} = $result;
+		#$plist->{old_libs} = $result;
 		return 0;
 	}
 	return 1;
