@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.97 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: update.c,v 1.98 2007/05/27 21:02:23 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -157,9 +157,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 			fatal("cvs_update_enterdir: `%s': %s",
 			    cf->file_path, strerror(errno));
 
-		entry = xmalloc(CVS_ENT_MAXLINELEN);
-		(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "D/%s////",
-		    cf->file_name);
+		(void)xasprintf(&entry, "D/%s////", cf->file_name);
 
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_add(entlist, entry);
