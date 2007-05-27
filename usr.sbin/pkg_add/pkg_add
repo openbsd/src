@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.271 2007/05/27 09:48:05 espie Exp $
+# $OpenBSD: pkg_add,v 1.272 2007/05/27 09:59:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -206,7 +206,7 @@ sub prepare_to_add
 		return $handle;
 	}
 	$handle->{location} = $location;
-    	my $plist = $handle->{plist} = $location->{plist} = $location->plist;
+    	my $plist = $handle->{plist} = $location->plist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
@@ -233,7 +233,7 @@ sub prepare_to_add
 	if (!can_install($handle, $state)) {
 		$location->close_with_client_error;
 		$location->wipe_info;
-		delete $location->{plist};
+		delete $handle->{plist};
 		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 	}
 	return $handle;
@@ -270,7 +270,8 @@ sub failed_install
 	if ($interrupted) {
 		$msg ="Caught SIG$interrupted. $msg";
 	}
-	OpenBSD::Add::borked_installation($plist, $handle->info, $not, $msg);
+	OpenBSD::Add::borked_installation($plist, 
+	    $handle->{location}->info, $not, $msg);
 }
 
 sub really_add
@@ -365,7 +366,7 @@ sub really_add
 		}
 		OpenBSD::ProgressMeter::next();
 		if ($interrupted || $errors) {
-			failed_install($location, $state->{not}, $interrupted);
+			failed_install($handle, $state->{not}, $interrupted);
 		}
 
 		for my $op (@toreplace) {
@@ -413,7 +414,7 @@ sub really_add
 
 		if ($interrupted || $errors) {
 			# here we should remove links from the temp package
-			failed_install($location, $state->{not}, $interrupted);
+			failed_install($handle, $state->{not}, $interrupted);
 		}
 	} else {
 		do_script($plist, REQUIRE, $state, "INSTALL");
@@ -464,7 +465,7 @@ sub really_add
 
 	unlink($dir.CONTENTS);
 	if ($interrupted || $errors) {
-		failed_install($location, $state->{not}, $interrupted);
+		failed_install($handle, $state->{not}, $interrupted);
 	}
 	OpenBSD::SharedLibs::add_libs_from_plist($plist);
 	$plist->to_cache;
@@ -545,7 +546,7 @@ sub install_package
 		}
 	}
 	if (!defined $handle->{solver}) {
-		my $solver = OpenBSD::Dependencies::Solver->new($location->{plist});
+		my $solver = OpenBSD::Dependencies::Solver->new($handle->{plist});
 		my @deps = $solver->solve($state, @todo);
 		$handle->{solver} = $solver;
 		if ($state->{verbose}) {
