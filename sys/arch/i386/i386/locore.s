@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.110 2007/05/26 22:09:17 weingart Exp $	*/
+/*	$OpenBSD: locore.s,v 1.111 2007/05/27 18:34:01 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -81,51 +81,14 @@
 
 #define CPL _C_LABEL(lapic_tpr)
 
-#if defined(MULTIPROCESSOR)
-#include <machine/i82489reg.h>
-
-#define	GET_CPUINFO(reg)				\
-	movl	_C_LABEL(lapic_id),reg	;		\
-	shrl	$LAPIC_ID_SHIFT,reg	; 		\
-	movl	_C_LABEL(cpu_info)(,reg,4),reg
-#else
-#define	GET_CPUINFO(reg)				\
-	leal	_C_LABEL(cpu_info_primary),reg
-#endif
-
-#define	GET_CURPROC(reg, treg)				\
-	GET_CPUINFO(treg)			;	\
-	movl	CPU_INFO_CURPROC(treg),reg
-
-#define	PUSH_CURPROC(treg)				\
-	GET_CPUINFO(treg)			;	\
-	pushl	CPU_INFO_CURPROC(treg)
-
-#define	CLEAR_CURPROC(treg)				\
-	GET_CPUINFO(treg)			;	\
-	movl	$0,CPU_INFO_CURPROC(treg)
-
-#define	SET_CURPROC(proc,cpu)				\
-	GET_CPUINFO(cpu)			;	\
-	movl	proc,CPU_INFO_CURPROC(cpu)	;	\
-	movl	cpu,P_CPU(proc)
-
 #define	GET_CURPCB(reg)					\
-	GET_CPUINFO(reg)			;	\
-	movl	CPU_INFO_CURPCB(reg),reg
+	movl	CPUVAR(CURPCB), reg
 
-#define	SET_CURPCB(reg,treg)				\
-	GET_CPUINFO(treg)			;	\
-	movl	reg,CPU_INFO_CURPCB(treg)
-
-#define	CLEAR_RESCHED(treg)				\
-	GET_CPUINFO(treg)			;	\
-	xorl	%eax,%eax			;	\
-	movl	%eax,CPU_INFO_RESCHED(treg)
+#define	SET_CURPCB(reg)					\
+	movl	reg, CPUVAR(CURPCB)
 
 #define	CHECK_ASTPENDING(treg)				\
-	GET_CPUINFO(treg)			;	\
-	movl	CPU_INFO_CURPROC(treg), treg	;	\
+	movl 	CPUVAR(CURPROC),treg		;	\
 	cmpl	$0, treg			;	\
 	je	1f				;	\
 	cmpl	$0,P_MD_ASTPENDING(treg)	;	\
@@ -1559,9 +1522,8 @@ ENTRY(idle)
 	movl	P_ADDR(%ebx),%edi
 	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
-	GET_CPUINFO(%ebx)
-	movl	CPU_INFO_IDLE_PCB(%ebx),%edi
-	movl	CPU_INFO_IDLE_TSS_SEL(%ebx),%edx
+	movl	CPUVAR(IDLE_PCB), %edi
+	movl	CPUVAR(IDLE_TSS_SEL), %edx
 #endif
 
 	/* Restore the idle context (avoid interrupts) */
@@ -1578,7 +1540,7 @@ ENTRY(idle)
 
 	/* Switch TSS. Reset "task busy" flag before loading. */
 #ifdef MULTIPROCESSOR
-	movl	CPU_INFO_GDT(%ebx),%eax
+	movl	CPUVAR(GDT), %eax
 #else
 	movl	_C_LABEL(gdt),%eax
 #endif
@@ -1592,7 +1554,7 @@ ENTRY(idle)
 	movl	%ecx,%cr0
 
 	/* Record new pcb. */
-	SET_CURPCB(%edi,%ecx)
+	SET_CURPCB(%edi)
 
 	xorl	%esi,%esi
 	sti
@@ -1653,7 +1615,7 @@ ENTRY(cpu_switch)
 	pushl	%edi
 	pushl	CPL
 
-	GET_CURPROC(%esi,%ecx)
+	movl	CPUVAR(CURPROC), %esi
 
 	/*
 	 * Clear curproc so that we don't accumulate system time while idle.
@@ -1662,7 +1624,7 @@ ENTRY(cpu_switch)
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
 	 */
-	CLEAR_CURPROC(%ecx)
+	movl	$0, CPUVAR(CURPROC)
 
 switch_search:
 	/*
@@ -1697,8 +1659,9 @@ switch_search:
 	btrl	%ebx,%ecx		# yes, clear to indicate empty
 	movl	%ecx,_C_LABEL(whichqs)	# update q status
 
-3:	/* We just did it. */
-	CLEAR_RESCHED(%ecx)
+3:	xorl	%eax, %eax
+	/* We just did it. */
+	movl	$0, CPUVAR(RESCHED)
 
 #ifdef	DIAGNOSTIC
 	cmpl	%eax,P_WCHAN(%edi)	# Waiting for something?
@@ -1712,7 +1675,9 @@ switch_search:
 
 	/* Record new process. */
 	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
-	SET_CURPROC(%edi,%ecx)
+	movl	CPUVAR(SELF), %ecx
+	movl	%edi, CPUVAR(CURPROC)
+	movl	%ecx, P_CPU(%edi)
 
 	/* Skip context switch if same process. */
 	cmpl	%edi,%esi
@@ -1777,8 +1742,7 @@ switch_exited:
 	
 	/* Load TSS info. */
 #ifdef MULTIPROCESSOR
-	GET_CPUINFO(%ebx)
-	movl	CPU_INFO_GDT(%ebx),%eax
+	movl	CPUVAR(GDT),%eax
 #else
 	movl	_C_LABEL(gdt),%eax
 #endif
@@ -1808,7 +1772,7 @@ switch_restored:
 	 * If our floating point registers are on a different CPU,
 	 * clear CR0_TS so we'll trap rather than reuse bogus state.
 	 */
-	GET_CPUINFO(%ebx)
+	movl	CPUVAR(SELF), %ebx
 	cmpl	PCB_FPCPU(%esi),%ebx
 	jz	1f
 	orl	$CR0_TS,%ecx
@@ -1817,7 +1781,7 @@ switch_restored:
 	movl	%ecx,%cr0
 
 	/* Record new pcb. */
-	SET_CURPCB(%esi, %ecx)
+	SET_CURPCB(%esi)
 
 	/* Interrupts are okay again. */
 	sti
@@ -1825,7 +1789,7 @@ switch_restored:
 switch_return:
 #if 0
 	pushl	%edi
-	GET_CPUINFO(%ebx)
+	movl	CPUVAR(NAME), %ebx
 	leal	CPU_INFO_NAME(%ebx),%ebx
 	pushl	%ebx
 	pushl	$1f
@@ -1863,13 +1827,12 @@ ENTRY(switch_exit)
 	movl	P_ADDR(%ebx),%esi
 	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
-	GET_CPUINFO(%ebx)
-	movl	CPU_INFO_IDLE_PCB(%ebx),%esi
-	movl	CPU_INFO_IDLE_TSS_SEL(%ebx),%edx
+	movl	CPUVAR(IDLE_PCB), %esi
+	movl	CPUVAR(IDLE_TSS_SEL), %edx
 #endif
 
 	/* In case we fault... */
-	CLEAR_CURPROC(%ecx)
+	movl	$0, CPUVAR(CURPROC)
 
 	/* Restore the idle context. */
 	cli
@@ -1880,7 +1843,7 @@ ENTRY(switch_exit)
 
 	/* Load TSS info. */
 #ifdef MULTIPROCESSOR
-	movl	CPU_INFO_GDT(%ebx),%eax
+	movl	CPUVAR(GDT), %eax
 #else
 	movl	_C_LABEL(gdt),%eax
 #endif
@@ -1908,7 +1871,7 @@ ENTRY(switch_exit)
 	movl	%ecx,%cr0
 
 	/* Record new pcb. */
-	SET_CURPCB(%esi, %ecx)
+	SET_CURPCB(%esi)
 
 	/* Interrupts are okay again. */
 	sti
@@ -1922,7 +1885,7 @@ ENTRY(switch_exit)
 
 	/* Jump into cpu_switch() with the right state. */
 	xorl	%esi,%esi
-	CLEAR_CURPROC(%ecx)
+	movl	$0, CPUVAR(CURPROC)
 	jmp	switch_search
 
 /*
@@ -1989,8 +1952,7 @@ IDTVEC(dna)
 	pushl	$T_DNA
 	INTRENTRY
 #ifdef MULTIPROCESSOR
-	GET_CPUINFO(%eax)
-	pushl	%eax
+	pushl	CPUVAR(SELF)
 #else
 	pushl	$_C_LABEL(cpu_info_primary)
 #endif
