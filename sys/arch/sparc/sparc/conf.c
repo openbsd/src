@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2007/05/26 19:54:24 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2007/05/27 01:50:36 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -51,7 +51,6 @@
 
 #include <machine/conf.h>
 
-#include "bio.h"
 #include "pty.h"
 #include "bpfilter.h"
 #include "tun.h"
@@ -135,7 +134,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 1 */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
-	cdev_bio_init(NBIO,bio),	/* 4: ioctl tunnel */
+	cdev_notdef(),			/* 4 */
 	cdev_notdef(),			/* 5 */
 	cdev_notdef(),			/* 6 */
 	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */

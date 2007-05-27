@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2007/05/26 19:54:24 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 2007/05/27 01:50:36 todd Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -70,7 +70,6 @@
  */
 #include "bpfilter.h"
 #include "pf.h"
-#include "bio.h"
 #include "pty.h"
 #include "tun.h"
 #include "ksyms.h"
@@ -318,7 +317,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_init(NLKM,lkm),		/* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),		/* 36: generic audio I/O */
 	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 37: devices hot plugging*/
-	cdev_bio_init(NBIO,bio),		/* 38: removed cpu device */
+	cdev_notdef(),				/* 38: removed cpu device */
 	cdev_lkm_dummy(),			/* 39: reserved */
 	cdev_random_init(1,random),		/* 40: random generator */
 	cdev_lkm_dummy(),			/* 41: reserved */

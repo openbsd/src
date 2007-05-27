@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.50 2007/05/26 19:54:24 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.51 2007/05/27 01:50:36 todd Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -229,7 +229,6 @@ struct	consdev constab[]={
 #define mmread	mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
-#include "bio.h"
 #include "pty.h"
 
 cdev_decl(hp);
@@ -362,7 +361,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_disk_init(NHP,hp),		/* 4: Massbuss disk */
-	cdev_bio_init(NBIO,bio),	/* 5: ioctl tunnel */
+	cdev_notdef(),			/* 5 */
 	cdev_plotter_init(NVP,vp),	/* 6: Versatec plotter */
 	cdev_swap_init(1,sw),		/* 7 */
 	cdev_cnstore_init(NCFL,cfl),	/* 8: 11/780 console floppy */

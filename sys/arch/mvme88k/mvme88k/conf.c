@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2007/05/26 19:54:24 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2007/05/27 01:50:36 todd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,7 +40,6 @@
 
 #include <machine/conf.h>
 
-#include "bio.h"
 #include "pty.h"
 #include "bpfilter.h"
 #include "tun.h"
@@ -149,7 +148,7 @@ struct cdevsw	cdevsw[] =
 #endif /* notyet */
 	cdev_tty_init(NDART,dart),	/* 12: MVME188 serial (tty[a-b]) */
 	cdev_tty_init(NCL,cl),		/* 13: CL-CD1400 serial (tty0[0-3]) */
-	cdev_bio_init(NBIO,bio),	/* 14: ioctl tunnel */
+	cdev_notdef(),			/* 14 */
 	cdev_tty_init(NVX,vx),		/* 15: MVME332XT serial/lpt ttyv[0-7][a-i] */
 	cdev_notdef(),			/* 16 */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */

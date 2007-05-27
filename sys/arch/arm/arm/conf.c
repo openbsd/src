@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2007/05/26 19:54:24 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 2007/05/27 01:50:36 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ cdev_decl(pci);
 #include "ch.h"
 #include "uk.h"
 #include "ss.h"
-#include "bio.h"
 
 /*
  * Audio devices
@@ -391,11 +390,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),                          /* 93: removed device */
 	cdev_notdef(),                          /* 94: removed device */
 	cdev_notdef(),                          /* 95: removed device */
-#ifdef __zaurus__
-	cdev_disk_init(NFLASH,flash),		/* 96: flash ROM devices */
-#else
 	cdev_notdef(),                          /* 96: removed device */
-#endif
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
 	cdev_ptm_init(NPTY,ptm),		/* 98: pseudo-tty ptm device */
 	cdev_spkr_init(NSPKR,spkr),		/* 99: PC speaker */
@@ -537,11 +532,7 @@ int chrtoblktbl[] = {
     /* 93 */	    NODEV,
     /* 94 */	    NODEV,
     /* 95 */	    NODEV,
-#ifdef __zaurus__
-    /* 96 */	    96,
-#else
     /* 96 */	    NODEV,
-#endif
     /* 97 */	    NODEV,
 };
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);

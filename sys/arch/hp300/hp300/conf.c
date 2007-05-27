@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.39 2007/05/26 19:54:24 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.40 2007/05/27 01:50:36 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -83,7 +83,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
 
-#include "bio.h"
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
@@ -126,7 +125,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NCT,ct),		/* 7: cs80 cartridge tape */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NHD,hd),		/* 9: HPIB disk */
-	cdev_bio_init(NBIO,bio),	/* 10: ioctl tunnel */
+	cdev_notdef(),			/* 10: vas frame buffer */
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */
 	cdev_notdef(),			/* 13: was console terminal emulator */

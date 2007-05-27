@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.37 2007/05/26 19:54:24 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.38 2007/05/27 01:50:36 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define mmread	mmrw
 #define mmwrite	mmrw
 cdev_decl(mm);
-#include "bio.h"
 #include "pty.h"
 #include "ss.h"
 #include "uk.h"
@@ -115,7 +114,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_bio_init(NBIO,bio),	/* 7: ioctl tunnel */
+	cdev_notdef(),			/* 7 */
 	cdev_notdef(),			/* 8 */
 	cdev_notdef(),			/* 9 */
 	cdev_notdef(),			/* 10 was GRF */
