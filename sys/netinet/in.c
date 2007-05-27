@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.46 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: in.c,v 1.47 2007/05/27 20:04:25 dlg Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -87,13 +87,13 @@
 
 #ifdef INET
 
-static int in_mask2len(struct in_addr *);
-static void in_len2mask(struct in_addr *, int);
-static int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
+int in_mask2len(struct in_addr *);
+void in_len2mask(struct in_addr *, int);
+int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
 	struct ifnet *);
 
-static int in_addprefix(struct in_ifaddr *, int);
-static int in_scrubprefix(struct in_ifaddr *);
+int in_addprefix(struct in_ifaddr *, int);
+int in_scrubprefix(struct in_ifaddr *);
 
 #ifndef SUBNETSARELOCAL
 #define	SUBNETSARELOCAL	0
@@ -169,7 +169,7 @@ in_socktrim(ap)
 		}
 }
 
-static int
+int
 in_mask2len(mask)
 	struct in_addr *mask;
 {
@@ -191,7 +191,7 @@ in_mask2len(mask)
 	return x * 8 + y;
 }
 
-static void
+void
 in_len2mask(mask, len)
 	struct in_addr *mask;
 	int len;
@@ -488,7 +488,7 @@ cleanup:
  *	EADDRNOTAVAIL on prefix match failed/specified address not found
  *	other values may be returned from in_ioctl()
  */
-static int
+int
 in_lifaddr_ioctl(so, cmd, data, ifp)
 	struct socket *so;
 	u_long cmd;
@@ -768,7 +768,7 @@ in_ifinit(ifp, ia, sin, scrub)
  * add a route to prefix ("connected route" in cisco terminology).
  * does nothing if there's some interface address with the same prefix already.
  */
-static int
+int
 in_addprefix(target, flags)
 	struct in_ifaddr *target;
 	int flags;
@@ -830,7 +830,7 @@ in_addprefix(target, flags)
  * re-installs the route by using another interface address, if there's one
  * with the same prefix (otherwise we lose the route mistakenly).
  */
-static int
+int
 in_scrubprefix(target)
 	struct in_ifaddr *target;
 {
