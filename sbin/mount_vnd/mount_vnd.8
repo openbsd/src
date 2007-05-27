@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_vnd.8,v 1.5 2007/05/26 23:04:20 jmc Exp $
+.\"	$OpenBSD: mount_vnd.8,v 1.6 2007/05/27 03:47:09 jmc Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -79,9 +79,9 @@ The
 .Nm vnconfig
 command configures vnode pseudo disk devices.
 It will associate (or disassociate) the special file
-.Ar rawdev
+.Ar vnd_dev
 with the regular file
-.Ar regular_file ,
+.Ar image ,
 allowing the latter to be accessed as though it were a disk.
 Hence a regular file within the file system can be used for swapping
 or can contain a file system that is mounted in the name space.
@@ -98,7 +98,7 @@ should be mounted with the
 option
 .Dq sync
 if
-.Ar regular_file
+.Ar image
 is being read from,
 to ensure consistency in the buffer cache.
 For normal operation this is not necessary.
@@ -131,9 +131,9 @@ The options are as follows:
 only.
 Configures the device.
 If successful, references to
-.Ar rawdev
+.Ar vnd_dev
 will access the contents of
-.Ar regular_file .
+.Ar image .
 This is the default operation.
 .It Fl K Ar rounds
 Associate an encryption key with the device.
@@ -163,7 +163,7 @@ Encryption only works with
 only.
 List the (s)vnd devices and indicate which ones are in use.
 If a specific
-.Ar rawdev
+.Ar vnd_dev
 is given, then only that one will be described.
 .It Fl o Ar options
 .Nm mount_vnd
@@ -192,7 +192,7 @@ it defaults to
 .Nm vnconfig
 only.
 Unconfigures a
-.Ar rawdev .
+.Ar vnd_dev .
 .It Fl v
 .Nm vnconfig
 only.
