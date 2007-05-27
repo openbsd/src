@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.275 2007/05/27 11:21:55 espie Exp $
+# $OpenBSD: pkg_add,v 1.276 2007/05/27 11:31:35 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,6 @@ use OpenBSD::Add;
 use OpenBSD::SharedLibs;
 # use OpenBSD::UpdateSet;
 
-my $errors = 0;
 my $bad = 0;
 
 our %forced = ();
@@ -305,6 +304,7 @@ sub really_add
 	my $plist = $handle->{plist};
 	my $dir = $location->info;
 	my $pkgname = $handle->{pkgname};
+	my $errors = 0;
 	$state->{archive} = $location;
 	$plist->{dir} = $dir;
 	$state->{dir} = $plist->{dir};
