@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.273 2007/05/27 10:38:12 espie Exp $
+# $OpenBSD: pkg_add,v 1.274 2007/05/27 11:02:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -95,10 +95,26 @@ sub installed
 	return keys %{$state->{installed}};
 }
 
+package OpenBSD::UpdateSet;
+use OpenBSD::PackageInfo;
+
+sub actual_replacements
+{
+	my $set = shift;
+	my @toreplace = ();
+	for my $h (@{$set->{older}}) {
+		if (is_installed($h->{pkgname})) {
+			push(@toreplace, $h->{plist});
+		}
+	}
+	return @toreplace;
+}
+	
 package main;
 sub can_install
 {
-	my ($handle, $state) = @_;
+	my ($set, $state) = @_;
+	my $handle = $set->handle;
 	my $plist = $handle->{plist};
 	my $pkgname = $handle->{pkgname};
 	$plist->{replacing} = [];
@@ -183,10 +199,13 @@ sub can_install
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
+		my $old_handle = OpenBSD::Handle->new;
+		$old_handle->{plist} = $rplist;
+		$old_handle->{pkgname} = $toreplace;
 		$rplist->{dir} = installed_info($toreplace);
-		push(@{$plist->{replacing}}, $rplist);
-		$plist->{skipupdatedeps} = \%conflicts;
+		$set->add_older($old_handle);
 	}
+	$plist->{skipupdatedeps} = \%conflicts;
 	return 1;
 }
 
@@ -232,7 +251,7 @@ sub prepare_to_add
 		print $state->deptree_header($pkg);
 		print "parsing $pkgname\n";
 	}
-	if (!can_install($handle, $state)) {
+	if (!can_install($set, $state)) {
 		$location->close_with_client_error;
 		$location->wipe_info;
 		delete $handle->{plist};
@@ -278,7 +297,8 @@ sub failed_install
 
 sub really_add
 {
-	my ($handle, $state) = @_;
+	my ($set, $state) = @_;
+	my $handle = $set->handle;
 	my $location = $handle->{location};
 	my $destdir = $state->{destdir};
 	my $plist = $handle->{plist};
@@ -292,13 +312,7 @@ sub really_add
 	# XXX in `combined' updates, some dependencies may remove extra 
 	# packages, so we do a double-take on the list of packages we 
 	# are actually replacing.
-	my @toreplace = ();
-	for my $pl2 (@{$plist->{replacing}}) {
-		if (is_installed($pl2->pkgname)) {
-			push(@toreplace, $pl2);
-		}
-	}
-	
+	my @toreplace = $set->actual_replacements;
 	my $replacing = 0;
 	if (@toreplace) {
 		$replacing = 1;
@@ -591,7 +605,7 @@ sub install_package
 			return ();
 		}
 	}
-	really_add($handle, $state);
+	really_add($set, $state);
 	$location->wipe_info;
 	delete $handle->{plist};
 	$state->mark_installed($handle->{pkgname});
