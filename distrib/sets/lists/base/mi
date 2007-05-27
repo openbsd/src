@@ -119,6 +119,7 @@
 ./sbin/mount_portal
 ./sbin/mount_procfs
 ./sbin/mount_udf
+./sbin/mount_vnd
 ./sbin/mount_xfs
 ./sbin/mountd
 ./sbin/ncheck
@@ -153,6 +154,7 @@
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
+./sbin/vnconfig
 ./stand
 ./tmp
 ./usr

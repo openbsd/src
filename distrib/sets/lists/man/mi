@@ -1103,6 +1103,7 @@
 ./usr/share/man/cat4/cdcef.0
 ./usr/share/man/cat4/cfxga.0
 ./usr/share/man/cat4/ch.0
+./usr/share/man/cat4/che.0
 ./usr/share/man/cat4/ciphy.0
 ./usr/share/man/cat4/ciss.0
 ./usr/share/man/cat4/clcs.0
@@ -2277,6 +2278,7 @@
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
 ./usr/share/man/cat8/mount_udf.0
+./usr/share/man/cat8/mount_vnd.0
 ./usr/share/man/cat8/mount_xfs.0
 ./usr/share/man/cat8/mountd.0
 ./usr/share/man/cat8/mrinfo.0
