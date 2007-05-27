@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.202 2007/05/22 10:20:55 michele Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.203 2007/05/27 20:20:54 dlg Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -99,6 +99,8 @@ struct	tcpiphdr tcp_saveti;
 #ifdef INET6
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+
+int tcp_mss_adv(struct ifnet *, int);
 
 struct  tcpipv6hdr tcp_saveti6;
 
@@ -3255,7 +3257,7 @@ tcp_newreno(tp, th)
 }
 #endif /* TCP_SACK */
 
-static int
+int
 tcp_mss_adv(struct ifnet *ifp, int af)
 {
 	int mss = 0;
