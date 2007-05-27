@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.14 2007/03/06 16:45:34 henning Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.15 2007/05/27 18:54:25 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -103,7 +103,7 @@ prefixset_addmember(char *s)
 	}
 
 	pfx->af = AF_INET;
-	pfx->len = len;
+	pfx->len = pfx->maxlen = len;
 
 	/* yes, there are dupes... e. g. from multiple sources */
 	for (i = 0; i < curpfxs->prefixcnt; i++)
