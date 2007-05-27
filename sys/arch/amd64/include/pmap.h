@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.13 2007/05/27 08:58:31 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.14 2007/05/27 21:06:05 jason Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -565,12 +565,13 @@ void	pmap_ldt_cleanup(struct proc *);
 
 #define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + pa)
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)va - PMAP_DIRECT_BASE)
+#define pmap_map_direct(pg)	PMAP_DIRECT_MAP(VM_PAGE_TO_PHYS(pg))
+#define pmap_unmap_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_UNMAP(va))
 
 #define PMAP_DIRECT_NC_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE_NC + pa)
 #define PMAP_DIRECT_NC_UNMAP(va) ((paddr_t)va - PMAP_DIRECT_BASE_NC)
-
-#define pmap_map_direct(pg)	PMAP_DIRECT_MAP(VM_PAGE_TO_PHYS(pg))
-#define pmap_unmap_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_UNMAP(va))
+#define pmap_map_nc_direct(pg)		PMAP_DIRECT_NC_MAP(VM_PAGE_TO_PHYS(pg))
+#define pmap_unmap_nc_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_NC_UNMAP(va))
 
 #define __HAVE_PMAP_DIRECT
 
