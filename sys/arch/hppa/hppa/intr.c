@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.22 2004/07/13 19:34:22 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.23 2007/05/27 16:36:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -154,6 +154,18 @@ cpu_intr_init(void)
 	/* in spl*() we trust, clock is started in initclocks() */
 	kpsw |= PSL_I;
 	ssm(PSL_I, mask);
+}
+
+int
+cpu_intr_findirq(void)
+{
+	int irq;
+
+	for (irq = 0; irq < CPU_NINTS; irq++)
+		if (intr_table[irq].handler == NULL)
+			return irq;
+
+	return -1;
 }
 
 void *

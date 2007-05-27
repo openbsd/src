@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.21 2004/09/15 20:11:29 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.22 2007/05/27 16:36:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -72,6 +72,7 @@ const char *hppa_mod_info(int, int);
 void	pdc_scanbus(struct device *, struct confargs *, int, hppa_hpa_t hpa);
 int	mbprint(void *, const char *);
 int	mbsubmatch(struct device *, void *, void *);
+int	cpu_intr_findirq(void);
 void	*cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *),
 	    void *arg, const char *name);
 void	*cpu_intr_establish(int pri, int irq, int (*handler)(void *),

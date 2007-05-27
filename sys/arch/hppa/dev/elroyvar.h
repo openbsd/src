@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroyvar.h,v 1.1 2007/05/21 22:43:38 kettenis Exp $	*/
+/*	$OpenBSD: elroyvar.h,v 1.2 2007/05/27 16:36:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -29,6 +29,7 @@ struct elroy_softc {
 
 	u_int32_t sc_imr;
 	int sc_nints;
+	int *sc_irq;
 
 	struct hppa_pci_chipset_tag sc_pc;
 	struct hppa_bus_space_tag sc_iot;

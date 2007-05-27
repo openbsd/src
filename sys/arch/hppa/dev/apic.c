@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.1 2007/05/21 22:43:38 kettenis Exp $	*/
+/*	$OpenBSD: apic.c,v 1.2 2007/05/27 16:36:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -31,6 +31,13 @@
 
 #include <hppa/dev/elroyreg.h>
 #include <hppa/dev/elroyvar.h>
+
+#define APIC_INT_LINE_MASK	0x0000ff00
+#define APIC_INT_LINE_SHIFT	8
+#define APIC_INT_IRQ_MASK	0x0000001f
+
+#define APIC_INT_LINE(x) (((x) & APIC_INT_LINE_MASK) >> APIC_INT_LINE_SHIFT)
+#define APIC_INT_IRQ(x) ((x) & APIC_INT_IRQ_MASK)
 
 struct apic_iv {
 	struct elroy_softc *sc;
@@ -72,6 +79,11 @@ apic_attach(struct elroy_softc *sc)
 	printf(" APIC ver %x, %d pins",
 	    data & APIC_VERSION_MASK, sc->sc_nints);
 
+	sc->sc_irq = malloc(sc->sc_nints * sizeof(int), M_DEVBUF, M_NOWAIT);
+	if (sc->sc_irq == NULL)
+		panic("apic_attach: cannot allocate irq table\n");
+	memset(sc->sc_irq, 0, sc->sc_nints * sizeof(int));
+
 #ifdef DEBUG
 	apic_dump(sc);
 #endif
@@ -80,17 +92,22 @@ apic_attach(struct elroy_softc *sc)
 int
 apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
+	struct elroy_softc *sc = pa->pa_pc->_cookie;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	pcireg_t reg;
+	int line;
 
 	reg = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 #ifdef DEBUG
 	printf(" pin=%d line=%d ", PCI_INTERRUPT_PIN(reg),
 	    PCI_INTERRUPT_LINE(reg));
 #endif
-	*ihp = PCI_INTERRUPT_LINE(reg) + 1;
-	return (*ihp == 0);
+	line = PCI_INTERRUPT_LINE(reg);
+	if (sc->sc_irq[line] == 0)
+		sc->sc_irq[line] = cpu_intr_findirq();
+	*ihp = (line << APIC_INT_LINE_SHIFT) | sc->sc_irq[line];
+	return (APIC_INT_IRQ(*ihp) == 0);
 }
 
 const char *
@@ -98,7 +115,8 @@ apic_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char buf[32];
 
-	snprintf(buf, 32, "irq %ld", (ih + 8 - 1));
+	snprintf(buf, 32, "line %ld irq %ld",
+	    APIC_INT_LINE(ih), APIC_INT_IRQ(ih));
 
 	return (buf);
 }
@@ -110,12 +128,14 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 	struct elroy_softc *sc = v;
 	volatile struct elroy_regs *r = sc->sc_regs;
 	hppa_hpa_t hpa = cpu_gethpa(0);
-	u_int32_t ent0;
 	struct apic_iv *aiv, *biv;
 	void *iv;
+	int irq = APIC_INT_IRQ(ih);
+	int line = APIC_INT_LINE(ih);
+	u_int32_t ent0;
 
 	/* no mapping or bogus */
-	if (ih <= 0 || ih > 31)
+	if (irq <= 0 || irq > 31)
 		return (NULL);
 
 	aiv = malloc(sizeof(struct apic_iv), M_DEVBUF, M_NOWAIT);
@@ -127,32 +147,34 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 	aiv->handler = handler;
 	aiv->arg = arg;
 	aiv->next = NULL;
-	if (apic_intr_list[(ih + 8 - 1)]) {
-		biv = apic_intr_list[(ih + 8 - 1)];
+	if (apic_intr_list[irq]) {
+		biv = apic_intr_list[irq];
 		while (biv->next)
 			biv = biv->next;
 		biv->next = aiv;
 		return (arg);
 	}
 
-	if ((iv = cpu_intr_establish(pri, (ih + 8 - 1), apic_intr, aiv, name))) {
-		ent0 = (31 - (ih + 8 - 1)) & APIC_ENT0_VEC;
+	if ((iv = cpu_intr_establish(pri, irq, apic_intr, aiv, name))) {
+		ent0 = (31 - irq) & APIC_ENT0_VEC;
 		ent0 |= APIC_ENT0_LOW;
 		ent0 |= APIC_ENT0_LEV;
 #if 0
 		if (cold) {
-			sc->sc_imr |= (1 << (ih + 8 - 1));
+			sc->sc_imr |= (1 << irq);
 			ent0 |= APIC_ENT0_MASK;
 		}
 #endif
-		apic_write(sc->sc_regs, APIC_ENT0(ih - 1), APIC_ENT0_MASK);
-		apic_write(sc->sc_regs, APIC_ENT1(ih - 1),
+		apic_write(sc->sc_regs, APIC_ENT0(line), APIC_ENT0_MASK);
+		apic_write(sc->sc_regs, APIC_ENT1(line),
 		    ((hpa & 0x0ff00000) >> 4) | ((hpa & 0x000ff000) << 12));
-		apic_write(sc->sc_regs, APIC_ENT0(ih - 1), ent0);
+		apic_write(sc->sc_regs, APIC_ENT0(line), ent0);
 
-		elroy_write32(&r->apic_eoi, htole32((31 - (ih + 8 - 1)) & APIC_ENT0_VEC));
+		/* Signal EOI. */
+		elroy_write32(&r->apic_eoi,
+		    htole32((31 - irq) & APIC_ENT0_VEC));
 
-		apic_intr_list[(ih + 8 - 1)] = aiv;
+		apic_intr_list[irq] = aiv;
 	}
 
 	return (arg);
@@ -176,7 +198,9 @@ apic_intr(void *v)
 		iv = iv->next;
 	}
 
-	elroy_write32(&r->apic_eoi, htole32((31 - (iv->ih + 8 - 1)) & APIC_ENT0_VEC));
+	/* Signal EOI. */
+	elroy_write32(&r->apic_eoi,
+	    htole32((31 - APIC_INT_IRQ(iv->ih)) & APIC_ENT0_VEC));
 
 	return (claimed);
 }
