@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.23 2007/05/27 10:38:12 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.24 2007/05/27 11:21:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -237,7 +237,8 @@ package OpenBSD::Handle;
 use constant {
 	NOT_FOUND => 0,
 	BAD_PACKAGE => 1,
-	CANT_INSTALL => 2
+	CANT_INSTALL => 2,
+	ALREADY_INSTALLED => 3
 };
 
 sub new

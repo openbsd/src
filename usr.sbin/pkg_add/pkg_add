@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.274 2007/05/27 11:02:03 espie Exp $
+# $OpenBSD: pkg_add,v 1.275 2007/05/27 11:21:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -123,14 +123,6 @@ sub can_install
 
 	my %conflicts = map {($_,1)} @conflicts;
 
-	if ((keys %conflicts) == 1 && (keys %conflicts)[0] eq $pkgname) {
-		if (!$state->{forced}->{installed} &&
-		    !$plist->has_new_sig($state) && !$plist->uses_old_libs) {
-			print "Already installed: $pkgname\n";
-			return 1;
-		}
-	}
-
 	my @libs = ();
 	@conflicts = ();
 	for my $k (keys %conflicts) {
@@ -142,13 +134,6 @@ sub can_install
 	}
 
 	if (!$state->{replace}) {
-		if (@conflicts == 1 && is_installed($pkgname) &&
-		    !$plist->has_new_sig($state) && 
-		    !$plist->uses_old_libs) {
-			print "Not reinstalling $pkgname\n" if $state->{verbose};
-			$state->mark_as_already_installed($pkgname);
-			return;
-		}
 		if ($state->{forced}->{conflicts}) {
 			print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts, @libs), ")\n";
 			return 1;
@@ -166,13 +151,6 @@ sub can_install
 
 	require OpenBSD::Replace;
 
-	if (is_installed($pkgname) && !$state->{forced}->{installed}) {
-		if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
-			    print "Not reinstalling $pkgname\n" if $state->{verbose};
-			    $state->mark_as_already_installed($pkgname);
-			    return;
-			}
-	}
 	if (!OpenBSD::Replace::is_safe($plist, $state)) {
 		print "Can't safely update to $pkgname (use -F update to force it)\n";
 		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
@@ -227,22 +205,45 @@ sub prepare_to_add
 		return $set;
 	}
 	$handle->{location} = $location;
-    	my $plist = $handle->{plist} = $location->plist;
+    	my $plist = $location->plist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
+		$location->close_with_client_error;
+		$location->wipe_info;
 		return $set;
 	}
+	$handle->{plist} = $plist;
 	if ($plist->localbase ne $state->{localbase}) {
 		print "Localbase mismatch: package has: ", $plist->localbase, " , user wants: ", $state->{localbase}, "\n";
+		$location->close_with_client_error;
+		$location->wipe_info;
+		delete $handle->{plist};
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
 		return $set;
 	}
 	my $pkgname = $handle->{pkgname} = $plist->pkgname;
+
+	if (is_installed($pkgname) && 
+	    (!$state->{replace} ||	
+	    	!$state->{forced}->{installed} &&
+	    	!$plist->has_new_sig($state) && 
+	    	!$plist->uses_old_libs)) {
+		print "Not reinstalling $pkgname\n" if $state->{verbose};
+		$state->mark_as_already_installed($pkgname);
+		$location->close_now;
+		$location->wipe_info;
+		delete $handle->{plist};
+		$handle->set_error(OpenBSD::Handle::ALREADY_INSTALLED);
+		return $set;
+	}
 	if ($pkg ne '-') {
 		if (!defined $pkgname or 
 		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
 			print "Package name is not consistent ???\n";
+			$location->close_with_client_error;
+			$location->wipe_info;
+			delete $handle->{plist};
 			$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
 			return $set;
 		}
@@ -526,6 +527,9 @@ sub install_package
 
 	my $set = $cache->{$pkg};
 	my $handle = $set->handle;
+	if ($handle->has_error(OpenBSD::Handle::ALREADY_INSTALLED)) {
+		return ();
+	}
 	if ($handle->has_error) {
 		if (!$state->{forced}->{kitchensink} ||
 		    $handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
@@ -544,18 +548,6 @@ sub install_package
 
 	my $plist = $handle->{plist};
 
-	if (is_installed($handle->{pkgname}) && !$state->{forced}->{installed}) {
-		if ($state->{replace}) {
-			if (!$plist->has_new_sig($state) && !$plist->uses_old_libs) {
-				$state->mark_as_already_installed($handle->{pkgname});
-				$location->close_now;
-				return ();
-			}
-		} else {
-			$location->close_now;
-			return ();
-		}
-	}
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($state->{arch})) {
 			print "$pkg is not for the right architecture\n";
