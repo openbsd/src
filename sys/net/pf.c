@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.531 2007/05/27 18:30:02 pyr Exp $ */
+/*	$OpenBSD: pf.c,v 1.532 2007/05/27 21:17:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -185,6 +185,8 @@ int			 pf_test_state_other(struct pf_state **, int,
 			    struct pfi_kif *, struct pf_pdesc *);
 int			 pf_match_tag(struct mbuf *, struct pf_rule *,
 			     struct pf_mtag *, int *);
+void			 pf_step_into_anchor(int *, struct pf_ruleset **, int,
+			    struct pf_rule **, struct pf_rule **,  int *);
 int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
 			     int, struct pf_rule **, struct pf_rule **,
 			     int *);
@@ -1903,7 +1905,7 @@ pf_tag_packet(struct mbuf *m, struct pf_mtag *pf_mtag, int tag, int rtableid)
 	return (0);
 }
 
-static void
+void
 pf_step_into_anchor(int *depth, struct pf_ruleset **rs, int n,
     struct pf_rule **r, struct pf_rule **a,  int *match)
 {
