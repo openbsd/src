@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.5 2007/05/25 16:22:11 art Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.6 2007/05/27 08:59:25 art Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -244,58 +244,10 @@ int
 x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
     bus_space_handle_t *bshp)
 {
-	u_long pa, endpa;
-	vaddr_t va, sva;
-	pt_entry_t *pte;
-
-	pa = trunc_page(bpa);
-	endpa = round_page(bpa + size);
-
-#ifdef DIAGNOSTIC
-	if (endpa <= pa)
-		panic("x86_mem_add_mapping: overflow");
-#endif
-
-	va = uvm_km_valloc(kernel_map, endpa - pa);
-	if (va == 0)
-		return (ENOMEM);
-
-	sva = va;
-
-	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
-
-	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-
-		/*
-		 * PG_N doesn't exist on 386's, so we assume that
-		 * the mainboard has wired up device space non-cacheable
-		 * on those machines.
-		 *
-		 * Note that it's not necessary to use atomic ops to
-		 * fiddle with the PTE here, because we don't care
-		 * about mod/ref information.
-		 *
-		 * XXX should hand this bit to pmap_kenter_pa to
-		 * save the extra invalidate!
-		 *
-		 * XXX extreme paranoia suggests tlb shootdown belongs here.
-		 */
-		if (pmap_cpu_has_pg_n()) {
-			pte = kvtopte(va);
-			if (cacheable)
-				*pte &= ~PG_N;
-			else
-				*pte |= PG_N;
-		}
-	}
-	if (!cacheable) {
-		pmap_tlb_shootrange(pmap_kernel(), sva, sva + size);
-		pmap_tlb_shootwait();
-	}
-
-	pmap_update(pmap_kernel());
-
+	if (cacheable)
+		*bshp = PMAP_DIRECT_MAP(bpa);
+	else
+		*bshp = PMAP_DIRECT_NC_MAP(bpa);
 	return 0;
 }
 
@@ -313,7 +265,6 @@ void
 _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
     bus_addr_t *adrp)
 {
-	u_long va, endva;
 	bus_addr_t bpa;
 
 	/*
@@ -325,27 +276,11 @@ _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
 		if (bsh >= atdevbase && (bsh + size) <= (atdevbase + IOM_SIZE)) {
 			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
 		} else {
-
-			va = trunc_page(bsh);
-			endva = round_page(bsh + size);
-
-#ifdef DIAGNOSTIC
-			if (endva <= va) {
-				panic("_x86_memio_unmap: overflow");
-			}
-#endif
-
-			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
-				panic("_x86_memio_unmap:"
-				    " wrong virtual address");
-			}
-			bpa += (bsh & PGOFSET);
-
-			pmap_kremove(va, endva - va);
-			/*
-			 * Free the kernel virtual mapping.
-			 */
-			uvm_km_free(kernel_map, va, endva - va);
+			if (bsh >= PMAP_DIRECT_BASE_NC &&
+			    bsh < PMAP_DIRECT_END_NC)
+				bpa = PMAP_DIRECT_NC_UNMAP(bsh);
+			else
+				bpa = PMAP_DIRECT_UNMAP(bsh);
 		}
 	} else {
 		panic("_x86_memio_unmap: bad bus space tag");
@@ -360,7 +295,6 @@ void
 x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	struct extent *ex;
-	u_long va, endva;
 	bus_addr_t bpa;
 
 	/*
@@ -378,22 +312,11 @@ x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 			goto ok;
 		}
 
-		va = trunc_page(bsh);
-		endva = round_page(bsh + size);
-
-#ifdef DIAGNOSTIC
-		if (endva <= va)
-			panic("x86_memio_unmap: overflow");
-#endif
-
-		(void) pmap_extract(pmap_kernel(), va, &bpa);
-		bpa += (bsh & PGOFSET);
-
-		pmap_kremove(va, endva - va);
-		/*
-		 * Free the kernel virtual mapping.
-		 */
-		uvm_km_free(kernel_map, va, endva - va);
+		if (bsh >= PMAP_DIRECT_BASE_NC &&
+		    bsh < PMAP_DIRECT_END_NC)
+			bpa = PMAP_DIRECT_NC_UNMAP(bsh);
+		else
+			bpa = PMAP_DIRECT_UNMAP(bsh);
 	} else
 		panic("x86_memio_unmap: bad bus space tag");
 
