@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.43 2007/05/03 18:40:19 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.44 2007/05/27 15:46:02 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -98,17 +98,17 @@ typedef	struct pmap *pmap_t;
 
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
-boolean_t pteclrbits(paddr_t pa, u_int mask, u_int clear);
+boolean_t pteclrbits(struct vm_page *pg, u_int mask, u_int clear);
 
 
 #define pmap_clear_modify(page) \
-	(pteclrbits(VM_PAGE_TO_PHYS(page), PTE_CHG_32, TRUE))
+	(pteclrbits((page), PG_PMAP_MOD, TRUE))
 #define	pmap_clear_reference(page) \
-	(pteclrbits(VM_PAGE_TO_PHYS(page), PTE_REF_32, TRUE))
+	(pteclrbits((page), PG_PMAP_REF, TRUE))
 #define	pmap_is_modified(page) \
-	(pteclrbits(VM_PAGE_TO_PHYS(page), PTE_CHG_32, FALSE))
+	(pteclrbits((page), PG_PMAP_MOD, FALSE))
 #define	pmap_is_referenced(page) \
-	(pteclrbits(VM_PAGE_TO_PHYS(page), PTE_REF_32, FALSE))
+	(pteclrbits((page), PG_PMAP_REF, FALSE))
 
 #define	pmap_unwire(pm, va)
 #define	pmap_phys_address(x)		(x)
@@ -141,6 +141,10 @@ void pmap_proc_iflush(struct proc *proc, vaddr_t va, vsize_t len);
 #define pmap_unuse_final(p)		/* nothing */
 
 #define	PMAP_STEAL_MEMORY
+
+#define PG_PMAP_MOD     PG_PMAP0
+#define PG_PMAP_REF     PG_PMAP1
+#define PG_PMAP_EXE     PG_PMAP2
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */

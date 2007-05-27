@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.24 2005/12/17 07:31:26 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.25 2007/05/27 15:46:02 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -387,8 +387,36 @@ void
 _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 bus_size_t len, int op)
 {
+	int i;
+	bus_size_t minlen, wlen;
+	bus_addr_t pa, addr;
+	struct vm_page *pg;
 
-	/* Nothing to do here. */
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		/* Find the beginning segment. */
+		if (offset >= map->dm_segs[i].ds_len) {
+			offset -= map->dm_segs[i].ds_len;
+			continue;
+		}
+
+		minlen = len < map->dm_segs[i].ds_len - offset ?
+		    len : map->dm_segs[i].ds_len - offset;
+
+		addr = map->dm_segs[i].ds_addr + offset;
+
+		switch (op) {
+		case BUS_DMASYNC_POSTWRITE:
+			for (pa = trunc_page(addr), wlen = 0;
+			    pa < round_page(addr + minlen);
+			    pa += PAGE_SIZE) {
+				pg = PHYS_TO_VM_PAGE(pa);
+				if (pg != NULL)
+					atomic_clearbits_int(&pg->pg_flags,
+					    PG_PMAP_EXE);
+			}
+		}
+		
+	}
 }
 
 /*
