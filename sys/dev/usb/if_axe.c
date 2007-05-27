@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.68 2007/05/21 05:40:27 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.69 2007/05/27 04:00:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -541,9 +541,10 @@ axe_ax88772_init(struct axe_softc *sc)
 /*
  * Probe for a AX88172 chip.
  */
-USB_MATCH(axe)
+int
+axe_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(axe, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (!uaa->iface)
 		return(UMATCH_NONE);
@@ -556,9 +557,11 @@ USB_MATCH(axe)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-USB_ATTACH(axe)
+void
+axe_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(axe, sc, uaa);
+	struct axe_softc *sc = (struct axe_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
@@ -571,7 +574,7 @@ USB_ATTACH(axe)
 	int i, s;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
+	printf("\n");
 
 	sc->axe_unit = self->dv_unit; /*device_get_unit(self);*/
 
@@ -580,7 +583,7 @@ USB_ATTACH(axe)
 		printf("axe%d: getting interface handle failed\n",
 		    sc->axe_unit);
 		usbd_devinfo_free(devinfop);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->axe_flags = axe_lookup(uaa->vendor, uaa->product)->axe_flags;
@@ -594,7 +597,7 @@ USB_ATTACH(axe)
 		printf("axe%d: getting interface handle failed\n",
 		    sc->axe_unit);
 		usbd_devinfo_free(devinfop);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->axe_udev = dev;
@@ -618,7 +621,7 @@ USB_ATTACH(axe)
 		ed = usbd_interface2endpoint_descriptor(sc->axe_iface, i);
 		if (!ed) {
 			printf(" couldn't get ep %d\n", i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -718,13 +721,12 @@ USB_ATTACH(axe)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axe_udev,
 			   USBDEV(sc->axe_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(axe)
+int
+axe_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(axe, sc);
+	struct axe_softc	*sc = (struct axe_softc *)self;
 	int			s;
 	struct ifnet		*ifp = GET_IFP(sc);
 

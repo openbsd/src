@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.9 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.10 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -256,9 +256,10 @@ MODULE_DEPEND(uvscom, ucom, UCOM_MINVER, UCOM_PREFVER, UCOM_MAXVER);
 MODULE_VERSION(uvscom, UVSCOM_MODVER);
 #endif
 
-USB_MATCH(uvscom)
+int
+uvscom_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uvscom, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -267,9 +268,11 @@ USB_MATCH(uvscom)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uvscom)
+void
+uvscom_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uvscom, sc, uaa);
+	struct uvscom_softc *sc = (struct uvscom_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
@@ -281,8 +284,7 @@ USB_ATTACH(uvscom)
 	struct ucom_attach_args uca;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	printf("\n%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
@@ -300,7 +302,7 @@ USB_ATTACH(uvscom)
 		printf("%s: failed to set configuration, err=%s\n",
 			devname, usbd_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the config descriptor */
@@ -310,7 +312,7 @@ USB_ATTACH(uvscom)
 		printf("%s: failed to get configuration descriptor\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the common interface */
@@ -320,7 +322,7 @@ USB_ATTACH(uvscom)
 		printf("%s: failed to get interface, err=%s\n",
 			devname, usbd_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
@@ -333,7 +335,7 @@ USB_ATTACH(uvscom)
 			printf("%s: no endpoint descriptor for %d\n",
 				USBDEVNAME(sc->sc_dev), i);
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -353,19 +355,19 @@ USB_ATTACH(uvscom)
 		printf("%s: Could not find data bulk in\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	if (uca.bulkout == -1) {
 		printf("%s: Could not find data bulk out\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	if (sc->sc_intr_number == -1) {
 		printf("%s: Could not find interrupt in\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_dtr = sc->sc_rts = 0;
@@ -389,7 +391,7 @@ USB_ATTACH(uvscom)
 		printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
 			usbd_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	DPRINTF(("uvscom: in = 0x%x out = 0x%x intr = 0x%x\n",
@@ -401,13 +403,12 @@ USB_ATTACH(uvscom)
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
 			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(uvscom)
+int
+uvscom_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(uvscom, sc);
+	struct uvscom_softc *sc = (struct uvscom_softc *)self;
 	int rv = 0;
 
 	DPRINTF(("uvscom_detach: sc = %p\n", sc));

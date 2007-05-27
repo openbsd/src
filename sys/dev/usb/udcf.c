@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.32 2007/04/21 20:17:04 art Exp $ */
+/*	$OpenBSD: udcf.c,v 1.33 2007/05/27 04:00:25 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -135,9 +135,10 @@ void	udcf_ct_probe(void *);
 
 USB_DECLARE_DRIVER(udcf);
 
-USB_MATCH(udcf)
+int
+udcf_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(udcf, uaa);
+	struct usb_attach_arg		*uaa = aux;
 
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
@@ -147,9 +148,11 @@ USB_MATCH(udcf)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-USB_ATTACH(udcf)
+void
+udcf_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(udcf, sc, uaa);
+	struct udcf_softc		*sc = (struct udcf_softc *)self;
+	struct usb_attach_arg		*uaa = aux;
 	usbd_device_handle		 dev = uaa->device;
 	usbd_interface_handle		 iface;
 	struct timeval			 t;
@@ -173,8 +176,7 @@ USB_ATTACH(udcf)
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
@@ -302,15 +304,15 @@ USB_ATTACH(udcf)
 	timeout_add(&sc->sc_sl_to, t_wait + t_sl);
 
 	DPRINTF(("synchronizing\n"));
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 fishy:
 	DPRINTF(("udcf_attach failed\n"));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
 }
 
-USB_DETACH(udcf)
+int
+udcf_detach(struct device *self, int flags)
 {
 	struct udcf_softc	*sc = (struct udcf_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.67 2007/05/21 06:10:44 jsg Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.68 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -165,44 +165,6 @@ const struct cfattach __CONCAT(dname,_ca) = { \
 }
 
 #define USB_DECLARE_DRIVER(dname) USB_DECLARE_DRIVER_CLASS(dname, DV_DULL)
-
-#define USB_MATCH(dname) \
-int \
-__CONCAT(dname,_match)(parent, match, aux) \
-	struct device *parent; \
-	void *match; \
-	void *aux;
-
-#define USB_MATCH_START(dname, uaa) \
-	struct usb_attach_arg *uaa = aux
-
-#define USB_ATTACH(dname) \
-void \
-__CONCAT(dname,_attach)(parent, self, aux) \
-	struct device *parent; \
-	struct device *self; \
-	void *aux;
-
-#define USB_ATTACH_START(dname, sc, uaa) \
-	struct __CONCAT(dname,_softc) *sc = \
-		(struct __CONCAT(dname,_softc) *)self; \
-	struct usb_attach_arg *uaa = aux
-
-/* Returns from attach */
-#define USB_ATTACH_ERROR_RETURN	return
-#define USB_ATTACH_SUCCESS_RETURN	return
-
-#define USB_ATTACH_SETUP printf("\n")
-
-#define USB_DETACH(dname) \
-int \
-__CONCAT(dname,_detach)(self, flags) \
-	struct device *self; \
-	int flags;
-
-#define USB_DETACH_START(dname, sc) \
-	struct __CONCAT(dname,_softc) *sc = \
-		(struct __CONCAT(dname,_softc) *)self
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
 	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \

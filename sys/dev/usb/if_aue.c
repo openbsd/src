@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.54 2007/05/21 05:40:27 jsg Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.55 2007/05/27 04:00:24 jsg Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -698,9 +698,10 @@ aue_reset(struct aue_softc *sc)
 /*
  * Probe for a Pegasus chip.
  */
-USB_MATCH(aue)
+int
+aue_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(aue, uaa);
+	struct usb_attach_arg	*uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -713,9 +714,11 @@ USB_MATCH(aue)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-USB_ATTACH(aue)
+void
+aue_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(aue, sc, uaa);
+	struct aue_softc	*sc = (struct aue_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
 	char			*devinfop;
 	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
@@ -731,15 +734,14 @@ USB_ATTACH(aue)
 	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->aue_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->aue_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->aue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	usb_init_task(&sc->aue_tick_task, aue_tick_task, sc);
@@ -750,7 +752,7 @@ USB_ATTACH(aue)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->aue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
@@ -768,7 +770,7 @@ USB_ATTACH(aue)
 		if (ed == NULL) {
 			printf("%s: couldn't get endpoint descriptor %d\n",
 			    USBDEVNAME(sc->aue_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -785,7 +787,7 @@ USB_ATTACH(aue)
 	if (sc->aue_ed[AUE_ENDPT_RX] == 0 || sc->aue_ed[AUE_ENDPT_TX] == 0 ||
 	    sc->aue_ed[AUE_ENDPT_INTR] == 0) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->aue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 
@@ -847,13 +849,12 @@ USB_ATTACH(aue)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev,
 			   USBDEV(sc->aue_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(aue)
+int
+aue_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(aue, sc);
+	struct aue_softc	*sc = (struct aue_softc *)self;
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 

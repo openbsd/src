@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.4 2006/06/23 06:27:11 miod Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.5 2007/05/27 04:00:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -132,9 +132,10 @@ static const struct uipaq_type uipaq_devs[] = {
 
 USB_DECLARE_DRIVER(uipaq);
 
-USB_MATCH(uipaq)
+int
+uipaq_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uipaq, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -146,9 +147,11 @@ USB_MATCH(uipaq)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uipaq)
+void
+uipaq_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uipaq, sc, uaa);
+	struct uipaq_softc *sc = (struct uipaq_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
@@ -177,8 +180,7 @@ USB_ATTACH(uipaq)
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	printf("\n%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uipaq_lookup(uaa->vendor, uaa->product)->uv_flags;
@@ -232,12 +234,11 @@ USB_ATTACH(uipaq)
 		printf("%s: no proper endpoints found (%d,%d) \n",
 		    devname, uca.bulkin, uca.bulkout);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 bad:
 	DPRINTF(("uipaq_attach: ATTACH ERROR\n"));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.14 2006/10/08 21:14:12 grange Exp $	*/
+/*	$OpenBSD: uow.c,v 1.15 2007/05/27 04:00:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -86,9 +86,10 @@ Static int	uow_read(struct uow_softc *, void *, int);
 Static int	uow_write(struct uow_softc *, const void *, int);
 Static int	uow_reset(struct uow_softc *);
 
-USB_MATCH(uow)
+int
+uow_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uow, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -97,9 +98,11 @@ USB_MATCH(uow)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uow)
+void
+uow_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uow, sc, uaa);
+	struct uow_softc *sc = (struct uow_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -111,7 +114,7 @@ USB_ATTACH(uow)
 	sc->sc_udev = uaa->device;
 
 	/* Display device info string */
-	USB_ATTACH_SETUP;
+	printf("\n");
 	if ((devinfop = usbd_devinfo_alloc(uaa->device, 0)) != NULL) {
 		printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 		usbd_devinfo_free(devinfop);
@@ -123,7 +126,7 @@ USB_ATTACH(uow)
 		printf("%s: failed to set config %d: %s\n",
 		    USBDEVNAME(sc->sc_dev), DS2490_USB_CONFIG,
 		    usbd_errstr(error));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Get interface handle */
@@ -132,7 +135,7 @@ USB_ATTACH(uow)
 		printf("%s: failed to get iface %d: %s\n",
 		    USBDEVNAME(sc->sc_dev), DS2490_USB_IFACE,
 		    usbd_errstr(error));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Find endpoints */
@@ -142,7 +145,7 @@ USB_ATTACH(uow)
 		if (ed == NULL) {
 			printf("%s: failed to get endpoint %d descriptor\n",
 			    USBDEVNAME(sc->sc_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -158,7 +161,7 @@ USB_ATTACH(uow)
 	if (ep_ibulk == -1 || ep_obulk == -1 || ep_intr == -1) {
 		printf("%s: missing endpoint: ibulk %d, obulk %d, intr %d\n",
 		   USBDEVNAME(sc->sc_dev), ep_ibulk, ep_obulk, ep_intr);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Open pipes */
@@ -166,7 +169,7 @@ USB_ATTACH(uow)
 	    &sc->sc_ph_ibulk)) != 0) {
 		printf("%s: failed to open bulk-in pipe: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	if ((error = usbd_open_pipe(sc->sc_iface, ep_obulk, USBD_EXCLUSIVE_USE,
 	    &sc->sc_ph_obulk)) != 0) {
@@ -212,7 +215,7 @@ USB_ATTACH(uow)
 	oba.oba_bus = &sc->sc_ow_bus;
 	sc->sc_ow_dev = config_found(self, &oba, onewirebus_print);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 fail:
 	if (sc->sc_ph_ibulk != NULL)
@@ -223,12 +226,12 @@ fail:
 		usbd_close_pipe(sc->sc_ph_intr);
 	if (sc->sc_xfer != NULL)
 		usbd_free_xfer(sc->sc_xfer);
-	USB_ATTACH_ERROR_RETURN;
 }
 
-USB_DETACH(uow)
+int
+uow_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(uow, sc);
+	struct uow_softc *sc = (struct uow_softc *)self;
 	int rv = 0, s;
 
 	s = splusb();

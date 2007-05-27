@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.13 2007/05/21 05:40:28 jsg Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.14 2007/05/27 04:00:25 jsg Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -185,9 +185,10 @@ Static callback usscanner_sensedata_cb;
 
 USB_DECLARE_DRIVER(usscanner);
 
-USB_MATCH(usscanner)
+int
+usscanner_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(usscanner, uaa);
+	struct usb_attach_arg	*uaa = aux;
 
 	DPRINTFN(50,("usscanner_match\n"));
 
@@ -201,9 +202,11 @@ USB_MATCH(usscanner)
 		return (UMATCH_NONE);
 }
 
-USB_ATTACH(usscanner)
+void
+usscanner_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(usscanner, sc, uaa);
+	struct usscanner_softc	*sc = (struct usscanner_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
 	struct scsibus_attach_args saa;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
@@ -216,22 +219,21 @@ USB_ATTACH(usscanner)
 	DPRINTFN(10,("usscanner_attach: sc=%p\n", sc));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, USSCANNER_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	err = usbd_device2interface_handle(dev, USSCANNER_IFACE_IDX, &iface);
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_udev = dev;
@@ -248,7 +250,7 @@ USB_ATTACH(usscanner)
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -264,7 +266,7 @@ USB_ATTACH(usscanner)
 	if (sc->sc_in_addr == -1 || sc->sc_intr_addr == -1 ||
 	    sc->sc_out_addr == -1) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_in_addr,
@@ -272,7 +274,7 @@ USB_ATTACH(usscanner)
 	if (err) {
 		printf("%s: open in pipe failed, err=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* The interrupt endpoint must be opened as a normal pipe. */
@@ -283,7 +285,7 @@ USB_ATTACH(usscanner)
 		printf("%s: open intr pipe failed, err=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
 		usscanner_cleanup(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_out_addr,
 			     USBD_EXCLUSIVE_USE, &sc->sc_out_pipe);
@@ -291,7 +293,7 @@ USB_ATTACH(usscanner)
 		printf("%s: open out pipe failed, err=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
 		usscanner_cleanup(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_cmd_xfer = usbd_alloc_xfer(uaa->device);
@@ -299,7 +301,7 @@ USB_ATTACH(usscanner)
 		printf("%s: alloc cmd xfer failed, err=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
 		usscanner_cleanup(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* XXX too big */
@@ -309,7 +311,7 @@ USB_ATTACH(usscanner)
 		printf("%s: alloc cmd buffer failed, err=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
 		usscanner_cleanup(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_intr_xfer = usbd_alloc_xfer (uaa->device);
@@ -317,7 +319,7 @@ USB_ATTACH(usscanner)
 	  printf("%s: alloc intr xfer failed, err=%d\n",
 		 USBDEVNAME(sc->sc_dev), err);
 	  usscanner_cleanup(sc);
-	  USB_ATTACH_ERROR_RETURN;
+	  return; 
         }
 
 	sc->sc_data_xfer = usbd_alloc_xfer(uaa->device);
@@ -325,7 +327,7 @@ USB_ATTACH(usscanner)
 		printf("%s: alloc data xfer failed, err=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
 		usscanner_cleanup(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	sc->sc_data_buffer = usbd_alloc_buffer(sc->sc_data_xfer,
 					      USSCANNER_MAX_TRANSFER_SIZE);
@@ -333,7 +335,7 @@ USB_ATTACH(usscanner)
 		printf("%s: alloc data buffer failed, err=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
 		usscanner_cleanup(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/*
@@ -374,13 +376,12 @@ USB_ATTACH(usscanner)
 			   USBDEV(sc->sc_dev));
 
 	DPRINTFN(10, ("usscanner_attach: %p\n", sc->sc_udev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(usscanner)
+int
+usscanner_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(usscanner, sc);
+	struct usscanner_softc *sc = (struct usscanner_softc *)self;
 	int rv, s;
 
 	DPRINTF(("usscanner_detach: sc=%p flags=%d\n", sc, flags));

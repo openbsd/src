@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.33 2007/05/20 00:52:26 jsg Exp $ */
+/*	$OpenBSD: ucom.c,v 1.34 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -165,12 +165,14 @@ ucom_unlock(struct ucom_softc *sc)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }
 
-USB_MATCH(ucom)
+int
+ucom_match(struct device *parent, void *match, void *aux)
 {
 	return (1);
 }
 
-USB_ATTACH(ucom)
+void
+ucom_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
 	struct ucom_attach_args *uca = aux;
@@ -202,11 +204,10 @@ USB_ATTACH(ucom)
 	rw_init(&sc->sc_lock, "ucomlk");
 
 	sc->sc_open = 0;
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(ucom)
+int
+ucom_detach(struct device *self, int flags)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
 	struct tty *tp = sc->sc_tty;

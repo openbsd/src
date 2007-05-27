@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.21 2007/05/21 05:40:28 jsg Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.22 2007/05/27 04:00:25 jsg Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -248,9 +248,10 @@ Static const struct usb_devno ubsa_devs[] = {
 
 USB_DECLARE_DRIVER(ubsa);
 
-USB_MATCH(ubsa)
+int
+ubsa_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(ubsa, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -259,9 +260,11 @@ USB_MATCH(ubsa)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(ubsa)
+void
+ubsa_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ubsa, sc, uaa);
+	struct ubsa_softc *sc = (struct ubsa_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
@@ -273,8 +276,7 @@ USB_ATTACH(ubsa)
 	int i;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	printf("\n%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = dev;
@@ -387,15 +389,14 @@ USB_ATTACH(ubsa)
 
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
-	USB_ATTACH_SUCCESS_RETURN;
-
 error:
-	USB_ATTACH_ERROR_RETURN;
+	return;
 }
 
-USB_DETACH(ubsa)
+int
+ubsa_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(ubsa, sc);
+	struct ubsa_softc *sc = (struct ubsa_softc *)self;
 	int rv = 0;
 
 

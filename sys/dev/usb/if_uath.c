@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.18 2007/05/21 05:40:27 jsg Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.19 2007/05/27 04:00:24 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -196,9 +196,10 @@ Static int	uath_activate(device_ptr_t, enum devact);
 
 USB_DECLARE_DRIVER(uath);
 
-USB_MATCH(uath)
+int
+uath_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uath, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
@@ -240,9 +241,11 @@ uath_attachhook(void *xsc)
 	}
 }
 
-USB_ATTACH(uath)
+void
+uath_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uath, sc, uaa);
+	struct uath_softc *sc = (struct uath_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	usbd_status error;
@@ -254,8 +257,7 @@ USB_ATTACH(uath)
 	sc->sc_port = uaa->port;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uath_lookup(uaa->vendor, uaa->product)->flags;
@@ -263,7 +265,7 @@ USB_ATTACH(uath)
 	if (usbd_set_config_no(sc->sc_udev, UATH_CONFIG_NO, 0) != 0) {
 		printf("%s: could not set configuration no\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the first interface handle */
@@ -272,7 +274,7 @@ USB_ATTACH(uath)
 	if (error != 0) {
 		printf("%s: could not get interface handle\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/*
@@ -281,7 +283,7 @@ USB_ATTACH(uath)
 	 */
 	if (uath_open_pipes(sc) != 0) {
 		printf("%s: could not open pipes\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (sc->sc_flags & UATH_FLAG_PRE_FIRMWARE) {
@@ -289,7 +291,7 @@ USB_ATTACH(uath)
 			mountroothook_establish(uath_attachhook, sc);
 		else
 			uath_attachhook(sc);
-		USB_ATTACH_SUCCESS_RETURN;
+		return;
 	}
 
 	/*
@@ -418,19 +420,18 @@ USB_ATTACH(uath)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 fail4:	uath_free_tx_data_list(sc);
 fail3:	uath_free_rx_cmd_list(sc);
 fail2:	uath_free_tx_cmd_list(sc);
 fail1:	uath_close_pipes(sc);
-
-	USB_ATTACH_ERROR_RETURN;
 }
 
-USB_DETACH(uath)
+int
+uath_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(uath, sc);
+	struct uath_softc *sc = (struct uath_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 

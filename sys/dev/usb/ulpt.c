@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.22 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.23 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -179,9 +179,10 @@ void ieee1284_print_id(char *);
 
 USB_DECLARE_DRIVER(ulpt);
 
-USB_MATCH(ulpt)
+int
+ulpt_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(ulpt, uaa);
+	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 
 	DPRINTFN(10,("ulpt_match\n"));
@@ -198,9 +199,11 @@ USB_MATCH(ulpt)
 	return (UMATCH_NONE);
 }
 
-USB_ATTACH(ulpt)
+void
+ulpt_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ulpt, sc, uaa);
+	struct ulpt_softc *sc = (struct ulpt_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
@@ -215,8 +218,7 @@ USB_ATTACH(ulpt)
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	printf("\n%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfop, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
 
@@ -227,7 +229,7 @@ USB_ATTACH(ulpt)
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
 		       USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	iend = (usb_interface_descriptor_t *)
 		   ((char *)cdesc + UGETW(cdesc->wTotalLength));
@@ -260,7 +262,7 @@ USB_ATTACH(ulpt)
 			printf("%s: setting alternate interface failed\n",
 			       USBDEVNAME(sc->sc_dev));
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	}
 
@@ -274,7 +276,7 @@ USB_ATTACH(ulpt)
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -288,7 +290,7 @@ USB_ATTACH(ulpt)
 		printf("%s: could not find bulk out endpoint\n",
 		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (usbd_get_quirks(dev)->uq_flags & UQ_BROKEN_BIDIR) {
@@ -351,8 +353,6 @@ USB_ATTACH(ulpt)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -373,9 +373,10 @@ ulpt_activate(device_ptr_t self, enum devact act)
 }
 #endif
 
-USB_DETACH(ulpt)
+int
+ulpt_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(ulpt, sc);
+	struct ulpt_softc *sc = (struct ulpt_softc *)self;
 	int s;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	int maj, mn;

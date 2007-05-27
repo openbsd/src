@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.35 2007/05/21 05:40:27 jsg Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.36 2007/05/27 04:00:25 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -264,9 +264,10 @@ const struct wi_usb_type {
 
 USB_DECLARE_DRIVER_CLASS(wi_usb, DV_IFNET);
 
-USB_MATCH(wi_usb)
+int
+wi_usb_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(wi_usb, uaa);
+	struct usb_attach_arg	*uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -280,9 +281,11 @@ USB_MATCH(wi_usb)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-USB_ATTACH(wi_usb)
+void
+wi_usb_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(wi_usb, sc, uaa);
+	struct wi_usb_softc	*sc = (struct wi_usb_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
 	char			*devinfop;
 /*	int			s; */
 	usbd_device_handle	dev = uaa->device;
@@ -298,12 +301,11 @@ USB_ATTACH(wi_usb)
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->wi_usb_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->wi_usb_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/* XXX - any tasks? */
@@ -312,7 +314,7 @@ USB_ATTACH(wi_usb)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* XXX - flags? */
@@ -337,7 +339,7 @@ USB_ATTACH(wi_usb)
 		if (ed == NULL) {
 			printf("%s: couldn't get endpoint descriptor %d\n",
 			    USBDEVNAME(sc->wi_usb_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -358,18 +360,18 @@ USB_ATTACH(wi_usb)
 	if (wi_usb_rx_list_init(sc)) {
 		printf("%s: rx list init failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	if (wi_usb_tx_list_init(sc)) {
 		printf("%s: tx list init failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (wi_usb_open_pipes(sc)){
 		printf("%s: open pipes failed\n",
 		    USBDEVNAME(sc->wi_usb_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->wi_usb_attached = 1;
@@ -378,14 +380,12 @@ USB_ATTACH(wi_usb)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->wi_usb_udev,
 			   USBDEV(sc->wi_usb_dev));
-
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(wi_usb)
+int
+wi_usb_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(wi_usb, sc);
+	struct wi_usb_softc	*sc = (struct wi_usb_softc *)self;
 	struct ifnet		*ifp = WI_GET_IFP(sc);
 	struct wi_softc		*wsc = &sc->sc_wi;
 	int s;

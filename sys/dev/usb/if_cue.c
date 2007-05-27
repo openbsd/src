@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.34 2007/05/21 05:40:27 jsg Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.35 2007/05/27 04:00:24 jsg Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -432,9 +432,10 @@ cue_reset(struct cue_softc *sc)
 /*
  * Probe for a CATC chip.
  */
-USB_MATCH(cue)
+int
+cue_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(cue, uaa);
+	struct usb_attach_arg	*uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -447,9 +448,11 @@ USB_MATCH(cue)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-USB_ATTACH(cue)
+void
+cue_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(cue, sc, uaa);
+	struct cue_softc	*sc = (struct cue_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
 	char			*devinfop;
 	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
@@ -464,15 +467,14 @@ USB_ATTACH(cue)
 	DPRINTFN(5,(" : cue_attach: sc=%p, dev=%p", sc, dev));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->cue_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->cue_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, CUE_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->cue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->cue_udev = dev;
@@ -486,7 +488,7 @@ USB_ATTACH(cue)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->cue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->cue_iface = iface;
@@ -498,7 +500,7 @@ USB_ATTACH(cue)
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->cue_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -555,13 +557,12 @@ USB_ATTACH(cue)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cue_udev,
 	    USBDEV(sc->cue_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(cue)
+int
+cue_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(cue, sc);
+	struct cue_softc	*sc = (struct cue_softc *)self;
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.38 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: uhub.c,v 1.39 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -134,9 +134,10 @@ Static	driver_t uhubroot_driver = {
 };
 #endif
 
-USB_MATCH(uhub)
+int
+uhub_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uhub, uaa);
+	struct usb_attach_arg *uaa = aux;
 	usb_device_descriptor_t *dd = usbd_get_device_descriptor(uaa->device);
 
 	DPRINTFN(5,("uhub_match, dd=%p\n", dd));
@@ -149,9 +150,11 @@ USB_MATCH(uhub)
 	return (UMATCH_NONE);
 }
 
-USB_ATTACH(uhub)
+void
+uhub_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uhub, sc, uaa);
+	struct uhub_softc *sc = (struct uhub_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	char *devinfop;
 	usbd_status err;
@@ -167,21 +170,20 @@ USB_ATTACH(uhub)
 	sc->sc_hub = dev;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {
 		DPRINTF(("%s: configuration failed, error=%s\n",
 			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (dev->depth > USB_HUB_MAX_DEPTH) {
 		printf("%s: hub depth (%d) exceeded, hub ignored\n",
 		       USBDEVNAME(sc->sc_dev), USB_HUB_MAX_DEPTH);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Get hub descriptor. */
@@ -200,7 +202,7 @@ USB_ATTACH(uhub)
 	if (err) {
 		DPRINTF(("%s: getting hub descriptor failed, error=%s\n",
 			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	for (nremov = 0, port = 1; port <= nports; port++)
@@ -225,7 +227,7 @@ USB_ATTACH(uhub)
 	hub = malloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
 		     M_USBDEV, M_NOWAIT);
 	if (hub == NULL)
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	dev->hub = hub;
 	dev->hub->hubsoftc = sc;
 	hub->explore = uhub_explore;
@@ -348,13 +350,12 @@ USB_ATTACH(uhub)
 
 	sc->sc_running = 1;
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
  bad:
 	if (hub)
 		free(hub, M_USBDEV);
 	dev->hub = NULL;
-	USB_ATTACH_ERROR_RETURN;
 }
 
 usbd_status
@@ -562,9 +563,10 @@ uhub_activate(device_ptr_t self, enum devact act)
  * Called from process context when the hub is gone.
  * Detach all devices on active ports.
  */
-USB_DETACH(uhub)
+int
+uhub_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(uhub, sc);
+	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usbd_hub *hub = sc->sc_hub->hub;
 	struct usbd_port *rup;
 	int port, nports;

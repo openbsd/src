@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.34 2007/05/21 05:40:28 jsg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.35 2007/05/27 04:00:25 jsg Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -191,9 +191,10 @@ static const struct usb_devno uplcom_devs[] = {
 
 USB_DECLARE_DRIVER(uplcom);
 
-USB_MATCH(uplcom)
+int
+uplcom_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uplcom, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -202,9 +203,11 @@ USB_MATCH(uplcom)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uplcom)
+void
+uplcom_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uplcom, sc, uaa);
+	struct uplcom_softc *sc = (struct uplcom_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_device_descriptor_t *ddesc;
@@ -218,8 +221,7 @@ USB_ATTACH(uplcom)
 	struct ucom_attach_args uca;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	printf("\n%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
@@ -237,7 +239,7 @@ USB_ATTACH(uplcom)
 		printf("\n%s: failed to set configuration, err=%s\n",
 			devname, usbd_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the config descriptor */
@@ -247,7 +249,7 @@ USB_ATTACH(uplcom)
 		printf("%s: failed to get configuration descriptor\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the device descriptor */
@@ -256,7 +258,7 @@ USB_ATTACH(uplcom)
 		printf("%s: failed to get device descriptor\n",
 		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/*
@@ -276,7 +278,7 @@ USB_ATTACH(uplcom)
 		printf("\n%s: failed to get interface, err=%s\n",
 			devname, usbd_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Find the interrupt endpoints */
@@ -290,7 +292,7 @@ USB_ATTACH(uplcom)
 			printf("%s: no endpoint descriptor for %d\n",
 				USBDEVNAME(sc->sc_dev), i);
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -304,7 +306,7 @@ USB_ATTACH(uplcom)
 		printf("%s: Could not find interrupt in\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* keep interface for interrupt */
@@ -329,7 +331,7 @@ USB_ATTACH(uplcom)
 			printf("\n%s: failed to get second interface, err=%s\n",
 							devname, usbd_errstr(err));
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	}
 
@@ -344,7 +346,7 @@ USB_ATTACH(uplcom)
 			printf("%s: no endpoint descriptor for %d\n",
 				USBDEVNAME(sc->sc_dev), i);
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -360,14 +362,14 @@ USB_ATTACH(uplcom)
 		printf("%s: Could not find data bulk in\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (uca.bulkout == -1) {
 		printf("%s: Could not find data bulk out\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_dtr = sc->sc_rts = -1;
@@ -389,7 +391,7 @@ USB_ATTACH(uplcom)
 		printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
 			usbd_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
@@ -398,13 +400,12 @@ USB_ATTACH(uplcom)
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
 			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(uplcom)
+int
+uplcom_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(uplcom, sc);
+	struct uplcom_softc *sc = (struct uplcom_softc *)self;
 	int rv = 0;
 
 	DPRINTF(("uplcom_detach: sc=%p flags=%d\n", sc, flags));

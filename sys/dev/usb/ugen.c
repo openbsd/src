@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.37 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: ugen.c,v 1.38 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -182,9 +182,10 @@ Static int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 
 USB_DECLARE_DRIVER(ugen);
 
-USB_MATCH(ugen)
+int
+ugen_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(ugen, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 #if 0
 	if (uaa->matchlvl)
@@ -207,17 +208,18 @@ USB_MATCH(ugen)
 		return (UMATCH_NONE);
 }
 
-USB_ATTACH(ugen)
+void
+ugen_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ugen, sc, uaa);
+	struct ugen_softc *sc = (struct ugen_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle udev;
 	char *devinfop;
 	usbd_status err;
 	int conf;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = udev = uaa->device;
@@ -228,7 +230,7 @@ USB_ATTACH(ugen)
 		printf("%s: setting configuration index 0 failed\n",
 		       USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	conf = usbd_get_config_descriptor(udev)->bConfigurationValue;
 
@@ -238,7 +240,7 @@ USB_ATTACH(ugen)
 		printf("%s: setting configuration %d failed\n",
 		       USBDEVNAME(sc->sc_dev), conf);
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 #ifdef __FreeBSD__
@@ -253,8 +255,6 @@ USB_ATTACH(ugen)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 Static int
@@ -799,9 +799,10 @@ ugen_activate(device_ptr_t self, enum devact act)
 }
 #endif
 
-USB_DETACH(ugen)
+int
+ugen_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(ugen, sc);
+	struct ugen_softc *sc = (struct ugen_softc *)self;
 	struct ugen_endpoint *sce;
 	int i, dir;
 	int s;

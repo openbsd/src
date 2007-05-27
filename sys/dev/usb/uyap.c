@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyap.c,v 1.9 2005/08/01 05:36:49 brad Exp $ */
+/*	$OpenBSD: uyap.c,v 1.10 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
 
 /*
@@ -58,9 +58,10 @@ struct uyap_softc {
 USB_DECLARE_DRIVER(uyap);
 void uyap_attachhook(void *);
 
-USB_MATCH(uyap)
+int
+uyap_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uyap, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -84,22 +85,23 @@ uyap_attachhook(void *xsc)
 	if (err) {
 		printf("%s: download ezdata format firmware error: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	printf("%s: firmware download complete, disconnecting.\n",
 	    USBDEVNAME(sc->sc_dev));
 }
 
-USB_ATTACH(uyap)
+void
+uyap_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uyap, sc, uaa);
+	struct uyap_softc *sc = (struct uyap_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	char *devinfop;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	printf("%s: downloading firmware\n", USBDEVNAME(sc->sc_dev));
@@ -109,14 +111,11 @@ USB_ATTACH(uyap)
 		mountroothook_establish(uyap_attachhook, sc);
 	else
 		uyap_attachhook(sc);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(uyap)
+int
+uyap_detach(struct device *self, int flags)
 {
-	/*USB_DETACH_START(uyap, sc);*/
-
 	return (0);
 }
 

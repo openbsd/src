@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.37 2007/05/21 05:40:27 jsg Exp $ */
+/*	$OpenBSD: if_url.c,v 1.38 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -171,9 +171,10 @@ static const struct url_type {
 
 
 /* Probe */
-USB_MATCH(url)
+int
+url_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(url, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -182,9 +183,11 @@ USB_MATCH(url)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 /* Attach */
-USB_ATTACH(url)
+void
+url_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(url, sc, uaa);
+	struct url_softc *sc = (struct url_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usbd_status err;
@@ -198,8 +201,7 @@ USB_ATTACH(url)
 	int i, s;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	printf("\n%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/* Move the device into the configured state. */
@@ -322,17 +324,17 @@ USB_ATTACH(url)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, USBDEV(sc->sc_dev));
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
  bad:
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
 }
 
 /* detach */
-USB_DETACH(url)
+int
+url_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(url, sc);
+	struct url_softc *sc = (struct url_softc *)self;
 	struct ifnet *ifp = GET_IFP(sc);
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.39 2007/05/21 05:40:28 jsg Exp $	*/
+/*	$OpenBSD: usb.c,v 1.40 2007/05/27 04:00:25 jsg Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -146,13 +146,15 @@ Static const char *usbrev_str[] = USBREV_STR;
 
 USB_DECLARE_DRIVER(usb);
 
-USB_MATCH(usb)
+int
+usb_match(struct device *parent, void *match, void *aux)
 {
 	DPRINTF(("usbd_match\n"));
 	return (UMATCH_GENERIC);
 }
 
-USB_ATTACH(usb)
+void
+usb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
 	usbd_device_handle dev;
@@ -181,7 +183,7 @@ USB_ATTACH(usb)
 	default:
 		printf(", not supported\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	printf("\n");
 
@@ -200,7 +202,7 @@ USB_ATTACH(usb)
 	if (sc->sc_bus->soft == NULL) {
 		printf("%s: can't register softintr\n", USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 #else
 	usb_callout_init(sc->sc_bus->softi);
@@ -215,7 +217,7 @@ USB_ATTACH(usb)
 			sc->sc_dying = 1;
 			printf("%s: root device is not a hub\n",
 			       USBDEVNAME(sc->sc_dev));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		sc->sc_bus->root_hub = dev;
 #if 1
@@ -237,8 +239,6 @@ USB_ATTACH(usb)
 
 	config_pending_incr();
 	kthread_create_deferred(usb_create_event_thread, sc);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)

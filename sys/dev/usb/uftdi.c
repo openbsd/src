@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.33 2007/03/03 12:40:31 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.34 2007/05/27 04:00:25 jsg Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -126,9 +126,10 @@ struct ucom_methods uftdi_methods = {
 
 USB_DECLARE_DRIVER(uftdi);
 
-USB_MATCH(uftdi)
+int
+uftdi_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uftdi, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL) {
 		if (uaa->vendor == USB_VENDOR_FTDI &&
@@ -184,9 +185,11 @@ USB_MATCH(uftdi)
 	return (UMATCH_NONE);
 }
 
-USB_ATTACH(uftdi)
+void
+uftdi_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uftdi, sc, uaa);
+	struct uftdi_softc *sc = (struct uftdi_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
@@ -218,8 +221,7 @@ USB_ATTACH(uftdi)
 		iface = uaa->iface;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	printf("\n%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
@@ -370,12 +372,11 @@ USB_ATTACH(uftdi)
 	DPRINTF(("uftdi: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 bad:
 	DPRINTF(("uftdi_attach: ATTACH ERROR\n"));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
 }
 
 int

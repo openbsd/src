@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.7 2007/05/18 18:47:30 robert Exp $ */
+/*	$OpenBSD: uts.c,v 1.8 2007/05/27 04:00:25 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -112,9 +112,10 @@ const struct wsmouse_accessops uts_accessops = {
 
 USB_DECLARE_DRIVER(uts);
 
-USB_MATCH(uts)
+int
+uts_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uts, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
@@ -123,9 +124,11 @@ USB_MATCH(uts)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-USB_ATTACH(uts)
+void
+uts_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uts, sc, uaa);
+	struct uts_softc *sc = (struct uts_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -143,7 +146,7 @@ USB_ATTACH(uts)
 	bcopy(&def_scale, &sc->sc_tsscale, sizeof(sc->sc_tsscale));
 
 	/* Display device info string */
-	USB_ATTACH_SETUP;
+	printf("\n");
 	if ((devinfop = usbd_devinfo_alloc(uaa->device, 0)) != NULL) {
 		printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 		usbd_devinfo_free(devinfop);
@@ -154,7 +157,7 @@ USB_ATTACH(uts)
 		printf("%s: could not set configuartion no\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the config descriptor */
@@ -163,7 +166,7 @@ USB_ATTACH(uts)
 		printf("%s: failed to get configuration descriptor\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the interface */
@@ -171,7 +174,7 @@ USB_ATTACH(uts)
 		printf("%s: failed to get interface\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Find the interrupt endpoint */
@@ -185,7 +188,7 @@ USB_ATTACH(uts)
 			printf("%s: no endpoint descriptor for %d\n",
 				USBDEVNAME(sc->sc_dev), i);
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -199,7 +202,7 @@ USB_ATTACH(uts)
 		printf("%s: Could not find interrupt in\n",
 			USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
@@ -209,13 +212,12 @@ USB_ATTACH(uts)
 	a.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(uts)
+int
+uts_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(uts, sc);
+	struct uts_softc *sc = (struct uts_softc *)self;
 	int rv = 0;
 
 	if (sc->sc_intr_pipe != NULL) {

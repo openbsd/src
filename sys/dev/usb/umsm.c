@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.8 2007/05/13 12:17:30 fkr Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.9 2007/05/27 04:00:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -78,9 +78,10 @@ static const struct usb_devno umsm_devs[] = {
 
 USB_DECLARE_DRIVER(umsm);
 
-USB_MATCH(umsm)
+int
+umsm_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(umsm, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
@@ -89,9 +90,11 @@ USB_MATCH(umsm)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-USB_ATTACH(umsm)
+void
+umsm_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(umsm, sc, uaa);
+	struct umsm_softc *sc = (struct umsm_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct ucom_attach_args uca;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -102,15 +105,14 @@ USB_ATTACH(umsm)
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_index(sc->sc_udev, UMSM_CONFIG_NO, 1) != 0) {
 		printf("%s: could not set configuration no\n",
 		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the first interface handle */
@@ -120,7 +122,7 @@ USB_ATTACH(umsm)
 		printf("%s: could not get interface handle\n",
 		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
@@ -132,7 +134,7 @@ USB_ATTACH(umsm)
 			printf("%s: no endpoint descriptor found for %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -145,7 +147,7 @@ USB_ATTACH(umsm)
 	if (uca.bulkin == -1 || uca.bulkout == -1) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* We need to force size as some devices lie */
@@ -163,13 +165,12 @@ USB_ATTACH(umsm)
 	    USBDEV(sc->sc_dev));
 	
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(umsm)
+int
+umsm_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(umsm, sc);
+	struct umsm_softc *sc = (struct umsm_softc *)self;
 	int rv = 0;
 
 	sc->sc_dying = 1;

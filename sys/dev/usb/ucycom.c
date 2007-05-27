@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.5 2007/05/21 05:40:28 jsg Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.6 2007/05/27 04:00:25 jsg Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -167,7 +167,8 @@ Static const struct usb_devno ucycom_devs[] = {
 
 USB_DECLARE_DRIVER(ucycom);
 
-USB_MATCH(ucycom)
+int
+ucycom_match(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
@@ -176,9 +177,11 @@ USB_MATCH(ucycom)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(ucycom)
+void
+ucycom_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ucycom, sc, uaa);
+	struct ucycom_softc *sc = (struct ucycom_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	usbd_device_handle dev = uha->parent->sc_udev;
 	struct ucom_attach_args uca;
@@ -233,8 +236,6 @@ USB_ATTACH(ucycom)
 
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 	DPRINTF(("ucycom_attach: complete %p\n", sc->sc_subdev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 void

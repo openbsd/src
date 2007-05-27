@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.22 2007/05/21 05:40:28 jsg Exp $	*/
+/*	$OpenBSD: urio.c,v 1.23 2007/05/27 04:00:25 jsg Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -145,9 +145,10 @@ static const struct usb_devno urio_devs[] = {
 
 USB_DECLARE_DRIVER(urio);
 
-USB_MATCH(urio)
+int
+urio_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(urio, uaa);
+	struct usb_attach_arg	*uaa = aux;
 
 	DPRINTFN(50,("urio_match\n"));
 
@@ -158,9 +159,11 @@ USB_MATCH(urio)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(urio)
+void
+urio_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(urio, sc, uaa);
+	struct urio_softc	*sc = (struct urio_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
 	char			*devinfop;
@@ -172,22 +175,21 @@ USB_ATTACH(urio)
 	DPRINTFN(10,("urio_attach: sc=%p\n", sc));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, URIO_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	err = usbd_device2interface_handle(dev, URIO_IFACE_IDX, &iface);
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_udev = dev;
@@ -203,7 +205,7 @@ USB_ATTACH(urio)
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -215,7 +217,7 @@ USB_ATTACH(urio)
 	}
 	if (sc->sc_in_addr == -1 || sc->sc_out_addr == -1) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 #if defined(__FreeBSD__)
@@ -229,13 +231,12 @@ USB_ATTACH(urio)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(urio)
+int
+urio_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(urio, sc);
+	struct urio_softc *sc = (struct urio_softc *)self;
 	int s;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	int maj, mn;

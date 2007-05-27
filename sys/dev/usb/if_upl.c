@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.27 2007/05/21 05:40:27 jsg Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.28 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -208,9 +208,10 @@ Static void upl_input(struct ifnet *, struct mbuf *);
 /*
  * Probe for a Prolific chip.
  */
-USB_MATCH(upl)
+int
+upl_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(upl, uaa);
+	struct usb_attach_arg		*uaa = aux;
 	struct upl_type			*t;
 
 	if (uaa->iface != NULL)
@@ -223,9 +224,11 @@ USB_MATCH(upl)
 	return (UMATCH_NONE);
 }
 
-USB_ATTACH(upl)
+void
+upl_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(upl, sc, uaa);
+	struct upl_softc	*sc = (struct upl_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
 	char			*devinfop;
 	int			s;
 	usbd_device_handle	dev = uaa->device;
@@ -239,15 +242,14 @@ USB_ATTACH(upl)
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_udev = dev;
@@ -258,7 +260,7 @@ USB_ATTACH(upl)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_iface = iface;
@@ -270,7 +272,7 @@ USB_ATTACH(upl)
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -287,7 +289,7 @@ USB_ATTACH(upl)
 	if (sc->sc_ed[UPL_ENDPT_RX] == 0 || sc->sc_ed[UPL_ENDPT_TX] == 0 ||
 	    sc->sc_ed[UPL_ENDPT_INTR] == 0) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	s = splnet();
@@ -325,13 +327,12 @@ USB_ATTACH(upl)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(upl)
+int
+upl_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(upl, sc);
+	struct upl_softc	*sc = (struct upl_softc *)self;
 	struct ifnet		*ifp = &sc->sc_if;
 	int			s;
 

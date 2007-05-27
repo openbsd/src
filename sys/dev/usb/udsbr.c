@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.10 2007/05/21 05:40:28 jsg Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.11 2007/05/27 04:00:25 jsg Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -103,9 +103,10 @@ Static	int	udsbr_status(struct udsbr_softc *sc);
 
 USB_DECLARE_DRIVER(udsbr);
 
-USB_MATCH(udsbr)
+int
+udsbr_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(udsbr, uaa);
+	struct usb_attach_arg	*uaa = aux;
 
 	DPRINTFN(50,("udsbr_match\n"));
 
@@ -118,9 +119,11 @@ USB_MATCH(udsbr)
 	return (UMATCH_VENDOR_PRODUCT);
 }
 
-USB_ATTACH(udsbr)
+void
+udsbr_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(udsbr, sc, uaa);
+	struct udsbr_softc	*sc = (struct udsbr_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
 	usbd_device_handle	dev = uaa->device;
 	char			*devinfop;
 	usbd_status		err;
@@ -128,15 +131,14 @@ USB_ATTACH(udsbr)
 	DPRINTFN(10,("udsbr_attach: sc=%p\n", sc));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_udev = dev;
@@ -147,13 +149,12 @@ USB_ATTACH(udsbr)
 			   USBDEV(sc->sc_dev));
 
 	sc->sc_child = radio_attach_mi(&udsbr_hw_if, sc, USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(udsbr)
+int
+udsbr_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(udsbr, sc);
+	struct udsbr_softc *sc = (struct udsbr_softc *)self;
 	int rv = 0;
 
 	if (sc->sc_child != NULL)

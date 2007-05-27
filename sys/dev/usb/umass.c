@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.44 2006/06/23 06:27:11 miod Exp $ */
+/*	$OpenBSD: umass.c,v 1.45 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -255,9 +255,10 @@ Static void umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer,
  * USB device probe/attach/detach
  */
 
-USB_MATCH(umass)
+int
+umass_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(umass, uaa);
+	struct usb_attach_arg *uaa = aux;
 	const struct umass_quirk *quirk;
 	usb_interface_descriptor_t *id;
 
@@ -297,9 +298,11 @@ USB_MATCH(umass)
 	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 }
 
-USB_ATTACH(umass)
+void
+umass_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(umass, sc, uaa);
+	struct umass_softc *sc = (struct umass_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	const struct umass_quirk *quirk;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -309,8 +312,7 @@ USB_ATTACH(umass)
 	int i, bno, error;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
@@ -335,7 +337,7 @@ USB_ATTACH(umass)
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	if (id == NULL)
-		USB_ATTACH_ERROR_RETURN;
+		return;
 
 	if (sc->sc_wire == UMASS_WPROTO_UNSPEC) {
 		switch (id->bInterfaceProtocol) {
@@ -354,7 +356,7 @@ USB_ATTACH(umass)
 				("%s: Unsupported wire protocol %u\n",
 				USBDEVNAME(sc->sc_dev),
 				id->bInterfaceProtocol));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	}
 
@@ -379,7 +381,7 @@ USB_ATTACH(umass)
 				("%s: Unsupported command protocol %u\n",
 				USBDEVNAME(sc->sc_dev),
 				id->bInterfaceSubClass));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	}
 
@@ -426,7 +428,7 @@ USB_ATTACH(umass)
 		err = (*quirk->uq_init)(sc);
 		if (err) {
 			umass_disco(sc);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	}
 
@@ -446,7 +448,7 @@ USB_ATTACH(umass)
 		if (ed == NULL) {
 			printf("%s: could not read endpoint descriptor\n",
 			       USBDEVNAME(sc->sc_dev));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN
 		    && (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
@@ -476,7 +478,7 @@ USB_ATTACH(umass)
 			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN],
 			sc->sc_epaddr[UMASS_BULKOUT],
 			sc->sc_epaddr[UMASS_INTRIN]));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/*
@@ -487,7 +489,7 @@ USB_ATTACH(umass)
 		if (err) {
 			printf("%s: unable to get Max Lun: %s\n",
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	} else {
 		sc->maxlun = 0;
@@ -504,7 +506,7 @@ USB_ATTACH(umass)
 		DPRINTF(UDMASS_USB, ("%s: cannot open %u-out pipe (bulk)\n",
 			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKOUT]));
 		umass_disco(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	DPRINTF(UDMASS_USB, ("%s: opening iface %p epaddr %d for BULKIN\n",
 	    USBDEVNAME(sc->sc_dev), sc->sc_iface,
@@ -515,7 +517,7 @@ USB_ATTACH(umass)
 		DPRINTF(UDMASS_USB, ("%s: could not open %u-in pipe (bulk)\n",
 			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN]));
 		umass_disco(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	/*
 	 * Open the intr-in pipe if the protocol is CBI with CCI.
@@ -540,7 +542,7 @@ USB_ATTACH(umass)
 				USBDEVNAME(sc->sc_dev),
 				sc->sc_epaddr[UMASS_INTRIN]));
 			umass_disco(sc);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	}
 
@@ -554,7 +556,7 @@ USB_ATTACH(umass)
 			DPRINTF(UDMASS_USB, ("%s: Out of memory\n",
 				USBDEVNAME(sc->sc_dev)));
 			umass_disco(sc);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	}
 	/* Allocate buffer for data transfer (it's huge). */
@@ -572,7 +574,7 @@ USB_ATTACH(umass)
 						    UMASS_MAX_TRANSFER_SIZE);
 		if (sc->data_buffer == NULL) {
 			umass_disco(sc);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		break;
 	default:
@@ -590,7 +592,7 @@ USB_ATTACH(umass)
 		break;
 	default:
 		umass_disco(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	error = 0;
@@ -626,25 +628,24 @@ USB_ATTACH(umass)
 		printf("%s: command protocol=0x%x not supported\n",
 		       USBDEVNAME(sc->sc_dev), sc->sc_cmd);
 		umass_disco(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	if (error) {
 		printf("%s: bus attach failed\n", USBDEVNAME(sc->sc_dev));
 		umass_disco(sc);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
 	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", USBDEVNAME(sc->sc_dev)));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(umass)
+int
+umass_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(umass, sc);
+	struct umass_softc *sc = (struct umass_softc *)self;
 	struct umassbus_softc *scbus;
 	int rv = 0, i, s;
 

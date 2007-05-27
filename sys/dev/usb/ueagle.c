@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.13 2007/05/21 05:40:28 jsg Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.14 2007/05/27 04:00:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -127,9 +127,10 @@ Static void	ueagle_stop(struct ifnet *, int);
 
 USB_DECLARE_DRIVER(ueagle);
 
-USB_MATCH(ueagle)
+int
+ueagle_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(ueagle, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
@@ -154,15 +155,17 @@ ueagle_attachhook(void *xsc)
 	}
 }
 
-USB_ATTACH(ueagle)
+void
+ueagle_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ueagle, sc, uaa);
+	struct ueagle_softc *sc = (struct ueagle_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct ifnet *ifp = &sc->sc_if;
 	char *devinfop;
 	uint8_t addr[ETHER_ADDR_LEN];
 
 	sc->sc_udev = uaa->device;
-	USB_ATTACH_SETUP;
+	printf("\n");
 
 	/*
 	 * Pre-firmware modems must be flashed and reset first.  They will
@@ -177,7 +180,7 @@ USB_ATTACH(ueagle)
 			ueagle_attachhook(sc);
 
 		/* processing of pre-firmware modems ends here */
-		USB_ATTACH_SUCCESS_RETURN;
+		return;
 	}
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
@@ -187,13 +190,13 @@ USB_ATTACH(ueagle)
 	if (usbd_set_config_no(sc->sc_udev, UEAGLE_CONFIG_NO, 0) != 0) {
 		printf("%s: could not set configuration no\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (ueagle_getesi(sc, addr) != 0) {
 		printf("%s: could not read end system identifier\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	printf("%s: address: %02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -222,13 +225,12 @@ USB_ATTACH(ueagle)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(ueagle)
+int
+ueagle_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(ueagle, sc);
+	struct ueagle_softc *sc = (struct ueagle_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 
 	if (sc->fw != NULL)

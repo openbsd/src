@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.3 2007/04/26 17:00:28 miod Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.4 2007/05/27 04:00:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -51,9 +51,10 @@ Static struct usb_devno const uberry_devices[] = {
 
 USB_DECLARE_DRIVER(uberry);
 
-USB_MATCH(uberry)
+int
+uberry_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uberry, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
@@ -62,35 +63,35 @@ USB_MATCH(uberry)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-USB_ATTACH(uberry)
+void
+uberry_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uberry, sc, uaa);
+	struct uberry_softc *sc = (struct uberry_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	char *devinfop;
 
 	sc->sc_udev = uaa->device;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/* Enable the device, then it cannot idle, and will charge */
 	if (usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1) != 0) {
 		printf("%s: could not set configuration no\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	printf("%s: Charging enabled\n", USBDEVNAME(sc->sc_dev));
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(uberry)
+int
+uberry_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(uberry, sc);
+	struct uberry_softc *sc = (struct uberry_softc *)self;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));

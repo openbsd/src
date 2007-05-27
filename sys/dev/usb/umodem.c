@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.24 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: umodem.c,v 1.25 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -152,9 +152,10 @@ Static struct ucom_methods umodem_methods = {
 
 USB_DECLARE_DRIVER(umodem);
 
-USB_MATCH(umodem)
+int
+umodem_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(umodem, uaa);
+	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 	usb_device_descriptor_t *dd;
 	int ret;
@@ -182,9 +183,11 @@ USB_MATCH(umodem)
 	return (ret);
 }
 
-USB_ATTACH(umodem)
+void
+umodem_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(umodem, sc, uaa);
+	struct umodem_softc *sc = (struct umodem_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -201,7 +204,7 @@ USB_ATTACH(umodem)
 	struct ucom_attach_args uca;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
+	printf("\n");
 
 	sc->sc_udev = dev;
 	sc->sc_ctl_iface = uaa->iface;
@@ -368,11 +371,10 @@ USB_ATTACH(umodem)
 	DPRINTF(("umodem_attach: sc=%p\n", sc));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
  bad:
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
 }
 
 Static int
@@ -729,9 +731,10 @@ umodem_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-USB_DETACH(umodem)
+int
+umodem_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(umodem, sc);
+	struct umodem_softc *sc = (struct umodem_softc *)self;
 	int rv = 0;
 
 	DPRINTF(("umodem_detach: sc=%p flags=%d\n", sc, flags));

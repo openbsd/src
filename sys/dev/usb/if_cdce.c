@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.25 2007/05/21 05:18:56 jsg Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.26 2007/05/27 04:00:24 jsg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -107,9 +107,10 @@ Static const struct cdce_type cdce_devs[] = {
 
 USB_DECLARE_DRIVER_CLASS(cdce, DV_IFNET);
 
-USB_MATCH(cdce)
+int
+cdce_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(cdce, uaa);
+	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 
 	if (uaa->iface == NULL)
@@ -129,9 +130,11 @@ USB_MATCH(cdce)
 	return (UMATCH_NONE);
 }
 
-USB_ATTACH(cdce)
+void
+cdce_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(cdce, sc, uaa);
+	struct cdce_softc		*sc = (struct cdce_softc *)self;
+	struct usb_attach_arg		*uaa = aux;
 	char				 *devinfop;
 	int				 s;
 	struct ifnet			*ifp;
@@ -146,8 +149,7 @@ USB_ATTACH(cdce)
 	int				 i, j, numalts;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->cdce_udev = uaa->device;
@@ -165,7 +167,7 @@ USB_ATTACH(cdce)
 		if (ud == NULL) {
 			printf("%s: no union descriptor\n",
 			    USBDEVNAME(sc->cdce_dev));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		data_ifcno = ud->bSlaveInterface[0];
 
@@ -184,7 +186,7 @@ USB_ATTACH(cdce)
 
 	if (sc->cdce_data_iface == NULL) {
 		printf("%s: no data interface\n", USBDEVNAME(sc->cdce_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Find endpoints. */
@@ -196,7 +198,7 @@ USB_ATTACH(cdce)
     	    if (usbd_set_interface(sc->cdce_data_iface, j)) {
        		printf("%s: setting alternate interface failed\n", 
 			USBDEVNAME(sc->cdce_dev));
-        	USB_ATTACH_ERROR_RETURN;
+		return;
     	    } 
 	    id = usbd_get_interface_descriptor(sc->cdce_data_iface);
 	    sc->cdce_bulkin_no = sc->cdce_bulkout_no = -1;
@@ -205,7 +207,7 @@ USB_ATTACH(cdce)
 		if (!ed) {
 			printf("%s: could not read endpoint descriptor\n",
 			    USBDEVNAME(sc->cdce_dev));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -228,12 +230,12 @@ USB_ATTACH(cdce)
 	if (sc->cdce_bulkin_no == -1) {
 		printf("%s: could not find data bulk in\n",
 		    USBDEVNAME(sc->cdce_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	if (sc->cdce_bulkout_no == -1 ) {
 		printf("%s: could not find data bulk out\n",
 		    USBDEVNAME(sc->cdce_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	s = splnet();
@@ -264,15 +266,14 @@ USB_ATTACH(cdce)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cdce_udev,
 	    USBDEV(sc->cdce_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(cdce)
+int
+cdce_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(cdce, sc);
-	struct ifnet	*ifp = GET_IFP(sc);
-	int		 s;
+	struct cdce_softc	*sc = (struct cdce_softc *)self;	
+	struct ifnet		*ifp = GET_IFP(sc);
+	int			 s;
 
 	s = splusb();
 

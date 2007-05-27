@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.10 2007/05/23 01:32:25 ray Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.11 2007/05/27 04:00:24 jsg Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.10 2007/05/23 01:32:25 ray Exp $
+ * $Id: if_ubt.c,v 1.11 2007/05/27 04:00:24 jsg Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -100,7 +100,8 @@ Static int		ubt_if_ioctl(struct ifnet *, u_long, caddr_t);
 Static int		ubt_if_init(struct ifnet *);
 Static void		ubt_if_watchdog(struct ifnet *);
 
-USB_MATCH(ubt)
+int
+ubt_match(struct device *parent, void *match, void *aux)
 {
 #ifdef notyet
 	/*
@@ -129,8 +130,7 @@ USB_MATCH(ubt)
 		{ USB_VENDOR_MSI, USB_PRODUCT_MSI_BLUETOOTH_2 }
 	};
 
-	USB_MATCH_START(ubt, uaa);
-
+	struct usb_attach_arg *uaa = aux;
 	usb_device_descriptor_t	*dd = usbd_get_device_descriptor(uaa->device);
 
 	if (uaa->iface == NULL)
@@ -151,9 +151,11 @@ USB_MATCH(ubt)
 	return (UMATCH_NONE);
 }
 
-USB_ATTACH(ubt)
+void
+ubt_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ubt, sc, uaa);
+	struct ubt_softc		*sc = (struct ubt_softc *)self;
+	struct usb_attach_arg		*uaa = aux;
 	usb_config_descriptor_t		*cd = NULL;
 	usb_interface_descriptor_t	*id = NULL;
 	usb_endpoint_descriptor_t	*ed = NULL;
@@ -167,8 +169,7 @@ USB_ATTACH(ubt)
 	sc->sc_udev = uaa->device;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/*
@@ -636,17 +637,17 @@ USB_ATTACH(ubt)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 		USBDEV(sc->sc_dev));
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 bad:
 #if 0
 	ubt_detach(self);
 #endif
-	USB_ATTACH_ERROR_RETURN;
 }
 
-USB_DETACH(ubt)
+int
+ubt_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(ubt, sc);
+	struct ubt_softc *sc = (struct ubt_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 
 	/* Close pipes */

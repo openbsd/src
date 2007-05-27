@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.80 2007/04/10 17:47:55 miod Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.81 2007/05/27 04:00:24 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1091,9 +1091,10 @@ atu_get_card_config(struct atu_softc *sc)
 /*
  * Probe for an AT76c503 chip.
  */
-USB_MATCH(atu)
+int
+atu_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(atu, uaa);
+	struct usb_attach_arg	*uaa = aux;
 	int			i;
 
 	if (!uaa->iface)
@@ -1234,9 +1235,11 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
  * Attach the interface. Allocate softc structures, do
  * setup and ethernet/BPF attach.
  */
-USB_ATTACH(atu)
+void
+atu_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(atu, sc, uaa);
+	struct atu_softc		*sc = (struct atu_softc *)self;
+	struct usb_attach_arg		*uaa = aux;
 	char				*devinfop;
 	usbd_status			err;
 	usbd_device_handle		dev = uaa->device;
@@ -1246,22 +1249,21 @@ USB_ATTACH(atu)
 	sc->sc_state = ATU_S_UNCONFIG;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s", USBDEVNAME(sc->atu_dev), devinfop);
+	printf("\n%s: %s", USBDEVNAME(sc->atu_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, ATU_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->atu_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	err = usbd_device2interface_handle(dev, ATU_IFACE_IDX, &sc->atu_iface);
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->atu_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->atu_unit = self->dv_unit;
@@ -1308,7 +1310,7 @@ USB_ATTACH(atu)
 		 * so we don't want to do any more configuration after this
 		 * point.
 		 */
-		USB_ATTACH_SUCCESS_RETURN;
+		return;
 	}
 
 	uaa->iface = sc->atu_iface;
@@ -1335,7 +1337,7 @@ USB_ATTACH(atu)
 				    " been downloaded\n",
 				    USBDEVNAME(sc->atu_dev)));
 				atu_complete_attach(sc);
-				USB_ATTACH_SUCCESS_RETURN;
+				return;
 			}
 		}
 
@@ -1352,8 +1354,6 @@ USB_ATTACH(atu)
 		/* all the firmwares are in place, so complete the attach */
 		atu_complete_attach(sc);
 	}
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 void
@@ -1477,9 +1477,10 @@ atu_complete_attach(struct atu_softc *sc)
 	sc->sc_state = ATU_S_OK;
 }
 
-USB_DETACH(atu)
+int
+atu_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(atu, sc);
+	struct atu_softc	*sc = (struct atu_softc *)self;
 	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 
 	DPRINTFN(10, ("%s: atu_detach state=%d\n", USBDEVNAME(sc->atu_dev),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.91 2007/05/21 06:10:43 jsg Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.92 2007/05/27 04:00:24 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -198,9 +198,10 @@ static const uint32_t ural_rf2526_r2[] =    RAL_RF2526_R2;
 
 USB_DECLARE_DRIVER_CLASS(ural, DV_IFNET);
 
-USB_MATCH(ural)
+int
+ural_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(ural, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
@@ -209,9 +210,11 @@ USB_MATCH(ural)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-USB_ATTACH(ural)
+void
+ural_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ural, sc, uaa);
+	struct ural_softc *sc = (struct ural_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	usb_interface_descriptor_t *id;
@@ -223,14 +226,13 @@ USB_ATTACH(ural)
 	sc->sc_udev = uaa->device;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_no(sc->sc_udev, RAL_CONFIG_NO, 0) != 0) {
 		printf("%s: could not set configuration no\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the first interface handle */
@@ -239,7 +241,7 @@ USB_ATTACH(ural)
 	if (error != 0) {
 		printf("%s: could not get interface handle\n",
 		    USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/*
@@ -253,7 +255,7 @@ USB_ATTACH(ural)
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for iface %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -265,7 +267,7 @@ USB_ATTACH(ural)
 	}
 	if (sc->sc_rx_no == -1 || sc->sc_tx_no == -1) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	usb_init_task(&sc->sc_task, ural_task, sc);
@@ -345,13 +347,12 @@ USB_ATTACH(ural)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(ural)
+int
+ural_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(ural, sc);
+	struct ural_softc *sc = (struct ural_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.28 2007/05/21 05:40:28 jsg Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.29 2007/05/27 04:00:25 jsg Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -334,9 +334,10 @@ struct wskbd_mapdata ukbd_keymapdata = {
 
 USB_DECLARE_DRIVER(ukbd);
 
-USB_MATCH(ukbd)
+int
+ukbd_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(ukbd, uaa);
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	int size;
 	void *desc;
@@ -349,9 +350,11 @@ USB_MATCH(ukbd)
 	return (UMATCH_IFACECLASS);
 }
 
-USB_ATTACH(ukbd)
+void
+ukbd_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ukbd, sc, uaa);
+	struct ukbd_softc *sc = (struct ukbd_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	usb_hid_descriptor_t *hid;
 	u_int32_t qflags;
@@ -367,7 +370,7 @@ USB_ATTACH(ukbd)
 	if (parseerr != NULL) {
 		printf("\n%s: attach failed, %s\n",
 		       sc->sc_hdev.sc_dev.dv_xname, parseerr);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	hid = usbd_get_hid_descriptor(uha->uaa->iface);
@@ -448,8 +451,6 @@ USB_ATTACH(ukbd)
 	ukbd_set_leds(sc, 0);
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 int
@@ -496,9 +497,10 @@ ukbd_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-USB_DETACH(ukbd)
+int
+ukbd_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(ukbd, sc);
+	struct ukbd_softc *sc = (struct ukbd_softc *)self;
 	int rv = 0;
 
 	DPRINTF(("ukbd_detach: sc=%p flags=%d\n", sc, flags));

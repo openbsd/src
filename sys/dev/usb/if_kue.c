@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.46 2007/05/21 05:40:27 jsg Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.47 2007/05/27 04:00:24 jsg Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -400,9 +400,10 @@ kue_reset(struct kue_softc *sc)
 /*
  * Probe for a KLSI chip.
  */
-USB_MATCH(kue)
+int
+kue_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(kue, uaa);
+	struct usb_attach_arg	*uaa = aux;
 
 	DPRINTFN(25,("kue_match: enter\n"));
 
@@ -430,14 +431,14 @@ kue_attachhook(void *xsc)
 	if (kue_load_fw(sc)) {
 		printf("%s: loading firmware failed\n",
 		    USBDEVNAME(sc->kue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	err = usbd_device2interface_handle(dev, KUE_IFACE_IDX, &iface);
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->kue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->kue_iface = iface;
@@ -449,7 +450,7 @@ kue_attachhook(void *xsc)
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->kue_dev), i);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
@@ -465,7 +466,7 @@ kue_attachhook(void *xsc)
 
 	if (sc->kue_ed[KUE_ENDPT_RX] == 0 || sc->kue_ed[KUE_ENDPT_TX] == 0) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->kue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Read ethernet descriptor */
@@ -474,7 +475,7 @@ kue_attachhook(void *xsc)
 	if (err) {
 		printf("%s: could not read Ethernet descriptor\n",
 		    USBDEVNAME(sc->kue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->kue_mcfilters = malloc(KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN,
@@ -482,7 +483,7 @@ kue_attachhook(void *xsc)
 	if (sc->kue_mcfilters == NULL) {
 		printf("%s: no memory for multicast filter buffer\n",
 		    USBDEVNAME(sc->kue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	s = splnet();
@@ -522,9 +523,11 @@ kue_attachhook(void *xsc)
  * Attach the interface. Allocate softc structures, do
  * setup and ethernet/BPF attach.
  */
-USB_ATTACH(kue)
+void
+kue_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(kue, sc, uaa);
+	struct kue_softc	*sc = (struct kue_softc *)self;
+	struct usb_attach_arg	*uaa = aux;
 	char			*devinfop;
 	usbd_device_handle	dev = uaa->device;
 	usbd_status		err;
@@ -532,15 +535,14 @@ USB_ATTACH(kue)
 	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfop);
+	printf("/n%s: %s\n", USBDEVNAME(sc->kue_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->kue_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->kue_udev = dev;
@@ -554,13 +556,12 @@ USB_ATTACH(kue)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev,
 			   USBDEV(sc->kue_dev));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(kue)
+int
+kue_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(kue, sc);
+	struct kue_softc	*sc = (struct kue_softc *)self;
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.31 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: uhid.c,v 1.32 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -125,9 +125,10 @@ Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,
 
 USB_DECLARE_DRIVER(uhid);
 
-USB_MATCH(uhid)
+int
+uhid_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uhid, uaa);
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 
 	DPRINTF(("uhid_match: report=%d\n", uha->reportid));
@@ -137,9 +138,11 @@ USB_MATCH(uhid)
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 
-USB_ATTACH(uhid)
+void
+uhid_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uhid, sc, uaa);
+	struct uhid_softc *sc = (struct uhid_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	int size, repid;
 	void *desc;
@@ -156,8 +159,6 @@ USB_ATTACH(uhid)
 
 	printf(": input=%d, output=%d, feature=%d\n",
 	       sc->sc_isize, sc->sc_osize, sc->sc_fsize);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 int
@@ -176,9 +177,10 @@ uhid_activate(device_ptr_t self, enum devact act)
 	return (0);
 }
 
-USB_DETACH(uhid)
+int
+uhid_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(uhid, sc);
+	struct uhid_softc *sc = (struct uhid_softc *)self;
 	int s;
 	int maj, mn;
 

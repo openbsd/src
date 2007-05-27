@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.38 2007/05/21 05:40:27 jsg Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.39 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -363,9 +363,10 @@ Static struct audio_device uaudio_device = {
 
 USB_DECLARE_DRIVER(uaudio);
 
-USB_MATCH(uaudio)
+int
+uaudio_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uaudio, uaa);
+	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 
 	if (uaa->iface == NULL)
@@ -382,9 +383,11 @@ USB_MATCH(uaudio)
 	return (UMATCH_IFACECLASS_IFACESUBCLASS);
 }
 
-USB_ATTACH(uaudio)
+void
+uaudio_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uaudio, sc, uaa);
+	struct uaudio_softc *sc = (struct uaudio_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 	usb_config_descriptor_t *cdesc;
 	char *devinfop;
@@ -401,14 +404,14 @@ USB_ATTACH(uaudio)
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
 		       USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	err = uaudio_identify(sc, cdesc);
 	if (err) {
 		printf("%s: audio descriptors make no sense, error=%d\n",
 		       USBDEVNAME(sc->sc_dev), err);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_ac_ifaceh = uaa->iface;
@@ -435,7 +438,7 @@ USB_ATTACH(uaudio)
 		if (sc->sc_alts[j].ifaceh == NULL) {
 			printf("%s: alt %d missing AS interface(s)\n",
 			    USBDEVNAME(sc->sc_dev), j);
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 	}
 
@@ -461,8 +464,6 @@ USB_ATTACH(uaudio)
 
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.19 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: ums.c,v 1.20 2007/05/27 04:00:25 jsg Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -126,9 +126,10 @@ const struct wsmouse_accessops ums_accessops = {
 
 USB_DECLARE_DRIVER(ums);
 
-USB_MATCH(ums)
+int
+ums_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(ums, uaa);
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	int size;
 	void *desc;
@@ -141,9 +142,11 @@ USB_MATCH(ums)
 	return (UMATCH_IFACECLASS);
 }
 
-USB_ATTACH(ums)
+void
+ums_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(ums, sc, uaa);
+	struct ums_softc *sc = (struct ums_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	struct wsmousedev_attach_args a;
 	int size;
@@ -168,24 +171,24 @@ USB_ATTACH(ums)
 	       uha->reportid, hid_input, &sc->sc_loc_x, &flags)) {
 		printf("\n%s: mouse has no X report\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 		printf("\n%s: X report 0x%04x not supported\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
 	       uha->reportid, hid_input, &sc->sc_loc_y, &flags)) {
 		printf("\n%s: mouse has no Y report\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 		printf("\n%s: Y report 0x%04x not supported\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Try the wheel as Z activator first */
@@ -261,8 +264,6 @@ USB_ATTACH(ums)
 	a.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 int
@@ -284,9 +285,10 @@ ums_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-USB_DETACH(ums)
+int
+ums_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(ums, sc);
+	struct ums_softc *sc = (struct ums_softc *)self;
 	int rv = 0;
 
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));

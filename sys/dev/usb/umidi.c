@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.17 2007/05/05 16:31:27 krw Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.18 2007/05/27 04:00:25 jsg Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -138,9 +138,10 @@ struct midi_hw_if umidi_hw_if = {
 
 USB_DECLARE_DRIVER(umidi);
 
-USB_MATCH(umidi)
+int
+umidi_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(umidi, uaa);
+	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 
 	DPRINTFN(1,("umidi_match\n"));
@@ -160,10 +161,12 @@ USB_MATCH(umidi)
 	return UMATCH_NONE;
 }
 
-USB_ATTACH(umidi)
+void
+umidi_attach(struct device *parent, struct device *self, void *aux)
 {
 	usbd_status err;
-	USB_ATTACH_START(umidi, sc, uaa);
+	struct umidi_softc *sc = (struct umidi_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	char *devinfop;
 	int i;
 
@@ -219,11 +222,10 @@ USB_ATTACH(umidi)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH,
 			   sc->sc_udev, USBDEV(sc->sc_dev));
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 error:
 	printf("%s: disabled.\n", USBDEVNAME(sc->sc_dev));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
 }
 
 int
@@ -244,9 +246,10 @@ umidi_activate(device_ptr_t self, enum devact act)
 	return 0;
 }
 
-USB_DETACH(umidi)
+int
+umidi_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(umidi, sc);
+	struct umidi_softc *sc = (struct umidi_softc *)self;
 
 	DPRINTFN(1,("umidi_detach\n"));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.27 2006/06/23 06:27:12 miod Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.28 2007/05/27 04:00:25 jsg Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -203,9 +203,10 @@ static const struct uvisor_type uvisor_devs[] = {
 
 USB_DECLARE_DRIVER(uvisor);
 
-USB_MATCH(uvisor)
+int
+uvisor_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(uvisor, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
@@ -217,9 +218,11 @@ USB_MATCH(uvisor)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uvisor)
+void
+uvisor_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(uvisor, sc, uaa);
+	struct uvisor_softc *sc = (struct uvisor_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
@@ -250,8 +253,7 @@ USB_ATTACH(uvisor)
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	printf("\n%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uvisor_lookup(uaa->vendor, uaa->product)->uv_flags;
@@ -366,12 +368,11 @@ USB_ATTACH(uvisor)
 		}
 	}
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 bad:
 	DPRINTF(("uvisor_attach: ATTACH ERROR\n"));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
 }
 
 int

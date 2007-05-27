@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.53 2007/05/27 04:00:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -218,9 +218,10 @@ void		zyd_amrr_timeout(void *);
 void		zyd_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
 
-USB_MATCH(zyd)
+int
+zyd_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(zyd, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if (!uaa->iface)
 		return UMATCH_NONE;
@@ -258,17 +259,18 @@ zyd_attachhook(void *xsc)
 		sc->attached = 1;
 }
 
-USB_ATTACH(zyd)
+void
+zyd_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(zyd, sc, uaa);
+	struct zyd_softc *sc = (struct zyd_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	char *devinfop;
 	usb_device_descriptor_t* ddesc;
 
 	sc->sc_udev = uaa->device;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->mac_rev = zyd_lookup(uaa->vendor, uaa->product)->rev;
@@ -278,15 +280,13 @@ USB_ATTACH(zyd)
 		printf("%s: device version mismatch: 0x%x "
 		    "(only >= 43.30 supported)\n", USBDEVNAME(sc->sc_dev),
 		    UGETW(ddesc->bcdDevice));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (rootvp == NULL)
 		mountroothook_establish(zyd_attachhook, sc);
 	else
 		zyd_attachhook(sc);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 int
@@ -407,9 +407,10 @@ zyd_complete_attach(struct zyd_softc *sc)
 fail:	return error;
 }
 
-USB_DETACH(zyd)
+int
+zyd_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(zyd, sc);
+	struct zyd_softc *sc = (struct zyd_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
