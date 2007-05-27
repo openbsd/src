@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.19 2007/05/27 21:08:07 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.20 2007/05/27 21:44:23 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -196,6 +196,7 @@ amdgart_invalidate(void)
 		pci_conf_write(amdgart_softcs[n].g_pc,
 		    amdgart_softcs[n].g_tag, GART_CACHECTRL,
 		    GART_CACHE_INVALIDATE);
+	amdgart_invalidate_wait();
 }
 
 void
@@ -406,7 +407,6 @@ amdgart_initpt(struct amdgart_softc *sc, u_long nent)
 	for (i = 0; i < nent; i++)
 		sc->g_pte[i] = sc->g_scribpte;
 	amdgart_invalidate();
-	amdgart_invalidate_wait();
 }
 
 int
@@ -589,7 +589,7 @@ amdgart_dmamap_unload(bus_dma_tag_t tag, bus_dmamap_t dmam)
 
 	for (i = 0; i < dmam->dm_nsegs; i++)
 		amdgart_iommu_unmap(amdgart_softcs[0].g_ex, &dmam->dm_segs[i]);
-	/* XXX should we invalidate here? */
+	amdgart_invalidate();
 	bus_dmamap_unload(amdgart_softcs[0].g_dmat, dmam);
 }
 
@@ -597,19 +597,10 @@ void
 amdgart_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset,
     bus_size_t size, int ops)
 {
-	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) {
-		/*
-		 * XXX this should be conditionalized... only do it
-		 * XXX when necessary.
-		 */
-		amdgart_invalidate_wait();
-	}
-
 	/*
 	 * XXX how do we deal with non-coherent mappings?  We don't
 	 * XXX allow them right now.
 	 */
-
 	bus_dmamap_sync(amdgart_softcs[0].g_dmat, dmam, offset, size, ops);
 }
 
