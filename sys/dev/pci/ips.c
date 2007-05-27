@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.17 2007/05/27 19:21:09 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.18 2007/05/27 20:06:40 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -671,6 +671,8 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 	}
 
 	/* Pass command to hardware */
+	DPRINTF(IPS_D_XFER, ("%s: run command 0x%02x\n", sc->sc_dev.dv_xname,
+	    ccb->c_id));
 	ccb->c_flags |= IPS_CCB_RUN;
 	TAILQ_INSERT_TAIL(&sc->sc_ccbq_run, ccb, c_link);
 	ips_exec(sc);
@@ -719,7 +721,7 @@ ips_done(struct ips_softc *sc, struct ips_ccb *ccb)
 	int flags = ccb->c_flags;
 
 	if ((flags & IPS_CCB_RUN) == 0) {
-		printf("%s: command %d not run\n", sc->sc_dev.dv_xname,
+		printf("%s: command 0x%02x not run\n", sc->sc_dev.dv_xname,
 		    ccb->c_id);
 		if (xs != NULL) {
 			xs->error = XS_DRIVER_STUFFUP;
