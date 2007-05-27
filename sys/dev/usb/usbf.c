@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.3 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.4 2007/05/27 10:24:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -136,7 +136,7 @@ usbf_attach(struct device *parent, struct device *self, void *aux)
 	default:
 		printf(", not supported\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	printf("\n");
 
@@ -147,7 +147,7 @@ usbf_attach(struct device *parent, struct device *self, void *aux)
 	if (usbf_softintr_establish(sc->sc_bus)) {
 		printf("%s: can't establish softintr\n", DEVNAME(sc));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Attach the function driver. */
@@ -156,7 +156,7 @@ usbf_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: usbf_new_device failed, %s\n", DEVNAME(sc),
 		    usbf_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Create a process context for asynchronous tasks. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.13 2007/05/27 04:00:24 jsg Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.14 2007/05/27 10:24:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -448,7 +448,7 @@ done:
 	status = usbf_transfer(xfer);
 	if (status && status != USBF_IN_PROGRESS) {
 		printf("%s: usbf_transfer failed\n", DEVNAME(sc));
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 }
 
