@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.184 2006/12/05 09:17:12 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.185 2007/05/27 20:15:48 dlg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -84,8 +84,8 @@ extern int ipforwarding;
 extern int ipmforwarding;
 #endif
 
-static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
-static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
+struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
+void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
@@ -928,7 +928,7 @@ sendorfree:
  * Adjust IP destination as required for IP source routing,
  * as indicated by a non-zero in_addr at the start of the options.
  */
-static struct mbuf *
+struct mbuf *
 ip_insertoptions(m, opt, phlen)
 	struct mbuf *m;
 	struct mbuf *opt;
@@ -1990,7 +1990,7 @@ ip_freemoptions(imo)
  * calls the output routine of the loopback "driver", but with an interface
  * pointer that might NOT be &loif -- easier than replicating that code here.
  */
-static void
+void
 ip_mloopback(ifp, m, dst)
 	struct ifnet *ifp;
 	struct mbuf *m;
