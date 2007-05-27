@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.27 2004/02/19 22:20:05 jmc Exp $
+.\"	$OpenBSD: crypto.9,v 1.28 2007/05/27 05:32:30 tedu Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -76,8 +76,8 @@ struct cryptop {
 	int                crp_alloctype;
 	int                crp_etype;
 	int                crp_flags;
-	caddr_t            crp_buf;
-	caddr_t            crp_opaque;
+	void              *crp_buf;
+	void              *crp_opaque;
 	struct cryptodesc *crp_desc;
 	int              (*crp_callback)(struct cryptop *);
 	struct cryptop    *crp_next;
@@ -283,9 +283,7 @@ Points to the input buffer.
 On return (when the callback is invoked),
 it contains the result of the request.
 The input buffer may be an mbuf
-chain or a contiguous buffer (of a type identified by
-.Fa crp_alloctype ) ,
-depending on
+chain or a struct uio depending on
 .Fa crp_flags .
 .It Fa crp_opaque
 This is passed through the crypto framework untouched and is
