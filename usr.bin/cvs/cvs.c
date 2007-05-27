@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.124 2007/05/26 20:45:26 ray Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.125 2007/05/27 00:46:31 ray Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -239,6 +239,9 @@ main(int argc, char **argv)
 	cvs_file_init();
 
 	if (cvs_cmdop == CVS_OP_SERVER) {
+		if (cmd_argc > 1)
+			fatal("server does not take any extra arguments");
+
 		setvbuf(stdin, NULL, _IOLBF, 0);
 		setvbuf(stdout, NULL, _IOLBF, 0);
 
