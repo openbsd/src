@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.39 2007/05/23 10:33:45 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.40 2007/05/27 11:36:21 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -119,14 +119,14 @@ sub solve_dependency
 
 	my $v;
 
-	if ($state->{replace}) {
+	if ($state->{allow_replacing}) {
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 	}
 
 	if (!$v) {
 		$v = find_candidate($dep->spec, installed_packages());
 	}
-	if (!$v && !$state->{replace}) {
+	if (!$v && !$state->{allow_replacing}) {
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 	}
 

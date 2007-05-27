@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.276 2007/05/27 11:31:35 espie Exp $
+# $OpenBSD: pkg_add,v 1.277 2007/05/27 11:36:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -116,7 +116,6 @@ sub can_install
 	my $handle = $set->handle;
 	my $plist = $handle->{plist};
 	my $pkgname = $handle->{pkgname};
-	$plist->{replacing} = [];
 	my @conflicts = OpenBSD::PkgCfl::find_all($plist, $state);
 	return 1 if @conflicts == 0;
 
@@ -132,7 +131,7 @@ sub can_install
 		}
 	}
 
-	if (!$state->{replace}) {
+	if (!$state->{allow_replacing}) {
 		if ($state->{forced}->{conflicts}) {
 			print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts, @libs), ")\n";
 			return 1;
@@ -224,7 +223,7 @@ sub prepare_to_add
 	my $pkgname = $handle->{pkgname} = $plist->pkgname;
 
 	if (is_installed($pkgname) && 
-	    (!$state->{replace} ||	
+	    (!$state->{allow_replacing} ||	
 	    	!$state->{forced}->{installed} &&
 	    	!$plist->has_new_sig($state) && 
 	    	!$plist->uses_old_libs)) {
@@ -729,7 +728,7 @@ $state->{very_verbose} = $opt_v >= 2;
 $state->{verbose} = $opt_v;
 $state->{interactive} = $opt_i;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
-$state->{replace} = $opt_r || $opt_u;
+$state->{allow_replacing} = $opt_r || $opt_u;
 
 if (@ARGV == 0 && !$opt_u) {
 	Usage "Missing pkgname";
