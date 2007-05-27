@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.111 2007/05/27 18:34:01 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.112 2007/05/27 21:35:36 tom Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1539,11 +1539,7 @@ ENTRY(idle)
 	movl	%ecx,%cr3
 
 	/* Switch TSS. Reset "task busy" flag before loading. */
-#ifdef MULTIPROCESSOR
 	movl	CPUVAR(GDT), %eax
-#else
-	movl	_C_LABEL(gdt),%eax
-#endif
 	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
 	ltr	%dx
 
@@ -1741,11 +1737,7 @@ switch_exited:
 	addl	$4,%esp
 	
 	/* Load TSS info. */
-#ifdef MULTIPROCESSOR
 	movl	CPUVAR(GDT),%eax
-#else
-	movl	_C_LABEL(gdt),%eax
-#endif
 	movl	P_MD_TSS_SEL(%edi),%edx
 
 	/* Switch TSS. */
@@ -1842,11 +1834,7 @@ ENTRY(switch_exit)
 	movl	PCB_EBP(%esi),%ebp
 
 	/* Load TSS info. */
-#ifdef MULTIPROCESSOR
 	movl	CPUVAR(GDT), %eax
-#else
-	movl	_C_LABEL(gdt),%eax
-#endif
 
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%ecx
