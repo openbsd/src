@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.87 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.88 2007/05/27 20:06:40 otto Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1248,7 +1248,7 @@ softdep_mount(devvp, mp, fs, cred)
 	struct fs *fs;
 	struct ucred *cred;
 {
-	struct csum cstotal;
+	struct csum_total cstotal;
 	struct cg *cgp;
 	struct buf *bp;
 	int error, cyl;
