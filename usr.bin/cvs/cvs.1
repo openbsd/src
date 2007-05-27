@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.110 2007/05/22 16:47:22 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.111 2007/05/27 03:35:11 ray Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2007 Xavier Santolaria <xsa@openbsd.org>
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl flnQqRrtVvw
+.Op Fl flnQqRrtVvwx
 .Op Fl d Ar root
 .Op Fl e Ar editor
 .Xo
@@ -146,6 +146,8 @@ This is the default unless
 is set or the
 .Fl r
 option is specified.
+.It Fl x
+This flag is for compatibility only.
 .It Fl z Ar level
 Specify the compression level to
 .Xr gzip 1
