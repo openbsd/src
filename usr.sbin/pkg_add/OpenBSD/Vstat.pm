@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.25 2007/05/27 22:04:17 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.26 2007/05/27 22:18:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -293,6 +293,9 @@ sub newer
 sub older
 {
 	my $self = shift;
+	# XXX in `combined' updates, some dependencies may remove extra 
+	# packages, so we do a double-take on the list of packages we 
+	# are actually replacing... for now, until we merge update sets.
 	require OpenBSD::PackageInfo;
 	my @l = ();
 	for my $h (@{$self->{older}}) {
