@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.5 2007/05/26 21:16:02 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.6 2007/05/27 13:27:53 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -332,6 +332,7 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 	const char *name = "malo8385-h";
 	size_t usize;
 	uint8_t *ucode, val8;
+	uint16_t *uc;
 	int offset, error, bsize, i;
 
 	/* verify if the card is ready for firmware download */
@@ -364,8 +365,11 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 		DPRINTF(3, "%s: download helper FW block (%d bytes, %d off)\n",
 		    sc->sc_dev.dv_xname, bsize, offset);
 		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, bsize);
-		MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE,
-		    (uint16_t *)(ucode + offset), bsize / 2);
+
+		uc = (uint16_t *)(ucode + offset);
+		for (i = 0; i < bsize / 2; i++)
+			MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
+
 		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 		MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -400,7 +404,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 	const char *name = "malo8385-m";
 	size_t usize;
 	uint8_t *ucode;
-	uint16_t val16;
+	uint16_t val16, *uc;
 	int offset, error, bsize, retry, i;
 
 	/* read main firmware image */
@@ -449,8 +453,9 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		DPRINTF(3, "%s: download main FW block (%d bytes, %d off)\n",
 		    sc->sc_dev.dv_xname, bsize, offset);
 		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, bsize);
-		MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE,
-		    (uint16_t *)(ucode + offset), bsize / 2);
+		uc = (uint16_t *)(ucode + offset);
+		for (i = 0; i < bsize / 2; i++)
+			MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
 		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
                 MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -633,7 +638,7 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_spec *body;
-	uint16_t psize;
+	uint16_t psize, *uc;
 	int i;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
@@ -652,7 +657,9 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 
 	/* send command request */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, (uint16_t *)hdr, psize / 2);
+	uc = (uint16_t *)hdr;
+	for (i = 0; i < psize / 2; i++)
+		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -696,7 +703,8 @@ int
 cmalo_cmd_set_reset(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
-	uint16_t psize;
+	uint16_t psize, *uc;
+	int i;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 	psize = sizeof(*hdr);
@@ -708,7 +716,9 @@ cmalo_cmd_set_reset(struct malo_softc *sc)
 
 	/* send command request */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, (uint16_t *)hdr, psize / 2);
+	uc = (uint16_t *)hdr;
+	for (i = 0; i < psize / 2; i++)
+		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -720,7 +730,7 @@ cmalo_cmd_set_channel(struct malo_softc *sc, uint16_t channel)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_channel *body;
-	uint16_t psize;
+	uint16_t psize, *uc;
 	int i;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
@@ -739,7 +749,9 @@ cmalo_cmd_set_channel(struct malo_softc *sc, uint16_t channel)
 
 	/* send command request */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, (uint16_t *)hdr, psize / 2);
+	uc = (uint16_t *)hdr;
+	for (i = 0; i < psize / 2; i++)
+		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -766,15 +778,29 @@ int
 cmalo_cmd_response(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
-	int len;
+	uint16_t psize, *uc;
+	int i;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 
-	/* read the whole command answer */
-	len = MALO_READ_2(sc, MALO_REG_CMD_READ_LEN);
-	MALO_READ_MULTI_2(sc, MALO_REG_CMD_READ, sc->sc_cmd, len / 2);
+	/* read the whole command response */
+	psize = MALO_READ_2(sc, MALO_REG_CMD_READ_LEN);
+	uc = (uint16_t *)sc->sc_cmd;
+	for (i = 0; i < psize / 2; i++)
+		uc[i] = htole16(MALO_READ_2(sc, MALO_REG_CMD_READ));
 
-	cmalo_hexdump(sc->sc_cmd, len);
+	cmalo_hexdump(sc->sc_cmd, psize);
+
+	/*
+	 * We convert the header values into the machines correct endianess,
+	 * so we don't have to letoh16() all over the code.  The body is
+	 * kept in the cards order, little endian.  We need to take care
+	 * about the body endianess in the corresponding response routines.
+	 */
+	hdr->cmd = letoh16(hdr->cmd);
+	hdr->size = letoh16(hdr->size);
+	hdr->seqnum = letoh16(hdr->seqnum);
+	hdr->result = letoh16(hdr->result);
 
 	/* check for a valid command response */
 	if (!(hdr->cmd & MALO_VAL_CMD_RESP)) {
