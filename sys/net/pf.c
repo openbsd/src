@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.530 2007/05/26 20:12:02 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.531 2007/05/27 18:30:02 pyr Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5934,9 +5934,10 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		return (PF_PASS);
 
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
-		ifp = ifp->if_carpdev;
+		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
+	else
+		kif = (struct pfi_kif *)ifp->if_pf_kif;
 
-	kif = (struct pfi_kif *)ifp->if_pf_kif;
 	if (kif == NULL) {
 		DPFPRINTF(PF_DEBUG_URGENT,
 		    ("pf_test: kif == NULL, if_xname %s\n", ifp->if_xname));
@@ -6229,7 +6230,7 @@ done:
 		action = PF_PASS;
 	} else if (r->rt)
 		/* pf_route can free the mbuf causing *m0 to become NULL */
-		pf_route(m0, r, dir, ifp, s, &pd);
+		pf_route(m0, r, dir, kif->pfik_ifp, s, &pd);
 
 	return (action);
 }
@@ -6263,9 +6264,10 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		return (PF_PASS);
 
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
-		ifp = ifp->if_carpdev;
+		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
+	else
+		kif = (struct pfi_kif *)ifp->if_pf_kif;
 
-	kif = (struct pfi_kif *)ifp->if_pf_kif;
 	if (kif == NULL) {
 		DPFPRINTF(PF_DEBUG_URGENT,
 		    ("pf_test6: kif == NULL, if_xname %s\n", ifp->if_xname));
@@ -6628,7 +6630,7 @@ done:
 		action = PF_PASS;
 	} else if (r->rt)
 		/* pf_route6 can free the mbuf causing *m0 to become NULL */
-		pf_route6(m0, r, dir, ifp, s, &pd);
+		pf_route6(m0, r, dir, kif->pfik_ifp, s, &pd);
 
 	return (action);
 }
