@@ -15,6 +15,7 @@
  */
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <sys/device.h>
 
 #include <sys/audioio.h>
 #include <sys/cdio.h>
