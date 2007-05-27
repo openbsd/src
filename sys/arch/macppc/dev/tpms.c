@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.5 2007/04/10 22:37:17 miod Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.6 2007/05/27 10:03:47 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -295,9 +295,10 @@ USB_DECLARE_DRIVER(tpms);
 
 /* Try to match the device at some uhidev. */
 
-USB_MATCH(tpms)
+int
+tpms_match(struct device *parent, void *match, void *aux)
 {
-	USB_MATCH_START(tpms, uaa);
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	usb_device_descriptor_t *udd;
 	int i;
@@ -323,9 +324,11 @@ USB_MATCH(tpms)
 
 /* Attach the device. */
 
-USB_ATTACH(tpms)
+void
+tpms_attach(struct device *parent, struct device *self, void *aux)
 {
-	USB_ATTACH_START(tpms, sc, uaa);
+	struct tpms_softc *sc = (struct tpms_softc *)self;
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	struct wsmousedev_attach_args a;
 	struct tpms_dev *pd;
@@ -355,7 +358,7 @@ USB_ATTACH(tpms)
 	    sc->sc_y_sensors <= 0 || sc->sc_y_sensors > TPMS_Y_SENSORS) {
 		printf(": unexpected sensors configuration (%d:%d)\n",
 		    sc->sc_x_sensors, sc->sc_y_sensors);
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_hdev.sc_intr = tpms_intr;
@@ -367,15 +370,14 @@ USB_ATTACH(tpms)
 	a.accessops = &tpms_accessops;
 	a.accesscookie = sc;
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
 /* Detach the device. */
 
-USB_DETACH(tpms)
+int
+tpms_detach(struct device *self, int flags)
 {
-	USB_DETACH_START(tpms, sc);
+	struct tpms_softc *sc = (struct tpms_softc *)self;
 	int ret;
 
 	/* The wsmouse driver does all the work. */
