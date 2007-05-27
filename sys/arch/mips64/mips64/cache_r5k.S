@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.17 2007/03/21 05:26:37 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.18 2007/05/27 09:23:04 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -169,7 +169,7 @@
 LEAF(Mips5k_ConfigCache, 0)
 	.set	noreorder
 	LA	v0, 1f
-	LA	v1, KSEG1_BASE
+	LA	v1, XKPHYS_NC
 	or	v0, v1
 	jr	v0				# Switch to uncached.
 	nop
@@ -237,7 +237,7 @@ Conf5K:						# R5xxx type, check for L2 cache
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, ta2
 1:
 	cache	InvalidateSecondaryPage, 0(t0)
@@ -267,7 +267,7 @@ Conf52K:					# R5200 type, check for L2 cache
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, ta2
 1:
 	cache	InvalidateSecondaryPage, 0(t0)
@@ -308,7 +308,7 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	mtc0	v0, COP_0_CONFIG		# Enable L3 cache
 	or	t2, CTYPE_HAS_XL3
 #endif
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, ta3
 1:
 	cache	InvalidatePage_T, 0(t0)
@@ -327,7 +327,7 @@ Conf7KL2:
 	ori	v0, CF_7_SE
 
 	mtc0	v0, COP_0_CONFIG		# Enable and init L2 cache
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, ta3
 1:
 	PTR_ADDU t0, 32
@@ -335,7 +335,7 @@ Conf7KL2:
 	cache	IndexStoreTag_S, -4(t0)
 	sync
 
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, ta3
 1:
 	PTR_ADDU t0, 32
@@ -343,7 +343,7 @@ Conf7KL2:
 	lw	zero, -4(t0)
 	sync
 
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, ta3
 1:
 	PTR_ADDU t0, 32
@@ -423,7 +423,7 @@ LEAF(Mips5k_SyncCache, 0)
 	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 #endif
 
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, t1			# Compute end address
 	PTR_SUBU t1, 128
 
@@ -441,7 +441,7 @@ LEAF(Mips5k_SyncCache, 0)
  * the selected cache and differs from Hit in that sense.
  */
 
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, t2			# End address
 	PTR_SUBU t1, t1, 128
 1:
@@ -460,7 +460,7 @@ LEAF(Mips5k_SyncCache, 0)
 	nop
 
 3:
-	LA	t3, KSEG0_BASE
+	LA	t3, XKPHYS_NONCOHERENT
 	lw	ta0, CpuSecondaryCacheSize
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
@@ -476,7 +476,7 @@ LEAF(Mips5k_SyncCache, 0)
 	nop
 
 	mtc0    zero, COP_0_TAG_LO
-	LA	t3, KSEG0_BASE
+	LA	t3, XKPHYS_NONCOHERENT
 	lw	ta0, CpuSecondaryCacheSize
 21:
 	cache	InvalidateSecondaryPage, 0(t3)
@@ -492,7 +492,7 @@ LEAF(Mips5k_SyncCache, 0)
 	nop
 
 	mtc0    zero, COP_0_TAG_LO
-	LA	t3, KSEG0_BASE
+	LA	t3, XKPHYS_NONCOHERENT
 	lw	ta0, CpuTertiaryCacheSize
 31:
 	cache	InvalidatePage_T, 0(t3)
@@ -563,7 +563,7 @@ END(Mips5k_InvalidateICachePage)
  *
  *	Invalidate the L1 instruction cache for at least range
  *	of addr to addr + len - 1.
- *	The address is reduced to a KSEG0 index to avoid TLB faults.
+ *	The address is reduced to a XKPHYS index to avoid TLB faults.
  *
  * Results:
  *	None.
@@ -587,7 +587,7 @@ LEAF(Mips5k_InvalidateICache, 0)
 	PTR_ADDU a1, a0				# Add extra from address
 	and	a0, -32				# Align start address
 	PTR_SUBU a1, a1, a0
-	PTR_ADDU a0, KSEG0_BASE			# a0 now new KSEG0 address
+	PTR_ADDU a0, XKPHYS_NONCOHERENT		# a0 now new XKPHYS address
 	srl	a1, a1, 5			# Number of unrolled loops
 	addiu	v0, -2				# <0 1way, 0 = two, >0 four
 1:
@@ -627,7 +627,7 @@ END(Mips5k_InvalidateICache)
  *		vaddr_t addr;
  *
  *	Sync the L1 data cache page for address addr.
- *	The address is reduced to a KSEG0 index to avoid TLB faults.
+ *	The address is reduced to a XKPHYS index to avoid TLB faults.
  *
  * Results:
  *	None.
@@ -648,7 +648,7 @@ LEAF(Mips5k_SyncDCachePage, 0)
 	lw	v0, CpuNWayCache
 	dsll	a0, 34
 	dsrl	a0, 34
-	PTR_ADDU a0, KSEG0_BASE			# a0 now new KSEG0 address
+	PTR_ADDU a0, XKPHYS_NONCOHERENT		# a0 now new XKPHYS address
 	and	a0, ~PAGE_MASK			# Page align start address
 	PTR_ADDU a1, a0, PAGE_SIZE-128
 	addiu	v0, -2				# <0 1way, 0 = two, >0 four

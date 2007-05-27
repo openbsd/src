@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.3 2007/03/21 05:26:37 miod Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.4 2007/05/27 09:23:04 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -210,7 +210,7 @@ LEAF(Mips10k_SyncCache, 0)
  * Sync the instruction cache.
  */
 
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, t1			# Compute end address
 	PTR_SUBU t1, 128
 
@@ -229,7 +229,7 @@ LEAF(Mips10k_SyncCache, 0)
  * the selected cache and differs from Hit in that sense.
  */
 
-	LA	t0, KSEG0_BASE
+	LA	t0, XKPHYS_NONCOHERENT
 	PTR_ADDU t1, t0, t2			# End address
 	PTR_SUBU t1, t1, 128
 1:
@@ -247,7 +247,7 @@ LEAF(Mips10k_SyncCache, 0)
 	PTR_ADDU t0, t0, 128
 
 /* Do L2 */
-	LA	t3, KSEG0_BASE
+	LA	t3, XKPHYS_NONCOHERENT
 	lw	ta0, CpuSecondaryCacheSize	# XXX Need set size here.
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
@@ -302,7 +302,7 @@ END(Mips10k_InvalidateICachePage)
  *
  *	Invalidate the L1 instruction cache for at least range
  *	of addr to addr + len - 1.
- *	The address is reduced to a KSEG0 index to avoid TLB faults.
+ *	The address is reduced to a XKPHYS index to avoid TLB faults.
  *
  * Results:
  *	None.
@@ -319,7 +319,7 @@ LEAF(Mips10k_InvalidateICache, 0)
 	PTR_ADDU a1, a0				# Add extra from address
 	and	a0, -64				# Align start address
 	PTR_SUBU a1, a1, a0
-	PTR_ADDU a0, KSEG0_BASE			# a0 now new KSEG0 address
+	PTR_ADDU a0, XKPHYS_NONCOHERENT		# a0 now new XKPHYS address
 	srl	a1, a1, 6			# Number of unrolled loops
 1:
 	addu	a1, -1
@@ -342,7 +342,7 @@ END(Mips10k_InvalidateICache)
  *		vaddr_t addr;
  *
  *	Sync the L1 data cache page for address addr.
- *	The address is reduced to a KSEG0 index to avoid TLB faults.
+ *	The address is reduced to a XKPHYS index to avoid TLB faults.
  *
  * Results:
  *	None.
@@ -356,7 +356,7 @@ END(Mips10k_InvalidateICache)
 LEAF(Mips10k_SyncDCachePage, 0)
 	dsll	a0, 34
 	dsrl	a0, 34
-	PTR_ADDU a0, KSEG0_BASE			# a0 now new KSEG0 address
+	PTR_ADDU a0, XKPHYS_NONCOHERENT		# a0 now new XKPHYS address
 	and	a0, ~PAGE_MASK			# Page align start address
 	PTR_ADDU a1, a0, PAGE_SIZE-128
 
