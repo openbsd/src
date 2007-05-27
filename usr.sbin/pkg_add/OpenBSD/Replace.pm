@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.18 2007/05/26 23:45:44 espie Exp $
+# $OpenBSD: Replace.pm,v 1.19 2007/05/27 21:33:55 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -252,15 +252,6 @@ sub can_do
 				    $toreplace, $replacement);
 			}
 		}
-	}
-
-	if ($state->{okay}) {
-		try {
-			OpenBSD::Delete::validate_plist($plist, $state);
-		} catchall {
-			Warn "$_";
-			return 0;
-		};
 	}
 
 	return $state->{okay} ? $plist : 0;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.277 2007/05/27 11:36:21 espie Exp $
+# $OpenBSD: pkg_add,v 1.278 2007/05/27 21:33:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -335,6 +335,11 @@ sub really_add
 		    print " under ", $state->{destdir};
 	    }
 	    print "\n";
+	}
+	if (@toreplace) {
+		for my $old (@toreplace) {
+			OpenBSD::Delete::validate_plist($old, $state);
+		}
 	}
 	my $totsize = OpenBSD::Add::validate_plist($plist, $state);
 	OpenBSD::Vstat::synchronize();
