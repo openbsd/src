@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.30 2007/02/19 08:55:41 hshoexer Exp $	*/
+/*	$OpenBSD: xform.c,v 1.31 2007/05/27 05:43:17 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -514,7 +514,7 @@ rijndael128_zerokey(u_int8_t **sched)
 #define AESCTR_BLOCKSIZE	16
 
 struct aes_ctr_ctx {
-	u_int32_t	ac_ek[4*(MAXNR + 1)];
+	u_int32_t	ac_ek[4*(AES_MAXROUNDS + 1)];
 	u_int8_t	ac_block[AESCTR_BLOCKSIZE];
 	int		ac_nr;
 };

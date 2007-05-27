@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.h,v 1.11 2005/05/25 05:47:53 markus Exp $ */
+/*	$OpenBSD: rijndael.h,v 1.12 2007/05/27 05:43:17 tedu Exp $ */
 
 /**
  * rijndael-alg-fst.h
@@ -28,9 +28,10 @@
 #ifndef __RIJNDAEL_H
 #define __RIJNDAEL_H
 
-#define MAXKC	(256/32)
-#define MAXKB	(256/8)
-#define MAXNR	14
+#define AES_MAXKEYBITS	(256)
+#define AES_MAXKEYBYTES	(AES_MAXKEYBITS/8)
+/* for 256-bit keys, fewer for less */
+#define AES_MAXROUNDS	14
 
 typedef unsigned char	u8;
 typedef unsigned short	u16;
@@ -40,8 +41,8 @@ typedef unsigned int	u32;
 typedef struct {
 	int	enc_only;		/* context contains only encrypt schedule */
 	int	Nr;			/* key-length-dependent number of rounds */
-	u32	ek[4*(MAXNR + 1)];	/* encrypt key schedule */
-	u32	dk[4*(MAXNR + 1)];	/* decrypt key schedule */
+	u32	ek[4*(AES_MAXROUNDS + 1)];	/* encrypt key schedule */
+	u32	dk[4*(AES_MAXROUNDS + 1)];	/* decrypt key schedule */
 } rijndael_ctx;
 
 int	 rijndael_set_key(rijndael_ctx *, u_char *, int);
