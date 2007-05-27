@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.1 2007/05/26 03:37:45 grunk Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.2 2007/05/27 03:19:15 ray Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -189,16 +189,13 @@ get_pkcs_key(char *arg, char *saltopt)
 		printf("Salt file: ");
 		fflush(stdout);
 		saltfile = fgets(saltfilebuf, sizeof(saltfilebuf), stdin);
+		if (saltfile)
+			saltfile[strcspn(saltfile, "\n")] = '\0';
 	}
-	if (!saltfile || saltfile[0] == '\n') {
+	if (!saltfile || saltfile[0] == '\0') {
 		warnx("Skipping salt file, insecure");
-		saltfile = NULL;
+		memset(saltbuf, 0, sizeof(saltbuf));
 	} else {
-		size_t len = strlen(saltfile);
-		if (saltfile[len - 1] == '\n')
-			saltfile[len - 1] = 0;
-	}
-	if (saltfile) {
 		int fd;
 
 		fd = open(saltfile, O_RDONLY);
@@ -223,8 +220,6 @@ get_pkcs_key(char *arg, char *saltopt)
 				err(1, "Unable to read salt file: '%s'", saltfile);
 		}
 		close(fd);
-	} else {
-		memset(saltbuf, 0, sizeof(saltbuf));
 	}
 	if (pkcs5_pbkdf2((u_int8_t**)&key, BLF_MAXUTILIZED, keybuf,
 	    sizeof(keybuf), saltbuf, sizeof(saltbuf), rounds, 0))
