@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2001/06/27 06:16:46 art Exp $
+#	$OpenBSD: Makefile,v 1.9 2007/05/27 21:56:57 bluhm Exp $
 
 PROG=	sysctl
 MAN=	sysctl.8
@@ -6,6 +6,6 @@ MAN=	sysctl.8
 CPPFLAGS+=	-DINET6
 
 afterinstall:
-	(cd ${DESTDIR}/usr/sbin; ln -sf ../../sbin/sysctl .)
+	ln -sf ../../sbin/sysctl ${DESTDIR}/usr/sbin
 
 .include <bsd.prog.mk>

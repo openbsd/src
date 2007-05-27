@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2007/05/26 21:39:45 grunk Exp $
+# $OpenBSD: Makefile,v 1.4 2007/05/27 21:56:57 bluhm Exp $
 
 PROG=	mount_vnd
 SRCS=	mount_vnd.c pkcs5_pbkdf2.c
@@ -10,7 +10,7 @@ MLINKS=	mount_vnd.8 vnconfig.8
 
 # XXX compatibility
 afterinstall:
-	(cd ${DESTDIR}/usr/sbin && ln -sf ../../sbin/vnconfig .)
+	ln -sf ../../sbin/vnconfig ${DESTDIR}/usr/sbin 
 
 MAN=	mount_vnd.8
 
