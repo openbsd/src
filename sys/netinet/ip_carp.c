@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.138 2007/05/26 17:13:31 jason Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.139 2007/05/27 20:11:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -222,11 +222,7 @@ void	carp_update_lsmask(struct carp_softc *);
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
 
-static __inline u_int16_t
-carp_cksum(struct mbuf *m, int len)
-{
-	return (in_cksum(m, len));
-}
+#define carp_cksum(_m, _l)	((u_int16_t)in_cksum((_m), (_l)))
 
 void
 carp_hmac_prepare(struct carp_softc *sc)
