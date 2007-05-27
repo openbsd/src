@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.21 2005/12/22 18:45:46 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.22 2007/05/27 16:12:11 matthieu Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -773,6 +773,10 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wsdisp_info->width = sc->geometry->panel_width;
 		wsdisp_info->depth = 16; /* XXX */
 		wsdisp_info->cmsize = 0;
+		break;
+
+	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
+		*(u_int *)data = WSDISPLAYIO_DEPTH_16;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
