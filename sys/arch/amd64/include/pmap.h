@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.12 2007/05/25 16:22:11 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.13 2007/05/27 08:58:31 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -157,11 +157,13 @@
 #define L4_SLOT_KERNBASE	511
 #define L4_SLOT_APTE		510
 #define L4_SLOT_DIRECT		509
+#define L4_SLOT_DIRECT_NC	508
 
 #define PDIR_SLOT_KERN		L4_SLOT_KERN
 #define PDIR_SLOT_PTE		L4_SLOT_PTE
 #define PDIR_SLOT_APTE		L4_SLOT_APTE
 #define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
+#define PDIR_SLOT_DIRECT_NC	L4_SLOT_DIRECT_NC
 
 /*
  * the following defines give the virtual addresses of various MMU
@@ -176,6 +178,8 @@
 #define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((L4_SLOT_APTE * NBPD_L4))))
 #define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
 #define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
+#define PMAP_DIRECT_BASE_NC	(VA_SIGN_NEG((L4_SLOT_DIRECT_NC * NBPD_L4)))
+#define PMAP_DIRECT_END_NC	(VA_SIGN_NEG(((L4_SLOT_DIRECT_NC + 1) * NBPD_L4)))
 
 #define L1_BASE		PTE_BASE
 #define AL1_BASE	APTE_BASE
@@ -202,6 +206,10 @@
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
 #define NKL2_KIMG_ENTRIES	8
+
+#define NDML4_ENTRIES		1
+#define NDML3_ENTRIES		1
+#define NDML2_ENTRIES		4	/* 4GB */
 
 /*
  * Since kva space is below the kernel in its entirety, we start off
@@ -557,6 +565,9 @@ void	pmap_ldt_cleanup(struct proc *);
 
 #define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + pa)
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)va - PMAP_DIRECT_BASE)
+
+#define PMAP_DIRECT_NC_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE_NC + pa)
+#define PMAP_DIRECT_NC_UNMAP(va) ((paddr_t)va - PMAP_DIRECT_BASE_NC)
 
 #define pmap_map_direct(pg)	PMAP_DIRECT_MAP(VM_PAGE_TO_PHYS(pg))
 #define pmap_unmap_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_UNMAP(va))

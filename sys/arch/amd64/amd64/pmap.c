@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2007/05/25 16:22:11 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2007/05/27 08:58:31 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -236,11 +236,6 @@ long nkptpmax[] = NKPTPMAX_INITIALIZER;
 long nbpd[] = NBPD_INITIALIZER;
 pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
 pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
-
-/*
- * Direct map.
- */
-paddr_t DMPDpa;
 
 /* int nkpde = NKPTP; */
 
@@ -575,8 +570,6 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 {
 	vaddr_t kva, kva_end;
 	struct pmap *kpm;
-	pt_entry_t *tmppte;
-	vaddr_t tmpva;
 	int i;
 	unsigned long p1i;
 	pt_entry_t pg_nx = (cpu_feature & CPUID_NXE? PG_NX : 0);
@@ -658,58 +651,83 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	}
 
 	/*
-	 * Temporary mapping for setting up the direct map.
-	 */
-	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
-	virtual_avail += PAGE_SIZE;
-	tmppte = PTE_BASE + pl1_i(tmpva);
-
-	/*
-	 * Map the direct map. We steal pages for the page tables from
-	 * avail_start, then we create temporary mappings using the
-	 * early_zerop. Scary, slow, but we only do it once.
+	 * Map the direct map. The first 4GB were mapped in locore, here
+	 * we map the rest if it exists. We actually use the direct map
+	 * here to set up the page tables, we're assuming that we're still
+	 * operating in the lower 4GB of memory.
 	 */
 	ndmpdp = (max_pa + NBPD_L3 - 1) >> L3_SHIFT;
-	if (ndmpdp < 4)
-		ndmpdp = 4;	/* At least 4GB */
+	if (ndmpdp < NDML2_ENTRIES)
+		ndmpdp = NDML2_ENTRIES;		/* At least 4GB */
+
+printf("ndmpdp: %ld\n", ndmpdp);
+
+	dmpdp = kpm->pm_pdir[PDIR_SLOT_DIRECT] & PG_FRAME;
+
+	dmpd = avail_start; avail_start += ndmpdp * PAGE_SIZE;
+
+	for (i = NDML2_ENTRIES; i < NPDPG * ndmpdp; i++) {
+		paddr_t pdp;
+		vaddr_t va;
+
+		pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
+		va = PMAP_DIRECT_MAP(pdp);
+
+		*((pd_entry_t *)va) = ((paddr_t)i << L2_SHIFT);
+		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_PS | PG_G | PG_U |
+		    PG_M;
+	}
+
+	for (i = NDML2_ENTRIES; i < ndmpdp; i++) {
+		paddr_t pdp;
+		vaddr_t va;
+
+		pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
+		va = PMAP_DIRECT_MAP(pdp);
+
+		*((pd_entry_t *)va) = dmpd + (i << PAGE_SHIFT);
+		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U | PG_M;
+	}
+
+	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_V | PG_KW | PG_U |
+	    PG_M;
+
+	/*
+	 * Now do the same thing, but for the direct uncached map.
+	 */
+	ndmpdp = (max_pa + NBPD_L3 - 1) >> L3_SHIFT;
+	if (ndmpdp < NDML2_ENTRIES)
+		ndmpdp = NDML2_ENTRIES;		/* At least 4GB */
 
 	dmpdp = avail_start;	avail_start += PAGE_SIZE;
 	dmpd = avail_start;	avail_start += ndmpdp * PAGE_SIZE;
 
 	for (i = 0; i < NPDPG * ndmpdp; i++) {
 		paddr_t pdp;
-		paddr_t off;
 		vaddr_t va;
 
 		pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
-		off = pdp - trunc_page(pdp);
-		*tmppte = (trunc_page(pdp) & PG_FRAME) | PG_V | PG_RW;
-		pmap_update_pg(tmpva);
+		va = PMAP_DIRECT_MAP(pdp);
 
-		va = tmpva + off;
 		*((pd_entry_t *)va) = (paddr_t)i << L2_SHIFT;
-		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_PS | PG_G;
+		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_PS | PG_G | PG_N |
+		    PG_U | PG_M;
 	}
 
 	for (i = 0; i < ndmpdp; i++) {
 		paddr_t pdp;
-		paddr_t off;
 		vaddr_t va;
 
 		pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-		off = pdp - trunc_page(pdp);
-		*tmppte = (trunc_page(pdp) & PG_FRAME) | PG_V | PG_RW;
-		pmap_update_pg(tmpva);
+		va = PMAP_DIRECT_MAP(pdp);
 
-		va = tmpva + off;
 		*((pd_entry_t *)va) = dmpd + (i << PAGE_SHIFT);
-		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U;
+		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U | PG_M;
 	}
-	*tmppte = 0;
-	
-	DMPDpa = dmpdp;
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = DMPDpa | PG_V | PG_KW | PG_U;
 
+	kpm->pm_pdir[PDIR_SLOT_DIRECT_NC] = dmpdp | PG_V | PG_KW | PG_U |
+	    PG_M;
+	
 	tlbflush();
 
 	msgbuf_vaddr = virtual_avail;
@@ -1073,7 +1091,8 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	memset(&pdir[PDIR_SLOT_KERN + npde], 0,
 	    (NTOPLEVEL_PDES - (PDIR_SLOT_KERN + npde)) * sizeof(pd_entry_t));
 
-	pdir[PDIR_SLOT_DIRECT] = DMPDpa | PG_V | PG_KW | PG_U;
+	pdir[PDIR_SLOT_DIRECT] = pmap_kernel()->pm_pdir[PDIR_SLOT_DIRECT];
+	pdir[PDIR_SLOT_DIRECT_NC] = pmap_kernel()->pm_pdir[PDIR_SLOT_DIRECT_NC];
 
 #if VM_MIN_KERNEL_ADDRESS != KERNBASE
 	pdir[pl4_pi(KERNBASE)] = PDP_BASE[pl4_pi(KERNBASE)];
@@ -1385,6 +1404,12 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	if (pmap == pmap_kernel() && va >= PMAP_DIRECT_BASE &&
 	    va < PMAP_DIRECT_END) {
 		*pap = va - PMAP_DIRECT_BASE;
+		return (TRUE);
+	}
+
+	if (pmap == pmap_kernel() && va >= PMAP_DIRECT_BASE_NC &&
+	    va < PMAP_DIRECT_END_NC) {
+		*pap = va - PMAP_DIRECT_BASE_NC;
 		return (TRUE);
 	}
 

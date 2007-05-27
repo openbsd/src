@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.21 2005/08/20 00:33:59 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.22 2007/05/27 08:58:31 art Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -363,9 +363,11 @@ bi_size_ok:
 #define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * NBPG)
 #define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * NBPG)
 #define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * NBPG)
+#define	PROC0_DMP3_OFF	(PROC0_PTP1_OFF + TABLE_L2_ENTRIES * NBPG)
+#define PROC0_DMP2_OFF	(PROC0_DMP3_OFF + NDML3_ENTRIES * NBPG)
 #define TABLESIZE \
-  ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
-    * NBPG)
+    ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES + \
+	NDML3_ENTRIES + NDML2_ENTRIES) * NBPG)
 
 #define fillkpt	\
 1:	movl	%eax,(%ebx)	; 	/* store phys addr */ \
@@ -484,9 +486,36 @@ bi_size_ok:
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
+	/*
+	 * Map the first 4 GB with the direct map. We'll map the rest
+	 * in pmap_bootstrap. But we always need the first 4GB during
+	 * bootstrap.
+	 */
+	leal	(PROC0_DMP2_OFF)(%esi), %ebx
+	xorl	%eax, %eax
+	orl	$(PG_V|PG_KW|PG_PS|PG_G), %eax
+	movl	$(NDML2_ENTRIES * NPDPG), %ecx
+1:	movl	%eax, (%ebx)
+	movl	$0, 4(%ebx)
+	addl	$8, %ebx
+	addl	$NBPD_L2, %eax
+	loop	1b
+
+	leal	(PROC0_DMP3_OFF)(%esi), %ebx
+	leal	(PROC0_DMP2_OFF)(%esi), %eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	$NDML2_ENTRIES, %ecx
+	fillkpt
+
+	leal	(PROC0_PML4_OFF + PDIR_SLOT_DIRECT * 8)(%esi), %ebx
+	leal	(PROC0_DMP3_OFF)(%esi), %eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	$NDML3_ENTRIES, %ecx
+	fillkpt
+
 	/* Install recursive top level PDE */
-	leal    (PROC0_PML4_OFF + PDIR_SLOT_PTE*8)(%esi),%ebx
-	leal    (PROC0_PML4_OFF)(%esi),%eax
+	leal	(PROC0_PML4_OFF + PDIR_SLOT_PTE*8)(%esi),%ebx
+	leal	(PROC0_PML4_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	%eax,(%ebx)
 	movl	$0, 4(%ebx)

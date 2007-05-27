@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.12 2007/05/25 16:22:11 art Exp $
+#	$OpenBSD: genassym.cf,v 1.13 2007/05/27 08:58:31 art Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -140,6 +140,8 @@ export	PG_KR
 export	PG_KW
 export	PG_N
 export	PG_NX
+export	PG_G
+export	PG_PS
 
 # pmap constants
 export	PDIR_SLOT_PTE
@@ -147,6 +149,15 @@ export	PDIR_SLOT_PTE
 export	NKL4_KIMG_ENTRIES
 export	NKL3_KIMG_ENTRIES
 export	NKL2_KIMG_ENTRIES
+
+export	NDML4_ENTRIES
+export	NDML3_ENTRIES
+export	NDML2_ENTRIES
+
+export	NBPD_L2
+export	NPDPG
+
+export	PDIR_SLOT_DIRECT
 
 export	CR4_DEFAULT
 
