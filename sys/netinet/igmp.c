@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.22 2005/09/19 06:40:01 krw Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.23 2007/05/27 20:05:37 dlg Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -37,8 +37,8 @@ static struct router_info *rti_head;
 struct igmpstat igmpstat;
 
 void igmp_sendpkt(struct in_multi *, int, in_addr_t);
-static int rti_fill(struct in_multi *);
-static struct router_info * rti_find(struct ifnet *);
+int rti_fill(struct in_multi *);
+struct router_info * rti_find(struct ifnet *);
 
 void
 igmp_init()
@@ -52,7 +52,7 @@ igmp_init()
 }
 
 /* Return -1 for error. */
-static int
+int
 rti_fill(inm)
 	struct in_multi *inm;
 {
@@ -80,7 +80,7 @@ rti_fill(inm)
 	return (IGMP_v2_HOST_MEMBERSHIP_REPORT);
 }
 
-static struct router_info *
+struct router_info *
 rti_find(ifp)
 	struct ifnet *ifp;
 {
