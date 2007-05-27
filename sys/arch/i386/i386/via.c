@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.9 2007/04/10 17:47:54 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.10 2007/05/27 07:17:47 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -63,8 +63,8 @@ void	viac3_rnd(void *);
 #ifdef CRYPTO
 
 struct viac3_session {
-	u_int32_t	ses_ekey[4 * (MAXNR + 1) + 4];	/* 128 bit aligned */
-	u_int32_t	ses_dkey[4 * (MAXNR + 1) + 4];	/* 128 bit aligned */
+	u_int32_t	ses_ekey[4 * (AES_MAXROUNDS + 1) + 4];	/* 128 bit aligned */
+	u_int32_t	ses_dkey[4 * (AES_MAXROUNDS + 1) + 4];	/* 128 bit aligned */
 	u_int8_t	ses_iv[16];			/* 128 bit aligned */
 	u_int32_t	ses_cw0;
 	struct swcr_data *swd;
@@ -202,7 +202,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    c->cri_klen);
 			rijndaelKeySetupDec(ses->ses_dkey, c->cri_key,
 			    c->cri_klen);
-			for (i = 0; i < 4 * (MAXNR + 1); i++) {
+			for (i = 0; i < 4 * (AES_MAXROUNDS + 1); i++) {
 				ses->ses_ekey[i] = ntohl(ses->ses_ekey[i]);
 				ses->ses_dkey[i] = ntohl(ses->ses_dkey[i]);
 			}
