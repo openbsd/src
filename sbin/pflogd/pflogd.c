@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.39 2007/04/07 07:48:50 jmc Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.40 2007/05/27 20:07:42 jdixon Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -34,6 +34,8 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <net/if.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +44,7 @@
 #include <pcap.h>
 #include <syslog.h>
 #include <signal.h>
+#include <err.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <fcntl.h>
@@ -70,6 +73,7 @@ char *copy_argv(char * const *);
 void  dump_packet(u_char *, const struct pcap_pkthdr *, const u_char *);
 void  dump_packet_nobuf(u_char *, const struct pcap_pkthdr *, const u_char *);
 int   flush_buffer(FILE *);
+int   if_exists(char *);
 int   init_pcap(void);
 void  logmsg(int, const char *, ...);
 void  purge_buffer(void);
@@ -186,6 +190,30 @@ set_pcap_filter(void)
 			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
 		pcap_freecode(&bprog);
 	}
+}
+
+int
+if_exists(char *interface)
+{
+	int s;
+	struct ifreq ifr;
+	struct if_data ifrdat;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		err(1, "socket");
+	bzero(&ifr, sizeof(ifr));
+	if (strlcpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name)) >=
+		sizeof(ifr.ifr_name))
+			errx(1, "main ifr_name: strlcpy");
+	ifr.ifr_data = (caddr_t)&ifrdat;
+	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1) {
+		logmsg(LOG_ERR, "Failed to initialize: %s", interface);
+		return (-1);
+	}
+	if (close(s))
+		err(1, "close");
+
+	return (0);
 }
 
 int
@@ -574,6 +602,13 @@ main(int argc, char **argv)
 	log_debug = Debug;
 	argc -= optind;
 	argv += optind;
+
+	/* does interface exist */
+	if (if_exists(interface)) {
+		err(1, "Failed to initialize: %s", interface);
+		logmsg(LOG_ERR, "Exiting, init failure");
+		exit(1);
+	}
 
 	if (!Debug) {
 		openlog("pflogd", LOG_PID | LOG_CONS, LOG_DAEMON);
