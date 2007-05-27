@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.6 2007/05/27 13:27:53 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.7 2007/05/27 15:44:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -331,9 +331,9 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 {
 	const char *name = "malo8385-h";
 	size_t usize;
-	uint8_t *ucode, val8;
-	uint16_t *uc;
-	int offset, error, bsize, i;
+	uint8_t val8, *ucode;
+	uint16_t bsize, *uc;
+	int error, offset, i;
 
 	/* verify if the card is ready for firmware download */
 	val8 = MALO_READ_1(sc, MALO_REG_SCRATCH);
@@ -365,11 +365,9 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 		DPRINTF(3, "%s: download helper FW block (%d bytes, %d off)\n",
 		    sc->sc_dev.dv_xname, bsize, offset);
 		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, bsize);
-
 		uc = (uint16_t *)(ucode + offset);
 		for (i = 0; i < bsize / 2; i++)
 			MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
-
 		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 		MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
 
@@ -404,8 +402,8 @@ cmalo_fw_load_main(struct malo_softc *sc)
 	const char *name = "malo8385-m";
 	size_t usize;
 	uint8_t *ucode;
-	uint16_t val16, *uc;
-	int offset, error, bsize, retry, i;
+	uint16_t val16, bsize, *uc;
+	int error, offset, i, retry;
 
 	/* read main firmware image */
 	if ((error = loadfirmware(name, &ucode, &usize)) != 0) {
