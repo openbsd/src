@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.74 2007/05/09 14:35:25 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.75 2007/05/27 19:55:13 dlg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ int *icmpctl_vars[ICMPCTL_MAXID] = ICMPCTL_VARS;
 
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
-static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
+void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
 extern	struct protosw inetsw[];
 
@@ -1005,7 +1005,7 @@ icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
 }
 
 /* XXX only handles table 0 right now */
-static void
+void
 icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
