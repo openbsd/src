@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.14 2007/04/04 13:39:17 jmc Exp $
+.\"	$OpenBSD: ld.so.1,v 1.15 2007/05/27 16:48:11 jmc Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -128,6 +128,11 @@ to customize the trace output and are used by
 option and allows
 .Xr ldd 1
 to be operated as a filter more conveniently.
+.Ev LD_TRACE_LOADED_OBJECTS_FMT1
+is used for tracing shared libraries;
+.Ev LD_TRACE_LOADED_OBJECTS_FMT2
+for dynamically loaded objects, the dynamic linker,
+and the main executable.
 The following conversions can be used:
 .Bl -tag -width "xxxx"
 .It %a
