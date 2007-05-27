@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.47 2006/01/20 23:27:25 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.48 2007/05/27 20:59:26 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -68,34 +68,6 @@
 #include <machine/trap.h>
 
 #include <sparc/sparc/cpuvar.h>
-
-/*
- * Move pages from one kernel virtual address to another.
- */
-void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
-{
-	paddr_t pa;
-
-#ifdef DEBUG
-	if ((size & PAGE_MASK) != 0 ||
-	    ((vaddr_t)from & PAGE_MASK) != 0 ||
-	    ((vaddr_t)to & PAGE_MASK) != 0)
-		panic("pagemove 1");
-#endif
-	while (size > 0) {
-		if (pmap_extract(pmap_kernel(), (vaddr_t)from, &pa) == FALSE)
-			panic("pagemove 2");
-		pmap_kremove((vaddr_t)from, PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-}
 
 /*
  * Wrapper for dvma_mapin() in kernel space,

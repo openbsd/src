@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.65 2007/04/11 12:51:51 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.66 2007/05/27 20:59:26 miod Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -444,7 +444,6 @@ struct core;
 /* vm_machdep.c */
 void		vmapbuf(struct buf *, vsize_t);
 void		vunmapbuf(struct buf *, vsize_t);
-void		pagemove(caddr_t, caddr_t, size_t);
 void		cpu_fork(struct proc *, struct proc *, void *, size_t,
 		    void (*)(void *), void *);
 

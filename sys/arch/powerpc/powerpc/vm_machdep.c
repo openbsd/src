@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.42 2007/03/20 20:59:53 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.43 2007/05/27 20:59:26 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -124,26 +124,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	sf->user_sr = pmap_kernel()->pm_sr[PPC_USER_SR]; /* just in case */
 	pcb->pcb_sp = (int)stktop2;
 	pcb->pcb_spl = 0;
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	vaddr_t va;
-	paddr_t pa;
-	
-	for (va = (vaddr_t)from; size > 0; size -= NBPG) {
-		pmap_extract(pmap_kernel(), va, &pa);
-		pmap_kremove(va, NBPG);
-		pmap_kenter_pa((vaddr_t)to, pa,
-			   VM_PROT_READ | VM_PROT_WRITE );
-		va += NBPG;
-		to += NBPG;
-	}
-	pmap_update(pmap_kernel());
 }
 
 /*

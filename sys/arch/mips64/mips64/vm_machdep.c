@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 2007/05/09 19:21:49 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2007/05/27 20:59:25 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -179,44 +179,11 @@ cpu_coredump(p, vp, cred, chdr)
 	return error;
 }
 
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
- */
-void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
-{
-	pt_entry_t *fpte, *tpte;
-
-	if (size % PAGE_SIZE)
-		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
-	if (((vaddr_t)from & CpuCacheAliasMask) != ((vaddr_t)to & CpuCacheAliasMask)) {
-		Mips_HitSyncDCache((vaddr_t)from, size);
-	}
-	while (size > 0) {
-		tlb_flush_addr((vaddr_t)from);
-		tlb_update((vaddr_t)to, fpte->pt_entry);
-		*tpte++ = *fpte;
-		fpte->pt_entry = PG_NV | PG_G;
-		fpte++;
-		size -= NBPG;
-		from += NBPG;
-		to += NBPG;
-	}
-}
-
 extern vm_map_t phys_map;
 
 /*
  * Map an user IO request into kernel virtual address space.
  */
-
-#define trunc_page_align(x) ((vaddr_t)(x) & ~(CpuCacheAliasMask | PAGE_SIZE))
 
 void
 vmapbuf(bp, len)

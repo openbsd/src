@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 2006/11/29 12:26:13 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 2007/05/27 20:59:25 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -222,40 +222,6 @@ cpu_exit(struct proc *p)
 {
 	pmap_update(p->p_vmspace->vm_map.pmap); /* XXX DSR help stability */
 	switch_exit(p, &proc0, exit2);
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of PAGE_SIZE.
- */
-
-void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
-{
-	paddr_t pa;
-	boolean_t rv;
-
-	if (size % PAGE_SIZE)
-		panic("pagemove: size=%08lx", (u_long) size);
-
-	while (size > 0) {
-		rv = pmap_extract(pmap_kernel(), (vaddr_t) from, &pa);
-#ifdef DEBUG
-		if (rv == FALSE)
-			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vaddr_t) to, NULL) == TRUE)
-			panic("pagemove 3");
-#endif
-		pmap_kremove((vaddr_t) from, PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t) to, pa, VM_PROT_READ|VM_PROT_WRITE);
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
 }
 
 /*

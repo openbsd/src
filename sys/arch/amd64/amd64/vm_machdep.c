@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 2007/05/25 16:22:11 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 2007/05/27 20:59:25 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -251,50 +251,6 @@ setredzone(struct proc *p)
 	    (vaddr_t)p->p_addr + 2 * PAGE_SIZE);
 	pmap_update(pmap_kernel());
 #endif
-}
-
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap.
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	pt_entry_t *fpte, *tpte, ofpte, otpte;
-	vaddr_t fsva, tsva, feva, teva;
-
-#ifdef DIAGNOSTIC
-	if ((size & PAGE_MASK) != 0)
-		panic("pagemove");
-#endif
-
-	fsva = (vaddr_t)from;
-	tsva = (vaddr_t)to;
-	feva = fsva + size;
-	teva = tsva + size;
-
-	fpte = kvtopte((vaddr_t)from);
-	tpte = kvtopte((vaddr_t)to);
-#ifdef LARGEPAGES
-	/* XXX For now... */
-	if (*fpte & PG_PS)
-		panic("pagemove: fpte PG_PS");
-	if (*tpte & PG_PS)
-		panic("pagemove: tpte PG_PS");
-#endif
-	while (size > 0) {
-		otpte = *tpte;
-		ofpte = *fpte;
-		*tpte++ = *fpte;
-		*fpte++ = 0;
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_tlb_shootrange(pmap_kernel(), fsva, feva);
-	pmap_tlb_shootrange(pmap_kernel(), tsva, teva);
-	pmap_tlb_shootwait();
 }
 
 /*

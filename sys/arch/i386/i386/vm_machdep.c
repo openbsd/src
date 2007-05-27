@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.51 2007/05/25 15:55:26 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.52 2007/05/27 20:59:25 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -209,44 +209,6 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 
 	chdr->c_nseg++;
 	return 0;
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap.
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	pt_entry_t *fpte, *tpte;
-	pt_entry_t ofpte, otpte;
-	vaddr_t fsva, tsva, feva, teva;
-
-#ifdef DIAGNOSTIC
-	if ((size & PAGE_MASK) != 0)
-		panic("pagemove");
-#endif
-
-	fsva = (vaddr_t)from;
-	tsva = (vaddr_t)to;
-	feva = fsva + size;
-	teva = tsva + size;
-
-	fpte = kvtopte((vaddr_t)from);
-	tpte = kvtopte((vaddr_t)to);
-	while (size > 0) {
-		ofpte = *fpte;
-		otpte = *tpte;
-		*tpte++ = *fpte;
-		*fpte++ = 0;
-
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_tlb_shootrange(pmap_kernel(), fsva, feva);
-	pmap_tlb_shootrange(pmap_kernel(), tsva, teva);
-	pmap_tlb_shootwait();
 }
 
 /*

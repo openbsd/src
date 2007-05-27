@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.32 2006/11/29 12:26:11 miod Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.33 2007/05/27 20:59:24 miod Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -232,48 +232,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 		up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
-	}
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to have valid page table pages.
- *
- * Note that since all kernel page table pages are pre-allocated
- * and mapped in, we can use the Virtual Page Table.
- */
-void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
-{
-	long fidx, tidx;
-	ssize_t todo;
-
-#ifdef DIAGNOSTIC
-	if ((size & PAGE_MASK) != 0)
-		panic("pagemove");
-#endif
-
-	todo = size;			/* if testing > 0, need sign... */
-	while (todo > 0) {
-		fidx = VPT_INDEX(from);
-		tidx = VPT_INDEX(to);
-
-		VPT[tidx] = VPT[fidx];
-		VPT[fidx] = 0;
-
-		ALPHA_TBIS((vaddr_t)from);
-		ALPHA_TBIS((vaddr_t)to);
-
-#if defined(MULTIPROCESSOR) && 0
-		pmap_tlb_shootdown(pmap_kernel(), (vaddr_t)from, PG_ASM);
-		pmap_tlb_shootdown(pmap_kernel(), (vaddr_t)to, PG_ASM);
-#endif
-
-		todo -= PAGE_SIZE;
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
 	}
 }
 

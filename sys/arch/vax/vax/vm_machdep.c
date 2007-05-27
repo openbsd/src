@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.32 2006/11/29 12:26:14 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.33 2007/05/27 20:59:26 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -57,29 +57,6 @@
 #include <machine/sid.h>
 
 #include <sys/syscallargs.h>
-
-volatile int whichqs;
-
-/*
- * pagemove - moves pages at virtual address from to virtual address to,
- * block moved of size size. Using fast insn bcopy for pte move.
- */
-void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
-{
-	pt_entry_t *fpte, *tpte;
-	int	stor;
-
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
-
-	stor = (size >> VAX_PGSHIFT) * sizeof(pt_entry_t);
-	bcopy(fpte, tpte, stor);
-	bzero(fpte, stor);
-	mtpr(0, PR_TBIA);
-}
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
