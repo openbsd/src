@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.4 2007/05/27 05:52:35 dlg Exp $ */
+/*	$OpenBSD: if_che.c,v 1.5 2007/05/27 06:04:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -179,6 +179,7 @@ struct che_attach_args {
 	struct pci_attach_args	*caa_pa;
 	pci_intr_handle_t	caa_ih;
 	int			caa_port;
+	u_int8_t		caa_lladdr[ETHER_ADDR_LEN];
 };
 
 /* che itself */
@@ -188,7 +189,11 @@ struct che_softc {
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
 
+	struct cheg_softc	*sc_cheg;
+
 	void			*sc_ih;
+
+	int			sc_port;
 };
 
 int		che_match(struct device *, void *, void *);
@@ -214,7 +219,12 @@ int		che_read_eeprom(struct cheg_softc *, struct pci_attach_args *,
 		    pcireg_t, pcireg_t *);
 int		che_get_vpd(struct cheg_softc *, struct pci_attach_args *,
 		    void *, size_t);
+void		che_conv_lladdr(char *, u_int8_t *);
 void		che_reset(struct cheg_softc *);
+int		che_ioctl(struct ifnet *, u_long, caddr_t);
+void		che_watchdog(struct ifnet *);
+void		che_start(struct ifnet *);
+
 
 /* bus_space wrappers */
 u_int32_t 	che_read(struct cheg_softc *, bus_size_t);
@@ -320,10 +330,19 @@ cheg_attach(struct device *parent, struct device *self, void *aux)
 	    FW_VERS_MAJOR(vers), FW_VERS_MINOR(vers), FW_VERS_MICRO(vers));
 
 	caa.caa_pa = pa;
+	che_conv_lladdr(vpd.na_data, caa.caa_lladdr);
+
 	for (i = 0; i < cd->cd_nports; i++) {
 		caa.caa_port = i;
 
 		config_found(self, &caa, cheg_print);
+
+		/*
+		 * The VPD EEPROM stores only the base Ethernet address for the
+		 * card. The last octet is increased by one for every additional
+		 * port.
+		 */
+		caa.caa_lladdr[5] += 1;
 	}
 
 	return;
@@ -355,7 +374,33 @@ che_match(struct device *parent, void *match, void *aux)
 void
 che_attach(struct device *parent, struct device *self, void *aux)
 {
-	printf(": not done yet\n");
+	struct cheg_softc *gsc = (struct cheg_softc *)parent;
+	struct che_softc *sc = (struct che_softc *)self;
+	struct che_attach_args *caa = aux;
+	struct ifnet *ifp;
+
+	sc->sc_cheg = gsc;
+
+	sc->sc_port = caa->caa_port;
+	bcopy(caa->caa_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
+
+	ifp = &sc->sc_ac.ac_if;
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = che_ioctl;
+	ifp->if_start = che_start;
+	ifp->if_watchdog = che_watchdog;
+	ifp->if_hardmtu = MCLBYTES - ETHER_HDR_LEN - ETHER_CRC_LEN; /* XXX */
+	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
+	IFQ_SET_MAXLEN(&ifp->if_snd, 400);
+	IFQ_SET_READY(&ifp->if_snd);
+
+	/* XXX ifmedia */
+
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
+	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 	return;
 }
 
@@ -472,6 +517,33 @@ che_get_vpd(struct cheg_softc *sc, struct pci_attach_args *pa,
 	return (0);
 }
 
+/*
+ * VPD mac addr is stored as ASCII string so we need to convert it to a
+ * sane representation form.
+ */
+void
+che_conv_lladdr(char *mac, u_int8_t *lladdr)
+{
+	int i;
+	u_int8_t digit;
+
+	bzero(lladdr, ETHER_ADDR_LEN);
+
+	for (i = 0; i < ETHER_ADDR_LEN * 2; i++) {
+		if (mac[i] >= '0' && mac[i] <= '9')
+			digit = mac[i] - '0';
+		else if (mac[i] >= 'A' && mac[i] <= 'F')
+			digit = mac[i] - 'A' + 10;
+		else if (mac[i] >= 'a' && mac[i] <= 'f')
+			digit = mac[i] - 'a' + 10;
+
+		if (i & 1)
+			digit <<= 4;
+
+		lladdr[i/2] |= digit;
+	}
+}
+
 void
 che_reset(struct cheg_softc *sc)
 {
@@ -480,6 +552,24 @@ che_reset(struct cheg_softc *sc)
 
 	/* Give the card some time to boot */
 	delay(500);
+}
+
+int
+che_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
+{
+	return (EIO);
+}
+
+void
+che_watchdog(struct ifnet *ifp)
+{
+	/* XXX */
+}
+
+void
+che_start(struct ifnet *ifp)
+{
+	/* XXX */
 }
 
 u_int32_t
