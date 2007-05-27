@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.279 2007/05/27 21:43:06 espie Exp $
+# $OpenBSD: pkg_add,v 1.280 2007/05/27 22:04:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -100,13 +100,7 @@ use OpenBSD::PackageInfo;
 sub actual_replacements
 {
 	my $set = shift;
-	my @toreplace = ();
-	for my $h (@{$set->{older}}) {
-		if (is_installed($h->{pkgname})) {
-			push(@toreplace, $h->{plist});
-		}
-	}
-	return @toreplace;
+	return map {$_->{plist}} $set->older;
 }
 	
 package main;
@@ -336,13 +330,10 @@ sub really_add
 	    }
 	    print "\n";
 	}
-	if (@toreplace) {
-		for my $old (@toreplace) {
-			OpenBSD::Delete::validate_plist($old, $state);
-		}
-	}
-	my $totsize = OpenBSD::Add::validate_plist($plist, $state);
-	OpenBSD::Vstat::synchronize();
+
+	$set->validate_plists($state);
+
+	my $totsize = $plist->{totsize};
 
 	if (!defined $location) {
 		Fatal "Archive in $pkgname broken";
