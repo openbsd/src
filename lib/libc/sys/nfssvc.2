@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.17 2003/10/22 04:45:54 jmc Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.18 2007/05/27 21:14:41 thib Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -44,94 +44,19 @@
 .Sh DESCRIPTION
 The
 .Fn nfssvc
-function is used by the NFS daemons to pass information into and out
-of the kernel and also to enter the kernel as a server daemon.
+function is used by the NFS daemons to pass information into the kernel
+and also to enter the kernel as a server daemon.
 The
 .Fa flags
 argument consists of several bits that show what action is to be taken
 once in the kernel and the
 .Fa argstructp
-points to one of three structures depending on which bits are set in
+points to one of two structures depending on which bits are set in
 flags.
 .Pp
-On the client side, there is no longer a need to call
-.Fn nfssvc
-with the
-.Fa flags
-argument set to
-.Dv NFSSVC_BIOD
-since this functionality has been replaced by a
-.Nm nfsiod
-implementation using kernel threads.
-See
+To enter an
 .Xr nfsd 8
-and
-.Xr sysctl 8
-for further discussion.
-For
-.Nm NQNFS ,
-.Xr mount_nfs 8
-calls
-.Fn nfssvc
-with the
-.Dv NFSSVC_MNTD
-flag, optionally or'd with the flags
-.Dv NFSSVC_GOTAUTH
-and
-.Dv NFSSVC_AUTHINFAIL
-along with a pointer to a
-.Bd -literal
-struct nfsd_cargs {
-        char            *ncd_dirp;      /* Mount dir path */
-        uid_t           ncd_authuid;    /* Effective uid */
-        int             ncd_authtype;   /* Type of authenticator */
-        u_int           ncd_authlen;   /* Length of authenticator string */
-        u_char          *ncd_authstr;   /* Authenticator string */
-        u_int           ncd_verflen;    /* and the verifier */
-        u_char          *ncd_verfstr;
-        NFSKERBKEY_T    ncd_key;        /* Session key */
-};
-.Ed
-.Pp
-structure.
-The initial call has only the
-.Dv NFSSVC_MNTD
-flag set to specify service for the mount point.
-If the mount point is using Kerberos, then the
-.Xr mount_nfs 8
-daemon will return from
-.Fn nfssvc
-with
-.Va errno
-set to
-.Er ENEEDAUTH
-whenever the client side requires an
-.Dq rcmd
-authentication ticket for the user.
-.Xr mount_nfs 8
-will attempt to get the Kerberos ticket, and if successful will call
-.Fn nfssvc
-with the flags
-.Dv NFSSVC_MNTD
-and
-.Dv NFSSVC_GOTAUTH
-after filling the ticket into the
-ncd_authstr field
-and
-setting the ncd_authlen and ncd_authtype
-fields of the nfsd_cargs structure.
-If
-.Xr mount_nfs 8
-failed to get the ticket,
-.Fn nfssvc
-will be called with the flags
-.Dv NFSSVC_MNTD ,
-.Dv NFSSVC_GOTAUTH
-and
-.Dv NFSSVC_AUTHINFAIL
-to denote a failed authentication attempt.
-.Pp
-On the server side,
+daemon into the kernel
 .Fn nfssvc
 is called with the flag
 .Dv NFSSVC_NFSD
@@ -151,51 +76,13 @@ struct nfsd_srvargs {
         NFSKERBKEY_T    nsd_key;        /* Session key */
 };
 .Ed
+structure.
 .Pp
-to enter the kernel as an
+To add further sockets for processing by the
 .Xr nfsd 8
-daemon.
-Whenever an
+server daemons the master
 .Xr nfsd 8
-daemon receives a Kerberos authentication ticket, it will return from
-.Fn nfssvc
-with
-.Va errno
-set to
-.Er ENEEDAUTH .
-The
-.Xr nfsd 8
-will attempt to authenticate the ticket and generate a set of credentials
-on the server for the user ID specified in the field nsd_uid.
-This is done by first authenticating the Kerberos ticket and then mapping
-the Kerberos principal to a local name and getting a set of credentials for
-that user via
-.Xr getpwnam 3
-and
-.Xr getgrouplist 3 .
-If successful, the
-.Xr nfsd 8
-will call
-.Fn nfssvc
-with the
-.Dv NFSSVC_NFSD
-and
-.Dv NFSSVC_AUTHIN
-flags set to pass the credential mapping in nsd_cr into the
-kernel to be cached on the server socket for that client.
-If the authentication failed,
-.Xr nfsd 8
-calls
-.Fn nfssvc
-with the flags
-.Dv NFSSVC_NFSD
-and
-.Dv NFSSVC_AUTHINFAIL
-to denote an authentication failure.
-.Pp
-The master
-.Xr nfsd 8
-server daemon calls
+daemon  calls
 .Fn nfssvc
 with the flag
 .Dv NFSSVC_ADDSOCK
@@ -207,12 +94,8 @@ struct nfsd_args {
         int     namelen;  /* Length of name */
 };
 .Ed
+structure.
 .Pp
-to pass a server side
-.Tn NFS
-socket into the kernel for servicing by the
-.Xr nfsd 8
-daemons.
 .Sh RETURN VALUES
 Normally
 .Nm nfssvc
@@ -223,12 +106,11 @@ Otherwise, \-1 is returned and the global variable
 is set to specify the error.
 .Sh ERRORS
 .Bl -tag -width Er
-.It Bq Er ENEEDAUTH
-This special error value
-is really used for authentication support, particularly Kerberos,
-as explained above.
 .It Bq Er EPERM
 The caller is not the superuser.
+.It Bq Er EINVAL
+The flag argument consisted of incompatible or otherwise
+unsupported bits.
 .El
 .Sh SEE ALSO
 .Xr mount_nfs 8 ,
@@ -245,11 +127,7 @@ The
 system call is designed specifically for the
 .Tn NFS
 support daemons and as such is specific to their requirements.
-It should really return values to indicate the need for authentication
-support, since
-.Er ENEEDAUTH
-is not really an error.
 Several fields of the argument structures are assumed to be valid and
 sometimes to be unchanged from a previous call, such that
-.Nm nfssvc
+.Fn nfssvc
 must be used with extreme care.

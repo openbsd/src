@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.26 2005/12/02 01:08:01 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.27 2007/05/27 21:14:41 thib Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.26 2005/12/02 01:08:01 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.27 2007/05/27 21:14:41 thib Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ main(int argc, char *argv[])
 	fd_set *ready, *sockbits;
 	size_t fd_size;
 	int ch, connect_type_cnt, i, maxsock = 0, msgsock;
-	int nfsdcnt = DEFNFSDCNT, nfssvc_flag, on, reregister = 0, sock;
+	int nfsdcnt = DEFNFSDCNT, on, reregister = 0, sock;
 	int udpflag = 0, tcpflag = 0, tcpsock;
 	const char *errstr = NULL;
 	socklen_t len;
@@ -199,14 +199,10 @@ main(int argc, char *argv[])
 		}
 
 		setproctitle("server");
-		nfssvc_flag = NFSSVC_NFSD;
 		nsd.nsd_nfsd = NULL;
-		while (nfssvc(nfssvc_flag, &nsd) < 0) {
-			if (errno != ENEEDAUTH) {
-				syslog(LOG_ERR, "nfssvc: %m");
-				return (1);
-			}
-			nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHINFAIL;
+		if (nfssvc(NFSSVC_NFSD, &nsd) < 0) {
+			syslog(LOG_ERR, "nfssvc: %m");
+			return (1);
 		}
 		return (0);
 	}
@@ -323,7 +319,10 @@ main(int argc, char *argv[])
 			nfsdargs.sock = msgsock;
 			nfsdargs.name = (caddr_t)&inetpeer;
 			nfsdargs.namelen = sizeof(inetpeer);
-			nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
+			if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) < 0) {
+				syslog(LOG_ERR, "can't Add TCP socket");
+				return (1);
+			}
 			(void)close(msgsock);
 		}
 	}
