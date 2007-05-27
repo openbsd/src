@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.1 2007/05/26 17:39:53 claudio Exp $ */
+/*	$OpenBSD: if_che.c,v 1.2 2007/05/27 03:52:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -83,10 +83,18 @@ int		che_read_flash_reg(struct cheg_softc *, size_t, int,
 		    u_int32_t *);
 int		che_read_flash_multi4(struct cheg_softc *, u_int, u_int32_t *,
 		    size_t);
+int		che_read_eeprom(struct cheg_softc *, struct pci_attach_args *,
+		    pcireg_t, pcireg_t *);
+int		che_get_vpd(struct cheg_softc *, struct pci_attach_args *,
+		    void *, size_t);
 void		che_reset(struct cheg_softc *);
 
 /* registers & defines */
 #define CHE_PCI_BAR		0x10
+#define CHE_PCI_CAP_ID_VPD	0x03
+#define CHE_PCI_VPD_DATA	0x4
+#define CHE_PCI_F_VPD_ADDR	0x80000000
+#define CHE_PCI_VPD_BASE	0xc00
 
 #define CHE_REG_PL_RST		0x6f0
 #define CHE_RST_F_CRSTWRM	0x2
@@ -118,6 +126,65 @@ void		che_reset(struct cheg_softc *);
 #define FW_VERS_MAJOR(_x)	(((_x) >> 16) & 0xfff)
 #define FW_VERS_MINOR(_x)	(((_x) >> 8) & 0xff)
 #define FW_VERS_MICRO(_x)	((_x) & 0xff)
+
+/* Partial EEPROM Vital Product Data structure. */
+struct che_vpd {
+	u_int8_t	id_tag;
+	u_int8_t	id_len[2];
+	u_int8_t	id_data[16];
+	u_int8_t	vpdr_tag;
+	u_int8_t	vpdr_len[2];
+	u_int8_t	pn_name[2];		/* part number */
+	u_int8_t	pn_len;
+	u_int8_t	pn_data[16];
+	u_int8_t	ec_name[2];		/* EC level */
+	u_int8_t	ec_len;
+	u_int8_t	ec_data[16];
+	u_int8_t	sn_name[2];		/* serial number */
+	u_int8_t	sn_len;
+	u_int8_t	sn_data[16];
+	u_int8_t	na_name[2];		/* MAC address base */
+	u_int8_t	na_len;
+	u_int8_t	na_data[12];
+	u_int8_t	cclk_name[2];		/* core clock */
+	u_int8_t	cclk_len;
+	u_int8_t	cclk_data[6];
+	u_int8_t	mclk_name[2];		/* mem clock */
+	u_int8_t	mclk_len;
+	u_int8_t	mclk_data[6];
+	u_int8_t	uclk_name[2];		/* uP clock */
+	u_int8_t	uclk_len;
+	u_int8_t	uclk_data[6];
+	u_int8_t	mdc_name[2];		/* MDIO clock */
+	u_int8_t	mdc_len;
+	u_int8_t	mdc_data[6];
+	u_int8_t	mt_name[2];		/* mem timing */
+	u_int8_t	mt_len;
+	u_int8_t	mt_data[2];
+	u_int8_t	xaui0cfg_name[2];	/* XAUI0 config */
+	u_int8_t	xaui0cfg_len;
+	u_int8_t	xaui0cfg_data[6];
+	u_int8_t	xaui1cfg_name[2];	/* XAUI1 config */
+	u_int8_t	xaui1cfg_len;
+	u_int8_t	xaui1cfg_data[6];
+	u_int8_t	port0_name[2];		/* PHY0 */
+	u_int8_t	port0_len;
+	u_int8_t	port0_data[2];
+	u_int8_t	port1_name[2];		/* PHY1 */
+	u_int8_t	port1_len;
+	u_int8_t	port1_data[2];
+	u_int8_t	port2_name[2];		/* PHY2 */
+	u_int8_t	port2_len;
+	u_int8_t	port2_data[2];
+	u_int8_t	port3_name[2];		/* PHY3 */
+	u_int8_t	port3_len;
+	u_int8_t	port3_data[2];
+	u_int8_t	rv_name[2];		/* csum */
+	u_int8_t	rv_len;
+	u_int8_t	rv_data[1];
+	u_int8_t	pad[4];			/* for multiple-of-4 sizing */
+} __packed;
+
 
 struct cfattach cheg_ca = {
 	sizeof(struct cheg_softc), cheg_match, cheg_attach
@@ -197,6 +264,7 @@ cheg_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	const struct cheg_device *cd;
 	struct che_attach_args caa;
+	struct che_vpd vpd;
 	pcireg_t memtype;
 	u_int32_t vers;
 	u_int i;
@@ -225,8 +293,11 @@ cheg_attach(struct device *parent, struct device *self, void *aux)
 	che_reset(sc);
 
 	che_read_flash_multi4(sc, FW_VERS_ADDR, &vers, 1);
-	printf(", rev %d, fw %d-%d.%d.%d\n", sc->sc_rev, FW_VERS_TYPE(vers),
+	printf(", rev %d, fw %s-%d.%d.%d\n", sc->sc_rev,
+	    FW_VERS_TYPE(vers) ? "T" : "N",
 	    FW_VERS_MAJOR(vers), FW_VERS_MINOR(vers), FW_VERS_MICRO(vers));
+
+	che_get_vpd(sc, pa, &vpd, sizeof(vpd)/sizeof(u_int32_t));
 
 	caa.caa_pa = pa;
 	for (i = 0; i < cd->cd_nports; i++) {
@@ -351,6 +422,65 @@ che_read_flash_multi4(struct cheg_softc *sc, u_int addr, u_int32_t *datap,
 		datap++;
 	}
 	return (0);
+}
+
+int
+che_read_eeprom(struct cheg_softc *sc, struct pci_attach_args *pa,
+    pcireg_t addr, pcireg_t *dp)
+{
+	pcireg_t rv, base; 
+	int i = 4;
+
+	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, CHE_PCI_CAP_ID_VPD,
+	    &base, NULL)) {
+		printf("%s: VPD EEPROM not found\n", 
+		    DEVNAME(sc), addr);
+		return EIO;
+	}
+
+	addr <<= 16;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, base, addr);
+
+	while(i--) {
+		delay(10);	
+		rv = pci_conf_read(pa->pa_pc, pa->pa_tag, base);
+		if (rv & CHE_PCI_F_VPD_ADDR)
+			break;
+	}
+	if (!(rv & CHE_PCI_F_VPD_ADDR)) {
+		printf("%s: reading EEPROM address 0x%x failed\n", 
+		    DEVNAME(sc), addr);
+		return EIO;
+	}
+
+	*dp = pci_conf_read(pa->pa_pc, pa->pa_tag, base + CHE_PCI_VPD_DATA);
+	return (0);
+}
+
+int
+che_get_vpd(struct cheg_softc *sc, struct pci_attach_args *pa,
+    void *vpd, size_t dwords)
+{
+	pcireg_t dw0, *dw = vpd;
+	int i;
+	u_int16_t addr;
+
+	/*
+	 * Card information is normally at CHE_PCI_VPD_BASE but some early
+	 * cards had it at 0.
+	 */
+	if (che_read_eeprom(sc, pa, CHE_PCI_VPD_BASE, &dw0))
+		return -1;
+
+	/* we compare the id_tag which is least significant byte */
+	addr = ((dw0 & 0xff) == 0x82) ? CHE_PCI_VPD_BASE : 0;
+
+	for (i = 0; i < dwords; i++) {
+		if (che_read_eeprom(sc, pa, addr + i * 4, &dw[i]))
+			return -1;
+	}
+
+	return 0;
 }
 
 void
