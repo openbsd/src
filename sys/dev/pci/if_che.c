@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.2 2007/05/27 03:52:00 claudio Exp $ */
+/*	$OpenBSD: if_che.c,v 1.3 2007/05/27 05:18:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -44,50 +44,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
-
-
-struct cheg_softc {
-	struct device		sc_dev;
-
-	bus_dma_tag_t		sc_dmat;
-
-	bus_space_tag_t		sc_memt;
-	bus_space_handle_t	sc_memh;
-	bus_size_t		sc_mems;
-
-	u_int32_t		sc_rev;	/* card revision */
-};
-
-struct che_softc {
-	struct device		sc_dev;
-	struct arpcom		sc_ac;
-	struct ifmedia		sc_media;
-
-	void			*sc_if;
-};
-
-/* function protos */
-int		cheg_match(struct device *, void *, void *);
-void		cheg_attach(struct device *, struct device *, void *);
-int		cheg_print(void *, const char *);
-int		che_match(struct device *, void *, void *);
-void		che_attach(struct device *, struct device *, void *);
-u_int32_t 	che_read(struct cheg_softc *, bus_size_t);
-void		che_write(struct cheg_softc *, bus_size_t, u_int32_t);
-int		che_waitfor(struct cheg_softc *, bus_size_t, u_int32_t, int);
-int		che_write_flash_reg(struct cheg_softc *, size_t, int,
-		    u_int32_t);
-int		che_read_flash_reg(struct cheg_softc *, size_t, int,
-		    u_int32_t *);
-int		che_read_flash_multi4(struct cheg_softc *, u_int, u_int32_t *,
-		    size_t);
-int		che_read_eeprom(struct cheg_softc *, struct pci_attach_args *,
-		    pcireg_t, pcireg_t *);
-int		che_get_vpd(struct cheg_softc *, struct pci_attach_args *,
-		    void *, size_t);
-void		che_reset(struct cheg_softc *);
 
 /* registers & defines */
 #define CHE_PCI_BAR		0x10
@@ -186,8 +142,30 @@ struct che_vpd {
 } __packed;
 
 
+#define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
+
+/* the pci controller */
+
+struct cheg_softc {
+	struct device		sc_dev;
+
+	bus_dma_tag_t		sc_dmat;
+
+	bus_space_tag_t		sc_memt;
+	bus_space_handle_t	sc_memh;
+	bus_size_t		sc_mems;
+
+	u_int32_t		sc_rev;	/* card revision */
+};
+
+int		cheg_match(struct device *, void *, void *);
+void		cheg_attach(struct device *, struct device *, void *);
+int		cheg_print(void *, const char *);
+
 struct cfattach cheg_ca = {
-	sizeof(struct cheg_softc), cheg_match, cheg_attach
+	sizeof(struct cheg_softc),
+	cheg_match,
+	cheg_attach
 };
 
 struct cfdriver cheg_cd = {
@@ -195,20 +173,54 @@ struct cfdriver cheg_cd = {
 };
 
 /* glue between the controller and the port */
+
 struct che_attach_args {
 	struct pci_attach_args	*caa_pa;
 	pci_intr_handle_t	caa_ih;
 	int			caa_port;
 };
 
+/* che itself */
+
+struct che_softc {
+	struct device		sc_dev;
+	struct arpcom		sc_ac;
+	struct ifmedia		sc_media;
+
+	void			*sc_ih;
+};
+
+int		che_match(struct device *, void *, void *);
+void		che_attach(struct device *, struct device *, void *);
+
 struct cfattach che_ca = {
-	sizeof(struct che_softc), che_match, che_attach
+	sizeof(struct che_softc),
+	che_match,
+	che_attach
 };
 
 struct cfdriver che_cd = {
 	NULL, "che", DV_IFNET
 };
 
+int		che_write_flash_reg(struct cheg_softc *, size_t, int,
+		    u_int32_t);
+int		che_read_flash_reg(struct cheg_softc *, size_t, int,
+		    u_int32_t *);
+int		che_read_flash_multi4(struct cheg_softc *, u_int, u_int32_t *,
+		    size_t);
+int		che_read_eeprom(struct cheg_softc *, struct pci_attach_args *,
+		    pcireg_t, pcireg_t *);
+int		che_get_vpd(struct cheg_softc *, struct pci_attach_args *,
+		    void *, size_t);
+void		che_reset(struct cheg_softc *);
+
+/* bus_space wrappers */
+u_int32_t 	che_read(struct cheg_softc *, bus_size_t);
+void		che_write(struct cheg_softc *, bus_size_t, u_int32_t);
+int		che_waitfor(struct cheg_softc *, bus_size_t, u_int32_t, int);
+
+/* cheg */
 struct cheg_device {
 	pci_vendor_id_t	cd_vendor;
 	pci_vendor_id_t	cd_product;
