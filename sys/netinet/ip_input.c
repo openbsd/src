@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.147 2007/03/18 23:23:17 mpf Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.148 2007/05/27 20:14:15 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -196,8 +196,8 @@ static	struct ip_srcrt {
 	struct	in_addr route[MAX_IPOPTLEN/sizeof(struct in_addr)];
 } ip_srcrt;
 
-static void save_rte(u_char *, struct in_addr);
-static int ip_weadvertise(u_int32_t);
+void save_rte(u_char *, struct in_addr);
+int ip_weadvertise(u_int32_t);
 
 /*
  * IP initialization: fill in IP protocol switch table.
@@ -1264,7 +1264,7 @@ save_rte(option, dst)
  * Check whether we do proxy ARP for this address and we point to ourselves.
  * Code shamelessly copied from arplookup().
  */
-static int
+int
 ip_weadvertise(addr)
 	u_int32_t addr;
 {
