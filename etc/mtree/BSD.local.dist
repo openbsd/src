@@ -1,4 +1,4 @@
-#     $OpenBSD: BSD.local.dist,v 1.12 2002/06/09 06:15:15 todd Exp $
+#     $OpenBSD: BSD.local.dist,v 1.13 2007/05/27 00:24:24 naddy Exp $
 #     $FreeBSD: BSD.local.dist,v 1.32 1997/09/12 05:44:11 asami Exp $
 #
 
@@ -181,6 +181,8 @@
 	    nl_NL.ISO_8859-1
             ..
 	    no_NO.ISO_8859-1
+            ..
+	    pl_PL.ISO_8859-2
             ..
 	    pt_PT.ISO_8859-1
             ..
