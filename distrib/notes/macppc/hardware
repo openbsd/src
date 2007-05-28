@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.82 2007/05/28 13:20:48 martin Exp $
+dnl	$OpenBSD: hardware,v 1.83 2007/05/28 22:16:31 cnst Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -554,6 +554,17 @@ Supported devices {:-include-:}:
 			Video Highway XTreme
 			VideoLogic Captivator PCI
 			Zoltrix TV and Genie TV/FM
+		Hardware monitoring sensors, including:
+			Analog Devices AD7416, AD7417 and AD7418 (adc)
+			Analog Devices ADM1030 (admtmp)
+			Analog Devices ADT7460 (adt)
+			Apple Fan Control Unit (fcu)
+			Apple Sudden Motion Sensor (asms)
+			National Semiconductor LM75, LM77 (lmtemp)
+			National Semiconductor LM87 (lmenv)
+			Maxim DS1624/DS1631/DS1721 (maxds)
+			Maxim MAX6642/MAX6690 (maxtmp)
+			TAOS TSL2560/61 light sensor (tsl)
 		Hardware watchdog timer support
 			Quancom PWDOG1 (pwdog)
 		Meinberg Funkuhren radio clocks, including:
