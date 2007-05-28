@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.418 2007/04/27 02:41:41 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.419 2007/05/28 02:57:11 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -73,7 +73,7 @@
 #	MDTERM      - 'vt220' assumed if not provided
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
-#	MDMTDEVS    - '/^[cmsw]t[0-9][0-9]* /s/ .*//p'
+#	MDMTDEVS    - '/^[cms]t[0-9][0-9]* /s/ .*//p'
 #	MDSERIAL    - offer to configure a serial console
 #	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
 . install.md
@@ -1657,7 +1657,7 @@ dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 # Scan /var/run/dmesg.boot for interesting devices.
 DKDEVS=$(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
 CDDEVS=$(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
-MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cmsw]t[0-9][0-9]* /s/ .*//p}")
+MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
 IFDEVS=$(get_ifdevs)
 SERIALDEV=$(get_serialdev)
 
