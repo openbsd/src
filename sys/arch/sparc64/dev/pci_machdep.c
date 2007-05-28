@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.28 2007/04/02 18:10:14 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.29 2007/05/28 16:14:27 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ pci_intr_map(pa, ihp)
 	char devtype[30];
 
 	len = OF_getproplen(node, "interrupts");
-	if (len < sizeof(interrupts)) {
+	if (len < 0 || len < sizeof(interrupts)) {
 		DPRINTF(SPDB_INTMAP,
 			("pci_intr_map: interrupts len %d too small\n", len));
 		return (ENODEV);
