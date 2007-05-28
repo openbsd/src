@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.53 2007/05/28 19:18:45 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.54 2007/05/28 23:46:28 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -77,9 +77,6 @@ TAILQ_HEAD(,pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
 static struct pool phpool;
-
-/* # of seconds to retain page after last use */
-int pool_inactive_time = 10;
 
 /* This spin lock protects both pool_head */
 struct simplelock pool_head_slock;
@@ -1248,7 +1245,6 @@ pool_reclaim(struct pool *pp)
 {
 	struct pool_item_header *ph, *phnext;
 	struct pool_cache *pc;
-	struct timeval curtime;
 	struct pool_pagelist pq;
 	int s;
 
@@ -1263,8 +1259,6 @@ pool_reclaim(struct pool *pp)
 	 */
 	TAILQ_FOREACH(pc, &pp->pr_cachelist, pc_poollist)
 		pool_cache_reclaim(pc);
-
-	microuptime(&curtime);
 
 	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
 		phnext = LIST_NEXT(ph, ph_pagelist);
