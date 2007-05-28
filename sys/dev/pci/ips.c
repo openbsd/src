@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.20 2007/05/28 03:01:10 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.21 2007/05/28 03:57:43 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -504,6 +504,9 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		    "target %d, lun %d\n", sc->sc_dev.dv_xname,
 		    target, link->lun));
 		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -605,6 +608,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		    sc->sc_dev.dv_xname, xs->cmd->opcode));
 		xs->error = XS_DRIVER_STUFFUP;
 	}
+	scsi_done(xs);
 	splx(s);
 
 	return (COMPLETE);
