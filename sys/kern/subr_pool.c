@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.52 2007/05/28 17:55:56 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.53 2007/05/28 19:18:45 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -93,7 +93,6 @@ struct pool_item_header {
 				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
-	struct timeval		ph_time;	/* last referenced */
 };
 
 struct pool_item {
@@ -951,14 +950,6 @@ pool_do_put(struct pool *pp, void *v)
 		} else {
 			LIST_REMOVE(ph, ph_pagelist);
 			LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
-
-			/*
-			 * Update the timestamp on the page.  A page must
-			 * be idle for some period of time before it can
-			 * be reclaimed by the pagedaemon.  This minimizes
-			 * ping-pong'ing for memory.
-			 */
-			microuptime(&ph->ph_time);
 		}
 		pool_update_curpage(pp);
 	}
@@ -1077,7 +1068,6 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	TAILQ_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
-	memset(&ph->ph_time, 0, sizeof(ph->ph_time));
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
 
@@ -1260,7 +1250,6 @@ pool_reclaim(struct pool *pp)
 	struct pool_cache *pc;
 	struct timeval curtime;
 	struct pool_pagelist pq;
-	struct timeval diff;
 	int s;
 
 	if (simple_lock_try(&pp->pr_slock) == 0)
@@ -1285,9 +1274,6 @@ pool_reclaim(struct pool *pp)
 			break;
 
 		KASSERT(ph->ph_nmissing == 0);
-		timersub(&curtime, &ph->ph_time, &diff);
-		if (diff.tv_sec < pool_inactive_time)
-			continue;
 
 		/*
 		 * If freeing this page would put us below
@@ -1353,10 +1339,8 @@ pool_print_pagelist(struct pool_pagelist *pl, int (*pr)(const char *, ...))
 #endif
 
 	LIST_FOREACH(ph, pl, ph_pagelist) {
-		(*pr)("\t\tpage %p, nmissing %d, time %lu,%lu\n",
-		    ph->ph_page, ph->ph_nmissing,
-		    (u_long)ph->ph_time.tv_sec,
-		    (u_long)ph->ph_time.tv_usec);
+		(*pr)("\t\tpage %p, nmissing %d\n",
+		    ph->ph_page, ph->ph_nmissing);
 #ifdef DIAGNOSTIC
 		TAILQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 			if (pi->pi_magic != PI_MAGIC) {
