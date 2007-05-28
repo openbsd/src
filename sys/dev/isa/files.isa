@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.94 2006/03/26 20:19:53 grange Exp $
+#	$OpenBSD: files.isa,v 1.95 2007/05/28 02:13:44 krw Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -135,11 +135,6 @@ file	dev/isa/mcd.c			mcd needs-flag
 # ISA "wd" (ESDI/IDE/etc.) controllers, ATAPI bus
 attach	wdc at isa with wdc_isa: isa_dma
 file	dev/isa/wdc_isa.c		wdc_isa
-
-# Wangtek- and Archive-compatible tape controller boards
-device	wt: tape, isa_dma
-attach	wt at isa
-file	dev/isa/wt.c			wt needs-flag
 
 #
 # ISA networking drivers

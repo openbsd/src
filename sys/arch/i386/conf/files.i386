@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.160 2007/05/04 13:22:21 art Exp $
+#	$OpenBSD: files.i386,v 1.161 2007/05/28 02:13:44 krw Exp $
 #
 # new style config file for i386 architecture
 #
@@ -164,7 +164,6 @@ file	dev/pci/if_hme_pci.c		hme_pci
 
 major	{mcd = 7}
 major	{wd = 0}
-major	{wt = 3}
 
 include "../../../dev/isa/files.isa"
 file	arch/i386/isa/isa_machdep.c	isabus
