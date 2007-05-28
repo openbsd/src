@@ -187,7 +187,6 @@
 ./usr/include/sparc64/loadfile_machdep.h
 ./usr/include/sparc64/lock.h
 ./usr/include/sparc64/mutex.h
-./usr/include/sparc64/netbsd_machdep.h
 ./usr/include/sparc64/openfirm.h
 ./usr/include/sparc64/openpromio.h
 ./usr/include/sparc64/param.h

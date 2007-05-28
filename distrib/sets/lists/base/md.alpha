@@ -654,7 +654,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/limits.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/lock.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/mutex.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/netbsd_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/pal.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/param.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/pcb.ph

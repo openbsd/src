@@ -32,7 +32,6 @@
 ./usr/include/alpha/limits.h
 ./usr/include/alpha/lock.h
 ./usr/include/alpha/mutex.h
-./usr/include/alpha/netbsd_machdep.h
 ./usr/include/alpha/pal.h
 ./usr/include/alpha/param.h
 ./usr/include/alpha/pcb.h
