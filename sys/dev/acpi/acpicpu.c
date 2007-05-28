@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.23 2007/05/28 03:38:32 krw Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.24 2007/05/28 20:22:24 robert Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -467,7 +467,7 @@ acpicpu_setperf(int level) {
 	sc = acpicpu_sc[cpu_number()];
 
 	dnprintf(10, "%s: acpicpu setperf level %d\n",
-	    sc->sc_devnode->>name, level);
+	    sc->sc_devnode->name, level);
 
 	if (level < 0 || level > 100) {
 		dnprintf(10, "%s: acpicpu setperf illegal percentage\n",
