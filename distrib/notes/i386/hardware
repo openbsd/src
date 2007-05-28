@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.249 2007/05/28 02:49:19 krw Exp $
+dnl	$OpenBSD: hardware,v 1.250 2007/05/28 18:57:25 cnst Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1364,13 +1364,31 @@ Supported hardware {:-include-:}:
 		    VideoLogic Captivator PCI
 		    Zoltrix TV and Genie TV/FM
 		Hardware monitoring sensors, including: [G]
+		    Asus AS99127F
+		    Asus ASB100
+		    Analog Devices AD7416, AD7417 and AD7418
+		    Analog Devices ADM1021
+		    Analog Devices ADM1024
+		    Analog Devices ADM1025
+		    Analog Devices ADM1026
+		    Analog Devices ADM1030
+		    Analog Devices ADM1031
+		    Analog Devices ADT7460
+		    Genesys Logic GL518SM
 		    ITE IT8705F, IT8712F
-		    National Semiconductor LM75, LM77, LM78, LM78-J, LM79
+		    National Semiconductor LM87
+		    National Semiconductor LM75, LM77
+		    National Semiconductor LM78, LM78-J, LM79
 		    National Semiconductor PC87366 LPC Super I/O VLM and TMS
+		    Maxim DS1624/DS1631/DS1721
+		    Maxim MAX6642/MAX6690
 		    SiS SiS950
+		    ThinkPad Active Protection System accelerometer
 		    VIA VT1211
 		    VIA VT82C686A, VT8231
-		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
+		    Winbond W83627HF, W83627THF, W83627DHG, W83627EHF, W83637HF
+		    Winbond W83697HF, W83781D, W83782D, W83783S, W83791D, W83792D
+		    Winbond W83L784R, W83L785R and W83L785TS-L
 		Hardware watchdog timer support, including: [G]
 		    AMD Elan SC520 System Controller
 		    ICS PCI-WDT500/501 watchdog timer
