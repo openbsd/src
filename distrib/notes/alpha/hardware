@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.87 2007/03/18 10:11:34 martin Exp $
+dnl	$OpenBSD: hardware,v 1.88 2007/05/28 21:22:55 cnst Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -429,6 +429,19 @@ Supported Peripherals:
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including: [G]
 			Leadtek Winfast TV 2000
+		Hardware monitoring sensors, including: [-]
+			Analog Devices AD7416, AD7417 and AD7418 (adc)
+			Analog Devices ADM1021 (admtemp)
+			Analog Devices ADM1024 (admlc)
+			Analog Devices ADM1025 (admtm)
+			Analog Devices ADM1030 (admtmp)
+			Analog Devices ADM1031 (admtt)
+			Analog Devices ADT7460 (adt)
+			National Semiconductor LM75, LM77 (lmtemp)
+			National Semiconductor LM78, LM78-J, LM79 (lm)
+			National Semiconductor LM87 (lmenv)
+			Maxim DS1624/DS1631/DS1721 (maxds)
+			Maxim MAX6642/MAX6690 (maxtmp)
 
 Untested Peripherals:
 
