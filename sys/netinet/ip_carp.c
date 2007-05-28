@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.139 2007/05/27 20:11:44 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.140 2007/05/28 06:31:01 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -55,6 +55,9 @@
 #include <net/if_llc.h>
 #include <net/route.h>
 #include <net/netisr.h>
+
+/* for arc4random() */
+#include <dev/rndvar.h>
 
 #if NFDDI > 0
 #include <net/if_fddi.h>

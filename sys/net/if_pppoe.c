@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.11 2006/12/28 23:38:23 todd Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.12 2007/05/28 06:31:01 mcbride Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -63,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $")
 #include <net/netisr.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+/* for arc4random() */
+#include <dev/rndvar.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
