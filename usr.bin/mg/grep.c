@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.33 2006/11/19 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.34 2007/05/28 17:52:17 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -34,6 +34,7 @@
 #include <libgen.h>
 #include <time.h>
 
+int	 globalwd = FALSE;
 static int	 compile_goto_error(int, int);
 int		 next_error(int, int);
 static int	 grep(int, int);
@@ -41,7 +42,6 @@ static int	 compile(int, int);
 static int	 gid(int, int);
 static struct buffer	*compile_mode(const char *, const char *);
 static int	 xlint(int, int);
-
 void grep_init(void);
 
 static char compile_last_command[NFILEN] = "make ";
@@ -316,7 +316,8 @@ compile_goto_error(int f, int n)
 		goto fail;
 
 	if (fname && fname[0] != '/') {
-		(void)strlcpy(path, curbp->b_cwd, sizeof(path));
+		if (getbufcwd(path, sizeof(path)) == FALSE)
+			goto fail;
 		if (strlcat(path, fname, sizeof(path)) >= sizeof(path))
 			goto fail;
 		adjf = path;
@@ -367,4 +368,22 @@ next_error(int f, int n)
 	curwp->w_flag |= WFMOVE;
 
 	return (compile_goto_error(f, n));
+}
+
+/*
+ * Since we don't have variables (we probably should) these are command
+ * processors for changing the values of mode flags.
+ */
+/* ARGSUSED */
+int
+globalwdtoggle(int f, int n)
+{
+	if (f & FFARG)
+		globalwd = n > 0;
+	else
+		globalwd = !globalwd;
+
+	sgarbf = TRUE;
+
+	return (TRUE);
 }

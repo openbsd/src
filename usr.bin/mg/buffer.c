@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.66 2006/11/19 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.67 2007/05/28 17:52:17 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -14,6 +14,9 @@
 
 static struct buffer  *makelist(void);
 static struct buffer *bnew(const char *);
+
+/* Flag for global working dir */
+extern int globalwd;
 
 /* ARGSUSED */
 int
@@ -782,7 +785,7 @@ getbufcwd(char *path, size_t plen)
 	if (plen == 0)
 		return (FALSE);
 
-	if (curbp->b_cwd[0] != '\0') {
+	if (globalwd == FALSE && curbp->b_cwd[0] != '\0') {
 		(void)strlcpy(path, curbp->b_cwd, plen);
 	} else {
 		if (getcwdir(cwd, sizeof(cwd)) == FALSE)

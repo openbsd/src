@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.26 2006/12/21 18:06:02 kjell Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.27 2007/05/28 17:52:17 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -89,6 +89,7 @@ static struct funmap functnames[] = {
 #ifndef NO_MACRO
 	{finishmacro, "end-kbd-macro",},
 #endif /* !NO_MACRO */
+	{globalwdtoggle, "global-wd-mode",},
 	{gotoeob, "end-of-buffer",},
 	{gotoeol, "end-of-line",},
 	{enlargewind, "enlarge-window",},
