@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.5 2007/05/27 06:04:38 claudio Exp $ */
+/*	$OpenBSD: if_che.c,v 1.6 2007/05/28 07:42:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -44,6 +44,9 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 /* registers & defines */
 
@@ -187,12 +190,10 @@ struct che_attach_args {
 struct che_softc {
 	struct device		sc_dev;
 	struct arpcom		sc_ac;
-	struct ifmedia		sc_media;
+	struct mii_data		sc_mii;
 
 	struct cheg_softc	*sc_cheg;
-
 	void			*sc_ih;
-
 	int			sc_port;
 };
 
@@ -225,6 +226,12 @@ int		che_ioctl(struct ifnet *, u_long, caddr_t);
 void		che_watchdog(struct ifnet *);
 void		che_start(struct ifnet *);
 
+/* ifmedia & mii helper functions */
+int	che_ifmedia_upd(struct ifnet *);
+void	che_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+int	che_miibus_readreg(struct device *, int, int);
+void	che_miibus_writereg(struct device *, int, int, int);
+void	che_miibus_statchg(struct device *);
 
 /* bus_space wrappers */
 u_int32_t 	che_read(struct cheg_softc *, bus_size_t);
@@ -395,7 +402,16 @@ che_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, 400);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/* XXX ifmedia */
+	ifmedia_init(&sc->sc_mii.mii_media, 0,
+	    che_ifmedia_upd, che_ifmedia_sts);
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = che_miibus_readreg;
+	sc->sc_mii.mii_writereg = che_miibus_writereg;
+	sc->sc_mii.mii_statchg = che_miibus_statchg;
+
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -570,6 +586,48 @@ void
 che_start(struct ifnet *ifp)
 {
 	/* XXX */
+}
+
+int
+che_ifmedia_upd(struct ifnet *ifp)
+{
+	struct che_softc *sc = ifp->if_softc;
+
+	mii_mediachg(&sc->sc_mii);
+	return (0);
+}
+
+void
+che_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct che_softc *sc = ifp->if_softc;
+
+	mii_pollstat(&sc->sc_mii);
+	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+}
+
+int
+che_miibus_readreg(struct device *dev, int phy, int reg)
+{
+	//struct che_softc *sc = (struct che_softc *)dev; 
+
+	return (0);
+}
+
+void
+che_miibus_writereg(struct device *dev, int phy, int reg, int val)
+{
+	//struct che_softc *sc = (struct che_softc *)dev; 
+}
+
+void 
+che_miibus_statchg(struct device *dev)   
+{
+	struct che_softc *sc = (struct che_softc *)dev;
+	//struct mii_data *mii = &sc->sc_mii;
+
+	printf("%s: che_miibus_statchg\n", DEVNAME(sc));
 }
 
 u_int32_t
