@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.283 2007/05/28 11:15:10 espie Exp $
+# $OpenBSD: pkg_add,v 1.284 2007/05/28 11:29:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -200,31 +200,29 @@ sub can_install
 	return 1;
 }
 
-
-# This does prepare_to_add a package: finding it and reading its 
-# package information
-sub prepare_to_add
+sub create_handle
 {
 	my ($pkg, $state) = @_;
-
-	my $set = OpenBSD::UpdateSet->new;
 	my $handle = OpenBSD::Handle->new;
-	$set->add_newer($handle);
 	my $location = OpenBSD::PackageLocator->find($pkg, $state->{arch});
 	if (!$location) {
 		print $state->deptree_header($pkg);
 		print "Can't find $pkg\n";
 		$handle->set_error(OpenBSD::Handle::NOT_FOUND);
-		return $set;
+		return $handle;
 	}
 	$handle->{location} = $location;
+	if ($state->{verbose}) {
+		print $state->deptree_header($pkg);
+		print "parsing $pkg\n";
+	}
     	my $plist = $location->plist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
 		$location->close_with_client_error;
 		$location->wipe_info;
-		return $set;
+		return $handle;
 	}
 	$handle->{plist} = $plist;
 	if ($plist->localbase ne $state->{localbase}) {
@@ -233,7 +231,7 @@ sub prepare_to_add
 		$location->wipe_info;
 		delete $handle->{plist};
 		$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
-		return $set;
+		return $handle;
 	}
 	my $pkgname = $handle->{pkgname} = $plist->pkgname;
 
@@ -248,7 +246,7 @@ sub prepare_to_add
 		$location->wipe_info;
 		delete $handle->{plist};
 		$handle->set_error(OpenBSD::Handle::ALREADY_INSTALLED);
-		return $set;
+		return $handle;
 	}
 	if ($pkg ne '-') {
 		if (!defined $pkgname or 
@@ -258,16 +256,25 @@ sub prepare_to_add
 			$location->wipe_info;
 			delete $handle->{plist};
 			$handle->set_error(OpenBSD::Handle::BAD_PACKAGE);
-			return $set;
+			return $handle;
 		}
 	}
-	if ($state->{verbose}) {
-		print $state->deptree_header($pkg);
-		print "parsing $pkgname\n";
+	return $handle;
+}
+
+sub prepare_to_add
+{
+	my ($pkg, $state) = @_;
+
+	my $set = OpenBSD::UpdateSet->new;
+	my $handle = create_handle($pkg, $state);
+	$set->add_newer($handle);
+	if ($handle->has_error) {
+		return $set;
 	}
 	if (!can_install($set, $state)) {
-		$location->close_with_client_error;
-		$location->wipe_info;
+		$handle->{location}->close_with_client_error;
+		$handle->{location}->wipe_info;
 		delete $handle->{plist};
 		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 	}
