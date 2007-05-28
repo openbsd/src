@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.18 2007/05/27 21:14:41 thib Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.19 2007/05/28 18:47:54 jmc Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -44,7 +44,7 @@
 .Sh DESCRIPTION
 The
 .Fn nfssvc
-function is used by the NFS daemons to pass information into the kernel
+function is used by NFS daemons to pass information into the kernel
 and also to enter the kernel as a server daemon.
 The
 .Fa flags
@@ -56,11 +56,11 @@ flags.
 .Pp
 To enter an
 .Xr nfsd 8
-daemon into the kernel
+daemon into the kernel,
 .Fn nfssvc
 is called with the flag
 .Dv NFSSVC_NFSD
-and a pointer to a
+and a pointer to a structure:
 .Bd -literal
 struct nfsd_srvargs {
         struct nfsd     *nsd_nfsd;   /* Pointer to in kernel nfsd struct */
@@ -76,7 +76,6 @@ struct nfsd_srvargs {
         NFSKERBKEY_T    nsd_key;        /* Session key */
 };
 .Ed
-structure.
 .Pp
 To add further sockets for processing by the
 .Xr nfsd 8
@@ -86,7 +85,7 @@ daemon  calls
 .Fn nfssvc
 with the flag
 .Dv NFSSVC_ADDSOCK
-and a pointer to a
+and a pointer to a structure:
 .Bd -literal
 struct nfsd_args {
         int     sock;     /* Socket to serve */
@@ -94,8 +93,6 @@ struct nfsd_args {
         int     namelen;  /* Length of name */
 };
 .Ed
-structure.
-.Pp
 .Sh RETURN VALUES
 Normally
 .Nm nfssvc
