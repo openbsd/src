@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr_dispatch.h,v 1.10 2005/06/08 07:13:24 henning Exp $	*/
+/*	$OpenBSD: netisr_dispatch.h,v 1.11 2007/05/28 08:48:15 mcbride Exp $	*/
 /* $NetBSD: netisr_dispatch.h,v 1.2 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
@@ -33,6 +33,8 @@
  * When adding functions to this list, be sure to add headers to provide
  * their prototypes in <net/netisr.h> (if necessary).
  */
+
+	DONETISR(NETISR_RND,netrndintr);
 
 #ifdef INET
 #if NETHER > 0

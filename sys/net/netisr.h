@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.23 2005/06/08 07:13:24 henning Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.24 2007/05/28 08:48:15 mcbride Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
  * interrupt used for scheduling the network code to calls
  * on the lowest level routine of each protocol.
  */
+#define	NETISR_RND	1
 #define	NETISR_IP	2		/* same as AF_INET */
 #define	NETISR_IMP	3		/* same as AF_IMPLINK */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
@@ -69,6 +70,7 @@
 #ifdef _KERNEL
 extern int	netisr;			/* scheduling bits for network */
 
+void	netrndintr(void);
 void	arpintr(void);
 void	ipintr(void);
 void	ip6intr(void);
@@ -81,9 +83,8 @@ void	bridgeintr(void);
 void	pppoeintr(void);
 void	btintr(void);
 
-#include <dev/rndvar.h>
 #define	schednetisr(anisr)	\
-	{ netisr |= 1<<(anisr); add_net_randomness(anisr); setsoftnet(); }
+	{ netisr |= (1<<(anisr) | NETISR_RND); setsoftnet(); }
 #endif
 #endif
 
