@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/queue.h>
 #include <xfs/xfs_locl.h>
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_fs.h>
@@ -274,13 +275,6 @@ free_all_xfs_nodes(struct xfs *xfsp, int flags, int unmountp)
     NNPFSDEB(XDEBNODE, ("free_all_xfs_nodes done\n"));
     return error;
 }
-
-#ifndef LIST_FOREACH
-#define LIST_FOREACH(var, head, field)					\
-	for ((var) = ((head)->lh_first);				\
-		(var);							\
-		(var) = ((var)->field.le_next))
-#endif
 
 void
 vattr2xfs_attr(const struct vattr *va, struct xfs_attr *xa)

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: aicasm_gram.y,v 1.14 2006/12/23 21:08:01 krw Exp $	*/
+/*	$OpenBSD: aicasm_gram.y,v 1.15 2007/05/28 22:17:21 pyr Exp $	*/
 /*	$NetBSD: aicasm_gram.y,v 1.3 2003/04/19 19:26:11 fvdl Exp $	*/
 
 /*
@@ -1845,9 +1845,7 @@ type_check(symbol_t *symbol, expression_t *expression, int opcode)
 	 * expression are defined for this register.
 	 */
 	if (symbol->info.rinfo->typecheck_masks != FALSE) {
-		for(node = expression->referenced_syms.slh_first;
-		    node != NULL;
-		    node = node->links.sle_next) {
+		SLIST_FOREACH(node, &expression->referenced_syms, links) {
 			if ((node->symbol->type == MASK
 			  || node->symbol->type == FIELD
 			  || node->symbol->type == ENUM
@@ -1943,8 +1941,8 @@ yyerror(const char *string)
 static int
 is_download_const(expression_t *immed)
 {
-	if ((immed->referenced_syms.slh_first != NULL)
-	 && (immed->referenced_syms.slh_first->symbol->type == DOWNLOAD_CONST))
+	if (!SLIST_EMPTY(&immed->referenced_syms))
+	 && (SLIST_FIRST(&immed->referenced_syms)->symbol->type == DOWNLOAD_CONST))
 		return (TRUE);
 
 	return (FALSE);

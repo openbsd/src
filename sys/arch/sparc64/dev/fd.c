@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.10 2007/04/27 22:20:01 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.11 2007/05/28 22:17:21 pyr Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -1078,7 +1078,7 @@ fdcstatus(fdc, s)
 	struct fdc_softc *fdc;
 	char *s;
 {
-	struct fd_softc *fd = fdc->sc_drives.tqh_first;
+	struct fd_softc *fd = TAILQ_FIRST(&fdc->sc_drives);
 	int n;
 
 	/* Just print last status */

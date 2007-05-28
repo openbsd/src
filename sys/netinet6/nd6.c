@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.72 2006/06/16 16:49:40 henning Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.73 2007/05/28 22:17:21 pyr Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -557,8 +557,8 @@ nd6_timer(ignored_arg)
 	}
 
 	/* expire prefix list */
-	pr = nd_prefix.lh_first;
-	while (pr) {
+	pr = LIST_FIRST(&nd_prefix);
+	while (pr != NULL) {
 		/*
 		 * check prefix lifetime.
 		 * since pltime is just for autoconf, pltime processing for
@@ -567,7 +567,7 @@ nd6_timer(ignored_arg)
 		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
 		    time_second - pr->ndpr_lastupdate > pr->ndpr_vltime) {
 			struct nd_prefix *t;
-			t = pr->ndpr_next;
+			t = LIST_NEXT(pr, ndpr_entry);
 
 			/*
 			 * address expiration and prefix expiration are
@@ -577,7 +577,7 @@ nd6_timer(ignored_arg)
 			prelist_remove(pr);
 			pr = t;
 		} else
-			pr = pr->ndpr_next;
+			pr = LIST_NEXT(pr, ndpr_entry);
 	}
 	splx(s);
 }
@@ -618,8 +618,8 @@ nd6_purge(ifp)
 	}
 
 	/* Nuke prefix list entries toward ifp */
-	for (pr = nd_prefix.lh_first; pr; pr = npr) {
-		npr = pr->ndpr_next;
+	for (pr = LIST_FIRST(&nd_prefix); pr != NULL; pr = npr) {
+		npr = LIST_NEXT(pr, ndpr_entry);
 		if (pr->ndpr_ifp == ifp) {
 			/*
 			 * Because if_detach() does *not* release prefixes
@@ -796,7 +796,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * If the address matches one of our on-link prefixes, it should be a
 	 * neighbor.
 	 */
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		if (pr->ndpr_ifp != ifp)
 			continue;
 
@@ -1301,7 +1301,7 @@ nd6_ioctl(cmd, data, ifp)
 		 */
 		bzero(oprl, sizeof(*oprl));
 		s = splsoftnet();
-		pr = nd_prefix.lh_first;
+		pr = LIST_FIRST(&nd_prefix);
 		while (pr && i < PRLSTSIZ) {
 			struct nd_pfxrouter *pfr;
 			int j;
@@ -1314,7 +1314,7 @@ nd6_ioctl(cmd, data, ifp)
 			oprl->prefix[i].if_index = pr->ndpr_ifp->if_index;
 			oprl->prefix[i].expire = pr->ndpr_expire;
 
-			pfr = pr->ndpr_advrtrs.lh_first;
+			pfr = LIST_FIRST(&pr->ndpr_advrtrs);
 			j = 0;
 			while(pfr) {
 				if (j < DRLSTSIZ) {
@@ -1332,13 +1332,13 @@ nd6_ioctl(cmd, data, ifp)
 #undef RTRADDR
 				}
 				j++;
-				pfr = pfr->pfr_next;
+				pfr = LIST_NEXT(pfr, pfr_entry);
 			}
 			oprl->prefix[i].advrtrs = j;
 			oprl->prefix[i].origin = PR_ORIG_RA;
 
 			i++;
-			pr = pr->ndpr_next;
+			pr = LIST_NEXT(pr, ndpr_entry);
 		}
 		splx(s);
 
@@ -1372,10 +1372,10 @@ nd6_ioctl(cmd, data, ifp)
 		struct nd_prefix *pr, *next;
 
 		s = splsoftnet();
-		for (pr = nd_prefix.lh_first; pr; pr = next) {
+		for (pr = LIST_FIRST(&nd_prefix); pr; pr = next) {
 			struct in6_ifaddr *ia, *ia_next;
 
-			next = pr->ndpr_next;
+			next = LIST_NEXT(pr, ndpr_entry);
 
 			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
 				continue; /* XXX */
@@ -2110,7 +2110,7 @@ fill_prlist(oldp, oldlenp, ol)
 	}
 	l = 0;
 
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		u_short advrtrs;
 		size_t advance;
 		struct sockaddr_in6 *sin6;
@@ -2152,8 +2152,7 @@ fill_prlist(oldp, oldlenp, ol)
 			p->flags = pr->ndpr_stateflags;
 			p->origin = PR_ORIG_RA;
 			advrtrs = 0;
-			for (pfr = pr->ndpr_advrtrs.lh_first; pfr;
-			     pfr = pfr->pfr_next) {
+			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry) {
 				if ((void *)&sin6[advrtrs + 1] > (void *)pe) {
 					advrtrs++;
 					continue;
@@ -2170,8 +2169,7 @@ fill_prlist(oldp, oldlenp, ol)
 		}
 		else {
 			advrtrs = 0;
-			for (pfr = pr->ndpr_advrtrs.lh_first; pfr;
-			     pfr = pfr->pfr_next)
+			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry)
 				advrtrs++;
 		}
 

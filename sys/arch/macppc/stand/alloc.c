@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.4 2005/09/15 20:42:33 kettenis Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.5 2007/05/28 22:17:21 pyr Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1997/04/16 20:29:16 thorpej Exp $	*/
 
 /*
@@ -114,15 +114,14 @@ alloc(unsigned size)
 
 #ifdef ALLOC_FIRST_FIT
 	/* scan freelist */
-	for (f = freelist.lh_first; f != NULL && f->size < size;
-	    f = f->list.le_next)
-		/* noop */ ;
+	LIST_FOREACH(f, &freelist, list)
+		if (f->size >= size)
+			break;
 	bestf = f;
 	failed = (bestf == (struct fl *)0);
 #else
 	/* scan freelist */
-	f = freelist.lh_first;
-	while (f != NULL) {
+	LIST_FOREACH(f, &freelist, list) {
 		if (f->size >= size) {
 			if (f->size == size)	/* exact match */
 				goto found;
@@ -133,7 +132,6 @@ alloc(unsigned size)
 				bestsize = f->size;
 			}
 		}
-		f = f->list.le_next;
 	}
 
 	/* no match in freelist if bestsize unchanged */
@@ -201,13 +199,13 @@ freeall()
 	struct ml *m;
 
 	/* Release chunks on freelist... */
-	while ((m = freelist.lh_first) != NULL) {
+	while ((m = LIST_FIRST(&freelist)) != NULL) {
 		LIST_REMOVE(m, list);
 		OF_release(m, m->size);
 	}
 
 	/* ...and allocated list. */
-	while ((m = allocatedlist.lh_first) != NULL) {
+	while ((m = LIST_FIRST(&allocated)) != NULL)) {
 		LIST_REMOVE(m, list);
 		OF_release(m, m->size);
 	}

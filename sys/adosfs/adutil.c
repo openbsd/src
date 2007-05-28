@@ -1,4 +1,4 @@
-/*	$OpenBSD: adutil.c,v 1.16 2007/03/21 17:29:31 thib Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.17 2007/05/28 22:17:21 pyr Exp $	*/
 /*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
 
 /*
@@ -65,10 +65,8 @@ adosfs_ahashget(mp, an)
 
 	hp = &VFSTOADOSFS(mp)->anodetab[AHASH(an)];
 
-	for (;;)
-		for (ap = hp->lh_first; ; ap = ap->link.le_next) {
-			if (ap == NULL)
-				return (NULL);
+	for (;;) {
+		LIST_FOREACH(ap, hp, link) {
 			if (ABLKTOINO(ap->block) == an) {
 				vp = ATOV(ap);
 				if (!vget(vp, LK_EXCLUSIVE, p))
@@ -76,6 +74,9 @@ adosfs_ahashget(mp, an)
 				break;
 			}
 		}
+		if (ap == NULL)
+			return (NULL);
+	}
 	/* NOTREACHED */
 }
 
@@ -95,7 +96,7 @@ adosfs_ainshash(amp, ap)
 
 	hp = &amp->anodetab[AHASH(ap->block)];
 
-	for (aq = hp->lh_first; aq ; aq = aq->link.le_next) {
+	LIST_FOREACH(aq, hp, link) {
 		if (aq->block == ap->block) {
 			lockmgr(&ap->a_lock, LK_RELEASE, NULL);
 			return (EEXIST);

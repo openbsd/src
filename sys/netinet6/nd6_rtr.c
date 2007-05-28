@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.41 2006/11/15 03:07:44 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.42 2007/05/28 22:17:21 pyr Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/queue.h>
 #include <dev/rndvar.h>
 
 #include <net/if.h>
@@ -507,7 +508,7 @@ defrtrlist_del(dr)
 	/*
 	 * Also delete all the pointers to the router in each prefix lists.
 	 */
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		struct nd_pfxrouter *pfxrtr;
 		if ((pfxrtr = pfxrtr_lookup(pr, dr)) != NULL)
 			pfxrtr_del(pfxrtr);
@@ -822,7 +823,7 @@ pfxrtr_lookup(pr, dr)
 {
 	struct nd_pfxrouter *search;
 
-	for (search = pr->ndpr_advrtrs.lh_first; search; search = search->pfr_next) {
+	LIST_FOREACH(search, &pr->ndpr_advrtrs, pfr_entry) {
 		if (search->router == dr)
 			break;
 	}
@@ -862,7 +863,7 @@ nd6_prefix_lookup(pr)
 {
 	struct nd_prefix *search;
 
-	for (search = nd_prefix.lh_first; search; search = search->ndpr_next) {
+	LIST_FOREACH(search, &nd_prefix, ndpr_entry) {
 		if (pr->ndpr_ifp == search->ndpr_ifp &&
 		    pr->ndpr_plen == search->ndpr_plen &&
 		    in6_are_prefix_equal(&pr->ndpr_prefix.sin6_addr,
@@ -958,8 +959,8 @@ prelist_remove(pr)
 	LIST_REMOVE(pr, ndpr_entry);
 
 	/* free list of routers that adversed the prefix */
-	for (pfr = pr->ndpr_advrtrs.lh_first; pfr; pfr = next) {
-		next = pfr->pfr_next;
+	for (pfr = LIST_FIRST(&p->ndpr_advrtrs); pfr != NULL; pfr = next) {
+		next = LIST_NEXT(pfr, pfr_entry);
 
 		free(pfr, M_IP6NDP);
 	}
@@ -1272,7 +1273,7 @@ pfxlist_onlink_check()
 	 * Check if there is a prefix that has a reachable advertising
 	 * router.
 	 */
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		if (pr->ndpr_raf_onlink && find_pfxlist_reachable_router(pr))
 			break;
 	}
@@ -1286,7 +1287,7 @@ pfxlist_onlink_check()
 		 * Detach prefixes which have no reachable advertising
 		 * router, and attach other prefixes.
 		 */
-		for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+		LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 			/* XXX: a link-local prefix should never be detached */
 			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
 				continue;
@@ -1307,7 +1308,7 @@ pfxlist_onlink_check()
 		}
 	} else {
 		/* there is no prefix that has a reachable router */
-		for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+		LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
 				continue;
 
@@ -1327,7 +1328,7 @@ pfxlist_onlink_check()
 	 * interfaces.  Such cases will be handled in nd6_prefix_onlink,
 	 * so we don't have to care about them.
 	 */
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {	
 		int e;
 
 		if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
@@ -1434,7 +1435,7 @@ nd6_prefix_onlink(pr)
 	 * Although such a configuration is expected to be rare, we explicitly
 	 * allow it.
 	 */
-	for (opr = nd_prefix.lh_first; opr; opr = opr->ndpr_next) {
+	LIST_FOREACH(opr, &nd_prefix, ndpr_entry) {
 		if (opr == pr)
 			continue;
 
@@ -1559,7 +1560,7 @@ nd6_prefix_offlink(pr)
 		 * If there's one, try to make the prefix on-link on the
 		 * interface.
 		 */
-		for (opr = nd_prefix.lh_first; opr; opr = opr->ndpr_next) {
+		LIST_FOREACH(opr, &nd_prefix, ndpr_entry) {
 			if (opr == pr)
 				continue;
 

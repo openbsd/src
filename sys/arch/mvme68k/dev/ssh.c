@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.14 2005/12/03 18:09:37 krw Exp $ */
+/*	$OpenBSD: ssh.c,v 1.15 2007/05/28 22:17:21 pyr Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -46,6 +46,7 @@
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -391,7 +392,7 @@ ssh_scsidone(acb, stat)
 			dosched = 1;	/* start next command */
 		--sc->sc_active;
 		SSH_TRACE('d','a',stat,0)
-	} else if (sc->ready_list.tqh_last == &acb->chain.tqe_next) {
+	} else if (TAILQ_LAST(&sc->ready_list)  == TAILQ_NEXT(acb, chain)) {
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
 		SSH_TRACE('d','r',stat,0)
 	} else {

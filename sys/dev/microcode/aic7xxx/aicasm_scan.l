@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: aicasm_scan.l,v 1.9 2004/09/18 19:51:53 mickey Exp $	*/
+/*	$OpenBSD: aicasm_scan.l,v 1.10 2007/05/28 22:17:21 pyr Exp $	*/
 /*
  * Lexical Analyzer for the Aic7xxx SCSI Host adapter sequencer assembler.
  *
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aicasm_scan.l,v 1.9 2004/09/18 19:51:53 mickey Exp $
+ * $Id: aicasm_scan.l,v 1.10 2007/05/28 22:17:21 pyr Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_scan.l,v 1.22 2003/12/16 23:54:07 gibbs Exp $
  */
@@ -459,9 +459,7 @@ include_file(char *file_name, include_type type)
 
 	if (newfile == NULL && type != SOURCE_FILE) {
                 path_entry_t include_dir;
-                for (include_dir = search_path.slh_first;
-                     include_dir != NULL;                
-                     include_dir = include_dir->links.sle_next) {
+		SLIST_FOREACH(include_dir, &search_path, links) {
 			char fullname[PATH_MAX];
 
 			if ((include_dir->quoted_includes_only == TRUE)
@@ -595,7 +593,7 @@ yywrap()
 	if (yyfilename != NULL)
 		free(yyfilename);
 	yyfilename = NULL;
-	include = include_stack.slh_first;
+	include = SLIST_FIRST(&include_stack);
 	if (include != NULL) {
 		yy_switch_to_buffer(include->buffer);
 		yylineno = include->lineno;
