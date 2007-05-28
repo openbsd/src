@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2007/05/27 20:53:10 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.42 2007/05/28 17:37:16 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -1417,6 +1417,7 @@ parse_config(const char *filename, int opts)
 	conf->prefork_relay = RELAY_NUMPROC;
 	conf->statinterval.tv_sec = RELAY_STATINTERVAL;
 	conf->opts = opts;
+	conf->confpath = filename;
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		warn("%s", filename);
