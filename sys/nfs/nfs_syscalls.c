@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.51 2007/05/27 21:14:41 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.52 2007/05/28 06:13:07 krw Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -118,13 +118,13 @@ static void nfsd_rt(int, struct nfsrv_descript *, int);
 int
 sys_nfssvc(struct proc *p, void *v, register_t *retval)
 {
+	int error = 0;
+#ifdef NFSSERVER
 	struct sys_nfssvc_args /* {
 		syscallarg(int) flag;
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
 	int flags = SCARG(uap, flag);
-	int error = 0;
-#ifdef NFSSERVER
 	struct file *fp;
 	struct mbuf *nam;
 	struct nfsd_args nfsdarg;
