@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.74 2007/04/23 16:27:20 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.75 2007/05/28 13:13:54 martin Exp $
 #
 # PPC GENERIC config file
 #
@@ -85,6 +85,7 @@ msk*		at mskc?	#  each port of above
 an*		at pci?		# Cisco/Aironet 802.11DS
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 vr*		at pci?		# VIA Rhine ethernet
+pcn*		at pci?		# AMD PCnet-PCI Ethernet
 xge*		at pci?		# Neterion Xframe-I/II 10Gb ethernet
 
 iop*		at pci?		# I2O processor
