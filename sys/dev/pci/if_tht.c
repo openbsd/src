@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.105 2007/05/26 20:47:32 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.106 2007/05/28 06:34:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1521,7 +1521,7 @@ tht_fifo_read(struct tht_softc *sc, struct tht_fifo *tf,
 	len = tf->tf_len - tf->tf_rptr;
 
 	if (len < buflen) {
-		bcopy(fifo + tf->tf_rptr, desc, len);
+		memcpy(desc, fifo + tf->tf_rptr, len);
 
 		buflen -= len;
 		desc += len;
@@ -1529,7 +1529,7 @@ tht_fifo_read(struct tht_softc *sc, struct tht_fifo *tf,
 		tf->tf_rptr = 0;
 	}
 
-	bcopy(fifo + tf->tf_rptr, desc, buflen);
+	memcpy(desc, fifo + tf->tf_rptr, buflen);
 	tf->tf_rptr += buflen;
 
 	DPRINTF(THT_D_FIFO, "%s: fifo rd wptr: %d rptr: %d ready: %d\n",
@@ -1549,7 +1549,7 @@ tht_fifo_write(struct tht_softc *sc, struct tht_fifo *tf,
 	len = tf->tf_len - tf->tf_wptr;
 
 	if (len < buflen) {
-		bcopy(desc, fifo + tf->tf_wptr, len);
+		memcpy(fifo + tf->tf_wptr, desc, len);
 
 		buflen -= len;
 		desc += len;
@@ -1557,7 +1557,7 @@ tht_fifo_write(struct tht_softc *sc, struct tht_fifo *tf,
 		tf->tf_wptr = 0;
 	}
 
-	bcopy(desc, fifo + tf->tf_wptr, buflen);
+	memcpy(fifo + tf->tf_wptr, desc, buflen);
 	tf->tf_wptr += buflen;
 	tf->tf_wptr %= tf->tf_len;
 
