@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.103 2007/05/28 11:35:54 espie Exp $
+# $OpenBSD: pkg_create,v 1.104 2007/05/28 12:08:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -180,8 +180,6 @@ sub prepare_for_archival
 package OpenBSD::PackingElement::FCONTENTS;
 sub makesum_plist
 {
-	my ($self, $plist, $base, $stash, $infodir) = @_;
-	$self->add_object($plist);
 }
 
 sub verify_checksum
