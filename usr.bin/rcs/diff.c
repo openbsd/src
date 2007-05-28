@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.14 2007/05/28 22:07:40 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.15 2007/05/28 22:12:44 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -154,7 +154,7 @@ struct line {
 } *file[2];
 
 /*
- * The following struct is used to record change in formation when
+ * The following struct is used to record change information when
  * doing a "context" or "unified" diff.  (see routine "change" to
  * understand the highly mnemonic field names)
  */
