@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.5 2007/05/17 23:46:28 thib Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.6 2007/05/28 21:47:50 thib Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -38,9 +38,6 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $");
-#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
