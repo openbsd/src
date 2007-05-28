@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nx.c,v 1.49 2007/05/26 18:56:23 reyk Exp $	*/
+/*	$OpenBSD: if_nx.c,v 1.50 2007/05/28 19:44:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -224,7 +224,7 @@ u_int32_t nxb_readcrb(struct nxb_softc *, bus_size_t);
 void	 nxb_writecrb(struct nxb_softc *, bus_size_t, u_int32_t);
 int	 nxb_writehw(struct nxb_softc *, u_int32_t, u_int32_t);
 bus_size_t nxb_set_crbwindow(struct nxb_softc *, bus_size_t);
-bus_size_t nxb_set_pciwindow(struct nxb_softc *, bus_size_t);
+u_int64_t nxb_set_pciwindow(struct nxb_softc *, u_int64_t);
 int	 nxb_wait(struct nxb_softc *, bus_size_t, u_int32_t, u_int32_t,
 	    int, u_int);
 int	 nxb_read_rom(struct nxb_softc *, u_int32_t, u_int32_t *);
@@ -921,8 +921,8 @@ nxb_reset(struct nxb_softc *sc)
 	addr = NXFLASHMAP_BOOTLOADER;
 	data = (u_int32_t *)(fw + sizeof(fh));
 	for (i = 0; i < (bootsz / 4); i++) {
-		reg = nxb_set_pciwindow(sc, addr);
-		if (reg == ~0ULL)
+		reg = nxb_set_pciwindow(sc, (u_int64_t)addr);
+		if (reg == ~0)
 			goto fail1;
 		nxb_write(sc, reg, *data);
 		addr += sizeof(u_int32_t);
@@ -931,8 +931,8 @@ nxb_reset(struct nxb_softc *sc)
 	if (imagesz) {
 		addr = NXFLASHMAP_FIRMWARE_0;
 		for (i = 0; i < (imagesz / 4); i++) {
-			reg = nxb_set_pciwindow(sc, addr);
-			if (reg == ~0ULL)
+			reg = nxb_set_pciwindow(sc, (u_int64_t)addr);
+			if (reg == ~0)
 				goto fail1;
 			nxb_write(sc, reg, *data);
 			addr += sizeof(u_int32_t);
@@ -1048,11 +1048,11 @@ nxb_writehw(struct nxb_softc *sc, u_int32_t addr, u_int32_t val)
 	return (0);
 }
 
-bus_size_t
-nxb_set_pciwindow(struct nxb_softc *sc, bus_size_t reg)
+u_int64_t
+nxb_set_pciwindow(struct nxb_softc *sc, u_int64_t reg)
 {
 	int32_t		 window = -1;
-	bus_size_t	 wreg = ~0ULL;
+	u_int64_t	 wreg = ~0ULL;
 
 	/*
 	 * Get the correct offset in the mapped PCI space
@@ -1709,7 +1709,8 @@ nx_start(struct ifnet *ifp)
 				break;
 			case 2:
 				txd->tx_buflength |=
-				    htole64((map->dm_segs[i].ds_len <<
+				    htole64(((u_int64_t)
+				    map->dm_segs[i].ds_len <<
 				    NX_TXDESC_BUFLENGTH3_S) &
 				    NX_TXDESC_BUFLENGTH3_M);
 				txd->tx_addr3 =
@@ -1717,7 +1718,8 @@ nx_start(struct ifnet *ifp)
 				break;
 			case 3:
 				txd->tx_buflength |=
-				    htole64((map->dm_segs[i].ds_len <<
+				    htole64(((u_int64_t)
+				    map->dm_segs[i].ds_len <<
 				    NX_TXDESC_BUFLENGTH4_S) &
 				    NX_TXDESC_BUFLENGTH4_M);
 				txd->tx_addr4 =
