@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.148 2007/05/27 20:14:15 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.149 2007/05/28 17:16:39 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1434,9 +1434,6 @@ ip_forward(m, srcrt)
 	int error, type = 0, code = 0, destmtu = 0, rtableid = 0;
 	struct mbuf *mcopy;
 	n_long dest;
-#if NPF > 0
-	struct pf_mtag	*pft;
-#endif
 
 	dest = 0;
 #ifdef DIAGNOSTIC
@@ -1455,8 +1452,7 @@ ip_forward(m, srcrt)
 	}
 
 #if NPF > 0
-	if ((pft = pf_find_mtag(m)) != NULL)
-		rtableid = pft->rtableid;
+	rtableid = m->m_pkthdr.pf.rtableid;
 #endif
 
 	sin = satosin(&ipforward_rt.ro_dst);

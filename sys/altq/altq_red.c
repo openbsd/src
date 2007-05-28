@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.c,v 1.12 2005/10/17 08:43:35 henning Exp $	*/
+/*	$OpenBSD: altq_red.c,v 1.13 2007/05/28 17:16:38 henning Exp $	*/
 /*	$KAME: altq_red.c,v 1.10 2002/04/03 05:38:51 kjc Exp $	*/
 
 /*
@@ -420,33 +420,26 @@ int
 mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 {
 	struct mbuf	*m0;
-	struct pf_mtag	*t;
+	void		*hdr;
 
-	if ((t = pf_find_mtag(m)) == NULL)
-		return (0);
-
-	if (t->af != AF_INET && t->af != AF_INET6)
-		return (0);
+	hdr = m->m_pkthdr.pf.hdr;
 
 	/* verify that pattr_hdr is within the mbuf data */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if (((caddr_t)(t->hdr) >= m0->m_data) &&
-		    ((caddr_t)(t->hdr) < m0->m_data + m0->m_len))
+		if (((caddr_t)(hdr) >= m0->m_data) &&
+		    ((caddr_t)(hdr) < m0->m_data + m0->m_len))
 			break;
 	if (m0 == NULL) {
 		/* ick, tag info is stale */
 		return (0);
 	}
 
-	switch (t->af) {
-	case AF_INET:
+	switch (((struct ip *)hdr)->ip_v) {
+	case 4:
 		if (flags & REDF_ECN4) {
-			struct ip *ip = t->hdr;
+			struct ip *ip = hdr;
 			u_int8_t otos;
 			int sum;
-
-			if (ip->ip_v != 4)
-				return (0);	/* version mismatch! */
 
 			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_NOTECT)
 				return (0);	/* not-ECT */
@@ -472,9 +465,9 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 		}
 		break;
 #ifdef INET6
-	case AF_INET6:
+	case 6:
 		if (flags & REDF_ECN6) {
-			struct ip6_hdr *ip6 = t->hdr;
+			struct ip6_hdr *ip6 = hdr;
 			u_int32_t flowlabel;
 
 			flowlabel = ntohl(ip6->ip6_flow);

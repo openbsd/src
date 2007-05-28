@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.81 2007/05/27 20:54:25 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.82 2007/05/28 17:16:39 henning Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -191,6 +191,12 @@ m_gethdr(int nowait, int type)
 		m->m_flags = M_PKTHDR;
 		SLIST_INIT(&m->m_pkthdr.tags);
 		m->m_pkthdr.csum_flags = 0;
+		m->m_pkthdr.pf.hdr = NULL;
+		m->m_pkthdr.pf.rtableid = 0;
+		m->m_pkthdr.pf.qid = 0;
+		m->m_pkthdr.pf.tag = 0;
+		m->m_pkthdr.pf.flags = 0;
+		m->m_pkthdr.pf.routed = 0;
 	}
 	splx(s);
 	return (m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.37 2007/02/08 15:25:30 itojun Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.38 2007/05/28 17:16:39 henning Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -497,7 +497,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 
 #if NPF > 0
 	/* Add pf tag if requested. */
-	if (pf_tag_packet(m, NULL, tdb->tdb_tag, -1))
+	if (pf_tag_packet(m, tdb->tdb_tag, -1))
 		DPRINTF(("failed to tag ipsec packet\n"));
 #endif
 

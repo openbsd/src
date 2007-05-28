@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.76 2007/05/08 23:23:16 mcbride Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.77 2007/05/28 17:16:39 henning Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ ip6_input(m)
 	struct ifnet *deliverifp = NULL;
 #if NPF > 0
 	struct in6_addr odst;
-	struct pf_mtag *pft;
 #endif
 	int srcrt = 0, rtableid = 0;
 
@@ -431,8 +430,7 @@ ip6_input(m)
 	}
 
 #if NPF > 0
-	if ((pft = pf_find_mtag(m)) != NULL)
-		rtableid = pft->rtableid;
+	rtableid = m->m_pkthdr.pf.rtableid;
 #endif
 
 	/*

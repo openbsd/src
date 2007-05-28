@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.21 2007/04/10 17:47:52 miod Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.22 2007/05/28 17:16:38 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -441,7 +441,6 @@ cbq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 {
 	cbq_state_t	*cbqp = (cbq_state_t *)ifq->altq_disc;
 	struct rm_class	*cl;
-	struct pf_mtag	*t;
 	int		 len;
 
 	/* grab class set by classifier */
@@ -452,9 +451,7 @@ cbq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 		m_freem(m);
 		return (ENOBUFS);
 	}
-	t = pf_find_mtag(m);
-	if (t == NULL ||
-	    (cl = clh_to_clp(cbqp, t->qid)) == NULL) {
+	if ((cl = clh_to_clp(cbqp, m->m_pkthdr.pf.qid)) == NULL) {
 		cl = cbqp->ifnp.default_;
 		if (cl == NULL) {
 			m_freem(m);

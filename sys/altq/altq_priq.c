@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.19 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.20 2007/05/28 17:16:38 henning Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -396,7 +396,6 @@ priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 {
 	struct priq_if	*pif = (struct priq_if *)ifq->altq_disc;
 	struct priq_class *cl;
-	struct pf_mtag *t;
 	int len;
 
 	/* grab class set by classifier */
@@ -407,9 +406,7 @@ priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 		m_freem(m);
 		return (ENOBUFS);
 	}
-	t = pf_find_mtag(m);
-	if (t == NULL ||
-	    (cl = clh_to_clp(pif, t->qid)) == NULL) {
+	if ((cl = clh_to_clp(pif, m->m_pkthdr.pf.qid)) == NULL) {
 		cl = pif->pif_default;
 		if (cl == NULL) {
 			m_freem(m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.87 2007/05/27 20:54:25 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.88 2007/05/28 17:16:39 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -75,12 +75,23 @@ struct m_hdr {
 	u_short	mh_flags;		/* flags; see below */
 };
 
+/* pf stuff */
+struct pkthdr_pf {
+	void		*hdr;		/* saved hdr pos in mbuf, for ECN */
+	u_int		 rtableid;	/* alternate routing table id */
+	u_int32_t	 qid;		/* queue id */
+	u_int16_t	 tag;		/* tag id */
+	u_int8_t	 flags;
+	u_int8_t	 routed;
+};
+
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
-	struct	ifnet *rcvif;		/* rcv interface */
+	struct ifnet		*rcvif;		/* rcv interface */
 	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
-	int	len;			/* total packet length */
-	int	csum_flags;		/* checksum flags */
+	int			 len;		/* total packet length */
+	int			 csum_flags;	/* checksum flags */
+	struct pkthdr_pf	 pf;
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
@@ -527,7 +538,6 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_GIF				8  /* GIF processing done */
 #define PACKET_TAG_GRE				9  /* GRE processing done */
 #define PACKET_TAG_IN_PACKET_CHECKSUM		10 /* NIC checksumming done */
-#define PACKET_TAG_PF				11 /* PF */
 #define PACKET_TAG_DLT				17 /* data link layer type */
 
 #ifdef MBTYPES
