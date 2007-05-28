@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.22 2007/05/28 05:10:12 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.23 2007/05/28 13:07:49 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -713,8 +713,8 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *c)
 				continue;
 			id = IPS_REG_STAT_ID(status);
 			if (id >= sc->sc_nccbs) {
-				DPRINTF(IPS_D_ERR, ("%s: invalid command %d\n",
-				    sc->sc_dev.dv_xname, id));
+				DPRINTF(IPS_D_ERR, ("%s: invalid command "
+				    "0x%02x\n", sc->sc_dev.dv_xname, id));
 				continue;
 			}
 			break;
