@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.35 2007/05/28 22:37:14 todd Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -156,7 +156,6 @@ twrget(all, lpt, lpa, 0, 1, 2)dnl
 target(all, joy, 0, 1)dnl
 twrget(all, rnd, random)dnl
 target(all, uk, 0)dnl
-target(all, wt, 0)dnl
 twrget(all, au, audio, 0)dnl
 twrget(all, speak, speaker)dnl
 target(all, asc, 0)dnl
@@ -201,14 +200,6 @@ _mkdev(uall, uall, {-dnl
 show_target({-usb-})dnl
 -})dnl
 __devtitle(tap, Tapes)dnl
-__devitem(wt, {-wt*-}, Archive/Wangtek QIC-cartridge tape drives)dnl
-_mkdev(wt, wt*,
-{-name=wt
-	n=Mult($U, 8) m=Add($n, 4)
-	M $name$U	b major_wt_b $n 640 operator
-	M r$name$U	c major_wt_c $n 640 operator
-	M n$name$U	b major_wt_b $m 640 operator
-	M nr$name$U	c major_wt_c $m 640 operator-})dnl
 __devitem(tz, tz*, {-DEC TK50 cartridge tape drives-})dnl
 __devitem(st, {-st*-}, SCSI tape drives)dnl
 _mkdev(st, st*, {-n=Mult($U, 16)
@@ -254,7 +245,6 @@ target(ramd, sd, 0, 1, 2, 3, 4)dnl
 target(ramd, wd, 0, 1, 2, 3, 4)dnl
 target(ramd, st, 0, 1)dnl
 target(ramd, cd, 0, 1)dnl
-target(ramd, wt, 0)dnl
 target(ramd, rd, 0)dnl
 dnl
 __devitem(rd, {-rd*-}, quote(rd)pseudo-disks)dnl
