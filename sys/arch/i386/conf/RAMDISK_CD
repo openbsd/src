@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.138 2007/04/10 00:44:50 dlg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.139 2007/05/28 03:12:38 krw Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -285,8 +285,6 @@ wd*	at pciide? flags 0x0000
 atapiscsi* at wdc?
 atapiscsi* at pciide?
 scsibus* at atapiscsi?
-
-#wt0	at isa? port 0x308 irq 5 drq 1	# Archive/Wangtek QIC tapes
 
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#

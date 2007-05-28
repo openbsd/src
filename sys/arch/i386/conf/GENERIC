@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.558 2007/05/27 01:50:36 todd Exp $
+#	$OpenBSD: GENERIC,v 1.559 2007/05/28 03:12:38 krw Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -440,8 +440,6 @@ wd*	at pciide? flags 0x0000
 atapiscsi* at wdc?
 atapiscsi* at pciide?
 scsibus* at atapiscsi?
-
-#wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 # Networking devices
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet
