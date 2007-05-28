@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.12 2007/04/30 01:28:02 krw Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.13 2007/05/28 15:44:04 miod Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ ofdstrategy(struct buf *bp)
 
 done:
 	s = splbio();
-	biodone(bp);'
+	biodone(bp);
 	splx(s);
 }
 
