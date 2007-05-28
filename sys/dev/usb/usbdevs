@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.277 2007/05/22 06:58:40 matthieu Exp $
+$OpenBSD: usbdevs,v 1.278 2007/05/28 17:51:22 tom Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1836,7 +1836,7 @@ product PLANEX2 GWUS54GZL	0xc007	GW-US54GZL
 product PLANEX2 GWUSMM		0xed02	GW-USMM
 
 /* Plantronics products */
-product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
+product PLANTRONICS HEADSET	0x0ca1	DSP-400 Headset
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
