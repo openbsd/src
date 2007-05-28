@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.81 2007/04/13 12:10:41 claudio Exp $
+dnl	$OpenBSD: hardware,v 1.82 2007/05/28 13:20:48 martin Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -311,6 +311,9 @@ Supported devices {:-include-:}:
 			Addtron AEF-360TX
 			Hawking PN102TX
 			D-Link DFE530TX
+		AMD PCnet-based PCI adapters (pcn), including:
+			BOCALANcard/PCI
+			AT&T StarLAN 10, EN100, and StarLAN Fiber
 
 	Wireless Ethernet Adapters
 		PCMCIA Adapters
