@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.32 2006/05/07 20:12:41 tedu Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.33 2007/05/28 21:07:31 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/hash.h>
+#include <sys/rwlock.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -56,7 +57,7 @@
 
 LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
 u_long nfsnodehash;
-struct lock nfs_hashlock;
+struct rwlock nfs_hashlock = RWLOCK_INITIALIZER;
 
 struct pool nfs_node_pool;
 
@@ -75,8 +76,6 @@ void
 nfs_nhinit()
 {
 	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, M_WAITOK, &nfsnodehash);
-	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
-
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
 	    &pool_allocator_nointr);
 }
@@ -114,12 +113,12 @@ loop:
 		*npp = np;
 		return(0);
 	}
-	if (lockmgr(&nfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL))
+	if (rw_enter(&nfs_hashlock, RW_WRITE|RW_SLEEPFAIL))
 		goto loop;
 	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp);
 	if (error) {
 		*npp = 0;
-		lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
+		rw_exit(&nfs_hashlock);
 		return (error);
 	}
 	vp = nvp;
@@ -151,7 +150,7 @@ loop:
 		np->n_fhp = &np->n_fh;
 	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
-	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
+	rw_exit(&nfs_hashlock);
 	*npp = np;
 	return (0);
 }
