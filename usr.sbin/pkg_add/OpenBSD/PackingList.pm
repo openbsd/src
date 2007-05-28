@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.65 2007/05/24 11:06:29 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.66 2007/05/28 11:35:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -53,9 +53,9 @@ use OpenBSD::PackageInfo;
 sub new
 {
 	my $class = shift;
-	bless {state => 
-		OpenBSD::PackingList::State->new
-	}, $class;
+	my $plist = bless {state => OpenBSD::PackingList::State->new }, $class;
+	OpenBSD::PackingElement::File->add($plist, CONTENTS);
+	return $plist;
 }
 
 sub read

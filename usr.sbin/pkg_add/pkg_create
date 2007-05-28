@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.102 2007/05/25 12:19:23 espie Exp $
+# $OpenBSD: pkg_create,v 1.103 2007/05/28 11:35:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -476,7 +476,6 @@ set_usage(
 '[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkg-name');
 
 my $plist = new OpenBSD::PackingList;
-OpenBSD::PackingElement::File->add($plist, CONTENTS);
 try { 
 	getopts('p:f:c:d:vi:k:r:m:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
 	{'D' => 
