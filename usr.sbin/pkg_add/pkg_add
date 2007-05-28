@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.284 2007/05/28 11:29:09 espie Exp $
+# $OpenBSD: pkg_add,v 1.285 2007/05/28 12:44:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -196,7 +196,7 @@ sub can_install
 		$rplist->{dir} = installed_info($toreplace);
 		$set->add_older($old_handle);
 	}
-	$plist->{skipupdatedeps} = \%conflicts;
+	$set->{skipupdatedeps} = \%conflicts;
 	return 1;
 }
 
@@ -513,7 +513,7 @@ sub really_add
 		    if $state->{beverbose};
 		my $d = OpenBSD::RequiredBy->new($pkgname);
 		for my $dep (@{$op->{wantlist}}) {
-			if (defined $plist->{skipupdatedeps}->{$dep}) {
+			if (defined $set->{skipupdatedeps}->{$dep}) {
 				print "\tskipping $dep\n" if $state->{beverbose};
 				next;
 			}
