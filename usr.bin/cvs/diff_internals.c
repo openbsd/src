@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.7 2007/05/28 22:12:44 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.8 2007/05/28 23:02:40 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -228,8 +228,8 @@ static struct context_vec *context_vec_ptr;
 
 #define FUNCTION_CONTEXT_SIZE	55
 static char lastbuf[FUNCTION_CONTEXT_SIZE];
-static int  lastline;
-static int  lastmatchline;
+static int lastline;
+static int lastmatchline;
 BUF  *diffbuf = NULL;
 
 /*
