@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.24 2007/05/28 14:05:16 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.25 2007/05/28 16:35:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -92,6 +92,9 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMD_SG		0x80
 
 /* Register definitions */
+#define IPS_REG_HIS		0x08	/* host interrupt status */
+#define IPS_REG_HIS_SCE			0x01	/* status channel enqueue */
+#define IPS_REG_HIS_EN			0x80	/* enable interrupts */
 #define IPS_REG_CCSA		0x10	/* command channel system address */
 #define IPS_REG_CCC		0x14	/* command channel control */
 #define IPS_REG_CCC_SEM			0x0008	/* semaphore */
@@ -834,7 +837,22 @@ ips_flush(struct ips_softc *sc)
 void
 ips_copperhead_exec(struct ips_softc *sc, struct ips_ccb *ccb)
 {
-	/* XXX: not implemented */
+	u_int32_t reg;
+	int timeout;
+
+	for (timeout = 10; timeout-- > 0; delay(100)) {
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_CCC);
+		if ((reg & IPS_REG_CCC_SEM) == 0)
+			break;
+	}
+	if (timeout < 0) {
+		printf("%s: semaphore timeout\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_CCSA, ccb->c_cmdpa);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, IPS_REG_CCC,
+	    IPS_REG_CCC_START);
 }
 
 void
@@ -846,13 +864,19 @@ ips_copperhead_init(struct ips_softc *sc)
 void
 ips_copperhead_intren(struct ips_softc *sc)
 {
-	/* XXX: not implemented */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IPS_REG_HIS, IPS_REG_HIS_EN);
 }
 
 int
 ips_copperhead_isintr(struct ips_softc *sc)
 {
-	/* XXX: not implemented */
+	u_int8_t reg;
+
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, IPS_REG_HIS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IPS_REG_HIS, reg);
+	if (reg != 0xff && (reg & IPS_REG_HIS_SCE))
+		return (1);
+
 	return (0);
 }
 
