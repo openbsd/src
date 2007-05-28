@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.32 2007/05/27 01:50:35 todd Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.33 2007/05/28 22:26:01 todd Exp 
 #	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -69,6 +69,7 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 # Special purpose devices:
 #	audio*	Audio devices
+#	bio	ioctl tunnel pseudo-device
 #	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
@@ -341,6 +342,10 @@ bktr*)
 	M bktr$U c 58 $U 644
 	;;
 
+bio)
+	M bio c 53 0 600
+	;;
+
 audio*)
 	M sound$U	c 24 $U
 	M mixer$U	c 24 $(($U+16))
@@ -530,13 +535,13 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
 	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0
-	R ss1 ch0 hotplug ptm local wscons pci0 pci1 pci2 pci3 iop0
-	R iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6
-	R rmidi7 tuner0 radio0 music0 speaker audio0 uk0 random lpa0
-	R lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyc0
-	R ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 ttyB0 ttyB1 ttyB2
-	R ttyB3 ttyB4 ttyB5 crypto pf systrace wd0 wd1 wd2 wd3 raid0
-	R raid1 raid2 raid3 std st0 st1 fd
+	R ss1 ch0 bio hotplug ptm local wscons pci0 pci1 pci2 pci3
+	R iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5
+	R rmidi6 rmidi7 tuner0 radio0 music0 speaker audio0 uk0 random
+	R lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03
+	R ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 ttyB0 ttyB1
+	R ttyB2 ttyB3 ttyB4 ttyB5 crypto pf systrace wd0 wd1 wd2 wd3
+	R raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

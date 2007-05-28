@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.11 2007/05/27 01:50:36 todd Exp 
+#	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.12 2007/05/28 22:26:02 todd Exp 
 #	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -66,6 +66,7 @@
 #	apm	Power management device
 #	audio*	Audio devices
 #	hotplug	devices hot plugging
+#	bio	ioctl tunnel pseudo-device
 #	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
@@ -293,6 +294,10 @@ bktr*)
 	M bktr$U c 75 $U 644
 	;;
 
+bio)
+	M bio c 52 0 600
+	;;
+
 hotplug)
 	M hotplug c 37 $U 400
 	;;
@@ -459,10 +464,10 @@ local)
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 hotplug ptm
-	R local wscons uall tuner0 radio0 audio0 uk0 random lkm tty00
-	R tty01 tty02 tty03 apm crypto pf systrace wd0 wd1 wd2 wd3
-	R raid0 raid1 raid2 raid3 std st0 st1 fd
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 bio xfs0 ss0 ss1 ch0 hotplug
+	R ptm local wscons uall tuner0 radio0 audio0 uk0 random lkm
+	R tty00 tty01 tty02 tty03 apm crypto pf systrace wd0 wd1 wd2
+	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

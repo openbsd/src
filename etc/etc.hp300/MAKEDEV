@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.29 2007/05/27 01:50:35 todd Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.30 2007/05/28 22:26:02 todd Exp 
 #	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -60,6 +60,7 @@
 # Printers:
 #	ppi*	HP-IB plotters
 # Special purpose devices:
+#	bio	ioctl tunnel pseudo-device
 #	bpf*	Berkeley Packet Filter
 #	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
@@ -329,6 +330,10 @@ bpf*)
 	M bpf$U c 22 $U 600
 	;;
 
+bio)
+	M bio c 49 0 600
+	;;
+
 wsmouse*)
 	M wsmouse$U c 42 $U 600
 	;;
@@ -450,9 +455,9 @@ local)
 all)
 	R ct0 ct1 hd0 hd1 hd2 dcm0 dcm1 dcm2 dcm3 dca0 dca1 ccd0 ccd1
 	R ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1
-	R rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
-	R bpf7 bpf8 bpf9 pty0 xfs0 ss0 ch0 ptm local ppi0 apci0 wscons
-	R uk0 random lkm pf systrace std st0 st1 fd
+	R rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5
+	R bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ch0 ptm local ppi0 apci0
+	R wscons uk0 random lkm pf systrace std st0 st1 fd
 	;;
 
 sd*|hd*|ccd*)

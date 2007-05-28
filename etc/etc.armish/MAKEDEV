@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.armish/MAKEDEV.md,v 1.4 2007/05/27 01:50:35 todd Exp 
+#	OpenBSD: etc.armish/MAKEDEV.md,v 1.5 2007/05/28 22:26:02 todd Exp 
 #	OpenBSD: MAKEDEV.common,v 1.34 2007/05/18 14:05:33 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -65,6 +65,7 @@
 # Special purpose devices:
 #	apm	Power management device
 #	audio*	Audio devices
+#	bio	ioctl tunnel pseudo-device
 #	hotplug	devices hot plugging
 #	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
@@ -308,6 +309,10 @@ hotplug)
 	M hotplug c 37 $U 400
 	;;
 
+bio)
+	M bio c 52 0 600
+	;;
+
 audio*)
 	M sound$U	c 36 $U
 	M mixer$U	c 36 $(($U+16))
@@ -469,7 +474,7 @@ local)
 
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
-	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
+	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 hotplug ptm
 	R local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall tuner0
 	R radio0 audio0 uk0 random lkm tty00 tty01 tty02 tty03 apm
