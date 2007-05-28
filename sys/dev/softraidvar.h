@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.20 2007/05/26 14:30:26 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.21 2007/05/28 21:54:26 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -121,7 +121,8 @@ struct sr_metadata {
 	u_int64_t		ssd_magic;	/* magic id */
 #define	SR_MAGIC		0x4d4152436372616dllu
 	u_int8_t		ssd_version;	/* meta data version */
-	u_int8_t		ssd_pad1[7];
+	u_int8_t		ssd_pad1[3];
+	u_int32_t		ssd_flags;	/* flags */
 
 	/* meta-data */
 	u_int32_t		ssd_checksum;	/* xor of the structure */
@@ -234,6 +235,7 @@ struct sr_discipline {
 
 	/* discipline metadata */
 	struct sr_metadata	*sd_meta;	/* in memory copy of metadata */
+	u_int32_t		sd_meta_flags;
 
 	/* discipline volume */
 	struct sr_volume	sd_vol;		/* volume associated */

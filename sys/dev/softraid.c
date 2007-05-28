@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.49 2007/05/27 00:10:47 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.50 2007/05/28 21:54:26 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -128,10 +128,12 @@ void			sr_raid1_startwu(struct sr_workunit *);
 void			sr_get_uuid(struct sr_uuid *);
 void			sr_print_uuid(struct sr_uuid *, int);
 u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
+int			sr_clear_metadata(struct sr_discipline *);
 int			sr_save_metadata(struct sr_discipline *);
 void			sr_refresh_sensors(void *);
 int			sr_create_sensors(struct sr_discipline *);
 int			sr_boot_assembly(struct sr_softc *);
+int			sr_already_assembled(struct sr_discipline *);
 int			sr_validate_metadata(struct sr_softc *, dev_t,
 			    struct sr_metadata *);
 
@@ -774,6 +776,29 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	    M_DEVBUF, M_WAITOK);
 	bzero(sd->sd_vol.sv_chunks, sizeof(struct sr_chunk *) * no_chunk);
 
+	/* force the raid volume by clearing metadata region */
+	if (bc->bc_flags & BIOC_SCFORCE) {
+		/* make sure disk isn't up and running */
+		if (sr_read_meta(sd))
+			if (sr_already_assembled(sd)) {
+				printf("%s: disk ", DEVNAME(sc));
+				sr_print_uuid(&sd->sd_meta->ssd_uuid, 0);
+				printf(" is currently in use; can't force "
+				    "create\n");
+				goto unwind;
+			}
+
+		/* zero out pointers and metadata again to create disk */
+		bzero(sd->sd_vol.sv_chunks,
+		    sizeof(struct sr_chunk *) * no_chunk);
+		bzero(sd->sd_meta, SR_META_SIZE  * 512);
+
+		if (sr_clear_metadata(sd)) {
+			printf("%s: failed to clear metadata\n");
+			goto unwind;
+		}
+	}
+
 	if ((no_meta = sr_read_meta(sd)) == 0) {
 		/* no metadata available */
 		switch (bc->bc_level) {
@@ -812,13 +837,31 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		    sizeof(sd->sd_vol.sv_meta.svm_revision), "%03d",
 		    SR_META_VERSION);
 
+		sd->sd_meta_flags = bc->bc_flags & BIOC_SCNOAUTOASSEMBLE;
 		updatemeta = 1;
-
 	} else if (no_meta == no_chunk) {
+		if (user == 0 && sd->sd_meta_flags & BIOC_SCNOAUTOASSEMBLE) {
+			DNPRINTF(SR_D_META, "%s: disk not auto assembled from "
+			    "metadata\n", DEVNAME(sc));
+			goto unwind;
+		}
+		if (sr_already_assembled(sd)) {
+			printf("%s: disk ", DEVNAME(sc));
+			sr_print_uuid(&sd->sd_meta->ssd_uuid, 0);
+			printf(" already assembled\n");
+			goto unwind;
+		}
 		DNPRINTF(SR_D_META, "%s: disk assembled from metadata\n",
 		    DEVNAME(sc));
 		updatemeta = 0;
 	} else {
+		if (sr_already_assembled(sd)) {
+			printf("%s: disk ", DEVNAME(sc));
+			sr_print_uuid(&sd->sd_meta->ssd_uuid, 0);
+			printf(" already assembled; will not partial "
+			    "assemble it\n");
+			goto unwind;
+		}
 		panic("not yet partial bringup");
 	}
 
@@ -920,10 +963,12 @@ unwind:
 
 	/* XXX free scsibus */
 
-	if (sd) {
-		sr_free_discipline(sd);
+	if (sc && cl)
 		sr_unwind_chunks(sc, cl);
-	}
+
+	if (sd)
+		sr_free_discipline(sd);
+
 	return (rv);
 }
 
@@ -1031,7 +1076,7 @@ sr_read_meta(struct sr_discipline *sd)
 	bzero(m, sz);
 
 	SLIST_FOREACH(ch_entry, cl, src_link) {
-		memset(&b, 0, sizeof(b));
+		bzero(&b, sizeof(b));
 
 		b.b_flags = B_READ;
 		b.b_blkno = SR_META_OFFSET;
@@ -1072,11 +1117,12 @@ sr_read_meta(struct sr_discipline *sd)
 		/* we asssume that the first chunk has the initial metadata */
 		if (no_chunk++ == 0) {
 			bcopy(m, sm, sz);
-			bcopy(m, &sd->sd_meta, sizeof(sd->sd_meta));
+			bcopy(m, sd->sd_meta, sizeof(*sd->sd_meta));
 			bcopy(mv, &sd->sd_vol.sv_meta,
 			    sizeof(sd->sd_vol.sv_meta));
 
 			volid = m->ssd_vd_volid;
+			sd->sd_meta_flags = sm->ssd_flags;
 		}
 
 		if (bcmp(&sm->ssd_uuid, &sd->sd_vol.sv_meta.svm_uuid,
@@ -1120,7 +1166,8 @@ sr_read_meta(struct sr_discipline *sd)
 		}
 
 		sd->sd_vol.sv_chunks[m->ssd_chunk_id] = ch_entry;
-		bcopy(mc, &ch_entry->src_meta, sizeof(ch_entry->src_meta));
+		bcopy(mc + m->ssd_chunk_id, &ch_entry->src_meta,
+		    sizeof(ch_entry->src_meta));
 	}
 
 	if (no_chunk != m->ssd_chunk_no) {
@@ -1194,7 +1241,7 @@ void
 sr_unwind_chunks(struct sr_softc *sc, struct sr_chunk_head *cl)
 {
 	struct sr_chunk		*ch_entry, *ch_next;
-	dev_t dev;
+	dev_t			dev;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_unwind_chunks\n", DEVNAME(sc));
 
@@ -1226,8 +1273,6 @@ sr_free_discipline(struct sr_discipline *sd)
 		sd->sd_free_resources(sd);
 	if (sd->sd_vol.sv_chunks)
 		free(sd->sd_vol.sv_chunks, M_DEVBUF);
-	if (sd->sd_meta)
-		free(sd->sd_meta, M_DEVBUF);
 	free(sd, M_DEVBUF);
 }
 
@@ -1415,13 +1460,9 @@ sr_raid1_sync(struct sr_workunit *wu)
 		DNPRINTF(SR_D_DIS, "%s: %s: %s: sync\n", DEVNAME(sd->sd_sc),
 		    sd->sd_vol.sv_meta.svm_devname,
 		    ch_entry->src_meta.scm_devname);
-#if 0
-		vn_lock(ch_entry->src_dev_vn, LK_EXCLUSIVE | LK_RETRY, curproc);
-		/* XXX we want MNT_WAIT but that hangs in fdisk */
-		VOP_FSYNC(ch_entry->src_dev_vn, curproc->p_ucred,
-		    0 /* MNT_WAIT */, curproc);
-		VOP_UNLOCK(ch_entry->src_dev_vn, 0, curproc);
-#endif
+
+		/* quiesce io? or assume that there isn't any comming in*/
+
 	}
 
 	return (0);
@@ -1944,6 +1985,69 @@ sr_print_uuid(struct sr_uuid *uuid, int cr)
 }
 
 int
+sr_clear_metadata(struct sr_discipline *sd)
+{
+	struct sr_softc		*sc = sd->sd_sc;
+	struct sr_chunk_head	*cl = &sd->sd_vol.sv_chunk_list;
+	struct sr_chunk		*ch_entry;
+	struct buf		b;
+	size_t			sz = SR_META_SIZE * 512;
+	void			*m;
+	int			rv = 0;
+
+	DNPRINTF(SR_D_META, "%s: sr_clear_metadata\n", DEVNAME(sc));
+
+	m = malloc(sz , M_DEVBUF, M_WAITOK);
+	bzero(m, sz);
+
+	SLIST_FOREACH(ch_entry, cl, src_link) {
+		bzero(&b, sizeof(b));
+
+		b.b_flags = B_WRITE;
+		b.b_blkno = SR_META_OFFSET;
+		b.b_bcount = sz;
+		b.b_bufsize = sz;
+		b.b_resid = sz;
+		b.b_data = (void *)m;
+		b.b_error = 0;
+		b.b_proc = curproc;
+		b.b_dev = ch_entry->src_dev_mm;
+		b.b_vp = NULL;
+		b.b_iodone = NULL;
+		LIST_INIT(&b.b_dep);
+		bdevsw_lookup(b.b_dev)->d_strategy(&b);
+		biowait(&b);
+
+		if (b.b_flags & B_ERROR) {
+			printf("%s: %s i/o error on block %d while clearing "
+			    "metadata %d\n", DEVNAME(sc),
+			    ch_entry->src_devname, b.b_blkno, b.b_error);
+			rv++;
+			continue;
+		}
+	}
+
+	free(m, M_DEVBUF);
+	return (rv);
+}
+
+int
+sr_already_assembled(struct sr_discipline *sd)
+{
+	struct sr_softc		*sc = sd->sd_sc;
+	int			i;
+
+	for (i = 0; i < SR_MAXSCSIBUS; i++)
+		if (sc->sc_dis[i])
+			if (!bcmp(&sd->sd_meta->ssd_uuid,
+			    &sc->sc_dis[i]->sd_meta->ssd_uuid,
+			    sizeof(sd->sd_meta->ssd_uuid)))
+				return (1);
+
+	return (0);
+}
+
+int
 sr_save_metadata(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
@@ -1980,6 +2084,7 @@ sr_save_metadata(struct sr_discipline *sd)
 		sm->ssd_version = SR_META_VERSION;
 		sm->ssd_size = sizeof(struct sr_metadata);
 		sm->ssd_ondisk = 0;
+		sm->ssd_flags = sd->sd_meta_flags;
 		/* get uuid from chunk 0 */
 		bcopy(&sd->sd_vol.sv_chunks[0]->src_meta.scm_uuid,
 		    &sm->ssd_uuid,

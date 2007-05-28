@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.27 2007/05/23 21:27:13 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.28 2007/05/28 21:54:26 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -179,6 +179,7 @@ struct bioc_createraid {
 	u_int32_t	bc_flags;
 #define BIOC_SCFORCE		0x01	/* do not assemble, force create */
 #define BIOC_SCDEVT		0x02	/* dev_t array or string in dev_list */
+#define BIOC_SCNOAUTOASSEMBLE	0x04	/* do not assemble during autoconf */
 };
 
 /* kernel and userspace defines */

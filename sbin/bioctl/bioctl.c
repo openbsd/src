@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.54 2007/05/23 21:27:13 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.55 2007/05/28 21:54:26 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -64,10 +64,12 @@ void			bio_setstate(char *);
 void			bio_setblink(char *, char *, int);
 void			bio_blink(char *, int, int);
 void			bio_createraid(u_int16_t, char *);
+u_int32_t		bio_createflags(char *);
 
 int			devh = -1;
 int			human;
 int			verbose;
+u_int32_t		cflags = 0;
 
 struct bio_locate	bl;
 
@@ -86,7 +88,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:c:l:u:H:ha:iv")) != -1) {
+	while ((ch = getopt(argc, argv, "b:C:c:l:u:H:ha:iv")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -96,6 +98,9 @@ main(int argc, char *argv[])
 			func |= BIOC_BLINK;
 			blink = BIOC_SBBLINK;
 			bl_arg = optarg;
+			break;
+		case 'C': /* creation flags */
+			cflags = bio_createflags(optarg);
 			break;
 		case 'c': /* create */
 			func |= BIOC_CREATERAID;
@@ -609,9 +614,8 @@ bio_createraid(u_int16_t level, char *dev_list)
 	create.bc_level = level;
 	create.bc_dev_list_len = no_dev * sizeof(dev_t);
 	create.bc_dev_list = dt;
-	create.bc_flags = BIOC_SCDEVT;
+	create.bc_flags = BIOC_SCDEVT | cflags;
 
-	printf("ioctl\n");
 	rv = ioctl(devh, BIOCCREATERAID, &create);
 	if (rv == -1) {
 		warn("BIOCCREATERAID");
@@ -659,4 +663,40 @@ bio_parse_devlist(char *lst, dev_t *dt)
 				errx(1, "duplicate device in list");
 
 	return (no_dev);
+}
+
+u_int32_t
+bio_createflags(char *lst)
+{
+	char			*s, *e, fs[32];
+	u_int32_t		sz = 0;
+	u_int32_t		flags = 0;
+
+	if (!lst)
+		errx(1, "invalid flags list");
+
+	s = e = lst;
+	/* make sure we have a valid flags list like force,noassemeble */
+	while (*e != '\0') {
+		if (*e == ',')
+			s = e + 1;
+		else if (*(e + 1) == '\0' || *(e + 1) == ',') {
+			/* got one */
+			sz = e - s + 1;
+			switch (s[0]) {
+			case 'f':
+				flags |= BIOC_SCFORCE;
+				break;
+			case 'n':
+				flags |= BIOC_SCNOAUTOASSEMBLE;
+				break;
+			default:
+				strlcpy(fs, s, sz + 1);
+				errx(1, "invalid flag %s", fs);
+			}
+		}
+		e++;
+	}
+
+	return (flags);
 }
