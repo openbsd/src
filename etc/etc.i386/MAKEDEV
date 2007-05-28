@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.36 2006/06/11 10:58:57 mk Exp 
-#	OpenBSD: MAKEDEV.common,v 1.33 2007/03/07 02:51:17 krw Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.37 2007/05/28 22:37:15 todd Exp 
+#	OpenBSD: MAKEDEV.common,v 1.35 2007/05/28 22:37:14 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -42,7 +42,6 @@
 # Tapes:
 #	ch*	SCSI media changers
 #	st*	SCSI tape drives
-#	wt*	Archive/Wangtek QIC-cartridge tape drives
 # Terminal ports:
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	ttyc*	Cyclades serial ports
@@ -510,15 +509,6 @@ tty[0-7][0-9a-f])
 	M cua$U c 8 $(($o+128)) 660 dialer uucp
 	;;
 
-wt*)
-	name=wt
-	n=$(($U*8)) m=$(($n+4))
-	M $name$U	b 3 $n 640 operator
-	M r$name$U	c 10 $n 640 operator
-	M n$name$U	b 3 $m 640 operator
-	M nr$name$U	c 10 $m 640 operator
-	;;
-
 st*)
 	n=$(($U*16))
 	for pre in " " n e en
@@ -592,11 +582,11 @@ all)
 	R fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 hotplug ptm gpr0
 	R local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall rmidi0
 	R rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0
-	R radio0 music0 speaker audio0 wt0 uk0 random joy0 joy1 lpa0
-	R lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyc0
-	R ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 acpi apm crypto pf
-	R pctr systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std
-	R st0 st1 fd mcd0
+	R radio0 music0 speaker audio0 uk0 random joy0 joy1 lpa0 lpa1
+	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyc0 ttyc1
+	R ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 acpi apm crypto pf pctr
+	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
+	R fd mcd0
 	;;
 
 wd*|sd*|raid*|ccd*)
