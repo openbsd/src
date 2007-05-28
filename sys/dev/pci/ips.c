@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.25 2007/05/28 16:35:41 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.26 2007/05/28 17:18:35 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -57,7 +57,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_MAXDRIVES		8
 #define IPS_MAXCHANS		4
 #define IPS_MAXTARGETS		15
-#define IPS_MAXCMDS		256
+#define IPS_MAXCMDS		128
 
 #define IPS_MAXFER		(64 * 1024)
 #define IPS_MAXSGS		16
