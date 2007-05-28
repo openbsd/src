@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.82 2007/05/28 17:16:39 henning Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.83 2007/05/28 19:20:14 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -134,6 +134,7 @@ nmbclust_update(void)
 	 * reached message max once a minute.
 	 */
 	(void)pool_sethardlimit(&mclpool, nmbclust, mclpool_warnmsg, 60);
+	pool_sethiwat(&mbpool, nmbclust);
 }
 
 void
