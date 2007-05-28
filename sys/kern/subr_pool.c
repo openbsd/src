@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.51 2007/04/23 09:27:59 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.52 2007/05/28 17:55:56 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -517,6 +517,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 
 	simple_lock_init(&pp->pr_slock);
 
+	pp->pr_ipl = -1;
+
 	/*
 	 * Initialize private page header pool and cache magazine pool if we
 	 * haven't done so yet.
@@ -541,6 +543,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
 	simple_unlock(&palloc->pa_slock);
 }
+
+#ifdef DIAGNOSTIC
+void
+pool_setipl(struct pool *pp, int ipl)
+{
+	pp->pr_ipl = ipl;
+}
+#endif
 
 /*
  * Decommission a pool resource.
@@ -621,6 +631,8 @@ pool_get(struct pool *pp, int flags)
 #ifdef DIAGNOSTIC
 	if ((flags & PR_WAITOK) != 0)
 		splassert(IPL_NONE);
+	if (pp->pr_ipl != -1)
+		splassert(pp->pr_ipl);
 	if (__predict_false(curproc == NULL && /* doing_shutdown == 0 && XXX*/
 			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: %s:must have NOWAIT", pp->pr_wchan);
@@ -864,6 +876,9 @@ pool_do_put(struct pool *pp, void *v)
 	page = (caddr_t)((vaddr_t)v & pp->pr_alloc->pa_pagemask);
 
 #ifdef DIAGNOSTIC
+	if (pp->pr_ipl != -1)
+		splassert(pp->pr_ipl);
+
 	if (__predict_false(pp->pr_nout == 0)) {
 		printf("pool %s: putting with none out\n",
 		    pp->pr_wchan);

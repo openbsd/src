@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.23 2007/04/23 11:28:24 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.24 2007/05/28 17:55:56 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -148,6 +148,7 @@ struct pool {
 	 * since the page allocators may block.
 	 */
 	struct simplelock	pr_slock;
+	int			pr_ipl;
 
 	SPLAY_HEAD(phtree, pool_item_header) pr_phtree;
 
@@ -193,6 +194,11 @@ extern struct pool_allocator pool_allocator_nointr;
 
 void		pool_init(struct pool *, size_t, u_int, u_int, int,
 		    const char *, struct pool_allocator *);
+#ifdef DIAGNOSTIC
+void		pool_setipl(struct pool *, int);
+#else
+#define pool_setipl(p, i) do { /* nothing */  } while (0)
+#endif
 void		pool_destroy(struct pool *);
 
 void		*pool_get(struct pool *, int) __malloc;
