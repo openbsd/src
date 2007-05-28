@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.26 2007/05/27 18:58:23 martin Exp $
+dnl	$OpenBSD: hardware,v 1.27 2007/05/28 09:00:55 martin Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -46,6 +46,13 @@ Supported devices {:-include-:}:
 		Intel EtherExpress PRO/100+ "Management Adapter"
 		Intel EtherExpress PRO/100 Dual Port
 		Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
+	3Com 3c9xx EtherLink XL adapters (xl), including:
+		3Com 3c900/3c900B PCI adapters
+		3Com 3c905/3c905B/3c905C PCI adapters
+		3Com 3c980/3c980C server adapters
+		3Com 3cSOHO adapter
+		3Com 3c900B-FL and 3c900B-FL/FX fiber optic adapters
+		3Com 3c555/3c556/3c556B MiniPCI adapters
 - SCSI controllers
 	built-in 53C700 SCSI (oosiop)
 	built-in 53C710 SCSI (osiop)
