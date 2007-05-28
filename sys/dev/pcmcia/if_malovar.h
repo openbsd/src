@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.4 2007/05/26 21:16:03 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.5 2007/05/28 13:51:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -66,12 +66,47 @@ struct malo_cmd_body_spec {
 	uint32_t	fw_capinfo;
 } __packed;
 
+struct malo_cmd_body_status {
+	uint16_t	fw_status;
+	uint16_t	mac_status;
+	uint16_t	rf_status;
+	uint16_t	current_channel;
+	uint8_t		ap_mac[ETHER_ADDR_LEN];
+	uint16_t	reserved;
+	uint32_t	max_linkspeed;
+} __packed;
+
+struct malo_cmd_body_radio {
+	uint16_t	action;
+	uint16_t	control;
+} __packed;
+
 struct malo_cmd_body_channel {
 	uint16_t	action;
 	uint16_t	channel;
 	uint16_t	rftype;
 	uint16_t	reserved;
 	uint8_t		channel_list[32];
+} __packed;
+
+struct malo_cmd_body_txpower {
+	uint16_t	action;
+	int16_t		txpower;	
+} __packed;
+
+struct malo_cmd_body_antenna {
+	uint16_t	action;
+	uint16_t	antenna_mode;
+} __packed;
+
+struct malo_cmd_body_macctrl {
+	uint16_t	action;
+	uint16_t	reserved;
+} __packed;
+
+struct malo_cmd_body_macaddr {
+	uint16_t	action;
+	uint8_t		macaddr[ETHER_ADDR_LEN];
 } __packed;
 
 struct malo_softc {

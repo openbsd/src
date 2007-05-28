@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.7 2007/05/27 15:44:27 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.8 2007/05/28 13:51:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -76,7 +76,15 @@ void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
 int	cmalo_cmd_rsp_hwspec(struct malo_softc *);
 int	cmalo_cmd_set_reset(struct malo_softc *);
+int	cmalo_cmd_get_status(struct malo_softc *);
+int	cmalo_cmd_rsp_status(struct malo_softc *);
+int	cmalo_cmd_set_radio(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_channel(struct malo_softc *, uint16_t);
+int	cmalo_cmd_set_txpower(struct malo_softc *, int16_t);
+int	cmalo_cmd_set_antenna(struct malo_softc *, uint16_t);
+int	cmalo_cmd_set_macctrl(struct malo_softc *);
+int	cmalo_cmd_set_macaddr(struct malo_softc *);
+int	cmalo_cmd_request(struct malo_softc *, uint16_t, int);
 int	cmalo_cmd_response(struct malo_softc *);
 
 /*
@@ -515,6 +523,18 @@ cmalo_init(struct ifnet *ifp)
 	/* setup device */
 	if (cmalo_cmd_set_channel(sc, 1) != 0)
 		return (EIO);
+	if (cmalo_cmd_set_antenna(sc, 1) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_antenna(sc, 2) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_radio(sc, 1) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_txpower(sc, 15) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_macctrl(sc) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_macaddr(sc) != 0)
+		return (EIO);
 
 	/* device up */
 	ifp->if_flags |= IFF_RUNNING;
@@ -578,10 +598,9 @@ cmalo_intr(void *arg)
 	DPRINTF(2, "%s: interrupt handler called (intr = 0x%04x)\n",
 	    sc->sc_dev.dv_xname, intr);
 
-	if (intr & MALO_VAL_HOST_INTR_CMD) {
+	if (intr & MALO_VAL_HOST_INTR_CMD)
 		/* command response */
 		sc->sc_cmd_running = 0;
-	}
 
 	/* acknowledge interrupt */
 	intr &= MALO_VAL_HOST_INTR_MASK_ON;
@@ -636,13 +655,12 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_spec *body;
-	uint16_t psize, *uc;
-	int i;
+	uint16_t psize;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 	psize = sizeof(*hdr) + sizeof(*body);
 
-	hdr->cmd = htole16(MALO_VAL_CMD_HWSPEC);
+	hdr->cmd = htole16(MALO_CMD_HWSPEC);
 	hdr->size = htole16(sizeof(*body));
 	hdr->seqnum = htole16(1);
 	hdr->result = 0;
@@ -651,28 +669,9 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 	/* set all bits for MAC address, otherwise we won't get one back */
 	memset(body->macaddr, 0xff, ETHER_ADDR_LEN);
 
-	cmalo_hexdump(sc->sc_cmd, psize);
-
-	/* send command request */
-	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	uc = (uint16_t *)hdr;
-	for (i = 0; i < psize / 2; i++)
-		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
-	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
-	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
-
-	/* wait for the command response */
-	sc->sc_cmd_running = 1;
-	for (i = 0; i < 10; i++) {
-		if (sc->sc_cmd_running == 0)
-			break;
-		tsleep(sc, 0, "malocmd", 1);
-	}
-	if (sc->sc_cmd_running) {
-		printf("%s: timeout while waiting for cmd response!\n",
-		    sc->sc_dev.dv_xname);
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
-	}
 
 	/* process command repsonse */
 	cmalo_cmd_response(sc);
@@ -701,24 +700,90 @@ int
 cmalo_cmd_set_reset(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
-	uint16_t psize, *uc;
-	int i;
+	uint16_t psize;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 	psize = sizeof(*hdr);
 
-	hdr->cmd = htole16(MALO_VAL_CMD_RESET);
+	hdr->cmd = htole16(MALO_CMD_RESET);
 	hdr->size = 0;
 	hdr->seqnum = htole16(1);
 	hdr->result = 0;
 
-	/* send command request */
-	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	uc = (uint16_t *)hdr;
-	for (i = 0; i < psize / 2; i++)
-		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
-	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
-	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 1) != 0)
+		return (EIO);
+
+	return (0);
+}
+
+int
+cmalo_cmd_get_status(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr);
+
+	hdr->cmd = htole16(MALO_CMD_STATUS);
+	hdr->size = 0;
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_rsp_status(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_status *body;
+
+	body = (struct malo_cmd_body_status *)(hdr + 1);
+
+	printf("%s: FW status = 0x%04x, MAC status = 0x%04x\n",
+	    body->fw_status, body->mac_status);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_radio(struct malo_softc *sc, uint16_t control)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_radio *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_RADIO);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_radio *)(hdr + 1);
+
+	body->action = htole16(1);
+
+	if (control) {
+		body->control  = htole16(MALO_CMD_RADIO_ON);
+		body->control |= htole16(MALO_CMD_RADIO_AUTO_P);
+	}
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
 
 	return (0);
 }
@@ -728,13 +793,12 @@ cmalo_cmd_set_channel(struct malo_softc *sc, uint16_t channel)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_channel *body;
-	uint16_t psize, *uc;
-	int i;
+	uint16_t psize;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 	psize = sizeof(*hdr) + sizeof(*body);
 
-	hdr->cmd = htole16(MALO_VAL_CMD_CHANNEL);
+	hdr->cmd = htole16(MALO_CMD_CHANNEL);
 	hdr->size = htole16(sizeof(*body));
 	hdr->seqnum = htole16(1);
 	hdr->result = 0;
@@ -743,15 +807,163 @@ cmalo_cmd_set_channel(struct malo_softc *sc, uint16_t channel)
 	body->action = htole16(1);
 	body->channel = htole16(channel);
 
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+
+int
+cmalo_cmd_set_txpower(struct malo_softc *sc, int16_t txpower)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_txpower *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_TXPOWER);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_txpower *)(hdr + 1);
+
+	body->action = htole16(1);
+	body->txpower = htole16(txpower);
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_antenna(struct malo_softc *sc, uint16_t action)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_antenna *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_ANTENNA);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_antenna *)(hdr + 1);
+
+	/* 1 = set RX, 2 = set TX */
+	body->action = htole16(action);
+
+	if (action == 1)
+		/* set RX antenna */
+		body->antenna_mode = htole16(0xffff);	/* diversity */
+	if (action == 2)
+		/* set TX antenna */
+		body->antenna_mode = htole16(2);
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_macctrl(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_macctrl *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_MACCTRL);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_macctrl *)(hdr + 1);
+
+	body->action  = htole16(MALO_CMD_MACCTRL_RX_ON);
+	body->action |= htole16(MALO_CMD_MACCTRL_TX_ON);
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_macaddr(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_macaddr *body;
+	uint16_t psize;
+	int i;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_MACADDR);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_macaddr *)(hdr + 1);
+
+	body->action = htole16(1);
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		body->macaddr[i] = ic->ic_myaddr[i];
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
+{
+	uint16_t *uc;
+	int i;
+
 	cmalo_hexdump(sc->sc_cmd, psize);
 
 	/* send command request */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	uc = (uint16_t *)hdr;
+	uc = (uint16_t *)sc->sc_cmd;
 	for (i = 0; i < psize / 2; i++)
 		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
+
+	if (no_response)
+		/* we don't expect a response */
+		return (0);
 
 	/* wait for the command response */
 	sc->sc_cmd_running = 1;
@@ -765,9 +977,6 @@ cmalo_cmd_set_channel(struct malo_softc *sc, uint16_t channel)
 		    sc->sc_dev.dv_xname);
 		return (EIO);
 	}
-
-	/* process command repsonse */
-	cmalo_cmd_response(sc);
 
 	return (0);
 }
@@ -801,24 +1010,56 @@ cmalo_cmd_response(struct malo_softc *sc)
 	hdr->result = letoh16(hdr->result);
 
 	/* check for a valid command response */
-	if (!(hdr->cmd & MALO_VAL_CMD_RESP)) {
+	if (!(hdr->cmd & MALO_CMD_RESP)) {
 		printf("%s: got invalid command response (0x%04x)!\n",
 		    sc->sc_dev.dv_xname, hdr->cmd);
 		return (EIO);
 	}
-	hdr->cmd &= ~MALO_VAL_CMD_RESP;
+	hdr->cmd &= ~MALO_CMD_RESP;
 
 	/* to which command does the response belong */
 	switch (hdr->cmd) {
-	case MALO_VAL_CMD_HWSPEC:
+	case MALO_CMD_HWSPEC:
+		DPRINTF(1, "%s: got hwspec cmd response\n",
+		    sc->sc_dev.dv_xname);
 		cmalo_cmd_rsp_hwspec(sc);
 		break;
-	case MALO_VAL_CMD_RESET:
+	case MALO_CMD_RESET:
 		/* reset will not send back a response */
 		break;
-	case MALO_VAL_CMD_CHANNEL:
+	case MALO_CMD_STATUS:
+		DPRINTF(1, "%s: got status cmd response\n",
+		    sc->sc_dev.dv_xname);
+		cmalo_cmd_rsp_status(sc);
+		break;
+	case MALO_CMD_RADIO:
+		/* do nothing */
+		DPRINTF(1, "%s: got radio cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_CHANNEL:
 		/* do nothing */
 		DPRINTF(1, "%s: got channel cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_TXPOWER:
+		/* do nothing */
+		DPRINTF(1, "%s: got txpower cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_ANTENNA:
+		/* do nothing */
+		DPRINTF(1, "%s: got antenna cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_MACCTRL:
+		/* do nothing */
+		DPRINTF(1, "%s: got macctrl cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_MACADDR:
+		/* do nothing */
+		DPRINTF(1, "%s: got macaddr cmd response\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	default:
