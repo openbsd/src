@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.217 2007/05/15 14:35:30 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.218 2007/05/28 17:26:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -594,6 +594,7 @@ struct filter_peers {
 #define	COMMUNITY_ERROR			-1
 #define	COMMUNITY_ANY			-2
 #define	COMMUNITY_NEIGHBOR_AS		-3
+#define	COMMUNITY_UNSET			-4
 #define	COMMUNITY_WELLKNOWN		0xffff
 #define	COMMUNITY_NO_EXPORT		0xff01
 #define	COMMUNITY_NO_ADVERTISE		0xff02

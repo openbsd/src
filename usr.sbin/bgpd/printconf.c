@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.63 2007/05/15 11:07:46 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.64 2007/05/28 17:26:33 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -484,7 +484,7 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 			printf("unfluffy-as %s ", log_as(r->match.as.as));
 	}
 
-	if (r->match.community.as != 0) {
+	if (r->match.community.as != COMMUNITY_UNSET) {
 		printf("community ");
 		print_community(r->match.community.as,
 		    r->match.community.type);

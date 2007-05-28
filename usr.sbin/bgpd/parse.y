@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.204 2007/04/23 13:04:24 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.205 2007/05/28 17:26:33 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1267,8 +1267,14 @@ filter_as	: as4number		{
 		}
 		;
 
-filter_match_h	: /* empty */			{ bzero(&$$, sizeof($$)); }
-		| { bzero(&fmopts, sizeof(fmopts)); }
+filter_match_h	: /* empty */			{
+			bzero(&$$, sizeof($$));
+			$$.m.community.as = COMMUNITY_UNSET;
+		}
+		| {
+			bzero(&fmopts, sizeof(fmopts));
+			fmopts.m.community.as = COMMUNITY_UNSET;
+		}
 		    filter_match		{
 			memcpy(&$$, &fmopts, sizeof($$));
 		}
@@ -1307,7 +1313,7 @@ filter_elm	: filter_prefix_h	{
 			fmopts.as_l = $1;
 		}
 		| COMMUNITY STRING	{
-			if (fmopts.m.community.as) {
+			if (fmopts.m.community.as != COMMUNITY_UNSET) {
 				yyerror("\"community\" already specified");
 				free($2);
 				YYERROR;
@@ -2264,10 +2270,6 @@ parsecommunity(char *s, int *as, int *type)
 
 	if ((i = getcommunity(s)) == COMMUNITY_ERROR)
 		return (-1);
-	if (i == 0 || i == USHRT_MAX) {
-		yyerror("Bad community AS number");
-		return (-1);
-	}
 	*as = i;
 
 	if ((i = getcommunity(p)) == COMMUNITY_ERROR)
