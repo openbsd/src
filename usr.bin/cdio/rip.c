@@ -80,7 +80,7 @@ static u_char wavehdr[44] = {
 
 static int	write_sector(int fd, u_char *sec, u_int32_t secsize);
 
-int	read_data_sector(int fd, u_int32_t lba, u_char *sec, u_int32_t secsize);
+int	read_data_sector(u_int32_t lba, u_char *sec, u_int32_t secsize);
 
 struct track_info {
 	int fd;		/* descriptor of output file */
@@ -317,7 +317,7 @@ write_sector(int fd, u_char *sec, u_int32_t secsize)
  *	[EAGAIN]	The operation must be made again. XXX - not implemented
  */
 int
-read_data_sector(int fd, u_int32_t lba, u_char *sec, u_int32_t secsize)
+read_data_sector(u_int32_t lba, u_char *sec, u_int32_t secsize)
 {
 	scsireq_t scr;
 	u_char *cmd;
@@ -370,7 +370,7 @@ read_track(int fd, struct track_info *ti)
 		fprintf(stderr, "track %u '%c' %08u/%08u %3u%%\r", ti->track,
 		    (ti->isaudio) ? 'a' : 'd', i, n_sec, 100 * i / n_sec);
 
-		error = read_data_sector(fd, i + ti->start_lba, sec, blksize);
+		error = read_data_sector(i + ti->start_lba, sec, blksize);
 		if (error == 0) {
 			if (write_sector(ti->fd, sec, blksize) != 0) {
 				free(sec);
@@ -580,13 +580,11 @@ rip_tracks(char *arg, int (*next_track)(struct track_info *), int issorted)
 int
 cdrip(char *arg)
 {
-
 	return rip_tracks(arg, rip_next_track, 1);
 }
 
 int
 cdplay(char *arg)
 {
-
 	return rip_tracks(arg, play_next_track, 0);
 }
