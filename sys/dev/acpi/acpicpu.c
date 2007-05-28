@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.22 2007/05/06 04:09:43 tedu Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.23 2007/05/28 03:38:32 krw Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -185,7 +185,7 @@ acpicpu_add_cstate(struct acpicpu_softc *sc, int type,
 
 	return cx;
  bad:
-	printf("acpicpu%d: C%d not supported\n", sc->sc_cpu, type);
+	printf("acpicpu%d: C%d not supported", sc->sc_cpu, type);
 	return NULL;
 }
 
@@ -323,9 +323,9 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 
 nopss:
 	if (sc->sc_flags & FLAGS_NOTHROTTLE)
-		printf("no performance/throttling supported\n");
-	else
-		printf("\n");
+		printf("no performance/throttling supported");
+
+	printf("\n");
 }
 
 int
