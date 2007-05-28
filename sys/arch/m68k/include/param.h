@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2007/05/15 13:46:22 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.22 2007/05/28 21:02:49 thib Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -111,19 +111,7 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
  */
-#define	MSIZE		256		/* size of an mbuf */
-
-#ifndef	MCLSHIFT
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-#endif	/* MCLSHIFT */
-
-#define	MCLBYTES	(1 << MCLSHIFT)
-#define	MCLOFSET	(MCLBYTES - 1)
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 
 /* pages ("clicks") to disk blocks */

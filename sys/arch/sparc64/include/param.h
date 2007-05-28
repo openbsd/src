@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.24 2007/05/02 14:05:39 tom Exp $	*/
+/*	$OpenBSD: param.h,v 1.25 2007/05/28 21:02:49 thib Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -173,15 +173,7 @@ extern int nbpg, pgofset, pgshift;
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
  */
-#define	MSIZE		256		/* size of an mbuf */
-#define	MCLSHIFT	11		/* log2(MCLBYTES) */
-#define	MCLBYTES	(1 << MCLSHIFT)	/* enough for whole Ethernet packet */
-#define	MCLOFSET	(MCLBYTES - 1)
 #define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
 
 #define MSGBUFSIZE	NBPG
