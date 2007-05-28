@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.15 2007/05/14 21:38:08 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.16 2007/05/28 23:10:10 beck Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -98,10 +98,6 @@ include <machine/bsd_openprom.h>
 include <machine/reg.h>
 
 #include <sparc64/sparc64/cpuvar.h>
-
-ifdef COMPAT_NETBSD
-include <compat/netbsd/netbsd_syscall.h>
-endif
 
 ifdef notyet
 include <sparc64/dev/zsreg.h>
@@ -265,11 +261,6 @@ member	dbr_mg
 member	dbr_out
 member	dbr_local
 member	dbr_in
-endif
-
-ifdef COMPAT_NETBSD
-export	NETBSD_SYS___sigreturn14
-export	NETBSD_SYS_exit
 endif
 
 export	TLB_ACCESS

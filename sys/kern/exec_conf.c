@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.17 2004/04/15 00:22:42 tedu Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.18 2007/05/28 23:10:10 beck Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -97,9 +97,6 @@ struct execsw execsw[] = {
 #endif
 #ifdef _KERN_DO_ELF64
 	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_native },	/* elf binaries */
-#ifdef COMPAT_NETBSD
-	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_netbsd_elf64 },
-#endif
 #ifdef COMPAT_OSF1
 	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_osf1 },
 #endif

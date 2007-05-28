@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.82 2007/04/10 19:05:52 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.83 2007/05/28 23:10:10 beck Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -59,10 +59,6 @@ include	"dev/atapiscsi/files.atapiscsi"
 include	"dev/ata/files.ata"
 include	"dev/pckbc/files.pckbc"
 include	"dev/pcmcia/files.pcmcia"
-
-# COMPAT_NETBSD
-include	"compat/netbsd/files.netbsd"
-file	arch/sparc64/sparc64/netbsd_machdep.c	compat_netbsd
 
 # Sun specific files
 include	"../../../dev/sun/files.sun"

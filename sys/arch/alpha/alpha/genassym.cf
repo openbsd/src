@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2007/04/13 08:31:50 martin Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2007/05/28 23:10:10 beck Exp $
 
 # Copyright (c) 1994, 1995 Gordon W. Ross
 # Copyright (c) 1993 Adam Glass
@@ -42,10 +42,6 @@ include <machine/reg.h>
 include <machine/frame.h>
 include <machine/rpb.h>
 include <machine/vmparam.h>
-
-ifdef COMPAT_NETBSD
-include <compat/netbsd/netbsd_syscall.h>
-endif
 
 include <uvm/uvm_extern.h>
 
@@ -158,12 +154,6 @@ export	EFAULT
 # Syscalls called from sigreturn.
 export	SYS_sigreturn
 export	SYS_exit
-
-ifdef COMPAT_NETBSD
-# XXX - these should probably use the magic macro from machine/asm.h
-export	NETBSD_SYS___sigreturn14
-export	NETBSD_SYS_exit
-endif
 
 # CPU info
 struct	cpu_info	CPU_INFO_

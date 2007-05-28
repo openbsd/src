@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.191 2007/04/19 04:52:22 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.192 2007/05/28 23:10:10 beck Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,7 +30,6 @@ option		DEC_6600	# EV6:		XP1000, 264DP OEM Board
 option		API_UP1000	# EV6:		Alpha Processor UP1000
 
 option		COMPAT_OSF1	# OSF/1 binary compatibility
-option		COMPAT_NETBSD	# NetBSD compatibility
 
 # Misc. options
 option		EISAVERBOSE		# recognize "unknown" EISA devices

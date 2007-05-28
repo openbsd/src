@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.60 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.61 2007/05/28 23:10:10 beck Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -67,10 +67,6 @@
 #include <compat/freebsd/freebsd_exec.h>
 #endif
 
-#ifdef COMPAT_NETBSD
-#include <compat/netbsd/netbsd_exec.h>
-#endif
-
 struct ELFNAME(probe_entry) {
 	int (*func)(struct proc *, struct exec_package *, char *,
 	    u_long *, u_int8_t *);
@@ -87,9 +83,6 @@ struct ELFNAME(probe_entry) {
 #endif
 #ifdef COMPAT_LINUX
 	{ linux_elf_probe, 1 << OOS_LINUX },
-#endif
-#ifdef COMPAT_NETBSD
-	{ netbsd_elf64_probe, 1 << OOS_NETBSD },
 #endif
 	{ 0, 1 << OOS_OPENBSD }
 };
