@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.80 2007/04/13 12:10:41 claudio Exp $
+dnl	$OpenBSD: hardware,v 1.81 2007/05/28 19:27:42 cnst Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -1075,8 +1075,23 @@ dnl		    See above
 		    VideoLogic Captivator PCI
 		    Zoltrix TV and Genie TV/FM
 		Hardware monitoring sensors, including:
+		    Asus AS99127F
+		    Analog Devices AD7416, AD7417 and AD7418
+		    Analog Devices ADM1021
+		    Analog Devices ADM1024
+		    Analog Devices ADM1025
+		    Analog Devices ADM1026
+		    Analog Devices ADM1030
+		    Analog Devices ADM1031
+		    Analog Devices ADT7460
 		    ITE IT8705F, IT8712F
+		    National Semiconductor LM75, LM77
 		    National Semiconductor LM78, LM78-J, LM79
+		    National Semiconductor LM87
+		    Maxim DS1624/DS1631/DS1721
+		    Maxim MAX6642/MAX6690
 		    SiS SiS950
 		    VIA VT82C686A, VT8231
-		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
+		    Winbond W83627HF, W83627THF, W83627DHG, W83627EHF, W83637HF
+		    Winbond W83697HF, W83781D, W83782D, W83783S
+		    Winbond W83791D and W83792D
