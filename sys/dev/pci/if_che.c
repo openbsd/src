@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_che.c,v 1.6 2007/05/28 07:42:22 claudio Exp $ */
+/*	$OpenBSD: if_che.c,v 1.7 2007/05/28 16:26:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Claudio Jeker <claudio@openbsd.org>
@@ -56,10 +56,57 @@
 #define CHE_PCI_F_VPD_ADDR	0x80000000
 #define CHE_PCI_VPD_BASE	0xc00
 
+#define CHE_REG_T3DBG_GPIO_EN	0xd0
+#define CHE_T3DBG_F_GPIO11_OEN		0x08000000
+#define CHE_T3DBG_F_GPIO10_OEN		0x04000000
+#define CHE_T3DBG_F_GPIO9_OEN		0x02000000
+#define CHE_T3DBG_F_GPIO8_OEN		0x01000000
+#define CHE_T3DBG_F_GPIO7_OEN		0x00800000
+#define CHE_T3DBG_F_GPIO6_OEN		0x00400000
+#define CHE_T3DBG_F_GPIO5_OEN		0x00200000
+#define CHE_T3DBG_F_GPIO4_OEN		0x00100000
+#define CHE_T3DBG_F_GPIO3_OEN		0x00080000
+#define CHE_T3DBG_F_GPIO2_OEN		0x00040000
+#define CHE_T3DBG_F_GPIO1_OEN		0x00020000
+#define CHE_T3DBG_F_GPIO0_OEN		0x00010000
+#define CHE_T3DBG_F_GPIO11_OUT_VAL	0x00000800
+#define CHE_T3DBG_F_GPIO10_OUT_VAL	0x00000400
+#define CHE_T3DBG_F_GPIO9_OUT_VAL	0x00000200
+#define CHE_T3DBG_F_GPIO8_OUT_VAL	0x00000100
+#define CHE_T3DBG_F_GPIO7_OUT_VAL	0x00000080
+#define CHE_T3DBG_F_GPIO6_OUT_VAL	0x00000040
+#define CHE_T3DBG_F_GPIO5_OUT_VAL	0x00000020
+#define CHE_T3DBG_F_GPIO4_OUT_VAL	0x00000010
+#define CHE_T3DBG_F_GPIO3_OUT_VAL	0x00000008
+#define CHE_T3DBG_F_GPIO2_OUT_VAL	0x00000004
+#define CHE_T3DBG_F_GPIO1_OUT_VAL	0x00000002
+#define CHE_T3DBG_F_GPIO0_OUT_VAL	0x00000001
+#define CHE_REG_I2C_CFG		0x6a0
+#define CHE_I2C_CLKDIV(_x)	((_x) && 0xfff)
+#define CHE_REG_MI1_CFG		0x6b0
+#define CHE_REG_MI1_ADDR	0x6b4
+#define CHE_REG_MI1_DATA	0x6b8
+#define CHE_REG_MI1_OP		0x6bc
+#define CHE_MI1_F_BUSY		(1U << 31)
+#define CHE_MI1_F_ST		0x8
+#define CHE_MI1_F_PREEN		0x4
+#define CHE_MI1_F_MDIINV	0x2
+#define CHE_MI1_F_MDIEN		0x1
+#define CHE_MI1_CLKDIV(_x)	((_x) << 5)
+#define CHE_MI1_PHYADDR(_x)	((_x) << 5)
+#define CHE_MI1_OP(_x)		((_x) & 0x3)
 #define CHE_REG_PL_RST		0x6f0
 #define CHE_RST_F_CRSTWRM	0x2
 #define CHE_RST_F_CRSTWRMMODE	0x1
 #define CHE_REG_PL_REV		0x6f4
+#define CHE_REG_XGM_PORT_CFG	0x8b8
+#define CHE_XGMAC0_0_BASE_ADDR	0x800
+#define CHE_XGMAC0_1_BASE_ADDR	0xa00
+#define CHE_XGM_REG(_r, _i)	\
+    ((_r) + (_i) * (CHE_XGMAC0_1_BASE_ADDR - CHE_XGMAC0_0_BASE_ADDR))
+#define CHE_XGM_PORTSPEED(_x)	((_x) << 1)
+#define CHE_XGM_F_ENRGMII	0x1
+#define CHE_XGM_F_CLKDIVRESET	0x8
 
 /* serial flash and firmware definitions */
 #define CHE_REG_SF_DATA		0x6d8
@@ -159,7 +206,11 @@ struct cheg_softc {
 	bus_space_handle_t	sc_memh;
 	bus_size_t		sc_mems;
 
-	u_int32_t		sc_rev;	/* card revision */
+	u_int32_t		sc_rev;		/* card revision */
+	u_int32_t		sc_cclk;	/* core clock */
+	u_int32_t		sc_mdc;		/* mdio clock */
+
+	pci_vendor_id_t		sc_product;
 };
 
 int		cheg_match(struct device *, void *, void *);
@@ -221,6 +272,7 @@ int		che_read_eeprom(struct cheg_softc *, struct pci_attach_args *,
 int		che_get_vpd(struct cheg_softc *, struct pci_attach_args *,
 		    void *, size_t);
 void		che_conv_lladdr(char *, u_int8_t *);
+u_int32_t	che_conv_num(char *, size_t);
 void		che_reset(struct cheg_softc *);
 int		che_ioctl(struct ifnet *, u_long, caddr_t);
 void		che_watchdog(struct ifnet *);
@@ -231,12 +283,17 @@ int	che_ifmedia_upd(struct ifnet *);
 void	che_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 int	che_miibus_readreg(struct device *, int, int);
 void	che_miibus_writereg(struct device *, int, int, int);
+int	che_miibus_ind_readreg(struct device *, int, int);
+void	che_miibus_ind_writereg(struct device *, int, int, int);
 void	che_miibus_statchg(struct device *);
 
 /* bus_space wrappers */
 u_int32_t 	che_read(struct cheg_softc *, bus_size_t);
 void		che_write(struct cheg_softc *, bus_size_t, u_int32_t);
 int		che_waitfor(struct cheg_softc *, bus_size_t, u_int32_t, int);
+
+/* HW low-level functions */
+void	che_hw_init(struct cheg_softc *);
 
 /* cheg */
 struct cheg_device {
@@ -336,6 +393,12 @@ cheg_attach(struct device *parent, struct device *self, void *aux)
 	    FW_VERS_TYPE(vers) ? "T" : "N",
 	    FW_VERS_MAJOR(vers), FW_VERS_MINOR(vers), FW_VERS_MICRO(vers));
 
+	sc->sc_product = PCI_PRODUCT(pa->pa_id);
+	sc->sc_cclk = che_conv_num(vpd.cclk_data, sizeof(vpd.cclk_data));
+	sc->sc_mdc = che_conv_num(vpd.mdc_data, sizeof(vpd.mdc_data));
+
+	che_hw_init(sc);
+
 	caa.caa_pa = pa;
 	che_conv_lladdr(vpd.na_data, caa.caa_lladdr);
 
@@ -391,6 +454,8 @@ che_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_port = caa->caa_port;
 	bcopy(caa->caa_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
+	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
+
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -406,17 +471,24 @@ che_attach(struct device *parent, struct device *self, void *aux)
 	    che_ifmedia_upd, che_ifmedia_sts);
 
 	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = che_miibus_readreg;
-	sc->sc_mii.mii_writereg = che_miibus_writereg;
+	sc->sc_mii.mii_readreg = che_miibus_ind_readreg;
+	sc->sc_mii.mii_writereg = che_miibus_ind_writereg;
 	sc->sc_mii.mii_statchg = che_miibus_statchg;
 
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, MIIF_DOPAUSE);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE | MIIF_HAVEFIBER);
+
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL,
+		    0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+	} else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 	return;
 }
 
@@ -560,6 +632,21 @@ che_conv_lladdr(char *mac, u_int8_t *lladdr)
 	}
 }
 
+u_int32_t
+che_conv_num(char *num, size_t len)
+{
+	size_t i;
+	u_int32_t n = 0;
+
+	for (i = 0; i < len; i++) {
+		if (num[i] >= '0' && num[i] <= '9')
+			n = 10 * n + (num[i] - '0');
+		else
+			break;
+	}
+	return (n);
+}
+
 void
 che_reset(struct cheg_softc *sc)
 {
@@ -610,15 +697,66 @@ che_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 che_miibus_readreg(struct device *dev, int phy, int reg)
 {
-	//struct che_softc *sc = (struct che_softc *)dev; 
+	struct che_softc *sc = (struct che_softc *)dev; 
+	u_int32_t addr = CHE_MI1_PHYADDR(phy) | reg;
 
-	return (0);
+	che_write(sc->sc_cheg, CHE_REG_MI1_ADDR, addr);
+	che_write(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_OP(2));
+
+	if (che_waitfor(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_F_BUSY, 20))
+		return (0);
+
+	return ((int)che_read(sc->sc_cheg, CHE_REG_MI1_DATA));
 }
 
 void
 che_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
-	//struct che_softc *sc = (struct che_softc *)dev; 
+	struct che_softc *sc = (struct che_softc *)dev; 
+	u_int32_t addr = CHE_MI1_PHYADDR(phy) | reg;
+
+	che_write(sc->sc_cheg, CHE_REG_MI1_ADDR, addr);
+	che_write(sc->sc_cheg, CHE_REG_MI1_DATA, val);
+	che_write(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_OP(1));
+	che_waitfor(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_F_BUSY, 20);
+}
+
+int
+che_miibus_ind_readreg(struct device *dev, int phy, int reg)
+{
+	struct che_softc *sc = (struct che_softc *)dev; 
+
+	che_write(sc->sc_cheg, CHE_REG_MI1_ADDR, CHE_MI1_PHYADDR(phy));
+	che_write(sc->sc_cheg, CHE_REG_MI1_DATA, reg);
+	che_write(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_OP(0));
+
+	if (che_waitfor(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_F_BUSY, 20))
+		return (0);
+
+	che_write(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_OP(3));
+
+	if (che_waitfor(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_F_BUSY, 20))
+		return (0);
+
+	return ((int)che_read(sc->sc_cheg, CHE_REG_MI1_DATA));
+}
+
+void
+che_miibus_ind_writereg(struct device *dev, int phy, int reg, int val)
+{
+	struct che_softc *sc = (struct che_softc *)dev; 
+
+	che_write(sc->sc_cheg, CHE_REG_MI1_ADDR, CHE_MI1_PHYADDR(phy));
+	che_write(sc->sc_cheg, CHE_REG_MI1_DATA, reg);
+	che_write(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_OP(0));
+
+	if (che_waitfor(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_F_BUSY, 20))
+		return;
+
+	che_write(sc->sc_cheg, CHE_REG_MI1_DATA, val);
+	che_write(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_OP(1));
+
+	che_waitfor(sc->sc_cheg, CHE_REG_MI1_OP, CHE_MI1_F_BUSY, 20);
 }
 
 void 
@@ -659,4 +797,79 @@ che_waitfor(struct cheg_softc *sc, bus_size_t r, u_int32_t mask, int tries)
 		delay(10);
 	}
 	return (EAGAIN);
+}
+
+void
+che_hw_init(struct cheg_softc *sc)
+{
+	u_int32_t	mi1_reg;
+	u_int32_t	i2c_reg;
+	u_int32_t	gpio_reg;
+	u_int32_t	port_reg;
+	
+	mi1_reg = CHE_MI1_F_PREEN |
+	    CHE_MI1_CLKDIV(sc->sc_cclk / (2 * sc->sc_mdc) - 1);
+
+	i2c_reg = CHE_I2C_CLKDIV(sc->sc_cclk / 80 - 1);	/* 80KHz */
+
+	gpio_reg =  CHE_T3DBG_F_GPIO0_OEN | CHE_T3DBG_F_GPIO0_OUT_VAL;
+
+	switch (sc->sc_product) {
+	case PCI_PRODUCT_CHELSIO_PE9000:
+		gpio_reg |= CHE_T3DBG_F_GPIO2_OEN | CHE_T3DBG_F_GPIO2_OUT_VAL |
+		    CHE_T3DBG_F_GPIO4_OEN | CHE_T3DBG_F_GPIO4_OUT_VAL;
+		port_reg = CHE_XGM_PORTSPEED(2);
+		break;
+	case PCI_PRODUCT_CHELSIO_T302E:
+	case PCI_PRODUCT_CHELSIO_T302X:
+	case PCI_PRODUCT_CHELSIO_T3B02:
+		gpio_reg |= CHE_T3DBG_F_GPIO2_OEN | CHE_T3DBG_F_GPIO2_OUT_VAL |
+		    CHE_T3DBG_F_GPIO4_OEN | CHE_T3DBG_F_GPIO4_OUT_VAL;
+		port_reg = CHE_XGM_PORTSPEED(2);
+		break;
+	case PCI_PRODUCT_CHELSIO_T310E:
+	case PCI_PRODUCT_CHELSIO_T310X:
+	case PCI_PRODUCT_CHELSIO_T3B10:
+		mi1_reg |= CHE_MI1_F_ST;
+		gpio_reg |= CHE_T3DBG_F_GPIO1_OEN | CHE_T3DBG_F_GPIO1_OUT_VAL |
+		    CHE_T3DBG_F_GPIO6_OEN | CHE_T3DBG_F_GPIO6_OUT_VAL |
+		    CHE_T3DBG_F_GPIO7_OEN |
+		    CHE_T3DBG_F_GPIO10_OEN | CHE_T3DBG_F_GPIO10_OUT_VAL;
+		port_reg = CHE_XGM_PORTSPEED(3);
+		port_reg |= CHE_XGM_F_ENRGMII;
+		break;
+	case PCI_PRODUCT_CHELSIO_T320X:
+	case PCI_PRODUCT_CHELSIO_T320E:
+	case PCI_PRODUCT_CHELSIO_T3B20:
+		mi1_reg |= CHE_MI1_F_ST;
+		gpio_reg |= CHE_T3DBG_F_GPIO1_OEN | CHE_T3DBG_F_GPIO1_OUT_VAL |
+		    CHE_T3DBG_F_GPIO2_OEN |
+		    CHE_T3DBG_F_GPIO4_OEN |
+		    CHE_T3DBG_F_GPIO5_OEN | CHE_T3DBG_F_GPIO5_OUT_VAL |
+		    CHE_T3DBG_F_GPIO6_OEN | CHE_T3DBG_F_GPIO6_OUT_VAL |
+		    CHE_T3DBG_F_GPIO7_OEN |
+		    CHE_T3DBG_F_GPIO10_OEN | CHE_T3DBG_F_GPIO10_OUT_VAL |
+		    CHE_T3DBG_F_GPIO11_OEN;
+		port_reg = CHE_XGM_PORTSPEED(3);
+		port_reg |= CHE_XGM_F_ENRGMII;
+		break;
+	}
+
+	if (sc->sc_rev == 0)
+		port_reg |= CHE_XGM_F_ENRGMII;
+
+	/* write all registers */
+	che_write(sc, CHE_REG_MI1_CFG, mi1_reg);
+	che_write(sc, CHE_REG_I2C_CFG, i2c_reg);
+	che_write(sc, CHE_REG_T3DBG_GPIO_EN, gpio_reg);
+
+	che_write(sc, CHE_REG_XGM_PORT_CFG, port_reg);
+	(void)che_read(sc, CHE_REG_XGM_PORT_CFG);
+
+	port_reg |= CHE_XGM_F_CLKDIVRESET;
+
+	che_write(sc, CHE_REG_XGM_PORT_CFG, port_reg);
+	(void)che_read(sc, CHE_REG_XGM_PORT_CFG);
+	che_write(sc, CHE_XGM_REG(CHE_REG_XGM_PORT_CFG, 1), port_reg);
+	(void)che_read(sc, CHE_REG_XGM_PORT_CFG);
 }
