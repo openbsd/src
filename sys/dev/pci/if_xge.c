@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.41 2007/05/26 18:40:28 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.42 2007/05/28 23:39:07 ckuethe Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 		val = PIF_RCSR(SW_RESET);
 		val &= 0xffff00ffffffffffULL;
 		PIF_WCSR(SW_RESET,val);
-		delay(1000*1000);	//wait for 1 sec
+		delay(1000*1000);	/* wait for 1 sec */
 	}
 
 	/* 29, Bring adapter out of reset */
