@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.122 2007/03/09 22:43:37 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.123 2007/05/28 20:53:49 cnst Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -753,6 +753,20 @@ Supported devices {:-include-:}:
 		    (currently restricted to non-DMA devices)
 		onboard floppy drive on SBus systems (such as Ultra 1 and
 		    Ultra 2)
+		Hardware monitoring sensors, including:
+		    Analog Devices AD7416, AD7417 and AD7418 (adc)
+		    Analog Devices ADM1021 (admtemp)
+		    Analog Devices ADM1024 (admlc)
+		    Analog Devices ADM1025 (admtm)
+		    Analog Devices ADM1030 (admtmp)
+		    Analog Devices ADM1031 (admtt)
+		    Analog Devices ADT7460 (adt)
+		    National Semiconductor LM75, LM77 (lmtemp)
+		    National Semiconductor LM78, LM78-J, LM79 (lm)
+		    National Semiconductor LM87 (lmenv)
+		    Maxim DS1624/DS1631/DS1721 (maxds)
+		    Maxim MAX6642/MAX6690 (maxtmp)
+		    Philips PCF8591 (pcfadc)
 		Meinberg Funkuhren radio clocks, including:
 		    PCI32 DCF77 time signal station receiver card
 		    PCI511 DCF77 time signal station receiver card
