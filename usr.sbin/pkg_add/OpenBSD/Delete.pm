@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.48 2007/05/28 12:16:55 espie Exp $
+# $OpenBSD: Delete.pm,v 1.49 2007/05/28 13:00:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -106,11 +106,8 @@ sub validate_plist
 {
 	my ($plist, $state) = @_;
 
-	$state->{problems} = 0;
 	$state->{totsize} = 0;
 	$plist->prepare_for_deletion($state, $plist->pkgname);
-	Fatal "fatal issues in deinstalling ", $plist->pkgname 
-	    if $state->{problems};
 	$state->{totsize} = 1 if $state->{totsize} == 0;
 	$plist->{totsize} = $state->{totsize};
 }
@@ -140,7 +137,10 @@ sub delete_package
 		Fatal "Package $pkgname real name does not match";
 	}
 
+	$state->{problems} = 0;
 	validate_plist($plist, $state);
+	Fatal "fatal issues in deinstalling $pkgname"
+	    if $state->{problems};
 	OpenBSD::Vstat::synchronize();
 
 	delete_plist($plist, $state);

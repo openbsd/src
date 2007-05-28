@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.57 2007/05/28 12:16:55 espie Exp $
+# $OpenBSD: Add.pm,v 1.58 2007/05/28 13:00:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -59,21 +59,9 @@ sub validate_plist
 {
 	my ($plist, $state) = @_;
 
-	$state->{problems} = 0;
 	$state->{totsize} = 0;
-	$state->{colliding} = [];
 
 	$plist->prepare_for_addition($state, $plist->pkgname);
-	if (@{$state->{colliding}} > 0) {
-		require OpenBSD::CollisionReport;
-
-		OpenBSD::CollisionReport::collision_report($state->{colliding}, $state);
-	}
-	if (defined $state->{overflow}) {
-		OpenBSD::Vstat::tally();
-	}
-	Fatal "fatal issues in installing ", $plist->pkgname 
-	    if $state->{problems};
 	$state->{totsize} = 1 if $state->{totsize} == 0;
 	$plist->{totsize} = $state->{totsize};
 }

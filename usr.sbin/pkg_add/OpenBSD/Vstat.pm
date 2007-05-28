@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.27 2007/05/28 12:16:55 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.28 2007/05/28 13:00:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -343,16 +343,46 @@ sub older
 	return @l;
 }
 
+sub print
+{
+	my $self = shift;
+	my @l = ();
+	if (defined $self->{newer}) {
+		push(@l, "installing", map {$_->{pkgname}} $self->newer);
+	}
+	if (defined $self->{older} && @{$self->{older}} > 0) {
+		push(@l, "deinstalling", map {$_->{pkgname}} $self->older);
+	}
+	return join(' ', @l);
+}
+
 sub validate_plists
 {
 	my ($self, $state) = @_;
+	$state->{problems} = 0;
+
 	for my $o ($self->older) {
 		require OpenBSD::Delete;
-		OpenBSD::Delete::validate_plist($o->{plist}, $state);
+		$o->{totsize} =
+		    OpenBSD::Delete::validate_plist($o->{plist}, $state);
 	}
+	$state->{colliding} = [];
 	for my $n ($self->newer) {
 		require OpenBSD::Add;
-		OpenBSD::Add::validate_plist($n->{plist}, $state);
+		$n->{totsize} =
+		    OpenBSD::Add::validate_plist($n->{plist}, $state);
+	}
+	if (@{$state->{colliding}} > 0) {
+		require OpenBSD::CollisionReport;
+
+		OpenBSD::CollisionReport::collision_report($state->{colliding}, $state);
+	}
+	if (defined $state->{overflow}) {
+		OpenBSD::Vstat::tally();
+	}
+	if ($state->{problems}) {
+		require OpenBSD::Error;
+		OpenBSD::Error::Fatal "fatal issues in ", $self->print;
 	}
 	OpenBSD::Vstat::synchronize();
 }
