@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.23 2007/05/28 13:07:49 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.24 2007/05/28 14:05:16 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -719,7 +719,7 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *c)
 			}
 			break;
 		}
-		if (timeout == 0) {
+		if (timeout < 0) {
 			printf("%s: poll timeout\n", sc->sc_dev.dv_xname);
 			return (EBUSY);
 		}
