@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.26 2007/05/28 17:18:35 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.27 2007/05/28 17:44:54 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -711,7 +711,7 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *c)
 	int id, timeout;
 
 	while (ccb != c) {
-		for (timeout = 10; timeout-- > 0; delay(100)) {
+		for (timeout = 100; timeout-- > 0; delay(100)) {
 			if ((status = ips_status(sc)) == 0xffffffff)
 				continue;
 			id = IPS_REG_STAT_ID(status);
@@ -840,7 +840,7 @@ ips_copperhead_exec(struct ips_softc *sc, struct ips_ccb *ccb)
 	u_int32_t reg;
 	int timeout;
 
-	for (timeout = 10; timeout-- > 0; delay(100)) {
+	for (timeout = 100; timeout-- > 0; delay(100)) {
 		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_CCC);
 		if ((reg & IPS_REG_CCC_SEM) == 0)
 			break;
