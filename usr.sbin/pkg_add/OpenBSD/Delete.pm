@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.47 2007/05/28 11:15:11 espie Exp $
+# $OpenBSD: Delete.pm,v 1.48 2007/05/28 12:16:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -108,20 +108,7 @@ sub validate_plist
 
 	$state->{problems} = 0;
 	$state->{totsize} = 0;
-	$plist->prepare_for_deletion($state);
-	my $dir = installed_info($plist->pkgname);
-	for my $i (info_names()) {
-		my $fname = $dir.$i;
-		if (-e $fname) {
-			my $size = (stat _)[7];
-			my $s = OpenBSD::Vstat::remove($fname, $size);
-			next unless defined $s;
-			if ($s->{ro}) {
-				Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
-				$state->{problems}++;
-			}
-		}
-	}
+	$plist->prepare_for_deletion($state, $plist->pkgname);
 	Fatal "fatal issues in deinstalling ", $plist->pkgname 
 	    if $state->{problems};
 	$state->{totsize} = 1 if $state->{totsize} == 0;
@@ -363,21 +350,14 @@ use OpenBSD::Vstat;
 
 sub prepare_for_deletion
 {
-	my ($self, $state) = @_;
+	my ($self, $state, $pkgname) = @_;
 
 	my $fname = $state->{destdir}.$self->fullname;
 	$state->{totsize} += $self->{size} if defined $self->{size};
 	my $s = OpenBSD::Vstat::remove($fname, $self->{size});
 	return unless defined $s;
 	if ($s->{ro}) {
-		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-			Warn "Error: ", $s->{dev}, 
-			    " is read-only ($fname)\n";
-		} elsif ($s->{problems} == 4) {
-			Warn "Error: ... more files can't be removed from ",
-				$s->{dev}, "\n";
-		}
-		$state->{problems}++;
+		$s->report_ro($state, $fname);
 	}
 }
 
@@ -435,6 +415,28 @@ sub delete
 	if (!unlink $realname) {
 		print "Problem deleting $realname\n";
 		$state->print("deleting $realname failed: $!\n");
+	}
+}
+
+package OpenBSD::PackingElement::SpecialFile;
+use OpenBSD::PackageInfo;
+
+sub prepare_for_deletetion
+{
+	my ($self, $state, $pkgname) = @_;
+
+	my $fname = installed_info($pkgname).$self->{name};
+	my $size = $self->{size};
+	if (!defined $size) {
+		$size = (stat $fname)[7];
+	}
+	my $s = OpenBSD::Vstat::remove($fname, $self->{size});
+	return unless defined $s;
+	if ($s->{ro}) {
+		$s->report_ro($state, $fname);
+	}
+	if ($s->{noexec} && $self->exec_on_delete) {
+		$s->report_noexec($state, $fname);
 	}
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.56 2007/05/28 11:15:11 espie Exp $
+# $OpenBSD: Add.pm,v 1.57 2007/05/28 12:16:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -300,28 +300,13 @@ sub prepare_for_addition
 	my $s = OpenBSD::Vstat::add($fname, $self->{size}, \$pkgname);
 	return unless defined $s;
 	if ($s->{ro}) {
-		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-			Warn "Error: ", $s->{dev}, 
-			    " is read-only ($fname)\n";
-		} elsif ($s->{problems} == 4) {
-			Warn "Error: ... more files can't be written to ",
-				$s->{dev}, "\n";
-		}
-		$state->{problems}++;
+		$s->report_ro($state, $fname);
 	}
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
 	}
 	if ($s->avail < 0) {
-		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-			Warn "Error: ", $s->{dev}, 
-			    " is not large enough ($fname)\n";
-		} elsif ($s->{problems} == 4) {
-			Warn "Error: ... more files do not fit on ",
-				$s->{dev}, "\n";
-		}
-		$state->{overflow} = 1;
-		$state->{problems}++;
+		$s->report_overflow($state, $fname);
 	}
 }
 
@@ -433,28 +418,13 @@ sub prepare_for_addition
 	my $s = OpenBSD::Vstat::add($fname, $size, \$pkgname);
 	return unless defined $s;
 	if ($s->{ro}) {
-		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-			Warn "Error: ", $s->{dev}, 
-			    " is read-only ($fname)\n";
-		} elsif ($s->{problems} == 4) {
-			Warn "Error: ... more files can't be written to ",
-				$s->{dev}, "\n";
-		}
-		$state->{problems}++;
+		$s->report_ro($state, $fname);
 	}
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
 	}
 	if ($s->avail < 0) {
-		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-			Warn "Error: ", $s->{dev}, 
-			    " is not large enough ($fname)\n";
-		} elsif ($s->{problems} == 4) {
-			Warn "Error: ... more files do not fit on ",
-				$s->{dev}, "\n";
-		}
-		$state->{overflow} = 1;
-		$state->{problems}++;
+		$s->report_overflow($state, $fname);
 	}
 }
 
@@ -607,27 +577,22 @@ sub prepare_for_addition
 	if ($self->exec_on_add) {
 		my $s2 = OpenBSD::Vstat::filestat($cname);
 		if (defined $s2 && $s2->{noexec}) {
-			Warn "Error: ", $s2->{dev}, " is noexec ($cname)\n";
-			$state->{problems}++;
+			$s2->report_noexec($state, $cname);
 		}
 	}
 	my $s = OpenBSD::Vstat::add($fname, $self->{size}, \$pkgname);
 	return unless defined $s;
 	if ($s->{ro}) {
-		Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
-		$state->{problems}++;
+		$s->report_ro($state, $fname);
 	}
 	if ($s->{noexec} && $self->exec_on_delete) {
-		Warn "Error: ", $s->{dev}, " is noexec ($fname)\n";
-		$state->{problems}++;
+		$s->report_noexec($state, $fname);
 	}
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
 	}
 	if ($s->avail < 0) {
-		Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
-		$state->{overflow} = 1;
-		$state->{problems}++;
+		$s->report_overflow($state, $fname);
 	}
 }
 

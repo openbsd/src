@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.26 2007/05/27 22:18:14 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.27 2007/05/28 12:16:55 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -71,7 +71,7 @@ sub init_devices()
 		}
 	}
 	close($cmd1) or print STDERR "Error running mount: $!\n";
-	$giveup = { used => 0 };
+	$giveup = { used => 0, dev => '???' };
 	bless $giveup, "OpenBSD::Vstat::Failsafe";
 }
 
@@ -194,12 +194,49 @@ sub tally()
 package OpenBSD::Vstat::MountPoint;
 sub avail
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	return $self->{avail} - $self->{used}/$self->{blocksize};
 }
 
+sub report_ro
+{
+	my ($s, $state, $fname) = @_;
+
+	if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+		print STDERR "Error: ", $s->{dev}, 
+		    " is read-only ($fname)\n";
+	} elsif ($s->{problems} == 4) {
+		print STDERR "Error: ... more files on ", $s->{dev}, "\n";
+	}
+	$state->{problems}++;
+}
+
+sub report_overflow
+{
+	my ($s, $state, $fname) = @_;
+
+	if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+		print STDERR "Error: ", $s->{dev}, 
+		    " is not large enough ($fname)\n";
+	} elsif ($s->{problems} == 4) {
+		print STDERR "Error: ... more files do not fit on ", 
+		    $s->{dev}, "\n";
+	}
+	$state->{problems}++;
+	$state->{overflow} = 1;
+}
+
+sub report_noexec
+{
+	my ($s, $state, $fname) = @_;
+	print STDERR "Error: ", $s->{dev}, " is noexec ($fname)\n";
+	$state->{problems}++;
+}
+
 package OpenBSD::Vstat::Failsafe;
+our @ISA=(qw(OpenBSD::Vstat::MountPoint));
+
 sub avail
 {
 	return 1;
