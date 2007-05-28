@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.285 2007/05/28 12:44:41 espie Exp $
+# $OpenBSD: pkg_add,v 1.286 2007/05/28 13:55:34 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -356,9 +356,8 @@ sub really_add
 
 	$ENV{'PKG_PREFIX'} = $plist->localbase;
 
-	my $interrupted;
 	my $handler = sub {
-		$interrupted = shift;
+		$state->{interrupted} = shift;
 	};
 	local $SIG{'INT'} = $handler;
 	local $SIG{'QUIT'} = $handler;
@@ -387,11 +386,11 @@ sub really_add
 				$donesize += $item->{size};
 				OpenBSD::ProgressMeter::show($donesize, $totsize);
 			}
-			last if $interrupted || $errors;
+			last if $state->{interrupted} || $errors;
 		}
 		OpenBSD::ProgressMeter::next();
-		if ($interrupted || $errors) {
-			failed_install($handle, $state->{not}, $interrupted);
+		if ($state->{interrupted} || $errors) {
+			failed_install($handle, $state->{not}, $state->{interrupted});
 		}
 
 		for my $op (@toreplace) {
@@ -437,9 +436,9 @@ sub really_add
 			$errors++;
 		};
 
-		if ($interrupted || $errors) {
+		if ($state->{interrupted} || $errors) {
 			# here we should remove links from the temp package
-			failed_install($handle, $state->{not}, $interrupted);
+			failed_install($handle, $state->{not}, $state->{interrupted});
 		}
 	} else {
 		do_script($plist, REQUIRE, $state, "INSTALL");
@@ -464,7 +463,7 @@ sub really_add
                         OpenBSD::ProgressMeter::show($donesize, $totsize);
                 }
 
-		last if $interrupted;
+		last if $state->{interrupted};
 		# stop faked installation there...
 		if ($state->{do_faked} && $state->{end_faked}) {
 			last;
@@ -479,7 +478,7 @@ sub really_add
 	};
 	OpenBSD::ProgressMeter::next();
 
-	if (!($interrupted || $errors)) {
+	if (!($state->{interrupted} || $errors)) {
 		try { 
 			do_script($plist, INSTALL, $state, "POST-INSTALL") 
 		} catchall {
@@ -489,8 +488,8 @@ sub really_add
 	}
 
 	unlink($dir.CONTENTS);
-	if ($interrupted || $errors) {
-		failed_install($handle, $state->{not}, $interrupted);
+	if ($state->{interrupted} || $errors) {
+		failed_install($handle, $state->{not}, $state->{interrupted});
 	}
 	OpenBSD::SharedLibs::add_libs_from_plist($plist);
 	$plist->to_cache;
