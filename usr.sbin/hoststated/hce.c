@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.20 2007/05/27 20:53:10 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.21 2007/05/28 22:11:33 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -85,6 +85,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	}
 
 	env = x_env;
+	purge_config(env, PURGE_SERVICES|PURGE_RELAYS|PURGE_PROTOS);
 
 	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
 		fatal("hce: getpwnam");

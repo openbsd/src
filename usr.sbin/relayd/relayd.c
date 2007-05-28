@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.23 2007/05/27 20:53:10 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.24 2007/05/28 22:11:33 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -330,6 +330,86 @@ send_all(struct hoststated *env, enum imsg_type type, void *buf, u_int16_t len)
 			return (-1);
 	}
 	return (0);
+}
+
+void
+purge_config(struct hoststated *env, u_int8_t what)
+{
+	struct table		*table;
+	struct host		*host;
+	struct service		*service;
+	struct address		*virt;
+	struct protocol		*proto;
+	struct protonode	*pnode;
+	struct relay		*rly;
+
+	if (what & PURGE_SERVICES) {
+		while ((service = TAILQ_FIRST(&env->services)) != NULL) {
+			TAILQ_REMOVE(&env->services, service, entry);
+			while ((virt = TAILQ_FIRST(&service->virts)) != NULL) {
+				TAILQ_REMOVE(&service->virts, virt, entry);
+				free(virt);
+			}
+			free(service);
+		}
+	}
+
+	if (what & PURGE_RELAYS) {
+		while ((rly = TAILQ_FIRST(&env->relays)) != NULL) {
+			TAILQ_REMOVE(&env->relays, rly, entry);
+			if (rly->bev != NULL)
+				bufferevent_free(rly->bev);
+			if (rly->dstbev != NULL)
+				bufferevent_free(rly->dstbev);
+			if (rly->ctx != NULL)
+				SSL_CTX_free(rly->ctx);
+			free(rly);
+		}
+	}
+
+	if (what & PURGE_PROTOS) {
+		while ((proto = TAILQ_FIRST(&env->protos)) != NULL) {
+			TAILQ_REMOVE(&env->protos, proto, entry);
+			if (proto == &env->proto_default)
+				continue;
+			while ((pnode = RB_ROOT(&proto->request_tree))
+			    != NULL) {
+				RB_REMOVE(proto_tree, &proto->request_tree,
+				    pnode);
+				if (pnode->key != NULL)
+					free(pnode->key);
+				if (pnode->value != NULL)
+					free(pnode->value);
+				free(pnode);
+			}
+			while ((pnode = RB_ROOT(&proto->response_tree))
+			    != NULL) {
+				RB_REMOVE(proto_tree, &proto->response_tree,
+				    pnode);
+				if (pnode->key != NULL)
+					free(pnode->key);
+				if (pnode->value != NULL)
+					free(pnode->value);
+				free(pnode);
+			}
+			free(proto);
+		}
+	}
+
+	if (what & PURGE_TABLES) {
+		while ((table = TAILQ_FIRST(&env->tables)) != NULL) {
+			TAILQ_REMOVE(&env->tables, table, entry);
+			while ((host = TAILQ_FIRST(&table->hosts)) != NULL) {
+				TAILQ_REMOVE(&table->hosts, host, entry);
+				free(host);
+			}
+			if (table->sendbuf != NULL)
+				free(table->sendbuf);
+			if (table->ssl_ctx != NULL)
+				SSL_CTX_free(table->ssl_ctx);
+			free(table);
+		}
+	}
 }
 
 void

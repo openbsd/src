@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.44 2007/05/28 17:37:16 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.45 2007/05/28 22:11:33 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -47,6 +47,12 @@
 #define SMALL_READ_BUF_SIZE	1024
 #define READ_BUF_SIZE		65535
 #define ICMP_BUF_SIZE		64
+
+#define PURGE_TABLES		0x01
+#define PURGE_SERVICES		0x02
+#define PURGE_RELAYS		0x04
+#define PURGE_PROTOS		0x08
+#define PURGE_EVERYTHING	0xff
 
 /* buffer */
 struct buf {
@@ -683,6 +689,7 @@ struct relay	*relay_find(struct hoststated *, objid_t);
 struct session	*session_find(struct hoststated *, objid_t);
 struct relay	*relay_findbyname(struct hoststated *, const char *);
 int		 expand_string(char *, size_t, const char *, const char *);
+void		 purge_config(struct hoststated *, u_int8_t);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);
