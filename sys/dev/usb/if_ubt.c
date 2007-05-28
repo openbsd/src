@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.11 2007/05/27 04:00:24 jsg Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.12 2007/05/28 15:48:02 fkr Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.11 2007/05/27 04:00:24 jsg Exp $
+ * $Id: if_ubt.c,v 1.12 2007/05/28 15:48:02 fkr Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -249,14 +249,14 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: Could not get interface 0 handle. %s (%d), " \
 			"handle=%p\n", USBDEVNAME(sc->sc_dev),
 			usbd_errstr(error), error, sc->sc_iface0);
-		goto bad;
+		return;
 	}
 
 	id = usbd_get_interface_descriptor(sc->sc_iface0);
 	if (id == NULL) {
 		printf("%s: Could not get interface 0 descriptor\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	for (i = 0; i < id->bNumEndpoints; i ++) {
@@ -265,7 +265,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 			printf("%s: Could not read endpoint descriptor for " \
 				"interface 0, i=%d\n", USBDEVNAME(sc->sc_dev),
 				i);
-			goto bad;
+			return;
 		}
 
 		switch (UE_GET_XFERTYPE(ed->bmAttributes)) {
@@ -286,17 +286,17 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_intr_ep == -1) {
 		printf("%s: Could not detect interrupt endpoint\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	if (sc->sc_bulk_in_ep == -1) {
 		printf("%s: Could not detect bulk-in endpoint\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	if (sc->sc_bulk_out_ep == -1) {
 		printf("%s: Could not detect bulk-out endpoint\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	printf("%s: Interface 0 endpoints: interrupt=%#x, bulk-in=%#x, " \
@@ -311,7 +311,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	if (cd == NULL) {
 		printf("%s: Could not get device configuration descriptor\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	error = usbd_device2interface_handle(sc->sc_udev, 1, &sc->sc_iface1);
@@ -319,14 +319,14 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: Could not get interface 1 handle. %s (%d), " \
 			"handle=%p\n", USBDEVNAME(sc->sc_dev),
 			usbd_errstr(error), error, sc->sc_iface1);
-		goto bad;
+		return;
 	}
 
 	id = usbd_get_interface_descriptor(sc->sc_iface1);
 	if (id == NULL) {
 		printf("%s: Could not get interface 1 descriptor\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	/*
@@ -342,14 +342,14 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 				"configuration %d for interface 1. %s (%d)\n",
 				USBDEVNAME(sc->sc_dev),  ai, usbd_errstr(error),
 				error);
-			goto bad;
+			return;
 		}
 		id = usbd_get_interface_descriptor(sc->sc_iface1);
 		if (id == NULL) {
 			printf("%s: Could not get interface 1 descriptor for " \
 				"alternate configuration %d\n",
 				USBDEVNAME(sc->sc_dev), ai);
-			goto bad;
+			return;
 		}
 
 		isoc_in = isoc_out = -1;
@@ -362,7 +362,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 					"descriptor for interface 1, " \
 					"alternate configuration %d, i=%d\n",
 					USBDEVNAME(sc->sc_dev), ai, i);
-				goto bad;
+				return;
 			}
 
 			if (UE_GET_XFERTYPE(ed->bmAttributes) != UE_ISOCHRONOUS)
@@ -396,17 +396,17 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_isoc_in_ep == -1) {
 		printf("%s: Could not detect isoc-in endpoint\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	if (sc->sc_isoc_out_ep == -1) {
 		printf("%s: Could not detect isoc-out endpoint\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	if (sc->sc_isoc_size <= 0) {
 		printf("%s: Invalid isoc. packet size=%d\n",
 			USBDEVNAME(sc->sc_dev), sc->sc_isoc_size);
-		goto bad;
+		return;
 	}
 
 	error = usbd_set_interface(sc->sc_iface1, alt_no);
@@ -414,7 +414,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: Could not set alternate configuration " \
 			"%d for interface 1. %s (%d)\n", USBDEVNAME(sc->sc_dev),
 			alt_no, usbd_errstr(error), error);
-		goto bad;
+		return;
 	}
 
 	/* Allocate USB transfer handles and buffers */
@@ -422,56 +422,56 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ctrl_xfer == NULL) {
 		printf("%s: Could not allocate control xfer handle\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	sc->sc_ctrl_buffer = usbd_alloc_buffer(sc->sc_ctrl_xfer,
 						UBT_CTRL_BUFFER_SIZE);
 	if (sc->sc_ctrl_buffer == NULL) {
 		printf("%s: Could not allocate control buffer\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	sc->sc_intr_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_intr_xfer == NULL) {
 		printf("%s: Could not allocate interrupt xfer handle\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	sc->sc_intr_buffer = usbd_alloc_buffer(sc->sc_intr_xfer,
 						UBT_INTR_BUFFER_SIZE);
 	if (sc->sc_intr_buffer == NULL) {
 		printf("%s: Could not allocate interrupt buffer\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	sc->sc_bulk_in_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_bulk_in_xfer == NULL) {
 		printf("%s: Could not allocate bulk-in xfer handle\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	sc->sc_bulk_in_buffer = usbd_alloc_buffer(sc->sc_bulk_in_xfer,
 						UBT_BULK_BUFFER_SIZE);
 	if (sc->sc_bulk_in_buffer == NULL) {
 		printf("%s: Could not allocate bulk-in buffer\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	sc->sc_bulk_out_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_bulk_out_xfer == NULL) {
 		printf("%s: Could not allocate bulk-out xfer handle\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	sc->sc_bulk_out_buffer = usbd_alloc_buffer(sc->sc_bulk_out_xfer,
 						UBT_BULK_BUFFER_SIZE);
 	if (sc->sc_bulk_out_buffer == NULL) {
 		printf("%s: Could not allocate bulk-out buffer\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	/*
@@ -484,42 +484,42 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_isoc_in_xfer == NULL) {
 		printf("%s: Could not allocate isoc-in xfer handle\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	sc->sc_isoc_in_buffer = usbd_alloc_buffer(sc->sc_isoc_in_xfer,
 					sc->sc_isoc_nframes * sc->sc_isoc_size);
 	if (sc->sc_isoc_in_buffer == NULL) {
 		printf("%s: Could not allocate isoc-in buffer\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	sc->sc_isoc_in_frlen = malloc(sizeof(u_int16_t) * sc->sc_isoc_nframes,
 						M_USBDEV, M_NOWAIT);
 	if (sc->sc_isoc_in_frlen == NULL) {
 		printf("%s: Could not allocate isoc-in frame sizes buffer\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	sc->sc_isoc_out_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_isoc_out_xfer == NULL) {
 		printf("%s: Could not allocate isoc-out xfer handle\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	sc->sc_isoc_out_buffer = usbd_alloc_buffer(sc->sc_isoc_out_xfer,
 					sc->sc_isoc_nframes * sc->sc_isoc_size);
 	if (sc->sc_isoc_out_buffer == NULL) {
 		printf("%s: Could not allocate isoc-out buffer\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 	sc->sc_isoc_out_frlen = malloc(sizeof(u_int16_t) * sc->sc_isoc_nframes,
 						M_USBDEV, M_NOWAIT);
 	if (sc->sc_isoc_out_frlen == NULL) {
 		printf("%s: Could not allocate isoc-out frame sizes buffer\n",
 			USBDEVNAME(sc->sc_dev));
-		goto bad;
+		return;
 	}
 
 	printf("%s: Interface 1 (alt.config %d) endpoints: isoc-in=%#x, " \
@@ -539,7 +539,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: %s - Could not open interrupt pipe. %s (%d)\n",
 			__func__, USBDEVNAME(sc->sc_dev), usbd_errstr(error),
 			error);
-		goto bad;
+		return;
 	}
 
 	/* Bulk-in */
@@ -549,7 +549,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: %s - Could not open bulk-in pipe. %s (%d)\n",
 			__func__,  USBDEVNAME(sc->sc_dev), usbd_errstr(error),
 			error);
-		goto bad;
+		return;
 	}
 
 	/* Bulk-out */
@@ -559,7 +559,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: %s - Could not open bulk-out pipe. %s (%d)\n",
 			__func__, USBDEVNAME(sc->sc_dev), usbd_errstr(error),
 			error);
-		goto bad;
+		return;
 	}
 
 #if __broken__ /* XXX FIXME */
@@ -570,7 +570,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: %s - Could not open isoc-in pipe. %s (%d)\n",
 			__func__, USBDEVNAME(sc->sc_dev), usbd_errstr(error),
 			error);
-		goto bad;
+		return;
 	}
 
 	/* Isoc-out */
@@ -580,7 +580,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: %s - Could not open isoc-out pipe. %s (%d)\n",
 			__func__, USBDEVNAME(sc->sc_dev), usbd_errstr(error),
 			error);
-		goto bad;
+		return;
 	}
 #endif /* __broken__ */
 
@@ -591,7 +591,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 "%s: %s - Could not start interrupt transfer. %s (%d)\n",
 			__func__, USBDEVNAME(sc->sc_dev), usbd_errstr(error),
 			error);
-		goto bad;
+		return;
 	}
 
 	/* Start bulk-in transfer */
@@ -601,7 +601,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 "%s: %s - Could not start bulk-in transfer. %s (%d)\n",
 			__func__, USBDEVNAME(sc->sc_dev), usbd_errstr(error),
 			error);
-		goto bad;
+		return;
 	}
 
 #if __broken__ /* XXX FIXME */
@@ -612,8 +612,8 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 "%s: %s - Could not start isoc-in transfer. %s (%d)\n",
 			__func__, USBDEVNAME(sc->sc_dev), usbd_errstr(error),
 			error);
-		goto bad;
-	}
+		return;
+		}
 #endif /* __broken__ */
 
 	/* Claim all interfaces on the device */
@@ -636,12 +636,6 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 		USBDEV(sc->sc_dev));
-
-	return;
-bad:
-#if 0
-	ubt_detach(self);
-#endif
 }
 
 int
