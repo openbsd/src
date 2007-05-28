@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.89 2007/05/27 01:25:56 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.90 2007/05/28 22:18:48 thib Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -332,6 +332,7 @@ bufinit(void)
 	struct bqueues *dp;
 
 	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
+	pool_setipl(&bufpool, IPL_BIO);
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
 	minaddr = vm_map_min(kernel_map);
