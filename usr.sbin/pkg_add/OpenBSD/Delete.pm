@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.46 2007/05/22 11:02:57 espie Exp $
+# $OpenBSD: Delete.pm,v 1.47 2007/05/28 11:15:11 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -102,11 +102,10 @@ sub manpages_unindex
 	undef $state->{mandirs};
 }
 
-sub validate_plist($$)
+sub validate_plist
 {
 	my ($plist, $state) = @_;
 
-	my $destdir = $state->{destdir};
 	$state->{problems} = 0;
 	$state->{totsize} = 0;
 	$plist->prepare_for_deletion($state);
@@ -123,7 +122,8 @@ sub validate_plist($$)
 			}
 		}
 	}
-	Fatal "fatal issues" if $state->{problems};
+	Fatal "fatal issues in deinstalling ", $plist->pkgname 
+	    if $state->{problems};
 	$state->{totsize} = 1 if $state->{totsize} == 0;
 	$plist->{totsize} = $state->{totsize};
 }

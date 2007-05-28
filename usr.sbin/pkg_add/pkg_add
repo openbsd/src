@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.282 2007/05/27 22:34:24 espie Exp $
+# $OpenBSD: pkg_add,v 1.283 2007/05/28 11:15:10 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -239,9 +239,9 @@ sub prepare_to_add
 
 	if (is_installed($pkgname) && 
 	    (!$state->{allow_replacing} ||	
-	    	!$state->{forced}->{installed} &&
-	    	!$plist->has_new_sig($state) && 
-	    	!$plist->uses_old_libs)) {
+	      !$state->{forced}->{installed} &&
+	      !$plist->has_new_sig($state) && 
+	      !$plist->uses_old_libs)) {
 		print "Not reinstalling $pkgname\n" if $state->{verbose};
 		$state->mark_as_already_installed($pkgname);
 		$location->close_now;

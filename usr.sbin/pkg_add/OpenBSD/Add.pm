@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.55 2007/05/27 22:04:17 espie Exp $
+# $OpenBSD: Add.pm,v 1.56 2007/05/28 11:15:11 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -55,28 +55,27 @@ sub register_installation
 	$plist->to_installation;
 }
 
-sub validate_plist($$)
+sub validate_plist
 {
 	my ($plist, $state) = @_;
 
-	my $destdir = $state->{destdir};
-	my $problems = 0;
-	my $pkgname = $plist->pkgname;
-	my $totsize = 0;
-	my $colliding = [];
+	$state->{problems} = 0;
+	$state->{totsize} = 0;
+	$state->{colliding} = [];
 
-	$plist->validate($state, \$problems, $colliding, \$totsize, $plist->pkgname);
-	if (@$colliding > 0) {
+	$plist->prepare_for_addition($state, $plist->pkgname);
+	if (@{$state->{colliding}} > 0) {
 		require OpenBSD::CollisionReport;
 
-		OpenBSD::CollisionReport::collision_report($colliding, $state);
+		OpenBSD::CollisionReport::collision_report($state->{colliding}, $state);
 	}
 	if (defined $state->{overflow}) {
 		OpenBSD::Vstat::tally();
 	}
-	Fatal "fatal issues in installing $pkgname" if $problems;
-	$totsize = 1 if $totsize == 0;
-	$plist->{totsize} = $totsize;
+	Fatal "fatal issues in installing ", $plist->pkgname 
+	    if $state->{problems};
+	$state->{totsize} = 1 if $state->{totsize} == 0;
+	$plist->{totsize} = $state->{totsize};
 }
 
 sub borked_installation
@@ -123,7 +122,7 @@ use OpenBSD::Error;
 
 my ($uidcache, $gidcache);
 
-sub validate
+sub prepare_for_addition
 {
 }
 
@@ -169,17 +168,17 @@ sub set_modes
 package OpenBSD::PackingElement::ExtraInfo;
 use OpenBSD::Error;
 
-sub validate
+sub prepare_for_addition
 {
-	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
+	my ($self, $state, $pkgname) = @_;
 
 	if ($state->{cdrom_only} && $self->{cdrom} ne 'yes') {
 	    Warn "Package $pkgname is not for cdrom.\n";
-	    $$problems++;
+	    $state->{problems}++;
 	}
 	if ($state->{ftp_only} && $self->{ftp} ne 'yes') {
 	    Warn "Package $pkgname is not for ftp.\n";
-	    $$problems++;
+	    $state->{problems}++;
 	}
 }
 
@@ -202,15 +201,15 @@ sub add_entry
 	}
 }
 
-sub validate
+sub prepare_for_addition
 {
-	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
-	my $ok = $self->check();
+	my ($self, $state, $pkgname) = @_;
+	my $ok = $self->check;
 	if (defined $ok) {
 		if ($ok == 0) {
 			Warn $self->type, " ",  $self->{name}, 
 			    " does not match\n";
-			$$problems++;
+			$state->{problems}++;
 		}
 	}
 	$self->{okay} = $ok;
@@ -287,17 +286,17 @@ use OpenBSD::Error;
 use File::Basename;
 use File::Path;
 
-sub validate
+sub prepare_for_addition
 {
-	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
+	my ($self, $state, $pkgname) = @_;
 	my $fname = $state->{destdir}.$self->fullname;
 	# check for collisions with existing stuff
 	if (OpenBSD::Vstat::vexists($fname)) {
-		push(@$colliding, $self);
-		$$problems++;
+		push(@{$state->{colliding}}, $self);
+		$state->{problems}++;
 		return;
 	}
-	$$totsize += $self->{size} if defined $self->{size};
+	$state->{totsize} += $self->{size} if defined $self->{size};
 	my $s = OpenBSD::Vstat::add($fname, $self->{size}, \$pkgname);
 	return unless defined $s;
 	if ($s->{ro}) {
@@ -308,7 +307,7 @@ sub validate
 			Warn "Error: ... more files can't be written to ",
 				$s->{dev}, "\n";
 		}
-		$$problems++;
+		$state->{problems}++;
 	}
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
@@ -322,7 +321,7 @@ sub validate
 				$s->{dev}, "\n";
 		}
 		$state->{overflow} = 1;
-		$$problems++;
+		$state->{problems}++;
 	}
 }
 
@@ -418,19 +417,19 @@ package OpenBSD::PackingElement::Sample;
 use OpenBSD::Error;
 use File::Copy;
 
-sub validate
+sub prepare_for_addition
 {
-	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
+	my ($self, $state, $pkgname) = @_;
 	if (!defined $self->{copyfrom}) {
 		Fatal "\@sample element does not reference a valid file\n";
 	}
-	my $fname = $state->{destdir}.$self->fullname();
+	my $fname = $state->{destdir}.$self->fullname;
 	# If file already exists, we won't change it
 	if (OpenBSD::Vstat::vexists($fname)) {
 		return;
 	}
 	my $size = $self->{copyfrom}->{size};
-	$$totsize += $size if defined $size;
+	$state->{totsize} += $size if defined $size;
 	my $s = OpenBSD::Vstat::add($fname, $size, \$pkgname);
 	return unless defined $s;
 	if ($s->{ro}) {
@@ -441,7 +440,7 @@ sub validate
 			Warn "Error: ... more files can't be written to ",
 				$s->{dev}, "\n";
 		}
-		$$problems++;
+		$state->{problems}++;
 	}
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
@@ -455,7 +454,7 @@ sub validate
 				$s->{dev}, "\n";
 		}
 		$state->{overflow} = 1;
-		$$problems++;
+		$state->{problems}++;
 	}
 }
 
@@ -595,9 +594,9 @@ package OpenBSD::PackingElement::SpecialFile;
 use OpenBSD::PackageInfo;
 use OpenBSD::Error;
 
-sub validate
+sub prepare_for_addition
 {
-	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
+	my ($self, $state, $pkgname) = @_;
 
 	my $fname = installed_info($pkgname).$self->{name};
 	my $cname = $state->{dir}.'/'.$self->{name};
@@ -605,22 +604,22 @@ sub validate
 	if (!defined $size) {
 		$size = (stat $cname)[7];
 	}
-	if ($self->exec_on_add()) {
+	if ($self->exec_on_add) {
 		my $s2 = OpenBSD::Vstat::filestat($cname);
 		if (defined $s2 && $s2->{noexec}) {
 			Warn "Error: ", $s2->{dev}, " is noexec ($cname)\n";
-			$$problems++;
+			$state->{problems}++;
 		}
 	}
 	my $s = OpenBSD::Vstat::add($fname, $self->{size}, \$pkgname);
 	return unless defined $s;
 	if ($s->{ro}) {
 		Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
-		$$problems++;
+		$state->{problems}++;
 	}
-	if ($s->{noexec} && $self->exec_on_delete()) {
+	if ($s->{noexec} && $self->exec_on_delete) {
 		Warn "Error: ", $s->{dev}, " is noexec ($fname)\n";
-		$$problems++;
+		$state->{problems}++;
 	}
 	if ($state->{forced}->{kitchensink} && $state->{not}) {
 		return;
@@ -628,7 +627,7 @@ sub validate
 	if ($s->avail < 0) {
 		Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
 		$state->{overflow} = 1;
-		$$problems++;
+		$state->{problems}++;
 	}
 }
 
