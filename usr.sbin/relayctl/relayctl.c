@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.16 2007/02/22 05:59:13 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.17 2007/05/28 00:04:47 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -311,23 +311,23 @@ show_summary_msg(struct imsg *imsg, int type)
 			break;
 		service = imsg->data;
 		printf("service\t%4u\t%-24s\t%-7s\t%s\n",
-		    service->id, service->name, "",
-		    print_service_status(service->flags));
+		    service->conf.id, service->conf.name, "",
+		    print_service_status(service->conf.flags));
 		break;
 	case IMSG_CTL_TABLE:
 		if (type == SHOW_RELAYS)
 			break;
 		table = imsg->data;
 		printf("table\t%4u\t%-24s\t%-7s\t%s\n",
-		    table->id, table->name, "",
-		    print_table_status(table->up, table->flags));
+		    table->conf.id, table->conf.name, "",
+		    print_table_status(table->up, table->conf.flags));
 		break;
 	case IMSG_CTL_HOST:
 		if (type == SHOW_RELAYS)
 			break;
 		host = imsg->data;
 		printf("host\t%4u\t%-24s\t%-7s\t%s\n",
-		    host->id, host->name,
+		    host->conf.id, host->conf.name,
 		    print_availability(host->check_cnt, host->up_cnt),
 		    print_host_status(host->up, host->flags));
 		if (type == SHOW_HOSTS && host->check_cnt) {
