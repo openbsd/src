@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2007/04/26 01:43:14 gwk Exp $
+#	$OpenBSD: Makefile,v 1.61 2007/05/28 02:49:19 krw Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 #	Id: Makefile,v 1.4 1995/12/14 05:41:38 deraadt Exp $
 
@@ -7,7 +7,7 @@ MAN=	apm.4 autoconf.4 bios.4 cpu.4 elansc.4 esm.4 \
 	ichpcib.4 intro.4 ioapic.4 \
 	joy.4 le.4 lms.4 mcd.4 mem.4 mms.4 mtrr.4 npx.4 nvram.4 pas.4 \
 	pcibios.4 pctr.4 piixpcib.4 pss.4 sb.4 \
-	sea.4 uha.4 wds.4 wdt.4 wss.4 wt.4
+	sea.4 uha.4 wds.4 wdt.4 wss.4
 
 MLINKS+= mem.4 kmem.4
 MANSUBDIR=i386

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.248 2007/04/13 12:10:41 claudio Exp $
+dnl	$OpenBSD: hardware,v 1.249 2007/05/28 02:49:19 krw Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -220,8 +220,6 @@ Supported hardware {:-include-:}:
 	Tape Drives
 		Most SCSI tape drives [C]
 		Most SCSI tape changers [G]
-		QIC-02 and QIC-36 format (Archive- and Wangtek-
-		   compatible) tape drives [*]
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters OpenBSD/MACHINE
 		are supported by X.  See the XFree86 FAQ for more
