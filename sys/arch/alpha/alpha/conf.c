@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 2007/05/27 01:50:36 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.54 2007/05/28 22:26:03 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@ cdev_decl(music);
 #include "spkr.h"
 cdev_decl(spkr);
 
+#include "bio.h"
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(prom);			/* XXX XXX XXX */
@@ -195,7 +196,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),
 #endif
-	cdev_notdef(),			/* 53: ALTQ (deprecated) */
+	cdev_bio_init(NBIO,bio),	/* 53: ioctl tunnel */
 	cdev_iop_init(NIOP, iop),	/* 54: I2O IOP control interface */
 	cdev_ptm_init(NPTY,ptm),	/* 55: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 56: devices hot plugging */

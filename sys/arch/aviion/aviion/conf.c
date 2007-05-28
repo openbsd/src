@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2007/05/27 01:50:36 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 2007/05/28 22:26:03 todd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,6 +48,7 @@
 #include "ksyms.h"
 #include "nvram.h"
 #include "pf.h"
+#include "bio.h"
 #include "pty.h"
 #include "rd.h"
 #include "sd.h"
@@ -96,7 +97,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_notdef(),			/* 7: /dev/sramX */
+	cdev_notdef(),			/* 7 */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
 	cdev_mm_init(NNVRAM,nvram),	/* 10: /dev/nvramX */
@@ -138,7 +139,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 46 */
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
-	cdev_notdef(),			/* 49 */
+	cdev_bio_init(NBIO,bio),	/* 49: ioctl tunnel */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */

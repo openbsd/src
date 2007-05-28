@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.185 2007/05/27 14:45:23 grange Exp $
+#	$OpenBSD: GENERIC,v 1.186 2007/05/28 22:26:03 todd Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -517,7 +517,6 @@ owtemp* at onewire?		# Temperature
 
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
-pseudo-device	bio		1	# ioctl multiplexing device
 pseudo-device	hotplug		1	# devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices

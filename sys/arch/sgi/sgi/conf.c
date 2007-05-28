@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 2007/05/27 01:50:36 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.12 2007/05/28 22:26:03 todd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,6 +93,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 #define mmwrite mmrw
 dev_type_read(mmrw);
 cdev_decl(mm);
+#include "bio.h"
 #include "pty.h"
 cdev_decl(fd);
 #include "st.h"
@@ -141,7 +142,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 13: network tunnel */
-	cdev_notdef(),			/* 14: */
+	cdev_notdef(),			/* 14 */
 	cdev_notdef(),			/* 15: */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
@@ -180,7 +181,7 @@ cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_notdef(),			/* 46: */
 	cdev_crypto_init(NCRYPTO,crypto),	/* 47: /dev/crypto */
 	cdev_notdef(),			/* 48: */
-	cdev_notdef(),			/* 49: */
+	cdev_bio_init(NDEV,bio),	/* 49: ioctl tunnel */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */

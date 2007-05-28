@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2007/05/27 01:50:36 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.44 2007/05/28 22:26:03 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -51,6 +51,7 @@
 
 #include <machine/conf.h>
 
+#include "bio.h"
 #include "pty.h"
 #include "bpfilter.h"
 #include "tun.h"
@@ -276,7 +277,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 117 */
 	cdev_lkm_dummy(),		/* 118 */
 	cdev_random_init(1,random),	/* 119: random data source */
-	cdev_notdef(),			/* 120 */
+	cdev_bio_init(NBIO,bio),	/* 120: ioctl tunnel */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
 	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
 	cdev_ptm_init(NPTY,ptm),	/* 123: pseudo-tty ptm device */

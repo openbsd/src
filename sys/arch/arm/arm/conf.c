@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2007/05/27 01:50:36 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2007/05/28 22:26:03 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ cdev_decl(pci);
 #include "ch.h"
 #include "uk.h"
 #include "ss.h"
+#include "bio.h"
 
 /*
  * Audio devices
@@ -342,7 +343,7 @@ struct cdevsw cdevsw[] = {
 #else
 	cdev_notdef(),				/* 51: reserved */
 #endif
-	cdev_notdef(),				/* 52: reserved */
+ 	cdev_bio_init(NBIO,bio),		/* 52: ioctl tunnel */
 	cdev_notdef(),				/* 53: reserved */
 	cdev_tty_init(NFCOM,fcom),		/* 54: FOOTBRIDGE console */
 	cdev_lkm_dummy(),			/* 55: Reserved for bypass device */	

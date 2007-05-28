@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.40 2007/05/27 01:50:36 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.41 2007/05/28 22:26:03 todd Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -111,6 +111,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "nvram.h"
 #include "flash.h"
 
+#include "bio.h"
 #include "pty.h"
 cdev_decl(fd);
 
@@ -184,7 +185,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 26 */
 #endif
-	cdev_notdef(),			/* 27 */
+	cdev_bio_init(NBIO,bio),	/* 27: ioctl tunnel */
 	cdev_lp_init(NLP,lp),		/* 28: lp */
 	cdev_lp_init(NLPTWO,lptwo),	/* 29: lptwo */
 	cdev_tty_init(NWL,wl),		/* 30: WG CL-CD2400 serial (ttywX) */

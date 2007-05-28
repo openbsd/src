@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2007/05/27 01:50:36 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.20 2007/05/28 22:26:03 todd Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -84,6 +84,7 @@ struct bdevsw bdevsw[] = {
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
+#include "bio.h"
 #include "pty.h"
 
 #include "bugtty.h"
@@ -133,7 +134,7 @@ struct cdevsw cdevsw[] = {
         cdev_disk_init(NCD,cd),         /* 9: SCSI CD-ROM */
         cdev_notdef(),                  /* 10: SCSI changer */
 	cdev_disk_init(NWD,wd),		/* 11: ST506/ESDI/IDE disk */
-        cdev_notdef(),                  /* 12 */
+        cdev_notdef(),			/* 12 */
 	cdev_notdef(),			/* 13 */
 	cdev_tty_init(NBUGTTY,bugtty),  /* 14: BUGtty (ttyB) */
         cdev_notdef(),                  /* 15 */
@@ -178,7 +179,7 @@ struct cdevsw cdevsw[] = {
         cdev_notdef(),                  /* 51 */
 #endif
         cdev_notdef(),                  /* 52 */ 
-        cdev_notdef(),                  /* 53 */ 
+	cdev_bio_init(NBIO,bio),	/* 53: ioctl tunnel */
 	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
 	cdev_ptm_init(NPTY,ptm),	/* 55: pseudo-tty ptm device */
 };

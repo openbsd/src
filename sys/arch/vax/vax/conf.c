@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.51 2007/05/27 01:50:36 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.52 2007/05/28 22:26:03 todd Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -229,6 +229,7 @@ struct	consdev constab[]={
 #define mmread	mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
+#include "bio.h"
 #include "pty.h"
 
 cdev_decl(hp);
@@ -428,7 +429,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD, wskbd),	/* 69: keyboards */
 	cdev_mouse_init(NWSMOUSE, wsmouse), /* 70: mice */
 	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
-	cdev_notdef(),			/* 72: was: SCSI bus */
+	cdev_bio_init(NBIO,bio),	/* 72: ioctl tunnel */
 	cdev_disk_init(NRAID,raid),	/* 73: RAIDframe disk driver */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 74: xfs communication device */

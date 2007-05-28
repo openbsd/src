@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.29 2007/05/27 01:50:35 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.30 2007/05/28 22:26:02 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -59,6 +59,7 @@ _DEV(urio, 44)
 _DEV(ttyU, 45)
 _DEV(uscan, 46)
 _TITLE(spec)
+_DEV(bio, 37)
 _DEV(au, 35)
 _DEV(bpf, 17)
 _DEV(cry, 36)
@@ -89,6 +90,7 @@ dnl
 dnl *** hppa specific devices
 dnl
 target(all, ch, 0)dnl
+target(all, bio)dnl
 target(all, ss, 0, 1)dnl
 target(all, xfs, 0)dnl
 twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
