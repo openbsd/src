@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.81 2007/05/26 18:42:21 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.82 2007/05/28 21:05:20 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -230,22 +230,11 @@ extern struct freelst vnode_free_list;	/* vnode free list */
 
 #ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
-
-#define	VREF(vp)	vref(vp)
-void	vref(struct vnode *);
 #else
 #define	VATTR_NULL(vap)	(*(vap) = va_null)	/* initialize a vattr */
-
-static __inline void vref(struct vnode *);
-#define	VREF(vp)	vref(vp)		/* increase reference */
-static __inline void
-vref(vp)
-	struct vnode *vp;
-{
-	vp->v_usecount++;
-}
 #endif /* DIAGNOSTIC */
 
+#define	VREF(vp)	vref(vp)		/* increase reference */
 #define	NULLVP	((struct vnode *)NULL)
 #define	VN_KNOTE(vp, b)					\
 	KNOTE(&vp->v_selectinfo.si_note, (b))
@@ -425,6 +414,7 @@ void	vwakeup(struct vnode *);
 void	vput(struct vnode *);
 int	vrecycle(struct vnode *, struct proc *);
 void	vrele(struct vnode *);
+void	vref(struct vnode *);
 void	vprint(char *, struct vnode *);
 
 /* vfs_getcwd.c */

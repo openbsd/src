@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.148 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.149 2007/05/28 21:05:21 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -630,18 +630,16 @@ vget(struct vnode *vp, int flags, struct proc *p)
 }
 
 
-#ifdef DIAGNOSTIC
-/*
- * Vnode reference.
- */
+/* Vnode reference. */
 void
 vref(struct vnode *vp)
 {
+#ifdef DIAGNOSTIC
 	if (vp->v_usecount == 0)
 		panic("vref used where vget required");
+#endif
 	vp->v_usecount++;
 }
-#endif /* DIAGNOSTIC */
 
 void
 vputonfreelist(struct vnode *vp)
