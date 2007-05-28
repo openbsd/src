@@ -1,4 +1,4 @@
-/*	$OpenBSD: irrfilter.c,v 1.3 2007/03/06 16:45:34 henning Exp $ */
+/*	$OpenBSD: irrfilter.c,v 1.4 2007/05/28 23:31:53 henning Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,7 @@ irr_main(u_int32_t AS, int flags, char *outdir)
 	char	*query;
 	int	 r;
 
-	fprintf(stderr, "irrfilter for: %u\n", AS);
+	fprintf(stderr, "irrfilter for: %u, writing to %s\n", AS, outdir);
 
 	irrflags = flags;
 	irrverbose = 0;
