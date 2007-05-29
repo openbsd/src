@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.29 2007/02/28 15:28:22 henning Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.30 2007/05/29 02:02:12 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -414,23 +414,24 @@ parse_config(char *cf)
 		snprintf(node, sizeof(node), "hw.sensors.%s.%s%d", 
 		    p->dxname, sensor_type_s[p->type], p->numt);
 		if (cgetent(&buf, cfa, node) != 0)
-			p->watch = 0;
-		else {
-			p->watch = 1;
-			watch_cnt++;
-			if (cgetstr(buf, "low", &ebuf) < 0)
-				ebuf = NULL;
-			p->lower = get_val(ebuf, 0, p->type);
-			if (cgetstr(buf, "high", &ebuf) < 0)
-				ebuf = NULL;
-			p->upper = get_val(ebuf, 1, p->type);
-			if (cgetstr(buf, "command", &ebuf) < 0)
-				ebuf = NULL;
-			if (ebuf)
-				asprintf(&(p->command), "%s", ebuf);
-			free(buf);
-			buf = NULL;
-		}
+			if (cgetent(&buf, cfa, sensor_type_s[p->type]) != 0) {
+				p->watch = 0;
+				continue;
+			}
+		p->watch = 1;
+		watch_cnt++;
+		if (cgetstr(buf, "low", &ebuf) < 0)
+			ebuf = NULL;
+		p->lower = get_val(ebuf, 0, p->type);
+		if (cgetstr(buf, "high", &ebuf) < 0)
+			ebuf = NULL;
+		p->upper = get_val(ebuf, 1, p->type);
+		if (cgetstr(buf, "command", &ebuf) < 0)
+			ebuf = NULL;
+		if (ebuf)
+			asprintf(&(p->command), "%s", ebuf);
+		free(buf);
+		buf = NULL;
 	}
 	free(cfa);
 	return (watch_cnt);
