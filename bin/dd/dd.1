@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.18 2006/06/01 09:26:49 jmc Exp $
+.\"	$OpenBSD: dd.1,v 1.19 2007/05/29 15:04:59 jmc Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -352,19 +352,17 @@ Create an ISO-9660 image of a CD-ROM:
 .Sh STANDARDS
 The
 .Nm
-utility is expected to be a superset of the
-.St -p1003.2
-standard.
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
 The
 .Cm files
-operand and the
-.Cm ascii ,
-.Cm ebcdic ,
-.Cm ibm ,
+operand as well as the
 .Cm oldascii ,
 .Cm oldebcdic ,
+.Cm osync ,
 and
 .Cm oldibm
-values are extensions to the
-.Tn POSIX
-standard.
+values
+are extensions to that specification.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.30 2006/01/26 22:20:32 jmc Exp $
+.\"	$OpenBSD: chmod.1,v 1.31 2007/05/29 15:04:59 jmc Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -372,9 +372,13 @@ Set the group bits equal to the user bits, but clear the group write bit:
 .Sh STANDARDS
 The
 .Nm
-utility is expected to be
+utility is compliant with the
 .St -p1003.1-2004
-compatible.
+specification.
+.Pp
+The flags
+.Op Fl HLP
+are extensions to that specification.
 .Sh HISTORY
 A
 .Nm

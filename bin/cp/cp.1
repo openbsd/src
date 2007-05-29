@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.26 2007/04/06 06:50:00 tedu Exp $
+.\"	$OpenBSD: cp.1,v 1.27 2007/05/29 15:04:59 jmc Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -222,6 +222,12 @@ directory:
 .Xr fts 3 ,
 .Xr symlink 7
 .Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
 Historic versions of the
 .Nm
 utility had a
@@ -230,12 +236,6 @@ option.
 This implementation supports that option; however, its use is strongly
 discouraged, as it does not correctly copy special files, symbolic links
 or FIFOs.
-.Pp
-The
-.Nm
-utility is expected to be
-.St -p1003.2
-compatible.
 .Sh HISTORY
 A
 .Nm

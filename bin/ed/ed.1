@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.49 2004/10/04 21:24:54 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.50 2007/05/29 15:04:59 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -780,6 +780,21 @@ but any changes to the buffer are lost.
 .%O Addison-Wesley
 .%D 1981
 .Re
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flag
+.Op Fl x
+as well as the commands
+.Cm W ,
+.Cm x ,
+and
+.Cm z
+are extensions to that specification.
 .Sh HISTORY
 An
 .Nm

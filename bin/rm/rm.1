@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.28 2007/05/19 21:33:40 jmc Exp $
+.\"	$OpenBSD: rm.1,v 1.29 2007/05/29 15:04:59 jmc Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -150,6 +150,16 @@ $ rm ./-f
 .Sh STANDARDS
 The
 .Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flags
+.Op Fl dP
+are extensions to that specification.
+.Pp
+The
+.Nm
 utility differs from historical implementations in that the
 .Fl f
 option only masks attempts to remove non-existent files instead of
@@ -165,12 +175,7 @@ The interactive mode used to be a
 command, a carryover from the ancient past with an
 amusing etymology.
 .Pp
-The
-.Nm
-utility is almost
-.St -p1003.2
-compatible, except that
-.Tn POSIX
+.St -p1003.1-2004
 requires
 .Nm
 to act like

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.22 2005/12/02 20:36:56 cloder Exp $
+.\"	$OpenBSD: ln.1,v 1.23 2007/05/29 15:04:59 jmc Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -191,6 +191,16 @@ This results from directory-walking.
 .Xr stat 2 ,
 .Xr symlink 2 ,
 .Xr symlink 7
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flags
+.Op Fl hn
+are extensions to that specification.
 .Sh HISTORY
 An
 .Nm

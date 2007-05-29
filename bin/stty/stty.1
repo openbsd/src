@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.31 2003/12/16 16:53:56 jmc Exp $
+.\"	$OpenBSD: stty.1,v 1.32 2007/05/29 15:04:59 jmc Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -651,16 +651,39 @@ utility exits 0 on success or >0 if an error occurred.
 .Sh STANDARDS
 The
 .Nm
-utility is expected to be
-.St -p1003.2
-compatible.
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
 The flags
-.Fl e
-and
-.Fl f
-are
-extensions to the standard, as are the operands mentioned in the control
-operations section.
+.Op Fl ef
+and the operands
+.Cm speed ,
+.Cm crtscts ,
+.Cm iuclc ,
+.Cm imaxlabel ,
+.Cm onlcr ,
+.Cm olcuc ,
+.Cm oxtabs ,
+.Cm onoeot ,
+.Cm echoke ,
+.Cm altwerase ,
+.Cm mdmbuf ,
+.Cm flusho ,
+.Cm pendin ,
+.Cm xcase ,
+.Cm tty ,
+.Cm crt ,
+.Cm kerninfo ,
+.Cm columns ,
+.Cm cols ,
+.Cm rows ,
+.Cm dec ,
+.Cm extproc ,
+.Cm raw ,
+.Cm size ,
+the compatibility modes and the control operations
+are extensions to that specification.
 .Sh HISTORY
 A
 .Nm

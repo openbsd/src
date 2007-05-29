@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.20 2007/02/21 16:44:44 jmc Exp $
+.\"	$OpenBSD: test.1,v 1.21 2007/05/29 15:04:59 jmc Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -321,6 +321,18 @@ An error occurred.
 .Sh STANDARDS
 The
 .Nm
-utility implements a superset of the
-.St -p1003.2
+utility is compliant with the
+.St -p1003.1-2004
 specification.
+.Pp
+The primaries
+.Fl G ,
+.Fl k ,
+.Fl O ,
+.Fl nt ,
+.Fl ot ,
+.Fl ef ,
+.Cm \*(Lt ,
+and
+.Cm \*(Gt
+are extensions to that specification.

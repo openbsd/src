@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chgrp.1,v 1.8 2005/10/15 08:42:14 jmc Exp $
+.\"	$OpenBSD: chgrp.1,v 1.9 2007/05/29 15:04:59 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,4 +121,10 @@ group ID file
 .Sh STANDARDS
 The
 .Nm
-utility is expected to be POSIX 1003.2 compatible.
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flag
+.Op Fl f
+is an extension to that specification.

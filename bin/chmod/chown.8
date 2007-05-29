@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.8,v 1.9 2005/10/15 08:52:39 jmc Exp $
+.\"	$OpenBSD: chown.8,v 1.10 2007/05/29 15:04:59 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,6 +142,16 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr fts 3 ,
 .Xr symlink 7
 .Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flag
+.Op Fl f
+is an extension to that specification.
+.Pp
 Previous versions of the
 .Nm
 utility used the dot
@@ -151,9 +161,3 @@ This has been changed to be a colon
 .Pq Sq \&:
 character so that user and
 group names may contain the dot character.
-.Pp
-The
-.Nm
-command is expected to be
-.St -p1003.2
-compliant.
