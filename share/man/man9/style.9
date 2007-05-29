@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.46 2007/02/15 18:08:50 thib Exp $
+.\"	$OpenBSD: style.9,v 1.47 2007/05/29 00:22:50 deraadt Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -604,7 +604,7 @@ That is, with no regard to whether an option takes an argument.
 .Pp
 The
 .Li __progname
-string, should be used instead of hard-coding the program name.
+string may be used instead of hard-coding the program name.
 .Bd -literal -offset indent
 (void)fprintf(stderr, "usage: %s [-ab]\en", __progname);
 exit(1);
@@ -614,11 +614,6 @@ exit(1);
 New core kernel code should be reasonably compliant with the style guides.
 The guidelines for third-party maintained modules and device drivers are more
 relaxed but at a minimum should be internally consistent with their style.
-.Pp
-Stylistic changes (including whitespace changes) are hard on the source
-repository and are to be avoided without good reason.
-Code that is approximately KNF compliant in the repository must not diverge
-from compliance.
 .Pp
 Whenever possible, code should be run through a code checker
 (e.g.,
