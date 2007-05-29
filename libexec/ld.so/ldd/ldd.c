@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.11 2003/07/10 00:04:28 david Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.12 2007/05/29 04:47:17 jason Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -31,10 +31,12 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <dlfcn.h>
 
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
+#include <sys/param.h>
 
 int usage(void);
 int doit(char *);
@@ -93,8 +95,9 @@ doit(char *name)
 	Elf_Ehdr ehdr;
 	Elf_Phdr *phdr;
 	int fd, i, size, status;
+	char buf[MAXPATHLEN];
+	void * dlhandle; 
 
-	printf("%s:\n", name);
 
 	if ((fd = open(name, O_RDONLY)) < 0) {
 		warn("%s", name);
@@ -112,6 +115,21 @@ doit(char *name)
 		warnx("%s: not an ELF executable", name);
 		close(fd);
 		return 1;
+	}
+
+	if (ehdr.e_type == ET_DYN) {
+		printf("%s:\n", name);
+		if (realpath(name, buf) == NULL) {
+			warn("realpath(%s)", name);
+			return 1;
+		}
+		dlhandle = dlopen(buf, RTLD_TRACE);
+		if (dlhandle == NULL) {
+			printf("%s\n", dlerror());
+			return 1;
+		}
+		close(fd);
+		return 0;
 	}
 
 	size = ehdr.e_phnum * sizeof(Elf_Phdr);
@@ -135,6 +153,7 @@ doit(char *name)
 		return 1;
 	}
 
+	printf("%s:\n", name);
 	fflush(stdout);
 	switch (fork()) {
 	case -1:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.75 2007/05/05 15:21:21 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.76 2007/05/29 04:47:17 jason Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,6 +40,7 @@
 #include "sod.h"
 
 int _dl_errno;
+int _dl_tracelib;
 
 int _dl_real_close(void *handle);
 void (*_dl_thread_fnc)(int) = NULL;
@@ -54,6 +55,11 @@ dlopen(const char *libname, int flags)
 
 	if (libname == NULL)
 		return RTLD_DEFAULT;
+
+	if ((flags & RTLD_TRACE) == RTLD_TRACE) {
+		_dl_traceld = "true";
+		_dl_tracelib = 1;
+	}
 
 	DL_DEB(("dlopen: loading: %s\n", libname));
 
@@ -97,6 +103,11 @@ dlopen(const char *libname, int flags)
 	} else {
 		int err;
 		DL_DEB(("tail %s\n", object->load_name ));
+		if (_dl_traceld) {
+			_dl_show_objects();
+			_dl_unload_shlib(object);
+			_dl_exit(0);
+		}
 		err = _dl_rtld(object);
 		if (err != 0) {
 			_dl_real_close(object);
@@ -467,6 +478,14 @@ _dl_show_objects(void)
 	if (_dl_tracefmt1 == NULL && _dl_tracefmt2 == NULL)
 		_dl_fdprintf(outputfd, "\tStart   %s End     %s Type Open Ref GrpRef Name\n",
 		    pad, pad);
+
+	if (_dl_tracelib) {
+		for (; object != NULL; object = object->next)
+			if (object->obj_type == OBJTYPE_LDR) {
+				object = object->next;
+				break;
+			}
+	}
 
 	for (; object != NULL; object = object->next) {
 		switch (object->obj_type) {
