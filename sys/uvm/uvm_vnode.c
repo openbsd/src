@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.47 2007/04/14 23:04:28 tedu Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.48 2007/05/29 21:06:34 thib Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 
 LIST_HEAD(uvn_list_struct, uvm_vnode);
 struct uvn_list_struct uvn_wlist;	/* writeable uvns */
-simple_lock_data_t uvn_wl_lock;		/* locks uvn_wlist */
 
 SIMPLEQ_HEAD(uvn_sq_struct, uvm_vnode);
 struct uvn_sq_struct uvn_sync_q;		/* sync'ing uvns */
@@ -130,11 +129,10 @@ struct uvm_pagerops uvm_vnodeops = {
  */
 
 void
-uvn_init()
+uvn_init(void)
 {
 
 	LIST_INIT(&uvn_wlist);
-	simple_lock_init(&uvn_wl_lock);
 	/* note: uvn_sync_q init'd in uvm_vnp_sync() */
 	rw_init(&uvn_sync_lock, "uvnsync");
 }
@@ -214,9 +212,7 @@ uvn_attach(arg, accessprot)
 		/* check for new writeable uvn */
 		if ((accessprot & VM_PROT_WRITE) != 0 &&
 		    (uvn->u_flags & UVM_VNODE_WRITEABLE) == 0) {
-			simple_lock(&uvn_wl_lock);
 			LIST_INSERT_HEAD(&uvn_wlist, uvn, u_wlist);
-			simple_unlock(&uvn_wl_lock);
 			/* we are now on wlist! */
 			uvn->u_flags |= UVM_VNODE_WRITEABLE;
 		}
@@ -297,9 +293,7 @@ uvn_attach(arg, accessprot)
 
 	/* if write access, we need to add it to the wlist */
 	if (accessprot & VM_PROT_WRITE) {
-		simple_lock(&uvn_wl_lock);
 		LIST_INSERT_HEAD(&uvn_wlist, uvn, u_wlist);
-		simple_unlock(&uvn_wl_lock);
 		uvn->u_flags |= UVM_VNODE_WRITEABLE;	/* we are on wlist! */
 	}
 
@@ -463,9 +457,7 @@ uvn_detach(uobj)
 	 * all references are gone.
 	 */
 	if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
-		simple_lock(&uvn_wl_lock);		/* protect uvn_wlist */
 		LIST_REMOVE(uvn, u_wlist);
-		simple_unlock(&uvn_wl_lock);
 	}
 #ifdef DIAGNOSTIC
 	if (!TAILQ_EMPTY(&uobj->memq))
@@ -637,9 +629,7 @@ uvm_vnp_terminate(vp)
 			panic("uvm_vnp_terminate: io sync wanted bit set");
 
 		if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
-			simple_lock(&uvn_wl_lock);
 			LIST_REMOVE(uvn, u_wlist);
-			simple_unlock(&uvn_wl_lock);
 		}
 		uvn->u_flags = 0;	/* uvn is history, clear all bits */
 	}
@@ -700,9 +690,7 @@ uvn_releasepg(pg, nextpgp)
 			    "object!");
 		if (uvn->u_obj.uo_npages == 0) {
 			if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
-				simple_lock(&uvn_wl_lock);
 				LIST_REMOVE(uvn, u_wlist);
-				simple_unlock(&uvn_wl_lock);
 			}
 #ifdef DIAGNOSTIC
 			if (!TAILQ_EMPTY(&uvn->u_obj.memq))
@@ -1943,12 +1931,9 @@ uvm_vnp_sync(mp)
 
 	/*
 	 * step 2: build up a simpleq of uvns of interest based on the
-	 * write list.   we gain a reference to uvns of interest.  must
-	 * be careful about locking uvn's since we will be holding uvn_wl_lock
-	 * in the body of the loop.
+	 * write list.   we gain a reference to uvns of interest. 
 	 */
 	SIMPLEQ_INIT(&uvn_sync_q);
-	simple_lock(&uvn_wl_lock);
 	LIST_FOREACH(uvn, &uvn_wlist, u_wlist) {
 
 		vp = (struct vnode *) uvn;
@@ -1995,12 +1980,10 @@ uvm_vnp_sync(mp)
 		 */
 		SIMPLEQ_INSERT_HEAD(&uvn_sync_q, uvn, u_syncq);
 	}
-	simple_unlock(&uvn_wl_lock);
 
 	/*
 	 * step 3: we now have a list of uvn's that may need cleaning.
-	 * we are holding the uvn_sync_lock, but have dropped the uvn_wl_lock
-	 * (so we can now safely lock uvn's again).
+	 * we are holding the uvn_sync_lock.
 	 */
 
 	SIMPLEQ_FOREACH(uvn, &uvn_sync_q, u_syncq) {
