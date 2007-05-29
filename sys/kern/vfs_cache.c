@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.22 2007/05/29 05:28:53 beck Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.23 2007/05/29 17:33:27 beck Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -137,7 +137,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			if (ncp->nc_dvpid != dvp->v_id)
 				panic("ncp->nc_dvpid %x != dvp->v_id %x\n",
 				ncp->nc_dvpid, dvp->v_id);
-			else 
 #endif
 				break;
 		}
@@ -167,10 +166,10 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			goto remove;
 		}
 	} else if (ncp->nc_vpid != ncp->nc_vp->v_id) {
+#ifdef DIAGNOSTIC
 		panic("ncp->vpid %x != ncp->nc_vp->v_id %x\n", ncp->nc_vpid,
 			ncp->nc_vp->v_id);
-		nchstats.ncs_falsehits++;
-		goto remove;
+#endif
 	}
 
 	vp = ncp->nc_vp;
@@ -211,9 +210,10 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 */
 	if (error || vpid != vp->v_id) {
 		if (!error) {
+#ifdef DIAGNOSTIC
 			panic("vpid %x != vp->vid %x\n", vpid, vp->v_id);
 			vput(vp);
-			nchstats.ncs_falsehits++;
+#endif
 		} else
 			nchstats.ncs_badhits++;
 		/*
@@ -409,7 +409,8 @@ nchinit(void)
 	    &pool_allocator_nointr);
 }
 
-void cache_delete (struct namecache *ncp)
+void
+cache_delete (struct namecache *ncp)
 {
 	/*
 	 * just make it go away...
