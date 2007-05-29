@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.13 2007/05/29 06:31:44 tedu Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.14 2007/05/29 07:35:55 tedu Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ intelcore_update_sensor(void *args)
 	msr = rdmsr(MSR_THERM_STATUS);
 	if (msr & MSR_THERM_STATUS_VALID_BIT) {
 		ci->ci_sensor.value = max - MSR_THERM_STATUS_TEMP(msr);
-		/* micro degress */
+		/* micro degrees */
 		ci->ci_sensor.value *= 1000000;
 		/* kelvin */
 		ci->ci_sensor.value += 273150000;
