@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.52 2007/05/29 08:15:32 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.53 2007/05/29 16:31:38 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -45,7 +45,6 @@
 #include <dev/rndvar.h>
 
 /* #define SR_FANCY_STATS */
-#define SR_FANCY_STATS
 
 #ifdef SR_DEBUG
 uint32_t	sr_debug = 0
@@ -1456,20 +1455,24 @@ int
 sr_raid1_sync(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
-	int			rv = 0;
+	int			s, rv = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid1_sync\n", DEVNAME(sd->sd_sc));
 
-	atomic_setbits_int(&sd->sd_sync, 1);
+	s = splbio();
+	sd->sd_sync = 1;
 
 	/* assume that there isn't any more io comming in, count sync wu */
 	while (sd->sd_wu_pending > 1)
-		if (tsleep(sd, PWAIT, "sr_sync", 60 * hz) == EWOULDBLOCK) {
-			rv = 0;
+		if (tsleep(sd, PRIBIO, "sr_sync", 60 * hz) == EWOULDBLOCK) {
+			DNPRINTF(SR_D_DIS, "%s: sr_raid1_sync timeout\n",
+			    DEVNAME(sd->sd_sc));
+			rv = 1;
 			break;
 		}
 
-	atomic_clearbits_int(&sd->sd_sync, 1);
+	sd->sd_sync = 0;
+	splx(s);
 
 	return (rv);
 }
