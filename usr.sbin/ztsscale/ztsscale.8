@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ztsscale.8,v 1.4 2005/04/27 20:57:53 deraadt Exp $
+.\"	$OpenBSD: ztsscale.8,v 1.5 2007/05/29 21:13:56 robert Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -48,18 +48,18 @@ points,
 will exit and provide on standard output
 a result like the following:
 .Pp
-.Dl machdep.ztsscale=200,3400,312,3672
+.Dl mouse.scale=200,3400,312,3672,0,640,480
 .Pp
 This result should be placed into
-.Pa /etc/sysctl.conf
+.Pa /etc/wsconsctl.conf
 for future use, or can be immediately applied using:
 .Pp
-.Dl # sysctl machdep.ztsscale=200,3400,312,3672
+.Dl # wsconsctl mouse.scale=200,3400,312,3672,0,640,480
 .Sh SEE ALSO
 .Xr lcd 4 ,
 .Xr zts 4 ,
-.Xr sysctl.conf 5 ,
-.Xr sysctl 8
+.Xr wsconsctl.conf 5 ,
+.Xr wsconsctl 8
 .Sh HISTORY
 The
 .Nm

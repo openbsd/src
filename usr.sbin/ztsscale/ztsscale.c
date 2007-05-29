@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.12 2007/02/23 17:50:30 deraadt Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.13 2007/05/29 21:13:56 robert Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -19,7 +19,6 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
-#include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <dev/wscons/wsconsio.h>
 
@@ -47,13 +46,11 @@
 
 u_short		*mapaddr, *save;
 int		 orawmode = -1;
-int		 fd;
+int		 fd, mfd;
 int		 xc[] = { 25, 25, 320, 615, 615 };
 int		 yc[] = { 25, 455, 240, 25, 455 };
 
-int		mib[2] = { CTL_MACHDEP, CPU_ZTSRAWMODE };
-struct ctlname	topname[] = CTL_NAMES;
-struct ctlname	machdepname[] = CTL_MACHDEP_NAMES;
+struct wsmouse_calibcoords wmcoords;
 
 void		bitmap(u_short *, u_short, u_char[], int, int, int);
 void		cross(u_short *, int, int);
@@ -160,9 +157,12 @@ cleanup(void)
 
 	restore_screen();
 
-	if (orawmode != -1 && sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    NULL, NULL, &orawmode, sizeof(orawmode)) == -1)
-		err(1, "sysctl");
+	wmcoords.samplelen = orawmode;
+	if (wmcoords.samplelen != -1 && ioctl(mfd, WSMOUSEIO_SCALIBCOORDS, &wmcoords) < 0)
+		err(1, "WSMOUSEIO_SCALIBCOORDS");
+
+	close(mfd);
+
 }
 
 /* ARGSUSED */
@@ -177,16 +177,15 @@ sighandler(int sig)
 int
 main(int argc, char *argv[])
 {
-	int mfd;
 	int i, x[5], y[5];
 	double a, a1, a2, b, b1, b2, xerr, yerr;
-	int rawmode;
 	size_t oldsize;
 	struct ztsscale {
 		int ts_minx;
 		int ts_maxx;
 		int ts_miny;
 		int ts_maxy;
+		int ts_swapxy;
 	} ts;
 
 	if (argc != 1)
@@ -198,18 +197,24 @@ main(int argc, char *argv[])
 	save_screen();
 
 again:
-	mfd = open("/dev/wsmouse", O_RDONLY);
+	mfd = open("/dev/wsmouse", O_RDWR);
 	if (mfd < 0) {
 		restore_screen();
 		err(2, "open /dev/wsmouse");
 	}
 
-	rawmode = 1;
-	oldsize = sizeof(orawmode);
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), &orawmode, &oldsize,
-	    &rawmode, sizeof(rawmode)) == -1) {
+	if (ioctl(mfd, WSMOUSEIO_GCALIBCOORDS, &wmcoords) < 0) {
 		restore_screen();
-		err(1, "sysctl");
+                err(1, "WSMOUSEIO_GCALIBCOORDS");
+	}
+
+	/* Save the old rawmode value then switch rawmode on */ 
+	orawmode = wmcoords.samplelen;
+	wmcoords.samplelen = 1;
+
+	if (ioctl(mfd, WSMOUSEIO_SCALIBCOORDS, &wmcoords) < 0) {
+		restore_screen();
+		err(1, "WSMOUSEIO_SCALIBCOORDS");
 	}
 
 	signal(SIGINT, sighandler);
@@ -223,12 +228,12 @@ again:
 		/* printf("waiting for event\n"); */
 		wait_event(mfd, &x[i], &y[i]);
 	}
-	close(mfd);
 
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, NULL,
-	    &orawmode, sizeof(orawmode)) == -1) {
+	/* Restore rawmode state */
+	wmcoords.samplelen = orawmode;
+	if (ioctl(mfd, WSMOUSEIO_SCALIBCOORDS, &wmcoords) < 0) {
 		restore_screen();
-		err(1, "sysctl");
+		err(1, "WSMOUSEIO_SCALIBCOORDS");
 	}
 
 	bzero(&ts, sizeof(ts));
@@ -277,9 +282,8 @@ again:
 
 	cleanup();
 
-	(void)printf("%s.%s=%d,%d,%d,%d\n", topname[CTL_MACHDEP].ctl_name,
-	    machdepname[CPU_ZTSSCALE].ctl_name, ts.ts_minx, ts.ts_maxx,
-	    ts.ts_miny, ts.ts_maxy);
+	(void)printf("mouse.scale=%d,%d,%d,%d,%d,%d,%d\n", ts.ts_minx, ts.ts_maxx,
+	    ts.ts_miny, ts.ts_maxy, ts.ts_swapxy, WIDTH, HEIGHT);
 	return 0;
 
 err:
