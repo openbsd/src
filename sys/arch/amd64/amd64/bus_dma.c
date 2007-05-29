@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.7 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.8 2007/05/29 21:00:50 jason Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -500,7 +500,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 /*
  * Utility function to load a linear buffer.  lastaddrp holds state
  * between invocations (for multiple-buffer loads).  segp contains
- * the starting segment on entrace, and the ending segment on exit.
+ * the starting segment on entrance, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
 int

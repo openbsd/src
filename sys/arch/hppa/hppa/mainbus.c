@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.64 2007/05/23 18:07:19 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.65 2007/05/29 21:00:50 jason Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -647,7 +647,7 @@ mbus_dmamap_destroy(void *v, bus_dmamap_t map)
 /*
  * Utility function to load a linear buffer.  lastaddrp holds state
  * between invocations (for multiple-buffer loads).  segp contains
- * the starting segment on entrace, and the ending segment on exit.
+ * the starting segment on entrance, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
 int
