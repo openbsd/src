@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.41 2007/02/28 22:30:02 miod Exp $
+dnl	$OpenBSD: packages,v 1.42 2007/05/29 04:30:38 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -139,7 +139,6 @@ dnl define text that tells which binary packages you can try to run.
 dnl
 define({:-EMUL-:},
 {:-ifelse(
-MACHINE_ARCH,alpha,{:-NetBSD-:},
 MACHINE_ARCH,i386,{:-FreeBSD-:})-:})dnl
 dnl
 dnl Same as above, defining a manual page to check for more compat
