@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2007/05/28 22:26:03 todd Exp $ */
+/*	$OpenBSD: conf.c,v 1.13 2007/05/29 07:23:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,7 +181,7 @@ cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_notdef(),			/* 46: */
 	cdev_crypto_init(NCRYPTO,crypto),	/* 47: /dev/crypto */
 	cdev_notdef(),			/* 48: */
-	cdev_bio_init(NDEV,bio),	/* 49: ioctl tunnel */
+	cdev_bio_init(NBIO,bio),	/* 49: ioctl tunnel */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
