@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.9 2007/05/29 06:31:44 tedu Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.10 2007/05/29 06:40:15 tedu Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -174,6 +174,9 @@
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */   
+/* not documented anywhere, see intelcore_update_sensor() */
+#define MSR_TEMPERATURE_TARGET	0x0ee
+#define MSR_TEMPERATURE_TARGET_LOW_BIT	0x40000000
 #define MSR_MTRRcap		0x0fe
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
@@ -629,7 +632,3 @@
 #define	K7_BP1_MATCH			0xdd
 #define	K7_BP2_MATCH			0xde
 #define	K7_BP3_MATCH			0xdf
-
-/* not documented anywhere, see intelcore_update_sensor() */
-#define MSR_TEMPERATURE_TARGET		0xee
-#define MSR_TEMPERATURE_TARGET_LOW_BIT		0x40000000
