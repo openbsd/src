@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2007/05/29 02:36:19 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2007/05/29 02:37:04 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -659,8 +659,6 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	ndmpdp = (max_pa + NBPD_L3 - 1) >> L3_SHIFT;
 	if (ndmpdp < NDML2_ENTRIES)
 		ndmpdp = NDML2_ENTRIES;		/* At least 4GB */
-
-printf("ndmpdp: %ld\n", ndmpdp);
 
 	dmpdp = kpm->pm_pdir[PDIR_SLOT_DIRECT] & PG_FRAME;
 
