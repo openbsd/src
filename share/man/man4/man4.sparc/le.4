@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.23 2006/11/08 03:56:52 brad Exp $
+.\"	$OpenBSD: le.4,v 1.24 2007/05/29 16:44:45 sobrado Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -41,9 +41,9 @@
 .Nd AMD LANCE Ethernet device
 .Sh SYNOPSIS
 .Cd "le0 at sbus0                            " Pq "sun4c onboard"
-.Cd "le* at sbus?                            " Pq Sbus
-.Cd "lebuffer* at sbus?                      " Pq Sbus
-.Cd "le* at lebuffer?                        " Pq Sbus
+.Cd "le* at sbus?                            " Pq SBus
+.Cd "lebuffer* at sbus?                      " Pq SBus
+.Cd "le* at lebuffer?                        " Pq SBus
 .Cd "ledma0 at sbus0                         " Pq "sun4m onboard"
 .Cd "le0 at ledma0                           " Pq "sun4m onboard"
 .Cd "le0 at obio0 addr 0xf9000000 level 6    " Pq sun4/300

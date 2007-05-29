@@ -1,4 +1,4 @@
-.\"     $OpenBSD: uperf.4,v 1.12 2004/09/30 19:59:28 mickey Exp $
+.\"     $OpenBSD: uperf.4,v 1.13 2007/05/29 16:44:45 sobrado Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -37,8 +37,8 @@
 Some UltraSPARC host bridges provide performance counters on their host
 bridges.
 The counters are a part of the system controller chip (usc, dsc, or qsc).
-On PCI machines the system controller shows up as a device on the EBUS, but
-on SBUS machines the system controller exists in SBUS space.
+On PCI machines the system controller shows up as a device on the EBus, but
+on SBus machines the system controller exists in SBus space.
 The
 .Nm
 driver provides access to these counters via
