@@ -109,6 +109,7 @@ getdiskbyname(const char *name)
 	strlcpy(ptype, "tx", sizeof ptype);
 	max = 'a' - 1;
 	pp = &dp->d_partitions[0];
+	dp->d_version = 1; 
 	for (p = 'a'; p < 'a' + MAXPARTITIONS; p++, pp++) {
 		long f;
 
