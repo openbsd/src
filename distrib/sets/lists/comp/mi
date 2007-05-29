@@ -435,7 +435,6 @@
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wssvar.h
-./usr/include/dev/isa/wtreg.h
 ./usr/include/dev/isa/ymvar.h
 ./usr/include/dev/midi_if.h
 ./usr/include/dev/midisynvar.h

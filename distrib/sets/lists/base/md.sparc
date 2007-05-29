@@ -479,7 +479,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/wdsreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/wssreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/wssvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/wtreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/ymvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/midi_if.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/midisynvar.ph
