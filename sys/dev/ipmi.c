@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.55 2007/04/13 18:57:56 reyk Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.56 2007/05/29 05:54:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1663,6 +1663,7 @@ ipmi_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	/* Map registers */
+	sc->sc_dev.dv_xname = "ipmi0";	/* XXX local softc is wrong wrong wrong */
 	if (ipmi_map_regs(&sc, ia) == 0) {
 		sc.sc_if->probe(&sc);
 
