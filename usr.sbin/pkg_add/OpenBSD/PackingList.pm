@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.68 2007/05/29 13:00:17 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.69 2007/05/29 13:17:48 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -419,7 +419,9 @@ sub from_installation
 	if (defined $plist && $code == \&DependOnly) {
 		$plist_cache->{$pkgname} = $plist;
 	} 
-	$plist->set_infodir(OpenBSD::PackageInfo::installed_info($pkgname));
+	if (defined $plist) {
+		$plist->set_infodir(OpenBSD::PackageInfo::installed_info($pkgname));
+	}
 	return $plist;
 }
 
