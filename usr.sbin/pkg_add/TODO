@@ -1,3 +1,5 @@
+- make sure solved dependencies are adjusted along with stuff that actually
+get installed or replaced... this would make some stuff ways less brittle.
 - handle n-to-1 updates: mostly need to allow for a list of replaced packages.
 The tricky part is that the replaced packages will often have 
 inter-dependencies, and we must ignore those inter-dependencies.
