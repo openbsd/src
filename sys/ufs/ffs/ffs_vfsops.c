@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.104 2007/04/24 12:10:28 millert Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.105 2007/05/29 18:40:53 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -553,7 +553,10 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	else
 		size = dpart.disklab->d_secsize;
 
-	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
+	fs = VFSTOUFS(mountp)->um_fs;
+
+	error = bread(devvp, (daddr_t)(fs->fs_sblockloc / size), SBSIZE,
+	    NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -564,7 +567,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 		brelse(bp);
 		return (EINVAL);
 	}
-	fs = VFSTOUFS(mountp)->um_fs;
+
 	/*
 	 * Copy pointer fields back into superblock before copying in	XXX
 	 * new superblock. These should really be in the ufsmount.	XXX
@@ -578,7 +581,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	mountp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
-	ffs1_compat_read(fs, VFSTOUFS(mountp), SBOFF);
+	ffs1_compat_read(fs, VFSTOUFS(mountp), fs->fs_sblockloc);
 	ffs_oldfscompat(fs);
 	(void)ffs_statfs(mountp, &mountp->mnt_stat, p);
 	/*
@@ -1436,16 +1439,20 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 		else if ((error = bwrite(bp)))
 			allerror = error;
 	}
+
 	/*
 	 * Now write back the superblock itself. If any errors occurred
 	 * up to this point, then fail so that the superblock avoids
 	 * being written out as clean.
 	 */
-	if (allerror)
+	if (allerror) {
+		brelse(bp);
 		return (allerror);
+	}
 
-	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
-		    (int)fs->fs_sbsize, 0, 0);
+	bp = getblk(mp->um_devvp,
+	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb),
+	    (int)fs->fs_sbsize, 0, 0);
 	fs->fs_fmod = 0;
 	fs->fs_time = time_second;
 	bcopy((caddr_t)fs, bp->b_data, (u_int)fs->fs_sbsize);
@@ -1470,6 +1477,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 		bawrite(bp);
 	else if ((error = bwrite(bp)))
 		allerror = error;
+
 	return (allerror);
 }
 
