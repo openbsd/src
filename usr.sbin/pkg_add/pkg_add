@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.289 2007/05/29 14:39:03 espie Exp $
+# $OpenBSD: pkg_add,v 1.290 2007/05/29 14:52:48 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -317,14 +317,14 @@ sub failed_install
 sub really_add
 {
 	my ($set, $state) = @_;
+
+	for my $h ($set->newer) {
+		$h->{plist}->set_infodir($h->{location}->info);
+	}
 	my $handle = $set->handle;
-	my $location = $handle->{location};
-	my $destdir = $state->{destdir};
 	my $plist = $handle->{plist};
-	$plist->set_infodir($location->info);
 	my $pkgname = $handle->{pkgname};
 	my $errors = 0;
-	$state->{archive} = $location;
 	$state->set_pkgname($pkgname);
 
 	$set->setup_header($state);
@@ -344,13 +344,8 @@ sub really_add
 
 	$set->validate_plists($state);
 
-	my $totsize = $plist->{totsize};
 
-	if (!defined $location) {
-		Fatal "Archive in $pkgname broken";
-	}
-
-	$ENV{'PKG_PREFIX'} = $plist->localbase;
+	$ENV{'PKG_PREFIX'} = $state->{localbase};
 
 	my $handler = sub {
 		$state->{interrupted} = shift;
@@ -370,6 +365,8 @@ sub really_add
 
 		my $donesize = 0;
 		$plist->{done} = [];
+		my $totsize = $handle->{totsize};
+		$state->{archive} = $handle->{location};
 		for my $item (@{$plist->{items}}) {
 			try { 
 				$item->extract($state); 
@@ -440,6 +437,8 @@ sub really_add
 		do_script($plist, INSTALL, $state, "PRE-INSTALL");
 	}
 
+	my $totsize = $handle->{totsize};
+	$state->{archive} = $handle->{location};
 	my $donesize = 0;
 	$state->{end_faked} = 0;
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
@@ -466,7 +465,7 @@ sub really_add
 	}
 
 	try { 
-		$location->finish_and_close; }
+		$handle->{location}->finish_and_close; }
 	catchall {
 		Warn $_;
 		$errors++;
