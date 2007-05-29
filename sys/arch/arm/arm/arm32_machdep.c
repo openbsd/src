@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.25 2007/05/26 20:56:49 drahn Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.26 2007/05/29 21:09:43 robert Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -119,16 +119,6 @@ int allowaperture = 0;
 /* Permit console keyboard to do a nice halt. */
 int kbd_reset;
 int lid_suspend;
-
-/* Touch pad scaling disable flag and scaling parameters. */
-extern int zts_rawmode;
-struct ztsscale {
-	int ts_minx;
-	int ts_maxx;
-	int ts_miny;
-	int ts_maxy;
-};
-extern struct ztsscale zts_scale;
 extern int xscale_maxspeed;
 #endif
 
@@ -424,7 +414,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
 #endif
 #if defined(__zaurus__)
-#include "zts.h"
 	case CPU_KBDRESET:
 		if (securelevel > 0)
 			return (sysctl_rdint(oldp, oldlenp, newp,
@@ -446,45 +435,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    &xscale_maxspeed));
 		pxa2x0_maxspeed(&xscale_maxspeed);
 		return err;
-	}
-		
-	case CPU_ZTSRAWMODE:
-#if NZTS > 0
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &zts_rawmode));
-#else
-		return (EINVAL);
-#endif /* NZTS > 0 */
-	case CPU_ZTSSCALE:
-	{
-		int err = EINVAL;
-#if NZTS > 0
-		struct ztsscale *p = newp;
-		struct ztsscale ts;
-		int s;
-
-		if (!newp && newlen == 0)
-			return (sysctl_struct(oldp, oldlenp, 0, 0,
-			    &zts_scale, sizeof zts_scale));
-
-		if (!(newlen == sizeof zts_scale &&
-		    p->ts_minx < p->ts_maxx && p->ts_miny < p->ts_maxy &&
-		    p->ts_minx >= 0 && p->ts_maxx >= 0 &&
-		    p->ts_miny >= 0 && p->ts_maxy >= 0 &&
-		    p->ts_minx < 32768 && p->ts_maxx < 32768 &&
-		    p->ts_miny < 32768 && p->ts_maxy < 32768))
-			return (EINVAL);
-
-		ts = zts_scale;
-		err = sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &ts, sizeof ts);
-		if (err == 0) {
-			s = splhigh();
-			zts_scale = ts;
-			splx(s);
-		}
-#endif /* NZTS > 0 */
-		return (err);
 	}
 #endif
 

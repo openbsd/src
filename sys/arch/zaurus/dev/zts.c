@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.10 2007/04/10 22:37:17 miod Exp $ */
+/* $OpenBSD: zts.c,v 1.11 2007/05/29 21:09:43 robert Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -35,6 +35,12 @@
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_lcd.h>
 
+#ifdef ZTS_DEBUG
+#define DPRINTF(x)	do { printf x; } while (0)
+#else
+#define DPRINTF(x)
+#endif
+
 /*
  * ADS784x touch screen controller
  */
@@ -53,20 +59,14 @@
 
 #define CCNT_HS_400_VGA_C3K 6250	/* 15.024us */
 
-/* XXX need to ask zaurus_lcd.c for the screen dimension */
-#define CURRENT_DISPLAY (&sharp_zaurus_C3000)
-extern const struct lcd_panel_geometry sharp_zaurus_C3000;
-
-/* Settable via sysctl. */
-int	zts_rawmode;
-struct ztsscale {
-	int ts_minx;
-	int ts_maxx;
-	int ts_miny;
-	int ts_maxy;
+struct tsscale {
+	int minx, maxx;
+	int miny, maxy;
+	int swapxy;
+	int resx, resy;
 } zts_scale = {
 	/* C3000 */
-	209, 3620, 312, 3780
+	209, 3620, 312, 3780, 0, 640, 480
 };
 
 int	zts_match(struct device *, void *, void *);
@@ -88,8 +88,9 @@ struct zts_softc {
 	struct device *sc_wsmousedev;
 	int sc_oldx;
 	int sc_oldy;
-	int sc_resx;
-	int sc_resy;
+	int sc_rawmode;
+	
+	struct tsscale sc_tsscale;
 };
 
 struct cfattach zts_ca = {
@@ -137,10 +138,10 @@ zts_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &zts_accessops;
 	a.accesscookie = sc;
 	printf("\n");
-		
-	sc->sc_resx = CURRENT_DISPLAY->panel_height;
-	sc->sc_resy = CURRENT_DISPLAY->panel_width;
 
+	/* Copy the default scalue values to each softc */
+	bcopy(&zts_scale, &sc->sc_tsscale, sizeof(sc->sc_tsscale));
+		
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
@@ -514,14 +515,14 @@ zts_irq(void *v)
 	
 	if (down) {
 		zts_avgpos(&tp);
-		if (!zts_rawmode) {
-			struct ztsscale *tsp = &zts_scale;
-
+		if (!sc->sc_rawmode) {
 			/* Scale down to the screen resolution. */
-			tp.x = ((tp.x - tsp->ts_minx) * sc->sc_resx) /
-			    (tsp->ts_maxx - tsp->ts_minx);
-			tp.y = ((tp.y - tsp->ts_miny) * sc->sc_resy) /
-			    (tsp->ts_maxy - tsp->ts_miny);
+			tp.x = ((tp.x - sc->sc_tsscale.minx) *
+			    sc->sc_tsscale.resx) /
+			    (sc->sc_tsscale.maxx - sc->sc_tsscale.minx);
+			tp.y = ((tp.y - sc->sc_tsscale.miny) *
+			    sc->sc_tsscale.resy) /
+			    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny);
 		}
 	}
 
@@ -542,6 +543,9 @@ zts_irq(void *v)
 	}
 
 	if (down || sc->sc_buttons != down) {
+		DPRINTF(("%s: tp.z = %d, tp.x = %d, tp.y = %d\n",
+		    sc->sc_dev.dv_xname, tp.z, tp.x, tp.y));
+
 		wsmouse_input(sc->sc_wsmousedev, down, tp.x, tp.y,
 		    0 /* z */, 0 /* w */,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
@@ -557,12 +561,51 @@ zts_irq(void *v)
 int
 zts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	int error = 0;
+	struct zts_softc *sc = v;
+	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
+
+	DPRINTF(("zts_ioctl(%d, '%c', %d)\n",
+	    IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd & 0xff));
 
 	switch (cmd) {
+	case WSMOUSEIO_SCALIBCOORDS:
+		if (!(wsmc->minx >= 0 && wsmc->maxx >= 0 &&
+		    wsmc->miny >= 0 && wsmc->maxy >= 0 &&
+		    wsmc->resx >= 0 && wsmc->resy >= 0 &&
+		    wsmc->minx < 32768 && wsmc->maxx < 32768 &&
+		    wsmc->miny < 32768 && wsmc->maxy < 32768 &&
+		    wsmc->resx < 32768 && wsmc->resy < 32768 &&
+		    wsmc->swapxy >= 0 && wsmc->swapxy <= 1 &&
+		    wsmc->samplelen >= 0 && wsmc->samplelen <= 1))
+			return (EINVAL);
+
+		sc->sc_tsscale.minx = wsmc->minx;
+		sc->sc_tsscale.maxx = wsmc->maxx;
+		sc->sc_tsscale.miny = wsmc->miny;
+		sc->sc_tsscale.maxy = wsmc->maxy;
+		sc->sc_tsscale.swapxy = wsmc->swapxy;
+		sc->sc_tsscale.resx = wsmc->resx;
+		sc->sc_tsscale.resy = wsmc->resy;
+		sc->sc_rawmode = wsmc->samplelen;
+		break;
+	case WSMOUSEIO_GCALIBCOORDS:
+		wsmc->minx = sc->sc_tsscale.minx;
+		wsmc->maxx = sc->sc_tsscale.maxx;
+		wsmc->miny = sc->sc_tsscale.miny;
+		wsmc->maxy = sc->sc_tsscale.maxy;
+		wsmc->swapxy = sc->sc_tsscale.swapxy;
+		wsmc->resx = sc->sc_tsscale.resx;
+		wsmc->resy = sc->sc_tsscale.resy;
+		wsmc->samplelen = sc->sc_rawmode;
+		break;
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		return (0);
+		break;
+	default:
+		error = ENOTTY;
+		break;
 	}
 
-	return (-1);
+	return (error);
 }
