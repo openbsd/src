@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.533 2007/05/28 17:16:39 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.534 2007/05/29 00:50:41 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2939,16 +2939,22 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		if (((r->rule_flag & PFRULE_RETURNRST) ||
 		    (r->rule_flag & PFRULE_RETURN)) &&
 		    !(th->th_flags & TH_RST)) {
-			u_int32_t ack = ntohl(th->th_seq) + pd->p_len;
+			u_int32_t	 ack = ntohl(th->th_seq) + pd->p_len;
+			struct ip	*h = mtod(m, struct ip *);
 
-			if (th->th_flags & TH_SYN)
-				ack++;
-			if (th->th_flags & TH_FIN)
-				ack++;
-			pf_send_tcp(r, af, pd->dst,
-			    pd->src, th->th_dport, th->th_sport,
-			    ntohl(th->th_ack), ack, TH_RST|TH_ACK, 0, 0,
-			    r->return_ttl, 1, 0, pd->eh, kif->pfik_ifp);
+			if (pf_check_proto_cksum(m, off,
+			    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET))
+				REASON_SET(&reason, PFRES_PROTCKSUM);
+			else {
+				if (th->th_flags & TH_SYN)
+					ack++;
+				if (th->th_flags & TH_FIN)
+					ack++;
+				pf_send_tcp(r, af, pd->dst,
+				    pd->src, th->th_dport, th->th_sport,
+				    ntohl(th->th_ack), ack, TH_RST|TH_ACK, 0, 0,
+				    r->return_ttl, 1, 0, pd->eh, kif->pfik_ifp);
+			}
 		} else if ((af == AF_INET) && r->return_icmp)
 			pf_send_icmp(m, r->return_icmp >> 8,
 			    r->return_icmp & 255, af, r);
@@ -5954,12 +5960,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = action != PF_PASS;
 			goto done;
 		}
-		if (dir == PF_IN && pf_check_proto_cksum(m, off,
-		    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET)) {
-			REASON_SET(&reason, PFRES_PROTCKSUM);
-			action = PF_DROP;
-			goto done;
-		}
 		pd.p_len = pd.tot_len - off - (th.th_off << 2);
 		if ((th.th_flags & TH_ACK) && pd.p_len == 0)
 			pqid = 1;
@@ -5990,12 +5990,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = action != PF_PASS;
 			goto done;
 		}
-		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(m,
-		    off, ntohs(h->ip_len) - off, IPPROTO_UDP, AF_INET)) {
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_PROTCKSUM);
-			goto done;
-		}
 		if (uh.uh_dport == 0 ||
 		    ntohs(uh.uh_ulen) > m->m_pkthdr.len - off ||
 		    ntohs(uh.uh_ulen) < sizeof(struct udphdr)) {
@@ -6024,12 +6018,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		if (!pf_pull_hdr(m, off, &ih, ICMP_MINLEN,
 		    &action, &reason, AF_INET)) {
 			log = action != PF_PASS;
-			goto done;
-		}
-		if (dir == PF_IN && pf_check_proto_cksum(m, off,
-		    ntohs(h->ip_len) - off, IPPROTO_ICMP, AF_INET)) {
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_PROTCKSUM);
 			goto done;
 		}
 		action = pf_test_state_icmp(&s, dir, kif, m, off, h, &pd,
@@ -6346,13 +6334,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = action != PF_PASS;
 			goto done;
 		}
-		if (dir == PF_IN && pf_check_proto_cksum(n, off,
-		    ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
-		    IPPROTO_TCP, AF_INET6)) {
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_PROTCKSUM);
-			goto done;
-		}
 		pd.p_len = pd.tot_len - off - (th.th_off << 2);
 		action = pf_normalize_tcp(dir, kif, m, 0, off, h, &pd);
 		if (action == PF_DROP)
@@ -6379,13 +6360,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		if (!pf_pull_hdr(m, off, &uh, sizeof(uh),
 		    &action, &reason, AF_INET6)) {
 			log = action != PF_PASS;
-			goto done;
-		}
-		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(n,
-		    off, ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
-		    IPPROTO_UDP, AF_INET6)) {
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_PROTCKSUM);
 			goto done;
 		}
 		if (uh.uh_dport == 0 ||
@@ -6416,13 +6390,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		if (!pf_pull_hdr(m, off, &ih, sizeof(ih),
 		    &action, &reason, AF_INET6)) {
 			log = action != PF_PASS;
-			goto done;
-		}
-		if (dir == PF_IN && pf_check_proto_cksum(n, off,
-		    ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
-		    IPPROTO_ICMPV6, AF_INET6)) {
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_PROTCKSUM);
 			goto done;
 		}
 		action = pf_test_state_icmp(&s, dir, kif,
