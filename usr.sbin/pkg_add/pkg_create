@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.105 2007/05/29 13:10:57 espie Exp $
+# $OpenBSD: pkg_create,v 1.106 2007/05/29 15:35:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -78,8 +78,12 @@ use OpenBSD::md5;
 
 sub compute_checksum
 {
-	my ($self, $result, $base, $name, $stash) = @_;
-	my $fname = "$base/$name";
+	my ($self, $result, $base, $stash) = @_;
+	my $name = $self->fullname;
+	my $fname = $name;
+	if (defined $base) {
+		$fname = "$base/$fname";
+	}
 
 	if (-l $fname) {
 		my $value = readlink $fname;
@@ -101,22 +105,23 @@ sub compute_checksum
 
 sub makesum_plist_filename
 {
-	my ($self, $plist, $base, $name, $stash) = @_;
-	$self->compute_checksum($self, $base, $name, $stash);
+	my ($self, $plist, $base, $stash) = @_;
+	$self->compute_checksum($self, $base, $stash);
 	$self->add_object($plist);
 }
 
 sub verify_checksum_filename
 {
-	my ($self, $base, $name, $stash) = @_;
+	my ($self, $base, $stash) = @_;
 	my $check = ref($self)->new($self->{name});
-	$self->compute_checksum($check, $base, $name, $stash);
+	$self->compute_checksum($check, $base, $stash);
 
 	for my $field (qw(symlink link md5 size)) {
 		if ((defined $check->{$field} && defined $self->{$field} &&
 		    $check->{$field} ne $self->{$field}) ||
 		    (defined $check->{$field} xor defined $self->{$field})) {
-			print STDERR "Error: $field inconsistency for $name\n";
+			print STDERR "Error: $field inconsistency for ", 
+			    $self->fullname, "\n";
 			$main::errors++;
 		}
 	}
@@ -154,13 +159,13 @@ sub comment_create_package
 sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
-	$self->makesum_plist_filename($plist, $self->infodir ,$self->{name}, $stash);
+	$self->makesum_plist_filename($plist, undef, $stash);
 }
 
 sub verify_checksum
 {
 	my ($self, $base, $stash) = @_;
-	$self->verify_checksum_filename($self->infodir, $self->{name}, $stash);
+	$self->verify_checksum_filename(undef, $stash);
 }
 
 sub prepare_for_archival
@@ -241,13 +246,13 @@ sub print_file
 sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
-	$self->makesum_plist_filename($plist, $base, $self->fullname, $stash);
+	$self->makesum_plist_filename($plist, $base, $stash);
 }
 
 sub verify_checksum
 {
 	my ($self, $base, $stash) = @_;
-	$self->verify_checksum_filename($base, $self->fullname, $stash);
+	$self->verify_checksum_filename($base, $stash);
 }
 
 package OpenBSD::PackingElement::InfoFile;
@@ -259,7 +264,7 @@ sub makesum_plist
 	for (my $i = 1; ; $i++) {
 		if (-e "$base/$fname-$i") {
 			my $e = OpenBSD::PackingElement::File->add($plist, $self->{name}."-".$i);
-			$e->compute_checksum($e, $base, "$fname-$i", $stash);
+			$e->compute_checksum($e, $base, $stash);
 		} else {
 			last;
 		}
