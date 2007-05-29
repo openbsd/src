@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.27 2007/05/28 17:44:54 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.28 2007/05/29 16:56:01 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -660,7 +660,8 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 			    sc->sc_dev.dv_xname);
 			return (1);	/* XXX: return code */
 		}
-		bus_dmamap_sync(sc->sc_dmat, ccb->c_dmam, 0, size,
+		bus_dmamap_sync(sc->sc_dmat, ccb->c_dmam, 0,
+		    ccb->c_dmam->dm_mapsize,
 		    flags & IPS_CCB_READ ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 
