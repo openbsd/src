@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.88 2007/05/26 17:13:30 jason Exp $	*/
+/*	$OpenBSD: if.h,v 1.89 2007/05/29 18:18:57 uwe Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -290,41 +290,45 @@ struct ifnet {				/* and the entries */
  */
 #define	IF_QFULL(ifq)		((ifq)->ifq_len >= (ifq)->ifq_maxlen)
 #define	IF_DROP(ifq)		((ifq)->ifq_drops++)
-#define	IF_ENQUEUE(ifq, m) { \
-	(m)->m_nextpkt = 0; \
-	if ((ifq)->ifq_tail == 0) \
-		(ifq)->ifq_head = m; \
-	else \
-		(ifq)->ifq_tail->m_nextpkt = m; \
-	(ifq)->ifq_tail = m; \
-	(ifq)->ifq_len++; \
-}
-#define	IF_PREPEND(ifq, m) { \
-	(m)->m_nextpkt = (ifq)->ifq_head; \
-	if ((ifq)->ifq_tail == 0) \
-		(ifq)->ifq_tail = (m); \
-	(ifq)->ifq_head = (m); \
-	(ifq)->ifq_len++; \
-}
-#define	IF_DEQUEUE(ifq, m) { \
-	(m) = (ifq)->ifq_head; \
-	if (m) { \
-		if (((ifq)->ifq_head = (m)->m_nextpkt) == 0) \
-			(ifq)->ifq_tail = 0; \
-		(m)->m_nextpkt = 0; \
-		(ifq)->ifq_len--; \
-	} \
-}
+#define	IF_ENQUEUE(ifq, m)						\
+do {									\
+	(m)->m_nextpkt = 0;						\
+	if ((ifq)->ifq_tail == 0)					\
+		(ifq)->ifq_head = m;					\
+	else								\
+		(ifq)->ifq_tail->m_nextpkt = m;				\
+	(ifq)->ifq_tail = m;						\
+	(ifq)->ifq_len++;						\
+} while (0)
+#define	IF_PREPEND(ifq, m)						\
+do {									\
+	(m)->m_nextpkt = (ifq)->ifq_head;				\
+	if ((ifq)->ifq_tail == 0)					\
+		(ifq)->ifq_tail = (m);					\
+	(ifq)->ifq_head = (m);						\
+	(ifq)->ifq_len++;						\
+} while (0)
+#define	IF_DEQUEUE(ifq, m)						\
+do {									\
+	(m) = (ifq)->ifq_head;						\
+	if (m) {							\
+		if (((ifq)->ifq_head = (m)->m_nextpkt) == 0)		\
+			(ifq)->ifq_tail = 0;				\
+		(m)->m_nextpkt = 0;					\
+		(ifq)->ifq_len--;					\
+	}								\
+} while (0)
 
-#define	IF_INPUT_ENQUEUE(ifq, m) {			\
-	if (IF_QFULL(ifq)) {				\
-		IF_DROP(ifq);				\
-		m_freem(m);				\
-		if (!(ifq)->ifq_congestion)		\
-			if_congestion(ifq);		\
-	} else						\
-		IF_ENQUEUE(ifq, m);			\
-}
+#define	IF_INPUT_ENQUEUE(ifq, m)					\
+do {									\
+	if (IF_QFULL(ifq)) {						\
+		IF_DROP(ifq);						\
+		m_freem(m);						\
+		if (!(ifq)->ifq_congestion)				\
+			if_congestion(ifq);				\
+	} else								\
+		IF_ENQUEUE(ifq, m);					\
+} while (0)
 
 #define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
 #define	IF_PURGE(ifq)							\
