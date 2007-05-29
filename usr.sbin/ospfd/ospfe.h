@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.35 2007/03/21 10:54:30 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.36 2007/05/29 22:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -130,6 +130,8 @@ void		 ospfe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 ospfe_nbr_ctl(struct ctl_conn *);
 void		 orig_rtr_lsa(struct area *);
 void		 orig_net_lsa(struct iface *);
+void		 ospfe_demote_area(struct area *, int);
+void		 ospfe_demote_iface(struct iface *, int);
 
 /* interface.c */
 int		 if_fsm(struct iface *, enum iface_event);

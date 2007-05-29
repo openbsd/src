@@ -1,4 +1,4 @@
-/*	$OpenBSD: area.c,v 1.4 2005/05/26 18:59:14 norby Exp $ */
+/*	$OpenBSD: area.c,v 1.5 2007/05/29 22:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -53,6 +53,10 @@ area_del(struct area *area)
 	struct vertex		*v, *nv;
 	struct rde_nbr		*n;
 
+	/* area is removed so neutralize the demotion done by the area */
+	if (area->active == 0)
+		ospfe_demote_area(area, 1);
+
 	/* clean lists */
 	while ((iface = LIST_FIRST(&area->iface_list)) != NULL) {
 		LIST_REMOVE(iface, entry);
@@ -90,12 +94,17 @@ area_find(struct ospfd_conf *conf, struct in_addr area_id)
 void
 area_track(struct area *area, int state)
 {
+	int			old = area->active;
+
 	if (state & NBR_STA_FULL)
 		area->active++;
 	else if (area->active == 0)
 		fatalx("king bula sez: area already inactive");
 	else
 		area->active--;
+
+	if (area->active == 0 || old == 0)
+		ospfe_demote_area(area, old == 0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2007/03/28 14:17:13 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.48 2007/05/29 22:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -112,6 +112,7 @@ typedef struct {
 %token	RETRANSMITINTERVAL ROUTERDEADTIME ROUTERPRIORITY
 %token	SET TYPE
 %token	YES NO
+%token	DEMOTE
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.number>	number yesno no optlist, optlist_l option
@@ -470,6 +471,28 @@ areaopts_l	: areaopts_l areaoptsl nl
 		;
 
 areaoptsl	: interface
+		| DEMOTE STRING	number	{
+			if ($3 > 255) {
+				yyerror("demote count too big: max 255");
+				free($2);
+				YYERROR;
+			}
+			area->demote_level = $3;
+			if (strlcpy(area->demote_group, $2,
+			    sizeof(area->demote_group)) >=
+			    sizeof(area->demote_group)) {
+				yyerror("demote group name \"%s\" too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (carp_demote_init(area->demote_group,
+			    conf->opts & OSPFD_OPT_FORCE_DEMOTE) == -1) {
+				yyerror("error initializing group \"%s\"",
+				    area->demote_group);
+				YYERROR;
+			}
+		}
 		| defaults
 		;
 
@@ -544,6 +567,22 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl nl
 		;
 
 interfaceoptsl	: PASSIVE		{ iface->passive = 1; }
+		| DEMOTE STRING		{
+			if (strlcpy(iface->demote_group, $2,
+			    sizeof(iface->demote_group)) >=
+			    sizeof(iface->demote_group)) {
+				yyerror("demote group name \"%s\" too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (carp_demote_init(iface->demote_group,
+			    conf->opts & OSPFD_OPT_FORCE_DEMOTE) == -1) {
+				yyerror("error initializing group \"%s\"",
+				    iface->demote_group);
+				YYERROR;
+			}
+		}
 		| defaults
 		;
 
@@ -585,6 +624,7 @@ lookup(char *s)
 		{"auth-md",		AUTHMD},
 		{"auth-md-keyid",	AUTHMDKEYID},
 		{"auth-type",		AUTHTYPE},
+		{"demote",		DEMOTE},
 		{"fib-update",		FIBUPDATE},
 		{"hello-interval",	HELLOINTERVAL},
 		{"interface",		INTERFACE},

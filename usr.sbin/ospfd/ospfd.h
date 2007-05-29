@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.66 2007/03/21 10:54:30 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.67 2007/05/29 22:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -144,7 +144,8 @@ enum imsg_type {
 	IMSG_RECONF_AREA,
 	IMSG_RECONF_IFACE,
 	IMSG_RECONF_AUTHMD,
-	IMSG_RECONF_END
+	IMSG_RECONF_END,
+	IMSG_DEMOTE
 };
 
 struct imsg_hdr {
@@ -172,12 +173,14 @@ struct area {
 	LIST_HEAD(, iface)	 iface_list;
 	LIST_HEAD(, rde_nbr)	 nbr_list;
 /*	list			 addr_range_list; */
+	char			 demote_group[IFNAMSIZ];
 	u_int32_t		 stub_default_cost;
 	u_int32_t		 num_spf_calc;
 	int			 active;
 	u_int8_t		 transit;
 	u_int8_t		 stub;
 	u_int8_t		 dirty;
+	u_int8_t		 demote_level;
 };
 
 /* interface states */
@@ -328,6 +331,7 @@ struct iface {
 	struct lsa_head		 ls_ack_list;
 
 	char			 name[IF_NAMESIZE];
+	char			 demote_group[IFNAMSIZ];
 	char			 auth_key[MAX_SIMPLE_AUTH_LEN];
 	struct in_addr		 addr;
 	struct in_addr		 dst;
@@ -396,6 +400,7 @@ struct ospfd_conf {
 #define OSPFD_OPT_VERBOSE2	0x00000002
 #define OSPFD_OPT_NOACTION	0x00000004
 #define OSPFD_OPT_STUB_ROUTER	0x00000008
+#define OSPFD_OPT_FORCE_DEMOTE	0x00000010
 	u_int32_t		spf_delay;
 	u_int32_t		spf_hold_time;
 	time_t			uptime;
@@ -526,6 +531,11 @@ struct ctl_sum_area {
 	u_int32_t		 num_lsa;
 };
 
+struct demote_msg {
+	char			 demote_group[IF_NAMESIZE];
+	int			 level;
+};
+
 /* area.c */
 struct area	*area_new(void);
 int		 area_del(struct area *);
@@ -544,6 +554,12 @@ void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
 int		 msgbuf_write(struct msgbuf *);
+
+/* carp.c */
+int		 carp_demote_init(char *, int);
+void		 carp_demote_shutdown(void);
+int		 carp_demote_get(char *);
+int		 carp_demote_set(char *, int);
 
 /* parse.y */
 struct ospfd_conf	*parse_config(char *, int);

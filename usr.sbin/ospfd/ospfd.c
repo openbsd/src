@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.45 2007/03/25 15:48:54 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.46 2007/05/29 22:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -117,7 +117,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dnv] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-cdnv] [-f file]\n", __progname);
 	exit(1);
 }
 
@@ -135,8 +135,11 @@ main(int argc, char *argv[])
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
 
-	while ((ch = getopt(argc, argv, "df:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "cdf:nv")) != -1) {
 		switch (ch) {
+		case 'c':
+			opts |= OSPFD_OPT_FORCE_DEMOTE;
+			break;
 		case 'd':
 			debug = 1;
 			break;
@@ -295,6 +298,7 @@ ospfd_shutdown(void)
 
 	control_cleanup();
 	kr_shutdown();
+	carp_demote_shutdown();
 
 	do {
 		if ((pid = wait(NULL)) == -1 &&
@@ -339,6 +343,7 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 {
 	struct imsgbuf		*ibuf = bula;
 	struct imsg		 imsg;
+	struct demote_msg	 dmsg;
 	ssize_t			 n;
 
 	switch (event) {
@@ -388,6 +393,12 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 				kr_ifinfo(imsg.data, imsg.hdr.pid);
 			else
 				log_warnx("IFINFO request with wrong len");
+			break;
+		case IMSG_DEMOTE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(dmsg))
+				fatalx("invalid size of OE request");
+			memcpy(&dmsg, imsg.data, sizeof(dmsg));
+			carp_demote_set(dmsg.demote_group, dmsg.level);
 			break;
 		default:
 			log_debug("main_dispatch_ospfe: error handling imsg %d",
@@ -667,6 +678,7 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 			LIST_INSERT_HEAD(&conf->area_list, xa, entry);
 			if (ospfd_process == PROC_OSPF_ENGINE) {
 				/* start interfaces */
+				ospfe_demote_area(xa, 0);
 				LIST_FOREACH(iface, &xa->iface_list, entry) {
 					if_init(conf, iface);
 					if (if_fsm(iface, IF_EVT_UP)) {

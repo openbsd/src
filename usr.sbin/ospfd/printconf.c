@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.8 2007/03/22 16:00:46 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.9 2007/05/29 22:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -107,6 +107,8 @@ print_iface(struct iface *iface)
 
 	if (iface->passive)
 		printf("\t\tpassive\n");
+	if (*iface->demote_group)
+		printf("\t\tdemote %s\n", iface->demote_group);
 
 	printf("\t\tretransmit-interval %d\n", iface->rxmt_interval);
 	printf("\t\trouter-dead-time %d\n", iface->dead_interval);
@@ -145,6 +147,9 @@ print_config(struct ospfd_conf *conf)
 
 	LIST_FOREACH(area, &conf->area_list, entry) {
 		printf("area %s {\n", inet_ntoa(area->id));
+		if (*area->demote_group)
+			printf("\tdemote %s %d\n", area->demote_group,
+			area->demote_level);
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			print_iface(iface);
 		}

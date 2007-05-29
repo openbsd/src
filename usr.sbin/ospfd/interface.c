@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.58 2007/02/01 13:25:28 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.59 2007/05/29 22:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -139,6 +139,13 @@ if_fsm(struct iface *iface, enum iface_event event)
 	if (iface->state != old_state)
 		orig_rtr_lsa(iface->area);
 
+	if (old_state & (IF_STA_MULTI | IF_STA_POINTTOPOINT) &&
+	    (iface->state & (IF_STA_MULTI | IF_STA_POINTTOPOINT)) == 0)
+		ospfe_demote_iface(iface, 0);
+	if ((old_state & (IF_STA_MULTI | IF_STA_POINTTOPOINT)) == 0 &&
+	    iface->state & (IF_STA_MULTI | IF_STA_POINTTOPOINT))
+		ospfe_demote_iface(iface, 1);
+
 	log_debug("if_fsm: event %s resulted in action %s and changing "
 	    "state for interface %s from %s to %s",
 	    if_event_names[event], if_action_names[iface_fsm[i].action],
@@ -209,6 +216,10 @@ if_del(struct iface *iface)
 
 	log_debug("if_del: interface %s", iface->name);
 
+	/* revert the demotion when the interface is deleted */
+	if ((iface->state & (IF_STA_MULTI | IF_STA_POINTTOPOINT)) == 0)
+		ospfe_demote_iface(iface, 1);
+
 	/* clear lists etc */
 	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL)
 		nbr_del(nbr);
@@ -237,6 +248,8 @@ if_init(struct ospfd_conf *xconf, struct iface *iface)
 	evtimer_set(&iface->wait_timer, if_wait_timer, iface);
 
 	iface->fd = xconf->ospf_socket;
+
+	ospfe_demote_iface(iface, 0);
 }
 
 /* timers */

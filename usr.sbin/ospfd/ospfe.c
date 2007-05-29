@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.54 2007/03/21 10:54:30 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.55 2007/05/29 22:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -179,6 +179,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 
 	/* start interfaces */
 	LIST_FOREACH(area, &oeconf->area_list, entry) {
+		ospfe_demote_area(area, 0);
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			if_init(xconf, iface);
 			if (if_fsm(iface, IF_EVT_UP)) {
@@ -1042,4 +1043,43 @@ ospfe_nbr_ctl(struct ctl_conn *c)
 			}
 
 	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, NULL, 0);
+}
+
+void
+ospfe_demote_area(struct area *area, int active)
+{
+	struct demote_msg	dmsg;
+
+	if (ospfd_process != PROC_OSPF_ENGINE ||
+	    area->demote_group[0] == '\0')
+		return;
+
+	bzero(&dmsg, sizeof(dmsg));
+	strlcpy(dmsg.demote_group, area->demote_group,  
+	sizeof(dmsg.demote_group));
+	dmsg.level = area->demote_level;
+	if (active)
+		dmsg.level = -dmsg.level;
+
+	ospfe_imsg_compose_parent(IMSG_DEMOTE, 0, &dmsg, sizeof(dmsg));
+}
+
+void
+ospfe_demote_iface(struct iface *iface, int active)
+{
+	struct demote_msg	dmsg;
+
+	if (ospfd_process != PROC_OSPF_ENGINE ||
+	    iface->demote_group[0] == '\0')
+		return;
+
+	bzero(&dmsg, sizeof(dmsg));
+	strlcpy(dmsg.demote_group, iface->demote_group,  
+	sizeof(dmsg.demote_group));
+	if (active)
+		dmsg.level = -1;
+	else
+		dmsg.level = 1;
+
+	ospfe_imsg_compose_parent(IMSG_DEMOTE, 0, &dmsg, sizeof(dmsg));
 }
