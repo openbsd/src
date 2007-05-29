@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.93 2007/05/26 22:09:17 weingart Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.94 2007/05/29 21:01:56 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -67,9 +67,11 @@
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
 #include <sys/sched.h>
+#include <sys/sensors.h>
 
 struct intrsource;
 
+#ifdef _KERNEL
 /* XXX stuff to move to cpuvar.h later */
 struct cpu_info {
 	struct device ci_dev;		/* our device */
@@ -141,6 +143,9 @@ struct cpu_info {
 #define CI_SETPERF_SHOULDSTOP	1
 #define CI_SETPERF_INTRANSIT	2
 #define CI_SETPERF_DONE		3
+
+	struct ksensordev	ci_sensordev;
+	struct ksensor		ci_sensor;
 };
 
 /*
@@ -295,7 +300,6 @@ struct cpu_cpuid_feature {
 	const char *feature_name;
 };
 
-#ifdef _KERNEL
 /* locore.s */
 extern int cpu;
 extern int cpu_id;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.30 2007/02/17 17:38:37 tom Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.31 2007/05/29 21:01:56 tedu Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -162,6 +162,8 @@
 #define P6MSR_CTR0		0x0c1
 #define P6MSR_CTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
+#define MSR_TEMPERATURE_TARGET	0x0ee
+#define MSR_TEMPERATURE_TARGET_LOW_BIT	0x40000000
 #define MSR_MTRRcap		0x0fe
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
@@ -182,6 +184,8 @@
 #define MSR_THERM_CONTROL	0x19a
 #define MSR_THERM_INTERRUPT	0x19b
 #define MSR_THERM_STATUS	0x19c
+#define MSR_THERM_STATUS_VALID_BIT	0x80000000
+#define MSR_THERM_STATUS_TEMP(msr)	((msr >> 16) & 0x7f)
 #define MSR_THERM2_CTL		0x19d	/* Pentium M */
 #define MSR_MISC_ENABLE		0x1a0
 #define MSR_DEBUGCTLMSR		0x1d9
