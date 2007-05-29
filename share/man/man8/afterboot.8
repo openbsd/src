@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.117 2007/04/08 16:32:30 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.118 2007/05/29 15:40:13 sobrado Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -98,7 +98,7 @@ Change the password for the root user.
 (Note that throughout the documentation, the term
 .Dq superuser
 is a synonym for the root user.)
-Choose a password that has numbers, digits, and special characters (not space)
+Choose a password that has digits and special characters (not space)
 as well as from the upper and lower case alphabet.
 Do not choose any word in any language.
 It is common for an intruder to use dictionary attacks.
@@ -475,9 +475,6 @@ option in your sendmail .mc file.
 See
 .Pa /usr/share/sendmail/README
 for more information.
-The
-.Pa /etc/mail/localhost.cf
-file already has this disabled.
 .Ss Daily, weekly, monthly scripts
 Look at and possibly edit the
 .Pa /etc/daily , /etc/weekly ,
