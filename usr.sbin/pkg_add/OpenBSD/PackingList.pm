@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.67 2007/05/29 12:36:53 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.68 2007/05/29 13:00:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -61,8 +61,15 @@ sub new
 
 sub set_infodir
 {
-	my ($self, $dir) = shift;
+	my ($self, $dir) = @_;
+	$dir .= '/' unless $dir =~ m/\/$/;
 	${$self->{infodir}} = $dir;
+}
+
+sub infodir
+{
+	my $self = shift;
+	return ${$self->{infodir}}
 }
 
 sub read
@@ -274,6 +281,12 @@ sub tofile
 	$self->write($fh);
 	close($fh) or return;
 	return 1;
+}
+
+sub save
+{
+	my $self = shift;
+	$self->tofile($self->infodir.CONTENTS);
 }
 
 sub add2list

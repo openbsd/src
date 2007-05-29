@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.116 2007/05/29 12:36:53 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.117 2007/05/29 13:00:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1260,7 +1260,12 @@ sub add
 sub fullname
 {
 	my $self = shift;
-	return $self->infodir.'/'.$self->category;
+	my $d = $self->infodir;
+	if (defined $d) {
+		return $d.$self->category;
+	} else {
+		return undef;
+	}
 }
 
 package OpenBSD::PackingElement::FCONTENTS;
