@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.11 2007/05/29 02:02:12 cnst Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.12 2007/05/29 06:04:41 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -30,8 +30,8 @@ file is read by
 .Xr sensorsd 8
 to configure hardware sensor monitoring.
 Each valid sensor registered in the system
-shall be matched by at most one entry in 
-.Nm , 
+is matched by at most one entry in
+.Nm ,
 which may specify high and low limits.
 If the limits are crossed,
 .Xr sensorsd 8 's
@@ -41,14 +41,14 @@ executed.
 .Nm
 follows the syntax of configuration databases as documented in
 .Xr getcap 3 .
-Full
+Complete
 .Va hw.sensors
 .Xr sysctl 8
-addresses are used to find entries,
-with a fallback on sensor types.
-For example, if an entry with a full name of a certain temperature 
-sensor is not present in 
-.Nm , 
+variable names are used to find entries,
+with a fallback to sensor types.
+For example, if an entry with a full name of a certain temperature
+sensor is not present in
+.Nm ,
 then an entry
 .Va temp
 will be looked at to determine the limits.
