@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.14 2007/05/04 03:44:44 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.15 2007/05/29 09:54:27 sobrado Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -92,7 +92,7 @@ struct intrmap {
 extern struct intrmap intrmap[];
 
 /* The "mainbus" on ultra desktops is actually the UPA bus.  We need to
- * separate this from peripheral buses like SBUS and PCI because each bus may
+ * separate this from peripheral buses like SBus and PCI because each bus may
  * have different ways of encoding properties, such as "reg" and "interrupts".
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.24 2007/03/16 09:28:38 art Exp $	*/
+/*	$OpenBSD: intr.c,v 1.25 2007/05/29 09:53:57 sobrado Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -119,7 +119,7 @@ strayintr(fp, vectored)
 }
 
 /*
- * Level 1 software interrupt (could also be Sbus level 1 interrupt).
+ * Level 1 software interrupt (could also be SBus level 1 interrupt).
  * Three possible reasons:
  *	Network software interrupt
  *	Soft clock interrupt

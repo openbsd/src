@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.26 2006/06/28 20:09:15 deraadt Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.27 2007/05/29 09:54:13 sobrado Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -102,7 +102,7 @@
 
 
 /*
- * Sbus stuff.
+ * SBus stuff.
  */
 
 #include <sys/param.h>
@@ -147,7 +147,7 @@ int _sbus_bus_map(bus_space_tag_t, bus_space_tag_t,
     int,		/*flags*/
     bus_space_handle_t *);
 void *sbus_intr_establish(bus_space_tag_t, bus_space_tag_t,
-    int,		/*Sbus interrupt level*/
+    int,		/*SBus interrupt level*/
     int,		/*`device class' priority*/
     int,		/*flags*/
     int (*)(void *),	/*handler*/
@@ -182,17 +182,17 @@ int sbus_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
 /*
- * Child devices receive the Sbus interrupt level in their attach
+ * Child devices receive the SBus interrupt level in their attach
  * arguments. We translate these to CPU IPLs using the following
  * tables. Note: obio bus interrupt levels are identical to the
  * processor IPL.
  *
- * The second set of tables is used when the Sbus interrupt level
+ * The second set of tables is used when the SBus interrupt level
  * cannot be had from the PROM as an `interrupt' property. We then
  * fall back on the `intr' property which contains the CPU IPL.
  */
 
-/* Translate Sbus interrupt level to processor IPL */
+/* Translate SBus interrupt level to processor IPL */
 static int intr_sbus2ipl_4u[] = {
 	0, 2, 3, 5, 7, 9, 11, 13
 };
@@ -200,7 +200,7 @@ static int intr_sbus2ipl_4u[] = {
 /*
  * This value is or'ed into the attach args' interrupt level cookie
  * if the interrupt level comes from an `intr' property, i.e. it is
- * not an Sbus interrupt level.
+ * not an SBus interrupt level.
  */
 #define SBUS_INTR_COMPAT	0x80000000
 
@@ -372,7 +372,7 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 	*(ih->ih_map) |= INTMAP_V;
 	
 	/*
-	 * Note: the stupid SBUS IOMMU ignores the high bits of an address, so a
+	 * Note: the stupid SBus IOMMU ignores the high bits of an address, so a
 	 * NULL DMA pointer will be translated by the first page of the IOTSB.
 	 * To avoid bugs we'll alloc and ignore the first entry in the IOTSB.
 	 */
@@ -392,7 +392,7 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 }
 
 /*
- * Attach an Sbus (main part).
+ * Attach an SBus (main part).
  */
 void
 sbus_attach_common(struct sbus_softc *sc, int node, int indirect)
@@ -577,7 +577,7 @@ sbus_overtemp(void *arg)
 }
 
 /*
- * Get interrupt attributes for an Sbus device.
+ * Get interrupt attributes for an SBus device.
  */
 int
 sbus_get_intr(struct sbus_softc *sc, int node, struct sbus_intr **ipp, int *np,
@@ -588,7 +588,7 @@ sbus_get_intr(struct sbus_softc *sc, int node, struct sbus_intr **ipp, int *np,
 	char buf[32];
 
 	/*
-	 * The `interrupts' property contains the Sbus interrupt level.
+	 * The `interrupts' property contains the SBus interrupt level.
 	 */
 	ipl = NULL;
 	if (getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
@@ -620,7 +620,7 @@ sbus_get_intr(struct sbus_softc *sc, int node, struct sbus_intr **ipp, int *np,
 			}
 
 		/*
-		 * Sbus card devices need the slot number encoded into
+		 * SBus card devices need the slot number encoded into
 		 * the vector as this is generally not done.
 		 */
 		if ((ipl[0] & INTMAP_OBIO) == 0)
@@ -647,7 +647,7 @@ sbus_get_intr(struct sbus_softc *sc, int node, struct sbus_intr **ipp, int *np,
 
 
 /*
- * Install an interrupt handler for an Sbus device.
+ * Install an interrupt handler for an SBus device.
  */
 void *
 sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
@@ -684,7 +684,7 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 		    ("\nsbus: intr[%ld]%lx: %lx\nHunting for IRQ...\n",
 		    (long)ipl, (long)vec, (u_long)intrlev[vec]));
 		if ((vec & INTMAP_OBIO) == 0) {
-			/* We're in an SBUS slot */
+			/* We're in an SBus slot */
 			/* Register the map and clear intr registers */
 			bus_space_handle_t maph;
 			int slot = INTSLOT(pri);
@@ -695,7 +695,7 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 			if (sbus_debug & SDB_INTR) {
 				int64_t intrmap = *map;
 				
-				printf("SBUS %lx IRQ as %llx in slot %d\n", 
+				printf("SBus %lx IRQ as %llx in slot %d\n", 
 				       (long)vec, (long long)intrmap, slot);
 				printf("\tmap addr %p clr addr %p\n",
 				    map, clr);

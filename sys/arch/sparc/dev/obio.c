@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.16 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: obio.c,v 1.17 2007/05/29 09:54:11 sobrado Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ obioattach(parent, self, args)
 		return;
 
 	/*
-	 * There is only one obio bus (it is in fact one of the Sbus slots)
+	 * There is only one obio bus (it is in fact one of the SBus slots)
 	 * How about VME?
 	 */
 	if (self->dv_unit > 0) {

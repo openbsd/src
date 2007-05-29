@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.8 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.9 2007/05/29 09:54:17 sobrado Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.7 1999/06/05 05:30:43 mrg Exp $ */
 
 /*-
@@ -93,7 +93,7 @@
  * fake name ("mainbus").
  */
 
-/* variables per Sbus */
+/* variables per SBus */
 struct sbus_softc {
 	struct	device		sc_dev;		/* base device */
 	bus_space_tag_t		sc_bustag;

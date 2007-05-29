@@ -1,4 +1,4 @@
-/*	$OpenBSD: btreg.h,v 1.4 2003/06/02 23:27:53 millert Exp $	*/
+/*	$OpenBSD: btreg.h,v 1.5 2007/05/29 09:54:05 sobrado Exp $	*/
 /*	$NetBSD: btreg.h,v 1.4 1996/02/27 22:09:21 thorpej Exp $ */
 
 /*
@@ -105,7 +105,7 @@ struct bt_regs {
 
 
 /*
- * Sbus framebuffer control look like this (usually at offset 0x400000).
+ * SBus framebuffer control look like this (usually at offset 0x400000).
  */
 struct fbcontrol {
 	struct	bt_regs fbc_dac;

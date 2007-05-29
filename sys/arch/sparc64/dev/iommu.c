@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.46 2007/04/04 20:09:37 kettenis Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.47 2007/05/29 09:53:59 sobrado Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ iommu_strbuf_flush(struct strbuf_ctl *sb, vaddr_t va)
 }
 
 /*
- * initialise the UltraSPARC IOMMU (SBUS or PCI):
+ * initialise the UltraSPARC IOMMU (SBus or PCI):
  *	- allocate and setup the iotsb.
  *	- enable the IOMMU
  *	- initialise the streaming buffers (if they exist)
@@ -135,7 +135,7 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	/*
 	 * Setup the iommu.
 	 *
-	 * The sun4u iommu is part of the SBUS or PCI controller so we will
+	 * The sun4u iommu is part of the SBus or PCI controller so we will
 	 * deal with it here..
 	 *
 	 * For sysio and psycho/psycho+ the IOMMU address space always ends at
@@ -560,7 +560,7 @@ iommu_strbuf_flush_done(struct iommu_map_state *ims)
 }
 
 /*
- * IOMMU DVMA operations, common to SBUS and PCI.
+ * IOMMU DVMA operations, common to SBus and PCI.
  */
 
 #define BUS_DMA_FIND_PARENT(t, fn)                                      \

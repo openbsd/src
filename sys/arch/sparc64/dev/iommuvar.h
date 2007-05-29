@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.9 2003/06/11 03:16:12 henric Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.10 2007/05/29 09:53:59 sobrado Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ struct iommu_state {
 	bus_space_handle_t	is_iommu;	/* IOMMU registers */
 };
 
-/* interfaces for PCI/SBUS code */
+/* interfaces for PCI/SBus code */
 void	iommu_init(char *, struct iommu_state *, int, u_int32_t);
 void	iommu_reset(struct iommu_state *);
 paddr_t iommu_extract(struct iommu_state *, vaddr_t);

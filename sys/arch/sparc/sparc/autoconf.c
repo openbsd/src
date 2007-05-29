@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.78 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.79 2007/05/29 09:53:54 sobrado Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1002,7 +1002,7 @@ romprop(rp, cp, node)
 			for (n = 0; n < len; n++) {
 				intr = interrupts[n];
 				/*
-				 * Non-Sbus devices (such as the cgfourteen,
+				 * Non-SBus devices (such as the cgfourteen,
 				 * which attaches on obio) do not need their
 				 * interrupt level translated.
 				 */

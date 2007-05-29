@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.21 2007/04/10 18:02:48 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.22 2007/05/29 09:54:25 sobrado Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -125,7 +125,7 @@ extern int bus_space_debug;
 
 
 /*
- * UPA and SBUS spaces are non-cached and big endian
+ * UPA and SBus spaces are non-cached and big endian
  * (except for RAM and PROM)
  *
  * PCI spaces are non-cached and little endian

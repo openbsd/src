@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.89 2006/12/10 16:14:20 miod Exp $
+#	$OpenBSD: GENERIC,v 1.90 2007/05/29 09:54:03 sobrado Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -244,7 +244,7 @@ wsdisplay* at bwtwo?
 cgtwo0	at vmes0 addr 0xff400000 level 4 vect 0xa8
 wsdisplay* at cgtwo?
 
-# Sun "cgthree" Sbus color framebuffer.
+# Sun "cgthree" SBus color framebuffer.
 cgthree* at sbus?
 wsdisplay* at cgthree?
 

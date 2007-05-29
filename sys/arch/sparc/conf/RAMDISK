@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.61 2007/05/01 15:22:23 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.62 2007/05/29 09:54:03 sobrado Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -248,7 +248,7 @@ wsdisplay* at bwtwo?
 cgtwo0	at vmes0 addr 0xff400000 level 4 vect 0xa8
 wsdisplay* at cgtwo?
 
-# Sun "cgthree" Sbus color framebuffer.
+# Sun "cgthree" SBus color framebuffer.
 cgthree* at sbus?
 wsdisplay* at cgthree?
 

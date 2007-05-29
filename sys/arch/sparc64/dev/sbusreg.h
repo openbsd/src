@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusreg.h,v 1.2 2001/08/18 21:30:00 jason Exp $	*/
+/*	$OpenBSD: sbusreg.h,v 1.3 2007/05/29 09:54:15 sobrado Exp $	*/
 /*	$NetBSD: sbusreg.h,v 1.7 1999/06/07 05:28:03 eeh Exp $ */
 
 /*
@@ -26,7 +26,7 @@
 
 
 /*
- * Sbus device addresses are obtained from the FORTH PROMs.  They come
+ * SBus device addresses are obtained from the FORTH PROMs.  They come
  * in `absolute' and `relative' address flavors, so we have to handle both.
  * Relative addresses do *not* include the slot number.
  */
@@ -37,19 +37,19 @@
 #define	SBUS_ABS_TO_OFFSET(a)	(((a) - SBUS_BASE) & 0x1ffffff)
 
 /*
- * Sun4u S-bus definitions.  Here's where we deal w/the machine
+ * Sun4u SBus definitions.  Here's where we deal w/the machine
  * dependencies of sysio.
  *
  * SYSIO implements or is the interface to several things:  
  *
- * o The SBUS interface itself
+ * o The SBus interface itself
  * o The IOMMU
  * o The DVMA units
  * o The interrupt controller
  * o The counter/timers
  *
  * Since it has registers to control lots of different things
- * as well as several on-board SBUS devices and external SBUS
+ * as well as several on-board SBus devices and external SBus
  * slots scattered throughout its address space, it's a pain.
  *
  * One good point, however, is that all registers are 64-bit.
@@ -80,14 +80,14 @@ struct sysioreg {
 	u_int64_t	pad2[990];
 
 	struct sbusreg {
-		u_int64_t	sbus_cr;		/* SBUS Control Register */		/* 1fe.0000.2000 */
+		u_int64_t	sbus_cr;		/* SBus Control Register */		/* 1fe.0000.2000 */
 		u_int64_t	reserved;							/* 1fe.0000.2008 */
-		u_int64_t	sbus_afsr;		/* SBUS AFSR */				/* 1fe.0000.2010 */
-		u_int64_t	sbus_afar;		/* SBUS AFAR */				/* 1fe.0000.2018 */
-		u_int64_t	sbus_config0;	/* SBUS Slot 0 config register */	/* 1fe.0000.2020 */
-		u_int64_t	sbus_config1;	/* SBUS Slot 1 config register */	/* 1fe.0000.2028 */
-		u_int64_t	sbus_config2;	/* SBUS Slot 2 config register */	/* 1fe.0000.2030 */
-		u_int64_t	sbus_config3;	/* SBUS Slot 3 config register */	/* 1fe.0000.2038 */
+		u_int64_t	sbus_afsr;		/* SBus AFSR */				/* 1fe.0000.2010 */
+		u_int64_t	sbus_afar;		/* SBus AFAR */				/* 1fe.0000.2018 */
+		u_int64_t	sbus_config0;	/* SBus Slot 0 config register */	/* 1fe.0000.2020 */
+		u_int64_t	sbus_config1;	/* SBus Slot 1 config register */	/* 1fe.0000.2028 */
+		u_int64_t	sbus_config2;	/* SBus Slot 2 config register */	/* 1fe.0000.2030 */
+		u_int64_t	sbus_config3;	/* SBus Slot 3 config register */	/* 1fe.0000.2038 */
 		u_int64_t	sbus_config13;	/* Slot 13 config register <audio> */	/* 1fe.0000.2040 */
 		u_int64_t	sbus_config14;	/* Slot 14 config register <macio> */	/* 1fe.0000.2048 */
 		u_int64_t	sbus_config15;	/* Slot 15 config register <slavio> */	/* 1fe.0000.2050 */
@@ -103,10 +103,10 @@ struct sysioreg {
 
 	u_int64_t	pad5[125];
 
-	u_int64_t	sbus_slot0_int;		/* SBUS slot 0 interrupt map reg */	/* 1fe.0000.2c00 */
-	u_int64_t	sbus_slot1_int;		/* SBUS slot 1 interrupt map reg */	/* 1fe.0000.2c08 */
-	u_int64_t	sbus_slot2_int;		/* SBUS slot 2 interrupt map reg */	/* 1fe.0000.2c10 */
-	u_int64_t	sbus_slot3_int;		/* SBUS slot 3 interrupt map reg */	/* 1fe.0000.2c18 */
+	u_int64_t	sbus_slot0_int;		/* SBus slot 0 interrupt map reg */	/* 1fe.0000.2c00 */
+	u_int64_t	sbus_slot1_int;		/* SBus slot 1 interrupt map reg */	/* 1fe.0000.2c08 */
+	u_int64_t	sbus_slot2_int;		/* SBus slot 2 interrupt map reg */	/* 1fe.0000.2c10 */
+	u_int64_t	sbus_slot3_int;		/* SBus slot 3 interrupt map reg */	/* 1fe.0000.2c18 */
 	u_int64_t	intr_retry;		/* interrupt retry timer reg */		/* 1fe.0000.2c20 */
 
 	u_int64_t	pad6[123];
@@ -127,7 +127,7 @@ struct sysioreg {
 	u_int64_t	timer1_int_map;		/* timer 1 interrupt map reg */		/* 1fe.0000.3068 */
 	u_int64_t	ue_int_map;		/* UE interrupt map reg */		/* 1fe.0000.3070 */
 	u_int64_t	ce_int_map;		/* CE interrupt map reg */		/* 1fe.0000.3078 */
-	u_int64_t	sbus_async_int_map;	/* SBUS error interrupt map reg */	/* 1fe.0000.3080 */
+	u_int64_t	sbus_async_int_map;	/* SBus error interrupt map reg */	/* 1fe.0000.3080 */
 	u_int64_t	pwrmgt_int_map;		/* power mgmt wake interrupt map reg */	/* 1fe.0000.3088 */
 	u_int64_t	upagr_int_map;		/* UPA graphics interrupt map reg */	/* 1fe.0000.3090 */
 	u_int64_t	reserved_int_map;	/* reserved interrupt map reg */	/* 1fe.0000.3098 */
@@ -135,10 +135,10 @@ struct sysioreg {
 	u_int64_t	pad8[108];
 
 	/* Note: clear interrupt 0 registers are not really used */
-	u_int64_t	sbus0_clr_int[8];	/* SBUS slot 0 clear int regs 0..7 */	/* 1fe.0000.3400-3438 */
-	u_int64_t	sbus1_clr_int[8];	/* SBUS slot 1 clear int regs 0..7 */	/* 1fe.0000.3440-3478 */
-	u_int64_t	sbus2_clr_int[8];	/* SBUS slot 2 clear int regs 0..7 */	/* 1fe.0000.3480-34b8 */
-	u_int64_t	sbus3_clr_int[8];	/* SBUS slot 3 clear int regs 0..7 */	/* 1fe.0000.34c0-34f8 */
+	u_int64_t	sbus0_clr_int[8];	/* SBus slot 0 clear int regs 0..7 */	/* 1fe.0000.3400-3438 */
+	u_int64_t	sbus1_clr_int[8];	/* SBus slot 1 clear int regs 0..7 */	/* 1fe.0000.3440-3478 */
+	u_int64_t	sbus2_clr_int[8];	/* SBus slot 2 clear int regs 0..7 */	/* 1fe.0000.3480-34b8 */
+	u_int64_t	sbus3_clr_int[8];	/* SBus slot 3 clear int regs 0..7 */	/* 1fe.0000.34c0-34f8 */
 
 	u_int64_t	pad9[96];
 
@@ -158,7 +158,7 @@ struct sysioreg {
 	u_int64_t	timer1_clr_int;		/* timer 1 clear int reg */		/* 1fe.0000.3868 */
 	u_int64_t	ue_clr_int;		/* UE clear int reg */			/* 1fe.0000.3870 */
 	u_int64_t	ce_clr_int;		/* CE clear int reg */			/* 1fe.0000.3878 */
-	u_int64_t	sbus_clr_async_int;	/* SBUS error clr interrupt reg */	/* 1fe.0000.3880 */
+	u_int64_t	sbus_clr_async_int;	/* SBus error clr interrupt reg */	/* 1fe.0000.3880 */
 	u_int64_t	pwrmgt_clr_int;		/* power mgmt wake clr interrupt reg */	/* 1fe.0000.3888 */
 
 	u_int64_t	pad11[110];
@@ -170,7 +170,7 @@ struct sysioreg {
 
 	u_int64_t	pad12[252];
 
-	u_int64_t	sys_svadiag;		/* SBUS virtual addr diag reg */	/* 1fe.0000.4400 */
+	u_int64_t	sys_svadiag;		/* SBus virtual addr diag reg */	/* 1fe.0000.4400 */
 	
 	u_int64_t	pad13[31];
 
@@ -180,7 +180,7 @@ struct sysioreg {
 
 	u_int64_t	pad14[32];
 
-	u_int64_t	sbus_int_diag;		/* SBUS int state diag reg */		/* 1fe.0000.4800 */
+	u_int64_t	sbus_int_diag;		/* SBus int state diag reg */		/* 1fe.0000.4800 */
 	u_int64_t	obio_int_diag;		/* OBIO and misc int state diag reg */	/* 1fe.0000.4808 */
 
 	u_int64_t	pad15[254];

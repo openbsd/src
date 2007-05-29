@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.19 2005/03/29 11:33:18 miod Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.20 2007/05/29 09:53:59 sobrado Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -272,7 +272,7 @@ iommu_attach(parent, self, aux)
 		oca.ca_ra.ra_bp = NULL;
 
 	/*
-	 * Loop through ROM children (expect Sbus among them).
+	 * Loop through ROM children (expect SBus among them).
 	 */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		name = getpropstring(node, "name");

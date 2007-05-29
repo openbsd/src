@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.77 2007/02/03 20:08:50 miod Exp $
+#	$OpenBSD: files.sparc,v 1.78 2007/05/29 09:54:03 sobrado Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -264,7 +264,7 @@ file	arch/sparc/dev/si.c		si | sw
 #attach	en at sbus with en_sbus
 #file	arch/sparc/dev/if_en_sbus.c	en_sbus
 
-# Qlogic ISP 10x0 (Sbus) family
+# Qlogic ISP 10x0 (SBus) family
 # device declaration in sys/conf/files
 attach	isp at sbus with isp_sbus
 file	arch/sparc/dev/isp_sbus.c	isp_sbus

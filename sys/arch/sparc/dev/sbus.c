@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.15 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.16 2007/05/29 09:54:13 sobrado Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -42,7 +42,7 @@
  */
 
 /*
- * Sbus stuff.
+ * SBus stuff.
  */
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ sbus_match(parent, vcf, aux)
 }
 
 /*
- * Attach an Sbus.
+ * Attach an SBus.
  */
 void
 sbus_attach(parent, self, aux)
@@ -146,7 +146,7 @@ sbus_attach(parent, self, aux)
 	int rlen;
 
 	/*
-	 * XXX there is only one Sbus, for now -- do not know how to
+	 * XXX there is only one SBus, for now -- do not know how to
 	 * address children on others
 	 */
 	if (sc->sc_dev.dv_unit > 0 && ca->ca_bustype != BUS_XBOX) {
@@ -218,7 +218,7 @@ sbus_translate(dev, ca)
 	register int i;
 
 	if (sc->sc_nrange == 0) {
-		/* Old-style Sbus configuration */
+		/* Old-style SBus configuration */
 		base = (int)ca->ca_ra.ra_paddr;
 		if (SBUS_ABS(base)) {
 			ca->ca_slot = SBUS_ABS_TO_SLOT(base);

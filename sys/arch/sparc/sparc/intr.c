@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.29 2007/05/01 15:21:43 deraadt Exp $ */
+/*	$OpenBSD: intr.c,v 1.30 2007/05/29 09:53:57 sobrado Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -106,7 +106,7 @@ union sir sir;
 int netisr;
 
 /*
- * Level 1 software interrupt (could also be Sbus level 1 interrupt).
+ * Level 1 software interrupt (could also be SBus level 1 interrupt).
  * Three possible reasons:
  *	ROM console input needed
  *	Network software interrupt
@@ -227,15 +227,15 @@ intr_init()
  */
 struct intrhand *intrhand[15] = {
 	NULL,			/*  0 = error */
-	&level01,		/*  1 = software level 1 + Sbus */
-	NULL,	 		/*  2 = Sbus level 2 (4m: Sbus L1) */
-	NULL,			/*  3 = SCSI + DMA + Sbus level 3 (4m: L2,lpt)*/
+	&level01,		/*  1 = software level 1 + SBus */
+	NULL,	 		/*  2 = SBus level 2 (4m: SBus L1) */
+	NULL,			/*  3 = SCSI + DMA + SBus level 3 (4m: L2,lpt)*/
 	NULL,			/*  4 = software level 4 (tty softint) (scsi) */
-	NULL,			/*  5 = Ethernet + Sbus level 4 (4m: Sbus L3) */
+	NULL,			/*  5 = Ethernet + SBus level 4 (4m: SBus L3) */
 	NULL,			/*  6 = software level 6 (not used) (4m: enet)*/
-	NULL,			/*  7 = video + Sbus level 5 */
-	NULL,			/*  8 = Sbus level 6 */
-	NULL,			/*  9 = Sbus level 7 */
+	NULL,			/*  7 = video + SBus level 5 */
+	NULL,			/*  8 = SBus level 6 */
+	NULL,			/*  9 = SBus level 7 */
 	&level10,		/* 10 = counter 0 = clock */
 	NULL,			/* 11 = floppy */
 	NULL,			/* 12 = zs hardware interrupt */
