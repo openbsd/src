@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.25 2007/05/29 00:21:10 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.26 2007/05/29 00:58:06 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -342,6 +342,7 @@ purge_config(struct hoststated *env, u_int8_t what)
 	struct protocol		*proto;
 	struct protonode	*pnode;
 	struct relay		*rly;
+	struct session		*sess;
 
 	if (what & PURGE_SERVICES) {
 		while ((service = TAILQ_FIRST(&env->services)) != NULL) {
@@ -357,6 +358,10 @@ purge_config(struct hoststated *env, u_int8_t what)
 	if (what & PURGE_RELAYS) {
 		while ((rly = TAILQ_FIRST(&env->relays)) != NULL) {
 			TAILQ_REMOVE(&env->relays, rly, entry);
+			while ((sess = TAILQ_FIRST(&rly->sessions)) != NULL) {
+				TAILQ_REMOVE(&rly->sessions, sess, entry);
+				free(sess);
+			}
 			if (rly->bev != NULL)
 				bufferevent_free(rly->bev);
 			if (rly->dstbev != NULL)
