@@ -489,14 +489,6 @@ rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 			    toc_buffer[i].track,
 			    (info.isaudio) ? "wav" : "dat");
 
-			error = next_track(&info);
-			if (error == NXTRACK_SKIP)
-				continue;
-			else if (error == NXTRACK_FAIL) {
-				error = -1;
-				break;
-			}
-
 			if (msf) {
 				info.start_lba = msf2lba(
 				    toc_buffer[i].addr.msf.minute,
@@ -509,6 +501,14 @@ rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 			} else {
 				info.start_lba = toc_buffer[i].addr.lba;
 				info.end_lba = toc_buffer[i + 1].addr.lba;
+			}
+
+			error = next_track(&info);
+			if (error == NXTRACK_SKIP)
+				continue;
+			else if (error == NXTRACK_FAIL) {
+				error = -1;
+				break;
 			}
 
 			error = read_track(fd, &info);
