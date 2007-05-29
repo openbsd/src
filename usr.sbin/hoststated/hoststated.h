@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.48 2007/05/29 17:12:04 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.49 2007/05/29 19:05:13 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -125,6 +125,17 @@ enum imsg_type {
 	IMSG_DEMOTE,
 	IMSG_STATISTICS,
 	IMSG_RECONF,		/* reconfiguration notifies */
+	IMSG_RECONF_TABLE,
+	IMSG_RECONF_SENDBUF,
+	IMSG_RECONF_HOST,
+	IMSG_RECONF_SERVICE,
+	IMSG_RECONF_VIRT,
+	IMSG_RECONF_PROTO,
+	IMSG_RECONF_REQUEST_TREE,
+	IMSG_RECONF_RESPONSE_TREE,
+	IMSG_RECONF_PNODE_KEY,
+	IMSG_RECONF_PNODE_VAL,
+	IMSG_RECONF_RELAY,
 	IMSG_RECONF_END,
 	IMSG_SCRIPT
 };
