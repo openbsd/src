@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.49 2007/05/28 13:00:05 espie Exp $
+# $OpenBSD: Delete.pm,v 1.50 2007/05/29 14:39:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -47,7 +47,7 @@ sub rename_file_to_temp
 
 sub keep_old_files
 {
-	my ($state, $plist, $dir) = @_;
+	my ($state, $plist) = @_;
 	my $p = new OpenBSD::PackingList;
 	for my $i (qw(cvstags no-default-conflict conflict) ) {
 		if (defined $plist->{$i}) {
@@ -71,12 +71,12 @@ sub keep_old_files
 	my $borked = borked_package($plist->pkgname);
 	OpenBSD::PackingElement::Name->add($p, $borked);
 	$p->{name}->{name} = $borked;
-	my $dest = installed_info($borked);
-	mkdir($dest);
+	$p->set_info(installed_info($borked));
+	mkdir($p->infodir);
 	require File::Copy;
 
-	File::Copy::copy($dir.COMMENT, $dest);
-	File::Copy::copy($dir.DESC, $dest);
+	File::Copy::copy($plist->infodir.COMMENT, $p->infodir);
+	File::Copy::copy($plist->infodir.DESC, $p->infodir);
 	$p->to_installation;
 	return $borked;
 }
@@ -114,7 +114,9 @@ sub validate_plist
 
 sub remove_packing_info
 {
-	my $dir = shift;
+	my $plist = shift;
+
+	my $dir = $plist->infodir;
 
 	for my $fname (info_names()) {
 		unlink($dir.$fname);
@@ -153,8 +155,6 @@ sub delete_plist
 	my $totsize = $plist->{totsize};
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
-	my $dir = installed_info($pkgname);
-	$state->{dir} = $dir;
 	$ENV{'PKG_PREFIX'} = $plist->localbase;
 	if ($plist->has(REQUIRE)) {
 		$plist->get(REQUIRE)->delete($state);
@@ -191,13 +191,13 @@ sub delete_plist
 		
 	return if $state->{not};
 	if ($state->{baddelete}) {
-	    my $borked = keep_old_files($state, $plist, $dir);
+	    my $borked = keep_old_files($state, $plist);
 	    $state->print("Files kept as $borked package\n");
 	    delete $state->{baddelete};
 	}
 			
 
-	remove_packing_info($dir);
+	remove_packing_info($plist);
 }
 
 package OpenBSD::PackingElement;

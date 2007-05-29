@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.288 2007/05/29 13:52:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.289 2007/05/29 14:39:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -193,7 +193,6 @@ sub can_install
 		my $old_handle = OpenBSD::Handle->new;
 		$old_handle->{plist} = $rplist;
 		$old_handle->{pkgname} = $toreplace;
-		$rplist->{dir} = installed_info($toreplace);
 		$set->add_older($old_handle);
 	}
 	$set->{skipupdatedeps} = \%conflicts;
@@ -312,8 +311,7 @@ sub failed_install
 	if ($interrupted) {
 		$msg ="Caught SIG$interrupted. $msg";
 	}
-	OpenBSD::Add::borked_installation($plist, 
-	    $handle->{location}->info, $not, $msg);
+	OpenBSD::Add::borked_installation($plist, $not, $msg);
 }
 
 sub really_add
@@ -323,13 +321,10 @@ sub really_add
 	my $location = $handle->{location};
 	my $destdir = $state->{destdir};
 	my $plist = $handle->{plist};
-	my $dir = $location->info;
 	$plist->set_infodir($location->info);
 	my $pkgname = $handle->{pkgname};
 	my $errors = 0;
 	$state->{archive} = $location;
-	$plist->{dir} = $dir;
-	$state->{dir} = $plist->{dir};
 	$state->set_pkgname($pkgname);
 
 	$set->setup_header($state);
@@ -409,7 +404,7 @@ sub really_add
 			    OpenBSD::Delete::delete_plist($op, $state);
 			} catchall {
 				Warn $_;
-				OpenBSD::Add::borked_installation($plist, $dir, 
+				OpenBSD::Add::borked_installation($plist,
 				    $state->{not},
 				    "Deinstallation of ", 
 				    $op->pkgname, " failed");
@@ -424,7 +419,6 @@ sub really_add
 		# Here there should be code to handle old libs
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (installing)");
-		$state->{dir} = $plist->{dir};
 		$state->set_pkgname($pkgname);
 	}
 
@@ -488,7 +482,7 @@ sub really_add
 		};
 	}
 
-	unlink($dir.CONTENTS);
+	unlink($plist->infodir.CONTENTS);
 	if ($state->{interrupted} || $errors) {
 		failed_install($handle, $state->{not}, $state->{interrupted});
 	}

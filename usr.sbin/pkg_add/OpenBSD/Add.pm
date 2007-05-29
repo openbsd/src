@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.59 2007/05/29 13:52:07 espie Exp $
+# $OpenBSD: Add.pm,v 1.60 2007/05/29 14:39:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,6 @@ sub register_installation
 	my $plist = shift;
 	return if $main::not;
 	my $dest = installed_info($plist->pkgname);
-	my $dir = $plist->infodir;
 	mkdir($dest);
 	$plist->copy_info($dest);
 	$plist->set_infodir($dest);
@@ -69,7 +68,7 @@ sub validate_plist
 
 sub borked_installation
 {
-	my ($plist, $dir, $not, @msg) = @_;
+	my ($plist, $not, @msg) = @_;
 
 	Fatal @msg if $not;
 	use OpenBSD::PackingElement;
@@ -560,7 +559,7 @@ sub prepare_for_addition
 	my ($self, $state, $pkgname) = @_;
 
 	my $fname = installed_info($pkgname).$self->{name};
-	my $cname = $state->{dir}.'/'.$self->{name};
+	my $cname = $self->fullname;
 	my $size = $self->{size};
 	if (!defined $size) {
 		$size = (stat $cname)[7];
