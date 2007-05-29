@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.27 2007/05/29 17:12:04 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.28 2007/05/29 18:59:53 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -209,8 +209,9 @@ main(int argc, char *argv[])
 	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
 	hce_pid = hce(env, pipe_parent2pfe, pipe_parent2hce,
 	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
-	relay_pid = relay(env, pipe_parent2pfe, pipe_parent2hce,
-	    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
+	if (env->prefork_relay > 0)
+		relay_pid = relay(env, pipe_parent2pfe, pipe_parent2hce,
+		    pipe_parent2relay, pipe_pfe2hce, pipe_pfe2relay);
 
 	setproctitle("parent");
 
@@ -237,9 +238,12 @@ main(int argc, char *argv[])
 	}
 
 	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL ||
+	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL) 
+		fatal(NULL);
+
+	if (env->prefork_relay > 0 &&
 	    (ibuf_relay = calloc(env->prefork_relay,
-	    sizeof(struct imsgbuf))) == NULL)
+	    sizeof(struct imsgbuf)) == NULL))
 		fatal(NULL);
 
 	imsg_init(ibuf_pfe, pipe_parent2pfe[0], main_dispatch_pfe);

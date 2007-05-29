@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2007/05/29 17:12:04 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.46 2007/05/29 18:59:54 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -1473,6 +1473,9 @@ parse_config(const char *filename, int opts)
 		log_warnx("no services, nothing to do");
 		errors++;
 	}
+
+	if (TAILQ_EMPTY(&conf->relays))
+		conf->prefork_relay = 0;
 
 	if (timercmp(&conf->timeout, &conf->interval, >=)) {
 		log_warnx("global timeout exceeds interval");
