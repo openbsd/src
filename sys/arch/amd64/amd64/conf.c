@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2007/05/28 02:13:44 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2007/05/29 19:03:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -114,7 +114,6 @@ cdev_decl(wd);
 #include "com.h"
 cdev_decl(com);
 cdev_decl(fd);
-cdev_decl(wt);
 cdev_decl(scd);
 #include "ss.h"
 #include "lpt.h"

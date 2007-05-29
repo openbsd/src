@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.116 2007/05/28 02:13:44 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.117 2007/05/29 19:03:35 krw Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ cdev_decl(wd);
 #include "pccom.h"
 cdev_decl(com);
 cdev_decl(fd);
-cdev_decl(wt);
 #include "ss.h"
 #include "lpt.h"
 cdev_decl(lpt);
