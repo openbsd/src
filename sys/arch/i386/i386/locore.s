@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.112 2007/05/27 21:35:36 tom Exp $	*/
+/*	$OpenBSD: locore.s,v 1.113 2007/05/29 18:18:20 tom Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -972,58 +972,6 @@ ENTRY(copyout)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_fault)
 
-#if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
-	jne	3f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
-
-	testl	%eax,%eax		# anything to do?
-	jz	3f
-
-	/*
-	 * We have to check each PTE for (write) permission, since the CPU
-	 * doesn't do it for us.
-	 */
-
-	/* Compute number of pages. */
-	movl	%edi,%ecx
-	andl	$PGOFSET,%ecx
-	addl	%eax,%ecx
-	decl	%ecx
-	shrl	$PGSHIFT,%ecx
-
-	/* Compute PTE offset for start address. */
-	shrl	$PGSHIFT,%edi
-
-	GET_CURPCB(%edx)
-	movl	$2f, PCB_ONFAULT(%edx)
-
-1:	/* Check PTE for each page. */
-	testb	$PG_RW,_C_LABEL(PTmap)(,%edi,4)
-	jz	2f
-
-4:	incl	%edi
-	decl	%ecx
-	jns	1b
-
-	movl	20+FPADD(%esp),%edi
-	movl	24+FPADD(%esp),%eax
-	jmp	3f
-
-2:	/* Simulate a trap. */
-	pushl	%ecx
-	movl	%edi,%eax
-	shll	$PGSHIFT,%eax
-	pushl	%eax
-	call	_C_LABEL(trapwrite)	# trapwrite(addr)
-	addl	$4,%esp			# pop argument
-	popl	%ecx
-	testl	%eax,%eax		# if not ok, return EFAULT
-	jz	4b
-	jmp	_C_LABEL(copy_fault)
-#endif /* I386_CPU */
-
 3:	GET_CURPCB(%edx)
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
 
@@ -1128,73 +1076,6 @@ ENTRY(copyoutstr)
 	movl	16+FPADD(%esp),%edi		# edi = to
 	movl	20+FPADD(%esp),%edx		# edx = maxlen
 
-#if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
-	jne	5f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
-
-	/* Compute number of bytes in first page. */
-	movl	%edi,%eax
-	andl	$PGOFSET,%eax
-	movl	$NBPG,%ecx
-	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
-
-	GET_CURPCB(%ecx)
-	movl	$6f, PCB_ONFAULT(%ecx)
-
-1:	/*
-	 * Once per page, check that we are still within the bounds of user
-	 * space, and check for a write fault.
-	 */
-	cmpl	$VM_MAXUSER_ADDRESS,%edi
-	jae	_C_LABEL(copystr_fault)
-
-	/* Compute PTE offset for start address. */
-	movl	%edi,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
-
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
-	jnz	2f
-
-6:	/* Simulate a trap. */
-	pushl	%edx
-	pushl	%edi
-	call	_C_LABEL(trapwrite)	# trapwrite(addr)
-	addl	$4,%esp			# clear argument from stack
-	popl	%edx
-	testl	%eax,%eax
-	jnz	_C_LABEL(copystr_fault)
-
-2:	/* Copy up to end of this page. */
-	subl	%ecx,%edx		# predecrement total count
-	jnc	3f
-	addl	%edx,%ecx		# ecx += (edx - ecx) = edx
-	xorl	%edx,%edx
-
-3:	decl	%ecx
-	js	4f
-	lodsb
-	stosb
-	testb	%al,%al
-	jnz	3b
-
-	/* Success -- 0 byte reached. */
-	addl	%ecx,%edx		# add back residual for this page
-	xorl	%eax,%eax
-	jmp	copystr_return
-
-4:	/* Go to next page, if any. */
-	movl	$NBPG,%ecx
-	testl	%edx,%edx
-	jnz	1b
-
-	/* edx is zero -- return ENAMETOOLONG. */
-	movl	$ENAMETOOLONG,%eax
-	jmp	copystr_return
-#endif /* I386_CPU */
-
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 5:	GET_CURPCB(%eax)
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%eax)
 	/*
@@ -1229,7 +1110,6 @@ ENTRY(copyoutstr)
 	jae	_C_LABEL(copystr_fault)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 /*
  * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
@@ -2150,7 +2030,7 @@ ENTRY(bzero)
 	stosb
 
 #if defined(I486_CPU)
-#if defined(I386_CPU) || defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU)
 	cmpl	$CPUCLASS_486,_C_LABEL(cpu_class)
 	jne	8f
 #endif

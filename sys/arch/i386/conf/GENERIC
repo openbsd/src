@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.562 2007/05/28 23:50:23 beck Exp $
+#	$OpenBSD: GENERIC,v 1.563 2007/05/29 18:18:19 tom Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -13,8 +13,7 @@ machine		i386
 include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
-option		I386_CPU	# CPU classes; at least one is REQUIRED
-option		I486_CPU
+option		I486_CPU	# CPU classes; at least one is REQUIRED
 option		I586_CPU
 option		I686_CPU
 

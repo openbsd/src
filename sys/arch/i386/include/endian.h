@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.14 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: endian.h,v 1.15 2007/05/29 18:18:20 tom Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -29,22 +29,12 @@
 
 #ifdef __GNUC__
 
-#if defined(_KERNEL) && !defined(I386_CPU)
 #define	__swap32md(x) ({						\
 	u_int32_t __swap32md_x = (x);					\
 									\
 	__asm ("bswap %1" : "+r" (__swap32md_x));			\
 	__swap32md_x;							\
 })
-#else
-#define	__swap32md(x) ({						\
-	u_int32_t __swap32md_x = (x);					\
-									\
-	__asm ("rorw $8, %w1; rorl $16, %1; rorw $8, %w1" :		\
-	    "+r" (__swap32md_x));					\
-	__swap32md_x;							\
-})
-#endif	/* _KERNEL && !I386_CPU */
 
 #define	__swap64md(x) ({						\
 	u_int64_t __swap64md_x = (x);					\

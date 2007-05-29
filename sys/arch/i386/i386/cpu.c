@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2007/05/26 22:09:17 weingart Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.25 2007/05/29 18:18:20 tom Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -331,13 +331,12 @@ cpu_init(struct cpu_info *ci)
 	if (ci->cpu_setup != NULL)
 		(*ci->cpu_setup)(ci);
 
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	/*
-	 * On a 486 or above, enable ring 0 write protection.
+	 * Enable ring 0 write protection (486 or above, but 386
+	 * no longer supported).
 	 */
-	if (ci->cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP);
-#endif
+	lcr0(rcr0() | CR0_WP);
+
 	if (cpu_feature & CPUID_PGE)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
 

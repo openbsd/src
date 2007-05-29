@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.394 2007/05/27 21:33:25 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.395 2007/05/29 18:18:20 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -337,7 +337,6 @@ void	p4_update_cpuspeed(void);
 void	p3_update_cpuspeed(void);
 int	pentium_cpuspeed(int *);
 
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 static __inline u_char
 cyrix_read_reg(u_char reg)
 {
@@ -351,7 +350,6 @@ cyrix_write_reg(u_char reg, u_char data)
 	outb(0x22, reg);
 	outb(0x23, data);
 }
-#endif
 
 /*
  * cpuid instruction.  request in eax, result in eax, ebx, ecx, edx.
@@ -1188,7 +1186,6 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 void
 cyrix6x86_cpu_setup(struct cpu_info *ci)
 {
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	extern int clock_broken_latch;
 
 	switch ((ci->ci_signature >> 4) & 15) { /* model */
@@ -1217,7 +1214,6 @@ cyrix6x86_cpu_setup(struct cpu_info *ci)
 		printf("%s: TSC disabled\n", ci->ci_dev.dv_xname);
 		break;
 	}
-#endif
 }
 
 void
@@ -1734,7 +1730,7 @@ identifycpu(struct cpu_info *ci)
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (cpu_class) {
-#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU) && !defined(I686_CPU)
+#if !defined(I486_CPU) && !defined(I586_CPU) && !defined(I686_CPU)
 #error No CPU classes configured.
 #endif
 #ifndef I686_CPU
@@ -1758,17 +1754,10 @@ identifycpu(struct cpu_info *ci)
 #ifndef I486_CPU
 	case CPUCLASS_486:
 		printf("NOTICE: this kernel does not support i486 CPU class\n");
-#ifdef I386_CPU
-		printf("NOTICE: lowering CPU class to i386\n");
-		cpu_class = CPUCLASS_386;
-		break;
 #endif
-#endif
-#ifndef I386_CPU
 	case CPUCLASS_386:
 		printf("NOTICE: this kernel does not support i386 CPU class\n");
 		panic("no appropriate CPU class available");
-#endif
 	default:
 		break;
 	}
@@ -1787,13 +1776,11 @@ identifycpu(struct cpu_info *ci)
 #endif
 	}
 
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	/*
-	 * On a 486 or above, enable ring 0 write protection.
+	 * Enable ring 0 write protection (486 or above, but 386
+	 * no longer supported).
 	 */
-	if (ci->cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP);
-#endif
+	lcr0(rcr0() | CR0_WP);
 
 #if defined(I686_CPU)
 	/*

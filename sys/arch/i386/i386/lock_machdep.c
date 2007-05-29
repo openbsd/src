@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.5 2007/05/25 15:55:26 art Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.6 2007/05/29 18:18:20 tom Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -107,40 +107,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 }
 
 #endif
-
-int rw_cas_386(volatile unsigned long *,  unsigned long, unsigned long);
-int rw_cas_486(volatile unsigned long *,  unsigned long, unsigned long);
-int rw_cas_choose(volatile unsigned long *,  unsigned long, unsigned long);
-
-int (*rw_cas_p)(volatile unsigned long *, unsigned long, unsigned long)
-    = rw_cas_choose;
-
-int
-rw_cas_choose(volatile unsigned long *p, unsigned long o, unsigned long n)
-{
-	if (cpu_class == CPUCLASS_386)
-		rw_cas_p = rw_cas_386;
-	else
-		rw_cas_p = rw_cas_486;
-
-	return (*rw_cas_p)(p, o, n);
-}
-
-int
-rw_cas_386(volatile unsigned long *p, unsigned long o, unsigned long n)
-{
-	u_int ef = read_eflags();
-
-	disable_intr();
-	if (*p != o) {
-		write_eflags(ef);
-		return (1);
-	}
-	*p = n;
-	write_eflags(ef);
-
-	return (0);
-}
 
 int
 rw_cas_486(volatile unsigned long *p, unsigned long o, unsigned long n)

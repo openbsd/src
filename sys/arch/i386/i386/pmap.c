@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.114 2007/05/28 18:31:11 krw Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.115 2007/05/29 18:18:20 tom Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1812,8 +1812,7 @@ pmap_zero_page_uncached(paddr_t pa)
 		panic("pmap_zero_page_uncached: lock botch");
 #endif
 
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
-	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_N;	/* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 	pagezero(zerova, PAGE_SIZE);				/* zero */
 	*zpte = 0;					/* zap! */
@@ -2943,11 +2942,6 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 	int wait = 0;
 	int mask = 0;
 
-	if (cpu_class == CPUCLASS_386) {
-		tlbflush();
-		return;
-	}
-
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !pmap_is_active(pm, ci->ci_cpuid) ||
 		    !(ci->ci_flags & CPUF_RUNNING))
@@ -2985,11 +2979,6 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 	int wait = 0;
 	int mask = 0;
 	vaddr_t va;
-
-	if (cpu_class == CPUCLASS_386) {
-		tlbflush();
-		return;
-	}
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !pmap_is_active(pm, ci->ci_cpuid) ||
@@ -3030,11 +3019,6 @@ pmap_tlb_shoottlb(void)
 	int wait = 0;
 	int mask = 0;
 
-	if (cpu_class == CPUCLASS_386) {
-		tlbflush();
-		return;
-	}
-
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
 			continue;
@@ -3074,11 +3058,6 @@ pmap_tlb_shootwait(void)
 void
 pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 {
-	if (cpu_class == CPUCLASS_386) {
-		tlbflush();
-		return;
-	}
-
 	if (pmap_is_curpmap(pm))
 		pmap_update_pg(va);
 
@@ -3089,14 +3068,8 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 {
 	vaddr_t va;
 
-	if (cpu_class == CPUCLASS_386) {
-		tlbflush();
-		return;
-	}
-
 	for (va = sva; va < eva; va += PAGE_SIZE)
 		pmap_update_pg(va);	
-
 }
 
 void

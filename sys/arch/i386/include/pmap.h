@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.46 2007/05/25 15:55:27 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.47 2007/05/29 18:18:20 tom Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -374,8 +374,6 @@ static void	pmap_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 boolean_t	pmap_test_attrs(struct vm_page *, int);
-static void	pmap_update_pg(vaddr_t);
-static void	pmap_update_2pg(vaddr_t,vaddr_t);
 void		pmap_write_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
@@ -409,36 +407,13 @@ boolean_t	pmap_zero_page_uncached(paddr_t);
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void
-pmap_update_pg(va)
-	vaddr_t va;
-{
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-		invlpg((u_int) va);
-}
+#define pmap_update_pg(va)	invlpg((u_int)(va))
 
 /*
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void
-pmap_update_2pg(va, vb)
-	vaddr_t va, vb;
-{
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-	else
-#endif
-	{
-		invlpg((u_int) va);
-		invlpg((u_int) vb);
-	}
-}
+#define pmap_update_2pg(va, vb) { invlpg((u_int)(va)); invlpg((u_int)(vb)); }
 
 /*
  * pmap_page_protect: change the protection of all recorded mappings
