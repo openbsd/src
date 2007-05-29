@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.33 2007/02/18 11:43:19 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.34 2007/05/29 05:08:20 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	struct cpu_disklabel *osdep;
 	int spoofonly;
 {
-	struct buf *bp;
+	struct buf *bp = NULL;
 	struct disklabel *dlp;
 	char *msg = NULL;
 	int i;
@@ -131,8 +131,10 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	if (lp->d_secpercyl == 0)
-		return ("invalid geometry");
+	if (lp->d_secpercyl == 0) {
+		msg = "invalid geometry";
+		goto done;
+	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -146,7 +148,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
-		return (NULL);
+		goto done;
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
@@ -178,8 +180,11 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		msg = NULL;
 #endif
 
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
-	brelse(bp);
+done:
+	if (bp) {
+		bp->b_flags = B_INVAL | B_AGE | B_READ;
+		brelse(bp);
+	}
 	return (msg);
 }
 

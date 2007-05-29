@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.36 2007/02/18 13:49:22 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.37 2007/05/29 05:08:20 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	struct disklabel *dlp;
 	unsigned long extoff = 0;
 	unsigned int fattest;
-	struct buf *bp;
+	struct buf *bp = NULL;
 	daddr_t part_blkno = DOSBBSECTOR;
 	char *msg = NULL;
 	char *s;
@@ -87,8 +87,10 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	if (lp->d_secpercyl == 0)
-		return ("invalid geometry");
+	if (lp->d_secpercyl == 0) {
+		msg = "invalid geometry";
+		goto done;
+	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -375,8 +377,10 @@ found_disklabel:
 #endif
 
 done:
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
 	return (msg);
 }
 

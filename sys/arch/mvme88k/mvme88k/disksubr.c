@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.33 2006/08/17 10:34:14 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.34 2007/05/29 05:08:20 krw Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -63,7 +63,8 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	struct cpu_disklabel *clp;
 	int spoofonly;
 {
-	struct buf *bp;
+	struct buf *bp = NULL;
+	char *msg = NULL;
 	int error, i;
 
 	/* minimal requirements for archetypal disk label */
@@ -71,8 +72,10 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	if (lp->d_secpercyl == 0)
-		return ("invalid geometry");
+	if (lp->d_secpercyl == 0) {
+		msg = "invalid geometry";
+		goto done;
+	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -84,7 +87,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
-		return (NULL);
+		goto done;
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -100,27 +103,35 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	error = biowait(bp);
 	if (error == 0)
 		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
-	brelse(bp);
 
-	if (error)
-		return ("disk label read error");
+	if (error) {
+		msg = "disk label read error";
+		goto done;
+	}
 
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == 0)
-		return (NULL);
+	if (iso_disklabelspoof(dev, strat, lp) == 0) {
+		msg = NULL;
+		goto done;
+	}
 #endif
 #if defined(UDF)
-	if (udf_disklabelspoof(dev, strat, lp) == 0)
-		return (NULL);
+	if (udf_disklabelspoof(dev, strat, lp) == 0) {
+		msg = NULL;
+		goto done;
+	}
 #endif
-	if (clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC)
-		return ("no disk label");
+	if (clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC) {
+		msg = "no disk label";
+		goto done;
+	}
 
 	cputobsdlabel(lp, clp);
 
-	if (dkcksum(lp) != 0)
-		return ("disk label corrupted");
+	if (dkcksum(lp) != 0) {
+		msg = "disk label corrupted";
+		goto done;
+	}
 
 #ifdef DEBUG
 	if (disksubr_debug != 0) {
@@ -128,7 +139,12 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		printclp(clp, "readdisklabel:cpu label");
 	}
 #endif
-	return (NULL);
+done:
+	if (bp) {
+		bp->b_flags = B_INVAL | B_AGE | B_READ;
+		brelse(bp);
+	}
+	return (msg);
 }
 
 /*

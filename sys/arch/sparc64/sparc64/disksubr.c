@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 2006/10/04 03:23:01 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 2007/05/29 05:08:20 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -78,9 +78,10 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	struct cpu_disklabel *clp;
 	int spoofonly;
 {
-	struct buf *bp;
+	struct buf *bp = NULL;
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
+	char *msg = NULL;
 	int error, i;
 
 	/* minimal requirements for archetypal disk label */
@@ -88,8 +89,10 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	if (lp->d_secpercyl == 0)
-		return ("invalid geometry");
+	if (lp->d_secpercyl == 0) {
+		msg = "invalid geometry";
+		goto done;
+	}
 	lp->d_npartitions = RAW_PART+1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -103,17 +106,21 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
-		return (NULL);
+		goto done;
 
 #if NCD > 0
 	if (strat == cdstrategy) {
 #if defined(CD9660)
-		if (iso_disklabelspoof(dev, strat, lp) == 0)
-			return (NULL);
+		if (iso_disklabelspoof(dev, strat, lp) == 0) {
+			msg = NULL;
+			goto done;
+		}
 #endif
 #if defined(UDF)
-		if (udf_disklabelspoof(dev, strat, lp) == 0)
-			return (NULL);
+		if (udf_disklabelspoof(dev, strat, lp) == 0) {
+			msg = NULL;
+			goto done;
+		}
 #endif
 	}
 #endif /* NCD > 0 */
@@ -135,34 +142,50 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		/* Save the whole block in case it has info we need. */
 		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 	}
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
-	brelse(bp);
-	if (error)
-		return ("disk label read error");
+	if (error) {
+		msg = "disk label read error";
+		goto done;
+	}
 
 	slp = (struct sun_disklabel *) clp->cd_block;
-	if (slp->sl_magic == SUN_DKMAGIC)
-		return (disklabel_sun_to_bsd(clp->cd_block, lp));
+	if (slp->sl_magic == SUN_DKMAGIC) {
+		msg = disklabel_sun_to_bsd(clp->cd_block, lp);
+		goto done;
+	}
 
 	/* Check for a native disk label (PROM can not boot it). */
 	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
-		if (dkcksum(dlp))
-			return ("disk label corrupted");
+		if (dkcksum(dlp)) {
+			msg = "disk label corrupted";
+			goto done;
+		}
 		*lp = *dlp;	/* struct assignment */
-		return (NULL);
+		msg = NULL;
+		goto done;
 	}
 
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == NULL)
-		return (NULL);
+	if (iso_disklabelspoof(dev, strat, lp) == NULL) {
+		msg = NULL;
+		goto done;
+	}
 #endif
 #if defined(UDF)
-	if (udf_disklabelspoof(dev, strat, lp) == 0)
-		return (NULL);
+	if (udf_disklabelspoof(dev, strat, lp) == 0) {
+		msg = NULL;
+		goto done;
+	}
 #endif
 	bzero(clp->cd_block, sizeof(clp->cd_block));
-	return ("no disk label");
+	msg = "no disk label";
+
+done:
+	if (bp) {
+		bp->b_flags = B_INVAL | B_AGE | B_READ;
+		brelse(bp);
+	}
+	return (msg);
 }
 
 /*
