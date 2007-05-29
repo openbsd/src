@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.106 2007/05/29 15:35:05 espie Exp $
+# $OpenBSD: pkg_create,v 1.107 2007/05/29 15:38:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -103,14 +103,14 @@ sub compute_checksum
 	}
 }
 
-sub makesum_plist_filename
+sub makesum_plist_with_base
 {
 	my ($self, $plist, $base, $stash) = @_;
 	$self->compute_checksum($self, $base, $stash);
 	$self->add_object($plist);
 }
 
-sub verify_checksum_filename
+sub verify_checksum_with_base
 {
 	my ($self, $base, $stash) = @_;
 	my $check = ref($self)->new($self->{name});
@@ -159,13 +159,13 @@ sub comment_create_package
 sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
-	$self->makesum_plist_filename($plist, undef, $stash);
+	$self->makesum_plist_with_base($plist, undef, $stash);
 }
 
 sub verify_checksum
 {
 	my ($self, $base, $stash) = @_;
-	$self->verify_checksum_filename(undef, $stash);
+	$self->verify_checksum_with_base(undef, $stash);
 }
 
 sub prepare_for_archival
@@ -246,13 +246,13 @@ sub print_file
 sub makesum_plist
 {
 	my ($self, $plist, $base, $stash) = @_;
-	$self->makesum_plist_filename($plist, $base, $stash);
+	$self->makesum_plist_with_base($plist, $base, $stash);
 }
 
 sub verify_checksum
 {
 	my ($self, $base, $stash) = @_;
-	$self->verify_checksum_filename($base, $stash);
+	$self->verify_checksum_with_base($base, $stash);
 }
 
 package OpenBSD::PackingElement::InfoFile;
