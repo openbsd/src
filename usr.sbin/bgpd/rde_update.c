@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.58 2007/05/11 11:27:59 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.59 2007/05/29 02:31:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -890,10 +890,16 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 u_char *
 up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 {
-	int		wpos = 8;	/* reserve some space for header */
+	int		wpos;
 	u_int16_t	datalen, tmp;
 	u_int16_t	attrlen = 2;	/* attribute header (without len) */
 	u_int8_t	flags = ATTR_OPTIONAL;
+
+	/*
+	 * reserve space for withdraw len, attr len, the attribute header
+	 * and the mp attribute header
+	 */
+	wpos = 2 + 2 + 4 + 3;
 
 	if (*len < wpos)
 		return (NULL);
@@ -903,6 +909,7 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	if (datalen == 0)
 		return (NULL);
 
+	datalen += 3;	/* afi + safi */
 	if (datalen > 255) {
 		attrlen += 2 + datalen;
 		flags |= ATTR_EXTLEN;
@@ -910,27 +917,36 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 		attrlen += 1 + datalen;
 		buf++;
 	}
-	/* prepend header */
-	/* no IPv4 withdraws */
-	wpos = 0;
-	bzero(buf, sizeof(u_int16_t));
-	wpos += sizeof(u_int16_t);
+	/* prepend header, need to do it reverse */
+	/* safi & afi */
+	buf[--wpos] = SAFI_UNICAST;
+	wpos -= sizeof(u_int16_t);
+	tmp = htons(AFI_IPv6);
+	memcpy(buf + wpos, &tmp, sizeof(u_int16_t));
 
 	/* attribute length */
-	tmp = htons(attrlen);
-	memcpy(buf + wpos, &tmp, sizeof(u_int16_t));
-	wpos += sizeof(u_int16_t);
-
-	/* mp attribute */
-	buf[wpos++] = flags;
-	buf[wpos++] = (u_char)ATTR_MP_UNREACH_NLRI;
-
 	if (datalen > 255) {
+		wpos -= sizeof(u_int16_t);
 		tmp = htons(datalen);
 		memcpy(buf + wpos, &tmp, sizeof(u_int16_t));
-		wpos += sizeof(u_int16_t);
 	} else
-		buf[wpos++] = (u_char)datalen;
+		buf[--wpos] = (u_char)datalen;
+
+	/* mp attribute */
+	buf[--wpos] = (u_char)ATTR_MP_UNREACH_NLRI;
+	buf[--wpos] = flags;
+
+	/* attribute length */
+	wpos -= sizeof(u_int16_t);
+	tmp = htons(attrlen);
+	memcpy(buf + wpos, &tmp, sizeof(u_int16_t));
+
+	/* no IPv4 withdraws */
+	wpos -= sizeof(u_int16_t);
+	bzero(buf + wpos, sizeof(u_int16_t));
+
+	if (wpos < 0)
+		fatalx("up_dump_mp_unreach: buffer underflow");
 
 	/* total length includes the two 2-bytes length fields. */
 	*len = attrlen + 2 * sizeof(u_int16_t);
@@ -993,7 +1009,6 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 		datalen += 4;
 		flags |= ATTR_EXTLEN;
 	} else {
-		buf++; wpos--; /* skip one byte */
 		buf[--wpos] = (u_char)datalen;
 		datalen += 3;
 	}
@@ -1004,9 +1019,8 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	wpos -= upa->attr_len;
 	memcpy(buf + wpos, upa->attr, upa->attr_len);
 
-	if (wpos != 4)
+	if (wpos < 4)
 		fatalx("Grrr, mp_reach buffer fucked up");
-	*len = datalen + 4;
 
 	wpos -= 2;
 	tmp = htons(datalen);
@@ -1026,6 +1040,7 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 		peer->up_acnt--;
 	}
 
-	return (buf);
+	*len = datalen + 4;
+	return (buf + wpos);
 }
 
