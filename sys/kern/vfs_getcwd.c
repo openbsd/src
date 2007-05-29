@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.9 2006/05/17 12:52:12 pedro Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.10 2007/05/29 05:28:53 beck Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -239,17 +239,17 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	if (error)
 		*uvpp = NULL;
 
-	/*
-	 * Verify that vget() succeeded, and check that vnode capability
-	 * didn't change while we were waiting for the lock.
-	 */
-	if (error || (vpid != uvp->v_id)) {
+
+#ifdef DIAGNOSTIC
+	/* XXX should not happen with vhold/vdrop in cache layer now. */
+	if (vpid != uvp->v_id)
+		panic("vpid %d != uvp->v_id %d\n");
+#endif
+	if (error) {
 		/*
 		 * Try to get our lock back. If that works, tell the caller to
 		 * try things the hard way, otherwise give up.
 		 */
-		if (!error)
-			vput(uvp);
 
 		*uvpp = NULL;
 		

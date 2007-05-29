@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.21 2007/04/19 09:25:33 pedro Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.22 2007/05/29 05:28:53 beck Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -69,8 +69,10 @@
  * Structures associated with name caching.
  */
 LIST_HEAD(nchashhead, namecache) *nchashtbl;
+TAILQ_HEAD (, namecache) ncneq;
 u_long	nchash;				/* size of hash table - 1 */
 long	numcache;			/* number of cache entries allocated */
+long	numcachehv;			/* number of holding vnodes */
 TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
@@ -129,10 +131,16 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	ncpp = &nchashtbl[NCHASH(dvp, cnp)];
 	LIST_FOREACH(ncp, ncpp, nc_hash) {
 		if (ncp->nc_dvp == dvp &&
-		    ncp->nc_dvpid == dvp->v_id &&
 		    ncp->nc_nlen == cnp->cn_namelen &&
-		    !memcmp(ncp->nc_name, cnp->cn_nameptr, (u_int)ncp->nc_nlen))
-			break;
+		    !memcmp(ncp->nc_name, cnp->cn_nameptr, (u_int)ncp->nc_nlen)) {
+#ifdef DIAGNOSTIC
+			if (ncp->nc_dvpid != dvp->v_id)
+				panic("ncp->nc_dvpid %x != dvp->v_id %x\n",
+				ncp->nc_dvpid, dvp->v_id);
+			else 
+#endif
+				break;
+		}
 	}
 	if (ncp == NULL) {
 		nchstats.ncs_miss++;
@@ -159,6 +167,8 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			goto remove;
 		}
 	} else if (ncp->nc_vpid != ncp->nc_vp->v_id) {
+		panic("ncp->vpid %x != ncp->nc_vp->v_id %x\n", ncp->nc_vpid,
+			ncp->nc_vp->v_id);
 		nchstats.ncs_falsehits++;
 		goto remove;
 	}
@@ -201,6 +211,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 */
 	if (error || vpid != vp->v_id) {
 		if (!error) {
+			panic("vpid %x != vp->vid %x\n", vpid, vp->v_id);
 			vput(vp);
 			nchstats.ncs_falsehits++;
 		} else
@@ -236,17 +247,7 @@ remove:
 	 * the cache entry is invalid, or otherwise don't
 	 * want cache entry to exist.
 	 */
-	TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-	LIST_REMOVE(ncp, nc_hash);
-	ncp->nc_hash.le_prev = NULL;
-
-	if (ncp->nc_vhash.le_prev != NULL) {
-		LIST_REMOVE(ncp, nc_vhash);
-		ncp->nc_vhash.le_prev = NULL;
-	}
-
-	pool_put(&nch_pool, ncp);
-	numcache--;
+	cache_delete(ncp);
 	return (-1);
 }
 
@@ -280,12 +281,13 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 
 	LIST_FOREACH(ncp, nvcpp, nc_vhash) {
 		if (ncp->nc_vp == vp &&
-		    ncp->nc_vpid == vp->v_id &&
 		    (dvp = ncp->nc_dvp) != NULL &&
 		    /* avoid pesky '.' entries.. */
 		    dvp != vp && ncp->nc_dvpid == dvp->v_id) {
-
 #ifdef DIAGNOSTIC
+			if (ncp->nc_vpid != vp->v_id)
+				panic("ncp->nc_vpid %x != vp->v_id %x\n",
+				ncp->nc_vpid, vp->v_id);
 			if (ncp->nc_nlen == 1 &&
 			    ncp->nc_name[0] == '.')
 				panic("cache_revlookup: found entry for .");
@@ -338,6 +340,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
 	struct ncvhashhead *nvcpp;
+	int hold = 0;
 
 	if (!doingcache || cnp->cn_namelen > NCHNAMLEN)
 		return;
@@ -345,22 +348,13 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	/*
 	 * Free the cache slot at head of lru chain.
 	 */
-	if (numcache < desiredvnodes) {
-		ncp = pool_get(&nch_pool, PR_WAITOK);
-		bzero((char *)ncp, sizeof *ncp);
-		numcache++;
-	} else if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL) {
-		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		if (ncp->nc_hash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_hash);
-			ncp->nc_hash.le_prev = NULL;
-		}
-		if (ncp->nc_vhash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_vhash);
-			ncp->nc_vhash.le_prev = NULL;
-		}
-	} else
-		return;
+	while ((numcache >= desiredvnodes) &&
+		((ncp = TAILQ_FIRST(&nclruhead)) != NULL)){
+		cache_delete(ncp);
+	}
+	ncp = pool_get(&nch_pool, PR_WAITOK);
+	bzero((char *)ncp, sizeof *ncp);
+	numcache++;
 	/* grab the vnode we just found */
 	ncp->nc_vp = vp;
 	if (vp)
@@ -373,6 +367,15 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 	ncpp = &nchashtbl[NCHASH(dvp, cnp)];
 	LIST_INSERT_HEAD(ncpp, ncp, nc_hash);
+
+	/* record references to us in various vnodes... */
+	if (LIST_EMPTY(&dvp->v_cache_src)) {
+		hold = 1;
+		numcachehv++;
+	}
+	LIST_INSERT_HEAD(&dvp->v_cache_src, ncp, nc_src);
+	if (vp)
+		TAILQ_INSERT_HEAD(&vp->v_cache_dst, ncp, nc_dst);
 
 	/*
 	 * Create reverse-cache entries (used in getcwd) for
@@ -389,6 +392,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		nvcpp = &ncvhashtbl[NCVHASH(vp)];
 		LIST_INSERT_HEAD(nvcpp, ncp, nc_vhash);
 	}
+	if (hold)
+		vhold(dvp);
 }
 
 /*
@@ -397,12 +402,49 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 void
 nchinit(void)
 {
-
 	TAILQ_INIT(&nclruhead);
 	nchashtbl = hashinit(desiredvnodes, M_CACHE, M_WAITOK, &nchash);
 	ncvhashtbl = hashinit(desiredvnodes/8, M_CACHE, M_WAITOK, &ncvhash);
 	pool_init(&nch_pool, sizeof(struct namecache), 0, 0, 0, "nchpl",
 	    &pool_allocator_nointr);
+}
+
+void cache_delete (struct namecache *ncp)
+{
+	/*
+	 * just make it go away...
+	 */
+	struct vnode *vp = NULL;
+	/* 
+	 * XXX abuse of the queue macro internals is endemic to this
+	 * and needs fixing - for now this is inherited from earlier evil.
+	 */
+	if (ncp->nc_lru.tqe_prev != NULL) {
+		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
+		ncp->nc_lru.tqe_prev = NULL;
+	}
+	if (ncp->nc_hash.le_prev != NULL) { 
+		LIST_REMOVE(ncp, nc_hash);
+		ncp->nc_hash.le_prev = NULL;
+	}
+	if (ncp->nc_vhash.le_prev != NULL) {
+		LIST_REMOVE(ncp, nc_vhash);
+		ncp->nc_vhash.le_prev = NULL;
+	}
+	LIST_REMOVE(ncp, nc_src);
+	if (LIST_EMPTY(&ncp->nc_dvp->v_cache_src)) {
+		vp = ncp->nc_dvp;
+		numcachehv--;
+	}
+	if (ncp->nc_vp)
+		TAILQ_REMOVE(&ncp->nc_vp->v_cache_dst, ncp, nc_dst);
+	ncp->nc_vp = NULL;
+	ncp->nc_dvp = NULL;
+	pool_put(&nch_pool, ncp);
+	numcache--;
+	if (vp) {
+		vdrop(vp);
+	}
 }
 
 /*
@@ -415,6 +457,12 @@ cache_purge(struct vnode *vp)
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
 
+	while (!LIST_EMPTY(&vp->v_cache_src)) {
+		cache_delete(LIST_FIRST(&vp->v_cache_src));
+	}
+	while (!TAILQ_EMPTY(&vp->v_cache_dst)) {
+		cache_delete(TAILQ_FIRST(&vp->v_cache_dst));
+	}
 	vp->v_id = ++nextvnodeid;
 	if (nextvnodeid != 0)
 		return;
@@ -442,18 +490,6 @@ cache_purgevfs(struct mount *mp)
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp)
 			continue;
 		/* free the resources we had */
-		ncp->nc_vp = NULL;
-		ncp->nc_dvp = NULL;
-		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		if (ncp->nc_hash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_hash);
-			ncp->nc_hash.le_prev = NULL;
-		}
-		if (ncp->nc_vhash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_vhash);
-			ncp->nc_vhash.le_prev = NULL;
-		}
-		pool_put(&nch_pool, ncp);
-		numcache--;
+		cache_delete(ncp);
 	}
 }

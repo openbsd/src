@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.149 2007/05/28 21:05:21 thib Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.150 2007/05/29 05:28:54 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -339,47 +339,50 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 {
 	struct proc *p = curproc;
 	struct freelst *listhd;
-	static int toggle;
 	struct vnode *vp;
 	int s;
 
 	/*
-	 * We must choose whether to allocate a new vnode or recycle an
-	 * existing one. The criterion for allocating a new one is that
-	 * the total number of vnodes is less than the number desired or
-	 * there are no vnodes on either free list. Generally we only
+	 * Allocate a new vnode if we have less than the desired
+	 * number allocated, otherwise, recycle one. Generally we only
 	 * want to recycle vnodes that have no buffers associated with
-	 * them, so we look first on the vnode_free_list. If it is empty,
-	 * we next consider vnodes with referencing buffers on the
-	 * vnode_hold_list. The toggle ensures that half the time we
-	 * will use a buffer from the vnode_hold_list, and half the time
-	 * we will allocate a new one unless the list has grown to twice
-	 * the desired size. We are reticent to recycle vnodes from the
-	 * vnode_hold_list because we will lose the identity of all its
-	 * referencing buffers.
+	 * them, so we look first on the vnode_free_list. If it is
+	 * empty, we next consider vnodes with referencing buffers on
+	 * the vnode_hold_list. We are reticent to recycle vnodes from
+	 * the vnode_hold_list because we will lose the identity of
+	 * all its referencing buffers.
 	 */
-	toggle ^= 1;
-	if (numvnodes > 2 * desiredvnodes)
-		toggle = 0;
-
+	simple_lock(&vnode_free_list_slock);
 	s = splbio();
-	if ((numvnodes < desiredvnodes) ||
-	    ((TAILQ_FIRST(listhd = &vnode_free_list) == NULL) &&
-	    ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
+	if (numvnodes < desiredvnodes) {
 		splx(s);
 		vp = pool_get(&vnode_pool, PR_WAITOK);
 		bzero((char *)vp, sizeof *vp);
+		LIST_INIT(&vp->v_cache_src);
+		TAILQ_INIT(&vp->v_cache_dst);
 		numvnodes++;
 	} else {
-		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
+		for (vp = TAILQ_FIRST(listhd = &vnode_free_list); vp != NULLVP;
 		    vp = TAILQ_NEXT(vp, v_freelist)) {
 			if (VOP_ISLOCKED(vp) == 0)
 				break;
 		}
+		/* 
+		 * There is nothing on the free list, so we have to try to
+		 * recycle one off the hold list
+		 */
+		if (vp == NULL) {
+			for (vp = TAILQ_FIRST(listhd = &vnode_hold_list);
+			    vp != NULLVP;
+			    vp = TAILQ_NEXT(vp, v_freelist)) {
+				if ((VOP_ISLOCKED(vp) == 0) && (vp->v_holdcnt == 0))
+					break;
+			}
+		}
 		/*
-		 * Unless this is a bad time of the month, at most
-		 * the first NCPUS items on the free list are
-		 * locked, so this is close enough to being empty.
+		 * We have made a pass through both the free and hold list
+		 * and not encountered an unlocked entry. So this is close
+		 * enough to being empty.
 		 */
 		if (vp == NULL) {
 			splx(s);
@@ -392,6 +395,11 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		if (vp->v_usecount) {
 			vprint("free vnode", vp);
 			panic("free vnode isn't");
+		}
+
+		if (vp->v_holdcnt) {
+			vprint("held vnode", vp);
+			panic("unheld vnode being held!");
 		}
 #endif
 
@@ -758,7 +766,7 @@ vrele(struct vnode *vp)
 void vhold(struct vnode *vp);
 
 /*
- * Page or buffer structure gets a reference.
+ * declare interest in a vnode.
  */
 void
 vhold(struct vnode *vp)
@@ -773,6 +781,27 @@ vhold(struct vnode *vp)
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
 	}
 	vp->v_holdcnt++;
+}
+
+void vdrop(struct vnode *vp);
+
+/*
+ * lose interest in a vnode
+ */
+void
+vdrop(struct vnode *vp)
+{
+	vp->v_holdcnt--;
+
+	/*
+	 * If it is on the holdlist and the hold count drops to
+	 * zero, move it to the free list.
+	 */
+	if ((vp->v_bioflag & VBIOONFREELIST) &&
+	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
+		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
+		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	}
 }
 
 /*
@@ -1993,17 +2022,7 @@ brelvp(struct buf *bp)
 	if (vp->v_holdcnt == 0)
 		panic("brelvp: holdcnt");
 #endif
-	vp->v_holdcnt--;
-
-	/*
-	 * If it is on the holdlist and the hold count drops to
-	 * zero, move it to the free list.
-	 */
-	if ((vp->v_bioflag & VBIOONFREELIST) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-	}
+	vdrop(vp);
 }
 
 /*
