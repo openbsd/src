@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.83 2007/05/28 23:10:10 beck Exp $
+#	$OpenBSD: files.sparc64,v 1.84 2007/05/29 04:10:15 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -141,6 +141,10 @@ file	arch/sparc64/dev/beeper.c		beeper
 device	beep
 attach	beep at ebus
 file	arch/sparc64/dev/beep.c			beep
+
+device	led
+attach	led at ebus
+file	arch/sparc64/dev/led.c			led
 
 device	pmc
 attach	pmc at ebus

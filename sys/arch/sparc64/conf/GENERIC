@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.178 2007/05/26 20:44:58 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.179 2007/05/29 04:10:15 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -239,6 +239,7 @@ bpp*	at sbus?
 lpt*	at ebus?
 
 bbc*	at ebus?
+led*	at ebus?
 pmc*	at ebus?
 ppm*	at ebus?
 
