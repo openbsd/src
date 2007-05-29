@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.14 2007/04/12 14:29:04 jmc Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.15 2007/05/29 20:00:06 jmc Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,14 +55,12 @@ The media is typically set using the
 .Xr ifconfig 8
 command.
 .Pp
-There are currently four link types supported by
+There are currently three link types supported by
 .Nm ifmedia :
 .Pp
 .Bl -tag -offset indent -width IFM_IEEE80211 -compact
 .It Dv IFM_ETHER
 Ethernet
-.It Dv IFM_TOKEN
-Token Ring
 .It Dv IFM_FDDI
 FDDI
 .It Dv IFM_IEEE80211
@@ -167,35 +165,6 @@ The following media option is defined for Ethernet:
 .Bl -tag -offset indent -width IFM_ETH_MASTER
 .It Dv IFM_ETH_MASTER
 Configure a 1000BASE-T PHY as a MASTER PHY.
-.El
-.Sh MEDIA TYPES AND OPTIONS FOR TOKEN RING
-The following media types are defined for Token Ring:
-.Bl -tag -offset indent -width IFM_TOK_UTP16
-.It Dv IFM_TOK_STP4
-4Mb/s, shielded twisted pair, DB9 connector.
-[DB9/4Mbit, 4STP]
-.It Dv IFM_TOK_STP16
-16Mb/s, shielded twisted pair, DB9 connector.
-[DB9/16Mbit, 16STP]
-.It Dv IFM_TOK_UTP4
-4Mb/s, unshielded twisted pair, RJ45 connector.
-[UTP/4Mbit, 4UTP]
-.It Dv IFM_TOK_UTP16
-16Mb/s, unshielded twisted pair, RJ45 connector.
-[UTP/16Mbit, 16UTP]
-.El
-.Pp
-The following media options are defined for Token Ring:
-.Bl -tag -offset indent -width IFM_TOK_SRCRT
-.It Dv IFM_TOK_ETR
-Early token release.
-[EarlyTokenRelease, ETR]
-.It Dv IFM_TOK_SRCRT
-Enable source routing features.
-[SourceRouting, SRCRT]
-.It Dv IFM_TOK_ALLR
-All routes vs. single route broadcast.
-[AllRoutes, ALLR]
 .El
 .Sh MEDIA TYPES AND OPTIONS FOR FDDI
 The following media types are defined for FDDI:
