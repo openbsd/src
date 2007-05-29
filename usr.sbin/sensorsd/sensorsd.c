@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.30 2007/05/29 02:02:12 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.31 2007/05/29 20:30:40 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@ void		 check_sensors(void);
 void		 execute(char *);
 void		 report(time_t);
 static char	*print_sensor(enum sensor_type, int64_t);
-int		 parse_config(char *);
+void		 parse_config(char *);
 int64_t		 get_val(char *, int, enum sensor_type);
 void		 reparse_cfg(int);
 
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 	time_t		 next_report, last_report = 0, next_check;
 	int		 mib[5], dev, numt;
 	enum sensor_type type;
-	int		 sleeptime, sensor_cnt, watch_cnt, ch;
+	int		 sleeptime, sensor_cnt, ch;
 
 	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
@@ -146,11 +146,7 @@ main(int argc, char *argv[])
 	if (configfile == NULL)
 		if (asprintf(&configfile, "/etc/sensorsd.conf") == -1)
 			err(1, "out of memory");
-	if ((watch_cnt = parse_config(configfile)) == -1)
-		errx(1, "error in config file");
-
-	if (watch_cnt == 0)
-		errx(1, "no watches defined");
+	parse_config(configfile);
 
 	if (debug == 0 && daemon(0, 0) == -1)
 		err(1, "unable to fork");
@@ -158,20 +154,14 @@ main(int argc, char *argv[])
 	signal(SIGHUP, reparse_cfg);
 	signal(SIGCHLD, SIG_IGN);
 
-	syslog(LOG_INFO, "startup, %d watches for %d sensors",
-	    watch_cnt, sensor_cnt);
+	syslog(LOG_INFO, "startup, system has %d sensors", sensor_cnt);
 
 	next_check = next_report = time(NULL);
 
 	for (;;) {
 		if (reload) {
-			if ((watch_cnt = parse_config(configfile)) == -1)
-				syslog(LOG_CRIT, "error in config file %s",
-				    configfile);
-			else
-				syslog(LOG_INFO,
-				    "configuration reloaded, %d watches",
-				    watch_cnt);
+			parse_config(configfile);
+			syslog(LOG_INFO, "configuration reloaded");
 			reload = 0;
 		}
 		if (next_check <= time(NULL)) {
@@ -395,14 +385,13 @@ print_sensor(enum sensor_type type, int64_t value)
 	return (fbuf);
 }
 
-int
+void
 parse_config(char *cf)
 {
 	struct limits_t	 *p, *next;
 	char		 *buf = NULL, *ebuf = NULL;
 	char		  node[48];
 	char		**cfa;
-	int		  watch_cnt = 0;
 
 	if ((cfa = calloc(2, sizeof(char *))) == NULL)
 		err(1, "calloc");
@@ -419,7 +408,6 @@ parse_config(char *cf)
 				continue;
 			}
 		p->watch = 1;
-		watch_cnt++;
 		if (cgetstr(buf, "low", &ebuf) < 0)
 			ebuf = NULL;
 		p->lower = get_val(ebuf, 0, p->type);
@@ -434,7 +422,6 @@ parse_config(char *cf)
 		buf = NULL;
 	}
 	free(cfa);
-	return (watch_cnt);
 }
 
 int64_t
