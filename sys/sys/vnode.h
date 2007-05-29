@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.83 2007/05/29 05:28:54 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.84 2007/05/29 16:25:07 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -230,12 +230,7 @@ TAILQ_HEAD(freelst, vnode);
 extern struct freelst vnode_hold_list;	/* free vnodes referencing buffers */
 extern struct freelst vnode_free_list;	/* vnode free list */
 
-#ifdef DIAGNOSTIC
 #define	VATTR_NULL(vap)	vattr_null(vap)
-#else
-#define	VATTR_NULL(vap)	(*(vap) = va_null)	/* initialize a vattr */
-#endif /* DIAGNOSTIC */
-
 #define	VREF(vp)	vref(vp)		/* increase reference */
 #define	NULLVP	((struct vnode *)NULL)
 #define	VN_KNOTE(vp, b)					\
@@ -248,8 +243,6 @@ extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
 extern	int desiredvnodes;		/* number of vnodes desired */
 extern	time_t syncdelay;		/* time to delay syncing vnodes */
 extern	int rushjob;			/* # of slots syncer should run ASAP */
-extern	struct vattr va_null;		/* predefined null vattr structure */
-
 #endif /* _KERNEL */
 
 

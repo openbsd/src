@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.18 2005/11/06 13:07:48 pedro Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.19 2007/05/29 16:25:07 thib Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -225,8 +225,6 @@ vfs_op_init(void)
 /*
  * Routines having to do with the management of the vnode table.
  */
-struct vattr va_null;
-
 struct pool namei_pool;
 
 /*
@@ -255,10 +253,6 @@ vfsinit(void)
 	 */
 	vfs_op_init();
 	vfs_opv_init();   /* finish the job */
-	/*
-	 * Initialize each file system type.
-	 */
-	vattr_null(&va_null);
 
 	/*
 	 * Stop using vfsconf and maxvfsconf as a temporary storage,
