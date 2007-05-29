@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.114 2007/05/24 10:06:35 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.115 2007/05/29 10:56:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1309,7 +1309,7 @@ sub prepare
 {
 	my ($self, $state) = @_;
 	my $fname = $state->{dir}.$self->{name};
-	open(my $src, '<', $fname) or Fatal "Can't open $fname: $!";
+	open(my $src, '<', $fname) or Warn "Can't open $fname: $!";
 	while (<$src>) {
 		next if m/^\+\-+\s*$/;
 		s/^[+-] //;
