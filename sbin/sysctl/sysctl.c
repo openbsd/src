@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.147 2007/05/21 21:36:07 cnst Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.148 2007/05/29 21:11:51 robert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.147 2007/05/21 21:36:07 cnst Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.148 2007/05/29 21:11:51 robert Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,6 @@ int	Aflag, aflag, nflag, qflag;
 #define	LONGARRAY	0x00000800
 #define	KMEMSTATS	0x00001000
 #define	SENSORS		0x00002000
-#define	ZTSSCALE	0x00004000
 
 /* prototypes */
 void debuginit(void);
@@ -312,14 +311,6 @@ parse(char *string, int flags)
 	struct list *lp;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ];
-#ifdef CPU_ZTSSCALE
-	struct ztsscale {
-		int ts_minx;
-		int ts_maxx;
-		int ts_miny;
-		int ts_maxy;
-	} tsbuf;
-#endif
 
 	(void)strlcpy(buf, string, sizeof(buf));
 	bufp = buf;
@@ -625,46 +616,6 @@ parse(char *string, int flags)
 			break;
 		}
 #endif
-#ifdef CPU_ZTSSCALE
-		if (mib[1] == CPU_ZTSSCALE) {
-			special |= ZTSSCALE;
-			if (newsize > 0) {
-				const char *errstr = NULL;
-
-				/* Unspecified values default to 0. */
-				bzero(&tsbuf, sizeof tsbuf);
-				newval = (void *)strtok(newval, ",");
-				if (newval != NULL) {
-					tsbuf.ts_minx = (int)strtonum(newval,
-					    0, 32768, &errstr);
-					newval = (void *)strtok(NULL, ",");
-				}
-				if (!errstr && newval != NULL) {
-					tsbuf.ts_maxx = (int)strtonum(newval,
-					    0, 32768, &errstr);
-					newval = (void *)strtok(NULL, ",");
-				}
-				if (!errstr && newval != NULL) {
-					tsbuf.ts_miny = (int)strtonum(newval,
-					    0, 32768, &errstr);
-					newval = (void *)strtok(NULL, ",");
-				}
-				if (!errstr && newval != NULL) {
-					tsbuf.ts_maxy = (int)strtonum(newval,
-					    0, 32768, &errstr);
-					newval = (void *)strtok(NULL, ",");
-				}
-				if (errstr)
-					errx(1, "calibration value is %s",
-					    errstr);
-				if (newval != NULL)
-					errx(1, "too many calibration values");
-				newval = &tsbuf;
-				newsize = sizeof(tsbuf);
-			}
-			break;
-		}
-#endif
 		break;
 
 	case CTL_FS:
@@ -961,32 +912,6 @@ parse(char *string, int flags)
 		}
 		return;
 	}
-#ifdef CPU_ZTSSCALE
-	if (special & ZTSSCALE) {
-		struct ztsscale *tsp;
-
-		if (newsize == 0) {
-			if (!nflag)
-				(void)printf("%s%s", string, equ);
-			tsp = (struct ztsscale *)buf;
-			(void)printf("%d,%d,%d,%d\n", tsp->ts_minx,
-			    tsp->ts_maxx, tsp->ts_miny, tsp->ts_maxy);
-		} else {
-			if (!qflag) {
-				if (!nflag) {
-					tsp = (struct ztsscale *)buf;
-					(void)printf("%s: %d,%d,%d,%d -> ",
-					    string, tsp->ts_minx, tsp->ts_maxx,
-					    tsp->ts_miny, tsp->ts_maxy);
-				}
-				tsp = (struct ztsscale *)newval;
-				(void)printf("%d,%d,%d,%d\n", tsp->ts_minx,
-				    tsp->ts_maxx, tsp->ts_miny, tsp->ts_maxy);
-			}
-		}
-		return;
-	}
-#endif
 	switch (type) {
 	case CTLTYPE_INT:
 		if (newsize == 0) {
