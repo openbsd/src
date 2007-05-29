@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.149 2007/05/28 17:16:39 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.150 2007/05/29 17:46:24 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -90,6 +90,9 @@ int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;
 char ipsec_def_enc[20];
 char ipsec_def_auth[20];
 char ipsec_def_comp[20];
+#ifdef IPSEC
+extern int	ipsec_in_use;
+#endif /* IPSEC */
 
 /* values controllable via sysctl */
 int	ipforwarding = 0;
@@ -491,8 +494,10 @@ ipv4_input(m)
 	if (ipforwarding == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
-	} else {
+		return;
+	}
 #ifdef IPSEC
+	if (ipsec_in_use) {
 	        /*
 		 * IPsec policy check for forwarded packets. Look at
 		 * inner-most IPsec SA used.
@@ -519,10 +524,10 @@ ipv4_input(m)
 		 * Fall through, forward packet. Outbound IPsec policy
 		 * checking will occur in ip_output().
 		 */
+	}
 #endif /* IPSEC */
 
-		ip_forward(m, pfrdr);
-	}
+	ip_forward(m, pfrdr);
 	return;
 
 ours:
@@ -617,6 +622,9 @@ found:
 	}
 
 #ifdef IPSEC
+	if (!ipsec_in_use)
+		goto skipipsec;
+
         /*
          * If it's a protected packet for us, skip the policy check.
          * That's because we really only care about the properties of

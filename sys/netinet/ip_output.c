@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.185 2007/05/27 20:15:48 dlg Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.186 2007/05/29 17:46:24 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
 extern int ipsec_ipcomp_default_level;
 extern int ipforwarding;
+extern int ipsec_in_use;
 #endif /* IPSEC */
 
 #ifdef MROUTING
@@ -243,6 +244,9 @@ ip_output(struct mbuf *m0, ...)
 	}
 
 #ifdef IPSEC
+	if (!ipsec_in_use && inp == NULL)
+		goto done_spd;
+
 	/*
 	 * splnet is chosen over spltdb because we are not allowed to
 	 * lower the level, and udp_output calls us in splnet().
@@ -655,8 +659,9 @@ sendit:
 	 * If deferred crypto processing is needed, check that the
 	 * interface supports it.
 	 */
-	if ((mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL))
-	    != NULL && (ifp->if_capabilities & IFCAP_IPSEC) == 0) {
+	if (ipsec_in_use && (mtag = m_tag_find(m,
+	    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL)) != NULL &&
+	    (ifp->if_capabilities & IFCAP_IPSEC) == 0) {
 		/* Notify IPsec to do its own crypto. */
 		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
 		m_freem(m);
@@ -697,7 +702,7 @@ sendit:
 #endif
 
 #ifdef IPSEC
-	if ((flags & IP_FORWARDING) && (ipforwarding == 2) &&
+	if (ipsec_in_use && (flags & IP_FORWARDING) && (ipforwarding == 2) &&
 	    (m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL) == NULL)) {
 		error = EHOSTUNREACH;
 		m_freem(m);
