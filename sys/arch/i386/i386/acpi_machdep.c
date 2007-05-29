@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.5 2006/11/29 11:16:25 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.6 2007/05/29 08:22:14 gwk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -113,17 +113,25 @@ acpi_probe(struct device *parent, struct cfdata *match, struct acpi_attach_args 
 	struct acpi_mem_map handle;
 	u_int8_t *ptr;
 	paddr_t ebda;
+#if NAPM > 0
+	extern int apm_attached;
+	
+	if (apm_attached)
+		return (0);	
+#endif
 #if NBIOS > 0
-	bios_memmap_t *im;
+	{
+		bios_memmap_t *im;
 
-	/*
-	 * First look for ACPI entries in the BIOS memory map
-	 */
-	for (im = bios_memmap; im->type != BIOS_MAP_END; im++)
-		if (im->type == BIOS_MAP_ACPI) {
-			if ((ptr = acpi_scan(&handle, im->addr, im->size)))
-				goto havebase;
-		}
+		/*
+	 	 * First look for ACPI entries in the BIOS memory map
+		 */
+		for (im = bios_memmap; im->type != BIOS_MAP_END; im++)
+			if (im->type == BIOS_MAP_ACPI) {
+				if ((ptr = acpi_scan(&handle, im->addr, im->size)))
+					goto havebase;
+			}
+	}
 #endif
 
 	/*
@@ -156,14 +164,6 @@ havebase:
 	aaa->aaa_pbase = ptr - handle.va + handle.pa;
 	acpi_unmap(&handle);
 
-#ifdef notyet
-	/*
-	 * Disable APM if we are using ACPI
-	 */
-#if NAPM > 0 && NBIOS > 0
-	apm = NULL;
-#endif
-#endif
 	return (1);
 }
 

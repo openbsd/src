@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.74 2007/03/19 09:29:33 art Exp $	*/
+/*	$OpenBSD: apm.c,v 1.75 2007/05/29 08:22:14 gwk Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -150,6 +150,7 @@ int	apm_dobusy = 0;
 int	apm_doidle = 0;
 int	apm_bebatt = 0;
 int	apm_idle_called = 0;
+int	apm_attached = 0;
 
 struct {
 	u_int32_t entry;
@@ -355,7 +356,7 @@ apm_resume(struct apm_softc *sc, struct apmregs *regs)
 	/* lower bit in cx means pccard was powered down */
 	dopowerhooks(PWR_RESUME);
 	apm_record_event(sc, regs->bx);
-	
+
 	/* acknowledge any rtc interrupt we may have missed */
 	rtcdrain(NULL);
 
@@ -903,8 +904,10 @@ apmattach(struct device *parent, struct device *self, void *aux)
 		if (apm_periodic_check(sc) == -1) {
 			apm_disconnect(sc);
 			apm_dobusy = apm_doidle = 0;
-		} else
+		} else {
 			kthread_create_deferred(apm_thread_create, sc);
+			apm_attached = 1;
+		}
 	} else {
 		setgdt(GAPM32CODE_SEL, NULL, 0, 0, 0, 0, 0);
 		setgdt(GAPM16CODE_SEL, NULL, 0, 0, 0, 0, 0);
