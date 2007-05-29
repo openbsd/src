@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2007/05/29 00:03:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2007/05/29 08:16:54 deraadt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -9,7 +9,7 @@ S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
 PROG=	cdboot
-SRCS=	srt0.S cdboot.c conf.c
+SRCS=	srt0.S boot.c conf.c
 LD?=	ld
 SIZE?=	size
 LDFLAGS+=-melf_i386 -nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec
