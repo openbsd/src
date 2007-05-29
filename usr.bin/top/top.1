@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.45 2007/03/15 22:02:22 jmc Exp $
+.\"	$OpenBSD: top.1,v 1.46 2007/05/29 00:56:56 otto Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -263,8 +263,6 @@ Redraw the screen.
 Quit
 .Nm .
 .El
-.Pp
-The following commands may not be available with overstrike terminals:
 .Bl -tag -width XxXXXX
 .It +
 Reset any filters put in place by the
@@ -317,6 +315,9 @@ as the primary key.
 Values are the same as for the
 .Fl o
 flag, as detailed above.
+.It P Ar pid
+Highlight a specific process, selected by
+.Ar pid .
 .It p Ar pid
 Show only the process
 .Ar pid .

@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.16 2007/04/04 19:12:15 otto Exp $	 */
+/* $OpenBSD: screen.c,v 1.17 2007/05/29 00:56:56 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -40,10 +40,10 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <curses.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <term.h>
 #include <unistd.h>
 
@@ -51,21 +51,16 @@
 #include "screen.h"
 #include "boolean.h"
 
-int	overstrike, screen_length, screen_width;
-char	ch_erase, ch_kill, smart_terminal, PC;
-char	string_buffer[1024], home[15], lower_left[15];
-char	*clear_line, *clear_scr, *clear_to_end;
-char	*cursor_motion, *start_standout, *end_standout;
-char	*terminal_init, *terminal_end;
+int	screen_length, screen_width;
+char	ch_erase, ch_kill, smart_terminal;
 
 static struct termios old_settings, new_settings;
-
-static char	is_a_terminal = No;
+static char is_a_terminal = No;
 
 void
 init_termcap(int interactive)
 {
-	char *bufptr, *PCptr, *term_name;
+	char *term_name;
 	int status;
 
 	/* set defaults in case we aren't smart */
@@ -107,6 +102,7 @@ init_termcap(int interactive)
 		smart_terminal = No;
 		return;
 	}
+
 	/* set up common terminal capabilities */
 	if ((screen_length = tgetnum("li")) <= Header_lines) {
 		screen_length = smart_terminal = 0;
@@ -119,35 +115,11 @@ init_termcap(int interactive)
 	else
 		screen_width -= 1;
 
-	/* terminals that overstrike need special attention */
-	overstrike = tgetflag("os");
-
-	/* initialize the pointer into the termcap string buffer */
-	bufptr = string_buffer;
-
-	/* get "ce", clear to end */
-	if (!overstrike) {
-		clear_line = tgetstr("ce", &bufptr);
-	}
-	/* get necessary capabilities */
-	if ((clear_scr = tgetstr("cl", &bufptr)) == NULL ||
-	    (cursor_motion = tgetstr("cm", &bufptr)) == NULL) {
-		smart_terminal = No;
-		return;
-	}
-	/* get some more sophisticated stuff -- these are optional */
-	clear_to_end = tgetstr("cd", &bufptr);
-	terminal_init = tgetstr("ti", &bufptr);
-	terminal_end = tgetstr("te", &bufptr);
-	start_standout = tgetstr("so", &bufptr);
-	end_standout = tgetstr("se", &bufptr);
-
-	/* pad character */
-	PC = (PCptr = tgetstr("pc", &bufptr)) ? *PCptr : 0;
-
-	/* set convenience strings */
-	(void) strlcpy(home, tgoto(cursor_motion, 0, 0), sizeof(home));
-	/* (lower_left is set in get_screensize) */
+        /* get necessary capabilities */
+        if (tgetstr("cl", NULL) == NULL || tgetstr("cm", NULL) == NULL) {
+                smart_terminal = No;
+                return;
+        }
 
 	/* get the actual screen size with an ioctl, if needed */
 	/*
@@ -168,42 +140,37 @@ init_screen(void)
 	if (tcgetattr(STDOUT_FILENO, &old_settings) != -1) {
 		/* copy the settings so we can modify them */
 		new_settings = old_settings;
-
 		/* turn off ICANON, character echo and tab expansion */
 		new_settings.c_lflag &= ~(ICANON | ECHO);
 		new_settings.c_oflag &= ~(OXTABS);
 		new_settings.c_cc[VMIN] = 1;
 		new_settings.c_cc[VTIME] = 0;
-		(void) tcsetattr(STDOUT_FILENO, TCSADRAIN, &new_settings);
 
+		(void) tcsetattr(STDOUT_FILENO, TCSADRAIN, &new_settings);
 		/* remember the erase and kill characters */
 		ch_erase = old_settings.c_cc[VERASE];
 		ch_kill = old_settings.c_cc[VKILL];
 
-		/* remember that it really is a terminal */
 		is_a_terminal = Yes;
-
+#if 0
 		/* send the termcap initialization string */
 		putcap(terminal_init);
+#endif
 	}
 	if (!is_a_terminal) {
 		/* not a terminal at all---consider it dumb */
 		smart_terminal = No;
 	}
+
+	if (smart_terminal)
+		initscr();
 }
 
 void
 end_screen(void)
 {
-	/* move to the lower left, clear the line and send "te" */
-	if (smart_terminal) {
-		putcap(lower_left);
-		putcap(clear_line);
-		fflush(stdout);
-		putcap(terminal_end);
-	}
-
-	/* if we have settings to reset, then do so */
+	if (smart_terminal)
+		endwin();
 	if (is_a_terminal)
 		(void) tcsetattr(STDOUT_FILENO, TCSADRAIN, &old_settings);
 }
@@ -211,6 +178,7 @@ end_screen(void)
 void
 reinit_screen(void)
 {
+#if 0
 	/* install our settings if it is a terminal */
 	if (is_a_terminal)
 		(void) tcsetattr(STDOUT_FILENO, TCSADRAIN, &new_settings);
@@ -218,6 +186,7 @@ reinit_screen(void)
 	/* send init string */
 	if (smart_terminal)
 		putcap(terminal_init);
+#endif
 }
 
 void
@@ -231,54 +200,15 @@ get_screensize(void)
 		if (ws.ws_col != 0)
 			screen_width = ws.ws_col - 1;
 	}
-	(void) strlcpy(lower_left, tgoto(cursor_motion, 0, screen_length - 1),
-	    sizeof(lower_left));
-}
-
-void
-standout(char *msg)
-{
-	if (smart_terminal) {
-		putcap(start_standout);
-		if (fputs(msg, stdout) == EOF)
-			exit(1);
-		putcap(end_standout);
-	} else {
-		if (fputs(msg, stdout) == EOF)
-			exit(1);
-	}
-}
-
-void
-clear(void)
-{
-	if (smart_terminal)
-		putcap(clear_scr);
-}
-
-int
-clear_eol(int len)
-{
-	if (smart_terminal && !overstrike && len > 0) {
-		if (clear_line) {
-			putcap(clear_line);
-			return (0);
-		} else {
-			while (len-- > 0) {
-				if (putchar(' ') == EOF)
-					exit(1);
-			}
-			return (1);
-		}
-	}
-	return (-1);
 }
 
 void
 go_home(void)
 {
-	if (smart_terminal)
-		putcap(home);
+	if (smart_terminal) {
+		move(0, 0);
+		refresh();
+	}
 }
 
 /* This has to be defined as a subroutine for tputs (instead of a macro) */

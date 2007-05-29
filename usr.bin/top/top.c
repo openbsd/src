@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.50 2007/04/01 19:07:48 jmc Exp $	*/
+/*	$OpenBSD: top.c,v 1.51 2007/05/29 00:56:56 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -28,21 +28,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const char	copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
-
 #include <sys/types.h>
-#include <sys/time.h>
+#include <curses.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <signal.h>
 #include <string.h>
 #include <poll.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
-#include <sys/stat.h>
 
 /* includes specific to top */
 #include "display.h"		/* interface to display package */
@@ -59,13 +55,11 @@ const char	copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 /* The buffer that stdio will use */
 char		stdoutbuf[BUFFERSIZE];
 
-extern int	overstrike;
-
 /* signal handling routines */
 static void	leave(int);
 static void	onalrm(int);
 static void	tstop(int);
-static void	winch(int);
+static void	sigwinch(int);
 
 volatile sig_atomic_t leaveflag, tstopflag, winchflag;
 
@@ -76,15 +70,6 @@ static int	max_topn;	/* maximum displayable processes */
 
 extern int	(*proc_compares[])(const void *, const void *);
 int order_index;
-
-/* pointers to display routines */
-void		(*d_loadave)(int, double *) = i_loadave;
-void		(*d_procstates)(int, int *) = i_procstates;
-void		(*d_cpustates)(int64_t *) = i_cpustates;
-void		(*d_memory)(int *) = i_memory;
-void		(*d_message)(void) = i_message;
-void		(*d_header)(char *) = i_header;
-void		(*d_process)(int, char *) = i_process;
 
 int displays = 0;	/* indicates unspecified */
 char do_unames = Yes;
@@ -98,6 +83,7 @@ int no_command = Yes;
 int old_system = No;
 int old_threads = No;
 int show_args = No;
+pid_t hlpid = -1;
 
 #if Default_TOPN == Infinity
 char topn_specified = No;
@@ -130,6 +116,7 @@ char topn_specified = No;
 #define CMD_threads	19
 #define CMD_grep	20
 #define CMD_add		21
+#define CMD_hl		22
 
 static void
 usage(void)
@@ -405,7 +392,8 @@ main(int argc, char *argv[])
 	siginterrupt(SIGINT, 1);
 	(void) signal(SIGQUIT, leave);
 	(void) signal(SIGTSTP, tstop);
-	(void) signal(SIGWINCH, winch);
+	if (smart_terminal)
+		(void) signal(SIGWINCH, sigwinch);
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	if (warnings) {
 		fputs("....", stderr);
@@ -428,7 +416,7 @@ restart:
 		    proc_compares[order_index]);
 
 		/* display the load averages */
-		(*d_loadave)(system_info.last_pid, system_info.load_avg);
+		i_loadave(system_info.last_pid, system_info.load_avg);
 
 		/* display the current time */
 		/* this method of getting the time SHOULD be fairly portable */
@@ -436,19 +424,19 @@ restart:
 		i_timeofday(&curr_time);
 
 		/* display process state breakdown */
-		(*d_procstates)(system_info.p_total, system_info.procstates);
+		i_procstates(system_info.p_total, system_info.procstates);
 
 		/* display the cpu state percentage breakdown */
-		(*d_cpustates)(system_info.cpustates);
+		i_cpustates(system_info.cpustates);
 
 		/* display memory stats */
-		(*d_memory)(system_info.memory);
+		i_memory(system_info.memory);
 
 		/* handle message area */
-		(*d_message)();
+		i_message();
 
 		/* update the header area */
-		(*d_header)(header_text);
+		i_header(header_text);
 
 		if (topn > 0) {
 			/* determine number of processes to actually display */
@@ -463,9 +451,14 @@ restart:
 			if (active_procs > max_topn)
 				active_procs = max_topn;
 			/* now show the top "n" processes. */
-			for (i = 0; i < active_procs; i++)
-				(*d_process)(i, format_next_process(processes,
-				    get_userid));
+			for (i = 0; i < active_procs; i++) {
+				pid_t pid;
+				char * s;
+
+				s = format_next_process(processes, get_userid,
+				    &pid);
+				i_process(i, s, pid == hlpid);
+			}
 		} else
 			i = 0;
 
@@ -475,22 +468,12 @@ restart:
 		/* now, flush the output buffer */
 		fflush(stdout);
 
+		if (smart_terminal)
+			refresh();
+
 		/* only do the rest if we have more displays to show */
 		if (displays) {
 			/* switch out for new display on smart terminals */
-			if (smart_terminal) {
-				if (overstrike) {
-					reset_display();
-				} else {
-					d_loadave = u_loadave;
-					d_procstates = u_procstates;
-					d_cpustates = u_cpustates;
-					d_memory = u_memory;
-					d_message = u_message;
-					d_header = u_header;
-					d_process = u_process;
-				}
-			}
 			no_command = Yes;
 			if (!interactive) {
 				/* set up alarm */
@@ -530,7 +513,7 @@ rundisplay(void)
 	int change, i;
 	struct pollfd pfd[1];
 	uid_t uid;
-	static char command_chars[] = "\f qh?en#sdkriIuSopCTg+";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCTg+P";
 
 	/*
 	 * assume valid command unless told
@@ -582,12 +565,13 @@ rundisplay(void)
 		 * dimensions
 		 */
 		get_screensize();
+		resizeterm(screen_length, screen_width + 1);
 
 		/* tell display to resize */
 		max_topn = display_resize();
 
 		/* reset the signal handler */
-		(void) signal(SIGWINCH, winch);
+		(void) signal(SIGWINCH, sigwinch);
 
 		reset_display();
 		winchflag = 0;
@@ -620,24 +604,13 @@ rundisplay(void)
 		if ((iptr = strchr(command_chars, ch)) == NULL) {
 			/* illegal command */
 			new_message(MT_standout, " Command not understood");
-			if (putchar('\r') == EOF)
-				exit(1);
+			putr();
 			no_command = Yes;
 			fflush(stdout);
 			return (0);
 		}
 
 		change = iptr - command_chars;
-		if (overstrike && change > CMD_OSLIMIT) {
-			/* error */
-			new_message(MT_standout,
-			    " Command cannot be handled by this terminal");
-			if (putchar('\r') == EOF)
-				exit(1);
-			no_command = Yes;
-			fflush(stdout);
-			return (0);
-		}
 
 		switch (change) {
 		case CMD_redraw:	/* redraw screen */
@@ -661,42 +634,23 @@ rundisplay(void)
 
 		case CMD_help1:	/* help */
 		case CMD_help2:
-			reset_display();
 			clear();
 			show_help();
-			standout("Hit any key to continue: ");
-			fflush(stdout);
-			while (1) {
-				len = read(STDIN_FILENO, &ch, 1);
-				if (len == -1 && errno == EINTR)
-					continue;
-				if (len == 0)
-					exit(1);
-				break;
-			}
+			anykey();
+			clear();
 			break;
 
 		case CMD_errors:	/* show errors */
 			if (error_count() == 0) {
 				new_message(MT_standout,
 				    " Currently no errors to report.");
-				if (putchar('\r') == EOF)
-					exit(1);
+				putr();
 				no_command = Yes;
 			} else {
-				reset_display();
 				clear();
 				show_errors();
-				standout("Hit any key to continue: ");
-				fflush(stdout);
-				while (1) {
-					len = read(STDIN_FILENO, &ch, 1);
-					if (len == -1 && errno == EINTR)
-						continue;
-					if (len == 0)
-						exit(1);
-					break;
-				}
+				anykey();
+				clear();
 			}
 			break;
 
@@ -711,15 +665,13 @@ rundisplay(void)
 					    " This terminal can only "
 					    "display %d processes.",
 					    max_topn);
-					if (putchar('\r') == EOF)
-						exit(1);
+					putr();
 				}
 				if (newval == 0)
 					display_header(No);
 				else if (newval > topn && topn == 0) {
 					/* redraw the header */
 					display_header(Yes);
-					d_header = i_header;
 				}
 				topn = newval;
 			}
@@ -737,8 +689,7 @@ rundisplay(void)
 				} else {
 					new_message(MT_standout,
 					    "Delay should be a non-negative number");
-					if (putchar('\r') == EOF)
-						exit(1);
+					putr();
 					no_command = Yes;
 				}
 
@@ -764,8 +715,7 @@ rundisplay(void)
 			if (readline(tempbuf2, sizeof(tempbuf2), No) > 0) {
 				if ((errmsg = kill_procs(tempbuf2)) != NULL) {
 					new_message(MT_standout, "%s", errmsg);
-					if (putchar('\r') == EOF)
-						exit(1);
+					putr();
 					no_command = Yes;
 				}
 			} else
@@ -777,8 +727,7 @@ rundisplay(void)
 			if (readline(tempbuf2, sizeof(tempbuf2), No) > 0) {
 				if ((errmsg = renice_procs(tempbuf2)) != NULL) {
 					new_message(MT_standout, "%s", errmsg);
-					if (putchar('\r') == EOF)
-						exit(1);
+					putr();
 					no_command = Yes;
 				}
 			} else
@@ -791,8 +740,7 @@ rundisplay(void)
 			new_message(MT_standout | MT_delayed,
 			    " %sisplaying idle processes.",
 			    ps.idle ? "D" : "Not d");
-			if (putchar('\r') == EOF)
-				exit(1);
+			putr();
 			break;
 
 		case CMD_user:
@@ -808,8 +756,7 @@ rundisplay(void)
 					no_command = Yes;
 				} else
 					ps.uid = uid;
-				if (putchar('\r') == EOF)
-					exit(1);
+				putr();
 			} else
 				clear_message();
 			break;
@@ -835,8 +782,7 @@ rundisplay(void)
 					no_command = Yes;
 				} else
 					order_index = i;
-				if (putchar('\r') == EOF)
-					exit(1);
+				putr();
 			} else
 				clear_message();
 			break;
@@ -866,8 +812,7 @@ rundisplay(void)
 						ps.system = Yes;
 					}
 				}
-				if (putchar('\r') == EOF)
-					exit(1);
+				putr();
 			} else
 				clear_message();
 			break;
@@ -894,8 +839,32 @@ rundisplay(void)
 					ps.command = NULL;
 				else
 					ps.command = strdup(tempbuf2);
-				if (putchar('\r') == EOF)
-					exit(1);
+				putr();
+			} else
+				clear_message();
+			break;
+
+		case CMD_hl:
+			new_message(MT_standout, "Process ID to higlight: ");
+			if (readline(tempbuf2, sizeof(tempbuf2), No) > 0) {
+				if (tempbuf2[0] == '+' &&
+				    tempbuf2[1] == '\0') {
+					hlpid = -1;
+				} else {
+					unsigned long long num;
+					const char *errstr;
+
+					num = strtonum(tempbuf2, 0, INT_MAX,
+					    &errstr);
+					if (errstr != NULL || !find_pid(num)) {
+						new_message(MT_standout,
+						    " %s: unknown pid",
+						    tempbuf2);
+						no_command = Yes;
+					} else
+						hlpid = (pid_t)num;
+				}
+				putr();
 			} else
 				clear_message();
 			break;
@@ -905,12 +874,12 @@ rundisplay(void)
 			ps.pid = (pid_t)-1; 	/* pid */
 			ps.system = old_system;
 			ps.command = NULL;	/* grep */
+			hlpid = -1;
 			break;
 		
 		default:
 			new_message(MT_standout, " BAD CASE IN SWITCH!");
-			if (putchar('\r') == EOF)
-				exit(1);
+			putr();
 		}
 	}
 
@@ -927,13 +896,10 @@ rundisplay(void)
 static void
 reset_display(void)
 {
-	d_loadave = i_loadave;
-	d_procstates = i_procstates;
-	d_cpustates = i_cpustates;
-	d_memory = i_memory;
-	d_message = i_message;
-	d_header = i_header;
-	d_process = i_process;
+	if (smart_terminal) {
+		clear();
+		refresh();
+	}
 }
 
 /* ARGSUSED */
@@ -952,7 +918,7 @@ tstop(int signo)
 
 /* ARGSUSED */
 void
-winch(int signo)
+sigwinch(int signo)
 {
 	winchflag = 1;
 }

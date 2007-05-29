@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.60 2007/04/16 11:49:51 otto Exp $	 */
+/* $OpenBSD: machine.c,v 1.61 2007/05/29 00:56:56 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -459,7 +459,7 @@ format_comm(struct kinfo_proc2 *kp)
 }
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
+format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid)
 {
 	char *p_wait, waddr[sizeof(void *) * 2 + 3];	/* Hexify void pointer */
 	struct kinfo_proc2 *pp;
@@ -499,6 +499,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 	    p_wait, format_time(cputime), 100.0 * pct,
 	    printable(format_comm(pp)));
 
+	*pid = pp->p_pid;
 	/* return the result */
 	return (fmt);
 }

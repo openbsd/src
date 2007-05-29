@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.h,v 1.8 2006/03/04 06:58:12 otto Exp $	*/
+/*	$OpenBSD: display.h,v 1.9 2007/05/29 00:56:56 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -34,25 +34,32 @@
 #define  MT_delayed   2
 
 /* prototypes */
-extern int display_resize(void);
-extern void i_loadave(int, double *);
-extern void u_loadave(int, double *);
-extern void i_timeofday(time_t *);
-extern void i_procstates(int, int *);
-extern void u_procstates(int, int *);
-extern void i_cpustates(int64_t *);
-extern void u_cpustates(int64_t *);
-extern void i_memory(int *);
-extern void u_memory(int *);
-extern void i_message(void);
-extern void u_message(void);
-extern void i_header(char *);
-extern void u_header(char *);
-extern void i_process(int, char *);
-extern void u_process(int, char *);
-extern void u_endscreen(int);
-extern void display_header(int);
-extern void new_message(int, const char *, ...);
-extern void clear_message(void);
-extern int readline(char *, int, int);
-extern char *printable(char *);
+int display_resize(void);
+void i_loadave(int, double *);
+void u_loadave(int, double *);
+void i_timeofday(time_t *);
+void i_procstates(int, int *);
+void u_procstates(int, int *);
+void i_cpustates(int64_t *);
+void u_cpustates(int64_t *);
+void i_memory(int *);
+void u_memory(int *);
+void i_message(void);
+void u_message(void);
+void i_header(char *);
+void u_header(char *);
+void i_process(int, char *, int);
+void u_process(int, char *, int);
+void u_endscreen(int);
+void display_header(int);
+void new_message(int, const char *, ...);
+void clear_message(void);
+int readline(char *, int, int);
+char *printable(char *);
+void show_help(void);
+void anykey(void);
+
+#define putr() do { if (!smart_terminal) if (putchar('\r') == EOF) exit(1); } \
+	while (0)
+#define putn() do { if (!smart_terminal) if (putchar('\n') == EOF) exit(1); } \
+	while (0)
