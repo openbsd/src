@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.12 2007/05/06 03:37:08 gwk Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.13 2007/05/29 06:31:44 tedu Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -109,6 +109,44 @@ cpu_amd64speed(int *freq)
 	return (0);
 }
 
+#ifndef SMALL_KERNEL
+void	intelcore_update_sensor(void *args);
+/*
+ * Temperature read on the CPU is relative to the maximum
+ * temperature supported by the CPU, Tj(Max).
+ * Poorly documented, refer to:
+ * http://softwarecommunity.intel.com/isn/Community/
+ * en-US/forums/thread/30228638.aspx
+ * Basically, depending on a bit in one msr, the max is either 85 or 100.
+ * Then we subtract the temperature portion of thermal status from
+ * max to get current temperature.
+ */
+void
+intelcore_update_sensor(void *args)
+{
+	struct cpu_info *ci = (struct cpu_info *) args;
+	u_int64_t msr;
+	int max = 100;
+
+	if (rdmsr(MSR_TEMPERATURE_TARGET) & MSR_TEMPERATURE_TARGET_LOW_BIT)
+		max = 85;
+
+	msr = rdmsr(MSR_THERM_STATUS);
+	if (msr & MSR_THERM_STATUS_VALID_BIT) {
+		ci->ci_sensor.value = max - MSR_THERM_STATUS_TEMP(msr);
+		/* micro degress */
+		ci->ci_sensor.value *= 1000000;
+		/* kelvin */
+		ci->ci_sensor.value += 273150000;
+		ci->ci_sensor.flags &= ~SENSOR_FINVALID;
+	} else {
+		ci->ci_sensor.value = 0;
+		ci->ci_sensor.flags |= SENSOR_FINVALID;
+	}
+}
+
+#endif
+
 void (*setperf_setup)(struct cpu_info *);
 
 void
@@ -183,6 +221,7 @@ identifycpu(struct cpu_info *ci)
 
 	x86_print_cacheinfo(ci);
 
+#ifndef SMALL_KERNEL
 	if (pnfeatset > 0x80000007) {
 		CPUID(0x80000007, dummy, dummy, dummy, pnfeatset);
 
@@ -191,6 +230,24 @@ identifycpu(struct cpu_info *ci)
 				setperf_setup = k8_powernow_init;
 		}
 	}
+
+	if (!strncmp(cpu_model, "Intel", 5)) {
+		if (cpu_ecxfeature & CPUIDECX_EST) {
+			setperf_setup = est_init;
+		}
+	 	CPUID(0x06, val, dummy, dummy, dummy);
+	 	if (val & 0x1) {
+			strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
+			    sizeof(ci->ci_sensordev.xname));
+			ci->ci_sensor.type = SENSOR_TEMP;
+			sensor_task_register(ci, intelcore_update_sensor, 5);
+			sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
+			sensordev_install(&ci->ci_sensordev);
+		}
+	}
+
+#endif
+
 
 	/* AuthenticAMD:    h t u A                    i t n e */
 	if (vendor[0] == 0x68747541 && vendor[1] == 0x69746e65 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.8 2007/04/27 01:57:16 dlg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.9 2007/05/29 06:31:44 tedu Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -173,6 +173,7 @@
 #define MSR_BIOS_SIGN		0x08b
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
+#define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */   
 #define MSR_MTRRcap		0x0fe
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
@@ -188,6 +189,14 @@
 #define MSR_MCG_CTL		0x17b
 #define MSR_EVNTSEL0		0x186
 #define MSR_EVNTSEL1		0x187
+#define MSR_PERF_STATUS		0x198	/* Pentium M */
+#define MSR_PERF_CTL		0x199	/* Pentium M */
+#define MSR_THERM_CONTROL	0x19a
+#define MSR_THERM_INTERRUPT	0x19b
+#define MSR_THERM_STATUS	0x19c
+#define MSR_THERM_STATUS_VALID_BIT	0x80000000
+#define	MSR_THERM_STATUS_TEMP(msr)	((msr >> 16) & 0x7f)
+#define MSR_THERM2_CTL		0x19d	/* Pentium M */
 #define MSR_DEBUGCTLMSR		0x1d9
 #define MSR_LASTBRANCHFROMIP	0x1db
 #define MSR_LASTBRANCHTOIP	0x1dc
@@ -620,3 +629,7 @@
 #define	K7_BP1_MATCH			0xdd
 #define	K7_BP2_MATCH			0xde
 #define	K7_BP3_MATCH			0xdf
+
+/* not documented anywhere, see intelcore_update_sensor() */
+#define MSR_TEMPERATURE_TARGET		0xee
+#define MSR_TEMPERATURE_TARGET_LOW_BIT		0x40000000

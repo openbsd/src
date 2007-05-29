@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.29 2007/05/28 02:13:44 krw Exp $
+#	$OpenBSD: files.amd64,v 1.30 2007/05/29 06:31:44 tedu Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -58,7 +58,8 @@ file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 # Basic clock - required
 file	arch/amd64/isa/clock.c
 
-file	arch/amd64/amd64/powernow-k8.c
+file	arch/amd64/amd64/powernow-k8.c		!small_kernel
+file	arch/amd64/amd64/est.c			!small_kernel
 
 include	"dev/mii/files.mii"
 

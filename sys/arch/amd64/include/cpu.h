@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2007/05/10 17:59:24 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2007/05/29 06:31:44 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/sched.h>
+#include <sys/sensors.h>
 
 struct cpu_info {
 	struct device *ci_dev;
@@ -127,6 +128,9 @@ struct cpu_info {
 	struct x86_64_tss	ci_doubleflt_tss;
 
 	char *ci_doubleflt_stack;
+
+	struct ksensordev	ci_sensordev;
+	struct ksensor		ci_sensor;
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */
@@ -307,6 +311,9 @@ void x86_bus_space_mallocok(void);
 /* powernow-k8.c */
 void k8_powernow_init(struct cpu_info *);
 void k8_powernow_setperf(int);
+
+void est_init(struct cpu_info *);
+void est_setperf(int);
 
 #ifdef MULTIPROCESSOR
 /* mp_setperf.c */
