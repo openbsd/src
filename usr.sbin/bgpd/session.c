@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.274 2007/05/15 14:47:36 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.275 2007/05/29 02:27:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1373,13 +1373,13 @@ session_open(struct peer *p)
 		errs += session_capa_add(p, opb, CAPA_REFRESH, 0, &optparamlen);
 
 	/* End-of-RIB marker, RFC 4724 */
-	if (p->capa.ann.restart) {	/* 4 bytes data */
-		u_char	c[4];
+	if (p->capa.ann.restart) {	/* 2 bytes data */
+		u_char		c[2];
 
-		bzero(&c, 4);
-		c[0] = 0x80;
-		errs += session_capa_add(p, opb, CAPA_RESTART, 4, &optparamlen);
-		errs += buf_add(opb, &c, 4);
+		bzero(&c, 2);
+		c[0] = 0x80; /* we're always restarting */
+		errs += session_capa_add(p, opb, CAPA_RESTART, 2, &optparamlen);
+		errs += buf_add(opb, &c, 2);
 	}
 
 	/* 4-bytes AS numbers, draft-ietf-idr-as4bytes-13 */
