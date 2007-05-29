@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.31 2007/05/29 00:21:10 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.32 2007/05/29 00:48:04 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1951,7 +1951,7 @@ relay_ssl_ctx_create(struct relay *rlay)
 {
 	struct protocol *proto = rlay->proto;
 	SSL_CTX *ctx;
-	char certfile[PATH_MAX], hbuf[128], *ciphers = NULL;
+	char certfile[PATH_MAX], hbuf[128];
 
 	ctx = SSL_CTX_new(SSLv23_method());
 	if (ctx == NULL)
@@ -1980,10 +1980,7 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if ((proto->sslflags & SSLFLAG_TLSV1) == 0)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
 
-	/* Change the default SSL cipher suite, if specified */
-	if ((ciphers = proto->sslciphers) == NULL)
-		ciphers = SSLCIPHERS_DEFAULT;
-	if (!SSL_CTX_set_cipher_list(ctx, ciphers))
+	if (!SSL_CTX_set_cipher_list(ctx, proto->sslciphers))
 		goto err;
 
 	if (relay_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)

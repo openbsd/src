@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.46 2007/05/29 00:21:10 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.47 2007/05/29 00:48:04 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -455,7 +455,7 @@ struct protocol {
 	u_int8_t		 tcpipttl;
 	u_int8_t		 tcpipminttl;
 	u_int8_t		 sslflags;
-	char			*sslciphers;
+	char			 sslciphers[32];
 	char			 name[MAX_NAME_SIZE];
 	int			 cache;
 	enum prototype		 type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2007/05/29 00:21:10 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.44 2007/05/29 00:48:04 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -558,8 +558,9 @@ proto		: PROTO STRING	{
 			p->type = RELAY_PROTO_TCP;
 			p->tcpflags = TCPFLAG_DEFAULT;
 			p->sslflags = SSLFLAG_DEFAULT;
-			p->sslciphers = NULL;
 			p->tcpbacklog = RELAY_BACKLOG;
+			(void)strlcpy(p->sslciphers, SSLCIPHERS_DEFAULT,
+			    sizeof(p->sslciphers));
 			if (last_proto_id == INT_MAX) {
 				yyerror("too many protocols defined");
 				YYERROR;
@@ -712,9 +713,13 @@ sslflags_l	: sslflags comma sslflags_l
 
 sslflags	: SESSION CACHE sslcache	{ proto->cache = $3; }
 		| CIPHERS STRING		{
-			proto->sslciphers = strdup($2);
-			if (proto->sslciphers == NULL)
-				fatal("out of memory");
+			if (strlcpy(proto->sslciphers, $2,
+			    sizeof(proto->sslciphers)) >=
+			    sizeof(proto->sslciphers)) {
+				yyerror("sslciphers truncated");
+				free($2);
+				YYERROR;
+			}
 			free($2);
 		}
 		| NO flag			{ proto->sslflags &= ~($2); }
