@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.50 2007/05/28 21:54:26 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.51 2007/05/29 02:09:45 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -737,6 +737,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	int			i, s, no_chunk, rv = EINVAL, sb = -1, vol;
 	int			no_meta, updatemeta = 0;
 	u_quad_t		vol_size;
+	u_int32_t		sense;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
 	struct sr_chunk		*ch_entry;
@@ -913,7 +914,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT;
 	sd->sd_scsi_sense.segment = 0;
 	sd->sd_scsi_sense.flags = SKEY_NO_SENSE;
-	*(u_int32_t*)sd->sd_scsi_sense.info = htole32(0);
+	sense = htole32(0);
+	bcopy(&sense, sd->sd_scsi_sense.info, sizeof(sense));
 	sd->sd_scsi_sense.extra_len = 0;
 
 	/* use temporary discipline pointer */
