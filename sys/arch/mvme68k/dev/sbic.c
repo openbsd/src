@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.18 2007/05/28 22:17:21 pyr Exp $ */
+/*	$OpenBSD: sbic.c,v 1.19 2007/05/29 13:56:14 pyr Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -644,7 +644,7 @@ sbic_scsidone(acb, stat)
             dosched = 1;    /* start next command */
 
     } else
-    if (TAILQ_LAST(&dev->ready_list) == TAILQ_NEXT(acb, chain)) {
+    if (TAILQ_LAST(&dev->ready_list, acb_list) == TAILQ_NEXT(acb, chain)) {
 
         TAILQ_REMOVE(&dev->ready_list, acb, chain);
 
