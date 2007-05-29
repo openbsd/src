@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.60 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: buf.c,v 1.61 2007/05/29 00:19:10 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -367,10 +367,7 @@ cvs_buf_write_stmp(BUF *b, char *template, struct timeval *tv)
 static void
 cvs_buf_grow(BUF *b, size_t len)
 {
-	void *tmp;
-
-	tmp = xrealloc(b->cb_buf, 1, b->cb_size + len);
-	b->cb_buf = tmp;
+	b->cb_buf = xrealloc(b->cb_buf, 1, b->cb_size + len);
 	b->cb_size += len;
 }
 

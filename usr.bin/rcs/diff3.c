@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.20 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.21 2007/05/29 00:19:10 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.20 2007/02/27 07:59:13 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.21 2007/05/29 00:19:10 ray Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -632,12 +632,10 @@ getline(FILE *b, size_t *n)
 	if (cp[len - 1] != '\n')
 		len++;
 	if (len + 1 > bufsize) {
-		char *newbuf;
 		do {
 			bufsize += 1024;
 		} while (len + 1 > bufsize);
-		newbuf = xrealloc(buf, 1, bufsize);
-		buf = newbuf;
+		buf = xrealloc(buf, 1, bufsize);
 	}
 	memcpy(buf, cp, len - 1);
 	buf[len - 1] = '\n';
@@ -929,25 +927,19 @@ edscript(int n)
 static void
 increase(void)
 {
-	struct diff *p;
-	char *q;
 	size_t newsz, incr;
 
 	/* are the memset(3) calls needed? */
 	newsz = szchanges == 0 ? 64 : 2 * szchanges;
 	incr = newsz - szchanges;
 
-	p = xrealloc(d13, newsz, sizeof(*d13));
-	memset(p + szchanges, 0, incr * sizeof(*d13));
-	d13 = p;
-	p = xrealloc(d23, newsz, sizeof(*d23));
-	memset(p + szchanges, 0, incr * sizeof(*d23));
-	d23 = p;
-	p = xrealloc(de, newsz, sizeof(*de));
-	memset(p + szchanges, 0, incr * sizeof(*de));
-	de = p;
-	q = xrealloc(overlap, newsz, sizeof(*overlap));
-	memset(q + szchanges, 0, incr * sizeof(*overlap));
-	overlap = q;
+	d13 = xrealloc(d13, newsz, sizeof(*d13));
+	memset(d13 + szchanges, 0, incr * sizeof(*d13));
+	d23 = xrealloc(d23, newsz, sizeof(*d23));
+	memset(d23 + szchanges, 0, incr * sizeof(*d23));
+	de = xrealloc(de, newsz, sizeof(*de));
+	memset(de + szchanges, 0, incr * sizeof(*de));
+	overlap = xrealloc(overlap, newsz, sizeof(*overlap));
+	memset(overlap + szchanges, 0, incr * sizeof(*overlap));
 	szchanges = newsz;
 }

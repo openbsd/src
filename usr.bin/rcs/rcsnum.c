@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.6 2007/05/12 17:33:05 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.7 2007/05/29 00:19:10 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -214,7 +214,6 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 {
 	u_int32_t val;
 	const char *sp;
-	void *tmp;
 	char *s;
 
 	if (nump->rn_id == NULL)
@@ -234,9 +233,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 			}
 
 			nump->rn_len++;
-			tmp = xrealloc(nump->rn_id,
+			nump->rn_id = xrealloc(nump->rn_id,
 			    nump->rn_len + 1, sizeof(*(nump->rn_id)));
-			nump->rn_id = tmp;
 			nump->rn_id[nump->rn_len] = 0;
 			continue;
 		}
@@ -297,9 +295,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 
 	/* We can't have a single-digit rcs number. */
 	if (nump->rn_len == 0) {
-		tmp = xrealloc(nump->rn_id,
+		nump->rn_id = xrealloc(nump->rn_id,
 		    nump->rn_len + 1, sizeof(*(nump->rn_id)));
-		nump->rn_id = tmp;
 		nump->rn_id[nump->rn_len + 1] = 0;
 		nump->rn_len++;
 	}
@@ -396,9 +393,6 @@ rcsnum_brtorev(const RCSNUM *brnum)
 static void
 rcsnum_setsize(RCSNUM *num, u_int len)
 {
-	void *tmp;
-
-	tmp = xrealloc(num->rn_id, len, sizeof(*(num->rn_id)));
-	num->rn_id = tmp;
+	num->rn_id = xrealloc(num->rn_id, len, sizeof(*(num->rn_id)));
 	num->rn_len = len;
 }

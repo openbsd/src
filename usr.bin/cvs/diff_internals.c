@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.8 2007/05/28 23:02:40 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.9 2007/05/29 00:19:10 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -295,7 +295,6 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 {
 	FILE *f1, *f2;
 	int i, rval;
-	void *tmp;
 
 	f1 = f2 = NULL;
 	rval = D_SAME;
@@ -351,13 +350,11 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	tmp = xrealloc(member, slen[1] + 2, sizeof(*member));
-	member = tmp;
+	member = xrealloc(member, slen[1] + 2, sizeof(*member));
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	tmp = xrealloc(class, slen[0] + 2, sizeof(*class));
-	class = tmp;
+	class = xrealloc(class, slen[0] + 2, sizeof(*class));
 
 	klist = xcalloc(slen[0] + 2, sizeof(*klist));
 	clen = 0;
@@ -370,17 +367,14 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 	xfree(member);
 	xfree(class);
 
-	tmp = xrealloc(J, diff_len[0] + 2, sizeof(*J));
-	J = tmp;
+	J = xrealloc(J, diff_len[0] + 2, sizeof(*J));
 	unravel(klist[i]);
 	xfree(clist);
 	xfree(klist);
 
-	tmp = xrealloc(ixold, diff_len[0] + 2, sizeof(*ixold));
-	ixold = tmp;
+	ixold = xrealloc(ixold, diff_len[0] + 2, sizeof(*ixold));
 
-	tmp = xrealloc(ixnew, diff_len[1] + 2, sizeof(*ixnew));
-	ixnew = tmp;
+	ixnew = xrealloc(ixnew, diff_len[1] + 2, sizeof(*ixnew));
 	check(f1, f2);
 	output(f1, f2);
 
@@ -428,7 +422,6 @@ files_differ(FILE *f1, FILE *f2)
 static int
 prepare(int i, FILE *fd, off_t filesize)
 {
-	void *tmp;
 	struct line *p;
 	int j, h;
 	size_t sz;
@@ -443,8 +436,7 @@ prepare(int i, FILE *fd, off_t filesize)
 	for (j = 0; (h = readhash(fd));) {
 		if (j == (int)sz) {
 			sz = sz * 3 / 2;
-			tmp = xrealloc(p, sz + 3, sizeof(*p));
-			p = tmp;
+			p = xrealloc(p, sz + 3, sizeof(*p));
 		}
 		p[++j].value = h;
 	}
@@ -578,13 +570,12 @@ stone(int *a, int n, int *b, int *c)
 static int
 newcand(int x, int y, int pred)
 {
-	struct cand *q, *tmp;
+	struct cand *q;
 	int newclistlen;
 
 	if (clen == clistlen) {
 		newclistlen = clistlen * 11 / 10;
-		tmp = xrealloc(clist, newclistlen, sizeof(*clist));
-		clist = tmp;
+		clist = xrealloc(clist, newclistlen, sizeof(*clist));
 		clistlen = newclistlen;
 	}
 	q = clist + clen;
@@ -923,12 +914,10 @@ proceed:
 		 * Allocate change records as needed.
 		 */
 		if (context_vec_ptr == context_vec_end - 1) {
-			struct context_vec *tmp;
 			ptrdiff_t offset = context_vec_ptr - context_vec_start;
 			max_context <<= 1;
-			tmp = xrealloc(context_vec_start, max_context,
-			    sizeof(*context_vec_start));
-			context_vec_start = tmp;
+			context_vec_start = xrealloc(context_vec_start,
+			    max_context, sizeof(*context_vec_start));
 			context_vec_end = context_vec_start + max_context;
 			context_vec_ptr = context_vec_start + offset;
 		}
