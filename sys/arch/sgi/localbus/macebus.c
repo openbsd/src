@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.20 2007/05/03 19:34:01 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.21 2007/05/29 18:10:43 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -653,11 +653,14 @@ macebus_do_pending_int(int newcpl)
 	}
 	if ((ipending & SINT_NETMASK) & ~newcpl) {
 		extern int netisr;
-		int isr = netisr;
-		netisr = 0;
+		int isr;
+
 		atomic_clearbits_int(&ipending, SINT_NETMASK);
+		while ((isr = netisr) != 0) {
+			atomic_clearbits_int(&netisr, isr);
 #define	DONETISR(b,f)	if (isr & (1 << (b)))	f();
 #include <net/netisr_dispatch.h>
+		}
 	}
 
 #ifdef NOTYET

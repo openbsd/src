@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.25 2007/05/29 09:53:57 sobrado Exp $	*/
+/*	$OpenBSD: intr.c,v 1.26 2007/05/29 18:10:43 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -50,6 +50,7 @@
 
 #include <net/netisr.h>
 
+#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
@@ -131,19 +132,21 @@ int
 softnet(fp)
 	void *fp;
 {
-	int n, s;
+	int n;
 	
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
+	while ((n = netisr) != 0) {
+		atomic_clearbits_int(&netisr, n);
 	
-#define DONETISR(bit, fn) do {		\
-	if (n & (1 << bit))		\
-		fn();			\
-} while (0)
+#define DONETISR(bit, fn)						\
+		do {							\
+			if (n & (1 << bit))				\
+				fn();					\
+		} while (0)
+
 #include <net/netisr_dispatch.h>
+
 #undef DONETISR
+	}
 	return (1);
 }
 

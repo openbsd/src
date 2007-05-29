@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.32 2007/03/20 20:59:53 kettenis Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.33 2007/05/29 18:10:42 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -46,6 +46,7 @@
 #include <uvm/uvm.h>
 #include <ddb/db_var.h>
 
+#include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
@@ -582,10 +583,13 @@ mac_intr_do_pending_int()
 		}
 		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
 			extern int netisr;
-			int pisr = netisr;
-			netisr = 0;
+			int pisr;
+
 			ci->ci_ipending &= ~SINT_NET;
-			softnet(pisr);
+			while ((pisr = netisr) != 0) {
+				atomic_clearbits_int(&netisr, pisr);
+				softnet(pisr);
+			}
 		}
 		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_TTY;

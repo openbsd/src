@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.5 2007/05/10 17:59:26 deraadt Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.6 2007/05/29 18:10:43 miod Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #include <sh/trap.h>
 #include <sh/intcreg.h>
 #include <sh/tmureg.h>
+#include <machine/atomic.h>
 #include <machine/intr.h>
 
 void intc_intr_priority(int, int);
@@ -685,21 +686,21 @@ softintr_disestablish(void *arg)
 void
 netintr(void)
 {
+	int n;
+
+	while ((n = netisr) != 0) {
+		atomic_clearbits_int(&netisr, n);
+
 #define	DONETISR(bit, fn)						\
-	do {								\
-		if (n & (1 << bit))					\
-			fn();						\
-	} while (/*CONSTCOND*/0)
+		do {							\
+			if (n & (1 << bit))				\
+				fn();					\
+		} while (/*CONSTCOND*/0)
 
-	int s, n;
-
-	s = splnet();
-	n = netisr;
-	netisr = 0;
-	splx(s);
 #include <net/netisr_dispatch.h>
 
 #undef DONETISR
+	}
 }
 
 /*

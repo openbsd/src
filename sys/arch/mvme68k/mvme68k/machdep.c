@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.103 2007/05/27 17:31:56 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.104 2007/05/29 18:10:43 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -90,6 +90,7 @@
 #endif
 #include <sys/evcount.h>
 
+#include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/kcore.h>
@@ -848,15 +849,21 @@ void
 netintr(arg)
 	void *arg;
 {
-#define DONETISR(bit, fn) \
-	do { \
-		if (netisr & (1 << (bit))) { \
-			netisr &= ~(1 << (bit)); \
-			(fn)(); \
-		} \
-	} while (0)
+	int n;
+
+	while ((n = netisr) != 0) {
+		atomic_clearbits_int(&netisr, n);
+
+#define DONETISR(bit, fn)						\
+		do {							\
+			if (n & (1 << (bit)))				\
+				(fn)();					\
+		} while (0)
+
 #include <net/netisr_dispatch.h>
+
 #undef DONETISR
+	}
 }
 
 /*

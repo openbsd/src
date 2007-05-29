@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.20 2007/05/19 20:34:34 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.21 2007/05/29 18:10:42 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -59,6 +59,7 @@
 
 #include <machine/asm.h>
 #include <machine/asm_macro.h>
+#include <machine/atomic.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -373,27 +374,32 @@ int netisr;
 void
 dosoftint()
 {
-	int sir = ssir;
+	int sir, n;
+
+	if ((sir = ssir) == 0)
+		return;
 
 	atomic_clearbits_int(&ssir, sir);
+	uvmexp.softs++;
 
 	if (ISSET(sir, SIR_NET)) {
-		uvmexp.softs++;
-#define DONETISR(bit, fn) \
-	do { \
-		if (netisr & (1 << bit)) { \
-			netisr &= ~(1 << bit); \
-			fn(); \
-		} \
-	} while (0)
+		while ((n = netisr) != 0) {
+			atomic_clearbits_int(&netisr, n);
+
+#define DONETISR(bit, fn)						\
+			do {						\
+				if (n & (1 << bit))			\
+					fn();				\
+			} while (0)
+
 #include <net/netisr_dispatch.h>
+
 #undef DONETISR
+		}
 	}
 
-	if (ISSET(sir, SIR_CLOCK)) {
-		uvmexp.softs++;
+	if (ISSET(sir, SIR_CLOCK))
 		softclock();
-	}
 }
 
 int
@@ -403,8 +409,7 @@ spl0()
 
 	s = setipl(IPL_SOFTCLOCK);
 
-	if (ssir)
-		dosoftint();
+	dosoftint();
 
 	setipl(IPL_NONE);
 	return (s);

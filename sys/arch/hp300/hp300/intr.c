@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.16 2006/03/13 19:39:52 brad Exp $	*/
+/*	$OpenBSD: intr.c,v 1.17 2007/05/29 18:10:42 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 
 void	netintr(void);
 
+#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
@@ -283,13 +284,19 @@ int netisr;
 void
 netintr()
 {
-#define	DONETISR(bit, fn) \
-	do { \
-		if (netisr & (1 << (bit))) { \
-			netisr &= ~(1 << (bit)); \
-			(fn)(); \
-		} \
-	} while (0)
+	int n;
+
+	while ((n = netisr) != 0) {
+		atomic_clearbits_int(&netisr, n);
+
+#define	DONETISR(bit, fn)						\
+		do {							\
+			if (n & (1 << (bit)))				\
+				(fn)();					\
+		} while (0)
+
 #include <net/netisr_dispatch.h>
+
 #undef	DONETISR
+	}
 }

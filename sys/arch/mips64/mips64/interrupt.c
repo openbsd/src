@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.26 2007/05/09 19:20:09 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.27 2007/05/29 18:10:43 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -199,11 +199,15 @@ interrupt(struct trap_frame *trapframe)
 	}
 	if ((ipending & SINT_NETMASK) & ~xcpl) {
 		extern int netisr;
-		int isr = netisr;
-		netisr = 0;
+		int isr;
+
 		atomic_clearbits_int(&ipending, SINT_NETMASK);
+		while ((isr = netisr) != 0) {
+			atomic_clearbits_int(&netisr, isr);
+
 #define DONETISR(b,f)   if (isr & (1 << (b)))   f();
 #include <net/netisr_dispatch.h>
+		}
 	}
 
 #ifdef notyet

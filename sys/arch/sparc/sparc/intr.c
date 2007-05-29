@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.30 2007/05/29 09:53:57 sobrado Exp $ */
+/*	$OpenBSD: intr.c,v 1.31 2007/05/29 18:10:43 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -53,6 +53,7 @@
 #include <net/netisr.h>
 #include <net/if.h>
 
+#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
@@ -118,20 +119,22 @@ soft01intr(fp)
 {
 	if (sir.sir_any) {
 		if (sir.sir_which[SIR_NET]) {
-			int n, s;
+			int n;
 
-			s = splhigh();
-			n = netisr;
-			netisr = 0;
-			splx(s);
 			sir.sir_which[SIR_NET] = 0;
-#define DONETISR(bit, fn) \
-	do { \
-		if (n & (1 << bit)) \
-			fn(); \
-	} while (0)
+			while ((n = netisr) != 0) {
+				atomic_clearbits_int(&netisr, n);
+
+#define DONETISR(bit, fn)						\
+				do {					\
+					if (n & (1 << bit))		\
+						fn();			\
+				} while (0)
+
 #include <net/netisr_dispatch.h>
+
 #undef DONETISR
+			}
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;

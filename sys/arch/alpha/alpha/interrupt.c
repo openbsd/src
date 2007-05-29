@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.22 2007/05/05 20:46:34 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.23 2007/05/29 18:10:41 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -492,22 +492,21 @@ int netisr;
 void
 netintr()
 {
-	int n, s;
+	int n;
 
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
+	while ((n = netisr) != 0) {
+		atomic_clearbits_int(&netisr, n);
 
 #define	DONETISR(bit, fn)						\
-	do {								\
-		if (n & (1 << (bit)))					\
-			fn();						\
-	} while (0)
+		do {							\
+			if (n & (1 << (bit)))				\
+				fn();					\
+		} while (0)
 
 #include <net/netisr_dispatch.h>
 
 #undef DONETISR
+	}
 }
 
 struct alpha_soft_intr alpha_soft_intrs[SI_NSOFT];

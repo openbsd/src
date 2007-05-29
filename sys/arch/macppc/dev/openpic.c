@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.39 2007/05/10 15:28:09 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.40 2007/05/29 18:10:43 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -46,6 +46,7 @@
 #include <uvm/uvm.h>
 #include <ddb/db_var.h>
 
+#include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
@@ -501,10 +502,13 @@ openpic_do_pending_int()
 		}
 		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
 			extern int netisr;
-			int pisr = netisr;
-			netisr = 0;
+			int pisr;
+		       
 			ci->ci_ipending &= ~SINT_NET;
-			softnet(pisr);
+			while ((pisr = netisr) != 0) {
+				atomic_clearbits_int(&netisr, pisr);
+				softnet(pisr);
+			}
 		}
 		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_TTY;

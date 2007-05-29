@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.3 2007/05/10 17:59:24 deraadt Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.4 2007/05/29 18:10:42 miod Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/atomic.h>
 #include <machine/intr.h>
 
 struct soft_intrq soft_intrq[SI_NQUEUES];
@@ -179,20 +180,19 @@ int netisr;
 void
 netintr(void)
 {
-	int n, s;
+	int n;
 
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
+	while ((n = netisr) != 0) {
+		atomic_clearbits_int(&netisr, n);
 
 #define	DONETISR(bit, fn)						\
-	do {								\
-		if (n & (1 << (bit)))					\
-			fn();						\
-	} while (/*CONSTCOND*/0)
+		do {							\
+			if (n & (1 << (bit)))				\
+				fn();					\
+		} while (/*CONSTCOND*/0)
 
 #include <net/netisr_dispatch.h>
 
 #undef DONETISR
+	}
 }
