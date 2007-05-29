@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.9 2007/05/29 00:19:10 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.10 2007/05/29 08:02:59 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -571,12 +571,10 @@ static int
 newcand(int x, int y, int pred)
 {
 	struct cand *q;
-	int newclistlen;
 
 	if (clen == clistlen) {
-		newclistlen = clistlen * 11 / 10;
-		clist = xrealloc(clist, newclistlen, sizeof(*clist));
-		clistlen = newclistlen;
+		clistlen = clistlen * 11 / 10;
+		clist = xrealloc(clist, clistlen, sizeof(*clist));
 	}
 	q = clist + clen;
 	q->x = x;
