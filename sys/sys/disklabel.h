@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.29 2007/05/29 06:28:14 otto Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.30 2007/05/29 16:26:53 thib Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -163,12 +163,7 @@ struct disklabel {
 		u_int16_t p_sizeh;	/* number of sectors (high part) */
 		u_int8_t p_fstype;	/* filesystem type, see below */
 		u_int8_t p_fragblock;	/* encoded filesystem frag/block */
-		union {
-			u_int16_t cpg;	/* UFS: FS cylinders per group */
-			u_int16_t sgs;	/* LFS: FS segment shift */
-		} __partition_u1;
-#define	p_cpg	__partition_u1.cpg
-#define	p_sgs	__partition_u1.sgs
+		u_int16_t p_cpg;	/* UFS: FS cylinders per group */
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
 };
 
