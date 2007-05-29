@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.37 2007/05/29 05:08:20 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.38 2007/05/29 06:28:15 otto Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -201,6 +201,7 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
+	cvtdisklabelv1(lp);
 	return (msg);
 }
 
@@ -501,8 +502,8 @@ static struct {int m; int b;} maptab[] = {
 		lp->d_partitions[bsd].p_size = dlp->partitions[i].blocks;
 		lp->d_partitions[bsd].p_fstype = maptab[i].b;
 		if (lp->d_partitions[bsd].p_fstype == FS_BSDFFS) {
-			lp->d_partitions[bsd].p_fsize = 1024;
-			lp->d_partitions[bsd].p_frag = 8;
+			lp->d_partitions[bsd].p_fragblock =
+			    DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
 			lp->d_partitions[bsd].p_cpg = 16;
 		}
 	}
@@ -561,8 +562,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 		 */
 		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
 			npp->p_fstype = opp->p_fstype;
-			npp->p_fsize = opp->p_fsize;
-			npp->p_frag = opp->p_frag;
+			npp->p_fragblock = opp->p_fragblock;
 			npp->p_cpg = opp->p_cpg;
 		}
 	}

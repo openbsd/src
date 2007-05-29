@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.64 2007/05/20 11:28:06 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.65 2007/05/29 06:28:16 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 	mode_t mfsmode = 0;
 	char *fstype = NULL;
 	char **saveargv = argv;
-	int ffs = 1;
+	int ffsflag = 1;
 	const char *errstr;
 
 	if (strstr(__progname, "mfs"))
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 		case 't':
 			fstype = optarg;
 			if (strcmp(fstype, "ffs"))
-				ffs = 0;
+				ffsflag = 0;
 			break;
 #ifdef MFS
 		case 'P':
@@ -283,13 +283,13 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
-		if (!ffs)
+		if (!ffsflag)
 			break;
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (ffs && argc - mfs != 1)
+	if (ffsflag && argc - mfs != 1)
 		usage();
 
 	/* Increase our data size to the max */
@@ -335,8 +335,8 @@ main(int argc, char *argv[])
 		mfsfakelabel.d_interleave = 1;
 		mfsfakelabel.d_npartitions = 1;
 		mfsfakelabel.d_partitions[0].p_size = 16384;
-		mfsfakelabel.d_partitions[0].p_fsize = 1024;
-		mfsfakelabel.d_partitions[0].p_frag = 8;
+		mfsfakelabel.d_partitions[0].p_fragblock =
+		    DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
 		mfsfakelabel.d_partitions[0].p_cpg = 16;
 
 		lp = &mfsfakelabel;
@@ -428,12 +428,12 @@ havelabel:
 			fatal("%s: no default sector size", argv[0]);
 	}
 	if (fsize == 0) {
-		fsize = pp->p_fsize;
+		fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		if (fsize <= 0)
 			fsize = MAX(DFL_FRAGSIZE, lp->d_secsize);
 	}
 	if (bsize == 0) {
-		bsize = pp->p_frag * pp->p_fsize;
+		bsize = DISKLABELV1_FFS_BSIZE(pp->p_fragblock);
 		if (bsize <= 0)
 			bsize = MIN(DFL_BLKSIZE, 8 * fsize);
 	}

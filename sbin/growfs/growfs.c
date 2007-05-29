@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.18 2007/04/23 10:18:30 pedro Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.19 2007/05/29 06:28:16 otto Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.18 2007/04/23 10:18:30 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.19 2007/05/29 06:28:16 otto Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -2093,8 +2093,8 @@ main(int argc, char **argv)
 	/*
 	 * Update the disk label.
 	 */
-	pp->p_fsize = sblock.fs_fsize;
-	pp->p_frag = sblock.fs_frag;
+	pp->p_fragblock =
+	    DISKLABELV1_FFS_FRAGBLOCK(sblock.fs_fsize, sblock.fs_frag);
 	pp->p_cpg = sblock.fs_cpg;
 
 	return_disklabel(fso, lp, Nflag);

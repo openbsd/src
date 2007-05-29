@@ -116,16 +116,18 @@ getdiskbyname(const char *name)
 		if (cgetnum(buf, psize, &f) == -1)
 			pp->p_size = 0;
 		else {
+			u_int32_t fsize, frag = 8;
+
 			pp->p_size = f;
 			getnum(pp->p_offset, poffset);
-			getnumdflt(pp->p_fsize, pfsize, 0);
-			if (pp->p_fsize) {
+			getnumdflt(fsize, pfsize, 0);
+			if (fsize) {
 				long bsize;
 
 				if (cgetnum(buf, pbsize, &bsize) == 0)
-					pp->p_frag = bsize / pp->p_fsize;
-				else
-					pp->p_frag = 8;
+					frag = bsize / fsize;
+				pp->p_fragblock =
+				    DISKLABELV1_FFS_FRAGBLOCK(fsize, frag);
 			}
 			getnumdflt(pp->p_fstype, ptype, 0);
 			if (pp->p_fstype == 0 && cgetstr(buf, ptype, &cq) > 0)

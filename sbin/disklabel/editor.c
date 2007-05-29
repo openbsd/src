@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.112 2007/04/29 18:31:35 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.113 2007/05/29 06:28:15 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.112 2007/04/29 18:31:35 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.113 2007/05/29 06:28:15 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -147,7 +147,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		pp->p_offset = 0;
 		pp->p_size = label.d_secperunit;
 		pp->p_fstype = FS_UNUSED;
-		pp->p_fsize = pp->p_frag = pp->p_cpg = 0;
+		pp->p_fragblock = pp->p_cpg = 0;
 	}
 
 #ifdef CYLCHECK
@@ -503,11 +503,11 @@ editor_add(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 	pp->p_fstype = partno == 1 ? FS_SWAP : FS_BSDFFS;
 #if defined (__sparc__) && !defined(__sparc64__)
 	/* can't boot from > 8k boot blocks */
-	pp->p_fsize = partno == 0 ? 1024 : 2048;
+	pp->p_fragblock =
+	    DISKLABELV1_FFS_FRAGBLOCK(partno == 0 ? 1024 : 2048, 8);
 #else
-	pp->p_fsize = 2048;
+	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
 #endif
-	pp->p_frag = 8;
 	pp->p_cpg = 16;
 	old_offset = pp->p_offset;
 	old_size = pp->p_size;
@@ -2054,13 +2054,18 @@ get_size(struct disklabel *lp, int partno, u_int32_t *freep, int new)
 int
 get_fsize(struct disklabel *lp, int partno)
 {
-	u_int32_t ui;
+	u_int32_t ui, fsize, frag;
 	struct partition *pp = &lp->d_partitions[partno];
+	
+	fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
+	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
+	if (fsize == 0)
+		frag = 8;
 
 	for (;;) {
 		ui = getuint(lp, partno, "fragment size",
 		    "Size of fs block fragments.  Usually 2048 or 512.",
-		    pp->p_fsize, pp->p_fsize, 0, 0);
+		    fsize, fsize, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return(1);
@@ -2071,26 +2076,28 @@ get_fsize(struct disklabel *lp, int partno)
 	}
 	if (ui == 0)
 		puts("Zero fragment size implies zero block size");
-	pp->p_fsize = ui;
+	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(ui, frag);
 	return(0);
 }
 
 int
 get_bsize(struct disklabel *lp, int partno)
 {
-	u_int32_t ui;
+	u_int32_t ui, bsize, frag, fsize;
 	struct partition *pp = &lp->d_partitions[partno];
 
 	/* Avoid dividing by zero... */
-	if (pp->p_fsize == 0) {
-		pp->p_frag = 0;
+	if (pp->p_fragblock == 0)
 		return(1);
-	}
+
+	bsize = DISKLABELV1_FFS_BSIZE(pp->p_fragblock);
+	fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
+	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 
 	for (;;) {
 		ui = getuint(lp, partno, "block size",
 		    "Size of filesystem blocks.  Usually 16384 or 4096.",
-		    pp->p_fsize * pp->p_frag, pp->p_fsize * pp->p_frag,
+		    fsize * frag, fsize * frag,
 		    0, 0);
 
 		/* sanity checks */
@@ -2103,16 +2110,16 @@ get_bsize(struct disklabel *lp, int partno)
 			fprintf(stderr,
 			    "Error: block size must be at least as big "
 			    "as page size (%d).\n", getpagesize());
-		else if (ui % pp->p_fsize != 0)
+		else if (ui % fsize != 0)
 			fputs("Error: block size must be a multiple of the "
 			    "fragment size.\n", stderr);
-		else if (ui / pp->p_fsize < 1)
+		else if (ui / fsize < 1)
 			fputs("Error: block size must be at least as big as "
 			    "fragment size.\n", stderr);
 		else
 			break;
 	}
-	pp->p_frag = ui / pp->p_fsize;
+	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(ui / frag, frag);
 	return(0);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.11 2007/05/29 05:08:20 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.12 2007/05/29 06:28:15 otto Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -208,6 +208,7 @@ done:
 		bp->b_flags = B_INVAL | B_AGE | B_READ;
 		brelse(bp);
 	}
+	cvtdisklabelv1(lp);
 	return (msg);
 
 }
@@ -453,8 +454,8 @@ disklabel_om_to_bsd(cp, lp)
 			 * XXX: (Should remove that code from newfs...)
 			 */
 			if (npp->p_fstype == FS_BSDFFS) {
-				npp->p_fsize = 1024;
-				npp->p_frag = 8;
+				npp->p_fragblock =
+				   DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
 				npp->p_cpg = 16;
 			}
 		}

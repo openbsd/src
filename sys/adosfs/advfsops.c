@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.25 2003/08/14 07:46:39 mickey Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.26 2007/05/29 06:28:16 otto Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -200,8 +200,8 @@ adosfs_mountfs(devvp, mp, p)
 		amp->secsperblk = 1;
 	}
 	else {
-		amp->bsize = parp->p_fsize * parp->p_frag;
-		amp->secsperblk = parp->p_frag;
+		amp->bsize = DISKLABELV1_FFS_BSIZE(parp->fragblock);
+		amp->secsperblk = DISKLABELV1_FFS_FRAG(parp->p_fragblock);
 	}
 	amp->rootb = (parp->p_size / amp->secsperblk - 1 + parp->p_cpg) >> 1;
 	amp->numblks = parp->p_size / amp->secsperblk - parp->p_cpg;

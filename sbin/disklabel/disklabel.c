@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.109 2007/05/24 13:01:23 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.110 2007/05/29 06:28:15 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.109 2007/05/24 13:01:23 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.110 2007/05/29 06:28:15 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -388,6 +388,31 @@ makelabel(char *type, char *name, struct disklabel *lp)
 		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
 
+/*
+ * Convert an old disklabel to a v1 disklabel
+ */
+void
+cvtdisklabelv1(struct disklabel *lp)
+{
+	int i;
+
+	if (lp->d_version == 1)
+		return;
+
+	lp->d_version = 1;
+	lp->d_secperunith = 0;
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		struct partition *pp = &lp->d_partitions[i];
+		struct __partitionv0 *v0pp = (struct __partitionv0 *)
+		    &lp->d_partitions[i];
+
+		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(v0pp->p_fsize,
+		    v0pp->p_frag);
+		pp->p_offseth = 0;
+		pp->p_sizeh = 0;	
+	}
+}
+
 int
 writelabel(int f, char *boot, struct disklabel *lp)
 {
@@ -409,6 +434,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
+	cvtdisklabelv1(lp);
 	lp->d_checksum = dkcksum(lp);
 	if (rflag) {
 #ifdef DOSLABEL
@@ -930,8 +956,9 @@ makedisktab(FILE *f, struct disklabel *lp)
 
 			case FS_BSDFFS:
 				(void)fprintf(f, "b%c#%u:", c,
-				    pp->p_fsize * pp->p_frag);
-				(void)fprintf(f, "f%c#%u:", c, pp->p_fsize);
+				    DISKLABELV1_FFS_BSIZE(pp->p_fragblock));
+				(void)fprintf(f, "f%c#%u:", c,
+				    DISKLABELV1_FFS_FSIZE(pp->p_fragblock));
 				break;
 
 			default:
@@ -979,6 +1006,8 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 	p_size = scale(pp->p_size, unit, lp);
 	p_offset = scale(pp->p_offset, unit, lp);
 	if (pp->p_size) {
+		u_int32_t frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
+		u_int32_t fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		if (p_size < 0)
 			fprintf(f, "  %c: %13u %13u ", 'a' + i,
 			    pp->p_size, pp->p_offset);
@@ -994,12 +1023,12 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 
 		case FS_UNUSED:				/* XXX */
 			fprintf(f, "  %5u %5u %4.4s ",
-			    pp->p_fsize, pp->p_fsize * pp->p_frag, "");
+			   fsize, fsize * frag, "");
 			break;
 
 		case FS_BSDFFS:
 			fprintf(f, "  %5u %5u %4hu ",
-			    pp->p_fsize, pp->p_fsize * pp->p_frag,
+			    fsize, fsize * frag,
 			    pp->p_cpg);
 			break;
 
@@ -1274,7 +1303,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	struct partition *pp;
 	char *tp, *s, line[BUFSIZ];
 	int lineno = 0, errors = 0;
-	u_int32_t v;
+	u_int32_t v, fsize;
 
 	lp->d_bbsize = BBSIZE;				/* XXX */
 	lp->d_sbsize = SBSIZE;				/* XXX */
@@ -1527,19 +1556,21 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			case FS_UNUSED:				/* XXX */
 				if (tp == NULL)	/* ok to skip fsize/bsize */
 					break;
-				NXTNUM(pp->p_fsize, pp->p_fsize, &errstr);
-				if (pp->p_fsize == 0)
+				NXTNUM(fsize, fsize, &errstr);
+				if (fsize == 0)
 					break;
 				NXTNUM(v, v, &errstr);
-				pp->p_frag = v / pp->p_fsize;
+				pp->p_fragblock =
+				    DISKLABELV1_FFS_FRAGBLOCK(fsize, v / fsize);
 				break;
 
 			case FS_BSDFFS:
-				NXTNUM(pp->p_fsize, pp->p_fsize, &errstr);
-				if (pp->p_fsize == 0)
+				NXTNUM(fsize, fsize, &errstr);
+				if (fsize == 0)
 					break;
 				NXTNUM(v, v, &errstr);
-				pp->p_frag = v / pp->p_fsize;
+				pp->p_fragblock =
+				    DISKLABELV1_FFS_FRAGBLOCK(fsize, v / fsize);
 				NXTNUM(pp->p_cpg, pp->p_cpg, &errstr);
 				break;
 
@@ -1642,10 +1673,12 @@ checklabel(struct disklabel *lp)
 			    part);
 			errors++;
 		}
+#if 0
 		if (pp->p_frag == 0 && pp->p_fsize != 0) {
 			warnx("partition %c: block size < fragment size", part);
 			errors++;
 		}
+#endif
 	}
 	for (; i < MAXPARTITIONS; i++) {
 		part = 'a' + i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.63 2007/05/19 20:12:50 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.64 2007/05/29 06:28:16 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -593,8 +593,8 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 * be updated on disk.
 	 */
 	pp->p_fstype = FS_BSDFFS;
-	pp->p_fsize = sblock.fs_fsize;
-	pp->p_frag = sblock.fs_frag;
+	pp->p_fragblock =
+	    DISKLABELV1_FFS_FRAGBLOCK(sblock.fs_fsize, sblock.fs_frag);
 	pp->p_cpg = sblock.fs_cpg;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.39 2007/04/10 19:02:26 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.40 2007/05/29 06:28:15 otto Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -267,10 +267,13 @@ spec_read(v)
 		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
 		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
-			if (dpart.part->p_fstype == FS_BSDFFS &&
-			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
-				bsize = dpart.part->p_frag *
-				    dpart.part->p_fsize;
+			u_int32_t frag =
+			    DISKLABELV1_FFS_FRAG(dpart.part->p_fragblock);
+			u_int32_t fsize =
+			    DISKLABELV1_FFS_FSIZE(dpart.part->p_fragblock);
+			if (dpart.part->p_fstype == FS_BSDFFS && frag != 0 &&
+			    fsize != 0)
+				bsize = frag * fsize;
 		}
 		bscale = btodb(bsize);
 		do {
@@ -363,10 +366,13 @@ spec_write(v)
 		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
 		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
-			if (dpart.part->p_fstype == FS_BSDFFS &&
-			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
-				bsize = dpart.part->p_frag *
-				    dpart.part->p_fsize;
+			u_int32_t frag =
+			    DISKLABELV1_FFS_FRAG(dpart.part->p_fragblock);
+			u_int32_t fsize =
+			    DISKLABELV1_FFS_FSIZE(dpart.part->p_fragblock);
+			if (dpart.part->p_fstype == FS_BSDFFS && frag != 0 &&
+			    fsize != 0)
+				bsize = frag * fsize;
 		}
 		bscale = btodb(bsize);
 		do {

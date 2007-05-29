@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.42 2007/05/18 16:26:38 drahn Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.43 2007/05/29 06:28:15 otto Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -179,6 +179,31 @@ dkcksum(struct disklabel *lp)
 	while (start < end)
 		sum ^= *start++;
 	return (sum);
+}
+
+/*
+ * Convert an old disklabel to a v1 disklabel
+ */
+void
+cvtdisklabelv1(struct disklabel *lp)
+{
+	int i;
+
+	if (lp->d_version == 1)
+		return;
+
+	lp->d_version = 1;
+	lp->d_secperunith = 0;
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		struct partition *pp = &lp->d_partitions[i];
+		struct __partitionv0 *v0pp = (struct __partitionv0 *)
+		    &lp->d_partitions[i];
+
+		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(v0pp->p_fsize,
+		    v0pp->p_frag);
+		pp->p_offseth = 0;
+		pp->p_sizeh = 0;	
+	}
 }
 
 /*

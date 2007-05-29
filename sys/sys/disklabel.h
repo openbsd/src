@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.28 2006/09/26 23:33:04 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.29 2007/05/29 06:28:14 otto Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -145,7 +145,9 @@ struct disklabel {
 	u_int32_t d_flags;		/* generic flags */
 #define NDDATA 5
 	u_int32_t d_drivedata[NDDATA];	/* drive-type specific information */
-#define NSPARE 5
+	u_int16_t d_secperunith;	/* # of data sectors (high part) */
+	u_int16_t d_version;		/* version # (1=48 bit addressing) */
+#define NSPARE 4
 	u_int32_t d_spare[NSPARE];	/* reserved for future use */
 	u_int32_t d_magic2;		/* the magic number (again) */
 	u_int16_t d_checksum;		/* xor of data incl. partitions */
@@ -157,9 +159,10 @@ struct disklabel {
 	struct	partition {		/* the partition table */
 		u_int32_t p_size;	/* number of sectors in partition */
 		u_int32_t p_offset;	/* starting sector */
-		u_int32_t p_fsize;	/* filesystem basic fragment size */
+		u_int16_t p_offseth;	/* starting sector (high part) */
+		u_int16_t p_sizeh;	/* number of sectors (high part) */
 		u_int8_t p_fstype;	/* filesystem type, see below */
-		u_int8_t p_frag;	/* filesystem fragments per block */
+		u_int8_t p_fragblock;	/* encoded filesystem frag/block */
 		union {
 			u_int16_t cpg;	/* UFS: FS cylinders per group */
 			u_int16_t sgs;	/* LFS: FS segment shift */
@@ -168,6 +171,20 @@ struct disklabel {
 #define	p_sgs	__partition_u1.sgs
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
 };
+
+
+struct	__partitionv0 {		/* the partition table */
+	u_int32_t p_size;	/* number of sectors in partition */
+	u_int32_t p_offset;	/* starting sector */
+	u_int32_t p_fsize;	/* filesystem basic fragment size */
+	u_int8_t p_fstype;	/* filesystem type, see below */
+	u_int8_t p_frag;	/* filesystem fragments per block */
+	union {
+		u_int16_t cpg;	/* UFS: FS cylinders per group */
+		u_int16_t sgs;	/* LFS: FS segment shift */
+	} __partitionv0_u1;
+};
+
 #else /* _LOCORE */
 	/*
 	 * offsets for asm boot files.
@@ -180,6 +197,17 @@ struct disklabel {
 	.set	d_secperunit,60
 	.set	d_end_,404		/* size of disk label */
 #endif /* _LOCORE */
+
+
+#define DISKLABELV1_FFS_FRAGBLOCK(fsize, frag) 			\
+	((fsize) * (frag) == 0 ? 0 :				\
+	(((ffs((fsize) * (frag)) - 13) << 3) | (ffs(frag))))
+
+#define DISKLABELV1_FFS_BSIZE(i) ((i) == 0 ? 0 : (1 << (((i) >> 3) + 12)))
+#define DISKLABELV1_FFS_FRAG(i) ((i) == 0 ? 0 : (1 << (((i) & 0x07) - 1)))
+#define DISKLABELV1_FFS_FSIZE(i) ((i) == 0 ? 0 : \
+	(DISKLABELV1_FFS_BSIZE(i) / DISKLABELV1_FFS_FRAG(i)))
+
 
 /* d_type values: */
 #define	DTYPE_SMD		1		/* SMD, XSMD; VAX hp/up */
@@ -354,6 +382,7 @@ struct partinfo {
 void	 diskerr(struct buf *, char *, char *, int, int, struct disklabel *);
 void	 disksort(struct buf *, struct buf *);
 u_int	 dkcksum(struct disklabel *);
+void	 cvtdisklabelv1(struct disklabel *);
 int	 setdisklabel(struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *);
 char	*readdisklabel(dev_t, void (*)(struct buf *), struct disklabel *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.38 2007/05/29 05:08:20 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.39 2007/05/29 06:28:15 otto Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -147,6 +147,7 @@ done:
 		bp->b_flags = B_INVAL | B_AGE | B_READ;
 		brelse(bp);
 	}
+	cvtdisklabelv1(lp);
 	return (msg);
 }
 
@@ -202,8 +203,7 @@ setdisklabel(olp, nlp, openmask, clp)
 		 */
 		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
 			npp->p_fstype = opp->p_fstype;
-			npp->p_fsize = opp->p_fsize;
-			npp->p_frag = opp->p_frag;
+			npp->p_fragblock = opp->p_fragblock;
 			npp->p_cpg = opp->p_cpg;
 		}
 	}

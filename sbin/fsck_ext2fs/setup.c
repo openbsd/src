@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.13 2005/04/30 13:56:16 niallo Exp $	*/
+/*	$OpenBSD: setup.c,v 1.14 2007/05/29 06:28:15 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -441,8 +441,8 @@ calcsb(char *dev, int devfd, struct m_ext2fs *fs)
 		return (0);
 	}
 	memset(fs, 0, sizeof(struct m_ext2fs));
-	fs->e2fs_bsize = pp->p_fsize;
-	fs->e2fs.e2fs_log_bsize = pp->p_fsize / 1024;
+	fs->e2fs_bsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock); /* XXX */
+	fs->e2fs.e2fs_log_bsize = fs->e2fs_bsize / 1024;
 	fs->e2fs.e2fs_bcount = (pp->p_size * DEV_BSIZE) / fs->e2fs_bsize;
 	fs->e2fs.e2fs_first_dblock = (fs->e2fs.e2fs_log_bsize == 0) ? 1 : 0;
 	fs->e2fs.e2fs_bpg = fs->e2fs_bsize * NBBY;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.34 2007/04/18 20:49:46 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.35 2007/05/29 06:28:15 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.34 2007/04/18 20:49:46 otto Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.35 2007/05/29 06:28:15 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -638,8 +638,8 @@ calcsb(char *dev, int devfd, struct fs *fs)
 		return (0);
 	}
 	memset(fs, 0, sizeof(struct fs));
-	fs->fs_fsize = pp->p_fsize;
-	fs->fs_frag = pp->p_frag;
+	fs->fs_fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
+	fs->fs_frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 	fs->fs_bsize = fs->fs_fsize * fs->fs_frag;
 	fs->fs_cpg = pp->p_cpg;
 	fs->fs_nspf = fs->fs_fsize / lp->d_secsize;
