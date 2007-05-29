@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.29 2007/05/29 23:19:18 pyr Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.30 2007/05/29 23:58:30 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -254,18 +254,18 @@ main(int argc, char *argv[])
 		imsg_init(ibuf, pipe_parent2relay[c][1], main_dispatch_relay);
 		ibuf->events = EV_READ;
 		event_set(&ibuf->ev, ibuf->fd, ibuf->events,
-		    ibuf->handler, ibuf);
+		    ibuf->handler, env);
 		event_add(&ibuf->ev, NULL);
 	}
 
 	ibuf_pfe->events = EV_READ;
 	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
-	    ibuf_pfe->handler, ibuf_pfe);
+	    ibuf_pfe->handler, env);
 	event_add(&ibuf_pfe->ev, NULL);
 
 	ibuf_hce->events = EV_READ;
 	event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
-	    ibuf_hce->handler, ibuf_hce);
+	    ibuf_hce->handler, env);
 	event_add(&ibuf_hce->ev, NULL);
 
 	if (env->flags & F_DEMOTE)
@@ -442,6 +442,7 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 	struct imsg		 imsg;
 	ssize_t			 n;
 	struct ctl_demote	 demote;
+	struct hoststated	*env = ptr;
 
 	ibuf = ptr;
 	switch (event) {
@@ -497,7 +498,7 @@ main_dispatch_hce(int fd, short event, void * ptr)
 	struct imsg		 imsg;
 	ssize_t			 n;
 	struct ctl_script	 scr;
-	struct hoststated	*env;
+	struct hoststated	*env = ptr;
 
 	env = hoststated_env;
 	ibuf = ptr;
@@ -550,6 +551,7 @@ main_dispatch_relay(int fd, short event, void * ptr)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
+	struct hoststated	*env = ptr;
 
 	ibuf = ptr;
 	switch (event) {
