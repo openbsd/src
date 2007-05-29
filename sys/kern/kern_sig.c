@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.91 2007/05/08 14:16:36 miod Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.92 2007/05/29 00:03:18 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1358,17 +1358,20 @@ coredump(struct proc *p)
 	struct vattr vattr;
 	int error, error1;
 	char name[MAXCOMLEN+6];		/* progname.core */
+	char *dir = "";
 	struct core core;
 
 	/*
 	 * Don't dump if not root and the process has used set user or
 	 * group privileges.
 	 */
-	if ((p->p_flag & P_SUGID) &&
-	    (error = suser(p, 0)) != 0)
-		return (error);
-	if ((p->p_flag & P_SUGID) && nosuidcoredump)
-		return (EPERM);
+	if (((p->p_flag & P_SUGID) && (error = suser(p, 0))) ||
+	   ((p->p_flag & P_SUGID) && nosuidcoredump)) {
+		if (nosuidcoredump == 2)
+			dir = "/var/crash/";
+		else
+			return (EPERM);
+	}
 
 	/* Don't dump if will exceed file size limit. */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
@@ -1382,7 +1385,7 @@ coredump(struct proc *p)
 	cred->cr_uid = p->p_cred->p_ruid;
 	cred->cr_gid = p->p_cred->p_rgid;
 
-	snprintf(name, sizeof name, "%s.core", p->p_comm);
+	snprintf(name, sizeof name, "%s%s.core", dir, p->p_comm);
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
