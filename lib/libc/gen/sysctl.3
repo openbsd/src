@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.166 2007/05/10 08:56:08 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.167 2007/05/29 00:09:45 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -605,6 +605,9 @@ Number of open files.
 The maximum number of supplemental groups.
 .It Dv KERN_NOSUIDCOREDUMP
 Programs with their set-user-ID bit set will not dump core when this is set.
+The special value of 2 means that core dumps will be allowed, but placed
+in
+.Pa /var/crash .
 .It Dv KERN_NPROCS
 The number of entries in the kernel process table.
 .It Dv KERN_NSELCOLL
