@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.14 2007/05/27 21:06:05 jason Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.15 2007/05/29 02:36:19 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -433,6 +433,7 @@ void	pmap_prealloc_lowmem_ptps(void);
 
 void	pagezero(vaddr_t);
 
+#define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /*

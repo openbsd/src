@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2007/05/27 08:58:31 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 2007/05/29 02:36:19 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2376,15 +2376,16 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 	struct pmap *kpm = pmap_kernel();
 
 	if (uvm.page_init_done == FALSE) {
+		vaddr_t va;
+
 		/*
 		 * we're growing the kernel pmap early (from
 		 * uvm_pageboot_alloc()).  this case must be
 		 * handled a little differently.
 		 */
 
-		if (uvm_page_physget(paddrp) == FALSE)
-			panic("pmap_get_physpage: out of memory");
-		memset((void *)PMAP_DIRECT_MAP(*paddrp), 0, PAGE_SIZE);
+		va = pmap_steal_memory(PAGE_SIZE, NULL, NULL);
+		*paddrp = PMAP_DIRECT_UNMAP(va);
 	} else {
 		ptp = uvm_pagealloc(&kpm->pm_obj[level - 1],
 				    ptp_va2o(va, level), NULL,
@@ -2508,6 +2509,68 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	splx(s);
 
 	return maxkvaddr;
+}
+
+vaddr_t
+pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
+{
+	int segno;
+	u_int npg;
+	vaddr_t va;
+	paddr_t pa;
+	struct vm_physseg *seg;
+
+	size = round_page(size);
+	npg = atop(size);
+
+	for (segno = 0, seg = vm_physmem; segno < vm_nphysseg; segno++, seg++) {
+		if (seg->avail_end - seg->avail_start < npg)
+			continue;
+		/*
+		 * We can only steal at an ``unused'' segment boundary,
+		 * i.e. either at the start or at the end.
+		 */
+		if (seg->avail_start == seg->start ||
+		    seg->avail_end == seg->end)
+			break;
+	}
+	if (segno == vm_nphysseg) {
+		panic("pmap_steal_memory: out of memory");
+	} else {
+		if (seg->avail_start == seg->start) {
+			pa = ptoa(seg->avail_start);
+			seg->avail_start += npg;
+			seg->start += npg;
+		} else {
+			pa = ptoa(seg->avail_end) - size;
+			seg->avail_end -= npg;
+			seg->end -= npg;
+		}
+		/*
+		 * If all the segment has been consumed now, remove it.
+		 * Note that the crash dump code still knows about it
+		 * and will dump it correctly.
+		 */
+		if (seg->start == seg->end) {
+			if (vm_nphysseg-- == 1)
+				panic("pmap_steal_memory: out of memory");
+			while (segno < vm_nphysseg) {
+				seg[0] = seg[1]; /* struct copy */
+				seg++;
+				segno++;
+			}
+		}
+
+		va = PMAP_DIRECT_MAP(pa);
+		memset((void *)va, 0, size);
+	}
+
+	if (start != NULL)
+		*start = virtual_avail;
+	if (end != NULL)
+		*end = VM_MAX_KERNEL_ADDRESS;
+
+	return (va);
 }
 
 #ifdef DEBUG
