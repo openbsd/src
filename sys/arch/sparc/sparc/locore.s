@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.71 2007/05/08 07:23:18 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.72 2007/05/29 09:54:01 sobrado Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -3646,7 +3646,7 @@ remap_done:
 	nop
 
 	/*
-	 * Ok, we have a non-Mbus TI Viking, a MicroSparc.
+	 * Ok, we have a non-MBus TI Viking, a MicroSparc.
 	 * In this scenerio, in order to play with the MMU
 	 * passthrough safely, we need turn off traps, flip
 	 * the AC bit on in the mmu status register, do our
@@ -3677,7 +3677,7 @@ remap_done:
 
 	/*
 	 * The following is generic and should work on all
-	 * Mbus based SRMMU's.
+	 * MBus based SRMMU's.
 	 */
 remap_notvik:
 	set	SRMMU_CXTPTR, %o0
