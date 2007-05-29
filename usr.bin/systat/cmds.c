@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.15 2007/04/24 06:32:08 tedu Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.16 2007/05/29 20:56:54 tedu Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.15 2007/04/24 06:32:08 tedu Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.16 2007/05/29 20:56:54 tedu Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -179,7 +179,7 @@ void
 status(void)
 {
 
-	error("Showing %s, refresh every %f seconds.",
+	error("Showing %s, refresh every %.1f seconds.",
 	    curcmd->c_name, naptime);
 }
 
