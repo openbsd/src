@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.1 2007/03/22 19:26:28 kettenis Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.2 2007/05/29 20:22:10 drahn Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn
@@ -51,6 +51,10 @@ ENTRY(mtx_enter)
 	cmpwi	0,%r6,0				# test owner == 0
 	beq+	0,.L_mutex_free			# if owner == 0 branch free
 .L_mutex_locked:
+#ifdef DIAGNOSTIC
+	cmpl	0,%r4,%r6
+	beq-	.L_mutex_selflocked
+#endif
 	stw	%r3,28(%r1)			# save mtx during lcsplx
 	la	%r4,28(%r1)
 	stwcx.	%r3,0,%r4			# unreserve owner
@@ -67,6 +71,16 @@ ENTRY(mtx_enter)
 	mtlr	%r0
 	addi	%r1,%r1,32			# restore stack
 	blr
+
+#ifdef DIAGNOSTIC
+.L_mutex_selflocked:
+	mr	%r5, %r3
+	lis	%r3,.L_panicstr@ha
+	la	%r3,.L_panicstr@l(%r3)
+	bl 	panic
+.L_panicstr:
+	.string "mtx_enter: recursed %x %x\n"
+#endif
 
 
 ENTRY(mtx_leave)
