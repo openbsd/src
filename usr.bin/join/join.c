@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.19 2007/04/23 19:21:24 millert Exp $	*/
+/* $OpenBSD: join.c,v 1.20 2007/05/29 18:29:26 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static const char rcsid[] = "$OpenBSD: join.c,v 1.19 2007/04/23 19:21:24 millert Exp $";
+static const char rcsid[] = "$OpenBSD: join.c,v 1.20 2007/05/29 18:29:26 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -649,7 +649,7 @@ usage(void)
 	len = strlen(__progname) + sizeof("usage: ");
 	(void)fprintf(stderr, "usage: %s [-1 field] [-2 field] "
 	    "[-a file_number | -v file_number] [-e string]\n"
-	    "%*s[-j file_number field] [-o list] [-t char] file1 file2\n",
+	    "%*s[-o list] [-t char] file1 file2\n",
 	    __progname, len, "");
 	exit(1);
 }
