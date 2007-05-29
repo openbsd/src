@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.22 2007/05/14 11:22:00 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.23 2007/05/29 10:40:20 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -112,7 +112,7 @@ sub find($$)
 sub find_all
 {
 	my ($plist, $state) = @_;
-	my $pkgname = $plist->pkgname();
+	my $pkgname = $plist->pkgname;
 
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
 	$plist->{conflicts} = $l;
