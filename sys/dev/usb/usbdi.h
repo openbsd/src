@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.25 2005/09/20 08:03:59 dlg Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.26 2007/05/29 01:43:44 claudio Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -88,10 +88,6 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
-
-#if defined(__FreeBSD__)
-#define USB_CDEV_MAJOR 108
-#endif
 
 #define DEVINFOSIZE 1024
 
@@ -235,7 +231,6 @@ struct usb_attach_arg {
 	int			nifaces; /* number of interfaces */
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 /* Match codes. */
 /* First five codes is for a whole device. */
 #define UMATCH_VENDOR_PRODUCT_REV			14
@@ -256,30 +251,6 @@ struct usb_attach_arg {
 #define UMATCH_GENERIC					 1
 /* No match */
 #define UMATCH_NONE					 0
-
-#elif defined(__FreeBSD__)
-/* FreeBSD needs values less than zero */
-#define UMATCH_VENDOR_PRODUCT_REV			(-10)
-#define UMATCH_VENDOR_PRODUCT				(-20)
-#define UMATCH_VENDOR_DEVCLASS_DEVPROTO			(-30)
-#define UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO		(-40)
-#define UMATCH_DEVCLASS_DEVSUBCLASS			(-50)
-#define UMATCH_VENDOR_PRODUCT_REV_CONF_IFACE		(-60)
-#define UMATCH_VENDOR_PRODUCT_CONF_IFACE		(-70)
-#define UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO		(-80)
-#define UMATCH_VENDOR_IFACESUBCLASS			(-90)
-#define UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO	(-100)
-#define UMATCH_IFACECLASS_IFACESUBCLASS			(-110)
-#define UMATCH_IFACECLASS				(-120)
-#define UMATCH_IFACECLASS_GENERIC			(-130)
-#define UMATCH_GENERIC					(-140)
-#define UMATCH_NONE					(ENXIO)
-
-#endif
-
-#if defined(__FreeBSD__)
-int usbd_driver_load(module_t mod, int what, void *arg);
-#endif
 
 /* XXX Perhaps USB should have its own levels? */
 #ifdef USB_USE_SOFTINTR
