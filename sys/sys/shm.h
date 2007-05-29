@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.20 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: shm.h,v 1.21 2007/05/29 10:44:28 sturm Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -77,6 +77,9 @@
  */
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
+#ifdef _KERNEL
+#define	_SHM_RMLINGER	040000	/* Attach even if segment removed */
+#endif
 
 /*
  * Shared memory specific control commands for shmctl().
@@ -169,7 +172,6 @@ void	shminit(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
 int	sysctl_sysvshm(int *, u_int, void *, size_t *, void *, size_t);
-int	sys_shmat1(struct proc *, void *, register_t *, int);
 int	shmctl1(struct proc *, int, int, caddr_t,
 	    int (*)(const void *, void *, size_t),
 	    int (*)(const void *, void *, size_t));

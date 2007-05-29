@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.46 2004/07/15 11:24:46 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.47 2007/05/29 10:44:28 sturm Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ struct shmid_ds **shmsegs;	/* linear mapping of shmid -> shmseg */
 struct pool shm_pool;
 unsigned short *shmseqs;	/* array of shm sequence numbers */
 
-struct shmid_ds *shm_find_segment_by_shmid(int, int);
+struct shmid_ds *shm_find_segment_by_shmid(int);
 
 /*
  * Provides the following externally accessible functions:
@@ -89,6 +89,7 @@ struct shmid_ds *shm_find_segment_by_shmid(int, int);
  */
 
 #define	SHMSEG_REMOVED  	0x0200		/* can't overlap ACCESSPERMS */
+#define	SHMSEG_RMLINGER		0x0400
 
 int shm_last_free, shm_nused, shm_committed;
 
@@ -129,7 +130,7 @@ shm_find_segment_by_key(key_t key)
 }
 
 struct shmid_ds *
-shm_find_segment_by_shmid(int shmid, int findremoved)
+shm_find_segment_by_shmid(int shmid)
 {
 	int segnum;
 	struct shmid_ds *shmseg;
@@ -139,7 +140,7 @@ shm_find_segment_by_shmid(int shmid, int findremoved)
 	    (shmseg = shmsegs[segnum]) == NULL ||
 	    shmseg->shm_perm.seq != IPCID_TO_SEQ(shmid))
 		return (NULL);
-	if (!findremoved && (shmseg->shm_perm.mode & SHMSEG_REMOVED))
+	if ((shmseg->shm_perm.mode & (SHMSEG_REMOVED|SHMSEG_RMLINGER)) == SHMSEG_REMOVED)
 		return (NULL);
 	return (shmseg);
 }
@@ -209,12 +210,6 @@ sys_shmdt(struct proc *p, void *v, register_t *retval)
 int
 sys_shmat(struct proc *p, void *v, register_t *retval)
 {
-	return (sys_shmat1(p, v, retval, 0));
-}
-
-int
-sys_shmat1(struct proc *p, void *v, register_t *retval, int findremoved)
-{
 	struct sys_shmat_args /* {
 		syscallarg(int) shmid;
 		syscallarg(const void *) shmaddr;
@@ -241,7 +236,7 @@ sys_shmat1(struct proc *p, void *v, register_t *retval, int findremoved)
 			shmmap_s->shmid = -1;
 		p->p_vmspace->vm_shm = (caddr_t)shmmap_h;
 	}
-	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid), findremoved);
+	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
 	if (shmseg == NULL)
 		return (EINVAL);
 	error = ipcperm(cred, &shmseg->shm_perm,
@@ -314,7 +309,7 @@ shmctl1(struct proc *p, int shmid, int cmd, caddr_t buf,
 	struct shmid_ds inbuf, *shmseg;
 	int error;
 
-	shmseg = shm_find_segment_by_shmid(shmid, 1);
+	shmseg = shm_find_segment_by_shmid(shmid);
 	if (shmseg == NULL)
 		return (EINVAL);
 	switch (cmd) {
@@ -446,7 +441,7 @@ shmget_allocate_segment(struct proc *p,
 
 	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = cred->cr_uid;
 	shmseg->shm_perm.cgid = shmseg->shm_perm.gid = cred->cr_gid;
-	shmseg->shm_perm.mode = (mode & ACCESSPERMS);
+	shmseg->shm_perm.mode = (mode & (ACCESSPERMS|SHMSEG_RMLINGER));
 	shmseg->shm_perm.seq = shmseqs[segnum] = (shmseqs[segnum] + 1) & 0x7fff;
 	shmseg->shm_perm.key = key;
 	shmseg->shm_segsz = SCARG(uap, size);
@@ -471,6 +466,9 @@ sys_shmget(struct proc *p, void *v, register_t *retval)
 	int segnum, mode, error;
 
 	mode = SCARG(uap, shmflg) & ACCESSPERMS;
+	if (SCARG(uap, shmflg) & _SHM_RMLINGER)
+		mode |= SHMSEG_RMLINGER;
+
 	if (SCARG(uap, key) != IPC_PRIVATE) {
 	again:
 		segnum = shm_find_segment_by_key(SCARG(uap, key));
