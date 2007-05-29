@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.54 2007/05/29 16:36:35 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.55 2007/05/29 18:35:00 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -96,6 +96,7 @@ int			sr_create_chunk_meta(struct sr_softc *,
 void			sr_unwind_chunks(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_free_discipline(struct sr_discipline *);
+void			sr_shutdown_discipline(struct sr_discipline *);
 
 /* work units & ccbs */
 int			sr_alloc_ccb(struct sr_discipline *);
@@ -125,6 +126,7 @@ void			sr_raid1_set_vol_state(struct sr_discipline *);
 void			sr_raid1_startwu(struct sr_workunit *);
 
 /* utility functions */
+void			sr_shutdown(void *);
 void			sr_get_uuid(struct sr_uuid *);
 void			sr_print_uuid(struct sr_uuid *, int);
 u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
@@ -132,6 +134,7 @@ int			sr_clear_metadata(struct sr_discipline *);
 int			sr_save_metadata(struct sr_discipline *);
 void			sr_refresh_sensors(void *);
 int			sr_create_sensors(struct sr_discipline *);
+void			sr_delete_sensors(struct sr_discipline *);
 int			sr_boot_assembly(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
 int			sr_validate_metadata(struct sr_softc *, dev_t,
@@ -736,7 +739,7 @@ int
 sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 {
 	dev_t			*dt;
-	int			i, s, no_chunk, rv = EINVAL, sb = -1, vol;
+	int			i, s, no_chunk, rv = EINVAL, vol;
 	int			no_meta, updatemeta = 0;
 	u_quad_t		vol_size;
 	u_int32_t		sense;
@@ -938,7 +941,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	    DEVNAME(sc), dev->dv_xname, sd->sd_link.scsibus);
 
 	sc->sc_dis[sd->sd_link.scsibus] = sd;
-	sb = sd->sd_link.scsibus;
 	for (i = 0, vol = -1; i <= sd->sd_link.scsibus; i++)
 		if (sc->sc_dis[i])
 			vol++;
@@ -955,23 +957,19 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		/* XXX compare scsibus & sdXX to metadata */
 	}
 
-	if (sr_create_sensors(sd) != 0)
+	if (sr_create_sensors(sd))
 		printf("%s: unable to create sensor for %s\n", DEVNAME(sc),
 		    dev->dv_xname);
+	else
+		sd->sd_vol.sv_sensor_valid = 1;
+
+	sd->sd_scsibus_dev = dev2;
+	sd->sd_shutdownhook = shutdownhook_establish(sr_shutdown, sd);
 
 	return (rv);
 
 unwind:
-	if (sb != -1)
-		sc->sc_dis[sb] = NULL;
-
-	/* XXX free scsibus */
-
-	if (sc && cl)
-		sr_unwind_chunks(sc, cl);
-
-	if (sd)
-		sr_free_discipline(sd);
+	sr_shutdown_discipline(sd);
 
 	return (rv);
 }
@@ -985,7 +983,7 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 	struct bdevsw		*bdsw;
 	char			*name;
 	int			maj, unit, part, i, error;
-	quad_t		size;
+	quad_t			size;
 	dev_t			dev;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_open_chunks(%d)\n", DEVNAME(sc), no_chunk);
@@ -1273,11 +1271,36 @@ sr_free_discipline(struct sr_discipline *sd)
 	if (!sd)
 		return;
 
+	DNPRINTF(SR_D_DIS, "%s: sr_free_discipline %s\n",
+	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
 	if (sd->sd_free_resources)
 		sd->sd_free_resources(sd);
 	if (sd->sd_vol.sv_chunks)
 		free(sd->sd_vol.sv_chunks, M_DEVBUF);
 	free(sd, M_DEVBUF);
+}
+
+void
+sr_shutdown_discipline(struct sr_discipline *sd)
+{
+	struct sr_softc		*sc = sd->sd_sc;
+
+	if (!sd || !sc)
+		return;
+
+	DNPRINTF(SR_D_DIS, "%s: sr_shutdown_discipline %s\n",
+	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	sr_delete_sensors(sd);
+
+	if (sd->sd_scsibus_dev)
+		config_detach(sd->sd_scsibus_dev, DETACH_FORCE);
+
+	sr_unwind_chunks(sc, &sd->sd_vol.sv_chunk_list);
+
+	if (sd)
+		sr_free_discipline(sd);
 }
 
 /* RAID 1 functions */
@@ -2496,6 +2519,19 @@ bad:
 	return (1);
 }
 
+void
+sr_shutdown(void *arg)
+{
+	struct sr_discipline	*sd = arg;
+#ifdef SR_DEBUG
+	struct sr_softc		*sc = sd->sd_sc;
+#endif
+	DNPRINTF(SR_D_DIS, "%s: sr_shutdown %s\n",
+	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	sr_shutdown_discipline(sd);
+}
+
 int
 sr_create_sensors(struct sr_discipline *sd)
 {
@@ -2526,6 +2562,20 @@ sr_create_sensors(struct sr_discipline *sd)
 bad:
 	return (rv);
 }
+
+void
+sr_delete_sensors(struct sr_discipline *sd)
+{
+#ifdef SR_DEBUG
+	struct sr_softc		*sc = sd->sd_sc;
+#endif
+	DNPRINTF(SR_D_STATE, "%s: %s: sr_delete_sensors\n",
+	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	if (sd->sd_vol.sv_sensor_valid)
+		sensordev_deinstall(&sd->sd_vol.sv_sensordev);
+}
+
 void
 sr_refresh_sensors(void *arg)
 {

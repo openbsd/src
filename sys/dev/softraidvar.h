@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.22 2007/05/29 08:15:32 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.23 2007/05/29 18:35:00 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -209,6 +209,7 @@ struct sr_volume {
 	/* sensors */
 	struct ksensor		sv_sensor;
 	struct ksensordev	sv_sensordev;
+	int			sv_sensor_valid;
 };
 
 /* RAID 1 */
@@ -236,7 +237,10 @@ struct sr_discipline {
 	/* discipline metadata */
 	struct sr_metadata	*sd_meta;	/* in memory copy of metadata */
 	u_int32_t		sd_meta_flags;
+
 	int			sd_sync;
+	struct device		*sd_scsibus_dev;
+	void			(*sd_shutdownhook)(void *);
 
 	/* discipline volume */
 	struct sr_volume	sd_vol;		/* volume associated */
