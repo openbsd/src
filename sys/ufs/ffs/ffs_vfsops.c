@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.105 2007/05/29 18:40:53 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.106 2007/05/29 19:02:33 otto Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -752,7 +752,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	fs->fs_fmod = 0;
 	fs->fs_flags &= ~FS_UNCLEAN;
 	if (fs->fs_clean == 0) {
-		fs->fs_flags |= FS_UNCLEAN;
 #if 0
 		/*
 		 * It is safe mount unclean file system
@@ -809,6 +808,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 	ffs1_compat_read(fs, ump, sbloc);
 
+	if (fs->fs_clean == 0)
+		fs->fs_flags |= FS_UNCLEAN;
 	fs->fs_ronly = ronly;
 	size = fs->fs_cssize;
 	blks = howmany(size, fs->fs_fsize);
