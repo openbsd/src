@@ -506,7 +506,7 @@ remote_pioctl (d_thread_t *p,
     if (vp != NULL) {
 	struct xfs_node *xn;
 
-	if (vp->v_tag != VT_AFS) {
+	if (vp->v_tag != VT_XFS) {
 	    NNPFSDEB(XDEBSYS, ("xfs_syscall: file is not in afs\n"));
 	    vrele(vp);
 	    error = EINVAL;
