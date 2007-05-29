@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.115 2007/05/29 10:56:22 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.116 2007/05/29 12:36:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1229,6 +1229,38 @@ sub needs_keyword { 0 }
 sub write
 {
 	&OpenBSD::PackingElement::FileBase::write;
+}
+
+sub add_object
+{
+	my ($self, $plist) = @_;
+	$self->{infodir} = $plist->{infodir};
+	$self->SUPER::add_object($plist);
+}
+
+sub infodir
+{
+	my $self = shift;
+	return ${$self->{infodir}};
+}
+
+sub stringize
+{
+	my $self = shift;
+	return $self->category;
+}
+
+sub add
+{
+	my ($class, $plist, @args) = @_;
+
+	$class->SUPER::add($plist, $class->category);
+}
+
+sub fullname
+{
+	my $self = shift;
+	return $self->infodir.'/'.$self->category;
 }
 
 package OpenBSD::PackingElement::FCONTENTS;

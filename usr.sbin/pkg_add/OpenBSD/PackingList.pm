@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.66 2007/05/28 11:35:54 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.67 2007/05/29 12:36:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -53,9 +53,16 @@ use OpenBSD::PackageInfo;
 sub new
 {
 	my $class = shift;
-	my $plist = bless {state => OpenBSD::PackingList::State->new }, $class;
+	my $plist = bless {state => OpenBSD::PackingList::State->new,
+		infodir => \(my $d)}, $class;
 	OpenBSD::PackingElement::File->add($plist, CONTENTS);
 	return $plist;
+}
+
+sub set_infodir
+{
+	my ($self, $dir) = shift;
+	${$self->{infodir}} = $dir;
 }
 
 sub read
@@ -399,6 +406,7 @@ sub from_installation
 	if (defined $plist && $code == \&DependOnly) {
 		$plist_cache->{$pkgname} = $plist;
 	} 
+	$plist->set_infodir(OpenBSD::PackageInfo::installed_info($pkgname));
 	return $plist;
 }
 
@@ -412,7 +420,7 @@ sub to_cache
 			$plist->{$c} = $self->{$c};
 		}
 	}
-	$plist_cache->{$self->pkgname()} = $plist;
+	$plist_cache->{$self->pkgname} = $plist;
 }
 
 sub to_installation
