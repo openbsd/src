@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.22 2007/05/29 06:28:15 otto Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.23 2007/05/29 06:56:30 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -480,7 +480,7 @@ disklabel_sun_to_bsd(cp, lp)
 			npp->p_fstype = sun_fstypes[i+8];
 			if (npp->p_fstype == FS_BSDFFS) {
 				npp->p_fragblock =
-				    DISKLABELV1_FFS_FRAGBLOCK(2048, 8)
+				    DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
 				npp->p_cpg = 16;
 			}
 		}
