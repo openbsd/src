@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.95 2007/05/28 02:13:44 krw Exp $
+#	$OpenBSD: files.isa,v 1.96 2007/05/29 18:21:19 claudio Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -235,13 +235,6 @@ file	dev/isa/if_sm_isa.c		sm_isa
 # RangeLAN2 wireless network
 attach	rln at isa with rln_isa
 file	dev/isa/if_rln_isa.c		rln_isa
-
-# TROPIC based Token-Ring (IBM/3COM)
-define	tr_isa
-file	dev/isa/if_tr_isa.c		tr_isa
-attach	tr at isa with tr_isa: tr_isa, elink
-file	dev/isa/if_tribm_isa.c		tr_isa
-file	dev/isa/if_trtcm_isa.c		tr_isa
 
 #
 # ISA Sound hardware

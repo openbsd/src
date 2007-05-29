@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.399 2007/05/15 15:23:36 art Exp $
+#	$OpenBSD: files,v 1.400 2007/05/29 18:21:19 claudio Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -60,7 +60,6 @@ define	systrace
 define	ether
 define	fddi
 define	sppp
-define	token
 define	wlan
 define	bluetooth
 
@@ -294,10 +293,6 @@ file	dev/ic/i82596.c			ie & (ie_pci | ie_eisa | ie_gsc)
 # Sun GEM Ethernet controllers
 device	gem: ether, ifnet, ifmedia, mii
 file	dev/ic/gem.c			gem
-
-# TROPIC Token-Ring controller
-device	tr: ether, token, ifnet
-file	dev/ic/tropic.c			tr
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
@@ -737,7 +732,7 @@ file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
 file net/if.c
 file net/if_atmsubr.c			atm			needs-flag
-file net/if_ethersubr.c			ether | inet | fddi | token needs-flag
+file net/if_ethersubr.c			ether | inet | fddi	needs-flag
 file net/if_fddisubr.c			fddi
 file net/if_spppsubr.c			sppp
 file net/if_loop.c			loop
@@ -749,7 +744,6 @@ file net/ppp_tty.c			ppp
 file net/bsd-comp.c			ppp_bsdcomp
 file net/ppp-deflate.c			ppp_deflate
 file net/zlib.c				ppp_deflate | ipsec | crypto
-file net/if_tokensubr.c			token			needs-flag
 file net/if_tun.c			tun			needs-count
 file net/if_bridge.c			bridge			needs-count
 file net/bridgestp.c			bridge

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.140 2007/05/28 06:31:01 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.141 2007/05/29 18:21:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -61,9 +61,6 @@
 
 #if NFDDI > 0
 #include <net/if_fddi.h>
-#endif
-#if NTOKEN > 0
-#include <net/if_token.h>
 #endif
 
 #include <crypto/sha1.h>

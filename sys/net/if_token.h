@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_token.h,v 1.6 2003/11/16 20:30:07 avsm Exp $	*/
+/*	$OpenBSD: if_token.h,v 1.7 2007/05/29 18:21:19 claudio Exp $	*/
 /*	$NetBSD: if_token.h,v 1.6 1999/11/19 20:41:19 thorpej Exp $	*/
 
 /*
@@ -100,29 +100,5 @@ struct token_rif {
  * existing structures like llinfo_arp and token_header
  */
 #define TOKEN_RIF(x) ((struct token_rif *) ((x) + 1))
-
-/*
- * This is a kludge to get at the token ring mac header and the source route
- * information after m_adj() has been used on the mbuf.
- * Note that m is always an mbuf with a packet header.
- */
-#define M_TRHSTART(m) \
-	(ALIGN(((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf : &(m)->m_pktdat[0]) \
-	    + sizeof (struct token_header)) - sizeof(struct token_header))
-
-#if defined(_KERNEL)
-/*
- * XXX we need if_ethersubr.c with all these defines
- */
-#define	tokenbroadcastaddr	etherbroadcastaddr
-#define	token_ipmulticast_min	ether_ipmulticast_min
-#define	token_ipmulticast_max	ether_ipmulticast_max
-#define	token_addmulti		ether_addmulti
-#define	token_delmulti		ether_delmulti
-#define	token_sprintf		ether_sprintf
-
-void    token_ifattach(struct ifnet *);
-void	token_input(struct ifnet *, struct mbuf *);
-#endif
 
 #endif /* _NET_IF_TOKEN_H_ */
