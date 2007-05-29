@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.45 2007/05/28 22:11:33 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.46 2007/05/29 00:21:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -469,38 +469,44 @@ struct protocol {
 };
 TAILQ_HEAD(protolist, protocol);
 
-struct relay {
+struct relay_config {
 	objid_t			 id;
 	u_int16_t		 flags;
+	objid_t			 proto;
+	char			 name[MAXHOSTNAMELEN];
+	in_port_t		 port;
+	in_port_t		 dstport;
+	int			 dstmode;
+	int			 dstcheck;
+	int			 dstretry;
+	objid_t			 dsttable;
+	struct sockaddr_storage	 ss;
+	struct sockaddr_storage	 dstss;
+	struct timeval		 timeout;
+};
+
+struct relay {
+	TAILQ_ENTRY(relay)	 entry;
+	struct relay_config	 conf;
 	int			 up;
 	struct protocol		*proto;
-	char			 name[MAXHOSTNAMELEN];
 	int			 s;
-	in_port_t		 port;
-	struct sockaddr_storage	 ss;
 	struct bufferevent	*bev;
 
 	int			 dsts;
-	in_port_t		 dstport;
-	struct sockaddr_storage	 dstss;
 	struct bufferevent	*dstbev;
 
 	struct table		*dsttable;
 	u_int32_t		 dstkey;
 	struct host		*dsthost[RELAY_MAXHOSTS];
 	int			 dstnhosts;
-	int			 dstmode;
-	int			 dstcheck;
-	int			 dstretry;
 
 	struct event		 ev;
-	struct timeval		 timeout;
 	SSL_CTX			*ctx;
 
 	struct ctl_stats	 stats[RELAY_MAXPROC + 1];
 
 	struct sessionlist	 sessions;
-	TAILQ_ENTRY(relay)	 entry;
 };
 TAILQ_HEAD(relaylist, relay);
 
