@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.25 2007/05/29 23:19:18 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.26 2007/05/29 23:42:15 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -319,6 +319,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
+	imsg_event_add(ibuf);
 }
 
 void
