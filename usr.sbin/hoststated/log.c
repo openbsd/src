@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2007/02/22 03:32:39 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.5 2007/05/29 17:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -196,6 +196,8 @@ table_check(enum table_check check)
 		return ("http digest");
 	case CHECK_SEND_EXPECT:
 		return ("send expect");
+	case CHECK_SCRIPT:
+		return ("script");
 	};
 	/* NOTREACHED */
 	return ("invalid");

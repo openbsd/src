@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2007/05/29 00:48:04 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.45 2007/05/29 17:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -108,7 +108,7 @@ typedef struct {
 %token	SERVICE TABLE BACKUP HOST REAL
 %token  CHECK TCP ICMP EXTERNAL REQUEST RESPONSE
 %token  TIMEOUT CODE DIGEST PORT TAG INTERFACE
-%token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH
+%token	VIRTUAL INTERVAL DISABLE STICKYADDR BACKLOG PATH SCRIPT
 %token	SEND EXPECT NOTHING SSL LOADBALANCE ROUNDROBIN CIPHERS COOKIE
 %token	RELAY LISTEN ON FORWARD TO NAT LOOKUP PREFORK NO MARK MARKED
 %token	PROTO SESSION CACHE APPEND CHANGE REMOVE FROM FILTER HASH HEADER
@@ -507,6 +507,17 @@ tableoptsl	: host			{
 				YYERROR;
 			}
 			free($5);
+		}
+		| CHECK SCRIPT STRING {
+			table->conf.check = CHECK_SCRIPT;
+			if (strlcpy(table->conf.path, $3,
+			    sizeof(table->conf.path)) >=
+			    sizeof(table->conf.path)) {
+				yyerror("script path truncated");
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		| REAL port {
 			table->conf.port = $2;
@@ -1167,6 +1178,7 @@ lookup(char *s)
 		{ "retry",		RETRY },
 		{ "roundrobin",		ROUNDROBIN },
 		{ "sack",		SACK },
+		{ "script",		SCRIPT },
 		{ "send",		SEND },
 		{ "service",		SERVICE },
 		{ "session",		SESSION },

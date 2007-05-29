@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.26 2007/05/29 00:58:06 pyr Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.27 2007/05/29 17:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -54,6 +54,8 @@ int		 pipe_pfe2hce[2];
 int		 pipe_parent2relay[RELAY_MAXPROC][2];
 int		 pipe_pfe2relay[RELAY_MAXPROC][2];
 
+struct hoststated	*hoststated_env;
+
 struct imsgbuf	*ibuf_pfe;
 struct imsgbuf	*ibuf_hce;
 struct imsgbuf	*ibuf_relay;
@@ -67,8 +69,6 @@ main_sig_handler(int sig, short event, void *arg)
 {
 	struct hoststated	*env = arg;
 	int			 die = 0;
-
-	log_debug("signal %d", sig);
 
 	switch (sig) {
 	case SIGTERM:
@@ -154,6 +154,7 @@ main(int argc, char *argv[])
 
 	if ((env = parse_config(conffile, opts)) == NULL)
 		exit(1);
+	hoststated_env = env;
 
 	if (env->opts & HOSTSTATED_OPT_NOACTION) {
 		fprintf(stderr, "configuration OK\n");
@@ -485,7 +486,10 @@ main_dispatch_hce(int fd, short event, void * ptr)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
+	struct ctl_script	 scr;
+	struct hoststated	*env;
 
+	env = hoststated_env;
 	ibuf = ptr;
 	switch (event) {
 	case EV_READ:
@@ -510,6 +514,16 @@ main_dispatch_hce(int fd, short event, void * ptr)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_SCRIPT:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(scr))
+				fatalx("main_dispatch_hce: "
+				    "invalid size of script request");
+			bcopy(imsg.data, &scr, sizeof(scr));
+			scr.retval = script_exec(env, &scr);
+			imsg_compose(ibuf_hce, IMSG_SCRIPT,
+			    0, 0, &scr, sizeof(scr));
+			break;
 		default:
 			log_debug("main_dispatch_hce: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -517,6 +531,7 @@ main_dispatch_hce(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
+	imsg_event_add(ibuf);
 }
 
 void

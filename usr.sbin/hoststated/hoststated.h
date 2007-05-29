@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.47 2007/05/29 00:48:04 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.48 2007/05/29 17:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -125,7 +125,8 @@ enum imsg_type {
 	IMSG_DEMOTE,
 	IMSG_STATISTICS,
 	IMSG_RECONF,		/* reconfiguration notifies */
-	IMSG_RECONF_END
+	IMSG_RECONF_END,
+	IMSG_SCRIPT
 };
 
 struct imsg_hdr {
@@ -152,6 +153,11 @@ struct ctl_status {
 struct ctl_id {
 	objid_t		 id;
 	char		 name[MAX_NAME_SIZE];
+};
+
+struct ctl_script {
+	objid_t		 host;
+	int		 retval;
 };
 
 struct ctl_demote {
@@ -342,7 +348,8 @@ enum table_check {
 	CHECK_TCP		= 2,
 	CHECK_HTTP_CODE		= 3,
 	CHECK_HTTP_DIGEST	= 4,
-	CHECK_SEND_EXPECT	= 5
+	CHECK_SEND_EXPECT	= 5,
+	CHECK_SCRIPT		= 6
 };
 
 struct service_config {
@@ -674,6 +681,11 @@ void	 check_icmp(struct hoststated *, struct timeval *);
 
 /* check_tcp.c */
 void	 check_tcp(struct ctl_tcp_event *);
+
+/* check_script.c */
+void	 check_script(struct host *);
+void	 script_done(struct hoststated *, struct ctl_script *);
+int	 script_exec(struct hoststated *, struct ctl_script *);
 
 /* ssl.c */
 void	 ssl_init(struct hoststated *);

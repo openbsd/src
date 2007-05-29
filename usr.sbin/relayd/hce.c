@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.21 2007/05/28 22:11:33 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.22 2007/05/29 17:12:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -46,7 +46,7 @@ void	hce_dispatch_imsg(int, short, void *);
 void	hce_dispatch_parent(int, short, void *);
 void	hce_launch_checks(int, short, void *);
 
-static struct hoststated	*env = NULL;
+static struct hoststated *env = NULL;
 struct imsgbuf		*ibuf_pfe;
 struct imsgbuf		*ibuf_main;
 
@@ -194,19 +194,24 @@ hce_launch_checks(int fd, short event, void *arg)
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if (host->flags & F_DISABLE)
 				continue;
-			if (table->conf.check == CHECK_ICMP) {
+			switch (table->conf.check) {
+			case CHECK_ICMP:
 				schedule_icmp(env, host);
-				continue;
+				break;
+			case CHECK_SCRIPT:
+				check_script(host);
+				break;
+			default:
+				/* Any other TCP-style checks */
+				bzero(&host->cte, sizeof(host->cte));
+				host->last_up = host->up;
+				host->cte.host = host;
+				host->cte.table = table;
+				bcopy(&tv, &host->cte.tv_start,
+				    sizeof(host->cte.tv_start));
+				check_tcp(&host->cte);
+				break;
 			}
-
-			/* Any other TCP-style checks */
-			bzero(&host->cte, sizeof(host->cte));
-			host->last_up = host->up;
-			host->cte.host = host;
-			host->cte.table = table;
-			bcopy(&tv, &host->cte.tv_start,
-			    sizeof(host->cte.tv_start));
-			check_tcp(&host->cte);
 		}
 	}
 	check_icmp(env, &tv);
@@ -359,9 +364,10 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 void
 hce_dispatch_parent(int fd, short event, void * ptr)
 {
-	struct imsgbuf	*ibuf;
-	struct imsg	 imsg;
-	ssize_t		 n;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	struct ctl_script	 scr;
+	ssize_t		 	 n;
 
 	ibuf = ptr;
 	switch (event) {
@@ -387,6 +393,14 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_SCRIPT:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(scr))
+				fatalx("hce_dispatch_parent: "
+				    "invalid size of script request");
+			bcopy(imsg.data, &scr, sizeof(scr));
+			script_done(env, &scr);
+			break;
 		default:
 			log_debug("hce_dispatch_parent: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -394,4 +408,5 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
+	imsg_event_add(ibuf);
 }

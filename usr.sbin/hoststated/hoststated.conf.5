@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.43 2007/05/27 19:21:15 reyk Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.44 2007/05/29 17:12:04 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -204,6 +204,21 @@ If the
 .Ic ssl
 keyword is present,
 the transaction will occur in an SSL tunnel.
+.It Ic check script Ar path
+Execute an external program to check the host state.
+The program will be executed for each host by specifing the host name
+on the command line:
+.Bd -literal -offset indent
+/usr/local/bin/checkload.pl front-www1.private.example.com
+.Ed
+.Pp
+.Xr hoststated 8
+expects a positive return value on success and zero on failure.
+Note that the script will be executed with the privileges of the
+.Qq _hoststated
+user and terminated after
+.Ar timeout
+milliseconds.
 .It Ic check ssl
 Perform a complete SSL handshake with each host to check their availability.
 .It Ic check tcp
