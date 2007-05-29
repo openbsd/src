@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.67 2007/03/18 21:12:27 espie Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.68 2007/05/29 18:24:56 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.67 2007/03/18 21:12:27 espie Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.68 2007/05/29 18:24:56 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,6 +84,7 @@ static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.67 2007/03/18 21:12:27 espi
 
 #include "diff.h"
 #include "pathnames.h"
+#include "xmalloc.h"
 
 /*
  * diff - compare two files.
@@ -153,14 +154,14 @@ static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.67 2007/03/18 21:12:27 espi
  */
 
 struct cand {
-	int x;
-	int y;
-	int pred;
+	int	x;
+	int	y;
+	int	pred;
 };
 
 struct line {
-	int serial;
-	int value;
+	int	serial;
+	int	value;
 } *file[2];
 
 /*
@@ -169,10 +170,10 @@ struct line {
  * understand the highly mnemonic field names)
  */
 struct context_vec {
-	int a;			/* start line in old file */
-	int b;			/* end line in old file */
-	int c;			/* start line in new file */
-	int d;			/* end line in new file */
+	int	a;		/* start line in old file */
+	int	b;		/* end line in old file */
+	int	c;		/* start line in new file */
+	int	d;		/* end line in new file */
 };
 
 static int  *J;			/* will be overlaid on class */
@@ -225,8 +226,6 @@ static int  isqrt(int);
 static int  stone(int *, int, int *, int *);
 static int  readhash(FILE *);
 static int  files_differ(FILE *, FILE *, int);
-static __inline int min(int, int);
-static __inline int max(int, int);
 static char *match_function(const long *, int, FILE *);
 static char *preadline(int, size_t, off_t);
 
@@ -374,7 +373,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 		char *header;
 		char *prargv[] = { "pr", "-h", NULL, "-f", NULL };
 
-		easprintf(&header, "%s %s %s", diffargs, file1, file2);
+		xasprintf(&header, "%s %s %s", diffargs, file1, file2);
 		prargv[2] = header;
 		fflush(stdout);
 		rewind(stdout);
@@ -383,7 +382,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 		case -1:
 			warnx("No more processes");
 			status |= 2;
-			free(header);
+			xfree(header);
 			return (D_ERROR);
 		case 0:
 			/* child */
@@ -403,7 +402,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 			}
 			close(pfd[0]);
 			rewind(stdout);
-			free(header);
+			xfree(header);
 		}
 	}
 	prepare(0, f1, stb1.st_size);
@@ -414,27 +413,27 @@ diffreg(char *ofile1, char *ofile2, int flags)
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	member = erealloc(member, (slen[1] + 2) * sizeof(int));
+	member = xrealloc(member, slen[1] + 2, sizeof(int));
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	class = erealloc(class, (slen[0] + 2) * sizeof(int));
+	class = xrealloc(class, slen[0] + 2, sizeof(int));
 
-	klist = emalloc((slen[0] + 2) * sizeof(int));
+	klist = xmalloc((slen[0] + 2) * sizeof(int));
 	clen = 0;
 	clistlen = 100;
-	clist = emalloc(clistlen * sizeof(struct cand));
+	clist = xmalloc(clistlen * sizeof(struct cand));
 	i = stone(class, slen[0], member, klist);
-	free(member);
-	free(class);
+	xfree(member);
+	xfree(class);
 
-	J = erealloc(J, (len[0] + 2) * sizeof(int));
+	J = xrealloc(J, len[0] + 2, sizeof(int));
 	unravel(klist[i]);
-	free(clist);
-	free(klist);
+	xfree(clist);
+	xfree(klist);
 
-	ixold = erealloc(ixold, (len[0] + 2) * sizeof(long));
-	ixnew = erealloc(ixnew, (len[1] + 2) * sizeof(long));
+	ixold = xrealloc(ixold, len[0] + 2, sizeof(long));
+	ixnew = xrealloc(ixnew, len[1] + 2, sizeof(long));
 	check(file1, f1, file2, f2);
 	output(file1, f1, file2, f2, (flags & D_HEADER));
 	if (ostdout != -1) {
@@ -461,9 +460,9 @@ closem:
 	if (f2 != NULL)
 		fclose(f2);
 	if (file1 != ofile1)
-		free(file1);
+		xfree(file1);
 	if (file2 != ofile2)
-		free(file2);
+		xfree(file2);
 	return (rval);
 }
 
@@ -543,7 +542,7 @@ splice(char *dir, char *file)
 		tail = file;
 	else
 		tail++;
-	easprintf(&buf, "%s/%s", dir, tail);
+	xasprintf(&buf, "%s/%s", dir, tail);
 	return (buf);
 }
 
@@ -560,11 +559,11 @@ prepare(int i, FILE *fd, off_t filesize)
 	if (sz < 100)
 		sz = 100;
 
-	p = emalloc((sz + 3) * sizeof(struct line));
+	p = xmalloc((sz + 3) * sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
 		if (j == sz) {
 			sz = sz * 3 / 2;
-			p = erealloc(p, (sz + 3) * sizeof(struct line));
+			p = xrealloc(p, sz + 3, sizeof(struct line));
 		}
 		p[++j].value = h;
 	}
@@ -628,7 +627,7 @@ isqrt(int n)
 	int y, x = 1;
 
 	if (n == 0)
-		return(0);
+		return (0);
 
 	do { /* newton was a stinker */
 		y = x;
@@ -647,7 +646,7 @@ stone(int *a, int n, int *b, int *c)
 	int oldc, tc, oldl;
 	u_int numtries;
 
-	const u_int bound = dflag ? UINT_MAX : max(256, isqrt(n));
+	const u_int bound = dflag ? UINT_MAX : MAX(256, isqrt(n));
 
 	k = 0;
 	c[0] = newcand(0, 0, 0);
@@ -690,7 +689,7 @@ newcand(int x, int y, int pred)
 
 	if (clen == clistlen) {
 		clistlen = clistlen * 11 / 10;
-		clist = erealloc(clist, clistlen * sizeof(struct cand));
+		clist = xrealloc(clist, clistlen, sizeof(struct cand));
 	}
 	q = clist + clen;
 	q->x = x;
@@ -878,12 +877,12 @@ unsort(struct line *f, int l, int *b)
 {
 	int *a, i;
 
-	a = emalloc((l + 1) * sizeof(int));
+	a = xmalloc((l + 1) * sizeof(int));
 	for (i = 1; i <= l; i++)
 		a[f[i].serial] = f[i].value;
 	for (i = 1; i <= l; i++)
 		b[i] = a[i];
-	free(a);
+	xfree(a);
 }
 
 static int
@@ -950,7 +949,7 @@ output(char *file1, FILE *f1, char *file2, FILE *f2, int flags)
 	}
 }
 
-static __inline void
+static void
 range(int a, int b, char *separator)
 {
 	printf("%d", a > b ? b : a);
@@ -958,7 +957,7 @@ range(int a, int b, char *separator)
 		printf("%s%d", separator, b);
 }
 
-static __inline void
+static void
 uni_range(int a, int b)
 {
 	if (a < b)
@@ -975,7 +974,7 @@ preadline(int fd, size_t len, off_t off)
 	char *line;
 	ssize_t nr;
 
-	line = emalloc(len + 1);
+	line = xmalloc(len + 1);
 	if ((nr = pread(fd, line, len, off)) < 0)
 		err(1, "preadline");
 	if (nr > 0 && line[nr-1] == '\n')
@@ -990,7 +989,7 @@ ignoreline(char *line)
 	int ret;
 
 	ret = regexec(&ignore_re, line, 0, NULL, 0);
-	free(line);
+	xfree(line);
 	return (ret == 0);	/* if it matched, it should be ignored. */
 }
 
@@ -1048,8 +1047,8 @@ proceed:
 		if (context_vec_ptr == context_vec_end - 1) {
 			ptrdiff_t offset = context_vec_ptr - context_vec_start;
 			max_context <<= 1;
-			context_vec_start = erealloc(context_vec_start,
-			    max_context * sizeof(struct context_vec));
+			context_vec_start = xrealloc(context_vec_start,
+			    max_context, sizeof(struct context_vec));
 			context_vec_end = context_vec_start + max_context;
 			context_vec_ptr = context_vec_start + offset;
 		}
@@ -1293,16 +1292,6 @@ asciifile(FILE *f)
 	return (1);
 }
 
-static __inline int min(int a, int b)
-{
-	return (a < b ? a : b);
-}
-
-static __inline int max(int a, int b)
-{
-	return (a > b ? a : b);
-}
-
 #define begins_with(s, pre) (strncmp(s, pre, sizeof(pre)-1) == 0)
 
 static char *
@@ -1364,10 +1353,10 @@ dump_context_vec(FILE *f1, FILE *f2)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = max(1, cvp->a - context);
-	upb = min(len[0], context_vec_ptr->b + context);
-	lowc = max(1, cvp->c - context);
-	upd = min(len[1], context_vec_ptr->d + context);
+	lowa = MAX(1, cvp->a - context);
+	upb = MIN(len[0], context_vec_ptr->b + context);
+	lowc = MAX(1, cvp->c - context);
+	upd = MIN(len[1], context_vec_ptr->d + context);
 
 	printf("***************");
 	if (pflag) {
@@ -1469,10 +1458,10 @@ dump_unified_vec(FILE *f1, FILE *f2)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = max(1, cvp->a - context);
-	upb = min(len[0], context_vec_ptr->b + context);
-	lowc = max(1, cvp->c - context);
-	upd = min(len[1], context_vec_ptr->d + context);
+	lowa = MAX(1, cvp->a - context);
+	upb = MIN(len[0], context_vec_ptr->b + context);
+	lowc = MAX(1, cvp->c - context);
+	upd = MIN(len[1], context_vec_ptr->d + context);
 
 	fputs("@@ -", stdout);
 	uni_range(lowa, upb);

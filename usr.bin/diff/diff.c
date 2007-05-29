@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.49 2007/03/01 21:48:32 jmc Exp $	*/
+/*	$OpenBSD: diff.c,v 1.50 2007/05/29 18:24:56 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.49 2007/03/01 21:48:32 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.50 2007/05/29 18:24:56 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -39,6 +39,7 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.49 2007/03/01 21:48:32 jmc Exp
 #include <unistd.h>
 
 #include "diff.h"
+#include "xmalloc.h"
 
 int	 aflag, bflag, dflag, iflag, lflag, Nflag, Pflag, pflag, rflag;
 int	 sflag, tflag, Tflag, wflag;
@@ -274,41 +275,6 @@ main(int argc, char **argv)
 	exit(status);
 }
 
-void *
-emalloc(size_t n)
-{
-	void *p;
-
-	if ((p = malloc(n)) == NULL)
-		err(2, NULL);
-	return (p);
-}
-
-void *
-erealloc(void *p, size_t n)
-{
-	void *q;
-
-	if ((q = realloc(p, n)) == NULL)
-		err(2, NULL);
-	return (q);
-}
-
-int
-easprintf(char **ret, const char *fmt, ...)
-{
-	int len;
-	va_list ap;
-
-	va_start(ap, fmt);
-	len = vasprintf(ret, fmt, ap);
-	va_end(ap);
-
-	if (len == -1)
-		err(2, NULL);
-	return (len);
-}
-
 void
 set_argstr(char **av, char **ave)
 {
@@ -316,7 +282,7 @@ set_argstr(char **av, char **ave)
 	char **ap;
 
 	argsize = 4 + *ave - *av + 1;
-	diffargs = emalloc(argsize);
+	diffargs = xmalloc(argsize);
 	strlcpy(diffargs, "diff", argsize);
 	for (ap = av + 1; ap < ave; ap++) {
 		if (strcmp(*ap, "--") != 0) {
@@ -343,7 +309,7 @@ read_excludes_file(char *file)
 	while ((buf = fgetln(fp, &len)) != NULL) {
 		if (buf[len - 1] == '\n')
 			len--;
-		pattern = emalloc(len + 1);
+		pattern = xmalloc(len + 1);
 		memcpy(pattern, buf, len);
 		pattern[len] = '\0';
 		push_excludes(pattern);
@@ -360,7 +326,7 @@ push_excludes(char *pattern)
 {
 	struct excludes *entry;
 
-	entry = emalloc(sizeof(*entry));
+	entry = xmalloc(sizeof(*entry));
 	entry->pattern = pattern;
 	entry->next = excludes_list;
 	excludes_list = entry;
@@ -371,15 +337,12 @@ push_ignore_pats(char *pattern)
 {
 	size_t len;
 
-	if (ignore_pats == NULL) {
-		/* XXX: estrdup */
-		len = strlen(pattern) + 1;
-		ignore_pats = emalloc(len);
-		strlcpy(ignore_pats, pattern, len);
-	} else {
+	if (ignore_pats == NULL)
+		ignore_pats = xstrdup(pattern);
+	else {
 		/* old + "|" + new + NUL */
 		len = strlen(ignore_pats) + strlen(pattern) + 2;
-		ignore_pats = erealloc(ignore_pats, len);
+		ignore_pats = xrealloc(ignore_pats, 1, len);
 		strlcat(ignore_pats, "|", len);
 		strlcat(ignore_pats, pattern, len);
 	}
