@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.55 2007/05/29 18:35:00 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.56 2007/05/29 22:12:42 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -132,13 +132,17 @@ void			sr_print_uuid(struct sr_uuid *, int);
 u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
 int			sr_clear_metadata(struct sr_discipline *);
 int			sr_save_metadata(struct sr_discipline *);
-void			sr_refresh_sensors(void *);
-int			sr_create_sensors(struct sr_discipline *);
-void			sr_delete_sensors(struct sr_discipline *);
 int			sr_boot_assembly(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
 int			sr_validate_metadata(struct sr_softc *, dev_t,
 			    struct sr_metadata *);
+
+/* don't include these on RAMDISK */
+#ifndef SMALL_KERNEL
+void			sr_refresh_sensors(void *);
+int			sr_create_sensors(struct sr_discipline *);
+void			sr_delete_sensors(struct sr_discipline *);
+#endif
 
 #ifdef SR_DEBUG
 void			sr_print_metadata(struct sr_metadata *);
@@ -957,11 +961,13 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		/* XXX compare scsibus & sdXX to metadata */
 	}
 
+#ifndef SMALL_KERNEL
 	if (sr_create_sensors(sd))
 		printf("%s: unable to create sensor for %s\n", DEVNAME(sc),
 		    dev->dv_xname);
 	else
 		sd->sd_vol.sv_sensor_valid = 1;
+#endif /* SMALL_KERNEL */
 
 	sd->sd_scsibus_dev = dev2;
 	sd->sd_shutdownhook = shutdownhook_establish(sr_shutdown, sd);
@@ -1292,7 +1298,9 @@ sr_shutdown_discipline(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_shutdown_discipline %s\n",
 	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
 
+#ifndef SMALL_KERNEL
 	sr_delete_sensors(sd);
+#endif /* SMALL_KERNEL */
 
 	if (sd->sd_scsibus_dev)
 		config_detach(sd->sd_scsibus_dev, DETACH_FORCE);
@@ -2532,6 +2540,7 @@ sr_shutdown(void *arg)
 	sr_shutdown_discipline(sd);
 }
 
+#ifndef SMALL_KERNEL
 int
 sr_create_sensors(struct sr_discipline *sd)
 {
@@ -2615,6 +2624,7 @@ sr_refresh_sensors(void *arg)
 		}
 	}
 }
+#endif /* SMALL_KERNEL */
 
 #ifdef SR_FANCY_STATS
 void				sr_print_stats(void);
@@ -2650,7 +2660,7 @@ sr_print_stats(void)
 		    sd->sd_wu_collisions);
 	}
 }
-#endif
+#endif /* SR_FANCY_STATS */
 
 #ifdef SR_DEBUG
 void
@@ -2710,4 +2720,4 @@ sr_print_metadata(struct sr_metadata *sm)
 		sr_print_uuid(&im_sc[ch].scm_uuid, 1);
 	}
 }
-#endif
+#endif /* SR_DEBUG */
