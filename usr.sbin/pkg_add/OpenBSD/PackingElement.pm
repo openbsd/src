@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.117 2007/05/29 13:00:17 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.118 2007/05/29 13:52:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -350,7 +350,7 @@ sub add_object
 	my $j = is_info_name($self->fullname);
 	if ($j) {
 		bless $self, "OpenBSD::PackingElement::$j";
-		$plist->addunique($self);
+		$self->add_object($plist);
 	} else {
 		$plist->add2list($self);
 	}
@@ -1290,18 +1290,17 @@ sub run
 {
 	my ($self, $state, @args) = @_;
 
-	my $dir = $state->{dir};
 	my $not = $state->{not};
 	my $pkgname = $state->{pkgname};
-	my $name = $self->{name};
+	my $name = $self->fullname;
 
 	return if $state->{dont_run_scripts};
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
-	print $self->beautify, " script: $dir$name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
+	print $self->beautify, " script: $name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
 	return if $not;
-	chmod 0755, $dir.$name;
-	return if $state->system($dir.$name, $pkgname, @args) == 0;
+	chmod 0755, $name;
+	return if $state->system($name, $pkgname, @args) == 0;
 	if ($state->{forced}->{scripts}) {
 		$state->warn($self->beautify, " script failed\n");
 	} else {
@@ -1345,7 +1344,7 @@ use OpenBSD::Error;
 sub prepare
 {
 	my ($self, $state) = @_;
-	my $fname = $state->{dir}.$self->{name};
+	my $fname = $self->fullname;
 	open(my $src, '<', $fname) or Warn "Can't open $fname: $!";
 	while (<$src>) {
 		next if m/^\+\-+\s*$/;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.58 2007/05/28 13:00:04 espie Exp $
+# $OpenBSD: Add.pm,v 1.59 2007/05/29 13:52:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -46,12 +46,13 @@ sub manpages_index
 
 sub register_installation
 {
-	my ($dir, $dest, $plist) = @_;
+	my $plist = shift;
 	return if $main::not;
+	my $dest = installed_info($plist->pkgname);
+	my $dir = $plist->infodir;
 	mkdir($dest);
-	for my $i (info_names()) {
-		copy($dir.$i, $dest);
-	}
+	$plist->copy_info($dest);
+	$plist->set_infodir($dest);
 	$plist->to_installation;
 }
 
@@ -97,10 +98,8 @@ sub borked_installation
 	    }
 	}
 	OpenBSD::PackingElement::Cwd->add($plist, '.');
-	my $pkgname = $plist->pkgname;
 	$plist->{name}->{name} = $borked;
-	my $dest = installed_info($borked);
-	register_installation($dir, $dest, $plist);
+	register_installation($plist);
 	Fatal @msg, ", partial installation recorded as $borked";
 }
 
@@ -115,6 +114,10 @@ sub prepare_for_addition
 }
 
 sub install
+{
+}
+
+sub copy_info
 {
 }
 
@@ -582,6 +585,19 @@ sub prepare_for_addition
 	if ($s->avail < 0) {
 		$s->report_overflow($state, $fname);
 	}
+}
+
+sub copy_info
+{
+	my ($self, $dest) = @_;
+	require File::Copy;
+
+	File::Copy::move($self->fullname, $dest);
+}
+
+package OpenBSD::PackingElement::FCONTENTS;
+sub copy_info
+{
 }
 
 1;

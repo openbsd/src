@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.287 2007/05/29 13:15:23 espie Exp $
+# $OpenBSD: pkg_add,v 1.288 2007/05/29 13:52:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -494,8 +494,7 @@ sub really_add
 	}
 	OpenBSD::SharedLibs::add_libs_from_plist($plist);
 	$plist->to_cache;
-	my $dest = installed_info($pkgname);
-	OpenBSD::Add::register_installation($dir, $dest, $plist);
+	OpenBSD::Add::register_installation($plist);
 	if (defined $handle->{solver}) {
 		$handle->{solver}->register_dependencies;
 	}
