@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.45 2007/04/27 10:08:34 tom Exp $
+.\"	$OpenBSD: boot.8,v 1.46 2007/05/29 00:03:10 deraadt Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -135,13 +135,8 @@ By default,
 .Nm
 attempts to load the kernel executable
 .Pa /bsd .
-If that fails, it will attempt to load
-.Pa /obsd
-and then
-.Pa /bsd.old .
-If it fails to find any of these files,
-and no alternative kernel image has been specified,
-the system will be unable to boot.
+If it fails to find the kernel and no alternative kernel image has
+been specified, the system will be unable to boot.
 .Sh COMMANDS
 The following commands are accepted at the
 .Nm

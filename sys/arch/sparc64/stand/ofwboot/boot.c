@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 2007/05/03 18:38:11 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.14 2007/05/29 00:03:13 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -67,7 +67,6 @@
  */
 char *kernels[] = {
 	"bsd",
-	"obsd",
 	NULL
 };
 

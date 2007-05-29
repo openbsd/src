@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hp300.8,v 1.9 2004/12/27 16:41:12 miod Exp $
+.\"	$OpenBSD: boot_hp300.8,v 1.10 2007/05/29 00:03:06 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -127,24 +127,9 @@ The system will be booted multi-user unless this option is specified.
 .El
 .Pp
 If the user does not enter anything after a few seconds, the bootloader
-will attempt to boot a kernel from the device it was loaded from, with no
-options.
-The following kernel filenames will be tried, in this order:
-.Bl -item -compact
-.Pp
-.It
-bsd
-.It
-bsd.gz
-.It
-obsd
-.It
-obsd.gz
-.It
-bsd.old
-.It
-bsd.old.gz
-.El
+will attempt to boot
+.Pa /bsd
+from the device it was loaded from, with no options.
 .Ss Abnormal system termination
 In case of system crashes, the kernel will usually enter the kernel
 debugger,

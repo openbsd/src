@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.6 2005/04/22 00:42:14 miod Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.7 2007/05/29 00:03:09 deraadt Exp $	*/
 /*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ char *names[] = {
 #ifdef OSREV
 	OSREV "/hp300/bsd.rd",
 #endif
-	"bsd.rd", "bsd", "obsd", "bsd.old"
+	"bsd.rd", "bsd",
 };
 #define NUMNAMES	(sizeof(names) / sizeof(char *))
 
