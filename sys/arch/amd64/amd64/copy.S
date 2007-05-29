@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.2 2005/03/16 07:08:38 tedu Exp $	*/
+/*	$OpenBSD: copy.S,v 1.3 2007/05/29 23:03:20 tom Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ ENTRY(copyoutstr)
 	 */
 	movq	$VM_MAXUSER_ADDRESS,%rax
 	subq	%rdi,%rax
-	jc	_C_LABEL(copystr_efault)
+	jbe	_C_LABEL(copystr_efault)	/* die if CF == 1 || ZF == 1 */
 	cmpq	%rdx,%rax
 	jae	1f
 	movq	%rax,%rdx
@@ -249,7 +249,7 @@ ENTRY(copyinstr)
 	 */
 	movq	$VM_MAXUSER_ADDRESS,%rax
 	subq	%rsi,%rax
-	jc	_C_LABEL(copystr_efault)
+	jbe	_C_LABEL(copystr_efault)	/* die if CF == 1 || ZF == 1 */
 	cmpq	%rdx,%rax
 	jae	1f
 	movq	%rax,%rdx
