@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.28 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.29 2007/05/29 09:54:09 sobrado Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ lewrcsr(sc, port, val)
 	ler1->ler1_rdp = val;
 #if defined(SUN4M)
 	/* 
-	 * We need to flush the Sbus->Mbus write buffers. This can most
+	 * We need to flush the SBus->MBus write buffers. This can most
 	 * easily be accomplished by reading back the register that we
 	 * just wrote (thanks to Chris Torek for this solution).
 	 */	   
