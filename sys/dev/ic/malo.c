@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.70 2007/05/25 18:31:02 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.71 2007/05/29 18:03:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1998,16 +1998,33 @@ malo_update_slot(struct ieee80211com *ic)
 void
 malo_hexdump(void *buf, int len)
 {
-	int i;
+	u_char b[16];
+	int i, j, l;
 
-	for (i = 0; i < len; i++) {
-		if (i % 16 == 0)
-			printf("%s%4i:", i ? "\n" : "", i);
-		if (i % 4 == 0)
-			printf(" ");
-		printf("%02x", (int)*((u_char *)buf + i));
+	for (i = 0; i < len; i += l) {
+		printf("%4i:", i);
+		l = min(sizeof(b), len - i);
+		bcopy(buf + i, b, l);
+		
+		for (j = 0; j < sizeof(b); j++) {
+			if (j % 2 == 0)
+				printf(" ");
+			if (j % 8 == 0)
+				printf(" ");
+			if (j < l)
+				printf("%02x", (int)b[j]);
+			else
+				printf("  ");
+		}
+		printf("  |");
+		for (j = 0; j < l; j++) {
+			if (b[j] >= 0x20 && b[j] <= 0x7e)
+				printf("%c", b[j]);
+			else
+				printf(".");
+		}
+		printf("|\n");
 	}
-	printf("\n");
 }
 #endif
 
