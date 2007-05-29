@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.51 2007/05/29 02:09:45 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.52 2007/05/29 08:15:32 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -45,6 +45,7 @@
 #include <dev/rndvar.h>
 
 /* #define SR_FANCY_STATS */
+#define SR_FANCY_STATS
 
 #ifdef SR_DEBUG
 uint32_t	sr_debug = 0
@@ -319,6 +320,8 @@ sr_alloc_wu(struct sr_discipline *sd)
 		return (1);
 
 	no_wu = sd->sd_max_wu;
+	sd->sd_wu_pending = no_wu;
+
 	sd->sd_wu = malloc(sizeof(struct sr_workunit) * no_wu,
 	    M_DEVBUF, M_WAITOK);
 	memset(sd->sd_wu, 0, sizeof(struct sr_workunit) * no_wu);
@@ -1453,21 +1456,22 @@ int
 sr_raid1_sync(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
-	struct sr_chunk		*ch_entry;
+	int			rv = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid1_sync\n", DEVNAME(sd->sd_sc));
 
-	/* drain all io */
-	SLIST_FOREACH(ch_entry, &sd->sd_vol.sv_chunk_list, src_link) {
-		DNPRINTF(SR_D_DIS, "%s: %s: %s: sync\n", DEVNAME(sd->sd_sc),
-		    sd->sd_vol.sv_meta.svm_devname,
-		    ch_entry->src_meta.scm_devname);
+	atomic_setbits_int(&sd->sd_sync, 1);
 
-		/* quiesce io? or assume that there isn't any comming in*/
+	/* assume that there isn't any more io comming in, count sync wu */
+	while (sd->sd_wu_pending > 1)
+		if (tsleep(sd, PWAIT, "sr_sync", 60 * hz) == EWOULDBLOCK) {
+			rv = 0;
+			break;
+		}
 
-	}
+	atomic_clearbits_int(&sd->sd_sync, 1);
 
-	return (0);
+	return (rv);
 }
 
 int
@@ -1748,6 +1752,9 @@ sr_raid1_intr(struct buf *bp)
 		/* do not change the order of these 2 functions */
 		sr_put_wu(wu);
 		scsi_done(xs);
+
+		if (sd->sd_sync && sd->sd_wu_pending == 0)
+			wakeup(sd);
 	}
 
 	splx(s);
@@ -2585,9 +2592,9 @@ sr_print_stats(void)
 			continue;
 
 		sd = sc->sc_dis[i];
-		printf("%s: ios in flight: %d  collisions %llu\n",
+		printf("%s: ios pending: %d  collisions %llu\n",
 		    sd->sd_vol.sv_meta.svm_devname,
-		    sd->sd_wu_pending + sd->sd_max_wu,
+		    sd->sd_wu_pending,
 		    sd->sd_wu_collisions);
 	}
 }

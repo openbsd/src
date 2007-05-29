@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.21 2007/05/28 21:54:26 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.22 2007/05/29 08:15:32 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -236,6 +236,7 @@ struct sr_discipline {
 	/* discipline metadata */
 	struct sr_metadata	*sd_meta;	/* in memory copy of metadata */
 	u_int32_t		sd_meta_flags;
+	int			sd_sync;
 
 	/* discipline volume */
 	struct sr_volume	sd_vol;		/* volume associated */
