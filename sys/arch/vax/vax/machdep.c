@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.90 2007/05/27 17:31:57 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.91 2007/05/29 20:36:48 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -266,21 +266,24 @@ long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
 void
-dumpconf()
+dumpconf(void)
 {
 	int nblks;
+
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
+		return;
+	if (nblks <= ctod(1))
+		return;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
 	dumpsize = physmem + 1;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(dumpsize));
-	}
+	if (dumpsize > btoc(dbtob(nblks - dumplo)))
+		dumpsize = btoc(dbtob(nblks - dumplo));
+	else if (dumplo == 0)
+		dumplo = nblks - btodb(ctob(dumpsize));
 
 	/*
 	 * Don't dump on the first block in case the dump

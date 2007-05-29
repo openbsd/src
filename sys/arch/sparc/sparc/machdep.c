@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.111 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.112 2007/05/29 20:36:48 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -723,15 +723,15 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
 void
-dumpconf()
+dumpconf(void)
 {
 	int nblks, dumpblks;
 
-	if (dumpdev == NODEV || bdevsw[major(dumpdev)].d_psize == 0)
-		/* No usable dump device */
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
 		return;
-
-	nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
 
 	dumpblks = ctod(physmem) + ctod(pmap_dumpsize());
 	if (dumpblks > (nblks - ctod(1)))

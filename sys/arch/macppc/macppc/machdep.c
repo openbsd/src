@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.92 2007/05/29 20:36:47 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -734,27 +734,20 @@ long dumplo = -1;			/* blocks */
  * reduce the chance that swapping trashes it.
  */
 void dumpconf(void);
+
 void
-dumpconf()
+dumpconf(void)
 {
 	int nblks;	/* size of dump area */
-	int maj;
 	int i;
 
-
-	if (dumpdev == NODEV)
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 
 	/* Always skip the first block, in case there is a label there. */
-
 	if (dumplo < ctod(1))
 		dumplo = ctod(1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2007/05/29 20:36:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -180,37 +180,27 @@ dumpconf(void)
 {
 	extern int dumpsize;
 	int nblks, dumpblks;	/* size of dump area */
-	int maj;
 
-	if (dumpdev == NODEV)
-		goto bad;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		goto bad;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
+		return;
 	if (nblks <= ctod(1))
-		goto bad;
+		return;
+
 	dumpblks = cpu_dumpsize();
 	if (dumpblks < 0)
-		goto bad;
+		return;
 	dumpblks += ctod(physmem);
 
 	/* If dump won't fit (incl. room for possible label), punt. */
 	if (dumpblks > (nblks - ctod(1)))
-		goto bad;
+		return;
 
 	/* Put dump at end of partition */
 	dumplo = nblks - dumpblks;
 
 	/* dumpsize is in page units, and doesn't include headers. */
 	dumpsize = physmem;
-	return;
-
-bad:
-	dumpsize = 0;
-	return;
 }
 
 

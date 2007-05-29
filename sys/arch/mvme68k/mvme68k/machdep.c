@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.104 2007/05/29 18:10:43 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.105 2007/05/29 20:36:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -563,19 +563,13 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+dumpconf(void)
 {
 	int nblks;	/* size of dump area */
-	int maj;
 
-	if (dumpdev == NODEV)
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 

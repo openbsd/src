@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2007/05/27 17:31:57 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.43 2007/05/29 20:36:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -942,18 +942,22 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
 void
-dumpconf()
+dumpconf(void)
 {
 	int nblks;
 
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
+		return;
+	if (nblks <= ctod(1))
+		return;
+
 	dumpsize = ptoa(physmem);
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
-	}
+	if (dumpsize > btoc(dbtob(nblks - dumplo)))
+		dumpsize = btoc(dbtob(nblks - dumplo));
+	else if (dumplo == 0)
+		dumplo = nblks - btodb(ctob(physmem));
+
 	/*
 	 * Don't dump on the first page
 	 * in case the dump device includes a disk label.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2007/05/29 20:36:48 deraadt Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -677,7 +677,7 @@ haltsys:
 
 /* XXX - needs to be written */
 void
-dumpconf()
+dumpconf(void)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.14 2007/05/27 17:31:57 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.15 2007/05/29 20:36:48 deraadt Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -368,26 +368,16 @@ allocsys(caddr_t v)
 }
 
 void
-dumpconf()
+dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	u_int dumpextra, totaldumpsize;		/* in disk blocks */
 	u_int seg, nblks;
-	int maj;
 
-	if (dumpdev == NODEV)
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
 		return;
-
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev) {
-		printf("dumpconf: bad dumpdev=0x%x\n", dumpdev);
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (u_int)(*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= btodb(1U))
+	if (nblks <= ctod(1))
 		return;
 
 	dumpsize = 0;

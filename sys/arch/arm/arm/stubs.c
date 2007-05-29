@@ -1,4 +1,4 @@
-/*	$OpenBSD: stubs.c,v 1.3 2007/05/19 15:49:05 miod Exp $	*/
+/*	$OpenBSD: stubs.c,v 1.4 2007/05/29 20:36:47 deraadt Exp $	*/
 /*	$NetBSD: stubs.c,v 1.14 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -80,19 +80,13 @@ struct pcb dumppcb;
 void dumpconf(void);
 
 void
-dumpconf()
+dumpconf(void)
 {
-	const struct bdevsw *bdev;
-	int block, nblks;
+	int nblks, block;
 
-	if (dumpdev == NODEV)
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 

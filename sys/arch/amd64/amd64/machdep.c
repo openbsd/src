@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 2007/05/26 20:26:50 pedro Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.58 2007/05/29 20:36:47 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -863,39 +863,28 @@ cpu_dump(void)
 void
 dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
-	if (dumpdev == NODEV)
-		goto bad;
-	bdev = &bdevsw[major(dumpdev)];
-
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
+		return;
 	if (nblks <= ctod(1))
-		goto bad;
+		return;
 
 	dumpblks = cpu_dumpsize();
 	if (dumpblks < 0)
-		goto bad;
+		return;
 	dumpblks += ctod(cpu_dump_mempagecnt());
 
 	/* If dump won't fit (incl. room for possible label), punt. */
 	if (dumpblks > (nblks - ctod(1)))
-		goto bad;
+		return;
 
 	/* Put dump at end of partition */
 	dumplo = nblks - dumpblks;
 
 	/* dumpsize is in page units, and doesn't include headers. */
 	dumpsize = cpu_dump_mempagecnt();
-	return;
-
- bad:
-	dumpsize = 0;
 }
 
 /*

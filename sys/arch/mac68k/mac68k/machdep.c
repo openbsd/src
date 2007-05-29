@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.139 2007/05/27 17:31:56 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.140 2007/05/29 20:36:47 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -691,21 +691,15 @@ long	dumplo = 0;		/* blocks */
  * that swapping trashes it.
  */
 void
-dumpconf()
+dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	int nblks;	/* size of dump area */
-	int maj;
 	int i;
 
-	if (dumpdev == NODEV)
+	if (dumpdev == NODEV ||
+	    (nblks = (bdevsw[major(dumpdev)].d_psize)(dumpdev)) == 0)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 
