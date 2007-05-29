@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.113 2007/05/29 18:18:20 tom Exp $	*/
+/*	$OpenBSD: locore.s,v 1.114 2007/05/29 23:02:02 tom Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1083,6 +1083,10 @@ ENTRY(copyoutstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%edi,%eax
+	jbe	_C_LABEL(copystr_fault)		# die if CF == 1 || ZF == 1
+						# i.e. make sure that %edi
+						# is below VM_MAXUSER_ADDRESS
+
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -1093,8 +1097,6 @@ ENTRY(copyoutstr)
 
 1:	decl	%edx
 	jz	2f
-	cmpl	$VM_MAXUSER_ADDRESS,%edi
-	jae	_C_LABEL(copystr_fault)
 	lodsb
 	stosb
 	testb	%al,%al
@@ -1137,6 +1139,9 @@ ENTRY(copyinstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
+	jbe	_C_LABEL(copystr_fault)		# Error if CF == 1 || ZF == 1
+						# i.e. make sure that %esi
+						# is below VM_MAXUSER_ADDRESS
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -1147,8 +1152,6 @@ ENTRY(copyinstr)
 
 1:	decl	%edx
 	jz	2f
-	cmpl    $VM_MAXUSER_ADDRESS,%esi
-	jae     _C_LABEL(copystr_fault)
 	lodsb
 	stosb
 	testb	%al,%al
