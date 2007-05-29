@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.175 2007/02/26 22:47:43 deraadt Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.176 2007/05/29 00:17:32 thib Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -111,7 +111,7 @@ void			 pf_hash_rule_addr(MD5_CTX *, struct pf_rule_addr *);
 int			 pf_commit_rules(u_int32_t, int, char *);
 
 struct pf_rule		 pf_default_rule;
-struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER;
+struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER("pfcnslk");
 #ifdef ALTQ
 static int		 pf_altq_running;
 #endif

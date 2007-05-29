@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.69 2007/04/12 21:47:45 miod Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.70 2007/05/29 00:17:32 thib Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ int buckstring_init = 0;
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
 char *memname[] = INITKMEMNAMES;
 char *memall = NULL;
-struct rwlock sysctl_kmemlock = RWLOCK_INITIALIZER;
+struct rwlock sysctl_kmemlock = RWLOCK_INITIALIZER("sysctlklk");
 #endif
 
 #ifdef DIAGNOSTIC

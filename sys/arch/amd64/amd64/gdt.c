@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.9 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.10 2007/05/29 00:17:33 thib Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ int gdt_dynavail;
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
-struct rwlock gdt_lock_store = RWLOCK_INITIALIZER;
+struct rwlock gdt_lock_store = RWLOCK_INITIALIZER("gdtlk");
 
 static __inline void gdt_lock(void);
 static __inline void gdt_unlock(void);

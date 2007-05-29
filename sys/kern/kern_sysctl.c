@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.152 2007/05/16 17:27:30 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.153 2007/05/29 00:17:32 thib Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -111,8 +111,8 @@ int perflevel = 100;
  * Lock to avoid too many processes vslocking a large amount of memory
  * at the same time.
  */
-struct rwlock sysctl_lock = RWLOCK_INITIALIZER;
-struct rwlock sysctl_disklock = RWLOCK_INITIALIZER;
+struct rwlock sysctl_lock = RWLOCK_INITIALIZER("sysctllk");
+struct rwlock sysctl_disklock = RWLOCK_INITIALIZER("sysctldlk");
 
 int
 sys___sysctl(struct proc *p, void *v, register_t *retval)

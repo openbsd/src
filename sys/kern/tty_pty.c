@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.33 2006/03/04 19:33:21 miod Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.34 2007/05/29 00:17:32 thib Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -87,7 +87,8 @@ struct	pt_softc {
 static struct pt_softc **pt_softc = NULL;	/* pty array */
 static int npty = 0;				/* size of pty array */
 static int maxptys = NPTY_MAX;			/* maximum number of ptys */
-struct rwlock pt_softc_lock = RWLOCK_INITIALIZER;  /* for pty array */
+/* for pty array */
+struct rwlock pt_softc_lock = RWLOCK_INITIALIZER("ptarrlk");
 
 #define	PF_PKT		0x08		/* packet mode */
 #define	PF_STOPPED	0x10		/* user told stopped */

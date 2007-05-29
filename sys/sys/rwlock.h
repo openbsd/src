@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.10 2007/05/04 12:56:15 art Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.11 2007/05/29 00:17:32 thib Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -76,7 +76,7 @@ struct rwlock {
 	const char *rwl_name;
 };
 
-#define RWLOCK_INITIALIZER	{ 0 }
+#define RWLOCK_INITIALIZER(name)	{ 0, name }
 
 #define RWLOCK_WAIT		0x01UL
 #define RWLOCK_WRWANT		0x02UL

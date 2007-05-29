@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.33 2007/05/28 21:07:31 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.34 2007/05/29 00:17:33 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 
 LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
 u_long nfsnodehash;
-struct rwlock nfs_hashlock = RWLOCK_INITIALIZER;
+struct rwlock nfs_hashlock = RWLOCK_INITIALIZER("nfshshlk");
 
 struct pool nfs_node_pool;
 
