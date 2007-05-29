@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cnfp.c,v 1.6 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: print-cnfp.c,v 1.7 2007/05/29 10:42:25 canacar Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -94,11 +94,8 @@ cnfp_print(register const u_char *cp, u_int len, register const u_char *bp)
 	if (ver == 5) {
 		printf("#%u, ", htonl(nh->sequence));
 		nr = (struct nfrec *)&nh[1];
-		snaplen -= 24;
-	} else {
+	} else
 		nr = (struct nfrec *)&nh->sequence;
-		snaplen -= 16;
-	}
 
 	printf("%2u recs", nrecs);
 
