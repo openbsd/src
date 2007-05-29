@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.53 2007/05/29 16:31:38 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.54 2007/05/29 16:36:35 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1462,7 +1462,6 @@ sr_raid1_sync(struct sr_workunit *wu)
 	s = splbio();
 	sd->sd_sync = 1;
 
-	/* assume that there isn't any more io comming in, count sync wu */
 	while (sd->sd_wu_pending > 1)
 		if (tsleep(sd, PRIBIO, "sr_sync", 60 * hz) == EWOULDBLOCK) {
 			DNPRINTF(SR_D_DIS, "%s: sr_raid1_sync timeout\n",
