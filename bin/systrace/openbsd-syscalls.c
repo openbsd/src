@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.31 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.32 2007/05/29 01:02:21 otto Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -35,7 +35,6 @@
 
 #include <compat/bsdos/bsdos_syscall.h>
 #include <compat/freebsd/freebsd_syscall.h>
-#include <compat/netbsd/netbsd_syscall.h>
 #if defined(__hppa__) || defined(__m68k__)
 #include <compat/hpux/hpux_syscall.h>
 #endif
@@ -59,7 +58,6 @@
 
 #include <compat/bsdos/bsdos_syscalls.c>
 #include <compat/freebsd/freebsd_syscalls.c>
-#include <compat/netbsd/netbsd_syscalls.c>
 #if defined(__hppa__) || defined(__m68k__)
 #include <compat/hpux/hpux_syscalls.c>
 #endif
@@ -113,7 +111,6 @@ static struct emulation emulations[] = {
 	{ "ultrix",	ultrix_syscallnames,	ULTRIX_SYS_MAXSYSCALL },
 	{ "bsdos",	bsdos_syscallnames,	BSDOS_SYS_MAXSYSCALL },
 	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL },
-	{ "netbsd",	netbsd_syscallnames,	NETBSD_SYS_MAXSYSCALL },
 	{ NULL,		NULL,			0 }
 };
 
