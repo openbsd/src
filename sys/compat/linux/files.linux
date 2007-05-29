@@ -1,4 +1,4 @@
-#	$OpenBSD: files.linux,v 1.13 2001/04/09 06:53:44 tholo Exp $
+#	$OpenBSD: files.linux,v 1.14 2007/05/29 03:28:01 tedu Exp $
 #	$NetBSD: files.linux,v 1.4 1996/03/08 04:55:59 mycroft Exp $
 #
 # Config.new file description for machine-independent Linux compat code.
@@ -14,7 +14,6 @@ file	compat/linux/linux_exec.c		compat_linux
 file	compat/linux/linux_fdio.c		compat_linux
 file	compat/linux/linux_file.c		compat_linux
 file	compat/linux/linux_file64.c		compat_linux
-file	compat/linux/linux_getcwd.c		compat_linux
 file	compat/linux/linux_hdio.c		compat_linux
 file	compat/linux/linux_ioctl.c		compat_linux
 file	compat/linux/linux_ipc.c		compat_linux
