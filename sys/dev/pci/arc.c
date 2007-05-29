@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.62 2007/05/20 04:39:35 ray Exp $ */
+/*	$OpenBSD: arc.c,v 1.63 2007/05/29 22:17:50 todd Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -492,9 +492,11 @@ int			arc_bio_alarm_state(struct arc_softc *,
 int			arc_bio_getvol(struct arc_softc *, int,
 			    struct arc_fw_volinfo *);
 
+#ifndef SMALL_KERNEL
 /* sensors */
 void			arc_create_sensors(void *, void *);
 void			arc_refresh_sensors(void *);
+#endif /* SMALL_KERNEL */
 #endif
 
 int
@@ -555,6 +557,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	if (bio_register(self, arc_bioctl) != 0)
 		panic("%s: bioctl registration failed\n", DEVNAME(sc));
 
+#ifndef SMALL_KERNEL
 	/*
 	 * you need to talk to the firmware to get volume info. our firmware
 	 * interface relies on being able to sleep, so we need to use a thread
@@ -563,6 +566,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	if (scsi_task(arc_create_sensors, sc, NULL, 1) != 0)
 		printf("%s: unable to schedule arc_create_sensors as a "
 		    "scsi task", DEVNAME(sc));
+#endif
 #endif
 
 	return;
@@ -1515,6 +1519,7 @@ arc_wait(struct arc_softc *sc)
 	splx(s);
 }
 
+#ifndef SMALL_KERNEL
 void
 arc_create_sensors(void *xsc, void *arg)
 {
@@ -1611,6 +1616,7 @@ arc_refresh_sensors(void *arg)
 
 	}
 }
+#endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
 
 u_int32_t

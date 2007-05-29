@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.25 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.26 2007/05/29 22:17:50 todd Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -99,7 +99,9 @@ int	ciss_sync(struct ciss_softc *sc);
 void	ciss_heartbeat(void *v);
 void	ciss_shutdown(void *v);
 void	ciss_kthread(void *v);
+#ifndef SMALL_KERNEL
 void	ciss_sensors(void *);
+#endif
 
 struct ciss_ccb *ciss_get_ccb(struct ciss_softc *sc);
 void	ciss_put_ccb(struct ciss_ccb *ccb);
@@ -418,6 +420,7 @@ ciss_attach(struct ciss_softc *sc)
 		    sc->sc_dev.dv_xname);
 
 	sc->sc_flags |= CISS_BIO;
+#ifndef SMALL_KERNEL
 	sc->sensors = malloc(sizeof(struct ksensor) * sc->maxunits,
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sensors) {
@@ -440,7 +443,8 @@ ciss_attach(struct ciss_softc *sc)
 		else
 			sensordev_install(&sc->sensordev);
 	}
-#endif
+#endif /* SMALL_KERNEL */
+#endif /* BIO > 0 */
 
 	return 0;
 }
@@ -1172,6 +1176,7 @@ ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 	return error;
 }
 
+#ifndef SMALL_KERNEL
 void
 ciss_sensors(void *v)
 {
@@ -1221,6 +1226,7 @@ ciss_sensors(void *v)
 		}
 	}
 }
+#endif /* SMALL_KERNEL */
 
 int
 ciss_ldid(struct ciss_softc *sc, int target, struct ciss_ldid *id)
