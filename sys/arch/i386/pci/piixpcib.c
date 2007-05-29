@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpcib.c,v 1.1 2007/04/26 01:43:13 gwk Exp $ */
+/*	$OpenBSD: piixpcib.c,v 1.2 2007/05/29 02:40:24 tom Exp $ */
 
 /*
  * Copyright (c) 2007 Stefan Sperling <stsp@stsp.in-berlin.de>
@@ -116,7 +116,9 @@ void	piixpcib_int15_gsic_call(struct piixpcib_softc *);
 extern void	pcibattach(struct device *, struct device *, void *);
 
 /* arch/i386/i386/machdep.c */
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 extern void	p3_update_cpuspeed(void);
+#endif
 
 struct cfattach piixpcib_ca = {
 	sizeof(struct piixpcib_softc),
@@ -363,6 +365,7 @@ piixpcib_setperf(int level)
 	 * There seems to be no reliable fix for this.
 	 */
 	delay(200);
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 	p3_update_cpuspeed();
+#endif
 }
-
