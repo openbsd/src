@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststatectl.c,v 1.18 2007/05/29 00:21:10 pyr Exp $	*/
+/*	$OpenBSD: hoststatectl.c,v 1.19 2007/05/29 23:19:18 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -212,10 +212,10 @@ main(int argc, char *argv[])
 			case TABLE_ENABLE:
 			case HOST_DISABLE:
 			case HOST_ENABLE:
-				done = show_command_output(&imsg);
-				break;
 			case RELOAD:
 			case SHUTDOWN:
+				done = show_command_output(&imsg);
+				break;
 			case NONE:
 				break;
 			case MONITOR:

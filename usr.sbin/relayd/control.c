@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.14 2007/03/19 10:11:59 henning Exp $	*/
+/*	$OpenBSD: control.c,v 1.15 2007/05/29 23:19:18 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,6 +42,8 @@ struct ctl_connlist ctl_conns;
 struct ctl_conn	*control_connbyfd(int);
 void		 control_close(int);
 
+struct imsgbuf	*ibuf_main = NULL;
+
 int
 control_init(void)
 {
@@ -54,7 +56,6 @@ control_init(void)
 		return (-1);
 	}
 
-	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	if (strlcpy(sun.sun_path, HOSTSTATED_SOCKET,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path)) {
@@ -93,8 +94,10 @@ control_init(void)
 }
 
 int
-control_listen(void)
+control_listen(struct hoststated *env, struct imsgbuf *ibuf)
 {
+
+	ibuf_main = ibuf;
 
 	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
 		log_warn("control_listen: listen");
@@ -102,7 +105,7 @@ control_listen(void)
 	}
 
 	event_set(&control_state.ev, control_state.fd, EV_READ | EV_PERSIST,
-	    control_accept, NULL);
+	    control_accept, env);
 	event_add(&control_state.ev, NULL);
 
 	return (0);
@@ -122,6 +125,7 @@ control_accept(int listenfd, short event, void *arg)
 	socklen_t		 len;
 	struct sockaddr_un	 sun;
 	struct ctl_conn		*c;
+	struct hoststated	*env = arg;
 
 	len = sizeof(sun);
 	if ((connfd = accept(listenfd,
@@ -141,7 +145,7 @@ control_accept(int listenfd, short event, void *arg)
 	imsg_init(&c->ibuf, connfd, control_dispatch_imsg);
 	c->ibuf.events = EV_READ;
 	event_set(&c->ibuf.ev, c->ibuf.fd, c->ibuf.events,
-	    c->ibuf.handler, &c->ibuf);
+	    c->ibuf.handler, env);
 	event_add(&c->ibuf.ev, NULL);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
@@ -183,6 +187,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	struct imsg		 imsg;
 	struct ctl_id		 id;
 	int			 n;
+	struct hoststated	*env = arg;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warn("control_dispatch_imsg: fd %d: not found", fd);
@@ -305,8 +310,16 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 			break;
 		case IMSG_CTL_SHUTDOWN:
-		case IMSG_CTL_RELOAD:
 			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, NULL, 0);
+			break;
+		case IMSG_CTL_RELOAD:
+			if (env->prefork_relay > 0) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0,
+				    NULL, 0);
+				break;
+			}
+			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, NULL, 0);
+			imsg_compose(ibuf_main, IMSG_CTL_RELOAD, 0, 0, NULL, 0);
 			break;
 		case IMSG_CTL_NOTIFY:
 			if (c->flags & CTL_CONN_NOTIFY) {

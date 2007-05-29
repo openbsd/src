@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.28 2007/05/29 18:59:53 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.29 2007/05/29 23:19:18 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -241,10 +241,11 @@ main(int argc, char *argv[])
 	    (ibuf_hce = calloc(1, sizeof(struct imsgbuf))) == NULL) 
 		fatal(NULL);
 
-	if (env->prefork_relay > 0 &&
-	    (ibuf_relay = calloc(env->prefork_relay,
-	    sizeof(struct imsgbuf)) == NULL))
-		fatal(NULL);
+	if (env->prefork_relay > 0) {
+		if ((ibuf_relay = calloc(env->prefork_relay,
+		    sizeof(struct imsgbuf))) == NULL) 
+			fatal(NULL);
+	}
 
 	imsg_init(ibuf_pfe, pipe_parent2pfe[0], main_dispatch_pfe);
 	imsg_init(ibuf_hce, pipe_parent2hce[0], main_dispatch_hce);
@@ -473,6 +474,11 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 				    "invalid size of demote request");
 			memcpy(&demote, imsg.data, sizeof(demote));
 			carp_demote_set(demote.group, demote.level);
+			break;
+		case IMSG_CTL_RELOAD:
+			/*
+			 * so far we only get here if no L7 (relay) is done.
+			 */
 			break;
 		default:
 			log_debug("main_dispatch_pfe: unexpected imsg %d",
