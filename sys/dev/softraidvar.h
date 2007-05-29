@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.23 2007/05/29 18:35:00 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.24 2007/05/29 23:20:02 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -189,6 +189,7 @@ struct sr_vol_meta {
 	u_int32_t		svm_volid;	/* volume id */
 	u_int32_t		svm_status; 	/* use bioc_vol status */
 	u_int32_t		svm_flags;	/* flags */
+#define	SR_VOL_DIRTY		0x01
 	u_int32_t		svm_level;	/* raid level */
 	u_quad_t		svm_size;	/* virtual disk size */
 	char			svm_devname[32];/* /dev/XXXXX */

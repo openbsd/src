@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.56 2007/05/29 22:12:42 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.57 2007/05/29 23:20:02 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -131,7 +131,7 @@ void			sr_get_uuid(struct sr_uuid *);
 void			sr_print_uuid(struct sr_uuid *, int);
 u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
 int			sr_clear_metadata(struct sr_discipline *);
-int			sr_save_metadata(struct sr_discipline *);
+int			sr_save_metadata(struct sr_discipline *, u_int32_t);
 int			sr_boot_assembly(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
 int			sr_validate_metadata(struct sr_softc *, dev_t,
@@ -956,10 +956,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		strlcpy(sd->sd_vol.sv_meta.svm_devname, dev->dv_xname,
 		    sizeof(sd->sd_vol.sv_meta.svm_devname));
 
-		rv = sr_save_metadata(sd); /* save metadata to disk */
-	} else {
-		/* XXX compare scsibus & sdXX to metadata */
 	}
+
+	/* save metadata to disk */
+	rv = sr_save_metadata(sd, SR_VOL_DIRTY);
 
 #ifndef SMALL_KERNEL
 	if (sr_create_sensors(sd))
@@ -1274,6 +1274,9 @@ sr_unwind_chunks(struct sr_softc *sc, struct sr_chunk_head *cl)
 void
 sr_free_discipline(struct sr_discipline *sd)
 {
+#ifdef SR_DEBUG
+	struct sr_softc		*sc = sd->sd_sc;
+#endif
 	if (!sd)
 		return;
 
@@ -2090,7 +2093,7 @@ sr_already_assembled(struct sr_discipline *sd)
 }
 
 int
-sr_save_metadata(struct sr_discipline *sd)
+sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_metadata	*sm = sd->sd_meta;
@@ -2151,6 +2154,7 @@ sr_save_metadata(struct sr_discipline *sd)
 
 	/* from here on out metadata is updated */
 	sm->ssd_ondisk++;
+	im_sv->svm_flags |= flags;
 	sm->ssd_vd_chk = sr_checksum(DEVNAME(sc),
 	    (u_int32_t *)im_sv, sm->ssd_vd_size);
 
@@ -2536,6 +2540,8 @@ sr_shutdown(void *arg)
 #endif
 	DNPRINTF(SR_D_DIS, "%s: sr_shutdown %s\n",
 	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	sr_save_metadata(sd, 0);
 
 	sr_shutdown_discipline(sd);
 }
