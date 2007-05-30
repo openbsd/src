@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.20 2005/02/08 09:12:16 pvalchev Exp $
+.\"	$OpenBSD: flex.1,v 1.21 2007/05/30 05:52:33 jmc Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -47,14 +47,31 @@
 .Op Fl S Ar skeleton
 .Op Ar filename ...
 .Sm on
-.Sh OVERVIEW
-This manual describes
-.Nm ,
-a tool for generating programs that perform pattern-matching on text.
+.Sh DESCRIPTION
+.Nm
+is a tool for generating
+.Em scanners :
+programs which recognize lexical patterns in text.
+.Nm
+reads the given input files, or its standard input if no file names are given,
+for a description of a scanner to generate.
+The description is in the form of pairs of regular expressions and C code,
+called
+.Em rules .
+.Nm
+generates as output a C source file,
+.Pa lex.yy.c ,
+which defines a routine
+.Fn yylex .
+This file is compiled and linked with the
+.Fl lfl
+library to produce an executable.
+When the executable is run, it analyzes its input for occurrences
+of the regular expressions.
+Whenever it finds one, it executes the corresponding C code.
+.Pp
 The manual includes both tutorial and reference sections:
 .Bl -ohang
-.It Sy Description
-A brief overview of the tool.
 .It Sy Some Simple Examples
 .It Sy Format of the Input File
 .It Sy Patterns
@@ -118,28 +135,6 @@ Includes contact information.
 Known problems with
 .Nm .
 .El
-.Sh DESCRIPTION
-.Nm
-is a tool for generating
-.Em scanners :
-programs which recognize lexical patterns in text.
-.Nm
-reads the given input files, or its standard input if no file names are given,
-for a description of a scanner to generate.
-The description is in the form of pairs of regular expressions and C code,
-called
-.Em rules .
-.Nm
-generates as output a C source file,
-.Pa lex.yy.c ,
-which defines a routine
-.Fn yylex .
-This file is compiled and linked with the
-.Fl lfl
-library to produce an executable.
-When the executable is run, it analyzes its input for occurrences
-of the regular expressions.
-Whenever it finds one, it executes the corresponding C code.
 .Sh SOME SIMPLE EXAMPLES
 First some simple examples to get the flavor of how one uses
 .Nm .
