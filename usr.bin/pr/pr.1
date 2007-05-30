@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pr.1,v 1.16 2007/03/03 23:16:02 jmc Exp $
+.\"	$OpenBSD: pr.1,v 1.17 2007/05/30 04:41:34 jmc Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -402,10 +402,13 @@ use of these characters will cause formatting errors.
 .Xr ascii 7
 .Sh STANDARDS
 The
-.Nm pr
-utility is
-.St -p1003.2
-compatible; however, that standard is relatively silent concerning the
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+.St -p1003.1-2004
+is relatively silent concerning the
 handling of input characters beyond the behavior dictated by the
 .Nm pr
 required command

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.37 2007/04/04 16:25:03 jmc Exp $
+.\"	$OpenBSD: compress.1,v 1.38 2007/05/30 04:41:33 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -334,10 +334,26 @@ or 2 if a warning occurred.
 .Re
 .Sh STANDARDS
 The
-.Nm
-utility is compliant with the
-.St -p1003.2-92
+.Nm ,
+.Nm uncompress ,
+and
+.Nm zcat
+utilities are compliant with the
+.St -p1003.1-2004
 specification.
+.Pp
+The
+.Nm
+flags
+.Op Fl 123456789dghLlNnOqrtV ,
+.Nm uncompress
+flags
+.Op Fl hlNnqrt ,
+and the
+.Nm zcat
+flags
+.Op Fl fghqr
+are extensions to that specification.
 .Sh HISTORY
 The
 .Nm

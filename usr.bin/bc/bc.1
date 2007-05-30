@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.20 2005/10/29 08:27:25 jmc Exp $
+.\"	$OpenBSD: bc.1,v 1.21 2007/05/30 04:41:33 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -351,9 +351,13 @@ option is specified on the command line.
 .Sh STANDARDS
 The
 .Nm
-utility is expected to conform to the
-.St -p1003.2
+utility is compliant with the
+.St -p1003.1-2004
 specification.
+.Pp
+The flags
+.Op Fl ce
+are extensions to that specification.
 .Sh HISTORY
 The
 .Nm

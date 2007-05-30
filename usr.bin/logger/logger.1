@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logger.1,v 1.13 2007/03/15 23:12:12 jmc Exp $
+.\"	$OpenBSD: logger.1,v 1.14 2007/05/30 04:41:34 jmc Exp $
 .\"	$NetBSD: logger.1,v 1.4 1994/12/22 06:26:59 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -95,6 +95,11 @@ $ logger -p local0.notice -t HOSTIDM -f /dev/idmc
 .Xr syslogd 8
 .Sh STANDARDS
 The
-.Nm logger
-utility conforms to
-.St -p1003.2-92 .
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flags
+.Op Fl ifpst
+are extensions to that specification.

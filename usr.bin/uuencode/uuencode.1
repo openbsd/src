@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuencode.1,v 1.16 2005/01/11 18:30:28 jmc Exp $
+.\"	$OpenBSD: uuencode.1,v 1.17 2007/05/30 04:41:34 jmc Exp $
 .\"	$FreeBSD: uuencode.1,v 1.26 2003/03/18 14:24:47 fanf Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -205,8 +205,13 @@ The
 .Nm uudecode
 and
 .Nm uuencode
-utilities conform to
-.St -p1003.2-92 .
+utilities are compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flags
+.Op Fl ciprs
+are extensions to that specification.
 .Sh HISTORY
 The
 .Nm uudecode

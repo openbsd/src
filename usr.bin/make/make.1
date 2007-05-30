@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.66 2006/01/12 17:15:59 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.67 2007/05/30 04:41:34 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -1286,9 +1286,15 @@ directory
 "Make \(em A Tutorial",
 .Pa /usr/share/doc/psd/12.make/ .
 .Sh STANDARDS
+The
 .Nm
-mostly conforms to the Single Unix Specification, Version 2,
-with some noted extensions and a few problems.
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flags
+.Op Fl BDdIjmPV
+are extensions to that specification.
 .Pp
 Older versions of
 .Nm

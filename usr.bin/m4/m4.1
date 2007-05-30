@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.48 2006/12/12 21:16:18 jmc Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.49 2007/05/30 04:41:34 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -419,18 +419,29 @@ Returns the current file's line number.
 Returns the current file's name.
 .El
 .Sh STANDARDS
+The
 .Nm
-is expected to be
+utility is compliant with the
 .St -p1003.1-2004
-compliant,
-along with a few extensions taken from
-.Nm gnu-m4 .
+specification.
 .Pp
-Flags
-.Fl I ,
-.Fl d ,
-.Fl t
-are non-standard.
+The flags
+.Op Fl dgIot
+and the macros
+.Ic builtin ,
+.Ic esyscmd ,
+.Ic expr ,
+.Ic format ,
+.Ic indir ,
+.Ic paste ,
+.Ic patsubst ,
+.Ic regexp ,
+.Ic spaste ,
+.Ic unix ,
+.Ic __line__ ,
+and
+.Ic __file__
+are extensions to that specification.
 .Pp
 The output format of tracing and of
 .Ic dumpdef
@@ -454,20 +465,6 @@ In this implementation,
 .Ic define
 replaces the top-most definition only.
 Other implementations may erase all definitions on the stack instead.
-.Pp
-For portability, one should not use the macros
-.Ic builtin ,
-.Ic esyscmd ,
-.Ic expr ,
-.Ic format ,
-.Ic indir ,
-.Ic paste ,
-.Ic patsubst ,
-.Ic regexp ,
-.Ic spaste ,
-.Ic unix ,
-.Ic __line__ ,
-.Ic __file__ .
 .Pp
 All built-ins do expand without arguments in many other
 .Nm m4 .

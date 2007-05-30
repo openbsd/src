@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tr.1,v 1.9 2003/06/10 09:12:12 jmc Exp $
+.\"	$OpenBSD: tr.1,v 1.10 2007/05/30 04:41:34 jmc Exp $
 .\"	$NetBSD: tr.1,v 1.5 1994/12/07 08:35:13 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -262,6 +262,12 @@ Strip out non-printable characters from file1.
 .Sh SEE ALSO
 .Xr sed 1
 .Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
 System V has historically implemented character ranges using the syntax
 .Dq [c-c]
 instead of the
@@ -315,11 +321,6 @@ and
 options were ignored unless two strings were specified.
 This implementation will not permit illegal syntax.
 .Pp
-The
-.Nm
-utility is expected to be
-.St -p1003.2
-compatible.
 It should be noted that the feature wherein the last character of
 .Ar string2
 is duplicated if

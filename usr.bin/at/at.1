@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.34 2007/03/26 13:55:42 jmc Exp $
+.\" $OpenBSD: at.1,v 1.35 2007/05/30 04:41:33 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -315,6 +315,24 @@ deny permission control
 .Xr umask 2 ,
 .Xr cron 8 ,
 .Xr sendmail 8
+.Sh STANDARDS
+The
+.Nm
+and
+.Nm batch
+utilities are compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The
+.Nm
+flags
+.Op Fl bc
+and the
+.Nm batch
+flags
+.Op Fl fmq
+are extensions to that specification.
 .Sh AUTHORS
 .An -nosplit
 .Nm at

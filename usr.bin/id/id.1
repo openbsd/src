@@ -1,4 +1,4 @@
-.\"	$OpenBSD: id.1,v 1.12 2004/11/16 13:51:35 jmc Exp $
+.\"	$OpenBSD: id.1,v 1.13 2007/05/30 04:41:34 jmc Exp $
 .\"	$NetBSD: id.1,v 1.5 1995/09/28 08:05:40 perry Exp $
 .\"
 .\" Copyright (c) 1991, 1993, 1994
@@ -123,8 +123,13 @@ utility exits 0 on success or >0 if an error occurred.
 .Sh STANDARDS
 The
 .Nm
-function is expected to conform to
-.St -p1003.2 .
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flag
+.Op Fl p
+is an extension to that specification.
 .Sh HISTORY
 The
 historic

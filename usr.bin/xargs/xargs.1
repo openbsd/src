@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.19 2006/08/12 07:10:56 jmc Exp $
+.\"	$OpenBSD: xargs.1,v 1.20 2007/05/30 04:41:35 jmc Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -313,16 +313,13 @@ Some other error occurred.
 .Sh STANDARDS
 The
 .Nm
-utility is expected to be
-.St -p1003.2
-compliant.
-The
-.Fl 0 , J , o , P ,
-.Fl R ,
-and
-.Fl r
-options are non-standard
-extensions which may not be available on other operating systems.
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flags
+.Op Fl 0JoPRr
+are extensions to that specification.
 .Pp
 The meanings of the 123, 124, and 125 exit values were taken from
 .Tn GNU

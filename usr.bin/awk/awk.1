@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.25 2007/01/29 19:41:10 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.26 2007/05/30 04:41:33 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -745,6 +745,20 @@ Print an error message to standard error:
 .%D 1988
 .%O ISBN 0-201-07981-X
 .Re
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flags
+.Op Fl \&dV
+and
+.Op Fl safe ,
+as well as the command
+.Cm fflush ,
+are extensions to that specification.
 .Sh HISTORY
 An
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.11 2007/03/29 11:06:44 jmc Exp $
+.\"	$OpenBSD: touch.1,v 1.12 2007/05/30 04:41:34 jmc Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -125,6 +125,12 @@ utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr utimes 2
 .Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
 The obsolescent form of
 .Nm touch ,
 where a time format is specified as the first argument, is supported.
@@ -150,12 +156,6 @@ If the
 .Dq YY
 letter pair is in the range 69 to 99, the year is set from 1969 to 1999;
 otherwise, the year is set in the 21st century.
-.Pp
-The
-.Nm
-utility is expected to be a superset of the
-.St -p1003.2
-specification.
 .Sh HISTORY
 A
 .Nm
