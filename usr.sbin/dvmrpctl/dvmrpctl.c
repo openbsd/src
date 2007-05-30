@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpctl.c,v 1.2 2006/11/28 19:21:15 reyk Exp $ */
+/*	$OpenBSD: dvmrpctl.c,v 1.3 2007/05/30 02:21:08 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -257,9 +257,6 @@ get_ifms_type(int mediatype)
 		break;
 	case IFT_FDDI:
 		return (IFM_FDDI);
-		break;
-	case IFT_ISO88025:
-		return (IFM_TOKEN);
 		break;
 	case IFT_CARP:
 		return (IFM_CARP);

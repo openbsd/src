@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.36 2006/11/28 19:21:15 reyk Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.37 2007/05/30 02:21:08 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -338,8 +338,6 @@ get_ifms_type(int mediatype)
 		return (IFM_ETHER);
 	case IFT_FDDI:
 		return (IFM_FDDI);
-	case IFT_ISO88025:
-		return (IFM_TOKEN);
 	case IFT_CARP:
 		return (IFM_CARP);
 	case IFT_PPP:
@@ -1236,9 +1234,6 @@ show_fib_interface_msg(struct imsg *imsg)
 			break;
 		case IFT_FDDI:
 			ifms_type = IFM_FDDI;
-			break;
-		case IFT_ISO88025:
-			ifms_type = IFM_TOKEN;
 			break;
 		case IFT_CARP:
 			ifms_type = IFM_CARP;
