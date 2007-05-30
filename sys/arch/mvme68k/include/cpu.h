@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.26 2007/03/15 10:22:29 art Exp $ */
+/*	$OpenBSD: cpu.h,v 1.27 2007/05/30 17:10:44 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -74,7 +74,7 @@
 #define M68K_MMU_MOTOROLA
 #include <m68k/cpu.h>
 
-#ifdef	_KERNEL
+#ifdef _KERNEL
 
 /*
  * Get interrupt glue.
@@ -132,6 +132,8 @@ extern int want_resched;
 extern int astpending;
 #define aston() (astpending = 1)
 
+#endif	/* _KERNEL */
+
 /*
  * CTL_MACHDEP definitions.
  */
@@ -142,6 +144,8 @@ extern int astpending;
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
+
+#ifdef _KERNEL
 
 extern	vaddr_t intiobase, intiolimit;
 extern	vaddr_t iiomapbase;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.34 2007/05/30 17:10:42 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+
+#ifdef _KERNEL
 
 /*
  * Get interrupt glue.
@@ -106,6 +108,8 @@ extern int want_resched;	/* resched() was called */
 
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending = 1)
+
+#endif	/* _KERNEL */
 
 /*
  * CTL_MACHDEP definitions.

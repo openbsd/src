@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.43 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.44 2007/05/30 17:10:44 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -71,6 +71,8 @@
 #include <m68k/cpu.h>
 #define	M68K_MMU_MOTOROLA
 
+#ifdef _KERNEL
+
 /*
  * Get interrupt glue.
  */
@@ -120,6 +122,8 @@ extern int want_resched;	/* resched() was called */
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending = 1)
 
+#endif	/* _KERNEL */
+
 #define CPU_CONSDEV	1
 #define CPU_MAXID	2
 
@@ -127,6 +131,8 @@ extern int astpending;		/* need to trap before returning to user mode */
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
+
+#ifdef _KERNEL
 
 /* values for machineid --
  * 	These are equivalent to the MacOS Gestalt values. */
@@ -202,7 +208,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define MACH_CLASSAV	10	/* A/V Centris/Quadras. */
 #define MACH_CLASSQ2	11	/* More Centris/Quadras, different sccA. */
 
-#ifdef _KERNEL
 struct mac68k_machine_S {
 	int			cpu_model_index;
 	/*
@@ -252,7 +257,6 @@ extern unsigned long		NuBusBase;	/* Base address of NuBus */
 
 extern  struct mac68k_machine_S	mac68k_machine;
 extern	unsigned long		load_addr;
-#endif /* _KERNEL */
 
 #define IIOMAPSIZE		(0x040000 / PAGE_SIZE)
 
@@ -269,8 +273,6 @@ extern	unsigned long		load_addr;
 #define NBMAPSIZE	btoc(NBTOP-NBBASE)	/* ~ 96 megs */
 #define NBMEMSIZE	0x01000000	/* 16 megs per card */
 #define NBROMOFFSET	0x00FF0000	/* Last 64K == ROM */
-
-#ifdef _KERNEL
 
 /* locore.s */
 void	PCIA(void);
