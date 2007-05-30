@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.65 2007/05/30 14:04:51 espie Exp $
+# $OpenBSD: Add.pm,v 1.66 2007/05/30 16:32:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -623,6 +623,20 @@ sub copy_info
 	require File::Copy;
 
 	File::Copy::move($self->fullname, $dest);
+}
+
+package OpenBSD::PackingElement::FREQUIRE;
+sub install
+{
+	my ($self, $state) = @_;
+	$self->run($state, 'INSTALL');
+}
+
+package OpenBSD::PackingElement::FINSTALL;
+sub install
+{
+	my ($self, $state) = @_;
+	$self->run($state, 'PRE-INSTALL');
 }
 
 package OpenBSD::PackingElement::FCONTENTS;

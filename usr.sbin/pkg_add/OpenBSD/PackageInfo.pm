@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.29 2007/05/18 12:40:35 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.30 2007/05/30 16:32:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -44,6 +44,7 @@ my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
 my ($list, $stemlist);
 
+# XXX note that REQUIRE occurs before INSTALL/DESINSTALL.
 our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, REQUIRING, DISPLAY, UNDISPLAY, MTREE_DIRS, MODULE);
 
 our %info = ();

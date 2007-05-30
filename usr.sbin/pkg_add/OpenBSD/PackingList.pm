@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.71 2007/05/30 12:29:19 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.72 2007/05/30 16:32:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -361,21 +361,6 @@ sub is_signed
 	return 0;
 }
 
-{
-    package OpenBSD::PackingList::Visitor;
-    sub new
-    {
-	    my $class = shift;
-	    bless {list=>[], pass=>1}, $class;
-    }
-
-    sub revisit
-    {
-	    my ($self, $item) = @_;
-	    push(@{$self->{list}}, $item);
-    }
-}
-
 our @unique_categories =
     (qw(name no-default-conflict manual-installation extrainfo localbase arch));
 
@@ -389,10 +374,6 @@ our @cache_categories =
 sub visit
 {
 	my ($self, $method, @l) = @_;
-
-	my $visitor = new OpenBSD::PackingList::Visitor;
-
-	push(@l, $visitor);
 
 	if (defined $self->{cvstags}) {
 		for my $item (@{$self->{cvstags}}) {
@@ -414,10 +395,6 @@ sub visit
 				$item->$method(@l);
 			}
 		}
-	}
-	$visitor->{pass} = 2;
-	while (my $item = shift @{$visitor->{list}}) {
-		$item->$method(@l);
 	}
 }
 

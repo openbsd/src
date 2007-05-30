@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.53 2007/05/30 14:04:51 espie Exp $
+# $OpenBSD: Delete.pm,v 1.54 2007/05/30 16:32:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -131,27 +131,18 @@ sub delete_plist
 	my ($plist, $state) = @_;
 
 	my $totsize = $plist->{totsize};
+	my $donesize = 0;
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
 	$ENV{'PKG_PREFIX'} = $plist->localbase;
-	if ($plist->has(REQUIRE)) {
-		$plist->get(REQUIRE)->delete($state);
-	}
-	if ($plist->has(DEINSTALL)) {
-		$plist->get(DEINSTALL)->delete($state);
-	} 
 	$plist->register_manpage($state);
 	manpages_unindex($state);
-	my $donesize = 0;
-	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
-		$item->delete($state);
-		$item->mark_progress(\$donesize, $totsize);
-	}
-
+	$plist->delete_and_progress($state, \$donesize, $totsize);
 	OpenBSD::ProgressMeter::next();
 	if ($plist->has(UNDISPLAY)) {
 		$plist->get(UNDISPLAY)->prepare($state);
 	}
+ 
 
 	for my $name (OpenBSD::Requiring->new($pkgname)->list) {
 		print "remove dependency on $name\n" 
@@ -183,6 +174,13 @@ sub prepare_for_deletion
 
 sub delete
 {
+}
+
+sub delete_and_progress
+{
+	my ($self, $state, $donesize, $totsize) = @_;
+	$self->delete($state);
+	$self->mark_progress($donesize, $totsize);
 }
 
 sub record_shared
