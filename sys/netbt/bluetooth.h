@@ -1,9 +1,9 @@
-/*	$OpenBSD: bluetooth.h,v 1.3 2006/12/01 07:18:34 camield Exp $	*/
+/*	$OpenBSD: bluetooth.h,v 1.4 2007/05/30 03:42:53 uwe Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.5 2007/04/21 06:15:22 plunky Exp $	*/
 
-/*
- * bluetooth.h
- *
- * Copyright (c) 2001-2002 Maksim Yevmenkin <m_evmenkin@yahoo.com>
+/*-
+ * Copyright (c) 2005 Iain Hibbert.
+ * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,250 +14,135 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Itronix Inc. may not be used to endorse
+ *    or promote products derived from this software without specific
+ *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_bluetooth.h,v 1.3 2003/11/14 03:45:29 emax Exp $
+ * THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETGRAPH_BLUETOOTH_H_
-#define _NETGRAPH_BLUETOOTH_H_
+#ifndef _NETBT_BLUETOOTH_H_
+#define _NETBT_BLUETOOTH_H_
+
+#include <sys/socket.h>
+#include <sys/types.h>
 
 /*
- * XXX: This file only contains redundant mbuf wrapppers and must be
- * removed later.
+ * Bluetooth Address Family Protocol Numbers
  */
+#define BTPROTO_HCI	1
+#define BTPROTO_L2CAP	2
+#define BTPROTO_RFCOMM	3
+#define BTPROTO_SCO	4
+
+/* All sizes are in bytes */
+#define BLUETOOTH_BDADDR_SIZE	6
 
 /*
- * XXX: dirty temporary hacks.
+ * Bluetooth device address
  */
-#undef KASSERT
-#define KASSERT(a, b)
-#undef mtx_init
-#undef mtx_lock
-#undef mtx_unlock
-#undef mtx_assert
-#undef mtx_destroy
-#define mtx_init(a, b, c, d)
-#define mtx_lock(a)
-#define mtx_unlock(a)
-#define mtx_assert(a, b)
-#define mtx_destroy(a)
-#define ACCEPT_LOCK()
-#define SOCK_LOCK(a)
-
-#define NG_FREE_M(m)							\
-	do {								\
-		if ((m)) {						\
-			m_freem((m));					\
-			(m) = NULL;					\
-		}							\
-	} while (0)
+typedef struct {
+	uint8_t	b[BLUETOOTH_BDADDR_SIZE];
+} __attribute__ ((packed)) bdaddr_t;
 
 /*
- * Version of the stack
+ * bdaddr utility functions
  */
+static __inline int
+bdaddr_same(const bdaddr_t *a, const bdaddr_t *b)
+{
 
-#define NG_BLUETOOTH_VERSION	1
+	return (a->b[0] == b->b[0] && a->b[1] == b->b[1]
+		&& a->b[2] == b->b[2] && a->b[3] == b->b[3]
+		&& a->b[4] == b->b[4] && a->b[5] == b->b[5]);
+}
+
+static __inline int
+bdaddr_any(const bdaddr_t *a)
+{
+
+	return (a->b[0] == 0 && a->b[1] == 0 && a->b[2] == 0
+		&& a->b[3] == 0 && a->b[4] == 0 && a->b[5] == 0);
+}
+
+static __inline void
+bdaddr_copy(bdaddr_t *d, const bdaddr_t *s)
+{
+
+	d->b[0] = s->b[0];
+	d->b[1] = s->b[1];
+	d->b[2] = s->b[2];
+	d->b[3] = s->b[3];
+	d->b[4] = s->b[4];
+	d->b[5] = s->b[5];
+}
 
 /*
- * Declare the base of the Bluetooth sysctl hierarchy, 
- * but only if this file cares about sysctl's
+ * Socket address used by Bluetooth protocols
  */
+struct sockaddr_bt {
+	uint8_t		bt_len;
+	sa_family_t	bt_family;
+	bdaddr_t	bt_bdaddr;
+	uint16_t	bt_psm;
+	uint8_t		bt_channel;
+	uint8_t		bt_zero[5];
+};
 
-#ifdef SYSCTL_DECL
-SYSCTL_DECL(_net_bluetooth);
-SYSCTL_DECL(_net_bluetooth_hci);
-SYSCTL_DECL(_net_bluetooth_l2cap);
-SYSCTL_DECL(_net_bluetooth_rfcomm);
-#endif /* SYSCTL_DECL */
+/* Note: this is actually 6 bytes including terminator */
+#define BDADDR_ANY	((const bdaddr_t *) "\000\000\000\000\000")
+
+#ifdef _KERNEL
 
 /*
- * Mbuf queue and useful mbufq macros. We do not use ifqueue because we
- * do not need mutex and other locking stuff
+ * Bluetooth Protocol API callback methods
  */
-
 struct mbuf;
-
-struct ng_bt_mbufq {
-	struct mbuf	*head;   /* first item in the queue */
-	struct mbuf	*tail;   /* last item in the queue */
-	u_int32_t	 len;    /* number of items in the queue */
-	u_int32_t	 maxlen; /* maximal number of items in the queue */
-	u_int32_t	 drops;	 /* number if dropped items */
+struct btproto {
+	void (*connecting)(void *);
+	void (*connected)(void *);
+	void (*disconnected)(void *, int);
+	void *(*newconn)(void *, struct sockaddr_bt *, struct sockaddr_bt *);
+	void (*complete)(void *, int);
+	void (*linkmode)(void *, int);
+	void (*input)(void *, struct mbuf *);
 };
-typedef struct ng_bt_mbufq	ng_bt_mbufq_t;
-typedef struct ng_bt_mbufq *	ng_bt_mbufq_p;
-
-#define NG_BT_MBUFQ_INIT(q, _maxlen)			\
-	do {						\
-		(q)->head = NULL;			\
-		(q)->tail = NULL;			\
-		(q)->len = 0;				\
-		(q)->maxlen = (_maxlen);		\
-		(q)->drops = 0;				\
-	} while (0)
-
-#define NG_BT_MBUFQ_DESTROY(q)				\
-	do {						\
-		NG_BT_MBUFQ_DRAIN((q));			\
-	} while (0)
-
-#define NG_BT_MBUFQ_FIRST(q)	(q)->head
-
-#define NG_BT_MBUFQ_LEN(q)	(q)->len
-
-#define NG_BT_MBUFQ_FULL(q)	((q)->len >= (q)->maxlen)
-
-#define NG_BT_MBUFQ_DROP(q)	(q)->drops ++
-
-#define NG_BT_MBUFQ_ENQUEUE(q, i)			\
-	do {						\
-		(i)->m_nextpkt = NULL;			\
-							\
-		if ((q)->tail == NULL)			\
-			(q)->head = (i);		\
-		else					\
-			(q)->tail->m_nextpkt = (i);	\
-							\
-		(q)->tail = (i);			\
-		(q)->len ++;				\
-	} while (0)
-
-#define NG_BT_MBUFQ_DEQUEUE(q, i)			\
-	do {						\
-		(i) = (q)->head;			\
-		if ((i) != NULL) {			\
-			(q)->head = (q)->head->m_nextpkt; \
-			if ((q)->head == NULL)		\
-				(q)->tail = NULL;	\
-							\
-			(q)->len --;			\
-			(i)->m_nextpkt = NULL;		\
-		} 					\
-	} while (0)
-
-#define NG_BT_MBUFQ_PREPEND(q, i)			\
-	do {						\
-		(i)->m_nextpkt = (q)->head;		\
-		if ((q)->tail == NULL)			\
-			(q)->tail = (i);		\
-							\
-		(q)->head = (i);			\
-		(q)->len ++;				\
-	} while (0)
-
-#define NG_BT_MBUFQ_DRAIN(q)				\
-	do { 						\
-        	struct mbuf	*m = NULL;		\
-							\
-		for (;;) { 				\
-			NG_BT_MBUFQ_DEQUEUE((q), m);	\
-			if (m == NULL) 			\
-				break; 			\
-							\
-			NG_FREE_M(m);	 		\
-		} 					\
-	} while (0)
-
-/* 
- * Netgraph item queue and useful itemq macros
- */
-
-struct ng_item;
-
-struct ng_bt_itemq {
-	struct ng_item	*head;   /* first item in the queue */
-	struct ng_item	*tail;   /* last item in the queue */
-	u_int32_t	 len;    /* number of items in the queue */
-	u_int32_t	 maxlen; /* maximal number of items in the queue */
-	u_int32_t	 drops;  /* number if dropped items */
-};
-typedef struct ng_bt_itemq	ng_bt_itemq_t;
-typedef struct ng_bt_itemq *	ng_bt_itemq_p;
-
-#define NG_BT_ITEMQ_INIT(q, _maxlen)	NG_BT_MBUFQ_INIT((q), (_maxlen))
-
-#define NG_BT_ITEMQ_DESTROY(q)				\
-	do {						\
-		NG_BT_ITEMQ_DRAIN((q));			\
-	} while (0)
-
-#define NG_BT_ITEMQ_FIRST(q)	NG_BT_MBUFQ_FIRST((q))
-
-#define NG_BT_ITEMQ_LEN(q)	NG_BT_MBUFQ_LEN((q))
-
-#define NG_BT_ITEMQ_FULL(q)	NG_BT_MBUFQ_FULL((q))
-
-#define NG_BT_ITEMQ_DROP(q)	NG_BT_MBUFQ_DROP((q))
-
-#define NG_BT_ITEMQ_ENQUEUE(q, i)			\
-	do {						\
-		(i)->el_next = NULL;			\
-							\
-		if ((q)->tail == NULL)			\
-			(q)->head = (i);		\
-		else					\
-			(q)->tail->el_next = (i);	\
-							\
-		(q)->tail = (i);			\
-		(q)->len ++;				\
-	} while (0)
-
-#define NG_BT_ITEMQ_DEQUEUE(q, i)			\
-	do {						\
-		(i) = (q)->head;			\
-		if ((i) != NULL) {			\
-			(q)->head = (q)->head->el_next;	\
-			if ((q)->head == NULL)		\
-				(q)->tail = NULL;	\
-							\
-			(q)->len --;			\
-			(i)->el_next = NULL;		\
-		} 					\
-	} while (0)
-
-#define NG_BT_ITEMQ_PREPEND(q, i)			\
-	do {						\
-		(i)->el_next = (q)->head;		\
-		if ((q)->tail == NULL)			\
-			(q)->tail = (i);		\
-							\
-		(q)->head = (i);			\
-		(q)->len ++;				\
-	} while (0)
-
-#define NG_BT_ITEMQ_DRAIN(q)				\
-	do { 						\
-        	struct ng_item	*i = NULL;		\
-							\
-		for (;;) { 				\
-			NG_BT_ITEMQ_DEQUEUE((q), i);	\
-			if (i == NULL) 			\
-				break; 			\
-							\
-			NG_FREE_ITEM(i); 		\
-		} 					\
-	} while (0)
 
 /*
- * Get Bluetooth stack sysctl globals
+ * Debugging stuff
  */
 
-u_int32_t	bluetooth_hci_command_timeout	(void);
-u_int32_t	bluetooth_hci_connect_timeout	(void);
-u_int32_t	bluetooth_hci_max_neighbor_age	(void);
-u_int32_t	bluetooth_l2cap_rtx_timeout	(void);
-u_int32_t	bluetooth_l2cap_ertx_timeout	(void);
+#define BLUETOOTH_DEBUG
+#ifdef BLUETOOTH_DEBUG
+extern int bluetooth_debug;
+# define DPRINTF(fmt, args...)	do {			\
+	if (bluetooth_debug)				\
+		printf("%s: "fmt, __func__ , ##args);	\
+} while (/* CONSTCOND */0)
 
-#endif /* _NETGRAPH_BLUETOOTH_H_ */
+# define DPRINTFN(n, fmt, args...)	do {		\
+	if (bluetooth_debug > (n))			\
+		printf("%s: "fmt, __func__ , ##args);	\
+} while (/* CONSTCOND */0)
+
+# define UNKNOWN(value)			\
+		printf("%s: %s = %d unknown!\n", __func__, #value, (value));
+#else
+# define DPRINTF(...)
+# define DPRINTFN(...)
+# define UNKNOWN(x)
+#endif	/* BLUETOOTH_DEBUG */
+
+#endif	/* _KERNEL */
+
+#endif	/* _NETBT_BLUETOOTH_H_ */
