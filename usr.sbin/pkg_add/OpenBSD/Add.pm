@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.63 2007/05/30 12:52:07 espie Exp $
+# $OpenBSD: Add.pm,v 1.64 2007/05/30 13:03:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -206,7 +206,7 @@ sub prepare_for_addition
 sub install
 {
 	my ($self, $state) = @_;
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::install($state);
 	my $auth = $self->{name};
 	print "adding ", $self->type, " $auth\n" if $state->{verbose};
 	return if $state->{not};
@@ -253,7 +253,7 @@ sub install
 	my ($self, $state) = @_;
 
 	my $name = $self->{name};
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::install($state);
 	open(my $pipe, '-|', '/sbin/sysctl', '-n', $name);
 	my $actual = <$pipe>;
 	chomp $actual;
@@ -303,7 +303,7 @@ sub prepare_for_addition
 sub install
 {
 	my ($self, $state) = @_;
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::install($state);
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
@@ -384,7 +384,7 @@ sub install
 {
 	my ($self, $state) = @_;
 
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::install($state);
 	$state->{end_faked} = 1;
 }
 
@@ -422,7 +422,7 @@ sub install
 {
 	my ($self, $state) = @_;
 
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::install($state);
 	my $destdir = $state->{destdir};
 	my $filename = $destdir.$self->fullname;
 	my $orig = $self->{copyfrom};
@@ -522,7 +522,7 @@ package OpenBSD::PackingElement::Dir;
 sub install
 {
 	my ($self, $state) = @_;
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::install($state);
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
@@ -539,7 +539,7 @@ sub install
 {
 	my ($self, $state) = @_;
 
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::install($state);
 	$self->run($state);
 }
 

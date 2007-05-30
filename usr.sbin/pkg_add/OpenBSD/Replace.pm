@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.23 2007/05/30 12:52:07 espie Exp $
+# $OpenBSD: Replace.pm,v 1.24 2007/05/30 13:03:54 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub extract
 		return;
 	}
 	
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::extract($state);
 	my $d = dirname($file->{destdir}.$file->{name});
 	while (!-d $d && -e _) {
 		$d = dirname($d);
@@ -96,7 +96,7 @@ sub extract
 	my $destdir = $state->{destdir};
 
 	return if -e $destdir.$fullname;
-	$state->{partial}->{$self} = 1;
+	$self->SUPER::extract($state);
 	print "new directory ", $destdir, $fullname, "\n" if $state->{very_verbose};
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
