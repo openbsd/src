@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.169 2007/05/09 18:02:46 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.170 2007/05/30 06:29:17 ckuethe Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2376,8 +2376,6 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 		/* Set the interrupt throttling rate.  Value is calculated
 		 * as DEFAULT_ITR = 1/(MAX_INTS_PER_SEC * 256ns) */
-#define MAX_INTS_PER_SEC	8000
-#define DEFAULT_ITR		1000000000/(MAX_INTS_PER_SEC * 256)
 		E1000_WRITE_REG(&sc->hw, ITR, DEFAULT_ITR);
 	}
 

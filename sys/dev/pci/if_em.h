@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.34 2006/11/18 18:39:14 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.35 2007/05/30 06:29:17 ckuethe Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -113,6 +113,15 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 #define EM_MIN_RXD			12
 #define EM_MAX_RXD			256
+
+/*
+ * MAX_INTS_PER_SEC (ITR - Interrupt Throttle Register)
+ * The Interrupt Throttle Register (ITR) limits the delivery of interrupts
+ * to a reasonable rate by providing a guaranteed inter-interrupt delay
+ * between interrupts asserted by the Ethernet controller.
+ */
+#define MAX_INTS_PER_SEC	8000
+#define DEFAULT_ITR		1000000000/(MAX_INTS_PER_SEC * 256)
 
 /*
  * EM_TIDV - Transmit Interrupt Delay Value
