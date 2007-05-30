@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.118 2007/05/29 13:52:07 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.119 2007/05/30 12:29:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -132,6 +132,12 @@ sub IsFile() { 0 }
 sub NoDuplicateNames() { 0 }
 
 sub signature {}
+
+sub copy_if
+{
+	my ($self, $copy, $h) = @_;
+	$self->add_object($copy) if defined $h->{$self};
+}
 
 # Basic class hierarchy
 

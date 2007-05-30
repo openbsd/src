@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.70 2007/05/30 11:13:35 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.71 2007/05/30 12:29:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -65,6 +65,17 @@ sub set_infodir
 	$dir .= '/' unless $dir =~ m/\/$/;
 	${$self->{infodir}} = $dir;
 }
+
+sub make_copy
+{
+	my ($plist, $h) = @_;
+
+	my $copy = bless {state => OpenBSD::PackingList::State->new,
+		infodir => \(my $d = ${$plist->{infodir}})}, ref($plist);
+	$plist->copy_if($copy, $h);
+	return $copy;
+}
+
 
 sub infodir
 {
@@ -316,6 +327,16 @@ sub get
 {
 	my ($plist, $name) = @_;
 	return $plist->{$name};
+}
+
+sub set_pkgname
+{
+	my ($self, $name) = @_;
+	if (defined $self->{name}) {
+		$self->{name}->{name} = $name;
+	} else {
+		OpenBSD::PackingElement::Name->add($self, $name);
+	}
 }
 
 sub pkgname
