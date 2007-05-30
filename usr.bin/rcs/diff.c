@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.19 2007/05/30 03:24:54 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.20 2007/05/30 03:30:21 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -146,7 +146,7 @@ struct cand {
 	int	x;
 	int	y;
 	int	pred;
-} cand;
+};
 
 struct line {
 	int	serial;
