@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.30 2007/05/30 00:23:48 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.31 2007/05/30 02:24:59 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -91,10 +91,10 @@ int	filt_procattach(struct knote *kn);
 void	filt_procdetach(struct knote *kn);
 int	filt_proc(struct knote *kn, long hint);
 int	filt_fileattach(struct knote *kn);
-void    filt_timerexpire(void *knx);
-int     filt_timerattach(struct knote *kn);
-void    filt_timerdetach(struct knote *kn);
-int     filt_timer(struct knote *kn, long hint);
+void	filt_timerexpire(void *knx);
+int	filt_timerattach(struct knote *kn);
+void	filt_timerdetach(struct knote *kn);
+int	filt_timer(struct knote *kn, long hint);
 
 struct filterops kqread_filtops =
 	{ 1, NULL, filt_kqdetach, filt_kqueue };
@@ -107,8 +107,8 @@ struct filterops timer_filtops =
 
 struct	pool knote_pool;
 struct	pool kqueue_pool;
-int kq_ncallouts = 0;
-int kq_calloutmax = (4 * 1024);
+int kq_ntimeouts = 0;
+int kq_timeoutmax = (4 * 1024);
 
 #define KNOTE_ACTIVATE(kn) do {						\
 	kn->kn_status |= KN_ACTIVE;					\
@@ -323,9 +323,9 @@ filt_timerattach(struct knote *kn)
 	struct timeval tv;
 	int tticks;
 
-	if (kq_ncallouts > kq_calloutmax)
+	if (kq_ntimeouts > kq_timeoutmax)
 		return (ENOMEM);
-	kq_ncallouts++;
+	kq_ntimeouts++;
 
 	tv.tv_sec = kn->kn_sdata / 1000;
 	tv.tv_usec = (kn->kn_sdata % 1000) * 1000;
@@ -348,7 +348,7 @@ filt_timerdetach(struct knote *kn)
 	to = (struct timeout *)kn->kn_hook;
 	timeout_del(to);
 	FREE(to, M_KEVENT);
-	kq_ncallouts--;
+	kq_ntimeouts--;
 }
 
 int
