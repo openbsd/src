@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.84 2007/05/29 16:25:07 thib Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.85 2007/05/30 04:27:43 beck Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -91,8 +91,6 @@ struct vnode {
 	u_int   v_bioflag;
 	u_int   v_holdcnt;			/* buffer references */
 	u_int   v_id;				/* capability identifier */
-	LIST_HEAD(, namecache) v_cache_src;	/* cache entries from us */
-	TAILQ_HEAD(, namecache) v_cache_dst;	/* cache entries to us */
 	struct	mount *v_mount;			/* ptr to vfs we are in */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
@@ -407,8 +405,6 @@ void	vntblinit(void);
 int	vwaitforio(struct vnode *, int, char *, int);
 void	vwakeup(struct vnode *);
 void	vput(struct vnode *);
-void	vhold(struct vnode *);
-void	vdrop(struct vnode *);
 int	vrecycle(struct vnode *, struct proc *);
 void	vrele(struct vnode *);
 void	vref(struct vnode *);

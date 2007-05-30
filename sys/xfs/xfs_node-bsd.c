@@ -420,8 +420,6 @@ static struct long_entry tbl;
 static void
 tbl_clear (void)
 {
-    vdrop(tbl.vp);
-    vdrop(tbl.dvp);  
     tbl.dvp = tbl.vp = NULL;
     tbl.name[0] = '\0';
     tbl.len = 0;
@@ -435,8 +433,6 @@ tbl_clear (void)
 static void
 tbl_enter (size_t len, const char *name, struct vnode *dvp, struct vnode *vp)
 {
-    vhold(vp);
-    vhold(dvp);  
     tbl.len = len;
     bcopy(name, tbl.name, len);
     tbl.dvp = dvp;
@@ -457,15 +453,10 @@ tbl_lookup (struct componentname *cnp,
 {
     if (tbl.dvp == dvp
 	&& tbl.len == cnp->cn_namelen
-	&& strncmp(tbl.name, cnp->cn_nameptr, tbl.len) == 0) {
-#ifdef DIAGNOSTIC
-	if (tbl.vpid != tbl.vp->v_id)
-		panic("tbl.vpid %x != tbl.vp->v_id %x", tbl.vpid,
-		    tbl.vp->v_id);
-	if (tbl.dvpid != tbl.dvp->v_id)
-		panic("tbl.dvpid %x != tbl.dvp->v_id %x", tbl.dvpid,
-		    tbl.dvp->v_id);
-#endif
+	&& strncmp(tbl.name, cnp->cn_nameptr, tbl.len) == 0
+	&& tbl.dvpid == tbl.dvp->v_id
+	&& tbl.vpid == tbl.vp->v_id) {
+
 	*res = tbl.vp;
 	return -1;
     } else
@@ -676,10 +667,10 @@ xfs_dnlc_lock(struct vnode *dvp,
 	xfs_vfs_writelock(dvp, xfs_cnp_to_proc(cnp));
 #endif
 
-#ifdef DIAGNOSTIC
-	if (dvp->v_id != vpid)
-		panic("dvp->v_id %x != vpid %x", dvp->v_id, vpid);
-#endif	
+	if (error == 0 && dvp->v_id != vpid) {
+	    vput(*res);
+	    return 0;
+	}
     } else {
 #ifdef HAVE_FREEBSD_THREAD
 	error = xfs_do_vget(*res, LK_EXCLUSIVE, xfs_cnp_to_thread(cnp));

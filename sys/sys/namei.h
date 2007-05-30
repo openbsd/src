@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.17 2007/05/29 05:28:54 beck Exp $	*/
+/*	$OpenBSD: namei.h,v 1.18 2007/05/30 04:27:43 beck Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -161,8 +161,6 @@ struct	namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
 	LIST_ENTRY(namecache) nc_vhash;	/* (reverse) directory hash chain */
 	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
-	LIST_ENTRY(namecache) nc_src;	/* source vnodes */
-	TAILQ_ENTRY(namecache) nc_dst;	/* destination vnodes */
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
 	u_long	nc_dvpid;		/* capability number of nc_dvp */
 	struct	vnode *nc_vp;		/* vnode the name refers to */
@@ -177,7 +175,6 @@ int	namei(struct nameidata *ndp);
 int	lookup(struct nameidata *ndp);
 int	relookup(struct vnode *dvp, struct vnode **vpp,
 		      struct componentname *cnp);
-void cache_delete(struct namecache *);
 void cache_purge(struct vnode *);
 int cache_lookup(struct vnode *, struct vnode **, struct componentname *);
 void cache_enter(struct vnode *, struct vnode *, struct componentname *);
