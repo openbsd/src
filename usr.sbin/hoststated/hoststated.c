@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.32 2007/05/30 00:19:25 pyr Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.33 2007/05/30 00:51:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -254,18 +254,18 @@ main(int argc, char *argv[])
 		imsg_init(ibuf, pipe_parent2relay[c][1], main_dispatch_relay);
 		ibuf->events = EV_READ;
 		event_set(&ibuf->ev, ibuf->fd, ibuf->events,
-		    ibuf->handler, env);
+		    ibuf->handler, ibuf);
 		event_add(&ibuf->ev, NULL);
 	}
 
 	ibuf_pfe->events = EV_READ;
 	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
-	    ibuf_pfe->handler, env);
+	    ibuf_pfe->handler, ibuf_pfe);
 	event_add(&ibuf_pfe->ev, NULL);
 
 	ibuf_hce->events = EV_READ;
 	event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
-	    ibuf_hce->handler, env);
+	    ibuf_hce->handler, ibuf_hce);
 	event_add(&ibuf_hce->ev, NULL);
 
 	if (env->flags & F_DEMOTE)
