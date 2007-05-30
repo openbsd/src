@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.60 2007/05/30 16:54:07 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.61 2007/05/30 17:56:37 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1339,6 +1339,12 @@ sr_shutdown_discipline(struct sr_discipline *sd)
 
 	DNPRINTF(SR_D_DIS, "%s: sr_shutdown_discipline %s\n",
 	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
+
+	/* make sure there isn't a sync pending and yield */
+	wakeup(sd);
+	while (tsleep(sr_shutdown_discipline, MAXPRI, "sr_down", 1 * hz) !=
+	    EWOULDBLOCK)
+		;
 
 #ifndef SMALL_KERNEL
 	sr_delete_sensors(sd);
