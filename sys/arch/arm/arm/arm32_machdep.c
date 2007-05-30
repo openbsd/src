@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.26 2007/05/29 21:09:43 robert Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.27 2007/05/30 17:13:29 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -327,6 +327,7 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+	minaddr = vm_map_min(kernel_map);
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
