@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.108 2007/03/25 16:10:35 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.109 2007/05/30 01:08:41 mcbride Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1091,9 +1091,6 @@ get_linkstate(int mt, int link_state)
 		break;
 	case IFT_FDDI:
 		media_type = IFM_FDDI;
-		break;
-	case IFT_ISO88025:
-		media_type = IFM_TOKEN;
 		break;
 	case IFT_CARP:
 		media_type = IFM_CARP;
