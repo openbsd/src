@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.11 2007/05/30 02:21:20 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.12 2007/05/30 03:24:54 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -160,13 +160,6 @@ struct context_vec {
 	int	b;		/* end line in old file */
 	int	c;		/* start line in new file */
 	int	d;		/* end line in new file */
-};
-
-struct diff_arg {
-	char	*rev1;
-	char	*rev2;
-	char	*date1;
-	char	*date2;
 };
 
 static void	 output(FILE *, FILE *);
