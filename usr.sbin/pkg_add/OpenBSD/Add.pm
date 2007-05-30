@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.60 2007/05/29 14:39:03 espie Exp $
+# $OpenBSD: Add.pm,v 1.61 2007/05/30 11:13:35 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -66,13 +66,11 @@ sub validate_plist
 	$plist->{totsize} = $state->{totsize};
 }
 
-sub borked_installation
+sub record_partial_installation
 {
-	my ($plist, $not, @msg) = @_;
+	my $plist = shift;
 
-	Fatal @msg if $not;
 	use OpenBSD::PackingElement;
-
 
 	my $borked = borked_package($plist->pkgname);
 	# fix packing list for pkg_delete
@@ -80,7 +78,7 @@ sub borked_installation
 
 	# last file may have not copied correctly
 	my $last = $plist->{items}->[@{$plist->{items}}-1];
-	if ($last->IsFile() && defined($last->{md5})) {
+	if ($last->IsFile && defined($last->{md5})) {
 	    require OpenBSD::md5;
 
 	    my $old = $last->{md5};
@@ -99,6 +97,15 @@ sub borked_installation
 	OpenBSD::PackingElement::Cwd->add($plist, '.');
 	$plist->{name}->{name} = $borked;
 	register_installation($plist);
+	return $borked;
+}
+
+sub borked_installation
+{
+	my ($plist, $not, @msg) = @_;
+
+	Fatal @msg if $not;
+	my $borked = record_partial_installation($plist);
 	Fatal @msg, ", partial installation recorded as $borked";
 }
 
