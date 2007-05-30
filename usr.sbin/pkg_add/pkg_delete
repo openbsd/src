@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.103 2007/05/22 10:47:40 espie Exp $
+# $OpenBSD: pkg_delete,v 1.104 2007/05/30 15:10:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -89,8 +89,8 @@ $state->{not} = $opt_n;
 # XXX RequiredBy
 $not = $opt_n;
 $state->{quick} = $opt_q;
-$state->{verbose} = $opt_v >= 2;
-$state->{very_verbose} = $opt_v;
+$state->{very_verbose} = $opt_v >=2;
+$state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
