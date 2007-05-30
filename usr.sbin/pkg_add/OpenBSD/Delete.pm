@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.50 2007/05/29 14:39:03 espie Exp $
+# $OpenBSD: Delete.pm,v 1.51 2007/05/30 11:13:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,34 +49,12 @@ sub keep_old_files
 {
 	my ($state, $plist) = @_;
 	my $p = new OpenBSD::PackingList;
-	for my $i (qw(cvstags no-default-conflict conflict) ) {
-		if (defined $plist->{$i}) {
-			$p->{$i} = $plist->{$i};
-		}
-	}
-	for my $i (@{$plist->{items}}) {
-		if ($i->isa("OpenBSD::PackingElement::Cwd")) {
-			push(@{$p->{items}}, $i);
-			next;
-		}
-		next unless $i->IsFile;
-		if (defined $i->{stillaround}) {
-			delete $i->{stillaround};
-			if ($state->{replacing}) {
-				rename_file_to_temp($i);
-			}
-			push(@{$p->{items}}, $i);
-		}
-	}
 	my $borked = borked_package($plist->pkgname);
 	OpenBSD::PackingElement::Name->add($p, $borked);
-	$p->{name}->{name} = $borked;
-	$p->set_info(installed_info($borked));
+	$p->set_infodir(installed_info($borked));
 	mkdir($p->infodir);
-	require File::Copy;
 
-	File::Copy::copy($plist->infodir.COMMENT, $p->infodir);
-	File::Copy::copy($plist->infodir.DESC, $p->infodir);
+	$plist->copy_old_stuff($p, $state);
 	$p->to_installation;
 	return $borked;
 }
@@ -212,6 +190,18 @@ sub delete
 
 sub record_shared
 {
+}
+
+sub copy_old_stuff
+{
+}
+
+package OpenBSD::PackingElement::Cwd;
+
+sub copy_old_stuff
+{
+	my ($self, $plist, $state) = @_;
+	$self->add_object($plist);
 }
 
 package OpenBSD::PackingElement::FileObject;
@@ -418,6 +408,19 @@ sub delete
 	}
 }
 
+sub copy_old_stuff
+{
+	my ($self, $plist, $state) = @_;
+
+	if (defined $self->{stillaround}) {
+		delete $self->{stillaround};
+		if ($state->{replacing}) {
+			rename_file_to_temp($self);
+		}
+		$self->add_object($plist);
+	}
+}
+
 package OpenBSD::PackingElement::SpecialFile;
 use OpenBSD::PackageInfo;
 
@@ -438,6 +441,32 @@ sub prepare_for_deletetion
 	if ($s->{noexec} && $self->exec_on_delete) {
 		$s->report_noexec($state, $fname);
 	}
+}
+
+sub copy_old_stuff
+{
+}
+
+package OpenBSD::PackingElement::Meta;
+sub copy_old_stuff
+{
+	my ($self, $plist, $state) = @_;
+	$self->add_object($plist);
+}
+
+package OpenBSD::PackingElement::Name;
+sub copy_old_stuff
+{
+}
+
+package OpenBSD::PackingElement::FDESC;
+sub copy_old_stuff
+{
+	my ($self, $plist, $state) = @_;
+	require File::Copy;
+
+	File::Copy::copy($self->fullname, $plist->infodir);
+	$self->add_object($plist);
 }
 
 package OpenBSD::PackingElement::Sample;
@@ -611,6 +640,14 @@ sub delete
 	my ($self, $state) = @_;
 
 	$self->run($state, "DEINSTALL");
+}
+
+package OpenBSD::PackingElement::Depend;
+sub copy_old_stuff
+{
+	my ($self, $plist, $state) = @_;
+
+	OpenBSD::PackingElement::Comment->add($plist, "\@".$self->keyword." ".$self->stringize);
 }
 
 1;
