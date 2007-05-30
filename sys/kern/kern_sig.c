@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.93 2007/05/29 00:26:29 jcs Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.94 2007/05/30 07:42:52 moritz Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1356,8 +1356,8 @@ coredump(struct proc *p)
 	struct vmspace *vm = p->p_vmspace;
 	struct nameidata nd;
 	struct vattr vattr;
-	int error, error1;
-	char name[MAXCOMLEN+6];		/* progname.core */
+	int error, error1, len;
+	char name[sizeof("/var/crash/") + MAXCOMLEN + sizeof(".core")];
 	char *dir = "";
 	struct core core;
 
@@ -1379,6 +1379,10 @@ coredump(struct proc *p)
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
 		return (EFBIG);
 
+	len = snprintf(name, sizeof(name), "%s%s.core", dir, p->p_comm);
+	if (len >= sizeof(name))
+		return (EACCES);
+
 	/*
 	 * ... but actually write it as UID
 	 */
@@ -1386,7 +1390,6 @@ coredump(struct proc *p)
 	cred->cr_uid = p->p_cred->p_ruid;
 	cred->cr_gid = p->p_cred->p_rgid;
 
-	snprintf(name, sizeof name, "%s%s.core", dir, p->p_comm);
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
