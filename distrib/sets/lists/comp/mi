@@ -366,8 +366,6 @@
 ./usr/include/dev/ic/tcic2var.h
 ./usr/include/dev/ic/tea5757.h
 ./usr/include/dev/ic/trm.h
-./usr/include/dev/ic/tropicreg.h
-./usr/include/dev/ic/tropicvar.h
 ./usr/include/dev/ic/twereg.h
 ./usr/include/dev/ic/twevar.h
 ./usr/include/dev/ic/uhareg.h
@@ -1027,7 +1025,6 @@
 ./usr/include/net/if_slvar.h
 ./usr/include/net/if_sppp.h
 ./usr/include/net/if_stripvar.h
-./usr/include/net/if_token.h
 ./usr/include/net/if_trunk.h
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h

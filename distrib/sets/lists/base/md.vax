@@ -347,8 +347,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tcic2var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tea5757.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/trm.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tropicreg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tropicvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/twereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/twevar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/uhareg.ph
@@ -1065,7 +1063,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_slvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_stripvar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_trunk.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/net/if_types.ph
