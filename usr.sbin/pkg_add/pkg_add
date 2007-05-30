@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.293 2007/05/30 14:04:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.294 2007/05/30 14:10:08 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -431,8 +431,12 @@ sub really_add
 
 	try {
 		do_script($plist, REQUIRE, $state, "INSTALL");
-		do_script($plist, INSTALL, $state, "PRE-INSTALL");
-		OpenBSD::Add::perform_installation($handle, $state);
+		do_script($plist, INSTALL, $state, "PRE-INSTALL")
+		    unless $state->{interrupted};
+		OpenBSD::Add::perform_installation($handle, $state) 
+		    unless $state->{interrupted};
+		do_script($plist, INSTALL, $state, "POST-INSTALL") 
+		    unless $state->{interrupted};
 	} catchall {
 		unless ($state->{interrupted}) {
 			Warn $_;
@@ -440,15 +444,6 @@ sub really_add
 		}
 	};
 	OpenBSD::ProgressMeter::next();
-
-	if (!($state->{interrupted} || $errors)) {
-		try { 
-			do_script($plist, INSTALL, $state, "POST-INSTALL") 
-		} catchall {
-			Warn $_;
-			$errors++;
-		};
-	}
 
 	unlink($plist->infodir.CONTENTS);
 	if ($state->{interrupted} || $errors) {
