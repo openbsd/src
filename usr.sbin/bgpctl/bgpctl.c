@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.123 2007/04/23 13:05:35 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.124 2007/05/30 01:13:19 otto Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -927,8 +927,6 @@ ift2ifm(int media_type)
 		return (IFM_ETHER);
 	case IFT_FDDI:
 		return (IFM_FDDI);
-	case IFT_ISO88025:
-		return (IFM_TOKEN);
 	case IFT_CARP:
 		return (IFM_CARP);
 	case IFT_IEEE80211:
