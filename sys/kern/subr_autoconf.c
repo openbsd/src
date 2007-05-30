@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.51 2007/05/15 01:56:47 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.52 2007/05/30 05:36:36 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	device_ref(dev);
 
 	if (parent == ROOT)
-		printf("%s (root)", dev->dv_xname);
+		printf("%s at root", dev->dv_xname);
 	else {
 		printf("%s at %s", dev->dv_xname, parent->dv_xname);
 		if (print)
