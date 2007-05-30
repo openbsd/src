@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.20 2006/01/01 22:46:44 marc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.21 2007/05/30 00:23:48 tedu Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -416,6 +416,22 @@ even if the signal has been marked as
 Event notification happens after normal signal delivery processing.
 .Va data
 returns the number of times the signal has occurred since the last call to
+.Fn kevent .
+This filter automatically sets the
+.Dv EV_CLEAR
+flag internally.
+.It Dv EVFILT_TIMER
+Establishes an arbitrary timer identified by
+.Va ident .
+When adding a timer,
+.Va data
+specifies the timeout period in milliseconds.
+The timer will be periodic unless
+.Dv EV_ONESHOT
+is specified.
+On return,
+.Va data
+contains the number of times the timeout has expired since the last call to
 .Fn kevent .
 This filter automatically sets the
 .Dv EV_CLEAR

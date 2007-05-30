@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.29 2007/03/30 14:21:51 reyk Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.30 2007/05/30 00:23:48 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -50,6 +50,7 @@
 #include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/syscallargs.h>
+#include <sys/timeout.h>
 
 int	kqueue_scan(struct file *fp, int maxevents,
 		    struct kevent *ulistp, const struct timespec *timeout,
@@ -90,6 +91,10 @@ int	filt_procattach(struct knote *kn);
 void	filt_procdetach(struct knote *kn);
 int	filt_proc(struct knote *kn, long hint);
 int	filt_fileattach(struct knote *kn);
+void    filt_timerexpire(void *knx);
+int     filt_timerattach(struct knote *kn);
+void    filt_timerdetach(struct knote *kn);
+int     filt_timer(struct knote *kn, long hint);
 
 struct filterops kqread_filtops =
 	{ 1, NULL, filt_kqdetach, filt_kqueue };
@@ -97,9 +102,13 @@ struct filterops proc_filtops =
 	{ 0, filt_procattach, filt_procdetach, filt_proc };
 struct filterops file_filtops =
 	{ 1, filt_fileattach, NULL, NULL };
+struct filterops timer_filtops =
+        { 0, filt_timerattach, filt_timerdetach, filt_timer };
 
 struct	pool knote_pool;
 struct	pool kqueue_pool;
+int kq_ncallouts = 0;
+int kq_calloutmax = (4 * 1024);
 
 #define KNOTE_ACTIVATE(kn) do {						\
 	kn->kn_status |= KN_ACTIVE;					\
@@ -125,6 +134,7 @@ struct filterops *sysfilt_ops[] = {
 	&file_filtops,			/* EVFILT_VNODE */
 	&proc_filtops,			/* EVFILT_PROC */
 	&sig_filtops,			/* EVFILT_SIGNAL */
+	&timer_filtops,			/* EVFILT_TIMER */
 };
 
 void kqueue_init(void);
@@ -283,6 +293,70 @@ filt_proc(struct knote *kn, long hint)
 
 	return (kn->kn_fflags != 0);
 }
+
+void
+filt_timerexpire(void *knx)
+{
+	struct knote *kn = knx;
+	struct timeval tv;
+	int tticks;
+
+	kn->kn_data++;
+	KNOTE_ACTIVATE(kn);
+
+	if ((kn->kn_flags & EV_ONESHOT) == 0) {
+		tv.tv_sec = kn->kn_sdata / 1000;
+		tv.tv_usec = (kn->kn_sdata % 1000) * 1000;
+		tticks = tvtohz(&tv);
+		timeout_add((struct timeout *)kn->kn_hook, tticks);
+	}
+}
+
+
+/*
+ * data contains amount of time to sleep, in milliseconds
+ */ 
+int
+filt_timerattach(struct knote *kn)
+{
+	struct timeout *to;
+	struct timeval tv;
+	int tticks;
+
+	if (kq_ncallouts > kq_calloutmax)
+		return (ENOMEM);
+	kq_ncallouts++;
+
+	tv.tv_sec = kn->kn_sdata / 1000;
+	tv.tv_usec = (kn->kn_sdata % 1000) * 1000;
+	tticks = tvtohz(&tv);
+
+	kn->kn_flags |= EV_CLEAR;	/* automatically set */
+	MALLOC(to, struct timeout *, sizeof(*to), M_KEVENT, 0);
+	timeout_set(to, filt_timerexpire, kn);
+	timeout_add(to, tticks);
+	kn->kn_hook = to;
+
+	return (0);
+}
+
+void
+filt_timerdetach(struct knote *kn)
+{
+	struct timeout *to;
+
+	to = (struct timeout *)kn->kn_hook;
+	timeout_del(to);
+	FREE(to, M_KEVENT);
+	kq_ncallouts--;
+}
+
+int
+filt_timer(struct knote *kn, long hint)
+{
+	return (kn->kn_data != 0);
+}
+
 
 /*
  * filt_seltrue:
