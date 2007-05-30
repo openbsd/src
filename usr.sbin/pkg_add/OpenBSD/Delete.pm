@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.51 2007/05/30 11:13:04 espie Exp $
+# $OpenBSD: Delete.pm,v 1.52 2007/05/30 12:30:15 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -50,7 +50,7 @@ sub keep_old_files
 	my ($state, $plist) = @_;
 	my $p = new OpenBSD::PackingList;
 	my $borked = borked_package($plist->pkgname);
-	OpenBSD::PackingElement::Name->add($p, $borked);
+	$p->set_pkgname($borked);
 	$p->set_infodir(installed_info($borked));
 	mkdir($p->infodir);
 
@@ -452,11 +452,6 @@ sub copy_old_stuff
 {
 	my ($self, $plist, $state) = @_;
 	$self->add_object($plist);
-}
-
-package OpenBSD::PackingElement::Name;
-sub copy_old_stuff
-{
 }
 
 package OpenBSD::PackingElement::FDESC;
