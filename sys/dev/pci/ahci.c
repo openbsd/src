@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.117 2007/05/10 02:16:11 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.118 2007/05/30 03:55:19 tedu Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1315,14 +1315,15 @@ ahci_port_portreset(struct ahci_port *ap)
 
 	/* Perform device detection */
 	ahci_pwrite(ap, AHCI_PREG_SCTL, 0);
+	delay(10000);
 	r = AHCI_PREG_SCTL_IPM_DISABLED | AHCI_PREG_SCTL_SPD_ANY |
 	    AHCI_PREG_SCTL_DET_INIT;
 	ahci_pwrite(ap, AHCI_PREG_SCTL, r);
-	delay(2000);	/* wait at least 1ms for COMRESET to be sent */
+	delay(10000);	/* wait at least 1ms for COMRESET to be sent */
 	r &= ~AHCI_PREG_SCTL_DET_INIT;
 	r |= AHCI_PREG_SCTL_DET_NONE;
 	ahci_pwrite(ap, AHCI_PREG_SCTL, r);
-	delay(2000);
+	delay(10000);
 
 	/* Wait for device to be detected and communications established */
 	if (ahci_pwait_eq(ap, AHCI_PREG_SSTS, AHCI_PREG_SSTS_DET,
