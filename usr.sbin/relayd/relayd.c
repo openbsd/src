@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.31 2007/05/30 00:12:21 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.32 2007/05/30 00:19:25 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -47,7 +47,6 @@ void		 main_dispatch_relay(int, short, void *);
 int		 check_child(pid_t, const char *);
 int		 send_all(struct hoststated *, enum imsg_type,
 		    void *, u_int16_t);
-void		 reconfigure(struct hoststated *);
 
 int		 pipe_parent2pfe[2];
 int		 pipe_parent2hce[2];
@@ -340,44 +339,6 @@ send_all(struct hoststated *env, enum imsg_type type, void *buf, u_int16_t len)
 }
 
 void
-reconfigure(struct hoststated *env)
-{
-	struct hoststated	*new_env;
-	struct table            *table;
-	struct host             *host;
-	struct service          *service;
-	struct address          *virt;
-
-	if ((new_env = parse_config(env->confpath, env->opts)) == NULL)
-		fatalx("reconfigure: could not parse configuration");
-	log_warnx("PURGING CONF");
-	purge_config(env, PURGE_EVERYTHING);
-	log_warnx("MEMCPY ENV");
-	memcpy(env, new_env, sizeof(*env));
-	/*
-	 * XXX free(new_env)
-	 */
-	TAILQ_FOREACH(table, &env->tables, entry) {
-		send_all(env, IMSG_RECONF_TABLE,
-		    &table->conf, sizeof(table->conf));
-		imsg_compose(ibuf_hce, IMSG_RECONF_SENDBUF, 0, 0,
-		    table->sendbuf, strlen(table->sendbuf)); 
-		TAILQ_FOREACH(host, &table->hosts, entry)
-			send_all(env, IMSG_RECONF_HOST,
-			    &host->conf, sizeof(host->conf));
-	}
-	TAILQ_FOREACH(service, &env->services, entry) {
-		imsg_compose(ibuf_pfe, IMSG_RECONF_SERVICE, 0, 0,
-		    &service->conf, sizeof(service->conf));
-		TAILQ_FOREACH(virt, &service->virts, entry)
-			imsg_compose(ibuf_pfe, IMSG_RECONF_VIRT, 0, 0,
-			    virt, sizeof(*virt));
-	}
-
-	send_all(env, IMSG_RECONF_END, NULL, 0);
-}
-
-void
 purge_config(struct hoststated *env, u_int8_t what)
 {
 	struct table		*table;
@@ -518,7 +479,6 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 			/*
 			 * so far we only get here if no L7 (relay) is done.
 			 */
-			reconfigure(env);
 			break;
 		default:
 			log_debug("main_dispatch_pfe: unexpected imsg %d",
