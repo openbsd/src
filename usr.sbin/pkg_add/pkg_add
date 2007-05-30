@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.291 2007/05/30 11:40:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.292 2007/05/30 12:52:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -322,8 +322,8 @@ sub save_partial_set
 	return () if $not;
 	my @l = ();
 	for my $h ($set->newer) {
-		next unless defined $h->{plist}->{done};
-		push(@l, OpenBSD::Add::record_partial_installation($h->{plist}));
+		next unless defined $h->{partial};
+		push(@l, OpenBSD::Add::record_partial_installation($h->{plist}, $h->{partial}));
 	}
 	return @l;
 }
@@ -384,7 +384,8 @@ sub really_add
 		OpenBSD::Replace::save_old_libraries($set, $state);
 
 		my $donesize = 0;
-		$plist->{done} = [];
+		$handle->{partial} = {};
+		$state->{partial} = $handle->{partial};
 		my $totsize = $handle->{totsize};
 		$state->{archive} = $handle->{location};
 		for my $item (@{$plist->{items}}) {
@@ -394,7 +395,6 @@ sub really_add
 				Warn $_;
 				$errors++;
 			};
-			push(@{$plist->{done}}, $item);
 			if (defined $item->{size}) {
 				$donesize += $item->{size};
 				OpenBSD::ProgressMeter::show($donesize, $totsize);
@@ -462,6 +462,10 @@ sub really_add
 	$state->{archive} = $handle->{location};
 	my $donesize = 0;
 	$state->{end_faked} = 0;
+	if (!defined $handle->{partial}) {
+		$handle->{partial} = {};
+	}
+	$state->{partial} = $handle->{partial};
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
 		try { 
 			$item->install($state); }
@@ -470,9 +474,6 @@ sub really_add
 			$errors++;
 		};
 		last if $errors;
-		if (!$replacing) {
-			push(@{$plist->{done}}, $item);
-		}
 		if (defined $item->{size}) {
                         $donesize += $item->{size};
                         OpenBSD::ProgressMeter::show($donesize, $totsize);
@@ -510,6 +511,7 @@ sub really_add
 	OpenBSD::SharedLibs::add_libs_from_plist($plist);
 	$plist->to_cache;
 	OpenBSD::Add::register_installation($plist);
+	delete $handle->{partial};
 	if (defined $handle->{solver}) {
 		$handle->{solver}->register_dependencies;
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.22 2007/05/27 22:39:09 espie Exp $
+# $OpenBSD: Replace.pm,v 1.23 2007/05/30 12:52:07 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -42,6 +42,8 @@ sub update_issue($$) { undef }
 
 sub extract
 {
+	my ($self, $state) = @_;
+	$state->{partial}->{$self} = 1;
 }
 
 sub mark_lib
@@ -62,10 +64,10 @@ sub extract
 	my $file = $self->prepare_to_extract($state);
 
 	if (defined $self->{link} || defined $self->{symlink}) {
-		$self->{zap} = 1;
 		return;
 	}
 	
+	$state->{partial}->{$self} = 1;
 	my $d = dirname($file->{destdir}.$file->{name});
 	while (!-d $d && -e _) {
 		$d = dirname($d);
@@ -94,10 +96,12 @@ sub extract
 	my $destdir = $state->{destdir};
 
 	return if -e $destdir.$fullname;
+	$state->{partial}->{$self} = 1;
 	print "new directory ", $destdir, $fullname, "\n" if $state->{very_verbose};
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
 }
+
 
 package OpenBSD::PackingElement::Sample;
 sub extract
@@ -290,7 +294,7 @@ sub split_libs
 
 	my $splitted = OpenBSD::PackingList->new;
 
-	OpenBSD::PackingElement::Name->add($splitted, ".libs-".$plist->pkgname);
+	$splitted->set_pkgname(".libs-".$plist->pkgname);
 	if (defined $plist->{conflict}) {
 		for my $item (@{$plist->{conflict}}) {
 			$item->clone()->add_object($splitted);

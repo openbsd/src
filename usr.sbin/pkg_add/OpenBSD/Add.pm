@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.62 2007/05/30 11:40:07 espie Exp $
+# $OpenBSD: Add.pm,v 1.63 2007/05/30 12:52:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -68,17 +68,17 @@ sub validate_plist
 
 sub record_partial_installation
 {
-	my $plist = shift;
+	my ($plist, $h) = @_;
 
 	use OpenBSD::PackingElement;
 
+	my $n = $plist->make_copy($h);
 	my $borked = borked_package($plist->pkgname);
-	# fix packing list for pkg_delete
-	$plist->{items} = $plist->{done};
-
+	$n->set_pkgname($borked);
+	
 	# last file may have not copied correctly
-	my $last = $plist->{items}->[@{$plist->{items}}-1];
-	if ($last->IsFile && defined($last->{md5})) {
+	my $last = $n->{state}->{lastfile};
+	if (defined $last && defined($last->{md5})) {
 	    require OpenBSD::md5;
 
 	    my $old = $last->{md5};
@@ -94,9 +94,7 @@ sub record_partial_installation
 		    unpack('H*', $old), " to ", unpack('H*', $last->{md5}), "\n";
 	    }
 	}
-	OpenBSD::PackingElement::Cwd->add($plist, '.');
-	$plist->{name}->{name} = $borked;
-	register_installation($plist);
+	register_installation($n);
 	return $borked;
 }
 
@@ -112,6 +110,8 @@ sub prepare_for_addition
 
 sub install
 {
+	my ($self, $state) = @_;
+	$state->{partial}->{$self} = 1;
 }
 
 sub copy_info
@@ -206,6 +206,7 @@ sub prepare_for_addition
 sub install
 {
 	my ($self, $state) = @_;
+	$state->{partial}->{$self} = 1;
 	my $auth = $self->{name};
 	print "adding ", $self->type, " $auth\n" if $state->{verbose};
 	return if $state->{not};
@@ -252,6 +253,7 @@ sub install
 	my ($self, $state) = @_;
 
 	my $name = $self->{name};
+	$state->{partial}->{$self} = 1;
 	open(my $pipe, '-|', '/sbin/sysctl', '-n', $name);
 	my $actual = <$pipe>;
 	chomp $actual;
@@ -301,6 +303,7 @@ sub prepare_for_addition
 sub install
 {
 	my ($self, $state) = @_;
+	$state->{partial}->{$self} = 1;
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
@@ -312,10 +315,8 @@ sub install
 		File::Path::mkpath(dirname($destdir.$fullname));
 		if (defined $self->{link}) {
 			link($destdir.$self->{link}, $destdir.$fullname);
-			delete $self->{zap};
 		} elsif (defined $self->{symlink}) {
 			symlink($self->{symlink}, $destdir.$fullname);
-			delete $self->{zap};
 		} else {
 			rename($self->{tempname}, $destdir.$fullname) or 
 			    Fatal "Can't move ", $self->{tempname}, " to $fullname: $!";
@@ -383,6 +384,7 @@ sub install
 {
 	my ($self, $state) = @_;
 
+	$state->{partial}->{$self} = 1;
 	$state->{end_faked} = 1;
 }
 
@@ -420,6 +422,7 @@ sub install
 {
 	my ($self, $state) = @_;
 
+	$state->{partial}->{$self} = 1;
 	my $destdir = $state->{destdir};
 	my $filename = $destdir.$self->fullname;
 	my $orig = $self->{copyfrom};
@@ -519,6 +522,7 @@ package OpenBSD::PackingElement::Dir;
 sub install
 {
 	my ($self, $state) = @_;
+	$state->{partial}->{$self} = 1;
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
@@ -535,6 +539,7 @@ sub install
 {
 	my ($self, $state) = @_;
 
+	$state->{partial}->{$self} = 1;
 	$self->run($state);
 }
 
