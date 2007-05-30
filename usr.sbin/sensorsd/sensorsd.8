@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.9 2006/04/21 08:35:00 jmc Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.10 2007/05/30 07:49:37 cnst Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -34,6 +34,10 @@ logical disk status via
 If the data is out of given limits, an alert is sent using
 .Xr syslog 3
 and a command, if specified, is executed.
+.Pp
+By default,
+.Nm
+also monitors status changes on all sensors that keep their state.
 .Pp
 Limit and command values for a particular sensor may be specified in the
 .Xr sensorsd.conf 5

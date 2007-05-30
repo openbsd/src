@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.12 2007/05/29 06:04:41 jmc Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.13 2007/05/30 07:49:37 cnst Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -32,8 +32,9 @@ to configure hardware sensor monitoring.
 Each valid sensor registered in the system
 is matched by at most one entry in
 .Nm ,
-which may specify high and low limits.
-If the limits are crossed,
+which may specify high and low limits,
+and whether sensor status changes provided by driver should be ignored.
+If the limits are crossed or if status provided by the driver changes,
 .Xr sensorsd 8 's
 alert functionality is triggered and a command, if specified, is
 executed.
@@ -51,7 +52,7 @@ sensor is not present in
 .Nm ,
 then an entry
 .Va temp
-will be looked at to determine the limits.
+will be looked at to determine the settings.
 The following attributes may be used:
 .Pp
 .Bl -tag -width "commandXX" -offset indent -compact
@@ -61,6 +62,8 @@ Specify a command to be executed if limits are crossed.
 Specify an upper limit.
 .It Li low
 Specify a lower limit.
+.It Li istatus
+Specify to ignore status provided by the driver.
 .El
 .Pp
 The values for temperature sensors can be given in degrees Celsius or
@@ -92,6 +95,15 @@ the sensor's low limit
 .It %4
 the sensor's high limit
 .El
+.Pp
+By default,
+.Xr sensorsd 8
+monitors status changes on all sensors that keep their state.
+This behaviour may be altered by using the
+.Dq istatus
+attribute,
+for example, you may specify to ignore status changes of sensors with
+certain type, or of any individual sensors.
 .Sh FILES
 .Bl -tag -width "/etc/sensorsd.conf"
 .It /etc/sensorsd.conf
@@ -108,18 +120,24 @@ Alerts will be sent if hw.sensors.ipmi0.temp1 goes above 170F;
 if hw.sensors.lm0.volt3 goes below 4.8V or above 5.2V;
 if the speed of the fan attached to hw.sensors.lm0.fan1
 goes below 1000RPM or above 8000RPM;
-or if hw.sensors.ami0.drive0,
-attached to raid volume sd0,
+if any RAID volume drive
 goes into a state other than
 .Dq OK ,
-such as drive failure, rebuild, or a complete failure.
+such as drive failure, rebuild, or a complete failure, the command
+.Pa /etc/sensorsd/drive
+will be executed, with the sensor number passed to it; however,
+no alerts will be generated for status changes on timedelta sensors.
+For all other sensors whose drivers automatically provide
+sensor status updates, alerts will be generated 
+each time those sensors undergo status transitions.
 .Bd -literal -offset indent
 # Comments are allowed
 hw.sensors.ipmi0.temp0:high=80C:command=/etc/sensorsd/log_warning %t %n %2
 hw.sensors.ipmi0.temp1:high=170F
 hw.sensors.lm0.volt3:low=4.8V:high=5.2V
 hw.sensors.lm0.fan1:low=1000:high=8000
-hw.sensors.ami0.drive0:		# raid volume status changes
+drive:command=/etc/sensorsd/drive %n
+timedelta:istatus	#ignore status changes for timedelta
 .Ed
 .Sh SEE ALSO
 .Xr getcap 3 ,
