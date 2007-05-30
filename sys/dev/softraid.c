@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.58 2007/05/30 13:55:47 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.59 2007/05/30 15:59:35 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -397,6 +397,7 @@ sr_put_wu(struct sr_workunit *wu)
 	wu->swu_blk_start = 0;
 	wu->swu_blk_end = 0;
 	wu->swu_collider = NULL;
+	wu->swu_fake = 0;
 
 	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
 		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
@@ -1528,14 +1529,17 @@ int
 sr_raid_sync(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
-	int			s, rv = 0;
+	int			s, rv = 0, ios;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_sync\n", DEVNAME(sd->sd_sc));
+
+	/* when doing a fake sync don't coun't the wu */
+	ios = wu->swu_fake ? 0 : 1;
 
 	s = splbio();
 	sd->sd_sync = 1;
 
-	while (sd->sd_wu_pending > 1)
+	while (sd->sd_wu_pending > ios)
 		if (tsleep(sd, PRIBIO, "sr_sync", 60 * hz) == EWOULDBLOCK) {
 			DNPRINTF(SR_D_DIS, "%s: sr_raid_sync timeout\n",
 			    DEVNAME(sd->sd_sc));
@@ -2140,6 +2144,7 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 	struct sr_chunk_meta	*im_sc;
 	struct sr_chunk		*src;
 	struct buf		b;
+	struct sr_workunit	wu;
 	int			i, rv = 1, ch = 0;
 	size_t			sz = SR_META_SIZE * 512;
 
@@ -2256,6 +2261,11 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 		DNPRINTF(SR_D_META, "%s: sr_save_metadata written to %s\n",
 		    DEVNAME(sc), src->src_meta.scm_devname);
 	}
+
+	bzero(&wu, sizeof(wu));
+	wu.swu_fake = 1;
+	wu.swu_dis = sd;
+	sd->sd_scsi_sync(&wu);
 
 	rv = 0;
 bad:

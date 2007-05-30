@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.25 2007/05/30 13:55:47 tedu Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.26 2007/05/30 15:59:35 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
  *
@@ -90,6 +90,7 @@ struct sr_workunit {
 #define SR_WU_DEFERRED		5
 #define SR_WU_PENDING		6
 
+	int			swu_fake;	/* faked wu */
 	/* workunit io range */
 	daddr64_t		swu_blk_start;
 	daddr64_t		swu_blk_end;
