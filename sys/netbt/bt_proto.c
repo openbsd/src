@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_proto.c,v 1.1 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: bt_proto.c,v 1.2 2007/05/30 08:10:03 uwe Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -19,22 +19,19 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/timeout.h>
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
-#include <netbt/l2cap.h>
-#include <netbt/bt.h>
 #include <netbt/bt_var.h>
-#include <netbt/hci_var.h>
-#include <netbt/l2cap_var.h>
 
 struct domain btdomain;
 
 struct protosw btsw[] = {
-	{ SOCK_RAW, &btdomain, BLUETOOTH_PROTO_HCI,
+	{ SOCK_RAW, &btdomain, BTPROTO_HCI,
 	  PR_ATOMIC | PR_ADDR,
 	  NULL/*input*/, NULL/*output*/, NULL/*ctlinput*/,
-	  hci_raw_ctloutput, hci_raw_usrreq, hci_raw_init,
+	  NULL/*hci_ctloutput*/, NULL/*hci_usrreq*/, NULL/*init*/,
 	  NULL/*fasttimo*/, NULL/*slowtimo*/, NULL/*drain*/,
 	  NULL/*sysctl*/
 	},
@@ -67,6 +64,6 @@ struct domain btdomain = {
 	AF_BLUETOOTH, "bluetooth",
 	bt_init, NULL/*externalize*/, NULL/*dispose*/,
 	btsw, &btsw[sizeof(btsw) / sizeof(btsw[0])], NULL,
-	NULL/*rtattach*/, 32, sizeof(struct sockaddr_hci),
+	NULL/*rtattach*/, 32, sizeof(struct sockaddr_bt),
 	NULL/*ifattach*/, NULL/*ifdetach*/
 };

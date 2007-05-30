@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.402 2007/05/30 04:35:10 uwe Exp $
+#	$OpenBSD: files,v 1.403 2007/05/30 08:10:02 uwe Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -824,7 +824,9 @@ file netatalk/at_proto.c		netatalk
 file netatalk/ddp_input.c		netatalk
 file netatalk/ddp_output.c		netatalk
 file netatalk/ddp_usrreq.c		netatalk
-file netbt/hci_event.c			bluetooth		needs-flag
+file netbt/bt_input.c			bluetooth		needs-flag
+file netbt/bt_proto.c			bluetooth
+file netbt/hci_event.c			bluetooth
 file netbt/hci_link.c			bluetooth
 file netbt/hci_misc.c			bluetooth
 file netbt/hci_socket.c			bluetooth

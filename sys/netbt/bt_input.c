@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_input.c,v 1.2 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: bt_input.c,v 1.3 2007/05/30 08:10:02 uwe Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -25,11 +25,7 @@
 #include <net/netisr.h>
 
 #include <netbt/bluetooth.h>
-#include <netbt/hci.h>
-#include <netbt/l2cap.h>
-#include <netbt/bt.h>
 #include <netbt/bt_var.h>
-#include <netbt/hci_var.h>
 
 struct ifqueue btintrq;
 
@@ -53,6 +49,8 @@ btintr(void)
 		if (m == NULL)
 			break;
 
+#if 0
 		ng_btsocket_hci_raw_data_input(m);
+#endif
 	}
 }
