@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.61 2007/05/30 11:13:35 espie Exp $
+# $OpenBSD: Add.pm,v 1.62 2007/05/30 11:40:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -98,15 +98,6 @@ sub record_partial_installation
 	$plist->{name}->{name} = $borked;
 	register_installation($plist);
 	return $borked;
-}
-
-sub borked_installation
-{
-	my ($plist, $not, @msg) = @_;
-
-	Fatal @msg if $not;
-	my $borked = record_partial_installation($plist);
-	Fatal @msg, ", partial installation recorded as $borked";
 }
 
 # used by newuser/newgroup to deal with options.

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.290 2007/05/29 14:52:48 espie Exp $
+# $OpenBSD: pkg_add,v 1.291 2007/05/30 11:40:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -302,16 +302,36 @@ sub thunderbird_special_case
 	}
 }
 
-sub failed_install
+sub failed_message
 {
-	my ($handle, $not, $interrupted) = @_;
-	my $plist = $handle->{plist};
-	my $pkgname = $handle->{pkgname};
-	my $msg = "Installation of $pkgname failed";
+	my ($base_msg, $interrupted, @l) = @_;
+	my $msg = $base_msg;
 	if ($interrupted) {
-		$msg ="Caught SIG$interrupted. $msg";
+		$msg = "Caught SIG$interrupted. $msg";
 	}
-	OpenBSD::Add::borked_installation($plist, $not, $msg);
+	if (@l > 0) {
+		$msg.= ", partial installation recorded as ".join(',', @l);
+	}
+	return $msg;
+}
+
+sub save_partial_set
+{
+	my ($set, $not) = @_;
+
+	return () if $not;
+	my @l = ();
+	for my $h ($set->newer) {
+		next unless defined $h->{plist}->{done};
+		push(@l, OpenBSD::Add::record_partial_installation($h->{plist}));
+	}
+	return @l;
+}
+
+sub partial_install
+{
+	my ($base_msg, $set, $state) = @_;
+	return failed_message($base_msg, $state->{interrupted}, save_partial_set($set, $state->{not}));
 }
 
 sub really_add
@@ -383,7 +403,8 @@ sub really_add
 		}
 		OpenBSD::ProgressMeter::next();
 		if ($state->{interrupted} || $errors) {
-			failed_install($handle, $state->{not}, $state->{interrupted});
+			Fatal partial_install("Installation of $pkgname failed",
+			    $set, $state);
 		}
 
 		for my $op (@toreplace) {
@@ -401,10 +422,9 @@ sub really_add
 			    OpenBSD::Delete::delete_plist($op, $state);
 			} catchall {
 				Warn $_;
-				OpenBSD::Add::borked_installation($plist,
-				    $state->{not},
-				    "Deinstallation of ", 
-				    $op->pkgname, " failed");
+				Fatal partial_install(
+				    "Deinstallation of ".$op->pkgname." failed", 
+				    $set, $state);
 			};
 
 			delete_installed($op->pkgname);
@@ -430,7 +450,8 @@ sub really_add
 
 		if ($state->{interrupted} || $errors) {
 			# here we should remove links from the temp package
-			failed_install($handle, $state->{not}, $state->{interrupted});
+			Fatal partial_install("Installation of $pkgname failed",
+			    $set, $state);
 		}
 	} else {
 		do_script($plist, REQUIRE, $state, "INSTALL");
@@ -483,7 +504,8 @@ sub really_add
 
 	unlink($plist->infodir.CONTENTS);
 	if ($state->{interrupted} || $errors) {
-		failed_install($handle, $state->{not}, $state->{interrupted});
+		Fatal partial_install("Installation of $pkgname failed",
+		    $set, $state);
 	}
 	OpenBSD::SharedLibs::add_libs_from_plist($plist);
 	$plist->to_cache;
