@@ -1,4 +1,4 @@
-/*	$OpenBSD: busdma.c,v 1.12 2007/03/21 05:26:37 miod Exp $ */
+/*	$OpenBSD: busdma.c,v 1.13 2007/05/30 19:44:26 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -368,12 +368,13 @@ _dmamap_sync(t, map, addr, size, op)
 		vaddr = map->dm_segs[curseg].ds_vaddr;
 
 		if (addr > 0) {
-			if (addr > ssize) {
+			if (addr >= ssize) {
 				addr -= ssize;
 				ssize = 0;
 			} else {
 				vaddr += addr;
 				ssize -= addr;
+				addr = 0;
 			}
 		}
 		if (ssize > size) {
@@ -381,7 +382,6 @@ _dmamap_sync(t, map, addr, size, op)
 		}
 
 		if (ssize) {
-// #define DEBUG_BUSDMASYNC_FRAG
 #ifdef DEBUG_BUSDMASYNC_FRAG
 	printf(" syncing %p:%p ", vaddr, ssize);
 	if (op & BUS_DMASYNC_PREWRITE) printf("PRW ");
@@ -636,4 +636,3 @@ _dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 
 	return (0);
 }
-
