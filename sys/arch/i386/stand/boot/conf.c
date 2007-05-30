@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.36 2007/04/27 10:08:34 tom Exp $	*/
+/*	$OpenBSD: conf.c,v 1.37 2007/05/30 01:25:43 tom Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -24,7 +24,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <sys/types.h>
@@ -43,7 +42,7 @@
 #include <dev/cons.h>
 #include "debug.h"
 
-const char version[] = "2.14";
+const char version[] = "3.00";
 int	debug = 1;
 
 

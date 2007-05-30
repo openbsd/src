@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: loadfile_machdep.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.2 2007/05/30 01:25:43 tom Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
@@ -39,6 +39,10 @@
  */
 
 #define BOOT_ELF
+#define BOOT_ELF32
+#define BOOT_ELF64
+
+/* Keep a default ELFSIZE */
 #define ELFSIZE 64
 
 #define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)

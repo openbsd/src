@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2006/09/18 21:14:15 mpf Exp $
+#	$OpenBSD: Makefile,v 1.47 2007/05/30 01:25:43 tom Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -8,7 +8,7 @@ S=${.CURDIR}/../../../..
 SADIR=${.CURDIR}/..
 
 # i386 stuff (so, it will possibly load in the same 64k)
-SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c loadfile.c
+SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c loadfile.c elf32.c elf64.c
 
 .if defined(DEBUGFLAGS) && !empty(DEBUGFLAGS:M-D_TEST)
 SRCS+=	unixdev.c unixsys.S nullfs.c memprobe.c

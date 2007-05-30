@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2006/10/30 18:28:57 jmc Exp $
+#	$OpenBSD: Makefile,v 1.7 2007/05/30 01:25:43 tom Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -33,7 +33,8 @@ SRCS+=	alloc.c exit.c getfile.c gets.c globals.c strcmp.c strlen.c \
 	strerror.c strncpy.c strtol.c strtoll.c ctime.c strlcpy.c strlcat.c
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
-	open.c read.c stat.c write.c cread.c readdir.c cons.c loadfile.c
+	open.c read.c stat.c write.c cread.c readdir.c cons.c loadfile.c \
+	elf32.c elf64.c
 # boot filesystems
 SRCS+=	ufs.c
 # gcc support
