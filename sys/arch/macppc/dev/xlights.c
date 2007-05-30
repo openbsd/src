@@ -1,4 +1,4 @@
-/* $OpenBSD: xlights.c,v 1.1 2007/04/22 18:04:23 deraadt Exp $ */
+/* $OpenBSD: xlights.c,v 1.2 2007/05/30 03:03:54 gwk Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd,org>
  *
@@ -86,11 +86,13 @@ xlights_match(struct device *parent, void *arg, void *aux)
 		return 0;
 
 	error = OF_getprop(soundchip, "virtual", compat, sizeof(compat));
-	if (error == -1)
-		error = OF_getprop(soundchip, "lightshow", compat,
+	if (error == -1) {
+		error = OF_getprop(soundchip, "name", compat,
 		    sizeof(compat));
-	if (error == -1)
-		return 0;
+
+		if (error == -1 || (strcmp(compat, "lightshow")) != 0)
+			return 0;
+	}
 
 	/* we require at least 4 registers */
 	if (ca->ca_nreg / sizeof(int) < 4)
@@ -168,8 +170,8 @@ xlights_attach(struct device *parent, struct device *self, void *aux)
 	mac_intr_establish(parent, sc->sc_intr, intr[3] ? IST_LEVEL :
 	    IST_EDGE, IPL_AUDIO, xlights_intr, sc, sc->sc_dev.dv_xname);
 
+	keylargo_fcr_enable(I2SClockOffset, I2S0EN);
 	out32rb(sc->sc_reg + I2S_INT, I2S_INT_CLKSTOPPEND);
-
 	keylargo_fcr_disable(I2SClockOffset, I2S0CLKEN);
 	for (error = 0; error < 1000; error++) {
 		if (in32rb(sc->sc_reg + I2S_INT) & I2S_INT_CLKSTOPPEND) {
