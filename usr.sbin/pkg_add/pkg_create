@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.107 2007/05/29 15:38:41 espie Exp $
+# $OpenBSD: pkg_create,v 1.108 2007/05/30 12:37:07 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -582,7 +582,7 @@ if ($regen_package) {
 	if ($ARGV[0] =~ m|([^/]+)$|) {
 		my $pkgname = $1;
 		$pkgname =~ s/\.tgz$//;
-		OpenBSD::PackingElement::Name->add($plist, $pkgname);
+		$plist->set_pkgname($pkgname);
 	}
 	my $fullpkgpath = $defines{'FULLPKGPATH'};
 	my $cdrom = $defines{'PERMIT_PACKAGE_CDROM'};
