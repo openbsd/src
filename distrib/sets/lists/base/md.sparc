@@ -1167,14 +1167,10 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netbt
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/bt.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/bt_var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/h4.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/hci.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/hci_var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/l2cap.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/l2cap_var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netbt/rfcomm_var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet

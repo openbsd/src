@@ -1064,14 +1064,10 @@
 ./usr/include/netatalk/phase2.h
 ./usr/include/netbt
 ./usr/include/netbt/bluetooth.h
-./usr/include/netbt/bt.h
 ./usr/include/netbt/bt_var.h
-./usr/include/netbt/h4.h
 ./usr/include/netbt/hci.h
-./usr/include/netbt/hci_var.h
 ./usr/include/netbt/l2cap.h
-./usr/include/netbt/l2cap_var.h
-./usr/include/netbt/rfcomm_var.h
+./usr/include/netbt/sco.h
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
 ./usr/include/netinet

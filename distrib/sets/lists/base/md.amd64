@@ -1808,14 +1808,10 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netbt
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/bt.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/bt_var.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/h4.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/hci.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/hci_var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/l2cap.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/l2cap_var.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netbt/rfcomm_var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netinet

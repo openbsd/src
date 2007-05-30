@@ -1684,14 +1684,10 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netbt
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/bt.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/bt_var.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/h4.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/hci.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/hci_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/l2cap.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/l2cap_var.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netbt/rfcomm_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet

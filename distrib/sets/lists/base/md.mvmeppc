@@ -1704,14 +1704,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/bt.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/bt_var.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/h4.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/hci.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/hci_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/l2cap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/l2cap_var.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/rfcomm_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet
