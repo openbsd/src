@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.11 2007/05/02 15:05:29 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.12 2007/05/30 12:27:19 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,14 @@ use OpenBSD::Vstat;
 sub collision_report($$)
 {
 	my ($list, $state) = @_;
+
+	if ($state->{forced}->{removecollisions}) {
+		for my $f (@$list) {
+			print "rm ", $f->fullname, "\n";
+			unlink($f->fullname);
+		}
+		return;
+	}
 	my %todo = map {($_->fullname, $_->{md5})} @$list;
 	my $bypkg = {};
 	my $clueless_bat = 0;
