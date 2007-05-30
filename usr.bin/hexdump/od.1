@@ -1,4 +1,4 @@
-.\"  $OpenBSD: od.1,v 1.17 2007/02/07 12:18:45 otto Exp $
+.\"  $OpenBSD: od.1,v 1.18 2007/05/30 06:45:56 jmc Exp $
 .\"  $NetBSD: od.1,v 1.16 2001/12/07 01:23:42 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -308,6 +308,16 @@ option.
 .Xr hexdump 1 ,
 .Xr strings 1
 .Sh HISTORY
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification.
+.Pp
+The flags
+.Op Fl aBDeFfHhIiLlOX
+are extensions to that specification.
+.Pp
 A
 .Nm
 command appears in
