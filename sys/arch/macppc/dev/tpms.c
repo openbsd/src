@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.6 2007/05/27 10:03:47 mglocker Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.7 2007/05/30 23:17:43 maja Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -228,6 +228,8 @@ static struct tpms_dev tpms_devices[] =
        }
        /* 12 inch PowerBooks */
        POWERBOOK_TOUCHPAD(12, 0x030a, 69, 16, 52), /* XXX Not tested. */
+       /* 14 inch iBook G4 */
+       POWERBOOK_TOUCHPAD(14, 0x030b, 69, 16, 52),
        /* 15 inch PowerBooks */
        POWERBOOK_TOUCHPAD(15, 0x020e, 85, 16, 57), /* XXX Not tested. */
        POWERBOOK_TOUCHPAD(15, 0x020f, 85, 16, 57),
