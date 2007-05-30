@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.10 2007/05/29 08:02:59 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.11 2007/05/30 02:21:20 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -126,6 +126,7 @@
  *	6n words for files of length n.
  */
 
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -318,11 +319,11 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 		goto closem;
 	}
 
-	if (stat(file1, &stb1) < 0) {
+	if (fstat(fileno(f1), &stb1) < 0) {
 		cvs_log(LP_ERR, "%s", file1);
 		goto closem;
 	}
-	if (stat(file2, &stb2) < 0) {
+	if (fstat(fileno(f2), &stb2) < 0) {
 		cvs_log(LP_ERR, "%s", file2);
 		goto closem;
 	}
@@ -405,8 +406,8 @@ files_differ(FILE *f1, FILE *f2)
 	if (stb1.st_size != stb2.st_size)
 		return (1);
 	for (;;) {
-		i = fread(buf1, (size_t)1, sizeof(buf1), f1);
-		j = fread(buf2, (size_t)1, sizeof(buf2), f2);
+		i = fread(buf1, 1, sizeof(buf1), f1);
+		j = fread(buf2, 1, sizeof(buf2), f2);
 		if (i != j)
 			return (1);
 		if (i == 0 && j == 0) {
@@ -428,7 +429,7 @@ prepare(int i, FILE *fd, off_t filesize)
 
 	rewind(fd);
 
-	sz = ((size_t)filesize <= SIZE_MAX ? (size_t)filesize : SIZE_MAX) / 25;
+	sz = (filesize <= SIZE_MAX ? filesize : SIZE_MAX) / 25;
 	if (sz < 100)
 		sz = 100;
 
@@ -820,7 +821,7 @@ output(FILE *f1, FILE *f2)
 	}
 }
 
-static __inline void
+static void
 range(int a, int b, char *separator)
 {
 	diff_output("%d", a > b ? b : a);
@@ -828,7 +829,7 @@ range(int a, int b, char *separator)
 		diff_output("%s%d", separator, b);
 }
 
-static __inline void
+static void
 uni_range(int a, int b)
 {
 	if (a < b)
@@ -848,6 +849,7 @@ preadline(int fd, size_t rlen, off_t off)
 	line = xmalloc(rlen + 1);
 	if ((nr = pread(fd, line, rlen, off)) < 0) {
 		cvs_log(LP_ERR, "preadline failed");
+		xfree(line);
 		return (NULL);
 	}
 	line[nr] = '\0';
@@ -859,7 +861,7 @@ ignoreline(char *line)
 {
 	int ret;
 
-	ret = regexec(&ignore_re, line, (size_t)0, NULL, 0);
+	ret = regexec(&ignore_re, line, 0, NULL, 0);
 	xfree(line);
 	return (ret == 0);	/* if it matched, it should be ignored. */
 }
@@ -923,7 +925,7 @@ proceed:
 			/*
 			 * Print the context/unidiff header first time through.
 			 */
-			t = localtime(&stb1.st_mtime); 
+			t = localtime(&stb1.st_mtime);
 			(void)strftime(buf, sizeof(buf),
 			    "%d %b %G %H:%M:%S", t);
 
@@ -1144,7 +1146,7 @@ asciifile(FILE *f)
 		return (1);
 
 	rewind(f);
-	cnt = fread(buf, (size_t)1, sizeof(buf), f);
+	cnt = fread(buf, 1, sizeof(buf), f);
 	for (i = 0; i < cnt; i++)
 		if (!isprint(buf[i]) && !isspace(buf[i]))
 			return (0);
@@ -1168,7 +1170,7 @@ match_function(const long *f, int pos, FILE *fp)
 		nc = f[pos] - f[pos - 1];
 		if (nc >= sizeof(buf))
 			nc = sizeof(buf) - 1;
-		nc = fread(buf, (size_t)1, nc, fp);
+		nc = fread(buf, 1, nc, fp);
 		if (nc > 0) {
 			buf[nc] = '\0';
 			p = strchr((const char *)buf, '\n');
