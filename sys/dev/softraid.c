@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.59 2007/05/30 15:59:35 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.60 2007/05/30 16:54:07 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -831,10 +831,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 			break;
 		case 'c':
-			if (no_chunk != 1) {
-				printf("too many c chunks\n");
+			if (no_chunk != 1)
 				goto unwind;
-			}
 			strlcpy(sd->sd_name, "RAID C", sizeof(sd->sd_name));
 			break;
 		default:
@@ -892,7 +890,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			    "assemble it\n");
 			goto unwind;
 		}
-		panic("not yet partial bringup");
+		printf("%s: not yet partial bringup", DEVNAME(sc));
+		goto unwind;
 	}
 
 	/* XXX metadata SHALL be fully filled in at this point */
