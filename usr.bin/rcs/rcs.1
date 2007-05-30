@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.51 2007/04/23 15:15:27 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.52 2007/05/30 13:26:12 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -286,6 +286,12 @@ of the RCS file.
 The log message supplied during commit, preceded by a header
 containing the RCS filename, the revision number, the
 author, and the date (UTC).
+.It $\Mdocdate$
+Produce a date of the form month name, day number, and year,
+suitable for the
+.Xr mdoc 7
+.Dq \&Dd
+macro.
 .It $\&Name$
 The tag name used to check out the file.
 .It $\&RCSfile$
