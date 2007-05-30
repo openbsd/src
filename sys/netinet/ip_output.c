@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.186 2007/05/29 17:46:24 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.187 2007/05/30 04:46:45 henning Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
 extern int ipsec_ipcomp_default_level;
 extern int ipforwarding;
-extern int ipsec_in_use;
 #endif /* IPSEC */
 
 #ifdef MROUTING

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.150 2007/05/29 17:46:24 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.151 2007/05/30 04:46:45 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -90,9 +90,6 @@ int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;
 char ipsec_def_enc[20];
 char ipsec_def_auth[20];
 char ipsec_def_comp[20];
-#ifdef IPSEC
-extern int	ipsec_in_use;
-#endif /* IPSEC */
 
 /* values controllable via sysctl */
 int	ipforwarding = 0;
