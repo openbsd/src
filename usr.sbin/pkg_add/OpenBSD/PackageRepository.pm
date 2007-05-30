@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.38 2007/05/19 09:18:55 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.39 2007/05/30 11:04:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -115,30 +115,6 @@ sub close
 	    if defined $object->{errors};
 	undef $object->{errors};
 	$object->deref();
-}
-
-sub finish_and_close
-{
-	my ($self, $object) = @_;
-	$self->close($object);
-}
-
-sub close_now
-{
-	my ($self, $object) = @_;
-	$self->close($object, 0);
-}
-
-sub close_after_error
-{
-	my ($self, $object) = @_;
-	$self->close($object, 1);
-}
-
-sub close_with_client_error
-{
-	my ($self, $object) = @_;
-	$self->close($object, 1);
 }
 
 sub make_room

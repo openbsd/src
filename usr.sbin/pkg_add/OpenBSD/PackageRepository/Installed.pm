@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.10 2007/05/19 09:45:33 espie Exp $
+# $OpenBSD: Installed.pm,v 1.11 2007/05/30 11:04:31 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -54,6 +54,30 @@ sub url
 	return $self->urlscheme.':'.$self->relative_url($name);
 }
 
+sub finish_and_close
+{
+	my ($self, $object) = @_;
+	$self->close($object);
+}
+
+sub close_now
+{
+	my ($self, $object) = @_;
+	$self->close($object, 0);
+}
+
+sub close_after_error
+{
+	my ($self, $object) = @_;
+	$self->close($object, 1);
+}
+
+sub close_with_client_error
+{
+	my ($self, $object) = @_;
+	$self->close($object, 1);
+}
+
 package OpenBSD::PackageRepository::Installed;
 
 our @ISA = (qw(OpenBSD::PackageRepositoryBase));
@@ -78,6 +102,10 @@ sub relative_url
 {
 	my ($self, $name) = @_;
 	return $name or '';
+}
+
+sub close
+{
 }
 
 sub find
