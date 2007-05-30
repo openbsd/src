@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.15 2004/08/13 14:03:20 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.16 2007/05/30 04:28:27 msf Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -26,10 +26,6 @@
 /*
  * MRT binary packet format as used by zebra.
  * For more info see:
- * http://www.mrtd.net/mrt_doc/html/mrtprogrammer.html#_Toc412283890
- * or
- * http://www.mrtd.net/mrt_doc/PDF/mrtprogrammer.pdf (Chapter 12)
- * and
  * http://www.quagga.net/docs/docs-multi/Packet-Binary-Dump-Format.html
  */
 
