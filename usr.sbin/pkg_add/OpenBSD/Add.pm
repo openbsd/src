@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.64 2007/05/30 13:03:54 espie Exp $
+# $OpenBSD: Add.pm,v 1.65 2007/05/30 14:04:51 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -98,6 +98,22 @@ sub record_partial_installation
 	return $borked;
 }
 
+sub perform_installation
+{
+	my ($handle, $state) = @_;
+
+	my $totsize = $handle->{totsize};
+	$state->{archive} = $handle->{location};
+	my $donesize = 0;
+	$state->{end_faked} = 0;
+	if (!defined $handle->{partial}) {
+		$handle->{partial} = {};
+	}
+	$state->{partial} = $handle->{partial};
+	$handle->{plist}->install_and_progress($state, \$donesize, $totsize);
+	$handle->{location}->finish_and_close;
+}
+
 # used by newuser/newgroup to deal with options.
 package OpenBSD::PackingElement;
 use OpenBSD::Error;
@@ -106,6 +122,18 @@ my ($uidcache, $gidcache);
 
 sub prepare_for_addition
 {
+}
+
+sub install_and_progress
+{
+	my ($self, $state, $donesize, $totsize) = @_;
+	unless ($state->{do_faked} && $state->{end_faked}) {
+		$self->install($state);
+	}
+	if ($state->{interrupted}) {
+		die "Interrupted";
+	}
+	$self->mark_progress($donesize, $totsize);
 }
 
 sub install

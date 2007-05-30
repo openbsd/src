@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.292 2007/05/30 12:52:06 espie Exp $
+# $OpenBSD: pkg_add,v 1.293 2007/05/30 14:04:51 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -383,24 +383,14 @@ sub really_add
 
 		OpenBSD::Replace::save_old_libraries($set, $state);
 
-		my $donesize = 0;
-		$handle->{partial} = {};
-		$state->{partial} = $handle->{partial};
-		my $totsize = $handle->{totsize};
-		$state->{archive} = $handle->{location};
-		for my $item (@{$plist->{items}}) {
-			try { 
-				$item->extract($state); 
-			} catchall {
+		try {
+			OpenBSD::Replace::perform_extraction($handle, $state);
+		} catchall {
+			unless ($state->{interrupted}) {
 				Warn $_;
 				$errors++;
-			};
-			if (defined $item->{size}) {
-				$donesize += $item->{size};
-				OpenBSD::ProgressMeter::show($donesize, $totsize);
 			}
-			last if $state->{interrupted} || $errors;
-		}
+		};
 		OpenBSD::ProgressMeter::next();
 		if ($state->{interrupted} || $errors) {
 			Fatal partial_install("Installation of $pkgname failed",
@@ -439,58 +429,15 @@ sub really_add
 		$state->set_pkgname($pkgname);
 	}
 
-	if ($replacing) {
-		try {
-			do_script($plist, REQUIRE, $state, "INSTALL");
-			do_script($plist, INSTALL, $state, "PRE-INSTALL");
-		} catchall {
-			Warn $_;
-			$errors++;
-		};
-
-		if ($state->{interrupted} || $errors) {
-			# here we should remove links from the temp package
-			Fatal partial_install("Installation of $pkgname failed",
-			    $set, $state);
-		}
-	} else {
+	try {
 		do_script($plist, REQUIRE, $state, "INSTALL");
 		do_script($plist, INSTALL, $state, "PRE-INSTALL");
-	}
-
-	my $totsize = $handle->{totsize};
-	$state->{archive} = $handle->{location};
-	my $donesize = 0;
-	$state->{end_faked} = 0;
-	if (!defined $handle->{partial}) {
-		$handle->{partial} = {};
-	}
-	$state->{partial} = $handle->{partial};
-	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
-		try { 
-			$item->install($state); }
-		catchall {
+		OpenBSD::Add::perform_installation($handle, $state);
+	} catchall {
+		unless ($state->{interrupted}) {
 			Warn $_;
 			$errors++;
-		};
-		last if $errors;
-		if (defined $item->{size}) {
-                        $donesize += $item->{size};
-                        OpenBSD::ProgressMeter::show($donesize, $totsize);
-                }
-
-		last if $state->{interrupted};
-		# stop faked installation there...
-		if ($state->{do_faked} && $state->{end_faked}) {
-			last;
 		}
-	}
-
-	try { 
-		$handle->{location}->finish_and_close; }
-	catchall {
-		Warn $_;
-		$errors++;
 	};
 	OpenBSD::ProgressMeter::next();
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.24 2007/05/30 13:03:54 espie Exp $
+# $OpenBSD: Replace.pm,v 1.25 2007/05/30 14:04:51 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -52,6 +52,18 @@ sub mark_lib
 
 sub unmark_lib
 {
+}
+
+sub extract_and_progress
+{
+	require OpenBSD::ProgressMeter;
+
+	my ($self, $state, $donesize, $totsize) = @_;
+	$self->extract($state);
+	if ($state->{interrupted}) {
+		die "Interrupted";
+	}
+	$self->mark_progress($donesize, $totsize);
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -211,6 +223,19 @@ use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use OpenBSD::Error;
 use OpenBSD::Interactive;
+
+sub perform_extraction
+{
+	my ($handle, $state) = @_;
+
+	$handle->{partial} = {};
+	$state->{partial} = $handle->{partial};
+	my $totsize = $handle->{totsize};
+	$state->{archive} = $handle->{location};
+	my $donesize = 0;
+	$state->{donesize} = 0;
+	$handle->{plist}->extract_and_progress($state, \$donesize, $totsize);
+}
 
 sub can_do
 {

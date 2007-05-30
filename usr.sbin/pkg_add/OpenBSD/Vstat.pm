@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.29 2007/05/29 10:40:20 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.30 2007/05/30 14:04:51 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -396,6 +396,21 @@ sub handle
 	} else {
 		return undef;
 	}
+}
+
+package OpenBSD::PackingElement;
+sub mark_progress
+{
+}
+
+package OpenBSD::PackingElement::FileBase;
+sub mark_progress
+{
+	my ($self, $donesize, $totsize) = @_;
+	return unless defined $self->{size};
+	require OpenBSD::ProgressMeter;
+	$$donesize += $self->{size};
+	OpenBSD::ProgressMeter::show($$donesize, $totsize);
 }
 
 1;
