@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.27 2007/02/25 18:21:24 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.28 2007/05/30 05:20:58 otto Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.27 2007/02/25 18:21:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.28 2007/05/30 05:20:58 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ void
 labeliostat(void)
 {
 	mvwprintw(wnd, 1, 0, SFMT, "Device", "rKBytes", "wKBytes", "rtps",
-	    "wtps", "msec");
+	    "wtps", "sec");
 }
 
 void
