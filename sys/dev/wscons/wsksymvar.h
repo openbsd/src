@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymvar.h,v 1.5 2006/05/29 20:23:13 miod Exp $	*/
+/*	$OpenBSD: wsksymvar.h,v 1.6 2007/05/31 22:23:13 tedu Exp $	*/
 /*	$NetBSD: wsksymvar.h,v 1.8.4.1 2000/07/07 09:50:21 hannken Exp $ */
 
 /*-
@@ -78,12 +78,6 @@ void	wskbd_init_keymap(int, struct wscons_keymap **, int *);
 int	wskbd_load_keymap(const struct wskbd_mapdata *,
                                struct wscons_keymap **, int *);
 keysym_t wskbd_compose_value(keysym_t *);
-
-/*
- * keysym_t hotkey functions.
- */
-void	wskbd_hotkey_init(void);
-void	wskbd_hotkey_put(keysym_t);
 
 #endif
 

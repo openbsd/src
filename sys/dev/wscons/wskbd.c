@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.54 2007/03/25 18:04:14 tedu Exp $ */
+/* $OpenBSD: wskbd.c,v 1.55 2007/05/31 22:23:13 tedu Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -95,6 +95,7 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/workq.h>
 
 #include <ddb/db_var.h>
 
@@ -111,10 +112,7 @@
 #include "wskbd.h"
 #include "wsmux.h"
 
-#ifdef	SMALL_KERNEL
-#undef	NWSKBD_HOTKEY
-#define	NWSKBD_HOTKEY 0
-#else
+#ifndef	SMALL_KERNEL
 #define	BURNER_SUPPORT
 #define	SCROLLBACK_SUPPORT
 #endif
@@ -300,6 +298,10 @@ static struct wskbd_internal wskbd_console_data;
 
 void	wskbd_update_layout(struct wskbd_internal *, kbd_t);
 
+#if NAUDIO > 0
+extern int wskbd_set_mixervolume(long dir);
+#endif
+
 void
 wskbd_update_layout(struct wskbd_internal *id, kbd_t enc)
 {
@@ -453,9 +455,6 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if NWSKBD_HOTKEY > 0
-	wskbd_hotkey_init();
-#endif
 }
 
 void    
@@ -1644,22 +1643,27 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		}
 	}
 
-#if NWSKBD_HOTKEY > 0
 	/* Submit Audio keys for hotkey processing */
 	if (KS_GROUP(ksym) == KS_GROUP_Function) {
 		switch (ksym) {
 #if NAUDIO > 0
 		case KS_AudioMute:
+			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
+			    (void *)(u_long)0, NULL);
+			break;
 		case KS_AudioLower:
+			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
+			    (void *)(u_long)1, NULL);
+			break;
 		case KS_AudioRaise:
-			wskbd_hotkey_put(ksym);
+			workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
+			    (void *)(u_long)1, NULL);
 			return (0);
 #endif
 		default:
 			break;
 		}
 	}
-#endif
 
 	/* Process compose sequence and dead accents */
 	res = KS_voidSymbol;
