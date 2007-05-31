@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.74 2007/05/31 19:19:14 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.75 2007/05/31 20:47:44 otto Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -158,7 +158,8 @@ otherwise, the basename the shell was called with (i.e. argv[0]) is used.
 .Pp
 If the
 .Ev ENV
-parameter is set when the shell starts (or, in the case of login shells,
+parameter is set when an interactive shell starts (or,
+in the case of login shells,
 after any profiles are processed), its value is subjected to parameter,
 command, arithmetic, and tilde
 .Pq Sq ~

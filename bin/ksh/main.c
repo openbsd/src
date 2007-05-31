@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2006/11/02 18:21:20 ray Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2007/05/31 20:47:44 otto Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -339,7 +339,7 @@ main(int argc, char *argv[])
 
 	if (Flag(FPRIVILEGED))
 		include("/etc/suid_profile", 0, (char **) 0, 1);
-	else {
+	else if (Flag(FTALKING)) {
 		char *env_file;
 
 		/* include $ENV */
