@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.30 2007/05/30 16:32:14 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.31 2007/05/31 13:11:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -21,14 +21,13 @@ package OpenBSD::PackageInfo;
 our @ISA=qw(Exporter);
 our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name installed_stems
     lock_db unlock_db
-    add_installed delete_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE MODULE
+    add_installed delete_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE
     REQUIRED_BY REQUIRING DISPLAY UNDISPLAY MTREE_DIRS);
 
 use OpenBSD::PackageName;
 use constant {
 	CONTENTS => '+CONTENTS',
 	COMMENT => '+COMMENT',
-	MODULE => '+MODULE.pm' ,
 	DESC => '+DESC',
 	INSTALL => '+INSTALL',
 	DEINSTALL => '+DEINSTALL',
@@ -44,15 +43,13 @@ my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
 my ($list, $stemlist);
 
-# XXX note that REQUIRE occurs before INSTALL/DESINSTALL.
-our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, REQUIRING, DISPLAY, UNDISPLAY, MTREE_DIRS, MODULE);
+our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, REQUIRING, DISPLAY, UNDISPLAY, MTREE_DIRS);
 
 our %info = ();
 for my $i (@info) {
 	my $j = $i;
 	$j =~ s/\+/F/;
 	$info{$i} = $j;
-	$info{'+MODULE.pm'} = 'FMODULE';
 }
 
 sub _init_list

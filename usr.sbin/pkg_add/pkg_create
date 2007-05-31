@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.109 2007/05/31 11:05:41 espie Exp $
+# $OpenBSD: pkg_create,v 1.110 2007/05/31 13:11:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -333,7 +333,7 @@ sub copy_subst
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k,
 	$opt_S, $opt_s, $opt_O, $opt_A, $opt_L,
-	$opt_m, $opt_M, $opt_U, $opt_P, $opt_W, $opt_n,
+	$opt_M, $opt_U, $opt_P, $opt_W, $opt_n,
 	$opt_B, $opt_q, $opt_Q);
 
 sub deduce_name
@@ -480,7 +480,7 @@ set_usage(
 
 my $plist = new OpenBSD::PackingList;
 try { 
-	getopts('p:f:c:d:vi:k:m:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
+	getopts('p:f:c:d:vi:k:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
 	{'D' => 
 		sub { 
 			local $_ = shift;
@@ -562,7 +562,6 @@ if ($regen_package) {
 	add_special_file($plist, INSTALL, $opt_i);
 	add_special_file($plist, DEINSTALL, $opt_k);
 	add_special_file($plist, DISPLAY, $opt_M);
-	add_special_file($plist, MODULE, $opt_m);
 	add_special_file($plist, UNDISPLAY, $opt_U);
 	if (defined $opt_p) {
 		OpenBSD::PackingElement::Cwd->add($plist, $opt_p);

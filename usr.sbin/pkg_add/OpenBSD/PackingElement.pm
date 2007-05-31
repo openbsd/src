@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.122 2007/05/31 11:05:41 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.123 2007/05/31 13:11:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -217,6 +217,23 @@ sub destate
 	$self->compute_fullname($state);
 }
 
+sub set_tempname
+{
+	my ($self, $tempname) = @_;
+	$self->{tempname} = $tempname;
+}
+
+sub realname
+{
+	my ($self, $state) = @_;
+
+	my $name = $self->fullname;
+	if (defined $self->{tempname}) {
+		$name = $self->{tempname};
+	}
+	return $state->{destdir}.$name;
+}
+
 # exec/unexec and friends
 package OpenBSD::PackingElement::Action;
 our @ISA=qw(OpenBSD::PackingElement::Object);
@@ -321,23 +338,6 @@ sub make_hardlink
 {
 	my ($self, $linkname) = @_;
 	$self->{link} = $linkname;
-}
-
-sub set_tempname
-{
-	my ($self, $tempname) = @_;
-	$self->{tempname} = $tempname;
-}
-
-sub realname
-{
-	my ($self, $state) = @_;
-
-	my $name = $self->fullname;
-	if (defined $self->{tempname}) {
-		$name = $self->{tempname};
-	}
-	return $state->{destdir}.$name;
 }
 
 sub IsFile() { 1 }
@@ -779,44 +779,6 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 sub keyword() { "updateset" }
 __PACKAGE__->register_with_factory;
 sub category() { "updateset" }
-
-package OpenBSD::PackingElement::Module;
-our @ISA=qw(OpenBSD::PackingElement::Meta);
-
-use OpenBSD::PackageInfo;
-
-sub keyword() { "module" }
-__PACKAGE__->register_with_factory;
-sub category() { "module" }
-
-my $installed_modules = {};
-
-sub add
-{
-	my ($class, $plist, $args) = @_;
-
-	require OpenBSD::Search;
-	require OpenBSD::PackageRepository::Installed;
-
-	my @candidates = OpenBSD::PackageRepository::Installed->new
-	    ->match(OpenBSD::Search::PkgSpec->new($args));
-	if (@candidates == 1) {
-		if (!defined $installed_modules->{$candidates[0]}) {
-			# pull in the module right here and now;
-			my $f = installed_info($candidates[0]).MODULE;
-			eval "require \"$f\";";
-			if ($@) {
-				die "Error in reading module $f: $@";
-			}
-		}
-	} elsif (@candidates == 0) {
-		$plist->{need_modules} = 1;
-	} else {
-		die "Ambiguous module: ", $args;
-	}
-		
-	$class->SUPER::add($plist, $args);
-}
 
 package OpenBSD::PackingElement::NewAuth;
 our @ISA=qw(OpenBSD::PackingElement::Action);
@@ -1290,10 +1252,6 @@ sub category() { OpenBSD::PackageInfo::CONTENTS }
 # XXX we don't write `self'
 sub write
 {}
-
-package OpenBSD::PackingElement::FMODULE;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-sub category() { OpenBSD::PackageInfo::MODULE }
 
 package OpenBSD::PackingElement::ScriptFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);

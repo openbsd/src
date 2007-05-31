@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.72 2007/05/30 16:32:14 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.73 2007/05/31 13:11:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -366,7 +366,7 @@ our @unique_categories =
 
 our @list_categories =
     (qw(conflict pkgpath incompatibility updateset depend 
-    	wantlib module groups users items));
+    	wantlib groups users items));
 
 our @cache_categories =
     (qw(depend wantlib));
