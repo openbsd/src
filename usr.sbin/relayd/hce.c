@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.24 2007/05/31 03:26:36 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.25 2007/05/31 05:07:08 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -45,8 +45,8 @@ void	hce_shutdown(void);
 void	hce_dispatch_imsg(int, short, void *);
 void	hce_dispatch_parent(int, short, void *);
 void	hce_launch_checks(int, short, void *);
-void	hce_setup_events(int);
-void	hce_start(void);
+void	hce_setup_events(void);
+void	hce_disable_events(void);
 
 static struct hoststated *env = NULL;
 struct imsgbuf		*ibuf_pfe;
@@ -78,6 +78,8 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	pid_t		 pid;
 	struct passwd	*pw;
 	int		 i;
+	struct event	 ev_sigint;
+	struct event	 ev_sigterm;
 
 	switch (pid = fork()) {
 	case -1:
@@ -110,10 +112,29 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("hce: can't drop privileges");
 
-	pipe_pfe = pipe_pfe2hce[0];
-	pipe_parent = pipe_parent2hce[1];
+	event_init();
 
-	hce_setup_events(0);
+	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
+	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
+		fatal("hce");
+	imsg_init(ibuf_pfe, pipe_pfe2hce[0], hce_dispatch_imsg);
+	imsg_init(ibuf_main, pipe_parent2hce[1], hce_dispatch_parent);
+
+	ibuf_pfe->events = EV_READ;
+	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
+	    ibuf_pfe->handler, ibuf_pfe);
+	event_add(&ibuf_pfe->ev, NULL);
+
+	ibuf_main->events = EV_READ;
+	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
+	    ibuf_main->handler, ibuf_main);
+	event_add(&ibuf_main->ev, NULL);
+
+	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_pfe2hce[1]);
@@ -127,57 +148,15 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 		close(pipe_pfe2relay[i][1]);
 	}
 
-	hce_start();
-
+	hce_setup_events();
+	event_dispatch();
 	hce_shutdown();
 
 	return (0);
 }
 
 void
-hce_setup_events(int diefirst)
-{
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
-	struct timeval	 tv;
-
-	if (diefirst) {
-
-		if (!TAILQ_EMPTY(env->tables)) {
-			evtimer_set(&env->ev, hce_launch_checks, env);
-			bzero(&tv, sizeof(tv));
-			evtimer_add(&env->ev, &tv);
-		}
-
-		bzero(&tv, sizeof(tv));
-		event_loopexit(&tv);
-	}
-	event_init();
-
-	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
-	signal(SIGPIPE, SIG_IGN);
-
-	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
-		fatal("hce");
-	imsg_init(ibuf_pfe, pipe_pfe, hce_dispatch_imsg);
-	imsg_init(ibuf_main, pipe_parent, hce_dispatch_parent);
-	ibuf_pfe->events = EV_READ;
-	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
-	    ibuf_pfe->handler, ibuf_pfe);
-	event_add(&ibuf_pfe->ev, NULL);
-
-	ibuf_main->events = EV_READ;
-	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-	    ibuf_main->handler, ibuf_main);
-	event_add(&ibuf_main->ev, NULL);
-}
-
-void
-hce_start(void)
+hce_setup_events(void)
 {
 	struct timeval	 tv;
 	struct table	*table;
@@ -196,7 +175,29 @@ hce_start(void)
 			table->ssl_ctx = ssl_ctx_create(env);
 		}
 	}
-	event_dispatch();
+}
+
+void
+hce_disable_events(void)
+{
+	struct table	*table;
+	struct host	*host;
+
+	evtimer_del(&env->ev);
+	TAILQ_FOREACH(table, env->tables, entry) {
+		TAILQ_FOREACH(host, &table->hosts, entry) {
+			event_del(&host->cte.ev);
+			close(host->cte.s);
+		}
+	}
+	if (env->has_icmp) {
+		event_del(&env->icmp_send.ev);
+		event_del(&env->icmp_recv.ev);
+	}
+	if (env->has_icmp6) {
+		event_del(&env->icmp6_send.ev);
+		event_del(&env->icmp6_recv.ev);
+	}
 }
 
 void
