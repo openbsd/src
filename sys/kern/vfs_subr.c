@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.151 2007/05/30 04:27:42 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.152 2007/05/31 05:12:41 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ void printlockedvnodes(void);
 #endif
 
 struct pool vnode_pool;
-int desiredvnodes;
 
 /*
  * Initialize the vnode management data structures.
@@ -119,8 +118,6 @@ int desiredvnodes;
 void
 vntblinit(void)
 {
-
-	desiredvnodes = bufpages;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
 	    &pool_allocator_nointr);
 	TAILQ_INIT(&vnode_hold_list);
