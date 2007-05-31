@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.3 2007/05/31 19:14:05 reyk Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.4 2007/05/31 22:09:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -138,7 +138,9 @@ int	 myx_loadfirmware(struct myx_softc *, u_int8_t *, size_t,
 	    u_int32_t, int);
 void	 myx_attachhook(void *);
 void	 myx_read(struct myx_softc *, bus_size_t, u_int8_t *, bus_size_t);
+void	 myx_rawread(struct myx_softc *, bus_size_t, u_int8_t *, bus_size_t);
 void	 myx_write(struct myx_softc *, bus_size_t, u_int8_t *, bus_size_t);
+void	 myx_rawwrite(struct myx_softc *, bus_size_t, u_int8_t *, bus_size_t);
 int	 myx_cmd(struct myx_softc *, u_int32_t, struct myx_cmd *, u_int32_t *);
 int	 myx_boot(struct myx_softc *, u_int32_t, struct myx_bootcmd *);
 int	 myx_rdma(struct myx_softc *, u_int);
@@ -216,8 +218,8 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate command DMA memory
 	 */
-	if (myx_dmamem_alloc(sc, &sc->sc_cmddma,
-	    sizeof(struct myx_cmd), MYXALIGN_CMD, "cmd") != 0) {
+	if (myx_dmamem_alloc(sc, &sc->sc_cmddma, MYXALIGN_CMD,
+	    MYXALIGN_CMD, "cmd") != 0) {
 		printf(": failed to allocate command DMA memory\n");
 		goto unmap;
 	}
@@ -386,7 +388,7 @@ myx_loadfirmware(struct myx_softc *sc, u_int8_t *fw, size_t fwlen,
 	/* Write the firmware to the card's SRAM */
 	for (i = 0; i < fwlen; i += 256) {
 		len = min(256, fwlen - i);
-		myx_write(sc, i + MYX_FW, fw + i, min(256, fwlen - i));
+		myx_rawwrite(sc, i + MYX_FW, fw + i, min(256, fwlen - i));
 	}
 
  done:
@@ -414,7 +416,7 @@ myx_attachhook(void *arg)
 		goto load;
 
 	fw = malloc(fwlen, M_DEVBUF, M_WAIT);
-	myx_read(sc, MYX_HEADER_POS, fw, fwlen);
+	myx_rawread(sc, MYX_HEADER_POS, fw, fwlen);
 
 	if (myx_loadfirmware(sc, fw, fwlen, fwhdroff, 0) == 0)
 		goto boot;
@@ -467,13 +469,31 @@ myx_read(struct myx_softc *sc, bus_size_t off, u_int8_t *ptr, bus_size_t len)
 {
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
 	    BUS_SPACE_BARRIER_READ);
-	bus_space_read_region_1(sc->sc_memt, sc->sc_memh, off, ptr, len);
+	bus_space_read_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len / 4);
+}
+
+void
+myx_rawread(struct myx_softc *sc, bus_size_t off, u_int8_t *ptr,
+    bus_size_t len)
+{
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
+	    BUS_SPACE_BARRIER_READ);
+	bus_space_read_raw_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len);
 }
 
 void
 myx_write(struct myx_softc *sc, bus_size_t off, u_int8_t *ptr, bus_size_t len)
 {
-	bus_space_write_region_1(sc->sc_memt, sc->sc_memh, off, ptr, len);
+	bus_space_write_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len / 4);
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+myx_rawwrite(struct myx_softc *sc, bus_size_t off, u_int8_t *ptr,
+    bus_size_t len)
+{
+	bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len);
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
 	    BUS_SPACE_BARRIER_WRITE);
 }
@@ -527,6 +547,7 @@ myx_cmd(struct myx_softc *sc, u_int32_t cmd, struct myx_cmd *mc, u_int32_t *r)
 	bus_dmamap_t		 map = sc->sc_cmddma.mxm_map;
 	struct myx_response	*mr;
 	u_int			 i;
+	u_int32_t		 result, data;
 
 	DPRINTF(MYXDBG_CMD, "%s(%s) command %d\n", DEVNAME(sc),
 	    __func__, cmd);
@@ -544,20 +565,23 @@ myx_cmd(struct myx_softc *sc, u_int32_t cmd, struct myx_cmd *mc, u_int32_t *r)
 	for (i = 0; i < 20; i++) {
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
-		if (mr->mr_result != 0xffffffff)
+		result = betoh32(mr->mr_result);
+		data = betoh32(mr->mr_data);
+
+		if (result != 0xffffffff)
 			break;
 		delay(1000);
 	}
 
-	DPRINTF(MYXDBG_CMD, "%s(%s): command %d completed, "
-	    "result %x, data %x\n", DEVNAME(sc), __func__, cmd,
-	    betoh32(mr->mr_result), betoh32(mr->mr_data));
+	DPRINTF(MYXDBG_CMD, "%s(%s): command %d completed, i %d, "
+	    "result 0x%x, data 0x%x (%u)\n", DEVNAME(sc), __func__, cmd, i,
+	    result, data, data);
 
-	if (betoh32(mr->mr_result) != 0)
+	if (result != 0)
 		return (-1);
 
 	if (r != NULL)
-		*r = betoh32(mr->mr_data);
+		*r = data;
 	return (0);
 }
 
@@ -582,16 +606,16 @@ myx_boot(struct myx_softc *sc, u_int32_t length, struct myx_bootcmd *bc)
 	/* Send command */
 	myx_write(sc, MYX_BOOT, (u_int8_t *)bc, sizeof(struct myx_bootcmd));
 
-	for (i = 0; i < 2000; i++) {
+	for (i = 0; i < 200; i++) {
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 		if (*status == 0xffffffff)
 			break;
-		delay(100);
+		delay(1000);
 	}
 
-	DPRINTF(MYXDBG_CMD, "%s(%s): boot completed, result %x\n",
-	    DEVNAME(sc), __func__, betoh32(*status));
+	DPRINTF(MYXDBG_CMD, "%s(%s): boot completed, i %d, result 0x%x\n",
+	    DEVNAME(sc), __func__, i, betoh32(*status));
 
 	if (*status != 0xffffffff)
 		return (-1);
@@ -625,7 +649,7 @@ myx_rdma(struct myx_softc *sc, u_int do_enable)
 	/* Send command */
 	myx_write(sc, MYX_RDMA, (u_int8_t *)&rc, sizeof(struct myx_rdmacmd));
 
-	for (i = 0; i < 200; i++) {
+	for (i = 0; i < 20; i++) {
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
 		if (*status == 0xffffffff)
@@ -633,9 +657,9 @@ myx_rdma(struct myx_softc *sc, u_int do_enable)
 		delay(1000);
 	}
 
-	DPRINTF(MYXDBG_CMD, "%s(%s): dummy RDMA %s, result %x\n",
+	DPRINTF(MYXDBG_CMD, "%s(%s): dummy RDMA %s, i %d, result 0x%x\n",
 	    DEVNAME(sc), __func__,
-	    do_enable ? "enabled" : "disabled", betoh32(*status));
+	    do_enable ? "enabled" : "disabled", i, betoh32(*status));
 
 	if (*status != 0xffffffff)
 		return (-1);
