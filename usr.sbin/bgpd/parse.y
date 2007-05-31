@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.205 2007/05/28 17:26:33 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.206 2007/05/31 04:06:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2270,6 +2270,10 @@ parsecommunity(char *s, int *as, int *type)
 
 	if ((i = getcommunity(s)) == COMMUNITY_ERROR)
 		return (-1);
+	if (i == USHRT_MAX) {
+		yyerror("Bad community AS number");
+		return (-1);
+	}
 	*as = i;
 
 	if ((i = getcommunity(p)) == COMMUNITY_ERROR)
