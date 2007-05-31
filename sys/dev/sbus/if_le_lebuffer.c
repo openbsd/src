@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_lebuffer.c,v 1.7 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: if_le_lebuffer.c,v 1.8 2007/05/31 17:23:14 sobrado Exp $	*/
 /*	$NetBSD: if_le_lebuffer.c,v 1.10 2002/03/11 16:00:56 pk Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ le_lebuffer_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 
 #if defined(SUN4M)
 	/*
-	 * We need to flush the Sbus->Mbus write buffers. This can most
+	 * We need to flush the SBus->MBus write buffers. This can most
 	 * easily be accomplished by reading back the register that we
 	 * just wrote (thanks to Chris Torek for this solution).
 	 */

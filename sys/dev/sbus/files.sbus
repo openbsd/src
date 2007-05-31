@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.36 2007/02/28 18:48:35 miod Exp $
+#	$OpenBSD: files.sbus,v 1.37 2007/05/31 17:23:14 sobrado Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -7,7 +7,7 @@
 device	sbus {[slot = -1], [offset = -1]}
 #notyet:file	dev/sbus/sbus.c		sbus
 
-# Sbus NCR539x SCSI & Lance Ethernet
+# SBus NCR539x SCSI & Lance Ethernet
 device	dma {}: lsi64854
 attach	dma at sbus with dma_sbus
 device	ledma {}: lsi64854

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ledma.c,v 1.12 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: if_le_ledma.c,v 1.13 2007/05/31 17:23:14 sobrado Exp $	*/
 /*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ le_ledma_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 
 #if defined(SUN4M)
 	/*
-	 * We need to flush the Sbus->Mbus write buffers. This can most
+	 * We need to flush the SBus->MBus write buffers. This can most
 	 * easily be accomplished by reading back the register that we
 	 * just wrote (thanks to Chris Torek for this solution).
 	 */
