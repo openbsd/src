@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.1 2007/05/31 18:23:42 reyk Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.2 2007/05/31 19:12:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -473,7 +473,7 @@ myx_read(struct myx_softc *sc, bus_size_t off, u_int8_t *ptr, bus_size_t len)
 void
 myx_write(struct myx_softc *sc, bus_size_t off, u_int8_t *ptr, bus_size_t len)
 {
-	bus_space_write_region_4(sc->sc_memt, sc->sc_memh, off, ptr, len);
+	bus_space_write_region_1(sc->sc_memt, sc->sc_memh, off, ptr, len);
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, off, len,
 	    BUS_SPACE_BARRIER_WRITE);
 }
