@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.29 2005/11/04 08:24:15 mcbride Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.30 2007/05/31 04:16:26 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.29 2005/11/04 08:24:15 mcbride Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.30 2007/05/31 04:16:26 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -149,37 +149,9 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	case PFSYNC_ACT_DEL:
 		for (i = 1, s = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*s) <= len; i++, s++) {
-			struct pf_state st;
-
-			bzero(&st, sizeof(st));
-			bcopy(&s->id, &st.id, sizeof(st.id));
-			strlcpy(st.u.ifname, s->ifname, sizeof(st.u.ifname));
-			pf_state_host_ntoh(&s->lan, &st.lan);
-			pf_state_host_ntoh(&s->gwy, &st.gwy);
-			pf_state_host_ntoh(&s->ext, &st.ext);
-			pf_state_peer_ntoh(&s->src, &st.src);
-			pf_state_peer_ntoh(&s->dst, &st.dst);
-			st.rule.nr = ntohl(s->rule);
-			st.nat_rule.nr = ntohl(s->nat_rule);
-			st.anchor.nr = ntohl(s->anchor);
-			bcopy(&s->rt_addr, &st.rt_addr, sizeof(st.rt_addr));
-			st.creation = ntohl(s->creation);
-			st.expire = ntohl(s->expire);
-			pf_state_counter_ntoh(s->packets[0], st.packets[0]);
-			pf_state_counter_ntoh(s->packets[1], st.packets[1]);
-			pf_state_counter_ntoh(s->bytes[0], st.bytes[0]);
-			pf_state_counter_ntoh(s->bytes[1], st.bytes[1]);
-			st.creatorid = s->creatorid;
-			st.af = s->af;
-			st.proto = s->proto;
-			st.direction = s->direction;
-			st.log = s->log;
-			st.timeout = s->timeout;
-			st.allow_opts = s->allow_opts;
-			st.sync_flags = s->sync_flags;
 
 			putchar('\n');
-			print_state(&st, flags);
+			print_state(s, flags);
 			if (vflag > 1 && hdr->action == PFSYNC_ACT_UPD)
 				printf(" updates: %d", s->updates);
 		}

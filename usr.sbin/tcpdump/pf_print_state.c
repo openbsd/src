@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.3 2005/11/04 08:24:15 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.4 2007/05/31 04:16:26 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -129,7 +129,7 @@ print_name(struct pf_addr *addr, sa_family_t af)
 }
 
 void
-print_host(struct pf_state_host *h, sa_family_t af, int opts)
+print_host(struct pfsync_state_host *h, sa_family_t af, int opts)
 {
 	u_int16_t p = ntohs(h->port);
 
@@ -158,19 +158,20 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 }
 
 void
-print_seq(struct pf_state_peer *p)
+print_seq(struct pfsync_state_peer *p)
 {
 	if (p->seqdiff)
-		printf("[%u + %u](+%u)", p->seqlo, p->seqhi - p->seqlo,
-		    p->seqdiff);
+		printf("[%u + %u](+%u)", ntohl(p->seqlo),
+		    ntohl(p->seqhi) - ntohl(p->seqlo), ntohl(p->seqdiff));
 	else
-		printf("[%u + %u]", p->seqlo, p->seqhi - p->seqlo);
+		printf("[%u + %u]", ntohl(p->seqlo),
+		    ntohl(p->seqhi) - ntohl(p->seqlo));
 }
 
 void
-print_state(struct pf_state *s, int opts)
+print_state(struct pfsync_state *s, int opts)
 {
-	struct pf_state_peer *src, *dst;
+	struct pfsync_state_peer *src, *dst;
 	int min, sec;
 
 	if (s->direction == PF_OUT) {
@@ -180,7 +181,7 @@ print_state(struct pf_state *s, int opts)
 		src = &s->dst;
 		dst = &s->src;
 	}
-	printf("%s ", s->u.ifname);
+	printf("%s ", s->ifname);
 	printf("%s ", ipproto_string(s->proto));
 	if (PF_ANEQ(&s->lan.addr, &s->gwy.addr, s->af) ||
 	    (s->lan.port != s->gwy.port)) {
@@ -240,30 +241,41 @@ print_state(struct pf_state *s, int opts)
 	}
 
 	if (opts & PF_OPT_VERBOSE) {
+		u_int64_t packets[2];
+		u_int64_t bytes[2];
+
 		sec = s->creation % 60;
 		s->creation /= 60;
 		min = s->creation % 60;
 		s->creation /= 60;
-		printf("\n   age %.2u:%.2u:%.2u", s->creation, min, sec);
+		printf("\n   age %.2u:%.2u:%.2u", ntohl(s->creation), min, sec);
 		sec = s->expire % 60;
 		s->expire /= 60;
 		min = s->expire % 60;
 		s->expire /= 60;
-		printf(", expires in %.2u:%.2u:%.2u", s->expire, min, sec);
+		printf(", expires in %.2u:%.2u:%.2u",
+		    ntohl(s->expire), min, sec);
+
+		bcopy(s->packets[0], &packets[0], sizeof(u_int64_t));
+		bcopy(s->packets[1], &packets[1], sizeof(u_int64_t));
+		bcopy(s->bytes[0], &bytes[0], sizeof(u_int64_t));
+		bcopy(s->bytes[1], &bytes[1], sizeof(u_int64_t));
 		printf(", %llu:%llu pkts, %llu:%llu bytes",
-		    s->packets[0], s->packets[1], s->bytes[0], s->bytes[1]);
-		if (s->anchor.nr != -1)
-			printf(", anchor %u", s->anchor.nr);
-		if (s->rule.nr != -1)
-			printf(", rule %u", s->rule.nr);
-		if (s->src_node != NULL)
-			printf(", source-track");
-		if (s->nat_src_node != NULL)
-			printf(", sticky-address");
+		    betoh64(packets[0]),
+		    betoh64(packets[1]),
+		    betoh64(bytes[0]),
+		    betoh64(bytes[1]));
+		if (s->anchor != -1)
+			printf(", anchor %u", ntohl(s->anchor));
+		if (s->rule != -1)
+			printf(", rule %u", ntohl(s->rule));
 	}
 	if (opts & PF_OPT_VERBOSE2) {
+		u_int64_t id;
+
+		bcopy(&s->id, &id, sizeof(u_int64_t));
 		printf("\n   id: %016llx creatorid: %08x",
-		    betoh64(s->id), ntohl(s->creatorid));
+		    betoh64(id), ntohl(s->creatorid));
 	}
 }
 
