@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.24 2007/04/26 04:59:39 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.25 2007/05/31 18:22:25 thib Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -612,7 +612,6 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	    D(vp, vnode)->v_data != NULL) {
 		switch (D(vp, vnode)->v_tag) {
 		case VT_UFS:
-		case VT_LFS:
 		case VT_EXT2FS:
 			V_DATA_IS(vp, inode, i_dev, i_number);
 			break;
@@ -623,7 +622,6 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		case VT_NFS:
 		case VT_MFS:
 		case VT_MSDOSFS:
-		case VT_LOFS:
 		case VT_PORTAL:
 		case VT_PROCFS:
 		case VT_AFS:
