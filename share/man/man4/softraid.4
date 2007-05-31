@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.7 2007/04/18 13:38:33 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.8 2007/05/31 02:49:05 grunk Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -56,9 +56,10 @@ is a partition or storage area of the type RAID.
 The first step to using the
 .Nm
 driver is to ensure that it is suitably configured in the kernel.
-This is done by uncommenting the softraid device in sys/conf/GENERIC and
-recompiling it.
-Uncomment the folowing lines:
+This is done by uncommenting the softraid device in
+.Pa sys/conf/GENERIC
+and recompiling it.
+Uncomment the following lines:
 .Bd -literal -offset indent
 #softraid0       at root         # Software RAID
 #scsibus*        at softraid?
@@ -131,10 +132,10 @@ partition type should be used on such platforms.
 .Sh HISTORY
 The
 .Nm
-driver
-is an original work by Marco Peereboom.
-It first appeared in
+driver first appeared in
 .Ox 4.2 .
+.Sh AUTHORS
+.An Marco Peereboom .
 .Sh CAVEATS
 The driver relies on underlying hardware to properly fail chunks.
 Currently the RAID 1 support does not have the ability to recover a
