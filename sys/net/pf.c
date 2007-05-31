@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.535 2007/05/31 04:11:42 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.536 2007/05/31 06:22:40 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -798,10 +798,12 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 int
 pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 {
+	struct pf_state_key *sk;
+
 	KASSERT(s->state_key != NULL);
+	sk = s->state_key;
 
 	/* Thou MUST NOT insert multiple duplicate keys */
-	struct pf_state_key *sk = s->state_key;
 	s->u.s.kif = kif;
 	if (RB_INSERT(pf_state_tree_lan_ext, &kif->pfik_lan_ext, sk)) {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
