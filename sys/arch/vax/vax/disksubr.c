@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.35 2007/05/29 06:28:15 otto Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.36 2007/05/31 19:57:44 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -56,11 +56,8 @@
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, osdep, wlabel)
-	struct	buf *bp;
-	struct	disklabel *lp;
-	struct	cpu_disklabel *osdep;
-	int	wlabel;
+bounds_check_with_label(struct buf *bp, struct disklabel *lp,
+    struct cpu_disklabel *osdep, int wlabel)
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsect = lp->d_partitions[2].p_offset;
@@ -82,27 +79,28 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 
 	/* beyond partition? */
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		/* if exactly at end of disk, return an EOF */
+		/* if exactly at end of disk, return EOF. */
 		if (bp->b_blkno == maxsz) {
 			bp->b_resid = bp->b_bcount;
 			return(0);
 		}
-		/* or truncate if part of it fits */
+		/* Otherwise, truncate request. */
 		sz = maxsz - bp->b_blkno;
 		if (sz <= 0) {
 			bp->b_error = EINVAL;
 			goto bad;
 		}
+		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;	
-	return(1);
+	return (1);
 
 bad:
 	bp->b_flags |= B_ERROR;
-	return(-1);
+	return (-1);
 }
 
 /*

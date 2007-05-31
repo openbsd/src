@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.39 2007/05/31 16:05:50 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.40 2007/05/31 19:57:43 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -567,6 +567,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		goto bad;
 	}
 
+	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
 		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
 		if (sz == 0) {

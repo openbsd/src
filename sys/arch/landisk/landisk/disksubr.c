@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.17 2007/05/31 16:05:50 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.18 2007/05/31 19:57:43 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -446,11 +446,8 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, osdep, wlabel)
-	struct buf *bp;
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int wlabel;
+bounds_check_with_label(struct buf *bp, struct disklabel *lp,
+    struct cpu_disklabel *osdep, int wlabel)
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
@@ -493,7 +490,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
-		lp->d_secpercyl;
+	    lp->d_secpercyl;
 	return (1);
 
 bad:
