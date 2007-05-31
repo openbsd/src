@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.3 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.4 2007/05/31 21:43:57 tom Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
@@ -38,6 +38,10 @@
  */
 
 #define BOOT_ELF
+#define BOOT_ELF32
+#define BOOT_ELF64
+
+/* Keep a default ELFSIZE */
 #define ELFSIZE 32
 
 #define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
@@ -45,7 +49,7 @@
 
 #define LOADADDR(a)		((((u_long)(a)) + offset)&0xfffffff)
 #define ALIGNENTRY(a)		((u_long)(a))
-#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (size_t)(c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
 #define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
 #define	WARN(a)			(void)(printf a, \
