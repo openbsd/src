@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2007/05/31 18:20:03 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.49 2007/05/31 18:58:09 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -334,6 +334,7 @@ serviceoptsl	: TABLE STRING dstport	{
 			free($2);
 
 			service->table = tb;
+			service->conf.table_id = tb->conf.id;
 			service->table->conf.serviceid = service->conf.id;
 			service->table->conf.flags |= F_USED;
 		}
@@ -357,6 +358,7 @@ serviceoptsl	: TABLE STRING dstport	{
 			free($3);
 
 			service->backup = tb;
+			service->conf.backup_id = tb->conf.id;
 			service->backup->conf.serviceid = service->conf.id;
 			service->backup->conf.flags |= (F_USED|F_BACKUP);
 		}
