@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.53 2007/05/31 03:01:12 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.54 2007/05/31 20:03:43 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ extern int nfs_numasync;
 extern int nfsrtton;
 extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
-struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
+struct nfssvc_sock *nfs_udpsock;
 int nuidhash_max = NFS_MAXUIDHASH;
 int nfsd_waiting = 0;
 #ifdef NFSSERVER
@@ -647,12 +647,6 @@ nfsrv_init(terminating)
 	bzero((caddr_t)nfs_udpsock, sizeof (struct nfssvc_sock));
 	TAILQ_INIT(&nfs_udpsock->ns_uidlruhead);
 	TAILQ_INSERT_HEAD(&nfssvc_sockhead, nfs_udpsock, ns_chain);
-
-	nfs_cltpsock = (struct nfssvc_sock *)
-	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-	bzero((caddr_t)nfs_cltpsock, sizeof (struct nfssvc_sock));
-	TAILQ_INIT(&nfs_cltpsock->ns_uidlruhead);
-	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_cltpsock, ns_chain);
 }
 
 /*
