@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.152 2007/05/31 05:12:41 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.153 2007/05/31 17:00:51 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -196,9 +196,9 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 			break;
 	if (vfsp == NULL)
 		return (ENODEV);
-	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
-	(void) vfs_busy(mp, VB_READ|VB_NOWAIT);
+	mp = malloc(sizeof(struct mount), M_MOUNT, M_WAITOK);
+	bzero(mp, sizeof(struct mount));
+	(void)vfs_busy(mp, VB_READ|VB_NOWAIT);
 	LIST_INIT(&mp->mnt_vnodelist);
 	mp->mnt_vfc = vfsp;
 	mp->mnt_op = vfsp->vfc_vfsops;
@@ -208,7 +208,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	mp->mnt_flag |= vfsp->vfc_flags & MNT_VISFLAGMASK;
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
 	mp->mnt_stat.f_mntonname[0] = '/';
-	(void) copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 0);
+	(void)copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 0);
 	*mpp = mp;
  	return (0);
  }
@@ -252,7 +252,7 @@ vfs_getvfs(fsid_t *fsid)
 		}
 	}
 
-	return ((struct mount *)0);
+	return (NULL);
 }
 
 
