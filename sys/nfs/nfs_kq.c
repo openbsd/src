@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.7 2007/05/29 00:17:32 thib Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.8 2007/05/31 20:29:23 thib Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -60,6 +60,12 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 
+void	nfs_kqpoll(void *);
+
+void	filt_nfsdetach(struct knote *);
+int	filt_nfsread(struct knote *, long);
+int	filt_nfsvnode(struct knote *, long);
+
 struct kevq {
 	SLIST_ENTRY(kevq)	kev_link;
 	struct vnode		*vp;
@@ -74,8 +80,8 @@ struct kevq {
 SLIST_HEAD(kevqlist, kevq);
 
 struct rwlock nfskevq_lock = RWLOCK_INITIALIZER("nfskqlk");
-static struct proc *pnfskq;
-static struct kevqlist kevlist = SLIST_HEAD_INITIALIZER(kevlist);
+struct proc *pnfskq;
+struct kevqlist kevlist = SLIST_HEAD_INITIALIZER(kevlist);
 
 /*
  * This quite simplistic routine periodically checks for server changes
@@ -92,7 +98,7 @@ static struct kevqlist kevlist = SLIST_HEAD_INITIALIZER(kevlist);
  * isn't really important, neither speed of attach and detach of knote.
  */
 /* ARGSUSED */
-static void
+void
 nfs_kqpoll(void *arg)
 {
 	struct kevq *ke;
@@ -173,22 +179,16 @@ next:
 		rw_exit_write(&nfskevq_lock);
 
 		/* wait a while before checking for changes again */
-		tsleep(pnfskq, PSOCK, "nfskqpw",
-			NFS_MINATTRTIMO * hz / 2);
+		tsleep(pnfskq, PSOCK, "nfskqpw", NFS_MINATTRTIMO * hz / 2);
 
 	}
 }
 
-static void
+void
 filt_nfsdetach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 	struct kevq *ke;
-
-#ifdef notyet
-	/* XXXLUKEM lock the struct? */
-	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
-#endif
 
 	SLIST_REMOVE(&vp->v_selectinfo.si_note, kn, knote, kn_selnext);
 
@@ -217,7 +217,7 @@ filt_nfsdetach(struct knote *kn)
 	rw_exit_write(&nfskevq_lock);
 }
 
-static int
+int
 filt_nfsread(struct knote *kn, long hint)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
@@ -232,8 +232,6 @@ filt_nfsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	/* XXXLUKEM lock the struct? */
-
 	kn->kn_data = np->n_size - kn->kn_fp->f_offset;
 #ifdef DEBUG
 	printf("nfsread event. %d\n", kn->kn_data);
@@ -241,7 +239,7 @@ filt_nfsread(struct knote *kn, long hint)
         return (kn->kn_data != 0);
 }
 
-static int
+int
 filt_nfsvnode(struct knote *kn, long hint)
 {
 	if (kn->kn_sfflags & hint)
@@ -339,11 +337,6 @@ nfs_kqfilter(void *v)
 	wakeup(pnfskq);
 
 	SLIST_INSERT_HEAD(&vp->v_selectinfo.si_note, kn, kn_selnext);
-
-#ifdef notyet
-	/* XXXLUKEM lock the struct? */
-	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
-#endif
 
 out:
 	rw_exit_write(&nfskevq_lock);
