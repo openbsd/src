@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.10 2007/05/08 07:23:18 art Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.11 2007/05/31 19:53:14 sobrado Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -278,8 +278,8 @@ struct cpu_softc {
 #define CPUTYP_2		16	/* SPARCstation 2 */
 
 /* We classify the Sun4m's by feature, not by model (XXX: do same for 4/4c) */
-#define	CPUTYP_SS2_MBUS_MXCC	20 	/* SuperSPARC-II, Mbus, MXCC (SS20) */
-#define CPUTYP_SS1_MBUS_MXCC	21	/* SuperSPARC-I, Mbus, MXCC (SS10) */
+#define	CPUTYP_SS2_MBUS_MXCC	20 	/* SuperSPARC-II, MBus, MXCC (SS20) */
+#define CPUTYP_SS1_MBUS_MXCC	21	/* SuperSPARC-I, MBus, MXCC (SS10) */
 #define CPUTYP_SS2_MBUS_NOMXCC	22	/* SuperSPARC-II, on MBus w/o MXCC */
 #define CPUTYP_SS1_MBUS_NOMXCC	23	/* SuperSPARC-I, on MBus w/o MXCC */
 #define CPUTYP_MS2		24	/* MicroSPARC-2 */
