@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.295 2007/05/30 16:32:14 espie Exp $
+# $OpenBSD: pkg_add,v 1.296 2007/05/31 10:04:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -310,13 +310,13 @@ sub failed_message
 
 sub save_partial_set
 {
-	my ($set, $not) = @_;
+	my ($set, $state) = @_;
 
-	return () if $not;
+	return () if $state->{not};
 	my @l = ();
 	for my $h ($set->newer) {
 		next unless defined $h->{partial};
-		push(@l, OpenBSD::Add::record_partial_installation($h->{plist}, $h->{partial}));
+		push(@l, OpenBSD::Add::record_partial_installation($h->{plist}, $state, $h->{partial}));
 	}
 	return @l;
 }
@@ -324,7 +324,7 @@ sub save_partial_set
 sub partial_install
 {
 	my ($base_msg, $set, $state) = @_;
-	return failed_message($base_msg, $state->{interrupted}, save_partial_set($set, $state->{not}));
+	return failed_message($base_msg, $state->{interrupted}, save_partial_set($set, $state));
 }
 
 sub really_add

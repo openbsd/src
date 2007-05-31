@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.66 2007/05/30 16:32:14 espie Exp $
+# $OpenBSD: Add.pm,v 1.67 2007/05/31 10:04:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -68,7 +68,7 @@ sub validate_plist
 
 sub record_partial_installation
 {
-	my ($plist, $h) = @_;
+	my ($plist, $state, $h) = @_;
 
 	use OpenBSD::PackingElement;
 
@@ -82,12 +82,7 @@ sub record_partial_installation
 	    require OpenBSD::md5;
 
 	    my $old = $last->{md5};
-	    my $lastname;
-	    if (defined $last->{tempname}) {
-	    	$lastname = $last->{tempname};
-	    } else {
-	    	$lastname = $last->fullname;
-	    }
+	    my $lastname = $last->realname($state);
 	    $last->{md5} = OpenBSD::md5::fromfile($lastname);
 	    if ($old ne $last->{md5}) {
 		print "Adjusting md5 for $lastname from ",
