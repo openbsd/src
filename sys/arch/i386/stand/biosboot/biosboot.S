@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.37 2004/02/10 00:35:16 tom Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.38 2007/05/31 23:34:46 weingart Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -190,7 +190,7 @@ ebpb:	.long	16			/* hidden sectors */
 	.word	0			/* physical disk */
 	.byte	0x29			/* signature, needed by NT */
 	.space	4, 0			/* volume serial number */
-	.ascii	"UNIX LABEL"
+	.asciz	"UNIX LABEL"
 	.asciz	"UFS 4.4"
 
 	/* boot code */
