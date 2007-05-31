@@ -143,6 +143,30 @@ double x,y;
         return(x);
 }
 
+int
+__signbitf(float x)
+{
+	unsigned short *px = (unsigned short *)&x;
+
+	return (*px & ~msign);
+}
+
+int
+__signbit(double x)
+{
+	unsigned short *px = (unsigned short *)&x;
+
+	return (*px & ~msign);
+}
+
+int
+__signbitl(long double x)
+{
+	unsigned short *px = (unsigned short *)&x;
+
+	return (*px & ~msign);
+}
+
 double logb(x)
 double x; 
 {
