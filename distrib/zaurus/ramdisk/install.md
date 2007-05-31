@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.11 2007/05/31 03:51:56 robert Exp $
+#	$OpenBSD: install.md,v 1.12 2007/05/31 20:28:23 robert Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -128,6 +128,9 @@ md_congrats() {
 		     >/tmp/wsconsctl.conf
 		echo $val "	# see ztsscale(8)" >> /tmp/wsconsctl.conf
 		cp /tmp/wsconsctl.conf /mnt/etc/wsconsctl.conf
+		grep -v '^machdep\.ztsscale.*$' /mnt/etc/sysctl.conf \
+		     >/tmp/sysctl.conf
+		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 		;;
 	esac
 }
