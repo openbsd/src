@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.206 2007/05/31 04:06:04 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.207 2007/05/31 18:38:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2695,6 +2695,7 @@ get_rule(enum action_types type)
 		r->quick = 0;
 		r->dir = out ? DIR_OUT : DIR_IN;
 		r->action = ACTION_NONE;
+		r->match.community.as = COMMUNITY_UNSET;
 		TAILQ_INIT(&r->set);
 		if (curpeer == curgroup) {
 			/* group */
