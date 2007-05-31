@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.85 2007/05/31 18:21:44 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.86 2007/05/31 21:53:02 tedu Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ const void *scsi_inqmatch(struct scsi_inquiry_data *, const void *, int,
 	    int, int *);
 
 #define scsi_task(_f, _a1, _a2, _fl) \
-    workq_add_task(NULL, (_f), (_a1), (_a2), (_fl))
+    workq_add_task(NULL, (_fl), (_f), (_a1), (_a2))
 
 void	scsi_init(void);
 void	scsi_deinit(void);
