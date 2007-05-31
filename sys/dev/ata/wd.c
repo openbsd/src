@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.58 2007/04/28 02:24:21 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.59 2007/05/31 05:24:06 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -822,27 +822,13 @@ wdgetdisklabel(dev_t dev, struct wd_softc *wd, struct disklabel *lp,
 
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
-	errstring = readdisklabel(DISKLABELDEV(dev),
-	    wdstrategy, lp, clp, spoofonly);
-	if (errstring) {
-		/*
-		 * This probably happened because the drive's default
-		 * geometry doesn't match the DOS geometry.  We
-		 * assume the DOS geometry is now in the label and try
-		 * again.  XXX This is a kluge.
-		 */
-		if (wd->drvp->state > RECAL)
-			wd->drvp->drive_flags |= DRIVE_RESET;
-		errstring = readdisklabel(DISKLABELDEV(dev),
-		    wdstrategy, lp, clp, spoofonly);
-	}
-	if (errstring) {
-		/*printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);*/
-		return;
-	}
-
+	errstring = readdisklabel(DISKLABELDEV(dev), wdstrategy, lp, clp,
+	    spoofonly);
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
+	if (errstring) {
+		/*printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);*/
+	}
 }
 
 int
