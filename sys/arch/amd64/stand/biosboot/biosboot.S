@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.2 2004/03/21 21:22:10 tom Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.3 2007/05/31 18:08:13 tom Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -573,7 +573,7 @@ err_stop:
 	call	Lmessage
 stay_stopped:
 	sti				/* Ensure Ctl-Alt-Del will work */
-	hlt
+	hlt				/* (don't require power cycle) */
 	jmp	stay_stopped		/* Just to make sure :-) */
 
 exec_boot:
