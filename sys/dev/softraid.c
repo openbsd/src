@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.61 2007/05/30 17:56:37 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.62 2007/05/31 06:26:23 grunk Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2845,26 +2845,26 @@ sr_raidc_putcryptop(struct cryptop *crp)
 int
 sr_raidc_alloc_resources(struct sr_discipline *sd)
 {
-	int			rv = EINVAL;
 	struct cryptoini	cri;
 
 	if (!sd)
-		return (rv);
+		return (EINVAL);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raidc_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
 	sr_alloc_wu(sd);
 	sr_alloc_ccb(sd);
+
+	/* XXX we need a real key later */
 	memset(sd->mds.mdd_raidc.src_key, 'k', sizeof sd->mds.mdd_raidc.src_key);
 	bzero(&cri, sizeof(cri));
 	cri.cri_alg = CRYPTO_AES_CBC;
 	cri.cri_klen = 256;
 	cri.cri_rnd = 14;
 	cri.cri_key = sd->mds.mdd_raidc.src_key;
-	rv = crypto_newsession(&sd->mds.mdd_raidc.src_sid, &cri, 0);
 
-	return (rv);
+	return (crypto_newsession(&sd->mds.mdd_raidc.src_sid, &cri, 0));
 }
 
 int
