@@ -1,6 +1,6 @@
-/* $OpenBSD: softraidvar.h,v 1.26 2007/05/30 15:59:35 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.27 2007/05/31 05:49:26 grunk Exp $ */
 /*
- * Copyright (c) 2006 Marco Peereboom <sro@peereboom.us>
+ * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
