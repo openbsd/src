@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.23 2007/05/31 03:24:05 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.24 2007/05/31 03:26:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -206,7 +206,6 @@ hce_launch_checks(int fd, short event, void *arg)
 	struct table		*table;
 	struct timeval		 tv;
 
-	log_warnx("new check suite");
 	/*
 	 * notify pfe checks are done and schedule next check
 	 */
@@ -221,18 +220,13 @@ hce_launch_checks(int fd, short event, void *arg)
 	if (gettimeofday(&tv, NULL))
 		fatal("hce_launch_checks: gettimeofday");
 
-	log_warnx("setting up checks");
-
 	TAILQ_FOREACH(table, env->tables, entry) {
-		log_warnx("setting up %s", table->conf.name);
 		if (table->conf.flags & F_DISABLE)
 			continue;
 		if (table->conf.check == CHECK_NOCHECK)
 			fatalx("hce_launch_checks: unknown check type");
 
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			log_warnx("setting up %s.%s", table->conf.name,
-			    host->conf.name);
 			if (host->flags & F_DISABLE)
 				continue;
 			switch (table->conf.check) {
