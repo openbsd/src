@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.45 2007/05/28 20:09:21 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.46 2007/05/31 04:21:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -316,6 +316,8 @@ parse(int argc, char *argv[])
 	const struct token	*match;
 
 	bzero(&res, sizeof(res));
+	res.community.as = COMMUNITY_UNSET;
+	res.community.type = COMMUNITY_UNSET;
 	TAILQ_INIT(&res.set);
 
 	while (argc >= 0) {
