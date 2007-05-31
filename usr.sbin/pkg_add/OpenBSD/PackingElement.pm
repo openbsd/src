@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.123 2007/05/31 13:11:21 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.124 2007/05/31 13:20:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -420,12 +420,10 @@ __PACKAGE__->register_with_factory;
 sub register_manpage
 {
 	my ($self, $state) = @_;
+	return if defined $self->{tempname};
 	my $fname = $self->fullname;
 	if ($fname =~ m,^(.*/man)/(?:man|cat).*?/,) {
 		my $d = $1;
-		$state->{mandirs} = {} unless defined $state->{mandirs};
-		$state->{mandirs}->{$d} = [] 
-		    unless defined $state->{mandirs}->{$d};
 		push(@{$state->{mandirs}->{$d}}, $fname);
     	}
 }
