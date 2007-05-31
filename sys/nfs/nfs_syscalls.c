@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.52 2007/05/28 06:13:07 krw Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.53 2007/05/31 03:01:12 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -756,7 +756,7 @@ nfssvc_iod(p)
 		     */
 		    if (nbp) {
 			nbp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
-			buf_undirty(bp);
+			buf_undirty(nbp);
 			nbp->b_vp->v_numoutput++;
 		    }
 		    splx(s);
