@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.31 2007/05/31 02:33:37 otto Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.32 2007/05/31 03:19:19 otto Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ struct	__partitionv0 {		/* the partition table */
 
 #define DL_PSIZE(p)	(((u_int64_t)(p)->p_sizeh << 32) + (p)->p_size)
 #define DL_POFFSET(p)	(((u_int64_t)(p)->p_offseth << 32) + (p)->p_offset)
-#define DL_DSIZE(d)	(((u_int64_t)(d)->d_secperunith << 32) + (d)->d_secperun
+#define DL_DSIZE(d)	(((u_int64_t)(d)->d_secperunith << 32) + (d)->d_secperunit)
 
 
 /* d_type values: */
