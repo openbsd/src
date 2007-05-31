@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.27 2007/05/31 03:24:05 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.28 2007/05/31 15:49:26 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -37,6 +37,8 @@
 
 void	pfe_sig_handler(int sig, short, void *);
 void	pfe_shutdown(void);
+void	pfe_setup_events(void);
+void	pfe_disable_events(void);
 void	pfe_dispatch_imsg(int, short, void *);
 void	pfe_dispatch_parent(int, short, void *);
 void	pfe_dispatch_relay(int, short, void *);
@@ -71,7 +73,6 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
 	int		 i;
-	struct imsgbuf	*ibuf;
 	size_t		 size;
 
 	switch (pid = fork()) {
@@ -95,18 +96,22 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
 		fatal("pfe: getpwnam");
 
+#ifndef DEBUG
 	if (chroot(pw->pw_dir) == -1)
 		fatal("pfe: chroot");
 	if (chdir("/") == -1)
 		fatal("pfe: chdir(\"/\")");
+#endif
 
 	setproctitle("pf update engine");
 	hoststated_process = PROC_PFE;
 
+#ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("pfe: cannot drop privileges");
+#endif
 
 	event_init();
 
@@ -132,28 +137,19 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	    (ibuf_relay = calloc(env->prefork_relay, size)) == NULL ||
 	    (ibuf_main = calloc(1, size)) == NULL)
 		fatal("pfe");
+
 	imsg_init(ibuf_hce, pipe_pfe2hce[1], pfe_dispatch_imsg);
 	imsg_init(ibuf_main, pipe_parent2pfe[1], pfe_dispatch_parent);
-
-	ibuf_hce->events = EV_READ;
-	event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
-	    ibuf_hce->handler, ibuf_hce);
-	event_add(&ibuf_hce->ev, NULL);
+	for (i = 0; i < env->prefork_relay; i++)
+		imsg_init(&ibuf_relay[i], pipe_pfe2relay[i][1],
+		    pfe_dispatch_relay);
 
 	ibuf_main->events = EV_READ;
 	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
 	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
 
-	for (i = 0; i < env->prefork_relay; i++) {
-		ibuf = &ibuf_relay[i];
-		imsg_init(ibuf, pipe_pfe2relay[i][1], pfe_dispatch_relay);
-
-		ibuf->events = EV_READ;
-		event_set(&ibuf->ev, ibuf->fd, ibuf->events,
-		    ibuf->handler, ibuf);
-		event_add(&ibuf->ev, NULL);
-	}
+	pfe_setup_events();
 
 	TAILQ_INIT(&ctl_conns);
 
@@ -175,6 +171,41 @@ pfe_shutdown(void)
 	flush_rulesets(env);
 	log_info("pf update engine exiting");
 	_exit(0);
+}
+
+void
+pfe_setup_events(void)
+{
+	int		 i;
+	struct imsgbuf	*ibuf;
+
+	ibuf_hce->events = EV_READ;
+	event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
+	    ibuf_hce->handler, ibuf_hce);
+	event_add(&ibuf_hce->ev, NULL);
+
+	for (i = 0; i < env->prefork_relay; i++) {
+		ibuf = &ibuf_relay[i];
+
+		ibuf->events = EV_READ;
+		event_set(&ibuf->ev, ibuf->fd, ibuf->events,
+		    ibuf->handler, ibuf);
+		event_add(&ibuf->ev, NULL);
+	}
+}
+
+void
+pfe_disable_events(void)
+{
+	int		 i;
+	struct imsgbuf	*ibuf;
+
+	event_del(&ibuf_hce->ev);
+
+	for (i = 0; i < env->prefork_relay; i++) {
+		ibuf = &ibuf_relay[i];
+		event_del(&ibuf->ev);
+	}
 }
 
 void
