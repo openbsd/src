@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.2 2007/05/29 20:22:10 drahn Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.3 2007/05/31 23:50:25 drahn Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn
@@ -75,15 +75,21 @@ ENTRY(mtx_enter)
 #ifdef DIAGNOSTIC
 .L_mutex_selflocked:
 	mr	%r5, %r3
-	lis	%r3,.L_panicstr@ha
-	la	%r3,.L_panicstr@l(%r3)
+	lis	%r3,.L_paniclocked@ha
+	la	%r3,.L_paniclocked@l(%r3)
 	bl 	panic
-.L_panicstr:
+.L_paniclocked:
 	.string "mtx_enter: recursed %x %x\n"
 #endif
 
 
 ENTRY(mtx_leave)
+#ifdef DIAGNOSTIC
+	lwz	%r6,MTX_OWNER(%r3)
+	cmpwi   0,%r6,0                         # test owner == 0
+
+	beq-	.L_mutex_notlocked
+#endif
 	li	%r4,0
 	lwz	%r5,MTX_OLDCPL(%r3)
 	stw	%r4,MTX_OLDCPL(%r3)
@@ -96,3 +102,14 @@ ENTRY(mtx_leave)
 	b	_C_LABEL(lcsplx)
 1:
 	blr
+
+#ifdef DIAGNOSTIC
+.L_mutex_notlocked:
+	GET_CPUINFO(%r4)
+	mr	%r5, %r3
+	lis	%r3,.L_panicnotlocked@ha
+	la	%r3,.L_panicnotlocked@l(%r3)
+	bl 	panic
+.L_panicnotlocked:
+	.string "mtx_leave: not locked %x %x\n"
+#endif
