@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.63 2007/05/31 18:56:27 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.64 2007/05/31 22:04:23 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1335,6 +1335,7 @@ void
 sr_shutdown_discipline(struct sr_discipline *sd)
 {
 	struct sr_softc		*sc = sd->sd_sc;
+	int			s;
 
 	if (!sd || !sc)
 		return;
@@ -1342,11 +1343,14 @@ sr_shutdown_discipline(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_shutdown_discipline %s\n",
 	    DEVNAME(sc), sd->sd_vol.sv_meta.svm_devname);
 
+	s = splbio();
+
 	/* make sure there isn't a sync pending and yield */
 	wakeup(sd);
-	while (tsleep(sr_shutdown_discipline, MAXPRI, "sr_down", 1 * hz) !=
-	    EWOULDBLOCK)
-		;
+	while (sd->sd_sync)
+		if (tsleep(&sd->sd_sync, MAXPRI, "sr_down", 60 * hz) ==
+		    EWOULDBLOCK)
+			break;
 
 #ifndef SMALL_KERNEL
 	sr_delete_sensors(sd);
@@ -1359,6 +1363,8 @@ sr_shutdown_discipline(struct sr_discipline *sd)
 
 	if (sd)
 		sr_free_discipline(sd);
+
+	splx(s);
 }
 
 /* RAID 1 functions */
@@ -1547,7 +1553,7 @@ sr_raid_sync(struct sr_workunit *wu)
 	sd->sd_sync = 1;
 
 	while (sd->sd_wu_pending > ios)
-		if (tsleep(sd, PRIBIO, "sr_sync", 60 * hz) == EWOULDBLOCK) {
+		if (tsleep(sd, PRIBIO, "sr_sync", 15 * hz) == EWOULDBLOCK) {
 			DNPRINTF(SR_D_DIS, "%s: sr_raid_sync timeout\n",
 			    DEVNAME(sd->sd_sc));
 			rv = 1;
@@ -1556,6 +1562,8 @@ sr_raid_sync(struct sr_workunit *wu)
 
 	sd->sd_sync = 0;
 	splx(s);
+
+	wakeup(&sd->sd_sync);
 
 	return (rv);
 }
@@ -1992,6 +2000,7 @@ die:
 	sd->sd_vol.sv_chunks[c]->src_meta.scm_status = new_state;
 	sd->sd_set_vol_state(sd);
 
+	sr_save_metadata(sd, SR_VOL_DIRTY);
 done:
 	splx(s);
 }
@@ -2549,6 +2558,8 @@ sr_validate_metadata(struct sr_softc *sc, dev_t dev, struct sr_metadata *sm)
 
 	DNPRINTF(SR_D_META, "%s: sr_validate_metadata(0x%x)\n",
 	    DEVNAME(sc), dev);
+
+	bzero(devname, sizeof(devname));
 
 	if (sm->ssd_magic != SR_MAGIC)
 		goto bad;
