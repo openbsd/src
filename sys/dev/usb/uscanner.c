@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.24 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.25 2007/05/31 18:20:22 mbalmer Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -44,15 +44,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <sys/conf.h>
-#include <sys/fcntl.h>
-#include <sys/filio.h>
-#endif
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
@@ -240,48 +232,6 @@ struct uscanner_softc {
 	u_char			sc_dying;
 };
 
-#if defined(__NetBSD__)
-dev_type_open(uscanneropen);
-dev_type_close(uscannerclose);
-dev_type_read(uscannerread);
-dev_type_write(uscannerwrite);
-dev_type_ioctl(uscannerioctl);
-dev_type_poll(uscannerpoll);
-dev_type_kqfilter(uscannerkqfilter);
-
-const struct cdevsw uscanner_cdevsw = {
-	uscanneropen, uscannerclose, uscannerread, uscannerwrite,
-	uscannerioctl, nostop, notty, uscannerpoll, nommap, uscannerkqfilter,
-};
-#elif defined(__FreeBSD__)
-d_open_t  uscanneropen;
-d_close_t uscannerclose;
-d_read_t  uscannerread;
-d_write_t uscannerwrite;
-d_poll_t  uscannerpoll;
-
-#define USCANNER_CDEV_MAJOR	156
-
-Static struct cdevsw uscanner_cdevsw = {
-	/* open */	uscanneropen,
-	/* close */	uscannerclose,
-	/* read */	uscannerread,
-	/* write */	uscannerwrite,
-	/* ioctl */	noioctl,
-	/* poll */	uscannerpoll,
-	/* mmap */	nommap,
-	/* strategy */	nostrategy,
-	/* name */	"uscanner",
-	/* maj */	USCANNER_CDEV_MAJOR,
-	/* dump */	nodump,
-	/* psize */	nopsize,
-	/* flags */	0,
-#if !defined(__FreeBSD__) || (__FreeBSD__ < 5)
-	/* bmaj */	-1
-#endif
-};
-#endif
-
 Static int uscanner_do_read(struct uscanner_softc *, struct uio *, int);
 Static int uscanner_do_write(struct uscanner_softc *, struct uio *, int);
 Static void uscanner_do_close(struct uscanner_softc *);
@@ -368,12 +318,6 @@ uscanner_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bulkin = ed_bulkin->bEndpointAddress;
 	sc->sc_bulkout = ed_bulkout->bEndpointAddress;
-
-#ifdef __FreeBSD__
-	/* the main device, ctrl endpoint */
-	make_dev(&uscanner_cdevsw, USBDEVUNIT(sc->sc_dev),
-		UID_ROOT, GID_OPERATOR, 0644, "%s", USBDEVNAME(sc->sc_dev));
-#endif
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -605,7 +549,6 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 	return (error);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 uscanner_activate(device_ptr_t self, enum devact act)
 {
@@ -621,25 +564,15 @@ uscanner_activate(device_ptr_t self, enum devact act)
 	}
 	return (0);
 }
-#endif
 
 int
 uscanner_detach(struct device *self, int flags)
 {
 	struct uscanner_softc *sc = (struct uscanner_softc *)self;
 	int s;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int maj, mn;
-#elif defined(__FreeBSD__)
-	dev_t dev;
-	struct vnode *vp;
-#endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	DPRINTF(("uscanner_detach: sc=%p flags=%d\n", sc, flags));
-#elif defined(__FreeBSD__)
-	DPRINTF(("uscanner_detach: sc=%p\n", sc));
-#endif
 
 	sc->sc_dying = 1;
 	sc->sc_dev_flags = 0;	/* make close really close device */
@@ -657,28 +590,14 @@ uscanner_detach(struct device *self, int flags)
 	}
 	splx(s);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
-#if defined(__NetBSD__)
-	maj = cdevsw_lookup_major(&uscanner_cdevsw);
-#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == uscanneropen)
 			break;
-#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
-#elif defined(__FreeBSD__)
-	/* destroy the device for the control endpoint */
-	dev = makedev(USCANNER_CDEV_MAJOR, USBDEVUNIT(sc->sc_dev));
-	vp = SLIST_FIRST(&dev->si_hlist);
-	if (vp)
-		VOP_REVOKE(vp, REVOKEALL);
-	destroy_dev(dev);
-#endif
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
@@ -760,7 +679,3 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 
 	return (0);
 }
-
-#if defined(__FreeBSD__)
-DRIVER_MODULE(uscanner, uhub, uscanner_driver, uscanner_devclass, usbd_driver_load, 0);
-#endif

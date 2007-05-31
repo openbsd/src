@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.10 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.11 2007/05/31 18:20:22 mbalmer Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -43,18 +43,8 @@
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#if defined(__FreeBSD__)
-#include <sys/bus.h>
-#include <sys/ioccom.h>
-#if __FreeBSD_version >= 500014
-#include <sys/selinfo.h>
-#else
-#include <sys/select.h>
-#endif
-#else
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#endif
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
@@ -72,24 +62,11 @@
 #ifdef UVSCOM_DEBUG
 static int	uvscomdebug = 1;
 
-#if defined(__FreeBSD__)
-#include <sys/sysctl.h>
-
-SYSCTL_DECL(_debug_usb);
-SYSCTL_INT(_debug_usb, OID_AUTO, uvscom, CTLFLAG_RW,
-	   &uvscomdebug, 0, "uvscom debug level");
-
-#endif
-
 #define DPRINTFN(n, x)  do { if (uvscomdebug > (n)) printf x; } while (0)
 #else
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
-
-#if defined(__FreeBSD__)
-#define UVSCOM_MODVER		1	/* module version */
-#endif
 
 #define	UVSCOM_CONFIG_INDEX	0
 #define	UVSCOM_IFACE_INDEX	0
@@ -231,30 +208,6 @@ static const struct usb_devno uvscom_devs [] = {
 #define uvscom_lookup(v, p) usb_lookup(uvscom_devs, v, p)
 
 USB_DECLARE_DRIVER(uvscom);
-
-#ifdef __FreeBSD__
-Static device_probe_t uvscom_match;
-Static device_attach_t uvscom_attach;
-Static device_detach_t uvscom_detach;
-
-Static device_method_t uvscom_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe, uvscom_match),
-	DEVMETHOD(device_attach, uvscom_attach),
-	DEVMETHOD(device_detach, uvscom_detach),
-	{ 0, 0 }
-};
-
-Static driver_t uvscom_driver = {
-	"usio",
-	uvscom_methods,
-	sizeof (struct uvscom_softc)
-};
-
-DRIVER_MODULE(uvscom, uhub, uvscom_driver, ucom_devclass, usbd_driver_load, 0);
-MODULE_DEPEND(uvscom, ucom, UCOM_MINVER, UCOM_PREFVER, UCOM_MAXVER);
-MODULE_VERSION(uvscom, UVSCOM_MODVER);
-#endif
 
 int
 uvscom_match(struct device *parent, void *match, void *aux)
@@ -898,4 +851,3 @@ uvscom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 	if (msr != NULL)
 		*msr = sc->sc_msr;
 }
-
