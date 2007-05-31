@@ -1,7 +1,9 @@
-.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
+.\"	$OpenBSD: mdoc.template,v 1.10 2007/05/31 22:10:19 jmc Exp $
 .\"
 .\" The following requests are required for all man pages.
-.Dd Month DD, YYYY
+.\"
+.\" Remove `\&' from the line below.
+.Dd $\&Mdocdate$
 .Dt NAME SECTION#
 .Os
 .Sh NAME

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.73 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.74 2007/05/31 22:10:19 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -507,7 +507,7 @@ template found in the file
 .Pa /usr/share/misc/mdoc.template .
 .Bd -literal -offset indent
 \&.\e" The following requests are required for all man pages.
-\&.Dd Month DD, YYYY
+\&.Dd $\&Mdocdate$
 \&.Dt NAME SECTION#
 \&.Os
 \&.Sh NAME
@@ -582,14 +582,21 @@ domain, but are presented first and separate for someone who
 wishes to start writing a man page yesterday.
 Three header macros designate the document title or manual page title,
 the operating system,
-and the date of authorship.
+and the date of document change (or creation).
 These macros are called once at the very beginning of the document
 and are used to construct the headers and footers only.
 .Bl -tag -width 6n
-.It Li \&.Dd month day, year
+.It Li \&.Dd $\&Mdocdate$
+The literal string
+.Dq $\&Mdocdate$ ,
+which is expanded by
+.Xr cvs 1
+to the date a document is committed to a source repository.
+.Pp
+Alternatively the date may be written by hand.
 The date should be written formally:
 .Pp
-.Dl January 25, 1989
+.Dl \&.Dd January 25, 1989
 .It Li \&.Dt DOCUMENT_TITLE section# [volume]
 The document title is the
 subject of the man page and must be in
