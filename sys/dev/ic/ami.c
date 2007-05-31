@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.181 2007/05/29 22:17:50 todd Exp $	*/
+/*	$OpenBSD: ami.c,v 1.182 2007/05/31 18:34:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2502,8 +2502,13 @@ ami_refresh_sensors(void *arg)
 	int i;
 
 	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof(*sc->sc_bd),
-	    sc->sc_bd))
+	    sc->sc_bd)) {
+		for (i = 0; i < sc->sc_nunits; i++) {
+			sc->sc_sensors[i].value = 0; /* unknown */
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		}
 		return;
+	}
 
 	for (i = 0; i < sc->sc_nunits; i++) {
 		switch (sc->sc_bd->ald[i].adl_status) {
