@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.297 2007/05/31 13:33:17 espie Exp $
+# $OpenBSD: pkg_add,v 1.298 2007/05/31 16:48:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -78,7 +78,6 @@ sub mark_installed
 sub mark_as_already_installed
 {
 	my ($state, $pkg) = @_;
-	OpenBSD::SharedLibs::add_libs_from_installed_package($pkg);
 	$state->mark_installed($pkg);
 }
 
@@ -532,10 +531,6 @@ sub install_package
 		return ();
 	}
 
-	# grab libraries
-	for my $dep ($handle->{solver}->dependencies) {
-		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
-	}
 	my $okay = 1;
 	for my $lib (@{$plist->{wantlib}}) {
 		if (!$handle->{solver}->lookup_library($state, $lib->{name})) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.41 2007/05/29 23:12:26 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.42 2007/05/31 16:48:18 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -230,17 +230,10 @@ sub lookup_library
 
 	my $plist = $self->{plist};
 	my $dependencies = $self->{to_register};
-
-	my $r = check_lib_spec($plist->localbase, $lib, $dependencies);
-	if ($r) {
-	    print "found libspec $lib in $r\n" if $state->{very_verbose};
-	    return 1;
-	}
 	my $known = $self->{known};
-	$r = check_lib_spec($plist->localbase, $lib, $known);
+	my $r = check_lib_spec($plist->localbase, $lib, $known);
 	if ($r) {
-		print "found libspec $lib in dependent package $r\n" if $state->{verbose};
-		delete $known->{$r};
+		print "found libspec $lib in package $r\n" if $state->{verbose};
 		$dependencies->{$r} = 1;
 		return 1;
 	}
@@ -271,15 +264,13 @@ sub lookup_library
 		for my $dep2 (OpenBSD::Requiring->new($dep)->list) {
 			push(@{$self->{todo}}, $dep2) unless $done->{$dep2};
 		}
-		next if $dependencies->{$dep};
 		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
+		$known->{$dep} = 1;
 		if (check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
-			print "found libspec $lib in dependent package $dep\n" if $state->{verbose};
+			print "found libspec $lib in package $dep\n" if $state->{verbose};
 			$dependencies->{$dep} = 1;
 			return 1;
-		} else {
-			$known->{$dep} = 1;
-		}
+		} 
 	}
 	
 	print "libspec $lib not found\n" if $state->{very_verbose};
