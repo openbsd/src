@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.25 2007/05/31 03:12:21 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.26 2007/05/31 04:24:26 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -214,6 +214,29 @@ area 0.0.0.0 {
 }
 .Ed
 .El
+.Pp
+Area specific parameters are listed below.
+.Bl -tag -width Ds
+.It Ic demote Ar group Op Ar count
+Increase the
+.Xr carp 4
+demotion counter by
+.Ar count
+on the given interface group, usually
+.Ar carp ,
+when no neighbor in the area is in an active state.
+The demotion counter will be decreased when one neighbor in that
+area is in an active state.
+The default value for
+.Ar count
+is 1.
+.Pp
+For more information on interface groups,
+see the
+.Ic group
+keyword in
+.Xr ifconfig 8 .
+.El
 .Sh INTERFACES
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
@@ -271,6 +294,14 @@ The default is
 .Ic none .
 Simple authentication uses a plaintext password, up to 8 characters.
 Crypt authentication uses an MD5 hash.
+.It Ic demote Ar group
+Increase the
+.Xr carp 4
+demotion counter by 1 on the given interface group, usually
+.Ar carp ,
+when the interface state is going down.
+The demotion counter will be decreased when the interface
+state is active again.
 .It Ic hello-interval Ar seconds
 Set the hello interval.
 The default value is 10; valid range is 1\-65535 seconds.
