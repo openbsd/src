@@ -1,6 +1,30 @@
-/*	$OpenBSD: pchb.c,v 1.6 2007/05/19 19:32:03 tedu Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.7 2007/05/31 23:35:46 tedu Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
-
+/*
+ * Copyright (c) 2000 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,15 +65,17 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
-
 #include <dev/pci/pcidevs.h>
 
-#include <arch/amd64/pci/pchbvar.h>
+#include <dev/rndvar.h>
+
+#include <dev/ic/i82802reg.h>
 
 #define PCISET_BRIDGETYPE_MASK	0x3
 #define PCISET_TYPE_COMPAT	0x1
@@ -87,10 +113,22 @@
 
 #define AMD64HT_LDT_SEC_BUS_NUM(reg)	(((reg) >> 8) & 0xff)
 
+struct pchb_softc {
+	struct device sc_dev;
+
+	bus_space_tag_t sc_bt;
+	bus_space_handle_t sc_bh;
+
+	int sc_rnd_i;
+	u_int32_t sc_rnd_ax;
+	struct timeout sc_rnd_to;
+};
+
 int	pchbmatch(struct device *, void *, void *);
 void	pchbattach(struct device *, struct device *, void *);
 
 int	pchb_print(void *, const char *);
+void	pchb_rnd(void *);
 void	pchb_amd64ht_attach (struct device *, struct pci_attach_args *, int);
 
 struct cfattach pchb_ca = {
@@ -117,8 +155,10 @@ pchbmatch(struct device *parent, void *match, void *aux)
 void
 pchbattach(struct device *parent, struct device *self, void *aux)
 {
+	struct pchb_softc *sc = (struct pchb_softc *)self;
 	struct pci_attach_args *pa = aux;
-	int i;
+	struct timeval tv1, tv2;
+	int i, r;
 
 	printf("\n");
 
@@ -135,6 +175,68 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 #ifdef PCIAGP
 		pciagp_set_pchb(pa);
 #endif
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82915G_HB:
+		case PCI_PRODUCT_INTEL_82915GM_HB:
+		case PCI_PRODUCT_INTEL_82925X_HB:
+		case PCI_PRODUCT_INTEL_82945GP_MCH:
+		case PCI_PRODUCT_INTEL_82955X_HB:
+			sc->sc_bt = pa->pa_memt;
+			if (bus_space_map(sc->sc_bt, I82802_IOBASE,
+			    I82802_IOSIZE, 0, &sc->sc_bh)) {
+				break;
+			}
+
+			/* probe and init rng */
+			if (!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_HWST) & I82802_RNG_HWST_PRESENT)) {
+				break;
+			}
+
+			/* enable RNG */
+			bus_space_write_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_HWST,
+			    bus_space_read_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_HWST) | I82802_RNG_HWST_ENABLE);
+
+			/* see if we can read anything */
+			for (i = 1000; i-- &&
+			    !(bus_space_read_1(sc->sc_bt,sc->sc_bh,
+			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV));
+				DELAY(10);
+
+			if (!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV)) {
+				break;
+			}
+
+			r = bus_space_read_1(sc->sc_bt, sc->sc_bh,
+			    I82802_RNG_DATA);
+
+			/* benchmark the RNG */
+			microtime(&tv1);
+			for (i = 8 * 1024; i--; ) {
+				while(!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
+				    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV))
+					;
+				r = bus_space_read_1(sc->sc_bt, sc->sc_bh,
+				    I82802_RNG_DATA);
+			}
+			microtime(&tv2);
+
+			timersub(&tv2, &tv1, &tv1);
+			if (tv1.tv_sec)
+				tv1.tv_usec += 1000000 * tv1.tv_sec;
+			printf(": rng active");
+			if (tv1.tv_usec != 0)
+				printf(", %dKb/sec",
+				    8 * 1000000 / tv1.tv_usec);
+
+			timeout_set(&sc->sc_rnd_to, pchb_rnd, sc);
+			sc->sc_rnd_i = 4;
+			pchb_rnd(sc);
+			break;
+		}
 		break;
 	}
 }
@@ -151,7 +253,7 @@ pchb_print(void *aux, const char *pnp)
 }
 
 void
-pchb_amd64ht_attach (struct device *self, struct pci_attach_args *pa, int i)
+pchb_amd64ht_attach(struct device *self, struct pci_attach_args *pa, int i)
 {
 	struct pcibus_attach_args pba;
 	pcireg_t type, bus;
@@ -175,4 +277,32 @@ pchb_amd64ht_attach (struct device *self, struct pci_attach_args *pa, int i)
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);
 	}
+}
+
+/*
+ * Should do FIPS testing as per:
+ *	http://csrc.nist.gov/publications/fips/fips140-1/fips1401.pdf
+ */
+void
+pchb_rnd(void *v)
+{
+	struct pchb_softc *sc = v;
+
+	/*
+	 * Don't wait for data to be ready. If it's not there, we'll check
+	 * next time.
+	 */
+	if ((bus_space_read_1(sc->sc_bt, sc->sc_bh, I82802_RNG_RNGST) &
+	    I82802_RNG_RNGST_DATAV)) {
+
+		sc->sc_rnd_ax = (sc->sc_rnd_ax << 8) |
+		    bus_space_read_1(sc->sc_bt, sc->sc_bh, I82802_RNG_DATA);
+
+		if (!sc->sc_rnd_i--) {
+			sc->sc_rnd_i = 4;
+			add_true_randomness(sc->sc_rnd_ax);
+		}
+	}
+
+	timeout_add(&sc->sc_rnd_to, 1);
 }
