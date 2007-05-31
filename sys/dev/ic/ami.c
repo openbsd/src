@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.182 2007/05/31 18:34:12 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.183 2007/05/31 18:39:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1879,10 +1879,9 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 		goto bail;
 	}
 
-	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)) {
-		error = EINVAL;
+	if ((error = ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p,
+	    p)))
 		goto bail2;
-	}
 
 	memset(plist, 0, AMI_BIG_MAX_PDRIVES);
 
@@ -2130,10 +2129,8 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 	if (!p)
 		return (ENOMEM);
 
-	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)) {
-		error = EINVAL;
+	if ((error = ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)))
 		goto bail;
-	}
 
 	if (bv->bv_volid >= p->ada_nld) {
 		error = ami_vol(sc, bv, p);
@@ -2255,10 +2252,8 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 	if (!p)
 		return (ENOMEM);
 
-	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)) {
-		error = EINVAL;
+	if ((error = ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)))
 		goto bail;
-	}
 
 	if (bd->bd_volid >= p->ada_nld) {
 		error = ami_disk(sc, bd, p);
@@ -2381,13 +2376,13 @@ int ami_ioctl_alarm(struct ami_softc *sc, struct bioc_alarm *ba)
 		return (EINVAL);
 	}
 
-	if (ami_mgmt(sc, AMI_SPEAKER, func, 0, 0, sizeof ret, &ret))
-		error = EINVAL;
-	else
+	if (!(error = ami_mgmt(sc, AMI_SPEAKER, func, 0, 0, sizeof ret,
+	    &ret))) {
 		if (ba->ba_opcode == BIOC_GASTATUS)
 			ba->ba_status = ret;
 		else
 			ba->ba_status = 0;
+	}
 
 	return (error);
 }
@@ -2396,8 +2391,7 @@ int
 ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 {
 	struct scsi_inquiry_data inqbuf;
-	int func;
-	int off;
+	int func, off, error;
 
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
@@ -2424,9 +2418,9 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 		return (EINVAL);
 	}
 
-	if (ami_mgmt(sc, AMI_CHSTATE, bs->bs_channel, bs->bs_target, func,
-	    0, NULL))
-		return (EINVAL);
+	if ((error = ami_mgmt(sc, AMI_CHSTATE, bs->bs_channel, bs->bs_target,
+	    func, 0, NULL)))
+		return (error);
 
 	return (0);
 }
