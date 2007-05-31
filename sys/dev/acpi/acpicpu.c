@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.24 2007/05/28 20:22:24 robert Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.25 2007/05/31 17:49:16 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -52,6 +52,7 @@ void	acpicpu_setperf(int);
 #define FLAGS_BMCHECK     	0x04
 #define FLAGS_NOTHROTTLE  	0x08
 #define FLAGS_NOPSS       	0x10
+#define FLAGS_NOPCT		0x20
 
 #define CPU_THT_EN		(1L << 4)
 #define CPU_MAXSTATE(sc)  	(1L << (sc)->sc_duty_wid)
@@ -96,6 +97,13 @@ struct acpicpu_softc {
 	struct acpicpu_pss	*sc_pss;
 
 	struct acpicpu_pct	sc_pct;
+	/* XXX: _PPC Change listener
+	 * PPC changes can occur when for example a machine is disconnected
+	 * from AC power and can no loger support the highest frequency or
+	 * voltage when driven from the battery.
+	 * Should probably be reimplemented as a list for now we assume only 
+	 * one listener */
+	void 			(*sc_notify)(struct acpicpu_pss *, int);
 };
 
 void    acpicpu_set_throttle(struct acpicpu_softc *, int);
@@ -185,7 +193,7 @@ acpicpu_add_cstate(struct acpicpu_softc *sc, int type,
 
 	return cx;
  bad:
-	printf("acpicpu%d: C%d not supported", sc->sc_cpu, type);
+	dprintf("acpicpu%d: C%d not supported", sc->sc_cpu, type);
 	return NULL;
 }
 
@@ -229,15 +237,16 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct			aml_value res;
 	int			i;
+	struct acpi_cstate	*cx;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
+	acpicpu_sc[sc->sc_dev.dv_unit] = sc;
 
 	SLIST_INIT(&sc->sc_cstates);
 
 	sc->sc_pss = NULL;
 
-	printf(": %s: ", sc->sc_devnode->name);
 	if (aml_evalnode(sc->sc_acpi, sc->sc_devnode, 0, NULL, &res) == 0) {
 		if (res.type == AML_OBJTYPE_PROCESSOR) {
 			sc->sc_cpu = res.v_processor.proc_id;
@@ -282,50 +291,87 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	if (acpicpu_getpss(sc)) {
 		/* XXX not the right test but has to do for now */
 		sc->sc_flags |= FLAGS_NOPSS;
-		goto nopss;
-	}
+	} else {
 
 #ifdef ACPI_DEBUG
-	for (i = 0; i < sc->sc_pss_len; i++) {
-		dnprintf(20, "%d %d %d %d %d %d\n",
-		    sc->sc_pss[i].pss_core_freq,
-		    sc->sc_pss[i].pss_power,
-		    sc->sc_pss[i].pss_trans_latency,
-		    sc->sc_pss[i].pss_bus_latency,
-		    sc->sc_pss[i].pss_ctrl,
-		    sc->sc_pss[i].pss_status);
-	}
-	dnprintf(20, "\n");
+		for (i = 0; i < sc->sc_pss_len; i++) {
+			dnprintf(20, "%d %d %d %d %d %d\n",
+			    sc->sc_pss[i].pss_core_freq,
+			    sc->sc_pss[i].pss_power,
+			    sc->sc_pss[i].pss_trans_latency,
+			    sc->sc_pss[i].pss_bus_latency,
+			    sc->sc_pss[i].pss_ctrl,
+			    sc->sc_pss[i].pss_status);
+		}
+		dnprintf(20, "\n");
 #endif
-	/* XXX this needs to be moved to probe routine */
-	if (acpicpu_getpct(sc))
-		return;
+		/* XXX this needs to be moved to probe routine */
+		if (acpicpu_getpct(sc))
+			sc->sc_flags |= FLAGS_NOPCT;
+		else {
 
-	/* Notify BIOS we are handing p-states */
-	if (sc->sc_acpi->sc_fadt->pstate_cnt)
-		acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD, 0,
-		    sc->sc_acpi->sc_fadt->pstate_cnt);
+			/* Notify BIOS we are handing p-states */
+			if (sc->sc_acpi->sc_fadt->pstate_cnt)
+				acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD, 0,
+				sc->sc_acpi->sc_fadt->pstate_cnt);
 
-	for (i = 0; i < sc->sc_pss_len; i++)
-		printf("%d%s", sc->sc_pss[i].pss_core_freq,
-		    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
+			aml_register_notify(sc->sc_devnode, NULL,
+			    acpicpu_notify, sc, ACPIDEV_NOPOLL);
 
-	aml_register_notify(sc->sc_devnode, NULL,
-	    acpicpu_notify, sc, ACPIDEV_NOPOLL);
-
-	if (setperf_prio < 30) {
-		cpu_setperf = acpicpu_setperf;
-		setperf_prio = 30;
-		acpi_hasprocfvs = 1;
+			if (setperf_prio < 30) {
+				cpu_setperf = acpicpu_setperf;
+				setperf_prio = 30;
+				acpi_hasprocfvs = 1;
+			}
+		}
 	}
-	acpicpu_sc[sc->sc_dev.dv_unit] = sc;
-	return;
 
-nopss:
-	if (sc->sc_flags & FLAGS_NOTHROTTLE)
-		printf("no performance/throttling supported");
-
+	/* 
+	 * Nicely enumerate what power management capabilities
+	 * ACPI CPU provides.
+	 * */
+	i = 0;
+	SLIST_FOREACH(cx, &sc->sc_cstates, link) {
+		if (i)
+			printf(",");
+		switch(cx->type) {
+		case ACPI_STATE_C0:
+			printf(" C0");
+			break;
+		case ACPI_STATE_C1:
+			printf(" C1");
+			break;
+		case ACPI_STATE_C2:
+			printf(" C2");
+			break;
+		case ACPI_STATE_C3:
+			printf(" C3");
+			break;
+		}
+		i++;
+	}
+	if (!(sc->sc_flags & FLAGS_NOPSS) && !(sc->sc_flags & FLAGS_NOPCT)) {
+		if (i)
+			printf(",");
+		printf(" FVS");
+	} else if (!(sc->sc_flags & FLAGS_NOPSS)) {
+		if (i)
+			printf(",");
+		printf(" PSS");
+	}
 	printf("\n");
+
+	/*
+	 * If acpicpu is itself providing the capability to transition
+	 * states, enumerate them in the fashion that est and powernow
+	 * would.
+	 */
+	if (!(sc->sc_flags & FLAGS_NOPSS) && !(sc->sc_flags & FLAGS_NOPCT)) {
+		printf("%s: ", sc->sc_dev.dv_xname);
+		for (i = 0; i < sc->sc_pss_len; i++)
+			printf("%d%s", sc->sc_pss[i].pss_core_freq,
+			    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
+	}
 }
 
 int
@@ -336,7 +382,7 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PPC", 0, NULL, &res)) {
 		dnprintf(20, "%s: no _PPC\n", DEVNAME(sc));
-		printf("%s: no _PPC\n", DEVNAME(sc));
+		dnprintf(10, "%s: no _PPC\n", DEVNAME(sc));
 		return (1);
 	}
 
@@ -344,12 +390,12 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	aml_freevalue(&res);
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PCT", 0, NULL, &res)) {
-		printf("%s: no _PCT\n", DEVNAME(sc));
+		dnprintf(20, "%s: no _PCT\n", DEVNAME(sc));
 		return (1);
 	}
 
 	if (res.length != 2) {
-		printf("%s: %s: invalid _PCT length\n", DEVNAME(sc),
+		dnprintf(20, "%s: %s: invalid _PCT length\n", DEVNAME(sc),
 		    sc->sc_devnode->name);
 		return (1);
 	}
@@ -358,16 +404,16 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	    sizeof sc->sc_pct.pct_ctrl);
 	if (sc->sc_pct.pct_ctrl.grd_gas.address_space_id ==
 	    GAS_FUNCTIONAL_FIXED) {
-		printf("CTRL GASIO is CPU manufacturer overridden\n");
-		goto bad;
+		dnprintf(20, "CTRL GASIO is functional fixed hardware.\n");
+		goto ffh;
 	}
 
 	memcpy(&sc->sc_pct.pct_status, res.v_package[1]->v_buffer,
 	    sizeof sc->sc_pct.pct_status);
 	if (sc->sc_pct.pct_status.grd_gas.address_space_id ==
 	    GAS_FUNCTIONAL_FIXED) {
-		printf("STATUS GASIO is CPU manufacturer overridden\n");
-		goto bad;
+		dnprintf(20, "CTRL GASIO is functional fixed hardware.\n");
+		goto ffh;
 	}
 
 	dnprintf(10, "_PCT(ctrl)  : %02x %04x %02x %02x %02x %02x %016x\n",
@@ -389,7 +435,7 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	    sc->sc_pct.pct_status.grd_gas.address);
 
 	rv = 0;
-bad:
+ffh:
 	aml_freevalue(&res);
 	return (rv);
 }
@@ -401,7 +447,7 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 	int			i;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSS", 0, NULL, &res)) {
-		dnprintf(20, "%s: no _PSS\n", DEVNAME(sc));
+		dprintf("%s: no _PSS\n", DEVNAME(sc));
 		return (1);
 	}
 
@@ -435,6 +481,24 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 }
 
 int
+acpicpu_fetch_pss(struct acpicpu_pss **pss) {
+	/*XXX: According to the ACPI spec in an SMP system all processors
+	 * are supposed to support the same states. For now we prey
+	 * the bios ensures this...
+	 */
+	struct acpicpu_softc *sc;
+
+	sc = acpicpu_sc[0];
+	if (!sc) {
+		printf("couldnt fetch acpicpu_softc\n");
+		return 0;
+	}
+	*pss = sc->sc_pss;
+
+	return sc->sc_pss_len;
+}
+
+int
 acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpicpu_softc	*sc = arg;
@@ -446,6 +510,7 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 	case 0x80:	/* _PPC changed, retrieve new values */
 		acpicpu_getpct(sc);
 		acpicpu_getpss(sc);
+		sc->sc_notify(sc->sc_pss, sc->sc_pss_len);
 		break;
 	default:
 		printf("%s: unhandled cpu event %x\n", DEVNAME(sc),
@@ -454,6 +519,15 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 	}
 
 	return (0);
+}
+
+void
+acpicpu_set_notify(void (*func)(struct acpicpu_pss *, int)) {
+	struct acpicpu_softc    *sc;
+
+	sc = acpicpu_sc[0];
+	if (sc != NULL)
+		sc->sc_notify = func;
 }
 
 void

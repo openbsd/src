@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.24 2007/04/23 17:38:30 mk Exp $ */
+/* $OpenBSD: acpidev.h,v 1.25 2007/05/31 17:49:16 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -21,6 +21,7 @@
 
 #include <sys/sensors.h>
 #include <sys/rwlock.h>
+#include <dev/acpi/acpireg.h>
 
 #define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
@@ -226,6 +227,8 @@ struct acpicpu_pss {
 	u_int32_t	pss_status;
 };
 
+int acpicpu_fetch_pss(struct acpicpu_pss **);
+void acpicpu_set_notify(void (*)(struct acpicpu_pss *, int));
 /*
  * XXX this is returned in a buffer and is not a "natural" type.
  *
@@ -290,7 +293,7 @@ struct acpidock_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-			 
+
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
