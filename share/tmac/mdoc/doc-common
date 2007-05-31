@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.52 2007/05/26 21:10:04 jmc Exp $
+.\"	$OpenBSD: doc-common,v 1.53 2007/05/31 04:28:09 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -290,7 +290,7 @@
 .de Dd
 .if !"\\*(dD"" .nr gX 1
 .ie \\n(.$>0 \{\
-.	ie "\\$1"$Mdocdate" \{\
+.	ie "\\$1"$Mdocdate:" \{\
 .		ds dD \\$2 \\$3, \\$4
 .	\}
 .	el \{\
