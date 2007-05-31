@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.98 2007/05/23 18:24:25 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.99 2007/05/31 23:18:25 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -157,12 +157,17 @@ scsibus* at usscanner?
 uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
-#ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
+
+# Bluetooth controllers
+#ubt*	at uhub?		# USB Bluetooth
+
+# Bluetooth bus support
+#bthub*	at ubt?
 
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*

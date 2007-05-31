@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.12 2007/03/19 20:14:14 miod Exp $
+# $OpenBSD: GENERIC,v 1.13 2007/05/31 23:18:25 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -144,7 +144,6 @@ urio*	at uhub?		# Diamond Multimedia Rio 500
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
-#ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
@@ -155,6 +154,12 @@ zyd*	at uhub?		# Zydas ZD1211
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 #uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 #onewire* at uow?
+
+# Bluetooth controllers
+#ubt*	at uhub?		# USB Bluetooth
+
+# Bluetooth bus support
+#bthub*	at ubt?
 
 sd*	at scsibus?			# SCSI disk drives
 cd*	at scsibus?			# SCSI CD-ROM drives

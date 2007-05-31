@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.63 2007/05/04 03:44:44 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.64 2007/05/31 23:18:25 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -129,7 +129,6 @@ scsibus*	at usscanner?
 #uyap*		at uhub?		# Y@P firmware loader
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
-#ubt*		at uhub?		# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
 udcf*		at uhub?		# Gude Expert mouseCLOCK
 uow*		at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
@@ -205,6 +204,14 @@ flash0		at pxaip?		# NAND flash memory
 pxammc0		at pxaip?		# MMC/SD/SDIO controller
 sdmmc*		at pxammc?		# SD/MMC bus
 scsibus*	at sdmmc?		# SCSI emulation
+
+# Bluetooth controllers
+#sbt*	at sdmmc?			# SDIO Bluetooth
+#ubt*	at uhub?			# USB Bluetooth
+
+# Bluetooth bus support
+#bthub*	at sbt?
+#bthub*	at ubt?
 
 # 1-Wire devices
 option ONEWIREVERBOSE

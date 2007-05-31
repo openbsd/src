@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.186 2007/05/28 22:26:03 todd Exp $
+#	$OpenBSD: GENERIC,v 1.187 2007/05/31 23:18:25 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -192,7 +192,6 @@ scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
-#ubt*	at uhub?		# USB Bluetooth
 uberry*	at uhub?		# Research In Motion Blackberry
 ugen*	at uhub?		# USB Generic driver
 uath*	at uhub?		# Atheros AR5005UG/AR5005UX
@@ -209,6 +208,14 @@ puc*	at pci?			# PCI "universal" communication device
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
 scsibus* at sdmmc?		# SCSI emulation
+
+# Bluetooth controllers
+#sbt*	at sdmmc?		# SDIO Bluetooth
+#ubt*	at uhub?		# USB Bluetooth
+
+# Bluetooth bus support
+#bthub*	at sbt?
+#bthub*	at ubt?
 
 isadma0	at isa?
 
