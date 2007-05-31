@@ -223,3 +223,22 @@ Rop:					#Reserved operand
 Ret:
 	movq	$0x8000,r0		#propagate reserved op
 	ret
+
+/*
+ * signbit(x), signbitl(x), signbitf(x) -- returns zero if x is
+ *    non-negative.
+ */
+        .globl ___signbitf
+        .type ___signbitf, @function
+        .globl ___signbit
+        .type ___signbit, @function
+        .globl ___signbitl
+        .type ___signbitl, @function
+___signbitf:
+___signbit:
+___signbitl:
+        .word 0x0
+        movw 4(ap), r0
+        bicl2 $-32769,r0
+        ret
+
