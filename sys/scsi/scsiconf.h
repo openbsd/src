@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.84 2007/04/10 17:47:56 miod Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.85 2007/05/31 18:21:44 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 
 #include <sys/queue.h>
 #include <sys/timeout.h>
+#include <sys/workq.h>
 #include <machine/cpu.h>
 #include <scsi/scsi_debug.h>
 
@@ -302,9 +303,11 @@ struct scsi_xfer {
 const void *scsi_inqmatch(struct scsi_inquiry_data *, const void *, int,
 	    int, int *);
 
+#define scsi_task(_f, _a1, _a2, _fl) \
+    workq_add_task(NULL, (_f), (_a1), (_a2), (_fl))
+
 void	scsi_init(void);
 void	scsi_deinit(void);
-int	scsi_task(void (*func)(void *, void *), void *, void *, int);
 struct scsi_xfer *
 	scsi_get_xs(struct scsi_link *, int);
 void	scsi_free_xs(struct scsi_xfer *, int);
