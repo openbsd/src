@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.23 2007/05/29 06:56:30 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.24 2007/05/31 00:30:10 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -421,6 +421,7 @@ disklabel_sun_to_bsd(cp, lp)
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	lp->d_secpercyl  = secpercyl;
 	lp->d_secperunit = secpercyl * sl->sl_ncylinders;
+	lp->d_version = 1;	/* 48 bit addressing */
 
 	lp->d_sparespercyl = sl->sl_sparespercyl;
 	lp->d_acylinders   = sl->sl_acylinders;
@@ -462,7 +463,7 @@ disklabel_sun_to_bsd(cp, lp)
 	}
 
 	/* Check to see if there's an "extended" partition table */
-	if (sl->sl_xpmag == SL_XPMAG &&
+	if ((sl->sl_xpmag == SL_XPMAG || sl->sl_xpmag == SL_XPMAGTYP) &&
 	    sun_extended_sum(sl) == sl->sl_xpsum) {	/* ...yes! */
 		/*
 		 * There is.  Copy over the "extended" partitions.
@@ -484,6 +485,13 @@ disklabel_sun_to_bsd(cp, lp)
 				npp->p_cpg = 16;
 			}
 		}
+		if (sl->sl_xpmag == SL_XPMAGTYP)
+			for (i = 0; i < MAXPARTITIONS; i++) {
+				npp = &lp->d_partitions[i];
+				npp->p_fstype = sl->sl_types[i];
+				npp->p_fragblock = sl->sl_fragblock[i];
+				npp->p_cpg = sl->sl_cpg[i];
+			}
 	}
 
 	lp->d_checksum = 0;
@@ -551,7 +559,7 @@ disklabel_bsd_to_sun(lp, cp)
 	}
 	/* We do need to load the extended table? */
 	if (i < SUNXPART) {
-		sl->sl_xpmag = SL_XPMAG;
+		sl->sl_xpmag = SL_XPMAGTYP;
 		for (i = 0; i < SUNXPART; i++) {
 			spp = &sl->sl_xpart[i];
 			npp = &lp->d_partitions[i+8];
@@ -560,6 +568,12 @@ disklabel_bsd_to_sun(lp, cp)
 			sl->sl_xpart[i].sdkp_cyloffset =
 			    npp->p_offset / secpercyl;
 			sl->sl_xpart[i].sdkp_nsectors = npp->p_size;
+		}
+		for (i = 0; i < MAXPARTITIONS; i++) {
+			npp = &lp->d_partitions[i];
+			sl->sl_types[i] = npp->p_fstype;
+			sl->sl_fragblock[i] = npp->p_fragblock;
+			sl->sl_cpg[i] = npp->p_cpg;
 		}
 		sl->sl_xpsum = sun_extended_sum(sl);
 	} else {

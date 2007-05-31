@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.3 2003/06/02 23:28:04 millert Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.4 2007/05/31 00:30:10 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 1998/08/22 14:55:28 mrg Exp $ */
 
 /*
@@ -47,51 +47,29 @@
 
 #define	SUN_DKMAGIC	55998
 
-/* These are the guys that Sun's dkinfo needs... */
-#define DKIOCGGEOM	_IOR('d', 2, struct sun_dkgeom)	/* geometry info */
-#define DKIOCINFO	_IOR('d', 8, struct sun_dkctlr)	/* controller info */
-#define DKIOCGPART	_IOR('d', 4, struct sun_dkpart)	/* partition info */
-
-/* geometry info */
-struct sun_dkgeom {
-	u_short	sdkc_ncylinders;	/* data cylinders */
-	u_short	sdkc_acylinders;	/* alternate cylinders */
-	u_short	sdkc_xxx1;
-	u_short	sdkc_ntracks;		/* tracks per cylinder */
-	u_short	sdkc_xxx2;
-	u_short	sdkc_nsectors;		/* sectors per track */
-	u_short	sdkc_interleave;	/* interleave factor */
-	u_short	sdkc_xxx3;
-	u_short	sdkc_xxx4;
-	u_short	sdkc_sparespercyl;	/* spare sectors per cylinder */
-	u_short	sdkc_rpm;		/* rotational speed */
-	u_short	sdkc_pcylinders;	/* physical cylinders */
-	u_short	sdkc_xxx5[7];
-};
-
-/* controller info */
-struct sun_dkctlr {
-	int	sdkc_addr;		/* controller address */
-	short	sdkc_unit;		/* unit (slave) address */
-	short	sdkc_type;		/* controller type */
-	short	sdkc_flags;		/* flags */
-};
-
 /* partition info */
 struct sun_dkpart {
 	int	sdkp_cyloffset;		/* starting cylinder */
 	int	sdkp_nsectors;		/* number of sectors */
 };
 
-#define	SUNXPART 8
-#define	SL_XPMAG (0x199d1fe2+SUNXPART)
+#define	SUNXPART	8
+#define	SL_XPMAG	(0x199d1fe2+SUNXPART)
+#define	SL_XPMAGTYP	(0x199d1fe2+SUNXPART+1)		/* contains types */
 
 struct sun_disklabel {			/* total size = 512 bytes */
-	char	sl_text[128];
-	u_int	sl_xpsum;		/* additive cksum, [xl_xpmag,sl_xx1) */
-	u_int	sl_xpmag;		/* "extended" magic number */
+	char		sl_text[128];
+	u_int		sl_xpsum;		/* additive cksum, [xl_xpmag,sl_xx1) */
+	u_int		sl_xpmag;		/* "extended" magic number */
 	struct sun_dkpart sl_xpart[SUNXPART];	/* "extended" partitions, i through p */
-	char	sl_xxx1[292-8-(8*SUNXPART)];	/* [292] include sl_x* */
+	u_char		sl_types[MAXPARTITIONS];
+	u_int8_t	sl_fragblock[MAXPARTITIONS];
+	u_int16_t	sl_cpg[MAXPARTITIONS];
+	char		sl_xxx1[292 - sizeof(u_int) - sizeof(u_int) -
+			    (sizeof(struct sun_dkpart) * SUNXPART) -
+			    sizeof(u_char) * MAXPARTITIONS -
+			    sizeof(u_int8_t) * MAXPARTITIONS -
+			    sizeof(u_int16_t) * MAXPARTITIONS];
 	u_short sl_rpm;			/* rotational speed */
 	u_short	sl_pcylinders;		/* number of physical cyls */
 #define	sl_pcyl	 sl_pcylinders		/* XXX: old sun3 */
@@ -107,5 +85,3 @@ struct sun_disklabel {			/* total size = 512 bytes */
 	u_short	sl_magic;		/* == SUN_DKMAGIC */
 	u_short	sl_cksum;		/* xor checksum of all shorts */
 };
-
-#define SUN_LABELOFFSET	128		/* XXX we don't use this */
