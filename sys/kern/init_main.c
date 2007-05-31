@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.140 2007/05/16 17:27:30 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.141 2007/05/31 18:16:59 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -73,6 +73,7 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/pipe.h>
+#include <sys/workq.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -139,6 +140,7 @@ void	start_reaper(void *);
 void	start_crypto(void *);
 void	init_exec(void);
 void	kqueue_init(void);
+void	workq_init(void);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -329,6 +331,9 @@ main(void *framep)
 
 	/* Initialize run queues */
 	rqinit();
+
+	/* Initialize work queues */
+	workq_init();
 
 	/* Configure the devices */
 	cpu_configure();
