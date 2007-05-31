@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.247 2007/05/31 18:48:05 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.248 2007/05/31 22:45:36 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -687,7 +687,6 @@ TAILQ_HEAD(pf_state_queue, pf_state);
 
 /* keep synced with struct pf_state_key, used in RB_FIND */
 struct pf_state_key_cmp {
-	u_int64_t	 id;
 	struct pf_state_host lan;
 	struct pf_state_host gwy;
 	struct pf_state_host ext;
