@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.38 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: ugen.c,v 1.39 2007/05/31 17:35:45 mbalmer Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -44,17 +44,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <sys/ioccom.h>
-#include <sys/conf.h>
-#include <sys/fcntl.h>
-#include <sys/filio.h>
-#endif
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/file.h>
@@ -120,47 +111,6 @@ struct ugen_softc {
 	int sc_refcnt;
 	u_char sc_dying;
 };
-
-#if defined(__NetBSD__)
-dev_type_open(ugenopen);
-dev_type_close(ugenclose);
-dev_type_read(ugenread);
-dev_type_write(ugenwrite);
-dev_type_ioctl(ugenioctl);
-dev_type_poll(ugenpoll);
-dev_type_kqfilter(ugenkqfilter);
-
-const struct cdevsw ugen_cdevsw = {
-	ugenopen, ugenclose, ugenread, ugenwrite, ugenioctl,
-	nostop, notty, ugenpoll, nommap, ugenkqfilter,
-};
-#elif defined(__FreeBSD__)
-d_open_t  ugenopen;
-d_close_t ugenclose;
-d_read_t  ugenread;
-d_write_t ugenwrite;
-d_ioctl_t ugenioctl;
-d_poll_t  ugenpoll;
-
-#define UGEN_CDEV_MAJOR	114
-
-Static struct cdevsw ugen_cdevsw = {
-	/* open */	ugenopen,
-	/* close */	ugenclose,
-	/* read */	ugenread,
-	/* write */	ugenwrite,
-	/* ioctl */	ugenioctl,
-	/* poll */	ugenpoll,
-	/* mmap */	nommap,
-	/* strategy */	nostrategy,
-	/* name */	"ugen",
-	/* maj */	UGEN_CDEV_MAJOR,
-	/* dump */	nodump,
-	/* psize */	nopsize,
-	/* flags */	0,
-	/* bmaj */	-1
-};
-#endif
 
 Static void ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		     usbd_status status);
@@ -242,16 +192,6 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dying = 1;
 		return;
 	}
-
-#ifdef __FreeBSD__
-	{
-		static int global_init_done = 0;
-		if (!global_init_done) {
-			cdevsw_add(&ugen_cdevsw);
-			global_init_done = 1;
-		}
-	}
-#endif
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -781,7 +721,6 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 	return (error);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ugen_activate(device_ptr_t self, enum devact act)
 {
@@ -797,7 +736,6 @@ ugen_activate(device_ptr_t self, enum devact act)
 	}
 	return (0);
 }
-#endif
 
 int
 ugen_detach(struct device *self, int flags)
@@ -806,13 +744,9 @@ ugen_detach(struct device *self, int flags)
 	struct ugen_endpoint *sce;
 	int i, dir;
 	int s;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int maj, mn;
 
 	DPRINTF(("ugen_detach: sc=%p flags=%d\n", sc, flags));
-#elif defined(__FreeBSD__)
-	DPRINTF(("ugen_detach: sc=%p\n", sc));
-#endif
 
 	sc->sc_dying = 1;
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
@@ -835,13 +769,9 @@ ugen_detach(struct device *self, int flags)
 	splx(s);
 
 	/* locate the major number */
-#if defined(__NetBSD__)
-	maj = cdevsw_lookup_major(&ugen_cdevsw);
-#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ugenopen)
 			break;
-#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;
@@ -1523,7 +1453,3 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 
 	return (0);
 }
-
-#if defined(__FreeBSD__)
-DRIVER_MODULE(ugen, uhub, ugen_driver, ugen_devclass, usbd_driver_load, 0);
-#endif
