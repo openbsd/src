@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.55 2007/05/28 21:54:26 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.56 2007/05/31 04:23:23 grunk Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -606,7 +606,7 @@ bio_createraid(u_int16_t level, char *dev_list)
 		min_disks = 2;
 		break;
 	default:
-		errx(1, "unsuported raid level");
+		errx(1, "unsupported raid level");
 	}
 
 	memset(&create, 0, sizeof(create));
