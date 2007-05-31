@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.2 2007/05/31 19:12:56 reyk Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.3 2007/05/31 19:14:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -62,7 +62,7 @@
 #define MYXDBG_CMD	(2<<0)	/* commands */
 #define MYXDBG_INTR	(2<<0)	/* interrupts */
 #define MYXDBG_ALL	0xffff	/* enable all debugging messages */
-int myx_debug = 0;
+int myx_debug = MYXDBG_ALL;
 #define DPRINTF(_lvl, _arg...)	do {					\
 	if (myx_debug & (_lvl))						\
 		printf(_arg);						\
