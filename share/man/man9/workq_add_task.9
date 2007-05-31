@@ -1,4 +1,4 @@
-.\"	$OpenBSD: workq_add_task.9,v 1.1 2007/05/31 21:41:41 dlg Exp $
+.\"	$OpenBSD: workq_add_task.9,v 1.2 2007/05/31 21:43:02 dlg Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -35,7 +35,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/workq.h>
 .Ft int
-.Fn "workq_add_task" "struct workq *wq" "void (*func)(void *, void *)" "void *arg1" "void *arg2" "int flags"
+.Fn "workq_add_task" "struct workq *wq" "int flags" "void (*func)(void *, void *)" "void *arg1" "void *arg2"
 .Ft struct workq *
 .Fn "workq_create" "const char *name" "int maxthreads"
 .Ft void
