@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.74 2007/05/26 17:13:31 jason Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.75 2007/05/31 04:11:42 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -220,6 +220,7 @@ int
 pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 {
 	struct pf_state	*st = NULL;
+	struct pf_state_key *sk = NULL;
 	struct pf_rule *r = NULL;
 	struct pfi_kif	*kif;
 
@@ -254,7 +255,16 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		return (ENOMEM);
 	}
+	sk = pool_get(&pf_state_key_pl, PR_NOWAIT);
+	if (sk == NULL) {
+		pool_put(&pf_state_pl, st);
+		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
+		return (ENOMEM);
+	}
 	bzero(st, sizeof(*st));
+	bzero(sk, sizeof(*sk));
+	sk->state = st;
+	st->state_key = sk;
 
 	/* allocate memory for scrub info */
 	if (pfsync_alloc_scrub_memory(&sp->src, &st->src) ||
@@ -263,6 +273,7 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 		if (st->src.scrub)
 			pool_put(&pf_state_scrub_pl, st->src.scrub);
 		pool_put(&pf_state_pl, st);
+		pool_put(&pf_state_key_pl, sk);
 		return (ENOMEM);
 	}
 
@@ -273,9 +284,9 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	r->states++;
 
 	/* fill in the rest of the state entry */
-	pf_state_host_ntoh(&sp->lan, &st->lan);
-	pf_state_host_ntoh(&sp->gwy, &st->gwy);
-	pf_state_host_ntoh(&sp->ext, &st->ext);
+	pf_state_host_ntoh(&sp->lan, &sk->lan);
+	pf_state_host_ntoh(&sp->gwy, &sk->gwy);
+	pf_state_host_ntoh(&sp->ext, &sk->ext);
 
 	pf_state_peer_ntoh(&sp->src, &st->src);
 	pf_state_peer_ntoh(&sp->dst, &st->dst);
@@ -284,15 +295,15 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	st->creation = time_second - ntohl(sp->creation);
 	st->expire = ntohl(sp->expire) + time_second;
 
-	st->af = sp->af;
-	st->proto = sp->proto;
-	st->direction = sp->direction;
+	sk->af = sp->af;
+	sk->proto = sp->proto;
+	sk->direction = sp->direction;
 	st->log = sp->log;
 	st->timeout = sp->timeout;
 	st->allow_opts = sp->allow_opts;
 
-	bcopy(sp->id, &st->id, sizeof(st->id));
-	st->creatorid = sp->creatorid;
+	bcopy(sp->id, &sk->id, sizeof(sk->id));
+	sk->creatorid = sp->creatorid;
 	st->sync_flags = PFSTATE_FROMSYNC;
 
 	if (pf_insert_state(kif, st)) {
@@ -317,7 +328,8 @@ pfsync_input(struct mbuf *m, ...)
 	struct pfsync_header *ph;
 	struct pfsync_softc *sc = pfsyncif;
 	struct pf_state *st;
-	struct pf_state_cmp key;
+	struct pf_state_key *sk;
+	struct pf_state_key_cmp key;
 	struct pfsync_state *sp;
 	struct pfsync_state_upd *up;
 	struct pfsync_state_del *dp;
@@ -387,7 +399,7 @@ pfsync_input(struct mbuf *m, ...)
 
 	switch (action) {
 	case PFSYNC_ACT_CLR: {
-		struct pf_state *nexts;
+		struct pf_state_key *nexts;
 		struct pfi_kif	*kif;
 		u_int32_t creatorid;
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
@@ -400,12 +412,12 @@ pfsync_input(struct mbuf *m, ...)
 
 		s = splsoftnet();
 		if (cp->ifname[0] == '\0') {
-			for (st = RB_MIN(pf_state_tree_id, &tree_id);
-			    st; st = nexts) {
-				nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
-				if (st->creatorid == creatorid) {
+			for (sk = RB_MIN(pf_state_tree_id, &tree_id);
+			    sk; sk = nexts) {
+				nexts = RB_NEXT(pf_state_tree_id, &tree_id, sk);
+				if (sk->creatorid == creatorid) {
 					st->sync_flags |= PFSTATE_FROMSYNC;
-					pf_unlink_state(st);
+					pf_unlink_state(sk->state);
 				}
 			}
 		} else {
@@ -413,13 +425,13 @@ pfsync_input(struct mbuf *m, ...)
 				splx(s);
 				return;
 			}
-			for (st = RB_MIN(pf_state_tree_lan_ext,
-			    &kif->pfik_lan_ext); st; st = nexts) {
+			for (sk = RB_MIN(pf_state_tree_lan_ext,
+			    &kif->pfik_lan_ext); sk; sk = nexts) {
 				nexts = RB_NEXT(pf_state_tree_lan_ext,
-				    &kif->pfik_lan_ext, st);
-				if (st->creatorid == creatorid) {
+				    &kif->pfik_lan_ext, sk);
+				if (sk->creatorid == creatorid) {
 					st->sync_flags |= PFSTATE_FROMSYNC;
-					pf_unlink_state(st);
+					pf_unlink_state(sk->state);
 				}
 			}
 		}
@@ -494,8 +506,9 @@ pfsync_input(struct mbuf *m, ...)
 					pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
+			sk = st->state_key;
 			sfail = 0;
-			if (st->proto == IPPROTO_TCP) {
+			if (sk->proto == IPPROTO_TCP) {
 				/*
 				 * The state should never go backwards except
 				 * for syn-proxy states.  Neither should the
@@ -539,8 +552,8 @@ pfsync_input(struct mbuf *m, ...)
 					    "creatorid: %08x\n",
 					    (sfail < 7 ?  "ignoring"
 					     : "partial"), sfail,
-					    betoh64(st->id),
-					    ntohl(st->creatorid));
+					    betoh64(sk->id),
+					    ntohl(sk->creatorid));
 				pfsyncstats.pfsyncs_badstate++;
 
 				if (!(sp->sync_flags & PFSTATE_STALE)) {
@@ -630,8 +643,9 @@ pfsync_input(struct mbuf *m, ...)
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
+			sk = st->state_key;
 			sfail = 0;
-			if (st->proto == IPPROTO_TCP) {
+			if (sk->proto == IPPROTO_TCP) {
 				/*
 				 * The state should never go backwards except
 				 * for syn-proxy states.  Neither should the
@@ -664,8 +678,8 @@ pfsync_input(struct mbuf *m, ...)
 					printf("pfsync: ignoring stale update "
 					    "(%d) id: %016llx "
 					    "creatorid: %08x\n", sfail,
-					    betoh64(st->id),
-					    ntohl(st->creatorid));
+					    betoh64(sk->id),
+					    ntohl(sk->creatorid));
 				pfsyncstats.pfsyncs_badstate++;
 
 				/* we have a better state, send it out */
@@ -1079,6 +1093,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 	struct pfsync_state *sp = NULL;
 	struct pfsync_state_upd *up = NULL;
 	struct pfsync_state_del *dp = NULL;
+	struct pf_state_key *sk = st->state_key;
 	struct pf_rule *r;
 	u_long secs;
 	int s, ret = 0;
@@ -1134,9 +1149,9 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 				    (void *)((char *)h + PFSYNC_HDRLEN);
 
 				for (i = 0; i < h->count; i++) {
-					if (!memcmp(usp->id, &st->id,
+					if (!memcmp(usp->id, &sk->id,
 					    PFSYNC_ID_LEN) &&
-					    usp->creatorid == st->creatorid) {
+					    usp->creatorid == sk->creatorid) {
 						sp = usp;
 						sp->updates++;
 						break;
@@ -1160,13 +1175,13 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 		h->count++;
 		bzero(sp, sizeof(*sp));
 
-		bcopy(&st->id, sp->id, sizeof(sp->id));
-		sp->creatorid = st->creatorid;
+		bcopy(&sk->id, sp->id, sizeof(sp->id));
+		sp->creatorid = sk->creatorid;
 
 		strlcpy(sp->ifname, st->u.s.kif->pfik_name, sizeof(sp->ifname));
-		pf_state_host_hton(&st->lan, &sp->lan);
-		pf_state_host_hton(&st->gwy, &sp->gwy);
-		pf_state_host_hton(&st->ext, &sp->ext);
+		pf_state_host_hton(&sk->lan, &sp->lan);
+		pf_state_host_hton(&sk->gwy, &sp->gwy);
+		pf_state_host_hton(&sk->ext, &sp->ext);
 
 		bcopy(&st->rt_addr, &sp->rt_addr, sizeof(sp->rt_addr));
 
@@ -1183,9 +1198,9 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 			sp->anchor = htonl(-1);
 		else
 			sp->anchor = htonl(r->nr);
-		sp->af = st->af;
-		sp->proto = st->proto;
-		sp->direction = st->direction;
+		sp->af = sk->af;
+		sp->proto = sk->proto;
+		sp->direction = sk->direction;
 		sp->log = st->log;
 		sp->allow_opts = st->allow_opts;
 		sp->timeout = st->timeout;
@@ -1240,8 +1255,8 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 				up = sc->sc_statep_net.u++;
 
 				bzero(up, sizeof(*up));
-				bcopy(&st->id, up->id, sizeof(up->id));
-				up->creatorid = st->creatorid;
+				bcopy(&sk->id, up->id, sizeof(up->id));
+				up->creatorid = sk->creatorid;
 			}
 			up->timeout = st->timeout;
 			up->expire = sp->expire;
@@ -1255,8 +1270,8 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 			h_net->count++;
 
 			bzero(dp, sizeof(*dp));
-			bcopy(&st->id, dp->id, sizeof(dp->id));
-			dp->creatorid = st->creatorid;
+			bcopy(&sk->id, dp->id, sizeof(dp->id));
+			dp->creatorid = sk->creatorid;
 			break;
 		}
 	}
