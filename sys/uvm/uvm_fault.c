@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.47 2007/04/15 11:15:08 art Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.48 2007/05/31 21:20:30 thib Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -416,9 +416,6 @@ uvmfault_anonget(ufi, amap, anon)
 		 */
 
 		locked = uvmfault_relock(ufi);
-		if (locked && amap != NULL) {
-			amap_lock(amap);
-		}
 		if (locked || we_own)
 			simple_lock(&anon->an_lock);
 
@@ -739,7 +736,6 @@ ReFault:
 	 */
 
 	if (amap) {
-		amap_lock(amap);
 		anons = anons_store;
 		amap_lookups(&ufi.entry->aref, startva - ufi.entry->start,
 		    anons, npages);
@@ -1376,8 +1372,6 @@ Case2:
 		 */
 
 		locked = uvmfault_relock(&ufi);
-		if (locked && amap)
-			amap_lock(amap);
 		simple_lock(&uobj->vmobjlock);
 		
 		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */

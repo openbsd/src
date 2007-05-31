@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap_i.h,v 1.16 2006/07/31 11:51:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_amap_i.h,v 1.17 2007/05/31 21:20:30 thib Exp $	*/
 /*	$NetBSD: uvm_amap_i.h,v 1.15 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -207,7 +207,6 @@ amap_ref(amap, offset, len, flags)
 {
 	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
 
-	amap_lock(amap);
 	amap->am_ref++;
 	if (flags & AMAP_SHARED)
 		amap->am_flags |= AMAP_SHARED;
@@ -222,7 +221,6 @@ amap_ref(amap, offset, len, flags)
 			amap_pp_adjref(amap, offset, len, 1);
 	}
 #endif
-	amap_unlock(amap);
 	UVMHIST_LOG(maphist,"<- done!  amap=%p", amap, 0, 0, 0);
 }
 
@@ -244,10 +242,6 @@ amap_unref(amap, offset, len, all)
 {
 	UVMHIST_FUNC("amap_unref"); UVMHIST_CALLED(maphist);
 
-	/*
-	 * lock it
-	 */
-	amap_lock(amap);
 	UVMHIST_LOG(maphist,"  amap=%p  refs=%ld, nused=%ld",
 	    amap, amap->am_ref, amap->am_nused, 0);
 
@@ -278,7 +272,6 @@ amap_unref(amap, offset, len, all)
 			amap_pp_adjref(amap, offset, len, -1);
 	}
 #endif
-	amap_unlock(amap);
 
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 }

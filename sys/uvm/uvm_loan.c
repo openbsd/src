@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.26 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.27 2007/05/31 21:20:30 thib Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -142,8 +142,6 @@ uvm_loanentry(ufi, output, flags)
 	/*
 	 * lock us the rest of the way down
 	 */
-	if (aref->ar_amap)
-		amap_lock(aref->ar_amap);
 	if (uobj)
 		simple_lock(&uobj->vmobjlock);
 
@@ -475,8 +473,6 @@ uvm_loanuobj(ufi, output, flags, va)
 		 */
 
 		locked = uvmfault_relock(ufi);
-		if (locked && amap)
-			amap_lock(amap);
 		simple_lock(&uobj->vmobjlock);
 
 		/*
@@ -629,8 +625,6 @@ uvm_loanzero(ufi, output, flags)
 			uvm_wait("loanzero1");
 			if (!uvmfault_relock(ufi))
 				return(0);
-			if (ufi->entry->aref.ar_amap)
-				amap_lock(ufi->entry->aref.ar_amap);
 			if (ufi->entry->object.uvm_obj)
 				simple_lock(
 				    &ufi->entry->object.uvm_obj->vmobjlock);
@@ -670,8 +664,6 @@ uvm_loanzero(ufi, output, flags)
 			return (0);
 
 		/* relock everything else */
-		if (ufi->entry->aref.ar_amap)
-			amap_lock(ufi->entry->aref.ar_amap);
 		if (ufi->entry->object.uvm_obj)
 			simple_lock(&ufi->entry->object.uvm_obj->vmobjlock);
 		/* ... and try again */

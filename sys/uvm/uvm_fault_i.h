@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault_i.h,v 1.11 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: uvm_fault_i.h,v 1.12 2007/05/31 21:20:30 thib Exp $	*/
 /*	$NetBSD: uvm_fault_i.h,v 1.11 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
@@ -90,8 +90,6 @@ uvmfault_unlockall(ufi, amap, uobj, anon)
 		simple_unlock(&anon->an_lock);
 	if (uobj)
 		simple_unlock(&uobj->vmobjlock);
-	if (amap)
-		amap_unlock(amap);
 	uvmfault_unlockmaps(ufi, FALSE);
 }
 

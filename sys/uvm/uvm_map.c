@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.92 2007/04/27 18:01:49 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.93 2007/05/31 21:20:30 thib Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -2919,7 +2919,6 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		if (amap_clean_works == 0)
 			goto flush_object;
 
-		amap_lock(amap);
 		offset = start - current->start;
 		size = MIN(end, current->end) - start;
 		for ( ; size != 0; size -= PAGE_SIZE, offset += PAGE_SIZE) {
@@ -3012,9 +3011,8 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				panic("uvm_map_clean: weird flags");
 			}
 		}
-		amap_unlock(amap);
 
- flush_object:
+flush_object:
 		/*
 		 * flush pages if we've got a valid backing object.
 		 *

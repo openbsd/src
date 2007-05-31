@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.36 2007/04/27 16:38:13 art Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.37 2007/05/31 21:20:30 thib Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -175,7 +175,6 @@ amap_alloc1(int slots, int padslots, int waitf)
 
 	totalslots = malloc_roundup((slots + padslots) * sizeof(int)) /
 	    sizeof(int);
-	simple_lock_init(&amap->am_l);
 	amap->am_ref = 1;
 	amap->am_flags = 0;
 #ifdef UVM_AMAP_PPREF
@@ -258,7 +257,6 @@ amap_free(struct vm_amap *amap)
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		free(amap->am_ppref, M_UVMAMAP);
 #endif
-	amap_unlock(amap);	/* mainly for lock debugging */
 	pool_put(&uvm_amap_pool, amap);
 
 	UVMHIST_LOG(maphist,"<- done, freed amap = %p", amap, 0, 0, 0);
@@ -296,7 +294,6 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 	 * there are some unused slots before us in the amap.
 	 */
 
-	amap_lock(amap);					/* lock! */
 	AMAP_B2SLOT(slotmapped, entry->end - entry->start); /* slots mapped */
 	AMAP_B2SLOT(slotadd, addsize);			/* slots to add */
 	slotneed = slotoff + slotmapped + slotadd;
@@ -313,7 +310,6 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 			amap_pp_adjref(amap, slotoff + slotmapped, slotadd, 1);
 		}
 #endif
-		amap_unlock(amap);
 		UVMHIST_LOG(maphist,"<- done (case 1), amap = %p, sltneed=%ld", 
 		    amap, slotneed, 0, 0);
 		return (0);
@@ -336,7 +332,6 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 		}
 #endif
 		amap->am_nslot = slotneed;
-		amap_unlock(amap);
 
 		/*
 		 * no need to zero am_anon since that was done at
@@ -354,7 +349,6 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 	 * XXXCDC: could we take advantage of a kernel realloc()?  
 	 */
 
-	amap_unlock(amap);	/* unlock in case we sleep in malloc */
 	slotalloc = malloc_roundup(slotneed * sizeof(int)) / sizeof(int);
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
@@ -386,7 +380,6 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 		}
 		return (ENOMEM);
 	}
-	amap_lock(amap);			/* re-lock! */
 	KASSERT(amap->am_maxslot < slotneed);
 
 	/*
@@ -431,9 +424,6 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize)
 	/* update master values */
 	amap->am_nslot = slotneed;
 	amap->am_maxslot = slotalloc;
-
-	/* unlock */
-	amap_unlock(amap);
 
 	/* and free */
 	free(oldsl, M_UVMAMAP);
@@ -635,7 +625,6 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 		return;
 	}
 	srcamap = entry->aref.ar_amap;
-	amap_lock(srcamap);
 
 	/*
 	 * need to double check reference count now that we've got the
@@ -649,7 +638,6 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 		entry->etype &= ~UVM_ET_NEEDSCOPY;
 		amap->am_ref--;		/* drop final reference to map */
 		amap_free(amap);	/* dispose of new (unused) amap */
-		amap_unlock(srcamap);
 		return;
 	}
 
@@ -689,8 +677,6 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 		    (entry->end - entry->start) >> PAGE_SHIFT, -1);
 	}
 #endif
-
-	amap_unlock(srcamap);
 
 	/*
 	 * install new amap.
@@ -742,8 +728,6 @@ amap_cow_now(struct vm_map *map, struct vm_map_entry *entry)
 	 * am_anon[] array on us while the lock is dropped.
 	 */
 ReStart:
-	amap_lock(amap);
-
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
 
 		/*
@@ -781,7 +765,6 @@ ReStart:
 			 */
 			if (pg->pg_flags & PG_BUSY) {
 				atomic_setbits_int(&pg->pg_flags, PG_WANTED);
-				amap_unlock(amap);
 				UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE,
 				    "cownow", 0);
 				goto ReStart;
@@ -807,7 +790,6 @@ ReStart:
 					uvm_anfree(nanon);
 				}
 				simple_unlock(&anon->an_lock);
-				amap_unlock(amap);
 				uvm_wait("cownowpage");
 				goto ReStart;
 			}
@@ -838,8 +820,6 @@ ReStart:
 		 */
 
 	}	/* end of 'for' loop */
-
-	amap_unlock(amap);
 }
 
 /*
@@ -859,11 +839,6 @@ amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 		panic("amap_splitref: split at zero offset");
 
 	/*
-	 * lock the amap
-	 */
-	amap_lock(origref->ar_amap);
-
-	/*
 	 * now: amap is locked and we have a valid am_mapped array.
 	 */
 
@@ -881,8 +856,6 @@ amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 	splitref->ar_amap = origref->ar_amap;
 	splitref->ar_amap->am_ref++;		/* not a share reference */
 	splitref->ar_pageoff = origref->ar_pageoff + leftslots;
-
-	amap_unlock(origref->ar_amap);
 }
 
 #ifdef UVM_AMAP_PPREF
