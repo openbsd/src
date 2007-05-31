@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.1 2007/05/30 03:42:53 uwe Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.2 2007/05/31 23:50:19 uwe Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
@@ -42,9 +42,14 @@
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
+#include <sys/workq.h>
+
+#include <net/netisr.h>
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
+
+#define splraiseipl(ipl) splbio() /* XXX */
 
 struct hci_unit_list hci_unit_list = TAILQ_HEAD_INITIALIZER(hci_unit_list);
 
@@ -59,12 +64,14 @@ int hci_scorxq_max = 50;
  * bluetooth unit functions
  */
 
+void hci_enable_task(void *, void *);
 void hci_intr(void *);
+
+struct workq *hci_workq;
 
 void
 hci_attach(struct hci_unit *unit)
 {
-
 	KASSERT(unit->hci_softc != NULL);
 	KASSERT(unit->hci_devname != NULL);
 	KASSERT(unit->hci_enable != NULL);
@@ -81,15 +88,30 @@ hci_attach(struct hci_unit *unit)
 	LIST_INIT(&unit->hci_memos);
 
 	TAILQ_INSERT_TAIL(&hci_unit_list, unit, hci_next);
+
+	/* XXX enable HCI by default until we have userland tools */
+	if (hci_workq == NULL)
+		hci_workq = workq_create("hci_enable", 1);
+	if (hci_workq != NULL)
+		(void)workq_add_task(hci_workq, hci_enable_task, unit,
+		    NULL, 0);
 }
 
 void
 hci_detach(struct hci_unit *unit)
 {
-
 	hci_disable(unit);
 
 	TAILQ_REMOVE(&hci_unit_list, unit, hci_next);
+}
+
+void
+hci_enable_task(void *arg0, void *arg1)
+{
+	struct hci_unit *unit = arg0;
+
+	if (!(unit->hci_flags & BTF_UP) && hci_enable(unit) == 0)
+		unit->hci_flags |= BTF_UP;
 }
 
 int
@@ -116,14 +138,6 @@ hci_enable(struct hci_unit *unit)
 	 */
 	unit->hci_acl_mask = HCI_PKT_DM1 | HCI_PKT_DH1;
 	unit->hci_packet_type = unit->hci_acl_mask;
-
-/* XXX */
-#ifdef notyet
-	unit->hci_rxint = softintr_establish(IPL_SOFTNET, &hci_intr, unit);
-	if (unit->hci_rxint == NULL)
-		return EIO;
-#endif
-#define splraiseipl(ipl) splnet()
 
 	s = splraiseipl(unit->hci_ipl);
 	err = (*unit->hci_enable)(unit);
@@ -166,11 +180,6 @@ bad2:
 	splx(s);
 
 bad1:
-#ifdef notyet			/* XXX */
-	softintr_disestablish(unit->hci_rxint);
-#endif
-	unit->hci_rxint = NULL;
-
 	return err;
 }
 
@@ -184,13 +193,6 @@ hci_disable(struct hci_unit *unit)
 	if (unit->hci_bthub) {
 		config_detach(unit->hci_bthub, DETACH_FORCE);
 		unit->hci_bthub = NULL;
-	}
-
-	if (unit->hci_rxint) {
-#ifdef notyet			/* XXX */
-		softintr_disestablish(unit->hci_rxint);
-#endif
-		unit->hci_rxint = NULL;
 	}
 
 	s = splraiseipl(unit->hci_ipl);
@@ -391,51 +393,42 @@ another:
 void
 hci_input_event(struct hci_unit *unit, struct mbuf *m)
 {
-
-	if (unit->hci_eventqlen > hci_eventq_max || unit->hci_rxint == NULL) {
+	if (unit->hci_eventqlen > hci_eventq_max) {
 		DPRINTF("(%s) dropped event packet.\n", unit->hci_devname);
 		unit->hci_stats.err_rx++;
 		m_freem(m);
 	} else {
 		unit->hci_eventqlen++;
 		IF_ENQUEUE(&unit->hci_eventq, m);
-#ifdef notyet			/* XXX */
-		softintr_schedule(unit->hci_rxint);
-#endif
+		schednetisr(NETISR_BT);
 	}
 }
 
 void
 hci_input_acl(struct hci_unit *unit, struct mbuf *m)
 {
-
-	if (unit->hci_aclrxqlen > hci_aclrxq_max || unit->hci_rxint == NULL) {
+	if (unit->hci_aclrxqlen > hci_aclrxq_max) {
 		DPRINTF("(%s) dropped ACL packet.\n", unit->hci_devname);
 		unit->hci_stats.err_rx++;
 		m_freem(m);
 	} else {
 		unit->hci_aclrxqlen++;
 		IF_ENQUEUE(&unit->hci_aclrxq, m);
-#ifdef notyet			/* XXX */
-		softintr_schedule(unit->hci_rxint);
-#endif
+		schednetisr(NETISR_BT);
 	}
 }
 
 void
 hci_input_sco(struct hci_unit *unit, struct mbuf *m)
 {
-
-	if (unit->hci_scorxqlen > hci_scorxq_max || unit->hci_rxint == NULL) {
+	if (unit->hci_scorxqlen > hci_scorxq_max) {
 		DPRINTF("(%s) dropped SCO packet.\n", unit->hci_devname);
 		unit->hci_stats.err_rx++;
 		m_freem(m);
 	} else {
 		unit->hci_scorxqlen++;
 		IF_ENQUEUE(&unit->hci_scorxq, m);
-#ifdef notyet			/* XXX */
-		softintr_schedule(unit->hci_rxint);
-#endif
+		schednetisr(NETISR_BT);
 	}
 }
 
@@ -515,15 +508,6 @@ hci_output_sco(struct hci_unit *unit, struct mbuf *m)
 void
 hci_complete_sco(struct hci_unit *unit, struct mbuf *m)
 {
-
-	if (unit->hci_rxint == NULL) {
-		DPRINTFN(10, "(%s) complete SCO!\n", unit->hci_devname);
-		unit->hci_stats.err_rx++;
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(&unit->hci_scodone, m);
-#ifdef notyet			/* XXX */
-		softintr_schedule(unit->hci_rxint);
-#endif
-	}
+	IF_ENQUEUE(&unit->hci_scodone, m);
+	schednetisr(NETISR_BT);
 }

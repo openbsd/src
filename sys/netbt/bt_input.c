@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_input.c,v 1.3 2007/05/30 08:10:02 uwe Exp $	*/
+/*	$OpenBSD: bt_input.c,v 1.4 2007/05/31 23:50:19 uwe Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -26,6 +27,9 @@
 
 #include <netbt/bluetooth.h>
 #include <netbt/bt_var.h>
+#include <netbt/hci.h>
+
+extern void hci_intr(void *);	/* XXX */
 
 struct ifqueue btintrq;
 
@@ -38,8 +42,13 @@ bt_init(void)
 void
 btintr(void)
 {
+	struct hci_unit *unit;
 	struct mbuf *m;
 	int s;
+
+	TAILQ_FOREACH(unit, &hci_unit_list, hci_next) {
+		hci_intr(unit);
+	}
 
 	for (;;) {
 		s = splnet();
