@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.20 2007/05/31 10:09:01 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.21 2007/05/31 23:37:21 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -521,7 +521,6 @@ sdhc_card_intr_mask(sdmmc_chipset_handle_t sch, int enable)
 {
 	struct sdhc_host *hp = sch;
 
-	printf("sdhc_card_intr_mask enable=%d\n", enable);
 	if (enable) {
 		HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 		HSET2(hp, SDHC_NINTR_SIGNAL_EN, SDHC_CARD_INTERRUPT);

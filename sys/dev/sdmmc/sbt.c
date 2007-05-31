@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.2 2007/05/31 23:28:30 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.3 2007/05/31 23:37:21 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -66,7 +66,6 @@ int	sbt_detach(struct device *, int);
 int	sbt_write_packet(struct sbt_softc *, u_char *, size_t);
 int	sbt_read_packet(struct sbt_softc *, u_char *, size_t *);
 
-int	sbt_intr_pending(struct sbt_softc *);
 int	sbt_intr(void *);
 
 int	sbt_enable(struct hci_unit *);
@@ -278,15 +277,6 @@ again:
  */
 
 int
-sbt_intr_pending(struct sbt_softc *sc)
-{
-	u_char val = CSR_READ_1(sc, SBT_REG_ISTAT);
-	if (val != 0)
-		printf("sbt_intr_pending %x\n", val);
-	return val != 0;
-}
-
-int
 sbt_intr(void *arg)
 {
 	struct sbt_softc *sc = arg;
@@ -299,7 +289,6 @@ sbt_intr(void *arg)
 
 	status = CSR_READ_1(sc, SBT_REG_ISTAT);
 	CSR_WRITE_1(sc, SBT_REG_ICLR, status);
-	printf("sbt_intr status=0x%x\n");
 
 	if ((status & ISTAT_INTRD) == 0)
 		return 0;	/* shared SDIO card interrupt? */
@@ -347,8 +336,6 @@ eoi:
 int
 sbt_enable(struct hci_unit *unit)
 {
-	printf("sbt_enable\n");
-
 	if (unit->hci_flags & BTF_RUNNING)
 		return 0;
 
@@ -360,8 +347,6 @@ sbt_enable(struct hci_unit *unit)
 void
 sbt_disable(struct hci_unit *unit)
 {
-	printf("sbt_disable\n");
-
 	if (!(unit->hci_flags & BTF_RUNNING))
 		return;
 
