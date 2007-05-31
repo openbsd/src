@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.8 2007/05/31 02:49:05 grunk Exp $
+.\"	$OpenBSD: softraid.4,v 1.9 2007/05/31 04:26:29 grunk Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -27,7 +27,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-device emulates an HBA that provides RAID and other IO related services.
+device emulates an HBA (host bus adapter) that provides RAID and other IO
+related services.
 The idea is to tie chunks together into an IO discipline.
 A discipline can for example provide a volume that mirrors chunks (RAID 1).
 .Pp
