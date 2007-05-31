@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.196 2007/05/31 10:48:51 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.197 2007/05/31 15:20:32 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -2177,7 +2177,8 @@ Until revision 1.295,
 did not substitute variables in the packing list unless this special form
 was used.
 .It Pa ${PKGDIR}/REQ*
-Old requirement script. Was mostly unused anyways.
+Old requirement script.
+Was mostly unused anyway.
 .It Pa /usr/share/mk/bsd.port.mk
 Original location of
 .Nm bsd.port.mk .
@@ -2420,7 +2421,7 @@ depending on the current SUBPACKAGE and FLAVOR information.
 Set ${PLIST${SUBPACKAGE}}, ${DESCR${SUBPACKAGE}}, ${COMMENT${SUBPACKAGE}}, ${MESSAGE${SUBPACKAGE}}, ${UNMESSAGE${SUBPACKAGE}} accordingly.
 .It
 Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
-These are now deprecated. 
+These are now deprecated.
 Use @exec and @unexec annotations instead.
 .It
 Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE,
