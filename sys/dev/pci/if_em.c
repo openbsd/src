@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.171 2007/05/31 00:47:53 ckuethe Exp $ */
+/* $OpenBSD: if_em.c,v 1.172 2007/05/31 01:04:57 henning Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -503,8 +503,10 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFADDR:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFADDR (Set Interface "
 			       "Addr)");
-		ifp->if_flags |= IFF_UP;
-		em_init(sc);
+		if (!(ifp->if_flags & IFF_UP)) {
+			ifp->if_flags |= IFF_UP;
+			em_init(sc);
+		}
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->interface_data, ifa);
