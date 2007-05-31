@@ -1,4 +1,4 @@
-.\"	$OpenBSD: workq_add_task.9,v 1.2 2007/05/31 21:43:02 dlg Exp $
+.\"	$OpenBSD: workq_add_task.9,v 1.3 2007/05/31 23:36:44 tedu Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -63,6 +63,11 @@ argument, and will be called with
 .Pa arg1
 and
 .Pa arg2 .
+Two arguments are allowed to provide additional flexibility to the called
+function.
+In many cases, one may wish to perform an action on a target.
+Two arguments allow both target and action to be passed without
+the need for a wrapper struct to contain them in a single argument.
 The
 .Pa flags
 argument specifies creation and runtime characteristics of the task.
