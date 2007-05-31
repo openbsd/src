@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.40 2007/05/31 19:57:43 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.41 2007/05/31 22:06:02 krw Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -300,7 +300,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = blockpersec(lp->d_partitions[0].p_offset, lp) +
+	int labelsector = blockpersec(lp->d_partitions[0].p_offset, lp) +
 	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
@@ -312,9 +312,9 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= labelsect &&
+	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= labelsector &&
 #if LABELSECTOR != 0
-	    bp->b_blkno + blockpersec(p->p_offset, lp) + sz > labelsect &&
+	    bp->b_blkno + blockpersec(p->p_offset, lp) + sz > labelsector &&
 #endif
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
@@ -329,7 +329,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 			bp->b_resid = bp->b_bcount;
 			return(0);
 		}
-		if (sz <= 0) {
+		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
 			goto bad;

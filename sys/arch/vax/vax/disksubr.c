@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.36 2007/05/31 19:57:44 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.37 2007/05/31 22:06:03 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
     struct cpu_disklabel *osdep, int wlabel)
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = lp->d_partitions[2].p_offset;
+	int labelsector = lp->d_partitions[2].p_offset;
 	int maxsz = p->p_size,
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
@@ -71,7 +71,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* overwriting disk label ? */
-	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
+	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsector &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
