@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.22 2007/02/27 16:22:11 otto Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.23 2007/05/31 20:00:16 cnst Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -266,7 +266,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int i, ch, action = 0, type = WHITE, r = 0;
+	int i, ch, action = 0, type = WHITE, r = 0, c = 0;
 	HASHINFO	hashinfo;
 	DB		*db;
 
@@ -312,11 +312,21 @@ main(int argc, char **argv)
 		return dblist(db);
 	case 1:
 		for (i=0; i<argc; i++)
-			r += dbupdate(db, argv[i], 1, type);
+			if (argv[i][0] != '\0') {
+				c++;
+				r += dbupdate(db, argv[i], 1, type);
+			}
+		if (c == 0)
+			errx(2, "no addresses specified");
 		break;
 	case 2:
 		for (i=0; i<argc; i++)
-			r += dbupdate(db, argv[i], 0, type);
+			if (argv[i][0] != '\0') {
+				c++;
+				r += dbupdate(db, argv[i], 0, type);
+			}
+		if (c == 0)
+			errx(2, "no addresses specified");
 		break;
 	default:
 		errx(-1, "bad action");
