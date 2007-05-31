@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.563 2007/05/29 18:18:19 tom Exp $
+#	$OpenBSD: GENERIC,v 1.564 2007/05/31 18:45:08 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -264,6 +264,9 @@ puc*	at pci?			# PCI "universal" communication device
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
 scsibus* at sdmmc?		# SCSI emulation
+
+# SDIO devices
+#sbt*	at sdmmc?		# Bluetooth
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sdmmc,v 1.2 2006/06/01 21:53:41 uwe Exp $
+#	$OpenBSD: files.sdmmc,v 1.3 2007/05/31 18:45:09 uwe Exp $
 #
 # Config file and device description for machine-independent SD/MMC code.
 # Included by ports that need it.
@@ -11,3 +11,8 @@ file	dev/sdmmc/sdmmc_cis.c		sdmmc
 file	dev/sdmmc/sdmmc_io.c		sdmmc
 file	dev/sdmmc/sdmmc_mem.c		sdmmc
 file	dev/sdmmc/sdmmc_scsi.c		sdmmc
+
+# Bluetooth SDIO cards (Type-A/B)
+device	sbt: btbus, bluetooth
+attach	sbt at sdmmc
+file	dev/sdmmc/sbt.c			sbt
