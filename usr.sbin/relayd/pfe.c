@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.28 2007/05/31 15:49:26 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.29 2007/05/31 18:24:02 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -197,15 +197,12 @@ pfe_setup_events(void)
 void
 pfe_disable_events(void)
 {
-	int		 i;
-	struct imsgbuf	*ibuf;
+	int	i;
 
 	event_del(&ibuf_hce->ev);
 
-	for (i = 0; i < env->prefork_relay; i++) {
-		ibuf = &ibuf_relay[i];
-		event_del(&ibuf->ev);
-	}
+	for (i = 0; i < env->prefork_relay; i++)
+		event_del(&ibuf_relay[i].ev);
 }
 
 void
