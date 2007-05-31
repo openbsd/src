@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2007/05/29 18:59:54 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.47 2007/05/31 03:24:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -262,7 +262,7 @@ loglevel	: UPDATES		{ $$ = HOSTSTATED_OPT_LOGUPDATE; }
 service		: SERVICE STRING	{
 			struct service *srv;
 
-			TAILQ_FOREACH(srv, &conf->services, entry)
+			TAILQ_FOREACH(srv, conf->services, entry)
 				if (!strcmp(srv->conf.name, $2))
 					break;
 			if (srv != NULL) {
@@ -312,7 +312,7 @@ service		: SERVICE STRING	{
 
 			if (!(service->conf.flags & F_DISABLE))
 				service->conf.flags |= F_ADD;
-			TAILQ_INSERT_HEAD(&conf->services, service, entry);
+			TAILQ_INSERT_HEAD(conf->services, service, entry);
 		}
 		;
 
@@ -390,7 +390,7 @@ serviceoptsl	: TABLE STRING dstport	{
 table		: TABLE STRING	{
 			struct table *tb;
 
-			TAILQ_FOREACH(tb, &conf->tables, entry)
+			TAILQ_FOREACH(tb, conf->tables, entry)
 				if (!strcmp(tb->conf.name, $2))
 					break;
 			if (tb != NULL) {
@@ -428,7 +428,7 @@ table		: TABLE STRING	{
 				YYERROR;
 			}
 			conf->tablecount++;
-			TAILQ_INSERT_HEAD(&conf->tables, table, entry);
+			TAILQ_INSERT_HEAD(conf->tables, table, entry);
 		}
 		;
 
@@ -1411,11 +1411,13 @@ parse_config(const char *filename, int opts)
 	struct table	*nexttb;
 	struct host	*h;
 
-	if ((conf = calloc(1, sizeof(*conf))) == NULL)
+	if ((conf = calloc(1, sizeof(*conf))) == NULL ||
+	    (conf->tables = calloc(1, sizeof(*conf->tables))) == NULL ||
+	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL)
 		return (NULL);
 
-	TAILQ_INIT(&conf->services);
-	TAILQ_INIT(&conf->tables);
+	TAILQ_INIT(conf->services);
+	TAILQ_INIT(conf->tables);
 	TAILQ_INIT(&conf->protos);
 	TAILQ_INIT(&conf->relays);
 
@@ -1469,7 +1471,7 @@ parse_config(const char *filename, int opts)
 		}
 	}
 
-	if (TAILQ_EMPTY(&conf->services) && TAILQ_EMPTY(&conf->relays)) {
+	if (TAILQ_EMPTY(conf->services) && TAILQ_EMPTY(&conf->relays)) {
 		log_warnx("no services, nothing to do");
 		errors++;
 	}
@@ -1483,11 +1485,11 @@ parse_config(const char *filename, int opts)
 	}
 
 	/* Verify that every table is used */
-	for (table = TAILQ_FIRST(&conf->tables); table != NULL;
+	for (table = TAILQ_FIRST(conf->tables); table != NULL;
 	     table = nexttb) {
 		nexttb = TAILQ_NEXT(table, entry);
 		if (table->conf.port == 0) {
-			TAILQ_REMOVE(&conf->tables, table, entry);
+			TAILQ_REMOVE(conf->tables, table, entry);
 			while ((h = TAILQ_FIRST(&table->hosts)) != NULL) {
 				TAILQ_REMOVE(&table->hosts, h, entry);
 				free(h);
@@ -1796,7 +1798,7 @@ table_inherit(const char *name, in_port_t port)
 	}
 
 	conf->tablecount++;
-	TAILQ_INSERT_HEAD(&conf->tables, tb, entry);
+	TAILQ_INSERT_HEAD(conf->tables, tb, entry);
 
 	return (tb);
 }

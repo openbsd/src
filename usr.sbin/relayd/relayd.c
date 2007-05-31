@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.33 2007/05/30 00:51:21 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.34 2007/05/31 03:24:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -339,6 +339,31 @@ send_all(struct hoststated *env, enum imsg_type type, void *buf, u_int16_t len)
 }
 
 void
+merge_config(struct hoststated *env, struct hoststated *new_env)
+{
+	env->opts = new_env->opts;
+	env->flags = new_env->flags;
+	env->confpath = new_env->confpath;
+	env->tablecount = new_env->tablecount;
+	env->servicecount = new_env->servicecount;
+	env->protocount = new_env->protocount;
+	env->relaycount = new_env->relaycount;
+
+	memcpy(&env->interval, &new_env->interval, sizeof(env->interval));
+	memcpy(&env->timeout, &new_env->timeout, sizeof(env->timeout));
+	memcpy(&env->empty_table, &new_env->empty_table,
+	    sizeof(env->empty_table));
+	memcpy(&env->proto_default, &new_env->proto_default,
+	    sizeof(env->proto_default));
+	env->prefork_relay = new_env->prefork_relay;
+	(void)strlcpy(env->demote_group, new_env->demote_group,
+	    sizeof(env->demote_group));
+
+	env->tables = new_env->tables;
+	env->services = new_env->services;
+}
+
+void
 purge_config(struct hoststated *env, u_int8_t what)
 {
 	struct table		*table;
@@ -350,15 +375,35 @@ purge_config(struct hoststated *env, u_int8_t what)
 	struct relay		*rly;
 	struct session		*sess;
 
+	if (what & PURGE_TABLES) {
+		while ((table = TAILQ_FIRST(env->tables)) != NULL) {
+
+			while ((host = TAILQ_FIRST(&table->hosts)) != NULL) {
+				TAILQ_REMOVE(&table->hosts, host, entry);
+				free(host);
+			}
+			if (table->sendbuf != NULL)
+				free(table->sendbuf);
+			if (table->conf.flags & F_SSL)
+				SSL_CTX_free(table->ssl_ctx);
+
+			TAILQ_REMOVE(env->tables, table, entry);
+
+			free(table);
+		}
+		free(env->tables);
+	}
+
 	if (what & PURGE_SERVICES) {
-		while ((service = TAILQ_FIRST(&env->services)) != NULL) {
-			TAILQ_REMOVE(&env->services, service, entry);
+		while ((service = TAILQ_FIRST(env->services)) != NULL) {
+			TAILQ_REMOVE(env->services, service, entry);
 			while ((virt = TAILQ_FIRST(&service->virts)) != NULL) {
 				TAILQ_REMOVE(&service->virts, virt, entry);
 				free(virt);
 			}
 			free(service);
 		}
+		free(env->services);
 	}
 
 	if (what & PURGE_RELAYS) {
@@ -407,20 +452,6 @@ purge_config(struct hoststated *env, u_int8_t what)
 		}
 	}
 
-	if (what & PURGE_TABLES) {
-		while ((table = TAILQ_FIRST(&env->tables)) != NULL) {
-			TAILQ_REMOVE(&env->tables, table, entry);
-			while ((host = TAILQ_FIRST(&table->hosts)) != NULL) {
-				TAILQ_REMOVE(&table->hosts, host, entry);
-				free(host);
-			}
-			if (table->sendbuf != NULL)
-				free(table->sendbuf);
-			if (table->ssl_ctx != NULL)
-				SSL_CTX_free(table->ssl_ctx);
-			free(table);
-		}
-	}
 }
 
 void
@@ -591,7 +622,7 @@ host_find(struct hoststated *env, objid_t id)
 	struct table	*table;
 	struct host	*host;
 
-	TAILQ_FOREACH(table, &env->tables, entry)
+	TAILQ_FOREACH(table, env->tables, entry)
 		TAILQ_FOREACH(host, &table->hosts, entry)
 			if (host->conf.id == id)
 				return (host);
@@ -603,7 +634,7 @@ table_find(struct hoststated *env, objid_t id)
 {
 	struct table	*table;
 
-	TAILQ_FOREACH(table, &env->tables, entry)
+	TAILQ_FOREACH(table, env->tables, entry)
 		if (table->conf.id == id)
 			return (table);
 	return (NULL);
@@ -614,7 +645,7 @@ service_find(struct hoststated *env, objid_t id)
 {
 	struct service	*service;
 
-	TAILQ_FOREACH(service, &env->services, entry)
+	TAILQ_FOREACH(service, env->services, entry)
 		if (service->conf.id == id)
 			return (service);
 	return (NULL);
@@ -650,7 +681,7 @@ host_findbyname(struct hoststated *env, const char *name)
 	struct table	*table;
 	struct host	*host;
 
-	TAILQ_FOREACH(table, &env->tables, entry)
+	TAILQ_FOREACH(table, env->tables, entry)
 		TAILQ_FOREACH(host, &table->hosts, entry)
 			if (strcmp(host->conf.name, name) == 0)
 				return (host);
@@ -662,7 +693,7 @@ table_findbyname(struct hoststated *env, const char *name)
 {
 	struct table	*table;
 
-	TAILQ_FOREACH(table, &env->tables, entry)
+	TAILQ_FOREACH(table, env->tables, entry)
 		if (strcmp(table->conf.name, name) == 0)
 			return (table);
 	return (NULL);
@@ -673,7 +704,7 @@ service_findbyname(struct hoststated *env, const char *name)
 {
 	struct service	*service;
 
-	TAILQ_FOREACH(service, &env->services, entry)
+	TAILQ_FOREACH(service, env->services, entry)
 		if (strcmp(service->conf.name, name) == 0)
 			return (service);
 	return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.26 2007/05/29 23:42:15 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.27 2007/05/31 03:24:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -398,7 +398,7 @@ show(struct ctl_conn *c)
 	struct host	*host;
 	struct relay	*rlay;
 
-	TAILQ_FOREACH(service, &env->services, entry) {
+	TAILQ_FOREACH(service, env->services, entry) {
 		imsg_compose(&c->ibuf, IMSG_CTL_SERVICE, 0, 0,
 		    service, sizeof(*service));
 		if (service->conf.flags & F_DISABLE)
@@ -654,7 +654,7 @@ pfe_sync(void)
 
 	bzero(&id, sizeof(id));
 	bzero(&imsg, sizeof(imsg));
-	TAILQ_FOREACH(service, &env->services, entry) {
+	TAILQ_FOREACH(service, env->services, entry) {
 		service->conf.flags &= ~(F_BACKUP);
 		service->conf.flags &= ~(F_DOWN);
 
@@ -708,7 +708,7 @@ pfe_sync(void)
 		}
 	}
 
-	TAILQ_FOREACH(table, &env->tables, entry) {
+	TAILQ_FOREACH(table, env->tables, entry) {
 		if ((table->conf.flags & F_DEMOTE) == 0)
 			continue;
 		demote.level = 0;

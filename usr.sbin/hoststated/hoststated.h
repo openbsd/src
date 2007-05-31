@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.50 2007/05/29 23:19:18 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.51 2007/05/31 03:24:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -556,8 +556,8 @@ struct hoststated {
 	struct table		 empty_table;
 	struct protocol		 proto_default;
 	struct event		 ev;
-	struct tablelist	 tables;
-	struct servicelist	 services;
+	struct tablelist	*tables;
+	struct servicelist	*services;
 	struct protolist	 protos;
 	struct relaylist	 relays;
 	u_int16_t		 prefork_relay;
@@ -719,6 +719,7 @@ struct session	*session_find(struct hoststated *, objid_t);
 struct relay	*relay_findbyname(struct hoststated *, const char *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 purge_config(struct hoststated *, u_int8_t);
+void		 merge_config(struct hoststated *, struct hoststated *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

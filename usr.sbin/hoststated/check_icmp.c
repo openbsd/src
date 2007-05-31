@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.15 2007/05/27 20:53:10 pyr Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.16 2007/05/31 03:24:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -119,7 +119,7 @@ icmp_checks_done(struct ctl_icmp_event *cie)
 	struct table	*table;
 	struct host	*host;
 
-	TAILQ_FOREACH(table, &cie->env->tables, entry) {
+	TAILQ_FOREACH(table, cie->env->tables, entry) {
 		if (table->conf.flags & F_DISABLE ||
 		    table->conf.check != CHECK_ICMP)
 			continue;
@@ -140,7 +140,7 @@ icmp_checks_timeout(struct ctl_icmp_event *cie, const char *msg)
 	struct table	*table;
 	struct host	*host;
 
-	TAILQ_FOREACH(table, &cie->env->tables, entry) {
+	TAILQ_FOREACH(table, cie->env->tables, entry) {
 		if (table->conf.flags & F_DISABLE ||
 		    table->conf.check != CHECK_ICMP)
 			continue;
@@ -191,7 +191,7 @@ send_icmp(int s, short event, void *arg)
 		slen = sizeof(struct sockaddr_in6);
 	}
 
-	TAILQ_FOREACH(table, &cie->env->tables, entry) {
+	TAILQ_FOREACH(table, cie->env->tables, entry) {
 		if (table->conf.check != CHECK_ICMP ||
 		    table->conf.flags & F_DISABLE)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.16 2007/05/27 20:53:10 pyr Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.17 2007/05/31 03:24:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -78,7 +78,7 @@ init_tables(struct hoststated *env)
 		fatal("calloc");
 	i = 0;
 
-	TAILQ_FOREACH(service, &env->services, entry) {
+	TAILQ_FOREACH(service, env->services, entry) {
 		if (strlcpy(tables[i].pfrt_anchor, HOSTSTATED_ANCHOR "/",
 		    sizeof(tables[i].pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
@@ -112,7 +112,7 @@ init_tables(struct hoststated *env)
 	/*
 	 * clear all tables, since some already existed
 	 */
-	TAILQ_FOREACH(service, &env->services, entry)
+	TAILQ_FOREACH(service, env->services, entry)
 		flush_table(env, service);
 
 	return;
@@ -127,7 +127,7 @@ kill_tables(struct hoststated *env) {
 	struct service		*service;
 
 	memset(&io, 0, sizeof(io));
-	TAILQ_FOREACH(service, &env->services, entry) {
+	TAILQ_FOREACH(service, env->services, entry) {
 		if (strlcpy(io.pfrio_table.pfrt_anchor, HOSTSTATED_ANCHOR "/",
 		    sizeof(io.pfrio_table.pfrt_anchor)) >= PF_ANCHOR_NAME_SIZE)
 			goto toolong;
@@ -378,7 +378,7 @@ flush_rulesets(struct hoststated *env)
 	char		 anchor[PF_ANCHOR_NAME_SIZE];
 
 	kill_tables(env);
-	TAILQ_FOREACH(service, &env->services, entry) {
+	TAILQ_FOREACH(service, env->services, entry) {
 		if (strlcpy(anchor, HOSTSTATED_ANCHOR "/", sizeof(anchor)) >=
 		    PF_ANCHOR_NAME_SIZE)
 			goto toolong;

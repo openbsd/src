@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.22 2007/05/29 17:12:04 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.23 2007/05/31 03:24:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -45,10 +45,15 @@ void	hce_shutdown(void);
 void	hce_dispatch_imsg(int, short, void *);
 void	hce_dispatch_parent(int, short, void *);
 void	hce_launch_checks(int, short, void *);
+void	hce_setup_events(int);
+void	hce_start(void);
 
 static struct hoststated *env = NULL;
 struct imsgbuf		*ibuf_pfe;
 struct imsgbuf		*ibuf_main;
+int			 pipe_pfe;
+int			 pipe_parent;
+int			 running = 0;
 
 void
 hce_sig_handler(int sig, short event, void *arg)
@@ -57,6 +62,9 @@ hce_sig_handler(int sig, short event, void *arg)
 	case SIGINT:
 	case SIGTERM:
 		hce_shutdown();
+		break;
+	case SIGHUP:
+		break;
 	default:
 		fatalx("hce_sig_handler: unexpected signal");
 	}
@@ -69,10 +77,6 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 {
 	pid_t		 pid;
 	struct passwd	*pw;
-	struct timeval	 tv;
-	struct event	 ev_sigint;
-	struct event	 ev_sigterm;
-	struct table	*table;
 	int		 i;
 
 	switch (pid = fork()) {
@@ -106,13 +110,10 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("hce: can't drop privileges");
 
-	event_init();
+	pipe_pfe = pipe_pfe2hce[0];
+	pipe_parent = pipe_parent2hce[1];
 
-	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
-	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
-	signal_add(&ev_sigint, NULL);
-	signal_add(&ev_sigterm, NULL);
-	signal(SIGPIPE, SIG_IGN);
+	hce_setup_events(0);
 
 	/* setup pipes */
 	close(pipe_pfe2hce[1]);
@@ -126,12 +127,44 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 		close(pipe_pfe2relay[i][1]);
 	}
 
+	hce_start();
+
+	hce_shutdown();
+
+	return (0);
+}
+
+void
+hce_setup_events(int diefirst)
+{
+	struct event	 ev_sigint;
+	struct event	 ev_sigterm;
+	struct timeval	 tv;
+
+	if (diefirst) {
+
+		if (!TAILQ_EMPTY(env->tables)) {
+			evtimer_set(&env->ev, hce_launch_checks, env);
+			bzero(&tv, sizeof(tv));
+			evtimer_add(&env->ev, &tv);
+		}
+
+		bzero(&tv, sizeof(tv));
+		event_loopexit(&tv);
+	}
+	event_init();
+
+	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
+	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sigterm, NULL);
+	signal(SIGPIPE, SIG_IGN);
+
 	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
 	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
 		fatal("hce");
-	imsg_init(ibuf_pfe, pipe_pfe2hce[0], hce_dispatch_imsg);
-	imsg_init(ibuf_main, pipe_parent2hce[1], hce_dispatch_parent);
-
+	imsg_init(ibuf_pfe, pipe_pfe, hce_dispatch_imsg);
+	imsg_init(ibuf_main, pipe_parent, hce_dispatch_parent);
 	ibuf_pfe->events = EV_READ;
 	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
 	    ibuf_pfe->handler, ibuf_pfe);
@@ -141,8 +174,15 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
 	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
+}
 
-	if (!TAILQ_EMPTY(&env->tables)) {
+void
+hce_start(void)
+{
+	struct timeval	 tv;
+	struct table	*table;
+
+	if (!TAILQ_EMPTY(env->tables)) {
 		evtimer_set(&env->ev, hce_launch_checks, env);
 		bzero(&tv, sizeof(tv));
 		evtimer_add(&env->ev, &tv);
@@ -150,18 +190,13 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	if (env->flags & F_SSL) {
 		ssl_init(env);
-		TAILQ_FOREACH(table, &env->tables, entry) {
+		TAILQ_FOREACH(table, env->tables, entry) {
 			if (!(table->conf.flags & F_SSL))
 				continue;
 			table->ssl_ctx = ssl_ctx_create(env);
 		}
 	}
-
 	event_dispatch();
-
-	hce_shutdown();
-
-	return (0);
 }
 
 void
@@ -171,11 +206,12 @@ hce_launch_checks(int fd, short event, void *arg)
 	struct table		*table;
 	struct timeval		 tv;
 
+	log_warnx("new check suite");
 	/*
 	 * notify pfe checks are done and schedule next check
 	 */
 	imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, NULL, 0);
-	TAILQ_FOREACH(table, &env->tables, entry) {
+	TAILQ_FOREACH(table, env->tables, entry) {
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 			event_del(&host->cte.ev);
@@ -185,13 +221,18 @@ hce_launch_checks(int fd, short event, void *arg)
 	if (gettimeofday(&tv, NULL))
 		fatal("hce_launch_checks: gettimeofday");
 
-	TAILQ_FOREACH(table, &env->tables, entry) {
+	log_warnx("setting up checks");
+
+	TAILQ_FOREACH(table, env->tables, entry) {
+		log_warnx("setting up %s", table->conf.name);
 		if (table->conf.flags & F_DISABLE)
 			continue;
 		if (table->conf.check == CHECK_NOCHECK)
 			fatalx("hce_launch_checks: unknown check type");
 
 		TAILQ_FOREACH(host, &table->hosts, entry) {
+			log_warnx("setting up %s.%s", table->conf.name,
+			    host->conf.name);
 			if (host->flags & F_DISABLE)
 				continue;
 			switch (table->conf.check) {
@@ -274,7 +315,6 @@ hce_notify_done(struct host *host, const char *msg)
 		    host_status(host->last_up), host_status(host->up),
 		    print_availability(host->check_cnt, host->up_cnt));
 	}
-
 	host->last_up = host->up;
 }
 
