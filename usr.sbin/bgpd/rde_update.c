@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.59 2007/05/29 02:31:42 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.60 2007/05/31 04:27:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -610,11 +610,11 @@ int
 up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
     struct rde_aspath *a, sa_family_t af)
 {
-	struct attr	*oa;
+	struct attr	*oa, *newaggr = NULL;
 	u_char		*pdata;
-	u_int32_t	 tmp32, aggr_as;
+	u_int32_t	 tmp32;
 	in_addr_t	 nexthop;
-	int		 r, ismp = 0, neednewpath = 0, neednewaggr = 0;
+	int		 r, ismp = 0, neednewpath = 0;
 	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0, plen;
 	u_int8_t	 l;
 
@@ -706,17 +706,17 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 					break;
 				}
 
-				memcpy(&aggr_as, oa->data, sizeof(aggr_as));
-				if (htonl(aggr_as) > USHRT_MAX) {
+				memcpy(&tmp32, oa->data, sizeof(tmp32));
+				if (ntohl(tmp32) > USHRT_MAX) {
 					tas = htons(AS_TRANS);
-					neednewaggr = 1;
+					newaggr = oa;
 				} else
-					tas = htons(ntohl(aggr_as));
+					tas = htons(ntohl(tmp32));
 
 				memcpy(t, &tas, sizeof(tas));
 				memcpy(t + sizeof(tas),
-				    oa->data + sizeof(aggr_as),
-				    oa->len - sizeof(aggr_as));
+				    oa->data + sizeof(tmp32),
+				    oa->len - sizeof(tmp32));
 				if ((r = attr_write(up_attr_buf + wlen, len,
 				    oa->flags, oa->type, &t, sizeof(t))) == -1)
 					return (-1);
@@ -774,10 +774,10 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 		wlen += r; len -= r;
 		free(pdata);
 	}
-	if (neednewaggr) {
+	if (newaggr) {
 		if ((r = attr_write(up_attr_buf + wlen, len,
 		    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_NEW_AGGREGATOR,
-		    &aggr_as, sizeof(aggr_as))) == -1)
+		    newaggr->data, newaggr->len)) == -1)
 			return (-1);
 		wlen += r; len -= r;
 	}
