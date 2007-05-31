@@ -25,9 +25,9 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.37 2005/09/22 14:03:39 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.38 2007/05/31 19:20:27 jmc Exp $
 .\"
-.Dd September 20, 1995
+.Dd $Mdocdate: May 31 2007 $
 .Dt PPP 8
 .Os
 .Sh NAME

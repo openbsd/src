@@ -1,7 +1,7 @@
-.\"	$OpenBSD: phantasia.6tbl,v 1.7 2004/01/02 22:22:43 jmc Exp $
+.\"	$OpenBSD: phantasia.6tbl,v 1.8 2007/05/31 19:19:18 jmc Exp $
 .\"	$NetBSD: phantasia.6,v 1.9 2002/09/26 18:32:03 wiz Exp $
 .\"
-.Dd April 1, 2001
+.Dd $Mdocdate: May 31 2007 $
 .Dt PHANTASIA 6
 .Os
 .Sh NAME

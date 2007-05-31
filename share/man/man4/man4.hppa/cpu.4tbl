@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.23 2004/09/14 22:03:29 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.24 2007/05/31 19:19:54 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 4, 2002
+.Dd $Mdocdate: May 31 2007 $
 .Dt CPU 4 hppa
 .Os
 .Sh NAME
