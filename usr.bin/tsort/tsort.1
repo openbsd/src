@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsort.1,v 1.17 2006/08/06 06:13:26 jmc Exp $
+.\"	$OpenBSD: tsort.1,v 1.18 2007/05/31 17:59:40 jmc Exp $
 .\"	$NetBSD: tsort.1,v 1.6 1996/01/17 20:37:49 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -147,10 +147,12 @@ accomplishes the same task in a dynamic way.
 The
 .Nm
 utility is compliant with the
-.St -p1003.1-2004
+.St -xpg4
 specification.
 .Pp
-All options are extensions to that specification.
+The flags
+.Op Fl fhlqrvw
+are extensions to that specification.
 .Sh HISTORY
 A
 .Nm

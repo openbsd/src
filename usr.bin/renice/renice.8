@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.15 2007/03/16 16:36:06 jmc Exp $
+.\"	$OpenBSD: renice.8,v 1.16 2007/05/31 17:59:40 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,6 +118,17 @@ and all processes owned by users daemon and root:
 .Xr nice 1 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification,
+but its presence is optional.
+.Pp
+The arguments to flags
+.Op Fl gpu
+are extensions to that specification.
 .Sh HISTORY
 The
 .Nm

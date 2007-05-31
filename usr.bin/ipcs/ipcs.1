@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipcs.1,v 1.17 2005/02/22 14:47:45 jmc Exp $
+.\"	$OpenBSD: ipcs.1,v 1.18 2007/05/31 17:59:39 jmc Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -128,6 +128,16 @@ is running; the output of
 is not guaranteed to be consistent.
 .Sh SEE ALSO
 .Xr ipcrm 1
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -xpg4
+specification.
+.Pp
+The flags
+.Op Fl CMNQST
+are extensions to that specification.
 .Sh AUTHORS
 .An Thorsten Lockert Aq tholo@sigmasoft.com
 .Sh BUGS

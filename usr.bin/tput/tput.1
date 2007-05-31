@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.14 2007/03/15 23:14:37 jmc Exp $
+.\"	$OpenBSD: tput.1,v 1.15 2007/05/31 17:59:40 jmc Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -148,6 +148,17 @@ exits with a value of 0 if the terminal has this attribute or
 .Sh SEE ALSO
 .Xr terminfo 3 ,
 .Xr terminfo 5
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification,
+but its presence is optional.
+.Pp
+The flag
+.Op Fl S
+is an extension to that specification.
 .Sh HISTORY
 The
 .Nm

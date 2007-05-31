@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.18 2007/04/18 21:52:24 sobrado Exp $
+.\"	$OpenBSD: patch.1,v 1.19 2007/05/31 17:59:39 jmc Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -631,6 +631,19 @@ When applying a set of patches in a loop it behooves you to check this
 exit status so you don't apply a later patch to a partially patched file.
 .Sh SEE ALSO
 .Xr diff 1
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification,
+but its presence is optional.
+.Pp
+The flags
+.Op Fl CEfstuvBFVxz
+and
+.Op Fl -posix
+are extensions to that specification.
 .Sh AUTHORS
 .An Larry Wall
 with many other contributors.

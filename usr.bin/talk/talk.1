@@ -1,4 +1,4 @@
-.\"	$OpenBSD: talk.1,v 1.19 2004/08/04 23:06:34 jmc Exp $
+.\"	$OpenBSD: talk.1,v 1.20 2007/05/31 17:59:40 jmc Exp $
 .\"	$NetBSD: talk.1,v 1.3 1994/12/09 02:14:23 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -130,6 +130,17 @@ to find the recipient's tty
 .Xr who 1 ,
 .Xr write 1 ,
 .Xr talkd 8
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2004
+specification,
+but its presence is optional.
+.Pp
+The flags
+.Op Fl Hs
+are extensions to that specification.
 .Sh HISTORY
 The
 .Nm
