@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.19 2007/05/26 19:04:24 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.20 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -84,6 +84,8 @@ int	sdhc_host_maxblklen(sdmmc_chipset_handle_t);
 int	sdhc_card_detect(sdmmc_chipset_handle_t);
 int	sdhc_bus_power(sdmmc_chipset_handle_t, u_int32_t);
 int	sdhc_bus_clock(sdmmc_chipset_handle_t, int);
+void	sdhc_card_intr_mask(sdmmc_chipset_handle_t, int);
+void	sdhc_card_intr_ack(sdmmc_chipset_handle_t);
 void	sdhc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 int	sdhc_wait_state(struct sdhc_host *, u_int32_t, u_int32_t);
@@ -113,7 +115,10 @@ struct sdmmc_chip_functions sdhc_functions = {
 	sdhc_bus_power,
 	sdhc_bus_clock,
 	/* command execution */
-	sdhc_exec_command
+	sdhc_exec_command,
+	/* card interrupt */
+	sdhc_card_intr_mask,
+	sdhc_card_intr_ack
 };
 
 struct cfdriver sdhc_cd = {
@@ -333,8 +338,7 @@ sdhc_host_reset(sdmmc_chipset_handle_t sch)
 	imask = SDHC_CARD_REMOVAL | SDHC_CARD_INSERTION |
 	    SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY |
 	    SDHC_DMA_INTERRUPT | SDHC_BLOCK_GAP_EVENT |
-	    SDHC_TRANSFER_COMPLETE | SDHC_COMMAND_COMPLETE |
-	    SDHC_CARD_INTERRUPT;
+	    SDHC_TRANSFER_COMPLETE | SDHC_COMMAND_COMPLETE;
 
 	HWRITE2(hp, SDHC_NINTR_STATUS_EN, imask);
 	HWRITE2(hp, SDHC_EINTR_STATUS_EN, SDHC_EINTR_STATUS_MASK);
@@ -512,6 +516,28 @@ ret:
 	return error;
 }
 
+void
+sdhc_card_intr_mask(sdmmc_chipset_handle_t sch, int enable)
+{
+	struct sdhc_host *hp = sch;
+
+	printf("sdhc_card_intr_mask enable=%d\n", enable);
+	if (enable) {
+		HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
+		HSET2(hp, SDHC_NINTR_SIGNAL_EN, SDHC_CARD_INTERRUPT);
+	} else {
+		HCLR2(hp, SDHC_NINTR_SIGNAL_EN, SDHC_CARD_INTERRUPT);
+		HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
+	}
+}
+
+void
+sdhc_card_intr_ack(sdmmc_chipset_handle_t sch)
+{
+	struct sdhc_host *hp = sch;
+
+	HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
+}
 
 int
 sdhc_wait_state(struct sdhc_host *hp, u_int32_t mask, u_int32_t value)
@@ -917,12 +943,9 @@ sdhc_intr(void *arg)
 		 * Service SD card interrupts.
 		 */
 		if (ISSET(status, SDHC_CARD_INTERRUPT)) {
-			printf("%s: card interrupt\n", HDEVNAME(hp));
+			DPRINTF(0,("%s: card interrupt\n", HDEVNAME(hp)));
 			HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
-			/* XXX service card interrupt */
-#ifdef notyet
-			HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
-#endif
+			sdmmc_card_intr(hp->sdmmc);
 		}
 	}
 	return done;

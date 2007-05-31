@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcchip.h,v 1.2 2006/07/18 04:10:35 uwe Exp $	*/
+/*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -38,6 +38,9 @@ struct sdmmc_chip_functions {
 	/* command execution */
 	void	(*exec_command)(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
+	/* card interrupt */
+	void	(*card_intr_mask)(sdmmc_chipset_handle_t, int);
+	void	(*card_intr_ack)(sdmmc_chipset_handle_t);
 };
 
 /* host controller reset */
@@ -59,6 +62,11 @@ struct sdmmc_chip_functions {
 /* command execution */
 #define sdmmc_chip_exec_command(tag, handle, cmdp)			\
 	((tag)->exec_command((handle), (cmdp)))
+/* card interrupt */
+#define sdmmc_chip_card_intr_mask(tag, handle, enable)			\
+	((tag)->card_intr_mask((handle), (enable)))
+#define sdmmc_chip_card_intr_ack(tag, handle)				\
+	((tag)->card_intr_ack((handle)))
 
 /* clock frequencies for sdmmc_chip_bus_clock() */
 #define SDMMC_SDCLK_OFF		0
@@ -72,6 +80,7 @@ struct sdmmcbus_attach_args {
 };
 
 void	sdmmc_needs_discover(struct device *);
+void	sdmmc_card_intr(struct device *);
 void	sdmmc_delay(u_int);
 
 #endif

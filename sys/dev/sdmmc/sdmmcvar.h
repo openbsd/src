@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.8 2007/05/26 18:37:45 uwe Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.9 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -167,8 +167,10 @@ struct sdmmc_softc {
 	struct proc *sc_task_thread;	/* asynchronous tasks */
 	TAILQ_HEAD(, sdmmc_task) sc_tskq;   /* task thread work queue */
 	struct sdmmc_task sc_discover_task; /* card attach/detach task */
+	struct sdmmc_task sc_intr_task;	/* card interrupt task */
 	struct lock sc_lock;		/* lock around host controller */
 	void *sc_scsibus;		/* SCSI bus emulation softc */
+	TAILQ_HEAD(, sdmmc_intr_handler) sc_intrq; /* interrupt handlers */
 };
 
 /*
@@ -197,6 +199,13 @@ void	sdmmc_go_idle_state(struct sdmmc_softc *);
 int	sdmmc_select_card(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_set_relative_addr(struct sdmmc_softc *,
 	    struct sdmmc_function *);
+
+void	sdmmc_intr_enable(struct sdmmc_function *);
+void	sdmmc_intr_disable(struct sdmmc_function *);
+void	*sdmmc_intr_establish(struct device *, int (*)(void *),
+	    void *, const char *);
+void	sdmmc_intr_disestablish(void *);
+void	sdmmc_intr_task(void *);
 
 int	sdmmc_io_enable(struct sdmmc_softc *);
 void	sdmmc_io_scan(struct sdmmc_softc *);

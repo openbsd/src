@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.11 2007/05/26 17:06:36 uwe Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.12 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -105,7 +105,9 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 
 	SIMPLEQ_INIT(&sc->sf_head);
 	TAILQ_INIT(&sc->sc_tskq);
+	TAILQ_INIT(&sc->sc_intrq);
 	sdmmc_init_task(&sc->sc_discover_task, sdmmc_discover_task, sc);
+	sdmmc_init_task(&sc->sc_intr_task, sdmmc_intr_task, sc);
 	lockinit(&sc->sc_lock, PRIBIO, DEVNAME(sc), 0, LK_CANRECURSE);
 
 #ifdef SDMMC_IOCTL
