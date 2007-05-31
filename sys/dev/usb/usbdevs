@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.278 2007/05/28 17:51:22 tom Exp $
+$OpenBSD: usbdevs,v 1.279 2007/05/31 02:39:33 robert Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -226,6 +226,7 @@ vendor ACTLABS		0x061c	Act Labs
 vendor ALARIS		0x0620	Alaris
 vendor APEX		0x0624	Apex
 vendor VIVITAR		0x0636  Vivitar
+vendor GUNZE		0x0637	Gunze Electronics USA
 vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
 vendor ARKMICRO		0x6547	Arkmicro
@@ -1210,6 +1211,9 @@ product GUILLEMOT DALEADER	0xa300	DA Leader
 product GUILLEMOT HWGUSB254	0xe000	HWGUSB2-54 WLAN
 product GUILLEMOT HWGUSB254LB	0xe010	HWGUSB2-54-LB
 product GUILLEMOT HWGUSB254V2AP	0xe020	HWGUSB2-54V2-AP
+
+/* Gunze Gunze Electronics USA */
+product GUNZE TOUCHPANEL	0x0001	Gunze USB Touch Panel
 
 /* Hagiwara products */
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia
