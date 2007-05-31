@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.56 2007/05/31 11:05:41 espie Exp $
+# $OpenBSD: Delete.pm,v 1.57 2007/05/31 13:33:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -164,6 +164,7 @@ sub delete_plist
 			
 
 	remove_packing_info($plist);
+	delete_installed($pkgname);
 }
 
 package OpenBSD::PackingElement;

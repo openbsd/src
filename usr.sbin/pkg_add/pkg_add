@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.296 2007/05/31 10:04:03 espie Exp $
+# $OpenBSD: pkg_add,v 1.297 2007/05/31 13:33:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -334,6 +334,9 @@ sub really_add
 	for my $h ($set->newer) {
 		$h->{plist}->set_infodir($h->{location}->info);
 	}
+
+	$set->validate_plists($state);
+
 	my $handle = $set->handle;
 	my $plist = $handle->{plist};
 	my $pkgname = $handle->{pkgname};
@@ -354,9 +357,6 @@ sub really_add
 #		$replacing = 1;
 #	}
 	$state->{replacing} = $replacing;
-
-	$set->validate_plists($state);
-
 
 	$ENV{'PKG_PREFIX'} = $state->{localbase};
 
@@ -410,7 +410,6 @@ sub really_add
 				    $set, $state);
 			};
 
-			delete_installed($op->pkgname);
 			if (defined $state->{updatedepends}) {
 				delete $state->{updatedepends}->{$op->pkgname};
 			}
