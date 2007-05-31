@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.8 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: uts.c,v 1.9 2007/05/31 02:56:03 robert Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -66,6 +66,7 @@ struct uts_softc {
 	usbd_interface_handle	sc_iface;
 	int			sc_iface_number;
 	int			sc_product;
+	int			sc_vendor;
 
 	int			sc_intr_number;
 	usbd_pipe_handle	sc_intr_pipe;
@@ -94,7 +95,8 @@ struct uts_pos {
 Static const struct usb_devno uts_devs[] = {
 	{ USB_VENDOR_FTDI,		USB_PRODUCT_FTDI_ITM_TOUCH },
 	{ USB_VENDOR_EGALAX,		USB_PRODUCT_EGALAX_TPANEL },
-	{ USB_VENDOR_EGALAX,		USB_PRODUCT_EGALAX_TPANEL2 }
+	{ USB_VENDOR_EGALAX,		USB_PRODUCT_EGALAX_TPANEL2 },
+	{ USB_VENDOR_GUNZE,		USB_PRODUCT_GUNZE_TOUCHPANEL }
 };
 
 Static void uts_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -138,6 +140,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_udev = uaa->device;
 	sc->sc_product = uaa->product;
+	sc->sc_vendor = uaa->vendor;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
 	sc->sc_enabled = sc->sc_isize = 0;
@@ -383,11 +386,26 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 		break;
 	case USB_PRODUCT_EGALAX_TPANEL:
 	case USB_PRODUCT_EGALAX_TPANEL2:
-		down = (p[0] & 0x01);
-		/* Invert the X coordiate */
-		x = 0x07ff - abs(((p[3] & 0x0f) << 7) | (p[4] & 0x7f));
-		y = ((p[1] & 0x0f) << 7) | (p[2] & 0x7f);
-		sc->sc_pkts = 0x5;
+		/*
+		 * eGalax and Gunze USB touch panels have the same device ID,
+		 * so decide upon the vendor ID.
+		 */
+		switch (sc->sc_vendor) {
+		case USB_VENDOR_EGALAX:
+			down = (p[0] & 0x01);
+			/* Invert the X coordiate */
+			x = 0x07ff - abs(((p[3] & 0x0f) << 7) | (p[4] & 0x7f));
+			y = ((p[1] & 0x0f) << 7) | (p[2] & 0x7f);
+			sc->sc_pkts = 0x5;
+			break;
+		case USB_VENDOR_GUNZE:
+			down = (~p[7] & 0x20);
+			/* Invert the X coordinate */
+			x = 0x0fff - abs(((p[0] & 0x1f) << 7) | (p[2] & 0x7f));
+			y = ((p[1] & 0x1f) << 7) | (p[3] & 0x7f);
+			sc->sc_pkts = 0x4;
+			break;
+		}
 		break;
 	}
 
