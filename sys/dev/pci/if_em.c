@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.170 2007/05/30 06:29:17 ckuethe Exp $ */
+/* $OpenBSD: if_em.c,v 1.171 2007/05/31 00:47:53 ckuethe Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1607,7 +1607,7 @@ em_hardware_init(struct em_softc *sc)
 	if (sc->hw.mac_type == em_80003es2lan)
 		sc->hw.fc_pause_time = 0xFFFF;
 	else
-		sc->hw.fc_pause_time = 0x1000;
+		sc->hw.fc_pause_time = 1000;
 	sc->hw.fc_send_xon = TRUE;
 	sc->hw.fc = E1000_FC_FULL;
 
