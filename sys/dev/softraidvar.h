@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.27 2007/05/31 05:49:26 grunk Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.28 2007/05/31 18:56:27 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -89,6 +89,8 @@ struct sr_workunit {
 #define SR_WU_PARTIALLYFAILED	4
 #define SR_WU_DEFERRED		5
 #define SR_WU_PENDING		6
+#define SR_WU_RESTART		7
+#define SR_WU_REQUEUE		8
 
 	int			swu_fake;	/* faked wu */
 	/* workunit io range */

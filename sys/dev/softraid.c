@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.62 2007/05/31 06:26:23 grunk Exp $ */
+/* $OpenBSD: softraid.c,v 1.63 2007/05/31 18:56:27 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -50,6 +50,7 @@
 /* #define SR_FANCY_STATS */
 
 #ifdef SR_DEBUG
+#define SR_FANCY_STATS
 uint32_t	sr_debug = 0
 		    /* | SR_D_CMD */
 		    /* | SR_D_MISC */
@@ -127,6 +128,7 @@ int			sr_raid1_alloc_resources(struct sr_discipline *);
 int			sr_raid1_free_resources(struct sr_discipline *);
 int			sr_raid1_rw(struct sr_workunit *);
 void			sr_raid1_intr(struct buf *);
+void			sr_raid1_recreate_wu(struct sr_workunit *);
 
 struct cryptop *	sr_raidc_getcryptop(struct sr_workunit *, int);
 void *			sr_raidc_putcryptop(struct cryptop *);
@@ -1714,9 +1716,18 @@ ragain:
 		}
 #endif
 	}
+	
+	s = splbio();
+
+	/* current io failed, restart */
+	if (wu->swu_state == SR_WU_RESTART)
+		goto start;
+
+	/* deferred io failed, don't restart */
+	if (wu->swu_state == SR_WU_REQUEUE)
+		goto queued;
 
 	/* walk queue backwards and fill in collider if we have one */
-	s = splbio();
 	TAILQ_FOREACH_REVERSE(wup, &sd->sd_wu_pendq, sr_wu_list, swu_link) {
 		if (wu->swu_blk_end < wup->swu_blk_start ||
 		    wup->swu_blk_end < wu->swu_blk_start)
@@ -1736,9 +1747,8 @@ ragain:
 	}
 
 	/* XXX deal with polling */
-
+start:
 	sr_raid_startwu(wu);
-
 queued:
 	splx(s);
 	return (0);
@@ -1755,8 +1765,16 @@ sr_raid_startwu(struct sr_workunit *wu)
 
 	splassert(IPL_BIO);
 
-	/* move wu to pending queue */
-	TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
+	if (wu->swu_state == SR_WU_RESTART)
+		/*
+		 * no need to put the wu on the pending queue since we
+		 * are restarting the io
+		 */
+		 ;
+	else
+		/* move wu to pending queue */
+		TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
+
 	/* start all individual ios */
 	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link) {
 		bdevsw_lookup(ccb->ccb_buf.b_dev)->d_strategy(&ccb->ccb_buf);
@@ -1777,14 +1795,15 @@ sr_raid1_intr(struct buf *bp)
 	    DEVNAME(sc), bp, xs);
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
-	    " b_flags: 0x%0x\n", DEVNAME(sc), ccb->ccb_buf.b_bcount,
-	    ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags);
+	    " b_flags: 0x%0x block: %llu target: %d\n", DEVNAME(sc),
+	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
+	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
 
 	s = splbio();
 
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
-		printf("%s: i/o error on block %llu\n", DEVNAME(sc),
-		    ccb->ccb_buf.b_blkno);
+		DNPRINTF(SR_D_INTR, "%s: i/o error on block %llu target: %d\n", 
+		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
 		wu->swu_ios_failed++;
 		ccb->ccb_state = SR_CCB_FAILED;
 		if (ccb->ccb_target != -1)
@@ -1792,21 +1811,41 @@ sr_raid1_intr(struct buf *bp)
 			    BIOC_SDOFFLINE);
 		else
 			panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
+		
+
 	} else {
 		ccb->ccb_state = SR_CCB_OK;
 		wu->swu_ios_succeeded++;
 	}
 	wu->swu_ios_complete++;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d\n",
-	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count);
+	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d failed: %d\n",
+	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
+	    wu->swu_ios_failed);
 
-	if (wu->swu_ios_complete == wu->swu_io_count) {
-		if (wu->swu_ios_failed == wu->swu_ios_complete)
-			xs->error = XS_DRIVER_STUFFUP;
-		else
-			xs->error = XS_NOERROR;
+	if (wu->swu_ios_complete >= wu->swu_io_count) {
+		/* if all ios failed, retry reads and give up on writes */
+		if (wu->swu_ios_failed == wu->swu_ios_complete) {
+			if (xs->flags & SCSI_DATA_IN) {
+				printf("%s: retrying read on block %llu\n", 
+				    DEVNAME(sc), ccb->ccb_buf.b_blkno);
+				sr_put_ccb(ccb);
+				TAILQ_INIT(&wu->swu_ccb);
+				wu->swu_state = SR_WU_RESTART;
+				if (sd->sd_scsi_rw(wu))
+					goto bad;
+				else
+					goto retry;
+			} else {
+				printf("%s: permanently fail write on block "
+				    "%llu\n", DEVNAME(sc),
+				    ccb->ccb_buf.b_blkno);
+				xs->error = XS_DRIVER_STUFFUP;
+				goto bad;
+			}
+		}
 
+		xs->error = XS_NOERROR;
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 
@@ -1818,6 +1857,10 @@ sr_raid1_intr(struct buf *bp)
 				pend = 1;
 
 				if (wu->swu_collider) {
+					if (wu->swu_ios_failed)
+						/* toss all ccbs and recreate */
+						sr_raid1_recreate_wu(wu->swu_collider);
+
 					/* restart deferred wu */
 					wu->swu_collider->swu_state =
 					    SR_WU_INPROGRESS;
@@ -1841,7 +1884,41 @@ sr_raid1_intr(struct buf *bp)
 			wakeup(sd);
 	}
 
+retry:
 	splx(s);
+	return;
+bad:
+	xs->error = XS_DRIVER_STUFFUP;
+	xs->flags |= ITSDONE;
+	sr_put_wu(wu);
+	scsi_done(xs);
+	splx(s);
+}
+
+void
+sr_raid1_recreate_wu(struct sr_workunit *wu)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_workunit	*wup = wu;
+	struct sr_ccb		*ccb;
+
+	do {
+		DNPRINTF(SR_D_INTR, "%s: sr_raid1_recreate_wu: %p\n", wup);
+
+		/* toss all ccbs */
+		while ((ccb = TAILQ_FIRST(&wup->swu_ccb)) != NULL) {
+			TAILQ_REMOVE(&wup->swu_ccb, ccb, ccb_link);
+			sr_put_ccb(ccb);
+		}
+		TAILQ_INIT(&wup->swu_ccb);
+
+		/* recreate ccbs */
+		wup->swu_state = SR_WU_REQUEUE;
+		if (sd->sd_scsi_rw(wup))
+			panic("could not requeue io");
+
+		wup = wup->swu_collider;
+	} while (wup);
 }
 
 void
@@ -3068,9 +3145,12 @@ sr_raidc_intr(struct buf *bp)
 	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
 	struct sr_workunit	*wu = ccb->ccb_wu;
 	struct cryptop		*crp;
+#ifdef SR_DEBUG
+	struct sr_softc		*sc = wu->swu_dis->sd_sc;
+#endif
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
-	    DEVNAME(sc), bp, xs);
+	    DEVNAME(sc), bp, wu->swu_xs);
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
 	    " b_flags: 0x%0x\n", DEVNAME(sc), ccb->ccb_buf.b_bcount,
