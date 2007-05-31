@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.22 2007/04/15 10:17:29 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.23 2007/05/31 11:05:41 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -113,27 +113,6 @@ If a package is required by other installed packages not mentioned in
 the list of packages to remove,
 .Nm
 will list those dependent packages and refuse to delete the package.
-.Pp
-If the package contains a
-.Ar require
-file (see
-.Xr pkg_create 1 ) ,
-then this is executed first as
-.Bd -filled -offset indent
-.Cm require
-.Ar <pkg-name>
-.Ar DEINSTALL
-.Ed
-.Pp
-(where
-.Ar pkgname
-is the name of the package in question and
-.Ar DEINSTALL
-is a keyword denoting that this is a deinstallation)
-to see whether or not deinstallation should continue.
-A non-zero exit status means no, unless the
-.Fl f
-option is specified.
 .Pp
 If a
 .Cm deinstall

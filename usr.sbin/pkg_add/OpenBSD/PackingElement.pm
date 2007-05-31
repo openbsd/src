@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.121 2007/05/31 10:00:22 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.122 2007/05/31 11:05:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1348,10 +1348,6 @@ package OpenBSD::PackingElement::FREQUIRE;
 our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
 sub category() { OpenBSD::PackageInfo::REQUIRE }
 sub beautify() { "Require" }
-
-package OpenBSD::PackingElement::FREQUIRED_BY;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
-sub category() { OpenBSD::PackageInfo::REQUIRED_BY }
 
 package OpenBSD::PackingElement::DisplayFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);

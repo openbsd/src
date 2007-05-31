@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.6 2005/08/17 19:28:24 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.7 2007/05/31 11:05:41 espie Exp $
 
 =head1 NAME
 
@@ -90,11 +90,7 @@ package description.
 
 =item ::FREQUIRE
 
-registration of forward dependencies (see L<OpenBSD::RequiredBy(3p)>).
-
-=item ::FREQUIRED_BY
-
-registration of reverse dependencies.
+Deprecated.
 
 =item ::FMTREE_DIRS
 

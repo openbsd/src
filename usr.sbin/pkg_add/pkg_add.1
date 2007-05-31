@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.63 2007/05/07 08:14:51 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.64 2007/05/31 11:05:41 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -391,24 +391,6 @@ the installation is terminated.
 .Nm
 checks for collisions with installed file names, read-only file systems,
 and enough space to store files.
-.It
-If the package contains a
-.Ar require
-script (see
-.Xr pkg_create 1 ) ,
-it is executed with the following arguments:
-.Bl -tag -width indentindent
-.It Ar pkg-name
-The name of the package being installed
-.It Cm INSTALL
-Keyword denoting to the script that it is to run an installation requirements
-check
-(the keyword is useful only to scripts which serve multiple functions).
-.El
-.Pp
-If the
-.Ar require
-script exits with a non-zero status code, the installation is terminated.
 .It
 If the package contains an
 .Ar install

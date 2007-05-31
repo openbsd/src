@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.37 2007/05/22 11:02:57 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.38 2007/05/31 11:05:41 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -42,7 +42,6 @@
 .Op Fl M Ar displayfile
 .Op Fl P Ar pkg-dependency
 .Op Fl p Ar prefix
-.Op Fl r Ar rscript
 .Op Fl S Ar pkg-destdir
 .Op Fl U Ar undisplayfile
 .Op Fl W Ar wantedlib
@@ -123,14 +122,18 @@ concatenated together.
 .It Fl i Ar iscript
 Set
 .Ar iscript
-to be the install procedure for the package.
+to be the install procedure for the package (deprecated, use
+.Cm @exec
+instead).
 This can be any executable program (or shell script).
 It will be invoked automatically
 when the package is later installed.
 .It Fl k Ar dscript
 Set
 .Ar dscript
-to be the de-install procedure for the package.
+to be the de-install procedure for the package (deprecated, use
+.Cm @unexec
+instead).
 This can be any executable program (or shell script).
 It will be invoked automatically
 when the package is later (if ever) de-installed.
@@ -172,16 +175,6 @@ Print out the actual packing-list of the package being generated
 (query mode).
 Most often used in combination with
 .Fl n .
-.It Fl r Ar rscript
-Set
-.Ar rscript
-to be the
-.Dq requirements
-procedure for the package.
-This can be any executable program (or shell script).
-It will be invoked automatically
-at installation/deinstallation time to determine whether or not
-installation/deinstallation should proceed.
 .It Fl S Ar pkg-destdir
 Set
 .Ar pkg-destdir
