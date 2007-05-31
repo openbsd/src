@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.536 2007/05/31 06:22:40 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.537 2007/05/31 18:48:05 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -288,8 +288,8 @@ static __inline int pf_state_compare_lan_ext(struct pf_state_key *,
 	struct pf_state_key *);
 static __inline int pf_state_compare_ext_gwy(struct pf_state_key *,
 	struct pf_state_key *);
-static __inline int pf_state_compare_id(struct pf_state_key *,
-	struct pf_state_key *);
+static __inline int pf_state_compare_id(struct pf_state *,
+	struct pf_state *);
 
 struct pf_src_tree tree_src_tracking;
 
@@ -298,11 +298,11 @@ struct pf_state_queue state_list;
 
 RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RB_GENERATE(pf_state_tree_lan_ext, pf_state_key,
-    u.s.entry_lan_ext, pf_state_compare_lan_ext);
+    entry_lan_ext, pf_state_compare_lan_ext);
 RB_GENERATE(pf_state_tree_ext_gwy, pf_state_key,
-    u.s.entry_ext_gwy, pf_state_compare_ext_gwy);
-RB_GENERATE(pf_state_tree_id, pf_state_key,
-    u.s.entry_id, pf_state_compare_id);
+    entry_ext_gwy, pf_state_compare_ext_gwy);
+RB_GENERATE(pf_state_tree_id, pf_state,
+    entry_id, pf_state_compare_id);
 
 static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
@@ -485,7 +485,7 @@ pf_state_compare_ext_gwy(struct pf_state_key *a, struct pf_state_key *b)
 }
 
 static __inline int
-pf_state_compare_id(struct pf_state_key *a, struct pf_state_key *b)
+pf_state_compare_id(struct pf_state *a, struct pf_state *b)
 {
 	if (a->id > b->id)
 		return (1);
@@ -520,13 +520,11 @@ pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 #endif /* INET6 */
 
 struct pf_state *
-pf_find_state_byid(struct pf_state_key_cmp *key)
+pf_find_state_byid(struct pf_state_cmp *key)
 {
-	struct pf_state_key *sk;
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 	
-	sk = RB_FIND(pf_state_tree_id, &tree_id, (struct pf_state_key *)key);
-	return (sk ? sk->state : NULL);
+	return (RB_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
 }
 
 struct pf_state *
@@ -634,7 +632,6 @@ pf_check_threshold(struct pf_threshold *threshold)
 int
 pf_src_connlimit(struct pf_state **state)
 {
-	struct pf_state_key *sk;
 	int bad = 0;
 
 	(*state)->src_node->conn++;
@@ -690,9 +687,12 @@ pf_src_connlimit(struct pf_state **state)
 
 		/* kill existing states if that's required. */
 		if ((*state)->rule.ptr->flush) {
-			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
+			struct pf_state_key *sk;
+			struct pf_state *st;
 
-			RB_FOREACH(sk, pf_state_tree_id, &tree_id) {
+			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
+			RB_FOREACH(st, pf_state_tree_id, &tree_id) {
+				sk = st->state_key;
 				/*
 				 * Kill states from this source.  (Only those
 				 * from the same rule if PF_FLUSH_GLOBAL is not
@@ -709,11 +709,9 @@ pf_src_connlimit(struct pf_state **state)
 				        &sk->ext.addr, sk->af))) &&
 				    ((*state)->rule.ptr->flush &
 				    PF_FLUSH_GLOBAL ||
-				    (*state)->rule.ptr ==
-				    sk->state->rule.ptr)) {
-					sk->state->timeout = PFTM_PURGE;
-					sk->state->src.state =
-					    sk->state->dst.state =
+				    (*state)->rule.ptr == st->rule.ptr)) {
+					st->timeout = PFTM_PURGE;
+					st->src.state = st->dst.state =
 					    TCPS_CLOSED;
 					killed++;
 				}
@@ -844,15 +842,15 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 		return (-1);
 	}
 
-	if (sk->id == 0 && sk->creatorid == 0) {
-		sk->id = htobe64(pf_status.stateid++);
-		sk->creatorid = pf_status.hostid;
+	if (s->id == 0 && s->creatorid == 0) {
+		s->id = htobe64(pf_status.stateid++);
+		s->creatorid = pf_status.hostid;
 	}
-	if (RB_INSERT(pf_state_tree_id, &tree_id, sk) != NULL) {
+	if (RB_INSERT(pf_state_tree_id, &tree_id, s) != NULL) {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			printf("pf: state insert failed: "
 			    "id: %016llx creatorid: %08x",
-			    betoh64(sk->id), ntohl(sk->creatorid));
+			    betoh64(s->id), ntohl(s->creatorid));
 			if (s->sync_flags & PFSTATE_FROMSYNC)
 				printf(" (from sync)");
 			printf("\n");
@@ -1011,9 +1009,9 @@ pf_unlink_state(struct pf_state *cur)
 	    &cur->u.s.kif->pfik_ext_gwy, cur->state_key);
 	RB_REMOVE(pf_state_tree_lan_ext,
 	    &cur->u.s.kif->pfik_lan_ext, cur->state_key);
-	RB_REMOVE(pf_state_tree_id, &tree_id, cur->state_key);
+	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
 #if NPFSYNC
-	if (cur->state_key->creatorid == pf_status.hostid)
+	if (cur->creatorid == pf_status.hostid)
 		pfsync_delete_state(cur);
 #endif
 	cur->timeout = PFTM_UNLINKED;

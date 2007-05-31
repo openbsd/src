@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.246 2007/05/31 04:11:42 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.247 2007/05/31 18:48:05 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -688,7 +688,6 @@ TAILQ_HEAD(pf_state_queue, pf_state);
 /* keep synced with struct pf_state_key, used in RB_FIND */
 struct pf_state_key_cmp {
 	u_int64_t	 id;
-	u_int32_t	 creatorid;
 	struct pf_state_host lan;
 	struct pf_state_host gwy;
 	struct pf_state_host ext;
@@ -699,8 +698,6 @@ struct pf_state_key_cmp {
 };
 
 struct pf_state_key {
-	u_int64_t	 id;
-	u_int32_t	 creatorid;
 	struct pf_state_host lan;
 	struct pf_state_host gwy;
 	struct pf_state_host ext;
@@ -709,18 +706,25 @@ struct pf_state_key {
 	u_int8_t	 direction;
 	u_int8_t	 pad;
 
-	union {
-		struct {
-			RB_ENTRY(pf_state_key)	 entry_lan_ext;
-			RB_ENTRY(pf_state_key)	 entry_ext_gwy;
-			RB_ENTRY(pf_state_key)	 entry_id;
-		} s;
-	} u;
+	RB_ENTRY(pf_state_key)	 entry_lan_ext;
+	RB_ENTRY(pf_state_key)	 entry_ext_gwy;
 	struct pf_state	*state;
 };
 
 
+/* keep synced with struct pf_state, used in RB_FIND */
+struct pf_state_cmp {
+	u_int64_t	 id;
+	u_int32_t	 creatorid;
+	u_int32_t	 pad;
+};
+
 struct pf_state {
+	u_int64_t	 id;
+	u_int32_t	 creatorid;
+	u_int32_t	 pad;
+
+	RB_ENTRY(pf_state)	 entry_id;
 	struct pf_state_key	*state_key;
 	u_int8_t	 log;
 	u_int8_t	 allow_opts;
@@ -1004,11 +1008,11 @@ struct pfr_ktable {
 
 RB_HEAD(pf_state_tree_lan_ext, pf_state_key);
 RB_PROTOTYPE(pf_state_tree_lan_ext, pf_state_key,
-    u.s.entry_lan_ext, pf_state_compare_lan_ext);
+    entry_lan_ext, pf_state_compare_lan_ext);
 
 RB_HEAD(pf_state_tree_ext_gwy, pf_state_key);
 RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state_key,
-    u.s.entry_ext_gwy, pf_state_compare_ext_gwy);
+    entry_ext_gwy, pf_state_compare_ext_gwy);
 
 TAILQ_HEAD(pfi_statehead, pfi_kif);
 RB_HEAD(pfi_ifhead, pfi_kif);
@@ -1541,8 +1545,8 @@ RB_HEAD(pf_src_tree, pf_src_node);
 RB_PROTOTYPE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 extern struct pf_src_tree tree_src_tracking;
 
-RB_HEAD(pf_state_tree_id, pf_state_key);
-RB_PROTOTYPE(pf_state_tree_id, pf_state_key,
+RB_HEAD(pf_state_tree_id, pf_state);
+RB_PROTOTYPE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 extern struct pf_state_tree_id tree_id;
 extern struct pf_state_queue state_list;
@@ -1581,7 +1585,7 @@ extern int			 pf_insert_src_node(struct pf_src_node **,
 				    struct pf_rule *, struct pf_addr *,
 				    sa_family_t);
 void				 pf_src_tree_remove_state(struct pf_state *);
-extern struct pf_state		*pf_find_state_byid(struct pf_state_key_cmp *);
+extern struct pf_state		*pf_find_state_byid(struct pf_state_cmp *);
 extern struct pf_state		*pf_find_state_all(struct pf_state_key_cmp *,
 				    u_int8_t, int *);
 extern void			 pf_print_state(struct pf_state *);
