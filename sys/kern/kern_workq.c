@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.1 2007/05/31 18:16:59 dlg Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.2 2007/05/31 21:33:07 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -28,7 +28,7 @@
 
 struct workq_task {
 	int		wqt_flags;
-	void		(*wqt_func)(void *, void *);
+	workq_fn	wqt_func;
 	void		*wqt_arg1;
 	void		*wqt_arg2;
 
@@ -121,8 +121,8 @@ workq_destroy(struct workq *wq)
 }
 
 int
-workq_add_task(struct workq *wq, void (*func)(void *, void *),
-    void *a1, void *a2, int flags)
+workq_add_task(struct workq *wq, int flags, workq_fn func,
+    void *a1, void *a2)
 {
 	struct workq_task	*wqt;
 	int			wake = 1;
