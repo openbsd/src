@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.120 2007/05/30 12:52:07 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.121 2007/05/31 10:00:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -327,6 +327,17 @@ sub set_tempname
 {
 	my ($self, $tempname) = @_;
 	$self->{tempname} = $tempname;
+}
+
+sub realname
+{
+	my ($self, $state) = @_;
+
+	my $name = $self->fullname;
+	if (defined $self->{tempname}) {
+		$name = $self->{tempname};
+	}
+	return $state->{destdir}.$name;
 }
 
 sub IsFile() { 1 }

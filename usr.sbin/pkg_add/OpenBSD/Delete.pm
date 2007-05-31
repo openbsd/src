@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.54 2007/05/30 16:32:14 espie Exp $
+# $OpenBSD: Delete.pm,v 1.55 2007/05/31 10:00:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -29,14 +29,14 @@ sub rename_file_to_temp
 	my $i = shift;
 	require OpenBSD::Temp;
 
-	my $n = $i->fullname();
+	my $n = $i->fullname;
 
 	my ($fh, $j) = OpenBSD::Temp::permanent_file(undef, $n);
 	close $fh;
 	if (rename($n, $j)) {
 		print "Renaming old file $n to $j\n";
-		if ($i->{name} !~ m|^/| && $i->cwd() ne '.') {
-			my $c = $i->cwd();
+		if ($i->{name} !~ m|^/| && $i->cwd ne '.') {
+			my $c = $i->cwd;
 			$j =~ s|^\Q$c\E/||;
 		}
 		$i->{name} = $j;
@@ -217,18 +217,7 @@ sub mark_dir
 {
 	my ($self, $state) = @_;
 
-	$self->mark_directory($state, dirname($self->fullname()));
-}
-
-sub realname
-{
-	my ($self, $state) = @_;
-
-	my $name = $self->fullname;
-	if (defined $self->{tempname}) {
-		$name = $self->{tempname};
-	}
-	return $state->{destdir}.$name;
+	$self->mark_directory($state, dirname($self->fullname));
 }
 
 sub do_not_delete
@@ -302,7 +291,7 @@ sub delete
 	my ($self, $state) = @_;
 
 	if ($state->{very_verbose}) {
-		print "dirrm: ", $self->fullname, "\n";
+		print "rmdir: ", $self->fullname, "\n";
 	}
 
 	$self->record_shared($state->{recorder}, $state->{pkgname});
@@ -423,7 +412,7 @@ sub prepare_for_deletetion
 {
 	my ($self, $state, $pkgname) = @_;
 
-	my $fname = installed_info($pkgname).$self->{name};
+	my $fname = $self->fullname;
 	my $size = $self->{size};
 	if (!defined $size) {
 		$size = (stat $fname)[7];
@@ -522,7 +511,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 	unless ($state->{not}) {
-	    my $fullname = $state->{destdir}.$self->fullname();
+	    my $fullname = $state->{destdir}.$self->fullname;
 	    VSystem($state->{very_verbose}, 
 	    "install-info", "--delete", "--info-dir=".dirname($fullname), $fullname);
 	}
