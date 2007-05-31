@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2007/05/31 03:24:05 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.48 2007/05/31 18:20:03 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -1415,6 +1415,9 @@ parse_config(const char *filename, int opts)
 	    (conf->tables = calloc(1, sizeof(*conf->tables))) == NULL ||
 	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL)
 		return (NULL);
+
+	last_host_id = last_table_id = last_service_id = last_proto_id =
+	    last_relay_id = 0;
 
 	TAILQ_INIT(conf->services);
 	TAILQ_INIT(conf->tables);
