@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.266 2007/04/21 14:50:26 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.267 2007/05/31 04:13:37 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -998,7 +998,7 @@ int
 pfctl_show_states(int dev, const char *iface, int opts)
 {
 	struct pfioc_states ps;
-	struct pf_state *p;
+	struct pfsync_state *p;
 	char *inbuf = NULL, *newinbuf = NULL;
 	unsigned len = 0;
 	int i, dotitle = (opts & PF_OPT_SHOWALL);
@@ -1029,7 +1029,7 @@ pfctl_show_states(int dev, const char *iface, int opts)
 	}
 	p = ps.ps_states;
 	for (i = 0; i < ps.ps_len; i += sizeof(*p), p++) {
-		if (iface != NULL && strcmp(p->u.ifname, iface))
+		if (iface != NULL && strcmp(p->ifname, iface))
 			continue;
 		if (dotitle) {
 			pfctl_print_title("STATES:");
