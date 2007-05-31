@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.1 2007/05/31 18:45:09 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.2 2007/05/31 23:28:30 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -20,8 +20,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
@@ -64,10 +62,6 @@ struct sbt_softc {
 int	sbt_match(struct device *, void *, void *);
 void	sbt_attach(struct device *, struct device *, void *);
 int	sbt_detach(struct device *, int);
-void	sbt_create_thread(void *);
-
-void	sbt_thread0(void *);
-void	sbt_thread(void *);
 
 int	sbt_write_packet(struct sbt_softc *, u_char *, size_t);
 int	sbt_read_packet(struct sbt_softc *, u_char *, size_t *);
@@ -97,8 +91,6 @@ struct cfattach sbt_ca = {
 struct cfdriver sbt_cd = {
 	NULL, "sbt", DV_DULL
 };
-
-extern struct cfdriver bthub_cd;
 
 
 /*
@@ -174,12 +166,6 @@ sbt_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sdmmc_intr_enable(sc->sc_sf);
 
-	/* Create a thread for the packet transport. */
-#ifdef DO_CONFIG_PENDING
-	config_pending_incr();
-#endif
-	kthread_create_deferred(sbt_create_thread, sc);
-
 	/*
 	 * Attach Bluetooth unit (machine-independent HCI).
 	 */
@@ -192,23 +178,6 @@ sbt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_unit.hci_start_sco = sbt_start_sco;
 	sc->sc_unit.hci_ipl = IPL_TTY; /* XXX */
 	hci_attach(&sc->sc_unit);
-}
-
-void
-sbt_create_thread(void *arg)
-{
-	struct sbt_softc *sc = arg;
-	struct proc *thread0;
-
-	if (kthread_create(sbt_thread, sc, &sc->sc_thread, "%s",
-	    DEVNAME(sc)) != 0)
-		printf("%s: unable to create thread\n", DEVNAME(sc));
-	if (kthread_create(sbt_thread0, sc, &thread0, "%s (hci)",
-	    DEVNAME(sc)) != 0)
-		printf("%s: unable to create hci thread\n", DEVNAME(sc));
-#ifdef DO_CONFIG_PENDING
-	config_pending_decr();
-#endif
 }
 
 int
@@ -230,41 +199,6 @@ sbt_detach(struct device *self, int flags)
 
 
 /*
- * Bluetooth HCI packet transport thread (*caugh*)
- */
-
-void
-sbt_thread0(void *arg)
-{
-	struct sbt_softc *sc = arg;
-
-	/* XXX wrong place */
-	if (!(sc->sc_unit.hci_flags & BTF_UP) &&
-	    hci_enable(&sc->sc_unit) == 0)
-		sc->sc_unit.hci_flags |= BTF_UP;
-
-	kthread_exit(0);
-}
-
-void
-sbt_thread(void *arg)
-{
-	struct sbt_softc *sc = arg;
-
-	while (!sc->sc_dying) {
-#ifdef SBT_POLLING
-		if (sbt_intr_pending(sc) && sbt_intr(sc))
-			continue;
-#endif
-		tsleep(sc, PPAUSE, "slack", hz / 4);
-	}
-
-	sc->sc_thread = NULL;
-	wakeup(sc);
-	kthread_exit(0);
-}
-
-/*
  * Bluetooth HCI packet transport
  */
 
@@ -272,6 +206,7 @@ int
 sbt_write_packet(struct sbt_softc *sc, u_char *buf, size_t len)
 {
 	u_char hdr[3];
+	size_t pktlen;
 	int error = EIO;
 	int retry = 3;
 
@@ -285,9 +220,10 @@ again:
 	sdmmc_io_write_1(sc->sc_sf, SBT_REG_WPC, WPC_PCWRT);
 
 	/* Write the packet length. */
-	hdr[0] = len & 0xff;
-	hdr[1] = (len >> 8) & 0xff;
-	hdr[2] = (len >> 16) & 0xff;
+	pktlen = len + 3;
+	hdr[0] = pktlen & 0xff;
+	hdr[1] = (pktlen >> 8) & 0xff;
+	hdr[2] = (pktlen >> 16) & 0xff;
 	error = sdmmc_io_write_multi_1(sc->sc_sf, SBT_REG_DAT, hdr, 3);
 	if (error) {
 		DPRINTF(("sbt_write_packet: failed to send length\n"));
@@ -357,6 +293,9 @@ sbt_intr(void *arg)
 	struct mbuf *m = NULL;
 	u_int8_t status;
 	size_t len;
+	int s;
+
+	s = splsdmmc();
 
 	status = CSR_READ_1(sc, SBT_REG_ISTAT);
 	CSR_WRITE_1(sc, SBT_REG_ICLR, status);
@@ -393,6 +332,8 @@ eoi:
 		hci_input_event(&sc->sc_unit, m);
 	else
 		sc->sc_unit.hci_stats.err_rx++;
+
+	splx(s);
 
 	/* Claim this interrupt. */
 	return 1;
