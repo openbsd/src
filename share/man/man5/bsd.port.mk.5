@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.195 2007/05/21 11:19:30 steven Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.196 2007/05/31 10:48:51 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -51,7 +51,7 @@ followed by sections on obsolete constructs that a porter may need
 when converting from other ports systems.
 There is a separate section covering the fake framework, a section
 explaining flavors and multi-packages, and a section covering
-the generation of packing-lists.
+the generation of package information.
 .Pp
 Selected common user activity such as the building of every package in
 the system is covered by
@@ -1745,11 +1745,6 @@ Note that WRKDIST may be a symbolic link, if set to ${WRKDIR}.
 Subdirectory of ${WRKDIR} where the actual source is.
 Base for configuration (default: ${WRKDIST})
 Note that WRKSRC may be a symbolic link, if set to ${WRKDIR}.
-.It Ev WRKPKG
-Subdirectory of ${WRKBUILD} where package information gets generated.
-Defaults to ${WKRBUILD}/pkg, do not override unless
-.Sq pkg
-conflicts with the port's conventions.
 .It Ev WRKINST
 Subdirectory of ${WRKDIR} where port normally installs (see
 .Ar fake
@@ -2145,6 +2140,11 @@ The framework will automatically detect the presence of
 files to extract.
 .It Ev VARNAME
 Use make show=name instead of make show VARNAME=name.
+.It Ev WRKPKG
+Directory used to build package information from the templates under
+.Pa ${PKGDIR} .
+This information is now built on the fly by
+.Xr pkg_create 1 .
 .El
 .Sh OBSOLETE FILES
 .Bl -tag -width files/md5
@@ -2163,6 +2163,10 @@ in the Makefile, or put the script in ${FILESDIR} and
 invoke it.
 .It Pa ${PKGDIR}/COMMENT
 Use COMMENT variable instead.
+.It Pa ${PKGDIR}/DEINSTALL*
+Use @unexec annotations in the packing-list instead.
+.It Pa ${PKGDIR}/INSTALL*
+Use @exec annotations in the packing-list instead.
 .It Pa ${PKGDIR}/PLIST.noshared
 Use PFRAG.shared or PFRAG.no-shared instead.
 PLIST.noshared was too easy to forget when updating ports.
@@ -2172,6 +2176,8 @@ Until revision 1.295,
 .Nm
 did not substitute variables in the packing list unless this special form
 was used.
+.It Pa ${PKGDIR}/REQ*
+Old requirement script. Was mostly unused anyways.
 .It Pa /usr/share/mk/bsd.port.mk
 Original location of
 .Nm bsd.port.mk .
@@ -2289,7 +2295,7 @@ in FLAVORS.
 In recursive package building, flavors can be specified as a comma
 separated list after the package directory, e.g., SUBDIR+=vim,no_x11.
 .Pp
-Finally, packing information will use templates with the canonical package
+Finally, package information will use templates with the canonical package
 extension if they are available: if FLAVOR='option1 option2' and both
 COMMENT and COMMENT-option1-option2 are available, COMMENT-option1-option2 will
 be used.
@@ -2317,7 +2323,7 @@ will be used for the subpackages respectively called
 and
 .Ev FULLPKGNAME-server .
 .Pp
-All packing information is also derived from
+All package information is also derived from
 templates with SUBPACKAGE appended.
 In the preceding example, the packing-list template for FULLPKGNAME-lib
 must be in PLIST-lib.
@@ -2400,11 +2406,12 @@ and invoking
 is the same as invoking
 subupdate
 for all subpackages.
-.Sh THE GENERATION OF PACKING INFORMATION
+.Sh THE GENERATION OF PACKAGE INFORMATION
 Starting after
-.Ox 2.7
-(around revision 1.300 of bsd.port.mk), all packing information is
-generated from templates in ${PKGDIR}.
+.Ox 4.1
+all package information is processed directly by
+.Xr pkg_create 1
+from templates in ${PKG_DIR}.
 .Pp
 .Bl -bullet -compact
 .It
@@ -2413,13 +2420,11 @@ depending on the current SUBPACKAGE and FLAVOR information.
 Set ${PLIST${SUBPACKAGE}}, ${DESCR${SUBPACKAGE}}, ${COMMENT${SUBPACKAGE}}, ${MESSAGE${SUBPACKAGE}}, ${UNMESSAGE${SUBPACKAGE}} accordingly.
 .It
 Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
-Modify PKG_ARGS accordingly, to use the generated files, and add
-dependencies to regenerate the files if the templates change.
+These are now deprecated. 
+Use @exec and @unexec annotations instead.
 .It
 Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE,
-REQ, INSTALL, DEINSTALL from the templates in ${DESCR}, ${MESSAGE},
-${UNMESSAGE}, ${PKGDIR}/REQ${SUBPACKAGE},
-${PKGDIR}/INSTALL${SUBPACKAGE}, ${PKGDIR}/DEINSTALL${SUBPACKAGE}, by
+from the templates in ${DESCR}, ${MESSAGE}, ${UNMESSAGE}, by
 substituting the variables in ${SUBST_VARS}, and by substituting
 ${FLAVORS} with the canonical flavor extension for this port,
 e.g., if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is
@@ -2427,7 +2432,7 @@ e.g., if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is
 .It
 Generate the actual PLIST from the template ${PLIST},
 by inserting shared/no-shared fragments, merging other fragments,
-and applying the same variable substitutions as other packing information.
+and applying the same variable substitutions as other package information.
 .El
 .Pp
 Note that ${COMMENT} is currently not substituted, to speed up
@@ -2486,19 +2491,22 @@ PFRAG.shared fragments.
 .Pp
 If
 .Ev PLIST_DB
-points to a directory, all packing-lists generated by
+points to a directory, all packing-lists from packages generated by
 .Xr pkg_create 1
 during the
 .Ar package
-stage are saved in that location in a timeless format:
-md5 and size information are removed, as well as build specificities.
+stage are saved in that location by a script:
+.Pa ${PORTSDIR}/infrastructure/packages/register-plist .
+This script strips some irrelevant information and normalizes the
+packing-list somehow, and compares it to existing information, looking
+for relevant changes.
 Since a package name must always be changed when the packing-list changes,
 any attempt to replace a packing-list of a given name with a different
 packing-list will be flagged as an error.
 .Pp
 In MULTI_PACKAGES mode, there must be separate COMMENT, DESCR, and PLIST
-templates for each SUBPACKAGE (and optional distinct MESSAGE, UNMESSAGE,
-REQ, INSTALL, DEINSTALL files in a similar way).
+templates for each SUBPACKAGE (and optional distinct MESSAGE, UNMESSAGE
+files in a similar way).
 This contrasts with the FLAVORS
 situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
