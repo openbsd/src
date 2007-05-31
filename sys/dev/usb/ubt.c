@@ -1,4 +1,4 @@
-/* $OpenBSD: ubt.c,v 1.1 2007/05/30 12:15:02 gwk Exp $ */
+/* $OpenBSD: ubt.c,v 1.2 2007/05/31 05:07:19 gwk Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -84,6 +84,7 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/kthread.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -250,6 +251,8 @@ USB_DECLARE_DRIVER(ubt);
 static int ubt_set_isoc_config(struct ubt_softc *);
 static void ubt_abortdealloc(struct ubt_softc *);
 
+void ubt_create_thread(void *);
+void ubt_thread(void *);
 /*
  * Match against the whole device, since we want to take
  * both interfaces. If a device should be ignored then add
@@ -259,6 +262,7 @@ static void ubt_abortdealloc(struct ubt_softc *);
  * to the ubt_ignore list.
  */
 static const struct usb_devno ubt_ignore[] = {
+	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033 },
 	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
 	{ 0, 0 }	/* end of list */
 };
@@ -426,9 +430,24 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
+	kthread_create_deferred(ubt_create_thread, sc);
 	sc->sc_ok = 1;
 
 	return;
+}
+
+void
+ubt_create_thread(void *v)
+{
+	kthread_create(ubt_thread, v, NULL, "ubt");
+}
+
+void
+ubt_thread(void *v)
+{
+	struct ubt_softc *sc = (struct ubt_softc *)v;
+	hci_enable(&sc->sc_unit);
+	kthread_exit(0);
 }
 
 int
