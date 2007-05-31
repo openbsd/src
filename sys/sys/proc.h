@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.98 2007/05/16 17:27:30 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.99 2007/05/31 22:07:53 thib Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -254,7 +254,6 @@ struct proc {
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
 	u_short	p_acflag;	/* Accounting flags. */
 	struct	rusage *p_ru;	/* Exit information. XXX */
-	int	p_locks;       	/* DEBUG: lockmgr count of held locks */
 };
 
 #define	p_session	p_pgrp->pg_session

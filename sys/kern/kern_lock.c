@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.29 2007/05/11 10:06:56 pedro Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.30 2007/05/31 22:07:53 thib Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -60,13 +60,6 @@ void playback_stacktrace(int *, int);
  * Locking primitives implementation.
  * Locks provide shared/exclusive synchronization.
  */
-
-#if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
-#define	COUNT(lkp, p, cpu_id, x)					\
-	(p)->p_locks += (x)
-#else
-#define COUNT(lkp, p, cpu_id, x)
-#endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
 
 #ifdef DDB /* { */
 #ifdef MULTIPROCESSOR
@@ -281,7 +274,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 			if (error)
 				break;
 			lkp->lk_sharecount++;
-			COUNT(lkp, p, cpu_id, 1);
 			break;
 		}
 		/*
@@ -289,7 +281,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 		 * An alternative would be to fail with EDEADLK.
 		 */
 		lkp->lk_sharecount++;
-		COUNT(lkp, p, cpu_id, 1);
 
 		if (WEHOLDIT(lkp, pid, cpu_id) == 0 ||
 		    lkp->lk_exclusivecount == 0)
@@ -319,7 +310,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 					panic("lockmgr: locking against myself");
 			}
 			lkp->lk_exclusivecount++;
-			COUNT(lkp, p, cpu_id, 1);
 			break;
 		}
 		/*
@@ -356,7 +346,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 		if (lkp->lk_exclusivecount != 0)
 			panic("lockmgr: non-zero exclusive count");
 		lkp->lk_exclusivecount = 1;
-		COUNT(lkp, p, cpu_id, 1);
 		break;
 
 	case LK_RELEASE:
@@ -367,7 +356,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 				    pid, lkp->lk_lockholder);
 			}
 			lkp->lk_exclusivecount--;
-			COUNT(lkp, p, cpu_id, -1);
 			if (lkp->lk_exclusivecount == 0) {
 				lkp->lk_flags &= ~LK_HAVE_EXCL;
 				SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
@@ -379,7 +367,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 			}
 		} else if (lkp->lk_sharecount != 0) {
 			lkp->lk_sharecount--;
-			COUNT(lkp, p, cpu_id, -1);
 		}
 #ifdef DIAGNOSTIC
 		else
@@ -421,7 +408,6 @@ lockmgr(__volatile struct lock *lkp, u_int flags, struct simplelock *interlkp)
 #endif
 		HAVEIT(lkp);
 		lkp->lk_exclusivecount = 1;
-		COUNT(lkp, p, cpu_id, 1);
 		break;
 
 	default:
