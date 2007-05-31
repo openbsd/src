@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.47 2007/05/27 04:00:24 jsg Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.48 2007/05/31 00:34:11 maja Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -535,7 +535,7 @@ kue_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("/n%s: %s\n", USBDEVNAME(sc->kue_dev), devinfop);
+	printf("\n%s: %s\n", USBDEVNAME(sc->kue_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
