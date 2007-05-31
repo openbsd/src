@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.127 2007/04/28 02:24:21 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.128 2007/05/31 18:07:18 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -521,7 +521,7 @@ sdstrategy(struct buf *bp)
 		goto done;
 
 	/*
-	 * The transfer must be a whole number of blocks.
+	 * The transfer must be a whole number of sectors.
 	 */
 	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
@@ -593,6 +593,8 @@ sdstart(void *v)
 	struct buf *bp = 0;
 	struct buf *dp;
 	struct scsi_rw_big cmd_big;
+	struct scsi_rw_12 cmd_12;
+	struct scsi_rw_16 cmd_16;
 	struct scsi_rw cmd_small;
 	struct scsi_generic *cmdp;
 	int blkno, nblks, cmdlen, error;
@@ -661,18 +663,19 @@ sdstart(void *v)
 		    ((blkno & 0x1fffff) == blkno) &&
 		    ((nblks & 0xff) == nblks)) {
 			/*
-			 * We can fit in a small cdb.
+			 * We can fit in a 6 byte cdb.
 			 */
 			bzero(&cmd_small, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    READ_COMMAND : WRITE_COMMAND;
 			_lto3b(blkno, cmd_small.addr);
-			cmd_small.length = nblks & 0xff;
+			cmd_small.length = nblks;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsi_generic *)&cmd_small;
-		} else {
+		} else if (((blkno & 0xffffffff) == blkno) &&
+		    ((nblks & 0xffff) == nblks)) {
 			/*
-			 * Need a large cdb.
+			 * We can fit in a 10 byte cdb.
 			 */
 			bzero(&cmd_big, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
@@ -681,6 +684,29 @@ sdstart(void *v)
 			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
 			cmdp = (struct scsi_generic *)&cmd_big;
+		} else if (((blkno & 0xffffffff) == blkno) &&
+		    ((nblks & 0xffffffff) == nblks)) {
+			/*
+			 * We can fit in a 12 byte cdb.
+			 */
+			bzero(&cmd_12, sizeof(cmd_12));
+			cmd_12.opcode = (bp->b_flags & B_READ) ?
+			    READ_12 : WRITE_12;
+			_lto4b(blkno, cmd_12.addr);
+			_lto4b(nblks, cmd_12.length);
+			cmdlen = sizeof(cmd_12);
+			cmdp = (struct scsi_generic *)&cmd_12;
+		} else {
+			/*
+			 * Need a 16 byte cdb. There's nothing bigger.
+			 */
+			bzero(&cmd_16, sizeof(cmd_16));
+			cmd_16.opcode = (bp->b_flags & B_READ) ?
+			    READ_16 : WRITE_16;
+			_lto8b(blkno, cmd_16.addr);
+			_lto4b(nblks, cmd_16.length);
+			cmdlen = sizeof(cmd_16);
+			cmdp = (struct scsi_generic *)&cmd_16;
 		}
 
 		/* Instrumentation. */
