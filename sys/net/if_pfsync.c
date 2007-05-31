@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.76 2007/05/31 18:48:05 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.77 2007/05/31 20:38:12 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -433,7 +433,7 @@ pfsync_input(struct mbuf *m, ...)
 				if (sk->state->creatorid == creatorid) {
 					sk->state->sync_flags |=
 					    PFSTATE_FROMSYNC;
-					pf_unlink_state(st);
+					pf_unlink_state(sk->state);
 				}
 			}
 		}
