@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.42 2007/05/31 16:48:18 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.43 2007/05/31 22:33:45 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -247,13 +247,6 @@ sub lookup_library
 			}
 		}
 	}
-	for my $dep (@{$plist->{depends}}) {
-		$r = find_old_lib($state, $plist->localbase, $dep->{pattern}, $lib, $dependencies);
-		if ($r) {
-			print "found libspec $lib in old package $r\n" if $state->{verbose};
-			return 1;
-		}
-    	}
 	# lookup through the rest of the tree...
 	my $done = $self->{done};
 	while (my $dep = pop @{$self->{todo}}) {
@@ -272,6 +265,13 @@ sub lookup_library
 			return 1;
 		} 
 	}
+	for my $dep (@{$plist->{depends}}) {
+		$r = find_old_lib($state, $plist->localbase, $dep->{pattern}, $lib, $dependencies);
+		if ($r) {
+			print "found libspec $lib in old package $r\n" if $state->{verbose};
+			return 1;
+		}
+    	}
 	
 	print "libspec $lib not found\n" if $state->{very_verbose};
 	return;
