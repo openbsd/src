@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.12 2007/06/01 06:38:56 deraadt Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.13 2007/06/01 17:01:29 pedro Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 typedef int32_t ufs_daddr_t;
 typedef int32_t ufs1_daddr_t;
 typedef int64_t ufs_lbn_t;
-typedef int64_t ufs_time_t;
 
 #define	NXADDR	2			/* External addresses in inode */
 #define	NDADDR	12			/* Direct addresses in inode. */
@@ -96,10 +95,10 @@ struct ufs2_dinode {
 	u_int32_t	di_blksize;	/*  12: Inode blocksize. */
 	u_int64_t	di_size;	/*  16: File byte count. */
 	u_int64_t	di_blocks;	/*  24: Bytes actually held. */
-	ufs_time_t	di_atime;	/*  32: Last access time. */
-	ufs_time_t	di_mtime;	/*  40: Last modified time. */
-	ufs_time_t	di_ctime;	/*  48: Last inode change time. */
-	ufs_time_t	di_birthtime;	/*  56: Inode creation time. */
+	int64_t		di_atime;	/*  32: Last access time. */
+	int64_t		di_mtime;	/*  40: Last modified time. */
+	int64_t		di_ctime;	/*  48: Last inode change time. */
+	int64_t		di_birthtime;	/*  56: Inode creation time. */
 	int32_t		di_mtimensec;	/*  64: Last modified time. */
 	int32_t		di_atimensec;	/*  68: Last access time. */
 	int32_t		di_ctimensec;	/*  72: Last inode change time. */
