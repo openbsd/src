@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.66 2007/06/01 23:08:23 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.67 2007/06/01 23:42:35 pedro Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 */
 	if (Oflag <= 1) {
 		sblock.fs_sblockloc = SBLOCK_UFS1;
-		sblock.fs_nindir = sblock.fs_bsize / sizeof(ufs1_daddr_t);
+		sblock.fs_nindir = sblock.fs_bsize / sizeof(int32_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
 		if (Oflag == 0) {
 			sblock.fs_maxsymlinklen = 0;
@@ -284,7 +284,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	} else {
 		sblock.fs_inodefmt = FS_44INODEFMT;
 		sblock.fs_sblockloc = SBLOCK_UFS2;
-		sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr64_t);
+		sblock.fs_nindir = sblock.fs_bsize / sizeof(int64_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs2_dinode);
 		sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS2;
 	}

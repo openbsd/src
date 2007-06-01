@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.29 2007/06/01 06:41:35 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.30 2007/06/01 23:42:35 pedro Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.29 2007/06/01 06:41:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.30 2007/06/01 23:42:35 pedro Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -379,9 +379,9 @@ dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t filesize,
 	if (ind_level <= 0) {
 		for (i = 0; filesize > 0 && i < NINDIR(sblock); i++) {
 			if (sblock->fs_magic == FS_UFS1_MAGIC)
-				blkno = ((ufs1_daddr_t *)idblk)[i];
+				blkno = ((int32_t *)idblk)[i];
 			else
-				blkno = ((daddr64_t *)idblk)[i];
+				blkno = ((int64_t *)idblk)[i];
 			if (blkno != 0)
 				searchdir(ino, blkno, sblock->fs_bsize,
 				    filesize, path);
@@ -391,9 +391,9 @@ dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t filesize,
 	ind_level--;
 	for (i = 0; filesize > 0 && i < NINDIR(sblock); i++) {
 		if (sblock->fs_magic == FS_UFS1_MAGIC)
-			blkno = ((ufs1_daddr_t *)idblk)[i];
+			blkno = ((int32_t *)idblk)[i];
 		else
-			blkno = ((daddr64_t *)idblk)[i];
+			blkno = ((int64_t *)idblk)[i];
 		if (blkno != 0)
 			dirindir(ino, blkno, ind_level, filesize, path);
 	}

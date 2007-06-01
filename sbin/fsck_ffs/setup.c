@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.36 2007/06/01 06:41:33 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.37 2007/06/01 23:42:35 pedro Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.36 2007/06/01 06:41:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.37 2007/06/01 23:42:35 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -357,9 +357,9 @@ setup(char *dev)
 		}
 	}
 	if (sblock.fs_magic == FS_UFS2_MAGIC)
-		nindir = sblock.fs_bsize / sizeof(daddr64_t);
+		nindir = sblock.fs_bsize / sizeof(int64_t);
 	else
-		nindir = sblock.fs_bsize / sizeof(ufs1_daddr_t);
+		nindir = sblock.fs_bsize / sizeof(int32_t);
 	if (NINDIR(&sblock) != nindir) {
 		pwarn("INCONSISTENT NINDIR=%d\n", NINDIR(&sblock));
 		sblock.fs_nindir = nindir;

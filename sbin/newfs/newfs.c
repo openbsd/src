@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.66 2007/06/01 06:41:35 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.67 2007/06/01 23:42:35 pedro Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -98,8 +98,8 @@ u_short	dkcksum(struct disklabel *);
  * placed in a single cylinder group. The default is one indirect
  * block worth of data blocks.
  */
-#define MAXBLKPG_FFS1(bsize)	((bsize) / sizeof(ufs1_daddr_t))
-#define MAXBLKPG_FFS2(bsize)	((bsize) / sizeof(daddr64_t))
+#define MAXBLKPG_FFS1(bsize)	((bsize) / sizeof(int32_t))
+#define MAXBLKPG_FFS2(bsize)	((bsize) / sizeof(int64_t))
 
 /*
  * Each file system has a number of inodes statically allocated.

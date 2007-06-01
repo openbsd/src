@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.24 2007/06/01 06:41:33 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.25 2007/06/01 23:42:35 pedro Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1.c,v 1.24 2007/06/01 06:41:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.25 2007/06/01 23:42:35 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,9 +132,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	if (mode == 0) {
 		if ((sblock.fs_magic == FS_UFS1_MAGIC &&
 		     (memcmp(dp->dp1.di_db, ufs1_zino.di_db,
-			NDADDR * sizeof(ufs1_daddr_t)) ||
+			NDADDR * sizeof(int32_t)) ||
 		      memcmp(dp->dp1.di_ib, ufs1_zino.di_ib,
-			NIADDR * sizeof(ufs1_daddr_t)) ||
+			NIADDR * sizeof(int32_t)) ||
 		      dp->dp1.di_mode || dp->dp1.di_size)) ||
 		    (sblock.fs_magic == FS_UFS2_MAGIC &&
 		     (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
@@ -213,10 +213,10 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		    (sblock.fs_maxsymlinklen == 0 && DIP(dp, di_blocks) == 0)) {
 			if (sblock.fs_magic == FS_UFS1_MAGIC)
 				ndb = howmany(DIP(dp, di_size),
-				    sizeof(ufs1_daddr_t));
+				    sizeof(int32_t));
 			else
 				ndb = howmany(DIP(dp, di_size),
-				    sizeof(daddr64_t));
+				    sizeof(int64_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
 				for (ndb = 1; j > 1; j--)
