@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.32 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.33 2007/06/01 00:52:39 henning Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -495,7 +495,7 @@ rip6_output(struct mbuf *m, ...)
 		flags |= IPV6_MINMTU;
 
 	error = ip6_output(m, optp, &in6p->in6p_route, flags,
-	    in6p->in6p_moptions, &oifp);
+	    in6p->in6p_moptions, &oifp, in6p);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 		if (oifp)
 			icmp6_ifoutstat_inc(oifp, type, code);

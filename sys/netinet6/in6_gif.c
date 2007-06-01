@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.24 2007/02/15 22:45:09 claudio Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.25 2007/06/01 00:52:38 henning Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ in6_gif_output(ifp, family, m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL);
+	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL, NULL);
 
 	return error;
 }

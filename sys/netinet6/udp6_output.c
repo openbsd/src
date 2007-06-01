@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.13 2006/12/09 01:12:28 itojun Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.14 2007/06/01 00:52:39 henning Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ udp6_output(in6p, m, addr6, control)
 
 		udp6stat.udp6s_opackets++;
 		error = ip6_output(m, optp, &in6p->in6p_route,
-			    flags, in6p->in6p_moptions, NULL);
+			    flags, in6p->in6p_moptions, NULL, in6p);
 		break;
 	case AF_INET:
 		error = EAFNOSUPPORT;

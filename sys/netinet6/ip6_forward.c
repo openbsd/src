@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.38 2007/05/28 17:16:39 henning Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.39 2007/06/01 00:52:38 henning Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -140,6 +140,9 @@ ip6_forward(m, srcrt)
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
 
 #ifdef IPSEC
+	if (!ipsec_in_use)
+		goto done_spd;
+
 	s = splnet();
 
 	/*

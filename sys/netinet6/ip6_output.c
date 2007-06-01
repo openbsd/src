@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.98 2007/02/08 15:25:30 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.99 2007/06/01 00:52:38 henning Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -144,13 +144,14 @@ static int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
  * which is rt_rmx.rmx_mtu.
  */
 int
-ip6_output(m0, opt, ro, flags, im6o, ifpp)
+ip6_output(m0, opt, ro, flags, im6o, ifpp, inp)
 	struct mbuf *m0;
 	struct ip6_pktopts *opt;
 	struct route_in6 *ro;
 	int flags;
 	struct ip6_moptions *im6o;
 	struct ifnet **ifpp;		/* XXX: just for statistics */
+	struct inpcb *inp;
 {
 	struct ip6_hdr *ip6, *mhip6;
 	struct ifnet *ifp, *origifp = NULL;
@@ -174,13 +175,11 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	union sockaddr_union sdst;
 	struct tdb_ident *tdbi;
 	u_int32_t sspi;
-	struct inpcb *inp;
 	struct tdb *tdb;
 	int s;
 #endif /* IPSEC */
 
 #ifdef IPSEC
-	inp = NULL;	/*XXX*/
 	if (inp && (inp->inp_flags & INP_IPV6) == 0)
 		panic("ip6_output: IPv4 pcb is passed");
 #endif /* IPSEC */
@@ -213,6 +212,9 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	}
 
 #ifdef IPSEC
+	if (!ipsec_in_use && !inp)
+		goto done_spd;
+
 	/*
 	 * splnet is chosen over spltdb because we are not allowed to
 	 * lower the level, and udp6_output calls us in splnet(). XXX check

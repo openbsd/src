@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.95 2007/05/09 14:28:47 deraadt Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.96 2007/06/01 00:52:38 henning Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -443,7 +443,8 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		   sizeof(struct ip6_hdr), ((struct ip6_hdr *)ti)->ip6_plen);
 		HTONS(((struct ip6_hdr *)ti)->ip6_plen);
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
-		    (struct route_in6 *)ro, 0, NULL, NULL);
+		    (struct route_in6 *)ro, 0, NULL, NULL,
+		    tp ? tp->t_inpcb : NULL);
 		break;
 #endif /* INET6 */
 	case AF_INET:

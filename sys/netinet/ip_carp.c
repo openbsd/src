@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.142 2007/06/01 00:07:13 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.143 2007/06/01 00:52:38 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1150,7 +1150,7 @@ carp_send_ad(void *v)
 		sc->sc_if.if_obytes += len;
 		carpstats.carps_opackets6++;
 
-		error = ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL);
+		error = ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL, NULL);
 		if (error) {
 			if (error == ENOBUFS)
 				carpstats.carps_onomem++;

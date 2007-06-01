@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.204 2007/05/27 21:37:53 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.205 2007/06/01 00:52:38 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4376,7 +4376,7 @@ syn_cache_respond(sc, m)
 				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
-			(struct ip6_moptions *)0, NULL);
+			(struct ip6_moptions *)0, NULL, NULL);
 		break;
 #endif
 	default:
