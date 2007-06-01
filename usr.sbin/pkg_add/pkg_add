@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.301 2007/06/01 21:37:56 espie Exp $
+# $OpenBSD: pkg_add,v 1.302 2007/06/01 21:50:46 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -92,15 +92,15 @@ sub installed
 	return keys %{$state->{installed}};
 }
 
+sub set_name_from_handle
+{
+	my ($state, $h) = @_;
+	$state->set_pkgname($h->{pkgname});
+}
+
 package OpenBSD::UpdateSet;
 use OpenBSD::PackageInfo;
 
-sub actual_replacements
-{
-	my $set = shift;
-	return map {$_->{plist}} $set->older;
-}
-	
 sub setup_header
 {
 	my ($set, $state) = @_;
@@ -108,9 +108,8 @@ sub setup_header
 	my $pkgname = $set->handle->{pkgname};
 
 	my $header = $state->deptree_header($pkgname).$pkgname;
-	my @toreplace = $set->older;
-	if (@toreplace) {
-		$header.=" (replacing ". join(', ', (map {$_->{pkgname}} @toreplace)). ")";
+	if ($set->older) {
+		$header.=" (replacing ". join(', ', (map {$_->{pkgname}} $set->older)). ")";
 	}
 	if (!$state->progress->set_header($header)) {
 	    print $state->{not} ? "Pretending to add " : "Adding ";
@@ -339,16 +338,15 @@ sub really_add
 	my $plist = $handle->{plist};
 	my $pkgname = $handle->{pkgname};
 	my $errors = 0;
-	$state->set_pkgname($pkgname);
+	$state->set_name_from_handle($handle);
 
 	$set->setup_header($state);
 
 	# XXX in `combined' updates, some dependencies may remove extra 
 	# packages, so we do a double-take on the list of packages we 
 	# are actually replacing.
-	my @toreplace = $set->actual_replacements;
 	my $replacing = 0;
-	if (@toreplace) {
+	if ($set->older) {
 		$replacing = 1;
 	} 
 #	if (defined $plist->{old_libs}) {
@@ -388,35 +386,36 @@ sub really_add
 			    $set, $state);
 		}
 
-		for my $op (@toreplace) {
-			$state->progress->set_header($op->pkgname." (deleting)");
-			$state->set_pkgname($op->pkgname);
+		for my $o ($set->older) {
+			my $oldname = $o->{pkgname};
+			$state->progress->set_header($oldname." (deleting)");
+			$state->set_name_from_handle($o);
 			require OpenBSD::Search;
-			if (OpenBSD::Search::PkgSpec->new("mozilla-thunderbird-<=1.0.2p0")->filter($op->pkgname)) {
+			if (OpenBSD::Search::PkgSpec->new("mozilla-thunderbird-<=1.0.2p0")->filter($oldname)) {
 			    	thunderbird_special_case($plist);
 			}
 			require OpenBSD::Delete;
 			require OpenBSD::RequiredBy;
-			my @wantlist = OpenBSD::RequiredBy->new($op->pkgname)->list;
-			$op->{wantlist} = \@wantlist;
+			my @wantlist = OpenBSD::RequiredBy->new($oldname)->list;
+			$o->{wantlist} = \@wantlist;
 			try {
-			    OpenBSD::Delete::delete_plist($op, $state);
+			    OpenBSD::Delete::delete_plist($o->{plist}, $state);
 			} catchall {
 				Warn $_;
 				Fatal partial_install(
-				    "Deinstallation of ".$op->pkgname." failed", 
+				    "Deinstallation of ".$oldname." failed", 
 				    $set, $state);
 			};
 
 			if (defined $state->{updatedepends}) {
-				delete $state->{updatedepends}->{$op->pkgname};
+				delete $state->{updatedepends}->{$oldname};
 			}
-			OpenBSD::PkgCfl::unregister($op, $state);
+			OpenBSD::PkgCfl::unregister($o->{plist}, $state);
 		}
 		# Here there should be code to handle old libs
 
 		$state->progress->set_header("$pkgname (installing)");
-		$state->set_pkgname($pkgname);
+		$state->set_name_from_handle($handle);
 	}
 
 	try {
@@ -448,21 +447,21 @@ sub really_add
 		$plist->get(DISPLAY)->prepare($state);
 	}
 	# and add dependencies corresponding to the replacement
-	for my $op (@toreplace) {
+	for my $o ($set->older) {
 		require OpenBSD::Replace;
-		my $opkgname = $op->pkgname;
+		my $oldname = $o->{pkgname};
 
-		print "Adjusting dependencies for $pkgname/$opkgname\n" 
+		print "Adjusting dependencies for $pkgname/$oldname\n" 
 		    if $state->{beverbose};
 		my $d = OpenBSD::RequiredBy->new($pkgname);
-		for my $dep (@{$op->{wantlist}}) {
+		for my $dep (@{$o->{wantlist}}) {
 			if (defined $set->{skipupdatedeps}->{$dep}) {
 				print "\tskipping $dep\n" if $state->{beverbose};
 				next;
 			}
 			print "\t$dep\n" if $state->{beverbose};
 			$d->add($dep);
-			OpenBSD::Replace::adjust_dependency($dep, $opkgname, $pkgname);
+			OpenBSD::Replace::adjust_dependency($dep, $oldname, $pkgname);
 		}
 	}
 }
@@ -484,7 +483,7 @@ sub install_package
 	if ($handle->has_error) {
 		if (!$state->{forced}->{kitchensink} ||
 		    $handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
-			$state->set_pkgname($pkg);
+			$state->set_name_from_handle($handle);
 			$state->fatal("Fatal error");
 		} else {
 			return ();

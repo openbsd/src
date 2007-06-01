@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.27 2007/06/01 14:58:29 espie Exp $
+# $OpenBSD: Replace.pm,v 1.28 2007/06/01 21:50:47 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -388,8 +388,10 @@ sub save_old_libraries
 {
 	my ($set, $state) = @_;
 
-	for my $old_plist ($set->actual_replacements) {
+	for my $o ($set->older) {
 
+		my $old_plist = $o->{plist};
+		my $oldname = $o->{pkgname};
 		my $libs = {};
 		my $p = {};
 
@@ -414,7 +416,6 @@ sub save_old_libraries
 				require OpenBSD::md5;
 
 				mkdir($dest);
-				my $oldname = $old_plist->pkgname;
 				open my $descr, '>', $dest.DESC;
 				print $descr "Stub libraries for $oldname\n";
 				close $descr;
@@ -429,7 +430,7 @@ sub save_old_libraries
 			require OpenBSD::PkgCfl;
 			OpenBSD::PkgCfl::register($stub_list, $state);
 
-			walk_depends_closure($old_plist->pkgname, $stub_list, $state);
+			walk_depends_closure($oldname, $stub_list, $state);
 		} else {
 			print "No libraries to keep\n" if $state->{beverbose};
 		}
