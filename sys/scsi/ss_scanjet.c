@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.30 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.31 2007/06/01 20:59:04 moritz Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ scanjet_set_window(ss, flags)
 	    (int)(ss->sio.scan_brightness) - 128,
 	    (int)(ss->sio.scan_contrast) - 128);
 
-	if (n >= sizeof escape_codes || n == -1)
+	if (n >= sizeof escape_codes - len)
 		return (ENOMEM);
 	len += n;
 
