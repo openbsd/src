@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.300 2007/06/01 14:58:29 espie Exp $
+# $OpenBSD: pkg_add,v 1.301 2007/06/01 21:37:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -397,7 +397,7 @@ sub really_add
 			}
 			require OpenBSD::Delete;
 			require OpenBSD::RequiredBy;
-			my @wantlist = OpenBSD::RequiredBy->new($op)->list;
+			my @wantlist = OpenBSD::RequiredBy->new($op->pkgname)->list;
 			$op->{wantlist} = \@wantlist;
 			try {
 			    OpenBSD::Delete::delete_plist($op, $state);
