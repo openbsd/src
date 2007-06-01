@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.15 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: printf.9,v 1.16 2007/06/01 21:10:18 moritz Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 1 2007 $
 .Dt PRINTF 9
 .Os
 .Sh NAME
@@ -197,13 +197,21 @@ This format specifier is only available to
 .El
 .Sh RETURN VALUES
 The
-.Fn printf ,
-.Fn snprintf ,
-.Fn vprintf ,
+.Fn printf
+and
+.Fn vprintf
+functions return the number of characters printed.
+.Pp
+The
+.Fn snprintf
 and
 .Fn vsnprintf
-functions return the number of characters they placed in the buffer
-.Fa buf .
+functions return the number of characters that would have been put into
+the buffer
+.Fa buf
+if the
+.Fa size
+were unlimited.
 .Sh EXAMPLES
 Use of the
 .Li %b
