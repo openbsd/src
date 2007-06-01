@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.7 2007/05/31 23:35:46 tedu Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.8 2007/06/01 01:00:45 tedu Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -202,7 +202,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			/* see if we can read anything */
 			for (i = 1000; i-- &&
 			    !(bus_space_read_1(sc->sc_bt,sc->sc_bh,
-			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV));
+			    I82802_RNG_RNGST) & I82802_RNG_RNGST_DATAV);)
 				DELAY(10);
 
 			if (!(bus_space_read_1(sc->sc_bt, sc->sc_bh,
