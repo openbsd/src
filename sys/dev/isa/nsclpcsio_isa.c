@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.11 2007/03/22 16:55:31 deraadt Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.12 2007/06/01 21:30:31 cnst Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -386,9 +386,9 @@ nsclpcsio_tms_init(struct nsclpcsio_softc *sc)
 		sc->sensors[i].type = SENSOR_TEMP;
 	}
 
-	strlcpy(sc->sensors[0].desc, "Remote Temp 1", sizeof(sc->sensors[0].desc));
-	strlcpy(sc->sensors[1].desc, "Remote Temp 2", sizeof(sc->sensors[0].desc));
-	strlcpy(sc->sensors[2].desc, "Local Temp", sizeof(sc->sensors[0].desc));
+	strlcpy(sc->sensors[0].desc, "Remote", sizeof(sc->sensors[0].desc));
+	strlcpy(sc->sensors[1].desc, "Remote", sizeof(sc->sensors[1].desc));
+	strlcpy(sc->sensors[2].desc, "Local", sizeof(sc->sensors[2].desc));
 
 	nsclpcsio_tms_update(sc);
 }
@@ -453,12 +453,10 @@ nsclpcsio_vlm_init(struct nsclpcsio_softc *sc)
 			desc = "TS3";
 			break;
 		}
+		/* only init .desc if we have something meaningful to say */
 		if (desc != NULL)
 			strlcpy(sc->sensors[SIO_VLM_OFF + i].desc, desc,
 			    sizeof(sc->sensors[SIO_VLM_OFF + i].desc));
-		else
-			snprintf(sc->sensors[SIO_VLM_OFF + i].desc,
-			    sizeof(sc->sensors[SIO_VLM_OFF].desc), "VSENS%d", i);
 		sc->sensors[SIO_VLM_OFF + i].type = SENSOR_VOLTS_DC;
 
 	}
