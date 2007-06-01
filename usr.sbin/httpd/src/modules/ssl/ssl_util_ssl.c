@@ -503,7 +503,7 @@ char *SSL_SESSION_id2sz(unsigned char *id, int idlen)
     cp = str;
     for (n = 0; n < idlen && n < SSL_MAX_SSL_SESSION_ID_LENGTH; n++) {
         ap_snprintf(cp, sizeof(str)-(cp-str), "%02X", id[n]);
-        cp += 2;
+        cp += strlen(cp);
     }
     *cp = NUL;
     return str;
