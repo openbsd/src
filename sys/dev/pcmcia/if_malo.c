@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.8 2007/05/28 13:51:09 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.9 2007/06/01 23:43:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -26,6 +28,11 @@
 #include <sys/tree.h>
 #include <sys/malloc.h>
 #include <sys/sockio.h>
+#include <sys/mbuf.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -68,9 +75,12 @@ int	cmalo_fw_load_helper(struct malo_softc *);
 int	cmalo_fw_load_main(struct malo_softc *);
 int	cmalo_init(struct ifnet *);
 void	cmalo_stop(struct malo_softc *);
+int	cmalo_media_change(struct ifnet *);
+int	cmalo_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	cmalo_detach(void *);
 int	cmalo_intr(void *);
-void	cmalo_intr_mask(struct malo_softc *sc, int);
+void	cmalo_intr_mask(struct malo_softc *, int);
+void	cmalo_rx(struct malo_softc *);
 
 void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
@@ -246,11 +256,14 @@ cmalo_attach(void *arg)
 		return;
 	sc->sc_flags |= MALO_FW_LOADED;
 
+	/* allocate command buffer */
+	sc->sc_cmd = malloc(MALO_CMD_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
+
+	/* allocate data buffer */
+	sc->sc_data = malloc(MCLBYTES, M_DEVBUF, M_NOWAIT);
+
 	/* enable interrupts */
 	cmalo_intr_mask(sc, 1);
-
-	/* allocate command buffer */
-	sc->sc_cmd = malloc(MALO_CMD_BUFFER_SIZE, M_USBDEV, M_WAITOK);
 
 	/* get hardware specs */
 	cmalo_cmd_get_hwspec(sc);
@@ -267,6 +280,7 @@ cmalo_attach(void *arg)
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_caps =
+	    IEEE80211_C_MONITOR |
 	    IEEE80211_C_IBSS |
 	    IEEE80211_C_WEP;
 
@@ -285,8 +299,9 @@ cmalo_attach(void *arg)
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 
-	ieee80211_media_init(ifp, ieee80211_media_change,
-	    ieee80211_media_status);
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = cmalo_newstate;
+	ieee80211_media_init(ifp, cmalo_media_change, ieee80211_media_status);
 
 	/* second attach line */
 	printf("%s: address %s\n",
@@ -325,8 +340,15 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = ieee80211_ioctl(ifp, cmd, data);
 		break;
+	}
+
+	if (error == ENETRESET) {
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+		    (IFF_UP | IFF_RUNNING))
+			cmalo_init(ifp);
+		error = 0;
 	}
 
 	splx(s);
@@ -376,13 +398,14 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 		uc = (uint16_t *)(ucode + offset);
 		for (i = 0; i < bsize / 2; i++)
 			MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
-		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
-		MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
+		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_CMD_DL_OVER);
+		MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE,
+		    MALO_VAL_CMD_DL_OVER);
 
 		/* poll for an acknowledgement */
 		for (i = 0; i < 50; i++) {
 			if (MALO_READ_1(sc, MALO_REG_CARD_STATUS) ==
-			    MALO_VAL_DNLD_OVER)
+			    MALO_VAL_CMD_DL_OVER)
 				break;
 			delay(1000);
 		}
@@ -397,8 +420,8 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 
 	/* helper firmware download done */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, 0);
-	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
-	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
+	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_CMD_DL_OVER);
+	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_CMD_DL_OVER);
 	DPRINTF(1, "%s: helper FW downloaded\n", sc->sc_dev.dv_xname);
 
 	return (0);
@@ -462,13 +485,14 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		uc = (uint16_t *)(ucode + offset);
 		for (i = 0; i < bsize / 2; i++)
 			MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
-		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
-                MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
+		MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_CMD_DL_OVER);
+                MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE,
+		    MALO_VAL_CMD_DL_OVER);
 
 		/* poll for an acknowledgement */
 		for (i = 0; i < 5000; i++) {
 			if (MALO_READ_1(sc, MALO_REG_CARD_STATUS) ==
-			    MALO_VAL_DNLD_OVER)
+			    MALO_VAL_CMD_DL_OVER)
 				break;
 		}
 		if (i == 5000) {
@@ -521,7 +545,9 @@ cmalo_init(struct ifnet *ifp)
 	}
 
 	/* setup device */
-	if (cmalo_cmd_set_channel(sc, 1) != 0)
+	if (cmalo_cmd_set_macctrl(sc) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_txpower(sc, 15) != 0)
 		return (EIO);
 	if (cmalo_cmd_set_antenna(sc, 1) != 0)
 		return (EIO);
@@ -529,11 +555,7 @@ cmalo_init(struct ifnet *ifp)
 		return (EIO);
 	if (cmalo_cmd_set_radio(sc, 1) != 0)
 		return (EIO);
-	if (cmalo_cmd_set_txpower(sc, 15) != 0)
-		return (EIO);
-	if (cmalo_cmd_set_macctrl(sc) != 0)
-		return (EIO);
-	if (cmalo_cmd_set_macaddr(sc) != 0)
+	if (cmalo_cmd_set_channel(sc, 1) != 0)
 		return (EIO);
 
 	/* device up */
@@ -558,6 +580,28 @@ cmalo_stop(struct malo_softc *sc)
 	ifp->if_flags &= ~IFF_RUNNING;
 }
 
+int
+cmalo_media_change(struct ifnet *ifp)
+{
+	int error;
+
+	if ((error = ieee80211_media_change(ifp) != ENETRESET))
+		return (error);
+
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
+		cmalo_init(ifp);
+
+	return (0);
+}
+
+int
+cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
+{
+	struct malo_softc *sc = ic->ic_if.if_softc;
+
+	return (sc->sc_newstate(ic, nstate, arg));
+}
+
 void
 cmalo_detach(void *arg)
 {
@@ -572,6 +616,10 @@ cmalo_detach(void *arg)
 	/* free command buffer */
 	if (sc->sc_cmd != NULL)
 		free(sc->sc_cmd, M_DEVBUF);
+
+	/* free data buffer */
+	if (sc->sc_data != NULL)
+		free(sc->sc_data, M_DEVBUF);
 
 	/* detach inferface */
 	ieee80211_ifdetach(ifp);
@@ -598,6 +646,9 @@ cmalo_intr(void *arg)
 	DPRINTF(2, "%s: interrupt handler called (intr = 0x%04x)\n",
 	    sc->sc_dev.dv_xname, intr);
 
+	if (intr & MALO_VAL_HOST_INTR_RX)
+		/* RX frame received */
+		cmalo_rx(sc);
 	if (intr & MALO_VAL_HOST_INTR_CMD)
 		/* command response */
 		sc->sc_cmd_running = 0;
@@ -629,6 +680,65 @@ cmalo_intr_mask(struct malo_softc *sc, int enable)
 	val16 = MALO_READ_2(sc, MALO_REG_HOST_INTR_MASK);
 
 	DPRINTF(1, "to 0x%04x\n", val16);
+}
+
+void
+cmalo_rx(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct malo_rx_desc *rxdesc;
+	struct mbuf *m;
+	uint8_t *data;
+	uint16_t psize, *uc;
+	int i;
+
+	/* read the whole RX packet */
+	psize = MALO_READ_2(sc, MALO_REG_DATA_READ_LEN);
+	uc = (uint16_t *)sc->sc_data;
+	for (i = 0; i < psize / 2; i++)
+		uc[i] = htole16(MALO_READ_2(sc, MALO_REG_DATA_READ));
+	if (psize & 0x0001)
+		uc[i] = MALO_READ_1(sc, MALO_REG_DATA_READ);
+	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DATA_DL_OVER);
+	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DATA_DL_OVER);
+
+	rxdesc = (struct malo_rx_desc *)sc->sc_data;
+
+	DPRINTF(2, "RX status=%d, pkglen=%d, pkgoffset=%d\n",
+	    rxdesc->status, rxdesc->pkglen, rxdesc->pkgoffset);
+
+	if (rxdesc->status != MALO_RX_STATUS_OK)
+		/* RX packet is not OK */
+		return;
+
+	/* prepare mbuf */
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) {
+		ifp->if_ierrors++;
+		return;
+	}
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		ifp->if_ierrors++;
+		m_freem(m);
+		return;
+	}
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = m->m_len = letoh16(rxdesc->pkglen);
+	data = mtod(m, uint8_t *);
+	bcopy(sc->sc_data + rxdesc->pkgoffset, data, m->m_pkthdr.len);
+
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif
+
+	/* push the frame up to the network stack if not in monitor mode */
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		ether_input_mbuf(ifp, m);
+
+	m_freem(m);
 }
 
 void
@@ -868,7 +978,7 @@ cmalo_cmd_set_antenna(struct malo_softc *sc, uint16_t action)
 
 	if (action == 1)
 		/* set RX antenna */
-		body->antenna_mode = htole16(0xffff);	/* diversity */
+		body->antenna_mode = htole16(0xffff);
 	if (action == 2)
 		/* set TX antenna */
 		body->antenna_mode = htole16(2);
@@ -886,6 +996,7 @@ cmalo_cmd_set_antenna(struct malo_softc *sc, uint16_t action)
 int
 cmalo_cmd_set_macctrl(struct malo_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_macctrl *body;
 	uint16_t psize;
@@ -901,6 +1012,8 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 
 	body->action  = htole16(MALO_CMD_MACCTRL_RX_ON);
 	body->action |= htole16(MALO_CMD_MACCTRL_TX_ON);
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		body->action |= htole16(MALO_CMD_MACCTRL_PROMISC_ON);
 
 	/* process command request */
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
@@ -958,8 +1071,8 @@ cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 	uc = (uint16_t *)sc->sc_cmd;
 	for (i = 0; i < psize / 2; i++)
 		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
-	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DNLD_OVER);
-	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DNLD_OVER);
+	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_CMD_DL_OVER);
+	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_CMD_DL_OVER);
 
 	if (no_response)
 		/* we don't expect a response */

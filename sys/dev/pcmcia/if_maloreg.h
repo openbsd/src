@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_maloreg.h,v 1.4 2007/05/28 13:51:09 mglocker Exp $ */
+/*	$OpenBSD: if_maloreg.h,v 1.5 2007/06/01 23:43:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -16,28 +16,31 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* I/O registers */
+/* registers */
 #define MALO_REG_HOST_STATUS		0x00
 #define MALO_REG_CARD_INTR_CAUSE	0x02
 #define MALO_REG_HOST_INTR_MASK		0x04
+#define MALO_REG_DATA_READ		0x10
 #define MALO_REG_CMD_READ		0x12
 #define MALO_REG_CMD_WRITE_LEN		0x18
 #define MALO_REG_CMD_WRITE		0x1a
 #define MALO_REG_CARD_STATUS		0x20
 #define MALO_REG_HOST_INTR_CAUSE	0x22
+#define MALO_REG_DATA_READ_LEN		0x24
 #define MALO_REG_RBAL			0x28
 #define MALO_REG_CMD_READ_LEN		0x30
 #define MALO_REG_SCRATCH		0x3f
 #define MALO_REG_CARD_INTR_MASK		0x44
 
-/* I/O register values */
+/* register values */
 #define MALO_VAL_SCRATCH_READY		0x00
 #define MALO_VAL_SCRATCH_FW_LOADED	0x5a
 #define MALO_VAL_HOST_INTR_MASK_ON	0x001f
-#define MALO_VAL_DNLD_OVER		(1 << 2)
+#define MALO_VAL_DATA_DL_OVER		0x02
+#define MALO_VAL_CMD_DL_OVER		0x04
 
 /* interrupt reasons */
-#define MALO_VAL_HOST_INTR_RX		(1 << 0)
+#define MALO_VAL_HOST_INTR_RX		(1 << 1)
 #define MALO_VAL_HOST_INTR_CMD		(1 << 3)
 
 /* FW commands */
@@ -60,3 +63,4 @@
 #define MALO_CMD_RADIO_AUTO_P		0x0004
 #define MALO_CMD_MACCTRL_RX_ON		0x0001
 #define MALO_CMD_MACCTRL_TX_ON		0x0002
+#define MALO_CMD_MACCTRL_PROMISC_ON	0x0080

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.5 2007/05/28 13:51:09 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.6 2007/06/01 23:43:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -109,13 +109,32 @@ struct malo_cmd_body_macaddr {
 	uint8_t		macaddr[ETHER_ADDR_LEN];
 } __packed;
 
+/* RX descriptor */
+#define MALO_RX_STATUS_OK	0x0001
+struct malo_rx_desc {
+	uint16_t	status;
+	uint8_t		snr;
+	uint8_t		control;
+	uint16_t	pkglen;
+	uint8_t		nf;
+	uint8_t		rate;
+	uint32_t	pkgoffset;
+	uint32_t	reserved1;
+	uint8_t		priority;
+	uint8_t		reserved2[3];
+} __packed;
+
 struct malo_softc {
 	struct device		 sc_dev;
 	struct ieee80211com	 sc_ic;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
+	int			 (*sc_newstate)
+				 (struct ieee80211com *, enum ieee80211_state,
+				     int);
 
 	int			 sc_flags;
 	void			*sc_cmd;
 	uint8_t			 sc_cmd_running;
+	void			*sc_data;
 };
