@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.54 2007/05/26 16:44:21 reyk Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.55 2007/06/01 04:35:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1100,7 +1100,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	mii_flags = MIIF_DOPAUSE;
 	if (sc->sk_fibertype)
 		mii_flags |= MIIF_HAVEFIBER;
-	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, &sc_if->sk_mii, 0xffffffff, 0,
 	    MII_OFFSET_ANY, mii_flags);
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc_if->sk_dev.dv_xname);
