@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.66 2007/06/01 17:43:05 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.67 2007/06/01 18:50:56 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1362,7 +1362,7 @@ sr_shutdown_discipline(struct sr_discipline *sd)
 
 	/* make sure there isn't a sync pending and yield */
 	wakeup(sd);
-	while (sd->sd_sync)
+	while (sd->sd_sync || sd->sd_must_flush)
 		if (tsleep(&sd->sd_sync, MAXPRI, "sr_down", 60 * hz) ==
 		    EWOULDBLOCK)
 			break;
@@ -2018,6 +2018,7 @@ die:
 	sd->sd_vol.sv_chunks[c]->src_meta.scm_status = new_state;
 	sd->sd_set_vol_state(sd);
 
+	sd->sd_must_flush = 1;
 	workq_add_task(NULL, 0, sr_save_metadata_callback, sd, NULL);
 done:
 	splx(s);
@@ -2247,9 +2248,17 @@ sr_already_assembled(struct sr_discipline *sd)
 void
 sr_save_metadata_callback(void *arg1, void *arg2)
 {
+	struct sr_discipline	*sd = arg1;
+	int			s;
+
+	s = splbio();
+
 	if (sr_save_metadata(arg1, SR_VOL_DIRTY))
 		printf("%s: save metadata failed\n",
-		    DEVNAME(((struct sr_discipline *)arg1)->sd_sc));
+		    DEVNAME(sd->sd_sc));
+
+	sd->sd_must_flush = 0;
+	splx(s);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.28 2007/05/31 18:56:27 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.29 2007/06/01 18:50:56 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -251,6 +251,8 @@ struct sr_discipline {
 	u_int32_t		sd_meta_flags;
 
 	int			sd_sync;
+	int			sd_must_flush;
+
 	struct device		*sd_scsibus_dev;
 	void			(*sd_shutdownhook)(void *);
 
