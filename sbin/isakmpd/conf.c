@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.95 2007/04/22 11:34:36 moritz Exp $	 */
+/* $OpenBSD: conf.c,v 1.96 2007/06/01 10:27:17 moritz Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -812,8 +812,9 @@ conf_begin(void)
 	return ++seq;
 }
 
-static struct conf_trans *
-conf_trans_node(int transaction, enum conf_op op)
+static int
+conf_trans_node(int transaction, enum conf_op op, char *section, char *tag,
+    char *value, int override, int is_default)
 {
 	struct conf_trans *node;
 
@@ -821,12 +822,27 @@ conf_trans_node(int transaction, enum conf_op op)
 	if (!node) {
 		log_error("conf_trans_node: calloc (1, %lu) failed",
 		    (unsigned long)sizeof *node);
-		return 0;
+		return 1;
 	}
 	node->trans = transaction;
 	node->op = op;
+	node->override = override;
+	node->is_default = is_default;
+	if (section && (node->section = strdup(section)) == NULL)
+		goto fail;
+	if (tag && (node->tag = strdup(tag)) == NULL)
+		goto fail;
+	if (value && (node->value = strdup(value)) == NULL)
+		goto fail;
 	TAILQ_INSERT_TAIL(&conf_trans_queue, node, link);
-	return node;
+	return 0;
+
+fail:
+	free(node->section);
+	free(node->tag);
+	free(node->value);
+	free(node);
+	return 1;
 }
 
 /* Queue a set operation.  */
@@ -834,84 +850,24 @@ int
 conf_set(int transaction, char *section, char *tag, char *value, int override,
     int is_default)
 {
-	struct conf_trans *node;
-
-	node = conf_trans_node(transaction, CONF_SET);
-	if (!node)
-		return 1;
-	node->section = strdup(section);
-	if (!node->section) {
-		log_error("conf_set: strdup (\"%s\") failed", section);
-		goto fail;
-	}
-	node->tag = strdup(tag);
-	if (!node->tag) {
-		log_error("conf_set: strdup (\"%s\") failed", tag);
-		goto fail;
-	}
-	node->value = strdup(value);
-	if (!node->value) {
-		log_error("conf_set: strdup (\"%s\") failed", value);
-		goto fail;
-	}
-	node->override = override;
-	node->is_default = is_default;
-	return 0;
-
-fail:
-	free(node->tag);
-	free(node->section);
-	free(node);
-	return 1;
+	return conf_trans_node(transaction, CONF_SET, section, tag, value,
+	    override, is_default);
 }
 
 /* Queue a remove operation.  */
 int
 conf_remove(int transaction, char *section, char *tag)
 {
-	struct conf_trans *node;
-
-	node = conf_trans_node(transaction, CONF_REMOVE);
-	if (!node)
-		goto fail;
-	node->section = strdup(section);
-	if (!node->section) {
-		log_error("conf_remove: strdup (\"%s\") failed", section);
-		goto fail;
-	}
-	node->tag = strdup(tag);
-	if (!node->tag) {
-		log_error("conf_remove: strdup (\"%s\") failed", tag);
-		goto fail;
-	}
-	return 0;
-
-fail:
-	free(node->section);
-	free(node);
-	return 1;
+	return conf_trans_node(transaction, CONF_REMOVE, section, tag, NULL,
+	    0, 0);
 }
 
 /* Queue a remove section operation.  */
 int
 conf_remove_section(int transaction, char *section)
 {
-	struct conf_trans *node;
-
-	node = conf_trans_node(transaction, CONF_REMOVE_SECTION);
-	if (!node)
-		goto fail;
-	node->section = strdup(section);
-	if (!node->section) {
-		log_error("conf_remove_section: strdup (\"%s\") failed",
-		    section);
-		goto fail;
-	}
-	return 0;
-
-fail:
-	free(node);
-	return 1;
+	return conf_trans_node(transaction, CONF_REMOVE_SECTION, section, NULL,
+	    NULL, 0, 0);
 }
 
 /* Execute all queued operations for this transaction.  Cleanup.  */
