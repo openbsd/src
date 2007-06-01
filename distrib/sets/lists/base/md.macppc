@@ -1133,6 +1133,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_mskvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_myxreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_nfereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_nfevar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ngereg.ph
@@ -1383,7 +1384,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_rumvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_uathreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_uathvar.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_ubtreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_wi_usb.ph
@@ -1791,10 +1791,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/bt_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/hci.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/l2cap.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet
@@ -2235,6 +2235,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/vnode_if.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/wait.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/workq.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/tar.ph

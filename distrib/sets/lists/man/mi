@@ -1,3 +1,4 @@
+./usr/share/man/cat4/myx.0
 ./usr/share/doc/html
 ./usr/share/info/amdref.info
 ./usr/share/info/annotate.info
@@ -2267,7 +2268,6 @@
 ./usr/share/man/cat8/monthly.0
 ./usr/share/man/cat8/mopd.0
 ./usr/share/man/cat8/mount.0
-./usr/share/man/cat8/mount_ados.0
 ./usr/share/man/cat8/mount_cd9660.0
 ./usr/share/man/cat8/mount_ext2fs.0
 ./usr/share/man/cat8/mount_ffs.0

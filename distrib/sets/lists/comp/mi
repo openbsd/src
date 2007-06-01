@@ -533,6 +533,7 @@
 ./usr/include/dev/pci/if_lmcioctl.h
 ./usr/include/dev/pci/if_lmcvar.h
 ./usr/include/dev/pci/if_mskvar.h
+./usr/include/dev/pci/if_myxreg.h
 ./usr/include/dev/pci/if_nfereg.h
 ./usr/include/dev/pci/if_nfevar.h
 ./usr/include/dev/pci/if_ngereg.h
@@ -783,7 +784,6 @@
 ./usr/include/dev/usb/if_rumvar.h
 ./usr/include/dev/usb/if_uathreg.h
 ./usr/include/dev/usb/if_uathvar.h
-./usr/include/dev/usb/if_ubtreg.h
 ./usr/include/dev/usb/if_udavreg.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_wi_usb.h
@@ -1481,6 +1481,7 @@
 ./usr/include/sys/vnode.h
 ./usr/include/sys/vnode_if.h
 ./usr/include/sys/wait.h
+./usr/include/sys/workq.h
 ./usr/include/sysexits.h
 ./usr/include/syslog.h
 ./usr/include/tar.h
@@ -6175,6 +6176,9 @@
 ./usr/share/man/cat9/vwakeup.0
 ./usr/share/man/cat9/wakeup.0
 ./usr/share/man/cat9/wdog_register.0
+./usr/share/man/cat9/workq_add_task.0
+./usr/share/man/cat9/workq_create.0
+./usr/share/man/cat9/workq_destroy.0
 ./usr/share/man/cat9/writedisklabel.0
 ./usr/share/misc/getopt
 ./usr/share/misc/gprof.callg

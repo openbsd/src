@@ -514,6 +514,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_lmcioctl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_lmcvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_mskvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_myxreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_nfereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_nfevar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_ngereg.ph
@@ -764,7 +765,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_rumvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_uathreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_uathvar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_ubtreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_wi_usb.ph
@@ -1102,10 +1102,10 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netbt
 ./usr/libdata/perl5/site_perl/vax-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netbt/bt_var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netbt/hci.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netbt/l2cap.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet
@@ -1504,6 +1504,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/vnode_if.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/wait.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/workq.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/tar.ph

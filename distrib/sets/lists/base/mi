@@ -109,7 +109,6 @@
 ./sbin/modload
 ./sbin/modunload
 ./sbin/mount
-./sbin/mount_ados
 ./sbin/mount_cd9660
 ./sbin/mount_ext2fs
 ./sbin/mount_ffs

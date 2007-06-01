@@ -1126,6 +1126,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_lmcioctl.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_lmcvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_mskvar.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_myxreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_nfereg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_nfevar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/if_ngereg.ph
@@ -1376,7 +1377,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/usb/if_rumvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/usb/if_uathreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/usb/if_uathvar.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/usb/if_ubtreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/usb/if_wi_usb.ph
@@ -1782,10 +1782,10 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netatalk/phase2.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/bluetooth.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/bt_var.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/hci.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/l2cap.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netinet
@@ -2184,6 +2184,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/vnode_if.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/wait.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/workq.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/syslog.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/tar.ph
