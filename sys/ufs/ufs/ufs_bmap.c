@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.22 2007/06/01 06:38:56 deraadt Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.23 2007/06/01 07:36:19 otto Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ ufs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
-		daddr_t  a_bn;
+		daddr64_t  a_bn;
 		struct vnode **a_vpp;
 		daddr_t *a_bnp;
 		int *a_runp;
