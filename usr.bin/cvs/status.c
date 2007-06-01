@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.73 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: status.c,v 1.74 2007/06/01 17:47:47 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -141,7 +141,7 @@ cvs_status_local(struct cvs_file *cf)
 
 	if (cf->file_status == FILE_LOST ||
 	    cf->file_status == FILE_UNKNOWN ||
-	    (cf->file_rcs != NULL && cf->file_rcs->rf_inattic == 1)) {
+	    (cf->file_rcs != NULL && cf->in_attic == 1)) {
 		(void)xsnprintf(buf, sizeof(buf), "no file %s\t",
 		    cf->file_name);
 	} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.92 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.93 2007/06/01 17:47:47 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -34,6 +34,7 @@ static void checkout_repository(const char *, const char *);
 extern int prune_dirs;
 extern int build_dirs;
 extern int reset_stickies;
+extern char *tag;
 
 static int flags = CR_REPO | CR_RECURSE_DIRS;
 
@@ -75,6 +76,9 @@ cvs_checkout(int argc, char **argv)
 			prune_dirs = 1;
 			break;
 		case 'R':
+			break;
+		case 'r':
+			tag = xstrdup(optarg);
 			break;
 		default:
 			fatal("%s", cvs_cmd_checkout.cmd_synopsis);
@@ -133,6 +137,8 @@ checkout_check_repository(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 
+		if (tag != NULL)
+			cvs_client_send_request("Argument -r%s", tag);
 		if (reset_stickies == 1)
 			cvs_client_send_request("Argument -A");
 
@@ -282,7 +288,12 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 	}
 
 	if (co_flags & CO_SETSTICKY)
-		(void)xsnprintf(stickytag, sizeof(stickytag), "T%s", rev);
+		if (tag != NULL)
+			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
+			    tag);
+		else
+			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
+			    rev);
 	else
 		stickytag[0] = '\0';
 

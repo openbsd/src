@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.105 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: commit.c,v 1.106 2007/06/01 17:47:47 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -239,7 +239,7 @@ cvs_commit_local(struct cvs_file *cf)
 		rcsflags = RCS_CREATE;
 		openflags = O_CREAT | O_TRUNC | O_WRONLY;
 		if (cf->file_rcs != NULL) {
-			if (cf->file_rcs->rf_inattic == 0)
+			if (cf->in_attic == 0)
 				cvs_log(LP_ERR, "warning: expected %s "
 				    "to be in the Attic", cf->file_path);
 

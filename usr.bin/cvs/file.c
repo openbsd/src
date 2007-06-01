@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.189 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: file.c,v 1.190 2007/06/01 17:47:47 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -504,7 +504,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		if (!(cr->flags & CR_RECURSE_DIRS) &&
 		    ent->ce_type == CVS_ENT_DIR)
 			continue;
-
 		if (ent->ce_type == CVS_ENT_DIR)
 			cvs_file_get(fpath, &dl);
 		else if (ent->ce_type == CVS_ENT_FILE)
@@ -558,6 +557,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	CVSENTRIES *entlist = NULL;
 	const char *state;
 	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN], r1[16], r2[16];
+	char *tfname, *tpath, *p;
 
 	cvs_log(LP_TRACE, "cvs_file_classify(%s)", cf->file_path);
 
@@ -565,6 +565,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cf->file_status = FILE_UPTODATE;
 		return;
 	}
+
 
 	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
 	(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s",
@@ -577,6 +578,21 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	}
 
 	cf->file_rpath = xstrdup(rcsfile);
+	/* XXX: likely wrong place for this shit */
+	/* is this file in the Attic? */
+	if (cf->file_type == CVS_FILE
+	    && strstr(cf->file_rpath, CVS_PATH_ATTIC) != NULL) {
+		cf->in_attic = 1;
+		/* chop the 'Attic' out of cf->file_path */
+		if ((tfname = basename(cf->file_path)) == NULL)
+			fatal("cvs_file_classify: basename failure");
+		if ((tpath = dirname(cf->file_path)) == NULL)
+			fatal("cvs_file_classify: dirname failure");
+		if ((p = strstr(tpath, CVS_PATH_ATTIC)) == NULL)
+			fatal("cvs_file_classify: strstr failure");
+		strlcpy(cf->file_path, tpath, p - tpath + 1);
+		strlcat(cf->file_path, tfname, MAXPATHLEN);
+	}
 
 	entlist = cvs_ent_open(cf->file_wd);
 	cf->file_ent = cvs_ent_get(entlist, cf->file_name);
@@ -615,46 +631,46 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		break;
 	}
 
+	if (strncmp(cf->file_path, CVS_JUNK, strlen(CVS_JUNK)) == 0) {
+		cf->file_status = FILE_UNKNOWN;
+		return;
+	}
 	cf->repo_fd = open(cf->file_rpath, O_RDONLY);
 	if (cf->repo_fd != -1) {
 		cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd, rflags);
 		if (cf->file_rcs == NULL)
 			fatal("cvs_file_classify: failed to parse RCS");
-		cf->file_rcs->rf_inattic = 0;
-	} else if (cvs_cmdop != CVS_OP_CHECKOUT) {
-		(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s/%s%s",
-		    repo, CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
-
-		cf->repo_fd = open(rcsfile, O_RDONLY);
-		if (cf->repo_fd != -1) {
-			xfree(cf->file_rpath);
-			cf->file_rpath = xstrdup(rcsfile);
-			cf->file_rcs = rcs_open(cf->file_rpath,
-			     cf->repo_fd, rflags);
-			if (cf->file_rcs == NULL)
-				fatal("cvs_file_classify: failed to parse RCS");
-			cf->file_rcs->rf_inattic = 1;
-		} else {
-			cf->file_rcs = NULL;
-		}
-	} else
-		cf->file_rcs = NULL;
+	} else {
+		
+		fatal("cvs_file_classify: failed to open file `%s' of type %d",
+		    cf->file_rpath, cf->file_type);
+	}
 
 	if (tag != NULL && cf->file_rcs != NULL) {
-		if ((cf->file_rcsrev = rcs_translate_tag(tag, cf->file_rcs)) == NULL)
-			fatal("cvs_file_classify: could not translate tag `%s'", tag);
+		/* if we could not translate tag, means that we should
+		 * skip this file. */
+		if ((cf->file_rcsrev = rcs_translate_tag(tag, cf->file_rcs)) == NULL) {
+			cf->file_status = FILE_SKIP;
+			cvs_ent_close(entlist, ENT_NOSYNC);
+			return;
+		}
+
+		rcsnum_tostr(cf->file_rcsrev, r1, sizeof(r1));
+
 	} else if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL) {
 		cf->file_rcsrev = rcsnum_alloc();
 		rcsnum_cpy(cf->file_ent->ce_rev, cf->file_rcsrev, 0);
-	} else if (cf->file_rcs != NULL)
+	} else if (cf->file_rcs != NULL) {
 		cf->file_rcsrev = rcs_head_get(cf->file_rcs);
-	else
+	} else {
 		cf->file_rcsrev = NULL;
+	}
 
 	if (cf->file_ent != NULL)
 		rcsnum_tostr(cf->file_ent->ce_rev, r1, sizeof(r1));
-	if (cf->file_rcsrev != NULL)
+	if (cf->file_rcsrev != NULL) {
 		rcsnum_tostr(cf->file_rcsrev, r2, sizeof(r2));
+	}
 
 	ismodified = rcsdead = 0;
 	if (cf->fd != -1 && cf->file_ent != NULL) {

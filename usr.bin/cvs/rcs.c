@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.212 2007/05/29 00:19:10 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.213 2007/06/01 17:47:47 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -269,7 +269,6 @@ rcs_open(const char *path, int fd, int flags, ...)
 	rfp->rf_mode = fmode;
 	rfp->fd = fd;
 	rfp->rf_dead = 0;
-	rfp->rf_inattic = 0;
 
 	TAILQ_INIT(&(rfp->rf_delta));
 	TAILQ_INIT(&(rfp->rf_access));
@@ -529,14 +528,27 @@ rcs_write(RCSFILE *rfp)
 RCSNUM *
 rcs_head_get(RCSFILE *file)
 {
-	char br[16];
-	RCSNUM *rev;
+	struct rcs_branch *brp;
+	struct rcs_delta *rdp;
+	RCSNUM *rev, *rootrev;
 
+	rev = rcsnum_alloc();
 	if (file->rf_branch != NULL) {
-		rcsnum_tostr(file->rf_branch, br, sizeof(br));
-		rev = rcs_translate_tag(br, file);
+		/* we have a default branch, use that to calculate the
+		 * real HEAD*/
+		rootrev = rcsnum_alloc();
+		rcsnum_cpy(file->rf_branch, rootrev, 2);
+		if ((rdp = rcs_findrev(file, rootrev)) == NULL)
+			fatal("rcs_head_get: could not find root revision");
+
+		/* HEAD should be the last revision on the default branch */
+		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
+			if (TAILQ_NEXT(brp, rb_list) == NULL)
+				break;
+		}
+		rcsnum_free(rootrev);
+		rcsnum_cpy(brp->rb_num, rev, 0);
 	} else {
-		rev = rcsnum_alloc();
 		rcsnum_cpy(file->rf_head, rev, 0);
 	}
 
@@ -2537,85 +2549,65 @@ rcs_state_get(RCSFILE *rfp, RCSNUM *rev)
 	return (rdp->rd_state);
 }
 
+/* rcs_translate_tag() */
 RCSNUM *
 rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 {
-	size_t i;
-	char *sdate;
-	RCSNUM *rev, *brev;
+	RCSNUM *rev, *brev, *frev;
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
-	time_t givendate, rcsdate;
+	size_t i;
 
 	rdp = NULL;
 
+	/* Possibly we could be passed a version number */
+	if ((frev = rcsnum_parse(revstr)) != NULL)
+		return (frev);
+
+	/* More likely we will be passed a symbol */
 	rev = rcs_sym_getrev(rfp, revstr);
-	if (rev == NULL) {
-		if ((rev = rcsnum_parse(revstr)) == NULL) {
-			if ((givendate = cvs_date_parse(revstr)) == -1)
-				fatal("tag %s does not exist (0)", revstr);
+	
+	if (rev == NULL)
+		return (NULL);
 
-			rcs_parse_deltas(rfp, NULL);
+	/* If this isn't a branch revision, we have a problem */
+	if (!RCSNUM_ISBRANCH(rev))
+		fatal("rcs_translate_tag: tag `%s' is not a branch", revstr);
 
-			TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
-				sdate = asctime(&rdp->rd_date);
-				if (sdate == NULL)
-					fatal("failed to parse rcs date");
-				rcsdate = cvs_date_parse(sdate);
-				if (rcsdate == -1)
-					fatal("failed to parse %s", sdate);
-				if (givendate <= rcsdate)
-					continue;
-				break;
-			}
-
-			if (rdp == NULL)
-				fatal("no revision that matches date %s",
-				    revstr);
-
-			rev = rdp->rd_num;
-		}
-	}
-
-	if (RCSNUM_ISBRANCH(rev)) {
-		brev = rcsnum_alloc();
-		rcsnum_cpy(rev, brev, rev->rn_len - 1);
-	} else {
-		brev = rev;
-	}
+	brev = rcsnum_alloc();
+	rcsnum_cpy(rev, brev, rev->rn_len - 1);
 
 	if ((rdp = rcs_findrev(rfp, brev)) == NULL)
-		fatal("tag %s does not exist (1)", revstr);
+		fatal("rcs_translate_tag: tag `%s' does not exist", revstr);
+	rcsnum_free(brev);
 
-	if (RCSNUM_ISBRANCH(rev)) {
-		rcsnum_free(brev);
-		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
-			for (i = 0; i < rev->rn_len; i++) {
-				if (brp->rb_num->rn_id[i] != rev->rn_id[i])
-					break;
-			}
-
-			if (i != rev->rn_len)
-				continue;
-
-			break;
-		}
-
-		if (brp == NULL)
-			return (NULL);
-
-		if ((rdp = rcs_findrev(rfp, brp->rb_num)) == NULL)
-			fatal("tag %s does not exist (3)", revstr);
-
-		while (rdp->rd_next->rn_len != 0) {
-			if ((rdp = rcs_findrev(rfp, rdp->rd_next)) == NULL)
-				fatal("tag %s does not exist (4)", revstr);
-		}
-
-		rcsnum_cpy(rdp->rd_num, rev, 0);
+	TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
+		for (i = 0; i < rev->rn_len; i++)
+			if (brp->rb_num->rn_id[i] != rev->rn_id[i])
+				break;
+		if (i != rev->rn_len)
+			continue;
+		break;
 	}
 
-	return (rev);
+	frev = rcsnum_alloc();
+	if (brp == NULL) {
+		rcsnum_cpy(rdp->rd_num, frev, 0);
+		return (frev);
+	} else {
+		/* Fetch the delta with the correct branch num */
+		if ((rdp = rcs_findrev(rfp, brp->rb_num)) == NULL)
+			fatal("rcs_translate_tag: could not fetch branch delta");
+		/* Find the latest delta on that branch */
+		for (;;) {
+			if (rdp->rd_next->rn_len == 0)
+				break;
+			if ((rdp = rcs_findrev(rfp, rdp->rd_next)) == NULL)
+				fatal("rcs_translate_tag: could not fetch branch delta");
+		}
+		rcsnum_cpy(rdp->rd_num, frev, 0);
+		return (frev);
+	}
 }
 
 /*
@@ -2628,7 +2620,7 @@ struct cvs_lines *
 rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev)
 {
 	size_t plen;
-	int i, done, nextroot, found;
+	int i, done, nextroot;
 	RCSNUM *tnum, *bnum;
 	struct rcs_branch *brp;
 	struct rcs_delta *hrdp, *trdp, *rdp;
@@ -2699,17 +2691,12 @@ next:
 		nextroot += 2;
 		rcsnum_cpy(frev, bnum, nextroot);
 
-		/* XXX strange loop and "found" set but not used */
 		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
-			found = 1;
-			for (i = 0; i < nextroot - 1; i++) {
-				if (brp->rb_num->rn_id[i] != bnum->rn_id[i]) {
-					found = 0;
+			for (i = 0; i < nextroot - 1; i++)
+				if (brp->rb_num->rn_id[i] != bnum->rn_id[i])
 					break;
-				}
-			}
-
-			break;
+			if (i == nextroot - 1)
+				break;
 		}
 
 		if (brp == NULL)

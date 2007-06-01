@@ -18,6 +18,7 @@
 #define REPO_H
 
 #define CVS_LOCK		"#cvs.lock"
+#define CVS_JUNK		"#cvs."
 #define CVS_LOCK_SLEEP		30
 #define CVS_LOCK_TRIES		5
 

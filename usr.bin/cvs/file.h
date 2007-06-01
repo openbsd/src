@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.43 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: file.h,v 1.44 2007/06/01 17:47:47 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -46,6 +46,7 @@ struct cvs_file {
 	int	 file_type;
 	int	 file_status;
 	int	 file_flags;
+	int	 in_attic;
 
 	RCSNUM		*file_rcsrev;
 	RCSFILE		*file_rcs;
