@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.32 2007/05/30 07:49:37 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.33 2007/06/01 22:41:12 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -37,15 +37,6 @@
 #define REPORT_PERIOD	60	/* report every n seconds */
 #define CHECK_PERIOD	20	/* check every n seconds */
 
-void		 usage(void);
-void		 check_sensors(void);
-void		 execute(char *);
-void		 report(time_t);
-static char	*print_sensor(enum sensor_type, int64_t);
-void		 parse_config(char *);
-int64_t		 get_val(char *, int, enum sensor_type);
-void		 reparse_cfg(int);
-
 enum sensorsd_s_status {
 	SENSORSD_S_UNSPEC,	/* status is unspecified */
 	SENSORSD_S_INVALID,	/* status is invalid, per SENSOR_FINVALID */
@@ -55,8 +46,6 @@ enum sensorsd_s_status {
 
 struct limits_t {
 	TAILQ_ENTRY(limits_t)	entries;
-	char			dxname[16];	/* device unix name */
-	int			dev;		/* device number */
 	enum sensor_type	type;		/* sensor type */
 	int			numt;		/* sensor number */
 	int64_t			last_val;
@@ -76,7 +65,28 @@ struct limits_t {
 #define SENSORSD_L_ISTATUS		0x0002	/* ignore automatic status */
 };
 
-TAILQ_HEAD(limits, limits_t) limits = TAILQ_HEAD_INITIALIZER(limits);
+struct sdlim_t {
+	TAILQ_ENTRY(sdlim_t)	entries;
+	char			dxname[16];	/* device unix name */
+	int			dev;		/* device number */
+	int			sensor_cnt;
+	TAILQ_HEAD(, limits_t)	limits;
+};
+
+void		 usage(void);
+struct sdlim_t	*create_sdlim(struct sensordev *);
+void		 check(void);
+void		 check_sdlim(struct sdlim_t *);
+void		 execute(char *);
+void		 report(time_t);
+void		 report_sdlim(struct sdlim_t *, time_t);
+static char	*print_sensor(enum sensor_type, int64_t);
+void		 parse_config(char *);
+void		 parse_config_sdlim(struct sdlim_t *, char **);
+int64_t		 get_val(char *, int, enum sensor_type);
+void		 reparse_cfg(int);
+
+TAILQ_HEAD(, sdlim_t) sdlims = TAILQ_HEAD_INITIALIZER(sdlims);
 
 char			 *configfile;
 volatile sig_atomic_t	  reload = 0;
@@ -93,14 +103,12 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct sensor	 sensor;
 	struct sensordev sensordev;
-	struct limits_t	*limit;
-	size_t		 slen, sdlen;
+	struct sdlim_t	*sdlim;
+	size_t		 sdlen = sizeof(sensordev);
 	time_t		 next_report, last_report = 0, next_check;
-	int		 mib[5], dev, numt;
-	enum sensor_type type;
-	int		 sleeptime, sensor_cnt, ch;
+	int		 mib[3], dev;
+	int		 sleeptime, sensor_cnt = 0, ch;
 
 	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
@@ -114,10 +122,7 @@ main(int argc, char *argv[])
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
-	slen = sizeof(sensor);
-	sdlen = sizeof(sensordev);
 
-	sensor_cnt = 0;
 	for (dev = 0; dev < MAXSENSORDEVICES; dev++) {
 		mib[2] = dev;
 		if (sysctl(mib, 3, &sensordev, &sdlen, NULL, 0) == -1) {
@@ -125,28 +130,9 @@ main(int argc, char *argv[])
 				warn("sysctl");
 			continue;
 		}
-		for (type = 0; type < SENSOR_MAX_TYPES; type++) {
-			mib[3] = type;
-			for (numt = 0; numt < sensordev.maxnumt[type]; numt++) {
-				mib[4] = numt;
-				if (sysctl(mib, 5, &sensor, &slen, NULL, 0)
-				    == -1) {
-					if (errno != ENOENT)
-						warn("sysctl");
-					continue;
-				}
-				if ((limit = calloc(1, sizeof(struct limits_t)))
-				    == NULL)
-					err(1, "calloc");
-				strlcpy(limit->dxname, sensordev.xname,
-				    sizeof(limit->dxname));
-				limit->dev = dev;
-				limit->type = type;
-				limit->numt = numt;
-				TAILQ_INSERT_TAIL(&limits, limit, entries);
-				sensor_cnt++;
-			}
-		}
+		sdlim = create_sdlim(&sensordev);
+		TAILQ_INSERT_TAIL(&sdlims, sdlim, entries);
+		sensor_cnt += sdlim->sensor_cnt;
 	}
 
 	if (sensor_cnt == 0)
@@ -176,7 +162,7 @@ main(int argc, char *argv[])
 			reload = 0;
 		}
 		if (next_check <= time(NULL)) {
-			check_sensors();
+			check();
 			next_check = time(NULL) + CHECK_PERIOD;
 		}
 		if (next_report <= time(NULL)) {
@@ -193,8 +179,60 @@ main(int argc, char *argv[])
 	}
 }
 
+struct sdlim_t *
+create_sdlim(struct sensordev *snsrdev)
+{
+	struct sensor	 sensor;
+	struct sdlim_t	*sdlim;
+	struct limits_t	*limit;
+	size_t		 slen = sizeof(sensor);
+	int		 mib[5], numt;
+	enum sensor_type type;
+
+	if ((sdlim = calloc(1, sizeof(struct sdlim_t))) == NULL)
+		err(1, "calloc");
+
+	strlcpy(sdlim->dxname, snsrdev->xname, sizeof(sdlim->dxname));
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_SENSORS;
+	mib[2] = sdlim->dev = snsrdev->num;
+
+	TAILQ_INIT(&sdlim->limits);
+
+	for (type = 0; type < SENSOR_MAX_TYPES; type++) {
+		mib[3] = type;
+		for (numt = 0; numt < snsrdev->maxnumt[type]; numt++) {
+			mib[4] = numt;
+			if (sysctl(mib, 5, &sensor, &slen, NULL, 0) == -1) {
+				if (errno != ENOENT)
+					warn("sysctl");
+				continue;
+			}
+			if ((limit = calloc(1, sizeof(struct limits_t))) ==
+			    NULL)
+				err(1, "calloc");
+			limit->type = type;
+			limit->numt = numt;
+			TAILQ_INSERT_TAIL(&sdlim->limits, limit, entries);
+			sdlim->sensor_cnt++;
+		}
+	}
+
+	return (sdlim);
+}
+
 void
-check_sensors(void)
+check(void)
+{
+	struct sdlim_t	*sdlim;
+
+	TAILQ_FOREACH(sdlim, &sdlims, entries)
+		check_sdlim(sdlim);
+}
+
+void
+check_sdlim(struct sdlim_t *sdlim)
 {
 	struct sensor		 sensor;
 	struct limits_t		*limit;
@@ -203,14 +241,14 @@ check_sensors(void)
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
+	mib[2] = sdlim->dev;
 	len = sizeof(sensor);
 
-	TAILQ_FOREACH(limit, &limits, entries) {
+	TAILQ_FOREACH(limit, &sdlim->limits, entries) {
 		if ((limit->flags & SENSORSD_L_ISTATUS) &&
 		    !(limit->flags & SENSORSD_L_USERLIMIT)) 
 			continue;
 
-		mib[2] = limit->dev;
 		mib[3] = limit->type;
 		mib[4] = limit->numt;
 		if (sysctl(mib, 5, &sensor, &len, NULL, 0) == -1)
@@ -279,9 +317,18 @@ execute(char *command)
 void
 report(time_t last_report)
 {
-	struct limits_t	*limit = NULL;
+	struct sdlim_t	*sdlim;
+ 
+	TAILQ_FOREACH(sdlim, &sdlims, entries)
+		report_sdlim(sdlim, last_report);
+}
 
-	TAILQ_FOREACH(limit, &limits, entries) {
+void
+report_sdlim(struct sdlim_t *sdlim, time_t last_report)
+{
+	struct limits_t	*limit;
+
+	TAILQ_FOREACH(limit, &sdlim->limits, entries) {
 		if ((limit->astatus_changed <= last_report) &&
 		    (limit->ustatus_changed <= last_report))
 			continue;
@@ -307,7 +354,7 @@ report(time_t last_report)
 				break;
 			}
 			syslog(LOG_ALERT, "%s.%s%d: %s%s",
-			    limit->dxname, sensor_type_s[limit->type],
+			    sdlim->dxname, sensor_type_s[limit->type],
 			    limit->numt,
 			    print_sensor(limit->type, limit->last_val), as);
 		}
@@ -333,7 +380,7 @@ report(time_t last_report)
 				break;
 			}
 			syslog(LOG_ALERT, "%s.%s%d: %s",
-			    limit->dxname, sensor_type_s[limit->type],
+			    sdlim->dxname, sensor_type_s[limit->type],
 			    limit->numt, us);
 		}
 
@@ -362,7 +409,7 @@ report(time_t last_report)
 				switch (cmd[i]) {
 				case 'x':
 					r = snprintf(&buf[n], len - n, "%s",
-					    limit->dxname);
+					    sdlim->dxname);
 					break;
 				case 't':
 					r = snprintf(&buf[n], len - n, "%s",
@@ -464,9 +511,7 @@ print_sensor(enum sensor_type type, int64_t value)
 void
 parse_config(char *cf)
 {
-	struct limits_t	 *p, *next;
-	char		 *buf = NULL, *ebuf = NULL;
-	char		  node[48];
+	struct sdlim_t	 *sdlim;
 	char		**cfa;
 
 	if ((cfa = calloc(2, sizeof(char *))) == NULL)
@@ -474,10 +519,21 @@ parse_config(char *cf)
 	cfa[0] = cf;
 	cfa[1] = NULL;
 
-	for (p = TAILQ_FIRST(&limits); p != NULL; p = next) {
-		next = TAILQ_NEXT(p, entries);
+	TAILQ_FOREACH(sdlim, &sdlims, entries)
+		parse_config_sdlim(sdlim, cfa);
+	free(cfa);
+}
+
+void
+parse_config_sdlim(struct sdlim_t *sdlim, char **cfa)
+{
+	struct limits_t	 *p;
+	char		 *buf = NULL, *ebuf = NULL;
+	char		  node[48];
+
+	TAILQ_FOREACH(p, &sdlim->limits, entries) {
 		snprintf(node, sizeof(node), "hw.sensors.%s.%s%d", 
-		    p->dxname, sensor_type_s[p->type], p->numt);
+		    sdlim->dxname, sensor_type_s[p->type], p->numt);
 		p->flags = 0;
 		if (cgetent(&buf, cfa, node) != 0)
 			if (cgetent(&buf, cfa, sensor_type_s[p->type]) != 0)
@@ -499,7 +555,6 @@ parse_config(char *cf)
 		if (p->lower != LLONG_MIN || p->upper != LLONG_MAX)
 			p->flags |= SENSORSD_L_USERLIMIT;
 	}
-	free(cfa);
 }
 
 int64_t
