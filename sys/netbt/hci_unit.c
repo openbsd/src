@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.4 2007/06/01 20:03:31 uwe Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.5 2007/06/01 20:29:54 uwe Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
@@ -108,8 +108,9 @@ hci_enable_task(void *arg0, void *arg1)
 {
 	struct hci_unit *unit = arg0;
 
-	if (!(unit->hci_flags & BTF_UP) && hci_enable(unit) == 0)
-		unit->hci_flags |= BTF_UP;
+	unit->hci_flags |= BTF_UP;
+	if (hci_enable(unit) != 0)
+		unit->hci_flags &= ~BTF_UP;
 }
 
 int
