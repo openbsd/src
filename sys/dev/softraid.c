@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.67 2007/06/01 18:50:56 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.68 2007/06/01 22:23:03 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2417,18 +2417,24 @@ sr_boot_assembly(struct sr_softc *sc)
 
 	SLIST_INIT(&mlh);
 	bp = geteblk(sz);
+	if (!bp)
+		return (ENOMEM);
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class != DV_DISK)
 			continue;
 
 		majdev = findblkmajor(dv);
+		if (majdev == -1)
+			continue;
+
 		bp->b_dev = dev =  MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
 		bdsw = &bdevsw[major(dev)];
 
 		/* XXX is there  a better way of excluding some devices? */
 		if (!strncmp(dv->dv_xname, "fd", 2) ||
-		    !strncmp(dv->dv_xname, "cd", 2))
+		    !strncmp(dv->dv_xname, "cd", 2) ||
+		    !strncmp(dv->dv_xname, "rx", 2))
 			continue;
 
 		/* open device */
