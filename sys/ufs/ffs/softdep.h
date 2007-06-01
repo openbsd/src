@@ -1,4 +1,4 @@
-/*	$OpenBSD: softdep.h,v 1.13 2006/10/16 15:51:26 tom Exp $	*/
+/*	$OpenBSD: softdep.h,v 1.14 2007/06/01 20:23:26 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -192,7 +192,7 @@ struct pagedep {
 	LIST_ENTRY(pagedep) pd_hash;	/* hashed lookup */
 	struct	mount *pd_mnt;		/* associated mount point */
 	ino_t	pd_ino;			/* associated file */
-	ufs_lbn_t pd_lbn;		/* block within file */
+	daddr64_t pd_lbn;		/* block within file */
 	struct	dirremhd pd_dirremhd;	/* dirrem's waiting for page */
 	struct	diraddhd pd_diraddhd[DAHASHSZ]; /* diradd dir entry updates */
 	struct	diraddhd pd_pendinghd;	/* directory entries awaiting write */
@@ -336,7 +336,7 @@ struct allocdirect {
 	struct	worklist ad_list;	/* buffer holding block */
 #	define	ad_state ad_list.wk_state /* block pointer state */
 	TAILQ_ENTRY(allocdirect) ad_next; /* inodedep's list of allocdirect's */
-	ufs_lbn_t ad_lbn;		/* block within file */
+	daddr64_t ad_lbn;		/* block within file */
 	daddr_t ad_newblkno;		/* new value of block pointer */
 	daddr_t ad_oldblkno;		/* old value of block pointer */
 	long	ad_newsize;		/* size of new block */

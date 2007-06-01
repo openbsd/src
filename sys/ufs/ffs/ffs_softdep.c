@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.90 2007/06/01 18:54:27 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.91 2007/06/01 20:23:26 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -139,8 +139,7 @@ STATIC	struct dirrem *newdirrem(struct buf *, struct inode *,
 STATIC	void free_diradd(struct diradd *);
 STATIC	void free_allocindir(struct allocindir *, struct inodedep *);
 STATIC	void free_newdirblk(struct newdirblk *);
-STATIC	int indir_trunc(struct inode *, daddr_t, int, ufs_lbn_t,
-	    long *);
+STATIC	int indir_trunc(struct inode *, daddr_t, int, daddr64_t, long *);
 STATIC	void deallocate_dependencies(struct buf *, struct inodedep *);
 STATIC	void free_allocdirect(struct allocdirectlst *,
 	    struct allocdirect *, int);
@@ -160,8 +159,7 @@ STATIC	struct bmsafemap *bmsafemap_lookup(struct buf *);
 STATIC	int newblk_lookup(struct fs *, daddr_t, int,
 	    struct newblk **);
 STATIC	int inodedep_lookup(struct fs *, ino_t, int, struct inodedep **);
-STATIC	int pagedep_lookup(struct inode *, ufs_lbn_t, int,
-	    struct pagedep **);
+STATIC	int pagedep_lookup(struct inode *, daddr64_t, int, struct pagedep **);
 STATIC	void pause_timer(void *);
 STATIC	int request_cleanup(int, int);
 STATIC	int process_worklist_item(struct mount *, int);
@@ -991,7 +989,7 @@ STATIC struct sema pagedep_in_progress;
 STATIC int
 pagedep_lookup(ip, lbn, flags, pagedeppp)
 	struct inode *ip;
-	ufs_lbn_t lbn;
+	daddr64_t lbn;
 	int flags;
 	struct pagedep **pagedeppp;
 {
@@ -1440,7 +1438,7 @@ bmsafemap_lookup(bp)
 void 
 softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	struct inode *ip;	/* inode to which block is being added */
-	ufs_lbn_t lbn;		/* block pointer within inode */
+	daddr64_t lbn;		/* block pointer within inode */
 	daddr_t newblkno;	/* disk block number being added */
 	daddr_t oldblkno;	/* previous block number, 0 unless frag */
 	long newsize;		/* size of new block */
@@ -1720,7 +1718,7 @@ newallocindir(ip, ptrno, newblkno, oldblkno)
 void
 softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 	struct inode *ip;	/* inode for file being extended */
-	ufs_lbn_t lbn;		/* allocated block number within file */
+	daddr64_t lbn;		/* allocated block number within file */
 	struct buf *bp;		/* buffer with indirect blk referencing page */
 	int ptrno;		/* offset of pointer in indirect block */
 	daddr_t newblkno;	/* disk block number being added */
@@ -2399,7 +2397,7 @@ handle_workitem_freeblocks(freeblks)
 	int i, level, bsize;
 	long nblocks, blocksreleased = 0;
 	int error, allerror = 0;
-	ufs_lbn_t baselbns[NIADDR], tmpval;
+	daddr64_t baselbns[NIADDR], tmpval;
 
 	if (VFSTOUFS(freeblks->fb_mnt)->um_fstype == UM_UFS1)
 		tip.i_din1 = &di.di1;
@@ -2464,7 +2462,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	struct inode *ip;
 	daddr_t dbn;
 	int level;
-	ufs_lbn_t lbn;
+	daddr64_t lbn;
 	long *countp;
 {
 	struct buf *bp;
@@ -2610,7 +2608,7 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
 	int isnewblk;		/* entry is in a newly allocated block */
 {
 	int offset;		/* offset of new entry within directory block */
-	ufs_lbn_t lbn;		/* block in directory containing new entry */
+	daddr64_t lbn;		/* block in directory containing new entry */
 	struct fs *fs;
 	struct diradd *dap;
 	struct allocdirect *adp;
@@ -2758,7 +2756,7 @@ softdep_change_directoryentry_offset(dp, base, oldloc, newloc, entrysize)
 	int offset, oldoffset, newoffset;
 	struct pagedep *pagedep;
 	struct diradd *dap;
-	ufs_lbn_t lbn;
+	daddr64_t lbn;
 
 	ACQUIRE_LOCK(&lk);
 	lbn = lblkno(dp->i_fs, dp->i_offset);
@@ -2913,7 +2911,7 @@ newdirrem(bp, dp, ip, isrmdir, prevdirremp)
 	struct dirrem **prevdirremp; /* previously referenced inode, if any */
 {
 	int offset;
-	ufs_lbn_t lbn;
+	daddr64_t lbn;
 	struct diradd *dap;
 	struct dirrem *dirrem;
 	struct pagedep *pagedep;
@@ -3443,7 +3441,7 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 	struct ufs1_dinode *dp;
 	struct fs *fs;
 #ifdef DIAGNOSTIC
-	ufs_lbn_t prevlbn = 0;
+	daddr64_t prevlbn = 0;
 	int32_t d1, d2;
 #endif
 	int i, deplist;
@@ -4561,7 +4559,7 @@ softdep_fsync(vp)
 	struct proc *p = CURPROC;		/* XXX */
 	int error, flushparent;
 	ino_t parentino;
-	ufs_lbn_t lbn;
+	daddr64_t lbn;
 
 	ip = VTOI(vp);
 	fs = ip->i_fs;

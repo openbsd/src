@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.31 2007/06/01 18:54:27 pedro Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.32 2007/06/01 20:23:25 pedro Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -177,11 +177,11 @@ void  softdep_freefile(struct vnode *, ino_t, mode_t);
 void  softdep_setup_freeblocks(struct inode *, off_t);
 void  softdep_setup_inomapdep(struct buf *, struct inode *, ino_t);
 void  softdep_setup_blkmapdep(struct buf *, struct fs *, daddr_t);
-void  softdep_setup_allocdirect(struct inode *, ufs_lbn_t, daddr_t,
+void  softdep_setup_allocdirect(struct inode *, daddr64_t, daddr_t,
             daddr_t, long, long, struct buf *);
 void  softdep_setup_allocindir_meta(struct buf *, struct inode *,
             struct buf *, int, daddr_t);
-void  softdep_setup_allocindir_page(struct inode *, ufs_lbn_t,
+void  softdep_setup_allocindir_page(struct inode *, daddr64_t,
             struct buf *, int, daddr_t, daddr_t, struct buf *);
 void  softdep_fsync_mountdev(struct vnode *, int);
 int   softdep_sync_metadata(struct vop_fsync_args *);

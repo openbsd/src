@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep_stub.c,v 1.14 2006/06/21 10:01:10 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep_stub.c,v 1.15 2007/06/01 20:23:26 pedro Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -80,14 +80,14 @@ softdep_setup_blkmapdep(struct buf *bp, struct fs *fs, daddr_t newblkno)
 }
 
 void 
-softdep_setup_allocdirect(struct inode *ip, ufs_lbn_t lbn, daddr_t newblkno,
+softdep_setup_allocdirect(struct inode *ip, daddr64_t lbn, daddr_t newblkno,
     daddr_t oldblkno, long newsize, long oldsize, struct buf *bp)
 {
 	panic("softdep_setup_allocdirect called");
 }
 
 void
-softdep_setup_allocindir_page(struct inode *ip, ufs_lbn_t lbn, struct buf *bp,
+softdep_setup_allocindir_page(struct inode *ip, daddr64_t lbn, struct buf *bp,
     int ptrno, daddr_t newblkno, daddr_t oldblkno, struct buf *nbp)
 {
 	panic("softdep_setup_allocindir_page called");
