@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.92 2007/05/29 21:34:43 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.93 2007/06/01 17:34:08 dlg Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -274,7 +274,7 @@ buf_get(size_t size)
 
 	bp = pool_get(&bufpool, PR_WAITOK);
 
-	data = (void *)uvm_km_zalloc(buf_map, qs);
+	data = (void *)uvm_km_alloc(buf_map, qs);
 	if (data == NULL) {
 		pool_put(&bufpool, bp);
 		return (NULL);
