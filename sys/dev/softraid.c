@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.64 2007/05/31 22:04:23 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.65 2007/06/01 01:16:48 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -146,6 +146,7 @@ void			sr_print_uuid(struct sr_uuid *, int);
 u_int32_t		sr_checksum(char *, u_int32_t *, u_int32_t);
 int			sr_clear_metadata(struct sr_discipline *);
 int			sr_save_metadata(struct sr_discipline *, u_int32_t);
+void			sr_save_metadata_callback(void *, void *);
 int			sr_boot_assembly(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
 int			sr_validate_metadata(struct sr_softc *, dev_t,
@@ -892,7 +893,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			    "assemble it\n");
 			goto unwind;
 		}
-		printf("%s: not yet partial bringup", DEVNAME(sc));
+		printf("%s: not yet partial bringup\n", DEVNAME(sc));
 		goto unwind;
 	}
 
@@ -1117,7 +1118,7 @@ sr_read_meta(struct sr_discipline *sd)
 	struct sr_chunk_meta	*mc;
 	size_t			sz = SR_META_SIZE * 512;
 	int			no_chunk = 0;
-	u_int32_t		volid;
+	u_int32_t		volid, ondisk = 0, cid;
 
 	DNPRINTF(SR_D_META, "%s: sr_read_meta\n", DEVNAME(sc));
 
@@ -1207,7 +1208,7 @@ sr_read_meta(struct sr_discipline *sd)
 		}
 
 		if (sd->sd_vol.sv_chunks[m->ssd_chunk_id]) {
-			printf("%s: %s chunk id %d already in use\n ",
+			printf("%s: %s chunk id %d already in use\n",
 			    DEVNAME(sc), ch_entry->src_devname,
 			    m->ssd_chunk_id);
 			no_chunk = -1;
@@ -1217,6 +1218,19 @@ sr_read_meta(struct sr_discipline *sd)
 		sd->sd_vol.sv_chunks[m->ssd_chunk_id] = ch_entry;
 		bcopy(mc + m->ssd_chunk_id, &ch_entry->src_meta,
 		    sizeof(ch_entry->src_meta));
+
+		if (ondisk == 0) {
+			ondisk = m->ssd_ondisk;
+			cid = m->ssd_chunk_id;
+		}
+
+		if (m->ssd_ondisk != ondisk) {
+			printf("%s: %s chunk id %d contains stale metadata\n",
+			    DEVNAME(sc), ch_entry->src_devname,
+			    m->ssd_ondisk < ondisk ? m->ssd_chunk_id : cid);
+			no_chunk = -1;
+			goto bad;
+		}
 	}
 
 	if (no_chunk != m->ssd_chunk_no) {
@@ -2000,7 +2014,7 @@ die:
 	sd->sd_vol.sv_chunks[c]->src_meta.scm_status = new_state;
 	sd->sd_set_vol_state(sd);
 
-	sr_save_metadata(sd, SR_VOL_DIRTY);
+	workq_add_task(NULL, 0, sr_save_metadata_callback, sd, NULL);
 done:
 	splx(s);
 }
@@ -2224,6 +2238,14 @@ sr_already_assembled(struct sr_discipline *sd)
 				return (1);
 
 	return (0);
+}
+
+void
+sr_save_metadata_callback(void *arg1, void *arg2)
+{
+	if (sr_save_metadata(arg1, SR_VOL_DIRTY))
+		printf("%s: save metadata failed\n",
+		    DEVNAME(((struct sr_discipline *)arg1)->sd_sc));
 }
 
 int
