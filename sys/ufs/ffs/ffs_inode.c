@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.47 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.48 2007/06/01 06:38:54 deraadt Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -162,9 +162,9 @@ int
 ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 {
 	struct vnode *ovp;
-	ufs2_daddr_t lastblock;
-	ufs2_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	ufs2_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	daddr64_t lastblock;
+	daddr64_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	daddr64_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	struct fs *fs;
 	struct buf *bp;
 	int offset, size, level;
@@ -479,7 +479,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	int error = 0, allerror = 0;
 	ufs1_daddr_t *bap1 = NULL;
 #ifdef FFS2
-	ufs2_daddr_t *bap2 = NULL;
+	daddr64_t *bap2 = NULL;
 #endif
 
 	/*
@@ -521,7 +521,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 
 #ifdef FFS2
 	if (ip->i_ump->um_fstype == UM_UFS2)
-		bap2 = (ufs2_daddr_t *) bp->b_data;
+		bap2 = (daddr64_t *) bp->b_data;
 	else
 #endif
 		bap1 = (ufs1_daddr_t *) bp->b_data;
@@ -543,7 +543,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 
 #ifdef FFS2
 		if (ip->i_ump->um_fstype == UM_UFS2)
-			bap2 = (ufs2_daddr_t *) copy;
+			bap2 = (daddr64_t *) copy;
 		else
 #endif
 			bap1 = (ufs1_daddr_t *) copy;

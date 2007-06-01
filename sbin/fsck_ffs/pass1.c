@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.23 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.24 2007/06/01 06:41:33 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1.c,v 1.23 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.24 2007/06/01 06:41:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,9 +138,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		      dp->dp1.di_mode || dp->dp1.di_size)) ||
 		    (sblock.fs_magic == FS_UFS2_MAGIC &&
 		     (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
-			NDADDR * sizeof(ufs2_daddr_t)) ||
+			NDADDR * sizeof(daddr64_t)) ||
 		      memcmp(dp->dp2.di_ib, ufs2_zino.di_ib,
-			NIADDR * sizeof(ufs2_daddr_t)) ||
+			NIADDR * sizeof(daddr64_t)) ||
 		      dp->dp2.di_mode || dp->dp2.di_size))) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
 			if (reply("CLEAR") == 1) {
@@ -216,7 +216,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 				    sizeof(ufs1_daddr_t));
 			else
 				ndb = howmany(DIP(dp, di_size),
-				    sizeof(ufs2_daddr_t));
+				    sizeof(daddr64_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
 				for (ndb = 1; j > 1; j--)

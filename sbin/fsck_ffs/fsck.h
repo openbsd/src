@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.18 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.19 2007/06/01 06:41:33 deraadt Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct bufarea {
 	union {
 		char	*b_buf;			/* buffer space */
 		ufs1_daddr_t	*b_indir1;	/* FFS1 indirect block */
-		ufs2_daddr_t	*b_indir2;	/* FFS2 indirect block */
+		daddr64_t	*b_indir2;	/* FFS2 indirect block */
 		struct	fs *b_fs;		/* super block */
 		struct	cg *b_cg;		/* cylinder group */
 		struct	ufs1_dinode *b_dinode1;	/* FFS1 inode block */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.88 2007/05/27 20:06:40 otto Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.89 2007/06/01 06:38:54 deraadt Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1852,7 +1852,7 @@ setup_allocindir_phase2(bp, ip, aip)
 				((ufs1_daddr_t *)indirdep->ir_savebp->b_data)
 				    [aip->ai_offset] = aip->ai_oldblkno;
 			else
-				((ufs2_daddr_t *)indirdep->ir_savebp->b_data)
+				((daddr64_t *)indirdep->ir_savebp->b_data)
 				    [aip->ai_offset] = aip->ai_oldblkno;
 			FREE_LOCK(&lk);
 			if (freefrag != NULL)
@@ -2469,7 +2469,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 {
 	struct buf *bp;
 	ufs1_daddr_t *bap1 = NULL;
-	ufs2_daddr_t nb, *bap2 = NULL;
+	daddr64_t nb, *bap2 = NULL;
 	struct fs *fs;
 	struct worklist *wk;
 	struct indirdep *indirdep;
@@ -2522,7 +2522,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 		bap1 = (ufs1_daddr_t *) bp->b_data;
 	} else {
 		ufs1fmt = 0;
-		bap2 = (ufs2_daddr_t *) bp->b_data;
+		bap2 = (daddr64_t *) bp->b_data;
 	}
 	nblocks = btodb(fs->fs_bsize);
 	for (i = NINDIR(fs) - 1; i >= 0; i--) {
@@ -3591,7 +3591,7 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 	struct ufs2_dinode *dp;
 	struct fs *fs = inodedep->id_fs;
 #ifdef DIAGNOSTIC
-	ufs2_daddr_t prevlbn = -1, d1, d2;
+	daddr64_t prevlbn = -1, d1, d2;
 #endif
 	int deplist, i;
 
@@ -4029,7 +4029,7 @@ handle_allocindir_partdone(aip)
 		((ufs1_daddr_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
 		    aip->ai_newblkno;
 	else
-		((ufs2_daddr_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
+		((daddr64_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
 		    aip->ai_newblkno;
 	LIST_REMOVE(aip, ai_next);
 	if (aip->ai_freefrag != NULL)

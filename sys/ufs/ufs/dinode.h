@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.11 2005/12/19 15:18:01 pedro Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.12 2007/06/01 06:38:56 deraadt Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 
 typedef int32_t ufs_daddr_t;
 typedef int32_t ufs1_daddr_t;
-typedef int64_t ufs2_daddr_t;
 typedef int64_t ufs_lbn_t;
 typedef int64_t ufs_time_t;
 
@@ -109,9 +108,9 @@ struct ufs2_dinode {
 	u_int32_t	di_kernflags;	/*  84: Kernel flags. */
 	u_int32_t	di_flags;	/*  88: Status flags (chflags). */
 	int32_t		di_extsize;	/*  92: External attributes block. */
-	ufs2_daddr_t	di_extb[NXADDR];/*  96: External attributes block. */
-	ufs2_daddr_t	di_db[NDADDR];	/* 112: Direct disk blocks. */
-	ufs2_daddr_t	di_ib[NIADDR];	/* 208: Indirect disk blocks. */
+	daddr64_t	di_extb[NXADDR];/*  96: External attributes block. */
+	daddr64_t	di_db[NDADDR];	/* 112: Direct disk blocks. */
+	daddr64_t	di_ib[NIADDR];	/* 208: Indirect disk blocks. */
 	int64_t		di_spare[3];	/* 232: Reserved; currently unused */
 };
 
@@ -129,7 +128,7 @@ struct ufs2_dinode {
 #define	di_shortlink	di_db
 
 #define MAXSYMLINKLEN_UFS1	((NDADDR + NIADDR) * sizeof(ufs1_daddr_t))
-#define MAXSYMLINKLEN_UFS2	((NDADDR + NIADDR) * sizeof(ufs2_daddr_t))
+#define MAXSYMLINKLEN_UFS2	((NDADDR + NIADDR) * sizeof(daddr64_t))
 
 #define MAXSYMLINKLEN(ip) \
 	((ip)->i_ump->um_fstype == UM_UFS1) ? \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.21 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.22 2007/06/01 06:38:56 deraadt Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr64_t *bnp, struct indir *ap,
 	struct mount *mp;
 	struct vnode *devvp;
 	struct indir a[NIADDR+1], *xap;
-	ufs2_daddr_t daddr;
+	daddr64_t daddr;
 	long metalbn;
 	int error, maxrun = 0, num;
 
@@ -189,13 +189,13 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr64_t *bnp, struct indir *ap,
 
 #ifdef FFS2
 		if (ip->i_ump->um_fstype == UM_UFS2) {
-			daddr = ((ufs2_daddr_t *)bp->b_data)[xap->in_off];
+			daddr = ((daddr64_t *)bp->b_data)[xap->in_off];
 			if (num == 1 && daddr && runp)
 				for (bn = xap->in_off + 1;
 				    bn < MNINDIR(ump) && *runp < maxrun &&
 				    is_sequential(ump,
-					((ufs2_daddr_t *)bp->b_data)[bn - 1],
-					((ufs2_daddr_t *)bp->b_data)[bn]);
+					((daddr64_t *)bp->b_data)[bn - 1],
+					((daddr64_t *)bp->b_data)[bn]);
 				    ++bn, ++*runp);
 
                         continue;

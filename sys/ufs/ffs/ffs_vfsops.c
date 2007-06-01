@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.106 2007/05/29 19:02:33 otto Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.107 2007/06/01 06:38:54 deraadt Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ int ffs_reload_vnode(struct vnode *, void *);
 int ffs_sync_vnode(struct vnode *, void *);
 int ffs_validate(struct fs *);
 
-void ffs1_compat_read(struct fs *, struct ufsmount *, ufs2_daddr_t);
+void ffs1_compat_read(struct fs *, struct ufsmount *, daddr64_t);
 void ffs1_compat_write(struct fs *, struct ufsmount *);
 
 const struct vfsops ffs_vfsops = {
@@ -670,7 +670,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	dev_t dev;
 	struct partinfo dpart;
 	caddr_t space;
-	ufs2_daddr_t sbloc;
+	daddr64_t sbloc;
 	int error, i, blks, size, ronly;
 	int32_t *lp;
 	size_t strsize;
@@ -960,7 +960,7 @@ ffs_oldfscompat(struct fs *fs)
  * Auxiliary function for reading FFS1 super blocks.
  */
 void
-ffs1_compat_read(struct fs *fs, struct ufsmount *ump, ufs2_daddr_t sbloc)
+ffs1_compat_read(struct fs *fs, struct ufsmount *ump, daddr64_t sbloc)
 {
 	if (fs->fs_magic == FS_UFS2_MAGIC)
 		return; /* UFS2 */

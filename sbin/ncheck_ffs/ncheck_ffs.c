@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.28 2007/05/21 18:12:00 millert Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.29 2007/06/01 06:41:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.28 2007/05/21 18:12:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.29 2007/06/01 06:41:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,11 +107,11 @@ int	nicache;
 void addinode(ino_t inum);
 void *getino(ino_t inum);
 void findinodes(ino_t);
-void bread(ufs2_daddr_t, char *, int);
+void bread(daddr64_t, char *, int);
 __dead void usage(void);
 void scanonedir(ino_t, const char *);
-void dirindir(ino_t, ufs2_daddr_t, int, off_t, const char *);
-void searchdir(ino_t, ufs2_daddr_t, long, off_t, const char *);
+void dirindir(ino_t, daddr64_t, int, off_t, const char *);
+void searchdir(ino_t, daddr64_t, long, off_t, const char *);
 int matchino(const void *, const void *);
 int matchcache(const void *, const void *);
 void cacheino(ino_t, void *);
@@ -264,7 +264,7 @@ int	breaderrors = 0;
 #define	BREADEMAX 32
 
 void
-bread(ufs2_daddr_t blkno, char *buf, int size)
+bread(daddr64_t blkno, char *buf, int size)
 {
 	int cnt, i;
 
@@ -367,7 +367,7 @@ scanonedir(ino_t ino, const char *path)
  * require the directory to be dumped.
  */
 void
-dirindir(ino_t ino, ufs2_daddr_t blkno, int ind_level, off_t filesize,
+dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t filesize,
     const char *path)
 {
 	int i;
@@ -381,7 +381,7 @@ dirindir(ino_t ino, ufs2_daddr_t blkno, int ind_level, off_t filesize,
 			if (sblock->fs_magic == FS_UFS1_MAGIC)
 				blkno = ((ufs1_daddr_t *)idblk)[i];
 			else
-				blkno = ((ufs2_daddr_t *)idblk)[i];
+				blkno = ((daddr64_t *)idblk)[i];
 			if (blkno != 0)
 				searchdir(ino, blkno, sblock->fs_bsize,
 				    filesize, path);
@@ -393,7 +393,7 @@ dirindir(ino_t ino, ufs2_daddr_t blkno, int ind_level, off_t filesize,
 		if (sblock->fs_magic == FS_UFS1_MAGIC)
 			blkno = ((ufs1_daddr_t *)idblk)[i];
 		else
-			blkno = ((ufs2_daddr_t *)idblk)[i];
+			blkno = ((daddr64_t *)idblk)[i];
 		if (blkno != 0)
 			dirindir(ino, blkno, ind_level, filesize, path);
 	}
@@ -405,7 +405,7 @@ dirindir(ino_t ino, ufs2_daddr_t blkno, int ind_level, off_t filesize,
  * contains any subdirectories.
  */
 void
-searchdir(ino_t ino, ufs2_daddr_t blkno, long size, off_t filesize,
+searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize,
     const char *path)
 {
 	char *dblk;

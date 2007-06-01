@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.64 2007/05/29 06:28:16 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.65 2007/06/01 06:41:35 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	} else {
 		sblock.fs_inodefmt = FS_44INODEFMT;
 		sblock.fs_sblockloc = SBLOCK_UFS2;
-		sblock.fs_nindir = sblock.fs_bsize / sizeof(ufs2_daddr_t);
+		sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr64_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs2_dinode);
 		sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS2;
 	}
@@ -605,7 +605,7 @@ void
 initcg(int cylno, time_t utime)
 {
 	int i, j, d, dlower, dupper, blkno, start;
-	ufs2_daddr_t cbase, dmax;
+	daddr64_t cbase, dmax;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	struct csum *cs;
@@ -960,7 +960,7 @@ goth:
 void
 iput(union dinode *ip, ino_t ino)
 {
-	ufs2_daddr_t d;
+	daddr64_t d;
 
 	if (Oflag <= 1)
 		ip->dp1.di_gen = (u_int32_t)arc4random();

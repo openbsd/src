@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.73 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.74 2007/06/01 06:38:54 deraadt Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -580,11 +580,11 @@ ffs2_reallocblks(void *v)
 	struct inode *ip;
 	struct vnode *vp;
 	struct buf *sbp, *ebp;
-	ufs2_daddr_t *bap, *sbap, *ebap = 0;
+	daddr64_t *bap, *sbap, *ebap = 0;
 	struct cluster_save *buflist;
 	struct ufsmount *ump;
 	ufs_lbn_t start_lbn, end_lbn;
-	ufs2_daddr_t soff, newblk, blkno, pref;
+	daddr64_t soff, newblk, blkno, pref;
 	struct indir start_ap[NIADDR + 1], end_ap[NIADDR + 1], *idp;
 	int i, len, start_lvl, end_lvl, ssize;
 
@@ -643,7 +643,7 @@ ffs2_reallocblks(void *v)
 			brelse(sbp);
 			return (ENOSPC);
 		}
-		sbap = (ufs2_daddr_t *)sbp->b_data;
+		sbap = (daddr64_t *)sbp->b_data;
 		soff = idp->in_off;
 	}
 
@@ -660,7 +660,7 @@ ffs2_reallocblks(void *v)
 		ssize = len - (idp->in_off + 1);
 		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &ebp))
 			goto fail;
-		ebap = (ufs2_daddr_t *)ebp->b_data;
+		ebap = (daddr64_t *)ebp->b_data;
 	}
 
 	/*
@@ -1086,8 +1086,8 @@ ffs1_blkpref(struct inode *ip, daddr_t lbn, int indx, ufs1_daddr_t *bap)
  * Same as above, for UFS2.
  */
 #ifdef FFS2
-ufs2_daddr_t
-ffs2_blkpref(struct inode *ip, daddr_t lbn, int indx, ufs2_daddr_t *bap)
+daddr64_t
+ffs2_blkpref(struct inode *ip, daddr_t lbn, int indx, daddr64_t *bap)
 {
 	struct fs *fs;
 	int cg, avgbfree, startcg;

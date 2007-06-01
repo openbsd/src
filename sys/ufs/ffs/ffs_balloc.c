@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.32 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.33 2007/06/01 06:38:54 deraadt Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -439,7 +439,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 {
 	daddr_t lbn, lastlbn, nb, newb, *blkp;
 	daddr_t pref, *allocblk, allociblk[NIADDR + 1];
-	ufs2_daddr_t *bap, *allocib;
+	daddr64_t *bap, *allocib;
 	int deallocated, osize, nsize, num, i, error, unwindidx, r;
 	struct buf *bp, *nbp;
 	struct indir indirs[NIADDR + 2];

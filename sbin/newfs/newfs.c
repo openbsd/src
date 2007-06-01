@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.65 2007/05/29 06:28:16 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.66 2007/06/01 06:41:35 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ u_short	dkcksum(struct disklabel *);
  * block worth of data blocks.
  */
 #define MAXBLKPG_FFS1(bsize)	((bsize) / sizeof(ufs1_daddr_t))
-#define MAXBLKPG_FFS2(bsize)	((bsize) / sizeof(ufs2_daddr_t))
+#define MAXBLKPG_FFS2(bsize)	((bsize) / sizeof(daddr64_t))
 
 /*
  * Each file system has a number of inodes statically allocated.
