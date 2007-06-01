@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.74 2007/05/31 13:33:17 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.75 2007/06/01 20:39:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -95,10 +95,9 @@ sub read
 	}
 	&$code($u,
 		sub {
-			local $_ = shift;
-			return if m/^\s*$/;
-			chomp;
-			OpenBSD::PackingElement->create($_, $plist);
+			my $line = shift;
+			return if $line =~ m/^\s*$/o;
+			OpenBSD::PackingElement->create($line, $plist);
 		});
 	return $plist;
 }

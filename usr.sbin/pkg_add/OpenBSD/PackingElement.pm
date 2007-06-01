@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.124 2007/05/31 13:20:27 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.125 2007/06/01 20:39:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -31,13 +31,14 @@ our %keyword;
 sub create
 {
 	my ($class, $line, $plist) = @_;
-	if ($line =~ m/^\@(\S+)\s*(.*)/) {
+	if ($line =~ m/^\@(\S+)\s*(.*)$/o) {
 		if (defined $keyword{$1}) {
 			$keyword{$1}->add($plist, $2);
 		} else {
 			die "Unknown element: $line";
 		}
 	} else {
+		chomp $line;
 		OpenBSD::PackingElement::File->add($plist, $line);
 	}
 }
