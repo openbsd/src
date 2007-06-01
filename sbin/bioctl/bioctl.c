@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.56 2007/05/31 04:23:23 grunk Exp $       */
+/* $OpenBSD: bioctl.c,v 1.57 2007/06/01 00:00:54 tedu Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -104,7 +104,10 @@ main(int argc, char *argv[])
 			break;
 		case 'c': /* create */
 			func |= BIOC_CREATERAID;
-			cr_level = atoi(optarg);
+			if (isdigit(*optarg))
+				cr_level = atoi(optarg);
+			else
+				cr_level = *optarg;
 			break;
 		case 'u': /* unblink */
 			func |= BIOC_BLINK;
@@ -604,6 +607,9 @@ bio_createraid(u_int16_t level, char *dev_list)
 		break;
 	case 1:
 		min_disks = 2;
+		break;
+	case 'c':
+		min_disks = 1;
 		break;
 	default:
 		errx(1, "unsupported raid level");
