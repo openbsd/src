@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.25 2007/05/30 14:04:51 espie Exp $
+# $OpenBSD: Replace.pm,v 1.26 2007/06/01 12:19:00 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -56,8 +56,6 @@ sub unmark_lib
 
 sub extract_and_progress
 {
-	require OpenBSD::ProgressMeter;
-
 	my ($self, $state, $donesize, $totsize) = @_;
 	$self->extract($state);
 	if ($state->{interrupted}) {
