@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.28 2007/06/01 21:50:47 espie Exp $
+# $OpenBSD: Replace.pm,v 1.29 2007/06/01 22:06:03 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -74,11 +74,16 @@ sub extract
 	my $file = $self->prepare_to_extract($state);
 
 	if (defined $self->{link} || defined $self->{symlink}) {
+		$state->{archive}->skip;
 		return;
 	}
 	
 	$self->SUPER::extract($state);
+
+	# figure out a safe directory where to put the temp file
 	my $d = dirname($file->{destdir}.$file->{name});
+	# we go back up until we find an existing directory.
+	# hopefully this will be on the same file system.
 	while (!-d $d && -e _) {
 		$d = dirname($d);
 	}
