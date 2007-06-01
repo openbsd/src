@@ -1,4 +1,4 @@
-/*	$OpenBSD: owsbm.c,v 1.2 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: owsbm.c,v 1.3 2007/06/01 23:35:00 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Aaron Linville <aaron@linville.org>
@@ -115,7 +115,6 @@ owsbm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 	sc->sc_temp.type = SENSOR_TEMP;
-	strlcpy(sc->sc_temp.desc, "Temp", sizeof(sc->sc_temp.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_temp);
 
 	/* Initialize voltage sensor */
