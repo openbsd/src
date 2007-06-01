@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myxreg.h,v 1.1 2007/05/31 18:23:42 reyk Exp $	*/
+/*	$OpenBSD: if_myxreg.h,v 1.2 2007/06/01 18:07:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -30,15 +30,17 @@
 #define MYXBAR0			PCI_MAPREG_START
 
 #define MYX_NRXDESC		256
+#define MYX_NTXDESC_MIN		2
 #define MYX_IRQCOALDELAY	30
 #define MYX_IRQDEASSERTWAIT	1
-#define MYX_FLOW_CONTROL	1
+#define MYX_MAX_MTU_SMALL	(ETHERMTU + ETHER_HDR_LEN + 4)
+#define MYX_MAX_MTU_BIG		PAGE_SIZE
 
 #define MYXALIGN_CMD		64
 #define MYXALIGN_DATA		PAGE_SIZE
 
-#define MYX_ADDRHIGH(_v)	htobe32((_v >> 32) & 0xffffffff)
-#define MYX_ADDRLOW(_v)		htobe32(_v & 0xffffffff)
+#define MYX_ADDRHIGH(_v)	((_v >> 32) & 0xffffffff)
+#define MYX_ADDRLOW(_v)		(_v & 0xffffffff)
 
 /*
  * PCI memory/register layout
@@ -148,8 +150,34 @@ struct myx_status {
 } __packed;
 
 struct myx_rxdesc {
-	u_int16_t	rd_csum;
-	u_int16_t	rd_length;
+	u_int16_t	rx_csum;
+	u_int16_t	rx_length;
+} __packed;
+
+struct myx_rxbufdesc {
+	u_int32_t	rb_addr_high;
+	u_int32_t	rb_addr_low;
+} __packed;
+
+struct myx_txdesc {
+	u_int32_t	tx_addr_high;
+	u_int32_t	tx_addr_low;
+	u_int16_t	tx_hdr_offset;
+	u_int16_t	tx_length;
+	u_int8_t	tx_pad;
+	u_int8_t	tx_nsegs;
+	u_int8_t	tx_cksum_offset;
+	u_int8_t	tx_flags;
+#define  MYXTXD_FLAGS_SMALL	(1<<0)
+#define  MYXTXD_FLAGS_FIRST	(1<<1)
+#define  MYXTXD_FLAGS_ALIGN_ODD	(1<<2)
+#define  MYXTXD_FLAGS_CKSUM	(1<<3)
+#define  MYXTXD_FLAGS_NO_TSO	(1<<4)
+
+#define  MYXTXD_FLAGS_TSO_HDR	(1<<0)
+#define  MYXTXD_FLAGS_TSO_LAST	(1<<3)
+#define  MYXTXD_FLAGS_TSO_CHOP	(1<<4)
+#define  MYXTXD_FLAGS_TSO_PLD	(1<<5)
 } __packed;
 
 enum {
@@ -159,9 +187,9 @@ enum {
 	MYXCMD_SET_INTRQDMA		= 3,
 	MYXCMD_SET_BIGBUFSZ		= 4,
 	MYXCMD_SET_SMALLBUFSZ		= 5,
-	MYXCMD_GET_TXOFF		= 6,
-	MYXCMD_GET_SMALLRXOFF		= 7,
-	MYXCMD_GET_BIGRXOFF		= 8,
+	MYXCMD_GET_TXRINGOFF		= 6,
+	MYXCMD_GET_RXSMALLRINGOFF	= 7,
+	MYXCMD_GET_RXBIGRINGOFF		= 8,
 	MYXCMD_GET_INTRACKOFF		= 9,
 	MYXCMD_GET_INTRDEASSERTOFF	= 10,
 	MYXCMD_GET_TXRINGSZ		= 11,
@@ -178,6 +206,7 @@ enum {
 	MYXCMD_SET_LLADDR		= 22,
 	MYXCMD_SET_FC			= 23,
 	MYXCMD_UNSET_FC			= 24,
+#define  MYXCMD_FC_DEFAULT		MYXCMD_SET_FC	/* set flow control */
 	MYXCMD_DMA_TEST			= 25,
 	MYXCMD_SET_ALLMULTI		= 26,
 	MYXCMD_UNSET_ALLMULTI		= 27,
@@ -186,7 +215,8 @@ enum {
 	MYXCMD_UNSET_MCAST		= 30,
 	MYXCMD_SET_STATSDMA		= 31,
 	MYXCMD_UNALIGNED_DMA_TEST	= 32,
-	MYXCMD_GET_UNALIGNED_STATUS	= 33
+	MYXCMD_GET_UNALIGNED_STATUS	= 33,
+	MYXCMD_MAX			= 34
 };
 
 enum {
