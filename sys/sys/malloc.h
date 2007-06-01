@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.83 2006/09/30 14:31:28 mickey Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.84 2007/06/01 05:37:14 deraadt Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -117,13 +117,7 @@
 #define	M_TTYS		62	/* allocated tty structures */
 #define	M_EXEC		63	/* argument lists & other mem used by exec */
 #define	M_MISCFSMNT	64	/* miscfs mount structures */
-/* 65 - free */
-#define	M_ADOSFSMNT	66	/* adosfs mount structures */
-/* 67 - free */
-#define	M_ANODE		68	/* adosfs anode structures and tables. */
-/* 69-70 - free */
-#define	M_ADOSFSBITMAP	71	/* adosfs bitmap */
-/* 72-73 - free */
+/* 65-73 - free */
 #define	M_PFKEY		74	/* pfkey data */
 #define	M_TDB		75	/* Transforms database */
 #define	M_XDATA		76	/* IPsec data */
@@ -251,12 +245,12 @@
 	"exec",		/* 63 M_EXEC */ \
 	"miscfs mount",	/* 64 M_MISCFSMNT */ \
 	NULL, \
-	"adosfs mount",	/* 66 M_ADOSFSMNT */ \
-	NULL, \
-	"adosfs anode",	/* 68 M_ANODE */ \
 	NULL, \
 	NULL, \
-	"adosfs bitmap", /* 71 M_ADOSFSBITMAP */ \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
 	NULL, \
 	NULL, \
 	"pfkey data",	/* 74 M_PFKEY */ \

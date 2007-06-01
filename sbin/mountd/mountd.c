@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.67 2006/05/29 16:49:42 avsm Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.68 2007/06/01 05:37:14 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -710,7 +710,6 @@ get_exportlist(void)
 		struct iso_args ia;
 		struct mfs_args ma;
 		struct msdosfs_args da;
-		struct adosfs_args aa;
 	} targs;
 	struct fsarray {
 		int exflags;
@@ -758,7 +757,6 @@ get_exportlist(void)
 		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
-		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
 			fstbl[i].exflags = MNT_DELEXPORT;
 			fstbl[i].mntonname = fsp->f_mntonname;
@@ -1583,7 +1581,6 @@ do_mount(struct exportlist *ep, struct grouplist *grp, int exflags,
 		struct iso_args ia;
 		struct mfs_args ma;
 		struct msdosfs_args da;
-		struct adosfs_args aa;
 	} args;
 	char savedc = '\0';
 	u_int32_t **addrp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.32 2007/05/08 20:26:19 deraadt Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.33 2007/06/01 05:37:14 deraadt Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -103,10 +103,6 @@ extern	const struct vfsops procfs_vfsops;
 extern	const struct vfsops cd9660_vfsops;
 #endif
 
-#ifdef ADOSFS
-extern 	const struct vfsops adosfs_vfsops;
-#endif
-
 #ifdef EXT2FS
 extern	const struct vfsops ext2fs_vfsops;
 #endif
@@ -149,11 +145,6 @@ static struct vfsconf vfsconflist[] = {
         /* MSDOS Filesystem */
 #ifdef MSDOSFS
         { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL, NULL, NULL },
-#endif
-
-        /* AmigaDOS Filesystem */
-#ifdef ADOSFS
-        { &adosfs_vfsops, MOUNT_ADOSFS, 16, 0, MNT_LOCAL, NULL, NULL },
 #endif
 
         /* Sun-compatible Network Filesystem */
@@ -219,7 +210,6 @@ extern struct vnodeopv_desc cd9660_vnodeop_opv_desc;
 extern struct vnodeopv_desc cd9660_specop_opv_desc;
 extern struct vnodeopv_desc cd9660_fifoop_opv_desc;
 extern struct vnodeopv_desc msdosfs_vnodeop_opv_desc;
-extern struct vnodeopv_desc adosfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
 extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
@@ -266,9 +256,6 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 #endif
 #ifdef MSDOSFS
 	&msdosfs_vnodeop_opv_desc,
-#endif
-#ifdef ADOSFS
-	&adosfs_vnodeop_opv_desc,
 #endif
 #ifdef EXT2FS
 	&ext2fs_vnodeop_opv_desc,

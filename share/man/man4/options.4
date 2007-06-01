@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.181 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.182 2007/06/01 05:37:14 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 1 2007 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -337,15 +337,6 @@ Most machines need this if they are not running diskless.
 .It Cd option FFS2
 Includes code implementing the enhanced Fast File System
 .Em ( FFS2 ) .
-.It Cd option ADOSFS
-Includes code implementing the AmigaDOS Fast File System
-.Em ( ADOSFS ) .
-Note that the Professional and Smart File Systems are
-.Em not
-supported.
-See
-.Xr mount_ados 8
-for details.
 .It Cd option EXT2FS
 Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) .

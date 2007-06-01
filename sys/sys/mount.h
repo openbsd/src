@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.80 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: mount.h,v 1.81 2007/06/01 05:37:14 deraadt Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -225,18 +225,6 @@ struct msdosfs_args {
 #define MSDOSFSMNT_ALLOWDIRX	0x10	/* dir is mode +x if r */
 
 /*
- * Arguments to mount amigados filesystems.
- */
-struct adosfs_args {
-	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export_info;
-				/* network export information */
-	uid_t	uid;		/* uid that owns adosfs files */
-	gid_t	gid;		/* gid that owns adosfs files */
-	mode_t	mask;		/* mask to be applied for adosfs perms */
-};
-
-/*
  * Arguments to mount ntfs filesystems
  */
 struct ntfs_args {
@@ -290,7 +278,6 @@ union mount_info {
 	struct iso_args iso_args;
 	struct procfs_args procfs_args;
 	struct msdosfs_args msdosfs_args;
-	struct adosfs_args adosfs_args;
 	struct ntfs_args ntfs_args;
 	char __align[160];	/* 64-bit alignment and room to grow */
 };
@@ -350,7 +337,6 @@ struct ostatfs {
 #define	MOUNT_PROCFS	"procfs"	/* /proc Filesystem */
 #define	MOUNT_AFS	"afs"		/* Andrew Filesystem */
 #define	MOUNT_CD9660	"cd9660"	/* ISO9660 (aka CDROM) Filesystem */
-#define	MOUNT_ADOSFS	"adosfs"	/* AmigaDOS Filesystem */
 #define	MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */
 #define	MOUNT_NCPFS	"ncpfs"		/* NetWare Network File System */
 #define	MOUNT_XFS	"xfs"		/* xfs */

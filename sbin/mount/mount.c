@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.44 2006/12/15 03:04:24 krw Exp $	*/
+/*	$OpenBSD: mount.c,v 1.45 2007/06/01 05:37:14 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.44 2006/12/15 03:04:24 krw Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.45 2007/06/01 05:37:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -560,15 +560,6 @@ prmount(struct statfs *sf)
 		header = getbsize(&headerlen, &blocksize);
 		(void)printf("%s%s=%lu %s", !f++ ? " (" : ", ",
 		    "size", sf->mount_info.mfs_args.size / blocksize, header);
-	} else if (strcmp(sf->f_fstypename, MOUNT_ADOSFS) == 0) {
-		struct adosfs_args *adosfs_args = &sf->mount_info.adosfs_args;
-
-		if (verbose || adosfs_args->uid || adosfs_args->gid)
-			(void)printf("%s%s=%u, %s=%u", !f++ ? " (" : ", ",
-			    "uid", adosfs_args->uid, "gid", adosfs_args->gid);
-		if (verbose || adosfs_args->mask != 0755)
-			(void)printf("%s%s=0%o", !f++ ? " (" : ", ",
-			    "mask", adosfs_args->mask);
 	} else if (strcmp(sf->f_fstypename, MOUNT_MSDOS) == 0) {
 		struct msdosfs_args *msdosfs_args = &sf->mount_info.msdosfs_args;
 
