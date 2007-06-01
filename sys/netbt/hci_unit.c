@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.3 2007/06/01 02:46:11 uwe Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.4 2007/06/01 20:03:31 uwe Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
@@ -91,8 +91,8 @@ hci_attach(struct hci_unit *unit)
 	if (hci_workq == NULL)
 		hci_workq = workq_create("hci_enable", 1);
 	if (hci_workq != NULL)
-		(void)workq_add_task(hci_workq, hci_enable_task, unit,
-		    NULL, 0);
+		(void)workq_add_task(hci_workq, 0,
+		    hci_enable_task, unit, NULL);
 }
 
 void
