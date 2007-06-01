@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap.h,v 1.3 2007/05/30 03:42:53 uwe Exp $	*/
+/*	$OpenBSD: l2cap.h,v 1.4 2007/06/01 02:46:11 uwe Exp $	*/
 /*	$NetBSD: l2cap.h,v 1.5 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.3 2007/05/30 03:42:53 uwe Exp $
+ * $Id: l2cap.h,v 1.4 2007/06/01 02:46:11 uwe Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -354,6 +354,8 @@ typedef union {
 
 #ifdef _KERNEL
 
+#include <net/if.h>		/* for struct ifqueue */
+
 LIST_HEAD(l2cap_channel_list, l2cap_channel);
 
 /* global variables */
@@ -448,6 +450,7 @@ void l2cap_recv_frame(struct mbuf *, struct hci_link *);
 int l2cap_start(struct l2cap_channel *);
 
 /* l2cap_misc.c */
+void l2cap_init(void);
 int l2cap_setmode(struct l2cap_channel *);
 int l2cap_cid_alloc(struct l2cap_channel *);
 struct l2cap_channel *l2cap_cid_lookup(uint16_t);
@@ -464,7 +467,7 @@ int l2cap_send_disconnect_req(struct l2cap_channel *);
 int l2cap_send_connect_rsp(struct hci_link *, uint8_t, uint16_t, uint16_t, uint16_t);
 
 /* l2cap_socket.c */
-int l2cap_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+int l2cap_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *);
 int l2cap_ctloutput(int, struct socket *, int, int, struct mbuf **);
 
 /* l2cap_upper.c */

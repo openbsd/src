@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_socket.c,v 1.1 2007/05/30 03:42:53 uwe Exp $	*/
+/*	$OpenBSD: hci_socket.c,v 1.2 2007/06/01 02:46:11 uwe Exp $	*/
 /*	$NetBSD: hci_socket.c,v 1.10 2007/03/31 18:17:13 plunky Exp $	*/
 
 /*-
@@ -218,22 +218,20 @@ static void
 hci_cmdwait_flush(struct socket *so)
 {
 	struct hci_unit *unit;
-	//struct socket *ctx;
-	//struct mbuf *m;
+	struct socket *ctx;
+	struct mbuf *m;
 
 	DPRINTF("flushing %p\n", so);
 
 	TAILQ_FOREACH(unit, &hci_unit_list, hci_next) {
-#ifdef notyet			/* XXX */
-		m = MBUFQ_FIRST(&unit->hci_cmdwait);
+		IF_POLL(&unit->hci_cmdwait, m);
 		while (m != NULL) {
 			ctx = M_GETCTX(m, struct socket *);
 			if (ctx == so)
 				M_SETCTX(m, NULL);
 
-			m = MBUFQ_NEXT(m);
+			m = m->m_nextpkt;
 		}
-#endif
 	}
 }
 
@@ -292,9 +290,7 @@ hci_send(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
 		goto bad;
 	}
 	sbappendrecord(&pcb->hp_socket->so_snd, m0);
-#ifdef notyet			/* XXX */
 	M_SETCTX(m, pcb->hp_socket);	/* enable drop callback */
-#endif
 
 	DPRINTFN(2, "(%s) opcode (%03x|%04x)\n", unit->hci_devname,
 		HCI_OGF(letoh16(hdr.opcode)), HCI_OCF(letoh16(hdr.opcode)));
@@ -332,7 +328,7 @@ bad:
  */
 int
 hci_usrreq(struct socket *up, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *ctl, struct proc *l)
+    struct mbuf *nam, struct mbuf *ctl)
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)up->so_pcb;
 	struct sockaddr_bt *sa;
@@ -343,10 +339,8 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 #endif
 
 	switch(req) {
-#ifdef notyet			/* XXX */
 	case PRU_CONTROL:
-		return hci_ioctl((unsigned long)m, (void *)nam, l);
-#endif
+		return hci_ioctl((unsigned long)m, (void *)nam, curproc);
 
 	case PRU_ATTACH:
 		if (pcb)

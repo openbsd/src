@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_link.c,v 1.1 2007/05/30 03:42:53 uwe Exp $	*/
+/*	$OpenBSD: hci_link.c,v 1.2 2007/06/01 02:46:11 uwe Exp $	*/
 /*	$NetBSD: hci_link.c,v 1.11 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -748,7 +748,6 @@ hci_acl_complete(struct hci_link *link, int num)
 struct hci_link *
 hci_sco_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 {
-#ifdef notyet			/* XXX */
 	struct sockaddr_bt laddr, raddr;
 	struct sco_pcb *pcb, *new;
 	struct hci_link *sco, *acl;
@@ -805,7 +804,6 @@ hci_sco_newconn(struct hci_unit *unit, bdaddr_t *bdaddr)
 		new->sp_mtu = unit->hci_max_sco_size;
 		return sco;
 	}
-#endif
 
 	return NULL;
 }

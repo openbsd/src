@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.2 2007/05/31 23:50:19 uwe Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.3 2007/06/01 02:46:11 uwe Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
@@ -48,8 +48,6 @@
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
-
-#define splraiseipl(ipl) splbio() /* XXX */
 
 struct hci_unit_list hci_unit_list = TAILQ_HEAD_INITIALIZER(hci_unit_list);
 
@@ -267,6 +265,7 @@ hci_send_cmd(struct hci_unit *unit, uint16_t opcode, void *buf, uint8_t len)
 	p->opcode = htole16(opcode);
 	p->length = len;
 	m->m_pkthdr.len = m->m_len = sizeof(hci_cmd_hdr_t);
+	M_SETCTX(m, NULL);
 
 	if (len) {
 		KASSERT(buf != NULL);
@@ -363,12 +362,10 @@ another:
 				unit->hci_devname);
 
 		TAILQ_FOREACH(link, &unit->hci_links, hl_next) {
-#ifdef notyet			/* XXX */
 			if (link == M_GETCTX(m, struct hci_link *)) {
 				hci_sco_complete(link, 1);
 				break;
 			}
-#endif
 		}
 
 		unit->hci_num_sco_pkts++;
@@ -435,9 +432,7 @@ hci_input_sco(struct hci_unit *unit, struct mbuf *m)
 void
 hci_output_cmd(struct hci_unit *unit, struct mbuf *m)
 {
-#ifdef notyet
 	void *arg;
-#endif
 	int s;
 
 	hci_mtap(m, unit);
@@ -451,11 +446,9 @@ hci_output_cmd(struct hci_unit *unit, struct mbuf *m)
 	 * If context is set, this was from a HCI raw socket
 	 * and a record needs to be dropped from the sockbuf.
 	 */
-#ifdef notyet			/* XXX */
 	arg = M_GETCTX(m, void *);
 	if (arg != NULL)
 		hci_drop(arg);
-#endif
 
 	s = splraiseipl(unit->hci_ipl);
 	IF_ENQUEUE(&unit->hci_cmdq, m);

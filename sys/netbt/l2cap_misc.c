@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_misc.c,v 1.1 2007/05/30 03:42:53 uwe Exp $	*/
+/*	$OpenBSD: l2cap_misc.c,v 1.2 2007/06/01 02:46:11 uwe Exp $	*/
 /*	$NetBSD: l2cap_misc.c,v 1.3 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -51,12 +51,6 @@ struct l2cap_channel_list
 
 struct pool l2cap_req_pool;
 struct pool l2cap_pdu_pool;
-#ifdef notyet			/* XXX */
-POOL_INIT(l2cap_req_pool, sizeof(struct l2cap_req), 0, 0, 0, "l2cap_req", NULL,
-    IPL_SOFTNET);
-POOL_INIT(l2cap_pdu_pool, sizeof(struct l2cap_pdu), 0, 0, 0, "l2cap_pdu", NULL,
-    IPL_SOFTNET);
-#endif
 
 const l2cap_qos_t l2cap_default_qos = {
 	0,			/* flags */
@@ -73,6 +67,15 @@ const l2cap_qos_t l2cap_default_qos = {
  */
 int l2cap_response_timeout = 30;		/* seconds */
 int l2cap_response_extended_timeout = 180;	/* seconds */
+
+void
+l2cap_init(void)
+{
+	pool_init(&l2cap_req_pool, sizeof(struct l2cap_req), 0, 0, 0,
+	    "l2cap_req", NULL);
+	pool_init(&l2cap_pdu_pool, sizeof(struct l2cap_pdu), 0, 0, 0,
+	    "l2cap_pdu", NULL);
+}
 
 /*
  * Set Link Mode on channel

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sco.h,v 1.1 2007/05/30 03:42:53 uwe Exp $	*/
+/*	$OpenBSD: sco.h,v 1.2 2007/06/01 02:46:12 uwe Exp $	*/
 /*	$NetBSD: sco.h,v 1.2 2006/07/26 10:20:56 tron Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@ struct socket;
 extern int sco_sendspace;
 extern int sco_recvspace;
 int sco_usrreq(struct socket *, int, struct mbuf *,
-		struct mbuf *, struct mbuf *, struct proc *);
+		struct mbuf *, struct mbuf *);
 int sco_ctloutput(int, struct socket *, int, int, struct mbuf **);
 
 /* sco_upper.c */

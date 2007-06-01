@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_event.c,v 1.2 2007/05/31 23:50:19 uwe Exp $	*/
+/*	$OpenBSD: hci_event.c,v 1.3 2007/06/01 02:46:11 uwe Exp $	*/
 /*	$NetBSD: hci_event.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -43,8 +43,6 @@
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
 #include <netbt/sco.h>
-
-#define splraiseipl(ipl) splbio() /* XXX */
 
 static void hci_event_inquiry_result(struct hci_unit *, struct mbuf *);
 static void hci_event_command_status(struct hci_unit *, struct mbuf *);

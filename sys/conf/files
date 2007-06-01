@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.404 2007/05/31 18:16:59 dlg Exp $
+#	$OpenBSD: files,v 1.405 2007/06/01 02:46:11 uwe Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -828,6 +828,7 @@ file netatalk/ddp_usrreq.c		netatalk
 file netbt/bt_input.c			bluetooth		needs-flag
 file netbt/bt_proto.c			bluetooth
 file netbt/hci_event.c			bluetooth
+file netbt/hci_ioctl.c			bluetooth
 file netbt/hci_link.c			bluetooth
 file netbt/hci_misc.c			bluetooth
 file netbt/hci_socket.c			bluetooth
@@ -835,6 +836,14 @@ file netbt/hci_unit.c			bluetooth
 file netbt/l2cap_lower.c		bluetooth
 file netbt/l2cap_misc.c			bluetooth
 file netbt/l2cap_signal.c		bluetooth
+file netbt/l2cap_socket.c		bluetooth
+file netbt/l2cap_upper.c		bluetooth
+file netbt/rfcomm_dlc.c			bluetooth
+file netbt/rfcomm_session.c		bluetooth
+file netbt/rfcomm_socket.c		bluetooth
+file netbt/rfcomm_upper.c		bluetooth
+file netbt/sco_socket.c			bluetooth
+file netbt/sco_upper.c			bluetooth
 file netnatm/natm_pcb.c			natm
 file netnatm/natm_proto.c		natm
 file netnatm/natm.c			natm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.h,v 1.5 2007/05/31 23:50:19 uwe Exp $	*/
+/*	$OpenBSD: hci.h,v 1.6 2007/06/01 02:46:11 uwe Exp $	*/
 /*	$NetBSD: hci.h,v 1.10 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.5 2007/05/31 23:50:19 uwe Exp $
+ * $Id: hci.h,v 1.6 2007/06/01 02:46:11 uwe Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2202,7 +2202,7 @@ void hci_memo_free(struct hci_memo *);
 
 /* hci_socket.c */
 void hci_drop(void *);
-int hci_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+int hci_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *);
 int hci_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void hci_mtap(struct mbuf *, struct hci_unit *);
 
@@ -2220,6 +2220,13 @@ void hci_complete_sco(struct hci_unit *, struct mbuf *);
 void hci_output_cmd(struct hci_unit *, struct mbuf *);
 void hci_output_acl(struct hci_unit *, struct mbuf *);
 void hci_output_sco(struct hci_unit *, struct mbuf *);
+
+/* XXX mimic NetBSD for now, although we don't have these interfaces */
+#define M_GETCTX(m, t)	((t)(m)->m_pkthdr.rcvif)
+#define M_SETCTX(m, c)	((m)->m_pkthdr.rcvif = (void *)(c))
+#define splraiseipl(ipl) splbio() /* XXX */
+#define ENOLINK ENOENT		/* XXX */
+#define EPASSTHROUGH ENOTTY	/* XXX */
 
 #endif	/* _KERNEL */
 
