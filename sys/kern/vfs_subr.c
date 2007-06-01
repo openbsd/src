@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.153 2007/05/31 17:00:51 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.154 2007/06/01 17:29:10 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ void vfs_free_addrlist(struct netexport *);
 void vputonfreelist(struct vnode *);
 
 int vflush_vnode(struct vnode *, void *);
+int maxvnodes;
 
 #ifdef DEBUG
 void printlockedvnodes(void);
@@ -118,6 +119,13 @@ struct pool vnode_pool;
 void
 vntblinit(void)
 {
+	/* buffer cache may need a vnode for each buffer */
+	/* 
+	 * XXX note this is different from desiredvnodes, which is
+	 * XXX the old static value computed from MAXUSERS which is
+	 * XXX used for sizing may other subsystems (namecache, softdeps, etc)
+	 */
+	maxvnodes = bufpages;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
 	    &pool_allocator_nointr);
 	TAILQ_INIT(&vnode_hold_list);
@@ -356,11 +364,11 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	 * referencing buffers.
 	 */
 	toggle ^= 1;
-	if (numvnodes > 2 * desiredvnodes)
+	if (numvnodes > 2 * maxvnodes)
 		toggle = 0;
 
 	s = splbio();
-	if ((numvnodes < desiredvnodes) ||
+	if ((numvnodes < maxvnodes) ||
 	    ((TAILQ_FIRST(listhd = &vnode_free_list) == NULL) &&
 	    ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
 		splx(s);
