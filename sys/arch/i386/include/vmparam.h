@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.38 2007/04/26 11:31:52 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.39 2007/06/01 18:57:02 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -88,6 +88,12 @@
  * Size of User Raw I/O map
  */
 #define	USRIOSIZE 	300
+
+/*
+ * Specific addresses being unmapped and used as fillers for free memory.
+ */
+#define	DEADBEEF0	0xefffeecc	/* malloc's filler */
+#define	DEADBEEF1	0xefffaabb	/* pool's filler */
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
