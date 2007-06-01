@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.5 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: debug.c,v 1.6 2007/06/01 19:26:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: debug.c,v 1.5 2007/03/19 13:27:47 pedro Exp $";
+  "$OpenBSD: debug.c,v 1.6 2007/06/01 19:26:06 deraadt Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -147,13 +147,13 @@ dbg_dump_fs(struct fs *sb, const char *comment)
 	fprintf(dbg_log, "# %d@%lx: %s\n", indent, (unsigned long)sb, comment);
 	indent++;
 
-	fprintf(dbg_log, "sblkno        ufs_daddr_t       0x%08x\n",
+	fprintf(dbg_log, "sblkno        int32_t       0x%08x\n",
 	    sb->fs_sblkno);
-	fprintf(dbg_log, "cblkno        ufs_daddr_t       0x%08x\n",
+	fprintf(dbg_log, "cblkno        int32_t       0x%08x\n",
 	    sb->fs_cblkno);
-	fprintf(dbg_log, "iblkno        ufs_daddr_t       0x%08x\n",
+	fprintf(dbg_log, "iblkno        int32_t       0x%08x\n",
 	    sb->fs_iblkno);
-	fprintf(dbg_log, "dblkno        ufs_daddr_t       0x%08x\n",
+	fprintf(dbg_log, "dblkno        int32_t       0x%08x\n",
 	    sb->fs_dblkno);
 
 	fprintf(dbg_log, "cgoffset      int32_t           0x%08x\n",
@@ -226,7 +226,7 @@ dbg_dump_fs(struct fs *sb, const char *comment)
 	fprintf(dbg_log, "id            int32_t[2]        %08x %08x\n",
 	    sb->fs_id[0], sb->fs_id[1]);
 
-	fprintf(dbg_log, "csaddr        ufs_daddr_t       0x%08x\n",
+	fprintf(dbg_log, "csaddr        int32_t       0x%08x\n",
 	    sb->fs_ffs1_csaddr);
 	fprintf(dbg_log, "cssize        int32_t           0x%08x\n",
 	    sb->fs_cssize);
@@ -630,24 +630,24 @@ dbg_dump_ino(struct fs *sb, const char *comment, struct ufs1_dinode *ino)
 
 	remaining_blocks=howmany(ino->di_size, sb->fs_bsize); /* XXX ts - +1? */
 	for(ictr=0; ictr < MIN(NDADDR, remaining_blocks); ictr++) {
-		fprintf(dbg_log, "db         ufs_daddr_t[%x] 0x%08x\n", ictr,
+		fprintf(dbg_log, "db         int32_t[%x] 0x%08x\n", ictr,
 		    ino->di_db[ictr]);
 	}
 	remaining_blocks-=NDADDR;
 	if(remaining_blocks>0) {
-		fprintf(dbg_log, "ib         ufs_daddr_t[0] 0x%08x\n",
+		fprintf(dbg_log, "ib         int32_t[0] 0x%08x\n",
 		    ino->di_ib[0]);
 	}
-	remaining_blocks-=howmany(sb->fs_bsize, sizeof(ufs_daddr_t));
+	remaining_blocks-=howmany(sb->fs_bsize, sizeof(int32_t));
 	if(remaining_blocks>0) {
-		fprintf(dbg_log, "ib         ufs_daddr_t[1] 0x%08x\n",
+		fprintf(dbg_log, "ib         int32_t[1] 0x%08x\n",
 		    ino->di_ib[1]);
 	}
 #define SQUARE(a) ((a)*(a))
 	remaining_blocks-=SQUARE(howmany(sb->fs_bsize, sizeof(ufs_daddr_t)));
 #undef SQUARE
 	if(remaining_blocks>0) {
-		fprintf(dbg_log, "ib         ufs_daddr_t[2] 0x%08x\n",
+		fprintf(dbg_log, "ib         int32_t[2] 0x%08x\n",
 		    ino->di_ib[2]);
 	}
 

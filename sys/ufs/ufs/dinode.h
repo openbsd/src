@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.14 2007/06/01 18:54:27 pedro Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.15 2007/06/01 19:26:05 deraadt Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
  * are defined by types with precise widths.
  */
 
-typedef int32_t ufs_daddr_t;
 typedef int32_t ufs1_daddr_t;
 typedef int64_t ufs_lbn_t;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.19 2007/05/29 06:28:16 otto Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.20 2007/06/01 19:26:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.19 2007/05/29 06:28:16 otto Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.20 2007/06/01 19:26:06 deraadt Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -142,7 +142,7 @@ static struct disklabel	*get_disklabel(int);
 static void	return_disklabel(int, struct disklabel *, unsigned int);
 static struct ufs1_dinode	*ginode(ino_t, int, int);
 static void	frag_adjust(daddr_t, int);
-static void	cond_bl_upd(ufs_daddr_t *, struct gfs_bpp *,
+static void	cond_bl_upd(int32_t *, struct gfs_bpp *,
     enum pointer_source, int, unsigned int);
 static void	updclst(int);
 static void	updrefs(int, ino_t, struct gfs_bpp *, int, int, unsigned int);
@@ -565,7 +565,7 @@ frag_adjust(daddr_t frag, int sign)
  * out if a write back operation is needed.
  */
 static void
-cond_bl_upd(ufs_daddr_t *block, struct gfs_bpp *field,
+cond_bl_upd(int32_t *block, struct gfs_bpp *field,
     enum pointer_source source, int fso, unsigned int Nflag)
 {
 	DBG_FUNC("cond_bl_upd")
@@ -1780,7 +1780,7 @@ static struct ufs1_dinode *
 ginode(ino_t inumber, int fsi, int cg)
 {
 	DBG_FUNC("ginode")
-	ufs_daddr_t	iblk;
+	int32_t	iblk;
 	static ino_t	startinum = 0;	/* first inode in cached block */
 	struct ufs1_dinode	*pi;
 
@@ -2242,7 +2242,7 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 {
 	DBG_FUNC("updrefs")
 	unsigned int	ictr, ind2ctr, ind3ctr;
-	ufs_daddr_t	*iptr, *ind2ptr, *ind3ptr;
+	int32_t	*iptr, *ind2ptr, *ind3ptr;
 	struct ufs1_dinode	*ino;
 	int	remaining_blocks;
 
@@ -2298,9 +2298,9 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 		i1_src = fsbtodb(&sblock, ino->di_ib[0]);
 		rdfs(i1_src, (size_t)sblock.fs_bsize, &i1blk, fsi);
 		for (ictr = 0; ictr < MIN(howmany(sblock.fs_bsize,
-		    sizeof(ufs_daddr_t)), (unsigned int)remaining_blocks);
+		    sizeof(int32_t)), (unsigned int)remaining_blocks);
 		    ictr++) {
-			iptr = &((ufs_daddr_t *)&i1blk)[ictr];
+			iptr = &((int32_t *)&i1blk)[ictr];
 			if (*iptr) {
 				cond_bl_upd(iptr, bp, GFS_PS_IND_BLK_LVL1,
 				    fso, Nflag);
@@ -2309,7 +2309,7 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 	}
 	DBG_PRINT0("scg indirect_1 blocks checked\n");
 
-	remaining_blocks -= howmany(sblock.fs_bsize, sizeof(ufs_daddr_t));
+	remaining_blocks -= howmany(sblock.fs_bsize, sizeof(int32_t));
 	if (remaining_blocks<0) {
 		DBG_LEAVE;
 		return;
@@ -2322,8 +2322,8 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 		i2_src = fsbtodb(&sblock, ino->di_ib[1]);
 		rdfs(i2_src, (size_t)sblock.fs_bsize, &i2blk, fsi);
 		for (ind2ctr = 0; ind2ctr < howmany(sblock.fs_bsize,
-		    sizeof(ufs_daddr_t)); ind2ctr++) {
-			ind2ptr = &((ufs_daddr_t *)&i2blk)[ind2ctr];
+		    sizeof(int32_t)); ind2ctr++) {
+			ind2ptr = &((int32_t *)&i2blk)[ind2ctr];
 			if (!*ind2ptr)
 				continue;
 			cond_bl_upd(ind2ptr, bp, GFS_PS_IND_BLK_LVL2, fso,
@@ -2332,9 +2332,9 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 			rdfs(i1_src, (size_t)sblock.fs_bsize, &i1blk,
 			    fsi);
 			for (ictr = 0; ictr < MIN(howmany((unsigned int)
-			    sblock.fs_bsize, sizeof(ufs_daddr_t)),
+			    sblock.fs_bsize, sizeof(int32_t)),
 			    (unsigned int)remaining_blocks); ictr++) {
-				iptr = &((ufs_daddr_t *)&i1blk)[ictr];
+				iptr = &((int32_t *)&i1blk)[ictr];
 				if (*iptr) {
 					cond_bl_upd(iptr, bp,
 					    GFS_PS_IND_BLK_LVL1, fso, Nflag);
@@ -2345,7 +2345,7 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 	DBG_PRINT0("scg indirect_2 blocks checked\n");
 
 #define SQUARE(a) ((a)*(a))
-	remaining_blocks -= SQUARE(howmany(sblock.fs_bsize, sizeof(ufs_daddr_t)));
+	remaining_blocks -= SQUARE(howmany(sblock.fs_bsize, sizeof(int32_t)));
 #undef SQUARE
 	if (remaining_blocks < 0) {
 		DBG_LEAVE;
@@ -2360,8 +2360,8 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 		i3_src = fsbtodb(&sblock, ino->di_ib[2]);
 		rdfs(i3_src, (size_t)sblock.fs_bsize, &i3blk, fsi);
 		for (ind3ctr = 0; ind3ctr < howmany(sblock.fs_bsize,
-		    sizeof(ufs_daddr_t)); ind3ctr++) {
-			ind3ptr = &((ufs_daddr_t *)&i3blk)[ind3ctr];
+		    sizeof(int32_t)); ind3ctr++) {
+			ind3ptr = &((int32_t *)&i3blk)[ind3ctr];
 			if (!*ind3ptr)
 				continue;
 			cond_bl_upd(ind3ptr, bp, GFS_PS_IND_BLK_LVL3, fso,
@@ -2370,8 +2370,8 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 			rdfs(i2_src, (size_t)sblock.fs_bsize, &i2blk,
 			    fsi);
 			for (ind2ctr = 0; ind2ctr < howmany(sblock.fs_bsize,
-			    sizeof(ufs_daddr_t)); ind2ctr++) {
-				ind2ptr = &((ufs_daddr_t *)&i2blk)[ind2ctr];
+			    sizeof(int32_t)); ind2ctr++) {
+				ind2ptr = &((int32_t *)&i2blk)[ind2ctr];
 				if (!*ind2ptr)
 					continue;
 				cond_bl_upd(ind2ptr, bp, GFS_PS_IND_BLK_LVL2,
@@ -2380,9 +2380,9 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 				rdfs(i1_src, (size_t)sblock.fs_bsize,
 				    &i1blk, fsi);
 				for (ictr = 0; ictr < MIN(howmany(sblock.fs_bsize,
-				    sizeof(ufs_daddr_t)),
+				    sizeof(int32_t)),
 				    (unsigned int)remaining_blocks); ictr++) {
-					iptr = &((ufs_daddr_t *)&i1blk)[ictr];
+					iptr = &((int32_t *)&i1blk)[ictr];
 					if (*iptr) {
 						cond_bl_upd(iptr, bp,
 						    GFS_PS_IND_BLK_LVL1, fso,
