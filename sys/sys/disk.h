@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.15 2007/05/05 12:43:35 art Exp $	*/
+/*	$OpenBSD: disk.h,v 1.16 2007/06/01 18:26:29 deraadt Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ struct disk {
 	 * must be dynamically allocated, otherwise the size of this
 	 * structure becomes machine-dependent.
 	 */
-	daddr_t		dk_labelsector;		/* sector containing label */
+	daddr64_t	dk_labelsector;		/* sector containing label */
 	struct disklabel *dk_label;	/* label */
 	struct cpu_disklabel *dk_cpulabel;
 };
@@ -119,7 +119,7 @@ struct dkdriver {
 	int	(*d_ioctl)(dev_t dev, u_long cmd, caddr_t data, int fflag,
 				struct proc *);
 	int	(*d_dump)(dev_t);
-	void	(*d_start)(struct buf *, daddr_t);
+	void	(*d_start)(struct buf *, daddr64_t);
 	int	(*d_mklabel)(struct disk *);
 #endif
 };
