@@ -1,4 +1,4 @@
-/* $OpenBSD: xlights.c,v 1.2 2007/05/30 03:03:54 gwk Exp $ */
+/* $OpenBSD: xlights.c,v 1.3 2007/06/01 08:29:30 gwk Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd,org>
  *
@@ -167,9 +167,6 @@ xlights_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_intr = intr[2];
 	printf(": irq %d\n", sc->sc_intr);
 
-	mac_intr_establish(parent, sc->sc_intr, intr[3] ? IST_LEVEL :
-	    IST_EDGE, IPL_AUDIO, xlights_intr, sc, sc->sc_dev.dv_xname);
-
 	keylargo_fcr_enable(I2SClockOffset, I2S0EN);
 	out32rb(sc->sc_reg + I2S_INT, I2S_INT_CLKSTOPPEND);
 	keylargo_fcr_disable(I2SClockOffset, I2S0CLKEN);
@@ -184,6 +181,9 @@ xlights_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: i2s timeout\n", sc->sc_dev.dv_xname);
 		goto nodmaload;
 	}
+
+	mac_intr_establish(parent, sc->sc_intr, intr[3] ? IST_LEVEL :
+	    IST_EDGE, IPL_AUDIO, xlights_intr, sc, sc->sc_dev.dv_xname);
 
 	out32rb(sc->sc_reg + I2S_FORMAT, CLKSRC_VS);
 	keylargo_fcr_enable(I2SClockOffset, I2S0CLKEN);
