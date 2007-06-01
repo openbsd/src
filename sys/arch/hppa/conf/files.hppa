@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.64 2007/05/22 19:57:32 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.65 2007/06/01 22:40:17 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -34,6 +34,7 @@ include "dev/i2o/files.i2o"
 #
 include "dev/atapiscsi/files.atapiscsi"
 include "dev/ata/files.ata"
+major	{wd = 8}
 
 #
 # ISA Bus support
@@ -203,7 +204,6 @@ file	arch/hppa/gsc/mongoose_gsc.c		mg_gsc
 
 #include "dev/fdc/files.fdc"
 #major	{fd = 7}
-#major	{ft = 8}
 #attach	fdc at gsc with fdc_gsc
 #file	arch/hppa/gsc/fdc_gsc.c			fdc_gsc
 

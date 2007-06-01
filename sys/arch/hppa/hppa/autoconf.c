@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.49 2007/06/01 19:25:09 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.50 2007/06/01 22:40:33 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -479,9 +479,7 @@ struct nam2blk nam2blk[] = {
 	{ "sd",		4 },
 	{ "st",		5 },
 	{ "cd",		6 },
-#if 0
-	{ "wd",		? },
 	{ "fd",		7 },
-#endif
+	{ "wd",		8 },
 	{ NULL,		-1 }
 };
