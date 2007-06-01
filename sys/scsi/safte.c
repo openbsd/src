@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.35 2007/04/03 04:15:50 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.36 2007/06/01 22:58:50 cnst Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -363,8 +363,6 @@ safte_read_config(struct safte_softc *sc)
 		s->se_type = SAFTE_T_TEMP;
 		s->se_field = (u_int8_t *)(sc->sc_encbuf + j + i);
 		s->se_sensor.type = SENSOR_TEMP;
-		snprintf(s->se_sensor.desc, sizeof(s->se_sensor.desc),
-		    "Temp%d", i);
 
 		s++;
 	}
