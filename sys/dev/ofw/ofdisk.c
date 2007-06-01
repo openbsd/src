@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.13 2007/05/28 15:44:04 miod Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.14 2007/06/01 00:07:48 krw Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -164,9 +164,6 @@ ofdopen(dev_t dev, int flags, int fmt, struct proc *p)
 		lp->d_ntracks = 1;
 		lp->d_ncylinders = lp->d_secperunit;
 			
-		lp->d_partitions[RAW_PART].p_offset = 0;
-		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-		
 		readdisklabel(DISKLABELDEV(dev), ofdstrategy, lp,
 		    of->sc_dk.dk_cpulabel, 0);
 	}

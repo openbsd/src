@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.72 2007/04/28 12:32:13 krw Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.73 2007/06/01 00:07:48 krw Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1384,11 +1384,6 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
-
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	lp->d_npartitions = RAW_PART + 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

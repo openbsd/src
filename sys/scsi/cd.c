@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.125 2007/05/25 05:37:16 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.126 2007/06/01 00:07:48 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1190,12 +1190,6 @@ cdgetdisklabel(dev_t dev, struct cd_softc *cd, struct disklabel *lp,
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
-
-	/* The raw partition is special.  */
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	lp->d_npartitions = RAW_PART + 1;
 
 	if (cd_load_toc(cd, toc, CD_LBA_FORMAT)) {
 		audioonly = 0; /* No valid TOC found == not an audio CD. */

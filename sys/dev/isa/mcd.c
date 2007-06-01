@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.43 2007/05/04 22:14:36 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.44 2007/06/01 00:07:48 krw Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -757,11 +757,6 @@ mcdgetdisklabel(dev, sc, lp, clp, spoofonly)
 	lp->d_secperunit = sc->disksize;
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
-
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	lp->d_npartitions = RAW_PART + 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

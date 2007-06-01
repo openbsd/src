@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.2 2007/02/15 00:53:26 krw Exp $	*/
+/*	$OpenBSD: flash.c,v 1.3 2007/06/01 00:07:48 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -1000,12 +1000,6 @@ flashgetdefaultlabel(dev_t dev, struct flash_softc *sc,
 	/* XXX these values assume ffs. */
 	lp->d_bbsize = BBSIZE;
 	lp->d_sbsize = SBSIZE;
-
-	/* Fake the partition information. */
-	lp->d_npartitions = RAW_PART + 1;
-	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 
 	/* Wrap it up. */
 	lp->d_magic = DISKMAGIC;

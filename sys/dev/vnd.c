@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.74 2007/05/12 12:19:23 krw Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.75 2007/06/01 00:07:48 krw Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -313,11 +313,6 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
-
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	lp->d_npartitions = RAW_PART + 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

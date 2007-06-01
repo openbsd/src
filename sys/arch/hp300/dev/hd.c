@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.46 2007/04/30 00:17:48 krw Exp $	*/
+/*	$OpenBSD: hd.c,v 1.47 2007/06/01 00:07:48 krw Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -517,11 +517,6 @@ hdgetdisklabel(dev, rs, lp, clp, spoofonly)
 	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
 	lp->d_bbsize = BBSIZE;
 	lp->d_sbsize = SBSIZE;
-
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	lp->d_npartitions = RAW_PART + 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

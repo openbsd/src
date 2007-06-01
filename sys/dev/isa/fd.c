@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.62 2007/05/08 20:59:39 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.63 2007/06/01 00:07:48 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -985,11 +985,6 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp->d_secperunit = fd->sc_type->size;
 		lp->d_rpm = 300;
 		lp->d_interleave = 1;
-
-		lp->d_partitions[RAW_PART].p_offset = 0;
-		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-		lp->d_npartitions = RAW_PART + 1;
 
 		lp->d_magic = DISKMAGIC;
 		lp->d_magic2 = DISKMAGIC;
