@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2007/05/25 14:50:38 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 2007/06/01 17:10:00 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -455,13 +455,15 @@ struct  ngcconf {
 };
 
 struct nam2blk nam2blk[] = {
-        { "ra",          9 },
-        { "rx",         12 },
-        { "rl",         14 },
+	{ "ra",          9 },
+	{ "rx",         12 },
+#ifdef notyet
+	{ "rl",         14 },
+#endif
 	{ "hd",		19 },
-        { "sd",         20 },
-        { "rd",         23 },
-        { "raid",       25 },
-        { "cd",         61 },
+	{ "sd",         20 },
+	{ "cd",         22 },
+	{ "rd",         23 },
+	{ "raid",       25 },
 	{ NULL,		-1 }
 };
