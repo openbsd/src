@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.1 2007/05/29 06:31:44 tedu Exp $ */
+/*	$OpenBSD: est.c,v 1.2 2007/06/01 22:28:21 tedu Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -97,40 +97,115 @@ extern int perflevel;
 
 int bus_clock;
 
+void p4_get_bus_clock(struct cpu_info *);
+void p3_get_bus_clock(struct cpu_info *);
+
+void
+p4_get_bus_clock(struct cpu_info *ci)
+{
+	u_int64_t msr;
+	int model, bus;
+
+	model = (ci->ci_signature >> 4) & 15;
+	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
+	if (model < 2) {
+		bus = (msr >> 21) & 0x7;
+		switch (bus) {
+		case 0:
+			bus_clock = 10000;
+			break;
+		case 1:
+			bus_clock = 13333;
+			break;
+		default:
+			printf("%s: unknown Pentium 4 (model %d) "
+			    "EBC_FREQUENCY_ID value %d\n",
+			    ci->ci_dev->dv_xname, model, bus);
+			break;
+		}
+	} else {
+		bus = (msr >> 16) & 0x7;
+		switch (bus) {
+		case 0:
+			bus_clock = (model == 2) ? 10000 : 26666;
+			break;
+		case 1:
+			bus_clock = 13333;
+			break;
+		case 2:
+			bus_clock = 20000;
+			break;
+		case 3:
+			bus_clock = 16666;
+			break;
+		default:
+			printf("%s: unknown Pentium 4 (model %d) "
+			    "EBC_FREQUENCY_ID value %d\n",
+			    ci->ci_dev->dv_xname, model, bus);
+			break;
+		}
+	}
+}
+
+void
+p3_get_bus_clock(struct cpu_info *ci)
+{
+	u_int64_t msr;
+	int model, bus;
+
+	model = (ci->ci_signature >> 4) & 15;
+	switch (model) {
+	case 0xe: /* Core Duo/Solo */
+	case 0xf: /* Core Xeon */
+		msr = rdmsr(MSR_FSB_FREQ);
+		bus = (msr >> 0) & 0x7;
+		switch (bus) {
+		case 5:
+			bus_clock = 10000;
+			break;
+		case 1:
+			bus_clock = 13333;
+			break;
+		case 3:
+			bus_clock = 16666;
+			break;
+		case 0:
+			bus_clock = 26666;
+			break;
+		case 4:
+			bus_clock = 33333;
+			break;
+		default:
+			printf("%s: unknown Core FSB_FREQ value %d",
+			    ci->ci_dev->dv_xname, bus);
+			break;
+		}
+		break;
+	default: 
+		printf("%s: unknown i686 model %d, can't get bus clock",
+		    ci->ci_dev->dv_xname, model);
+	}
+}
+
 void
 est_init(struct cpu_info *ci)
 {
 	const char *cpu_device = ci->ci_dev->dv_xname;
 	int vendor = -1;
-	int i, mhz, mv, low, high, bus;
+	int i, mhz, mv, low, high, family;
 	u_int64_t msr;
 	u_int16_t idhi, idlo, cur;
 	u_int8_t crhi, crlo, crcur;
 
 	if (setperf_prio > 3)
 		return;
-	msr = rdmsr(MSR_FSB_FREQ);
-	bus = msr & 0x07;
-	switch (bus) {
-	case 5:
-		bus_clock = 10000;
-		break;
-	case 1:
-		bus_clock = 13333;
-		break;
-	case 3:
-		bus_clock = 16666;
-		break;
-	case 0:
-		bus_clock = 26666;
-		break;
-	case 4:
-		bus_clock = 33333;
-		break;
-	default:
-		printf("unknown bus %d\n", bus);
-	}
 
+	family = (ci->ci_signature >> 8) & 15;
+	if (family == 0xf) {
+		p4_get_bus_clock(ci);
+	} else if (family == 6) {
+		p3_get_bus_clock(ci);
+	}
 	if (bus_clock == 0) {
 		printf("%s: EST: unknown system bus clock\n", cpu_device);
 		return;
