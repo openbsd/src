@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_private.h,v 1.6 2002/02/16 21:27:27 millert Exp $	*/
+/*	$OpenBSD: math_private.h,v 1.7 2007/06/01 05:50:56 jason Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -50,6 +50,27 @@ typedef union
   } parts;
 } ieee_double_shape_type;
 
+typedef union
+{
+  long double value;
+  struct {
+    u_int32_t msw;
+    u_int32_t nsw;
+    u_int32_t lsw;
+  } parts;
+} ieee_extended_shape_type;
+
+typedef union
+{
+  long double value;
+  struct {
+    u_int32_t mswhi;
+    u_int32_t mswlo;
+    u_int32_t lswhi;
+    u_int32_t lswlo;
+  } parts;
+} ieee_quad_shape_type;
+
 #endif
 
 #if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(arm32)
@@ -63,6 +84,27 @@ typedef union
     u_int32_t msw;
   } parts;
 } ieee_double_shape_type;
+
+typedef union
+{
+  long double value;
+  struct {
+    u_int32_t lswlo;
+    u_int32_t lswhi;
+    u_int32_t mswlo;
+    u_int32_t mswhi;
+  } parts;
+} ieee_quad_shape_type;
+
+typedef union
+{
+  long double value;
+  struct {
+    u_int32_t lsw;
+    u_int32_t nsw;
+    u_int32_t msw;
+  } parts;
+} ieee_extended_shape_type;
 
 #endif
 
