@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.22 2007/05/27 04:00:25 jsg Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.23 2007/06/01 06:12:20 mbalmer Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -67,11 +67,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__OpenBSD__)
 #include <sys/device.h>
-#elif defined(__FreeBSD__)
-#include <sys/bus.h>
-#endif
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -99,11 +95,6 @@
 
 #ifdef UBSA_DEBUG
 Static int	ubsadebug = 0;
-#ifdef __FreeBSD__
-SYSCTL_NODE(_hw_usb, OID_AUTO, ubsa, CTLFLAG_RW, 0, "USB ubsa");
-SYSCTL_INT(_hw_usb_ubsa, OID_AUTO, debug, CTLFLAG_RW,
-	   &ubsadebug, 0, "ubsa debug level");
-#endif
 
 #define	DPRINTFN(n, x)	do { if (ubsadebug > (n)) printf x; } while (0)
 #else

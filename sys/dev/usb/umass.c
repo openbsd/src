@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.45 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: umass.c,v 1.46 2007/06/01 06:12:20 mbalmer Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -137,17 +137,11 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #undef KASSERT
 #define KASSERT(cond, msg)
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <machine/clock.h>
-#endif
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>
@@ -599,11 +593,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 	switch (sc->sc_cmd) {
 	case UMASS_CPROTO_RBC:
 	case UMASS_CPROTO_SCSI:
-#if defined(__OpenBSD__) || NSCSIBUS > 0
 		error = umass_scsi_attach(sc);
-#else
-		printf("%s: scsibus not configured\n", USBDEVNAME(sc->sc_dev));
-#endif
 		break;
 
 	case UMASS_CPROTO_UFI:
@@ -617,11 +607,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case UMASS_CPROTO_ISD_ATA:
-#if defined (__NetBSD__) && NWD > 0
-		error = umass_isdata_attach(sc);
-#else
 		printf("%s: isdata not configured\n", USBDEVNAME(sc->sc_dev));
-#endif
 		break;
 
 	default:
@@ -1901,9 +1887,6 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 
 	return (err);
 }
-
-
-
 
 #ifdef UMASS_DEBUG
 Static void

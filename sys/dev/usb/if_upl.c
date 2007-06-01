@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.28 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.29 2007/06/01 06:12:20 mbalmer Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,11 +45,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-#include <sys/callout.h>
-#else
 #include <sys/timeout.h>
-#endif
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
@@ -70,13 +66,9 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#if defined(__NetBSD__)
-#include <netinet/if_inarp.h>
-#elif defined(__OpenBSD__)
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
 #else
 #error upl without INET?
 #endif
@@ -309,19 +301,12 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_hdrlen = 0;
 	ifp->if_output = upl_output;
 	ifp->if_baudrate = 12000000;
-#if defined(__NetBSD__)
-	ifp->if_input = upl_input;
-	ifp->if_dlt = DLT_RAW;
-#endif
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-#if defined(__NetBSD__) && NBPFILTER > 0
-	bpfattach(ifp, DLT_RAW, 0);
-#endif
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -557,11 +542,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
 		    __func__, m->m_len));
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	IF_INPUT(ifp, m);
-#else
-	upl_input(ifp, m);
-#endif
 
  done1:
 	splx(s);
