@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2006/05/29 01:41:27 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2007/06/01 06:48:34 cnst Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -26,7 +26,7 @@
 #include <sys/queue.h>
 
 #include <ctype.h>
-#include <errno.h>
+#include <err.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdarg.h>
