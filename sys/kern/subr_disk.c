@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.43 2007/05/29 06:28:15 otto Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.44 2007/06/01 19:06:28 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -187,22 +187,35 @@ dkcksum(struct disklabel *lp)
 void
 cvtdisklabelv1(struct disklabel *lp)
 {
-	int i;
+	struct __partitionv0 *v0pp = (struct __partitionv0 *)lp->d_partitions;
+	struct partition *pp = lp->d_partitions;
+	daddr64_t sz;
+	int i, oversion = lp->d_version;
 
-	if (lp->d_version == 1)
-		return;
+	if (oversion == 0) {
+		lp->d_version = 1;
+		lp->d_secperunith = 0;
+	}
 
-	lp->d_version = 1;
-	lp->d_secperunith = 0;
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		struct partition *pp = &lp->d_partitions[i];
-		struct __partitionv0 *v0pp = (struct __partitionv0 *)
-		    &lp->d_partitions[i];
+	for (i = 0; i < MAXPARTITIONS; i++, pp++, v0pp++) {
+		if (oversion == 0) {
+			pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(v0pp->
+			    p_fsize, v0pp->p_frag);
+			pp->p_offseth = 0;
+			pp->p_sizeh = 0;
+		}
 
-		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(v0pp->p_fsize,
-		    v0pp->p_frag);
-		pp->p_offseth = 0;
-		pp->p_sizeh = 0;	
+		/* In a V1 label no partition extends past DL_SIZE(lp) - 1. */
+		if (DL_POFFSET(pp) >= DL_DSIZE(lp)) {
+			pp->p_fstype = FS_UNUSED;
+			pp->p_offset = pp->p_offseth = 0;
+			pp->p_size = pp->p_sizeh = 0;
+		} else if ((DL_POFFSET(pp) + DL_PSIZE(pp)) > DL_DSIZE(lp)) {
+			pp->p_fstype = FS_UNUSED;
+			sz = DL_DSIZE(lp) - DL_POFFSET(pp);
+			pp->p_size = sz & 0xffffffff;
+			pp->p_sizeh = (sz >> 32) & 0xffff;
+		}
 	}
 }
 
