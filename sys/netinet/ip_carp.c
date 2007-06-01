@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.141 2007/05/29 18:21:19 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.142 2007/06/01 00:07:13 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1786,24 +1786,15 @@ carp_set_enaddr(struct carp_softc *sc)
 {
 	if (sc->sc_vhid != -1 && sc->sc_carpdev) {
 		/* XXX detach ipv6 link-local address? */
-		if (sc->sc_carpdev->if_type == IFT_ISO88025) {
-			sc->sc_carplladdr[0] = 3;
-			sc->sc_carplladdr[1] = 0;
-			sc->sc_carplladdr[2] = 0x40 >> (sc->sc_vhid - 1);
-			sc->sc_carplladdr[3] = 0x40000 >> (sc->sc_vhid - 1);
-			sc->sc_carplladdr[4] = 0;
-			sc->sc_carplladdr[5] = 0;
-		} else {
-			if (sc->sc_if.if_flags & IFF_LINK2)
-				sc->sc_carplladdr[0] = 1;
-			else
-				sc->sc_carplladdr[0] = 0;
-			sc->sc_carplladdr[1] = 0;
-			sc->sc_carplladdr[2] = 0x5e;
-			sc->sc_carplladdr[3] = 0;
-			sc->sc_carplladdr[4] = 1;
-			sc->sc_carplladdr[5] = sc->sc_vhid;
-		}
+		if (sc->sc_if.if_flags & IFF_LINK2)
+			sc->sc_carplladdr[0] = 1;
+		else
+			sc->sc_carplladdr[0] = 0;
+		sc->sc_carplladdr[1] = 0;
+		sc->sc_carplladdr[2] = 0x5e;
+		sc->sc_carplladdr[3] = 0;
+		sc->sc_carplladdr[4] = 1;
+		sc->sc_carplladdr[5] = sc->sc_vhid;
 	} else
 		bzero(&sc->sc_carplladdr, ETHER_ADDR_LEN);
 
