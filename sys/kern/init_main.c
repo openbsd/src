@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.141 2007/05/31 18:16:59 dlg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.142 2007/06/01 19:25:09 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -119,7 +119,6 @@ struct	proc *initproc;
 int	cmask = CMASK;
 extern	struct user *proc0paddr;
 
-void	(*md_diskconf)(void) = NULL;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 struct	timeval boottime;
@@ -446,8 +445,7 @@ main(void *framep)
 #endif
 
 	/* Configure root/swap devices */
-	if (md_diskconf)
-		(*md_diskconf)();
+	diskconf();
 
 	/* Mount the root file system. */
 	if (vfs_mountroot())

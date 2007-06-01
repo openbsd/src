@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2007/05/04 19:30:54 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2007/06/01 19:25:09 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -90,14 +90,18 @@ cpu_configure()
 	 */
 	set_psr(get_psr() & ~PSR_IND);
 	spl0();
+	cold = 0;
+}
 
+void
+diskconf(void)
+{
 	printf("boot device: %s\n",
 	    (bootdv) ? bootdv->dv_xname : "<unknown>");
 
 	setroot(bootdv, bootpart, RB_USERREQ);
 	dumpconf();
 
-	cold = 0;
 }
 
 /*

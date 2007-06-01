@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.31 2007/05/26 15:24:21 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.32 2007/06/01 19:25:10 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.31 2007/05/26 15:24:21 drahn Exp $
+ *      $Id: autoconf.c,v 1.32 2007/06/01 19:25:10 deraadt Exp $
  */
 
 /*
@@ -71,7 +71,6 @@ struct	device *getdevunit(char *, int);
 static	struct devmap *findtype(char **);
 void	makebootdev(char *cp);
 int	getpno(char **);
-void	diskconf(void);
 
 /*
  * The following several variables are related to
@@ -98,12 +97,6 @@ cpu_configure()
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 	(void)spl0();
-
-	/*
-	 * We can not know which is our root disk, defer
-	 * until we can checksum blocks to figure it out.
-	 */
-	md_diskconf = diskconf;
 	cold = 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 2007/06/01 17:10:00 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 2007/06/01 19:25:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 
 void	dumpconf(void);	/* machdep.c */
 void	gencnslask(void);
-void    diskconf(void);
 
 struct cpu_dep *dep_call;
 
@@ -80,20 +79,23 @@ cpu_configure()
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("mainbus not configured");
 
+	/*
+	 * We're ready to start up. Clear CPU cold start flag.
+	 */
+	cold = 0;
+
+	if (dep_call->cpu_clrf) 
+		(*dep_call->cpu_clrf)();
+}
+
+void
+diskconf(void)
+{
 	printf("boot device: %s\n",
 	    bootdv ? bootdv->dv_xname : "<unknown>");
 
 	setroot(bootdv, booted_partition, RB_USERREQ);
 	dumpconf();
-
-	/*
-	 * We're ready to start up. Clear CPU cold start flag.
-	 */
-
-	cold = 0;
-
-	if (dep_call->cpu_clrf) 
-		(*dep_call->cpu_clrf)();
 }
 
 int	mainbus_print(void *, const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.74 2007/05/15 01:56:47 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.75 2007/06/01 19:25:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -76,8 +76,6 @@
 #include <machine/i82093var.h>
 #endif
 
-void diskconf(void);
-
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
@@ -146,7 +144,6 @@ cpu_configure(void)
 	 * We can not know which is our root disk, defer
 	 * until we can checksum blocks to figure it out.
 	 */
-	md_diskconf = diskconf;
 	cold = 0;
 
 #ifdef I686_CPU

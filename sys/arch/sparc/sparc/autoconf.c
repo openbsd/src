@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.79 2007/05/29 09:53:54 sobrado Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.80 2007/06/01 19:25:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -749,8 +749,6 @@ cpu_configure()
 	struct confargs oca;
 	register int node = 0;
 	register char *cp;
-	struct bootpath *bp;
-	struct device *bootdv;
 	int s;
 	extern struct user *proc0paddr;
 
@@ -838,6 +836,25 @@ cpu_configure()
 	(void)spl0();
 
 	/*
+	 * Re-zero proc0's user area, to nullify the effect of the
+	 * stack running into it during auto-configuration.
+	 * XXX - should fix stack usage.
+	 */
+	s = splhigh();
+	bzero(proc0paddr, sizeof(struct user));
+
+	pmap_redzone();
+	splx(s);
+	cold = 0;
+}
+
+void
+diskconf(void)
+{
+	struct bootpath *bp;
+	struct device *bootdv;
+
+	/*
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
 	 */
@@ -848,18 +865,6 @@ cpu_configure()
 
 	setroot(bootdv, bp->val[2], RB_USERREQ | RB_HALT);
 	dumpconf();
-	cold = 0;
-
-	/*
-	 * Re-zero proc0's user area, to nullify the effect of the
-	 * stack running into it during auto-configuration.
-	 * XXX - should fix stack usage.
-	 */
-	s = splhigh();
-	bzero(proc0paddr, sizeof(struct user));
-
-	pmap_redzone();
-	splx(s);
 }
 
 /*

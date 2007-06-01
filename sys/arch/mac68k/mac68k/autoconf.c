@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2007/05/17 13:06:57 martin Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 2007/06/01 19:25:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 #include <scsi/scsiconf.h>
 
 int target_to_unit(u_long, u_long, u_long);
-void	diskconf(void);
 void	findbootdev(void);
 
 struct device	*booted_device;
@@ -118,7 +117,6 @@ cpu_configure()
 	spl0();
 
 	findbootdev();
-	md_diskconf = diskconf;
 	cold = 0;
 }
 
@@ -128,7 +126,7 @@ device_register(struct device *dev, void *aux)
 }
 
 void
-diskconf()
+diskconf(void)
 {
 	setroot(booted_device, booted_partition, RB_USERREQ);
 	dumpconf();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2007/05/19 15:49:05 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2007/06/01 19:25:09 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -61,8 +61,43 @@ int booted_partition;
 struct device *bootdv = NULL;
 extern char *boot_file;
 
-void diskconf(void);
 void dumpconf(void);
+
+void
+device_register(struct device *dev, void *aux)
+{
+}
+
+/*
+ * void cpu_configure()
+ *
+ * Configure all the root devices
+ * The root devices are expected to configure their own children
+ */
+void
+cpu_configure(void)
+{
+	softintr_init();
+
+	/*
+	 * Since various PCI interrupts could be routed via the ICU
+	 * (for PCI devices in the bridge) we need to set up the ICU
+	 * now so that these interrupts can be established correctly
+	 * i.e. This is a hack.
+	 */
+
+	config_rootfound("mainbus", NULL);
+
+	/*
+	 * We can not know which is our root disk, defer
+	 * until we can checksum blocks to figure it out.
+	 */
+	cold = 0;
+
+	/* Time to start taking interrupts so lets open the flood gates .... */
+	(void)spl0();
+
+}
 
 /*
  * Now that we are fully operational, we can checksum the
@@ -70,7 +105,7 @@ void dumpconf(void);
  * always determine the correct root disk.
  */
 void
-diskconf()
+diskconf(void)
 {
 	dev_t tmpdev;
 
@@ -104,44 +139,6 @@ diskconf()
 		printf("boot device: %s\n", bootdv->dv_xname);
 	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
-}
-
-
-void
-device_register(struct device *dev, void *aux)
-{
-}
-
-/*
- * void cpu_configure()
- *
- * Configure all the root devices
- * The root devices are expected to configure their own children
- */
-void
-cpu_configure(void)
-{
-	softintr_init();
-
-	/*
-	 * Since various PCI interrupts could be routed via the ICU
-	 * (for PCI devices in the bridge) we need to set up the ICU
-	 * now so that these interrupts can be established correctly
-	 * i.e. This is a hack.
-	 */
-
-	config_rootfound("mainbus", NULL);
-
-	/*
-	 * We can not know which is our root disk, defer
-	 * until we can checksum blocks to figure it out.
-	 */
-	md_diskconf = diskconf;
-	cold = 0;
-
-	/* Time to start taking interrupts so lets open the flood gates .... */
-	(void)spl0();
-
 }
 
 struct nam2blk nam2blk[] = {

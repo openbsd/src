@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2007/05/19 15:49:05 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2007/06/01 19:25:09 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -63,33 +63,6 @@ extern char *boot_file;
 
 void isa_intr_init(void);
 
-void diskconf(void);
-
-/*
- * Now that we are fully operational, we can checksum the
- * disks, and using some heuristics, hopefully are able to
- * always determine the correct root disk.
- */
-void
-diskconf()
-{
-#if 0
-	/*
-	 * Configure root, swap, and dump area.  This is
-	 * currently done by running the same checksum
-	 * algorithm over all known disks, as was done in
-	 * /boot.  Then we basically fixup the *dev vars
-	 * from the info we gleaned from this.
-	 */
-	dkcsumattach();
-#endif
-
-	printf("boot_file: '%s'\n", boot_file);
-	setroot(bootdv, 0, RB_USERREQ);
-	dumpconf();
-}
-
-
 /*
  * void cpu_configure()
  *
@@ -115,12 +88,35 @@ cpu_configure(void)
 	 * We can not know which is our root disk, defer
 	 * until we can checksum blocks to figure it out.
 	 */
-	md_diskconf = diskconf;
 	cold = 0;
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	(void)spl0();
 
+}
+
+/*
+ * Now that we are fully operational, we can checksum the
+ * disks, and using some heuristics, hopefully are able to
+ * always determine the correct root disk.
+ */
+void
+diskconf(void)
+{
+#if 0
+	/*
+	 * Configure root, swap, and dump area.  This is
+	 * currently done by running the same checksum
+	 * algorithm over all known disks, as was done in
+	 * /boot.  Then we basically fixup the *dev vars
+	 * from the info we gleaned from this.
+	 */
+	dkcsumattach();
+#endif
+
+	printf("boot_file: '%s'\n", boot_file);
+	setroot(bootdv, 0, RB_USERREQ);
+	dumpconf();
 }
 
 struct nam2blk nam2blk[] = {

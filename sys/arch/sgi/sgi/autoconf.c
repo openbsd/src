@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2007/05/15 01:56:47 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2007/06/01 19:25:10 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -61,7 +61,6 @@
 #include <machine/autoconf.h>
 #include <mips64/archtype.h>
 
-void	diskconf(void);
 extern void dumpconf(void);
 struct device *getdevunit(char *, int);
 const struct devmap *boot_findtype(char *);
@@ -101,8 +100,6 @@ cpu_configure(void)
 	}
 
 	splinit();		/* Initialized, fire up interrupt system */
-
-	md_diskconf = diskconf;
 	cold = 0;
 }
 

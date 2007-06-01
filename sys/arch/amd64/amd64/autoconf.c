@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.21 2007/05/15 01:56:47 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.22 2007/06/01 19:25:09 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -81,8 +81,6 @@
 #include <machine/i82489var.h>
 #endif
 
-void diskconf(void);
-
 #if 0
 #include "bios32.h"
 #if NBIOS32 > 0
@@ -126,8 +124,6 @@ cpu_configure(void)
 	lcr8(0);
 	spl0();
 	cold = 0;
-
-	md_diskconf = diskconf;
 }
 
 void

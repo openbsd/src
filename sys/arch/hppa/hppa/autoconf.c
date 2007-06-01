@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.48 2007/05/29 20:36:47 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.49 2007/06/01 19:25:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -457,8 +457,6 @@ cpu_configure(void)
 
 	print_devpath("bootpath", &PAGE0->mem_boot);
 
-	setroot(bootdv, 0, RB_USERREQ);
-	dumpconf();
 	if (cold_hook)
 		(*cold_hook)(HPPA_COLD_HOT);
 
@@ -467,6 +465,13 @@ cpu_configure(void)
 	heartbeat(NULL);
 #endif
 	cold = 0;
+}
+
+void
+diskconf(void)
+{
+	setroot(bootdv, 0, RB_USERREQ);
+	dumpconf();
 }
 
 struct nam2blk nam2blk[] = {

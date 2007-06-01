@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.66 2007/05/13 09:16:05 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.67 2007/06/01 19:25:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -111,7 +111,6 @@ static	int mbprint(void *, const char *);
 void	sync_crash(void);
 int	mainbus_match(struct device *, void *, void *);
 static	void mainbus_attach(struct device *, struct device *, void *);
-void	diskconf(void);
 
 struct device *booted_device;
 struct	bootpath bootpath[8];
@@ -496,8 +495,6 @@ cpu_configure()
 #endif
 
 	(void)spl0();
-
-	md_diskconf = diskconf;
 	cold = 0;
 }
 

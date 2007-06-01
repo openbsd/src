@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2007/05/04 19:30:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2007/06/01 19:25:10 deraadt Exp $	*/
 /*	OpenBSD: autoconf.c,v 1.64 2005/03/23 17:10:24 miod Exp 	*/
 
 /*
@@ -277,8 +277,6 @@ cpu_configure()
 	struct confargs oca;
 	register int node = 0;
 	register char *cp;
-	struct bootpath *bp;
-	struct device *bootdv;
 	int s;
 	extern struct user *proc0paddr;
 
@@ -305,15 +303,6 @@ cpu_configure()
 	    ((lda(GLU_ICR, ASI_PHYS_IO) >> 24) & ~GICR_DISABLE_ALL) << 24);
 	(void)spl0();
 
-	/*
-	 * Configure swap area and related system
-	 * parameter based on device(s) used.
-	 */
-	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
-	bootdv = (bp == NULL) ? NULL : bp->dev;
-
-	setroot(bootdv, bp->val[2], RB_USERREQ | RB_HALT);
-	dumpconf();
 	cold = 0;
 
 	/*
@@ -326,6 +315,23 @@ cpu_configure()
 
 	pmap_redzone();
 	splx(s);
+}
+
+void
+diskconf(void)
+{
+	struct bootpath *bp;
+	struct device *bootdv;
+
+	/*
+	 * Configure swap area and related system
+	 * parameter based on device(s) used.
+	 */
+	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
+	bootdv = (bp == NULL) ? NULL : bp->dev;
+
+	setroot(bootdv, bp->val[2], RB_USERREQ | RB_HALT);
+	dumpconf();
 }
 
 /*

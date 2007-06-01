@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.30 2007/05/04 19:30:53 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.31 2007/06/01 19:25:09 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -76,9 +76,6 @@ int	atoi(char *);
 void
 cpu_configure()
 {
-	struct device *bootdv;
-	int bootpartition;
-
 	parse_prom_bootdev();
 	softintr_init();
 
@@ -94,6 +91,14 @@ cpu_configure()
 	(void)spl0();
 
 	hwrpb_restart_setup();
+	cold = 0;
+}
+
+void
+diskconf(void)
+{
+	struct device *bootdv;
+	int bootpartition;
 
 	if (booted_device == NULL)
 		printf("WARNING: can't figure what device matches \"%s\"\n",
@@ -103,7 +108,6 @@ cpu_configure()
 
 	setroot(bootdv, bootpartition, RB_USERREQ);
 	dumpconf();
-	cold = 0;
 }
 
 void

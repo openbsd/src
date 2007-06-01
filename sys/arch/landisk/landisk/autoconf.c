@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2007/05/15 01:56:47 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2007/06/01 19:25:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -48,8 +48,6 @@
 
 int cold = 1;
 
-void	diskconf(void);
-
 void
 device_register(struct device *dev, void *aux)
 {
@@ -66,11 +64,8 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
-	md_diskconf = diskconf;
-
 	/* Configuration is finished, turn on interrupts. */
 	spl0();
-
 	cold = 0;
 }
 

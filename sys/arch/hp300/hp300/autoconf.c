@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.42 2007/05/04 19:30:54 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.43 2007/06/01 19:25:09 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ ddlist_t	dev_data_list;	  	/* all dev_datas */
 ddlist_t	dev_data_list_hpib;	/* hpib controller dev_datas */
 ddlist_t	dev_data_list_scsi;	/* scsi controller dev_datas */
 
-void	diskconf(void);
 void	findbootdev(void);
 void	findbootdev_slave(ddlist_t *, int, int, int);
 void	setbootdev(void);
@@ -261,14 +260,11 @@ cpu_configure()
 			printf("boot device: %s\n", bootdv->dv_xname);
 		}
 	}
-
-	md_diskconf = diskconf;
-
 	cold = 0;
 }
 
 void
-diskconf()
+diskconf(void)
 {
 	int bootpartition = 0;
 

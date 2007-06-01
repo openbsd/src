@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2007/05/19 15:49:06 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2007/06/01 19:25:10 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -61,7 +61,6 @@ int booted_partition;
 struct device *bootdv = NULL;
 extern char *boot_file;
 
-void diskconf(void);
 void dumpconf(void);
 
 /*
@@ -133,7 +132,6 @@ cpu_configure(void)
 	 * We can not know which is our root disk, defer
 	 * until we can checksum blocks to figure it out.
 	 */
-	md_diskconf = diskconf;
 	cold = 0;
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
