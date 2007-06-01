@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.32 2007/05/18 19:21:34 millert Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.33 2007/06/01 14:26:08 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.32 2007/05/18 19:21:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.33 2007/06/01 14:26:08 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ pass5(void)
 			newcg->cg_initediblk = 0;
 			newcg->cg_niblk = cg->cg_niblk;
 			if (cg->cg_irotor >= 0 &&
-			    cg->cg_irotor < newcg->cg_niblk)
+			    cg->cg_irotor < fs->fs_ipg)
 				newcg->cg_irotor = cg->cg_irotor;
 		} else {
 			newcg->cg_ncyl = 0;
