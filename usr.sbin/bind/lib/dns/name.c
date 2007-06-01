@@ -1413,11 +1413,13 @@ dns_name_tofilenametext(dns_name_t *name, isc_boolean_t omit_final_dot,
 					trem--;
 					nlen--;
 				} else {
+					size_t tlen;
 					if (trem < 3)
 						return (ISC_R_NOSPACE);
 					snprintf(tdata, trem, "%%%02X", c);
-					tdata += 3;
-					trem -= 3;
+					tlen = strlen(tdata);
+					tdata += tlen;
+					trem -= tlen;
 					ndata++;
 					nlen--;
 				}
