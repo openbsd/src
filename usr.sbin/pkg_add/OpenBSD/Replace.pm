@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.29 2007/06/01 22:06:03 espie Exp $
+# $OpenBSD: Replace.pm,v 1.30 2007/06/01 22:35:46 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -374,8 +374,7 @@ sub walk_depends_closure
 			print "\t$pkg2\n" if $state->{beverbose};
 			$done->{$pkg2} = 1;
 			$write->add($pkg2);
-			my $l = OpenBSD::Requiring->new($pkg2);
-			$l->add($name);
+			OpenBSD::Requiring->new($pkg2)->add($name);
 			$depend = 1;
 		}
 	}

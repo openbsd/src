@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.43 2007/05/31 22:33:45 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.44 2007/06/01 22:35:46 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -184,12 +184,11 @@ sub register_dependencies
 
 	require OpenBSD::RequiredBy;
 	my $pkgname = $self->pkgname;
+	my @l = $self->dependencies;
 
-	my $r = OpenBSD::Requiring->new($pkgname);
-
-	for my $dep ($self->dependencies) {
+	OpenBSD::Requiring->new($pkgname)->add(@l);
+	for my $dep (@l) {
 		OpenBSD::RequiredBy->new($dep)->add($pkgname);
-		$r->add($dep);
 	}
 }
 

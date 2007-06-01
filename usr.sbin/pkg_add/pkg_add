@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.302 2007/06/01 21:50:46 espie Exp $
+# $OpenBSD: pkg_add,v 1.303 2007/06/01 22:35:46 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -780,8 +780,8 @@ sub uses_old_libs
 	my $plist = shift;
 	require OpenBSD::RequiredBy;
 
-	my $d = OpenBSD::Requiring->new($plist->pkgname);
-	return  grep {/^\.libs\-/} $d->list;
+	return  grep {/^\.libs\-/} 
+	    OpenBSD::Requiring->new($plist->pkgname)->list;
 }
 
 sub has_new_sig

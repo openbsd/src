@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.14 2007/05/14 09:49:27 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.15 2007/06/01 22:35:47 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -21,12 +21,11 @@ use warnings;
 package OpenBSD::RequirementList;
 use OpenBSD::PackageInfo;
 
-sub fill_entries($)
+sub fill_entries
 {
 	my $self = shift;
 	if (!exists $self->{entries}) {
-		my $l = {};
-		$self->{entries} = $l;
+		my $l = $self->{entries} = {};
 
 		if (-f $self->{filename}) {
 			open(my $fh, '<', $self->{filename}) or 
@@ -34,9 +33,9 @@ sub fill_entries($)
 				$self->{filename}, ": $!";
 			local $_;
 			while(<$fh>) {
-				chomp $_;
 				s/\s+$//;
 				next if /^$/;
+				chomp;
 				$l->{$_} = 1;
 			}
 			close($fh);

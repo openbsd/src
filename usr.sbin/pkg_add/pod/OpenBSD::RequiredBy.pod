@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::RequiredBy.pod,v 1.2 2005/08/17 18:53:08 espie Exp $
+$OpenBSD: OpenBSD::RequiredBy.pod,v 1.3 2007/06/01 22:35:47 espie Exp $
 
 =head1 NAME
 
@@ -16,7 +16,7 @@ OpenBSD::RequiredBy - manage installed package dependencies
 
     my $o2 = OpenBSD::Requiring->new($pkgname);
 
-    print "Requirements for $pkgname are ", join(' ',$o2->list()), "\n";
+    print "Requirements for $pkgname are ", join(' ',$o2->list), "\n";
 
     # add some reverse dependencies
     $o->add($reverse_dep1, $reverse_dep2);
@@ -47,7 +47,7 @@ dependencies,
 C<$o =OpenBSD::Requiring-E<gt>new($pkgname)>  gives access to the forward 
 dependencies.
 
-Such an object can be used to list the dependencies C<$o-E<gt>list()>,
+Such an object can be used to list the dependencies C<$o-E<gt>list>,
 add names to them C<$o-E<gt>add(name1, name2, ...)> or remove name from
 them C<$o-E<gt>delete(name1, name2, ...)>.
 
