@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.32 2007/05/31 03:19:19 otto Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.33 2007/06/01 18:09:52 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ static char *fstypesnames[] = {
 struct format_op {
 	char	*df_buf;
 	int	 df_count;		/* value-result */
-	daddr_t	 df_startblk;
+	daddr64_t df_startblk;
 	int	 df_reg[8];		/* result */
 };
 
