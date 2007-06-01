@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.65 2007/06/01 06:41:35 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.66 2007/06/01 23:08:23 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -122,11 +122,11 @@ int	fsi, fso;
 static caddr_t iobuf;
 static long iobufsize;
 
-daddr_t		alloc(int, int);
+daddr64_t	alloc(int, int);
 static int	charsperline(void);
 static int	ilog2(int);
 void		initcg(int, time_t);
-void		wtfs(daddr_t, int, void *);
+void		wtfs(daddr64_t, int, void *);
 int		fsinit1(time_t, mode_t, uid_t, gid_t);
 int		fsinit2(time_t);
 int		makedir(struct direct *, int);
@@ -134,7 +134,7 @@ void		iput(union dinode *, ino_t);
 void		setblock(struct fs *, unsigned char *, int);
 void		clrblock(struct fs *, unsigned char *, int);
 int		isblock(struct fs *, unsigned char *, int);
-void		rdfs(daddr_t, int, void *);
+void		rdfs(daddr64_t, int, void *);
 void		mkfs(struct partition *, char *, int, int,
 		    mode_t, uid_t, gid_t);
 
@@ -903,11 +903,11 @@ makedir(struct direct *protodir, int entries)
 /*
  * allocate a block or frag
  */
-daddr_t
+daddr64_t
 alloc(int size, int mode)
 {
 	int i, frag;
-	daddr_t d, blkno;
+	daddr64_t d, blkno;
 
 	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
 	    (char *)&acg);
@@ -999,7 +999,7 @@ iput(union dinode *ip, ino_t ino)
  * read a block from the file system
  */
 void
-rdfs(daddr_t bno, int size, void *bf)
+rdfs(daddr64_t bno, int size, void *bf)
 {
 	int n;
 
@@ -1009,7 +1009,7 @@ rdfs(daddr_t bno, int size, void *bf)
 	}
 	n = pread(fsi, bf, size, (off_t)bno * sectorsize);
 	if (n != size) {
-		err(34, "rdfs: read error on block %d", bno);
+		err(34, "rdfs: read error on block %lld", bno);
 	}
 }
 
@@ -1017,7 +1017,7 @@ rdfs(daddr_t bno, int size, void *bf)
  * write a block to the file system
  */
 void
-wtfs(daddr_t bno, int size, void *bf)
+wtfs(daddr64_t bno, int size, void *bf)
 {
 	int n;
 
@@ -1029,7 +1029,7 @@ wtfs(daddr_t bno, int size, void *bf)
 		return;
 	n = pwrite(fso, bf, size, (off_t)bno * sectorsize);
 	if (n != size) {
-		err(36, "wtfs: write error on block %d", bno);
+		err(36, "wtfs: write error on block %lld", bno);
 	}
 }
 
