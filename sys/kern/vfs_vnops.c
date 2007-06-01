@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.56 2007/05/05 12:03:04 art Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.57 2007/06/01 22:30:46 deraadt Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -420,9 +420,6 @@ vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 			*(int *)data = vattr.va_size - fp->f_offset;
 			return (0);
 		}
-		if (com == FIBMAP)
-			return VOP_IOCTL(vp, com, data, fp->f_flag,
-					 p->p_ucred, p);
 		if (com == FIONBIO || com == FIOASYNC)  /* XXX */
 			return (0);			/* XXX */
 		/* FALLTHROUGH */

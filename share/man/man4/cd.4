@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.19 2007/05/31 19:19:49 jmc Exp $
+.\"	$OpenBSD: cd.4,v 1.20 2007/06/01 22:30:48 deraadt Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 1 2007 $
 .Dt CD 4
 .Os
 .Sh NAME
@@ -295,12 +295,6 @@ Eject the CD-ROM.
 .\"	short	speed;
 .\"};
 .\".Ed
-.It Dv FIBMAP
-Return the physical block number (in 512-byte sectors) given the
-logical block number.
-The argument is a pointer to an integer.
-On invocation, it should contain the logical block.
-On return, it contains the physical block number.
 .El
 .Pp
 In addition the general
