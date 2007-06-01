@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.95 2007/05/11 11:27:59 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.96 2007/06/01 04:17:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -233,16 +233,6 @@ path_remove(struct rde_aspath *asp)
 		prefix_destroy(p);
 	}
 	path_destroy(asp);
-}
-
-void
-path_updateall(struct rde_aspath *asp, enum nexthop_state state)
-{
-	if (rde_noevaluate())
-		/* if the decision process is turned off this is a no-op */
-		return;
-
-	prefix_updateall(asp, state);
 }
 
 /* this function is only called by prefix_remove and path_remove */
@@ -876,7 +866,7 @@ nexthop_update(struct kroute_nexthop *msg)
 		return;
 
 	LIST_FOREACH(asp, &nh->path_h, nexthop_l) {
-		path_updateall(asp, nh->state);
+		prefix_updateall(asp, nh->state);
 	}
 }
 

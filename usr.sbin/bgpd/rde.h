@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.99 2007/04/23 13:04:24 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.100 2007/06/01 04:17:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -332,7 +332,6 @@ void		 path_update(struct rde_peer *, struct rde_aspath *,
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
 void		 path_remove(struct rde_aspath *);
-void		 path_updateall(struct rde_aspath *, enum nexthop_state);
 void		 path_destroy(struct rde_aspath *);
 int		 path_empty(struct rde_aspath *);
 struct rde_aspath *path_copy(struct rde_aspath *);
