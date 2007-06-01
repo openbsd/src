@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.93 2007/06/01 17:34:08 dlg Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.94 2007/06/01 23:35:42 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ void buf_put(struct buf *);
 #define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
 #define	binstailfree(bp, dp)	TAILQ_INSERT_TAIL(dp, bp, b_freelist)
 
-static __inline struct buf *bio_doread(struct vnode *, daddr64_t, int, int);
+struct buf *bio_doread(struct vnode *, daddr64_t, int, int);
 struct buf *getnewbuf(size_t);
 int buf_wait(int, int);
 void buf_init(struct buf *, int);
@@ -360,7 +360,7 @@ bufinit(void)
 	maxcleanpages = locleanpages;
 }
 
-static __inline struct buf *
+struct buf *
 bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
 {
 	struct buf *bp;
