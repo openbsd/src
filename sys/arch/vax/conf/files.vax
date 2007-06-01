@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.42 2007/05/04 03:44:44 deraadt Exp $
+#	$OpenBSD: files.vax,v 1.43 2007/06/01 22:01:52 maja Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -395,7 +395,7 @@ file	arch/vax/vsa/asc_vsbus.c		asc needs-flag
 include	"compat/ultrix/files.ultrix"
 include	"compat/vax1k/files.vax1k"
 
-# Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
+# Keep these for now. Time will tell which we will need... 
 #arch/vax/vax/dkbad.c		standard
 #arch/vax/vax/ka730.c		standard
 #arch/vax/vax/iidr.o		optional ii
