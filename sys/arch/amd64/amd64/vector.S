@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.9 2007/05/25 16:22:11 art Exp $	*/
+/*	$OpenBSD: vector.S,v 1.10 2007/06/01 21:01:51 art Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 
 #define ALIGN_TEXT	.align 16,0x90
 
+#include <machine/param.h>
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
 #include <machine/i82489reg.h>
