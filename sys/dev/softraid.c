@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.65 2007/06/01 01:16:48 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.66 2007/06/01 17:43:05 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -944,7 +944,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	}
 
 	/* allocate all resources */
-	sd->sd_alloc_resources(sd);
+	if ((rv = sd->sd_alloc_resources(sd)))
+		goto unwind;
 
 	/* setup scsi midlayer */
 	sd->sd_link.openings = sd->sd_max_wu;
@@ -1393,10 +1394,13 @@ sr_raid1_alloc_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_raid1_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
-	sr_alloc_wu(sd);
-	sr_alloc_ccb(sd);
+	if (sr_alloc_wu(sd))
+		goto bad;
+	if (sr_alloc_ccb(sd))
+		goto bad;
 
 	rv = 0;
+bad:
 	return (rv);
 }
 
@@ -2963,8 +2967,10 @@ sr_raidc_alloc_resources(struct sr_discipline *sd)
 	DNPRINTF(SR_D_DIS, "%s: sr_raidc_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
-	sr_alloc_wu(sd);
-	sr_alloc_ccb(sd);
+	if (sr_alloc_wu(sd))
+		return (ENOMEM);
+	if (sr_alloc_ccb(sd))
+		return (ENOMEM);
 
 	/* XXX we need a real key later */
 	memset(sd->mds.mdd_raidc.src_key, 'k', sizeof sd->mds.mdd_raidc.src_key);
