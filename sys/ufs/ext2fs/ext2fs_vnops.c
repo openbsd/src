@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.46 2007/04/10 17:47:56 miod Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.47 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -80,12 +80,7 @@ int
 ext2fs_create(v)
 	void *v;
 {
-	struct vop_create_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
+	struct vop_create_args *ap = v;
 	return ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type, 
 					  ap->a_vap->va_mode),
 			  	ap->a_dvp, ap->a_vpp, ap->a_cnp);
@@ -99,12 +94,7 @@ int
 ext2fs_mknod(v)
 	void *v;
 {
-	struct vop_mknod_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
+	struct vop_mknod_args *ap = v;
 	register struct vattr *vap = ap->a_vap;
 	register struct vnode **vpp = ap->a_vpp;
 	register struct inode *ip;
@@ -145,12 +135,7 @@ int
 ext2fs_open(v)
 	void *v;
 {
-	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_open_args *ap = v;
 
 	/*
 	 * Files marked append-only must be opened for appending.
@@ -165,12 +150,7 @@ int
 ext2fs_access(v)
 	void *v;
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_access_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	mode_t mode = ap->a_mode;
@@ -188,12 +168,7 @@ int
 ext2fs_getattr(v)
 	void *v;
 {
-	struct vop_getattr_args /* {
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_getattr_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	register struct vattr *vap = ap->a_vap;
@@ -246,12 +221,7 @@ int
 ext2fs_setattr(v)
 	void *v;
 {
-	struct vop_setattr_args /* {
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_setattr_args *ap = v;
 	register struct vattr *vap = ap->a_vap;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
@@ -432,11 +402,7 @@ int
 ext2fs_remove(v)
 	void *v;
 {
-	struct vop_remove_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_remove_args *ap = v;
 	register struct inode *ip;
 	register struct vnode *vp = ap->a_vp;
 	register struct vnode *dvp = ap->a_dvp;
@@ -470,11 +436,7 @@ int
 ext2fs_link(v)
 	void *v;
 {
-	struct vop_link_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_link_args *ap = v;
 	register struct vnode *dvp = ap->a_dvp;
 	register struct vnode *vp = ap->a_vp;
 	register struct componentname *cnp = ap->a_cnp;
@@ -557,14 +519,7 @@ int
 ext2fs_rename(v)
 	void *v;
 {
-	struct vop_rename_args  /* {
-		struct vnode *a_fdvp;
-		struct vnode *a_fvp;
-		struct componentname *a_fcnp;
-		struct vnode *a_tdvp;
-		struct vnode *a_tvp;
-		struct componentname *a_tcnp;
-	} */ *ap = v;
+	struct vop_rename_args  *ap = v;
 	struct vnode *tvp = ap->a_tvp;
 	register struct vnode *tdvp = ap->a_tdvp;
 	struct vnode *fvp = ap->a_fvp;
@@ -945,12 +900,7 @@ int
 ext2fs_mkdir(v)
 	void *v;
 {
-	struct vop_mkdir_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
+	struct vop_mkdir_args *ap = v;
 	register struct vnode *dvp = ap->a_dvp;
 	register struct vattr *vap = ap->a_vap;
 	register struct componentname *cnp = ap->a_cnp;
@@ -1067,11 +1017,7 @@ int
 ext2fs_rmdir(v)
 	void *v;
 {
-	struct vop_rmdir_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_rmdir_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct vnode *dvp = ap->a_dvp;
 	register struct componentname *cnp = ap->a_cnp;
@@ -1147,13 +1093,7 @@ int
 ext2fs_symlink(v)
 	void *v;
 {
-	struct vop_symlink_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-		char *a_target;
-	} */ *ap = v;
+	struct vop_symlink_args *ap = v;
 	register struct vnode *vp, **vpp = ap->a_vpp;
 	register struct inode *ip;
 	int len, error;
@@ -1187,11 +1127,7 @@ int
 ext2fs_readlink(v)
 	void *v;
 {
-	struct vop_readlink_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_readlink_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	int isize;
@@ -1212,13 +1148,7 @@ int
 ext2fs_advlock(v)
 	void *v;
 {
-	struct vop_advlock_args /* {
-		struct vnode *a_vp;
-		caddr_t  a_id;
-		int  a_op;
-		struct flock *a_fl;
-		int  a_flags;
-	} */ *ap = v;
+	struct vop_advlock_args *ap = v;
 	register struct inode *ip = VTOI(ap->a_vp);
 
 	return (lf_advlock(&ip->i_lockf, ext2fs_size(ip), ap->a_id, ap->a_op,
@@ -1302,12 +1232,7 @@ int
 ext2fs_fsync(v)
 	void *v;
 {
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		struct ucred *a_cred;
-		int a_waitfor;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_fsync_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 
 	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
@@ -1322,9 +1247,7 @@ int
 ext2fs_reclaim(v)
 	void *v;
 {
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_reclaim_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	struct inode *ip;
 #ifdef DIAGNOSTIC

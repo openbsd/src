@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.17 2007/04/08 16:37:10 pedro Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.18 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -133,11 +133,7 @@ struct vnodeopv_desc dead_vnodeop_opv_desc =
 int
 dead_lookup(void *v)
 {
-	struct vop_lookup_args /* {
-		struct vnode * a_dvp;
-		struct vnode ** a_vpp;
-		struct componentname * a_cnp;
-	} */ *ap = v;
+	struct vop_lookup_args *ap = v;
 
 	*ap->a_vpp = NULL;
 	return (ENOTDIR);
@@ -160,12 +156,7 @@ dead_open(void *v)
 int
 dead_read(void *v)
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_read_args *ap = v;
 
 	if (chkvnlock(ap->a_vp))
 		panic("dead_read: lock");
@@ -184,12 +175,7 @@ dead_read(void *v)
 int
 dead_write(void *v)
 {
-	struct vop_write_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_write_args *ap = v;
 
 	if (chkvnlock(ap->a_vp))
 		panic("dead_write: lock");
@@ -203,14 +189,7 @@ dead_write(void *v)
 int
 dead_ioctl(void *v)
 {
-	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		u_long a_command;
-		caddr_t  a_data;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_ioctl_args *ap = v;
 
 	if (!chkvnlock(ap->a_vp))
 		return (EBADF);
@@ -222,11 +201,7 @@ int
 dead_poll(void *v)
 {
 #if 0
-	struct vop_poll_args /* {
-		struct vnode *a_vp;
-		int a_events;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_poll_args *ap = v;
 #endif
 
 	/*
@@ -241,9 +216,7 @@ dead_poll(void *v)
 int
 dead_strategy(void *v)
 {
-	struct vop_strategy_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
+	struct vop_strategy_args *ap = v;
 	int s;
 
 	if (ap->a_bp->b_vp == NULL || !chkvnlock(ap->a_bp->b_vp)) {
@@ -262,11 +235,7 @@ dead_strategy(void *v)
 int
 dead_lock(void *v)
 {
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_lock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
 	if (ap->a_flags & LK_DRAIN || !chkvnlock(vp))
@@ -281,13 +250,7 @@ dead_lock(void *v)
 int
 dead_bmap(void *v)
 {
-	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr_t  a_bn;
-		struct vnode **a_vpp;
-		daddr_t *a_bnp;
-		int *a_runp;
-	} */ *ap = v;
+	struct vop_bmap_args *ap = v;
 
 	if (!chkvnlock(ap->a_vp))
 		return (EIO);

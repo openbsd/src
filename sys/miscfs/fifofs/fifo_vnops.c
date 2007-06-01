@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.22 2007/01/16 17:52:18 thib Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.23 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -131,11 +131,7 @@ int
 fifo_lookup(v)
 	void *v;
 {
-	struct vop_lookup_args /* {
-		struct vnode * a_dvp;
-		struct vnode ** a_vpp;
-		struct componentname * a_cnp;
-	} */ *ap = v;
+	struct vop_lookup_args *ap = v;
 	
 	*ap->a_vpp = NULL;
 	return (ENOTDIR);
@@ -150,12 +146,7 @@ int
 fifo_open(v)
 	void *v;
 {
-	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_open_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct fifoinfo *fip;
 	struct proc *p = ap->a_p;
@@ -241,12 +232,7 @@ int
 fifo_read(v)
 	void *v;
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_read_args *ap = v;
 	register struct uio *uio = ap->a_uio;
 	register struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
 	struct proc *p = uio->uio_procp;
@@ -280,12 +266,7 @@ int
 fifo_write(v)
 	void *v;
 {
-	struct vop_write_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_write_args *ap = v;
 	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
 	struct proc *p = ap->a_uio->uio_procp;
 	int error;
@@ -312,14 +293,7 @@ int
 fifo_ioctl(v)
 	void *v;
 {
-	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		u_long a_command;
-		caddr_t  a_data;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_ioctl_args *ap = v;
 	struct file filetmp;
 	int error;
 
@@ -345,11 +319,7 @@ int
 fifo_poll(v)
 	void *v;
 {
-	struct vop_poll_args /* {
-		struct vnode *a_vp;
-		int  a_events;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_poll_args *ap = v;
 	struct file filetmp;
 	short ostate;
 	int revents = 0;
@@ -382,10 +352,7 @@ int
 fifo_inactive(v)
 	void *v;
 {
-	struct vop_inactive_args /* {
-	     struct vnode *a_vp;
-	     struct proc *a_p;
-	} */ *ap = v;
+	struct vop_inactive_args *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
 	return (0);
@@ -398,13 +365,7 @@ int
 fifo_bmap(v)
 	void *v;
 {
-	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr_t  a_bn;
-		struct vnode **a_vpp;
-		daddr_t *a_bnp;
-		int *a_runp;
-	} */ *ap = v;
+	struct vop_bmap_args *ap = v;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = ap->a_vp;
@@ -421,12 +382,7 @@ int
 fifo_close(v)
 	void *v;
 {
-	struct vop_close_args /* {
-		struct vnode *a_vp;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_close_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct fifoinfo *fip = vp->v_fifoinfo;
 	int error1 = 0, error2 = 0;
@@ -476,9 +432,7 @@ int
 fifo_print(v)
 	void *v;
 {
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_print_args *ap = v;
 
 	printf("tag VT_NON");
 	fifo_printinfo(ap->a_vp);
@@ -506,11 +460,7 @@ int
 fifo_pathconf(v)
 	void *v;
 {
-	struct vop_pathconf_args /* {
-		struct vnode *a_vp;
-		int a_name;
-		register_t *a_retval;
-	} */ *ap = v;
+	struct vop_pathconf_args *ap = v;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
@@ -570,10 +520,7 @@ int
 fifo_kqfilter(v)
 	void *v;
 {
-	struct vop_kqfilter_args /* {
-		struct vnode *a_vp;
-		struct knote *a_kn;
-	} */ *ap = v;
+	struct vop_kqfilter_args *ap = v;
 	struct socket *so = (struct socket *)ap->a_vp->v_fifoinfo->fi_readsock;
 	struct sockbuf *sb;
 

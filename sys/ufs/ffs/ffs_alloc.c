@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.76 2007/06/01 20:23:25 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.77 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -366,10 +366,7 @@ int prtrealloc = 0;
 int
 ffs1_reallocblks(void *v)
 {
-	struct vop_reallocblks_args /* {
-		struct vnode *a_vp;
-		struct cluster_save *a_buflist;
-	} */ *ap = v;
+	struct vop_reallocblks_args *ap = v;
 	struct fs *fs;
 	struct inode *ip;
 	struct vnode *vp;
@@ -572,10 +569,7 @@ fail:
 int
 ffs2_reallocblks(void *v)
 {
-	struct vop_reallocblks_args /* {
-		struct vnode *a_vp;
-		struct cluster_save *a_buflist;
-	} */ *ap = v;
+	struct vop_reallocblks_args *ap = v;
 	struct fs *fs;
 	struct inode *ip;
 	struct vnode *vp;

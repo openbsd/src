@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.44 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.45 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -168,12 +168,7 @@ int doclusterwrite = 1;
 int
 ffs_read(void *v)
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_read_args *ap = v;
 	struct vnode *vp;
 	struct inode *ip;
 	struct uio *uio;
@@ -264,12 +259,7 @@ ffs_read(void *v)
 int
 ffs_write(void *v)
 {
-	struct vop_write_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_write_args *ap = v;
 	struct vnode *vp;
 	struct uio *uio;
 	struct inode *ip;
@@ -409,12 +399,7 @@ ffs_write(void *v)
 int
 ffs_fsync(void *v)
 {
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		struct ucred *a_cred;
-		int a_waitfor;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_fsync_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
 	int s, error, passes, skipmeta;
@@ -523,10 +508,7 @@ loop:
 int
 ffs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	int error;

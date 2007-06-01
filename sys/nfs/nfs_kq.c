@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.8 2007/05/31 20:29:23 thib Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.9 2007/06/01 23:47:57 deraadt Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -259,10 +259,7 @@ static const struct filterops nfsvnode_filtops =
 int
 nfs_kqfilter(void *v)
 {
-	struct vop_kqfilter_args /* {
-		struct vnode	*a_vp;
-		struct knote	*a_kn;
-	} */ *ap = v;
+	struct vop_kqfilter_args *ap = v;
 	struct vnode *vp;
 	struct knote *kn;
 	struct kevq *ke;

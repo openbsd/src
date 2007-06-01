@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.40 2007/05/29 06:28:15 otto Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.41 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -113,11 +113,7 @@ int
 spec_lookup(v)
 	void *v;
 {
-	struct vop_lookup_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_lookup_args *ap = v;
 
 	*ap->a_vpp = NULL;
 	return (ENOTDIR);
@@ -131,12 +127,7 @@ int
 spec_open(v)
 	void *v;
 {
-	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_open_args *ap = v;
 	struct proc *p = ap->a_p;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *bvp;
@@ -225,12 +216,7 @@ int
 spec_read(v)
 	void *v;
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_read_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
@@ -307,10 +293,7 @@ int
 spec_inactive(v)
 	void *v;
 {
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_inactive_args *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
 	return (0);
@@ -324,12 +307,7 @@ int
 spec_write(v)
 	void *v;
 {
-	struct vop_write_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_write_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
@@ -407,14 +385,7 @@ int
 spec_ioctl(v)
 	void *v;
 {
-	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		u_long a_command;
-		caddr_t  a_data;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_ioctl_args *ap = v;
 	dev_t dev = ap->a_vp->v_rdev;
 	int maj = major(dev);
 
@@ -439,11 +410,7 @@ int
 spec_poll(v)
 	void *v;
 {
-	struct vop_poll_args /* {
-		struct vnode *a_vp;
-		int  a_events;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_poll_args *ap = v;
 	register dev_t dev;
 
 	switch (ap->a_vp->v_type) {
@@ -462,10 +429,7 @@ int
 spec_kqfilter(v)
 	void *v;
 {
-	struct vop_kqfilter_args /* {
-		struct vnode *a_vp;
-		struct knote *a_kn;
-	} */ *ap = v;
+	struct vop_kqfilter_args *ap = v;
 
 	dev_t dev;
 
@@ -483,12 +447,7 @@ int
 spec_fsync(v)
 	void *v;
 {
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		struct ucred *a_cred;
-		int  a_waitfor;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_fsync_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct buf *bp;
 	struct buf *nbp;
@@ -533,9 +492,7 @@ int
 spec_strategy(v)
 	void *v;
 {
-	struct vop_strategy_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
+	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
 	int maj = major(bp->b_dev);
 	
@@ -553,13 +510,7 @@ int
 spec_bmap(v)
 	void *v;
 {
-	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr_t  a_bn;
-		struct vnode **a_vpp;
-		daddr_t *a_bnp;
-		int *a_runp;
-	} */ *ap = v;
+	struct vop_bmap_args *ap = v;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = ap->a_vp;
@@ -579,12 +530,7 @@ int
 spec_close(v)
 	void *v;
 {
-	struct vop_close_args /* {
-		struct vnode *a_vp;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_close_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
 	int (*devclose)(dev_t, int, int, struct proc *);
@@ -664,9 +610,7 @@ int
 spec_print(v)
 	void *v;
 {
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_print_args *ap = v;
 
 	printf("tag VT_NON, dev %d, %d\n", major(ap->a_vp->v_rdev),
 		minor(ap->a_vp->v_rdev));
@@ -680,11 +624,7 @@ int
 spec_pathconf(v)
 	void *v;
 {
-	struct vop_pathconf_args /* {
-		struct vnode *a_vp;
-		int a_name;
-		register_t *a_retval;
-	} */ *ap = v;
+	struct vop_pathconf_args *ap = v;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
@@ -719,14 +659,7 @@ int
 spec_advlock(v)
 	void *v;
 {
-	struct vop_advlock_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		caddr_t  a_id;
-		int  a_op;
-		struct flock *a_fl;
-		int  a_flags;
-	} */ *ap = v;
+	struct vop_advlock_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 
 	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id,

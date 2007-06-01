@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.41 2007/06/01 22:30:48 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.42 2007/06/01 23:47:55 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -149,13 +149,7 @@ int
 cd9660_setattr(v)
 	void *v;
 {
-	struct vop_setattr_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_setattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
 
@@ -218,12 +212,7 @@ int
 cd9660_access(v)
 	void *v;
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_access_args *ap = v;
 	struct iso_node *ip = VTOI(ap->a_vp);
 
 	return (vaccess(ip->inode.iso_mode & ALLPERMS, ip->inode.iso_uid,
@@ -234,12 +223,7 @@ int
 cd9660_getattr(v)
 	void *v;
 {
-	struct vop_getattr_args /* {
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_getattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	register struct vattr *vap = ap->a_vap;
 	register struct iso_node *ip = VTOI(vp);
@@ -295,12 +279,7 @@ int
 cd9660_read(v)
 	void *v;
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	register struct uio *uio = ap->a_uio;
 	register struct iso_node *ip = VTOI(vp);
@@ -382,11 +361,7 @@ int
 cd9660_poll(v)
 	void *v;
 {
-	struct vop_poll_args /* {
-		struct vnode *a_vp;
-		int a_events;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_poll_args *ap = v;
 
 	/*
 	 * We should really check to see if I/O is possible.
@@ -514,14 +489,7 @@ int
 cd9660_readdir(v)
 	void *v;
 {
-	struct vop_readdir_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		struct ucred *a_cred;
-		int *a_eofflag;
-		u_long *a_cookies;
-		int a_ncookies;
-	} */ *ap = v;
+	struct vop_readdir_args *ap = v;
 	register struct uio *uio = ap->a_uio;
 	struct isoreaddir *idp;
 	struct vnode *vdp = ap->a_vp;
@@ -710,11 +678,7 @@ int
 cd9660_readlink(v)
 	void *v;
 {
-	struct vop_readlink_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_readlink_args *ap = v;
 	ISONODE	*ip;
 	ISODIR	*dirp;
 	ISOMNT	*imp;
@@ -802,11 +766,7 @@ int
 cd9660_link(v)
 	void *v;
 {
-	struct vop_link_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_link_args *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
@@ -817,13 +777,7 @@ int
 cd9660_symlink(v)
 	void *v;
 {
-	struct vop_symlink_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-		char *a_target;
-	} */ *ap = v;
+	struct vop_symlink_args *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
@@ -837,9 +791,7 @@ int
 cd9660_lock(v)
 	void *v;
 {
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_lock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
 	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, NULL));
@@ -852,9 +804,7 @@ int
 cd9660_unlock(v)
 	void *v;
 {
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_unlock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
 	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags | LK_RELEASE, NULL));
@@ -868,9 +818,7 @@ int
 cd9660_strategy(v)
 	void *v;
 {
-	struct vop_strategy_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
+	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
 	struct vnode *vp = bp->b_vp;
 	struct iso_node *ip;
@@ -924,9 +872,7 @@ int
 cd9660_islocked(v)
 	void *v;
 {
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_islocked_args *ap = v;
 
 	return (lockstatus(&VTOI(ap->a_vp)->i_lock));
 }
@@ -938,11 +884,7 @@ int
 cd9660_pathconf(v)
 	void *v;
 {
-	struct vop_pathconf_args /* {
-		struct vnode *a_vp;
-		int a_name;
-		register_t *a_retval;
-	} */ *ap = v;
+	struct vop_pathconf_args *ap = v;
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = 1;

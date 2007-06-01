@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.42 2006/11/18 10:19:59 jmc Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.43 2007/06/01 23:47:56 deraadt Exp $  */
 
 /*
  *  Portions of this code are:
@@ -327,13 +327,7 @@ vfs_allocate_syncvnode(struct mount *mp)
 int
 sync_fsync(void *v)
 {
-	struct vop_fsync_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct ucred *a_cred;
-		int a_waitfor;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_fsync_args *ap = v;
 	struct vnode *syncvp = ap->a_vp;
 	struct mount *mp = syncvp->v_mount;
 	int asyncflag;
@@ -371,11 +365,7 @@ sync_fsync(void *v)
 int
 sync_inactive(void *v)
 {
-	struct vop_inactive_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_inactive_args *ap = v;
 
 	struct vnode *vp = ap->a_vp;
 	int s;

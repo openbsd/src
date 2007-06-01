@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.34 2007/05/29 00:17:33 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.35 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -159,10 +159,7 @@ int
 nfs_inactive(v)
 	void *v;
 {
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_inactive_args *ap = v;
 	struct nfsnode *np;
 	struct sillyrename *sp;
 	struct proc *p = curproc;	/* XXX */
@@ -202,9 +199,7 @@ int
 nfs_reclaim(v)
 	void *v;
 {
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdmap *dp, *dp2;

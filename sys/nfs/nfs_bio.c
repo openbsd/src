@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.45 2007/06/01 07:13:47 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.46 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -274,12 +274,7 @@ int
 nfs_write(v)
 	void *v;
 {
-	struct vop_write_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_write_args *ap = v;
 	int biosize;
 	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;

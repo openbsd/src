@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.35 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.36 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -108,10 +108,7 @@ int
 ext2fs_inactive(v)
 	void *v;
 {   
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct proc *p = ap->a_p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.36 2006/11/17 11:09:00 pedro Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.37 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -104,11 +104,7 @@ int	dirchk = 0;
 int
 ufs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_lookup_args *ap = v;
 	struct vnode *vdp;		/* vnode for directory being searched */
 	struct inode *dp;		/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.33 2007/05/26 18:42:21 thib Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.34 2007/06/01 23:47:56 deraadt Exp $  */
 
 /*
  * Portions of this code are:
@@ -57,11 +57,7 @@ void filt_generic_detach(struct knote *);
 int
 vop_generic_revoke(void *v)
 {
-	struct vop_revoke_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
+	struct vop_revoke_args *ap = v;
 	struct vnode *vp, *vq;
 	struct proc *p = curproc;
 
@@ -123,11 +119,7 @@ vop_generic_bwrite(void *v)
 int
 vop_generic_abortop(void *v)
 {
-	struct vop_abortop_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_abortop_args *ap = v;
  
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
 		pool_put(&namei_pool, ap->a_cnp->cn_pnbuf);
@@ -172,11 +164,7 @@ struct filterops generic_filtops =
 int
 vop_generic_kqfilter(void *v)
 {
-	struct vop_kqfilter_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct knote *a_kn;
-	} */ *ap = v;
+	struct vop_kqfilter_args *ap = v;
 	struct knote *kn = ap->a_kn;
 
 	switch (kn->kn_filter) {

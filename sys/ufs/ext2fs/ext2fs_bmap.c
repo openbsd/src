@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.12 2006/10/03 19:49:06 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.13 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -68,13 +68,7 @@ int
 ext2fs_bmap(v)
 	void *v;
 {
-	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr_t  a_bn;
-		struct vnode **a_vpp;
-		daddr_t *a_bnp;
-		int *a_runp;
-	} */ *ap = v;
+	struct vop_bmap_args *ap = v;
 	/*
 	 * Check for underlying vnode requests and ensure that logical
 	 * to physical mapping is requested.

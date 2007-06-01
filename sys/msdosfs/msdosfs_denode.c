@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.30 2007/04/11 16:08:50 thib Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.31 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -587,9 +587,7 @@ int
 msdosfs_reclaim(v)
 	void *v;
 {
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 #ifdef DIAGNOSTIC
@@ -628,10 +626,7 @@ int
 msdosfs_inactive(v)
 	void *v;
 {
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	struct proc *p = ap->a_p;

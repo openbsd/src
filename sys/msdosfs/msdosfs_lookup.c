@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.17 2007/04/10 15:21:04 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.18 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -81,11 +81,7 @@ int
 msdosfs_lookup(v)
 	void *v;
 {
-	struct vop_lookup_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_lookup_args *ap = v;
 	struct vnode *vdp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;

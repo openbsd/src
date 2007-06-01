@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.21 2005/12/28 20:48:17 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.22 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -129,14 +129,7 @@ int
 ext2fs_readdir(v)
 	void *v;
 {
-	struct vop_readdir_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		struct ucred *a_cred;
-		int **a_eofflag;
-		off_t **a_cookies;
-		int ncookies;
-	} */ *ap = v;
+	struct vop_readdir_args *ap = v;
 	struct uio *uio = ap->a_uio;
 	int error;
 	size_t e2fs_count, readcnt, entries;
@@ -259,11 +252,7 @@ int
 ext2fs_lookup(v)
 	void *v;
 {
-	struct vop_lookup_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_lookup_args *ap = v;
 	struct vnode *vdp;	/* vnode for directory being searched */
 	struct inode *dp;	/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */

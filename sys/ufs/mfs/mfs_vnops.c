@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.27 2007/02/07 15:20:39 jmc Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.28 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -105,12 +105,7 @@ int
 mfs_open(void *v)
 {
 #ifdef DIAGNOSTIC
-	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_open_args *ap = v;
 
 	if (ap->a_vp->v_type != VBLK) {
 		panic("mfs_open not VBLK");
@@ -128,14 +123,7 @@ int
 mfs_ioctl(void *v)
 {
 #if 0
-	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		u_long a_command;
-		caddr_t  a_data;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_ioctl_args *ap = v;
 #endif
 
 	return (ENOTTY);
@@ -147,9 +135,7 @@ mfs_ioctl(void *v)
 int
 mfs_strategy(void *v)
 {
-	struct vop_strategy_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
+	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
 	struct mfsnode *mfsp;
 	struct vnode *vp;
@@ -212,13 +198,7 @@ mfs_doio(struct buf *bp, caddr_t base)
 int
 mfs_bmap(void *v)
 {
-	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr_t  a_bn;
-		struct vnode **a_vpp;
-		daddr_t *a_bnp;
-		int *a_runp;
-	} */ *ap = v;
+	struct vop_bmap_args *ap = v;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = ap->a_vp;
@@ -237,12 +217,7 @@ mfs_bmap(void *v)
 int
 mfs_close(void *v)
 {
-	struct vop_close_args /* {
-		struct vnode *a_vp;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	struct buf *bp;
@@ -290,10 +265,7 @@ mfs_close(void *v)
 int
 mfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_inactive_args *ap = v;
 #ifdef DIAGNOSTIC
 	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
@@ -311,9 +283,7 @@ mfs_inactive(void *v)
 int
 mfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
 	free(vp->v_data, M_MFSNODE);
@@ -327,9 +297,7 @@ mfs_reclaim(void *v)
 int
 mfs_print(void *v)
 {
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_print_args *ap = v;
 	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
 	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,

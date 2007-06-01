@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.74 2007/06/01 07:13:47 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.75 2007/06/01 23:47:57 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -215,12 +215,7 @@ int
 nfs_access(v)
 	void *v;
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_access_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	u_int32_t *tl;
 	caddr_t cp;
@@ -307,12 +302,7 @@ int
 nfs_open(v)
 	void *v;
 {
-	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_open_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr vattr;
@@ -407,13 +397,7 @@ int
 nfs_close(v)
 	void *v;
 {
-	struct vop_close_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	int error = 0;
@@ -442,12 +426,7 @@ int
 nfs_getattr(v)
 	void *v;
 {
-	struct vop_getattr_args /* {
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_getattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	caddr_t cp;
@@ -485,13 +464,7 @@ int
 nfs_setattr(v)
 	void *v;
 {
-	struct vop_setattr_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_setattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr *vap = ap->a_vap;
@@ -626,12 +599,7 @@ int
 nfs_lookup(v)
 	void *v;
 {
-	struct vop_lookup_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_lookup_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
@@ -888,12 +856,7 @@ int
 nfs_read(v)
 	void *v;
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
 	if (vp->v_type != VREG)
@@ -908,11 +871,7 @@ int
 nfs_readlink(v)
 	void *v;
 {
-	struct vop_readlink_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_readlink_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
 	if (vp->v_type != VLNK)
@@ -1225,12 +1184,7 @@ int
 nfs_mknod(v)
 	void *v;
 {
-	struct vop_mknod_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
+	struct vop_mknod_args *ap = v;
 	struct vnode *newvp;
 	int error;
 
@@ -1251,12 +1205,7 @@ int
 nfs_create(v)
 	void *v;
 {
-	struct vop_create_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
+	struct vop_create_args *ap = v;
 	struct vnode *dvp = ap->a_dvp;
 	struct vattr *vap = ap->a_vap;
 	struct componentname *cnp = ap->a_cnp;
@@ -1365,12 +1314,7 @@ int
 nfs_remove(v)
 	void *v;
 {
-	struct vop_remove_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode * a_dvp;
-		struct vnode * a_vp;
-		struct componentname * a_cnp;
-	} */ *ap = v;
+	struct vop_remove_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
@@ -1480,14 +1424,7 @@ int
 nfs_rename(v)
 	void *v;
 {
-	struct vop_rename_args  /* {
-		struct vnode *a_fdvp;
-		struct vnode *a_fvp;
-		struct componentname *a_fcnp;
-		struct vnode *a_tdvp;
-		struct vnode *a_tvp;
-		struct componentname *a_tcnp;
-	} */ *ap = v;
+	struct vop_rename_args  *ap = v;
 	struct vnode *fvp = ap->a_fvp;
 	struct vnode *tvp = ap->a_tvp;
 	struct vnode *fdvp = ap->a_fdvp;
@@ -1613,11 +1550,7 @@ int
 nfs_link(v)
 	void *v;
 {
-	struct vop_link_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_link_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
@@ -1683,13 +1616,7 @@ int
 nfs_symlink(v)
 	void *v;
 {
-	struct vop_symlink_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-		char *a_target;
-	} */ *ap = v;
+	struct vop_symlink_args *ap = v;
 	struct vnode *dvp = ap->a_dvp;
 	struct vattr *vap = ap->a_vap;
 	struct componentname *cnp = ap->a_cnp;
@@ -1751,12 +1678,7 @@ int
 nfs_mkdir(v)
 	void *v;
 {
-	struct vop_mkdir_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
+	struct vop_mkdir_args *ap = v;
 	struct vnode *dvp = ap->a_dvp;
 	struct vattr *vap = ap->a_vap;
 	struct componentname *cnp = ap->a_cnp;
@@ -1835,11 +1757,7 @@ int
 nfs_rmdir(v)
 	void *v;
 {
-	struct vop_rmdir_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_rmdir_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
@@ -1914,14 +1832,7 @@ int
 nfs_readdir(v)
 	void *v;
 {
-	struct vop_readdir_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		struct ucred *a_cred;
-		int *a_eofflag;
-		u_long **a_cookies;
-		int *a_ncookies;
-	} */ *ap = v;
+	struct vop_readdir_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct uio *uio = ap->a_uio;
@@ -2666,13 +2577,7 @@ int
 nfs_bmap(v)
 	void *v;
 {
-	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr64_t  a_bn;
-		struct vnode **a_vpp;
-		daddr64_t *a_bnp;
-		int *a_runp;
-	} */ *ap = v;
+	struct vop_bmap_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
 	if (ap->a_vpp != NULL)
@@ -2721,13 +2626,7 @@ int
 nfs_fsync(v)
 	void *v;
 {
-	struct vop_fsync_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode * a_vp;
-		struct ucred * a_cred;
-		int  a_waitfor;
-		struct proc * a_p;
-	} */ *ap = v;
+	struct vop_fsync_args *ap = v;
 
 	return (nfs_flush(ap->a_vp, ap->a_cred, ap->a_waitfor, ap->a_p, 1));
 }
@@ -2913,11 +2812,7 @@ nfs_pathconf(v)
 	void *v;
 {
 #if 0
-	struct vop_pathconf_args /* {
-		struct vnode *a_vp;
-		int a_name;
-		register_t *a_retval;
-	} */ *ap = v;
+	struct vop_pathconf_args *ap = v;
 #endif
 
 	return (EINVAL);
@@ -2930,13 +2825,7 @@ int
 nfs_advlock(v)
 	void *v;
 {
-	struct vop_advlock_args /* {
-		struct vnode *a_vp;
-		caddr_t  a_id;
-		int  a_op;
-		struct flock *a_fl;
-		int  a_flags;
-	} */ *ap = v;
+	struct vop_advlock_args *ap = v;
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
 	return (lf_advlock(&np->n_lockf, np->n_size, ap->a_id, ap->a_op,
@@ -2950,9 +2839,7 @@ int
 nfs_print(v)
 	void *v;
 {
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_print_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 
@@ -2973,9 +2860,7 @@ int
 nfs_bwrite(v)
 	void *v;
 {
-	struct vop_bwrite_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
+	struct vop_bwrite_args *ap = v;
 
 	return (nfs_writebp(ap->a_bp, 1));
 }
@@ -3096,12 +2981,7 @@ int
 nfsspec_access(v)
 	void *v;
 {
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_access_args *ap = v;
 	struct vattr va;
 	struct vnode *vp = ap->a_vp;
 	int error;
@@ -3135,11 +3015,7 @@ int
 nfs_poll(v)
         void *v;
 {
-	struct vop_poll_args /* {
-		struct vnode *a_vp;
-		int  a_events;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_poll_args *ap = v;
 
 	/*
 	 * We should really check to see if I/O is possible.
@@ -3154,12 +3030,7 @@ int
 nfsspec_read(v)
 	void *v;
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_read_args *ap = v;
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
 	/*
@@ -3177,12 +3048,7 @@ int
 nfsspec_write(v)
 	void *v;
 {
-	struct vop_write_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_write_args *ap = v;
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
 	/*
@@ -3202,12 +3068,7 @@ int
 nfsspec_close(v)
 	void *v;
 {
-	struct vop_close_args /* {
-		struct vnode *a_vp;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr vattr;
@@ -3235,12 +3096,7 @@ int
 nfsfifo_read(v)
 	void *v;
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_read_args *ap = v;
 	extern int (**fifo_vnodeop_p)(void *);
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
@@ -3259,12 +3115,7 @@ int
 nfsfifo_write(v)
 	void *v;
 {
-	struct vop_write_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
+	struct vop_write_args *ap = v;
 	extern int (**fifo_vnodeop_p)(void *);
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
@@ -3285,12 +3136,7 @@ int
 nfsfifo_close(v)
 	void *v;
 {
-	struct vop_close_args /* {
-		struct vnode *a_vp;
-		int  a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr vattr;

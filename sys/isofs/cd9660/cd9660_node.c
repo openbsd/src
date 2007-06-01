@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.18 2007/04/11 16:08:50 thib Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.19 2007/06/01 23:47:55 deraadt Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -234,10 +234,7 @@ int
 cd9660_inactive(v)
 	void *v;
 {
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
+	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct proc *p = ap->a_p;
 	register struct iso_node *ip = VTOI(vp);
@@ -267,9 +264,7 @@ int
 cd9660_reclaim(v)
 	void *v;
 {
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
+	struct vop_reclaim_args *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct iso_node *ip = VTOI(vp);
 

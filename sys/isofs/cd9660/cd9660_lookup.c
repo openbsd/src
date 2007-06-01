@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.12 2006/01/25 21:15:55 mickey Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.13 2007/06/01 23:47:55 deraadt Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -95,11 +95,7 @@ int
 cd9660_lookup(v)
 	void *v;
 {
-	struct vop_lookup_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
+	struct vop_lookup_args *ap = v;
 	register struct vnode *vdp;	/* vnode for directory being searched */
 	register struct iso_node *dp;	/* inode for directory being searched */
 	register struct iso_mnt *imp;	/* file system that directory is in */
