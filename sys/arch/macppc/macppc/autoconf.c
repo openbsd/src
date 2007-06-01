@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.32 2007/06/01 19:25:10 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.33 2007/06/01 23:14:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.32 2007/06/01 19:25:10 deraadt Exp $
+ *      $Id: autoconf.c,v 1.33 2007/06/01 23:14:06 deraadt Exp $
  */
 
 /*
@@ -288,7 +288,6 @@ diskconf(void)
 struct nam2blk nam2blk[] = {
 	{ "wd",		0 },
 	{ "sd",		2 },
-	{ "ofdisk",	4 },
 	{ "raid",	19 },
 	{ NULL,		-1 }
 };

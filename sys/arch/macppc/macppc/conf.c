@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 2007/02/06 22:39:13 dlg Exp $ */
+/*	$OpenBSD: conf.c,v 1.30 2007/06/01 23:14:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -51,9 +51,6 @@
 bdev_decl(wd);
 cdev_decl(wd);
 
-#include "ofdisk.h"
-bdev_decl(ofd);
-
 #include "vnd.h"
 #include "ccd.h"
 #include "raid.h"
@@ -63,7 +60,6 @@ struct bdevsw bdevsw[] = {
 	bdev_swap_init(1,sw),		/* 1 swap pseudo device */
 	bdev_disk_init(NSD,sd),		/* 2 SCSI Disk */
 	bdev_disk_init(NCD,cd),		/* 3 SCSI CD-ROM */
-	bdev_disk_init(NOFDISK,ofd),	/* 4 Openfirmware disk */
 	bdev_notdef(),			/* 5 unknown*/
 	bdev_notdef(),			/* 6 unknown*/
 	bdev_notdef(),			/* 7 unknown*/
@@ -84,13 +80,6 @@ int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
 #include "pty.h"
 #include "zstty.h"
-
-#include "ofcons.h"
-cdev_decl(ofc);
-cdev_decl(ofd);
-
-#include "ofrtc.h"
-cdev_decl(ofrtc);
 
 cdev_decl(kbd);
 cdev_decl(ms);
@@ -165,8 +154,8 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 10: SCSI changer */
 	cdev_disk_init(NWD,wd),		/* 11: ST506/ESDI/IDE disk */
 	cdev_notdef(),			/* 12 */
-	cdev_disk_init(NOFDISK,ofd),	/* 13 Openfirmware disk */
-	cdev_tty_init(NOFCONS,ofc),	/* 14 Openfirmware console */
+	cdev_notdef(),			/* 13 */
+	cdev_notdef(),			/* 14 */
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
 	cdev_disk_init(NRD,rd),		/* 17 ram disk driver*/

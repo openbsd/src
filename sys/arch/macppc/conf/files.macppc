@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.54 2007/04/23 16:27:20 deraadt Exp $
+#	$OpenBSD: files.macppc,v 1.55 2007/06/01 23:14:07 deraadt Exp $
 
 #
 # macppc-specific configuration info
@@ -43,11 +43,7 @@ file	arch/macppc/macppc/mainbus.c			mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/macppc/macppc/cpu.c
-
-include "../../../dev/ofw/files.ofw"
 file	arch/macppc/macppc/opendev.c
-major	{ofdisk = 4}
-
 
 device	memc {}
 attach	memc at mainbus
