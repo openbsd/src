@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.113 2007/05/29 06:28:15 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.114 2007/06/01 21:51:15 todd Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.113 2007/05/29 06:28:15 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.114 2007/06/01 21:51:15 todd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -601,7 +601,8 @@ editor_name(struct disklabel *lp, char **mp, char *p)
 
 	/* Not all fstypes can be named */
 	if (pp->p_fstype == FS_UNUSED || pp->p_fstype == FS_SWAP ||
-	    pp->p_fstype == FS_BOOT || pp->p_fstype == FS_OTHER) {
+	    pp->p_fstype == FS_BOOT || pp->p_fstype == FS_OTHER ||
+	    pp->p_fstype == FS_RAID) {
 		fprintf(stderr, "You cannot name a filesystem of type %s.\n",
 		    fstypenames[lp->d_partitions[partno].p_fstype]);
 		return;
