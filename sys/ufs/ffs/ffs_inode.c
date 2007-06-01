@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.48 2007/06/01 06:38:54 deraadt Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.49 2007/06/01 18:54:27 pedro Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -477,9 +477,9 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	long blkcount, factor;
 	int nblocks, blocksreleased = 0;
 	int error = 0, allerror = 0;
-	ufs1_daddr_t *bap1 = NULL;
+	int32_t *bap1 = NULL;
 #ifdef FFS2
-	daddr64_t *bap2 = NULL;
+	int64_t *bap2 = NULL;
 #endif
 
 	/*
@@ -521,10 +521,10 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 
 #ifdef FFS2
 	if (ip->i_ump->um_fstype == UM_UFS2)
-		bap2 = (daddr64_t *) bp->b_data;
+		bap2 = (int64_t *)bp->b_data;
 	else
 #endif
-		bap1 = (ufs1_daddr_t *) bp->b_data;
+		bap1 = (int32_t *)bp->b_data;
 
 	if (lastbn != -1) {
 		MALLOC(copy, void *, fs->fs_bsize, M_TEMP, M_WAITOK);
@@ -543,10 +543,10 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 
 #ifdef FFS2
 		if (ip->i_ump->um_fstype == UM_UFS2)
-			bap2 = (daddr64_t *) copy;
+			bap2 = (int64_t *)copy;
 		else
 #endif
-			bap1 = (ufs1_daddr_t *) copy;
+			bap1 = (int32_t *)copy;
 	}
 
 	/*

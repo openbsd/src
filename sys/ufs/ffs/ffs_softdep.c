@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.89 2007/06/01 06:38:54 deraadt Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.90 2007/06/01 18:54:27 pedro Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1849,10 +1849,10 @@ setup_allocindir_phase2(bp, ip, aip)
 			}
 			LIST_INSERT_HEAD(&indirdep->ir_deplisthd, aip, ai_next);
 			if (ip->i_ump->um_fstype == UM_UFS1)
-				((ufs1_daddr_t *)indirdep->ir_savebp->b_data)
+				((int32_t *)indirdep->ir_savebp->b_data)
 				    [aip->ai_offset] = aip->ai_oldblkno;
 			else
-				((daddr64_t *)indirdep->ir_savebp->b_data)
+				((int64_t *)indirdep->ir_savebp->b_data)
 				    [aip->ai_offset] = aip->ai_oldblkno;
 			FREE_LOCK(&lk);
 			if (freefrag != NULL)
@@ -2468,8 +2468,8 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	long *countp;
 {
 	struct buf *bp;
-	ufs1_daddr_t *bap1 = NULL;
-	daddr64_t nb, *bap2 = NULL;
+	int32_t *bap1 = NULL;
+	int64_t nb, *bap2 = NULL;
 	struct fs *fs;
 	struct worklist *wk;
 	struct indirdep *indirdep;
@@ -2519,10 +2519,10 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	 */
 	if (ip->i_ump->um_fstype == UM_UFS1) {
 		ufs1fmt = 1;
-		bap1 = (ufs1_daddr_t *) bp->b_data;
+		bap1 = (int32_t *)bp->b_data;
 	} else {
 		ufs1fmt = 0;
-		bap2 = (daddr64_t *) bp->b_data;
+		bap2 = (int64_t *)bp->b_data;
 	}
 	nblocks = btodb(fs->fs_bsize);
 	for (i = NINDIR(fs) - 1; i >= 0; i--) {
@@ -3444,7 +3444,7 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 	struct fs *fs;
 #ifdef DIAGNOSTIC
 	ufs_lbn_t prevlbn = 0;
-	ufs1_daddr_t d1, d2;
+	int32_t d1, d2;
 #endif
 	int i, deplist;
 
@@ -4026,10 +4026,10 @@ handle_allocindir_partdone(aip)
 		return;
 	}
 	if (indirdep->ir_state & UFS1FMT)
-		((ufs1_daddr_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
+		((int32_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
 		    aip->ai_newblkno;
 	else
-		((daddr64_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
+		((int64_t *)indirdep->ir_savebp->b_data)[aip->ai_offset] =
 		    aip->ai_newblkno;
 	LIST_REMOVE(aip, ai_next);
 	if (aip->ai_freefrag != NULL)

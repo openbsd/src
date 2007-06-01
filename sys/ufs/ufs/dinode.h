@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.13 2007/06/01 17:01:29 pedro Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.14 2007/06/01 18:54:27 pedro Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -77,8 +77,8 @@ struct	ufs1_dinode {
 	int32_t		di_mtimensec;	/*  28: Last modified time. */
 	int32_t		di_ctime;	/*  32: Last inode change time. */
 	int32_t		di_ctimensec;	/*  36: Last inode change time. */
-	ufs1_daddr_t	di_db[NDADDR];	/*  40: Direct disk blocks. */
-	ufs1_daddr_t	di_ib[NIADDR];	/*  88: Indirect disk blocks. */
+	int32_t		di_db[NDADDR];	/*  40: Direct disk blocks. */
+	int32_t		di_ib[NIADDR];	/*  88: Indirect disk blocks. */
 	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
 	int32_t		di_blocks;	/* 104: Blocks actually held. */
 	int32_t		di_gen;		/* 108: Generation number. */
@@ -107,9 +107,9 @@ struct ufs2_dinode {
 	u_int32_t	di_kernflags;	/*  84: Kernel flags. */
 	u_int32_t	di_flags;	/*  88: Status flags (chflags). */
 	int32_t		di_extsize;	/*  92: External attributes block. */
-	daddr64_t	di_extb[NXADDR];/*  96: External attributes block. */
-	daddr64_t	di_db[NDADDR];	/* 112: Direct disk blocks. */
-	daddr64_t	di_ib[NIADDR];	/* 208: Indirect disk blocks. */
+	int64_t		di_extb[NXADDR];/*  96: External attributes block. */
+	int64_t		di_db[NDADDR];	/* 112: Direct disk blocks. */
+	int64_t		di_ib[NIADDR];	/* 208: Indirect disk blocks. */
 	int64_t		di_spare[3];	/* 232: Reserved; currently unused */
 };
 
@@ -126,8 +126,8 @@ struct ufs2_dinode {
 #define	di_rdev		di_db[0]
 #define	di_shortlink	di_db
 
-#define MAXSYMLINKLEN_UFS1	((NDADDR + NIADDR) * sizeof(ufs1_daddr_t))
-#define MAXSYMLINKLEN_UFS2	((NDADDR + NIADDR) * sizeof(daddr64_t))
+#define MAXSYMLINKLEN_UFS1	((NDADDR + NIADDR) * sizeof(int32_t))
+#define MAXSYMLINKLEN_UFS2	((NDADDR + NIADDR) * sizeof(int64_t))
 
 #define MAXSYMLINKLEN(ip) \
 	((ip)->i_ump->um_fstype == UM_UFS1) ? \

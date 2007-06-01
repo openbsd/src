@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.74 2007/06/01 06:38:54 deraadt Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.75 2007/06/01 18:54:27 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1043,8 +1043,8 @@ end:
  * here a best guess is made based upon the logical block number being
  * allocated.
  */
-ufs1_daddr_t
-ffs1_blkpref(struct inode *ip, daddr_t lbn, int indx, ufs1_daddr_t *bap)
+int32_t
+ffs1_blkpref(struct inode *ip, daddr_t lbn, int indx, int32_t *bap)
 {
 	struct fs *fs;
 	int cg, avgbfree, startcg;
@@ -1086,8 +1086,8 @@ ffs1_blkpref(struct inode *ip, daddr_t lbn, int indx, ufs1_daddr_t *bap)
  * Same as above, for UFS2.
  */
 #ifdef FFS2
-daddr64_t
-ffs2_blkpref(struct inode *ip, daddr_t lbn, int indx, daddr64_t *bap)
+int64_t
+ffs2_blkpref(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 {
 	struct fs *fs;
 	int cg, avgbfree, startcg;
@@ -1689,7 +1689,7 @@ gotit:
  * block reassembly is checked.
  */
 void
-ffs_blkfree(struct inode *ip, daddr_t bno, long size)
+ffs_blkfree(struct inode *ip, daddr64_t bno, long size)
 {
 	struct fs *fs;
 	struct cg *cgp;

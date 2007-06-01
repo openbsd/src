@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.30 2007/06/01 06:38:54 deraadt Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.31 2007/06/01 18:54:27 pedro Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -106,11 +106,11 @@ int ffs_inode_alloc(struct inode *, mode_t, struct ucred *, struct vnode **);
 int ffs_inode_free(struct inode *, ino_t, mode_t);
 int ffs_freefile(struct inode *, ino_t, mode_t);
 
-ufs1_daddr_t ffs1_blkpref(struct inode *, daddr_t, int, ufs1_daddr_t *);
+int32_t ffs1_blkpref(struct inode *, daddr_t, int, int32_t *);
 #ifdef FFS2
-daddr64_t ffs2_blkpref(struct inode *, daddr_t, int, daddr64_t *);
+int64_t ffs2_blkpref(struct inode *, daddr_t, int, int64_t *);
 #endif
-void ffs_blkfree(struct inode *, daddr_t, long);
+void ffs_blkfree(struct inode *, daddr64_t, long);
 void ffs_clusteracct(struct fs *, struct cg *, daddr_t, int);
 
 /* ffs_balloc.c */
