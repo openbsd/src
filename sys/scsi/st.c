@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.73 2007/04/10 17:47:56 miod Exp $	*/
+/*	$OpenBSD: st.c,v 1.74 2007/06/01 18:44:48 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -204,8 +204,8 @@ struct st_softc {
 	u_int64_t numblks;		/* nominal blocks capacity            */
 	u_int32_t media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
 	u_int32_t media_density;	/* this is what it said when asked    */
-	daddr_t media_fileno;		/* relative to BOT. -1 means unknown. */
-	daddr_t media_blkno;		/* relative to BOF. -1 means unknown. */
+	int media_fileno;		/* relative to BOT. -1 means unknown. */
+	int media_blkno;		/* relative to BOF. -1 means unknown. */
 /*--------------------quirks for the whole drive------------------------------*/
 	u_int drive_quirks;	/* quirks of this drive               */
 /*--------------------How we should set up when opening each minor device----*/
@@ -234,14 +234,14 @@ int	st_read(struct st_softc *, char *, int, int);
 int	st_read_block_limits(struct st_softc *, int);
 int	st_mode_sense(struct st_softc *, int);
 int	st_mode_select(struct st_softc *, int);
-int	st_space(struct st_softc *, daddr_t, u_int, int);
-int	st_write_filemarks(struct st_softc *, daddr_t, int);
+int	st_space(struct st_softc *, int, u_int, int);
+int	st_write_filemarks(struct st_softc *, int, int);
 int	st_check_eod(struct st_softc *, int, int *, int);
 int	st_load(struct st_softc *, u_int, int);
 int	st_rewind(struct st_softc *, u_int, int);
 int	st_interpret_sense(struct scsi_xfer *);
 int	st_touch_tape(struct st_softc *);
-int	st_erase(struct st_softc *, daddr_t, int);
+int	st_erase(struct st_softc *, int, int);
 
 struct cfattach st_ca = {
 	sizeof(struct st_softc), stmatch, stattach
@@ -1057,7 +1057,7 @@ stioctl(dev, cmd, arg, flag, p)
 	int hold_blksize;
 	u_int8_t hold_density;
 	struct mtop *mt = (struct mtop *) arg;
-	daddr_t number;
+	int number;
 
 	/*
 	 * Find the device that the user is talking about
@@ -1502,8 +1502,7 @@ st_mode_select(st, flags)
 int
 st_erase(st, full, flags)
 	struct st_softc *st;
-	daddr_t full;
-	int flags;
+	int full, flags;
 {
 	struct scsi_erase cmd;
 	int tmo;
@@ -1539,7 +1538,7 @@ st_space(st, number, what, flags)
 	struct st_softc *st;
 	u_int what;
 	int flags;
-	daddr_t number;
+	int number;
 {
 	struct scsi_space cmd;
 	int error;
@@ -1613,8 +1612,8 @@ st_space(st, number, what, flags)
 	    sizeof(cmd), 0, 0, 0, ST_SPC_TIME, NULL, flags);
 
 	if (error != 0) {
-		st->media_fileno = (daddr_t) -1;
-		st->media_blkno = (daddr_t) -1;
+		st->media_fileno = -1;
+		st->media_blkno = -1;
 	} else {
 		switch (what) {
 		case SP_BLKS:
@@ -1647,7 +1646,7 @@ int
 st_write_filemarks(st, number, flags)
 	struct st_softc *st;
 	int flags;
-	daddr_t number;
+	int number;
 {
 	struct scsi_write_filemarks cmd;
 	int error;
@@ -2036,7 +2035,7 @@ bad:			free(buf, M_TEMP);
 int
 stdump(dev, blkno, va, size)
 	dev_t dev;
-	daddr_t blkno;
+	int blkno;
 	caddr_t va;
 	size_t size;
 {

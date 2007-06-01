@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtio.h,v 1.8 2007/01/05 00:42:47 krw Exp $	*/
+/*	$OpenBSD: mtio.h,v 1.9 2007/06/01 18:44:48 krw Exp $	*/
 /*	$NetBSD: mtio.h,v 1.14 1997/04/15 06:50:19 lukem Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 /* structure for MTIOCTOP - mag tape op command */
 struct mtop {
 	short	mt_op;		/* operations defined below */
-	daddr_t	mt_count;	/* how many of them */
+	int	mt_count;	/* how many of them */
 };
 
 /* operations */
@@ -72,12 +72,12 @@ struct mtget {
 	short	mt_erreg;	/* ``error'' register */
 /* end device-dependent registers */
 	short	mt_resid;	/* residual count */
-	daddr_t mt_fileno;	/* current file number relative to BOT. */ 
-	daddr_t mt_blkno;	/* current block number relative to BOF. */
-	daddr_t	mt_blksiz;	/* current block size */
-	daddr_t	mt_density;	/* current density code */
-	daddr_t	mt_mblksiz;	/* default block size */
-	daddr_t mt_mdensity;	/* default density code */
+	int	mt_fileno;	/* current file number relative to BOT. */ 
+	int	mt_blkno;	/* current block number relative to BOF. */
+	int	mt_blksiz;	/* current block size */
+	int	mt_density;	/* current density code */
+	int	mt_mblksiz;	/* default block size */
+	int	mt_mdensity;	/* default density code */
 };
 
 /*
