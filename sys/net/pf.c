@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.539 2007/06/01 18:01:59 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.540 2007/06/01 18:44:22 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2789,6 +2789,20 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 	}
 }
 
+struct pf_state_key *
+pf_alloc_state_key(struct pf_state *s)
+{
+	struct pf_state_key	*sk;
+
+	if ((sk = pool_get(&pf_state_key_pl, PR_NOWAIT)) == NULL)
+		return (NULL);
+	bzero(sk, sizeof(*sk));
+	sk->state = s;
+	s->state_key = sk;
+
+	return (sk);
+}
+
 int
 pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
     struct pfi_kif *kif, struct mbuf *m, int off, void *h,
@@ -3215,12 +3229,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			REASON_SET(&reason, PFRES_SRCLIMIT);
 			goto cleanup;
 		}
-		/* state key */
-		sk = pool_get(&pf_state_key_pl, PR_NOWAIT);
-		if (sk == NULL) {
-			REASON_SET(&reason, PFRES_MEMORY);
-			goto cleanup;
-		}
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
 			REASON_SET(&reason, PFRES_MEMORY);
@@ -3244,9 +3252,6 @@ cleanup:
 			return (PF_DROP);
 		}
 		bzero(s, sizeof(*s));
-		bzero(sk, sizeof(*sk));
-		sk->state = s;
-		s->state_key = sk;
 		s->rule.ptr = r;
 		s->nat_rule.ptr = nr;
 		s->anchor.ptr = a;
@@ -3255,55 +3260,6 @@ cleanup:
 		s->log = r->log & PF_LOG_ALL;
 		if (nr != NULL)
 			s->log |= nr->log & PF_LOG_ALL;
-		sk->proto = pd->proto;
-		sk->direction = direction;
-		sk->af = af;
-		if (direction == PF_OUT) {
-			PF_ACPY(&sk->gwy.addr, saddr, af);
-			PF_ACPY(&sk->ext.addr, daddr, af);
-			switch (pd->proto) {
-			case IPPROTO_ICMP:
-#ifdef INET6
-			case IPPROTO_ICMPV6:
-#endif
-				sk->gwy.port = nport;
-				sk->ext.port = 0;
-				break;
-			default:
-				sk->gwy.port = sport;
-				sk->ext.port = dport;
-			}
-			if (nr != NULL) {
-				PF_ACPY(&sk->lan.addr, &pd->baddr, af);
-				sk->lan.port = bport;
-			} else {
-				PF_ACPY(&sk->lan.addr, &sk->gwy.addr, af);
-				sk->lan.port = sk->gwy.port;
-			}
-		} else {
-			PF_ACPY(&sk->lan.addr, daddr, af);
-			PF_ACPY(&sk->ext.addr, saddr, af);
-			switch (pd->proto) {
-			case IPPROTO_ICMP:
-#ifdef INET6
-			case IPPROTO_ICMPV6:
-#endif
-				sk->lan.port = nport;
-				sk->ext.port = 0;
-				break;
-			default:
-				sk->lan.port = dport;
-				sk->ext.port = sport;
-			}
-			if (nr != NULL) {
-				PF_ACPY(&sk->gwy.addr, &pd->baddr, af);
-				sk->gwy.port = bport;
-			} else {
-				PF_ACPY(&sk->gwy.addr, &sk->lan.addr, af);
-				sk->gwy.port = sk->lan.port;
-			}
-		}
-
 		switch (pd->proto) {
 		case IPPROTO_TCP:
 			len = pd->tot_len - off - (th->th_off << 2);
@@ -3395,6 +3351,61 @@ cleanup:
 				return (PF_DROP);
 			}
 		}
+
+		if ((sk = pf_alloc_state_key(s)) == NULL) {
+			REASON_SET(&reason, PFRES_MEMORY);
+			goto cleanup;
+		}
+
+		sk->proto = pd->proto;
+		sk->direction = direction;
+		sk->af = af;
+		if (direction == PF_OUT) {
+			PF_ACPY(&sk->gwy.addr, saddr, af);
+			PF_ACPY(&sk->ext.addr, daddr, af);
+			switch (pd->proto) {
+			case IPPROTO_ICMP:
+#ifdef INET6
+			case IPPROTO_ICMPV6:
+#endif
+				sk->gwy.port = nport;
+				sk->ext.port = 0;
+				break;
+			default:
+				sk->gwy.port = sport;
+				sk->ext.port = dport;
+			}
+			if (nr != NULL) {
+				PF_ACPY(&sk->lan.addr, &pd->baddr, af);
+				sk->lan.port = bport;
+			} else {
+				PF_ACPY(&sk->lan.addr, &sk->gwy.addr, af);
+				sk->lan.port = sk->gwy.port;
+			}
+		} else {
+			PF_ACPY(&sk->lan.addr, daddr, af);
+			PF_ACPY(&sk->ext.addr, saddr, af);
+			switch (pd->proto) {
+			case IPPROTO_ICMP:
+#ifdef INET6
+			case IPPROTO_ICMPV6:
+#endif
+				sk->lan.port = nport;
+				sk->ext.port = 0;
+				break;
+			default:
+				sk->lan.port = dport;
+				sk->ext.port = sport;
+			}
+			if (nr != NULL) {
+				PF_ACPY(&sk->gwy.addr, &pd->baddr, af);
+				sk->gwy.port = bport;
+			} else {
+				PF_ACPY(&sk->gwy.addr, &sk->lan.addr, af);
+				sk->gwy.port = sk->lan.port;
+			}
+		}
+
 		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			if (pd->proto == IPPROTO_TCP)
 				pf_normalize_tcp_cleanup(s);

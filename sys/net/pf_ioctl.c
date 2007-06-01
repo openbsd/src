@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.178 2007/05/31 18:48:05 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.179 2007/06/01 18:44:23 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -898,11 +898,6 @@ void
 pf_state_import(struct pfsync_state *sp, struct pf_state_key *sk,
    struct pf_state *s) 
 {
-	bzero(sk, sizeof(struct pf_state_key));
-	bzero(s, sizeof(struct pf_state));
-	sk->state = s;
-	s->state_key = sk;
-
 	/* copy to state key */
 	sk->lan.addr = sp->lan.addr;
 	sk->lan.port = sp->lan.port;
@@ -1645,8 +1640,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOMEM;
 			break;
 		}
-		sk = pool_get(&pf_state_key_pl, PR_NOWAIT);
-		if (sk == NULL) {
+		bzero(s, sizeof(struct pf_state));
+		if ((sk = pf_alloc_state_key(s)) == NULL) {
 			error = ENOMEM;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.248 2007/05/31 22:45:36 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.249 2007/06/01 18:44:23 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1642,6 +1642,8 @@ void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *);
 int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *);
 int	pf_socket_lookup(int, struct pf_pdesc *);
+struct pf_state_key *
+	pf_alloc_state_key(struct pf_state *);
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,

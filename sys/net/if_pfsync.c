@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.77 2007/05/31 20:38:12 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.78 2007/06/01 18:44:22 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -255,16 +255,13 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		return (ENOMEM);
 	}
-	sk = pool_get(&pf_state_key_pl, PR_NOWAIT);
-	if (sk == NULL) {
+	bzero(st, sizeof(*st));
+
+	if ((sk = pf_alloc_state_key(st)) == NULL) {
 		pool_put(&pf_state_pl, st);
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		return (ENOMEM);
 	}
-	bzero(st, sizeof(*st));
-	bzero(sk, sizeof(*sk));
-	sk->state = st;
-	st->state_key = sk;
 
 	/* allocate memory for scrub info */
 	if (pfsync_alloc_scrub_memory(&sp->src, &st->src) ||
