@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.93 2007/05/31 21:20:30 thib Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.94 2007/06/01 20:10:04 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -563,6 +563,7 @@ uvm_map_init(void)
 	    0, 0, 0, "vmmpepl", &pool_allocator_nointr);
 	pool_init(&uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry),
 	    0, 0, 0, "vmmpekpl", NULL);
+	pool_sethiwat(&uvm_map_entry_pool, 8192);
 }
 
 /*
