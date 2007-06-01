@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_event.c,v 1.3 2007/06/01 02:46:11 uwe Exp $	*/
+/*	$OpenBSD: hci_event.c,v 1.4 2007/06/01 03:21:41 uwe Exp $	*/
 /*	$NetBSD: hci_event.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
 static void hci_cmd_reset(struct hci_unit *, struct mbuf *);
 
 #ifdef BLUETOOTH_DEBUG
-int bluetooth_debug = 99;
+int bluetooth_debug = 0;
 
 static const char *hci_eventnames[] = {
 /* 0x00 */ "NULL",
