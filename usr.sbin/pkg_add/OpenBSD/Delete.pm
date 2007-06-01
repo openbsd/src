@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.57 2007/05/31 13:33:17 espie Exp $
+# $OpenBSD: Delete.pm,v 1.58 2007/06/01 14:58:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -107,7 +107,7 @@ sub remove_packing_info
 sub delete_package
 {
 	my ($pkgname, $state) = @_;
-	OpenBSD::ProgressMeter::message("reading plist");
+	$state->progress->message("reading plist");
 	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
 	    Fatal "Bad package";
 	if (!defined $plist->pkgname) {
@@ -138,7 +138,7 @@ sub delete_plist
 	$plist->register_manpage($state);
 	manpages_unindex($state);
 	$plist->delete_and_progress($state, \$donesize, $totsize);
-	OpenBSD::ProgressMeter::next();
+	$state->progress->next;
 	if ($plist->has(UNDISPLAY)) {
 		$plist->get(UNDISPLAY)->prepare($state);
 	}
@@ -181,7 +181,7 @@ sub delete_and_progress
 {
 	my ($self, $state, $donesize, $totsize) = @_;
 	$self->delete($state);
-	$self->mark_progress($donesize, $totsize);
+	$self->mark_progress($state->progress, $donesize, $totsize);
 }
 
 sub record_shared

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.105 2007/05/31 13:33:17 espie Exp $
+# $OpenBSD: pkg_delete,v 1.106 2007/06/01 14:58:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -22,7 +22,6 @@ use OpenBSD::Getopt;
 use OpenBSD::PackingList;
 use OpenBSD::RequiredBy;
 use OpenBSD::Error;
-use OpenBSD::ProgressMeter;
 use OpenBSD::Interactive;
 use OpenBSD::Delete;
 use OpenBSD::PackageInfo;
@@ -33,7 +32,7 @@ our %forced = ();
 our $not;
 
 package OpenBSD::pkg_delete::State;
-our @ISA=(qw(OpenBSD::Error));
+our @ISA=(qw(OpenBSD::pkg_foo::State));
 
 package main;
 
@@ -106,17 +105,8 @@ if ($opt_B eq '') {
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
 lock_db($opt_n);
-if (!$opt_x && !$state->{beverbose}) {
-	OpenBSD::ProgressMeter::enable();
-}
-
-if ($< && !$forced{nonroot}) {
-	if ($state->{not}) {
-		Warn "$0 should be run as root\n";
-	} else {
-		Fatal "$0 must be run as root";
-	}
-}
+$state->setup_progressmeter($opt_x);
+$state->check_root;
 
 # First, resolve pkg names
 
@@ -193,7 +183,7 @@ eval {
 				next;
 			}
 		}
-		if (!OpenBSD::ProgressMeter::set_header($pkgname)) {
+		if (!$state->progress->set_header($pkgname)) {
 			print $opt_n ? "Pretending to delete " : "Deleting ", 
 			    "$pkgname\n";
 		}

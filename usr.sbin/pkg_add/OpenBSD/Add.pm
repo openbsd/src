@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.68 2007/05/31 11:05:41 espie Exp $
+# $OpenBSD: Add.pm,v 1.69 2007/06/01 14:58:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -128,7 +128,7 @@ sub install_and_progress
 	if ($state->{interrupted}) {
 		die "Interrupted";
 	}
-	$self->mark_progress($donesize, $totsize);
+	$self->mark_progress($state->progress, $donesize, $totsize);
 }
 
 sub install

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.10 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.11 2007/06/01 14:58:29 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -23,7 +23,6 @@ package OpenBSD::ProgressMeter;
 my $header;
 my $lastdisplay = '';
 my $isatty;
-my $enabled = 0;
 my $continued = 0;
 
 # unless we know better
@@ -32,6 +31,13 @@ my $playfield;
 
 my $wsz_format = 'SSSS';
 our %sizeof;
+
+sub new
+{
+	my $class = shift;
+	$isatty = -t STDERR;
+	return bless {}, $class;
+}
 
 sub find_window_size
 {
@@ -59,20 +65,10 @@ sub compute_playfield
 	}
 }
 
-sub enable
-{
-	$enabled = 1;
-}
-
 sub set_header
 {
+	my $self = shift;
 	$header = shift;
-	if (!$enabled) {
-		$isatty = 0;
-	}
-	if (!defined $isatty) {
-		$isatty = -t STDERR;
-	}
 	if ($isatty) {
 		find_window_size();
 		compute_playfield();
@@ -90,6 +86,7 @@ sub set_header
 
 sub message
 {
+	my $self = shift;
 	return unless $isatty;
 	my $message = shift;
 	my $d;
@@ -109,6 +106,7 @@ sub message
 
 sub show
 {
+	my $self = shift;
 	return unless $isatty;
 	my ($current, $total) = @_;
 	my $d;
@@ -127,14 +125,16 @@ sub show
 
 sub clear
 {
+	my $self = shift;
 	return unless $isatty;
 	print STDERR ' 'x length($lastdisplay), "\r";
 }
 
 sub next
 {
+	my $self = shift;
 	return unless $isatty;
-	clear;
+	$self->clear;
 	print STDERR"$header: complete\n";
 }
 

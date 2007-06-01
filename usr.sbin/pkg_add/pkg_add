@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.299 2007/05/31 16:50:43 espie Exp $
+# $OpenBSD: pkg_add,v 1.300 2007/06/01 14:58:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,6 @@ use OpenBSD::PkgCfl;
 use OpenBSD::Vstat;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
-use OpenBSD::ProgressMeter;
 use OpenBSD::Interactive;
 use OpenBSD::Add;
 use OpenBSD::SharedLibs;
@@ -41,7 +40,7 @@ our %forced = ();
 our $not;
 
 package OpenBSD::pkg_add::State;
-our @ISA=(qw(OpenBSD::Error));
+our @ISA=(qw(OpenBSD::pkg_foo::State));
 
 # one-level dependencies tree, for nicer printouts
 sub build_deptree
@@ -113,7 +112,7 @@ sub setup_header
 	if (@toreplace) {
 		$header.=" (replacing ". join(', ', (map {$_->{pkgname}} @toreplace)). ")";
 	}
-	if (!OpenBSD::ProgressMeter::set_header($header)) {
+	if (!$state->progress->set_header($header)) {
 	    print $state->{not} ? "Pretending to add " : "Adding ";
 	    print $header;
 	    if ($state->{do_faked}) {
@@ -371,7 +370,7 @@ sub really_add
 	if ($replacing) {
 		require OpenBSD::Replace;
 
-		OpenBSD::ProgressMeter::set_header("$pkgname (extracting)");
+		$state->progress->set_header("$pkgname (extracting)");
 
 		OpenBSD::Replace::save_old_libraries($set, $state);
 
@@ -383,14 +382,14 @@ sub really_add
 				$errors++;
 			}
 		};
-		OpenBSD::ProgressMeter::next();
+		$state->progress->next;
 		if ($state->{interrupted} || $errors) {
 			Fatal partial_install("Installation of $pkgname failed",
 			    $set, $state);
 		}
 
 		for my $op (@toreplace) {
-			OpenBSD::ProgressMeter::set_header($op->pkgname." (deleting)");
+			$state->progress->set_header($op->pkgname." (deleting)");
 			$state->set_pkgname($op->pkgname);
 			require OpenBSD::Search;
 			if (OpenBSD::Search::PkgSpec->new("mozilla-thunderbird-<=1.0.2p0")->filter($op->pkgname)) {
@@ -416,7 +415,7 @@ sub really_add
 		}
 		# Here there should be code to handle old libs
 
-		OpenBSD::ProgressMeter::set_header("$pkgname (installing)");
+		$state->progress->set_header("$pkgname (installing)");
 		$state->set_pkgname($pkgname);
 	}
 
@@ -431,7 +430,7 @@ sub really_add
 			$errors++;
 		}
 	};
-	OpenBSD::ProgressMeter::next();
+	$state->progress->next;
 
 	unlink($plist->infodir.CONTENTS);
 	if ($state->{interrupted} || $errors) {
@@ -682,19 +681,11 @@ $state->{allow_replacing} = $opt_r || $opt_u;
 if (@ARGV == 0 && !$opt_u) {
 	Usage "Missing pkgname";
 }
-if (!$opt_x && !$state->{beverbose}) {
-	OpenBSD::ProgressMeter::enable();
-}
-
-if ($< && !$forced{nonroot}) {
-	if ($state->{not}) {
-		Warn "$0 should be run as root\n";
-	} else {
-		Fatal "must be run as root";
-	}
-}
 
 lock_db($state->{not});
+$state->setup_progressmeter($opt_x);
+$state->check_root;
+
 
 my @todo = ();
 

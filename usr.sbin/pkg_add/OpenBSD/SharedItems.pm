@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.10 2007/05/22 10:11:59 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.11 2007/06/01 14:58:29 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -19,20 +19,20 @@ use strict;
 use warnings;
 package OpenBSD::SharedItems;
 
-use OpenBSD::ProgressMeter;
 use OpenBSD::Error;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackingList;
 
 sub find_items_in_installed_packages
 {
+	my $progress = shift;
 	my $db = OpenBSD::SharedItemsRecorder->new;
 	my @list = installed_packages();
 	my $total = @list;
-	OpenBSD::ProgressMeter::set_header("Read shared items");
+	$progress->set_header("Read shared items");
 	my $done = 0;
 	for my $e (@list) {
-		OpenBSD::ProgressMeter::show($done, $total);
+		$progress->show($done, $total);
 		my $plist = OpenBSD::PackingList->from_installation($e, 
 		    \&OpenBSD::PackingList::SharedItemsOnly) or next;
 		$plist->record_shared($db, $e);
@@ -45,10 +45,10 @@ sub cleanup
 {
 	my ($recorder, $state) = @_;
 
-	my $remaining = find_items_in_installed_packages();
+	my $remaining = find_items_in_installed_packages($state->progress);
 
-	OpenBSD::ProgressMeter::clear();
-	OpenBSD::ProgressMeter::set_header("Clean shared items");
+	$state->progress->clear;
+	$state->progress->set_header("Clean shared items");
 	my $h = $recorder->{dirs};
 	my $u = $recorder->{users};
 	my $g = $recorder->{groups};
@@ -60,7 +60,7 @@ sub cleanup
 
 	if (defined $h) {
 		for my $d (sort {$b cmp $a} keys %$h) {
-			OpenBSD::ProgressMeter::show($done, $total);
+			$state->progress->show($done, $total);
 			my $realname = $state->{destdir}.$d;
 			if ($remaining->{dirs}->{$realname}) {
 				for my $i (@{$h->{$d}}) {
@@ -82,7 +82,7 @@ sub cleanup
 	}
 	if (defined $u) {
 		while (my ($user, $pkgname) = each %$u) {
-			OpenBSD::ProgressMeter::show($done, $total);
+			$state->progress->show($done, $total);
 			next if $remaining->{users}->{$user};
 			if ($state->{extra}) {
 				System("/usr/sbin/userdel", $user);
@@ -95,7 +95,7 @@ sub cleanup
 	}
 	if (defined $g) {
 		while (my ($group, $pkgname) = each %$g) {
-			OpenBSD::ProgressMeter::show($done, $total);
+			$state->progress->show($done, $total);
 			next if $remaining->{groups}->{$group};
 			if ($state->{extra}) {
 				System("/usr/sbin/groupdel", $group);
@@ -106,7 +106,7 @@ sub cleanup
 			$done++;
 		}
 	}
-	OpenBSD::ProgressMeter::next();
+	$state->progress->next;
 }
 
 package OpenBSD::PackingElement;

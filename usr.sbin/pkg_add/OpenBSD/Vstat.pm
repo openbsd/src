@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.30 2007/05/30 14:04:51 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.31 2007/06/01 14:58:29 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -267,6 +267,50 @@ sub cleanup
 	OpenBSD::SharedItems::cleanup($self, $state);
 }
 
+package OpenBSD::pkg_foo::State;
+use OpenBSD::Error;
+our @ISA=(qw(OpenBSD::Error));
+
+sub progress
+{
+	my $self = shift;
+	return $self->{progressmeter};
+}
+
+sub setup_progressmeter
+{
+	my ($self, $opt_x) = @_;
+	if (!$opt_x && !$self->{beverbose}) {
+		require OpenBSD::ProgressMeter;
+		$self->{progressmeter} = OpenBSD::ProgressMeter->new;
+	} else {
+		$self->{progressmeter} = bless {}, "OpenBSD::StubProgress";
+	}
+}
+
+sub check_root
+{
+	my $state = shift;
+	if ($< && !$state->{forced}->{nonroot}) {
+		if ($state->{not}) {
+			Warn "$0 should be run as root\n";
+		} else {
+			Fatal "$0 must be run as root";
+		}
+	}
+}
+
+package OpenBSD::StubProgress;
+sub clear {}
+
+sub show {}
+
+sub message {}
+
+sub next {}
+
+sub set_header {}
+
 # fairly non-descriptive name. Used to store various package information
 # during installs and updates.
 package OpenBSD::Handle;
@@ -406,11 +450,10 @@ sub mark_progress
 package OpenBSD::PackingElement::FileBase;
 sub mark_progress
 {
-	my ($self, $donesize, $totsize) = @_;
+	my ($self, $progress, $donesize, $totsize) = @_;
 	return unless defined $self->{size};
-	require OpenBSD::ProgressMeter;
 	$$donesize += $self->{size};
-	OpenBSD::ProgressMeter::show($$donesize, $totsize);
+	$progress->show($$donesize, $totsize);
 }
 
 1;

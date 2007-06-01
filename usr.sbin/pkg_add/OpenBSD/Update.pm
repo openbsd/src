@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.77 2007/05/14 11:22:00 espie Exp $
+# $OpenBSD: Update.pm,v 1.78 2007/06/01 14:58:29 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -18,7 +18,6 @@ use strict;
 use warnings;
 
 package OpenBSD::Update;
-use OpenBSD::ProgressMeter;
 use OpenBSD::Interactive;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageLocator;
@@ -59,7 +58,7 @@ sub process_package
 {
 	my ($self, $pkgname, $state) = @_;
 	if ($pkgname =~ m/^(?:\.libs|partial)\-/) {
-		OpenBSD::ProgressMeter::clear();
+		$state->progress->clear;
 		print "Not updating $pkgname, remember to clean it\n";
 		return;
 	}
@@ -128,7 +127,7 @@ sub process_package
 	}
 	if (@l == 1) {
 		if ($state->{forced}->{pkgpath}) {
-			OpenBSD::ProgressMeter::clear();
+			$state->progress->clear;
 			print "Directly updating $pkgname -> ", $l[0], "\n";
 			$self->add2updates($l[0]);
 			return;
@@ -136,13 +135,13 @@ sub process_package
 		if (defined $found && $found eq  $l[0] && 
 		    !$plist->uses_old_libs) {
 				my $msg = "No need to update $pkgname";
-				OpenBSD::ProgressMeter::message($msg);
+				$state->progress->message($msg);
 				print "$msg\n" if $state->{beverbose};
 				return;
 		}
 	}
 
-	OpenBSD::ProgressMeter::clear();
+	$state->progress->clear;
 	print "Candidates for updating $pkgname -> ", join(' ', @l), "\n";
 		
 	if (@l == 1) {
@@ -175,11 +174,11 @@ sub process
 		@list = OpenBSD::Requiring->compute_closure(@list);
 	}
 
-	OpenBSD::ProgressMeter::set_header("Looking for updates");
+	$state->progress->set_header("Looking for updates");
 	for my $pkgname (@list) {
 		$self->process_package($pkgname, $state);
 	}
-	OpenBSD::ProgressMeter::next();
+	$state->progress->next;
 }
 
 1;
