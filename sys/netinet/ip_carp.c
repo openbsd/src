@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.143 2007/06/01 00:52:38 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.144 2007/06/01 02:42:59 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -266,7 +266,7 @@ carp_hmac_prepare_ctx(struct carp_softc *sc, u_int8_t ctx)
 	sc->sc_hashkey[1] = kmd[2] ^ kmd[3];
 
 	/* the rest of the precomputation */
-	if (bcmp(sc->sc_ac.ac_enaddr, &sc->sc_carplladdr, ETHER_ADDR_LEN) != 0)
+	if (bcmp(sc->sc_ac.ac_enaddr, sc->sc_carplladdr, ETHER_ADDR_LEN) != 0)
 		SHA1Update(&sc->sc_sha1[ctx], sc->sc_ac.ac_enaddr,
 		    ETHER_ADDR_LEN);
 
@@ -1796,7 +1796,7 @@ carp_set_enaddr(struct carp_softc *sc)
 		sc->sc_carplladdr[4] = 1;
 		sc->sc_carplladdr[5] = sc->sc_vhid;
 	} else
-		bzero(&sc->sc_carplladdr, ETHER_ADDR_LEN);
+		bzero(sc->sc_carplladdr, ETHER_ADDR_LEN);
 
 	/*
 	 * Use the carp lladdr if the running one isn't manually set.
