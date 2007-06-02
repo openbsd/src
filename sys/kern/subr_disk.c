@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.44 2007/06/01 19:06:28 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.45 2007/06/02 02:35:27 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -182,10 +182,12 @@ dkcksum(struct disklabel *lp)
 }
 
 /*
- * Convert an old disklabel to a v1 disklabel
+ * Convert an on-disk disklabel to a kernel disklabel, converting versions
+ * as required and applying constraints that kernel disklabels are guaranteed
+ * to satisfy.
  */
 void
-cvtdisklabelv1(struct disklabel *lp)
+disklabeltokernlabel(struct disklabel *lp)
 {
 	struct __partitionv0 *v0pp = (struct __partitionv0 *)lp->d_partitions;
 	struct partition *pp = lp->d_partitions;
