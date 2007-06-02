@@ -1008,9 +1008,9 @@ xfs_mmap(struct vop_mmap_args *ap)
 int
 xfs_bmap(struct vop_bmap_args *ap)
      /*	IN struct vnode *vp;
-	IN daddr_t bn;
+	IN daddr64_t bn;
 	OUT struct vnode **vpp;
-	IN daddr_t *bnp;
+	IN daddr64_t *bnp;
 	OUT int *runp;
 	OUT int *runb;
 	*/
