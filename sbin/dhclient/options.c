@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.35 2007/05/31 23:24:15 pvalchev Exp $	*/
+/*	$OpenBSD: options.c,v 1.36 2007/06/02 01:29:11 pvalchev Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -297,10 +297,12 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 					    !isprint(*dp)) {
 						if (dp + 1 != data + len ||
 						    *dp != 0) {
+							size_t oplen;
 							snprintf(op, opleft,
 							    "\\%03o", *dp);
-							op += 4;
-							opleft -= 4;
+							oplen = strlen(op);
+							op += oplen;
+							opleft -= oplen;
 						}
 					} else if (*dp == '"' ||
 					    *dp == '\'' ||

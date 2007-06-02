@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.59 2006/09/19 10:48:41 otto Exp $	 */
+/* $OpenBSD: log.c,v 1.60 2007/06/02 01:29:11 pvalchev Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -259,7 +259,7 @@ log_debug_buf(int cls, int level, const char *header, const u_int8_t *buf,
 	log_debug(cls, level, "%s:", header);
 	for (i = j = 0; i < sz;) {
 		snprintf(s + j, sizeof s - j, "%02x", buf[i++]);
-		j += 2;
+		j += strlen(s + j);
 		if (i % 4 == 0) {
 			if (i % 32 == 0) {
 				s[j] = '\0';

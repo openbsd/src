@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.111 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: sa.c,v 1.112 2007/06/02 01:29:12 pvalchev Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -463,7 +463,7 @@ report_spi(FILE *fd, const u_int8_t *buf, size_t sz, int spi)
 
 	for (i = j = 0; i < sz;) {
 		snprintf(s + j, sizeof s - j, "%02x", buf[i++]);
-		j += 2;
+		j += strlen(s + j);
 		if (i % 4 == 0) {
 			if (i % 32 == 0) {
 				s[j] = '\0';

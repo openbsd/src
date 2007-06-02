@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.125 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: message.c,v 1.126 2007/06/02 01:29:11 pvalchev Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1931,7 +1931,7 @@ message_dump_raw(char *header, struct message *msg, int class)
 		for (j = 0; j < msg->iov[i].iov_len; j++) {
 			snprintf(p, sizeof buf - (int) (p - buf), "%02x",
 			    ((u_int8_t *) msg->iov[i].iov_base)[j]);
-			p += 2;
+			p += strlen(p);
 			if (++k % 32 == 0) {
 				*p = '\0';
 				LOG_DBG((class, 70, "%s: %s", header, buf));

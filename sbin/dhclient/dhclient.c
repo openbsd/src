@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.111 2007/02/25 18:10:43 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.112 2007/06/02 01:29:11 pvalchev Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2088,9 +2088,11 @@ option_as_string(unsigned int code, unsigned char *data, int len)
 	for (; dp < data + len; dp++) {
 		if (!isascii(*dp) || !isprint(*dp)) {
 			if (dp + 1 != data + len || *dp != 0) {
+				size_t oplen;
 				snprintf(op, opleft, "\\%03o", *dp);
-				op += 4;
-				opleft -= 4;
+				oplen = strlen(op);
+				op += oplen;
+				opleft -= oplen;
 			}
 		} else if (*dp == '"' || *dp == '\'' || *dp == '$' ||
 		    *dp == '`' || *dp == '\\') {

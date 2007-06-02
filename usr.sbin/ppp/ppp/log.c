@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: log.c,v 1.18 2005/09/21 16:28:47 brad Exp $
+ *	$OpenBSD: log.c,v 1.19 2007/06/02 01:29:11 pvalchev Exp $
  */
 
 #include <sys/types.h>
@@ -369,7 +369,7 @@ log_DumpBp(int lev, const char *hdr, const struct mbuf *bp)
 	snprintf(b, buf + sizeof buf - b, " %02x", (int) *ptr);
         *c++ = isprint(*ptr) ? *ptr : '.';
         ptr++;
-        b += 3;
+        b += strlen(b);
         if (b == buf + 48) {
           memset(b, ' ', 2);
           *c = '\0';

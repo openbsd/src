@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_expand.c,v 1.5 2003/03/17 19:16:59 millert Exp $	*/
+/*	$OpenBSD: comp_expand.c,v 1.6 2007/06/02 01:29:11 pvalchev Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -173,10 +173,10 @@ _nc_tic_expand
 	else if (REALCTL(str) && ch != '\\'
 		 && (!islong || isdigit(CharOf(str[1])))) {
 	    (void) snprintf(buffer + bufp, length - bufp, "^%c", UnCtl(ch));
-	    bufp += 2;
+	    bufp += strlen(buffer + bufp);
 	} else {
 	    (void) snprintf(buffer + bufp, length - bufp, "\\%03o", ch);
-	    bufp += 4;
+	    bufp += strlen(buffer + bufp);
 	}
 
 	str++;

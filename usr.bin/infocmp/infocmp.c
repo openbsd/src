@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.18 2006/12/06 04:59:58 ray Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.19 2007/06/02 01:29:12 pvalchev Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -1043,7 +1043,7 @@ dump_initializers(TERMTYPE * term)
 		    *tp++ = *sp;
 		else {
 		    (void) snprintf(tp, buf + sizeof buf - tp, "\\%03o", CharOf(*sp));
-		    tp += 4;
+		    tp += strlen(tp);
 		}
 	    }
 	    *tp++ = '"';

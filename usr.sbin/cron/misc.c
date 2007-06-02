@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.37 2005/06/08 18:34:00 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.38 2007/06/02 01:29:11 pvalchev Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.37 2005/06/08 18:34:00 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.38 2007/06/02 01:29:11 pvalchev Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -614,7 +614,7 @@ mkprint(dst, src, len)
 			*dst++ = '?';
 		} else {			/* parity character */
 			snprintf(dst, 5, "\\%03o", ch);
-			dst += 4;
+			dst += strlen(dst);
 		}
 	}
 	*dst = '\0';
