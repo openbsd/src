@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.306 2007/06/02 11:24:22 espie Exp $
+# $OpenBSD: pkg_add,v 1.307 2007/06/02 12:21:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -486,11 +486,10 @@ sub install_package
 		}
 	}
 	if (!defined $set->{solver}) {
-		my $solver = OpenBSD::Dependencies::Solver->new($set);
-		my @deps = $solver->solve($state, @todo);
-		$set->{solver} = $solver;
+		$set->{solver} = OpenBSD::Dependencies::Solver->new($set);
+		my @deps = $set->{solver}->solve_depends($state, @todo);
 		if ($state->{verbose}) {
-			$solver->dump;
+			$set->{solver}->dump;
 		}
 		if (@deps > 0) {
 			$state->build_deptree($pkg, @deps);
@@ -508,16 +507,8 @@ sub install_package
 		return ();
 	}
 
-	my $okay = 1;
-	for my $lib (@{$plist->{wantlib}}) {
-		if (!$set->{solver}->lookup_library($state, $lib->{name})) {
-		    	Warn "Can't install $pkg: lib not found ", $lib->{name}, "\n";
-			$set->{solver}->dump if $okay;
-			$okay = 0;
-		}
-	}
 #	print "Didn't need to process: ", join(',', @{$set->{solver}->{todo}}), "\n";
-	if (!$okay) {
+	if (!$set->{solver}->solve_wantlibs($state)) {
 		$location->close_now;
 		if (!$forced{libdepends}) {
 			$bad++;

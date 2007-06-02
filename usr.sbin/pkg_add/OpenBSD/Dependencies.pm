@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.47 2007/06/02 11:30:06 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.48 2007/06/02 12:21:14 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -146,7 +146,7 @@ sub solve_dependency
 	$self->add_new_dep($v, $dep);
 }
 
-sub solve
+sub solve_depends
 {
 	my ($self, $state, @extra) = @_;
 
@@ -226,8 +226,6 @@ sub adjust_old_dependencies
 		}
 	}
 }
-
-
 
 use OpenBSD::SharedLibs;
 
@@ -311,6 +309,26 @@ sub lookup_library
 	
 	print "libspec $lib not found\n" if $state->{very_verbose};
 	return;
+}
+
+
+sub solve_wantlibs
+{
+	my ($solver, $state) = @_;
+	my $okay = 1;
+
+	for my $h ($solver->{set}->newer) {
+		for my $lib (@{$h->{plist}->{wantlib}}) {
+			if (!$solver->lookup_library($state, $lib->{name})) {
+				OpenBSD::Error::Warn "Can't install ", 
+				    $h->{pkgname}, ": lib not found ", 
+				    $lib->{name}, "\n";
+				$solver->dump if $okay;
+				$okay = 0;
+			}
+		}
+	}
+	return $okay;
 }
 
 1;
