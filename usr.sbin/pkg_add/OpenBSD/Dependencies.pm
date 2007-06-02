@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.48 2007/06/02 12:21:14 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.49 2007/06/02 12:37:37 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -163,6 +163,17 @@ sub solve_depends
 	$self->{known} = {};
 
 	return @{$self->{deplist}};
+}
+
+sub check_depends
+{
+	my $self = shift;
+	my @bad = ();
+
+	for my $dep ($self->dependencies) {
+		push(@bad, $dep) unless is_installed($dep);
+	}
+	return @bad;
 }
 
 sub dump

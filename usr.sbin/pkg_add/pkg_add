@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.307 2007/06/02 12:21:14 espie Exp $
+# $OpenBSD: pkg_add,v 1.308 2007/06/02 12:37:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -497,11 +497,12 @@ sub install_package
 		}
 	}
 
-	# verify dependencies and register them
+	# verify dependencies have been installed
+	my @baddeps = $set->{solver}->check_depends;
 
-	for my $dep ($set->{solver}->dependencies) {
-		next if is_installed($dep);
-		print "Can't install $pkg: can't resolve $dep\n";
+	if (@baddeps) {
+		print "Can't install $pkg: can't resolve ",
+		    join(',', @baddeps), "\n";
 		$location->close_now;
 		$bad++;
 		return ();
