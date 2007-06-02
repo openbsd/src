@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.83 2007/05/28 19:20:14 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.84 2007/06/02 09:45:32 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -190,6 +190,7 @@ m_gethdr(int nowait, int type)
 		m->m_nextpkt = (struct mbuf *)NULL;
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
+		m->m_pkthdr.rcvif = NULL;
 		SLIST_INIT(&m->m_pkthdr.tags);
 		m->m_pkthdr.csum_flags = 0;
 		m->m_pkthdr.pf.hdr = NULL;
