@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.29 2007/06/01 18:50:56 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.30 2007/06/02 00:53:35 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -116,6 +116,19 @@ struct sr_workunit {
 
 TAILQ_HEAD(sr_wu_list, sr_workunit);
 
+/* RAID 1 */
+#define SR_RAID1_NOWU		16
+struct sr_raid1 {
+	u_int32_t		sr1_counter;
+};
+
+/* RAID C */
+#define SR_RAIDC_NOWU		16
+struct sr_raidc {
+	u_int64_t		src_sid;
+	char			src_key[64];
+};
+
 #define SR_META_SIZE		32	/* save space at chunk beginning */
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
 #define SR_META_VERSION		1	/* bump when sr_metadata changes */
@@ -147,6 +160,12 @@ struct sr_metadata {
 	u_int32_t		ssd_chunk_id;	/* chunk identifier */
 	u_int32_t		ssd_chunk_chk;	/* chunk structure xor */
 	u_int32_t		ssd_pad3;
+
+	/* optional metadata */
+	u_int32_t		ssd_opt_ver;	/* optinal meta version */
+	u_int32_t		ssd_opt_no;	/* nr of optional md elements */
+	u_int32_t		ssd_opt_size;	/* sizeof optional metadata */
+	u_int32_t		ssd_opt_chk;	/* optional metadata xor */
 } __packed;
 
 struct sr_metadata_list {
@@ -158,6 +177,17 @@ struct sr_metadata_list {
 };
 
 SLIST_HEAD(sr_metadata_list_head, sr_metadata_list);
+
+#define SR_OPT_VERSION		1	/* bump when sr_opt_meta changes */
+struct sr_opt_meta {
+	u_int32_t		som_type;
+	u_int32_t		som_pad;
+#define SR_OPT_INVALID		0x00
+#define SR_OPT_CRYPTO		0x01
+	union {
+		struct sr_raidc	smm_crypto;
+	}			som_meta;
+};
 
 #define SR_CHUNK_VERSION	1	/* bump when sr_chunk_meta changes */
 struct sr_chunk_meta {
@@ -214,18 +244,6 @@ struct sr_volume {
 	struct ksensor		sv_sensor;
 	struct ksensordev	sv_sensordev;
 	int			sv_sensor_valid;
-};
-
-/* RAID 1 */
-#define SR_RAID1_NOWU		16
-struct sr_raid1 {
-	u_int32_t		sr1_counter;
-};
-
-#define SR_RAIDC_NOWU		16
-struct sr_raidc {
-	u_int64_t		src_sid;
-	char			src_key[64];
 };
 
 struct sr_discipline {

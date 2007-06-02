@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.69 2007/06/02 00:27:44 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.70 2007/06/02 00:53:35 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2306,6 +2306,11 @@ sr_save_metadata(struct sr_discipline *sd, u_int32_t flags)
 		sm->ssd_chunk_ver = SR_CHUNK_VERSION;
 		sm->ssd_chunk_size = sizeof(struct sr_chunk_meta);
 		sm->ssd_chunk_no = sd->sd_vol.sv_meta.svm_no_chunk;
+
+		/* optional */
+		sm->ssd_opt_ver = SR_OPT_VERSION;
+		sm->ssd_opt_size = 0; /* unused */
+		sm->ssd_opt_no = 0; /* unused */
 	}
 
 	/* from here on out metadata is updated */
