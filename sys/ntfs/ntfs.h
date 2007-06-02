@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.4 2007/02/11 20:29:22 miod Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.5 2007/06/02 01:02:56 deraadt Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@ typedef u_int16_t wchar;
 #pragma pack(1)
 #define BBSIZE			1024
 #define	BBOFF			((off_t)(0))
-#define	BBLOCK			((daddr_t)(0))
+#define	BBLOCK			0
 #define	NTFS_MFTINO		0
 #define	NTFS_VOLUMEINO		3
 #define	NTFS_ATTRDEFINO		4
@@ -278,14 +278,12 @@ struct ntfsmount {
 #define	VTOF(v)		((struct fnode *)((v)->v_data))
 #define	FTOV(f)		((f)->f_vp)
 #define	FTONT(f)	((f)->f_ip)
-#define ntfs_cntobn(cn)	(daddr_t)((cn) * (ntmp->ntm_spc))
+#define ntfs_cntobn(cn)	(daddr64_t)((cn) * (ntmp->ntm_spc))
 #define ntfs_cntob(cn)	(off_t)((cn) * (ntmp)->ntm_spc * (ntmp)->ntm_bps)
 #define ntfs_btocn(off)	(cn_t)((off) / ((ntmp)->ntm_spc * (ntmp)->ntm_bps))
 #define ntfs_btocl(off)	(cn_t)((off + ntfs_cntob(1) - 1) / ((ntmp)->ntm_spc * (ntmp)->ntm_bps))
 #define ntfs_btocnoff(off)	(off_t)((off) % ((ntmp)->ntm_spc * (ntmp)->ntm_bps))
-#define ntfs_bntob(bn)	(daddr_t)((bn) * (ntmp)->ntm_bps)
-
-#define	ntfs_bpbl	(daddr_t)((ntmp)->ntm_bps)
+#define ntfs_bntob(bn)	(int32_t)((bn) * (ntmp)->ntm_bps)
 
 #if __FreeBSD_version >= 300000 || defined(__NetBSD__)
 MALLOC_DECLARE(M_NTFSMNT);

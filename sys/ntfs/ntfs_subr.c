@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.10 2007/04/12 22:02:57 thib Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.11 2007/06/02 01:02:56 deraadt Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -293,7 +293,7 @@ ntfs_loadntnode(
 	      struct ntnode * ip)
 {
 	struct filerec  *mfrp;
-	daddr_t         bn;
+	daddr64_t         bn;
 	int		error,off;
 	struct attr    *ap;
 	struct ntvattr *nvap;
