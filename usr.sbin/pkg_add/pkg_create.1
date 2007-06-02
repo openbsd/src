@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.39 2007/05/31 19:20:26 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.40 2007/06/02 10:19:29 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 2 2007 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -75,6 +75,17 @@ Use of the
 infrastructure instead of manual
 .Nm
 invocation is strongly recommended.
+.Pp
+During package creation,
+.Nm
+replaces too long file names with smaller equivalents
+.Po
+see
+.Xr package 5
+.Pc ,
+records extra information in the packing-list, such as the existence
+of symlinks and hard links, computes and stores file checksums, and
+verifies that all special objects are properly annotated in the packing-list.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -439,6 +450,11 @@ run
 .Xr ldconfig 8
 as needed.
 .Pp
+.It Cm @link Ar name
+Added after a file entry by
+.Nm
+to record that the entry is actually a hard link.
+.Pp
 .It Cm @localbase Ar base
 Used internally to record the settings of
 .Fl L
@@ -458,6 +474,11 @@ directory to
 remove
 .Xr apropos 1
 database when needed.
+.Pp
+.It Cm @md5
+Added after a file entry by
+.Nm
+to record the files's cryptographic checksum.
 .Pp
 .It Cm @mode Ar mode
 Set default permission for all subsequently extracted files to
@@ -604,6 +625,16 @@ to handle shells.
 See
 .Xr shells 5 .
 .Pp
+.It Cm @size
+Added after a file entry by
+.Nm
+to record a file size.
+.Pp
+.It Cm @symlink Ar name
+Added after a file entry by
+.Nm
+to record that the entry is actually a symbolic link.
+.Pp
 .It Cm @sysctl Ar var Ns = Ns Ar val
 .It Cm @sysctl Ar var Ns \*(Ge Ns Ar val
 During
@@ -655,6 +686,67 @@ constructs like
 will be replaced with the variable value, according to
 .Fl D Ar name Ns = Ns Ar value
 options.
+.Pp
+Constructs like
+.Li %%VAR%%
+and
+.Li !%%VAR%%
+trigger fragment inclusion.
+If such a line is encountered in a packing-list, the corresponding variable
+must be defined to 0 or 1.
+If the variable's value is 1,
+.Li %%VAR%%
+will be replaced by the corresponding positive fragment, and
+.Li !%%VAR%%
+will be ignored.
+If the variable's value is 0,
+.Li %%VAR%%
+will be ignored, and
+.Li !%%VAR%%
+will be replaced by the corresponding positive fragment.
+.Pp
+A fragment is an auxiliary packing-list file, whose name is derived from the
+current packing-list, and the variable name 
+.Va VAR
+triggering the inclusion:
+.Pa pkg/PLIST
+yields a positive fragment
+.Pa pkg/PFRAG.VAR
+and a negative fragment
+.Pa pkg/PFRAG.no-VAR ,
+.Pa pkg/PLIST-FOO
+yields a positive fragment
+.Pa pkg/PFRAG.VAR-foo
+and a negative fragment
+.Pa pkg/PFRAG.no-VAR-foo .
+.Pp
+Fragments can be included inside fragments, so that
+.Li %%VAR2%%
+inside
+.Pa pkg/PFRAG.VAR
+triggers the inclusion of
+.Pa pkg/PFRAG.VAR2-VAR
+and
+.Li !%%VAR2%%
+triggers the inclusion of
+.Pa pkg/PFRAG.no-VAR2-VAR .
+.Pp
+If a positive or a negative fragment file does not exist, the corresponding 
+inclusion will be ignored.
+However, if both the positive and negative fragment files do not exist,
+.Nm
+will error out, to make it easier to spot fragment names errors.
+.Pp
+As a special historical exception, the variable
+.Va SHARED_LIBS
+controls the inclusion of fragments
+.Pa PFRAG.shared
+and
+.Pa PFRAG.no-shared
+through the lines
+.Li %%SHARED%%
+and
+.Li !%%SHARED%% .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
 .It Ev PKG_DESTDIR
