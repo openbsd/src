@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.49 2007/06/02 12:37:37 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.50 2007/06/02 12:45:24 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -201,6 +201,8 @@ sub register_dependencies
 	for my $dep (@l) {
 		OpenBSD::RequiredBy->new($dep)->add($pkgname);
 	}
+	delete $self->{toregister};
+	delete $self->{deplist};
 }
 
 sub record_old_dependencies
