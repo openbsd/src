@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.77 2007/05/26 02:30:28 ray Exp $	*/
+/*	$OpenBSD: entries.c,v 1.78 2007/06/02 09:00:19 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -157,13 +157,15 @@ cvs_ent_parse(const char *entry)
 		    strncmp(fields[3], "Result of merge", 15) == 0)
 			ent->ce_mtime = CVS_DATE_DMSEC;
 		else {
-			if (strptime(fields[3], "%a %b %d %T %Y", &t) == NULL)
-				fatal("'%s' is not a valid date", fields[3]);
+			/* Date field can be a '+=' with remote to indicate
+			 * conflict.  In this case do nothing. */
+			if (strptime(fields[3], "%a %b %d %T %Y", &t) != NULL) {
 
-			t.tm_isdst = -1;	/* Figure out DST. */
-			t.tm_gmtoff = 0;
-			ent->ce_mtime = mktime(&t);
-			ent->ce_mtime += t.tm_gmtoff;
+				t.tm_isdst = -1;	/* Figure out DST. */
+				t.tm_gmtoff = 0;
+				ent->ce_mtime = mktime(&t);
+				ent->ce_mtime += t.tm_gmtoff;
+			}
 		}
 	}
 
