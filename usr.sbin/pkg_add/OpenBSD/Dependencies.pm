@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.45 2007/06/02 11:18:46 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.46 2007/06/02 11:24:22 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -180,7 +180,7 @@ sub dump
 
 sub register_dependencies
 {
-	my $self = shift;
+	my ($self, $state) = @_;
 
 	require OpenBSD::RequiredBy;
 	my $pkgname = $self->pkgname;
@@ -275,6 +275,42 @@ sub lookup_library
 	print "libspec $lib not found\n" if $state->{very_verbose};
 	return;
 }
+
+sub record_old_dependencies
+{
+	my ($self, $state) = @_;
+	for my $o ($self->{set}->older) {
+		require OpenBSD::RequiredBy;
+		my @wantlist = OpenBSD::RequiredBy->new($o->{pkgname})->list;
+		$o->{wantlist} = \@wantlist;
+	}
+}
+
+sub adjust_old_dependencies
+{
+	my ($self, $state) = @_;
+	my $pkgname = $self->{set}->handle->{pkgname};
+	for my $o ($self->{set}->older) {
+		require OpenBSD::Replace;
+		require OpenBSD::RequiredBy;
+
+		my $oldname = $o->{pkgname};
+
+		print "Adjusting dependencies for $pkgname/$oldname\n" 
+		    if $state->{beverbose};
+		my $d = OpenBSD::RequiredBy->new($pkgname);
+		for my $dep (@{$o->{wantlist}}) {
+			if (defined $self->{set}->{skipupdatedeps}->{$dep}) {
+				print "\tskipping $dep\n" if $state->{beverbose};
+				next;
+			}
+			print "\t$dep\n" if $state->{beverbose};
+			$d->add($dep);
+			OpenBSD::Replace::adjust_dependency($dep, $oldname, $pkgname);
+		}
+	}
+}
+
 
 
 1;

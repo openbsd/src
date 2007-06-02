@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.305 2007/06/02 11:18:46 espie Exp $
+# $OpenBSD: pkg_add,v 1.306 2007/06/02 11:24:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -324,42 +324,6 @@ sub partial_install
 	return failed_message($base_msg, $state->{interrupted}, save_partial_set($set, $state));
 }
 
-sub record_old_dependencies
-{
-	my ($set, $state) = @_;
-	for my $o ($set->older) {
-		require OpenBSD::RequiredBy;
-		my @wantlist = OpenBSD::RequiredBy->new($o->{pkgname})->list;
-		$o->{wantlist} = \@wantlist;
-	}
-}
-
-sub adjust_old_dependencies
-{
-	my ($set, $state) = @_;
-	my $pkgname = $set->handle->{pkgname};
-	for my $o ($set->older) {
-		require OpenBSD::Replace;
-		require OpenBSD::RequiredBy;
-
-		my $oldname = $o->{pkgname};
-
-		print "Adjusting dependencies for $pkgname/$oldname\n" 
-		    if $state->{beverbose};
-		my $d = OpenBSD::RequiredBy->new($pkgname);
-		for my $dep (@{$o->{wantlist}}) {
-			if (defined $set->{skipupdatedeps}->{$dep}) {
-				print "\tskipping $dep\n" if $state->{beverbose};
-				next;
-			}
-			print "\t$dep\n" if $state->{beverbose};
-			$d->add($dep);
-			OpenBSD::Replace::adjust_dependency($dep, $oldname, $pkgname);
-		}
-	}
-}
-
-
 sub really_add
 {
 	my ($set, $state) = @_;
@@ -422,7 +386,7 @@ sub really_add
 			    $set, $state);
 		}
 
-		record_old_dependencies($set, $state);
+		$set->{solver}->record_old_dependencies($state);
 		for my $o ($set->older) {
 			my $oldname = $o->{pkgname};
 			$state->progress->set_header($oldname." (deleting)");
@@ -473,14 +437,14 @@ sub really_add
 	OpenBSD::SharedLibs::add_libs_from_plist($plist);
 	$plist->to_cache;
 	OpenBSD::Add::register_installation($plist);
-	$set->{solver}->register_dependencies;
+	$set->{solver}->register_dependencies($state);
 	add_installed($pkgname);
 	delete $handle->{partial};
 	OpenBSD::PkgCfl::register($plist, $state);
 	if ($plist->has(DISPLAY)) {
 		$plist->get(DISPLAY)->prepare($state);
 	}
-	adjust_old_dependencies($set, $state);
+	$set->{solver}->adjust_old_dependencies($state);
 }
 
 sub install_package
