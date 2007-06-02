@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.16 2007/06/01 20:23:26 pedro Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.17 2007/06/02 01:32:04 pedro Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -54,9 +54,6 @@
  * this structure describes an on-disk structure, all its fields
  * are defined by types with precise widths.
  */
-
-typedef int32_t ufs1_daddr_t;
-
 #define	NXADDR	2			/* External addresses in inode */
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
