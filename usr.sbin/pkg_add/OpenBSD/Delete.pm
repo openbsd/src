@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.58 2007/06/01 14:58:29 espie Exp $
+# $OpenBSD: Delete.pm,v 1.59 2007/06/02 10:32:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -126,6 +126,24 @@ sub delete_package
 	delete_plist($plist, $state);
 }
 
+sub unregister_dependencies
+{
+	my ($plist, $state) = @_;
+
+	my $pkgname = $plist->pkgname;
+
+	for my $name (OpenBSD::Requiring->new($pkgname)->list) {
+		print "remove dependency on $name\n" 
+		    if $state->{very_verbose} or $state->{not};
+		local $@;
+		try { 
+			OpenBSD::RequiredBy->new($name)->delete($pkgname);
+		} catchall {
+			print STDERR "$_\n";
+		};
+	}
+}
+		
 sub delete_plist
 {
 	my ($plist, $state) = @_;
@@ -144,17 +162,7 @@ sub delete_plist
 	}
  
 
-	for my $name (OpenBSD::Requiring->new($pkgname)->list) {
-		print "remove dependency on $name\n" 
-		    if $state->{very_verbose} or $state->{not};
-		local $@;
-		try { 
-			OpenBSD::RequiredBy->new($name)->delete($pkgname);
-		} catchall {
-			print STDERR "$_\n";
-		};
-	}
-		
+	unregister_dependencies($plist, $state);
 	return if $state->{not};
 	if ($state->{baddelete}) {
 	    my $borked = keep_old_files($state, $plist);
