@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.68 2007/06/01 22:23:03 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.69 2007/06/02 00:27:44 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -472,19 +472,6 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	xs->error = XS_NOERROR;
 	wu->swu_xs = xs;
 
-	/* if we have sense data let the midlayer know */
-	if (sd->sd_scsi_sense.flags != SKEY_NO_SENSE &&
-	    (!(xs->cmd->opcode == REQUEST_SENSE ||
-	    xs->cmd->opcode == INQUIRY))) {
-		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd opcode 0x%02x sense "
-		    "0x%02x 0x%02x\n", DEVNAME(sc), xs->cmd->opcode,
-		    sd->sd_scsi_sense.add_sense_code,
-		    sd->sd_scsi_sense.add_sense_code_qual);
-		xs->error = XS_SENSE;
-		xs->flags |= ITSDONE;
-		goto complete;
-	}
-
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
 	case READ_BIG:
@@ -547,8 +534,14 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 
 	return (SUCCESSFULLY_QUEUED);
 stuffup:
-	xs->error = XS_DRIVER_STUFFUP;
-	xs->flags |= ITSDONE;
+	if (sd->sd_scsi_sense.error_code) {
+		xs->error = XS_SENSE;
+		bcopy(&sd->sd_scsi_sense, &xs->sense, sizeof(xs->sense));
+		bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
+	} else {
+		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
+	}
 complete:
 	s = splbio();
 	scsi_done(xs);
@@ -762,7 +755,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	int			i, s, no_chunk, rv = EINVAL, vol;
 	int			no_meta, updatemeta = 0;
 	u_quad_t		vol_size;
-	u_int32_t		sense;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
 	struct sr_chunk		*ch_entry;
@@ -963,12 +955,6 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 	/* clear sense data */
 	bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
-	sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT;
-	sd->sd_scsi_sense.segment = 0;
-	sd->sd_scsi_sense.flags = SKEY_NO_SENSE;
-	sense = htole32(0);
-	bcopy(&sense, sd->sd_scsi_sense.info, sizeof(sense));
-	sd->sd_scsi_sense.extra_len = 0;
 
 	/* use temporary discipline pointer */
 	s = splhigh();
@@ -1477,21 +1463,17 @@ sr_raid_tur(struct sr_workunit *wu)
 
 	if (sd->sd_vol.sv_meta.svm_status == BIOC_SVOFFLINE) {
 		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT;
-		sd->sd_scsi_sense.segment = 0;
 		sd->sd_scsi_sense.flags = SKEY_NOT_READY;
 		sd->sd_scsi_sense.add_sense_code = 0x04;
 		sd->sd_scsi_sense.add_sense_code_qual = 0x11;
-		*(u_int32_t*)sd->sd_scsi_sense.info = htole32(0);
-		sd->sd_scsi_sense.extra_len = 0;
+		sd->sd_scsi_sense.extra_len = 4;
 		return (1);
 	} else if (sd->sd_vol.sv_meta.svm_status == BIOC_SVINVALID) {
 		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT;
-		sd->sd_scsi_sense.segment = 0;
 		sd->sd_scsi_sense.flags = SKEY_HARDWARE_ERROR;
 		sd->sd_scsi_sense.add_sense_code = 0x05;
 		sd->sd_scsi_sense.add_sense_code_qual = 0x00;
-		*(u_int32_t*)sd->sd_scsi_sense.info = htole32(0);
-		sd->sd_scsi_sense.extra_len = 0;
+		sd->sd_scsi_sense.extra_len = 4;
 		return (1);
 	}
 
@@ -1508,16 +1490,10 @@ sr_raid_request_sense(struct sr_workunit *wu)
 	    DEVNAME(sd->sd_sc));
 
 	/* use latest sense data */
-	sr_copy_internal_data(xs, &sd->sd_scsi_sense,
-	    sizeof(sd->sd_scsi_sense));
+	bcopy(&sd->sd_scsi_sense, &xs->sense, sizeof(xs->sense));
 
 	/* clear sense data */
 	bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
-	sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT;
-	sd->sd_scsi_sense.segment = 0;
-	sd->sd_scsi_sense.flags = SKEY_NO_SENSE;
-	*(u_int32_t*)sd->sd_scsi_sense.info = htole32(0);
-	sd->sd_scsi_sense.extra_len = 0;
 
 	return (0);
 }
@@ -1632,6 +1608,16 @@ sr_raid1_rw(struct sr_workunit *wu)
 	wu->swu_blk_start = blk;
 	wu->swu_blk_end = blk + xs->datalen - 1;
 	wu->swu_io_count = ios;
+
+	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
+		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
+		    SSD_ERRCODE_VALID;
+		sd->sd_scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
+		sd->sd_scsi_sense.add_sense_code = 0x21;
+		sd->sd_scsi_sense.add_sense_code_qual = 0x00;
+		sd->sd_scsi_sense.extra_len = 4;
+		goto bad;
+	}
 
 	for (i = 0; i < ios; i++) {
 		ccb = sr_get_ccb(sd);
