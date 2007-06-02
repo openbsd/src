@@ -1785,6 +1785,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/bt_var.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/hci.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/l2cap.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/rfcomm.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netbt/sco.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/netgroup.ph
@@ -2157,7 +2158,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/syslimits.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/syslog.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/systm.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/tablet.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/termios.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/time.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/timeb.ph

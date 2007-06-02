@@ -1067,6 +1067,7 @@
 ./usr/include/netbt/bt_var.h
 ./usr/include/netbt/hci.h
 ./usr/include/netbt/l2cap.h
+./usr/include/netbt/rfcomm.h
 ./usr/include/netbt/sco.h
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
@@ -1454,7 +1455,6 @@
 ./usr/include/sys/syslimits.h
 ./usr/include/sys/syslog.h
 ./usr/include/sys/systm.h
-./usr/include/sys/tablet.h
 ./usr/include/sys/termios.h
 ./usr/include/sys/time.h
 ./usr/include/sys/timeb.h

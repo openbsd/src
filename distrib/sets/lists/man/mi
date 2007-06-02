@@ -1,4 +1,3 @@
-./usr/share/man/cat4/myx.0
 ./usr/share/doc/html
 ./usr/share/info/amdref.info
 ./usr/share/info/annotate.info
@@ -704,7 +703,6 @@
 ./usr/share/man/cat3p/ExtUtils::Constant::XS.0
 ./usr/share/man/cat3p/ExtUtils::Embed.0
 ./usr/share/man/cat3p/ExtUtils::Install.0
-./usr/share/man/cat4/sparc64/led.0
 ./usr/share/man/cat3p/ExtUtils::Installed.0
 ./usr/share/man/cat3p/ExtUtils::Liblist.0
 ./usr/share/man/cat3p/ExtUtils::MM.0
@@ -1414,6 +1412,7 @@
 ./usr/share/man/cat4/mvme88k/vme.0
 ./usr/share/man/cat4/mvme88k/vs.0
 ./usr/share/man/cat4/mvmeppc
+./usr/share/man/cat4/myx.0
 ./usr/share/man/cat4/ne.0
 ./usr/share/man/cat4/neo.0
 ./usr/share/man/cat4/netintro.0
@@ -1608,6 +1607,7 @@
 ./usr/share/man/cat4/sparc64/kmem.0
 ./usr/share/man/cat4/sparc64/le.0
 ./usr/share/man/cat4/sparc64/lebuffer.0
+./usr/share/man/cat4/sparc64/led.0
 ./usr/share/man/cat4/sparc64/ledma.0
 ./usr/share/man/cat4/sparc64/magma.0
 ./usr/share/man/cat4/sparc64/mem.0
