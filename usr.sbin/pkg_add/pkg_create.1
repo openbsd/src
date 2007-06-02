@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.40 2007/06/02 10:19:29 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.41 2007/06/02 15:32:07 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -706,7 +706,7 @@ will be ignored, and
 will be replaced by the corresponding positive fragment.
 .Pp
 A fragment is an auxiliary packing-list file, whose name is derived from the
-current packing-list, and the variable name 
+current packing-list, and the variable name
 .Va VAR
 triggering the inclusion:
 .Pa pkg/PLIST
@@ -731,7 +731,7 @@ and
 triggers the inclusion of
 .Pa pkg/PFRAG.no-VAR2-VAR .
 .Pp
-If a positive or a negative fragment file does not exist, the corresponding 
+If a positive or a negative fragment file does not exist, the corresponding
 inclusion will be ignored.
 However, if both the positive and negative fragment files do not exist,
 .Nm
