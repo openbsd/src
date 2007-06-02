@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1240 2007/05/26 01:09:06 claudio Exp 
+ *	OpenBSD: pcidevs,v 1.1241 2007/06/02 15:24:43 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6360,6 +6360,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801HO LPC",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_LPC,
+	    "82801HBM LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_1_6P,
 	    "82801H SATA",
 	},
@@ -6450,6 +6454,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_HDA,
 	    "82801H HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_IDE,
+	    "82801HBM IDE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_HB,
@@ -6558,6 +6566,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965_KT,
 	    "82865 KT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GM_MCH,
+	    "82965GM MCH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GM_IGD_1,
+	    "82965GM Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GM_IGD_2,
+	    "82965GM Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU32,
@@ -6726,6 +6746,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3965ABG,
 	    "PRO/Wireless 3965ABG",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN,
+	    "PRO/Wireless 4965AGN",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RD,
@@ -11626,6 +11650,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCIXX12,
 	    "PCIXX12 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCIXX12_FW,
+	    "PCIXX12 FireWire",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCIXX12_MCR,
