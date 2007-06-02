@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.540 2007/06/01 18:44:22 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.541 2007/06/02 01:28:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3317,7 +3317,6 @@ cleanup:
 		s->creation = time_second;
 		s->expire = time_second;
 
-		pf_set_rt_ifp(s, saddr);
 		if (sn != NULL) {
 			s->src_node = sn;
 			s->src_node->states++;
@@ -3405,6 +3404,8 @@ cleanup:
 				sk->gwy.port = sk->lan.port;
 			}
 		}
+
+		pf_set_rt_ifp(s, saddr);	/* needs s->state_key set */
 
 		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			if (pd->proto == IPPROTO_TCP)
