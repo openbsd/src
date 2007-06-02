@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_socket.c,v 1.2 2007/06/01 02:46:11 uwe Exp $	*/
+/*	$OpenBSD: hci_socket.c,v 1.3 2007/06/02 01:46:01 uwe Exp $	*/
 /*	$NetBSD: hci_socket.c,v 1.10 2007/03/31 18:17:13 plunky Exp $	*/
 
 /*-
@@ -358,11 +358,8 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		up->so_pcb = pcb;
 		pcb->hp_socket = up;
 
-#ifdef notyet			/* XXX */
-		if (l == NULL || kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL) == 0)
+		if (curproc == NULL || suser(curproc, 0) == 0)
 			pcb->hp_flags |= HCI_PRIVILEGED;
-#endif
 
 		/*
 		 * Set default user filter. By default, socket only passes
