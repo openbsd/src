@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.44 2007/06/01 22:35:46 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.45 2007/06/02 11:18:46 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,9 +35,9 @@ sub find_candidate
 
 sub new
 {
-	my ($class, $plist) = @_;
-	bless {plist => $plist, to_install => {}, deplist => [], 
-	    to_register => {} }, $class;
+	my ($class, $set) = @_;
+	bless {set => $set, plist => $set->handle->{plist}, 
+	    to_install => {}, deplist => [], to_register => {} }, $class;
 }
 
 sub dependencies
