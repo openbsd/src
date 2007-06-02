@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.63 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.64 2007/06/02 02:04:21 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -519,8 +519,8 @@ msdosfs_write(v)
 	int resid;
 	uint32_t osize;
 	int error = 0;
-	uint32_t count;
-	daddr_t bn, lastcn;
+	uint32_t count, lastcn;
+	daddr64_t bn;
 	struct buf *bp;
 	int ioflag = ap->a_ioflag;
 	struct uio *uio = ap->a_uio;
@@ -863,7 +863,7 @@ msdosfs_rename(v)
 	int doingdirectory = 0, newparent = 0;
 	int error;
 	uint32_t cn, pcl;
-	daddr_t bn;
+	daddr64_t bn;
 	struct msdosfsmount *pmp;
 	struct direntry *dotdotp;
 	struct buf *bp;
@@ -1191,7 +1191,7 @@ msdosfs_mkdir(v)
 	struct denode *dep;
 	struct denode *pdep = VTODE(ap->a_dvp);
 	int error;
-	int bn;
+	daddr64_t bn;
 	uint32_t newcluster, pcl;
 	struct direntry *denp;
 	struct msdosfsmount *pmp = pdep->de_pmp;
@@ -1381,10 +1381,9 @@ msdosfs_readdir(v)
 	long lost;
 	long count;
 	uint32_t dirsperblk;
-	uint32_t cn;
+	uint32_t cn, lbn;
 	uint32_t fileno;
 	long bias = 0;
-	daddr_t lbn;
 	daddr64_t bn;
 	struct buf *bp;
 	struct denode *dep = VTODE(ap->a_vp);
