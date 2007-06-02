@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.41 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.42 2007/06/02 00:45:21 thib Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -221,8 +221,8 @@ spec_read(v)
 	register struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
-	daddr64_t bn, nextbn;
-	long bsize, bscale;
+	daddr64_t bn, nextbn, bscale;
+	int bsize;
 	struct partinfo dpart;
 	int n, on, majordev;
 	int (*ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
@@ -265,13 +265,13 @@ spec_read(v)
 		do {
 			bn = btodb(uio->uio_offset) & ~(bscale - 1);
 			on = uio->uio_offset % bsize;
-			n = min((unsigned)(bsize - on), uio->uio_resid);
+			n = min((bsize - on), uio->uio_resid);
 			if (vp->v_lastr + bscale == bn) {
 				nextbn = bn + bscale;
-				error = breadn(vp, bn, (int)bsize, &nextbn,
-					(int *)&bsize, 1, NOCRED, &bp);
+				error = breadn(vp, bn, bsize, &nextbn, &bsize,
+				    1, NOCRED, &bp);
 			} else
-				error = bread(vp, bn, (int)bsize, NOCRED, &bp);
+				error = bread(vp, bn, bsize, NOCRED, &bp);
 			vp->v_lastr = bn;
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
@@ -312,8 +312,8 @@ spec_write(v)
 	register struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
-	daddr_t bn;
-	long bsize, bscale;
+	daddr64_t bn, bscale;
+	int bsize;
 	struct partinfo dpart;
 	int n, on, majordev;
 	int (*ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
@@ -356,7 +356,7 @@ spec_write(v)
 		do {
 			bn = btodb(uio->uio_offset) & ~(bscale - 1);
 			on = uio->uio_offset % bsize;
-			n = min((unsigned)(bsize - on), uio->uio_resid);
+			n = min((bsize - on), uio->uio_resid);
 			error = bread(vp, bn, bsize, NOCRED, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
