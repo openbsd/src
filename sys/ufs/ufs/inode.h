@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.34 2006/10/29 00:53:37 thib Exp $	*/
+/*	$OpenBSD: inode.h,v 1.35 2007/06/02 00:45:50 pedro Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -47,8 +47,8 @@
  * Per-filesystem inode extensions.
  */
 struct ext2fs_inode_ext {
-       ufs1_daddr_t	ext2fs_last_lblk; /* last logical block allocated */
-       ufs1_daddr_t	ext2fs_last_blk; /* last block allocated on disk */
+       int32_t	ext2fs_last_lblk; /* last logical block allocated */
+       int32_t	ext2fs_last_blk; /* last block allocated on disk */
        u_int32_t	ext2fs_effective_uid; /* effective inode uid */
        u_int32_t	ext2fs_effective_gid; /* effective inode gid */
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.13 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs_balloc.c,v 1.14 2007/06/02 00:45:50 pedro Exp $	*/
 /*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
 
 /*
@@ -60,14 +60,14 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
     struct buf **bpp, int flags)
 {
 	struct m_ext2fs *fs;
-	ufs1_daddr_t nb;
+	int32_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ITOV(ip);
 	struct indir indirs[NIADDR + 2];
-	ufs1_daddr_t newb, lbn, *bap, pref;
+	int32_t newb, lbn, *bap, pref;
 	int num, i, error;
 	u_int deallocated;
-	ufs1_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
+	int32_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 	int unwindidx = -1;
 
 	*bpp = NULL;
@@ -128,7 +128,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
-		pref = ext2fs_blkpref(ip, lbn, 0, (ufs1_daddr_t *)0);
+		pref = ext2fs_blkpref(ip, lbn, 0, (int32_t *)0);
 		error = ext2fs_alloc(ip, lbn, pref, cred, &newb);
 		if (error)
 			return (error);
@@ -159,7 +159,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 			brelse(bp);
 			goto fail;
 		}
-		bap = (ufs1_daddr_t *)bp->b_data;
+		bap = (int32_t *)bp->b_data;
 		nb = fs2h32(bap[indirs[i].in_off]);
 		if (i == num)
 			break;
@@ -168,7 +168,7 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 			brelse(bp);
 			continue;
 		}
-		pref = ext2fs_blkpref(ip, lbn, 0, (ufs1_daddr_t *)0);
+		pref = ext2fs_blkpref(ip, lbn, 0, (int32_t *)0);
 		error = ext2fs_alloc(ip, lbn, pref, cred, &newb);
 		if (error) {
 			brelse(bp);
@@ -267,7 +267,7 @@ fail:
 				panic("Could not unwind indirect block, error %d", r);
 				brelse(bp);
 			} else {
-				bap = (ufs1_daddr_t *)bp->b_data;
+				bap = (int32_t *)bp->b_data;
 				bap[indirs[unwindidx].in_off] = 0;
 				if (flags & B_SYNC)
 					bwrite(bp);

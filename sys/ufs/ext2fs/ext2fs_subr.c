@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.15 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.16 2007/06/02 00:45:50 pedro Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ ext2fs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 	struct vnode *vp;
 	struct m_ext2fs *fs;
 	struct buf *bp;
-	ufs1_daddr_t lbn;
+	int32_t lbn;
 	int error;
 
 	vp = ITOV(ip);
@@ -108,7 +108,7 @@ ext2fs_checkoverlap(bp, ip)
 	struct inode *ip;
 {
 	struct buf *ep;
-	ufs1_daddr_t start, last;
+	int32_t start, last;
 	struct vnode *vp;
 
 	start = bp->b_blkno;
