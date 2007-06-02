@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.70 2007/06/02 00:53:35 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.71 2007/06/02 01:49:27 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -1606,10 +1606,14 @@ sr_raid1_rw(struct sr_workunit *wu)
 	blk += SR_META_SIZE + SR_META_OFFSET;
 
 	wu->swu_blk_start = blk;
-	wu->swu_blk_end = blk + xs->datalen - 1;
+	wu->swu_blk_end = blk + (xs->datalen >> 9) - 1;
 	wu->swu_io_count = ios;
 
 	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
+		DNPRINTF(SR_D_DIS, "%s: sr_raid1_rw out of bounds start: %lld "
+		    "end: %lld length: %d\n", wu->swu_blk_start,
+		    wu->swu_blk_end, xs->datalen);
+
 		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
 		    SSD_ERRCODE_VALID;
 		sd->sd_scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
@@ -1708,25 +1712,6 @@ ragain:
 		    DEVNAME(sd->sd_sc), sd->sd_vol.sv_meta.svm_devname,
 		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
 		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
-
-#if 0
-		/* vprint("despatch: ", ccb->ccb_buf.b_vp); */
-		ccb->ccb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&ccb->ccb_buf);
-		if (xs->flags & SCSI_POLL) {
-			/* polling, wait for completion */
-			biowait(&ccb->ccb_buf);
-			if (ccb->ccb_buf.b_flags & B_ERROR) {
-				printf("%s: %s: %s: i/o error on block %d\n",
-				    DEVNAME(sd->sd_sc),
-				    sd->sd_vol.sv_meta.svm_devname,
-				    sd->sd_vol.sv_chunks[x]->src_meta.scm_devname,
-				    ccb->ccb_buf.b_blkno);
-			/* don't abort other ios because of error */
-			}
-			sr_put_ccb(ccb);
-		}
-#endif
 	}
 	
 	s = splbio();
@@ -3063,8 +3048,22 @@ sr_raidc_rw2(struct cryptop *crp)
 	blk += SR_META_SIZE + SR_META_OFFSET;
 
 	wu->swu_blk_start = blk;
-	wu->swu_blk_end = blk + xs->datalen - 1;
+	wu->swu_blk_end = blk + (xs->datalen >> 9) - 1;
 	wu->swu_io_count = 1;
+
+	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
+		DNPRINTF(SR_D_DIS, "%s: sr_raidc_rw2 out of bounds start: %lld "
+		    "end: %lld length: %d\n", wu->swu_blk_start,
+		    wu->swu_blk_end, xs->datalen);
+
+		sd->sd_scsi_sense.error_code = SSD_ERRCODE_CURRENT |
+		    SSD_ERRCODE_VALID;
+		sd->sd_scsi_sense.flags = SKEY_ILLEGAL_REQUEST;
+		sd->sd_scsi_sense.add_sense_code = 0x21;
+		sd->sd_scsi_sense.add_sense_code_qual = 0x00;
+		sd->sd_scsi_sense.extra_len = 4;
+		goto bad;
+	}
 
 	ccb = sr_get_ccb(sd);
 	if (!ccb) {
