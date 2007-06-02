@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.268 2007/05/11 13:26:20 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.269 2007/06/02 18:44:44 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -494,6 +494,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82801HBM_SATA_2, /* Intel 82801HBM (ICH8M) SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801HBM_IDE, /* Intel 82801HBM (ICH8M) IDE */
+	  0,
+	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_6321ESB_SATA, /* Intel 6321ESB SATA */
 	  0,
@@ -2179,6 +2183,7 @@ piix_timing_debug(struct pciide_softc *sc)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801HBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82372FB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -2224,6 +2229,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_82801EB_IDE:
 		case PCI_PRODUCT_INTEL_82801FB_IDE:
 		case PCI_PRODUCT_INTEL_82801GB_IDE:
+		case PCI_PRODUCT_INTEL_82801HBM_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			break;
 		}
@@ -2247,6 +2253,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82801EB_IDE:
 	case PCI_PRODUCT_INTEL_82801FB_IDE:
 	case PCI_PRODUCT_INTEL_82801GB_IDE:
+	case PCI_PRODUCT_INTEL_82801HBM_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
@@ -2576,6 +2583,7 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801HBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82372FB_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
@@ -2590,7 +2598,8 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801HBM_IDE) {
 			/* setup Ultra/100 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
