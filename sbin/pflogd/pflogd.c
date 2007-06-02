@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.40 2007/05/27 20:07:42 jdixon Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.41 2007/06/02 20:38:14 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -206,10 +206,8 @@ if_exists(char *interface)
 		sizeof(ifr.ifr_name))
 			errx(1, "main ifr_name: strlcpy");
 	ifr.ifr_data = (caddr_t)&ifrdat;
-	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1) {
-		logmsg(LOG_ERR, "Failed to initialize: %s", interface);
+	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1)
 		return (-1);
-	}
 	if (close(s))
 		err(1, "close");
 
@@ -606,6 +604,7 @@ main(int argc, char **argv)
 	/* does interface exist */
 	if (if_exists(interface)) {
 		err(1, "Failed to initialize: %s", interface);
+		logmsg(LOG_ERR, "Failed to initialize: %s", interface);
 		logmsg(LOG_ERR, "Exiting, init failure");
 		exit(1);
 	}
@@ -673,8 +672,14 @@ main(int argc, char **argv)
 	while (1) {
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS,
 		    phandler, (u_char *)dpcap);
-		if (np < 0)
+		if (np < 0) {
+			if (if_exists(interface) == -1) {
+				logmsg(LOG_NOTICE, "interface %s went away",
+				    interface);
+				break;
+			}
 			logmsg(LOG_NOTICE, "%s", pcap_geterr(hpcap));
+		}
 
 		if (gotsig_close)
 			break;
