@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.3 2007/05/31 23:37:21 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.4 2007/06/02 01:30:37 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -37,6 +37,7 @@
 
 #define SBT_REG_DAT	0x00		/* receiver/transmitter data */
 #define SBT_REG_RPC	0x10		/* read packet control */
+#define  RPC_PCRRT	(1<<0)		/* packet read retry */
 #define SBT_REG_WPC	0x11		/* write packet control */
 #define  WPC_PCWRT	(1<<0)		/* packet write retry */
 #define SBT_REG_RC	0x12		/* retry control status/set */
@@ -47,7 +48,8 @@
 #define SBT_REG_BTMODE	0x20		/* SDIO Bluetooth card mode */
 #define  BTMODE_TYPEB	(1<<0)		/* 1=Type-B, 0=Type-A */
 
-#define SBT_BUFSIZ_HCI	65535
+#define SBT_BUFSIZ_HCI	65540
+#define SBT_RXTRY_MAX	5
 
 struct sbt_softc {
 	struct device sc_dev;		/* base device */
@@ -57,6 +59,7 @@ struct sbt_softc {
 	int sc_dying;			/* shutdown in progress */
 	void *sc_ih;
 	u_char *sc_buf;
+	int sc_rxtry;
 };
 
 int	sbt_match(struct device *, void *, void *);
@@ -240,29 +243,41 @@ again:
 int
 sbt_read_packet(struct sbt_softc *sc, u_char *buf, size_t *lenp)
 {
-	int error, retry = 3;
 	u_char hdr[3];
 	size_t len;
-
-again:
-	if (retry-- == 0)
-		return error;
+	int error;
 
 	error = sdmmc_io_read_multi_1(sc->sc_sf, SBT_REG_DAT, hdr, 3);
 	if (error) {
 		DPRINTF(("sbt_read_packet: failed to read length\n"));
-		goto again;
+		goto out;
 	}
 	len = (hdr[0] | (hdr[1] << 8) | (hdr[2] << 16)) - 3;
 	if (len > *lenp) {
-		error = ENOMEM;
-		goto again;
+		DPRINTF(("sbt_read_packet: len %u > %u\n", len, *lenp));
+		error = ENOBUFS;
+		goto out;
 	}
 
+	DPRINTF(("sbt_read_packet: reading len %u bytes\n", len));
 	error = sdmmc_io_read_multi_1(sc->sc_sf, SBT_REG_DAT, buf, len);
 	if (error) {
 		DPRINTF(("sbt_read_packet: failed to read packet data\n"));
-		goto again;
+		goto out;
+	}
+
+out:
+	if (error) {
+		if (sc->sc_rxtry >= SBT_RXTRY_MAX) {
+			/* Drop and request the next packet. */
+			sc->sc_rxtry = 0;
+			CSR_WRITE_1(sc, SBT_REG_RPC, 0);
+		} else {
+			/* Request the current packet again. */
+			sc->sc_rxtry++;
+			CSR_WRITE_1(sc, SBT_REG_RPC, RPC_PCRRT);
+		}
+		return error;
 	}
 
 	/* acknowledge read packet */
@@ -317,9 +332,11 @@ sbt_intr(void *arg)
 	}
 
 eoi:
-	if (m != NULL)
+	if (m != NULL) {
+		DPRINTF(("%s: recv 0x%x packet (%d bytes)\n",
+		    DEVNAME(sc), sc->sc_buf[0], m->m_pkthdr.len));
 		hci_input_event(&sc->sc_unit, m);
-	else
+	} else
 		sc->sc_unit.hci_stats.err_rx++;
 
 	splx(s);
