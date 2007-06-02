@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.303 2007/06/01 22:35:46 espie Exp $
+# $OpenBSD: pkg_add,v 1.304 2007/06/02 10:29:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -324,6 +324,42 @@ sub partial_install
 	return failed_message($base_msg, $state->{interrupted}, save_partial_set($set, $state));
 }
 
+sub record_old_dependencies
+{
+	my ($set, $state) = @_;
+	for my $o ($set->older) {
+		require OpenBSD::RequiredBy;
+		my @wantlist = OpenBSD::RequiredBy->new($o->{pkgname})->list;
+		$o->{wantlist} = \@wantlist;
+	}
+}
+
+sub adjust_old_dependencies
+{
+	my ($set, $state) = @_;
+	my $pkgname = $set->handle->{pkgname};
+	for my $o ($set->older) {
+		require OpenBSD::Replace;
+		require OpenBSD::RequiredBy;
+
+		my $oldname = $o->{pkgname};
+
+		print "Adjusting dependencies for $pkgname/$oldname\n" 
+		    if $state->{beverbose};
+		my $d = OpenBSD::RequiredBy->new($pkgname);
+		for my $dep (@{$o->{wantlist}}) {
+			if (defined $set->{skipupdatedeps}->{$dep}) {
+				print "\tskipping $dep\n" if $state->{beverbose};
+				next;
+			}
+			print "\t$dep\n" if $state->{beverbose};
+			$d->add($dep);
+			OpenBSD::Replace::adjust_dependency($dep, $oldname, $pkgname);
+		}
+	}
+}
+
+
 sub really_add
 {
 	my ($set, $state) = @_;
@@ -386,6 +422,7 @@ sub really_add
 			    $set, $state);
 		}
 
+		record_old_dependencies($set, $state);
 		for my $o ($set->older) {
 			my $oldname = $o->{pkgname};
 			$state->progress->set_header($oldname." (deleting)");
@@ -395,9 +432,6 @@ sub really_add
 			    	thunderbird_special_case($plist);
 			}
 			require OpenBSD::Delete;
-			require OpenBSD::RequiredBy;
-			my @wantlist = OpenBSD::RequiredBy->new($oldname)->list;
-			$o->{wantlist} = \@wantlist;
 			try {
 			    OpenBSD::Delete::delete_plist($o->{plist}, $state);
 			} catchall {
@@ -446,24 +480,7 @@ sub really_add
 	if ($plist->has(DISPLAY)) {
 		$plist->get(DISPLAY)->prepare($state);
 	}
-	# and add dependencies corresponding to the replacement
-	for my $o ($set->older) {
-		require OpenBSD::Replace;
-		my $oldname = $o->{pkgname};
-
-		print "Adjusting dependencies for $pkgname/$oldname\n" 
-		    if $state->{beverbose};
-		my $d = OpenBSD::RequiredBy->new($pkgname);
-		for my $dep (@{$o->{wantlist}}) {
-			if (defined $set->{skipupdatedeps}->{$dep}) {
-				print "\tskipping $dep\n" if $state->{beverbose};
-				next;
-			}
-			print "\t$dep\n" if $state->{beverbose};
-			$d->add($dep);
-			OpenBSD::Replace::adjust_dependency($dep, $oldname, $pkgname);
-		}
-	}
+	adjust_old_dependencies($set, $state);
 }
 
 sub install_package
