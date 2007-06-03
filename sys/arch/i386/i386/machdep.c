@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.398 2007/05/29 21:01:56 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.399 2007/06/03 04:30:31 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2005,6 +2005,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		case 3:
 			bus_clock = 16666;
+			break;
+		case 2:
+			bus_clock = 20000;
 			break;
 		case 0:
 			bus_clock = 26666;
