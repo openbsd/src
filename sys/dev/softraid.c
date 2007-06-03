@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.72 2007/06/02 01:52:25 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.73 2007/06/03 04:27:09 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2386,6 +2386,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	struct sr_metadata	*sm;
 	struct sr_metadata_list_head mlh;
 	struct sr_metadata_list *mle, *mle2;
+	struct sr_vol_meta	*vm;
 	struct bioc_createraid	bc;
 	dev_t			dev, devr, *dt = NULL;
 	int			error, majdev, i, no_dev, rv = 0;
@@ -2543,7 +2544,8 @@ sr_boot_assembly(struct sr_softc *sc)
 		}
 
 		bzero(&bc, sizeof(bc));
-		bc.bc_level = 1;
+		vm = (struct sr_vol_meta *)(mle->sml_metadata + 1);
+		bc.bc_level = vm->svm_level;
 		bc.bc_dev_list_len = no_dev * sizeof(dev_t);
 		bc.bc_dev_list = dt;
 		bc.bc_flags = BIOC_SCDEVT;
@@ -2899,7 +2901,10 @@ sr_raidc_getcryptop(struct sr_workunit *wu, int encrypt)
 	struct cryptodesc	*crd;
 	struct uio		*uio;
 	int			flags, i, n;
-	int blk = 0;
+	int			blk = 0;
+
+	DNPRINTF(SR_D_DIS, "%s: sr_raidc_getcryptop wu: %p encrypt: %d\n",
+	    DEVNAME(sd->sd_sc), wu, encrypt);
 
 	uio = malloc(sizeof(*uio), M_DEVBUF, M_WAITOK);
 	memset(uio, 0, sizeof(*uio));
@@ -2913,7 +2918,7 @@ sr_raidc_getcryptop(struct sr_workunit *wu, int encrypt)
 	else if (xs->cmdlen == 6)
 		blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
 
-	n = xs->datalen / 512;
+	n = xs->datalen >> 9;
 	flags = (encrypt ? CRD_F_ENCRYPT : 0) |
 	    CRD_F_IV_PRESENT | CRD_F_IV_EXPLICIT;
 
@@ -2934,7 +2939,8 @@ sr_raidc_getcryptop(struct sr_workunit *wu, int encrypt)
 		crd->crd_key = sd->mds.mdd_raidc.src_key;
 		memset(crd->crd_iv, blk + i, sizeof(crd->crd_iv));
 	}
-	return crp;
+
+	return (crp);
 }
 
 void *
@@ -2942,11 +2948,14 @@ sr_raidc_putcryptop(struct cryptop *crp)
 {
 	struct uio		*uio = crp->crp_buf;
 	void			*opaque = crp->crp_opaque;
+
+	DNPRINTF(SR_D_DIS, "sr_raidc_putcryptop crp: %p\n", crp);
+
 	free(uio->uio_iov, M_DEVBUF);
 	free(uio, M_DEVBUF);
 	crypto_freereq(crp);
 
-	return opaque;
+	return (opaque);
 }
 
 int
@@ -2966,7 +2975,9 @@ sr_raidc_alloc_resources(struct sr_discipline *sd)
 		return (ENOMEM);
 
 	/* XXX we need a real key later */
-	memset(sd->mds.mdd_raidc.src_key, 'k', sizeof sd->mds.mdd_raidc.src_key);
+	memset(sd->mds.mdd_raidc.src_key, 'k',
+	    sizeof sd->mds.mdd_raidc.src_key);
+
 	bzero(&cri, sizeof(cri));
 	cri.cri_alg = CRYPTO_AES_CBC;
 	cri.cri_klen = 256;
@@ -3002,11 +3013,15 @@ sr_raidc_rw(struct sr_workunit *wu)
 {
 	struct cryptop		*crp;
 
+	DNPRINTF(SR_D_DIS, "%s: sr_raidc_rw wu: %p\n",
+	    DEVNAME(wu->swu_dis->sd_sc), wu);
+
 	crp = sr_raidc_getcryptop(wu, 1);
 	crp->crp_callback = sr_raidc_rw2;
 	crp->crp_opaque = wu;
 	crypto_dispatch(crp);
-	return 0;
+
+	return (0);
 }
 
 int
@@ -3022,7 +3037,7 @@ sr_raidc_rw2(struct cryptop *crp)
 	daddr64_t		blk;
 
 	
-	DNPRINTF(SR_D_DIS, "%s: sr_raidc_rw 0x%02x\n", DEVNAME(sd->sd_sc),
+	DNPRINTF(SR_D_DIS, "%s: sr_raidc_rw2 0x%02x\n", DEVNAME(sd->sd_sc),
 	    xs->cmd->opcode);
 
 	if (sd->sd_vol.sv_meta.svm_status == BIOC_SVOFFLINE) {
@@ -3195,10 +3210,10 @@ sr_raidc_intr(struct buf *bp)
 	struct sr_softc		*sc = wu->swu_dis->sd_sc;
 #endif
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
+	DNPRINTF(SR_D_INTR, "%s: sr_raidc_intr bp: %x xs: %x\n",
 	    DEVNAME(sc), bp, wu->swu_xs);
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
+	DNPRINTF(SR_D_INTR, "%s: sr_raidc_intr: b_bcount: %d b_resid: %d"
 	    " b_flags: 0x%0x\n", DEVNAME(sc), ccb->ccb_buf.b_bcount,
 	    ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags);
 
@@ -3219,6 +3234,9 @@ sr_raidc_intr2(struct cryptop *crp)
 	struct sr_softc		*sc = sd->sd_sc;
 	int			s, pend;
 
+	DNPRINTF(SR_D_INTR, "%s: sr_raidc_intr2 crp: %x xs: %x\n",
+	    DEVNAME(sc), crp, xs);
+
 	s = splbio();
 
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
@@ -3237,7 +3255,7 @@ sr_raidc_intr2(struct cryptop *crp)
 	}
 	wu->swu_ios_complete++;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d\n",
+	DNPRINTF(SR_D_INTR, "%s: sr_raidc_intr2: comp: %d count: %d\n",
 	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count);
 
 	if (wu->swu_ios_complete == wu->swu_io_count) {
@@ -3275,8 +3293,12 @@ sr_raidc_intr2(struct cryptop *crp)
 		/* do not change the order of these 2 functions */
 		sr_put_wu(wu);
 		scsi_done(xs);
+
+		if (sd->sd_sync && sd->sd_wu_pending == 0)
+			wakeup(sd);
 	}
 
 	splx(s);
-	return 0;
+
+	return (0);
 }
