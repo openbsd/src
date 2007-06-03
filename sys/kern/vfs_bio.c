@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.94 2007/06/01 23:35:42 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.95 2007/06/03 20:25:12 otto Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -104,8 +104,7 @@ void buf_put(struct buf *);
 #define	binstailfree(bp, dp)	TAILQ_INSERT_TAIL(dp, bp, b_freelist)
 
 struct buf *bio_doread(struct vnode *, daddr64_t, int, int);
-struct buf *getnewbuf(size_t);
-int buf_wait(int, int);
+struct buf *getnewbuf(size_t, int, int, int *);
 void buf_init(struct buf *, int);
 void bread_cluster_callback(struct buf *);
 
@@ -502,7 +501,7 @@ bread_cluster(struct vnode *vp, daddr64_t blkno, int size, struct buf **rbpp)
 
 	xbpp[howmany] = 0;
 
-	bp = getnewbuf(howmany * size);
+	bp = getnewbuf(howmany * size, 0, 0, NULL);
 	if (bp == NULL) {
 		for (i = 0; i < howmany; i++) {
 			SET(xbpp[i]->b_flags, B_INVAL);
@@ -900,9 +899,8 @@ start:
 		nb = NULL;
 	}
 	if (bp == NULL && nb == NULL) {
-		nb = getnewbuf(size);
+		nb = getnewbuf(size, slpflag, slptimeo, &error);
 		if (nb == NULL) {
-			error = buf_wait(slpflag, slptimeo);
 			if (error == ERESTART || error == EINTR)
 				return (NULL);
 		}
@@ -927,8 +925,8 @@ geteblk(int size)
 {
 	struct buf *bp;
 
-	while ((bp = getnewbuf(size)) == NULL)
-		buf_wait(0, 0);
+	while ((bp = getnewbuf(size, 0, 0, NULL)) == NULL)
+		;
 	SET(bp->b_flags, B_INVAL);
 	binshash(bp, &invalhash);
 
@@ -939,10 +937,10 @@ geteblk(int size)
  * Find a buffer which is available for use.
  */
 struct buf *
-getnewbuf(size_t size)
+getnewbuf(size_t size, int slpflag, int slptimeo, int *ep)
 {
 	struct buf *bp;
-	int s, queue, qs;
+	int s, error, queue, qs;
 
 #if 0		/* we would really like this but sblock update kills it */
 	KASSERT(curproc != syncerproc && curproc != cleanerproc);
@@ -996,8 +994,18 @@ getsome:
 			goto getsome;
 	}
 	if (bp == NULL) {
-		splx(s);
-		return (NULL);
+		/* wait for a free buffer of any kind */
+		needbuffer++;
+		error = tsleep(&needbuffer, slpflag | (PRIBIO + 1),
+		    "getnewbuf", slptimeo);
+		if (ep != NULL) {
+			*ep = error;
+			if (error) {
+				splx(s);
+				return (NULL);
+			}
+		}
+		goto getsome;
 	}
 
 	bremfree(bp);
@@ -1034,19 +1042,6 @@ getsome:
 
 	bremhash(bp);
 	return (bp);
-}
-
-int
-buf_wait(int flag, int timeo)
-{
-	int s, error;
-
-	s = splbio();
-	needbuffer++;
-	error = tsleep(&needbuffer, flag | (PRIBIO + 1), "buf_wait", timeo);
-	splx(s);
-
-	return (error);
 }
 
 /*
