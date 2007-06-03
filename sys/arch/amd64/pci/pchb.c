@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.8 2007/06/01 01:00:45 tedu Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.9 2007/06/03 22:56:22 tedu Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -177,7 +177,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 #endif
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82915G_HB:
-		case PCI_PRODUCT_INTEL_82915GM_HB:
 		case PCI_PRODUCT_INTEL_82925X_HB:
 		case PCI_PRODUCT_INTEL_82945GP_MCH:
 		case PCI_PRODUCT_INTEL_82955X_HB:
