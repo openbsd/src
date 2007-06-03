@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.10 2007/06/03 11:04:46 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.11 2007/06/03 21:26:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -703,6 +703,9 @@ cmalo_rx(struct malo_softc *sc)
 
 	/* access RX packet descriptor */
 	rxdesc = (struct malo_rx_desc *)sc->sc_data;
+	rxdesc->status = letoh16(rxdesc->status);
+	rxdesc->pkglen = letoh16(rxdesc->pkglen);
+	rxdesc->pkgoffset = letoh32(rxdesc->pkgoffset);
 
 	DPRINTF(2, "RX status=%d, pkglen=%d, pkgoffset=%d\n",
 	    rxdesc->status, rxdesc->pkglen, rxdesc->pkgoffset);
@@ -730,7 +733,7 @@ cmalo_rx(struct malo_softc *sc)
 		return;
 	}
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = m->m_len = letoh16(rxdesc->pkglen);
+	m->m_pkthdr.len = m->m_len = rxdesc->pkglen;
 	data = mtod(m, uint8_t *);
 	bcopy(sc->sc_data + rxdesc->pkgoffset, data, m->m_pkthdr.len);
 
