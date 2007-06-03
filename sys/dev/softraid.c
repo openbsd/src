@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.75 2007/06/03 22:33:35 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.76 2007/06/03 22:36:27 tedu Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -911,6 +911,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_set_chunk_state = sr_raid_set_chunk_state;
 		sd->sd_set_vol_state = sr_raid_set_vol_state;
 		break;
+#ifdef CRYPTO
 	case 'c':
 		/* fill out discipline members */
 		sd->sd_type = SR_MD_RAIDC;
@@ -930,6 +931,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_set_chunk_state = sr_raid_set_chunk_state;
 		sd->sd_set_vol_state = sr_raid_set_vol_state;
 		break;
+#endif
 	default:
 		printf("default %d\n", bc->bc_level);
 		goto unwind;
@@ -2889,6 +2891,7 @@ sr_raid1_recreate_wu(struct sr_workunit *wu)
 	} while (wup);
 }
 
+#ifdef CRYPTO
 /* RAID crypto functions */
 struct cryptop *
 sr_raidc_getcryptop(struct sr_workunit *wu, int encrypt)
@@ -3300,3 +3303,4 @@ sr_raidc_intr2(struct cryptop *crp)
 
 	return (0);
 }
+#endif
