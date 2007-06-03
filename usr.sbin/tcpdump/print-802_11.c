@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.9 2007/03/27 12:39:24 claudio Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.10 2007/06/03 23:47:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -204,21 +204,21 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 	buf = (u_int8_t *)wh;
 	frm = (u_int8_t *)&wh[1];
 
-	TCHECK2(frm, 8);
+	TCHECK2(*frm, 8);
 	bcopy(frm, &tstamp, sizeof(u_int64_t));
 	frm += 8;
 
 	if (vflag > 1)
 		printf(", timestamp %llu", letoh64(tstamp));
 
-	TCHECK2(frm, 2);
+	TCHECK2(*frm, 2);
 	bcopy(frm, &bintval, sizeof(u_int16_t));
 	frm += 2;
 
 	if (vflag > 1)
 		printf(", interval %u", letoh16(bintval));
 
-	TCHECK2(frm, 2);
+	TCHECK2(*frm, 2);
 	bcopy(frm, &capinfo, sizeof(u_int16_t));
 	frm += 2;
 
