@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.279 2007/05/31 02:39:33 robert Exp $
+$OpenBSD: usbdevs,v 1.280 2007/06/03 23:48:27 djm Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -504,6 +504,7 @@ vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
+vendor WCH		0x4348	QinHeng Electronics
 vendor ACEECA		0x4766	Aceeca
 vendor AVERATEC		0x50c2	Averatec
 vendor SWEEX		0x5173	Sweex
@@ -2338,6 +2339,9 @@ product OPTION VODAFONEMC3G	0x5000	Vodafone Mobile Connect 3G
 product OPTION GT3GFUSION	0x6000	GlobeTrotter 3G FUSION
 product OPTION GT3GQUAD		0x6300	GlobeTrotter 3G QUAD
 product OPTION GT3GQUADPLUS		0x6600	GlobeTrotter 3G QUAD PLUS
+
+/* WCH/QinHeng Electronics */
+product WCH CH341		0x5523	CH341 serial/parallel
 
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
