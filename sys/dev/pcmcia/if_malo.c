@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.9 2007/06/01 23:43:32 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.10 2007/06/03 11:04:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -36,6 +36,7 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/if_llc.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -86,14 +87,11 @@ void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
 int	cmalo_cmd_rsp_hwspec(struct malo_softc *);
 int	cmalo_cmd_set_reset(struct malo_softc *);
-int	cmalo_cmd_get_status(struct malo_softc *);
-int	cmalo_cmd_rsp_status(struct malo_softc *);
 int	cmalo_cmd_set_radio(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_channel(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_txpower(struct malo_softc *, int16_t);
 int	cmalo_cmd_set_antenna(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_macctrl(struct malo_softc *);
-int	cmalo_cmd_set_macaddr(struct malo_softc *);
 int	cmalo_cmd_request(struct malo_softc *, uint16_t, int);
 int	cmalo_cmd_response(struct malo_softc *);
 
@@ -693,7 +691,7 @@ cmalo_rx(struct malo_softc *sc)
 	uint16_t psize, *uc;
 	int i;
 
-	/* read the whole RX packet */
+	/* read the whole RX packet which is always 802.3 */
 	psize = MALO_READ_2(sc, MALO_REG_DATA_READ_LEN);
 	uc = (uint16_t *)sc->sc_data;
 	for (i = 0; i < psize / 2; i++)
@@ -703,6 +701,7 @@ cmalo_rx(struct malo_softc *sc)
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DATA_DL_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DATA_DL_OVER);
 
+	/* access RX packet descriptor */
 	rxdesc = (struct malo_rx_desc *)sc->sc_data;
 
 	DPRINTF(2, "RX status=%d, pkglen=%d, pkgoffset=%d\n",
@@ -711,6 +710,12 @@ cmalo_rx(struct malo_softc *sc)
 	if (rxdesc->status != MALO_RX_STATUS_OK)
 		/* RX packet is not OK */
 		return;
+
+	/* remove the LLC / SNAP header */
+	data = sc->sc_data + rxdesc->pkgoffset;
+	i = (ETHER_ADDR_LEN * 2) + sizeof(struct llc);
+	bcopy(data + i, data + (ETHER_ADDR_LEN * 2), rxdesc->pkglen - i);
+	rxdesc->pkglen -= sizeof(struct llc);
 
 	/* prepare mbuf */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -735,8 +740,10 @@ cmalo_rx(struct malo_softc *sc)
 #endif
 
 	/* push the frame up to the network stack if not in monitor mode */
-	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 		ether_input_mbuf(ifp, m);
+		ifp->if_ipackets++;
+	}
 
 	m_freem(m);
 }
@@ -823,44 +830,6 @@ cmalo_cmd_set_reset(struct malo_softc *sc)
 	/* process command request */
 	if (cmalo_cmd_request(sc, psize, 1) != 0)
 		return (EIO);
-
-	return (0);
-}
-
-int
-cmalo_cmd_get_status(struct malo_softc *sc)
-{
-	struct malo_cmd_header *hdr = sc->sc_cmd;
-	uint16_t psize;
-
-	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
-	psize = sizeof(*hdr);
-
-	hdr->cmd = htole16(MALO_CMD_STATUS);
-	hdr->size = 0;
-	hdr->seqnum = htole16(1);
-	hdr->result = 0;
-
-	/* process command request */
-	if (cmalo_cmd_request(sc, psize, 0) != 0)
-		return (EIO);
-
-	/* process command repsonse */
-	cmalo_cmd_response(sc);
-
-	return (0);
-}
-
-int
-cmalo_cmd_rsp_status(struct malo_softc *sc)
-{
-	struct malo_cmd_header *hdr = sc->sc_cmd;
-	struct malo_cmd_body_status *body;
-
-	body = (struct malo_cmd_body_status *)(hdr + 1);
-
-	printf("%s: FW status = 0x%04x, MAC status = 0x%04x\n",
-	    body->fw_status, body->mac_status);
 
 	return (0);
 }
@@ -1026,39 +995,6 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 }
 
 int
-cmalo_cmd_set_macaddr(struct malo_softc *sc)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct malo_cmd_header *hdr = sc->sc_cmd;
-	struct malo_cmd_body_macaddr *body;
-	uint16_t psize;
-	int i;
-
-	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
-	psize = sizeof(*hdr) + sizeof(*body);
-
-	hdr->cmd = htole16(MALO_CMD_MACADDR);
-	hdr->size = htole16(sizeof(*body));
-	hdr->seqnum = htole16(1);
-	hdr->result = 0;
-	body = (struct malo_cmd_body_macaddr *)(hdr + 1);
-
-	body->action = htole16(1);
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		body->macaddr[i] = ic->ic_myaddr[i];
-
-	/* process command request */
-	if (cmalo_cmd_request(sc, psize, 0) != 0)
-		return (EIO);
-
-	/* process command repsonse */
-	cmalo_cmd_response(sc);
-
-	return (0);
-}
-
-int
 cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 {
 	uint16_t *uc;
@@ -1140,11 +1076,6 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_RESET:
 		/* reset will not send back a response */
 		break;
-	case MALO_CMD_STATUS:
-		DPRINTF(1, "%s: got status cmd response\n",
-		    sc->sc_dev.dv_xname);
-		cmalo_cmd_rsp_status(sc);
-		break;
 	case MALO_CMD_RADIO:
 		/* do nothing */
 		DPRINTF(1, "%s: got radio cmd response\n",
@@ -1168,11 +1099,6 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_MACCTRL:
 		/* do nothing */
 		DPRINTF(1, "%s: got macctrl cmd response\n",
-		    sc->sc_dev.dv_xname);
-		break;
-	case MALO_CMD_MACADDR:
-		/* do nothing */
-		DPRINTF(1, "%s: got macaddr cmd response\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	default:
