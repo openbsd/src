@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.4 2007/06/02 01:30:37 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.5 2007/06/03 21:57:38 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -73,6 +73,7 @@ int	sbt_intr(void *);
 
 int	sbt_enable(struct hci_unit *);
 void	sbt_disable(struct hci_unit *);
+void	sbt_start(struct hci_unit *, struct ifqueue *, int);
 void	sbt_start_cmd(struct hci_unit *);
 void	sbt_start_acl(struct hci_unit *);
 void	sbt_start_sco(struct hci_unit *);
@@ -383,21 +384,37 @@ sbt_disable(struct hci_unit *unit)
 }
 
 void
-sbt_start_cmd(struct hci_unit *unit)
+sbt_start(struct hci_unit *unit, struct ifqueue *q, int xmit)
 {
 	struct sbt_softc *sc = (struct sbt_softc *)unit->hci_softc;
 	struct mbuf *m;
 	int len;
+#ifdef SBT_DEBUG
+	const char *what;
+#endif
 
-	if (sc->sc_dying || IF_IS_EMPTY(&unit->hci_cmdq))
+	if (sc->sc_dying || IF_IS_EMPTY(q))
 		return;
 
-	IF_DEQUEUE(&unit->hci_cmdq, m);
+	IF_DEQUEUE(q, m);
 
-	DPRINTF(("%s: xmit CMD packet (%d bytes)\n",
-	    unit->hci_devname, m->m_pkthdr.len));
+#ifdef SBT_DEBUG
+	switch (xmit) {
+	case BTF_XMIT_CMD:
+		what = "CMD";
+		break;
+	case BTF_XMIT_ACL:
+		what = "ACL";
+		break;
+	case BTF_XMIT_SCL:
+		what = "SCO";
+		break;
+	}
+	printf("%s: xmit %s packet (%d bytes)\n",
+	    unit->hci_devname, m->m_pkthdr.len);
+#endif
 
-	unit->hci_flags |= BTF_XMIT_CMD;
+	unit->hci_flags |= xmit;
 
 	len = m->m_pkthdr.len;
 	m_copydata(m, 0, len, sc->sc_buf);
@@ -407,18 +424,23 @@ sbt_start_cmd(struct hci_unit *unit)
 		printf("%s: sbt_write_packet failed\n",
 		    unit->hci_devname);
 
-	unit->hci_flags &= ~BTF_XMIT_CMD;
+	unit->hci_flags &= ~xmit;
+}
+
+void
+sbt_start_cmd(struct hci_unit *unit)
+{
+	sbt_start(unit, &unit->hci_cmdq, BTF_XMIT_ACL);
 }
 
 void
 sbt_start_acl(struct hci_unit *unit)
 {
-	printf("sbt_start_acl\n");
+	sbt_start(unit, &unit->hci_acltxq, BTF_XMIT_ACL);
 }
 
 void
 sbt_start_sco(struct hci_unit *unit)
 {
-	printf("sbt_start_sco\n");
+	sbt_start(unit, &unit->hci_scotxq, BTF_XMIT_SCO);
 }
-
