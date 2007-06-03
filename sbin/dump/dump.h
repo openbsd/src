@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.15 2007/04/10 04:45:37 moritz Exp $	*/
+/*	$OpenBSD: dump.h,v 1.16 2007/06/03 20:16:08 millert Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -31,9 +31,6 @@
  *
  *	@(#)dump.h	8.1 (Berkeley) 6/5/93
  */
-
-#define MAXINOPB	(MAXBSIZE / sizeof(struct ufs1_dinode))
-#define MAXNINDIR	(MAXBSIZE / sizeof(daddr_t))
 
 /*
  * Dump maps used to describe what is to be dumped.
@@ -90,31 +87,34 @@ int	tp_bshift;	/* log2(TP_BSIZE) */
 void	broadcast(char *message);
 time_t	do_stats(void);
 void	lastdump(int arg);	/* int should be char */
-void	msg(const char *fmt, ...);
-void	msgtail(const char *fmt, ...);
+void	msg(const char *fmt, ...)
+    __attribute__((__format__ (printf, 1, 2)));
+void	msgtail(const char *fmt, ...)
+    __attribute__((__format__ (printf, 1, 2)));
 int	query(char *question);
 void	quit(const char *fmt, ...);
 void	statussig(int);
 void	timeest(void);
 
 /* mapping routines */
-struct	ufs1_dinode;
-off_t	blockest(struct ufs1_dinode *dp);
+union	dinode;
+off_t	blockest(union dinode *dp);
 void	mapfileino(ino_t, off_t *, int *);
 int	mapfiles(ino_t maxino, off_t *tapesize, char *disk, char * const *dirv);
 int	mapdirs(ino_t maxino, off_t *tapesize);
 
 /* file dumping routines */
-void	blksout(daddr_t *blkp, int frags, ino_t ino);
-void	bread(daddr_t blkno, char *buf, int size);	
-void	dumpino(struct ufs1_dinode *dp, ino_t ino);
+void	ufs1_blksout(int32_t *blkp, int frags, ino_t ino);
+void	ufs2_blksout(daddr64_t *blkp, int frags, ino_t ino);
+void	bread(daddr64_t blkno, char *buf, int size);	
+void	dumpino(union dinode *dp, ino_t ino);
 void	dumpmap(char *map, int type, ino_t ino);
 void	writeheader(ino_t ino);
 
 /* tape writing routines */
 int	alloctape(void);
 void	close_rewind(void);
-void	dumpblock(daddr_t blkno, int size);
+void	dumpblock(daddr64_t blkno, int size);
 void	startnewtape(int top);
 void	trewind(void);
 void	writerec(char *dp, int isspcl);
@@ -124,7 +124,7 @@ void	dumpabort(int signo);
 void	getfstab(void);
 
 char	*rawname(char *cp);
-struct	ufs1_dinode *getino(ino_t inum);
+union	dinode *getino(ino_t inum, int *mode);
 
 /* rdump routines */
 #ifdef RDUMP

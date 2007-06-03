@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.h,v 1.6 2004/03/31 22:08:32 henning Exp $	*/
+/*	$OpenBSD: restore.h,v 1.7 2007/06/03 20:16:08 millert Exp $	*/
 /*	$NetBSD: restore.h,v 1.8 1997/07/01 05:37:54 lukem Exp $	*/
 
 /*
@@ -105,10 +105,21 @@ struct entry {
  * The entry describes the next file available on the tape
  */
 struct context {
-	char	*name;		/* name of file */
+	short	action;		/* action being taken on this file */
+	mode_t	mode;		/* mode of file */
 	ino_t	ino;		/* inumber of file */
-	struct	ufs1_dinode *dip;	/* pointer to inode */
-	char	action;		/* action being taken on this file */
+	uid_t	uid;		/* file owner */
+	gid_t	gid;		/* file group */
+	int	file_flags;	/* status flags (chflags) */
+	int	rdev;		/* device number of file */
+	time_t	atime_sec;	/* access time seconds */
+	time_t	mtime_sec;	/* modified time seconds */
+	time_t	birthtime_sec;	/* creation time seconds */
+	int	atime_nsec;	/* access time nanoseconds */
+	int	mtime_nsec;	/* modified time nanoseconds */
+	int	birthtime_nsec;	/* creation time nanoseconds */
+	off_t	size;		/* size of file */
+	char	*name;		/* name of file */
 } curfile;
 /* actions */
 #define	USING	1	/* extracting from the tape */

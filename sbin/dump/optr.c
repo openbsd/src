@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.29 2007/02/20 01:44:16 ray Exp $	*/
+/*	$OpenBSD: optr.c,v 1.30 2007/06/03 20:16:08 millert Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -34,13 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static const char rcsid[] = "$OpenBSD: optr.c,v 1.29 2007/02/20 01:44:16 ray Exp $";
+static const char rcsid[] = "$OpenBSD: optr.c,v 1.30 2007/06/03 20:16:08 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/wait.h>
 #include <sys/time.h>
+
+#include <ufs/ufs/dinode.h>
 
 #include <errno.h>
 #include <fstab.h>

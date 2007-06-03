@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2007/03/04 22:36:54 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2007/06/03 20:16:08 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.40 2007/03/04 22:36:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.41 2007/06/03 20:16:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,10 +69,6 @@ static const char rcsid[] = "$OpenBSD: main.c,v 1.40 2007/03/04 22:36:54 deraadt
 #include "dump.h"
 #include "pathnames.h"
 
-#ifndef SBOFF
-#define SBOFF (SBLOCK * DEV_BSIZE)
-#endif
-
 int	notify = 0;	/* notify operator flag */
 int	blockswritten = 0;	/* number of blocks written on current tape */
 int	tapeno = 0;	/* current tape number */
@@ -84,6 +80,11 @@ long	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
 int	maxbsize = 64*1024;	/* XXX MAXBSIZE from sys/param.h */
 
+/*
+ * Possible superblock locations ordered from most to least likely.
+ */
+static int sblock_try[] = SBLOCKSEARCH;
+
 static long numarg(char *, long, long);
 static void obsolete(int *, char **[]);
 static void usage(void);
@@ -93,20 +94,19 @@ main(int argc, char *argv[])
 {
 	ino_t ino;
 	int dirty;
-	struct ufs1_dinode *dp;
+	union dinode *dp;
 	struct	fstab *dt;
 	char *map;
-	int ch;
+	int ch, mode;
 	struct tm then;
 	struct statfs fsbuf;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
-	time_t tnow;
+	time_t t;
 	int dirlist;
 	char *toplevel, *str, *mount_point = NULL;
 
-	spcl.c_date = 0;
-	(void)time((time_t *)&spcl.c_date);
+	spcl.c_date = (int64_t)time(NULL);
 
 	tsize = 0;	/* Default later, based on 'c' option for cart tapes */
 	if ((tape = getenv("TAPE")) == NULL)
@@ -173,9 +173,9 @@ main(int argc, char *argv[])
 			str = strptime(optarg, "%a %b %e %H:%M:%S %Y", &then);
 			then.tm_isdst = -1;
 			if (str == NULL || (*str != '\n' && *str != '\0'))
-				spcl.c_ddate = (time_t) -1;
+				spcl.c_ddate = -1;
 			else
-				spcl.c_ddate = mktime(&then);
+				spcl.c_ddate = (int64_t)mktime(&then);
 			if (spcl.c_ddate < 0) {
 				(void)fprintf(stderr, "bad time \"%s\"\n",
 				    optarg);
@@ -378,10 +378,12 @@ main(int argc, char *argv[])
 	if (!Tflag)
 	        getdumptime();		/* /etc/dumpdates snarfed */
 
+	t = (time_t)spcl.c_date;
 	msg("Date of this level %c dump: %s", level,
-		spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
+		t == 0 ? "the epoch\n" : ctime(&t));
+	t = (time_t)spcl.c_ddate;
  	msg("Date of last level %c dump: %s", lastlevel,
-		spcl.c_ddate == 0 ? "the epoch\n" : ctime(&spcl.c_ddate));
+		t == 0 ? "the epoch\n" : ctime(&t));
 	msg("Dumping %s ", disk);
 	if (mount_point != NULL)
 		msgtail("(%s) ", mount_point);
@@ -396,9 +398,18 @@ main(int argc, char *argv[])
 	}
 	sync();
 	sblock = (struct fs *)sblock_buf;
-	bread(SBOFF, (char *) sblock, SBSIZE);
-	if (sblock->fs_magic != FS_MAGIC)
-		quit("bad sblock magic number\n");
+	for (i = 0; sblock_try[i] != -1; i++) {
+		ssize_t n = pread(diskfd, sblock, SBLOCKSIZE,
+		    (off_t)sblock_try[i]);
+		if (n == SBLOCKSIZE && (sblock->fs_magic == FS_UFS1_MAGIC ||
+		     (sblock->fs_magic == FS_UFS2_MAGIC &&
+		      sblock->fs_sblockloc == sblock_try[i])) &&
+		    sblock->fs_bsize <= MAXBSIZE &&
+		    sblock->fs_bsize >= sizeof(struct fs))
+			break;
+	}
+	if (sblock_try[i] == -1)
+		quit("Cannot find filesystem superblock\n");
 	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
 	dev_bshift = ffs(dev_bsize) - 1;
 	if (dev_bsize != (1 << dev_bshift))
@@ -407,7 +418,8 @@ main(int argc, char *argv[])
 	if (TP_BSIZE != (1 << tp_bshift))
 		quit("TP_BSIZE (%d) is not a power of 2\n", TP_BSIZE);
 #ifdef FS_44INODEFMT
-	if (sblock->fs_inodefmt >= FS_44INODEFMT)
+	if (sblock->fs_magic == FS_UFS2_MAGIC ||
+	    sblock->fs_inodefmt >= FS_44INODEFMT)
 		spcl.c_flags |= DR_NEWINODEFMT;
 #endif
 	maxino = sblock->fs_ipg * sblock->fs_ncg;
@@ -432,7 +444,7 @@ main(int argc, char *argv[])
 
 	if (pipeout || unlimited) {
 		tapesize += 10;	/* 10 trailer blocks */
-		msg("estimated %qd tape blocks.\n", tapesize);
+		msg("estimated %lld tape blocks.\n", tapesize);
 	} else {
 		double fetapes;
 
@@ -472,7 +484,7 @@ main(int argc, char *argv[])
 		tapesize += (etapes - 1) *
 			(howmany(mapsize * sizeof(char), TP_BSIZE) + 1);
 		tapesize += etapes + 10;	/* headers + 10 trailer blks */
-		msg("estimated %qd tape blocks on %3.2f tape(s).\n",
+		msg("estimated %lld tape blocks on %3.2f tape(s).\n",
 		    tapesize, fetapes);
 	}
 
@@ -499,16 +511,14 @@ main(int argc, char *argv[])
 		/*
 		 * Skip directory inodes deleted and maybe reallocated
 		 */
-		dp = getino(ino);
-		if ((dp->di_mode & IFMT) != IFDIR)
+		dp = getino(ino, &mode);
+		if (mode != IFDIR)
 			continue;
 		(void)dumpino(dp, ino);
 	}
 
 	msg("dumping (Pass IV) [regular files]\n");
 	for (map = dumpinomap, ino = 1; ino < maxino; ino++) {
-		int mode;
-
 		if (((ino - 1) % NBBY) == 0)	/* map is offset by 1 */
 			dirty = *map++;
 		else
@@ -518,8 +528,7 @@ main(int argc, char *argv[])
 		/*
 		 * Skip inodes deleted and reallocated as directories.
 		 */
-		dp = getino(ino);
-		mode = dp->di_mode & IFMT;
+		dp = getino(ino, &mode);
 		if (mode == IFDIR)
 			continue;
 		(void)dumpino(dp, ino);
@@ -529,15 +538,16 @@ main(int argc, char *argv[])
 	for (i = 0; i < ntrec; i++)
 		writeheader(maxino - 1);
 	if (pipeout)
-		msg("%ld tape blocks\n", spcl.c_tapea);
+		msg("%lld tape blocks\n", spcl.c_tapea);
 	else
-		msg("%ld tape blocks on %d volume%s\n",
+		msg("%lld tape blocks on %d volume%s\n",
 		    spcl.c_tapea, spcl.c_volume,
 		    (spcl.c_volume == 1) ? "" : "s");
-	tnow = do_stats();
+	t = (time_t)spcl.c_date;
 	msg("Date of this level %c dump: %s", level,
-	    spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
-	msg("Date this dump completed:  %s", ctime(&tnow));
+	    t == 0 ? "the epoch\n" : ctime(&t));
+	t = do_stats();
+	msg("Date this dump completed:  %s", ctime(&t));
 	msg("Average transfer rate: %ld KB/s\n", xferrate / tapeno);
 	putdumptime();
 	trewind();

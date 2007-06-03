@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.28 2007/03/04 22:36:54 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.29 2007/06/03 20:16:08 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.28 2007/03/04 22:36:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.29 2007/06/03 20:16:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static const char rcsid[] = "$OpenBSD: tape.c,v 1.28 2007/03/04 22:36:54 deraadt
 #include "pathnames.h"
 
 int	writesize;		/* size of malloc()ed buffer for tape */
-long	lastspclrec = -1;	/* tape block number of last written header */
+int64_t	lastspclrec = -1;	/* tape block number of last written header */
 int	trecno = 0;		/* next record to write in current block */
 extern	long blocksperfile;	/* number of blocks per output file */
 long	blocksthisvol;		/* number of blocks on current output file */
@@ -87,21 +87,21 @@ static	void rollforward(void);
  * The following structure defines the instruction packets sent to slaves.
  */
 struct req {
-	daddr_t dblk;
+	daddr64_t dblk;
 	int count;
 };
 int reqsiz;
 
 #define SLAVES 3		/* 1 slave writing, 1 reading, 1 for slack */
 struct slave {
-	int tapea;		/* header number at start of this chunk */
+	int64_t tapea;		/* header number at start of this chunk */
+	int64_t firstrec;	/* record number of this block */
 	int count;		/* count to next header (used for TS_TAPE */
 				/* after EOT) */
 	int inode;		/* inode that we are currently dealing with */
 	int fd;			/* FD for this slave */
 	pid_t pid;		/* PID for this slave */
 	int sent;		/* 1 == we've sent this slave requests */
-	int firstrec;		/* record number of this block */
 	char (*tblock)[TP_BSIZE]; /* buffer for data blocks */
 	struct req *req;	/* buffer for requests */
 } slaves[SLAVES+1];
@@ -110,7 +110,7 @@ struct slave *slp;
 char	(*nextblock)[TP_BSIZE];
 
 static time_t tstart_volume;	/* time of volume start */
-static int tapea_volume;	/* value of spcl.c_tapea at volume start */
+static int64_t tapea_volume;	/* value of spcl.c_tapea at volume start */
 
 pid_t master;		/* pid of master, for sending error signals */
 int tenths;		/* length of tape used per block written */
@@ -160,7 +160,7 @@ void
 writerec(char *dp, int isspcl)
 {
 
-	slp->req[trecno].dblk = (daddr_t)0;
+	slp->req[trecno].dblk = (daddr64_t)0;
 	slp->req[trecno].count = 1;
 	*(union u_spcl *)(*(nextblock)++) = *(union u_spcl *)dp;
 	if (isspcl)
@@ -172,9 +172,10 @@ writerec(char *dp, int isspcl)
 }
 
 void
-dumpblock(daddr_t blkno, int size)
+dumpblock(daddr64_t blkno, int size)
 {
-	int avail, tpblks, dblkno;
+	int avail, tpblks;
+	daddr64_t dblkno;
 
 	dblkno = fsbtodb(sblock, blkno);
 	tpblks = size >> tp_bshift;
@@ -203,7 +204,7 @@ tperror(int signo)
 		quit("Cannot recover\n");
 		/* NOTREACHED */
 	}
-	msg("write error %d blocks into volume %d\n", blocksthisvol, tapeno);
+	msg("write error %ld blocks into volume %d\n", blocksthisvol, tapeno);
 	broadcast("DUMP WRITE ERROR!\n");
 	if (!query("Do you want to restart?"))
 		dumpabort(0);
@@ -240,7 +241,7 @@ do_stats(void)
 	if (ttaken > 0) {
 		msg("Volume %d took %d:%02d:%02d\n", tapeno,
 		    ttaken / 3600, (ttaken % 3600) / 60, ttaken % 60);
-		msg("Volume %d transfer rate: %ld KB/s\n", tapeno,
+		msg("Volume %d transfer rate: %d KB/s\n", tapeno,
 		    blocks / ttaken);
 		xferrate += blocks / ttaken;
 	}
@@ -267,7 +268,7 @@ statussig(int signo)
 	deltat = tstart_writing - tnow + (1.0 * (tnow - tstart_writing))
 		/ blockswritten * tapesize;
 	(void)snprintf(msgbuf, sizeof(msgbuf),
-	    "dump: %s %3.2f%% done at %d KB/s, finished in %d:%02d\n",
+	    "dump: %s %3.2f%% done at %lld KB/s, finished in %d:%02d\n",
 	    tape, (blockswritten * 100.0) / tapesize,
 	    (spcl.c_tapea - tapea_volume) / (tnow - tstart_volume),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
@@ -279,7 +280,7 @@ static void
 flushtape(void)
 {
 	int i, blks, got;
-	long lastfirstrec;
+	int64_t lastfirstrec;
 
 	int siz = (char *)nextblock - (char *)slp->req;
 
@@ -445,7 +446,8 @@ rollforward(void)
 {
 	struct req *p, *q, *prev;
 	struct slave *tslp;
-	int i, size, savedtapea, got;
+	int i, size, got;
+	int64_t savedtapea;
 	union u_spcl *ntb, *otb;
 	tslp = &slaves[SLAVES];
 	ntb = (union u_spcl *)tslp->tblock[1];
@@ -681,9 +683,11 @@ restore_check_point:
 		spcl.c_firstrec = slp->firstrec;
 		spcl.c_volume++;
 		spcl.c_type = TS_TAPE;
-		spcl.c_flags |= DR_NEWHEADER;
+		if (sblock->fs_magic != FS_UFS2_MAGIC)
+			spcl.c_flags |= DR_NEWHEADER;
 		writeheader((ino_t)slp->inode);
-		spcl.c_flags &=~ DR_NEWHEADER;
+		if (sblock->fs_magic != FS_UFS2_MAGIC)
+			spcl.c_flags &=~ DR_NEWHEADER;
 		msg("Volume %d started at: %s", tapeno, ctime(&tstart_volume));
 		if (tapeno > 1)
 			msg("Volume %d begins with blocks from inode %d\n",
@@ -795,7 +799,7 @@ killall(void)
 static void
 doslave(int cmd, int slave_number)
 {
-	int nread, nextslave, size, wrote, eot_count;
+	int nread, nextslave, size, wrote = 0, eot_count;
 	sigset_t nsigset, osigset;
 
 	/*

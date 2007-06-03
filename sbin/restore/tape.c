@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.31 2005/06/14 19:46:05 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.32 2007/06/03 20:16:08 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.31 2005/06/14 19:46:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.32 2007/06/03 20:16:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,9 +86,36 @@ static size_t	pathlen;
 
 int		oldinofmt;	/* old inode format conversion required */
 int		Bcvt;		/* Swap Bytes (for CCI or sun) */
-static int	Qcvt;		/* Swap quads (for sun) */
 
 #define	FLUSHTAPEBUF()	blkcnt = ntrec + 1
+
+union u_ospcl {
+	char dummy[TP_BSIZE];
+	struct	s_ospcl {
+		int32_t   c_type;
+		int32_t   c_date;
+		int32_t   c_ddate;
+		int32_t   c_volume;
+		int32_t   c_tapea;
+		u_int16_t c_inumber;
+		int32_t   c_magic;
+		int32_t   c_checksum;
+		struct odinode {
+			unsigned short odi_mode;
+			u_int16_t odi_nlink;
+			u_int16_t odi_uid;
+			u_int16_t odi_gid;
+			int32_t   odi_size;
+			int32_t   odi_rdev;
+			char      odi_addr[36];
+			int32_t   odi_atime;
+			int32_t   odi_mtime;
+			int32_t   odi_ctime;
+		} c_odinode;
+		int32_t c_count;
+		char    c_addr[256];
+	} s_ospcl;
+};
 
 static void	 accthdr(struct s_spcl *);
 static int	 checksum(int *);
@@ -98,6 +125,7 @@ static int	 gethead(struct s_spcl *);
 static void	 readtape(char *);
 static void	 setdumpnum(void);
 static void	 swap_header(struct s_spcl *);
+static void	 swap_old_header(struct s_ospcl *);
 static void	 terminateinput(void);
 static void	 xtrfile(char *, size_t);
 static void	 xtrlnkfile(char *, size_t);
@@ -198,7 +226,8 @@ setup(void)
 		(void)fputs("Converting to new file system format.\n", stderr);
 	}
 	if (pipein) {
-		endoftapemark.s_spcl.c_magic = cvtflag ? OFS_MAGIC : NFS_MAGIC;
+		endoftapemark.s_spcl.c_magic = cvtflag ? OFS_MAGIC :
+		    FS_UFS2_MAGIC;
 		endoftapemark.s_spcl.c_type = TS_END;
 		ip = (int *)&endoftapemark;
 		j = sizeof(union u_spcl) / sizeof(int);
@@ -210,8 +239,8 @@ setup(void)
 	}
 	if (vflag || command == 't')
 		printdumpinfo();
-	dumptime = spcl.c_ddate;
-	dumpdate = spcl.c_date;
+	dumptime = (time_t)spcl.c_ddate;
+	dumpdate = (time_t)spcl.c_date;
 	if (stat(".", &stbuf) < 0)
 		err(1, "cannot stat .");
 	if (stbuf.st_blksize > 0 && stbuf.st_blksize < TP_BSIZE )
@@ -257,7 +286,7 @@ setup(void)
 void
 getvol(long nextvol)
 {
-	long newvol = 0, savecnt, wantnext, i;
+	long newvol = 0, savecnt = 0, wantnext = 0, i;
 	union u_spcl tmpspcl;
 #	define tmpbuf tmpspcl.s_spcl
 	char buf[TP_BSIZE];
@@ -364,8 +393,8 @@ gethdr:
 		goto again;
 	}
 	if (tmpbuf.c_date != dumpdate || tmpbuf.c_ddate != dumptime) {
-		fprintf(stderr, "Wrong dump date\n\tgot: %s",
-			ctime(&tmpbuf.c_date));
+		time_t t = (time_t)tmpbuf.c_date;
+		fprintf(stderr, "Wrong dump date\n\tgot: %s", ctime(&t));
 		fprintf(stderr, "\twanted: %s", ctime(&dumpdate));
 		volno = 0;
 		goto again;
@@ -379,7 +408,7 @@ gethdr:
  	 * If coming to this volume at random, skip to the beginning
  	 * of the next record.
  	 */
-	Dprintf(stdout, "read %ld recs, tape starts with %d\n",
+	Dprintf(stdout, "read %ld recs, tape starts with %lld\n",
 		tpblksread, tmpbuf.c_firstrec);
  	if (tmpbuf.c_type == TS_TAPE && (tmpbuf.c_flags & DR_NEWHEADER)) {
  		if (!wantnext) {
@@ -430,7 +459,7 @@ terminateinput(void)
 	}
 	curfile.name = "<name unknown>";
 	curfile.action = UNKNOWN;
-	curfile.dip = NULL;
+	curfile.mode = 0;
 	curfile.ino = maxino;
 	if (gettingfile) {
 		gettingfile = 0;
@@ -465,9 +494,13 @@ setdumpnum(void)
 void
 printdumpinfo(void)
 {
-	fprintf(stdout, "Dump   date: %s", ctime(&spcl.c_date));
+	time_t t;
+
+	t = (time_t)spcl.c_date;
+	fprintf(stdout, "Dump   date: %s", ctime(&t));
+	t = (time_t)spcl.c_ddate;
 	fprintf(stdout, "Dumped from: %s",
-	    (spcl.c_ddate == 0) ? "the epoch\n" : ctime(&spcl.c_ddate));
+	    (spcl.c_ddate == 0) ? "the epoch\n" : ctime(&t));
 	if (spcl.c_host[0] == '\0')
 		return;
 	fprintf(stderr, "Level %d dump of %s on %s:%s\n",
@@ -479,18 +512,31 @@ int
 extractfile(char *name)
 {
 	u_int flags;
+	uid_t uid;
+	gid_t gid;
 	mode_t mode;
-	struct timeval timep[2];
+	struct timeval mtimep[2], ctimep[2];
 	struct entry *ep;
+	int setbirth;
 
 	curfile.name = name;
 	curfile.action = USING;
-	timep[0].tv_sec = curfile.dip->di_atime;
-	timep[0].tv_usec = curfile.dip->di_atimensec / 1000;
-	timep[1].tv_sec = curfile.dip->di_mtime;
-	timep[1].tv_usec = curfile.dip->di_mtimensec / 1000;
-	mode = curfile.dip->di_mode;
-	flags = curfile.dip->di_flags;
+	mtimep[0].tv_sec = curfile.atime_sec;
+	mtimep[0].tv_usec = curfile.atime_nsec / 1000;
+	mtimep[1].tv_sec = curfile.mtime_sec;
+	mtimep[1].tv_usec = curfile.mtime_nsec / 1000;
+
+	setbirth = curfile.birthtime_sec != 0;
+	if (setbirth) {
+		ctimep[0].tv_sec = curfile.atime_sec;
+		ctimep[0].tv_usec = curfile.atime_nsec / 1000;
+		ctimep[1].tv_sec = curfile.birthtime_sec;
+		ctimep[1].tv_usec = curfile.birthtime_nsec / 1000;
+	}
+	uid = curfile.uid;
+	gid = curfile.gid;
+	mode = curfile.mode;
+	flags = curfile.file_flags;
 	switch (mode & IFMT) {
 
 	default:
@@ -515,10 +561,6 @@ extractfile(char *name)
 		return (genliteraldir(name, curfile.ino));
 
 	case IFLNK: {
-			/* Gotta save these, linkit() changes curfile. */
-			uid_t luid = curfile.dip->di_uid;
-			gid_t lgid = curfile.dip->di_gid;
-
 			lnkbuf[0] = '\0';
 			pathlen = 0;
 			getfile(xtrlnkfile, xtrlnkskip);
@@ -530,7 +572,7 @@ extractfile(char *name)
 			}
 			if (linkit(lnkbuf, name, SYMLINK) == FAIL)
 				return (FAIL);
-			(void)lchown(name, luid, lgid);
+			(void)lchown(name, uid, gid);
 			return (GOOD);
 		}
 
@@ -541,16 +583,18 @@ extractfile(char *name)
 			skipfile();
 			return (GOOD);
 		}
-		if (mknod(name, mode, (int)curfile.dip->di_rdev) < 0) {
+		if (mknod(name, mode, (int)curfile.rdev) < 0) {
 			warn("%s: cannot create special file", name);
 			skipfile();
 			return (FAIL);
 		}
-		(void)chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
+		(void)chown(name, uid, gid);
 		(void)chmod(name, mode);
 		(void)chflags(name, flags);
 		skipfile();
-		utimes(name, timep);
+		if (setbirth)
+			(void)utimes(name, ctimep);
+		(void)utimes(name, mtimep);
 		return (GOOD);
 
 	case IFIFO:
@@ -564,11 +608,13 @@ extractfile(char *name)
 			skipfile();
 			return (FAIL);
 		}
-		(void)chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
+		(void)chown(name, uid, gid);
 		(void)chmod(name, mode);
 		(void)chflags(name, flags);
 		skipfile();
-		utimes(name, timep);
+		if (setbirth)
+			(void)utimes(name, ctimep);
+		(void)utimes(name, mtimep);
 		return (GOOD);
 
 	case IFREG:
@@ -583,12 +629,14 @@ extractfile(char *name)
 			skipfile();
 			return (FAIL);
 		}
-		(void)fchown(ofile, curfile.dip->di_uid, curfile.dip->di_gid);
+		(void)fchown(ofile, curfile.uid, curfile.gid);
 		(void)fchmod(ofile, mode);
 		(void)fchflags(ofile, flags);
 		getfile(xtrfile, xtrskip);
 		(void)close(ofile);
-		utimes(name, timep);
+		if (setbirth)
+			(void)utimes(name, ctimep);
+		(void)utimes(name, mtimep);
 		return (GOOD);
 	}
 	/* NOTREACHED */
@@ -630,7 +678,7 @@ getfile(void (*fill)(char *, size_t), void (*skip)(char *, size_t))
 {
 	int i;
 	volatile int curblk = 0;
-	volatile off_t size = spcl.c_dinode.di_size;
+	volatile off_t size = spcl.c_size;
 	static char clearedbuf[MAXBSIZE];
 	char buf[MAXBSIZE / TP_BSIZE][TP_BSIZE];
 	char junk[TP_BSIZE];
@@ -638,7 +686,7 @@ getfile(void (*fill)(char *, size_t), void (*skip)(char *, size_t))
 
 	if (spcl.c_type == TS_END)
 		panic("ran off end of tape\n");
-	if (spcl.c_magic != NFS_MAGIC)
+	if (spcl.c_magic != FS_UFS2_MAGIC)
 		panic("not at beginning of a file\n");
 	if (!gettingfile && setjmp(restart) != 0)
 		return;
@@ -938,43 +986,14 @@ closemt(void)
 static int
 gethead(struct s_spcl *buf)
 {
-	long i;
-	union {
-		quad_t	qval;
-		int32_t	val[2];
-	} qcvt;
-	union u_ospcl {
-		char dummy[TP_BSIZE];
-		struct	s_ospcl {
-			int32_t   c_type;
-			int32_t   c_date;
-			int32_t   c_ddate;
-			int32_t   c_volume;
-			int32_t   c_tapea;
-			u_int16_t c_inumber;
-			int32_t   c_magic;
-			int32_t   c_checksum;
-			struct odinode {
-				unsigned short odi_mode;
-				u_int16_t odi_nlink;
-				u_int16_t odi_uid;
-				u_int16_t odi_gid;
-				int32_t   odi_size;
-				int32_t   odi_rdev;
-				char	  odi_addr[36];
-				int32_t   odi_atime;
-				int32_t   odi_mtime;
-				int32_t   odi_ctime;
-			} c_dinode;
-			int32_t c_count;
-			char	c_addr[256];
-		} s_ospcl;
-	} u_ospcl;
+	union u_ospcl u_ospcl;
 
 	if (!cvtflag) {
 		readtape((char *)buf);
-		if (buf->c_magic != NFS_MAGIC) {
-			if (swap32(buf->c_magic) != NFS_MAGIC)
+		if (buf->c_magic != NFS_MAGIC &&
+		    buf->c_magic != FS_UFS2_MAGIC) {
+			if (swap32(buf->c_magic) != NFS_MAGIC &&
+			    swap32(buf->c_magic) != FS_UFS2_MAGIC)
 				return (FAIL);
 			if (!Bcvt) {
 				Vprintf(stdout, "Note: Doing Byte swapping\n");
@@ -987,7 +1006,20 @@ gethead(struct s_spcl *buf)
 			swap_header(buf);
 		goto good;
 	}
+
 	readtape((char *)(&u_ospcl.s_ospcl));
+	if (checksum((int *)(&u_ospcl.s_ospcl)) == FAIL)
+		return (FAIL);
+	if (u_ospcl.s_ospcl.c_magic != OFS_MAGIC) {
+		if (swap32(u_ospcl.s_ospcl.c_magic) != OFS_MAGIC)
+			return (FAIL);
+		if (!Bcvt) {
+			fprintf(stdout, "Note: Doing Byte swapping\n");
+			Bcvt = 1;
+		}
+		swap_old_header(&u_ospcl.s_ospcl);
+	}
+
 	memset(buf, 0, (long)TP_BSIZE);
 	buf->c_type = u_ospcl.s_ospcl.c_type;
 	buf->c_date = u_ospcl.s_ospcl.c_date;
@@ -996,40 +1028,17 @@ gethead(struct s_spcl *buf)
 	buf->c_tapea = u_ospcl.s_ospcl.c_tapea;
 	buf->c_inumber = u_ospcl.s_ospcl.c_inumber;
 	buf->c_checksum = u_ospcl.s_ospcl.c_checksum;
-	buf->c_magic = u_ospcl.s_ospcl.c_magic;
-	buf->c_dinode.di_mode = u_ospcl.s_ospcl.c_dinode.odi_mode;
-	buf->c_dinode.di_nlink = u_ospcl.s_ospcl.c_dinode.odi_nlink;
-	buf->c_dinode.di_uid = u_ospcl.s_ospcl.c_dinode.odi_uid;
-	buf->c_dinode.di_gid = u_ospcl.s_ospcl.c_dinode.odi_gid;
-	buf->c_dinode.di_size = u_ospcl.s_ospcl.c_dinode.odi_size;
-	buf->c_dinode.di_rdev = u_ospcl.s_ospcl.c_dinode.odi_rdev;
-	buf->c_dinode.di_atime = u_ospcl.s_ospcl.c_dinode.odi_atime;
-	buf->c_dinode.di_mtime = u_ospcl.s_ospcl.c_dinode.odi_mtime;
-	buf->c_dinode.di_ctime = u_ospcl.s_ospcl.c_dinode.odi_ctime;
+	buf->c_mode = u_ospcl.s_ospcl.c_odinode.odi_mode;
+	buf->c_uid = u_ospcl.s_ospcl.c_odinode.odi_uid;
+	buf->c_gid = u_ospcl.s_ospcl.c_odinode.odi_gid;
+	buf->c_size = u_ospcl.s_ospcl.c_odinode.odi_size;
+	buf->c_rdev = u_ospcl.s_ospcl.c_odinode.odi_rdev;
+	buf->c_atime = u_ospcl.s_ospcl.c_odinode.odi_atime;
+	buf->c_mtime = u_ospcl.s_ospcl.c_odinode.odi_mtime;
 	buf->c_count = u_ospcl.s_ospcl.c_count;
 	memcpy(buf->c_addr, u_ospcl.s_ospcl.c_addr, (long)256);
-	if (u_ospcl.s_ospcl.c_magic != OFS_MAGIC ||
-	    checksum((int *)(&u_ospcl.s_ospcl)) == FAIL)
-		return(FAIL);
-	buf->c_magic = NFS_MAGIC;
-
+	buf->c_magic = FS_UFS2_MAGIC;
 good:
-	if ((buf->c_dinode.di_size == 0 || buf->c_dinode.di_size > 0xfffffff) &&
-	    (buf->c_dinode.di_mode & IFMT) == IFDIR && Qcvt == 0) {
-		qcvt.qval = buf->c_dinode.di_size;
-		if (qcvt.val[0] || qcvt.val[1]) {
-			printf("Note: Doing Quad swapping\n");
-			Qcvt = 1;
-		}
-	}
-	if (Qcvt) {
-		qcvt.qval = buf->c_dinode.di_size;
-		i = qcvt.val[1];
-		qcvt.val[1] = qcvt.val[0];
-		qcvt.val[0] = i;
-		buf->c_dinode.di_size = qcvt.qval;
-	}
-
 	switch (buf->c_type) {
 
 	case TS_CLRI:
@@ -1038,7 +1047,7 @@ good:
 		 * Have to patch up missing information in bit map headers
 		 */
 		buf->c_inumber = 0;
-		buf->c_dinode.di_size = buf->c_count * TP_BSIZE;
+		buf->c_size = buf->c_count * TP_BSIZE;
 		break;
 
 	case TS_TAPE:
@@ -1050,6 +1059,18 @@ good:
 		break;
 
 	case TS_INODE:
+		if (buf->c_magic == NFS_MAGIC) {
+			buf->c_tapea = buf->c_old_tapea;
+			buf->c_firstrec = buf->c_old_firstrec;
+			buf->c_date = buf->c_old_date;
+			buf->c_ddate = buf->c_old_ddate;
+			buf->c_atime = buf->c_old_atime;
+			buf->c_mtime = buf->c_old_mtime;
+			buf->c_birthtime = 0;
+			buf->c_birthtimensec = 0;
+			buf->c_atimensec = buf->c_mtimensec = 0;
+		}
+			
 	case TS_ADDR:
 		break;
 
@@ -1057,13 +1078,16 @@ good:
 		panic("gethead: unknown inode type %d\n", buf->c_type);
 		break;
 	}
+
+	buf->c_magic = FS_UFS2_MAGIC;
+
 	/*
-	 * If we are restoring a filesystem with old format inodes,
+	 * If we are restoring a filesystem with old format inodes, 
 	 * copy the uid/gid to the new location.
 	 */
 	if (oldinofmt) {
-		buf->c_dinode.di_uid = buf->c_dinode.di_ouid;
-		buf->c_dinode.di_gid = buf->c_dinode.di_ogid;
+		buf->c_uid = buf->c_spare1[1];
+		buf->c_gid = buf->c_spare1[2];
 	}
 	if (dflag)
 		accthdr(buf);
@@ -1085,8 +1109,8 @@ accthdr(struct s_spcl *header)
 		fprintf(stderr, "Volume header (%s inode format) ",
 		    oldinofmt ? "old" : "new");
  		if (header->c_firstrec)
- 			fprintf(stderr, "begins with record %d",
- 				header->c_firstrec);
+ 			fprintf(stderr, "begins with record %lld",
+ 				(long long)header->c_firstrec);
  		fprintf(stderr, "\n");
 		previno = 0x7fffffff;
 		return;
@@ -1150,10 +1174,10 @@ findinode(struct s_spcl *header)
 
 	curfile.name = "<name unknown>";
 	curfile.action = UNKNOWN;
-	curfile.dip = NULL;
+	curfile.mode = 0;
 	curfile.ino = 0;
 	do {
-		if (header->c_magic != NFS_MAGIC) {
+		if (header->c_magic != FS_UFS2_MAGIC) {
 			skipcnt++;
 			while (gethead(header) == FAIL ||
 			    header->c_date != dumpdate)
@@ -1174,7 +1198,18 @@ findinode(struct s_spcl *header)
 			break;
 
 		case TS_INODE:
-			curfile.dip = &header->c_dinode;
+			curfile.mode = header->c_mode;
+			curfile.uid = header->c_uid;
+			curfile.gid = header->c_gid;
+			curfile.file_flags = header->c_file_flags;
+			curfile.rdev = header->c_rdev;
+			curfile.atime_sec = header->c_atime;
+			curfile.atime_nsec = header->c_atimensec;
+			curfile.mtime_sec = header->c_mtime;
+			curfile.mtime_nsec = header->c_mtimensec;
+			curfile.birthtime_sec = header->c_birthtime;
+			curfile.birthtime_nsec = header->c_birthtimensec;
+			curfile.size = header->c_size;
 			curfile.ino = header->c_inumber;
 			break;
 
@@ -1217,8 +1252,6 @@ checksum(int *buf)
 			i += *buf++;
 		while (--j);
 	} else {
-		/* What happens if we want to read restore tapes
-			for a 16bit int machine??? */
 		do
 			i += swap32(*buf++);
 		while (--j);
@@ -1250,36 +1283,68 @@ static void
 swap_header(struct s_spcl *s)
 {
 	s->c_type = swap32(s->c_type);
-	s->c_date = swap32(s->c_date);
-	s->c_ddate = swap32(s->c_ddate);
+	s->c_old_date = swap32(s->c_old_date);
+	s->c_old_ddate = swap32(s->c_old_ddate);
 	s->c_volume = swap32(s->c_volume);
-	s->c_tapea = swap32(s->c_tapea);
+	s->c_old_tapea = swap32(s->c_old_tapea);
 	s->c_inumber = swap32(s->c_inumber);
 	s->c_magic = swap32(s->c_magic);
 	s->c_checksum = swap32(s->c_checksum);
 
-	s->c_dinode.di_mode = swap16(s->c_dinode.di_mode);
-	s->c_dinode.di_nlink = swap16(s->c_dinode.di_nlink);
-	s->c_dinode.di_ouid = swap16(s->c_dinode.di_ouid);
-	s->c_dinode.di_ogid = swap16(s->c_dinode.di_ogid);
-
-	s->c_dinode.di_size = swap64(s->c_dinode.di_size);
-
-	s->c_dinode.di_atime = swap32(s->c_dinode.di_atime);
-	s->c_dinode.di_atimensec = swap32(s->c_dinode.di_atimensec);
-	s->c_dinode.di_mtime = swap32(s->c_dinode.di_mtime);
-	s->c_dinode.di_mtimensec = swap32(s->c_dinode.di_mtimensec);
-	s->c_dinode.di_ctime = swap32(s->c_dinode.di_ctime);
-	s->c_dinode.di_ctimensec = swap32(s->c_dinode.di_ctimensec);
-
-	s->c_dinode.di_flags = swap32(s->c_dinode.di_flags);
-	s->c_dinode.di_blocks = swap32(s->c_dinode.di_blocks);
-	s->c_dinode.di_gen = swap32(s->c_dinode.di_gen);
-	s->c_dinode.di_uid = swap32(s->c_dinode.di_uid);
-	s->c_dinode.di_gid = swap32(s->c_dinode.di_gid);
+	s->c_mode = swap16(s->c_mode);
+	s->c_size = swap64(s->c_size);
+	s->c_old_atime = swap32(s->c_old_atime);
+	s->c_atimensec = swap32(s->c_atimensec);
+	s->c_old_mtime = swap32(s->c_old_mtime);
+	s->c_mtimensec = swap32(s->c_mtimensec);
+	s->c_rdev = swap32(s->c_rdev);
+	s->c_birthtimensec = swap32(s->c_birthtimensec);
+	s->c_birthtime = swap64(s->c_birthtime);
+	s->c_atime = swap64(s->c_atime);
+	s->c_mtime = swap64(s->c_mtime);
+	s->c_file_flags = swap32(s->c_file_flags);
+	s->c_uid = swap32(s->c_uid);
+	s->c_gid = swap32(s->c_gid);
 
 	s->c_count = swap32(s->c_count);
 	s->c_level = swap32(s->c_level);
 	s->c_flags = swap32(s->c_flags);
-	s->c_firstrec = swap32(s->c_firstrec);
+	s->c_old_firstrec = swap32(s->c_old_firstrec);
+
+	s->c_date = swap64(s->c_date);
+	s->c_ddate = swap64(s->c_ddate);
+	s->c_tapea = swap64(s->c_tapea);
+	s->c_firstrec = swap64(s->c_firstrec);
+
+	/*
+	 * These are ouid and ogid.
+	 */
+	s->c_spare1[1] = swap16(s->c_spare1[1]);
+	s->c_spare1[2] = swap16(s->c_spare1[2]);
+}
+
+static void
+swap_old_header(struct s_ospcl *os)
+{
+	os->c_type = swap32(os->c_type);
+	os->c_date = swap32(os->c_date);
+	os->c_ddate = swap32(os->c_ddate);
+	os->c_volume = swap32(os->c_volume);
+	os->c_tapea = swap32(os->c_tapea);
+	os->c_inumber = swap16(os->c_inumber);
+	os->c_magic = swap32(os->c_magic);
+	os->c_checksum = swap32(os->c_checksum);
+
+	os->c_odinode.odi_mode = swap16(os->c_odinode.odi_mode);
+	os->c_odinode.odi_nlink = swap16(os->c_odinode.odi_nlink);
+	os->c_odinode.odi_uid = swap16(os->c_odinode.odi_uid);
+	os->c_odinode.odi_gid = swap16(os->c_odinode.odi_gid);
+
+	os->c_odinode.odi_size = swap32(os->c_odinode.odi_size);
+	os->c_odinode.odi_rdev = swap32(os->c_odinode.odi_rdev);
+	os->c_odinode.odi_atime = swap32(os->c_odinode.odi_atime);
+	os->c_odinode.odi_mtime = swap32(os->c_odinode.odi_mtime);
+	os->c_odinode.odi_ctime = swap32(os->c_odinode.odi_ctime);
+
+	os->c_count = swap32(os->c_count);
 }

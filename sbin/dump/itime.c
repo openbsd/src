@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.14 2007/03/04 22:37:18 deraadt Exp $	*/
+/*	$OpenBSD: itime.c,v 1.15 2007/06/03 20:16:08 millert Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: itime.c,v 1.14 2007/03/04 22:37:18 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: itime.c,v 1.15 2007/06/03 20:16:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,9 +150,9 @@ getdumptime(void)
 			continue;
 		if (ddp->dd_level >= level)
 			continue;
-		if (ddp->dd_ddate <= spcl.c_ddate)
+		if (ddp->dd_ddate <= (time_t)spcl.c_ddate)
 			continue;
-		spcl.c_ddate = ddp->dd_ddate;
+		spcl.c_ddate = (int64_t)ddp->dd_ddate;
 		lastlevel = ddp->dd_level;
 	}
 }
@@ -162,9 +162,9 @@ putdumptime(void)
 {
 	FILE *df;
 	struct dumpdates *dtwalk;
-	int i;
-	int fd;
+	int fd, i;
 	char *fname;
+	time_t t;
 
 	if(uflag == 0)
 		return;
@@ -200,7 +200,7 @@ putdumptime(void)
   found:
 	(void) strlcpy(dtwalk->dd_name, fname, sizeof(dtwalk->dd_name));
 	dtwalk->dd_level = level;
-	dtwalk->dd_ddate = spcl.c_date;
+	dtwalk->dd_ddate = (time_t)spcl.c_date;
 
 	ITITERATE(i, dtwalk) {
 		dumprecout(df, dtwalk);
@@ -210,8 +210,8 @@ putdumptime(void)
 	if (ftruncate(fd, ftello(df)))
 		quit("ftruncate (%s): %s\n", dumpdates, strerror(errno));
 	(void) fclose(df);
-	msg("level %c dump on %s", level,
-		spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
+	t = (time_t)spcl.c_date;
+	msg("level %c dump on %s", level, t == 0 ? "the epoch\n" : ctime(&t));
 }
 
 static void
