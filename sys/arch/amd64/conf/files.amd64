@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.31 2007/05/29 22:27:14 tedu Exp $
+#	$OpenBSD: files.amd64,v 1.32 2007/06/04 20:22:08 ckuethe Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -168,6 +168,11 @@ file	dev/isa/fd.c				fd needs-flag
 # USB
 #
 include	"dev/usb/files.usb"
+
+#
+# Bluetooth
+#
+include "dev/bluetooth/files.bluetooth"
 
 #
 # I2C
