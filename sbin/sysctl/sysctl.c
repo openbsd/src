@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.148 2007/05/29 21:11:51 robert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.149 2007/06/04 13:17:54 henning Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.148 2007/05/29 21:11:51 robert Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.149 2007/06/04 13:17:54 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,9 +100,6 @@ static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.148 2007/05/29 21:11:51 robe
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
-#include <netipx/ipx.h>
-#include <netipx/ipx_var.h>
-#include <netipx/spx_var.h>
 #include <ddb/db_var.h>
 #include <dev/rndvar.h>
 
@@ -196,7 +193,6 @@ int sysctl_inet(char *, char **, int *, int, int *);
 int sysctl_inet6(char *, char **, int *, int, int *);
 #endif
 int sysctl_bpf(char *, char **, int *, int, int *);
-int sysctl_ipx(char *, char **, int *, int, int *);
 int sysctl_fs(char *, char **, int *, int, int *);
 static int sysctl_vfs(char *, char **, int[], int, int *);
 static int sysctl_vfsgen(char *, char **, int[], int, int *);
@@ -547,12 +543,6 @@ parse(char *string, int flags)
 			break;
 		}
 #endif
-		if (mib[1] == PF_IPX) {
-			len = sysctl_ipx(string, &bufp, mib, flags, &type);
-			if (len >= 0)
-				break;
-			return;
-		}
 		if (mib[1] == PF_BPF) {
 			len = sysctl_bpf(string, &bufp, mib, flags, &type);
 			if (len < 0)
@@ -1862,54 +1852,6 @@ sysctl_inet6(char *string, char **bufpp, int mib[], int flags, int *typep)
 	return (4);
 }
 #endif
-
-struct ctlname ipxname[] = CTL_IPXPROTO_NAMES;
-struct ctlname ipxpname[] = IPXCTL_NAMES;
-struct ctlname spxpname[] = SPXCTL_NAMES;
-struct list ipxlist = { ipxname, IPXCTL_MAXID };
-struct list ipxvars[] = {
-	{ ipxpname, IPXCTL_MAXID },	/* ipx */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ spxpname, SPXCTL_MAXID },
-};
-
-/*
- * Handle internet requests
- */
-int
-sysctl_ipx(char *string, char **bufpp, int mib[], int flags, int *typep)
-{
-	struct list *lp;
-	int indx;
-
-	if (*bufpp == NULL) {
-		listall(string, &ipxlist);
-		return (-1);
-	}
-	if ((indx = findname(string, "third", bufpp, &ipxlist)) == -1)
-		return (-1);
-	mib[2] = indx;
-	if (indx <= IPXPROTO_SPX && ipxvars[indx].list != NULL)
-		lp = &ipxvars[indx];
-	else if (!flags)
-		return (-1);
-	else {
-		warnx("%s: no variables defined for this protocol", string);
-		return (-1);
-	}
-	if (*bufpp == NULL) {
-		listall(string, lp);
-		return (-1);
-	}
-	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
-		return (-1);
-	mib[3] = indx;
-	*typep = lp->list[indx].ctl_type;
-	return (4);
-}
 
 /* handle bpf requests */
 int
