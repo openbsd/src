@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.111 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: pkg_create,v 1.112 2007/06/04 16:33:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -401,7 +401,8 @@ sub read_fragments
 				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$_ = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
-				if (m,^\@lib\s+.*/lib[^/]+\.so\.\d+\.\d+$,o) {
+				if (m/^\@lib\s+(.*)$/o && 
+				    OpenBSD::PackingElement::Lib->parse($1)) {
 					Warn "Shared library without SHARED_LIBS: $_";
 					$main::errors++;
 				}

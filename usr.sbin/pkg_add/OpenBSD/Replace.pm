@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.31 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Replace.pm,v 1.32 2007/06/04 16:33:23 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -199,8 +199,9 @@ sub mark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname;
-	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/o) {
-		$libpatterns->{$1} = [$2, $3, $libname];
+	my ($stem, $major, $minor, $dir) = $self->parse($libname);
+	if (defined $stem) {
+		$libpatterns->{$stem}->{$dir} = [$major, $minor, $libname];
 	}
 	$libs->{$libname} = 1;
 }
@@ -209,9 +210,9 @@ sub unmark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname;
-	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/o) {
-		my ($pat, $major, $minor) = ($1, $2, $3);
-		my $p = $libpatterns->{$pat};
+	my ($stem, $major, $minor, $dir) = $self->parse($libname);
+	if (defined $stem) {
+		my $p = $libpatterns->{$stem}->{$dir};
 		if (defined $p && $p->[0] == $major && $p->[1] <= $minor) {
 			my $n = $p->[2];
 			delete $libs->{$n};

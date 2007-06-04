@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.18 2007/06/04 14:57:33 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.19 2007/06/04 16:33:23 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -87,9 +87,11 @@ our $registered_libs = {};
 sub register_lib
 {
 	my ($name, $pkgname) = @_;
-	if ($name =~ m/^(.*\/lib.*?\.so\.\d+)\.(\d+)$/o) {
-		my ($stem, $minor) = ($1, $2);
-		push(@{$registered_libs->{$stem}}, [$minor, $pkgname]);
+	my ($stem, $major, $minor, $dir) = 
+	    OpenBSD::PackingElement::Lib->parse($name);
+	if (defined $stem) {
+		push(@{$registered_libs->{$stem}->{$dir}->{$major}},
+		    [$minor, $pkgname]);
 	}
 }
 
@@ -145,7 +147,7 @@ sub _lookup_libspec
 
 	if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/o) {
 		my ($libname, $major, $minor) = ($1, $2, $3);
-		my $exists = $registered_libs->{"$dir/lib$libname.so.$major"};
+		my $exists = $registered_libs->{$libname}->{$dir}->{$major};
 		if (defined $exists) {
 			for my $e (@$exists) {
 				if ($e->[0] >= $minor) {
