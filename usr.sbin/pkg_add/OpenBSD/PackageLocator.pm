@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.72 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.73 2007/06/04 14:57:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -33,7 +33,7 @@ if (defined $ENV{PKG_PATH}) {
 	my $v = $ENV{PKG_PATH};
 	$v =~ s/^\:+//o;
 	$v =~ s/\:+$//o;
-	my @tentative = split '/:', $v;
+	my @tentative = split /\/\:/o, $v;
 	while (my $i = shift @tentative) {
 		$i =~ m|/$|o or $i.='/';
 		$pkgpath->add(OpenBSD::PackageRepository->new($i));

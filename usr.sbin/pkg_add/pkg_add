@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.309 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: pkg_add,v 1.310 2007/06/04 14:57:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -580,12 +580,12 @@ try {
 	{'v' => sub {++$opt_v;},
 	 'h' => sub { Usage(); },
 	 'F' => sub { 
-	 		for my $o (split ',', shift) { 
+	 		for my $o (split /\,/o, shift) { 
 				$forced{$o} = 1;
 			}
 	    	},
 	 'f' => sub { 
-	 		for my $o (split ',', shift) { 
+	 		for my $o (split /\,/o, shift) { 
 				$forced{$o} = 1;
 			}
 	    	}}); 

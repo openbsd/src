@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.6 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Search.pm,v 1.7 2007/06/04 14:57:33 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub filter
 sub new
 {
 	my ($class, $pattern) = @_;
-	my @l = split '|', $pattern;
+	my @l = split /\|/o, $pattern;
 	bless { patterns => \@l }, $class;
 }
 

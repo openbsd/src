@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.128 2007/06/04 14:42:19 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.129 2007/06/04 14:57:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -726,7 +726,7 @@ sub category() { "depend" }
 sub new
 {
 	my ($class, $args) = @_;
-	my ($pkgpath, $pattern, $def) = split ':', $args;
+	my ($pkgpath, $pattern, $def) = split /\:/o, $args;
 	bless { name => $def, pkgpath => $pkgpath, pattern => $pattern, 
 	    def => $def }, $class;
 }
@@ -791,7 +791,7 @@ sub new
 {
 	my ($class, $args) = @_;
 	my ($name, $uid, $group, $loginclass, $comment, $home, $shell) = 
-	    split ':', $args;
+	    split /\:/o, $args;
 	bless { name => $name, uid => $uid, group => $group, 
 	    class => $loginclass, 
 	    comment => $comment, home => $home, shell => $shell }, $class;
@@ -849,7 +849,7 @@ __PACKAGE__->register_with_factory;
 sub new
 {
 	my ($class, $args) = @_;
-	my ($name, $gid) = split ':', $args;
+	my ($name, $gid) = split /\:/o, $args;
 	bless { name => $name, gid => $gid }, $class;
 }
 
@@ -1341,7 +1341,7 @@ __PACKAGE__->register_with_factory;
 sub new
 {
 	my ($class, $args) = @_;
-	my @arches= split(',', $args);
+	my @arches= split(/\,/o, $args);
 	bless { arches => \@arches }, $class;
 }
 

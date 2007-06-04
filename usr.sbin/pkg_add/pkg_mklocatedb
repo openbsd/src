@@ -82,7 +82,7 @@ if ($opt_n or -t STDOUT) {
 	open $fh, "|-", $MKLOCATEDB, $MKLOCATEDB or die "couldn't open pipe: $!";
 }
 if ($opt_s || $opt_x) {
-	my ($rev, $arch) = split(' ', `uname -mr`);
+	my ($rev, $arch) = split(/\s+/o, `uname -mr`);
 	chomp $arch;
 	$rev =~ s/\.//;
 	if ($opt_s) {

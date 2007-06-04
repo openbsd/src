@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.17 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.18 2007/06/04 14:57:33 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -51,7 +51,7 @@ sub init_path($)
 		local $_;
 		while (<$fh>) {
 			if (m/^\s*search directories:\s*(.*?)\s*$/o) {
-				for my $d (split(':', $1)) {
+				for my $d (split(/\:/o, $1)) {
 					$path->{$d} = 1;
 				}
 			}

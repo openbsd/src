@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.13 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.14 2007/06/04 14:57:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -61,9 +61,9 @@ sub dewey_compare
 		$pb = $1;
 	}
 
-	my @a = split('.', $a);
+	my @a = split(/\./o, $a);
 	push @a, $pa if defined $pa;	# ... and restore them
-	my @b = split("\\.", $b);
+	my @b = split(/\\\./o, $b);
 	push @b, $pb if defined $pb;
 	while (@a > 0 && @b > 0) {
 		my $va = shift @a;
@@ -86,7 +86,7 @@ sub check_version
 	# any version spec
 	return 1 if $spec eq '.*';
 
-	my @specs = split(',', $spec);
+	my @specs = split(/\,/o, $spec);
 	for (grep /^\d/o, @specs) { 		# exact number: check match
 		return 1 if $v =~ /^$_$/;
 		return 1 if $v =~ /^${_}p\d+$/; # allows for recent patches
@@ -114,7 +114,7 @@ sub check_1flavor
 	my ($f, $spec) = @_;
 	local $_;
 
-	for (split '-', $spec) {
+	for (split /\-/o, $spec) {
 		# must not be here
 		if (m/^\!/o) {
 			return 0 if $f->{$'};
@@ -135,10 +135,10 @@ sub check_flavor
 
 	$spec =~ s/^-//o;
 	# retrieve all flavors
-	my %f = map +($_, 1), split '-', $f;
+	my %f = map +($_, 1), split /\-/o, $f;
 
 	# check each flavor constraint
-	for (split ',', $spec) {
+	for (split /\,/o, $spec) {
 		if (check_1flavor(\%f, $_)) {
 			return 1;
 		}

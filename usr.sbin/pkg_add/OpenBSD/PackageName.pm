@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.28 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.29 2007/06/04 14:57:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,7 @@ sub splitname
 	if (/\-(?=\d)/o) {
 		my $stem = $`;
 		my $rest = $';
-		my @all = split '-', $rest;
+		my @all = split /\-/o, $rest;
 		return ($stem, @all);
 	} else {
 		return ($_);
@@ -49,7 +49,7 @@ sub from_string
 	if (/\-(?=\d)/o) {
 		my $stem = $`;
 		my $rest = $';
-		my @all = split '-', $rest;
+		my @all = split /\-/o, $rest;
 		my $version = OpenBSD::PackageName::version->from_string(shift @all);
 		my %flavors = map {($_,1)}  @all;
 		return bless {
@@ -187,7 +187,7 @@ package OpenBSD::PackageName::version;
 sub make_dewey
 {
 	my $o = shift;
-	$o->{deweys} = [ split('.', $o->{string}) ];
+	$o->{deweys} = [ split(/\./o, $o->{string}) ];
 	for my $suffix (qw(rc beta pre pl)) {
 		if ($o->{deweys}->[-1] =~ m/^(\d+)$suffix(\d*)$/) {
 			$o->{deweys}->[-1] = $1;

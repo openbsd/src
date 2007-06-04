@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.32 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.33 2007/06/04 14:57:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -55,7 +55,7 @@ sub init_devices()
 			my $i = create_device($dev);
 			next unless defined $i;
 			next unless defined $opts;
-			for my $o (split /,\s*/, $opts) {
+			for my $o (split /\,\s*/o, $opts) {
 				if ($o eq 'read-only') {
 					$i->{ro} = 1;
 				} elsif ($o eq 'nodev') {
