@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2007/06/01 23:14:06 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.31 2007/06/04 10:23:51 otto Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -60,6 +60,7 @@ struct bdevsw bdevsw[] = {
 	bdev_swap_init(1,sw),		/* 1 swap pseudo device */
 	bdev_disk_init(NSD,sd),		/* 2 SCSI Disk */
 	bdev_disk_init(NCD,cd),		/* 3 SCSI CD-ROM */
+	bdev_notdef(),			/* 4 unknown*/
 	bdev_notdef(),			/* 5 unknown*/
 	bdev_notdef(),			/* 6 unknown*/
 	bdev_notdef(),			/* 7 unknown*/
