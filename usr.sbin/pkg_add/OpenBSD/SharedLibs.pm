@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.25 2007/06/04 22:32:59 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.26 2007/06/04 23:28:01 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -180,7 +180,7 @@ sub lookup_libspec
 
 sub entry_string
 {
-	my ($name, $d, $M, $m) = @_;
+	my ($d, $M, $m) = @_;
 	return "partial match in $d: major=$M, minor=$m";
 }
 
