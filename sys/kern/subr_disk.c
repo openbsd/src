@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.45 2007/06/02 02:35:27 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.46 2007/06/04 22:07:59 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -191,7 +191,6 @@ disklabeltokernlabel(struct disklabel *lp)
 {
 	struct __partitionv0 *v0pp = (struct __partitionv0 *)lp->d_partitions;
 	struct partition *pp = lp->d_partitions;
-	daddr64_t sz;
 	int i, oversion = lp->d_version;
 
 	if (oversion == 0) {
@@ -212,11 +211,15 @@ disklabeltokernlabel(struct disklabel *lp)
 			pp->p_fstype = FS_UNUSED;
 			pp->p_offset = pp->p_offseth = 0;
 			pp->p_size = pp->p_sizeh = 0;
+#ifdef notyet	/* older broken sparc/sparc64 fake cyl-based disklabels fool this */
 		} else if ((DL_POFFSET(pp) + DL_PSIZE(pp)) > DL_DSIZE(lp)) {
+			daddr64_t sz;
+
 			pp->p_fstype = FS_UNUSED;
 			sz = DL_DSIZE(lp) - DL_POFFSET(pp);
 			pp->p_size = sz & 0xffffffff;
 			pp->p_sizeh = (sz >> 32) & 0xffff;
+#endif /* notyet */
 		}
 	}
 }
