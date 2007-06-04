@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.71 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Add.pm,v 1.72 2007/06/04 18:55:47 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -204,8 +204,8 @@ sub add_entry
 		my $f = shift;
 		my $v = shift;
 		next if !defined $v or $v eq '';
-		if ($v =~ m/^\!/o) {
-			push(@$l, $f, $');
+		if ($v =~ m/^\!(.*)$/o) {
+			push(@$l, $f, $1);
 		} else {
 			push(@$l, $f, $v);
 		}

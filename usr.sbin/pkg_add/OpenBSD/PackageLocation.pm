@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.12 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.13 2007/06/04 18:55:47 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -155,10 +155,10 @@ sub openPackage
 
 	# maybe it's a fat package.
 	while (my $e = $self->intNext) {
-		unless ($e->{name} =~ m/\/\+CONTENTS$/o) {
+		unless ($e->{name} =~ m/^(.*)\/\+CONTENTS$/o) {
 			last;
 		}
-		my $prefix = $`;
+		my $prefix = $1;
 		my $contents = $e->contents;
 		require OpenBSD::PackingList;
 

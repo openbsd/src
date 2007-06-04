@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.41 2007/06/04 18:52:02 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.42 2007/06/04 18:55:47 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -236,9 +236,9 @@ sub list
 	my $dname = $self->{baseurl};
 	opendir(my $dir, $dname) or return $l;
 	while (my $e = readdir $dir) {
-		next unless $e =~ m/\.tgz$/o;
+		next unless $e =~ m/^(.*)\.tgz$/o;
 		next unless -f "$dname/$e";
-		push(@$l, $`);
+		push(@$l, $1);
 	}
 	close($dir);
 	return $l;
