@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.42 2007/06/02 20:38:58 henning Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.43 2007/06/04 13:55:24 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -554,10 +554,12 @@ int
 main(int argc, char **argv)
 {
 	struct pcap_stat pstat;
-	int ch, np, Xflag = 0;
+	int ch, np, ret, Xflag = 0;
 	pcap_handler phandler = dump_packet;
 	const char *errstr = NULL;
 	char *pidf = NULL;
+
+	ret = 0;
 
 	closefrom(STDERR_FILENO + 1);
 
@@ -603,7 +605,7 @@ main(int argc, char **argv)
 
 	/* does interface exist */
 	if (if_exists(interface)) {
-		err(1, "Failed to initialize: %s", interface);
+		warn("Failed to initialize: %s", interface);
 		logmsg(LOG_ERR, "Failed to initialize: %s", interface);
 		logmsg(LOG_ERR, "Exiting, init failure");
 		exit(1);
@@ -676,6 +678,7 @@ main(int argc, char **argv)
 			if (if_exists(interface) == -1) {
 				logmsg(LOG_NOTICE, "interface %s went away",
 				    interface);
+				ret = -1;
 				break;
 			}
 			logmsg(LOG_NOTICE, "%s", pcap_geterr(hpcap));
@@ -719,5 +722,5 @@ main(int argc, char **argv)
 	pcap_close(hpcap);
 	if (!Debug)
 		closelog();
-	return (0);
+	return (ret);
 }
