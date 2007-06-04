@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.46 2007/06/04 05:28:43 todd Exp $
+.\"	$OpenBSD: bioctl.8,v 1.47 2007/06/04 11:26:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -81,16 +81,7 @@ to start blinking, if there is
 or
 .Xr safte 4
 support in the enclosure.
-.It Fl c Ar raidlevel
-Create a
-.Xr softraid 4
-device of level
-.Ar raidlevel .
-The device must begin with
-.Dq softraid
-followed by a number.
 .It Fl C Ar flag[,flag,...]
-.Bl -tag -width Ds
 Pass flags when doing operations with
 .Nm .
 May be one of:
@@ -102,6 +93,14 @@ with unclean data in the metatdata areas.
 .It Ar noauto
 Ignore this RAID volume upon reboot.
 .El
+.It Fl c Ar raidlevel
+Create a
+.Xr softraid 4
+device of level
+.Ar raidlevel .
+The device must begin with
+.Dq softraid
+followed by a number.
 .It Fl H Ar channel:target[.lun]
 If the device at
 .Ar channel:target[.lun]
