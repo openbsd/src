@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.20 2007/06/04 16:58:40 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.21 2007/06/04 17:00:45 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -161,7 +161,7 @@ sub _lookup_libspec
 
 sub lookup_libspec
 {
-	my ($base, $libspec, $wantpath) = @_;
+	my ($base, $libspec) = @_;
 		
 	if ($libspec =~ m|(.*)/|o) {
 		return _lookup_libspec("$base/$1", $');
