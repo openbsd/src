@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.76 2007/06/03 22:36:27 tedu Exp $ */
+/* $OpenBSD: softraid.c,v 1.77 2007/06/04 04:53:31 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2040,9 +2040,15 @@ sr_boot_assembly(struct sr_softc *sc)
 		    !strncmp(dv->dv_xname, "cd", 2) ||
 		    !strncmp(dv->dv_xname, "rx", 2))
 			continue;
+		/*
+		 * The devices are being opened with S_IFCHR instead of
+		 * S_IFBLK so that the SCSI mid-layer does not whine when
+		 * media is not inserted in certain devices like zip drives
+		 * and such.
+		 */
 
 		/* open device */
-		error = (*bdsw->d_open)(dev, FREAD, S_IFBLK, curproc);
+		error = (*bdsw->d_open)(dev, FREAD, S_IFCHR, curproc);
 		if (error) {
 			DNPRINTF(SR_D_META, "%s: sr_boot_assembly open failed"
 			    "\n", DEVNAME(sc));
@@ -2055,12 +2061,12 @@ sr_boot_assembly(struct sr_softc *sc)
 		if (error) {
 			DNPRINTF(SR_D_META, "%s: sr_boot_assembly ioctl "
 			    "failed\n", DEVNAME(sc));
-			error = (*bdsw->d_close)(dev, FREAD, S_IFBLK, curproc);
+			error = (*bdsw->d_close)(dev, FREAD, S_IFCHR, curproc);
 			continue;
 		}
 
 		/* we are done, close device */
-		error = (*bdsw->d_close)(dev, FREAD, S_IFBLK, curproc);
+		error = (*bdsw->d_close)(dev, FREAD, S_IFCHR, curproc);
 		if (error) {
 			DNPRINTF(SR_D_META, "%s: sr_boot_assembly close "
 			    "failed\n", DEVNAME(sc));
@@ -2074,7 +2080,7 @@ sr_boot_assembly(struct sr_softc *sc)
 
 			/* open device */
 			bp->b_dev = devr = MAKEDISKDEV(majdev, dv->dv_unit, i);
-			error = (*bdsw->d_open)(devr, FREAD, S_IFBLK, curproc);
+			error = (*bdsw->d_open)(devr, FREAD, S_IFCHR, curproc);
 			if (error) {
 				DNPRINTF(SR_D_META, "%s: sr_boot_assembly "
 				    "open failed, partition %d\n",
@@ -2093,7 +2099,7 @@ sr_boot_assembly(struct sr_softc *sc)
 				DNPRINTF(SR_D_META, "%s: sr_boot_assembly "
 				    "strategy failed, partition %d\n",
 				    DEVNAME(sc));
-				error = (*bdsw->d_close)(devr, FREAD, S_IFBLK,
+				error = (*bdsw->d_close)(devr, FREAD, S_IFCHR,
 				    curproc);
 				continue;
 			}
@@ -2112,7 +2118,7 @@ sr_boot_assembly(struct sr_softc *sc)
 			}
 
 			/* we are done, close device */
-			error = (*bdsw->d_close)(devr, FREAD, S_IFBLK,
+			error = (*bdsw->d_close)(devr, FREAD, S_IFCHR,
 			    curproc);
 			if (error) {
 				DNPRINTF(SR_D_META, "%s: sr_boot_assembly "
