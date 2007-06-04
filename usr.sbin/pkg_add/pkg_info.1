@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.25 2007/05/31 19:20:26 jmc Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.26 2007/06/04 11:42:03 pyr Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2007 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -160,6 +160,8 @@ This signature is a unique tag showing the package name, and the version number
 of every dependency and shared library necessary to build this package.
 .It Fl s
 Show an estimate of the total size of each package.
+.It Fl t
+Show packages which are not required by any other packages.
 .It Fl U
 Show the deinstall-message file (if any) for each package.
 .It Fl v
