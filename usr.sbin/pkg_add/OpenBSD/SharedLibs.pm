@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.24 2007/06/04 21:51:35 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.25 2007/06/04 22:32:59 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -178,28 +178,25 @@ sub lookup_libspec
 	return @r;
 }
 
-sub write_entry
+sub entry_string
 {
 	my ($name, $d, $M, $m) = @_;
-	print "$name: partial match in $d: major=$M, minor=$m ";
+	return "partial match in $d: major=$M, minor=$m";
 }
 
 sub why_is_this_bad
 {
 	my ($name, $d1, $d2, $M1, $M2, $m1, $m2, $pkgname) = @_;
 	if ($d1 ne $d2) {
-		print "(bad directory)\n";
-		return;
+		return "bad directory";
 	}
 	if ($M1 != $M2) {
-		print "(bad major)\n";
-		return;
+		return "bad major";
 	}
 	if ($m1 < $m2) {
-		print "(too small minor)\n";
-		return;
+		return "too small minor";
 	}
-	print "($pkgname not reachable)\n";
+	return "$pkgname not reachable";
 }
 
 sub report_problem
@@ -213,8 +210,12 @@ sub report_problem
 	while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
 		while (my ($M, $w) = each %$v) {
 			for my $e (@$w) {
-				write_entry($name, $d, $M, $e->[0]);
-				why_is_this_bad($name, $dir, $d, $major, $M, $minor, $e->[0], $e->[1]);
+				print "$name: ", 
+				    entry_string($d, $M, $e->[0]),
+				    " (", 
+				    why_is_this_bad($name, $dir, $d, $major, 
+				    	$M, $minor, $e->[0], $e->[1]),
+				    ")\n";
 			}
 		}
 	}
