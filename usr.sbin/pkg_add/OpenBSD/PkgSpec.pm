@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.14 2007/06/04 14:57:33 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.15 2007/06/04 20:48:23 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,13 +26,13 @@ sub compare_pseudo_numbers
 
 	my ($n1, $m1);
 
-	if ($n =~ m/^\d+/o) {
-		$n1 = $&;
-		$n = $';
+	if ($n =~ m/^(\d+)(.*)$/o) {
+		$n1 = $1;
+		$n = $2;
 	}
-	if ($m =~ m/^\d+/o) {
-		$m1 = $&;
-		$m = $';
+	if ($m =~ m/^(\d+)(.*)$/o) {
+		$m1 = $1;
+		$m = $2;
 	}
 
 	if ($n1 == $m1) {
@@ -95,8 +95,8 @@ sub check_version
 	# Last chance: dewey specs ?
 	my @deweys = grep !/^\d/o, @specs;		
 	for (@deweys) {
-		if (m/^\<\=|\>\=|\<|\>/o) {
-			my ($op, $dewey) = ($&, $');
+		if (m/^(\<\=|\>\=|\<|\>)(.*)$/o) {
+			my ($op, $dewey) = ($1, $2);
 			my $compare = dewey_compare($v, $dewey);
 			return 0 if $op eq '<' && $compare >= 0;
 			return 0 if $op eq '<=' && $compare > 0;
@@ -116,8 +116,8 @@ sub check_1flavor
 
 	for (split /\-/o, $spec) {
 		# must not be here
-		if (m/^\!/o) {
-			return 0 if $f->{$'};
+		if (m/^\!(.*)$/o) {
+			return 0 if $f->{$1};
 		# must be here
 		} else {
 			return 0 unless $f->{$_};
@@ -160,11 +160,11 @@ sub subpattern_match
 	# the only constraint is that the actual number 
 	# - must start with a digit, 
 	# - not contain - or ,
-	if ($p =~ m/\-((?:\>|\>\=|\<|\<\=)?\d[^-]*)/o) {
-		($stemspec, $vspec, $flavorspec) = ($`, $1, $');
+	if ($p =~ m/^(.*?)\-((?:\>|\>\=|\<|\<\=)?\d[^-]*)(.*)$/o) {
+		($stemspec, $vspec, $flavorspec) = ($1, $2, $3);
 	# `any version' matcher
-	} elsif ($p =~ m/\-\*/o) {
-		($stemspec, $vspec, $flavorspec) = ($`, '*', $');
+	} elsif ($p =~ m/^(.*?)\-\*(.*)$/o) {
+		($stemspec, $vspec, $flavorspec) = ($1, '*', $2);
 	# okay, so no version marker. Assume no flavor spec.
 	} else {
 		($stemspec, $vspec, $flavorspec) = ($p, '', '');
@@ -189,8 +189,8 @@ sub subpattern_match
 	# Now, have to extract the version number, and the flavor...
 	for (@l) {
 		my ($stem, $v, $flavor);
-		if (m/\-(\d[^-]*)/o) {
-			($stem, $v, $flavor) = ($`, $1, $');
+		if (m/^(.*?)\-(\d[^-]*)(.*)$/o) {
+			($stem, $v, $flavor) = ($1, $2, $3);
 			if ($stem =~ m/^$stemspec$/ &&
 			    check_version($v, $vspec) &&
 			    check_flavor($flavor, $flavorspec)) {

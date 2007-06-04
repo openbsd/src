@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.29 2007/06/04 14:57:33 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.30 2007/06/04 20:48:23 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -32,9 +32,9 @@ sub url2pkgname($)
 sub splitname
 {
 	local $_ = shift;
-	if (/\-(?=\d)/o) {
-		my $stem = $`;
-		my $rest = $';
+	if (/^(.*?)\-(\d.*)$/o) {
+		my $stem = $1;
+		my $rest = $2;
 		my @all = split /\-/o, $rest;
 		return ($stem, @all);
 	} else {
@@ -46,9 +46,9 @@ sub from_string
 {
 	my $class = shift;
 	local $_ = shift;
-	if (/\-(?=\d)/o) {
-		my $stem = $`;
-		my $rest = $';
+	if (/^(.*?)\-(\d.*)$/o) {
+		my $stem = $1;
+		my $rest = $2;
 		my @all = split /\-/o, $rest;
 		my $version = OpenBSD::PackageName::version->from_string(shift @all);
 		my %flavors = map {($_,1)}  @all;
@@ -67,8 +67,8 @@ sub from_string
 sub splitstem
 {
 	local $_ = shift;
-	if (/\-(?=\d)/o) {
-		return $`;
+	if (/^(.*?)\-\d/o) {
+		return $1;
 	} else {
 		return $_;
 	}
@@ -88,8 +88,8 @@ sub splitp
 {
 	local $_ = shift;
 
-	if (/^(.*\-\d[^-]*)p(\d+)/o) {
-		return ($1.$', $2);
+	if (/^(.*\-\d[^-]*)p(\d+)(.*)$/o) {
+		return ($1.$3, $2);
 	} else {
 		return ($_,-1);
 	}
@@ -101,8 +101,8 @@ sub rebuildp
 	if ($p == -1) {
 		return $pkg;
 	}
-	if ($pkg =~ m/\-\d[^-]*/o) {
-		return "$`$&p$p$'";
+	if ($pkg =~ m/^(.*?)(\-\d[^-]*)(.*)$/o) {
+		return "$1$2p$p$3";
 	} else {
 		return $pkg."p".$p;
 	}
@@ -201,13 +201,13 @@ sub from_string
 	my ($class, $string) = @_;
 	my $vnum = -1;
 	my $pnum = -1;
-	if ($string =~ m/v(\d+)$/o) {
-		$vnum = $1;
-		$string = $`;
+	if ($string =~ m/^(.*)v(\d+)$/o) {
+		$vnum = $2;
+		$string = $1;
 	}
-	if ($string =~ m/p(\d+)$/o) {
-		$pnum = $1;
-		$string = $`;
+	if ($string =~ m/^(.*)p(\d+)$/o) {
+		$pnum = $2;
+		$string = $1;
 	}
 	my $o = bless {
 		pnum => $pnum,
