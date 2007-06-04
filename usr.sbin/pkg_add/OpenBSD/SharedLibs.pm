@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.19 2007/06/04 16:33:23 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.20 2007/06/04 16:58:40 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -170,4 +170,55 @@ sub lookup_libspec
 	}
 }
 
+sub write_entry
+{
+	my ($name, $d, $M, $m) = @_;
+	print "$name: found partial match in $d: major=$M, minor=$m ";
+}
+
+sub why_is_this_bad
+{
+	my ($name, $d1, $d2, $M1, $M2, $m1, $m2, $pkgname) = @_;
+	if ($d1 ne $d2) {
+		print "(bad directory)\n";
+		return;
+	}
+	if ($M1 != $M2) {
+		print "(bad major)\n";
+		return;
+	}
+	if ($m1 < $m2) {
+		print "(too small minor)\n";
+		return;
+	}
+	print "($pkgname not reachable)\n";
+}
+
+sub _report_problem
+{
+	my ($dir, $name) = @_;
+	if ($name =~ m/^(.*)\.(\d+)\.(\d+)$/o) {
+		my ($stem, $major, $minor) = ($1, $2, $3, $4);
+		return unless defined $registered_libs->{$stem};
+		while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
+			while (my ($M, $w) = each %$v) {
+				for my $e (@$w) {
+					write_entry($name, $d, $M, $e->[0]);
+					why_is_this_bad($name, $dir, $d, $major, $M, $minor, $e->[0], $e->[1]);
+				}
+			}
+		}
+	}
+}
+
+sub report_problem
+{
+	my ($base, $libspec) = @_;
+		
+	if ($libspec =~ m|(.*)/|o) {
+		return _report_problem("$base/$1", $');
+	} else {
+		return _report_problem("$base/lib", $libspec);
+	}
+}
 1;
