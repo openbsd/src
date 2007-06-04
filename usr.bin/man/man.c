@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.33 2007/01/09 18:01:53 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.34 2007/06/04 20:40:10 otto Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.33 2007/01/09 18:01:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.34 2007/06/04 20:40:10 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -616,17 +616,28 @@ how(char *fname)
 	}
 #define	S1	"SYNOPSIS"
 #define	S2	"S\bSY\bYN\bNO\bOP\bPS\bSI\bIS\bS"
-#define	D1	"DESCRIPTION"
-#define	D2	"D\bDE\bES\bSC\bCR\bRI\bIP\bPT\bTI\bIO\bON\bN"
 	for (lcnt = print = 0; fgets(buf, sizeof(buf), fp);) {
 		if (!strncmp(buf, S1, sizeof(S1) - 1) ||
 		    !strncmp(buf, S2, sizeof(S2) - 1)) {
 			print = 1;
 			continue;
-		} else if (!strncmp(buf, D1, sizeof(D1) - 1) ||
-		    !strncmp(buf, D2, sizeof(D2) - 1)) {
-		    	(void)fclose(fp);
-			return;
+		} else if (print) {
+			char *p = buf;
+			int allcaps = 0;
+
+			while (*p) {
+				if (!allcaps && isalpha(*p))
+					allcaps = 1;
+				if (isalpha(*p) && !isupper(*p)) {
+					allcaps = 0;
+					break;
+				}
+				p++;
+			}
+			if (allcaps) {
+				(void)fclose(fp);
+				return;
+			}
 		}
 		if (!print)
 			continue;
