@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.140 2007/05/31 19:19:44 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.141 2007/06/04 20:05:14 henning Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2007 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -121,9 +121,8 @@ The address or protocol families currently
 supported are
 .Dq inet ,
 .Dq inet6 ,
-.Dq atalk ,
 and
-.Dq ipx .
+.Dq atalk .
 .It Ar address
 For the
 .Tn DARPA
@@ -158,10 +157,6 @@ are specified in hexadecimal.
 The host number may be omitted on Ethernet interfaces,
 which use the hardware physical address,
 and on interfaces other than the first.
-.Tn IPX
-addresses are specified as listed in the
-.Xr ipx 3
-manual page.
 .Pp
 .Tn AppleTalk
 (LLAP) addresses are specified as
@@ -183,13 +178,6 @@ The following
 may be set with
 .Nm :
 .Bl -tag -width dest_addressxx
-.It Xo
-.Cm 802.2 \*(Ba 802.2tr \*(Ba 802.3 \*(Ba
-.Cm snap \*(Ba EtherII
-.Xc
-Set the
-.Xr ipx 3
-frame type to be either 802.2, 802.2tr, 802.3, snap, or Ethernet II.
 .It Cm alias
 Establish an additional network address for this interface.
 This is sometimes useful when changing network numbers, and
@@ -298,7 +286,7 @@ by the network interface driver as the driver may take care of this
 automatically; see the driver's manual page for more information.
 .It Cm ipdst Ar addr
 This is used to specify an Internet host which is willing to receive
-IP packets encapsulating IPX or AppleTalk packets bound for a remote network.
+IP packets encapsulating AppleTalk packets bound for a remote network.
 An apparent point-to-point link is constructed, and
 the address specified will be taken as the address and network
 of the destination.
