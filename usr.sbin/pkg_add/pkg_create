@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.112 2007/06/04 16:33:22 espie Exp $
+# $OpenBSD: pkg_create,v 1.113 2007/06/04 18:52:01 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -445,14 +445,14 @@ sub add_description
 	    if (defined $comment) {
 	    	print $fh dosubst($comment), "\n";
 	    } else {
-		if ($opt_c =~ /^\-/o) {
-		    print $fh $', "\n";
+		if ($opt_c =~ /^\-(.*)$/o) {
+		    print $fh $1, "\n";
 		} else {
 		    copy_subst_fh($opt_c, $fh);
 		}
 	    }
-	    if ($opt_d =~ /^\-/o) {
-		print $fh $', "\n";
+	    if ($opt_d =~ /^\-(.*)$/o) {
+		print $fh $1, "\n";
 	    } else {
 		copy_subst_fh($opt_d, $fh);
 	    }
@@ -485,8 +485,8 @@ try {
 	{'D' => 
 		sub { 
 			local $_ = shift;
-			if (m/\=/o) {
-				my ($k, $v) = ($`,$');
+			if (m/^([^=]+)\=(.*)$/o) {
+				my ($k, $v) = ($1, $2);
 				$v =~ s/^\'(.*)\'$/$1/;
 				$v =~ s/^\"(.*)\"$/$1/;
 				$defines{$k} = $v;

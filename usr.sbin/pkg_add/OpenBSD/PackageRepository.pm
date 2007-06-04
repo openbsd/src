@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.40 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.41 2007/06/04 18:52:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -38,22 +38,22 @@ sub _new
 sub new
 {
 	my ($class, $baseurl) = @_;
-	if ($baseurl =~ m/^ftp\:/io) {
-		return OpenBSD::PackageRepository::FTP->_new($');
-	} elsif ($baseurl =~ m/^http\:/io) {
-		return OpenBSD::PackageRepository::HTTP->_new($');
-	} elsif ($baseurl =~ m/^scp\:/io) {
+	if ($baseurl =~ m/^ftp\:(.*)$/io) {
+		return OpenBSD::PackageRepository::FTP->_new($1);
+	} elsif ($baseurl =~ m/^http\:(.*)$/io) {
+		return OpenBSD::PackageRepository::HTTP->_new($1);
+	} elsif ($baseurl =~ m/^scp\:(.*)$/io) {
 		require OpenBSD::PackageRepository::SCP;
 
-		return OpenBSD::PackageRepository::SCP->_new($');
-	} elsif ($baseurl =~ m/^src\:/io) {
+		return OpenBSD::PackageRepository::SCP->_new($1);
+	} elsif ($baseurl =~ m/^src\:(.*)$/io) {
 		require OpenBSD::PackageRepository::Source;
 
-		return OpenBSD::PackageRepository::Source->_new($');
-	} elsif ($baseurl =~ m/^file\:/io) {
-		return OpenBSD::PackageRepository::Local->_new($');
-	} elsif ($baseurl =~ m/^inst\:/io) {
-		return OpenBSD::PackageRepository::Installed->_new($');
+		return OpenBSD::PackageRepository::Source->_new($1);
+	} elsif ($baseurl =~ m/^file\:(.*)$/io) {
+		return OpenBSD::PackageRepository::Local->_new($1);
+	} elsif ($baseurl =~ m/^inst\:(.*)$/io) {
+		return OpenBSD::PackageRepository::Installed->_new($1);
 	} else {
 		return OpenBSD::PackageRepository::Local->_new($baseurl);
 	}
@@ -473,8 +473,8 @@ sub _new
 {
 	my ($class, $baseurl) = @_;
 	my $distant_host;
-	if ($baseurl =~ m/^\/\/(.*?)\//io) {
-	    $distant_host = $&;
+	if ($baseurl =~ m/^(\/\/.*?\/)/io) {
+	    $distant_host = $1;
 	}
 	bless { baseurl => $baseurl, key => $distant_host }, $class;
 }

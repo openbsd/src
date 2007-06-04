@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.21 2007/06/04 17:00:45 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.22 2007/06/04 18:52:02 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -163,8 +163,8 @@ sub lookup_libspec
 {
 	my ($base, $libspec) = @_;
 		
-	if ($libspec =~ m|(.*)/|o) {
-		return _lookup_libspec("$base/$1", $');
+	if ($libspec =~ m/^(.*)\/([^\/]+)$/o) {
+		return _lookup_libspec("$base/$1", $2);
 	} else {
 		return _lookup_libspec("$base/lib", $libspec);
 	}
@@ -215,8 +215,8 @@ sub report_problem
 {
 	my ($base, $libspec) = @_;
 		
-	if ($libspec =~ m|(.*)/|o) {
-		return _report_problem("$base/$1", $');
+	if ($libspec =~ m/^(.*)\/([^\/]+)$/o) {
+		return _report_problem("$base/$1", $2);
 	} else {
 		return _report_problem("$base/lib", $libspec);
 	}

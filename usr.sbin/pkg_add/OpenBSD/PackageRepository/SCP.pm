@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.14 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: SCP.pm,v 1.15 2007/06/04 18:52:02 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -217,8 +217,8 @@ sub abort_batch()
 local $_;
 while (<STDIN>) {
 	chomp;
-	if (m/^LIST\s+/o) {
-		my $dname = $';
+	if (m/^LIST\s+(.*)$/o) {
+		my $dname = $1;
 		batch(sub {
 			my $d;
 			if (opendir($d, $dname)) {
@@ -235,8 +235,8 @@ while (<STDIN>) {
 			print "\n";
 			closedir($d);
 		});
-	} elsif (m/^GET\s+/o) {
-		my $fname = $';
+	} elsif (m/^GET\s+(.*)$/o) {
+		my $fname = $1;
 		batch(sub {
 			if (open(my $fh, '<', $fname)) {
 				my $size = (stat $fh)[7];

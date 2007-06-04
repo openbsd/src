@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.131 2007/06/04 16:13:30 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.132 2007/06/04 18:52:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -205,8 +205,8 @@ sub dirclass() { undef }
 sub new
 {
 	my ($class, $args) = @_;
-	if ($args =~ m|/+$|o and defined $class->dirclass) {
-		bless { name => $` }, $class->dirclass;
+	if ($args =~ m/^(.*?)\/+$/o and defined $class->dirclass) {
+		bless { name => $1 }, $class->dirclass;
 	} else {
 		bless { name => $args }, $class;
 	}
@@ -813,28 +813,28 @@ sub check
 	my ($name, $passwd, $uid, $gid, $quota, $class, $gcos, $dir, $shell, 
 	    $expire) = getpwnam($self->{name});
 	return unless defined $name;
-	if ($self->{uid} =~ m/^\!/o) {
-		return 0 unless $uid == $';
+	if ($self->{uid} =~ m/^\!(.*)$/o) {
+		return 0 unless $uid == $1;
 	}
-	if ($self->{group} =~ m/^\!/o) {
-		my $g = $';
-		unless ($g =~ m/^\d+/o) {
+	if ($self->{group} =~ m/^\!(.*)$/o) {
+		my $g = $1;
+		unless ($g =~ m/^\d+$/o) {
 			$g = getgrnam($g);
 			return 0 unless defined $g;
 		}
 		return 0 unless $gid eq $g;
 	}
-	if ($self->{class} =~ m/^\!/o) {
-		return 0 unless $class eq $';
+	if ($self->{class} =~ m/^\!(.*)$/o) {
+		return 0 unless $class eq $1;
 	}
-	if ($self->{comment} =~ m/^\!/o) {
-		return 0 unless $gcos eq $';
+	if ($self->{comment} =~ m/^\!(.*)$/o) {
+		return 0 unless $gcos eq $1;
 	}
-	if ($self->{home} =~ m/^\!/o) {
-		return 0 unless $dir eq $';
+	if ($self->{home} =~ m/^\!(.*)$/o) {
+		return 0 unless $dir eq $1;
 	}
-	if ($self->{shell} =~ m/^\!/o) {
-		return 0 unless $shell eq $';
+	if ($self->{shell} =~ m/^\!(.*)$/o) {
+		return 0 unless $shell eq $1;
 	}
 	return 1;
 }
@@ -868,8 +868,8 @@ sub check
 	my $self = shift;
 	my ($name, $passwd, $gid, $members) = getgrnam($self->{name});
 	return unless defined $name;
-	if ($self->{gid} =~ m/^\!/o) {
-		return 0 unless $gid == $';
+	if ($self->{gid} =~ m/^\!(.*)$/o) {
+		return 0 unless $gid == $1;
 	}
 	return 1;
 }
