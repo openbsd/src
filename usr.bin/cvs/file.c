@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.190 2007/06/01 17:47:47 niallo Exp $	*/
+/*	$OpenBSD: file.c,v 1.191 2007/06/04 21:54:26 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -640,10 +640,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd, rflags);
 		if (cf->file_rcs == NULL)
 			fatal("cvs_file_classify: failed to parse RCS");
-	} else {
-		
-		fatal("cvs_file_classify: failed to open file `%s' of type %d",
-		    cf->file_rpath, cf->file_type);
 	}
 
 	if (tag != NULL && cf->file_rcs != NULL) {
