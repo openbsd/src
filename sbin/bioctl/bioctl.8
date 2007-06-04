@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.45 2007/05/31 19:19:43 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.46 2007/06/04 05:28:43 todd Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2007 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -35,9 +35,10 @@
 .Op Fl hiv
 .Op Fl a Ar alarm-function
 .Op Fl b Ar channel:target[.lun]
+.Op Fl C Ar flag[,flag,...]
 .Op Fl c Ar raidlevel
 .Op Fl H Ar channel:target[.lun]
-.Op Fl l Ar special[,special[,...]]
+.Op Fl l Ar special[,special,...]
 .Op Fl u Ar channel:target[.lun]
 .Ar device
 .Ek
@@ -88,6 +89,19 @@ device of level
 The device must begin with
 .Dq softraid
 followed by a number.
+.It Fl C Ar flag[,flag,...]
+.Bl -tag -width Ds
+Pass flags when doing operations with
+.Nm .
+May be one of:
+.Pp
+.Bl -tag -width disable -compact
+.It Ar force
+Force the operation, e.g. to force creation of volumes
+with unclean data in the metatdata areas.
+.It Ar noauto
+Ignore this RAID volume upon reboot.
+.El
 .It Fl H Ar channel:target[.lun]
 If the device at
 .Ar channel:target[.lun]
@@ -102,7 +116,7 @@ Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
 digits to four or less.
 .It Fl i
 Enumerate the selected RAID devices.
-.It Fl l Ar special[,special[,...]]
+.It Fl l Ar special[,special,...]
 Use
 .Ar special
 device list to create within the
