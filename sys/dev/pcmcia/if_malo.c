@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.11 2007/06/03 21:26:41 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.12 2007/06/04 20:29:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -329,11 +329,11 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP)) {
-			if (!(ifp->if_flags & IFF_RUNNING))
+		if (ifp->if_flags & IFF_UP) {
+			if ((ifp->if_flags & IFF_RUNNING) == 0)
 				cmalo_init(ifp);
 		} else {
-			if ((ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
 				cmalo_stop(sc);
 		}
 		break;
@@ -343,8 +343,7 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	if (error == ENETRESET) {
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
+		if (ifp->if_flags & (IFF_UP | IFF_RUNNING))
 			cmalo_init(ifp);
 		error = 0;
 	}
@@ -525,6 +524,7 @@ int
 cmalo_init(struct ifnet *ifp)
 {
 	struct malo_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 
 	/* reload the firmware if necessary */
 	if (!(sc->sc_flags & MALO_FW_LOADED)) {
@@ -542,6 +542,13 @@ cmalo_init(struct ifnet *ifp)
 		cmalo_intr_mask(sc, 1);
 	}
 
+	/* get current channel */
+        ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+        sc->sc_curchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+
+	DPRINTF(1, "%s: current channel is %d\n",
+	    sc->sc_dev.dv_xname, sc->sc_curchan);
+
 	/* setup device */
 	if (cmalo_cmd_set_macctrl(sc) != 0)
 		return (EIO);
@@ -553,7 +560,7 @@ cmalo_init(struct ifnet *ifp)
 		return (EIO);
 	if (cmalo_cmd_set_radio(sc, 1) != 0)
 		return (EIO);
-	if (cmalo_cmd_set_channel(sc, 1) != 0)
+	if (cmalo_cmd_set_channel(sc, sc->sc_curchan) != 0)
 		return (EIO);
 
 	/* device up */
@@ -586,7 +593,7 @@ cmalo_media_change(struct ifnet *ifp)
 	if ((error = ieee80211_media_change(ifp) != ENETRESET))
 		return (error);
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
+	if (ifp->if_flags & (IFF_UP | IFF_RUNNING))
 		cmalo_init(ifp);
 
 	return (0);

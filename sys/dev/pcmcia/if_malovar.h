@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.7 2007/06/03 21:26:41 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.8 2007/06/04 20:29:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -122,4 +122,5 @@ struct malo_softc {
 	void			*sc_cmd;
 	uint8_t			 sc_cmd_running;
 	void			*sc_data;
+	uint8_t			 sc_curchan;
 };
