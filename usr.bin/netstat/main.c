@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2007/03/23 15:37:57 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.66 2007/06/04 12:20:24 henning Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.65 2007/03/23 15:37:57 jmc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.66 2007/06/04 12:20:24 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,12 +102,6 @@ struct nlist nl[] = {
 	{ "_mfchash" },
 #define N_VIFTABLE	17
 	{ "_viftable" },
-#define N_IPX		18
-	{ "_ipxcbtable"},
-#define N_IPXSTAT	19
-	{ "_ipxstat"},
-#define N_SPXSTAT	20
-	{ "_spx_istat"},
 #define N_AHSTAT	21
 	{ "_ahstat"},
 #define N_ESPSTAT	22
@@ -219,15 +213,6 @@ struct protox ip6protox[] = {
 };
 #endif
 
-struct protox ipxprotox[] = {
-	{ N_IPX,	N_IPXSTAT,	1,	ipxprotopr,
-	  ipx_stats,	0,		"ipx" },
-	{ N_IPX,	N_SPXSTAT,	1,	ipxprotopr,
-	  spx_stats,	0,		"spx" },
-	{ -1,		-1,		0,	0,
-	  0,		0,		0 }
-};
-
 struct protox atalkprotox[] = {
 	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
 	  ddp_stats,	0,		"ddp" },
@@ -237,11 +222,11 @@ struct protox atalkprotox[] = {
 
 #ifndef INET6
 struct protox *protoprotox[] = {
-	protox, ipxprotox, atalkprotox, NULL
+	protox, atalkprotox, NULL
 };
 #else
 struct protox *protoprotox[] = {
-	protox, ip6protox, ipxprotox, atalkprotox, NULL
+	protox, ip6protox, atalkprotox, NULL
 };
 #endif
 
@@ -293,8 +278,6 @@ main(int argc, char *argv[])
 				af = AF_LOCAL;
 			else if (strcmp(optarg, "unix") == 0)
 				af = AF_UNIX;
-			else if (strcmp(optarg, "ipx") == 0)
-				af = AF_IPX;
 			else if (strcmp(optarg, "encap") == 0)
 				af = PF_KEY;
 			else if (strcmp(optarg, "atalk") == 0)
@@ -537,9 +520,6 @@ main(int argc, char *argv[])
 		for (tp = ip6protox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
 #endif
-	if (af == AF_IPX || af == AF_UNSPEC)
-		for (tp = ipxprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value);
 	if (af == AF_APPLETALK || af == AF_UNSPEC)

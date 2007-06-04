@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.49 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.50 2007/06/04 12:20:24 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.49 2006/11/17 01:11:23 itojun Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.50 2007/06/04 12:20:24 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,6 @@ static char *rcsid = "$OpenBSD: if.c,v 1.49 2006/11/17 01:11:23 itojun Exp $";
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #include <arpa/inet.h>
 
 #include <limits.h>
@@ -82,7 +80,6 @@ intpr(int interval, u_long ifnetaddr)
 #ifdef INET6
 		struct in6_ifaddr in6;
 #endif
-		struct ipx_ifaddr ipx;
 	} ifaddr;
 	u_long total, ifaddraddr;
 	struct sockaddr *sa;
@@ -273,21 +270,6 @@ intpr(int interval, u_long ifnetaddr)
 				}
 				break;
 #endif
-			case AF_IPX:
-				{
-				struct sockaddr_ipx *sipx =
-					(struct sockaddr_ipx *)sa;
-				u_long net;
-				char netnum[8];
-
-				*(union ipx_net *)&net = sipx->sipx_addr.ipx_net;
-				snprintf(netnum, sizeof netnum, "%XH",
-				    ntohl(net));
-				printf("ipx:%-8s", netnum);
-				printf("%-17s ",
-				    ipx_phost((struct sockaddr *)sipx));
-				}
-				break;
 			case AF_APPLETALK:
 				printf("atlk:%-12s",atalk_print(sa,0x10) );
 				printf("%-12s ",atalk_print(sa,0x0b) );
@@ -551,22 +533,3 @@ catchalarm(int signo)
 {
 	signalled = YES;
 }
-
-char *
-ipx_phost(struct sockaddr *sa)
-{
-	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *)sa;
-	struct sockaddr_ipx work;
-	static union ipx_net ipx_zeronet;
-	char *p;
-
-	work = *sipx;
-	work.sipx_addr.ipx_port = 0;
-	work.sipx_addr.ipx_net = ipx_zeronet;
-
-	p = ipx_print((struct sockaddr *)&work);
-	if (strncmp("0H.", p, 3) == 0)
-		p += 3;
-	return(p);
-}
-

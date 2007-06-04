@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.40 2007/03/23 10:59:38 pyr Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.41 2007/06/04 12:20:24 henning Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -99,8 +99,6 @@ void	rt_stats(int, u_long);
 void	pr_rthdr(int, int);
 void	pr_encaphdr(void);
 void	pr_family(int);
-char	*ns_phost(struct sockaddr *);
-char	*ipx_phost(struct sockaddr *);
 
 #ifdef INET6
 struct in6_addr;
@@ -127,18 +125,12 @@ char	*routename(struct sockaddr *);
 char	*routename4(in_addr_t);
 char	*netname(struct sockaddr *, struct sockaddr *);
 char	*netname4(in_addr_t, in_addr_t);
-char	*ipx_print(struct sockaddr *);
 void	routepr(u_long, u_long, u_long, u_long);
 
 void	nsprotopr(u_long, char *);
 void	spp_stats(u_long, char *);
 void	idp_stats(u_long, char *);
 void	nserr_stats(u_long, char *);
-
-void	ipxprotopr(u_long, char *);
-void	spx_stats(u_long, char *);
-void	ipx_stats(u_long, char *);
-void	ipxerr_stats(u_long, char *);
 
 void	intpr(int, u_long);
 
