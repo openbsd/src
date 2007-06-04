@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.22 2007/06/04 18:52:02 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.23 2007/06/04 20:34:07 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -173,7 +173,7 @@ sub lookup_libspec
 sub write_entry
 {
 	my ($name, $d, $M, $m) = @_;
-	print "$name: found partial match in $d: major=$M, minor=$m ";
+	print "$name: partial match in $d: major=$M, minor=$m ";
 }
 
 sub why_is_this_bad
