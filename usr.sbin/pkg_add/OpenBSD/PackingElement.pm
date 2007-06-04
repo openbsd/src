@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.127 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.128 2007/06/04 14:42:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -529,9 +529,6 @@ sub add
 
 	if ($args =~ m/^\$OpenBSD.*\$\s*$/o) {
 		return OpenBSD::PackingElement::CVSTag->add($plist, $args);
-	} elsif ($args =~ m/^MD5:\s*/o) {
-		$plist->{state}->{lastfile}->add_md5(pack('H*', $'));
-		return;
 	} elsif ($args =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/o) {
 		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
 	} elsif ($args eq 'no checksum') {

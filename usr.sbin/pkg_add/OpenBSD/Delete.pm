@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.61 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Delete.pm,v 1.62 2007/06/04 14:42:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -311,12 +311,6 @@ sub record_shared
 	my ($self, $recorder, $pkgname) = @_;
 	$self->{pkgname} = $pkgname;
 	push(@{$recorder->{dirs}->{$self->fullname}} , $self);
-}
-
-package OpenBSD::PackingElement::DirRm;
-sub delete
-{
-	&OpenBSD::PackingElement::DirBase::delete;
 }
 
 package OpenBSD::PackingElement::Unexec;
