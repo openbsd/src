@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.23 2004/05/26 14:22:54 otto Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.24 2007/06/04 14:59:45 henning Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -78,7 +78,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.23 2004/05/26 14:22:54 otto Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.24 2007/06/04 14:59:45 henning Exp $";
 #endif
 #endif
 
@@ -130,12 +130,6 @@ static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.23 2004/05/26 14:22:54 otto Exp $
 #include "pppd.h"
 #include "fsm.h"
 #include "ipcp.h"
-
-#ifdef IPX_CHANGE
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-#include "ipxcp.h"
-#endif
 
 #define ok_error(num) ((num)==EIO)
 
@@ -368,101 +362,6 @@ restore_loop()
     }
     ppp_fd = loop_slave;
 }
-
-#ifdef IPX_CHANGE
-/*
- * sipxfaddr - Config the interface IPX networknumber
- */
-int
-sipxfaddr(unit, network, node)
-	  int unit;
-	  u_int32_t network;
-	  u_char * node;
-{
-	int    skfd; 
-	int    result = 1;
-	struct ifreq         ifr;
-	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *) &ifr.ifr_addr;
-
-	skfd = socket (AF_IPX, SOCK_DGRAM, 0);
-	if (skfd < 0) { 
-		if (!ok_error (errno))
-			syslog (LOG_DEBUG, "socket(AF_IPX): %m(%d)", errno);
-		result = 0;
-	} else {
-		bzero (&ifr, sizeof(ifr));
-		strlcpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-
-		sipx->sipx_len     = sizeof(*sipx);
-		sipx->sipx_family  = AF_IPX;
-		sipx->sipx_type    = IPX_ETHERTYPE_II;
-		sipx->sipx_port    = 0;
-		sipx->sipx_network = htonl (network);
-		memcpy (sipx->sipx_node, node, IPX_HOSTADDRLEN);
-
-		/*
-		 *  Set the IPX device
-		 */
-		if (ioctl(skfd, SIOCSIFADDR, (caddr_t) &ifr) < 0) {
-			result = 0;
-			if (errno != EEXIST && !ok_error (errno)) {
-				syslog (LOG_DEBUG,
-					"ioctl(SIOCAIFADDR, CRTITF): %m(%d)",
-					errno);
-			} else {
-				syslog (LOG_WARNING,
-					"ioctl(SIOCAIFADDR, CRTITF): Address already exists");
-			}
-		}
-		close (skfd);
-	}
-
-	return result;
-}
-
-/*
- * cipxfaddr - Clear the information for the IPX network. The IPX routes
- *	       are removed and the device is no longer able to pass IPX
- *	       frames.
- */
-int
-cipxfaddr(unit)
-	int unit;
-{
-	int    skfd; 
-	int    result = 1;
-	struct ifreq         ifr;
-	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *) &ifr.ifr_addr;
-
-	skfd = socket (AF_IPX, SOCK_DGRAM, 0);
-	if (skfd < 0) {
-		if (! ok_error (errno))
-			syslog (LOG_DEBUG, "socket(AF_IPX): %m(%d)", errno);
-		result = 0;
-	} else {
-		bzero (&ifr, sizeof(ifr));
-		strlcpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-
-		sipx->sipx_len     = sizeof(*sipx);
-		sipx->sipx_family  = AF_IPX;
-		sipx->sipx_type    = IPX_ETHERTYPE_II;
-
-		/*
-		 *  Set the IPX device
-		 */
-		if (ioctl(skfd, SIOCDIFADDR, (caddr_t) &ifr) < 0) {
-			if (!ok_error (errno))
-				syslog (LOG_INFO,
-					"ioctl(SIOCAIFADDR, IPX_DLTITF): %m(%d)",
-					errno);
-			result = 0;
-		}
-		close (skfd);
-	}
-
-	return result;
-}
-#endif
 
 /*
  * disestablish_ppp - Restore the serial port to normal operation.

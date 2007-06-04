@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.21 2007/03/06 03:06:41 ray Exp $	*/
+/*	$OpenBSD: options.c,v 1.22 2007/06/04 14:59:45 henning Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.21 2007/03/06 03:06:41 ray Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.22 2007/06/04 14:59:45 henning Exp $";
 #endif
 #endif
 
@@ -82,10 +82,6 @@ static char rcsid[] = "$OpenBSD: options.c,v 1.21 2007/03/06 03:06:41 ray Exp $"
 #ifdef CBCP_SUPPORT
 #include "cbcp.h"
 #endif
-
-#ifdef IPX_CHANGE
-#include "ipxcp.h"
-#endif /* IPX_CHANGE */
 
 #include <net/ppp-comp.h>
 
@@ -253,7 +249,6 @@ static int setpapcrypt(char **);
 static int setidle(char **);
 static int setholdoff(char **);
 static int setdnsaddr(char **);
-static int resetipxproto(char **);
 static int setwinsaddr(char **);
 static int showversion(char **);
 static int showhelp(char **);
@@ -263,21 +258,6 @@ static int setpdebug(char **);
 static int setpassfilter(char **);
 static int setactivefilter(char **);
 #endif
-
-#ifdef IPX_CHANGE
-static int setipxproto(char **);
-static int setipxanet(char **);
-static int setipxalcl(char **);
-static int setipxarmt(char **);
-static int setipxnetwork(char **);
-static int setipxnode(char **);
-static int setipxrouter(char **);
-static int setipxname(char **);
-static int setipxcptimeout(char **);
-static int setipxcpterm(char **);
-static int setipxcpconf(char **);
-static int setipxcpfails(char **);
-#endif /* IPX_CHANGE */
 
 #ifdef MSLANMAN
 static int setmslanman(char **);
@@ -407,8 +387,6 @@ static struct cmd {
     {"holdoff", 1, setholdoff},		/* set holdoff time (seconds) */
     {"ms-dns", 1, setdnsaddr},		/* DNS address for the peer's use */
     {"ms-wins", 1, setwinsaddr},	/* Nameserver for SMB over TCP/IP for peer */
-    {"noipx",  0, resetipxproto},	/* Disable IPXCP (and IPX) */
-    {"-ipx",   0, resetipxproto},	/* Disable IPXCP (and IPX) */
     {"--version", 0, showversion},	/* Show version number */
     {"--help", 0, showhelp},		/* Show brief listing of options */
     {"-h", 0, showhelp},		/* ditto */
@@ -418,25 +396,6 @@ static struct cmd {
     {"pass-filter", 1, setpassfilter},	/* set filter for packets to pass */
     {"active-filter", 1, setactivefilter}, /* set filter for active pkts */
 #endif
-
-#ifdef IPX_CHANGE
-    {"ipx-network",          1, setipxnetwork}, /* IPX network number */
-    {"ipxcp-accept-network", 0, setipxanet},    /* Accept peer netowrk */
-    {"ipx-node",             1, setipxnode},    /* IPX node number */
-    {"ipxcp-accept-local",   0, setipxalcl},    /* Accept our address */
-    {"ipxcp-accept-remote",  0, setipxarmt},    /* Accept peer's address */
-    {"ipx-routing",          1, setipxrouter},  /* IPX routing proto number */
-    {"ipx-router-name",      1, setipxname},    /* IPX router name */
-    {"ipxcp-restart",        1, setipxcptimeout}, /* Set timeout for IPXCP */
-    {"ipxcp-max-terminate",  1, setipxcpterm},  /* max #xmits for term-reqs */
-    {"ipxcp-max-configure",  1, setipxcpconf},  /* max #xmits for conf-reqs */
-    {"ipxcp-max-failure",    1, setipxcpfails}, /* max #conf-naks for IPXCP */
-#if 0
-    {"ipx-compression", 1, setipxcompression}, /* IPX compression number */
-#endif
-    {"ipx",		     0, setipxproto},	/* Enable IPXCP (and IPX) */
-    {"+ipx",		     0, setipxproto},	/* Enable IPXCP (and IPX) */
-#endif /* IPX_CHANGE */
 
 #ifdef MSLANMAN
     {"ms-lanman", 0, setmslanman},	/* Use LanMan psswd when using MS-CHAP */
@@ -1191,11 +1150,6 @@ noopt(argv)
     BZERO((char *) &lcp_allowoptions[0], sizeof (struct lcp_options));
     BZERO((char *) &ipcp_wantoptions[0], sizeof (struct ipcp_options));
     BZERO((char *) &ipcp_allowoptions[0], sizeof (struct ipcp_options));
-
-#ifdef IPX_CHANGE
-    BZERO((char *) &ipxcp_wantoptions[0], sizeof (struct ipxcp_options));
-    BZERO((char *) &ipxcp_allowoptions[0], sizeof (struct ipxcp_options));
-#endif /* IPX_CHANGE */
 
     return (1);
 }
@@ -2327,191 +2281,6 @@ setwinsaddr(argv)
 
     return (1);
 }
-
-#ifdef IPX_CHANGE
-static int
-setipxrouter (argv)
-    char **argv;
-{
-    ipxcp_wantoptions[0].neg_router  = 1;
-    ipxcp_allowoptions[0].neg_router = 1;
-    return int_option(*argv, &ipxcp_wantoptions[0].router); 
-}
-
-static int
-setipxname (argv)
-    char **argv;
-{
-    char *dest = ipxcp_wantoptions[0].name;
-    char *src  = *argv;
-    int  count;
-    char ch;
-
-    ipxcp_wantoptions[0].neg_name  = 1;
-    ipxcp_allowoptions[0].neg_name = 1;
-    memset (dest, '\0', sizeof (ipxcp_wantoptions[0].name));
-
-    count = 0;
-    while (*src) {
-        ch = *src++;
-	if (! isalnum (ch) && ch != '_') {
-	    option_error("IPX router name must be alphanumeric or _");
-	    return 0;
-	}
-
-	if (count >= sizeof (ipxcp_wantoptions[0].name)) {
-	    option_error("IPX router name is limited to %d characters",
-			 sizeof (ipxcp_wantoptions[0].name) - 1);
-	    return 0;
-	}
-
-	dest[count++] = toupper (ch);
-    }
-
-    return 1;
-}
-
-static int
-setipxcptimeout (argv)
-    char **argv;
-{
-    return int_option(*argv, &ipxcp_fsm[0].timeouttime);
-}
-
-static int
-setipxcpterm (argv)
-    char **argv;
-{
-    return int_option(*argv, &ipxcp_fsm[0].maxtermtransmits);
-}
-
-static int
-setipxcpconf (argv)
-    char **argv;
-{
-    return int_option(*argv, &ipxcp_fsm[0].maxconfreqtransmits);
-}
-
-static int
-setipxcpfails (argv)
-    char **argv;
-{
-    return int_option(*argv, &ipxcp_fsm[0].maxnakloops);
-}
-
-static int
-setipxnetwork(argv)
-    char **argv;
-{
-    u_int32_t v;
-
-    if (!number_option(*argv, &v, 16))
-	return 0;
-
-    ipxcp_wantoptions[0].our_network = (int) v;
-    ipxcp_wantoptions[0].neg_nn      = 1;
-    return 1;
-}
-
-static int
-setipxanet(argv)
-    char **argv;
-{
-    ipxcp_wantoptions[0].accept_network = 1;
-    ipxcp_allowoptions[0].accept_network = 1;
-    return 1;
-}
-
-static int
-setipxalcl(argv)
-    char **argv;
-{
-    ipxcp_wantoptions[0].accept_local = 1;
-    ipxcp_allowoptions[0].accept_local = 1;
-    return 1;
-}
-
-static int
-setipxarmt(argv)
-    char **argv;
-{
-    ipxcp_wantoptions[0].accept_remote = 1;
-    ipxcp_allowoptions[0].accept_remote = 1;
-    return 1;
-}
-
-static u_char *
-setipxnodevalue(src,dst)
-u_char *src, *dst;
-{
-    int indx;
-    int item;
-
-    for (;;) {
-        if (!isxdigit (*src))
-	    break;
-	
-	for (indx = 0; indx < 5; ++indx) {
-	    dst[indx] <<= 4;
-	    dst[indx] |= (dst[indx + 1] >> 4) & 0x0F;
-	}
-
-	item = toupper (*src) - '0';
-	if (item > 9)
-	    item -= 7;
-
-	dst[5] = (dst[5] << 4) | item;
-	++src;
-    }
-    return src;
-}
-
-static int
-setipxnode(argv)
-    char **argv;
-{
-    char *end;
-
-    memset (&ipxcp_wantoptions[0].our_node[0], 0, 6);
-    memset (&ipxcp_wantoptions[0].his_node[0], 0, 6);
-
-    end = setipxnodevalue (*argv, &ipxcp_wantoptions[0].our_node[0]);
-    if (*end == ':')
-	end = setipxnodevalue (++end, &ipxcp_wantoptions[0].his_node[0]);
-
-    if (*end == '\0') {
-        ipxcp_wantoptions[0].neg_node = 1;
-        return 1;
-    }
-
-    option_error("invalid parameter '%s' for ipx-node option", *argv);
-    return 0;
-}
-
-static int
-setipxproto(argv)
-    char **argv;
-{
-    ipxcp_protent.enabled_flag = 1;
-    return 1;
-}
-
-static int
-resetipxproto(argv)
-    char **argv;
-{
-    ipxcp_protent.enabled_flag = 0;
-    return 1;
-}
-#else
-
-static int
-resetipxproto(argv)
-    char **argv;
-{
-    return 1;
-}
-#endif /* IPX_CHANGE */
 
 #ifdef MSLANMAN
 static int

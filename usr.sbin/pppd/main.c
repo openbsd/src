@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2005/05/03 03:42:16 djm Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2007/06/04 14:59:45 henning Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.45 2005/05/03 03:42:16 djm Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.46 2007/06/04 14:59:45 henning Exp $";
 #endif
 #endif
 
@@ -90,9 +90,6 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.45 2005/05/03 03:42:16 djm Exp $";
 extern char *strerror();
 #endif
 
-#ifdef IPX_CHANGE
-#include "ipxcp.h"
-#endif /* IPX_CHANGE */
 #ifdef AT_CHANGE
 #include "atcp.h"
 #endif
@@ -181,9 +178,6 @@ struct protent *protocols[] = {
 #endif
     &ipcp_protent,
     &ccp_protent,
-#ifdef IPX_CHANGE
-    &ipxcp_protent,
-#endif
 #ifdef AT_CHANGE
     &atcp_protent,
 #endif

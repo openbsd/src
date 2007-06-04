@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.15 2003/04/25 23:24:32 deraadt Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.16 2007/06/04 14:59:45 henning Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -479,12 +479,6 @@ extern struct option_info devnam_info;
 #define CHAPDEBUG(x)	if (debug) syslog x
 #else
 #define CHAPDEBUG(x)
-#endif
-
-#ifdef DEBUGIPXCP
-#define IPXCPDEBUG(x)	if (debug) syslog x
-#else
-#define IPXCPDEBUG(x)
 #endif
 
 #ifndef SIGTYPE

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.32 2007/05/31 19:20:28 jmc Exp $
+.\" $OpenBSD: pppd.8,v 1.33 2007/06/04 14:59:45 henning Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2007 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -465,81 +465,6 @@ Provides an extra parameter to the ip-up and ip-down scripts.
 If this option is given, the
 .Ar string
 supplied is given as the 6th parameter to those scripts.
-.It Cm ipx
-Enable the IPXCP and IPX protocols.
-This option is presently only supported under Linux,
-and only if your kernel has been configured to include IPX support.
-.It Cm ipx-network Ar n
-Set the IPX network number in the IPXCP configure request frame to
-.Ar n ,
-a hexadecimal number (without a leading 0x).
-There is no valid default.
-If this option is not specified, the network number is obtained from the peer.
-If the peer does not have the network number, the IPX protocol will not be
-started.
-.It Cm ipx-node Ar n Ns : Ns Ar m
-Set the IPX node numbers.
-The two node numbers are separated from each other with a colon character.
-The first number
-.Ar n
-is the local node number.
-The second number
-.Ar m
-is the peer's node number.
-Each node number is a hexadecimal number, at most 10 digits long.
-The node numbers on the ipx-network must be unique.
-There is no valid default.
-If this option is not specified then the node numbers are
-obtained from the peer.
-.It Cm ipx-router-name Op Ar string
-Set the name of the router.
-This is a string and is sent to the peer as information data.
-.It Cm ipx-routing Ar n
-Set the routing protocol to be received by this option.
-More than one instance of
-.Cm ipx-routing
-may be specified.
-The
-.Sq Cm none
-option (0) may be specified as the only instance of ipx-routing.
-The values may be
-.Ar 0
-for NONE,
-.Ar 2
-for RIP/SAP, and
-.Ar 4
-for NLSP.
-.It Cm ipxcp-accept-local
-Accept the peer's NAK for the node number specified in the ipx-node option.
-If a node number was specified, and non-zero, the default is
-to insist that the value be used.
-If you include this option then you will permit the peer to override
-the entry of the node number.
-.It Cm ipxcp-accept-network
-Accept the peer's NAK for the network number specified in the
-ipx-network option.
-If a network number was specified, and non-zero,
-the default is to insist that the value be used.
-If you include this option then you will permit the peer to override
-the entry of the node number.
-.It Cm ipxcp-accept-remote
-Use the peer's network number specified in the configure request frame.
-If a node number was specified for the peer and this option was
-not specified, the peer will be forced to use the value which you have
-specified.
-.It Cm ipxcp-max-configure Ar n
-Set the maximum number of IPXCP configure request frames which the
-system will send to
-.Ar n .
-The default is 10.
-.It Cm ipxcp-max-failure Ar n
-Set the maximum number of IPXCP NAK frames which the local system will
-send before it rejects the options.
-The default value is 3.
-.It Cm ipxcp-max-terminate Ar n
-Set the maximum number of IPXCP terminate request frames before the
-local system considers that the peer is not listening to them.
-The default value is 3.
 .It Cm kdebug Ar n
 Enable debugging code in the kernel-level PPP driver.
 The argument
@@ -758,12 +683,6 @@ which is to determine (if possible) the local IP address from the hostname.
 With this option, the peer will have to supply the local IP
 address during IPCP negotiation (unless it was specified explicitly
 on the command line or in an options file).
-.It Cm noipx
-Disable the IPXCP and IPX protocols.
-This option should only be required if the peer is buggy and gets confused
-by requests from
-.Nm
-for IPXCP negotiation.
 .It Cm nomagic
 Disable magic number negotiation.
 With this option,
@@ -1455,37 +1374,6 @@ This script can be used for undoing the effects of the
 .Pa /etc/ppp/ip-up
 script.
 It is invoked in the same manner and with the same parameters as the ip-up
-script.
-.It Pa /etc/ppp/ipx-up
-A program or script which is executed when the link is available for
-sending and receiving IPX packets (that is, IPXCP has come up).
-It is executed with the parameters
-.Pp
-.Ar interface-name tty-device speed network-number local-IPX-node-address
-.Ar remote-IPX-node-address local-IPX-routing-protocol
-.Ar remote-IPX-routing-protocol local-IPX-router-name remote-IPX-router-name
-.Ar ipparam pppd-pid
-.Pp
-The local-IPX-routing-protocol and remote-IPX-routing-protocol field
-may be one of the following:
-.Bl -tag -width "RIP NLSP"
-.It NONE
-to indicate that there is no routing protocol
-.It RIP
-to indicate that RIP/SAP should be used
-.It NLSP
-to indicate that Novell NLSP should be used
-.It RIP NLSP
-to indicate that both RIP/SAP and NLSP should be used
-.El
-.Pp
-.It Pa /etc/ppp/ipx-down
-A program or script which is executed when the link is no longer
-available for sending and receiving IPX packets.
-This script can be used for undoing the effects of the
-.Pa /etc/ppp/ipx-up
-script.
-It is invoked in the same manner and with the same parameters as the ipx-up
 script.
 .El
 .Sh FILES
