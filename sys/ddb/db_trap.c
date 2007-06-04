@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.12 2007/06/04 16:52:39 miod Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.13 2007/06/04 17:03:04 miod Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -78,7 +78,7 @@ db_trap(int type, int code)
 		 * give the user a traceback.
 		 */
 		if (cold) {
-			db_stack_trace_print(db_dot, 0, 20 /* arbitrary */, "",
+			db_stack_trace_print(db_dot, 0, 10 /* arbitrary */, "",
 			    db_printf);
 		}
 
