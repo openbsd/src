@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.25 2007/05/20 14:14:12 miod Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.26 2007/06/04 10:38:05 mbalmer Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -38,10 +38,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(__NetBSD__)
-#include <sys/callout.h>
-#endif
 
 /* From usb_mem.h */
 DECLARE_USB_DMA_T;
@@ -131,10 +127,7 @@ struct usbd_bus {
 	usb_callout_t		softi;
 #endif
 #endif
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_dma_tag_t		dmatag;	/* DMA tag */
-#endif
 };
 
 struct usbd_device {
@@ -285,9 +278,6 @@ void		usb_schedsoftintr(struct usbd_bus *);
 
 /* Locator stuff. */
 
-#if defined(__NetBSD__)
-#include "locators.h"
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 /* XXX these values are used to statically bind some elements in the USB tree
  * to specific driver instances. This should be somehow emulated in FreeBSD
  * but can be done later on.
@@ -299,16 +289,13 @@ void		usb_schedsoftintr(struct usbd_bus *);
 #define UHUBCF_VENDOR_DEFAULT -1
 #define UHUBCF_PRODUCT_DEFAULT -1
 #define UHUBCF_RELEASE_DEFAULT -1
-#endif
 
-#if defined (__OpenBSD__)
 #define	UHUBCF_PORT		0
 #define	UHUBCF_CONFIGURATION	1
 #define	UHUBCF_INTERFACE	2
 #define	UHUBCF_VENDOR		3
 #define	UHUBCF_PRODUCT		4
 #define	UHUBCF_RELEASE		5
-#endif
 
 #define	uhubcf_port		cf_loc[UHUBCF_PORT]
 #define	uhubcf_configuration	cf_loc[UHUBCF_CONFIGURATION]
@@ -322,4 +309,3 @@ void		usb_schedsoftintr(struct usbd_bus *);
 #define	UHUB_UNK_VENDOR		UHUBCF_VENDOR_DEFAULT /* wildcarded 'vendor' */
 #define	UHUB_UNK_PRODUCT	UHUBCF_PRODUCT_DEFAULT /* wildcarded 'product' */
 #define	UHUB_UNK_RELEASE	UHUBCF_RELEASE_DEFAULT /* wildcarded 'release' */
-
