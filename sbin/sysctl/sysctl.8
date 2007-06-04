@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.138 2007/05/31 19:19:48 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.139 2007/06/04 20:06:22 henning Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2007 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -319,11 +319,6 @@ not all of the variables are relevant to all architectures.
 .It net.inet6.icmp6.mtudisc_hiwat	integer	yes
 .It net.inet6.icmp6.mtudisc_lowat	integer	yes
 .It net.inet6.icmp6.nd6_debug	integer	yes
-.It net.ipx.ipx.checksum	integer	yes
-.It net.ipx.ipx.forwarding	integer	yes
-.It net.ipx.ipx.netbios	integer	yes
-.It net.ipx.ipx.recvspace	integer	yes
-.It net.ipx.ipx.sendspace	integer	yes
 .It debug.syncprt	integer	yes
 .It debug.busyprt	integer	yes
 .It debug.doclusterread	integer	yes
@@ -463,9 +458,6 @@ definitions for fourth level ICMPv6 identifiers
 definitions for fourth level TCP identifiers
 .It Aq Pa netinet/udp_var.h
 definitions for fourth level UDP identifiers
-.It Aq Pa netipx/ipx_var.h
-definitions for third level IPX identifiers and
-fourth level IPX identifiers
 .It Aq Pa ddb/db_var.h
 definitions for second level ddb identifiers
 .It Aq Pa sys/mount.h
