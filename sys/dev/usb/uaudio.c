@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.39 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.40 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -350,9 +350,6 @@ Static struct audio_hw_if uaudio_hw_if = {
 	uaudio_get_props,
 	uaudio_trigger_output,
 	uaudio_trigger_input,
-#if defined(__NetBSD__)
-	NULL,
-#endif
 };
 
 Static struct audio_device uaudio_device = {
@@ -452,12 +449,7 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_NO_FRAC)
 		sc->sc_altflags |= UA_NOFRAC;
 
-#if defined(__NetBSD__) && !defined(UAUDIO_DEBUG)
-	if (bootverbose)
-#endif
-		printf(", %d mixer controls", sc->sc_nctls);
-
-	printf("\n");
+	printf(", %d mixer controls\n", sc->sc_nctls);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -469,12 +461,10 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 /*
  * Macros to help sync OpenBSD to NetBSD
  */
-#if defined(__OpenBSD__)
 #define hw_channels channels
 #define hw_sample_rate sample_rate
 #define hw_precision precision
 #define hw_encoding encoding
-#endif
 
 int
 uaudio_activate(device_ptr_t self, enum devact act)

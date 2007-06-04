@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kuereg.h,v 1.6 2006/03/07 04:41:19 krw Exp $ */
+/*	$OpenBSD: if_kuereg.h,v 1.7 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: if_kuereg.h,v 1.11 2001/01/21 02:35:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -162,13 +162,8 @@ struct kue_cdata {
 struct kue_softc {
 	USBBASEDEVICE		kue_dev;
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 	struct arpcom		arpcom;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
-#elif defined(__NetBSD__)
-	struct ethercom		kue_ec;
-#define GET_IFP(sc) (&(sc)->kue_ec.ec_if)
-#endif
 
 	usbd_device_handle	kue_udev;
 	usbd_interface_handle	kue_iface;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.16 2007/05/21 05:40:27 jsg Exp $ */
+/*	$OpenBSD: hid.c,v 1.17 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -41,9 +41,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if defined(__NetBSD__)
-#include <sys/kernel.h>
-#endif
 #include <sys/malloc.h>
 
 #include <dev/usb/usb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.69 2007/05/21 06:10:43 jsg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.70 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -83,11 +83,9 @@
 
 #include <dev/rndvar.h>
 
-#if defined(__OpenBSD__)
 struct cfdriver ehci_cd = {
 	NULL, "ehci", DV_DULL
 };
-#endif
 
 #ifdef USB_DEBUG
 #define EHCI_DEBUG
@@ -97,9 +95,7 @@ struct cfdriver ehci_cd = {
 #define DPRINTF(x)	do { if (ehcidebug) printf x; } while(0)
 #define DPRINTFN(n,x)	do { if (ehcidebug>(n)) printf x; } while (0)
 int ehcidebug = 0;
-#ifndef __NetBSD__
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
-#endif
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -1053,12 +1049,6 @@ ehci_power(int why, void *v)
 
 		sc->sc_bus.use_polling--;
 		break;
-#if defined(__NetBSD__)
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-#endif
 	}
 	splx(s);
 

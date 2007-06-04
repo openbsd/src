@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.29 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.30 2007/06/04 10:34:04 mbalmer Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -44,11 +44,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if defined(__OpenBSD__)
 #include <sys/timeout.h>
-#else
-#include <sys/callout.h>
-#endif
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>

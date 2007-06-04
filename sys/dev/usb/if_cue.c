@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.35 2007/05/27 04:00:24 jsg Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.36 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -60,9 +60,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if !defined(__OpenBSD__)
-#include <sys/callout.h>
-#endif
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
@@ -72,24 +69,12 @@
 #include <sys/device.h>
 
 #include <net/if.h>
-#if defined(__NetBSD__)
-#include <net/if_arp.h>
-#endif
 #include <net/if_dl.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-#endif /* defined(__NetBSD__) */
-
-#if defined(__OpenBSD__)
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -97,7 +82,6 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
-#endif /* defined(__OpenBSD__) */
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -371,11 +355,7 @@ allmulti:
 		sc->cue_mctab[i] = 0;
 
 	/* now program new ones */
-#if defined(__NetBSD__)
-	ETHER_FIRST_MULTI(step, &sc->cue_ec, enm);
-#else
 	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
-#endif
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
 		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
@@ -531,9 +511,7 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: address %s\n", USBDEVNAME(sc->cue_dev),
 	    ether_sprintf(eaddr));
 
-#if defined(__OpenBSD__)
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
-#endif
 
 	/* Initialize interface info.*/
 	ifp = GET_IFP(sc);
@@ -1017,11 +995,7 @@ cue_init(void *xsc)
 	cue_csr_write_1(sc, CUE_ADVANCED_OPMODES,
 	    CUE_AOP_EMBED_RXLEN | 0x03); /* 1 wait state */
 
-#if defined(__OpenBSD__)
 	eaddr = sc->arpcom.ac_enaddr;
-#elif defined(__NetBSD__)
-	eaddr = LLADDR(ifp->if_sadl);
-#endif
 	/* Set MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		cue_csr_write_1(sc, CUE_PAR0 - i, eaddr[i]);
@@ -1135,11 +1109,7 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-#if defined(__NetBSD__)
-			arp_ifinit(ifp, ifa);
-#else
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
 			break;
 #endif /* INET */
 		}

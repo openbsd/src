@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_auereg.h,v 1.10 2007/05/06 04:08:47 krw Exp $ */
+/*	$OpenBSD: if_auereg.h,v 1.11 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: if_auereg.h,v 1.16 2001/10/10 02:14:17 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -227,22 +227,10 @@ struct aue_cdata {
 struct aue_softc {
 	USBBASEDEVICE		aue_dev;
 
-#if defined(__FreeBSD__)
-	struct arpcom		arpcom;
-	device_t		aue_miibus;
-#define GET_IFP(sc) (&(sc)->arpcom.ac_if)
-#define GET_MII(sc) (device_get_softc((sc)->aue_miibus))
-#elif defined(__NetBSD__)
-	struct ethercom		aue_ec;
-	struct mii_data		aue_mii;
-#define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
-#define GET_MII(sc) (&(sc)->aue_mii)
-#elif defined(__OpenBSD__)
 	struct arpcom		arpcom;
 	struct mii_data		aue_mii;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
-#endif
 
 	usb_callout_t		aue_stat_ch;
 

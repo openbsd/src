@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.21 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.22 2007/06/04 10:34:04 mbalmer Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -78,11 +78,7 @@ Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static int uhidev_maxrepid(void *buf, int len);
 Static int uhidevprint(void *aux, const char *pnp);
-#if defined(__NetBSD__)
-Static int uhidevsubmatch(struct device *parent, struct cfdata *cf, void *aux);
-#else
 Static int uhidevsubmatch(struct device *parent, void *cf, void *aux);
-#endif
 
 USB_DECLARE_DRIVER(uhidev);
 
@@ -328,16 +324,10 @@ uhidevprint(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-#if defined(__NetBSD__)
-Static int uhidevsubmatch(struct device *parent, struct cfdata *cf, void *aux)
-#else
 Static int uhidevsubmatch(struct device *parent, void *match, void *aux)
-#endif
 {
 	struct uhidev_attach_arg *uha = aux;
-#if defined(__OpenBSD__)
         struct cfdata *cf = match;
-#endif
 
 	if (cf->uhidevcf_reportid != UHIDEV_UNK_REPORTID &&
 	    cf->uhidevcf_reportid != uha->reportid)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.48 2007/05/31 00:34:11 maja Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.49 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -83,24 +83,12 @@
 #include <sys/proc.h>
 
 #include <net/if.h>
-#if defined(__NetBSD__)
-#include <net/if_arp.h>
-#endif
 #include <net/if_dl.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-#endif /* defined (__NetBSD__) */
-
-#if defined(__OpenBSD__)
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -108,7 +96,6 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
-#endif /* defined (__OpenBSD__) */
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -353,11 +340,7 @@ allmulti:
 	sc->kue_rxfilt &= ~KUE_RXFILT_ALLMULTI;
 
 	i = 0;
-#if defined (__NetBSD__)
-	ETHER_FIRST_MULTI(step, &sc->kue_ec, enm);
-#else
 	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
-#endif
 	while (enm != NULL) {
 		if (i == KUE_MCFILTCNT(sc) ||
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -494,10 +477,8 @@ kue_attachhook(void *xsc)
 	printf("%s: address %s\n", USBDEVNAME(sc->kue_dev),
 	    ether_sprintf(sc->kue_desc.kue_macaddr));
 
-#if defined(__OpenBSD__)
 	bcopy(sc->kue_desc.kue_macaddr,
 	    (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
-#endif
 
 	/* Initialize interface info.*/
 	ifp = GET_IFP(sc);
@@ -611,10 +592,6 @@ kue_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#if defined(__NetBSD__)
-		/* Deactivate the interface. */
-		if_deactivate(&sc->kue_ec.ec_if);
-#endif
 		sc->kue_dying = 1;
 		break;
 	}
@@ -967,11 +944,7 @@ kue_init(void *xsc)
 
 	s = splnet();
 
-#if defined(__NetBSD__)
-	eaddr = LLADDR(ifp->if_sadl);
-#else
 	eaddr = sc->arpcom.ac_enaddr;
-#endif /* defined(__NetBSD__) */
 	/* Set MAC address */
 	kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SET_MAC, 0, eaddr, ETHER_ADDR_LEN);
 
@@ -1094,11 +1067,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-#if defined(__NetBSD__)
-			arp_ifinit(ifp, ifa);
-#else
 			arp_ifinit(&sc->arpcom, ifa);
-#endif
 			break;
 #endif /* INET */
 		}

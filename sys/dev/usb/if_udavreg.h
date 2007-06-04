@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.5 2007/05/06 04:08:47 krw Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.6 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -135,11 +135,7 @@
 #define	 UDAV_GPR_GEPIO1	(1<<1) /* General purpose 1 */
 #define	 UDAV_GPR_GEPIO0	(1<<0) /* General purpose 0 */
 
-#if defined(__NetBSD__)
-#define GET_IFP(sc)             (&(sc)->sc_ec.ec_if)
-#else
 #define GET_IFP(sc)             (&(sc)->sc_ac.ac_if)
-#endif
 #define	GET_MII(sc)		(&(sc)->sc_mii)
 
 struct udav_chain {
@@ -182,11 +178,7 @@ struct udav_softc {
 	struct timeval		sc_rx_notice;
 
 	/* Ethernet */
-#if defined(__NetBSD__)
-        struct ethercom         sc_ec; /* ethernet common */
-#else
         struct arpcom           sc_ac; /* ethernet common */
-#endif
 	struct mii_data		sc_mii;
 	struct rwlock		sc_mii_lock;
 	int			sc_link;

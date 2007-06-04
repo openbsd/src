@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.38 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: if_url.c,v 1.39 2007/06/04 10:34:04 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -50,9 +50,7 @@
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
-#if defined(__OpenBSD__)
 #include <sys/proc.h>
-#endif
 #include <sys/socket.h>
 
 #include <sys/device.h>
@@ -66,15 +64,6 @@
 #include <net/bpf.h>
 #endif
 
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-#endif /* defined(__NetBSD__) */
-
-#if defined(__OpenBSD__)
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -82,7 +71,6 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
-#endif /* defined(__OpenBSD__) */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -272,9 +260,7 @@ url_attach(struct device *parent, struct device *self, void *aux)
 	/* Print Ethernet Address */
 	printf("%s: address %s\n", devname, ether_sprintf(eaddr));
 
-#if defined(__OpenBSD__)
 	bcopy(eaddr, (char *)&sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
-#endif
 	/* initialize interface information */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
@@ -283,10 +269,6 @@ url_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = url_start;
 	ifp->if_ioctl = url_ioctl;
 	ifp->if_watchdog = url_watchdog;
-#if defined(__NetBSD__)
-	ifp->if_init = url_init;
-	ifp->if_stop = url_stop;
-#endif
 
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -524,11 +506,7 @@ url_init(struct ifnet *ifp)
 	/* Cancel pending I/O and free all TX/RX buffers */
 	url_stop(ifp, 1);
 
-#if defined(__OpenBSD__)
 	eaddr = sc->sc_ac.ac_enaddr;
-#elif defined(__NetBSD__)
-	eaddr = LLADDR(ifp->if_sadl);
-#endif
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		url_csr_write_1(sc, URL_IDR0 + i, eaddr[i]);
 

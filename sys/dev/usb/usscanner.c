@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.14 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.15 2007/06/04 10:34:04 mbalmer Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -68,17 +68,9 @@
 
 #include <dev/usb/usbdevs.h>
 
-#if defined(__NetBSD__)
-#include <sys/scsiio.h>
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-#include <dev/scsipi/atapiconf.h>
-#elif defined(__OpenBSD__)
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <machine/bus.h>
-#endif
 
 #ifdef USSCANNER_DEBUG
 #define DPRINTF(x)	do { if (usscannerdebug) printf x; } while (0)
@@ -158,13 +150,8 @@ struct usscanner_softc {
 	device_ptr_t		sc_child;	/* child device, for detach */
 
 	struct scsipi_link	sc_link;
-#if defined(__NetBSD__)
-	struct atapi_adapter	sc_atapi_adapter;
-#define sc_adapter sc_atapi_adapter._generic
-#else
 	struct scsi_adapter	sc_atapi_adapter;
 #define sc_adapter sc_atapi_adapter
-#endif
 
 	int			sc_refcnt;
 	char			sc_dying;
@@ -347,25 +334,14 @@ usscanner_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * fill in the prototype scsipi_link.
 	 */
-#if defined(__NetBSD__)
-	sc->sc_link.type = BUS_SCSI;
-#endif
-#if defined(__OpenBSD__)
 	sc->sc_link.flags &= ~SDEV_ATAPI;
 	sc->sc_link.adapter_buswidth = 2;
 	sc->sc_link.adapter_target = USSCANNER_SCSIID_HOST;
-#endif
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &usscanner_dev;
 	sc->sc_link.openings = 1;
-#if defined(__NetBSD__)
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.scsipi_scsi.adapter_target = USSCANNER_SCSIID_HOST;
-	sc->sc_link.scsipi_scsi.max_target = USSCANNER_SCSIID_DEVICE;
-	sc->sc_link.scsipi_scsi.max_lun = 0;
-#endif
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -473,11 +449,7 @@ usscanner_sense(struct usscanner_softc *sc)
 	/* fetch sense data */
 	memset(&sense_cmd, 0, sizeof(sense_cmd));
 	sense_cmd.opcode = REQUEST_SENSE;
-#if defined(__NetBSD__)
-	sense_cmd.byte2 = sc_link->scsipi_scsi.lun << SCSI_CMD_LUN_SHIFT;
-#else
 	sense_cmd.byte2 = sc_link->lun << SCSI_CMD_LUN_SHIFT;
-#endif
 	sense_cmd.length = sizeof xs->sense;
 
 	sc->sc_state = UAS_SENSECMD;

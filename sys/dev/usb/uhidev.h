@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.6 2006/08/18 02:54:11 jason Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.7 2007/06/04 10:34:04 mbalmer Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -37,12 +37,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(__NetBSD__)
-#include "locators.h"
-#include "rnd.h"
-
-#endif
 
 #define uhidevcf_reportid cf_loc[UHIDBUSCF_REPORTID]
 #define UHIDEV_UNK_REPORTID UHIDBUSCF_REPORTID_DEFAULT

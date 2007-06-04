@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.40 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: usb.c,v 1.41 2007/06/04 10:34:04 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -104,20 +104,6 @@ struct usb_softc {
 };
 
 TAILQ_HEAD(, usb_task) usb_all_tasks;
-
-#if defined(__NetBSD__)
-dev_type_open(usbopen);
-dev_type_close(usbclose);
-dev_type_read(usbread);
-dev_type_ioctl(usbioctl);
-dev_type_poll(usbpoll);
-dev_type_kqfilter(usbkqfilter);
-
-const struct cdevsw usb_cdevsw = {
-	usbopen, usbclose, usbread, nowrite, usbioctl,
-	nostop, notty, usbpoll, nommap, usbkqfilter,
-};
-#endif
 
 Static volatile int threads_pending = 0;
 
@@ -241,7 +227,6 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	kthread_create_deferred(usb_create_event_thread, sc);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 void
 usb_create_event_thread(void *arg)
 {
@@ -386,7 +371,6 @@ usbctlprint(void *aux, const char *pnp)
 
 	return (UNCONF);
 }
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
 usbopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
