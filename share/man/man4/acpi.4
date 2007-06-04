@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.22 2007/05/31 19:19:48 jmc Exp $
+.\"	$OpenBSD: acpi.4,v 1.23 2007/06/04 19:49:35 mk Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2007 $
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -45,6 +45,9 @@ driver will take control of ACPI from the firmware (BIOS).
 WARNING: this may cause an overheating on some machines since
 .Nm
 doesn't provide any thermal or cooling control.
+For thermal control, use
+.Xr acpitz 4
+to shut down the system when temperatures exceed critical limits.
 .Pp
 The following devices can attach to
 .Nm :
