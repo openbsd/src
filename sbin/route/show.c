@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.57 2007/03/23 16:02:26 pyr Exp $	*/
+/*	$OpenBSD: show.c,v 1.58 2007/06/04 12:23:44 henning Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <net/pfkeyv2.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netipx/ipx.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
@@ -59,7 +58,6 @@
 #include "show.h"
 
 char	*any_ntoa(const struct sockaddr *);
-char	*ipx_print(struct sockaddr *);
 char	*link_print(struct sockaddr *);
 
 extern int nflag;
@@ -343,9 +341,6 @@ pr_family(int af)
 	case AF_INET6:
 		afname = "Internet6";
 		break;
-	case AF_IPX:
-		afname = "IPX";
-		break;
 	case PF_KEY:
 		afname = "Encap";
 		break;
@@ -562,9 +557,6 @@ routename(struct sockaddr *sa)
 		return (routename6(&sin6));
 	    }
 
-	case AF_IPX:
-		return (ipx_print(sa));
-
 	case AF_LINK:
 		return (link_print(sa));
 
@@ -775,9 +767,6 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 		return netname6((struct sockaddr_in6 *)sa,
 		    (struct sockaddr_in6 *)mask);
 
-	case AF_IPX:
-		return (ipx_print(sa));
-
 	case AF_LINK:
 		return (link_print(sa));
 
@@ -807,57 +796,6 @@ any_ntoa(const struct sockaddr *sa)
 	} while (--len > 0 && (out + 3) < &obuf[sizeof(obuf) - 1]);
 	out[-1] = '\0';
 	return (obuf);
-}
-
-short ipx_nullh[] = {0,0,0};
-short ipx_bh[] = {-1,-1,-1};
-
-char *
-ipx_print(struct sockaddr *sa)
-{
-	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *)sa;
-	struct ipx_addr work;
-	union {
-		union ipx_net	net_e;
-		u_int32_t	long_e;
-	} net;
-	u_short port;
-	static char mybuf[50+MAXHOSTNAMELEN], cport[10], chost[25];
-	char *host = "";
-	char *p;
-	u_char *q;
-
-	work = sipx->sipx_addr;
-	port = ntohs(work.ipx_port);
-	work.ipx_port = 0;
-	net.net_e = work.ipx_net;
-	if (ipx_nullhost(work) && net.long_e == 0) {
-		if (!port)
-			return ("*.*");
-		snprintf(mybuf, sizeof(mybuf), "*.0x%XH", port);
-		return (mybuf);
-	}
-
-	if (memcmp(ipx_bh, work.ipx_host.c_host, 6) == 0)
-		host = "any";
-	else if (memcmp(ipx_nullh, work.ipx_host.c_host, 6) == 0)
-		host = "*";
-	else {
-		q = work.ipx_host.c_host;
-		snprintf(chost, sizeof(chost), "%02X%02X%02X%02X%02X%02XH",
-		    q[0], q[1], q[2], q[3], q[4], q[5]);
-		for (p = chost; *p == '0' && p < chost + 12; p++)
-			/* void */;
-		host = p;
-	}
-	if (port)
-		snprintf(cport, sizeof(cport), ".%XH", htons(port));
-	else
-		*cport = '\0';
-
-	snprintf(mybuf, sizeof(mybuf), "%XH.%s%s",
-	    ntohl(net.long_e), host, cport);
-	return (mybuf);
 }
 
 char *

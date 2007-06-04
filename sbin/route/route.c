@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.109 2007/05/30 01:08:41 mcbride Exp $	*/
+/*	$OpenBSD: route.c,v 1.110 2007/06/04 12:23:43 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netipx/ipx.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -68,7 +67,6 @@ union	sockunion {
 	struct sockaddr		sa;
 	struct sockaddr_in	sin;
 	struct sockaddr_in6	sin6;
-	struct sockaddr_ipx	sipx;
 	struct sockaddr_dl	sdl;
 	struct sockaddr_rtlabel	rtlabel;
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label;
@@ -226,9 +224,6 @@ flushroutes(int argc, char **argv)
 			case K_INET6:
 				af = AF_INET6;
 				break;
-			case K_IPX:
-				af = AF_IPX;
-				break;
 			case K_LINK:
 				af = AF_LINK;
 				break;
@@ -369,10 +364,6 @@ newroute(int argc, char **argv)
 			case K_SA:
 				af = PF_ROUTE;
 				aflen = sizeof(union sockunion);
-				break;
-			case K_IPX:
-				af = AF_IPX;
-				aflen = sizeof(struct sockaddr_ipx);
 				break;
 			case K_IFACE:
 			case K_INTERFACE:
@@ -588,9 +579,6 @@ show(int argc, char *argv[])
 			case K_INET6:
 				af = AF_INET6;
 				break;
-			case K_IPX:
-				af = AF_IPX;
-				break;
 			case K_LINK:
 				af = AF_LINK;
 				break;
@@ -777,19 +765,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 		} else
 			return (1);
 	    }
-
-	case AF_IPX:
-		if (which == RTA_DST) {
-			extern short ipx_bh[3];
-			struct sockaddr_ipx *sms = &(so_mask.sipx);
-			memset(sms, 0, sizeof(*sms));
-			sms->sipx_family = 0;
-			sms->sipx_len = 6;
-			sms->sipx_addr.ipx_net = *(union ipx_net *)ipx_bh;
-			rtm_addrs |= RTA_NETMASK;
-		}
-		su->sipx.sipx_addr = ipx_addr(s);
-		return (!ipx_nullhost(su->sipx.sipx_addr));
 
 	case AF_LINK:
 		link_addr(s, &su->sdl);
@@ -1033,7 +1008,6 @@ mask_addr(union sockunion *addr, union sockunion *mask, int which)
 	if ((rtm_addrs & which) == 0)
 		return;
 	switch (addr->sa.sa_family) {
-	case AF_IPX:
 	case AF_INET:
 	case AF_INET6:
 	case 0:
@@ -1390,9 +1364,6 @@ sodump(sup su, char *which)
 		    ntop_buf, sizeof(ntop_buf)));
 		break;
 	    }
-	case AF_IPX:
-		printf("%s: ipx %s; ", which, ipx_ntoa(su->sipx.sipx_addr));
-		break;
 	}
 	fflush(stdout);
 }
