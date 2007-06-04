@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.126 2007/06/02 12:44:37 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.127 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -174,7 +174,7 @@ sub fullname
 {
 	my $self = $_[0];
 	my $fullname = $self->{name};
-	if ($fullname !~ m|^/| && $self->cwd ne '.') {
+	if ($fullname !~ m|^/|o && $self->cwd ne '.') {
 		$fullname = $self->cwd."/".$fullname;
 	}
 	return $fullname;
@@ -205,7 +205,7 @@ sub dirclass() { undef }
 sub new
 {
 	my ($class, $args) = @_;
-	if ($args =~ m|/+$| and defined $class->dirclass) {
+	if ($args =~ m|/+$|o and defined $class->dirclass) {
 		bless { name => $` }, $class->dirclass;
 	} else {
 		bless { name => $args }, $class;
@@ -432,7 +432,7 @@ sub register_manpage
 sub is_source
 {
 	my $self = shift;
-	return $self->{name} =~ m/man\/man[^\/]+\/[^\/]+\.[\dln][^\/]?$/;
+	return $self->{name} =~ m/man\/man[^\/]+\/[^\/]+\.[\dln][^\/]?$/o;
 }
 
 sub source_to_dest
@@ -453,9 +453,9 @@ sub format
 	close $fh;
 	my @extra = ();
 	# extra preprocessors as described in man.
-	if ($line =~ m/^\'\\\"\s+(.*)$/) {
+	if ($line =~ m/^\'\\\"\s+(.*)$/o) {
 		for my $letter (split $1) {
-			if ($letter =~ m/[ept]/) {
+			if ($letter =~ m/[ept]/o) {
 				push(@extra, "-$letter");
 			} elsif ($letter eq 'r') {
 				push(@extra, "-R");
@@ -527,12 +527,12 @@ sub add
 {
 	my ($class, $plist, $args) = @_;
 
-	if ($args =~ m/^\$OpenBSD.*\$\s*$/) {
+	if ($args =~ m/^\$OpenBSD.*\$\s*$/o) {
 		return OpenBSD::PackingElement::CVSTag->add($plist, $args);
-	} elsif ($args =~ m/^MD5:\s*/) {
+	} elsif ($args =~ m/^MD5:\s*/o) {
 		$plist->{state}->{lastfile}->add_md5(pack('H*', $'));
 		return;
-	} elsif ($args =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/) {
+	} elsif ($args =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/o) {
 		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
 	} elsif ($args eq 'no checksum') {
 		$plist->{state}->{nochecksum} = 1;
@@ -729,7 +729,7 @@ sub category() { "depend" }
 sub new
 {
 	my ($class, $args) = @_;
-	my ($pkgpath, $pattern, $def) = split /\:/, $args;
+	my ($pkgpath, $pattern, $def) = split ':', $args;
 	bless { name => $def, pkgpath => $pkgpath, pattern => $pattern, 
 	    def => $def }, $class;
 }
@@ -794,7 +794,7 @@ sub new
 {
 	my ($class, $args) = @_;
 	my ($name, $uid, $group, $loginclass, $comment, $home, $shell) = 
-	    split /\:/, $args;
+	    split ':', $args;
 	bless { name => $name, uid => $uid, group => $group, 
 	    class => $loginclass, 
 	    comment => $comment, home => $home, shell => $shell }, $class;
@@ -806,27 +806,27 @@ sub check
 	my ($name, $passwd, $uid, $gid, $quota, $class, $gcos, $dir, $shell, 
 	    $expire) = getpwnam($self->{name});
 	return unless defined $name;
-	if ($self->{uid} =~ m/^\!/) {
+	if ($self->{uid} =~ m/^\!/o) {
 		return 0 unless $uid == $';
 	}
-	if ($self->{group} =~ m/^\!/) {
+	if ($self->{group} =~ m/^\!/o) {
 		my $g = $';
-		unless ($g =~ m/^\d+/) {
+		unless ($g =~ m/^\d+/o) {
 			$g = getgrnam($g);
 			return 0 unless defined $g;
 		}
 		return 0 unless $gid eq $g;
 	}
-	if ($self->{class} =~ m/^\!/) {
+	if ($self->{class} =~ m/^\!/o) {
 		return 0 unless $class eq $';
 	}
-	if ($self->{comment} =~ m/^\!/) {
+	if ($self->{comment} =~ m/^\!/o) {
 		return 0 unless $gcos eq $';
 	}
-	if ($self->{home} =~ m/^\!/) {
+	if ($self->{home} =~ m/^\!/o) {
 		return 0 unless $dir eq $';
 	}
-	if ($self->{shell} =~ m/^\!/) {
+	if ($self->{shell} =~ m/^\!/o) {
 		return 0 unless $shell eq $';
 	}
 	return 1;
@@ -852,7 +852,7 @@ __PACKAGE__->register_with_factory;
 sub new
 {
 	my ($class, $args) = @_;
-	my ($name, $gid) = split /\:/, $args;
+	my ($name, $gid) = split ':', $args;
 	bless { name => $name, gid => $gid }, $class;
 }
 
@@ -861,7 +861,7 @@ sub check
 	my $self = shift;
 	my ($name, $passwd, $gid, $members) = getgrnam($self->{name});
 	return unless defined $name;
-	if ($self->{gid} =~ m/^\!/) {
+	if ($self->{gid} =~ m/^\!/o) {
 		return 0 unless $gid == $';
 	}
 	return 1;
@@ -963,7 +963,7 @@ sub new
 
 {
 	my ($class, $args) = @_;
-	if ($args =~ m/^\s*(.*)\s*(\=|\>=)\s*(.*)\s*$/) {
+	if ($args =~ m/^\s*(.*)\s*(\=|\>=)\s*(.*)\s*$/o) {
 		bless { name => $1, mode => $2, value => $3}, $class;
 	} else {
 		die "Bad syntax for \@sysctl";
@@ -985,21 +985,21 @@ sub expand
 {
 	my $state = $_[2];
 	local $_ = $_[1];
-	if (m/\%F/) {
+	if (m/\%F/o) {
 		die "Bad expand" unless defined $state->{lastfile};
 		s/\%F/$state->{lastfile}->{name}/g;
 	}
-	if (m/\%D/) {
+	if (m/\%D/o) {
 		die "Bad expand" unless defined $state->{cwd};
-		s/\%D/$state->cwd()/ge;
+		s/\%D/$state->cwd/ge;
 	}
-	if (m/\%B/) {
+	if (m/\%B/o) {
 		die "Bad expand" unless defined $state->{lastfile};
-		s/\%B/dirname($state->{lastfile}->fullname())/ge;
+		s/\%B/dirname($state->{lastfile}->fullname)/ge;
 	}
-	if (m/\%f/) {
+	if (m/\%f/o) {
 		die "Bad expand" unless defined $state->{lastfile};
-		s/\%f/basename($state->{lastfile}->fullname())/ge;
+		s/\%f/basename($state->{lastfile}->fullname)/ge;
 	}
 	return $_;
 }
@@ -1065,7 +1065,7 @@ sub destate
 sub needs_keyword
 {
 	my $self = shift;
-	return $self->stringize =~ m/\^@/;
+	return $self->stringize =~ m/\^@/o;
 }
 
 package OpenBSD::PackingElement::Infodir;
@@ -1316,8 +1316,8 @@ sub prepare
 	my $fname = $self->fullname;
 	open(my $src, '<', $fname) or Warn "Can't open $fname: $!";
 	while (<$src>) {
-		next if m/^\+\-+\s*$/;
-		s/^[+-] //;
+		next if m/^\+\-+\s*$/o;
+		s/^[+-] //o;
 		$state->print($_);
 	}
 }
@@ -1344,14 +1344,14 @@ __PACKAGE__->register_with_factory;
 sub new
 {
 	my ($class, $args) = @_;
-	my @arches= split(/\,/, $args);
+	my @arches= split(',', $args);
 	bless { arches => \@arches }, $class;
 }
 
 sub stringize($)
 {
 	my $self = $_[0];
-	return join(',',@{$self->{arches}});
+	return join(',', @{$self->{arches}});
 }
 
 sub check

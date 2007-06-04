@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.30 2007/06/01 22:35:46 espie Exp $
+# $OpenBSD: Replace.pm,v 1.31 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -199,7 +199,7 @@ sub mark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname;
-	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
+	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/o) {
 		$libpatterns->{$1} = [$2, $3, $libname];
 	}
 	$libs->{$libname} = 1;
@@ -209,7 +209,7 @@ sub unmark_lib
 {
 	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname;
-	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
+	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/o) {
 		my ($pat, $major, $minor) = ($1, $2, $3);
 		my $p = $libpatterns->{$pat};
 		if (defined $p && $p->[0] == $major && $p->[1] <= $minor) {
@@ -325,7 +325,7 @@ sub split_libs
 	$splitted->set_pkgname(".libs-".$plist->pkgname);
 	if (defined $plist->{conflict}) {
 		for my $item (@{$plist->{conflict}}) {
-			$item->clone()->add_object($splitted);
+			$item->clone->add_object($splitted);
 		}
 	}
 	if (defined $plist->{'no-default-conflict'}) {

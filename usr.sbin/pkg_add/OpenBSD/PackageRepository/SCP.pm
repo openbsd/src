@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.13 2007/05/19 09:44:28 espie Exp $
+# $OpenBSD: SCP.pm,v 1.14 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -47,9 +47,9 @@ sub initiate
 
 	while(<DATA>) {
 		# compress script a bit
-		next if m/^\#/ && !m/^\#!/;
-		s/^\s*//;
-		next if m/^$/;
+		next if m/^\#/o && !m/^\#!/o;
+		s/^\s*//o;
+		next if m/^$/o;
 		print $wrfh $_;
 	}
 }
@@ -58,7 +58,7 @@ sub initiate
 sub may_exist
 {
 	my ($self, $name) = @_;
-	my $l = $self->list();
+	my $l = $self->list;
 	return grep {$_ eq $name } @$l;
 }
 
@@ -72,16 +72,16 @@ sub grab_object
 	print $cmdfh "ABORT\n";
 	local $_;
 	while (<$getfh>) {
-		last if m/^ABORTED/;
+		last if m/^ABORTED/o;
 	}
 	print $cmdfh "GET ", $self->{path}.$object->{name}.".tgz", "\n";
 	close($cmdfh);
 	$_ = <$getfh>;
 	chomp;
-	if (m/^ERROR:/) {
+	if (m/^ERROR:/o) {
 		die "transfer error: $_";
 	}
-	if (m/^TRANSFER:\s+(\d+)/) {
+	if (m/^TRANSFER:\s+(\d+)/o) {
 		my $buffsize = 10 * 1024;
 		my $buffer;
 		my $size = $1;
@@ -106,7 +106,7 @@ sub grab_object
 sub _new
 {
 	my ($class, $baseurl) = @_;
-	if ($baseurl =~ m/^\/\/(.*?)(\/.*)$/) {
+	if ($baseurl =~ m/^\/\/(.*?)(\/.*)$/o) {
 		bless {	host => $1, baseurl => $baseurl, 
 		    key => $1, path => $2 }, $class;
 	} else {
@@ -134,7 +134,7 @@ sub list
 	my ($self) = @_;
 	if (!defined $self->{list}) {
 		if (!defined $self->{controller}) {
-			$self->initiate();
+			$self->initiate;
 		}
 		my $cmdfh = $self->{cmdfh};
 		my $getfh = $self->{getfh};
@@ -147,10 +147,10 @@ sub list
 			die "Could not initiate SSH session\n";
 		}
 		chomp;
-		if (m/^ERROR:/) {
+		if (m/^ERROR:/o) {
 			die $_;
 		}
-		if (!m/^SUCCESS:/) {
+		if (!m/^SUCCESS:/o) {
 			die "Synchronization error\n";
 		}
 		while (<$getfh>) {
@@ -217,7 +217,7 @@ sub abort_batch()
 local $_;
 while (<STDIN>) {
 	chomp;
-	if (m/^LIST\s+/) {
+	if (m/^LIST\s+/o) {
 		my $dname = $';
 		batch(sub {
 			my $d;
@@ -235,7 +235,7 @@ while (<STDIN>) {
 			print "\n";
 			closedir($d);
 		});
-	} elsif (m/^GET\s+/) {
+	} elsif (m/^GET\s+/o) {
 		my $fname = $';
 		batch(sub {
 			if (open(my $fh, '<', $fname)) {
@@ -250,9 +250,9 @@ while (<STDIN>) {
 				print "ERROR: bad file $fname $!\n";
 			}
 		});
-	} elsif (m/^BYE$/) {
+	} elsif (m/^BYE$/o) {
 		exit(0);
-	} elsif (m/^ABORT$/) {
+	} elsif (m/^ABORT$/o) {
 		abort_batch();
 	} else {
 		print "ERROR: Unknown command\n";

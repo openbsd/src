@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.12 2007/05/30 12:27:19 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.13 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -73,10 +73,10 @@ sub collision_report($$)
 	    for my $item (sort @{$bypkg->{$pkg}}) {
 	    	print "\t$item ($pkg)\n";
 	    }
-	    if ($pkg =~ m/^(?:partial\-|borked\.\d+$)/) {
+	    if ($pkg =~ m/^(?:partial\-|borked\.\d+$)/o) {
 	    	$clueless_bat = $pkg;
 	    }
-	    if ($pkg =~ m/^\.libs-*$/) {
+	    if ($pkg =~ m/^\.libs-*$/o) {
 	    	$clueless_bat2 = $pkg;
 	    }
 	}

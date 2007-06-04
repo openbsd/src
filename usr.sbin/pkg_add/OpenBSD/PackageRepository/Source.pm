@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Source.pm,v 1.4 2007/05/18 13:22:06 espie Exp $
+# $OpenBSD: Source.pm,v 1.5 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -63,7 +63,7 @@ sub build_package
 	if (! -f $pkgfile) {
 		return undef;
 	}
-	$pkgfile =~ m|(.*/)([^/]*)|;
+	$pkgfile =~ m|(.*/)([^/]*)|o;
 	my ($base, $fname) = ($1, $2);
 
 	my $repo = OpenBSD::PackageRepository::Local->_new($base);

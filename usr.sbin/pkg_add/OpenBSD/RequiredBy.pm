@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.15 2007/06/01 22:35:47 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.16 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -33,8 +33,8 @@ sub fill_entries
 				$self->{filename}, ": $!";
 			local $_;
 			while(<$fh>) {
-				s/\s+$//;
-				next if /^$/;
+				s/\s+$//o;
+				next if /^$/o;
 				chomp;
 				$l->{$_} = 1;
 			}

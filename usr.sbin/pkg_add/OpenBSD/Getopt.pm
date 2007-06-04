@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Getopt.pm,v 1.3 2006/07/31 16:27:21 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.4 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -51,8 +51,8 @@ sub getopts($;$)
     local @EXPORT;
 
     while ($_ = shift @ARGV) {
-    	last if /^--$/;
-    	unless (m/^-(.)(.*)/s) {
+    	last if /^--$/o;
+    	unless (m/^-(.)(.*)/so) {
 		unshift @ARGV, $_;
 		last;
 	}

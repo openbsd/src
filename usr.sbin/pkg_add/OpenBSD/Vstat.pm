@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.31 2007/06/01 14:58:29 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.32 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -50,7 +50,7 @@ sub init_devices()
 	open(my $cmd1, "/sbin/mount|") or print STDERR "Can't run mount\n";
 	while (<$cmd1>) {
 		chomp;
-		if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
+		if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/o) {
 			my ($dev, $opts) = ($1, $2);
 			my $i = create_device($dev);
 			next unless defined $i;
@@ -85,9 +85,9 @@ sub ask_df($)
 	my $blocksize = 512;
 	while (<$cmd2>) {
 		chomp;
-		if (m/^Filesystem\s+(\d+)\-blocks/) {
+		if (m/^Filesystem\s+(\d+)\-blocks/o) {
 			$blocksize = $1;
-		} elsif (m/^(.*?)\s+\d+\s+\d+\s+(\-?\d+)\s+\d+\%\s+\/.*?$/) {
+		} elsif (m/^(.*?)\s+\d+\s+\d+\s+(\-?\d+)\s+\d+\%\s+\/.*?$/o) {
 			my ($dev, $avail) = ($1, $2);
 			$info = $devinfo->{$dev};
 			if (!defined $info) {
@@ -182,7 +182,7 @@ sub tally()
 	while (my ($device, $data) = each %$devinfo) {
 		if ($data->{used} != 0) {
 			print $device, ": ", $data->{used}, " bytes";
-			my $avail = $data->avail(); 
+			my $avail = $data->avail; 
 			if ($avail < 0) {
 				print " (missing ", int(-$avail+1), " blocks)";
 			}

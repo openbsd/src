@@ -28,7 +28,7 @@ package OpenBSD::PackingElement::FileObject;
 sub print_name
 {
 	my ($self, $fh, $pkgname) = @_;
-	print $fh $pkgname, ":", $self->fullname(), "\n";
+	print $fh $pkgname, ":", $self->fullname, "\n";
 }
 
 package main;
@@ -42,11 +42,11 @@ sub info
 	my $plist = shift;
 	my $r;
 	if ($opt_a) {
-		$r = $plist->{extrainfo}->{subdir}.":".$plist->pkgname();
+		$r = $plist->{extrainfo}->{subdir}.":".$plist->pkgname;
 	} elsif ($opt_P) {
 		$r = $plist->{extrainfo}->{subdir};
 	} else {
-		$r = $plist->pkgname();
+		$r = $plist->pkgname;
 	}
 	print STDERR "$r\n" unless $opt_q;
 	return $r;
@@ -82,7 +82,7 @@ if ($opt_n or -t STDOUT) {
 	open $fh, "|-", $MKLOCATEDB, $MKLOCATEDB or die "couldn't open pipe: $!";
 }
 if ($opt_s || $opt_x) {
-	my ($rev, $arch) = split(/ /, `uname -mr`);
+	my ($rev, $arch) = split(' ', `uname -mr`);
 	chomp $arch;
 	$rev =~ s/\.//;
 	if ($opt_s) {
@@ -120,13 +120,13 @@ if ($opt_r) {
 
 	opendir(my $dir, $opt_r) or next;
 	while (my $e = readdir $dir) {
-		if ($e =~ m/^(\w+\d\d)\.tgz$/) {
+		if ($e =~ m/^(\w+\d\d)\.tgz$/o) {
 			my $set = $1;
 			open my $arc, '-|', '/usr/bin/gzip', 'gzip', '-c', '-d', "$opt_r/$e";
 			my $u = OpenBSD::Ustar->new($arc, '/');
-			while (my $f = $u->next()) {
+			while (my $f = $u->next) {
 				my $name = $f->{name};
-				$name =~ s/^\.//;
+				$name =~ s/^\.//o;
 				print $fh "$set:$name\n";
 			}
 			close $arc;
@@ -151,7 +151,7 @@ if ($opt_p) {
 			}
 			$done = 1;
 		    });
-		if (defined $plist && defined $plist->pkgname()) {
+		if (defined $plist && defined $plist->pkgname) {
 			$plist->print_name($fh, info($plist));
 		}
 	}

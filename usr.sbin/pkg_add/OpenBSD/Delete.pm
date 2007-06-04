@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.60 2007/06/04 10:58:23 espie Exp $
+# $OpenBSD: Delete.pm,v 1.61 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,7 @@ sub rename_file_to_temp
 	close $fh;
 	if (rename($n, $j)) {
 		print "Renaming old file $n to $j\n";
-		if ($i->{name} !~ m|^/| && $i->cwd ne '.') {
+		if ($i->{name} !~ m/^\//o && $i->cwd ne '.') {
 			my $c = $i->cwd;
 			$j =~ s|^\Q$c\E/||;
 		}
@@ -373,7 +373,7 @@ sub delete
 			}
 			unless (defined($self->{link}) or $self->{nochecksum} or $state->{quick}) {
 				if (!defined $self->{md5}) {
-					print "Problem: ", $self->fullname(),
+					print "Problem: ", $self->fullname,
 					    " does not have an md5 checksum\n";
 					print "NOT deleting: $realname\n";
 					$state->print("Couldn't delete $realname (no md5)\n");
@@ -544,7 +544,7 @@ sub delete
 			local $_;
 			while(<$shells>) {
 				push(@l, $_);
-				s/^\#.*//;
+				s/^\#.*//o;
 				if ($_ =~ m/^\Q$fullname\E\s*$/) {
 					pop(@l);
 				}

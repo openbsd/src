@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.27 2007/05/17 12:07:46 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.28 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -32,10 +32,10 @@ sub url2pkgname($)
 sub splitname
 {
 	local $_ = shift;
-	if (/\-(?=\d)/) {
+	if (/\-(?=\d)/o) {
 		my $stem = $`;
 		my $rest = $';
-		my @all = split /\-/, $rest;
+		my @all = split '-', $rest;
 		return ($stem, @all);
 	} else {
 		return ($_);
@@ -46,10 +46,10 @@ sub from_string
 {
 	my $class = shift;
 	local $_ = shift;
-	if (/\-(?=\d)/) {
+	if (/\-(?=\d)/o) {
 		my $stem = $`;
 		my $rest = $';
-		my @all = split /\-/, $rest;
+		my @all = split '-', $rest;
 		my $version = OpenBSD::PackageName::version->from_string(shift @all);
 		my %flavors = map {($_,1)}  @all;
 		return bless {
@@ -67,7 +67,7 @@ sub from_string
 sub splitstem
 {
 	local $_ = shift;
-	if (/\-(?=\d)/) {
+	if (/\-(?=\d)/o) {
 		return $`;
 	} else {
 		return $_;
@@ -77,7 +77,7 @@ sub splitstem
 sub is_stem
 {
 	local $_ = shift;
-	if (m/\-\d/ || $_ eq '-') {
+	if (m/\-\d/o || $_ eq '-') {
 		return 0;
 	} else {
 		return 1;
@@ -88,7 +88,7 @@ sub splitp
 {
 	local $_ = shift;
 
-	if (/^(.*\-\d[^-]*)p(\d+)/) {
+	if (/^(.*\-\d[^-]*)p(\d+)/o) {
 		return ($1.$', $2);
 	} else {
 		return ($_,-1);
@@ -101,7 +101,7 @@ sub rebuildp
 	if ($p == -1) {
 		return $pkg;
 	}
-	if ($pkg =~ m/\-\d[^-]*/) {
+	if ($pkg =~ m/\-\d[^-]*/o) {
 		return "$`$&p$p$'";
 	} else {
 		return $pkg."p".$p;
@@ -187,7 +187,7 @@ package OpenBSD::PackageName::version;
 sub make_dewey
 {
 	my $o = shift;
-	$o->{deweys} = [ split(/\./, $o->{string}) ];
+	$o->{deweys} = [ split('.', $o->{string}) ];
 	for my $suffix (qw(rc beta pre pl)) {
 		if ($o->{deweys}->[-1] =~ m/^(\d+)$suffix(\d*)$/) {
 			$o->{deweys}->[-1] = $1;
@@ -201,11 +201,11 @@ sub from_string
 	my ($class, $string) = @_;
 	my $vnum = -1;
 	my $pnum = -1;
-	if ($string =~ m/v(\d+)$/) {
+	if ($string =~ m/v(\d+)$/o) {
 		$vnum = $1;
 		$string = $`;
 	}
-	if ($string =~ m/p(\d+)$/) {
+	if ($string =~ m/p(\d+)$/o) {
 		$pnum = $1;
 		$string = $`;
 	}
@@ -281,11 +281,11 @@ sub dewey_compare
 {
 	my ($a, $b) = @_;
 	# numerical comparison
-	if ($a =~ m/^\d+$/ and $b =~ m/^\d+$/) {
+	if ($a =~ m/^\d+$/o and $b =~ m/^\d+$/o) {
 		return $a <=> $b;
 	}
 	# added lowercase letter
-	if ("$a.$b" =~ m/^(\d+)([a-z]?)\.(\d+)([a-z]?)$/) {
+	if ("$a.$b" =~ m/^(\d+)([a-z]?)\.(\d+)([a-z]?)$/o) {
 		my ($an, $al, $bn, $bl) = ($1, $2, $3, $4);
 		if ($an != $bn) {
 			return $an <=> $bn;

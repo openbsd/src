@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.70 2007/06/01 22:06:03 espie Exp $
+# $OpenBSD: Add.pm,v 1.71 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -168,7 +168,7 @@ sub set_modes
 	}
 	if (defined $self->{mode}) {
 		my $v = $self->{mode};
-		if ($v =~ m/^\d+$/) {
+		if ($v =~ m/^\d+$/o) {
 			chmod oct($v), $name;
 		} else {
 			System('chmod', $self->{mode}, $name);
@@ -204,7 +204,7 @@ sub add_entry
 		my $f = shift;
 		my $v = shift;
 		next if !defined $v or $v eq '';
-		if ($v =~ m/^\!/) {
+		if ($v =~ m/^\!/o) {
 			push(@$l, $f, $');
 		} else {
 			push(@$l, $f, $v);
@@ -534,7 +534,7 @@ sub install
 	open(my $shells, '<', $destdir.'/etc/shells') or return;
 	local $_;
 	while(<$shells>) {
-		s/^\#.*//;
+		s/^\#.*//o;
 		return if $_ =~ m/^\Q$fullname\E\s*$/;
 	}
 	close($shells);

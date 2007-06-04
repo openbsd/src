@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.47 2007/05/02 15:05:30 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.48 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -104,7 +104,7 @@ sub next
     die "Error while reading header"
 	unless defined $n and $n == 512;
     if ($header eq "\0"x512) {
-	return $self->next();
+	return $self->next;
     }
     # decode header
     my ($name, $mode, $uid, $gid, $size, $mtime, $chksum, $type,
@@ -120,11 +120,11 @@ sub next
     if ($ck2 != oct($chksum)) {
 	die "Bad archive checksum";
     }
-    $name =~ s/\0*$//;
+    $name =~ s/\0*$//o;
     $mode = oct($mode) & 0xfff;
-    $uname =~ s/\0*$//;
-    $gname =~ s/\0*$//;
-    $linkname =~ s/\0*$//;
+    $uname =~ s/\0*$//o;
+    $gname =~ s/\0*$//o;
+    $linkname =~ s/\0*$//o;
     $major = oct($major);
     $minor = oct($minor);
     $uid = oct($uid);
@@ -132,8 +132,8 @@ sub next
     $uid = $uidcache->lookup($uname, $uid);
     $gid = $gidcache->lookup($gname, $gid);
     $mtime = oct($mtime);
-    unless ($prefix =~ m/^\0/) {
-	$prefix =~ s/\0*$//;
+    unless ($prefix =~ m/^\0/o) {
+	$prefix =~ s/\0*$//o;
 	$name = "$prefix/$name";
     }
     
@@ -175,7 +175,7 @@ sub split_name
 	my $l = length $name;
 	if ($l > MAXFILENAME && $l <= MAXFILENAME+MAXPREFIX+1) {
 		while (length($name) > MAXFILENAME && 
-		    $name =~ m/^(.*?\/)(.*)$/) {
+		    $name =~ m/^(.*?\/)(.*)$/o) {
 			$prefix .= $1;
 			$name = $2;
 		}
@@ -215,7 +215,7 @@ sub mkheader
 
 	if (defined $entry->{cwd}) {
 		my $cwd = $entry->{cwd};
-		$cwd.='/' unless $cwd =~ m/\/$/;
+		$cwd.='/' unless $cwd =~ m/\/$/o;
 		$linkname =~ s/^\Q$cwd\E//;
 	}
 	if (!defined $linkname) {
@@ -370,7 +370,7 @@ sub write
 	my $out = $arc->{fh};
 
 	$arc->{padout} = 1;
-	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
+	my $header = OpenBSD::Ustar::mkheader($self, $self->type);
 	print $out $header or die "Error writing to archive: $!";
 	$self->write_contents($arc);
 	my $k = $self->{key};
@@ -410,7 +410,7 @@ sub copy
 	my $out = $wrarc->{fh};
 	$self->resolve_links($wrarc);
 	$wrarc->{padout} = 1;
-	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
+	my $header = OpenBSD::Ustar::mkheader($self, $self->type);
 	print $out $header or die "Error writing to archive: $!";
 
 	$self->copy_contents($wrarc);

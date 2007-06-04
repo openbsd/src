@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.8 2007/04/15 17:42:29 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.9 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -43,7 +43,7 @@ LOOP:
 	if ($result eq '') {
 		return $values[0];
 	}
-	if ($result =~ m/^\d+$/) {
+	if ($result =~ m/^\d+$/o) {
 		if ($result >= 0 && $result < @values) {
 			return $values[$result];
 		}
@@ -79,7 +79,7 @@ LOOP2:
 		return $default;
 	}
 	chomp $result;
-	$result =~ s/\s+//g;
+	$result =~ s/\s+//go;
 	$result =~ tr/A-Z/a-z/;
 	if ($result eq 'yes' or $result eq 'y') {
 		return 1;

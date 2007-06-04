@@ -41,7 +41,7 @@ sub mark_tocopy
 sub copy_over
 {
 	my ($self, $wrarc, $prefix, $pkg) = @_;
-	my $e = $pkg->{pkg}->next();
+	my $e = $pkg->{pkg}->next;
 	if (!$e->check_name($self)) {
 		die "Names don't match: ", $e->{name}, " ", $self->{name};
 	}
@@ -52,7 +52,7 @@ sub copy_over
 sub make_alias
 {
 	my ($self, $wrarc, $prefix, $pkg, $alias) = @_;
-	my $e = $pkg->{pkg}->next();
+	my $e = $pkg->{pkg}->next;
 	if (!$e->check_name($self)) {
 		die "Names don't match: ", $e->{name}, " ", $self->{name};
 	}

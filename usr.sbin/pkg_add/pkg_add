@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.308 2007/06/02 12:37:37 espie Exp $
+# $OpenBSD: pkg_add,v 1.309 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -136,7 +136,7 @@ sub can_install
 	my @libs = ();
 	@conflicts = ();
 	for my $k (keys %conflicts) {
-		if ($k =~ m/^\.libs\-/) {
+		if ($k =~ m/^\.libs\-/o) {
 			push(@libs, $k);
 		} else {
 			push(@conflicts, $k);
@@ -531,7 +531,7 @@ sub find_truenames
 	for my $pkgname (@$old) {
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
 		    my ($h, $path, $repo);
-		    if ($pkgname =~ m/\//) {
+		    if ($pkgname =~ m/\//o) {
 			($repo, $path, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
 			$h = $repo;
 		    } else {
@@ -580,12 +580,12 @@ try {
 	{'v' => sub {++$opt_v;},
 	 'h' => sub { Usage(); },
 	 'F' => sub { 
-	 		for my $o (split/,/, shift) { 
+	 		for my $o (split ',', shift) { 
 				$forced{$o} = 1;
 			}
 	    	},
 	 'f' => sub { 
-	 		for my $o (split/,/, shift) { 
+	 		for my $o (split ',', shift) { 
 				$forced{$o} = 1;
 			}
 	    	}}); 
@@ -698,7 +698,7 @@ if ($opt_u) {
 	if (defined $state->{forced}->{kitchensink}) {
 		reorder(\@todo);
 		if (!$opt_r) {
-			@todo = grep {s/\.tgz$//; !is_installed($_);} @todo;
+			@todo = grep {s/\.tgz$//o; !is_installed($_);} @todo;
 		}
 		print "Adding in order:\n", (map { "\t$_\n" } @todo), "\n";
 	}
@@ -724,7 +724,7 @@ OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
-$state->delayed_output();
+$state->delayed_output;
 if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
 	print "Forced updates, bogus dependencies for ", 
 	    join(' ', sort(keys %{$state->{updatedepends}})),
@@ -736,7 +736,7 @@ if (defined $state->{forced}->{kitchensink}) {
 rethrow $dielater;
 } catch {
 	print STDERR "$0: $_\n";
-	if ($_ =~ m/^Caught SIG(\w+)/) {
+	if ($_ =~ m/^Caught SIG(\w+)/o) {
 		kill $1, $$;
 	}
 	exit(1);
@@ -753,7 +753,7 @@ sub uses_old_libs
 	my $plist = shift;
 	require OpenBSD::RequiredBy;
 
-	return  grep {/^\.libs\-/} 
+	return  grep {/^\.libs\-/o} 
 	    OpenBSD::Requiring->new($plist->pkgname)->list;
 }
 

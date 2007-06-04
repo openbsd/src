@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.11 2007/05/17 18:52:58 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.12 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -28,7 +28,7 @@ sub new
 	my ($class, $repository, $name, $arch) = @_;
 
 	if (defined $name) {
-		$name =~ s/\.tgz$//;
+		$name =~ s/\.tgz$//o;
 	}
 	my $self = { repository => $repository, name => $name, arch => $arch};
 	bless $self, $class;
@@ -82,15 +82,15 @@ sub grabInfoFiles
 	while (my $e = $self->intNext) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			$e->{name}=$dir.$e->{name};
-			eval { $e->create(); };
+			eval { $e->create; };
 			if ($@) {
 				unlink($e->{name});
-				$@ =~ s/\s+at.*//;
+				$@ =~ s/\s+at.*//o;
 				print STDERR $@;
 				return 0;
 			}
 		} else {
-			$self->unput();
+			$self->unput;
 			last;
 		}
 	}
@@ -103,7 +103,7 @@ sub scanPackage
 	while (my $e = $self->intNext) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS && !defined $self->{dir}) {
-				$self->{contents} = $e->contents();
+				$self->{contents} = $e->contents;
 				last;
 			}
 			if (!defined $self->{dir}) {
@@ -113,7 +113,7 @@ sub scanPackage
 			eval { $e->create; };
 			if ($@) {
 				unlink($e->{name});
-				$@ =~ s/\s+at.*//;
+				$@ =~ s/\s+at.*//o;
 				print STDERR $@;
 				return 0;
 			}
@@ -155,7 +155,7 @@ sub openPackage
 
 	# maybe it's a fat package.
 	while (my $e = $self->intNext) {
-		unless ($e->{name} =~ m/\/\+CONTENTS$/) {
+		unless ($e->{name} =~ m/\/\+CONTENTS$/o) {
 			last;
 		}
 		my $prefix = $`;
@@ -324,14 +324,14 @@ sub getNext
 	my $self = shift;
 
 	my $e = $self->SUPER::getNext;
-	if ($e->{name} =~ m/^(.*?)\/(.*)$/) {
+	if ($e->{name} =~ m/^(.*?)\/(.*)$/o) {
 		my ($beg, $name) = ($1, $2);
 		if (index($beg, $self->{filter}) == -1) {
 			return $self->next;
 		}
 		$e->{name} = $name;
 		if ($e->isHardLink) {
-			$e->{linkname} =~ s/^(.*?)\///;
+			$e->{linkname} =~ s/^(.*?)\///o;
 		}
 	}
 	return $e;

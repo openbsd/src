@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.32 2007/06/01 14:58:29 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.33 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -48,7 +48,7 @@ our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, 
 our %info = ();
 for my $i (@info) {
 	my $j = $i;
-	$j =~ s/\+/F/;
+	$j =~ s/\+/F/o;
 	$info{$i} = $j;
 }
 
@@ -93,35 +93,36 @@ sub installed_stems
 	return $stemlist;
 }
 
-sub installed_packages(;$)
+sub installed_packages
 {
 	if (!defined $list) {
 		_init_list();
 	}
 	if ($_[0]) {
-		return grep { !/^\./ } keys %$list;
+		return grep { !/^\./o } keys %$list;
 	} else {
 		return keys %$list;
 	}
 }
 
-sub installed_info($)
+sub installed_info
 {
 	my $name =  shift;
 
-	if ($name =~ m|^\Q$pkg_db\E/?|) {
+	# XXX remove the o if we allow pkg_db to change dynamically
+	if ($name =~ m|^\Q$pkg_db\E/?|o) {
 		return "$name/";
 	} else {
 		return "$pkg_db/$name/";
 	}
 }
 
-sub installed_contents($)
+sub installed_contents
 {
 	return installed_info(shift).CONTENTS;
 }
 
-sub borked_package($)
+sub borked_package
 {
 	my $pkgname = $_[0];
 	unless (-e "$pkg_db/partial-$pkgname") {
@@ -135,7 +136,7 @@ sub borked_package($)
 	return "partial-$pkgname.$i";
 }
 
-sub is_installed($)
+sub is_installed
 {
 	my $name = installed_name(shift);
 	if (!defined $list) {
@@ -144,12 +145,13 @@ sub is_installed($)
 	return defined $list->{$name};
 }
 
-sub installed_name($)
+sub installed_name
 {
 	my $name = shift;
-	$name =~ s|/$||;
-	$name =~ s|^\Q$pkg_db\E/?||;
-	$name =~ s|/\+CONTENTS$||;
+	$name =~ s|/$||o;
+	# XXX remove the o if we allow pkg_db to change dynamically
+	$name =~ s|^\Q$pkg_db\E/?||o;
+	$name =~ s|/\+CONTENTS$||o;
 	return $name;
 }
 
@@ -158,7 +160,7 @@ sub info_names()
 	return @info;
 }
 
-sub is_info_name($)
+sub is_info_name
 {
 	my $name = shift;
 	return $info{$name};
@@ -198,7 +200,7 @@ sub solve_installed_names
 	my $seen = {};
 
 	for my $pkgname (@$old) {
-	    $pkgname =~ s/\.tgz$//;
+	    $pkgname =~ s/\.tgz$//o;
 	    if (is_installed($pkgname)) {
 	    	if (!$seen->{$pkgname}) {
 		    $seen->{$pkgname} = 1;

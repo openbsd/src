@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.106 2007/06/01 14:58:29 espie Exp $
+# $OpenBSD: pkg_delete,v 1.107 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -46,12 +46,12 @@ try {
 	    {'v' => sub {++$opt_v;},
 	     'h' => sub { Usage(); },
 	     'F' => sub { 
-			    for my $o (split/,/, shift) { 
+			    for my $o (split ',', shift) { 
 				    $forced{$o} = 1;
 			    }
 		    },
 	     'f' => sub { 
-			    for my $o (split/,/, shift) { 
+			    for my $o (split ',', shift) { 
 				    $forced{$o} = 1;
 			    }
 	    	}}); 
@@ -65,7 +65,7 @@ if ($opt_D) {
 $opt_B = $ENV{'PKG_DESTDIR'} unless defined $opt_B;
 $opt_B = '' unless defined $opt_B;
 if ($opt_B ne '') {
-	$opt_B.='/' unless $opt_B =~ m/\/$/;
+	$opt_B.='/' unless $opt_B =~ m/\/$/o;
 }
 $ENV{'PKG_DESTDIR'} = $opt_B;
 
@@ -203,7 +203,7 @@ OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
-$state->delayed_output();
+$state->delayed_output;
 rethrow $dielater;
 } catch {
 	print STDERR "$0: $_\n";

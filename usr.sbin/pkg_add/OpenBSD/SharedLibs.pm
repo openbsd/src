@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.16 2007/05/23 10:33:45 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.17 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -50,7 +50,7 @@ sub init_path($)
 	if (defined $fh) {
 		local $_;
 		while (<$fh>) {
-			if (m/^\s*search directories:\s*(.*?)\s*$/) {
+			if (m/^\s*search directories:\s*(.*?)\s*$/o) {
 				for my $d (split(':', $1)) {
 					$path->{$d} = 1;
 				}
@@ -87,7 +87,7 @@ our $registered_libs = {};
 sub register_lib
 {
 	my ($name, $pkgname) = @_;
-	if ($name =~ m/^(.*\/lib.*?\.so\.\d+)\.(\d+)$/) {
+	if ($name =~ m/^(.*\/lib.*?\.so\.\d+)\.(\d+)$/o) {
 		my ($stem, $minor) = ($1, $2);
 		push(@{$registered_libs->{$stem}}, [$minor, $pkgname]);
 	}
@@ -143,7 +143,7 @@ sub _lookup_libspec
 	my ($dir, $spec) = @_;
 	my @r = ();
 
-	if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
+	if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/o) {
 		my ($libname, $major, $minor) = ($1, $2, $3);
 		my $exists = $registered_libs->{"$dir/lib$libname.so.$major"};
 		if (defined $exists) {
@@ -161,7 +161,7 @@ sub lookup_libspec
 {
 	my ($base, $libspec, $wantpath) = @_;
 		
-	if ($libspec =~ m|(.*)/|) {
+	if ($libspec =~ m|(.*)/|o) {
 		return _lookup_libspec("$base/$1", $');
 	} else {
 		return _lookup_libspec("$base/lib", $libspec);

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.39 2007/05/30 11:04:31 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.40 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -38,21 +38,21 @@ sub _new
 sub new
 {
 	my ($class, $baseurl) = @_;
-	if ($baseurl =~ m/^ftp\:/i) {
+	if ($baseurl =~ m/^ftp\:/io) {
 		return OpenBSD::PackageRepository::FTP->_new($');
-	} elsif ($baseurl =~ m/^http\:/i) {
+	} elsif ($baseurl =~ m/^http\:/io) {
 		return OpenBSD::PackageRepository::HTTP->_new($');
-	} elsif ($baseurl =~ m/^scp\:/i) {
+	} elsif ($baseurl =~ m/^scp\:/io) {
 		require OpenBSD::PackageRepository::SCP;
 
 		return OpenBSD::PackageRepository::SCP->_new($');
-	} elsif ($baseurl =~ m/^src\:/i) {
+	} elsif ($baseurl =~ m/^src\:/io) {
 		require OpenBSD::PackageRepository::Source;
 
 		return OpenBSD::PackageRepository::Source->_new($');
-	} elsif ($baseurl =~ m/^file\:/i) {
+	} elsif ($baseurl =~ m/^file\:/io) {
 		return OpenBSD::PackageRepository::Local->_new($');
-	} elsif ($baseurl =~ m/^inst\:/i) {
+	} elsif ($baseurl =~ m/^inst\:/io) {
 		return OpenBSD::PackageRepository::Installed->_new($');
 	} else {
 		return OpenBSD::PackageRepository::Local->_new($baseurl);
@@ -114,7 +114,7 @@ sub close
 	$self->parse_problems($object->{errors}, $hint) 
 	    if defined $object->{errors};
 	undef $object->{errors};
-	$object->deref();
+	$object->deref;
 }
 
 sub make_room
@@ -236,7 +236,7 @@ sub list
 	my $dname = $self->{baseurl};
 	opendir(my $dir, $dname) or return $l;
 	while (my $e = readdir $dir) {
-		next unless $e =~ m/\.tgz$/;
+		next unless $e =~ m/\.tgz$/o;
 		next unless -f "$dname/$e";
 		push(@$l, $`);
 	}
@@ -473,7 +473,7 @@ sub _new
 {
 	my ($class, $baseurl) = @_;
 	my $distant_host;
-	if ($baseurl =~ m/^\/\/(.*?)\//i) {
+	if ($baseurl =~ m/^\/\/(.*?)\//io) {
 	    $distant_host = $&;
 	}
 	bless { baseurl => $baseurl, key => $distant_host }, $class;
@@ -536,33 +536,33 @@ sub parse_problems
 	local $_;
 	my $notyet = 1;
 	while(<$fh>) {
-		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/;
-		next if m/^EPSV command not understood/;
-		next if m/^Trying [\da-f\.\:]+\.\.\./;
+		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/o;
+		next if m/^EPSV command not understood/o;
+		next if m/^Trying [\da-f\.\:]+\.\.\./o;
 		next if m/^Requesting \Q$baseurl\E/;
-		next if m/^Remote system type is\s+/;
-		next if m/^Connected to\s+/;
-		next if m/^remote\:\s+/;
-		next if m/^Using binary mode to transfer files/;
-		next if m/^Retrieving\s+/;
-		next if m/^Success?fully retrieved file/;
-		next if m/^\d+\s+bytes\s+received\s+in/;
-		next if m/^ftp: connect to address.*: No route to host/;
+		next if m/^Remote system type is\s+/o;
+		next if m/^Connected to\s+/o;
+		next if m/^remote\:\s+/o;
+		next if m/^Using binary mode to transfer files/o;
+		next if m/^Retrieving\s+/o;
+		next if m/^Success?fully retrieved file/o;
+		next if m/^\d+\s+bytes\s+received\s+in/o;
+		next if m/^ftp: connect to address.*: No route to host/o;
 
 		if (defined $hint && $hint == 0) {
-			next if m/^ftp: -: short write/;
-			next if m/^421\s+/;
+			next if m/^ftp: -: short write/o;
+			next if m/^421\s+/o;
 		}
 		if ($notyet) {
 			print STDERR "Error from $baseurl:\n" if $notyet;
 			$notyet = 0;
 		}
-		if (m/^421\s+/ ||
-		    m/^ftp: connect: Connection timed out/ ||
-		    m/^ftp: Can't connect or login to host/) {
+		if (m/^421\s+/o ||
+		    m/^ftp: connect: Connection timed out/o ||
+		    m/^ftp: Can't connect or login to host/o) {
 			$self->{lasterror} = 421;
 		}
-		if (m/^550\s+/) {
+		if (m/^550\s+/o) {
 			$self->{lasterror} = 550;
 		}
 		print STDERR  $_;
@@ -593,7 +593,7 @@ sub list
 		# XXX assumes a pkg HREF won't cross a line. Is this the case ?
 		while(<$fh>) {
 			chomp;
-			for my $pkg (m/\<A\s+HREF=\"(.*?)\.tgz\"\>/gi) {
+			for my $pkg (m/\<A\s+HREF=\"(.*?)\.tgz\"\>/gio) {
 				next if $pkg =~ m|/|;
 				push(@$l, $pkg);
 			}

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.58 2007/06/04 11:42:03 pyr Exp $
+# $OpenBSD: pkg_info,v 1.59 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -191,11 +191,11 @@ sub find_by_path
 				OpenBSD::PackingList->from_installation($pkg,
 				    \&OpenBSD::PackingList::ExtraInfoOnly);
 			add_to_path_info($plist->{extrainfo}->{subdir}, 
-			    $plist->pkgname());
+			    $plist->pkgname);
 			if ($plist->has('pkgpath')) {
 				for my $p (@{$plist->{pkgpath}}) {
 					add_to_path_info($p->{name}, 
-					    $plist->pkgname());
+					    $plist->pkgname);
 				}
 			}
 		}
@@ -328,7 +328,7 @@ try {
 			    my @list;
 			    lock_db(1, $opt_q);
 			    $locked = 1;
-			    if ($pat =~ m/\//) {
+			    if ($pat =~ m/\//o) {
 				    @list = find_by_path($pat);
 			    } else {
 				    @list = find_by_spec($pat);

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.110 2007/05/31 13:11:21 espie Exp $
+# $OpenBSD: pkg_create,v 1.111 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -307,11 +307,11 @@ my %defines;
 sub dosubst
 {
 	local $_ = shift;
-	return $_ unless m/\$/;
+	return $_ unless m/\$/o;
 	while (my ($k, $v) = each %defines) {
 		s/\$\{\Q$k\E\}/$v/g;
 	}
-	s/\$\\/\$/g;
+	s/\$\\/\$/go;
 	return $_;
 }
 
@@ -343,11 +343,11 @@ sub deduce_name
 	my $noto = $o;
 	my $nofrag = "no-$frag";
 
-	$o =~ s/PFRAG\./PFRAG.$frag-/ or
-	    $o =~ s/PLIST/PFRAG.$frag/;
+	$o =~ s/PFRAG\./PFRAG.$frag-/o or
+	    $o =~ s/PLIST/PFRAG.$frag/o;
 
-	$noto =~ s/PFRAG\./PFRAG.no-$frag-/ or
-	    $noto =~ s/PLIST/PFRAG.no-$frag/;
+	$noto =~ s/PFRAG\./PFRAG.no-$frag-/o or
+	    $noto =~ s/PLIST/PFRAG.no-$frag/o;
 	unless (-e $o or -e $noto) {
 		die "Missing fragments for $frag: $o and $noto don't exist";
 	}
@@ -375,7 +375,7 @@ sub read_fragments
 		while(my $file = pop @$stack) {
 			GETLINE:
 			while ($_ = $file->readline) {
-				if (m/^(\!)?\%\%(.*)\%\%$/) {
+				if (m/^(\!)?\%\%(.*)\%\%$/o) {
 					my ($not, $frag) = ($1, $2);
 					my $def = $frag;
 					if ($frag eq 'SHARED') {
@@ -398,10 +398,10 @@ sub read_fragments
 					}
 					next GETLINE;
 				}
-				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/) {
+				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$_ = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
-				if (m,^\@lib\s+.*/lib[^/]+\.so\.\d+\.\d+$,) {
+				if (m,^\@lib\s+.*/lib[^/]+\.so\.\d+\.\d+$,o) {
 					Warn "Shared library without SHARED_LIBS: $_";
 					$main::errors++;
 				}
@@ -444,13 +444,13 @@ sub add_description
 	    if (defined $comment) {
 	    	print $fh dosubst($comment), "\n";
 	    } else {
-		if ($opt_c =~ /^\-/) {
+		if ($opt_c =~ /^\-/o) {
 		    print $fh $', "\n";
 		} else {
 		    copy_subst_fh($opt_c, $fh);
 		}
 	    }
-	    if ($opt_d =~ /^\-/) {
+	    if ($opt_d =~ /^\-/o) {
 		print $fh $', "\n";
 	    } else {
 		copy_subst_fh($opt_d, $fh);
@@ -484,7 +484,7 @@ try {
 	{'D' => 
 		sub { 
 			local $_ = shift;
-			if (m/\=/) {
+			if (m/\=/o) {
 				my ($k, $v) = ($`,$');
 				$v =~ s/^\'(.*)\'$/$1/;
 				$v =~ s/^\"(.*)\"$/$1/;
@@ -583,17 +583,17 @@ if ($regen_package) {
 	if (defined $opt_L) {
 		OpenBSD::PackingElement::LocalBase->add($plist, $opt_L);
 	}
-	if ($ARGV[0] =~ m|([^/]+)$|) {
+	if ($ARGV[0] =~ m|([^/]+)$|o) {
 		my $pkgname = $1;
-		$pkgname =~ s/\.tgz$//;
+		$pkgname =~ s/\.tgz$//o;
 		$plist->set_pkgname($pkgname);
 	}
 	my $fullpkgpath = $defines{'FULLPKGPATH'};
 	my $cdrom = $defines{'PERMIT_PACKAGE_CDROM'};
 	my $ftp = $defines{'PERMIT_PACKAGE_FTP'};
 	if (defined $fullpkgpath && defined $cdrom && defined $ftp) {
-		$cdrom = 'yes' if $cdrom =~ m/^yes$/i;
-		$ftp = 'yes' if $ftp =~ m/^yes$/i;
+		$cdrom = 'yes' if $cdrom =~ m/^yes$/io;
+		$ftp = 'yes' if $ftp =~ m/^yes$/io;
 
 		OpenBSD::PackingElement::ExtraInfo->add($plist, 
 		    $fullpkgpath, $cdrom, $ftp);

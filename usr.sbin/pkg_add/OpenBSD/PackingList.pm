@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.75 2007/06/01 20:39:41 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.76 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -62,7 +62,7 @@ sub new
 sub set_infodir
 {
 	my ($self, $dir) = @_;
-	$dir .= '/' unless $dir =~ m/\/$/;
+	$dir .= '/' unless $dir =~ m/\/$/o;
 	${$self->{infodir}} = $dir;
 }
 
@@ -252,16 +252,16 @@ sub SharedStuffOnly
 	local $_;
 MAINLOOP:
 	while (<$fh>) {
-		if (m/^\@shared\b/) {
+		if (m/^\@shared\b/o) {
 			&$cont($_);
 			while(<$fh>) {
-				redo MAINLOOP unless m/^\@(?:md5|size|symlink|link)\b/;
-				    m/^\@size\b/ || m/^\@symlink\b/ || 
-				    m/^\@link\b/;
+				redo MAINLOOP unless m/^\@(?:md5|size|symlink|link)\b/o;
+				    m/^\@size\b/o || m/^\@symlink\b/o || 
+				    m/^\@link\b/o;
 				&$cont($_);
 			}
 		} else {
-			next unless m/^\@(?:cwd|name)\b/;
+			next unless m/^\@(?:cwd|name)\b/o;
 		}
 		&$cont($_);
 	}
@@ -277,7 +277,7 @@ sub fromfile
 	};
 	if ($@) {
 		chomp $@;
-		$@ =~ s/\.$/,/;
+		$@ =~ s/\.$/,/o;
 		die "$@ in $fname, ";
 	}
 	close($fh);
@@ -465,7 +465,7 @@ sub AUTOLOAD
 {
 	our $AUTOLOAD;
 	my $fullsub = $AUTOLOAD;
-	(my $sub = $fullsub) =~ s/.*:://;
+	(my $sub = $fullsub) =~ s/.*:://o;
 	return if $sub eq 'DESTROY'; # special case
 	# verify it makes sense
 	if (OpenBSD::PackingElement->can($sub)) {

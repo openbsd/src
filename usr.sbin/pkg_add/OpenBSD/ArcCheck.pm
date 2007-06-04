@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.8 2007/05/25 22:32:47 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.9 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,7 @@ sub check_name
 {
 	my ($self, $item) = @_;
 	return 1 if $self->{name} eq $item->{name};
-	if ($self->{name} =~ m/^LongName\d+$/) {
+	if ($self->{name} =~ m/^LongName\d+$/o) {
 		$self->{name} = $item->{name};
 		return 1;
 	}
@@ -45,7 +45,7 @@ sub check_linkname
 		$c = $self->{cwd}.'/'.$c;
 	}
 	return 1 if $c eq $linkname;
-	if ($self->{linkname} =~ m/^Long(?:Link|Name)\d+$/) {
+	if ($self->{linkname} =~ m/^Long(?:Link|Name)\d+$/o) {
 		$self->{linkname} = $linkname;
 		if ($self->isHardLink && defined $self->{cwd}) {
 			$self->{linkname} =~ s|^$self->{cwd}/||;
@@ -98,7 +98,7 @@ sub verify_modes
 sub copy_long
 {
 	my ($self, $wrarc) = @_;
-	if ($self->{name} =~ m/^LongName(\d+)$/) {
+	if ($self->{name} =~ m/^LongName(\d+)$/o) {
 		$wrarc->{name_index} = $1 + 1;
 	}
 	if (length($self->{name}) > MAXFILENAME+MAXPREFIX+1) {

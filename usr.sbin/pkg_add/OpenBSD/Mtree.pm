@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Mtree.pm,v 1.3 2007/04/15 10:17:29 espie Exp $
+# $OpenBSD: Mtree.pm,v 1.4 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2004-2005 Marc Espie <espie@openbsd.org>
 #
@@ -29,18 +29,18 @@ sub parse_fh
 	local $_;
 	while(<$fh>) {
 		chomp;
-		s/^\s*//;
-		next if /^\#/ || /^\//;
-		s/\s.*$//;
-		next if /^$/;
+		s/^\s*//o;
+		next if /^\#/o || /^\//o;
+		s/\s.*$//o;
+		next if /^$/o;
 		if ($_ eq '..') {
-			$basedir =~ s|/[^/]*$||;
+			$basedir =~ s|/[^/]*$||o;
 			next;
 		} else {
 			$basedir.="/$_";
 		}
 		$_ = $basedir;
-		while (s|/\./|/|)	{}
+		while (s|/\./|/|o)	{}
 		$mtree->{File::Spec->canonpath($_)} = 1;
 	}
 }

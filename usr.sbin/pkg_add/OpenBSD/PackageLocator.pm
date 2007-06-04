@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.71 2007/05/19 09:45:33 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.72 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -31,11 +31,11 @@ my $pkgpath = OpenBSD::PackageRepositoryList->new;
 
 if (defined $ENV{PKG_PATH}) {
 	my $v = $ENV{PKG_PATH};
-	$v =~ s/^\:+//;
-	$v =~ s/\:+$//;
-	my @tentative = split /\/\:/, $v;
+	$v =~ s/^\:+//o;
+	$v =~ s/\:+$//o;
+	my @tentative = split '/:', $v;
 	while (my $i = shift @tentative) {
-		$i =~ m|/$| or $i.='/';
+		$i =~ m|/$|o or $i.='/';
 		$pkgpath->add(OpenBSD::PackageRepository->new($i));
 	}
 } else {
@@ -66,7 +66,7 @@ sub find
 		return $packages{$_};
 	}
 	my $package;
-	if (m/\//) {
+	if (m/\//o) {
 		my ($repository, undef, $pkgname) = path_parse($_);
 		$package = $repository->find($pkgname, $arch);
 		if (defined $package) {
@@ -92,7 +92,7 @@ sub grabPlist
 		return $plist;
 	}
 	my $plist;
-	if (m/\//) {
+	if (m/\//o) {
 		my ($repository, undef, $pkgname) = path_parse($_);
 		$plist = $repository->grabPlist($pkgname, $arch, $code);
 		if (defined $plist) {

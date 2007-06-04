@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.78 2007/06/01 14:58:29 espie Exp $
+# $OpenBSD: Update.pm,v 1.79 2007/06/04 14:40:39 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -57,7 +57,7 @@ sub add2updates
 sub process_package
 {
 	my ($self, $pkgname, $state) = @_;
-	if ($pkgname =~ m/^(?:\.libs|partial)\-/) {
+	if ($pkgname =~ m/^(?:\.libs|partial)\-/o) {
 		$state->progress->clear;
 		print "Not updating $pkgname, remember to clean it\n";
 		return;
@@ -100,7 +100,7 @@ sub process_package
 			    next;
 			}
 		    }
-		    if ($plist->signature() eq $p2->signature()) {
+		    if ($plist->signature eq $p2->signature) {
 			$found = $candidate;
 			push(@l2, $candidate);
 			next;
