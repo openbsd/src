@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.7 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: presto.c,v 1.8 2007/06/04 16:38:58 krw Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -71,7 +71,7 @@ struct presto_softc {
 
 void	prestostrategy(struct buf *);
 void	presto_attach(struct device *, struct device *, void *);
-void	presto_getdisklabel(struct presto_softc *);
+void	presto_getdisklabel(dev_t, struct presto_softc *);
 int	presto_match(struct device *, void *, void *);
 
 struct cfattach presto_ca = {
@@ -167,9 +167,6 @@ presto_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_dk.dk_driver = &presto_dk;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dk);
-
-	/* read the disk label immediately */
-	presto_getdisklabel(sc);
 }
 
 /*
@@ -215,6 +212,9 @@ prestoopen(dev_t dev, int flag, int fmt, struct proc *proc)
 	sc = (struct presto_softc *)device_lookup(&presto_cd, unit);
 	if (sc == NULL)
 		return (ENXIO);
+
+	/* read the disk label */
+	presto_getdisklabel(dev, sc);
 
 	/* only allow valid partitions */
 	part = DISKPART(dev);
@@ -368,7 +368,7 @@ prestoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
  * Read the disklabel. If none is present, use a fictitious one instead.
  */
 void
-presto_getdisklabel(struct presto_softc *sc)
+presto_getdisklabel(dev_t dev, struct presto_softc *sc)
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
 
@@ -392,6 +392,6 @@ presto_getdisklabel(struct presto_softc *sc)
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
 
-	readdisklabel(DISKLABELDEV(sc->sc_dev.dv_unit), prestostrategy,
-	    sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel, 0);
+	readdisklabel(DISKLABELDEV(dev), prestostrategy, sc->sc_dk.dk_label,
+	    sc->sc_dk.dk_cpulabel, 0);
 }
