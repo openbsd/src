@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.59 2007/06/02 10:32:31 espie Exp $
+# $OpenBSD: Delete.pm,v 1.60 2007/06/04 10:58:23 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -436,6 +436,11 @@ sub prepare_for_deletetion
 	}
 }
 
+sub copy_old_stuff
+{
+}
+
+package OpenBSD::PackingElement::Name;
 sub copy_old_stuff
 {
 }
