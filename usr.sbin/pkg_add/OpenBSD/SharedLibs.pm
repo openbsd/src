@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.23 2007/06/04 20:34:07 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.24 2007/06/04 21:51:35 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -140,13 +140,32 @@ sub add_libs_from_plist
 	$plist->mark_available_lib($pkgname);
 }
 
-sub _lookup_libspec
+sub normalize_dir_and_spec
 {
-	my ($dir, $spec) = @_;
-	my @r = ();
+	my ($base, $libspec) = @_;
+	if ($libspec =~ m/^(.*)\/([^\/]+)$/o) {
+		return ("$base/$1", $2);
+	} else {
+		return ("$base/lib", $libspec);
+	}
+}
 
+sub parse_spec
+{
+	my $spec = shift;
 	if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/o) {
-		my ($libname, $major, $minor) = ($1, $2, $3);
+		return ($1, $2, $3);
+	} else {
+		return undef;
+	}
+}
+
+sub lookup_libspec
+{
+	my ($dir, $spec) = normalize_dir_and_spec(@_);
+	my @r = ();
+	my ($libname, $major, $minor) = parse_spec($spec);
+	if (defined $libname) {
 		my $exists = $registered_libs->{$libname}->{$dir}->{$major};
 		if (defined $exists) {
 			for my $e (@$exists) {
@@ -157,17 +176,6 @@ sub _lookup_libspec
 		}
 	}
 	return @r;
-}
-
-sub lookup_libspec
-{
-	my ($base, $libspec) = @_;
-		
-	if ($libspec =~ m/^(.*)\/([^\/]+)$/o) {
-		return _lookup_libspec("$base/$1", $2);
-	} else {
-		return _lookup_libspec("$base/lib", $libspec);
-	}
 }
 
 sub write_entry
@@ -194,31 +202,22 @@ sub why_is_this_bad
 	print "($pkgname not reachable)\n";
 }
 
-sub _report_problem
+sub report_problem
 {
-	my ($dir, $name) = @_;
-	if ($name =~ m/^(.*)\.(\d+)\.(\d+)$/o) {
-		my ($stem, $major, $minor) = ($1, $2, $3, $4);
-		return unless defined $registered_libs->{$stem};
-		while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
-			while (my ($M, $w) = each %$v) {
-				for my $e (@$w) {
-					write_entry($name, $d, $M, $e->[0]);
-					why_is_this_bad($name, $dir, $d, $major, $M, $minor, $e->[0], $e->[1]);
-				}
+	my ($dir, $name) = normalize_dir_and_spec(@_);
+	my ($stem, $major, $minor) = parse_spec($name);
+
+	return unless defined $stem;
+	return unless defined $registered_libs->{$stem};
+
+	while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
+		while (my ($M, $w) = each %$v) {
+			for my $e (@$w) {
+				write_entry($name, $d, $M, $e->[0]);
+				why_is_this_bad($name, $dir, $d, $major, $M, $minor, $e->[0], $e->[1]);
 			}
 		}
 	}
 }
 
-sub report_problem
-{
-	my ($base, $libspec) = @_;
-		
-	if ($libspec =~ m/^(.*)\/([^\/]+)$/o) {
-		return _report_problem("$base/$1", $2);
-	} else {
-		return _report_problem("$base/lib", $libspec);
-	}
-}
 1;
