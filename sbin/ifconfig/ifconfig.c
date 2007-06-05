@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.178 2007/05/26 01:02:53 krw Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.179 2007/06/05 21:14:07 kurt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -95,10 +95,6 @@
 
 #include <netinet/ip_carp.h>
 
-#define	IPXIP
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-
 #include <netdb.h>
 
 #include <net/if_vlan_var.h>
@@ -124,7 +120,6 @@ struct	sockaddr_in	netmask;
 #ifndef SMALL
 struct	ifaliasreq	addreq;
 struct  netrange	at_nr;		/* AppleTalk net range */
-int	ipx_type = IPX_ETHERTYPE_II;
 #endif /* SMALL */
 
 char	name[IFNAMSIZ];
@@ -165,7 +160,6 @@ void	setifnwflag(const char *, int);
 void	unsetifnwflag(const char *, int);
 void	setifnetmask(const char *, int);
 void	setifprefixlen(const char *, int);
-void	setipxframetype(const char *, int);
 void	setatrange(const char *, int);
 void	setatphase(const char *, int);
 void	settunnel(const char *, const char *);
@@ -306,11 +300,6 @@ const struct	cmd {
 #ifndef SMALL
 	{ "range",	NEXTARG,	0,		setatrange },
 	{ "phase",	NEXTARG,	0,		setatphase },
-	{ "802.2",	IPX_ETHERTYPE_8022,	0,	setipxframetype },
-	{ "802.2tr",	IPX_ETHERTYPE_8022TR, 0,	setipxframetype },
-	{ "802.3",	IPX_ETHERTYPE_8023,	0,	setipxframetype },
-	{ "snap",	IPX_ETHERTYPE_SNAP,	0,	setipxframetype },
-	{ "EtherII",	IPX_ETHERTYPE_II,	0,	setipxframetype },
 	{ "vlan",	NEXTARG,	0,		setvlantag },
 	{ "vlanprio",	NEXTARG,	0,		setvlanprio },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
@@ -422,8 +411,6 @@ void	in6_getprefix(const char *, int);
 #endif /* INET6 */
 void    at_status(int);
 void    at_getaddr(const char *, int);
-void	ipx_status(int);
-void	ipx_getaddr(const char *, int);
 void	ieee80211_status(void);
 void	ieee80211_listnodes(void);
 void	ieee80211_printnode(struct ieee80211_nodereq *);
@@ -450,8 +437,6 @@ const struct afswtch {
 #ifndef SMALL
 	{ "atalk", AF_APPLETALK, at_status, at_getaddr, NULL,
 	    SIOCDIFADDR, SIOCAIFADDR, C(addreq), C(addreq) },
-	{ "ipx", AF_IPX, ipx_status, ipx_getaddr, NULL,
-	    SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
 #endif
 	{ 0,	0,	    0,		0 }
 };
@@ -619,23 +604,8 @@ main(int argc, char *argv[])
 	}
 
 #ifndef SMALL
-	switch (af) {
-	case AF_IPX:
-		if (setipdst) {
-			struct ipxip_req rq;
-			int size = sizeof(rq);
-
-			rq.rq_ipx = addreq.ifra_addr;
-			rq.rq_ip = addreq.ifra_dstaddr;
-
-			if (setsockopt(s, 0, SO_IPXIP_ROUTE, &rq, size) < 0)
-				warn("encapsulation routing");
-		}
-		break;
-	case AF_APPLETALK:
+	if (af == AF_APPLETALK)
 		checkatrange((struct sockaddr_at *) &addreq.ifra_addr);
-		break;
-	}
 #endif /* SMALL */
 
 	if (clearaddr) {
@@ -2709,79 +2679,6 @@ at_status(int force)
 	putchar('\n');
 }
 
-/* ARGSUSED */
-void
-setipxframetype(const char *vname, int type)
-{
-	struct  sockaddr_ipx	*sipx;
-
-	ipx_type = type;
-	getsock(AF_IPX);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
-			return;
-		err(1, "socket");
-	}
-	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	sipx = (struct sockaddr_ipx *)&addreq.ifra_addr;
-	sipx->sipx_type = ipx_type;
-}
-
-void
-ipx_status(int force)
-{
-	struct sockaddr_ipx *sipx;
-	struct frame_types {
-		int	type;
-		char	*name;
-	} *p, frames[] = {
-		{ IPX_ETHERTYPE_8022, "802.2" },
-		{ IPX_ETHERTYPE_8022TR, "802.2tr" },
-		{ IPX_ETHERTYPE_8023, "802.3" },
-		{ IPX_ETHERTYPE_SNAP, "SNAP" },
-		{ IPX_ETHERTYPE_II,  "EtherII" },
-		{ 0, NULL }
-	};
-
-	getsock(AF_IPX);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
-			return;
-		err(1, "socket");
-	}
-	memset(&ifr, 0, sizeof(ifr));
-	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			if (!force)
-				return;
-			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-		} else
-			warn("SIOCGIFADDR");
-	}
-	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	sipx = (struct sockaddr_ipx *)&ifr.ifr_addr;
-	printf("\tipx %s ", ipx_ntoa(sipx->sipx_addr));
-	if (flags & IFF_POINTOPOINT) { /* by W. Nesheim@Cornell */
-		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
-			if (errno == EADDRNOTAVAIL)
-			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			else
-			    warn("SIOCGIFDSTADDR");
-		}
-		(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-		sipx = (struct sockaddr_ipx *)&ifr.ifr_dstaddr;
-		printf("--> %s ", ipx_ntoa(sipx->sipx_addr));
-	}
-
-	for (p = frames; p->name && p->type != sipx->sipx_type; p++)
-		;
-	if (p->name != NULL)
-		printf("frame %s ", p->name);
-	putchar('\n');
-}
-
 void
 at_getaddr(const char *addr, int which)
 {
@@ -2841,24 +2738,6 @@ checkatrange(struct sockaddr_at *sat)
 	    (u_short) ntohs(sat->sat_addr.s_net))
 		errx(1, "AppleTalk address is not in range");
 	*((struct netrange *) &sat->sat_zero) = at_nr;
-}
-
-#define SIPX(x) ((struct sockaddr_ipx *) &(x))
-struct sockaddr_ipx *sipxtab[] = {
-SIPX(ridreq.ifr_addr), SIPX(addreq.ifra_addr),
-SIPX(addreq.ifra_mask), SIPX(addreq.ifra_broadaddr)};
-
-void
-ipx_getaddr(const char *addr, int which)
-{
-	struct sockaddr_ipx *sipx = sipxtab[which];
-
-	sipx->sipx_family = AF_IPX;
-	sipx->sipx_len  = sizeof(*sipx);
-	sipx->sipx_addr = ipx_addr(addr);
-	sipx->sipx_type = ipx_type;
-	if (which == MASK)
-		printf("Attempt to set IPX netmask will be ineffectual\n");
 }
 
 static int __tag = 0;
