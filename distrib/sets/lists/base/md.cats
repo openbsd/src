@@ -72,7 +72,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.1/3.3.5/f771
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.1/3.3.5/specs
 ./usr/lib/libasn1.so.16.0
-./usr/lib/libc.so.40.3
+./usr/lib/libc.so.41.0
 ./usr/lib/libcom_err.so.16.0
 ./usr/lib/libcrypto.so.13.0
 ./usr/lib/libcurses.so.10.0
