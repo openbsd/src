@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.25 2007/05/31 18:20:22 mbalmer Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.26 2007/06/05 08:43:56 mbalmer Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -232,9 +232,9 @@ struct uscanner_softc {
 	u_char			sc_dying;
 };
 
-Static int uscanner_do_read(struct uscanner_softc *, struct uio *, int);
-Static int uscanner_do_write(struct uscanner_softc *, struct uio *, int);
-Static void uscanner_do_close(struct uscanner_softc *);
+int uscanner_do_read(struct uscanner_softc *, struct uio *, int);
+int uscanner_do_write(struct uscanner_softc *, struct uio *, int);
+void uscanner_do_close(struct uscanner_softc *);
 
 #define USCANNERUNIT(n) (minor(n))
 
@@ -445,7 +445,7 @@ uscanner_do_close(struct uscanner_softc *sc)
 	sc->sc_state &= ~USCANNER_OPEN;
 }
 
-Static int
+int
 uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 {
 	u_int32_t n, tn;
@@ -500,7 +500,7 @@ uscannerread(dev_t dev, struct uio *uio, int flag)
 	return (error);
 }
 
-Static int
+int
 uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 {
 	u_int32_t n;
@@ -632,10 +632,10 @@ uscannerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	return (EINVAL);
 }
 
-Static void filt_uscannerdetach(struct knote *);
+void filt_uscannerdetach(struct knote *);
 int uscannerkqfilter(dev_t, struct knote *);
 
-Static void
+void
 filt_uscannerdetach(struct knote *kn)
 {
 	struct uscanner_softc *sc = (void *)kn->kn_hook;
@@ -643,7 +643,7 @@ filt_uscannerdetach(struct knote *kn)
 	SLIST_REMOVE(&sc->sc_selq.sel_klist, kn, knote, kn_selnext);
 }
 
-Static struct filterops uscanner_seltrue_filtops =
+struct filterops uscanner_seltrue_filtops =
 	{ 1, NULL, filt_uscannerdetach, filt_seltrue };
 
 int

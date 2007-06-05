@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.34 2007/05/27 04:00:25 jsg Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.35 2007/06/05 08:43:55 mbalmer Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -102,16 +102,16 @@ struct uftdi_softc {
 	u_int			last_lcr;
 };
 
-Static void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
-Static void	uftdi_set(void *, int, int, int);
-Static int	uftdi_param(void *, int, struct termios *);
-Static int	uftdi_open(void *sc, int portno);
-Static void	uftdi_read(void *sc, int portno, u_char **ptr,
+void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
+void	uftdi_set(void *, int, int, int);
+int	uftdi_param(void *, int, struct termios *);
+int	uftdi_open(void *sc, int portno);
+void	uftdi_read(void *sc, int portno, u_char **ptr,
 			   u_int32_t *count);
-Static void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
+void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
 			    u_int32_t *count);
-Static void	uftdi_break(void *sc, int portno, int onoff);
-Static int	uftdi_8u232am_getrate(speed_t speed, int *rate);
+void	uftdi_break(void *sc, int portno, int onoff);
+int	uftdi_8u232am_getrate(speed_t speed, int *rate);
 
 struct ucom_methods uftdi_methods = {
 	uftdi_get_status,
@@ -416,7 +416,7 @@ uftdi_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-Static int
+int
 uftdi_open(void *vsc, int portno)
 {
 	struct uftdi_softc *sc = vsc;
@@ -457,7 +457,7 @@ uftdi_open(void *vsc, int portno)
 	return (0);
 }
 
-Static void
+void
 uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
@@ -490,7 +490,7 @@ uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 	*count -= 2;
 }
 
-Static void
+void
 uftdi_write(void *vsc, int portno, u_char *to, u_char *from, u_int32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
@@ -506,7 +506,7 @@ uftdi_write(void *vsc, int portno, u_char *to, u_char *from, u_int32_t *count)
 	*count += sc->sc_hdrlen;
 }
 
-Static void
+void
 uftdi_set(void *vsc, int portno, int reg, int onoff)
 {
 	struct uftdi_softc *sc = vsc;
@@ -540,7 +540,7 @@ uftdi_set(void *vsc, int portno, int reg, int onoff)
 	(void)usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
-Static int
+int
 uftdi_param(void *vsc, int portno, struct termios *t)
 {
 	struct uftdi_softc *sc = vsc;
@@ -686,7 +686,7 @@ uftdi_break(void *vsc, int portno, int onoff)
 	(void)usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
-Static int
+int
 uftdi_8u232am_getrate(speed_t speed, int *rate)
 {
 	/* Table of the nearest even powers-of-2 for values 0..15. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.26 2007/06/04 10:34:04 mbalmer Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.27 2007/06/05 08:43:56 mbalmer Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -52,13 +52,13 @@
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_quirks.h>
 
-Static usbd_status umass_init_insystem(struct umass_softc *);
-Static usbd_status umass_init_shuttle(struct umass_softc *);
+usbd_status umass_init_insystem(struct umass_softc *);
+usbd_status umass_init_shuttle(struct umass_softc *);
 
-Static void umass_fixup_sony(struct umass_softc *);
-Static void umass_fixup_yedata(struct umass_softc *);
+void umass_fixup_sony(struct umass_softc *);
+void umass_fixup_yedata(struct umass_softc *);
 
-Static const struct umass_quirk umass_quirks[] = {
+const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_ATI, USB_PRODUCT_ATI2_205 },
 	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
 	  0,
@@ -473,7 +473,7 @@ umass_lookup(u_int16_t vendor, u_int16_t product)
 		usb_lookup(umass_quirks, vendor, product));
 }
 
-Static usbd_status
+usbd_status
 umass_init_insystem(struct umass_softc *sc)
 {
 	usbd_status err;
@@ -489,7 +489,7 @@ umass_init_insystem(struct umass_softc *sc)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-Static usbd_status
+usbd_status
 umass_init_shuttle(struct umass_softc *sc)
 {
 	usb_device_request_t req;
@@ -505,7 +505,7 @@ umass_init_shuttle(struct umass_softc *sc)
 	return (usbd_do_request(sc->sc_udev, &req, &status));
 }
 
-Static void
+void
 umass_fixup_sony(struct umass_softc *sc)
 {
 	usb_interface_descriptor_t *id;
@@ -530,7 +530,7 @@ umass_fixup_sony(struct umass_softc *sc)
 	}
 }
 
-Static void
+void
 umass_fixup_yedata(struct umass_softc *sc)
 {
 	usb_device_descriptor_t *dd;

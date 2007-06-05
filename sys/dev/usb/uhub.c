@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.40 2007/06/01 06:12:20 mbalmer Exp $ */
+/*	$OpenBSD: uhub.c,v 1.41 2007/06/05 08:43:55 mbalmer Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -79,8 +79,8 @@ struct uhub_softc {
 #define UHUB_IS_HIGH_SPEED(sc) (UHUB_PROTO(sc) != UDPROTO_FSHUB)
 #define UHUB_IS_SINGLE_TT(sc) (UHUB_PROTO(sc) == UDPROTO_HSHUBSTT)
 
-Static usbd_status uhub_explore(usbd_device_handle hub);
-Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
+usbd_status uhub_explore(usbd_device_handle hub);
+void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
 
 /*
  * We need two attachment points:

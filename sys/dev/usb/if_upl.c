@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.29 2007/06/01 06:12:20 mbalmer Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.30 2007/06/05 08:43:55 mbalmer Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ int	upldebug = 0;
 /*
  * Various supported device vendors/products.
  */
-Static struct upl_type sc_devs[] = {
+struct upl_type sc_devs[] = {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2301 },
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2302 },
 	{ 0, 0 }
@@ -179,23 +179,23 @@ Static struct upl_type sc_devs[] = {
 
 USB_DECLARE_DRIVER_CLASS(upl, DV_IFNET);
 
-Static int upl_openpipes(struct upl_softc *);
-Static int upl_tx_list_init(struct upl_softc *);
-Static int upl_rx_list_init(struct upl_softc *);
-Static int upl_newbuf(struct upl_softc *, struct upl_chain *, struct mbuf *);
-Static int upl_send(struct upl_softc *, struct mbuf *, int);
-Static void upl_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void upl_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void upl_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void upl_start(struct ifnet *);
-Static int upl_ioctl(struct ifnet *, u_long, caddr_t);
-Static void upl_init(void *);
-Static void upl_stop(struct upl_softc *);
-Static void upl_watchdog(struct ifnet *);
+int upl_openpipes(struct upl_softc *);
+int upl_tx_list_init(struct upl_softc *);
+int upl_rx_list_init(struct upl_softc *);
+int upl_newbuf(struct upl_softc *, struct upl_chain *, struct mbuf *);
+int upl_send(struct upl_softc *, struct mbuf *, int);
+void upl_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void upl_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void upl_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void upl_start(struct ifnet *);
+int upl_ioctl(struct ifnet *, u_long, caddr_t);
+void upl_init(void *);
+void upl_stop(struct upl_softc *);
+void upl_watchdog(struct ifnet *);
 
-Static int upl_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+int upl_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		      struct rtentry *);
-Static void upl_input(struct ifnet *, struct mbuf *);
+void upl_input(struct ifnet *, struct mbuf *);
 
 /*
  * Probe for a Prolific chip.
@@ -376,7 +376,7 @@ upl_activate(device_ptr_t self, enum devact act)
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
-Static int
+int
 upl_newbuf(struct upl_softc *sc, struct upl_chain *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
@@ -410,7 +410,7 @@ upl_newbuf(struct upl_softc *sc, struct upl_chain *c, struct mbuf *m)
 	return (0);
 }
 
-Static int
+int
 upl_rx_list_init(struct upl_softc *sc)
 {
 	struct upl_cdata	*cd;
@@ -441,7 +441,7 @@ upl_rx_list_init(struct upl_softc *sc)
 	return (0);
 }
 
-Static int
+int
 upl_tx_list_init(struct upl_softc *sc)
 {
 	struct upl_cdata	*cd;
@@ -475,7 +475,7 @@ upl_tx_list_init(struct upl_softc *sc)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-Static void
+void
 upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct upl_chain	*c = priv;
@@ -564,7 +564,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-Static void
+void
 upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct upl_chain	*c = priv;
@@ -608,7 +608,7 @@ upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	splx(s);
 }
 
-Static int
+int
 upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 {
 	int			total_len;
@@ -647,7 +647,7 @@ upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 	return (0);
 }
 
-Static void
+void
 upl_start(struct ifnet *ifp)
 {
 	struct upl_softc	*sc = ifp->if_softc;
@@ -689,7 +689,7 @@ upl_start(struct ifnet *ifp)
 	ifp->if_timer = 5;
 }
 
-Static void
+void
 upl_init(void *xsc)
 {
 	struct upl_softc	*sc = xsc;
@@ -733,7 +733,7 @@ upl_init(void *xsc)
 	splx(s);
 }
 
-Static int
+int
 upl_openpipes(struct upl_softc *sc)
 {
 	struct upl_chain	*c;
@@ -781,7 +781,7 @@ upl_openpipes(struct upl_softc *sc)
 	return (0);
 }
 
-Static void
+void
 upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct upl_softc	*sc = priv;
@@ -822,7 +822,7 @@ upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 }
 
-Static int
+int
 upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct upl_softc	*sc = ifp->if_softc;
@@ -878,7 +878,7 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	return (error);
 }
 
-Static void
+void
 upl_watchdog(struct ifnet *ifp)
 {
 	struct upl_softc	*sc = ifp->if_softc;
@@ -902,7 +902,7 @@ upl_watchdog(struct ifnet *ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-Static void
+void
 upl_stop(struct upl_softc *sc)
 {
 	usbd_status		err;
@@ -983,7 +983,7 @@ upl_stop(struct upl_softc *sc)
 	}
 }
 
-Static int
+int
 upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	   struct rtentry *rt0)
 {
@@ -1013,7 +1013,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	return (0);
 }
 
-Static void
+void
 upl_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;

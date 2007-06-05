@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.28 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.29 2007/06/05 08:43:56 mbalmer Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -149,11 +149,11 @@ struct uvisor_softc {
 	u_char			sc_dying;
 };
 
-Static usbd_status uvisor_init(struct uvisor_softc *,
+usbd_status uvisor_init(struct uvisor_softc *,
 			       struct uvisor_connection_info *,
 			       struct uvisor_palm_connection_info *);
 
-Static void uvisor_close(void *, int);
+void uvisor_close(void *, int);
 
 
 struct ucom_methods uvisor_methods = {

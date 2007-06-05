@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.4 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.5 2007/06/05 08:43:55 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -45,7 +45,7 @@ struct uberry_softc {
 
 #define UBERRY_CONFIG_NO		0
 
-Static struct usb_devno const uberry_devices[] = {
+struct usb_devno const uberry_devices[] = {
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY }
 };
 
@@ -99,7 +99,7 @@ uberry_detach(struct device *self, int flags)
 	return 0;
 }
 
-Static int
+int
 uberry_activate(device_ptr_t self, enum devact act)
 {
 	switch (act) {

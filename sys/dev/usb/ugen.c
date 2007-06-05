@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.39 2007/05/31 17:35:45 mbalmer Exp $ */
+/*	$OpenBSD: ugen.c,v 1.40 2007/06/05 08:43:55 mbalmer Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -112,19 +112,19 @@ struct ugen_softc {
 	u_char sc_dying;
 };
 
-Static void ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr,
+void ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		     usbd_status status);
-Static void ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
+void ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 			    usbd_status status);
-Static int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
-Static int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
-Static int ugen_do_ioctl(struct ugen_softc *, int, u_long,
+int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
+int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
+int ugen_do_ioctl(struct ugen_softc *, int, u_long,
 			 caddr_t, int, usb_proc_ptr);
-Static int ugen_set_config(struct ugen_softc *sc, int configno);
-Static usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *sc,
+int ugen_set_config(struct ugen_softc *sc, int configno);
+usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *sc,
 					       int index, int *lenp);
-Static usbd_status ugen_set_interface(struct ugen_softc *, int, int);
-Static int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
+usbd_status ugen_set_interface(struct ugen_softc *, int, int);
+int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 
 #define UGENUNIT(n) ((minor(n) >> 4) & 0xf)
 #define UGENENDPOINT(n) (minor(n) & 0xf)
@@ -197,7 +197,7 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 			   USBDEV(sc->sc_dev));
 }
 
-Static int
+int
 ugen_set_config(struct ugen_softc *sc, int configno)
 {
 	usbd_device_handle dev = sc->sc_udev;
@@ -464,7 +464,7 @@ ugenclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	return (0);
 }
 
-Static int
+int
 ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][IN];
@@ -622,7 +622,7 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 	return (error);
 }
 
-Static int
+int
 ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
@@ -783,7 +783,7 @@ ugen_detach(struct device *self, int flags)
 	return (0);
 }
 
-Static void
+void
 ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 {
 	struct ugen_endpoint *sce = addr;
@@ -819,7 +819,7 @@ ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	selwakeup(&sce->rsel);
 }
 
-Static void
+void
 ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		usbd_status status)
 {
@@ -878,7 +878,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	selwakeup(&sce->rsel);
 }
 
-Static usbd_status
+usbd_status
 ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 {
 	usbd_interface_handle iface;
@@ -934,7 +934,7 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 }
 
 /* Retrieve a complete descriptor for a certain device and index. */
-Static usb_config_descriptor_t *
+usb_config_descriptor_t *
 ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
 {
 	usb_config_descriptor_t *cdesc, *tdesc, cdescr;
@@ -968,7 +968,7 @@ ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
 	return (cdesc);
 }
 
-Static int
+int
 ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 {
 	usbd_interface_handle iface;
@@ -980,7 +980,7 @@ ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 	return (usbd_get_interface_altindex(iface));
 }
 
-Static int
+int
 ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	      caddr_t addr, int flag, usb_proc_ptr p)
 {
@@ -1328,12 +1328,12 @@ ugenpoll(dev_t dev, int events, usb_proc_ptr p)
 	return (revents);
 }
 
-Static void filt_ugenrdetach(struct knote *);
-Static int filt_ugenread_intr(struct knote *, long);
-Static int filt_ugenread_isoc(struct knote *, long);
+void filt_ugenrdetach(struct knote *);
+int filt_ugenread_intr(struct knote *, long);
+int filt_ugenread_isoc(struct knote *, long);
 int ugenkqfilter(dev_t, struct knote *);
 
-Static void
+void
 filt_ugenrdetach(struct knote *kn)
 {
 	struct ugen_endpoint *sce = (void *)kn->kn_hook;
@@ -1344,7 +1344,7 @@ filt_ugenrdetach(struct knote *kn)
 	splx(s);
 }
 
-Static int
+int
 filt_ugenread_intr(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = (void *)kn->kn_hook;
@@ -1353,7 +1353,7 @@ filt_ugenread_intr(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-Static int
+int
 filt_ugenread_isoc(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = (void *)kn->kn_hook;
@@ -1370,13 +1370,13 @@ filt_ugenread_isoc(struct knote *kn, long hint)
 	return (1);
 }
 
-Static struct filterops ugenread_intr_filtops =
+struct filterops ugenread_intr_filtops =
 	{ 1, NULL, filt_ugenrdetach, filt_ugenread_intr };
 
-Static struct filterops ugenread_isoc_filtops =
+struct filterops ugenread_isoc_filtops =
 	{ 1, NULL, filt_ugenrdetach, filt_ugenread_isoc };
 
-Static struct filterops ugen_seltrue_filtops =
+struct filterops ugen_seltrue_filtops =
 	{ 1, NULL, filt_ugenrdetach, filt_seltrue };
 
 int

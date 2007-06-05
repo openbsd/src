@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.9 2007/05/31 02:56:03 robert Exp $ */
+/*	$OpenBSD: uts.c,v 1.10 2007/06/05 08:43:56 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -92,19 +92,19 @@ struct uts_pos {
 	int	z;	/* touch pressure */
 };
 
-Static const struct usb_devno uts_devs[] = {
+const struct usb_devno uts_devs[] = {
 	{ USB_VENDOR_FTDI,		USB_PRODUCT_FTDI_ITM_TOUCH },
 	{ USB_VENDOR_EGALAX,		USB_PRODUCT_EGALAX_TPANEL },
 	{ USB_VENDOR_EGALAX,		USB_PRODUCT_EGALAX_TPANEL2 },
 	{ USB_VENDOR_GUNZE,		USB_PRODUCT_GUNZE_TOUCHPANEL }
 };
 
-Static void uts_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void uts_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 struct uts_pos uts_get_pos(usbd_private_handle addr, struct uts_pos tp);
 
-Static int	uts_enable(void *);
-Static void	uts_disable(void *);
-Static int	uts_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	uts_enable(void *);
+void	uts_disable(void *);
+int	uts_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wsmouse_accessops uts_accessops = {
 	uts_enable,
@@ -262,7 +262,7 @@ uts_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-Static int
+int
 uts_enable(void *v)
 {
 	struct uts_softc *sc = v;
@@ -292,7 +292,7 @@ uts_enable(void *v)
 	return (0);
 }
 
-Static void
+void
 uts_disable(void *v)
 {
 	struct uts_softc *sc = v;
@@ -317,7 +317,7 @@ uts_disable(void *v)
 	sc->sc_enabled = 0;
 }
 
-Static int
+int
 uts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *l)
 {
 	int error = 0;
@@ -441,7 +441,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 	return (tp);
 }
 
-Static void
+void
 uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 {
 	struct uts_softc *sc = addr;

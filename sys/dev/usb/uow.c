@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.15 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: uow.c,v 1.16 2007/06/05 08:43:56 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -67,24 +67,24 @@ static const struct usb_devno uow_devs[] = {
 	{ USB_VENDOR_DALLAS,		USB_PRODUCT_DALLAS_USB_FOB_IBUTTON }
 };
 
-Static int	uow_ow_reset(void *);
-Static int	uow_ow_bit(void *, int);
-Static int	uow_ow_read_byte(void *);
-Static void	uow_ow_write_byte(void *, int);
-Static void	uow_ow_read_block(void *, void *, int);
-Static void	uow_ow_write_block(void *, const void *, int);
-Static void	uow_ow_matchrom(void *, u_int64_t);
-Static int	uow_ow_search(void *, u_int64_t *, int, u_int64_t);
+int	uow_ow_reset(void *);
+int	uow_ow_bit(void *, int);
+int	uow_ow_read_byte(void *);
+void	uow_ow_write_byte(void *, int);
+void	uow_ow_read_block(void *, void *, int);
+void	uow_ow_write_block(void *, const void *, int);
+void	uow_ow_matchrom(void *, u_int64_t);
+int	uow_ow_search(void *, u_int64_t *, int, u_int64_t);
 
-Static int	uow_cmd(struct uow_softc *, int, int, int);
+int	uow_cmd(struct uow_softc *, int, int, int);
 #define uow_ctlcmd(s, c, p)	uow_cmd((s), DS2490_CONTROL_CMD, (c), (p))
 #define uow_commcmd(s, c, p)	uow_cmd((s), DS2490_COMM_CMD, (c), (p))
 #define uow_modecmd(s, c, p)	uow_cmd((s), DS2490_MODE_CMD, (c), (p))
 
-Static void	uow_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static int	uow_read(struct uow_softc *, void *, int);
-Static int	uow_write(struct uow_softc *, const void *, int);
-Static int	uow_reset(struct uow_softc *);
+void	uow_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+int	uow_read(struct uow_softc *, void *, int);
+int	uow_write(struct uow_softc *, const void *, int);
+int	uow_reset(struct uow_softc *);
 
 int
 uow_match(struct device *parent, void *match, void *aux)
@@ -281,7 +281,7 @@ uow_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-Static int
+int
 uow_ow_reset(void *arg)
 {
 	struct uow_softc *sc = arg;
@@ -293,7 +293,7 @@ uow_ow_reset(void *arg)
 	return (0);
 }
 
-Static int
+int
 uow_ow_bit(void *arg, int value)
 {
 	struct uow_softc *sc = arg;
@@ -308,7 +308,7 @@ uow_ow_bit(void *arg, int value)
 	return (data);
 }
 
-Static int
+int
 uow_ow_read_byte(void *arg)
 {
 	struct uow_softc *sc = arg;
@@ -322,7 +322,7 @@ uow_ow_read_byte(void *arg)
 	return (data);
 }
 
-Static void
+void
 uow_ow_write_byte(void *arg, int value)
 {
 	struct uow_softc *sc = arg;
@@ -333,7 +333,7 @@ uow_ow_write_byte(void *arg, int value)
 	uow_read(sc, &data, sizeof(data));
 }
 
-Static void
+void
 uow_ow_read_block(void *arg, void *buf, int len)
 {
 	struct uow_softc *sc = arg;
@@ -345,7 +345,7 @@ uow_ow_read_block(void *arg, void *buf, int len)
 	uow_read(sc, buf, len);
 }
 
-Static void
+void
 uow_ow_write_block(void *arg, const void *buf, int len)
 {
 	struct uow_softc *sc = arg;
@@ -356,7 +356,7 @@ uow_ow_write_block(void *arg, const void *buf, int len)
 		return;
 }
 
-Static void
+void
 uow_ow_matchrom(void *arg, u_int64_t rom)
 {
 	struct uow_softc *sc = arg;
@@ -373,7 +373,7 @@ uow_ow_matchrom(void *arg, u_int64_t rom)
 		return;
 }
 
-Static int
+int
 uow_ow_search(void *arg, u_int64_t *buf, int size, u_int64_t startrom)
 {
 	struct uow_softc *sc = arg;
@@ -396,7 +396,7 @@ uow_ow_search(void *arg, u_int64_t *buf, int size, u_int64_t startrom)
 	return (rv / 8);
 }
 
-Static int
+int
 uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 {
 	usb_device_request_t req;
@@ -430,7 +430,7 @@ again:
 	return (0);
 }
 
-Static void
+void
 uow_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct uow_softc *sc = priv;
@@ -446,7 +446,7 @@ uow_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	wakeup(sc->sc_regs);
 }
 
-Static int
+int
 uow_read(struct uow_softc *sc, void *buf, int len)
 {
 	usbd_status error;
@@ -478,7 +478,7 @@ uow_read(struct uow_softc *sc, void *buf, int len)
 	return (count);
 }
 
-Static int
+int
 uow_write(struct uow_softc *sc, const void *buf, int len)
 {
 	usbd_status error;
@@ -508,7 +508,7 @@ uow_write(struct uow_softc *sc, const void *buf, int len)
 	return (0);
 }
 
-Static int
+int
 uow_reset(struct uow_softc *sc)
 {
 	return (uow_ctlcmd(sc, DS2490_CTL_RESET_DEVICE, 0));

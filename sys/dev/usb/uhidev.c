@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.22 2007/06/04 10:34:04 mbalmer Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.23 2007/06/05 08:43:55 mbalmer Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -74,11 +74,11 @@ int	uhidevdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static int uhidev_maxrepid(void *buf, int len);
-Static int uhidevprint(void *aux, const char *pnp);
-Static int uhidevsubmatch(struct device *parent, void *cf, void *aux);
+int uhidev_maxrepid(void *buf, int len);
+int uhidevprint(void *aux, const char *pnp);
+int uhidevsubmatch(struct device *parent, void *cf, void *aux);
 
 USB_DECLARE_DRIVER(uhidev);
 
@@ -324,7 +324,7 @@ uhidevprint(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-Static int uhidevsubmatch(struct device *parent, void *match, void *aux)
+int uhidevsubmatch(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
         struct cfdata *cf = match;

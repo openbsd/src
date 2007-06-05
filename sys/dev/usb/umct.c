@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.19 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: umct.c,v 1.20 2007/06/05 08:43:56 mbalmer Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,20 +116,20 @@ struct	umct_softc {
 #define UMCTIBUFSIZE 256
 #define UMCTOBUFSIZE 256
 
-Static	void umct_init(struct umct_softc *);
-Static	void umct_set_baudrate(struct umct_softc *, u_int);
-Static	void umct_set_lcr(struct umct_softc *, u_int);
-Static	void umct_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void umct_init(struct umct_softc *);
+void umct_set_baudrate(struct umct_softc *, u_int);
+void umct_set_lcr(struct umct_softc *, u_int);
+void umct_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static	void umct_set(void *, int, int, int);
-Static	void umct_dtr(struct umct_softc *, int);
-Static	void umct_rts(struct umct_softc *, int);
-Static	void umct_break(struct umct_softc *, int);
-Static	void umct_set_line_state(struct umct_softc *);
-Static	void umct_get_status(void *, int portno, u_char *lsr, u_char *msr);
-Static	int  umct_param(void *, int, struct termios *);
-Static	int  umct_open(void *, int);
-Static	void umct_close(void *, int);
+void umct_set(void *, int, int, int);
+void umct_dtr(struct umct_softc *, int);
+void umct_rts(struct umct_softc *, int);
+void umct_break(struct umct_softc *, int);
+void umct_set_line_state(struct umct_softc *);
+void umct_get_status(void *, int portno, u_char *lsr, u_char *msr);
+int  umct_param(void *, int, struct termios *);
+int  umct_open(void *, int);
+void umct_close(void *, int);
 
 struct	ucom_methods umct_methods = {
 	umct_get_status,

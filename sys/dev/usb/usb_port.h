@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.69 2007/05/29 19:57:45 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.70 2007/06/05 08:43:56 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -85,8 +85,6 @@
 #define UIPAQ_DEBUG 1
 #define UDCF_DEBUG 1
 #endif
-
-#define Static
 
 #define UMASS_ATAPISTR		"atapiscsi"
 

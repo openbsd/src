@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.35 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.36 2007/06/05 08:43:56 mbalmer Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,24 +120,24 @@ struct	uplcom_softc {
 #define UPLCOMIBUFSIZE 256
 #define UPLCOMOBUFSIZE 256
 
-Static	usbd_status uplcom_reset(struct uplcom_softc *);
-Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
+usbd_status uplcom_reset(struct uplcom_softc *);
+usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
 					   usb_cdc_line_state_t *state);
-Static	usbd_status uplcom_set_crtscts(struct uplcom_softc *);
-Static	void uplcom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+usbd_status uplcom_set_crtscts(struct uplcom_softc *);
+void uplcom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static	void uplcom_set(void *, int, int, int);
-Static	void uplcom_dtr(struct uplcom_softc *, int);
-Static	void uplcom_rts(struct uplcom_softc *, int);
-Static	void uplcom_break(struct uplcom_softc *, int);
-Static	void uplcom_set_line_state(struct uplcom_softc *);
-Static	void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
+void uplcom_set(void *, int, int, int);
+void uplcom_dtr(struct uplcom_softc *, int);
+void uplcom_rts(struct uplcom_softc *, int);
+void uplcom_break(struct uplcom_softc *, int);
+void uplcom_set_line_state(struct uplcom_softc *);
+void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
 #if TODO
-Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
+int  uplcom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
 #endif
-Static	int  uplcom_param(void *, int, struct termios *);
-Static	int  uplcom_open(void *, int);
-Static	void uplcom_close(void *, int);
+int  uplcom_param(void *, int, struct termios *);
+int  uplcom_open(void *, int);
+void uplcom_close(void *, int);
 
 struct	ucom_methods uplcom_methods = {
 	uplcom_get_status,

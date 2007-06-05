@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.69 2007/05/27 04:00:24 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.70 2007/06/05 08:43:55 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -143,7 +143,7 @@ int	axedebug = 0;
 /*
  * Various supported device vendors/products.
  */
-Static const struct axe_type axe_devs[] = {
+const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_UF200}, 0 },
 	{ { USB_VENDOR_ACERCM, USB_PRODUCT_ACERCM_EP1427X2}, 0 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88172}, 0 },
@@ -175,43 +175,43 @@ Static const struct axe_type axe_devs[] = {
 
 USB_DECLARE_DRIVER_CLASS(axe, DV_IFNET);
 
-Static int axe_tx_list_init(struct axe_softc *);
-Static int axe_rx_list_init(struct axe_softc *);
-Static struct mbuf *axe_newbuf(void);
-Static int axe_encap(struct axe_softc *, struct mbuf *, int);
-Static void axe_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void axe_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void axe_tick(void *);
-Static void axe_tick_task(void *);
-Static void axe_start(struct ifnet *);
-Static int axe_ioctl(struct ifnet *, u_long, caddr_t);
-Static void axe_init(void *);
-Static void axe_stop(struct axe_softc *);
-Static void axe_watchdog(struct ifnet *);
-Static int axe_miibus_readreg(device_ptr_t, int, int);
-Static void axe_miibus_writereg(device_ptr_t, int, int, int);
-Static void axe_miibus_statchg(device_ptr_t);
-Static int axe_cmd(struct axe_softc *, int, int, int, void *);
-Static int axe_ifmedia_upd(struct ifnet *);
-Static void axe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-Static void axe_reset(struct axe_softc *sc);
+int axe_tx_list_init(struct axe_softc *);
+int axe_rx_list_init(struct axe_softc *);
+struct mbuf *axe_newbuf(void);
+int axe_encap(struct axe_softc *, struct mbuf *, int);
+void axe_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void axe_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void axe_tick(void *);
+void axe_tick_task(void *);
+void axe_start(struct ifnet *);
+int axe_ioctl(struct ifnet *, u_long, caddr_t);
+void axe_init(void *);
+void axe_stop(struct axe_softc *);
+void axe_watchdog(struct ifnet *);
+int axe_miibus_readreg(device_ptr_t, int, int);
+void axe_miibus_writereg(device_ptr_t, int, int, int);
+void axe_miibus_statchg(device_ptr_t);
+int axe_cmd(struct axe_softc *, int, int, int, void *);
+int axe_ifmedia_upd(struct ifnet *);
+void axe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+void axe_reset(struct axe_softc *sc);
 
-Static void axe_setmulti(struct axe_softc *);
-Static void axe_lock_mii(struct axe_softc *sc);
-Static void axe_unlock_mii(struct axe_softc *sc);
+void axe_setmulti(struct axe_softc *);
+void axe_lock_mii(struct axe_softc *sc);
+void axe_unlock_mii(struct axe_softc *sc);
 
-Static void axe_ax88178_init(struct axe_softc *);
-Static void axe_ax88772_init(struct axe_softc *);
+void axe_ax88178_init(struct axe_softc *);
+void axe_ax88772_init(struct axe_softc *);
 
 /* Get exclusive access to the MII registers */
-Static void
+void
 axe_lock_mii(struct axe_softc *sc)
 {
 	sc->axe_refcnt++;
 	rw_enter_write(&sc->axe_mii_lock);
 }
 
-Static void
+void
 axe_unlock_mii(struct axe_softc *sc)
 {
 	rw_exit_write(&sc->axe_mii_lock);
@@ -219,7 +219,7 @@ axe_unlock_mii(struct axe_softc *sc)
 		usb_detach_wakeup(USBDEV(sc->axe_dev));
 }
 
-Static int
+int
 axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 {
 	usb_device_request_t	req;
@@ -245,7 +245,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	return(0);
 }
 
-Static int
+int
 axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 {
 	struct axe_softc	*sc = USBGETSOFTC(dev);
@@ -293,7 +293,7 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	return (UGETW(val));
 }
 
-Static void
+void
 axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 {
 	struct axe_softc	*sc = USBGETSOFTC(dev);
@@ -317,7 +317,7 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 	}
 }
 
-Static void
+void
 axe_miibus_statchg(device_ptr_t dev)
 {
 	struct axe_softc	*sc = USBGETSOFTC(dev);
@@ -356,7 +356,7 @@ axe_miibus_statchg(device_ptr_t dev)
 /*
  * Set media options.
  */
-Static int
+int
 axe_ifmedia_upd(struct ifnet *ifp)
 {
 	struct axe_softc	*sc = ifp->if_softc;
@@ -376,7 +376,7 @@ axe_ifmedia_upd(struct ifnet *ifp)
 /*
  * Report current media status.
  */
-Static void
+void
 axe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct axe_softc	*sc = ifp->if_softc;
@@ -387,7 +387,7 @@ axe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = mii->mii_media_status;
 }
 
-Static void
+void
 axe_setmulti(struct axe_softc *sc)
 {
 	struct ifnet		*ifp;
@@ -432,7 +432,7 @@ allmulti:
 	return;
 }
 
-Static void
+void
 axe_reset(struct axe_softc *sc)
 {
 	if (sc->axe_dying)
@@ -444,7 +444,7 @@ axe_reset(struct axe_softc *sc)
 	return;
 }
 
-Static void
+void
 axe_ax88178_init(struct axe_softc *sc)
 {
 	int gpio0 = 0, phymode = 0;
@@ -498,7 +498,7 @@ axe_ax88178_init(struct axe_softc *sc)
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
 }
 
-Static void
+void
 axe_ax88772_init(struct axe_softc *sc)
 {
 	axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x00b0, NULL);
@@ -812,7 +812,7 @@ axe_activate(device_ptr_t self, enum devact act)
 	return (0);
 }
 
-Static struct mbuf *
+struct mbuf *
 axe_newbuf(void)
 {
 	struct mbuf		*m;
@@ -833,7 +833,7 @@ axe_newbuf(void)
 	return (m);
 }
 
-Static int
+int
 axe_rx_list_init(struct axe_softc *sc)
 {
 	struct axe_cdata *cd;
@@ -864,7 +864,7 @@ axe_rx_list_init(struct axe_softc *sc)
 	return (0);
 }
 
-Static int
+int
 axe_tx_list_init(struct axe_softc *sc)
 {
 	struct axe_cdata *cd;
@@ -899,7 +899,7 @@ axe_tx_list_init(struct axe_softc *sc)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-Static void
+void
 axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct axe_chain	*c = (struct axe_chain *)priv;
@@ -1015,7 +1015,7 @@ done:
  * the list buffers.
  */
 
-Static void
+void
 axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct axe_softc	*sc;
@@ -1060,7 +1060,7 @@ axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	return;
 }
 
-Static void
+void
 axe_tick(void *xsc)
 {
 	struct axe_softc *sc = xsc;
@@ -1079,7 +1079,7 @@ axe_tick(void *xsc)
 
 }
 
-Static void
+void
 axe_tick_task(void *xsc)
 {
 	int			s;
@@ -1117,7 +1117,7 @@ axe_tick_task(void *xsc)
 	splx(s);
 }
 
-Static int
+int
 axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 {
 	struct axe_chain	*c;
@@ -1169,7 +1169,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	return(0);
 }
 
-Static void
+void
 axe_start(struct ifnet *ifp)
 {
 	struct axe_softc	*sc;
@@ -1212,7 +1212,7 @@ axe_start(struct ifnet *ifp)
 	return;
 }
 
-Static void
+void
 axe_init(void *xsc)
 {
 	struct axe_softc	*sc = xsc;
@@ -1315,7 +1315,7 @@ axe_init(void *xsc)
 	return;
 }
 
-Static int
+int
 axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct axe_softc	*sc = ifp->if_softc;
@@ -1399,7 +1399,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return(error);
 }
 
-Static void
+void
 axe_watchdog(struct ifnet *ifp)
 {
 	struct axe_softc	*sc;
@@ -1426,7 +1426,7 @@ axe_watchdog(struct ifnet *ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-Static void
+void
 axe_stop(struct axe_softc *sc)
 {
 	usbd_status		err;

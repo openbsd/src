@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.33 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: uhid.c,v 1.34 2007/06/05 08:43:55 mbalmer Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -101,11 +101,11 @@ struct uhid_softc {
 #define	UHID_CHUNK	128	/* chunk size for read */
 #define	UHID_BSIZE	1020	/* buffer size */
 
-Static void uhid_intr(struct uhidev *, void *, u_int len);
+void uhid_intr(struct uhidev *, void *, u_int len);
 
-Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
-Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
-Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,
+int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
+int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
+int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,
 			 usb_proc_ptr);
 
 USB_DECLARE_DRIVER(uhid);
@@ -548,11 +548,11 @@ uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 	return (revents);
 }
 
-Static void filt_uhidrdetach(struct knote *);
-Static int filt_uhidread(struct knote *, long);
+void filt_uhidrdetach(struct knote *);
+int filt_uhidread(struct knote *, long);
 int uhidkqfilter(dev_t, struct knote *);
 
-Static void
+void
 filt_uhidrdetach(struct knote *kn)
 {
 	struct uhid_softc *sc = (void *)kn->kn_hook;
@@ -563,7 +563,7 @@ filt_uhidrdetach(struct knote *kn)
 	splx(s);
 }
 
-Static int
+int
 filt_uhidread(struct knote *kn, long hint)
 {
 	struct uhid_softc *sc = (void *)kn->kn_hook;
@@ -572,10 +572,10 @@ filt_uhidread(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-Static struct filterops uhidread_filtops =
+struct filterops uhidread_filtops =
 	{ 1, NULL, filt_uhidrdetach, filt_uhidread };
 
-Static struct filterops uhid_seltrue_filtops =
+struct filterops uhid_seltrue_filtops =
 	{ 1, NULL, filt_uhidrdetach, filt_seltrue };
 
 int

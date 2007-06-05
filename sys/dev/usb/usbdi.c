@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.30 2007/05/31 18:20:22 mbalmer Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.31 2007/06/05 08:43:56 mbalmer Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -63,14 +63,14 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-Static usbd_status usbd_ar_pipe(usbd_pipe_handle pipe);
-Static void usbd_do_request_async_cb
+usbd_status usbd_ar_pipe(usbd_pipe_handle pipe);
+void usbd_do_request_async_cb
 	(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void usbd_start_next(usbd_pipe_handle pipe);
-Static usbd_status usbd_open_pipe_ival
+void usbd_start_next(usbd_pipe_handle pipe);
+usbd_status usbd_open_pipe_ival
 	(usbd_interface_handle, u_int8_t, u_int8_t, usbd_pipe_handle *, int);
 
-Static int usbd_nbuses = 0;
+int usbd_nbuses = 0;
 
 void
 usbd_init(void)
@@ -705,7 +705,7 @@ usbd_get_interface(usbd_interface_handle iface, u_int8_t *aiface)
 /*** Internal routines ***/
 
 /* Dequeue all pipe operations, called at splusb(). */
-Static usbd_status
+usbd_status
 usbd_ar_pipe(usbd_pipe_handle pipe)
 {
 	usbd_xfer_handle xfer;

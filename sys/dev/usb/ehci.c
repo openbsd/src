@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.70 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: ehci.c,v 1.71 2007/06/05 08:43:55 mbalmer Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -129,108 +129,108 @@ struct ehci_pipe {
 	} u;
 };
 
-Static u_int8_t		ehci_reverse_bits(u_int8_t, int);
+u_int8_t		ehci_reverse_bits(u_int8_t, int);
 
-Static void		ehci_power(int, void *);
+void		ehci_power(int, void *);
 
-Static usbd_status	ehci_open(usbd_pipe_handle);
-Static void		ehci_poll(struct usbd_bus *);
-Static void		ehci_softintr(void *);
-Static int		ehci_intr1(ehci_softc_t *);
-Static void		ehci_waitintr(ehci_softc_t *, usbd_xfer_handle);
-Static void		ehci_check_intr(ehci_softc_t *, struct ehci_xfer *);
-Static void		ehci_idone(struct ehci_xfer *);
-Static void		ehci_timeout(void *);
-Static void		ehci_timeout_task(void *);
-Static void		ehci_intrlist_timeout(void *);
+usbd_status	ehci_open(usbd_pipe_handle);
+void		ehci_poll(struct usbd_bus *);
+void		ehci_softintr(void *);
+int		ehci_intr1(ehci_softc_t *);
+void		ehci_waitintr(ehci_softc_t *, usbd_xfer_handle);
+void		ehci_check_intr(ehci_softc_t *, struct ehci_xfer *);
+void		ehci_idone(struct ehci_xfer *);
+void		ehci_timeout(void *);
+void		ehci_timeout_task(void *);
+void		ehci_intrlist_timeout(void *);
 
-Static usbd_status	ehci_allocm(struct usbd_bus *, usb_dma_t *, u_int32_t);
-Static void		ehci_freem(struct usbd_bus *, usb_dma_t *);
+usbd_status	ehci_allocm(struct usbd_bus *, usb_dma_t *, u_int32_t);
+void		ehci_freem(struct usbd_bus *, usb_dma_t *);
 
-Static usbd_xfer_handle	ehci_allocx(struct usbd_bus *);
-Static void		ehci_freex(struct usbd_bus *, usbd_xfer_handle);
+usbd_xfer_handle	ehci_allocx(struct usbd_bus *);
+void		ehci_freex(struct usbd_bus *, usbd_xfer_handle);
 
-Static usbd_status	ehci_root_ctrl_transfer(usbd_xfer_handle);
-Static usbd_status	ehci_root_ctrl_start(usbd_xfer_handle);
-Static void		ehci_root_ctrl_abort(usbd_xfer_handle);
-Static void		ehci_root_ctrl_close(usbd_pipe_handle);
-Static void		ehci_root_ctrl_done(usbd_xfer_handle);
+usbd_status	ehci_root_ctrl_transfer(usbd_xfer_handle);
+usbd_status	ehci_root_ctrl_start(usbd_xfer_handle);
+void		ehci_root_ctrl_abort(usbd_xfer_handle);
+void		ehci_root_ctrl_close(usbd_pipe_handle);
+void		ehci_root_ctrl_done(usbd_xfer_handle);
 
-Static usbd_status	ehci_root_intr_transfer(usbd_xfer_handle);
-Static usbd_status	ehci_root_intr_start(usbd_xfer_handle);
-Static void		ehci_root_intr_abort(usbd_xfer_handle);
-Static void		ehci_root_intr_close(usbd_pipe_handle);
-Static void		ehci_root_intr_done(usbd_xfer_handle);
+usbd_status	ehci_root_intr_transfer(usbd_xfer_handle);
+usbd_status	ehci_root_intr_start(usbd_xfer_handle);
+void		ehci_root_intr_abort(usbd_xfer_handle);
+void		ehci_root_intr_close(usbd_pipe_handle);
+void		ehci_root_intr_done(usbd_xfer_handle);
 
-Static usbd_status	ehci_device_ctrl_transfer(usbd_xfer_handle);
-Static usbd_status	ehci_device_ctrl_start(usbd_xfer_handle);
-Static void		ehci_device_ctrl_abort(usbd_xfer_handle);
-Static void		ehci_device_ctrl_close(usbd_pipe_handle);
-Static void		ehci_device_ctrl_done(usbd_xfer_handle);
+usbd_status	ehci_device_ctrl_transfer(usbd_xfer_handle);
+usbd_status	ehci_device_ctrl_start(usbd_xfer_handle);
+void		ehci_device_ctrl_abort(usbd_xfer_handle);
+void		ehci_device_ctrl_close(usbd_pipe_handle);
+void		ehci_device_ctrl_done(usbd_xfer_handle);
 
-Static usbd_status	ehci_device_bulk_transfer(usbd_xfer_handle);
-Static usbd_status	ehci_device_bulk_start(usbd_xfer_handle);
-Static void		ehci_device_bulk_abort(usbd_xfer_handle);
-Static void		ehci_device_bulk_close(usbd_pipe_handle);
-Static void		ehci_device_bulk_done(usbd_xfer_handle);
+usbd_status	ehci_device_bulk_transfer(usbd_xfer_handle);
+usbd_status	ehci_device_bulk_start(usbd_xfer_handle);
+void		ehci_device_bulk_abort(usbd_xfer_handle);
+void		ehci_device_bulk_close(usbd_pipe_handle);
+void		ehci_device_bulk_done(usbd_xfer_handle);
 
-Static usbd_status	ehci_device_intr_transfer(usbd_xfer_handle);
-Static usbd_status	ehci_device_intr_start(usbd_xfer_handle);
-Static void		ehci_device_intr_abort(usbd_xfer_handle);
-Static void		ehci_device_intr_close(usbd_pipe_handle);
-Static void		ehci_device_intr_done(usbd_xfer_handle);
+usbd_status	ehci_device_intr_transfer(usbd_xfer_handle);
+usbd_status	ehci_device_intr_start(usbd_xfer_handle);
+void		ehci_device_intr_abort(usbd_xfer_handle);
+void		ehci_device_intr_close(usbd_pipe_handle);
+void		ehci_device_intr_done(usbd_xfer_handle);
 
-Static usbd_status	ehci_device_isoc_transfer(usbd_xfer_handle);
-Static usbd_status	ehci_device_isoc_start(usbd_xfer_handle);
-Static void		ehci_device_isoc_abort(usbd_xfer_handle);
-Static void		ehci_device_isoc_close(usbd_pipe_handle);
-Static void		ehci_device_isoc_done(usbd_xfer_handle);
+usbd_status	ehci_device_isoc_transfer(usbd_xfer_handle);
+usbd_status	ehci_device_isoc_start(usbd_xfer_handle);
+void		ehci_device_isoc_abort(usbd_xfer_handle);
+void		ehci_device_isoc_close(usbd_pipe_handle);
+void		ehci_device_isoc_done(usbd_xfer_handle);
 
-Static void		ehci_device_clear_toggle(usbd_pipe_handle pipe);
-Static void		ehci_noop(usbd_pipe_handle pipe);
+void		ehci_device_clear_toggle(usbd_pipe_handle pipe);
+void		ehci_noop(usbd_pipe_handle pipe);
 
-Static int		ehci_str(usb_string_descriptor_t *, int, const char *);
-Static void		ehci_pcd(ehci_softc_t *, usbd_xfer_handle);
-Static void		ehci_pcd_able(ehci_softc_t *, int);
-Static void		ehci_pcd_enable(void *);
-Static void		ehci_disown(ehci_softc_t *, int, int);
+int		ehci_str(usb_string_descriptor_t *, int, const char *);
+void		ehci_pcd(ehci_softc_t *, usbd_xfer_handle);
+void		ehci_pcd_able(ehci_softc_t *, int);
+void		ehci_pcd_enable(void *);
+void		ehci_disown(ehci_softc_t *, int, int);
 
-Static ehci_soft_qh_t  *ehci_alloc_sqh(ehci_softc_t *);
-Static void		ehci_free_sqh(ehci_softc_t *, ehci_soft_qh_t *);
+ehci_soft_qh_t  *ehci_alloc_sqh(ehci_softc_t *);
+void		ehci_free_sqh(ehci_softc_t *, ehci_soft_qh_t *);
 
-Static ehci_soft_qtd_t  *ehci_alloc_sqtd(ehci_softc_t *);
-Static void		ehci_free_sqtd(ehci_softc_t *, ehci_soft_qtd_t *);
-Static usbd_status	ehci_alloc_sqtd_chain(struct ehci_pipe *,
+ehci_soft_qtd_t  *ehci_alloc_sqtd(ehci_softc_t *);
+void		ehci_free_sqtd(ehci_softc_t *, ehci_soft_qtd_t *);
+usbd_status	ehci_alloc_sqtd_chain(struct ehci_pipe *,
 			    ehci_softc_t *, int, int, usbd_xfer_handle,
 			    ehci_soft_qtd_t **, ehci_soft_qtd_t **);
-Static void		ehci_free_sqtd_chain(ehci_softc_t *, ehci_soft_qtd_t *,
+void		ehci_free_sqtd_chain(ehci_softc_t *, ehci_soft_qtd_t *,
 			    ehci_soft_qtd_t *);
 
-Static usbd_status	ehci_device_request(usbd_xfer_handle xfer);
+usbd_status	ehci_device_request(usbd_xfer_handle xfer);
 
-Static usbd_status	ehci_device_setintr(ehci_softc_t *, ehci_soft_qh_t *,
+usbd_status	ehci_device_setintr(ehci_softc_t *, ehci_soft_qh_t *,
 			    int ival);
 
-Static void		ehci_add_qh(ehci_soft_qh_t *, ehci_soft_qh_t *);
-Static void		ehci_rem_qh(ehci_softc_t *, ehci_soft_qh_t *,
+void		ehci_add_qh(ehci_soft_qh_t *, ehci_soft_qh_t *);
+void		ehci_rem_qh(ehci_softc_t *, ehci_soft_qh_t *,
 			    ehci_soft_qh_t *);
-Static void		ehci_set_qh_qtd(ehci_soft_qh_t *, ehci_soft_qtd_t *);
-Static void		ehci_sync_hc(ehci_softc_t *);
+void		ehci_set_qh_qtd(ehci_soft_qh_t *, ehci_soft_qtd_t *);
+void		ehci_sync_hc(ehci_softc_t *);
 
-Static void		ehci_close_pipe(usbd_pipe_handle, ehci_soft_qh_t *);
-Static void		ehci_abort_xfer(usbd_xfer_handle, usbd_status);
+void		ehci_close_pipe(usbd_pipe_handle, ehci_soft_qh_t *);
+void		ehci_abort_xfer(usbd_xfer_handle, usbd_status);
 
 #ifdef EHCI_DEBUG
-Static void		ehci_dump_regs(ehci_softc_t *);
-Static void		ehci_dump(void);
-Static ehci_softc_t	*theehci;
-Static void		ehci_dump_link(ehci_link_t, int);
-Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
-Static void		ehci_dump_sqtd(ehci_soft_qtd_t *);
-Static void		ehci_dump_qtd(ehci_qtd_t *);
-Static void		ehci_dump_sqh(ehci_soft_qh_t *);
+void		ehci_dump_regs(ehci_softc_t *);
+void		ehci_dump(void);
+ehci_softc_t	*theehci;
+void		ehci_dump_link(ehci_link_t, int);
+void		ehci_dump_sqtds(ehci_soft_qtd_t *);
+void		ehci_dump_sqtd(ehci_soft_qtd_t *);
+void		ehci_dump_qtd(ehci_qtd_t *);
+void		ehci_dump_sqh(ehci_soft_qh_t *);
 #ifdef DIAGNOSTIC
-Static void		ehci_dump_exfer(struct ehci_xfer *);
+void		ehci_dump_exfer(struct ehci_xfer *);
 #endif
 #endif
 
@@ -247,7 +247,7 @@ Static void		ehci_dump_exfer(struct ehci_xfer *);
 	} while (0)
 #define ehci_active_intr_list(ex) ((ex)->inext.le_prev != NULL)
 
-Static struct usbd_bus_methods ehci_bus_methods = {
+struct usbd_bus_methods ehci_bus_methods = {
 	ehci_open,
 	ehci_softintr,
 	ehci_poll,
@@ -257,7 +257,7 @@ Static struct usbd_bus_methods ehci_bus_methods = {
 	ehci_freex,
 };
 
-Static struct usbd_pipe_methods ehci_root_ctrl_methods = {
+struct usbd_pipe_methods ehci_root_ctrl_methods = {
 	ehci_root_ctrl_transfer,
 	ehci_root_ctrl_start,
 	ehci_root_ctrl_abort,
@@ -266,7 +266,7 @@ Static struct usbd_pipe_methods ehci_root_ctrl_methods = {
 	ehci_root_ctrl_done,
 };
 
-Static struct usbd_pipe_methods ehci_root_intr_methods = {
+struct usbd_pipe_methods ehci_root_intr_methods = {
 	ehci_root_intr_transfer,
 	ehci_root_intr_start,
 	ehci_root_intr_abort,
@@ -275,7 +275,7 @@ Static struct usbd_pipe_methods ehci_root_intr_methods = {
 	ehci_root_intr_done,
 };
 
-Static struct usbd_pipe_methods ehci_device_ctrl_methods = {
+struct usbd_pipe_methods ehci_device_ctrl_methods = {
 	ehci_device_ctrl_transfer,
 	ehci_device_ctrl_start,
 	ehci_device_ctrl_abort,
@@ -284,7 +284,7 @@ Static struct usbd_pipe_methods ehci_device_ctrl_methods = {
 	ehci_device_ctrl_done,
 };
 
-Static struct usbd_pipe_methods ehci_device_intr_methods = {
+struct usbd_pipe_methods ehci_device_intr_methods = {
 	ehci_device_intr_transfer,
 	ehci_device_intr_start,
 	ehci_device_intr_abort,
@@ -293,7 +293,7 @@ Static struct usbd_pipe_methods ehci_device_intr_methods = {
 	ehci_device_intr_done,
 };
 
-Static struct usbd_pipe_methods ehci_device_bulk_methods = {
+struct usbd_pipe_methods ehci_device_bulk_methods = {
 	ehci_device_bulk_transfer,
 	ehci_device_bulk_start,
 	ehci_device_bulk_abort,
@@ -302,7 +302,7 @@ Static struct usbd_pipe_methods ehci_device_bulk_methods = {
 	ehci_device_bulk_done,
 };
 
-Static struct usbd_pipe_methods ehci_device_isoc_methods = {
+struct usbd_pipe_methods ehci_device_isoc_methods = {
 	ehci_device_isoc_transfer,
 	ehci_device_isoc_start,
 	ehci_device_isoc_abort,
@@ -316,7 +316,7 @@ Static struct usbd_pipe_methods ehci_device_isoc_methods = {
  * interrupt heads in the periodic schedule.
  * Suitable for use with EHCI_IPOLLRATES <= 9.
  */
-Static u_int8_t
+u_int8_t
 ehci_reverse_bits(u_int8_t c, int nbits)
 {
 	c = ((c >> 1) & 0x55) | ((c << 1) & 0xaa);
@@ -531,7 +531,7 @@ ehci_intr(void *v)
 	return (ehci_intr1(sc));
 }
 
-Static int
+int
 ehci_intr1(ehci_softc_t *sc)
 {
 	u_int32_t intrs, eintrs;
@@ -1144,7 +1144,7 @@ ehci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
-Static void
+void
 ehci_device_clear_toggle(usbd_pipe_handle pipe)
 {
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
@@ -1162,7 +1162,7 @@ ehci_device_clear_toggle(usbd_pipe_handle pipe)
 	epipe->sqh->qh.qh_qtd.qtd_status &= htole32(~EHCI_QTD_TOGGLE_MASK);
 }
 
-Static void
+void
 ehci_noop(usbd_pipe_handle pipe)
 {
 }
@@ -1291,7 +1291,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 }
 
 #ifdef DIAGNOSTIC
-Static void
+void
 ehci_dump_exfer(struct ehci_xfer *ex)
 {
 	printf("ehci_dump_exfer: ex=%p\n", ex);
@@ -1539,7 +1539,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 /*
  * Data structures and routines to emulate the root hub.
  */
-Static usb_device_descriptor_t ehci_devd = {
+usb_device_descriptor_t ehci_devd = {
 	USB_DEVICE_DESCRIPTOR_SIZE,
 	UDESC_DEVICE,		/* type */
 	{0x00, 0x02},		/* USB version */
@@ -1552,7 +1552,7 @@ Static usb_device_descriptor_t ehci_devd = {
 	1			/* # of configurations */
 };
 
-Static usb_device_qualifier_t ehci_odevd = {
+usb_device_qualifier_t ehci_odevd = {
 	USB_DEVICE_DESCRIPTOR_SIZE,
 	UDESC_DEVICE_QUALIFIER,	/* type */
 	{0x00, 0x02},		/* USB version */
@@ -1564,7 +1564,7 @@ Static usb_device_qualifier_t ehci_odevd = {
 	0
 };
 
-Static usb_config_descriptor_t ehci_confd = {
+usb_config_descriptor_t ehci_confd = {
 	USB_CONFIG_DESCRIPTOR_SIZE,
 	UDESC_CONFIG,
 	{USB_CONFIG_DESCRIPTOR_SIZE +
@@ -1577,7 +1577,7 @@ Static usb_config_descriptor_t ehci_confd = {
 	0			/* max power */
 };
 
-Static usb_interface_descriptor_t ehci_ifcd = {
+usb_interface_descriptor_t ehci_ifcd = {
 	USB_INTERFACE_DESCRIPTOR_SIZE,
 	UDESC_INTERFACE,
 	0,
@@ -1589,7 +1589,7 @@ Static usb_interface_descriptor_t ehci_ifcd = {
 	0
 };
 
-Static usb_endpoint_descriptor_t ehci_endpd = {
+usb_endpoint_descriptor_t ehci_endpd = {
 	USB_ENDPOINT_DESCRIPTOR_SIZE,
 	UDESC_ENDPOINT,
 	UE_DIR_IN | EHCI_INTR_ENDPT,
@@ -1598,7 +1598,7 @@ Static usb_endpoint_descriptor_t ehci_endpd = {
 	255
 };
 
-Static usb_hub_descriptor_t ehci_hubd = {
+usb_hub_descriptor_t ehci_hubd = {
 	USB_HUB_DESCRIPTOR_SIZE,
 	UDESC_HUB,
 	0,
@@ -1608,7 +1608,7 @@ Static usb_hub_descriptor_t ehci_hubd = {
 	{0},
 };
 
-Static int
+int
 ehci_str(usb_string_descriptor_t *p, int l, const char *s)
 {
 	int i;
@@ -1628,7 +1628,7 @@ ehci_str(usb_string_descriptor_t *p, int l, const char *s)
 /*
  * Simulate a hardware hub by handling all the necessary requests.
  */
-Static usbd_status
+usbd_status
 ehci_root_ctrl_transfer(usbd_xfer_handle xfer)
 {
 	usbd_status err;
@@ -1642,7 +1642,7 @@ ehci_root_ctrl_transfer(usbd_xfer_handle xfer)
 	return (ehci_root_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-Static usbd_status
+usbd_status
 ehci_root_ctrl_start(usbd_xfer_handle xfer)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)xfer->pipe->device->bus;
@@ -2043,14 +2043,14 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 }
 
 /* Abort a root control request. */
-Static void
+void
 ehci_root_ctrl_abort(usbd_xfer_handle xfer)
 {
 	/* Nothing to do, all transfers are synchronous. */
 }
 
 /* Close the root pipe. */
-Static void
+void
 ehci_root_ctrl_close(usbd_pipe_handle pipe)
 {
 	DPRINTF(("ehci_root_ctrl_close\n"));
@@ -2062,7 +2062,7 @@ ehci_root_intr_done(usbd_xfer_handle xfer)
 {
 }
 
-Static usbd_status
+usbd_status
 ehci_root_intr_transfer(usbd_xfer_handle xfer)
 {
 	usbd_status err;
@@ -2076,7 +2076,7 @@ ehci_root_intr_transfer(usbd_xfer_handle xfer)
 	return (ehci_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-Static usbd_status
+usbd_status
 ehci_root_intr_start(usbd_xfer_handle xfer)
 {
 	usbd_pipe_handle pipe = xfer->pipe;
@@ -2091,7 +2091,7 @@ ehci_root_intr_start(usbd_xfer_handle xfer)
 }
 
 /* Abort a root interrupt request. */
-Static void
+void
 ehci_root_intr_abort(usbd_xfer_handle xfer)
 {
 	int s;
@@ -2107,7 +2107,7 @@ ehci_root_intr_abort(usbd_xfer_handle xfer)
 }
 
 /* Close the root pipe. */
-Static void
+void
 ehci_root_intr_close(usbd_pipe_handle pipe)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
@@ -2357,7 +2357,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc, int alen,
 	return (USBD_NOMEM);
 }
 
-Static void
+void
 ehci_free_sqtd_chain(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd,
 		    ehci_soft_qtd_t *sqtdend)
 {
@@ -2661,7 +2661,7 @@ ehci_intrlist_timeout(void *arg)
 
 /************************/
 
-Static usbd_status
+usbd_status
 ehci_device_ctrl_transfer(usbd_xfer_handle xfer)
 {
 	usbd_status err;
@@ -2675,7 +2675,7 @@ ehci_device_ctrl_transfer(usbd_xfer_handle xfer)
 	return (ehci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-Static usbd_status
+usbd_status
 ehci_device_ctrl_start(usbd_xfer_handle xfer)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)xfer->pipe->device->bus;
@@ -2725,7 +2725,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 }
 
 /* Abort a device control request. */
-Static void
+void
 ehci_device_ctrl_abort(usbd_xfer_handle xfer)
 {
 	DPRINTF(("ehci_device_ctrl_abort: xfer=%p\n", xfer));
@@ -2733,7 +2733,7 @@ ehci_device_ctrl_abort(usbd_xfer_handle xfer)
 }
 
 /* Close a device control pipe. */
-Static void
+void
 ehci_device_ctrl_close(usbd_pipe_handle pipe)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
@@ -2894,7 +2894,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 
 /************************/
 
-Static usbd_status
+usbd_status
 ehci_device_bulk_transfer(usbd_xfer_handle xfer)
 {
 	usbd_status err;
@@ -2999,7 +2999,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 #undef exfer
 }
 
-Static void
+void
 ehci_device_bulk_abort(usbd_xfer_handle xfer)
 {
 	DPRINTF(("ehci_device_bulk_abort: xfer=%p\n", xfer));
@@ -3009,7 +3009,7 @@ ehci_device_bulk_abort(usbd_xfer_handle xfer)
 /*
  * Close a device bulk pipe.
  */
-Static void
+void
 ehci_device_bulk_close(usbd_pipe_handle pipe)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
@@ -3038,7 +3038,7 @@ ehci_device_bulk_done(usbd_xfer_handle xfer)
 
 /************************/
 
-Static usbd_status
+usbd_status
 ehci_device_setintr(ehci_softc_t *sc, ehci_soft_qh_t *sqh, int ival)
 {
 	struct ehci_soft_islot *isp;
@@ -3065,7 +3065,7 @@ ehci_device_setintr(ehci_softc_t *sc, ehci_soft_qh_t *sqh, int ival)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-Static usbd_status
+usbd_status
 ehci_device_intr_transfer(usbd_xfer_handle xfer)
 {
 	usbd_status err;
@@ -3082,7 +3082,7 @@ ehci_device_intr_transfer(usbd_xfer_handle xfer)
 	return (ehci_device_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
 }
 
-Static usbd_status
+usbd_status
 ehci_device_intr_start(usbd_xfer_handle xfer)
 {
 #define exfer EXFER(xfer)
@@ -3167,7 +3167,7 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 #undef exfer
 }
 
-Static void
+void
 ehci_device_intr_abort(usbd_xfer_handle xfer)
 {
 	DPRINTFN(1, ("ehci_device_intr_abort: xfer=%p\n", xfer));
@@ -3178,7 +3178,7 @@ ehci_device_intr_abort(usbd_xfer_handle xfer)
 	ehci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
-Static void
+void
 ehci_device_intr_close(usbd_pipe_handle pipe)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)pipe->device->bus;
@@ -3189,7 +3189,7 @@ ehci_device_intr_close(usbd_pipe_handle pipe)
 	ehci_close_pipe(pipe, isp->sqh);
 }
 
-Static void
+void
 ehci_device_intr_done(usbd_xfer_handle xfer)
 {
 #define exfer EXFER(xfer)
@@ -3250,8 +3250,8 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 
 /************************/
 
-Static usbd_status	ehci_device_isoc_transfer(usbd_xfer_handle xfer) { return USBD_IOERROR; }
-Static usbd_status	ehci_device_isoc_start(usbd_xfer_handle xfer) { return USBD_IOERROR; }
-Static void		ehci_device_isoc_abort(usbd_xfer_handle xfer) { }
-Static void		ehci_device_isoc_close(usbd_pipe_handle pipe) { }
-Static void		ehci_device_isoc_done(usbd_xfer_handle xfer) { }
+usbd_status	ehci_device_isoc_transfer(usbd_xfer_handle xfer) { return USBD_IOERROR; }
+usbd_status	ehci_device_isoc_start(usbd_xfer_handle xfer) { return USBD_IOERROR; }
+void		ehci_device_isoc_abort(usbd_xfer_handle xfer) { }
+void		ehci_device_isoc_close(usbd_pipe_handle pipe) { }
+void		ehci_device_isoc_done(usbd_xfer_handle xfer) { }

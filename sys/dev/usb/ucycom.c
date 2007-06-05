@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.6 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.7 2007/06/05 08:43:55 mbalmer Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -135,13 +135,13 @@ struct ucycom_softc {
 };
 
 /* Callback routines */
-Static void	ucycom_set(void *, int, int, int);
-Static int	ucycom_param(void *, int, struct termios *);
-Static void	ucycom_get_status(void *, int, u_char *, u_char *);
-Static int	ucycom_open(void *, int);
-Static void	ucycom_close(void *, int);
-Static void	ucycom_write(void *, int, u_char *, u_char *, u_int32_t *);
-Static void	ucycom_read(void *, int, u_char **, u_int32_t *);
+void	ucycom_set(void *, int, int, int);
+int	ucycom_param(void *, int, struct termios *);
+void	ucycom_get_status(void *, int, u_char *, u_char *);
+int	ucycom_open(void *, int);
+void	ucycom_close(void *, int);
+void	ucycom_write(void *, int, u_char *, u_char *, u_int32_t *);
+void	ucycom_read(void *, int, u_char **, u_int32_t *);
 
 struct ucom_methods ucycom_methods = {
 	NULL, /* ucycom_get_status, */
@@ -154,11 +154,11 @@ struct ucom_methods ucycom_methods = {
 	ucycom_write,
 };
 
-Static void ucycom_intr(struct uhidev *, void *, u_int);
+void ucycom_intr(struct uhidev *, void *, u_int);
 
-Static void ucycom_get_cfg(struct ucycom_softc *);
+void ucycom_get_cfg(struct ucycom_softc *);
 
-Static const struct usb_devno ucycom_devs[] = {
+const struct usb_devno ucycom_devs[] = {
 	{ USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_USBRS232 },
 	{ USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EMUSB },
 	{ USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EMLT20 },
@@ -311,7 +311,7 @@ ucycom_close(void *addr, int portno)
 	splx(s);
 }
 
-Static void
+void
 ucycom_read(void *addr, int portno, u_char **ptr, u_int32_t *count)
 {
 	struct ucycom_softc *sc = addr;
@@ -328,7 +328,7 @@ ucycom_read(void *addr, int portno, u_char **ptr, u_int32_t *count)
 	*count = sc->sc_icnt;
 }
 
-Static void
+void
 ucycom_write(void *addr, int portno, u_char *to, u_char *data, u_int32_t *cnt)
 {
 	struct ucycom_softc *sc = addr;
@@ -383,7 +383,7 @@ ucycom_write(void *addr, int portno, u_char *to, u_char *data, u_int32_t *cnt)
 	DPRINTFN(4,("ucycomstart: req %d chars did %d chars\n", want, len));
 }
 
-Static int
+int
 ucycom_param(void *addr, int portno, struct termios *t)
 {
 	struct ucycom_softc *sc = addr;
@@ -469,7 +469,7 @@ ucycom_param(void *addr, int portno, struct termios *t)
 	return (err);
 }
 
-Static void
+void
 ucycom_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	extern void ucomreadcb(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -524,7 +524,7 @@ ucycom_intr(struct uhidev *addr, void *ibuf, u_int len)
 	}
 }
 
-Static void
+void
 ucycom_set(void *addr, int portno, int reg, int onoff)
 {
 	struct ucycom_softc *sc = addr;
@@ -555,7 +555,7 @@ ucycom_set(void *addr, int portno, int reg, int onoff)
 		DPRINTF(("ucycom_set_status: err=%d\n", err));
 }
 
-Static void
+void
 ucycom_get_cfg(struct ucycom_softc *sc)
 {
 	int err, cfg, baud;

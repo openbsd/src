@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.17 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: hid.c,v 1.18 2007/06/05 08:43:55 mbalmer Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -57,7 +57,7 @@ extern int uhidevdebug;
 #define DPRINTFN(n,x)
 #endif
 
-Static void hid_clear_local(struct hid_item *);
+void hid_clear_local(struct hid_item *);
 
 #define MAXUSAGE 256
 struct hid_data {
@@ -73,7 +73,7 @@ struct hid_data {
 	enum hid_kind kind;
 };
 
-Static void
+void
 hid_clear_local(struct hid_item *c)
 {
 

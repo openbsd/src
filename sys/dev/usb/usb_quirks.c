@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.28 2007/05/22 09:55:15 robert Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.29 2007/06/05 08:43:56 mbalmer Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -53,7 +53,7 @@ extern int usbdebug;
 
 #define ANY 0xffff
 
-Static const struct usbd_quirk_entry {
+const struct usbd_quirk_entry {
 	u_int16_t idVendor;
 	u_int16_t idProduct;
 	u_int16_t bcdDevice;

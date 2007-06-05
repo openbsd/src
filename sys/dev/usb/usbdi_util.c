@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.19 2007/05/31 18:20:22 mbalmer Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.20 2007/06/05 08:43:56 mbalmer Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -419,9 +419,9 @@ usbd_get_config(usbd_device_handle dev, u_int8_t *conf)
 	return (usbd_do_request(dev, &req, conf));
 }
 
-Static void usbd_bulk_transfer_cb(usbd_xfer_handle xfer,
+void usbd_bulk_transfer_cb(usbd_xfer_handle xfer,
 				  usbd_private_handle priv, usbd_status status);
-Static void
+void
 usbd_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		      usbd_status status)
 {
@@ -461,9 +461,9 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	return (err);
 }
 
-Static void usbd_intr_transfer_cb(usbd_xfer_handle xfer,
+void usbd_intr_transfer_cb(usbd_xfer_handle xfer,
 				  usbd_private_handle priv, usbd_status status);
-Static void
+void
 usbd_intr_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		      usbd_status status)
 {

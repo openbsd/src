@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.11 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.12 2007/06/05 08:43:55 mbalmer Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -70,8 +70,8 @@ int	udsbrdebug = 0;
 
 #define UDSBR_CONFIG_NO		1
 
-Static	int     udsbr_get_info(void *, struct radio_info *);
-Static	int     udsbr_set_info(void *, struct radio_info *);
+int     udsbr_get_info(void *, struct radio_info *);
+int     udsbr_set_info(void *, struct radio_info *);
 
 struct radio_hw_if udsbr_hw_if = {
 	NULL, /* open */
@@ -94,12 +94,12 @@ struct udsbr_softc {
 	char			sc_dying;
 };
 
-Static	int	udsbr_req(struct udsbr_softc *sc, int ureq, int value,
+	int	udsbr_req(struct udsbr_softc *sc, int ureq, int value,
 			  int index);
-Static	void	udsbr_start(struct udsbr_softc *sc);
-Static	void	udsbr_stop(struct udsbr_softc *sc);
-Static	void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
-Static	int	udsbr_status(struct udsbr_softc *sc);
+	void	udsbr_start(struct udsbr_softc *sc);
+	void	udsbr_stop(struct udsbr_softc *sc);
+	void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
+	int	udsbr_status(struct udsbr_softc *sc);
 
 USB_DECLARE_DRIVER(udsbr);
 

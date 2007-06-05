@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.50 2007/06/03 20:49:25 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.51 2007/06/05 08:43:56 mbalmer Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -66,26 +66,26 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-Static usbd_status	usbd_set_config(usbd_device_handle, int);
-Static void		usbd_devinfo(usbd_device_handle, int, char *, size_t);
-Static void		usbd_devinfo_vp(usbd_device_handle, char *, char *,
+usbd_status	usbd_set_config(usbd_device_handle, int);
+void		usbd_devinfo(usbd_device_handle, int, char *, size_t);
+void		usbd_devinfo_vp(usbd_device_handle, char *, char *,
 			    int);
-Static char		*usbd_get_string(usbd_device_handle, int, char *);
-Static int		usbd_getnewaddr(usbd_bus_handle);
-Static int		usbd_print(void *, const char *);
-Static int		usbd_submatch(device_ptr_t, void *, void *);
-Static void		usbd_free_iface_data(usbd_device_handle, int);
-Static void		usbd_kill_pipe(usbd_pipe_handle);
-Static usbd_status	usbd_probe_and_attach(device_ptr_t,
+char		*usbd_get_string(usbd_device_handle, int, char *);
+int		usbd_getnewaddr(usbd_bus_handle);
+int		usbd_print(void *, const char *);
+int		usbd_submatch(device_ptr_t, void *, void *);
+void		usbd_free_iface_data(usbd_device_handle, int);
+void		usbd_kill_pipe(usbd_pipe_handle);
+usbd_status	usbd_probe_and_attach(device_ptr_t,
 			    usbd_device_handle, int, int);
 
-Static u_int32_t	usb_cookie_no = 0;
+u_int32_t	usb_cookie_no = 0;
 
 #ifdef USBVERBOSE
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
 
-Static const char * const usbd_error_strs[] = {
+const char * const usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
 	"IN_PROGRESS",
 	"PENDING_REQUESTS",
@@ -290,7 +290,7 @@ usbd_printBCD(char *cp, size_t len, int bcd)
 	return (l);
 }
 
-Static void
+void
 usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
@@ -561,7 +561,7 @@ usbd_free_iface_data(usbd_device_handle dev, int ifcno)
 		free(ifc->endpoints, M_USB);
 }
 
-Static usbd_status
+usbd_status
 usbd_set_config(usbd_device_handle dev, int conf)
 {
 	usb_device_request_t req;

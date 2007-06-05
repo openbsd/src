@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.6 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.7 2007/06/05 08:43:56 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -91,12 +91,12 @@ struct uslcom_softc {
 	u_char			sc_dying;
 };
 
-Static void	uslcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
-Static void	uslcom_set(void *, int, int, int);
-Static int	uslcom_param(void *, int, struct termios *);
-Static int	uslcom_open(void *sc, int portno);
-Static void	uslcom_close(void *, int);
-Static void	uslcom_break(void *sc, int portno, int onoff);
+void	uslcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
+void	uslcom_set(void *, int, int, int);
+int	uslcom_param(void *, int, struct termios *);
+int	uslcom_open(void *sc, int portno);
+void	uslcom_close(void *, int);
+void	uslcom_break(void *sc, int portno, int onoff);
 
 struct ucom_methods uslcom_methods = {
 	uslcom_get_status,
@@ -257,7 +257,7 @@ uslcom_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-Static int
+int
 uslcom_open(void *vsc, int portno)
 {
 	struct uslcom_softc *sc = vsc;
@@ -279,7 +279,7 @@ uslcom_open(void *vsc, int portno)
 	return (0);
 }
 
-Static void
+void
 uslcom_close(void *vsc, int portno)
 {
 	struct uslcom_softc *sc = vsc;
@@ -296,7 +296,7 @@ uslcom_close(void *vsc, int portno)
 	usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
-Static void
+void
 uslcom_set(void *vsc, int portno, int reg, int onoff)
 {
 	struct uslcom_softc *sc = vsc;
@@ -326,7 +326,7 @@ uslcom_set(void *vsc, int portno, int reg, int onoff)
 	usbd_do_request(sc->sc_udev, &req, NULL);
 }
 
-Static int
+int
 uslcom_param(void *vsc, int portno, struct termios *t)
 {
 	struct uslcom_softc *sc = (struct uslcom_softc *)vsc;

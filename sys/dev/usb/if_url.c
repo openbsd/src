@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.39 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.40 2007/06/05 08:43:55 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -87,37 +87,37 @@
 /* Function declarations */
 USB_DECLARE_DRIVER_CLASS(url, DV_IFNET);
 
-Static int url_openpipes(struct url_softc *);
-Static int url_rx_list_init(struct url_softc *);
-Static int url_tx_list_init(struct url_softc *);
-Static int url_newbuf(struct url_softc *, struct url_chain *, struct mbuf *);
-Static void url_start(struct ifnet *);
-Static int url_send(struct url_softc *, struct mbuf *, int);
-Static void url_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void url_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void url_tick(void *);
-Static void url_tick_task(void *);
-Static int url_ioctl(struct ifnet *, u_long, caddr_t);
-Static void url_stop_task(struct url_softc *);
-Static void url_stop(struct ifnet *, int);
-Static void url_watchdog(struct ifnet *);
-Static int url_ifmedia_change(struct ifnet *);
-Static void url_ifmedia_status(struct ifnet *, struct ifmediareq *);
-Static void url_lock_mii(struct url_softc *);
-Static void url_unlock_mii(struct url_softc *);
-Static int url_int_miibus_readreg(device_ptr_t, int, int);
-Static void url_int_miibus_writereg(device_ptr_t, int, int, int);
-Static void url_miibus_statchg(device_ptr_t);
-Static int url_init(struct ifnet *);
-Static void url_setmulti(struct url_softc *);
-Static void url_reset(struct url_softc *);
+int url_openpipes(struct url_softc *);
+int url_rx_list_init(struct url_softc *);
+int url_tx_list_init(struct url_softc *);
+int url_newbuf(struct url_softc *, struct url_chain *, struct mbuf *);
+void url_start(struct ifnet *);
+int url_send(struct url_softc *, struct mbuf *, int);
+void url_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void url_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void url_tick(void *);
+void url_tick_task(void *);
+int url_ioctl(struct ifnet *, u_long, caddr_t);
+void url_stop_task(struct url_softc *);
+void url_stop(struct ifnet *, int);
+void url_watchdog(struct ifnet *);
+int url_ifmedia_change(struct ifnet *);
+void url_ifmedia_status(struct ifnet *, struct ifmediareq *);
+void url_lock_mii(struct url_softc *);
+void url_unlock_mii(struct url_softc *);
+int url_int_miibus_readreg(device_ptr_t, int, int);
+void url_int_miibus_writereg(device_ptr_t, int, int, int);
+void url_miibus_statchg(device_ptr_t);
+int url_init(struct ifnet *);
+void url_setmulti(struct url_softc *);
+void url_reset(struct url_softc *);
 
-Static int url_csr_read_1(struct url_softc *, int);
-Static int url_csr_read_2(struct url_softc *, int);
-Static int url_csr_write_1(struct url_softc *, int, int);
-Static int url_csr_write_2(struct url_softc *, int, int);
-Static int url_csr_write_4(struct url_softc *, int, int);
-Static int url_mem(struct url_softc *, int, int, void *, int);
+int url_csr_read_1(struct url_softc *, int);
+int url_csr_read_2(struct url_softc *, int);
+int url_csr_write_1(struct url_softc *, int, int);
+int url_csr_write_2(struct url_softc *, int, int);
+int url_csr_write_4(struct url_softc *, int, int);
+int url_mem(struct url_softc *, int, int, void *, int);
 
 /* Macros */
 #ifdef URL_DEBUG
@@ -370,7 +370,7 @@ url_detach(struct device *self, int flags)
 }
 
 /* read/write memory */
-Static int
+int
 url_mem(struct url_softc *sc, int cmd, int offset, void *buf, int len)
 {
 	usb_device_request_t req;
@@ -409,7 +409,7 @@ url_mem(struct url_softc *sc, int cmd, int offset, void *buf, int len)
 }
 
 /* read 1byte from register */
-Static int
+int
 url_csr_read_1(struct url_softc *sc, int reg)
 {
 	u_int8_t val = 0;
@@ -424,7 +424,7 @@ url_csr_read_1(struct url_softc *sc, int reg)
 }
 
 /* read 2bytes from register */
-Static int
+int
 url_csr_read_2(struct url_softc *sc, int reg)
 {
 	uWord val;
@@ -440,7 +440,7 @@ url_csr_read_2(struct url_softc *sc, int reg)
 }
 
 /* write 1byte to register */
-Static int
+int
 url_csr_write_1(struct url_softc *sc, int reg, int aval)
 {
 	u_int8_t val = aval;
@@ -455,7 +455,7 @@ url_csr_write_1(struct url_softc *sc, int reg, int aval)
 }
 
 /* write 2bytes to register */
-Static int
+int
 url_csr_write_2(struct url_softc *sc, int reg, int aval)
 {
 	uWord val;
@@ -472,7 +472,7 @@ url_csr_write_2(struct url_softc *sc, int reg, int aval)
 }
 
 /* write 4bytes to register */
-Static int
+int
 url_csr_write_4(struct url_softc *sc, int reg, int aval)
 {
 	uDWord val;
@@ -488,7 +488,7 @@ url_csr_write_4(struct url_softc *sc, int reg, int aval)
 	return (url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 4) ? -1 : 0);
 }
 
-Static int
+int
 url_init(struct ifnet *ifp)
 {
 	struct url_softc *sc = ifp->if_softc;
@@ -569,7 +569,7 @@ url_init(struct ifnet *ifp)
 	return (0);
 }
 
-Static void
+void
 url_reset(struct url_softc *sc)
 {
 	int i;
@@ -614,7 +614,7 @@ url_activate(device_ptr_t self, enum devact act)
 #define url_calchash(addr) (ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
 
 
-Static void
+void
 url_setmulti(struct url_softc *sc)
 {
 	struct ifnet *ifp;
@@ -675,7 +675,7 @@ url_setmulti(struct url_softc *sc)
 	url_csr_write_4(sc, URL_MAR4, hashes[1]);
 }
 
-Static int
+int
 url_openpipes(struct url_softc *sc)
 {
 	struct url_chain *c;
@@ -743,7 +743,7 @@ url_openpipes(struct url_softc *sc)
 	return (error);
 }
 
-Static int
+int
 url_newbuf(struct url_softc *sc, struct url_chain *c, struct mbuf *m)
 {
 	struct mbuf *m_new = NULL;
@@ -778,7 +778,7 @@ url_newbuf(struct url_softc *sc, struct url_chain *c, struct mbuf *m)
 }
 
 
-Static int
+int
 url_rx_list_init(struct url_softc *sc)
 {
 	struct url_cdata *cd;
@@ -809,7 +809,7 @@ url_rx_list_init(struct url_softc *sc)
 	return (0);
 }
 
-Static int
+int
 url_tx_list_init(struct url_softc *sc)
 {
 	struct url_cdata *cd;
@@ -839,7 +839,7 @@ url_tx_list_init(struct url_softc *sc)
 	return (0);
 }
 
-Static void
+void
 url_start(struct ifnet *ifp)
 {
 	struct url_softc *sc = ifp->if_softc;
@@ -879,7 +879,7 @@ url_start(struct ifnet *ifp)
 	ifp->if_timer = 5;
 }
 
-Static int
+int
 url_send(struct url_softc *sc, struct mbuf *m, int idx)
 {
 	int total_len;
@@ -924,7 +924,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 	return (0);
 }
 
-Static void
+void
 url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct url_chain *c = priv;
@@ -971,7 +971,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	splx(s);
 }
 
-Static void
+void
 url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct url_chain *c = priv;
@@ -1070,12 +1070,12 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 #if 0
-Static void url_intr()
+void url_intr()
 {
 }
 #endif
 
-Static int
+int
 url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct url_softc *sc = ifp->if_softc;
@@ -1157,7 +1157,7 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-Static void
+void
 url_watchdog(struct ifnet *ifp)
 {
 	struct url_softc *sc = ifp->if_softc;
@@ -1180,14 +1180,14 @@ url_watchdog(struct ifnet *ifp)
 	splx(s);
 }
 
-Static void
+void
 url_stop_task(struct url_softc *sc)
 {
 	url_stop(GET_IFP(sc), 1);
 }
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
-Static void
+void
 url_stop(struct ifnet *ifp, int disable)
 {
 	struct url_softc *sc = ifp->if_softc;
@@ -1274,7 +1274,7 @@ url_stop(struct ifnet *ifp, int disable)
 }
 
 /* Set media options */
-Static int
+int
 url_ifmedia_change(struct ifnet *ifp)
 {
 	struct url_softc *sc = ifp->if_softc;
@@ -1297,7 +1297,7 @@ url_ifmedia_change(struct ifnet *ifp)
 }
 
 /* Report current media status. */
-Static void
+void
 url_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct url_softc *sc = ifp->if_softc;
@@ -1319,7 +1319,7 @@ url_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = mii->mii_media_status;
 }
 
-Static void
+void
 url_tick(void *xsc)
 {
 	struct url_softc *sc = xsc;
@@ -1337,7 +1337,7 @@ url_tick(void *xsc)
 	usb_add_task(sc->sc_udev, &sc->sc_tick_task);
 }
 
-Static void
+void
 url_tick_task(void *xsc)
 {
 	struct url_softc *sc = xsc;
@@ -1378,7 +1378,7 @@ url_tick_task(void *xsc)
 }
 
 /* Get exclusive access to the MII registers */
-Static void
+void
 url_lock_mii(struct url_softc *sc)
 {
 	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),
@@ -1388,7 +1388,7 @@ url_lock_mii(struct url_softc *sc)
 	rw_enter_write(&sc->sc_mii_lock);
 }
 
-Static void
+void
 url_unlock_mii(struct url_softc *sc)
 {
 	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),
@@ -1399,7 +1399,7 @@ url_unlock_mii(struct url_softc *sc)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }
 
-Static int
+int
 url_int_miibus_readreg(device_ptr_t dev, int phy, int reg)
 {
 	struct url_softc *sc;
@@ -1472,7 +1472,7 @@ url_int_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	return (val);
 }
 
-Static void
+void
 url_int_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 {
 	struct url_softc *sc;
@@ -1539,7 +1539,7 @@ url_int_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 	return;
 }
 
-Static void
+void
 url_miibus_statchg(device_ptr_t dev)
 {
 #ifdef URL_DEBUG
@@ -1558,7 +1558,7 @@ url_miibus_statchg(device_ptr_t dev)
 /*
  * external PHYs support, but not test.
  */
-Static int
+int
 url_ext_miibus_redreg(device_ptr_t dev, int phy, int reg)
 {
 	struct url_softc *sc = USBGETSOFTC(dev);
@@ -1602,7 +1602,7 @@ url_ext_miibus_redreg(device_ptr_t dev, int phy, int reg)
 	return (val);
 }
 
-Static void
+void
 url_ext_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 {
 	struct url_softc *sc = USBGETSOFTC(dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.15 2007/06/04 10:34:04 mbalmer Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.16 2007/06/05 08:43:56 mbalmer Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ int	usscannerdebug = 0;
 
 #define USSCANNER_TIMEOUT 2000
 
-Static struct scsipi_device usscanner_dev =
+struct scsipi_device usscanner_dev =
 {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
@@ -158,17 +158,17 @@ struct usscanner_softc {
 };
 
 
-Static void usscanner_cleanup(struct usscanner_softc *sc);
-Static int usscanner_scsipi_cmd(struct scsipi_xfer *xs);
-Static void usscanner_scsipi_minphys(struct buf *bp);
-Static void usscanner_done(struct usscanner_softc *sc);
-Static void usscanner_sense(struct usscanner_softc *sc);
+void usscanner_cleanup(struct usscanner_softc *sc);
+int usscanner_scsipi_cmd(struct scsipi_xfer *xs);
+void usscanner_scsipi_minphys(struct buf *bp);
+void usscanner_done(struct usscanner_softc *sc);
+void usscanner_sense(struct usscanner_softc *sc);
 typedef void callback(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static callback usscanner_intr_cb;
-Static callback usscanner_cmd_cb;
-Static callback usscanner_data_cb;
-Static callback usscanner_sensecmd_cb;
-Static callback usscanner_sensedata_cb;
+callback usscanner_intr_cb;
+callback usscanner_cmd_cb;
+callback usscanner_data_cb;
+callback usscanner_sensecmd_cb;
+callback usscanner_sensedata_cb;
 
 USB_DECLARE_DRIVER(usscanner);
 
@@ -389,7 +389,7 @@ usscanner_detach(struct device *self, int flags)
 	return (rv);
 }
 
-Static void
+void
 usscanner_cleanup(struct usscanner_softc *sc)
 {
 	if (sc->sc_in_pipe != NULL) {
@@ -430,7 +430,7 @@ usscanner_activate(device_ptr_t self, enum devact act)
 	return (0);
 }
 
-Static void
+void
 usscanner_scsipi_minphys(struct buf *bp)
 {
 	if (bp->b_bcount > USSCANNER_MAX_TRANSFER_SIZE)
@@ -438,7 +438,7 @@ usscanner_scsipi_minphys(struct buf *bp)
 	minphys(bp);
 }
 
-Static void
+void
 usscanner_sense(struct usscanner_softc *sc)
 {
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -465,7 +465,7 @@ usscanner_sense(struct usscanner_softc *sc)
 	usscanner_done(sc);
 }
 
-Static void
+void
 usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		 usbd_status status)
 {
@@ -492,7 +492,7 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	splx(s);
 }
 
-Static void
+void
 usscanner_data_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		 usbd_status status)
 {
@@ -534,7 +534,7 @@ usscanner_data_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usscanner_done(sc);
 }
 
-Static void
+void
 usscanner_sensedata_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		       usbd_status status)
 {
@@ -571,7 +571,7 @@ usscanner_sensedata_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usscanner_done(sc);
 }
 
-Static void
+void
 usscanner_done(struct usscanner_softc *sc)
 {
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -589,7 +589,7 @@ usscanner_done(struct usscanner_softc *sc)
 	xs->error = XS_DRIVER_STUFFUP;
 }
 
-Static void
+void
 usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		      usbd_status status)
 {
@@ -636,7 +636,7 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usscanner_done(sc);
 }
 
-Static void
+void
 usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		 usbd_status status)
 {
@@ -702,7 +702,7 @@ usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usscanner_done(sc);
 }
 
-Static int
+int
 usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 {
 	struct scsipi_link *sc_link = xs->sc_link;

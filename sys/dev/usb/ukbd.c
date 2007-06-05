@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.30 2007/06/04 10:34:04 mbalmer Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.31 2007/06/05 08:43:55 mbalmer Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -100,7 +100,7 @@ struct ukbd_data {
  *
  * See http://www.microsoft.com/whdc/device/input/Scancode.mspx
  */
-Static const u_int8_t ukbd_trtab[256] = {
+const u_int8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
     0x12, 0x21, 0x22, 0x23, 0x17, 0x24, 0x25, 0x26, /* 08 - 0f */
     0x32, 0x31, 0x18, 0x19, 0x10, 0x13, 0x1f, 0x14, /* 10 - 17 */
@@ -292,28 +292,28 @@ ukbdtracedump(void)
 #define	UKBD_CHUNK	128	/* chunk size for read */
 #define	UKBD_BSIZE	1020	/* buffer size */
 
-Static int	ukbd_is_console;
+int	ukbd_is_console;
 
-Static void	ukbd_cngetc(void *, u_int *, int *);
-Static void	ukbd_cnpollc(void *, int);
+void	ukbd_cngetc(void *, u_int *, int *);
+void	ukbd_cnpollc(void *, int);
 
 const struct wskbd_consops ukbd_consops = {
 	ukbd_cngetc,
 	ukbd_cnpollc,
 };
 
-Static const char *ukbd_parse_desc(struct ukbd_softc *sc);
+const char *ukbd_parse_desc(struct ukbd_softc *sc);
 
-Static void	ukbd_intr(struct uhidev *addr, void *ibuf, u_int len);
-Static void	ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud);
-Static void	ukbd_delayed_decode(void *addr);
+void	ukbd_intr(struct uhidev *addr, void *ibuf, u_int len);
+void	ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud);
+void	ukbd_delayed_decode(void *addr);
 
-Static int	ukbd_enable(void *, int);
-Static void	ukbd_set_leds(void *, int);
+int	ukbd_enable(void *, int);
+void	ukbd_set_leds(void *, int);
 
-Static int	ukbd_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr );
+int	ukbd_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr );
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-Static void	ukbd_rawrepeat(void *v);
+void	ukbd_rawrepeat(void *v);
 #endif
 
 const struct wskbd_accessops ukbd_accessops = {

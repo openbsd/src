@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.26 2007/05/27 04:00:24 jsg Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.27 2007/06/05 08:43:55 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -73,22 +73,22 @@
 
 #include <dev/usb/if_cdcereg.h>
 
-Static void	*cdce_get_desc(usbd_device_handle dev, int type, int subtype);
-Static int	 cdce_tx_list_init(struct cdce_softc *);
-Static int	 cdce_rx_list_init(struct cdce_softc *);
-Static int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
+void	*cdce_get_desc(usbd_device_handle dev, int type, int subtype);
+int	 cdce_tx_list_init(struct cdce_softc *);
+int	 cdce_rx_list_init(struct cdce_softc *);
+int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
 		    struct mbuf *);
-Static int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
-Static void	 cdce_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void	 cdce_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void	 cdce_start(struct ifnet *);
-Static int	 cdce_ioctl(struct ifnet *, u_long, caddr_t);
-Static void	 cdce_init(void *);
-Static void	 cdce_watchdog(struct ifnet *);
-Static void	 cdce_stop(struct cdce_softc *);
+int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
+void	 cdce_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	 cdce_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	 cdce_start(struct ifnet *);
+int	 cdce_ioctl(struct ifnet *, u_long, caddr_t);
+void	 cdce_init(void *);
+void	 cdce_watchdog(struct ifnet *);
+void	 cdce_stop(struct cdce_softc *);
 static uint32_t	 cdce_crc32(const void *, size_t);
 
-Static const struct cdce_type cdce_devs[] = {
+const struct cdce_type cdce_devs[] = {
     {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, CDCE_NO_UNION },
     {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, CDCE_NO_UNION },
     {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5500 }, CDCE_ZAURUS },
@@ -295,7 +295,7 @@ cdce_detach(struct device *self, int flags)
 	return (0);
 }
 
-Static void
+void
 cdce_start(struct ifnet *ifp)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
@@ -325,7 +325,7 @@ cdce_start(struct ifnet *ifp)
 	ifp->if_timer = 6;
 }
 
-Static int
+int
 cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 {
 	struct cdce_chain	*c;
@@ -359,7 +359,7 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	return (0);
 }
 
-Static void
+void
 cdce_stop(struct cdce_softc *sc)
 {
 	usbd_status	 err;
@@ -416,7 +416,7 @@ cdce_stop(struct cdce_softc *sc)
 	}
 }
 
-Static int
+int
 cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
@@ -478,7 +478,7 @@ cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	return (error);
 }
 
-Static void
+void
 cdce_watchdog(struct ifnet *ifp)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
@@ -490,7 +490,7 @@ cdce_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog timeout\n", USBDEVNAME(sc->cdce_dev));
 }
 
-Static void
+void
 cdce_init(void *xsc)
 {
 	struct cdce_softc	*sc = xsc;
@@ -550,7 +550,7 @@ cdce_init(void *xsc)
 	splx(s);
 }
 
-Static int
+int
 cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 {
 	struct mbuf	*m_new = NULL;
@@ -581,7 +581,7 @@ cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 	return (0);
 }
 
-Static int
+int
 cdce_rx_list_init(struct cdce_softc *sc)
 {
 	struct cdce_cdata	*cd;
@@ -608,7 +608,7 @@ cdce_rx_list_init(struct cdce_softc *sc)
 	return (0);
 }
 
-Static int
+int
 cdce_tx_list_init(struct cdce_softc *sc)
 {
 	struct cdce_cdata	*cd;
@@ -634,7 +634,7 @@ cdce_tx_list_init(struct cdce_softc *sc)
 	return (0);
 }
 
-Static void
+void
 cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct cdce_chain	*c = priv;
@@ -711,7 +711,7 @@ done:
 	usbd_transfer(c->cdce_xfer);
 }
 
-Static void
+void
 cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct cdce_chain	*c = priv;

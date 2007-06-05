@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.25 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: umodem.c,v 1.26 2007/06/05 08:43:56 mbalmer Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -122,24 +122,24 @@ struct umodem_softc {
 	u_char			sc_msr;		/* Modem status register */
 };
 
-Static usbd_status umodem_set_comm_feature(struct umodem_softc *sc,
+usbd_status umodem_set_comm_feature(struct umodem_softc *sc,
 					   int feature, int state);
-Static usbd_status umodem_set_line_coding(struct umodem_softc *sc,
+usbd_status umodem_set_line_coding(struct umodem_softc *sc,
 					  usb_cdc_line_state_t *state);
 
-Static void	umodem_get_status(void *, int portno, u_char *lsr, u_char *msr);
-Static void	umodem_set(void *, int, int, int);
-Static void	umodem_dtr(struct umodem_softc *, int);
-Static void	umodem_rts(struct umodem_softc *, int);
-Static void	umodem_break(struct umodem_softc *, int);
-Static void	umodem_set_line_state(struct umodem_softc *);
-Static int	umodem_param(void *, int, struct termios *);
-Static int	umodem_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
-Static int	umodem_open(void *, int portno);
-Static void	umodem_close(void *, int portno);
-Static void	umodem_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	umodem_get_status(void *, int portno, u_char *lsr, u_char *msr);
+void	umodem_set(void *, int, int, int);
+void	umodem_dtr(struct umodem_softc *, int);
+void	umodem_rts(struct umodem_softc *, int);
+void	umodem_break(struct umodem_softc *, int);
+void	umodem_set_line_state(struct umodem_softc *);
+int	umodem_param(void *, int, struct termios *);
+int	umodem_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
+int	umodem_open(void *, int portno);
+void	umodem_close(void *, int portno);
+void	umodem_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static struct ucom_methods umodem_methods = {
+struct ucom_methods umodem_methods = {
 	umodem_get_status,
 	umodem_set,
 	umodem_param,
@@ -377,7 +377,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dying = 1;
 }
 
-Static int
+int
 umodem_open(void *addr, int portno)
 {
 	struct umodem_softc *sc = addr;
@@ -401,7 +401,7 @@ umodem_open(void *addr, int portno)
 	return 0;
 }
 
-Static void
+void
 umodem_close(void *addr, int portno)
 {
 	struct umodem_softc *sc = addr;
@@ -422,7 +422,7 @@ umodem_close(void *addr, int portno)
 	}
 }
 
-Static void
+void
 umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct umodem_softc *sc = priv;

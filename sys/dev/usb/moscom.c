@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.3 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.4 2007/06/05 08:43:55 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -145,11 +145,11 @@ struct moscom_softc {
 	u_char			sc_dying;
 };
 
-Static void	moscom_get_status(void *, int, u_char *, u_char *);
-Static void	moscom_set(void *, int, int, int);
-Static int	moscom_param(void *, int, struct termios *);
-Static int	moscom_open(void *, int);
-Static int	moscom_cmd(struct moscom_softc *, int, int);	
+void	moscom_get_status(void *, int, u_char *, u_char *);
+void	moscom_set(void *, int, int, int);
+int	moscom_param(void *, int, struct termios *);
+int	moscom_open(void *, int);
+int	moscom_cmd(struct moscom_softc *, int, int);	
 
 struct ucom_methods moscom_methods = {
 	NULL,
@@ -294,7 +294,7 @@ moscom_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-Static int
+int
 moscom_open(void *vsc, int portno)
 {
 	struct moscom_softc *sc = vsc;
@@ -324,7 +324,7 @@ moscom_open(void *vsc, int portno)
 	return (0);
 }
 
-Static void
+void
 moscom_set(void *vsc, int portno, int reg, int onoff)
 {
 	struct moscom_softc *sc = vsc;
@@ -350,7 +350,7 @@ moscom_set(void *vsc, int portno, int reg, int onoff)
 	moscom_cmd(sc, MOSCOM_MCR, val);
 }
 
-Static int
+int
 moscom_param(void *vsc, int portno, struct termios *t)
 {
 	struct moscom_softc *sc = (struct moscom_softc *)vsc;
@@ -411,7 +411,7 @@ moscom_param(void *vsc, int portno, struct termios *t)
 	return (0);
 }
 
-Static void
+void
 moscom_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct moscom_softc *sc = vsc;
@@ -422,7 +422,7 @@ moscom_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 		*lsr = sc->sc_lsr;
 }
 
-Static int
+int
 moscom_cmd(struct moscom_softc *sc, int reg, int val)
 {
 	usb_device_request_t req;

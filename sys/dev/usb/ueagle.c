@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.14 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.15 2007/06/05 08:43:55 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -89,41 +89,41 @@ static const struct ueagle_type {
 #define ueagle_lookup(v, p)	\
 	((struct ueagle_type *)usb_lookup(ueagle_devs, v, p))
 
-Static void	ueagle_attachhook(void *);
-Static int	ueagle_getesi(struct ueagle_softc *, uint8_t *);
-Static void	ueagle_loadpage(void *);
-Static void	ueagle_request(struct ueagle_softc *, uint16_t, uint16_t,
+void	ueagle_attachhook(void *);
+int	ueagle_getesi(struct ueagle_softc *, uint8_t *);
+void	ueagle_loadpage(void *);
+void	ueagle_request(struct ueagle_softc *, uint16_t, uint16_t,
 		    void *, int);
 #ifdef USB_DEBUG
-Static void	ueagle_dump_cmv(struct ueagle_softc *, struct ueagle_cmv *);
+void	ueagle_dump_cmv(struct ueagle_softc *, struct ueagle_cmv *);
 #endif
-Static int	ueagle_cr(struct ueagle_softc *, uint32_t, uint16_t,
+int	ueagle_cr(struct ueagle_softc *, uint32_t, uint16_t,
 		    uint32_t *);
-Static int	ueagle_cw(struct ueagle_softc *, uint32_t, uint16_t, uint32_t);
-Static int	ueagle_stat(struct ueagle_softc *);
-Static void	ueagle_stat_thread(void *);
-Static int	ueagle_boot(struct ueagle_softc *);
-Static void	ueagle_swap_intr(struct ueagle_softc *, struct ueagle_swap *);
-Static void	ueagle_cmv_intr(struct ueagle_softc *, struct ueagle_cmv *);
-Static void	ueagle_intr(usbd_xfer_handle, usbd_private_handle,
+int	ueagle_cw(struct ueagle_softc *, uint32_t, uint16_t, uint32_t);
+int	ueagle_stat(struct ueagle_softc *);
+void	ueagle_stat_thread(void *);
+int	ueagle_boot(struct ueagle_softc *);
+void	ueagle_swap_intr(struct ueagle_softc *, struct ueagle_swap *);
+void	ueagle_cmv_intr(struct ueagle_softc *, struct ueagle_cmv *);
+void	ueagle_intr(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-Static uint32_t	ueagle_crc_update(uint32_t, uint8_t *, int);
-Static void	ueagle_push_cell(struct ueagle_softc *, uint8_t *);
-Static void	ueagle_rxeof(usbd_xfer_handle, usbd_private_handle,
+uint32_t	ueagle_crc_update(uint32_t, uint8_t *, int);
+void	ueagle_push_cell(struct ueagle_softc *, uint8_t *);
+void	ueagle_rxeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-Static void	ueagle_txeof(usbd_xfer_handle, usbd_private_handle,
+void	ueagle_txeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-Static int	ueagle_encap(struct ueagle_softc *, struct mbuf *);
-Static void	ueagle_start(struct ifnet *);
-Static int	ueagle_open_vcc(struct ueagle_softc *,
+int	ueagle_encap(struct ueagle_softc *, struct mbuf *);
+void	ueagle_start(struct ifnet *);
+int	ueagle_open_vcc(struct ueagle_softc *,
 		    struct atm_pseudoioctl *);
-Static int	ueagle_close_vcc(struct ueagle_softc *,
+int	ueagle_close_vcc(struct ueagle_softc *,
 		    struct atm_pseudoioctl *);
-Static int	ueagle_ioctl(struct ifnet *, u_long, caddr_t);
-Static int	ueagle_open_pipes(struct ueagle_softc *);
-Static void	ueagle_close_pipes(struct ueagle_softc *);
-Static int	ueagle_init(struct ifnet *);
-Static void	ueagle_stop(struct ifnet *, int);
+int	ueagle_ioctl(struct ifnet *, u_long, caddr_t);
+int	ueagle_open_pipes(struct ueagle_softc *);
+void	ueagle_close_pipes(struct ueagle_softc *);
+int	ueagle_init(struct ifnet *);
+void	ueagle_stop(struct ifnet *, int);
 
 USB_DECLARE_DRIVER(ueagle);
 
@@ -139,7 +139,7 @@ ueagle_match(struct device *parent, void *match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-Static void
+void
 ueagle_attachhook(void *xsc)
 {
 	char *firmwares[2];
@@ -261,7 +261,7 @@ ueagle_detach(struct device *self, int flags)
 /*
  * Retrieve the device End System Identifier (MAC address).
  */
-Static int
+int
 ueagle_getesi(struct ueagle_softc *sc, uint8_t *addr)
 {
 	usb_string_descriptor_t us;
@@ -298,7 +298,7 @@ ueagle_getesi(struct ueagle_softc *sc, uint8_t *addr)
 	return 0;
 }
 
-Static void
+void
 ueagle_loadpage(void *xsc)
 {
 	struct ueagle_softc *sc = xsc;
@@ -374,7 +374,7 @@ ueagle_loadpage(void *xsc)
 	usbd_free_xfer(xfer);
 }
 
-Static void
+void
 ueagle_request(struct ueagle_softc *sc, uint16_t val, uint16_t index,
     void *data, int len)
 {
@@ -393,7 +393,7 @@ ueagle_request(struct ueagle_softc *sc, uint16_t val, uint16_t index,
 }
 
 #ifdef USB_DEBUG
-Static void
+void
 ueagle_dump_cmv(struct ueagle_softc *sc, struct ueagle_cmv *cmv)
 {
 	printf("    Preamble:    0x%04x\n", UGETW(cmv->wPreamble));
@@ -410,7 +410,7 @@ ueagle_dump_cmv(struct ueagle_softc *sc, struct ueagle_cmv *cmv)
 }
 #endif
 
-Static int
+int
 ueagle_cr(struct ueagle_softc *sc, uint32_t address, uint16_t offset,
     uint32_t *data)
 {
@@ -452,7 +452,7 @@ ueagle_cr(struct ueagle_softc *sc, uint32_t address, uint16_t offset,
 	return 0;
 }
 
-Static int
+int
 ueagle_cw(struct ueagle_softc *sc, uint32_t address, uint16_t offset,
     uint32_t data)
 {
@@ -493,7 +493,7 @@ ueagle_cw(struct ueagle_softc *sc, uint32_t address, uint16_t offset,
 	return 0;
 }
 
-Static int
+int
 ueagle_stat(struct ueagle_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -560,7 +560,7 @@ ueagle_stat(struct ueagle_softc *sc)
 #undef CR
 }
 
-Static void
+void
 ueagle_stat_thread(void *arg)
 {
 	struct ueagle_softc *sc = arg;
@@ -577,7 +577,7 @@ ueagle_stat_thread(void *arg)
 	kthread_exit(0);
 }
 
-Static int
+int
 ueagle_boot(struct ueagle_softc *sc)
 {
 	uint16_t zero = 0; /* ;-) */
@@ -626,7 +626,7 @@ ueagle_boot(struct ueagle_softc *sc)
 #undef CW
 }
 
-Static void
+void
 ueagle_swap_intr(struct ueagle_softc *sc, struct ueagle_swap *swap)
 {
 #define rotbr(v, n)	((v) >> (n) | (v) << (8 - (n)))
@@ -641,7 +641,7 @@ ueagle_swap_intr(struct ueagle_softc *sc, struct ueagle_swap *swap)
  * This function handles spontaneous CMVs and CMV acknowledgements sent by the
  * modem on the interrupt pipe.
  */
-Static void
+void
 ueagle_cmv_intr(struct ueagle_softc *sc, struct ueagle_cmv *cmv)
 {
 #ifdef USB_DEBUG
@@ -680,7 +680,7 @@ ueagle_cmv_intr(struct ueagle_softc *sc, struct ueagle_cmv *cmv)
 	}
 }
 
-Static void
+void
 ueagle_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct ueagle_softc *sc = priv;
@@ -770,7 +770,7 @@ static const uint32_t ueagle_crc32_table[256] = {
 	0xb1f740b4
 };
 
-Static uint32_t
+uint32_t
 ueagle_crc_update(uint32_t crc, uint8_t *buf, int len)
 {
 	for (; len != 0; len--, buf++)
@@ -782,7 +782,7 @@ ueagle_crc_update(uint32_t crc, uint8_t *buf, int len)
 /*
  * Reassembly part of the software ATM AAL5 SAR.
  */
-Static void
+void
 ueagle_push_cell(struct ueagle_softc *sc, uint8_t *cell)
 {
 	struct ueagle_vcc *vcc = &sc->vcc;
@@ -893,7 +893,7 @@ fail:	m_freem(vcc->m);
 	vcc->m = NULL;
 }
 
-Static void
+void
 ueagle_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
@@ -929,7 +929,7 @@ ueagle_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usbd_transfer(xfer);
 }
 
-Static void
+void
 ueagle_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
@@ -964,7 +964,7 @@ ueagle_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 /*
  * Segmentation part of the software ATM AAL5 SAR.
  */
-Static int
+int
 ueagle_encap(struct ueagle_softc *sc, struct mbuf *m0)
 {
 	struct ueagle_vcc *vcc = &sc->vcc;
@@ -1064,7 +1064,7 @@ ueagle_encap(struct ueagle_softc *sc, struct mbuf *m0)
 	return 0;
 }
 
-Static void
+void
 ueagle_start(struct ifnet *ifp)
 {
 	struct ueagle_softc *sc = ifp->if_softc;
@@ -1097,7 +1097,7 @@ ueagle_start(struct ifnet *ifp)
 	ifp->if_flags |= IFF_OACTIVE;
 }
 
-Static int
+int
 ueagle_open_vcc(struct ueagle_softc *sc, struct atm_pseudoioctl *api)
 {
 	struct ueagle_vcc *vcc = &sc->vcc;
@@ -1117,7 +1117,7 @@ ueagle_open_vcc(struct ueagle_softc *sc, struct atm_pseudoioctl *api)
 	return 0;
 }
 
-Static int
+int
 ueagle_close_vcc(struct ueagle_softc *sc, struct atm_pseudoioctl *api)
 {
 	DPRINTF(("%s: closing ATM VCC\n", USBDEVNAME(sc->sc_dev)));
@@ -1127,7 +1127,7 @@ ueagle_close_vcc(struct ueagle_softc *sc, struct atm_pseudoioctl *api)
 	return 0;
 }
 
-Static int
+int
 ueagle_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ueagle_softc *sc = ifp->if_softc;
@@ -1187,7 +1187,7 @@ ueagle_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-Static int
+int
 ueagle_open_pipes(struct ueagle_softc *sc)
 {
 	usb_endpoint_descriptor_t *edesc;
@@ -1309,7 +1309,7 @@ fail:	ueagle_close_pipes(sc);
 	return error;
 }
 
-Static void
+void
 ueagle_close_pipes(struct ueagle_softc *sc)
 {
 	int i;
@@ -1345,7 +1345,7 @@ ueagle_close_pipes(struct ueagle_softc *sc)
 	}
 }
 
-Static int
+int
 ueagle_init(struct ifnet *ifp)
 {
 	struct ueagle_softc *sc = ifp->if_softc;
@@ -1414,7 +1414,7 @@ fail:	ueagle_stop(ifp, 1);
 	return error;
 }
 
-Static void
+void
 ueagle_stop(struct ifnet *ifp, int disable)
 {
 	struct ueagle_softc *sc = ifp->if_softc;
@@ -1451,7 +1451,7 @@ ueagle_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
-Static int
+int
 ueagle_activate(device_ptr_t self, enum devact act)
 {
 	struct ueagle_softc *sc = (struct ueagle_softc *)self;

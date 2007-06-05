@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.23 2007/06/01 06:12:20 mbalmer Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.24 2007/06/05 08:43:55 mbalmer Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -94,7 +94,7 @@
 #endif
 
 #ifdef UBSA_DEBUG
-Static int	ubsadebug = 0;
+int	ubsadebug = 0;
 
 #define	DPRINTFN(n, x)	do { if (ubsadebug > (n)) printf x; } while (0)
 #else
@@ -180,23 +180,23 @@ struct	ubsa_softc {
 
 };
 
-Static	void ubsa_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void ubsa_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static	void ubsa_get_status(void *, int, u_char *, u_char *);
-Static	void ubsa_set(void *, int, int, int);
-Static	int  ubsa_param(void *, int, struct termios *);
-Static	int  ubsa_open(void *, int);
-Static	void ubsa_close(void *, int);
+void ubsa_get_status(void *, int, u_char *, u_char *);
+void ubsa_set(void *, int, int, int);
+int  ubsa_param(void *, int, struct termios *);
+int  ubsa_open(void *, int);
+void ubsa_close(void *, int);
 
-Static	void ubsa_break(struct ubsa_softc *sc, int onoff);
-Static	int  ubsa_request(struct ubsa_softc *, u_int8_t, u_int16_t);
-Static	void ubsa_dtr(struct ubsa_softc *, int);
-Static	void ubsa_rts(struct ubsa_softc *, int);
-Static	void ubsa_baudrate(struct ubsa_softc *, speed_t);
-Static	void ubsa_parity(struct ubsa_softc *, tcflag_t);
-Static	void ubsa_databits(struct ubsa_softc *, tcflag_t);
-Static	void ubsa_stopbits(struct ubsa_softc *, tcflag_t);
-Static	void ubsa_flow(struct ubsa_softc *, tcflag_t, tcflag_t);
+void ubsa_break(struct ubsa_softc *sc, int onoff);
+int  ubsa_request(struct ubsa_softc *, u_int8_t, u_int16_t);
+void ubsa_dtr(struct ubsa_softc *, int);
+void ubsa_rts(struct ubsa_softc *, int);
+void ubsa_baudrate(struct ubsa_softc *, speed_t);
+void ubsa_parity(struct ubsa_softc *, tcflag_t);
+void ubsa_databits(struct ubsa_softc *, tcflag_t);
+void ubsa_stopbits(struct ubsa_softc *, tcflag_t);
+void ubsa_flow(struct ubsa_softc *, tcflag_t, tcflag_t);
 
 struct	ucom_methods ubsa_methods = {
 	ubsa_get_status,
@@ -209,7 +209,7 @@ struct	ucom_methods ubsa_methods = {
 	NULL
 };
 
-Static const struct usb_devno ubsa_devs[] = {
+const struct usb_devno ubsa_devs[] = {
 	/* AnyDATA ADU-E100H */
 	{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_E100H },
 	/* BELKIN F5U103 */
@@ -431,7 +431,7 @@ ubsa_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-Static int
+int
 ubsa_request(struct ubsa_softc *sc, u_int8_t request, u_int16_t value)
 {
 	usb_device_request_t req;
@@ -450,7 +450,7 @@ ubsa_request(struct ubsa_softc *sc, u_int8_t request, u_int16_t value)
 	return (err);
 }
 
-Static void
+void
 ubsa_dtr(struct ubsa_softc *sc, int onoff)
 {
 
@@ -463,7 +463,7 @@ ubsa_dtr(struct ubsa_softc *sc, int onoff)
 	ubsa_request(sc, UBSA_SET_DTR, onoff ? 1 : 0);
 }
 
-Static void
+void
 ubsa_rts(struct ubsa_softc *sc, int onoff)
 {
 
@@ -476,7 +476,7 @@ ubsa_rts(struct ubsa_softc *sc, int onoff)
 	ubsa_request(sc, UBSA_SET_RTS, onoff ? 1 : 0);
 }
 
-Static void
+void
 ubsa_break(struct ubsa_softc *sc, int onoff)
 {
 
@@ -485,7 +485,7 @@ ubsa_break(struct ubsa_softc *sc, int onoff)
 	ubsa_request(sc, UBSA_SET_BREAK, onoff ? 1 : 0);
 }
 
-Static void
+void
 ubsa_set(void *addr, int portno, int reg, int onoff)
 {
 	struct ubsa_softc *sc;
@@ -506,7 +506,7 @@ ubsa_set(void *addr, int portno, int reg, int onoff)
 	}
 }
 
-Static void
+void
 ubsa_baudrate(struct ubsa_softc *sc, speed_t speed)
 {
 	u_int16_t value = 0;
@@ -545,7 +545,7 @@ ubsa_baudrate(struct ubsa_softc *sc, speed_t speed)
 		ubsa_request(sc, UBSA_SET_BAUDRATE, value);
 }
 
-Static void
+void
 ubsa_parity(struct ubsa_softc *sc, tcflag_t cflag)
 {
 	int value;
@@ -560,7 +560,7 @@ ubsa_parity(struct ubsa_softc *sc, tcflag_t cflag)
 	ubsa_request(sc, UBSA_SET_PARITY, value);
 }
 
-Static void
+void
 ubsa_databits(struct ubsa_softc *sc, tcflag_t cflag)
 {
 	int value;
@@ -582,7 +582,7 @@ ubsa_databits(struct ubsa_softc *sc, tcflag_t cflag)
 	ubsa_request(sc, UBSA_SET_DATA_BITS, value);
 }
 
-Static void
+void
 ubsa_stopbits(struct ubsa_softc *sc, tcflag_t cflag)
 {
 	int value;
@@ -594,7 +594,7 @@ ubsa_stopbits(struct ubsa_softc *sc, tcflag_t cflag)
 	ubsa_request(sc, UBSA_SET_STOP_BITS, value);
 }
 
-Static void
+void
 ubsa_flow(struct ubsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 {
 	int value;
@@ -610,7 +610,7 @@ ubsa_flow(struct ubsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 	ubsa_request(sc, UBSA_SET_FLOW_CTRL, value);
 }
 
-Static int
+int
 ubsa_param(void *addr, int portno, struct termios *ti)
 {
 	struct ubsa_softc *sc = addr;
@@ -626,7 +626,7 @@ ubsa_param(void *addr, int portno, struct termios *ti)
 	return (0);
 }
 
-Static int
+int
 ubsa_open(void *addr, int portno)
 {
 	struct ubsa_softc *sc = addr;
@@ -659,7 +659,7 @@ ubsa_open(void *addr, int portno)
 	return (0);
 }
 
-Static void
+void
 ubsa_close(void *addr, int portno)
 {
 	struct ubsa_softc *sc = addr;
@@ -686,7 +686,7 @@ ubsa_close(void *addr, int portno)
 	}
 }
 
-Static void
+void
 ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct ubsa_softc *sc = priv;
@@ -716,7 +716,7 @@ ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	ucom_status_change((struct ucom_softc *)sc->sc_subdev);
 }
 
-Static void
+void
 ubsa_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
 	struct ubsa_softc *sc = addr;

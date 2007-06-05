@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.19 2007/05/27 04:00:24 jsg Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.20 2007/06/05 08:43:55 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -131,68 +131,68 @@ static const struct uath_type {
 #define uath_lookup(v, p)	\
 	((const struct uath_type *)usb_lookup(uath_devs, v, p))
 
-Static void	uath_attachhook(void *);
-Static int	uath_open_pipes(struct uath_softc *);
-Static void	uath_close_pipes(struct uath_softc *);
-Static int	uath_alloc_tx_data_list(struct uath_softc *);
-Static void	uath_free_tx_data_list(struct uath_softc *);
-Static int	uath_alloc_rx_data_list(struct uath_softc *);
-Static void	uath_free_rx_data_list(struct uath_softc *);
-Static void	uath_free_rx_data(caddr_t, u_int, void *);
-Static int	uath_alloc_tx_cmd_list(struct uath_softc *);
-Static void	uath_free_tx_cmd_list(struct uath_softc *);
-Static int	uath_alloc_rx_cmd_list(struct uath_softc *);
-Static void	uath_free_rx_cmd_list(struct uath_softc *);
-Static int	uath_media_change(struct ifnet *);
-Static void	uath_stat(void *);
-Static void	uath_next_scan(void *);
-Static void	uath_task(void *);
-Static int	uath_newstate(struct ieee80211com *, enum ieee80211_state,
+void	uath_attachhook(void *);
+int	uath_open_pipes(struct uath_softc *);
+void	uath_close_pipes(struct uath_softc *);
+int	uath_alloc_tx_data_list(struct uath_softc *);
+void	uath_free_tx_data_list(struct uath_softc *);
+int	uath_alloc_rx_data_list(struct uath_softc *);
+void	uath_free_rx_data_list(struct uath_softc *);
+void	uath_free_rx_data(caddr_t, u_int, void *);
+int	uath_alloc_tx_cmd_list(struct uath_softc *);
+void	uath_free_tx_cmd_list(struct uath_softc *);
+int	uath_alloc_rx_cmd_list(struct uath_softc *);
+void	uath_free_rx_cmd_list(struct uath_softc *);
+int	uath_media_change(struct ifnet *);
+void	uath_stat(void *);
+void	uath_next_scan(void *);
+void	uath_task(void *);
+int	uath_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 #ifdef UATH_DEBUG
-Static void	uath_dump_cmd(const uint8_t *, int, char);
+void	uath_dump_cmd(const uint8_t *, int, char);
 #endif
-Static int	uath_cmd(struct uath_softc *, uint32_t, const void *, int,
+int	uath_cmd(struct uath_softc *, uint32_t, const void *, int,
 		    void *, int);
-Static int	uath_cmd_write(struct uath_softc *, uint32_t, const void *,
+int	uath_cmd_write(struct uath_softc *, uint32_t, const void *,
 		    int, int);
-Static int	uath_cmd_read(struct uath_softc *, uint32_t, const void *,
+int	uath_cmd_read(struct uath_softc *, uint32_t, const void *,
 		    int, void *, int);
-Static int	uath_write_reg(struct uath_softc *, uint32_t, uint32_t);
-Static int	uath_write_multi(struct uath_softc *, uint32_t, const void *,
+int	uath_write_reg(struct uath_softc *, uint32_t, uint32_t);
+int	uath_write_multi(struct uath_softc *, uint32_t, const void *,
 		    int);
-Static int	uath_read_reg(struct uath_softc *, uint32_t, uint32_t *);
-Static int	uath_read_eeprom(struct uath_softc *, uint32_t, void *);
-Static void	uath_cmd_rxeof(usbd_xfer_handle, usbd_private_handle,
+int	uath_read_reg(struct uath_softc *, uint32_t, uint32_t *);
+int	uath_read_eeprom(struct uath_softc *, uint32_t, void *);
+void	uath_cmd_rxeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-Static void	uath_data_rxeof(usbd_xfer_handle, usbd_private_handle,
+void	uath_data_rxeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-Static void	uath_data_txeof(usbd_xfer_handle, usbd_private_handle,
+void	uath_data_txeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-Static int	uath_tx_null(struct uath_softc *);
-Static int	uath_tx_data(struct uath_softc *, struct mbuf *,
+int	uath_tx_null(struct uath_softc *);
+int	uath_tx_data(struct uath_softc *, struct mbuf *,
 		    struct ieee80211_node *);
-Static void	uath_start(struct ifnet *);
-Static void	uath_watchdog(struct ifnet *);
-Static int	uath_ioctl(struct ifnet *, u_long, caddr_t);
-Static int	uath_query_eeprom(struct uath_softc *);
-Static int	uath_reset(struct uath_softc *);
-Static int	uath_reset_tx_queues(struct uath_softc *);
-Static int	uath_wme_init(struct uath_softc *);
-Static int	uath_set_chan(struct uath_softc *, struct ieee80211_channel *);
-Static int	uath_set_key(struct uath_softc *,
+void	uath_start(struct ifnet *);
+void	uath_watchdog(struct ifnet *);
+int	uath_ioctl(struct ifnet *, u_long, caddr_t);
+int	uath_query_eeprom(struct uath_softc *);
+int	uath_reset(struct uath_softc *);
+int	uath_reset_tx_queues(struct uath_softc *);
+int	uath_wme_init(struct uath_softc *);
+int	uath_set_chan(struct uath_softc *, struct ieee80211_channel *);
+int	uath_set_key(struct uath_softc *,
 		    const struct ieee80211_wepkey *, int);
-Static int	uath_set_keys(struct uath_softc *);
-Static int	uath_set_rates(struct uath_softc *,
+int	uath_set_keys(struct uath_softc *);
+int	uath_set_rates(struct uath_softc *,
 		    const struct ieee80211_rateset *);
-Static int	uath_set_rxfilter(struct uath_softc *, uint32_t, uint32_t);
-Static int	uath_set_led(struct uath_softc *, int, int);
-Static int	uath_switch_channel(struct uath_softc *,
+int	uath_set_rxfilter(struct uath_softc *, uint32_t, uint32_t);
+int	uath_set_led(struct uath_softc *, int, int);
+int	uath_switch_channel(struct uath_softc *,
 		    struct ieee80211_channel *);
-Static int	uath_init(struct ifnet *);
-Static void	uath_stop(struct ifnet *, int);
-Static int	uath_loadfirmware(struct uath_softc *, const u_char *, int);
-Static int	uath_activate(device_ptr_t, enum devact);
+int	uath_init(struct ifnet *);
+void	uath_stop(struct ifnet *, int);
+int	uath_loadfirmware(struct uath_softc *, const u_char *, int);
+int	uath_activate(device_ptr_t, enum devact);
 
 USB_DECLARE_DRIVER(uath);
 
@@ -208,7 +208,7 @@ uath_match(struct device *parent, void *match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-Static void
+void
 uath_attachhook(void *xsc)
 {
 	struct uath_softc *sc = xsc;
@@ -475,7 +475,7 @@ uath_detach(struct device *self, int flags)
 	return 0;
 }
 
-Static int
+int
 uath_open_pipes(struct uath_softc *sc)
 {
 	int error;
@@ -523,7 +523,7 @@ fail:	uath_close_pipes(sc);
 	return error;
 }
 
-Static void
+void
 uath_close_pipes(struct uath_softc *sc)
 {
 	/* assumes no transfers are pending on the pipes */
@@ -541,7 +541,7 @@ uath_close_pipes(struct uath_softc *sc)
 		usbd_close_pipe(sc->cmd_rx_pipe);
 }
 
-Static int
+int
 uath_alloc_tx_data_list(struct uath_softc *sc)
 {
 	int i, error;
@@ -572,7 +572,7 @@ fail:	uath_free_tx_data_list(sc);
 	return error;
 }
 
-Static void
+void
 uath_free_tx_data_list(struct uath_softc *sc)
 {
 	int i;
@@ -585,7 +585,7 @@ uath_free_tx_data_list(struct uath_softc *sc)
 			usbd_free_xfer(sc->tx_data[i].xfer);
 }
 
-Static int
+int
 uath_alloc_rx_data_list(struct uath_softc *sc)
 {
 	int i, error;
@@ -618,7 +618,7 @@ fail:	uath_free_rx_data_list(sc);
 	return error;
 }
 
-Static void
+void
 uath_free_rx_data_list(struct uath_softc *sc)
 {
 	int i;
@@ -631,7 +631,7 @@ uath_free_rx_data_list(struct uath_softc *sc)
 			usbd_free_xfer(sc->rx_data[i].xfer);
 }
 
-Static void
+void
 uath_free_rx_data(caddr_t buf, u_int size, void *arg)
 {
 	struct uath_rx_data *data = arg;
@@ -645,7 +645,7 @@ uath_free_rx_data(caddr_t buf, u_int size, void *arg)
 		wakeup(UATH_COND_NOREF(sc));
 }
 
-Static int
+int
 uath_alloc_tx_cmd_list(struct uath_softc *sc)
 {
 	int i, error;
@@ -676,7 +676,7 @@ fail:	uath_free_tx_cmd_list(sc);
 	return error;
 }
 
-Static void
+void
 uath_free_tx_cmd_list(struct uath_softc *sc)
 {
 	int i;
@@ -689,7 +689,7 @@ uath_free_tx_cmd_list(struct uath_softc *sc)
 			usbd_free_xfer(sc->tx_cmd[i].xfer);
 }
 
-Static int
+int
 uath_alloc_rx_cmd_list(struct uath_softc *sc)
 {
 	int i, error;
@@ -720,7 +720,7 @@ fail:	uath_free_rx_cmd_list(sc);
 	return error;
 }
 
-Static void
+void
 uath_free_rx_cmd_list(struct uath_softc *sc)
 {
 	int i;
@@ -733,7 +733,7 @@ uath_free_rx_cmd_list(struct uath_softc *sc)
 			usbd_free_xfer(sc->rx_cmd[i].xfer);
 }
 
-Static int
+int
 uath_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -752,7 +752,7 @@ uath_media_change(struct ifnet *ifp)
  * This function is called periodically (every second) when associated to
  * query device statistics.
  */
-Static void
+void
 uath_stat(void *arg)
 {
 	struct uath_softc *sc = arg;
@@ -774,7 +774,7 @@ uath_stat(void *arg)
  * This function is called periodically (every 250ms) during scanning to
  * switch from one channel to another.
  */
-Static void
+void
 uath_next_scan(void *arg)
 {
 	struct uath_softc *sc = arg;
@@ -785,7 +785,7 @@ uath_next_scan(void *arg)
 		ieee80211_next_scan(ifp);
 }
 
-Static void
+void
 uath_task(void *arg)
 {
 	struct uath_softc *sc = arg;
@@ -914,7 +914,7 @@ uath_task(void *arg)
 	sc->sc_newstate(ic, sc->sc_state, sc->sc_arg);
 }
 
-Static int
+int
 uath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct uath_softc *sc = ic->ic_softc;
@@ -931,7 +931,7 @@ uath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 #ifdef UATH_DEBUG
-Static void
+void
 uath_dump_cmd(const uint8_t *buf, int len, char prefix)
 {
 	int i;
@@ -950,7 +950,7 @@ uath_dump_cmd(const uint8_t *buf, int len, char prefix)
 /*
  * Low-level function to send read or write commands to the firmware.
  */
-Static int
+int
 uath_cmd(struct uath_softc *sc, uint32_t code, const void *idata, int ilen,
     void *odata, int flags)
 {
@@ -1015,7 +1015,7 @@ uath_cmd(struct uath_softc *sc, uint32_t code, const void *idata, int ilen,
 	return error;
 }
 
-Static int
+int
 uath_cmd_write(struct uath_softc *sc, uint32_t code, const void *data, int len,
     int flags)
 {
@@ -1023,7 +1023,7 @@ uath_cmd_write(struct uath_softc *sc, uint32_t code, const void *data, int len,
 	return uath_cmd(sc, code, data, len, NULL, flags);
 }
 
-Static int
+int
 uath_cmd_read(struct uath_softc *sc, uint32_t code, const void *idata,
     int ilen, void *odata, int flags)
 {
@@ -1031,7 +1031,7 @@ uath_cmd_read(struct uath_softc *sc, uint32_t code, const void *idata,
 	return uath_cmd(sc, code, idata, ilen, odata, flags);
 }
 
-Static int
+int
 uath_write_reg(struct uath_softc *sc, uint32_t reg, uint32_t val)
 {
 	struct uath_write_mac write;
@@ -1050,7 +1050,7 @@ uath_write_reg(struct uath_softc *sc, uint32_t reg, uint32_t val)
 	return error;
 }
 
-Static int
+int
 uath_write_multi(struct uath_softc *sc, uint32_t reg, const void *data,
     int len)
 {
@@ -1071,7 +1071,7 @@ uath_write_multi(struct uath_softc *sc, uint32_t reg, const void *data,
 	return error;
 }
 
-Static int
+int
 uath_read_reg(struct uath_softc *sc, uint32_t reg, uint32_t *val)
 {
 	struct uath_read_mac read;
@@ -1089,7 +1089,7 @@ uath_read_reg(struct uath_softc *sc, uint32_t reg, uint32_t *val)
 	return error;
 }
 
-Static int
+int
 uath_read_eeprom(struct uath_softc *sc, uint32_t reg, void *odata)
 {
 	struct uath_read_mac read;
@@ -1108,7 +1108,7 @@ uath_read_eeprom(struct uath_softc *sc, uint32_t reg, void *odata)
 	return error;
 }
 
-Static void
+void
 uath_cmd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
@@ -1170,7 +1170,7 @@ uath_cmd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	(void)usbd_transfer(xfer);
 }
 
-Static void
+void
 uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
@@ -1298,7 +1298,7 @@ skip:	/* setup a new transfer */
 	(void)usbd_transfer(data->xfer);
 }
 
-Static int
+int
 uath_tx_null(struct uath_softc *sc)
 {
 	struct uath_tx_data *data;
@@ -1326,7 +1326,7 @@ uath_tx_null(struct uath_softc *sc)
 	return uath_cmd_write(sc, UATH_CMD_0F, NULL, 0, UATH_CMD_FLAG_ASYNC);
 }
 
-Static void
+void
 uath_data_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
@@ -1365,7 +1365,7 @@ uath_data_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	splx(s);
 }
 
-Static int
+int
 uath_tx_data(struct uath_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1471,7 +1471,7 @@ uath_tx_data(struct uath_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	return 0;
 }
 
-Static void
+void
 uath_start(struct ifnet *ifp)
 {
 	struct uath_softc *sc = ifp->if_softc;
@@ -1538,7 +1538,7 @@ uath_start(struct ifnet *ifp)
 	}
 }
 
-Static void
+void
 uath_watchdog(struct ifnet *ifp)
 {
 	struct uath_softc *sc = ifp->if_softc;
@@ -1558,7 +1558,7 @@ uath_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-Static int
+int
 uath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct uath_softc *sc = ifp->if_softc;
@@ -1614,7 +1614,7 @@ uath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-Static int
+int
 uath_query_eeprom(struct uath_softc *sc)
 {
 	uint32_t tmp;
@@ -1640,7 +1640,7 @@ uath_query_eeprom(struct uath_softc *sc)
 	return 0;
 }
 
-Static int
+int
 uath_reset(struct uath_softc *sc)
 {
 	struct uath_cmd_setup setup;
@@ -1674,7 +1674,7 @@ uath_reset(struct uath_softc *sc)
 	return error;
 }
 
-Static int
+int
 uath_reset_tx_queues(struct uath_softc *sc)
 {
 	int ac, error;
@@ -1691,7 +1691,7 @@ uath_reset_tx_queues(struct uath_softc *sc)
 	return error;
 }
 
-Static int
+int
 uath_wme_init(struct uath_softc *sc)
 {
 	struct uath_qinfo qinfo;
@@ -1726,7 +1726,7 @@ uath_wme_init(struct uath_softc *sc)
 	return error;
 }
 
-Static int
+int
 uath_set_chan(struct uath_softc *sc, struct ieee80211_channel *c)
 {
 	struct uath_set_chan chan;
@@ -1743,7 +1743,7 @@ uath_set_chan(struct uath_softc *sc, struct ieee80211_channel *c)
 	return uath_cmd_write(sc, UATH_CMD_SET_CHAN, &chan, sizeof chan, 0);
 }
 
-Static int
+int
 uath_set_key(struct uath_softc *sc, const struct ieee80211_wepkey *wk,
     int index)
 {
@@ -1771,7 +1771,7 @@ uath_set_key(struct uath_softc *sc, const struct ieee80211_wepkey *wk,
 	return uath_cmd_write(sc, UATH_CMD_CRYPTO, &crypto, sizeof crypto, 0);
 }
 
-Static int
+int
 uath_set_keys(struct uath_softc *sc)
 {
 	const struct ieee80211com *ic = &sc->sc_ic;
@@ -1788,7 +1788,7 @@ uath_set_keys(struct uath_softc *sc)
 	    UATH_DEFAULT_KEY);
 }
 
-Static int
+int
 uath_set_rates(struct uath_softc *sc, const struct ieee80211_rateset *rs)
 {
 	struct uath_cmd_rates rates;
@@ -1803,7 +1803,7 @@ uath_set_rates(struct uath_softc *sc, const struct ieee80211_rateset *rs)
 	return uath_cmd_write(sc, UATH_CMD_SET_RATES, &rates, sizeof rates, 0);
 }
 
-Static int
+int
 uath_set_rxfilter(struct uath_softc *sc, uint32_t filter, uint32_t flags)
 {
 	struct uath_cmd_filter rxfilter;
@@ -1816,7 +1816,7 @@ uath_set_rxfilter(struct uath_softc *sc, uint32_t filter, uint32_t flags)
 	    sizeof rxfilter, 0);
 }
 
-Static int
+int
 uath_set_led(struct uath_softc *sc, int which, int on)
 {
 	struct uath_cmd_led led;
@@ -1830,7 +1830,7 @@ uath_set_led(struct uath_softc *sc, int which, int on)
 	return uath_cmd_write(sc, UATH_CMD_SET_LED, &led, sizeof led, 0);
 }
 
-Static int
+int
 uath_switch_channel(struct uath_softc *sc, struct ieee80211_channel *c)
 {
 	uint32_t val;
@@ -1866,7 +1866,7 @@ uath_switch_channel(struct uath_softc *sc, struct ieee80211_channel *c)
 	return uath_tx_null(sc);
 }
 
-Static int
+int
 uath_init(struct ifnet *ifp)
 {
 	struct uath_softc *sc = ifp->if_softc;
@@ -1975,7 +1975,7 @@ fail:	uath_stop(ifp, 1);
 	return error;
 }
 
-Static void
+void
 uath_stop(struct ifnet *ifp, int disable)
 {
 	struct uath_softc *sc = ifp->if_softc;
@@ -2017,7 +2017,7 @@ uath_stop(struct ifnet *ifp, int disable)
  * product Id (a la ezusb).  XXX this could also be implemented in userland
  * through /dev/ugen.
  */
-Static int
+int
 uath_loadfirmware(struct uath_softc *sc, const u_char *fw, int len)
 {
 	usbd_xfer_handle ctlxfer, txxfer, rxxfer;
@@ -2122,7 +2122,7 @@ fail2:	usbd_free_xfer(ctlxfer);
 fail1:	return error;
 }
 
-Static int
+int
 uath_activate(device_ptr_t self, enum devact act)
 {
 	switch (act) {

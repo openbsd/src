@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.41 2007/06/04 10:34:04 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.42 2007/06/05 08:43:56 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -105,30 +105,30 @@ struct usb_softc {
 
 TAILQ_HEAD(, usb_task) usb_all_tasks;
 
-Static volatile int threads_pending = 0;
+volatile int threads_pending = 0;
 
-Static void	usb_discover(void *);
-Static void	usb_create_event_thread(void *);
-Static void	usb_event_thread(void *);
-Static void	usb_task_thread(void *);
-Static usb_proc_ptr usb_task_thread_proc = NULL;
+void	usb_discover(void *);
+void	usb_create_event_thread(void *);
+void	usb_event_thread(void *);
+void	usb_task_thread(void *);
+usb_proc_ptr usb_task_thread_proc = NULL;
 
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
 	struct usb_event ue;
 	SIMPLEQ_ENTRY(usb_event_q) next;
 };
-Static SIMPLEQ_HEAD(, usb_event_q) usb_events =
+SIMPLEQ_HEAD(, usb_event_q) usb_events =
 	SIMPLEQ_HEAD_INITIALIZER(usb_events);
-Static int usb_nevents = 0;
-Static struct selinfo usb_selevent;
-Static usb_proc_ptr usb_async_proc;  /* process that wants USB SIGIO */
-Static int usb_dev_open = 0;
-Static void usb_add_event(int, struct usb_event *);
+int usb_nevents = 0;
+struct selinfo usb_selevent;
+usb_proc_ptr usb_async_proc;  /* process that wants USB SIGIO */
+int usb_dev_open = 0;
+void usb_add_event(int, struct usb_event *);
 
-Static int usb_get_next_event(struct usb_event *);
+int usb_get_next_event(struct usb_event *);
 
-Static const char *usbrev_str[] = USBREV_STR;
+const char *usbrev_str[] = USBREV_STR;
 
 USB_DECLARE_DRIVER(usb);
 
@@ -589,11 +589,11 @@ usbpoll(dev_t dev, int events, usb_proc_ptr p)
 	}
 }
 
-Static void filt_usbrdetach(struct knote *);
-Static int filt_usbread(struct knote *, long);
+void filt_usbrdetach(struct knote *);
+int filt_usbread(struct knote *, long);
 int usbkqfilter(dev_t, struct knote *);
 
-Static void
+void
 filt_usbrdetach(struct knote *kn)
 {
 	int s;
@@ -603,7 +603,7 @@ filt_usbrdetach(struct knote *kn)
 	splx(s);
 }
 
-Static int
+int
 filt_usbread(struct knote *kn, long hint)
 {
 
@@ -614,7 +614,7 @@ filt_usbread(struct knote *kn, long hint)
 	return (1);
 }
 
-Static struct filterops usbread_filtops =
+struct filterops usbread_filtops =
 	{ 1, NULL, filt_usbrdetach, filt_usbread };
 
 int
@@ -645,7 +645,7 @@ usbkqfilter(dev_t dev, struct knote *kn)
 }
 
 /* Explore device tree from the root. */
-Static void
+void
 usb_discover(void *v)
 {
 	struct usb_softc *sc = v;
@@ -726,7 +726,7 @@ usbd_add_drv_event(int type, usbd_device_handle udev, device_ptr_t dev)
 	usb_add_event(type, &ue);
 }
 
-Static void
+void
 usb_add_event(int type, struct usb_event *uep)
 {
 	struct usb_event_q *ueq;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.5 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.6 2007/06/05 08:43:55 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,14 +94,14 @@ struct uipaq_softc {
 };
 
 /* Callback routines */
-Static void	uipaq_set(void *, int, int, int);
+void	uipaq_set(void *, int, int, int);
 
 
 /* Support routines. */
 /* based on uppc module by Sam Lawrance */
-Static void	uipaq_dtr(struct uipaq_softc *sc, int onoff);
-Static void	uipaq_rts(struct uipaq_softc *sc, int onoff);
-Static void	uipaq_break(struct uipaq_softc* sc, int onoff);
+void	uipaq_dtr(struct uipaq_softc *sc, int onoff);
+void	uipaq_rts(struct uipaq_softc *sc, int onoff);
+void	uipaq_break(struct uipaq_softc* sc, int onoff);
 
 
 struct ucom_methods uipaq_methods = {

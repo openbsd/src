@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.20 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: ums.c,v 1.21 2007/06/05 08:43:56 mbalmer Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -112,11 +112,11 @@ struct ums_softc {
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 #define MOUSE_FLAGS (HIO_RELATIVE)
 
-Static void ums_intr(struct uhidev *addr, void *ibuf, u_int len);
+void ums_intr(struct uhidev *addr, void *ibuf, u_int len);
 
-Static int	ums_enable(void *);
-Static void	ums_disable(void *);
-Static int	ums_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr);
+int	ums_enable(void *);
+void	ums_disable(void *);
+int	ums_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr);
 
 const struct wsmouse_accessops ums_accessops = {
 	ums_enable,
@@ -335,7 +335,7 @@ ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 	}
 }
 
-Static int
+int
 ums_enable(void *v)
 {
 	struct ums_softc *sc = v;
@@ -354,7 +354,7 @@ ums_enable(void *v)
 	return (uhidev_open(&sc->sc_hdev));
 }
 
-Static void
+void
 ums_disable(void *v)
 {
 	struct ums_softc *sc = v;
@@ -371,7 +371,7 @@ ums_disable(void *v)
 	uhidev_close(&sc->sc_hdev);
 }
 
-Static int
+int
 ums_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 
 {
