@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.78 2007/06/05 00:38:20 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.79 2007/06/05 03:08:10 todd Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2033,7 +2033,7 @@ sr_boot_assembly(struct sr_softc *sc)
 			continue;
 
 		bp->b_dev = dev =  MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
-		bdsw = &bdevsw[major(dev)];
+		bdsw = &bdevsw[majdev];
 
 		/* XXX is there  a better way of excluding some devices? */
 		if (!strncmp(dv->dv_xname, "fd", 2) ||
