@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.14 2007/05/31 19:20:29 jmc Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.15 2007/06/05 04:10:56 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2007 $
 .Dt SENSORSD.CONF 5
 .Os
 .Sh NAME
@@ -33,8 +33,8 @@ Each valid sensor registered in the system
 is matched by at most one entry in
 .Nm ,
 which may specify high and low limits,
-and whether sensor status changes provided by driver should be ignored.
-If the limits are crossed or if status provided by the driver changes,
+and whether sensor status changes provided by the driver should be ignored.
+If the limits are crossed or if the status provided by the driver changes,
 .Xr sensorsd 8 's
 alert functionality is triggered and a command, if specified, is
 executed.
@@ -42,17 +42,17 @@ executed.
 .Nm
 follows the syntax of configuration databases as documented in
 .Xr getcap 3 .
-Complete
+Sensors may be specified by their full
 .Va hw.sensors
 .Xr sysctl 8
-variable names are used to find entries,
-with a fallback to sensor types.
-For example, if an entry with a full name of a certain temperature
-sensor is not present in
-.Nm ,
-then an entry
-.Va temp
-will be looked at to determine the settings.
+variable name or by type,
+with the full name taking precedence.
+For example, if an entry
+.Dq hw.sensors.lm0.temp1
+is not found, then an entry for
+.Dq temp
+will instead be looked for.
+.Pp
 The following attributes may be used:
 .Pp
 .Bl -tag -width "commandXX" -offset indent -compact
@@ -63,7 +63,7 @@ Specify an upper limit.
 .It Li low
 Specify a lower limit.
 .It Li istatus
-Specify to ignore status provided by the driver.
+Ignore status provided by the driver.
 .El
 .Pp
 The values for temperature sensors can be given in degrees Celsius or
@@ -101,9 +101,9 @@ By default,
 monitors status changes on all sensors that keep their state.
 This behaviour may be altered by using the
 .Dq istatus
-attribute,
-for example, you may specify to ignore status changes of sensors with
-certain type, or of any individual sensors.
+attribute to ignore
+status changes of sensors of a certain type
+or individual sensors.
 .Sh FILES
 .Bl -tag -width "/etc/sensorsd.conf"
 .It /etc/sensorsd.conf
@@ -128,7 +128,7 @@ such as drive failure, rebuild, or a complete failure, the command
 will be executed, with the sensor number passed to it; however,
 no alerts will be generated for status changes on timedelta sensors.
 For all other sensors whose drivers automatically provide
-sensor status updates, alerts will be generated 
+sensor status updates, alerts will be generated
 each time those sensors undergo status transitions.
 .Bd -literal -offset indent
 # Comments are allowed
