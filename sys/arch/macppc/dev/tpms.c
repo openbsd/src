@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.7 2007/05/30 23:17:43 maja Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.8 2007/06/05 08:52:20 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -272,14 +272,14 @@ struct tpms_softc {
 };
 
 /* Static function prototypes. */
-Static void tpms_intr(struct uhidev *, void *, unsigned int);
-Static int tpms_enable(void *);
-Static void tpms_disable(void *);
-Static int tpms_ioctl(void *, unsigned long, caddr_t, int, usb_proc_ptr);
-Static void reorder_sample(signed char *, signed char *);
-Static int compute_delta(struct tpms_softc *, int *, int *, int *, uint32_t *);
-Static int detect_pos(int *, int, int, int, int *, int *);
-Static int smooth_pos(int, int, int);
+void tpms_intr(struct uhidev *, void *, unsigned int);
+int tpms_enable(void *);
+void tpms_disable(void *);
+int tpms_ioctl(void *, unsigned long, caddr_t, int, usb_proc_ptr);
+void reorder_sample(signed char *, signed char *);
+int compute_delta(struct tpms_softc *, int *, int *, int *, uint32_t *);
+int detect_pos(int *, int, int, int, int *, int *);
+int smooth_pos(int, int, int);
 
 /* Access methods for wsmouse. */
 const struct wsmouse_accessops tpms_accessops = {
@@ -392,7 +392,7 @@ tpms_detach(struct device *self, int flags)
 
 /* Activate the device. */
 
-Static int
+int
 tpms_activate(device_ptr_t self, enum devact act)
 {
 	struct tpms_softc *sc = (struct tpms_softc *)self;
@@ -411,7 +411,7 @@ tpms_activate(device_ptr_t self, enum devact act)
 
 /* Enable the device. */
 
-Static int
+int
 tpms_enable(void *v)
 {
 	struct tpms_softc *sc = v;
@@ -432,7 +432,7 @@ tpms_enable(void *v)
 
 /* Disable the device. */
 
-Static void
+void
 tpms_disable(void *v)
 {
 	struct tpms_softc *sc = v;
@@ -444,7 +444,7 @@ tpms_disable(void *v)
 	uhidev_close(&sc->sc_hdev);
 }
 
-Static int
+int
 tpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
 	switch (cmd) {
@@ -462,7 +462,7 @@ tpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, usb_proc_ptr p)
 
 /* Handle interrupts. */
 
-Static void
+void
 tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 {
 	struct tpms_softc *sc = (struct tpms_softc *)addr;
@@ -520,7 +520,7 @@ tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
  * rewritten if TPMS_X_SENSORS or TPMS_Y_SENSORS change. 
  */
 
-Static void 
+void 
 reorder_sample(signed char *to, signed char *from)
 {
 	int i;
@@ -554,7 +554,7 @@ reorder_sample(signed char *to, signed char *from)
 
 /* XXX Could we report something useful in dz? */
 
-Static int
+int
 compute_delta(struct tpms_softc *sc, int *dx, int *dy, int *dz, 
 	      uint32_t * buttons)
 {
@@ -614,7 +614,7 @@ compute_delta(struct tpms_softc *sc, int *dx, int *dy, int *dz,
  * and the raw position.
  */
 
-Static int
+int
 smooth_pos(int pos_old, int pos_raw, int noise)
 {
 	int ad, delta;
@@ -641,7 +641,7 @@ smooth_pos(int pos_old, int pos_raw, int noise)
  * is in [0, (n_sensors - 1) * factor - 1].
  */
 
-Static int
+int
 detect_pos(int *sensors, int n_sensors, int threshold, int fact,
 	   int *pos_ret, int *fingers_ret)
 {
