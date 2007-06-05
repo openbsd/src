@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_wpivar.h,v 1.10 2006/10/23 18:16:56 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.11 2007/06/05 19:49:40 damien Exp $	*/
 
 /*-
- * Copyright (c) 2006
+ * Copyright (c) 2006, 2007
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -110,6 +110,19 @@ struct wpi_node {
 	struct	ieee80211_amrr_node	amn;
 };
 
+struct wpi_power_sample {
+	uint8_t	index;
+	int8_t	power;
+};
+
+struct wpi_power_group {
+#define WPI_SAMPLES_COUNT	5
+	struct	wpi_power_sample samples[WPI_SAMPLES_COUNT];
+	uint8_t	chan;
+	int8_t	maxpwr;
+	int16_t	temp;
+};
+
 struct wpi_softc {
 	struct device		sc_dev;
 
@@ -118,15 +131,16 @@ struct wpi_softc {
 				    enum ieee80211_state, int);
 	struct ieee80211_amrr	amrr;
 
-	uint32_t		flags;
-#define WPI_FLAG_FW_INITED	(1 << 0)
-
 	bus_dma_tag_t		sc_dmat;
 
 	/* shared area */
 	struct wpi_dma_info	shared_dma;
 	struct wpi_shared	*shared;
 
+	/* firmware DMA transfer */
+	struct wpi_dma_info	fw_dma;
+
+	/* rings */
 	struct wpi_tx_ring	txq[4];
 	struct wpi_tx_ring	cmdq;
 	struct wpi_tx_ring	svcq;
@@ -139,11 +153,19 @@ struct wpi_softc {
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
 
-	struct timeout		amrr_ch;
+	struct ksensordev	sensordev;
+	struct ksensor		sensor;
+	struct timeout		calib_to;
+	int			calib_cnt;
 
 	struct wpi_config	config;
-	uint16_t		pwr1[14];
-	uint16_t		pwr2[14];
+	int			temp;
+
+	uint8_t			cap;
+	uint16_t		rev;
+	uint8_t			type;
+	struct wpi_power_group	groups[WPI_POWER_GROUPS_COUNT];
+	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	int			sc_tx_timer;
 	void			*powerhook;

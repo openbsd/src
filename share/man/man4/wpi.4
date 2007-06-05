@@ -1,6 +1,6 @@
-.\" $OpenBSD: wpi.4,v 1.9 2007/05/31 19:19:53 jmc Exp $
+.\" $OpenBSD: wpi.4,v 1.10 2007/06/05 19:49:40 damien Exp $
 .\"
-.\" Copyright (c) 2006
+.\" Copyright (c) 2006, 2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2007 $
 .Os
 .Dt WPI 4
 .Sh NAME
@@ -68,6 +68,9 @@ Unfortunately, due to serious weaknesses in WEP protocol
 it is strongly recommended that it not be used as the
 sole mechanism to secure wireless communication.
 WEP is not enabled by default.
+.Pp
+The device has one temperature sensor.
+Sensor data is updated every 500 milliseconds.
 .Sh CONFIGURATION
 The
 .Nm
@@ -193,7 +196,7 @@ A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Pp
-.Pa http://damien.bergamini.free.fr/packages/openbsd/wpi-firmware-1.13.tgz
+.Pa http://damien.bergamini.free.fr/packages/openbsd/wpi-firmware-2.14.3.tgz
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5

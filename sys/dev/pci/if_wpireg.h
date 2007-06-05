@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_wpireg.h,v 1.12 2006/11/13 20:06:38 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.13 2007/06/05 19:49:40 damien Exp $	*/
 
 /*-
- * Copyright (c) 2006
+ * Copyright (c) 2006, 2007
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -23,7 +23,7 @@
 #define WPI_RX_RING_COUNT	64
 
 /*
- * Rings must be aligned on a four 4K-pages boundary.
+ * Rings must be aligned on a 16K boundary.
  * I had a hard time figuring this out.
  */
 #define WPI_RING_DMA_ALIGN	0x4000
@@ -31,7 +31,7 @@
 /* maximum scatter/gather */
 #define WPI_MAX_SCATTER	4
 
-/* maximum Rx buffer size */
+/* maximum Rx buffer size (larger than MCLBYTES) */
 #define WPI_RBUF_SIZE	(3 * 1024)	/* XXX 3000 but must be aligned! */
 
 /*
@@ -92,6 +92,11 @@
 #define WPI_MEM_UCODE_DST	0x3408
 #define WPI_MEM_UCODE_SIZE	0x340c
 #define WPI_MEM_UCODE_BASE	0x3800
+
+#define WPI_MEM_MAIN_TEXT_BASE	0x3490
+#define WPI_MEM_MAIN_TEXT_SIZE	0x3494
+#define WPI_MEM_MAIN_DATA_BASE	0x3498
+#define WPI_MEM_MAIN_DATA_SIZE	0x349c
 
 
 /* possible flags for register WPI_HWCONFIG */
@@ -250,8 +255,8 @@ struct wpi_tx_cmd {
 #define WPI_CMD_SET_POWER_MODE	119
 #define WPI_CMD_SCAN		128
 #define WPI_CMD_SET_BEACON	145
+#define WPI_CMD_TXPOWER		151
 #define WPI_CMD_BLUETOOTH	155
-#define WPI_CMD_TXPOWER		176
 
 	uint8_t	flags;
 	uint8_t	idx;
@@ -275,9 +280,7 @@ struct wpi_config {
 	uint8_t		reserved4[3];
 	uint8_t		ofdm_mask;
 	uint8_t		cck_mask;
-	uint16_t	state;
-#define WPI_STATE_ASSOCIATED	4
-
+	uint16_t	associd;
 	uint32_t	flags;
 #define WPI_CONFIG_24GHZ	(1 << 0)
 #define WPI_CONFIG_CCK		(1 << 1)
@@ -331,7 +334,7 @@ struct wpi_node_info {
 #define WPI_ID_BSS		0
 #define WPI_ID_BROADCAST	24
 
-	uint8_t		sta_mask;
+	uint8_t		flags;
 	uint16_t	reserved3;
 	uint16_t	key_flags;
 	uint8_t		tkip;
@@ -339,11 +342,17 @@ struct wpi_node_info {
 	uint16_t	ttak[5];
 	uint16_t	reserved5;
 	uint8_t		key[IEEE80211_KEYBUF_SIZE];
-	uint32_t	flags;
+	uint32_t	action;
+#define WPI_ACTION_SET_RATE	4
+
 	uint32_t	mask;
 	uint16_t	tid;
 	uint8_t		rate;
-	uint8_t		reserved6;
+	uint8_t		antenna;
+#define WPI_ANTENNA_A		(1 << 6)
+#define WPI_ANTENNA_B		(1 << 7)
+#define WPI_ANTENNA_BOTH	(WPI_ANTENNA_A | WPI_ANTENNA_B)
+
 	uint8_t		add_imm;
 	uint8_t		del_imm;
 	uint16_t	add_imm_start;
@@ -358,6 +367,7 @@ struct wpi_cmd_data {
 #define WPI_TX_NEED_CTS		(1 <<  2)
 #define WPI_TX_NEED_ACK		(1 <<  3)
 #define WPI_TX_FULL_TXOP	(1 <<  7)
+#define WPI_TX_BT_DISABLE	(1 << 12)	/* bluetooth coexistence */
 #define WPI_TX_AUTO_SEQ		(1 << 13)
 #define WPI_TX_INSERT_TSTAMP	(1 << 16)
 
@@ -369,6 +379,8 @@ struct wpi_cmd_data {
 	uint8_t		tkip[IEEE80211_WEP_MICLEN];
 	uint32_t	fnext;
 	uint32_t	lifetime;
+#define WPI_LIFETIME_INFINITE	0xffffffff
+
 	uint8_t		ofdm_mask;
 	uint8_t		cck_mask;
 	uint8_t		rts_ntries;
@@ -431,37 +443,53 @@ struct wpi_cmd_led {
 /* structure for WPI_CMD_SET_POWER_MODE */
 struct wpi_power {
 	uint32_t	flags;
+#define WPI_POWER_CAM	0	/* constantly awake mode */
+
 	uint32_t	rx_timeout;
 	uint32_t	tx_timeout;
 	uint32_t	sleep[5];
 } __packed;
 
-/* structure for command WPI_CMD_SCAN */
+/* structures for command WPI_CMD_SCAN */
+struct wpi_scan_essid {
+	uint8_t	id;
+	uint8_t	len;
+	uint8_t	data[IEEE80211_NWID_LEN];
+} __packed;
+
 struct wpi_scan_hdr {
-	uint8_t		len;
-	uint8_t		first;
+	uint16_t	len;
 	uint8_t		reserved1;
 	uint8_t		nchan;
 	uint16_t	quiet;
-	uint16_t	threshold;
-	uint16_t	band;
-#define WPI_SCAN_5GHZ	1
-
-	uint16_t	reserved2[5];
+	uint16_t	plcp_threshold;
+	uint16_t	crc_threshold;
+	uint16_t	reserved2;
+	uint32_t	max_svc;	/* background scans */
+	uint32_t	pause_svc;	/* background scans */
 	uint32_t	flags;
 	uint32_t	filter;
-	uint16_t	length;
-	uint16_t	reserved4;
-	uint32_t	magic1;
+
+	/* wpi_cmd_data structure */
+	uint16_t	paylen;
+	uint16_t	lnext;
+	uint32_t	txflags;
 	uint8_t		rate;
 	uint8_t		id;
-	uint16_t	reserved5;
-	uint32_t	reserved6[7];
-	uint32_t	mask;
-	uint32_t	reserved7[2];
-	uint8_t		reserved8;
-	uint8_t		esslen;
-	uint8_t		essid[134];
+	uint8_t		tid;
+	uint8_t		security;
+	uint8_t		key[IEEE80211_KEYBUF_SIZE];
+	uint8_t		tkip[IEEE80211_WEP_MICLEN];
+	uint32_t	fnext;
+	uint32_t	lifetime;
+	uint8_t		ofdm_mask;
+	uint8_t		cck_mask;
+	uint8_t		rts_ntries;
+	uint8_t		data_ntries;
+	uint16_t	timeout;
+	uint16_t	txop;
+
+	struct		wpi_scan_essid essid[4];
 
 	/* followed by probe request body */
 	/* followed by nchan x wpi_scan_chan */
@@ -469,12 +497,30 @@ struct wpi_scan_hdr {
 
 struct wpi_scan_chan {
 	uint8_t		flags;
-#define WPI_CHAN_ACTIVE	3
+#define WPI_CHAN_ACTIVE	(1 << 0)
+#define WPI_CHAN_DIRECT	(1 << 1)
 
 	uint8_t		chan;
-	uint16_t	magic;		/* XXX */
+	uint8_t		rf_gain;
+	uint8_t		dsp_gain;
 	uint16_t	active;		/* msecs */
 	uint16_t	passive;	/* msecs */
+} __packed;
+
+/* structure for WPI_CMD_TXPOWER */
+struct wpi_cmd_txpower {
+	uint8_t		band;
+#define WPI_BAND_5GHZ	0
+#define WPI_BAND_2GHZ	1
+
+	uint8_t		reserved;
+	uint16_t	chan;
+	struct {
+		uint8_t	plcp;
+		uint8_t	rf_gain;
+		uint8_t	dsp_gain;
+		uint8_t	reserved;
+	} __packed	rates[WPI_CCK11 + 1];
 } __packed;
 
 /* structure for WPI_CMD_BLUETOOTH */
@@ -487,23 +533,6 @@ struct wpi_bluetooth {
 	uint32_t	cts;
 } __packed;
 
-/* structure for command WPI_CMD_TXPOWER */
-struct wpi_txpower {
-	uint32_t	reserved1;
-	uint16_t	pwr1[14];
-	uint32_t	reserved2[2];
-	uint16_t	pwr2[14];
-	uint32_t	reserved3[2];
-} __packed;
-
-
-/* firmware image header */
-struct wpi_firmware_hdr {
-	uint32_t	version;
-	uint32_t	textsz;
-	uint32_t	datasz;
-	uint32_t	bootsz;
-} __packed;
 
 /* structure for WPI_UC_READY notification */
 struct wpi_ucode_info {
@@ -537,12 +566,144 @@ struct wpi_stop_scan {
 	uint64_t	tsf;
 } __packed;
 
+
+/* firmware image header */
+struct wpi_firmware_hdr {
+	uint32_t	version;
+	uint32_t	main_textsz;
+	uint32_t	main_datasz;
+	uint32_t	boot_textsz;
+	uint32_t	boot_datasz;
+} __packed;
+
+#define WPI_FW_MAIN_TEXT_MAXSZ	(80 * 1024)
+#define WPI_FW_MAIN_DATA_MAXSZ	(32 * 1024)
+#define WPI_FW_BOOT_TEXT_MAXSZ	(80 * 1024)
+#define WPI_FW_BOOT_DATA_MAXSZ	(32 * 1024)
+
+/*
+ * Offsets into EEPROM.
+ */
 #define WPI_EEPROM_MAC		0x015
 #define WPI_EEPROM_REVISION	0x035
 #define WPI_EEPROM_CAPABILITIES	0x045
 #define WPI_EEPROM_TYPE		0x04a
-#define WPI_EEPROM_PWR1		0x1ae
-#define WPI_EEPROM_PWR2		0x1bc
+#define WPI_EEPROM_BAND1	0x063
+#define WPI_EEPROM_BAND2	0x072
+#define WPI_EEPROM_BAND3	0x080
+#define WPI_EEPROM_BAND4	0x08d
+#define WPI_EEPROM_BAND5	0x099
+#define WPI_EEPROM_POWER_GRP	0x100
+
+struct wpi_eeprom_chan {
+	uint8_t	flags;
+#define WPI_EEPROM_CHAN_VALID	(1 << 0)
+#define WPI_EEPROM_CHAN_IBSS	(1 << 1)
+#define WPI_EEPROM_CHAN_ACTIVE	(1 << 3)
+#define WPI_EEPROM_CHAN_RADAR	(1 << 4)
+
+	int8_t	maxpwr;
+} __packed;
+
+struct wpi_eeprom_sample {
+	uint8_t		index;
+	int8_t		power;
+	uint16_t	volt;
+} __packed;
+
+#define WPI_POWER_GROUPS_COUNT	5
+struct wpi_eeprom_group {
+	struct		wpi_eeprom_sample samples[5];
+	int32_t		coef[5];
+	int32_t		corr[5];
+	int8_t		maxpwr;
+	uint8_t		chan;
+	int16_t		temp;
+} __packed;
+
+#define WPI_CHAN_BANDS_COUNT	5
+#define WPI_MAX_CHAN_PER_BAND	14
+static const struct wpi_chan_band {
+	uint32_t	addr;	/* offset in EEPROM */
+	uint8_t		nchan;
+	uint8_t		chan[WPI_MAX_CHAN_PER_BAND];
+} wpi_bands[5] = {
+	{ WPI_EEPROM_BAND1, 14,
+	    { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 } },
+	{ WPI_EEPROM_BAND2, 13,
+	    { 183, 184, 185, 187, 188, 189, 192, 196, 7, 8, 11, 12, 16 } },
+	{ WPI_EEPROM_BAND3, 12,
+	    { 34, 36, 38, 40, 42, 44, 46, 48, 52, 56, 60, 64 } },
+	{ WPI_EEPROM_BAND4, 11,
+	    { 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140 } },
+	{ WPI_EEPROM_BAND5, 6,
+	    { 145, 149, 153, 157, 161, 165 } }
+};
+
+/* convert rate index (device view) into rate in 500Kbps unit */
+static const uint8_t wpi_ridx_to_rate[] = {
+	12, 18, 24, 36, 48, 72, 96, 108, /* OFDM */
+	2, 4, 11, 22 /* CCK */
+};
+
+/* convert rate index (device view) into PLCP code */
+static const uint8_t wpi_ridx_to_plcp[] = {
+	0xd, 0xf, 0x5, 0x7, 0x9, 0xb, 0x1, 0x3, /* OFDM R1-R4 */
+	10, 20, 55, 110 /* CCK */
+};
+
+#define WPI_MAX_PWR_INDEX	77
+/*
+ * RF Tx gain values from highest to lowest power (values obtained from
+ * the reference driver.)
+ */
+static const uint8_t wpi_rf_gain_2ghz[WPI_MAX_PWR_INDEX + 1] = {
+	0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xbb, 0xbb, 0xbb,
+	0xbb, 0xf3, 0xf3, 0xf3, 0xf3, 0xf3, 0xd3, 0xd3, 0xb3, 0xb3, 0xb3,
+	0x93, 0x93, 0x93, 0x93, 0x93, 0x93, 0x93, 0x73, 0xeb, 0xeb, 0xeb,
+	0xcb, 0xcb, 0xcb, 0xcb, 0xcb, 0xcb, 0xcb, 0xab, 0xab, 0xab, 0x8b,
+	0xe3, 0xe3, 0xe3, 0xe3, 0xe3, 0xe3, 0xc3, 0xc3, 0xc3, 0xc3, 0xa3,
+	0xa3, 0xa3, 0xa3, 0x83, 0x83, 0x83, 0x83, 0x63, 0x63, 0x63, 0x63,
+	0x43, 0x43, 0x43, 0x43, 0x23, 0x23, 0x23, 0x23, 0x03, 0x03, 0x03,
+	0x03
+};
+
+static const uint8_t wpi_rf_gain_5ghz[WPI_MAX_PWR_INDEX + 1] = {
+	0xfb, 0xfb, 0xfb, 0xdb, 0xdb, 0xbb, 0xbb, 0x9b, 0x9b, 0x7b, 0x7b,
+	0x7b, 0x7b, 0x5b, 0x3b, 0x3b, 0x3b, 0x3b, 0x3b, 0x3b, 0x1b, 0x1b,
+	0x1b, 0x73, 0x73, 0x73, 0x53, 0x53, 0x53, 0x53, 0x53, 0x33, 0x33,
+	0x33, 0x33, 0x13, 0x13, 0x13, 0x13, 0x13, 0xab, 0xab, 0xab, 0x8b,
+	0x8b, 0x8b, 0x8b, 0x6b, 0x6b, 0x6b, 0x6b, 0x4b, 0x4b, 0x4b, 0x4b,
+	0x2b, 0x2b, 0x2b, 0x2b, 0x0b, 0x0b, 0x0b, 0x0b, 0x83, 0x83, 0x63,
+	0x63, 0x63, 0x63, 0x43, 0x43, 0x43, 0x43, 0x23, 0x23, 0x23, 0x23,
+	0x03
+};
+
+/*
+ * DSP pre-DAC gain values from highest to lowest power (values obtained
+ * from the reference driver.)
+ */
+static const uint8_t wpi_dsp_gain_2ghz[WPI_MAX_PWR_INDEX + 1] = {
+	0x7f, 0x7f, 0x7f, 0x7f, 0x7d, 0x6e, 0x69, 0x62, 0x7d, 0x73, 0x6c,
+	0x63, 0x77, 0x6f, 0x69, 0x61, 0x5c, 0x6a, 0x64, 0x78, 0x71, 0x6b,
+	0x7d, 0x77, 0x70, 0x6a, 0x65, 0x61, 0x5b, 0x6b, 0x79, 0x73, 0x6d,
+	0x7f, 0x79, 0x73, 0x6c, 0x66, 0x60, 0x5c, 0x6e, 0x68, 0x62, 0x74,
+	0x7d, 0x77, 0x71, 0x6b, 0x65, 0x60, 0x71, 0x6a, 0x66, 0x5f, 0x71,
+	0x6a, 0x66, 0x5f, 0x71, 0x6a, 0x66, 0x5f, 0x71, 0x6a, 0x66, 0x5f,
+	0x71, 0x6a, 0x66, 0x5f, 0x71, 0x6a, 0x66, 0x5f, 0x71, 0x6a, 0x66,
+	0x5f
+};
+
+static const uint8_t wpi_dsp_gain_5ghz[WPI_MAX_PWR_INDEX + 1] = {
+	0x7f, 0x78, 0x72, 0x77, 0x65, 0x71, 0x66, 0x72, 0x67, 0x75, 0x6b,
+	0x63, 0x5c, 0x6c, 0x7d, 0x76, 0x6d, 0x66, 0x60, 0x5a, 0x68, 0x62,
+	0x5c, 0x76, 0x6f, 0x68, 0x7e, 0x79, 0x71, 0x69, 0x63, 0x76, 0x6f,
+	0x68, 0x62, 0x74, 0x6d, 0x66, 0x62, 0x5d, 0x71, 0x6b, 0x63, 0x78,
+	0x71, 0x6b, 0x63, 0x78, 0x71, 0x6b, 0x63, 0x78, 0x71, 0x6b, 0x63,
+	0x78, 0x71, 0x6b, 0x63, 0x78, 0x71, 0x6b, 0x63, 0x6b, 0x63, 0x78,
+	0x71, 0x6b, 0x63, 0x78, 0x71, 0x6b, 0x63, 0x78, 0x71, 0x6b, 0x63,
+	0x78
+};
 
 #define WPI_READ(sc, reg)						\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
