@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.39 2007/06/05 00:38:17 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.40 2007/06/05 02:38:37 krw Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -267,17 +267,6 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		goto bad;
 	}
 
-	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
-	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= labelsector &&
-#if LABELSECTOR != 0
-	    bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) + sz > labelsector &&
-#endif
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-
 	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(DL_GETPSIZE(p), lp)) {
 		sz = blockpersec(DL_GETPSIZE(p), lp) - bp->b_blkno;
@@ -293,6 +282,17 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	/* overwriting disk label ? */
+	/* XXX should also protect bootstrap in first 8K */
+	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= labelsector &&
+#if LABELSECTOR != 0
+	    bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) + sz > labelsector &&
+#endif
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+		bp->b_error = EROFS;
+		goto bad;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */

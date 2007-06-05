@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.40 2007/06/05 00:38:19 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.41 2007/06/05 02:38:37 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -70,13 +70,6 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		goto bad;
 	}
 
-	/* overwriting disk label ? */
-	if (bp->b_blkno + DL_GETPOFFSET(p) <= LABELSECTOR + labelsector &&
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-
 	/* beyond partition? */
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
 		/* if exactly at end of disk, return EOF. */
@@ -92,6 +85,13 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	/* overwriting disk label ? */
+	if (bp->b_blkno + DL_GETPOFFSET(p) <= LABELSECTOR + labelsector &&
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+		bp->b_error = EROFS;
+		goto bad;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
