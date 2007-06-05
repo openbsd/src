@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2007/06/05 05:49:41 niallo Exp $
+#	$OpenBSD: Makefile,v 1.2 2007/06/05 08:04:24 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # Based on OpenRCS regression framework.
@@ -23,10 +23,13 @@ test-cvs-initial: clean
 	@${CVS} -d ${.OBJDIR}/regress_cvs_root init
 
 test-cvs-import:
-	@cd ${.CURDIR}/import_seed; ${CVS} -Q -d ${.OBJDIR}/regress_cvs_root import -m'import seed repo' seed regress regress_`date +%Y%m%d`
+	@cd ${.CURDIR}/import_seed; ${CVS} -Q		\
+	    -d ${.OBJDIR}/regress_cvs_root import	\
+	    -m'import seed repo' seed regress regress_`date +%Y%m%d`
 
 test-cvs-checkout-dflag:
-	@${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co -d ${.OBJDIR}/regress_cvs_wcopy seed
+	@${CVS} -Q -d ${.OBJDIR}/regress_cvs_root co	\
+	    -d ${.OBJDIR}/regress_cvs_wcopy seed
 	@test -d ${.OBJDIR}/regress_cvs_wcopy
 
 clean:
