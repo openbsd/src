@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.33 2007/06/04 14:57:33 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.34 2007/06/05 23:19:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -350,7 +350,7 @@ package OpenBSD::UpdateSet;
 sub new
 {
 	my $class = shift;
-	return bless {}, $class;
+	return bless {newer => [], older => []}, $class;
 }
 
 sub add_newer
@@ -374,12 +374,18 @@ sub newer
 sub older
 {
 	my $self = shift;
+	return @{$self->{older}};
+}
+
+sub older_to_do
+{
+	my $self = shift;
 	# XXX in `combined' updates, some dependencies may remove extra 
 	# packages, so we do a double-take on the list of packages we 
 	# are actually replacing... for now, until we merge update sets.
 	require OpenBSD::PackageInfo;
 	my @l = ();
-	for my $h (@{$self->{older}}) {
+	for my $h ($self->older) {
 		if (OpenBSD::PackageInfo::is_installed($h->{pkgname})) {
 			push(@l, $h);
 		}

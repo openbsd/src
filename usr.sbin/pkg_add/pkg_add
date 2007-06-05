@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.310 2007/06/04 14:57:33 espie Exp $
+# $OpenBSD: pkg_add,v 1.311 2007/06/05 23:19:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -346,7 +346,7 @@ sub really_add
 	# packages, so we do a double-take on the list of packages we 
 	# are actually replacing.
 	my $replacing = 0;
-	if ($set->older) {
+	if ($set->older_to_do) {
 		$replacing = 1;
 	} 
 #	if (defined $plist->{old_libs}) {
@@ -387,7 +387,7 @@ sub really_add
 		}
 
 		$set->{solver}->record_old_dependencies($state);
-		for my $o ($set->older) {
+		for my $o ($set->older_to_do) {
 			my $oldname = $o->{pkgname};
 			$state->progress->set_header($oldname." (deleting)");
 			$state->set_name_from_handle($o);

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.51 2007/06/04 16:58:40 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.52 2007/06/05 23:19:00 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -208,7 +208,7 @@ sub register_dependencies
 sub record_old_dependencies
 {
 	my ($self, $state) = @_;
-	for my $o ($self->{set}->older) {
+	for my $o ($self->{set}->older_to_do) {
 		require OpenBSD::RequiredBy;
 		my @wantlist = OpenBSD::RequiredBy->new($o->{pkgname})->list;
 		$o->{wantlist} = \@wantlist;
@@ -220,6 +220,7 @@ sub adjust_old_dependencies
 	my ($self, $state) = @_;
 	my $pkgname = $self->{set}->handle->{pkgname};
 	for my $o ($self->{set}->older) {
+		next unless defined $o->{wantlist};
 		require OpenBSD::Replace;
 		require OpenBSD::RequiredBy;
 
