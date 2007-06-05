@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.8 2007/06/05 08:52:20 mbalmer Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.9 2007/06/05 23:21:06 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -271,7 +271,6 @@ struct tpms_softc {
 #define TPMS_VALID 4		      /* Is the previous sample valid? */
 };
 
-/* Static function prototypes. */
 void tpms_intr(struct uhidev *, void *, unsigned int);
 int tpms_enable(void *);
 void tpms_disable(void *);
