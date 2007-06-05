@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.79 2007/06/05 03:08:10 todd Exp $ */
+/* $OpenBSD: softraid.c,v 1.80 2007/06/05 16:30:02 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2601,16 +2601,8 @@ sr_raid1_rw(struct sr_workunit *wu)
 		goto bad;
 	}
 
-	if (xs->flags & SCSI_DATA_IN)
-		ios = 1;
-	else
-		ios = sd->sd_vol.sv_meta.svm_no_chunk;
-
-	blk += SR_META_SIZE + SR_META_OFFSET;
-
 	wu->swu_blk_start = blk;
 	wu->swu_blk_end = blk + (xs->datalen >> 9) - 1;
-	wu->swu_io_count = ios;
 
 	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
 		DNPRINTF(SR_D_DIS, "%s: sr_raid1_rw out of bounds start: %lld "
@@ -2625,6 +2617,15 @@ sr_raid1_rw(struct sr_workunit *wu)
 		sd->sd_scsi_sense.extra_len = 4;
 		goto bad;
 	}
+
+	/* calculate physical block */
+	blk += SR_META_SIZE + SR_META_OFFSET;
+
+	if (xs->flags & SCSI_DATA_IN)
+		ios = 1;
+	else
+		ios = sd->sd_vol.sv_meta.svm_no_chunk;
+	wu->swu_io_count = ios;
 
 	for (i = 0; i < ios; i++) {
 		ccb = sr_get_ccb(sd);
@@ -3069,11 +3070,8 @@ sr_raidc_rw2(struct cryptop *crp)
 		goto bad;
 	}
 
-	blk += SR_META_SIZE + SR_META_OFFSET;
-
 	wu->swu_blk_start = blk;
 	wu->swu_blk_end = blk + (xs->datalen >> 9) - 1;
-	wu->swu_io_count = 1;
 
 	if (wu->swu_blk_end > sd->sd_vol.sv_meta.svm_size) {
 		DNPRINTF(SR_D_DIS, "%s: sr_raidc_rw2 out of bounds start: %lld "
@@ -3089,6 +3087,11 @@ sr_raidc_rw2(struct cryptop *crp)
 		goto bad;
 	}
 
+	/* calculate physical block */
+	blk += SR_META_SIZE + SR_META_OFFSET;
+
+	wu->swu_io_count = 1;
+
 	ccb = sr_get_ccb(sd);
 	if (!ccb) {
 		/* should never happen but handle more gracefully */
@@ -3099,7 +3102,7 @@ sr_raidc_rw2(struct cryptop *crp)
 	}
 
 	if (xs->flags & SCSI_POLL) {
-		panic("p");
+		panic("not yet, crypto poll");
 		ccb->ccb_buf.b_flags = 0;
 		ccb->ccb_buf.b_iodone = NULL;
 	} else {
