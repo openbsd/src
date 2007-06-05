@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2004/06/07 21:11:23 marc Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2007/06/05 18:11:48 kurt Exp $
 
 .PATH: ${LIBCSRCDIR}/thread
 
-SRCS+=	thread_fd.c unithread_malloc_lock.c unithread_tag.c
+SRCS+=	unithread_malloc_lock.c unithread_mutex.c unithread_tag.c
 

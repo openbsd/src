@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir.c,v 1.11 2007/02/08 16:34:39 millert Exp $ */
+/*	$OpenBSD: readdir.c,v 1.12 2007/06/05 18:11:48 kurt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
  * get next entry in a directory.
  */
 struct dirent *
-readdir(DIR *dirp)
+_readdir_unlocked(DIR *dirp)
 {
 	struct dirent *dp;
 
@@ -65,28 +65,34 @@ readdir(DIR *dirp)
 	}
 }
 
+struct dirent *
+readdir(DIR *dirp)
+{
+	struct dirent *dp;
+
+	_MUTEX_LOCK(&dirp->dd_lock);
+	dp = _readdir_unlocked(dirp);
+	_MUTEX_UNLOCK(&dirp->dd_lock);
+
+	return (dp);
+}
+
 int
 readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 {
 	struct dirent *dp;
-	int ret;
 
-	if (dirp->dd_fd < 0) {
-		return EBADF;
-	}
-	if ((ret = _FD_LOCK(dirp->dd_fd, FD_READ, NULL)) != 0)
-		return ret;
-	errno = 0;
-	dp = readdir(dirp);
+	_MUTEX_LOCK(&dirp->dd_lock);
+	dp = _readdir_unlocked(dirp);
 	if (dp == NULL && errno != 0) {
-		_FD_UNLOCK(dirp->dd_fd, FD_READ);
+		_MUTEX_UNLOCK(&dirp->dd_lock);
 		return errno;
 	}
 	if (dp != NULL) 
 		memcpy(entry, dp, sizeof (struct dirent) - MAXNAMLEN + dp->d_namlen);
-	_FD_UNLOCK(dirp->dd_fd, FD_READ);
+	_MUTEX_UNLOCK(&dirp->dd_lock);
 	if (dp != NULL)
-	*result = entry;
+		*result = entry;
 	else
 		*result = NULL;
 	return 0;

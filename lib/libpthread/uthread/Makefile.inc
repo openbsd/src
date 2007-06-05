@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.19 2005/10/30 03:37:34 brad Exp $
+# $OpenBSD: Makefile.inc,v 1.20 2007/06/05 18:11:48 kurt Exp $
 # $FreeBSD: Makefile.inc,v 1.19 1999/08/28 00:03:19 peter Exp $
 
 # uthread sources
@@ -59,6 +59,7 @@ SRCS+= \
 	uthread_fstat.c \
 	uthread_fstatfs.c \
 	uthread_fsync.c \
+	uthread_ftruncate.c \
 	uthread_gc.c \
 	uthread_getdirentries.c \
 	uthread_getpeername.c \
@@ -75,6 +76,7 @@ SRCS+= \
 	uthread_kqueue.c \
 	uthread_kill.c \
 	uthread_listen.c \
+	uthread_lseek.c \
 	uthread_main_np.c \
 	uthread_mattr_init.c \
 	uthread_mattr_kind_np.c \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.38 2007/05/21 16:50:36 kurt Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.39 2007/06/05 18:11:49 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -130,8 +130,6 @@ static void *references[] = {
 	&write,
 	&writev,
 	/* libc thread-safe helper functions */
-	&_thread_fd_lock,
-	&_thread_fd_unlock,
 	&_thread_malloc_init,
 	&_thread_malloc_lock,
 	&_thread_malloc_unlock,
@@ -140,9 +138,14 @@ static void *references[] = {
 	&_thread_tag_lock,
 	&_thread_tag_unlock,
 	&_thread_tag_storage,
+	&_thread_mutex_lock,
+	&_thread_mutex_unlock,
+	&_thread_mutex_destroy,
 	&flockfile,
+	&ftruncate,
 	&ftrylockfile,
-	&funlockfile
+	&funlockfile,
+	&lseek
 };
 
 /*

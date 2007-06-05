@@ -1,4 +1,4 @@
-/*	$OpenBSD: seekdir.c,v 1.8 2006/04/01 18:06:59 otto Exp $ */
+/*	$OpenBSD: seekdir.c,v 1.9 2007/06/05 18:11:48 kurt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,6 +30,7 @@
 
 #include <sys/param.h>
 #include <dirent.h>
+#include "thread_private.h"
 #include "telldir.h"
 
 /*
@@ -39,6 +40,7 @@
 void
 seekdir(DIR *dirp, long loc)
 {
-
+	_MUTEX_LOCK(&dirp->dd_lock);
 	__seekdir(dirp, loc);
+	_MUTEX_UNLOCK(&dirp->dd_lock);
 }

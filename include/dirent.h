@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.17 2007/02/08 16:34:38 millert Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.18 2007/06/05 18:11:48 kurt Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -71,6 +71,7 @@ typedef struct _dirdesc {
 	long	dd_rewind;	/* magic cookie for rewinding */
 	int	dd_flags;	/* flags for readdir */
 	struct _telldir *dd_td; /* telldir position recording */
+	void	*dd_lock;	/* mutex to protect struct */
 } DIR;
 
 #define	dirfd(dirp)	((dirp)->dd_fd)

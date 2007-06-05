@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.19 2006/09/26 14:18:28 kurt Exp $ */
+/* $OpenBSD: thread_private.h,v 1.20 2007/06/05 18:11:48 kurt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -54,10 +54,24 @@ extern int __isthreaded;
  *	return a pointer to per thread instance of data associated
  *	with the given tag.  If the given tag is NULL a tag is first
  *	allocated.
+ *
+ * _thread_mutex_lock:
+ *	lock the given mutex. If the given mutex is NULL,
+ *	rely on rthreads/pthreads implementation to initialize
+ *	the mutex before locking.
+ *
+ * _thread_mutex_unlock:
+ *	unlock the given mutex.
+ *
+ * _thread_mutex_destroy:
+ *	destroy the given mutex.
  */
 void	_thread_tag_lock(void **);
 void	_thread_tag_unlock(void **);
 void   *_thread_tag_storage(void **, void *, size_t, void *);
+void	_thread_mutex_lock(void **);
+void	_thread_mutex_unlock(void **);
+void	_thread_mutex_destroy(void **);
 
 /*
  * Macros used in libc to access thread mutex, keys, and per thread storage.
@@ -77,32 +91,32 @@ void   *_thread_tag_storage(void **, void *, size_t, void *);
 #define _THREAD_PRIVATE(keyname, storage, error)			\
 	_thread_tag_storage(&(__THREAD_NAME(keyname)), &(storage),	\
 			    sizeof (storage), error)
+
+/*
+ * Macros used in libc to access non-static mutexes.
+ */
+#define _MUTEX_LOCK(mutex)						\
+	do {								\
+		if (__isthreaded)					\
+			_thread_mutex_lock(mutex);			\
+	} while (0)
+#define _MUTEX_UNLOCK(mutex)						\
+	do {								\
+		if (__isthreaded)					\
+			_thread_mutex_unlock(mutex);			\
+	} while (0)
+#define _MUTEX_DESTROY(mutex)						\
+	do {								\
+		if (__isthreaded)					\
+			_thread_mutex_destroy(mutex);			\
+	} while (0)
+
 /*
  * Resolver code is special cased in that it uses global keys.
  */
 extern void *__THREAD_NAME(_res);
 extern void *__THREAD_NAME(_res_ext);
 extern void *__THREAD_NAME(serv_mutex);
-
-/*
- * File descriptor locking definitions.
- */
-#define FD_READ		0x1
-#define FD_WRITE	0x2
-#define FD_RDWR		(FD_READ | FD_WRITE)
-#define FD_RDWR_CLOSE	(FD_RDWR | 0x4)
-
-struct timespec;
-int	_thread_fd_lock(int, int, struct timespec *);
-void	_thread_fd_unlock(int, int);
-
-/*
- * Macros are used in libc code for historical (debug) reasons.
- * Define them here.
- */
-#define _FD_LOCK(_fd,_type,_ts)	_thread_fd_lock(_fd, _type, _ts)
-#define _FD_UNLOCK(_fd,_type)	_thread_fd_unlock(_fd, _type)
-
 
 /*
  * malloc lock/unlock prototypes and definitions

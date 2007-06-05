@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.20 2007/05/01 18:16:38 kurt Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.21 2007/06/05 18:11:49 kurt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -667,7 +667,9 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 
 	/*
 	 * If the mutex is statically initialized, perform the dynamic
-	 * initialization:
+	 * initialization. Note: _thread_mutex_lock() in libc requires
+	 * pthread_mutex_lock() to perform the mutex init when *mutex
+	 * is NULL.
 	 */
 	else if ((*mutex != NULL) || ((ret = init_static(mutex)) == 0))
 		ret = mutex_lock_common(mutex);

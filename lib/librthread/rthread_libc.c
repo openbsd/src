@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.3 2006/10/27 02:41:24 tedu Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.4 2007/06/05 18:11:49 kurt Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -124,6 +124,33 @@ _thread_tag_storage(void **tag, void *storage, size_t sz, void *err)
 		}
 	}
 	return ret;
+}
+
+void
+_thread_mutex_lock(void **mutex)
+{
+	pthread_mutex_t	*pmutex = (pthread_mutex_t *)mutex;
+
+	if (pthread_mutex_lock(pmutex) != 0)
+		_rthread_debug(1, "mutex lock failure");
+}
+
+void
+_thread_mutex_unlock(void **mutex)
+{
+	pthread_mutex_t	*pmutex = (pthread_mutex_t *)mutex;
+
+	if (pthread_mutex_unlock(pmutex) != 0)
+		_rthread_debug(1, "mutex unlock failure");
+}
+
+void
+_thread_mutex_destroy(void **mutex)
+{
+	pthread_mutex_t	*pmutex = (pthread_mutex_t *)mutex;
+
+	if (pthread_mutex_destroy(pmutex) != 0)
+		_rthread_debug(1, "mutex destroy failure");
 }
 
 /*

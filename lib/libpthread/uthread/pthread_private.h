@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.66 2007/05/21 16:50:36 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.67 2007/06/05 18:11:49 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -491,8 +491,15 @@ enum pthread_state {
 
 
 /*
- * File descriptor locking definitions are defined in "thread_private.h"
+ * File descriptor locking definitions.
  */
+#define FD_READ		0x1
+#define FD_WRITE	0x2
+#define FD_RDWR		(FD_READ | FD_WRITE)
+#define FD_RDWR_CLOSE	(FD_RDWR | 0x4)
+
+#define _FD_LOCK(_fd,_type,_ts)	_thread_fd_lock(_fd, _type, _ts)
+#define _FD_UNLOCK(_fd,_type)	_thread_fd_unlock(_fd, _type)
 
 /*
  * File status flags struture - shared for dup'ed fd's
@@ -1148,6 +1155,8 @@ void    _thread_cleanupspecific(void);
 void	_thread_clear_pending(int, pthread_t);
 void	_thread_dump_data(const void *, int);
 void    _thread_dump_info(void);
+int	_thread_fd_lock(int, int, struct timespec *);
+void	_thread_fd_unlock(int, int);
 void    _thread_init(void);
 void	_thread_kern_lock(int);
 void    _thread_kern_sched(struct sigcontext *);
