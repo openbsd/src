@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.32 2007/06/04 16:33:23 espie Exp $
+# $OpenBSD: Replace.pm,v 1.33 2007/06/05 23:11:01 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -354,39 +354,20 @@ sub split_libs
 	return $splitted;
 }
 
-sub walk_depends_closure
+sub adjust_depends_closure
 {
-	my ($start, $plist, $state) = @_;
-	my @todo = ($start);
-	my $done = {};
-	my $depend = 0;
-	my $name = $plist->pkgname;
+	my ($oldname, $plist, $state) = @_;
 
 	print "Packages that depend on those shared libraries:\n" 
 	    if $state->{beverbose};
 
-	my $write = OpenBSD::RequiredBy->new($name);
-
-	while (my $pkg = shift @todo) {
-		$done->{$pkg} = 1;
-		for my $pkg2 (OpenBSD::RequiredBy->new($pkg)->list) {
-			next if $done->{$pkg2};
-			push(@todo, $pkg2);
-			print "\t$pkg2\n" if $state->{beverbose};
-			$done->{$pkg2} = 1;
-			$write->add($pkg2);
-			OpenBSD::Requiring->new($pkg2)->add($name);
-			$depend = 1;
-		}
+	my $write = OpenBSD::RequiredBy->new($plist->pkgname);
+	for my $pkg (OpenBSD::RequiredBy->compute_closure($oldname)) {
+		print "\t$pkg\n" if $state->{beverbose};
+		$write->add($pkg);
+		OpenBSD::Requiring->new($pkg)->add($plist->pkgname);
 	}
-#	if (!$depend && $state->{interactive}) {
-#		if ($state->{forced}->{zapoldlibs} ||
-#		    OpenBSD::Interactive::confirm("Nothing depends on $name.  Delete it", 1, 0)) {
-#		    	OpenBSD::Delete::delete_plist($plist, $state);
-#		}
-#	}
 }
-
 
 
 sub save_old_libraries
@@ -435,7 +416,7 @@ sub save_old_libraries
 			require OpenBSD::PkgCfl;
 			OpenBSD::PkgCfl::register($stub_list, $state);
 
-			walk_depends_closure($oldname, $stub_list, $state);
+			adjust_depends_closure($oldname, $stub_list, $state);
 		} else {
 			print "No libraries to keep\n" if $state->{beverbose};
 		}
