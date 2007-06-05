@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.43 2006/12/09 01:12:28 itojun Exp $
+#	$OpenBSD: Makefile.inc,v 1.44 2007/06/05 18:04:46 henning Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -12,7 +12,7 @@ SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 	herror.c if_indextoname.c if_nameindex.c if_nametoindex.c inet_addr.c \
 	inet_lnaof.c inet_makeaddr.c inet_neta.c inet_netof.c inet_network.c \
 	inet_net_ntop.c inet_net_pton.c inet_ntoa.c inet_ntop.c inet_pton.c \
-	ipx_addr.c ipx_ntoa.c linkaddr.c net_addrcmp.c nsap_addr.c \
+	linkaddr.c net_addrcmp.c nsap_addr.c \
 	rcmd.c rresvport.c recv.c res_comp.c res_data.c res_debug.c \
 	res_debug_syms.c \
 	res_init.c res_mkquery.c res_query.c res_random.c res_send.c send.c \
@@ -32,7 +32,7 @@ MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
 	getrrsetbyname.3 getservent.3 if_indextoname.3 inet.3 \
 	inet_net.3 inet6_option_space.3 inet6_rthdr_space.3 \
 	inet6_opt_init.3 inet6_rth_space.3 \
-	ipx.3 link_addr.3 net_addrcmp.3 \
+	link_addr.3 net_addrcmp.3 \
 	rcmd.3 rcmdsh.3 resolver.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
@@ -70,7 +70,6 @@ MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
 	inet.3 ntoa.3 inet.3 inet_ntop.3 inet.3 inet_pton.3
 MLINKS+=inet_net.3 inet_net_ntop.3 inet_net.3 inet_net_pton.3
 MLINKS+=link_addr.3 link_ntoa.3
-MLINKS+=ipx.3 ipx_addr.3 ipx.3 ipx_ntoa.3
 MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3 \
 	rcmd.3 rresvport_af.3 rcmd.3 rcmd_af.3 rcmd.3 iruserok_sa.3
 MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
