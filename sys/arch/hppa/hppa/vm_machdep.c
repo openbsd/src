@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.59 2007/05/27 20:59:25 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.60 2007/06/05 17:15:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -223,7 +223,7 @@ vmapbuf(bp, len)
 	 * so that we can get all benefits of PMAP_PREFER.
 	 * - art@
 	 */
-	kva = uvm_km_valloc_prefer_wait(kernel_map, size, uva);
+	kva = uvm_km_valloc_prefer_wait(phys_map, size, uva);
 	fdcache(pm->pm_space, uva, size);
 	bp->b_data = (caddr_t)(kva + off);
 	while (size > 0) {
@@ -257,7 +257,7 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	uvm_km_free_wakeup(kernel_map, addr, len);
+	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
