@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.31 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.32 2007/06/05 00:38:20 deraadt Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ rdsize(dev_t dev)
 	if (part >= sc->sc_dkdev.dk_label->d_npartitions)
 		return 0;
 	else
-		return sc->sc_dkdev.dk_label->d_partitions[part].p_size *
+		return DL_GETPSIZE(&sc->sc_dkdev.dk_label->d_partitions[part]) *
 		    (sc->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 }
 
@@ -492,7 +492,7 @@ rdgetdisklabel(dev_t dev, struct rd_softc *sc)
 	strncpy(lp->d_typename, "RAM disk", sizeof(lp->d_typename));
 	lp->d_type = DTYPE_SCSI;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
-	lp->d_secperunit = lp->d_nsectors;
+	DL_SETDSIZE(lp, lp->d_nsectors);
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 

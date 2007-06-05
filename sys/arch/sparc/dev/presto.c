@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.8 2007/06/04 16:38:58 krw Exp $	*/
+/*	$OpenBSD: presto.c,v 1.9 2007/06/05 00:38:18 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -198,7 +198,7 @@ prestosize(dev_t dev)
 	if (part >= sc->sc_dk.dk_label->d_npartitions)
 		return (0);
 	else
-		return (sc->sc_dk.dk_label->d_partitions[part].p_size *
+		return (DL_GETPSIZE(&sc->sc_dk.dk_label->d_partitions[part]) *
 		    (sc->sc_dk.dk_label->d_secsize / DEV_BSIZE));
 }
 
@@ -378,8 +378,8 @@ presto_getdisklabel(dev_t dev, struct presto_softc *sc)
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 32;
-	lp->d_secperunit = (sc->sc_memsize - PSERVE_OFFSET) >> DEV_BSHIFT;
-	lp->d_ncylinders = lp->d_secperunit / lp->d_nsectors;
+	DL_SETDSIZE(lp, (sc->sc_memsize - PSERVE_OFFSET) >> DEV_BSHIFT);
+	lp->d_ncylinders = DL_GETDSIZE(lp) / lp->d_nsectors;
 	lp->d_secpercyl = lp->d_nsectors;
 
 	strncpy(lp->d_typename, "Prestoserve", 16);

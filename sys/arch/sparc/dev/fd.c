@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.49 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.50 2007/06/05 00:38:18 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1964,7 +1964,7 @@ fdgetdisklabel(dev)
 	lp->d_nsectors = fd->sc_type->sectrac;
 	lp->d_ncylinders = fd->sc_type->tracks;
 	lp->d_ntracks = fd->sc_type->heads;	/* Go figure... */
-	lp->d_secperunit = fd->sc_type->size;
+	DL_SETDSIZE(lp, fd->sc_type->size);
 	lp->d_rpm = 300;	/* XXX like it matters... */
 
 	strncpy(lp->d_typename, "floppy disk", sizeof(lp->d_typename));

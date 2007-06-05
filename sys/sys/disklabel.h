@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.34 2007/06/02 02:35:27 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.35 2007/06/05 00:38:24 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -70,6 +70,8 @@
     (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
 
 #define DISKMAGIC	((u_int32_t)0x82564557)	/* The disk magic number */
+
+#define MAXDISKSIZE	0x1fffffffffffLL	/* 47 bits of reach */
 
 #ifndef _LOCORE
 struct disklabel {
@@ -203,10 +205,26 @@ struct	__partitionv0 {		/* the partition table */
 #define DISKLABELV1_FFS_FSIZE(i) ((i) == 0 ? 0 : \
 	(DISKLABELV1_FFS_BSIZE(i) / DISKLABELV1_FFS_FRAG(i)))
 
-#define DL_PSIZE(p)	(((u_int64_t)(p)->p_sizeh << 32) + (p)->p_size)
-#define DL_POFFSET(p)	(((u_int64_t)(p)->p_offseth << 32) + (p)->p_offset)
-#define DL_DSIZE(d)	(((u_int64_t)(d)->d_secperunith << 32) + (d)->d_secperunit)
+#define DL_GETPSIZE(p)		(((u_int64_t)(p)->p_sizeh << 32) + (p)->p_size)
+#define DL_GETPOFFSET(p)	(((u_int64_t)(p)->p_offseth << 32) + (p)->p_offset)
+#define DL_GETDSIZE(d)		(((u_int64_t)(d)->d_secperunith << 32) + \
+				    (d)->d_secperunit)
 
+#define DL_SETPSIZE(p, n)	do { \
+					daddr64_t x = (n); \
+					(p)->p_sizeh = x >> 32; \
+					(p)->p_size = x; \
+				} while (0)
+#define DL_SETPOFFSET(p, n)	do { \
+					daddr64_t x = (n); \
+					(p)->p_offseth = x >> 32; \
+					(p)->p_offset = x; \
+				} while (0)
+#define DL_SETDSIZE(d, n)	do { \
+					daddr64_t x = (n); \
+					(d)->d_secperunith = x >> 32; \
+					(d)->d_secperunit = x; \
+				} while (0)
 
 /* d_type values: */
 #define	DTYPE_SMD		1		/* SMD, XSMD; VAX hp/up */

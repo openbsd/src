@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.14 2007/02/15 00:53:26 krw Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.15 2007/06/05 00:38:19 deraadt Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -366,8 +366,8 @@ hdattach(struct device *parent, struct device *self, void *aux)
 	msg = readdisklabel(MAKEDISKDEV(HDMAJOR, hd->sc_dev.dv_unit, RAW_PART),
 	    hdstrategy, dl, NULL, 0);
 	printf("%s: %luMB, %lu sectors\n",
-	    hd->sc_dev.dv_xname, dl->d_secperunit / (1048576 / DEV_BSIZE),
-	    dl->d_secperunit);
+	    hd->sc_dev.dv_xname, DL_GETDSIZE(dl) / (1048576 / DEV_BSIZE),
+	    DL_GETDSIZE(dl));
 	if (msg) {
 		/*printf("%s: %s\n", hd->sc_dev.dv_xname, msg);*/
 	}
@@ -464,7 +464,7 @@ hdstrategy(struct buf *bp)
 	 * this also truncates the block number at 4G, but there shouldn't be
 	 * any MFM disk that large.
 	 */
-	bn = bp->b_blkno + lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	bn = bp->b_blkno + DL_GETPOFFSET(&lp->d_partitions[DISKPART(bp->b_dev)]);
 	bp->b_cylinder = bn;
 
 	s = splbio();
@@ -636,7 +636,7 @@ hdsize(dev_t dev)
 	if (unit >= hd_cd.cd_ndevs || hd_cd.cd_devs[unit] == 0)
 		return -1;
 	hd = hd_cd.cd_devs[unit];
-	size = hd->sc_disk.dk_label->d_partitions[DISKPART(dev)].p_size *
+	size = DL_GETPSIZE(&hd->sc_disk.dk_label->d_partitions[DISKPART(dev)]) *
 	    (hd->sc_disk.dk_label->d_secsize / DEV_BSIZE);
 
 	return (size);
@@ -866,16 +866,18 @@ hdmakelabel(struct disklabel *dl, struct hdgeom *g)
 	dl->d_rpm = 3600;
 	dl->d_secsize = DEV_BSIZE;
 
-	dl->d_secperunit = g->lbn_count;
+	DL_SETDSIZE(dl, g->lbn_count);
 	dl->d_nsectors = g->nspt;
 	dl->d_ntracks = g->ntracks;
 	dl->d_secpercyl = dl->d_nsectors * dl->d_ntracks;
-	dl->d_ncylinders = dl->d_secperunit / dl->d_secpercyl;
+	dl->d_ncylinders = DL_GETDSIZE(dl) / dl->d_secpercyl;
 
 	dl->d_npartitions = MAXPARTITIONS;
-	dl->d_partitions[0].p_size = dl->d_partitions[2].p_size =
-	    dl->d_secperunit;
-	dl->d_partitions[0].p_offset = dl->d_partitions[2].p_offset = 0;
+	DL_SETPSIZE(&dl->d_partitions[0], DL_GETDSIZE(dl));
+	DL_SETPSIZE(&dl->d_partitions[2], DL_GETDSIZE(dl));
+	    
+	DL_SETPOFFSET(&dl->d_partitions[0], 0);
+	DL_SETPOFFSET(&dl->d_partitions[2], 0);
 	dl->d_interleave = dl->d_headswitch = 1;
 	dl->d_magic = dl->d_magic2 = DISKMAGIC;
 	dl->d_checksum = dkcksum(dl);

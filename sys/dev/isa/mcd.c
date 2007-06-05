@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.44 2007/06/01 00:07:48 krw Exp $ */
+/*	$OpenBSD: mcd.c,v 1.45 2007/06/05 00:38:21 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ loop:
 	if (DISKPART(bp->b_dev) != RAW_PART) {
 		struct partition *p;
 		p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		sc->mbx.blkno += p->p_offset;
+		sc->mbx.blkno += DL_GETPOFFSET(p);
 	}
 	sc->mbx.nblk = bp->b_bcount / sc->blksize;
 	sc->mbx.sz = sc->blksize;
@@ -754,7 +754,7 @@ mcdgetdisklabel(dev, sc, lp, clp, spoofonly)
 	strncpy(lp->d_typename, "Mitsumi CD-ROM", sizeof lp->d_typename);
 	lp->d_type = DTYPE_SCSI;	/* XXX */
 	strncpy(lp->d_packname, "fictitious", sizeof lp->d_packname);
-	lp->d_secperunit = sc->disksize;
+	DL_SETDSIZE(lp, sc->disksize);
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
 

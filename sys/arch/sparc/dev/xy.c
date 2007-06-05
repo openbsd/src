@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.31 2007/04/29 18:59:37 krw Exp $	*/
+/*	$OpenBSD: xy.c,v 1.32 2007/06/05 00:38:18 deraadt Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -972,7 +972,7 @@ xysize(dev)
 	if (xysc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
 	else
-		size = xysc->sc_dk.dk_label->d_partitions[part].p_size *
+		size = DL_GETPSIZE(&xysc->sc_dk.dk_label->d_partitions[part]) *
 		    (xysc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && xyclose(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
@@ -1283,7 +1283,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	 */
 
 	block = bp->b_blkno + ((partno == RAW_PART) ? 0 :
-	    xysc->sc_dk.dk_label->d_partitions[partno].p_offset);
+	    DL_GETPOFFSET(&xysc->sc_dk.dk_label->d_partitions[partno]));
 
 	dbuf = kdvma_mapin(bp->b_data, bp->b_bcount, 0);
 	if (dbuf == NULL) {	/* out of DVMA space */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.47 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: hd.c,v 1.48 2007/06/05 00:38:14 deraadt Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -509,7 +509,7 @@ hdgetdisklabel(dev, rs, lp, clp, spoofonly)
 	    sizeof(lp->d_typename));
 	strncpy(lp->d_packname, "fictitious", sizeof lp->d_packname);
 
-	lp->d_secperunit = hdidentinfo[rs->sc_type].ri_nblocks;
+	DL_SETDSIZE(lp, hdidentinfo[rs->sc_type].ri_nblocks);
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
@@ -709,7 +709,7 @@ hdstrategy(bp)
 		 * XXX bounds_check_with_label() has put in there.
 		*/
 		pinfo = &rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		bp->b_cylinder = bp->b_blkno + pinfo->p_offset;
+		bp->b_cylinder = bp->b_blkno + DL_GETPOFFSET(pinfo);
 	}
 
 	s = splbio();
@@ -1065,7 +1065,7 @@ hderror(unit)
 	 * we just use b_blkno.
  	 */
 	bp = rs->sc_tab.b_actf;
-	pbn = rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	pbn = DL_GETPOFFSET(&rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)]);
 	if ((sp->c_fef & FEF_CU) || (sp->c_fef & FEF_DR) ||
 	    (sp->c_ief & IEF_RRMASK)) {
 		hwbn = HDBTOS(pbn + bp->b_blkno);
@@ -1243,7 +1243,7 @@ hdsize(dev)
 	if (rs->sc_dkdev.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = rs->sc_dkdev.dk_label->d_partitions[part].p_size *
+		size = DL_GETPSIZE(&rs->sc_dkdev.dk_label->d_partitions[part]) *
 		    (rs->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 
 	if (hdclose(dev, FREAD | FWRITE, S_IFBLK, NULL) != 0)
@@ -1326,8 +1326,8 @@ hddump(dev, blkno, va, size)
 	totwrt = size / sectorsize;
 	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
 
-	nsects = lp->d_partitions[part].p_size;
-	sectoff = lp->d_partitions[part].p_offset;
+	nsects = DL_GETPSIZE(&lp->d_partitions[part]);
+	sectoff = DL_GETPOFFSET(&lp->d_partitions[part]);
 
 	/* Check transfer bounds against partition size. */
 	if ((blkno < 0) || (blkno + totwrt) > nsects)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.1 2006/11/25 14:31:59 uwe Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.2 2007/06/05 00:38:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -351,30 +351,30 @@ zflash_default_disklabel(void *arg, dev_t dev, struct disklabel *lp,
 
 	switch (sc->sc_flash.sc_flashdev->id) {
 	case FLASH_DEVICE_SAMSUNG_K9F2808U0C:
-		lp->d_partitions[8].p_size = 7*1024*1024 / bsize;
-		lp->d_partitions[9].p_size = 5*1024*1024 / bsize;
-		lp->d_partitions[10].p_size = 4*1024*1024 / bsize;
+		DL_SETPSIZE(&lp->d_partitions[8], 7*1024*1024 / bsize);
+		DL_SETPSIZE(&lp->d_partitions[9], 5*1024*1024 / bsize);
+		DL_SETPSIZE(&lp->d_partitions[10], 4*1024*1024 / bsize);
 		break;
 	case FLASH_DEVICE_SAMSUNG_K9F1G08U0A:
-		lp->d_partitions[8].p_size = 7*1024*1024 / bsize;
-		lp->d_partitions[9].p_size = 32*1024*1024 / bsize;
-		lp->d_partitions[10].p_size = 89*1024*1024 / bsize;
+		DL_SETPSIZE(&lp->d_partitions[8], 7*1024*1024 / bsize);
+		DL_SETPSIZE(&lp->d_partitions[9], 32*1024*1024 / bsize);
+		DL_SETPSIZE(&lp->d_partitions[10], 89*1024*1024 / bsize);
 		break;
 	default:
 		return;
 	}
 
 	/* The "smf" partition uses logical addressing. */
-	lp->d_partitions[8].p_offset = 0;
+	DL_SETPOFFSET(&lp->d_partitions[8], 0);
 	lp->d_partitions[8].p_fstype = FS_OTHER;
 
 	/* The "root" partition uses physical addressing. */
-	lp->d_partitions[9].p_offset = lp->d_partitions[8].p_size;
+	DL_SETPSIZE(&lp->d_partitions[9], DL_GETPSIZE(&lp->d_partitions[8]));
 	lp->d_partitions[9].p_fstype = FS_OTHER;
 
 	/* The "home" partition uses physical addressing. */
-	lp->d_partitions[10].p_offset = lp->d_partitions[9].p_offset +
-	    lp->d_partitions[9].p_size;
+	DL_SETPOFFSET(&lp->d_partitions[10],
+	    DL_GETPOFFSET(&lp->d_partitions[9]) + DL_GETPSIZE(&lp->d_partitions[9]));
 	lp->d_partitions[10].p_fstype = FS_OTHER;
 
 	lp->d_npartitions = 11;
@@ -621,7 +621,7 @@ zflash_safe_start(struct zflash_softc *sc, dev_t dev)
 	/* Safe partitions must start on a flash block boundary. */
 	blksect = (sc->sc_flash.sc_flashdev->blkpages *
 	    sc->sc_flash.sc_flashdev->pagesize) / lp->d_secsize;
-	if (lp->d_partitions[part].p_offset % blksect)
+	if (DL_GETPOFFSET(&lp->d_partitions[part]) % blksect)
 		return EIO;
 
 	MALLOC(sp, struct zflash_safe *, sizeof(struct zflash_safe),
@@ -632,7 +632,7 @@ zflash_safe_start(struct zflash_softc *sc, dev_t dev)
 	bzero(sp, sizeof(struct zflash_safe));
 	sp->sp_dev = dev;
 
-	sp->sp_pblks = lp->d_partitions[part].p_size / blksect;
+	sp->sp_pblks = DL_GETPSIZE(&lp->d_partitions[part]) / blksect;
 	sp->sp_lblks = sp->sp_pblks;
 
 	/* Try to reserve a number of spare physical blocks. */

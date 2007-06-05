@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.75 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.76 2007/06/05 00:38:20 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 	strncpy(lp->d_typename, "vnd device", sizeof(lp->d_typename));
 	lp->d_type = DTYPE_VND;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
-	lp->d_secperunit = sc->sc_size;
+	DL_SETDSIZE(lp, sc->sc_size);
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
@@ -437,7 +437,7 @@ vndstrategy(struct buf *bp)
 		/* Loop until all queued requests are handled.  */
 		for (;;) {
 			int part = DISKPART(bp->b_dev);
-			int off = vnd->sc_dk.dk_label->d_partitions[part].p_offset;
+			int off = DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[part]);
 
 			aiov.iov_base = bp->b_data;
 			auio.uio_resid = aiov.iov_len = bp->b_bcount;
@@ -496,7 +496,7 @@ vndstrategy(struct buf *bp)
 	}
 
 	/* The old-style buffercache bypassing method.  */
-	bn += vnd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	bn += DL_GETPOFFSET(&vnd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)]);
 	bn = dbtob(bn);
 	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;

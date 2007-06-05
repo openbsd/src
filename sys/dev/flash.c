@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.3 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: flash.c,v 1.4 2007/06/05 00:38:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -905,7 +905,7 @@ _flashstart(struct flash_softc *sc, struct buf *bp)
 
 	part = flashpart(bp->b_dev);
 	if (part != RAW_PART)
-		offset = sc->sc_dk.dk_label->d_partitions[part].p_offset;
+		offset = DL_GETPOFFSET(&sc->sc_dk.dk_label->d_partitions[part]);
 	else
 		offset = 0;
 
@@ -991,7 +991,7 @@ flashgetdefaultlabel(dev_t dev, struct flash_softc *sc,
 	lp->d_nsectors = sc->sc_flashdev->capacity / lp->d_ntracks
 	    / lp->d_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	lp->d_secperunit = lp->d_ncylinders * lp->d_secpercyl;
+	DL_SETDSIZE(lp, (daddr64_t)lp->d_ncylinders * lp->d_secpercyl);
 
 	/* Fake hardware characteristics. */
 	lp->d_rpm = 3600;

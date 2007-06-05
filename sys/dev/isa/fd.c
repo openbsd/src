@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.63 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: fd.c,v 1.64 2007/06/05 00:38:21 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -982,7 +982,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		strncpy(lp->d_typename, "floppy disk", sizeof lp->d_typename);
 		lp->d_type = DTYPE_FLOPPY;
 		strncpy(lp->d_packname, "fictitious", sizeof lp->d_packname);
-		lp->d_secperunit = fd->sc_type->size;
+		DL_SETDSIZE(lp, fd->sc_type->size);
 		lp->d_rpm = 300;
 		lp->d_interleave = 1;
 

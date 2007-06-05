@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_disks.c,v 1.11 2006/10/13 00:30:08 cloder Exp $	*/
+/*	$OpenBSD: rf_disks.c,v 1.12 2007/06/05 00:38:22 deraadt Exp $	*/
 /*	$NetBSD: rf_disks.c,v 1.31 2000/06/02 01:17:14 oster Exp $	*/
 
 /*
@@ -685,8 +685,8 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
 		}
 		diskPtr->blockSize = dpart.disklab->d_secsize;
 
-		diskPtr->numBlocks = dpart.part->p_size - rf_protectedSectors;
- 		diskPtr->partitionSize = dpart.part->p_size;
+		diskPtr->numBlocks = DL_GETPSIZE(dpart.part) - rf_protectedSectors;
+ 		diskPtr->partitionSize = DL_GETPSIZE(dpart.part);
 
 		raidPtr->raid_cinfo[row][col].ci_vp = vp;
 		raidPtr->raid_cinfo[row][col].ci_dev = va.va_rdev;

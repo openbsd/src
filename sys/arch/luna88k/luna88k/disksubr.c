@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.14 2007/06/02 02:35:27 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.15 2007/06/05 00:38:16 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -128,20 +128,20 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, MAXDISKSIZE);
 	if (lp->d_secpercyl == 0) {
 		msg = "invalid geometry";
 		goto done;
 	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
-		lp->d_partitions[i].p_size = 0;
-		lp->d_partitions[i].p_offset = 0;
+		DL_SETPSIZE(&lp->d_partitions[i], 0);
+		DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	}
-	if (lp->d_partitions[i].p_size == 0)
-		lp->d_partitions[i].p_size = lp->d_secperunit;
-	lp->d_partitions[i].p_offset = 0;
+	if (DL_GETPSIZE(&lp->d_partitions[i]) == 0)
+		DL_SETPSIZE(&lp->d_partitions[i], DL_GETDSIZE(lp));
+	DL_SETPOFFSET(&lp->d_partitions[i], 0);
 
         /* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -249,8 +249,8 @@ setdisklabel(olp, nlp, openmask, clp)
 			return (EBUSY);
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset ||
-		    npp->p_size < opp->p_size)
+		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
+		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
 			return (EBUSY);
 	}
 
@@ -322,15 +322,15 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	/* overwriting disk label ? */
 	/* XXX this assumes everything <=LABELSECTOR is label! */
 	/*     But since LABELSECTOR is 0, that's ok for now. */
-	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= LABELSECTOR &&
+	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= LABELSECTOR &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
 	/* beyond partition? */
-	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
-		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+	if (bp->b_blkno + sz > blockpersec(DL_GETPSIZE(p), lp)) {
+		sz = blockpersec(DL_GETPSIZE(p), lp) - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
@@ -346,7 +346,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp)) /
 	    lp->d_secpercyl;
 	return (1);
 
@@ -417,7 +417,7 @@ disklabel_om_to_bsd(cp, lp)
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	lp->d_secpercyl  = secpercyl;
-	lp->d_secperunit = secpercyl * sl->sl_ncylinders;
+	DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
 
 	lp->d_sparespercyl = 0;				/* no way to know */
 	lp->d_acylinders   = sl->sl_acylinders;
@@ -436,9 +436,9 @@ disklabel_om_to_bsd(cp, lp)
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
-		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
-		npp->p_size = spp->sdkp_nsectors;
-		if (npp->p_size == 0)
+		DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
+		DL_SETPSIZE(npp, spp->sdkp_nsectors);
+		if (DL_GETPSIZE(npp) == 0)
 			npp->p_fstype = FS_UNUSED;
 		else {
 			/* Partition has non-zero size.  Set type, etc. */
@@ -464,7 +464,7 @@ disklabel_om_to_bsd(cp, lp)
 	 * UniOS rootfs sits on part c which don't begin at sect 0,
 	 * and impossible to mount.  Thus, make it usable as part b.
 	 */
-	if (sl->sl_rpm == 0 && lp->d_partitions[2].p_offset != 0) {
+	if (sl->sl_rpm == 0 && DL_GETPOFFSET(&lp->d_partitions[2]) != 0) {
 		lp->d_partitions[1] = lp->d_partitions[2];
 		lp->d_partitions[1].p_fstype = FS_BSDFFS;
 	}
@@ -513,8 +513,8 @@ disklabel_bsd_to_om(lp, cp)
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
 
-		spp->sdkp_cyloffset = npp->p_offset;	/* UniOS */
-		spp->sdkp_nsectors = npp->p_size;
+		spp->sdkp_cyloffset = DL_GETPOFFSET(npp);	/* UniOS */
+		spp->sdkp_nsectors = DL_GETPSIZE(npp);
 	}
 	sl->sl_magic = SUN_DKMAGIC;
 

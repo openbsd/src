@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.35 2007/04/28 12:32:13 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.36 2007/06/05 00:38:22 deraadt Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -600,7 +600,7 @@ raidsize(dev_t dev)
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = lp->d_partitions[part].p_size *
+		size = DL_GETPSIZE(&lp->d_partitions[part]) *
 		    (lp->d_secsize / DEV_BSIZE);
 
 	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curproc))
@@ -1758,7 +1758,7 @@ raidstart(RF_Raid_t *raidPtr)
 		blocknum = bp->b_blkno;
 		if (DISKPART(bp->b_dev) != RAW_PART) {
 			pp = &rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-			blocknum += pp->p_offset;
+			blocknum += DL_GETPOFFSET(pp);
 		}
 
 		db1_printf(("Blocks: %d, %d\n", (int) bp->b_blkno,
@@ -2096,7 +2096,7 @@ raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs,
 	bzero(lp, sizeof(*lp));
 
 	/* Fabricate a label... */
-	lp->d_secperunit = raidPtr->totalSectors;
+	DL_SETDSIZE(lp, raidPtr->totalSectors);
 	lp->d_secsize = raidPtr->bytesPerSector;
 	lp->d_nsectors = raidPtr->Layout.dataSectorsPerStripe;
 	lp->d_ntracks = 4 * raidPtr->numCol;
@@ -2111,8 +2111,8 @@ raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs,
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
 
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = raidPtr->totalSectors;
+	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+	DL_SETPSIZE(&lp->d_partitions[RAW_PART], raidPtr->totalSectors);
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
@@ -2165,15 +2165,15 @@ raidgetdisklabel(dev_t dev)
 	 * if that is found.
 	 */
 #ifdef	RAIDDEBUG
-	if (lp->d_secperunit != rs->sc_size)
+	if (DL_GETDSIZE(lp) != rs->sc_size)
 		printf("WARNING: %s: "
 		    "total sector size in disklabel (%d) != "
 		    "the size of raid (%ld)\n", rs->sc_xname,
-		    lp->d_secperunit, (long) rs->sc_size);
+		    DL_GETDSIZE(lp), (long) rs->sc_size);
 #endif	/* RAIDDEBUG */
 	for (i = 0; i < lp->d_npartitions; i++) {
 		pp = &lp->d_partitions[i];
-		if (pp->p_offset + pp->p_size > rs->sc_size)
+		if (DL_GETPOFFSET(pp) + DL_GETPSIZE(pp) > rs->sc_size)
 			printf("WARNING: %s: end of partition `%c' "
 			    "exceeds the size of raid (%ld)\n",
 			    rs->sc_xname, 'a' + i, (long) rs->sc_size);
@@ -2844,11 +2844,11 @@ rf_find_raid_components(void)
 				/* Got the label.  Does it look reasonable ? */
 				if (rf_reasonable_label(clabel) &&
 				    (clabel->partitionSize <=
-				     label.d_partitions[i].p_size)) {
+				     DL_GETPSIZE(&label.d_partitions[i]))) {
 #ifdef	RAIDDEBUG
 					printf("Component on: %s%c: %d\n",
 					    dv->dv_xname, 'a'+i,
-					    label.d_partitions[i].p_size);
+					    DL_GETPSIZE(&label.d_partitions[i]));
 					rf_print_component_label(clabel);
 #endif	/* RAIDDEBUG */
 					/*

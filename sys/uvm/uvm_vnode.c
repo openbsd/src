@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.48 2007/05/29 21:06:34 thib Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.49 2007/06/05 00:38:24 deraadt Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ uvn_attach(arg, accessprot)
 		if (result == 0) {
 			/* XXX should remember blocksize */
 			used_vnode_size = (u_quad_t)pi.disklab->d_secsize *
-			    (u_quad_t)pi.part->p_size;
+			    (u_quad_t)DL_GETPSIZE(pi.part);
 		}
 	} else {
 		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);

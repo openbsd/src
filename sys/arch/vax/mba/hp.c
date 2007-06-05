@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.16 2007/02/15 00:53:26 krw Exp $ */
+/*	$OpenBSD: hp.c,v 1.17 2007/06/05 00:38:19 deraadt Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -167,7 +167,7 @@ hpattach(parent, self, aux)
 		/*printf(": %s", msg);*/
 	}
 	printf(": %.*s, size = %d sectors\n",
-	    (int)sizeof(dl->d_typename), dl->d_typename, dl->d_secperunit);
+	    (int)sizeof(dl->d_typename), dl->d_typename, DL_GETDSIZE(dl));
 	/*
 	 * check if this was what we booted from.
 	 */
@@ -194,7 +194,7 @@ hpstrategy(bp)
 		goto done;
 
 	bp->b_rawblkno =
-	    bp->b_blkno + lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	    bp->b_blkno + DL_GETPOFFSET(&lp->d_partitions[DISKPART(bp->b_dev)]);
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
 	s = splbio();
@@ -455,7 +455,7 @@ hpsize(dev)
 		return -1;
 
 	sc = hp_cd.cd_devs[unit];
-	size = sc->sc_disk.dk_label->d_partitions[DISKPART(dev)].p_size *
+	size = DL_GETPSIZE(&sc->sc_disk.dk_label->d_partitions[DISKPART(dev)]) *
 	    (sc->sc_disk.dk_label->d_secsize / DEV_BSIZE);
 
 	return size;

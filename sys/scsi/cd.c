@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.126 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.127 2007/06/05 00:38:23 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -603,7 +603,7 @@ cdstart(void *v)
 		    bp->b_blkno / (cd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 		if (DISKPART(bp->b_dev) != RAW_PART) {
 			p = &cd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-			blkno += p->p_offset;
+			blkno += DL_GETPOFFSET(p);
 		}
 		nblks = howmany(bp->b_bcount, cd->sc_dk.dk_label->d_secsize);
 
@@ -1179,7 +1179,7 @@ cdgetdisklabel(dev_t dev, struct cd_softc *cd, struct disklabel *lp,
 	}
 
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
-	lp->d_secperunit = cd->params.disksize;
+	DL_SETDSIZE(lp, cd->params.disksize);
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
 

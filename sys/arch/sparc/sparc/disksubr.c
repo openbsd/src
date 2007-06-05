@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.48 2007/06/02 02:35:27 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.49 2007/06/05 00:38:18 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -87,20 +87,20 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, MAXDISKSIZE);
 	if (lp->d_secpercyl == 0) {
 		msg = "invalid geometry";
 		goto done;
 	}
 	lp->d_npartitions = RAW_PART+1;
 	for (i = 0; i < RAW_PART; i++) {
-		lp->d_partitions[i].p_size = 0;
-		lp->d_partitions[i].p_offset = 0;
+		DL_SETPSIZE(&lp->d_partitions[i], 0);
+		DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	}
-	if (lp->d_partitions[i].p_size == 0)
-		lp->d_partitions[i].p_size = lp->d_secperunit;
-	lp->d_partitions[i].p_offset = 0;
+	if (DL_GETPSIZE(&lp->d_partitions[i]) == 0)
+		DL_SETPSIZE(&lp->d_partitions[i], DL_GETDSIZE(lp));
+	DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	lp->d_bbsize = 8192;
 	lp->d_sbsize = 64*1024;		/* XXX ? */
 
@@ -225,7 +225,8 @@ setdisklabel(olp, nlp, openmask, clp)
 			return (EBUSY);
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
+		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
+		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
 			return (EBUSY);
 	}
 
@@ -299,15 +300,15 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	/* XXX should also protect bootstrap in first 8K */
 	/* XXX this assumes everything <=LABELSECTOR is label! */
 	/*     But since LABELSECTOR is 0, that's ok for now. */
-	if ((bp->b_blkno + blockpersec(p->p_offset, lp) <= LABELSECTOR) &&
+	if ((bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= LABELSECTOR) &&
 	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0)) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
 	/* beyond partition? */
-	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
-		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+	if (bp->b_blkno + sz > blockpersec(DL_GETPSIZE(p), lp)) {
+		sz = blockpersec(DL_GETPSIZE(p), lp) - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
@@ -323,7 +324,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp)) /
 	    lp->d_secpercyl;
 	return (1);
 bad:
@@ -420,7 +421,7 @@ disklabel_sun_to_bsd(cp, lp)
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	lp->d_secpercyl  = secpercyl;
-	lp->d_secperunit = secpercyl * sl->sl_ncylinders;
+	DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
 	lp->d_version = 1;	/* 48 bit addressing */
 
 	lp->d_sparespercyl = sl->sl_sparespercyl;
@@ -436,9 +437,9 @@ disklabel_sun_to_bsd(cp, lp)
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
-		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
-		npp->p_size = spp->sdkp_nsectors;
-		if (npp->p_size == 0) {
+		DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
+		DL_SETPSIZE(npp, spp->sdkp_nsectors);
+		if (DL_GETPSIZE(npp) == 0) {
 			npp->p_fstype = FS_UNUSED;
 		} else {
 			npp->p_fstype = sun_fstypes[i];
@@ -457,8 +458,8 @@ disklabel_sun_to_bsd(cp, lp)
 	/* Clear "extended" partition info, tentatively */
 	for (i = 0; i < SUNXPART; i++) {
 		npp = &lp->d_partitions[i+8];
-		npp->p_offset = 0;
-		npp->p_size = 0;
+		DL_SETPOFFSET(npp, 0);
+		DL_SETPSIZE(npp, 0);
 		npp->p_fstype = FS_UNUSED;
 	}
 
@@ -472,9 +473,9 @@ disklabel_sun_to_bsd(cp, lp)
 		for (i = 0; i < SUNXPART; i++) {
 			spp = &sl->sl_xpart[i];
 			npp = &lp->d_partitions[i+8];
-			npp->p_offset = spp->sdkp_cyloffset * secpercyl;
-			npp->p_size = spp->sdkp_nsectors;
-			if (npp->p_size == 0) {
+			DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
+			DL_SETPSIZE(npp, spp->sdkp_nsectors);
+			if (DL_GETPSIZE(npp) == 0) {
 				npp->p_fstype = FS_UNUSED;
 				continue;
 			}
@@ -538,10 +539,10 @@ disklabel_bsd_to_sun(lp, cp)
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
 
-		if (npp->p_offset % secpercyl)
+		if (DL_GETPOFFSET(npp) % secpercyl)
 			return (EINVAL);
-		spp->sdkp_cyloffset = npp->p_offset / secpercyl;
-		spp->sdkp_nsectors = npp->p_size;
+		spp->sdkp_cyloffset = DL_GETPOFFSET(npp) / secpercyl;
+		spp->sdkp_nsectors = DL_GETPSIZE(npp);
 	}
 	sl->sl_magic = SUN_DKMAGIC;
 
@@ -553,8 +554,8 @@ disklabel_bsd_to_sun(lp, cp)
 	 * certainly doesn't hurt anything and it's easy to do.
 	 */
 	for (i = 0; i < SUNXPART; i++) {
-		if (lp->d_partitions[i+8].p_offset ||
-		    lp->d_partitions[i+8].p_size)
+		if (DL_GETPOFFSET(&lp->d_partitions[i+8]) ||
+		    DL_GETPSIZE(&lp->d_partitions[i+8]))
 			break;
 	}
 	/* We do need to load the extended table? */
@@ -563,11 +564,11 @@ disklabel_bsd_to_sun(lp, cp)
 		for (i = 0; i < SUNXPART; i++) {
 			spp = &sl->sl_xpart[i];
 			npp = &lp->d_partitions[i+8];
-			if (npp->p_offset % secpercyl)
+			if (DL_GETPOFFSET(npp) % secpercyl)
 				return (EINVAL);
 			sl->sl_xpart[i].sdkp_cyloffset =
-			    npp->p_offset / secpercyl;
-			sl->sl_xpart[i].sdkp_nsectors = npp->p_size;
+			    DL_GETPOFFSET(npp) / secpercyl;
+			sl->sl_xpart[i].sdkp_nsectors = DL_GETPSIZE(npp);
 		}
 		for (i = 0; i < MAXPARTITIONS; i++) {
 			npp = &lp->d_partitions[i];

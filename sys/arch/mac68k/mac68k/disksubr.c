@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.37 2007/06/02 02:35:27 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.38 2007/06/05 00:38:16 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -210,8 +210,8 @@ fixPartTable(partTable, size, base)
 void 
 setPart(struct partmapentry *part, struct disklabel *lp, int fstype, int slot)
 {
-	lp->d_partitions[slot].p_size = part->pmPartBlkCnt;
-	lp->d_partitions[slot].p_offset = part->pmPyPartStart;
+	DL_SETPSIZE(&lp->d_partitions[slot], part->pmPartBlkCnt);
+	DL_SETPOFFSET(&lp->d_partitions[slot], part->pmPyPartStart);
 	lp->d_partitions[slot].p_fstype = fstype;
 	part->pmPartType[0] = '\0';
 }
@@ -372,20 +372,20 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, MAXDISKSIZE);
 	if (lp->d_secpercyl == 0) {
 		msg = "invalid geometry";
 		goto done;
 	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
-		lp->d_partitions[i].p_size = 0;
-		lp->d_partitions[i].p_offset = 0;
+		DL_SETPSIZE(&lp->d_partitions[i], 0);
+		DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	}
-	if (lp->d_partitions[i].p_size == 0)
-		lp->d_partitions[i].p_size = lp->d_secperunit;
-	lp->d_partitions[i].p_offset = 0;
+	if (DL_GETPSIZE(&lp->d_partitions[i]) == 0)
+		DL_SETPSIZE(&lp->d_partitions[i], DL_GETDSIZE(lp));
+	DL_SETPOFFSET(&lp->d_partitions[i], 0);
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -474,7 +474,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 			return (EBUSY);
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
+		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
+		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
 			return (EBUSY);
 		/*
 		 * Copy internally-set partition information
@@ -512,8 +513,8 @@ writedisklabel(dev, strat, lp, osdep)
 	u_int16_t *sbSigp;
 
 	labelpart = DISKPART(dev);
-	if (lp->d_partitions[labelpart].p_offset != 0) {
-		if (lp->d_partitions[0].p_offset != 0)
+	if (DL_GETPOFFSET(&lp->d_partitions[labelpart]) != 0) {
+		if (DL_GETPOFFSET(&lp->d_partitions[0]) != 0)
 			return (EXDEV);	/* not quite right */
 		labelpart = 0;
 	}
@@ -563,7 +564,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = blockpersec(lp->d_partitions[RAW_PART].p_offset, lp) +
+	int labelsector = blockpersec(DL_GETPOFFSET(&lp->d_partitions[RAW_PART]), lp) +
 	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
@@ -574,8 +575,8 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* beyond partition? */
-	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
-		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+	if (bp->b_blkno + sz > blockpersec(DL_GETPSIZE(p), lp)) {
+		sz = blockpersec(DL_GETPSIZE(p), lp) - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
@@ -592,9 +593,9 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= labelsector &&
+	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= labelsector &&
 #if LABELSECTOR != 0
-	    bp->b_blkno + blockpersec(p->p_offset, lp) + sz > labelsector &&
+	    bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) + sz > labelsector &&
 #endif /* LABELSECTOR != 0 */
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
@@ -602,7 +603,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp)) /
 	    lp->d_secpercyl;
 	return (1);
 

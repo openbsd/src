@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.44 2007/03/25 10:20:50 pedro Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.45 2007/06/05 00:38:22 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -513,14 +513,14 @@ iso_disklabelspoof(dev, strat, lp)
 	strncpy(lp->d_typename, pri->volume_id, sizeof lp->d_typename);
 	strncpy(lp->d_packname, pri->volume_id+16, sizeof lp->d_packname);
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		lp->d_partitions[i].p_size = 0;
-		lp->d_partitions[i].p_offset = 0;
+		DL_SETPSIZE(&lp->d_partitions[i], 0);
+		DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	}
-	lp->d_partitions[0].p_offset = 0;
-	lp->d_partitions[0].p_size = lp->d_secperunit;
+	DL_SETPOFFSET(&lp->d_partitions[0], 0);
+	DL_SETPSIZE(&lp->d_partitions[0], DL_GETDSIZE(lp));
 	lp->d_partitions[0].p_fstype = FS_ISO9660;
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
 	lp->d_npartitions = RAW_PART + 1;
 	lp->d_bbsize = 8192;		/* fake */

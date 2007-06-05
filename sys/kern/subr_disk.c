@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.46 2007/06/04 22:07:59 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.47 2007/06/05 00:38:23 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -206,20 +206,23 @@ disklabeltokernlabel(struct disklabel *lp)
 			pp->p_sizeh = 0;
 		}
 
-		/* In a V1 label no partition extends past DL_SIZE(lp) - 1. */
-		if (DL_POFFSET(pp) >= DL_DSIZE(lp)) {
+		/* In a V1 label no partition extends past DL_GETSIZE(lp) - 1. */
+		if (DL_GETPOFFSET(pp) > DL_GETDSIZE(lp)) {
 			pp->p_fstype = FS_UNUSED;
-			pp->p_offset = pp->p_offseth = 0;
-			pp->p_size = pp->p_sizeh = 0;
-#ifdef notyet	/* older broken sparc/sparc64 fake cyl-based disklabels fool this */
-		} else if ((DL_POFFSET(pp) + DL_PSIZE(pp)) > DL_DSIZE(lp)) {
+			DL_SETPSIZE(pp, 0);
+			DL_SETPOFFSET(pp, 0);
+#ifdef notyet  /* older broken sparc/sparc64 fake cyl-based disklabels fool this */
+		} else if (DL_GETPOFFSET(pp) + DL_GETPSIZE(pp) > DL_GETDSIZE(lp)) {
 			daddr64_t sz;
 
+			printf("%lld %lld %lld\n",
+			    DL_GETPOFFSET(pp), DL_GETPSIZE(pp),
+			    DL_GETPOFFSET(pp) + DL_GETPSIZE(pp),
+			    DL_GETDSIZE(lp));
 			pp->p_fstype = FS_UNUSED;
-			sz = DL_DSIZE(lp) - DL_POFFSET(pp);
-			pp->p_size = sz & 0xffffffff;
-			pp->p_sizeh = (sz >> 32) & 0xffff;
-#endif /* notyet */
+			sz = DL_GETDSIZE(lp) - DL_GETPOFFSET(pp);
+			DL_SETPSIZE(pp, sz);
+#endif
 		}
 	}
 }
@@ -267,7 +270,7 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 		    bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE);
 	}
 	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
-		sn += lp->d_partitions[part].p_offset;
+		sn += DL_GETPOFFSET(&lp->d_partitions[part]);
 		(*pr)(" (%s%d bn %d; cn %d", dname, unit, sn,
 		    sn / lp->d_secpercyl);
 		sn %= lp->d_secpercyl;
@@ -452,7 +455,7 @@ dk_mountroot(void)
 	(void) (cdevsw[major(rrootdev)].d_close)(rawdev, FREAD,
 	    S_IFCHR, curproc);
 
-	if (dl.d_partitions[part].p_size == 0)
+	if (DL_GETPSIZE(&dl.d_partitions[part]) == 0)
 		panic("root filesystem has size 0");
 	switch (dl.d_partitions[part].p_fstype) {
 #ifdef EXT2FS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.39 2007/06/02 02:35:27 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.40 2007/06/05 00:38:19 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -60,9 +60,9 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
     struct cpu_disklabel *osdep, int wlabel)
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = lp->d_partitions[RAW_PART].p_offset;
-	int maxsz = p->p_size,
-		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int labelsector = DL_GETPOFFSET(&lp->d_partitions[RAW_PART]);
+	int maxsz = DL_GETPSIZE(p);
+	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* avoid division by zero */
 	if (lp->d_secpercyl == 0) {
@@ -71,7 +71,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* overwriting disk label ? */
-	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsector &&
+	if (bp->b_blkno + DL_GETPOFFSET(p) <= LABELSECTOR + labelsector &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
@@ -95,7 +95,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;	
+	bp->b_cylinder = (bp->b_blkno + DL_GETPOFFSET(p)) / lp->d_secpercyl;	
 	return (1);
 
 bad:
@@ -127,20 +127,20 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, MAXDISKSIZE);
 	if (lp->d_secpercyl == 0) {
 		msg = "invalid geometry";
 		goto done;
 	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
-		lp->d_partitions[i].p_size = 0;
-		lp->d_partitions[i].p_offset = 0;
+		DL_SETPSIZE(&lp->d_partitions[i], 0);
+		DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	}
-	if (lp->d_partitions[i].p_size == 0)
-		lp->d_partitions[i].p_size = lp->d_secperunit;
-	lp->d_partitions[i].p_offset = 0;
+	if (DL_GETPSIZE(&lp->d_partitions[i]) == 0)
+		DL_SETPSIZE(&lp->d_partitions[i], DL_GETDSIZE(lp));
+	DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	lp->d_bbsize = 8192;
 	lp->d_sbsize = 64 * 1024;
 
@@ -222,7 +222,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 			return (EBUSY);
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
+		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
+		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
 			return (EBUSY);
 		/*
 		 * Copy internally-set partition information

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.73 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.74 2007/06/05 00:38:20 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -355,7 +355,7 @@ ccdinit(struct ccddevice *ccd, char **cpaths, struct proc *p)
 			maxsecsize =
 			    ((dpart.disklab->d_secsize > maxsecsize) ?
 			    dpart.disklab->d_secsize : maxsecsize);
-			size = dpart.part->p_size;
+			size = DL_GETPSIZE(dpart.part);
 		} else {
 			CCD_DPRINTF(CCDB_FOLLOW | CCDB_INIT,
 			    ("%s: %s: incorrect partition type\n",
@@ -725,7 +725,7 @@ ccdstart(struct ccd_softc *cs, struct buf *bp)
 	bn = bp->b_blkno;
 	if (DISKPART(bp->b_dev) != RAW_PART) {
 		pp = &cs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		bn += pp->p_offset;
+		bn += DL_GETPOFFSET(pp);
 	}
 
 	/*
@@ -1290,7 +1290,7 @@ ccdsize(dev_t dev)
 	if (cs->sc_dkdev.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = cs->sc_dkdev.dk_label->d_partitions[part].p_size;
+		size = DL_GETPSIZE(&cs->sc_dkdev.dk_label->d_partitions[part]);
 
 	if (ccdclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
@@ -1371,7 +1371,7 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
 	bzero(lp, sizeof(*lp));
 	bzero(clp, sizeof(*clp));
 
-	lp->d_secperunit = cs->sc_size;
+	DL_SETDSIZE(lp, cs->sc_size);
 	lp->d_secsize = ccg->ccg_secsize;
 	lp->d_nsectors = ccg->ccg_nsectors;
 	lp->d_ntracks = ccg->ccg_ntracks;

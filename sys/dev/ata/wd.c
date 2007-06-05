@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.60 2007/06/01 00:07:48 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.61 2007/06/05 00:38:20 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -506,15 +506,10 @@ wdstart(void *arg)
 void
 __wdstart(struct wd_softc *wd, struct buf *bp)
 {
-	daddr_t p_offset;
 	daddr_t nblks;
 
-	if (DISKPART(bp->b_dev) != RAW_PART)
-		p_offset =
-		    wd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)].p_offset;
-	else
-		p_offset = 0;
-	wd->sc_wdc_bio.blkno = bp->b_blkno + p_offset;
+	wd->sc_wdc_bio.blkno = bp->b_blkno +
+	    DL_GETPOFFSET(&wd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)]);
 	wd->sc_wdc_bio.blkno /= (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	wd->sc_wdc_bio.blkdone =0;
 	wd->sc_bp = bp;
@@ -777,11 +772,11 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
-	lp->d_secperunit = wd->sc_capacity;
+	DL_SETDSIZE(lp, wd->sc_capacity);
 	lp->d_ntracks = wd->sc_params.atap_heads;
 	lp->d_nsectors = wd->sc_params.atap_sectors;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	lp->d_ncylinders = lp->d_secperunit / lp->d_secpercyl;
+	lp->d_ncylinders = DL_GETDSIZE(lp) / lp->d_secpercyl;
 	if (wd->drvp->ata_vers == -1) {
 		lp->d_type = DTYPE_ST506;
 		strncpy(lp->d_typename, "ST506/MFM/RLL", sizeof lp->d_typename);
@@ -978,7 +973,7 @@ wdsize(dev_t dev)
 		goto exit;
 	}
 
-	size = wd->sc_dk.dk_label->d_partitions[part].p_size *
+	size = DL_GETPSIZE(&wd->sc_dk.dk_label->d_partitions[part]) *
 	    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
 		size = -1;
@@ -1030,11 +1025,11 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	blkno = blkno / (lp->d_secsize / DEV_BSIZE);
 
 	/* Check transfer bounds against partition size. */
-	if ((blkno < 0) || ((blkno + nblks) > lp->d_partitions[part].p_size))
+	if ((blkno < 0) || ((blkno + nblks) > DL_GETPSIZE(&lp->d_partitions[part])))
 		return EINVAL;
 
 	/* Offset block number to start of partition. */
-	blkno += lp->d_partitions[part].p_offset;
+	blkno += DL_GETPOFFSET(&lp->d_partitions[part]);
 
 	/* Recalibrate, if first dump transfer. */
 	if (wddumprecalibrated == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.15 2003/10/26 15:07:26 jmc Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.16 2007/06/05 00:38:22 deraadt Exp $	*/
 /*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t row, RF_RowCol_t col)
 			    dpart.disklab->d_secsize;
 
 			raidPtr->Disks[row][col].numBlocks =
-			    dpart.part->p_size - rf_protectedSectors;
+			    DL_GETPSIZE(dpart.part) - rf_protectedSectors;
 
 			raidPtr->raid_cinfo[row][col].ci_vp = vp;
 			raidPtr->raid_cinfo[row][col].ci_dev = va.va_rdev;

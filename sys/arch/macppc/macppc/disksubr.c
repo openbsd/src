@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.41 2007/06/02 02:35:27 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.42 2007/06/05 00:38:17 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -85,20 +85,20 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize < DEV_BSIZE)
 		lp->d_secsize = DEV_BSIZE;
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, MAXDISKSIZE);
 	if (lp->d_secpercyl == 0) {
 		msg = "invalid geometry";
 		goto done;
 	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
-		lp->d_partitions[i].p_size = 0;
-		lp->d_partitions[i].p_offset = 0;
+		DL_SETPSIZE(&lp->d_partitions[i], 0);
+		DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	}
-	if (lp->d_partitions[i].p_size == 0)
-		lp->d_partitions[i].p_size = lp->d_secperunit;
-	lp->d_partitions[i].p_offset = 0;
+	if (DL_GETPSIZE(&lp->d_partitions[i]) == 0)
+		DL_SETPSIZE(&lp->d_partitions[i], DL_GETDSIZE(lp));
+	DL_SETPOFFSET(&lp->d_partitions[i], 0);
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -152,8 +152,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		}
 		/* currently we ignore all but HFS partitions */
 		if (strcmp(part->pmPartType, PART_TYPE_MAC) == 0) {
-			pp->p_offset = part->pmPyPartStart;
-			pp->p_size = part->pmPartBlkCnt;
+			DL_SETPOFFSET(pp, part->pmPyPartStart);
+			DL_SETPSIZE(pp, part->pmPartBlkCnt);
 			pp->p_fstype = FS_HFS;
 			n++;
 		}
@@ -231,10 +231,9 @@ hfs_done:
 			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
 			/* XXX build a temporary disklabel */
-			lp->d_partitions[0].p_size =
-			    letoh32(dp2->dp_size);
-			lp->d_partitions[0].p_offset =
-			    letoh32(dp2->dp_start) + part_blkno;
+			DL_SETPSIZE(&lp->d_partitions[0], letoh32(dp2->dp_size));
+			DL_SETPOFFSET(&lp->d_partitions[0],
+			    letoh32(dp2->dp_start) + part_blkno);
 			if (lp->d_ntracks == 0)
 				lp->d_ntracks = dp2->dp_ehd + 1;
 			if (lp->d_nsectors == 0)
@@ -253,17 +252,17 @@ donot:
 
 			if (dp2->dp_typ == DOSPTYP_OPENBSD)
 				continue;
-			if (letoh32(dp2->dp_size) > lp->d_secperunit)
+			if (letoh32(dp2->dp_size) > DL_GETDSIZE(lp))
 				continue;
-			if (letoh32(dp2->dp_start) > lp->d_secperunit)
+			if (letoh32(dp2->dp_start) > DL_GETDSIZE(lp))
 				continue;
 			if (letoh32(dp2->dp_size) == 0)
 				continue;
 			if (letoh32(dp2->dp_start))
-				pp->p_offset =
-				    letoh32(dp2->dp_start) + part_blkno;
+				DL_SETPOFFSET(pp,
+				    letoh32(dp2->dp_start) + part_blkno);
 
-			pp->p_size = letoh32(dp2->dp_size);
+			DL_SETPSIZE(pp, letoh32(dp2->dp_size));
 
 			switch (dp2->dp_typ) {
 			case DOSPTYP_UNUSED:
@@ -324,9 +323,9 @@ donot:
 			goto notfat;
 
 		/* Looks like a FAT filesystem. Spoof 'i'. */
-		lp->d_partitions['i' - 'a'].p_size =
-		    lp->d_partitions[RAW_PART].p_size;
-		lp->d_partitions['i' - 'a'].p_offset = 0;
+		DL_SETPSIZE(&lp->d_partitions['i' - 'a'],
+		    DL_GETPSIZE(&lp->d_partitions[RAW_PART]));
+		DL_SETPOFFSET(&lp->d_partitions['i' - 'a'], 0);
 		lp->d_partitions['i' - 'a'].p_fstype = FS_MSDOS;
 	}
 notfat:
@@ -420,7 +419,8 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 			return (EBUSY);
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
+		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
+		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
 			return (EBUSY);
 		/*
 		 * Copy internally-set partition information
@@ -557,7 +557,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = blockpersec(lp->d_partitions[RAW_PART].p_offset, lp) +
+	int labelsector = blockpersec(DL_GETPOFFSET(&lp->d_partitions[RAW_PART]), lp) +
 	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
@@ -568,8 +568,8 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* beyond partition? */
-	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
-		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+	if (bp->b_blkno + sz > blockpersec(DL_GETPSIZE(p), lp)) {
+		sz = blockpersec(DL_GETPSIZE(p), lp) - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
@@ -585,9 +585,9 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* Overwriting disk label? */
-	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= labelsector &&
+	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= labelsector &&
 #if LABELSECTOR != 0
-	    bp->b_blkno + blockpersec(p->p_offset, lp) + sz > labelsector &&
+	    bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) + sz > labelsector &&
 #endif
 	    (bp->b_flags & B_READ) == 0 && !wlabel) {
 		bp->b_error = EROFS;
@@ -595,7 +595,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp)) /
 	    lp->d_secpercyl;
 	return (1);
 

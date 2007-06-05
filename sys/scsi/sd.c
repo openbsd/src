@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.129 2007/06/01 00:07:48 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.130 2007/06/05 00:38:23 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -650,7 +650,7 @@ sdstart(void *v)
 		    bp->b_blkno / (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 		if (DISKPART(bp->b_dev) != RAW_PART) {
 			p = &sd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-			blkno += p->p_offset;
+			blkno += DL_GETPOFFSET(p);
 		}
 		nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize);
 
@@ -1030,7 +1030,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sd, struct disklabel *lp,
 	 */
 	bcopy(packname, lp->d_packname, len);
 
-	lp->d_secperunit = sd->params.disksize;
+	DL_SETDSIZE(lp, sd->params.disksize);
 	lp->d_rpm = sd->params.rot_rate;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
@@ -1161,7 +1161,7 @@ sdsize(dev_t dev)
 	else if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = sd->sc_dk.dk_label->d_partitions[part].p_size *
+		size = DL_GETPSIZE(&sd->sc_dk.dk_label->d_partitions[part]) *
 			(sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && sdclose(dev, 0, S_IFBLK, NULL) != 0)
 		size = -1;
@@ -1227,8 +1227,8 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	totwrt = size / sectorsize;
 	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
 
-	nsects = lp->d_partitions[part].p_size;
-	sectoff = lp->d_partitions[part].p_offset;
+	nsects = DL_GETPSIZE(&lp->d_partitions[part]);
+	sectoff = DL_GETPOFFSET(&lp->d_partitions[part]);
 
 	/* Check transfer bounds against partition size. */
 	if ((blkno < 0) || ((blkno + totwrt) > nsects))

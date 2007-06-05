@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.19 2007/03/13 21:05:24 miod Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.20 2007/06/05 00:38:19 deraadt Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -170,7 +170,7 @@ ra_putonline(ra)
 		ra->ra_state = DK_OPEN;
 	}
 
-	printf(": size %d sectors\n", dl->d_secperunit);
+	printf(": size %lld sectors\n", DL_GETDSIZE(dl));
 
 	return MSCP_DONE;
 }
@@ -444,7 +444,7 @@ rasize(dev)
 		if (ra_putonline(ra) == MSCP_FAILED)
 			return -1;
 
-	return ra->ra_disk.dk_label->d_partitions[DISKPART(dev)].p_size *
+	return DL_GETPSIZE(&ra->ra_disk.dk_label->d_partitions[DISKPART(dev)]) *
 	    (ra->ra_disk.dk_label->d_secsize / DEV_BSIZE);
 }
 
@@ -648,7 +648,7 @@ rxstrategy(bp)
 	 * Determine the size of the transfer, and make sure it is
 	 * within the boundaries of the partition.
 	 */
-	if (bp->b_blkno >= rx->ra_disk.dk_label->d_secperunit) {
+	if (bp->b_blkno >= DL_GETDSIZE(rx->ra_disk.dk_label)) {
 		bp->b_resid = bp->b_bcount;
 		goto done;
 	}
@@ -828,10 +828,10 @@ rronline(usc, mp)
 	rx->ra_state = DK_OPEN;
  
 	dl = rx->ra_disk.dk_label;
-	dl->d_secperunit = (daddr_t)mp->mscp_onle.onle_unitsize;
+	DL_SETDSIZE(dl, (daddr_t)mp->mscp_onle.onle_unitsize);
 
 	if (dl->d_secpercyl) {
-		dl->d_ncylinders = dl->d_secperunit/dl->d_secpercyl;
+		dl->d_ncylinders = DL_GETDSIZE(dl) / dl->d_secpercyl;
 		dl->d_type = DTYPE_MSCP;
 		dl->d_rpm = 3600;
 	} else {
@@ -870,9 +870,10 @@ rrmakelabel(dl, type)
 	dl->d_typename[p++] = n + '0';
 	dl->d_typename[p] = 0;
 	dl->d_npartitions = MAXPARTITIONS;
-	dl->d_partitions[0].p_size = dl->d_partitions[2].p_size =
-	    dl->d_secperunit;
-	dl->d_partitions[0].p_offset = dl->d_partitions[2].p_offset = 0;
+	DL_SETPSIZE(&dl->d_partitions[0], DL_GETDSIZE(dl));
+	DL_SETPSIZE(&dl->d_partitions[2], DL_GETDSIZE(dl));
+	DL_SETPOFFSET(&dl->d_partitions[0], 0);
+	DL_SETPOFFSET(&dl->d_partitions[2], 0);
 	dl->d_interleave = dl->d_headswitch = 1;
 	dl->d_magic = dl->d_magic2 = DISKMAGIC;
 	dl->d_checksum = dkcksum(dl);
@@ -971,7 +972,7 @@ rrfillin(bp, mp)
 #endif
 	lp = rx->ra_disk.dk_label;
 
-	mp->mscp_seq.seq_lbn = lp->d_partitions[part].p_offset + bp->b_blkno;
+	mp->mscp_seq.seq_lbn = DL_GETPOFFSET(&lp->d_partitions[part]) + bp->b_blkno;
 	mp->mscp_unit = rx->ra_hwunit;
 	mp->mscp_seq.seq_bytecount = bp->b_bcount;
 }
