@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_tag.c,v 1.2 2004/06/08 22:02:43 xsa Exp $ */
+/* $OpenBSD: thread_tag.c,v 1.3 2007/06/05 16:30:13 kurt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -12,7 +12,7 @@
 #include "pthread_private.h"
 
 /*
- * A thread tag is a pointer to a structure of this time.  An opaque
+ * A thread tag is a pointer to a structure of this type.  An opaque
  * tag is used to decouple libc from the thread library.
  */
 struct _thread_tag {
@@ -90,7 +90,7 @@ _thread_tag_unlock(void **tag)
 
 /*
  * return the thread specific data for the given tag.   If there
- * is no date for this thread initialize it from 'storage'.
+ * is no data for this thread initialize it from 'storage'.
  * On any error return 'err'.
  */
 void *
