@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.28 2007/05/29 16:56:01 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.29 2007/06/06 20:51:13 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -45,7 +45,6 @@
 #define IPS_D_ERR	0x0001	/* errors */
 #define IPS_D_INFO	0x0002	/* information */
 #define IPS_D_XFER	0x0004	/* transfers */
-#define IPS_D_INTR	0x0008	/* interrupts */
 
 #ifdef IPS_DEBUG
 #define DPRINTF(a, b)	do { if (ips_debug & (a)) printf b; } while (0)
@@ -797,7 +796,7 @@ ips_intr(void *arg)
 
 	/* Process completed commands */
 	while ((status = ips_status(sc)) != 0xffffffff) {
-		DPRINTF(IPS_D_INTR, ("%s: intr status 0x%08x\n",
+		DPRINTF(IPS_D_XFER, ("%s: intr status 0x%08x\n",
 		    sc->sc_dev.dv_xname, status));
 
 		id = IPS_REG_STAT_ID(status);
@@ -923,7 +922,7 @@ ips_morpheus_isintr(struct ips_softc *sc)
 	u_int32_t reg;
 
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OIS);
-	DPRINTF(IPS_D_INTR, ("%s: isintr 0x%08x\n", sc->sc_dev.dv_xname, reg));
+	DPRINTF(IPS_D_XFER, ("%s: isintr 0x%08x\n", sc->sc_dev.dv_xname, reg));
 
 	return (reg & IPS_REG_OIS_PEND);
 }
@@ -941,7 +940,7 @@ ips_morpheus_status(struct ips_softc *sc)
 	u_int32_t reg;
 
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OQP);
-	DPRINTF(IPS_D_INTR, ("%s: status 0x%08x\n", sc->sc_dev.dv_xname, reg));
+	DPRINTF(IPS_D_XFER, ("%s: status 0x%08x\n", sc->sc_dev.dv_xname, reg));
 
 	return (reg);
 }
