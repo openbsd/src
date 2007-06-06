@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.69 2007/05/26 17:13:31 jason Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.70 2007/06/06 14:05:58 henning Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -332,6 +332,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 
 	if (p->if_type != IFT_ETHER)
 		return EPROTONOSUPPORT;
+	if (ifv->ifv_p == p && ifv->ifv_tag == tag) /* noop */
+		return (0);
 	if (ifv->ifv_p)
 		return EBUSY;
 
