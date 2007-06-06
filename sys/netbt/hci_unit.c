@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.5 2007/06/01 20:29:54 uwe Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.6 2007/06/06 21:37:08 uwe Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/workq.h>
 
 #include <net/netisr.h>
 
@@ -65,8 +64,6 @@ int hci_scorxq_max = 50;
 void hci_enable_task(void *, void *);
 void hci_intr(void *);
 
-struct workq *hci_workq;
-
 void
 hci_attach(struct hci_unit *unit)
 {
@@ -86,13 +83,6 @@ hci_attach(struct hci_unit *unit)
 	LIST_INIT(&unit->hci_memos);
 
 	TAILQ_INSERT_TAIL(&hci_unit_list, unit, hci_next);
-
-	/* XXX enable HCI by default until we have userland tools */
-	if (hci_workq == NULL)
-		hci_workq = workq_create("hci_enable", 1);
-	if (hci_workq != NULL)
-		(void)workq_add_task(hci_workq, 0,
-		    hci_enable_task, unit, NULL);
 }
 
 void
