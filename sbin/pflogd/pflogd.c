@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.44 2007/06/06 09:40:48 henning Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -605,7 +605,7 @@ main(int argc, char **argv)
 
 	/* does interface exist */
 	if (!if_exists(interface)) {
-		warn(1, "Failed to initialize: %s", interface);
+		warn("Failed to initialize: %s", interface);
 		logmsg(LOG_ERR, "Failed to initialize: %s", interface);
 		logmsg(LOG_ERR, "Exiting, init failure");
 		exit(1);
