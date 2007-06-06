@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.28 2005/10/12 06:50:42 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.29 2007/06/06 19:15:33 pyr Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ void    reset(int, char **);
 void	restart(int, char **);
 void	rmthelp(int, char **);
 void	rmtstatus(int, char **);
-int	ruserpass(const char *, char **, char **, char **);
 void    sendrequest(const char *, const char *, const char *, int);
 void	setascii(int, char **);
 void	setbell(int, char **);
@@ -189,6 +188,10 @@ void	syst(int, char **);
 int	togglevar(int, char **, int *, const char *);
 void	usage(void);
 void	user(int, char **);
+
+#ifndef SMALL
+int	ruserpass(const char *, char **, char **, char **);
+#endif
 
 
 extern jmp_buf	abortprox;
