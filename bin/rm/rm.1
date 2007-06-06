@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.30 2007/05/31 19:19:15 jmc Exp $
+.\"	$OpenBSD: rm.1,v 1.31 2007/06/06 00:08:57 ray Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 6 2007 $
 .Dt RM 1
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ then
 and then
 .Li 0xff
 again, before they are deleted.
-Files with multiple links will not be overwritten.
+Files with multiple links will be unlinked but not overwritten.
 .It Fl R
 Attempt to remove the file hierarchy rooted in each file argument.
 The

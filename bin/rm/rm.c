@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.20 2006/03/21 20:28:52 otto Exp $	*/
+/*	$OpenBSD: rm.c,v 1.21 2007/06/06 00:08:57 ray Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.20 2006/03/21 20:28:52 otto Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.21 2007/06/06 00:08:57 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -214,8 +214,7 @@ rm_tree(char **argv)
 
 		default:
 			if (Pflag)
-				if (!rm_overwrite(p->fts_accpath, NULL))
-					continue;
+				rm_overwrite(p->fts_accpath, NULL);
 			if (!unlink(p->fts_accpath) ||
 			    (fflag && errno == ENOENT))
 				continue;
@@ -260,8 +259,7 @@ rm_file(char **argv)
 			rval = rmdir(f);
 		else {
 			if (Pflag)
-				if (!rm_overwrite(f, &sb))
-					continue;
+				rm_overwrite(f, &sb);
 			rval = unlink(f);
 		}
 		if (rval && (!fflag || errno != ENOENT)) {
