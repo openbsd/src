@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.60 2007/05/27 00:06:42 ray Exp $	*/
+/*	$OpenBSD: server.c,v 1.61 2007/06/06 00:38:37 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -329,9 +329,8 @@ cvs_server_directory(char *data)
 
 	if (server_currentdir != NULL)
 		xfree(server_currentdir);
-	server_currentdir = xstrdup(p);
+	server_currentdir = p;
 
-	xfree(p);
 	xfree(dir);
 }
 
