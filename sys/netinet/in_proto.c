@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.45 2005/12/23 13:01:23 claudio Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.46 2007/06/06 09:58:12 henning Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -143,11 +143,6 @@
 #include <netinet/in_gif.h>
 #endif
 
-#ifdef IPXIP
-#include <netipx/ipx.h>
-#include <netipx/ipx_ip.h>
-#endif /* IPXIP */
-
 #ifdef INET6
 #include <netinet6/ip6_var.h>
 #endif /* INET6 */
@@ -243,13 +238,6 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif /* PIM */
-#ifdef IPXIP
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR,
-  ipxip_input,	rip_output,	ipxip_ctlinput,	0,
-  rip_usrreq,
-  ipxipprotoinit,0,		0,		0,
-},
-#endif /* IPXIP */
 #ifdef IPSEC
 { SOCK_RAW,   &inetdomain,    IPPROTO_AH,     PR_ATOMIC|PR_ADDR,
   ah4_input,   rip_output,    ah4_ctlinput,   rip_ctloutput,
