@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.71 2007/05/08 21:19:42 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.72 2007/06/06 18:51:19 pvalchev Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -213,7 +213,7 @@ static const struct re_revision {
 	{ RL_HWREV_8110S,	"RTL8110S" },
 	{ RL_HWREV_8169S,	"RTL8169S" },
 	{ RL_HWREV_8169_8110SB,	"RTL8169/8110SB" },
-	{ RL_HWREV_8169_8110SC,	"RTL8169/8110SC" },
+	{ RL_HWREV_8169_8110SCd, "RTL8169/8110SCd" },
 	{ RL_HWREV_8168_SPIN1,	"RTL8168 1" },
 	{ RL_HWREV_8100E_SPIN1,	"RTL8100E 1" },
 	{ RL_HWREV_8101E,	"RTL8101E" },
@@ -222,6 +222,7 @@ static const struct re_revision {
 	{ RL_HWREV_8139CPLUS,	"RTL8139C+" },
 	{ RL_HWREV_8101,	"RTL8101" },
 	{ RL_HWREV_8100,	"RTL8100" },
+	{ RL_HWREV_8169_8110SCe, "RTL8169/8110SCe" },
 
 	{ 0, NULL }
 };
