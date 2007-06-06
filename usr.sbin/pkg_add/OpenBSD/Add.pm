@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.73 2007/06/06 12:32:09 espie Exp $
+# $OpenBSD: Add.pm,v 1.74 2007/06/06 15:31:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -59,11 +59,8 @@ sub validate_plist
 {
 	my ($plist, $state) = @_;
 
-	$state->{totsize} = 0;
-
 	$plist->prepare_for_addition($state, $plist->pkgname);
-	$state->{totsize} = 1 if $state->{totsize} == 0;
-	$plist->{totsize} = $state->{totsize};
+	return $plist->compute_size;
 }
 
 sub record_partial_installation
@@ -309,7 +306,6 @@ sub prepare_for_addition
 		$state->{problems}++;
 		return;
 	}
-	$state->{totsize} += $self->{size} if defined $self->{size};
 	my $s = OpenBSD::Vstat::add($fname, $self->{size}, \$pkgname);
 	return unless defined $s;
 	if ($s->{ro}) {
@@ -430,7 +426,6 @@ sub prepare_for_addition
 		return;
 	}
 	my $size = $self->{copyfrom}->{size};
-	$state->{totsize} += $size if defined $size;
 	my $s = OpenBSD::Vstat::add($fname, $size, \$pkgname);
 	return unless defined $s;
 	if ($s->{ro}) {

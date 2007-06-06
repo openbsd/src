@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.34 2007/06/06 14:09:47 espie Exp $
+# $OpenBSD: Replace.pm,v 1.35 2007/06/06 15:31:06 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -54,6 +54,12 @@ sub unmark_lib
 {
 }
 
+sub separate_element
+{
+	my ($self, $libs, $c1, $c2) = @_;
+	$c2->{$self} = 1;
+}
+
 sub extract_and_progress
 {
 	my ($self, $state, $donesize, $totsize) = @_;
@@ -62,6 +68,22 @@ sub extract_and_progress
 		die "Interrupted";
 	}
 	$self->mark_progress($state->progress, $donesize, $totsize);
+}
+
+package OpenBSD::PackingElement::Meta;
+
+sub separate_element
+{
+	my ($self, $libs, $c1, $c2) = @_;
+	$c1->{$self} = 1;
+	$c2->{$self} = 1;
+}
+
+package OpenBSD::PackingElement::State;
+
+sub separate_element
+{
+	&OpenBSD::PackingElement::Meta::separate_element;
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -164,6 +186,18 @@ sub update_issue($$)
 	return '@unexec '.$self->{expanded};
 }
 
+package OpenBSD::PackingElement::Depend;
+sub separate_element
+{
+	&OpenBSD::PackingElement::separate_element;
+}
+
+package OpenBSD::PackingElement::SpecialFile;
+sub separate_element
+{
+	&OpenBSD::PackingElement::separate_element;
+}
+
 package OpenBSD::PackingElement::Dependency;
 use OpenBSD::Error;
 
@@ -204,6 +238,16 @@ sub mark_lib
 		$libpatterns->{$stem}->{$dir} = [$major, $minor, $libname];
 	}
 	$libs->{$libname} = 1;
+}
+
+sub separate_element
+{
+	my ($self, $libs, $c1, $c2) = @_;
+	if ($libs->{$self->fullname}) {
+		$c1->{$self} = 1;
+	} else {
+		$c2->{$self} = 1;
+	}
 }
 
 sub unmark_lib
@@ -314,21 +358,26 @@ sub is_safe
 	return $state->{okay};
 }
 
+sub split_some_libs
+{
+	my ($plist, $libs) = @_;
+	my $c1 = {};
+	my $c2 = {};
+	$plist->separate_element($libs, $c1, $c2);
+	my $p1 = $plist->make_deep_copy($c1);
+	my $p2 = $plist->make_shallow_copy($c2);
+	return ($p1, $p2);
+}
+
 # create a packing-list with only the libraries we want to keep around.
 sub split_libs
 {
 	my ($plist, $to_split) = @_;
 
-	my $items = [];
-
-	my $splitted = OpenBSD::PackingList->new;
+	(my $splitted, $plist) = split_some_libs($plist, $to_split);
 
 	$splitted->set_pkgname(".libs-".$plist->pkgname);
-	if (defined $plist->{conflict}) {
-		for my $item (@{$plist->{conflict}}) {
-			$item->clone->add_object($splitted);
-		}
-	}
+
 	if (defined $plist->{'no-default-conflict'}) {
 		# we conflict with the package we just removed...
 		OpenBSD::PackingElement::Conflict->add($splitted, $plist->pkgname);
@@ -338,19 +387,6 @@ sub split_libs
 		my $stem = OpenBSD::PackageName::splitstem($plist->pkgname);
 		OpenBSD::PackingElement::Conflict->add($splitted, $stem."-*");
 	}
-
-	for my $item (@{$plist->{items}}) {
-		if ($item->isa("OpenBSD::PackingElement::Lib") &&
-		    defined $to_split->{$item->fullname}) {
-		    	$item->clone->add_object($splitted);
-			next;
-		}
-		if ($item->isa("OpenBSD::PackingElement::Cwd")) {
-			$item->clone->add_object($splitted);
-		}
-		push(@$items, $item);
-	}
-	$plist->{items} = $items;
 	return ($plist, $splitted);
 }
 
@@ -391,6 +427,8 @@ sub save_old_libraries
 			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
 			    if $state->{beverbose};
 			($o->{plist}, my $stub_list) = split_libs($o->{plist}, $libs);
+			$o->{totsize} = $o->{plist}->compute_size;
+
 			my $stub_name = $stub_list->pkgname;
 			my $dest = installed_info($stub_name);
 			print "Keeping them in $stub_name\n" if $state->{beverbose};

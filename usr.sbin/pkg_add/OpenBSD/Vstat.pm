@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.34 2007/06/05 23:19:00 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.35 2007/06/06 15:31:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -411,7 +411,7 @@ sub validate_plists
 	my ($self, $state) = @_;
 	$state->{problems} = 0;
 
-	for my $o ($self->older) {
+	for my $o ($self->older_to_do) {
 		require OpenBSD::Delete;
 		$o->{totsize} =
 		    OpenBSD::Delete::validate_plist($o->{plist}, $state);
@@ -448,8 +448,22 @@ sub handle
 	}
 }
 
+package OpenBSD::PackingList;
+sub compute_size
+{
+	my $plist = shift;
+	my $totsize = 0;
+	$plist->visit('compute_size', \$totsize);
+	$totsize = 1 if $totsize == 0;
+	$plist->{totsize} = $totsize;
+}
+
 package OpenBSD::PackingElement;
 sub mark_progress
+{
+}
+
+sub compute_size
 {
 }
 
@@ -460,6 +474,19 @@ sub mark_progress
 	return unless defined $self->{size};
 	$$donesize += $self->{size};
 	$progress->show($$donesize, $totsize);
+}
+
+sub compute_size
+{
+	my ($self, $totsize) = @_;
+
+	$$totsize += $self->{size} if defined $self->{size};
+}
+
+package OpenBSD::PackingElement::Sample;
+sub compute_size
+{
+	&OpenBSD::PackingElement::FileBase::compute_size;
 }
 
 1;

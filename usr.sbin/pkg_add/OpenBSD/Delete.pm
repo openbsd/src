@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.63 2007/06/06 12:32:09 espie Exp $
+# $OpenBSD: Delete.pm,v 1.64 2007/06/06 15:31:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,10 +84,8 @@ sub validate_plist
 {
 	my ($plist, $state) = @_;
 
-	$state->{totsize} = 0;
 	$plist->prepare_for_deletion($state, $plist->pkgname);
-	$state->{totsize} = 1 if $state->{totsize} == 0;
-	$plist->{totsize} = $state->{totsize};
+	return $plist->compute_size;
 }
 
 sub remove_packing_info
@@ -330,7 +328,6 @@ sub prepare_for_deletion
 	my ($self, $state, $pkgname) = @_;
 
 	my $fname = $state->{destdir}.$self->fullname;
-	$state->{totsize} += $self->{size} if defined $self->{size};
 	my $s = OpenBSD::Vstat::remove($fname, $self->{size});
 	return unless defined $s;
 	if ($s->{ro}) {
