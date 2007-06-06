@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.40 2007/06/06 18:06:05 cnst Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.41 2007/06/06 20:14:04 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -2238,7 +2238,11 @@ wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
 	idx = interpolate(pwr, sample[0].power, sample[0].index,
 	    sample[1].power, sample[1].index, 19);
 
-	/* adjust power index based on current temperature */
+	/*-
+	 * Adjust power index based on current temperature:
+	 * - if colder than factory-calibrated: decrease output power
+	 * - if warmer than factory-calibrated: increase output power
+	 */
 	idx -= (sc->temp - group->temp) * 11 / 100;
 
 	/* decrease power for CCK rates (-5dB) */
@@ -2253,7 +2257,7 @@ wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
 	return idx;
 
 #undef interpolate
-#undef fdiv
+#undef fdivround
 }
 
 /*
