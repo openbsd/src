@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.64 2007/06/06 15:31:06 espie Exp $
+# $OpenBSD: Delete.pm,v 1.65 2007/06/06 15:35:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -85,7 +85,6 @@ sub validate_plist
 	my ($plist, $state) = @_;
 
 	$plist->prepare_for_deletion($state, $plist->pkgname);
-	return $plist->compute_size;
 }
 
 sub remove_packing_info
@@ -117,6 +116,7 @@ sub delete_package
 
 	$state->{problems} = 0;
 	validate_plist($plist, $state);
+	$plist->compute_size;
 	Fatal "fatal issues in deinstalling $pkgname"
 	    if $state->{problems};
 	OpenBSD::Vstat::synchronize();

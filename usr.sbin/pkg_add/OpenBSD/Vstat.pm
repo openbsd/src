@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.35 2007/06/06 15:31:06 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.36 2007/06/06 15:35:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -413,14 +413,12 @@ sub validate_plists
 
 	for my $o ($self->older_to_do) {
 		require OpenBSD::Delete;
-		$o->{totsize} =
-		    OpenBSD::Delete::validate_plist($o->{plist}, $state);
+		OpenBSD::Delete::validate_plist($o->{plist}, $state);
 	}
 	$state->{colliding} = [];
 	for my $n ($self->newer) {
 		require OpenBSD::Add;
-		$n->{totsize} =
-		    OpenBSD::Add::validate_plist($n->{plist}, $state);
+		OpenBSD::Add::validate_plist($n->{plist}, $state);
 	}
 	if (@{$state->{colliding}} > 0) {
 		require OpenBSD::CollisionReport;
@@ -435,6 +433,9 @@ sub validate_plists
 		OpenBSD::Error::Fatal "fatal issues in ", $self->print;
 	}
 	OpenBSD::Vstat::synchronize();
+	for my $h ($self->older, $self->newer) {
+		$h->{totsize} = $h->{plist}->compute_size;
+	}
 }
 
 # temporary shortcut

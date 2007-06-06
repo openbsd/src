@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.74 2007/06/06 15:31:06 espie Exp $
+# $OpenBSD: Add.pm,v 1.75 2007/06/06 15:35:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -60,7 +60,6 @@ sub validate_plist
 	my ($plist, $state) = @_;
 
 	$plist->prepare_for_addition($state, $plist->pkgname);
-	return $plist->compute_size;
 }
 
 sub record_partial_installation
