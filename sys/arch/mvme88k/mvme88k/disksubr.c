@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.40 2007/06/05 02:38:37 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.41 2007/06/06 16:42:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -47,12 +47,8 @@ void cputobsdlabel(struct disklabel *, struct cpu_disklabel *);
  */
 
 char *
-readdisklabel(dev, strat, lp, clp, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *clp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg = NULL;
@@ -112,6 +108,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		goto done;
 	}
 #endif
+
 	if (clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC) {
 		msg = "no disk label";
 		goto done;
@@ -138,10 +135,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *clp)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -161,7 +156,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
@@ -182,8 +177,8 @@ setdisklabel(olp, nlp, openmask, clp)
 		}
 	}
 
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
+	nlp->d_checksum = 0;
+	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
 	return (0);
 }
@@ -192,11 +187,8 @@ setdisklabel(olp, nlp, openmask, clp)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	int error;
@@ -249,7 +241,6 @@ writedisklabel(dev, strat, lp, clp)
 	}
 	return (error);
 }
-
 
 int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp,
@@ -307,9 +298,7 @@ bad:
 
 
 void
-bsdtocpulabel(lp, clp)
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	char *tmot = "MOTOROLA";
 	char *id = "M88K";
@@ -380,9 +369,7 @@ bsdtocpulabel(lp, clp)
 }
 
 void
-cputobsdlabel(lp, clp)
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int i;
 

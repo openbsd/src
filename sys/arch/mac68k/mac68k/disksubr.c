@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.38 2007/06/05 00:38:16 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.39 2007/06/06 16:42:06 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -104,9 +104,8 @@ char *read_mac_label(char *, struct disklabel *, struct cpu_disklabel *);
  * Find an entry in the disk label that is unused and return it
  * or -1 if no entry
  */
-int 
-getFreeLabelEntry(lp)
-	struct disklabel *lp;
+int
+getFreeLabelEntry(struct disklabel *lp)
 {
 	int i;
 
@@ -122,9 +121,8 @@ getFreeLabelEntry(lp)
 /*
  * figure out what the type of the given part is and return it
  */
-int 
-whichType(part)
-	struct partmapentry *part;
+int
+whichType(struct partmapentry *part)
 {
 	struct blockzeroblock *bzb;
 
@@ -176,10 +174,7 @@ whichType(part)
  * of part types.
  */
 int
-fixPartTable(partTable, size, base)
-	struct partmapentry *partTable;
-	long size;
-	char *base;
+fixPartTable(struct partmapentry *partTable, long size, char *base)
 {
 	int i;
 	struct partmapentry *pmap;
@@ -207,7 +202,7 @@ fixPartTable(partTable, size, base)
 	return NUM_PARTS_PROBED;
 }
 
-void 
+void
 setPart(struct partmapentry *part, struct disklabel *lp, int fstype, int slot)
 {
 	DL_SETPSIZE(&lp->d_partitions[slot], part->pmPartBlkCnt);
@@ -216,13 +211,9 @@ setPart(struct partmapentry *part, struct disklabel *lp, int fstype, int slot)
 	part->pmPartType[0] = '\0';
 }
 
-int 
-getNamedType(part, num_parts, lp, type, alt, maxslot)
-	struct partmapentry *part;
-	int num_parts;
-	struct disklabel *lp;
-	int type, alt;
-	int *maxslot;
+int
+getNamedType(struct partmapentry *part, int num_parts, struct disklabel *lp,
+    int type, int alt, int *maxslot)
 {
 	struct blockzeroblock *bzb;
 	int i;
@@ -274,7 +265,7 @@ skip:
  *	A: root
  *	B: Swap
  *	C: Whole disk
- * 
+ *
  * AKB -- I added to Mike's original algorithm by searching for a bzbCluster
  *	of zero for root, first.  This allows A/UX to live on cluster 1 and
  *	NetBSD to live on cluster 0--regardless of the actual order on the
@@ -349,7 +340,7 @@ read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
  * routine.  The label must be partly set up before this: secpercyl and
  * anything required in the strategy routine (e.g., sector size) must be
  * filled in before calling us.  Returns null on success and an error
- * string on failure. 
+ * string on failure.
  *
  * This will read sector zero.  If this contains what looks like a valid
  * Macintosh boot sector, we attempt to fill in the disklabel structure.
@@ -357,12 +348,8 @@ read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
  * then we assume that it's a real disklabel and return it.
  */
 char *
-readdisklabel(dev, strat, lp, osdep, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg = NULL;
@@ -444,10 +431,8 @@ done:
  * Check new disk label for sensibility before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -467,7 +452,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
@@ -500,11 +485,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * refuse to write a disklabel if the media has a MacOS signature.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -540,7 +522,7 @@ writedisklabel(dev, strat, lp, osdep)
 			error = EINVAL;
 		goto done;
 	}
-	
+
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_flags = B_BUSY | B_WRITE;

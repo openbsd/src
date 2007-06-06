@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.41 2007/06/05 02:38:37 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.42 2007/06/06 16:42:07 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + DL_GETPOFFSET(p)) / lp->d_secpercyl;	
+	bp->b_cylinder = (bp->b_blkno + DL_GETPOFFSET(p)) / lp->d_secpercyl;
 	return (1);
 
 bad:
@@ -112,12 +112,8 @@ bad:
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
@@ -192,10 +188,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -210,12 +204,12 @@ setdisklabel(olp, nlp, openmask, osdep)
 		*olp = *nlp;
 		return (0);
 	}
-		
+
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
@@ -246,11 +240,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Always allow writing of disk label; even if the disk is unlabeled.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -277,13 +268,12 @@ done:
 	return (error);
 }
 
-/*	
+/*
  * Print out the name of the device; ex. TK50, RA80. DEC uses a common
  * disk type encoding scheme for most of its disks.
- */   
-void  
-disk_printtype(unit, type)
-	int unit, type;
+ */
+void
+disk_printtype(int unit, int type)
 {
 	printf(" drive %d: %c%c", unit, (int)MSCP_MID_CHAR(2, type),
 	    (int)MSCP_MID_CHAR(1, type));
@@ -298,10 +288,7 @@ disk_printtype(unit, type)
  * also map it in.
  */
 void
-disk_reallymapin(bp, map, reg, flag)
-	struct buf *bp;
-	pt_entry_t *map;
-	int reg, flag;
+disk_reallymapin(struct buf *bp, pt_entry_t *map, int reg, int flag)
 {
 	struct proc *p;
 	volatile pt_entry_t *io;

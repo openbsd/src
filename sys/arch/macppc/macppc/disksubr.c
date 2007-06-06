@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.42 2007/06/05 00:38:17 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.43 2007/06/06 16:42:06 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -350,8 +350,7 @@ notfat:
 
 found_disklabel:
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data +
-	        lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -389,8 +388,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *osdep)
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -444,8 +443,8 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
  * XXX cannot handle OpenBSD partitions in extended partitions!
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-    struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct disklabel *dlp;
@@ -481,6 +480,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
+
 	/* read master boot record */
 	bp->b_blkno = DOSBBSECTOR;
 	bp->b_bcount = lp->d_secsize;
@@ -495,8 +495,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bcopy(bp->b_data + DOSPARTOFF, dp, sizeof(dp));
 
 	for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-		if (letoh32(dp2->dp_size) && dp2->dp_typ ==
-		    DOSPTYP_OPENBSD)
+		if (letoh32(dp2->dp_size) && dp2->dp_typ == DOSPTYP_OPENBSD)
 			ourpart = i;
 
 	if (ourpart != -1) {
@@ -521,8 +520,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
-		sizeof(*dlp));
+	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {

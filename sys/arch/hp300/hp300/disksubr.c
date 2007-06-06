@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.31 2007/06/05 02:38:36 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.32 2007/06/06 16:42:06 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -52,12 +52,8 @@
  * string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
@@ -133,10 +129,8 @@ done:
  * Check new disk label for sensibility before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -144,7 +138,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
@@ -174,11 +168,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -260,7 +251,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
-	
+
 	/* Overwriting disk label? */
 	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= labelsector &&
 	    (bp->b_flags & B_READ) == 0 && !wlabel) {

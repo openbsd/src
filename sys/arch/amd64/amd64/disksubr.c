@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.37 2007/06/05 00:38:13 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.38 2007/06/06 16:42:03 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -66,13 +66,13 @@
 bios_diskinfo_t *bios_getdiskinfo(dev_t dev);
 
 char *
-readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-    struct cpu_disklabel *osdep, int spoofonly)
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
+	struct partition *pp;
 	struct disklabel *dlp;
 	bios_diskinfo_t *pdi;
-	struct partition *pp;
 	unsigned long extoff = 0;
 	unsigned int fattest;
 	struct buf *bp = NULL;
@@ -143,7 +143,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		bp->b_flags = B_BUSY | B_READ;
 		bp->b_cylinder = part_blkno / lp->d_secpercyl;
 		(*strat)(bp);
-	     
+
 		/* if successful, wander through dos partition table */
 		if (biowait(bp)) {
 			msg = "dos partition I/O error";
@@ -216,9 +216,9 @@ donot:
 			case DOSPTYP_FAT12:
 			case DOSPTYP_FAT16S:
 			case DOSPTYP_FAT16B:
-			case DOSPTYP_FAT32:
 			case DOSPTYP_FAT32L:
 			case DOSPTYP_FAT16L:
+			case DOSPTYP_FAT32:
 				pp->p_fstype = FS_MSDOS;
 				n++;
 				break;
@@ -269,7 +269,7 @@ donot:
 	}
 notfat:
 
-	/* Don't read the on-disk label if we are in spoofed-only mode. */
+	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
 		goto done;
 
@@ -325,8 +325,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *osdep)
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -380,8 +380,8 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
  * XXX cannot handle OpenBSD partitions in extended partitions!
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
-    struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct disklabel *dlp;

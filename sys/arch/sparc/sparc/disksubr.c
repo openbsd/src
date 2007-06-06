@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.50 2007/06/05 02:38:37 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.51 2007/06/06 16:42:06 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -39,22 +39,18 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <dev/sun/disklabel.h>
+
 #if defined(SUN4)
 #include <machine/oldmon.h>
 #endif
 
 #include "cd.h"
 
-#if MAXPARTITIONS != 16
-#warn beware: Sun disklabel compatibility assumes MAXPARTITIONS == 16
-#endif
-
 static	char *disklabel_sun_to_bsd(char *, struct disklabel *);
 static	int disklabel_bsd_to_sun(struct disklabel *, char *);
-static __inline u_long sun_extended_sum(struct sun_disklabel *);
+static __inline u_int sun_extended_sum(struct sun_disklabel *);
 
 #if NCD > 0
-/* XXX for comparison below. */
 extern void cdstrategy(struct buf *);
 #endif
 
@@ -71,12 +67,8 @@ extern void cdstrategy(struct buf *);
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *clp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
@@ -108,6 +100,23 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	if (spoofonly)
 		goto done;
 
+#if NCD > 0
+	if (strat == cdstrategy) {
+#if defined(CD9660)
+		if (iso_disklabelspoof(dev, strat, lp) == 0) {
+			msg = NULL;
+			goto done;
+		}
+#endif
+#if defined(UDF)
+		if (udf_disklabelspoof(dev, strat, lp) == 0) {
+			msg = NULL;
+			goto done;
+		}
+#endif
+	}
+#endif /* NCD > 0 */
+
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
 
@@ -130,32 +139,14 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		goto done;
 	}
 
-#if NCD > 0
-	if (strat == cdstrategy) {
-#if defined(CD9660)
-		if (iso_disklabelspoof(dev, strat, lp) == 0) {
-			msg = NULL;
-			goto done;
-		}
-#endif
-#if defined(UDF)
-		if (udf_disklabelspoof(dev, strat, lp) == 0) {
-			msg = NULL;
-			goto done;
-		}
-#endif
-	}
-#endif /* NCD > 0 */
-
-	/* Check for a Sun disk label (for PROM compatibility). */
-	slp = (struct sun_disklabel *) clp->cd_block;
+	slp = (struct sun_disklabel *)clp->cd_block;
 	if (slp->sl_magic == SUN_DKMAGIC) {
 		msg = disklabel_sun_to_bsd(clp->cd_block, lp);
 		goto done;
 	}
 
 	/* Check for a native disk label (PROM can not boot it). */
-	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
+	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp)) {
 			msg = "disk label corrupted";
@@ -195,10 +186,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *clp)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -218,7 +207,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
@@ -239,11 +228,8 @@ setdisklabel(olp, nlp, openmask, clp)
  * Current label is already in clp->cd_block[]
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	int error;
@@ -364,23 +350,20 @@ sun_fstypes[16] = {
  * Given a struct sun_disklabel, assume it has an extended partition
  * table and compute the correct value for sl_xpsum.
  */
-static __inline u_long
-sun_extended_sum(sl)
-	struct sun_disklabel *sl;
+static __inline u_int
+sun_extended_sum(struct sun_disklabel *sl)
 {
-	u_long lsum;
-	u_long *xp;
-	u_long *ep;
+	u_int sum, *xp, *ep;
 
-	xp = (u_long *) &sl->sl_xpmag;
-	ep = (u_long *) &sl->sl_xxx1[0];
+	xp = (u_int *)&sl->sl_xpmag;
+	ep = (u_int *)&sl->sl_xxx1[0];
 
-	lsum = 0;
+	sum = 0;
 	for (; xp < ep; xp++)
-		lsum += *xp;
-	return(lsum);
+		sum += *xp;
+	return (sum);
 }
-	
+
 /*
  * Given a SunOS disk label, set lp to a BSD disk label.
  * Returns NULL on success, else an error string.
@@ -388,9 +371,7 @@ sun_extended_sum(sl)
  * The BSD label is cleared out before this is called.
  */
 static char *
-disklabel_sun_to_bsd(cp, lp)
-	char *cp;
-	struct disklabel *lp;
+disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -507,9 +488,7 @@ disklabel_sun_to_bsd(cp, lp)
  * Returns zero or error code.
  */
 static int
-disklabel_bsd_to_sun(lp, cp)
-	struct disklabel *lp;
-	char *cp;
+disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -603,9 +582,7 @@ disklabel_bsd_to_sun(lp, cp)
  * Return -1 if not found.
  */
 int
-isbad(bt, cyl, trk, sec)
-	struct dkbad *bt;
-	int cyl, trk, sec;
+isbad(struct dkbad *bt, int cyl, int trk, int sec)
 {
 	int i;
 	long blk, bblk;

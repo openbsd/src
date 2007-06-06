@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.29 2007/06/05 02:38:37 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.30 2007/06/06 16:42:06 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -37,22 +37,17 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-
+#include <machine/cpu.h>
+#include <machine/autoconf.h>
 #include <dev/sun/disklabel.h>
 
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
-
 #include <dev/sbus/sbusvar.h>
+
 #include "cd.h"
 
 static	char *disklabel_sun_to_bsd(char *, struct disklabel *);
 static	int disklabel_bsd_to_sun(struct disklabel *, char *);
 static __inline u_int sun_extended_sum(struct sun_disklabel *);
-
-extern struct device *bootdv;
 
 #if NCD > 0
 extern void cdstrategy(struct buf *);
@@ -71,12 +66,8 @@ extern void cdstrategy(struct buf *);
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *clp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
@@ -133,7 +124,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_BUSY | B_READ;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -147,14 +138,14 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		goto done;
 	}
 
-	slp = (struct sun_disklabel *) clp->cd_block;
+	slp = (struct sun_disklabel *)clp->cd_block;
 	if (slp->sl_magic == SUN_DKMAGIC) {
 		msg = disklabel_sun_to_bsd(clp->cd_block, lp);
 		goto done;
 	}
 
 	/* Check for a native disk label (PROM can not boot it). */
-	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
+	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp)) {
 			msg = "disk label corrupted";
@@ -166,7 +157,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	}
 
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == NULL) {
+	if (iso_disklabelspoof(dev, strat, lp) == 0) {
 		msg = NULL;
 		goto done;
 	}
@@ -194,10 +185,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *clp)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -217,7 +206,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
@@ -238,16 +227,15 @@ setdisklabel(olp, nlp, openmask, clp)
  * Current label is already in clp->cd_block[]
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	int error;
 
 	error = disklabel_bsd_to_sun(lp, clp->cd_block);
+	if (error)
+		return (error);
 
 #if 0	/* XXX - Allow writing native disk labels? */
 	{
@@ -266,7 +254,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_WRITE;
+	bp->b_flags = B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
 	brelse(bp);
@@ -354,7 +342,7 @@ sun_fstypes[16] = {
 	FS_BSDFFS,	/* m */
 	FS_BSDFFS,	/* n */
 	FS_BSDFFS,	/* o */
-	FS_BSDFFS,	/* p */
+	FS_BSDFFS	/* p */
 };
 
 /*
@@ -362,20 +350,17 @@ sun_fstypes[16] = {
  * table and compute the correct value for sl_xpsum.
  */
 static __inline u_int
-sun_extended_sum(sl)
-	struct sun_disklabel *sl;
+sun_extended_sum(struct sun_disklabel *sl)
 {
-	u_int lsum;
-	u_int *xp;
-	u_int *ep;
+	u_int sum, *xp, *ep;
 
 	xp = (u_int *)&sl->sl_xpmag;
 	ep = (u_int *)&sl->sl_xxx1[0];
 
-	lsum = 0;
+	sum = 0;
 	for (; xp < ep; xp++)
-		lsum += *xp;
-	return(lsum);
+		sum += *xp;
+	return (sum);
 }
 
 /*
@@ -385,9 +370,7 @@ sun_extended_sum(sl)
  * The BSD label is cleared out before this is called.
  */
 static char *
-disklabel_sun_to_bsd(cp, lp)
-	char *cp;
-	struct disklabel *lp;
+disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -504,9 +487,7 @@ disklabel_sun_to_bsd(cp, lp)
  * Returns zero or error code.
  */
 static int
-disklabel_bsd_to_sun(lp, cp)
-	struct disklabel *lp;
-	char *cp;
+disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;

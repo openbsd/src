@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.73 2007/06/05 00:38:12 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.74 2007/06/06 16:42:01 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -57,12 +57,8 @@ char   *readdoslabel(struct buf *, void (*)(struct buf *),
  * Try to read a standard BSD disklabel at a certain sector.
  */
 char *
-readbsdlabel(bp, strat, cyl, sec, off, lp, spoofonly)
-	struct buf *bp;
-	void (*strat)(struct buf *);
-	int cyl, sec, off;
-	struct disklabel *lp;
-	int spoofonly;
+readbsdlabel(struct buf *bp, void (*strat)(struct buf *),
+    int cyl, int sec, int off, struct disklabel *lp, int spoofonly)
 {
 	struct disklabel *dlp;
 	char *msg = NULL;
@@ -124,12 +120,8 @@ readbsdlabel(bp, strat, cyl, sec, off, lp, spoofonly)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg = "no disk label";
@@ -208,14 +200,9 @@ done:
  * MBR is valid.
  */
 char *
-readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
-	struct buf *bp;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int *partoffp;
-	int *cylp;
-	int spoofonly;
+readdoslabel(struct buf *bp, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep,
+    int *partoffp, int *cylp, int spoofonly)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct partition *pp;
@@ -403,10 +390,8 @@ notfat:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -436,7 +421,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	/* XXX missing check if other dos partitions will be overwritten */
 
 	while (openmask != 0) {
-		i = ffs((long)openmask) - 1;
+		i = ffs(openmask) - 1;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
 			return (EBUSY);
@@ -466,11 +451,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	char *msg = "no disk label";
 	struct buf *bp;

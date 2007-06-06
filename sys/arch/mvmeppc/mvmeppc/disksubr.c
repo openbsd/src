@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.38 2007/06/05 00:38:17 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.39 2007/06/06 16:42:06 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -63,12 +63,8 @@
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct partition *pp;
@@ -123,7 +119,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		bp->b_flags = B_BUSY | B_READ;
 		bp->b_cylinder = part_blkno / lp->d_secpercyl;
 		(*strat)(bp);
-	     
+
 		/* if successful, wander through dos partition table */
 		if (biowait(bp)) {
 			msg = "dos partition I/O error";
@@ -304,10 +300,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -361,11 +355,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * XXX cannot handle OpenBSD partitions in extended partitions!
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct disklabel *dlp;

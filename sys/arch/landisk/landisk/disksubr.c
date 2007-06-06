@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 2007/06/05 00:38:16 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 2007/06/06 16:42:06 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -60,12 +60,8 @@
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct partition *pp;
@@ -90,7 +86,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		DL_SETPSIZE(&lp->d_partitions[i], 0);
-		DL_SETPSIZE(&lp->d_partitions[i], 0);
+		DL_SETPOFFSET(&lp->d_partitions[i], 0);
 	}
 	if (DL_GETPSIZE(&lp->d_partitions[i]) == 0)
 		DL_SETPSIZE(&lp->d_partitions[i], DL_GETDSIZE(lp));
@@ -120,7 +116,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		bp->b_flags = B_BUSY | B_READ;
 		bp->b_cylinder = part_blkno / lp->d_secpercyl;
 		(*strat)(bp);
-	     
+
 		/* if successful, wander through dos partition table */
 		if (biowait(bp)) {
 			msg = "dos partition I/O error";
@@ -301,10 +297,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -358,11 +352,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * XXX cannot handle OpenBSD partitions in extended partitions!
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct disklabel *dlp;

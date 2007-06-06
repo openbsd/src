@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.16 2007/06/05 02:38:36 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.17 2007/06/06 16:42:06 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  *
  * Credits:
  * This file was based mostly on the i386/disksubr.c file:
- *  	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
+ *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  * The functions: disklabel_sun_to_bsd, disklabel_bsd_to_sun
  * were originally taken from arch/sparc/scsi/sun_disklabel.c
  * (which was written by Theo de Raadt) and then substantially
@@ -112,12 +112,8 @@ int disklabel_bsd_to_om(struct disklabel *, char *);
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp, spoofonly)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
-	int spoofonly;
+readdisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *clp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
@@ -186,7 +182,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
 		if (dkcksum(dlp) == 0) {
-			*lp = *dlp; 	/* struct assignment */
+			*lp = *dlp;	/* struct assignment */
 			msg = NULL;
 			goto done;
 		}
@@ -218,10 +214,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *clp)
 {
 	struct partition *opp, *npp;
 	int i;
@@ -265,11 +259,8 @@ setdisklabel(olp, nlp, openmask, clp)
  * Current label is already in clp->cd_block[]
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -277,7 +268,7 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* implant OpenBSD disklabel at LABELOFFSET. */
 	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-	*dlp = *lp; 	/* struct assignment */
+	*dlp = *lp;	/* struct assignment */
 
 	error = disklabel_bsd_to_om(lp, clp->cd_block);
 	if (error)
@@ -292,7 +283,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_WRITE;
+	bp->b_flags = B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
 	brelse(bp);
@@ -382,9 +373,7 @@ sun_fstypes[8] = {
  * The BSD label is cleared out before this is called.
  */
 char *
-disklabel_om_to_bsd(cp, lp)
-	char *cp;
-	struct disklabel *lp;
+disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -481,9 +470,7 @@ disklabel_om_to_bsd(cp, lp)
  * Returns zero or error code.
  */
 int
-disklabel_bsd_to_om(lp, cp)
-	struct disklabel *lp;
-	char *cp;
+disklabel_bsd_to_om(struct disklabel *lp, char *cp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
