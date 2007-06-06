@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.6 2007/06/06 22:48:00 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.7 2007/06/06 23:18:06 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -48,7 +48,7 @@
 #define SBT_REG_BTMODE	0x20		/* SDIO Bluetooth card mode */
 #define  BTMODE_TYPEB	(1<<0)		/* 1=Type-B, 0=Type-A */
 
-#define SBT_BUFSIZ_HCI	65540
+#define SBT_PKT_BUFSIZ	65540
 #define SBT_RXTRY_MAX	5
 
 struct sbt_softc {
@@ -151,7 +151,7 @@ sbt_attach(struct device *parent, struct device *self, void *aux)
 	/* It may be Type-B, but we use it only in Type-A mode. */
 	printf("%s: SDIO Bluetooth Type-A\n", DEVNAME(sc));
 
-	sc->sc_buf = malloc(SBT_BUFSIZ_HCI, M_DEVBUF,
+	sc->sc_buf = malloc(SBT_PKT_BUFSIZ, M_DEVBUF,
 	    M_NOWAIT | M_CANFAIL);
 	if (sc->sc_buf == NULL) {
 		printf("%s: can't allocate cmd buffer\n", DEVNAME(sc));
@@ -309,8 +309,8 @@ sbt_intr(void *arg)
 	if ((status & ISTAT_INTRD) == 0)
 		return 0;	/* shared SDIO card interrupt? */
 
-	len = SBT_BUFSIZ_HCI;
-	if (sbt_read_packet(sc, sc->sc_buf, &len) != 0) {
+	len = SBT_PKT_BUFSIZ;
+	if (sbt_read_packet(sc, sc->sc_buf, &len) != 0 || len == 0) {
 		printf("sbt_intr: read failed\n");
 		goto eoi;
 	}
@@ -334,9 +334,23 @@ sbt_intr(void *arg)
 
 eoi:
 	if (m != NULL) {
-		DPRINTF(("%s: recv 0x%x packet (%d bytes)\n",
-		    DEVNAME(sc), sc->sc_buf[0], m->m_pkthdr.len));
-		hci_input_event(&sc->sc_unit, m);
+		switch (sc->sc_buf[0]) {
+		case HCI_ACL_DATA_PKT:
+			hci_input_acl(&sc->sc_unit, m);
+			break;
+		case HCI_SCO_DATA_PKT:
+			hci_input_sco(&sc->sc_unit, m);
+			break;
+		case HCI_EVENT_PKT:
+			hci_input_event(&sc->sc_unit, m);
+			break;
+		default:
+			DPRINTF(("%s: recv 0x%x packet (%d bytes)\n",
+			    DEVNAME(sc), sc->sc_buf[0], m->m_pkthdr.len));
+			sc->sc_unit.hci_stats.err_rx++;
+			m_free(m);
+			break;
+		}
 	} else
 		sc->sc_unit.hci_stats.err_rx++;
 
@@ -411,7 +425,7 @@ sbt_start(struct hci_unit *unit, struct ifqueue *q, int xmit)
 		break;
 	}
 	printf("%s: xmit %s packet (%d bytes)\n",
-	    unit->hci_devname, m->m_pkthdr.len);
+	    unit->hci_devname, what, m->m_pkthdr.len);
 #endif
 
 	unit->hci_flags |= xmit;
