@@ -175,9 +175,6 @@ print_sockdom(char *buf, size_t buflen, struct intercept_translate *tl)
 	case LINUX_AF_INET6:
 		what = "AF_INET6";
 		break;
-	case LINUX_AF_IPX:
-		what = "AF_IPX";
-		break;
 	default:
 		snprintf(buf, buflen, "AF_UNKNOWN(%d)", domain);
 		break;

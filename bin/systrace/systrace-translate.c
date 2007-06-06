@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.21 2006/07/02 12:34:15 sturm Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.22 2007/06/06 15:14:49 henning Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -192,15 +192,6 @@ print_sockdom(char *buf, size_t buflen, struct intercept_translate *tl)
 		break;
 	case AF_INET6:
 		what = "AF_INET6";
-		break;
-	case AF_IPX:
-		what = "AF_IPX";
-		break;
-	case AF_ISO:
-		what = "AF_ISO";
-		break;
-	case AF_NS:
-		what = "AF_NS";
 		break;
 	case AF_IMPLINK:
 		what = "AF_IMPLINK";
