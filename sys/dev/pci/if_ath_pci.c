@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.14 2007/04/13 14:44:41 reyk Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.15 2007/06/06 21:41:31 reyk Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -18,10 +18,6 @@
  * 3. Neither the names of the above-listed copyright holders nor the names
  *    of any contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
