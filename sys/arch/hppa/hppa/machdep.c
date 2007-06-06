@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.157 2007/05/27 17:31:56 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.158 2007/06/06 17:15:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1047,10 +1047,10 @@ void
 dumpsys(void)
 {
 	int psize, bytes, i, n;
-	register caddr_t maddr;
-	register daddr_t blkno;
-	register int (*dump)(dev_t, daddr_t, caddr_t, size_t);
-	register int error;
+	caddr_t maddr;
+	daddr64_t blkno;
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
+	int error;
 
 	/* Save registers
 	savectx(&dumppcb); */

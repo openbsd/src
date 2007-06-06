@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.130 2007/06/05 00:38:23 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.131 2007/06/06 17:15:14 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -597,7 +597,8 @@ sdstart(void *v)
 	struct scsi_rw_16 cmd_16;
 	struct scsi_rw cmd_small;
 	struct scsi_generic *cmdp;
-	int blkno, nblks, cmdlen, error;
+	int64_t blkno;
+	int nblks, cmdlen, error;
 	struct partition *p;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart\n"));
@@ -1138,12 +1139,12 @@ sd_interpret_sense(struct scsi_xfer *xs)
 	return (retval);
 }
 
-int
+daddr64_t
 sdsize(dev_t dev)
 {
 	struct sd_softc *sd;
 	int part, omask;
-	int size;
+	int64_t size;
 
 	sd = sdlookup(DISKUNIT(dev));
 	if (sd == NULL)
@@ -1180,14 +1181,14 @@ static int sddoingadump;
  * at offset 'dumplo' into the partition.
  */
 int
-sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+sddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 {
 	struct sd_softc *sd;	/* disk unit to do the I/O */
 	struct disklabel *lp;	/* disk's disklabel */
 	int	unit, part;
 	int	sectorsize;	/* size of a disk sector */
-	int	nsects;		/* number of sectors in partition */
-	int	sectoff;	/* sector offset of partition */
+	daddr64_t	nsects;		/* number of sectors in partition */
+	daddr64_t	sectoff;	/* sector offset of partition */
 	int	totwrt;		/* total number of sectors left to write */
 	int	nwrt;		/* current number of sectors to write */
 	struct scsi_rw_big cmd;	/* write command */

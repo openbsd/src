@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.13 2007/06/05 00:38:19 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.14 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -257,7 +257,7 @@ struct fd_softc {
 	struct timeout sc_motoron_to;
 	struct timeout sc_motoroff_to;
 
-	daddr_t	sc_blkno;	/* starting block number */
+	daddr64_t sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
 	int sc_skip;		/* bytes already transferred */
 	int sc_nblks;		/* number of blocks currently transferring */
@@ -743,9 +743,9 @@ fdstrategy(bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    printf("fdstrategy: b_blkno %lld b_bcount %ld blkno %lld cylin %ld\n",
-		    (long long)bp->b_blkno, bp->b_bcount,
-		    (long long)fd->sc_blkno, bp->b_cylinder);
+	    printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d\n",
+		    bp->b_blkno, bp->b_bcount,
+		    fd->sc_blkno, bp->b_cylinder);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -1446,14 +1446,19 @@ loop:
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
-		{int block;
-		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
-		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n", block, (int)fd->sc_blkno);
+		{
+			daddr64_t block;
+
+			block = (fd->sc_cylin * type->heads + head) *
+			    type->sectrac + sec;
+			if (block != fd->sc_blkno) {
+				printf("fdcintr: block %lld != blkno %d\n",
+				    block, (int)fd->sc_blkno);
 #if defined(FD_DEBUG) && defined(DDB)
-			 Debugger();
+				 Debugger();
 #endif
-		 }}
+			}
+		}
 #endif
 		read = bp->b_flags & B_READ;
 
@@ -1580,7 +1585,7 @@ loop:
 					bp->b_flags & B_READ
 					? "read failed" : "write failed");
 				printf("blkno %lld nblks %d nstat %d tc %d\n",
-				       (long long)fd->sc_blkno, fd->sc_nblks,
+				       fd->sc_blkno, fd->sc_nblks,
 				       fdc->sc_nstat, fdc->sc_tc);
 			}
 #endif
@@ -1802,7 +1807,7 @@ fdsize(dev)
 int
 fddump(dev, blkno, va, size)
 	dev_t dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t size;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.42 2007/06/01 23:47:55 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.43 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -285,7 +285,7 @@ cd9660_read(v)
 	register struct iso_node *ip = VTOI(vp);
 	register struct iso_mnt *imp;
 	struct buf *bp;
-	daddr_t lbn, rablock;
+	daddr64_t lbn, rablock;
 	off_t diff;
 	int error = 0;
 	long size, n, on;

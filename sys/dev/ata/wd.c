@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.61 2007/06/05 00:38:20 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.62 2007/06/06 17:15:13 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -506,7 +506,7 @@ wdstart(void *arg)
 void
 __wdstart(struct wd_softc *wd, struct buf *bp)
 {
-	daddr_t nblks;
+	daddr64_t nblks;
 
 	wd->sc_wdc_bio.blkno = bp->b_blkno +
 	    DL_GETPOFFSET(&wd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)]);
@@ -952,12 +952,12 @@ wdformat(struct buf *bp)
 }
 #endif
 
-int
+daddr64_t
 wdsize(dev_t dev)
 {
 	struct wd_softc *wd;
 	int part, omask;
-	int size;
+	int64_t size;
 
 	WDCDEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
 
@@ -992,7 +992,7 @@ static int wddumpmulti = 1;
  * Dump core after a system crash.
  */
 int
-wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+wddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 {
 	struct wd_softc *wd;	/* disk unit to do the I/O */
 	struct disklabel *lp;   /* disk's disklabel */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdvar.h,v 1.10 2007/04/18 19:06:56 miod Exp $	*/
+/*	$OpenBSD: ccdvar.h,v 1.11 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: ccdvar.h,v 1.11 1996/02/28 01:08:32 thorpej Exp $	*/
 
 /*-
@@ -162,11 +162,11 @@ struct ccdcinfo {
  * 2 starting at offset 5.
  */
 struct ccdiinfo {
-	daddr_t	ii_startblk;	/* starting scaled block # for range */
-	daddr_t	ii_startoff;	/* starting component offset (block #) */
-	int	*ii_index;	/* ordered list of components in range */
-	int	*ii_parity;	/* list of parity shifts */
-	int	ii_ndisk;	/* # of disks range is interleaved over */
+	daddr64_t	ii_startblk;	/* starting scaled block # for range */
+	daddr64_t	ii_startoff;	/* starting component offset (block #) */
+	int		*ii_index;	/* ordered list of components in range */
+	int		*ii_parity;	/* list of parity shifts */
+	int		ii_ndisk;	/* # of disks range is interleaved over */
 };
 
 /*

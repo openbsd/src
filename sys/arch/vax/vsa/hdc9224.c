@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.15 2007/06/05 00:38:19 deraadt Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.16 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -438,7 +438,7 @@ hdstrategy(struct buf *bp)
 	struct hdcsoftc *sc;
 	struct disklabel *lp;
 	int unit, s;
-	daddr_t bn;
+	daddr64_t bn;
 
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > hd_cd.cd_ndevs || (hd = hd_cd.cd_devs[unit]) == NULL) {
@@ -767,7 +767,7 @@ hdwrite(dev_t dev, struct uio *uio, int flag)
  *
  */
 int
-hddump(dev_t dev, daddr_t daddr, caddr_t addr, size_t size)
+hddump(dev_t dev, daddr64_t daddr, caddr_t addr, size_t size)
 {
 	return 0;
 }

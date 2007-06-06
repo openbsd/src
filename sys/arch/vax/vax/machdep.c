@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.91 2007/05/29 20:36:48 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.92 2007/06/06 17:15:13 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -595,8 +595,8 @@ void
 dumpsys()
 {
 	int maj, psize, pg;
-	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	daddr64_t blkno;
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
 	paddr_t maddr;
 	int error;
 	kcore_seg_t *kseg_p;

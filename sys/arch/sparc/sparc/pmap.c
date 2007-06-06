@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.144 2006/06/26 22:23:03 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.145 2007/06/06 17:15:12 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6385,8 +6385,8 @@ pmap_dumpsize()
  */
 int
 pmap_dumpmmu(dump, blkno)
-	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	daddr64_t blkno;
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
 {
 	kcore_seg_t	*ksegp;
 	cpu_kcore_hdr_t	*kcpup;

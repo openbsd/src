@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.42 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.43 2007/06/06 17:15:14 deraadt Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -394,7 +394,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
  *	PGO_SYNCIO: do SYNC I/O (no async)
  *	PGO_PDFREECLUST: pagedaemon: drop cluster on successful I/O
  * => start/stop: if (uobj && !PGO_ALLPAGES) limit targets to this range
- *		  if (!uobj) start is the (daddr_t) of the starting swapblk
+ *		  if (!uobj) start is the (daddr64_t) of the starting swapblk
  * => return state:
  *	1. we return the VM_PAGER status code of the pageout
  *	2. we return with the page queues unlocked
@@ -422,7 +422,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	voff_t start, stop;		/* IN, IN */
 {
 	int result;
-	daddr_t swblk;
+	daddr64_t swblk;
 	struct vm_page **ppsp = *ppsp_ptr;
 	UVMHIST_FUNC("uvm_pager_put"); UVMHIST_CALLED(pdhist);
 
@@ -460,7 +460,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 		 * interested in (in which case the whole cluster gets dropped
 		 * in the event of an error or a sync "done").
 		 */
-		swblk = (daddr_t) start;
+		swblk = (daddr64_t) start;
 		/* ppsp and npages should be ok */
 	}
 
@@ -480,6 +480,7 @@ ReTry:
 		/* object is now unlocked */
 	} else {
 		/* nothing locked */
+		/* XXX daddr64_t -> int */
 		result = uvm_swap_put(swblk, ppsp, *npages, flags);
 		/* nothing locked */
 	}
@@ -535,6 +536,7 @@ ReTry:
 		 */
 
 		if (uobj == NULL && pg != NULL) {
+			/* XXX daddr64_t -> int */
 			int nswblk = (result == VM_PAGER_AGAIN) ? swblk : 0;
 			if (pg->pg_flags & PQ_ANON) {
 				simple_lock(&pg->uanon->an_lock);
@@ -557,8 +559,10 @@ ReTry:
 
 			if (uobj == NULL) {
 				if (pg) {
+					/* XXX daddr64_t -> int */
 					uvm_swap_free(swblk + 1, *npages - 1);
 				} else {
+					/* XXX daddr64_t -> int */
 					uvm_swap_free(swblk, *npages);
 				}
 			}
@@ -575,6 +579,7 @@ ReTry:
 			 * free swslots that we mark bad.
 			 */
 
+			/* XXX daddr64_t -> int */
 			uvm_swap_markbad(swblk, *npages);
 		}
 	}

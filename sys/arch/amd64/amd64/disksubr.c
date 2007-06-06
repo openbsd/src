@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.38 2007/06/06 16:42:03 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.39 2007/06/06 17:15:11 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	unsigned long extoff = 0;
 	unsigned int fattest;
 	struct buf *bp = NULL;
-	daddr_t part_blkno = DOSBBSECTOR;
+	daddr64_t part_blkno = DOSBBSECTOR;
 	dev_t devno;
 	char *msg = NULL;
 	int dospartoff, cyl, i, ourpart = -1;

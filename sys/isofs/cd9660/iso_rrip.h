@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_rrip.h,v 1.4 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: iso_rrip.h,v 1.5 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: iso_rrip.h,v 1.3 1994/06/29 06:32:02 cgd Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@
 typedef struct {
 	struct iso_node	*inop;
 	int		fields;		/* interesting fields in this analysis */
-	daddr_t		iso_ce_blk;	/* block of continuation area */
+	daddr64_t	iso_ce_blk;	/* block of continuation area */
 	off_t		iso_ce_off;	/* offset of continuation area */
 	int		iso_ce_len;	/* length of continuation area */
 	struct iso_mnt	*imp;		/* mount structure */

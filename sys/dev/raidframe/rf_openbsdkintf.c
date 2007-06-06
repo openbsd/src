@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.36 2007/06/05 00:38:22 deraadt Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.37 2007/06/06 17:15:13 deraadt Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -181,7 +181,7 @@ int  raidioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int  raidwrite(dev_t, struct uio *, int);
 int  raidread(dev_t, struct uio *, int);
 void raidstrategy(struct buf *);
-int  raiddump(dev_t, daddr_t, caddr_t, size_t);
+int  raiddump(dev_t, daddr64_t, caddr_t, size_t);
 
 /*
  * Pilfered from ccd.c
@@ -611,7 +611,7 @@ raidsize(dev_t dev)
 }
 
 int
-raiddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+raiddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 {
 	/* Not implemented. */
 	return (ENXIO);
@@ -1719,7 +1719,7 @@ raidstart(RF_Raid_t *raidPtr)
 	RF_RaidAddr_t raid_addr;
 	int retcode;
 	struct partition *pp;
-	daddr_t blocknum;
+	daddr64_t blocknum;
 	int unit;
 	struct raid_softc *rs;
 	int	do_async;
@@ -1761,8 +1761,8 @@ raidstart(RF_Raid_t *raidPtr)
 			blocknum += DL_GETPOFFSET(pp);
 		}
 
-		db1_printf(("Blocks: %d, %d\n", (int) bp->b_blkno,
-			    (int) blocknum));
+		db1_printf(("Blocks: %d, %lld\n", (int) bp->b_blkno,
+			    blocknum));
 
 		db1_printf(("bp->b_bcount = %d\n", (int) bp->b_bcount));
 		db1_printf(("bp->b_resid = %d\n", (int) bp->b_resid));

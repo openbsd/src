@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.9 2007/06/05 00:38:18 deraadt Exp $	*/
+/*	$OpenBSD: presto.c,v 1.10 2007/06/06 17:15:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -174,7 +174,7 @@ presto_attach(struct device *parent, struct device *self, void *args)
  */
 
 int
-prestodump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+prestodump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 {
 	/*
 	 * A dump to nvram is theoretically possible, but its size is

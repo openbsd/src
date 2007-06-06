@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2007/05/29 20:36:48 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.91 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -822,8 +822,8 @@ void
 dumpsys()
 {
 	int psize;
-	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	daddr64_t blkno;
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
 	int error = 0;
 	struct mem_region *mp;
 	extern struct mem_region *mem;
@@ -864,7 +864,7 @@ dumpsys()
 
 	error = pmap_dumpmmu(dump, blkno);
 	blkno += pmap_dumpsize();
-printf("starting dump, blkno %d\n", blkno);
+printf("starting dump, blkno %lld\n", blkno);
 	for (mp = mem; mp->size; mp++) {
 		u_int64_t i = 0, n;
 		paddr_t maddr = mp->start;

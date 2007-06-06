@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.20 2007/06/05 00:38:19 deraadt Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.21 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -110,7 +110,7 @@ void	rastrategy(struct buf *);
 int	raread(dev_t, struct uio *);
 int	rawrite(dev_t, struct uio *);
 int	raioctl(dev_t, int, caddr_t, int, struct proc *);
-int	radump(dev_t, daddr_t, caddr_t, size_t);
+int	radump(dev_t, daddr64_t, caddr_t, size_t);
 int	rasize(dev_t);
 int	ra_putonline(struct ra_softc *);
 
@@ -418,7 +418,7 @@ raioctl(dev, cmd, data, flag, p)
 int
 radump(dev, blkno, va, size)
 	dev_t	dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t	size;
 {
@@ -459,7 +459,7 @@ void	rxstrategy(struct buf *);
 int	rxread(dev_t, struct uio *);
 int	rxwrite(dev_t, struct uio *);
 int	rxioctl(dev_t, int, caddr_t, int, struct proc *);
-int	rxdump(dev_t, daddr_t, caddr_t, size_t);
+int	rxdump(dev_t, daddr64_t, caddr_t, size_t);
 int	rxsize(dev_t);
 
 struct	cfattach rx_ca = {
@@ -730,7 +730,7 @@ rxioctl(dev, cmd, data, flag, p)
 int
 rxdump(dev, blkno, va, size)
 	dev_t dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t size;
 {
@@ -828,7 +828,7 @@ rronline(usc, mp)
 	rx->ra_state = DK_OPEN;
  
 	dl = rx->ra_disk.dk_label;
-	DL_SETDSIZE(dl, (daddr_t)mp->mscp_onle.onle_unitsize);
+	DL_SETDSIZE(dl, mp->mscp_onle.onle_unitsize);
 
 	if (dl->d_secpercyl) {
 		dl->d_ncylinders = DL_GETDSIZE(dl) / dl->d_secpercyl;

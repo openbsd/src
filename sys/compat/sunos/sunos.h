@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos.h,v 1.8 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: sunos.h,v 1.9 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: sunos.h,v 1.8 1996/05/05 16:07:43 veego Exp $	*/
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
@@ -45,7 +45,7 @@ struct sunos_nfs_args {
 
 
 struct sunos_ustat {
-	daddr_t	f_tfree;	/* total free */
+	int32_t	f_tfree;	/* total free */
 	ino_t	f_tinode;	/* total inodes free */
 	char	f_path[6];	/* filsys name */
 	char	f_fpack[6];	/* filsys pack name */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctu.c,v 1.9 2006/01/20 23:27:26 miod Exp $ */
+/*	$OpenBSD: ctu.c,v 1.10 2007/06/06 17:15:13 deraadt Exp $ */
 /*	$NetBSD: ctu.c,v 1.10 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -98,7 +98,7 @@ int	ctuopen(dev_t, int, int, struct proc *);
 int	ctuclose(dev_t, int, int, struct proc *);
 void	ctustrategy(struct buf *);
 int	ctuioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	ctudump(dev_t, daddr_t, caddr_t, size_t);
+int	ctudump(dev_t, daddr64_t, caddr_t, size_t);
 
 static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
 
@@ -240,7 +240,7 @@ ctuioctl(dev, cmd, data, fflag, p)
 int
 ctudump(dev, blkno, va, size)
 	dev_t dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t size;
 {

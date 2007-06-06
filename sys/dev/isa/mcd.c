@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.45 2007/06/05 00:38:21 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.46 2007/06/06 17:15:13 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -94,7 +94,7 @@
 struct mcd_mbx {
 	int		retry, count;
 	struct buf	*bp;
-	daddr_t		blkno;
+	daddr64_t		blkno;
 	int		nblk;
 	int		sz;
 	u_long		skip;
@@ -177,7 +177,7 @@ u_int8_t const __bin2bcd[] = {
 #define	bin2bcd(b)	(__bin2bcd[(b)&0xff])
 
 static void hsg2msf(int, bcd_t *);
-static daddr_t msf2hsg(bcd_t *, int);
+static daddr64_t msf2hsg(bcd_t *, int);
 
 int mcd_playtracks(struct mcd_softc *, struct ioc_play_track *);
 int mcd_playmsf(struct mcd_softc *, struct ioc_play_msf *);
@@ -778,7 +778,7 @@ mcd_get_parms(sc)
 	struct mcd_softc *sc;
 {
 	struct mcd_mbox mbx;
-	daddr_t size;
+	daddr64_t size;
 	int error;
 
 	/* Send volume info command. */
@@ -800,7 +800,7 @@ mcd_get_parms(sc)
 	return 0;
 }
 
-int
+daddr64_t
 mcdsize(dev)
 	dev_t dev;
 {
@@ -812,7 +812,7 @@ mcdsize(dev)
 int
 mcddump(dev, blkno, va, size)
 	dev_t dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t size;
 {
@@ -1101,12 +1101,12 @@ hsg2msf(hsg, msf)
 	M_msf(msf) = bin2bcd(hsg);
 }
 
-static daddr_t
+static daddr64_t
 msf2hsg(msf, relative)
 	bcd_t *msf;
 	int relative;
 {
-	daddr_t blkno;
+	daddr64_t blkno;
 
 	blkno = bcd2bin(M_msf(msf)) * 75 * 60 +
 		bcd2bin(S_msf(msf)) * 75 +
@@ -1454,7 +1454,7 @@ mcd_toc_entries(sc, te)
 		struct cd_toc_entry entries[MCD_MAXTOCS];
 	} data;
 	u_char trk;
-	daddr_t lba;
+	daddr64_t lba;
 	int error, n;
 
 	if (len > sizeof(data.entries) ||
@@ -1574,7 +1574,7 @@ mcd_read_subchannel(sc, ch)
 	int len = ch->data_len;
 	union mcd_qchninfo q;
 	struct cd_sub_channel_info data;
-	daddr_t lba;
+	daddr64_t lba;
 	int error;
 
 	if (sc->debug)

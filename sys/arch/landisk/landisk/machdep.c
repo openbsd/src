@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2007/04/29 18:18:03 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 2007/06/06 17:15:12 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -385,7 +385,7 @@ InitializeBsc(void)
  * Dump the machine-dependent dump header.
  */
 u_int
-cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
+cpu_dump(int (*dump)(dev_t, daddr64_t, caddr_t, size_t), daddr64_t *blknop)
 {
 	extern cpu_kcore_hdr_t cpu_kcore_hdr;
 	char buf[dbtob(1)];

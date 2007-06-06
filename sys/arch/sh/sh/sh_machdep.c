@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.15 2007/05/29 20:36:48 deraadt Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.16 2007/06/06 17:15:12 deraadt Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -403,8 +403,8 @@ void
 dumpsys()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	daddr64_t blkno;
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
 	u_int page = 0;
 	paddr_t dumppa;
 	u_int seg;

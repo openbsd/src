@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_tape.c,v 1.9 2006/03/15 20:04:36 miod Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.10 2007/06/06 17:15:13 deraadt Exp $ */
 /*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -91,7 +91,7 @@ void	mtstrategy(struct buf *);
 int	mtread(dev_t, struct uio *);
 int	mtwrite(dev_t, struct uio *);
 int	mtioctl(dev_t, int, caddr_t, int, struct proc *);
-int	mtdump(dev_t, daddr_t, caddr_t, size_t);
+int	mtdump(dev_t, daddr64_t, caddr_t, size_t);
 int	mtcmd(struct mt_softc *, int, int, int);
 void	mtcmddone(struct device *, struct mscp *);
 int	mt_putonline(struct mt_softc *);
@@ -471,7 +471,7 @@ mtioctl(dev, cmd, data, flag, p)
 int
 mtdump(dev, blkno, va, size)
 	dev_t	dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t	size;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.400 2007/06/04 06:57:56 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.401 2007/06/06 17:15:12 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2493,7 +2493,7 @@ dumpconf(void)
 int
 cpu_dump()
 {
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
 
@@ -2530,8 +2530,8 @@ dumpsys()
 {
 	u_int i, j, npg;
 	int maddr;
-	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	daddr64_t blkno;
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
 	int error;
 	char *str;
 	extern int msgbufmapped;
@@ -2574,7 +2574,7 @@ dumpsys()
 		maddr = ctob(dumpmem[i].start);
 		blkno = dumplo + btodb(maddr) + 1;
 #if 0
-		printf("(%d %ld %d) ", maddr, blkno, npg);
+		printf("(%d %lld %d) ", maddr, blkno, npg);
 #endif
 		for (j = npg; j--; maddr += NBPG, blkno += btodb(NBPG)) {
 
@@ -2583,7 +2583,7 @@ dumpsys()
 				printf("%d ",
 				    (ctob(dumpsize) - maddr) / (1024 * 1024));
 #if 0
-			printf("(%x %d) ", maddr, blkno);
+			printf("(%x %lld) ", maddr, blkno);
 #endif
 			pmap_enter(pmap_kernel(), dumpspace, maddr,
 			    VM_PROT_READ, PMAP_WIRED);

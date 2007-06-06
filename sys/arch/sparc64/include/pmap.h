@@ -173,7 +173,7 @@ void pmap_bootstrap(u_long kernelstart, u_long kernelend, u_int numctx);
 /* SPARC specific? */
 void		pmap_redzone(void);
 int             pmap_dumpsize(void);
-int             pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t);
+int             pmap_dumpmmu(int (*)(dev_t, daddr64_t, caddr_t, size_t), daddr64_t);
 int		pmap_pa_exists(paddr_t);
 struct proc;
 void		switchexit(struct proc *);

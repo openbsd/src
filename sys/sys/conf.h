@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.81 2007/02/06 22:39:13 dlg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.82 2007/06/06 17:15:14 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -90,9 +90,9 @@ struct bdevsw {
 	void	(*d_strategy)(struct buf *bp);
 	int	(*d_ioctl)(dev_t dev, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p);
-	int	(*d_dump)(dev_t dev, daddr_t blkno, caddr_t va,
+	int	(*d_dump)(dev_t dev, daddr64_t blkno, caddr_t va,
 				    size_t size);
-	int	(*d_psize)(dev_t dev);
+	daddr64_t (*d_psize)(dev_t dev);
 	u_int	d_type;
 	/* u_int	d_flags; */
 };
@@ -102,8 +102,8 @@ struct bdevsw {
 extern struct bdevsw bdevsw[];
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n(dev_t, daddr_t, caddr_t, size_t)
-#define	dev_type_size(n)	int n(dev_t)
+#define	dev_type_dump(n)	int n(dev_t, daddr64_t, caddr_t, size_t)
+#define	dev_type_size(n)	daddr64_t n(dev_t)
 
 /* bdevsw-specific initializations */
 #define	dev_size_init(c,n)	(c > 0 ? __CONCAT(n,size) : 0)

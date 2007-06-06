@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.140 2007/05/29 20:36:47 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.141 2007/06/06 17:15:12 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ u_long	get_physical(u_int, u_long *);
 caddr_t	allocsys(caddr_t);
 void	initcpu(void);
 int	cpu_dumpsize(void);
-int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+int	cpu_dump(int (*)(dev_t, daddr64_t, caddr_t, size_t), daddr64_t *);
 void	cpu_init_kcore_hdr(void);
 int	fpu_probe(void);
 
@@ -654,8 +654,8 @@ cpu_dumpsize()
  */
 int
 cpu_dump(dump, blknop)
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
-	daddr_t *blknop;
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
+	daddr64_t *blknop;
 {
 	int buf[dbtob(1) / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
@@ -723,9 +723,9 @@ void
 dumpsys()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	daddr_t blkno;		/* current block to write */
+	daddr64_t blkno;	/* current block to write */
 				/* dump routine */
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
 	int pg;			/* page being dumped */
 	vaddr_t maddr;	/* PA being dumped */
 	int seg;		/* RAM segment being dumped */

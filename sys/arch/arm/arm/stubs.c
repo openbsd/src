@@ -1,4 +1,4 @@
-/*	$OpenBSD: stubs.c,v 1.4 2007/05/29 20:36:47 deraadt Exp $	*/
+/*	$OpenBSD: stubs.c,v 1.5 2007/06/06 17:15:11 deraadt Exp $	*/
 /*	$NetBSD: stubs.c,v 1.14 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ void
 dumpsys()
 {
 	const struct bdevsw *bdev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	int psize;
 	int error;
 	int addr;

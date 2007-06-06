@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.114 2007/05/29 20:36:47 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.115 2007/06/06 17:15:11 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -757,9 +757,9 @@ dumpconf(void)
 void
 dumpsys()
 {
-	daddr_t blkno;		/* current block to write */
+	daddr64_t blkno;	/* current block to write */
 				/* dump routine */
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */

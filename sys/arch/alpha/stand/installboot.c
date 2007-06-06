@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.13 2005/08/01 05:01:35 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.14 2007/06/06 17:15:11 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	long	protosize;
 	struct stat disksb, bootsb;
 	struct disklabel dl;
-	unsigned long partoffset;
+	daddr64_t partoffset;
 #define BBPAD   0x1e0
 	struct bb {
 		char	bb_pad[BBPAD];	/* disklabel lives in here, actually */
@@ -165,8 +165,8 @@ main(int argc, char *argv[])
 	 * into the disk.  If disklabels not supported, assume zero.
 	 */
 	if (ioctl(devfd, DIOCGDINFO, &dl) != -1) {
-		partoffset = dl.d_partitions[minor(bootsb.st_dev) %
-		    getmaxpartitions()].p_offset;
+		partoffset = DL_GETPOFFSET(&dl.d_partitions[minor(bootsb.st_dev) %
+		    getmaxpartitions()]);
 	} else {
 		if (errno != ENOTTY)
 			err(1, "read disklabel: %s", dev);

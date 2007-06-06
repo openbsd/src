@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.32 2007/06/05 00:38:18 deraadt Exp $	*/
+/*	$OpenBSD: xy.c,v 1.33 2007/06/06 17:15:12 deraadt Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -741,7 +741,7 @@ xyclose(dev, flag, fmt, p)
 int
 xydump(dev, blkno, va, size)
 	dev_t dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t size;
 {
@@ -1255,7 +1255,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	int     partno;
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
-	u_long  block;
+	daddr64_t  block;
 	caddr_t dbuf;
 
 	iorq = xysc->xyrq;
@@ -1268,8 +1268,9 @@ xyc_startbuf(xycsc, xysc, bp)
 
 	partno = DISKPART(bp->b_dev);
 #ifdef XYC_DEBUG
-	printf("xyc_startbuf: %s%c: %s block %d\n", xysc->sc_dev.dv_xname,
-	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
+	printf("xyc_startbuf: %s%c: %s block %lld\n",
+	    xysc->sc_dev.dv_xname, 'a' + partno,
+	    (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
 	printf("xyc_startbuf: b_bcount %d, b_data 0x%x\n",
 	    bp->b_bcount, bp->b_data);
 #endif

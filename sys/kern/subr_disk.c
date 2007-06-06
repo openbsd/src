@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.49 2007/06/06 16:49:51 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.50 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
 	int (*pr)(const char *, ...);
 	char partname = 'a' + part;
-	int sn;
+	daddr64_t sn;
 
 	if (pri != LOG_PRINTF) {
 		static const char fmt[] = "";
@@ -260,18 +260,18 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 	    bp->b_flags & B_READ ? "read" : "writ");
 	sn = bp->b_blkno;
 	if (bp->b_bcount <= DEV_BSIZE)
-		(*pr)("%d", sn);
+		(*pr)("%lld", sn);
 	else {
 		if (blkdone >= 0) {
 			sn += blkdone;
-			(*pr)("%d of ", sn);
+			(*pr)("%lld of ", sn);
 		}
-		(*pr)("%d-%d", bp->b_blkno,
+		(*pr)("%lld-%lld", bp->b_blkno,
 		    bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE);
 	}
 	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
 		sn += DL_GETPOFFSET(&lp->d_partitions[part]);
-		(*pr)(" (%s%d bn %d; cn %d", dname, unit, sn,
+		(*pr)(" (%s%d bn %lld; cn %d", dname, unit, sn,
 		    sn / lp->d_secpercyl);
 		sn %= lp->d_secpercyl;
 		(*pr)(" tn %d sn %d)", sn / lp->d_nsectors, sn % lp->d_nsectors);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.26 2007/06/01 23:47:56 deraadt Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.27 2007/06/06 17:15:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -1221,7 +1221,7 @@ udf_bmap_internal(struct unode *up, off_t offset, daddr64_t *sector,
 	void *icb;
 	struct icb_tag *tag;
 	uint32_t icblen = 0;
-	daddr_t lsector;
+	daddr64_t lsector;
 	int ad_offset, ad_num = 0;
 	int i, p_offset;
 

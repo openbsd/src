@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.11 2004/09/24 07:05:44 grange Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.12 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -48,9 +48,9 @@ struct ata_bio {
 #define ATA_LBA48   0x0080 /* transfer uses 48-bit LBA addressing */
     int multi; /* number of blocks to transfer in multi-mode */
     struct disklabel *lp; /* pointer to drive's label info */
-    daddr_t blkno; /* block addr */
-    daddr_t blkdone; /* number of blks transferred */
-    daddr_t nblks; /* number of block currently transfering */
+    daddr64_t blkno; /* block addr */
+    daddr64_t blkdone; /* number of blks transferred */
+    daddr64_t nblks; /* number of block currently transfering */
     int     nbytes; /* number of bytes currently transfering */
     long    bcount; /* total number of bytes */
     char   *databuf; /* data buffer address */
@@ -62,7 +62,7 @@ struct ata_bio {
 #define TIMEOUT   4 /* device timed out */
 #define ERR_NODEV 5 /* device bas been detached */
     u_int8_t r_error; /* copy of error register */
-    daddr_t badsect[127];    /* 126 plus trailing -1 marker */
+    daddr64_t badsect[127];    /* 126 plus trailing -1 marker */
     struct wd_softc *wd;
 };
 

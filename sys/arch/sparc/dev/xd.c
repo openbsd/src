@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.36 2007/06/05 00:38:18 deraadt Exp $	*/
+/*	$OpenBSD: xd.c,v 1.37 2007/06/06 17:15:12 deraadt Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -780,7 +780,7 @@ xdclose(dev, flag, fmt, p)
 int
 xddump(dev, blkno, va, size)
 	dev_t dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t size;
 {
@@ -1410,8 +1410,9 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	}
 	partno = DISKPART(bp->b_dev);
 #ifdef XDC_DEBUG
-	printf("xdc_startbuf: %s%c: %s block %d\n", xdsc->sc_dev.dv_xname,
-	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
+	printf("xdc_startbuf: %s%c: %s block %lld\n",
+	    xdsc->sc_dev.dv_xname, 'a' + partno,
+	    (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
 	printf("xdc_startbuf: b_bcount %d, b_data 0x%x\n",
 	    bp->b_bcount, bp->b_data);
 #endif

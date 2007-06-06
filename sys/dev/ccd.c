@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.74 2007/06/05 00:38:20 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.75 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -173,14 +173,14 @@ void	ccdattach(int);
 
 /* called by biodone() at interrupt time */
 void	ccdiodone(struct buf *);
-int	ccdsize(dev_t);
+daddr64_t	ccdsize(dev_t);
 
 void	ccdstart(struct ccd_softc *, struct buf *);
 void	ccdinterleave(struct ccd_softc *);
 void	ccdintr(struct ccd_softc *, struct buf *);
 int	ccdinit(struct ccddevice *, char **, struct proc *);
 int	ccdlookup(char *, struct proc *p, struct vnode **);
-long	ccdbuffer(struct ccd_softc *, struct buf *, daddr_t, caddr_t,
+long	ccdbuffer(struct ccd_softc *, struct buf *, daddr64_t, caddr_t,
     long, struct ccdbuf **);
 void	ccdgetdisklabel(dev_t, struct ccd_softc *, struct disklabel *,
     struct cpu_disklabel *, int);
@@ -268,7 +268,7 @@ ccdinit(struct ccddevice *ccd, char **cpaths, struct proc *p)
 {
 	struct ccd_softc *cs = &ccd_softc[ccd->ccd_unit];
 	struct ccdcinfo *ci = NULL;
-	size_t size;
+	daddr64_t size;
 	int ix, rpm;
 	struct vnode *vp;
 	struct vattr va;
@@ -468,7 +468,7 @@ ccdinterleave(struct ccd_softc *cs)
 {
 	struct ccdcinfo *ci, *smallci;
 	struct ccdiinfo *ii;
-	daddr_t bn, lbn;
+	daddr64_t bn, lbn;
 	int ix;
 	u_long size;
 
@@ -710,7 +710,7 @@ ccdstart(struct ccd_softc *cs, struct buf *bp)
 	long bcount, rcount;
 	struct ccdbuf **cbpp;
 	caddr_t addr;
-	daddr_t bn;
+	daddr64_t bn;
 	struct partition *pp;
 
 	CCD_DPRINTF(CCDB_FOLLOW, ("ccdstart(%p, %p, %s)\n", cs, bp,
@@ -764,12 +764,12 @@ ccdstart(struct ccd_softc *cs, struct buf *bp)
  * Build a component buffer header.
  */
 long
-ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, caddr_t addr,
+ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr64_t bn, caddr_t addr,
     long bcount, struct ccdbuf **cbpp)
 {
 	struct ccdcinfo *ci, *ci2 = NULL;
 	struct ccdbuf *cbp;
-	daddr_t cbn, cboff, sblk;
+	daddr64_t cbn, cboff, sblk;
 	int ccdisk, ccdisk2, off;
 	long cnt;
 	struct ccdiinfo *ii;
@@ -1269,11 +1269,12 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (0);
 }
 
-int
+daddr64_t
 ccdsize(dev_t dev)
 {
 	struct ccd_softc *cs;
-	int part, size, unit;
+	int part, unit;
+	daddr64_t size;
 
 	unit = DISKUNIT(dev);
 	if (unit >= numccd)
@@ -1299,7 +1300,7 @@ ccdsize(dev_t dev)
 }
 
 int
-ccddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+ccddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */

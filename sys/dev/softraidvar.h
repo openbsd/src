@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.30 2007/06/02 00:53:35 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.31 2007/06/06 17:15:13 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -196,8 +196,8 @@ struct sr_chunk_meta {
 	u_int32_t		scm_status;	/* use bio bioc_disk status */
 	u_int32_t		scm_pad1;
 	char			scm_devname[32];/* /dev/XXXXX */
-	u_quad_t		scm_size;	/* size of partition */
-	u_quad_t		scm_coerced_size; /* coerced size of part */
+	int64_t			scm_size;	/* size of partition */
+	int64_t			scm_coerced_size; /* coerced size of part */
 	struct sr_uuid		scm_uuid;	/* unique identifier */
 } __packed;
 
@@ -210,7 +210,7 @@ struct sr_chunk {
 	/* helper members before metadata makes it onto the chunk  */
 	int			src_meta_ondisk;/* set when meta is on disk */
 	char			src_devname[32];
-	quad_t			src_size;
+	int64_t			src_size;
 
 	SLIST_ENTRY(sr_chunk)	src_link;
 };
@@ -224,7 +224,7 @@ struct sr_vol_meta {
 	u_int32_t		svm_flags;	/* flags */
 #define	SR_VOL_DIRTY		0x01
 	u_int32_t		svm_level;	/* raid level */
-	u_quad_t		svm_size;	/* virtual disk size */
+	int64_t			svm_size;	/* virtual disk size */
 	char			svm_devname[32];/* /dev/XXXXX */
 	char			svm_vendor[8];	/* scsi vendor */
 	char			svm_product[16];/* scsi product */

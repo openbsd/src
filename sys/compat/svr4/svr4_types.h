@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_types.h,v 1.5 1999/10/07 17:23:53 brad Exp $	*/
+/*	$OpenBSD: svr4_types.h,v 1.6 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: svr4_types.h,v 1.11 1998/09/11 12:34:46 mycroft Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ typedef u_long		 svr4_mode_t;
 typedef u_long		 svr4_nlink_t;
 typedef long		 svr4_uid_t;
 typedef long		 svr4_gid_t;
-typedef long		 svr4_daddr_t;
+typedef int32_t		 svr4_daddr_t;
 typedef long		 svr4_pid_t;
 typedef long		 svr4_time_t;
 typedef long		 svr4_blkcnt_t;

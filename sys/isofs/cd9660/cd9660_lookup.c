@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.13 2007/06/01 23:47:55 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.14 2007/06/06 17:15:13 deraadt Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -432,7 +432,7 @@ cd9660_bufatoff(struct iso_node *ip, off_t offset, char **res,
 {
 	struct iso_mnt *imp;
 	struct buf *bp;
-	daddr_t lbn;
+	daddr64_t lbn;
 	int bsize, error;
 	struct vnode *vp = ITOV(ip);
 

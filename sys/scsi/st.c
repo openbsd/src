@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.74 2007/06/01 18:44:48 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.75 2007/06/06 17:15:14 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -2035,7 +2035,7 @@ bad:			free(buf, M_TEMP);
 int
 stdump(dev, blkno, va, size)
 	dev_t dev;
-	int blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t size;
 {

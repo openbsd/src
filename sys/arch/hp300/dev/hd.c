@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.48 2007/06/05 00:38:14 deraadt Exp $	*/
+/*	$OpenBSD: hd.c,v 1.49 2007/06/06 17:15:11 deraadt Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1015,7 +1015,7 @@ hderror(unit)
 	struct hd_softc *rs = hd_cd.cd_devs[unit];
 	struct hd_stat *sp;
 	struct buf *bp;
-	daddr_t hwbn, pbn;
+	daddr64_t hwbn, pbn;
 
 	if (hdstatus(rs)) {
 #ifdef DEBUG
@@ -1214,7 +1214,7 @@ exit:
 	return (error);
 }
 
-int
+daddr64_t
 hdsize(dev)
 	dev_t dev;
 {
@@ -1283,13 +1283,13 @@ static int hddoingadump;	/* simple mutex */
 int
 hddump(dev, blkno, va, size)
 	dev_t dev;
-	daddr_t blkno;
+	daddr64_t blkno;
 	caddr_t va;
 	size_t size;
 {
 	int sectorsize;		/* size of a disk sector */
-	int nsects;		/* number of sectors in partition */
-	int sectoff;		/* sector offset of partition */
+	daddr64_t nsects;	/* number of sectors in partition */
+	daddr64_t sectoff;	/* sector offset of partition */
 	int totwrt;		/* total number of sectors left to write */
 	int nwrt;		/* current number of sectors to write */
 	int unit, part;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.37 2007/06/06 16:42:06 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.38 2007/06/06 17:15:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -211,7 +211,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 	struct partition *pp;
 	unsigned long extoff = 0;
 	unsigned int fattest;
-	daddr_t part_blkno = DOSBBSECTOR;
+	daddr64_t part_blkno = DOSBBSECTOR;
 	char *msg = NULL;
 	int dospartoff, cyl, i, ourpart = -1;
 	int wander = 1, n = 0, loop = 0;
