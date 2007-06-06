@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.31 2007/06/06 17:15:13 deraadt Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.32 2007/06/06 23:06:02 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -135,7 +135,7 @@ struct sr_raidc {
 struct sr_metadata {
 	/* do not change order of ssd_magic, ssd_version & ssd_checksum */
 	u_int64_t		ssd_magic;	/* magic id */
-#define	SR_MAGIC		0x4d4152436372616dllu
+#define	SR_MAGIC		0x4d4152436372616dLLU
 	u_int8_t		ssd_version;	/* meta data version */
 	u_int8_t		ssd_pad1[3];
 	u_int32_t		ssd_flags;	/* flags */

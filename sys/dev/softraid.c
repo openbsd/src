@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.80 2007/06/05 16:30:02 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.81 2007/06/06 23:06:02 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -103,11 +103,11 @@ void			sr_shutdown_discipline(struct sr_discipline *);
 /* work units & ccbs */
 int			sr_alloc_ccb(struct sr_discipline *);
 void			sr_free_ccb(struct sr_discipline *);
-struct sr_ccb 		*sr_get_ccb(struct sr_discipline *);
+struct sr_ccb		*sr_get_ccb(struct sr_discipline *);
 void			sr_put_ccb(struct sr_ccb *);
 int			sr_alloc_wu(struct sr_discipline *);
 void			sr_free_wu(struct sr_discipline *);
-struct sr_workunit 	*sr_get_wu(struct sr_discipline *);
+struct sr_workunit	*sr_get_wu(struct sr_discipline *);
 void			sr_put_wu(struct sr_workunit *);
 
 /* discipline functions */
@@ -222,7 +222,7 @@ sr_minphys(struct buf *bp)
 void
 sr_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size)
 {
-	size_t 			copy_cnt;
+	size_t			copy_cnt;
 
 	DNPRINTF(SR_D_MISC, "sr_copy_internal_data xs: %p size: %d\n",
 	    xs, size);
@@ -247,7 +247,7 @@ sr_alloc_ccb(struct sr_discipline *sd)
 	if (sd->sd_ccb)
 		return (1);
 
-	sd->sd_ccb = malloc(sizeof(struct sr_ccb) * 
+	sd->sd_ccb = malloc(sizeof(struct sr_ccb) *
 	    sd->sd_max_wu * sd->sd_max_ccb_per_wu, M_DEVBUF, M_WAITOK);
 	memset(sd->sd_ccb, 0, sizeof(struct sr_ccb) *
 	    sd->sd_max_wu * sd->sd_max_ccb_per_wu);
@@ -443,7 +443,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	struct sr_workunit	*wu;
 	struct sr_discipline	*sd;
 
-	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: scsibus: %d xs: %p "
+	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: scsibus%d xs: %p "
 	    "flags: %#x\n", DEVNAME(sc), link->scsibus, xs, xs->flags);
 
 	sd = sc->sc_dis[link->scsibus];
@@ -752,7 +752,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	dev_t			*dt;
 	int			i, s, no_chunk, rv = EINVAL, vol;
 	int			no_meta, updatemeta = 0;
-	u_quad_t		vol_size;
+	int64_t			vol_size;
 	struct sr_chunk_head	*cl;
 	struct sr_discipline	*sd = NULL;
 	struct sr_chunk		*ch_entry;
@@ -845,8 +845,9 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		/* fill out all volume metadata */
 		ch_entry = SLIST_FIRST(cl);
 		vol_size = ch_entry->src_meta.scm_coerced_size;
-		DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_createraid: vol_size: %llu\n"
-		    , DEVNAME(sc), vol_size);
+		DNPRINTF(SR_D_IOCTL,
+		    "%s: sr_ioctl_createraid: vol_size: %lld\n",
+		    DEVNAME(sc), vol_size);
 		sd->sd_vol.sv_meta.svm_no_chunk = no_chunk;
 		sd->sd_vol.sv_meta.svm_size = vol_size;
 		sd->sd_vol.sv_meta.svm_status = BIOC_SVONLINE;
@@ -972,7 +973,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	if (dev == NULL)
 		goto unwind;
 
-	DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s on scsibus: %d\n",
+	DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s on scsibus%d\n",
 	    DEVNAME(sc), dev->dv_xname, sd->sd_link.scsibus);
 
 	sc->sc_dis[sd->sd_link.scsibus] = sd;
@@ -1020,7 +1021,7 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 	struct bdevsw		*bdsw;
 	char			*name;
 	int			maj, unit, part, i, error;
-	quad_t			size;
+	daddr64_t		size;
 	dev_t			dev;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_open_chunks(%d)\n", DEVNAME(sc), no_chunk);
@@ -1071,7 +1072,7 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 			bdsw->d_close(dev, FWRITE, S_IFBLK, curproc);
 			goto unwind;
 		}
-		
+
 		/* get partition size */
 		ch_entry->src_size = size = DL_GETPSIZE(&label.d_partitions[part]) -
 		    SR_META_SIZE - SR_META_OFFSET;
@@ -1247,7 +1248,7 @@ sr_create_chunk_meta(struct sr_softc *sc, struct sr_chunk_head *cl)
 	struct sr_uuid		uuid;
 	int			rv = 1, cid = 0;
 	char			*name;
-	u_quad_t		max_chunk_sz = 0, min_chunk_sz;
+	u_int64_t		max_chunk_sz = 0, min_chunk_sz;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_create_chunk_meta\n", DEVNAME(sc));
 
@@ -1722,7 +1723,7 @@ sr_raid_set_vol_state(struct sr_discipline *sd)
 		switch (new_state) {
 		case BIOC_SVOFFLINE:
 		case BIOC_SVREBUILD:
- 		case BIOC_SVDEGRADED: /* can go to the same state */
+		case BIOC_SVDEGRADED: /* can go to the same state */
 			break;
 		default:
 			goto die;
@@ -2032,7 +2033,7 @@ sr_boot_assembly(struct sr_softc *sc)
 		if (majdev == -1)
 			continue;
 
-		bp->b_dev = dev =  MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
+		bp->b_dev = dev = MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART);
 		bdsw = &bdevsw[majdev];
 
 		/* XXX is there  a better way of excluding some devices? */
@@ -2129,7 +2130,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	}
 
 	/*
-	 * XXX poor mans hack that doesn't keep disks in order and does not 
+	 * XXX poor mans hack that doesn't keep disks in order and does not
 	 * roam disks correctly.  replace this with something smarter that
 	 * orders disks by volid, chunkid and uuid.
 	 */
@@ -2152,7 +2153,7 @@ sr_boot_assembly(struct sr_softc *sc)
 				continue;
 
 			/* same uuid? */
-			if (bcmp(&mle->sml_metadata->ssd_uuid, 
+			if (bcmp(&mle->sml_metadata->ssd_uuid,
 			    &mle2->sml_metadata->ssd_uuid,
 			    sizeof(mle->sml_metadata->ssd_uuid)))
 				continue;
@@ -2494,7 +2495,7 @@ sr_print_metadata(struct sr_metadata *sm)
 	DNPRINTF(SR_D_META, "\t\tvol status %d\n", im_sv->svm_status);
 	DNPRINTF(SR_D_META, "\t\tvol flags 0x%x\n", im_sv->svm_flags);
 	DNPRINTF(SR_D_META, "\t\tvol level %d\n", im_sv->svm_level);
-	DNPRINTF(SR_D_META, "\t\tvol size %llu\n", im_sv->svm_size);
+	DNPRINTF(SR_D_META, "\t\tvol size %lld\n", im_sv->svm_size);
 	DNPRINTF(SR_D_META, "\t\tvol name %s\n", im_sv->svm_devname);
 	DNPRINTF(SR_D_META, "\t\tvol vendor %s\n", im_sv->svm_vendor);
 	DNPRINTF(SR_D_META, "\t\tvol prod %s\n", im_sv->svm_product);
@@ -2512,9 +2513,9 @@ sr_print_metadata(struct sr_metadata *sm)
 		    im_sc[ch].scm_status);
 		DNPRINTF(SR_D_META, "\t\t\tchunk name %s\n",
 		    im_sc[ch].scm_devname);
-		DNPRINTF(SR_D_META, "\t\t\tchunk size %llu\n",
+		DNPRINTF(SR_D_META, "\t\t\tchunk size %lld\n",
 		    im_sc[ch].scm_size);
-		DNPRINTF(SR_D_META, "\t\t\tchunk coerced size %llu\n",
+		DNPRINTF(SR_D_META, "\t\t\tchunk coerced size %lld\n",
 		    im_sc[ch].scm_coerced_size);
 		DNPRINTF(SR_D_META, "\t\t\tchunk uuid ");
 		sr_print_uuid(&im_sc[ch].scm_uuid, 1);
@@ -2717,7 +2718,7 @@ ragain:
 		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
 		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
 	}
-	
+
 	s = splbio();
 
 	/* current io failed, restart */
@@ -2772,14 +2773,14 @@ sr_raid1_intr(struct buf *bp)
 	    DEVNAME(sc), bp, xs);
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
-	    " b_flags: 0x%0x block: %llu target: %d\n", DEVNAME(sc),
+	    " b_flags: 0x%0x block: %lld target: %d\n", DEVNAME(sc),
 	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
 	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
 
 	s = splbio();
 
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
-		DNPRINTF(SR_D_INTR, "%s: i/o error on block %llu target: %d\n", 
+		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target: %d\n",
 		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
 		wu->swu_ios_failed++;
 		ccb->ccb_state = SR_CCB_FAILED;
@@ -2788,8 +2789,6 @@ sr_raid1_intr(struct buf *bp)
 			    BIOC_SDOFFLINE);
 		else
 			panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
-		
-
 	} else {
 		ccb->ccb_state = SR_CCB_OK;
 		wu->swu_ios_succeeded++;
@@ -2804,7 +2803,7 @@ sr_raid1_intr(struct buf *bp)
 		/* if all ios failed, retry reads and give up on writes */
 		if (wu->swu_ios_failed == wu->swu_ios_complete) {
 			if (xs->flags & SCSI_DATA_IN) {
-				printf("%s: retrying read on block %llu\n", 
+				printf("%s: retrying read on block %lld\n",
 				    DEVNAME(sc), ccb->ccb_buf.b_blkno);
 				sr_put_ccb(ccb);
 				TAILQ_INIT(&wu->swu_ccb);
@@ -2815,7 +2814,7 @@ sr_raid1_intr(struct buf *bp)
 					goto retry;
 			} else {
 				printf("%s: permanently fail write on block "
-				    "%llu\n", DEVNAME(sc),
+				    "%lld\n", DEVNAME(sc),
 				    ccb->ccb_buf.b_blkno);
 				xs->error = XS_DRIVER_STUFFUP;
 				goto bad;
@@ -3044,7 +3043,6 @@ sr_raidc_rw2(struct cryptop *crp)
 	int			s, rt;
 	daddr64_t		blk;
 
-	
 	DNPRINTF(SR_D_DIS, "%s: sr_raidc_rw2 0x%02x\n", DEVNAME(sd->sd_sc),
 	    xs->cmd->opcode);
 
@@ -3250,7 +3248,7 @@ sr_raidc_intr2(struct cryptop *crp)
 	s = splbio();
 
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
-		printf("%s: i/o error on block %llu\n", DEVNAME(sc),
+		printf("%s: i/o error on block %lld\n", DEVNAME(sc),
 		    ccb->ccb_buf.b_blkno);
 		wu->swu_ios_failed++;
 		ccb->ccb_state = SR_CCB_FAILED;
