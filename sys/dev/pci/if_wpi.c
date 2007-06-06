@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.41 2007/06/06 20:14:04 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.42 2007/06/06 20:33:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -130,7 +130,9 @@ int		wpi_set_txpower(struct wpi_softc *,
 		    struct ieee80211_channel *);
 int		wpi_get_power_index(struct wpi_softc *,
 		    struct wpi_power_group *, struct ieee80211_channel *, int);
+#ifdef notyet
 int		wpi_setup_beacon(struct wpi_softc *, struct ieee80211_node *);
+#endif
 int		wpi_auth(struct wpi_softc *);
 int		wpi_scan(struct wpi_softc *, uint16_t);
 int		wpi_config(struct wpi_softc *);
@@ -2264,6 +2266,7 @@ wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
  * Build a beacon frame that the firmware will broadcast periodically in
  * IBSS or HostAP modes.
  */
+#ifdef notyet
 int
 wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 {
@@ -2332,6 +2335,7 @@ wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
 
 	return 0;
 }
+#endif
 
 int
 wpi_auth(struct wpi_softc *sc)
