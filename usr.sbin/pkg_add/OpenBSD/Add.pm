@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.72 2007/06/04 18:55:47 espie Exp $
+# $OpenBSD: Add.pm,v 1.73 2007/06/06 12:32:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -72,7 +72,7 @@ sub record_partial_installation
 
 	use OpenBSD::PackingElement;
 
-	my $n = $plist->make_copy($h);
+	my $n = $plist->make_shallow_copy($h);
 	my $borked = borked_package($plist->pkgname);
 	$n->set_pkgname($borked);
 	
