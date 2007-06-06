@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.39 2007/06/05 19:49:40 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.40 2007/06/06 18:06:05 cnst Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -323,12 +323,11 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sensor.desc, "temperature 0..285",
 	    sizeof sc->sensor.desc);
 	sc->sensor.type = SENSOR_INTEGER;	/* not in muK! */
-	sc->sensor.status = SENSOR_S_OK;
 	/* temperature invalid until interface is up */
 	sc->sensor.value = 0;
 	sc->sensor.flags = SENSOR_FINVALID;
-	sensordev_install(&sc->sensordev);
 	sensor_attach(&sc->sensordev, &sc->sensor);
+	sensordev_install(&sc->sensordev);
 
 	timeout_set(&sc->calib_to, wpi_calib_timeout, sc);
 
