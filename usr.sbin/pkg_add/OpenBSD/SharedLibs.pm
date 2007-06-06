@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.26 2007/06/04 23:28:01 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.27 2007/06/06 10:56:21 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -186,21 +186,22 @@ sub entry_string
 
 sub why_is_this_bad
 {
-	my ($name, $d1, $d2, $M1, $M2, $m1, $m2, $pkgname) = @_;
-	if ($d1 ne $d2) {
+	my ($base, $name, $d1, $d2, $M1, $M2, $m1, $m2, $pkgname) = @_;
+	if ($d1 ne $d2 && !($pkgname eq 'system' && $d1 eq "$base/lib")) {
 		return "bad directory";
 	}
 	if ($M1 != $M2) {
 		return "bad major";
 	}
-	if ($m1 < $m2) {
-		return "too small minor";
+	if ($m1 > $m2) {
+		return "minor not large enough";
 	}
 	return "$pkgname not reachable";
 }
 
 sub report_problem
 {
+	my $base = $_[0];
 	my ($dir, $name) = normalize_dir_and_spec(@_);
 	my ($stem, $major, $minor) = parse_spec($name);
 
@@ -213,8 +214,9 @@ sub report_problem
 				print "$name: ", 
 				    entry_string($d, $M, $e->[0]),
 				    " (", 
-				    why_is_this_bad($name, $dir, $d, $major, 
-				    	$M, $minor, $e->[0], $e->[1]),
+				    why_is_this_bad($base, $name, $dir, 
+				    	$d, $major, $M, $minor, 
+					$e->[0], $e->[1]),
 				    ")\n";
 			}
 		}
