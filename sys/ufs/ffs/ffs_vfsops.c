@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.107 2007/06/01 06:38:54 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.108 2007/06/06 09:53:16 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1208,8 +1208,6 @@ ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 			goto loop;
 	}
 	if (waitfor != MNT_LAZY) {
-		if (ump->um_mountp->mnt_flag & MNT_SOFTDEP)
-			waitfor = MNT_NOWAIT;
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 			allerror = error;
