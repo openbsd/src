@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.33 2007/06/05 23:11:01 espie Exp $
+# $OpenBSD: Replace.pm,v 1.34 2007/06/06 14:09:47 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -351,7 +351,7 @@ sub split_libs
 		push(@$items, $item);
 	}
 	$plist->{items} = $items;
-	return $splitted;
+	return ($plist, $splitted);
 }
 
 sub adjust_depends_closure
@@ -376,14 +376,13 @@ sub save_old_libraries
 
 	for my $o ($set->older) {
 
-		my $old_plist = $o->{plist};
 		my $oldname = $o->{pkgname};
 		my $libs = {};
 		my $p = {};
 
 		print "Looking for changes in shared libraries\n" 
 		    if $state->{beverbose};
-		$old_plist->mark_lib($libs, $p);
+		$o->{plist}->mark_lib($libs, $p);
 		for my $n ($set->newer) {
 			$n->{plist}->unmark_lib($libs, $p);
 		}
@@ -391,13 +390,13 @@ sub save_old_libraries
 		if (%$libs) {
 			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
 			    if $state->{beverbose};
-			my $stub_list = split_libs($old_plist, $libs);
+			($o->{plist}, my $stub_list) = split_libs($o->{plist}, $libs);
 			my $stub_name = $stub_list->pkgname;
 			my $dest = installed_info($stub_name);
 			print "Keeping them in $stub_name\n" if $state->{beverbose};
 			if ($state->{not}) {
 				$stub_list->to_cache;
-				$old_plist->to_cache;
+				$o->{plist}->to_cache;
 			} else {
 				require OpenBSD::md5;
 
@@ -409,7 +408,7 @@ sub save_old_libraries
 				$f->{ignore} = 1;
 				$f->{md5} = OpenBSD::md5::fromfile($dest.DESC);
 				$stub_list->to_installation;
-				$old_plist->to_installation;
+				$o->{plist}->to_installation;
 			}
 			add_installed($stub_name);
 
