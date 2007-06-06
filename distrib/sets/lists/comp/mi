@@ -3806,9 +3806,6 @@
 ./usr/share/man/cat3/instr.0
 ./usr/share/man/cat3/intrflush.0
 ./usr/share/man/cat3/intro.0
-./usr/share/man/cat3/ipx.0
-./usr/share/man/cat3/ipx_addr.0
-./usr/share/man/cat3/ipx_ntoa.0
 ./usr/share/man/cat3/iruserok.0
 ./usr/share/man/cat3/iruserok_sa.0
 ./usr/share/man/cat3/is_linetouched.0

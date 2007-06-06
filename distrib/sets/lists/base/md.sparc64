@@ -96,7 +96,7 @@
 ./usr/lib/libpanel.so.3.0
 ./usr/lib/libpcap.so.5.0
 ./usr/lib/libperl.so.10.1
-./usr/lib/libpthread.so.7.0
+./usr/lib/libpthread.so.8.0
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/librpcsvc.so.1.0
 ./usr/lib/libsectok.so.6.0
