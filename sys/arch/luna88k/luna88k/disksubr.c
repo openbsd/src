@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.17 2007/06/06 16:42:06 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.18 2007/06/06 22:14:29 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -406,7 +406,8 @@ disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	lp->d_secpercyl  = secpercyl;
-	DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
 
 	lp->d_sparespercyl = 0;				/* no way to know */
 	lp->d_acylinders   = sl->sl_acylinders;
