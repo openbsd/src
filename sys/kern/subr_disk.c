@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.47 2007/06/05 00:38:23 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.48 2007/06/06 16:39:49 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -206,12 +206,12 @@ disklabeltokernlabel(struct disklabel *lp)
 			pp->p_sizeh = 0;
 		}
 
+#ifdef notyet  /* older broken sparc/sparc64 fake cyl-based disklabels fool this */
 		/* In a V1 label no partition extends past DL_GETSIZE(lp) - 1. */
 		if (DL_GETPOFFSET(pp) > DL_GETDSIZE(lp)) {
 			pp->p_fstype = FS_UNUSED;
 			DL_SETPSIZE(pp, 0);
 			DL_SETPOFFSET(pp, 0);
-#ifdef notyet  /* older broken sparc/sparc64 fake cyl-based disklabels fool this */
 		} else if (DL_GETPOFFSET(pp) + DL_GETPSIZE(pp) > DL_GETDSIZE(lp)) {
 			daddr64_t sz;
 
