@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.43 2007/06/04 13:55:24 henning Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.44 2007/06/06 09:40:48 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -199,7 +199,7 @@ if_exists(char *ifname)
 	struct ifreq ifr;
 	struct if_data ifrdat;
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		err(1, "socket");
 	bzero(&ifr, sizeof(ifr));
 	if (strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)) >=
@@ -207,11 +207,11 @@ if_exists(char *ifname)
 			errx(1, "main ifr_name: strlcpy");
 	ifr.ifr_data = (caddr_t)&ifrdat;
 	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1)
-		return (-1);
+		return (0);
 	if (close(s))
 		err(1, "close");
 
-	return (0);
+	return (1);
 }
 
 int
@@ -604,8 +604,8 @@ main(int argc, char **argv)
 	argv += optind;
 
 	/* does interface exist */
-	if (if_exists(interface)) {
-		warn("Failed to initialize: %s", interface);
+	if (!if_exists(interface)) {
+		warn(1, "Failed to initialize: %s", interface);
 		logmsg(LOG_ERR, "Failed to initialize: %s", interface);
 		logmsg(LOG_ERR, "Exiting, init failure");
 		exit(1);
@@ -675,7 +675,7 @@ main(int argc, char **argv)
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS,
 		    phandler, (u_char *)dpcap);
 		if (np < 0) {
-			if (if_exists(interface) == -1) {
+			if (!if_exists(interface) == -1) {
 				logmsg(LOG_NOTICE, "interface %s went away",
 				    interface);
 				ret = -1;
