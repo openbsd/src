@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.48 2007/06/06 16:39:49 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.49 2007/06/06 16:49:51 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -222,8 +222,8 @@ disklabeltokernlabel(struct disklabel *lp)
 			pp->p_fstype = FS_UNUSED;
 			sz = DL_GETDSIZE(lp) - DL_GETPOFFSET(pp);
 			DL_SETPSIZE(pp, sz);
-#endif
 		}
+#endif
 	}
 }
 
