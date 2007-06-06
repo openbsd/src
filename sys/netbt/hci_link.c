@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_link.c,v 1.2 2007/06/01 02:46:11 uwe Exp $	*/
+/*	$OpenBSD: hci_link.c,v 1.3 2007/06/06 18:32:55 uwe Exp $	*/
 /*	$NetBSD: hci_link.c,v 1.11 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -544,6 +544,7 @@ hci_acl_send(struct mbuf *m, struct hci_link *link,
 	if (pdu == NULL)
 		goto nomem;
 
+	bzero(pdu, sizeof *pdu);
 	pdu->lp_chan = chan;
 	pdu->lp_pending = 0;
 
