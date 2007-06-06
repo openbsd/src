@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.42 2007/06/04 18:55:47 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.43 2007/06/06 14:06:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -42,6 +42,8 @@ sub new
 		return OpenBSD::PackageRepository::FTP->_new($1);
 	} elsif ($baseurl =~ m/^http\:(.*)$/io) {
 		return OpenBSD::PackageRepository::HTTP->_new($1);
+	} elsif ($baseurl =~ m/^https\:(.*)$/io) {
+		return OpenBSD::PackageRepository::HTTPS->_new($1);
 	} elsif ($baseurl =~ m/^scp\:(.*)$/io) {
 		require OpenBSD::PackageRepository::SCP;
 
@@ -602,6 +604,14 @@ sub list
 		$self->parse_problems($error);
 	}
 	return $self->{list};
+}
+
+package OpenBSD::PackageRepository::HTTPS;
+our @ISA=qw(OpenBSD::PackageRepository::HTTP);
+
+sub urlscheme
+{
+	return 'https';
 }
 
 package OpenBSD::PackageRepository::FTP;
