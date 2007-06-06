@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.32 2006/03/25 22:41:46 djm Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.33 2007/06/06 09:43:44 henning Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -67,11 +67,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #if NBPFILTER > 0

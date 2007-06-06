@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.86 2007/05/08 20:33:07 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.87 2007/06/06 09:43:44 henning Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -58,11 +58,6 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #if NBPFILTER > 0
