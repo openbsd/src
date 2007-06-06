@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralvar.h,v 1.8 2006/11/13 20:06:38 damien Exp $  */
+/*	$OpenBSD: if_ralvar.h,v 1.9 2007/06/06 19:25:49 mk Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -69,7 +69,7 @@ struct ural_rx_data {
 };
 
 struct ural_softc {
-	USBBASEDEVICE			sc_dev;
+	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);

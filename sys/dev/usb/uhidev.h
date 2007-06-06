@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.7 2007/06/04 10:34:04 mbalmer Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.8 2007/06/06 19:25:49 mk Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #define UHIDEV_UNK_REPORTID UHIDBUSCF_REPORTID_DEFAULT
 
 struct uhidev_softc {
-	USBBASEDEVICE sc_dev;		/* base device */
+	struct device sc_dev;		/* base device */
 	usbd_device_handle sc_udev;
 	usbd_interface_handle sc_iface;	/* interface */
 	usbd_pipe_handle sc_ipipe;	/* input interrupt pipe */
@@ -68,7 +68,7 @@ struct uhidev_softc {
 };
 
 struct uhidev {
-	USBBASEDEVICE sc_dev;		/* base device */
+	struct device sc_dev;		/* base device */
 	struct uhidev_softc *sc_parent;
 	uByte sc_report_id;
 	u_int8_t sc_state;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_auereg.h,v 1.11 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: if_auereg.h,v 1.12 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: if_auereg.h,v 1.16 2001/10/10 02:14:17 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -225,7 +225,7 @@ struct aue_cdata {
 };
 
 struct aue_softc {
-	USBBASEDEVICE		aue_dev;
+	struct device		aue_dev;
 
 	struct arpcom		arpcom;
 	struct mii_data		aue_mii;

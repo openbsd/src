@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.6 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.7 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -160,7 +160,7 @@ struct udav_cdata {
 };
 
 struct udav_softc {
-	USBBASEDEVICE		sc_dev;	/* base device */
+	struct device		sc_dev;	/* base device */
 	usbd_device_handle	sc_udev;
 
 	/* USB */

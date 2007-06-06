@@ -1,4 +1,4 @@
-/* $OpenBSD: ubt.c,v 1.3 2007/06/01 05:23:49 gwk Exp $ */
+/* $OpenBSD: ubt.c,v 1.4 2007/06/06 19:25:49 mk Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -158,7 +158,7 @@ struct ubt_isoc_xfer {
 };
 
 struct ubt_softc {
-	USBBASEDEVICE		 sc_dev;
+	struct device		 sc_dev;
 	usbd_device_handle	 sc_udev;
 	int			 sc_refcnt;
 	int			 sc_dying;

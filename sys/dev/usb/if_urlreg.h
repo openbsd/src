@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urlreg.h,v 1.9 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: if_urlreg.h,v 1.10 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: if_urlreg.h,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -150,7 +150,7 @@ struct url_cdata {
 };
 
 struct url_softc {
-	USBBASEDEVICE		sc_dev;	/* base device */
+	struct device		sc_dev;	/* base device */
 	usbd_device_handle	sc_udev;
 
 	/* USB */

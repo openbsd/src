@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.4 2007/05/27 10:24:51 jsg Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.5 2007/06/06 19:25:49 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -72,7 +72,7 @@ int usbfdebug = 0;
 #endif
 
 struct usbf_softc {
-	USBBASEDEVICE	 sc_dev;	/* base device */
+	struct device	 sc_dev;	/* base device */
 	usbf_bus_handle	 sc_bus;	/* USB device controller */
 	struct usbf_port sc_port;	/* dummy port for function */
 	usb_proc_ptr	 sc_proc;	/* task thread */

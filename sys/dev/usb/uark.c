@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.4 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: uark.c,v 1.5 2007/06/06 19:25:49 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -60,7 +60,7 @@ int	uarkebug = 0;
 #define UARK_REQUEST		0xfe
 
 struct uark_softc {
-	USBBASEDEVICE		sc_dev;
+	struct device		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
 	device_ptr_t		sc_subdev;

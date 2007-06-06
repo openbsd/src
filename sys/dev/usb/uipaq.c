@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.6 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.7 2007/06/06 19:25:49 mk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ int uipaqdebug = 0;
 #define UIPAQOBUFSIZE 1024
 
 struct uipaq_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 

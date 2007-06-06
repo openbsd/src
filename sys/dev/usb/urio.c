@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.24 2007/05/31 18:20:22 mbalmer Exp $	*/
+/*	$OpenBSD: urio.c,v 1.25 2007/06/06 19:25:49 mk Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ int	uriodebug = 0;
 #define	URIO_BSIZE	4096
 
 struct urio_softc {
- 	USBBASEDEVICE		sc_dev;
+ 	struct device		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
 

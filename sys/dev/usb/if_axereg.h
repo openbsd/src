@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.16 2007/06/04 10:34:04 mbalmer Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.17 2007/06/06 19:25:49 mk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -190,7 +190,7 @@ struct axe_sframe_hdr {
 } __packed;
 
 struct axe_softc {
-	USBBASEDEVICE		axe_dev;
+	struct device		axe_dev;
 #define GET_MII(sc) (&(sc)->axe_mii)
 	struct arpcom		arpcom;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)

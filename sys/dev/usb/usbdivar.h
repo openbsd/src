@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.26 2007/06/04 10:38:05 mbalmer Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.27 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -100,7 +100,7 @@ struct usb_softc;
 
 struct usbd_bus {
 	/* Filled by HC driver */
-	USBBASEDEVICE		bdev; /* base device, host adapter */
+	struct device		bdev; /* base device, host adapter */
 	struct usbd_bus_methods	*methods;
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	/* Filled by usb driver */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.h,v 1.1 2006/11/26 01:36:23 uwe Exp $	*/
+/*	$OpenBSD: usbf.h,v 1.2 2007/06/06 19:25:50 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -82,7 +82,7 @@ struct usbf_function_methods {
 };
 
 struct usbf_function {
-	USBBASEDEVICE bdev;		/* base device */
+	struct device bdev;		/* base device */
 	/* filled in by function driver */
 	struct usbf_function_methods *methods;
 };

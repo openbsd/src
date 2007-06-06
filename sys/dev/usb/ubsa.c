@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.24 2007/06/05 08:43:55 mbalmer Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.25 2007/06/06 19:25:49 mk Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -157,7 +157,7 @@ int	ubsadebug = 0;
 #define	UBSA_MSR_DCTS		0x01	/* CTS has changed state */
 
 struct	ubsa_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
 	usbd_interface_handle	sc_iface;	/* interface */
 

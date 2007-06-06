@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.42 2007/06/06 03:23:49 jsg Exp $ */
+/*	$OpenBSD: uhub.c,v 1.43 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -69,7 +69,7 @@ int	uhubdebug = 0;
 #endif
 
 struct uhub_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_hub;		/* USB device */
 	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
 	u_int8_t		sc_status[1];	/* XXX more ports */

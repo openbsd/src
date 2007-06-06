@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.16 2007/06/05 08:43:56 mbalmer Exp $	*/
+/*	$OpenBSD: uow.c,v 1.17 2007/06/06 19:25:49 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -45,7 +45,7 @@
 #define UOW_TIMEOUT	1000	/* ms */
 
 struct uow_softc {
-	USBBASEDEVICE		sc_dev;
+	struct device		sc_dev;
 
 	struct onewire_bus	sc_ow_bus;
 	struct device *		sc_ow_dev;

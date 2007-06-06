@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.5 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.6 2007/06/06 19:25:49 mk Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -38,7 +38,7 @@
 #include <dev/usb/usbdevs.h>
 
 struct uberry_softc {
-	USBBASEDEVICE			sc_dev;
+	struct device			sc_dev;
 	usbd_device_handle		sc_udev;
 	usbd_interface_handle		sc_iface;
 };

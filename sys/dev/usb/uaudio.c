@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.41 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.42 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ struct chan {
 };
 
 struct uaudio_softc {
-	USBBASEDEVICE	sc_dev;		/* base device */
+	struct device	sc_dev;		/* base device */
 	usbd_device_handle sc_udev;	/* USB device */
 	int		sc_ac_iface;	/* Audio Control interface */
 	usbd_interface_handle	sc_ac_ifaceh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cuereg.h,v 1.8 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: if_cuereg.h,v 1.9 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: if_cuereg.h,v 1.14 2001/01/21 22:09:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -165,7 +165,7 @@ struct cue_cdata {
 };
 
 struct cue_softc {
-	USBBASEDEVICE		cue_dev;
+	struct device		cue_dev;
 
 	struct arpcom		arpcom;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)

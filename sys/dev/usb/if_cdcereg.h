@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcereg.h,v 1.1 2004/07/20 20:30:09 dhartmei Exp $ */
+/*	$OpenBSD: if_cdcereg.h,v 1.2 2007/06/06 19:25:49 mk Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -66,7 +66,7 @@ struct cdce_cdata {
 };
 
 struct cdce_softc {
-	USBBASEDEVICE		 cdce_dev;
+	struct device		 cdce_dev;
 	struct arpcom		 cdce_arpcom;
 #define GET_IFP(sc) (&(sc)->cdce_arpcom.ac_if)
 	usbd_device_handle	 cdce_udev;

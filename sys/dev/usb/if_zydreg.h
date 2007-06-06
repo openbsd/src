@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.20 2007/06/06 19:25:49 mk Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1159,7 +1159,7 @@ struct zyd_rf {
 };
 
 struct zyd_softc {
-	USBBASEDEVICE			sc_dev;
+	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.28 2006/07/18 18:20:17 mk Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.29 2007/06/06 19:25:49 mk Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -168,7 +168,7 @@ struct atu_cdata {
 #define ATU_AVG_TIME		20
 
 struct atu_softc {
-	USBBASEDEVICE           atu_dev;
+	struct device           atu_dev;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);

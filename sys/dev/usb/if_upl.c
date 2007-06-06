@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.30 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.31 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct upl_cdata {
 };
 
 struct upl_softc {
-	USBBASEDEVICE		sc_dev;
+	struct device		sc_dev;
 
 	struct ifnet		sc_if;
 	usb_callout_t		sc_stat_ch;

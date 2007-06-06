@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.9 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.10 2007/06/06 19:25:49 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -36,7 +36,7 @@
 #define UMSM_IFACE_NO	0
 
 struct umsm_softc {
-	USBBASEDEVICE		sc_dev;
+	struct device		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
 	device_ptr_t		sc_subdev;

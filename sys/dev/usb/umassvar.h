@@ -1,4 +1,4 @@
-/*	$OpenBSD: umassvar.h,v 1.9 2007/05/21 05:40:28 jsg Exp $ */
+/*	$OpenBSD: umassvar.h,v 1.10 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: umassvar.h,v 1.20 2003/09/08 19:31:01 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -151,7 +151,7 @@ struct umassbus_softc {
 
 /* the per device structure */
 struct umass_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 	int			sc_ifaceno;	/* interface number */

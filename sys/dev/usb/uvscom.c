@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.12 2007/06/05 08:43:56 mbalmer Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.13 2007/06/06 19:25:50 mk Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -131,7 +131,7 @@ static int	uvscomdebug = 1;
 #define UVSCOM_USTAT_MASK	(UVSCOM_NOCARD | UVSCOM_DSR | UVSCOM_CTS)
 
 struct	uvscom_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
 	usbd_interface_handle	sc_iface;	/* interface */
 	int			sc_iface_number;/* interface number */

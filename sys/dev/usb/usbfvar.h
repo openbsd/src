@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbfvar.h,v 1.1 2006/11/25 18:10:29 uwe Exp $	*/
+/*	$OpenBSD: usbfvar.h,v 1.2 2007/06/06 19:25:50 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -51,7 +51,7 @@ struct usbf_config {
 };
 
 struct usbf_device {
-	USBBASEDEVICE		 bdev;		/* base device */
+	struct device		 bdev;		/* base device */
 	struct usbf_bus		*bus;		/* device controller */
 	struct usbf_function	*function;	/* function driver */
 	struct usbf_pipe	*default_pipe;	/* pipe 0 (device control) */
@@ -93,7 +93,7 @@ struct usbf_softc;
 
 struct usbf_bus {
 	/* Filled by DC driver */
-	USBBASEDEVICE		 bdev;		/* base device */
+	struct device		 bdev;		/* base device */
 	struct usbf_bus_methods	*methods;
 	size_t			 pipe_size;	/* size of pipe struct */
 	u_int8_t		 ep0_maxp;	/* packet size for EP0 */

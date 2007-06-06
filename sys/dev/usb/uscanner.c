@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.26 2007/06/05 08:43:56 mbalmer Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.27 2007/06/06 19:25:50 mk Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ static const struct uscan_info uscanner_devs[] = {
 #define	USCANNER_BUFFERSIZE	1024
 
 struct uscanner_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	struct device		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
 

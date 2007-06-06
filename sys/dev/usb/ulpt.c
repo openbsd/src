@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.24 2007/06/01 06:12:20 mbalmer Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.25 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -87,7 +87,7 @@ int	ulptdebug = 0;
 #define LPS_MASK        (LPS_SELECT|LPS_NERR|LPS_NOPAPER)
 
 struct ulpt_softc {
-	USBBASEDEVICE sc_dev;
+	struct device sc_dev;
 	usbd_device_handle sc_udev;	/* device */
 	usbd_interface_handle sc_iface;	/* interface */
 	int sc_ifaceno;

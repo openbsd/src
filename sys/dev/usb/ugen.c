@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.40 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: ugen.c,v 1.41 2007/06/06 19:25:49 mk Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -100,7 +100,7 @@ struct ugen_endpoint {
 };
 
 struct ugen_softc {
-	USBBASEDEVICE sc_dev;		/* base device */
+	struct device sc_dev;		/* base device */
 	usbd_device_handle sc_udev;
 
 	char sc_is_open[USB_MAX_ENDPOINTS];
