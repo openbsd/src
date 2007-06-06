@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsproto.h,v 1.6 2003/11/28 01:02:28 tedu Exp $	*/
+/*	$OpenBSD: nfsproto.h,v 1.7 2007/06/06 14:13:42 thib Exp $	*/
 /*	$NetBSD: nfsproto.h,v 1.1 1996/02/18 11:54:06 fvdl Exp $	*/
 
 /*
@@ -273,15 +273,6 @@ struct nfs_uquad {
 	u_int32_t nfsuquad[2];
 };
 typedef	struct nfs_uquad	nfsuint64;
-
-/*
- * Used to convert between two u_longs and a u_quad_t.
- */
-union nfs_quadconvert {
-	u_int32_t lval[2];
-	u_quad_t  qval;
-};
-typedef union nfs_quadconvert	nfsquad_t;
 
 /*
  * NFS Version 3 special file number.
