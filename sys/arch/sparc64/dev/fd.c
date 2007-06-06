@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.14 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.15 2007/06/06 21:56:14 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -1795,7 +1795,7 @@ fdcretry(fdc)
 	fdc->sc_errors++;
 }
 
-int
+daddr64_t
 fdsize(dev)
 	dev_t dev;
 {
