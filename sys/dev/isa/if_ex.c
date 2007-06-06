@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.15 2006/03/25 22:41:44 djm Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.16 2007/06/06 09:44:30 henning Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -52,11 +52,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -799,28 +794,6 @@ ex_ioctl(ifp, cmd, data)
 					ex_init(sc);
 					arp_ifinit((struct arpcom *) ifp, ifa);
 					break;
-#endif
-#ifdef IPX_NOTYET
-				case AF_IPX:
-				{
-					register struct ipx_addr *ina = 
-					    &(IA_SIPX(ifa)->sipx_addr);
-
-					if (ipx_nullhost(*ina))
-					ina->x_host = *(union ipx_host *) 
-					    (sc->arpcom.ac_enaddr);
-					else {
-	  					ifp->if_flags &= ~IFF_RUNNING;
-	  					bcopy((caddr_t) 
-						    ina->x_host.c_host,
-						    (caddr_t) 
-						    sc->arpcom.ac_enaddr, 
-						    sizeof(sc->arpcom.ac_enaddr)
-						    );
-					}
-					ex_init(sc);
-					break;
-     				}
 #endif
     default:
       ex_init(sc);
