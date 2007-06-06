@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.50 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.51 2007/06/06 22:04:11 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -271,10 +271,11 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 	}
 	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
 		sn += DL_GETPOFFSET(&lp->d_partitions[part]);
-		(*pr)(" (%s%d bn %lld; cn %d", dname, unit, sn,
+		(*pr)(" (%s%d bn %lld; cn %lld", dname, unit, sn,
 		    sn / lp->d_secpercyl);
 		sn %= lp->d_secpercyl;
-		(*pr)(" tn %d sn %d)", sn / lp->d_nsectors, sn % lp->d_nsectors);
+		(*pr)(" tn %lld sn %lld)", sn / lp->d_nsectors,
+		    sn % lp->d_nsectors);
 	}
 }
 
