@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1241 2007/06/02 15:24:43 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1242 2007/06/06 17:52:05 damien Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6744,12 +6744,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/Wireless 3945ABG",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3965ABG,
-	    "PRO/Wireless 3965ABG",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN,
-	    "PRO/Wireless 4965AGN",
+	    "Wireless Wi-Fi Link 4965AGN",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RD,
