@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.159 2007/05/29 02:21:18 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.160 2007/06/06 10:04:36 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -545,9 +545,6 @@ do { \
 #endif
 #ifdef INET6
 	IF_DETACH_QUEUES(ip6intrq);
-#endif
-#ifdef IPX
-	IF_DETACH_QUEUES(ipxintrq);
 #endif
 #ifdef NETATALK
 	IF_DETACH_QUEUES(atintrq1);

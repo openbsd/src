@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.51 2007/05/29 20:31:38 henning Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.52 2007/06/06 10:04:36 henning Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -100,11 +100,6 @@
 #endif
 #include <netinet/if_ether.h>
 #include <net/if_fddi.h>
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-#endif
 
 #ifdef INET6
 #ifndef INET
@@ -239,16 +234,6 @@ fddi_output(ifp0, m0, dst, rt0)
 		type = htons(ETHERTYPE_IPV6);
 		break;
 #endif /* INET6 */
-#endif
-#ifdef IPX
-	case AF_IPX:
-		type = htons(ETHERTYPE_IPX);
- 		bcopy((caddr_t)&(((struct sockaddr_ipx*)dst)->sipx_addr.ipx_host),
-		    (caddr_t)edst, sizeof (edst));
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		break;
 #endif
 
 	case pseudo_AF_HDRCMPLT:
@@ -412,7 +397,7 @@ fddi_input(ifp, fh, m)
 
 	l = mtod(m, struct llc *);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(IPX) || defined(INET6)
+#if defined(INET) || defined(INET6)
 	case LLC_SNAP_LSAP:
 	{
 		u_int16_t etype;
@@ -450,12 +435,6 @@ fddi_input(ifp, fh, m)
 			inq = &ip6intrq;
 			break;
 #endif /* INET6 */
-#ifdef IPX
-		case ETHERTYPE_IPX:
-			schednetisr(NETISR_IPX);
-			inq = &ipxintrq;
-			break;
-#endif
 		default:
 			/* printf("fddi_input: unknown protocol 0x%x\n", etype); */
 			ifp->if_noproto++;
@@ -463,7 +442,7 @@ fddi_input(ifp, fh, m)
 		}
 		break;
 	}
-#endif /* INET || IPX || INET6 */
+#endif /* INET || INET6 */
 		
 	default:
 		/* printf("fddi_input: unknown dsap 0x%x\n", l->llc_dsap); */

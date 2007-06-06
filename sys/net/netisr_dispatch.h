@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr_dispatch.h,v 1.12 2007/05/29 05:43:22 claudio Exp $	*/
+/*	$OpenBSD: netisr_dispatch.h,v 1.13 2007/06/06 10:04:36 henning Exp $	*/
 /* $NetBSD: netisr_dispatch.h,v 1.2 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
@@ -47,9 +47,6 @@
 #endif
 #ifdef NETATALK
 	DONETISR(NETISR_ATALK,atintr);
-#endif
-#ifdef IPX
-	DONETISR(NETISR_IPX,ipxintr);
 #endif
 #if NATM > 0
 	DONETISR(NETISR_NATM,natmintr);

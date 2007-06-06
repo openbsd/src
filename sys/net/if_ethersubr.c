@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.109 2007/05/29 20:19:37 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.110 2007/06/06 10:04:36 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -141,11 +141,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/nd6.h>
 #endif
 
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-#endif
-
 #ifdef NETATALK
 #include <netatalk/at.h>
 #include <netatalk/at_var.h>
@@ -174,20 +169,6 @@ ether_ioctl(ifp, arp, cmd, data)
 
 	case SIOCSIFADDR:
 		switch (ifa->ifa_addr->sa_family) {
-#ifdef IPX
-		case AF_IPX:
-		    {
-			struct ipx_addr *ina = &IA_SIPX(ifa)->sipx_addr;
-
-			if (ipx_nullhost(*ina))
-				ina->ipx_host =
-				    *(union ipx_host *)(arp->ac_enaddr);
-			else
-				bcopy(ina->ipx_host.c_host,
-				    arp->ac_enaddr, sizeof(arp->ac_enaddr));
-			break;
-		    }
-#endif /* IPX */
 #ifdef NETATALK
 		case AF_APPLETALK:
 			/* Nothing to do. */
@@ -292,16 +273,6 @@ ether_output(ifp0, m0, dst, rt0)
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
 			return (0); /* it must be impossible, but... */
 		etype = htons(ETHERTYPE_IPV6);
-		break;
-#endif
-#ifdef IPX
-	case AF_IPX:
-		etype = htons(ETHERTYPE_IPX);
-		bcopy((caddr_t)&satosipx(dst)->sipx_addr.ipx_host,
-		    (caddr_t)edst, sizeof(edst));
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		break;
 #endif
 #ifdef NETATALK
@@ -661,12 +632,6 @@ decapsulate:
 		inq = &ip6intrq;
 		break;
 #endif /* INET6 */
-#ifdef IPX
-	case ETHERTYPE_IPX:
-		schednetisr(NETISR_IPX);
-		inq = &ipxintrq;
-		break;
-#endif
 #ifdef NETATALK
 	case ETHERTYPE_AT:
 		schednetisr(NETISR_ATALK);

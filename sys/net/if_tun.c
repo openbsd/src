@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.88 2007/05/26 17:13:31 jason Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.89 2007/06/06 10:04:36 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -69,11 +69,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #ifdef NETATALK
@@ -883,12 +878,6 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	case AF_INET6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
-		break;
-#endif
-#ifdef IPX
-	case AF_IPX:
-		ifq = &ipxintrq;
-		isr = NETISR_IPX;
 		break;
 #endif
 #ifdef NETATALK

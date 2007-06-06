@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.26 2007/05/29 18:10:43 miod Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.27 2007/06/06 10:04:36 henning Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #define	NETISR_IP	2		/* same as AF_INET */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
 #define	NETISR_ARP	18		/* same as AF_LINK */
-#define	NETISR_IPX	23		/* same as AF_IPX */
 #define	NETISR_IPV6	24		/* same as AF_INET6 */
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_ATM */
@@ -74,7 +73,6 @@ void	arpintr(void);
 void	ipintr(void);
 void	ip6intr(void);
 void	atintr(void);
-void	ipxintr(void);
 void	clnlintr(void);
 void	natmintr(void);
 void	pppintr(void);

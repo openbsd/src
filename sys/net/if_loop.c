@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.40 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.41 2007/06/06 10:04:36 henning Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -136,11 +136,6 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #ifdef NETATALK
@@ -299,12 +294,6 @@ looutput(ifp, m, dst, rt)
 		isr = NETISR_IPV6;
 		break;
 #endif /* INET6 */
-#ifdef IPX
-	case AF_IPX:
-		ifq = &ipxintrq;
-		isr = NETISR_IPX;
-		break;
-#endif
 #ifdef NETATALK
 	case AF_APPLETALK:
 		ifq = &atintrq2;
@@ -365,12 +354,6 @@ lo_altqstart(ifp)
 			m->m_flags |= M_LOOP;
 			ifq = &ip6intrq;
 			isr = NETISR_IPV6;
-			break;
-#endif
-#ifdef IPX
-		case AF_IPX:
-			ifq = &ipxintrq;
-			isr = NETISR_IPX;
 			break;
 #endif
 #ifdef NETATALK

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.51 2007/05/28 06:31:01 mcbride Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.52 2007/06/06 10:04:36 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -80,11 +80,6 @@
 # endif
 #else
 # error Huh? sppp without INET?
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #include <net/if_sppp.h>
@@ -542,15 +537,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			break;
 #endif
-#ifdef IPX
-		case PPP_IPX:
-			/* IPX IPXCP not implemented yet */
-			if (sp->pp_phase == PHASE_NETWORK) {
-				schednetisr (NETISR_IPX);
-				inq = &ipxintrq;
-			}
-			break;
-#endif
 		}
 		break;
 	case CISCO_MULTICAST:
@@ -577,12 +563,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		case ETHERTYPE_IP:
 			schednetisr (NETISR_IP);
 			inq = &ipintrq;
-			break;
-#endif
-#ifdef IPX
-		case ETHERTYPE_IPX:
-			schednetisr (NETISR_IPX);
-			inq = &ipxintrq;
 			break;
 #endif
 		}
@@ -750,12 +730,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if (sp->state[IDX_IPCP] != STATE_OPENED)
 				rv = ENETDOWN;
 		}
-		break;
-#endif
-#ifdef IPX
-	case AF_IPX:     /* Novell IPX Protocol */
-		protocol = htons ((sp->pp_flags & PP_CISCO) ?
-			ETHERTYPE_IPX : PPP_IPX);
 		break;
 #endif
 	default:
