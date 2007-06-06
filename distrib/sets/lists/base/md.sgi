@@ -1838,16 +1838,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet6/pim6_var.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet6/raw_ip6.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netinet6/tcpipv6.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/ipx.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/ipx_if.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/ipx_ip.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/ipx_pcb.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/ipx_var.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/spx.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/spx_debug.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/spx_timer.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/netipx/spx_var.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/mips64-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/nfs

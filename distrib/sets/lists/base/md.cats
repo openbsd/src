@@ -1882,16 +1882,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet6/pim6_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet6/raw_ip6.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet6/tcpipv6.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/ipx.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/ipx_if.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/ipx_ip.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/ipx_pcb.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/ipx_var.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/spx.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/spx_debug.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/spx_timer.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netipx/spx_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/arm-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/nfs

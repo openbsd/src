@@ -1122,16 +1122,6 @@
 ./usr/include/netinet6/pim6_var.h
 ./usr/include/netinet6/raw_ip6.h
 ./usr/include/netinet6/tcpipv6.h
-./usr/include/netipx
-./usr/include/netipx/ipx.h
-./usr/include/netipx/ipx_if.h
-./usr/include/netipx/ipx_ip.h
-./usr/include/netipx/ipx_pcb.h
-./usr/include/netipx/ipx_var.h
-./usr/include/netipx/spx.h
-./usr/include/netipx/spx_debug.h
-./usr/include/netipx/spx_timer.h
-./usr/include/netipx/spx_var.h
 ./usr/include/netnatm
 ./usr/include/netnatm/natm.h
 ./usr/include/nfs
