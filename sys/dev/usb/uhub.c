@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.41 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: uhub.c,v 1.42 2007/06/06 03:23:49 jsg Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -131,7 +131,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hub = dev;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf(": %s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_index(dev, 0, 1);
@@ -169,6 +169,8 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	for (nremov = 0, port = 1; port <= nports; port++)
 		if (!UHD_NOT_REMOV(&hubdesc, port))
 			nremov++;
+
+#ifdef UHUB_DEBUG
 	printf("%s: %d port%s with %d removable, %s powered",
 	       USBDEVNAME(sc->sc_dev), nports, nports != 1 ? "s" : "",
 	       nremov, dev->self_powered ? "self" : "bus");
@@ -179,6 +181,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		    UHUB_IS_SINGLE_TT(sc) ? "" : "s");
 	}
 	printf("\n");
+#endif
 
 	if (nports == 0) {
 		printf("%s: no ports, hub ignored\n", USBDEVNAME(sc->sc_dev));
