@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.34 2007/06/07 03:42:51 deraadt Exp $	*/
+/*	$OpenBSD: xy.c,v 1.35 2007/06/07 14:38:39 deraadt Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -949,7 +949,7 @@ xywrite(dev, uio, flags)
  * xysize: return size of a partition for a dump
  */
 
-daddr_t
+daddr64_t
 xysize(dev)
 	dev_t   dev;
 
