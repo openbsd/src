@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.29 2007/06/07 10:24:30 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.30 2007/06/07 11:20:58 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -65,12 +65,6 @@
 /* Convert MHz and mV into IDs for passing to the MSR. */
 #define ID16(MHz, mV, bus_clk) \
 	((((MHz * 100 + 50) / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4))
-
-/* Possible bus speeds (multiplied by 100 for rounding) */
-#define BUS100 10000
-#define BUS133 13333
-#define BUS166 16666
-#define BUS200 20000
 
 
 /* Ultra Low Voltage Intel Pentium M processor 900 MHz */

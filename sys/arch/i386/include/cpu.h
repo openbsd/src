@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.94 2007/05/29 21:01:56 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.95 2007/06/07 11:20:58 dim Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -324,6 +324,16 @@ extern int cpu_apmwarn;
 
 #if defined(I586_CPU) || defined(I686_CPU)
 extern int cpuspeed;
+#endif
+
+#if !defined(SMALL_KERNEL)
+#define BUS66  6667
+#define BUS100 10000
+#define BUS133 13333
+#define BUS166 16667
+#define BUS200 20000
+#define BUS266 26667
+#define BUS333 33333
 extern int bus_clock;
 #endif
 

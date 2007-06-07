@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.4 2007/06/04 06:57:57 jsg Exp $ */
+/*	$OpenBSD: est.c,v 1.5 2007/06/07 11:20:58 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -72,8 +72,10 @@
 /* Possible bus speeds (multiplied by 100 for rounding) */
 #define BUS100 10000
 #define BUS133 13333
-#define BUS166 16666
+#define BUS166 16667
 #define BUS200 20000
+#define BUS266 26667
+#define BUS333 33333
 
 #define MSR2MHZ(msr, bus) \
 	(((((int) (msr) >> 8) & 0xff) * (bus) + 50) / 100)
@@ -112,10 +114,10 @@ p4_get_bus_clock(struct cpu_info *ci)
 		bus = (msr >> 21) & 0x7;
 		switch (bus) {
 		case 0:
-			bus_clock = 10000;
+			bus_clock = BUS100;
 			break;
 		case 1:
-			bus_clock = 13333;
+			bus_clock = BUS133;
 			break;
 		default:
 			printf("%s: unknown Pentium 4 (model %d) "
@@ -127,16 +129,16 @@ p4_get_bus_clock(struct cpu_info *ci)
 		bus = (msr >> 16) & 0x7;
 		switch (bus) {
 		case 0:
-			bus_clock = (model == 2) ? 10000 : 26666;
+			bus_clock = (model == 2) ? BUS100 : BUS266;
 			break;
 		case 1:
-			bus_clock = 13333;
+			bus_clock = BUS133;
 			break;
 		case 2:
-			bus_clock = 20000;
+			bus_clock = BUS200;
 			break;
 		case 3:
-			bus_clock = 16666;
+			bus_clock = BUS166;
 			break;
 		default:
 			printf("%s: unknown Pentium 4 (model %d) "
@@ -161,22 +163,22 @@ p3_get_bus_clock(struct cpu_info *ci)
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
 		case 5:
-			bus_clock = 10000;
+			bus_clock = BUS100;
 			break;
 		case 1:
-			bus_clock = 13333;
+			bus_clock = BUS133;
 			break;
 		case 3:
-			bus_clock = 16667;
+			bus_clock = BUS166;
 			break;
 		case 2:
-			bus_clock = 20000;
+			bus_clock = BUS200;
 			break;
 		case 0:
-			bus_clock = 26667;
+			bus_clock = BUS266;
 			break;
 		case 4:
-			bus_clock = 33333;
+			bus_clock = BUS333;
 			break;
 		default:
 			printf("%s: unknown Core FSB_FREQ value %d",

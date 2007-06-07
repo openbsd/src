@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.401 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.402 2007/06/07 11:20:58 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1904,16 +1904,16 @@ cyrix3_get_bus_clock(struct cpu_info *ci)
 	bus = (msr >> 18) & 0x3;
 	switch (bus) {
 	case 0:
-		bus_clock = 10000;
+		bus_clock = BUS100;
 		break;
 	case 1:
-		bus_clock = 13333;
+		bus_clock = BUS133;
 		break;
 	case 2:
-		bus_clock = 20000;
+		bus_clock = BUS200;
 		break;
 	case 3:
-		bus_clock = 16666;
+		bus_clock = BUS166;
 		break;
 	}
 }
@@ -1930,10 +1930,10 @@ p4_get_bus_clock(struct cpu_info *ci)
 		bus = (msr >> 21) & 0x7;
 		switch (bus) {
 		case 0:
-			bus_clock = 10000;
+			bus_clock = BUS100;
 			break;
 		case 1:
-			bus_clock = 13333;
+			bus_clock = BUS133;
 			break;
 		default:
 			printf("%s: unknown Pentium 4 (model %d) "
@@ -1945,16 +1945,16 @@ p4_get_bus_clock(struct cpu_info *ci)
 		bus = (msr >> 16) & 0x7;
 		switch (bus) {
 		case 0:
-			bus_clock = (model == 2) ? 10000 : 26666;
+			bus_clock = (model == 2) ? BUS100 : BUS266;
 			break;
 		case 1:
-			bus_clock = 13333;
+			bus_clock = BUS133;
 			break;
 		case 2:
-			bus_clock = 20000;
+			bus_clock = BUS200;
 			break;
 		case 3:
-			bus_clock = 16666;
+			bus_clock = BUS166;
 			break;
 		default:
 			printf("%s: unknown Pentium 4 (model %d) "
@@ -1974,17 +1974,17 @@ p3_get_bus_clock(struct cpu_info *ci)
 	model = (ci->ci_signature >> 4) & 15;
 	switch (model) {
 	case 0x9: /* Pentium M (130 nm, Banias) */
-		bus_clock = 10000;
+		bus_clock = BUS100;
 		break;
 	case 0xd: /* Pentium M (90 nm, Dothan) */
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
 		case 0:
-			bus_clock = 10000;
+			bus_clock = BUS100;
 			break;
 		case 1:
-			bus_clock = 13333;
+			bus_clock = BUS133;
 			break;
 		default:
 			printf("%s: unknown Pentium M FSB_FREQ value %d",
@@ -1998,22 +1998,22 @@ p3_get_bus_clock(struct cpu_info *ci)
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
 		case 5:
-			bus_clock = 10000;
+			bus_clock = BUS100;
 			break;
 		case 1:
-			bus_clock = 13333;
+			bus_clock = BUS133;
 			break;
 		case 3:
-			bus_clock = 16667;
+			bus_clock = BUS166;
 			break;
 		case 2:
-			bus_clock = 20000;
+			bus_clock = BUS200;
 			break;
 		case 0:
-			bus_clock = 26667;
+			bus_clock = BUS266;
 			break;
 		case 4:
-			bus_clock = 33333;
+			bus_clock = BUS333;
 			break;
 		default:
 			printf("%s: unknown Core FSB_FREQ value %d",
@@ -2033,13 +2033,13 @@ p3_get_bus_clock(struct cpu_info *ci)
 		bus = (msr >> 18) & 0x3;
 		switch (bus) {
 		case 0:
-			bus_clock = 6666;
+			bus_clock = BUS66;
 			break;
 		case 1:
-			bus_clock = 13333;
+			bus_clock = BUS133;
 			break;
 		case 2:
-			bus_clock = 10000;
+			bus_clock = BUS100;
 			break;
 		default:
 			printf("%s: unknown i686 EBL_CR_POWERON value %d",
