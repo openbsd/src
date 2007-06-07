@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.37 2007/06/06 15:36:32 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.38 2007/06/07 12:57:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -433,6 +433,11 @@ sub validate_plists
 		OpenBSD::Error::Fatal "fatal issues in ", $self->print;
 	}
 	OpenBSD::Vstat::synchronize();
+}
+
+sub compute_size
+{
+	my ($self, $state) = @_;
 	for my $h ($self->older_to_do, $self->newer) {
 		$h->{totsize} = $h->{plist}->compute_size;
 	}

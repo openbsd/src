@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.311 2007/06/05 23:19:00 espie Exp $
+# $OpenBSD: pkg_add,v 1.312 2007/06/07 12:57:33 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -367,10 +367,13 @@ sub really_add
 
 	if ($replacing) {
 		require OpenBSD::Replace;
-
-		$state->progress->set_header("$pkgname (extracting)");
-
 		OpenBSD::Replace::save_old_libraries($set, $state);
+	}
+
+	$set->compute_size;
+
+	if ($replacing) {
+		$state->progress->set_header("$pkgname (extracting)");
 
 		try {
 			OpenBSD::Replace::perform_extraction($handle, $state);
