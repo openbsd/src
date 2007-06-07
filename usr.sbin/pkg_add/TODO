@@ -1,3 +1,8 @@
+- fix library updates special cases: should note all potential library
+packages as conflicts. Then save_old_libraries can split stuff off old
+sets to keep libraries that are not in the new packages. There's only
+one slightly tricky part, which concerns moving stuff that's not really
+needed out of $set->{older}.
 - make sure solved dependencies are adjusted along with stuff that actually
 get installed or replaced... this would make some stuff ways less brittle.
 - handle n-to-1 updates: mostly need to allow for a list of replaced packages.
