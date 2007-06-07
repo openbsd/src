@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.27 2007/06/05 06:56:19 jmc Exp $
+.\"	$OpenBSD: socket.2,v 1.28 2007/06/07 19:49:38 jmc Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2007 $
+.Dd $Mdocdate: June 7 2007 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -52,25 +52,31 @@ communication will take place; this selects the protocol family
 which should be used.
 These families are defined in the include file
 .Ao Pa sys/socket.h Ac .
-The currently understood formats are
-.Bd -literal -offset indent
-AF_UNIX		(UNIX internal protocols),
-AF_INET		(ARPA Internet protocols),
-AF_INET6	(ARPA IPv6 protocols), and
-AF_IMPLINK	(IMP \*(lqhost at IMP\*(rq link layer).
-.Ed
+The currently understood formats are:
+.Pp
+.Bl -tag -width "AF_IMPLINKXXX" -offset indent -compact
+.It AF_UNIX
+UNIX internal protocols
+.It AF_INET
+ARPA Internet protocols
+.It AF_INET6
+ARPA IPv6 protocols
+.It AF_IMPLINK
+IMP host at IMP link layer
+.El
 .Pp
 The socket has the indicated
 .Fa type ,
 which specifies the semantics of communication.
 Currently defined types are:
-.Bd -literal -offset indent
-SOCK_STREAM
-SOCK_DGRAM
-SOCK_RAW
-SOCK_SEQPACKET
-SOCK_RDM
-.Ed
+.Pp
+.Bl -tag -width "SOCK_SEQPACKETXXX" -offset indent -compact
+.It SOCK_STREAM
+.It SOCK_DGRAM
+.It SOCK_RAW
+.It SOCK_SEQPACKET
+.It SOCK_RDM
+.El
 .Pp
 A
 .Dv SOCK_STREAM
