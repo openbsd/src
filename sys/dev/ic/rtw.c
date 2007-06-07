@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.60 2007/04/06 12:20:59 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.61 2007/06/07 20:20:15 damien Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -145,6 +145,9 @@ void	 rtw_rfmd_pwrstate(struct rtw_regs *, enum rtw_pwrstate, int, int);
 int	 rtw_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
 int	 rtw_tune(struct rtw_softc *);
 void	 rtw_set_nettype(struct rtw_softc *, enum ieee80211_opmode);
+int	 rtw_compute_duration1(int, int, uint32_t, int, struct rtw_duration *);
+int	 rtw_compute_duration(struct ieee80211_frame *, int, uint32_t, int,
+	    int, struct rtw_duration *, struct rtw_duration *, int *, int);
 int	 rtw_init(struct ifnet *);
 int	 rtw_ioctl(struct ifnet *, u_long, caddr_t);
 int	 rtw_seg_too_short(bus_dmamap_t);
@@ -2926,6 +2929,172 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 	return m0;
 }
 
+
+/*
+ * Arguments in:
+ *
+ * paylen:  payload length (no FCS, no WEP header)
+ *
+ * hdrlen:  header length
+ *
+ * rate:    MSDU speed, units 500kb/s
+ *
+ * flags:   IEEE80211_F_SHPREAMBLE (use short preamble),
+ *          IEEE80211_F_SHSLOT (use short slot length)
+ *
+ * Arguments out:
+ *
+ * d:       802.11 Duration field for RTS,
+ *          802.11 Duration field for data frame,
+ *          PLCP Length for data frame,
+ *          residual octets at end of data slot
+ */
+int
+rtw_compute_duration1(int len, int use_ack, uint32_t flags, int rate,
+    struct rtw_duration *d)
+{
+	int pre, ctsrate;
+	int ack, bitlen, data_dur, remainder;
+
+	/* RTS reserves medium for SIFS | CTS | SIFS | (DATA) | SIFS | ACK
+	 * DATA reserves medium for SIFS | ACK
+	 *
+	 * XXXMYC: no ACK on multicast/broadcast or control packets
+	 */
+
+	bitlen = len * 8;
+
+	pre = IEEE80211_DUR_DS_SIFS;
+	if ((flags & IEEE80211_F_SHPREAMBLE) != 0)
+		pre += IEEE80211_DUR_DS_SHORT_PREAMBLE +
+		    IEEE80211_DUR_DS_FAST_PLCPHDR;
+	else
+		pre += IEEE80211_DUR_DS_LONG_PREAMBLE +
+		    IEEE80211_DUR_DS_SLOW_PLCPHDR;
+
+	d->d_residue = 0;
+	data_dur = (bitlen * 2) / rate;
+	remainder = (bitlen * 2) % rate;
+	if (remainder != 0) {
+		d->d_residue = (rate - remainder) / 16;
+		data_dur++;
+	}
+
+	switch (rate) {
+	case 2:		/* 1 Mb/s */
+	case 4:		/* 2 Mb/s */
+		/* 1 - 2 Mb/s WLAN: send ACK/CTS at 1 Mb/s */
+		ctsrate = 2;
+		break;
+	case 11:	/* 5.5 Mb/s */
+	case 22:	/* 11  Mb/s */
+	case 44:	/* 22  Mb/s */
+		/* 5.5 - 11 Mb/s WLAN: send ACK/CTS at 2 Mb/s */
+		ctsrate = 4;
+		break;
+	default:
+		/* TBD */
+		return -1;
+	}
+
+	d->d_plcp_len = data_dur;
+
+	ack = (use_ack) ? pre + (IEEE80211_DUR_DS_SLOW_ACK * 2) / ctsrate : 0;
+
+	d->d_rts_dur =
+	    pre + (IEEE80211_DUR_DS_SLOW_CTS * 2) / ctsrate +
+	    pre + data_dur +
+	    ack;
+
+	d->d_data_dur = ack;
+
+	return 0;
+}
+
+/*
+ * Arguments in:
+ *
+ * wh:      802.11 header
+ *
+ * len: packet length 
+ *
+ * rate:    MSDU speed, units 500kb/s
+ *
+ * fraglen: fragment length, set to maximum (or higher) for no
+ *          fragmentation
+ *
+ * flags:   IEEE80211_F_WEPON (hardware adds WEP),
+ *          IEEE80211_F_SHPREAMBLE (use short preamble),
+ *          IEEE80211_F_SHSLOT (use short slot length)
+ *
+ * Arguments out:
+ *
+ * d0: 802.11 Duration fields (RTS/Data), PLCP Length, Service fields
+ *     of first/only fragment
+ *
+ * dn: 802.11 Duration fields (RTS/Data), PLCP Length, Service fields
+ *     of first/only fragment
+ */
+int
+rtw_compute_duration(struct ieee80211_frame *wh, int len, uint32_t flags,
+    int fraglen, int rate, struct rtw_duration *d0, struct rtw_duration *dn,
+    int *npktp, int debug)
+{
+	int ack, rc;
+	int firstlen, hdrlen, lastlen, lastlen0, npkt, overlen, paylen;
+
+	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
+		hdrlen = sizeof(struct ieee80211_frame_addr4);
+	else
+		hdrlen = sizeof(struct ieee80211_frame);
+
+	paylen = len - hdrlen;
+
+	if ((flags & IEEE80211_F_WEPON) != 0)
+		overlen = IEEE80211_WEP_TOTLEN + IEEE80211_CRC_LEN;
+	else
+		overlen = IEEE80211_CRC_LEN;
+
+	npkt = paylen / fraglen;
+	lastlen0 = paylen % fraglen;
+
+	if (npkt == 0)			/* no fragments */
+		lastlen = paylen + overlen;
+	else if (lastlen0 != 0) {	/* a short "tail" fragment */
+		lastlen = lastlen0 + overlen;
+		npkt++;
+	} else				/* full-length "tail" fragment */
+		lastlen = fraglen + overlen;
+
+	if (npktp != NULL)
+		*npktp = npkt;
+
+	if (npkt > 1)
+		firstlen = fraglen + overlen;
+	else
+		firstlen = paylen + overlen;
+
+	if (debug) {
+		printf("%s: npkt %d firstlen %d lastlen0 %d lastlen %d "
+		    "fraglen %d overlen %d len %d rate %d flags %08x\n",
+		    __func__, npkt, firstlen, lastlen0, lastlen, fraglen,
+		    overlen, len, rate, flags);
+	}
+
+	ack = !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (wh->i_fc[1] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL;
+
+	rc = rtw_compute_duration1(firstlen + hdrlen, ack, flags, rate, d0);
+	if (rc == -1)
+		return rc;
+
+	if (npkt <= 1) {
+		*dn = *d0;
+		return 0;
+	}
+	return rtw_compute_duration1(lastlen + hdrlen, ack, flags, rate, dn);
+}
+
 #ifdef RTW_DEBUG
 void
 rtw_print_txdesc(struct rtw_softc *sc, const char *action,
@@ -2949,11 +3118,11 @@ rtw_start(struct ifnet *ifp)
 	uint32_t proto_ctl0, ctl0, ctl1;
 	bus_dmamap_t		dmamap;
 	struct ieee80211com	*ic;
-	struct ieee80211_duration *d0;
 	struct ieee80211_frame	*wh;
 	struct ieee80211_node	*ni;
 	struct mbuf		*m0;
 	struct rtw_softc	*sc;
+	struct rtw_duration	*d0;
 	struct rtw_txsoft_blk	*tsb;
 	struct rtw_txdesc_blk	*tdb;
 	struct rtw_txsoft	*ts;
@@ -3040,7 +3209,7 @@ rtw_start(struct ifnet *ifp)
 				ctl0 |= RTW_TXCTL0_BEACON;
 		}
 
-		if (ieee80211_compute_duration(wh, m0->m_pkthdr.len,
+		if (rtw_compute_duration(wh, m0->m_pkthdr.len,
 		    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold,
 		    rate, &ts->ts_d0, &ts->ts_dn, &npkt,
 		    (sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) ==

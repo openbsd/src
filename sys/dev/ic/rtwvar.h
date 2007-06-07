@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.22 2006/06/27 04:25:12 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.23 2007/06/07 20:20:15 damien Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -154,6 +154,13 @@ struct rtw_rxsoft {
 	bus_dmamap_t			rs_dmamap;
 };
 
+struct rtw_duration {
+	uint16_t	d_rts_dur;
+	uint16_t	d_data_dur;
+	uint16_t	d_plcp_len;
+	uint8_t		d_residue;	/* unused octets in time slot */
+};
+
 struct rtw_txsoft {
 	SIMPLEQ_ENTRY(rtw_txsoft)	ts_q;
 	struct mbuf			*ts_mbuf;
@@ -161,8 +168,8 @@ struct rtw_txsoft {
 	struct ieee80211_node		*ts_ni;	/* destination node */
 	u_int				ts_first;	/* 1st hw descriptor */
 	u_int				ts_last;	/* last hw descriptor */
-	struct ieee80211_duration	ts_d0;
-	struct ieee80211_duration	ts_dn;
+	struct rtw_duration		ts_d0;
+	struct rtw_duration		ts_dn;
 };
 
 #define RTW_NTXPRI	4	/* number of Tx priorities */

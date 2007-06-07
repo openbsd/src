@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.12 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.13 2007/06/07 20:20:15 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -641,17 +641,6 @@ enum {
 #define	IEEE80211_RTS_DEFAULT			512
 #define	IEEE80211_RTS_MIN			1
 #define	IEEE80211_RTS_MAX			IEEE80211_MAX_LEN
-
-/*
- * 802.11 frame duration definitions.
- */
-
-struct ieee80211_duration {
-	uint16_t	d_rts_dur;
-	uint16_t	d_data_dur;
-	uint16_t	d_plcp_len;
-	uint8_t		d_residue;	/* unused octets in time slot */
-};
 
 /* One Time Unit (TU) is 1Kus = 1024 microseconds. */
 #define IEEE80211_DUR_TU		1024

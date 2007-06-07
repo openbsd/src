@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.12 2006/06/27 04:25:12 jsg Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.13 2007/06/07 20:20:15 damien Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -95,6 +95,14 @@ struct atw_control_data {
 #define	ATW_CDOFF(x)		offsetof(struct atw_control_data, x)
 #define	ATW_CDTXOFF(x)	ATW_CDOFF(acd_txdescs[(x)])
 #define	ATW_CDRXOFF(x)	ATW_CDOFF(acd_rxdescs[(x)])
+
+struct atw_duration {
+	uint16_t	d_rts_dur;
+	uint16_t	d_data_dur;
+	uint16_t	d_plcp_len;
+	uint8_t		d_residue;	/* unused octets in time slot */
+};
+
 /*
  * Software state for transmit jobs.
  */
@@ -104,8 +112,8 @@ struct atw_txsoft {
 	int txs_firstdesc;		/* first descriptor in packet */
 	int txs_lastdesc;		/* last descriptor in packet */
 	int txs_ndescs;			/* number of descriptors */
-	struct ieee80211_duration txs_d0;
-	struct ieee80211_duration txs_dn;
+	struct atw_duration txs_d0;
+	struct atw_duration txs_dn;
 	SIMPLEQ_ENTRY(atw_txsoft) txs_q;
 };
 

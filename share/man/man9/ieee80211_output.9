@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_output.9,v 1.3 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: ieee80211_output.9,v 1.4 2007/06/07 20:20:15 damien Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -26,14 +26,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_output.9,v 1.2 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_output.9,v 1.3 2007/05/31 19:20:00 jmc Exp $
+.\" $Id: ieee80211_output.9,v 1.4 2007/06/07 20:20:15 damien Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 7 2007 $
 .Dt IEEE80211_OUTPUT 9
 .Os
 .Sh NAME
 .Nm ieee80211_encap , ieee80211_add_rates ,
-.Nm ieee80211_add_xrates , ieee80211_compute_duration
+.Nm ieee80211_add_xrates ,
 .Nm ieee80211_send_mgmt
 .Nd software 802.11 stack output functions
 .Sh SYNOPSIS
@@ -47,18 +47,6 @@
 .Fn ieee80211_add_rates "u_int8_t *frm" "const struct ieee80211_rateset *rs"
 .Ft u_int8_t *
 .Fn ieee80211_add_xrates "u_int8_t *frm" "const struct ieee80211_rateset *rs"
-.Ft int
-.Fo ieee80211_compute_duration
-.Fa "struct ieee80211_frame *wh"
-.Fa "int len"
-.Fa "uint32_t flags"
-.Fa "int fraglen"
-.Fa "int rate"
-.Fa "struct ieee80211_duration *d0"
-.Fa "struct ieee80211_duration *dn"
-.Fa "int *npktp"
-.Fa "int debug"
-.Fc
 .Ft int
 .Fo ieee80211_send_mgmt
 .Fa "struct ieee80211com *ic" "struct ieee80211_node *ni" "int type" "int arg"
@@ -120,12 +108,6 @@ A pointer to the location in the buffer after the addition of the rate set
 is returned.
 It is typically used when constructing management frames from within the
 software 802.11 stack in 802.11g mode.
-.Pp
-.\"
-The
-.Fn ieee80211_compute_duration
-function computes for any packet the appropriate 802.11 Duration field,
-the PLCP Length field, as well as the Duration and Length fields for an RTS frame.
 .Pp
 .\"
 The

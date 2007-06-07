@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.52 2007/02/14 04:49:43 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.53 2007/06/07 20:20:15 damien Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -255,6 +255,9 @@ void	atw_node_free(struct ieee80211com *, struct ieee80211_node *);
 static	__inline uint32_t atw_last_even_tsft(uint32_t, uint32_t, uint32_t);
 uint64_t atw_get_tsft(struct atw_softc *sc);
 void	atw_change_ibss(struct atw_softc *);
+int	atw_compute_duration1(int, int, uint32_t, int, struct atw_duration *);
+int	atw_compute_duration(struct ieee80211_frame *, int, uint32_t, int,
+	    int, struct atw_duration *, struct atw_duration *, int *, int);
 
 /*
  * Tuner/transceiver/modem
@@ -3410,6 +3413,171 @@ atw_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
+/*
+ * Arguments in:
+ *
+ * paylen:  payload length (no FCS, no WEP header)
+ *
+ * hdrlen:  header length
+ *
+ * rate:    MSDU speed, units 500kb/s
+ *
+ * flags:   IEEE80211_F_SHPREAMBLE (use short preamble),
+ *          IEEE80211_F_SHSLOT (use short slot length)
+ *
+ * Arguments out:
+ *
+ * d:       802.11 Duration field for RTS,
+ *          802.11 Duration field for data frame,
+ *          PLCP Length for data frame,
+ *          residual octets at end of data slot
+ */
+int
+atw_compute_duration1(int len, int use_ack, uint32_t flags, int rate,
+    struct atw_duration *d)
+{
+	int pre, ctsrate;
+	int ack, bitlen, data_dur, remainder;
+
+	/* RTS reserves medium for SIFS | CTS | SIFS | (DATA) | SIFS | ACK
+	 * DATA reserves medium for SIFS | ACK
+	 *
+	 * XXXMYC: no ACK on multicast/broadcast or control packets
+	 */
+
+	bitlen = len * 8;
+
+	pre = IEEE80211_DUR_DS_SIFS;
+	if ((flags & IEEE80211_F_SHPREAMBLE) != 0)
+		pre += IEEE80211_DUR_DS_SHORT_PREAMBLE +
+		    IEEE80211_DUR_DS_FAST_PLCPHDR;
+	else
+		pre += IEEE80211_DUR_DS_LONG_PREAMBLE +
+		    IEEE80211_DUR_DS_SLOW_PLCPHDR;
+
+	d->d_residue = 0;
+	data_dur = (bitlen * 2) / rate;
+	remainder = (bitlen * 2) % rate;
+	if (remainder != 0) {
+		d->d_residue = (rate - remainder) / 16;
+		data_dur++;
+	}
+
+	switch (rate) {
+	case 2:		/* 1 Mb/s */
+	case 4:		/* 2 Mb/s */
+		/* 1 - 2 Mb/s WLAN: send ACK/CTS at 1 Mb/s */
+		ctsrate = 2;
+		break;
+	case 11:	/* 5.5 Mb/s */
+	case 22:	/* 11  Mb/s */
+	case 44:	/* 22  Mb/s */
+		/* 5.5 - 11 Mb/s WLAN: send ACK/CTS at 2 Mb/s */
+		ctsrate = 4;
+		break;
+	default:
+		/* TBD */
+		return -1;
+	}
+
+	d->d_plcp_len = data_dur;
+
+	ack = (use_ack) ? pre + (IEEE80211_DUR_DS_SLOW_ACK * 2) / ctsrate : 0;
+
+	d->d_rts_dur =
+	    pre + (IEEE80211_DUR_DS_SLOW_CTS * 2) / ctsrate +
+	    pre + data_dur +
+	    ack;
+
+	d->d_data_dur = ack;
+
+	return 0;
+}
+
+/*
+ * Arguments in:
+ *
+ * wh:      802.11 header
+ *
+ * len: packet length 
+ *
+ * rate:    MSDU speed, units 500kb/s
+ *
+ * fraglen: fragment length, set to maximum (or higher) for no
+ *          fragmentation
+ *
+ * flags:   IEEE80211_F_WEPON (hardware adds WEP),
+ *          IEEE80211_F_SHPREAMBLE (use short preamble),
+ *          IEEE80211_F_SHSLOT (use short slot length)
+ *
+ * Arguments out:
+ *
+ * d0: 802.11 Duration fields (RTS/Data), PLCP Length, Service fields
+ *     of first/only fragment
+ *
+ * dn: 802.11 Duration fields (RTS/Data), PLCP Length, Service fields
+ *     of first/only fragment
+ */
+int
+atw_compute_duration(struct ieee80211_frame *wh, int len, uint32_t flags,
+    int fraglen, int rate, struct atw_duration *d0, struct atw_duration *dn,
+    int *npktp, int debug)
+{
+	int ack, rc;
+	int firstlen, hdrlen, lastlen, lastlen0, npkt, overlen, paylen;
+
+	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
+		hdrlen = sizeof(struct ieee80211_frame_addr4);
+	else
+		hdrlen = sizeof(struct ieee80211_frame);
+
+	paylen = len - hdrlen;
+
+	if ((flags & IEEE80211_F_WEPON) != 0)
+		overlen = IEEE80211_WEP_TOTLEN + IEEE80211_CRC_LEN;
+	else
+		overlen = IEEE80211_CRC_LEN;
+
+	npkt = paylen / fraglen;
+	lastlen0 = paylen % fraglen;
+
+	if (npkt == 0)			/* no fragments */
+		lastlen = paylen + overlen;
+	else if (lastlen0 != 0) {	/* a short "tail" fragment */
+		lastlen = lastlen0 + overlen;
+		npkt++;
+	} else				/* full-length "tail" fragment */
+		lastlen = fraglen + overlen;
+
+	if (npktp != NULL)
+		*npktp = npkt;
+
+	if (npkt > 1)
+		firstlen = fraglen + overlen;
+	else
+		firstlen = paylen + overlen;
+
+	if (debug) {
+		printf("%s: npkt %d firstlen %d lastlen0 %d lastlen %d "
+		    "fraglen %d overlen %d len %d rate %d flags %08x\n",
+		    __func__, npkt, firstlen, lastlen0, lastlen, fraglen,
+		    overlen, len, rate, flags);
+	}
+
+	ack = !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (wh->i_fc[1] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL;
+
+	rc = atw_compute_duration1(firstlen + hdrlen, ack, flags, rate, d0);
+	if (rc == -1)
+		return rc;
+
+	if (npkt <= 1) {
+		*dn = *d0;
+		return 0;
+	}
+	return atw_compute_duration1(lastlen + hdrlen, ack, flags, rate, dn);
+}
+
 #ifdef ATW_DEBUG
 void
 atw_dump_pkt(struct ifnet *ifp, struct mbuf *m0)
@@ -3520,7 +3688,7 @@ atw_start(struct ifnet *ifp)
 		else
 			rate = MAX(2, ieee80211_get_rate(ic));
 
-		if (ieee80211_compute_duration(wh, m0->m_pkthdr.len,
+		if (atw_compute_duration(wh, m0->m_pkthdr.len,
 		    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold,
 		    rate, &txs->txs_d0, &txs->txs_dn, &npkt,
 		    (sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) ==
