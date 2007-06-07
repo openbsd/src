@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.29 2007/05/31 18:24:02 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.30 2007/06/07 07:19:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -58,6 +58,9 @@ pfe_sig_handler(int sig, short event, void *arg)
 	case SIGINT:
 	case SIGTERM:
 		pfe_shutdown();
+	case SIGHUP:
+		/* nothing */
+		break;
 	default:
 		fatalx("pfe_sig_handler: unexpected signal");
 	}
@@ -72,6 +75,7 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	struct passwd	*pw;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
+	struct event	 ev_sighup;
 	int		 i;
 	size_t		 size;
 
@@ -101,6 +105,8 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 		fatal("pfe: chroot");
 	if (chdir("/") == -1)
 		fatal("pfe: chdir(\"/\")");
+#else
+#warning disabling privilege revocation and chroot in DEBUG mode
 #endif
 
 	setproctitle("pf update engine");
@@ -117,8 +123,10 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	signal_set(&ev_sigint, SIGINT, pfe_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, pfe_sig_handler, NULL);
+	signal_set(&ev_sighup, SIGHUP, pfe_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes */
@@ -316,6 +324,11 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 	struct imsg	 imsg;
 	ssize_t		 n;
 
+	static struct service	*service = NULL;
+	static struct table	*table = NULL;
+	struct host		*host;
+	struct address		*virt;
+
 	ibuf = ptr;
 	switch (event) {
 	case EV_READ:
@@ -340,6 +353,70 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_RECONF:
+			log_debug("pfe: reloading configuration");
+			if (imsg.hdr.len !=
+			    sizeof(struct hoststated) + IMSG_HEADER_SIZE)
+				fatalx("corrupted reload data");
+			pfe_disable_events();
+			purge_config(env, PURGE_EVERYTHING);
+			merge_config(env, (struct hoststated *)imsg.data);
+
+			env->tables = calloc(1, sizeof(*env->tables));
+			env->services = calloc(1, sizeof(*env->services));
+			if (env->tables == NULL || env->services == NULL)
+				fatal(NULL);
+
+			TAILQ_INIT(env->tables);
+			TAILQ_INIT(env->services);
+			break;
+		case IMSG_RECONF_TABLE:
+			if ((table = calloc(1, sizeof(*table))) == NULL)
+				fatal(NULL);
+			memcpy(&table->conf, imsg.data, sizeof(table->conf));
+			TAILQ_INIT(&table->hosts);
+			TAILQ_INSERT_TAIL(env->tables, table, entry);
+			break;
+		case IMSG_RECONF_HOST:
+			if ((host = calloc(1, sizeof(*host))) == NULL)
+				fatal(NULL);
+			memcpy(&host->conf, imsg.data, sizeof(host->conf));
+			host->tablename = table->conf.name;
+			TAILQ_INSERT_TAIL(&table->hosts, host, entry);
+			break;
+		case IMSG_RECONF_SERVICE:
+			if ((service = calloc(1, sizeof(*service))) == NULL)
+				fatal(NULL);
+			memcpy(&service->conf, imsg.data,
+			    sizeof(service->conf));
+			service->table = table_find(env,
+			     service->conf.table_id);
+			if (service->conf.backup_id == EMPTY_TABLE)
+				service->backup = &env->empty_table;
+			else
+				service->backup = table_find(env,
+				    service->conf.backup_id);
+			if (service->table == NULL || service->backup == NULL)
+				fatal("pfe_dispatch_parent:"
+				    " corrupted configuration");
+			log_debug("pfe_dispatch_parent: service->table: %s",
+			    service->table->conf.name);
+			log_debug("pfe_dispatch_parent: service->backup: %s",
+			    service->backup->conf.name);
+			TAILQ_INIT(&service->virts);
+			TAILQ_INSERT_TAIL(env->services, service, entry);
+			break;
+		case IMSG_RECONF_VIRT:
+			if ((virt = calloc(1, sizeof(*virt))) == NULL)
+				fatal(NULL);
+			memcpy(virt, imsg.data, sizeof(*virt));
+			TAILQ_INSERT_TAIL(&service->virts, virt, entry);
+			break;
+		case IMSG_RECONF_END:
+			log_warnx("pfe: configuration reloaded");
+			pfe_setup_events();
+			pfe_sync();
+			break;
 		default:
 			log_debug("pfe_dispatch_parent: unexpected imsg %d",
 			    imsg.hdr.type);

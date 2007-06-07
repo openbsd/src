@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.34 2007/05/31 03:24:05 pyr Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.35 2007/06/07 07:19:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -47,6 +47,7 @@ void		 main_dispatch_relay(int, short, void *);
 int		 check_child(pid_t, const char *);
 int		 send_all(struct hoststated *, enum imsg_type,
 		    void *, u_int16_t);
+void		 reconfigure(void);
 
 int		 pipe_parent2pfe[2];
 int		 pipe_parent2hce[2];
@@ -91,7 +92,7 @@ main_sig_handler(int sig, short event, void *arg)
 			main_shutdown(env);
 		break;
 	case SIGHUP:
-		/* reconfigure */
+		reconfigure();
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -363,6 +364,65 @@ merge_config(struct hoststated *env, struct hoststated *new_env)
 	env->services = new_env->services;
 }
 
+
+void
+reconfigure(void)
+{
+	struct hoststated	*env = hoststated_env;
+	struct hoststated	*new_env;
+	struct service		*service;
+	struct address		*virt;
+	struct table            *table;
+	struct host             *host;
+
+	log_info("reloading configuration");
+	if ((new_env = parse_config(env->confpath, env->opts)) == NULL)
+		exit(1);
+
+	purge_config(env, PURGE_EVERYTHING);
+	merge_config(env, new_env);
+	free(new_env);
+	log_info("configuration merge done");
+
+	/*
+	 * first reconfigure pfe
+	 */
+	imsg_compose(ibuf_pfe, IMSG_RECONF, 0, 0, env, sizeof(*env));
+	TAILQ_FOREACH(table, env->tables, entry) {
+		imsg_compose(ibuf_pfe, IMSG_RECONF_TABLE, 0, 0,
+		    &table->conf, sizeof(table->conf));
+		TAILQ_FOREACH(host, &table->hosts, entry) {
+			imsg_compose(ibuf_pfe, IMSG_RECONF_HOST, 0, 0,
+			    &host->conf, sizeof(host->conf));
+		}
+	}
+	TAILQ_FOREACH(service, env->services, entry) {
+		imsg_compose(ibuf_pfe, IMSG_RECONF_SERVICE, 0, 0,
+		    &service->conf, sizeof(service->conf));
+		TAILQ_FOREACH(virt, &service->virts, entry)
+			imsg_compose(ibuf_pfe, IMSG_RECONF_VIRT, 0, 0,
+				virt, sizeof(*virt));
+	}
+	imsg_compose(ibuf_pfe, IMSG_RECONF_END, 0, 0, NULL, 0);
+
+	/*
+	 * then reconfigure hce
+	 */
+	imsg_compose(ibuf_hce, IMSG_RECONF, 0, 0, env, sizeof(*env));
+	TAILQ_FOREACH(table, env->tables, entry) {
+		imsg_compose(ibuf_hce, IMSG_RECONF_TABLE, 0, 0,
+		    &table->conf, sizeof(table->conf));
+		if (table->sendbuf != NULL)
+			imsg_compose(ibuf_hce, IMSG_RECONF_SENDBUF, 0, 0,
+			    table->sendbuf, strlen(table->sendbuf) + 1);
+		TAILQ_FOREACH(host, &table->hosts, entry) {
+			imsg_compose(ibuf_hce, IMSG_RECONF_HOST, 0, 0,
+			    &host->conf, sizeof(host->conf));
+		}
+	}
+	imsg_compose(ibuf_hce, IMSG_RECONF_END, 0, 0, NULL, 0);
+}
+
 void
 purge_config(struct hoststated *env, u_int8_t what)
 {
@@ -375,7 +435,7 @@ purge_config(struct hoststated *env, u_int8_t what)
 	struct relay		*rly;
 	struct session		*sess;
 
-	if (what & PURGE_TABLES) {
+	if (what & PURGE_TABLES && env->tables != NULL) {
 		while ((table = TAILQ_FIRST(env->tables)) != NULL) {
 
 			while ((host = TAILQ_FIRST(&table->hosts)) != NULL) {
@@ -392,9 +452,10 @@ purge_config(struct hoststated *env, u_int8_t what)
 			free(table);
 		}
 		free(env->tables);
+		env->tables = NULL;
 	}
 
-	if (what & PURGE_SERVICES) {
+	if (what & PURGE_SERVICES && env->services != NULL) {
 		while ((service = TAILQ_FIRST(env->services)) != NULL) {
 			TAILQ_REMOVE(env->services, service, entry);
 			while ((virt = TAILQ_FIRST(&service->virts)) != NULL) {
@@ -404,6 +465,7 @@ purge_config(struct hoststated *env, u_int8_t what)
 			free(service);
 		}
 		free(env->services);
+		env->services = NULL;
 	}
 
 	if (what & PURGE_RELAYS) {
@@ -451,7 +513,6 @@ purge_config(struct hoststated *env, u_int8_t what)
 			free(proto);
 		}
 	}
-
 }
 
 void
@@ -510,6 +571,7 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 			/*
 			 * so far we only get here if no L7 (relay) is done.
 			 */
+			reconfigure();
 			break;
 		default:
 			log_debug("main_dispatch_pfe: unexpected imsg %d",

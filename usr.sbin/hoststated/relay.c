@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.32 2007/05/29 00:48:04 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.33 2007/06/07 07:19:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -172,6 +172,9 @@ relay(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 		fatal("relay: chroot");
 	if (chdir("/") == -1)
 		fatal("relay: chdir(\"/\")");
+
+#else
+#warning disabling privilege revocation and chroot in DEBUG mode
 #endif
 
 	setproctitle("socket relay engine");

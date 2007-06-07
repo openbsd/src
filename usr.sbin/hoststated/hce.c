@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.25 2007/05/31 05:07:08 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.26 2007/06/07 07:19:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -64,6 +64,7 @@ hce_sig_handler(int sig, short event, void *arg)
 		hce_shutdown();
 		break;
 	case SIGHUP:
+		/* nothing */
 		break;
 	default:
 		fatalx("hce_sig_handler: unexpected signal");
@@ -80,6 +81,7 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	int		 i;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
+	struct event	 ev_sighup;
 
 	switch (pid = fork()) {
 	case -1:
@@ -96,10 +98,14 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	if ((pw = getpwnam(HOSTSTATED_USER)) == NULL)
 		fatal("hce: getpwnam");
 
+#ifndef DEBUG
 	if (chroot(pw->pw_dir) == -1)
 		fatal("hce: chroot");
 	if (chdir("/") == -1)
 		fatal("hce: chdir(\"/\")");
+#else
+#warning disabling privilege revocation and chroot in DEBUG mode
+#endif
 
 	setproctitle("host check engine");
 	hoststated_process = PROC_HCE;
@@ -107,10 +113,12 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	/* this is needed for icmp tests */
 	icmp_init(env);
 
+#ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("hce: can't drop privileges");
+#endif
 
 	event_init();
 
@@ -132,8 +140,10 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
+	signal_set(&ev_sighup, SIGHUP, hce_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
 	/* setup pipes */
@@ -403,6 +413,10 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 	struct imsg		 imsg;
 	struct ctl_script	 scr;
 	ssize_t		 	 n;
+	size_t			 len;
+
+	static struct table	*table = NULL;
+	struct host		*host;
 
 	ibuf = ptr;
 	switch (event) {
@@ -435,6 +449,44 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 				    "invalid size of script request");
 			bcopy(imsg.data, &scr, sizeof(scr));
 			script_done(env, &scr);
+			break;
+		case IMSG_RECONF:
+			log_debug("hce: reloading configuration");
+			if (imsg.hdr.len !=
+			    sizeof(struct hoststated) + IMSG_HEADER_SIZE)
+				fatalx("corrupted reload data");
+			hce_disable_events();
+			purge_config(env, PURGE_TABLES);
+			merge_config(env, (struct hoststated *)imsg.data);
+
+			env->tables = calloc(1, sizeof(*env->tables));
+			if (env->tables == NULL)
+				fatal(NULL);
+
+			TAILQ_INIT(env->tables);
+			break;
+		case IMSG_RECONF_TABLE:
+			if ((table = calloc(1, sizeof(*table))) == NULL)
+				fatal(NULL);
+			memcpy(&table->conf, imsg.data, sizeof(table->conf));
+			TAILQ_INIT(&table->hosts);
+			TAILQ_INSERT_TAIL(env->tables, table, entry);
+			break;
+		case IMSG_RECONF_SENDBUF:
+			len = imsg.hdr.len - IMSG_HEADER_SIZE;
+			table->sendbuf = calloc(1, len);
+			(void)strlcpy(table->sendbuf, (char *)imsg.data, len);
+			break;
+		case IMSG_RECONF_HOST:
+			if ((host = calloc(1, sizeof(*host))) == NULL)
+				fatal(NULL);
+			memcpy(&host->conf, imsg.data, sizeof(host->conf));
+			host->tablename = table->conf.name;
+			TAILQ_INSERT_TAIL(&table->hosts, host, entry);
+			break;
+		case IMSG_RECONF_END:
+			log_warnx("hce: configuration reloaded");
+			hce_setup_events();
 			break;
 		default:
 			log_debug("hce_dispatch_parent: unexpected imsg %d",
