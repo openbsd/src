@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.12 2006/10/20 23:47:43 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.13 2007/06/07 02:55:12 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -34,13 +34,8 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define	SGI_LABELSECTOR		1		/* sector containing label */
-#define	SGI_LABELOFFSET		0		/* offset of label in sector */
-#define	I386_LABELSECTOR	1		/* sector containing label */
-#define	I386_LABELOFFSET	0		/* offset of label in sector */
-
-#define LABELSECTOR		SGI_LABELSECTOR
-#define LABELOFFSET		SGI_LABELOFFSET
+#define LABELSECTOR		1
+#define LABELOFFSET		0
 
 #define	MAXPARTITIONS		16		/* number of partitions */
 #define	RAW_PART		2		/* raw partition: xx?c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.56 2007/06/07 00:28:17 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.57 2007/06/07 02:55:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -166,10 +166,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 			*lp = minilabel;
 		}
 	}
-	/* Record metainformation about the disklabel.  */
-	if (msg == NULL) {
-		osdep->labelsector = bp->b_blkno;
-	}
 
 #if defined(CD9660)
 	if (msg && iso_disklabelspoof(dev, strat, lp) == 0)
@@ -227,7 +223,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
-	cyl = I386_LABELSECTOR / lp->d_secpercyl;
+	cyl = LABELSECTOR / lp->d_secpercyl;
 
 	/*
 	 * Read dos partition table, follow extended partitions.
@@ -382,7 +378,7 @@ notfat:
 		*cylp = cyl;
 
 	/* next, dig out disk label */
-	msg = readbsdlabel(bp, strat, cyl, dospartoff + I386_LABELSECTOR, -1,
+	msg = readbsdlabel(bp, strat, cyl, dospartoff + LABELSECTOR, -1,
 	    lp, spoofonly);
 
 	return (msg);
@@ -541,8 +537,8 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	if (partoffp)
 		*partoffp = fsoff;
 
-	return readbsdlabel(bp, strat, 0,  fsoff + HPPA_LABELSECTOR,
-	    HPPA_LABELOFFSET, lp, spoofonly);
+	return readbsdlabel(bp, strat, 0,  fsoff + LABELSECTOR,
+	    LABELOFFSET, lp, spoofonly);
 }
 
 /*
@@ -624,19 +620,13 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	/*
-	 * I once played with the thought of using osdep->label{tag,sector}
-	 * as a cache for knowing where (and what) to write.  However, now I
-	 * think it might be useful to reprobe if someone has written
-	 * a newer disklabel of another type with disklabel(8) and -r.
-	 */
 	dl = *lp;
 	msg = readliflabel(bp, strat, &dl, &cdl, &partoff, &cyl, 0);
-	labeloffset = HPPA_LABELOFFSET;
+	labeloffset = LABELOFFSET;
 	if (msg) {
 		dl = *lp;
 		msg = readdoslabel(bp, strat, &dl, &cdl, &partoff, &cyl, 0);
-		labeloffset = I386_LABELOFFSET;
+		labeloffset = LABELOFFSET;
 	}
 	if (msg) {
 		if (partoff == -1)
@@ -672,7 +662,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsector = blockpersec(DL_GETPOFFSET(&lp->d_partitions[RAW_PART]), lp) +
-	    osdep->labelsector;
+	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* avoid division by zero */
