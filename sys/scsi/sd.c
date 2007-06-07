@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.131 2007/06/06 17:15:14 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.132 2007/06/07 05:29:44 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -597,7 +597,7 @@ sdstart(void *v)
 	struct scsi_rw_16 cmd_16;
 	struct scsi_rw cmd_small;
 	struct scsi_generic *cmdp;
-	int64_t blkno;
+	daddr64_t blkno;
 	int nblks, cmdlen, error;
 	struct partition *p;
 
@@ -649,10 +649,8 @@ sdstart(void *v)
 		 */
 		blkno =
 		    bp->b_blkno / (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-		if (DISKPART(bp->b_dev) != RAW_PART) {
-			p = &sd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-			blkno += DL_GETPOFFSET(p);
-		}
+		p = &sd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
+		blkno += DL_GETPOFFSET(p);
 		nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize);
 
 		/*

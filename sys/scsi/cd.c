@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.128 2007/06/06 17:15:14 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.129 2007/06/07 05:29:44 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -601,10 +601,8 @@ cdstart(void *v)
 		 */
 		blkno =
 		    bp->b_blkno / (cd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-		if (DISKPART(bp->b_dev) != RAW_PART) {
-			p = &cd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-			blkno += DL_GETPOFFSET(p);
-		}
+		p = &cd->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
+		blkno += DL_GETPOFFSET(p);
 		nblks = howmany(bp->b_bcount, cd->sc_dk.dk_label->d_secsize);
 
 		/*

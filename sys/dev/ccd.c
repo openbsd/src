@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.75 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.76 2007/06/07 05:29:43 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -723,10 +723,8 @@ ccdstart(struct ccd_softc *cs, struct buf *bp)
 	 * Translate the partition-relative block number to an absolute.
 	 */
 	bn = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &cs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		bn += DL_GETPOFFSET(pp);
-	}
+	pp = &cs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
+	bn += DL_GETPOFFSET(pp);
 
 	/*
 	 * Allocate component buffers

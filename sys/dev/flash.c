@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.5 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: flash.c,v 1.6 2007/06/07 05:29:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -904,12 +904,8 @@ _flashstart(struct flash_softc *sc, struct buf *bp)
 	long pgno;
 
 	part = flashpart(bp->b_dev);
-	if (part != RAW_PART)
-		offset = DL_GETPOFFSET(&sc->sc_dk.dk_label->d_partitions[part]);
-	else
-		offset = 0;
-
-	offset = offset + bp->b_blkno;
+	offset = DL_GETPOFFSET(&sc->sc_dk.dk_label->d_partitions[part]) +
+	    bp->b_blkno;
 	pgno = offset / (sc->sc_flashdev->pagesize / DEV_BSIZE);
 
 	/*
