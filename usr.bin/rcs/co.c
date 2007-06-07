@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.105 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.106 2007/06/07 09:08:54 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -45,7 +45,7 @@ static int	checkout_file_has_diffs(RCSFILE *, RCSNUM *, const char *);
 int
 checkout_main(int argc, char **argv)
 {
-	int fd, i, ch, flags, kflag, status;
+	int fd, i, ch, flags, kflag, ret;
 	RCSNUM *rev;
 	RCSFILE *file;
 	const char *author, *date, *state;
@@ -53,7 +53,7 @@ checkout_main(int argc, char **argv)
 	char *rev_str, *username;
 	time_t rcs_mtime = -1;
 
-	flags = status = 0;
+	flags = ret = 0;
 	kflag = RCS_KWEXP_ERR;
 	rev = RCS_HEAD_REV;
 	rev_str = NULL;
@@ -164,6 +164,7 @@ checkout_main(int argc, char **argv)
 		fd = rcs_choosefile(argv[i], fpath, sizeof(fpath));
 		if (fd < 0) {
 			warn("%s", fpath);
+			ret = 1;
 			continue;
 		}
 		rcs_strip_suffix(argv[i]);
@@ -202,10 +203,11 @@ checkout_main(int argc, char **argv)
 			}
 		}
 
-		if ((status = checkout_rev(file, rev, argv[i], flags,
-		    username, author, state, date)) < 0) {
+		if (checkout_rev(file, rev, argv[i], flags,
+		    username, author, state, date) < 0) {
 			rcs_close(file);
 			rcsnum_free(rev);
+			ret = 1;
 			continue;
 		}
 
@@ -220,7 +222,7 @@ checkout_main(int argc, char **argv)
 		rcs_close(file);
 	}
 
-	return (status);
+	return (ret);
 }
 
 void
