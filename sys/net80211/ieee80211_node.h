@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.11 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.12 2007/06/07 20:24:42 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -158,15 +158,6 @@ ieee80211_unref_node(struct ieee80211_node **ni)
 	ieee80211_node_decref(*ni);
 	*ni = NULL;			/* guard against use */
 }
-
-typedef int ieee80211_node_lock_t;
-#define	IEEE80211_NODE_LOCK_INIT(_ic, _name)
-#define	IEEE80211_NODE_LOCK_DESTROY(_ic)
-#define	IEEE80211_NODE_LOCK(_ic)		(_ic)->ic_nodelock = splnet()
-#define	IEEE80211_NODE_UNLOCK(_ic)		splx((_ic)->ic_nodelock)
-#define	IEEE80211_NODE_LOCK_ASSERT(_ic)
-#define	IEEE80211_NODE_LOCK_BH		IEEE80211_NODE_LOCK
-#define	IEEE80211_NODE_UNLOCK_BH	IEEE80211_NODE_UNLOCK
 
 struct ieee80211com;
 

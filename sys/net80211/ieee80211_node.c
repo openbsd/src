@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.20 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.21 2007/06/07 20:24:42 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -95,7 +95,6 @@ ieee80211_node_attach(struct ifnet *ifp)
 	struct ieee80211com *ic = (void *)ifp;
 	int size;
 
-	IEEE80211_NODE_LOCK_INIT(ic, ifp->if_xname);
 	RB_INIT(&ic->ic_tree);
 	ic->ic_node_alloc = ieee80211_node_alloc;
 	ic->ic_node_free = ieee80211_node_free;
@@ -156,7 +155,6 @@ ieee80211_node_detach(struct ifnet *ifp)
 		ic->ic_bss = NULL;
 	}
 	ieee80211_free_allnodes(ic);
-	IEEE80211_NODE_LOCK_DESTROY(ic);
 	if (ic->ic_aid_bitmap != NULL)
 		FREE(ic->ic_aid_bitmap, M_DEVBUF);
 }
@@ -559,10 +557,11 @@ static void
 ieee80211_setup_node(struct ieee80211com *ic,
 	struct ieee80211_node *ni, u_int8_t *macaddr)
 {
+	int s;
+
 	IEEE80211_DPRINTF(("%s %s\n", __func__, ether_sprintf(macaddr)));
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
 	ieee80211_node_newstate(ni, IEEE80211_STA_CACHE);
-	IEEE80211_NODE_LOCK_BH(ic);
 
 	/* 
 	 * Note we don't enable the inactive timer when acting
@@ -573,11 +572,12 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	 * more importantly, we'll incorrectly deauthenticate
 	 * ourself because the inactivity timer will kick us off.
 	 */
+	s = splnet();
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    RB_EMPTY(&ic->ic_tree))
 		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
 	RB_INSERT(ieee80211_tree, &ic->ic_tree, ni);
-	IEEE80211_NODE_UNLOCK_BH(ic);
+	splx(s);
 }
 
 struct ieee80211_node *
@@ -627,6 +627,7 @@ struct ieee80211_node *
 ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni;
+	int s;
 
 	/*
 	 * The destination address should be in the node table
@@ -636,10 +637,9 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
 	if (ic->ic_opmode == IEEE80211_M_STA || IEEE80211_IS_MULTICAST(macaddr))
 		return ieee80211_ref_node(ic->ic_bss);
 
-	/* XXX can't hold lock across dup_bss 'cuz of recursive locking */
-	IEEE80211_NODE_LOCK(ic);
+	s = splnet();
 	ni = ieee80211_find_node(ic, macaddr);
-	IEEE80211_NODE_UNLOCK(ic);
+	splx(s);
 	if (ni == NULL) {
 		if (ic->ic_opmode != IEEE80211_M_IBSS &&
 		    ic->ic_opmode != IEEE80211_M_AHDEMO)
@@ -755,13 +755,14 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 	struct ieee80211_node *ni;
 	const static u_int8_t zero[IEEE80211_ADDR_LEN];
 	u_int8_t *bssid;
+	int s;
 
 	if (!ieee80211_needs_rxnode(ic, wh, &bssid))
 		return ieee80211_ref_node(ic->ic_bss);
 
-	IEEE80211_NODE_LOCK(ic);
+	s = splnet();
 	ni = ieee80211_find_node(ic, wh->i_addr2);
-	IEEE80211_NODE_UNLOCK(ic);
+	splx(s);
 
 	if (ni != NULL)
 		return ieee80211_ref_node(ni);
@@ -790,10 +791,10 @@ ieee80211_find_node_for_beacon(struct ieee80211com *ic, u_int8_t *macaddr,
     struct ieee80211_channel *chan, char *ssid, u_int8_t rssi)
 {
 	struct ieee80211_node *ni, *keep = NULL;
-	int score = 0;
+	int s, score = 0;
 
 	if ((ni = ieee80211_find_node(ic, macaddr)) != NULL) {
-		IEEE80211_NODE_LOCK(ic);
+		s = splnet();
 
 		if (ni->ni_chan != chan && ni->ni_rssi >= rssi)
 			score++;
@@ -802,7 +803,7 @@ ieee80211_find_node_for_beacon(struct ieee80211com *ic, u_int8_t *macaddr,
 		if (score > 0)
 			keep = ni;
 
-		IEEE80211_NODE_UNLOCK(ic);
+		splx(s);
 	}
 
 	return (keep);
@@ -832,13 +833,15 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 void
 ieee80211_release_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
+	int s;
+
 	IEEE80211_DPRINTF(("%s %s refcnt %d\n", __func__,
 	    ether_sprintf(ni->ni_macaddr), ni->ni_refcnt));
 	if (ieee80211_node_decref(ni) == 0 &&
 	    ni->ni_state == IEEE80211_STA_COLLECT) {
-		IEEE80211_NODE_LOCK_BH(ic);
+		s = splnet();
 		ieee80211_free_node(ic, ni);
-		IEEE80211_NODE_UNLOCK_BH(ic);
+		splx(s);
 	}
 }
 
@@ -846,33 +849,29 @@ void
 ieee80211_free_allnodes(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni;
+	int s;
 
 	IEEE80211_DPRINTF(("%s\n", __func__));
-	IEEE80211_NODE_LOCK_BH(ic);
+	s = splnet();
 	while ((ni = RB_MIN(ieee80211_tree, &ic->ic_tree)) != NULL)
 		ieee80211_free_node(ic, ni);
-	IEEE80211_NODE_UNLOCK_BH(ic);
+	splx(s);
 
 	if (ic->ic_bss != NULL)
 		ieee80211_node_cleanup(ic, ic->ic_bss);	/* for station mode */
 }
 
 /*
- * Timeout inactive nodes.  Note that we cannot hold the node
- * lock while sending a frame as this would lead to a LOR.
- * Instead we use a generation number to mark nodes that we've
- * scanned and drop the lock and restart a scan if we have to
- * time out a node.  Since we are single-threaded by virtue of
- * controlling the inactivity timer we can be sure this will
- * process each node only once.
+ * Timeout inactive nodes.
  */
 void
 ieee80211_clean_nodes(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni, *next_ni;
 	u_int gen = ic->ic_scangen++;		/* NB: ok 'cuz single-threaded*/
+	int s;
 
-	IEEE80211_NODE_LOCK(ic);
+	s = splnet();
 	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
 	    ni != NULL; ni = next_ni) {
 		next_ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
@@ -889,17 +888,17 @@ ieee80211_clean_nodes(struct ieee80211com *ic)
 		 * Send a deauthenticate frame.
 		 */
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-			IEEE80211_NODE_UNLOCK(ic);
+			splx(s);
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH,
 			    IEEE80211_REASON_AUTH_EXPIRE);
-			IEEE80211_NODE_LOCK(ic);
+			s = splnet();
 			ieee80211_node_leave(ic, ni);
 		} else
 			ieee80211_free_node(ic, ni);
 		ic->ic_stats.is_node_timeout++;
 	}
-	IEEE80211_NODE_UNLOCK(ic);
+	splx(s);
 }
 
 void
@@ -907,11 +906,12 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
     void *arg)
 {
 	struct ieee80211_node *ni;
+	int s;
 
-	IEEE80211_NODE_LOCK(ic);
+	s = splnet();
 	RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
 		(*f)(arg, ni);
-	IEEE80211_NODE_UNLOCK(ic);
+	splx(s);
 }
 
 /*

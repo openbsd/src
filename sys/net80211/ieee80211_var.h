@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.19 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.20 2007/06/07 20:24:42 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -180,7 +180,6 @@ struct ieee80211com {
 	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
 	u_int16_t		ic_rtsthreshold;
 	u_int16_t		ic_fragthreshold;
-	ieee80211_node_lock_t	ic_nodelock;	/* on node table */
 	u_int			ic_scangen;	/* gen# for timeout scan */
 	struct ieee80211_node	*(*ic_node_alloc)(struct ieee80211com *);
 	void			(*ic_node_free)(struct ieee80211com *,
