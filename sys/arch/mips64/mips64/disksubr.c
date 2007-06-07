@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.46 2007/06/07 02:55:12 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.47 2007/06/07 12:10:07 otto Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -311,7 +311,7 @@ donot:
 				DL_SETPOFFSET(pp,
 				    letoh32(dp2->dp_start) + part_blkno);
 
-			DL_GETPSIZE(pp, letoh32(dp2->dp_size));
+			DL_SETPSIZE(pp, letoh32(dp2->dp_size));
 
 			switch (dp2->dp_typ) {
 			case DOSPTYP_UNUSED:
