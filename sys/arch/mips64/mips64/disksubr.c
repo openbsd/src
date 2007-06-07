@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.47 2007/06/07 12:10:07 otto Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.48 2007/06/07 23:12:41 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -64,7 +64,7 @@ void map_sgi_label(struct disklabel *, struct sgilabel *);
 char *
 readbsdlabel(struct buf *bp, void (*strat)(struct buf *),
     int cyl, int sec, int off, struct disklabel *lp,
-    int spoofonly;
+    int spoofonly)
 {
 	struct disklabel *dlp;
 	char *msg = NULL;
