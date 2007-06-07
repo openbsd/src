@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.28 2007/04/24 17:12:26 gwk Exp $ */
+/*	$OpenBSD: est.c,v 1.29 2007/06/07 10:24:30 dim Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -489,11 +489,11 @@ static const u_int16_t pm90_n725d[] = {
 
 /* Intel Pentium M processor 730 1.6 GHz, 533 MHz FSB */
 static const u_int16_t pm90_n730[] = {
-       ID16(1600, 1308, BUS133),
-       ID16(1333, 1260, BUS133),
-       ID16(1200, 1212, BUS133),
-       ID16(1067, 1180, BUS133),
-       ID16( 800,  988, BUS133),
+	ID16(1600, 1308, BUS133),
+	ID16(1333, 1260, BUS133),
+	ID16(1200, 1212, BUS133),
+	ID16(1067, 1180, BUS133),
+	ID16( 800,  988, BUS133),
 };
 
 /* Intel Pentium M processor 735 1.7 GHz, VID #A */
@@ -538,10 +538,10 @@ static const u_int16_t pm90_n735d[] = {
 
 /* Intel Pentium M processor 740 1.73 GHz, 533 MHz FSB */
 static const u_int16_t pm90_n740[] = {
-       ID16(1733, 1356, BUS133),
-       ID16(1333, 1212, BUS133),
-       ID16(1067, 1100, BUS133),
-       ID16( 800,  988, BUS133),
+	ID16(1733, 1356, BUS133),
+	ID16(1333, 1212, BUS133),
+	ID16(1067, 1100, BUS133),
+	ID16( 800,  988, BUS133),
 };
 
 /* Intel Pentium M processor 745 1.8 GHz, VID #A */
@@ -1007,7 +1007,7 @@ est_init(const char *cpu_device, int vendor)
 	/*
 	 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 	 */
-	for (i = 0; i <  NELEM(est_cpus); i++) {
+	for (i = 0; i < NELEM(est_cpus); i++) {
 		fql = &est_cpus[i];
 		if (vendor == fql->vendor && bus_clock == BUS_CLK(fql) &&
 		    idhi == fql->table[0] && idlo == fql->table[fql->n - 1]) {
