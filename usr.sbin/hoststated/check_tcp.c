@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.24 2007/05/27 20:53:10 pyr Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.25 2007/06/07 14:17:33 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -181,6 +181,7 @@ tcp_send_req(int s, short event, void *arg)
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
+		close(cte->s);
 		hce_notify_done(cte->host, "tcp_send_req: timeout");
 		return;
 	}
@@ -192,6 +193,7 @@ tcp_send_req(int s, short event, void *arg)
 				goto retry;
 			log_warnx("tcp_send_req: cannot send request");
 			cte->host->up = HOST_DOWN;
+			close(cte->s);
 			hce_notify_done(cte->host, "tcp_send_req: write");
 			return;
 		}
@@ -220,6 +222,7 @@ tcp_read_buf(int s, short event, void *arg)
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
 		buf_free(cte->buf);
+		close(s);
 		hce_notify_done(cte->host, "tcp_read_buf: timeout");
 		return;
 	}
@@ -232,6 +235,7 @@ tcp_read_buf(int s, short event, void *arg)
 			goto retry;
 		cte->host->up = HOST_DOWN;
 		buf_free(cte->buf);
+		close(cte->s);
 		hce_notify_done(cte->host, "tcp_read_buf: read failed");
 		return;;
 	case 0:
