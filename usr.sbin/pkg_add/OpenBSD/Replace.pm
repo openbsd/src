@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.36 2007/06/07 12:57:33 espie Exp $
+# $OpenBSD: Replace.pm,v 1.37 2007/06/07 20:41:01 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -425,11 +425,11 @@ sub save_old_libraries
 
 		if (%$libs) {
 			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
-			    if $state->{beverbose};
+			    if $state->{verbose};
 			($o->{plist}, my $stub_list) = split_libs($o->{plist}, $libs);
 			my $stub_name = $stub_list->pkgname;
 			my $dest = installed_info($stub_name);
-			print "Keeping them in $stub_name\n" if $state->{beverbose};
+			print "Keeping them in $stub_name\n" if $state->{verbose};
 			if ($state->{not}) {
 				$stub_list->to_cache;
 				$o->{plist}->to_cache;
@@ -453,7 +453,7 @@ sub save_old_libraries
 
 			adjust_depends_closure($oldname, $stub_list, $state);
 		} else {
-			print "No libraries to keep\n" if $state->{beverbose};
+			print "No libraries to keep\n" if $state->{verbose};
 		}
 	}
 }
