@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.37 2007/06/06 17:15:13 deraadt Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.38 2007/06/07 00:49:08 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -174,7 +174,7 @@ void rf_InitBP(struct buf *, struct vnode *, unsigned, dev_t, RF_SectorNum_t,
 void raidinit(RF_Raid_t *);
 
 void raidattach(int);
-int  raidsize(dev_t);
+daddr64_t raidsize(dev_t);
 int  raidopen(dev_t, int, int, struct proc *);
 int  raidclose(dev_t, int, int, struct proc *);
 int  raidioctl(dev_t, u_long, caddr_t, int, struct proc *);
@@ -575,7 +575,7 @@ rf_shutdown_hook(RF_ThreadArg_t arg)
 	disk_detach(&rs->sc_dkdev);
 }
 
-int
+daddr64_t
 raidsize(dev_t dev)
 {
 	struct raid_softc *rs;
