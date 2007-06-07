@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.16 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.17 2007/06/07 05:22:32 deraadt Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -626,7 +626,7 @@ hdc_printgeom(p)
 /*
  * Return the size of a partition, if known, or -1 if not.
  */
-int
+daddr64_t
 hdsize(dev_t dev)
 {
 	struct hdsoftc *hd;

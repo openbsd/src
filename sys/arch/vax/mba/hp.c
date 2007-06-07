@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.17 2007/06/05 00:38:19 deraadt Exp $ */
+/*	$OpenBSD: hp.c,v 1.18 2007/06/07 05:22:32 deraadt Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -83,10 +83,10 @@ enum	xfer_action hpfinish(struct mba_device *, int, int *);
 int	hpopen(dev_t, int, int);
 int	hpclose(dev_t, int, int);
 int	hpioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	hpdump(dev_t, caddr_t, caddr_t, size_t);
+int	hpdump(dev_t, daddr64_t, caddr_t, size_t);
 int	hpread(dev_t, struct uio *);
 int	hpwrite(dev_t, struct uio *);
-int	hpsize(dev_t);
+daddr64_t hpsize(dev_t);
 
 struct	cfattach hp_ca = {
 	sizeof(struct hp_softc), hpmatch, hpattach
@@ -444,7 +444,7 @@ hpattn(md)
 }
 
 
-int
+daddr64_t
 hpsize(dev)
 	dev_t	dev;
 {
@@ -464,7 +464,8 @@ hpsize(dev)
 int
 hpdump(dev, a1, a2, size)
 	dev_t	dev;
-	caddr_t	a1, a2;
+	daddr64_t a1;
+	caddr_t a2;
 	size_t	size;
 {
 	printf("hpdump: Not implemented yet.\n");

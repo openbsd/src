@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.21 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.22 2007/06/07 05:22:32 deraadt Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -111,7 +111,7 @@ int	raread(dev_t, struct uio *);
 int	rawrite(dev_t, struct uio *);
 int	raioctl(dev_t, int, caddr_t, int, struct proc *);
 int	radump(dev_t, daddr64_t, caddr_t, size_t);
-int	rasize(dev_t);
+daddr64_t	rasize(dev_t);
 int	ra_putonline(struct ra_softc *);
 
 struct	cfattach ra_ca = {
@@ -428,7 +428,7 @@ radump(dev, blkno, va, size)
 /*
  * Return the size of a partition, if known, or -1 if not.
  */
-int
+daddr64_t
 rasize(dev)
 	dev_t dev;
 {
@@ -460,7 +460,7 @@ int	rxread(dev_t, struct uio *);
 int	rxwrite(dev_t, struct uio *);
 int	rxioctl(dev_t, int, caddr_t, int, struct proc *);
 int	rxdump(dev_t, daddr64_t, caddr_t, size_t);
-int	rxsize(dev_t);
+daddr64_t	rxsize(dev_t);
 
 struct	cfattach rx_ca = {
 	sizeof(struct rx_softc), (cfmatch_t)rxmatch, rxattach
@@ -739,7 +739,7 @@ rxdump(dev, blkno, va, size)
 	return ENXIO;
 }
 
-int
+daddr64_t
 rxsize(dev)
 	dev_t dev;
 {
