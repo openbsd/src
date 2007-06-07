@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.53 2007/06/07 00:28:17 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.54 2007/06/07 03:41:52 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -301,10 +301,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
-	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
-	/* XXX this assumes everything <=LABELSECTOR is label! */
-	/*     But since LABELSECTOR is 0, that's ok for now. */
+	/* Overwriting disk label? */
 	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= labelsector &&
 	    bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) + sz > labelsector &&
 	    (bp->b_flags & B_READ) == 0 && !wlabel) {
