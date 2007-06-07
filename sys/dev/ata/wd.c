@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.62 2007/06/06 17:15:13 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.63 2007/06/07 03:50:20 ray Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -137,7 +137,7 @@ struct wd_softc {
 #define WDF_LOCKED	  0x01
 #define WDF_WANTED	  0x02
 #define WDF_WLABEL	  0x04 /* label is writable */
-#define WDF_LABELLING   0x08 /* writing label */
+#define WDF_LABELLING	  0x08 /* writing label */
 /*
  * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
  * more fully implemented.
@@ -233,8 +233,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	wd->openings = aa_link->aa_openings;
 	wd->drvp = aa_link->aa_drv_data;
 
-	strncpy(wd->drvp->drive_name, wd->sc_dev.dv_xname,
-		sizeof(wd->drvp->drive_name) - 1);
+	strlcpy(wd->drvp->drive_name, wd->sc_dev.dv_xname,
+	    sizeof(wd->drvp->drive_name));
 	wd->drvp->cf_flags = wd->sc_dev.dv_cfdata->cf_flags;
 
 	if ((NERRS_MAX - 2) > 0)
