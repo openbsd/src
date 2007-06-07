@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.37 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: xd.c,v 1.38 2007/06/07 03:42:51 deraadt Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -986,7 +986,7 @@ xdwrite(dev, uio, flags)
  * xdsize: return size of a partition for a dump
  */
 
-int
+daddr64_t
 xdsize(dev)
 	dev_t   dev;
 
