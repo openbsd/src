@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.18 2007/06/06 22:14:29 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.19 2007/06/07 00:28:17 krw Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -302,6 +302,8 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int labelsector = blockpersec(DL_GETPOFFSET(&lp->d_partitions[RAW_PART]), lp) +
+	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* avoid division by zero */
@@ -316,7 +318,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
-			return (0);
+			return (-1);
 		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
@@ -330,8 +332,9 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	/* overwriting disk label ? */
 	/* XXX this assumes everything <=LABELSECTOR is label! */
 	/*     But since LABELSECTOR is 0, that's ok for now. */
-	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= LABELSECTOR &&
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+	if (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) <= labelsector &&
+	    bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) + sz > labelsector &&
+	    (bp->b_flags & B_READ) == 0 && !wlabel) {
 		bp->b_error = EROFS;
 		goto bad;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.42 2007/06/06 16:42:07 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.43 2007/06/07 00:28:17 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 		/* if exactly at end of disk, return EOF. */
 		if (bp->b_blkno == maxsz) {
 			bp->b_resid = bp->b_bcount;
-			return(0);
+			return (-1);
 		}
 		/* Otherwise, truncate request. */
 		sz = maxsz - bp->b_blkno;
@@ -89,7 +89,8 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 
 	/* overwriting disk label ? */
 	if (bp->b_blkno + DL_GETPOFFSET(p) <= LABELSECTOR + labelsector &&
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+	    bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) + sz > labelsector &&
+	    (bp->b_flags & B_READ) == 0 && !wlabel) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
