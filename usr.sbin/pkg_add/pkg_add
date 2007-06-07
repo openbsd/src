@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.312 2007/06/07 12:57:33 espie Exp $
+# $OpenBSD: pkg_add,v 1.313 2007/06/07 20:30:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -200,6 +200,7 @@ sub create_handle
 {
 	my ($pkg, $state) = @_;
 	my $handle = OpenBSD::Handle->new;
+	$handle->{pkgname} = $pkg;
 	my $location = OpenBSD::PackageLocator->find($pkg, $state->{arch});
 	if (!$location) {
 		print $state->deptree_header($pkg);
