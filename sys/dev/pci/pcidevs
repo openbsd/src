@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1242 2007/06/06 17:52:05 damien Exp $
+$OpenBSD: pcidevs,v 1.1243 2007/06/08 10:23:29 mbalmer Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3435,6 +3435,7 @@ product SANGOMA A10X		0x0300	A10x
 
 /* Digi International */
 product	DIGI NEO4		0x00b0	Neo-4
+product	DIGI NEO8		0x00b1	Neo-8
 
 /* Schneider & Koch (SysKonnect) */
 product SCHNEIDERKOCH FDDI	0x4000	FDDI
