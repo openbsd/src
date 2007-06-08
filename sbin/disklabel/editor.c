@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.120 2007/06/08 19:08:35 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.121 2007/06/08 20:21:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.120 2007/06/08 19:08:35 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.121 2007/06/08 20:21:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -438,7 +438,12 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	u_int64_t ui, old_offset, old_size, new_offset, new_size;
 
 	/* XXX - prompt user to steal space from another partition instead */
-	if (*freep == 0) {
+#ifdef CYLCHECK
+	if (*freep < lp->d_secpercyl)
+#else
+	if (*freep == 0)
+#endif
+	{
 		fputs("No space left, you need to shrink a partition\n",
 		    stderr);
 		return;
@@ -1108,28 +1113,21 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 			}
 		}
 	}
-	if ((flags & DO_ROUNDING) && rval < ULLONG_MAX - lp->d_secpercyl / 2 &&
-	    lp->d_secpercyl != 0) {
-#ifndef CYLCHECK
+	if ((flags & DO_ROUNDING) && rval != ULLONG_MAX) {
 		/* Round to nearest cylinder unless given in sectors */
-		if (mult != 1)
+		if (
+#ifndef CYLCHECK
+		    mult != 1 &&
 #endif
-		{
+		    (rval + offset) % lp->d_secpercyl != 0) {
 			u_int64_t cyls;
 
-			/* If we round up past the end, round down instead */
-			cyls = (rval + lp->d_secpercyl / 2) / lp->d_secpercyl;
-			if (cyls != 0 && lp->d_secpercyl != 0) {
-				if (maxval && cyls > 1 &&
-				    (cyls * lp->d_secpercyl) - offset > maxval)
-					cyls--;
-
-				if (rval != (cyls * lp->d_secpercyl) - offset) {
-					rval = (cyls * lp->d_secpercyl) - offset;
-					printf("Rounding to nearest cylinder: %llu\n",
-					    rval);
-				}
-			}
+			/* Round to higher cylinder but no more than maxval */
+			cyls = (rval / lp->d_secpercyl) + 1;
+			if ((cyls * lp->d_secpercyl) - offset > maxval)
+				cyls--;
+			rval = (cyls * lp->d_secpercyl) - offset;
+			printf("Rounding to cylinder: %llu\n", rval);
 		}
 	}
 
