@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.24 2007/03/18 20:53:10 uwe Exp $
+#	$OpenBSD: files.zaurus,v 1.25 2007/06/08 22:57:43 jasper Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -101,6 +101,9 @@ include "dev/pckbc/files.pckbc"
 
 # Include USB stuff
 include "dev/usb/files.usb"
+
+# Bluetooth
+include "dev/bluetooth/files.bluetooth"
 
 # Media Independent Interface (mii)
 include "dev/mii/files.mii"

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.5 2007/01/15 22:22:18 martin Exp $
+#	$OpenBSD: files.landisk,v 1.6 2007/06/08 22:57:43 jasper Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -71,6 +71,11 @@ include "dev/wscons/files.wscons"
 # USB drivers
 #
 include "dev/usb/files.usb"
+
+#
+# Bluetooth
+#
+include "dev/bluetooth/files.bluetooth"
 
 #
 # SH bus

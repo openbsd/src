@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.81 2007/05/28 23:10:10 beck Exp $
+#	$OpenBSD: files.alpha,v 1.82 2007/06/08 22:57:42 jasper Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -345,6 +345,11 @@ include "dev/i2c/files.i2c"
 # Machine-independent USB drivers
 #
 include	"dev/usb/files.usb"
+
+#
+# Bluetooth
+#
+include "dev/bluetooth/files.bluetooth"
 
 #
 # Machine-independent 1-Wire drivers

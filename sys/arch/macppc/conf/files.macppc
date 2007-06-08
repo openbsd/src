@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.55 2007/06/01 23:14:07 deraadt Exp $
+#	$OpenBSD: files.macppc,v 1.56 2007/06/08 22:57:43 jasper Exp $
 
 #
 # macppc-specific configuration info
@@ -265,6 +265,11 @@ include "dev/pcmcia/files.pcmcia"
 # Machine-independent USB drivers
 #
 include "dev/usb/files.usb"
+
+#
+# Bluetooth
+#
+include "dev/bluetooth/files.bluetooth"
 
 #
 # Machine-independent I2C drivers
