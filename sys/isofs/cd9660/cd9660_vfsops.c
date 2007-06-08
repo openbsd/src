@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.45 2007/06/05 00:38:22 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.46 2007/06/08 05:35:32 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -525,6 +525,7 @@ iso_disklabelspoof(dev, strat, lp)
 	lp->d_npartitions = RAW_PART + 1;
 	lp->d_bbsize = 8192;		/* fake */
 	lp->d_sbsize = 64*1024;		/* fake */
+	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

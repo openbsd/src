@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.33 2007/06/07 00:28:17 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.34 2007/06/08 05:34:27 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 			   dkcksum(dlp) != 0)
 			msg = "disk label corrupted";
 		else {
+			DL_SETDSIZE(dlp, DL_GETDSIZE(lp));
 			*lp = *dlp;
 			msg = NULL;
 			break;

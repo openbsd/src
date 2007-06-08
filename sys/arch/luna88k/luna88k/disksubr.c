@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.20 2007/06/07 03:41:52 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.21 2007/06/08 05:34:28 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -182,6 +182,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
 		if (dkcksum(dlp) == 0) {
+			DL_SETDSIZE(dlp, DL_GETDSIZE(lp));
 			*lp = *dlp;	/* struct assignment */
 			msg = NULL;
 			goto done;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.43 2007/06/07 03:41:52 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.44 2007/06/08 05:34:28 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -382,7 +382,8 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 		lp->d_ntracks = clp->cfg_hds;
 
 		lp->d_secpercyl = clp->secpercyl;
-		DL_SETDSIZE(lp, clp->secperunit);
+		if (DL_GETDSIZE(lp) == 0)
+			DL_SETDSIZE(lp, clp->secperunit);
 		lp->d_sparespertrack = clp->sparespertrack;
 		lp->d_sparespercyl = clp->sparespercyl;
 		lp->d_acylinders = clp->acylinders;
@@ -439,7 +440,8 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 		lp->d_ntracks = clp->cfg_hds;
 
 		lp->d_secpercyl = clp->secpercyl;
-		DL_SETDSIZE(lp, clp->secperunit);
+		if (DL_GETDSIZE(lp) == 0)
+			DL_SETDSIZE(lp, clp->secperunit);
 		lp->d_sparespertrack = clp->sparespertrack;
 		lp->d_sparespercyl = clp->sparespercyl;
 		lp->d_acylinders = clp->acylinders;

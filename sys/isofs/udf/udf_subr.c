@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.12 2007/06/05 00:38:22 deraadt Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.13 2007/06/08 05:35:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -167,6 +167,7 @@ udf_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	lp->d_partitions[RAW_PART].p_fstype = FS_UDF;
 	lp->d_npartitions = RAW_PART + 1;
+	lp->d_version = 1;
 
 	lp->d_bbsize = 8192;	/* Fake. */
 	lp->d_sbsize = 64*1024;	/* Fake. */
