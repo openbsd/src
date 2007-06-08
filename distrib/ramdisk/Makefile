@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2007/04/13 17:34:40 millert Exp $
+#	$OpenBSD: Makefile,v 1.30 2007/06/08 02:30:20 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -46,7 +46,7 @@ RAWLABEL?=	-r
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192
-NEWFSOPTS_RD?=	${NEWFSOPTS} -i 16384 -s ${IMAGESIZE}
+NEWFSOPTS_RD?=	${NEWFSOPTS} -i 8192 -s ${IMAGESIZE}
 #NEWFSOPTS_FD=	${NEWFSOPTS} -i 524288 -c ${FLOPPYSIZE} -s ${FLOPPYSIZE}
 NEWFSOPTS_FD=	${NEWFSOPTS} -i 1048575 -c ${FLOPPYSIZE} -s ${FLOPPYSIZE}
 
