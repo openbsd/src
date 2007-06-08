@@ -1644,6 +1644,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/atomic.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/autoconf.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/bus.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/conf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/cpu.ph

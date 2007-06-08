@@ -150,6 +150,7 @@
 ./usr/include/mvme68k/asm.h
 ./usr/include/mvme68k/atomic.h
 ./usr/include/mvme68k/autoconf.h
+./usr/include/mvme68k/bus.h
 ./usr/include/mvme68k/cdefs.h
 ./usr/include/mvme68k/conf.h
 ./usr/include/mvme68k/cpu.h
