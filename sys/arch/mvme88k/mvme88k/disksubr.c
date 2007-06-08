@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.44 2007/06/08 05:34:28 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.45 2007/06/08 22:17:10 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -351,7 +351,7 @@ bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp)
 	clp->checksum = lp->d_checksum;
 	bcopy(&lp->d_partitions[0], clp->vid_4, sizeof(struct partition) * 4);
 	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) * 12);
-	clp->version = 1;
+	clp->version = 2;
 
 	/* Put "MOTOROLA" in the VID.  This makes it a valid boot disk. */
 	mot = clp->vid_mot;
@@ -370,6 +370,7 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int i;
 
+	lp->d_version = 0;
 	if (clp->version == 0) {
 		lp->d_magic = clp->magic1;
 		lp->d_type = clp->type;
@@ -426,8 +427,6 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 		lp->d_sbsize = clp->sbsize;
 		bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
 		bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) * 12);
-		lp->d_checksum = 0;
-		lp->d_checksum = dkcksum(lp);
 	} else {
 		lp->d_magic = clp->magic1;
 		lp->d_type = clp->type;
@@ -484,7 +483,10 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 		lp->d_sbsize = clp->sbsize;
 		bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
 		bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) * 12);
-		lp->d_checksum = 0;
-		lp->d_checksum = dkcksum(lp);
 	}
+
+	if (clp->version == 2)
+		lp->d_version = 1;
+	lp->d_checksum = 0;
+	lp->d_checksum = dkcksum(lp);
 }
