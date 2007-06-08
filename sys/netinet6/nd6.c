@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.73 2007/05/28 22:17:21 pyr Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.74 2007/06/08 09:31:38 henning Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -187,17 +187,10 @@ nd6_setmtu0(ifp, ndi)
 
 	omaxmtu = ndi->maxmtu;
 
-	switch (ifp->if_type) {
-	case IFT_ARCNET:
-		ndi->maxmtu = MIN(60480, ifp->if_mtu); /* RFC2497 */
-		break;
-	case IFT_FDDI:
+	if (ifp->if_type == IFT_FDDI)
 		ndi->maxmtu = MIN(FDDIMTU, ifp->if_mtu);
-		break;
-	default:
+	else
 		ndi->maxmtu = ifp->if_mtu;
-		break;
-	}
 
 	/*
 	 * Decreasing the interface MTU under IPV6 minimum MTU may cause
@@ -1919,13 +1912,12 @@ nd6_need_cache(ifp)
 {
 	/*
 	 * XXX: we currently do not make neighbor cache on any interface
-	 * other than ARCnet, Ethernet, FDDI and GIF.
+	 * other than Ethernet, FDDI and GIF.
 	 *
 	 * RFC2893 says:
 	 * - unidirectional tunnels needs no ND
 	 */
 	switch (ifp->if_type) {
-	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
 	case IFT_IEEE1394:
@@ -1958,9 +1950,6 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 						 desten);
 			return (1);
 			break;
-		case IFT_ARCNET:
-			*desten = 0;
-			return (1);
 		default:
 			m_freem(m);
 			return (0);

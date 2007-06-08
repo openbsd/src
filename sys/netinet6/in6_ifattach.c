@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.44 2006/11/15 03:07:44 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.45 2007/06/08 09:31:38 henning Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -200,22 +200,6 @@ found:
 			in6->s6_addr[14] = addr[4];
 			in6->s6_addr[15] = addr[5];
 		}
-		break;
-
-	case IFT_ARCNET:
-		if (addrlen != 1)
-			return -1;
-		if (!addr[0])
-			return -1;
-
-		bzero(&in6->s6_addr[8], 8);
-		in6->s6_addr[15] = addr[0];
-
-		/*
-		 * due to insufficient bitwidth, we mark it local.
-		 */
-		in6->s6_addr[8] &= ~EUI64_GBIT;	/* g bit to "individual" */
-		in6->s6_addr[8] |= EUI64_UBIT;	/* u bit to "local" */
 		break;
 
 	case IFT_GIF:

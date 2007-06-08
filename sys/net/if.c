@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.160 2007/06/06 10:04:36 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.161 2007/06/08 09:31:38 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1338,10 +1338,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			    (caddr_t)((struct arpcom *)ifp)->ac_enaddr,
 			    ETHER_ADDR_LEN);
 			/* FALLTHROUGH */
-		case IFT_ARCNET:
-			bcopy((caddr_t)ifr->ifr_addr.sa_data,
-			    LLADDR(sdl), ETHER_ADDR_LEN);
-			break;
 		default:
 			return (ENODEV);
 		}
