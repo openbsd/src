@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.112 2007/06/08 18:42:17 otto Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.113 2007/06/08 19:08:35 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.112 2007/06/08 18:42:17 otto Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.113 2007/06/08 19:08:35 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -903,7 +903,7 @@ makedisktab(FILE *f, struct disklabel *lp)
 	(void)fprintf(f, "nt#%u:", lp->d_ntracks);
 	(void)fprintf(f, "nc#%u:", lp->d_ncylinders);
 	(void)fprintf(f, "sc#%u:", lp->d_secpercyl);
-	(void)fprintf(f, "su#%u:", lp->d_secperunit);
+	(void)fprintf(f, "su#%llu:", DL_GETDSIZE(lp));
 
 	if (lp->d_rpm != 3600) {
 		(void)fprintf(f, "%srm#%hu:", did, lp->d_rpm);
@@ -1626,15 +1626,15 @@ checklabel(struct disklabel *lp)
 		warnx("warning, revolutions/minute %d", lp->d_rpm);
 	if (lp->d_secpercyl == 0)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, (u_int64_t)lp->d_secpercyl * lp->d_ncylinders);
 #ifdef i386__notyet
 	if (dosdp && dosdp->dp_size &&
 	    (dosdp->dp_typ == DOSPTYP_OPENBSD)) {
-		&& lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
+		&& DL_GETDSIZE(lp) > dosdp->dp_start + dosdp->dp_size) {
 		warnx("exceeds DOS partition size");
 		errors++;
-		lp->d_secperunit = dosdp->dp_start + dosdp->dp_size;
+		DL_SETDSIZE(lp, dosdp->dp_start + dosdp->dp_size);
 	}
 #endif
 	if (lp->d_bbsize == 0) {
