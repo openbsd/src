@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.21 2007/06/08 05:34:28 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.22 2007/06/08 12:45:05 krw Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -415,6 +415,7 @@ disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 	lp->d_acylinders   = sl->sl_acylinders;
 	lp->d_rpm          = sl->sl_rpm;		/* UniOS - (empty) */
 	lp->d_interleave   = sl->sl_interleave;		/* UniOS - ndisk */
+	lp->d_version	   = 1;
 
 	if (sl->sl_rpm == 0) {
 		/* UniOS label has blkoffset, not cyloffset */
