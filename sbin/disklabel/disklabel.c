@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.111 2007/06/07 19:51:08 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.112 2007/06/08 18:42:17 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.111 2007/06/07 19:51:08 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.112 2007/06/08 18:42:17 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ int	getasciilabel(FILE *, struct disklabel *);
 int	cmplabel(struct disklabel *, struct disklabel *);
 void	setbootflag(struct disklabel *);
 void	usage(void);
-u_int32_t getnum(char *, u_int32_t, u_int32_t, const char **);
+u_int64_t getnum(char *, u_int64_t, u_int64_t, const char **);
 
 int
 main(int argc, char *argv[])
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 			op = WRITE;
 			break;
 		case 'p':
-			if (strchr("bckmg", optarg[0]) == NULL ||
+			if (strchr("bckmgt", optarg[0]) == NULL ||
 			    optarg[1] != '\0')
 				usage();
 			print_unit = optarg[0];
@@ -448,7 +448,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		 * In this case, partition 'a' had better start at 0,
 		 * otherwise we reject the request as meaningless. -wfj
 		 */
-		if (dosdp && pp->p_size && (dosdp->dp_typ == DOSPTYP_OPENBSD)) {
+		if (dosdp && DL_GETPSIZE(pp) && (dosdp->dp_typ == DOSPTYP_OPENBSD)) {
 		        sectoffset = (off_t)letoh32(dosdp->dp_start) *
 			    lp->d_secsize;
 		} else {
@@ -565,13 +565,12 @@ writelabel(int f, char *boot, struct disklabel *lp)
 	}
 #ifdef __vax__
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
-		daddr_t alt;
+		off_t alt;
 		int i;
 
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			(void)lseek(f, (off_t)((alt + i) * lp->d_secsize),
-			    SEEK_SET);
+			(void)lseek(f, (alt + i) * lp->d_secsize, SEEK_SET);
 			if (!donothing)
 				if (write(f, boot, lp->d_secsize) < lp->d_secsize)
 					warn("alternate label %d write", i/2);
@@ -935,12 +934,12 @@ makedisktab(FILE *f, struct disklabel *lp)
 			(void)fprintf(f, "d%d#%u", i, lp->d_drivedata[i]);
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
-		if (pp->p_size) {
+		if (DL_GETPSIZE(pp)) {
 			char c = 'a' + i;
 
 			(void)fprintf(f, "\\\n\t:");
-			(void)fprintf(f, "p%c#%u:", c, pp->p_size);
-			(void)fprintf(f, "o%c#%u:", c, pp->p_offset);
+			(void)fprintf(f, "p%c#%llu:", c, DL_GETPSIZE(pp));
+			(void)fprintf(f, "o%c#%llu:", c, DL_GETPOFFSET(pp));
 			if (pp->p_fstype != FS_UNUSED) {
 				if ((unsigned) pp->p_fstype < FSMAXTYPES)
 					(void)fprintf(f, "t%c=%s:", c,
@@ -971,7 +970,7 @@ makedisktab(FILE *f, struct disklabel *lp)
 }
 
 double
-scale(u_int32_t sz, char unit, struct disklabel *lp)
+scale(u_int64_t sz, char unit, struct disklabel *lp)
 {
 	double fsz;
 
@@ -988,6 +987,8 @@ scale(u_int32_t sz, char unit, struct disklabel *lp)
 		return fsz / (1024 * 1024);
 	case 'G':
 		return fsz / (1024 * 1024 * 1024);
+	case 'T':
+		return fsz / (1024ULL * 1024 * 1024 * 1024);
 	default:
 		return -1.0;
 	}
@@ -1003,14 +1004,14 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 	volatile struct partition *pp = &lp->d_partitions[i];
 	double p_size, p_offset;
 
-	p_size = scale(pp->p_size, unit, lp);
-	p_offset = scale(pp->p_offset, unit, lp);
-	if (pp->p_size) {
+	p_size = scale(DL_GETPSIZE(pp), unit, lp);
+	p_offset = scale(DL_GETPOFFSET(pp), unit, lp);
+	if (DL_GETPSIZE(pp)) {
 		u_int32_t frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 		u_int32_t fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		if (p_size < 0)
-			fprintf(f, "  %c: %13u %13u ", 'a' + i,
-			    pp->p_size, pp->p_offset);
+			fprintf(f, "  %c: %13llu %13llu ", 'a' + i,
+			    DL_GETPSIZE(pp), DL_GETPOFFSET(pp));
 		else
 			fprintf(f, "  %c: %12.*f%c %12.*f%c ", 'a' + i,
 			    unit == 'B' ? 0 : 1, p_size, unit,
@@ -1040,17 +1041,17 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 			if (mp[i] != NULL)
 				fprintf(f, "# %s", mp[i]);
 		} else if (lp->d_secpercyl) {
-			fprintf(f, "# Cyl %5u",
-			    pp->p_offset / lp->d_secpercyl);
-			if (pp->p_offset % lp->d_secpercyl)
+			fprintf(f, "# Cyl %5llu",
+			    DL_GETPOFFSET(pp) / lp->d_secpercyl);
+			if (DL_GETPOFFSET(pp) % lp->d_secpercyl)
 				putc('*', f);
 			else
 				putc(' ', f);
-			fprintf(f, "-%6u",
-			    (pp->p_offset +
-			    pp->p_size + lp->d_secpercyl - 1) /
+			fprintf(f, "-%6llu",
+			    (DL_GETPOFFSET(pp) +
+			    DL_GETPSIZE(pp) + lp->d_secpercyl - 1) /
 			    lp->d_secpercyl - 1);
-			if ((pp->p_offset + pp->p_size) % lp->d_secpercyl)
+			if ((DL_GETPOFFSET(pp) + DL_GETPSIZE(pp)) % lp->d_secpercyl)
 				putc('*', f);
 			else
 				putc(' ', f);
@@ -1061,7 +1062,7 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 
 void
 display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
-     u_int32_t fr)
+     u_int64_t fr)
 {
 	int i, j;
 	double d;
@@ -1089,9 +1090,9 @@ display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
 	fprintf(f, "tracks/cylinder: %u\n", lp->d_ntracks);
 	fprintf(f, "sectors/cylinder: %u\n", lp->d_secpercyl);
 	fprintf(f, "cylinders: %u\n", lp->d_ncylinders);
-	d = scale(lp->d_secperunit, unit, lp);
+	d = scale(DL_GETDSIZE(lp), unit, lp);
 	if (d < 0)
-		fprintf(f, "total sectors: %u\n", lp->d_secperunit);
+		fprintf(f, "total sectors: %llu\n", DL_GETDSIZE(lp));
 	else
 		fprintf(f, "total bytes: %.*f%c\n", unit == 'B' ? 0 : 1,
 		    d, unit);
@@ -1099,7 +1100,7 @@ display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
 	if (edit) {
 		d = scale(fr, unit, lp);
 		if (d < 0)
-			fprintf(f, "free sectors: %u\n", fr);
+			fprintf(f, "free sectors: %llu\n", fr);
 		else
 			fprintf(f, "free bytes: %.*f%c\n", unit == 'B' ? 0 : 1,
 			    d, unit);
@@ -1272,14 +1273,15 @@ word(char *cp)
 /* Base the max value on the sizeof of the value we are reading */
 #define GETNUM(field, nptr, min, errstr) 				\
 	    getnum((nptr), (min),					\
-		sizeof(field) == 4 ? UINT_MAX : 			\
-		(sizeof(field) == 2 ? USHRT_MAX : UCHAR_MAX),  (errstr))
+		sizeof(field) == 8 ? LLONG_MAX : 			\
+		(sizeof(field) == 4 ? UINT_MAX : 			\
+		(sizeof(field) == 2 ? USHRT_MAX : UCHAR_MAX)),  (errstr))
 
-u_int32_t
-getnum(char *nptr, u_int32_t min, u_int32_t max, const char **errstr)
+u_int64_t
+getnum(char *nptr, u_int64_t min, u_int64_t max, const char **errstr)
 {
 	char *p, c;
-	u_int32_t ret;
+	u_int64_t ret;
 
 	for (p = nptr; *p != '\0' && !isspace(*p); p++)
 		;
@@ -1304,7 +1306,9 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	char *tp, *s, line[BUFSIZ];
 	int lineno = 0, errors = 0;
 	u_int32_t v, fsize;
+	u_int64_t lv;
 
+	lp->d_version = 1;
 	lp->d_bbsize = BBSIZE;				/* XXX */
 	lp->d_sbsize = SBSIZE;				/* XXX */
 	while (fgets(line, sizeof(line), f)) {
@@ -1431,12 +1435,13 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "total sectors")) {
-			v = GETNUM(lp->d_secperunit, tp, 1, &errstr);
+			lv = GETNUM(lv, tp, 1, &errstr);
 			if (errstr) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
-			} else
-				lp->d_secperunit = v;
+			} else {
+				DL_SETDSIZE(lp, lv);
+			}
 			continue;
 		}
 		if (!strcmp(cp, "rpm")) {
@@ -1515,20 +1520,22 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	} else							\
 		cp = tp, tp = word(cp), (n) = GETNUM(field, cp, 0, errstr); \
 }
-			NXTNUM(v, pp->p_size, &errstr);
+			NXTNUM(lv, lv, &errstr);
 			if (errstr) {
 				warnx("line %d: bad partition size: %s",
 				    lineno, cp);
 				errors++;
-			} else
-				pp->p_size = v;
-			NXTNUM(v, pp->p_offset, &errstr);
+			} else {
+				DL_SETPSIZE(pp, lv);
+			}
+			NXTNUM(lv, lv, &errstr);
 			if (errstr) {
 				warnx("line %d: bad partition offset: %s",
 				    lineno, cp);
 				errors++;
-			} else
-				pp->p_offset = v;
+			} else {
+				DL_SETPOFFSET(pp, lv);
+			}
 			if (tp == NULL) {
 				pp->p_fstype = FS_UNUSED;
 				goto gottype;
@@ -1646,29 +1653,29 @@ checklabel(struct disklabel *lp)
 	for (i = 0; i < lp->d_npartitions; i++) {
 		part = 'a' + i;
 		pp = &lp->d_partitions[i];
-		if (pp->p_size == 0 && pp->p_offset != 0)
-			warnx("warning, partition %c: size 0, but offset %d",
-			    part, pp->p_offset);
+		if (DL_GETPSIZE(pp) == 0 && DL_GETPOFFSET(pp) != 0)
+			warnx("warning, partition %c: size 0, but offset %lld",
+			    part, DL_GETPSIZE(pp));
 #ifdef CYLCHECK
-		if (i != RAW_PART && pp->p_size % lp->d_secpercyl)
+		if (i != RAW_PART && DL_GETPSIZE(pp) % lp->d_secpercyl)
 			warnx("warning, partition %c: size %% cylinder-size != 0",
 			    part);
-		if (i != RAW_PART && pp->p_offset % lp->d_secpercyl)
+		if (i != RAW_PART && DL_GETPOFFSET(pp) % lp->d_secpercyl)
 			warnx("warning, partition %c: offset %% cylinder-size != 0",
 			    part);
 #endif
 #ifdef AAT0
-		if (i == 0 && pp->p_size != 0 && pp->p_offset != 0) {
+		if (i == 0 && DL_GETPSIZE(pp) != 0 && DL_GETPOFFSET(pp) != 0) {
 			warnx("this architecture requires partition 'a' to "
 			    "start at sector 0");
 			errors++;
 		}
 #endif
-		if (pp->p_offset > lp->d_secperunit) {
+		if (DL_GETPOFFSET(pp) > DL_GETDSIZE(lp)) {
 			warnx("partition %c: offset past end of unit", part);
 			errors++;
 		}
-		if (pp->p_offset + pp->p_size > lp->d_secperunit) {
+		if (DL_GETPOFFSET(pp) + DL_GETPSIZE(pp) > DL_GETDSIZE(lp)) {
 			warnx("partition %c: partition extends past end of unit",
 			    part);
 			errors++;
@@ -1683,9 +1690,9 @@ checklabel(struct disklabel *lp)
 	for (; i < MAXPARTITIONS; i++) {
 		part = 'a' + i;
 		pp = &lp->d_partitions[i];
-		if (pp->p_size || pp->p_offset)
-			warnx("warning, unused partition %c: size %d offset %d",
-			    'a' + i, pp->p_size, pp->p_offset);
+		if (DL_GETPSIZE(pp) || DL_GETPOFFSET(pp))
+			warnx("warning, unused partition %c: size %lld offset %lld",
+			    'a' + i, DL_GETPSIZE(pp), DL_GETPOFFSET(pp));
 	}
 	return (errors);
 }
@@ -1711,9 +1718,9 @@ setbootflag(struct disklabel *lp)
 	for (i = 0; i < lp->d_npartitions; i++) {
 		part = 'a' + i;
 		pp = &lp->d_partitions[i];
-		if (pp->p_size == 0)
+		if (DL_GETPSIZE(pp) == 0)
 			continue;
-		if (boffset <= pp->p_offset) {
+		if (boffset <= DL_GETPOFFSET(pp)) {
 			if (pp->p_fstype == FS_BOOT)
 				pp->p_fstype = FS_UNUSED;
 		} else if (pp->p_fstype != FS_BOOT) {
