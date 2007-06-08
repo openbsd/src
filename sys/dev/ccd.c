@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.76 2007/06/07 05:29:43 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.77 2007/06/08 05:27:58 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1383,6 +1383,7 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
+	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

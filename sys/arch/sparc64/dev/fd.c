@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.15 2007/06/06 21:56:14 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.16 2007/06/08 05:27:58 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -2024,6 +2024,7 @@ fdgetdisklabel(dev)
 	strncpy(lp->d_typename, "floppy disk", sizeof(lp->d_typename));
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_interleave = 1;
+	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

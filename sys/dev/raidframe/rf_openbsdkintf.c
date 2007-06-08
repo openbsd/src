@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.38 2007/06/07 00:49:08 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.39 2007/06/08 05:27:58 deraadt Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -2108,8 +2108,9 @@ raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs,
 	lp->d_type = DTYPE_RAID;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_rpm = 3600;
-	lp->d_interleave = 1;
 	lp->d_flags = 0;
+	lp->d_interleave = 1;
+	lp->d_version = 1;
 
 	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], raidPtr->totalSectors);

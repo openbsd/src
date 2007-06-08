@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.49 2007/06/06 17:15:11 deraadt Exp $	*/
+/*	$OpenBSD: hd.c,v 1.50 2007/06/08 05:27:58 deraadt Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -513,6 +513,7 @@ hdgetdisklabel(dev, rs, lp, clp, spoofonly)
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
+	lp->d_version = 1;
 
 	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
 	lp->d_bbsize = BBSIZE;

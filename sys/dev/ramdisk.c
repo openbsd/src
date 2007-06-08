@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.33 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.34 2007/06/08 05:27:58 deraadt Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -495,6 +495,7 @@ rdgetdisklabel(dev_t dev, struct rd_softc *sc)
 	DL_SETDSIZE(lp, lp->d_nsectors);
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
+	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

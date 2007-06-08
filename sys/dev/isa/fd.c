@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.65 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.66 2007/06/08 05:27:58 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -985,6 +985,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		DL_SETDSIZE(lp, fd->sc_type->size);
 		lp->d_rpm = 300;
 		lp->d_interleave = 1;
+		lp->d_version = 1;
 
 		lp->d_magic = DISKMAGIC;
 		lp->d_magic2 = DISKMAGIC;

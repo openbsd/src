@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.46 2007/06/06 17:15:13 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.47 2007/06/08 05:27:58 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -757,6 +757,7 @@ mcdgetdisklabel(dev, sc, lp, clp, spoofonly)
 	DL_SETDSIZE(lp, sc->disksize);
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
+	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

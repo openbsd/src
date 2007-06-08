@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.6 2007/06/07 05:29:43 deraadt Exp $	*/
+/*	$OpenBSD: flash.c,v 1.7 2007/06/08 05:27:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -992,6 +992,7 @@ flashgetdefaultlabel(dev_t dev, struct flash_softc *sc,
 	/* Fake hardware characteristics. */
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
+	lp->d_version = 1;
 
 	/* XXX these values assume ffs. */
 	lp->d_bbsize = BBSIZE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.77 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.78 2007/06/08 05:27:58 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
+	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
