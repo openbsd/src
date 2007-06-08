@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.106 2007/06/07 09:08:54 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.107 2007/06/08 16:45:52 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -408,6 +408,10 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 				(void)fprintf(stderr, " (unlocked)");
 		}
 	}
+
+	/* If strict locking is disabled, make file writable by owner. */
+	if (rcs_lock_getmode(file) == RCS_LOCK_LOOSE)
+		mode |= S_IWUSR;
 
 	if (file->rf_ndelta == 0 && !(flags & QUIET) &&
 	    ((flags & CO_LOCK) || (flags & CO_UNLOCK))) {
