@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_maloreg.h,v 1.5 2007/06/01 23:43:32 mglocker Exp $ */
+/*	$OpenBSD: if_maloreg.h,v 1.6 2007/06/08 22:08:21 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -22,6 +22,8 @@
 #define MALO_REG_HOST_INTR_MASK		0x04
 #define MALO_REG_DATA_READ		0x10
 #define MALO_REG_CMD_READ		0x12
+#define MALO_REG_DATA_WRITE_LEN		0x14
+#define MALO_REG_DATA_WRITE		0x16
 #define MALO_REG_CMD_WRITE_LEN		0x18
 #define MALO_REG_CMD_WRITE		0x1a
 #define MALO_REG_CARD_STATUS		0x20
@@ -36,10 +38,12 @@
 #define MALO_VAL_SCRATCH_READY		0x00
 #define MALO_VAL_SCRATCH_FW_LOADED	0x5a
 #define MALO_VAL_HOST_INTR_MASK_ON	0x001f
-#define MALO_VAL_DATA_DL_OVER		0x02
+#define MALO_VAL_TX_DL_OVER		0x01
+#define MALO_VAL_RX_DL_OVER		0x02
 #define MALO_VAL_CMD_DL_OVER		0x04
 
 /* interrupt reasons */
+#define MALO_VAL_HOST_INTR_TX		(1 << 0)
 #define MALO_VAL_HOST_INTR_RX		(1 << 1)
 #define MALO_VAL_HOST_INTR_CMD		(1 << 3)
 
@@ -47,13 +51,12 @@
 #define MALO_CMD_RESP			0x8000
 #define MALO_CMD_HWSPEC			0x0003
 #define MALO_CMD_RESET			0x0005
-#define MALO_CMD_STATUS			0x000a
 #define MALO_CMD_RADIO			0x001c
 #define MALO_CMD_CHANNEL		0x001d
 #define MALO_CMD_TXPOWER		0x001e
 #define MALO_CMD_ANTENNA		0x0020
 #define MALO_CMD_MACCTRL		0x0028
-#define MALO_CMD_MACADDR		0x004d
+#define MALO_CMD_ASSOC			0x0050
 
 /* FW command values */
 #define MALO_CMD_RADIO_OFF		0x0000

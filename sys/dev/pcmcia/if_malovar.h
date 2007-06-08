@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.8 2007/06/04 20:29:51 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.9 2007/06/08 22:08:21 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -48,6 +48,7 @@ struct malo_cmd_header {
 	uint16_t	size;
 	uint16_t	seqnum;
 	uint16_t	result;
+	/* malo_cmd_body */
 };
 
 /* FW command bodies */
@@ -94,6 +95,42 @@ struct malo_cmd_body_macctrl {
 	uint16_t	reserved;
 } __packed;
 
+struct malo_cmd_body_assoc {
+	uint8_t		peermac[ETHER_ADDR_LEN];
+	uint16_t	capinfo;
+	uint16_t	listenintrv;
+	uint16_t	bcnperiod;
+	uint8_t		dtimperiod;
+	/* malo_cmd_body_assoc_ssid */
+	/* malo_cmd_body_assoc_phy */
+	/* malo_cmd_body_assoc_cf */
+	/* malo_cmd_body_assoc_rate */
+} __packed;
+#define MALO_TLV_TYPE_SSID	0x0000
+#define MALO_TLV_TYPE_PHY	0x0003
+#define MALO_TLV_TYPE_CF	0x0004
+#define MALO_TLV_TYPE_RATES	0x0001
+struct malo_cmd_body_assoc_ssid {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		data[1];
+} __packed;
+struct malo_cmd_body_assoc_phy {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		data[1];
+} __packed;
+struct malo_cmd_body_assoc_cf {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		data[1];
+} __packed;
+struct malo_cmd_body_assoc_rate {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		data[1];
+} __packed;
+
 /* RX descriptor */
 #define MALO_RX_STATUS_OK	0x0001
 struct malo_rx_desc {
@@ -107,6 +144,19 @@ struct malo_rx_desc {
 	uint32_t	reserved1;
 	uint8_t		priority;
 	uint8_t		reserved2[3];
+} __packed;
+
+/* TX descriptor */
+struct malo_tx_desc {
+	uint32_t	status;
+	uint32_t	control;
+	uint32_t	pkgoffset;
+	uint16_t	pkglen;
+	uint8_t		dstaddrhigh[2];
+	uint8_t		dstaddrlow[4];
+	uint8_t		priority;
+	uint8_t		flags;
+	uint8_t		reserved[2];
 } __packed;
 
 struct malo_softc {

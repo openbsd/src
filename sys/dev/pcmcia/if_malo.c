@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.12 2007/06/04 20:29:51 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.13 2007/06/08 22:08:21 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -82,6 +82,8 @@ void	cmalo_detach(void *);
 int	cmalo_intr(void *);
 void	cmalo_intr_mask(struct malo_softc *, int);
 void	cmalo_rx(struct malo_softc *);
+void	cmalo_start(struct ifnet *);
+int	cmalo_tx(struct malo_softc *, struct mbuf *);
 
 void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
@@ -92,6 +94,7 @@ int	cmalo_cmd_set_channel(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_txpower(struct malo_softc *, int16_t);
 int	cmalo_cmd_set_antenna(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_macctrl(struct malo_softc *);
+int	cmalo_cmd_set_assoc(struct malo_softc *);
 int	cmalo_cmd_request(struct malo_softc *, uint16_t, int);
 int	cmalo_cmd_response(struct malo_softc *);
 
@@ -270,7 +273,7 @@ cmalo_attach(void *arg)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = cmalo_ioctl;
 	ifp->if_init = cmalo_init;
-	//ifp->if_start = cmalo_start;
+	ifp->if_start = cmalo_start;
 	//ifp->if_watchdog = cmalo_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
@@ -563,6 +566,10 @@ cmalo_init(struct ifnet *ifp)
 	if (cmalo_cmd_set_channel(sc, sc->sc_curchan) != 0)
 		return (EIO);
 
+	cmalo_cmd_set_assoc(sc);
+
+	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+
 	/* device up */
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -603,6 +610,31 @@ int
 cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct malo_softc *sc = ic->ic_if.if_softc;
+
+	switch (nstate) {
+		case IEEE80211_S_INIT:
+			DPRINTF(1, "%s: newstate is IEEE80211_S_INIT\n",
+			    sc->sc_dev.dv_xname);
+			break;
+		case IEEE80211_S_SCAN:
+			DPRINTF(1, "%s: newstate is IEEE80211_S_SCAN\n",
+			    sc->sc_dev.dv_xname);
+			break;
+		case IEEE80211_S_AUTH:
+			DPRINTF(1, "%s: newstate is IEEE80211_S_AUTH\n",
+			    sc->sc_dev.dv_xname);
+			break;
+		case IEEE80211_S_ASSOC:
+			DPRINTF(1, "%s: newstate is IEEE80211_S_ASSOC\n",
+			    sc->sc_dev.dv_xname);
+			break;
+		case IEEE80211_S_RUN:
+			DPRINTF(1, "%s: newstate is IEEE80211_S_RUN\n",
+			    sc->sc_dev.dv_xname);
+			break;
+		default:
+			break;
+	}
 
 	return (sc->sc_newstate(ic, nstate, arg));
 }
@@ -651,6 +683,9 @@ cmalo_intr(void *arg)
 	DPRINTF(2, "%s: interrupt handler called (intr = 0x%04x)\n",
 	    sc->sc_dev.dv_xname, intr);
 
+	if (intr & MALO_VAL_HOST_INTR_TX)
+		/* TX frame sent */
+		DPRINTF(2, "%s: TX frame sent\n", sc->sc_dev.dv_xname);
 	if (intr & MALO_VAL_HOST_INTR_RX)
 		/* RX frame received */
 		cmalo_rx(sc);
@@ -705,8 +740,8 @@ cmalo_rx(struct malo_softc *sc)
 		uc[i] = htole16(MALO_READ_2(sc, MALO_REG_DATA_READ));
 	if (psize & 0x0001)
 		uc[i] = MALO_READ_1(sc, MALO_REG_DATA_READ);
-	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_DATA_DL_OVER);
-	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_DATA_DL_OVER);
+	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_RX_DL_OVER);
+	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_RX_DL_OVER);
 
 	/* access RX packet descriptor */
 	rxdesc = (struct malo_rx_desc *)sc->sc_data;
@@ -754,8 +789,72 @@ cmalo_rx(struct malo_softc *sc)
 		ether_input_mbuf(ifp, m);
 		ifp->if_ipackets++;
 	}
+}
 
-	m_freem(m);
+void
+cmalo_start(struct ifnet *ifp)
+{
+	struct malo_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct mbuf *m;
+
+	for (;;) {
+		IF_POLL(&ic->ic_mgtq, m);
+		if (m != NULL) {
+			IF_DEQUEUE(&ic->ic_mgtq, m);
+			/* all mgmt frames are handled by the FW */
+		}
+
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m != NULL) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+			if (cmalo_tx(sc, m) != 0) {
+				ifp->if_oerrors++;
+				break;
+			}
+		} else
+			break;
+	}
+}
+
+int
+cmalo_tx(struct malo_softc *sc, struct mbuf *m)
+{
+	struct malo_tx_desc *txdesc = sc->sc_data;
+	uint8_t *data;
+	uint16_t psize, *uc;
+	int i;
+
+	bzero(sc->sc_data, sizeof(*txdesc));
+	psize = sizeof(*txdesc) + m->m_pkthdr.len;
+	data = mtod(m, uint8_t *);
+
+	/* prepare TX descriptor */
+	txdesc->pkgoffset = htole32(sizeof(*txdesc));
+	txdesc->pkglen = htole16(m->m_pkthdr.len);
+	bcopy(data, txdesc->dstaddrhigh, ETHER_ADDR_LEN);
+
+	/* copy mbuf packet to the buffer */
+	bcopy(data, sc->sc_data + sizeof(*txdesc), m->m_pkthdr.len);
+
+	/* send TX packet to the device */
+	MALO_WRITE_2(sc, MALO_REG_DATA_WRITE_LEN, psize);
+	uc = (uint16_t *)sc->sc_data;
+	for (i = 0; i < psize / 2; i++)
+		MALO_WRITE_2(sc, MALO_REG_DATA_WRITE, uc[i]);
+	if (psize & 0x0001)
+		MALO_WRITE_1(sc, MALO_REG_DATA_WRITE, uc[i]);
+	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_TX_DL_OVER);
+	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_TX_DL_OVER);
+
+	DPRINTF(2, "%s: TX pkglen=%d, pkgoffset=%d\n",
+	    sc->sc_dev.dv_xname, txdesc->pkglen, txdesc->pkgoffset);
+
+	return (0);
 }
 
 void
@@ -1005,6 +1104,65 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 }
 
 int
+cmalo_cmd_set_assoc(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_assoc *body;
+	struct malo_cmd_body_assoc_ssid *body_ssid;
+	struct malo_cmd_body_assoc_phy *body_phy;
+	struct malo_cmd_body_assoc_cf *body_cf;
+	struct malo_cmd_body_assoc_rate *body_rate;
+	uint16_t psize;
+	uint8_t ap[] = { 0x00, 0x17, 0x9a, 0x44, 0xda, 0x83 };	/* XXX */
+	uint8_t chan[] = { 0x01 };				/* XXX */
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_ASSOC);
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+
+	body = (struct malo_cmd_body_assoc *)(hdr + 1);
+	bcopy(ap, body->peermac, ETHER_ADDR_LEN);
+	body->capinfo = 0;
+	body->listenintrv = htole16(10);
+
+	body_ssid = sc->sc_cmd + psize;
+	body_ssid->type = htole16(MALO_TLV_TYPE_SSID);
+	body_ssid->size = htole16(6);
+	bcopy("nazgul", body_ssid->data, 6);
+	psize += (sizeof(*body_ssid) - 1) + body_ssid->size;
+
+	body_phy = sc->sc_cmd + psize;
+	body_phy->type = htole16(MALO_TLV_TYPE_PHY);
+	body_phy->size = htole16(1);
+	bcopy(chan, body_phy->data, 1);
+	psize += sizeof(*body_phy);
+
+	body_cf = sc->sc_cmd + psize;
+	body_cf->type = htole16(MALO_TLV_TYPE_CF);
+	body_cf->size = htole16(0);
+	psize += sizeof(*body_cf);
+
+	body_rate = sc->sc_cmd + psize;
+	body_rate->type = htole16(MALO_TLV_TYPE_RATES);
+	body_rate->size = htole16(0);
+	psize += sizeof(*body_rate);
+
+	hdr->size = htole16(psize - sizeof(*hdr));
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
 cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 {
 	uint16_t *uc;
@@ -1026,7 +1184,7 @@ cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 
 	/* wait for the command response */
 	sc->sc_cmd_running = 1;
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 50; i++) {
 		if (sc->sc_cmd_running == 0)
 			break;
 		tsleep(sc, 0, "malocmd", 1);
@@ -1045,7 +1203,9 @@ cmalo_cmd_response(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	uint16_t psize, *uc;
-	int i;
+	int i, s;
+
+	s = splnet(); /* XXX */
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 
@@ -1116,6 +1276,8 @@ cmalo_cmd_response(struct malo_softc *sc)
 		    sc->sc_dev.dv_xname, hdr->cmd);
 		break;
 	}
+
+	splx(s);
 
 	return (0);
 }
