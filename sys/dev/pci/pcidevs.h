@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1242 2007/06/06 17:52:05 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1243 2007/06/08 10:23:29 mbalmer Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3440,6 +3440,7 @@
 
 /* Digi International */
 #define	PCI_PRODUCT_DIGI_NEO4	0x00b0		/* Neo-4 */
+#define	PCI_PRODUCT_DIGI_NEO8	0x00b1		/* Neo-8 */
 
 /* Schneider & Koch (SysKonnect) */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_FDDI	0x4000		/* FDDI */
