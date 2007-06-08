@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.117 2007/06/07 21:47:16 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.118 2007/06/08 13:52:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.117 2007/06/07 21:47:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.118 2007/06/08 13:52:51 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1326,11 +1326,11 @@ edit_parms(struct disklabel *lp, u_int32_t *freep)
 
 	/* total sectors */
 	for (;;) {
+		u_int32_t nsec = MAX(lp->d_secperunit,
+		    lp->d_ncylinders * lp->d_secpercyl);
 		ui = getuint(lp, 0, "total sectors",
 		    "The total number of sectors on the disk.",
-		    lp->d_secperunit ? lp->d_secperunit :
-		    lp->d_ncylinders * lp->d_ncylinders,
-		    lp->d_ncylinders * lp->d_ncylinders, 0, 0);
+		    nsec, nsec, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
