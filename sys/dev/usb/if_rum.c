@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.58 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.59 2007/06/09 08:52:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -134,34 +134,27 @@ void		rum_free_rx_list(struct rum_softc *);
 int		rum_media_change(struct ifnet *);
 void		rum_next_scan(void *);
 void		rum_task(void *);
-int		rum_newstate(struct ieee80211com *,
-			    enum ieee80211_state, int);
-void		rum_txeof(usbd_xfer_handle, usbd_private_handle,
-			    usbd_status);
-void		rum_rxeof(usbd_xfer_handle, usbd_private_handle,
-			    usbd_status);
+int		rum_newstate(struct ieee80211com *, enum ieee80211_state, int);
+void		rum_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		rum_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 #if NBPFILTER > 0
 uint8_t		rum_rxrate(const struct rum_rx_desc *);
 #endif
 int		rum_ack_rate(struct ieee80211com *, int);
-uint16_t		rum_txtime(int, int, uint32_t);
+uint16_t	rum_txtime(int, int, uint32_t);
 uint8_t		rum_plcp_signal(int);
-void		rum_setup_tx_desc(struct rum_softc *,
-			    struct rum_tx_desc *, uint32_t, uint16_t, int,
-			    int);
+void		rum_setup_tx_desc(struct rum_softc *, struct rum_tx_desc *,
+		    uint32_t, uint16_t, int, int);
 int		rum_tx_data(struct rum_softc *, struct mbuf *,
-			    struct ieee80211_node *);
+		    struct ieee80211_node *);
 void		rum_start(struct ifnet *);
 void		rum_watchdog(struct ifnet *);
 int		rum_ioctl(struct ifnet *, u_long, caddr_t);
-void		rum_eeprom_read(struct rum_softc *, uint16_t, void *,
-			    int);
-uint32_t		rum_read(struct rum_softc *, uint16_t);
-void		rum_read_multi(struct rum_softc *, uint16_t, void *,
-			    int);
+void		rum_eeprom_read(struct rum_softc *, uint16_t, void *, int);
+uint32_t	rum_read(struct rum_softc *, uint16_t);
+void		rum_read_multi(struct rum_softc *, uint16_t, void *, int);
 void		rum_write(struct rum_softc *, uint16_t, uint32_t);
-void		rum_write_multi(struct rum_softc *, uint16_t, void *,
-			    size_t);
+void		rum_write_multi(struct rum_softc *, uint16_t, void *, size_t);
 void		rum_bbp_write(struct rum_softc *, uint8_t, uint8_t);
 uint8_t		rum_bbp_read(struct rum_softc *, uint8_t);
 void		rum_rf_write(struct rum_softc *, uint8_t, uint32_t);
@@ -170,9 +163,8 @@ void		rum_enable_mrr(struct rum_softc *);
 void		rum_set_txpreamble(struct rum_softc *);
 void		rum_set_basicrates(struct rum_softc *);
 void		rum_select_band(struct rum_softc *,
-			    struct ieee80211_channel *);
-void		rum_set_chan(struct rum_softc *,
-			    struct ieee80211_channel *);
+		    struct ieee80211_channel *);
+void		rum_set_chan(struct rum_softc *, struct ieee80211_channel *);
 void		rum_enable_tsf_sync(struct rum_softc *);
 void		rum_update_slot(struct rum_softc *);
 void		rum_set_bssid(struct rum_softc *, const uint8_t *);
@@ -183,16 +175,14 @@ void		rum_read_eeprom(struct rum_softc *);
 int		rum_bbp_init(struct rum_softc *);
 int		rum_init(struct ifnet *);
 void		rum_stop(struct ifnet *, int);
-int		rum_load_microcode(struct rum_softc *, const u_char *,
-			    size_t);
+int		rum_load_microcode(struct rum_softc *, const u_char *, size_t);
 int		rum_prepare_beacon(struct rum_softc *);
-void		rum_newassoc(struct ieee80211com *,
-			    struct ieee80211_node *, int);
-void		rum_amrr_start(struct rum_softc *,
-			    struct ieee80211_node *);
+void		rum_newassoc(struct ieee80211com *, struct ieee80211_node *,
+		    int);
+void		rum_amrr_start(struct rum_softc *, struct ieee80211_node *);
 void		rum_amrr_timeout(void *);
 void		rum_amrr_update(usbd_xfer_handle, usbd_private_handle,
-			    usbd_status status);
+		    usbd_status status);
 
 static const struct {
 	uint32_t	reg;

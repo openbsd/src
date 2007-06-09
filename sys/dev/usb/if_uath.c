@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.20 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.21 2007/06/09 08:52:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -147,31 +147,25 @@ int	uath_media_change(struct ifnet *);
 void	uath_stat(void *);
 void	uath_next_scan(void *);
 void	uath_task(void *);
-int	uath_newstate(struct ieee80211com *, enum ieee80211_state,
-		    int);
+int	uath_newstate(struct ieee80211com *, enum ieee80211_state, int);
 #ifdef UATH_DEBUG
 void	uath_dump_cmd(const uint8_t *, int, char);
 #endif
-int	uath_cmd(struct uath_softc *, uint32_t, const void *, int,
-		    void *, int);
-int	uath_cmd_write(struct uath_softc *, uint32_t, const void *,
-		    int, int);
-int	uath_cmd_read(struct uath_softc *, uint32_t, const void *,
-		    int, void *, int);
+int	uath_cmd(struct uath_softc *, uint32_t, const void *, int, void *,
+	    int);
+int	uath_cmd_write(struct uath_softc *, uint32_t, const void *, int, int);
+int	uath_cmd_read(struct uath_softc *, uint32_t, const void *, int, void *,
+	    int);
 int	uath_write_reg(struct uath_softc *, uint32_t, uint32_t);
-int	uath_write_multi(struct uath_softc *, uint32_t, const void *,
-		    int);
+int	uath_write_multi(struct uath_softc *, uint32_t, const void *, int);
 int	uath_read_reg(struct uath_softc *, uint32_t, uint32_t *);
 int	uath_read_eeprom(struct uath_softc *, uint32_t, void *);
-void	uath_cmd_rxeof(usbd_xfer_handle, usbd_private_handle,
-		    usbd_status);
-void	uath_data_rxeof(usbd_xfer_handle, usbd_private_handle,
-		    usbd_status);
-void	uath_data_txeof(usbd_xfer_handle, usbd_private_handle,
-		    usbd_status);
+void	uath_cmd_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	uath_data_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	uath_data_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 int	uath_tx_null(struct uath_softc *);
 int	uath_tx_data(struct uath_softc *, struct mbuf *,
-		    struct ieee80211_node *);
+	    struct ieee80211_node *);
 void	uath_start(struct ifnet *);
 void	uath_watchdog(struct ifnet *);
 int	uath_ioctl(struct ifnet *, u_long, caddr_t);
@@ -180,15 +174,13 @@ int	uath_reset(struct uath_softc *);
 int	uath_reset_tx_queues(struct uath_softc *);
 int	uath_wme_init(struct uath_softc *);
 int	uath_set_chan(struct uath_softc *, struct ieee80211_channel *);
-int	uath_set_key(struct uath_softc *,
-		    const struct ieee80211_wepkey *, int);
+int	uath_set_key(struct uath_softc *, const struct ieee80211_wepkey *,
+	    int);
 int	uath_set_keys(struct uath_softc *);
-int	uath_set_rates(struct uath_softc *,
-		    const struct ieee80211_rateset *);
+int	uath_set_rates(struct uath_softc *, const struct ieee80211_rateset *);
 int	uath_set_rxfilter(struct uath_softc *, uint32_t, uint32_t);
 int	uath_set_led(struct uath_softc *, int, int);
-int	uath_switch_channel(struct uath_softc *,
-		    struct ieee80211_channel *);
+int	uath_switch_channel(struct uath_softc *, struct ieee80211_channel *);
 int	uath_init(struct ifnet *);
 void	uath_stop(struct ifnet *, int);
 int	uath_loadfirmware(struct uath_softc *, const u_char *, int);

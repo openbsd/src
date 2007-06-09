@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.15 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.16 2007/06/09 08:52:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -89,41 +89,41 @@ static const struct ueagle_type {
 #define ueagle_lookup(v, p)	\
 	((struct ueagle_type *)usb_lookup(ueagle_devs, v, p))
 
-void	ueagle_attachhook(void *);
-int	ueagle_getesi(struct ueagle_softc *, uint8_t *);
-void	ueagle_loadpage(void *);
-void	ueagle_request(struct ueagle_softc *, uint16_t, uint16_t,
+void		ueagle_attachhook(void *);
+int		ueagle_getesi(struct ueagle_softc *, uint8_t *);
+void		ueagle_loadpage(void *);
+void		ueagle_request(struct ueagle_softc *, uint16_t, uint16_t,
 		    void *, int);
 #ifdef USB_DEBUG
-void	ueagle_dump_cmv(struct ueagle_softc *, struct ueagle_cmv *);
+void		ueagle_dump_cmv(struct ueagle_softc *, struct ueagle_cmv *);
 #endif
-int	ueagle_cr(struct ueagle_softc *, uint32_t, uint16_t,
+int		ueagle_cr(struct ueagle_softc *, uint32_t, uint16_t,
 		    uint32_t *);
-int	ueagle_cw(struct ueagle_softc *, uint32_t, uint16_t, uint32_t);
-int	ueagle_stat(struct ueagle_softc *);
-void	ueagle_stat_thread(void *);
-int	ueagle_boot(struct ueagle_softc *);
-void	ueagle_swap_intr(struct ueagle_softc *, struct ueagle_swap *);
-void	ueagle_cmv_intr(struct ueagle_softc *, struct ueagle_cmv *);
-void	ueagle_intr(usbd_xfer_handle, usbd_private_handle,
+int		ueagle_cw(struct ueagle_softc *, uint32_t, uint16_t, uint32_t);
+int		ueagle_stat(struct ueagle_softc *);
+void		ueagle_stat_thread(void *);
+int		ueagle_boot(struct ueagle_softc *);
+void		ueagle_swap_intr(struct ueagle_softc *, struct ueagle_swap *);
+void		ueagle_cmv_intr(struct ueagle_softc *, struct ueagle_cmv *);
+void		ueagle_intr(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
 uint32_t	ueagle_crc_update(uint32_t, uint8_t *, int);
-void	ueagle_push_cell(struct ueagle_softc *, uint8_t *);
-void	ueagle_rxeof(usbd_xfer_handle, usbd_private_handle,
+void		ueagle_push_cell(struct ueagle_softc *, uint8_t *);
+void		ueagle_rxeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-void	ueagle_txeof(usbd_xfer_handle, usbd_private_handle,
+void		ueagle_txeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
-int	ueagle_encap(struct ueagle_softc *, struct mbuf *);
-void	ueagle_start(struct ifnet *);
-int	ueagle_open_vcc(struct ueagle_softc *,
+int		ueagle_encap(struct ueagle_softc *, struct mbuf *);
+void		ueagle_start(struct ifnet *);
+int		ueagle_open_vcc(struct ueagle_softc *,
 		    struct atm_pseudoioctl *);
-int	ueagle_close_vcc(struct ueagle_softc *,
+int		ueagle_close_vcc(struct ueagle_softc *,
 		    struct atm_pseudoioctl *);
-int	ueagle_ioctl(struct ifnet *, u_long, caddr_t);
-int	ueagle_open_pipes(struct ueagle_softc *);
-void	ueagle_close_pipes(struct ueagle_softc *);
-int	ueagle_init(struct ifnet *);
-void	ueagle_stop(struct ifnet *, int);
+int		ueagle_ioctl(struct ifnet *, u_long, caddr_t);
+int		ueagle_open_pipes(struct ueagle_softc *);
+void		ueagle_close_pipes(struct ueagle_softc *);
+int		ueagle_init(struct ifnet *);
+void		ueagle_stop(struct ifnet *, int);
 
 USB_DECLARE_DRIVER(ueagle);
 
