@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.68 2007/05/29 18:24:56 ray Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.69 2007/06/09 05:16:21 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.68 2007/05/29 18:24:56 ray Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.69 2007/06/09 05:16:21 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -176,6 +176,34 @@ struct context_vec {
 	int	d;		/* end line in new file */
 };
 
+static FILE	*opentemp(const char *);
+static void	 output(char *, FILE *, char *, FILE *, int);
+static void	 check(char *, FILE *, char *, FILE *);
+static void	 range(int, int, char *);
+static void	 uni_range(int, int);
+static void	 dump_context_vec(FILE *, FILE *);
+static void	 dump_unified_vec(FILE *, FILE *);
+static void	 prepare(int, FILE *, off_t);
+static void	 prune(void);
+static void	 equiv(struct line *, int, struct line *, int, int *);
+static void	 unravel(int);
+static void	 unsort(struct line *, int, int *);
+static void	 change(char *, FILE *, char *, FILE *, int, int, int, int, int *);
+static void	 sort(struct line *, int);
+static void	 print_header(const char *, const char *);
+static int	 ignoreline(char *);
+static int	 asciifile(FILE *);
+static int	 fetch(long *, int, int, FILE *, int, int);
+static int	 newcand(int, int, int);
+static int	 search(int *, int, int);
+static int	 skipline(FILE *);
+static int	 isqrt(int);
+static int	 stone(int *, int, int *, int *);
+static int	 readhash(FILE *);
+static int	 files_differ(FILE *, FILE *, int);
+static char	*match_function(const long *, int, FILE *);
+static char	*preadline(int, size_t, off_t);
+
 static int  *J;			/* will be overlaid on class */
 static int  *class;		/* will be overlaid on file[0] */
 static int  *klist;		/* will be overlaid on file[0] after class */
@@ -200,34 +228,6 @@ static struct context_vec *context_vec_ptr;
 static char lastbuf[FUNCTION_CONTEXT_SIZE];
 static int lastline;
 static int lastmatchline;
-
-static FILE *opentemp(const char *);
-static void output(char *, FILE *, char *, FILE *, int);
-static void check(char *, FILE *, char *, FILE *);
-static void range(int, int, char *);
-static void uni_range(int, int);
-static void dump_context_vec(FILE *, FILE *);
-static void dump_unified_vec(FILE *, FILE *);
-static void prepare(int, FILE *, off_t);
-static void prune(void);
-static void equiv(struct line *, int, struct line *, int, int *);
-static void unravel(int);
-static void unsort(struct line *, int, int *);
-static void change(char *, FILE *, char *, FILE *, int, int, int, int, int *);
-static void sort(struct line *, int);
-static void print_header(const char *, const char *);
-static int  ignoreline(char *);
-static int  asciifile(FILE *);
-static int  fetch(long *, int, int, FILE *, int, int);
-static int  newcand(int, int, int);
-static int  search(int *, int, int);
-static int  skipline(FILE *);
-static int  isqrt(int);
-static int  stone(int *, int, int *, int *);
-static int  readhash(FILE *);
-static int  files_differ(FILE *, FILE *, int);
-static char *match_function(const long *, int, FILE *);
-static char *preadline(int, size_t, off_t);
 
 
 /*
@@ -413,27 +413,27 @@ diffreg(char *ofile1, char *ofile2, int flags)
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	member = xrealloc(member, slen[1] + 2, sizeof(int));
+	member = xrealloc(member, slen[1] + 2, sizeof(*member));
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	class = xrealloc(class, slen[0] + 2, sizeof(int));
+	class = xrealloc(class, slen[0] + 2, sizeof(*class));
 
-	klist = xmalloc((slen[0] + 2) * sizeof(int));
+	klist = xmalloc((slen[0] + 2) * sizeof(*klist));
 	clen = 0;
 	clistlen = 100;
-	clist = xmalloc(clistlen * sizeof(struct cand));
+	clist = xmalloc(clistlen * sizeof(*clist));
 	i = stone(class, slen[0], member, klist);
 	xfree(member);
 	xfree(class);
 
-	J = xrealloc(J, len[0] + 2, sizeof(int));
+	J = xrealloc(J, len[0] + 2, sizeof(*J));
 	unravel(klist[i]);
 	xfree(clist);
 	xfree(klist);
 
-	ixold = xrealloc(ixold, len[0] + 2, sizeof(long));
-	ixnew = xrealloc(ixnew, len[1] + 2, sizeof(long));
+	ixold = xrealloc(ixold, len[0] + 2, sizeof(*ixold));
+	ixnew = xrealloc(ixnew, len[1] + 2, sizeof(*ixnew));
 	check(file1, f1, file2, f2);
 	output(file1, f1, file2, f2, (flags & D_HEADER));
 	if (ostdout != -1) {
@@ -559,11 +559,11 @@ prepare(int i, FILE *fd, off_t filesize)
 	if (sz < 100)
 		sz = 100;
 
-	p = xmalloc((sz + 3) * sizeof(struct line));
+	p = xmalloc((sz + 3) * sizeof(*p));
 	for (j = 0; (h = readhash(fd));) {
 		if (j == sz) {
 			sz = sz * 3 / 2;
-			p = xrealloc(p, sz + 3, sizeof(struct line));
+			p = xrealloc(p, sz + 3, sizeof(*p));
 		}
 		p[++j].value = h;
 	}
@@ -689,7 +689,7 @@ newcand(int x, int y, int pred)
 
 	if (clen == clistlen) {
 		clistlen = clistlen * 11 / 10;
-		clist = xrealloc(clist, clistlen, sizeof(struct cand));
+		clist = xrealloc(clist, clistlen, sizeof(*clist));
 	}
 	q = clist + clen;
 	q->x = x;
@@ -877,7 +877,7 @@ unsort(struct line *f, int l, int *b)
 {
 	int *a, i;
 
-	a = xmalloc((l + 1) * sizeof(int));
+	a = xmalloc((l + 1) * sizeof(*a));
 	for (i = 1; i <= l; i++)
 		a[f[i].serial] = f[i].value;
 	for (i = 1; i <= l; i++)
@@ -1048,7 +1048,7 @@ proceed:
 			ptrdiff_t offset = context_vec_ptr - context_vec_start;
 			max_context <<= 1;
 			context_vec_start = xrealloc(context_vec_start,
-			    max_context, sizeof(struct context_vec));
+			    max_context, sizeof(*context_vec_start));
 			context_vec_end = context_vec_start + max_context;
 			context_vec_ptr = context_vec_start + offset;
 		}
