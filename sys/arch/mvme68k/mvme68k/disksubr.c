@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.49 2007/06/08 22:17:06 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.50 2007/06/09 00:39:25 krw Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -370,123 +370,64 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int i;
 
-	lp->d_version = 0;
-	if (clp->version == 0) {
-		lp->d_magic = clp->magic1;
-		lp->d_type = clp->type;
-		lp->d_subtype = clp->subtype;
-		strncpy(lp->d_typename, clp->vid_vd, sizeof lp->d_typename);
-		strncpy(lp->d_packname, clp->packname, sizeof lp->d_packname);
-		lp->d_secsize = clp->cfg_psm;
-		lp->d_nsectors = clp->cfg_spt;
-		lp->d_ncylinders = clp->cfg_trk; /* trk is really num of cyl! */
-		lp->d_ntracks = clp->cfg_hds;
+	lp->d_magic = clp->magic1;
+	lp->d_type = clp->type;
+	lp->d_subtype = clp->subtype;
+	strncpy(lp->d_typename, clp->vid_vd, sizeof lp->d_typename);
+	strncpy(lp->d_packname, clp->packname, sizeof lp->d_packname);
+	lp->d_secsize = clp->cfg_psm;
+	lp->d_nsectors = clp->cfg_spt;
+	lp->d_ncylinders = clp->cfg_trk; /* trk is really num of cyl! */
+	lp->d_ntracks = clp->cfg_hds;
 
-		lp->d_secpercyl = clp->secpercyl;
-		if (DL_GETDSIZE(lp) == 0)
-			DL_SETDSIZE(lp, clp->secperunit);
-		lp->d_sparespertrack = clp->sparespertrack;
-		lp->d_sparespercyl = clp->sparespercyl;
-		lp->d_acylinders = clp->acylinders;
-		lp->d_rpm = clp->rpm;
-		lp->d_interleave = clp->cfg_ilv;
-		lp->d_trackskew = clp->cfg_sof;
-		lp->d_cylskew = clp->cylskew;
-		lp->d_headswitch = clp->headswitch;
+	lp->d_secpercyl = clp->secpercyl;
+	if (DL_GETDSIZE(lp) == 0)
+		DL_SETDSIZE(lp, clp->secperunit);
+	lp->d_sparespertrack = clp->sparespertrack;
+	lp->d_sparespercyl = clp->sparespercyl;
+	lp->d_acylinders = clp->acylinders;
+	lp->d_rpm = clp->rpm;
+	lp->d_interleave = clp->cfg_ilv;
+	lp->d_trackskew = clp->cfg_sof;
+	lp->d_cylskew = clp->cylskew;
+	lp->d_headswitch = clp->headswitch;
 
-		/* this silly table is for winchester drives */
-		switch (clp->cfg_ssr) {
-		case 0:
-			lp->d_trkseek = 0;
-			break;
-		case 1:
-			lp->d_trkseek = 6;
-			break;
-		case 2:
-			lp->d_trkseek = 10;
-			break;
-		case 3:
-			lp->d_trkseek = 15;
-			break;
-		case 4:
-			lp->d_trkseek = 20;
-			break;
-		default:
-			lp->d_trkseek = 0;
-		}
-		lp->d_flags = clp->flags;
-		for (i = 0; i < NDDATA; i++)
-			lp->d_drivedata[i] = clp->drivedata[i];
-		for (i = 0; i < NSPARE; i++)
-			lp->d_spare[i] = clp->spare[i];
-
-		lp->d_magic2 = clp->magic2;
-		lp->d_checksum = clp->checksum;
-		lp->d_npartitions = clp->partitions;
-		lp->d_bbsize = clp->bbsize;
-		lp->d_sbsize = clp->sbsize;
-		bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
-		bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) * 12);
-	} else {
-		lp->d_magic = clp->magic1;
-		lp->d_type = clp->type;
-		lp->d_subtype = clp->subtype;
-		strncpy(lp->d_typename, clp->vid_vd, sizeof lp->d_typename);
-		strncpy(lp->d_packname, clp->packname, sizeof lp->d_packname);
-		lp->d_secsize = clp->cfg_psm;
-		lp->d_nsectors = clp->cfg_spt;
-		lp->d_ncylinders = clp->cfg_trk; /* trk is really num of cyl! */
-		lp->d_ntracks = clp->cfg_hds;
-
-		lp->d_secpercyl = clp->secpercyl;
-		if (DL_GETDSIZE(lp) == 0)
-			DL_SETDSIZE(lp, clp->secperunit);
-		lp->d_sparespertrack = clp->sparespertrack;
-		lp->d_sparespercyl = clp->sparespercyl;
-		lp->d_acylinders = clp->acylinders;
-		lp->d_rpm = clp->rpm;
-		lp->d_interleave = clp->cfg_ilv;
-		lp->d_trackskew = clp->cfg_sof;
-		lp->d_cylskew = clp->cylskew;
-		lp->d_headswitch = clp->headswitch;
-
-		/* this silly table is for winchester drives */
-		switch (clp->cfg_ssr) {
-		case 0:
-			lp->d_trkseek = 0;
-			break;
-		case 1:
-			lp->d_trkseek = 6;
-			break;
-		case 2:
-			lp->d_trkseek = 10;
-			break;
-		case 3:
-			lp->d_trkseek = 15;
-			break;
-		case 4:
-			lp->d_trkseek = 20;
-			break;
-		default:
-			lp->d_trkseek = 0;
-		}
-		lp->d_flags = clp->flags;
-		for (i = 0; i < NDDATA; i++)
-			lp->d_drivedata[i] = clp->drivedata[i];
-		for (i = 0; i < NSPARE; i++)
-			lp->d_spare[i] = clp->spare[i];
-
-		lp->d_magic2 = clp->magic2;
-		lp->d_checksum = clp->checksum;
-		lp->d_npartitions = clp->partitions;
-		lp->d_bbsize = clp->bbsize;
-		lp->d_sbsize = clp->sbsize;
-		bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
-		bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) * 12);
+	/* this silly table is for winchester drives */
+	switch (clp->cfg_ssr) {
+	case 1:
+		lp->d_trkseek = 6;
+		break;
+	case 2:
+		lp->d_trkseek = 10;
+		break;
+	case 3:
+		lp->d_trkseek = 15;
+		break;
+	case 4:
+		lp->d_trkseek = 20;
+		break;
+	default:
+		lp->d_trkseek = 0;
 	}
+	lp->d_flags = clp->flags;
+	for (i = 0; i < NDDATA; i++)
+		lp->d_drivedata[i] = clp->drivedata[i];
+	for (i = 0; i < NSPARE; i++)
+		lp->d_spare[i] = clp->spare[i];
+
+	lp->d_magic2 = clp->magic2;
+	lp->d_checksum = 0;
+	lp->d_npartitions = clp->partitions;
+	lp->d_bbsize = clp->bbsize;
+	lp->d_sbsize = clp->sbsize;
+
+	bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
+	bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) * 12);
 
 	if (clp->version == 2)
 		lp->d_version = 1;
-	lp->d_checksum = 0;
+	else	
+		lp->d_version = 0;
+
 	lp->d_checksum = dkcksum(lp);
 }
