@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.42 2007/06/06 20:33:18 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.43 2007/06/09 09:50:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -287,7 +287,6 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* read supported channels and MAC address from EEPROM */
 	wpi_read_eeprom(sc);
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* set supported .11a, .11b and .11g rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
@@ -1913,6 +1912,7 @@ void
 wpi_read_eeprom(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	char domain[4];
 	int i;
 
 	wpi_read_prom_data(sc, WPI_EEPROM_CAPABILITIES, &sc->cap, 1);
@@ -1922,8 +1922,13 @@ wpi_read_eeprom(struct wpi_softc *sc)
 	DPRINTF(("cap=%x rev=%x type=%x\n", sc->cap, letoh16(sc->rev),
 	    sc->type));
 
-	/* read MAC address */
+	/* read and print regulatory domain */
+	wpi_read_prom_data(sc, WPI_EEPROM_DOMAIN, domain, 4);
+	printf(", %.4s", domain);
+
+	/* read and print MAC address */
 	wpi_read_prom_data(sc, WPI_EEPROM_MAC, ic->ic_myaddr, 6);
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* read the list of authorized channels */
 	for (i = 0; i < WPI_CHAN_BANDS_COUNT; i++)
@@ -2242,7 +2247,7 @@ wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
 
 	/*-
 	 * Adjust power index based on current temperature:
-	 * - if colder than factory-calibrated: decrease output power
+	 * - if cooler than factory-calibrated: decrease output power
 	 * - if warmer than factory-calibrated: increase output power
 	 */
 	idx -= (sc->temp - group->temp) * 11 / 100;

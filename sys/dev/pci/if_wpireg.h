@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.13 2007/06/05 19:49:40 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.14 2007/06/09 09:50:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -588,6 +588,7 @@ struct wpi_firmware_hdr {
 #define WPI_EEPROM_REVISION	0x035
 #define WPI_EEPROM_CAPABILITIES	0x045
 #define WPI_EEPROM_TYPE		0x04a
+#define WPI_EEPROM_DOMAIN	0x060
 #define WPI_EEPROM_BAND1	0x063
 #define WPI_EEPROM_BAND2	0x072
 #define WPI_EEPROM_BAND3	0x080
