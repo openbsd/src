@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.36 2007/05/27 04:00:25 jsg Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.37 2007/06/09 12:22:53 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1341,7 +1341,6 @@ wi_usb_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->sc_wi.wi_ec.ec_if);
 		sc->wi_usb_dying = 1;
 		sc->wi_thread_info->dying = 1;
 		break;

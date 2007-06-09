@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.59 2007/06/09 08:52:10 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.60 2007/06/09 12:22:53 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -2249,7 +2249,6 @@ rum_activate(device_ptr_t self, enum devact act)
 		return EOPNOTSUPP;
 
 	case DVACT_DEACTIVATE:
-		/*if_deactivate(&sc->sc_ic.ic_if);*/
 		break;
 	}
 

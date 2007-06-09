@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.21 2007/06/09 08:52:10 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.22 2007/06/09 12:22:53 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2122,7 +2122,6 @@ uath_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		/*if_deactivate(&sc->sc_ic.ic_if);*/
 		break;
 	}
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.37 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.38 2007/06/09 12:22:53 mbalmer Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -597,8 +597,6 @@ cue_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		/* Deactivate the interface. */
-		if_deactivate(&sc->cue_ec.ec_if);
 		sc->cue_dying = 1;
 		break;
 	}

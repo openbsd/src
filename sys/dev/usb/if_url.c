@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.40 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.41 2007/06/09 12:22:53 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -603,7 +603,6 @@ url_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if_deactivate(GET_IFP(sc));
 		sc->sc_dying = 1;
 		break;
 	}

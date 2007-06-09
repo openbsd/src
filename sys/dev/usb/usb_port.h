@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.72 2007/06/09 12:03:39 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.73 2007/06/09 12:22:53 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -105,7 +105,6 @@ typedef struct proc *usb_proc_ptr;
 
 #define sel_klist si_note
 
-#define if_deactivate(x)
 #define IF_INPUT(ifp, m) ether_input_mbuf((ifp), (m))
 
 #define swap_bytes_change_sign16_le swap_bytes_change_sign16

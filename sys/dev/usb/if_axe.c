@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.70 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.71 2007/06/09 12:22:53 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -805,7 +805,6 @@ axe_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->axe_ec.ec_if);
 		sc->axe_dying = 1;
 		break;
 	}

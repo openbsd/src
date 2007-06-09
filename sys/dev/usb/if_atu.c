@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.81 2007/05/27 04:00:24 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.82 2007/06/09 12:22:53 mbalmer Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1511,10 +1511,8 @@ atu_activate(device_ptr_t self, enum devact act)
 	case DVACT_ACTIVATE:
 		break;
 	case DVACT_DEACTIVATE:
-		if (sc->sc_state != ATU_S_UNCONFIG) {
-			if_deactivate(&sc->atu_ec.ec_if);
+		if (sc->sc_state != ATU_S_UNCONFIG)
 			sc->sc_state = ATU_S_DEAD;
-		}
 		break;
 	}
 	return (0);

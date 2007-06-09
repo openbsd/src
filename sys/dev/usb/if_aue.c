@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.57 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.58 2007/06/09 12:22:53 mbalmer Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -898,7 +898,6 @@ aue_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->aue_ec.ec_if);
 		sc->aue_dying = 1;
 		break;
 	}

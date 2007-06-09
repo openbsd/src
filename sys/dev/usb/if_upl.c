@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.31 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.32 2007/06/09 12:22:53 mbalmer Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -365,8 +365,6 @@ upl_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		/* Deactivate the interface. */
-		if_deactivate(&sc->sc_if);
 		sc->sc_dying = 1;
 		break;
 	}
