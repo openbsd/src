@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.38 2007/06/09 10:30:53 espie Exp $
+# $OpenBSD: Replace.pm,v 1.39 2007/06/09 11:16:54 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -376,7 +376,9 @@ sub split_libs
 
 	(my $splitted, $plist) = split_some_libs($plist, $to_split);
 
-	$splitted->set_pkgname(".libs-".$plist->pkgname);
+	require OpenBSD::PackageInfo;
+
+	$splitted->set_pkgname(OpenBSD::PackageInfo::libs_package($plist->pkgname));
 
 	if (defined $plist->{'no-default-conflict'}) {
 		# we conflict with the package we just removed...

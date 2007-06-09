@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.79 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Update.pm,v 1.80 2007/06/09 11:16:54 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -57,7 +57,7 @@ sub add2updates
 sub process_package
 {
 	my ($self, $pkgname, $state) = @_;
-	if ($pkgname =~ m/^(?:\.libs|partial)\-/o) {
+	if ($pkgname =~ m/^(?:\.libs\d*|partial)\-/o) {
 		$state->progress->clear;
 		print "Not updating $pkgname, remember to clean it\n";
 		return;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.15 2007/06/04 20:48:23 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.16 2007/06/09 11:16:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -174,6 +174,7 @@ sub subpattern_match
 	$stemspec =~ s/\+/\\\+/go;
 	$stemspec =~ s/\*/\.\*/go;
 	$stemspec =~ s/\?/\./go;
+	$stemspec =~ s/^(\\\.libs)\-/$1\\d*\-/go;
 	$vspec =~ s/\./\\\./go;
 	$vspec =~ s/\+/\\\+/go;
 	$vspec =~ s/\*/\.\*/go;

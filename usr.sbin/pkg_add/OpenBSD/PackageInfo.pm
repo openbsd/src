@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.33 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.34 2007/06/09 11:16:54 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -124,16 +124,32 @@ sub installed_contents
 
 sub borked_package
 {
-	my $pkgname = $_[0];
-	unless (-e "$pkg_db/partial-$pkgname") {
-		return "partial-$pkgname";
+	my $pkgname = shift;
+	$pkgname = "partial-$pkgname" unless $pkgname =~ m/^partial\-/;
+	unless (-e "$pkg_db/$pkgname") {
+		return $pkgname;
 	}
 	my $i = 1;
 
-	while (-e "$pkg_db/partial-$pkgname.$i") {
+	while (-e "$pkg_db/$pkgname.$i") {
 		$i++;
 	}
-	return "partial-$pkgname.$i";
+	return "$pkgname.$i";
+}
+
+sub libs_package
+{
+	my $pkgname = shift;
+	$pkgname =~ s/^\.libs\d*\-//;
+	unless (-e "$pkg_db/.libs-$pkgname") {
+		return ".libs-$pkgname";
+	}
+	my $i = 1;
+
+	while (-e "$pkg_db/.libs$i-$pkgname") {
+		$i++;
+	}
+	return ".libs$i-$pkgname";
 }
 
 sub is_installed
