@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.42 2007/06/08 05:34:28 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.43 2007/06/09 02:03:47 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp,
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
-		return(EINVAL);
+		return (EINVAL);
 
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {

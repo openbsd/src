@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.34 2007/06/08 04:59:07 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.35 2007/06/09 02:03:47 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -195,7 +195,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp,
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
-		return(EINVAL);
+		return (EINVAL);
 
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {
@@ -389,7 +389,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
-		return("SunOS disk label, bad checksum");
+		return ("SunOS disk label, bad checksum");
 
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
