@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.7 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.8 2007/06/09 11:06:53 mbalmer Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -198,7 +198,7 @@ struct udav_softc {
 struct udav_rx_hdr {
 	uByte			pktstat;
 	uWord			length;
-} UPACKED;
+} __packed;
 #define UDAV_RX_HDRLEN		sizeof(struct udav_rx_hdr)
 
 /* Packet length */

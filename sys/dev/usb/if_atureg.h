@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.29 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.30 2007/06/09 11:06:53 mbalmer Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -277,7 +277,7 @@ struct atu_cmd {
 	uByte			Cmd;
 	uByte			Reserved;
 	uWord			Size;
-} UPACKED;
+} __packed;
 
 /* CMD_SET_MIB command (0x01) */
 struct atu_cmd_set_mib {
@@ -294,7 +294,7 @@ struct atu_cmd_set_mib {
 
 	/* MIB data */
 	uByte		data[72];
-} UPACKED;
+} __packed;
 
 /* CMD_STARTUP command (0x0b) */
 struct atu_cmd_card_config {
@@ -318,7 +318,7 @@ struct atu_cmd_card_config {
 	uByte			SSID_Len;
 	uByte			ShortPreamble;
 	uWord			BeaconPeriod;
-} UPACKED;
+} __packed;
 
 /* CMD_SCAN command (0x03) */
 struct atu_cmd_do_scan {
@@ -335,7 +335,7 @@ struct atu_cmd_do_scan {
 	uWord			MaxChannelTime;
 	uByte			SSID_Len;
 	uByte			InternationalScan;  
-} UPACKED;
+} __packed;
 
 #define ATU_SCAN_ACTIVE		0x00
 #define ATU_SCAN_PASSIVE	0x01
@@ -353,7 +353,7 @@ struct atu_cmd_join {
 	uWord			timeout;
 	uByte			essid_size;
 	uByte			reserved;
-} UPACKED;
+} __packed;
 
 /* CMD_START_IBSS (0x05) */
 struct atu_cmd_start_ibss {
@@ -367,7 +367,7 @@ struct atu_cmd_start_ibss {
 	uByte		Channel; 
 	uByte		SSIDSize;
 	uByte		Res[3];  
-} UPACKED;
+} __packed;
 
 /*
  * The At76c503 adapters come with different types of radios on them.
@@ -387,7 +387,7 @@ struct atu_rfmd_conf {
 	u_int8_t		Reserved[3];
 	/* then we have 84 bytes, somehow Windows reads 95?? */
 	u_int8_t		Rest[11];
-} UPACKED;
+} __packed;
 
 /* The config structure of an Intersil radio */
 struct atu_intersil_conf {
@@ -400,7 +400,7 @@ struct atu_intersil_conf {
 	u_int8_t		PidVid[4];
 	u_int8_t		RegulatoryDomain;
 	u_int8_t		Reserved[1];
-} UPACKED;
+} __packed;
 
 
 /* Firmware information request */
@@ -409,7 +409,7 @@ struct atu_fw {
 	u_int8_t		minor;
 	u_int8_t		patch;
 	u_int8_t		build;
-} UPACKED;
+} __packed;
         
 /*
  * The header the AT76c503 puts in front of RX packets (for both managment &
@@ -424,7 +424,7 @@ struct atu_rx_hdr {
 	uByte			link_quality;
 	uByte			noise_level;
 	uDWord			rx_time;
-} UPACKED;
+} __packed;
 #define ATU_RX_HDRLEN sizeof(struct atu_rx_hdr)
 
 /*
@@ -436,7 +436,7 @@ struct atu_tx_hdr {
 	uByte				tx_rate;
 	uByte				padding;
 	uByte				reserved[4];
-} UPACKED;
+} __packed;
 #define ATU_TX_HDRLEN sizeof(struct atu_tx_hdr)
 
 #define NR(x)		(void *)((long)x)

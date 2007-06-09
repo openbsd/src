@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidireg.h,v 1.5 2004/10/01 04:08:46 jsg Exp $	*/
+/*	$OpenBSD: umidireg.h,v 1.6 2007/06/09 11:06:53 mbalmer Exp $	*/
 /*	$NetBSD: umidireg.h,v 1.3 2003/12/04 13:57:31 keihan Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ typedef struct {
 	uByte		bDescriptorSubtype;
 	uWord		bcdMSC;
 	uWord		wTotalLength;
-} UPACKED umidi_cs_interface_descriptor_t;
+} __packed umidi_cs_interface_descriptor_t;
 #define UMIDI_CS_INTERFACE_DESCRIPTOR_SIZE 7
 
 typedef struct {
@@ -59,7 +59,7 @@ typedef struct {
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubType;
 	uByte		bNumEmbMIDIJack;
-} UPACKED umidi_cs_endpoint_descriptor_t;
+} __packed umidi_cs_endpoint_descriptor_t;
 #define UMIDI_CS_ENDPOINT_DESCRIPTOR_SIZE 4
 
 typedef struct {
@@ -68,7 +68,7 @@ typedef struct {
 	uByte		bDescriptorSubtype;
 	uByte		bJackType;
 	uByte		bJackID;
-} UPACKED umidi_jack_descriptor_t;
+} __packed umidi_jack_descriptor_t;
 #define	UMIDI_JACK_DESCRIPTOR_SIZE	5
 
 

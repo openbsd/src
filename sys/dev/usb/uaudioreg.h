@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudioreg.h,v 1.11 2003/05/19 05:27:00 nate Exp $ */
+/*	$OpenBSD: uaudioreg.h,v 1.12 2007/06/09 11:06:53 mbalmer Exp $ */
 /*	$NetBSD: uaudioreg.h,v 1.11 2002/10/23 02:32:37 christos Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ typedef struct {
 	 */
 	uByte		bRefresh;
 	uByte		bSynchAddress;
-} UPACKED usb_endpoint_descriptor_audio_t;
+} __packed usb_endpoint_descriptor_audio_t;
 
 struct usb_audio_control_descriptor {
 	uByte		bLength;
@@ -81,7 +81,7 @@ struct usb_audio_control_descriptor {
 	uWord		wTotalLength;
 	uByte		bInCollection;
 	uByte		baInterfaceNr[1];
-} UPACKED;
+} __packed;
 
 struct usb_audio_streaming_interface_descriptor {
 	uByte		bLength;
@@ -90,7 +90,7 @@ struct usb_audio_streaming_interface_descriptor {
 	uByte		bTerminalLink;
 	uByte		bDelay;
 	uWord		wFormatTag;
-} UPACKED;
+} __packed;
 
 struct usb_audio_streaming_endpoint_descriptor {
 	uByte		bLength;
@@ -102,7 +102,7 @@ struct usb_audio_streaming_endpoint_descriptor {
 #define UA_SED_MAXPACKETSONLY	0x80
 	uByte		bLockDelayUnits;
 	uWord		wLockDelay;
-} UPACKED;
+} __packed;
 
 struct usb_audio_streaming_type1_descriptor {
 	uByte		bLength;
@@ -118,13 +118,13 @@ struct usb_audio_streaming_type1_descriptor {
 #define UA_GETSAMP(p, n) ((p)->tSamFreq[(n)*3+0] | ((p)->tSamFreq[(n)*3+1] << 8) | ((p)->tSamFreq[(n)*3+2] << 16))
 #define UA_SAMP_LO(p) UA_GETSAMP(p, 0)
 #define UA_SAMP_HI(p) UA_GETSAMP(p, 1)
-} UPACKED;
+} __packed;
 
 struct usb_audio_cluster {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
-} UPACKED;
+} __packed;
 
 /* Shared by all units and terminals */
 struct usb_audio_unit {
@@ -146,7 +146,7 @@ struct usb_audio_input_terminal {
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		iTerminal;
-} UPACKED;
+} __packed;
 
 /* UDESCSUB_AC_OUTPUT */
 struct usb_audio_output_terminal {
@@ -158,7 +158,7 @@ struct usb_audio_output_terminal {
 	uByte		bAssocTerminal;
 	uByte		bSourceId;
 	uByte		iTerminal;
-} UPACKED;
+} __packed;
 
 /* UDESCSUB_AC_MIXER */
 struct usb_audio_mixer_unit {
@@ -169,14 +169,14 @@ struct usb_audio_mixer_unit {
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_mixer_unit_1 */
-} UPACKED;
+} __packed;
 struct usb_audio_mixer_unit_1 {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		bmControls[255]; /* [bNrChannels] */
 	/*uByte		iMixer;*/
-} UPACKED;
+} __packed;
 
 /* UDESCSUB_AC_SELECTOR */
 struct usb_audio_selector_unit {
@@ -187,7 +187,7 @@ struct usb_audio_selector_unit {
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* uByte	iSelector; */
-} UPACKED;
+} __packed;
 
 /* UDESCSUB_AC_FEATURE */
 struct usb_audio_feature_unit {
@@ -199,7 +199,7 @@ struct usb_audio_feature_unit {
 	uByte		bControlSize;
 	uByte		bmaControls[255]; /* size for more than enough */
 	/* uByte	iFeature; */
-} UPACKED;
+} __packed;
 
 /* UDESCSUB_AC_PROCESSING */
 struct usb_audio_processing_unit {
@@ -211,7 +211,7 @@ struct usb_audio_processing_unit {
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_processing_unit_1 */
-} UPACKED;
+} __packed;
 struct usb_audio_processing_unit_1{
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
@@ -219,13 +219,13 @@ struct usb_audio_processing_unit_1{
 	uByte		bControlSize;
 	uByte		bmControls[255]; /* [bControlSize] */
 #define UA_PROC_ENABLE_MASK 1
-} UPACKED;
+} __packed;
 
 struct usb_audio_processing_unit_updown {
 	uByte		iProcessing;
 	uByte		bNrModes;
 	uWord		waModes[255]; /* [bNrModes] */
-} UPACKED;
+} __packed;
 
 /* UDESCSUB_AC_EXTENSION */
 struct usb_audio_extension_unit {
@@ -237,7 +237,7 @@ struct usb_audio_extension_unit {
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_extension_unit_1 */
-} UPACKED;
+} __packed;
 struct usb_audio_extension_unit_1 {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
@@ -247,7 +247,7 @@ struct usb_audio_extension_unit_1 {
 #define UA_EXT_ENABLE_MASK 1
 #define UA_EXT_ENABLE 1
 	/*uByte		iExtension;*/
-} UPACKED;
+} __packed;
 
 /* USB terminal types */
 #define UAT_UNDEFINED		0x0100

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueaglereg.h,v 1.2 2005/04/19 08:21:47 damien Exp $	*/
+/*	$OpenBSD: ueaglereg.h,v 1.3 2007/06/09 11:06:53 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -67,7 +67,7 @@ struct ueagle_block_info {
 	uWord	wOvlOffset;
 	uWord	wOvl;	/* overlay */
 	uWord	wLast;
-} UPACKED;
+} __packed;
 
 /* CMV (Configuration and Management Variable) */
 struct ueagle_cmv {
@@ -103,12 +103,12 @@ struct ueagle_cmv {
 	 (w)[3] = (uint8_t)((v) >> 8),					\
 	 (w)[0] = (uint8_t)((v) >> 16),					\
 	 (w)[1] = (uint8_t)((v) >> 24))
-} UPACKED;
+} __packed;
 
 struct ueagle_swap {
 	uByte	bPageNo;
 	uByte	bOvl;	/* overlay */
-} UPACKED;
+} __packed;
 
 struct ueagle_intr {
 	uByte  	bType;
@@ -119,6 +119,6 @@ struct ueagle_intr {
 	uWord	wInterrupt;
 #define UEAGLE_INTR_SWAP	1
 #define UEAGLE_INTR_CMV		2
-} UPACKED;
+} __packed;
 
 #define UEAGLE_INTR_MAXSIZE	28
