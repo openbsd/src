@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.25 2006/12/13 21:12:58 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.26 2007/06/09 14:21:44 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -649,7 +649,9 @@ si_dma_alloc(ncr_sc)
 
 	/* If the DMA start addr is misaligned then do PIO */
 	if ((addr & 1) || (xlen & 1)) {
+#ifdef DEBUG
 		printf("si_dma_alloc: misaligned.\n");
+#endif
 		return;
 	}
 
