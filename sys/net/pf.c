@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.542 2007/06/09 16:32:00 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.543 2007/06/09 18:30:47 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3081,7 +3081,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	if (r->log || (nr != NULL && nr->natpass && nr->log)) {
 		if (rewrite)
-			m_copyback(m, off, hdrlen, &pd->hdr.any);
+			m_copyback(m, off, hdrlen, pd->hdr.any);
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r->log ? r : nr,
 		    a, ruleset, pd);
 	}
