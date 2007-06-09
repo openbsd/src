@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.80 2007/06/09 18:03:59 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.81 2007/06/09 18:05:45 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -313,16 +313,15 @@ donot:
 			case DOSPTYP_FAT12:
 			case DOSPTYP_FAT16S:
 			case DOSPTYP_FAT16B:
+			case DOSPTYP_FAT16L:
 			case DOSPTYP_FAT32:
 			case DOSPTYP_FAT32L:
-			case DOSPTYP_FAT16L:
 				pp->p_fstype = FS_MSDOS;
 				n++;
 				break;
 			case DOSPTYP_EXTEND:
 			case DOSPTYP_EXTENDL:
-				part_blkno =
-				    letoh32(dp2->dp_start) + extoff;
+				part_blkno = letoh32(dp2->dp_start) + extoff;
 				if (!extoff) {
 					extoff = letoh32(dp2->dp_start);
 					part_blkno = 0;

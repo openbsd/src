@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.43 2007/06/09 04:08:39 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.44 2007/06/09 18:05:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -318,16 +318,15 @@ donot:
 			case DOSPTYP_FAT12:
 			case DOSPTYP_FAT16S:
 			case DOSPTYP_FAT16B:
+			case DOSPTYP_FAT16L:
 			case DOSPTYP_FAT32:
 			case DOSPTYP_FAT32L:
-			case DOSPTYP_FAT16L:
 				pp->p_fstype = FS_MSDOS;
 				n++;
 				break;
 			case DOSPTYP_EXTEND:
 			case DOSPTYP_EXTENDL:
-				part_blkno =
-				    letoh32(dp2->dp_start) + extoff;
+				part_blkno = letoh32(dp2->dp_start) + extoff;
 				if (!extoff) {
 					extoff = letoh32(dp2->dp_start);
 					part_blkno = 0;
