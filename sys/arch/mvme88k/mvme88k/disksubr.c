@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.47 2007/06/09 04:08:39 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.48 2007/06/09 04:33:14 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -48,7 +48,7 @@ void cputobsdlabel(struct disklabel *, struct cpu_disklabel *);
 
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *clp, int spoofonly)
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg = NULL;
@@ -76,20 +76,19 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (spoofonly)
 		goto done;
 
-	/* obtain buffer to probe drive with */
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-
-	/* request no partition relocation by driver on I/O operations */
 	bp->b_dev = dev;
+
 	bp->b_blkno = LABELSECTOR;
+	bp->b_cylinder = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
 
 	error = biowait(bp);
 	if (error == 0)
-		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
+		bcopy(bp->b_data, osdep, sizeof (struct cpu_disklabel));
 
 	if (error) {
 		msg = "disk label read error";
@@ -109,12 +108,12 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 #endif
 
-	if (clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC) {
+	if (osdep->magic1 != DISKMAGIC || osdep->magic2 != DISKMAGIC) {
 		msg = "no disk label";
 		goto done;
 	}
 
-	cputobsdlabel(lp, clp);
+	cputobsdlabel(lp, osdep);
 
 	if (dkcksum(lp) != 0) {
 		msg = "disk label corrupted";
@@ -123,7 +122,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 done:
 	if (bp) {
-		bp->b_flags = B_INVAL | B_AGE | B_READ;
+		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
 	disklabeltokernlabel(lp);
@@ -136,16 +135,15 @@ done:
  */
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *clp)
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
-	struct buf *bp;
+	struct buf *bp = NULL;
 	int error;
 
-	/* obtain buffer to read initial cpu_disklabel, for bootloader size :-) */
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-
-	/* request no partition relocation by driver on I/O operations */
 	bp->b_dev = dev;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -155,41 +153,41 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	if ((error = biowait(bp)) != 0) {
 		/* nothing */
 	} else {
-		bcopy(bp->b_data, clp, sizeof(struct cpu_disklabel));
+		bcopy(bp->b_data, osdep, sizeof(struct cpu_disklabel));
 	}
 
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
-	brelse(bp);
-
-	if (error) {
+	if (error)
 		return (error);
-	}
 
-	bsdtocpulabel(lp, clp);
+	bsdtocpulabel(lp, osdep);
 
 	if (lp->d_magic == DISKMAGIC && lp->d_magic2 == DISKMAGIC &&
 	    dkcksum(lp) == 0) {
-		/* obtain buffer to scrozz drive with */
-		bp = geteblk((int)lp->d_secsize);
-
-		bcopy(clp, bp->b_data, sizeof(struct cpu_disklabel));
+		bcopy(osdep, bp->b_data, sizeof(struct cpu_disklabel));
 
 		/* request no partition relocation by driver on I/O operations */
 		bp->b_dev = dev;
 		bp->b_blkno = 0; /* contained in block 0 */
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_WRITE;
+		bp->b_flags = B_BUSY | B_WRITE;
 		bp->b_cylinder = 0; /* contained in block 0 */
 		(*strat)(bp);
 
 		error = biowait(bp);
+	}
 
-		bp->b_flags = B_INVAL | B_AGE | B_READ;
+	if (bp) {
+		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
 	return (error);
 }
 
+/*
+ * Determine the size of the transfer, and make sure it is
+ * within the boundaries of the partition. Adjust transfer
+ * if needed, and signal errors or early completion.
+ */
 int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp,
     struct cpu_disklabel *osdep, int wlabel)
@@ -245,9 +243,7 @@ bad:
 void
 bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
-	char *tmot = "MOTOROLA";
-	char *id = "M88K";
-	char *mot;
+	char *tmot = "MOTOROLA", *id = "M88K", *mot;
 	int i;
 
 	clp->magic1 = lp->d_magic;
@@ -273,17 +269,16 @@ bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp)
 	clp->headswitch = lp->d_headswitch;
 
 	/* this silly table is for winchester drives */
-	if (lp->d_trkseek < 6) {
+	if (lp->d_trkseek < 6)
 		clp->cfg_ssr = 0;
-	} else if (lp->d_trkseek < 10) {
+	else if (lp->d_trkseek < 10)
 		clp->cfg_ssr = 1;
-	} else if (lp->d_trkseek < 15) {
+	else if (lp->d_trkseek < 15)
 		clp->cfg_ssr = 2;
-	} else if (lp->d_trkseek < 20) {
+	else if (lp->d_trkseek < 20)
 		clp->cfg_ssr = 3;
-	} else {
+	else
 		clp->cfg_ssr = 4;
-	}
 
 	clp->flags = lp->d_flags;
 	for (i = 0; i < NDDATA; i++)
@@ -301,16 +296,13 @@ bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp)
 	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) * 12);
 	clp->version = 2;
 
-	/* Put "MOTOROLA" in the VID.  This makes it a valid boot disk. */
-	mot = clp->vid_mot;
-	for (i = 0; i < 8; i++) {
+	/* Put "MOTOROLA" in the VID. This makes it a valid boot disk. */
+	for (mot = clp->vid_mot, i = 0; i < 8; i++)
 		*mot++ = *tmot++;
-	}
+
 	/* put volume id in the VID */
-	mot = clp->vid_id;
-	for (i = 0; i < 4; i++) {
+	for (mot = clp->vid_id, i = 0; i < 4; i++)
 		*mot++ = *id++;
-	}
 }
 
 void
@@ -357,6 +349,7 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 	default:
 		lp->d_trkseek = 0;
 	}
+
 	lp->d_flags = clp->flags;
 	for (i = 0; i < NDDATA; i++)
 		lp->d_drivedata[i] = clp->drivedata[i];
@@ -374,7 +367,7 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 
 	if (clp->version == 2)
 		lp->d_version = 1;
-	else	
+	else
 		lp->d_version = 0;
 
 	lp->d_checksum = dkcksum(lp);
