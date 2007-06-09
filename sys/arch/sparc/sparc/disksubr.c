@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.56 2007/06/09 04:08:39 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.57 2007/06/09 18:06:50 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -349,7 +349,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
-		return("SunOS disk label, bad checksum");
+		return ("SunOS disk label, bad checksum");
 
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
