@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.56 2007/06/09 17:18:36 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.57 2007/06/09 23:06:45 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -285,6 +285,52 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp,
 	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
 	return (0);
+}
+
+/*
+ * Determine the size of the transfer, and make sure it is within the
+ * boundaries of the partition. Adjust transfer if needed, and signal errors or
+ * early completion.
+ */
+int
+bounds_check_with_label(struct buf *bp, struct disklabel *lp,
+    struct cpu_disklabel *osdep, int wlabel)
+{
+#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int sz = howmany(bp->b_bcount, DEV_BSIZE);
+
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
+	/* beyond partition? */
+	if (bp->b_blkno + sz > blockpersec(DL_GETPSIZE(p), lp)) {
+		sz = blockpersec(DL_GETPSIZE(p), lp) - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
+			bp->b_resid = bp->b_bcount;
+			return (-1);
+		}
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		/* Otherwise, truncate request. */
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	/* calculate cylinder for disksort to order transfers with */
+	bp->b_cylinder = (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp)) /
+	    lp->d_secpercyl;
+	return (1);
+
+bad:
+	bp->b_flags |= B_ERROR;
+	return (-1);
 }
 
 /*

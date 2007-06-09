@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.46 2007/06/09 04:08:39 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.47 2007/06/09 23:06:46 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -49,61 +49,6 @@
 #include <machine/cpu.h>
 
 #include <vax/mscp/mscp.h> /* For disk encoding scheme */
-
-/*
- * Determine the size of the transfer, and make sure it is
- * within the boundaries of the partition. Adjust transfer
- * if needed, and signal errors or early completion.
- */
-int
-bounds_check_with_label(struct buf *bp, struct disklabel *lp,
-    struct cpu_disklabel *osdep, int wlabel)
-{
-#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = DL_GETPOFFSET(&lp->d_partitions[RAW_PART]);
-	int maxsz = DL_GETPSIZE(p);
-	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-
-	/* avoid division by zero */
-	if (lp->d_secpercyl == 0) {
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-
-	/* beyond partition? */
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		/* if exactly at end of disk, return EOF. */
-		if (bp->b_blkno == maxsz) {
-			bp->b_resid = bp->b_bcount;
-			return (-1);
-		}
-		/* Otherwise, truncate request. */
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0) {
-			bp->b_error = EINVAL;
-			goto bad;
-		}
-		/* Otherwise, truncate request. */
-		bp->b_bcount = sz << DEV_BSHIFT;
-	}
-
-	/* overwriting disk label ? */
-	if (bp->b_blkno + DL_GETPOFFSET(p) <= LABELSECTOR + labelsector &&
-	    bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp) + sz > labelsector &&
-	    (bp->b_flags & B_READ) == 0 && !wlabel) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-
-	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + DL_GETPOFFSET(p)) / lp->d_secpercyl;
-	return (1);
-
-bad:
-	bp->b_flags |= B_ERROR;
-	return (-1);
-}
 
 /*
  * Attempt to read a disk label from a device
