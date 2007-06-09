@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.57 2007/06/09 23:06:45 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.58 2007/06/09 23:35:23 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -301,10 +301,8 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* avoid division by zero */
-	if (lp->d_secpercyl == 0) {
-		bp->b_error = EINVAL;
+	if (lp->d_secpercyl == 0)
 		goto bad;
-	}
 
 	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(DL_GETPSIZE(p), lp)) {
@@ -314,21 +312,21 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp,
 			bp->b_resid = bp->b_bcount;
 			return (-1);
 		}
-		if (sz < 0) {
+		if (sz < 0)
 			/* If past end of disk, return EINVAL. */
-			bp->b_error = EINVAL;
 			goto bad;
-		}
+
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_cylinder = (bp->b_blkno + blockpersec(DL_GETPOFFSET(p), lp)) /
-	    lp->d_secpercyl;
+	    blockpersec(lp->d_secpercyl, lp);
 	return (1);
 
 bad:
+	bp->b_error = EINVAL;
 	bp->b_flags |= B_ERROR;
 	return (-1);
 }
