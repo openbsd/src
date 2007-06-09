@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.51 2007/06/06 22:04:11 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.52 2007/06/09 03:53:17 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -196,6 +196,11 @@ disklabeltokernlabel(struct disklabel *lp)
 	if (oversion == 0) {
 		lp->d_version = 1;
 		lp->d_secperunith = 0;
+	}
+
+	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0) {
+		printf("disklabeltokernlabel: Your raw partition MUST start at 0\n");
+		DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
 	}
 
 	for (i = 0; i < MAXPARTITIONS; i++, pp++, v0pp++) {
