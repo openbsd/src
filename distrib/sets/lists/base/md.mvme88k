@@ -873,7 +873,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/i82365_isavar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/ics2101var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/if_ecreg.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/if_edreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/if_egreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/if_elreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/isa/if_exreg.ph

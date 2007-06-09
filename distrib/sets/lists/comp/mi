@@ -397,7 +397,6 @@
 ./usr/include/dev/isa/i82365_isavar.h
 ./usr/include/dev/isa/ics2101var.h
 ./usr/include/dev/isa/if_ecreg.h
-./usr/include/dev/isa/if_edreg.h
 ./usr/include/dev/isa/if_egreg.h
 ./usr/include/dev/isa/if_elreg.h
 ./usr/include/dev/isa/if_exreg.h
