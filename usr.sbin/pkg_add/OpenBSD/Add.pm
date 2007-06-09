@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.75 2007/06/06 15:35:20 espie Exp $
+# $OpenBSD: Add.pm,v 1.76 2007/06/09 13:39:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -103,6 +103,54 @@ sub perform_installation
 	$state->{partial} = $handle->{partial};
 	$handle->{plist}->install_and_progress($state, \$donesize, $totsize);
 	$handle->{location}->finish_and_close;
+}
+
+my $user_tagged = {};
+
+sub extract_pkgname
+{
+	my $pkgname = shift;
+	$pkgname =~ s/^.*\///;
+	$pkgname =~ s/\.tgz$//;
+	return $pkgname;
+}
+
+sub tweak_package_status
+{
+	my ($pkgname, $state) = @_;
+
+	$pkgname = extract_pkgname($pkgname);
+	return 0 unless is_installed($pkgname);
+	return 0 unless $user_tagged->{$pkgname};
+	my $plist = OpenBSD::PackingList->from_installation($pkgname);
+	if ($plist->has('manual-installation') && $state->{automatic}) {
+		delete $plist->{'manual-installation'};
+		$plist->to_installation;
+		return 1;
+	} elsif (!$plist->has('manual-installation') && !$state->{automatic}) {
+		OpenBSD::PackingElement::ManualInstallation->add($plist);
+		$plist->to_installation;
+		return 1;
+	}
+	return 0;
+}
+
+sub tweak_plist_status
+{
+	my ($plist, $state) = @_;
+
+	my $pkgname = $plist->pkgname;
+	return 0 unless $user_tagged->{$pkgname};
+	if (!$plist->has('manual-installation') && !$state->{automatic}) {
+		OpenBSD::PackingElement::ManualInstallation->add($plist);
+	}
+}
+
+sub tag_user_packages
+{
+	for my $pkgname (@_) {
+		$user_tagged->{extract_pkgname($pkgname)} = 1;
+	}
 }
 
 # used by newuser/newgroup to deal with options.

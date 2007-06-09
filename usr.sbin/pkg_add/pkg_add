@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.315 2007/06/09 11:16:54 espie Exp $
+# $OpenBSD: pkg_add,v 1.316 2007/06/09 13:39:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -176,6 +176,10 @@ sub can_install
 		$old_handle->{plist} = $rplist;
 		$old_handle->{pkgname} = $toreplace;
 		$set->add_older($old_handle);
+		if ($rplist->has('manual-installation') && 
+		    !$plist->has('manual-installation')) {
+		    	OpenBSD::PackingElement::ManualInstallation->add($plist);
+		}
 	}
 	$set->{skipupdatedeps} = \%conflicts;
 	return 1;
@@ -186,11 +190,16 @@ sub create_handle
 	my ($pkg, $state) = @_;
 	my $handle = OpenBSD::Handle->new;
 	$handle->{pkgname} = $pkg;
+	$handle->{tweaked} = 0;
 	my $location = OpenBSD::PackageLocator->find($pkg, $state->{arch});
 	if (!$location) {
 		print $state->deptree_header($pkg);
-		print "Can't find $pkg\n";
 		$handle->set_error(OpenBSD::Handle::NOT_FOUND);
+		$handle->{tweaked} = 
+		    OpenBSD::Add::tweak_package_status($pkg, $state);
+		if (!$handle->{tweaked}) {
+			print "Can't find $pkg\n";
+		}
 		return $handle;
 	}
 	$handle->{location} = $location;
@@ -222,7 +231,10 @@ sub create_handle
 	      !$state->{forced}->{installed} &&
 	      !$plist->has_new_sig($state) && 
 	      !$plist->uses_old_libs)) {
-		print "Not reinstalling $pkgname\n" if $state->{verbose};
+		$handle->{tweaked} = 
+		    OpenBSD::Add::tweak_package_status($pkgname, $state);
+		print "Not reinstalling $pkgname\n" if $state->{verbose} and
+		    !$handle->{tweaked};
 		$state->mark_as_already_installed($pkgname);
 		$location->close_now;
 		$location->wipe_info;
@@ -424,6 +436,7 @@ sub really_add
 		    $set, $state);
 	}
 	OpenBSD::SharedLibs::add_libs_from_plist($plist);
+	OpenBSD::Add::tweak_plist_status($plist, $state);
 	$plist->to_cache;
 	OpenBSD::Add::register_installation($plist);
 	$set->{solver}->register_dependencies($state);
@@ -451,8 +464,9 @@ sub install_package
 		return ();
 	}
 	if ($handle->has_error) {
-		if (!$state->{forced}->{kitchensink} ||
-		    $handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
+		if ((!$state->{forced}->{kitchensink} ||
+		    $handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) &&
+		    !$handle->{tweaked}) {
 			$state->set_name_from_handle($handle);
 			$state->fatal("Fatal error");
 		} else {
@@ -632,6 +646,7 @@ $state->{not} = $opt_n;
 $not = $opt_n;
 $state->{quick} = $opt_q;
 $state->{extra} = $opt_c;
+$state->{automatic} = $opt_a;
 $state->{dont_run_scripts} = $opt_I;
 $state->{very_verbose} = $opt_v >= 2;
 $state->{verbose} = $opt_v;
@@ -684,6 +699,7 @@ if ($opt_u) {
 	}
 } else {
 	find_truenames(\@ARGV, \@todo, $state);
+	OpenBSD::Add::tag_user_packages(@todo);
 	if (defined $state->{forced}->{kitchensink}) {
 		reorder(\@todo);
 		if (!$opt_r) {
