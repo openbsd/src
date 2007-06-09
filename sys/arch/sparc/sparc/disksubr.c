@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.55 2007/06/08 04:59:06 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.56 2007/06/09 04:08:39 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -182,47 +182,6 @@ done:
 	return (msg);
 }
 
-/*
- * Check new disk label for sensibility
- * before setting it.
- */
-int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp,
-    u_int openmask, struct cpu_disklabel *clp)
-{
-	int i;
-	struct partition *opp, *npp;
-
-	/* sanity clause */
-	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
-	    (nlp->d_secsize % DEV_BSIZE) != 0)
-		return(EINVAL);
-
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) {
-		*olp = *nlp;
-		return (0);
-	}
-
-	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-	    dkcksum(nlp) != 0)
-		return (EINVAL);
-
-	while ((i = ffs(openmask)) != 0) {
-		i--;
-		openmask &= ~(1 << i);
-		if (nlp->d_npartitions <= i)
-			return (EBUSY);
-		opp = &olp->d_partitions[i];
-		npp = &nlp->d_partitions[i];
-		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
-		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
-			return (EBUSY);
-	}
-
-	*olp = *nlp;
-	return (0);
-}
 
 /*
  * Write disk label back to device after modification.

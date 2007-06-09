@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.22 2007/06/08 12:45:05 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.23 2007/06/09 04:08:39 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -210,49 +210,6 @@ done:
 
 }
 
-/*
- * Check new disk label for sensibility
- * before setting it.
- */
-int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp,
-    u_int openmask, struct cpu_disklabel *clp)
-{
-	struct partition *opp, *npp;
-	int i;
-
-	/* sanity clause */
-	if ((nlp->d_secpercyl == 0) || (nlp->d_secsize == 0) ||
-	    (nlp->d_secsize % DEV_BSIZE) != 0)
-		return (EINVAL);
-
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) {
-		*olp = *nlp;
-		return (0);
-	}
-
-	if (nlp->d_magic != DISKMAGIC ||
-	    nlp->d_magic2 != DISKMAGIC ||
-	    dkcksum(nlp) != 0)
-		return (EINVAL);
-
-	while (openmask != 0) {
-		i = ffs(openmask) - 1;
-		openmask &= ~(1 << i);
-		if (nlp->d_npartitions <= i)
-			return (EBUSY);
-		opp = &olp->d_partitions[i];
-		npp = &nlp->d_partitions[i];
-		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
-		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
-			return (EBUSY);
-	}
-
-	/* We did not modify the new label, so the checksum is OK. */
-	*olp = *nlp;
-	return (0);
-}
 
 
 /*

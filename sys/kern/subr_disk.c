@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.53 2007/06/09 03:56:48 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.54 2007/06/09 04:08:37 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -234,6 +234,60 @@ disklabeltokernlabel(struct disklabel *lp)
 		}
 #endif
 	}
+}
+
+/*
+ * Check new disk label for sensibility
+ * before setting it.
+ */
+int
+setdisklabel(struct disklabel *olp, struct disklabel *nlp,
+    u_int openmask, struct cpu_disklabel *osdep)
+{
+	int i;
+	struct partition *opp, *npp;
+
+	/* sanity clause */
+	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
+	    (nlp->d_secsize % DEV_BSIZE) != 0)
+		return (EINVAL);
+
+	/* special case to allow disklabel to be invalidated */
+	if (nlp->d_magic == 0xffffffff) {
+		*olp = *nlp;
+		return (0);
+	}
+
+	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
+	    dkcksum(nlp) != 0)
+		return (EINVAL);
+
+	/* XXX missing check if other dos partitions will be overwritten */
+
+	while (openmask != 0) {
+		i = ffs(openmask) - 1;
+		openmask &= ~(1 << i);
+		if (nlp->d_npartitions <= i)
+			return (EBUSY);
+		opp = &olp->d_partitions[i];
+		npp = &nlp->d_partitions[i];
+		if (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
+		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp))
+			return (EBUSY);
+		/*
+		 * Copy internally-set partition information
+		 * if new label doesn't include it.		XXX
+		 */
+		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
+			npp->p_fstype = opp->p_fstype;
+			npp->p_fragblock = opp->p_fragblock;
+			npp->p_cpg = opp->p_cpg;
+		}
+	}
+	nlp->d_checksum = 0;
+	nlp->d_checksum = dkcksum(nlp);
+	*olp = *nlp;
+	return (0);
 }
 
 /*
