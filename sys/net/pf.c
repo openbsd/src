@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.541 2007/06/02 01:28:55 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.542 2007/06/09 16:32:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2846,7 +2846,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 #ifdef INET
 	case IPPROTO_ICMP:
 		sport = dport = pd->hdr.icmp->icmp_id;
-		hdrlen = sizeof(pd->hdr.icmp);
+		hdrlen = sizeof(*pd->hdr.icmp);
 		icmptype = pd->hdr.icmp->icmp_type;
 		icmpcode = pd->hdr.icmp->icmp_code;
 
@@ -2861,7 +2861,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 #ifdef INET6
 	case IPPROTO_ICMPV6:
 		sport = dport = pd->hdr.icmp6->icmp6_id;
-		hdrlen = sizeof(pd->hdr.icmp6);
+		hdrlen = sizeof(*pd->hdr.icmp6);
 		icmptype = pd->hdr.icmp6->icmp6_type;
 		icmpcode = pd->hdr.icmp6->icmp6_code;
 
