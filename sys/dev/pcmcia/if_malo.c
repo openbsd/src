@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.13 2007/06/08 22:08:21 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.14 2007/06/09 13:14:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -84,6 +84,7 @@ void	cmalo_intr_mask(struct malo_softc *, int);
 void	cmalo_rx(struct malo_softc *);
 void	cmalo_start(struct ifnet *);
 int	cmalo_tx(struct malo_softc *, struct mbuf *);
+void	cmalo_tx_done(struct malo_softc *);
 
 void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
@@ -277,6 +278,8 @@ cmalo_attach(void *arg)
 	//ifp->if_watchdog = cmalo_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
@@ -568,10 +571,11 @@ cmalo_init(struct ifnet *ifp)
 
 	cmalo_cmd_set_assoc(sc);
 
-	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-
 	/* device up */
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	return (0);
 }
@@ -582,14 +586,17 @@ cmalo_stop(struct malo_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
         struct ifnet *ifp = &ic->ic_if;
 
-	DPRINTF(1, "%s: device down\n", sc->sc_dev.dv_xname);
+	/* device down */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	/* power cycle device */
+	/* change device back to initial state */
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+
+	/* reset device */
 	cmalo_cmd_set_reset(sc);
 	sc->sc_flags &= ~MALO_FW_LOADED;
 
-	/* device down */
-	ifp->if_flags &= ~IFF_RUNNING;
+	DPRINTF(1, "%s: device down\n", sc->sc_dev.dv_xname);
 }
 
 int
@@ -685,7 +692,7 @@ cmalo_intr(void *arg)
 
 	if (intr & MALO_VAL_HOST_INTR_TX)
 		/* TX frame sent */
-		DPRINTF(2, "%s: TX frame sent\n", sc->sc_dev.dv_xname);
+		cmalo_tx_done(sc);
 	if (intr & MALO_VAL_HOST_INTR_RX)
 		/* RX frame received */
 		cmalo_rx(sc);
@@ -798,26 +805,31 @@ cmalo_start(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct mbuf *m;
 
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
 	for (;;) {
+		/* mgmt frames */
 		IF_POLL(&ic->ic_mgtq, m);
 		if (m != NULL) {
 			IF_DEQUEUE(&ic->ic_mgtq, m);
 			/* all mgmt frames are handled by the FW */
+			continue;
 		}
 
+		/* data frames */
 		IFQ_POLL(&ifp->if_snd, m);
-		if (m != NULL) {
-			IFQ_DEQUEUE(&ifp->if_snd, m);
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif
-			if (cmalo_tx(sc, m) != 0) {
-				ifp->if_oerrors++;
-				break;
-			}
-		} else
+		if (m == NULL)
 			break;
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+		if (cmalo_tx(sc, m) != 0) {
+			ifp->if_oerrors++;
+			break;
+		}
 	}
 }
 
@@ -851,10 +863,19 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_TX_DL_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_TX_DL_OVER);
 
-	DPRINTF(2, "%s: TX pkglen=%d, pkgoffset=%d\n",
-	    sc->sc_dev.dv_xname, txdesc->pkglen, txdesc->pkgoffset);
-
 	return (0);
+}
+
+void
+cmalo_tx_done(struct malo_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	DPRINTF(2, "%s: TX frame sent\n", sc->sc_dev.dv_xname);
+
+	ifp->if_opackets++;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	cmalo_start(ifp);
 }
 
 void
