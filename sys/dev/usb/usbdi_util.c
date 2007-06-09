@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.20 2007/06/05 08:43:56 mbalmer Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.21 2007/06/09 12:03:39 mbalmer Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -378,7 +378,7 @@ usbd_get_hid_descriptor(usbd_interface_handle ifc)
 
 usbd_status
 usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
-		       usb_malloc_type mem)
+		       int mem)
 {
 	usb_interface_descriptor_t *id;
 	usb_hid_descriptor_t *hid;

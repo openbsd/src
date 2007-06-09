@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.71 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.72 2007/06/09 12:03:39 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -104,8 +104,6 @@ typedef struct proc *usb_proc_ptr;
 #define mstohz(ms) ((ms) * hz / 1000)
 
 #define sel_klist si_note
-
-typedef int usb_malloc_type;
 
 #define if_deactivate(x)
 #define IF_INPUT(ifp, m) ether_input_mbuf((ifp), (m))
