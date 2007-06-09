@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.313 2007/06/07 20:30:03 espie Exp $
+# $OpenBSD: pkg_add,v 1.314 2007/06/09 10:30:53 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -132,29 +132,20 @@ sub can_install
 	return 1 if @conflicts == 0;
 
 	my %conflicts = map {($_,1)} @conflicts;
-
-	my @libs = ();
-	@conflicts = ();
-	for my $k (keys %conflicts) {
-		if ($k =~ m/^\.libs\-/o) {
-			push(@libs, $k);
-		} else {
-			push(@conflicts, $k);
-		}
-	}
+	@conflicts = keys %conflicts;
 
 	if (!$state->{allow_replacing}) {
 		if ($state->{forced}->{conflicts}) {
-			print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts, @libs), ")\n";
+			print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts), ")\n";
 			return 1;
 		}
-		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
+		print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
 		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		return;
 	}
 
 	if (@conflicts >  5) {
-		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
+		print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
 		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		return;
 	}
@@ -163,12 +154,6 @@ sub can_install
 
 	if (!OpenBSD::Replace::is_safe($plist, $state)) {
 		print "Can't safely update to $pkgname (use -F update to force it)\n";
-		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
-		return;
-	}
-
-	if (!OpenBSD::Replace::figure_out_libs($plist, $state, @libs)) {
-		print "Can't update to $pkgname because of collision with old libs\n";
 		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		return;
 	}
