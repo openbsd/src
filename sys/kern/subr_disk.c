@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.52 2007/06/09 03:53:17 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.53 2007/06/09 03:56:48 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -198,9 +198,11 @@ disklabeltokernlabel(struct disklabel *lp)
 		lp->d_secperunith = 0;
 	}
 
+	/* XXX this should not be here */
 	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0) {
 		printf("disklabeltokernlabel: Your raw partition MUST start at 0\n");
 		DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	}
 
 	for (i = 0; i < MAXPARTITIONS; i++, pp++, v0pp++) {
@@ -211,7 +213,9 @@ disklabeltokernlabel(struct disklabel *lp)
 			pp->p_sizeh = 0;
 		}
 
-#ifdef notyet  /* older broken sparc/sparc64 fake cyl-based disklabels fool this */
+#ifdef notyet
+		/* XXX this should not be here */
+
 		/* In a V1 label no partition extends past DL_GETSIZE(lp) - 1. */
 		if (DL_GETPOFFSET(pp) > DL_GETDSIZE(lp)) {
 			pp->p_fstype = FS_UNUSED;
