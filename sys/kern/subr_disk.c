@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.54 2007/06/09 04:08:37 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.55 2007/06/09 06:03:24 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -198,13 +198,6 @@ disklabeltokernlabel(struct disklabel *lp)
 		lp->d_secperunith = 0;
 	}
 
-	/* XXX this should not be here */
-	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0) {
-		printf("disklabeltokernlabel: Your raw partition MUST start at 0\n");
-		DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-	}
-
 	for (i = 0; i < MAXPARTITIONS; i++, pp++, v0pp++) {
 		if (oversion == 0) {
 			pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(v0pp->
@@ -233,6 +226,13 @@ disklabeltokernlabel(struct disklabel *lp)
 			DL_SETPSIZE(pp, sz);
 		}
 #endif
+	}
+
+	/* XXX this should not be here */
+	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0) {
+		printf("disklabeltokernlabel: Your raw partition MUST start at 0\n");
+		DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	}
 }
 
