@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.169 2007/05/31 23:18:25 uwe Exp $g
+#	$OpenBSD: GENERIC,v 1.170 2007/06/09 22:36:43 mbalmer Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -80,6 +80,7 @@ epic*		at pci?		# SMC EPIC/100 ethernet
 bge*		at pci?		# Broadcom BCM570x (aka Tigon3)
 ti*		at pci?		# Alteon Tigon 1Gb ethernet
 re*		at pci?		# Realtek 8169/8169S/8110S
+re*		at cardbus?	# Realtek 8169/8169S/8110S
 stge*		at pci?		# Sundance TC9021 GigE
 skc*		at pci?		# SysKonnect GEnesis 984x
 sk*		at skc?		#  each port of above
