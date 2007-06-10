@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.38 2007/06/07 12:57:33 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.39 2007/06/10 16:05:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -346,6 +346,29 @@ sub has_error
 	return $self->{error};
 }
 
+sub create_old
+{
+
+	my ($class, $pkgname, $state) = @_;
+	my $self= $class->new;
+	$self->{pkgname} = $pkgname;
+
+	require OpenBSD::PackageRepository::Installed;
+
+	my $location = OpenBSD::PackageRepository::Installed->new->find($pkgname, $state->{arch});
+	if (!defined $location) {
+		$self->set_error(NOT_FOUND);
+    	} else {
+		$self->{location} = $location;
+		my $plist = $location->plist;
+		if (!defined $plist) {
+			$self->set_error(BAD_PACKAGE);
+		} else {
+			$self->{plist} = $plist;
+		}
+	}
+	return $self;
+}
 package OpenBSD::UpdateSet;
 sub new
 {

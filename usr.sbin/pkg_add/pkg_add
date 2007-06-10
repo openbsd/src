@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.319 2007/06/10 15:24:36 espie Exp $
+# $OpenBSD: pkg_add,v 1.320 2007/06/10 16:05:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -165,27 +165,23 @@ sub can_install
 			return;
 		}
 
-		my $old_handle = OpenBSD::Handle->new;
-		$old_handle->{pkgname} = $toreplace;
-		$old_handle->{location} = OpenBSD::PackageRepository::Installed->new->find($toreplace, $state->{arch});
-		if (!$old_handle->{location}) {
+		my $old_handle = OpenBSD::Handle->create_old($toreplace, $state);
+		if ($old_handle->has_error(OpenBSD::Handle::NOT_FOUND)) {
 			Fatal "Can't find $toreplace as an installed package\n";
 		}
-		my $rplist = $old_handle->{location}->plist;
-		if (!defined $rplist) {
+		if ($old_handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
 			Fatal "Couldn't find packing-list for $toreplace\n";
 		}
-		$old_handle->{plist} = $rplist;
 
-		if (!OpenBSD::Replace::can_old_package_be_replaced($rplist, 
+		if (!OpenBSD::Replace::can_old_package_be_replaced($old_handle->{plist}, 
 		    $pkgname, $state, \%conflicts)) {
 			print "Can't update $toreplace into $pkgname\n";
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
-
 		$set->add_older($old_handle);
-		if ($rplist->has('manual-installation') && 
+
+		if ($old_handle->{plist}->has('manual-installation') && 
 		    !$plist->has('manual-installation')) {
 		    	OpenBSD::PackingElement::ManualInstallation->add($plist);
 		}
@@ -809,5 +805,5 @@ sub complete
 	if (!defined $handle->{plist}) {
 		$handle->get_plist($state);
 	}
-		
 }
+
