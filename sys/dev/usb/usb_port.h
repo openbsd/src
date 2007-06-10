@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.73 2007/06/09 12:22:53 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.74 2007/06/10 08:02:16 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -52,38 +52,6 @@
 #define USB_USE_SOFTINTR
 #else
 #undef USB_USE_SOFTINTR
-#endif
-
-#ifdef USB_DEBUG
-#define UKBD_DEBUG 1
-#define UHIDEV_DEBUG 1
-#define UHID_DEBUG 1
-#define OHCI_DEBUG 1
-#define UGEN_DEBUG 1
-#define UHCI_DEBUG 1
-#define UHUB_DEBUG 1
-#define ULPT_DEBUG 1
-#define UCOM_DEBUG 1
-#define UPLCOM_DEBUG 1
-#define UMCT_DEBUG 1
-#define UMODEM_DEBUG 1
-#define UAUDIO_DEBUG 1
-#define AUE_DEBUG 1
-#define CUE_DEBUG 1
-#define KUE_DEBUG 1
-#define UDAV_DEBUG 1
-#define UMASS_DEBUG 1
-#define UVISOR_DEBUG 1
-#define UPL_DEBUG 1
-#define UZCOM_DEBUG 1
-#define URIO_DEBUG 1
-#define UFTDI_DEBUG 1
-#define USCANNER_DEBUG 1
-#define USSCANNER_DEBUG 1
-#define UISDATA_DEBUG 1
-#define UDSBR_DEBUG 1
-#define UIPAQ_DEBUG 1
-#define UDCF_DEBUG 1
 #endif
 
 #define UMASS_ATAPISTR		"atapiscsi"
