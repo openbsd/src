@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.14 2007/06/10 15:24:36 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.15 2007/06/10 17:13:48 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -27,10 +27,7 @@ sub new
 {
 	my ($class, $repository, $name, $arch) = @_;
 
-	if (defined $name) {
-		$name =~ s/\.tgz$//o;
-	}
-	my $self = { repository => $repository, name => $name, arch => $arch};
+	my $self = { repository => $repository, name => $repository->canonicalize($name), arch => $arch};
 	bless $self, $class;
 #	print STDERR "Built location ", $self->url, "\n";
 	return $self;
@@ -48,7 +45,13 @@ sub url
 {
 	my $self = shift;
 
-	return $self->{repository}->url($self->{name});
+	return $self->{repository}->url($self->name);
+}
+
+sub name
+{
+	my $self = shift;
+	return $self->{name};
 }
 
 sub openArchive
