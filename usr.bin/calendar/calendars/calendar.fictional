@@ -1,7 +1,7 @@
 /*
  * Fictional events
  *
- * $OpenBSD: calendar.fictional,v 1.3 2006/03/16 15:07:15 mcbride Exp $
+ * $OpenBSD: calendar.fictional,v 1.4 2007/06/10 17:34:04 simon Exp $
  */
 
 #ifndef _calendar_fictional_
@@ -24,6 +24,7 @@
 04/17	An unexpected party (LOTR)
 04/23	Crowning of King Ellesar (LOTR)
 05/19	Arwen leaves Lorien to wed King Ellesar (LOTR)
+05/25	Towel Day (The Hitchhiker's Guide to the Galaxy) 
 06/11	Sauron attacks Osgilliath (LOTR)
 06/13	Bilbo returns to Bag End (LOTR)
 06/23	Wedding of Ellesar & Arwen (LOTR)
