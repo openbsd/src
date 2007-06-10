@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.53 2007/06/10 15:33:16 mbalmer Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.54 2007/06/10 17:46:27 mbalmer Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -867,11 +867,11 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
 		if (err) {
 #ifdef USB_DEBUG
 			DPRINTF(("%s: port %d, set config at addr %d failed, "
-				 "error=%s\n", USBDEVPTRNAME(parent), port,
+				 "error=%s\n", parent->dv_xname, port,
 				 addr, usbd_errstr(err)));
 #else
 			printf("%s: port %d, set config at addr %d failed\n",
-			    USBDEVPTRNAME(parent), port, addr);
+			    parent->dv_xname, port, addr);
 #endif
 
  			return (err);
@@ -1263,7 +1263,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	if (dev->subdevs != NULL) {
 		for (i = 0; dev->subdevs[i] && i < USB_MAX_DEVNAMES; i++) {
 			strncpy(di->udi_devnames[i],
-			    USBDEVPTRNAME(dev->subdevs[i]), USB_MAX_DEVNAMELEN);
+			    dev->subdevs[i]->dv_xname, USB_MAX_DEVNAMELEN);
 			di->udi_devnames[i][USB_MAX_DEVNAMELEN-1] = '\0';
 		}
 	} else
@@ -1338,7 +1338,7 @@ void
 usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 {
 	usbd_device_handle dev = up->device;
-	char *hubname = USBDEVPTRNAME(parent);
+	char *hubname = parent->dv_xname;
 	int i;
 
 	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n",
@@ -1354,7 +1354,7 @@ usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 	if (dev->subdevs != NULL) {
 		DPRINTFN(3,("usb_disconnect_port: disconnect subdevs\n"));
 		for (i = 0; dev->subdevs[i]; i++) {
-			printf("%s: at %s", USBDEVPTRNAME(dev->subdevs[i]),
+			printf("%s: at %s", dev->subdevs[i]->dv_xname,
 			    hubname);
 			if (up->portno != 0)
 				printf(" port %d", up->portno);

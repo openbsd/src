@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.47 2007/06/10 15:33:16 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.48 2007/06/10 17:46:27 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -721,7 +721,7 @@ usbd_add_drv_event(int type, usbd_device_handle udev, device_ptr_t dev)
 	struct usb_event ue;
 
 	ue.u.ue_driver.ue_cookie = udev->cookie;
-	strncpy(ue.u.ue_driver.ue_devname, USBDEVPTRNAME(dev),
+	strncpy(ue.u.ue_driver.ue_devname, dev->dv_xname,
 	    sizeof ue.u.ue_driver.ue_devname);
 	usb_add_event(type, &ue);
 }
