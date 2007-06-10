@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.38 2007/06/09 12:22:53 mbalmer Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.39 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -528,7 +528,7 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	usb_callout_init(sc->cue_stat_ch);
+	timeout_set(&sc->cue_stat_ch, NULL, NULL);
 
 	sc->cue_attached = 1;
 	splx(s);
@@ -546,7 +546,7 @@ cue_detach(struct device *self, int flags)
 
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __func__));
 
-	usb_uncallout(sc->cue_stat_ch, cue_tick, sc);
+	timeout_del(&sc->cue_stat_ch);
 	/*
 	 * Remove any pending task.  It cannot be executing because it run
 	 * in the same thread as detach.
@@ -1047,7 +1047,9 @@ cue_init(void *xsc)
 
 	splx(s);
 
-	usb_callout(sc->cue_stat_ch, hz, cue_tick, sc);
+	timeout_del(&sc->cue_stat_ch);
+	timeout_set(&sc->cue_stat_ch, cue_tick, sc);
+	timeout_add(&sc->cue_stat_ch, hz);
 }
 
 int
@@ -1212,7 +1214,7 @@ cue_stop(struct cue_softc *sc)
 
 	cue_csr_write_1(sc, CUE_ETHCTL, 0);
 	cue_reset(sc);
-	usb_uncallout(sc->cue_stat_ch, cue_tick, sc);
+	timeout_del(&sc->cue_stat_ch);
 
 	/* Stop transfers. */
 	if (sc->cue_ep[CUE_ENDPT_RX] != NULL) {

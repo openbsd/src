@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.43 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: usb.c,v 1.44 2007/06/10 10:15:35 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 #else
-	usb_callout_init(sc->sc_bus->softi);
+	timeout_set(&sc->sc_bus->softi, NULL, NULL);
 #endif
 #endif
 
@@ -766,9 +766,11 @@ usb_schedsoftintr(usbd_bus_handle bus)
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softintr_schedule(bus->soft);
 #else
-		if (!usb_callout_pending(bus->softi))
-			usb_callout(bus->softi, 0, bus->methods->soft_intr,
-				    bus);
+		if (!timeout_pending(&bus->softi)) {
+			timeout_del(&bus->softi);
+			timeout_set(&bus->softi, bus->methods->soft_intr, bus);
+			timeout_add(&bus->softi, 0);
+		}
 #endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 	}
 #else
@@ -831,7 +833,7 @@ usb_detach(device_ptr_t self, int flags)
 		sc->sc_bus->soft = NULL;
 	}
 #else
-	usb_uncallout(sc->sc_bus->softi, bus->methods->soft_intr, bus);
+	timeout_del(&sc->sc_bus->softi);
 #endif
 #endif
 

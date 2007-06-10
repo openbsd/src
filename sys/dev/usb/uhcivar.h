@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.16 2007/06/04 10:34:04 mbalmer Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.17 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -175,7 +175,7 @@ typedef struct uhci_softc {
 	/* Info for the root hub interrupt "pipe". */
 	int sc_ival;			/* time between root hub intrs */
 	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
-	usb_callout_t sc_poll_handle;
+	struct timeout sc_poll_handle;
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */

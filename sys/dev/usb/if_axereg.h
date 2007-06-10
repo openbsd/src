@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.17 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.18 2007/06/10 10:15:35 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -208,7 +208,7 @@ struct axe_softc {
 	int			axe_unit;
 	int			axe_if_flags;
 	struct axe_cdata	axe_cdata;
-	usb_callout_t		axe_stat_ch;
+	struct timeout		axe_stat_ch;
 
 	int			axe_refcnt;
 	char			axe_dying;

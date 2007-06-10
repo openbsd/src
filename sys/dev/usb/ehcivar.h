@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.11 2007/05/20 00:52:26 jsg Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.12 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -133,8 +133,8 @@ typedef struct ehci_softc {
 
 	struct rwlock sc_doorbell_lock;
 
-	usb_callout_t sc_tmo_pcd;
-	usb_callout_t sc_tmo_intrlist;
+	struct timeout sc_tmo_pcd;
+	struct timeout sc_tmo_intrlist;
 
 	device_ptr_t sc_child;		/* /dev/usb# device */
 

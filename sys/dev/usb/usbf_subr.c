@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.3 2007/02/13 18:32:57 drahn Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.4 2007/06/10 10:15:35 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -810,7 +810,7 @@ usbf_alloc_xfer(usbf_device_handle dev)
 	if (xfer == NULL)
 		return NULL;
 	xfer->device = dev;
-	usb_callout_init(xfer->timeout_handle);
+	timeout_set(&xfer->timeout_handle, NULL, NULL);
 	DPRINTF(1,("usbf_alloc_xfer() = %p\n", xfer));
 	return xfer;
 }
@@ -1074,7 +1074,7 @@ usbf_softintr_establish(struct usbf_bus *bus)
 	if (bus->soft == NULL)
 		return USBF_INVAL;
 #else
-	usb_callout_init(bus->softi);
+	timeout_set(&bus->softi, NULLL, NULL);
 #endif
 #endif
 	return USBF_NORMAL_COMPLETION;
@@ -1087,9 +1087,11 @@ usbf_schedsoftintr(struct usbf_bus *bus)
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(bus->soft);
 #else
-	if (!usb_callout_pending(bus->softi))
-		usb_callout(bus->softi, 0, bus->methods->soft_intr,
-		    bus);
+	if (!timeout_pending(&bus->softi)) {
+		timeout_del(&bus->softi);
+		timeout_set(&bus->softi, bus->methods->soft_intr, bus);
+		timeout_add(&bus->softi, 0);
+	}
 #endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 #else
 	bus->methods->soft_intr(bus);

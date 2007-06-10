@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.41 2007/06/09 12:22:53 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.42 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -300,7 +300,7 @@ url_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	usb_callout_init(sc->sc_stat_ch);
+	timeout_set(&sc->sc_stat_ch, NULL, NULL);
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -326,7 +326,7 @@ url_detach(struct device *self, int flags)
 	if (!sc->sc_attached)
 		return (0);
 
-	usb_uncallout(sc->sc_stat_ch, url_tick, sc);
+	timeout_del(&sc->sc_stat_ch);
 
 	/* Remove any pending tasks */
 	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);
@@ -564,7 +564,9 @@ url_init(struct ifnet *ifp)
 
 	splx(s);
 
-	usb_callout(sc->sc_stat_ch, hz, url_tick, sc);
+	timeout_del(&sc->sc_stat_ch);
+	timeout_set(&sc->sc_stat_ch, url_tick, sc);
+	timeout_add(&sc->sc_stat_ch, hz);
 
 	return (0);
 }
@@ -1200,7 +1202,7 @@ url_stop(struct ifnet *ifp, int disable)
 
 	url_reset(sc);
 
-	usb_uncallout(sc->sc_stat_ch, url_tick, sc);
+	timeout_del(&sc->sc_stat_ch);
 
 	/* Stop transfers */
 	/* RX endpoint */
@@ -1371,7 +1373,9 @@ url_tick_task(void *xsc)
 			   url_start(ifp);
 	}
 
-	usb_callout(sc->sc_stat_ch, hz, url_tick, sc);
+	timeout_del(&sc->sc_stat_ch);
+	timeout_set(&sc->sc_stat_ch, url_tick, sc);
+	timeout_add(&sc->sc_stat_ch, hz);
 
 	splx(s);
 }

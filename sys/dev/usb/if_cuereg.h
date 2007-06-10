@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cuereg.h,v 1.9 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: if_cuereg.h,v 1.10 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: if_cuereg.h,v 1.14 2001/01/21 22:09:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -170,7 +170,7 @@ struct cue_softc {
 	struct arpcom		arpcom;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 
-	usb_callout_t		cue_stat_ch;
+	struct timeout		cue_stat_ch;
 
 	usbd_device_handle	cue_udev;
 	usbd_interface_handle	cue_iface;

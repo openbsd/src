@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.22 2007/03/22 05:53:36 pascoe Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.23 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -135,7 +135,7 @@ typedef struct ohci_softc {
 	u_int sc_overrun_cnt;
 	struct timeval sc_overrun_ntc;
 
-	usb_callout_t sc_tmo_rhsc;
+	struct timeout sc_tmo_rhsc;
 
 	device_ptr_t sc_child;
 

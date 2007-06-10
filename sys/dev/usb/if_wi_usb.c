@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.37 2007/06/09 12:22:53 mbalmer Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.38 2007/06/10 10:15:35 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -137,7 +137,7 @@ struct wi_usb_softc {
 	struct wi_softc		sc_wi;
 #define wi_usb_dev sc_wi.sc_dev
 
-	usb_callout_t		wi_usb_stat_ch;
+	struct timeout		wi_usb_stat_ch;
 
 	usbd_device_handle	wi_usb_udev;
 	usbd_interface_handle	wi_usb_iface;

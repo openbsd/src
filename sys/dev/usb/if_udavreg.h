@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.8 2007/06/09 11:06:53 mbalmer Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.9 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -172,7 +172,7 @@ struct udav_softc {
 	usbd_pipe_handle	sc_pipe_rx;
 	usbd_pipe_handle	sc_pipe_tx;
 	usbd_pipe_handle	sc_pipe_intr;
-	usb_callout_t		sc_stat_ch;
+	struct timeout		sc_stat_ch;
 	u_int			sc_rx_errs;
 	/* u_int		sc_intr_errs; */
 	struct timeval		sc_rx_notice;

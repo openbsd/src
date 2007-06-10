@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.31 2007/06/05 08:43:56 mbalmer Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.32 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -384,7 +384,7 @@ usbd_alloc_xfer(usbd_device_handle dev)
 	if (xfer == NULL)
 		return (NULL);
 	xfer->device = dev;
-	usb_callout_init(xfer->timeout_handle);
+	timeout_set(&xfer->timeout_handle, NULL, NULL);
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
 	return (xfer);
 }

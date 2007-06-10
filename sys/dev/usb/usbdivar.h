@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.27 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.28 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -124,7 +124,7 @@ struct usbd_bus {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void		       *soft; /* soft interrupt cookie */
 #else
-	usb_callout_t		softi;
+	struct timeout		softi;
 #endif
 #endif
 	bus_dma_tag_t		dmatag;	/* DMA tag */
@@ -221,7 +221,7 @@ struct usbd_xfer {
 
 	void		       *hcpriv; /* private use by the HC driver */
 
-	usb_callout_t		timeout_handle;
+	struct timeout		timeout_handle;
 };
 
 void usbd_init(void);

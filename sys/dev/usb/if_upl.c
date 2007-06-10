@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.32 2007/06/09 12:22:53 mbalmer Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.33 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ struct upl_softc {
 	struct device		sc_dev;
 
 	struct ifnet		sc_if;
-	usb_callout_t		sc_stat_ch;
+	struct timeout		sc_stat_ch;
 
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;

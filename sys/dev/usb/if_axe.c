@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.71 2007/06/09 12:22:53 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.72 2007/06/10 10:15:35 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -714,7 +714,7 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	usb_callout_init(sc->axe_stat_ch);
+	timeout_set(&sc->axe_stat_ch, NULL, NULL);
 
 	sc->axe_attached = 1;
 	splx(s);
@@ -736,7 +736,7 @@ axe_detach(struct device *self, int flags)
 	if (!sc->axe_attached)
 		return (0);
 
-	usb_uncallout(sc->axe_stat_ch, axe_tick, sc);
+	timeout_del(&sc->axe_stat_ch);
 
 	sc->axe_dying = 1;
 
@@ -1111,7 +1111,9 @@ axe_tick_task(void *xsc)
 			   axe_start(ifp);
 	}
 
-	usb_callout(sc->axe_stat_ch, hz, axe_tick, sc);
+	timeout_del(&sc->axe_stat_ch);
+	timeout_set(&sc->axe_stat_ch, axe_tick, sc);
+	timeout_add(&sc->axe_stat_ch, hz);
 
 	splx(s);
 }
@@ -1310,7 +1312,9 @@ axe_init(void *xsc)
 
 	splx(s);
 
-	usb_callout(sc->axe_stat_ch, hz, axe_tick, sc);
+	timeout_del(&sc->axe_stat_ch);
+	timeout_set(&sc->axe_stat_ch, axe_tick, sc);
+	timeout_add(&sc->axe_stat_ch, hz);
 	return;
 }
 
@@ -1438,7 +1442,7 @@ axe_stop(struct axe_softc *sc)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	usb_uncallout(sc->axe_stat_ch, axe_tick, sc);
+	timeout_del(&sc->axe_stat_ch);
 
 	/* Stop transfers. */
 	if (sc->axe_ep[AXE_ENDPT_RX] != NULL) {

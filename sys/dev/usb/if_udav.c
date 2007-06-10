@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.27 2007/06/09 12:22:53 mbalmer Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.28 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -291,7 +291,7 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	usb_callout_init(sc->sc_stat_ch);
+	timeout_set(&sc->sc_stat_ch, NULL, NULL);
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -317,7 +317,7 @@ udav_detach(struct device *self, int flags)
 	if (!sc->sc_attached)
 		return (0);
 
-	usb_uncallout(sc->sc_stat_ch, udav_tick, sc);
+	timeout_del(&sc->sc_stat_ch);
 
 	/* Remove any pending tasks */
 	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);
@@ -669,7 +669,9 @@ udav_init(struct ifnet *ifp)
 
 	splx(s);
 
-	usb_callout(sc->sc_stat_ch, hz, udav_tick, sc);
+	timeout_del(&sc->sc_stat_ch);
+	timeout_set(&sc->sc_stat_ch, udav_tick, sc);
+	timeout_add(&sc->sc_stat_ch, hz);
 
 	return (0);
 }
@@ -1312,7 +1314,7 @@ udav_stop(struct ifnet *ifp, int disable)
 
 	udav_reset(sc);
 
-	usb_uncallout(sc->sc_stat_ch, udav_tick, sc);
+	timeout_del(&sc->sc_stat_ch);
 
 	/* Stop transfers */
 	/* RX endpoint */
@@ -1483,7 +1485,9 @@ udav_tick_task(void *xsc)
 			   udav_start(ifp);
 	}
 
-	usb_callout(sc->sc_stat_ch, hz, udav_tick, sc);
+	timeout_del(&sc->sc_stat_ch);
+	timeout_set(&sc->sc_stat_ch, udav_tick, sc);
+	timeout_add(&sc->sc_stat_ch, hz);
 
 	splx(s);
 }

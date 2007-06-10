@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.58 2007/06/09 12:22:53 mbalmer Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.59 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -820,7 +820,7 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	usb_callout_init(sc->aue_stat_ch);
+	timeout_set(&sc->aue_stat_ch, NULL, NULL);
 
 	sc->aue_attached = 1;
 	sc->sc_sdhook = shutdownhook_establish(aue_shutdown, sc);
@@ -844,7 +844,7 @@ aue_detach(struct device *self, int flags)
 		return (0);
 	}
 
-	usb_uncallout(sc->aue_stat_ch, aue_tick, sc);
+	timeout_del(&sc->aue_stat_ch);
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
 	 * in the same thread as detach.
@@ -1235,7 +1235,9 @@ aue_tick_task(void *xsc)
 			aue_start(ifp);
 	}
 
-	usb_callout(sc->aue_stat_ch, hz, aue_tick, sc);
+	timeout_del(&sc->aue_stat_ch);
+	timeout_set(&sc->aue_stat_ch, aue_tick, sc);
+	timeout_add(&sc->aue_stat_ch, hz);
 
 	splx(s);
 }
@@ -1405,7 +1407,9 @@ aue_init(void *xsc)
 
 	splx(s);
 
-	usb_callout(sc->aue_stat_ch, hz, aue_tick, sc);
+	timeout_del(&sc->aue_stat_ch);
+	timeout_set(&sc->aue_stat_ch, aue_tick, sc);
+	timeout_add(&sc->aue_stat_ch, hz);
 }
 
 int
@@ -1634,7 +1638,7 @@ aue_stop(struct aue_softc *sc)
 	aue_csr_write_1(sc, AUE_CTL0, 0);
 	aue_csr_write_1(sc, AUE_CTL1, 0);
 	aue_reset(sc);
-	usb_uncallout(sc->aue_stat_ch, aue_tick, sc);
+	timeout_del(&sc->aue_stat_ch);
 
 	/* Stop transfers. */
 	if (sc->aue_ep[AUE_ENDPT_RX] != NULL) {

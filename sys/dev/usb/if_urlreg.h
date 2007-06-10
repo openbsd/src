@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urlreg.h,v 1.10 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: if_urlreg.h,v 1.11 2007/06/10 10:15:35 mbalmer Exp $ */
 /*	$NetBSD: if_urlreg.h,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -162,7 +162,7 @@ struct url_softc {
 	usbd_pipe_handle	sc_pipe_rx;
 	usbd_pipe_handle	sc_pipe_tx;
 	usbd_pipe_handle	sc_pipe_intr;
-	usb_callout_t		sc_stat_ch;
+	struct timeout		sc_stat_ch;
 	u_int			sc_rx_errs;
 	/* u_int		sc_intr_errs; */
 	struct timeval		sc_rx_notice;

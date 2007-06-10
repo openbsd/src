@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbfvar.h,v 1.2 2007/06/06 19:25:50 mk Exp $	*/
+/*	$OpenBSD: usbfvar.h,v 1.3 2007/06/10 10:15:35 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -105,7 +105,7 @@ struct usbf_bus {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void			*soft;		/* soft interrupt cookie */
 #else
-	usb_callout_t		 softi;		/* timeout handle */
+	struct timeout		 softi;		/* timeout handle */
 #endif
 #endif
 	bus_dma_tag_t		 dmatag;	/* DMA tag */
@@ -151,7 +151,7 @@ struct usbf_xfer {
 	int			 rqflags;
 	usb_dma_t		 dmabuf;
 
-	usb_callout_t		 timeout_handle;
+	struct timeout		 timeout_handle;
 };
 
 

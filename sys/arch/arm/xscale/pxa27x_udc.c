@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.19 2007/02/25 01:49:27 drahn Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.20 2007/06/10 10:15:35 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -1159,7 +1159,7 @@ pxaudc_ctrl_abort(usbf_xfer_handle xfer)
 	 */
 	s = splusb();
 	xfer->status = USBF_CANCELLED;
-	usb_uncallout(xfer->timeout_handle, pxaudc_timeout, NULL);
+	timeout_del(&xfer->timeout_handle);
 	splx(s);
 
 	/*

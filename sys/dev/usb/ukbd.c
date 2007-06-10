@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.31 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.32 2007/06/10 10:15:35 mbalmer Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -234,7 +234,7 @@ struct ukbd_softc {
 	int sc_console_keyboard;	/* we are the console keyboard */
 
 	char sc_debounce;		/* for quirk handling */
-	usb_callout_t sc_delay;		/* for quirk handling */
+	struct timeout sc_delay;		/* for quirk handling */
 	struct ukbd_data sc_data;	/* for quirk handling */
 
 	struct hid_location sc_numloc;
@@ -242,7 +242,7 @@ struct ukbd_softc {
 	struct hid_location sc_scroloc;
 	int sc_leds;
 
-	usb_callout_t sc_rawrepeat_ch;
+	struct timeout sc_rawrepeat_ch;
 
 	struct device *sc_wskbddev;
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
@@ -438,8 +438,8 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
 
-	usb_callout_init(sc->sc_rawrepeat_ch);
-	usb_callout_init(sc->sc_delay);
+	timeout_set(&sc->sc_rawrepeat_ch, NULL, NULL);
+	timeout_set(&sc->sc_delay, NULL, NULL);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
@@ -568,7 +568,9 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * We avoid this bug by holding off decoding for 20 ms.
 		 */
 		sc->sc_data = *ud;
-		usb_callout(sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
+		timeout_del(&sc->sc_delay);
+		timeout_set(&sc->sc_delay, ukbd_delayed_decode, sc);
+		timeout_add(&sc->sc_delay, hz / 50);
 #ifdef DDB
 	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
 		/*
@@ -578,7 +580,9 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * loses bigtime.
 		 */
 		sc->sc_data = *ud;
-		usb_callout(sc->sc_delay, 1, ukbd_delayed_decode, sc);
+		timeout_del(&sc->sc_delay);
+		timeout_set(&sc->sc_delay, ukbd_delayed_decode, sc);
+		timeout_add(&sc->sc_delay, 1);
 #endif
 	} else {
 		ukbd_decode(sc, ud);
@@ -711,11 +715,13 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 		splx(s);
-		usb_uncallout(sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+		timeout_del(&sc->sc_rawrepeat_ch);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
-			usb_callout(sc->sc_rawrepeat_ch,
-			    hz * REP_DELAY1 / 1000, ukbd_rawrepeat, sc);
+			timeout_del(&sc->sc_rawrepeat_ch);
+			timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+			timeout_add(&sc->sc_rawrepeat_ch,
+			    hz * REP_DELAY1 / 1000);
 		}
 		return;
 	}
@@ -767,8 +773,9 @@ ukbd_rawrepeat(void *v)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-	usb_callout(sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000,
-	    ukbd_rawrepeat, sc);
+	timeout_del(&sc->sc_rawrepeat_ch);
+	timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
 }
 #endif
 
@@ -791,7 +798,7 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		usb_uncallout(sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+		timeout_del(&sc->sc_rawrepeat_ch);
 		return (0);
 #endif
 	}
