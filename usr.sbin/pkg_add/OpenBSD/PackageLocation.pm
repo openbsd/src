@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.13 2007/06/04 18:55:47 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.14 2007/06/10 15:24:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -207,8 +207,11 @@ sub plist
 		my $value = $self->{contents};
 		return OpenBSD::PackingList->fromfile(\$value, $code);
 	} elsif (defined $self->{dir} && -f $self->{dir}.CONTENTS) {
-		return OpenBSD::PackingList->fromfile($self->{dir}.CONTENTS, 
+		my $plist = 
+		    OpenBSD::PackingList->fromfile($self->{dir}.CONTENTS, 
 		    $code);
+		$plist->set_infodir($self->{dir});
+		return $plist;
 	}
 	# hopeless
 	$self->close_with_client_error;
