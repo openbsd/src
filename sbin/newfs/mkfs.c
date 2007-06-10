@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.67 2007/06/01 23:42:35 pedro Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.68 2007/06/10 19:11:43 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	sblock.fs_sblkno =
 	    roundup(howmany(sblock.fs_sblockloc + SBLOCKSIZE, sblock.fs_fsize),
 		sblock.fs_frag);
-	sblock.fs_cblkno = (daddr_t)(sblock.fs_sblkno +
+	sblock.fs_cblkno = (int32_t)(sblock.fs_sblkno +
 	    roundup(howmany(SBSIZE, sblock.fs_fsize), sblock.fs_frag));
 	sblock.fs_iblkno = sblock.fs_cblkno + sblock.fs_frag;
 	sblock.fs_maxfilesize = sblock.fs_bsize * NDADDR - 1;

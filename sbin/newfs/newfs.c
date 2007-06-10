@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.67 2007/06/01 23:42:35 pedro Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.68 2007/06/10 19:11:43 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -598,7 +598,7 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
 		int i;
 		int cfd;
-		daddr_t alt;
+		daddr64_t alt;
 		char specname[64];
 		char blk[1024];
 		char *cp;
