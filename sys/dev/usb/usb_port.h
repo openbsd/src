@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.77 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.78 2007/06/10 15:33:16 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -85,7 +85,6 @@ typedef struct proc *usb_proc_ptr;
 #define slinear16_to_ulinear8_be linear16_to_ulinear8_be
 
 typedef struct device *device_ptr_t;
-#define USBDEVUNIT(bdev) ((bdev).dv_unit)
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 #define USBGETSOFTC(d) ((void *)(d))
 

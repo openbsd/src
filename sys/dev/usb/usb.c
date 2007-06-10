@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.46 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.47 2007/06/10 15:33:16 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	if (cold)
 		sc->sc_bus->use_polling++;
 
-	ue.u.ue_ctrlr.ue_bus = USBDEVUNIT(sc->sc_dev);
+	ue.u.ue_ctrlr.ue_bus = sc->sc_dev.dv_unit;
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, &ue);
 
 #ifdef USB_USE_SOFTINTR
@@ -837,7 +837,7 @@ usb_detach(device_ptr_t self, int flags)
 #endif
 #endif
 
-	ue.u.ue_ctrlr.ue_bus = USBDEVUNIT(sc->sc_dev);
+	ue.u.ue_ctrlr.ue_bus = sc->sc_dev.dv_unit;
 	usb_add_event(USB_EVENT_CTRLR_DETACH, &ue);
 
 	return (0);

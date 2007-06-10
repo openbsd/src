@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.52 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.53 2007/06/10 15:33:16 mbalmer Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1244,7 +1244,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	struct usbd_port *p;
 	int i, err, s;
 
-	di->udi_bus = USBDEVUNIT(dev->bus->bdev);
+	di->udi_bus = dev->bus->bdev.dv_unit;
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
 	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev);
