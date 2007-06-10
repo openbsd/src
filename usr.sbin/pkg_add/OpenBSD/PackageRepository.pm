@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.43 2007/06/06 14:06:18 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.44 2007/06/10 14:25:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -413,22 +413,6 @@ sub open_pipe
 	return $fh;
 }
 
-sub _list
-{
-	my ($self, $cmd) = @_;
-	my $l =[];
-	local $_;
-	open(my $fh, '-|', "$cmd") or return;
-	while(<$fh>) {
-		chomp;
-		next if m/^d.*\s+\S/;
-		next unless m/([^\s]+)\.tgz\s*$/;
-		push(@$l, $1);
-	}
-	close($fh);
-	return $l;
-}
-
 sub finish_and_close
 {
 	my ($self, $object) = @_;
@@ -553,6 +537,7 @@ sub parse_problems
 
 		if (defined $hint && $hint == 0) {
 			next if m/^ftp: -: short write/o;
+			next if m/^ftp: Writing -: Broken pipe/o;
 			next if m/^421\s+/o;
 		}
 		if ($notyet) {
@@ -573,6 +558,37 @@ sub parse_problems
 	$self->SUPER::parse_problems($filename, $hint);
 }
 
+sub list
+{
+	my ($self) = @_;
+	if (!defined $self->{list}) {
+		$self->make_room;
+		my $error = OpenBSD::Temp::file();
+		$self->{list} = $self->obtain_list($error);
+		$self->parse_problems($error);
+	}
+	return $self->{list};
+}
+
+sub get_http_list
+{
+	my ($self, $error) = @_;
+
+	my $fullname = $self->url;
+	my $l = [];
+	local $_;
+	open(my $fh, '-|', "ftp -o - $fullname 2>$error") or return;
+	# XXX assumes a pkg HREF won't cross a line. Is this the case ?
+	while(<$fh>) {
+		chomp;
+		for my $pkg (m/\<A\s+HREF=\"(.*?)\.tgz\"\>/gio) {
+			next if $pkg =~ m|/|;
+			push(@$l, $pkg);
+		}
+	}
+	close($fh);
+	return $l;
+}
 
 package OpenBSD::PackageRepository::HTTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
@@ -582,28 +598,10 @@ sub urlscheme
 	return 'http';
 }
 
-sub list
+sub obtain_list
 {
-	my ($self) = @_;
-	if (!defined $self->{list}) {
-		my $error = OpenBSD::Temp::file();
-		$self->make_room;
-		my $fullname = $self->url;
-		my $l = $self->{list} = [];
-		local $_;
-		open(my $fh, '-|', "ftp -o - $fullname 2>$error") or return;
-		# XXX assumes a pkg HREF won't cross a line. Is this the case ?
-		while(<$fh>) {
-			chomp;
-			for my $pkg (m/\<A\s+HREF=\"(.*?)\.tgz\"\>/gio) {
-				next if $pkg =~ m|/|;
-				push(@$l, $pkg);
-			}
-		}
-		close($fh);
-		$self->parse_problems($error);
-	}
-	return $self->{list};
+	my ($self, $error) = @_;
+	return $self->get_http_list($error);
 }
 
 package OpenBSD::PackageRepository::HTTPS;
@@ -622,19 +620,38 @@ sub urlscheme
 	return 'ftp';
 }
 
-sub list
+sub _list
 {
-	my ($self) = @_;
-	if (!defined $self->{list}) {
-		require OpenBSD::Temp;
-
-		my $error = OpenBSD::Temp::file();
-		$self->make_room;
-		my $fullname = $self->url;
-		$self->{list} = $self->_list("echo 'nlist *.tgz'|ftp -o - $fullname 2>$error");
-		$self->parse_problems($error);
+	my ($self, $cmd) = @_;
+	my $l =[];
+	local $_;
+	open(my $fh, '-|', "$cmd") or return;
+	while(<$fh>) {
+		chomp;
+		next if m/^d.*\s+\S/;
+		next unless m/([^\s]+)\.tgz\s*$/;
+		push(@$l, $1);
 	}
-	return $self->{list};
+	close($fh);
+	return $l;
+}
+
+sub get_ftp_list
+{
+	my ($self, $error) = @_;
+
+	my $fullname = $self->url;
+	return $self->_list("echo 'nlist *.tgz'|ftp -o - $fullname 2>$error");
+}
+
+sub obtain_list
+{
+	my ($self, $error) = @_;
+	if (defined $ENV{'ftp_proxy'}) {
+		return $self->get_http_list($error);
+	} else {
+		return $self->get_ftp_list($error);
+	}
 }
 
 1;
