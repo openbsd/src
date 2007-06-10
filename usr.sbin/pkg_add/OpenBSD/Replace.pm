@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.39 2007/06/09 11:16:54 espie Exp $
+# $OpenBSD: Replace.pm,v 1.40 2007/06/10 15:11:05 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -285,19 +285,16 @@ sub perform_extraction
 	$handle->{plist}->extract_and_progress($state, \$donesize, $totsize);
 }
 
-sub can_do
+sub can_old_package_be_replaced
 {
-	my ($toreplace, $replacement, $state, $ignore) = @_;
+	my ($old_plist, $new_pkgname, $state, $ignore) = @_;
 
 	$state->{okay} = 1;
-	my $plist = OpenBSD::PackingList->from_installation($toreplace);
-	if (!defined $plist) {
-		Fatal "Couldn't find packing-list for $toreplace\n";
-	}
 	$state->{journal} = [];
-	$plist->can_update(0, $state);
+	$old_plist->can_update(0, $state);
 	if ($state->{okay} == 0) {
-		Warn "Old package ", $plist->pkgname, " contains potentially unsafe operations\n";
+		Warn "Old package ", $old_plist->pkgname, 
+		    " contains potentially unsafe operations\n";
 		for my $i (@{$state->{journal}}) {
 			Warn "\t$i\n";
 		}
@@ -311,7 +308,7 @@ sub can_do
 			}
 		}
 	}
-	my @wantlist = OpenBSD::RequiredBy->new($toreplace)->list;
+	my @wantlist = OpenBSD::RequiredBy->new($old_plist->pkgname)->list;
 	my @r = ();
 	for my $wanting (@wantlist) {
 		push(@r, $wanting) if !defined $ignore->{$wanting};
@@ -326,15 +323,14 @@ sub can_do
 				Warn "Error: $wanting missing from installation\n"
 			} else {
 				$p2->validate_depend($state, $wanting, 
-				    $toreplace, $replacement);
+				    $old_plist->pkgname, $new_pkgname);
 			}
 		}
 	}
-
-	return $state->{okay} ? $plist : 0;
+	return $state->{okay};
 }
 
-sub is_safe
+sub is_new_package_safe
 {
 	my ($plist, $state) = @_;
 	$state->{okay} = 1;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.317 2007/06/10 14:52:29 espie Exp $
+# $OpenBSD: pkg_add,v 1.318 2007/06/10 15:11:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -152,7 +152,7 @@ sub can_install
 
 	require OpenBSD::Replace;
 
-	if (!OpenBSD::Replace::is_safe($plist, $state)) {
+	if (!OpenBSD::Replace::is_new_package_safe($plist, $state)) {
 		print "Can't safely update to $pkgname (use -F update to force it)\n";
 		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 		return;
@@ -165,9 +165,12 @@ sub can_install
 			return;
 		}
 
-		my $rplist = OpenBSD::Replace::can_do($toreplace, $pkgname, 
-		    $state, \%conflicts);
-		if (!$rplist) {
+		my $rplist = OpenBSD::PackingList->from_installation($toreplace);
+		if (!defined $rplist) {
+			Fatal "Couldn't find packing-list for $toreplace\n";
+		}
+		if (!OpenBSD::Replace::can_old_package_be_replaced($rplist, 
+		    $pkgname, $state, \%conflicts)) {
 			print "Can't update $toreplace into $pkgname\n";
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;
@@ -187,11 +190,10 @@ sub can_install
 
 sub create_handle
 {
-	my ($pkg, $state) = @_;
+	my $pkg = shift;
 	my $handle = OpenBSD::Handle->new;
 	$handle->{pkgname} = $pkg;
 	$handle->{tweaked} = 0;
-	$handle->complete($state);
 	return $handle;
 }
 
@@ -200,8 +202,9 @@ sub prepare_to_add
 	my ($pkg, $state) = @_;
 
 	my $set = OpenBSD::UpdateSet->new;
-	my $handle = create_handle($pkg, $state);
+	my $handle = create_handle($pkg);
 	$set->add_newer($handle);
+	$handle->complete($state);
 	if ($handle->has_error) {
 		return $set;
 	}
