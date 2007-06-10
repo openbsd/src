@@ -81,8 +81,8 @@ off_t	sblockloc;
 
 static off_t sblock_try[] = SBLOCKSEARCH;
 
-static	void	bwrite(daddr_t, char *, int, const char *);
-static	void	bread(daddr_t, char *, int, const char *);
+static	void	bwrite(daddr64_t, char *, int, const char *);
+static	void	bread(daddr64_t, char *, int, const char *);
 static	int	getnum(const char *, const char *, int, int);
 static	void	getsb(struct fs *, const char *);
 static	int	openpartition(const char *, int, char *, size_t);
@@ -308,7 +308,7 @@ getsb(struct fs *fs, const char *file)
 }
 
 static void
-bwrite(daddr_t blk, char *buffer, int size, const char *file)
+bwrite(daddr64_t blk, char *buffer, int size, const char *file)
 {
 	off_t	offset;
 
@@ -320,7 +320,7 @@ bwrite(daddr_t blk, char *buffer, int size, const char *file)
 }
 
 static void
-bread(daddr_t blk, char *buffer, int cnt, const char *file)
+bread(daddr64_t blk, char *buffer, int cnt, const char *file)
 {
 	off_t	offset;
 	int	i;
