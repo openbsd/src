@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.59 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.60 2007/06/10 10:53:48 mbalmer Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -422,7 +422,7 @@ aue_unlock_mii(struct aue_softc *sc)
 {
 	rw_exit_write(&sc->aue_mii_lock);
 	if (--sc->aue_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->aue_dev));
+		usb_detach_wakeup(&sc->aue_dev);
 }
 
 int
@@ -827,7 +827,7 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev,
-			   USBDEV(sc->aue_dev));
+			   &sc->aue_dev);
 }
 
 int
@@ -876,12 +876,12 @@ aue_detach(struct device *self, int flags)
 
 	if (--sc->aue_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(USBDEV(sc->aue_dev));
+		usb_detach_wait(&sc->aue_dev);
 	}
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev,
-			   USBDEV(sc->aue_dev));
+			   &sc->aue_dev);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.44 2007/06/10 10:15:35 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.45 2007/06/10 10:53:48 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif
 
-	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, speed, 0,
+	err = usbd_new_device(&sc->sc_dev, sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
 	if (!err) {
 		dev = sc->sc_port.device;

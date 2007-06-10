@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.7 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.8 2007/06/10 10:53:48 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 	}*/
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 
 	uca.bulkin = uca.bulkout = -1;
 	for (i=0; i<id->bNumEndpoints; i++) {
@@ -385,7 +385,7 @@ uipaq_detach(device_ptr_t self, int flags)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 
 	return (rv);
 }

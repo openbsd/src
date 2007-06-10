@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.7 2007/06/05 08:43:55 mbalmer Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.8 2007/06/10 10:53:48 mbalmer Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ ucycom_attach(struct device *parent, struct device *self, void *aux)
 	uca.info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_hdev.sc_dev));
+			   &sc->sc_hdev.sc_dev);
 
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 	DPRINTF(("ucycom_attach: complete %p\n", sc->sc_subdev));

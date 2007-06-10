@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.72 2007/06/10 10:15:35 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.73 2007/06/10 10:53:48 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -216,7 +216,7 @@ axe_unlock_mii(struct axe_softc *sc)
 {
 	rw_exit_write(&sc->axe_mii_lock);
 	if (--sc->axe_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->axe_dev));
+		usb_detach_wakeup(&sc->axe_dev);
 }
 
 int
@@ -720,7 +720,7 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axe_udev,
-			   USBDEV(sc->axe_dev));
+			   &sc->axe_dev);
 }
 
 int
@@ -760,7 +760,7 @@ axe_detach(struct device *self, int flags)
 
 	if (--sc->axe_refcnt >= 0) {
 		/* Wait for processes to go away */
-		usb_detach_wait(USBDEV(sc->axe_dev));
+		usb_detach_wait(&sc->axe_dev);
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -783,12 +783,12 @@ axe_detach(struct device *self, int flags)
 
 	if (--sc->axe_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(USBDEV(sc->axe_dev));
+		usb_detach_wait(&sc->axe_dev);
 	}
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->axe_udev,
-			   USBDEV(sc->axe_dev));
+			   &sc->axe_dev);
 
 	return (0);
 }

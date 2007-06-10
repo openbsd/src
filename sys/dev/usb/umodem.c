@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.27 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: umodem.c,v 1.28 2007/06/10 10:53:48 mbalmer Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	uca.info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	DPRINTF(("umodem_attach: sc=%p\n", sc));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
@@ -745,7 +745,7 @@ umodem_detach(struct device *self, int flags)
 		rv = config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (rv);
 }

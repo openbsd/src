@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.34 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: uhid.c,v 1.35 2007/06/10 10:53:48 mbalmer Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ uhid_detach(struct device *self, int flags)
 			/* Wake everyone */
 			wakeup(&sc->sc_q);
 			/* Wait for processes to go away. */
-			usb_detach_wait(USBDEV(sc->sc_hdev.sc_dev));
+			usb_detach_wait(&sc->sc_hdev.sc_dev);
 		}
 		splx(s);
 	}
@@ -196,7 +196,7 @@ uhid_detach(struct device *self, int flags)
 #if 0
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH,
 			   sc->sc_hdev.sc_parent->sc_udev,
-			   USBDEV(sc->sc_hdev.sc_dev));
+			   &sc->sc_hdev.sc_dev);
 #endif
 
 	return (0);
@@ -346,7 +346,7 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = uhid_do_read(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_hdev.sc_dev));
+		usb_detach_wakeup(&sc->sc_hdev.sc_dev);
 	return (error);
 }
 
@@ -388,7 +388,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = uhid_do_write(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_hdev.sc_dev));
+		usb_detach_wakeup(&sc->sc_hdev.sc_dev);
 	return (error);
 }
 
@@ -518,7 +518,7 @@ uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	sc->sc_refcnt++;
 	error = uhid_do_ioctl(sc, cmd, addr, flag, p);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_hdev.sc_dev));
+		usb_detach_wakeup(&sc->sc_hdev.sc_dev);
 	return (error);
 }
 

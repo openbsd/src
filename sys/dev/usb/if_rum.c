@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.60 2007/06/09 12:22:53 mbalmer Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.61 2007/06/10 10:53:48 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -423,7 +423,7 @@ rum_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 }
 
 int
@@ -461,7 +461,7 @@ rum_detach(struct device *self, int flags)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 
 	return 0;
 }

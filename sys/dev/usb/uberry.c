@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.6 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.7 2007/06/10 10:53:48 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -85,7 +85,7 @@ uberry_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: Charging enabled\n", USBDEVNAME(sc->sc_dev));
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 }
 
 int
@@ -94,7 +94,7 @@ uberry_detach(struct device *self, int flags)
 	struct uberry_softc *sc = (struct uberry_softc *)self;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 
 	return 0;
 }

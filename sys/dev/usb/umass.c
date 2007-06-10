@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.47 2007/06/05 08:43:55 mbalmer Exp $ */
+/*	$OpenBSD: umass.c,v 1.48 2007/06/10 10:53:48 mbalmer Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", USBDEVNAME(sc->sc_dev)));
 }
@@ -652,7 +652,7 @@ umass_detach(struct device *self, int flags)
 		printf("%s: waiting for refcnt\n", USBDEVNAME(sc->sc_dev));
 #endif
 		/* Wait for processes to go away. */
-		usb_detach_wait(USBDEV(sc->sc_dev));
+		usb_detach_wait(&sc->sc_dev);
 	}
 	splx(s);
 
@@ -670,7 +670,7 @@ umass_detach(struct device *self, int flags)
 	umass_disco(sc);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (rv);
 }

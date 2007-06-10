@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.22 2007/06/09 12:22:53 mbalmer Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.23 2007/06/10 10:53:48 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -410,7 +410,7 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 
 	return;
 
@@ -462,7 +462,7 @@ uath_detach(struct device *self, int flags)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 
 	return 0;
 }

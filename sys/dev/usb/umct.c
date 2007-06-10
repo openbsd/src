@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.21 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: umct.c,v 1.22 2007/06/10 10:53:48 mbalmer Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ umct_attach(struct device *parent, struct device *self, void *aux)
 	umct_init(sc);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	DPRINTF(("umct: in=0x%x out=0x%x intr=0x%x\n",
 			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
@@ -331,7 +331,7 @@ umct_detach(struct device *self, int flags)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (rv);
 }

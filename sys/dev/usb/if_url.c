@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.42 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.43 2007/06/10 10:53:48 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -304,7 +304,7 @@ url_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_attached = 1;
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, USBDEV(sc->sc_dev));
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, &sc->sc_dev);
 
 	return;
 
@@ -336,7 +336,7 @@ url_detach(struct device *self, int flags)
 
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away */
-		usb_detach_wait(USBDEV(sc->sc_dev));
+		usb_detach_wait(&sc->sc_dev);
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -364,7 +364,7 @@ url_detach(struct device *self, int flags)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (0);
 }
@@ -397,7 +397,7 @@ url_mem(struct url_softc *sc, int cmd, int offset, void *buf, int len)
 	sc->sc_refcnt++;
 	err = usbd_do_request(sc->sc_udev, &req, buf);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err) {
 		DPRINTF(("%s: url_mem(): %s failed. off=%04x, err=%d\n",
 			 USBDEVNAME(sc->sc_dev),
@@ -739,7 +739,7 @@ url_openpipes(struct url_softc *sc)
 
  done:
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	return (error);
 }
@@ -908,7 +908,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 	sc->sc_refcnt++;
 	err = usbd_transfer(c->url_xfer);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err != USBD_IN_PROGRESS) {
 		printf("%s: url_send error=%s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
@@ -955,7 +955,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_refcnt++;
 			usbd_clear_endpoint_stall_async(sc->sc_pipe_tx);
 			if (--sc->sc_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->sc_dev));
+				usb_detach_wakeup(&sc->sc_dev);
 		}
 		splx(s);
 		return;
@@ -1002,7 +1002,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_refcnt++;
 			usbd_clear_endpoint_stall_async(sc->sc_pipe_rx);
 			if (--sc->sc_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->sc_dev));
+				usb_detach_wakeup(&sc->sc_dev);
 		}
 		goto done;
 	}
@@ -1065,7 +1065,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	DPRINTF(("%s: %s: start rx\n", USBDEVNAME(sc->sc_dev), __func__));
 }
@@ -1399,7 +1399,7 @@ url_unlock_mii(struct url_softc *sc)
 
 	rw_exit_write(&sc->sc_mii_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 }
 
 int

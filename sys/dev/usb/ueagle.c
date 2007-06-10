@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.17 2007/06/09 12:22:53 mbalmer Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.18 2007/06/10 10:53:48 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -224,7 +224,7 @@ ueagle_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 }
 
 int
@@ -253,7 +253,7 @@ ueagle_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 
 	return 0;
 }

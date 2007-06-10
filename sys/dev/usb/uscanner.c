@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.27 2007/06/06 19:25:50 mk Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.28 2007/06/10 10:53:49 mbalmer Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ uscanner_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bulkout = ed_bulkout->bEndpointAddress;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 }
 
 int
@@ -495,7 +495,7 @@ uscannerread(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = uscanner_do_read(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	return (error);
 }
@@ -545,7 +545,7 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = uscanner_do_write(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	return (error);
 }
 
@@ -586,7 +586,7 @@ uscanner_detach(struct device *self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(USBDEV(sc->sc_dev));
+		usb_detach_wait(&sc->sc_dev);
 	}
 	splx(s);
 
@@ -599,7 +599,7 @@ uscanner_detach(struct device *self, int flags)
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (0);
 }

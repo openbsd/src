@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.37 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.38 2007/06/10 10:53:48 mbalmer Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
 			uca.bulkin, uca.bulkout, sc->sc_intr_number ));
@@ -424,7 +424,7 @@ uplcom_detach(struct device *self, int flags)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (rv);
 }

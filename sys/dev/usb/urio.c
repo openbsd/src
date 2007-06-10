@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.25 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: urio.c,v 1.26 2007/06/10 10:53:48 mbalmer Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ urio_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(10, ("urio_attach: %p\n", sc->sc_udev));
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 }
 
 int
@@ -211,7 +211,7 @@ urio_detach(struct device *self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(USBDEV(sc->sc_dev));
+		usb_detach_wait(&sc->sc_dev);
 	}
 	splx(s);
 
@@ -225,7 +225,7 @@ urio_detach(struct device *self, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (0);
 }
@@ -354,7 +354,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	usbd_free_xfer(xfer);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	return (error);
 }
@@ -412,7 +412,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	usbd_free_xfer(xfer);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	DPRINTFN(5, ("uriowrite: done unit=%d, error=%d\n", URIOUNIT(dev),
 		     error));
@@ -501,7 +501,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 		  &req_actlen, USBD_DEFAULT_TIMEOUT);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	if (err) {
 		error = EIO;

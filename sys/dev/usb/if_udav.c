@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.28 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.29 2007/06/10 10:53:48 mbalmer Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -295,7 +295,7 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_attached = 1;
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, USBDEV(sc->sc_dev));
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, &sc->sc_dev);
 
 	return;
 
@@ -327,7 +327,7 @@ udav_detach(struct device *self, int flags)
 
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away */
-		usb_detach_wait(USBDEV(sc->sc_dev));
+		usb_detach_wait(&sc->sc_dev);
 	}
 	if (ifp->if_flags & IFF_RUNNING)
 		udav_stop(GET_IFP(sc), 1);
@@ -353,7 +353,7 @@ udav_detach(struct device *self, int flags)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (0);
 }
@@ -387,7 +387,7 @@ udav_mem_read(struct udav_softc *sc, int offset, void *buf, int len)
 	sc->sc_refcnt++;
 	err = usbd_do_request(sc->sc_udev, &req, buf);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err) {
 		DPRINTF(("%s: %s: read failed. off=%04x, err=%d\n",
 			 USBDEVNAME(sc->sc_dev), __func__, offset, err));
@@ -424,7 +424,7 @@ udav_mem_write(struct udav_softc *sc, int offset, void *buf, int len)
 	sc->sc_refcnt++;
 	err = usbd_do_request(sc->sc_udev, &req, buf);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err) {
 		DPRINTF(("%s: %s: write failed. off=%04x, err=%d\n",
 			 USBDEVNAME(sc->sc_dev), __func__, offset, err));
@@ -460,7 +460,7 @@ udav_mem_write1(struct udav_softc *sc, int offset, unsigned char ch)
 	sc->sc_refcnt++;
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err) {
 		DPRINTF(("%s: %s: write failed. off=%04x, err=%d\n",
 			 USBDEVNAME(sc->sc_dev), __func__, offset, err));
@@ -498,7 +498,7 @@ udav_csr_read(struct udav_softc *sc, int offset, void *buf, int len)
 	sc->sc_refcnt++;
 	err = usbd_do_request(sc->sc_udev, &req, buf);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err) {
 		DPRINTF(("%s: %s: read failed. off=%04x, err=%d\n",
 			 USBDEVNAME(sc->sc_dev), __func__, offset, err));
@@ -535,7 +535,7 @@ udav_csr_write(struct udav_softc *sc, int offset, void *buf, int len)
 	sc->sc_refcnt++;
 	err = usbd_do_request(sc->sc_udev, &req, buf);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err) {
 		DPRINTF(("%s: %s: write failed. off=%04x, err=%d\n",
 			 USBDEVNAME(sc->sc_dev), __func__, offset, err));
@@ -588,7 +588,7 @@ udav_csr_write1(struct udav_softc *sc, int offset, unsigned char ch)
 	sc->sc_refcnt++;
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err) {
 		DPRINTF(("%s: %s: write failed. off=%04x, err=%d\n",
 			 USBDEVNAME(sc->sc_dev), __func__, offset, err));
@@ -849,7 +849,7 @@ udav_openpipes(struct udav_softc *sc)
 
  done:
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	return (error);
 }
@@ -1025,7 +1025,7 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 	sc->sc_refcnt++;
 	err = usbd_transfer(c->udav_xfer);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 	if (err != USBD_IN_PROGRESS) {
 		printf("%s: udav_send error=%s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
@@ -1072,7 +1072,7 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_refcnt++;
 			usbd_clear_endpoint_stall_async(sc->sc_pipe_tx);
 			if (--sc->sc_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->sc_dev));
+				usb_detach_wakeup(&sc->sc_dev);
 		}
 		splx(s);
 		return;
@@ -1119,7 +1119,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_refcnt++;
 			usbd_clear_endpoint_stall_async(sc->sc_pipe_rx);
 			if (--sc->sc_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->sc_dev));
+				usb_detach_wakeup(&sc->sc_dev);
 		}
 		goto done;
 	}
@@ -1178,7 +1178,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	DPRINTF(("%s: %s: start rx\n", USBDEVNAME(sc->sc_dev), __func__));
 }
@@ -1511,7 +1511,7 @@ udav_unlock_mii(struct udav_softc *sc)
 
 	rw_exit_write(&sc->sc_mii_lock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.17 2007/06/06 19:25:50 mk Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.18 2007/06/10 10:53:49 mbalmer Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -349,7 +349,7 @@ usscanner_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	DPRINTFN(10, ("usscanner_attach: %p\n", sc->sc_udev));
 }
@@ -374,7 +374,7 @@ usscanner_detach(struct device *self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(USBDEV(sc->sc_dev));
+		usb_detach_wait(&sc->sc_dev);
 	}
 	splx(s);
 
@@ -384,7 +384,7 @@ usscanner_detach(struct device *self, int flags)
 		rv = 0;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return (rv);
 }

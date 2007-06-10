@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.34 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: udcf.c,v 1.35 2007/06/10 10:53:48 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -249,7 +249,7 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 
 	usb_init_task(&sc->sc_task, udcf_probe, sc);
 	usb_init_task(&sc->sc_bv_task, udcf_bv_probe, sc);
@@ -335,7 +335,7 @@ udcf_detach(struct device *self, int flags)
 	usb_rem_task(sc->sc_udev, &sc->sc_ct_task);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    &sc->sc_dev);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.15 2006/11/30 10:05:32 deraadt Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.16 2007/06/10 10:53:48 mbalmer Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus->base.sc_child =
 	  config_found((struct device *)sc, &saa, scsiprint);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	return (0);
 }
@@ -144,7 +144,7 @@ umass_atapi_attach(struct umass_softc *sc)
 	scbus->base.sc_child = config_found((struct device *)sc,
 	    &saa, scsiprint);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_dev));
+		usb_detach_wakeup(&sc->sc_dev);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.18 2007/05/27 04:00:25 jsg Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.19 2007/06/10 10:53:48 mbalmer Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH,
-			   sc->sc_udev, USBDEV(sc->sc_dev));
+			   sc->sc_udev, &sc->sc_dev);
 
 	return;
 error:
@@ -260,7 +260,7 @@ umidi_detach(struct device *self, int flags)
 	free_all_endpoints(sc);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   &sc->sc_dev);
 
 	return 0;
 }

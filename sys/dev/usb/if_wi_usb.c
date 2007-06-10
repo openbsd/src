@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.38 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.39 2007/06/10 10:53:48 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -379,7 +379,7 @@ wi_usb_attach(struct device *parent, struct device *self, void *aux)
 	kthread_create_deferred(wi_usb_start_thread, sc);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->wi_usb_udev,
-			   USBDEV(sc->wi_usb_dev));
+			   &sc->wi_usb_dev);
 }
 
 int
@@ -426,7 +426,7 @@ wi_usb_detach(struct device *self, int flags)
 
 	if (--sc->wi_usb_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(USBDEV(sc->wi_usb_dev));
+		usb_detach_wait(&sc->wi_usb_dev);
 	}
 
 	while (sc->wi_usb_nummem) {
@@ -479,7 +479,7 @@ wi_usb_detach(struct device *self, int flags)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->wi_usb_udev,
-	    USBDEV(sc->wi_usb_dev));
+	    &sc->wi_usb_dev);
 	return (0);
 }
 
@@ -1077,7 +1077,7 @@ wi_usb_do_transmit_sync(struct wi_usb_softc *sc, struct wi_usb_chain *c,
 	}
 done:
 	if (--sc->wi_usb_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
+		usb_detach_wakeup(&sc->wi_usb_dev);
 	return err;
 }
 
@@ -1116,7 +1116,7 @@ wi_usb_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 			usbd_clear_endpoint_stall_async(
 			    sc->wi_usb_ep[WI_USB_ENDPT_TX]);
 			if (--sc->wi_usb_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
+				usb_detach_wakeup(&sc->wi_usb_dev);
 		}
 		splx(s);
 		return;
@@ -1162,7 +1162,7 @@ wi_usb_txeof_frm(usbd_xfer_handle xfer, usbd_private_handle priv,
 			usbd_clear_endpoint_stall_async(
 			    sc->wi_usb_ep[WI_USB_ENDPT_TX]);
 			if (--sc->wi_usb_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
+				usb_detach_wakeup(&sc->wi_usb_dev);
 		}
 		splx(s);
 		return;
@@ -1297,7 +1297,7 @@ wi_usb_open_pipes(struct wi_usb_softc *sc)
 
 done:
 	if (--sc->wi_usb_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
+		usb_detach_wakeup(&sc->wi_usb_dev);
 
 	return (error);
 }
@@ -1407,7 +1407,7 @@ wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 			usbd_clear_endpoint_stall_async(
 			    sc->wi_usb_ep[WI_USB_ENDPT_RX]);
 			if (--sc->wi_usb_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
+				usb_detach_wakeup(&sc->wi_usb_dev);
 		}
 		goto done;
 	}
@@ -1485,7 +1485,7 @@ wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 	sc->wi_usb_refcnt++;
 	usbd_transfer(c->wi_usb_xfer);
 	if (--sc->wi_usb_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
+		usb_detach_wakeup(&sc->wi_usb_dev);
 
 	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->wi_usb_dev),
 		    __func__));
@@ -1510,7 +1510,7 @@ wi_usb_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			usbd_clear_endpoint_stall_async(
 			    sc->wi_usb_ep[WI_USB_ENDPT_RX]);
 			if (--sc->wi_usb_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
+				usb_detach_wakeup(&sc->wi_usb_dev);
 		}
 		return;
 	}
@@ -1829,7 +1829,7 @@ wi_usb_thread(void *arg)
 	for(;;) {
 		if (wi_thread_info->dying) { 
 			if (--sc->wi_usb_refcnt < 0)
-				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
+				usb_detach_wakeup(&sc->wi_usb_dev);
 			kthread_exit(0);
 		}
 
