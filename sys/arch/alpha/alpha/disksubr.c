@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.82 2007/06/09 23:06:45 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.83 2007/06/10 05:42:48 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -146,8 +146,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR, ALPHA_LABELOFFSET,
-	    lp, spoofonly);
+	msg = readbsdlabel(bp, strat, 0, LABELSECTOR, LABELOFFSET, lp,
+	   spoofonly);
 	if (msg)
 		*lp = minilabel;
 	if (msg) {
@@ -406,9 +406,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	 * a newer disklabel of another type with disklabel(8) and -r.
 	 */
 	dl = *lp;
-	msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR, ALPHA_LABELOFFSET,
-	    &dl, 0);
-	labeloffset = ALPHA_LABELOFFSET;
+	msg = readbsdlabel(bp, strat, 0, LABELSECTOR, LABELOFFSET, &dl, 0);
+	labeloffset = LABELOFFSET;
 	if (msg == NULL)
 		needcsum = 1;
 	if (msg) {
