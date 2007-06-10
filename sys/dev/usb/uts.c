@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.12 2007/06/10 10:53:49 mbalmer Exp $ */
+/*	$OpenBSD: uts.c,v 1.13 2007/06/10 14:49:01 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -151,14 +151,14 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	/* Display device info string */
 	printf("\n");
 	if ((devinfop = usbd_devinfo_alloc(uaa->device, 0)) != NULL) {
-		printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+		printf("%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 		usbd_devinfo_free(devinfop);
 	}
 
 	/* Move the device into the configured state. */
 	if (usbd_set_config_index(uaa->device, UTS_CONFIG_INDEX, 1) != 0) {
 		printf("%s: could not set configuartion no\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -167,7 +167,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -175,7 +175,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	/* get the interface */
 	if (usbd_device2interface_handle(uaa->device, 0, &sc->sc_iface) != 0) {
 		printf("%s: failed to get interface\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -189,7 +189,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
-				USBDEVNAME(sc->sc_dev), i);
+				sc->sc_dev.dv_xname, i);
 			sc->sc_dying = 1;
 			return;
 		}
@@ -203,7 +203,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_intr_number== -1) {
 		printf("%s: Could not find interrupt in\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -410,7 +410,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 	}
 
 	DPRINTF(("%s: down = 0x%x, sc->sc_pkts = 0x%x\n",
-	    USBDEVNAME(sc->sc_dev), down, sc->sc_pkts));
+	    sc->sc_dev.dv_xname, down, sc->sc_pkts));
 
 	/* x/y values are not reliable if there is no pressure */
 	if (down) {
@@ -457,7 +457,7 @@ uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		printf("%s: status %d\n", USBDEVNAME(sc->sc_dev), status);
+		printf("%s: status %d\n", sc->sc_dev.dv_xname, status);
 		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
@@ -466,12 +466,12 @@ uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 
 	if (len != sc->sc_pkts) {
 		DPRINTF(("%s: bad input length %d != %d\n",
-			USBDEVNAME(sc->sc_dev), len, sc->sc_isize));
+			sc->sc_dev.dv_xname, len, sc->sc_isize));
 		return;
 	}
 
 	DPRINTF(("%s: tp.z = %d, tp.x = %d, tp.y = %d\n",
-	    USBDEVNAME(sc->sc_dev), tp.z, tp.x, tp.y));
+	    sc->sc_dev.dv_xname, tp.z, tp.x, tp.y));
 
 	wsmouse_input(sc->sc_wsmousedev, tp.z, tp.x, tp.y, 0, 0,
 		WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |

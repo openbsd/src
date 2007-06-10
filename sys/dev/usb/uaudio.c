@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.43 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.44 2007/06/10 14:49:00 mbalmer Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -400,14 +400,14 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		return;
 	}
 
 	err = uaudio_identify(sc, cdesc);
 	if (err) {
 		printf("%s: audio descriptors make no sense, error=%d\n",
-		       USBDEVNAME(sc->sc_dev), err);
+		       sc->sc_dev.dv_xname, err);
 		return;
 	}
 
@@ -434,12 +434,12 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 	for (j = 0; j < sc->sc_nalts; j++) {
 		if (sc->sc_alts[j].ifaceh == NULL) {
 			printf("%s: alt %d missing AS interface(s)\n",
-			    USBDEVNAME(sc->sc_dev), j);
+			    sc->sc_dev.dv_xname, j);
 			return;
 		}
 	}
 
-	printf("%s: audio rev %d.%02x", USBDEVNAME(sc->sc_dev),
+	printf("%s: audio rev %d.%02x", sc->sc_dev.dv_xname,
 	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
 	sc->sc_playchan.sc = sc->sc_recchan.sc = sc;
@@ -1534,7 +1534,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 
 	if (asf1d->bFormatType != FORMAT_TYPE_I) {
 		printf("%s: ignored setting with type %d format\n",
-		       USBDEVNAME(sc->sc_dev), UGETW(asid->wFormatTag));
+		       sc->sc_dev.dv_xname, UGETW(asid->wFormatTag));
 		return (USBD_NORMAL_COMPLETION);
 	}
 
@@ -1565,7 +1565,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 		sync = TRUE;
 #ifndef UAUDIO_MULTIPLE_ENDPOINTS
 		printf("%s: ignored input endpoint of type adaptive\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		return (USBD_NORMAL_COMPLETION);
 #endif
 	}
@@ -1573,7 +1573,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 		sync = TRUE;
 #ifndef UAUDIO_MULTIPLE_ENDPOINTS
 		printf("%s: ignored output endpoint of type async\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		return (USBD_NORMAL_COMPLETION);
 #endif
 	}
@@ -1589,12 +1589,12 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 
 	if (sync && id->bNumEndpoints <= 1) {
 		printf("%s: a sync-pipe endpoint but no other endpoint\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		return USBD_INVAL;
 	}
 	if (!sync && id->bNumEndpoints > 1) {
 		printf("%s: non sync-pipe endpoint but multiple endpoints\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		return USBD_INVAL;
 	}
 	epdesc1 = NULL;
@@ -1615,19 +1615,19 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 			return USBD_INVAL;
 		if (epdesc1->bSynchAddress != 0) {
 			printf("%s: invalid endpoint: bSynchAddress=0\n",
-			       USBDEVNAME(sc->sc_dev));
+			       sc->sc_dev.dv_xname);
 			return USBD_INVAL;
 		}
 		if (UE_GET_XFERTYPE(epdesc1->bmAttributes) != UE_ISOCHRONOUS) {
 			printf("%s: invalid endpoint: bmAttributes=0x%x\n",
-			       USBDEVNAME(sc->sc_dev), epdesc1->bmAttributes);
+			       sc->sc_dev.dv_xname, epdesc1->bmAttributes);
 			return USBD_INVAL;
 		}
 		if (epdesc1->bEndpointAddress != ed->bSynchAddress) {
 			printf("%s: invalid endpoint addresses: "
 			       "ep[0]->bSynchAddress=0x%x "
 			       "ep[1]->bEndpointAddress=0x%x\n",
-			       USBDEVNAME(sc->sc_dev), ed->bSynchAddress,
+			       sc->sc_dev.dv_xname, ed->bSynchAddress,
 			       epdesc1->bEndpointAddress);
 			return USBD_INVAL;
 		}
@@ -1639,7 +1639,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	prec = asf1d->bBitResolution;
 	if (prec != 8 && prec != 16 && prec != 24) {
 		printf("%s: ignored setting with precision %d\n",
-		       USBDEVNAME(sc->sc_dev), prec);
+		       sc->sc_dev.dv_xname, prec);
 		return (USBD_NORMAL_COMPLETION);
 	}
 	switch (format) {
@@ -1672,11 +1672,11 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	case UA_FMT_IEEE_FLOAT:
 	default:
 		printf("%s: ignored setting with format %d\n",
-		       USBDEVNAME(sc->sc_dev), format);
+		       sc->sc_dev.dv_xname, format);
 		return (USBD_NORMAL_COMPLETION);
 	}
 #ifdef UAUDIO_DEBUG
-	printf("%s: %s: %dch, %d/%dbit, %s,", USBDEVNAME(sc->sc_dev),
+	printf("%s: %s: %dch, %d/%dbit, %s,", sc->sc_dev.dv_xname,
 	       dir == UE_DIR_IN ? "recording" : "playback",
 	       chan, prec, asf1d->bSubFrameSize * 8, format_str);
 	if (asf1d->bSamFreqType == UA_SAMP_CONTNUOUS) {
@@ -1746,7 +1746,7 @@ uaudio_identify_as(struct uaudio_softc *sc,
 		default:
 			printf("%s: ignored audio interface with %d "
 			       "endpoints\n",
-			       USBDEVNAME(sc->sc_dev), id->bNumEndpoints);
+			       sc->sc_dev.dv_xname, id->bNumEndpoints);
 			break;
 		}
 		id = uaudio_find_iface(buf, size, &offs,UISUBCLASS_AUDIOSTREAM);
@@ -1759,7 +1759,7 @@ uaudio_identify_as(struct uaudio_softc *sc,
 
 	if (sc->sc_mode == 0) {
 		printf("%s: no usable endpoint found\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		return (USBD_INVAL);
 	}
 

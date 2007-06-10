@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.72 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: ehci.c,v 1.73 2007/06/10 14:49:00 mbalmer Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -341,7 +341,7 @@ ehci_init(ehci_softc_t *sc)
 	DPRINTF(("ehci_init: start\n"));
 
 	vers = EREAD2(sc, EHCI_HCIVERSION);
-	DPRINTF(("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
+	DPRINTF(("%s: EHCI version %x.%x\n", sc->sc_bus.bdev.dv_xname,
 	    vers >> 8, vers & 0xff));
 #endif
 
@@ -360,7 +360,7 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_bus.usbrev = USBREV_2_0;
 
 	/* Reset the controller */
-	DPRINTF(("%s: resetting\n", USBDEVNAME(sc->sc_bus.bdev)));
+	DPRINTF(("%s: resetting\n", sc->sc_bus.bdev.dv_xname));
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
 	usb_delay_ms(&sc->sc_bus, 1);
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
@@ -372,7 +372,7 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (hcr) {
 		printf("%s: reset timeout\n",
-		    USBDEVNAME(sc->sc_bus.bdev));
+		    sc->sc_bus.bdev.dv_xname);
 		return (USBD_IOERROR);
 	}
 
@@ -390,7 +390,7 @@ ehci_init(ehci_softc_t *sc)
 	    EHCI_FLALIGN_ALIGN, &sc->sc_fldma);
 	if (err)
 		return (err);
-	DPRINTF(("%s: flsize=%d\n", USBDEVNAME(sc->sc_bus.bdev),sc->sc_flsize));
+	DPRINTF(("%s: flsize=%d\n", sc->sc_bus.bdev.dv_xname,sc->sc_flsize));
 	sc->sc_flist = KERNADDR(&sc->sc_fldma, 0);
 	EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 
@@ -492,7 +492,7 @@ ehci_init(ehci_softc_t *sc)
 			break;
 	}
 	if (hcr) {
-		printf("%s: run timeout\n", USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: run timeout\n", sc->sc_bus.bdev.dv_xname);
 		return (USBD_IOERROR);
 	}
 
@@ -573,7 +573,7 @@ ehci_intr1(ehci_softc_t *sc)
 	}
 	if (eintrs & EHCI_STS_HSE) {
 		printf("%s: unrecoverable error, controller halted\n",
-		       USBDEVNAME(sc->sc_bus.bdev));
+		       sc->sc_bus.bdev.dv_xname);
 		/* XXX what else */
 	}
 	if (eintrs & EHCI_STS_PCD) {
@@ -597,7 +597,7 @@ ehci_intr1(ehci_softc_t *sc)
 		sc->sc_eintrs &= ~eintrs;
 		EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 		printf("%s: blocking intrs 0x%x\n",
-		       USBDEVNAME(sc->sc_bus.bdev), eintrs);
+		       sc->sc_bus.bdev.dv_xname, eintrs);
 	}
 
 	return (1);
@@ -657,7 +657,7 @@ ehci_softintr(void *v)
 	ehci_softc_t *sc = v;
 	struct ehci_xfer *ex, *nextex;
 
-	DPRINTFN(10,("%s: ehci_softintr (%d)\n", USBDEVNAME(sc->sc_bus.bdev),
+	DPRINTFN(10,("%s: ehci_softintr (%d)\n", sc->sc_bus.bdev.dv_xname,
 		     sc->sc_bus.intr_context));
 
 	sc->sc_bus.intr_context++;
@@ -983,7 +983,7 @@ ehci_power(int why, void *v)
 		}
 		if (hcr != 0)
 			printf("%s: reset timeout\n",
-			    USBDEVNAME(sc->sc_bus.bdev));
+			    sc->sc_bus.bdev.dv_xname);
 
 		cmd &= ~EHCI_CMD_RS;
 		EOWRITE4(sc, EHCI_USBCMD, cmd);
@@ -997,7 +997,7 @@ ehci_power(int why, void *v)
 		}
 		if (hcr != EHCI_STS_HCH)
 			printf("%s: config timeout\n",
-			    USBDEVNAME(sc->sc_bus.bdev));
+			    sc->sc_bus.bdev.dv_xname);
 
 		sc->sc_bus.use_polling--;
 		break;
@@ -1047,7 +1047,7 @@ ehci_power(int why, void *v)
 		}
 		if (hcr == EHCI_STS_HCH)
 			printf("%s: config timeout\n",
-			    USBDEVNAME(sc->sc_bus.bdev));
+			    sc->sc_bus.bdev.dv_xname);
 
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 
@@ -1356,7 +1356,7 @@ ehci_open(usbd_pipe_handle pipe)
 	if (speed != EHCI_QH_SPEED_HIGH && xfertype == UE_ISOCHRONOUS) {
 		printf("%s: *** WARNING: opening low/full speed isochronous "
 		    "device, this does not work yet.\n",
-		    USBDEVNAME(sc->sc_bus.bdev));
+		    sc->sc_bus.bdev.dv_xname);
 		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
 		    hshubaddr, hshubport));
 		return (USBD_INVAL);
@@ -1983,7 +1983,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			DPRINTF(("ehci after reset, status=0x%08x\n", v));
 			if (v & EHCI_PS_PR) {
 				printf("%s: port reset timeout\n",
-				    USBDEVNAME(sc->sc_bus.bdev));
+				    sc->sc_bus.bdev.dv_xname);
 				return (USBD_TIMEOUT);
 			}
 			if (!(v & EHCI_PS_PE)) {

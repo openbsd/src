@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.22 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: umct.c,v 1.23 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ umct_attach(struct device *parent, struct device *self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	char *devname = sc->sc_dev.dv_xname;
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;
@@ -214,7 +214,7 @@ umct_attach(struct device *parent, struct device *self, void *aux)
 
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -238,7 +238,7 @@ umct_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
-				USBDEVNAME(sc->sc_dev), i);
+				sc->sc_dev.dv_xname, i);
 			sc->sc_dying = 1;
 			return;
 		}
@@ -264,21 +264,21 @@ umct_attach(struct device *parent, struct device *self, void *aux)
 
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
 
 	if (uca.bulkout == -1) {
 		printf("%s: Could not find data bulk out\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
 
 	if (sc->sc_intr_number== -1) {
 		printf("%s: Could not find interrupt in\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -560,7 +560,7 @@ umct_open(void *addr, int portno)
 			umct_intr, USBD_DEFAULT_INTERVAL);
 		if (err) {
 			DPRINTF(("%s: cannot open interrupt pipe (addr %d)\n",
-				USBDEVNAME(sc->sc_dev), sc->sc_intr_number));
+				sc->sc_dev.dv_xname, sc->sc_intr_number));
 					return (EIO);
 		}
 	}
@@ -583,11 +583,11 @@ umct_close(void *addr, int portno)
 		err = usbd_abort_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: abort interrupt pipe failed: %s\n",
-				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+				sc->sc_dev.dv_xname, usbd_errstr(err));
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",
-				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+				sc->sc_dev.dv_xname, usbd_errstr(err));
 		free(sc->sc_intr_buf, M_USBDEV);
 		sc->sc_intr_pipe = NULL;
 	}
@@ -607,14 +607,14 @@ umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 
-		DPRINTF(("%s: abnormal status: %s\n", USBDEVNAME(sc->sc_dev),
+		DPRINTF(("%s: abnormal status: %s\n", sc->sc_dev.dv_xname,
 			usbd_errstr(status)));
 		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
 
 	DPRINTF(("%s: umct status = MSR:%02x, LSR:%02x\n",
-		 USBDEVNAME(sc->sc_dev), buf[0],buf[1]));
+		 sc->sc_dev.dv_xname, buf[0],buf[1]));
 
 	sc->sc_lsr = sc->sc_msr = 0;
 	mstatus = buf[0];

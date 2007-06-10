@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.28 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: umodem.c,v 1.29 2007/06/10 14:49:01 mbalmer Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ctl_iface = uaa->iface;
 
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
-	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	printf("%s: %s, iclass %d/%d\n", sc->sc_dev.dv_xname,
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
@@ -250,12 +250,12 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_data_iface_no == 0) {
 		printf("%s: no pointer to data interface\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		goto bad;
 	}
 
 	printf("%s: data interface %d, has %sCM over data, has %sbreak\n",
-	       USBDEVNAME(sc->sc_dev), sc->sc_data_iface_no,
+	       sc->sc_dev.dv_xname, sc->sc_data_iface_no,
 	       sc->sc_cm_cap & USB_CDC_CM_OVER_DATA ? "" : "no ",
 	       sc->sc_acm_cap & USB_CDC_ACM_HAS_BREAK ? "" : "no ");
 
@@ -271,7 +271,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	if (sc->sc_data_iface == NULL) {
-		printf("%s: no data interface\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: no data interface\n", sc->sc_dev.dv_xname);
 		goto bad;
 	}
 
@@ -286,7 +286,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_data_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
-				USBDEVNAME(sc->sc_dev), i);
+				sc->sc_dev.dv_xname, i);
 			goto bad;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -300,12 +300,12 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		goto bad;
 	}
 	if (uca.bulkout == -1) {
 		printf("%s: Could not find data bulk out\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 		goto bad;
 	}
 
@@ -320,7 +320,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 				err = 0;
 			if (err) {
 				printf("%s: could not set data multiplex mode\n",
-				       USBDEVNAME(sc->sc_dev));
+				       sc->sc_dev.dv_xname);
 				goto bad;
 			}
 			sc->sc_cm_over_data = 1;
@@ -346,7 +346,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
 			printf("%s: status change notification available\n",
-			       USBDEVNAME(sc->sc_dev));
+			       sc->sc_dev.dv_xname);
 			sc->sc_ctl_notify = ed->bEndpointAddress;
 		}
 	}
@@ -413,11 +413,11 @@ umodem_close(void *addr, int portno)
 		err = usbd_abort_pipe(sc->sc_notify_pipe);
 		if (err)
 			printf("%s: abort notify pipe failed: %s\n",
-			    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			    sc->sc_dev.dv_xname, usbd_errstr(err));
 		err = usbd_close_pipe(sc->sc_notify_pipe);
 		if (err)
 			printf("%s: close notify pipe failed: %s\n",
-			    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			    sc->sc_dev.dv_xname, usbd_errstr(err));
 		sc->sc_notify_pipe = NULL;
 	}
 }
@@ -434,14 +434,14 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-		printf("%s: abnormal status: %s\n", USBDEVNAME(sc->sc_dev),
+		printf("%s: abnormal status: %s\n", sc->sc_dev.dv_xname,
 		       usbd_errstr(status));
 		return;
 	}
 
 	if (sc->sc_notify_buf.bmRequestType != UCDC_NOTIFICATION) {
 		DPRINTF(("%s: unknown message type (%02x) on notify pipe\n",
-			 USBDEVNAME(sc->sc_dev),
+			 sc->sc_dev.dv_xname,
 			 sc->sc_notify_buf.bmRequestType));
 		return;
 	}
@@ -454,12 +454,12 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		 */
 		if (UGETW(sc->sc_notify_buf.wLength) != 2) {
 			printf("%s: Invalid notification length! (%d)\n",
-			       USBDEVNAME(sc->sc_dev),
+			       sc->sc_dev.dv_xname,
 			       UGETW(sc->sc_notify_buf.wLength));
 			break;
 		}
 		DPRINTF(("%s: notify bytes = %02x%02x\n",
-			 USBDEVNAME(sc->sc_dev),
+			 sc->sc_dev.dv_xname,
 			 sc->sc_notify_buf.data[0],
 			 sc->sc_notify_buf.data[1]));
 		/* Currently, lsr is always zero. */
@@ -476,7 +476,7 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		break;
 	default:
 		DPRINTF(("%s: unknown notify message: %02x\n",
-			 USBDEVNAME(sc->sc_dev),
+			 sc->sc_dev.dv_xname,
 			 sc->sc_notify_buf.bNotification));
 		break;
 	}

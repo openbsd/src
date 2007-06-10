@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.37 2007/06/10 10:53:48 mbalmer Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.38 2007/06/10 14:49:01 mbalmer Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	char *devname = sc->sc_dev.dv_xname;
 	int i;
 	usbd_status err;
 	struct ucom_attach_args uca;
@@ -342,12 +342,12 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		goto bad;
 	}
 	if (uca.bulkout == -1) {
 		printf("%s: Could not find data bulk out\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		goto bad;
 	}
 

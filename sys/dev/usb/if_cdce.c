@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.29 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.30 2007/06/10 14:49:00 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -149,7 +149,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	int				 i, j, numalts;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfop);
+	printf("\n%s: %s\n", sc->cdce_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->cdce_udev = uaa->device;
@@ -166,7 +166,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 		    UDESCSUB_CDC_UNION);
 		if (ud == NULL) {
 			printf("%s: no union descriptor\n",
-			    USBDEVNAME(sc->cdce_dev));
+			    sc->cdce_dev.dv_xname);
 			return;
 		}
 		data_ifcno = ud->bSlaveInterface[0];
@@ -185,7 +185,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->cdce_data_iface == NULL) {
-		printf("%s: no data interface\n", USBDEVNAME(sc->cdce_dev));
+		printf("%s: no data interface\n", sc->cdce_dev.dv_xname);
 		return;
 	}
 
@@ -197,7 +197,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	for (j = 0; j < numalts; j++) {
     	    if (usbd_set_interface(sc->cdce_data_iface, j)) {
        		printf("%s: setting alternate interface failed\n", 
-			USBDEVNAME(sc->cdce_dev));
+			sc->cdce_dev.dv_xname);
 		return;
     	    } 
 	    id = usbd_get_interface_descriptor(sc->cdce_data_iface);
@@ -206,7 +206,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->cdce_data_iface, i);
 		if (!ed) {
 			printf("%s: could not read endpoint descriptor\n",
-			    USBDEVNAME(sc->cdce_dev));
+			    sc->cdce_dev.dv_xname);
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -221,7 +221,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 			 * needed for simple host-to-host applications. */
 		} else {
 			printf("%s: unexpected endpoint\n",
-			    USBDEVNAME(sc->cdce_dev));
+			    sc->cdce_dev.dv_xname);
 		}
 	    }
 	    
@@ -229,12 +229,12 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	
 	if (sc->cdce_bulkin_no == -1) {
 		printf("%s: could not find data bulk in\n",
-		    USBDEVNAME(sc->cdce_dev));
+		    sc->cdce_dev.dv_xname);
 		return;
 	}
 	if (sc->cdce_bulkout_no == -1 ) {
 		printf("%s: could not find data bulk out\n",
-		    USBDEVNAME(sc->cdce_dev));
+		    sc->cdce_dev.dv_xname);
 		return;
 	}
 
@@ -245,7 +245,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	bcopy(&ticks, &sc->cdce_arpcom.ac_enaddr[2], sizeof(u_int32_t));
 	sc->cdce_arpcom.ac_enaddr[5] = (u_int8_t)(sc->cdce_unit);
 
-	printf("%s: address %s\n", USBDEVNAME(sc->cdce_dev),
+	printf("%s: address %s\n", sc->cdce_dev.dv_xname,
 	    ether_sprintf(sc->cdce_arpcom.ac_enaddr));
 
 	ifp = GET_IFP(sc);
@@ -254,7 +254,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = cdce_ioctl;
 	ifp->if_start = cdce_start;
 	ifp->if_watchdog = cdce_watchdog;
-	strlcpy(ifp->if_xname, USBDEVNAME(sc->cdce_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, sc->cdce_dev.dv_xname, IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -373,11 +373,11 @@ cdce_stop(struct cdce_softc *sc)
 		err = usbd_abort_pipe(sc->cdce_bulkin_pipe);
 		if (err)
 			printf("%s: abort rx pipe failed: %s\n",
-			    USBDEVNAME(sc->cdce_dev), usbd_errstr(err));
+			    sc->cdce_dev.dv_xname, usbd_errstr(err));
 		err = usbd_close_pipe(sc->cdce_bulkin_pipe);
 		if (err)
 			printf("%s: close rx pipe failed: %s\n",
-			    USBDEVNAME(sc->cdce_dev), usbd_errstr(err));
+			    sc->cdce_dev.dv_xname, usbd_errstr(err));
 		sc->cdce_bulkin_pipe = NULL;
 	}
 
@@ -385,11 +385,11 @@ cdce_stop(struct cdce_softc *sc)
 		err = usbd_abort_pipe(sc->cdce_bulkout_pipe);
 		if (err)
 			printf("%s: abort tx pipe failed: %s\n",
-			    USBDEVNAME(sc->cdce_dev), usbd_errstr(err));
+			    sc->cdce_dev.dv_xname, usbd_errstr(err));
 		err = usbd_close_pipe(sc->cdce_bulkout_pipe);
 		if (err)
 			printf("%s: close tx pipe failed: %s\n",
-			    USBDEVNAME(sc->cdce_dev), usbd_errstr(err));
+			    sc->cdce_dev.dv_xname, usbd_errstr(err));
 		sc->cdce_bulkout_pipe = NULL;
 	}
 
@@ -487,7 +487,7 @@ cdce_watchdog(struct ifnet *ifp)
 		return;
 
 	ifp->if_oerrors++;
-	printf("%s: watchdog timeout\n", USBDEVNAME(sc->cdce_dev));
+	printf("%s: watchdog timeout\n", sc->cdce_dev.dv_xname);
 }
 
 void
@@ -505,13 +505,13 @@ cdce_init(void *xsc)
 	s = splnet();
 
 	if (cdce_tx_list_init(sc) == ENOBUFS) {
-		printf("%s: tx list init failed\n", USBDEVNAME(sc->cdce_dev));
+		printf("%s: tx list init failed\n", sc->cdce_dev.dv_xname);
 		splx(s);
 		return;
 	}
 
 	if (cdce_rx_list_init(sc) == ENOBUFS) {
-		printf("%s: rx list init failed\n", USBDEVNAME(sc->cdce_dev));
+		printf("%s: rx list init failed\n", sc->cdce_dev.dv_xname);
 		splx(s);
 		return;
 	}
@@ -521,7 +521,7 @@ cdce_init(void *xsc)
 	err = usbd_open_pipe(sc->cdce_data_iface, sc->cdce_bulkin_no,
 	    USBD_EXCLUSIVE_USE, &sc->cdce_bulkin_pipe);
 	if (err) {
-		printf("%s: open rx pipe failed: %s\n", USBDEVNAME(sc->cdce_dev),
+		printf("%s: open rx pipe failed: %s\n", sc->cdce_dev.dv_xname,
 		    usbd_errstr(err));
 		splx(s);
 		return;
@@ -530,7 +530,7 @@ cdce_init(void *xsc)
 	err = usbd_open_pipe(sc->cdce_data_iface, sc->cdce_bulkout_no,
 	    USBD_EXCLUSIVE_USE, &sc->cdce_bulkout_pipe);
 	if (err) {
-		printf("%s: open tx pipe failed: %s\n", USBDEVNAME(sc->cdce_dev),
+		printf("%s: open tx pipe failed: %s\n", sc->cdce_dev.dv_xname,
 		    usbd_errstr(err));
 		splx(s);
 		return;
@@ -559,13 +559,13 @@ cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
 			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", USBDEVNAME(sc->cdce_dev));
+			    "-- packet dropped!\n", sc->cdce_dev.dv_xname);
 			return (ENOBUFS);
 		}
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", USBDEVNAME(sc->cdce_dev));
+			    "-- packet dropped!\n", sc->cdce_dev.dv_xname);
 			m_freem(m_new);
 			return (ENOBUFS);
 		}
@@ -652,13 +652,13 @@ cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 		if (sc->cdce_rxeof_errors == 0)
 			printf("%s: usb error on rx: %s\n",
-			    USBDEVNAME(sc->cdce_dev), usbd_errstr(status));
+			    sc->cdce_dev.dv_xname, usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->cdce_bulkin_pipe);
 		DELAY(sc->cdce_rxeof_errors * 10000);
 		if (sc->cdce_rxeof_errors++ > 10) {
 			printf("%s: too many errors, disabling\n",
-			    USBDEVNAME(sc->cdce_dev));
+			    sc->cdce_dev.dv_xname);
 			sc->cdce_dying = 1;
 			return;
 		}
@@ -734,7 +734,7 @@ cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 		}
 		ifp->if_oerrors++;
-		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->cdce_dev),
+		printf("%s: usb error on tx: %s\n", sc->cdce_dev.dv_xname,
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->cdce_bulkout_pipe);

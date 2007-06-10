@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.42 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: ugen.c,v 1.43 2007/06/10 14:49:01 mbalmer Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -169,7 +169,7 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 	int conf;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = udev = uaa->device;
@@ -178,7 +178,7 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 	err = usbd_set_config_index(udev, 0, 0);
 	if (err) {
 		printf("%s: setting configuration index 0 failed\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -188,7 +188,7 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 	err = ugen_set_config(sc, conf);
 	if (err) {
 		printf("%s: setting configuration %d failed\n",
-		       USBDEVNAME(sc->sc_dev), conf);
+		       sc->sc_dev.dv_xname, conf);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -210,7 +210,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	int dir;
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
-		    USBDEVNAME(sc->sc_dev), configno, sc));
+		    sc->sc_dev.dv_xname, configno, sc));
 
 	/*
 	 * We start at 1, not 0, because we don't care whether the
@@ -220,7 +220,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 		if (sc->sc_is_open[endptno]) {
 			DPRINTFN(1,
 			     ("ugen_set_config: %s - endpoint %d is open\n",
-			      USBDEVNAME(sc->sc_dev), endptno));
+			      sc->sc_dev.dv_xname, endptno));
 			return (USBD_IN_USE);
 		}
 
@@ -476,7 +476,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	int error = 0;
 	u_char buffer[UGEN_CHUNK];
 
-	DPRINTFN(5, ("%s: ugenread: %d\n", USBDEVNAME(sc->sc_dev), endpt));
+	DPRINTFN(5, ("%s: ugenread: %d\n", sc->sc_dev.dv_xname, endpt));
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -632,7 +632,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	usbd_xfer_handle xfer;
 	usbd_status err;
 
-	DPRINTFN(5, ("%s: ugenwrite: %d\n", USBDEVNAME(sc->sc_dev), endpt));
+	DPRINTFN(5, ("%s: ugenwrite: %d\n", sc->sc_dev.dv_xname, endpt));
 
 	if (sc->sc_dying)
 		return (EIO);

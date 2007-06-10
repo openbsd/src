@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.73 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.74 2007/06/10 14:49:00 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -348,7 +348,7 @@ axe_miibus_statchg(device_ptr_t dev)
 	DPRINTF(("axe_miibus_statchg: val=0x%x\n", val));
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
 	if (err) {
-		printf("%s: media change failed\n", USBDEVNAME(sc->axe_dev));
+		printf("%s: media change failed\n", sc->axe_dev.dv_xname);
 		return;
 	}
 }
@@ -569,7 +569,7 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_data	*mii;
 	u_char eaddr[ETHER_ADDR_LEN];
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->axe_dev);
+	char *devname = sc->axe_dev.dv_xname;
 	struct ifnet *ifp;
 	int i, s;
 
@@ -606,7 +606,7 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
 
-	printf("%s: %s", USBDEVNAME(sc->axe_dev), devinfop);
+	printf("%s: %s", sc->axe_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/* decide on what our bufsize will be */
@@ -730,7 +730,7 @@ axe_detach(struct device *self, int flags)
 	int			s;
 	struct ifnet		*ifp = GET_IFP(sc);
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTFN(2,("%s: %s: enter\n", sc->axe_dev.dv_xname, __func__));
 
 	/* Detached before attached finished, so just bail out. */
 	if (!sc->axe_attached)
@@ -776,7 +776,7 @@ axe_detach(struct device *self, int flags)
 	    sc->axe_ep[AXE_ENDPT_RX] != NULL ||
 	    sc->axe_ep[AXE_ENDPT_INTR] != NULL)
 		printf("%s: detach has active endpoints\n",
-		    USBDEVNAME(sc->axe_dev));
+		    sc->axe_dev.dv_xname);
 #endif
 
 	sc->axe_attached = 0;
@@ -798,7 +798,7 @@ axe_activate(device_ptr_t self, enum devact act)
 {
 	struct axe_softc *sc = (struct axe_softc *)self;
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTFN(2,("%s: %s: enter\n", sc->axe_dev.dv_xname, __func__));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -839,7 +839,7 @@ axe_rx_list_init(struct axe_softc *sc)
 	struct axe_chain *c;
 	int i;
 
-	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTF(("%s: %s: enter\n", sc->axe_dev.dv_xname, __func__));
 
 	cd = &sc->axe_cdata;
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
@@ -870,7 +870,7 @@ axe_tx_list_init(struct axe_softc *sc)
 	struct axe_chain *c;
 	int i;
 
-	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTF(("%s: %s: enter\n", sc->axe_dev.dv_xname, __func__));
 
 	cd = &sc->axe_cdata;
 	for (i = 0; i < AXE_TX_LIST_CNT; i++) {
@@ -911,7 +911,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct axe_sframe_hdr	hdr;
 	int			s;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev),__func__));
+	DPRINTFN(10,("%s: %s: enter\n", sc->axe_dev.dv_xname,__func__));
 
 	if (sc->axe_dying)
 		return;
@@ -924,7 +924,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 		if (usbd_ratecheck(&sc->axe_rx_notice)) {
 			printf("%s: usb errors on rx: %s\n",
-			    USBDEVNAME(sc->axe_dev), usbd_errstr(status));
+			    sc->axe_dev.dv_xname, usbd_errstr(status));
 		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_RX]);
@@ -1004,7 +1004,7 @@ done:
 	    USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(xfer);
 
-	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTFN(10,("%s: %s: start rx\n", sc->axe_dev.dv_xname, __func__));
 
 	return;
 }
@@ -1067,7 +1067,7 @@ axe_tick(void *xsc)
 	if (sc == NULL)
 		return;
 
-	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->axe_dev),
+	DPRINTFN(0xff, ("%s: %s: enter\n", sc->axe_dev.dv_xname,
 			__func__));
 
 	if (sc->axe_dying)
@@ -1105,7 +1105,7 @@ axe_tick_task(void *xsc)
 	if (!sc->axe_link && mii->mii_media_status & IFM_ACTIVE &&
 	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 		DPRINTF(("%s: %s: got link\n",
-			 USBDEVNAME(sc->axe_dev), __func__));
+			 sc->axe_dev.dv_xname, __func__));
 		sc->axe_link++;
 		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 			   axe_start(ifp);

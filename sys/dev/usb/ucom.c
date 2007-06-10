@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.37 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: ucom.c,v 1.38 2007/06/10 14:49:00 mbalmer Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 			    &sc->sc_bulkin_pipe);
 			if (err) {
 				DPRINTF(("%s: open bulk out error (addr %d), err=%s\n",
-				    USBDEVNAME(sc->sc_dev), sc->sc_bulkin_no,
+				    sc->sc_dev.dv_xname, sc->sc_bulkin_no,
 				    usbd_errstr(err)));
 				error = EIO;
 				goto fail_0;
@@ -340,7 +340,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 			    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
 			if (err) {
 				DPRINTF(("%s: open bulk in error (addr %d), err=%s\n",
-				    USBDEVNAME(sc->sc_dev), sc->sc_bulkout_no,
+				    sc->sc_dev.dv_xname, sc->sc_bulkout_no,
 				    usbd_errstr(err)));
 				error = EIO;
 				goto fail_1;
@@ -1131,7 +1131,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 		DPRINTFN(7,("ucomreadcb: char=0x%02x\n", *cp));
 		if ((*rint)(*cp++, tp) == -1) {
 			/* XXX what should we do? */
-			printf("%s: lost %d chars\n", USBDEVNAME(sc->sc_dev),
+			printf("%s: lost %d chars\n", sc->sc_dev.dv_xname,
 			       cc);
 			break;
 		}
@@ -1140,7 +1140,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	err = ucomstartread(sc);
 	if (err) {
-		printf("%s: read start failed\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: read start failed\n", sc->sc_dev.dv_xname);
 		/* XXX what should we dow now? */
 	}
 }

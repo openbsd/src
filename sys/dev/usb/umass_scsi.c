@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.16 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.17 2007/06/10 14:49:01 mbalmer Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ umass_scsi_attach(struct umass_softc *sc)
 
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
 			     "sc = 0x%x, scbus = 0x%x\n",
-			     USBDEVNAME(sc->sc_dev), sc, scbus));
+			     sc->sc_dev.dv_xname, sc, scbus));
 
 	sc->sc_refcnt++;
 	scbus->base.sc_child =
@@ -138,7 +138,7 @@ umass_atapi_attach(struct umass_softc *sc)
 
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
 			     "sc = 0x%x, scbus = 0x%x\n",
-			     USBDEVNAME(sc->sc_dev), sc, scbus));
+			     sc->sc_dev.dv_xname, sc, scbus));
 
 	sc->sc_refcnt++;
 	scbus->base.sc_child = config_found((struct device *)sc,
@@ -192,7 +192,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 
 	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd: at %lu.%06lu: %d:%d "
 		"xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
-		USBDEVNAME(sc->sc_dev), sc->tv.tv_sec, sc->tv.tv_usec,
+		sc->sc_dev.dv_xname, sc->tv.tv_sec, sc->tv.tv_usec,
 		sc_link->target, sc_link->lun, xs, xs->cmd->opcode,
 		xs->datalen, sc_link->quirks, xs->flags & SCSI_POLL));
 
@@ -211,7 +211,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 #if defined(UMASS_DEBUG)
 	if (sc_link->target != UMASS_SCSIID_DEVICE) {
 		DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
-			USBDEVNAME(sc->sc_dev), sc_link->target));
+			sc->sc_dev.dv_xname, sc_link->target));
 		xs->error = XS_DRIVER_STUFFUP;
 		goto done;
 	}
@@ -378,7 +378,7 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 
 	default:
 		panic("%s: Unknown status %d in umass_scsi_cb",
-		      USBDEVNAME(sc->sc_dev), status);
+		      sc->sc_dev.dv_xname, status);
 	}
 
 	if (xs->flags & SCSI_POLL)
@@ -421,7 +421,7 @@ umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 		break;
 	default:
 		DPRINTF(UDMASS_SCSI, ("%s: Autosense failed, status %d\n",
-			USBDEVNAME(sc->sc_dev), status));
+			sc->sc_dev.dv_xname, status));
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.56 2007/06/10 10:15:35 mbalmer Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.57 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -745,7 +745,7 @@ uhci_dumpregs(uhci_softc_t *sc)
 {
 	DPRINTFN(-1,("%s regs: cmd=%04x, sts=%04x, intr=%04x, frnum=%04x, "
 		     "flbase=%08x, sof=%04x, portsc1=%04x, portsc2=%04x\n",
-		     USBDEVNAME(sc->sc_bus.bdev),
+		     sc->sc_bus.bdev.dv_xname,
 		     UREAD2(sc, UHCI_CMD),
 		     UREAD2(sc, UHCI_STS),
 		     UREAD2(sc, UHCI_INTR),
@@ -1166,7 +1166,7 @@ uhci_intr1(uhci_softc_t *sc)
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 15) {
-		DPRINTF(("%s: uhci_intr1\n", USBDEVNAME(sc->sc_bus.bdev)));
+		DPRINTF(("%s: uhci_intr1\n", sc->sc_bus.bdev.dv_xname));
 		uhci_dumpregs(sc);
 	}
 #endif
@@ -1177,7 +1177,7 @@ uhci_intr1(uhci_softc_t *sc)
 
 	if (sc->sc_suspend != PWR_RESUME) {
 		printf("%s: interrupt while not operating ignored\n",
-		       USBDEVNAME(sc->sc_bus.bdev));
+		       sc->sc_bus.bdev.dv_xname);
 		UWRITE2(sc, UHCI_STS, status); /* acknowledge the ints */
 		return (0);
 	}
@@ -1190,23 +1190,23 @@ uhci_intr1(uhci_softc_t *sc)
 	if (status & UHCI_STS_RD) {
 		ack |= UHCI_STS_RD;
 #ifdef UHCI_DEBUG
-		printf("%s: resume detect\n", USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: resume detect\n", sc->sc_bus.bdev.dv_xname);
 #endif
 	}
 	if (status & UHCI_STS_HSE) {
 		ack |= UHCI_STS_HSE;
-		printf("%s: host system error\n", USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: host system error\n", sc->sc_bus.bdev.dv_xname);
 	}
 	if (status & UHCI_STS_HCPE) {
 		ack |= UHCI_STS_HCPE;
 		printf("%s: host controller process error\n",
-		       USBDEVNAME(sc->sc_bus.bdev));
+		       sc->sc_bus.bdev.dv_xname);
 	}
 	if (status & UHCI_STS_HCH) {
 		/* no acknowledge needed */
 		if (!sc->sc_dying) {
 			printf("%s: host controller halted\n",
-			    USBDEVNAME(sc->sc_bus.bdev));
+			    sc->sc_bus.bdev.dv_xname);
 #ifdef UHCI_DEBUG
 			uhci_dump_all(sc);
 #endif
@@ -1221,7 +1221,7 @@ uhci_intr1(uhci_softc_t *sc)
 	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
 
-	DPRINTFN(15, ("%s: uhci_intr: exit\n", USBDEVNAME(sc->sc_bus.bdev)));
+	DPRINTFN(15, ("%s: uhci_intr: exit\n", sc->sc_bus.bdev.dv_xname));
 
 	return (1);
 }
@@ -1232,7 +1232,7 @@ uhci_softintr(void *v)
 	uhci_softc_t *sc = v;
 	uhci_intr_info_t *ii, *nextii;
 
-	DPRINTFN(10,("%s: uhci_softintr (%d)\n", USBDEVNAME(sc->sc_bus.bdev),
+	DPRINTFN(10,("%s: uhci_softintr (%d)\n", sc->sc_bus.bdev.dv_xname,
 		     sc->sc_bus.intr_context));
 
 	sc->sc_bus.intr_context++;
@@ -1544,7 +1544,7 @@ uhci_reset(uhci_softc_t *sc)
 		usb_delay_ms(&sc->sc_bus, 1);
 	if (n >= UHCI_RESET_TIMEOUT)
 		printf("%s: controller did not reset\n",
-		       USBDEVNAME(sc->sc_bus.bdev));
+		       sc->sc_bus.bdev.dv_xname);
 }
 
 usbd_status
@@ -1574,7 +1574,7 @@ uhci_run(uhci_softc_t *sc, int run)
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
 	splx(s);
-	printf("%s: cannot %s\n", USBDEVNAME(sc->sc_bus.bdev),
+	printf("%s: cannot %s\n", sc->sc_bus.bdev.dv_xname,
 	       run ? "start" : "stop");
 	return (USBD_IOERROR);
 }

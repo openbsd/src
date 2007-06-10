@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.45 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.46 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus->soft = softintr_establish(IPL_SOFTNET,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
-		printf("%s: can't register softintr\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: can't register softintr\n", sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -202,7 +202,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 		if (dev->hub == NULL) {
 			sc->sc_dying = 1;
 			printf("%s: root device is not a hub\n",
-			       USBDEVNAME(sc->sc_dev));
+			       sc->sc_dev.dv_xname);
 			return;
 		}
 		sc->sc_bus->root_hub = dev;
@@ -217,7 +217,7 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	} else {
 		printf("%s: root hub problem, error=%d\n",
-		       USBDEVNAME(sc->sc_dev), err);
+		       sc->sc_dev.dv_xname, err);
 		sc->sc_dying = 1;
 	}
 	if (cold)
@@ -820,7 +820,7 @@ usb_detach(device_ptr_t self, int flags)
 		wakeup(&sc->sc_bus->needs_explore);
 		if (tsleep(sc, PWAIT, "usbdet", hz * 60))
 			printf("%s: event thread didn't die\n",
-			       USBDEVNAME(sc->sc_dev));
+			       sc->sc_dev.dv_xname);
 		DPRINTF(("usb_detach: event thread dead\n"));
 	}
 

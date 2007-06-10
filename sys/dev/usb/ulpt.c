@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.26 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.27 2007/06/10 14:49:01 mbalmer Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -169,7 +169,7 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	printf("\n%s: %s, iclass %d/%d\n", sc->sc_dev.dv_xname,
 	       devinfop, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
 
@@ -179,7 +179,7 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 	cdesc = usbd_get_config_descriptor(dev);
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 		return;
 	}
 	iend = (usb_interface_descriptor_t *)
@@ -211,7 +211,7 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 		err = usbd_set_interface(iface, altno);
 		if (err) {
 			printf("%s: setting alternate interface failed\n",
-			       USBDEVNAME(sc->sc_dev));
+			       sc->sc_dev.dv_xname);
 			sc->sc_dying = 1;
 			return;
 		}
@@ -226,7 +226,7 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			    sc->sc_dev.dv_xname, i);
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -239,7 +239,7 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (sc->sc_out == -1) {
 		printf("%s: could not find bulk out endpoint\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -249,7 +249,7 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_in = -1;
 	}
 
-	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
+	printf("%s: using %s-directional mode\n", sc->sc_dev.dv_xname,
 	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	DPRINTFN(10, ("ulpt_attach: bulk=%d\n", sc->sc_out));
@@ -277,17 +277,17 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 	err = usbd_do_request_flags(dev, &req, devinfop, USBD_SHORT_XFER_OK,
 		  &alen, USBD_DEFAULT_TIMEOUT);
 	if (err) {
-		printf("%s: cannot get device id\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: cannot get device id\n", sc->sc_dev.dv_xname);
 	} else if (alen <= 2) {
 		printf("%s: empty device id, no printer connected?\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 	} else {
 		/* devinfop now contains an IEEE-1284 device ID */
 		len = ((devinfop[0] & 0xff) << 8) | (devinfop[1] & 0xff);
 		if (len > DEVINFOSIZE - 3)
 			len = DEVINFOSIZE - 3;
 		devinfo[len] = 0;
-		printf("%s: device id <", USBDEVNAME(sc->sc_dev));
+		printf("%s: device id <", sc->sc_dev.dv_xname);
 		ieee1284_print_id(devinfop+2);
 		printf(">\n");
 	}
@@ -526,11 +526,11 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 	sc->sc_laststatus = status;
 
 	if (new & LPS_SELECT)
-		log(LOG_NOTICE, "%s: offline\n", USBDEVNAME(sc->sc_dev));
+		log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
 	else if (new & LPS_NOPAPER)
-		log(LOG_NOTICE, "%s: out of paper\n", USBDEVNAME(sc->sc_dev));
+		log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
 	else if (new & LPS_NERR)
-		log(LOG_NOTICE, "%s: output error\n", USBDEVNAME(sc->sc_dev));
+		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
 
 	return (status);
 }

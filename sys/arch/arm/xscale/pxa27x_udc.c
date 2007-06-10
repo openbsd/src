@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.20 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.21 2007/06/10 14:49:01 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -164,7 +164,7 @@ struct usbf_pipe_methods pxaudc_bulk_methods = {
 
 #endif /* NUSBF > 0 */
 
-#define DEVNAME(sc)	USBDEVNAME((sc)->sc_bus.bdev)
+#define DEVNAME(sc)	((sc)->sc_bus.bdev.dv_xname)
 
 #define CSR_READ_4(sc, reg) \
 	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.8 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.9 2007/06/10 14:49:01 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	char *devname = sc->sc_dev.dv_xname;
 	int i;
 	usbd_status err;
 	struct ucom_attach_args uca;
@@ -203,7 +203,7 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 
 /*	err = uipaq_init(sc);
 	if (err) {
-		printf("%s: init failed, %s\n", USBDEVNAME(sc->sc_dev),
+		printf("%s: init failed, %s\n", sc->sc_dev.dv_xname,
 		    usbd_errstr(err));
 		goto bad;
 	}*/
@@ -249,7 +249,7 @@ uipaq_dtr(struct uipaq_softc* sc, int onoff)
 	usbd_status err;
 	int retries = 3;
 
-	DPRINTF(("%s: uipaq_dtr: onoff=%x\n", USBDEVNAME(sc->sc_dev), onoff));
+	DPRINTF(("%s: uipaq_dtr: onoff=%x\n", sc->sc_dev.dv_xname, onoff));
 
 	/* Avoid sending unnecessary requests */
 	if (onoff && (sc->sc_lcr & UCDC_LINE_DTR))
@@ -282,7 +282,7 @@ uipaq_rts(struct uipaq_softc* sc, int onoff)
 	usbd_status err;
 	int retries = 3;
 
-	DPRINTF(("%s: uipaq_rts: onoff=%x\n", USBDEVNAME(sc->sc_dev), onoff));
+	DPRINTF(("%s: uipaq_rts: onoff=%x\n", sc->sc_dev.dv_xname, onoff));
 
 	/* Avoid sending unnecessary requests */
 	if (onoff && (sc->sc_lcr & UCDC_LINE_RTS)) return;
@@ -311,7 +311,7 @@ uipaq_break(struct uipaq_softc* sc, int onoff)
 	usbd_status err;
 	int retries = 3;
 
-	DPRINTF(("%s: uipaq_break: onoff=%x\n", USBDEVNAME(sc->sc_dev), onoff));
+	DPRINTF(("%s: uipaq_break: onoff=%x\n", sc->sc_dev.dv_xname, onoff));
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SEND_BREAK;
@@ -346,7 +346,7 @@ uipaq_set(void *addr, int portno, int reg, int onoff)
 		break;
 	default:
 		printf("%s: unhandled set request: reg=%x onoff=%x\n",
-		    USBDEVNAME(sc->sc_dev), reg, onoff);
+		    sc->sc_dev.dv_xname, reg, onoff);
 		return;
 	}
 }

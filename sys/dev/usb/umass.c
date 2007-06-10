@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.48 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: umass.c,v 1.49 2007/06/10 14:49:01 mbalmer Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 	int i, bno, error;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
@@ -348,7 +348,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		default:
 			DPRINTF(UDMASS_GEN,
 				("%s: Unsupported wire protocol %u\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				id->bInterfaceProtocol));
 			return;
 		}
@@ -373,7 +373,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		default:
 			DPRINTF(UDMASS_GEN,
 				("%s: Unsupported command protocol %u\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				id->bInterfaceSubClass));
 			return;
 		}
@@ -415,7 +415,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	printf("%s: using %s over %s\n", USBDEVNAME(sc->sc_dev), sCommand,
+	printf("%s: using %s over %s\n", sc->sc_dev.dv_xname, sCommand,
 	       sWire);
 
 	if (quirk != NULL && quirk->uq_init != NULL) {
@@ -441,7 +441,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: could not read endpoint descriptor\n",
-			       USBDEVNAME(sc->sc_dev));
+			       sc->sc_dev.dv_xname);
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN
@@ -457,7 +457,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 #ifdef UMASS_DEBUG
 			if (UGETW(ed->wMaxPacketSize) > 2) {
 				DPRINTF(UDMASS_CBI, ("%s: intr size is %d\n",
-					USBDEVNAME(sc->sc_dev),
+					sc->sc_dev.dv_xname,
 					UGETW(ed->wMaxPacketSize)));
 			}
 #endif
@@ -469,7 +469,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 	    (sc->sc_wire == UMASS_WPROTO_CBI_I &&
 	     !sc->sc_epaddr[UMASS_INTRIN])) {
 		DPRINTF(UDMASS_USB, ("%s: endpoint not found %u/%u/%u\n",
-			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN],
+			sc->sc_dev.dv_xname, sc->sc_epaddr[UMASS_BULKIN],
 			sc->sc_epaddr[UMASS_BULKOUT],
 			sc->sc_epaddr[UMASS_INTRIN]));
 		return;
@@ -482,7 +482,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		err = umass_bbb_get_max_lun(sc, &sc->maxlun);
 		if (err) {
 			printf("%s: unable to get Max Lun: %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			       sc->sc_dev.dv_xname, usbd_errstr(err));
 			return;
 		}
 	} else {
@@ -491,25 +491,25 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Open the bulk-in and -out pipe */
 	DPRINTF(UDMASS_USB, ("%s: opening iface %p epaddr %d for BULKOUT\n",
-	    USBDEVNAME(sc->sc_dev), sc->sc_iface,
+	    sc->sc_dev.dv_xname, sc->sc_iface,
 	    sc->sc_epaddr[UMASS_BULKOUT]));
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKOUT],
 				USBD_EXCLUSIVE_USE,
 				&sc->sc_pipe[UMASS_BULKOUT]);
 	if (err) {
 		DPRINTF(UDMASS_USB, ("%s: cannot open %u-out pipe (bulk)\n",
-			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKOUT]));
+			sc->sc_dev.dv_xname, sc->sc_epaddr[UMASS_BULKOUT]));
 		umass_disco(sc);
 		return;
 	}
 	DPRINTF(UDMASS_USB, ("%s: opening iface %p epaddr %d for BULKIN\n",
-	    USBDEVNAME(sc->sc_dev), sc->sc_iface,
+	    sc->sc_dev.dv_xname, sc->sc_iface,
 	    sc->sc_epaddr[UMASS_BULKIN]));
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_BULKIN]);
 	if (err) {
 		DPRINTF(UDMASS_USB, ("%s: could not open %u-in pipe (bulk)\n",
-			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN]));
+			sc->sc_dev.dv_xname, sc->sc_epaddr[UMASS_BULKIN]));
 		umass_disco(sc);
 		return;
 	}
@@ -527,13 +527,13 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (sc->sc_wire == UMASS_WPROTO_CBI_I) {
 		DPRINTF(UDMASS_USB, ("%s: opening iface %p epaddr %d for INTRIN\n",
-		    USBDEVNAME(sc->sc_dev), sc->sc_iface,
+		    sc->sc_dev.dv_xname, sc->sc_iface,
 		    sc->sc_epaddr[UMASS_INTRIN]));
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_INTRIN]);
 		if (err) {
 			DPRINTF(UDMASS_USB, ("%s: couldn't open %u-in (intr)\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				sc->sc_epaddr[UMASS_INTRIN]));
 			umass_disco(sc);
 			return;
@@ -548,7 +548,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		sc->transfer_xfer[i] = usbd_alloc_xfer(uaa->device);
 		if (sc->transfer_xfer[i] == NULL) {
 			DPRINTF(UDMASS_USB, ("%s: Out of memory\n",
-				USBDEVNAME(sc->sc_dev)));
+				sc->sc_dev.dv_xname));
 			umass_disco(sc);
 			return;
 		}
@@ -602,22 +602,22 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 		error = umass_atapi_attach(sc);
 #else
 		printf("%s: "UMASS_ATAPISTR" not configured\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 #endif
 		break;
 
 	case UMASS_CPROTO_ISD_ATA:
-		printf("%s: isdata not configured\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: isdata not configured\n", sc->sc_dev.dv_xname);
 		break;
 
 	default:
 		printf("%s: command protocol=0x%x not supported\n",
-		       USBDEVNAME(sc->sc_dev), sc->sc_cmd);
+		       sc->sc_dev.dv_xname, sc->sc_cmd);
 		umass_disco(sc);
 		return;
 	}
 	if (error) {
-		printf("%s: bus attach failed\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: bus attach failed\n", sc->sc_dev.dv_xname);
 		umass_disco(sc);
 		return;
 	}
@@ -625,7 +625,7 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   &sc->sc_dev);
 
-	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", USBDEVNAME(sc->sc_dev)));
+	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", sc->sc_dev.dv_xname));
 }
 
 int
@@ -635,7 +635,7 @@ umass_detach(struct device *self, int flags)
 	struct umassbus_softc *scbus;
 	int rv = 0, i, s;
 
-	DPRINTF(UDMASS_USB, ("%s: detached\n", USBDEVNAME(sc->sc_dev)));
+	DPRINTF(UDMASS_USB, ("%s: detached\n", sc->sc_dev.dv_xname));
 
 	/* Abort the pipes to wake up any waiting processes. */
 	for (i = 0 ; i < UMASS_NEP ; i++) {
@@ -649,7 +649,7 @@ umass_detach(struct device *self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 #ifdef DIAGNOSTIC
-		printf("%s: waiting for refcnt\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: waiting for refcnt\n", sc->sc_dev.dv_xname);
 #endif
 		/* Wait for processes to go away. */
 		usb_detach_wait(&sc->sc_dev);
@@ -683,7 +683,7 @@ umass_activate(struct device *dev, enum devact act)
 	int rv = 0;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_activate: %d\n",
-	    USBDEVNAME(sc->sc_dev), act));
+	    sc->sc_dev.dv_xname, act));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -695,7 +695,7 @@ umass_activate(struct device *dev, enum devact act)
 			break;
 		rv = config_deactivate(scbus->sc_child);
 		DPRINTF(UDMASS_USB, ("%s: umass_activate: child "
-		    "returned %d\n", USBDEVNAME(sc->sc_dev), rv));
+		    "returned %d\n", sc->sc_dev.dv_xname, rv));
 		break;
 	}
 	return (rv);
@@ -746,11 +746,11 @@ umass_polled_transfer(struct umass_softc *sc, usbd_xfer_handle xfer)
 	if (sc->polling_depth) {
 		if (sc->next_polled_xfer)
 			panic("%s: got polled xfer %p, but %p already "
-			    "pending\n", USBDEVNAME(sc->sc_dev), xfer,
+			    "pending\n", sc->sc_dev.dv_xname, xfer,
 			    sc->next_polled_xfer);
 
 		DPRINTF(UDMASS_XFER, ("%s: saving polled xfer %p\n",
-		    USBDEVNAME(sc->sc_dev), xfer));
+		    sc->sc_dev.dv_xname, xfer));
 		sc->next_polled_xfer = xfer;
 
 		return (USBD_IN_PROGRESS);
@@ -760,11 +760,11 @@ umass_polled_transfer(struct umass_softc *sc, usbd_xfer_handle xfer)
 
 start_next_xfer:
 	DPRINTF(UDMASS_XFER, ("%s: start polled xfer %p\n",
-	    USBDEVNAME(sc->sc_dev), xfer));
+	    sc->sc_dev.dv_xname, xfer));
 	err = usbd_transfer(xfer);
 	if (err && err != USBD_IN_PROGRESS && sc->next_polled_xfer == NULL) {
 		DPRINTF(UDMASS_BBB, ("%s: failed to setup transfer, %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+		    sc->sc_dev.dv_xname, usbd_errstr(err)));
 		sc->polling_depth--;
 		return (err);
 	}
@@ -804,18 +804,18 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 
 	if (sc->sc_udev->bus->use_polling) {
 		DPRINTF(UDMASS_XFER,("%s: start polled xfer buffer=%p "
-		    "buflen=%d flags=0x%x timeout=%d\n", USBDEVNAME(sc->sc_dev),
+		    "buflen=%d flags=0x%x timeout=%d\n", sc->sc_dev.dv_xname,
 		    buffer, buflen, flags | sc->sc_xfer_flags, sc->timeout));
 		err = umass_polled_transfer(sc, xfer);
 	} else {
 		err = usbd_transfer(xfer);
 		DPRINTF(UDMASS_XFER,("%s: start xfer buffer=%p buflen=%d "
-		    "flags=0x%x timeout=%d\n", USBDEVNAME(sc->sc_dev),
+		    "flags=0x%x timeout=%d\n", sc->sc_dev.dv_xname,
 		    buffer, buflen, flags | sc->sc_xfer_flags, sc->timeout));
 	}
 	if (err && err != USBD_IN_PROGRESS) {
 		DPRINTF(UDMASS_BBB, ("%s: failed to setup transfer, %s\n",
-			USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+			sc->sc_dev.dv_xname, usbd_errstr(err)));
 		return (err);
 	}
 
@@ -840,18 +840,18 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 
 	if (sc->sc_udev->bus->use_polling) {
 		DPRINTF(UDMASS_XFER,("%s: start polled ctrl xfer buffer=%p "
-		    "buflen=%d flags=0x%x\n", USBDEVNAME(sc->sc_dev), buffer,
+		    "buflen=%d flags=0x%x\n", sc->sc_dev.dv_xname, buffer,
 		    buflen, flags));
 		err = umass_polled_transfer(sc, xfer);
 	} else {
 		DPRINTF(UDMASS_XFER,("%s: start ctrl xfer buffer=%p buflen=%d "
-		    "flags=0x%x\n", USBDEVNAME(sc->sc_dev), buffer, buflen,
+		    "flags=0x%x\n", sc->sc_dev.dv_xname, buffer, buflen,
 		    flags));
 		err = usbd_transfer(xfer);
 	}
 	if (err && err != USBD_IN_PROGRESS) {
 		DPRINTF(UDMASS_BBB, ("%s: failed to setup ctrl transfer, %s\n",
-			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+			 sc->sc_dev.dv_xname, usbd_errstr(err)));
 
 		/* do not reset, as this would make us loop */
 		return (err);
@@ -903,7 +903,7 @@ umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 		return;
 
 	DPRINTF(UDMASS_BBB, ("%s: Clear endpoint 0x%02x stall\n",
-		USBDEVNAME(sc->sc_dev), sc->sc_epaddr[endpt]));
+		sc->sc_dev.dv_xname, sc->sc_epaddr[endpt]));
 
 	usbd_clear_endpoint_toggle(sc->sc_pipe[endpt]);
 
@@ -958,7 +958,7 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 	 */
 
 	DPRINTF(UDMASS_BBB, ("%s: Bulk Reset\n",
-		USBDEVNAME(sc->sc_dev)));
+		sc->sc_dev.dv_xname));
 
 	sc->transfer_state = TSTATE_BBB_RESET1;
 	sc->transfer_status = status;
@@ -982,7 +982,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	usbd_status err;
 
 	DPRINTF(UDMASS_BBB,("%s: umass_bbb_transfer cmd=0x%02x\n",
-		USBDEVNAME(sc->sc_dev), *(u_char *)cmd));
+		sc->sc_dev.dv_xname, *(u_char *)cmd));
 
 	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
@@ -1018,23 +1018,23 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 
 	/* check the given arguments */
 	KASSERT(datalen == 0 || data != NULL,
-		("%s: datalen > 0, but no buffer",USBDEVNAME(sc->sc_dev)));
+		("%s: datalen > 0, but no buffer",sc->sc_dev.dv_xname));
 	KASSERT(cmdlen <= CBWCDBLENGTH,
 		("%s: cmdlen exceeds CDB length in CBW (%d > %d)",
-			USBDEVNAME(sc->sc_dev), cmdlen, CBWCDBLENGTH));
+			sc->sc_dev.dv_xname, cmdlen, CBWCDBLENGTH));
 	KASSERT(dir == DIR_NONE || datalen > 0,
 		("%s: datalen == 0 while direction is not NONE\n",
-			USBDEVNAME(sc->sc_dev)));
+			sc->sc_dev.dv_xname));
 	KASSERT(datalen == 0 || dir != DIR_NONE,
 		("%s: direction is NONE while datalen is not zero\n",
-			USBDEVNAME(sc->sc_dev)));
+			sc->sc_dev.dv_xname));
 	KASSERT(sizeof(umass_bbb_cbw_t) == UMASS_BBB_CBW_SIZE,
 		("%s: CBW struct does not have the right size (%d vs. %d)\n",
-			USBDEVNAME(sc->sc_dev),
+			sc->sc_dev.dv_xname,
 			sizeof(umass_bbb_cbw_t), UMASS_BBB_CBW_SIZE));
 	KASSERT(sizeof(umass_bbb_csw_t) == UMASS_BBB_CSW_SIZE,
 		("%s: CSW struct does not have the right size (%d vs. %d)\n",
-			USBDEVNAME(sc->sc_dev),
+			sc->sc_dev.dv_xname,
 			sizeof(umass_bbb_csw_t), UMASS_BBB_CSW_SIZE));
 
 	/*
@@ -1120,7 +1120,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	 */
 
 	DPRINTF(UDMASS_BBB, ("%s: Handling BBB state %d (%s), xfer=%p, %s\n",
-		USBDEVNAME(sc->sc_dev), sc->transfer_state,
+		sc->sc_dev.dv_xname, sc->transfer_state,
 		states[sc->transfer_state], xfer, usbd_errstr(err)));
 
 	switch (sc->transfer_state) {
@@ -1130,7 +1130,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		/* Command transport phase, error handling */
 		if (err) {
 			DPRINTF(UDMASS_BBB, ("%s: failed to send CBW\n",
-				USBDEVNAME(sc->sc_dev)));
+				sc->sc_dev.dv_xname));
 			/* If the device detects that the CBW is invalid, then
 			 * the device may STALL both bulk endpoints and require
 			 * a Bulk-Reset
@@ -1161,7 +1161,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		} else {
 			DPRINTF(UDMASS_BBB, ("%s: no data phase\n",
-				USBDEVNAME(sc->sc_dev)));
+				sc->sc_dev.dv_xname));
 		}
 
 		/* FALLTHROUGH if no data phase, err == 0 */
@@ -1173,11 +1173,11 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			usbd_get_xfer_status(xfer, NULL, NULL,
 			     &sc->transfer_actlen, NULL);
 			DPRINTF(UDMASS_BBB, ("%s: BBB_DATA actlen=%d\n",
-				USBDEVNAME(sc->sc_dev), sc->transfer_actlen));
+				sc->sc_dev.dv_xname, sc->transfer_actlen));
 
 			if (err) {
 				DPRINTF(UDMASS_BBB, ("%s: Data-%s %d failed, "
-					"%s\n", USBDEVNAME(sc->sc_dev),
+					"%s\n", sc->sc_dev.dv_xname,
 					(sc->transfer_dir == DIR_IN?"in":"out"),
 					sc->transfer_datalen,usbd_errstr(err)));
 
@@ -1217,7 +1217,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		 */
 		if (err) {	/* should not occur */
 			printf("%s: BBB bulk-%s stall clear failed, %s\n",
-			    USBDEVNAME(sc->sc_dev),
+			    sc->sc_dev.dv_xname,
 			    (sc->transfer_dir == DIR_IN? "in":"out"),
 			    usbd_errstr(err));
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
@@ -1252,7 +1252,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		/* Status transfer, error handling */
 		if (err) {
 			DPRINTF(UDMASS_BBB, ("%s: Failed to read CSW, %s%s\n",
-				USBDEVNAME(sc->sc_dev), usbd_errstr(err),
+				sc->sc_dev.dv_xname, usbd_errstr(err),
 				(sc->transfer_state == TSTATE_BBB_STATUS1?
 					", retrying":"")));
 
@@ -1287,7 +1287,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			 * indicate that the device is confused -> reset it.
 			 */
 			printf("%s: Invalid CSW: sig 0x%08x should be 0x%08x\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				UGETDW(sc->csw.dCSWSignature),
 				CSWSIGNATURE);
 
@@ -1296,7 +1296,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		} else if (UGETDW(sc->csw.dCSWTag)
 				!= UGETDW(sc->cbw.dCBWTag)) {
 			printf("%s: Invalid CSW: tag %d should be %d\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				UGETDW(sc->csw.dCSWTag),
 				UGETDW(sc->cbw.dCBWTag));
 
@@ -1306,7 +1306,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		/* CSW is valid here */
 		} else if (sc->csw.bCSWStatus > CSWSTATUS_PHASE) {
 			printf("%s: Invalid CSW: status %d > %d\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				sc->csw.bCSWStatus,
 				CSWSTATUS_PHASE);
 
@@ -1314,7 +1314,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		} else if (sc->csw.bCSWStatus == CSWSTATUS_PHASE) {
 			printf("%s: Phase Error, residue = %d\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				UGETDW(sc->csw.dCSWDataResidue));
 
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
@@ -1323,13 +1323,13 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		} else if (sc->transfer_actlen > sc->transfer_datalen) {
 			/* Buffer overrun! Don't let this go by unnoticed */
 			panic("%s: transferred %d bytes instead of %d bytes",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				sc->transfer_actlen, sc->transfer_datalen);
 #if 0
 		} else if (sc->transfer_datalen - sc->transfer_actlen
 			   != UGETDW(sc->csw.dCSWDataResidue)) {
 			DPRINTF(UDMASS_BBB, ("%s: actlen=%d != residue=%d\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				sc->transfer_datalen - sc->transfer_actlen,
 				UGETDW(sc->csw.dCSWDataResidue)));
 
@@ -1338,7 +1338,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 #endif
 		} else if (sc->csw.bCSWStatus == CSWSTATUS_FAILED) {
 			DPRINTF(UDMASS_BBB, ("%s: Command Failed, res = %d\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				UGETDW(sc->csw.dCSWDataResidue)));
 
 			/* SCSI command failed but transfer was successful */
@@ -1362,7 +1362,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_BBB_RESET1:
 		if (err)
 			printf("%s: BBB reset failed, %s\n",
-				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+				sc->sc_dev.dv_xname, usbd_errstr(err));
 
 		sc->transfer_state = TSTATE_BBB_RESET2;
 		umass_clear_endpoint_stall(sc, UMASS_BULKIN,
@@ -1372,7 +1372,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_BBB_RESET2:
 		if (err)	/* should not occur */
 			printf("%s: BBB bulk-in clear stall failed, %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			       sc->sc_dev.dv_xname, usbd_errstr(err));
 			/* no error recovery, otherwise we end up in a loop */
 
 		sc->transfer_state = TSTATE_BBB_RESET3;
@@ -1383,7 +1383,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_BBB_RESET3:
 		if (err)	/* should not occur */
 			printf("%s: BBB bulk-out clear stall failed, %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			       sc->sc_dev.dv_xname, usbd_errstr(err));
 			/* no error recovery, otherwise we end up in a loop */
 
 		sc->transfer_state = TSTATE_IDLE;
@@ -1398,7 +1398,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	/***** Default *****/
 	default:
 		panic("%s: Unknown state %d",
-		      USBDEVNAME(sc->sc_dev), sc->transfer_state);
+		      sc->sc_dev.dv_xname, sc->transfer_state);
 	}
 }
 
@@ -1452,11 +1452,11 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 	 */
 
 	DPRINTF(UDMASS_CBI, ("%s: CBI Reset\n",
-		USBDEVNAME(sc->sc_dev)));
+		sc->sc_dev.dv_xname));
 
 	KASSERT(sizeof(sc->cbl) >= SEND_DIAGNOSTIC_CMDLEN,
 		("%s: CBL struct is too small (%d < %d)\n",
-			USBDEVNAME(sc->sc_dev),
+			sc->sc_dev.dv_xname,
 			sizeof(sc->cbl), SEND_DIAGNOSTIC_CMDLEN));
 
 	sc->transfer_state = TSTATE_CBI_RESET1;
@@ -1484,7 +1484,7 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	usbd_status err;
 
 	DPRINTF(UDMASS_CBI,("%s: umass_cbi_transfer cmd=0x%02x, len=%d\n",
-		USBDEVNAME(sc->sc_dev), *(u_char *)cmd, datalen));
+		sc->sc_dev.dv_xname, *(u_char *)cmd, datalen));
 
 	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
 		("sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
@@ -1517,10 +1517,10 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 
 	/* check the given arguments */
 	KASSERT(datalen == 0 || data != NULL,
-		("%s: datalen > 0, but no buffer",USBDEVNAME(sc->sc_dev)));
+		("%s: datalen > 0, but no buffer",sc->sc_dev.dv_xname));
 	KASSERT(datalen == 0 || dir != DIR_NONE,
 		("%s: direction is NONE while datalen is not zero\n",
-			USBDEVNAME(sc->sc_dev)));
+			sc->sc_dev.dv_xname));
 
 	/* store the details for the data transfer phase */
 	sc->transfer_dir = dir;
@@ -1565,7 +1565,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	 */
 
 	DPRINTF(UDMASS_CBI, ("%s: Handling CBI state %d (%s), xfer=%p, %s\n",
-		USBDEVNAME(sc->sc_dev), sc->transfer_state,
+		sc->sc_dev.dv_xname, sc->transfer_state,
 		states[sc->transfer_state], xfer, usbd_errstr(err)));
 
 	switch (sc->transfer_state) {
@@ -1574,7 +1574,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_CBI_COMMAND:
 		if (err == USBD_STALLED) {
 			DPRINTF(UDMASS_CBI, ("%s: Command Transport failed\n",
-				USBDEVNAME(sc->sc_dev)));
+				sc->sc_dev.dv_xname));
 			/* Status transport by control pipe (section 2.3.2.1).
 			 * The command contained in the command block failed.
 			 *
@@ -1592,7 +1592,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		} else if (err) {
 			DPRINTF(UDMASS_CBI, ("%s: failed to send ADSC\n",
-				USBDEVNAME(sc->sc_dev)));
+				sc->sc_dev.dv_xname));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 			return;
 		}
@@ -1619,7 +1619,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		} else {
 			DPRINTF(UDMASS_CBI, ("%s: no data phase\n",
-				USBDEVNAME(sc->sc_dev)));
+				sc->sc_dev.dv_xname));
 		}
 
 		/* FALLTHROUGH if no data phase, err == 0 */
@@ -1631,11 +1631,11 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			usbd_get_xfer_status(xfer, NULL, NULL,
 			    &sc->transfer_actlen, NULL);
 			DPRINTF(UDMASS_CBI, ("%s: CBI_DATA actlen=%d\n",
-				USBDEVNAME(sc->sc_dev), sc->transfer_actlen));
+				sc->sc_dev.dv_xname, sc->transfer_actlen));
 
 			if (err) {
 				DPRINTF(UDMASS_CBI, ("%s: Data-%s %d failed, "
-					"%s\n", USBDEVNAME(sc->sc_dev),
+					"%s\n", sc->sc_dev.dv_xname,
 					(sc->transfer_dir == DIR_IN?"in":"out"),
 					sc->transfer_datalen,usbd_errstr(err)));
 
@@ -1686,7 +1686,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_CBI_STATUS:
 		if (err) {
 			DPRINTF(UDMASS_CBI, ("%s: Status Transport failed\n",
-				USBDEVNAME(sc->sc_dev)));
+				sc->sc_dev.dv_xname));
 			/* Status transport by interrupt pipe (section 2.3.2.2).
 			 */
 
@@ -1706,7 +1706,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			u_int32_t actlen;
 			usbd_get_xfer_status(xfer, NULL, NULL, &actlen, NULL);
 			DPRINTF(UDMASS_CBI, ("%s: CBI_STATUS actlen=%d\n",
-			    USBDEVNAME(sc->sc_dev), actlen));
+			    sc->sc_dev.dv_xname, actlen));
 			if (actlen != 2)
 				break;
 		}
@@ -1721,7 +1721,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 			DPRINTF(UDMASS_CBI, ("%s: UFI CCI, ASC = 0x%02x, "
 				"ASCQ = 0x%02x\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				sc->sbl.ufi.asc, sc->sbl.ufi.ascq));
 
 			if ((sc->sbl.ufi.asc == 0 && sc->sbl.ufi.ascq == 0) ||
@@ -1740,7 +1740,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			/* Command Interrupt Data Block */
 
 			DPRINTF(UDMASS_CBI, ("%s: type=0x%02x, value=0x%02x\n",
-				USBDEVNAME(sc->sc_dev),
+				sc->sc_dev.dv_xname,
 				sc->sbl.common.type, sc->sbl.common.value));
 
 			if (sc->sbl.common.type == IDB_TYPE_CCI) {
@@ -1769,7 +1769,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_CBI_DCLEAR:
 		if (err) {	/* should not occur */
 			printf("%s: CBI bulk-in/out stall clear failed, %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			       sc->sc_dev.dv_xname, usbd_errstr(err));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 		} else {
 			sc->transfer_state = TSTATE_IDLE;
@@ -1781,7 +1781,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_CBI_SCLEAR:
 		if (err) {	/* should not occur */
 			printf("%s: CBI intr-in stall clear failed, %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			       sc->sc_dev.dv_xname, usbd_errstr(err));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 		} else {
 			sc->transfer_state = TSTATE_IDLE;
@@ -1794,7 +1794,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_CBI_RESET1:
 		if (err)
 			printf("%s: CBI reset failed, %s\n",
-				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+				sc->sc_dev.dv_xname, usbd_errstr(err));
 
 		sc->transfer_state = TSTATE_CBI_RESET2;
 		umass_clear_endpoint_stall(sc, UMASS_BULKIN,
@@ -1804,7 +1804,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_CBI_RESET2:
 		if (err)	/* should not occur */
 			printf("%s: CBI bulk-in stall clear failed, %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			       sc->sc_dev.dv_xname, usbd_errstr(err));
 			/* no error recovery, otherwise we end up in a loop */
 
 		sc->transfer_state = TSTATE_CBI_RESET3;
@@ -1815,7 +1815,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	case TSTATE_CBI_RESET3:
 		if (err)	/* should not occur */
 			printf("%s: CBI bulk-out stall clear failed, %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			       sc->sc_dev.dv_xname, usbd_errstr(err));
 			/* no error recovery, otherwise we end up in a loop */
 
 		sc->transfer_state = TSTATE_IDLE;
@@ -1831,7 +1831,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	/***** Default *****/
 	default:
 		panic("%s: Unknown state %d",
-		      USBDEVNAME(sc->sc_dev), sc->transfer_state);
+		      sc->sc_dev.dv_xname, sc->transfer_state);
 	}
 }
 
@@ -1843,7 +1843,7 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 
 	*maxlun = 0;		/* Default to 0. */
 
-	DPRINTF(UDMASS_BBB, ("%s: Get Max Lun\n", USBDEVNAME(sc->sc_dev)));
+	DPRINTF(UDMASS_BBB, ("%s: Get Max Lun\n", sc->sc_dev.dv_xname));
 
 	/* The Get Max Lun command is a class-specific request. */
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
@@ -1857,7 +1857,7 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 	switch (err) {
 	case USBD_NORMAL_COMPLETION:
 		DPRINTF(UDMASS_BBB, ("%s: Max Lun %d\n",
-		    USBDEVNAME(sc->sc_dev), *maxlun));
+		    sc->sc_dev.dv_xname, *maxlun));
 		break;
 
 	case USBD_STALLED:
@@ -1866,7 +1866,7 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 		 */
 		err = USBD_NORMAL_COMPLETION;
 		DPRINTF(UDMASS_BBB, ("%s: Get Max Lun not supported\n",
-		    USBDEVNAME(sc->sc_dev)));
+		    sc->sc_dev.dv_xname));
 		break;
 
 	case USBD_SHORT_XFER:
@@ -1875,12 +1875,12 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 		 */
 		err = USBD_NORMAL_COMPLETION;
 		DPRINTF(UDMASS_BBB, ("%s: Get Max Lun SHORT_XFER\n",
-		    USBDEVNAME(sc->sc_dev)));
+		    sc->sc_dev.dv_xname));
 		break;
 
 	default:
 		printf("%s: Get Max Lun failed: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		/* XXX Should we port_reset the device? */
 		break;
 	}
@@ -1901,7 +1901,7 @@ umass_bbb_dump_cbw(struct umass_softc *sc, umass_bbb_cbw_t *cbw)
 	DPRINTF(UDMASS_BBB, ("%s: CBW %d: cmdlen=%d "
 		"(0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%s), "
 		"data = %d bytes, dir = %s\n",
-		USBDEVNAME(sc->sc_dev), tag, clen,
+		sc->sc_dev.dv_xname, tag, clen,
 		c[0], c[1], c[2], c[3], c[4], c[5],
 		c[6], c[7], c[8], c[9],
 		(clen > 10? "...":""),
@@ -1918,7 +1918,7 @@ umass_bbb_dump_csw(struct umass_softc *sc, umass_bbb_csw_t *csw)
 	int status = csw->bCSWStatus;
 
 	DPRINTF(UDMASS_BBB, ("%s: CSW %d: sig = 0x%08x (%s), tag = %d, "
-		"res = %d, status = 0x%02x (%s)\n", USBDEVNAME(sc->sc_dev),
+		"res = %d, status = 0x%02x (%s)\n", sc->sc_dev.dv_xname,
 		tag, sig, (sig == CSWSIGNATURE?	 "valid":"invalid"),
 		tag, res,
 		status, (status == CSWSTATUS_GOOD? "good":
@@ -1943,7 +1943,7 @@ umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer, int buflen,
 		j = i % 16;
 		if (j == 0 && i != 0) {
 			DPRINTF(UDMASS_GEN, ("%s: 0x %s%s\n",
-				USBDEVNAME(sc->sc_dev), s1, s2));
+				sc->sc_dev.dv_xname, s1, s2));
 			s2[0] = '\0';
 		}
 		snprintf(&s1[j*2], sizeof s1 - j*2, "%02x", buffer[i] & 0xff);
@@ -1951,6 +1951,6 @@ umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer, int buflen,
 	if (buflen > printlen)
 		snprintf(s3, sizeof s3, " ...");
 	DPRINTF(UDMASS_GEN, ("%s: 0x %s%s%s\n",
-		USBDEVNAME(sc->sc_dev), s1, s2, s3));
+		sc->sc_dev.dv_xname, s1, s2, s3));
 }
 #endif

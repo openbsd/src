@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.21 2007/06/05 08:43:56 mbalmer Exp $ */
+/*	$OpenBSD: ums.c,v 1.22 2007/06/10 14:49:01 mbalmer Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -170,24 +170,24 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
 	       uha->reportid, hid_input, &sc->sc_loc_x, &flags)) {
 		printf("\n%s: mouse has no X report\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev));
+		       sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 		printf("\n%s: X report 0x%04x not supported\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
+		       sc->sc_hdev.sc_dev.dv_xname, flags);
 		return;
 	}
 
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
 	       uha->reportid, hid_input, &sc->sc_loc_y, &flags)) {
 		printf("\n%s: mouse has no Y report\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev));
+		       sc->sc_hdev.sc_dev.dv_xname);
 		return;
 	}
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 		printf("\n%s: Y report 0x%04x not supported\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
+		       sc->sc_hdev.sc_dev.dv_xname, flags);
 		return;
 	}
 
@@ -196,7 +196,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	    uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
 		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 			DPRINTF(("\n%s: Wheel report 0x%04x not supported\n",
-				USBDEVNAME(sc->sc_hdev.sc_dev), flags));
+				sc->sc_hdev.sc_dev.dv_xname, flags));
 			sc->sc_loc_z.size = 0; /* Bad Z coord, ignore it */
 		} else {
 			sc->flags |= UMS_Z;
@@ -212,7 +212,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 		    uha->reportid, hid_input, &sc->sc_loc_w, &flags)) {
 			if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 				DPRINTF(("\n%s: Z report 0x%04x not supported\n",
-					USBDEVNAME(sc->sc_hdev.sc_dev), flags));
+					sc->sc_hdev.sc_dev.dv_xname, flags));
 				/* Bad Z coord, ignore it */
 				sc->sc_loc_w.size = 0;
 			}
@@ -222,7 +222,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	    uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
 		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
 			DPRINTF(("\n%s: Z report 0x%04x not supported\n",
-				USBDEVNAME(sc->sc_hdev.sc_dev), flags));
+				sc->sc_hdev.sc_dev.dv_xname, flags));
 			sc->sc_loc_z.size = 0; /* Bad Z coord, ignore it */
 		} else {
 			sc->flags |= UMS_Z;

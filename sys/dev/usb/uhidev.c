@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.24 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.25 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	id = usbd_get_interface_descriptor(iface);
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	printf("\n%s: %s, iclass %d/%d\n", sc->sc_dev.dv_xname,
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
 
@@ -154,7 +154,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
 			printf("%s: could not read endpoint descriptor\n",
-			    USBDEVNAME(sc->sc_dev));
+			    sc->sc_dev.dv_xname);
 			sc->sc_dying = 1;
 			return;
 		}
@@ -175,7 +175,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
 			sc->sc_oep_addr = ed->bEndpointAddress;
 		} else {
-			printf("%s: unexpected endpoint\n", USBDEVNAME(sc->sc_dev));
+			printf("%s: unexpected endpoint\n", sc->sc_dev.dv_xname);
 			sc->sc_dying = 1;
 			return;
 		}
@@ -186,7 +186,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	 * endpoint is optional
 	 */
 	if (sc->sc_iep_addr == -1) {
-		printf("%s: no input interrupt endpoint\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: no input interrupt endpoint\n", sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -228,7 +228,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		err = usbd_read_report_desc(uaa->iface, &desc, &size, M_USBDEV);
 	}
 	if (err) {
-		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: no report descriptor\n", sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -241,12 +241,12 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	if (nrepid < 0)
 		return;
 	if (nrepid > 0)
-		printf("%s: %d report ids\n", USBDEVNAME(sc->sc_dev), nrepid);
+		printf("%s: %d report ids\n", sc->sc_dev.dv_xname, nrepid);
 	nrepid++;
 	sc->sc_subdevs = malloc(nrepid * sizeof(device_ptr_t),
 	    M_USBDEV, M_NOWAIT);
 	if (sc->sc_subdevs == NULL) {
-		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: no memory\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	bzero(sc->sc_subdevs, nrepid * sizeof(device_ptr_t));
@@ -287,7 +287,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 					 repid, dev));
 				if (dev->sc_intr == NULL) {
 					printf("%s: sc_intr == NULL\n",
-					       USBDEVNAME(sc->sc_dev));
+					       sc->sc_dev.dv_xname);
 					return;
 				}
 #endif
@@ -416,7 +416,7 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("%s: interrupt status=%d\n", USBDEVNAME(sc->sc_dev),
+		DPRINTF(("%s: interrupt status=%d\n", sc->sc_dev.dv_xname,
 			 status));
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
 		return;
@@ -438,7 +438,7 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 #ifdef UHIDEV_DEBUG
 	if (scd->sc_in_rep_size != cc)
-		printf("%s: bad input length %d != %d\n",USBDEVNAME(sc->sc_dev),
+		printf("%s: bad input length %d != %d\n",sc->sc_dev.dv_xname,
 		       scd->sc_in_rep_size, cc);
 #endif
 	scd->sc_intr(scd, p, cc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.19 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.20 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(1,("umidi_attach\n"));
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_iface = uaa->iface;
@@ -181,7 +181,7 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_quirk =
 	    umidi_search_quirk(uaa->vendor, uaa->product, uaa->ifaceno);
-	printf("%s: ", USBDEVNAME(sc->sc_dev));
+	printf("%s: ", sc->sc_dev.dv_xname);
 	umidi_print_quirk(sc->sc_quirk);
 
 
@@ -195,7 +195,7 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 		goto error;
 	}
 	printf("%s: out=%d, in=%d\n",
-	       USBDEVNAME(sc->sc_dev),
+	       sc->sc_dev.dv_xname,
 	       sc->sc_out_num_jacks, sc->sc_in_num_jacks);
 
 	err = assign_all_jacks_automatically(sc);
@@ -224,7 +224,7 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 error:
-	printf("%s: disabled.\n", USBDEVNAME(sc->sc_dev));
+	printf("%s: disabled.\n", sc->sc_dev.dv_xname);
 	sc->sc_dying = 1;
 }
 
@@ -359,7 +359,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	struct umidi_softc *sc = ep->sc;
 	usbd_status err;
 
-	DPRINTF(("%s: alloc_pipe %p\n", USBDEVNAME(sc->sc_dev), ep));
+	DPRINTF(("%s: alloc_pipe %p\n", sc->sc_dev.dv_xname, ep));
 	SIMPLEQ_INIT(&ep->intrq);
 	ep->pending = 0;
 	ep->busy = 0;
@@ -384,7 +384,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 static void
 free_pipe(struct umidi_endpoint *ep)
 {
-	DPRINTF(("%s: free_pipe %p\n", USBDEVNAME(ep->sc->sc_dev), ep));
+	DPRINTF(("%s: free_pipe %p\n", ep->sc->sc_dev.dv_xname, ep));
 	usbd_abort_pipe(ep->pipe);
 	usbd_close_pipe(ep->pipe);
 	usbd_free_xfer(ep->xfer);
@@ -476,14 +476,14 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 			fp->out_ep[i].ep);
 		if (!epd) {
 			DPRINTF(("%s: cannot get endpoint descriptor(out:%d)\n",
-			       USBDEVNAME(sc->sc_dev), fp->out_ep[i].ep));
+			       sc->sc_dev.dv_xname, fp->out_ep[i].ep));
 			err = USBD_INVAL;
 			goto error;
 		}
 		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
 		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_OUT) {
 			printf("%s: illegal endpoint(out:%d)\n",
-			       USBDEVNAME(sc->sc_dev), fp->out_ep[i].ep);
+			       sc->sc_dev.dv_xname, fp->out_ep[i].ep);
 			err = USBD_INVAL;
 			goto error;
 		}
@@ -503,14 +503,14 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 			fp->in_ep[i].ep);
 		if (!epd) {
 			DPRINTF(("%s: cannot get endpoint descriptor(in:%d)\n",
-			       USBDEVNAME(sc->sc_dev), fp->in_ep[i].ep));
+			       sc->sc_dev.dv_xname, fp->in_ep[i].ep));
 			err = USBD_INVAL;
 			goto error;
 		}
 		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
 		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_IN) {
 			printf("%s: illegal endpoint(in:%d)\n",
-			       USBDEVNAME(sc->sc_dev), fp->in_ep[i].ep);
+			       sc->sc_dev.dv_xname, fp->in_ep[i].ep);
 			err = USBD_INVAL;
 			goto error;
 		}
@@ -1049,7 +1049,7 @@ dump_sc(struct umidi_softc *sc)
 {
 	int i;
 
-	DPRINTFN(10, ("%s: dump_sc\n", USBDEVNAME(sc->sc_dev)));
+	DPRINTFN(10, ("%s: dump_sc\n", sc->sc_dev.dv_xname));
 	for (i=0; i<sc->sc_out_num_endpoints; i++) {
 		DPRINTFN(10, ("\tout_ep(%p):\n", &sc->sc_out_ep[i]));
 		dump_ep(&sc->sc_out_ep[i]);
@@ -1127,7 +1127,7 @@ start_input_transfer(struct umidi_endpoint *ep)
 	err = usbd_transfer(ep->xfer);
 	if (err != USBD_NORMAL_COMPLETION && err != USBD_IN_PROGRESS) {
 		DPRINTF(("%s: start_input_transfer: usbd_transfer() failed err=%s\n", 
-			USBDEVNAME(ep->sc->sc_dev), usbd_errstr(err)));
+			ep->sc->sc_dev.dv_xname, usbd_errstr(err)));
 		return err;
 	}
 	return USBD_NORMAL_COMPLETION;
@@ -1144,7 +1144,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 	err = usbd_transfer(ep->xfer);
 	if (err != USBD_NORMAL_COMPLETION && err != USBD_IN_PROGRESS) {
 		DPRINTF(("%s: start_output_transfer: usbd_transfer() failed err=%s\n", 
-			USBDEVNAME(ep->sc->sc_dev), usbd_errstr(err)));
+			ep->sc->sc_dev.dv_xname, usbd_errstr(err)));
 		return err;
 	}
 	ep->used = ep->packetsize;
@@ -1156,7 +1156,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 #define DPR_PACKET(dir, sc, p)						\
 	DPRINTFN(500,							\
 		 ("%s: umidi packet(" #dir "): %02X %02X %02X %02X\n",	\
-		  USBDEVNAME(sc->sc_dev),				\
+		  sc->sc_dev.dv_xname,				\
 		  (unsigned char)(p)->buffer[0],			\
 		  (unsigned char)(p)->buffer[1],			\
 		  (unsigned char)(p)->buffer[2],			\

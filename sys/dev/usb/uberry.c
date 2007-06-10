@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.7 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.8 2007/06/10 14:49:00 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -73,16 +73,16 @@ uberry_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_udev = uaa->device;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/* Enable the device, then it cannot idle, and will charge */
 	if (usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1) != 0) {
 		printf("%s: could not set configuration no\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		return;
 	}
-	printf("%s: Charging enabled\n", USBDEVNAME(sc->sc_dev));
+	printf("%s: Charging enabled\n", sc->sc_dev.dv_xname);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    &sc->sc_dev);

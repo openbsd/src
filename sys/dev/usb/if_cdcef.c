@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.14 2007/05/27 10:24:51 jsg Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.15 2007/06/10 14:49:00 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -123,7 +123,7 @@ struct usbf_function_methods cdcef_methods = {
 #define DPRINTF(x)	printf x
 #endif
 
-#define DEVNAME(sc)	USBDEVNAME((sc)->sc_dev.bdev)
+#define DEVNAME(sc)	((sc)->sc_dev.bdev.dv_xname)
 
 /*
  * USB function match/attach/detach

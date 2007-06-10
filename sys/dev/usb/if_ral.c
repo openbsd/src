@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.96 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.97 2007/06/10 14:49:00 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -219,12 +219,12 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_udev = uaa->device;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_no(sc->sc_udev, RAL_CONFIG_NO, 0) != 0) {
 		printf("%s: could not set configuration no\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -233,7 +233,7 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_iface);
 	if (error != 0) {
 		printf("%s: could not get interface handle\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -247,7 +247,7 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for iface %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			    sc->sc_dev.dv_xname, i);
 			return;
 		}
 
@@ -259,7 +259,7 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_tx_no = ed->bEndpointAddress;
 	}
 	if (sc->sc_rx_no == -1 || sc->sc_tx_no == -1) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: missing endpoint\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -277,7 +277,7 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 	ural_read_eeprom(sc);
 
 	printf("%s: MAC/BBP RT%04x (rev 0x%02x), RF %s, address %s\n",
-	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, sc->asic_rev,
+	    sc->sc_dev.dv_xname, sc->macbbp_rev, sc->asic_rev,
 	    ural_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
@@ -314,7 +314,7 @@ ural_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = ural_start;
 	ifp->if_watchdog = ural_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
-	memcpy(ifp->if_xname, USBDEVNAME(sc->sc_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
@@ -399,7 +399,7 @@ ural_alloc_tx_list(struct ural_softc *sc)
 		data->xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (data->xfer == NULL) {
 			printf("%s: could not allocate tx xfer\n",
-			    USBDEVNAME(sc->sc_dev));
+			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
@@ -407,7 +407,7 @@ ural_alloc_tx_list(struct ural_softc *sc)
 		    RAL_TX_DESC_SIZE + IEEE80211_MAX_LEN);
 		if (data->buf == NULL) {
 			printf("%s: could not allocate tx buffer\n",
-			    USBDEVNAME(sc->sc_dev));
+			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
@@ -452,13 +452,13 @@ ural_alloc_rx_list(struct ural_softc *sc)
 		data->xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (data->xfer == NULL) {
 			printf("%s: could not allocate rx xfer\n",
-			    USBDEVNAME(sc->sc_dev));
+			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
 		if (usbd_alloc_buffer(data->xfer, MCLBYTES) == NULL) {
 			printf("%s: could not allocate rx buffer\n",
-			    USBDEVNAME(sc->sc_dev));
+			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
@@ -466,14 +466,14 @@ ural_alloc_rx_list(struct ural_softc *sc)
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
 			printf("%s: could not allocate rx mbuf\n",
-			    USBDEVNAME(sc->sc_dev));
+			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
 		MCLGET(data->m, M_DONTWAIT);
 		if (!(data->m->m_flags & M_EXT)) {
 			printf("%s: could not allocate rx mbuf cluster\n",
-			    USBDEVNAME(sc->sc_dev));
+			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
@@ -587,14 +587,14 @@ ural_task(void *arg)
 			m = ieee80211_beacon_alloc(ic, ni);
 			if (m == NULL) {
 				printf("%s: could not allocate beacon\n",
-				    USBDEVNAME(sc->sc_dev));
+				    sc->sc_dev.dv_xname);
 				return;
 			}
 
 			if (ural_tx_bcn(sc, m, ni) != 0) {
 				m_freem(m);
 				printf("%s: could not transmit beacon\n",
-				    USBDEVNAME(sc->sc_dev));
+				    sc->sc_dev.dv_xname);
 				return;
 			}
 
@@ -663,7 +663,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 
 		printf("%s: could not transmit buffer: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(status));
+		    sc->sc_dev.dv_xname, usbd_errstr(status));
 
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_tx_pipeh);
@@ -714,7 +714,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
 	if (len < RAL_RX_DESC_SIZE + IEEE80211_MIN_LEN) {
-		DPRINTF(("%s: xfer too short %d\n", USBDEVNAME(sc->sc_dev),
+		DPRINTF(("%s: xfer too short %d\n", sc->sc_dev.dv_xname,
 		    len));
 		ifp->if_ierrors++;
 		goto skip;
@@ -736,14 +736,14 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 	if (mnew == NULL) {
 		printf("%s: could not allocate rx mbuf\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		goto skip;
 	}
 	MCLGET(mnew, M_DONTWAIT);
 	if (!(mnew->m_flags & M_EXT)) {
 		printf("%s: could not allocate rx mbuf cluster\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		m_freem(mnew);
 		ifp->if_ierrors++;
 		goto skip;
@@ -1285,7 +1285,7 @@ ural_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
-			printf("%s: device timeout\n", USBDEVNAME(sc->sc_dev));
+			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 			/*ural_init(ifp); XXX needs a process context! */
 			ifp->if_oerrors++;
 			return;
@@ -1386,7 +1386,7 @@ ural_eeprom_read(struct ural_softc *sc, uint16_t addr, void *buf, int len)
 	error = usbd_do_request(sc->sc_udev, &req, buf);
 	if (error != 0) {
 		printf("%s: could not read EEPROM: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 	}
 }
 
@@ -1406,7 +1406,7 @@ ural_read(struct ural_softc *sc, uint16_t reg)
 	error = usbd_do_request(sc->sc_udev, &req, &val);
 	if (error != 0) {
 		printf("%s: could not read MAC register: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		return 0;
 	}
 	return letoh16(val);
@@ -1427,7 +1427,7 @@ ural_read_multi(struct ural_softc *sc, uint16_t reg, void *buf, int len)
 	error = usbd_do_request(sc->sc_udev, &req, buf);
 	if (error != 0) {
 		printf("%s: could not read MAC register: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 	}
 }
 
@@ -1446,7 +1446,7 @@ ural_write(struct ural_softc *sc, uint16_t reg, uint16_t val)
 	error = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (error != 0) {
 		printf("%s: could not write MAC register: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 	}
 }
 
@@ -1465,7 +1465,7 @@ ural_write_multi(struct ural_softc *sc, uint16_t reg, void *buf, int len)
 	error = usbd_do_request(sc->sc_udev, &req, buf);
 	if (error != 0) {
 		printf("%s: could not write MAC register: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 	}
 }
 
@@ -1480,7 +1480,7 @@ ural_bbp_write(struct ural_softc *sc, uint8_t reg, uint8_t val)
 			break;
 	}
 	if (ntries == 5) {
-		printf("%s: could not write to BBP\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: could not write to BBP\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -1502,7 +1502,7 @@ ural_bbp_read(struct ural_softc *sc, uint8_t reg)
 			break;
 	}
 	if (ntries == 5) {
-		printf("%s: could not read BBP\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: could not read BBP\n", sc->sc_dev.dv_xname);
 		return 0;
 	}
 	return ural_read(sc, RAL_PHY_CSR7) & 0xff;
@@ -1519,7 +1519,7 @@ ural_rf_write(struct ural_softc *sc, uint8_t reg, uint32_t val)
 			break;
 	}
 	if (ntries == 5) {
-		printf("%s: could not write to RF\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: could not write to RF\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -1833,7 +1833,7 @@ ural_bbp_init(struct ural_softc *sc)
 		DELAY(1000);
 	}
 	if (ntries == 100) {
-		printf("%s: timeout waiting for BBP\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: timeout waiting for BBP\n", sc->sc_dev.dv_xname);
 		return EIO;
 	}
 
@@ -1929,7 +1929,7 @@ ural_init(struct ifnet *ifp)
 	}
 	if (ntries == 100) {
 		printf("%s: timeout waiting for BBP/RF to wakeup\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		error = EIO;
 		goto fail;
 	}
@@ -1975,7 +1975,7 @@ ural_init(struct ifnet *ifp)
 	sc->amrr_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->amrr_xfer == NULL) {
 		printf("%s: could not allocate AMRR xfer\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -1986,14 +1986,14 @@ ural_init(struct ifnet *ifp)
 	    &sc->sc_tx_pipeh);
 	if (error != 0) {
 		printf("%s: could not open Tx pipe: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		goto fail;
 	}
 	error = usbd_open_pipe(sc->sc_iface, sc->sc_rx_no, USBD_EXCLUSIVE_USE,
 	    &sc->sc_rx_pipeh);
 	if (error != 0) {
 		printf("%s: could not open Rx pipe: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		goto fail;
 	}
 
@@ -2003,13 +2003,13 @@ ural_init(struct ifnet *ifp)
 	error = ural_alloc_tx_list(sc);
 	if (error != 0) {
 		printf("%s: could not allocate Tx list\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 	error = ural_alloc_rx_list(sc);
 	if (error != 0) {
 		printf("%s: could not allocate Rx list\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -2024,7 +2024,7 @@ ural_init(struct ifnet *ifp)
 		error = usbd_transfer(data->xfer);
 		if (error != 0 && error != USBD_IN_PROGRESS) {
 			printf("%s: could not queue Rx transfer\n",
-			    USBDEVNAME(sc->sc_dev));
+			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 	}
@@ -2154,7 +2154,7 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		printf("%s: could not retrieve Tx statistics - cancelling "
-		    "automatic rate control\n", USBDEVNAME(sc->sc_dev));
+		    "automatic rate control\n", sc->sc_dev.dv_xname);
 		return;
 	}
 

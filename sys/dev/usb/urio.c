@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.26 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: urio.c,v 1.27 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -135,20 +135,20 @@ urio_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(10,("urio_attach: sc=%p\n", sc));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, URIO_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	err = usbd_device2interface_handle(dev, URIO_IFACE_IDX, &iface);
 	if (err) {
 		printf("%s: getting interface handle failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -164,7 +164,7 @@ urio_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			    sc->sc_dev.dv_xname, i);
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -176,7 +176,7 @@ urio_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	if (sc->sc_in_addr == -1 || sc->sc_out_addr == -1) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: missing endpoint\n", sc->sc_dev.dv_xname);
 		return;
 	}
 

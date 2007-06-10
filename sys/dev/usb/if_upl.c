@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.34 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.35 2007/06/10 14:49:00 mbalmer Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -234,13 +234,13 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -251,7 +251,7 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	err = usbd_device2interface_handle(dev, UPL_IFACE_IDX, &iface);
 	if (err) {
 		printf("%s: getting interface handle failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -263,7 +263,7 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			    sc->sc_dev.dv_xname, i);
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -280,7 +280,7 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_ed[UPL_ENDPT_RX] == 0 || sc->sc_ed[UPL_ENDPT_TX] == 0 ||
 	    sc->sc_ed[UPL_ENDPT_INTR] == 0) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: missing endpoint\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -294,7 +294,7 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = upl_ioctl;
 	ifp->if_start = upl_start;
 	ifp->if_watchdog = upl_watchdog;
-	strlcpy(ifp->if_xname, USBDEVNAME(sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_type = IFT_OTHER;
 	ifp->if_addrlen = 0;
@@ -321,7 +321,7 @@ upl_detach(struct device *self, int flags)
 	struct ifnet		*ifp = &sc->sc_if;
 	int			s;
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
+	DPRINTFN(2,("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	s = splusb();
 
@@ -341,7 +341,7 @@ upl_detach(struct device *self, int flags)
 	    sc->sc_ep[UPL_ENDPT_RX] != NULL ||
 	    sc->sc_ep[UPL_ENDPT_INTR] != NULL)
 		printf("%s: detach has active endpoints\n",
-		       USBDEVNAME(sc->sc_dev));
+		       sc->sc_dev.dv_xname);
 #endif
 
 	sc->sc_attached = 0;
@@ -358,7 +358,7 @@ upl_activate(device_ptr_t self, enum devact act)
 {
 	struct upl_softc *sc = (struct upl_softc *)self;
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
+	DPRINTFN(2,("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -379,20 +379,20 @@ upl_newbuf(struct upl_softc *sc, struct upl_chain *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
 
-	DPRINTFN(8,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
+	DPRINTFN(8,("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
 			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", USBDEVNAME(sc->sc_dev));
+			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
 			return (ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", USBDEVNAME(sc->sc_dev));
+			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return (ENOBUFS);
 		}
@@ -415,7 +415,7 @@ upl_rx_list_init(struct upl_softc *sc)
 	struct upl_chain	*c;
 	int			i;
 
-	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
+	DPRINTFN(5,("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	cd = &sc->sc_cdata;
 	for (i = 0; i < UPL_RX_LIST_CNT; i++) {
@@ -446,7 +446,7 @@ upl_tx_list_init(struct upl_softc *sc)
 	struct upl_chain	*c;
 	int			i;
 
-	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
+	DPRINTFN(5,("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	cd = &sc->sc_cdata;
 	for (i = 0; i < UPL_TX_LIST_CNT; i++) {
@@ -495,7 +495,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		sc->sc_rx_errs++;
 		if (usbd_ratecheck(&sc->sc_rx_notice)) {
 			printf("%s: %u usb errors on rx: %s\n",
-			    USBDEVNAME(sc->sc_dev), sc->sc_rx_errs,
+			    sc->sc_dev.dv_xname, sc->sc_rx_errs,
 			    usbd_errstr(status));
 			sc->sc_rx_errs = 0;
 		}
@@ -507,7 +507,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
 	DPRINTFN(9,("%s: %s: enter status=%d length=%d\n",
-		    USBDEVNAME(sc->sc_dev), __func__, status, total_len));
+		    sc->sc_dev.dv_xname, __func__, status, total_len));
 
 	m = c->upl_mbuf;
 	memcpy(mtod(c->upl_mbuf, char *), c->upl_buf, total_len);
@@ -537,7 +537,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 #endif
 
-	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
+	DPRINTFN(10,("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
 		    __func__, m->m_len));
 
 	IF_INPUT(ifp, m);
@@ -553,7 +553,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	    USBD_NO_TIMEOUT, upl_rxeof);
 	usbd_transfer(c->upl_xfer);
 
-	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->sc_dev),
+	DPRINTFN(10,("%s: %s: start rx\n", sc->sc_dev.dv_xname,
 		    __func__));
 #endif
 }
@@ -575,7 +575,7 @@ upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	s = splnet();
 
-	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->sc_dev),
+	DPRINTFN(10,("%s: %s: enter status=%d\n", sc->sc_dev.dv_xname,
 		    __func__, status));
 
 	ifp->if_timer = 0;
@@ -587,7 +587,7 @@ upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 		}
 		ifp->if_oerrors++;
-		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->sc_dev),
+		printf("%s: usb error on tx: %s\n", sc->sc_dev.dv_xname,
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_ep[UPL_ENDPT_TX]);
@@ -625,7 +625,7 @@ upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 	total_len = m->m_pkthdr.len;
 
 	DPRINTFN(10,("%s: %s: total_len=%d\n",
-		     USBDEVNAME(sc->sc_dev), __func__, total_len));
+		     sc->sc_dev.dv_xname, __func__, total_len));
 
 	usbd_setup_xfer(c->upl_xfer, sc->sc_ep[UPL_ENDPT_TX],
 	    c, c->upl_buf, total_len, USBD_NO_COPY, USBD_DEFAULT_TIMEOUT,
@@ -634,7 +634,7 @@ upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 	/* Transmit */
 	err = usbd_transfer(c->upl_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		printf("%s: upl_send error=%s\n", USBDEVNAME(sc->sc_dev),
+		printf("%s: upl_send error=%s\n", sc->sc_dev.dv_xname,
 		       usbd_errstr(err));
 		upl_stop(sc);
 		return (EIO);
@@ -654,7 +654,7 @@ upl_start(struct ifnet *ifp)
 	if (sc->sc_dying)
 		return;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
+	DPRINTFN(10,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
@@ -697,7 +697,7 @@ upl_init(void *xsc)
 	if (sc->sc_dying)
 		return;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
+	DPRINTFN(10,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
@@ -706,14 +706,14 @@ upl_init(void *xsc)
 
 	/* Init TX ring. */
 	if (upl_tx_list_init(sc) == ENOBUFS) {
-		printf("%s: tx list init failed\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: tx list init failed\n", sc->sc_dev.dv_xname);
 		splx(s);
 		return;
 	}
 
 	/* Init RX ring. */
 	if (upl_rx_list_init(sc) == ENOBUFS) {
-		printf("%s: rx list init failed\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: rx list init failed\n", sc->sc_dev.dv_xname);
 		splx(s);
 		return;
 	}
@@ -743,14 +743,14 @@ upl_openpipes(struct upl_softc *sc)
 	    USBD_EXCLUSIVE_USE, &sc->sc_ep[UPL_ENDPT_RX]);
 	if (err) {
 		printf("%s: open rx pipe failed: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		return (EIO);
 	}
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_ed[UPL_ENDPT_TX],
 	    USBD_EXCLUSIVE_USE, &sc->sc_ep[UPL_ENDPT_TX]);
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		return (EIO);
 	}
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ed[UPL_ENDPT_INTR],
@@ -759,7 +759,7 @@ upl_openpipes(struct upl_softc *sc)
 	    UPL_INTR_INTERVAL);
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		return (EIO);
 	}
 
@@ -786,7 +786,7 @@ upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet		*ifp = &sc->sc_if;
 	uByte			stat;
 
-	DPRINTFN(15,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
+	DPRINTFN(15,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
 	if (sc->sc_dying)
 		return;
@@ -801,7 +801,7 @@ upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		sc->sc_intr_errs++;
 		if (usbd_ratecheck(&sc->sc_rx_notice)) {
 			printf("%s: %u usb errors on intr: %s\n",
-			    USBDEVNAME(sc->sc_dev), sc->sc_rx_errs,
+			    sc->sc_dev.dv_xname, sc->sc_rx_errs,
 			    usbd_errstr(status));
 			sc->sc_intr_errs = 0;
 		}
@@ -815,7 +815,7 @@ upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (stat == 0)
 		return;
 
-	DPRINTFN(10,("%s: %s: stat=0x%02x\n", USBDEVNAME(sc->sc_dev),
+	DPRINTFN(10,("%s: %s: stat=0x%02x\n", sc->sc_dev.dv_xname,
 		     __func__, stat));
 
 }
@@ -832,7 +832,7 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		return (EIO);
 
 	DPRINTFN(5,("%s: %s: cmd=0x%08lx\n",
-		    USBDEVNAME(sc->sc_dev), __func__, command));
+		    sc->sc_dev.dv_xname, __func__, command));
 
 	s = splnet();
 
@@ -881,13 +881,13 @@ upl_watchdog(struct ifnet *ifp)
 {
 	struct upl_softc	*sc = ifp->if_softc;
 
-	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
+	DPRINTFN(5,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
 	if (sc->sc_dying)
 		return;
 
 	ifp->if_oerrors++;
-	printf("%s: watchdog timeout\n", USBDEVNAME(sc->sc_dev));
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	upl_stop(sc);
 	upl_init(sc);
@@ -907,7 +907,7 @@ upl_stop(struct upl_softc *sc)
 	struct ifnet		*ifp;
 	int			i;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
+	DPRINTFN(10,("%s: %s: enter\n", sc->sc_dev.dv_xname,__func__));
 
 	ifp = &sc->sc_if;
 	ifp->if_timer = 0;
@@ -918,12 +918,12 @@ upl_stop(struct upl_softc *sc)
 		err = usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_RX]);
 		if (err) {
 			printf("%s: abort rx pipe failed: %s\n",
-			USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			sc->sc_dev.dv_xname, usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
-			USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			sc->sc_dev.dv_xname, usbd_errstr(err));
 		}
 		sc->sc_ep[UPL_ENDPT_RX] = NULL;
 	}
@@ -932,12 +932,12 @@ upl_stop(struct upl_softc *sc)
 		err = usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_TX]);
 		if (err) {
 			printf("%s: abort tx pipe failed: %s\n",
-			USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			sc->sc_dev.dv_xname, usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
-			    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			    sc->sc_dev.dv_xname, usbd_errstr(err));
 		}
 		sc->sc_ep[UPL_ENDPT_TX] = NULL;
 	}
@@ -946,12 +946,12 @@ upl_stop(struct upl_softc *sc)
 		err = usbd_abort_pipe(sc->sc_ep[UPL_ENDPT_INTR]);
 		if (err) {
 			printf("%s: abort intr pipe failed: %s\n",
-			USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			sc->sc_dev.dv_xname, usbd_errstr(err));
 		}
 		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",
-			    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			    sc->sc_dev.dv_xname, usbd_errstr(err));
 		}
 		sc->sc_ep[UPL_ENDPT_INTR] = NULL;
 	}
@@ -988,7 +988,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	int s, len, error;
 
 	DPRINTFN(10,("%s: %s: enter\n",
-		     USBDEVNAME(((struct upl_softc *)ifp->if_softc)->sc_dev),
+		     ((struct upl_softc *)ifp->if_softc)->sc_dev.dv_xname,
 		     __func__));
 
 	len = m->m_pkthdr.len;

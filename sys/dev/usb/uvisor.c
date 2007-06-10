@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.31 2007/06/10 10:53:49 mbalmer Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.32 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 	struct uvisor_palm_connection_info palmconinfo;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	char *devname = sc->sc_dev.dv_xname;
 	int i, j, hasin, hasout, port;
 	usbd_status err;
 	struct ucom_attach_args uca;
@@ -261,7 +261,7 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 	
 	if ((sc->sc_flags & (VISOR | PALM4)) == 0) {
 		printf("%s: device is neither visor nor palm\n", 
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		goto bad;
 	}
 
@@ -281,7 +281,7 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 
 	err = uvisor_init(sc, &coninfo, &palmconinfo);
 	if (err) {
-		printf("%s: init failed, %s\n", USBDEVNAME(sc->sc_dev),
+		printf("%s: init failed, %s\n", sc->sc_dev.dv_xname,
 		       usbd_errstr(err));
 		goto bad;
 	}
@@ -338,7 +338,7 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 				    ucomprint, ucomsubmatch);
 			else
 				printf("%s: no proper endpoints for port %d (%d,%d)\n",
-				    USBDEVNAME(sc->sc_dev), port, hasin, hasout);
+				    sc->sc_dev.dv_xname, port, hasin, hasout);
 		}
 	} else {
 		sc->sc_numcon = palmconinfo.num_ports;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.4 2007/06/10 10:15:35 mbalmer Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.5 2007/06/10 14:49:01 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -889,7 +889,7 @@ usbf_dump_buffer(usbf_xfer_handle xfer)
 	u_char *p = xfer->buffer;
 	u_int i;
 
-	printf("%s: ep%d-%s, length=%u, %s", USBDEVNAME(*dev), index,
+	printf("%s: ep%d-%s, length=%u, %s", dev->dv_xname, index,
 	    (xfer->rqflags & URQ_REQUEST) ? "setup" :
 	    (index == 0 ? "in" : (dir == UE_DIR_IN ? "in" : "out")),
 	    xfer->length, usbf_errstr(xfer->status));

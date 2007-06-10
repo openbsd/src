@@ -1,4 +1,4 @@
-/* $OpenBSD: ubt.c,v 1.5 2007/06/10 10:53:48 mbalmer Exp $ */
+/* $OpenBSD: ubt.c,v 1.6 2007/06/10 14:49:00 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -301,7 +301,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_udev = uaa->device;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/*
@@ -310,7 +310,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	err = usbd_set_config_index(sc->sc_udev, 0, 1);
 	if (err) {
 		printf("%s: failed to set configuration idx 0: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
 
 		return;
 	}
@@ -324,7 +324,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	err = usbd_device2interface_handle(sc->sc_udev, 0, &sc->sc_iface0);
 	if (err) {
 		printf("%s: Could not get interface 0 handle %s (%d)\n",
-				USBDEVNAME(sc->sc_dev), usbd_errstr(err), err);
+				sc->sc_dev.dv_xname, usbd_errstr(err), err);
 
 		return;
 	}
@@ -342,7 +342,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface0, i);
 		if (ed == NULL) {
 			printf("%s: could not read endpoint descriptor %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			    sc->sc_dev.dv_xname, i);
 
 			return;
 		}
@@ -360,19 +360,19 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_evt_addr == -1) {
 		printf("%s: missing INTERRUPT endpoint on interface 0\n",
-				USBDEVNAME(sc->sc_dev));
+				sc->sc_dev.dv_xname);
 
 		return;
 	}
 	if (sc->sc_aclrd_addr == -1) {
 		printf("%s: missing BULK IN endpoint on interface 0\n",
-				USBDEVNAME(sc->sc_dev));
+				sc->sc_dev.dv_xname);
 
 		return;
 	}
 	if (sc->sc_aclwr_addr == -1) {
 		printf("%s: missing BULK OUT endpoint on interface 0\n",
-				USBDEVNAME(sc->sc_dev));
+				sc->sc_dev.dv_xname);
 
 		return;
 	}
@@ -389,7 +389,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	err = usbd_device2interface_handle(sc->sc_udev, 1, &sc->sc_iface1);
 	if (err) {
 		printf("%s: Could not get interface 1 handle %s (%d)\n",
-				USBDEVNAME(sc->sc_dev), usbd_errstr(err), err);
+				sc->sc_dev.dv_xname, usbd_errstr(err), err);
 
 		return;
 	}
@@ -397,7 +397,7 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	cd = usbd_get_config_descriptor(sc->sc_udev);
 	if (cd == NULL) {
 		printf("%s: could not get config descriptor\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 
 		return;
 	}
@@ -408,14 +408,14 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	err = ubt_set_isoc_config(sc);
 	if (err) {
 		printf("%s: ISOC config failed\n",
-			USBDEVNAME(sc->sc_dev));
+			sc->sc_dev.dv_xname);
 
 		return;
 	}
 
 	/* Attach HCI */
 	sc->sc_unit.hci_softc = self;
-	sc->sc_unit.hci_devname = USBDEVNAME(sc->sc_dev);
+	sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
 	sc->sc_unit.hci_enable = ubt_enable;
 	sc->sc_unit.hci_disable = ubt_disable;
 	sc->sc_unit.hci_start_cmd = ubt_xmit_cmd_start;
@@ -505,7 +505,7 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 	if (err != USBD_NORMAL_COMPLETION) {
 		printf(
 		    "%s: Could not set config %d on ISOC interface. %s (%d)\n",
-		    USBDEVNAME(sc->sc_dev), sc->sc_config, usbd_errstr(err), err);
+		    sc->sc_dev.dv_xname, sc->sc_config, usbd_errstr(err), err);
 
 		return err == USBD_IN_USE ? EBUSY : EIO;
 	}
@@ -530,13 +530,13 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface1, i);
 		if (ed == NULL) {
 			printf("%s: could not read endpoint descriptor %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			    sc->sc_dev.dv_xname, i);
 
 			return EIO;
 		}
 
 		DPRINTFN(5, "%s: endpoint type %02x (%02x) addr %02x (%s)\n",
-			USBDEVNAME(sc->sc_dev),
+			sc->sc_dev.dv_xname,
 			UE_GET_XFERTYPE(ed->bmAttributes),
 			UE_GET_ISO_TYPE(ed->bmAttributes),
 			ed->bEndpointAddress,
@@ -557,14 +557,14 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 	if (rd_addr == -1) {
 		printf(
 		    "%s: missing ISOC IN endpoint on interface config %d\n",
-		    USBDEVNAME(sc->sc_dev), sc->sc_config);
+		    sc->sc_dev.dv_xname, sc->sc_config);
 
 		return ENOENT;
 	}
 	if (wr_addr == -1) {
 		printf(
 		    "%s: missing ISOC OUT endpoint on interface config %d\n",
-		    USBDEVNAME(sc->sc_dev), sc->sc_config);
+		    sc->sc_dev.dv_xname, sc->sc_config);
 
 		return ENOENT;
 	}
@@ -572,14 +572,14 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 #ifdef DIAGNOSTIC
 	if (rd_size > MLEN) {
 		printf("%s: rd_size=%d exceeds MLEN\n",
-		    USBDEVNAME(sc->sc_dev), rd_size);
+		    sc->sc_dev.dv_xname, rd_size);
 
 		return EOVERFLOW;
 	}
 
 	if (wr_size > MLEN) {
 		printf("%s: wr_size=%d exceeds MLEN\n",
-		    USBDEVNAME(sc->sc_dev), wr_size);
+		    sc->sc_dev.dv_xname, wr_size);
 
 		return EOVERFLOW;
 	}
@@ -1454,7 +1454,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
 					printf("%s: out of memory (xfer halted)\n",
-						USBDEVNAME(sc->sc_dev));
+						sc->sc_dev.dv_xname);
 
 					sc->sc_unit.hci_stats.err_rx++;
 					return;		/* lost sync */

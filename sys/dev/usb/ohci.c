@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.80 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: ohci.c,v 1.81 2007/06/10 14:49:00 mbalmer Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -622,7 +622,7 @@ ohci_checkrev(ohci_softc_t *sc)
 
 	if (OHCI_REV_HI(rev) != 1 || OHCI_REV_LO(rev) != 0) {
 		printf("%s: unsupported OHCI revision\n",
-		       USBDEVNAME(sc->sc_bus.bdev));
+		       sc->sc_bus.bdev.dv_xname);
 		sc->sc_bus.usbrev = USBREV_UNKNOWN;
 		return (USBD_INVAL);
 	}
@@ -653,7 +653,7 @@ ohci_handover(ohci_softc_t *sc)
 		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_MIE);
 		if (ctl & OHCI_IR) {
 			printf("%s: SMM does not respond, will reset\n",
-			    USBDEVNAME(sc->sc_bus.bdev));
+			    sc->sc_bus.bdev.dv_xname);
 		}
 	}
 
@@ -781,7 +781,7 @@ ohci_init(ohci_softc_t *sc)
 	 * This reset should not be necessary according to the OHCI spec, but
 	 * without it some controllers do not start.
 	 */
-	DPRINTF(("%s: resetting\n", USBDEVNAME(sc->sc_bus.bdev)));
+	DPRINTF(("%s: resetting\n", sc->sc_bus.bdev.dv_xname));
 	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET | rwc);
 	usb_delay_ms(&sc->sc_bus, USB_BUS_RESET_DELAY);
 
@@ -796,7 +796,7 @@ ohci_init(ohci_softc_t *sc)
 			break;
 	}
 	if (hcr) {
-		printf("%s: reset timeout\n", USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: reset timeout\n", sc->sc_bus.bdev.dv_xname);
 		err = USBD_IOERROR;
 		goto bad5;
 	}
@@ -1154,7 +1154,7 @@ ohci_intr1(ohci_softc_t *sc)
 		sc->sc_overrun_cnt++;
 		if (usbd_ratecheck(&sc->sc_overrun_ntc)) {
 			printf("%s: %u scheduling overruns\n",
-			    USBDEVNAME(sc->sc_bus.bdev), sc->sc_overrun_cnt);
+			    sc->sc_bus.bdev.dv_xname, sc->sc_overrun_cnt);
 			sc->sc_overrun_cnt = 0;
 		}
 		/* XXX do what */
@@ -1166,12 +1166,12 @@ ohci_intr1(ohci_softc_t *sc)
 		eintrs &= ~OHCI_WDH;
 	}
 	if (eintrs & OHCI_RD) {
-		printf("%s: resume detect\n", USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: resume detect\n", sc->sc_bus.bdev.dv_xname);
 		/* XXX process resume detect */
 	}
 	if (eintrs & OHCI_UE) {
 		printf("%s: unrecoverable error, controller halted\n",
-		       USBDEVNAME(sc->sc_bus.bdev));
+		       sc->sc_bus.bdev.dv_xname);
 		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
 		/* XXX what else */
 	}
@@ -1183,7 +1183,7 @@ ohci_intr1(ohci_softc_t *sc)
 		 */
 		ohci_rhsc_able(sc, 0);
 		DPRINTFN(2, ("%s: rhsc interrupt disabled\n",
-			     USBDEVNAME(sc->sc_bus.bdev)));
+			     sc->sc_bus.bdev.dv_xname));
 
 		/* Do not allow RHSC interrupts > 1 per second */
                 timeout_del(&sc->sc_tmo_rhsc);
@@ -1199,7 +1199,7 @@ ohci_intr1(ohci_softc_t *sc)
 		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, eintrs);
 		sc->sc_eintrs &= ~eintrs;
 		printf("%s: blocking intrs 0x%x\n",
-		       USBDEVNAME(sc->sc_bus.bdev), eintrs);
+		       sc->sc_bus.bdev.dv_xname, eintrs);
 	}
 
 	return (1);
@@ -1227,7 +1227,7 @@ ohci_rhsc_enable(void *v_sc)
 	s = splhardusb();
 	ohci_rhsc(sc, sc->sc_intrxfer);
 	DPRINTFN(2, ("%s: rhsc interrupt enabled\n",
-		     USBDEVNAME(sc->sc_bus.bdev)));
+		     sc->sc_bus.bdev.dv_xname));
 
 	ohci_rhsc_able(sc, 1);
 	splx(s);
@@ -3248,7 +3248,7 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 			if (nsitd == NULL) {
 				/* XXX what now? */
 				printf("%s: isoc TD alloc failed\n",
-				       USBDEVNAME(sc->sc_bus.bdev));
+				       sc->sc_bus.bdev.dv_xname);
 				return;
 			}
 
@@ -3277,7 +3277,7 @@ ohci_device_isoc_enter(usbd_xfer_handle xfer)
 	if (nsitd == NULL) {
 		/* XXX what now? */
 		printf("%s: isoc TD alloc failed\n",
-		       USBDEVNAME(sc->sc_bus.bdev));
+		       sc->sc_bus.bdev.dv_xname);
 		return;
 	}
 	/* Fixup last used ITD */

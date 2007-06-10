@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.18 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: uow.c,v 1.19 2007/06/10 14:49:01 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -116,7 +116,7 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	/* Display device info string */
 	printf("\n");
 	if ((devinfop = usbd_devinfo_alloc(uaa->device, 0)) != NULL) {
-		printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+		printf("%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 		usbd_devinfo_free(devinfop);
 	}
 
@@ -124,7 +124,7 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = usbd_set_config_no(sc->sc_udev,
 	    DS2490_USB_CONFIG, 0)) != 0) {
 		printf("%s: failed to set config %d: %s\n",
-		    USBDEVNAME(sc->sc_dev), DS2490_USB_CONFIG,
+		    sc->sc_dev.dv_xname, DS2490_USB_CONFIG,
 		    usbd_errstr(error));
 		return;
 	}
@@ -133,7 +133,7 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = usbd_device2interface_handle(sc->sc_udev,
 	    DS2490_USB_IFACE, &sc->sc_iface)) != 0) {
 		printf("%s: failed to get iface %d: %s\n",
-		    USBDEVNAME(sc->sc_dev), DS2490_USB_IFACE,
+		    sc->sc_dev.dv_xname, DS2490_USB_IFACE,
 		    usbd_errstr(error));
 		return;
 	}
@@ -144,7 +144,7 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: failed to get endpoint %d descriptor\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			    sc->sc_dev.dv_xname, i);
 			return;
 		}
 
@@ -160,7 +160,7 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (ep_ibulk == -1 || ep_obulk == -1 || ep_intr == -1) {
 		printf("%s: missing endpoint: ibulk %d, obulk %d, intr %d\n",
-		   USBDEVNAME(sc->sc_dev), ep_ibulk, ep_obulk, ep_intr);
+		   sc->sc_dev.dv_xname, ep_ibulk, ep_obulk, ep_intr);
 		return;
 	}
 
@@ -168,13 +168,13 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = usbd_open_pipe(sc->sc_iface, ep_ibulk, USBD_EXCLUSIVE_USE,
 	    &sc->sc_ph_ibulk)) != 0) {
 		printf("%s: failed to open bulk-in pipe: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		return;
 	}
 	if ((error = usbd_open_pipe(sc->sc_iface, ep_obulk, USBD_EXCLUSIVE_USE,
 	    &sc->sc_ph_obulk)) != 0) {
 		printf("%s: failed to open bulk-out pipe: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		goto fail;
 	}
 	if ((error = usbd_open_pipe_intr(sc->sc_iface, ep_intr,
@@ -182,7 +182,7 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_regs, sizeof(sc->sc_regs), uow_intr,
 	    USBD_DEFAULT_INTERVAL)) != 0) {
 		printf("%s: failed to open intr pipe: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
+		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		goto fail;
 	}
 
@@ -190,7 +190,7 @@ uow_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate xfer for bulk transfers */
 	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
 		printf("%s: failed to alloc bulk xfer\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 #endif
@@ -409,7 +409,7 @@ uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 	USETW(req.wLength, 0);
 	if ((error = usbd_do_request(sc->sc_udev, &req, NULL)) != 0) {
 		printf("%s: cmd failed, type 0x%02x, cmd 0x%04x, "
-		    "param 0x%04x: %s\n", USBDEVNAME(sc->sc_dev), type, cmd,
+		    "param 0x%04x: %s\n", sc->sc_dev.dv_xname, type, cmd,
 		    param, usbd_errstr(error));
 		if (cmd != DS2490_CTL_RESET_DEVICE)
 			uow_reset(sc);
@@ -420,7 +420,7 @@ again:
 	if (tsleep(sc->sc_regs, PRIBIO, "uowcmd",
 	    (UOW_TIMEOUT * hz) / 1000) != 0) {
 		printf("%s: cmd timeout, type 0x%02x, cmd 0x%04x, "
-		    "param 0x%04x\n", USBDEVNAME(sc->sc_dev), type, cmd,
+		    "param 0x%04x\n", sc->sc_dev.dv_xname, type, cmd,
 		    param);
 		return (1);
 	}
@@ -455,12 +455,12 @@ uow_read(struct uow_softc *sc, void *buf, int len)
 	/* XXX: implement FIFO status monitoring */
 	if (len > DS2490_DATAFIFOSIZE) {
 		printf("%s: read %d bytes, xfer too big\n",
-		    USBDEVNAME(sc->sc_dev), len);
+		    sc->sc_dev.dv_xname, len);
 		return (-1);
 	}
 
 	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
-		printf("%s: failed to alloc xfer\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: failed to alloc xfer\n", sc->sc_dev.dv_xname);
 		return (-1);
 	}
 	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_ibulk, sc, buf, len,
@@ -469,7 +469,7 @@ uow_read(struct uow_softc *sc, void *buf, int len)
 	usbd_free_xfer(sc->sc_xfer);
 	if (error != 0) {
 		printf("%s: read failed, len %d: %s\n",
-		    USBDEVNAME(sc->sc_dev), len, usbd_errstr(error));
+		    sc->sc_dev.dv_xname, len, usbd_errstr(error));
 		uow_reset(sc);
 		return (-1);
 	}
@@ -486,12 +486,12 @@ uow_write(struct uow_softc *sc, const void *buf, int len)
 	/* XXX: implement FIFO status monitoring */
 	if (len > DS2490_DATAFIFOSIZE) {
 		printf("%s: write %d bytes, xfer too big\n",
-		    USBDEVNAME(sc->sc_dev), len);
+		    sc->sc_dev.dv_xname, len);
 		return (1);
 	}
 
 	if ((sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
-		printf("%s: failed to alloc xfer\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: failed to alloc xfer\n", sc->sc_dev.dv_xname);
 		return (-1);
 	}
 	usbd_setup_xfer(sc->sc_xfer, sc->sc_ph_obulk, sc, (void *)buf, len, 0,
@@ -500,7 +500,7 @@ uow_write(struct uow_softc *sc, const void *buf, int len)
 	usbd_free_xfer(sc->sc_xfer);
 	if (error != 0) {
 		printf("%s: write failed, len %d: %s\n",
-		    USBDEVNAME(sc->sc_dev), len, usbd_errstr(error));
+		    sc->sc_dev.dv_xname, len, usbd_errstr(error));
 		uow_reset(sc);
 		return (1);
 	}

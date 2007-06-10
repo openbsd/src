@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.27 2007/06/05 08:43:56 mbalmer Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.28 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -482,7 +482,7 @@ umass_init_insystem(struct umass_softc *sc)
 	if (err) {
 		DPRINTF(UDMASS_USB,
 			("%s: could not switch to Alt Interface 1\n",
-			USBDEVNAME(sc->sc_dev)));
+			sc->sc_dev.dv_xname));
 		return (err);
 	}
 

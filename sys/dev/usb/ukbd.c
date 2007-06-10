@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.32 2007/06/10 10:15:35 mbalmer Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.33 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -460,7 +460,7 @@ ukbd_enable(void *v, int on)
 	/* Should only be called to change state */
 	if (sc->sc_enabled == on) {
 		DPRINTF(("ukbd_enable: %s: bad call on=%d\n",
-			 USBDEVNAME(sc->sc_hdev.sc_dev), on));
+			 sc->sc_hdev.sc_dev.dv_xname, on));
 		return (EBUSY);
 	}
 
@@ -521,7 +521,7 @@ ukbd_detach(struct device *self, int flags)
 		 * XXX console, if there are any other keyboards.
 		 */
 		printf("%s: was console keyboard\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev));
+		       sc->sc_hdev.sc_dev.dv_xname);
 		wskbd_cndetach();
 		ukbd_is_console = 1;
 #endif

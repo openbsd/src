@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.35 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.36 2007/06/10 14:49:00 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -165,18 +165,18 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((err = usbd_set_config_index(dev, 0, 1))) {
 		DPRINTF(("\n%s: failed to set configuration, err=%s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+		    sc->sc_dev.dv_xname, usbd_errstr(err)));
 		goto fishy;
 	}
 
 	if ((err = usbd_device2interface_handle(dev, 0, &iface))) {
 		DPRINTF(("\n%s: failed to get interface, err=%s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+		    sc->sc_dev.dv_xname, usbd_errstr(err)));
 		goto fishy;
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
@@ -197,7 +197,7 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_last = 0L;
 	sc->sc_last_tv.tv_sec = 0L;
 
-	strlcpy(sc->sc_sensordev.xname, USBDEVNAME(sc->sc_dev),
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor.type = SENSOR_TIMEDELTA;

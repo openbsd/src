@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyap.c,v 1.11 2007/06/06 19:25:50 mk Exp $ */
+/*	$OpenBSD: uyap.c,v 1.12 2007/06/10 14:49:01 mbalmer Exp $ */
 /*	$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
 
 /*
@@ -84,12 +84,12 @@ uyap_attachhook(void *xsc)
 	err = ezload_downloads_and_reset(sc->sc_udev, firmwares);
 	if (err) {
 		printf("%s: download ezdata format firmware error: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		return;
 	}
 
 	printf("%s: firmware download complete, disconnecting.\n",
-	    USBDEVNAME(sc->sc_dev));
+	    sc->sc_dev.dv_xname);
 }
 
 void
@@ -101,10 +101,10 @@ uyap_attach(struct device *parent, struct device *self, void *aux)
 	char *devinfop;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
-	printf("%s: downloading firmware\n", USBDEVNAME(sc->sc_dev));
+	printf("%s: downloading firmware\n", sc->sc_dev.dv_xname);
 
 	sc->sc_udev = dev;
 	if (rootvp == NULL)

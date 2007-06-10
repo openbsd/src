@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.14 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.15 2007/06/10 14:49:01 mbalmer Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -131,13 +131,13 @@ udsbr_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(10,("udsbr_attach: sc=%p\n", sc));
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -201,7 +201,7 @@ udsbr_req(struct udsbr_softc *sc, int ureq, int value, int index)
 	USETW(req.wLength, 1);
 	err = usbd_do_request(sc->sc_udev, &req, &data);
 	if (err) {
-		printf("%s: request failed err=%d\n", USBDEVNAME(sc->sc_dev),
+		printf("%s: request failed err=%d\n", sc->sc_dev.dv_xname,
 		       err);
 	}
 	return !(data & 1);

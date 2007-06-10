@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.51 2007/06/05 08:43:56 mbalmer Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.52 2007/06/10 14:49:01 mbalmer Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -715,7 +715,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		if (msg)
 			printf("%s: device addr %d (config %d) exceeds power "
 			    "budget, %d mA > %d mA\n",
-			    USBDEVNAME(dev->bus->bdev), dev->address,
+			    dev->bus->bdev.dv_xname, dev->address,
 			    cdp->bConfigurationValue,
 			    power, dev->powersrc->power);
 		err = USBD_NO_POWER;
@@ -970,7 +970,7 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	addr = usbd_getnewaddr(bus);
 	if (addr < 0) {
 		printf("%s: No free USB addresses, new device ignored.\n",
-		    USBDEVNAME(bus->bdev));
+		    bus->bdev.dv_xname);
 		return (USBD_NO_ADDR);
 	}
 

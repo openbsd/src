@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.9 2007/06/10 10:53:49 mbalmer Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.10 2007/06/10 14:49:01 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -158,12 +158,12 @@ uslcom_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_index(sc->sc_udev, USLCOM_CONFIG_NO, 1) != 0) {
 		printf("%s: could not set configuration no\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -173,7 +173,7 @@ uslcom_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_iface);
 	if (error != 0) {
 		printf("%s: could not get interface handle\n",
-		    USBDEVNAME(sc->sc_dev));
+		    sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -185,7 +185,7 @@ uslcom_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor found for %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			    sc->sc_dev.dv_xname, i);
 			sc->sc_dying = 1;
 			return;
 		}
@@ -199,7 +199,7 @@ uslcom_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (uca.bulkin == -1 || uca.bulkout == -1) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		printf("%s: missing endpoint\n", sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
