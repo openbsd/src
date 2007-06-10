@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.58 2007/06/09 23:35:23 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.59 2007/06/10 16:37:09 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -191,11 +191,15 @@ disklabeltokernlabel(struct disklabel *lp)
 {
 	struct __partitionv0 *v0pp = (struct __partitionv0 *)lp->d_partitions;
 	struct partition *pp = lp->d_partitions;
-	int i, oversion = lp->d_version;
+	int i, oversion = lp->d_version, changed = 0, okbefore = 0;
+
+	if (dkcksum(lp) == 0)
+		okbefore = 1;
 
 	if (oversion == 0) {
 		lp->d_version = 1;
 		lp->d_secperunith = 0;
+		changed = 1;
 	}
 
 	for (i = 0; i < MAXPARTITIONS; i++, pp++, v0pp++) {
@@ -229,8 +233,15 @@ disklabeltokernlabel(struct disklabel *lp)
 	}
 
 	/* XXX this should not be here */
-	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
+	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0) {
+		DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
+		changed = 1;
+	}
+	if (changed && okbefore) {
+		lp->d_checksum = 0;
+		lp->d_checksum = dkcksum(lp);
+	}
 }
 
 /*
