@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.30 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.31 2007/06/11 05:42:53 mbalmer Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1524,7 +1524,7 @@ udav_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	if (dev == NULL)
 		return (0);
 
-	sc = USBGETSOFTC(dev);
+	sc = (void *)dev;
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x\n",
 		 sc->sc_dev.dv_xname, __func__, phy, reg));
@@ -1580,7 +1580,7 @@ udav_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 	if (dev == NULL)
 		return;
 
-	sc = USBGETSOFTC(dev);
+	sc = (void *)dev;
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x data=0x%04x\n",
 		 sc->sc_dev.dv_xname, __func__, phy, reg, data));
@@ -1633,7 +1633,7 @@ udav_miibus_statchg(device_ptr_t dev)
 	if (dev == NULL)
 		return;
 
-	sc = USBGETSOFTC(dev);
+	sc = (void *)dev;
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 #endif
 	/* Nothing to do */

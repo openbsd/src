@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.61 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.62 2007/06/11 05:42:53 mbalmer Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -428,7 +428,7 @@ aue_unlock_mii(struct aue_softc *sc)
 int
 aue_miibus_readreg(device_ptr_t dev, int phy, int reg)
 {
-	struct aue_softc	*sc = USBGETSOFTC(dev);
+	struct aue_softc	*sc = (void *)dev;
 	int			i;
 	u_int16_t		val;
 
@@ -482,7 +482,7 @@ aue_miibus_readreg(device_ptr_t dev, int phy, int reg)
 void
 aue_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 {
-	struct aue_softc	*sc = USBGETSOFTC(dev);
+	struct aue_softc	*sc = (void *)dev;
 	int			i;
 
 #if 0
@@ -516,7 +516,7 @@ aue_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 void
 aue_miibus_statchg(device_ptr_t dev)
 {
-	struct aue_softc	*sc = USBGETSOFTC(dev);
+	struct aue_softc	*sc = (void *)dev;
 	struct mii_data		*mii = GET_MII(sc);
 
 	DPRINTFN(5,("%s: %s: enter\n", sc->aue_dev.dv_xname, __func__));

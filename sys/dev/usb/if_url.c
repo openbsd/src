@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.44 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.45 2007/06/11 05:42:54 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -1411,7 +1411,7 @@ url_int_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	if (dev == NULL)
 		return (0);
 
-	sc = USBGETSOFTC(dev);
+	sc = (void *)dev;
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x\n",
 		 sc->sc_dev.dv_xname, __func__, phy, reg));
@@ -1483,7 +1483,7 @@ url_int_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 	if (dev == NULL)
 		return;
 
-	sc = USBGETSOFTC(dev);
+	sc = (void *)dev;
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x data=0x%04x\n",
 		 sc->sc_dev.dv_xname, __func__, phy, reg, data));
@@ -1551,7 +1551,7 @@ url_miibus_statchg(device_ptr_t dev)
 	if (dev == NULL)
 		return;
 
-	sc = USBGETSOFTC(dev);
+	sc = (void *)dev;
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 #endif
 	/* Nothing to do */
@@ -1564,7 +1564,7 @@ url_miibus_statchg(device_ptr_t dev)
 int
 url_ext_miibus_redreg(device_ptr_t dev, int phy, int reg)
 {
-	struct url_softc *sc = USBGETSOFTC(dev);
+	struct url_softc *sc = (void *)dev;
 	u_int16_t val;
 
 	DPRINTF(("%s: %s: enter, phy=%d reg=0x%04x\n",
@@ -1608,7 +1608,7 @@ url_ext_miibus_redreg(device_ptr_t dev, int phy, int reg)
 void
 url_ext_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 {
-	struct url_softc *sc = USBGETSOFTC(dev);
+	struct url_softc *sc = (void *)dev;
 
 	DPRINTF(("%s: %s: enter, phy=%d reg=0x%04x data=0x%04x\n",
 		 sc->sc_dev.dv_xname, __func__, phy, reg, data));

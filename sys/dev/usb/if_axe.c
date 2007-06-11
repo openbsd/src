@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.74 2007/06/10 14:49:00 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.75 2007/06/11 05:42:53 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -248,7 +248,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 int
 axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 {
-	struct axe_softc	*sc = USBGETSOFTC(dev);
+	struct axe_softc	*sc = (void *)dev;
 	usbd_status		err;
 	uWord			val;
 
@@ -296,7 +296,7 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 void
 axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 {
-	struct axe_softc	*sc = USBGETSOFTC(dev);
+	struct axe_softc	*sc = (void *)dev;
 	usbd_status		err;
 	uWord			uval;
 
@@ -320,7 +320,7 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 void
 axe_miibus_statchg(device_ptr_t dev)
 {
-	struct axe_softc	*sc = USBGETSOFTC(dev);
+	struct axe_softc	*sc = (void *)dev;
 	struct mii_data		*mii = GET_MII(sc);
 	int			val, err;
 
