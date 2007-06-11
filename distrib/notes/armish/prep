@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.7 2007/06/11 16:34:45 ian Exp $
+dnl	$OpenBSD: prep,v 1.8 2007/06/11 18:58:16 ian Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of RedBoot, the low-level
 process that controls the microprocessor after hardware initialization.
@@ -11,7 +11,7 @@ The Thecus N2100 needs a serial cable. There is either a 10-pin
 header (with one pin removed) on the back of the disk circuit board,
 or 9 holes for you to solder in your own header.  The ribbon cable
 that connects from there to your serial cable or the serial port on
-your computer is of the same type as used on older i386 PC's, but
+your computer is of the same type as used on older i386 PCs, but
 be aware that there are two different types of 10-pin IDC to DB-9M
 ribbon cable in use, which look identical (the differences are hidden
 inside the DB-9 connector). The cable you need is wired using the 
@@ -19,6 +19,13 @@ inside the DB-9 connector). The cable you need is wired using the
 http://www.pccables.com/07120.htm
 and not the more straightforward to solder "crossed" type:
 http://www.pccables.com/07121.htm.
+If you wish to check a cable, or make your own, the pinouts are:
+DB9           IDC10
+===           =====
+1 2 3 4 5     1 3 5 7 9
+ 6 7 8 9      2 4 6 8 10
+
+Wire pin 1 to 1, 2 to 2 etc, with 10 not connected.
 
 On the Thecus N2100, it is necessary to move jumper J3 to J4 to properly
 route the serial port interrupt to allow serial to work under OpenBSD.
