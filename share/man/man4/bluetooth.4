@@ -1,0 +1,383 @@
+.\"	$OpenBSD: bluetooth.4,v 1.1 2007/06/11 00:27:13 uwe Exp $
+.\"	$NetBSD: bluetooth.4,v 1.5 2007/04/21 06:15:22 plunky Exp $
+.\"
+.\" Copyright (c) 2006 Itronix Inc.
+.\" All rights reserved.
+.\"
+.\" Written by Iain Hibbert for Itronix Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Itronix Inc. may not be used to endorse
+.\"    or promote products derived from this software without specific
+.\"    prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd $Mdocdate: June 11 2007 $
+.Dt BLUETOOTH 4
+.Os
+.Sh NAME
+.Nm bluetooth
+.Nd Bluetooth Protocol Family
+.Sh SYNOPSIS
+.In netbt/bluetooth.h
+.In netbt/hci.h
+.In netbt/l2cap.h
+.In netbt/rfcomm.h
+.Sh DESCRIPTION
+The
+.Tn Bluetooth
+Protocol Family
+.Sh ADDRESSING
+Bluetooth Protocol Family sockets all use a
+.Ar sockaddr_bt
+structure which contains a Bluetooth Device Address (BDADDR).
+This consists of a six byte string in least significant byte
+first order.
+.Bd -literal -offset -indent
+struct sockaddr_bt {
+	uint8_t		bt_len;
+	sa_family_t	bt_family;
+	bdaddr_t	bt_bdaddr;
+	uint16_t	bt_psm;
+	uint8_t		bt_channel;
+};
+.Ed
+.Pp
+The local address used by the socket can be set with
+.Xr bind 2 .
+.Sh PROTOCOLS
+Protocols included are:
+.Bl -tag -width XX
+.It Cm BTPROTO_HCI
+This gives raw access to the Host Controller Interface of local devices
+using the HCI protocol as described in the Bluetooth Core Specification.
+Any user may open an HCI socket but there are limitations on what
+unprivileged users can send and receive. The local address specified by
+.Xr bind 2
+may be used to select the device that the socket will receive packets from. If
+.Dv BDADDR_ANY
+is specified then the socket will receive packets from all
+devices on the system.
+.Xr connect 2
+may be used to create connections such that packets sent with
+.Xr send 2
+will be delivered to the specified device, otherwise
+.Xr sendto 2
+should be used.
+.Pp
+The
+.Ar bt_psm
+and
+.Ar bt_channel
+fields in the sockaddr_bt structure are ignored by HCI protocol code
+and should be set to zero.
+.Pp
+HCI socket options:
+.Bl -tag -width XX
+.It Dv SO_HCI_EVT_FILTER Op Ar struct hci_filter
+This filter controls which events will be recieved at the socket. See
+.In netbt/hci.h
+for available events. By default, Command_Complete and Command_Status
+events only are enabled.
+.It Dv SO_HCI_PKT_FILTER Op Ar struct hci_filter
+This filter controls the type of packets that will be received at the
+socket. By default, Event packets only are enabled.
+.It Dv SO_HCI_DIRECTION Op Ar int
+When set, this enables control messages on packets received at the socket
+indicating the direction of travel of the packet.
+.El
+.Pp
+HCI
+.Xr sysctl 8
+controls:
+.Bl -tag -width XXX
+.It Dv net.bluetooth.hci.sendspace
+Default send buffer size for HCI sockets.
+.It Dv net.bluetooth.hci.recvspace
+Default receive buffer size for HCI sockets
+.It Dv net.bluetooth.hci.acl_expiry
+If set, this is the time in seconds after which unused ACL data connections
+will be expired. If zero, connections will not be closed.
+.It Dv net.bluetooth.hci.memo_expiry
+Time, in seconds, that the system will keep records of Bluetooth devices
+in the vicinity after an Inquiry Response packet has been recieved. This
+information is used for routing purposes.
+.It Dv net.bluetooth.hci.eventq_max
+The maximum number of packets on the low level Event queue.
+.It Dv net.bluetooth.hci.aclrxq_max
+The maximum number of packets on the low level ACL queue.
+.It Dv net.bluetooth.hci.scorxq_max
+The maximum number of packets on the low level SCO queue.
+.El
+.It Cm BTPROTO_L2CAP
+L2CAP sockets give sequential packet access over channels to other Bluetooth
+devices and make use of the
+.Ar bt_psm
+field in the
+.Ar sockaddr_bt
+structure to select the Protocol/Sevice Multiplexer to specify when making
+connections.
+.Pp
+L2CAP socket options:
+.Bl -tag -width XXX
+.It Dv SO_L2CAP_IMTU Op Ar uint16_t
+Incoming MTU
+.It Dv SO_L2CAP_OMTU Op Ar uint16_t
+Outgoing MTU (read-only)
+.It Dv SO_L2CAP_LM Op Ar int
+Link Mode.
+The following bits may be set:
+.Pp
+.Bl -tag -compact -width ".Dv L2CAP_LM_ENCRYPT"
+.It Dv L2CAP_LM_AUTH
+Request authentication
+.Pq pairing .
+.It Dv L2CAP_LM_ENCRYPT
+Request encryption
+.Pq includes auth .
+.It Dv L2CAP_LM_SECURE
+Request secured link
+.Pq encryption, plus change link key .
+.El
+.Pp
+Link mode settings will be applied to the baseband link during L2CAP
+connection establishment.
+If the L2CAP connection is already established,
+.Dv EINPROGRESS
+may be returned, and it is not possible to guarantee that data already queued
+.Pq from either end
+will not be delivered.
+If the mode change fails, the L2CAP connection will be aborted.
+.El
+.Pp
+L2CAP
+.Xr sysctl 8
+controls:
+.Bl -tag -width XXX
+.It Dv net.bluetooth.l2cap.sendspace
+Default send buffer size for L2CAP sockets.
+.It Dv net.bluetooth.l2cap.recvspace
+Default receive buffer size for L2CAP sockets.
+.It Dv net.bluetooth.l2cap.rtx
+Response Timeout eXpiry for L2CAP signals.
+.It Dv net.bluetooth.l2cap.ertx
+Extended Response Timeout eXpiry for L2CAP signals.
+.El
+.It Cm BTPROTO_RFCOMM
+RFCOMM sockets provide streamed data over Bluetooth connection and make use of the
+.Ar bt_psm ,
+and
+.Ar bt_channel
+fields in the
+.Ar sockaddr_bt
+structure.
+The channel number must be between 1 and 30 inclusive.
+If no PSM is specified, a default value of
+.Dv L2CAP_PSM_RFCOMM
+(0x0003) will be used.
+.Pp
+RFCOMM socket options:
+.Bl -tag -width XXX
+.It Dv SO_RFCOMM_MTU Op Ar uint16_t
+Maximum Frame Size to use for this link.
+.It Dv SO_RFCOMM_LM Op Ar int
+Link Mode.
+The following bits may be set at any time:
+.Pp
+.Bl -tag -compact -width ".Dv RFCOMM_LM_ENCRYPT"
+.It Dv RFCOMM_LM_AUTH
+Request authentication
+.Pq pairing .
+.It Dv RFCOMM_LM_ENCRYPT
+Request encryption
+.Pq includes auth .
+.It Dv RFCOMM_LM_SECURE
+Request secured link
+.Pq encryption, plus change link key .
+.El
+.Pp
+Link mode settings will be applied to the baseband link during RFCOMM
+connection establishment.
+If the RFCOMM connection is already established,
+.Dv EINPROGRESS
+may be returned, and it is not possible to guarantee that data already queued
+.Pq from either end
+will not be delivered.
+If the mode change fails, the RFCOMM connection will be aborted.
+.El
+.Pp
+RFCOMM
+.Xr sysctl 8
+controls:
+.Bl -tag -width XXX
+.It Dv net.bluetooth.rfcomm.sendspace
+Default send buffer size for RFCOMM sockets.
+.It Dv net.bluetooth.rfcomm.recvspace
+Default receive buffer size for RFCOMM sockets.
+.It Dv net.bluetooth.rfcomm.default_mtu
+Maximum Frame Size (N1)
+.It Dv net.bluetooth.ack_timeout
+Acknowledgement Timer (T1)
+.It Dv net.bluetooth.mcc_timeout
+Response Timer for Multiplexer Control Channel (T2)
+.El
+.It Cm BTPROTO_SCO
+SCO sockets provide sequential packet access to time sensitive data
+channels over Bluetooth connections, typically used for audio data.
+.Pp
+SCO socket options:
+.Bl -tag -width XXX
+.It Dv SO_SCO_MTU Op Ar uint16_t
+Maximum packet size for use on this link.
+This is read-only and will be set by the protocol code when a connection is made.
+Currently, due to limitations in the
+.Xr ubt 4
+driver, the SCO protocol code will only accept packets with
+exactly this size.
+.It Dv SO_SCO_HANDLE Op Ar uint16_t
+Connection handle for this link.
+This is read-only and provided for informational purposes only.
+.El
+.Pp
+SCO
+.Xr sysctl 8
+controls:
+.Bl -tag -width XXX
+.It Dv net.bluetooth.sco.sendspace
+Default send buffer size for SCO sockets.
+.It Dv net.bluetooth.sco.recvspace
+Default receive buffer size for SCO sockets.
+.El
+.El
+.Sh INFORMATION
+The following
+.Xr ioctl 2
+calls may be used to manipulate Bluetooth devices. The
+.Xr ioctl 2
+must be made on
+.Cm BTPROTO_HCI
+sockets. All of the requests take a
+.Ar btreq
+structure defined as follows as their parameter and unless otherwise
+specified, use the
+.Ar btr_name
+field to identify the device.
+.Bd -literal -offset
+struct btreq {
+    char btr_name[HCI_DEVNAME_SIZE];	/* device name */
+
+    union {
+	struct {
+	    bdaddr_t btri_bdaddr;	/* device bdaddr */
+	    uint16_t btri_flags;	/* flags */
+	    uint16_t btri_num_cmd;	/* # of free cmd buffers */
+	    uint16_t btri_num_acl;	/* # of free ACL buffers */
+	    uint16_t btri_num_sco;	/* # of free SCO buffers */
+	    uint16_t btri_acl_mtu;	/* ACL mtu */
+	    uint16_t btri_sco_mtu;	/* SCO mtu */
+	    uint16_t btri_link_policy;	/* Link Policy */
+	    uint16_t btri_packet_type;	/* Packet Type */
+	} btri;
+	struct bt_stats btrs;   /* unit stats */
+    } btru;
+};
+
+#define btr_flags	btru.btri.btri_flags
+#define btr_bdaddr	btru.btri.btri_bdaddr
+#define btr_num_cmd	btru.btri.btri_num_cmd
+#define btr_num_acl	btru.btri.btri_num_acl
+#define btr_num_sco	btru.btri.btri_num_sco
+#define btr_acl_mtu	btru.btri.btri_acl_mtu
+#define btr_sco_mtu	btru.btri.btri_sco_mtu
+#define btr_link_policy btru.btri.btri_link_policy
+#define btr_packet_type btru.btri.btri_packet_type
+#define btr_stats	btru.btrs
+
+/* btr_flags */
+#define BTF_UP			(1\*[Lt]\*[Lt]0)	/* unit is up */
+#define BTF_RUNNING		(1\*[Lt]\*[Lt]1)	/* unit is running */
+#define BTF_XMIT_CMD		(1\*[Lt]\*[Lt]2)	/* transmitting CMD packets */
+#define BTF_XMIT_ACL		(1\*[Lt]\*[Lt]3)	/* transmitting ACL packets */
+#define BTF_XMIT_SCO		(1\*[Lt]\*[Lt]4)	/* transmitting SCO packets */
+#define BTF_INIT_BDADDR		(1\*[Lt]\*[Lt]5)	/* waiting for bdaddr */
+#define BTF_INIT_BUFFER_SIZE	(1\*[Lt]\*[Lt]6)	/* waiting for buffer size */
+#define BTF_INIT_FEATURES	(1\*[Lt]\*[Lt]7)	/* waiting for features */
+
+struct bt_stats {
+	uint32_t	err_tx;
+	uint32_t	err_rx;
+	uint32_t	cmd_tx;
+	uint32_t	evt_rx;
+	uint32_t	acl_tx;
+	uint32_t	acl_rx;
+	uint32_t	sco_tx;
+	uint32_t	sco_rx;
+	uint32_t	byte_tx;
+	uint32_t	byte_rx;
+};
+
+.Ed
+.Bl -tag -width SIOCGBTPOLICY
+.It Dv SIOCGBTINFO
+Get Bluetooth device Info. Given the device name, fill in the
+btreq structure including the address field for use with socket addressing
+as above.
+.It Dv SIOCGBTINFOA
+Get Bluetooth device Info from Address. Given the device address, fill in the
+btreq structure including the name field.
+.It Dv SIOCNBTINFO
+Next Bluetooth device Info . If name field is empty, the first device
+will be returned. Otherwise, the next device will be returned. Thus, you
+can cycle through all devices in the system.
+.It Dv SIOCSBTFLAGS
+Set Bluetooth device Flags. Not all flags are settable.
+.It Dv SIOCSBTPOLICY
+Set Bluetooth device Link Policy. Link Policy bits are defined in
+.In netbt/hci.h ,
+though you can only set bits that the device supports.
+.It Dv SIOCSBTPTYPE
+Set Bluetooth device Packet Types. You can only set packet types
+that the device supports.
+.It Dv SIOCGBTSTATS
+Read device statistics.
+.It Dv SIOCZBTSTATS
+Read device statistics, and zero them.
+.El
+.Pp
+Only the super-user may change device configurations.
+.Sh SEE ALSO
+.Xr bind 2 ,
+.Xr getsockname 2 ,
+.Xr bluetooth 3 ,
+.Xr bt3c 4 ,
+.Xr options 4 ,
+.Xr ubt 4
+.Sh HISTORY
+The Bluetooth Protocol Stack was written for
+.Nx 4.0
+by
+.An Iain Hibbert
+under the sponsorship of Itronix, Inc. and
+ported to
+.Ox 4.2
+by
+.An Uwe Stuehler Aq uwe@openbsd.org .

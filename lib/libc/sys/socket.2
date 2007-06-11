@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.28 2007/06/07 19:49:38 jmc Exp $
+.\"	$OpenBSD: socket.2,v 1.29 2007/06/11 00:27:13 uwe Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 7 2007 $
+.Dd $Mdocdate: June 11 2007 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -63,6 +63,8 @@ ARPA Internet protocols
 ARPA IPv6 protocols
 .It AF_IMPLINK
 IMP host at IMP link layer
+.It AF_BLUETOOTH
+Bluetooth protocols
 .El
 .Pp
 The socket has the indicated
