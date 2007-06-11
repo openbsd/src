@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.75 2007/05/27 19:55:13 dlg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.76 2007/06/11 11:29:35 henning Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -142,9 +142,6 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	struct icmp *icp;
 	struct mbuf *m;
 	unsigned icmplen, mblen;
-#if NPF > 0
-	struct pf_mtag	*mtag;
-#endif
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
@@ -260,14 +257,11 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
-#if NPF > 0
+
 	/* move PF_GENERATED to new packet, if existant XXX preserve more? */
-	if ((mtag = pf_find_mtag(n)) != NULL &&
-	    mtag->flags & PF_TAG_GENERATED) {
-		mtag = pf_get_tag(m);
-		mtag->flags |= PF_TAG_GENERATED;
-	}
-#endif
+	if (n->m_pkthdr.pf.flags & PF_TAG_GENERATED)
+		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+
 	m_freem(n);
 	return (m);
 

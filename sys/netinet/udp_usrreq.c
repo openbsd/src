@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.113 2007/05/27 20:17:05 dlg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.114 2007/06/11 11:29:35 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -533,13 +533,8 @@ udp_input(struct mbuf *m, ...)
 	    ip->ip_dst, uh->uh_dport);
 	if (inp == 0) {
 		int	inpl_reverse = 0;
-#if NPF > 0
-		struct pf_mtag *t;
-
-		if ((t = pf_find_mtag(m)) != NULL &&
-		    t->flags & PF_TAG_TRANSLATE_LOCALHOST)
+		if (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST)
 			inpl_reverse = 1;
-#endif
 		++udpstat.udps_pcbhashmiss;
 #ifdef INET6
 		if (ip6) {
