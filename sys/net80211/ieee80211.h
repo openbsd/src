@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.13 2007/06/07 20:20:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.14 2007/06/11 19:35:24 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -448,6 +448,17 @@ enum {
 #define	IEEE80211_ERP_USE_PROTECTION		0x02
 #define	IEEE80211_ERP_BARKER_MODE		0x04
 
+/*
+ * 802.11e EDCA Access Categories.
+ */
+enum ieee80211_edca_ac {
+	EDCA_AC_BK  = 1,	/* Background */
+	EDCA_AC_BE  = 0,	/* Best Effort */
+	EDCA_AC_VI  = 2,	/* Video */
+	EDCA_AC_VO  = 3		/* Voice */
+};
+#define EDCA_NUM_AC	4
+
 /* Atheros private advanced capabilities info */
 #define	ATHEROS_CAP_TURBO_PRIME			0x01
 #define	ATHEROS_CAP_COMPRESSION			0x02
@@ -491,12 +502,6 @@ enum {
 #define	WME_OUI			0xf25000
 #define	WME_OUI_TYPE		0x02
 #define	WME_OUI_VERSION		1
-
-/* WME stream classes */
-#define	WME_AC_BE	0		/* best effort */
-#define	WME_AC_BK	1		/* background */
-#define	WME_AC_VI	2		/* video */
-#define	WME_AC_VO	3		/* voice */
 
 /*
  * AUTH management packets

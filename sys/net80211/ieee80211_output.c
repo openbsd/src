@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.25 2007/06/07 20:20:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.26 2007/06/11 19:35:24 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -191,6 +191,105 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	(*ifp->if_start)(ifp);
 	return 0;
 }
+
+/*-
+ * EDCA tables are computed using the following formulas:
+ *
+ * 1) EDCATable (non-AP QSTA)
+ *
+ * AC     CWmin 	   CWmax	   AIFSN  TXOP limit(ms)
+ * -------------------------------------------------------------
+ * AC_BK  aCWmin	   aCWmax	   7	  0
+ * AC_BE  aCWmin	   aCWmax	   3	  0
+ * AC_VI  (aCWmin+1)/2-1   aCWmin	   2	  agn=3.008 b=6.016 others=0
+ * AC_VO  (aCWmin+1)/4-1   (aCWmin+1)/2-1  2	  agn=1.504 b=3.264 others=0
+ *
+ * 2) QAPEDCATable (QAP)
+ *
+ * AC     CWmin 	   CWmax	   AIFSN  TXOP limit(ms)
+ * -------------------------------------------------------------
+ * AC_BK  aCWmin	   aCWmax	   7	  0
+ * AC_BE  aCWmin	   4*(aCWmin+1)-1  3	  0
+ * AC_VI  (aCWmin+1)/2-1   aCWmin	   1	  agn=3.008 b=6.016 others=0
+ * AC_VO  (aCWmin+1)/4-1   (aCWmin+1)/2-1  1	  agn=1.504 b=3.264 others=0
+ *
+ * and the following aCWmin/aCWmax values:
+ *
+ * PHY		aCWmin	aCWmax
+ * ---------------------------
+ * 11A		15	1023
+ * 11B  	31	1023
+ * 11G		15*	1023	(*) aCWmin(1)
+ * FH		15	1023
+ * Turbo A/G	7	1023	(Atheros proprietary mode)
+ */
+static const struct ieee80211_edca_ac_params
+    ieee80211_edca_table[IEEE80211_MODE_MAX][EDCA_NUM_AC] = {
+	[IEEE80211_MODE_FH] = {
+		[EDCA_AC_BK] = { 4, 10, 7,   0 },
+		[EDCA_AC_BE] = { 4, 10, 3,   0 },
+		[EDCA_AC_VI] = { 3,  4, 2,   0 },
+		[EDCA_AC_VO] = { 2,  3, 2,   0 }
+	},
+	[IEEE80211_MODE_11B] = {
+		[EDCA_AC_BK] = { 5, 10, 7,   0 },
+		[EDCA_AC_BE] = { 5, 10, 3,   0 },
+		[EDCA_AC_VI] = { 4,  5, 2, 188 },
+		[EDCA_AC_VO] = { 3,  4, 2, 102 }
+	},
+	[IEEE80211_MODE_11A] = {
+		[EDCA_AC_BK] = { 4, 10, 7,   0 },
+		[EDCA_AC_BE] = { 4, 10, 3,   0 },
+		[EDCA_AC_VI] = { 3,  4, 2,  94 },
+		[EDCA_AC_VO] = { 2,  3, 2,  47 }
+	},
+	[IEEE80211_MODE_11G] = {
+		[EDCA_AC_BK] = { 4, 10, 7,   0 },
+		[EDCA_AC_BE] = { 4, 10, 3,   0 },
+		[EDCA_AC_VI] = { 3,  4, 2,  94 },
+		[EDCA_AC_VO] = { 2,  3, 2,  47 }
+	},
+	[IEEE80211_MODE_TURBO] = {
+		[EDCA_AC_BK] = { 3, 10, 7,   0 },
+		[EDCA_AC_BE] = { 3, 10, 2,   0 },
+		[EDCA_AC_VI] = { 2,  3, 2,  94 },
+		[EDCA_AC_VO] = { 2,  2, 1,  47 }
+	}
+};
+
+static const struct ieee80211_edca_ac_params
+    ieee80211_qap_edca_table[IEEE80211_MODE_MAX][EDCA_NUM_AC] = {
+	[IEEE80211_MODE_FH] = {
+		[EDCA_AC_BK] = { 4, 10, 7,   0 },
+		[EDCA_AC_BE] = { 4,  6, 3,   0 },
+		[EDCA_AC_VI] = { 3,  4, 1,   0 },
+		[EDCA_AC_VO] = { 2,  3, 1,   0 }
+	},
+	[IEEE80211_MODE_11B] = {
+		[EDCA_AC_BK] = { 5, 10, 7,   0 },
+		[EDCA_AC_BE] = { 5,  7, 3,   0 },
+		[EDCA_AC_VI] = { 4,  5, 1, 188 },
+		[EDCA_AC_VO] = { 3,  4, 1, 102 }
+	},
+	[IEEE80211_MODE_11A] = {
+		[EDCA_AC_BK] = { 4, 10, 7,   0 },
+		[EDCA_AC_BE] = { 4,  6, 3,   0 },
+		[EDCA_AC_VI] = { 3,  4, 1,  94 },
+		[EDCA_AC_VO] = { 2,  3, 1,  47 }
+	},
+	[IEEE80211_MODE_11G] = {
+		[EDCA_AC_BK] = { 4, 10, 7,   0 },
+		[EDCA_AC_BE] = { 4,  6, 3,   0 },
+		[EDCA_AC_VI] = { 3,  4, 1,  94 },
+		[EDCA_AC_VO] = { 2,  3, 1,  47 }
+	},
+	[IEEE80211_MODE_TURBO] = {
+		[EDCA_AC_BK] = { 3, 10, 7,   0 },
+		[EDCA_AC_BE] = { 3,  5, 2,   0 },
+		[EDCA_AC_VI] = { 2,  3, 1,  94 },
+		[EDCA_AC_VO] = { 2,  2, 1,  47 }
+	}
+};
 
 /*
  * Encapsulate an outbound data frame.  The mbuf chain is updated and

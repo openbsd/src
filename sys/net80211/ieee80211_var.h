@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.20 2007/06/07 20:24:42 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.21 2007/06/11 19:35:24 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -129,6 +129,17 @@ struct ieee80211_channel {
 #define	IEEE80211_FH_CHAN(set,pat)	(((set)-1)*IEEE80211_FH_CHANMOD+(pat))
 #define	IEEE80211_FH_CHANSET(chan)	((chan)/IEEE80211_FH_CHANMOD+1)
 #define	IEEE80211_FH_CHANPAT(chan)	((chan)%IEEE80211_FH_CHANMOD)
+
+/*
+ * 802.11e EDCA AC parameters.
+ */
+struct ieee80211_edca_ac_params {
+	u_int8_t	ecwmin;		/* CWmin = 2^ECWmin - 1 */
+	u_int8_t	ecwmax;		/* CWmax = 2^ECWmax - 1 */
+	u_int8_t	aifsn;
+	u_int16_t	txoplimit;	/* 32TU */
+#define IEEE80211_TXOP_TO_US(txop)	((txop) * 32)
+};
 
 #define	IEEE80211_PS_SLEEP	0x1	/* STA is in power saving mode */
 
