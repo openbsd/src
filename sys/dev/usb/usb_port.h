@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.81 2007/06/11 06:14:24 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.82 2007/06/11 09:26:55 mk Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -60,8 +60,6 @@
 #define	PQUIRK_NOSENSE		ADEV_NOSENSE	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		SDEV_ONLYBIG
 
-#define sel_klist si_note
-
 typedef struct proc *usb_proc_ptr;
 
 #define UCOMBUSCF_PORTNO		0
@@ -70,8 +68,6 @@ typedef struct proc *usb_proc_ptr;
 #define UHIDBUSCF_REPORTID_DEFAULT	-1
 
 #define mstohz(ms) ((ms) * hz / 1000)
-
-#define sel_klist si_note
 
 #define IF_INPUT(ifp, m) ether_input_mbuf((ifp), (m))
 

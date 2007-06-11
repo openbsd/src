@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.43 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: ugen.c,v 1.44 2007/06/11 09:26:55 mk Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1340,7 +1340,7 @@ filt_ugenrdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sce->rsel.sel_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sce->rsel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1399,7 +1399,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sce->rsel.sel_klist;
+		klist = &sce->rsel.si_note;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 			kn->kn_fop = &ugenread_intr_filtops;
@@ -1421,7 +1421,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sce->rsel.sel_klist;
+		klist = &sce->rsel.si_note;
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 		case UE_ISOCHRONOUS:

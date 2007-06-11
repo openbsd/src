@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.48 2007/06/10 17:46:27 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.49 2007/06/11 09:26:55 mk Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -599,7 +599,7 @@ filt_usbrdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&usb_selevent.sel_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&usb_selevent.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -627,7 +627,7 @@ usbkqfilter(dev_t dev, struct knote *kn)
 	case EVFILT_READ:
 		if (minor(dev) != USB_DEV_MINOR)
 			return (1);
-		klist = &usb_selevent.sel_klist;
+		klist = &usb_selevent.si_note;
 		kn->kn_fop = &usbread_filtops;
 		break;
 

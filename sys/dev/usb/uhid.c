@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.35 2007/06/10 10:53:48 mbalmer Exp $ */
+/*	$OpenBSD: uhid.c,v 1.36 2007/06/11 09:26:55 mk Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -559,7 +559,7 @@ filt_uhidrdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -592,12 +592,12 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
+		klist = &sc->sc_rsel.si_note;
 		kn->kn_fop = &uhidread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_rsel.sel_klist;
+		klist = &sc->sc_rsel.si_note;
 		kn->kn_fop = &uhid_seltrue_filtops;
 		break;
 
