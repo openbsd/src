@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.37 2007/06/11 10:58:21 mbalmer Exp $ */
+/*	$OpenBSD: uhid.c,v 1.38 2007/06/11 12:36:52 mbalmer Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -238,7 +238,11 @@ uhidopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC_OPEN(uhid, UHIDUNIT(dev), sc);
+	if (UHIDUNIT(dev) >= uhid_cd.cd_ndevs)
+		return (ENXIO);
+	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
+	if (sc == NULL)
+		return (ENXIO);
 
 	DPRINTF(("uhidopen: sc=%p\n", sc));
 

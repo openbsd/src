@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.50 2007/06/11 10:58:21 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.51 2007/06/11 12:36:52 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -386,7 +386,11 @@ usbopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		return (0);
 	}
 
-	USB_GET_SC_OPEN(usb, unit, sc);
+	if (unit >= usb_cd.cd_ndevs)
+		return (ENXIO);
+	sc = usb_cd.cd_devs[unit];
+	if (sc == NULL)
+		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);

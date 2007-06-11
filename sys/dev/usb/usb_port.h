@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.83 2007/06/11 10:58:21 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.84 2007/06/11 12:36:53 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -108,12 +108,5 @@ const struct cfattach __CONCAT(dname,_ca) = { \
 }
 
 #define USB_DECLARE_DRIVER(dname) USB_DECLARE_DRIVER_CLASS(dname, DV_DULL)
-
-#define USB_GET_SC_OPEN(dname, unit, sc) \
-	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
-		return (ENXIO); \
-	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
-	if (sc == NULL) \
-		return (ENXIO)
 
 #endif /* _USB_PORT_H */

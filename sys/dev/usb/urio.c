@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.28 2007/06/11 10:58:21 mbalmer Exp $	*/
+/*	$OpenBSD: urio.c,v 1.29 2007/06/11 12:36:52 mbalmer Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -252,7 +252,11 @@ urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	struct urio_softc *sc;
 	usbd_status err;
 
-	USB_GET_SC_OPEN(urio, URIOUNIT(dev), sc);
+	if (URIOUNIT(dev) >= urio_cd.cd_ndevs)
+		return (ENXIO);
+	sc = urio_cd.cd_devs[URIOUNIT(dev)];
+	if (sc == NULL)
+		return (ENXIO);
 
 	DPRINTFN(5, ("urioopen: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, URIOUNIT(dev)));

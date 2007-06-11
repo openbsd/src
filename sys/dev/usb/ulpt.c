@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.28 2007/06/11 10:58:21 mbalmer Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.29 2007/06/11 12:36:52 mbalmer Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -422,7 +422,11 @@ ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	usbd_status err;
 	int spin, error;
 
-	USB_GET_SC_OPEN(ulpt, ULPTUNIT(dev), sc);
+	if (ULPTUNIT(dev) >= ulpt_cd.cd_ndevs)
+		return (ENXIO);
+	sc = ulpt_cd.cd_devs[ULPTUNIT(dev)];
+	if (sc == NULL)
+		return (ENXIO);
 
 	if (sc == NULL || sc->sc_iface == NULL || sc->sc_dying)
 		return (ENXIO);

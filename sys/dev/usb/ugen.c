@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.45 2007/06/11 10:58:21 mbalmer Exp $ */
+/*	$OpenBSD: ugen.c,v 1.46 2007/06/11 12:36:52 mbalmer Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -274,7 +274,11 @@ ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	void *buf;
 	int i, j;
 
-	USB_GET_SC_OPEN(ugen, unit, sc);
+	if (unit >= ugen_cd.cd_ndevs)
+		return (ENXIO);
+	sc = ugen_cd.cd_devs[unit];
+	if (sc == NULL)
+		return (ENXIO);
 
 	DPRINTFN(5, ("ugenopen: flag=%d, mode=%d, unit=%d endpt=%d\n",
 		     flag, mode, unit, endpt));
