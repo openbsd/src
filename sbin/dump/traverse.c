@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.21 2007/06/03 20:16:08 millert Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.22 2007/06/11 16:50:33 millert Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static const char rcsid[] = "$OpenBSD: traverse.c,v 1.21 2007/06/03 20:16:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: traverse.c,v 1.22 2007/06/11 16:50:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -480,9 +480,11 @@ dumpino(union dinode *dp, ino_t ino)
 	if (sblock->fs_magic == FS_UFS1_MAGIC) {  
 		spcl.c_mode = dp->dp1.di_mode;
 		spcl.c_size = dp->dp1.di_size;
-		spcl.c_atime = (time_t)dp->dp1.di_atime;
+		spcl.c_old_atime = (time_t)dp->dp1.di_atime;
+		spcl.c_atime = dp->dp1.di_atime;
 		spcl.c_atimensec = dp->dp1.di_atimensec;
-		spcl.c_mtime = (time_t)dp->dp1.di_mtime;
+		spcl.c_old_mtime = (time_t)dp->dp1.di_mtime;
+		spcl.c_mtime = dp->dp1.di_mtime;
 		spcl.c_mtimensec = dp->dp1.di_mtimensec;
 		spcl.c_birthtime = 0;
 		spcl.c_birthtimensec = 0;
@@ -493,11 +495,11 @@ dumpino(union dinode *dp, ino_t ino)
 	} else {
 		spcl.c_mode = dp->dp2.di_mode;
 		spcl.c_size = dp->dp2.di_size;
-		spcl.c_atime = (time_t)dp->dp2.di_atime;
+		spcl.c_atime = dp->dp2.di_atime;
 		spcl.c_atimensec = dp->dp2.di_atimensec;
-		spcl.c_mtime = (time_t)dp->dp2.di_mtime;
+		spcl.c_mtime = dp->dp2.di_mtime;
 		spcl.c_mtimensec = dp->dp2.di_mtimensec;
-		spcl.c_birthtime = (time_t)dp->dp2.di_birthtime;
+		spcl.c_birthtime = dp->dp2.di_birthtime;
 		spcl.c_birthtimensec = dp->dp2.di_birthnsec;
 		spcl.c_rdev = dp->dp2.di_rdev;
 		spcl.c_file_flags = dp->dp2.di_flags;
