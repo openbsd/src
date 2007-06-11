@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.88 2007/05/28 17:16:39 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.89 2007/06/11 11:18:14 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -84,6 +84,11 @@ struct pkthdr_pf {
 	u_int8_t	 flags;
 	u_int8_t	 routed;
 };
+
+/* pkthdr_pf.flags */
+#define	PF_TAG_GENERATED		0x01
+#define	PF_TAG_FRAGCACHE		0x02
+#define	PF_TAG_TRANSLATE_LOCALHOST	0x04
 
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {

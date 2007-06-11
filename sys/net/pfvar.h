@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.249 2007/06/01 18:44:23 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.250 2007/06/11 11:18:14 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1273,10 +1273,6 @@ struct pf_altq {
 
 	u_int32_t		 qid;		/* return value */
 };
-
-#define	PF_TAG_GENERATED		0x01
-#define	PF_TAG_FRAGCACHE		0x02
-#define	PF_TAG_TRANSLATE_LOCALHOST	0x04
 
 struct pf_tag {
 	u_int16_t	tag;		/* tag id */
