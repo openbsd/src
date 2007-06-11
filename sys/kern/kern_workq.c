@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.2 2007/05/31 21:33:07 tedu Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.3 2007/06/11 22:15:11 thib Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/kthread.h>
-#include <sys/stdarg.h>
 #include <sys/workq.h>
 
 struct workq_task {
