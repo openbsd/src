@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.320 2007/06/10 16:05:49 espie Exp $
+# $OpenBSD: pkg_add,v 1.321 2007/06/11 09:12:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -190,31 +190,20 @@ sub can_install
 	return 1;
 }
 
-sub create_handle
-{
-	my $pkg = shift;
-	my $handle = OpenBSD::Handle->new;
-	$handle->{pkgname} = $pkg;
-	$handle->{tweaked} = 0;
-	return $handle;
-}
-
 sub prepare_to_add
 {
 	my ($pkg, $state) = @_;
 
-	my $set = OpenBSD::UpdateSet->new;
-	my $handle = create_handle($pkg);
-	$set->add_newer($handle);
-	$handle->complete($state);
-	if ($handle->has_error) {
+	my $set = OpenBSD::UpdateSet->create_new($pkg);
+	$set->handle->complete($state);
+	if ($set->handle->has_error) {
 		return $set;
 	}
 	if (!can_install($set, $state)) {
-		$handle->{location}->close_with_client_error;
-		$handle->{location}->wipe_info;
-		delete $handle->{plist};
-		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
+		$set->handle->{location}->close_with_client_error;
+		$set->handle->{location}->wipe_info;
+		delete $set->handle->{plist};
+		$set->handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 	}
 	return $set;
 }
