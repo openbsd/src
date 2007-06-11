@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.321 2007/06/11 09:12:27 espie Exp $
+# $OpenBSD: pkg_add,v 1.322 2007/06/11 09:23:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -100,6 +100,7 @@ sub set_name_from_handle
 
 package OpenBSD::UpdateSet;
 use OpenBSD::PackageInfo;
+use OpenBSD::Error;
 
 sub setup_header
 {
@@ -121,7 +122,24 @@ sub setup_header
 	}
 }
 
-package main;
+sub complete
+{
+	my ($set, $state) = @_;
+
+	$set->handle->complete($state);
+	return if $set->handle->has_error;
+	return if defined $set->{installable};
+
+	$set->{installable} = $set->can_install($state);
+
+	if (!$set->{installable}) {
+		$set->handle->{location}->close_with_client_error;
+		$set->handle->{location}->wipe_info;
+		delete $set->handle->{plist};
+		$set->handle->set_error(OpenBSD::Handle::CANT_INSTALL);
+	}
+}
+
 sub can_install
 {
 	my ($set, $state) = @_;
@@ -190,21 +208,14 @@ sub can_install
 	return 1;
 }
 
+package main;
+
 sub prepare_to_add
 {
 	my ($pkg, $state) = @_;
 
 	my $set = OpenBSD::UpdateSet->create_new($pkg);
-	$set->handle->complete($state);
-	if ($set->handle->has_error) {
-		return $set;
-	}
-	if (!can_install($set, $state)) {
-		$set->handle->{location}->close_with_client_error;
-		$set->handle->{location}->wipe_info;
-		delete $set->handle->{plist};
-		$set->handle->set_error(OpenBSD::Handle::CANT_INSTALL);
-	}
+	$set->complete($state);
 	return $set;
 }
 
