@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.44 2007/06/11 09:26:55 mk Exp $ */
+/*	$OpenBSD: ugen.c,v 1.45 2007/06/11 10:58:21 mbalmer Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -409,7 +409,7 @@ ugenclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	int dir;
 	int i;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 
 	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
 		     flag, mode, UGENUNIT(dev), endpt));
@@ -613,7 +613,7 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 
 	sc->sc_refcnt++;
 	error = ugen_do_read(sc, endpt, uio, flag);
@@ -712,7 +712,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 
 	sc->sc_refcnt++;
 	error = ugen_do_write(sc, endpt, uio, flag);
@@ -1258,7 +1258,7 @@ ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 
 	sc->sc_refcnt++;
 	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, p);
@@ -1275,7 +1275,7 @@ ugenpoll(dev_t dev, int events, usb_proc_ptr p)
 	int revents = 0;
 	int s;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 
 	if (sc->sc_dying)
 		return (POLLERR);
@@ -1387,7 +1387,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	struct klist *klist;
 	int s;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
 
 	if (sc->sc_dying)
 		return (1);

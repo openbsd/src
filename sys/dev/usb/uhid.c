@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.36 2007/06/11 09:26:55 mk Exp $ */
+/*	$OpenBSD: uhid.c,v 1.37 2007/06/11 10:58:21 mbalmer Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ uhidclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 
 	DPRINTF(("uhidclose: sc=%p\n", sc));
 
@@ -341,7 +341,7 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 
 	sc->sc_refcnt++;
 	error = uhid_do_read(sc, uio, flag);
@@ -383,7 +383,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 
 	sc->sc_refcnt++;
 	error = uhid_do_write(sc, uio, flag);
@@ -513,7 +513,7 @@ uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 
 	sc->sc_refcnt++;
 	error = uhid_do_ioctl(sc, cmd, addr, flag, p);
@@ -529,7 +529,7 @@ uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 	int revents = 0;
 	int s;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 
 	if (sc->sc_dying)
 		return (POLLERR);
@@ -585,7 +585,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 	struct klist *klist;
 	int s;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 
 	if (sc->sc_dying)
 		return (EIO);

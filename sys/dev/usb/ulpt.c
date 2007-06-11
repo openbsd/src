@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.27 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.28 2007/06/11 10:58:21 mbalmer Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -540,7 +540,7 @@ ulptclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct ulpt_softc *sc;
 
-	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
+	sc = ulpt_cd.cd_devs[ULPTUNIT(dev)];
 
 	if (sc->sc_state != ULPT_OPEN)
 		/* We are being forced to close before the open completed. */
@@ -613,7 +613,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 	struct ulpt_softc *sc;
 	int error;
 
-	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
+	sc = ulpt_cd.cd_devs[ULPTUNIT(dev)];
 
 	if (sc->sc_dying)
 		return (EIO);

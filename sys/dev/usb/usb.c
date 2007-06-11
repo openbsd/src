@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.49 2007/06/11 09:26:55 mk Exp $	*/
+/*	$OpenBSD: usb.c,v 1.50 2007/06/11 10:58:21 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -464,7 +464,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		}
 	}
 
-	USB_GET_SC(usb, unit, sc);
+	sc = usb_cd.cd_devs[unit];
 
 	if (sc->sc_dying)
 		return (EIO);

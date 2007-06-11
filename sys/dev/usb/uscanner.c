@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.30 2007/06/11 09:26:55 mk Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.31 2007/06/11 10:58:21 mbalmer Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ uscannerclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct uscanner_softc *sc;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = uscanner_cd.cd_devs[USCANNERUNIT(dev)];
 
 	DPRINTFN(5, ("uscannerclose: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, USCANNERUNIT(dev)));
@@ -490,7 +490,7 @@ uscannerread(dev_t dev, struct uio *uio, int flag)
 	struct uscanner_softc *sc;
 	int error;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = uscanner_cd.cd_devs[USCANNERUNIT(dev)];
 
 	sc->sc_refcnt++;
 	error = uscanner_do_read(sc, uio, flag);
@@ -540,7 +540,7 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 	struct uscanner_softc *sc;
 	int error;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = uscanner_cd.cd_devs[USCANNERUNIT(dev)];
 
 	sc->sc_refcnt++;
 	error = uscanner_do_write(sc, uio, flag);
@@ -610,7 +610,7 @@ uscannerpoll(dev_t dev, int events, usb_proc_ptr p)
 	struct uscanner_softc *sc;
 	int revents = 0;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = uscanner_cd.cd_devs[USCANNERUNIT(dev)];
 
 	if (sc->sc_dying)
 		return (POLLERR);
@@ -652,7 +652,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 	struct uscanner_softc *sc;
 	struct klist *klist;
 
-	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
+	sc = uscanner_cd.cd_devs[USCANNERUNIT(dev)];
 
 	if (sc->sc_dying)
 		return (1);

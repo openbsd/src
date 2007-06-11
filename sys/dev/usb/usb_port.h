@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.82 2007/06/11 09:26:55 mk Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.83 2007/06/11 10:58:21 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -115,8 +115,5 @@ const struct cfattach __CONCAT(dname,_ca) = { \
 	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
 	if (sc == NULL) \
 		return (ENXIO)
-
-#define USB_GET_SC(dname, unit, sc) \
-	sc = __CONCAT(dname,_cd).cd_devs[unit]
 
 #endif /* _USB_PORT_H */

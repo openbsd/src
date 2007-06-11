@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.27 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: urio.c,v 1.28 2007/06/11 10:58:21 mbalmer Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ int
 urioclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct urio_softc *sc;
-	USB_GET_SC(urio, URIOUNIT(dev), sc);
+	sc = urio_cd.cd_devs[URIOUNIT(dev)];
 
 	DPRINTFN(5, ("urioclose: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, URIOUNIT(dev)));
@@ -312,7 +312,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	u_int32_t n, tn;
 	int error = 0;
 
-	USB_GET_SC(urio, URIOUNIT(dev), sc);
+	sc = urio_cd.cd_devs[URIOUNIT(dev)];
 
 	DPRINTFN(5, ("urioread: %d\n", URIOUNIT(dev)));
 
@@ -369,7 +369,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	u_int32_t n;
 	int error = 0;
 
-	USB_GET_SC(urio, URIOUNIT(dev), sc);
+	sc = urio_cd.cd_devs[URIOUNIT(dev)];
 
 	DPRINTFN(5, ("uriowrite: unit=%d, len=%ld\n", URIOUNIT(dev),
 		     (long)uio->uio_resid));
@@ -437,7 +437,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 	void *ptr = NULL;
 	int error = 0;
 
-	USB_GET_SC(urio, unit, sc);
+	sc = urio_cd.cd_devs[unit];
 
 	if (sc->sc_dying)
 		return (EIO);
