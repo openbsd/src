@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.5 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.6 2007/06/11 06:14:24 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -111,7 +111,7 @@ usbf_probe_and_attach(device_ptr_t parent, usbf_device_handle dev, int port)
 	 * be initialized in the function driver's attach routine.  Also, it
 	 * should use usbf_devinfo_setup() to set the device identification.
 	 */
-	dv = USB_DO_ATTACH(dev, NULL, parent, &uaa, NULL, NULL);
+	dv = config_found_sm(parent, &uaa, NULL, NULL);
 	if (dv != NULL) {
 		dev->function = (struct usbf_function *)dv;
 		return USBF_NORMAL_COMPLETION;

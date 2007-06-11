@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.54 2007/06/10 17:46:27 mbalmer Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.55 2007/06/11 06:14:24 mbalmer Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -845,7 +845,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
 
 	/* First try with device specific drivers. */
 	DPRINTF(("usbd_probe_and_attach: trying device specific drivers\n"));
-	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch);
+	dv = config_found_sm(parent, &uaa, usbd_print, usbd_submatch);
 	if (dv) {
 		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL)
@@ -900,7 +900,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
 				continue; /* interface already claimed */
 			uaa.iface = ifaces[i];
 			uaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
-			dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print,
+			dv = config_found_sm(parent, &uaa, usbd_print,
 					   usbd_submatch);
 
 			if (dv != NULL) {
@@ -927,7 +927,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
 	uaa.usegeneric = 1;
 	uaa.configno = UHUB_UNK_CONFIGURATION;
 	uaa.ifaceno = UHUB_UNK_INTERFACE;
-	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch);
+	dv = config_found_sm(parent, &uaa, usbd_print, usbd_submatch);
 	if (dv != NULL) {
 		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
 		if (dev->subdevs == 0)

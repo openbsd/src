@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.80 2007/06/11 05:42:54 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.81 2007/06/11 06:14:24 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -122,8 +122,5 @@ const struct cfattach __CONCAT(dname,_ca) = { \
 
 #define USB_GET_SC(dname, unit, sc) \
 	sc = __CONCAT(dname,_cd).cd_devs[unit]
-
-#define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
-	(config_found_sm(parent, args, print, sub))
 
 #endif /* _USB_PORT_H */
