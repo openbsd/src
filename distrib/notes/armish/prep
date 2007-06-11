@@ -1,14 +1,31 @@
-dnl	$OpenBSD: prep,v 1.6 2007/05/25 21:27:15 krw Exp $
+dnl	$OpenBSD: prep,v 1.7 2007/06/11 16:34:45 ian Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of RedBoot, the low-level
 process that controls the microprocessor after hardware initialization.
 dnl
 dnl XXX bootable partitions
 The enabled features between IOData HDL-G and Thecus N2100 vary so
-the same methods will not work on both machines.
+different methods will be needed on both machines.
+
+The Thecus N2100 needs a serial cable. There is either a 10-pin
+header (with one pin removed) on the back of the disk circuit board,
+or 9 holes for you to solder in your own header.  The ribbon cable
+that connects from there to your serial cable or the serial port on
+your computer is of the same type as used on older i386 PC's, but
+be aware that there are two different types of 10-pin IDC to DB-9M
+ribbon cable in use, which look identical (the differences are hidden
+inside the DB-9 connector). The cable you need is wired using the 
+"AT-Everex" or "Asus" pinout, as described here:
+http://www.pccables.com/07120.htm
+and not the more straightforward to solder "crossed" type:
+http://www.pccables.com/07121.htm.
 
 On the Thecus N2100, it is necessary to move jumper J3 to J4 to properly
 route the serial port interrupt to allow serial to work under OpenBSD.
+This jumper is under the disk drives, so you may wish to ensure its 
+correct setting while you are installing the disk(s).  For instructions 
+on assembling/disassembling your N2100, see the N2100 Manual at
+http://www.thecus.com/download/manual/N2100%20UM%20EN.pdf
 
 Thecus cannot load a file from disk, but can load an image
 from flash or network.
