@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.43 2007/06/09 09:50:00 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.44 2007/06/11 19:26:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -65,7 +65,7 @@
 #include <dev/pci/if_wpireg.h>
 #include <dev/pci/if_wpivar.h>
 
-const struct pci_matchid wpi_devices[] = {
+static const struct pci_matchid wpi_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2 }
 };
@@ -127,7 +127,7 @@ int		wpi_mrr_setup(struct wpi_softc *);
 void		wpi_set_led(struct wpi_softc *, uint8_t, uint8_t, uint8_t);
 void		wpi_enable_tsf(struct wpi_softc *, struct ieee80211_node *);
 int		wpi_set_txpower(struct wpi_softc *,
-		    struct ieee80211_channel *);
+		    struct ieee80211_channel *, int);
 int		wpi_get_power_index(struct wpi_softc *,
 		    struct wpi_power_group *, struct ieee80211_channel *, int);
 #ifdef notyet
@@ -851,7 +851,7 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		}
 
 		/* configuration has changed, set Tx power accordingly */
-		if ((error = wpi_set_txpower(sc, ni->ni_chan)) != 0) {
+		if ((error = wpi_set_txpower(sc, ni->ni_chan, 1)) != 0) {
 			printf("%s: could not set Tx power\n",
 			    sc->sc_dev.dv_xname);
 			return error;
@@ -993,7 +993,7 @@ wpi_load_segment(struct wpi_softc *sc, uint32_t target, const uint8_t *data,
 	WPI_WRITE(sc, WPI_TX_STATE(6), 0x4001);
 	WPI_WRITE(sc, WPI_TX_CONFIG(6), 0x80000001);
 
-	/* wait while the adapter transfers the block */
+	/* wait while the adapter transfers the segment */
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (WPI_READ(sc, WPI_TX_STATUS) & WPI_TX_IDLE(6))
 			break;
@@ -1190,7 +1190,7 @@ wpi_power_calibration(struct wpi_softc *sc, int temp)
 
 	sc->temp = temp;
 
-	if (wpi_set_txpower(sc, sc->sc_ic.ic_bss->ni_chan) != 0) {
+	if (wpi_set_txpower(sc, sc->sc_ic.ic_bss->ni_chan, 1) != 0) {
 		/* just warn, too bad for the automatic calibration... */
 		printf("%s: could not adjust Tx power\n",
 		    sc->sc_dev.dv_xname);
@@ -1965,7 +1965,7 @@ wpi_read_eeprom_channels(struct wpi_softc *sc, int n)
 
 		} else {	/* 5GHz band */
 			/*
-			 * Some 3945abg adapters support channels 7, 8, 11
+			 * Some 3945ABG adapters support channels 7, 8, 11
 			 * and 12 in the 2GHz *and* 5GHz bands.
 			 * Because of limitations in our net80211(9) stack,
 			 * we can't support these channels in 5GHz band.
@@ -2148,7 +2148,7 @@ wpi_enable_tsf(struct wpi_softc *sc, struct ieee80211_node *ni)
  * Update Tx power to match what is defined for channel `c'.
  */
 int
-wpi_set_txpower(struct wpi_softc *sc, struct ieee80211_channel *c)
+wpi_set_txpower(struct wpi_softc *sc, struct ieee80211_channel *c, int async)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct wpi_power_group *group;
@@ -2190,7 +2190,7 @@ wpi_set_txpower(struct wpi_softc *sc, struct ieee80211_channel *c)
 		    wpi_ridx_to_rate[i], idx));
 	}
 
-	return wpi_cmd(sc, WPI_CMD_TXPOWER, &txpower, sizeof txpower, 1);
+	return wpi_cmd(sc, WPI_CMD_TXPOWER, &txpower, sizeof txpower, async);
 }
 
 /*
@@ -2384,7 +2384,7 @@ wpi_auth(struct wpi_softc *sc)
 	}
 
 	/* configuration has changed, set Tx power accordingly */
-	if ((error = wpi_set_txpower(sc, ni->ni_chan)) != 0) {
+	if ((error = wpi_set_txpower(sc, ni->ni_chan, 1)) != 0) {
 		printf("%s: could not set Tx power\n", sc->sc_dev.dv_xname);
 		return error;
 	}
@@ -2636,7 +2636,7 @@ wpi_config(struct wpi_softc *sc)
 	}
 
 	/* configuration has changed, set Tx power accordingly */
-	if ((error = wpi_set_txpower(sc, ic->ic_ibss_chan)) != 0) {
+	if ((error = wpi_set_txpower(sc, ic->ic_ibss_chan, 0)) != 0) {
 		printf("%s: could not set Tx power\n", sc->sc_dev.dv_xname);
 		return error;
 	}
