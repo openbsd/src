@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.13 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: uts.c,v 1.14 2007/06/11 01:05:43 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -150,10 +150,9 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Display device info string */
 	printf("\n");
-	if ((devinfop = usbd_devinfo_alloc(uaa->device, 0)) != NULL) {
-		printf("%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-		usbd_devinfo_free(devinfop);
-	}
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	printf("%s: %s\n", sc->sc_dev.dv_xname, devinfop);
+	usbd_devinfo_free(devinfop);
 
 	/* Move the device into the configured state. */
 	if (usbd_set_config_index(uaa->device, UTS_CONFIG_INDEX, 1) != 0) {
