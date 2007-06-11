@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.14 2007/06/11 19:35:24 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.15 2007/06/11 19:41:18 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -80,10 +80,6 @@ struct ieee80211_qosframe {
 	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
 	/* see below */
 } __packed;
-
-struct ieee80211_qoscntl {
-	u_int8_t	i_qos[2];
-};
 
 struct ieee80211_frame_addr4 {
 	u_int8_t	i_fc[2];
