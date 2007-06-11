@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.14 2007/06/09 13:14:55 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.15 2007/06/11 09:56:13 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -46,6 +46,7 @@
 #include <net80211/ieee80211_radiotap.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -674,7 +675,7 @@ int
 cmalo_intr(void *arg)
 {
 	struct malo_softc *sc = arg;
-	uint16_t intr; 
+	uint16_t intr;
 
 	intr = MALO_READ_2(sc, MALO_REG_HOST_INTR_CAUSE);
 
@@ -837,9 +838,10 @@ int
 cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 {
 	struct malo_tx_desc *txdesc = sc->sc_data;
+	struct mbuf *m0;
 	uint8_t *data;
 	uint16_t psize, *uc;
-	int i;
+	int i, off;
 
 	bzero(sc->sc_data, sizeof(*txdesc));
 	psize = sizeof(*txdesc) + m->m_pkthdr.len;
@@ -850,8 +852,13 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	txdesc->pkglen = htole16(m->m_pkthdr.len);
 	bcopy(data, txdesc->dstaddrhigh, ETHER_ADDR_LEN);
 
-	/* copy mbuf packet to the buffer */
-	bcopy(data, sc->sc_data + sizeof(*txdesc), m->m_pkthdr.len);
+	/* copy mbuf data to the buffer */
+	off = sizeof(*txdesc);
+	for (m0 = m; m0; m0 = m0->m_next) {
+		data = mtod(m0, uint8_t *);
+		bcopy(data, sc->sc_data + off, m0->m_len);
+		off += m0->m_len;
+	}
 
 	/* send TX packet to the device */
 	MALO_WRITE_2(sc, MALO_REG_DATA_WRITE_LEN, psize);
@@ -863,6 +870,12 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_TX_DL_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_TX_DL_OVER);
 
+	/* XXX ifp->if_flags |= IFF_OACTIVE ??? */
+
+	DPRINTF(2, "%s: TX status=%d, pkglen=%d, pkgoffset=%d\n",
+	    sc->sc_dev.dv_xname, txdesc->status, m->m_pkthdr.len,
+	    sizeof(*txdesc));
+
 	return (0);
 }
 
@@ -871,7 +884,7 @@ cmalo_tx_done(struct malo_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	DPRINTF(2, "%s: TX frame sent\n", sc->sc_dev.dv_xname);
+	DPRINTF(2, "%s: TX done\n", sc->sc_dev.dv_xname);
 
 	ifp->if_opackets++;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -892,8 +905,8 @@ cmalo_hexdump(void *buf, int len)
 				printf(" ");
 			printf("%02x", (int)*((u_char *)buf + i));
 		}
+		printf("\n");
 	}
-	printf("\n");
 #endif
 }
 
@@ -1127,6 +1140,7 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 int
 cmalo_cmd_set_assoc(struct malo_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_assoc *body;
 	struct malo_cmd_body_assoc_ssid *body_ssid;
@@ -1136,6 +1150,10 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	uint16_t psize;
 	uint8_t ap[] = { 0x00, 0x17, 0x9a, 0x44, 0xda, 0x83 };	/* XXX */
 	uint8_t chan[] = { 0x01 };				/* XXX */
+#if 0
+	uint8_t ap[] = { 0x00, 0x15, 0xe9, 0xa4, 0x6e, 0xd1 };	/* XXX */
+	uint8_t chan[] = { 0x02 };				/* XXX */
+#endif
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 	psize = sizeof(*hdr) + sizeof(*body);
@@ -1146,7 +1164,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 
 	body = (struct malo_cmd_body_assoc *)(hdr + 1);
 	bcopy(ap, body->peermac, ETHER_ADDR_LEN);
-	body->capinfo = 0;
+	body->capinfo = htole16(IEEE80211_CAPINFO_ESS);
 	body->listenintrv = htole16(10);
 
 	body_ssid = sc->sc_cmd + psize;
@@ -1168,8 +1186,11 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 
 	body_rate = sc->sc_cmd + psize;
 	body_rate->type = htole16(MALO_TLV_TYPE_RATES);
-	body_rate->size = htole16(0);
-	psize += sizeof(*body_rate);
+	body_rate->size =
+	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rate->data,
+	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	psize += (sizeof(*body_rate) - 1) + body_rate->size;
 
 	hdr->size = htole16(psize - sizeof(*hdr));
 
@@ -1205,7 +1226,7 @@ cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 
 	/* wait for the command response */
 	sc->sc_cmd_running = 1;
-	for (i = 0; i < 50; i++) {
+	for (i = 0; i < 100; i++) {
 		if (sc->sc_cmd_running == 0)
 			break;
 		tsleep(sc, 0, "malocmd", 1);
