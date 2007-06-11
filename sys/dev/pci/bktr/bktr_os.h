@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.h,v 1.2 2003/01/15 06:30:35 art Exp $	*/
+/*	$OpenBSD: bktr_os.h,v 1.3 2007/06/11 08:10:22 robert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.h,v 1.4 2000/04/16 07:56:58 roger Exp $ */
 
 /*
@@ -48,26 +48,12 @@
 /******************************/
 /* *** Memory Allocation  *** */
 /******************************/
-#if (defined(__FreeBSD__) || defined(__bsdi__))
-vm_offset_t     get_bktr_mem( int unit, unsigned size );
-#endif
-
-#if (defined(__NetBSD__) || defined(__OpenBSD__))
 vaddr_t		get_bktr_mem(bktr_ptr_t, bus_dmamap_t *, unsigned size);
 void            free_bktr_mem(bktr_ptr_t, bus_dmamap_t, vaddr_t);
-#endif 
 
 /************************************/
 /* *** Interrupt Enable/Disable *** */
 /************************************/
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #define DECLARE_INTR_MASK(s)	intrmask_t s
 #define DISABLE_INTR(s)		s=spltty()
 #define ENABLE_INTR(s)		splx(s)
-#else
-#define DECLARE_INTR_MASK(s)	/* no need to declare 's' */
-#define DISABLE_INTR(s)		disable_intr()
-#define ENABLE_INTR(s)		enable_intr()
-#endif
-
-

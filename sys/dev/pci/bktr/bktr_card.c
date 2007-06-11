@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.14 2007/02/11 20:29:22 miod Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.15 2007/06/11 08:10:22 robert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -52,37 +52,12 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
-#ifdef __FreeBSD__
-
-#if (__FreeBSD_version < 500000)
-#include <machine/clock.h>	/* for DELAY */
-#endif
-
-#include <pci/pcivar.h>
-
-#if (__FreeBSD_version >=300000)
-#include <machine/bus_memio.h>	/* for bus space */
-#include <machine/bus.h>
-#include <sys/bus.h>
-#endif
-#endif
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#include <dev/ic/bt8xx.h>	/* NetBSD location for .h files */
+#include <dev/ic/bt8xx.h>	/* OpenBSD location for .h files */
 #include <dev/pci/bktr/bktr_reg.h>
 #include <dev/pci/bktr/bktr_core.h>
 #include <dev/pci/bktr/bktr_tuner.h>
 #include <dev/pci/bktr/bktr_card.h>
 #include <dev/pci/bktr/bktr_audio.h>
-#else
-#include <machine/ioctl_meteor.h>	/* Traditional location for .h files */
-#include <machine/ioctl_bt848.h>	/* extensions to ioctl_meteor.h */
-#include <dev/bktr/bktr_reg.h>
-#include <dev/bktr/bktr_core.h>
-#include <dev/bktr/bktr_tuner.h>
-#include <dev/bktr/bktr_card.h>
-#include <dev/bktr/bktr_audio.h>
-#endif
 
 /* Include the PCI Vendor definitions */
 #include <dev/pci/pcidevs.h>
@@ -583,7 +558,7 @@ static int locate_eeprom_address( bktr_ptr_t bktr) {
  * number assigned to the company by the PCI Special Interest Group
  */
 /* Following not confirmed with http://members.hyperlink.net.au/~chart,
-   so not added to NetBSD's pcidevs */
+   so not added to OpenBSD's pcidevs */
 #define PCI_VENDOR_LEADTEK_ALT	0x6606	/* this is swapped w/ prod id */
 #define PCI_VENDOR_LEADTEK_ALT_2        0x6607
 #define PCI_VENDOR_LEADTEK_ALT_3        0x107d

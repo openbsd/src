@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_tuner.c,v 1.5 2007/01/08 08:29:37 pedro Exp $	*/
+/*	$OpenBSD: bktr_tuner.c,v 1.6 2007/06/11 08:10:22 robert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp $ */
 
 /*
@@ -50,40 +50,13 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/proc.h>
-#endif
 
-#ifdef __FreeBSD__
-#include <pci/pcivar.h>
-
-#if (__FreeBSD_version < 500000)
-#include <machine/clock.h>              /* for DELAY */
-#endif
-
-#if (__FreeBSD_version >=300000)
-#include <machine/bus_memio.h>          /* for bus space */
-#include <machine/bus.h>
-#include <sys/bus.h>
-#endif
-#endif
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#include <dev/ic/bt8xx.h>	/* NetBSD .h file location */
+#include <dev/ic/bt8xx.h>	/* OpenBSD .h file location */
 #include <dev/pci/bktr/bktr_reg.h>
 #include <dev/pci/bktr/bktr_tuner.h>
 #include <dev/pci/bktr/bktr_card.h>
 #include <dev/pci/bktr/bktr_core.h>
-#else
-#include <machine/ioctl_meteor.h>	/* Traditional .h file location */
-#include <machine/ioctl_bt848.h>        /* extensions to ioctl_meteor.h */
-#include <dev/bktr/bktr_reg.h>
-#include <dev/bktr/bktr_tuner.h>
-#include <dev/bktr/bktr_card.h>
-#include <dev/bktr/bktr_core.h>
-#endif
-
-
 
 #if defined( TUNER_AFC )
 #define AFC_DELAY               10000   /* 10 millisend delay */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.8 2006/12/21 02:44:55 krw Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.9 2007/06/11 08:10:22 robert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -51,39 +51,14 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
-
-#ifdef __FreeBSD__
-
-#if (__FreeBSD_version < 500000)
-#include <machine/clock.h>              /* for DELAY */
-#endif
-
-#include <pci/pcivar.h>
-
-#if (__FreeBSD_version >=300000)
-#include <machine/bus_memio.h>		/* for bus space */
-#include <machine/bus.h>
-#include <sys/bus.h>
-#endif
-#endif
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/proc.h>
-#include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
+
+#include <dev/ic/bt8xx.h>	/* OpenBSD location of .h files */
 #include <dev/pci/bktr/bktr_reg.h>
 #include <dev/pci/bktr/bktr_core.h>
 #include <dev/pci/bktr/bktr_tuner.h>
 #include <dev/pci/bktr/bktr_card.h>
 #include <dev/pci/bktr/bktr_audio.h>
-#else
-#include <machine/ioctl_meteor.h>	/* Traditional location of .h files */
-#include <machine/ioctl_bt848.h>        /* extensions to ioctl_meteor.h */
-#include <dev/bktr/bktr_reg.h>
-#include <dev/bktr/bktr_core.h>
-#include <dev/bktr/bktr_tuner.h>
-#include <dev/bktr/bktr_card.h>
-#include <dev/bktr/bktr_audio.h>
-#endif
 
 /*
  * Prototypes for the GV_BCTV specific functions.
