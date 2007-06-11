@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.46 2007/06/11 12:36:52 mbalmer Exp $ */
+/*	$OpenBSD: ugen.c,v 1.47 2007/06/11 16:30:31 mbalmer Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -119,7 +119,7 @@ void ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_ioctl(struct ugen_softc *, int, u_long,
-			 caddr_t, int, usb_proc_ptr);
+			 caddr_t, int, struct proc *);
 int ugen_set_config(struct ugen_softc *sc, int configno);
 usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *sc,
 					       int index, int *lenp);
@@ -261,7 +261,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 }
 
 int
-ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ugen_softc *sc;
 	int unit = UGENUNIT(dev);
@@ -405,7 +405,7 @@ ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-ugenclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ugenclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
@@ -986,7 +986,7 @@ ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 
 int
 ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
-	      caddr_t addr, int flag, usb_proc_ptr p)
+	      caddr_t addr, int flag, struct proc *p)
 {
 	struct ugen_endpoint *sce;
 	usbd_status err;
@@ -1256,7 +1256,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 }
 
 int
-ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
+ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
@@ -1272,7 +1272,7 @@ ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 }
 
 int
-ugenpoll(dev_t dev, int events, usb_proc_ptr p)
+ugenpoll(dev_t dev, int events, struct proc *p)
 {
 	struct ugen_softc *sc;
 	struct ugen_endpoint *sce;

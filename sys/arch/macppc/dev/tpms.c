@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.9 2007/06/05 23:21:06 mbalmer Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.10 2007/06/11 16:30:31 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -274,7 +274,7 @@ struct tpms_softc {
 void tpms_intr(struct uhidev *, void *, unsigned int);
 int tpms_enable(void *);
 void tpms_disable(void *);
-int tpms_ioctl(void *, unsigned long, caddr_t, int, usb_proc_ptr);
+int tpms_ioctl(void *, unsigned long, caddr_t, int, struct proc *);
 void reorder_sample(signed char *, signed char *);
 int compute_delta(struct tpms_softc *, int *, int *, int *, uint32_t *);
 int detect_pos(int *, int, int, int, int *, int *);
@@ -444,7 +444,7 @@ tpms_disable(void *v)
 }
 
 int
-tpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, usb_proc_ptr p)
+tpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:

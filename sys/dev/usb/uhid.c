@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.38 2007/06/11 12:36:52 mbalmer Exp $ */
+/*	$OpenBSD: uhid.c,v 1.39 2007/06/11 16:30:31 mbalmer Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ struct uhid_softc {
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	usb_proc_ptr sc_async;	/* process that wants SIGIO */
+	struct proc *sc_async;	/* process that wants SIGIO */
 	u_char sc_state;	/* driver state */
 #define	UHID_ASLP	0x01	/* waiting for device data */
 #define UHID_IMMED	0x02	/* return read data immediately */
@@ -106,7 +106,7 @@ void uhid_intr(struct uhidev *, void *, u_int len);
 int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
 int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
 int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,
-			 usb_proc_ptr);
+			 struct proc *);
 
 USB_DECLARE_DRIVER(uhid);
 
@@ -233,7 +233,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 }
 
 int
-uhidopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+uhidopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -265,7 +265,7 @@ uhidopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-uhidclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+uhidclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct uhid_softc *sc;
 
@@ -398,7 +398,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 
 int
 uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
-	      int flag, usb_proc_ptr p)
+	      int flag, struct proc *p)
 {
 	struct usb_ctl_report_desc *rd;
 	struct usb_ctl_report *re;
@@ -512,7 +512,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 }
 
 int
-uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
+uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -527,7 +527,7 @@ uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 }
 
 int
-uhidpoll(dev_t dev, int events, usb_proc_ptr p)
+uhidpoll(dev_t dev, int events, struct proc *p)
 {
 	struct uhid_softc *sc;
 	int revents = 0;

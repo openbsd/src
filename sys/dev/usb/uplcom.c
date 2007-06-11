@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.39 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.40 2007/06/11 16:30:31 mbalmer Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ void uplcom_break(struct uplcom_softc *, int);
 void uplcom_set_line_state(struct uplcom_softc *);
 void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
 #if TODO
-int  uplcom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
+int  uplcom_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
 #endif
 int  uplcom_param(void *, int, struct termios *);
 int  uplcom_open(void *, int);
@@ -815,7 +815,7 @@ uplcom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 #if TODO
 int
 uplcom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-	     usb_proc_ptr p)
+	     struct proc *p)
 {
 	struct uplcom_softc *sc = addr;
 	int error = 0;

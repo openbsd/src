@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.84 2007/06/11 12:36:53 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.85 2007/06/11 16:30:31 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -59,8 +59,6 @@
 /* periph_quirks */
 #define	PQUIRK_NOSENSE		ADEV_NOSENSE	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		SDEV_ONLYBIG
-
-typedef struct proc *usb_proc_ptr;
 
 #define UCOMBUSCF_PORTNO		0
 #define UCOMBUSCF_PORTNO_DEFAULT	-1

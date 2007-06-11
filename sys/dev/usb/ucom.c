@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.38 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: ucom.c,v 1.39 2007/06/11 16:30:31 mbalmer Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ int	ucomparam(struct tty *, struct termios *);
 void	ucomstart(struct tty *);
 void	ucom_shutdown(struct ucom_softc *);
 int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
-			      int, usb_proc_ptr);
+			      int, struct proc *);
 void	ucom_dtr(struct ucom_softc *, int);
 void	ucom_rts(struct ucom_softc *, int);
 void	ucom_break(struct ucom_softc *, int);
@@ -292,7 +292,7 @@ ucom_shutdown(struct ucom_softc *sc)
 }
 
 int
-ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
@@ -534,7 +534,7 @@ bad:
 }
 
 int
-ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ucomclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -606,7 +606,7 @@ ucomtty(dev_t dev)
 }
 
 int
-ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
@@ -620,7 +620,7 @@ ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 
 int
 ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
-	      int flag, usb_proc_ptr p)
+	      int flag, struct proc *p)
 {
 	struct tty *tp = sc->sc_tty;
 	int error;

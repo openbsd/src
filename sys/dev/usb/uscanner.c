@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.32 2007/06/11 12:36:53 mbalmer Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.33 2007/06/11 16:30:31 mbalmer Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ uscanner_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-uscanneropen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+uscanneropen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct uscanner_softc *sc;
 	int unit = USCANNERUNIT(dev);
@@ -391,7 +391,7 @@ uscanneropen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-uscannerclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+uscannerclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct uscanner_softc *sc;
 
@@ -609,7 +609,7 @@ uscanner_detach(struct device *self, int flags)
 }
 
 int
-uscannerpoll(dev_t dev, int events, usb_proc_ptr p)
+uscannerpoll(dev_t dev, int events, struct proc *p)
 {
 	struct uscanner_softc *sc;
 	int revents = 0;
@@ -631,7 +631,7 @@ uscannerpoll(dev_t dev, int events, usb_proc_ptr p)
 }
 
 int
-uscannerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
+uscannerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	return (EINVAL);
 }

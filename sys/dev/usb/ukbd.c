@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.33 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.34 2007/06/11 16:30:31 mbalmer Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -311,7 +311,7 @@ void	ukbd_delayed_decode(void *addr);
 int	ukbd_enable(void *, int);
 void	ukbd_set_leds(void *, int);
 
-int	ukbd_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr );
+int	ukbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 void	ukbd_rawrepeat(void *v);
 #endif
@@ -780,7 +780,7 @@ ukbd_rawrepeat(void *v)
 #endif
 
 int
-ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ukbd_softc *sc = v;
 

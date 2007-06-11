@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.29 2007/06/11 12:36:52 mbalmer Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.30 2007/06/11 16:30:31 mbalmer Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -415,7 +415,7 @@ int ulptusein = 1;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ulptopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	u_char flags = ULPTFLAGS(dev);
 	struct ulpt_softc *sc;
@@ -540,7 +540,7 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 }
 
 int
-ulptclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+ulptclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ulpt_softc *sc;
 
@@ -630,7 +630,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 

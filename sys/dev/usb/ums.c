@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.22 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: ums.c,v 1.23 2007/06/11 16:30:31 mbalmer Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ void ums_intr(struct uhidev *addr, void *ibuf, u_int len);
 
 int	ums_enable(void *);
 void	ums_disable(void *);
-int	ums_ioctl(void *, u_long, caddr_t, int, usb_proc_ptr);
+int	ums_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wsmouse_accessops ums_accessops = {
 	ums_enable,
@@ -372,7 +372,7 @@ ums_disable(void *v)
 }
 
 int
-ums_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+ums_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 {
 	switch (cmd) {

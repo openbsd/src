@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.51 2007/06/11 12:36:52 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.52 2007/06/11 16:30:31 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ struct usb_softc {
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
-	usb_proc_ptr	sc_event_thread;
+	struct proc *	sc_event_thread;
 
 	char		sc_dying;
 };
@@ -111,7 +111,7 @@ void	usb_discover(void *);
 void	usb_create_event_thread(void *);
 void	usb_event_thread(void *);
 void	usb_task_thread(void *);
-usb_proc_ptr usb_task_thread_proc = NULL;
+struct proc *usb_task_thread_proc = NULL;
 
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
@@ -122,7 +122,7 @@ SIMPLEQ_HEAD(, usb_event_q) usb_events =
 	SIMPLEQ_HEAD_INITIALIZER(usb_events);
 int usb_nevents = 0;
 struct selinfo usb_selevent;
-usb_proc_ptr usb_async_proc;  /* process that wants USB SIGIO */
+struct proc *usb_async_proc;  /* process that wants USB SIGIO */
 int usb_dev_open = 0;
 void usb_add_event(int, struct usb_event *);
 
@@ -373,7 +373,7 @@ usbctlprint(void *aux, const char *pnp)
 }
 
 int
-usbopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+usbopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct usb_softc *sc;
@@ -432,7 +432,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-usbclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+usbclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 
@@ -445,7 +445,7 @@ usbclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct usb_softc *sc;
 	int unit = minor(devt);
@@ -572,7 +572,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 }
 
 int
-usbpoll(dev_t dev, int events, usb_proc_ptr p)
+usbpoll(dev_t dev, int events, struct proc *p)
 {
 	int revents, mask, s;
 

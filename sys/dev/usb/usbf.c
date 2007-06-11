@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.6 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.7 2007/06/11 16:30:31 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -75,7 +75,7 @@ struct usbf_softc {
 	struct device	 sc_dev;	/* base device */
 	usbf_bus_handle	 sc_bus;	/* USB device controller */
 	struct usbf_port sc_port;	/* dummy port for function */
-	usb_proc_ptr	 sc_proc;	/* task thread */
+	struct proc *	 sc_proc;	/* task thread */
 	TAILQ_HEAD(,usbf_task) sc_tskq;	/* task queue head */
 	int		 sc_dying;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.29 2007/06/11 12:36:52 mbalmer Exp $	*/
+/*	$OpenBSD: urio.c,v 1.30 2007/06/11 16:30:31 mbalmer Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ urio_activate(device_ptr_t self, enum devact act)
 }
 
 int
-urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+urioopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct urio_softc *sc;
 	usbd_status err;
@@ -284,7 +284,7 @@ urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-urioclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+urioclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct urio_softc *sc;
 	sc = urio_cd.cd_devs[URIOUNIT(dev)];
@@ -426,7 +426,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
+urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct urio_softc * sc;
 	int unit = URIOUNIT(dev);
@@ -521,7 +521,7 @@ ret:
 }
 
 int
-uriopoll(dev_t dev, int events, usb_proc_ptr p)
+uriopoll(dev_t dev, int events, struct proc *p)
 {
 	return (0);
 }
