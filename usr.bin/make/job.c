@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.61 2007/03/02 04:32:32 ray Exp $	*/
+/*	$OpenBSD: job.c,v 1.62 2007/06/12 16:33:27 cnst Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1349,14 +1349,19 @@ JobExec(Job *job, char **argv)
 	    job->curPos = 0;
 
 	    if (outputsp == NULL || job->inPipe > outputsn) {
-		int bytes = howmany(job->inPipe+1, NFDBITS) * sizeof(fd_mask);
-		int obytes = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
+		int bytes, obytes;
+		char *tmp;
 
-		if (outputsp == NULL || obytes != bytes) {
-			outputsp = realloc(outputsp, bytes);
-			if (outputsp == NULL)
+		bytes = howmany(job->inPipe+1, NFDBITS) * sizeof(fd_mask);
+		obytes = outputsn ?
+		    howmany(outputsn+1, NFDBITS) * sizeof(fd_mask) : 0;
+
+		if (bytes != obytes) {
+			tmp = realloc(outputsp, bytes);
+			if (tmp == NULL)
 				return;
-			memset(outputsp + obytes, 0, bytes - obytes);
+			memset(tmp + obytes, 0, bytes - obytes);
+			outputsp = (fd_set *)tmp;
 		}
 		outputsn = job->inPipe;
 	    }
