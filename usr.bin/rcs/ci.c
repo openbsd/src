@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.198 2007/04/26 21:48:37 sobrado Exp $	*/
+/*	$OpenBSD: ci.c,v 1.199 2007/06/12 06:09:38 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -531,7 +531,8 @@ checkin_update(struct checkin_params *pb)
 			    pb->flags);
 	}
 
-	if (rcs_lock_remove(pb->file, pb->username, pb->frev) < 0) {
+	if ((rcs_lock_remove(pb->file, pb->username, pb->frev) < 0) &&
+	    (rcs_lock_getmode(pb->file) != RCS_LOCK_LOOSE)) {
 		if (rcs_errno != RCS_ERR_NOENT)
 			warnx("failed to remove lock");
 		else if (!(pb->flags & CO_LOCK))
@@ -799,6 +800,9 @@ static int
 checkin_checklock(struct checkin_params *pb)
 {
 	struct rcs_lock *lkp;
+
+	if (rcs_lock_getmode(pb->file) == RCS_LOCK_LOOSE)
+		return (0);
 
 	TAILQ_FOREACH(lkp, &(pb->file->rf_locks), rl_list) {
 		if (!strcmp(lkp->rl_name, pb->username) &&
