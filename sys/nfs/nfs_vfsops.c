@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.63 2007/04/12 13:24:39 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.64 2007/06/12 19:25:27 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -70,10 +70,11 @@
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
+extern u_int32_t nfs_procids[NFS_NPROCS];
 
-int nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-int nfs_checkexp(struct mount *mp, struct mbuf *nam,
-	 int *extflagsp, struct ucred **credanonp);
+int		nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int		nfs_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
+struct mount	*nfs_mount_diskless(struct nfs_dlmount *, char *, int);
 
 /*
  * nfs vfs operations.
@@ -93,11 +94,6 @@ const struct vfsops nfs_vfsops = {
 	nfs_sysctl,
 	nfs_checkexp
 };
-
-extern u_int32_t nfs_procids[NFS_NPROCS];
-extern u_int32_t nfs_prog, nfs_vers;
-
-struct mount *nfs_mount_diskless(struct nfs_dlmount *, char *, int);
 
 #define TRUE	1
 #define	FALSE	0
@@ -800,8 +796,6 @@ nfs_root(mp, vpp)
 	*vpp = NFSTOV(np);
 	return (0);
 }
-
-extern int syncprt;
 
 /*
  * Flush out the buffer cache
