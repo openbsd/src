@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.141 2007/06/04 20:05:14 henning Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.142 2007/06/12 16:25:44 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 4 2007 $
+.Dd $Mdocdate: June 12 2007 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -142,21 +142,6 @@ or an Internet version 6 address in standard colon separated form, as
 described in the
 .Xr inet 3
 manual page.
-.Pp
-For the Xerox Network Systems(tm) and Internetwork Packet Exchange families,
-addresses are of the form
-.Dq net:a.b.c.d.e.f ,
-where
-.Dq net
-is the assigned network number (in decimal),
-and each of the six bytes of the host number,
-.Dq a
-through
-.Dq f ,
-are specified in hexadecimal.
-The host number may be omitted on Ethernet interfaces,
-which use the hardware physical address,
-and on interfaces other than the first.
 .Pp
 .Tn AppleTalk
 (LLAP) addresses are specified as
