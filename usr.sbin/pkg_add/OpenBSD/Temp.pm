@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.10 2007/05/07 09:56:48 espie Exp $
+# $OpenBSD: Temp.pm,v 1.11 2007/06/12 09:26:46 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -23,8 +23,8 @@ use File::Temp;
 
 our $tempbase = $ENV{'PKG_TMPDIR'} || '/var/tmp';
 
-my $dirs = [];
-my $files = [];
+my $dirs = {};
+my $files = {};
 
 sub cleanup
 {
@@ -39,8 +39,12 @@ sub cleanup
 	    local $SIG{'KILL'} = $h;
 	    local $SIG{'TERM'} = $h;
 
-	    unlink(@$files);
-	    File::Path::rmtree($dirs);
+	    while (my ($name, $pid) = each %$files) {
+		    unlink($name) if $pid == $$;
+	    }
+	    while (my ($dir, $pid) = each %$files) {
+		    File::Path::rmtree([$dir]) if $pid == $$;
+	    }
 	}
 	if (defined $caught) {
 		kill $caught, $$;
@@ -77,7 +81,7 @@ sub dir()
 	    local $SIG{'KILL'} = $h;
 	    local $SIG{'TERM'} = $h;
 	    $dir = permanent_dir($tempbase, "pkginfo");
-	    push(@$dirs, $dir);
+	    $dirs->{$dir} = $$;
 	}
 	if (defined $caught) {
 		kill $caught, $$;
@@ -98,7 +102,7 @@ sub file()
 	    local $SIG{'KILL'} = $h;
 	    local $SIG{'TERM'} = $h;
 	    ($fh, $file) = permanent_file($tempbase, "pkgout");
-	    push(@$files, $file);
+	    $files->{$file} = $$;
 	}
 	if (defined $caught) {
 		kill $caught, $$;
