@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.60 2007/04/10 13:26:39 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.61 2007/06/12 06:30:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -322,7 +322,7 @@ asext_calc(struct vertex *v)
 			if (rn->invalid)
 				continue;
 
-			if (rn->connected) {
+			if (rn->connected && r->d_type == DT_NET) {
 				if (v->lsa->data.asext.fw_addr != 0)
 					calc_nexthop_add(v, NULL, 
 					    v->lsa->data.asext.fw_addr);
