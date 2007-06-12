@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.1 2007/06/10 16:59:30 espie Exp $
+# $OpenBSD: Paths.pm,v 1.2 2007/06/12 09:57:50 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -21,41 +21,41 @@ use warnings;
 package OpenBSD::Paths;
 
 # Commands
-our $ldconfig = '/sbin/ldconfig';
-our $mkfontdir = '/usr/X11R6/bin/mkfontdir';
-our $fc_cache = '/usr/X11R6/bin/fc-cache';
-our $install_info = '/usr/bin/install-info';
-our $useradd = '/usr/sbin/useradd';
-our $groupadd = '/usr/sbin/groupadd';
-our $sysctl = '/sbin/sysctl';
-our $openssl = '/usr/sbin/openssl';
-our $chmod = '/bin/chmod';
-our $gzip = '/usr/bin/gzip';
-our $ftp = '/usr/bin/ftp';
-our $groff = '/usr/bin/groff';
-our $sh = '/bin/sh';
-our $arch = '/usr/bin/arch';
-our $uname = '/usr/bin/uname';
-our $userdel = '/usr/sbin/userdel';
-our $groupdel = '/usr/sbin/groupdel';
-our $mknod = '/sbin/mknod';
-our $mount = '/sbin/mount';
-our $df = '/bin/df';
-our $ssh = '/us/bin/ssh';
-our $make = '/usr/bin/make';
-our $mklocatedb = '/usr/libexec/locate.mklocatedb';
+sub ldconfig() { '/sbin/ldconfig' }
+sub mkfontdir() { '/usr/X11R6/bin/mkfontdir' }
+sub fc_cache() { '/usr/X11R6/bin/fc-cache' }
+sub install_info() { '/usr/bin/install-info' }
+sub useradd() { '/usr/sbin/useradd' }
+sub groupadd() { '/usr/sbin/groupadd' }
+sub sysctl() { '/sbin/sysctl' }
+sub openssl() { '/usr/sbin/openssl' }
+sub chmod() { '/bin/chmod' }
+sub gzip() { '/usr/bin/gzip' }
+sub ftp() { $ENV{'FETCH_CMD'} || '/usr/bin/ftp' }
+sub groff() { '/usr/bin/groff' }
+sub sh() { '/bin/sh' }
+sub arch() { '/usr/bin/arch' }
+sub uname() { '/usr/bin/uname' }
+sub userdel() { '/usr/sbin/userdel' }
+sub groupdel() { '/usr/sbin/groupdel' }
+sub mknod() { '/sbin/mknod' }
+sub mount() { '/sbin/mount' }
+sub df() { '/bin/df' }
+sub ssh() { '/us/bin/ssh' }
+sub make() { '/usr/bin/make' }
+sub mklocatedb() { '/usr/libexec/locate.mklocatedb' }
 
 # Various paths
-our $shells = '/etc/shells';
-our $pkgdb = '/var/db/pkg';
-our $localbase = '/usr/local';
-our $vartmp = '/var/tmp';
-our $portsdir = '/usr/ports';
+sub shells() { '/etc/shells' }
+sub pkgdb() { '/var/db/pkg' }
+sub localbase() { '/usr/local' }
+sub vartmp() { '/var/tmp' }
+sub portsdir() { '/usr/ports' }
 
-our @library_dirs = ("/usr", "/usr/X11R6");
-our @master_keys = ("/etc/master_key");
+sub library_dirs() { ("/usr", "/usr/X11R6") }
+sub master_keys() { ("/etc/master_key") }
 
-our @font_cruft = ("fonts.alias", "fonts.dir", "fonts.cache-1");
-our @man_cruft = ("whatis.db");
+sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1") }
+sub man_cruft() { ("whatis.db") }
 
 1;
