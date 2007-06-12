@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.53 2007/06/09 23:06:46 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.54 2007/06/12 20:57:42 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -157,7 +157,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 
 	if (error)
-		return (error);
+		goto done;
 
 	bsdtocpulabel(lp, osdep);
 
@@ -176,6 +176,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 		error = biowait(bp);
 	}
 
+done:
 	if (bp) {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);

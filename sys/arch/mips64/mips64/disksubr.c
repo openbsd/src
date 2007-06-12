@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.52 2007/06/09 23:06:46 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.53 2007/06/12 20:57:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -509,7 +509,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	char *msg = "no disk label";
-	struct buf *bp;
+	struct buf *bp = NULL;
 	struct disklabel dl;
 	struct cpu_disklabel cdl;
 	int labeloffset, error, partoff = 0, cyl = 0;
@@ -527,8 +527,10 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 		labeloffset = LABELOFFSET;
 	}
 	if (msg) {
-		if (partoff == -1)
-			return EIO;
+		if (partoff == -1) {
+			error = EIO;
+			goto error;
+		}
 
 		/* Write it in the regular place with native byte order. */
 		labeloffset = LABELOFFSET;
@@ -543,7 +545,9 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	(*strat)(bp);
 	error = biowait(bp);
 
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
 	return (error);
 }

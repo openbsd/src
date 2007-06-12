@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.37 2007/06/09 23:06:46 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.38 2007/06/12 20:57:43 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -174,7 +174,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 done:
 	if (bp) {
-		bp->b_flags = B_INVAL | B_AGE | B_READ;
+		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
 	disklabeltokernlabel(lp);
@@ -190,20 +190,12 @@ int
 writedisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *clp)
 {
-	struct buf *bp;
+	struct buf *bp = NULL;
 	int error;
 
 	error = disklabel_bsd_to_sun(lp, clp->cd_block);
 	if (error)
-		return (error);
-
-#if 0	/* XXX - Allow writing native disk labels? */
-	{
-		struct disklabel *dlp;
-		dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-		*dlp = *lp;	/* struct assignment */
-	}
-#endif
+		goto done;
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
@@ -214,11 +206,15 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_WRITE;
+	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
-	brelse(bp);
 
+done:
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
 	return (error);
 }
 

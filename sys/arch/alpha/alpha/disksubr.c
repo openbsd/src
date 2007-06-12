@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.83 2007/06/10 05:42:48 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.84 2007/06/12 20:57:41 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -389,7 +389,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	char *msg = "no disk label";
-	struct buf *bp;
+	struct buf *bp = NULL;
 	struct disklabel dl;
 	struct cpu_disklabel cdl;
 	int labeloffset, error, i, partoff = 0, cyl = 0, needcsum = 0;
@@ -416,8 +416,10 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 		labeloffset = I386_LABELOFFSET;
 	}
 	if (msg) {
-		if (partoff == -1)
-			return EIO;
+		if (partoff == -1) {
+			error = EIO;
+			goto done;
+		}
 
 		/* Write it in the regular place with native byte order. */
 		labeloffset = LABELOFFSET;
@@ -439,7 +441,10 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	(*strat)(bp);
 	error = biowait(bp);
 
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+done:
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
 	return (error);
 }

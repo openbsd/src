@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.46 2007/06/09 23:06:46 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.47 2007/06/12 20:57:43 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	struct disklabel *dlp;
-	struct buf *bp;
+	struct buf *bp = NULL;
 	int error, dospartoff, cyl, i;
 	int ourpart = -1;
 
@@ -378,7 +378,9 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	error = biowait(bp);
 
 done:
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
 	return (error);
 }
