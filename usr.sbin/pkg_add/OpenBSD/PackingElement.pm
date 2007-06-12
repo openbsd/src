@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.133 2007/06/06 12:32:09 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.134 2007/06/12 09:53:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1327,12 +1327,15 @@ sub prepare
 {
 	my ($self, $state) = @_;
 	my $fname = $self->fullname;
-	open(my $src, '<', $fname) or Warn "Can't open $fname: $!";
-	while (<$src>) {
-		next if m/^\+\-+\s*$/o;
-		s/^[+-] //o;
-		$state->print($_);
-	}
+	if (open(my $src, '<', $fname)) {
+		while (<$src>) {
+			next if m/^\+\-+\s*$/o;
+			s/^[+-] //o;
+			$state->print($_);
+		} 
+	} else {
+		Warn "Can't open $fname: $!\n";
+    	}
 }
 
 package OpenBSD::PackingElement::FDISPLAY;

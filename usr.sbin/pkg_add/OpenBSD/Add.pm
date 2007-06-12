@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.76 2007/06/09 13:39:31 espie Exp $
+# $OpenBSD: Add.pm,v 1.77 2007/06/12 09:53:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -662,7 +662,9 @@ sub copy_info
 	my ($self, $dest) = @_;
 	require File::Copy;
 
-	File::Copy::move($self->fullname, $dest);
+	File::Copy::move($self->fullname, $dest) or
+		print STDERR "Problem while moving ", $self->fullname,
+			" into $dest: $!\n";
 }
 
 package OpenBSD::PackingElement::FINSTALL;

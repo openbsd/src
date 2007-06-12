@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.44 2007/06/10 14:25:18 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.45 2007/06/12 09:53:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -326,7 +326,7 @@ sub pkg_copy
 	do {
 		$n = sysread($in, $buffer, $buffsize);
 		if (!defined $n) {
-			die "Error reading\n";
+			die "Error reading: $!";
 		}
 		if ($n > 0) {
 			$nonempty = 1;

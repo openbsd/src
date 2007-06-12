@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg,v 1.8 2007/05/14 11:02:14 espie Exp $
+# $OpenBSD: pkg,v 1.9 2007/06/12 09:53:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -34,7 +34,7 @@ sub check_dependencies($)
 my %opts;
 my %legacy = map +($_, 1), qw{add info delete create};
 if (@ARGV == 0) {
-	die "needs arguments\n";
+	die "needs arguments";
 }
 
 getopts('v', \%opts);
@@ -56,4 +56,4 @@ if (defined $legacy{$cmd}) {
 		}
 	}
 }
-die "Bad command $cmd\n";
+die "Bad command $cmd";

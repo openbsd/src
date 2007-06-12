@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.48 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.49 2007/06/12 09:53:36 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -73,10 +73,10 @@ sub skip
 	}
     	my $actual = read($self->{fh}, $temp, $toread);
 	if (!defined $actual) {
-		die "Error while skipping archive: $!\n";
+		die "Error while skipping archive: $!";
 	}
 	if ($actual == 0) {
-		die "Premature end of archive in header: $!\n";
+		die "Premature end of archive in header: $!";
 	}
 	$self->{swallow} -= $actual;
     }
@@ -222,19 +222,19 @@ sub mkheader
 		$linkname = '';
 	}
 	if (length $prefix > MAXPREFIX) {
-		die "Prefix too long $prefix\n";
+		die "Prefix too long $prefix";
 	}
 	if (length $name > MAXFILENAME) {
-		die "Name too long $name\n";
+		die "Name too long $name";
 	}
 	if (length $linkname > MAXLINKNAME) {
-		die "Linkname too long $linkname\n";
+		die "Linkname too long $linkname";
 	}
 	if (length $uname > MAXUSERNAME) {
-		die "Username too long $uname\n";
+		die "Username too long $uname";
 	}
 	if (length $gname > MAXGROUPNAME) {
-		die "Groupname too long $gname\n";
+		die "Groupname too long $gname";
 	}
 	my $header;
 	my $cksum = ' 'x8;
@@ -343,7 +343,7 @@ sub new
 	my ($class, $object) = @_;
 
 	if ($object->{size} != 0) {
-		die "Bad archive: non null size for arbitrary entry\n";
+		die "Bad archive: non null size for arbitrary entry";
 	}
 	bless $object, $class;
 }
@@ -462,7 +462,7 @@ sub resolve_links
 		$self->{linkname} = $arc->{key}->{$k};
 	} else {
 		print join("\n", keys(%{$arc->{key}})), "\n";
-		die "Can't copy link over: original for $k NOT available\n";
+		die "Can't copy link over: original for $k NOT available";
 	}
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.9 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.10 2007/06/12 09:53:36 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -117,10 +117,10 @@ sub prepare_long
 	my $filename = $item->{name};
 	my $entry = $self->prepare($filename);
 	if (!defined $entry->{uname}) {
-		die "No user name for ", $entry->{name}, " (uid ", $entry->{uid}, ")\n";
+		die "No user name for ", $entry->{name}, " (uid ", $entry->{uid}, ")";
 	}
 	if (!defined $entry->{gname}) {
-		die "No group name for ", $entry->{name}, " (gid ", $entry->{gid}. "\n";
+		die "No group name for ", $entry->{name}, " (gid ", $entry->{gid}. ")";
 	}
 	my ($prefix, $name) = split_name($entry->{name});
 	if (length($name) > MAXFILENAME || length($prefix) > MAXPREFIX) {
