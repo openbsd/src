@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.20 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: inet.3,v 1.21 2007/06/12 16:50:06 jmc Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 12 2007 $
 .Dt INET 3
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@ and
 .Fn inet_network
 interpret character strings representing
 numbers expressed in the Internet standard
-.Ql \&.
+.Dq dot
 notation.
 The
 .Fn inet_pton
@@ -121,10 +121,7 @@ will have been set), or it returns a pointer to the destination string.
 The routine
 .Fn inet_ntoa
 takes an Internet address and returns an
-.Tn ASCII
-string representing the address in
-.Ql \&.
-notation.
+ASCII string representing the address in dot notation.
 The routine
 .Fn inet_makeaddr
 takes an Internet network number and a local
@@ -143,10 +140,7 @@ order (bytes ordered from left to right).
 All network numbers and local address parts are
 returned as machine format integer values.
 .Sh INTERNET ADDRESSES (IP VERSION 4)
-Values specified using the
-.Ql \&.
-notation take one
-of the following forms:
+Values specified using dot notation take one of the following forms:
 .Bd -literal -offset indent
 a.b.c.d
 a.b.c
@@ -159,11 +153,9 @@ as a byte of data and assigned, from left to right,
 to the four bytes of an Internet address.
 Note that when an Internet address is viewed as a 32-bit
 integer quantity on a system that uses little-endian
-byte order (such as the
-.Tn Intel 386, 486
-and
-.Tn Pentium
-processors) the bytes referred to above appear as
+byte order
+(such as the Intel 386, 486 and Pentium processors)
+the bytes referred to above appear as
 .Dq Li d.c.b.a .
 That is, little-endian bytes are ordered from right to left.
 .Pp
@@ -187,9 +179,7 @@ rearrangement.
 .Pp
 All numbers supplied as
 .Dq parts
-in a
-.Ql \&.
-notation
+in a dot notation
 may be decimal, octal, or hexadecimal, as specified
 in the C language (i.e., a leading 0x or 0X implies
 hexadecimal; a leading 0 implies octal;
