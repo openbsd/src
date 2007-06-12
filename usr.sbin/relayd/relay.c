@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.33 2007/06/07 07:19:50 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.34 2007/06/12 15:16:10 msf Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -464,7 +464,7 @@ relay_statistics(int fd, short events, void *arg)
 
 		crs.id = rlay->conf.id;
 		crs.proc = proc_id;
-		imsg_compose(ibuf_pfe, IMSG_STATISTICS, 0, 0,
+		imsg_compose(ibuf_pfe, IMSG_STATISTICS, 0, 0, -1,
 		    &crs, sizeof(crs));
 
 		for (con = TAILQ_FIRST(&rlay->sessions);
@@ -1532,7 +1532,8 @@ relay_accept(int fd, short sig, void *arg)
 		cnl->proc = proc_id;
 		bcopy(&con->in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->conf.ss, &cnl->dst, sizeof(cnl->dst));
-		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, cnl, sizeof(*cnl));
+		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl, 
+		    sizeof(*cnl));
 
 		/* Schedule timeout */
 		evtimer_set(&con->ev, relay_natlook, con);
@@ -1784,7 +1785,7 @@ relay_close(struct session *con, const char *msg)
 
 	if (con->cnl != NULL) {
 #if 0
-		imsg_compose(ibuf_pfe, IMSG_KILLSTATES, 0, 0,
+		imsg_compose(ibuf_pfe, IMSG_KILLSTATES, 0, 0, -1,
 		    cnl, sizeof(*cnl));
 #endif
 		free(con->cnl);

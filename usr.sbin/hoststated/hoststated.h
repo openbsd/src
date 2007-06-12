@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.51 2007/05/31 03:24:05 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.52 2007/06/12 15:16:10 msf Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -62,6 +62,7 @@ struct buf {
 	size_t			 max;
 	size_t			 wpos;
 	size_t			 rpos;
+	int			 fd;
 };
 
 struct msgbuf {
@@ -77,6 +78,11 @@ struct buf_read {
 	u_char			 buf[READ_BUF_SIZE];
 	u_char			*rptr;
 	size_t			 wpos;
+};
+
+struct imsg_fd {
+	TAILQ_ENTRY(imsg_fd)	entry;
+	int			fd;
 };
 
 struct imsgbuf {
@@ -645,13 +651,14 @@ void	 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));
 ssize_t	 imsg_read(struct imsgbuf *);
 ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    void *, u_int16_t);
+	    int, void *, u_int16_t);
 struct buf *imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 	    u_int16_t);
 int	 imsg_add(struct buf *, void *, u_int16_t);
 int	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
 void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
+int	 imsg_get_fd(struct imsgbuf *);
 
 /* pfe.c */
 pid_t	 pfe(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],

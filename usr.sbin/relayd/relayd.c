@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.35 2007/06/07 07:19:50 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.36 2007/06/12 15:16:10 msf Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -328,12 +328,13 @@ send_all(struct hoststated *env, enum imsg_type type, void *buf, u_int16_t len)
 {
 	int		 i;
 
-	if (imsg_compose(ibuf_pfe, type, 0, 0, buf, len) == -1)
+	if (imsg_compose(ibuf_pfe, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
-	if (imsg_compose(ibuf_hce, type, 0, 0, buf, len) == -1)
+	if (imsg_compose(ibuf_hce, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
 	for (i = 0; i < env->prefork_relay; i++) {
-		if (imsg_compose(&ibuf_relay[i], type, 0, 0, buf, len) == -1)
+		if (imsg_compose(&ibuf_relay[i], type, 0, 0, -1, buf, len) 
+		    == -1)
 			return (-1);
 	}
 	return (0);
@@ -387,40 +388,40 @@ reconfigure(void)
 	/*
 	 * first reconfigure pfe
 	 */
-	imsg_compose(ibuf_pfe, IMSG_RECONF, 0, 0, env, sizeof(*env));
+	imsg_compose(ibuf_pfe, IMSG_RECONF, 0, 0, -1, env, sizeof(*env));
 	TAILQ_FOREACH(table, env->tables, entry) {
-		imsg_compose(ibuf_pfe, IMSG_RECONF_TABLE, 0, 0,
+		imsg_compose(ibuf_pfe, IMSG_RECONF_TABLE, 0, 0, -1,
 		    &table->conf, sizeof(table->conf));
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			imsg_compose(ibuf_pfe, IMSG_RECONF_HOST, 0, 0,
+			imsg_compose(ibuf_pfe, IMSG_RECONF_HOST, 0, 0, -1,
 			    &host->conf, sizeof(host->conf));
 		}
 	}
 	TAILQ_FOREACH(service, env->services, entry) {
-		imsg_compose(ibuf_pfe, IMSG_RECONF_SERVICE, 0, 0,
+		imsg_compose(ibuf_pfe, IMSG_RECONF_SERVICE, 0, 0, -1,
 		    &service->conf, sizeof(service->conf));
 		TAILQ_FOREACH(virt, &service->virts, entry)
-			imsg_compose(ibuf_pfe, IMSG_RECONF_VIRT, 0, 0,
+			imsg_compose(ibuf_pfe, IMSG_RECONF_VIRT, 0, 0, -1,
 				virt, sizeof(*virt));
 	}
-	imsg_compose(ibuf_pfe, IMSG_RECONF_END, 0, 0, NULL, 0);
+	imsg_compose(ibuf_pfe, IMSG_RECONF_END, 0, 0, -1, NULL, 0);
 
 	/*
 	 * then reconfigure hce
 	 */
-	imsg_compose(ibuf_hce, IMSG_RECONF, 0, 0, env, sizeof(*env));
+	imsg_compose(ibuf_hce, IMSG_RECONF, 0, 0, -1, env, sizeof(*env));
 	TAILQ_FOREACH(table, env->tables, entry) {
-		imsg_compose(ibuf_hce, IMSG_RECONF_TABLE, 0, 0,
+		imsg_compose(ibuf_hce, IMSG_RECONF_TABLE, 0, 0, -1,
 		    &table->conf, sizeof(table->conf));
 		if (table->sendbuf != NULL)
-			imsg_compose(ibuf_hce, IMSG_RECONF_SENDBUF, 0, 0,
+			imsg_compose(ibuf_hce, IMSG_RECONF_SENDBUF, 0, 0, -1,
 			    table->sendbuf, strlen(table->sendbuf) + 1);
 		TAILQ_FOREACH(host, &table->hosts, entry) {
-			imsg_compose(ibuf_hce, IMSG_RECONF_HOST, 0, 0,
+			imsg_compose(ibuf_hce, IMSG_RECONF_HOST, 0, 0, -1, 
 			    &host->conf, sizeof(host->conf));
 		}
 	}
-	imsg_compose(ibuf_hce, IMSG_RECONF_END, 0, 0, NULL, 0);
+	imsg_compose(ibuf_hce, IMSG_RECONF_END, 0, 0, -1, NULL, 0);
 }
 
 void
@@ -625,7 +626,7 @@ main_dispatch_hce(int fd, short event, void * ptr)
 			bcopy(imsg.data, &scr, sizeof(scr));
 			scr.retval = script_exec(env, &scr);
 			imsg_compose(ibuf_hce, IMSG_SCRIPT,
-			    0, 0, &scr, sizeof(scr));
+			    0, 0, -1, &scr, sizeof(scr));
 			break;
 		default:
 			log_debug("main_dispatch_hce: unexpected imsg %d",

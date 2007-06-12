@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.6 2007/02/07 13:39:58 reyk Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.7 2007/06/12 15:16:10 msf Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,6 +50,7 @@ buf_open(size_t len)
 		return (NULL);
 	}
 	buf->size = buf->max = len;
+	buf->fd = -1;
 
 	return (buf);
 }
@@ -156,6 +157,8 @@ msgbuf_write(struct msgbuf *msgbuf)
 	int		 i = 0;
 	ssize_t		 n;
 	struct msghdr	 msg;
+	struct cmsghdr	*cmsg;
+	char		 cmsgbuf[CMSG_SPACE(sizeof(int))];
 
 	bzero(&iov, sizeof(iov));
 	bzero(&msg, sizeof(msg));
@@ -165,10 +168,22 @@ msgbuf_write(struct msgbuf *msgbuf)
 		iov[i].iov_base = buf->buf + buf->rpos;
 		iov[i].iov_len = buf->size - buf->rpos;
 		i++;
+		if (buf->fd != -1)
+			break;
 	}
 
 	msg.msg_iov = iov;
 	msg.msg_iovlen = i;
+
+	if (buf != NULL && buf->fd != -1) {
+		msg.msg_control = (caddr_t)cmsgbuf;
+		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		cmsg = CMSG_FIRSTHDR(&msg);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		*(int *)CMSG_DATA(cmsg) = buf->fd;
+	}
 
 	if ((n = sendmsg(msgbuf->fd, &msg, 0)) == -1) {
 		if (errno == EAGAIN || errno == ENOBUFS ||
@@ -181,6 +196,16 @@ msgbuf_write(struct msgbuf *msgbuf)
 	if (n == 0) {			/* connection closed */
 		errno = 0;
 		return (-2);
+	}
+
+	if (buf != NULL && buf->fd != -1) {
+		msg.msg_control = (caddr_t)cmsgbuf;
+		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		cmsg = CMSG_FIRSTHDR(&msg);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		*(int *)CMSG_DATA(cmsg) = buf->fd;
 	}
 
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
@@ -209,6 +234,10 @@ void
 buf_dequeue(struct msgbuf *msgbuf, struct buf *buf)
 {
 	TAILQ_REMOVE(&msgbuf->bufs, buf, entry);
+
+	if (buf->fd != -1)
+		close(buf->fd);
+
 	msgbuf->queued--;
 	buf_free(buf);
 }

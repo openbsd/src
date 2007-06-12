@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.1 2007/05/29 17:12:04 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.2 2007/06/12 15:16:10 msf Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -53,7 +53,7 @@ check_script(struct host *host)
 	host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 
 	scr.host = host->conf.id;
-	imsg_compose(ibuf_main, IMSG_SCRIPT, 0, 0, &scr, sizeof(scr));
+	imsg_compose(ibuf_main, IMSG_SCRIPT, 0, 0, -1, &scr, sizeof(scr));
 }
 
 void

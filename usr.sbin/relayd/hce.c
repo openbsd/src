@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.26 2007/06/07 07:19:50 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.27 2007/06/12 15:16:10 msf Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -220,7 +220,7 @@ hce_launch_checks(int fd, short event, void *arg)
 	/*
 	 * notify pfe checks are done and schedule next check
 	 */
-	imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, NULL, 0);
+	imsg_compose(ibuf_pfe, IMSG_SYNC, 0, 0, -1, NULL, 0);
 	TAILQ_FOREACH(table, env->tables, entry) {
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
@@ -295,7 +295,7 @@ hce_notify_done(struct host *host, const char *msg)
 	if (msg)
 		log_debug("hce_notify_done: %s (%s)", host->conf.name, msg);
 
-	imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, &st, sizeof(st));
+	imsg_compose(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, -1, &st, sizeof(st));
 	if (host->up != host->last_up)
 		logopt = HOSTSTATED_OPT_LOGUPDATE;
 	else
