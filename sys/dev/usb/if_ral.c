@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.97 2007/06/10 14:49:00 mbalmer Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.98 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2176,7 +2176,7 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 int
-ural_activate(device_ptr_t self, enum devact act)
+ural_activate(struct device *self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

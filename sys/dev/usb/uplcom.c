@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.40 2007/06/11 16:30:31 mbalmer Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.41 2007/06/12 16:26:37 mbalmer Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ struct	uplcom_softc {
 	int			sc_dtr;		/* current DTR state */
 	int			sc_rts;		/* current RTS state */
 
-	device_ptr_t		sc_subdev;	/* ucom device */
+	struct device *		sc_subdev;	/* ucom device */
 
 	u_char			sc_dying;	/* disconnecting */
 
@@ -430,7 +430,7 @@ uplcom_detach(struct device *self, int flags)
 }
 
 int
-uplcom_activate(device_ptr_t self, enum devact act)
+uplcom_activate(struct device *self, enum devact act)
 {
 	struct uplcom_softc *sc = (struct uplcom_softc *)self;
 	int rv = 0;

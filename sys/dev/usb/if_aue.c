@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.62 2007/06/11 05:42:53 mbalmer Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.63 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -234,9 +234,9 @@ void aue_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 int aue_eeprom_getword(struct aue_softc *, int);
 void aue_read_mac(struct aue_softc *, u_char *);
-int aue_miibus_readreg(device_ptr_t, int, int);
-void aue_miibus_writereg(device_ptr_t, int, int, int);
-void aue_miibus_statchg(device_ptr_t);
+int aue_miibus_readreg(struct device *, int, int);
+void aue_miibus_writereg(struct device *, int, int, int);
+void aue_miibus_statchg(struct device *);
 
 void aue_lock_mii(struct aue_softc *);
 void aue_unlock_mii(struct aue_softc *);
@@ -426,7 +426,7 @@ aue_unlock_mii(struct aue_softc *sc)
 }
 
 int
-aue_miibus_readreg(device_ptr_t dev, int phy, int reg)
+aue_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct aue_softc	*sc = (void *)dev;
 	int			i;
@@ -480,7 +480,7 @@ aue_miibus_readreg(device_ptr_t dev, int phy, int reg)
 }
 
 void
-aue_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
+aue_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct aue_softc	*sc = (void *)dev;
 	int			i;
@@ -514,7 +514,7 @@ aue_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 }
 
 void
-aue_miibus_statchg(device_ptr_t dev)
+aue_miibus_statchg(struct device *dev)
 {
 	struct aue_softc	*sc = (void *)dev;
 	struct mii_data		*mii = GET_MII(sc);
@@ -887,7 +887,7 @@ aue_detach(struct device *self, int flags)
 }
 
 int
-aue_activate(device_ptr_t self, enum devact act)
+aue_activate(struct device *self, enum devact act)
 {
 	struct aue_softc *sc = (struct aue_softc *)self;
 

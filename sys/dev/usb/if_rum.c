@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.62 2007/06/10 14:49:00 mbalmer Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.63 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -2242,7 +2242,7 @@ rum_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 int
-rum_activate(device_ptr_t self, enum devact act)
+rum_activate(struct device *self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

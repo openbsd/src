@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.75 2007/06/11 05:42:53 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.76 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -188,9 +188,9 @@ int axe_ioctl(struct ifnet *, u_long, caddr_t);
 void axe_init(void *);
 void axe_stop(struct axe_softc *);
 void axe_watchdog(struct ifnet *);
-int axe_miibus_readreg(device_ptr_t, int, int);
-void axe_miibus_writereg(device_ptr_t, int, int, int);
-void axe_miibus_statchg(device_ptr_t);
+int axe_miibus_readreg(struct device *, int, int);
+void axe_miibus_writereg(struct device *, int, int, int);
+void axe_miibus_statchg(struct device *);
 int axe_cmd(struct axe_softc *, int, int, int, void *);
 int axe_ifmedia_upd(struct ifnet *);
 void axe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -246,7 +246,7 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 }
 
 int
-axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
+axe_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct axe_softc	*sc = (void *)dev;
 	usbd_status		err;
@@ -294,7 +294,7 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 }
 
 void
-axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
+axe_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct axe_softc	*sc = (void *)dev;
 	usbd_status		err;
@@ -318,7 +318,7 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int val)
 }
 
 void
-axe_miibus_statchg(device_ptr_t dev)
+axe_miibus_statchg(struct device *dev)
 {
 	struct axe_softc	*sc = (void *)dev;
 	struct mii_data		*mii = GET_MII(sc);
@@ -794,7 +794,7 @@ axe_detach(struct device *self, int flags)
 }
 
 int
-axe_activate(device_ptr_t self, enum devact act)
+axe_activate(struct device *self, enum devact act)
 {
 	struct axe_softc *sc = (struct axe_softc *)self;
 

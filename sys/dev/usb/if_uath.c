@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.24 2007/06/10 14:49:00 mbalmer Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.25 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -184,7 +184,7 @@ int	uath_switch_channel(struct uath_softc *, struct ieee80211_channel *);
 int	uath_init(struct ifnet *);
 void	uath_stop(struct ifnet *, int);
 int	uath_loadfirmware(struct uath_softc *, const u_char *, int);
-int	uath_activate(device_ptr_t, enum devact);
+int	uath_activate(struct device *, enum devact);
 
 USB_DECLARE_DRIVER(uath);
 
@@ -2115,7 +2115,7 @@ fail1:	return error;
 }
 
 int
-uath_activate(device_ptr_t self, enum devact act)
+uath_activate(struct device *self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

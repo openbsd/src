@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.15 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.16 2007/06/12 16:26:37 mbalmer Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -151,7 +151,7 @@ struct	uvscom_softc {
 	uint16_t		sc_lcr;		/* Line control */
 	u_char			sc_usr;		/* unit status */
 
-	device_ptr_t		sc_subdev;	/* ucom device */
+	struct device *		sc_subdev;	/* ucom device */
 	u_char			sc_dying;	/* disconnecting */
 };
 
@@ -388,7 +388,7 @@ uvscom_detach(struct device *self, int flags)
 }
 
 int
-uvscom_activate(device_ptr_t self, enum devact act)
+uvscom_activate(struct device *self, enum devact act)
 {
 	struct uvscom_softc *sc = (struct uvscom_softc *)self;
 	int rv = 0;

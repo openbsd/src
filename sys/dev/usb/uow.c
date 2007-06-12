@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.20 2007/06/11 01:05:43 jsg Exp $	*/
+/*	$OpenBSD: uow.c,v 1.21 2007/06/12 16:26:37 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -263,7 +263,7 @@ uow_detach(struct device *self, int flags)
 }
 
 int
-uow_activate(device_ptr_t self, enum devact act)
+uow_activate(struct device *self, enum devact act)
 {
 	struct uow_softc *sc = (struct uow_softc *)self;
 	int rv = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.52 2007/06/11 16:30:31 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.53 2007/06/12 16:26:37 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -720,7 +720,7 @@ usbd_add_dev_event(int type, usbd_device_handle udev)
 }
 
 void
-usbd_add_drv_event(int type, usbd_device_handle udev, device_ptr_t dev)
+usbd_add_drv_event(int type, usbd_device_handle udev, struct device *dev)
 {
 	struct usb_event ue;
 
@@ -783,7 +783,7 @@ usb_schedsoftintr(usbd_bus_handle bus)
 }
 
 int
-usb_activate(device_ptr_t self, enum devact act)
+usb_activate(struct device *self, enum devact act)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
 	usbd_device_handle dev = sc->sc_port.device;
@@ -806,7 +806,7 @@ usb_activate(device_ptr_t self, enum devact act)
 }
 
 int
-usb_detach(device_ptr_t self, int flags)
+usb_detach(struct device *self, int flags)
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
 	struct usb_event ue;

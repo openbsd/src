@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.45 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: uhub.c,v 1.46 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -494,7 +494,7 @@ uhub_explore(usbd_device_handle dev)
 }
 
 int
-uhub_activate(device_ptr_t self, enum devact act)
+uhub_activate(struct device *self, enum devact act)
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usbd_hub *hub = sc->sc_hub->hub;

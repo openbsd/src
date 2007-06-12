@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.23 2007/06/11 16:30:31 mbalmer Exp $ */
+/*	$OpenBSD: ums.c,v 1.24 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ums_activate(device_ptr_t self, enum devact act)
+ums_activate(struct device *self, enum devact act)
 {
 	struct ums_softc *sc = (struct ums_softc *)self;
 	int rv = 0;

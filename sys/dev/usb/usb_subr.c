@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.55 2007/06/11 06:14:24 mbalmer Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.56 2007/06/12 16:26:37 mbalmer Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -73,10 +73,10 @@ void		usbd_devinfo_vp(usbd_device_handle, char *, char *,
 char		*usbd_get_string(usbd_device_handle, int, char *);
 int		usbd_getnewaddr(usbd_bus_handle);
 int		usbd_print(void *, const char *);
-int		usbd_submatch(device_ptr_t, void *, void *);
+int		usbd_submatch(struct device *, void *, void *);
 void		usbd_free_iface_data(usbd_device_handle, int);
 void		usbd_kill_pipe(usbd_pipe_handle);
-usbd_status	usbd_probe_and_attach(device_ptr_t,
+usbd_status	usbd_probe_and_attach(struct device *,
 			    usbd_device_handle, int, int);
 
 u_int32_t	usb_cookie_no = 0;
@@ -821,14 +821,14 @@ usbd_getnewaddr(usbd_bus_handle bus)
 
 
 usbd_status
-usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
+usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
     int addr)
 {
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
 	int found, i, confi, nifaces, len;
 	usbd_status err;
-	device_ptr_t dv;
+	struct device *dv;
 	usbd_interface_handle *ifaces;
 
 	uaa.device = dev;
@@ -954,7 +954,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev, int port,
  * and attach a driver.
  */
 usbd_status
-usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
+usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 		int speed, int port, struct usbd_port *up)
 {
 	usbd_device_handle dev, adev;
@@ -1335,7 +1335,7 @@ usb_free_device(usbd_device_handle dev)
  * been disconnected.
  */
 void
-usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
+usb_disconnect_port(struct usbd_port *up, struct device *parent)
 {
 	usbd_device_handle dev = up->device;
 	char *hubname = parent->dv_xname;

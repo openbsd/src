@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.57 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.58 2007/06/12 16:26:36 mbalmer Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -508,7 +508,7 @@ uhci_init(uhci_softc_t *sc)
 }
 
 int
-uhci_activate(device_ptr_t self, enum devact act)
+uhci_activate(struct device *self, enum devact act)
 {
 	struct uhci_softc *sc = (struct uhci_softc *)self;
 	int rv = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.22 2007/06/10 17:46:27 mbalmer Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.23 2007/06/12 16:26:37 mbalmer Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -504,7 +504,7 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 }
 
 void
-usb_detach_wait(device_ptr_t dv)
+usb_detach_wait(struct device *dv)
 {
 	DPRINTF(("usb_detach_wait: waiting for %s\n", dv->dv_xname));
 	if (tsleep(dv, PZERO, "usbdet", hz * 60))
@@ -514,7 +514,7 @@ usb_detach_wait(device_ptr_t dv)
 }
 
 void
-usb_detach_wakeup(device_ptr_t dv)
+usb_detach_wakeup(struct device *dv)
 {
 	DPRINTF(("usb_detach_wakeup: for %s\n", dv->dv_xname));
 	wakeup(dv);

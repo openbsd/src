@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.30 2007/06/11 16:30:31 mbalmer Exp $ */
+/*	$OpenBSD: umodem.c,v 1.31 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct umodem_softc {
 	u_char			sc_dtr;		/* current DTR state */
 	u_char			sc_rts;		/* current RTS state */
 
-	device_ptr_t		sc_subdev;	/* ucom device */
+	struct device *		sc_subdev;	/* ucom device */
 
 	u_char			sc_opening;	/* lock during open */
 	u_char			sc_dying;	/* disconnecting */
@@ -713,7 +713,7 @@ umodem_set_comm_feature(struct umodem_softc *sc, int feature, int state)
 }
 
 int
-umodem_activate(device_ptr_t self, enum devact act)
+umodem_activate(struct device *self, enum devact act)
 {
 	struct umodem_softc *sc = (struct umodem_softc *)self;
 	int rv = 0;

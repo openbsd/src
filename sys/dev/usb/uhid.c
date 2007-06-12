@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.39 2007/06/11 16:30:31 mbalmer Exp $ */
+/*	$OpenBSD: uhid.c,v 1.40 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-uhid_activate(device_ptr_t self, enum devact act)
+uhid_activate(struct device *self, enum devact act)
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
 

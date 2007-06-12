@@ -1,4 +1,4 @@
-/* $OpenBSD: ubt.c,v 1.6 2007/06/10 14:49:00 mbalmer Exp $ */
+/* $OpenBSD: ubt.c,v 1.7 2007/06/12 16:26:36 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -473,7 +473,7 @@ ubt_detach(struct device *self, int flags)
 }
 
 int
-ubt_activate(device_ptr_t self, enum devact act)
+ubt_activate(struct device *self, enum devact act)
 {
 	struct ubt_softc *sc = (struct ubt_softc *)self;
 	int error = 0;

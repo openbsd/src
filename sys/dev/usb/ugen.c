@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.47 2007/06/11 16:30:31 mbalmer Exp $ */
+/*	$OpenBSD: ugen.c,v 1.48 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -726,7 +726,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ugen_activate(device_ptr_t self, enum devact act)
+ugen_activate(struct device *self, enum devact act)
 {
 	struct ugen_softc *sc = (struct ugen_softc *)self;
 

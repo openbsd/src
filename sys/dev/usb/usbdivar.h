@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.28 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.29 2007/06/12 16:26:37 mbalmer Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -152,7 +152,7 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	       /* full config descr */
 	const struct usbd_quirks     *quirks;  /* device quirks, always set */
 	struct usbd_hub	       *hub;           /* only if this is a hub */
-	device_ptr_t	       *subdevs;       /* sub-devices, 0 terminated */
+	struct device *	       *subdevs;       /* sub-devices, 0 terminated */
 };
 
 struct usbd_interface {
@@ -244,7 +244,7 @@ usbd_status	usbd_setup_pipe(usbd_device_handle dev,
 				usbd_interface_handle iface,
 				struct usbd_endpoint *, int,
 				usbd_pipe_handle *pipe);
-usbd_status	usbd_new_device(device_ptr_t parent,
+usbd_status	usbd_new_device(struct device *parent,
 				usbd_bus_handle bus, int depth,
 				int lowspeed, int port,
 				struct usbd_port *);
@@ -255,7 +255,7 @@ void		usb_free_device(usbd_device_handle);
 
 usbd_status	usb_insert_transfer(usbd_xfer_handle xfer);
 void		usb_transfer_complete(usbd_xfer_handle xfer);
-void		usb_disconnect_port(struct usbd_port *up, device_ptr_t);
+void		usb_disconnect_port(struct usbd_port *up, struct device *);
 
 /* Routines from usb.c */
 void		usb_needs_explore(usbd_device_handle);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.34 2007/06/11 16:30:31 mbalmer Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.35 2007/06/12 16:26:36 mbalmer Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -475,7 +475,7 @@ ukbd_enable(void *v, int on)
 }
 
 int
-ukbd_activate(device_ptr_t self, enum devact act)
+ukbd_activate(struct device *self, enum devact act)
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;
 	int rv = 0;

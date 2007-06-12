@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.19 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.20 2007/06/12 16:26:37 mbalmer Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ struct usscanner_softc {
 
 	struct scsipi_xfer	*sc_xs;
 
-	device_ptr_t		sc_child;	/* child device, for detach */
+	struct device *		sc_child;	/* child device, for detach */
 
 	struct scsipi_link	sc_link;
 	struct scsi_adapter	sc_atapi_adapter;
@@ -415,7 +415,7 @@ usscanner_cleanup(struct usscanner_softc *sc)
 }
 
 int
-usscanner_activate(device_ptr_t self, enum devact act)
+usscanner_activate(struct device *self, enum devact act)
 {
 	struct usscanner_softc *sc = (struct usscanner_softc *)self;
 

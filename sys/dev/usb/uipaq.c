@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.9 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.10 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct uipaq_softc {
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
-	device_ptr_t		sc_subdev;	/* ucom uses that */
+	struct device *		sc_subdev;	/* ucom uses that */
 	u_int16_t		sc_lcr;		/* state for DTR/RTS */
 
 	u_int16_t		sc_flags;
@@ -353,7 +353,7 @@ uipaq_set(void *addr, int portno, int reg, int onoff)
 
 
 int
-uipaq_activate(device_ptr_t self, enum devact act)
+uipaq_activate(struct device *self, enum devact act)
 {
 	struct uipaq_softc *sc = (struct uipaq_softc *)self;
 	int rv = 0;
@@ -372,7 +372,7 @@ uipaq_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uipaq_detach(device_ptr_t self, int flags)
+uipaq_detach(struct device *self, int flags)
 {
 	struct uipaq_softc *sc = (struct uipaq_softc *)self;
 	int rv = 0;

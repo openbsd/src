@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.33 2007/06/11 16:30:31 mbalmer Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.34 2007/06/12 16:26:37 mbalmer Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -554,7 +554,7 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-uscanner_activate(device_ptr_t self, enum devact act)
+uscanner_activate(struct device *self, enum devact act)
 {
 	struct uscanner_softc *sc = (struct uscanner_softc *)self;
 

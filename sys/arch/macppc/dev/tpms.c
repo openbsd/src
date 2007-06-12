@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.10 2007/06/11 16:30:31 mbalmer Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.11 2007/06/12 16:26:37 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -392,7 +392,7 @@ tpms_detach(struct device *self, int flags)
 /* Activate the device. */
 
 int
-tpms_activate(device_ptr_t self, enum devact act)
+tpms_activate(struct device *self, enum devact act)
 {
 	struct tpms_softc *sc = (struct tpms_softc *)self;
 	int ret;

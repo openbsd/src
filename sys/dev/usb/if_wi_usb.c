@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.40 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.41 2007/06/12 16:26:36 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1330,7 +1330,7 @@ wi_get_fid_usb(struct wi_softc *sc, int fid)
 }
 
 int
-wi_usb_activate(device_ptr_t self, enum devact act)
+wi_usb_activate(struct device *self, enum devact act)
 {
 	struct wi_usb_softc *sc = (struct wi_usb_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.8 2007/06/10 14:49:00 mbalmer Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.9 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -100,7 +100,7 @@ uberry_detach(struct device *self, int flags)
 }
 
 int
-uberry_activate(device_ptr_t self, enum devact act)
+uberry_activate(struct device *self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

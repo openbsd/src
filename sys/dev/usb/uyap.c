@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyap.c,v 1.12 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: uyap.c,v 1.13 2007/06/12 16:26:37 mbalmer Exp $ */
 /*	$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ uyap_detach(struct device *self, int flags)
 }
 
 int
-uyap_activate(device_ptr_t self, enum devact act)
+uyap_activate(struct device *self, enum devact act)
 {
 	return 0;
 }

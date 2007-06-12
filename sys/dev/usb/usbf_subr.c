@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.6 2007/06/11 06:14:24 mbalmer Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.7 2007/06/12 16:26:37 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -95,10 +95,10 @@ usbf_realloc(void **pp, size_t *sizep, size_t newsize)
  * Attach a function driver.
  */
 static usbf_status
-usbf_probe_and_attach(device_ptr_t parent, usbf_device_handle dev, int port)
+usbf_probe_and_attach(struct device *parent, usbf_device_handle dev, int port)
 {
 	struct usbf_attach_arg uaa;
-	device_ptr_t dv;
+	struct device *dv;
 
 	KASSERT(dev->function == NULL);
 
@@ -131,7 +131,7 @@ usbf_remove_device(usbf_device_handle dev, struct usbf_port *up)
 	KASSERT(dev != NULL && dev == up->device);
 
 	if (dev->function != NULL)
-		config_detach((device_ptr_t)dev->function, DETACH_FORCE);
+		config_detach((struct device *)dev->function, DETACH_FORCE);
 	if (dev->default_pipe != NULL)
 		usbf_close_pipe(dev->default_pipe);
 	up->device = NULL;
@@ -139,7 +139,7 @@ usbf_remove_device(usbf_device_handle dev, struct usbf_port *up)
 }
 
 usbf_status
-usbf_new_device(device_ptr_t parent, usbf_bus_handle bus, int depth,
+usbf_new_device(struct device *parent, usbf_bus_handle bus, int depth,
     int speed, int port, struct usbf_port *up)
 {
 	struct usbf_device *dev;
@@ -882,7 +882,7 @@ usbf_free_buffer(usbf_xfer_handle xfer)
 static void
 usbf_dump_buffer(usbf_xfer_handle xfer)
 {
-	device_ptr_t dev = (device_ptr_t)xfer->pipe->device->bus->usbfctl;
+	struct device *dev = (struct device *)xfer->pipe->device->bus->usbfctl;
 	usbf_endpoint_handle ep = xfer->pipe->endpoint;
 	int index = usbf_endpoint_index(ep);
 	int dir = usbf_endpoint_dir(ep);

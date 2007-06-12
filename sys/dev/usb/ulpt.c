@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.30 2007/06/11 16:30:31 mbalmer Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.31 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -298,7 +298,7 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ulpt_activate(device_ptr_t self, enum devact act)
+ulpt_activate(struct device *self, enum devact act)
 {
 	struct ulpt_softc *sc = (struct ulpt_softc *)self;
 

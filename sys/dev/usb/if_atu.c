@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.83 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.84 2007/06/12 16:26:36 mbalmer Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1503,7 +1503,7 @@ atu_detach(struct device *self, int flags)
 }
 
 int
-atu_activate(device_ptr_t self, enum devact act)
+atu_activate(struct device *self, enum devact act)
 {
 	struct atu_softc *sc = (struct atu_softc *)self;
 

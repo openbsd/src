@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.30 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.31 2007/06/12 16:26:36 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -780,7 +780,7 @@ cdce_get_desc(usbd_device_handle dev, int type, int subtype)
 }
 
 int
-cdce_activate(device_ptr_t self, enum devact act)
+cdce_activate(struct device *self, enum devact act)
 {
 	struct cdce_softc *sc = (struct cdce_softc *)self;
 

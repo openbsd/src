@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.35 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.36 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -354,7 +354,7 @@ upl_detach(struct device *self, int flags)
 }
 
 int
-upl_activate(device_ptr_t self, enum devact act)
+upl_activate(struct device *self, enum devact act)
 {
 	struct upl_softc *sc = (struct upl_softc *)self;
 

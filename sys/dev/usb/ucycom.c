@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.8 2007/06/10 10:53:48 mbalmer Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.9 2007/06/12 16:26:36 mbalmer Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ struct ucycom_softc {
 	uint8_t			sc_newmsr; /* from HID intr */
 	int			sc_swflags;
 
-	device_ptr_t		sc_subdev;
+	struct device *		sc_subdev;
 
 	/* flags */
 	u_char			sc_dying;
@@ -587,7 +587,7 @@ ucycom_detach(struct device *self, int flags)
 }
 
 int
-ucycom_activate(device_ptr_t self, enum devact act)
+ucycom_activate(struct device *self, enum devact act)
 {
 	struct ucycom_softc *sc = (struct ucycom_softc *)self;
 	int rv = 0;

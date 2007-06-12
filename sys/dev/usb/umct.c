@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.23 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: umct.c,v 1.24 2007/06/12 16:26:36 mbalmer Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ struct	umct_softc {
 
 	u_char			sc_status;
 
-	device_ptr_t		sc_subdev;	/* ucom device */
+	struct device *		sc_subdev;	/* ucom device */
 
 	u_char			sc_dying;	/* disconnecting */
 
@@ -337,7 +337,7 @@ umct_detach(struct device *self, int flags)
 }
 
 int
-umct_activate(device_ptr_t self, enum devact act)
+umct_activate(struct device *self, enum devact act)
 {
 	struct umct_softc *sc = (struct umct_softc *)self;
 	int rv = 0;

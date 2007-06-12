@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.45 2007/06/11 05:42:54 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.46 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -105,9 +105,9 @@ int url_ifmedia_change(struct ifnet *);
 void url_ifmedia_status(struct ifnet *, struct ifmediareq *);
 void url_lock_mii(struct url_softc *);
 void url_unlock_mii(struct url_softc *);
-int url_int_miibus_readreg(device_ptr_t, int, int);
-void url_int_miibus_writereg(device_ptr_t, int, int, int);
-void url_miibus_statchg(device_ptr_t);
+int url_int_miibus_readreg(struct device *, int, int);
+void url_int_miibus_writereg(struct device *, int, int, int);
+void url_miibus_statchg(struct device *);
 int url_init(struct ifnet *);
 void url_setmulti(struct url_softc *);
 void url_reset(struct url_softc *);
@@ -593,7 +593,7 @@ url_reset(struct url_softc *sc)
 }
 
 int
-url_activate(device_ptr_t self, enum devact act)
+url_activate(struct device *self, enum devact act)
 {
 	struct url_softc *sc = (struct url_softc *)self;
 
@@ -1403,7 +1403,7 @@ url_unlock_mii(struct url_softc *sc)
 }
 
 int
-url_int_miibus_readreg(device_ptr_t dev, int phy, int reg)
+url_int_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct url_softc *sc;
 	u_int16_t val;
@@ -1476,7 +1476,7 @@ url_int_miibus_readreg(device_ptr_t dev, int phy, int reg)
 }
 
 void
-url_int_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
+url_int_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct url_softc *sc;
 
@@ -1543,7 +1543,7 @@ url_int_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 }
 
 void
-url_miibus_statchg(device_ptr_t dev)
+url_miibus_statchg(struct device *dev)
 {
 #ifdef URL_DEBUG
 	struct url_softc *sc;
@@ -1562,7 +1562,7 @@ url_miibus_statchg(device_ptr_t dev)
  * external PHYs support, but not test.
  */
 int
-url_ext_miibus_redreg(device_ptr_t dev, int phy, int reg)
+url_ext_miibus_redreg(struct device *dev, int phy, int reg)
 {
 	struct url_softc *sc = (void *)dev;
 	u_int16_t val;
@@ -1606,7 +1606,7 @@ url_ext_miibus_redreg(device_ptr_t dev, int phy, int reg)
 }
 
 void
-url_ext_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
+url_ext_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct url_softc *sc = (void *)dev;
 

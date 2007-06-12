@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.38 2007/06/10 14:49:01 mbalmer Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.39 2007/06/12 16:26:36 mbalmer Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ struct uftdi_softc {
 	u_char			sc_msr;
 	u_char			sc_lsr;
 
-	device_ptr_t		sc_subdev;
+	struct device *		sc_subdev;
 
 	u_char			sc_dying;
 
@@ -380,7 +380,7 @@ bad:
 }
 
 int
-uftdi_activate(device_ptr_t self, enum devact act)
+uftdi_activate(struct device *self, enum devact act)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
 	int rv = 0;
@@ -399,7 +399,7 @@ uftdi_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uftdi_detach(device_ptr_t self, int flags)
+uftdi_detach(struct device *self, int flags)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
 

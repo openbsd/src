@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.41 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.42 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -586,7 +586,7 @@ cue_detach(struct device *self, int flags)
 }
 
 int
-cue_activate(device_ptr_t self, enum devact act)
+cue_activate(struct device *self, enum devact act)
 {
 	struct cue_softc *sc = (struct cue_softc *)self;
 

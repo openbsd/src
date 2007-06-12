@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.27 2007/06/10 14:49:00 mbalmer Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.28 2007/06/12 16:26:36 mbalmer Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -174,7 +174,7 @@ struct	ubsa_softc {
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* ubsa status register */
 
-	device_ptr_t		sc_subdev;	/* ucom device */
+	struct device *		sc_subdev;	/* ucom device */
 
 	u_char			sc_dying;	/* disconnecting */
 
@@ -413,7 +413,7 @@ ubsa_detach(struct device *self, int flags)
 }
 
 int
-ubsa_activate(device_ptr_t self, enum devact act)
+ubsa_activate(struct device *self, enum devact act)
 {
 	struct ubsa_softc *sc = (struct ubsa_softc *)self;
 	int rv = 0;

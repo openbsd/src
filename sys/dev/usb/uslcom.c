@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.10 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.11 2007/06/12 16:26:37 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -83,7 +83,7 @@ struct uslcom_softc {
 	struct device		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
-	device_ptr_t		sc_subdev;
+	struct device *		sc_subdev;
 
 	u_char			sc_msr;
 	u_char			sc_lsr;
@@ -239,7 +239,7 @@ uslcom_detach(struct device *self, int flags)
 }
 
 int
-uslcom_activate(device_ptr_t self, enum devact act)
+uslcom_activate(struct device *self, enum devact act)
 {
 	struct uslcom_softc *sc = (struct uslcom_softc *)self;
 	int rv = 0;

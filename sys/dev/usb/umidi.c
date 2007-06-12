@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.20 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.21 2007/06/12 16:26:36 mbalmer Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ error:
 }
 
 int
-umidi_activate(device_ptr_t self, enum devact act)
+umidi_activate(struct device *self, enum devact act)
 {
 	struct umidi_softc *sc = (struct umidi_softc *)self;
 

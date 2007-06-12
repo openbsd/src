@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.25 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.26 2007/06/12 16:26:36 mbalmer Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -243,13 +243,13 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	if (nrepid > 0)
 		printf("%s: %d report ids\n", sc->sc_dev.dv_xname, nrepid);
 	nrepid++;
-	sc->sc_subdevs = malloc(nrepid * sizeof(device_ptr_t),
+	sc->sc_subdevs = malloc(nrepid * sizeof(struct device *),
 	    M_USBDEV, M_NOWAIT);
 	if (sc->sc_subdevs == NULL) {
 		printf("%s: no memory\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	bzero(sc->sc_subdevs, nrepid * sizeof(device_ptr_t));
+	bzero(sc->sc_subdevs, nrepid * sizeof(struct device *));
 	sc->sc_nrepid = nrepid;
 	sc->sc_isize = 0;
 
@@ -340,7 +340,7 @@ int uhidevsubmatch(struct device *parent, void *match, void *aux)
 }
 
 int
-uhidev_activate(device_ptr_t self, enum devact act)
+uhidev_activate(struct device *self, enum devact act)
 {
 	struct uhidev_softc *sc = (struct uhidev_softc *)self;
 	int i, rv = 0;

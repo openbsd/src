@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.44 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.45 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ struct uaudio_softc {
 	int		sc_mode;	/* play/record capability */
 	struct mixerctl *sc_ctls;	/* mixer controls */
 	int		sc_nctls;	/* # of mixer controls */
-	device_ptr_t	sc_audiodev;
+	struct device *	sc_audiodev;
 	char		sc_dying;
 };
 
@@ -467,7 +467,7 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 #define hw_encoding encoding
 
 int
-uaudio_activate(device_ptr_t self, enum devact act)
+uaudio_activate(struct device *self, enum devact act)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
 	int rv = 0;
@@ -485,7 +485,7 @@ uaudio_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uaudio_detach(device_ptr_t self, int flags)
+uaudio_detach(struct device *self, int flags)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
 	int rv = 0;

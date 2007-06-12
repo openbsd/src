@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.39 2007/06/11 16:30:31 mbalmer Exp $ */
+/*	$OpenBSD: ucom.c,v 1.40 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ ucom_detach(struct device *self, int flags)
 }
 
 int
-ucom_activate(device_ptr_t self, enum devact act)
+ucom_activate(struct device *self, enum devact act)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
 

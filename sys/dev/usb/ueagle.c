@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.19 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.20 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -1452,7 +1452,7 @@ ueagle_stop(struct ifnet *ifp, int disable)
 }
 
 int
-ueagle_activate(device_ptr_t self, enum devact act)
+ueagle_activate(struct device *self, enum devact act)
 {
 	struct ueagle_softc *sc = (struct ueagle_softc *)self;
 

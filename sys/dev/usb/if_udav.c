@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.31 2007/06/11 05:42:53 mbalmer Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.32 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -107,9 +107,9 @@ int udav_ifmedia_change(struct ifnet *);
 void udav_ifmedia_status(struct ifnet *, struct ifmediareq *);
 void udav_lock_mii(struct udav_softc *);
 void udav_unlock_mii(struct udav_softc *);
-int udav_miibus_readreg(device_ptr_t, int, int);
-void udav_miibus_writereg(device_ptr_t, int, int, int);
-void udav_miibus_statchg(device_ptr_t);
+int udav_miibus_readreg(struct device *, int, int);
+void udav_miibus_writereg(struct device *, int, int, int);
+void udav_miibus_statchg(struct device *);
 int udav_init(struct ifnet *);
 void udav_setmulti(struct udav_softc *);
 void udav_reset(struct udav_softc *);
@@ -712,7 +712,7 @@ udav_reset(struct udav_softc *sc)
 }
 
 int
-udav_activate(device_ptr_t self, enum devact act)
+udav_activate(struct device *self, enum devact act)
 {
 	struct udav_softc *sc = (struct udav_softc *)self;
 
@@ -1515,7 +1515,7 @@ udav_unlock_mii(struct udav_softc *sc)
 }
 
 int
-udav_miibus_readreg(device_ptr_t dev, int phy, int reg)
+udav_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct udav_softc *sc;
 	u_int8_t val[2];
@@ -1572,7 +1572,7 @@ udav_miibus_readreg(device_ptr_t dev, int phy, int reg)
 }
 
 void
-udav_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
+udav_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct udav_softc *sc;
 	u_int8_t val[2];
@@ -1625,7 +1625,7 @@ udav_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 }
 
 void
-udav_miibus_statchg(device_ptr_t dev)
+udav_miibus_statchg(struct device *dev)
 {
 #ifdef UDAV_DEBUG
 	struct udav_softc *sc;

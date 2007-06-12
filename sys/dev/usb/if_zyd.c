@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.56 2007/06/10 14:49:00 mbalmer Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.57 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -2526,7 +2526,7 @@ zyd_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 }
 
 int
-zyd_activate(device_ptr_t self, enum devact act)
+zyd_activate(struct device *self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

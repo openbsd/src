@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.14 2007/06/11 01:05:43 jsg Exp $ */
+/*	$OpenBSD: uts.c,v 1.15 2007/06/12 16:26:37 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -74,7 +74,7 @@ struct uts_softc {
 	int			sc_isize;
 	u_int8_t		sc_pkts;
 
-	device_ptr_t		sc_wsmousedev;
+	struct device *		sc_wsmousedev;
 
 	int	sc_enabled;
 	int	sc_buttons;
@@ -242,7 +242,7 @@ uts_detach(struct device *self, int flags)
 }
 
 int
-uts_activate(device_ptr_t self, enum devact act)
+uts_activate(struct device *self, enum devact act)
 {
 	struct uts_softc *sc = (struct uts_softc *)self;
 	int rv = 0;

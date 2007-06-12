@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.52 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.53 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -581,7 +581,7 @@ kue_detach(struct device *self, int flags)
 }
 
 int
-kue_activate(device_ptr_t self, enum devact act)
+kue_activate(struct device *self, enum devact act)
 {
 	struct kue_softc *sc = (struct kue_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.17 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.18 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -183,11 +183,11 @@ typedef struct uhci_softc {
 	void *sc_powerhook;		/* cookie from power hook */
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
-	device_ptr_t sc_child;		/* /dev/usb# device */
+	struct device *sc_child;		/* /dev/usb# device */
 } uhci_softc_t;
 
 usbd_status	uhci_init(uhci_softc_t *);
 usbd_status	uhci_run(uhci_softc_t *, int run);
 int		uhci_intr(void *);
 int		uhci_detach(uhci_softc_t *, int);
-int		uhci_activate(device_ptr_t, enum devact);
+int		uhci_activate(struct device *, enum devact);

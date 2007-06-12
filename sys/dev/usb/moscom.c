@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.7 2007/06/10 14:49:00 mbalmer Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.8 2007/06/12 16:26:36 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -136,7 +136,7 @@ struct moscom_softc {
 	struct device		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
-	device_ptr_t		sc_subdev;
+	struct device *		sc_subdev;
 
 	u_char			sc_msr;
 	u_char			sc_lsr;
@@ -276,7 +276,7 @@ moscom_detach(struct device *self, int flags)
 }
 
 int
-moscom_activate(device_ptr_t self, enum devact act)
+moscom_activate(struct device *self, enum devact act)
 {
 	struct moscom_softc *sc = (struct moscom_softc *)self;
 	int rv = 0;

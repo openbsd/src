@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.30 2007/06/11 16:30:31 mbalmer Exp $	*/
+/*	$OpenBSD: urio.c,v 1.31 2007/06/12 16:26:37 mbalmer Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ urio_detach(struct device *self, int flags)
 }
 
 int
-urio_activate(device_ptr_t self, enum devact act)
+urio_activate(struct device *self, enum devact act)
 {
 	struct urio_softc *sc = (struct urio_softc *)self;
 

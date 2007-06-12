@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.12 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.13 2007/06/12 16:26:37 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -39,7 +39,7 @@ struct umsm_softc {
 	struct device		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
-	device_ptr_t		sc_subdev;
+	struct device *		sc_subdev;
 	u_char			sc_dying;
 };
 
@@ -186,7 +186,7 @@ umsm_detach(struct device *self, int flags)
 }
 
 int
-umsm_activate(device_ptr_t self, enum devact act)
+umsm_activate(struct device *self, enum devact act)
 {
 	struct umsm_softc *sc = (struct umsm_softc *)self;
 	int rv = 0;

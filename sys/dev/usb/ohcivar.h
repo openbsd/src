@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.23 2007/06/10 10:15:35 mbalmer Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.24 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -137,7 +137,7 @@ typedef struct ohci_softc {
 
 	struct timeout sc_tmo_rhsc;
 
-	device_ptr_t sc_child;
+	struct device *sc_child;
 
 	char sc_dying;
 } ohci_softc_t;
@@ -152,5 +152,5 @@ usbd_status	ohci_handover(ohci_softc_t *);
 usbd_status	ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);
 int		ohci_detach(ohci_softc_t *, int);
-int		ohci_activate(device_ptr_t, enum devact);
+int		ohci_activate(struct device *, enum devact);
 void		ohci_power(int, void *);

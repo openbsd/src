@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.73 2007/06/10 14:49:00 mbalmer Exp $ */
+/*	$OpenBSD: ehci.c,v 1.74 2007/06/12 16:26:36 mbalmer Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -918,7 +918,7 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 
 int
-ehci_activate(device_ptr_t self, enum devact act)
+ehci_activate(struct device *self, enum devact act)
 {
 	struct ehci_softc *sc = (struct ehci_softc *)self;
 	int rv = 0;

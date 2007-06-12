@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.32 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.33 2007/06/12 16:26:37 mbalmer Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ struct uvisor_softc {
  */
 	int			sc_vendor;	/* USB device vendor */
 
-	device_ptr_t		sc_subdevs[UVISOR_MAX_CONN];
+	struct device *		sc_subdevs[UVISOR_MAX_CONN];
 	int			sc_numcon;
 
 	u_int16_t		sc_flags;
@@ -376,7 +376,7 @@ bad:
 }
 
 int
-uvisor_activate(device_ptr_t self, enum devact act)
+uvisor_activate(struct device *self, enum devact act)
 {
 	struct uvisor_softc *sc = (struct uvisor_softc *)self;
 	int rv = 0;
@@ -397,7 +397,7 @@ uvisor_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uvisor_detach(device_ptr_t self, int flags)
+uvisor_detach(struct device *self, int flags)
 {
 	struct uvisor_softc *sc = (struct uvisor_softc *)self;
 	int rv = 0;

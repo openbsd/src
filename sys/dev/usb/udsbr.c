@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.15 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.16 2007/06/12 16:26:36 mbalmer Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ udsbr_detach(struct device *self, int flags)
 }
 
 int
-udsbr_activate(device_ptr_t self, enum devact act)
+udsbr_activate(struct device *self, enum devact act)
 {
 	struct udsbr_softc *sc = (struct udsbr_softc *)self;
 	int rv = 0;
