@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.48 2007/05/22 14:08:41 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.49 2007/06/12 04:23:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -371,7 +371,7 @@ kr_redist_remove(struct kroute_node *kh, struct kroute_node *kn)
 	/* remove redistributed flag */
 	kn->r.flags &= ~F_REDISTRIBUTED;
 	rr.kr = kn->r;
-	rr.metric = 0;
+	rr.metric = DEFAULT_REDIST_METRIC;	/* some dummy value */
 
 	/* probably inform the RDE (check if no other path is redistributed) */
 	for (kn = kh; kn; kn = kn->next)
@@ -459,6 +459,7 @@ kr_redistribute(struct kroute_node *kh)
 		main_imsg_compose_rde(IMSG_NETWORK_ADD, 0, &rr,
 		    sizeof(struct rroute));
 	} else {
+		rr.metric = DEFAULT_REDIST_METRIC;	/* some dummy value */
 		rr.kr = kh->r;
 		main_imsg_compose_rde(IMSG_NETWORK_DEL, 0, &rr,
 		    sizeof(struct rroute));
