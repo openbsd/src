@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.142 2007/06/12 16:25:44 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.143 2007/06/12 16:36:43 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -124,15 +124,10 @@ supported are
 and
 .Dq atalk .
 .It Ar address
-For the
-.Tn DARPA
-Internet
-family,
+For the DARPA Internet family,
 the address is either a host name present in the host name database,
 .Xr hosts 5 ,
-or a
-.Tn DARPA
-Internet address expressed in the Internet standard
+or a DARPA Internet address expressed in the Internet standard
 .Dq dot notation .
 .Pp
 Internet version 6 addresses are either a host name present
@@ -143,8 +138,7 @@ described in the
 .Xr inet 3
 manual page.
 .Pp
-.Tn AppleTalk
-(LLAP) addresses are specified as
+AppleTalk (LLAP) addresses are specified as
 .Dq nn.na
 .Pq Dq Network Number.Node Address .
 Node addresses are divided into two classes: User Node IDs and Server Node IDs.
@@ -177,9 +171,7 @@ Enable the use of the Address Resolution Protocol (ARP)
 in mapping
 between network level addresses and link level addresses (default).
 This is currently implemented for mapping between
-.Tn DARPA
-Internet
-addresses and Ethernet addresses.
+DARPA Internet addresses and Ethernet addresses.
 .It Fl arp
 Disable the use of ARP.
 .It Cm broadcast Ar addr
@@ -297,8 +289,7 @@ Set the media type of the interface to
 Some interfaces support the mutually exclusive use of one of several
 different physical media connectors.
 For example, a 10Mb/s Ethernet interface might support the use of either
-.Tn AUI
-or twisted pair connectors.
+AUI or twisted pair connectors.
 Setting the media type to
 .Dq 10base5
 or
