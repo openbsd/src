@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.39 2007/06/08 05:27:58 deraadt Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.40 2007/06/12 02:02:17 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ struct raid_softc **raid_scPtrs;
 
 void rf_shutdown_hook(RF_ThreadArg_t);
 void raidgetdefaultlabel(RF_Raid_t *, struct raid_softc *, struct disklabel *);
-void raidgetdisklabel(dev_t);
+void raidgetdisklabel(dev_t, struct disklabel *, struct cpu_disklabel *, int);
 void raidmakedisklabel(struct raid_softc *);
 
 int  raidlock(struct raid_softc *);
@@ -623,7 +623,6 @@ raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = DISKUNIT(dev);
 	struct raid_softc *rs;
-	struct disklabel *lp;
 	int part,pmask;
 	int error = 0;
 
@@ -633,7 +632,6 @@ raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 	if ((error = raidlock(rs)) != 0)
 		return (error);
-	lp = rs->sc_dkdev.dk_label;
 
 	part = DISKPART(dev);
 	pmask = (1 << part);
@@ -643,15 +641,17 @@ raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 
 	if ((rs->sc_flags & RAIDF_INITED) && (rs->sc_dkdev.dk_openmask == 0))
-		raidgetdisklabel(dev);
+		raidgetdisklabel(dev, rs->sc_dkdev.dk_label,
+		    rs->sc_dkdev.dk_cpulabel, 0);
 
 	/* Make sure that this partition exists. */
 
 	if (part != RAW_PART) {
 		db1_printf(("Not a raw partition..\n"));
 		if (((rs->sc_flags & RAIDF_INITED) == 0) ||
-		    ((part >= lp->d_npartitions) ||
-		    (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
+		    ((part >= rs->sc_dkdev.dk_label->d_npartitions) ||
+		    (rs->sc_dkdev.dk_label->d_partitions[part].p_fstype ==
+		    FS_UNUSED))) {
 			error = ENXIO;
 			raidunlock(rs);
 			db1_printf(("Bailing out...\n"));
@@ -1601,9 +1601,11 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			rs->sc_flags &= ~RAIDF_WLABEL;
 		break;
 
-	case DIOCGPDINFO:
-  		raidgetdefaultlabel(raidPtr, rs, (struct disklabel *) data);
-  		break;
+	case DIOCGPDINFO: {
+		struct cpu_disklabel osdep;
+		raidgetdisklabel(dev, (struct disklabel *)data, &osdep, 1);
+		break;
+	}
 
 	default:
 		retcode = ENOTTY;
@@ -2127,19 +2129,19 @@ raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs,
  * If one is not present, fake one up.
  */
 void
-raidgetdisklabel(dev_t dev)
+raidgetdisklabel(dev_t dev, struct disklabel *lp, struct cpu_disklabel *clp,
+    int spoofonly)
 {
 	int unit = DISKUNIT(dev);
 	struct raid_softc *rs = &raid_softc[unit];
 	char *errstring;
-	struct disklabel *lp = rs->sc_dkdev.dk_label;
-	struct cpu_disklabel *clp = rs->sc_dkdev.dk_cpulabel;
 	RF_Raid_t *raidPtr;
 	int i;
 	struct partition *pp;
 
 	db1_printf(("Getting the disklabel...\n"));
 
+	bzero(lp, sizeof(*lp));
 	bzero(clp, sizeof(*clp));
 
 	raidPtr = raidPtrs[unit];
@@ -2150,7 +2152,7 @@ raidgetdisklabel(dev_t dev)
 	 * Call the generic disklabel extraction routine.
 	 */
 	errstring = readdisklabel(DISKLABELDEV(dev), raidstrategy, lp,
-	    rs->sc_dkdev.dk_cpulabel, 0);
+	    clp, spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", rs->sc_xname, errstring);*/
 		return;
