@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.46 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.47 2007/06/13 11:15:29 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -1052,7 +1052,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTF(("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
 		 __func__, m->m_len));
-	IF_INPUT(ifp, m);
+	ether_input_mbuf(ifp, m);
 
  done1:
 	splx(s);

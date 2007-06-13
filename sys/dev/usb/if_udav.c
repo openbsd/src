@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.32 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.33 2007/06/13 11:15:29 mbalmer Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1165,7 +1165,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTF(("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
 		 __func__, m->m_len));
-	IF_INPUT(ifp, m);
+	ether_input_mbuf(ifp, m);
 
  done1:
 	splx(s);

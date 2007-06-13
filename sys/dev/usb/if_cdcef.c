@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.15 2007/06/10 14:49:00 mbalmer Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.16 2007/06/13 11:15:29 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -434,7 +434,7 @@ cdcef_rxeof(usbf_xfer_handle xfer, usbf_private_handle priv,
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
-		IF_INPUT(ifp, m);
+		ether_input_mbuf(ifp, m);
 	}
 
 done1:

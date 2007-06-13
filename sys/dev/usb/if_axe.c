@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.76 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.77 2007/06/13 11:15:29 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -988,7 +988,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
-		IF_INPUT(ifp, m);
+		ether_input_mbuf(ifp, m);
 
 		splx(s);
 

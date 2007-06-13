@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.36 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.37 2007/06/13 11:15:29 mbalmer Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -540,7 +540,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	DPRINTFN(10,("%s: %s: deliver %d\n", sc->sc_dev.dv_xname,
 		    __func__, m->m_len));
 
-	IF_INPUT(ifp, m);
+	ether_input_mbuf(ifp, m);
 
  done1:
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.31 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.32 2007/06/13 11:15:29 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -698,7 +698,7 @@ cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
-	IF_INPUT(ifp, m);
+	ether_input_mbuf(ifp, m);
 
 done1:
 	splx(s);

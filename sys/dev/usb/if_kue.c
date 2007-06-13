@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.53 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.54 2007/06/13 11:15:29 mbalmer Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -778,7 +778,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", sc->kue_dev.dv_xname,
 		    __func__, m->m_len));
-	IF_INPUT(ifp, m);
+	ether_input_mbuf(ifp, m);
  done1:
 	splx(s);
 

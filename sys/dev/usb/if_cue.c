@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.42 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.43 2007/06/13 11:15:29 mbalmer Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -777,7 +777,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", sc->cue_dev.dv_xname,
 		    __func__, m->m_len));
-	IF_INPUT(ifp, m);
+	ether_input_mbuf(ifp, m);
  done1:
 	splx(s);
 

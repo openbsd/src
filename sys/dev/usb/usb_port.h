@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.88 2007/06/13 10:33:52 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.89 2007/06/13 11:15:29 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -60,8 +60,6 @@
 #define UHIDBUSCF_REPORTID_DEFAULT	-1
 
 #define mstohz(ms) ((ms) * hz / 1000)
-
-#define IF_INPUT(ifp, m) ether_input_mbuf((ifp), (m))
 
 #define DECLARE_USB_DMA_T \
 	struct usb_dma_block; \
