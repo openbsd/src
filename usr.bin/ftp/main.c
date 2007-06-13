@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2007/06/13 13:52:26 pyr Exp $	*/
+/*	$OpenBSD: main.c,v 1.64 2007/06/13 18:43:16 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.63 2007/06/13 13:52:26 pyr Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.64 2007/06/13 18:43:16 jmc Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -746,7 +746,8 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-46AadEegimnptVv] [-P port] [-r seconds] [host [port]]\n"
+	    "usage: %s [-46AadEegimnptVv] [-c cookie] [-P port] "
+	    "[-r seconds] [host [port]]\n"
 	    "       %s [-o output] ftp://[user:password@]host[:port]/file[/]\n"
 	    "       %s [-o output] http://host[:port]/file\n"
 #ifndef SMALL
