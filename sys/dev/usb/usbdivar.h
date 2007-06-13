@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.30 2007/06/13 06:25:03 mbalmer Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.31 2007/06/13 11:31:33 mbalmer Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -40,7 +40,11 @@
  */
 
 /* From usb_mem.h */
-DECLARE_USB_DMA_T;
+struct usb_dma_block;
+typedef struct {
+	struct usb_dma_block	*block;
+	u_int			 offs;
+} usb_dma_t;
 
 struct usbd_xfer;
 struct usbd_pipe;
