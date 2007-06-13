@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.7 2007/06/11 16:30:31 mbalmer Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.8 2007/06/13 06:25:03 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -72,12 +72,12 @@ int usbfdebug = 0;
 #endif
 
 struct usbf_softc {
-	struct device	 sc_dev;	/* base device */
-	usbf_bus_handle	 sc_bus;	/* USB device controller */
-	struct usbf_port sc_port;	/* dummy port for function */
-	struct proc *	 sc_proc;	/* task thread */
-	TAILQ_HEAD(,usbf_task) sc_tskq;	/* task queue head */
-	int		 sc_dying;
+	struct device	 	 sc_dev;	/* base device */
+	usbf_bus_handle	 	 sc_bus;	/* USB device controller */
+	struct usbf_port 	 sc_port;	/* dummy port for function */
+	struct proc		*sc_proc;	/* task thread */
+	TAILQ_HEAD(,usbf_task)	 sc_tskq;	/* task queue head */
+	int			 sc_dying;
 };
 
 #define DEVNAME(sc)	((sc)->sc_dev.dv_xname)

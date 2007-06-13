@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.53 2007/06/12 16:26:37 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.54 2007/06/13 06:25:03 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -94,13 +94,13 @@ int	usb_noexplore = 0;
 #endif
 
 struct usb_softc {
-	struct device	sc_dev;		/* base device */
-	usbd_bus_handle sc_bus;		/* USB controller */
+	struct device	 sc_dev;	/* base device */
+	usbd_bus_handle  sc_bus;	/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
-	struct proc *	sc_event_thread;
+	struct proc	*sc_event_thread;
 
-	char		sc_dying;
+	char		 sc_dying;
 };
 
 TAILQ_HEAD(, usb_task) usb_all_tasks;

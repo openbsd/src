@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.11 2007/06/12 16:26:37 mbalmer Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.12 2007/06/13 06:25:03 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -80,15 +80,15 @@ int	uslcomdebug = 0;
 
 
 struct uslcom_softc {
-	struct device		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
-	struct device *		sc_subdev;
+	struct device		 sc_dev;
+	usbd_device_handle	 sc_udev;
+	usbd_interface_handle	 sc_iface;
+	struct device		*sc_subdev;
 
-	u_char			sc_msr;
-	u_char			sc_lsr;
+	u_char			 sc_msr;
+	u_char			 sc_lsr;
 
-	u_char			sc_dying;
+	u_char			 sc_dying;
 };
 
 void	uslcom_get_status(void *, int portno, u_char *lsr, u_char *msr);

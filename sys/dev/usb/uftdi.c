@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.39 2007/06/12 16:26:36 mbalmer Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.40 2007/06/13 06:25:03 mbalmer Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -85,21 +85,21 @@ int uftdidebug = 0;
 #define UFTDIOBUFSIZE 64
 
 struct uftdi_softc {
-	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct device		 sc_dev;		/* base device */
+	usbd_device_handle	 sc_udev;	/* device */
+	usbd_interface_handle	 sc_iface;	/* interface */
 
-	enum uftdi_type		sc_type;
-	u_int			sc_hdrlen;
+	enum uftdi_type		 sc_type;
+	u_int			 sc_hdrlen;
 
-	u_char			sc_msr;
-	u_char			sc_lsr;
+	u_char			 sc_msr;
+	u_char			 sc_lsr;
 
-	struct device *		sc_subdev;
+	struct device		*sc_subdev;
 
-	u_char			sc_dying;
+	u_char			 sc_dying;
 
-	u_int			last_lcr;
+	u_int			 last_lcr;
 };
 
 void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);

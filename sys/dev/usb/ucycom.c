@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.9 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.10 2007/06/13 06:25:03 mbalmer Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -107,31 +107,31 @@ int	ucycomdebug = 200;
 #define UCYCOM_ORESET	0x08
 
 struct ucycom_softc {
-	struct uhidev		sc_hdev;
-	usbd_device_handle	sc_udev;
+	struct uhidev		 sc_hdev;
+	usbd_device_handle	 sc_udev;
 
 	/* uhidev parameters */
-	size_t			sc_flen; /* feature report length */
-	size_t			sc_ilen; /* input report length */
-	size_t			sc_olen; /* output report length */
+	size_t			 sc_flen;	/* feature report length */
+	size_t			 sc_ilen;	/* input report length */
+	size_t			 sc_olen;	/* output report length */
 
 	uint8_t			*sc_obuf;
 
 	uint8_t			*sc_ibuf;
-	uint32_t		sc_icnt;
+	uint32_t		 sc_icnt;
 
 	/* settings */
-	uint32_t		sc_baud;
-	uint8_t			sc_cfg;	/* Data format */
-	uint8_t			sc_mcr;	/* Modem control */
-	uint8_t			sc_msr;	/* Modem status */
-	uint8_t			sc_newmsr; /* from HID intr */
-	int			sc_swflags;
+	uint32_t		 sc_baud;
+	uint8_t			 sc_cfg;	/* Data format */
+	uint8_t			 sc_mcr;	/* Modem control */
+	uint8_t			 sc_msr;	/* Modem status */
+	uint8_t			 sc_newmsr;	/* from HID intr */
+	int			 sc_swflags;
 
-	struct device *		sc_subdev;
+	struct device		*sc_subdev;
 
 	/* flags */
-	u_char			sc_dying;
+	u_char			 sc_dying;
 };
 
 /* Callback routines */

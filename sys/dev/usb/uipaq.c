@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.10 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.11 2007/06/13 06:25:03 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,16 +81,16 @@ int uipaqdebug = 0;
 #define UIPAQOBUFSIZE 1024
 
 struct uipaq_softc {
-	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct device		 sc_dev;	/* base device */
+	usbd_device_handle	 sc_udev;	/* device */
+	usbd_interface_handle	 sc_iface;	/* interface */
 
-	struct device *		sc_subdev;	/* ucom uses that */
-	u_int16_t		sc_lcr;		/* state for DTR/RTS */
+	struct device		*sc_subdev;	/* ucom uses that */
+	u_int16_t		 sc_lcr;	/* state for DTR/RTS */
 
-	u_int16_t		sc_flags;
+	u_int16_t		 sc_flags;
 
-	u_char			sc_dying;
+	u_char			 sc_dying;
 };
 
 /* Callback routines */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.31 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: umodem.c,v 1.32 2007/06/13 06:25:03 mbalmer Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -92,34 +92,34 @@ int	umodemdebug = 0;
 #define UMODEMOBUFSIZE 1024
 
 struct umodem_softc {
-	struct device		sc_dev;		/* base device */
+	struct device		 sc_dev;	/* base device */
 
-	usbd_device_handle	sc_udev;	/* USB device */
+	usbd_device_handle	 sc_udev;	/* USB device */
 
-	int			sc_ctl_iface_no;
-	usbd_interface_handle	sc_ctl_iface;	/* control interface */
-	int			sc_data_iface_no;
-	usbd_interface_handle	sc_data_iface;	/* data interface */
+	int			 sc_ctl_iface_no;
+	usbd_interface_handle	 sc_ctl_iface;	/* control interface */
+	int			 sc_data_iface_no;
+	usbd_interface_handle	 sc_data_iface;	/* data interface */
 
-	int			sc_cm_cap;	/* CM capabilities */
-	int			sc_acm_cap;	/* ACM capabilities */
+	int			 sc_cm_cap;	/* CM capabilities */
+	int			 sc_acm_cap;	/* ACM capabilities */
 
-	int			sc_cm_over_data;
+	int			 sc_cm_over_data;
 
-	usb_cdc_line_state_t	sc_line_state;	/* current line state */
-	u_char			sc_dtr;		/* current DTR state */
-	u_char			sc_rts;		/* current RTS state */
+	usb_cdc_line_state_t	 sc_line_state;	/* current line state */
+	u_char			 sc_dtr;	/* current DTR state */
+	u_char			 sc_rts;	/* current RTS state */
 
-	struct device *		sc_subdev;	/* ucom device */
+	struct device		*sc_subdev;	/* ucom device */
 
-	u_char			sc_opening;	/* lock during open */
-	u_char			sc_dying;	/* disconnecting */
+	u_char			 sc_opening;	/* lock during open */
+	u_char			 sc_dying;	/* disconnecting */
 
-	int			sc_ctl_notify;	/* Notification endpoint */
-	usbd_pipe_handle	sc_notify_pipe; /* Notification pipe */
-	usb_cdc_notification_t	sc_notify_buf;	/* Notification structure */
-	u_char			sc_lsr;		/* Local status register */
-	u_char			sc_msr;		/* Modem status register */
+	int			 sc_ctl_notify;	/* Notification endpoint */
+	usbd_pipe_handle	 sc_notify_pipe; /* Notification pipe */
+	usb_cdc_notification_t	 sc_notify_buf;	/* Notification structure */
+	u_char			 sc_lsr;	/* Local status register */
+	u_char			 sc_msr;	/* Modem status register */
 };
 
 usbd_status umodem_set_comm_feature(struct umodem_softc *sc,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.16 2007/06/12 16:26:37 mbalmer Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.17 2007/06/13 06:25:03 mbalmer Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -151,7 +151,7 @@ struct	uvscom_softc {
 	uint16_t		sc_lcr;		/* Line control */
 	u_char			sc_usr;		/* unit status */
 
-	struct device *		sc_subdev;	/* ucom device */
+	struct device		*sc_subdev;	/* ucom device */
 	u_char			sc_dying;	/* disconnecting */
 };
 

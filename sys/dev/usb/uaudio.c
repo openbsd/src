@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.45 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.46 2007/06/13 06:25:03 mbalmer Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -156,29 +156,29 @@ struct chan {
 };
 
 struct uaudio_softc {
-	struct device	sc_dev;		/* base device */
+	struct device	 sc_dev;	/* base device */
 	usbd_device_handle sc_udev;	/* USB device */
-	int		sc_ac_iface;	/* Audio Control interface */
+	int		 sc_ac_iface;	/* Audio Control interface */
 	usbd_interface_handle	sc_ac_ifaceh;
-	struct chan	sc_playchan;	/* play channel */
-	struct chan	sc_recchan;	/* record channel */
-	int		sc_nullalt;
-	int		sc_audio_rev;
+	struct chan	 sc_playchan;	/* play channel */
+	struct chan	 sc_recchan;	/* record channel */
+	int		 sc_nullalt;
+	int		 sc_audio_rev;
 	struct as_info	*sc_alts;	/* alternate settings */
-	int		sc_nalts;	/* # of alternate settings */
-	int		sc_altflags;
-#define HAS_8		0x01
-#define HAS_16		0x02
-#define HAS_8U		0x04
-#define HAS_ALAW	0x08
-#define HAS_MULAW	0x10
-#define UA_NOFRAC	0x20		/* don't do sample rate adjustment */
-#define HAS_24		0x40
-	int		sc_mode;	/* play/record capability */
+	int		 sc_nalts;	/* # of alternate settings */
+	int		 sc_altflags;
+#define HAS_8		 0x01
+#define HAS_16		 0x02
+#define HAS_8U		 0x04
+#define HAS_ALAW	 0x08
+#define HAS_MULAW	 0x10
+#define UA_NOFRAC	 0x20		/* don't do sample rate adjustment */
+#define HAS_24		 0x40
+	int		 sc_mode;	/* play/record capability */
 	struct mixerctl *sc_ctls;	/* mixer controls */
-	int		sc_nctls;	/* # of mixer controls */
-	struct device *	sc_audiodev;
-	char		sc_dying;
+	int		 sc_nctls;	/* # of mixer controls */
+	struct device	*sc_audiodev;
+	char		 sc_dying;
 };
 
 struct terminal_list {

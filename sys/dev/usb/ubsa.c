@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.28 2007/06/12 16:26:36 mbalmer Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.29 2007/06/13 06:25:03 mbalmer Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -157,26 +157,26 @@ int	ubsadebug = 0;
 #define	UBSA_MSR_DCTS		0x01	/* CTS has changed state */
 
 struct	ubsa_softc {
-	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct device		 sc_dev;	/* base device */
+	usbd_device_handle	 sc_udev;	/* USB device */
+	usbd_interface_handle	 sc_iface;	/* interface */
 
-	int			sc_iface_number;	/* interface number */
+	int			 sc_iface_number;	/* interface number */
 
-	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	int			 sc_intr_number;	/* interrupt number */
+	usbd_pipe_handle	 sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
-	int			sc_isize;
+	int			 sc_isize;
 
-	u_char			sc_dtr;		/* current DTR state */
-	u_char			sc_rts;		/* current RTS state */
+	u_char			 sc_dtr;	/* current DTR state */
+	u_char			 sc_rts;	/* current RTS state */
 
-	u_char			sc_lsr;		/* Local status register */
-	u_char			sc_msr;		/* ubsa status register */
+	u_char			 sc_lsr;	/* Local status register */
+	u_char			 sc_msr;	/* ubsa status register */
 
-	struct device *		sc_subdev;	/* ucom device */
+	struct device		*sc_subdev;	/* ucom device */
 
-	u_char			sc_dying;	/* disconnecting */
+	u_char			 sc_dying;	/* disconnecting */
 
 };
 

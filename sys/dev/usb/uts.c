@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.15 2007/06/12 16:26:37 mbalmer Exp $ */
+/*	$OpenBSD: uts.c,v 1.16 2007/06/13 06:25:03 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -74,7 +74,7 @@ struct uts_softc {
 	int			sc_isize;
 	u_int8_t		sc_pkts;
 
-	struct device *		sc_wsmousedev;
+	struct device		*sc_wsmousedev;
 
 	int	sc_enabled;
 	int	sc_buttons;

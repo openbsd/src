@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.33 2007/06/12 16:26:37 mbalmer Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.34 2007/06/13 06:25:03 mbalmer Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ struct uvisor_softc {
  */
 	int			sc_vendor;	/* USB device vendor */
 
-	struct device *		sc_subdevs[UVISOR_MAX_CONN];
+	struct device		*sc_subdevs[UVISOR_MAX_CONN];
 	int			sc_numcon;
 
 	u_int16_t		sc_flags;

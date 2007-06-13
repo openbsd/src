@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.8 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.9 2007/06/13 06:25:03 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -133,16 +133,16 @@
 #define MOSCOM_BAUD_REF		115200
 
 struct moscom_softc {
-	struct device		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
-	struct device *		sc_subdev;
+	struct device		 sc_dev;
+	usbd_device_handle	 sc_udev;
+	usbd_interface_handle	 sc_iface;
+	struct device		*sc_subdev;
 
-	u_char			sc_msr;
-	u_char			sc_lsr;
-	u_char			sc_lcr;
+	u_char			 sc_msr;
+	u_char			 sc_lsr;
+	u_char			 sc_lcr;
 
-	u_char			sc_dying;
+	u_char			 sc_dying;
 };
 
 void	moscom_get_status(void *, int, u_char *, u_char *);

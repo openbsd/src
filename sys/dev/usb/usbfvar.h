@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbfvar.h,v 1.4 2007/06/12 16:26:37 mbalmer Exp $	*/
+/*	$OpenBSD: usbfvar.h,v 1.5 2007/06/13 06:25:03 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -161,8 +161,8 @@ void	    usbf_do_request(usbf_xfer_handle, usbf_private_handle,
 			    usbf_status);
 
 /* usbf_subr.c */
-usbf_status usbf_new_device(struct device *, usbf_bus_handle, int,
-			    int, int, struct usbf_port *);
+usbf_status usbf_new_device(struct device *, usbf_bus_handle, int, int, int,
+				     struct usbf_port *);
 usbf_status usbf_set_endpoint_feature(usbf_config_handle, u_int8_t,
 				      u_int16_t);
 usbf_status usbf_clear_endpoint_feature(usbf_config_handle, u_int8_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umassvar.h,v 1.11 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: umassvar.h,v 1.12 2007/06/13 06:25:03 mbalmer Exp $ */
 /*	$NetBSD: umassvar.h,v 1.20 2003/09/08 19:31:01 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -146,7 +146,7 @@ struct umass_wire_methods {
 };
 
 struct umassbus_softc {
-	struct device *		sc_child;	/* child device, for detach */
+	struct device		*sc_child;	/* child device, for detach */
 };
 
 /* the per device structure */

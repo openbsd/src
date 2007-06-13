@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.24 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: umct.c,v 1.25 2007/06/13 06:25:03 mbalmer Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,32 +81,32 @@ int	umctdebug = 0;
 #define	UMCT_IFACE_INDEX	0
 
 struct	umct_softc {
-	struct device		sc_dev;		/* base device */
+	struct device		 sc_dev;	/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* interface */
-	int			sc_iface_number;	/* interface number */
-	u_int16_t		sc_product;
+	usbd_interface_handle	 sc_iface;	/* interface */
+	int			 sc_iface_number;	/* interface number */
+	u_int16_t		 sc_product;
 
-	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	int			 sc_intr_number;	/* interrupt number */
+	usbd_pipe_handle	 sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
-	int			sc_isize;
+	int			 sc_isize;
 
-	usb_cdc_line_state_t	sc_line_state;	/* current line state */
-	u_char			sc_dtr;		/* current DTR state */
-	u_char			sc_rts;		/* current RTS state */
-	u_char			sc_break;	/* set break */
+	usb_cdc_line_state_t	 sc_line_state;	/* current line state */
+	u_char			 sc_dtr;	/* current DTR state */
+	u_char			 sc_rts;	/* current RTS state */
+	u_char			 sc_break;	/* set break */
 
-	u_char			sc_status;
+	u_char			 sc_status;
 
-	struct device *		sc_subdev;	/* ucom device */
+	struct device		*sc_subdev;	/* ucom device */
 
-	u_char			sc_dying;	/* disconnecting */
+	u_char			 sc_dying;	/* disconnecting */
 
-	u_char			sc_lsr;		/* Local status register */
-	u_char			sc_msr;		/* umct status register */
+	u_char			 sc_lsr;	/* Local status register */
+	u_char			 sc_msr;	/* umct status register */
 
-	u_int			last_lcr;	/* keep lcr register */
+	u_int			 last_lcr;	/* keep lcr register */
 };
 
 /*

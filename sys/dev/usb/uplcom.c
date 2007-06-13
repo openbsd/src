@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.41 2007/06/12 16:26:37 mbalmer Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.42 2007/06/13 06:25:03 mbalmer Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,28 +89,28 @@ int	uplcomdebug = 0;
 #define RSAQ_STATUS_DCD		0x01
 
 struct	uplcom_softc {
-	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* interface */
-	int			sc_iface_number;	/* interface number */
+	struct device		 sc_dev;	/* base device */
+	usbd_device_handle	 sc_udev;	/* USB device */
+	usbd_interface_handle	 sc_iface;	/* interface */
+	int			 sc_iface_number;	/* interface number */
 
-	usbd_interface_handle	sc_intr_iface;	/* interrupt interface */
-	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	usbd_interface_handle	 sc_intr_iface;	/* interrupt interface */
+	int			 sc_intr_number;	/* interrupt number */
+	usbd_pipe_handle	 sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
-	int			sc_isize;
+	int			 sc_isize;
 
-	usb_cdc_line_state_t	sc_line_state;	/* current line state */
-	int			sc_dtr;		/* current DTR state */
-	int			sc_rts;		/* current RTS state */
+	usb_cdc_line_state_t	 sc_line_state;	/* current line state */
+	int			 sc_dtr;	/* current DTR state */
+	int			 sc_rts;	/* current RTS state */
 
-	struct device *		sc_subdev;	/* ucom device */
+	struct device		*sc_subdev;	/* ucom device */
 
-	u_char			sc_dying;	/* disconnecting */
+	u_char			 sc_dying;	/* disconnecting */
 
-	u_char			sc_lsr;		/* Local status register */
-	u_char			sc_msr;		/* uplcom status register */
-	int			sc_type_hx;	/* HX variant */
+	u_char			 sc_lsr;	/* Local status register */
+	u_char			 sc_msr;	/* uplcom status register */
+	int			 sc_type_hx;	/* HX variant */
 };
 
 /*
