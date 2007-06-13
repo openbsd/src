@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.33 2007/05/29 00:03:13 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.34 2007/06/13 02:17:32 drahn Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -49,11 +49,11 @@ struct cmd_state cmd;
 
 /* bootprompt can be set by MD code to avoid prompt first time round */
 int bootprompt = 1;
+const char *bootfile = KERNEL;
 
 void
 boot(dev_t bootdev)
 {
-	const char *bootfile = KERNEL;
 	int try = 0, st;
 	u_long marks[MARK_MAX];
 

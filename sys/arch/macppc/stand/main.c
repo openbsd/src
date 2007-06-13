@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 2005/12/24 01:05:17 kettenis Exp $	*/
+/*	$OpenBSD: main.c,v 1.1 2007/06/13 02:17:32 drahn Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <stand/boot/cmd.h>
 
 
 #include <machine/cpu.h>
@@ -62,9 +63,12 @@
 #include <macppc/stand/openfirm.h>
 
 char bootdev[128];
-char bootfile[128];
 int boothowto;
 int debug;
+
+
+void
+get_alt_bootdev(char *, size_t, char *, size_t);
 
 static void
 prom2boot(char *dev)
@@ -164,18 +168,16 @@ chain(void (*entry)(), char *args, void *ssym, void *esym)
  */
 #define CLAIM_LIMIT	0x00c00000
 
+char bootline[512];
+
+extern const char *bootfile;
 int
 main()
 {
 	int chosen;
-	char bootline[512];		/* Should check size? */
-	char *cp;
 	u_long marks[MARK_MAX];
-	u_int32_t entry;
-	void *ssym, *esym;
 	int fd;
 
-	printf("\n>> OpenBSD/macppc Boot\n");
 
 	/*
 	 * Get the boot arguments from Openfirmware
@@ -187,49 +189,67 @@ main()
 		exit();
 	}
 	prom2boot(bootdev);
-	parseargs(bootline, &boothowto);
-	for (;;) {
-		if (boothowto & RB_ASKNAME) {
-			printf("Boot (or \"exit\"): ");
-			gets(bootline);
-			parseargs(bootline, &boothowto);
-		}
-		OF_claim((void *)0x00100000, CLAIM_LIMIT, 0); /* XXX */
-		marks[MARK_START] = 0;
-		if (loadfile(bootline, marks, LOAD_ALL) >= 0)
-			break;
-		if (errno)
-			printf("open %s: %s\n", opened_name, strerror(errno));
-		boothowto |= RB_ASKNAME;
-	}
-#ifdef	__notyet__
-	OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
-	cp = bootline;
-#else
+	printf("bootline [%s]\n", bootline);
+	get_alt_bootdev(bootdev, sizeof(bootdev), bootline, sizeof(bootline));
+	if (bootline[0] != '\0')
+		bootfile = bootline;
+
+	OF_claim((void *)0x00100000, CLAIM_LIMIT, 0); /* XXX */
+	boot(0);
+	return 0;
+}
+
+void
+get_alt_bootdev(char *dev, size_t devsz, char *line, size_t linesz)
+{
+	char *p;
+	int len;
+	/*
+	 * if the kernel image specified contains a ':' it is
+	 * [device]:[kernel], so seperate the two fields.
+	 */
+	p = strrchr(line, ':');
+	if (p == NULL)
+		return;
+	/* user specified boot device for kernel */
+	len = p - line + 1; /* str len plus nil */
+	strlcpy(dev, line, len > devsz ? devsz : len);
+
+	strlcpy(line, p+1, linesz); /* rest of string ater ':' */
+}
+
+
+void
+devboot(dev_t dev, char *p)
+{
+	printf("bootdev [%s]\n", bootdev);
+	strlcpy(p, bootdev, BOOTDEVLEN);
+}
+
+run_loadfile(u_long *marks, int howto)
+{
+	char bootline[512];		/* Should check size? */
+	u_int32_t entry;
+	char *cp;
+	void *ssym, *esym;
+
 	strlcpy(bootline, opened_name, sizeof bootline);
 	cp = bootline + strlen(bootline);
 	*cp++ = ' ';
-#endif
-	*cp = '-';
-	if (boothowto & RB_ASKNAME)
-		*++cp = 'a';
-	if (boothowto & RB_CONFIG)
-		*++cp = 'c';
-	if (boothowto & RB_SINGLE)
-		*++cp = 's';
-	if (boothowto & RB_KDB)
-		*++cp = 'd';
-	if (*cp == '-')
-#ifdef	__notyet__
-		*cp = 0;
-#else
+        *cp = '-';
+        if (howto & RB_ASKNAME)
+                *++cp = 'a';
+        if (howto & RB_CONFIG)
+                *++cp = 'c';
+        if (howto & RB_SINGLE)
+                *++cp = 's';
+        if (howto & RB_KDB)
+                *++cp = 'd';
+        if (*cp == '-')
 		*--cp = 0;
-#endif
 	else
 		*++cp = 0;
-#ifdef	__notyet__
-	OF_setprop(chosen, "bootargs", bootline, strlen(bootline) + 1);
-#endif
+
 	entry = marks[MARK_ENTRY];
 	ssym = (void *)marks[MARK_SYM];
 	esym = (void *)marks[MARK_END];
@@ -243,4 +263,26 @@ main()
 
 	_rtt();
 	return 0;
+
+}
+
+int
+cnspeed(dev_t dev, int sp)
+{
+	return CONSPEED;
+}
+
+char ttyname_buf[8];
+
+char *
+ttyname(int fd)
+{
+        snprintf(ttyname_buf, sizeof ttyname_buf, "ofc0");
+
+}
+
+dev_t
+ttydev(char *name)
+{
+	return makedev(0,0);
 }

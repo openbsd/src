@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.12 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.13 2007/06/13 02:17:32 drahn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -48,53 +48,26 @@
 
 extern char bootdev[];
 
+/*
+ * this function is passed [device specifier]:[kernel]
+ * however a device specifier may contain a ':'
+ */
+char namebuf[256];
 static char *
-filename(char *str, char *ppart)
+filename(char *str)
 {
 	char *cp, *lp;
 	char savec;
 	int dhandle;
-	char devtype[16];
 
-	lp = str;
-	devtype[0] = 0;
-	*ppart = 0;
-	for (cp = str; *cp; lp = cp) {
-		/* For each component of the path name... */
-		while (*++cp && *cp != '/')
-			;
-		savec = *cp;
-		*cp = 0;
-		/* ...look whether there is a device with this name */
-		dhandle = OF_finddevice(str);
-		*cp = savec;
-		if (dhandle == -1) {
-			/*
-			 * if not, lp is the delimiter between device and path
-			 */
+	cp = strrchr(str, ':');
+	if (cp == NULL)
+		return NULL;
 
-			/* if the last component was a block device... */
-			if (!strcmp(devtype, "block")) {
-				/* search for arguments */
-				for (cp = lp;
-				    --cp >= str && *cp != '/' && *cp != ':';)
-					;
-				if (cp >= str && *cp == ':') {
-					/* found arguments */
-					for (cp = lp;
-					    *--cp != ':' && *cp != ',';)
-						;
-					if (*++cp >= 'a' &&
-					    *cp <= 'a' + MAXPARTITIONS)
-						*ppart = *cp;
-				}
-			}
-			return lp;
-		} else if (OF_getprop(dhandle, "device_type", devtype,
-		    sizeof devtype) < 0)
-			devtype[0] = 0;
-	}
-	return 0;
+	savec = *cp;
+	*cp = 0;
+	strlcpy(namebuf, cp+1, sizeof namebuf);
+	return namebuf;
 }
 
 static int
@@ -225,7 +198,6 @@ read_mac_label(struct of_dev *devp, char *buf, struct disklabel *lp)
 
 		if (0 == strcmp(part->pmPartType, PART_TYPE_OPENBSD)) {
 			/* FOUND OUR PARTITION!!! */
-			printf("found OpenBSD DPME partition\n");
 			if(strategy(devp, F_READ, part->pmPyPartStart,
 				DEV_BSIZE, buf, &read) == 0
 				&& read == DEV_BSIZE)
@@ -311,8 +283,8 @@ int
 devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
-	char partition;
 	char fname[256];
+	char devname[256];
 	char buf[DEV_BSIZE];
 	struct disklabel label;
 	int handle, part;
@@ -323,27 +295,21 @@ devopen(struct open_file *of, const char *name, char **file)
 		panic("devopen");
 	if (of->f_flags != F_READ)
 		return EPERM;
+
 	strlcpy(fname, name, sizeof fname);
-	cp = filename(fname, &partition);
-	if (cp) {
-		strlcpy(buf, cp, sizeof buf);
-		*cp = 0;
-	}
-	if (!cp || !*buf)
-		strlcpy(buf, DEFAULT_KERNEL, sizeof buf);
-	if (!*fname)
-		strlcpy(fname, bootdev, sizeof fname);
+	cp = filename(fname);
+	if (cp == NULL)
+		return ENOENT;
+	strlcpy(buf, cp, sizeof buf);
 	strlcpy(opened_name, fname, sizeof opened_name);
-	if (partition) {
-		cp = opened_name + strlen(opened_name);
-		*cp++ = ':';
-		*cp++ = partition;
-		*cp = 0;
-	}
+
+	strlcat(opened_name, ":", sizeof opened_name);
 	if (*buf != '/')
 		strlcat(opened_name, "/", sizeof opened_name);
+
 	strlcat(opened_name, buf, sizeof opened_name);
 	*file = opened_name + strlen(fname) + 1;
+
 	if ((handle = OF_finddevice(fname)) == -1)
 		return ENOENT;
 	if (OF_getprop(handle, "name", buf, sizeof buf) < 0)
@@ -380,16 +346,10 @@ devopen(struct open_file *of, const char *name, char **file)
 		}
 
 		if (error == ERDLAB) {
-			if (partition)
-				/*
-				 * User specified a partition,
-				 * but there is none
-				 */
-				goto bad;
 			/* No label, just use complete disk */
 			ofdev.partoff = 0;
 		} else {
-			part = partition ? partition - 'a' : 0;
+			part = 0; /* how to pass this parameter */
 			ofdev.partoff = label.d_partitions[part].p_offset;
 		}
 
