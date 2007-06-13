@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.19 2007/05/02 17:01:22 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.20 2007/06/13 02:32:41 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -102,6 +102,9 @@ int	azalia_cmi9880_mixer_init(codec_t *);
 int	azalia_stac9221_init_dacgroup(codec_t *);
 int	azalia_stac9200_mixer_init(codec_t *);
 int	azalia_stac9200_unsol_event(codec_t *, int);
+int	azalia_stac9221_apple_mixer_init(codec_t *);
+int	azalia_stac9221_apple_init_dacgroup(codec_t *);
+int	azalia_stac9221_gpio_unmute(codec_t *, int);
 
 int
 azalia_codec_init_vtbl(codec_t *this)
@@ -152,6 +155,13 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
 		this->init_dacgroup = azalia_stac9221_init_dacgroup;
+		if (this->subid == 0x76808384) {
+			this->init_dacgroup =
+			    azalia_stac9221_apple_init_dacgroup;
+			this->mixer_init =
+			    azalia_stac9221_apple_mixer_init;
+			break;
+		}
 		break;
 	case 0x83847683:
 		this->name = "Sigmatel STAC9221D";
@@ -2270,5 +2280,125 @@ azalia_stac9200_unsol_event(codec_t *this, int tag)
 	default:
 		DPRINTF(("%s: unknown tag: %d\n", __func__, tag));
 	}
+	return 0;
+}
+
+int
+azalia_stac9221_apple_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 1,
+		{{4, {0x02, 0x03, 0x04, 0x05}}}};
+
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x06, 0x07}},
+		 {1, {0x09}}}};
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+static const mixer_item_t stac9221_apple_mixer_items[] = {
+	{{AZ_CLASS_INPUT, {AudioCinputs}, AUDIO_MIXER_CLASS, AZ_CLASS_INPUT, 0, 0}, 0},
+	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
+	{{AZ_CLASS_RECORD, {AudioCrecord}, AUDIO_MIXER_CLASS, AZ_CLASS_RECORD, 0, 0}, 0},
+
+	{{0, {AudioNheadphone}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x02, MI_TARGET_OUTAMP},
+	{{0, {AudioNheadphone".mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x02, MI_TARGET_OUTAMP},
+
+	{{0, {AudioNspeaker}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x03, MI_TARGET_OUTAMP},
+	{{0, {AudioNspeaker".mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x03, MI_TARGET_OUTAMP},
+
+        {{0, {"line"}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+          0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x04, MI_TARGET_OUTAMP},
+        {{0, {"line.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+          0, 0, ENUM_OFFON}, 0x04, MI_TARGET_OUTAMP},
+
+        {{0, {"line2"}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+          0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x05, MI_TARGET_OUTAMP},
+        {{0, {"line2.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+          0, 0, ENUM_OFFON}, 0x05, MI_TARGET_OUTAMP},
+
+	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 1, MIXER_DELTA(15)}}, 0x16, MI_TARGET_VOLUME},
+};
+
+int
+azalia_stac9221_apple_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+
+	this->nmixers = sizeof(stac9221_apple_mixer_items) / sizeof(mixer_item_t);
+	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
+	    M_DEVBUF, M_NOWAIT);
+	if (this->mixers == NULL) {
+		printf("%s: out of memory in %s\n", XNAME(this), __func__);
+		return ENOMEM;
+	}
+	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
+	memcpy(this->mixers, stac9221_apple_mixer_items,
+	    sizeof(mixer_item_t) * this->nmixers);
+	azalia_generic_mixer_fix_indexes(this);
+	azalia_generic_mixer_default(this);
+
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
+	mc.un.ord = 1;		/* pindir: output */
+	azalia_generic_mixer_set(this, 0x0a, MI_TARGET_PINDIR, &mc); /* headphones */
+	azalia_generic_mixer_set(this, 0x0b, MI_TARGET_PINDIR, &mc); /* mic, set to output */
+	azalia_generic_mixer_set(this, 0x0c, MI_TARGET_PINDIR, &mc); /* speaker */
+	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc); /* line out */
+	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc); /* another line out */
+
+	/* max all volumes except master */
+	mc.type = AUDIO_MIXER_VALUE;
+	mc.un.value.num_channels = 2;
+	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x02, MI_TARGET_OUTAMP);
+	mc.un.value.level[1] = mc.un.value.level[0];
+	azalia_generic_mixer_set(this, 0x02, MI_TARGET_OUTAMP, &mc);
+
+	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x03, MI_TARGET_OUTAMP);
+	mc.un.value.level[1] = mc.un.value.level[0];
+	azalia_generic_mixer_set(this, 0x03, MI_TARGET_OUTAMP, &mc);
+
+	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x04, MI_TARGET_OUTAMP);
+	mc.un.value.level[1] = mc.un.value.level[0];
+	azalia_generic_mixer_set(this, 0x04, MI_TARGET_OUTAMP, &mc);
+
+	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x05, MI_TARGET_OUTAMP);
+	mc.un.value.level[1] = mc.un.value.level[0];
+	azalia_generic_mixer_set(this, 0x05, MI_TARGET_OUTAMP, &mc);
+
+	azalia_stac9221_gpio_unmute(this, 0);
+	azalia_stac9221_gpio_unmute(this, 1);
+
+	return 0;
+}
+
+int
+azalia_stac9221_gpio_unmute(codec_t *this, int pin)
+{
+	uint32_t data, mask, dir;
+
+	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DATA, 0, &data);
+	this->comresp(this, this->audiofunc, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
+	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DIRECTION, 0, &dir);
+
+	data |= 1 << pin;
+	mask |= 1 << pin;
+	dir |= 1 << pin;
+
+	this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
+	this->comresp(this, this->audiofunc, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
+	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DIRECTION, dir, NULL);
+	DELAY(1000);
+	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DATA, data, NULL);
+
 	return 0;
 }
