@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.34 2007/01/24 14:08:28 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.35 2007/06/13 17:47:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -111,7 +111,8 @@ const char * const nbr_action_names[] = {
 	"ADJ_OK",
 	"RESET_DD",
 	"DELETE",
-	"CLEAR_LISTS"
+	"CLEAR_LISTS",
+	"HELLO_CHK"
 };
 
 int
