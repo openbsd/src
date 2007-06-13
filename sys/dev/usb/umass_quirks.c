@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.28 2007/06/10 14:49:01 mbalmer Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.29 2007/06/13 10:33:52 mbalmer Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_FUJIPHOTO, USB_PRODUCT_FUJIPHOTO_MASS0100 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NOSENSE,
+	  ADEV_NOSENSE,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -102,7 +102,7 @@ const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_HP, USB_PRODUCT_HP_CDWRITERPLUS },
 	  UMASS_WPROTO_CBI, UMASS_CPROTO_ATAPI,
 	  0,
-	  PQUIRK_NOSENSE,
+	  ADEV_NOSENSE,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
@@ -188,7 +188,7 @@ const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_1XX },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_ONLYBIG,
+	  SDEV_ONLYBIG,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
@@ -284,7 +284,7 @@ const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_OLYMPUS, USB_PRODUCT_OLYMPUS_C700 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_ONLYBIG | SDEV_NOSYNCCACHE,
+	  SDEV_ONLYBIG | SDEV_NOSYNCCACHE,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -364,7 +364,7 @@ const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_SHUTTLE, USB_PRODUCT_SHUTTLE_EUSB },
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
 	  0,
-	  PQUIRK_NOSENSE,
+	  ADEV_NOSENSE,
 	  UMATCH_VENDOR_PRODUCT,
 	  umass_init_shuttle, NULL
 	},

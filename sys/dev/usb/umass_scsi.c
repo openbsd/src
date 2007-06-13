@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.17 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.18 2007/06/13 10:33:52 mbalmer Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ umass_scsi_setup(struct umass_softc *sc)
 	scbus->sc_link.adapter = &scbus->sc_adapter;
 	scbus->sc_link.adapter_softc = sc;
 	scbus->sc_link.openings = 1;
-	scbus->sc_link.quirks |= PQUIRK_ONLYBIG | sc->sc_busquirks;
+	scbus->sc_link.quirks |= SDEV_ONLYBIG | sc->sc_busquirks;
 
 	return (scbus);
 }
@@ -329,7 +329,7 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	case STATUS_CMD_UNKNOWN:
 		DPRINTF(UDMASS_CMD, ("umass_scsi_cb: status cmd unknown\n"));
 		/* we can't issue REQUEST SENSE */
-		if (xs->sc_link->quirks & PQUIRK_NOSENSE) {
+		if (xs->sc_link->quirks & ADEV_NOSENSE) {
 			/*
 			 * If no residue and no other USB error,
 			 * command succeeded.

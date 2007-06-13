@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.87 2007/06/13 10:10:30 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.88 2007/06/13 10:33:52 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -53,12 +53,6 @@
 #else
 #undef USB_USE_SOFTINTR
 #endif
-
-#define UMASS_ATAPISTR		"atapiscsi"
-
-/* periph_quirks */
-#define	PQUIRK_NOSENSE		ADEV_NOSENSE	/* can't REQUEST SENSE */
-#define PQUIRK_ONLYBIG		SDEV_ONLYBIG
 
 #define UCOMBUSCF_PORTNO		0
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
