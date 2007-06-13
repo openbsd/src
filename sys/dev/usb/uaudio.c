@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.46 2007/06/13 06:25:03 mbalmer Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.47 2007/06/13 10:10:30 mbalmer Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -3067,11 +3067,11 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->precision == 16) {
 				if (enc == AUDIO_ENCODING_ULINEAR_LE)
-					swcode = change_sign16_le;
+					swcode = change_sign16;
 				else if (mode == AUMODE_PLAY)
-					swcode = swap_bytes_change_sign16_le;
+					swcode = swap_bytes_change_sign16;
 				else
-					swcode = change_sign16_swap_bytes_le;
+					swcode = change_sign16_swap_bytes;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
 			} else if (p->precision == 8) {
 				if (flags & HAS_8U) {
@@ -3084,9 +3084,9 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 					p->hw_precision = 16;
 					enc = AUDIO_ENCODING_SLINEAR_LE;
 					if (mode == AUMODE_PLAY)
-						swcode = ulinear8_to_slinear16_le;
+						swcode = ulinear8_to_linear16_le;
 					else
-						swcode = slinear16_to_ulinear8_le;
+						swcode = linear16_to_ulinear8_le;
 				}
 			}
 			break;
