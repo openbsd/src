@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.26 2007/05/03 14:49:31 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.27 2007/06/13 02:29:10 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1431,7 +1431,8 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 				    (number << 4) | startchan, NULL);
 		if (err)
 			goto exit;
-		startchan += WIDGET_CHANNELS(&this->w[nid]);
+		if (nchan > 2)
+			startchan += WIDGET_CHANNELS(&this->w[nid]);
 	}
 
 exit:
