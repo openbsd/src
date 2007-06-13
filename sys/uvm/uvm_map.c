@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.94 2007/06/01 20:10:04 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.95 2007/06/13 13:32:26 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -192,13 +192,11 @@ vaddr_t uvm_maxkaddr;
  * local prototypes
  */
 
-static void		uvm_mapent_copy(struct vm_map_entry *,
-    struct vm_map_entry *);
-static void		uvm_map_entry_unwire(struct vm_map *,
-    struct vm_map_entry *);
-static void		uvm_map_reference_amap(struct vm_map_entry *, int);
-static void		uvm_map_unreference_amap(struct vm_map_entry *, int);
-int			uvm_map_spacefits(struct vm_map *, vaddr_t *, vsize_t,
+void uvm_mapent_copy(struct vm_map_entry *, struct vm_map_entry *);
+void uvm_map_entry_unwire(struct vm_map *, struct vm_map_entry *);
+void uvm_map_reference_amap(struct vm_map_entry *, int);
+void uvm_map_unreference_amap(struct vm_map_entry *, int);
+int uvm_map_spacefits(struct vm_map *, vaddr_t *, vsize_t,
     struct vm_map_entry *, voff_t, vsize_t);
 
 struct vm_map_entry	*uvm_mapent_alloc(struct vm_map *);
@@ -215,7 +213,8 @@ vsize_t uvm_rb_space(struct vm_map *, struct vm_map_entry *);
 #ifdef DEBUG
 int _uvm_tree_sanity(struct vm_map *map, const char *name);
 #endif
-static vsize_t uvm_rb_subtree_space(struct vm_map_entry *);
+vsize_t uvm_rb_subtree_space(struct vm_map_entry *);
+void uvm_rb_fixup(struct vm_map *, struct vm_map_entry *);
 
 static __inline int
 uvm_compare(struct vm_map_entry *a, struct vm_map_entry *b)
@@ -254,7 +253,7 @@ uvm_rb_space(struct vm_map *map, struct vm_map_entry *entry)
 	return (space);
 }
 		
-static vsize_t
+vsize_t
 uvm_rb_subtree_space(struct vm_map_entry *entry)
 {
 	vaddr_t space, tmp;
@@ -275,7 +274,7 @@ uvm_rb_subtree_space(struct vm_map_entry *entry)
 	return (space);
 }
 
-static void
+void
 uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 {
 	/* We need to traverse to the very top */
@@ -467,7 +466,7 @@ uvm_mapent_free(struct vm_map_entry *me)
  * uvm_mapent_copy: copy a map entry, preserving flags
  */
 
-static __inline void
+void
 uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 {
 	memcpy(dst, src, ((char *)&src->uvm_map_entry_stop_copy) -
@@ -479,8 +478,7 @@ uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
  *
  * => map should be locked by caller
  */
-
-static __inline void
+void
 uvm_map_entry_unwire(struct vm_map *map, struct vm_map_entry *entry)
 {
 
@@ -492,7 +490,7 @@ uvm_map_entry_unwire(struct vm_map *map, struct vm_map_entry *entry)
 /*
  * wrapper for calling amap_ref()
  */
-static __inline void
+void
 uvm_map_reference_amap(struct vm_map_entry *entry, int flags)
 {
 	amap_ref(entry->aref.ar_amap, entry->aref.ar_pageoff,
@@ -503,7 +501,7 @@ uvm_map_reference_amap(struct vm_map_entry *entry, int flags)
 /*
  * wrapper for calling amap_unref() 
  */
-static __inline void
+void
 uvm_map_unreference_amap(struct vm_map_entry *entry, int flags)
 {
 	amap_unref(entry->aref.ar_amap, entry->aref.ar_pageoff,
