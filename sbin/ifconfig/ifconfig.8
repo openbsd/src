@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.143 2007/06/12 16:36:43 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.144 2007/06/13 06:46:26 henning Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 12 2007 $
+.Dd $Mdocdate: June 13 2007 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -126,9 +126,11 @@ and
 .It Ar address
 For the DARPA Internet family,
 the address is either a host name present in the host name database,
-.Xr hosts 5 ,
-or a DARPA Internet address expressed in the Internet standard
-.Dq dot notation .
+.Xr hosts 5
+or a DARPA
+Internet address expressed in the Internet standard
+.Dq dot
+or CIDR notation.
 .Pp
 Internet version 6 addresses are either a host name present
 in the host name database,

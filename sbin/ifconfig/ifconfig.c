@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.179 2007/06/05 21:14:07 kurt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.180 2007/06/13 06:46:26 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3580,15 +3580,26 @@ SIN(in_addreq.ifra_mask), SIN(in_addreq.ifra_broadaddr)};
 void
 in_getaddr(const char *s, int which)
 {
-	struct sockaddr_in *sin = sintab[which];
+	struct sockaddr_in *sin = sintab[which], tsin;
 	struct hostent *hp;
 	struct netent *np;
+	int bits, l;
+	char p[3];
 
+	bzero(&tsin, sizeof(tsin));
 	sin->sin_len = sizeof(*sin);
 	if (which != MASK)
 		sin->sin_family = AF_INET;
 
-	if (inet_aton(s, &sin->sin_addr) == 0) {
+	if (which == ADDR && strrchr(s, '/') != NULL &&
+	    (bits = inet_net_pton(AF_INET, s, &tsin.sin_addr,
+	    sizeof(tsin.sin_addr))) != -1) {
+		l = snprintf(p, sizeof(p), "%i", bits);
+		if (l >= sizeof(p) || l == -1)
+			errx(1, "%i: bad prefixlen", bits);
+		in_getprefix(p, MASK);
+		memcpy(&sin->sin_addr, &tsin.sin_addr, sizeof(sin->sin_addr));
+	} else if (inet_aton(s, &sin->sin_addr) == 0) {
 		if ((hp = gethostbyname(s)))
 			memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
 		else if ((np = getnetbyname(s)))
