@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.49 2007/06/12 04:23:47 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.50 2007/06/13 17:16:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -202,6 +202,13 @@ kr_change(struct kroute *kroute)
 	/* nexthop within 127/8 -> ignore silently */
 	if ((kroute->nexthop.s_addr & htonl(IN_CLASSA_NET)) ==
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
+		return (0);
+
+	/*
+	 * Ingnore updates that did not change the route.
+	 * Currently only the nexthop can change.
+	 */
+	if (kr && kr->r.nexthop.s_addr == kroute->nexthop.s_addr)
 		return (0);
 
 	if (send_rtmsg(kr_state.fd, action, kroute) == -1)
