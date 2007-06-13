@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.62 2007/04/07 23:20:18 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.63 2007/06/13 13:52:26 pyr Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.62 2007/04/07 23:20:18 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.63 2007/06/13 13:52:26 pyr Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -120,6 +120,7 @@ main(volatile int argc, char *argv[])
 	editing = 0;
 	el = NULL;
 	hist = NULL;
+	cookiefile = NULL;
 #endif
 	mark = HASHBYTES;
 	marg_sl = sl_init();
@@ -176,7 +177,11 @@ main(volatile int argc, char *argv[])
 	if (isatty(fileno(ttyout)) && !dumb_terminal && foregroundproc())
 		progress = 1;		/* progress bar on if tty is usable */
 
-	while ((ch = getopt(argc, argv, "46AadEegimno:pP:r:tvV")) != -1) {
+#ifndef SMALL
+	cookiefile = getenv("http_cookies");
+#endif
+
+	while ((ch = getopt(argc, argv, "46Aac:dEegimno:pP:r:tvV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -191,6 +196,12 @@ main(volatile int argc, char *argv[])
 
 		case 'a':
 			anonftp = 1;
+			break;
+
+		case 'c':
+#ifndef SMALL
+			cookiefile = optarg;
+#endif
 			break;
 
 		case 'd':
@@ -264,6 +275,10 @@ main(volatile int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+#ifndef SMALL
+	cookie_load();
+#endif
 
 	cpend = 0;	/* no pending replies */
 	proxy = 0;	/* proxy not active */

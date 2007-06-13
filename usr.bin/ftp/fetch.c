@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.73 2007/04/17 14:58:51 drahn Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.74 2007/06/13 13:52:26 pyr Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.73 2007/04/17 14:58:51 drahn Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.74 2007/06/13 13:52:26 pyr Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -448,6 +448,9 @@ again:
 	/*
 	 * Construct and send the request. Proxy requests don't want leading /.
 	 */
+#ifndef SMALL
+	cookie_get(host, path, ishttpsurl, &buf);
+#endif
 	if (proxyurl) {
 		if (verbose)
 			fprintf(ttyout, " (via %s)\n", proxyenv);
@@ -457,11 +460,11 @@ again:
 		 */
 		if (cookie)
 			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n"
-			    "Proxy-Authorization: Basic %s\r\n%s\r\n\r\n",
-			    path, cookie, HTTP_USER_AGENT);
+			    "Proxy-Authorization: Basic %s%s\r\n%s\r\n\r\n",
+			    path, cookie, buf ? buf : "", HTTP_USER_AGENT);
 		else
-			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n%s\r\n\r\n",
-			    path, HTTP_USER_AGENT);
+			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n%s%s\r\n\r\n",
+			    path, buf ? buf : "", HTTP_USER_AGENT);
 
 	} else {
 		ftp_printf(fin, ssl, "GET /%s HTTP/1.0\r\nHost: ", path);
@@ -494,10 +497,18 @@ again:
 		if (port && strcmp(port, "80") != 0)
 			ftp_printf(fin, ssl, ":%s", port);
 #endif
-		ftp_printf(fin, ssl, "\r\n%s\r\n\r\n", HTTP_USER_AGENT);
+		ftp_printf(fin, ssl, "\r\n%s%s\r\n\r\n",
+		    buf ? buf : "", HTTP_USER_AGENT);
 		if (verbose)
 			fprintf(ttyout, "\n");
 	}
+
+
+#ifndef SMALL
+	free(buf);
+#endif
+	buf = NULL;
+
 	if (fin != NULL && fflush(fin) == EOF) {
 		warn("Writing HTTP request");
 		goto cleanup_url_get;

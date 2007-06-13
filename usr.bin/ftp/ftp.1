@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.58 2007/05/31 19:20:10 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.59 2007/06/13 13:52:26 pyr Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 13 2007 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Sh SYNOPSIS
 .Nm ftp
 .Op Fl 46AadEegimnptVv
+.Op Fl c Ar cookiefile
 .Op Fl P Ar port
 .Op Fl r Ar seconds
 .Op Ar host Op Ar port
@@ -108,6 +109,15 @@ to very old servers that do not implement passive mode properly.
 Causes
 .Nm
 to bypass the normal login procedure and use an anonymous login instead.
+.It Fl c
+Load a Netscape type cookiejar file.
+This option is only useful for HTTP and HTTPS transfers.
+With this option relevant cookies from the jar are sent with each HTTP(S)
+request.
+Setting the http_cookies environment variable has the same effect.
+If both the http_cookies environment variable is set and the
+.Fl c
+argument is given, the latter will take precedence.
 .It Fl d
 Enables debugging.
 .It Fl E
@@ -1505,6 +1515,9 @@ URL of FTP proxy to use when making FTP URL requests
 (if not defined, use the standard FTP protocol).
 .It Ev http_proxy
 URL of HTTP proxy to use when making HTTP or HTTPS URL requests.
+.It Ev http_cookies
+Path of a Netscape like cookiejar to use when making
+HTTP or HTTPS URL requests.
 .El
 .Sh PORT ALLOCATION
 For active mode data connections,
