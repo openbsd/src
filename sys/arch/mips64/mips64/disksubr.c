@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.57 2007/06/14 03:41:21 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.58 2007/06/14 04:56:15 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -528,7 +528,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (msg) {
 		if (partoff == -1) {
 			error = EIO;
-			goto error;
+			goto done;
 		}
 
 		/* Write it in the regular place with native byte order. */
@@ -544,6 +544,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	(*strat)(bp);
 	error = biowait(bp);
 
+done:
 	if (bp) {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
