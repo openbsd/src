@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.47 2007/04/15 11:21:16 mpf Exp $
+ * $OpenBSD: calendar.birthday,v 1.48 2007/06/14 20:13:17 jasper Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -188,7 +188,6 @@
 06/08	Frank Lloyd Wright born in Richland Center, Wisconsin, 1867
 06/13	Alexander the Great dies (323BC)
 06/14	Ernesto "Che" Guevara de la Serna born in Rosario, Argentina, 1928
-06/15	Edward (Edvard Hagerup) Grieg born in Bergen, Norway, 1843
 06/16	Hammurabi the Great dies, Babylon, 1686 BC
 06/17	M.C. Escher born, 1898
 06/22	Carl Hubbell born, 1903

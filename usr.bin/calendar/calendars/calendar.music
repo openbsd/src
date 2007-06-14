@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.21 2007/05/04 20:56:31 jasper Exp $
+ * $OpenBSD: calendar.music,v 1.22 2007/06/14 20:13:17 jasper Exp $
  */
 
 #ifndef _calendar_music_
@@ -249,7 +249,7 @@
 06/12	John Ireland dies, 1962
 06/13	Carlos Chavez is born in Popotla, Mexico, 1899
 06/15	Harry Nilsson is born in Brooklyn, 1941
-06/15	Edvard Grieg is born in Bergen, Norway, 1843
+06/15	Edvard Hagerup Grieg is born in Bergen, Norway, 1843
 06/15	John Philip Sousa's march "The Washington Post" premiered, 1889
 06/15	Robert Russell Bennett is born, 1894
 06/16	The Monterey Pop festival opens, 1967
