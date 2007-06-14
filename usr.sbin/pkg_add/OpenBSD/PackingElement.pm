@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.134 2007/06/12 09:53:36 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.135 2007/06/14 09:11:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -221,6 +221,7 @@ sub new
 sub destate
 {
 	my ($self, $state) = @_;
+	$state->{lastfileobject} = $self;
 	$self->compute_fullname($state);
 }
 
@@ -523,15 +524,6 @@ our @ISA=qw(OpenBSD::PackingElement::FileBase);
 sub keyword() { "ltlib" }
 __PACKAGE__->register_with_factory;
 
-package OpenBSD::PackingElement::Ignore;
-our @ISA=qw(OpenBSD::PackingElement::Annotation);
-
-__PACKAGE__->register_with_factory('ignore');
-
-sub add
-{
-}
-
 # Comment is very special
 package OpenBSD::PackingElement::Comment;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
@@ -639,42 +631,42 @@ sub new
 		return OpenBSD::PackingElement::NoDefaultConflict->new;
 	} elsif ($args eq 'manual-installation') {
 		return OpenBSD::PackingElement::ManualInstallation->new;
+	} elsif ($args eq 'system-package') {
+		return OpenBSD::PackingElement::SystemPackage->new;
 	} else {
 		die "Unknown option: $args";
 	}
 }
 
-package OpenBSD::PackingElement::NoDefaultConflict;
+package OpenBSD::PackingElement::UniqueOption;
 our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::Option);
+
+sub stringize 
+{ 
+	my $self = shift;
+	return $self->category; 
+}
+
+sub new
+{
+	my ($class, @args) = @_;
+	bless {}, $class;
+}
+
+package OpenBSD::PackingElement::NoDefaultConflict;
+our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
 
 sub category() { 'no-default-conflict' }
 
-sub stringize() 
-{
-	return 'no-default-conflict';
-}
-
-sub new
-{
-	my ($class, @args) = @_;
-	bless {}, $class;
-}
-
 package OpenBSD::PackingElement::ManualInstallation;
-our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::Option);
+our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
 
 sub category() { 'manual-installation' }
 
-sub stringize() 
-{
-	return 'manual-installation';
-}
+package OpenBSD::PackingElement::SystemPackage;
+our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
 
-sub new
-{
-	my ($class, @args) = @_;
-	bless {}, $class;
-}
+sub category() { 'system-package' }
 
 # The special elements that don't end in the right place
 package OpenBSD::PackingElement::ExtraInfo;
@@ -1433,7 +1425,7 @@ sub register_old_keyword
 }
 
 for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend 
-    libdepend digitalsignature)) {
+    libdepend digitalsignature ignore)) {
 	__PACKAGE__->register_old_keyword($k);
 }
 
