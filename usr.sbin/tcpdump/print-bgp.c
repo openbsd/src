@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.8 2007/05/27 12:38:39 canacar Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.9 2007/06/14 17:42:06 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -205,6 +205,7 @@ static const char *bgpattr_nlri_safi[] = {
 #define BGP_COMMUNITY_NO_EXPORT			0xffffff01
 #define BGP_COMMUNITY_NO_ADVERT			0xffffff02
 #define BGP_COMMUNITY_NO_EXPORT_SUBCONFED	0xffffff03
+#define BGP_COMMUNITY_NO_PEER			0xffffff04
 
 static const char *afnumber[] = AFNUM_NAME_STR;
 #define af_name(x) \
@@ -418,8 +419,11 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			case BGP_COMMUNITY_NO_EXPORT_SUBCONFED:
 				printf(" NO_EXPORT_SUBCONFED");
 				break;
+			case BGP_COMMUNITY_NO_PEER:
+				printf(" NO_PEER");
+				break;
 			default:
-				printf(" (AS #%d value 0x%04x)",
+				printf(" %d:%d",
 					(comm >> 16) & 0xffff, comm & 0xffff);
 				break;
 			}
