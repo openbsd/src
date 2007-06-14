@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.113 2007/06/04 18:52:01 espie Exp $
+# $OpenBSD: pkg_create,v 1.114 2007/06/14 10:16:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -610,6 +610,7 @@ my $base = '/';
 if (defined $opt_B) {
 	$base = $opt_B;
 } elsif (defined $opt_S) {
+	print STDERR "Warning: -S is deprecated, use -B instead\n";
 	$base = $opt_S;
 } elsif (defined $ENV{'PKG_PREFIX'}) {
 	$base = $ENV{'PKG_PREFIX'};

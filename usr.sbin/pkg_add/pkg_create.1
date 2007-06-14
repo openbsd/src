@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.41 2007/06/02 15:32:07 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.42 2007/06/14 10:16:37 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: June 2 2007 $
+.Dd $Mdocdate: June 14 2007 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -187,14 +187,10 @@ Print out the actual packing-list of the package being generated
 Most often used in combination with
 .Fl n .
 .It Fl S Ar pkg-destdir
-Set
-.Ar pkg-destdir
-as the prefix to prepend to any file to select for the package.
-This option is identical to the
+Deprecated, use
+identical
 .Fl B
-option; however the
-.Fl B
-option is preferred.
+option instead.
 .It Fl U Ar undisplayfile
 Display the file (using
 .Xr more 1 )
