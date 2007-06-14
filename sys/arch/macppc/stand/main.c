@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 2007/06/13 02:17:32 drahn Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 2007/06/14 03:32:53 drahn Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -189,7 +189,6 @@ main()
 		exit();
 	}
 	prom2boot(bootdev);
-	printf("bootline [%s]\n", bootline);
 	get_alt_bootdev(bootdev, sizeof(bootdev), bootline, sizeof(bootline));
 	if (bootline[0] != '\0')
 		bootfile = bootline;
@@ -222,7 +221,6 @@ get_alt_bootdev(char *dev, size_t devsz, char *line, size_t linesz)
 void
 devboot(dev_t dev, char *p)
 {
-	printf("bootdev [%s]\n", bootdev);
 	strlcpy(p, bootdev, BOOTDEVLEN);
 }
 
