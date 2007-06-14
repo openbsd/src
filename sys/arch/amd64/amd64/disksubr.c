@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.47 2007/06/14 03:29:34 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.48 2007/06/14 03:35:29 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -99,6 +99,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
 		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+	lp->d_version = 1;
 
 	/* Look for any BIOS geometry information we should honour. */
 	devno = chrtoblk(dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.55 2007/06/14 03:29:34 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.56 2007/06/14 03:35:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -71,6 +71,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
 		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+	lp->d_version = 1;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
