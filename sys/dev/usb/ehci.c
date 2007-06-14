@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.75 2007/06/14 06:55:09 mbalmer Exp $ */
+/*	$OpenBSD: ehci.c,v 1.76 2007/06/14 12:58:09 mbalmer Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -101,6 +101,8 @@ int ehcidebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+#define mstohz(ms) ((ms) * hz / 1000)
 
 struct ehci_pipe {
 	struct usbd_pipe pipe;

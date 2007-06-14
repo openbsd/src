@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.82 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: ohci.c,v 1.83 2007/06/14 12:58:09 mbalmer Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -80,6 +80,8 @@ int ohcidebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+#define mstohz(ms) ((ms) * hz / 1000)
 
 /*
  * The OHCI controller is little endian, so on big endian machines

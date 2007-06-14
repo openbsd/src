@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.58 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.59 2007/06/14 12:58:09 mbalmer Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -88,6 +88,8 @@ int uhcinoloop = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+#define mstohz(ms) ((ms) * hz / 1000)
 
 /*
  * The UHCI controller is little endian, so on big endian machines

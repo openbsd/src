@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.93 2007/06/14 10:11:16 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.94 2007/06/14 12:58:09 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -51,7 +51,5 @@
 #else
 #undef USB_USE_SOFTINTR
 #endif
-
-#define mstohz(ms) ((ms) * hz / 1000)
 
 #endif /* _USB_PORT_H */
