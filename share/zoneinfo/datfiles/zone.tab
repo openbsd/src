@@ -1,5 +1,5 @@
-# $OpenBSD: zone.tab,v 1.19 2007/02/27 16:26:46 millert Exp $
-# @(#)zone.tab	8.9
+# $OpenBSD: zone.tab,v 1.20 2007/06/14 20:07:10 millert Exp $
+# @(#)zone.tab	8.10
 #
 # TZ zone descriptions
 #
@@ -111,8 +111,9 @@ CA	+4531-07334	America/Montreal	Eastern Time - Quebec - most locations
 CA	+4339-07923	America/Toronto	Eastern Time - Ontario - most locations
 CA	+4901-08816	America/Nipigon	Eastern Time - Ontario & Quebec - places that did not observe DST 1967-1973
 CA	+4823-08915	America/Thunder_Bay	Eastern Time - Thunder Bay, Ontario
+CA	+6344-06828	America/Iqaluit	Eastern Time - east Nunavut - most locations
 CA	+6608-06544	America/Pangnirtung	Eastern Time - Pangnirtung, Nunavut
-CA	+6344-06828	America/Iqaluit	Eastern Time - east Nunavut
+CA	+744144-0944945	America/Resolute	Eastern Time - Resolute, Nunavut
 CA	+484531-0913718	America/Atikokan	Eastern Standard Time - Atikokan, Ontario and Southampton I, Nunavut
 CA	+624900-0920459	America/Rankin_Inlet	Central Time - central Nunavut
 CA	+4953-09709	America/Winnipeg	Central Time - Manitoba & west Ontario
