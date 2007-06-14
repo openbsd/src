@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.145 2007/06/13 04:55:49 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.146 2007/06/14 19:31:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -377,6 +377,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			struct radix_node *rn;
 			struct rt_addrinfo info;
 			int hr_otherif, nr_ourif;
+			struct sockaddr_rtlabel	sa_rl;
+			const char *label;
 
 			/*
 			 * Avoid screwing with the routes if there are other
@@ -418,6 +420,17 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			    ifa->ifa_netmask, 0);
 			nr_ourif = (rt && rt->rt_ifp == &sc->sc_if);
 
+			/* Restore the route label */
+			bzero(&sa_rl, sizeof(sa_rl));
+			if (rt && rt->rt_labelid) {
+				sa_rl.sr_len = sizeof(sa_rl);
+				sa_rl.sr_family = AF_UNSPEC;
+				label = rtlabel_id2name(rt->rt_labelid);
+				if (label != NULL)
+					strlcpy(sa_rl.sr_label, label,
+					    sizeof(sa_rl.sr_label));
+			}
+
 			switch (cmd) {
 			case RTM_ADD:
 				if (hr_otherif) {
@@ -449,6 +462,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					info.rti_info[RTAX_DST] = ifa->ifa_addr;
 					info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 					info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+					info.rti_info[RTAX_LABEL] =
+					    (struct sockaddr *)&sa_rl;
 					error = rtrequest1(RTM_ADD, &info, NULL, 0);
 					if (error == 0)
 						ifa->ifa_flags |= IFA_ROUTE;
