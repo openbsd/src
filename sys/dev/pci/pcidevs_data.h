@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1243 2007/06/08 10:23:29 mbalmer Exp 
+ *	OpenBSD: pcidevs,v 1.1244 2007/06/14 16:31:22 mk Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6553,19 +6553,19 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965_HECI_1,
-	    "82865 HECI",
+	    "82965 HECI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965_HECI_2,
-	    "82865 HECI",
+	    "82965 HECI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965_PT_IDER,
-	    "82865 PT IDER",
+	    "82965 PT IDER",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965_KT,
-	    "82865 KT",
+	    "82965 KT",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GM_MCH,
