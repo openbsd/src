@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.41 2007/06/14 03:37:23 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.42 2007/06/14 03:41:22 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -296,20 +296,20 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
 	lp->d_secsize = 512;
-	lp->d_nsectors   = sl->sl_nsectors;
-	lp->d_ntracks    = sl->sl_ntracks;
+	lp->d_nsectors = sl->sl_nsectors;
+	lp->d_ntracks = sl->sl_ntracks;
 	lp->d_ncylinders = sl->sl_ncylinders;
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
-	lp->d_secpercyl  = secpercyl;
+	lp->d_secpercyl = secpercyl;
 	if (DL_GETDSIZE(lp) == 0)
 		DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
 	lp->d_version = 1;	/* 48 bit addressing */
 
 	lp->d_sparespercyl = sl->sl_sparespercyl;
-	lp->d_acylinders   = sl->sl_acylinders;
-	lp->d_rpm          = sl->sl_rpm;
-	lp->d_interleave   = sl->sl_interleave;
+	lp->d_acylinders = sl->sl_acylinders;
+	lp->d_rpm = sl->sl_rpm;
+	lp->d_interleave = sl->sl_interleave;
 
 	lp->d_npartitions = MAXPARTITIONS;
 	/* These are as defined in <ufs/ffs/fs.h> */
@@ -412,13 +412,13 @@ disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 	/* Format conversion. */
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
 	sl->sl_rpm = lp->d_rpm;
-	sl->sl_pcylinders   = lp->d_ncylinders + lp->d_acylinders; /* XXX */
+	sl->sl_pcylinders = lp->d_ncylinders + lp->d_acylinders; /* XXX */
 	sl->sl_sparespercyl = lp->d_sparespercyl;
-	sl->sl_interleave   = lp->d_interleave;
-	sl->sl_ncylinders   = lp->d_ncylinders;
-	sl->sl_acylinders   = lp->d_acylinders;
-	sl->sl_ntracks      = lp->d_ntracks;
-	sl->sl_nsectors     = lp->d_nsectors;
+	sl->sl_interleave = lp->d_interleave;
+	sl->sl_ncylinders = lp->d_ncylinders;
+	sl->sl_acylinders = lp->d_acylinders;
+	sl->sl_ntracks = lp->d_ntracks;
+	sl->sl_nsectors = lp->d_nsectors;
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	for (i = 0; i < 8; i++) {

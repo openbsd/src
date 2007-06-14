@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.56 2007/06/14 03:37:23 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.57 2007/06/14 03:41:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -446,9 +446,9 @@ readsgilabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			return "sgilabel checksum error";
 
 		/* Set up partitions i-l if there is no BSD label. */
-		lp->d_secsize    = dlp->dp.dp_secbytes;
-		lp->d_nsectors   = dlp->dp.dp_secs;
-		lp->d_ntracks    = dlp->dp.dp_trks0;
+		lp->d_secsize = dlp->dp.dp_secbytes;
+		lp->d_nsectors = dlp->dp.dp_secs;
+		lp->d_ntracks = dlp->dp.dp_trks0;
 		lp->d_ncylinders = dlp->dp.dp_cyls;
 		lp->d_interleave = dlp->dp.dp_interleave;
 		lp->d_npartitions = MAXPARTITIONS;

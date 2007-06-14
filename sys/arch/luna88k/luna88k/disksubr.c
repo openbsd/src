@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.28 2007/06/14 03:37:23 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.29 2007/06/14 03:41:21 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -304,22 +304,22 @@ disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 	lp->d_magic2 = DISKMAGIC;
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
-	lp->d_type	 = DTYPE_SCSI;
-	lp->d_secsize	 = 512;
-	lp->d_nsectors   = sl->sl_nsectors;
-	lp->d_ntracks    = sl->sl_ntracks;
+	lp->d_type = DTYPE_SCSI;
+	lp->d_secsize = 512;
+	lp->d_nsectors = sl->sl_nsectors;
+	lp->d_ntracks = sl->sl_ntracks;
 	lp->d_ncylinders = sl->sl_ncylinders;
 
 	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
-	lp->d_secpercyl  = secpercyl;
+	lp->d_secpercyl = secpercyl;
 	if (DL_GETDSIZE(lp) == 0)
 		DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
 
 	lp->d_sparespercyl = 0;				/* no way to know */
-	lp->d_acylinders   = sl->sl_acylinders;
-	lp->d_rpm          = sl->sl_rpm;		/* UniOS - (empty) */
-	lp->d_interleave   = sl->sl_interleave;		/* UniOS - ndisk */
-	lp->d_version	   = 1;
+	lp->d_acylinders = sl->sl_acylinders;
+	lp->d_rpm = sl->sl_rpm;				/* UniOS - (empty) */
+	lp->d_interleave = sl->sl_interleave;		/* UniOS - ndisk */
+	lp->d_version = 1;
 
 	if (sl->sl_rpm == 0) {
 		/* UniOS label has blkoffset, not cyloffset */
@@ -398,11 +398,11 @@ disklabel_bsd_to_om(struct disklabel *lp, char *cp)
 	sl->sl_pcyl = lp->d_ncylinders + lp->d_acylinders;	/* XXX */
 	sl->sl_sparespercyl = lp->d_sparespercyl;
 #endif
-	sl->sl_interleave   = lp->d_interleave;
-	sl->sl_ncylinders   = lp->d_ncylinders;
-	sl->sl_acylinders   = lp->d_acylinders;
-	sl->sl_ntracks      = lp->d_ntracks;
-	sl->sl_nsectors     = lp->d_nsectors;
+	sl->sl_interleave = lp->d_interleave;
+	sl->sl_ncylinders = lp->d_ncylinders;
+	sl->sl_acylinders = lp->d_acylinders;
+	sl->sl_ntracks = lp->d_ntracks;
+	sl->sl_nsectors = lp->d_nsectors;
 
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
