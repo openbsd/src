@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.65 2007/06/06 15:35:20 espie Exp $
+# $OpenBSD: Delete.pm,v 1.66 2007/06/14 09:29:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,6 +84,11 @@ sub validate_plist
 {
 	my ($plist, $state) = @_;
 
+	if ($plist->has('system-package')) {
+		$state->{problems}++;
+		print STDERR "Error: can't delete system packages\n";
+		return;
+	}
 	$plist->prepare_for_deletion($state, $plist->pkgname);
 }
 
