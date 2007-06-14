@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.57 2007/06/01 22:30:46 deraadt Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.58 2007/06/14 20:36:34 otto Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -61,7 +61,6 @@ int vn_write(struct file *, off_t *, struct uio *, struct ucred *);
 int vn_poll(struct file *, int, struct proc *);
 int vn_kqfilter(struct file *, struct knote *);
 int vn_closefile(struct file *, struct proc *);
-int vn_ioctl(struct file *, u_long, caddr_t, struct proc *);
 
 struct 	fileops vnops =
 	{ vn_read, vn_write, vn_ioctl, vn_poll, vn_kqfilter, vn_statfile,
