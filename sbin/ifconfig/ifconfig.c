@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.180 2007/06/13 06:46:26 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.181 2007/06/14 18:31:50 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ void	notrailers(const char *, int);
 void	setifgroup(const char *, int);
 void	unsetifgroup(const char *, int);
 void	setifaddr(const char *, int);
+void	setifrtlabel(const char *, int);
 void	setiflladdr(const char *, int);
 void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
@@ -298,6 +299,8 @@ const struct	cmd {
 	{ "eui64",	0,		0,		setia6eui64 },
 #endif /*INET6*/
 #ifndef SMALL
+	{ "rtlabel",	NEXTARG,	0,		setifrtlabel },
+	{ "-rtlabel",	-1,		0,		setifrtlabel },
 	{ "range",	NEXTARG,	0,		setatrange },
 	{ "phase",	NEXTARG,	0,		setatphase },
 	{ "vlan",	NEXTARG,	0,		setvlantag },
@@ -939,6 +942,19 @@ setifaddr(const char *addr, int param)
 		clearaddr = 1;
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
 }
+
+#ifndef SMALL
+void
+setifrtlabel(const char *label, int d)
+{
+	if (d != 0)
+		ifr.ifr_data = (caddr_t)(const char *)"";
+	else
+		ifr.ifr_data = (caddr_t)label;
+	if (ioctl(s, SIOCSIFRTLABEL, &ifr) < 0)
+		warn("SIOCSIFRTLABEL");
+}
+#endif
 
 /* ARGSUSED */
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.161 2007/06/08 09:31:38 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.162 2007/06/14 18:31:49 reyk Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1151,9 +1151,11 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	struct sockaddr_dl *sdl;
 	struct ifgroupreq *ifgr;
 	char ifdescrbuf[IFDESCRSIZE];
+	char ifrtlabelbuf[RTLABEL_LEN];
 	int error = 0;
 	size_t bytesdone;
 	short oif_flags;
+	const char *label;
 
 	switch (cmd) {
 
@@ -1288,6 +1290,24 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if (error == 0) {
 			(void)memset(ifp->if_description, 0, IFDESCRSIZE);
 			strlcpy(ifp->if_description, ifdescrbuf, IFDESCRSIZE);
+		}
+		break;
+
+	case SIOCGIFRTLABEL:
+		label = rtlabel_id2name(ifp->if_rtlabelid);
+		strlcpy(ifrtlabelbuf, label, RTLABEL_LEN);
+		error = copyoutstr(ifrtlabelbuf, ifr->ifr_data, RTLABEL_LEN,
+		    &bytesdone);
+		break;
+
+	case SIOCSIFRTLABEL:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		error = copyinstr(ifr->ifr_data, ifrtlabelbuf,
+		    RTLABEL_LEN, &bytesdone);
+		if (error == 0) {
+			rtlabel_unref(ifp->if_rtlabelid);
+			ifp->if_rtlabelid = rtlabel_name2id(ifrtlabelbuf);
 		}
 		break;
 

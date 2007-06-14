@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.89 2007/05/29 18:18:57 uwe Exp $	*/
+/*	$OpenBSD: if.h,v 1.90 2007/06/14 18:31:49 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -200,6 +200,7 @@ struct ifnet {				/* and the entries */
 	u_int32_t if_hardmtu;		/* maximum MTU device supports */
 	int	if_capabilities;	/* interface capabilities */
 	char	if_description[IFDESCRSIZE]; /* interface description */
+	u_short	if_rtlabelid;		/* next route label */
 
 	/* procedure handles */
 					/* output routine (enqueue) */

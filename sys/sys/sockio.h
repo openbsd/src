@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.38 2006/12/03 13:41:19 reyk Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.39 2007/06/14 18:31:50 reyk Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -154,6 +154,9 @@
 
 #define	SIOCSIFDESCR	 _IOW('i', 128, struct ifreq)	/* set ifnet descr */
 #define	SIOCGIFDESCR	_IOWR('i', 129, struct ifreq)	/* get ifnet descr */
+
+#define	SIOCSIFRTLABEL	 _IOW('i', 130, struct ifreq)	/* set ifnet rtlabel */
+#define	SIOCGIFRTLABEL	_IOWR('i', 131, struct ifreq)	/* set ifnet rtlabel */
 
 #define	SIOCSIFTIMESLOT	 _IOW('i', 133, struct ifreq)	/* set ifnet timeslot */
 #define	SIOCGIFTIMESLOT	_IOWR('i', 134, struct ifreq)	/* get ifnet timeslot */

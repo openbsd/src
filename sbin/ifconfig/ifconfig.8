@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.144 2007/06/13 06:46:26 henning Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.145 2007/06/14 18:31:50 reyk Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 13 2007 $
+.Dd $Mdocdate: June 14 2007 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -385,6 +385,19 @@ AppleTalk uses this scheme instead of
 netmasks though
 .Ox
 implements it internally as a set of netmasks.
+.It Cm rtlabel Ar route-label
+(inet)
+Attach
+.Ar route-label
+to new network routes of the specified interface.
+Route labels can be used to implement policy routing;
+see
+.Xr route 4 ,
+.Xr route 8 ,
+and
+.Xr pf.conf 5 .
+.It Cm -rtlabel
+Clear the route label.
 .It Cm timeslot Ar timeslot_range
 Set the timeslot range map, which is used to control which channels
 an interface device uses.
