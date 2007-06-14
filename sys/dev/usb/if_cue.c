@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.44 2007/06/14 06:55:10 mbalmer Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.45 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -110,7 +110,22 @@ struct usb_devno cue_devs[] = {
 };
 #define cue_lookup(v, p) (usb_lookup(cue_devs, v, p))
 
-USB_DECLARE_DRIVER_CLASS(cue, DV_IFNET);
+int cue_match(struct device *, void *, void *); 
+void cue_attach(struct device *, struct device *, void *); 
+int cue_detach(struct device *, int); 
+int cue_activate(struct device *, enum devact); 
+
+struct cfdriver cue_cd = { 
+	NULL, "cue", DV_IFNET 
+}; 
+
+const struct cfattach cue_ca = { 
+	sizeof(struct cue_softc), 
+	cue_match, 
+	cue_attach, 
+	cue_detach, 
+	cue_activate, 
+};
 
 int cue_open_pipes(struct cue_softc *);
 int cue_tx_list_init(struct cue_softc *);

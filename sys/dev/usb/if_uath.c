@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.25 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.26 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -186,7 +186,22 @@ void	uath_stop(struct ifnet *, int);
 int	uath_loadfirmware(struct uath_softc *, const u_char *, int);
 int	uath_activate(struct device *, enum devact);
 
-USB_DECLARE_DRIVER(uath);
+int uath_match(struct device *, void *, void *); 
+void uath_attach(struct device *, struct device *, void *); 
+int uath_detach(struct device *, int); 
+int uath_activate(struct device *, enum devact); 
+
+struct cfdriver uath_cd = { 
+	NULL, "uath", DV_DULL 
+}; 
+
+const struct cfattach uath_ca = { 
+	sizeof(struct uath_softc), 
+	uath_match, 
+	uath_attach, 
+	uath_detach, 
+	uath_activate, 
+};
 
 int
 uath_match(struct device *parent, void *match, void *aux)

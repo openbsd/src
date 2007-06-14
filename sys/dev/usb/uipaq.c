@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.11 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.12 2007/06/14 10:11:16 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -130,7 +130,22 @@ static const struct uipaq_type uipaq_devs[] = {
 
 #define uipaq_lookup(v, p) ((struct uipaq_type *)usb_lookup(uipaq_devs, v, p))
 
-USB_DECLARE_DRIVER(uipaq);
+int uipaq_match(struct device *, void *, void *); 
+void uipaq_attach(struct device *, struct device *, void *); 
+int uipaq_detach(struct device *, int); 
+int uipaq_activate(struct device *, enum devact); 
+
+struct cfdriver uipaq_cd = { 
+	NULL, "uipaq", DV_DULL 
+}; 
+
+const struct cfattach uipaq_ca = { 
+	sizeof(struct uipaq_softc), 
+	uipaq_match, 
+	uipaq_attach, 
+	uipaq_detach, 
+	uipaq_activate, 
+};
 
 int
 uipaq_match(struct device *parent, void *match, void *aux)

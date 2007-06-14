@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.54 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: usb.c,v 1.55 2007/06/14 10:11:16 mbalmer Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -130,7 +130,22 @@ int usb_get_next_event(struct usb_event *);
 
 const char *usbrev_str[] = USBREV_STR;
 
-USB_DECLARE_DRIVER(usb);
+int usb_match(struct device *, void *, void *); 
+void usb_attach(struct device *, struct device *, void *); 
+int usb_detach(struct device *, int); 
+int usb_activate(struct device *, enum devact); 
+
+struct cfdriver usb_cd = { 
+	NULL, "usb", DV_DULL 
+}; 
+
+const struct cfattach usb_ca = { 
+	sizeof(struct usb_softc), 
+	usb_match, 
+	usb_attach, 
+	usb_detach, 
+	usb_activate, 
+};
 
 int
 usb_match(struct device *parent, void *match, void *aux)

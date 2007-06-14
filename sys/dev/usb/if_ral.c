@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.98 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.99 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -189,7 +189,22 @@ static const uint32_t ural_rf2525e_r2[] =   RAL_RF2525E_R2;
 static const uint32_t ural_rf2526_hi_r2[] = RAL_RF2526_HI_R2;
 static const uint32_t ural_rf2526_r2[] =    RAL_RF2526_R2;
 
-USB_DECLARE_DRIVER_CLASS(ural, DV_IFNET);
+int ural_match(struct device *, void *, void *); 
+void ural_attach(struct device *, struct device *, void *); 
+int ural_detach(struct device *, int); 
+int ural_activate(struct device *, enum devact); 
+
+struct cfdriver ural_cd = { 
+	NULL, "ural", DV_IFNET 
+}; 
+
+const struct cfattach ural_ca = { 
+	sizeof(struct ural_softc), 
+	ural_match, 
+	ural_attach, 
+	ural_detach, 
+	ural_activate, 
+};
 
 int
 ural_match(struct device *parent, void *match, void *aux)

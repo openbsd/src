@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.64 2007/06/13 11:15:29 mbalmer Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.65 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -210,7 +210,22 @@ const struct aue_type aue_devs[] = {
 };
 #define aue_lookup(v, p) ((struct aue_type *)usb_lookup(aue_devs, v, p))
 
-USB_DECLARE_DRIVER_CLASS(aue, DV_IFNET);
+int aue_match(struct device *, void *, void *); 
+void aue_attach(struct device *, struct device *, void *); 
+int aue_detach(struct device *, int); 
+int aue_activate(struct device *, enum devact); 
+
+struct cfdriver aue_cd = { 
+	NULL, "aue", DV_IFNET 
+}; 
+
+const struct cfattach aue_ca = { 
+	sizeof(struct aue_softc), 
+	aue_match, 
+	aue_attach, 
+	aue_detach, 
+	aue_activate, 
+};
 
 void aue_reset_pegasus_II(struct aue_softc *sc);
 int aue_tx_list_init(struct aue_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.35 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.36 2007/06/14 10:11:16 mbalmer Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -328,7 +328,22 @@ struct wskbd_mapdata ukbd_keymapdata = {
 	ukbd_keydesctab
 };
 
-USB_DECLARE_DRIVER(ukbd);
+int ukbd_match(struct device *, void *, void *); 
+void ukbd_attach(struct device *, struct device *, void *); 
+int ukbd_detach(struct device *, int); 
+int ukbd_activate(struct device *, enum devact); 
+
+struct cfdriver ukbd_cd = { 
+	NULL, "ukbd", DV_DULL 
+}; 
+
+const struct cfattach ukbd_ca = { 
+	sizeof(struct ukbd_softc), 
+	ukbd_match, 
+	ukbd_attach, 
+	ukbd_detach, 
+	ukbd_activate, 
+};
 
 int
 ukbd_match(struct device *parent, void *match, void *aux)

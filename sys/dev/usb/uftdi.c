@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.40 2007/06/13 06:25:03 mbalmer Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.41 2007/06/14 10:11:15 mbalmer Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -124,7 +124,22 @@ struct ucom_methods uftdi_methods = {
 	uftdi_write,
 };
 
-USB_DECLARE_DRIVER(uftdi);
+int uftdi_match(struct device *, void *, void *); 
+void uftdi_attach(struct device *, struct device *, void *); 
+int uftdi_detach(struct device *, int); 
+int uftdi_activate(struct device *, enum devact); 
+
+struct cfdriver uftdi_cd = { 
+	NULL, "uftdi", DV_DULL 
+}; 
+
+const struct cfattach uftdi_ca = { 
+	sizeof(struct uftdi_softc), 
+	uftdi_match, 
+	uftdi_attach, 
+	uftdi_detach, 
+	uftdi_activate, 
+};
 
 int
 uftdi_match(struct device *parent, void *match, void *aux)

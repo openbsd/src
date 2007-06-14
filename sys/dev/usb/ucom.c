@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.40 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: ucom.c,v 1.41 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -148,7 +148,22 @@ int	ucom_to_tiocm(struct ucom_softc *);
 void	ucom_lock(struct ucom_softc *);
 void	ucom_unlock(struct ucom_softc *);
 
-USB_DECLARE_DRIVER(ucom);
+int ucom_match(struct device *, void *, void *); 
+void ucom_attach(struct device *, struct device *, void *); 
+int ucom_detach(struct device *, int); 
+int ucom_activate(struct device *, enum devact); 
+
+struct cfdriver ucom_cd = { 
+	NULL, "ucom", DV_DULL 
+}; 
+
+const struct cfattach ucom_ca = { 
+	sizeof(struct ucom_softc), 
+	ucom_match, 
+	ucom_attach, 
+	ucom_detach, 
+	ucom_activate, 
+};
 
 void
 ucom_lock(struct ucom_softc *sc)

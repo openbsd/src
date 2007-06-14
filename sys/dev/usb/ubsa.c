@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.29 2007/06/13 06:25:03 mbalmer Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.30 2007/06/14 10:11:15 mbalmer Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -237,7 +237,22 @@ const struct usb_devno ubsa_devs[] = {
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
-USB_DECLARE_DRIVER(ubsa);
+int ubsa_match(struct device *, void *, void *); 
+void ubsa_attach(struct device *, struct device *, void *); 
+int ubsa_detach(struct device *, int); 
+int ubsa_activate(struct device *, enum devact); 
+
+struct cfdriver ubsa_cd = { 
+	NULL, "ubsa", DV_DULL 
+}; 
+
+const struct cfattach ubsa_ca = { 
+	sizeof(struct ubsa_softc), 
+	ubsa_match, 
+	ubsa_attach, 
+	ubsa_detach, 
+	ubsa_activate, 
+};
 
 int
 ubsa_match(struct device *parent, void *match, void *aux)

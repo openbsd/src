@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.24 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: ums.c,v 1.25 2007/06/14 10:11:16 mbalmer Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -124,7 +124,22 @@ const struct wsmouse_accessops ums_accessops = {
 	ums_disable,
 };
 
-USB_DECLARE_DRIVER(ums);
+int ums_match(struct device *, void *, void *); 
+void ums_attach(struct device *, struct device *, void *); 
+int ums_detach(struct device *, int); 
+int ums_activate(struct device *, enum devact); 
+
+struct cfdriver ums_cd = { 
+	NULL, "ums", DV_DULL 
+}; 
+
+const struct cfattach ums_ca = { 
+	sizeof(struct ums_softc), 
+	ums_match, 
+	ums_attach, 
+	ums_detach, 
+	ums_activate, 
+};
 
 int
 ums_match(struct device *parent, void *match, void *aux)

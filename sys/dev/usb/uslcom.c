@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.12 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.13 2007/06/14 10:11:16 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -129,7 +129,22 @@ static const struct usb_devno uslcom_devs[] = {
 	{ USB_VENDOR_USI,		USB_PRODUCT_USI_MC60 }
 };
 
-USB_DECLARE_DRIVER(uslcom);
+int uslcom_match(struct device *, void *, void *); 
+void uslcom_attach(struct device *, struct device *, void *); 
+int uslcom_detach(struct device *, int); 
+int uslcom_activate(struct device *, enum devact); 
+
+struct cfdriver uslcom_cd = { 
+	NULL, "uslcom", DV_DULL 
+}; 
+
+const struct cfattach uslcom_ca = { 
+	sizeof(struct uslcom_softc), 
+	uslcom_match, 
+	uslcom_attach, 
+	uslcom_detach, 
+	uslcom_activate, 
+};
 
 int
 uslcom_match(struct device *parent, void *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.84 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.85 2007/06/14 10:11:15 mbalmer Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -98,7 +98,22 @@ int atudebug = 1;
 #define DPRINTFN(n,x)
 #endif
 
-USB_DECLARE_DRIVER_CLASS(atu, DV_IFNET);
+int atu_match(struct device *, void *, void *); 
+void atu_attach(struct device *, struct device *, void *); 
+int atu_detach(struct device *, int); 
+int atu_activate(struct device *, enum devact); 
+
+struct cfdriver atu_cd = { 
+	NULL, "atu", DV_IFNET 
+}; 
+
+const struct cfattach atu_ca = { 
+	sizeof(struct atu_softc), 
+	atu_match, 
+	atu_attach, 
+	atu_detach, 
+	atu_activate, 
+};
 
 /*
  * Various supported device vendors/products/radio type.

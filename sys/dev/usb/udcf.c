@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.37 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.38 2007/06/14 10:11:15 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -133,7 +133,22 @@ void	udcf_sl_probe(void *);
 void	udcf_it_probe(void *);
 void	udcf_ct_probe(void *);
 
-USB_DECLARE_DRIVER(udcf);
+int udcf_match(struct device *, void *, void *); 
+void udcf_attach(struct device *, struct device *, void *); 
+int udcf_detach(struct device *, int); 
+int udcf_activate(struct device *, enum devact); 
+
+struct cfdriver udcf_cd = { 
+	NULL, "udcf", DV_DULL 
+}; 
+
+const struct cfattach udcf_ca = { 
+	sizeof(struct udcf_softc), 
+	udcf_match, 
+	udcf_attach, 
+	udcf_detach, 
+	udcf_activate, 
+};
 
 int
 udcf_match(struct device *parent, void *match, void *aux)

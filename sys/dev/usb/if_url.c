@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.47 2007/06/13 11:15:29 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.48 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -85,7 +85,22 @@
 
 
 /* Function declarations */
-USB_DECLARE_DRIVER_CLASS(url, DV_IFNET);
+int url_match(struct device *, void *, void *); 
+void url_attach(struct device *, struct device *, void *); 
+int url_detach(struct device *, int); 
+int url_activate(struct device *, enum devact); 
+
+struct cfdriver url_cd = { 
+	NULL, "url", DV_IFNET 
+}; 
+
+const struct cfattach url_ca = { 
+	sizeof(struct url_softc), 
+	url_match, 
+	url_attach, 
+	url_detach, 
+	url_activate, 
+};
 
 int url_openpipes(struct url_softc *);
 int url_rx_list_init(struct url_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.9 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: uark.c,v 1.10 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -93,7 +93,22 @@ static const struct usb_devno uark_devs[] = {
 	{ USB_VENDOR_ARKMICRO,		USB_PRODUCT_ARKMICRO_ARK3116 }
 };
 
-USB_DECLARE_DRIVER(uark);
+int uark_match(struct device *, void *, void *); 
+void uark_attach(struct device *, struct device *, void *); 
+int uark_detach(struct device *, int); 
+int uark_activate(struct device *, enum devact); 
+
+struct cfdriver uark_cd = { 
+	NULL, "uark", DV_DULL 
+}; 
+
+const struct cfattach uark_ca = { 
+	sizeof(struct uark_softc), 
+	uark_match, 
+	uark_attach, 
+	uark_detach, 
+	uark_activate, 
+};
 
 int
 uark_match(struct device *parent, void *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.14 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.15 2007/06/14 10:11:16 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -76,7 +76,22 @@ static const struct usb_devno umsm_devs[] = {
 	{ USB_VENDOR_SIERRA,	USB_PRODUCT_SIERRA_MC8775 },
 };
 
-USB_DECLARE_DRIVER(umsm);
+int umsm_match(struct device *, void *, void *); 
+void umsm_attach(struct device *, struct device *, void *); 
+int umsm_detach(struct device *, int); 
+int umsm_activate(struct device *, enum devact); 
+
+struct cfdriver umsm_cd = { 
+	NULL, "umsm", DV_DULL 
+}; 
+
+const struct cfattach umsm_ca = { 
+	sizeof(struct umsm_softc), 
+	umsm_match, 
+	umsm_attach, 
+	umsm_detach, 
+	umsm_activate, 
+};
 
 int
 umsm_match(struct device *parent, void *match, void *aux)

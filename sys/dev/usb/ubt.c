@@ -1,4 +1,4 @@
-/* $OpenBSD: ubt.c,v 1.7 2007/06/12 16:26:36 mbalmer Exp $ */
+/* $OpenBSD: ubt.c,v 1.8 2007/06/14 10:11:15 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -245,7 +245,22 @@ void ubt_recv_sco_start1(struct ubt_softc *, struct ubt_isoc_xfer *);
 void ubt_recv_sco_complete(usbd_xfer_handle,
 				usbd_private_handle, usbd_status);
 
-USB_DECLARE_DRIVER(ubt);
+int ubt_match(struct device *, void *, void *); 
+void ubt_attach(struct device *, struct device *, void *); 
+int ubt_detach(struct device *, int); 
+int ubt_activate(struct device *, enum devact); 
+
+struct cfdriver ubt_cd = { 
+	NULL, "ubt", DV_DULL 
+}; 
+
+const struct cfattach ubt_ca = { 
+	sizeof(struct ubt_softc), 
+	ubt_match, 
+	ubt_attach, 
+	ubt_detach, 
+	ubt_activate, 
+};
 
 static int ubt_set_isoc_config(struct ubt_softc *);
 static void ubt_abortdealloc(struct ubt_softc *);

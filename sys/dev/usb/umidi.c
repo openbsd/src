@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.21 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.22 2007/06/14 10:11:16 mbalmer Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,7 +136,22 @@ struct midi_hw_if umidi_hw_if = {
 	0,		/* ioctl */
 };
 
-USB_DECLARE_DRIVER(umidi);
+int umidi_match(struct device *, void *, void *); 
+void umidi_attach(struct device *, struct device *, void *); 
+int umidi_detach(struct device *, int); 
+int umidi_activate(struct device *, enum devact); 
+
+struct cfdriver umidi_cd = { 
+	NULL, "umidi", DV_DULL 
+}; 
+
+const struct cfattach umidi_ca = { 
+	sizeof(struct umidi_softc), 
+	umidi_match, 
+	umidi_attach, 
+	umidi_detach, 
+	umidi_activate, 
+};
 
 int
 umidi_match(struct device *parent, void *match, void *aux)

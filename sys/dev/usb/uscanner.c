@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.34 2007/06/12 16:26:37 mbalmer Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.35 2007/06/14 10:11:16 mbalmer Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -238,7 +238,22 @@ void uscanner_do_close(struct uscanner_softc *);
 
 #define USCANNERUNIT(n) (minor(n))
 
-USB_DECLARE_DRIVER(uscanner);
+int uscanner_match(struct device *, void *, void *); 
+void uscanner_attach(struct device *, struct device *, void *); 
+int uscanner_detach(struct device *, int); 
+int uscanner_activate(struct device *, enum devact); 
+
+struct cfdriver uscanner_cd = { 
+	NULL, "uscanner", DV_DULL 
+}; 
+
+const struct cfattach uscanner_ca = { 
+	sizeof(struct uscanner_softc), 
+	uscanner_match, 
+	uscanner_attach, 
+	uscanner_detach, 
+	uscanner_activate, 
+};
 
 int
 uscanner_match(struct device *parent, void *match, void *aux)

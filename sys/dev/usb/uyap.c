@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyap.c,v 1.13 2007/06/12 16:26:37 mbalmer Exp $ */
+/*	$OpenBSD: uyap.c,v 1.14 2007/06/14 10:11:16 mbalmer Exp $ */
 /*	$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
 
 /*
@@ -55,7 +55,22 @@ struct uyap_softc {
 	usbd_device_handle	sc_udev;
 };
 
-USB_DECLARE_DRIVER(uyap);
+int uyap_match(struct device *, void *, void *); 
+void uyap_attach(struct device *, struct device *, void *); 
+int uyap_detach(struct device *, int); 
+int uyap_activate(struct device *, enum devact); 
+
+struct cfdriver uyap_cd = { 
+	NULL, "uyap", DV_DULL 
+}; 
+
+const struct cfattach uyap_ca = { 
+	sizeof(struct uyap_softc), 
+	uyap_match, 
+	uyap_attach, 
+	uyap_detach, 
+	uyap_activate, 
+};
 void uyap_attachhook(void *);
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.16 2007/06/13 06:25:03 mbalmer Exp $ */
+/*	$OpenBSD: uts.c,v 1.17 2007/06/14 10:11:16 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -112,7 +112,22 @@ const struct wsmouse_accessops uts_accessops = {
 	uts_disable,
 };
 
-USB_DECLARE_DRIVER(uts);
+int uts_match(struct device *, void *, void *); 
+void uts_attach(struct device *, struct device *, void *); 
+int uts_detach(struct device *, int); 
+int uts_activate(struct device *, enum devact); 
+
+struct cfdriver uts_cd = { 
+	NULL, "uts", DV_DULL 
+}; 
+
+const struct cfattach uts_ca = { 
+	sizeof(struct uts_softc), 
+	uts_match, 
+	uts_attach, 
+	uts_detach, 
+	uts_activate, 
+};
 
 int
 uts_match(struct device *parent, void *match, void *aux)

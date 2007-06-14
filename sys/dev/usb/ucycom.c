@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.10 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.11 2007/06/14 10:11:15 mbalmer Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -165,7 +165,22 @@ const struct usb_devno ucycom_devs[] = {
 };
 #define ucycom_lookup(v, p) usb_lookup(ucycom_devs, v, p)
 
-USB_DECLARE_DRIVER(ucycom);
+int ucycom_match(struct device *, void *, void *); 
+void ucycom_attach(struct device *, struct device *, void *); 
+int ucycom_detach(struct device *, int); 
+int ucycom_activate(struct device *, enum devact); 
+
+struct cfdriver ucycom_cd = { 
+	NULL, "ucycom", DV_DULL 
+}; 
+
+const struct cfattach ucycom_ca = { 
+	sizeof(struct ucycom_softc), 
+	ucycom_match, 
+	ucycom_attach, 
+	ucycom_detach, 
+	ucycom_activate, 
+};
 
 int
 ucycom_match(struct device *parent, void *match, void *aux)

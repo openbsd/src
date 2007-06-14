@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.48 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: ugen.c,v 1.49 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -130,7 +130,22 @@ int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 #define UGENENDPOINT(n) (minor(n) & 0xf)
 #define UGENDEV(u, e) (makedev(0, ((u) << 4) | (e)))
 
-USB_DECLARE_DRIVER(ugen);
+int ugen_match(struct device *, void *, void *); 
+void ugen_attach(struct device *, struct device *, void *); 
+int ugen_detach(struct device *, int); 
+int ugen_activate(struct device *, enum devact); 
+
+struct cfdriver ugen_cd = { 
+	NULL, "ugen", DV_DULL 
+}; 
+
+const struct cfattach ugen_ca = { 
+	sizeof(struct ugen_softc), 
+	ugen_match, 
+	ugen_attach, 
+	ugen_detach, 
+	ugen_activate, 
+};
 
 int
 ugen_match(struct device *parent, void *match, void *aux)

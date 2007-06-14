@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.31 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.32 2007/06/14 10:11:16 mbalmer Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -128,7 +128,22 @@ void ieee1284_print_id(char *);
 #define	ULPTFLAGS(s)	(minor(s) & 0xe0)
 
 
-USB_DECLARE_DRIVER(ulpt);
+int ulpt_match(struct device *, void *, void *); 
+void ulpt_attach(struct device *, struct device *, void *); 
+int ulpt_detach(struct device *, int); 
+int ulpt_activate(struct device *, enum devact); 
+
+struct cfdriver ulpt_cd = { 
+	NULL, "ulpt", DV_DULL 
+}; 
+
+const struct cfattach ulpt_ca = { 
+	sizeof(struct ulpt_softc), 
+	ulpt_match, 
+	ulpt_attach, 
+	ulpt_detach, 
+	ulpt_activate, 
+};
 
 int
 ulpt_match(struct device *parent, void *match, void *aux)

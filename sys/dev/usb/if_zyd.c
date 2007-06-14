@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.57 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.58 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -143,7 +143,22 @@ static const struct zyd_type {
 #define zyd_lookup(v, p)	\
 	((const struct zyd_type *)usb_lookup(zyd_devs, v, p))
 
-USB_DECLARE_DRIVER_CLASS(zyd, DV_IFNET);
+int zyd_match(struct device *, void *, void *); 
+void zyd_attach(struct device *, struct device *, void *); 
+int zyd_detach(struct device *, int); 
+int zyd_activate(struct device *, enum devact); 
+
+struct cfdriver zyd_cd = { 
+	NULL, "zyd", DV_IFNET 
+}; 
+
+const struct cfattach zyd_ca = { 
+	sizeof(struct zyd_softc), 
+	zyd_match, 
+	zyd_attach, 
+	zyd_detach, 
+	zyd_activate, 
+};
 
 void		zyd_attachhook(void *);
 int		zyd_complete_attach(struct zyd_softc *);

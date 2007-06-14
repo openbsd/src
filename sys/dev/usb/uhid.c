@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.40 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: uhid.c,v 1.41 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -108,7 +108,22 @@ int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
 int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,
 			 struct proc *);
 
-USB_DECLARE_DRIVER(uhid);
+int uhid_match(struct device *, void *, void *); 
+void uhid_attach(struct device *, struct device *, void *); 
+int uhid_detach(struct device *, int); 
+int uhid_activate(struct device *, enum devact); 
+
+struct cfdriver uhid_cd = { 
+	NULL, "uhid", DV_DULL 
+}; 
+
+const struct cfattach uhid_ca = { 
+	sizeof(struct uhid_softc), 
+	uhid_match, 
+	uhid_attach, 
+	uhid_detach, 
+	uhid_activate, 
+};
 
 int
 uhid_match(struct device *parent, void *match, void *aux)

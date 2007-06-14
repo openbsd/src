@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.42 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.43 2007/06/14 10:11:16 mbalmer Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -189,7 +189,22 @@ static const struct usb_devno uplcom_devs[] = {
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
-USB_DECLARE_DRIVER(uplcom);
+int uplcom_match(struct device *, void *, void *); 
+void uplcom_attach(struct device *, struct device *, void *); 
+int uplcom_detach(struct device *, int); 
+int uplcom_activate(struct device *, enum devact); 
+
+struct cfdriver uplcom_cd = { 
+	NULL, "uplcom", DV_DULL 
+}; 
+
+const struct cfattach uplcom_ca = { 
+	sizeof(struct uplcom_softc), 
+	uplcom_match, 
+	uplcom_attach, 
+	uplcom_detach, 
+	uplcom_activate, 
+};
 
 int
 uplcom_match(struct device *parent, void *match, void *aux)

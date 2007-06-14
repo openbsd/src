@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.51 2007/06/14 06:55:10 mbalmer Exp $ */
+/*	$OpenBSD: umass.c,v 1.52 2007/06/14 10:11:16 mbalmer Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -186,7 +186,22 @@ char *states[TSTATE_STATES+1] = {
 #endif
 
 /* USB device probe/attach/detach functions */
-USB_DECLARE_DRIVER(umass);
+int umass_match(struct device *, void *, void *); 
+void umass_attach(struct device *, struct device *, void *); 
+int umass_detach(struct device *, int); 
+int umass_activate(struct device *, enum devact); 
+
+struct cfdriver umass_cd = { 
+	NULL, "umass", DV_DULL 
+}; 
+
+const struct cfattach umass_ca = { 
+	sizeof(struct umass_softc), 
+	umass_match, 
+	umass_attach, 
+	umass_detach, 
+	umass_activate, 
+};
 void umass_disco(struct umass_softc *sc);
 
 /* generic transfer functions */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.47 2007/06/13 10:10:30 mbalmer Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.48 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -358,7 +358,22 @@ struct audio_device uaudio_device = {
 	"uaudio"
 };
 
-USB_DECLARE_DRIVER(uaudio);
+int uaudio_match(struct device *, void *, void *); 
+void uaudio_attach(struct device *, struct device *, void *); 
+int uaudio_detach(struct device *, int); 
+int uaudio_activate(struct device *, enum devact); 
+
+struct cfdriver uaudio_cd = { 
+	NULL, "uaudio", DV_DULL 
+}; 
+
+const struct cfattach uaudio_ca = { 
+	sizeof(struct uaudio_softc), 
+	uaudio_match, 
+	uaudio_attach, 
+	uaudio_detach, 
+	uaudio_activate, 
+};
 
 int
 uaudio_match(struct device *parent, void *match, void *aux)

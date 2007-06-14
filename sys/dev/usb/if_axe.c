@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.77 2007/06/13 11:15:29 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.78 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -173,7 +173,22 @@ const struct axe_type axe_devs[] = {
 
 #define axe_lookup(v, p) ((struct axe_type *)usb_lookup(axe_devs, v, p))
 
-USB_DECLARE_DRIVER_CLASS(axe, DV_IFNET);
+int axe_match(struct device *, void *, void *); 
+void axe_attach(struct device *, struct device *, void *); 
+int axe_detach(struct device *, int); 
+int axe_activate(struct device *, enum devact); 
+
+struct cfdriver axe_cd = { 
+	NULL, "axe", DV_IFNET 
+}; 
+
+const struct cfattach axe_ca = { 
+	sizeof(struct axe_softc), 
+	axe_match, 
+	axe_attach, 
+	axe_detach, 
+	axe_activate, 
+};
 
 int axe_tx_list_init(struct axe_softc *);
 int axe_rx_list_init(struct axe_softc *);

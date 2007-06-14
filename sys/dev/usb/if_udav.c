@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.33 2007/06/13 11:15:29 mbalmer Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.34 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -87,7 +87,22 @@
 
 
 /* Function declarations */
-USB_DECLARE_DRIVER_CLASS(udav, DV_IFNET);
+int udav_match(struct device *, void *, void *); 
+void udav_attach(struct device *, struct device *, void *); 
+int udav_detach(struct device *, int); 
+int udav_activate(struct device *, enum devact); 
+
+struct cfdriver udav_cd = { 
+	NULL, "udav", DV_IFNET 
+}; 
+
+const struct cfattach udav_ca = { 
+	sizeof(struct udav_softc), 
+	udav_match, 
+	udav_attach, 
+	udav_detach, 
+	udav_activate, 
+};
 
 int udav_openpipes(struct udav_softc *);
 int udav_rx_list_init(struct udav_softc *);

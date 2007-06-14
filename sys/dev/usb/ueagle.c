@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.20 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.21 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -125,7 +125,22 @@ void		ueagle_close_pipes(struct ueagle_softc *);
 int		ueagle_init(struct ifnet *);
 void		ueagle_stop(struct ifnet *, int);
 
-USB_DECLARE_DRIVER(ueagle);
+int ueagle_match(struct device *, void *, void *); 
+void ueagle_attach(struct device *, struct device *, void *); 
+int ueagle_detach(struct device *, int); 
+int ueagle_activate(struct device *, enum devact); 
+
+struct cfdriver ueagle_cd = { 
+	NULL, "ueagle", DV_DULL 
+}; 
+
+const struct cfattach ueagle_ca = { 
+	sizeof(struct ueagle_softc), 
+	ueagle_match, 
+	ueagle_attach, 
+	ueagle_detach, 
+	ueagle_activate, 
+};
 
 int
 ueagle_match(struct device *parent, void *match, void *aux)

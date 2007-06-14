@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.32 2007/06/13 06:25:03 mbalmer Exp $ */
+/*	$OpenBSD: umodem.c,v 1.33 2007/06/14 10:11:16 mbalmer Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -150,7 +150,22 @@ struct ucom_methods umodem_methods = {
 	NULL,
 };
 
-USB_DECLARE_DRIVER(umodem);
+int umodem_match(struct device *, void *, void *); 
+void umodem_attach(struct device *, struct device *, void *); 
+int umodem_detach(struct device *, int); 
+int umodem_activate(struct device *, enum devact); 
+
+struct cfdriver umodem_cd = { 
+	NULL, "umodem", DV_DULL 
+}; 
+
+const struct cfattach umodem_ca = { 
+	sizeof(struct umodem_softc), 
+	umodem_match, 
+	umodem_attach, 
+	umodem_detach, 
+	umodem_activate, 
+};
 
 int
 umodem_match(struct device *parent, void *match, void *aux)

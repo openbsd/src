@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.46 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: uhub.c,v 1.47 2007/06/14 10:11:16 mbalmer Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -88,7 +88,22 @@ void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
  * Every other driver only connects to hubs
  */
 
-USB_DECLARE_DRIVER(uhub);
+int uhub_match(struct device *, void *, void *); 
+void uhub_attach(struct device *, struct device *, void *); 
+int uhub_detach(struct device *, int); 
+int uhub_activate(struct device *, enum devact); 
+
+struct cfdriver uhub_cd = { 
+	NULL, "uhub", DV_DULL 
+}; 
+
+const struct cfattach uhub_ca = { 
+	sizeof(struct uhub_softc), 
+	uhub_match, 
+	uhub_attach, 
+	uhub_detach, 
+	uhub_activate, 
+};
 
 struct cfattach uhub_uhub_ca = {
 	sizeof(struct uhub_softc), uhub_match, uhub_attach,

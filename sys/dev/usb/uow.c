@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.22 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: uow.c,v 1.23 2007/06/14 10:11:16 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -60,7 +60,22 @@ struct uow_softc {
 	u_int8_t		 sc_fifo[DS2490_DATAFIFOSIZE];
 };
 
-USB_DECLARE_DRIVER(uow);
+int uow_match(struct device *, void *, void *); 
+void uow_attach(struct device *, struct device *, void *); 
+int uow_detach(struct device *, int); 
+int uow_activate(struct device *, enum devact); 
+
+struct cfdriver uow_cd = { 
+	NULL, "uow", DV_DULL 
+}; 
+
+const struct cfattach uow_ca = { 
+	sizeof(struct uow_softc), 
+	uow_match, 
+	uow_attach, 
+	uow_detach, 
+	uow_activate, 
+};
 
 /* List of supported devices */
 static const struct usb_devno uow_devs[] = {

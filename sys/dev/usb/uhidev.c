@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.26 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.27 2007/06/14 10:11:16 mbalmer Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -80,7 +80,22 @@ int uhidev_maxrepid(void *buf, int len);
 int uhidevprint(void *aux, const char *pnp);
 int uhidevsubmatch(struct device *parent, void *cf, void *aux);
 
-USB_DECLARE_DRIVER(uhidev);
+int uhidev_match(struct device *, void *, void *); 
+void uhidev_attach(struct device *, struct device *, void *); 
+int uhidev_detach(struct device *, int); 
+int uhidev_activate(struct device *, enum devact); 
+
+struct cfdriver uhidev_cd = { 
+	NULL, "uhidev", DV_DULL 
+}; 
+
+const struct cfattach uhidev_ca = { 
+	sizeof(struct uhidev_softc), 
+	uhidev_match, 
+	uhidev_attach, 
+	uhidev_detach, 
+	uhidev_activate, 
+};
 
 int
 uhidev_match(struct device *parent, void *match, void *aux)

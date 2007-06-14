@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.9 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.10 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -166,7 +166,22 @@ static const struct usb_devno moscom_devs[] = {
 	{ USB_VENDOR_MOSCHIP,		USB_PRODUCT_MOSCHIP_MCS7703 }
 };
 
-USB_DECLARE_DRIVER(moscom);
+int moscom_match(struct device *, void *, void *); 
+void moscom_attach(struct device *, struct device *, void *); 
+int moscom_detach(struct device *, int); 
+int moscom_activate(struct device *, enum devact); 
+
+struct cfdriver moscom_cd = { 
+	NULL, "moscom", DV_DULL 
+}; 
+
+const struct cfattach moscom_ca = { 
+	sizeof(struct moscom_softc), 
+	moscom_match, 
+	moscom_attach, 
+	moscom_detach, 
+	moscom_activate, 
+};
 
 int
 moscom_match(struct device *parent, void *match, void *aux)

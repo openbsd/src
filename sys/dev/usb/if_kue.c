@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.54 2007/06/13 11:15:29 mbalmer Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.55 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -154,7 +154,22 @@ const struct usb_devno kue_devs[] = {
 };
 #define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
 
-USB_DECLARE_DRIVER_CLASS(kue, DV_IFNET);
+int kue_match(struct device *, void *, void *); 
+void kue_attach(struct device *, struct device *, void *); 
+int kue_detach(struct device *, int); 
+int kue_activate(struct device *, enum devact); 
+
+struct cfdriver kue_cd = { 
+	NULL, "kue", DV_IFNET 
+}; 
+
+const struct cfattach kue_ca = { 
+	sizeof(struct kue_softc), 
+	kue_match, 
+	kue_attach, 
+	kue_detach, 
+	kue_activate, 
+};
 
 int kue_tx_list_init(struct kue_softc *);
 int kue_rx_list_init(struct kue_softc *);

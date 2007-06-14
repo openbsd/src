@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.34 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.35 2007/06/14 10:11:16 mbalmer Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -201,7 +201,22 @@ static const struct uvisor_type uvisor_devs[] = {
 };
 #define uvisor_lookup(v, p) ((struct uvisor_type *)usb_lookup(uvisor_devs, v, p))
 
-USB_DECLARE_DRIVER(uvisor);
+int uvisor_match(struct device *, void *, void *); 
+void uvisor_attach(struct device *, struct device *, void *); 
+int uvisor_detach(struct device *, int); 
+int uvisor_activate(struct device *, enum devact); 
+
+struct cfdriver uvisor_cd = { 
+	NULL, "uvisor", DV_DULL 
+}; 
+
+const struct cfattach uvisor_ca = { 
+	sizeof(struct uvisor_softc), 
+	uvisor_match, 
+	uvisor_attach, 
+	uvisor_detach, 
+	uvisor_activate, 
+};
 
 int
 uvisor_match(struct device *parent, void *match, void *aux)

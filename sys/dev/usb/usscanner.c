@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.21 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.22 2007/06/14 10:11:16 mbalmer Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -170,7 +170,22 @@ callback usscanner_data_cb;
 callback usscanner_sensecmd_cb;
 callback usscanner_sensedata_cb;
 
-USB_DECLARE_DRIVER(usscanner);
+int usscanner_match(struct device *, void *, void *); 
+void usscanner_attach(struct device *, struct device *, void *); 
+int usscanner_detach(struct device *, int); 
+int usscanner_activate(struct device *, enum devact); 
+
+struct cfdriver usscanner_cd = { 
+	NULL, "usscanner", DV_DULL 
+}; 
+
+const struct cfattach usscanner_ca = { 
+	sizeof(struct usscanner_softc), 
+	usscanner_match, 
+	usscanner_attach, 
+	usscanner_detach, 
+	usscanner_activate, 
+};
 
 int
 usscanner_match(struct device *parent, void *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.17 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.18 2007/06/14 10:11:15 mbalmer Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -100,7 +100,22 @@ void	udsbr_stop(struct udsbr_softc *sc);
 void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
 int	udsbr_status(struct udsbr_softc *sc);
 
-USB_DECLARE_DRIVER(udsbr);
+int udsbr_match(struct device *, void *, void *); 
+void udsbr_attach(struct device *, struct device *, void *); 
+int udsbr_detach(struct device *, int); 
+int udsbr_activate(struct device *, enum devact); 
+
+struct cfdriver udsbr_cd = { 
+	NULL, "udsbr", DV_DULL 
+}; 
+
+const struct cfattach udsbr_ca = { 
+	sizeof(struct udsbr_softc), 
+	udsbr_match, 
+	udsbr_attach, 
+	udsbr_detach, 
+	udsbr_activate, 
+};
 
 int
 udsbr_match(struct device *parent, void *match, void *aux)

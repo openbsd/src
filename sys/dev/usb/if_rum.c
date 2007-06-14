@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.63 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.64 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -207,7 +207,22 @@ static const struct rfprog {
 	RT2573_RF5225
 };
 
-USB_DECLARE_DRIVER_CLASS(rum, DV_IFNET);
+int rum_match(struct device *, void *, void *); 
+void rum_attach(struct device *, struct device *, void *); 
+int rum_detach(struct device *, int); 
+int rum_activate(struct device *, enum devact); 
+
+struct cfdriver rum_cd = { 
+	NULL, "rum", DV_IFNET 
+}; 
+
+const struct cfattach rum_ca = { 
+	sizeof(struct rum_softc), 
+	rum_match, 
+	rum_attach, 
+	rum_detach, 
+	rum_activate, 
+};
 
 int
 rum_match(struct device *parent, void *match, void *aux)

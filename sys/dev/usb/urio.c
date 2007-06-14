@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.31 2007/06/12 16:26:37 mbalmer Exp $	*/
+/*	$OpenBSD: urio.c,v 1.32 2007/06/14 10:11:16 mbalmer Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -103,7 +103,22 @@ static const struct usb_devno urio_devs[] = {
 };
 #define urio_lookup(v, p) usb_lookup(urio_devs, v, p)
 
-USB_DECLARE_DRIVER(urio);
+int urio_match(struct device *, void *, void *); 
+void urio_attach(struct device *, struct device *, void *); 
+int urio_detach(struct device *, int); 
+int urio_activate(struct device *, enum devact); 
+
+struct cfdriver urio_cd = { 
+	NULL, "urio", DV_DULL 
+}; 
+
+const struct cfattach urio_ca = { 
+	sizeof(struct urio_softc), 
+	urio_match, 
+	urio_attach, 
+	urio_detach, 
+	urio_activate, 
+};
 
 int
 urio_match(struct device *parent, void *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.9 2007/06/12 16:26:36 mbalmer Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.10 2007/06/14 10:11:15 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -49,7 +49,22 @@ struct usb_devno const uberry_devices[] = {
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY }
 };
 
-USB_DECLARE_DRIVER(uberry);
+int uberry_match(struct device *, void *, void *); 
+void uberry_attach(struct device *, struct device *, void *); 
+int uberry_detach(struct device *, int); 
+int uberry_activate(struct device *, enum devact); 
+
+struct cfdriver uberry_cd = { 
+	NULL, "uberry", DV_DULL 
+}; 
+
+const struct cfattach uberry_ca = { 
+	sizeof(struct uberry_softc), 
+	uberry_match, 
+	uberry_attach, 
+	uberry_detach, 
+	uberry_activate, 
+};
 
 int
 uberry_match(struct device *parent, void *match, void *aux)

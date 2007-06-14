@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.32 2007/06/13 11:15:29 mbalmer Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.33 2007/06/14 10:11:15 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -105,7 +105,22 @@ const struct cdce_type cdce_devs[] = {
 };
 #define cdce_lookup(v, p) ((const struct cdce_type *)usb_lookup(cdce_devs, v, p))
 
-USB_DECLARE_DRIVER_CLASS(cdce, DV_IFNET);
+int cdce_match(struct device *, void *, void *); 
+void cdce_attach(struct device *, struct device *, void *); 
+int cdce_detach(struct device *, int); 
+int cdce_activate(struct device *, enum devact); 
+
+struct cfdriver cdce_cd = { 
+	NULL, "cdce", DV_IFNET 
+}; 
+
+const struct cfattach cdce_ca = { 
+	sizeof(struct cdce_softc), 
+	cdce_match, 
+	cdce_attach, 
+	cdce_detach, 
+	cdce_activate, 
+};
 
 int
 cdce_match(struct device *parent, void *match, void *aux)

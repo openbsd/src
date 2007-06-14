@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.37 2007/06/13 11:15:29 mbalmer Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.38 2007/06/14 10:11:15 mbalmer Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -177,7 +177,22 @@ struct upl_type sc_devs[] = {
 	{ 0, 0 }
 };
 
-USB_DECLARE_DRIVER_CLASS(upl, DV_IFNET);
+int upl_match(struct device *, void *, void *); 
+void upl_attach(struct device *, struct device *, void *); 
+int upl_detach(struct device *, int); 
+int upl_activate(struct device *, enum devact); 
+
+struct cfdriver upl_cd = { 
+	NULL, "upl", DV_IFNET 
+}; 
+
+const struct cfattach upl_ca = { 
+	sizeof(struct upl_softc), 
+	upl_match, 
+	upl_attach, 
+	upl_detach, 
+	upl_activate, 
+};
 
 int upl_openpipes(struct upl_softc *);
 int upl_tx_list_init(struct upl_softc *);
