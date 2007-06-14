@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.27 2007/06/14 03:35:29 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.28 2007/06/14 03:37:23 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -210,8 +210,6 @@ done:
 	return (msg);
 
 }
-
-
 
 /*
  * Write disk label back to device after modification.

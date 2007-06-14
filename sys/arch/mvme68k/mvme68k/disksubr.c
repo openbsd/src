@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.56 2007/06/14 03:35:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.57 2007/06/14 03:37:23 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -129,7 +129,6 @@ done:
 	disklabeltokernlabel(lp);
 	return (msg);
 }
-
 
 /*
  * Write disk label back to device after modification.

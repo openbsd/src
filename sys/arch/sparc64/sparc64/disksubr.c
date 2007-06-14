@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.40 2007/06/14 03:35:30 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.41 2007/06/14 03:37:23 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -181,7 +181,6 @@ done:
 	disklabeltokernlabel(lp);
 	return (msg);
 }
-
 
 /*
  * Write disk label back to device after modification.

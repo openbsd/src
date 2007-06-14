@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.53 2007/06/14 03:35:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.54 2007/06/14 03:37:23 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	/* HFS variables */
 	int part_cnt, n, hfspartoff;
 	struct part_map_entry *part;
-
 
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize < DEV_BSIZE)
@@ -179,7 +178,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 	goto found_disklabel;
-
 
 hfs_done:
 	/* MBR type disklabel */
@@ -385,8 +383,6 @@ done:
 	disklabeltokernlabel(lp);
 	return (msg);
 }
-
-
 
 /*
  * Write disk label back to device after modification.

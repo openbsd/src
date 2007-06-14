@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.64 2007/06/14 03:35:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.65 2007/06/14 03:37:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -541,8 +541,6 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	return readbsdlabel(bp, strat, 0,  fsoff + LABELSECTOR,
 	    LABELOFFSET, lp, spoofonly);
 }
-
-
 
 /*
  * Write disk label back to device after modification.
