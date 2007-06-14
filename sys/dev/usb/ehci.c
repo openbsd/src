@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.74 2007/06/12 16:26:36 mbalmer Exp $ */
+/*	$OpenBSD: ehci.c,v 1.75 2007/06/14 06:55:09 mbalmer Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
 #include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>

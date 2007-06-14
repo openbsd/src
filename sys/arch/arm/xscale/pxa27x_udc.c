@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.21 2007/06/10 14:49:01 mbalmer Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.22 2007/06/14 06:55:10 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

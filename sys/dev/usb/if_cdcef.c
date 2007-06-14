@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.16 2007/06/13 11:15:29 mbalmer Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.17 2007/06/14 06:55:10 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 
