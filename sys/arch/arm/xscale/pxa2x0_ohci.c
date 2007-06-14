@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.20 2007/03/24 03:33:10 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.21 2007/06/14 19:18:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

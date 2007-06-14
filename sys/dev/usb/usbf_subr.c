@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.7 2007/06/12 16:26:37 mbalmer Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.8 2007/06/14 19:18:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 
