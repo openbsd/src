@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.78 2007/06/01 18:44:22 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.79 2007/06/14 13:38:27 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -333,7 +333,9 @@ pfsync_input(struct mbuf *m, ...)
 	struct pfsync_state_clr *cp;
 	struct pfsync_state_upd_req *rup;
 	struct pfsync_state_bus *bus;
+#ifdef IPSEC
 	struct pfsync_tdb *pt;
+#endif
 	struct in_addr src;
 	struct mbuf *mp;
 	int iplen, action, error, i, s, count, offp, sfail, stale = 0;
@@ -816,6 +818,7 @@ pfsync_input(struct mbuf *m, ...)
 			break;
 		}
 		break;
+#ifdef IPSEC
 	case PFSYNC_ACT_TDB_UPD:
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
 		    count * sizeof(*pt), &offp)) == NULL) {
@@ -828,6 +831,7 @@ pfsync_input(struct mbuf *m, ...)
 			pfsync_update_net_tdb(pt);
 		splx(s);
 		break;
+#endif
 	}
 
 done:
@@ -1590,6 +1594,7 @@ pfsync_sendout_mbuf(struct pfsync_softc *sc, struct mbuf *m)
 	return (0);
 }
 
+#ifdef IPSEC
 /* Update an in-kernel tdb. Silently fail if no tdb is found. */
 void
 pfsync_update_net_tdb(struct pfsync_tdb *pt)
@@ -1740,3 +1745,4 @@ pfsync_update_tdb(struct tdb *tdb, int output)
 	splx(s);
 	return (ret);
 }
+#endif
