@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucomvar.h,v 1.15 2007/06/11 16:30:31 mbalmer Exp $ */
+/*	$OpenBSD: ucomvar.h,v 1.16 2007/06/14 08:08:21 mbalmer Exp $ */
 /*	$NetBSD: ucomvar.h,v 1.10 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define UCOMBUSCF_PORTNO		0
+#define UCOMBUSCF_PORTNO_DEFAULT	-1
 
 #define ucomcf_portno cf_loc[UCOMBUSCF_PORTNO]
 #define UCOM_UNK_PORTNO UCOMBUSCF_PORTNO_DEFAULT
