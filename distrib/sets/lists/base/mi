@@ -2934,6 +2934,7 @@
 ./usr/share/zoneinfo/America/Rankin_Inlet
 ./usr/share/zoneinfo/America/Recife
 ./usr/share/zoneinfo/America/Regina
+./usr/share/zoneinfo/America/Resolute
 ./usr/share/zoneinfo/America/Rio_Branco
 ./usr/share/zoneinfo/America/Rosario
 ./usr/share/zoneinfo/America/Santiago
@@ -3512,6 +3513,7 @@
 ./usr/share/zoneinfo/posix/America/Rankin_Inlet
 ./usr/share/zoneinfo/posix/America/Recife
 ./usr/share/zoneinfo/posix/America/Regina
+./usr/share/zoneinfo/posix/America/Resolute
 ./usr/share/zoneinfo/posix/America/Rio_Branco
 ./usr/share/zoneinfo/posix/America/Rosario
 ./usr/share/zoneinfo/posix/America/Santiago
@@ -4091,6 +4093,7 @@
 ./usr/share/zoneinfo/right/America/Rankin_Inlet
 ./usr/share/zoneinfo/right/America/Recife
 ./usr/share/zoneinfo/right/America/Regina
+./usr/share/zoneinfo/right/America/Resolute
 ./usr/share/zoneinfo/right/America/Rio_Branco
 ./usr/share/zoneinfo/right/America/Rosario
 ./usr/share/zoneinfo/right/America/Santiago
