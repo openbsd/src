@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.25 2007/05/31 17:49:16 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.26 2007/06/15 22:37:40 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -510,7 +510,8 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 	case 0x80:	/* _PPC changed, retrieve new values */
 		acpicpu_getpct(sc);
 		acpicpu_getpss(sc);
-		sc->sc_notify(sc->sc_pss, sc->sc_pss_len);
+		if (sc->sc_notify)
+			sc->sc_notify(sc->sc_pss, sc->sc_pss_len);
 		break;
 	default:
 		printf("%s: unhandled cpu event %x\n", DEVNAME(sc),
