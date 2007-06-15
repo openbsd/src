@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.76 2007/06/14 12:58:09 mbalmer Exp $ */
+/*	$OpenBSD: ehci.c,v 1.77 2007/06/15 11:41:47 mbalmer Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -684,12 +684,12 @@ ehci_softintr(void *v)
 		timeout_add(&sc->sc_tmo_intrlist, hz);
 	}
 
-#ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
 		wakeup(&sc->sc_softwake);
 	}
-#endif /* USB_USE_SOFTINTR */
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 	sc->sc_bus.intr_context--;
 }
@@ -2501,13 +2501,13 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * has run.
 	 */
 	s = splusb();
-#ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_softwake = 1;
-#endif /* USB_USE_SOFTINTR */
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 	usb_schedsoftintr(&sc->sc_bus);
-#ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	tsleep(&sc->sc_softwake, PZERO, "ehciab", 0);
-#endif /* USB_USE_SOFTINTR */
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 	/*
 	 * Step 5: Remove any vestiges of the xfer from the hardware.

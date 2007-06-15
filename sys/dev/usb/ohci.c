@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.83 2007/06/14 12:58:09 mbalmer Exp $ */
+/*	$OpenBSD: ohci.c,v 1.84 2007/06/15 11:41:48 mbalmer Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1474,12 +1474,12 @@ ohci_softintr(void *v)
 		}
 	}
 
-#ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
 		wakeup(&sc->sc_softwake);
 	}
-#endif /* USB_USE_SOFTINTR */
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 	sc->sc_bus.intr_context--;
 	DPRINTFN(10,("ohci_softintr: done:\n"));
@@ -2220,13 +2220,13 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 */
 	usb_delay_ms(opipe->pipe.device->bus, 20); /* Hardware finishes in 1ms */
 	s = splusb();
-#ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_softwake = 1;
-#endif /* USB_USE_SOFTINTR */
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 	usb_schedsoftintr(&sc->sc_bus);
-#ifdef USB_USE_SOFTINTR
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	tsleep(&sc->sc_softwake, PZERO, "ohciab", 0);
-#endif /* USB_USE_SOFTINTR */
+#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 	splx(s);
 
 	/*

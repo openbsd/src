@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.94 2007/06/14 12:58:09 mbalmer Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.95 2007/06/15 11:41:48 mbalmer Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -45,11 +45,5 @@
 /*
  * Macro's to cope with the differences between operating systems.
  */
-
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-#define USB_USE_SOFTINTR
-#else
-#undef USB_USE_SOFTINTR
-#endif
 
 #endif /* _USB_PORT_H */
