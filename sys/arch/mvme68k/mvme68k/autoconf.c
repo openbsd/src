@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.39 2007/06/01 19:25:10 deraadt Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.40 2007/06/15 01:19:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -82,7 +82,6 @@
 
 #include <machine/vmparam.h>
 #include <machine/autoconf.h>
-#include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 

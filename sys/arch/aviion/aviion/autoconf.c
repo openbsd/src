@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2007/06/01 19:25:09 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2007/06/15 01:19:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -44,7 +44,6 @@
 #include <machine/asm_macro.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/disklabel.h>
 #include <machine/vmparam.h>
 
 #include <scsi/scsi_all.h>
