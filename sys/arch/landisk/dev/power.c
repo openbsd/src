@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.3 2007/04/26 18:12:13 martin Exp $	*/
+/*	$OpenBSD: power.c,v 1.4 2007/06/15 18:17:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Martin Reindl.
@@ -58,9 +58,12 @@ int
 power_match(struct device *parent, void *match, void *aux)
 {
 	struct obio_attach_args *oa = aux;
+	static struct obio_irq power_match_irq;
 
 	oa->oa_nio = 0;
 	oa->oa_niomem = 0;
+	if (oa->oa_nirq == 0)
+		oa->oa_irq = &power_match_irq;
 	oa->oa_nirq = 1;
 	oa->oa_irq[0].or_irq = LANDISK_INTR_PWRSW;
 
