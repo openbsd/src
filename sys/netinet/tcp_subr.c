@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.96 2007/06/01 00:52:38 henning Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.97 2007/06/15 18:23:06 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -99,9 +99,7 @@
 #include <netinet6/ip6protosw.h>
 #endif /* INET6 */
 
-#ifdef TCP_SIGNATURE
 #include <crypto/md5.h>
-#endif /* TCP_SIGNATURE */
 
 /* patchable/settable parameters for tcp */
 int	tcp_mssdflt = TCP_MSS;
@@ -149,9 +147,7 @@ struct pool sackhl_pool;
 #endif
 
 struct tcpstat tcpstat;		/* tcp statistics */
-#ifdef TCP_COMPAT_42
 tcp_seq  tcp_iss;
-#endif
 
 /*
  * Tcp initialization
@@ -159,9 +155,7 @@ tcp_seq  tcp_iss;
 void
 tcp_init()
 {
-#ifdef TCP_COMPAT_42
 	tcp_iss = 1;		/* wrong */
-#endif /* TCP_COMPAT_42 */
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    NULL);
 	pool_init(&tcpqe_pool, sizeof(struct tcpqent), 0, 0, 0, "tcpqepl",
@@ -1014,6 +1008,76 @@ tcp_mtudisc_increase(inp, errno)
 		/* also takes care of congestion window */
 		tcp_mss(tp, -1);
 	}
+}
+
+#define TCP_ISS_CONN_INC 4096
+int tcp_iss_init;
+static u_char tcp_iss_secret[128];
+MD5_CTX tcp_iss_ctx;
+
+void
+tcp_set_iss(struct tcpcb *tp)
+{
+	MD5_CTX ctx;
+	tcp_seq digest[4];
+
+	if (tcp_iss_init == 0) {
+		arc4random_bytes(tcp_iss_secret, sizeof(tcp_iss_secret));
+		MD5Init(&tcp_iss_ctx);
+		MD5Update(&tcp_iss_ctx, tcp_iss_secret, sizeof(tcp_iss_secret));
+		tcp_iss_init = 1;
+	}
+	ctx = tcp_iss_ctx;
+	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_lport, sizeof(u_short));
+	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_fport, sizeof(u_short));
+	if (tp->pf == AF_INET6) {
+		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_laddr6,
+		    sizeof(struct in6_addr));
+		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_faddr6,
+		    sizeof(struct in6_addr));
+	} else {
+		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_laddr,
+		    sizeof(struct in_addr));
+		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_faddr,
+		    sizeof(struct in_addr));
+	}
+	MD5Final((u_char *)digest, &ctx);
+	tcp_iss += TCP_ISS_CONN_INC;
+	tp->iss = digest[0] + tcp_iss;
+}
+
+int tcp_tsm_init;
+static u_char tcp_tsm_secret[128];
+MD5_CTX tcp_tsm_ctx;
+
+void
+tcp_set_tsm(struct tcpcb *tp)
+{
+	MD5_CTX ctx;
+	u_int32_t digest[4];
+
+	if (tcp_tsm_init == 0) {
+		arc4random_bytes(tcp_tsm_secret, sizeof(tcp_tsm_secret));
+		MD5Init(&tcp_tsm_ctx);
+		MD5Update(&tcp_tsm_ctx, tcp_tsm_secret, sizeof(tcp_tsm_secret));
+		tcp_tsm_init = 1;
+	}
+	ctx = tcp_tsm_ctx;
+	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_lport, sizeof(u_short));
+	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_fport, sizeof(u_short));
+	if (tp->pf == AF_INET6) {
+		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_laddr6,
+		    sizeof(struct in6_addr));
+		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_faddr6,
+		    sizeof(struct in6_addr));
+	} else {
+		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_laddr,
+		    sizeof(struct in_addr));
+		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_faddr,
+		    sizeof(struct in_addr));
+	}
+	MD5Final((u_char *)digest, &ctx);
+	tp->ts_modulate = digest[0];
 }
 
 #ifdef TCP_SIGNATURE

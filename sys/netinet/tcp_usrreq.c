@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.89 2005/03/04 13:21:42 markus Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.90 2007/06/15 18:23:07 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ tcp_usrreq(so, req, m, nam, control)
 		
 		/* initialise the timestamp modulator */
 		if (tp->t_flags & TF_REQ_TSTMP)
-			tp->ts_modulate = arc4random();
+			tcp_set_tsm(tp);
 
 		/* Compute window scaling to request.  */
 		tcp_rscale(tp, so->so_rcv.sb_hiwat);
@@ -337,7 +337,7 @@ tcp_usrreq(so, req, m, nam, control)
 		tp->iss = tcp_iss;
 		tcp_iss += TCP_ISSINCR/2;
 #else  /* TCP_COMPAT_42 */
-		tp->iss = tcp_rndiss_next();
+		tcp_set_iss(tp);
 #endif /* !TCP_COMPAT_42 */
 		tcp_sendseqinit(tp);
 #if defined(TCP_SACK)
