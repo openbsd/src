@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.54 2007/05/15 19:42:46 sturm Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.55 2007/06/15 11:43:08 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -670,8 +670,9 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 		/* If realpath fails then the filename does not exist,
 		 * or we are supposed to not resolve the last component */
 		if (realpath(cwd, rcwd) == NULL) {
-			char *dir, *file;
+			char *dir, last_char;
 			struct stat st;
+			int base_is_dir;
 
 			if (errno != EACCES) {
 				failed = 1;
@@ -682,7 +683,12 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 			/* Component of path could not be entered */
 			if (strlcpy(rcwd, cwd, sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
-			if ((file = basename(rcwd)) == NULL)
+			last_char = rcwd[strlen(rcwd)-1];
+			if (last_char == '/')
+				base_is_dir = 1;
+			else
+				base_is_dir = 0;
+			if ((base = basename(rcwd)) == NULL)
 				goto error;
 			if ((dir = dirname(rcwd)) == NULL)
 				goto error;
@@ -696,7 +702,10 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 			if (strlen(rcwd) > 1 &&
 			    strlcat(rcwd, "/", sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
-			if (strlcat(rcwd, file, sizeof(rcwd)) >= sizeof(rcwd))
+			if (strlcat(rcwd, base, sizeof(rcwd)) >= sizeof(rcwd))
+				goto error;
+			if (base_is_dir &&
+			    strlcat(rcwd, "/", sizeof(rcwd)) >= sizeof(rcwd))
 				goto error;
 			/* 
 			 * At this point, filename has to exist and has to
