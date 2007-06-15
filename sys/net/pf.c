@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.543 2007/06/09 18:30:47 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.544 2007/06/15 08:18:59 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2832,6 +2832,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		return (PF_DROP);
 	}
 
+	sport = dport = hdrlen = 0;
+
 	switch (pd->proto) {
 	case IPPROTO_TCP:
 		sport = th->th_sport;
@@ -2845,6 +2847,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		break;
 #ifdef INET
 	case IPPROTO_ICMP:
+		if (pd->af != AF_INET)
+			break;
 		sport = dport = pd->hdr.icmp->icmp_id;
 		hdrlen = sizeof(*pd->hdr.icmp);
 		icmptype = pd->hdr.icmp->icmp_type;
@@ -2860,6 +2864,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 #endif /* INET */
 #ifdef INET6
 	case IPPROTO_ICMPV6:
+		if (pd->af != AF_INET6)
+			break;
 		sport = dport = pd->hdr.icmp6->icmp6_id;
 		hdrlen = sizeof(*pd->hdr.icmp6);
 		icmptype = pd->hdr.icmp6->icmp6_type;
@@ -2872,9 +2878,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			state_icmp++;
 		break;
 #endif /* INET6 */
-	default:
-		sport = dport = hdrlen = 0;
-		break;
 	}
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
