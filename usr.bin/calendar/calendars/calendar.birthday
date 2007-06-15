@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.48 2007/06/14 20:13:17 jasper Exp $
+ * $OpenBSD: calendar.birthday,v 1.49 2007/06/15 20:18:57 kili Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -102,6 +102,7 @@
 03/07	Sir John Frederick William Herschel born, 1792, astronomer
 03/08	Alvan Clark born, 1804, astronomer & lens manufacturer
 03/09	Howard Aiken born, 1900
+03/11	Douglas Adams born in Cambridge, England, 1952
 03/11	Robert Treat Paine born, 1731
 03/11	Vannevar Bush born, 1890
 03/12	Gustav Robert Kirchhoff born, 1824, physicist
@@ -164,6 +165,7 @@
 05/02	Dr. Benjamin Spock born, 1903
 05/09	Pinza died, 1957
 05/10	Fred Astaire (Frederick Austerlitz) born in Omaha, Nebraska, 1899
+05/11	Douglas Adams dies in Santa Barbara, 2001
 05/12	Florence Nightingale born in Florence, Italy, 1820
 05/13	Arthur S. Sullivan born, 1842
 05/15	Mike Oldfield is born in Essex, England, 1953
