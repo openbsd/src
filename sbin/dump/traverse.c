@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.22 2007/06/11 16:50:33 millert Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.23 2007/06/15 21:07:17 otto Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static const char rcsid[] = "$OpenBSD: traverse.c,v 1.22 2007/06/11 16:50:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: traverse.c,v 1.23 2007/06/15 21:07:17 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -380,10 +380,8 @@ dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t *filesize)
 {
 	int ret = 0;
 	int i;
-	static void *idblk;
+	char idblk[MAXBSIZE];
 
-	if (idblk == NULL && (idblk = malloc(sblock->fs_bsize)) == NULL)
-		quit("dirindir: cannot allocate indirect memory.\n");
 	bread(fsbtodb(sblock, blkno), idblk, (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
 		for (i = 0; *filesize > 0 && i < NINDIR(sblock); i++) {
@@ -585,10 +583,8 @@ static void
 dmpindir(ino_t ino, daddr64_t  blk, int ind_level, off_t *size)
 {
 	int i, cnt;
-	static void *idblk;
+	char idblk[MAXBSIZE];
 
-	if (idblk == NULL && (idblk = malloc(sblock->fs_bsize)) == NULL)
-		quit("dmpindir: cannot allocate indirect memory.\n");
 	if (blk != 0)
 		bread(fsbtodb(sblock, blk), idblk, (int) sblock->fs_bsize);
 	else
