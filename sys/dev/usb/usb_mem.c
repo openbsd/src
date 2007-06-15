@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.19 2007/06/05 08:43:56 mbalmer Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.20 2007/06/15 04:05:53 deraadt Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
 #include <sys/device.h>		/* for usbdivar.h */
 #include <machine/bus.h>
 
