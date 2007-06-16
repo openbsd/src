@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.17 2007/06/16 13:17:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.18 2007/06/16 13:29:11 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -62,8 +62,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-
-#define	IEEE80211_RATE2MBS(r)	(((r) & IEEE80211_RATE_VAL) / 2)
 
 const char * const ieee80211_mgt_subtype_name[] = {
 	"assoc_req",	"assoc_resp",	"reassoc_req",	"reassoc_resp",
@@ -193,7 +191,7 @@ ieee80211_dump_pkt(const u_int8_t *buf, int len, int rate, int rssi)
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 		printf(" WEP");
 	if (rate >= 0)
-		printf(" %dM", rate / 2);
+		printf(" %d%sM", rate / 2, (rate & 1) ? ".5" : "");
 	if (rssi >= 0)
 		printf(" +%d", rssi);
 	printf("\n");
@@ -361,7 +359,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
-	u_int mbps;
+	u_int rate;
 	int s;
 
 	ostate = ic->ic_state;
@@ -556,10 +554,11 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 				    ether_sprintf(ni->ni_bssid));
 				ieee80211_print_essid(ic->ic_bss->ni_essid,
 				    ni->ni_esslen);
-				mbps = IEEE80211_RATE2MBS(
-				    ni->ni_rates.rs_rates[ni->ni_txrate]);
-				printf(" channel %d start %uMb",
-				    ieee80211_chan2ieee(ic, ni->ni_chan), mbps);
+				rate = ni->ni_rates.rs_rates[ni->ni_txrate] &
+				    IEEE80211_RATE_VAL;
+				printf(" channel %d start %u%sMb",
+				    ieee80211_chan2ieee(ic, ni->ni_chan),
+				    rate / 2, (rate & 1) ? ".5" : "");
 				printf(" %s preamble %s slot time%s\n",
 				    (ic->ic_flags & IEEE80211_F_SHPREAMBLE) ?
 					"short" : "long",
