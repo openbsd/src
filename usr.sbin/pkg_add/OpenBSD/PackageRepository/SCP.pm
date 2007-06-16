@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.15 2007/06/04 18:52:02 espie Exp $
+# $OpenBSD: SCP.pm,v 1.16 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -23,6 +23,7 @@ our @ISA=qw(OpenBSD::PackageRepository::Distant);
 
 use IPC::Open2;
 use IO::Handle;
+use OpenBSD::Paths;
 
 sub urlscheme
 {
@@ -39,7 +40,8 @@ sub initiate
 
 	my ($rdfh, $wrfh);
 
-	$self->{controller} = open2($rdfh, $wrfh, 'ssh', $self->{host}, 'perl', '-x');
+	$self->{controller} = open2($rdfh, $wrfh, OpenBSD::Paths->ssh, 
+	    $self->{host}, 'perl', '-x');
 	$self->{cmdfh} = $wrfh;
 	$self->{getfh} = $rdfh;
 	$wrfh->autoflush(1);

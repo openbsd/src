@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.49 2007/06/12 09:53:36 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.50 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -42,6 +42,7 @@ use constant {
 use File::Path ();
 use File::Basename ();
 use OpenBSD::IdCache;
+use OpenBSD::Paths;
 
 my $uidcache = new OpenBSD::UidCache;
 my $gidcache = new OpenBSD::GidCache;
@@ -510,7 +511,9 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->{name});
-	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, $self->devicetype, $self->{major}, $self->{minor});
+	system(OpenBSD::Paths->mknod, 
+	    '-m', $self->{mode}, $self->{destdir}.$self->{name}, 
+	    $self->devicetype, $self->{major}, $self->{minor});
 	$self->set_modes;
 }
 

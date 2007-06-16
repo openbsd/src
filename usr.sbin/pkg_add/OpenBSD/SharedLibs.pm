@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.27 2007/06/06 10:56:21 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.28 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+use OpenBSD::Paths;
 package OpenBSD::PackingElement;
 
 sub mark_available_lib
@@ -36,7 +37,7 @@ use File::Basename;
 use OpenBSD::Error;
 
 my $path;
-my @ldconfig = ('/sbin/ldconfig');
+my @ldconfig = (OpenBSD::Paths->ldconfig);
 
 
 sub init_path($)
@@ -44,7 +45,7 @@ sub init_path($)
 	my $destdir = shift;
 	$path={};
 	if ($destdir ne '') {
-		unshift @ldconfig, 'chroot', $destdir;
+		unshift @ldconfig, OpenBSD::Paths->chroot, $destdir;
 	}
 	open my $fh, "-|", @ldconfig, "-r";
 	if (defined $fh) {
@@ -99,7 +100,7 @@ my $done_plist = {};
 
 sub system_dirs
 {
-	return ("/usr", "/usr/X11R6");
+	return OpenBSD::Paths->library_dirs;
 }
 
 sub add_libs_from_system

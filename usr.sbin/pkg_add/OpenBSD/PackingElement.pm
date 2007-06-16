@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.135 2007/06/14 09:11:49 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.136 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,7 @@
 use strict;
 use warnings;
 use OpenBSD::PackageInfo;
+use OpenBSD::Paths;
 
 # perl ipc
 require 5.008_000;
@@ -471,8 +472,8 @@ sub format
 	}
 	open my $oldout, '>&STDOUT';
 	open STDOUT, '>', "$base/$out" or die "Can't write to $base/$out";
-	system('groff', '-Tascii', '-mandoc', '-Wall', '-mtty-char', 
-	    @extra, $fname);
+	system(OpenBSD::Paths->groff,
+	    '-Tascii', '-mandoc', '-Wall', '-mtty-char', @extra, $fname);
 	open STDOUT, '>&', $oldout;
 }
 
@@ -1021,7 +1022,8 @@ sub run
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 	print $self->keyword, " ", $self->{expanded}, "\n" if $state->{beverbose};
-	$state->system('/bin/sh', '-c', $self->{expanded}) unless $state->{not};
+	$state->system(OpenBSD::Paths->sh, '-c', $self->{expanded}) 
+	    unless $state->{not};
 }
 
 package OpenBSD::PackingElement::Exec;
@@ -1149,11 +1151,11 @@ sub finish_fontdirs
 		map { update_fontalias($_) } @l unless $state->{not};
 		print "You may wish to update your font path for ", join(' ', @l), "\n";
 		return if $state->{not};
-		run_if_exists($state, "/usr/X11R6/bin/mkfontdir", @l);
+		run_if_exists($state, OpenBSD::Paths->mkfontdir, @l);
 
 		map { restore_fontdir($_) } @l;
 
-		run_if_exists($state, "/usr/X11R6/bin/fc-cache", @l);
+		run_if_exists($state, OpenBSD::Paths->fc_cache, @l);
 	}
 }
 
@@ -1377,11 +1379,13 @@ sub check
 			}
 		}
 		if (!defined $machine_arch) {
-			chomp($machine_arch = `/usr/bin/arch -s`);
+			my $cmd = OpenBSD::Paths->arch." -s";
+			chomp($machine_arch = `$cmd`);
 		}
 		return 1 if $ok eq $machine_arch;
 		if (!defined $arch) {
-			chomp($arch = `/usr/bin/uname -m`);
+			my $cmd = OpenBSD::Paths->uname." -m";
+			chomp($arch = `$cmd`);
 		}
 		return 1 if $ok eq $arch;
 	}

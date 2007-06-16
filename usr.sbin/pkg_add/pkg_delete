@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.108 2007/06/04 14:57:33 espie Exp $
+# $OpenBSD: pkg_delete,v 1.109 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,7 @@ use OpenBSD::Interactive;
 use OpenBSD::Delete;
 use OpenBSD::PackageInfo;
 use OpenBSD::Vstat;
+use OpenBSD::Paths;
 # use OpenBSD::UpdateSet;
 
 our %forced = ();
@@ -69,7 +70,7 @@ if ($opt_B ne '') {
 }
 $ENV{'PKG_DESTDIR'} = $opt_B;
 
-$opt_L = '/usr/local' unless defined $opt_L;
+$opt_L = OpenBSD::Paths->localbase unless defined $opt_L;
 
 if (defined $opt_p) {
 	Usage "Option p is obsolete";

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.12 2007/06/14 13:19:39 kili Exp $
+# $OpenBSD: Temp.pm,v 1.13 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -20,8 +20,9 @@ use warnings;
 package OpenBSD::Temp;
 
 use File::Temp;
+use OpenBSD::Paths;
 
-our $tempbase = $ENV{'PKG_TMPDIR'} || '/var/tmp';
+our $tempbase = $ENV{'PKG_TMPDIR'} || OpenBSD::Paths->vartmp;
 
 my $dirs = {};
 my $files = {};

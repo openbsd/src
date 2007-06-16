@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.11 2007/06/01 14:58:29 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.12 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,7 @@ package OpenBSD::SharedItems;
 use OpenBSD::Error;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackingList;
+use OpenBSD::Paths;
 
 sub find_items_in_installed_packages
 {
@@ -85,7 +86,7 @@ sub cleanup
 			$state->progress->show($done, $total);
 			next if $remaining->{users}->{$user};
 			if ($state->{extra}) {
-				System("/usr/sbin/userdel", $user);
+				System(OpenBSD::Paths->userdel, $user);
 			} else {
 				$state->set_pkgname($pkgname);
 				$state->print("You should also run /usr/sbin/userdel $user\n");
@@ -98,7 +99,7 @@ sub cleanup
 			$state->progress->show($done, $total);
 			next if $remaining->{groups}->{$group};
 			if ($state->{extra}) {
-				System("/usr/sbin/groupdel", $group);
+				System(OpenBSD::Paths->groupdel, $group);
 			} else {
 				$state->set_pkgname($pkgname);
 				$state->print("You should also run /usr/sbin/groupdel $group\n");
@@ -124,7 +125,9 @@ sub cleanup
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
 	$state->print("You may wish to remove ", $fullname, " from man.conf\n");
-	unlink("$fullname/whatis.db");
+	for my $f (OpenBSD::Paths->man_cruft) {
+		unlink("$fullname/$f");
+	}
 }
 
 package OpenBSD::PackingElement::Fontdir;
@@ -133,9 +136,9 @@ sub cleanup
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
 	$state->print("You may wish to remove ", $fullname, " from your font path\n");
-	unlink("$fullname/fonts.alias");
-	unlink("$fullname/fonts.dir");
-	unlink("$fullname/fonts.cache-1");
+	for my $f (OpenBSD::Paths->font_cruft) {
+		unlink("$fullname/$f");
+	}
 }
 
 package OpenBSD::PackingElement::Infodir;
@@ -143,7 +146,9 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
-	unlink("$fullname/dir");
+	for my $f (OpenBSD::Paths->info_cruft) {
+		unlink("$fullname/$f");
+	}
 }
 
 1;

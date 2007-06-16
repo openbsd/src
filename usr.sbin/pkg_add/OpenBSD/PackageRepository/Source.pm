@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Source.pm,v 1.5 2007/06/04 14:40:39 espie Exp $
+# $OpenBSD: Source.pm,v 1.6 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -21,6 +21,7 @@ use warnings;
 package OpenBSD::PackageRepository::Source;
 our @ISA=(qw(OpenBSD::PackageRepository));
 use OpenBSD::PackageInfo;
+use OpenBSD::Paths;
 
 sub urlscheme
 {
@@ -42,14 +43,14 @@ sub build_package
 	if (defined $ENV{'MAKE'}) {
 		$make = $ENV{'MAKE'};
 	} else {
-		$make = '/usr/bin/make';
+		$make = OpenBSD::Paths->make;
 	}
 	if (defined $self->{baseurl} && $self->{baseurl} ne '') {
 		$dir = $self->{baseurl}
 	} elsif (defined $ENV{PORTSDIR}) {
 		$dir = $ENV{PORTSDIR};
 	} else {
-		$dir = '/usr/ports';
+		$dir = OpenBSD::Paths->portsdir;
 	}
 	# figure out the repository name and the pkgname
 	my $pkgfile = `cd $dir && SUBDIR=$pkgpath ECHO_MSG=: $make show=PKGFILE`;

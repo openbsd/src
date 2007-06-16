@@ -19,6 +19,7 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackingList;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
+use OpenBSD::Paths;
 use File::Path;
 
 package OpenBSD::PackingElement;
@@ -74,7 +75,7 @@ try {
 };
 
 my $fh;
-my $MKLOCATEDB="/usr/libexec/locate.mklocatedb";
+my $MKLOCATEDB = OpenBSD::Paths->mklocatedb;
 
 if ($opt_n or -t STDOUT) {
 	$fh = \*STDOUT;
@@ -82,7 +83,8 @@ if ($opt_n or -t STDOUT) {
 	open $fh, "|-", $MKLOCATEDB, $MKLOCATEDB or die "couldn't open pipe: $!";
 }
 if ($opt_s || $opt_x) {
-	my ($rev, $arch) = split(/\s+/o, `uname -mr`);
+	my $cmd = OpenBSD::Paths->uname." -mr";
+	my ($rev, $arch) = split(/\s+/o, `$cmd`);
 	chomp $arch;
 	$rev =~ s/\.//;
 	if ($opt_s) {
@@ -122,7 +124,7 @@ if ($opt_r) {
 	while (my $e = readdir $dir) {
 		if ($e =~ m/^(\w+\d\d)\.tgz$/o) {
 			my $set = $1;
-			open my $arc, '-|', '/usr/bin/gzip', 'gzip', '-c', '-d', "$opt_r/$e";
+			open my $arc, '-|', OpenBSD::Paths->gzip, '-c', '-d', "$opt_r/$e";
 			my $u = OpenBSD::Ustar->new($arc, '/');
 			while (my $f = $u->next) {
 				my $name = $f->{name};

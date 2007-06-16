@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.114 2007/06/14 10:16:37 espie Exp $
+# $OpenBSD: pkg_create,v 1.115 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,7 @@ use OpenBSD::Temp;
 use OpenBSD::Error;
 use OpenBSD::Ustar;
 use OpenBSD::ArcCheck;
+use OpenBSD::Paths;
 use File::Basename;
 
 # Extra stuff needed to archive files
@@ -679,7 +680,7 @@ if ($opt_n) {
 	local $SIG{'HUP'} = $h;
 	local $SIG{'KILL'} = $h;
 	local $SIG{'TERM'} = $h;
-	open(my $fh, "|gzip >$wname");
+	open(my $fh, "|-", OpenBSD::Paths->gzip, "-o", $wname);
 	my $wrarc = OpenBSD::Ustar->new($fh, $plist->infodir);
 
 	$plist->create_package($wrarc, $base, $opt_v);

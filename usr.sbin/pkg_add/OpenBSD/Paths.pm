@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.2 2007/06/12 09:57:50 espie Exp $
+# $OpenBSD: Paths.pm,v 1.3 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,7 @@ package OpenBSD::Paths;
 
 # Commands
 sub ldconfig() { '/sbin/ldconfig' }
+sub chroot() { '/usr/sbin/chroot' }
 sub mkfontdir() { '/usr/X11R6/bin/mkfontdir' }
 sub fc_cache() { '/usr/X11R6/bin/fc-cache' }
 sub install_info() { '/usr/bin/install-info' }
@@ -29,7 +30,7 @@ sub useradd() { '/usr/sbin/useradd' }
 sub groupadd() { '/usr/sbin/groupadd' }
 sub sysctl() { '/sbin/sysctl' }
 sub openssl() { '/usr/sbin/openssl' }
-sub chmod() { '/bin/chmod' }
+sub chmod() { '/bin/chmod' }	# external command is used for symbolic modes.
 sub gzip() { '/usr/bin/gzip' }
 sub ftp() { $ENV{'FETCH_CMD'} || '/usr/bin/ftp' }
 sub groff() { '/usr/bin/groff' }
@@ -41,7 +42,7 @@ sub groupdel() { '/usr/sbin/groupdel' }
 sub mknod() { '/sbin/mknod' }
 sub mount() { '/sbin/mount' }
 sub df() { '/bin/df' }
-sub ssh() { '/us/bin/ssh' }
+sub ssh() { '/usr/bin/ssh' }
 sub make() { '/usr/bin/make' }
 sub mklocatedb() { '/usr/libexec/locate.mklocatedb' }
 
@@ -57,5 +58,6 @@ sub master_keys() { ("/etc/master_key") }
 
 sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1") }
 sub man_cruft() { ("whatis.db") }
+sub info_cruft() { ("dir") }
 
 1;

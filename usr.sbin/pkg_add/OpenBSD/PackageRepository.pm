@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.45 2007/06/12 09:53:36 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.46 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -28,6 +28,7 @@ package OpenBSD::PackageRepository;
 our @ISA=(qw(OpenBSD::PackageRepositoryBase));
 
 use OpenBSD::PackageLocation;
+use OpenBSD::Paths;
 
 sub _new
 {
@@ -214,7 +215,7 @@ sub open_pipe
 		return $fh;
 	} else {
 		open STDERR, ">/dev/null";
-		exec {"/usr/bin/gzip"} 
+		exec {OpenBSD::Paths->gzip} 
 		    "gzip", 
 		    "-d", 
 		    "-c", 
@@ -275,7 +276,7 @@ sub open_pipe
 		return $fh;
 	} else {
 		open STDERR, ">/dev/null";
-		exec {"/usr/bin/gzip"} 
+		exec {OpenBSD::Paths->gzip} 
 		    "gzip", 
 		    "-d", 
 		    "-c", 
@@ -372,7 +373,7 @@ sub open_pipe
 		open(STDIN, '<&', $rdfh) or die "Bad dup";
 		close($rdfh);
 		close($wrfh);
-		exec {"/usr/bin/gzip"} 
+		exec {OpenBSD::Paths->gzip} 
 		    "gzip", 
 		    "-d", 
 		    "-c", 
@@ -432,8 +433,7 @@ our %distant = ();
 sub grab_object
 {
 	my ($self, $object) = @_;
-	my $ftp = defined $ENV{'FETCH_CMD'} ? $ENV{'FETCH_CMD'} : "/usr/bin/ftp";
-	exec {$ftp} 
+	exec {OpenBSD::Paths->ftp} 
 	    "ftp", 
 	    "-o", 
 	    "-", $self->url($object->{name})

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.66 2007/06/14 09:29:32 espie Exp $
+# $OpenBSD: Delete.pm,v 1.67 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,7 @@ use OpenBSD::Error;
 use OpenBSD::Vstat;
 use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
+use OpenBSD::Paths;
 use File::Basename;
 
 sub rename_file_to_temp
@@ -518,7 +519,8 @@ sub delete
 	unless ($state->{not}) {
 	    my $fullname = $state->{destdir}.$self->fullname;
 	    VSystem($state->{very_verbose}, 
-	    "install-info", "--delete", "--info-dir=".dirname($fullname), $fullname);
+		OpenBSD::Paths->install_info, 
+		"--delete", "--info-dir=".dirname($fullname), $fullname);
 	}
 	$self->SUPER::delete($state);
 }
@@ -531,7 +533,7 @@ sub delete
 		my $destdir = $state->{destdir};
 		my $fullname = $self->fullname;
 		my @l=();
-		if (open(my $shells, '<', $destdir.'/etc/shells')) {
+		if (open(my $shells, '<', $destdir.OpenBSD::Paths->shells)) {
 			local $_;
 			while(<$shells>) {
 				push(@l, $_);
@@ -541,10 +543,11 @@ sub delete
 				}
 			}
 			close($shells);
-			open(my $shells2, '>', $destdir.'/etc/shells');
+			open(my $shells2, '>', $destdir.OpenBSD::Paths->shells);
 			print $shells2 @l;
 			close $shells2;
-			print "Shell $fullname removed from $destdir/etc/shells\n";
+			print "Shell $fullname removed from $destdir",
+			    OpenBSD::Paths->shells, "\n";
 		}
 	}
 	$self->SUPER::delete($state);

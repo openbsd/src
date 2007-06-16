@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.40 2007/06/11 09:12:27 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.41 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,7 @@ use warnings;
 
 package OpenBSD::Vstat;
 use File::Basename;
+use OpenBSD::Paths;
 
 my $devinfo = {};
 my $devinfo2 = {};
@@ -47,7 +48,7 @@ sub create_device($)
 sub init_devices()
 {
 	delete $ENV{'BLOCKSIZE'};
-	open(my $cmd1, "/sbin/mount|") or print STDERR "Can't run mount\n";
+	open(my $cmd1, "-|", OpenBSD::Paths->mount) or print STDERR "Can't run mount\n";
 	while (<$cmd1>) {
 		chomp;
 		if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/o) {
@@ -80,7 +81,7 @@ sub ask_df($)
 	my $fname = shift;
 	my $info = $giveup;
 
-	open(my $cmd2, "-|", "/bin/df", $fname)
+	open(my $cmd2, "-|", OpenBSD::Paths->df, $fname)
 	    or print STDERR "Can't run df\n";
 	my $blocksize = 512;
 	while (<$cmd2>) {

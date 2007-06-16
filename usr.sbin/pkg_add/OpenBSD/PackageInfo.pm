@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.34 2007/06/09 11:16:54 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.35 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -25,6 +25,7 @@ our @EXPORT=qw(installed_packages installed_info installed_name info_names is_in
     REQUIRED_BY REQUIRING DISPLAY UNDISPLAY MTREE_DIRS);
 
 use OpenBSD::PackageName;
+use OpenBSD::Paths;
 use constant {
 	CONTENTS => '+CONTENTS',
 	COMMENT => '+COMMENT',
@@ -39,7 +40,7 @@ use constant {
 	MTREE_DIRS => '+MTREE_DIRS' };
 
 use Fcntl qw/:flock/;
-my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
+my $pkg_db = $ENV{"PKG_DBDIR"} || OpenBSD::Paths->pkgdb;
 
 my ($list, $stemlist);
 

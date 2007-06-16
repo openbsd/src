@@ -22,6 +22,7 @@ use OpenBSD::Getopt;
 use OpenBSD::Error;
 use OpenBSD::Ustar;
 use OpenBSD::ArcCheck;
+use OpenBSD::Paths;
 use File::Copy;
 use File::Path;
 
@@ -145,7 +146,7 @@ my @tomerge;
 
 my $prefix = 'a';
 my $allprefix = '';
-open( my $outfh, "|gzip -c >$opt_o");
+open( my $outfh, "|-", OpenBSD::Paths->gzip, "-o", $opt_o);
 
 my $wrarc = OpenBSD::Ustar->new($outfh, ".");
 for my $pkgname (@ARGV) {

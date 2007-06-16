@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.77 2007/06/12 09:53:36 espie Exp $
+# $OpenBSD: Add.pm,v 1.78 2007/06/16 09:29:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -21,6 +21,7 @@ package OpenBSD::Add;
 use OpenBSD::Error;
 use OpenBSD::PackageInfo;
 use OpenBSD::ArcCheck;
+use OpenBSD::Paths;
 use File::Copy;
 
 sub manpages_index
@@ -215,7 +216,7 @@ sub set_modes
 		if ($v =~ m/^\d+$/o) {
 			chmod oct($v), $name;
 		} else {
-			System('chmod', $self->{mode}, $name);
+			System(OpenBSD::Paths->chmod, $self->{mode}, $name);
 		}
 	}
 }
@@ -286,7 +287,7 @@ sub install
 
 package OpenBSD::PackingElement::NewUser;
 
-sub command 	{ '/usr/sbin/useradd' }
+sub command 	{ OpenBSD::Paths->useradd }
 
 sub build_args
 {
@@ -303,7 +304,7 @@ sub build_args
 
 package OpenBSD::PackingElement::NewGroup;
 
-sub command { '/usr/sbin/groupadd' }
+sub command { OpenBSD::Paths->groupadd }
 
 sub build_args
 {
@@ -321,7 +322,7 @@ sub install
 
 	my $name = $self->{name};
 	$self->SUPER::install($state);
-	open(my $pipe, '-|', '/sbin/sysctl', '-n', $name);
+	open(my $pipe, '-|', OpenBSD::Paths->sysctl, '-n', $name);
 	my $actual = <$pipe>;
 	chomp $actual;
 	if ($self->{mode} eq '=' && $actual eq $self->{value}) {
@@ -335,7 +336,9 @@ sub install
 		    $self->{value}, "\n";
 		return;
 	}
-	VSystem($state->{very_verbose}, '/sbin/sysctl', $name.'='.$self->{value});
+	VSystem($state->{very_verbose}, 
+	    OpenBSD::Paths->sysctl, 
+	    $name.'='.$self->{value});
 }
 			
 package OpenBSD::PackingElement::FileBase;
@@ -561,7 +564,8 @@ sub install
 	return if $state->{not};
 	my $fullname = $state->{destdir}.$self->fullname;
 	VSystem($state->{very_verbose}, 
-	    "install-info", "--info-dir=".dirname($fullname), $fullname);
+	    OpenBSD::Paths->install_info,
+	    "--info-dir=".dirname($fullname), $fullname);
 }
 
 package OpenBSD::PackingElement::Shell;
@@ -573,17 +577,18 @@ sub install
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 	# go append to /etc/shells if needed
-	open(my $shells, '<', $destdir.'/etc/shells') or return;
+	open(my $shells, '<', $destdir.OpenBSD::Paths->shells) or return;
 	local $_;
 	while(<$shells>) {
 		s/^\#.*//o;
 		return if $_ =~ m/^\Q$fullname\E\s*$/;
 	}
 	close($shells);
-	open(my $shells2, '>>', $destdir.'/etc/shells') or return;
+	open(my $shells2, '>>', $destdir.OpenBSD::Paths->shells) or return;
 	print $shells2 $fullname, "\n";
 	close $shells2;
-	print "Shell $fullname appended to $destdir/etc/shells\n";
+	print "Shell $fullname appended to $destdir",
+	    OpenBSD::Paths->shells, "\n";
 }
 
 package OpenBSD::PackingElement::Dir;
