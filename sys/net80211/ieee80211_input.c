@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.26 2007/06/16 13:17:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.27 2007/06/16 18:36:01 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -61,11 +61,6 @@
 #include <net80211/ieee80211_var.h>
 
 #include <dev/rndvar.h>
-
-const struct timeval ieee80211_merge_print_intvl = {
-	.tv_sec = 1,
-	.tv_usec = 0
-};
 
 
 int ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *,
@@ -1634,10 +1629,13 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 int
 ieee80211_do_slow_print(struct ieee80211com *ic, int *did_print)
 {
+	static const struct timeval merge_print_intvl = {
+		.tv_sec = 1, .tv_usec = 0
+	};
 	if ((ic->ic_if.if_flags & IFF_LINK0) == 0)
 		return 0;
 	if (!*did_print && (ic->ic_if.if_flags & IFF_DEBUG) == 0 &&
-	    !ratecheck(&ic->ic_last_merge_print, &ieee80211_merge_print_intvl))
+	    !ratecheck(&ic->ic_last_merge_print, &merge_print_intvl))
 		return 0;
 
 	*did_print = 1;
