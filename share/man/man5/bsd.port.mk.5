@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.198 2007/05/31 19:19:58 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.199 2007/06/16 10:03:52 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 16 2007 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1684,11 +1684,10 @@ setting creates an extra flavor choice of
 See also
 .Ev MOTIFLIB
 .It Ev USE_SYSTRACE
+User settings.
 Set to
 .Sq Yes
 to protect port building with systrace.
-Set by the user, e.g. in
-.Pa /etc/mk.conf .
 .It Ev USE_X11
 Set to
 .Sq Yes
