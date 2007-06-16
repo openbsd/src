@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.22 2007/06/16 11:56:20 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.23 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -197,7 +197,7 @@ ieee80211_mhz2ieee(u_int freq, u_int flags)
  * Convert channel to IEEE channel number.
  */
 u_int
-ieee80211_chan2ieee(struct ieee80211com *ic, struct ieee80211_channel *c)
+ieee80211_chan2ieee(struct ieee80211com *ic, const struct ieee80211_channel *c)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	if (ic->ic_channels <= c && c <= &ic->ic_channels[IEEE80211_CHAN_MAX])
@@ -255,7 +255,7 @@ ieee80211_media_init(struct ifnet *ifp,
 	struct ieee80211com *ic = (void *)ifp;
 	struct ifmediareq imr;
 	int i, j, mode, rate, maxrate, mword, mopt, r;
-	struct ieee80211_rateset *rs;
+	const struct ieee80211_rateset *rs;
 	struct ieee80211_rateset allrates;
 
 	/*
@@ -533,7 +533,7 @@ void
 ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_node *ni = NULL;
+	const struct ieee80211_node *ni = NULL;
 
 	imr->ifm_status = IFM_AVALID;
 	imr->ifm_active = IFM_IEEE80211;
@@ -592,13 +592,13 @@ ieee80211_watchdog(struct ifnet *ifp)
 		ifp->if_timer = 1;
 }
 
-struct ieee80211_rateset ieee80211_std_rateset_11a =
+const struct ieee80211_rateset ieee80211_std_rateset_11a =
 	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-struct ieee80211_rateset ieee80211_std_rateset_11b =
+const struct ieee80211_rateset ieee80211_std_rateset_11b =
 	{ 4, { 2, 4, 11, 22 } };
 
-struct ieee80211_rateset ieee80211_std_rateset_11g =
+const struct ieee80211_rateset ieee80211_std_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 /*
@@ -658,7 +658,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 		IEEE80211_CHAN_FHSS,	/* IEEE80211_MODE_FH */
 		IEEE80211_CHAN_T,	/* IEEE80211_MODE_TURBO	*/
 	};
-	struct ieee80211_channel *c;
+	const struct ieee80211_channel *c;
 	u_int modeflags;
 	int i;
 
@@ -783,7 +783,8 @@ ieee80211_next_mode(struct ifnet *ifp)
  * XXX never returns turbo modes -dcy
  */
 enum ieee80211_phymode
-ieee80211_chan2mode(struct ieee80211com *ic, struct ieee80211_channel *chan)
+ieee80211_chan2mode(struct ieee80211com *ic,
+    const struct ieee80211_channel *chan)
 {
 	/*
 	 * NB: this assumes the channel would not be supplied to us

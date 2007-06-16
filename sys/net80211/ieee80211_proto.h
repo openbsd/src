@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.13 2007/06/07 20:20:15 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.14 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -49,8 +49,9 @@ enum ieee80211_state {
 #define	IEEE80211_SEND_MGMT(_ic,_ni,_type,_arg) \
 	((*(_ic)->ic_send_mgmt)(_ic, _ni, _type, _arg))
 
-extern	const char *ieee80211_mgt_subtype_name[];
-extern	const char *ieee80211_phymode_name[];
+extern	const char * const ieee80211_mgt_subtype_name[];
+extern	const char * const ieee80211_state_name[IEEE80211_S_MAX];
+extern	const char * const ieee80211_phymode_name[];
 
 extern	void ieee80211_proto_attach(struct ifnet *);
 extern	void ieee80211_proto_detach(struct ifnet *);
@@ -83,12 +84,11 @@ extern	u_int8_t *ieee80211_add_xrates(u_int8_t *frm,
 		const struct ieee80211_rateset *);
 extern	u_int8_t *ieee80211_add_ssid(u_int8_t *, const u_int8_t *, u_int);
 extern	u_int8_t *ieee80211_add_erp(u_int8_t *, struct ieee80211com *);
-extern	void ieee80211_print_essid(u_int8_t *, int);
-extern	void ieee80211_dump_pkt(u_int8_t *, int, int, int);
+extern	void ieee80211_print_essid(const u_int8_t *, int);
+extern	void ieee80211_dump_pkt(const u_int8_t *, int, int, int);
 extern	int ieee80211_ibss_merge(struct ieee80211com *,
 		struct ieee80211_node *, u_int64_t);
 extern	void ieee80211_reset_erp(struct ieee80211com *);
 extern	void ieee80211_set_shortslottime(struct ieee80211com *, int);
 
-extern	const char *ieee80211_state_name[IEEE80211_S_MAX];
 #endif /* _NET80211_IEEE80211_PROTO_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.11 2007/06/16 11:56:20 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.12 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 #define	arc4_encrypt(_c,_d,_s,_l)	rc4_crypt(_c,_s,_d,_l)
 
 void ieee80211_crc_init(void);
-u_int32_t ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len);
+u_int32_t ieee80211_crc_update(u_int32_t, const u_int8_t *, int);
 
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
@@ -318,9 +318,9 @@ ieee80211_crc_init(void)
  */
 
 u_int32_t
-ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len)
+ieee80211_crc_update(u_int32_t crc, const u_int8_t *buf, int len)
 {
-	u_int8_t *endbuf;
+	const u_int8_t *endbuf;
 
 	for (endbuf = buf + len; buf < endbuf; buf++)
 		crc = ieee80211_crc_table[(crc ^ *buf) & 0xff] ^ (crc >> 8);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.c,v 1.2 2006/11/26 19:46:28 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.c,v 1.3 2007/06/16 13:17:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -51,7 +51,7 @@
 	do { (amn)->amn_txcnt = (amn)->amn_retrycnt = 0; } while (0)
 
 void
-ieee80211_amrr_node_init(struct ieee80211_amrr *amrr,
+ieee80211_amrr_node_init(const struct ieee80211_amrr *amrr,
     struct ieee80211_amrr_node *amn)
 {
 	amn->amn_success = 0;

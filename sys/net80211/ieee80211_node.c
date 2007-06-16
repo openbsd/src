@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.23 2007/06/16 11:59:58 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.24 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -73,9 +73,9 @@ void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_copy(struct ieee80211com *, struct ieee80211_node *,
     const struct ieee80211_node *);
 u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
-    struct ieee80211_node *);
+    const struct ieee80211_node *);
 void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
-    u_int8_t *);
+    const u_int8_t *);
 void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
 struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
@@ -543,18 +543,20 @@ ieee80211_node_copy(struct ieee80211com *ic,
 }
 
 u_int8_t
-ieee80211_node_getrssi(struct ieee80211com *ic, struct ieee80211_node *ni)
+ieee80211_node_getrssi(struct ieee80211com *ic,
+    const struct ieee80211_node *ni)
 {
 	return ni->ni_rssi;
 }
 
 void
 ieee80211_setup_node(struct ieee80211com *ic,
-	struct ieee80211_node *ni, u_int8_t *macaddr)
+	struct ieee80211_node *ni, const u_int8_t *macaddr)
 {
 	int s;
 
-	IEEE80211_DPRINTF(("%s %s\n", __func__, ether_sprintf(macaddr)));
+	IEEE80211_DPRINTF(("%s %s\n", __func__,
+	    ether_sprintf((u_int8_t *)macaddr)));
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
 	ieee80211_node_newstate(ni, IEEE80211_STA_CACHE);
 
@@ -576,7 +578,7 @@ ieee80211_setup_node(struct ieee80211com *ic,
 }
 
 struct ieee80211_node *
-ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr)
+ieee80211_alloc_node(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni = ieee80211_alloc_node_helper(ic);
 	if (ni != NULL)
@@ -587,7 +589,7 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr)
 }
 
 struct ieee80211_node *
-ieee80211_dup_bss(struct ieee80211com *ic, u_int8_t *macaddr)
+ieee80211_dup_bss(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni = ieee80211_alloc_node_helper(ic);
 	if (ni != NULL) {
@@ -603,7 +605,7 @@ ieee80211_dup_bss(struct ieee80211com *ic, u_int8_t *macaddr)
 }
 
 struct ieee80211_node *
-ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
+ieee80211_find_node(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
 	struct ieee80211_node ni;
 
@@ -619,7 +621,7 @@ ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
  * returning the node.
  */
 struct ieee80211_node *
-ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
+ieee80211_find_txnode(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni;
 	int s;
@@ -685,8 +687,8 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
  * otherwise.
  */
 static __inline int
-ieee80211_needs_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh,
-    u_int8_t **bssid)
+ieee80211_needs_rxnode(struct ieee80211com *ic,
+    const struct ieee80211_frame *wh, const u_int8_t **bssid)
 {
 	struct ieee80211_node *bss = ic->ic_bss;
 	int monitor, rc = 0;
@@ -745,11 +747,12 @@ ieee80211_needs_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh,
  * the node.
  */
 struct ieee80211_node *
-ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
+ieee80211_find_rxnode(struct ieee80211com *ic,
+    const struct ieee80211_frame *wh)
 {
 	struct ieee80211_node *ni;
 	const static u_int8_t zero[IEEE80211_ADDR_LEN];
-	u_int8_t *bssid;
+	const u_int8_t *bssid;
 	int s;
 
 	if (!ieee80211_needs_rxnode(ic, wh, &bssid))
@@ -776,14 +779,15 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 		(*ic->ic_newassoc)(ic, ni, 1);
 
 	IEEE80211_DPRINTF(("%s: faked-up node %p for %s\n", __func__, ni,
-	    ether_sprintf(wh->i_addr2)));
+	    ether_sprintf((u_int8_t *)wh->i_addr2)));
 
 	return ieee80211_ref_node(ni);
 }
 
 struct ieee80211_node *
-ieee80211_find_node_for_beacon(struct ieee80211com *ic, u_int8_t *macaddr,
-    struct ieee80211_channel *chan, char *ssid, u_int8_t rssi)
+ieee80211_find_node_for_beacon(struct ieee80211com *ic,
+    const u_int8_t *macaddr, const struct ieee80211_channel *chan,
+    const char *ssid, u_int8_t rssi)
 {
 	struct ieee80211_node *ni, *keep = NULL;
 	int s, score = 0;
@@ -913,11 +917,11 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
  * Check if the specified node supports ERP.
  */
 int
-ieee80211_iserp_sta(struct ieee80211_node *ni)
+ieee80211_iserp_sta(const struct ieee80211_node *ni)
 {
 #define N(a)	(sizeof (a) / sizeof (a)[0])
 	static const u_int8_t rates[] = { 2, 4, 11, 22, 12, 24, 48 };
-	struct ieee80211_rateset *rs = &ni->ni_rates;
+	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	int i, j;
 
 	/*
@@ -1126,7 +1130,8 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
  * Compare nodes in the tree by lladdr
  */
 int
-ieee80211_node_cmp(struct ieee80211_node *b1, struct ieee80211_node *b2)
+ieee80211_node_cmp(const struct ieee80211_node *b1,
+    const struct ieee80211_node *b2)
 {
 	return (memcmp(b1->ni_macaddr, b2->ni_macaddr, IEEE80211_ADDR_LEN));
 }

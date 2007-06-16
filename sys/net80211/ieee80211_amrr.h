@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.h,v 1.3 2006/06/17 19:34:31 damien Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.h,v 1.4 2007/06/16 13:17:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -50,7 +50,7 @@ struct ieee80211_amrr_node {
 	u_int	amn_retrycnt;
 };
 
-void	ieee80211_amrr_node_init(struct ieee80211_amrr *,
+void	ieee80211_amrr_node_init(const struct ieee80211_amrr *,
 	    struct ieee80211_amrr_node *);
 void	ieee80211_amrr_choose(struct ieee80211_amrr *, struct ieee80211_node *,
 	    struct ieee80211_amrr_node *);

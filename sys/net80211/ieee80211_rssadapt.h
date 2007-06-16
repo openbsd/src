@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_rssadapt.h,v 1.3 2006/06/17 19:26:00 damien Exp $ */
+/* $OpenBSD: ieee80211_rssadapt.h,v 1.4 2007/06/16 13:17:05 damien Exp $ */
 /* $NetBSD: ieee80211_rssadapt.h,v 1.3 2004/05/06 03:03:20 dyoung Exp $ */
 
 /*-
@@ -89,16 +89,16 @@ struct ieee80211_rssdesc {
 };
 
 void	ieee80211_rssadapt_updatestats(struct ieee80211_rssadapt *);
-void	ieee80211_rssadapt_input(struct ieee80211com *, struct ieee80211_node *,
-	    struct ieee80211_rssadapt *, int);
+void	ieee80211_rssadapt_input(struct ieee80211com *,
+	    const struct ieee80211_node *, struct ieee80211_rssadapt *, int);
 void	ieee80211_rssadapt_lower_rate(struct ieee80211com *,
-	    struct ieee80211_node *, struct ieee80211_rssadapt *,
-	    struct ieee80211_rssdesc *);
+	    const struct ieee80211_node *, struct ieee80211_rssadapt *,
+	    const struct ieee80211_rssdesc *);
 void	ieee80211_rssadapt_raise_rate(struct ieee80211com *,
-	    struct ieee80211_rssadapt *, struct ieee80211_rssdesc *);
+	    struct ieee80211_rssadapt *, const struct ieee80211_rssdesc *);
 int	ieee80211_rssadapt_choose(struct ieee80211_rssadapt *,
-	    struct ieee80211_rateset *, struct ieee80211_frame *, u_int, int,
-	    const char *, int);
+	    const struct ieee80211_rateset *, const struct ieee80211_frame *,
+	    u_int, int, const char *, int);
 #ifdef IEEE80211_DEBUG
 extern int ieee80211_rssadapt_debug;
 #endif /* IEEE80211_DEBUG */

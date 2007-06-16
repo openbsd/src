@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.17 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.18 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -54,13 +54,13 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
 
-void	 ieee80211_node2req(struct ieee80211com *, struct ieee80211_node *,
-	    struct ieee80211_nodereq *);
-void	 ieee80211_req2node(struct ieee80211com *, struct ieee80211_nodereq *,
-	    struct ieee80211_node *);
+void	 ieee80211_node2req(struct ieee80211com *,
+	    const struct ieee80211_node *, struct ieee80211_nodereq *);
+void	 ieee80211_req2node(struct ieee80211com *,
+	    const struct ieee80211_nodereq *, struct ieee80211_node *);
 
 void
-ieee80211_node2req(struct ieee80211com *ic, struct ieee80211_node *ni,
+ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
     struct ieee80211_nodereq *nr)
 {
 	/* Node address and name information */
@@ -102,7 +102,7 @@ ieee80211_node2req(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 
 void
-ieee80211_req2node(struct ieee80211com *ic, struct ieee80211_nodereq *nr,
+ieee80211_req2node(struct ieee80211com *ic, const struct ieee80211_nodereq *nr,
     struct ieee80211_node *ni)
 {
 	/* Node address and name information */

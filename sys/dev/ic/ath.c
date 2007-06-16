@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.64 2007/06/06 21:41:32 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.65 2007/06/16 13:17:05 damien Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ void	ath_node_free(struct ieee80211com *, struct ieee80211_node *);
 void	ath_node_copy(struct ieee80211com *,
 	    struct ieee80211_node *, const struct ieee80211_node *);
 u_int8_t ath_node_getrssi(struct ieee80211com *,
-	    struct ieee80211_node *);
+	    const struct ieee80211_node *);
 int	ath_rxbuf_init(struct ath_softc *, struct ath_buf *);
 void	ath_rx_proc(void *, int);
 int	ath_tx_start(struct ath_softc *, struct ieee80211_node *,
@@ -1769,9 +1769,9 @@ ath_node_copy(struct ieee80211com *ic,
 }
 
 u_int8_t
-ath_node_getrssi(struct ieee80211com *ic, struct ieee80211_node *ni)
+ath_node_getrssi(struct ieee80211com *ic, const struct ieee80211_node *ni)
 {
-	struct ath_node *an = ATH_NODE(ni);
+	const struct ath_node *an = ATH_NODE(ni);
 	int i, now, nsamples, rssi;
 
 	/*
@@ -1782,7 +1782,7 @@ ath_node_getrssi(struct ieee80211com *ic, struct ieee80211_node *ni)
 	rssi = 0;
 	i = an->an_rx_hist_next;
 	do {
-		struct ath_recv_hist *rh = &an->an_rx_hist[i];
+		const struct ath_recv_hist *rh = &an->an_rx_hist[i];
 		if (rh->arh_ticks == ATH_RHIST_NOTIME)
 			goto done;
 		if (now - rh->arh_ticks > hz)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.16 2007/06/16 11:56:20 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.17 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -65,20 +65,20 @@
 
 #define	IEEE80211_RATE2MBS(r)	(((r) & IEEE80211_RATE_VAL) / 2)
 
-const char *ieee80211_mgt_subtype_name[] = {
+const char * const ieee80211_mgt_subtype_name[] = {
 	"assoc_req",	"assoc_resp",	"reassoc_req",	"reassoc_resp",
 	"probe_req",	"probe_resp",	"reserved#6",	"reserved#7",
 	"beacon",	"atim",		"disassoc",	"auth",
 	"deauth",	"reserved#13",	"reserved#14",	"reserved#15"
 };
-const char *ieee80211_state_name[IEEE80211_S_MAX] = {
+const char * const ieee80211_state_name[IEEE80211_S_MAX] = {
 	"INIT",		/* IEEE80211_S_INIT */
 	"SCAN",		/* IEEE80211_S_SCAN */
 	"AUTH",		/* IEEE80211_S_AUTH */
 	"ASSOC",	/* IEEE80211_S_ASSOC */
 	"RUN"		/* IEEE80211_S_RUN */
 };
-const char *ieee80211_phymode_name[] = {
+const char * const ieee80211_phymode_name[] = {
 	"auto",		/* IEEE80211_MODE_AUTO */
 	"11a",		/* IEEE80211_MODE_11A */
 	"11b",		/* IEEE80211_MODE_11B */
@@ -123,10 +123,10 @@ ieee80211_proto_detach(struct ifnet *ifp)
 }
 
 void
-ieee80211_print_essid(u_int8_t *essid, int len)
+ieee80211_print_essid(const u_int8_t *essid, int len)
 {
 	int i;
-	u_int8_t *p;
+	const u_int8_t *p;
 
 	if (len > IEEE80211_NWID_LEN)
 		len = IEEE80211_NWID_LEN;
@@ -148,7 +148,7 @@ ieee80211_print_essid(u_int8_t *essid, int len)
 }
 
 void
-ieee80211_dump_pkt(u_int8_t *buf, int len, int rate, int rssi)
+ieee80211_dump_pkt(const u_int8_t *buf, int len, int rate, int rssi)
 {
 	struct ieee80211_frame *wh;
 	int i;
@@ -214,7 +214,8 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 #define	RV(v)	((v) & IEEE80211_RATE_VAL)
 	int i, j, ignore, error;
 	int okrate, badrate, fixedrate;
-	struct ieee80211_rateset *srs, *nrs;
+	const struct ieee80211_rateset *srs;
+	struct ieee80211_rateset *nrs;
 	u_int8_t r;
 
 	/*

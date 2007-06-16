@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_rssadapt.c,v 1.5 2006/11/26 19:46:28 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_rssadapt.c,v 1.6 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 dyoung Exp $	*/
 
 /*-
@@ -84,8 +84,8 @@ static struct ieee80211_rssadapt_expavgctl master_expavgctl = {
 
 int
 ieee80211_rssadapt_choose(struct ieee80211_rssadapt *ra,
-    struct ieee80211_rateset *rs, struct ieee80211_frame *wh, u_int len,
-    int fixed_rate, const char *dvname, int do_not_adapt)
+    const struct ieee80211_rateset *rs, const struct ieee80211_frame *wh,
+    u_int len, int fixed_rate, const char *dvname, int do_not_adapt)
 {
 	u_int16_t (*thrs)[IEEE80211_RATE_SIZE];
 	int flags = 0, i, rateidx = 0, thridx, top;
@@ -127,7 +127,7 @@ out:
 #ifdef IEEE80211_DEBUG
 	if (ieee80211_rssadapt_debug && dvname != NULL) {
 		printf("%s: dst %s threshold[%d, %d.%d] %d < %d\n",
-		    dvname, ether_sprintf(wh->i_addr1), len,
+		    dvname, ether_sprintf((u_int8_t *)wh->i_addr1), len,
 		    (rs->rs_rates[rateidx] & IEEE80211_RATE_VAL) / 2,
 		    (rs->rs_rates[rateidx] & IEEE80211_RATE_VAL) * 5 % 10,
 		    (*thrs)[rateidx], ra->ra_avg_rssi);
@@ -154,8 +154,8 @@ ieee80211_rssadapt_updatestats(struct ieee80211_rssadapt *ra)
 }
 
 void
-ieee80211_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
-    struct ieee80211_rssadapt *ra, int rssi)
+ieee80211_rssadapt_input(struct ieee80211com *ic,
+    const struct ieee80211_node *ni, struct ieee80211_rssadapt *ra, int rssi)
 {
 #ifdef IEEE80211_DEBUG
 	int last_avg_rssi = ra->ra_avg_rssi;
@@ -165,7 +165,7 @@ ieee80211_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    ra->ra_avg_rssi, (rssi << 8));
 
 	RSSADAPT_PRINTF(("%s: src %s rssi %d avg %d -> %d\n",
-	    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr),
+	    ic->ic_if.if_xname, ether_sprintf((u_int8_t *)ni->ni_macaddr),
 	    rssi, last_avg_rssi, ra->ra_avg_rssi));
 }
 
@@ -177,10 +177,10 @@ ieee80211_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
  */
 void
 ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
-    struct ieee80211_node *ni, struct ieee80211_rssadapt *ra,
-    struct ieee80211_rssdesc *id)
+    const struct ieee80211_node *ni, struct ieee80211_rssadapt *ra,
+    const struct ieee80211_rssdesc *id)
 {
-	struct ieee80211_rateset *rs = &ni->ni_rates;
+	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	u_int16_t last_thr;
 	u_int i, thridx, top;
 
@@ -189,7 +189,7 @@ ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
 	if (id->id_rateidx >= rs->rs_nrates) {
 		RSSADAPT_PRINTF(("ieee80211_rssadapt_lower_rate: "
 		    "%s rate #%d > #%d out of bounds\n",
-		    ether_sprintf(ni->ni_macaddr), id->id_rateidx,
+		    ether_sprintf((u_int8_t *)ni->ni_macaddr), id->id_rateidx,
 		    rs->rs_nrates - 1));
 		return;
 	}
@@ -208,7 +208,7 @@ ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
 	    (id->id_rssi << 8));
 
 	RSSADAPT_PRINTF(("%s: dst %s rssi %d threshold[%d, %d.%d] %d -> %d\n",
-	    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr),
+	    ic->ic_if.if_xname, ether_sprintf((u_int8_t *)ni->ni_macaddr),
 	    id->id_rssi, id->id_len,
 	    (rs->rs_rates[id->id_rateidx] & IEEE80211_RATE_VAL) / 2,
 	    (rs->rs_rates[id->id_rateidx] & IEEE80211_RATE_VAL) * 5 % 10,
@@ -217,11 +217,11 @@ ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
 
 void
 ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
-    struct ieee80211_rssadapt *ra, struct ieee80211_rssdesc *id)
+    struct ieee80211_rssadapt *ra, const struct ieee80211_rssdesc *id)
 {
 	u_int16_t (*thrs)[IEEE80211_RATE_SIZE], newthr, oldthr;
-	struct ieee80211_node *ni = id->id_node;
-	struct ieee80211_rateset *rs = &ni->ni_rates;
+	const struct ieee80211_node *ni = id->id_node;
+	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	int i, rate, top;
 #ifdef IEEE80211_DEBUG
 	int j;
@@ -262,7 +262,7 @@ ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
 #ifdef IEEE80211_DEBUG
 	if (RSSADAPT_DO_PRINT()) {
 		printf("%s: dst %s thresholds\n", ic->ic_if.if_xname,
-		    ether_sprintf(ni->ni_macaddr));
+		    ether_sprintf((u_int8_t *)ni->ni_macaddr));
 		for (i = 0; i < IEEE80211_RSSADAPT_BKTS; i++) {
 			printf("%d-byte", IEEE80211_RSSADAPT_BKT0 <<
 			    (IEEE80211_RSSADAPT_BKTPOWER * i));

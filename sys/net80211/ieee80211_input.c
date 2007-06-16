@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.25 2007/06/16 11:59:58 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.26 2007/06/16 13:17:05 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -69,7 +69,7 @@ const struct timeval ieee80211_merge_print_intvl = {
 
 
 int ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *,
-    u_int8_t *, u_int8_t *, int);
+    const u_int8_t *, const u_int8_t *, int);
 void ieee80211_auth_open(struct ieee80211com *, struct ieee80211_frame *,
     struct ieee80211_node *, int, u_int32_t, u_int16_t, u_int16_t);
 void ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *, int,
@@ -564,7 +564,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
  */
 int
 ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
-	u_int8_t *rates, u_int8_t *xrates, int flags)
+	const u_int8_t *rates, const u_int8_t *xrates, int flags)
 {
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 
@@ -624,8 +624,11 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 #ifdef IEEE80211_DEBUG
 void
+ieee80211_ssid_mismatch(struct ieee80211com *, const char *,
+    u_int8_t[IEEE80211_ADDR_LEN], const u_int8_t *);
+void
 ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
-    u_int8_t mac[IEEE80211_ADDR_LEN], u_int8_t *ssid)
+    u_int8_t mac[IEEE80211_ADDR_LEN], const u_int8_t *ssid)
 {
 	printf("[%s] %s req ssid mismatch: ", ether_sprintf(mac), tag);
 	ieee80211_print_essid(ssid + 2, ssid[1]);
@@ -920,8 +923,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 #define	ISREASSOC(_st)	((_st) == IEEE80211_FC0_SUBTYPE_REASSOC_RESP)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
-	u_int8_t *frm, *efrm;
-	u_int8_t *ssid, *rates, *xrates;
+	const u_int8_t *frm, *efrm;
+	const u_int8_t *ssid, *rates, *xrates;
 	int is_new, reassoc, resp;
 
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -930,7 +933,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 	case IEEE80211_FC0_SUBTYPE_BEACON: {
-		u_int8_t *tstamp, *bintval, *capinfo, *country;
+		const u_int8_t *tstamp, *bintval, *capinfo, *country;
 		u_int8_t chan, bchan, fhindex, erp;
 		u_int16_t fhdwell;
 

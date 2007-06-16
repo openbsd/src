@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.12 2007/06/07 20:24:42 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.13 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -44,9 +44,9 @@ struct ieee80211_rateset {
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
 };
 
-extern struct ieee80211_rateset ieee80211_std_rateset_11a;
-extern struct ieee80211_rateset ieee80211_std_rateset_11b;
-extern struct ieee80211_rateset ieee80211_std_rateset_11g;
+extern const struct ieee80211_rateset ieee80211_std_rateset_11a;
+extern const struct ieee80211_rateset ieee80211_std_rateset_11b;
+extern const struct ieee80211_rateset ieee80211_std_rateset_11g;
 
 enum ieee80211_node_state {
 	IEEE80211_STA_CACHE,	/* cached node */
@@ -174,18 +174,19 @@ extern	void ieee80211_next_scan(struct ifnet *);
 extern	void ieee80211_end_scan(struct ifnet *);
 extern	void ieee80211_reset_scan(struct ifnet *);
 extern	struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *,
-		u_int8_t *);
+		const u_int8_t *);
 extern	struct ieee80211_node *ieee80211_dup_bss(struct ieee80211com *,
-		u_int8_t *);
+		const u_int8_t *);
 extern	struct ieee80211_node *ieee80211_find_node(struct ieee80211com *,
-		u_int8_t *);
+		const u_int8_t *);
 extern	struct ieee80211_node *ieee80211_find_rxnode(struct ieee80211com *,
-		struct ieee80211_frame *);
+		const struct ieee80211_frame *);
 extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
-		u_int8_t *);
+		const u_int8_t *);
 extern	struct ieee80211_node *
 		ieee80211_find_node_for_beacon(struct ieee80211com *,
-		u_int8_t *, struct ieee80211_channel *, char *, u_int8_t);
+		const u_int8_t *, const struct ieee80211_channel *,
+		const char *, u_int8_t);
 extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
 		u_int8_t *, struct ieee80211_channel *);
 extern	void ieee80211_release_node(struct ieee80211com *,
@@ -195,7 +196,7 @@ typedef void ieee80211_iter_func(void *, struct ieee80211_node *);
 extern	void ieee80211_iterate_nodes(struct ieee80211com *ic,
 		ieee80211_iter_func *, void *);
 extern	void ieee80211_clean_nodes(struct ieee80211com *);
-extern  int ieee80211_iserp_sta(struct ieee80211_node *);
+extern  int ieee80211_iserp_sta(const struct ieee80211_node *);
 
 extern	void ieee80211_node_join(struct ieee80211com *,
 		struct ieee80211_node *, int);
@@ -206,7 +207,8 @@ extern	int ieee80211_match_bss(struct ieee80211com *,
 extern	void ieee80211_create_ibss(struct ieee80211com* ,
 		struct ieee80211_channel *);
 
-extern	int ieee80211_node_cmp(struct ieee80211_node *, struct ieee80211_node *);
+extern	int ieee80211_node_cmp(const struct ieee80211_node *,
+		const struct ieee80211_node *);
 RB_PROTOTYPE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
 
 #endif /* _NET80211_IEEE80211_NODE_H_ */

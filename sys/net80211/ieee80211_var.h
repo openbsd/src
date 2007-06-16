@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.21 2007/06/11 19:35:24 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.22 2007/06/16 13:17:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ struct ieee80211com {
 					struct ieee80211_node *,
 					const struct ieee80211_node *);
 	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *,
-					struct ieee80211_node *);
+					const struct ieee80211_node *);
 	u_int8_t		ic_max_rssi;
 	struct ieee80211_tree	ic_tree;
 	int			ic_nnodes;	/* length of ic_nnodes */
@@ -288,12 +288,13 @@ int	ieee80211_rate2media(struct ieee80211com *, int,
 		enum ieee80211_phymode);
 int	ieee80211_media2rate(int);
 u_int	ieee80211_mhz2ieee(u_int, u_int);
-u_int	ieee80211_chan2ieee(struct ieee80211com *, struct ieee80211_channel *);
+u_int	ieee80211_chan2ieee(struct ieee80211com *,
+		const struct ieee80211_channel *);
 u_int	ieee80211_ieee2mhz(u_int, u_int);
 int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_next_mode(struct ifnet *);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
-		struct ieee80211_channel *);
+		const struct ieee80211_channel *);
 
 #ifdef IEEE80211_DEBUG
 extern	int ieee80211_debug;
