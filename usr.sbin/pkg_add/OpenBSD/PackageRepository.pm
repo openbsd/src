@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.46 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.47 2007/06/16 09:37:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -433,8 +433,14 @@ our %distant = ();
 sub grab_object
 {
 	my ($self, $object) = @_;
+	my $ftp = $ENV{'FETCH_CMD'} || OpenBSD::Paths->ftp;
+	my @extra = ();
+	if (defined $ENV{'FTP_KEEPALIVE'}) {
+		push(@extra, "-k", $ENV{'FTP_KEEPALIVE'});
+	}
 	exec {OpenBSD::Paths->ftp} 
 	    "ftp", 
+	    @extra,
 	    "-o", 
 	    "-", $self->url($object->{name})
 	or die "can't run ftp";
