@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.136 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.137 2007/06/16 11:50:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1032,10 +1032,46 @@ our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 sub keyword() { "exec" }
 __PACKAGE__->register_with_factory;
 
+package OpenBSD::PackingElement::ExecAlways;
+our @ISA=qw(OpenBSD::PackingElement::Exec);
+
+sub keyword() { "exec-always" }
+__PACKAGE__->register_with_factory;
+
+package OpenBSD::PackingElement::ExecInstall;
+our @ISA=qw(OpenBSD::PackingElement::Exec);
+
+sub keyword() { "exec-add" }
+__PACKAGE__->register_with_factory;
+
+package OpenBSD::PackingElement::ExecUpdate;
+our @ISA=qw(OpenBSD::PackingElement::Exec);
+
+sub keyword() { "exec-update" }
+__PACKAGE__->register_with_factory;
+
 package OpenBSD::PackingElement::Unexec;
 our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 
 sub keyword() { "unexec" }
+__PACKAGE__->register_with_factory;
+
+package OpenBSD::PackingElement::UnexecAlways;
+our @ISA=qw(OpenBSD::PackingElement::Unexec);
+
+sub keyword() { "unexec-always" }
+__PACKAGE__->register_with_factory;
+
+package OpenBSD::PackingElement::UnexecUpdate;
+our @ISA=qw(OpenBSD::PackingElement::Unexec);
+
+sub keyword() { "unexec-update" }
+__PACKAGE__->register_with_factory;
+
+package OpenBSD::PackingElement::UnexecDelete;
+our @ISA=qw(OpenBSD::PackingElement::Unexec);
+
+sub keyword() { "unexec-delete" }
 __PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::ExtraUnexec;

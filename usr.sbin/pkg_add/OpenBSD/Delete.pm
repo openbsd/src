@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.67 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: Delete.pm,v 1.68 2007/06/16 11:50:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -321,7 +321,25 @@ package OpenBSD::PackingElement::Unexec;
 sub delete
 {
 	my ($self, $state) = @_;
-	$self->run($state);
+	if ($self->should_run($state)) {
+		$self->run($state);
+	}
+}
+
+sub should_run() { 1 }
+
+package OpenBSD::PackingElement::UnexecDelete;
+sub should_run 
+{ 
+	my ($self, $state) = @_;
+	return !$state->{replacing};
+}
+
+package OpenBSD::PackingElement::UnexecUpdate;
+sub should_run 
+{ 
+	my ($self, $state) = @_;
+	return $state->{replacing};
 }
 
 package OpenBSD::PackingElement::FileBase;

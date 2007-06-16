@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.78 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: Add.pm,v 1.79 2007/06/16 11:50:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -613,7 +613,25 @@ sub install
 	my ($self, $state) = @_;
 
 	$self->SUPER::install($state);
-	$self->run($state);
+	if ($self->should_run($state)) {
+		$self->run($state);
+	}
+}
+
+sub should_run() { 1 }
+
+package OpenBSD::PackingElement::ExecAdd;
+sub should_run 
+{ 
+	my ($self, $state) = @_;
+	return !$state->{replacing};
+}
+
+package OpenBSD::PackingElement::ExecUpdate;
+sub should_run 
+{ 
+	my ($self, $state) = @_;
+	return $state->{replacing};
 }
 
 package OpenBSD::PackingElement::Lib;

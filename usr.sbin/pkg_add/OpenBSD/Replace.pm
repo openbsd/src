@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.40 2007/06/10 15:11:05 espie Exp $
+# $OpenBSD: Replace.pm,v 1.41 2007/06/16 11:50:49 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -24,9 +24,9 @@ use OpenBSD::Interactive;
 package OpenBSD::PackingElement;
 sub can_update
 {
-	my ($self, $install, $state) = @_;
+	my ($self, $installing, $state) = @_;
 
-	my $issue = $self->update_issue($install);
+	my $issue = $self->update_issue($installing);
 	
 	if (defined $issue) {
 		$state->{okay} = 0;
@@ -38,7 +38,7 @@ sub validate_depend
 {
 }
 
-sub update_issue($$) { undef }
+sub update_issue { undef }
 
 sub extract
 {
@@ -151,40 +151,51 @@ sub extract
 }
 
 package OpenBSD::PackingElement::ScriptFile;
-sub update_issue($$) 
+sub update_issue
 { 
-	return $_[0]->{name}." script";
+	my ($self, $installing) = @_;
+	return $self->{name}." script";
 }
 
 package OpenBSD::PackingElement::FINSTALL;
-sub update_issue($$) 
+sub update_issue
 { 
-	return if !$_[1];
-	return $_[0]->SUPER::update_issue($_[1]);
+	my ($self, $installing) = @_;
+	return if !$installing;
+	return $self->SUPER::update_issue($installing);
 }
 
 package OpenBSD::PackingElement::FDEINSTALL;
-sub update_issue($$) 
+sub update_issue
 { 
-	return if $_[1];
-	return $_[0]->SUPER::update_issue($_[1]);
+	my ($self, $installing) = @_;
+	return if $installing;
+	return $self->SUPER::update_issue($installing);
 }
 
 package OpenBSD::PackingElement::Exec;
-sub update_issue($$) 
+sub update_issue
 { 
-	return if !$_[1];
-	return '@exec '.$_[0]->{expanded};
+	my ($self, $installing) = @_;
+	return if !$installing;
+	return '@'.$self->keyword.' '.$self->{expanded};
 }
+
+package OpenBSD::PackingElement::ExecAdd;
+sub update_issue { undef }
 
 package OpenBSD::PackingElement::Unexec;
-sub update_issue($$) 
+sub update_issue
 { 
-	return if $_[1];
-	my $self = $_[0];
+	my ($self, $installing) = @_;
 
-	return '@unexec '.$self->{expanded};
+	return if $installing;
+
+	return '@'.$self->keyword.' '.$self->{expanded};
 }
+
+package OpenBSD::PackingElement::UnexecDelete;
+sub update_issue { undef }
 
 package OpenBSD::PackingElement::Depend;
 sub separate_element
