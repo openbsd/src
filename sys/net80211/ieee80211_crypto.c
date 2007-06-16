@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.10 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.11 2007/06/16 11:56:20 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -66,8 +66,8 @@
 #define	arc4_setkey(_c,_k,_l)		rc4_keysetup(_c,_k,_l)
 #define	arc4_encrypt(_c,_d,_s,_l)	rc4_crypt(_c,_s,_d,_l)
 
-static	void ieee80211_crc_init(void);
-static	u_int32_t ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len);
+void ieee80211_crc_init(void);
+u_int32_t ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len);
 
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
@@ -293,7 +293,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 static u_int32_t ieee80211_crc_table[256];
 
 /* Make the table for a fast CRC. */
-static void
+void
 ieee80211_crc_init(void)
 {
 	u_int32_t c;
@@ -317,7 +317,7 @@ ieee80211_crc_init(void)
  * is the 1's complement of the final running CRC
  */
 
-static u_int32_t
+u_int32_t
 ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len)
 {
 	u_int8_t *endbuf;

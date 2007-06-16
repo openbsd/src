@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.21 2007/06/07 20:24:42 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.22 2007/06/16 11:56:20 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -68,24 +68,19 @@
 
 #include <dev/rndvar.h>
 
-static struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
-static void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
-static void ieee80211_node_copy(struct ieee80211com *,
-    struct ieee80211_node *, const struct ieee80211_node *);
-static u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
+struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
+void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_node_copy(struct ieee80211com *, struct ieee80211_node *,
+    const struct ieee80211_node *);
+u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
     struct ieee80211_node *);
-static void ieee80211_setup_node(struct ieee80211com *ic,
-    struct ieee80211_node *ni, u_int8_t *macaddr);
-static void ieee80211_free_node(struct ieee80211com *,
-    struct ieee80211_node *);
-static struct ieee80211_node *
-    ieee80211_alloc_node_helper(struct ieee80211com *);
-static void ieee80211_node_cleanup(struct ieee80211com *,
-    struct ieee80211_node *);
-static void ieee80211_node_join_11g(struct ieee80211com *,
-    struct ieee80211_node *);
-static void ieee80211_node_leave_11g(struct ieee80211com *,
-    struct ieee80211_node *);
+void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
+    u_int8_t *);
+void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
+struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
+void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_node_join_11g(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_node_leave_11g(struct ieee80211com *, struct ieee80211_node *);
 
 #define M_80211_NODE	M_DEVBUF
 
@@ -117,7 +112,7 @@ ieee80211_node_attach(struct ifnet *ifp)
 		memset(ic->ic_aid_bitmap, 0, size);
 }
 
-static struct ieee80211_node *
+struct ieee80211_node *
 ieee80211_alloc_node_helper(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni;
@@ -511,7 +506,7 @@ ieee80211_get_rate(struct ieee80211com *ic)
 	return rate & IEEE80211_RATE_VAL;
 }
 
-static struct ieee80211_node *
+struct ieee80211_node *
 ieee80211_node_alloc(struct ieee80211com *ic)
 {
 	struct ieee80211_node *ni;
@@ -522,7 +517,7 @@ ieee80211_node_alloc(struct ieee80211com *ic)
 	return ni;
 }
 
-static void
+void
 ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni->ni_challenge != NULL) {
@@ -531,14 +526,14 @@ ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 	}
 }
 
-static void
+void
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_node_cleanup(ic, ni);
 	FREE(ni, M_80211_NODE);
 }
 
-static void
+void
 ieee80211_node_copy(struct ieee80211com *ic,
 	struct ieee80211_node *dst, const struct ieee80211_node *src)
 {
@@ -547,13 +542,13 @@ ieee80211_node_copy(struct ieee80211com *ic,
 	dst->ni_challenge = NULL;
 }
 
-static u_int8_t
+u_int8_t
 ieee80211_node_getrssi(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	return ni->ni_rssi;
 }
 
-static void
+void
 ieee80211_setup_node(struct ieee80211com *ic,
 	struct ieee80211_node *ni, u_int8_t *macaddr)
 {
@@ -809,7 +804,7 @@ ieee80211_find_node_for_beacon(struct ieee80211com *ic, u_int8_t *macaddr,
 	return (keep);
 }
 
-static void
+void
 ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni == ic->ic_bss)
@@ -944,7 +939,7 @@ ieee80211_iserp_sta(struct ieee80211_node *ni)
 /*
  * Handle a station joining an 11g network.
  */
-static void
+void
 ieee80211_node_join_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (!(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME)) {
@@ -1043,7 +1038,7 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 /*
  * Handle a station leaving an 11g network.
  */
-static void
+void
 ieee80211_node_leave_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (!(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME)) {

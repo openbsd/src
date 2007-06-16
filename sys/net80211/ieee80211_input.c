@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.23 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.24 2007/06/16 11:56:20 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -67,9 +67,14 @@ const struct timeval ieee80211_merge_print_intvl = {
 	.tv_usec = 0
 };
 
-static void ieee80211_recv_pspoll(struct ieee80211com *,
-    struct mbuf *, int, u_int32_t);
-static int ieee80211_do_slow_print(struct ieee80211com *, int *);
+
+int ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *,
+    u_int8_t *, u_int8_t *, int);
+void ieee80211_auth_open(struct ieee80211com *, struct ieee80211_frame *,
+    struct ieee80211_node *, int, u_int32_t, u_int16_t, u_int16_t);
+void ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *, int,
+    u_int32_t);
+int ieee80211_do_slow_print(struct ieee80211com *, int *);
 
 /*
  * Process a received frame.  The node associated with the sender
@@ -557,7 +562,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 /*
  * Install received rate set information in the node's state block.
  */
-static int
+int
 ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int8_t *rates, u_int8_t *xrates, int flags)
 {
@@ -618,7 +623,7 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 } while (0)
 
 #ifdef IEEE80211_DEBUG
-static void
+void
 ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
     u_int8_t mac[IEEE80211_ADDR_LEN], u_int8_t *ssid)
 {
@@ -649,7 +654,7 @@ ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
 } while (0)
 #endif /* !IEEE80211_DEBUG */
 
-static void
+void
 ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
     struct ieee80211_node *ni, int rssi, u_int32_t rstamp, u_int16_t seq,
     u_int16_t status)
@@ -735,7 +740,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 
 #if 0
 /* TBD send appropriate responses on error? */
-static void
+void
 ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
     u_int8_t *frm, u_int8_t *efrm, struct ieee80211_node *ni, int rssi,
     u_int32_t rstamp, u_int16_t seq, u_int16_t status)
@@ -1553,7 +1558,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 #undef IEEE80211_VERIFY_ELEMENT
 #undef IEEE80211_VERIFY_SSID
 
-static void
+void
 ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
     u_int32_t rstamp)
 {
@@ -1623,7 +1628,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	(*ifp->if_start)(ifp);
 }
 
-static int
+int
 ieee80211_do_slow_print(struct ieee80211com *ic, int *did_print)
 {
 	if ((ic->ic_if.if_flags & IFF_LINK0) == 0)

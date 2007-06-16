@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.21 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.22 2007/06/16 11:56:20 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -72,7 +72,8 @@ int ieee80211_cache_size = IEEE80211_CACHE_SIZE;
 struct ieee80211com_head ieee80211com_head =
     LIST_HEAD_INITIALIZER(ieee80211com_head);
 
-static void ieee80211_setbasicrates(struct ieee80211com *);
+void ieee80211_setbasicrates(struct ieee80211com *);
+int ieee80211_findrate(struct ieee80211com *, enum ieee80211_phymode, int);
 
 void
 ieee80211_ifattach(struct ifnet *ifp)
@@ -349,8 +350,9 @@ ieee80211_media_init(struct ifnet *ifp,
 #undef ADD
 }
 
-static int
-findrate(struct ieee80211com *ic, enum ieee80211_phymode mode, int rate)
+int
+ieee80211_findrate(struct ieee80211com *ic, enum ieee80211_phymode mode,
+    int rate)
 {
 #define	IEEERATE(_ic,_m,_i) \
 	((_ic)->ic_sup_rates[_m].rs_rates[_i] & IEEE80211_RATE_VAL)
@@ -434,7 +436,7 @@ ieee80211_media_change(struct ifnet *ifp)
 			     j < IEEE80211_MODE_MAX; j++) {
 				if ((ic->ic_modecaps & (1<<j)) == 0)
 					continue;
-				i = findrate(ic, j, newrate);
+				i = ieee80211_findrate(ic, j, newrate);
 				if (i != -1) {
 					/* lock mode too */
 					newphymode = j;
@@ -442,7 +444,7 @@ ieee80211_media_change(struct ifnet *ifp)
 				}
 			}
 		} else {
-			i = findrate(ic, newphymode, newrate);
+			i = ieee80211_findrate(ic, newphymode, newrate);
 		}
 		if (i == -1)			/* mode/rate mismatch */
 			return EINVAL;
@@ -606,7 +608,7 @@ struct ieee80211_rateset ieee80211_std_rateset_11g =
  * 11b rates.  There's also a pseudo 11a-mode used to mark only
  * the basic OFDM rates.
  */
-static void
+void
 ieee80211_setbasicrates(struct ieee80211com *ic)
 {
 	static const struct ieee80211_rateset basic[] = {

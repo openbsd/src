@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.26 2007/06/11 19:35:24 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.27 2007/06/16 11:56:20 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -55,6 +55,10 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
+
+int ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
+    struct mbuf *, int);
+struct mbuf *ieee80211_getmbuf(int, int, u_int);
 
 /*
  * IEEE 802.11 output routine. Normally this will directly call the
@@ -125,7 +129,7 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
  * dispatched to the driver, then it is responsible for freeing the
  * reference (and potentially free'ing up any associated storage).
  */
-static int
+int
 ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
     struct mbuf *m, int type)
 {
@@ -514,7 +518,7 @@ ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
 	return frm;
 }
 
-static struct mbuf *
+struct mbuf *
 ieee80211_getmbuf(int flags, int type, u_int pktlen)
 {
 	struct mbuf *m;
