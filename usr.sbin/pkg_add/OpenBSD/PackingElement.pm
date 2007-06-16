@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.137 2007/06/16 11:50:49 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.138 2007/06/16 12:16:42 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -566,6 +566,22 @@ sub add
 
 	$plist->{state}->{lastfile}->add_md5(pack('H*', $args));
 	return;
+}
+
+package OpenBSD::PackingElement::tag;
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
+
+__PACKAGE__->register_with_factory('tag');
+
+sub add
+{
+	my ($class, $plist, $args) = @_;
+
+	if ($args eq 'no checksum') {
+		$plist->{state}->{lastfile}->{nochecksum} = 1;
+	} else {
+		die "Unknown tag $args";
+	}
 }
 
 package OpenBSD::PackingElement::symlink;
