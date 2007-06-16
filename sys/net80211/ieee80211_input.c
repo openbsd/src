@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.24 2007/06/16 11:56:20 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.25 2007/06/16 11:59:58 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1656,13 +1656,13 @@ ieee80211_do_slow_print(struct ieee80211com *ic, int *did_print)
  */
 int
 ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
-    uint64_t local_tsft)
+    u_int64_t local_tsft)
 {
-	uint64_t beacon_tsft;
+	u_int64_t beacon_tsft;
 	int did_print = 0, sign;
 	union {
-		uint64_t	word;
-		uint8_t		tstamp[8];
+		u_int64_t	word;
+		u_int8_t	tstamp[8];
 	} u;
 
 	/* ensure alignment */

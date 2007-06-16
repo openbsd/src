@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.22 2007/06/16 11:56:20 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.23 2007/06/16 11:59:58 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -916,7 +916,7 @@ int
 ieee80211_iserp_sta(struct ieee80211_node *ni)
 {
 #define N(a)	(sizeof (a) / sizeof (a)[0])
-	static const uint8_t rates[] = { 2, 4, 11, 22, 12, 24, 48 };
+	static const u_int8_t rates[] = { 2, 4, 11, 22, 12, 24, 48 };
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	int i, j;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.27 2007/06/16 11:56:20 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.28 2007/06/16 11:59:58 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -884,7 +884,7 @@ ieee80211_get_rts(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	rts->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
 	    IEEE80211_FC0_SUBTYPE_RTS;
 	rts->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(uint16_t *)rts->i_dur = htole16(dur);
+	*(u_int16_t *)rts->i_dur = htole16(dur);
 	IEEE80211_ADDR_COPY(rts->i_ra, wh->i_addr1);
 	IEEE80211_ADDR_COPY(rts->i_ta, wh->i_addr2);
 
@@ -911,7 +911,7 @@ ieee80211_get_cts_to_self(struct ieee80211com *ic, u_int16_t dur)
 	cts->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
 	    IEEE80211_FC0_SUBTYPE_CTS;
 	cts->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	*(uint16_t *)cts->i_dur = htole16(dur);
+	*(u_int16_t *)cts->i_dur = htole16(dur);
 	IEEE80211_ADDR_COPY(cts->i_ra, ic->ic_myaddr);
 
 	return m;
