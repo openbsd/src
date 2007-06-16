@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2007/06/13 18:43:16 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.65 2007/06/16 08:58:33 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.64 2007/06/13 18:43:16 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.65 2007/06/16 08:58:33 espie Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -181,7 +181,7 @@ main(volatile int argc, char *argv[])
 	cookiefile = getenv("http_cookies");
 #endif
 
-	while ((ch = getopt(argc, argv, "46Aac:dEegimno:pP:r:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "46Aac:dEegik:mno:pP:r:tvV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -227,6 +227,15 @@ main(volatile int argc, char *argv[])
 			interactive = 0;
 			break;
 
+		case 'k':
+			keep_alive_timeout = strtonum(optarg, 0, INT_MAX, 
+			    &errstr);
+			if (errstr != NULL) {
+				warnx("keep alive amount is %s: %s", errstr, 
+					optarg);
+				usage();
+			}
+			break;
 		case 'm':
 			progress = -1;
 			break;
@@ -252,9 +261,11 @@ main(volatile int argc, char *argv[])
 
 		case 'r':
 			retry_connect = strtonum(optarg, 0, INT_MAX, &errstr);
-			if (errstr != NULL)
-				errx(1, "retry amount is %s: %s", errstr, 
+			if (errstr != NULL) {
+				warnx("retry amount is %s: %s", errstr, 
 					optarg);
+				usage();
+			}
 			break;
 
 		case 't':
@@ -746,8 +757,9 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-46AadEegimnptVv] [-c cookie] [-P port] "
-	    "[-r seconds] [host [port]]\n"
+	    "usage: %s [-46AadEegimnptVv] [-c cookie] [-k seconds] "
+	    "[-P port] [-r seconds]\n"
+	    "           [host [port]]\n"
 	    "       %s [-o output] ftp://[user:password@]host[:port]/file[/]\n"
 	    "       %s [-o output] http://host[:port]/file\n"
 #ifndef SMALL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.66 2007/03/06 05:16:01 beck Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.67 2007/06/16 08:58:33 espie Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.66 2007/03/06 05:16:01 beck Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.67 2007/06/16 08:58:33 espie Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -323,6 +323,73 @@ command(const char *fmt, ...)
 		(*oldintr)(SIGINT);
 	(void)signal(SIGINT, oldintr);
 	return (r);
+}
+
+int keep_alive_timeout = 0;		/* 0 -> no timeout */
+
+static int full_noops_sent = 0;
+static time_t last_timestamp = 0;	/* 0 -> no measurement yet */
+static char noop[] = "NOOP\r\n";
+#define NOOP_LENGTH (sizeof noop - 1)
+static int current_nop_pos = 0;		/* 0 -> no noop started */
+
+/* to achieve keep alive, we send noop one byte at a time */
+void 
+send_noop_char()
+{
+	if (debug)
+		fprintf(ttyout, "---> %c\n", noop[current_nop_pos]);
+	fputc(noop[current_nop_pos++], cout);
+	(void)fflush(cout);
+	if (current_nop_pos >= NOOP_LENGTH) {
+		full_noops_sent++;
+		current_nop_pos = 0;
+	}
+}
+
+void
+may_reset_noop_timeout()
+{
+	if (keep_alive_timeout != 0)
+		last_timestamp = time(NULL);
+}
+
+void 
+may_receive_noop_ack()
+{
+	int i;
+
+	/* finish sending last incomplete noop */
+	if (current_nop_pos != 0) {
+		fputs(&(noop[current_nop_pos]), cout);
+		if (debug)
+			fprintf(ttyout, "---> %s\n", &(noop[current_nop_pos]));
+		(void)fflush(cout);
+		current_nop_pos = 0;
+		full_noops_sent++;
+	}
+	/* and get the replies */
+	for (i = 0; i < full_noops_sent; i++)
+		(void)getreply(0);
+
+	full_noops_sent = 0;
+}
+
+void 
+may_send_noop_char()
+{
+	if (keep_alive_timeout != 0) {
+		if (last_timestamp != 0) {
+			time_t t = time(NULL);
+
+			if (t - last_timestamp >= keep_alive_timeout) {
+				last_timestamp = t;
+				send_noop_char();
+			} 
+		} else {
+			last_timestamp = time(NULL);
+		}
+	}
 }
 
 char reply_string[BUFSIZ];		/* first line of previous reply */
@@ -631,6 +698,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	if (dout == NULL)
 		goto abort;
 	progressmeter(-1);
+	may_reset_noop_timeout();
 	oldintp = signal(SIGPIPE, SIG_IGN);
 	switch (curtype) {
 
@@ -638,6 +706,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	case TYPE_L:
 		errno = d = 0;
 		while ((c = read(fileno(fin), buf, sizeof(buf))) > 0) {
+			may_send_noop_char();
 			bytes += c;
 			for (bufp = buf; c > 0; c -= d, bufp += d)
 				if ((d = write(fileno(dout), bufp, (size_t)c))
@@ -668,6 +737,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 
 	case TYPE_A:
 		while ((c = fgetc(fin)) != EOF) {
+			may_send_noop_char();
 			if (c == '\n') {
 				while (hash && (!progress || filesize < 0) &&
 				    (bytes >= hashbytes)) {
@@ -710,6 +780,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		(*closefunc)(fin);
 	(void)fclose(dout);
 	(void)getreply(0);
+	may_receive_noop_ack();
 	(void)signal(SIGINT, oldintr);
 	(void)signal(SIGINFO, oldinti);
 	if (oldintp)
@@ -938,6 +1009,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 		preserve = 0;
 	}
 	progressmeter(-1);
+	may_reset_noop_timeout();
 	switch (curtype) {
 
 	case TYPE_I:
@@ -956,6 +1028,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 			ssize_t	wr;
 			size_t	rd = c;
 
+			may_send_noop_char();
 			d = 0;
 			do {
 				wr = write(fileno(fout), buf + d, rd);
@@ -1018,6 +1091,7 @@ done:
 			}
 		}
 		while ((c = fgetc(din)) != EOF) {
+			may_send_noop_char();
 			if (c == '\n')
 				bare_lfs++;
 			while (c == '\r') {
@@ -1077,6 +1151,7 @@ break2:
 		(void)signal(SIGPIPE, oldintp);
 	(void)fclose(din);
 	(void)getreply(0);
+	may_receive_noop_ack();
 	if (bytes >= 0 && is_retr) {
 		if (bytes > 0)
 			ptransfer(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.30 2007/06/13 13:52:26 pyr Exp $	*/
+/*	$OpenBSD: extern.h,v 1.31 2007/06/16 08:58:33 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ extern int	proxy;
 extern char	reply_string[];
 extern off_t	restart_point;
 extern int	NCMDS;
+extern int	keep_alive_timeout;
 
 extern char *__progname;		/* from crt0.o */
 

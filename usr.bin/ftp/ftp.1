@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.60 2007/06/13 18:43:16 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.61 2007/06/16 08:58:33 espie Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: June 13 2007 $
+.Dd $Mdocdate: June 16 2007 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nm ftp
 .Op Fl 46AadEegimnptVv
 .Op Fl c Ar cookie
+.Op Fl k Ar seconds
 .Op Fl P Ar port
 .Op Fl r Ar seconds
 .Op Ar host Op Ar port
@@ -134,6 +135,19 @@ Disables file name globbing.
 .It Fl i
 Turns off interactive prompting during
 multiple file transfers.
+.It Fl k Ar seconds
+Sends a byte after each
+.Ar seconds
+period over the control connection during long transfers,
+so that incorrectly configured network equipment won't
+agressively drop it.
+The FTP protocol supports a
+.Dv NOOP
+command that can be used for that purpose.
+This assumes the FTP server can deal with extra commands coming over
+the control connection during a transfer.
+Well-behaved servers queue those commands, and process them after the
+transfer.
 .It Fl m
 Causes
 .Nm
