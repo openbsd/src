@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.3 2007/05/26 15:28:18 miod Exp $	*/
+/*	$OpenBSD: astro.c,v 1.4 2007/06/16 18:13:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -36,10 +36,36 @@ struct astro_regs {
 	u_int32_t	pad0000;
 	u_int32_t	ioc_ctrl;
 	u_int32_t	pad0008;
-	u_int64_t	resv1[0x4400 - 0x2];
+	u_int8_t	resv1[0x0300 - 0x0010];
+	u_int64_t	lmmio_direct0_base;
+	u_int64_t	lmmio_direct0_mask;
+	u_int64_t	lmmio_direct0_route;
+	u_int64_t	lmmio_direct1_base;
+	u_int64_t	lmmio_direct1_mask;
+	u_int64_t	lmmio_direct1_route;
+	u_int64_t	lmmio_direct2_base;
+	u_int64_t	lmmio_direct2_mask;
+	u_int64_t	lmmio_direct2_route;
+	u_int64_t	lmmio_direct3_base;
+	u_int64_t	lmmio_direct3_mask;
+	u_int64_t	lmmio_direct3_route;
+	u_int64_t	lmmio_dist_base;
+	u_int64_t	lmmio_dist_mask;
+	u_int64_t	lmmio_dist_route;
+	u_int64_t	gmmio_dist_base;
+	u_int64_t	gmmio_dist_mask;
+	u_int64_t	gmmio_dist_route;
+	u_int64_t	ios_dist_base;
+	u_int64_t	ios_dist_mask;
+	u_int64_t	ios_dist_route;
+	u_int8_t	resv2[0x03c0 - 0x03a8];
+	u_int64_t	ios_direct_base;
+	u_int64_t	ios_direct_mask;
+	u_int64_t	ios_direct_route;
+	u_int8_t	resv3[0x22000 - 0x03d8];
 	u_int64_t	func_id;
 	u_int64_t	func_class;
-	u_int64_t	resv2[0x60 - 0x2];
+	u_int8_t	resv4[0x22300 - 0x22010];
 	u_int32_t	tlb_ibase;
 	u_int32_t	pad22300;
 	u_int32_t	tlb_imask;
