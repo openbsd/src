@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_linux.h,v 1.7 2005/05/24 20:38:20 uwe Exp $	*/
+/*	$OpenBSD: compat_linux.h,v 1.8 2007/06/16 00:26:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -42,7 +42,7 @@ struct proc;
 #define SEEK_SET		0
 #define SEEK_CUR		1
 
-#define	EOVERFLOW		75
+#define	LINUX_EOVERFLOW		75
 
 #define termios			linux_termios
 
