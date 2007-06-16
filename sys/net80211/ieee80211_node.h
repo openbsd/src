@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.13 2007/06/16 13:17:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.14 2007/06/16 13:21:44 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -187,8 +187,6 @@ extern	struct ieee80211_node *
 		ieee80211_find_node_for_beacon(struct ieee80211com *,
 		const u_int8_t *, const struct ieee80211_channel *,
 		const char *, u_int8_t);
-extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
-		u_int8_t *, struct ieee80211_channel *);
 extern	void ieee80211_release_node(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_free_allnodes(struct ieee80211com *);

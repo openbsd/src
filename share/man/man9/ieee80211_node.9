@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_node.9,v 1.4 2007/06/16 13:17:05 damien Exp $
+.\"	$OpenBSD: ieee80211_node.9,v 1.5 2007/06/16 13:21:44 damien Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_node.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_node.9,v 1.4 2007/06/16 13:17:05 damien Exp $
+.\" $Id: ieee80211_node.9,v 1.5 2007/06/16 13:21:44 damien Exp $
 .\"
 .Dd $Mdocdate: June 16 2007 $
 .Dt IEEE80211_NODE 9
@@ -42,7 +42,6 @@
 .Nm ieee80211_alloc_node ,
 .Nm ieee80211_dup_bss ,
 .Nm ieee80211_find_node ,
-.Nm ieee80211_lookup_node ,
 .Nm ieee80211_release_node ,
 .Nm ieee80211_free_node ,
 .Nm ieee80211_free_allnodes ,
@@ -75,10 +74,6 @@
 .Ft struct ieee80211_node *
 .Fn ieee80211_find_node "struct ieee80211com *ic" "const u_int8_t *macaddr"
 .Ft struct ieee80211_node *
-.Fo ieee80211_lookup_node
-.Fa "struct ieee80211com *ic" "const u_int8_t *macaddr"
-.Fa "struct ieee80211_channel *chan"
-.Fc
 .Ft void
 .Fn ieee80211_release_node "struct ieee80211com *ic" "struct ieee80211_node *ni"
 .Ft void
@@ -219,19 +214,6 @@ function will iterate through the node list associated with the interface
 .Fa ic ,
 searching for a node entry which matches
 .Fa macaddr .
-If the entry is found, its reference count is incremented, and
-a pointer to the node is returned; otherwise,
-.Dv NULL
-will be returned.
-.Pp
-.\"
-The
-.Fn ieee80211_lookup_node
-function is similar to
-.Fn ieee80211_find_node ,
-with an additional argument
-.Fa chan
-which is used to specify a channel for the match.
 If the entry is found, its reference count is incremented, and
 a pointer to the node is returned; otherwise,
 .Dv NULL
