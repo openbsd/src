@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.4 2007/06/16 18:13:23 kettenis Exp $	*/
+/*	$OpenBSD: astro.c,v 1.5 2007/06/16 19:57:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -488,9 +488,7 @@ void
 iommu_dvmamap_sync(void *v, bus_dmamap_t map, bus_addr_t off,
     bus_size_t len, int ops)
 {
-	struct astro_softc *sc = v;
-
-	bus_dmamap_sync(sc->sc_dmat, map, off, len, ops);
+	/* Nothing to do; DMA is cache-coherent. */
 }
 
 int
