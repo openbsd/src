@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.9 2007/06/08 22:08:21 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.10 2007/06/16 19:45:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -67,6 +67,29 @@ struct malo_cmd_body_spec {
 	uint32_t	fw_capinfo;
 } __packed;
 
+struct malo_cmd_body_auth {
+	uint8_t		peermac[ETHER_ADDR_LEN];
+	uint8_t		authtype;
+} __packed;
+
+#define MALO_OID_BSS		0x00
+#define MALO_OID_RATE		0x01
+#define MALO_OID_BCNPERIOD	0x02
+#define MALO_OID_DTIMPERIOD	0x03
+#define MALO_OID_ASSOCTIMEOUT	0x04
+#define MALO_OID_RTSTRESH	0x05
+#define MALO_OID_SHORTRETRY	0x06
+#define MALO_OID_LONGRETRY	0x07
+#define MALO_OID_FRAGTRESH	0x08
+#define MALO_OID_80211D		0x09
+#define MALO_OID_80211H		0x0a
+struct malo_cmd_body_snmp {
+	uint16_t	action;
+	uint16_t	oid;
+	uint16_t	size;
+	uint8_t		data[128];
+} __packed;
+
 struct malo_cmd_body_radio {
 	uint16_t	action;
 	uint16_t	control;
@@ -129,6 +152,12 @@ struct malo_cmd_body_assoc_rate {
 	uint16_t	type;
 	uint16_t	size;
 	uint8_t		data[1];
+} __packed;
+
+struct malo_cmd_body_rate {
+	uint16_t	action;
+	uint16_t	hwauto;
+	uint16_t	ratebitmap;
 } __packed;
 
 /* RX descriptor */

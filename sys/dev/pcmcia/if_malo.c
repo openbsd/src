@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.15 2007/06/11 09:56:13 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.16 2007/06/16 19:45:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -91,12 +91,15 @@ void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
 int	cmalo_cmd_rsp_hwspec(struct malo_softc *);
 int	cmalo_cmd_set_reset(struct malo_softc *);
+int	cmalo_cmd_set_auth(struct malo_softc *);
+int	cmalo_cmd_set_snmp(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_radio(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_channel(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_txpower(struct malo_softc *, int16_t);
 int	cmalo_cmd_set_antenna(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_macctrl(struct malo_softc *);
 int	cmalo_cmd_set_assoc(struct malo_softc *);
+int	cmalo_cmd_set_rate(struct malo_softc *);
 int	cmalo_cmd_request(struct malo_softc *, uint16_t, int);
 int	cmalo_cmd_response(struct malo_softc *);
 
@@ -241,6 +244,15 @@ malo_pcmcia_activate(struct device *dev, enum devact act)
 /*
  * Driver.
  */
+
+/* XXX experimental */
+uint8_t ap[] = { 0x00, 0x17, 0x9a, 0x44, 0xda, 0x83 };
+uint8_t chan[] = { 0x01 };
+#if 0
+uint8_t ap[] = { 0x00, 0x15, 0xe9, 0xa4, 0x6e, 0xd1 };
+uint8_t chan[] = { 0x04 };
+#endif
+
 void
 cmalo_attach(void *arg)
 {
@@ -569,6 +581,12 @@ cmalo_init(struct ifnet *ifp)
 		return (EIO);
 	if (cmalo_cmd_set_channel(sc, sc->sc_curchan) != 0)
 		return (EIO);
+
+	cmalo_cmd_set_rate(sc);
+
+	cmalo_cmd_set_snmp(sc, MALO_OID_RTSTRESH);
+	cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY);
+	cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH);
 
 	cmalo_cmd_set_assoc(sc);
 
@@ -978,6 +996,83 @@ cmalo_cmd_set_reset(struct malo_softc *sc)
 }
 
 int
+cmalo_cmd_set_auth(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_auth *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_AUTH);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_auth *)(hdr + 1);
+
+	bcopy(ap, body->peermac, ETHER_ADDR_LEN);
+	body->authtype = 0;
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_snmp(struct malo_softc *sc, uint16_t oid)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_snmp *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_SNMP);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_snmp *)(hdr + 1);
+
+	body->action = htole16(1);
+
+	switch (oid) {
+	case MALO_OID_RTSTRESH:
+		body->oid = htole16(MALO_OID_RTSTRESH);
+		body->size = htole16(2);
+		*(uint16_t *)body->data = htole16(2347);
+		break;
+	case MALO_OID_SHORTRETRY:
+		body->oid = htole16(MALO_OID_SHORTRETRY);
+		body->size = htole16(2);
+		*(uint16_t *)body->data = htole16(4);
+		break;
+	case MALO_OID_FRAGTRESH:
+		body->oid = htole16(MALO_OID_FRAGTRESH);
+		body->size = htole16(2);
+		*(uint16_t *)body->data = htole16(2346);
+		break;
+	default:
+		break;
+	}
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
 cmalo_cmd_set_radio(struct malo_softc *sc, uint16_t control)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
@@ -1148,12 +1243,6 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	struct malo_cmd_body_assoc_cf *body_cf;
 	struct malo_cmd_body_assoc_rate *body_rate;
 	uint16_t psize;
-	uint8_t ap[] = { 0x00, 0x17, 0x9a, 0x44, 0xda, 0x83 };	/* XXX */
-	uint8_t chan[] = { 0x01 };				/* XXX */
-#if 0
-	uint8_t ap[] = { 0x00, 0x15, 0xe9, 0xa4, 0x6e, 0xd1 };	/* XXX */
-	uint8_t chan[] = { 0x02 };				/* XXX */
-#endif
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 	psize = sizeof(*hdr) + sizeof(*body);
@@ -1161,10 +1250,10 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	hdr->cmd = htole16(MALO_CMD_ASSOC);
 	hdr->seqnum = htole16(1);
 	hdr->result = 0;
-
 	body = (struct malo_cmd_body_assoc *)(hdr + 1);
+
 	bcopy(ap, body->peermac, ETHER_ADDR_LEN);
-	body->capinfo = htole16(IEEE80211_CAPINFO_ESS);
+	body->capinfo = htole16(IEEE80211_CAPINFO_ESS);	
 	body->listenintrv = htole16(10);
 
 	body_ssid = sc->sc_cmd + psize;
@@ -1193,6 +1282,36 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	psize += (sizeof(*body_rate) - 1) + body_rate->size;
 
 	hdr->size = htole16(psize - sizeof(*hdr));
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_rate(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_rate *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_RATE);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_rate *)(hdr + 1);
+
+	body->action = htole16(1);
+	body->hwauto = htole16(1);
+	body->ratebitmap = htole16(0x1fff);
 
 	/* process command request */
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
@@ -1288,6 +1407,16 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_RESET:
 		/* reset will not send back a response */
 		break;
+	case MALO_CMD_AUTH:
+		/* do nothing */
+		DPRINTF(1, "%s: got auth cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_SNMP:
+		/* do nothing */
+		DPRINTF(1, "%s: got snmp cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
 	case MALO_CMD_RADIO:
 		/* do nothing */
 		DPRINTF(1, "%s: got radio cmd response\n",
@@ -1311,6 +1440,11 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_MACCTRL:
 		/* do nothing */
 		DPRINTF(1, "%s: got macctrl cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_RATE:
+		/* do nothing */
+		DPRINTF(1, "%s: got rate cmd response\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	default:

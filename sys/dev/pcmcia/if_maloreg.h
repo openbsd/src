@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_maloreg.h,v 1.6 2007/06/08 22:08:21 mglocker Exp $ */
+/*	$OpenBSD: if_maloreg.h,v 1.7 2007/06/16 19:45:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -51,12 +51,15 @@
 #define MALO_CMD_RESP			0x8000
 #define MALO_CMD_HWSPEC			0x0003
 #define MALO_CMD_RESET			0x0005
+#define MALO_CMD_AUTH			0x0011
+#define MALO_CMD_SNMP			0x0016
 #define MALO_CMD_RADIO			0x001c
 #define MALO_CMD_CHANNEL		0x001d
 #define MALO_CMD_TXPOWER		0x001e
 #define MALO_CMD_ANTENNA		0x0020
 #define MALO_CMD_MACCTRL		0x0028
 #define MALO_CMD_ASSOC			0x0050
+#define MALO_CMD_RATE			0x0076
 
 /* FW command values */
 #define MALO_CMD_RADIO_OFF		0x0000
