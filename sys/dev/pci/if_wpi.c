@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.44 2007/06/11 19:26:42 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.45 2007/06/16 14:15:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -261,16 +261,10 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 		goto fail3;
 	}
 
-	error = wpi_alloc_tx_ring(sc, &sc->svcq, WPI_SVC_RING_COUNT, 5);
-	if (error != 0) {
-		printf(": could not allocate service ring\n");
-		goto fail4;
-	}
-
 	error = wpi_alloc_rx_ring(sc, &sc->rxq);
 	if (error != 0) {
 		printf(": could not allocate Rx ring\n");
-		goto fail5;
+		goto fail4;
 	}
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
@@ -350,7 +344,6 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 	/* free allocated memory if something failed during attachment */
-fail5:	wpi_free_tx_ring(sc, &sc->svcq);
 fail4:	wpi_free_tx_ring(sc, &sc->cmdq);
 fail3:	while (--ac >= 0)
 		wpi_free_tx_ring(sc, &sc->txq[ac]);
@@ -2911,7 +2904,6 @@ wpi_stop(struct ifnet *ifp, int disable)
 	for (ac = 0; ac < 4; ac++)
 		wpi_reset_tx_ring(sc, &sc->txq[ac]);
 	wpi_reset_tx_ring(sc, &sc->cmdq);
-	wpi_reset_tx_ring(sc, &sc->svcq);
 
 	/* reset Rx ring */
 	wpi_reset_rx_ring(sc, &sc->rxq);
