@@ -5796,7 +5796,6 @@
 ./usr/share/man/cat9/ieee80211_input.0
 ./usr/share/man/cat9/ieee80211_ioctl.0
 ./usr/share/man/cat9/ieee80211_iterate_nodes.0
-./usr/share/man/cat9/ieee80211_lookup_node.0
 ./usr/share/man/cat9/ieee80211_media2rate.0
 ./usr/share/man/cat9/ieee80211_media_change.0
 ./usr/share/man/cat9/ieee80211_media_init.0
