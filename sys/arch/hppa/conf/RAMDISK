@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.67 2007/05/23 18:24:25 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.68 2007/06/16 08:43:00 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -269,7 +269,7 @@ dcphy*		at mii?		# Digital Clone PHYs
 amphy*		at mii?		# AMD 79C873 PHYs
 exphy*		at mii?		# 3Com internal PHYs
 inphy*		at mii?		# Intel 82555 PHYs
-#iophy*		at mii?		# Intel 82553 PHYs
+iophy*		at mii?		# Intel 82553 PHYs
 icsphy*		at mii?		# ICS1890 PHYs
 lxtphy*		at mii?		# Level One LXT-970 PHYs
 nsphy*		at mii?		# NS83840 PHYs

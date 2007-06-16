@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.99 2007/05/31 23:18:25 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.100 2007/06/16 08:43:00 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -281,7 +281,7 @@ dcphy*		at mii?		# Digital Clone PHYs
 amphy*		at mii?		# AMD 79C873 PHYs
 exphy*		at mii?		# 3Com internal PHYs
 inphy*		at mii?		# Intel 82555 PHYs
-#iophy*		at mii?		# Intel 82553 PHYs
+iophy*		at mii?		# Intel 82553 PHYs
 icsphy*		at mii?		# ICS1890 PHYs
 lxtphy*		at mii?		# Level One LXT-970 PHYs
 nsphy*		at mii?		# NS83840 PHYs
