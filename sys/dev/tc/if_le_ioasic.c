@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ioasic.c,v 1.11 2002/05/02 22:56:06 miod Exp $	*/
+/*	$OpenBSD: if_le_ioasic.c,v 1.12 2007/06/17 21:20:47 jasper Exp $	*/
 /*	$NetBSD: if_le_ioasic.c,v 1.18 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -82,9 +82,7 @@ void le_ioasic_copyfrombuf_gap16(struct am7990_softc *, void *,
 void le_ioasic_zerobuf_gap16(struct am7990_softc *, int, int);
 
 int
-le_ioasic_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+le_ioasic_match(struct device parent, void *match, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -99,9 +97,7 @@ le_ioasic_match(parent, match, aux)
 #define	LE_IOASIC_MEMALIGN	(128*1024)
 
 void
-le_ioasic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_ioasic_softc *sc = (void *)self;
 	struct ioasicdev_attach_args *d = aux;
@@ -189,11 +185,8 @@ le_ioasic_attach(parent, self, aux)
  */
 
 void
-le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
-	struct am7990_softc *sc;  
-	void *fromv;
-	int boff;
-	int len;
+le_ioasic_copytobuf_gap2(struct am7990_softc *sc, void *fromv,
+    int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t from = fromv;
@@ -218,10 +211,8 @@ le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
 }
 
 void
-le_ioasic_copyfrombuf_gap2(sc, tov, boff, len)
-	struct am7990_softc *sc;
-	void *tov;
-	int boff, len;
+le_ioasic_copyfrombuf_gap2(struct am7990_softc *sc, void *tov,
+    int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t to = tov;
@@ -254,11 +245,8 @@ le_ioasic_copyfrombuf_gap2(sc, tov, boff, len)
  */
 
 void
-le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
-	struct am7990_softc *sc;
-	void *fromv;
-	int boff;
-	int len;
+le_ioasic_copytobuf_gap16(struct am7990_softc *sc, void *fromv,
+    int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t from = fromv;
@@ -339,10 +327,8 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 }
 
 void
-le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
-	struct am7990_softc *sc;
-	void *tov;
-	int boff, len;
+le_ioasic_copyfrombuf_gap16(struct am7990_softc *sc, void *tov,
+    int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t to = tov;
@@ -415,9 +401,7 @@ le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
 }
 
 void
-le_ioasic_zerobuf_gap16(sc, boff, len)
-	struct am7990_softc *sc;
-	int boff, len;
+le_ioasic_zerobuf_gap16(struct am7990_softc *sc, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t bptr;

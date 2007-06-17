@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_tc.c,v 1.7 2005/10/11 06:03:18 martin Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.8 2007/06/17 21:20:47 jasper Exp $	*/
 /*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -65,9 +65,7 @@ struct cfattach le_tc_ca = {
 #define	LE_OFFSET_ROM		0x1c0000
 
 int
-le_tc_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+le_tc_match(struct device *parent, void *match, void *aux)
 {
 	struct tc_attach_args *d = aux;
 
@@ -78,9 +76,7 @@ le_tc_match(parent, match, aux)
 }
 
 void
-le_tc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_tc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (void *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;

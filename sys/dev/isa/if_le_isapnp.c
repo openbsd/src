@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.11 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.12 2007/06/17 21:20:47 jasper Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -66,25 +66,21 @@
 
 #include <dev/isa/if_levar.h>
 
-int le_isapnp_match(struct device *, void *, void *);
-void le_isapnp_attach(struct device *, struct device *, void *);
+int	le_isapnp_match(struct device *, void *, void *);
+void	le_isapnp_attach(struct device *, struct device *, void *);
 
 struct cfattach le_isapnp_ca = {
 	sizeof(struct le_softc), le_isapnp_match, le_isapnp_attach
 };
 
 int
-le_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+le_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	return 1;
 }
 
 void
-le_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (void *)self;
 	struct isa_attach_args *ia = aux;

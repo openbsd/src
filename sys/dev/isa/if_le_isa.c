@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isa.c,v 1.18 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: if_le_isa.c,v 1.19 2007/06/17 21:20:47 jasper Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -69,22 +69,20 @@
 static char *card_type[] =
     { "unknown", "BICC Isolan", "NE2100", "DEPCA", "PCnet-ISA" };
 
-int le_isa_probe(struct device *, void *, void *);
-void le_isa_attach(struct device *, struct device *, void *);
+int	le_isa_probe(struct device *, void *, void *);
+void	le_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach le_isa_ca = {
 	sizeof(struct le_softc), le_isa_probe, le_isa_attach
 };
 
-int depca_isa_probe(struct le_softc *, struct isa_attach_args *);
-int ne2100_isa_probe(struct le_softc *, struct isa_attach_args *);
-int bicc_isa_probe(struct le_softc *, struct isa_attach_args *);
-int lance_isa_probe(struct am7990_softc *);
+int	depca_isa_probe(struct le_softc *, struct isa_attach_args *);
+int	ne2100_isa_probe(struct le_softc *, struct isa_attach_args *);
+int	bicc_isa_probe(struct le_softc *, struct isa_attach_args *);
+int	lance_isa_probe(struct am7990_softc *);
 
 int
-le_isa_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+le_isa_probe(struct device *parent, void *match, void *aux)
 {
 	struct le_softc *lesc = match;
 	struct isa_attach_args *ia = aux;
@@ -109,9 +107,7 @@ le_isa_probe(parent, match, aux)
 }
 
 int
-depca_isa_probe(lesc, ia)
-	struct le_softc *lesc;
-	struct isa_attach_args *ia;
+depca_isa_probe(struct le_softc *lesc, struct isa_attach_args *ia)
 {
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -213,9 +209,7 @@ found:
 }
 
 int
-ne2100_isa_probe(lesc, ia)
-	struct le_softc *lesc;
-	struct isa_attach_args *ia;
+ne2100_isa_probe(struct le_softc *lesc, struct isa_attach_args *ia)
 {
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -248,9 +242,7 @@ ne2100_isa_probe(lesc, ia)
 }
 
 int
-bicc_isa_probe(lesc, ia)
-	struct le_softc *lesc;
-	struct isa_attach_args *ia;
+bicc_isa_probe(struct le_softc *lesc, struct isa_attach_args *ia)
 {
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_space_handle_t ioh;
@@ -286,8 +278,7 @@ bicc_isa_probe(lesc, ia)
  * Determine which chip is present on the card.
  */
 int
-lance_isa_probe(sc)
-	struct am7990_softc *sc;
+lance_isa_probe(struct am7990_softc *sc)
 {
 
 	/* Stop the LANCE chip and put it in a known state. */
@@ -302,9 +293,8 @@ lance_isa_probe(sc)
 }
 
 void
-le_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_isa_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct le_softc *lesc = (void *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;

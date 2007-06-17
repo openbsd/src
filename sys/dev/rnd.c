@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.81 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.82 2007/06/17 21:22:04 jasper Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -472,7 +472,7 @@ rnd_qlen(void)
 void dequeue_randomness(void *);
 
 static void add_entropy_words(const u_int32_t *, u_int n);
-void extract_entropy(register u_int8_t *, int);
+void extract_entropy(u_int8_t *, int);
 
 static u_int8_t arc4_getbyte(void);
 void arc4_stir(void);
@@ -500,7 +500,7 @@ void arc4maybeinit(void);
 static u_int8_t
 arc4_getbyte(void)
 {
-	register u_int8_t si, sj, ret;
+	u_int8_t si, sj, ret;
 	int s;
 
 	s = splhigh();
@@ -521,8 +521,8 @@ void
 arc4_stir(void)
 {
 	u_int8_t buf[256];
-	register u_int8_t si;
-	register int n, s;
+	u_int8_t si;
+	int n, s;
 	int len;
 
 	nanotime((struct timespec *) buf);
@@ -579,8 +579,7 @@ arc4maybeinit(void)
  * actual stirring happens on any access attempt.
  */
 void
-arc4_reinit(v)
-	void *v;
+arc4_reinit(void *v)
 {
 	arc4random_initialized = 0;
 }
@@ -636,21 +635,13 @@ randomattach(void)
 }
 
 int
-randomopen(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
+randomopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (minor (dev) < RND_NODEV) ? 0 : ENXIO;
 }
 
 int
-randomclose(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
+randomclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return 0;
 }
@@ -670,9 +661,7 @@ randomclose(dev, flag, mode, p)
  * get affected. --- TYT, 10/11/95
  */
 static void
-add_entropy_words(buf, n)
-	const u_int32_t *buf;
-	u_int n;
+add_entropy_words(const u_int32_t *buf, u_int n)
 {
 	static const u_int32_t twist_table[8] = {
 		0x00000000, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
@@ -680,8 +669,8 @@ add_entropy_words(buf, n)
 	};
 
 	for (; n--; buf++) {
-		register u_int32_t w = roll(*buf, random_state.input_rotate);
-		register u_int i = random_state.add_ptr =
+		u_int32_t w = roll(*buf, random_state.input_rotate);
+		u_int i = random_state.add_ptr =
 		    (random_state.add_ptr - 1) & (POOLWORDS - 1);
 		/*
 		 * Normally, we add 7 bits of rotation to the pool.
@@ -716,11 +705,10 @@ add_entropy_words(buf, n)
  *
  */
 void
-enqueue_randomness(state, val)
-	int	state, val;
+enqueue_randomness(int state, int val)
 {
-	register struct timer_rand_state *p;
-	register struct rand_event *rep;
+	struct timer_rand_state *p;
+	struct rand_event *rep;
 	struct timespec	tv;
 	u_int	time, nbits;
 	int s;
@@ -747,7 +735,7 @@ enqueue_randomness(state, val)
 	 * deltas in order to make our estimate.
 	 */
 	if (!p->dont_count_entropy) {
-		register int	delta, delta2, delta3;
+		int	delta, delta2, delta3;
 		delta  = time   - p->last_time;
 		delta2 = delta  - p->last_delta;
 		delta3 = delta2 - p->last_delta2;
@@ -825,11 +813,10 @@ enqueue_randomness(state, val)
 }
 
 void
-dequeue_randomness(v)
-	void *v;
+dequeue_randomness(void *v)
 {
 	struct random_bucket *rs = v;
-	register struct rand_event *rep;
+	struct rand_event *rep;
 	u_int32_t buf[2];
 	u_int nbits;
 	int s;
@@ -883,9 +870,7 @@ dequeue_randomness(v)
  * number of bytes that are actually obtained.
  */
 void
-extract_entropy(buf, nbytes)
-	register u_int8_t *buf;
-	int	nbytes;
+extract_entropy(u_int8_t *buf, int nbytes)
 {
 	struct random_bucket *rs = &random_state;
 	u_char buffer[16];
@@ -946,19 +931,14 @@ extract_entropy(buf, nbytes)
  * numbers, etc.
  */
 void
-get_random_bytes(buf, nbytes)
-	void	*buf;
-	size_t	nbytes;
+get_random_bytes(void *buf, size_t nbytes)
 {
 	extract_entropy((u_int8_t *) buf, nbytes);
 	rndstats.rnd_used += nbytes * 8;
 }
 
 int
-randomread(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
+randomread(dev_t dev, struct uio *uio, int ioflag)
 {
 	int		ret = 0;
 	int		i;
@@ -1038,10 +1018,7 @@ randomread(dev, uio, ioflag)
 }
 
 int
-randompoll(dev, events, p)
-	dev_t	dev;
-	int	events;
-	struct proc *p;
+randompoll(dev_t dev, int events, struct proc *p)
 {
 	int revents;
 
@@ -1093,9 +1070,7 @@ filt_rndrdetach(struct knote *kn)
 }
 
 int
-filt_rndread(kn, hint)
-	struct knote *kn;
-	long hint;
+filt_rndread(struct knote *kn, long hint)
 {
 	struct random_bucket *rs = (struct random_bucket *)kn->kn_hook;
 
@@ -1113,18 +1088,13 @@ filt_rndwdetach(struct knote *kn)
 }
 
 int
-filt_rndwrite(kn, hint)
-	struct knote *kn;
-	long hint;
+filt_rndwrite(struct knote *kn, long hint)
 {
 	return (1);
 }
 
 int
-randomwrite(dev, uio, flags)
-	dev_t	dev;
-	struct uio *uio;
-	int	flags;
+randomwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int		ret = 0;
 	u_int32_t	*buf;
@@ -1156,12 +1126,7 @@ randomwrite(dev, uio, flags)
 }
 
 int
-randomioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
-	u_long	cmd;
-	caddr_t	data;
-	int	flag;
-	struct proc *p;
+randomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int	s, ret = 0;
 	u_int	cnt;

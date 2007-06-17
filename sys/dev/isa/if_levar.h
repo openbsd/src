@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_levar.h,v 1.8 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.9 2007/06/17 21:20:47 jasper Exp $	*/
 /*	$NetBSD: if_levar.h,v 1.5 1996/05/07 01:50:07 thorpej Exp $	*/
 
 /*
@@ -55,6 +55,6 @@ struct le_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-void le_isa_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-u_int16_t le_isa_rdcsr(struct am7990_softc *, u_int16_t);  
-int le_isa_intredge(void *);
+void		le_isa_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+u_int16_t	le_isa_rdcsr(struct am7990_softc *, u_int16_t);  
+int		le_isa_intredge(void *);

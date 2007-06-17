@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_dec.c,v 1.2 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: if_le_dec.c,v 1.3 2007/06/17 21:20:47 jasper Exp $	*/
 /*	$NetBSD: if_le_dec.c,v 1.12 2001/11/13 12:49:45 lukem Exp $	*/
 
 /*-
@@ -69,9 +69,7 @@ void le_dec_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
 u_int16_t le_dec_rdcsr(struct am7990_softc *, u_int16_t);
 
 void
-dec_le_common_attach(sc, eap)
-	struct am7990_softc *sc;
-	u_char *eap;
+dec_le_common_attach(struct am7990_softc *sc, u_char *eap)
 {
 	int i;
 
@@ -95,9 +93,7 @@ dec_le_common_attach(sc, eap)
 }
 
 void
-le_dec_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+le_dec_wrcsr(struct am7990_softc *sc, u_int16_t port, u_ int16_t val)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
@@ -106,9 +102,7 @@ le_dec_wrcsr(sc, port, val)
 }
 
 u_int16_t
-le_dec_rdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+le_dec_rdcsr(struct am7990_softc *sc, u_int16_t port)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
@@ -124,11 +118,9 @@ le_dec_rdcsr(sc, port)
  * pokey sometimes.
  */
 void
-le_dec_writereg(regptr, val)
-	register volatile u_short *regptr;
-	register u_short val;
+le_dec_writereg(volatile u_short *regptr, u_short val)
 {
-	register int i = 0;
+	int i = 0;
 
 	while (*regptr != val) {
 		*regptr = val;

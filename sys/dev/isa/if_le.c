@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.17 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.18 2007/06/17 21:20:47 jasper Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -67,9 +67,7 @@
 #include <dev/isa/if_levar.h>
 
 void
-le_isa_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+le_isa_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -80,9 +78,7 @@ le_isa_wrcsr(sc, port, val)
 }
 
 u_int16_t
-le_isa_rdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+le_isa_rdcsr(struct am7990_softc *sc, u_int16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -99,8 +95,7 @@ le_isa_rdcsr(sc, port)
  * Controller interrupt.
  */
 int
-le_isa_intredge(arg)
-	void *arg;
+le_isa_intredge(void *arg)
 {
 
 	if (am7990_intr(arg) == 0)
