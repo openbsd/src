@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.14 2007/06/16 13:21:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.15 2007/06/17 09:05:44 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -117,6 +117,8 @@ struct ieee80211_node {
 	u_int16_t		ni_associd;	/* assoc response */
 	u_int16_t		ni_txseq;	/* seq to be transmitted */
 	u_int16_t		ni_rxseq;	/* seq previous received */
+	u_int16_t		ni_qos_txseqs[IEEE80211_NUM_TID];
+	u_int16_t		ni_qos_rxseqs[IEEE80211_NUM_TID];
 	int			ni_fails;	/* failure count to associate */
 	int			ni_inact;	/* inactivity mark count */
 	int			ni_txrate;	/* index to ni_rates[] */
@@ -124,6 +126,7 @@ struct ieee80211_node {
 	u_int32_t		*ni_challenge;	/* shared-key challenge */
 	u_int8_t		ni_flags;	/* special-purpose state */
 #define IEEE80211_NODE_ERP	0x01
+#define IEEE80211_NODE_QOS	0x02
 };
 
 RB_HEAD(ieee80211_tree, ieee80211_node);

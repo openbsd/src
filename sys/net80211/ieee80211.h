@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.16 2007/06/17 09:02:28 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.17 2007/06/17 09:05:44 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -417,6 +417,9 @@ enum ieee80211_edca_ac {
 	EDCA_AC_VO  = 3		/* Voice */
 };
 #define EDCA_NUM_AC	4
+
+/* number of TID values (traffic identifier) */
+#define IEEE80211_NUM_TID	16
 
 /* Atheros private advanced capabilities info */
 #define	ATHEROS_CAP_TURBO_PRIME			0x01
