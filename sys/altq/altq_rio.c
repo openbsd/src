@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rio.c,v 1.9 2003/01/07 00:29:28 cloder Exp $	*/
+/*	$OpenBSD: altq_rio.c,v 1.10 2007/06/17 19:58:58 jasper Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -136,7 +136,7 @@
 #define	RIO_STATS		/* collect statistics */
 
 #define	TV_DELTA(a, b, delta) {					\
-	register int	xxs;					\
+	int	xxs;					\
 								\
 	delta = (a)->tv_usec - (b)->tv_usec;			\
 	if ((xxs = (a)->tv_sec - (b)->tv_sec) != 0) {		\
