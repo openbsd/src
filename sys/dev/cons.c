@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.17 2006/11/01 03:37:23 tedu Exp $	*/
+/*	$OpenBSD: cons.c,v 1.18 2007/06/17 18:50:58 jasper Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -58,10 +58,7 @@ struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp;	/* vnode for underlying device. */
 
 int
-cnopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+cnopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	dev_t cndev;
 
@@ -88,10 +85,7 @@ cnopen(dev, flag, mode, p)
 }
  
 int
-cnclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+cnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct vnode *vp;
 
@@ -115,10 +109,7 @@ cnclose(dev, flag, mode, p)
 }
  
 int
-cnread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cnread(dev_t dev, struct uio *uio, int flag)
 {
 
 	/*
@@ -138,10 +129,7 @@ cnread(dev, uio, flag)
 }
  
 int
-cnwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cnwrite(dev_t dev, struct uio *uio, int flag)
 {
 
 	/*
@@ -158,20 +146,14 @@ cnwrite(dev, uio, flag)
 }
 
 int
-cnstop(tp, flag)
-	struct tty *tp;
-	int flag;
+cnstop(struct tty *tp, int flag)
 {
 	return (0);
 }
  
 int
-cnioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	int error;
 
@@ -204,10 +186,7 @@ cnioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-cnpoll(dev, rw, p)
-	dev_t dev;
-	int rw;
-	struct proc *p;
+cnpoll(dev_t dev, int rw, struct proc *p)
 {
 
 	/*
@@ -226,9 +205,7 @@ cnpoll(dev, rw, p)
 
 
 int
-cnkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+cnkqfilter(dev_t dev, struct knote *kn)
 {
 
 	/*
@@ -247,7 +224,7 @@ cnkqfilter(dev, kn)
 }
 
 int
-cngetc()
+cngetc(void)
 {
 
 	if (cn_tab == NULL)
@@ -256,8 +233,7 @@ cngetc()
 }
 
 void
-cnputc(c)
-	register int c;
+cnputc(int c)
 {
 
 	if (cn_tab == NULL)
@@ -271,8 +247,7 @@ cnputc(c)
 }
 
 void
-cnpollc(on)
-	int on;
+cnpollc(int on)
 {
 	static int refcount = 0;
 
@@ -287,16 +262,13 @@ cnpollc(on)
 }
 
 void
-nullcnpollc(dev, on)
-	dev_t dev;
-	int on;
+nullcnpollc(dev_t dev, int on)
 {
 
 }
 
 void
-cnbell(pitch, period, volume)
-	u_int pitch, period, volume;
+cnbell(u_int pitch, u_int period, u_int volume)
 {
 	if (cn_tab == NULL || cn_tab->cn_bell == NULL)
 		return;
