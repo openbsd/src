@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.96 2007/06/09 08:21:34 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.97 2007/06/17 20:06:10 jasper Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -1198,8 +1198,8 @@ void
 vfs_bufstats(void)
 {
 	int s, i, j, count;
-	register struct buf *bp;
-	register struct bqueues *dp;
+	struct buf *bp;
+	struct bqueues *dp;
 	int counts[MAXBSIZE/PAGE_SIZE+1];
 	int totals[BQUEUES];
 	long ptotals[BQUEUES];
