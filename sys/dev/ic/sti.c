@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.53 2007/01/12 22:02:33 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.54 2007/06/17 13:57:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -328,7 +328,7 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	cc = &scr->scr_cfg;
 	bzero(cc, sizeof (*cc));
 	cc->ext_cfg = &scr->scr_ecfg;
-	bzero(&cc->ext_cfg, sizeof(*cc->ext_cfg));
+	bzero(cc->ext_cfg, sizeof(*cc->ext_cfg));
 	if (dd->dd_stimemreq) {
 		scr->scr_ecfg.addr =
 		    malloc(dd->dd_stimemreq, M_DEVBUF, M_NOWAIT);
@@ -664,6 +664,7 @@ sti_init(scr, mode)
 	struct {
 		struct sti_initflags flags;
 		struct sti_initin in;
+		struct sti_einitin ein;
 		struct sti_initout out;
 	} a;
 
@@ -673,12 +674,15 @@ sti_init(scr, mode)
 	    (mode & STI_TEXTMODE? STI_INITF_TEXT | STI_INITF_PBET |
 	     STI_INITF_PBETI | STI_INITF_ICMT : 0);
 	a.in.text_planes = 1;
+	a.in.ext_in = &a.ein;
 #ifdef STIDEBUG
 	printf("sti_init,%p(%x, %p, %p, %p)\n",
 	    scr->init, a.flags.flags, &a.in, &a.out, &scr->scr_cfg);
 #endif
 	(*scr->init)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
-	return (a.out.text_planes != a.in.text_planes || a.out.errno);
+	if (a.out.text_planes != a.in.text_planes)
+		return (-1);	/* not colliding with sti errno values */
+	return (a.out.errno);
 }
 
 int
