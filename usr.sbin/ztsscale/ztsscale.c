@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.13 2007/05/29 21:13:56 robert Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.14 2007/06/17 10:07:30 robert Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -162,7 +162,6 @@ cleanup(void)
 		err(1, "WSMOUSEIO_SCALIBCOORDS");
 
 	close(mfd);
-
 }
 
 /* ARGSUSED */
@@ -196,7 +195,6 @@ main(int argc, char *argv[])
 		err(2, "open /dev/ttyC0");
 	save_screen();
 
-again:
 	mfd = open("/dev/wsmouse", O_RDWR);
 	if (mfd < 0) {
 		restore_screen();
@@ -217,6 +215,7 @@ again:
 		err(1, "WSMOUSEIO_SCALIBCOORDS");
 	}
 
+again:
 	signal(SIGINT, sighandler);
 	for (i = 0; i < 5; i++) {
 		memset(mapaddr, WHITE, WIDTH*HEIGHT*sizeof(u_short));
@@ -227,13 +226,6 @@ again:
 		cross(mapaddr, xc[i], yc[i]);
 		/* printf("waiting for event\n"); */
 		wait_event(mfd, &x[i], &y[i]);
-	}
-
-	/* Restore rawmode state */
-	wmcoords.samplelen = orawmode;
-	if (ioctl(mfd, WSMOUSEIO_SCALIBCOORDS, &wmcoords) < 0) {
-		restore_screen();
-		err(1, "WSMOUSEIO_SCALIBCOORDS");
 	}
 
 	bzero(&ts, sizeof(ts));
