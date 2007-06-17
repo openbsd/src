@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.12 2007/06/17 00:27:27 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.13 2007/06/17 15:05:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -127,7 +127,6 @@ struct hpux_label {
 #define	lifstodb(s)	((s) * LIF_SECTSIZE / DEV_BSIZE)
 
 struct cpu_disklabel {
-	int labelsector;
 	union {
 		struct {
 			struct lifvol lifvol;
