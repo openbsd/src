@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.65 2007/05/31 19:20:26 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.66 2007/06/17 10:35:55 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 17 2007 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -67,6 +67,9 @@ or to update packages to newer versions
 option
 .Fl u
 .Pc .
+.Pp
+Details of packing-list internals are documented in
+.Xr pkg_create 1 .
 .Pp
 In normal mode,
 the package names given on the command lines are names of new packages that
@@ -481,9 +484,15 @@ in cases the installation fails.
 .It
 The old package is deleted as usual, except that some packages may still depend
 on it.
+Note also that
+.Cm @unexec-delete
+commands are not executed.
 .It
 The new package is installed as usual, except that the files are already present
 and only need to be renamed.
+Note also that
+.Cm @exec-add
+commands are not executed.
 .It
 Dependencies from the old package are adjusted to point to the new package.
 .El
