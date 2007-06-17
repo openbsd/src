@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.23 2007/05/29 18:10:41 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.24 2007/06/17 10:01:25 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -674,6 +674,13 @@ splassert_check(int wantipl, const char *func)
 	 */
 	if (wantipl < 0)
 		wantipl = IPL_SOFTINT;
+
+	/*
+	 * Depending on the system, hardware interrupts may occur either
+	 * at level 3 or level 4. Avoid false positives in the former case.
+	 */
+	if (curipl == ALPHA_PSL_IPL_IO - 1)
+		curipl = ALPHA_PSL_IPL_IO;
 
 	if (curipl < wantipl) {
 		splassert_fail(wantipl, curipl, func);
