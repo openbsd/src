@@ -1,11 +1,11 @@
-#	$OpenBSD: genassym.cf,v 1.3 1997/08/29 19:47:23 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.4 2007/06/17 00:28:56 deraadt Exp $
 
 include <sys/param.h>
+include <sys/disklabel.h>
 
 include <machine/specialreg.h>
 include <machine/segments.h>
 include <machine/biosvar.h>
-include <machine/disklabel.h>
 
 export	DOSPARTOFF
 export	DOSACTIVE

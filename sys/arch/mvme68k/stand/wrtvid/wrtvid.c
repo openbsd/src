@@ -1,4 +1,4 @@
-/*	$OpenBSD: wrtvid.c,v 1.6 2004/12/27 15:23:46 drahn Exp $ */
+/*	$OpenBSD: wrtvid.c,v 1.7 2007/06/17 00:28:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn <drahn@openbsd.org>
@@ -18,13 +18,12 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #define __DBINTERFACE_PRIVATE
 #include <db.h>
-#include <machine/disklabel.h>
-
 
 #define BUF_SIZ 512
 static void
@@ -43,7 +42,7 @@ copy_exe(int exe_file, int tape_exe)
 }
 
 static void
-swabvid(struct cpu_disklabel *pcpul)
+swabvid(struct mvmedisklabel *pcpul)
 {
 	M_32_SWAP(pcpul->vid_oss);
 	M_16_SWAP(pcpul->vid_osl);
@@ -55,7 +54,7 @@ swabvid(struct cpu_disklabel *pcpul)
 }
 
 static void
-swabcfg(struct cpu_disklabel *pcpul)
+swabcfg(struct mvmedisklabel *pcpul)
 {
 	M_16_SWAP(pcpul->cfg_atm);
 	M_16_SWAP(pcpul->cfg_prm);
@@ -77,7 +76,7 @@ swabcfg(struct cpu_disklabel *pcpul)
 int
 main(int argc, char *argv[])
 {
-	struct cpu_disklabel *pcpul;
+	struct mvmedisklabel *pcpul;
 	struct stat stat;
 	int exe_file;
 	int tape_vid;
@@ -104,8 +103,8 @@ main(int argc, char *argv[])
 	snprintf(fileext, sizeof fileext, "boot%c%c", filename[4], filename[5]);
 	tape_exe = open(fileext, O_WRONLY|O_CREAT|O_TRUNC,0644);
 
-	pcpul = (struct cpu_disklabel *)malloc(sizeof(struct cpu_disklabel));
-	bzero(pcpul, sizeof(struct cpu_disklabel));
+	pcpul = (struct mvmedisklabel *)malloc(sizeof(struct mvmedisklabel));
+	bzero(pcpul, sizeof(struct mvmedisklabel));
 
 	memcpy(pcpul->vid_id, "NBSD", sizeof pcpul->vid_id);
 
@@ -150,7 +149,7 @@ main(int argc, char *argv[])
 	if (BYTE_ORDER != BIG_ENDIAN)
 		swabcfg(pcpul);
 
-	write(tape_vid, pcpul, sizeof(struct cpu_disklabel));
+	write(tape_vid, pcpul, sizeof(struct mvmedisklabel));
 
 	free(pcpul);
 

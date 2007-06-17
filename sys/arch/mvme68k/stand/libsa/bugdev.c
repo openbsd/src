@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.3 2003/08/20 00:26:00 deraadt Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.4 2007/06/17 00:28:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -37,7 +37,7 @@
 #include "stand.h"
 #include "libsa.h"
 
-void cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp);
+void cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp);
 
 int errno;
 
@@ -82,7 +82,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	if (i != DEV_BSIZE)
 		return (EINVAL);
 
-	cputobsdlabel(&sdlabel, (struct cpu_disklabel *)iobuf);
+	cputobsdlabel(&sdlabel, (struct mvmedisklabel *)iobuf);
 	pp->poff = sdlabel.d_partitions[pn].p_offset;
 	pp->psize = sdlabel.d_partitions[pn].p_size;
 
@@ -160,7 +160,7 @@ bugscioctl(struct open_file *f, u_long cmd, void *data)
 }
 
 void
-cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
+cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp)
 {
 	int i;
 

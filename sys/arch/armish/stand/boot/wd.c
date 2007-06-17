@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.4 2006/08/12 13:53:44 krw Exp $	*/
+/*	$OpenBSD: wd.c,v 1.5 2007/06/17 00:28:56 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -174,7 +174,7 @@ wdgetdisklabel(wd)
 	if (wdstrategy(wd, F_READ, DOSBBSECTOR, DEV_BSIZE, buf, &rsize))
 		return EOFFSET;
 
-	if (*(u_int16_t *)&buf[DOSMAGICOFF] == DOSMAGIC) {
+	if (*(u_int16_t *)&buf[DOSMBR_SIGNATURE_OFF] == DOSMBR_SIGNATURE) {
 		int i;
 		struct dos_partition *dp = (struct dos_partition *)buf;
 

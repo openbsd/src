@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.5 2003/06/01 17:00:38 deraadt Exp $ */
+/*	$OpenBSD: installboot.c,v 1.6 2007/06/17 00:28:57 deraadt Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/time.h>
+#include <sys/disklabel.h>
 #include <sys/stat.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -47,7 +48,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-#include <machine/disklabel.h> 	
 
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;

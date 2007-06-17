@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtvid.c,v 1.6 2004/12/27 15:23:45 drahn Exp $	*/
+/*	$OpenBSD: prtvid.c,v 1.7 2007/06/17 00:28:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn <drahn@openbsd.org>
@@ -16,13 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/disklabel.h>
+
 #include <stdio.h>
 #define __DBINTERFACE_PRIVATE
 #include <db.h>
-#include <machine/disklabel.h>
 
 static void
-swabvid(struct cpu_disklabel *cdl)
+swabvid(struct mvmedisklabel *cdl)
 {
 	M_32_SWAP(cdl->vid_oss);
 	M_16_SWAP(cdl->vid_osl);
@@ -32,7 +34,7 @@ swabvid(struct cpu_disklabel *cdl)
 }
 
 static void
-swabcfg(struct cpu_disklabel *cdl)
+swabcfg(struct mvmedisklabel *cdl)
 {
 	printf("swapping cfg\n");
 
@@ -56,11 +58,11 @@ swabcfg(struct cpu_disklabel *cdl)
 int
 main(int argc, char *argv[])
 {
-	struct cpu_disklabel *cdl;
+	struct mvmedisklabel *cdl;
 
-	cdl = (struct cpu_disklabel *) malloc(sizeof (struct cpu_disklabel));
+	cdl = (struct mvmedisklabel *) malloc(sizeof (struct mvmedisklabel));
 
-	fread(cdl, sizeof(struct cpu_disklabel), 1, stdin);
+	fread(cdl, sizeof(struct mvmedisklabel), 1, stdin);
 
 	if (BYTE_ORDER != BIG_ENDIAN)
 		swabvid(cdl);

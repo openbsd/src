@@ -1,4 +1,4 @@
-/*	$OpenBSD: wrtvid.c,v 1.6 2006/05/18 06:11:16 miod Exp $ */
+/*	$OpenBSD: wrtvid.c,v 1.7 2007/06/17 00:28:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn <drahn@openbsd.org>
@@ -16,30 +16,25 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/disklabel.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include "disklabel.h" 	
-/* disklabel.h is in current dir because of my
-   cross-compile env.  if <machine/disklabel.h>
-   is newer, copy it here.
-*/
 
 void	copy_exe(int, int);
-void	swabcfg(struct cpu_disklabel *);
-void	swabvid(struct cpu_disklabel *);
+void	swabcfg(struct mvmedisklabel *);
+void	swabvid(struct mvmedisklabel *);
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	struct cpu_disklabel *pcpul;
+	struct mvmedisklabel *pcpul;
 	struct stat stat;
 	int exe_file;
 	int tape_vid;
@@ -63,8 +58,8 @@ main(argc, argv)
 	snprintf(fileext, sizeof fileext, "boot%c%c", filename[4], filename[5]);
 	tape_exe = open(fileext, O_WRONLY|O_CREAT|O_TRUNC,0644);
 
-	pcpul = (struct cpu_disklabel *)malloc(sizeof(struct cpu_disklabel));
-	bzero(pcpul, sizeof(struct cpu_disklabel));
+	pcpul = (struct mvmedisklabel *)malloc(sizeof(struct mvmedisklabel));
+	bzero(pcpul, sizeof(struct mvmedisklabel));
 
 	pcpul->version = 1;
 	memcpy(pcpul->vid_id, "M88K", sizeof pcpul->vid_id);
@@ -112,7 +107,7 @@ main(argc, argv)
 	if (BYTE_ORDER != BIG_ENDIAN)
 		swabcfg(pcpul);
 
-	write(tape_vid, pcpul, sizeof(struct cpu_disklabel));
+	write(tape_vid, pcpul, sizeof(struct mvmedisklabel));
 
 	free(pcpul);
 
@@ -143,7 +138,7 @@ copy_exe(exe_file, tape_exe)
 
 void
 swabvid(pcpul)
-	struct cpu_disklabel *pcpul;
+	struct mvmedisklabel *pcpul;
 {
 	swap32(pcpul->vid_oss);
 	swap16(pcpul->vid_osl);
@@ -156,7 +151,7 @@ swabvid(pcpul)
 
 void
 swabcfg(pcpul)
-	struct cpu_disklabel *pcpul;
+	struct mvmedisklabel *pcpul;
 {
 	swap16(pcpul->cfg_atm);
 	swap16(pcpul->cfg_prm);
