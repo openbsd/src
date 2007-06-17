@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.16 2007/06/16 19:45:24 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.17 2007/06/17 10:18:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -91,6 +91,7 @@ void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
 int	cmalo_cmd_rsp_hwspec(struct malo_softc *);
 int	cmalo_cmd_set_reset(struct malo_softc *);
+int	cmalo_cmd_set_scan(struct malo_softc *);
 int	cmalo_cmd_set_auth(struct malo_softc *);
 int	cmalo_cmd_set_snmp(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_radio(struct malo_softc *, uint16_t);
@@ -246,12 +247,14 @@ malo_pcmcia_activate(struct device *dev, enum devact act)
  */
 
 /* XXX experimental */
+#if 0
 uint8_t ap[] = { 0x00, 0x17, 0x9a, 0x44, 0xda, 0x83 };
 uint8_t chan[] = { 0x01 };
-#if 0
+uint8_t ssid[] = "nazgul";
+#endif
 uint8_t ap[] = { 0x00, 0x15, 0xe9, 0xa4, 0x6e, 0xd1 };
 uint8_t chan[] = { 0x04 };
-#endif
+uint8_t ssid[] = "foobar";
 
 void
 cmalo_attach(void *arg)
@@ -587,6 +590,8 @@ cmalo_init(struct ifnet *ifp)
 	cmalo_cmd_set_snmp(sc, MALO_OID_RTSTRESH);
 	cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY);
 	cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH);
+
+	//cmalo_cmd_set_scan(sc);
 
 	cmalo_cmd_set_assoc(sc);
 
@@ -996,6 +1001,72 @@ cmalo_cmd_set_reset(struct malo_softc *sc)
 }
 
 int
+cmalo_cmd_set_scan(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_scan *body;
+	struct malo_cmd_tlv_ssid *body_ssid;
+	struct malo_cmd_tlv_chanlist *body_chanlist;
+	struct malo_cmd_tlv_rates *body_rates;
+	struct malo_cmd_tlv_numprobes *body_numprobes;
+	uint16_t psize;
+	int i;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_SCAN);
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_scan *)(hdr + 1);
+
+	body->bsstype = 0x03; /* any BSS */
+
+	body_ssid = sc->sc_cmd + psize;
+	body_ssid->type = htole16(MALO_TLV_TYPE_SSID);
+	body_ssid->size = htole16(0);
+	psize += sizeof(*body_ssid);
+
+	body_chanlist = sc->sc_cmd + psize;
+	body_chanlist->type = htole16(MALO_TLV_TYPE_CHANLIST);
+	body_chanlist->size = htole16(sizeof(body_chanlist->data));
+	for (i = 0; i < CHANNELS; i++) {
+		body_chanlist->data[i].radiotype = 0x00;
+		body_chanlist->data[i].channumber = (i + 1);
+		body_chanlist->data[i].scantype = 0x00; /* active */
+		body_chanlist->data[i].minscantime = htole16(6);
+		body_chanlist->data[i].maxscantime = htole16(100);
+	}
+	psize += sizeof(*body_chanlist);
+
+	body_rates = sc->sc_cmd + psize;
+	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
+	body_rates->size =
+	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rates->data,
+	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	psize += (sizeof(*body_rates) - 1) + body_rates->size;
+
+	body_numprobes = sc->sc_cmd + psize;
+	body_numprobes->type = htole16(MALO_TLV_TYPE_NUMPROBES);
+	body_numprobes->size = htole16(2);
+	body_numprobes->numprobes = htole16(1);
+	psize += sizeof(*body_numprobes);
+
+	hdr->size = htole16(psize - sizeof(*hdr));
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
 cmalo_cmd_set_auth(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
@@ -1238,10 +1309,10 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_assoc *body;
-	struct malo_cmd_body_assoc_ssid *body_ssid;
-	struct malo_cmd_body_assoc_phy *body_phy;
-	struct malo_cmd_body_assoc_cf *body_cf;
-	struct malo_cmd_body_assoc_rate *body_rate;
+	struct malo_cmd_tlv_ssid *body_ssid;
+	struct malo_cmd_tlv_phy *body_phy;
+	struct malo_cmd_tlv_cf *body_cf;
+	struct malo_cmd_tlv_rates *body_rates;
 	uint16_t psize;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
@@ -1259,7 +1330,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	body_ssid = sc->sc_cmd + psize;
 	body_ssid->type = htole16(MALO_TLV_TYPE_SSID);
 	body_ssid->size = htole16(6);
-	bcopy("nazgul", body_ssid->data, 6);
+	bcopy(ssid, body_ssid->data, 6);
 	psize += (sizeof(*body_ssid) - 1) + body_ssid->size;
 
 	body_phy = sc->sc_cmd + psize;
@@ -1273,13 +1344,13 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	body_cf->size = htole16(0);
 	psize += sizeof(*body_cf);
 
-	body_rate = sc->sc_cmd + psize;
-	body_rate->type = htole16(MALO_TLV_TYPE_RATES);
-	body_rate->size =
+	body_rates = sc->sc_cmd + psize;
+	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
+	body_rates->size =
 	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
-	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rate->data,
+	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rates->data,
 	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
-	psize += (sizeof(*body_rate) - 1) + body_rate->size;
+	psize += (sizeof(*body_rates) - 1) + body_rates->size;
 
 	hdr->size = htole16(psize - sizeof(*hdr));
 
@@ -1345,7 +1416,7 @@ cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 
 	/* wait for the command response */
 	sc->sc_cmd_running = 1;
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 1000; i++) {
 		if (sc->sc_cmd_running == 0)
 			break;
 		tsleep(sc, 0, "malocmd", 1);
@@ -1406,6 +1477,11 @@ cmalo_cmd_response(struct malo_softc *sc)
 		break;
 	case MALO_CMD_RESET:
 		/* reset will not send back a response */
+		break;
+	case MALO_CMD_SCAN:
+		/* do nothing */
+		DPRINTF(1, "%s: got scan cmd response\n",
+		    sc->sc_dev.dv_xname);
 		break;
 	case MALO_CMD_AUTH:
 		/* do nothing */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.10 2007/06/16 19:45:24 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.11 2007/06/17 10:18:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -42,7 +42,9 @@
 #define MALO_DEVICE_ATTACHED	(1 << 0)
 #define MALO_FW_LOADED		(1 << 1)
 
-/* FW command header */
+/*
+ * FW command structures
+ */
 struct malo_cmd_header {
 	uint16_t	cmd;
 	uint16_t	size;
@@ -51,7 +53,6 @@ struct malo_cmd_header {
 	/* malo_cmd_body */
 };
 
-/* FW command bodies */
 struct malo_cmd_body_spec {
 	uint16_t	hw_if_version;
 	uint16_t	hw_version;
@@ -65,6 +66,15 @@ struct malo_cmd_body_spec {
 	uint32_t	rxpdrdptr;
 	uint32_t	rxpdwrptr;
 	uint32_t	fw_capinfo;
+} __packed;
+
+struct malo_cmd_body_scan {
+	uint8_t		bsstype;
+	uint8_t		bssid[ETHER_ADDR_LEN];
+	/* malo_cmd_tlv_ssid */
+	/* malo_cmd_tlv_chanlist */
+	/* malo_cmd_tlv_rates */
+	/* malo_cmd_tlv_numprobes */
 } __packed;
 
 struct malo_cmd_body_auth {
@@ -124,40 +134,70 @@ struct malo_cmd_body_assoc {
 	uint16_t	listenintrv;
 	uint16_t	bcnperiod;
 	uint8_t		dtimperiod;
-	/* malo_cmd_body_assoc_ssid */
-	/* malo_cmd_body_assoc_phy */
-	/* malo_cmd_body_assoc_cf */
-	/* malo_cmd_body_assoc_rate */
-} __packed;
-#define MALO_TLV_TYPE_SSID	0x0000
-#define MALO_TLV_TYPE_PHY	0x0003
-#define MALO_TLV_TYPE_CF	0x0004
-#define MALO_TLV_TYPE_RATES	0x0001
-struct malo_cmd_body_assoc_ssid {
-	uint16_t	type;
-	uint16_t	size;
-	uint8_t		data[1];
-} __packed;
-struct malo_cmd_body_assoc_phy {
-	uint16_t	type;
-	uint16_t	size;
-	uint8_t		data[1];
-} __packed;
-struct malo_cmd_body_assoc_cf {
-	uint16_t	type;
-	uint16_t	size;
-	uint8_t		data[1];
-} __packed;
-struct malo_cmd_body_assoc_rate {
-	uint16_t	type;
-	uint16_t	size;
-	uint8_t		data[1];
+	/* malo_cmd_tlv_ssid */
+	/* malo_cmd_tlv_phy */
+	/* malo_cmd_tlv_cf */
+	/* malo_cmd_tlv_rate */
 } __packed;
 
 struct malo_cmd_body_rate {
 	uint16_t	action;
 	uint16_t	hwauto;
 	uint16_t	ratebitmap;
+} __packed;
+
+/*
+ * FW command TLV structures
+ */
+#define MALO_TLV_TYPE_SSID	0x0000
+#define MALO_TLV_TYPE_RATES	0x0001
+#define MALO_TLV_TYPE_PHY	0x0003
+#define MALO_TLV_TYPE_CF	0x0004
+#define MALO_TLV_TYPE_CHANLIST	0x0101
+#define MALO_TLV_TYPE_NUMPROBES	0x0102
+
+struct malo_cmd_tlv_ssid {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		data[1];
+} __packed;
+
+struct malo_cmd_tlv_rates {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		data[1];
+} __packed;
+
+struct malo_cmd_tlv_phy {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		data[1];
+} __packed;
+
+struct malo_cmd_tlv_cf {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		data[1];
+} __packed;
+
+struct malo_cmd_tlv_chanlist_param {
+	uint8_t		radiotype;
+	uint8_t		channumber;
+	uint8_t		scantype;
+	uint16_t	minscantime;
+	uint16_t	maxscantime;
+} __packed;
+#define CHANNELS	12
+struct malo_cmd_tlv_chanlist {
+	uint16_t	type;
+	uint16_t	size;
+	struct malo_cmd_tlv_chanlist_param data[CHANNELS];
+} __packed;
+
+struct malo_cmd_tlv_numprobes {
+	uint16_t	type;
+	uint16_t	size;
+	uint16_t	numprobes;
 } __packed;
 
 /* RX descriptor */
@@ -188,6 +228,9 @@ struct malo_tx_desc {
 	uint8_t		reserved[2];
 } __packed;
 
+/*
+ * Softc
+ */
 struct malo_softc {
 	struct device		 sc_dev;
 	struct ieee80211com	 sc_ic;
