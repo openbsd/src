@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.39 2007/06/14 03:35:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.40 2007/06/17 00:27:28 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -33,8 +33,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
  */
 
 #include <sys/param.h>
@@ -56,74 +54,50 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
-	struct disklabel *dlp;
-	int i;
-	char *msg = NULL;
+	char *msg;
 
-	/* minimal requirements for archetypal disk label */
-	if (lp->d_secsize < DEV_BSIZE)
-		lp->d_secsize = DEV_BSIZE;
-	if (DL_GETDSIZE(lp) == 0)
-		DL_SETDSIZE(lp, MAXDISKSIZE);
-	if (lp->d_secpercyl == 0) {
-		msg = "invalid geometry";
+	if ((msg = initdisklabel(lp)))
 		goto done;
-	}
-	lp->d_npartitions = RAW_PART + 1;
-	for (i = 0; i < RAW_PART; i++) {
-		DL_SETPSIZE(&lp->d_partitions[i], 0);
-		DL_SETPOFFSET(&lp->d_partitions[i], 0);
-	}
-	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
-		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-	lp->d_version = 1;
+
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
 		goto done;
 
-	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
-	if (biowait(bp))
+	if (biowait(bp)) {
 		msg = "disk label I/O error";
-	else for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)((char *)bp->b_data +
-	    DEV_BSIZE - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL) {
-#if defined(CD9660)
-				if (iso_disklabelspoof(dev, strat, lp) != 0)
-#endif
-					msg = "no disk label";
-#if defined(UDF)
-				if (msg && udf_disklabelspoof(dev, strat, lp) == 0)
-					msg = NULL;
-#endif
-			}
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
-			msg = "disk label corrupted";
-		else {
-			DL_SETDSIZE(dlp, DL_GETDSIZE(lp));
-			*lp = *dlp;
-			msg = NULL;
-			break;
-		}
+		goto done;
 	}
+
+	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	if (msg == NULL)
+		goto done;
+
+#if defined(CD9660)
+	if (iso_disklabelspoof(dev, strat, lp) == 0) {
+		msg = NULL;
+		goto done;
+	}
+#endif
+#if defined(UDF)
+	if (udf_disklabelspoof(dev, strat, lp) == 0) {
+		msg = NULL;
+		goto done;
+	}
+#endif
 
 done:
 	if (bp) {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	disklabeltokernlabel(lp);
 	return (msg);
 }
 
@@ -136,38 +110,21 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
-	int labelpart;
 	int error = 0;
 
-	labelpart = DISKPART(dev);
-	if (DL_GETPOFFSET(&lp->d_partitions[labelpart]) != 0) {
-		if (DL_GETPOFFSET(&lp->d_partitions[0]) != 0)
-			return (EXDEV);			/* not quite right */
-		labelpart = 0;
-	}
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
+	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
-	if ((error = biowait(bp)))
+	if ((error = biowait(bp)) != 0)
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)
-	      ((char *)bp->b_data + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
-			*dlp = *lp;
-			bp->b_flags = B_BUSY | B_WRITE;
-			(*strat)(bp);
-			error = biowait(bp);
-			goto done;
-		}
-	}
+
 	/* Write it in the regular place. */
-	*(struct disklabel *)bp->b_data = *lp;
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	*dlp = *lp;
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

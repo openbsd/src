@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.8 2003/06/03 21:09:01 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 2007/06/17 00:27:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -34,7 +34,6 @@
 #define LABELSECTOR     0                       /* sector containing label */
 #define LABELOFFSET	0			/* offset of label in sector */
 #define MAXPARTITIONS	16			/* number of partitions */
-#define RAW_PART	2			/* raw partition: xx?c */
 
 /*
  * a cpu_disklabel is a disklabel that the bug (prom) can understand
@@ -57,8 +56,10 @@
  * around, make sure the various members are properly aligned and the
  * compiler won't do any additional padding.
  */
-
 struct cpu_disklabel {
+};
+
+struct mvmedisklabel {
 	/* VID */
 	u_char		vid_id[4];
 	u_char		vid_0[16];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.47 2007/06/14 03:35:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.48 2007/06/17 00:27:28 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -28,9 +28,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
+
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
@@ -87,11 +86,11 @@
 
 #define NUM_PARTS_PROBED 32
 
-#define ROOT_PART 1
-#define UFS_PART 2
-#define SWAP_PART 3
-#define HFS_PART 4
-#define SCRATCH_PART 5
+#define ROOT_PART	1
+#define UFS_PART	2
+#define SWAP_PART	3
+#define HFS_PART	4
+#define SCRATCH_PART	5
 
 int getFreeLabelEntry(struct disklabel *);
 int whichType(struct partmapentry *);
@@ -110,11 +109,10 @@ getFreeLabelEntry(struct disklabel *lp)
 	int i;
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		if ((i != RAW_PART)
-		    && (lp->d_partitions[i].p_fstype == FS_UNUSED))
+		if (i != RAW_PART &&
+		    lp->d_partitions[i].p_fstype == FS_UNUSED)
 			return i;
 	}
-
 	return -1;
 }
 
@@ -129,15 +127,11 @@ whichType(struct partmapentry *part)
 	if (part->pmPartType[0] == '\0')
 		return 0;
 
-	if (strcmp(PART_DRIVER_TYPE, (char *)part->pmPartType) == 0)
-		return 0;
-	if (strcmp(PART_DRIVER43_TYPE, (char *)part->pmPartType) == 0)
-		return 0;
-	if (strcmp(PART_DRIVERATA_TYPE, (char *)part->pmPartType) == 0)
-		return 0;
-	if (strcmp(PART_FWB_COMPONENT_TYPE, (char *)part->pmPartType) == 0)
-		return 0;
-	if (strcmp(PART_PARTMAP_TYPE, (char *)part->pmPartType) == 0)
+	if (strcmp(PART_DRIVER_TYPE, (char *)part->pmPartType) == 0 ||
+	    strcmp(PART_DRIVER43_TYPE, (char *)part->pmPartType) == 0 ||
+	    strcmp(PART_DRIVERATA_TYPE, (char *)part->pmPartType) == 0 ||
+	    strcmp(PART_FWB_COMPONENT_TYPE, (char *)part->pmPartType) == 0 ||
+	    strcmp(PART_PARTMAP_TYPE, (char *)part->pmPartType) == 0 ||
 		return 0;
 	if (strcmp(PART_UNIX_TYPE, (char *)part->pmPartType) == 0) {
 		/* unix part, swap, root, usr */
@@ -148,10 +142,10 @@ whichType(struct partmapentry *part)
 		if (bzb->bzbFlags & BZB_ROOTFS)
 			return ROOT_PART;
 
-		if ((bzb->bzbFlags & BZB_USRFS)
-		    || (bzb->bzbFlags & BZB_EXFS4)
-		    || (bzb->bzbFlags & BZB_EXFS5)
-		    || (bzb->bzbFlags & BZB_EXFS6))
+		if ((bzb->bzbFlags & BZB_USRFS) ||
+		    (bzb->bzbFlags & BZB_EXFS4) ||
+		    (bzb->bzbFlags & BZB_EXFS5) ||
+		    (bzb->bzbFlags & BZB_EXFS6))
 			return UFS_PART;
 
 		if (bzb->bzbType == BZB_TYPESWAP)
@@ -176,13 +170,12 @@ whichType(struct partmapentry *part)
 int
 fixPartTable(struct partmapentry *partTable, long size, char *base)
 {
-	int i;
 	struct partmapentry *pmap;
 	char *s;
+	int i;
 
 	for (i = 0; i < NUM_PARTS_PROBED; i++) {
 		pmap = (struct partmapentry *)((i * size) + base + DEV_BSIZE);
-
 		partTable[i] = *pmap;
 		pmap = &partTable[i];
 
@@ -198,7 +191,6 @@ fixPartTable(struct partmapentry *partTable, long size, char *base)
 			if ((*s >= 'a') && (*s <= 'z'))
 				*s = (*s - 'a' + 'A');
 	}
-
 	return NUM_PARTS_PROBED;
 }
 
@@ -246,12 +238,10 @@ getNamedType(struct partmapentry *part, int num_parts, struct disklabel *lp,
 				printf("disksubr.c: can't do type %d\n", type);
 				break;
 			}
-
 			return 0;
 		}
 skip:
 	}
-
 	return -1;
 }
 
@@ -289,8 +279,7 @@ read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
 	if (getNamedType(pmap, num_parts, lp, UFS_PART, 0, &maxslot))
 		getNamedType(pmap, num_parts, lp, UFS_PART, -1, &maxslot);
 	for (i = 0; i < num_parts; i++) {
-		int partType;
-		int slot;
+		int partType, slot;
 
 		slot = getFreeLabelEntry(lp);
 		if (slot < 0)
@@ -299,12 +288,7 @@ read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
 		partType = whichType(&(pmap[i]));
 
 		switch (partType) {
-
 		case ROOT_PART:
-		/*
-		 * another root part will turn into a plain old
-		 * UFS_PART partition, live with it.
-		 */
 		case UFS_PART:
 			setPart(&(pmap[i]), lp, FS_BSDFFS, slot);
 			if (slot > maxslot)
@@ -330,7 +314,9 @@ read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
 		}
 	}
 	lp->d_npartitions = maxslot + 1;
-
+	lp->d_version = 1;
+	lp->d_checksum = 0;
+	lp->d_checksum = dkcksum(lp);
 	FREE(pmap, M_DEVBUF);
 	return NULL;
 }
@@ -341,83 +327,70 @@ read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
  * anything required in the strategy routine (e.g., sector size) must be
  * filled in before calling us.  Returns null on success and an error
  * string on failure.
- *
- * This will read sector zero.  If this contains what looks like a valid
- * Macintosh boot sector, we attempt to fill in the disklabel structure.
- * If the first longword of the disk is a OpenBSD disk label magic number,
- * then we assume that it's a real disklabel and return it.
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
-	char *msg = NULL;
-	struct disklabel *dlp;
-	int i, size;
+	u_int16_t *sbSigp;
+	int size;
+	char *msg;
 
-	/* minimal requirements for archetypal disk label */
-	if (lp->d_secsize < DEV_BSIZE)
-		lp->d_secsize = DEV_BSIZE;
-	if (DL_GETDSIZE(lp) == 0)
-		DL_SETDSIZE(lp, MAXDISKSIZE);
-	if (lp->d_secpercyl == 0) {
-		msg = "invalid geometry";
-		goto done;
-	}
-	lp->d_npartitions = RAW_PART + 1;
-	for (i = 0; i < RAW_PART; i++) {
-		DL_SETPSIZE(&lp->d_partitions[i], 0);
-		DL_SETPOFFSET(&lp->d_partitions[i], 0);
-	}
-	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
-		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-	lp->d_version = 1;
-
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
+	if ((msg = initdisklabel(lp)))
 		goto done;
 
 	size = roundup((NUM_PARTS_PROBED + 1) << DEV_BSHIFT, lp->d_secsize);
 	bp = geteblk(size);
 	bp->b_dev = dev;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = size;
 	bp->b_flags = B_BUSY | B_READ;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
-	if (biowait(bp))
+	if (biowait(bp)) {
 		msg = "disk label I/O error";
-	else {
-		u_int16_t *sbSigp;
-
-		sbSigp = (u_int16_t *)bp->b_data;
-		if (*sbSigp == 0x4552) {
-			msg = read_mac_label(bp->b_data, lp, osdep);
-		} else {
-			dlp = (struct disklabel *)(bp->b_data +
-			    LABELOFFSET);
-			if (dlp->d_magic != DISKMAGIC ||
-			    dlp->d_magic2 != DISKMAGIC) {
-				msg = "no OpenBSD or MacOS disk label";
-			} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			    dkcksum(dlp) != 0) {
-				msg = "disk label corrupted";
-			} else {
-				DL_SETDSIZE(dlp, DL_GETDSIZE(lp));
-				*lp = *dlp;
-			}
-		}
+		goto done;
 	}
 
+	sbSigp = (u_int16_t *)bp->b_data;
+	if (*sbSigp == 0x4552) {
+		msg = read_mac_label(bp->b_data, lp, osdep);
+		if (msg == NULL)
+			goto done;
+	}
+
+	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	if (msg == NULL)
+		goto done;
+
+	/* Get a MI label */
+	bp->b_blkno = LABELSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
+	(*strat)(bp);
+	if (biowait(bp)) {
+		msg = "disk label I/O error";
+		goto done;
+	}
+
+	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	if (msg == NULL)
+		goto done;
+
 #if defined(CD9660)
-	if (msg != NULL && iso_disklabelspoof(dev, strat, lp) == 0)
+	if (iso_disklabelspoof(dev, strat, lp) == 0) {
 		msg = NULL;
+		goto done;
+	}
 #endif
 #if defined(UDF)
-	if (msg && udf_disklabelspoof(dev, strat, lp) == 0)
+	if (udf_disklabelspoof(dev, strat, lp) == 0) {
 		msg = NULL;
+		goto done;
+	}
 #endif
 
 done:
@@ -425,7 +398,6 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	disklabeltokernlabel(lp);
 	return (msg);
 }
 
@@ -441,18 +413,13 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
-	int labelpart;
 	int error = 0;
 	u_int16_t *sbSigp;
 
-	labelpart = DISKPART(dev);
-	if (DL_GETPOFFSET(&lp->d_partitions[labelpart]) != 0) {
-		if (DL_GETPOFFSET(&lp->d_partitions[0]) != 0)
-			return (EXDEV);	/* not quite right */
-		labelpart = 0;
-	}
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
+	bp->b_dev = dev;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -461,21 +428,15 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
-	/*
-	 * Check for MacOS fingerprints
-	 */
+	/* Check for MacOS fingerprints */
 	sbSigp = (u_int16_t *)bp->b_data;
 	if (*sbSigp == 0x4552) {
-		/*
-		 * Read the partition map again, in case it has changed.
-		 */
-		if (readdisklabel(dev, strat, lp, osdep, 0) != NULL)
-			error = EINVAL;
+		/* XXX AND THEN DO NOT WRITE?? */
 		goto done;
 	}
 
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
-	bcopy(lp, dlp, sizeof(struct disklabel));
+	*dlp = *lp;
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

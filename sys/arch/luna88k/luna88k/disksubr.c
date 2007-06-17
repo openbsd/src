@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.29 2007/06/14 03:41:21 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.30 2007/06/17 00:27:28 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -34,14 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * Credits:
- * This file was based mostly on the i386/disksubr.c file:
- *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- * The functions: disklabel_sun_to_bsd, disklabel_bsd_to_sun
- * were originally taken from arch/sparc/scsi/sun_disklabel.c
- * (which was written by Theo de Raadt) and then substantially
- * rewritten by Gordon W. Ross.
  */
 
 #include <sys/param.h>
@@ -118,37 +110,19 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	char *msg = NULL;
 	int error, i;
+	char *msg;
 
-	/* minimal requirements for archetypal disk label */
-	if (lp->d_secsize < DEV_BSIZE)
-		lp->d_secsize = DEV_BSIZE;
-	if (DL_GETDSIZE(lp) == 0)
-		DL_SETDSIZE(lp, MAXDISKSIZE);
-	if (lp->d_secpercyl == 0) {
-		msg = "invalid geometry";
-		goto done;
-	}
-	lp->d_npartitions = RAW_PART + 1;
-	for (i = 0; i < RAW_PART; i++) {
-		DL_SETPSIZE(&lp->d_partitions[i], 0);
-		DL_SETPOFFSET(&lp->d_partitions[i], 0);
-	}
-	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
-		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-	lp->d_version = 1;
-
-        /* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
+	if ((msg = initdisklabel(lp)))
 		goto done;
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
-
-	/* next, dig out disk label */
 	bp->b_dev = dev;
+
+	if (spoofonly)
+		goto done;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
@@ -166,6 +140,16 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 
+	slp = (struct sun_disklabel *)clp->cd_block;
+	if (slp->sl_magic == SUN_DKMAGIC) {
+		msg = disklabel_om_to_bsd(clp->cd_block, lp);
+		goto done;
+	}
+
+	msg = checkdisklabel(clp->cd_block + LABELOFFSET, lp);
+	if (msg == NULL)
+		goto done;
+
 #if defined(CD9660)
 	if (iso_disklabelspoof(dev, strat, lp) == 0) {
 		msg = NULL;
@@ -178,27 +162,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 #endif
-
-	/* Check for a BSD disk label first. */
-	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-	if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
-		if (dkcksum(dlp) == 0) {
-			DL_SETDSIZE(dlp, DL_GETDSIZE(lp));
-			*lp = *dlp;	/* struct assignment */
-			msg = NULL;
-			goto done;
-		}
-		printf("BSD disk label corrupted");
-	}
-
-	/* Check for a UniOS/ISI disk label. */
-	slp = (struct sun_disklabel *)clp->cd_block;
-	if (slp->sl_magic == SUN_DKMAGIC) {
-		msg = disklabel_om_to_bsd(clp->cd_block, lp);
-		goto done;
-	}
-
-	memset(clp->cd_block, 0, sizeof(clp->cd_block));
+	bzero(clp->cd_block, sizeof(clp->cd_block));
 	msg = "no disk label";
 
 done:
@@ -206,7 +170,6 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	disklabeltokernlabel(lp);
 	return (msg);
 
 }

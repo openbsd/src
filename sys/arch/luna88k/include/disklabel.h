@@ -1,5 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.2 2006/10/04 03:23:01 krw Exp $	*/
-/*	$NetBSD: disklabel.h,v 1.2 2000/01/28 02:25:24 nisimura Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.3 2007/06/17 00:27:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,7 +36,6 @@
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
 #define	MAXPARTITIONS	16			/* number of partitions */
-#define	RAW_PART	2			/* raw partition: xx?c */
 
 /*
  * This holds a copy of the whole label block, saved in here by

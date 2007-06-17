@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.51 2007/06/14 03:37:23 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.52 2007/06/17 00:27:29 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -28,8 +28,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 
 #include <sys/param.h>
@@ -63,37 +61,17 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
-	struct disklabel *dlp;
-	char *msg = NULL;
-	int i;
+	char *msg;
 
-	/* minimal requirements for archetypal disk label */
-	if (lp->d_secsize < DEV_BSIZE)
-		lp->d_secsize = DEV_BSIZE;
-	if (DL_GETDSIZE(lp) == 0)
-		DL_SETDSIZE(lp, MAXDISKSIZE);
-	if (lp->d_secpercyl == 0) {
-		msg = "invalid geometry";
-		goto done;
-	}
-	lp->d_npartitions = RAW_PART + 1;
-	for (i = 0; i < RAW_PART; i++) {
-		DL_SETPSIZE(&lp->d_partitions[i], 0);
-		DL_SETPOFFSET(&lp->d_partitions[i], 0);
-	}
-	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
-		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-	lp->d_version = 1;
-	lp->d_bbsize = 8192;
-	lp->d_sbsize = 64 * 1024;
-
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
+	if ((msg = initdisklabel(lp)))
 		goto done;
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+
+	if (spoofonly)
+		goto done;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
@@ -101,26 +79,24 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
-	} else {
-		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			msg = "no disk label";
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-		    dkcksum(dlp) != 0)
-			msg = "disk label corrupted";
-		else {
-			DL_SETDSIZE(dlp, DL_GETDSIZE(lp));
-			*lp = *dlp;
-		}
+		goto done;
 	}
 
+	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	if (msg == NULL)
+		goto done;
+
 #if defined(CD9660)
-	if (msg && iso_disklabelspoof(dev, strat, lp) == 0)
+	if (iso_disklabelspoof(dev, strat, lp) == 0) {
 		msg = NULL;
+		goto done;
+	}
 #endif
 #if defined(UDF)
-	if (msg && udf_disklabelspoof(dev, strat, lp) == 0)
+	if (udf_disklabelspoof(dev, strat, lp) == 0) {
 		msg = NULL;
+		goto done;
+	}
 #endif
 
 done:
@@ -128,7 +104,6 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	disklabeltokernlabel(lp);
 	return (msg);
 }
 
@@ -145,9 +120,11 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	int error = 0;
 
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
+	bp->b_dev = dev;
+
+	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -155,7 +132,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
-	bcopy(lp, dlp, sizeof(struct disklabel));
+	*dlp = *lp;
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

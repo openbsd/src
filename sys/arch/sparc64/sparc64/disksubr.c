@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.42 2007/06/14 03:41:22 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.43 2007/06/17 00:27:29 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -32,21 +32,15 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/ioccom.h>
-#include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-#include <machine/cpu.h>
-#include <machine/autoconf.h>
 #include <dev/sun/disklabel.h>
-
-#include <dev/sbus/sbusvar.h>
 
 #include "cd.h"
 
-static	char *disklabel_sun_to_bsd(char *, struct disklabel *);
-static	int disklabel_bsd_to_sun(struct disklabel *, char *);
+static	char *disklabel_sun_to_bsd(struct sun_disklabel *, struct disklabel *);
+static	int disklabel_bsd_to_sun(struct disklabel *, struct sun_disklabel *);
 static __inline u_int sun_extended_sum(struct sun_disklabel *, void *);
 
 #if NCD > 0
@@ -67,39 +61,21 @@ extern void cdstrategy(struct buf *);
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *clp, int spoofonly)
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
-	struct buf *bp = NULL;
-	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	char *msg = NULL;
-	int error, i;
+	struct buf *bp = NULL;
+	char *msg;
 
-	/* minimal requirements for archetypal disk label */
-	if (lp->d_secsize < DEV_BSIZE)
-		lp->d_secsize = DEV_BSIZE;
-	if (DL_GETDSIZE(lp) == 0)
-		DL_SETDSIZE(lp, MAXDISKSIZE);
-	if (lp->d_secpercyl == 0) {
-		msg = "invalid geometry";
-		goto done;
-	}
-	lp->d_npartitions = RAW_PART+1;
-	for (i = 0; i < RAW_PART; i++) {
-		DL_SETPSIZE(&lp->d_partitions[i], 0);
-		DL_SETPOFFSET(&lp->d_partitions[i], 0);
-	}
-	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
-		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-	lp->d_version = 1;
-	lp->d_bbsize = 8192;
-	lp->d_sbsize = 64*1024;		/* XXX ? */
-
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
+	if ((msg = initdisklabel(lp)))
 		goto done;
 
+	/*
+	 * On sparc64 we check for a CD label first, because our
+	 * CD install media contains both sparc & sparc64 labels.
+	 * We want the sparc64 machine to find the "CD label", not
+	 * the SunOS label, for loading it's kernel.
+	 */
 #if NCD > 0
 	if (strat == cdstrategy) {
 #if defined(CD9660)
@@ -117,47 +93,39 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 #endif /* NCD > 0 */
 
-	/* obtain buffer to probe drive with */
+	/* obtain buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-
-	/* next, dig out disk label */
 	bp->b_dev = dev;
+
+	if (spoofonly)
+		goto doslabel;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
-	error = biowait(bp);
-	if (error == 0) {
-		/* Save the whole block in case it has info we need. */
-		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
-	}
-	if (error) {
+	if (biowait(bp)) {
 		msg = "disk label read error";
 		goto done;
 	}
 
-	slp = (struct sun_disklabel *)clp->cd_block;
+	slp = (struct sun_disklabel *)bp->b_data;
 	if (slp->sl_magic == SUN_DKMAGIC) {
-		msg = disklabel_sun_to_bsd(clp->cd_block, lp);
+		msg = disklabel_sun_to_bsd(slp, lp);
 		goto done;
 	}
 
-	/* Check for a native disk label (PROM can not boot it). */
-	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-	if (dlp->d_magic == DISKMAGIC) {
-		if (dkcksum(dlp)) {
-			msg = "disk label corrupted";
-			goto done;
-		}
-		DL_SETDSIZE(dlp, DL_GETDSIZE(lp));
-		*lp = *dlp;	/* struct assignment */
-		msg = NULL;
+	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	if (msg == NULL)
 		goto done;
-	}
 
+doslabel:
+	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	if (msg == NULL)
+		goto done;
+
+	/* A CD9660/UDF label may be on a non-CD drive, so recheck */
 #if defined(CD9660)
 	if (iso_disklabelspoof(dev, strat, lp) == 0) {
 		msg = NULL;
@@ -170,39 +138,34 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 #endif
-	bzero(clp->cd_block, sizeof(clp->cd_block));
-	msg = "no disk label";
 
 done:
 	if (bp) {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	disklabeltokernlabel(lp);
 	return (msg);
 }
 
 /*
  * Write disk label back to device after modification.
- * Current label is already in clp->cd_block[]
  */
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *clp)
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp = NULL;
 	int error;
 
-	error = disklabel_bsd_to_sun(lp, clp->cd_block);
+	/* obtain buffer and initialize it */
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
+
+	error = disklabel_bsd_to_sun(lp, (struct sun_disklabel *)bp->b_data);
 	if (error)
 		goto done;
 
-	/* Get a buffer and copy the new label into it. */
-	bp = geteblk((int)lp->d_secsize);
-	bcopy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
-
 	/* Write out the updated label. */
-	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
@@ -271,20 +234,16 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
  * The BSD label is cleared out before this is called.
  */
 static char *
-disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
+disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 {
-	struct sun_disklabel *sl;
 	struct partition *npp;
 	struct sun_dkpart *spp;
 	int i, secpercyl;
-	u_short cksum, *sp1, *sp2;
-
-	sl = (struct sun_disklabel *)cp;
+	u_short cksum = 0, *sp1, *sp2;
 
 	/* Verify the XOR check. */
 	sp1 = (u_short *)sl;
 	sp2 = (u_short *)(sl + 1);
-	cksum = 0;
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
@@ -293,6 +252,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
+	lp->d_flags = D_VENDOR;
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
 	lp->d_secsize = 512;
@@ -304,7 +264,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	lp->d_secpercyl = secpercyl;
 	if (DL_GETDSIZE(lp) == 0)
 		DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
-	lp->d_version = 1;	/* 48 bit addressing */
+	lp->d_version = 1;
 
 	lp->d_sparespercyl = sl->sl_sparespercyl;
 	lp->d_acylinders = sl->sl_acylinders;
@@ -395,9 +355,8 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
  * Returns zero or error code.
  */
 static int
-disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
+disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)
 {
-	struct sun_disklabel *sl;
 	struct partition *npp;
 	struct sun_dkpart *spp;
 	int i, secpercyl;
@@ -406,8 +365,6 @@ disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 	/* Enforce preconditions */
 	if (lp->d_secsize != 512 || lp->d_nsectors == 0 || lp->d_ntracks == 0)
 		return (EINVAL);
-
-	sl = (struct sun_disklabel *)cp;
 
 	/* Format conversion. */
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.57 2007/06/14 03:37:23 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.58 2007/06/17 00:27:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -34,8 +34,8 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-void bsdtocpulabel(struct disklabel *, struct cpu_disklabel *);
-void cputobsdlabel(struct disklabel *, struct cpu_disklabel *);
+void bsdtocpulabel(struct disklabel *, struct mvmedisklabel *);
+void cputobsdlabel(struct disklabel *, struct mvmedisklabel *);
 
 /*
  * Attempt to read a disk label from a device
@@ -51,50 +51,42 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
 	struct buf *bp = NULL;
-	char *msg = NULL;
-	int error, i;
+	struct mvmedisklabel *mlp;
+	int error;
+	char *msg;
 
-	/* minimal requirements for archetypal disk label */
-	if (lp->d_secsize < DEV_BSIZE)
-		lp->d_secsize = DEV_BSIZE;
-	if (DL_GETDSIZE(lp) == 0)
-		DL_SETDSIZE(lp, MAXDISKSIZE);
-	if (lp->d_secpercyl == 0) {
-		msg = "invalid geometry";
-		goto done;
-	}
-	lp->d_npartitions = RAW_PART + 1;
-	for (i = 0; i < RAW_PART; i++) {
-		DL_SETPSIZE(&lp->d_partitions[i], 0);
-		DL_SETPOFFSET(&lp->d_partitions[i], 0);
-	}
-	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
-		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
-	lp->d_version = 1;
-
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
+	if ((msg = initdisklabel(lp)))
 		goto done;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		goto done;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
-
 	error = biowait(bp);
-	if (error == 0)
-		bcopy(bp->b_data, osdep, sizeof (struct cpu_disklabel));
-
 	if (error) {
 		msg = "disk label read error";
 		goto done;
 	}
+
+	mlp = (struct mvmedisklabel *)bp->b_data;
+	if (mlp->magic1 != DISKMAGIC || mlp->magic2 != DISKMAGIC) {
+		msg = "no disk label";
+		goto done;
+	}
+
+	cputobsdlabel(lp, mlp);
+	if (dkcksum(lp) == 0)
+		goto done;
+	msg = "disk label corrupted";
 
 #if defined(CD9660)
 	if (iso_disklabelspoof(dev, strat, lp) == 0) {
@@ -109,24 +101,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 #endif
 
-	if (osdep->magic1 != DISKMAGIC || osdep->magic2 != DISKMAGIC) {
-		msg = "no disk label";
-		goto done;
-	}
-
-	cputobsdlabel(lp, osdep);
-
-	if (dkcksum(lp) != 0) {
-		msg = "disk label corrupted";
-		goto done;
-	}
-
 done:
 	if (bp) {
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	disklabeltokernlabel(lp);
 	return (msg);
 }
 
@@ -145,36 +124,18 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_dev = dev;
 
 	bp->b_blkno = LABELSECTOR;
+	bp->b_cylinder = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
-
-	if ((error = biowait(bp)) != 0) {
-		/* nothing */
-	} else {
-		bcopy(bp->b_data, osdep, sizeof(struct cpu_disklabel));
-	}
-
-	if (error)
+	if ((error = biowait(bp)) != 0)
 		goto done;
 
-	bsdtocpulabel(lp, osdep);
+	bsdtocpulabel(lp, (struct mvmedisklabel *)bp->b_data);
 
-	if (lp->d_magic == DISKMAGIC && lp->d_magic2 == DISKMAGIC &&
-	    dkcksum(lp) == 0) {
-		bcopy(osdep, bp->b_data, sizeof(struct cpu_disklabel));
-
-		/* request no partition relocation by driver on I/O operations */
-		bp->b_dev = dev;
-		bp->b_blkno = 0; /* contained in block 0 */
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_WRITE;
-		bp->b_cylinder = 0; /* contained in block 0 */
-		(*strat)(bp);
-
-		error = biowait(bp);
-	}
+	bp->b_flags = B_BUSY | B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
 
 done:
 	if (bp) {
@@ -185,7 +146,7 @@ done:
 }
 
 void
-bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp)
+bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 {
 	char *tmot = "MOTOROLA", *id = "M68K", *mot;
 	int i;
@@ -250,7 +211,7 @@ bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp)
 }
 
 void
-cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
+cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp)
 {
 	int i;
 
@@ -301,7 +262,6 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 		lp->d_spare[i] = clp->spare[i];
 
 	lp->d_magic2 = clp->magic2;
-	lp->d_checksum = 0;
 	lp->d_npartitions = clp->partitions;
 	lp->d_bbsize = clp->bbsize;
 	lp->d_sbsize = clp->sbsize;
@@ -309,10 +269,19 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 	bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
 	bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) * 12);
 
-	if (clp->version == 2)
-		lp->d_version = 1;
-	else
-		lp->d_version = 0;
+	if (clp->version < 2) {
+		struct __partitionv0 *v0pp = (struct __partitionv0 *)lp->d_partitions;
+		struct partition *pp = lp->d_partitions;
 
+		for (i = 0; i < lp->d_npartitions; i++, pp++, v0pp++) {
+			pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(v0pp->
+			    p_fsize, v0pp->p_frag);
+			pp->p_offseth = 0;
+			pp->p_sizeh = 0;
+		}
+	}
+
+	lp->d_version = 1;
+	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 }

@@ -1,5 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.6 2002/04/18 22:12:38 miod Exp $	*/
-/*	$NetBSD: disklabel.h,v 1.2 1996/05/05 06:17:38 briggs Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.7 2007/06/17 00:27:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,20 +34,10 @@
 #define _MAC68K_DISKLABEL_H_
 
 #define	LABELSECTOR	0			/* sector containing label */
-#define	MAXPARTITIONS	16			/* number of partitions */
-#define	RAW_PART	2			/* raw partition: xx?c */
-
-/*
- * There is no physical disklabel on disk, since it is constructed from
- * the MacOS partition table.
- * However, to prevent disklabel -r to kill the disk, define a dummy
- * offset outside of vital structures.
- */
 #define	LABELOFFSET	64			/* offset of label in sector */
+#define	MAXPARTITIONS	16			/* number of partitions */
 
-/* Just a dummy */
 struct cpu_disklabel {
-	/* EMPTY */
 };
 
 #endif /* _MAC68K_DISKLABEL_H_ */
