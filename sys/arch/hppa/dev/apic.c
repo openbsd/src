@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.2 2007/05/27 16:36:07 kettenis Exp $	*/
+/*	$OpenBSD: apic.c,v 1.3 2007/06/17 14:51:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -39,6 +39,26 @@
 #define APIC_INT_LINE(x) (((x) & APIC_INT_LINE_MASK) >> APIC_INT_LINE_SHIFT)
 #define APIC_INT_IRQ(x) ((x) & APIC_INT_IRQ_MASK)
 
+/*
+ * Interrupt types match the Intel MP Specification.
+ */
+
+#define MPS_INTPO_DEF		0
+#define MPS_INTPO_ACTHI		1
+#define MPS_INTPO_ACTLO		3
+#define MPS_INTPO_SHIFT		0
+#define MPS_INTPO_MASK		3
+
+#define MPS_INTTR_DEF		0
+#define MPS_INTTR_EDGE		1
+#define MPS_INTTR_LEVEL		3
+#define MPS_INTTR_SHIFT		2
+#define MPS_INTTR_MASK		3
+
+#define MPS_INT(p,t) \
+    ((((p) & MPS_INTPO_MASK) << MPS_INTPO_SHIFT) | \
+     (((t) & MPS_INTTR_MASK) << MPS_INTTR_SHIFT))
+
 struct apic_iv {
 	struct elroy_softc *sc;
 	pci_intr_handle_t ih;
@@ -49,6 +69,8 @@ struct apic_iv {
 
 struct apic_iv *apic_intr_list[CPU_NINTS];
 
+void	apic_get_int_tbl(struct elroy_softc *);
+u_int32_t apic_get_int_ent0(struct elroy_softc *, int);
 #ifdef DEBUG
 void	apic_dump(struct elroy_softc *);
 #endif
@@ -83,6 +105,8 @@ apic_attach(struct elroy_softc *sc)
 	if (sc->sc_irq == NULL)
 		panic("apic_attach: cannot allocate irq table\n");
 	memset(sc->sc_irq, 0, sc->sc_nints * sizeof(int));
+
+	apic_get_int_tbl(sc);
 
 #ifdef DEBUG
 	apic_dump(sc);
@@ -157,8 +181,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 
 	if ((iv = cpu_intr_establish(pri, irq, apic_intr, aiv, name))) {
 		ent0 = (31 - irq) & APIC_ENT0_VEC;
-		ent0 |= APIC_ENT0_LOW;
-		ent0 |= APIC_ENT0_LEV;
+		ent0 |= apic_get_int_ent0(sc, line);
 #if 0
 		if (cold) {
 			sc->sc_imr |= (1 << irq);
@@ -205,12 +228,94 @@ apic_intr(void *v)
 	return (claimed);
 }
 
+/* Maximum number of supported interrupt routing entries. */
+#define MAX_INT_TBL_SZ	8
+
+void
+apic_get_int_tbl(struct elroy_softc *sc)
+{
+	struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
+	struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
+	size_t size;
+
+	/*
+	 * XXX int_tbl should not be allocated on the stack, but we need a
+	 * 1:1 mapping, and malloc doesn't provide that.
+	 */
+
+	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL_SZ,
+	    &int_tbl_sz, 0, 0, 0, 0, 0))
+		return;
+
+	if (int_tbl_sz.num > MAX_INT_TBL_SZ)
+		panic("interrupt routing table too big (%d entries)",
+		    int_tbl_sz.num);
+
+	size = int_tbl_sz.num * sizeof(struct pdc_pat_pci_rt);
+	sc->sc_int_tbl_sz = int_tbl_sz.num;
+	sc->sc_int_tbl = malloc(size, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_int_tbl == NULL)
+		return;
+
+	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL,
+	    &int_tbl_sz, 0, &int_tbl, 0, 0, 0))
+		return;
+
+	memcpy(sc->sc_int_tbl, int_tbl, size);
+}
+
+u_int32_t
+apic_get_int_ent0(struct elroy_softc *sc, int line)
+{
+	int trigger = MPS_INT(MPS_INTPO_DEF, MPS_INTTR_DEF);
+	u_int32_t ent0 = APIC_ENT0_LOW | APIC_ENT0_LEV;
+	int mpspo, mpstr;
+	int i;
+
+	for (i = 0; i < sc->sc_int_tbl_sz; i++) {
+		if (line == sc->sc_int_tbl[i].line &&
+		    sc->sc_hpa == sc->sc_int_tbl[i].addr)
+			trigger = sc->sc_int_tbl[i].trigger;
+	}
+
+	mpspo = (trigger >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK;
+	mpstr = (trigger >> MPS_INTTR_SHIFT) & MPS_INTTR_MASK;
+
+	switch (mpspo) {
+	case MPS_INTPO_DEF:
+		break;
+	case MPS_INTPO_ACTHI:
+		ent0 &= ~APIC_ENT0_LOW;
+		break;
+	case MPS_INTPO_ACTLO:
+		ent0 |= APIC_ENT0_LOW;
+		break;
+	default:
+		panic("unknown MPS interrupt polarity %d", mpspo);
+	}
+
+	switch(mpstr) {
+	case MPS_INTTR_DEF:
+		break;
+	case MPS_INTTR_LEVEL:
+		ent0 |= APIC_ENT0_LEV;
+		break;
+	case MPS_INTTR_EDGE:
+		ent0 &= ~APIC_ENT0_LEV;
+		break;
+	default:
+		panic("unknown MPS interrupt trigger %d", mpstr);
+	}
+
+	return ent0;
+}
+
 #ifdef DEBUG
 void
 apic_dump(struct elroy_softc *sc)
 {
 	struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
-	struct pdc_pat_pci_rt int_tbl[5] PDC_ALIGNMENT;
+	struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
 	int i;
 
 	for (i = 0; i < sc->sc_nints; i++)
@@ -221,11 +326,14 @@ apic_dump(struct elroy_softc *sc)
 	    &int_tbl_sz, 0, 0, 0, 0, 0))
 		printf("pdc_call failed\n");
 	printf("int_tbl_sz=%d\n", int_tbl_sz.num);
-	
+
+	if (int_tbl_sz.num > MAX_INT_TBL_SZ)
+		int_tbl_sz.num = MAX_INT_TBL_SZ;
+
 	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL,
 	    &int_tbl_sz, 0, &int_tbl, 0, 0, 0))
 		printf("pdc_call failed\n");
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < int_tbl_sz.num; i++) {
 		printf("type=%x, len=%d ", int_tbl[i].type, int_tbl[i].len);
 		printf("itype=%d, trigger=%x ", int_tbl[i].itype, int_tbl[i].trigger);			
 		printf("pin=%x, bus=%d ", int_tbl[i].pin, int_tbl[i].bus);			

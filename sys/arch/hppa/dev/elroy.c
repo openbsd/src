@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.2 2007/05/23 18:07:19 kettenis Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.3 2007/06/17 14:51:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1081,6 +1081,7 @@ elroy_attach(struct device *parent, struct device *self, void *aux)
 	const char *p = NULL, *q;
 	int i;
 
+	sc->sc_hpa = ca->ca_hpa;
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_dmat = ca->ca_dmatag;
 	if (bus_space_map(sc->sc_bt, ca->ca_hpa, ca->ca_hpasz, 0, &sc->sc_bh)) {
