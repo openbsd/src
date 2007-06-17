@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.15 2007/06/11 19:41:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.16 2007/06/17 09:02:28 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -116,46 +116,6 @@ struct ieee80211_mnf {
 #define	MNF_SETUP_RESP	1
 #define	MNF_TEARDOWN	2
 
- /*
- * WME/802.11e information element.
- */
-struct ieee80211_ie_wme {
-	u_int8_t	wme_id;		/* IEEE80211_ELEMID_VENDOR */
-	u_int8_t	wme_len;	/* length in bytes */
-	u_int8_t	wme_oui[3];	/* 0x00, 0x50, 0xf2 */
-	u_int8_t	wme_type;	/* OUI type */
-	u_int8_t	wme_subtype;	/* OUI subtype */
-	u_int8_t	wme_version;	/* spec revision */
-	u_int8_t	wme_info;	/* AC info */
-} __packed;
-
-/*
- * WME/802.11e Tspec Element
- */
-struct ieee80211_wme_tspec {
-	u_int8_t	ts_id;
-	u_int8_t	ts_len;
-	u_int8_t	ts_oui[3];
-	u_int8_t	ts_oui_type;
-	u_int8_t	ts_oui_subtype;
-	u_int8_t	ts_version;
-	u_int8_t	ts_tsinfo[3];
-	u_int8_t	ts_nom_msdu[2];
-	u_int8_t	ts_max_msdu[2];
-	u_int8_t	ts_min_svc[4];
-	u_int8_t	ts_max_svc[4];
-	u_int8_t	ts_inactv_intv[4];
-	u_int8_t	ts_susp_intv[4];
-	u_int8_t	ts_start_svc[4];
-	u_int8_t	ts_min_rate[4];
-	u_int8_t	ts_mean_rate[4];
-	u_int8_t	ts_max_burst[4];
-	u_int8_t	ts_min_phy[4];
-	u_int8_t	ts_peak_rate[4];
-	u_int8_t	ts_delay[4];
-	u_int8_t	ts_surplus[2];
-	u_int8_t	ts_medium_time[2];
-} __packed;
 
 #define	IEEE80211_FC0_VERSION_MASK		0x03
 #define	IEEE80211_FC0_VERSION_SHIFT		0
@@ -422,9 +382,12 @@ enum {
 	IEEE80211_ELEMID_TIM			= 5,
 	IEEE80211_ELEMID_IBSSPARMS		= 6,
 	IEEE80211_ELEMID_COUNTRY		= 7,
+	IEEE80211_ELEMID_QBSS_LOAD		= 11,
+	IEEE80211_ELEMID_EDCA_PARAMS		= 12,
 	IEEE80211_ELEMID_CHALLENGE		= 16,
 	/* 17-31 reserved for challenge text extension */
 	IEEE80211_ELEMID_ERP			= 42,
+	IEEE80211_ELEMID_QOS_CAP		= 46,
 	IEEE80211_ELEMID_RSN			= 48,
 	IEEE80211_ELEMID_XRATES			= 50,
 	IEEE80211_ELEMID_TPC			= 150,
