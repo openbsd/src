@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.5 2007/01/12 22:02:35 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.6 2007/06/17 12:07:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Miodrag Vallat.
@@ -316,7 +316,8 @@ sti_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
 #ifdef DIAGNOSTIC
 	if (bar < PCI_MAPREG_START || bar > PCI_MAPREG_PPB_END) {
 		sti_pci_disable_rom(sc);
-		printf("%s: unexpected bar %02x for region %d\n", bar, region);
+		printf("%s: unexpected bar %02x for region %d\n",
+		    sc->sc_dev.dv_xname, bar, region);
 		sti_pci_enable_rom(sc);
 	}
 #endif
@@ -331,7 +332,8 @@ sti_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
 
 	if (rc != 0) {
 		sti_pci_disable_rom(sc);
-		printf("%s: invalid bar %02x for region %d\n", bar, region);
+		printf("%s: invalid bar %02x for region %d\n",
+		    sc->sc_dev.dv_xname, bar, region);
 		sti_pci_enable_rom(sc);
 		return (rc);
 	}
