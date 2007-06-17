@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2007/06/16 17:32:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.45 2007/06/17 00:32:21 deraadt Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -58,7 +58,7 @@ CFLAGS+= -DSEEALSO="\"installboot(8)\""
 
 .if (${MACHINE} == "solbourne") || (${MACHINE} == "sparc") || \
     (${MACHINE} == "sparc64")
-CFLAGS+= -DSEEALSO="\"installboot(8)\"" -DCYLCHECK -DAAT0
+CFLAGS+= -DSEEALSO="\"installboot(8)\"" -DSUN_CYLCHECK -DSUN_AAT0
 .endif
 
 .if (${MACHINE} == "zaurus")

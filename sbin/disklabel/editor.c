@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.121 2007/06/08 20:21:13 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.122 2007/06/17 00:32:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.121 2007/06/08 20:21:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.122 2007/06/17 00:32:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -150,8 +150,13 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 		pp->p_fragblock = pp->p_cpg = 0;
 	}
 
-#ifdef CYLCHECK
-	puts("This platform requires that partition offsets/sizes be on cylinder boundaries.\nPartition offsets/sizes will be rounded to the nearest cylinder automatically.");
+#ifdef SUN_CYLCHECK
+	if (label.d_flags & D_VENDOR) {
+		puts("This platform requires that partition offsets/sizes "
+		    "be on cylinder boundaries.\n"
+		    "Partition offsets/sizes will be rounded to the "
+		    "nearest cylinder automatically.");
+	}
 #endif
 
 	/* Set d_bbsize and d_sbsize as necessary */
@@ -438,12 +443,15 @@ editor_add(struct disklabel *lp, char **mp, u_int64_t *freep, char *p)
 	u_int64_t ui, old_offset, old_size, new_offset, new_size;
 
 	/* XXX - prompt user to steal space from another partition instead */
-#ifdef CYLCHECK
-	if (*freep < lp->d_secpercyl)
-#else
-	if (*freep == 0)
+#ifdef SUN_CYLCHECK
+	if ((lp->d_flags & D_VENDOR) && *freep < lp->d_secpercyl) {
+		fputs("No space left, you need to shrink a partition "
+		    "(need at least one full cylinder)\n",
+		    stderr);
+		return;
+	}
 #endif
-	{
+	if (*freep == 0) {
 		fputs("No space left, you need to shrink a partition\n",
 		    stderr);
 		return;
@@ -1116,7 +1124,9 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 	if ((flags & DO_ROUNDING) && rval != ULLONG_MAX) {
 		/* Round to nearest cylinder unless given in sectors */
 		if (
-#ifndef CYLCHECK
+#ifdef SUN_CYLCHECK
+		    ((lp->d_flags & D_VENDOR) || mult != 1) &&
+#else
 		    mult != 1 &&
 #endif
 		    (rval + offset) % lp->d_secpercyl != 0) {
@@ -1984,7 +1994,7 @@ get_offset(struct disklabel *lp, int partno)
 			    "at sector %llu, you tried to add a partition at %llu."
 			    "  You can use the 'b' command to change the size "
 			    "of the OpenBSD portion.\n", ending_sector, ui);
-#ifdef AAT0
+#ifdef SUN_AAT0
 		else if (partno == 0 && ui != 0)
 			fprintf(stderr, "This architecture requires that "
 			    "partition 'a' start at sector 0.\n");

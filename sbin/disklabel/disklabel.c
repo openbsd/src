@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.113 2007/06/08 19:08:35 otto Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.114 2007/06/17 00:32:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.113 2007/06/08 19:08:35 otto Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.114 2007/06/17 00:32:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1083,6 +1083,8 @@ display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
 		fprintf(f, "flags:");
 		if (lp->d_flags & D_BADSECT)
 			fprintf(f, " badsect");
+		if (lp->d_flags & D_VENDOR)
+			fprintf(f, " vendor");
 		putc('\n', f);
 	}
 	fprintf(f, "bytes/sector: %u\n", lp->d_secsize);
@@ -1656,16 +1658,19 @@ checklabel(struct disklabel *lp)
 		if (DL_GETPSIZE(pp) == 0 && DL_GETPOFFSET(pp) != 0)
 			warnx("warning, partition %c: size 0, but offset %lld",
 			    part, DL_GETPSIZE(pp));
-#ifdef CYLCHECK
-		if (i != RAW_PART && DL_GETPSIZE(pp) % lp->d_secpercyl)
-			warnx("warning, partition %c: size %% cylinder-size != 0",
-			    part);
-		if (i != RAW_PART && DL_GETPOFFSET(pp) % lp->d_secpercyl)
-			warnx("warning, partition %c: offset %% cylinder-size != 0",
-			    part);
+#ifdef SUN_CYLCHECK
+		if (lp->d_flags & D_VENDOR) {
+			if (i != RAW_PART && DL_GETPSIZE(pp) % lp->d_secpercyl)
+				warnx("warning, partition %c: size %% "
+				    "cylinder-size != 0", part);
+			if (i != RAW_PART && DL_GETPOFFSET(pp) % lp->d_secpercyl)
+				warnx("warning, partition %c: offset %% "
+				    "cylinder-size != 0", part);
+		}
 #endif
-#ifdef AAT0
-		if (i == 0 && DL_GETPSIZE(pp) != 0 && DL_GETPOFFSET(pp) != 0) {
+#ifdef SUN_AAT0
+		if ((lp->d_flags & D_VENDOR) &&
+		    i == 0 && DL_GETPSIZE(pp) != 0 && DL_GETPOFFSET(pp) != 0) {
 			warnx("this architecture requires partition 'a' to "
 			    "start at sector 0");
 			errors++;
