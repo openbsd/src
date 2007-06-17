@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.140 2007/06/17 10:44:01 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.141 2007/06/17 12:09:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1463,18 +1463,53 @@ our @ISA=qw(OpenBSD::PackingElement::Unique);
 sub keyword() { 'digital-signature' }
 __PACKAGE__->register_with_factory;
 
+# parse to and from a subset of iso8601
+#
+# allows us to represent timestamps in a human readable format without
+# any ambiguity
+sub time_to_iso8601
+{
+	my $time = shift;
+	my ($sec, $min, $hour, $day, $month, $year, @rest) = gmtime($time);
+	return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", 
+	    $year+1900, $month+1, $day, $hour, $min, $sec);
+}
+
+sub iso8601_to_time
+{
+	if ($_[0] =~ m/^(\d{4})\-(\d{2})\-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})Z$/) {
+		my ($year, $month, $day, $hour, $min, $sec) =
+			($1 - 1900, $2-1, $3, $4, $5, $6);
+		require POSIX;
+		my $oldtz = $ENV{TZ};
+		$ENV{TZ} = 'UTC';
+		my $t = POSIX::mktime($sec, $min, $hour, $day, $month, $year);
+		if (defined $oldtz) {
+			$ENV{TZ} = $oldtz;
+		} else {
+			delete $ENV{TZ};
+		}
+		return $t;
+	} else {
+		die "Incorrect ISO8601 timestamp: $_[0]";
+	}
+}
+
 sub new
 {
 	my ($class, $args) = @_;
-	my ($key, $timestamp, $signature) = split(/\:/, $args);
+	my ($key, $tsbase, $tsmin, $tssec, $signature) = split(/\:/, $args);
+	my $timestamp = iso8601_to_time("$tsbase:$tsmin:$tssec");
 	bless { key => $key, timestamp => $timestamp, b64sig => $signature },
 		$class;
 }
 
+
 sub stringize
 {
 	my $self = shift;
-	return join(':', $self->{key}, $self->{timestamp}, $self->{b64sig});
+	return join(':', $self->{key}, time_to_iso8601($self->{timestamp}), 
+	    $self->{b64sig});
 }
 
 sub write_no_sig
