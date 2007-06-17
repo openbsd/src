@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.22 2007/06/16 13:17:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.23 2007/06/17 09:09:35 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -163,6 +163,7 @@ struct ieee80211com {
 	void			(*ic_newassoc)(struct ieee80211com *,
 				    struct ieee80211_node *, int);
 	void			(*ic_updateslot)(struct ieee80211com *);
+	void			(*ic_updateedca)(struct ieee80211com *);
 	int			(*ic_set_tim)(struct ieee80211com *, int, int);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];
@@ -253,6 +254,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define IEEE80211_F_TXPOW_AUTO	0x00010000	/* TX Power: undefined */
 #define	IEEE80211_F_SHSLOT	0x00020000	/* STATUS: short slot time */
 #define	IEEE80211_F_SHPREAMBLE	0x00040000	/* STATUS: short preamble */
+#define IEEE80211_F_QOS		0x00080000	/* CONF: QoS enabled */
 #define	IEEE80211_F_USEPROT	0x00100000	/* STATUS: protection enabled */
 #define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
 
@@ -268,6 +270,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_C_SHPREAMBLE	0x00000100	/* CAPABILITY: short preamble */
 #define	IEEE80211_C_MONITOR	0x00000200	/* CAPABILITY: monitor mode */
 #define IEEE80211_C_SCANALL	0x00000400	/* CAPABILITY: scan all chan */
+#define IEEE80211_C_QOS		0x00000800	/* CAPABILITY: QoS */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
