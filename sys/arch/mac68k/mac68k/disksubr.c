@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.48 2007/06/17 00:27:28 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.49 2007/06/17 15:30:03 martin Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ whichType(struct partmapentry *part)
 	    strcmp(PART_DRIVER43_TYPE, (char *)part->pmPartType) == 0 ||
 	    strcmp(PART_DRIVERATA_TYPE, (char *)part->pmPartType) == 0 ||
 	    strcmp(PART_FWB_COMPONENT_TYPE, (char *)part->pmPartType) == 0 ||
-	    strcmp(PART_PARTMAP_TYPE, (char *)part->pmPartType) == 0 ||
+	    strcmp(PART_PARTMAP_TYPE, (char *)part->pmPartType) == 0)
 		return 0;
 	if (strcmp(PART_UNIX_TYPE, (char *)part->pmPartType) == 0) {
 		/* unix part, swap, root, usr */
