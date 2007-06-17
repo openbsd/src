@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.59 2007/06/17 00:27:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.60 2007/06/17 10:29:10 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -53,9 +53,6 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *),
     int cyl, int sec, int off, struct disklabel *lp,
     int spoofonly)
 {
-	struct disklabel *dlp;
-	u_int16_t cksum;
-
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
 		return (NULL);
@@ -233,9 +230,9 @@ finished:
 	return checkdisklabel(bp->b_data + LABELOFFSET, lp);
 
 done:
-	if (dbp) {
-		dbp->b_flags |= B_INVAL;
-		brelse(dbp);
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
 	}
 	return (msg);
 }
@@ -248,18 +245,18 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	int error, partoff = -1, cyl = 0;
-	char *msg = "no disk label";
 	struct buf *bp = NULL;
+	struct disklabel *dlp;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
 	/* find where the disklabel label should be placed */
-	if (readsgilabel(bp, strat, &dl, &cdl, &partoff, &cyl, 1) == NULL)
+	if (readsgilabel(bp, strat, lp, osdep, &partoff, &cyl, 1) == NULL)
 		goto writeit;
 
-	if (readdoslabel(bp, strat, &dl, &cdl, &partoff, &cyl, 1) == NULL)
+	if (readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) == NULL)
 		goto writeit;
 
 	error = EIO;
