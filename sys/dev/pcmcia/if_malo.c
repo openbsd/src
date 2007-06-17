@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.17 2007/06/17 10:18:28 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.18 2007/06/17 15:11:23 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1003,7 +1003,6 @@ cmalo_cmd_set_reset(struct malo_softc *sc)
 int
 cmalo_cmd_set_scan(struct malo_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_scan *body;
 	struct malo_cmd_tlv_ssid *body_ssid;
@@ -1035,17 +1034,16 @@ cmalo_cmd_set_scan(struct malo_softc *sc)
 		body_chanlist->data[i].radiotype = 0x00;
 		body_chanlist->data[i].channumber = (i + 1);
 		body_chanlist->data[i].scantype = 0x00; /* active */
-		body_chanlist->data[i].minscantime = htole16(6);
+		body_chanlist->data[i].minscantime = htole16(0);
 		body_chanlist->data[i].maxscantime = htole16(100);
 	}
 	psize += sizeof(*body_chanlist);
 
 	body_rates = sc->sc_cmd + psize;
 	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
-	body_rates->size =
-	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
-	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rates->data,
-	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	body_rates->size = htole16(ieee80211_std_rateset_11g.rs_nrates);
+	bcopy(ieee80211_std_rateset_11g.rs_rates, body_rates->data,
+	    ieee80211_std_rateset_11g.rs_nrates);
 	psize += (sizeof(*body_rates) - 1) + body_rates->size;
 
 	body_numprobes = sc->sc_cmd + psize;
@@ -1306,7 +1304,6 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 int
 cmalo_cmd_set_assoc(struct malo_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_assoc *body;
 	struct malo_cmd_tlv_ssid *body_ssid;
@@ -1346,10 +1343,9 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 
 	body_rates = sc->sc_cmd + psize;
 	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
-	body_rates->size =
-	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
-	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rates->data,
-	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	body_rates->size = htole16(ieee80211_std_rateset_11g.rs_nrates);
+	bcopy(ieee80211_std_rateset_11g.rs_rates, body_rates->data,
+	    ieee80211_std_rateset_11g.rs_nrates);
 	psize += (sizeof(*body_rates) - 1) + body_rates->size;
 
 	hdr->size = htole16(psize - sizeof(*hdr));
