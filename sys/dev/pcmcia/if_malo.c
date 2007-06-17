@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.18 2007/06/17 15:11:23 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.19 2007/06/17 20:00:30 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -100,6 +100,8 @@ int	cmalo_cmd_set_txpower(struct malo_softc *, int16_t);
 int	cmalo_cmd_set_antenna(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_macctrl(struct malo_softc *);
 int	cmalo_cmd_set_assoc(struct malo_softc *);
+int	cmalo_cmd_set_bgscan_config(struct malo_softc *);
+int	cmalo_cmd_set_bgscan_query(struct malo_softc *);
 int	cmalo_cmd_set_rate(struct malo_softc *);
 int	cmalo_cmd_request(struct malo_softc *, uint16_t, int);
 int	cmalo_cmd_response(struct malo_softc *);
@@ -1361,6 +1363,67 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 }
 
 int
+cmalo_cmd_set_bgscan_config(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_bgscan_config *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_BGSCAN_CONFIG);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_bgscan_config *)(hdr + 1);
+
+	body->action = htole16(1);
+	body->enable = 1;
+	body->bsstype = 0x03;
+	body->chperscan = 12;
+	body->scanintvl = htole32(100);
+	body->maxscanres = htole16(12);
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_bgscan_query(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_bgscan_query *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_BGSCAN_QUERY);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_bgscan_query *)(hdr + 1);
+
+	body->flush = 0;
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
 cmalo_cmd_set_rate(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
@@ -1512,6 +1575,16 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_MACCTRL:
 		/* do nothing */
 		DPRINTF(1, "%s: got macctrl cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_BGSCAN_CONFIG:
+		/* do nothing */
+		DPRINTF(1, "%s: got bgscan config cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_BGSCAN_QUERY:
+		/* do nothing */
+		DPRINTF(1, "%s: got bgscan query cmd response\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case MALO_CMD_RATE:

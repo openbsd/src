@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.11 2007/06/17 10:18:28 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.12 2007/06/17 20:00:30 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -138,6 +138,23 @@ struct malo_cmd_body_assoc {
 	/* malo_cmd_tlv_phy */
 	/* malo_cmd_tlv_cf */
 	/* malo_cmd_tlv_rate */
+} __packed;
+
+struct malo_cmd_body_bgscan_config {
+	uint16_t	action;
+	uint8_t		enable;
+	uint8_t		bsstype;
+	uint8_t		chperscan;
+	uint8_t		discard;
+	uint16_t	reserved;
+	uint32_t	scanintvl;
+	uint32_t	storecond;
+	uint32_t	reportcond;
+	uint16_t	maxscanres;
+} __packed;
+
+struct malo_cmd_body_bgscan_query {
+	uint8_t		flush;
 } __packed;
 
 struct malo_cmd_body_rate {
