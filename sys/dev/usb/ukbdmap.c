@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.26 2006/12/05 21:28:42 otto Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.27 2007/06/17 07:53:11 mbalmer Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -56,7 +56,6 @@
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include <dev/usb/usb_port.h>
 
 #define KC(n) KS_KEYCODE(n)
 

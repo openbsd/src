@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.6 2005/05/23 21:33:03 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.7 2007/06/17 07:53:11 mbalmer Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.6 2005/05/23 21:33:03 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.7 2007/06/17 07:53:11 mbalmer Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -205,10 +205,8 @@ $1 == "#include" {
 	if (ignore)
 		next
 	if ($2 == "<dev/pckbc/wskbdmap_mfii.h>")
-		print "#include <dev/usb/usb_port.h>"
-	else
-		printf("#include %s\n", $2)
-
+		next
+	printf("#include %s\n", $2)
 	next
 }
 $1 == "#define" || $1 == "#undef" {

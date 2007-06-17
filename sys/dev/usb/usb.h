@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.27 2007/06/09 11:06:53 mbalmer Exp $ */
+/*	$OpenBSD: usb.h,v 1.28 2007/06/17 07:53:11 mbalmer Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -47,10 +47,6 @@
 #include <sys/time.h>
 
 #include <sys/ioctl.h>
-
-#if defined(_KERNEL)
-#include <dev/usb/usb_port.h>
-#endif /* _KERNEL */
 
 #define USB_STACK_VERSION 2
 
