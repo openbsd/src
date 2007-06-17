@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.138 2007/06/16 12:16:42 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.139 2007/06/17 09:50:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -109,6 +109,12 @@ sub write
 	} else {
 		print $fh "$s\n";
 	}
+}
+
+sub write_no_sig
+{
+	my ($self, $fh) = @_;
+	$self->write($fh);
 }
 
 # needed for comment checking
@@ -1444,6 +1450,32 @@ sub check
 	return;
 }
 
+package OpenBSD::PackingElement::DigitalSignature;
+our @ISA=qw(OpenBSD::PackingElement::Unique);
+sub keyword() { 'digital-signature' }
+__PACKAGE__->register_with_factory;
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($key, $timestamp, $signature) = split(/\:/, $args);
+	bless { key => $key, timestamp => $timestamp, b64sig => $signature },
+		$class;
+}
+
+sub stringize
+{
+	my $self = shift;
+	return join(':', $self->{key}, $self->{timestamp}, $self->{b64sig});
+}
+
+sub write_no_sig
+{
+	my ($self, $fh) = @_;
+	print $fh "\@", $self->keyword, " ", $self->{key}, ":", 
+	    $self->{timestamp}, "\n";
+}
+
 package OpenBSD::PackingElement::Old;
 our @ISA=qw(OpenBSD::PackingElement);
 
@@ -1481,7 +1513,7 @@ sub register_old_keyword
 }
 
 for my $k (qw(src display mtree ignore_inst dirrm pkgcfl pkgdep newdepend 
-    libdepend digitalsignature ignore)) {
+    libdepend ignore)) {
 	__PACKAGE__->register_old_keyword($k);
 }
 
