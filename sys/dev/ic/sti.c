@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.54 2007/06/17 13:57:44 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.55 2007/06/17 13:59:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -373,24 +373,23 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 			STI_ENABLE_ROM(scr->scr_main);
 #endif
 
-			/* rom has already been mapped */
-			if (p != cc->regions) {
-				if (bus_space_map(memt, *p,
-				    r.length << PGSHIFT,
-				    r.cache ? BUS_SPACE_MAP_CACHEABLE : 0,
-				    &fbh)) {
+			/* skip rom if it has already been mapped */
+			if (p == cc->regions && romh == bases[0])
+				continue;
+
+			if (bus_space_map(memt, *p, r.length << PGSHIFT,
+			    r.cache ? BUS_SPACE_MAP_CACHEABLE : 0, &fbh)) {
 #ifdef STIDEBUG
-					STI_DISABLE_ROM(scr->scr_main);
-					printf("already mapped region\n");
-					STI_ENABLE_ROM(scr->scr_main);
+				STI_DISABLE_ROM(scr->scr_main);
+				printf("already mapped region\n");
+				STI_ENABLE_ROM(scr->scr_main);
 #endif
-				} else {
-					if (p - cc->regions == 1) {
-						scr->fbaddr = *p;
-						scr->fblen = r.length << PGSHIFT;
-					}
-					*p = fbh;
+			} else {
+				if (p - cc->regions == 1) {
+					scr->fbaddr = *p;
+					scr->fblen = r.length << PGSHIFT;
 				}
+				*p = fbh;
 			}
 		}
 
