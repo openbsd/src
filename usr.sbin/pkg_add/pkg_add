@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.324 2007/06/16 11:50:48 espie Exp $
+# $OpenBSD: pkg_add,v 1.325 2007/06/17 10:44:01 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -139,6 +139,30 @@ sub complete
 		delete $set->handle->{plist};
 		$set->handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 	}
+}
+
+sub reorder_old
+{
+	my ($set, $state) = @_;
+	# no need to sort things if there is one package to replace
+	# return if $set->older <= 1;
+
+	my $resolved;
+	my @l = ();
+	my %todo = map {($_->{pkgname}, $_)} $set->older;
+	do {
+		$resolved = 0;
+BIGLOOP: 	while (my ($pkg, $h) = each %todo) {
+			for my $name (OpenBSD::RequiredBy->new($pkg)->list) {
+				next BIGLOOP if defined $todo{$name};
+			}
+			push(@l, $h);
+			delete $todo{$pkg};
+			$resolved++;
+		}
+	} while ($resolved);
+	push(@l, values %todo);
+	$set->{older} = \@l;
 }
 
 sub can_install
