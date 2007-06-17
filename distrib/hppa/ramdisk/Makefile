@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2007/04/13 17:34:40 millert Exp $
+#	$OpenBSD: Makefile,v 1.11 2007/06/17 00:28:21 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -82,7 +82,7 @@ ${RDSETROOT}: ${.CURDIR}/../../common/${RDSETROOT}.c
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${RAWLABEL} ${VND} ${DISKTYPE}
+	disklabel -w ${VND} ${DISKTYPE}
 	newfs ${NEWFSOPTS_RD} ${VND_RDEV} || ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u

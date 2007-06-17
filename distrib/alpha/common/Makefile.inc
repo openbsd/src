@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.17 2007/04/16 03:04:05 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.18 2007/06/17 00:28:21 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -43,7 +43,7 @@ NEWFSARGS_FD=	-i 524288 -c ${FLOPPYBLKS}
 ${FLOPPY}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} ${FLOPPYTYPE}
+	disklabel -w ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	dd if=${DESTDIR}/${BOOT} of=${MOUNT_POINT}/boot bs=512
@@ -87,7 +87,7 @@ elfrdsetroot: ${TOP}/../common/elfrdsetroot.c
 do_prep:
 	dd if=/dev/zero of=${REALIMAGE} count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} ${DISKTYPE}
+	disklabel -w ${VND} ${DISKTYPE}
 	
 do_mount:
 	newfs ${NEWFSARGS} ${NEWFSARGS_RD} -s ${NBLKS} ${VND_RDEV}

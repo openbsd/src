@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.7 2002/04/30 09:18:20 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2007/06/17 00:28:21 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
@@ -14,7 +14,6 @@ MOUNT_POINT?=	${TOP}/${BASE}/fs
 
 CRUNCHCONF?=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${UTILS}/mtree.conf
-RAWLABEL=	
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf

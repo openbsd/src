@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2007/06/08 02:30:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2007/06/17 00:28:21 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -42,7 +42,6 @@ INSTALLBOOT?=	installboot
 BOOT?=		${DESTDIR}/usr/mdec/boot
 BOOTIN?=	${MOUNT_POINT}/boot
 BOOTXX?=	${DESTDIR}/usr/mdec/bootxx
-RAWLABEL?=	-r
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192
@@ -65,7 +64,7 @@ all:	bsd.rd
 ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${RAWLABEL} ${VND} ${FLOPPYTYPE}
+	disklabel -w ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSOPTS_FD} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${MOUNT_POINT}/
@@ -103,7 +102,7 @@ ${RDSETROOT}: ${.CURDIR}/../common/${RDSETROOT}.c
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${RAWLABEL} ${VND} ${DISKTYPE}
+	disklabel -w ${VND} ${DISKTYPE}
 	newfs ${NEWFSOPTS_RD} ${VND_RDEV} || ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u

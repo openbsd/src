@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2007/04/13 17:34:39 millert Exp $
+#	$OpenBSD: Makefile,v 1.11 2007/06/17 00:28:20 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,7 +63,7 @@ elfrdsetroot: ${TOP}/../common/elfrdsetroot.c
 do_prep:
 	dd if=/dev/zero of=${REALIMAGE} count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} ${DISKTYPE}
+	disklabel -w ${VND} ${DISKTYPE}
 	
 do_mount:
 	newfs ${NEWFSARGS} ${NEWFSARGS_RD} -s ${NBLKS} ${VND_RDEV}

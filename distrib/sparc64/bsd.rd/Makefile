@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2007/04/13 17:34:40 millert Exp $
+#	$OpenBSD: Makefile,v 1.15 2007/06/17 00:28:21 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -67,7 +67,7 @@ elfrdsetroot: ${TOP}/../common/elfrdsetroot.c
 do_prep:
 	dd if=/dev/zero of=${REALIMAGE} count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} ${DISKTYPE}
+	disklabel -w ${VND} ${DISKTYPE}
 	
 do_mount:
 	newfs ${NEWFSARGS} ${NEWFSARGS_RD} ${VND_RDEV}
@@ -87,7 +87,7 @@ unconfig:
 rd_setup: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} ${DISKTYPE}
+	disklabel -w ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
