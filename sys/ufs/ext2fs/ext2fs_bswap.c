@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bswap.c,v 1.3 2005/10/06 17:43:14 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_bswap.c,v 1.4 2007/06/17 20:15:25 jasper Exp $	*/
 /*	$NetBSD: ext2fs_bswap.c,v 1.6 2000/07/24 00:23:10 mycroft Exp $	*/
 
 /*
@@ -47,8 +47,7 @@
 /* These functions are only needed if native byte order is not big endian */
 #if BYTE_ORDER == BIG_ENDIAN
 void
-e2fs_sb_bswap(old, new)
-	struct ext2fs *old, *new;
+e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 {
 	/* preserve unused fields */
 	memcpy(new, old, sizeof(struct ext2fs));
@@ -87,9 +86,7 @@ e2fs_sb_bswap(old, new)
 }
 
 void
-e2fs_cg_bswap(old, new, size)
-	struct  ext2_gd *old, *new;
-	int size;
+e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
 {
 	int i;
 	for (i=0; i < (size / sizeof(struct  ext2_gd)); i++) {
@@ -103,8 +100,7 @@ e2fs_cg_bswap(old, new, size)
 }
 
 void
-e2fs_i_bswap(old, new)
-	struct ext2fs_dinode *old, *new;
+e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 {
 	new->e2di_mode		=	swap16(old->e2di_mode);
 	new->e2di_uid_low	=	swap16(old->e2di_uid_low);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.37 2007/06/02 00:45:50 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.38 2007/06/17 20:15:25 jasper Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -105,8 +105,7 @@ ext2fs_setsize(struct inode *ip, u_int64_t size)
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
-ext2fs_inactive(v)
-	void *v;
+ext2fs_inactive(void *v)
 {   
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -431,12 +430,7 @@ done:
  * NB: triple indirect blocks are untested.
  */
 static int
-ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
-	struct inode *ip;
-	int32_t lbn, lastbn;
-	int32_t dbn;
-	int level;
-	long *countp;
+ext2fs_indirtrunc(struct inode *ip, int32_t lbn, int32_t dbn, int32_t lastbn, int level, long *countp)
 {
 	int i;
 	struct buf *bp;

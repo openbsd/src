@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.22 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.23 2007/06/17 20:15:25 jasper Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -86,9 +86,7 @@ static int	ext2fs_dirbadentry(struct vnode *dp,
  * have worked w/o changes (except for the difference in DIRBLKSIZ)
  */
 static void
-ext2fs_dirconv2ffs( e2dir, ffsdir)
-	struct ext2fs_direct	*e2dir;
-	struct dirent 		*ffsdir;
+ext2fs_dirconv2ffs(struct ext2fs_direct	*e2dir, struct dirent *ffsdir)
 {
 	memset(ffsdir, 0, sizeof(struct dirent));
 	ffsdir->d_fileno = fs2h32(e2dir->e2d_ino);
@@ -126,8 +124,7 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
  * the whole buffer to uiomove
  */
 int
-ext2fs_readdir(v)
-	void *v;
+ext2fs_readdir(void *v)
 {
 	struct vop_readdir_args *ap = v;
 	struct uio *uio = ap->a_uio;
@@ -249,8 +246,7 @@ ext2fs_readdir(v)
  *	  nor deleting, add name to cache
  */
 int
-ext2fs_lookup(v)
-	void *v;
+ext2fs_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
 	struct vnode *vdp;	/* vnode for directory being searched */
@@ -701,10 +697,8 @@ found:
  *	changed so that it confirms to ext2fs_check_dir_entry
  */
 static int
-ext2fs_dirbadentry(dp, de, entryoffsetinblock)
-	struct vnode *dp;
-	struct ext2fs_direct *de;
-	int entryoffsetinblock;
+ext2fs_dirbadentry(struct vnode *dp, struct ext2fs_direct *de,
+    int entryoffsetinblock)
 {
 	int	dirblksize = VTOI(dp)->i_e2fs->e2fs_bsize;
 
@@ -744,10 +738,8 @@ ext2fs_dirbadentry(dp, de, entryoffsetinblock)
  * entry is to be obtained.
  */
 int
-ext2fs_direnter(ip, dvp, cnp)
-	struct inode *ip;
-	struct vnode *dvp;
-	struct componentname *cnp;
+ext2fs_direnter(struct inode *ip, struct vnode *dvp,
+    struct componentname *cnp)
 {
 	struct ext2fs_direct *ep, *nep;
 	struct inode *dp;
@@ -894,9 +886,7 @@ ext2fs_direnter(ip, dvp, cnp)
  * to the size of the previous entry.
  */
 int
-ext2fs_dirremove(dvp, cnp)
-	struct vnode *dvp;
-	struct componentname *cnp;
+ext2fs_dirremove(struct vnode *dvp, struct componentname *cnp)
 {
 	struct inode *dp;
 	struct ext2fs_direct *ep;
@@ -936,9 +926,8 @@ ext2fs_dirremove(dvp, cnp)
  * set up by a call to namei.
  */
 int
-ext2fs_dirrewrite(dp, ip, cnp)
-	struct inode *dp, *ip;
-	struct componentname *cnp;
+ext2fs_dirrewrite(struct inode *dp, struct inode *ip,
+    struct componentname *cnp)
 {
 	struct buf *bp;
 	struct ext2fs_direct *ep;
@@ -969,10 +958,7 @@ ext2fs_dirrewrite(dp, ip, cnp)
  * NB: does not handle corrupted directories.
  */
 int
-ext2fs_dirempty(ip, parentino, cred)
-	struct inode *ip;
-	ino_t parentino;
-	struct ucred *cred;
+ext2fs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
 {
 	off_t off;
 	struct ext2fs_dirtemplate dbuf;
@@ -1023,9 +1009,8 @@ ext2fs_dirempty(ip, parentino, cred)
  * The target is always vput before returning.
  */
 int
-ext2fs_checkpath(source, target, cred)
-	struct inode *source, *target;
-	struct ucred *cred;
+ext2fs_checkpath(struct inode *source, struct inode *target,
+   struct ucred *cred)
 {
 	struct vnode *vp;
 	int error, rootino, namlen;

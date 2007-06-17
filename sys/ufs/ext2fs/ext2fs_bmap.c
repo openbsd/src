@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.14 2007/06/02 00:45:50 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.15 2007/06/17 20:15:25 jasper Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -65,8 +65,7 @@ static int ext2fs_bmaparray(struct vnode *, int32_t, daddr64_t *,
  * number to index into the array of block pointers described by the dinode.
  */
 int
-ext2fs_bmap(v)
-	void *v;
+ext2fs_bmap(void *v)
 {
 	struct vop_bmap_args *ap = v;
 	/*
@@ -97,13 +96,8 @@ ext2fs_bmap(v)
  */
 
 int
-ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
-	struct vnode *vp;
-	int32_t bn;
-	daddr64_t *bnp;
-	struct indir *ap;
-	int *nump;
-	int *runp;
+ext2fs_bmaparray(struct vnode *vp, int32_t bn, daddr64_t *bnp,
+    struct indir *ap, int *nump, int *runp)
 {
 	struct inode *ip;
 	struct buf *bp;

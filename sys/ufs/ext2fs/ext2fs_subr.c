@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.16 2007/06/02 00:45:50 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.17 2007/06/17 20:15:25 jasper Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -103,9 +103,7 @@ ext2fs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 
 #if defined(_KERNEL) && defined(DIAGNOSTIC)
 void
-ext2fs_checkoverlap(bp, ip)
-	struct buf *bp;
-	struct inode *ip;
+ext2fs_checkoverlap(struct buf *bp, struct inode *ip)
 {
 	struct buf *ep;
 	int32_t start, last;

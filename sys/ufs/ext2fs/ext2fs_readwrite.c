@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.21 2007/06/02 00:45:50 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.22 2007/06/17 20:15:25 jasper Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -62,8 +62,7 @@
  */
 /* ARGSUSED */
 int
-ext2fs_read(v)
-	void *v;
+ext2fs_read(void *v)
 {
 	struct vop_read_args *ap = v;
 	struct vnode *vp;
@@ -155,8 +154,7 @@ ext2fs_read(v)
  * Vnode op for writing.
  */
 int
-ext2fs_write(v)
-	void *v;
+ext2fs_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	struct vnode *vp;
