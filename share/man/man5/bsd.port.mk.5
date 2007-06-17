@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.199 2007/06/16 10:03:52 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.200 2007/06/17 10:39:39 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 16 2007 $
+.Dd $Mdocdate: June 17 2007 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -53,10 +53,19 @@ There is a separate section covering the fake framework, a section
 explaining flavors and multi-packages, and a section covering
 the generation of package information.
 .Pp
+Binary package details are mostly covered in
+.Xr pkg_create 1
+for the packing-list details,
+and in
+.Xr pkg_add 1
+for the installation semantics.
+.Pp
 Selected common user activity such as the building of every package in
 the system is covered by
 .Xr ports 7
 instead.
+.Xr packages 7
+provides an overview of the result.
 .Sh TARGETS
 .Bl -tag -width do-configure
 .It Ar {build,run,all,regress}-dir-depends
