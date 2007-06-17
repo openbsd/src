@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.60 2007/06/04 18:15:19 jmc Exp $
+# $OpenBSD: pkg_info,v 1.61 2007/06/17 12:34:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -215,6 +215,18 @@ my $exit_code = 0;
 my $error_e = 0;
 my @sought_files;
 
+sub just_in_time_header
+{
+	my ($pkg, $handle, $rdone) = @_;
+	return if $$rdone == 1;
+	if ($terse) {
+		print $opt_l, $pkg, "\n" unless $opt_q;
+	} else {
+		print $opt_l, "Information for ", $handle->url, "\n\n" unless $opt_q;
+	}
+	$$rdone = 1;
+}
+
 sub print_info
 {
 	my ($pkg, $handle) = @_;
@@ -226,47 +238,51 @@ sub print_info
 		$l = 1 if $l <= 0;
 		print $pkg, " "x$l, get_comment($handle->info), "\n";
 	} else {
-		if ($terse) {
-			print $opt_l, $pkg, "\n" unless $opt_q;
-		} else {
-			print $opt_l, "Information for ", $handle->url, "\n\n" unless $opt_q;
-		}
+		my $done = 0;
 		if ($opt_c) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Comment:\n" unless $opt_q;
 			print get_comment($handle->info), "\n";
 			print "\n";
 		}
 		if ($opt_R && -f $handle->info.REQUIRED_BY) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Required by:\n" unless $opt_q;
 			printfile($handle->info.REQUIRED_BY);
 			print "\n";
 		}
 		if ($opt_d) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Description:\n" unless $opt_q;
 			print_description($handle->info);
 			print "\n";
 		}
 		if ($opt_M && -f $handle->info.DISPLAY) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Install notice:\n" unless $opt_q;
 			printfile($handle->info.DISPLAY);
 			print "\n";
 		}
 		if ($opt_U && -f $handle->info.UNDISPLAY) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Deinstall notice:\n" unless $opt_q;
 			printfile($handle->info.UNDISPLAY);
 			print "\n";
 		}
 		if ($opt_i && -f $handle->info.INSTALL) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Install script:\n" unless $opt_q;
 			printfile($handle->info.INSTALL);
 			print "\n";
 		}
 		if ($opt_k && -f $handle->info.DEINSTALL) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "De-Install script:\n" unless $opt_q;
 			printfile($handle->info.DEINSTALL, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_r && -f $handle->info.REQUIRE) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Require script:\n" unless $opt_q;
 			printfile($handle->info.REQUIRE, \*STDOUT);
 			print "\n";
@@ -283,11 +299,13 @@ sub print_info
 			Fatal "Bad packing list" unless defined $plist;
 		}
 		if ($opt_L) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Files:\n" unless $opt_q;
 			$plist->dump_file($opt_K);
 			print "\n";
 		}
 		if ($opt_s) {
+			just_in_time_header($pkg, $handle ,\$done);
 			my $size = 0;
 			$plist->sum_up(\$size);
 			print "Size: " unless $opt_q;
@@ -296,6 +314,7 @@ sub print_info
 			$pkgs++;
 		}
 		if ($opt_S) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print "Signature: " unless $opt_q;
 			print $plist->signature, "\n";
 		}
@@ -304,15 +323,18 @@ sub print_info
 
 			my $plist = $handle->plist(
 			    \&OpenBSD::PackingList::ExtraInfoOnly);
+			just_in_time_header($pkg, $handle ,\$done);
 			print "Pkgpath:\n" unless $opt_q;
 			print $plist->{extrainfo}->{subdir}, "\n";
 		}
 
 		if ($opt_f) {
+			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Packing list:\n" unless $opt_q;
 			$plist->write(\*STDOUT);
 			print "\n";
 		}
+		return unless $done;
 		print $opt_l, "\n" unless $opt_q || $terse;
 	}
 }
