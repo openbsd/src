@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2007/05/27 09:23:06 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2007/06/18 20:25:55 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -65,5 +65,5 @@ export	SIGFPE
 
 export	PMAP_SEGTABSIZE
 
-define	XKPHYS_NC		PHYS_TO_XKPHYS(0, CCA_NC)
-define	XKPHYS_NONCOHERENT	PHYS_TO_XKPHYS(0, CCA_NONCOHERENT)
+export	CCA_NC
+export	CCA_NONCOHERENT

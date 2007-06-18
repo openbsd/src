@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2007/05/07 18:42:12 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 2007/06/18 20:25:53 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,8 +70,10 @@
  * Cache Coherency Attributes
  * We only list values common to r4k and r5k.
  */
+#if !defined(_LOCORE)
 #define	CCA_NC			2UL	/* uncached, write-around */
 #define	CCA_NONCOHERENT		3UL	/* cached, non-coherent, write-back */
+#endif
 
 #ifdef __LP64__
 #define	XKPHYS_BASE		0x8000000000000000UL
