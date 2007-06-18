@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.92 2007/06/18 05:25:07 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.93 2007/06/18 07:09:24 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ int
 writedisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
-	int error, partoff = -1, cyl = 0;
+	int error = EIO, partoff = -1, cyl = 0;
 	struct disklabel *dlp;
 	struct buf *bp = NULL;
 
@@ -136,10 +136,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL) {
-		error = EIO;
+	if (readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL)
 		goto done;
-	}
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
