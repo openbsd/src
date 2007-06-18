@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.68 2007/06/16 11:50:49 espie Exp $
+# $OpenBSD: Delete.pm,v 1.69 2007/06/18 10:47:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -299,6 +299,13 @@ sub record_shared
 }
 
 package OpenBSD::PackingElement::DirBase;
+sub prepare_for_deletion
+{
+	my ($self, $state, $pkgname) = @_;
+	return unless $self->{noshadow};
+	$state->{noshadow}->{$self->{destdir}.$self->fullname} = 1;
+}
+
 sub delete
 {
 	my ($self, $state) = @_;

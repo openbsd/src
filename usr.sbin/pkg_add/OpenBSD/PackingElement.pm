@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.141 2007/06/17 12:09:36 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.142 2007/06/18 10:47:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -132,7 +132,8 @@ sub fullstring
 
 sub stringize
 {
-	return $_[0]->{name};
+	my $self = shift;
+	return $self->{name};
 }
 
 sub IsFile() { 0 }
@@ -356,7 +357,6 @@ sub make_hardlink
 }
 
 sub IsFile() { 1 }
-
 
 package OpenBSD::PackingElement::File;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
@@ -585,6 +585,8 @@ sub add
 
 	if ($args eq 'no checksum') {
 		$plist->{state}->{lastfile}->{nochecksum} = 1;
+	} elsif ($args eq 'no shadow') {
+		$plist->{state}->{lastdir}->{noshadow} = 1;
 	} else {
 		my $object = $plist->{state}->{lastfileobject};
 		$object->{tags}->{$args} = 1;
@@ -726,9 +728,9 @@ sub may_quote
 	}
 }
 
-sub stringize($)
+sub stringize
 {
-	my $self = $_[0];
+	my $self = shift;
 	return "subdir=".$self->{subdir}." cdrom=".may_quote($self->{cdrom}).
 	    " ftp=".may_quote($self->{ftp});
 }
@@ -770,10 +772,11 @@ sub new
 	    def => $def }, $class;
 }
 
-sub stringize($)
+sub stringize
 {
-	my $self = $_[0];
-	return $self->{pkgpath}.':'.$self->{pattern}.':'.$self->{def};
+	my $self = shift;
+	return join(':', map { $self->{$_}} 
+	    (qw(pkgpath pattern def)));
 }
 
 sub spec
@@ -868,12 +871,11 @@ sub check
 	return 1;
 }
 
-sub stringize($)
+sub stringize
 {
-	my $self = $_[0];
-	return $self->{name}.':'.$self->{uid}.':'.$self->{group}.':'.
-	    $self->{class}.':'.$self->{comment}.':'.$self->{home}.':'.
-	    $self->{shell};
+	my $self = shift;
+	return join(':', map { $self->{$_}} 
+	    (qw(name uid group class comment home shell)));
 }
 
 package OpenBSD::PackingElement::NewGroup;
@@ -906,7 +908,8 @@ sub check
 sub stringize($)
 {
 	my $self = $_[0];
-	return $self->{name}.':'.$self->{gid};
+	return join(':', map { $self->{$_}} 
+	    (qw(name gid)));
 }
 
 package OpenBSD::PackingElement::Cwd;
@@ -1008,7 +1011,7 @@ sub new
 
 sub stringize
 {
-	my $self = $_[0];
+	my $self = shift;
 	return $self->{name}.$self->{mode}.$self->{value};
 }
 
@@ -1019,8 +1022,8 @@ our @ISA=qw(OpenBSD::PackingElement::Action);
 
 sub expand
 {
-	my $state = $_[2];
-	local $_ = $_[1];
+	my ($self, $state) = @_;
+	local $_ = $self->{name};
 	if (m/\%F/o) {
 		die "Bad expand" unless defined $state->{lastfile};
 		s/\%F/$state->{lastfile}->{name}/g;
@@ -1043,7 +1046,7 @@ sub expand
 sub destate
 {
 	my ($self, $state) = @_;
-	$self->{expanded} = $self->expand($self->{name}, $state);
+	$self->{expanded} = $self->expand($state);
 }
 
 sub run
@@ -1116,10 +1119,27 @@ our @ISA=qw(OpenBSD::PackingElement::FileObject);
 package OpenBSD::PackingElement::DirBase;
 our @ISA=qw(OpenBSD::PackingElement::DirlikeObject);
 
-sub stringize($)
+sub destate
 {
-	my $self = $_[0];
+	my ($self, $state) = @_;
+	$state->{lastdir} = $self;
+	$self->SUPER::destate($state);
+}
+	
+
+sub stringize
+{
+	my $self = shift;
 	return $self->{name}."/";
+}
+
+sub write
+{
+	my ($self, $fh) = @_;
+	$self->SUPER::write($fh);
+	if (defined $self->{noshadow}) {
+		print $fh "\@tag no shadow\n";
+	}
 }
 
 package OpenBSD::PackingElement::Dir;

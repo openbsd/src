@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.79 2007/06/16 11:50:49 espie Exp $
+# $OpenBSD: Add.pm,v 1.80 2007/06/18 10:47:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -341,6 +341,14 @@ sub install
 	    $name.'='.$self->{value});
 }
 			
+package OpenBSD::PackingElement::DirBase;
+sub prepare_for_addition
+{
+	my ($self, $state, $pkgname) = @_;
+	return unless $self->{noshadow};
+	$state->{noshadow}->{$self->{destdir}.$self->fullname} = 1;
+}
+
 package OpenBSD::PackingElement::FileBase;
 use OpenBSD::Error;
 use File::Basename;

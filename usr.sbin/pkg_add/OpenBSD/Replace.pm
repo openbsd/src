@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.41 2007/06/16 11:50:49 espie Exp $
+# $OpenBSD: Replace.pm,v 1.42 2007/06/18 10:47:03 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -106,7 +106,7 @@ sub extract
 	my $d = dirname($file->{destdir}.$file->{name});
 	# we go back up until we find an existing directory.
 	# hopefully this will be on the same file system.
-	while (!-d $d && -e _) {
+	while (!-d $d && -e _ || defined $state->{noshadow}->{$d}) {
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
