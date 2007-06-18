@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.53 2007/06/09 10:39:16 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.54 2007/06/18 18:06:28 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -245,7 +245,7 @@ use OpenBSD::SharedLibs;
 
 sub check_lib_spec
 {
-	my ($base, $spec, $dependencies) = @_;
+	my ($self, $base, $spec, $dependencies) = @_;
 	my @r = OpenBSD::SharedLibs::lookup_libspec($base, $spec);
 	for my $candidate (@r) {
 		if ($dependencies->{$candidate}) {
@@ -257,14 +257,14 @@ sub check_lib_spec
 
 sub find_old_lib
 {
-	my ($state, $base, $pattern, $lib, $dependencies) = @_;
+	my ($self, $state, $base, $pattern, $lib, $dependencies) = @_;
 
 	require OpenBSD::Search;
 	require OpenBSD::PackageRepository::Installed;
 
 	for my $try (OpenBSD::PackageRepository::Installed->new->match(OpenBSD::Search::PkgSpec->new(".libs-".$pattern))) {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($try);
-		if (check_lib_spec($base, $lib, {$try => 1})) {
+		if ($self->check_lib_spec($base, $lib, {$try => 1})) {
 			$dependencies->{$try} = 1;
 			return "$try($lib)";
 		}
@@ -279,7 +279,7 @@ sub lookup_library
 	my $plist = $self->{plist};
 	my $dependencies = $self->{to_register};
 	my $known = $self->{known};
-	my $r = check_lib_spec($plist->localbase, $lib, $known);
+	my $r = $self->check_lib_spec($plist->localbase, $lib, $known);
 	if ($r) {
 		print "found libspec $lib in package $r\n" if $state->{verbose};
 		$dependencies->{$r} = 1;
@@ -289,7 +289,7 @@ sub lookup_library
 
 		OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
 		for my $dir (OpenBSD::SharedLibs::system_dirs()) {
-			if (check_lib_spec($dir, $lib, {system => 1})) {
+			if ($self->check_lib_spec($dir, $lib, {system => 1})) {
 				print "found libspec $lib in $dir/lib\n" if $state->{very_verbose};
 				return 1;
 			}
@@ -307,14 +307,14 @@ sub lookup_library
 		}
 		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
 		$known->{$dep} = 1;
-		if (check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
+		if ($self->check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
 			print "found libspec $lib in package $dep\n" if $state->{verbose};
 			$dependencies->{$dep} = 1;
 			return 1;
 		} 
 	}
 	for my $dep (@{$plist->{depend}}) {
-		$r = find_old_lib($state, $plist->localbase, $dep->{pattern}, $lib, $dependencies);
+		$r = $self->find_old_lib($state, $plist->localbase, $dep->{pattern}, $lib, $dependencies);
 		if ($r) {
 			print "found libspec $lib in old package $r\n" if $state->{verbose};
 			return 1;
