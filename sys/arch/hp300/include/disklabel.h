@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.6 2007/06/17 00:27:27 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.7 2007/06/18 17:11:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -37,7 +37,6 @@
 #define	LABELOFFSET	0			/* offset of label in sector */
 #define	MAXPARTITIONS	16			/* number of partitions */
 
-/* Just a dummy */
 struct cpu_disklabel {
 };
 
