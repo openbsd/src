@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.43 2007/06/17 00:27:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.44 2007/06/18 02:14:17 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -79,16 +79,12 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 #if NCD > 0
 	if (strat == cdstrategy) {
 #if defined(CD9660)
-		if (iso_disklabelspoof(dev, strat, lp) == 0) {
-			msg = NULL;
+		if (iso_disklabelspoof(dev, strat, lp) == 0)
 			goto done;
-		}
 #endif
 #if defined(UDF)
-		if (udf_disklabelspoof(dev, strat, lp) == 0) {
-			msg = NULL;
+		if (udf_disklabelspoof(dev, strat, lp) == 0)
 			goto done;
-		}
 #endif
 	}
 #endif /* NCD > 0 */
