@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.133 2007/06/08 05:27:58 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.134 2007/06/18 20:55:52 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -824,6 +824,7 @@ int
 sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct sd_softc *sd;
+	struct disklabel *lp;
 	int error = 0;
 	int part = DISKPART(dev);
 
@@ -860,8 +861,10 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	switch (cmd) {
 	case DIOCRLDINFO:
-		sdgetdisklabel(dev, sd, sd->sc_dk.dk_label,
-		    sd->sc_dk.dk_cpulabel, 0);
+		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
+		sdgetdisklabel(dev, sd, lp, sd->sc_dk.dk_cpulabel, 0);
+		bcopy(lp, sd->sc_dk.dk_label, sizeof(*lp));
+		free(lp, M_TEMP);
 		goto exit;
 	case DIOCGPDINFO: {
 			struct cpu_disklabel osdep;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.64 2007/06/08 05:27:58 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.65 2007/06/18 20:55:52 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -826,6 +826,7 @@ int
 wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 {
 	struct wd_softc *wd;
+	struct disklabel *lp;
 	int error = 0;
 
 	WDCDEBUG_PRINT(("wdioctl\n"), DEBUG_FUNCS);
@@ -841,9 +842,12 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 
 	switch (xfer) {
 	case DIOCRLDINFO:
-		wdgetdisklabel(dev, wd, wd->sc_dk.dk_label,
-		    wd->sc_dk.dk_cpulabel, 0);
+		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
+		wdgetdisklabel(dev, wd, lp, wd->sc_dk.dk_cpulabel, 0);
+		bcopy(lp, wd->sc_dk.dk_label, sizeof(*lp));
+		free(lp, M_TEMP);
 		goto exit;
+
 	case DIOCGPDINFO: {
 			struct cpu_disklabel osdep;
 

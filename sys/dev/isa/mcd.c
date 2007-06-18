@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.47 2007/06/08 05:27:58 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.48 2007/06/18 20:55:52 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -621,6 +621,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct mcd_softc *sc = mcd_cd.cd_devs[DISKUNIT(dev)];
+	struct disklabel *lp;
 	int error;
 	
 	MCD_TRACE("ioctl: cmd=0x%x\n", cmd, 0, 0, 0);
@@ -630,9 +631,12 @@ mcdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCRLDINFO:
-		mcdgetdisklabel(dev, sc, sc->sc_dk.dk_label,
-		    sc->sc_dk.dk_cpulabel, 0);
+		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
+		mcdgetdisklabel(dev, sc, lp, sc->sc_dk.dk_cpulabel, 0);
+		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
+		free(lp, M_TEMP);
 		return 0;
+
 	case DIOCGDINFO:
 	case DIOCGPDINFO:
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);

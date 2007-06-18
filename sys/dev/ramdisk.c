@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.35 2007/06/18 20:49:19 krw Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.36 2007/06/18 20:55:52 deraadt Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -396,6 +396,7 @@ rdioctl(dev, cmd, data, flag, proc)
 	struct proc	*proc;
 {
 	int unit;
+	struct disklabel *lp;
 	struct rd_softc *sc;
 	struct rd_conf *urd;
 	int error;
@@ -406,11 +407,12 @@ rdioctl(dev, cmd, data, flag, proc)
 	urd = (struct rd_conf *)data;
 	switch (cmd) {
 	case DIOCRLDINFO:
-		if (sc->sc_type == RD_UNCONFIGURED) {
+		if (sc->sc_type == RD_UNCONFIGURED)
 			break;
-		}
-		rdgetdisklabel(dev, sc, sc->sc_dkdev.dk_label,
-		    sc->sc_dkdev.dk_cpulabel, 0);
+		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
+		rdgetdisklabel(dev, sc, lp, sc->sc_dkdev.dk_cpulabel, 0);
+		bcopy(lp, sc->sc_dkdev.dk_label, sizeof(*lp));
+		free(lp, M_TEMP);
 		return 0;
 
 	case DIOCGPDINFO: {
