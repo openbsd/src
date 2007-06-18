@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.55 2007/06/18 18:34:00 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.56 2007/06/18 18:45:09 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -376,60 +376,6 @@ sub find_old_lib
 	}
 	return undef;
 }
-
-sub lookup_library
-{
-	my ($self, $state, $lib) = @_;
-
-	my $plist = $self->{plist};
-	my $dependencies = $self->{to_register};
-	my $known = $self->{known};
-	my $r = $self->check_lib_spec($plist->localbase, $lib, $known);
-	if ($r) {
-		print "found libspec $lib in package $r\n" if $state->{verbose};
-		$dependencies->{$r} = 1;
-		return 1;
-	}
-	if ($lib !~ m|/|) {
-
-		OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
-		for my $dir (OpenBSD::SharedLibs::system_dirs()) {
-			if ($self->check_lib_spec($dir, $lib, {system => 1})) {
-				print "found libspec $lib in $dir/lib\n" if $state->{very_verbose};
-				return 1;
-			}
-		}
-	}
-	# lookup through the rest of the tree...
-	my $done = $self->{done};
-	while (my $dep = pop @{$self->{todo}}) {
-		require OpenBSD::RequiredBy;
-
-		next if $done->{$dep};
-		$done->{$dep} = 1;
-		for my $dep2 (OpenBSD::Requiring->new($dep)->list) {
-			push(@{$self->{todo}}, $dep2) unless $done->{$dep2};
-		}
-		OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
-		$known->{$dep} = 1;
-		if ($self->check_lib_spec($plist->localbase, $lib, {$dep => 1})) {
-			print "found libspec $lib in package $dep\n" if $state->{verbose};
-			$dependencies->{$dep} = 1;
-			return 1;
-		} 
-	}
-	for my $dep (@{$plist->{depend}}) {
-		$r = $self->find_old_lib($state, $plist->localbase, $dep->{pattern}, $lib, $dependencies);
-		if ($r) {
-			print "found libspec $lib in old package $r\n" if $state->{verbose};
-			return 1;
-		}
-    	}
-	
-	print "libspec $lib not found\n" if $state->{very_verbose};
-	return;
-}
-
 
 sub solve_wantlibs
 {
