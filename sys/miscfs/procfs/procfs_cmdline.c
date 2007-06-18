@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.7 2006/11/29 12:24:18 miod Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.8 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -53,11 +53,7 @@
  * code for returning process's command line arguments
  */
 int
-procfs_docmdline(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_docmdline(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct uio *uio)
 {
 	struct ps_strings pss;
 	int count, error, i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.23 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.24 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -147,9 +147,7 @@ struct vnodeopv_desc portal_vnodeop_opv_desc =
 	{ &portal_vnodeop_p, portal_vnodeop_entries };
 
 static void
-portal_closefd(p, fd)
-	struct proc *p;
-	int fd;
+portal_closefd(struct proc *p, int fd)
 {
 	struct sys_close_args /* {
 		syscallarg(int) fd;
@@ -172,8 +170,7 @@ portal_closefd(p, fd)
  * cnp is the name to locate in that directory...
  */
 int
-portal_lookup(v)
-	void *v;
+portal_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
@@ -239,9 +236,7 @@ bad:;
 }
 
 static int
-portal_connect(so, so2)
-	struct socket *so;
-	struct socket *so2;
+portal_connect(struct socket *so, struct socket *so2)
 {
 	/* from unp_connect, bypassing the namei stuff... */
 	struct socket *so3;
@@ -272,8 +267,7 @@ portal_connect(so, so2)
 }
 
 int
-portal_open(v)
-	void *v;
+portal_open(void *v)
 {
 	struct vop_open_args *ap = v;
 	struct socket *so = 0;
@@ -509,8 +503,7 @@ bad:;
 }
 
 int
-portal_getattr(v)
-	void *v;
+portal_getattr(void *v)
 {
 	struct vop_getattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -551,8 +544,7 @@ portal_getattr(v)
 }
 
 int
-portal_setattr(v)
-	void *v;
+portal_setattr(void *v)
 {
 	struct vop_setattr_args *ap = v;
 
@@ -574,16 +566,14 @@ portal_setattr(v)
  */
 /*ARGSUSED*/
 int
-portal_readdir(v)
-	void *v;
+portal_readdir(void *v)
 {
  	return (0);
 }
 
 /*ARGSUSED*/
 int
-portal_inactive(v)
-	void *v;
+portal_inactive(void *v)
 {
  	struct vop_inactive_args *ap = v;
 
@@ -592,8 +582,7 @@ portal_inactive(v)
 }
 
 int
-portal_reclaim(v)
-	void *v;
+portal_reclaim(void *v)
 {
 	struct vop_reclaim_args *ap = v;
 	struct portalnode *pt = VTOPORTAL(ap->a_vp);
@@ -612,8 +601,7 @@ portal_reclaim(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-portal_pathconf(v)
-	void *v;
+portal_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
 
@@ -647,16 +635,14 @@ portal_pathconf(v)
  */
 /* ARGSUSED */
 int
-portal_print(v)
-	void *v;
+portal_print(void *v)
 {
 	printf("tag VT_PORTAL, portal vnode\n");
 	return (0);
 }
 
 int
-portal_link(v) 
-	void *v;
+portal_link(void *v) 
 {
 	struct vop_link_args *ap = v;
  
@@ -666,8 +652,7 @@ portal_link(v)
 }
 
 int
-portal_symlink(v)
-	void *v;
+portal_symlink(void *v)
 {
 	struct vop_symlink_args *ap = v;
   
@@ -677,16 +662,14 @@ portal_symlink(v)
 }
 
 int
-portal_badop(v)
-	void *v;
+portal_badop(void *v)
 {
 	panic ("portal: bad op");
 	return (0);
 }
 
 int
-portal_poll(v)
-	void *v;
+portal_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
 

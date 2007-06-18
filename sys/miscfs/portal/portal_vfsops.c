@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.20 2004/05/20 18:32:38 tedu Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.21 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -73,12 +73,8 @@ int	portal_statfs(struct mount *, struct statfs *, struct proc *);
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-portal_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+portal_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
+    struct proc *p)
 {
 	struct file *fp;
 	struct portal_args args;
@@ -139,20 +135,14 @@ portal_mount(mp, path, data, ndp, p)
 }
 
 int
-portal_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+portal_start(struct mount *mp, int flags, struct proc *p)
 {
 
 	return (0);
 }
 
 int
-portal_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+portal_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct vnode *rvp = VFSTOPORTAL(mp)->pm_root;
 	int error, flags = 0;
@@ -205,9 +195,7 @@ portal_unmount(mp, mntflags, p)
 }
 
 int
-portal_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+portal_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *vp;
 	struct proc *p = curproc;
@@ -223,10 +211,7 @@ portal_root(mp, vpp)
 }
 
 int
-portal_statfs(mp, sbp, p)
-	struct mount *mp;
-	struct statfs *sbp;
-	struct proc *p;
+portal_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 
 	sbp->f_bsize = DEV_BSIZE;

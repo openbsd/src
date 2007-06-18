@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.25 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.26 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -53,9 +53,7 @@ struct lock pfs_vlock;
 
 /*ARGSUSED*/
 int
-procfs_init(vfsp)
-	struct vfsconf *vfsp;
-
+procfs_init(struct vfsconf *vfsp)
 {
 	lockinit(&pfs_vlock, PVFS, "procfsl", 0, 0);
 	TAILQ_INIT(&pfshead);
@@ -89,11 +87,7 @@ procfs_init(vfsp)
  * the vnode free list.
  */
 int
-procfs_allocvp(mp, vpp, pid, pfs_type)
-	struct mount *mp;
-	struct vnode **vpp;
-	long pid;
-	pfstype pfs_type;
+procfs_allocvp(struct mount *mp, struct vnode **vpp, long pid, pfstype pfs_type)
 {
 	struct proc *p = curproc;
 	struct pfsnode *pfs;
@@ -187,8 +181,7 @@ out:
 }
 
 int
-procfs_freevp(vp)
-	struct vnode *vp;
+procfs_freevp(struct vnode *vp)
 {
 	struct pfsnode *pfs = VTOPFS(vp);
 
@@ -199,8 +192,7 @@ procfs_freevp(vp)
 }
 
 int
-procfs_rw(v)
-	void *v;
+procfs_rw(void *v)
 {
 	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -259,10 +251,7 @@ procfs_rw(v)
  * EFAULT:    user i/o buffer is not addressable
  */
 int
-vfs_getuserstr(uio, buf, buflenp)
-	struct uio *uio;
-	char *buf;
-	int *buflenp;
+vfs_getuserstr(struct uio *uio, char *buf, int *buflenp)
 {
 	int xlen;
 	int error;
@@ -294,12 +283,8 @@ vfs_getuserstr(uio, buf, buflenp)
 }
 
 const vfs_namemap_t *
-vfs_findname(nm, buf, buflen)
-	const vfs_namemap_t *nm;
-	char *buf;
-	int buflen;
+vfs_findname(const vfs_namemap_t *nm, char *buf, int buflen)
 {
-
 	for (; nm->nm_name; nm++)
 		if (bcmp(buf, nm->nm_name, buflen + 1) == 0)
 			return (nm);

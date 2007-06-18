@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_status.c,v 1.9 2006/11/29 12:24:18 miod Exp $	*/
+/*	$OpenBSD: procfs_status.c,v 1.10 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: procfs_status.c,v 1.11 1996/03/16 23:52:50 christos Exp $	*/
 
 /*
@@ -62,10 +62,7 @@ int	procfs_stat_gen(struct proc *, char *s, int);
  *  comm pid ppid pgid sid maj,min ctty,sldr start ut st wmsg uid gid groups
  */
 int
-procfs_stat_gen(p, s, l)
-	struct proc *p;
-	char *s;
-	int l;
+procfs_stat_gen(struct proc *p, char *s, int l)
 {
 	struct session *sess;
 	struct tty *tp;
@@ -148,11 +145,7 @@ procfs_stat_gen(p, s, l)
 }
 
 int
-procfs_dostatus(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_dostatus(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct uio *uio)
 {
 	char *ps;
 	int error, len;

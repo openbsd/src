@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_note.c,v 1.3 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: procfs_note.c,v 1.4 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: procfs_note.c,v 1.8 1994/06/29 06:34:53 cgd Exp $	*/
 
 /*
@@ -46,11 +46,7 @@
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_donote(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_donote(struct proc *curp, struct proc *p, struct pfsnode *pfs, struct uio *uio)
 {
 	int xlen;
 	int error;

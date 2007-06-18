@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.24 2004/05/20 18:32:38 tedu Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.25 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -68,12 +68,8 @@ int	procfs_statfs(struct mount *, struct statfs *, struct proc *);
  */
 /* ARGSUSED */
 int
-procfs_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+procfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
+    struct proc *p)
 {
 	size_t size;
 	struct procfsmount *pmnt;
@@ -123,10 +119,7 @@ procfs_mount(mp, path, data, ndp, p)
  * unmount system call
  */
 int
-procfs_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+procfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	int error;
 	extern int doforce;
@@ -149,9 +142,7 @@ procfs_unmount(mp, mntflags, p)
 }
 
 int
-procfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+procfs_root(struct mount *mp, struct vnode **vpp)
 {
 	int error;
 
@@ -165,10 +156,7 @@ procfs_root(mp, vpp)
 
 /* ARGSUSED */
 int
-procfs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+procfs_start(struct mount *mp, int flags, struct proc *p)
 {
 
 	return (0);
@@ -178,10 +166,7 @@ procfs_start(mp, flags, p)
  * Get file system statistics.
  */
 int
-procfs_statfs(mp, sbp, p)
-	struct mount *mp;
-	struct statfs *sbp;
-	struct proc *p;
+procfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 	struct vmtotal	vmtotals;
 

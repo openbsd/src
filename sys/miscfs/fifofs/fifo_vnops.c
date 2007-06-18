@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.23 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.24 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -128,8 +128,7 @@ struct filterops fifowrite_filtops =
  */
 /* ARGSUSED */
 int
-fifo_lookup(v)
-	void *v;
+fifo_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
 	
@@ -143,12 +142,11 @@ fifo_lookup(v)
  */
 /* ARGSUSED */
 int
-fifo_open(v)
-	void *v;
+fifo_open(void *v)
 {
 	struct vop_open_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct fifoinfo *fip;
+	struct vnode *vp = ap->a_vp;
+	struct fifoinfo *fip;
 	struct proc *p = ap->a_p;
 	struct socket *rso, *wso;
 	int error;
@@ -229,12 +227,11 @@ bad:
  */
 /* ARGSUSED */
 int
-fifo_read(v)
-	void *v;
+fifo_read(void *v)
 {
 	struct vop_read_args *ap = v;
-	register struct uio *uio = ap->a_uio;
-	register struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
+	struct uio *uio = ap->a_uio;
+	struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
 	struct proc *p = uio->uio_procp;
 	int error;
 
@@ -263,8 +260,7 @@ fifo_read(v)
  */
 /* ARGSUSED */
 int
-fifo_write(v)
-	void *v;
+fifo_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
@@ -290,8 +286,7 @@ fifo_write(v)
  */
 /* ARGSUSED */
 int
-fifo_ioctl(v)
-	void *v;
+fifo_ioctl(void *v)
 {
 	struct vop_ioctl_args *ap = v;
 	struct file filetmp;
@@ -316,8 +311,7 @@ fifo_ioctl(v)
 
 /* ARGSUSED */
 int
-fifo_poll(v)
-	void *v;
+fifo_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
 	struct file filetmp;
@@ -349,8 +343,7 @@ fifo_poll(v)
 }
 
 int
-fifo_inactive(v)
-	void *v;
+fifo_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 
@@ -362,8 +355,7 @@ fifo_inactive(v)
  * This is a noop, simply returning what one has been given.
  */
 int
-fifo_bmap(v)
-	void *v;
+fifo_bmap(void *v)
 {
 	struct vop_bmap_args *ap = v;
 
@@ -379,12 +371,11 @@ fifo_bmap(v)
  */
 /* ARGSUSED */
 int
-fifo_close(v)
-	void *v;
+fifo_close(void *v)
 {
 	struct vop_close_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct fifoinfo *fip = vp->v_fifoinfo;
+	struct vnode *vp = ap->a_vp;
+	struct fifoinfo *fip = vp->v_fifoinfo;
 	int error1 = 0, error2 = 0;
 
 	if (fip == NULL)
@@ -429,8 +420,7 @@ fifo_reclaim(void *v)
  * Print out the contents of a fifo vnode.
  */
 int
-fifo_print(v)
-	void *v;
+fifo_print(void *v)
 {
 	struct vop_print_args *ap = v;
 
@@ -444,10 +434,9 @@ fifo_print(v)
  * Print out internal contents of a fifo vnode.
  */
 void
-fifo_printinfo(vp)
-	struct vnode *vp;
+fifo_printinfo(struct vnode *vp)
 {
-	register struct fifoinfo *fip = vp->v_fifoinfo;
+	struct fifoinfo *fip = vp->v_fifoinfo;
 
 	printf(", fifo with %ld readers and %ld writers",
 		fip->fi_readers, fip->fi_writers);
@@ -457,8 +446,7 @@ fifo_printinfo(vp)
  * Return POSIX pathconf information applicable to fifo's.
  */
 int
-fifo_pathconf(v)
-	void *v;
+fifo_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
 
@@ -483,8 +471,7 @@ fifo_pathconf(v)
  */
 /*ARGSUSED*/
 int
-fifo_ebadf(v)
-	void *v;
+fifo_ebadf(void *v)
 {
 
 	return (EBADF);
@@ -495,8 +482,7 @@ fifo_ebadf(v)
  */
 /* ARGSUSED */
 int
-fifo_advlock(v)
-	void *v;
+fifo_advlock(void *v)
 {
 	return (EOPNOTSUPP);
 }
@@ -506,8 +492,7 @@ fifo_advlock(v)
  */
 /*ARGSUSED*/
 int
-fifo_badop(v)
-	void *v;
+fifo_badop(void *v)
 {
 
 	panic("fifo_badop called");
@@ -517,8 +502,7 @@ fifo_badop(v)
 
 
 int
-fifo_kqfilter(v)
-	void *v;
+fifo_kqfilter(void *v)
 {
 	struct vop_kqfilter_args *ap = v;
 	struct socket *so = (struct socket *)ap->a_vp->v_fifoinfo->fi_readsock;

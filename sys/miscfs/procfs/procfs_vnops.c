@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.39 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.40 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -204,8 +204,7 @@ struct vnodeopv_desc procfs_vnodeop_opv_desc =
  * memory images.
  */
 int
-procfs_open(v)
-	void *v;
+procfs_open(void *v)
 {
 	struct vop_open_args *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -245,8 +244,7 @@ procfs_open(v)
  * any exclusive open flag (see _open above).
  */
 int
-procfs_close(v)
-	void *v;
+procfs_close(void *v)
 {
 	struct vop_close_args *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -282,8 +280,7 @@ procfs_close(v)
  */
 /*ARGSUSED*/
 int
-procfs_ioctl(v)
-	void *v;
+procfs_ioctl(void *v)
 {
 
 	return (ENOTTY);
@@ -300,8 +297,7 @@ procfs_ioctl(v)
  * (EIO) would be a reasonable alternative.
  */
 int
-procfs_bmap(v)
-	void *v;
+procfs_bmap(void *v)
 {
 	struct vop_bmap_args *ap = v;
 
@@ -329,8 +325,7 @@ procfs_bmap(v)
  * (vp) is not locked on entry or exit.
  */
 int
-procfs_inactive(v)
-	void *v;
+procfs_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -350,8 +345,7 @@ procfs_inactive(v)
  * from any private lists.
  */
 int
-procfs_reclaim(v)
-	void *v;
+procfs_reclaim(void *v)
 {
 	struct vop_reclaim_args *ap = v;
 
@@ -362,8 +356,7 @@ procfs_reclaim(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-procfs_pathconf(v)
-	void *v;
+procfs_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
 
@@ -398,8 +391,7 @@ procfs_pathconf(v)
  * of (vp).
  */
 int
-procfs_print(v)
-	void *v;
+procfs_print(void *v)
 {
 	struct vop_print_args *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -410,8 +402,7 @@ procfs_print(v)
 }
 
 int
-procfs_link(v)
-	void *v;
+procfs_link(void *v)
 {
 	struct vop_link_args *ap = v;
 
@@ -421,8 +412,7 @@ procfs_link(v)
 }
 
 int
-procfs_symlink(v)
-	void *v;
+procfs_symlink(void *v)
 {
 	struct vop_symlink_args *ap = v;
 
@@ -437,8 +427,7 @@ procfs_symlink(v)
  */
 /*ARGSUSED*/
 int
-procfs_badop(v)
-	void *v;
+procfs_badop(void *v)
 {
 
 	return (EIO);
@@ -454,8 +443,7 @@ procfs_badop(v)
  * this is relatively minimal for procfs.
  */
 int
-procfs_getattr(v)
-	void *v;
+procfs_getattr(void *v)
 {
 	struct vop_getattr_args *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -636,8 +624,7 @@ procfs_getattr(v)
 
 /*ARGSUSED*/
 int
-procfs_setattr(v)
-	void *v;
+procfs_setattr(void *v)
 {
 	/*
 	 * just fake out attribute setting
@@ -661,8 +648,7 @@ procfs_setattr(v)
  * that the operation really does make sense.
  */
 int
-procfs_access(v)
-	void *v;
+procfs_access(void *v)
 {
 	struct vop_access_args *ap = v;
 	struct vattr va;
@@ -685,8 +671,7 @@ procfs_access(v)
  * read and inwardly digest ufs_lookup().
  */
 int
-procfs_lookup(v)
-	void *v;
+procfs_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
@@ -827,18 +812,14 @@ procfs_lookup(v)
 }
 
 int
-procfs_validfile(p, mp)
-	struct proc *p;
-	struct mount *mp;
+procfs_validfile(struct proc *p, struct mount *mp)
 {
 
 	return (p->p_textvp != NULLVP);
 }
 
 int
-procfs_validfile_linux(p, mp)
-	struct proc *p;
-	struct mount *mp;
+procfs_validfile_linux(struct proc *p, struct mount *mp)
 {
 	int flags;
 
@@ -860,8 +841,7 @@ procfs_validfile_linux(p, mp)
  * this should just be done through read()
  */
 int
-procfs_readdir(v)
-	void *v;
+procfs_readdir(void *v)
 {
 	struct vop_readdir_args *ap = v;
 	struct uio *uio = ap->a_uio;
@@ -1029,8 +1009,7 @@ procfs_readdir(v)
  * readlink reads the link of `curproc'
  */
 int
-procfs_readlink(v)
-	void *v;
+procfs_readlink(void *v)
 {
 	struct vop_readlink_args *ap = v;
 	char buf[16];		/* should be enough */
@@ -1052,9 +1031,7 @@ procfs_readlink(v)
  * convert decimal ascii to pid_t
  */
 static pid_t
-atopid(b, len)
-	const char *b;
-	u_int len;
+atopid(const char *b, u_int len)
 {
 	pid_t p = 0;
 
@@ -1070,8 +1047,7 @@ atopid(b, len)
 	return (p);
 }
 int
-procfs_poll(v)
-	void *v;
+procfs_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
 

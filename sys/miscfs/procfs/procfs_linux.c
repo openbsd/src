@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_linux.c,v 1.7 2007/01/01 21:43:57 pedro Exp $	*/
+/*	$OpenBSD: procfs_linux.c,v 1.8 2007/06/18 08:30:07 jasper Exp $	*/
 /*      $NetBSD: procfs_linux.c,v 1.2.4.1 2001/03/30 21:48:11 he Exp $      */
 
 /*
@@ -126,9 +126,7 @@ procfs_docpuinfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 
 #ifndef __i386__
 int
-procfs_getcpuinfstr(buf, len)
-	char *buf;
-	int *len;
+procfs_getcpuinfstr(char *buf, int *len)
 {
 	*len = 0;
 

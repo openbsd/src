@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.42 2007/06/02 00:45:21 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.43 2007/06/18 08:30:07 jasper Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -110,8 +110,7 @@ spec_vnoperate(void *v)
  * Trivial lookup routine that always fails.
  */
 int
-spec_lookup(v)
-	void *v;
+spec_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
 
@@ -124,8 +123,7 @@ spec_lookup(v)
  */
 /* ARGSUSED */
 int
-spec_open(v)
-	void *v;
+spec_open(void *v)
 {
 	struct vop_open_args *ap = v;
 	struct proc *p = ap->a_p;
@@ -133,7 +131,7 @@ spec_open(v)
 	struct vnode *bvp;
 	dev_t bdev;
 	dev_t dev = (dev_t)vp->v_rdev;
-	register int maj = major(dev);
+	int maj = major(dev);
 	int error;
 
 	/*
@@ -213,12 +211,11 @@ spec_open(v)
  */
 /* ARGSUSED */
 int
-spec_read(v)
-	void *v;
+spec_read(void *v)
 {
 	struct vop_read_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
+	struct vnode *vp = ap->a_vp;
+	struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr64_t bn, nextbn, bscale;
@@ -290,8 +287,7 @@ spec_read(v)
 }
 
 int
-spec_inactive(v)
-	void *v;
+spec_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 
@@ -304,12 +300,11 @@ spec_inactive(v)
  */
 /* ARGSUSED */
 int
-spec_write(v)
-	void *v;
+spec_write(void *v)
 {
 	struct vop_write_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
+	struct vnode *vp = ap->a_vp;
+	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr64_t bn, bscale;
@@ -382,8 +377,7 @@ spec_write(v)
  */
 /* ARGSUSED */
 int
-spec_ioctl(v)
-	void *v;
+spec_ioctl(void *v)
 {
 	struct vop_ioctl_args *ap = v;
 	dev_t dev = ap->a_vp->v_rdev;
@@ -407,11 +401,10 @@ spec_ioctl(v)
 
 /* ARGSUSED */
 int
-spec_poll(v)
-	void *v;
+spec_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
-	register dev_t dev;
+	dev_t dev;
 
 	switch (ap->a_vp->v_type) {
 
@@ -426,8 +419,7 @@ spec_poll(v)
 }
 /* ARGSUSED */
 int
-spec_kqfilter(v)
-	void *v;
+spec_kqfilter(void *v)
 {
 	struct vop_kqfilter_args *ap = v;
 
@@ -444,12 +436,11 @@ spec_kqfilter(v)
  */
 /* ARGSUSED */
 int
-spec_fsync(v)
-	void *v;
+spec_fsync(void *v)
 {
 	struct vop_fsync_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct buf *bp;
+	struct vnode *vp = ap->a_vp;
+	struct buf *bp;
 	struct buf *nbp;
 	int s;
 
@@ -489,8 +480,7 @@ loop:
 }
 
 int
-spec_strategy(v)
-	void *v;
+spec_strategy(void *v)
 {
 	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
@@ -507,8 +497,7 @@ spec_strategy(v)
  * This is a noop, simply returning what one has been given.
  */
 int
-spec_bmap(v)
-	void *v;
+spec_bmap(void *v)
 {
 	struct vop_bmap_args *ap = v;
 
@@ -527,11 +516,10 @@ spec_bmap(v)
  */
 /* ARGSUSED */
 int
-spec_close(v)
-	void *v;
+spec_close(void *v)
 {
 	struct vop_close_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
 	int (*devclose)(dev_t, int, int, struct proc *);
 	int mode, error;
@@ -607,8 +595,7 @@ spec_close(v)
  * Print out the contents of a special device vnode.
  */
 int
-spec_print(v)
-	void *v;
+spec_print(void *v)
 {
 	struct vop_print_args *ap = v;
 
@@ -621,8 +608,7 @@ spec_print(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-spec_pathconf(v)
-	void *v;
+spec_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;
 
@@ -656,11 +642,10 @@ spec_pathconf(v)
  */
 /* ARGSUSED */
 int
-spec_advlock(v)
-	void *v;
+spec_advlock(void *v)
 {
 	struct vop_advlock_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
 	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id,
 		ap->a_op, ap->a_fl, ap->a_flags));
@@ -671,8 +656,7 @@ spec_advlock(v)
  */
 /*ARGSUSED*/
 int
-spec_ebadf(v)
-	void *v;
+spec_ebadf(void *v)
 {
 
 	return (EBADF);
@@ -683,8 +667,7 @@ spec_ebadf(v)
  */
 /*ARGSUSED*/
 int
-spec_badop(v)
-	void *v;
+spec_badop(void *v)
 {
 
 	panic("spec_badop called");
