@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.52 2007/06/12 15:16:10 msf Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.53 2007/06/18 17:29:38 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -287,22 +287,22 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
-#define F_DISABLE		0x0001
-#define F_BACKUP		0x0002
-#define F_USED			0x0004
-#define F_DOWN			0x0008
-#define F_ADD			0x0010
-#define F_DEL			0x0020
-#define F_CHANGED		0x0040
-#define F_STICKY		0x0080
-#define F_CHECK_DONE		0x0100
-#define F_ACTIVE_RULESET	0x0200
-#define F_CHECK_SENT		0x0400
-#define F_SSL			0x0800
-#define F_NATLOOK		0x1000
-#define F_DEMOTE		0x2000
-#define F_LOOKUP_PATH		0x4000
-#define F_DEMOTED		0x8000
+#define F_DISABLE		0x00000001
+#define F_BACKUP		0x00000002
+#define F_USED			0x00000004
+#define F_DOWN			0x00000008
+#define F_ADD			0x00000010
+#define F_DEL			0x00000020
+#define F_CHANGED		0x00000040
+#define F_STICKY		0x00000080
+#define F_CHECK_DONE		0x00000100
+#define F_ACTIVE_RULESET	0x00000200
+#define F_CHECK_SENT		0x00000400
+#define F_SSL			0x00000800
+#define F_NATLOOK		0x00001000
+#define F_DEMOTE		0x00002000
+#define F_LOOKUP_PATH		0x00004000
+#define F_DEMOTED		0x00008000
 
 struct host_config {
 	objid_t			 id;
@@ -315,7 +315,7 @@ struct host_config {
 struct host {
 	TAILQ_ENTRY(host)	 entry;
 	struct host_config	 conf;
-	u_int16_t		 flags;
+	u_int32_t		 flags;
 	char			*tablename;
 	int			 up;
 	int			 last_up;
@@ -336,7 +336,7 @@ enum host_status {
 struct table_config {
 	objid_t			 id;
 	objid_t			 serviceid;
-	u_int16_t		 flags;
+	u_int32_t		 flags;
 	int			 check;
 	char			 demote_group[IFNAMSIZ];
 	struct timeval		 timeout;
@@ -371,7 +371,7 @@ enum table_check {
 
 struct service_config {
 	objid_t			 id;
-	u_int16_t		 flags;
+	u_int32_t		 flags;
 	in_port_t		 port;
 	objid_t			 table_id;
 	objid_t			 backup_id;
@@ -472,7 +472,7 @@ enum prototype {
 
 struct protocol {
 	objid_t			 id;
-	u_int16_t		 flags;
+	u_int32_t		 flags;
 	u_int8_t		 tcpflags;
 	int			 tcpbufsiz;
 	int			 tcpbacklog;
@@ -495,7 +495,7 @@ TAILQ_HEAD(protolist, protocol);
 
 struct relay_config {
 	objid_t			 id;
-	u_int16_t		 flags;
+	u_int32_t		 flags;
 	objid_t			 proto;
 	char			 name[MAXHOSTNAMELEN];
 	in_port_t		 port;
@@ -550,7 +550,7 @@ enum {
 
 struct hoststated {
 	u_int8_t		 opts;
-	u_int16_t		 flags;
+	u_int32_t		 flags;
 	const char		*confpath;
 	struct pfdata		*pf;
 	int			 tablecount;
