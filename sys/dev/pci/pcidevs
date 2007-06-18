@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1244 2007/06/14 16:31:22 mk Exp $
+$OpenBSD: pcidevs,v 1.1245 2007/06/18 12:20:00 martin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2934,6 +2934,7 @@ product NVIDIA GEFORCE3		0x0200	GeForce3
 product NVIDIA GEFORCE3TI200	0x0201	GeForce3 Ti 200
 product NVIDIA GEFORCE3TI500	0x0202	GeForce3 Ti 500
 product NVIDIA QUADRO_DCC	0x0203	Quadro DCC
+product NVIDIA GEFORCE6200_2	0x0221	GeForce 6200
 product NVIDIA GEFORCE6150	0x0240	GeForce 6150
 product NVIDIA GEFORCE6150LE	0x0241	GeForce 6150 LE
 product NVIDIA GEFORCE6100	0x0242	GeForce 6100
