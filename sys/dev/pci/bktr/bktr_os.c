@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.26 2007/06/11 08:10:22 robert Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.27 2007/06/18 07:31:14 jakemsr Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -180,8 +180,6 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    fun | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE |
 	    PCI_COMMAND_BACKTOBACK_ENABLE);
-
-	printf("\n");
 
 	/*
 	 * map memory
