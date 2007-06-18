@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.66 2007/06/04 21:34:01 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.67 2007/06/18 21:34:08 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: June 4 2007 $
+.Dd $Mdocdate: June 18 2007 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -566,6 +566,11 @@ Source for files in
 .It xenocara/
 Source for the X11 window system.
 .El
+.Pp
+.It xobj/
+Architecture specific target tree produced by building the
+.Pa /usr/src/xenocara
+tree.
 .El
 .It /var/
 Multi-purpose log, temporary, transient, and spool files.
