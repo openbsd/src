@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.54 2007/06/18 18:06:28 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.55 2007/06/18 18:34:00 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,112 @@
 
 use strict;
 use warnings;
+
+package OpenBSD::lookup;
+
+sub lookup
+{
+	my ($self, $solver, $state, $obj) = @_;
+
+	my $dependencies = $solver->{to_register};
+	my $known = $solver->{known};
+	if (my $r = $self->find_in_already_done($solver, $state, $obj)) {
+		$dependencies->{$r} = 1;
+		return 1;
+	}
+	if ($self->find_in_extra_sources($solver, $state, $obj)) {
+		return 1;
+	}
+	# lookup through the rest of the tree...
+	my $done = $solver->{done};
+	while (my $dep = pop @{$solver->{todo}}) {
+		require OpenBSD::RequiredBy;
+
+		next if $done->{$dep};
+		$done->{$dep} = 1;
+		for my $dep2 (OpenBSD::Requiring->new($dep)->list) {
+			push(@{$solver->{todo}}, $dep2) unless $done->{$dep2};
+		}
+		$known->{$dep} = 1;
+		if ($self->find_in_new_source($solver, $state, $obj, $dep)) {
+			$dependencies->{$dep} = 1;
+			return 1;
+		}
+	}
+	if (my $r = $self->find_elsewhere($solver, $state, $obj)) {
+		$dependencies->{$r} = 1;
+		return 1;
+	}
+	
+	$self->dependency_not_found($state, $obj);
+	return 0;
+}
+
+package OpenBSD::lookup::library;
+our @ISA=qw(OpenBSD::lookup);
+
+sub find_in_already_done
+{
+	my ($self, $solver, $state, $obj) = @_;
+
+
+	my $r = $solver->check_lib_spec($solver->{plist}->localbase, $obj, 
+	    $solver->{known});
+	if ($r) {
+		print "found libspec $obj in package $r\n" if $state->{verbose};
+		return $r;
+	} else {
+		return undef;
+	}
+}
+
+sub find_in_extra_sources
+{
+	my ($self, $solver, $state, $obj) = @_;
+	return undef if $obj =~ m/\//;
+
+	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
+	for my $dir (OpenBSD::SharedLibs::system_dirs()) {
+		if ($solver->check_lib_spec($dir, $obj, {system => 1})) {
+			print "found libspec $obj in $dir/lib\n" if $state->{verbose};
+			return 'system';
+		}
+	}
+	return undef;
+}
+
+sub find_in_new_source
+{
+	my ($self, $solver, $state, $obj, $dep) = @_;
+	OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
+	if ($solver->check_lib_spec($solver->{plist}->localbase, $obj, 
+	    {$dep => 1})) {
+		print "found libspec $obj in package $dep\n" if $state->{verbose};
+		return $dep;
+	} 
+	return undef;
+}
+
+sub find_elsewhere
+{
+	my ($self, $state, $solver, $obj) = @_;
+
+	for my $dep (@{$solver->{plist}->{depend}}) {
+		my $r = $solver->find_old_lib($state, 
+		    $solver->{plist}->localbase, $dep->{pattern}, $obj);
+		if ($r) {
+			print "found libspec $obj in old package $r\n" if $state->{verbose};
+			return $r;
+		}
+    	}
+	return undef;
+}
+
+sub dependency_not_found
+{
+	my ($self, $state, $obj) = @_;
+	print "libspec $obj not found\n" if $state->{very_verbose};
+}
 
 package OpenBSD::Dependencies::Solver;
 
@@ -257,7 +363,7 @@ sub check_lib_spec
 
 sub find_old_lib
 {
-	my ($self, $state, $base, $pattern, $lib, $dependencies) = @_;
+	my ($self, $state, $base, $pattern, $lib) = @_;
 
 	require OpenBSD::Search;
 	require OpenBSD::PackageRepository::Installed;
@@ -265,11 +371,10 @@ sub find_old_lib
 	for my $try (OpenBSD::PackageRepository::Installed->new->match(OpenBSD::Search::PkgSpec->new(".libs-".$pattern))) {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($try);
 		if ($self->check_lib_spec($base, $lib, {$try => 1})) {
-			$dependencies->{$try} = 1;
-			return "$try($lib)";
+			return $try;
 		}
 	}
-	return;
+	return undef;
 }
 
 sub lookup_library
@@ -333,7 +438,8 @@ sub solve_wantlibs
 
 	for my $h ($solver->{set}->newer) {
 		for my $lib (@{$h->{plist}->{wantlib}}) {
-			if (!$solver->lookup_library($state, $lib->{name})) {
+			if (!OpenBSD::lookup::library->lookup($solver,
+			    $state, $lib->{name})) {
 				OpenBSD::Error::Warn "Can't install ", 
 				    $h->{pkgname}, ": lib not found ", 
 				    $lib->{name}, "\n";
