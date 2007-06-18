@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.33 2007/06/14 10:11:16 mbalmer Exp $ */
+/*	$OpenBSD: umodem.c,v 1.34 2007/06/18 09:55:58 mbalmer Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -353,6 +353,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ctl_notify = -1;
 	sc->sc_notify_pipe = NULL;
 
+	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_ctl_iface, i);
 		if (ed == NULL)
