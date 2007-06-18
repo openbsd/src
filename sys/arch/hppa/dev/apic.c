@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.3 2007/06/17 14:51:21 kettenis Exp $	*/
+/*	$OpenBSD: apic.c,v 1.4 2007/06/18 22:46:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -267,14 +267,16 @@ apic_get_int_tbl(struct elroy_softc *sc)
 u_int32_t
 apic_get_int_ent0(struct elroy_softc *sc, int line)
 {
+	volatile struct elroy_regs *r = sc->sc_regs;
 	int trigger = MPS_INT(MPS_INTPO_DEF, MPS_INTTR_DEF);
 	u_int32_t ent0 = APIC_ENT0_LOW | APIC_ENT0_LEV;
-	int mpspo, mpstr;
+	int bus, mpspo, mpstr;
 	int i;
 
+	bus = letoh32(elroy_read32(&r->busnum)) & 0xff;
 	for (i = 0; i < sc->sc_int_tbl_sz; i++) {
-		if (line == sc->sc_int_tbl[i].line &&
-		    sc->sc_hpa == sc->sc_int_tbl[i].addr)
+		if (bus == sc->sc_int_tbl[i].bus &&
+		    line == sc->sc_int_tbl[i].line)
 			trigger = sc->sc_int_tbl[i].trigger;
 	}
 
@@ -314,30 +316,21 @@ apic_get_int_ent0(struct elroy_softc *sc, int line)
 void
 apic_dump(struct elroy_softc *sc)
 {
-	struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
-	struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
 	int i;
 
 	for (i = 0; i < sc->sc_nints; i++)
 		printf("0x%04x 0x%04x\n", apic_read(sc->sc_regs, APIC_ENT0(i)),
 		    apic_read(sc->sc_regs, APIC_ENT1(i)));
 
-	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL_SZ,
-	    &int_tbl_sz, 0, 0, 0, 0, 0))
-		printf("pdc_call failed\n");
-	printf("int_tbl_sz=%d\n", int_tbl_sz.num);
-
-	if (int_tbl_sz.num > MAX_INT_TBL_SZ)
-		int_tbl_sz.num = MAX_INT_TBL_SZ;
-
-	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL,
-	    &int_tbl_sz, 0, &int_tbl, 0, 0, 0))
-		printf("pdc_call failed\n");
-	for (i = 0; i < int_tbl_sz.num; i++) {
-		printf("type=%x, len=%d ", int_tbl[i].type, int_tbl[i].len);
-		printf("itype=%d, trigger=%x ", int_tbl[i].itype, int_tbl[i].trigger);			
-		printf("pin=%x, bus=%d ", int_tbl[i].pin, int_tbl[i].bus);			
-		printf("line=%d, addr=%x\n", int_tbl[i].line, int_tbl[i].addr);			
+	for (i = 0; i < sc->sc_int_tbl_sz; i++) {
+		printf("type=%x ", sc->sc_int_tbl[i].type);
+		printf("len=%d ", sc->sc_int_tbl[i].len);
+		printf("itype=%d ", sc->sc_int_tbl[i].itype);			
+		printf("trigger=%x ", sc->sc_int_tbl[i].trigger);		
+		printf("pin=%x ", sc->sc_int_tbl[i].pin);		
+		printf("bus=%d ", sc->sc_int_tbl[i].bus);
+		printf("line=%d ", sc->sc_int_tbl[i].line);
+		printf("addr=%x\n", sc->sc_int_tbl[i].addr);
 	}
 }
 #endif
