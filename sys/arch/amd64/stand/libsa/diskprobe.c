@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.4 2006/09/26 23:33:04 krw Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.5 2007/06/18 22:11:20 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -259,10 +259,6 @@ cdprobe(void)
 	dip->disklabel.d_bbsize = 2048;
 	dip->disklabel.d_sbsize = 2048;
 
-	dip->disklabel.d_magic = DISKMAGIC;
-	dip->disklabel.d_magic2 = DISKMAGIC;
-	dip->disklabel.d_checksum = dkcksum(&dip->disklabel);
-
 	/* 'a' partition covering the "whole" disk */
 	dip->disklabel.d_partitions[0].p_offset = 0;
 	dip->disklabel.d_partitions[0].p_size = 100;
@@ -274,6 +270,10 @@ cdprobe(void)
 	dip->disklabel.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 
 	dip->disklabel.d_npartitions = RAW_PART + 1;
+
+	dip->disklabel.d_magic = DISKMAGIC;
+	dip->disklabel.d_magic2 = DISKMAGIC;
+	dip->disklabel.d_checksum = dkcksum(&dip->disklabel);
 
 	/* Add to queue of disks */
 	TAILQ_INSERT_TAIL(&disklist, dip, list);
