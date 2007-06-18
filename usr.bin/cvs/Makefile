@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2007/04/15 13:23:59 jmc Exp $
+#	$OpenBSD: Makefile,v 1.39 2007/06/18 17:54:12 joris Exp $
 
 PROG=	opencvs
 MAN=	cvs.1 cvs.5 cvsintro.7
@@ -6,8 +6,8 @@ CPPFLAGS+=-I${.CURDIR}
 
 SRCS=	cvs.c add.c admin.c annotate.c commit.c config.c checkout.c client.c \
 	buf.c cmd.c date.y diff.c diff3.c diff_internals.c edit.c entries.c \
-	fatal.c file.c getlog.c log.c logmsg.c import.c init.c remove.c \
-	repository.c rcs.c rcsnum.c remote.c root.c server.c \
+	fatal.c file.c getlog.c history.c log.c logmsg.c import.c init.c \
+	remove.c repository.c rcs.c rcsnum.c remote.c root.c server.c \
 	status.c tag.c worklist.c util.c update.c version.c watch.c xmalloc.c
 
 CFLAGS+=-Wall

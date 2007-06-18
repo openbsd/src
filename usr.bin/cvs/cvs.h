@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.135 2007/03/22 17:18:19 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.136 2007/06/18 17:54:13 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -145,6 +145,21 @@
 #define CVS_PATH_TEMPLATE	CVS_PATH_CVSDIR "/Template"
 #define CVS_PATH_UPDATEPROG	CVS_PATH_CVSDIR "/Update.prog"
 #define CVS_PATH_ATTIC		"Attic"
+
+/* history stuff */
+#define CVS_HISTORY_TAG			0
+#define CVS_HISTORY_CHECKOUT		1
+#define CVS_HISTORY_EXPORT		2
+#define CVS_HISTORY_RELEASE		3
+#define CVS_HISTORY_UPDATE_REMOVE	4
+#define CVS_HISTORY_UPDATE_CO		5
+#define CVS_HISTORY_UPDATE_MERGED	6
+#define CVS_HISTORY_UPDATE_MERGED_ERR	7
+#define CVS_HISTORY_COMMIT_MODIFIED	8
+#define CVS_HISTORY_COMMIT_ADDED	9
+#define CVS_HISTORY_COMMIT_REMOVED	10
+
+void	cvs_history_add(int, struct cvs_file *, const char *);
 
 struct cvs_cmd {
 	u_int	 cmd_op;
@@ -383,6 +398,7 @@ int	cvs_edit(int, char **);
 int	cvs_editors(int, char **);
 int	cvs_export(int, char **);
 int	cvs_getlog(int, char **);
+int	cvs_history(int, char **);
 int	cvs_import(int, char **);
 int	cvs_init(int, char **);
 int	cvs_remove(int, char **);

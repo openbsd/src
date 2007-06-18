@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.106 2007/06/01 17:47:47 niallo Exp $	*/
+/*	$OpenBSD: commit.c,v 1.107 2007/06/18 17:54:13 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -207,7 +207,7 @@ void
 cvs_commit_local(struct cvs_file *cf)
 {
 	BUF *b, *d;
-	int isnew;
+	int isnew, histtype;
 	RCSNUM *head;
 	int openflags, rcsflags;
 	char rbuf[24], nbuf[24];
@@ -222,6 +222,13 @@ cvs_commit_local(struct cvs_file *cf)
 
 	if (cf->file_type != CVS_FILE)
 		fatal("cvs_commit_local: '%s' is not a file", cf->file_path);
+
+	if (cf->file_status != FILE_MODIFIED &&
+	    cf->file_status != FILE_ADDED &&
+	    cf->file_status != FILE_REMOVED) {
+		cvs_log(LP_ERR, "skipping bogus file `%s'", cf->file_path);
+		return;
+	}
 
 	if (cf->file_status == FILE_MODIFIED ||
 	    cf->file_status == FILE_REMOVED || (cf->file_status == FILE_ADDED
@@ -379,6 +386,20 @@ cvs_commit_local(struct cvs_file *cf)
 		cvs_log(LP_NOTICE, "checking in '%s'; revision %s -> %s",
 		    cf->file_path, rbuf, nbuf);
 	}
+
+	switch (cf->file_status) {
+	case FILE_MODIFIED:
+		histtype = CVS_HISTORY_COMMIT_MODIFIED;
+		break;
+	case FILE_ADDED:
+		histtype = CVS_HISTORY_COMMIT_ADDED;
+		break;
+	case FILE_REMOVED:
+		histtype = CVS_HISTORY_COMMIT_REMOVED;
+		break;
+	}
+
+	cvs_history_add(histtype, cf, NULL);
 }
 
 static BUF *

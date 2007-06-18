@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.93 2007/06/01 17:47:47 niallo Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.94 2007/06/18 17:54:13 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -188,6 +188,8 @@ checkout_repository(const char *repobase, const char *wdbase)
 
 	TAILQ_INIT(&fl);
 	TAILQ_INIT(&dl);
+
+	cvs_history_add(CVS_HISTORY_CHECKOUT, NULL, wdbase);
 
 	build_dirs = 1;
 	cr.enterdir = cvs_update_enterdir;
