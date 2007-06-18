@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.114 2007/06/17 00:32:21 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.115 2007/06/18 21:06:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.114 2007/06/17 00:32:21 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.115 2007/06/18 21:06:51 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -702,8 +702,10 @@ readlabel(int f)
 		if (lp->d_magic == DISKMAGIC &&
 		    lp->d_magic2 == DISKMAGIC) {
 			if (lp->d_npartitions <= MAXPARTITIONS &&
-			    dkcksum(lp) == 0)
+			    dkcksum(lp) == 0) {
+				cvtdisklabelv1(lp);
 				return (lp);
+			}
 
 			msg = "disk label corrupted";
 		}
@@ -722,6 +724,7 @@ readlabel(int f)
 				    dkcksum(lp) == 0) {
 					warnx("found at 0x%lx",
 					    (long)((char *)lp - bootarea));
+					cvtdisklabelv1(lp);
 					return (lp);
 				}
 				msg = "disk label corrupted";
