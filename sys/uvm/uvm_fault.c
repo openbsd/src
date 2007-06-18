@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.48 2007/05/31 21:20:30 thib Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.49 2007/06/18 21:51:15 pedro Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ uvmfault_anonflush(anons, n)
 		if (anons[lcv] == NULL)
 			continue;
 		simple_lock(&anons[lcv]->an_lock);
-		pg = anons[lcv]->u.an_page;
+		pg = anons[lcv]->an_page;
 		if (pg && (pg->pg_flags & PG_BUSY) == 0 && pg->loan_count == 0) {
 			uvm_lock_pageq();
 			if (pg->wire_count == 0) {
@@ -306,7 +306,7 @@ uvmfault_anonget(ufi, amap, anon)
 	result = 0;		/* XXX shut up gcc */
 	uvmexp.fltanget++;
         /* bump rusage counters */
-	if (anon->u.an_page)
+	if (anon->an_page)
 		curproc->p_addr->u_stats.p_ru.ru_minflt++;
 	else
 		curproc->p_addr->u_stats.p_ru.ru_majflt++;
@@ -318,7 +318,7 @@ uvmfault_anonget(ufi, amap, anon)
 	while (1) {
 
 		we_own = FALSE;		/* TRUE if we set PG_BUSY on a page */
-		pg = anon->u.an_page;
+		pg = anon->an_page;
 
 		/*
 		 * if there is a resident page and it is loaned, then anon
@@ -462,7 +462,7 @@ uvmfault_anonget(ufi, amap, anon)
 				KASSERT(result != VM_PAGER_PEND);
 
 				/* remove page from anon */
-				anon->u.an_page = NULL;
+				anon->an_page = NULL;
 
 				/*
 				 * remove the swap slot from the anon
@@ -817,14 +817,14 @@ ReFault:
 		anon = anons[lcv];
 		simple_lock(&anon->an_lock);
 		/* ignore loaned pages */
-		if (anon->u.an_page && anon->u.an_page->loan_count == 0 &&
-			(anon->u.an_page->pg_flags & (PG_RELEASED|PG_BUSY)) == 0) {
+		if (anon->an_page && anon->an_page->loan_count == 0 &&
+		    (anon->an_page->pg_flags & (PG_RELEASED|PG_BUSY)) == 0) {
 			uvm_lock_pageq();
-			uvm_pageactivate(anon->u.an_page);	/* reactivate */
+			uvm_pageactivate(anon->an_page);	/* reactivate */
 			uvm_unlock_pageq();
 			UVMHIST_LOG(maphist,
 			    "  MAPPING: n anon: pm=%p, va=0x%lx, pg=%p",
-			    ufi.orig_map->pmap, currva, anon->u.an_page, 0);
+			    ufi.orig_map->pmap, currva, anon->an_page, 0);
 			uvmexp.fltnamap++;
 
 			/*
@@ -834,7 +834,7 @@ ReFault:
 			 */
 
 			(void) pmap_enter(ufi.orig_map->pmap, currva,
-			    VM_PAGE_TO_PHYS(anon->u.an_page),
+			    VM_PAGE_TO_PHYS(anon->an_page),
 			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
 			    enter_prot,
 			    PMAP_CANFAIL |
@@ -1069,7 +1069,7 @@ ReFault:
 	 * uobj is non null if the page is on loan from an object (i.e. uobj)
 	 */
 
-	uobj = anon->u.an_page->uobject;	/* locked by anonget if !NULL */
+	uobj = anon->an_page->uobject;	/* locked by anonget if !NULL */
 
 	/* locked: maps(read), amap, anon, uobj(if one) */
 
@@ -1077,7 +1077,7 @@ ReFault:
 	 * special handling for loaned pages 
 	 */
 
-	if (anon->u.an_page->loan_count) {
+	if (anon->an_page->loan_count) {
 
 		if ((access_type & VM_PROT_WRITE) == 0) {
 			
@@ -1119,19 +1119,19 @@ ReFault:
 				 * (if any)
 				 */
 				/* copy old -> new */
-				uvm_pagecopy(anon->u.an_page, pg);
+				uvm_pagecopy(anon->an_page, pg);
 
 				/* force reload */
-				pmap_page_protect(anon->u.an_page,
+				pmap_page_protect(anon->an_page,
 						  VM_PROT_NONE);
 				uvm_lock_pageq();	  /* KILL loan */
 				if (uobj)
 					/* if we were loaning */
-					anon->u.an_page->loan_count--;
-				anon->u.an_page->uanon = NULL;
+					anon->an_page->loan_count--;
+				anon->an_page->uanon = NULL;
 				/* in case we owned */
 				atomic_clearbits_int(
-				    &anon->u.an_page->pg_flags, PQ_ANON);
+				    &anon->an_page->pg_flags, PQ_ANON);
 				uvm_pageactivate(pg);
 				uvm_unlock_pageq();
 				if (uobj) {
@@ -1140,7 +1140,7 @@ ReFault:
 				}
 
 				/* install new page in anon */
-				anon->u.an_page = pg;
+				anon->an_page = pg;
 				pg->uanon = anon;
 				atomic_setbits_int(&pg->pg_flags, PQ_ANON);
 				atomic_clearbits_int(&pg->pg_flags,
@@ -1195,7 +1195,7 @@ ReFault:
 
 		/* got all resources, replace anon with nanon */
 
-		uvm_pagecopy(oanon->u.an_page, pg);	/* pg now !PG_CLEAN */
+		uvm_pagecopy(oanon->an_page, pg);	/* pg now !PG_CLEAN */
 		/* un-busy! new page */
 		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
@@ -1215,7 +1215,7 @@ ReFault:
 
 		uvmexp.flt_anon++;
 		oanon = anon;		/* old, locked anon is same as anon */
-		pg = anon->u.an_page;
+		pg = anon->an_page;
 		if (anon->an_ref > 1)     /* disallow writes to ref > 1 anons */
 			enter_prot = enter_prot & ~VM_PROT_WRITE;
 

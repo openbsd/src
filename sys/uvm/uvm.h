@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.20 2006/07/13 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.21 2007/06/18 21:51:15 pedro Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -101,10 +101,6 @@ struct uvm {
 	int page_nhash;			/* number of buckets */
 	int page_hashmask;		/* hash mask */
 	simple_lock_data_t hashlock;	/* lock on page_hash array */
-
-	/* anon stuff */
-	struct vm_anon *afree;		/* anon free list */
-	simple_lock_data_t afreelock; 	/* lock on anon free list */
 
 	/* static kernel map entry pool */
 	vm_map_entry_t kentry_free;	/* free page pool */

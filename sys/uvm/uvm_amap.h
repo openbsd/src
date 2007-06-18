@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.16 2007/05/31 21:20:30 thib Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.17 2007/06/18 21:51:15 pedro Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ AMAP_INLINE				/* drop reference to an amap */
 void		amap_unref(struct vm_amap *, vaddr_t, vsize_t, int);
 					/* remove all anons from amap */
 void		amap_wipeout(struct vm_amap *);
+boolean_t	amap_swap_off(int, int);
 
 /*
  * amap flag values
@@ -123,6 +124,7 @@ void		amap_wipeout(struct vm_amap *);
 
 #define AMAP_SHARED	0x1	/* amap is shared */
 #define AMAP_REFALL	0x2	/* amap_ref: reference entire amap */
+#define AMAP_SWAPOFF	0x4	/* amap_swap_off() is in progress */
 
 #endif /* _KERNEL */
 
@@ -157,6 +159,7 @@ struct vm_amap {
 #ifdef UVM_AMAP_PPREF
 	int *am_ppref;		/* per page reference count (if !NULL) */
 #endif
+	LIST_ENTRY(vm_amap) am_list;
 };
 
 /*

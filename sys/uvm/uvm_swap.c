@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.71 2007/06/06 17:15:14 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.72 2007/06/18 21:51:15 pedro Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1061,11 +1061,6 @@ swap_on(p, sdp)
 	 */
 	vref(vp);
 
-  	/*
-	 * add anons to reflect the new swap space
-	 */
-	uvm_anon_add(size);
-
 #ifdef UVM_SWAP_ENCRYPT
 	if (uvm_doswapencrypt)
 		uvm_swap_initcrypt(sdp, npages);
@@ -1101,6 +1096,7 @@ swap_off(p, sdp)
 	struct proc *p;
 	struct swapdev *sdp;
 {
+	int error;
 	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "  dev=%lx", sdp->swd_dev,0,0,0);
 
@@ -1117,15 +1113,20 @@ swap_off(p, sdp)
 
 	if (uao_swap_off(sdp->swd_drumoffset,
 			 sdp->swd_drumoffset + sdp->swd_drumsize) ||
-	    anon_swap_off(sdp->swd_drumoffset,
+	    amap_swap_off(sdp->swd_drumoffset,
 			  sdp->swd_drumoffset + sdp->swd_drumsize)) {
 		
+		error = ENOMEM;
+	} else if (sdp->swd_npginuse > sdp->swd_npgbad) {
+		error = EBUSY;
+	}
+
+	if (error) {
 		simple_lock(&uvm.swap_data_lock);
 		sdp->swd_flags |= SWF_ENABLE;
 		simple_unlock(&uvm.swap_data_lock);
-		return ENOMEM;
+		return (error);
 	}
-	KASSERT(sdp->swd_npginuse == sdp->swd_npgbad);
 
 	/*
 	 * done with the vnode and saved creds.
@@ -1139,9 +1140,6 @@ swap_off(p, sdp)
 	if (sdp->swd_vp != rootvp) {
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
 	}
-
-	/* remove anons from the system */
-	uvm_anon_remove(sdp->swd_npages);
 
 	simple_lock(&uvm.swap_data_lock);
 	uvmexp.swpages -= sdp->swd_npages;

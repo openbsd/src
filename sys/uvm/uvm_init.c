@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.15 2007/05/09 11:23:35 art Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.16 2007/06/18 21:51:15 pedro Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -134,11 +134,10 @@ uvm_init()
 	uvm_pager_init();
 
 	/*
-	 * step 8: init anonymous memory systems (both amap and anons)
+	 * step 8: init anonymous memory system
 	 */
 
 	amap_init();		/* init amap module */
-	uvm_anon_init();	/* allocate initial anons */
 
 	/*
 	 * the VM system is now up!  now that malloc is up we can resize the
@@ -170,8 +169,7 @@ uvm_init()
 		panic("uvm_init: cannot reserve dead beef @0x%x\n", DEADBEEF1);
 #endif
 	/*
-	 * done!
+	 * init anonymous memory systems
 	 */
-
-	return;
+	uvm_anon_init();
 }
