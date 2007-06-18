@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.15 2007/05/25 13:56:59 millert Exp $	*/
+/*	$OpenBSD: touch.c,v 1.16 2007/06/18 11:20:58 millert Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ stime_arg1(char *arg, struct timeval *tvp)
 		err(1, "localtime");
 					/* [[CC]YY]MMDDhhmm[.SS] */
 	for (p = arg, dot = NULL; *p != '\0'; p++) {
-		if (*p == '.' && dot != NULL)
+		if (*p == '.' && dot == NULL)
 			dot = p;
 		else if (!isdigit((unsigned char)*p))
 			goto terr;

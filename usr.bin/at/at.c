@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.51 2007/05/24 12:24:43 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.52 2007/06/18 11:20:58 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.51 2007/05/24 12:24:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.52 2007/06/18 11:20:58 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -812,7 +812,7 @@ ttime(char *arg)
 
 	/* Valid date format is [[CC]YY]MMDDhhmm[.SS] */
 	for (p = arg, dot = NULL; *p != '\0'; p++) {
-		if (*p == '.' && dot != NULL)
+		if (*p == '.' && dot == NULL)
 			dot = p;
 		else if (!isdigit((unsigned char)*p))
 			goto terr;
