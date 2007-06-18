@@ -162,7 +162,6 @@
 ./usr/include/mips64/cpu.h
 ./usr/include/mips64/cpustate.h
 ./usr/include/mips64/db_machdep.h
-./usr/include/mips64/disklabel.h
 ./usr/include/mips64/endian.h
 ./usr/include/mips64/exception.h
 ./usr/include/mips64/exec.h

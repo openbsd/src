@@ -1672,7 +1672,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cpu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/cpustate.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/db_machdep.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/disklabel.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/endian.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/exception.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/exec.ph
