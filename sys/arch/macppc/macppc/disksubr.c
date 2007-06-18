@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.55 2007/06/17 00:27:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.56 2007/06/18 08:41:04 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -34,13 +34,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/syslog.h>
 #include <sys/disk.h>
 
-#define BOOT_MAGIC 0xAA55
-#define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
+char   *readdpmelabel(struct buf *, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 
 /*
  * Attempt to read a disk label from a device
@@ -54,7 +52,7 @@
  * find disklabel inside a DOS partition. Return buffer
  * for use in signalling errors if requested.
  *
- * We would like to check if each MBR has a valid BOOT_MAGIC, but
+ * We would like to check if each MBR has a valid DOSMBR_SIGNATURE, but
  * we cannot because it doesn't always exist. So.. we assume the
  * MBR is valid.
  *
@@ -64,10 +62,7 @@ char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
-	struct partition *pp;
 	struct buf *bp = NULL;
-	int i, part_cnt, n, hfspartoff;
-	struct part_map_entry *part;
 	char *msg;
 
 	if ((msg = initdisklabel(lp)))
@@ -77,83 +72,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	/* First check for a DPME (HFS) disklabel */
-	bp->b_blkno = 1;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = 1 / lp->d_secpercyl;
-	(*strat)(bp);
-	if (biowait(bp)) {
-		msg = "DPME partition I/O error";
-		goto doslabel;
-	}
-
-	/* if successful, wander through DPME partition table */
-	part = (struct part_map_entry *)bp->b_data;
-	/* if first partition is not valid, assume not HFS/DPME partitioned */
-	if (part->pmSig != PART_ENTRY_MAGIC) {
-		osdep->macparts[0].pmSig = 0; /* make invalid */
-		goto doslabel;
-	}
-	osdep->macparts[0] = *part;
-	part_cnt = part->pmMapBlkCnt;
-	n = 0;
-	for (i = 0; i < part_cnt; i++) {
-		char *s;
-
-		pp = &lp->d_partitions[8+n];
-
-		bp->b_blkno = 1+i;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylinder = (1+i) / lp->d_secpercyl;
-		(*strat)(bp);
-		if (biowait(bp)) {
-			msg = "DPME partition I/O error";
-			goto doslabel;
-		}
-		part = (struct part_map_entry *)bp->b_data;
-		/* toupper the string, in case caps are different... */
-		for (s = part->pmPartType; *s; s++)
-			if ((*s >= 'a') && (*s <= 'z'))
-				*s = (*s - 'a' + 'A');
-
-		if (strcmp(part->pmPartType, PART_TYPE_OPENBSD) == 0) {
-			hfspartoff = part->pmPyPartStart;
-			osdep->macparts[1] = *part;
-		}
-		/* currently we ignore all but HFS partitions */
-		if (strcmp(part->pmPartType, PART_TYPE_MAC) == 0) {
-			DL_SETPOFFSET(pp, part->pmPyPartStart);
-			DL_SETPSIZE(pp, part->pmPartBlkCnt);
-			pp->p_fstype = FS_HFS;
-			n++;
-		}
-	}
-	lp->d_npartitions = MAXPARTITIONS;
-
-	if (spoofonly)
-		goto doslabel;
-
-	/* next, dig out disk label */
-	bp->b_blkno = hfspartoff;
-	bp->b_cylinder = hfspartoff / lp->d_secpercyl;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	(*strat)(bp);
-	if (biowait(bp)) {
-		msg = "disk label I/O error";
-		goto done;
-	}
-	goto realdisklabel;
-
-doslabel:
-	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	msg = readdpmelabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
-realdisklabel:
-	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
@@ -178,6 +101,84 @@ done:
 	return (msg);
 }
 
+char *
+readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
+    struct disklabel *lp, struct cpu_disklabel *osdep,
+    int *partoffp, int *cylp, int spoofonly)
+{
+	int i, part_cnt, n, hfspartoff = -1;
+	struct part_map_entry *part;
+
+	/* First check for a DPME (HFS) disklabel */
+	bp->b_blkno = 1;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylinder = 1 / lp->d_secpercyl;
+	(*strat)(bp);
+	if (biowait(bp))
+		return ("DPME partition I/O error");
+
+	/* if successful, wander through DPME partition table */
+	part = (struct part_map_entry *)bp->b_data;
+	/* if first partition is not valid, assume not HFS/DPME partitioned */
+	if (part->pmSig != PART_ENTRY_MAGIC)
+		return ("not a DPMI partition");
+	part_cnt = part->pmMapBlkCnt;
+	n = 0;
+	for (i = 0; i < part_cnt; i++) {
+		struct partition *pp = &lp->d_partitions[8+n];
+		char *s;
+
+		bp->b_blkno = 1+i;
+		bp->b_bcount = lp->d_secsize;
+		bp->b_flags = B_BUSY | B_READ;
+		bp->b_cylinder = (1+i) / lp->d_secpercyl;
+		(*strat)(bp);
+		if (biowait(bp))
+			return ("DPME partition I/O error");
+
+		part = (struct part_map_entry *)bp->b_data;
+		/* toupper the string, in case caps are different... */
+		for (s = part->pmPartType; *s; s++)
+			if ((*s >= 'a') && (*s <= 'z'))
+				*s = (*s - 'a' + 'A');
+
+		if (strcmp(part->pmPartType, PART_TYPE_OPENBSD) == 0)
+			hfspartoff = part->pmPyPartStart - LABELSECTOR;
+
+		/* currently we ignore all but HFS partitions */
+		if (strcmp(part->pmPartType, PART_TYPE_MAC) == 0) {
+			DL_SETPOFFSET(pp, part->pmPyPartStart);
+			DL_SETPSIZE(pp, part->pmPartBlkCnt);
+			pp->p_fstype = FS_HFS;
+			n++;
+		}
+	}
+	lp->d_npartitions = MAXPARTITIONS;
+
+	if (hfspartoff == -1)
+		return ("no OpenBSD parition inside DPME label");
+
+	if (partoffp)
+		*partoffp = hfspartoff;
+	if (cylp)
+		*cylp = hfspartoff / lp->d_secpercyl;
+
+	if (spoofonly)
+		return (NULL);
+
+	/* next, dig out disk label */
+	bp->b_blkno = hfspartoff + LABELSECTOR;
+	bp->b_cylinder = hfspartoff / lp->d_secpercyl;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	(*strat)(bp);
+	if (biowait(bp))
+		return("disk label I/O error");
+
+	return checkdisklabel(bp->b_data + LABELOFFSET, lp);
+}
+
 /*
  * Write disk label back to device after modification.
  */
@@ -185,7 +186,7 @@ int
 writedisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
-	int error, partoff = -1, cyl = 0;
+	int error = EIO, partoff = -1, cyl = 0;
 	struct disklabel *dlp;
 	struct buf *bp = NULL;
 
@@ -193,23 +194,9 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	/* try DPME partition */
-	if (osdep->macparts[0].pmSig == PART_ENTRY_MAGIC) {
-		/* only write if a valid "OpenBSD" partition type exists */
-		if (osdep->macparts[1].pmSig == PART_ENTRY_MAGIC) {
-			bp->b_blkno = osdep->macparts[1].pmPyPartStart;
-			bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
-			bp->b_bcount = lp->d_secsize;
-			goto writeit;
-		}
-		error = EIO;
+	if (readdpmelabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL &&
+	    readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL)
 		goto done;
-	}
-
-	if (readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL) {
-		error = EIO;
-		goto done;
-	}
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
@@ -220,7 +207,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	if ((error = biowait(bp)) != 0)
 		goto done;
 
-writeit:
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	*dlp = *lp;
 	bp->b_flags = B_BUSY | B_WRITE;
