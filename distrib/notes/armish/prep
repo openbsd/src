@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.8 2007/06/11 18:58:16 ian Exp $
+dnl	$OpenBSD: prep,v 1.9 2007/06/18 14:50:34 ian Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of RedBoot, the low-level
 process that controls the microprocessor after hardware initialization.
@@ -41,13 +41,30 @@ to load from flash are not available and network booting does not appear
 to work.
 
 Booting Thecus N2100 
-Thecus RedBoot provides the 'fconfig' command to change the boot
-configuration of the device also 'fis' is provided to perform
-flash operations.
-To enter interactive RedBoot, it is necessary to press ^C within one
-second of the prompt, it will typically accept it if typed early.
 
-The recommended way to install Thecus is configure networking and
+When you have connected your computer, a command like "tip -115200 tty00"
+(assuming you're using the first serial port on your machine) should 
+connect you to the Thecus console.
+
+Thecus RedBoot provides the 'fconfig' (not ifconfig) command to
+change the boot configuration of the device. Also 'fis' is provided
+to perform flash operations.
+
+Due to a change made by Thecus to the firmware, fconfig does not
+work with Thecus firmware version 1.93 (Feb 2007) and later, and
+*it is thus not possible to make the Thecus auto-boot into OpenBSD*
+(worse, it will let you enter the "script" commands below, but
+ignore them on boot).
+
+After some device probe information, you should see this prompt:
+
+== Executing boot script in 3.000 seconds - enter ^C to abort
+
+To enter interactive RedBoot, it is necessary to press ^C within a
+second or so of the prompt, it will typically accept the ^C if typed 
+during the diagnostics that precede this prompt.
+
+The recommended way to install Thecus is to configure networking and
 load bsd.rd from a tftp server or http server. First networking must be
 configured using the fconfig or ip_address commands.
 
@@ -56,9 +73,8 @@ listed below to allow booting from the network. TFTP and HTTP are
 supported. (BOOTP configuration _may_ not work)
 
 Using ip_address only allows you to set the local IP address and
-the IP address of the server where bsd.rd is located.
-This command also ensures that the new values  are going to be
-used instantly.
+the IP address of the server where bsd.rd is located.  This command
+also ensures that the new values will be used immediately.
 
 eg:
 ---
