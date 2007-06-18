@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ioasic.c,v 1.12 2007/06/17 21:20:47 jasper Exp $	*/
+/*	$OpenBSD: if_le_ioasic.c,v 1.13 2007/06/18 21:24:43 jasper Exp $	*/
 /*	$NetBSD: if_le_ioasic.c,v 1.18 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ void le_ioasic_copyfrombuf_gap16(struct am7990_softc *, void *,
 void le_ioasic_zerobuf_gap16(struct am7990_softc *, int, int);
 
 int
-le_ioasic_match(struct device parent, void *match, void *aux)
+le_ioasic_match(struct device *parent, void *match, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 

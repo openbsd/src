@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_dec.c,v 1.3 2007/06/17 21:20:47 jasper Exp $	*/
+/*	$OpenBSD: if_le_dec.c,v 1.4 2007/06/18 21:24:43 jasper Exp $	*/
 /*	$NetBSD: if_le_dec.c,v 1.12 2001/11/13 12:49:45 lukem Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ dec_le_common_attach(struct am7990_softc *sc, u_char *eap)
 }
 
 void
-le_dec_wrcsr(struct am7990_softc *sc, u_int16_t port, u_ int16_t val)
+le_dec_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
