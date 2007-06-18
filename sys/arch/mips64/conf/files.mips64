@@ -1,6 +1,5 @@
-#	$OpenBSD: files.mips64,v 1.7 2005/07/14 02:09:46 uwe Exp $
+#	$OpenBSD: files.mips64,v 1.8 2007/06/18 21:46:41 deraadt Exp $
 
-file	arch/mips64/mips64/disksubr.c		disk
 file	arch/mips64/mips64/mem.c
 file	arch/mips64/mips64/process_machdep.c
 file	arch/mips64/mips64/sys_machdep.c
