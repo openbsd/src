@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.33 2007/06/17 00:27:28 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.34 2007/06/18 05:25:07 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ done:
 
 /*
  * Write disk label back to device after modification.
- * XXX cannot handle OpenBSD partitions in extended partitions!
  */
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *),
