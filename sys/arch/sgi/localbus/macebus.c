@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.21 2007/05/29 18:10:43 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.22 2007/06/18 20:24:50 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -598,7 +598,7 @@ macebus_intr_makemasks(void)
 void
 macebus_do_pending_int(int newcpl)
 {
-#ifdef _USE_SILLY_OVERWORKED_HW_INT_PENDING_HANDLER_
+#if 0
 	struct intrhand *ih;
 	int vector;
 	intrmask_t hwpend;
@@ -607,7 +607,9 @@ macebus_do_pending_int(int newcpl)
 
 	/* Don't recurse... but change the mask */
 	if (processing) {
+		__asm__ (" .set noreorder\n");
 		cpl = newcpl;
+		__asm__ (" sync\n .set reorder\n");
 		return;
 	}
 	processing = 1;
@@ -627,7 +629,9 @@ macebus_do_pending_int(int newcpl)
 	atomic_clearbits_int(&ipending, hwpend);
 
 	/* Enable all non pending non masked hardware interrupts */
+	__asm__ (" .set noreorder\n");
 	cpl = (cpl & SINT_ALLMASK) | (newcpl & ~SINT_ALLMASK) | hwpend;
+	__asm__ (" sync\n .set reorder\n");
 	hw_setintrmask(cpl);
 
 	while (hwpend) {
@@ -644,7 +648,9 @@ macebus_do_pending_int(int newcpl)
 	}
 
 	/* Enable all processed pending hardware interrupts */
+	__asm__ (" .set noreorder\n");
 	cpl &= ~hwpend;
+	__asm__ (" sync\n .set reorder\n");
 	hw_setintrmask(cpl);
 
 	if ((ipending & SINT_CLOCKMASK) & ~newcpl) {
@@ -663,7 +669,7 @@ macebus_do_pending_int(int newcpl)
 		}
 	}
 
-#ifdef NOTYET
+#ifdef notyet
 	if ((ipending & SINT_TTYMASK) & ~newcpl) {
 		atomic_clearbits_int(&ipending, SINT_TTYMASK);
 		compoll(NULL);
@@ -671,16 +677,20 @@ macebus_do_pending_int(int newcpl)
 #endif
 
 	/* Update masks to new cpl. Order highly important! */
+	__asm__ (" .set noreorder\n");
 	cpl = newcpl;
+	__asm__ (" sync\n .set reorder\n");
 	hw_setintrmask(newcpl);
 
 	processing = 0;
 #else
 	/* Update masks to new cpl. Order highly important! */
+	__asm__ (" .set noreorder\n");
 	cpl = newcpl;
+	__asm__ (" sync\n .set reorder\n");
 	hw_setintrmask(newcpl);
 	/* If we still have softints pending trigg processing */
-	if (ipending & SINT_ALLMASK & ~cpl)
+	if (ipending & SINT_ALLMASK & ~newcpl)
 		setsoftintr0();
 #endif
 }

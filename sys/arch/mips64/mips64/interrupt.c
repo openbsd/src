@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.27 2007/05/29 18:10:43 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.28 2007/06/18 20:24:48 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -216,7 +216,9 @@ interrupt(struct trap_frame *trapframe)
 		compoll(NULL);
 	}
 #endif
+	__asm__ (" .set noreorder\n");
 	cpl = xcpl;
+	__asm__ (" sync\n .set reorder\n");
 }
 
 
@@ -470,7 +472,9 @@ generic_do_pending_int(int newcpl)
 
 	/* Don't recurse... but change the mask. */
 	if (processing) {
+		__asm__ (" .set noreorder\n");
 		cpl = newcpl;
+		__asm__ (" sync\n .set reorder\n");
 		return;
 	}
 	processing = 1;
@@ -515,7 +519,9 @@ generic_do_pending_int(int newcpl)
 	}
 #endif
 
+	__asm__ (" .set noreorder\n");
 	cpl = newcpl;
+	__asm__ (" sync\n .set reorder\n");
 	updateimask(newcpl);	/* Update CPU mask ins SR register */
 	processing = 0;
 }
