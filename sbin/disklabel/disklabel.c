@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.115 2007/06/18 21:06:51 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.116 2007/06/18 22:07:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.115 2007/06/18 21:06:51 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.116 2007/06/18 22:07:43 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -250,7 +250,7 @@ main(int argc, char *argv[])
 	 * Check for presence of DOS partition table in
 	 * master boot record. Return pointer to OpenBSD
 	 * partition, if present. If no valid partition table,
-	 * return 0. If valid partition table present, but no
+	 * return NULL. If valid partition table present, but no
 	 * partition to use, return a pointer to a non-386bsd
 	 * partition.
 	 */
@@ -625,7 +625,7 @@ readmbr(int f)
 	dp = (struct dos_partition *)mbr;
 	if (lseek(f, (off_t)DOSBBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
-		err(4, "can't read master boot record");
+		return (NULL);
 	signature = *((u_char *)mbr + DOSMBR_SIGNATURE_OFF) |
 	    (*((u_char *)mbr + DOSMBR_SIGNATURE_OFF + 1) << 8);
 	bcopy((char *)mbr+DOSPARTOFF, (char *)mbr, sizeof(*dp) * NDOSPART);
