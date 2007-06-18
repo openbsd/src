@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.66 2007/06/18 05:28:54 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.67 2007/06/18 05:30:54 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -96,7 +96,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 #endif /* NCD > 0 */
 
-	/* get buffer and initialize it */
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
@@ -163,7 +163,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	struct buf *bp = NULL;
 	int error;
 
-	/* get buffer and initialize it */
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
