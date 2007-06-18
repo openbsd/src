@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.30 2007/06/17 00:27:28 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.31 2007/06/18 05:28:54 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -116,7 +116,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	if ((msg = initdisklabel(lp)))
 		goto done;
 
-	/* obtain buffer to probe drive with */
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
@@ -194,7 +194,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (error)
 		goto done;
 
-	/* Get a buffer and copy the new label into it. */
+	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bcopy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
 
