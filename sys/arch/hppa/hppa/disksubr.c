@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.67 2007/06/18 07:10:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.68 2007/06/18 21:38:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -101,8 +101,9 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 {
 	struct buf *dbp = NULL;
 	struct lifdir *p;
+	struct lifvol *lvp;
 	char *msg = NULL;
-	int fsoff = 0;
+	int fsoff = 0, i;
 
 	/* read LIF volume header */
 	bp->b_blkno = btodb(LIF_VOLSTART);
@@ -113,17 +114,15 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	if (biowait(bp))
 		return "LIF volume header I/O error";
 
-	bcopy(bp->b_data, &osdep->u._hppa.lifvol, sizeof(struct lifvol));
-	if (osdep->u._hppa.lifvol.vol_id != LIF_VOL_ID) {
-		fsoff = 0;
+	lvp = (struct lifvol *)bp->b_data;
+	if (lvp->vol_id != LIF_VOL_ID)
 		goto finished;
-	}
 
 	dbp = geteblk(LIF_DIRSIZE);
 	dbp->b_dev = bp->b_dev;
 
 	/* read LIF directory */
-	dbp->b_blkno = lifstodb(osdep->u._hppa.lifvol.vol_addr);
+	dbp->b_blkno = lifstodb(lvp->vol_addr);
 	dbp->b_bcount = lp->d_secsize;
 	dbp->b_flags = B_BUSY | B_READ;
 	dbp->b_cylinder = dbp->b_blkno / lp->d_secpercyl;
@@ -134,13 +133,9 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		goto done;
 	}
 
-	bcopy(dbp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
-
 	/* scan for LIF_DIR_FS dir entry */
-	for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
-	    fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++) {
-		if (p->dir_type == LIF_DIR_FS ||
-		    p->dir_type == LIF_DIR_HPLBL)
+	for (i=0, p=(struct lifdir *)dbp->b_data; i < LIF_NUMDIR; p++, i++) {
+		if (p->dir_type == LIF_DIR_FS || p->dir_type == LIF_DIR_HPLBL)
 			break;
 	}
 
@@ -171,10 +166,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 			goto done;
 		}
 
-		bcopy(dbp->b_data, &osdep->u._hppa.hplabel,
-		    sizeof(osdep->u._hppa.hplabel));
-
-		hl = &osdep->u._hppa.hplabel;
+		hl = (struct hpux_label *)dbp->b_data;
 		if (hl->hl_magic1 != hl->hl_magic2 ||
 		    hl->hl_magic != HPUX_MAGIC || hl->hl_version != 1) {
 			msg = "HPUX label magic mismatch";
@@ -222,9 +214,6 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	}
 
 finished:
-	/* if no suitable lifdir entry found assume zero */
-	if (fsoff < 0)
-		fsoff = 0;
 	if (partoffp)
 		*partoffp = fsoff;
 
