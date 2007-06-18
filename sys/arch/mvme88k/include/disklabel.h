@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.12 2007/06/17 00:27:27 deraadt Exp $ */
+/*	$OpenBSD: disklabel.h,v 1.13 2007/06/18 17:11:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -35,14 +35,14 @@
 #define LABELOFFSET	0			/* offset of label in sector */
 #define MAXPARTITIONS	16			/* number of partitions */
 
+struct cpu_disklabel {
+};
+
 /*
  * Note: this structure is exactly 512 bytes in size. If you move fields
  * around, make sure the various members are properly aligned and the
  * compiler won't do any additional padding.
  */
-struct cpu_disklabel {
-};
-
 struct mvmedisklabel {
 	/* VID */
 	u_char		vid_id[4];
