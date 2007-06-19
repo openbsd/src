@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.36 2007/06/12 15:16:10 msf Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.37 2007/06/19 06:29:20 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -541,8 +541,12 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
-		if (n == 0)
-			fatalx("main_dispatch_pfe: pipe closed");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -599,8 +603,12 @@ main_dispatch_hce(int fd, short event, void * ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
-		if (n == 0)
-			fatalx("main_dispatch_hce: pipe closed");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -650,8 +658,12 @@ main_dispatch_relay(int fd, short event, void * ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
-		if (n == 0)
-			fatalx("main_dispatch_relay: pipe closed");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)

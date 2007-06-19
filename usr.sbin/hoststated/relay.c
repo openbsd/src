@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.34 2007/06/12 15:16:10 msf Exp $	*/
+/*	$OpenBSD: relay.c,v 1.35 2007/06/19 06:29:20 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1814,8 +1814,12 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("relay_dispatch_pfe: imsg_read_error");
-		if (n == 0)
-			fatalx("relay_dispatch_pfe: pipe closed");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -1921,8 +1925,12 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("relay_dispatch_parent: imsg_read error");
-		if (n == 0)
-			fatalx("relay_dispatch_parent: pipe closed");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)

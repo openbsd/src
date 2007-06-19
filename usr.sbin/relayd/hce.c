@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.27 2007/06/12 15:16:10 msf Exp $	*/
+/*	$OpenBSD: hce.c,v 1.28 2007/06/19 06:29:20 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -345,8 +345,12 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("hce_dispatch_imsg: imsg_read_error");
-		if (n == 0)
-			fatalx("hce_dispatch_imsg: pipe closed");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -423,8 +427,12 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("hce_dispatch_parent: imsg_read error");
-		if (n == 0)
-			fatalx("hce_dispatch_parent: pipe closed");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
