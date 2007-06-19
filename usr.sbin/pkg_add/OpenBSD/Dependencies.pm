@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.56 2007/06/18 18:45:09 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.57 2007/06/19 10:25:35 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -25,7 +25,7 @@ sub lookup
 	my ($self, $solver, $state, $obj) = @_;
 
 	my $dependencies = $solver->{to_register};
-	my $known = $solver->{known};
+	my $known = $self->{known};
 	if (my $r = $self->find_in_already_done($solver, $state, $obj)) {
 		$dependencies->{$r} = 1;
 		return 1;
@@ -34,14 +34,14 @@ sub lookup
 		return 1;
 	}
 	# lookup through the rest of the tree...
-	my $done = $solver->{done};
-	while (my $dep = pop @{$solver->{todo}}) {
+	my $done = $self->{done};
+	while (my $dep = pop @{$self->{todo}}) {
 		require OpenBSD::RequiredBy;
 
 		next if $done->{$dep};
 		$done->{$dep} = 1;
 		for my $dep2 (OpenBSD::Requiring->new($dep)->list) {
-			push(@{$solver->{todo}}, $dep2) unless $done->{$dep2};
+			push(@{$self->{todo}}, $dep2) unless $done->{$dep2};
 		}
 		$known->{$dep} = 1;
 		if ($self->find_in_new_source($solver, $state, $obj, $dep)) {
@@ -58,6 +58,24 @@ sub lookup
 	return 0;
 }
 
+sub new
+{
+	my ($class, $solver) = @_;
+
+	# prepare for closure
+	my @todo = $solver->dependencies;
+	bless { todo => \@todo, done => {}, known => {} }, $class;
+}
+
+sub dump
+{
+	my $self = shift;
+
+	return unless %{$self->{done}};
+	print "Full dependency tree is ", join(',', keys %{$self->{done}}), 
+	    "\n";
+}
+
 package OpenBSD::lookup::library;
 our @ISA=qw(OpenBSD::lookup);
 
@@ -67,7 +85,7 @@ sub find_in_already_done
 
 
 	my $r = $solver->check_lib_spec($solver->{plist}->localbase, $obj, 
-	    $solver->{known});
+	    $self->{known});
 	if ($r) {
 		print "found libspec $obj in package $r\n" if $state->{verbose};
 		return $r;
@@ -259,14 +277,8 @@ sub solve_depends
 	$self->add_todo(@extra);
 
 	for my $dep (@{$self->{plist}->{depend}}) {
-	    $self->solve_dependency($state, $dep);
+		$self->solve_dependency($state, $dep);
 	}
-
-	# prepare for closure
-	my @todo = $self->dependencies;
-	$self->{todo} = \@todo;
-	$self->{done} = {};
-	$self->{known} = {};
 
 	return @{$self->{deplist}};
 }
@@ -291,7 +303,6 @@ sub dump
 	    print " (todo: ", join(',', @{$self->{deplist}}), ")" 
 	    	if @{$self->{deplist}} > 0;
 	    print "\n";
-	    print "Full dependency tree is ", join(',', keys %{$self->{done}}), "\n"	if %{$self->{done}};
 	}
 }
 
@@ -382,17 +393,21 @@ sub solve_wantlibs
 	my ($solver, $state) = @_;
 	my $okay = 1;
 
+	my $lib_finder = OpenBSD::lookup::library->new($solver);
 	for my $h ($solver->{set}->newer) {
 		for my $lib (@{$h->{plist}->{wantlib}}) {
-			if (!OpenBSD::lookup::library->lookup($solver,
-			    $state, $lib->{name})) {
-				OpenBSD::Error::Warn "Can't install ", 
-				    $h->{pkgname}, ": lib not found ", 
-				    $lib->{name}, "\n";
-				$solver->dump if $okay;
-				OpenBSD::SharedLibs::report_problem($state->{localbase}, $lib->{name});
+			next if $lib_finder->lookup($solver, $state, 
+			    $lib->{name});
+			OpenBSD::Error::Warn "Can't install ", 
+			    $h->{pkgname}, ": lib not found ", 
+			    $lib->{name}, "\n";
+			if ($okay) {
+				$solver->dump;
+				$lib_finder->dump;
 				$okay = 0;
 			}
+			OpenBSD::SharedLibs::report_problem(
+			    $state->{localbase}, $lib->{name});
 		}
 	}
 	return $okay;
