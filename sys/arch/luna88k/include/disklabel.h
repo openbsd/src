@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.3 2007/06/17 00:27:27 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.4 2007/06/19 12:33:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -44,7 +44,6 @@
  * (i.e. Sun label info, etc.)
  */
 struct cpu_disklabel {
-	char	cd_block[512];
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */

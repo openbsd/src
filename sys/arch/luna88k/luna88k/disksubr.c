@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.31 2007/06/18 05:28:54 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.32 2007/06/19 12:33:59 krw Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -88,8 +88,8 @@
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
 
-char *disklabel_om_to_bsd(char *, struct disklabel *);
-int disklabel_bsd_to_om(struct disklabel *, char *);
+char *disklabel_om_to_bsd(struct sun_disklabel *, struct disklabel *);
+int disklabel_bsd_to_om(struct disklabel *, struct sun_disklabel *);
 
 /*
  * Attempt to read a disk label from a device
@@ -105,12 +105,10 @@ int disklabel_bsd_to_om(struct disklabel *, char *);
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *clp, int spoofonly)
+    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
 {
-	struct buf *bp = NULL;
-	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	int error, i;
+	struct buf *bp = NULL;
 	char *msg;
 
 	if ((msg = initdisklabel(lp)))
@@ -128,25 +126,18 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
-	error = biowait(bp);
-	if (!error) {
-		/* Save the whole block in case it has info we need. */
-		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
-	}
-	if (error) {
+	if (biowait(bp)) {
 		msg = "disk label read error";
 		goto done;
 	}
 
-	slp = (struct sun_disklabel *)clp->cd_block;
+	slp = (struct sun_disklabel *)bp->b_data;
 	if (slp->sl_magic == SUN_DKMAGIC) {
-		msg = disklabel_om_to_bsd(clp->cd_block, lp);
+		msg = disklabel_om_to_bsd(slp, lp);
 		goto done;
 	}
 
-	msg = checkdisklabel(clp->cd_block + LABELOFFSET, lp);
+	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
 	if (msg == NULL)
 		goto done;
 
@@ -162,8 +153,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 #endif
-	bzero(clp->cd_block, sizeof(clp->cd_block));
-	msg = "no disk label";
 
 done:
 	if (bp) {
@@ -171,38 +160,38 @@ done:
 		brelse(bp);
 	}
 	return (msg);
-
 }
 
 /*
  * Write disk label back to device after modification.
- * Current label is already in clp->cd_block[]
  */
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *clp)
+    struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct buf *bp = NULL;
-	struct disklabel *dlp;
 	int error;
-
-	/* implant OpenBSD disklabel at LABELOFFSET. */
-	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-	*dlp = *lp;	/* struct assignment */
-
-	error = disklabel_bsd_to_om(lp, clp->cd_block);
-	if (error)
-		goto done;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	bcopy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
-
-	/* Write out the updated label. */
 	bp->b_dev = dev;
+
+	/* Read the on disk label. */
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+
+	(*strat)(bp);
+	error = biowait(bp);
+	if (error)
+		goto done;
+
+	/* Write out the updated label. */
+	error = disklabel_bsd_to_om(lp, (struct sun_disklabel *)bp->b_data);
+	if (error)
+		goto done;
+
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
@@ -242,20 +231,16 @@ sun_fstypes[8] = {
  * The BSD label is cleared out before this is called.
  */
 char *
-disklabel_om_to_bsd(char *cp, struct disklabel *lp)
+disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 {
-	struct sun_disklabel *sl;
 	struct partition *npp;
 	struct sun_dkpart *spp;
 	int i, secpercyl;
-	u_short cksum, *sp1, *sp2;
-
-	sl = (struct sun_disklabel *)cp;
+	u_short cksum = 0, *sp1, *sp2;
 
 	/* Verify the XOR check. */
 	sp1 = (u_short *)sl;
 	sp2 = (u_short *)(sl + 1);
-	cksum = 0;
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
@@ -265,9 +250,9 @@ disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
+	lp->d_flags = D_VENDOR;
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
-	lp->d_type = DTYPE_SCSI;
 	lp->d_secsize = 512;
 	lp->d_nsectors = sl->sl_nsectors;
 	lp->d_ntracks = sl->sl_ntracks;
@@ -277,12 +262,12 @@ disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 	lp->d_secpercyl = secpercyl;
 	if (DL_GETDSIZE(lp) == 0)
 		DL_SETDSIZE(lp, (daddr64_t)secpercyl * sl->sl_ncylinders);
+	lp->d_version = 1;
 
 	lp->d_sparespercyl = 0;				/* no way to know */
 	lp->d_acylinders = sl->sl_acylinders;
 	lp->d_rpm = sl->sl_rpm;				/* UniOS - (empty) */
 	lp->d_interleave = sl->sl_interleave;		/* UniOS - ndisk */
-	lp->d_version = 1;
 
 	if (sl->sl_rpm == 0) {
 		/* UniOS label has blkoffset, not cyloffset */
@@ -291,29 +276,25 @@ disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 
 	lp->d_npartitions = 8;
 	/* These are as defined in <ufs/ffs/fs.h> */
-	lp->d_bbsize = 8192;				/* XXX */
-	lp->d_sbsize = 8192;				/* XXX */
+	lp->d_bbsize = 8192;	/* XXX */
+	lp->d_sbsize = 8192;	/* XXX */
+
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
 		DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
 		DL_SETPSIZE(npp, spp->sdkp_nsectors);
-		if (DL_GETPSIZE(npp) == 0)
+		if (DL_GETPSIZE(npp) == 0) {
 			npp->p_fstype = FS_UNUSED;
-		else {
-			/* Partition has non-zero size.  Set type, etc. */
+		} else {
 			npp->p_fstype = sun_fstypes[i];
-
-			/*
-			 * The sun label does not store the FFS fields,
-			 * so just set them with default values here.
-			 * XXX: This keeps newfs from trying to rewrite
-			 * XXX: the disk label in the most common case.
-			 * XXX: (Should remove that code from newfs...)
-			 */
 			if (npp->p_fstype == FS_BSDFFS) {
+				/*
+				 * The sun label does not store the FFS fields,
+				 * so just set them with default values here.
+				 */
 				npp->p_fragblock =
-				   DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
+				    DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
 				npp->p_cpg = 16;
 			}
 		}
@@ -329,21 +310,20 @@ disklabel_om_to_bsd(char *cp, struct disklabel *lp)
 		lp->d_partitions[1].p_fstype = FS_BSDFFS;
 	}
 
+	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-
 	return (NULL);
 }
 
 /*
  * Given a BSD disk label, update the UniOS disklabel
- * pointed to by cp with the new info.  Note that the
+ * pointed to by sl with the new info.  Note that the
  * UniOS disklabel may have other info we need to keep.
  * Returns zero or error code.
  */
 int
-disklabel_bsd_to_om(struct disklabel *lp, char *cp)
+disklabel_bsd_to_om(struct disklabel *lp, struct sun_disklabel *sl)
 {
-	struct sun_disklabel *sl;
 	struct partition *npp;
 	struct sun_dkpart *spp;
 	int i;
@@ -351,8 +331,6 @@ disklabel_bsd_to_om(struct disklabel *lp, char *cp)
 
 	if (lp->d_secsize != 512)
 		return (EINVAL);
-
-	sl = (struct sun_disklabel *)cp;
 
 	/* Format conversion. */
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
