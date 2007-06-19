@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.28 2007/06/19 06:29:20 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.29 2007/06/19 13:06:00 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -63,9 +63,6 @@ hce_sig_handler(int sig, short event, void *arg)
 	case SIGTERM:
 		hce_shutdown();
 		break;
-	case SIGHUP:
-		/* nothing */
-		break;
 	default:
 		fatalx("hce_sig_handler: unexpected signal");
 	}
@@ -81,7 +78,6 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	int		 i;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
-	struct event	 ev_sighup;
 
 	switch (pid = fork()) {
 	case -1:
@@ -140,11 +136,10 @@ hce(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
-	signal_set(&ev_sighup, SIGHUP, hce_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
-	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_pfe2hce[1]);

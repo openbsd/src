@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.32 2007/06/19 06:29:20 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.33 2007/06/19 13:06:00 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -58,9 +58,6 @@ pfe_sig_handler(int sig, short event, void *arg)
 	case SIGINT:
 	case SIGTERM:
 		pfe_shutdown();
-	case SIGHUP:
-		/* nothing */
-		break;
 	default:
 		fatalx("pfe_sig_handler: unexpected signal");
 	}
@@ -75,7 +72,6 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	struct passwd	*pw;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
-	struct event	 ev_sighup;
 	int		 i;
 	size_t		 size;
 
@@ -123,11 +119,10 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	signal_set(&ev_sigint, SIGINT, pfe_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, pfe_sig_handler, NULL);
-	signal_set(&ev_sighup, SIGHUP, pfe_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
-	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_pfe2hce[0]);
