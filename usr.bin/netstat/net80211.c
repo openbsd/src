@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.3 2005/12/18 17:53:12 reyk Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.4 2007/06/19 05:29:26 ray Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -32,6 +32,7 @@
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -102,7 +103,6 @@ net80211_ifstats(char *ifname)
 	p(is_node_timeout, "\t%lu node%s timed out\n");
 	p(is_crypto_nomem, "\t%lu failure%s with no memory for crypto ctx\n");
 
-  end:
 	close(s);
 
 #undef p
