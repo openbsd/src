@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.176 2007/03/22 15:53:10 cloder Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.177 2007/06/19 06:48:23 ray Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.176 2007/03/22 15:53:10 cloder Exp $";
+    "$OpenBSD: ftpd.c,v 1.177 2007/06/19 06:48:23 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -1417,7 +1417,8 @@ dataconn(char *name, off_t size, char *mode)
 			alen = sizeof(struct in6_addr);
 			break;
 		default:
-			perror_reply(425, "Can't build data connection");
+			reply(425, "Can't build data connection: "
+			    "unknown address family");
 			(void) close(pdata);
 			(void) close(s);
 			pdata = -1;
@@ -1425,14 +1426,16 @@ dataconn(char *name, off_t size, char *mode)
 		}
 		if (from.su_family != his_addr.su_family ||
 		    ntohs(*p) < IPPORT_RESERVED) {
-			perror_reply(425, "Can't build data connection");
+			reply(425, "Can't build data connection: "
+			    "address family or port error");
 			(void) close(pdata);
 			(void) close(s);
 			pdata = -1;
 			return (NULL);
 		}
 		if (portcheck && memcmp(fa, ha, alen) != 0) {
-			perror_reply(435, "Can't build data connection");
+			reply(435, "Can't build data connection: "
+			    "illegal port number");
 			(void) close(pdata);
 			(void) close(s);
 			pdata = -1;
@@ -1491,19 +1494,22 @@ dataconn(char *name, off_t size, char *mode)
 			alen = sizeof(struct in6_addr);
 			break;
 		default:
-			perror_reply(425, "Can't build data connection");
+			reply(425, "Can't build data connection: "
+			    "unknown address family");
 			(void) fclose(file);
 			pdata = -1;
 			return (NULL);
 		}
 		if (data_dest.su_family != his_addr.su_family ||
 		    ntohs(*p) < IPPORT_RESERVED || ntohs(*p) == 2049) { /* XXX */
-			perror_reply(425, "Can't build data connection");
+			reply(425, "Can't build data connection: "
+			    "address family or port error");
 			(void) fclose(file);
 			return NULL;
 		}
 		if (portcheck && memcmp(fa, ha, alen) != 0) {
-			perror_reply(435, "Can't build data connection");
+			reply(435, "Can't build data connection: "
+			    "illegal port number");
 			(void) fclose(file);
 			return NULL;
 		}
@@ -1630,12 +1636,12 @@ oldway:
 
 data_err:
 	transflag = 0;
-	perror_reply(426, "Data connection");
+	reply(426, "Data connection");
 	return(-1);
 
 file_err:
 	transflag = 0;
-	perror_reply(551, "Error on input file");
+	reply(551, "Error on input file");
 	return(-1);
 
 got_oob:
@@ -1734,12 +1740,12 @@ receive_data(FILE *instr, FILE *outstr)
 
 data_err:
 	transflag = 0;
-	perror_reply(426, "Data Connection");
+	reply(426, "Data Connection");
 	return (-1);
 
 file_err:
 	transflag = 0;
-	perror_reply(452, "Error writing file");
+	reply(452, "Error writing file");
 	return (-1);
 
 got_oob:
@@ -2284,9 +2290,9 @@ passive(void)
 	return;
 
 pasv_error:
+	perror_reply(425, "Can't open passive connection");
 	(void) close(pdata);
 	pdata = -1;
-	perror_reply(425, "Can't open passive connection");
 	return;
 }
 
@@ -2421,9 +2427,9 @@ long_passive(char *cmd, int pf)
 	}
 
   pasv_error:
+	perror_reply(425, "Can't open passive connection");
 	(void) close(pdata);
 	pdata = -1;
-	perror_reply(425, "Can't open passive connection");
 	return;
 }
 
@@ -2897,6 +2903,7 @@ copy_dir(char *dir, struct passwd *pw)
 				return(strdup(dir));
 			}
 		}
+		free(user);
 	}
 
 	/*
@@ -2907,15 +2914,11 @@ copy_dir(char *dir, struct passwd *pw)
 		newdir = strdup(pw->pw_dir);
 	} else {
 		dirsiz = strlen(cp) + strlen(pw->pw_dir) + 1;
-		if ((newdir = malloc(dirsiz)) == NULL) {
-			free(user);
+		if ((newdir = malloc(dirsiz)) == NULL)
 			return (NULL);
-		}
 		strlcpy(newdir, pw->pw_dir, dirsiz);
 		strlcat(newdir, cp, dirsiz);
 	}
 
-	if (user)
-		free(user);
 	return(newdir);
 }
