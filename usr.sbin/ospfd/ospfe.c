@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.55 2007/05/29 22:08:25 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.56 2007/06/19 14:42:09 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -136,6 +136,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_parent2ospfe[0]);

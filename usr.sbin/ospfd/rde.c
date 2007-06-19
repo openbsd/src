@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.66 2007/04/11 07:09:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.67 2007/06/19 14:42:09 pyr Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -137,6 +137,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	/* setup pipes */
 	close(pipe_ospfe2rde[0]);

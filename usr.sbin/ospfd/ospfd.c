@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.46 2007/05/29 22:08:25 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.47 2007/06/19 14:42:09 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -103,8 +103,10 @@ main_sig_handler(int sig, short event, void *arg)
 			ospfd_shutdown();
 		break;
 	case SIGHUP:
-		/* reconfigure */
-		/* ... */
+		if (ospf_reload() == -1)
+			log_warnx("configuration reload failed");
+		else
+			log_debug("configuration reloaded");
 		break;
 	default:
 		fatalx("unexpected signal");
