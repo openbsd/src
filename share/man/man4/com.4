@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.29 2007/05/31 19:19:49 jmc Exp $
+.\"	$OpenBSD: com.4,v 1.30 2007/06/19 22:53:27 kettenis Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 19 2007 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -69,6 +69,8 @@
 .Cd "com1 at gsc? offset 0x822000 irq 6"
 .Cd "com2 at gsc? irq 13"
 .Cd "com1 at dino? irq 11"
+.Cd "com0 at ssio? irq 4"
+.Cd "com1 at ssio? irq 3"
 .Pp
 .Cd "# macppc"
 .Cd "com* at pcmcia?"
@@ -158,6 +160,7 @@ with the code listed.
 .Xr puc 4 ,
 .Xr pxaip 4 ,
 .Xr rtfps 4 ,
+.Xr ssio 4,
 .Xr tty 4
 .Sh HISTORY
 The
