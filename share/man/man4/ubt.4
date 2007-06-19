@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubt.4,v 1.4 2007/06/11 08:42:01 jmc Exp $
+.\"	$OpenBSD: ubt.4,v 1.5 2007/06/19 11:34:12 uwe Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 11 2007 $
+.Dd $Mdocdate: June 19 2007 $
 .Dt UBT 4
 .Os
 .Sh NAME
@@ -40,11 +40,15 @@ device driver first appeared in
 .An -nosplit
 The
 .Nm
-device driver was written by
-.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com
-for
+device driver was originally ported from
 .Fx
-and ported to
+to
 .Ox
 by
 .An Alexander Yurchenko Aq grange@openbsd.org .
+The current implementation was ported from
+.Nx
+to
+.Ox 4.2
+by
+.An Gordon Willem Klok Aq gwk@openbsd.org .
