@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.181 2007/06/14 18:31:50 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.182 2007/06/19 06:24:28 pyr Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3720,11 +3720,23 @@ in6_getaddr(const char *s, int which)
 {
 	struct sockaddr_in6 *sin6 = sin6tab[which];
 	struct addrinfo hints, *res;
+	char buf[MAXHOSTNAMELEN+sizeof("/128")], *pfxlen;
 	int error;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+
+	if (which == ADDR && strchr(s, '/') != NULL) {
+		if (strlcpy(buf, s, sizeof(buf)) >= sizeof(buf))
+			errx(1, "%s: bad value", s);
+		pfxlen = strchr(buf, '/');
+		*pfxlen++ = '\0';
+		s = buf;
+		in6_getprefix(pfxlen, MASK);
+		explicit_prefix = 1;
+	}
+
 	error = getaddrinfo(s, "0", &hints, &res);
 	if (error)
 		errx(1, "%s: %s", s, gai_strerror(error));
