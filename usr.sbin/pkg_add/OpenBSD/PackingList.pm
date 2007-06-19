@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.78 2007/06/12 09:53:36 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.79 2007/06/19 10:47:28 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -164,7 +164,7 @@ sub DependOnly
 		# XXX optimization
 		if (m/^\@arch\b/o) {
 			while (<$fh>) {
-			    if (m/^\@(?:depend|wantlib)\b/o) {
+			    if (m/^\@(?:depend|wantlib|define-tag)\b/o) {
 				    &$cont($_);
 			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
 				    last;
@@ -172,7 +172,7 @@ sub DependOnly
 			}
 			return;
 		}
-		next unless m/^\@(?:depend|wantlib)\b/o;
+		next unless m/^\@(?:depend|wantlib|define-tag)\b/o;
 		&$cont($_);
 	}
 }
@@ -374,7 +374,7 @@ our @unique_categories =
 
 our @list_categories =
     (qw(conflict pkgpath incompatibility updateset depend 
-    	wantlib groups users items));
+    	wantlib define-tag groups users items));
 
 our @cache_categories =
     (qw(depend wantlib));

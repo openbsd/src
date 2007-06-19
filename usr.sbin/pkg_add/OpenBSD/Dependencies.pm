@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.57 2007/06/19 10:25:35 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.58 2007/06/19 10:47:28 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -140,6 +140,42 @@ sub dependency_not_found
 {
 	my ($self, $state, $obj) = @_;
 	print "libspec $obj not found\n" if $state->{very_verbose};
+}
+
+package OpenBSD::lookup::tag;
+our @ISA=qw(OpenBSD::lookup);
+sub find_in_extra_sources
+{
+}
+
+sub find_elsewhere
+{
+}
+
+sub find_in_already_done
+{
+	my ($self, $solver, $state, $obj) = @_;
+	my $r = $self->{known_tags}->{$obj};
+	if (defined $r) {
+		print "Found tag $obj in $r\n" if $state->{verbose};
+	}
+	return $r;
+}
+
+sub find_in_new_source
+{
+	my ($self, $solver, $state, $obj, $dep) = @_;
+	my $plist = OpenBSD::PackingList->from_installation($dep,
+	    \&OpenBSD::PackingList::DependsOnly);
+	if (!defined $plist) {
+		print STDERR "Can't read plist for $dep\n";
+	}
+	if ($plist->has('define-tag')) {
+		for my $t (@{$plist->{'define-tag'}}) {
+			$self->{known_tags}->{$t} = $dep;
+		}
+	}
+	return $self->find_in_already_dony($solver, $state, $obj);
 }
 
 package OpenBSD::Dependencies::Solver;
@@ -409,6 +445,28 @@ sub solve_wantlibs
 			OpenBSD::SharedLibs::report_problem(
 			    $state->{localbase}, $lib->{name});
 		}
+	}
+	return $okay;
+}
+
+sub solve_tags
+{
+	my ($solver, $state) = @_;
+	my $okay = 1;
+
+	my $tag_finder = OpenBSD::lookup::tag->new($solver);
+	for my $h ($solver->{set}->newer) {
+		for my $tag (keys %{$h->{plist}->{tags}}) {
+			next if $tag_finder->lookup($solver, $state, $tag);
+			OpenBSD::Error::Warn "Can't install ", 
+			    $h->{pkgname}, ": tag definition not found ", 
+			    $tag, "\n";
+			if ($okay) {
+				$solver->dump;
+				$tag_finder->dump;
+				$okay = 0;
+			}
+	    	}
 	}
 	return $okay;
 }
