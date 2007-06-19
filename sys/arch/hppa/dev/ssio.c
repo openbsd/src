@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssio.c,v 1.1 2007/06/19 19:16:59 kettenis Exp $	*/
+/*	$OpenBSD: ssio.c,v 1.2 2007/06/19 22:51:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -29,6 +29,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <hppa/dev/ssiovar.h>
 
 /* PCI config space. */
 #define SSIO_PCI_DMA_RC2	0x64
@@ -117,6 +119,7 @@ const struct pci_matchid ssio_devices[] = {
 };
 
 int	ssio_intr(void *);
+int	ssio_print(void *, const char *);
 
 int
 ssio_match(struct device *parent, void *match, void *aux)
@@ -130,6 +133,7 @@ ssio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ssio_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
+	struct ssio_attach_args saa;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t reg;
@@ -203,7 +207,23 @@ ssio_attach(struct device *parent, struct device *self, void *aux)
 	/* Unmask all interrupts. */
 	bus_space_write_1(sc->sc_iot, sc->sc_ic1h, 1, 0x00);
 	bus_space_write_1(sc->sc_iot, sc->sc_ic2h, 1, 0x00);
-	
+
+	/* Serial Port 1. */
+	saa.saa_name = "com";
+	saa.saa_iot = sc->sc_iot;
+	saa.saa_iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_SP1BAR);
+	saa.saa_iobase &= 0xfffffffe;
+	saa.saa_irq = 4;
+	config_found(self, &saa, ssio_print);
+
+	/* Serial Port 2. */
+	saa.saa_name = "com";
+	saa.saa_iot = sc->sc_iot;
+	saa.saa_iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_SP2BAR);
+	saa.saa_iobase &= 0xfffffffe;
+	saa.saa_irq = 3;
+	config_found(self, &saa, ssio_print);
+
 	return;
 
 unmap_ic2:
@@ -240,9 +260,6 @@ ssio_intr(void *v)
 	/* Signal EOI. */
 	bus_space_write_1(sc->sc_iot, sc->sc_ic1h, 0, 0x60 | (irq & 0x0f));
 
-	if (claimed)
-		printf("claimed irq %d\n", irq);
-
 	return (claimed);
 }
 
@@ -260,4 +277,14 @@ ssio_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	iv->arg = arg;
 
 	return (iv);
+}
+
+int
+ssio_print(void *aux, const char *pnp)
+{
+	struct ssio_attach_args *saa = aux;
+
+	if (pnp)
+		printf("%s at %s\n", saa->saa_name, pnp);
+	return (UNCONF);
 }
