@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.280 2007/06/03 23:48:27 djm Exp $
+$OpenBSD: usbdevs,v 1.281 2007/06/19 23:57:19 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1734,6 +1734,7 @@ product NOVATEL MERLINV620	0x1110	Merlin V620
 product NOVATEL S720		0x1130	S720
 product NOVATEL MERLINU740	0x1400	Merlin U740
 product NOVATEL XU870		0x1430	XU870
+product NOVATEL ES620		0x2100	ES620 CDMA
 product NOVATEL U720		0x2110	U720
 
 /* Olympus products */
