@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.66 2007/06/08 22:57:43 jasper Exp $
+#	$OpenBSD: files.hppa,v 1.67 2007/06/19 19:16:59 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -182,6 +182,10 @@ file	arch/hppa/dev/sti_pci_machdep.c		sti_pci
 
 attach	siop at gedoens with siop_sgc
 file	arch/hppa/dev/siop_sgc.c		siop_sgc
+
+device	ssio
+attach	ssio at pci
+file	arch/hppa/dev/ssio.c			ssio
 
 ###
 
