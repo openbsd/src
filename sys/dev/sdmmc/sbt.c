@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.8 2007/06/19 07:58:05 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -459,7 +459,7 @@ sbt_start(struct hci_unit *unit, struct ifqueue *q, int xmit)
 void
 sbt_start_cmd(struct hci_unit *unit)
 {
-	sbt_start(unit, &unit->hci_cmdq, BTF_XMIT_ACL);
+	sbt_start(unit, &unit->hci_cmdq, BTF_XMIT_CMD);
 }
 
 void
