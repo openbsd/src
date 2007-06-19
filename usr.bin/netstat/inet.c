@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.99 2005/10/17 19:09:36 otto Exp $	*/
+/*	$OpenBSD: inet.c,v 1.100 2007/06/19 05:28:30 ray Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.99 2005/10/17 19:09:36 otto Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.100 2007/06/19 05:28:30 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -1041,7 +1041,7 @@ tcp_dump(u_long off)
 	kread(off, (char *)&tcpcb, sizeof (tcpcb));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, tcpcb.v);
-	printf("pcb %p, ", off);
+	printf("pcb %#lx, ", off);
 	p("%p", t_inpcb, "\n");
 	p("%d", t_state, "");
         if (tcpcb.t_state >= 0 && tcpcb.t_state < TCP_NSTATES)
