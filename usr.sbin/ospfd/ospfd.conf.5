@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.27 2007/05/31 19:20:26 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.28 2007/06/19 16:45:15 reyk Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 19 2007 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -168,6 +168,11 @@ The default is
 .It Ic router-id Ar address
 Set the router ID; if not specified, the lowest IP address of the router
 will be used.
+.Pp
+.It Ic rtlabel Ar label Ic external-tag Ar number
+Map route labels to external route tags and vice versa.
+The external route tag is a non-negative 32-bit number attached to
+AS-external OSPF LSAs.
 .Pp
 .It Ic spf-delay Ar seconds
 Set SPF delay in seconds.

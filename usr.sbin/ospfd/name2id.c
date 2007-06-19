@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.1 2006/05/30 22:06:14 claudio Exp $ */
+/*	$OpenBSD: name2id.c,v 1.2 2007/06/19 16:45:15 reyk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -29,17 +29,11 @@
 
 #define	IDVAL_MAX	50000
 
-struct n2id_label {
-	TAILQ_ENTRY(n2id_label)	 entry;
-	char			*name;
-	u_int16_t		 id;
-	int			 ref;
-};
-
-TAILQ_HEAD(n2id_labels, n2id_label);
-
 u_int16_t	 _name2id(struct n2id_labels *, const char *);
 const char	*_id2name(struct n2id_labels *, u_int16_t);
+u_int32_t	 _id2tag(struct n2id_labels *, u_int16_t);
+u_int16_t	 _tag2id(struct n2id_labels *, u_int32_t);
+void		 _tag(struct n2id_labels *, u_int16_t, u_int32_t);
 void		 _unref(struct n2id_labels *, u_int16_t);
 void		 _ref(struct n2id_labels *, u_int16_t);
 
@@ -55,6 +49,24 @@ const char *
 rtlabel_id2name(u_int16_t id)
 {
 	return (_id2name(&rt_labels, id));
+}
+
+u_int32_t
+rtlabel_id2tag(u_int16_t id)
+{
+	return (_id2tag(&rt_labels, id));
+}
+
+u_int16_t
+rtlabel_tag2id(u_int32_t tag)
+{
+	return (_tag2id(&rt_labels, tag));
+}
+
+void
+rtlabel_tag(u_int16_t id, u_int32_t tag)
+{
+	_tag(&rt_labels, id, tag);
 }
 
 void
@@ -134,6 +146,49 @@ _id2name(struct n2id_labels *head, u_int16_t id)
 			return (label->name);
 
 	return ("");
+}
+
+u_int32_t
+_id2tag(struct n2id_labels *head, u_int16_t id)
+{
+	struct n2id_label	*label;
+
+	if (id == 0)
+		return (0);
+
+	TAILQ_FOREACH(label, head, entry)
+		if (label->id == id)
+			return (label->ext_tag);
+
+	return (0);
+}
+
+u_int16_t
+_tag2id(struct n2id_labels *head, u_int32_t tag)
+{
+	struct n2id_label	*label;
+
+	if (tag == 0)
+		return (0);
+
+	TAILQ_FOREACH(label, head, entry)
+		if (label->ext_tag == tag)
+			return (label->id);
+
+	return (0);
+}
+
+void
+_tag(struct n2id_labels *head, u_int16_t id, u_int32_t tag)
+{
+	struct n2id_label	*label;
+
+	if (id == 0)
+		return;
+
+	TAILQ_FOREACH(label, head, entry)
+		if (label->id == id)
+			label->ext_tag = tag;
 }
 
 void

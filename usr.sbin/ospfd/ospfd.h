@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.67 2007/05/29 22:08:25 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.68 2007/06/19 16:45:15 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -419,6 +419,7 @@ struct kroute {
 	struct in_addr	nexthop;
 	u_int16_t	flags;
 	u_int16_t	rtlabel;
+	u_int32_t	ext_tag;
 	u_short		ifindex;
 	u_int8_t	prefixlen;
 };
@@ -445,6 +446,18 @@ struct kif {
 	u_int8_t		 link_state;
 	u_int8_t		 nh_reachable;	/* for nexthop verification */
 };
+
+/* name2id */
+struct n2id_label {
+	TAILQ_ENTRY(n2id_label)	 entry;
+	char			*name;
+	u_int16_t		 id;
+	u_int32_t		 ext_tag;
+	int			 ref;
+};
+
+TAILQ_HEAD(n2id_labels, n2id_label);
+extern struct n2id_labels rt_labels;
 
 /* control data structures */
 struct ctl_iface {
@@ -613,6 +626,9 @@ const char	*path_type_name(enum path_type);
 u_int16_t	 rtlabel_name2id(const char *);
 const char	*rtlabel_id2name(u_int16_t);
 void		 rtlabel_unref(u_int16_t);
+u_int32_t	 rtlabel_id2tag(u_int16_t);
+u_int16_t	 rtlabel_tag2id(u_int32_t);
+void		 rtlabel_tag(u_int16_t, u_int32_t);
 
 /* ospfd.c */
 void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);

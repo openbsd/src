@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.50 2007/06/13 17:16:07 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.51 2007/06/19 16:45:15 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -169,6 +169,8 @@ kr_change(struct kroute *kroute)
 	struct kroute_node	*kr;
 	int			 action = RTM_ADD;
 
+	kroute->rtlabel = rtlabel_tag2id(kroute->ext_tag);
+
 	if ((kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen)) !=
 	    NULL) {
 		if (!(kr->r.flags & F_KERNEL))
@@ -195,7 +197,8 @@ kr_change(struct kroute *kroute)
 			kr->r.flags = kroute->flags | F_OSPFD_INSERTED;
 			kr->r.ifindex = 0;
 			rtlabel_unref(kr->r.rtlabel);
-			kr->r.rtlabel = 0;
+			kr->r.ext_tag = kroute->ext_tag;
+			kr->r.rtlabel = kroute->rtlabel;
 		}
 	}
 
@@ -223,6 +226,8 @@ kr_change(struct kroute *kroute)
 		kr->r.prefixlen = kroute->prefixlen;
 		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
 		kr->r.flags = kroute->flags | F_OSPFD_INSERTED;
+		kr->r.ext_tag = kroute->ext_tag;
+		kr->r.rtlabel = kroute->rtlabel;
 
 		if (kroute_insert(kr) == -1)
 			free(kr);
@@ -940,12 +945,14 @@ if_announce(void *msg)
 int
 send_rtmsg(int fd, int action, struct kroute *kroute)
 {
-	struct iovec		iov[4];
+	struct iovec		iov[5];
 	struct rt_msghdr	hdr;
 	struct sockaddr_in	prefix;
 	struct sockaddr_in	nexthop;
 	struct sockaddr_in	mask;
+	struct sockaddr_rtlabel	sa_rl;
 	int			iovcnt = 0;
+	const char		*label;
 
 	if (kr_state.fib_sync == 0)
 		return (0);
@@ -998,6 +1005,24 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	/* adjust iovec */
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = sizeof(mask);
+
+	if (kroute->rtlabel != 0) {
+		sa_rl.sr_len = sizeof(sa_rl);
+		sa_rl.sr_family = AF_UNSPEC;
+		label = rtlabel_id2name(kroute->rtlabel);
+		if (strlcpy(sa_rl.sr_label, label,
+		    sizeof(sa_rl.sr_label)) >= sizeof(sa_rl.sr_label)) {
+			log_warnx("send_rtmsg: invalid rtlabel");
+			return (-1);
+		}
+		/* adjust header */
+		hdr.rtm_addrs |= RTA_LABEL;
+		hdr.rtm_msglen += sizeof(sa_rl);
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &sa_rl;
+		iov[iovcnt++].iov_len = sizeof(sa_rl);
+	}
+
 
 retry:
 	if (writev(fd, iov, iovcnt) == -1) {
@@ -1128,9 +1153,12 @@ fetchtable(void)
 			free(kr);
 		} else {
 			if ((label = (struct sockaddr_rtlabel *)
-			    rti_info[RTAX_LABEL]) != NULL)
+			    rti_info[RTAX_LABEL]) != NULL) {
 				kr->r.rtlabel =
 				    rtlabel_name2id(label->sr_label);
+				kr->r.ext_tag =
+				    rtlabel_id2tag(kr->r.rtlabel);
+			}
 			kroute_insert(kr);
 		}
 
@@ -1351,10 +1379,14 @@ dispatch_rtmsg(void)
 
 				rtlabel_unref(kr->r.rtlabel);
 				kr->r.rtlabel = 0;
+				kr->r.ext_tag = 0;
 				if ((label = (struct sockaddr_rtlabel *)
-				    rti_info[RTAX_LABEL]) != NULL)
+				    rti_info[RTAX_LABEL]) != NULL) {
 					kr->r.rtlabel =
 					    rtlabel_name2id(label->sr_label);
+					kr->r.ext_tag =
+					    rtlabel_id2tag(kr->r.rtlabel);
+				}
 
 				if (kif_validate(kr->r.ifindex))
 					kr->r.flags &= ~F_DOWN;
@@ -1377,9 +1409,12 @@ add:
 				kr->r.ifindex = ifindex;
 
 				if ((label = (struct sockaddr_rtlabel *)
-				    rti_info[RTAX_LABEL]) != NULL)
+				    rti_info[RTAX_LABEL]) != NULL) {
 					kr->r.rtlabel =
 					    rtlabel_name2id(label->sr_label);
+					kr->r.ext_tag =
+					    rtlabel_id2tag(kr->r.rtlabel);
+				}
 
 				kroute_insert(kr);
 			}

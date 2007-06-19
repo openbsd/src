@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2007/05/29 22:08:25 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.49 2007/06/19 16:45:15 reyk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -105,7 +105,7 @@ typedef struct {
 %}
 
 %token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE RTLABEL
-%token	RFC1583COMPAT STUB ROUTER SPFDELAY SPFHOLDTIME
+%token	RFC1583COMPAT STUB ROUTER SPFDELAY SPFHOLDTIME EXTTAG
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL TRANSMITDELAY
@@ -238,6 +238,15 @@ conf_main	: ROUTERID STRING {
 
 			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
 			conf->redistribute |= REDISTRIBUTE_ON;
+		}
+		| RTLABEL STRING EXTTAG number {
+			if (!$4) {
+				yyerror("invalid external route tag");
+				free($2);
+				YYERROR;
+			}
+			rtlabel_tag(rtlabel_name2id($2), $4);
+			free($2);
 		}
 		| RFC1583COMPAT yesno {
 			conf->rfc1583compat = $2;
@@ -625,6 +634,7 @@ lookup(char *s)
 		{"auth-md-keyid",	AUTHMDKEYID},
 		{"auth-type",		AUTHTYPE},
 		{"demote",		DEMOTE},
+		{"external-tag",	EXTTAG},
 		{"fib-update",		FIBUPDATE},
 		{"hello-interval",	HELLOINTERVAL},
 		{"interface",		INTERFACE},

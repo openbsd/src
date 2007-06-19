@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.67 2007/06/19 14:42:09 pyr Exp $ */
+/*	$OpenBSD: rde.c,v 1.68 2007/06/19 16:45:15 reyk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -718,6 +718,7 @@ rde_send_change_kroute(struct rt_node *r)
 	kr.prefix.s_addr = r->prefix.s_addr;
 	kr.nexthop.s_addr = rn->nexthop.s_addr;
 	kr.prefixlen = r->prefixlen;
+	kr.ext_tag = r->ext_tag;
 
 	imsg_compose(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0, &kr, sizeof(kr));
 }
@@ -1126,7 +1127,7 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 	lsa->data.asext.fw_addr = 0;
 
 	lsa->data.asext.metric = htonl(rr->metric);
-	lsa->data.asext.ext_tag = 0;
+	lsa->data.asext.ext_tag = htonl(rr->kr.ext_tag);
 
 	lsa->hdr.ls_chksum = 0;
 	lsa->hdr.ls_chksum =

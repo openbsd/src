@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.9 2007/05/29 22:08:25 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.10 2007/06/19 16:45:15 reyk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -31,6 +31,7 @@
 void	print_mainconf(struct ospfd_conf *);
 const char *print_no(u_int16_t);
 void	print_redistribute(struct ospfd_conf *);
+void	print_rtlabel(struct ospfd_conf *);
 void	print_iface(struct iface *);
 
 void
@@ -52,6 +53,7 @@ print_mainconf(struct ospfd_conf *conf)
 		printf("stub router yes\n");
 
 	print_redistribute(conf);
+	print_rtlabel(conf);
 
 	printf("spf-delay %u\n", conf->spf_delay);
 	printf("spf-holdtime %u\n", conf->spf_hold_time);
@@ -93,6 +95,17 @@ print_redistribute(struct ospfd_conf *conf)
 			break;
 		}
 	}
+}
+
+void
+print_rtlabel(struct ospfd_conf *conf)
+{
+	struct n2id_label	*label;
+
+	TAILQ_FOREACH(label, &rt_labels, entry)
+		if (label->ext_tag)
+			printf("rtlabel \"%s\" external-tag %u\n",
+			    label->name, label->ext_tag);
 }
 
 void
