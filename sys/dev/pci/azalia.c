@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.27 2007/06/13 02:29:10 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.28 2007/06/19 00:06:51 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -491,9 +491,7 @@ azalia_intr(void *v)
 	AZ_WRITE_4(az, INTSTS, intsts);
 
 	ret += azalia_stream_intr(&az->pstream, intsts);
-#if 0
 	ret += azalia_stream_intr(&az->rstream, intsts);
-#endif
 
 	rirbctl = AZ_READ_1(az, RIRBCTL);
 	rirbsts = AZ_READ_1(az, RIRBSTS);
