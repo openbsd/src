@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.226 2007/05/11 11:27:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.227 2007/06/19 09:44:55 pyr Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -186,6 +186,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	signal(SIGTERM, rde_sighdlr);
 	signal(SIGINT, rde_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	close(pipe_s2r[0]);
 	close(pipe_s2rctl[0]);

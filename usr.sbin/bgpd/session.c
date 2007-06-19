@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.275 2007/05/29 02:27:05 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.276 2007/06/19 09:44:55 pyr Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -244,6 +244,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	signal(SIGTERM, session_sighdlr);
 	signal(SIGINT, session_sighdlr);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 	log_info("session engine ready");
 	close(pipe_m2s[0]);
 	close(pipe_s2r[1]);
