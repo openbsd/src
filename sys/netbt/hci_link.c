@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_link.c,v 1.3 2007/06/06 18:32:55 uwe Exp $	*/
+/*	$OpenBSD: hci_link.c,v 1.4 2007/06/19 08:12:35 uwe Exp $	*/
 /*	$NetBSD: hci_link.c,v 1.11 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -988,6 +988,22 @@ hci_link_free(struct hci_link *link, int err)
 
 	TAILQ_REMOVE(&link->hl_unit->hci_links, link, hl_next);
 	free(link, M_BLUETOOTH);
+}
+
+/*
+ * Lookup HCI link by type and state.
+ */
+struct hci_link *
+hci_link_lookup_state(struct hci_unit *unit, uint16_t type, uint16_t state)
+{
+	struct hci_link *link;
+
+	TAILQ_FOREACH(link, &unit->hci_links, hl_next) {
+		if (link->hl_type == type && link->hl_state == state)
+			break;
+	}
+
+	return link;
 }
 
 /*

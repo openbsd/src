@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_event.c,v 1.4 2007/06/01 03:21:41 uwe Exp $	*/
+/*	$OpenBSD: hci_event.c,v 1.5 2007/06/19 08:12:35 uwe Exp $	*/
 /*	$NetBSD: hci_event.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -239,6 +239,7 @@ static void
 hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 {
 	hci_command_status_ep ep;
+	struct hci_link *link;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(ep));
 	m_copydata(m, 0, sizeof(ep), (caddr_t)&ep);
@@ -256,6 +257,17 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 	 * post processing of pending commands
 	 */
 	switch(letoh16(ep.opcode)) {
+	case HCI_CMD_CREATE_CON:
+		switch (ep.status) {
+		case 0x12:	/* Invalid HCI command parameters */
+			DPRINTF("(%s) Invalid HCI command parameters\n",
+			    unit->hci_devname);
+			while ((link = hci_link_lookup_state(unit,
+			    HCI_LINK_ACL, HCI_LINK_WAIT_CONNECT)) != NULL)
+				hci_link_free(link, ECONNABORTED);
+			break;
+		}
+		break;
 	default:
 		break;
 	}
@@ -480,6 +492,7 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 				break;
 
 			case 0x08: /* "Connection Timed Out" */
+			case 0x10: /* "Connection Accept Timeout Exceeded" */
 				err = ETIMEDOUT;
 				break;
 
