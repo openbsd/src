@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbt.c,v 1.7 2007/06/06 23:18:06 uwe Exp $	*/
+/*	$OpenBSD: sbt.c,v 1.8 2007/06/19 07:58:05 uwe Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -79,10 +79,14 @@ void	sbt_start_acl(struct hci_unit *);
 void	sbt_start_sco(struct hci_unit *);
 
 #undef DPRINTF
+#define SBT_DEBUG
 #ifdef SBT_DEBUG
+int sbt_debug = 1;
 #define DPRINTF(s)	printf s
+#define DNPRINTF(n, s)	do { if ((n) <= sbt_debug) printf s; } while (0)
 #else
 #define DPRINTF(s)	do {} while (0)
+#define DNPRINTF(n, s)	do {} while (0)
 #endif
 
 #define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
@@ -215,7 +219,7 @@ sbt_write_packet(struct sbt_softc *sc, u_char *buf, size_t len)
 
 again:
 	if (retry-- == 0) {
-		printf("sbt_write_cmd: giving up :-(\n");
+		DPRINTF(("%s: sbt_write_cmd: giving up\n", DEVNAME(sc)));
 		return error;
 	}
 
@@ -229,13 +233,15 @@ again:
 	hdr[2] = (pktlen >> 16) & 0xff;
 	error = sdmmc_io_write_multi_1(sc->sc_sf, SBT_REG_DAT, hdr, 3);
 	if (error) {
-		DPRINTF(("sbt_write_packet: failed to send length\n"));
+		DPRINTF(("%s: sbt_write_packet: failed to send length\n",
+		    DEVNAME(sc)));
 		goto again;
 	}
 
 	error = sdmmc_io_write_multi_1(sc->sc_sf, SBT_REG_DAT, buf, len);
 	if (error) {
-		DPRINTF(("sbt_write_packet: failed to send packet data\n"));
+		DPRINTF(("%s: sbt_write_packet: failed to send packet data\n",
+		    DEVNAME(sc)));
 		goto again;
 	}
 	return 0;
@@ -250,20 +256,24 @@ sbt_read_packet(struct sbt_softc *sc, u_char *buf, size_t *lenp)
 
 	error = sdmmc_io_read_multi_1(sc->sc_sf, SBT_REG_DAT, hdr, 3);
 	if (error) {
-		DPRINTF(("sbt_read_packet: failed to read length\n"));
+		DPRINTF(("%s: sbt_read_packet: failed to read length\n",
+		    DEVNAME(sc)));
 		goto out;
 	}
 	len = (hdr[0] | (hdr[1] << 8) | (hdr[2] << 16)) - 3;
 	if (len > *lenp) {
-		DPRINTF(("sbt_read_packet: len %u > %u\n", len, *lenp));
+		DPRINTF(("%s: sbt_read_packet: len %u > %u\n",
+		    DEVNAME(sc), len, *lenp));
 		error = ENOBUFS;
 		goto out;
 	}
 
-	DPRINTF(("sbt_read_packet: reading len %u bytes\n", len));
+	DNPRINTF(2,("%s: sbt_read_packet: reading len %u bytes\n",
+	    DEVNAME(sc), len));
 	error = sdmmc_io_read_multi_1(sc->sc_sf, SBT_REG_DAT, buf, len);
 	if (error) {
-		DPRINTF(("sbt_read_packet: failed to read packet data\n"));
+		DPRINTF(("%s: sbt_read_packet: failed to read packet data\n",
+		    DEVNAME(sc)));
 		goto out;
 	}
 
@@ -311,13 +321,13 @@ sbt_intr(void *arg)
 
 	len = SBT_PKT_BUFSIZ;
 	if (sbt_read_packet(sc, sc->sc_buf, &len) != 0 || len == 0) {
-		printf("sbt_intr: read failed\n");
+		DPRINTF(("%s: sbt_intr: read failed\n", DEVNAME(sc)));
 		goto eoi;
 	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		printf("sbt_intr: MGETHDR failed\n");
+		DPRINTF(("%s: sbt_intr: MGETHDR failed\n", DEVNAME(sc)));
 		goto eoi;
 	}
 
@@ -327,7 +337,7 @@ sbt_intr(void *arg)
 		m->m_pkthdr.len = len;
 		m->m_len = MIN(MHLEN, m->m_pkthdr.len);
 	} else {
-		printf("sbt_intr: m_copyback failed\n");
+		DPRINTF(("%s: sbt_intr: m_copyback failed\n", DEVNAME(sc)));
 		m_free(m);
 		m = NULL;
 	}
@@ -336,12 +346,18 @@ eoi:
 	if (m != NULL) {
 		switch (sc->sc_buf[0]) {
 		case HCI_ACL_DATA_PKT:
+			DNPRINTF(1,("%s: recv ACL packet (%d bytes)\n",
+			    DEVNAME(sc), m->m_pkthdr.len));
 			hci_input_acl(&sc->sc_unit, m);
 			break;
 		case HCI_SCO_DATA_PKT:
+			DNPRINTF(1,("%s: recv SCO packet (%d bytes)\n",
+			    DEVNAME(sc), m->m_pkthdr.len));
 			hci_input_sco(&sc->sc_unit, m);
 			break;
 		case HCI_EVENT_PKT:
+			DNPRINTF(1,("%s: recv EVENT packet (%d bytes)\n",
+			    DEVNAME(sc), m->m_pkthdr.len));
 			hci_input_event(&sc->sc_unit, m);
 			break;
 		default:
@@ -424,8 +440,8 @@ sbt_start(struct hci_unit *unit, struct ifqueue *q, int xmit)
 		what = "SCO";
 		break;
 	}
-	printf("%s: xmit %s packet (%d bytes)\n",
-	    unit->hci_devname, what, m->m_pkthdr.len);
+	DNPRINTF(1,("%s: xmit %s packet (%d bytes)\n", DEVNAME(sc),
+	    what, m->m_pkthdr.len));
 #endif
 
 	unit->hci_flags |= xmit;
@@ -435,8 +451,7 @@ sbt_start(struct hci_unit *unit, struct ifqueue *q, int xmit)
 	m_freem(m);
 
 	if (sbt_write_packet(sc, sc->sc_buf, len))
-		printf("%s: sbt_write_packet failed\n",
-		    unit->hci_devname);
+		DPRINTF(("%s: sbt_write_packet failed\n", DEVNAME(sc)));
 
 	unit->hci_flags &= ~xmit;
 }
