@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.117 2007/06/07 15:31:09 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.118 2007/06/19 09:41:39 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -543,7 +543,8 @@ pmap_map_ptes(struct pmap *pmap)
 	/* need to load a new alternate pt space into curpmap? */
 	opde = *APDP_PDE;
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
-		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V);
+		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V |
+		    PG_U | PG_M);
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(curpcb->pcb_pmap);
 	}
@@ -1457,7 +1458,8 @@ pmap_pinit(struct pmap *pmap)
 	/* zero init area */
 	bzero(pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
 	/* put in recursive PDE to map the PTEs */
-	pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW;
+	pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW | PG_U |
+	    PG_M;
 
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
@@ -2817,7 +2819,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			pmap_zero_phys(ptaddr);
 
 			kpm->pm_pdir[PDSLOT_KERN + nkpde] =
-				ptaddr | PG_RW | PG_V;
+				ptaddr | PG_RW | PG_V | PG_U | PG_M;
 
 			/* count PTP as resident */
 			kpm->pm_stats.resident_count++;
