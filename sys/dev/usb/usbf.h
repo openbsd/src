@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.h,v 1.2 2007/06/06 19:25:50 mk Exp $	*/
+/*	$OpenBSD: usbf.h,v 1.3 2007/06/19 11:52:07 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -100,29 +100,23 @@ const char	*usbf_errstr(usbf_status);
 
 /* device */
 void		 usbf_devinfo_setup(usbf_device_handle, u_int8_t, u_int8_t,
-				    u_int8_t, u_int16_t, u_int16_t,
-				    u_int16_t, const char *, const char *,
-				    const char *);
+		     u_int8_t, u_int16_t, u_int16_t, u_int16_t, const char *,
+		     const char *, const char *);
 char		*usbf_devinfo_alloc(usbf_device_handle);
 void		 usbf_devinfo_free(char *);
-usb_device_descriptor_t *
-		 usbf_device_descriptor(usbf_device_handle);
-usb_string_descriptor_t *
-		 usbf_string_descriptor(usbf_device_handle, u_int8_t);
-usb_config_descriptor_t *
-		 usbf_config_descriptor(usbf_device_handle, u_int8_t);
+usb_device_descriptor_t *usbf_device_descriptor(usbf_device_handle);
+usb_string_descriptor_t *usbf_string_descriptor(usbf_device_handle, u_int8_t);
+usb_config_descriptor_t *usbf_config_descriptor(usbf_device_handle, u_int8_t);
 
 /* configuration */
 u_int8_t	 usbf_add_string(usbf_device_handle, const char *);
 usbf_status	 usbf_add_config(usbf_device_handle, usbf_config_handle *);
 usbf_status	 usbf_add_config_desc(usbf_config_handle, usb_descriptor_t *,
-				      usb_descriptor_t **);
+		     usb_descriptor_t **);
 usbf_status	 usbf_add_interface(usbf_config_handle, u_int8_t, u_int8_t,
-				    u_int8_t, const char *,
-				    usbf_interface_handle *);
+		     u_int8_t, const char *, usbf_interface_handle *);
 usbf_status	 usbf_add_endpoint(usbf_interface_handle, u_int8_t,
-				   u_int8_t, u_int16_t, u_int8_t,
-				   usbf_endpoint_handle *);
+		     u_int8_t, u_int16_t, u_int8_t, usbf_endpoint_handle *);
 usbf_status	 usbf_end_config(usbf_config_handle);
 usbf_endpoint_handle usbf_config_endpoint(usbf_config_handle, u_int8_t);
 
@@ -139,7 +133,7 @@ u_int8_t	 usbf_endpoint_attributes(usbf_endpoint_handle);
 
 /* pipe */
 usbf_status	 usbf_open_pipe(usbf_interface_handle, u_int8_t,
-				usbf_pipe_handle *);
+		     usbf_pipe_handle *);
 void		 usbf_abort_pipe(usbf_pipe_handle);
 void		 usbf_close_pipe(usbf_pipe_handle);
 void		 usbf_stall_pipe(usbf_pipe_handle);
@@ -150,14 +144,13 @@ void		 usbf_free_xfer(usbf_xfer_handle);
 void		*usbf_alloc_buffer(usbf_xfer_handle, u_int32_t);
 void		 usbf_free_buffer(usbf_xfer_handle);
 void		 usbf_setup_xfer(usbf_xfer_handle, usbf_pipe_handle,
-				 usbf_private_handle, void *, u_int32_t,
-				 u_int16_t, u_int32_t, usbf_callback);
+		     usbf_private_handle, void *, u_int32_t, u_int16_t,
+		     u_int32_t, usbf_callback);
 void		 usbf_setup_default_xfer(usbf_xfer_handle, usbf_pipe_handle,
-					 usbf_private_handle,
-					 usb_device_request_t *, u_int16_t,
-					 u_int32_t, usbf_callback);
+		     usbf_private_handle, usb_device_request_t *, u_int16_t,
+		     u_int32_t, usbf_callback);
 void		 usbf_get_xfer_status(usbf_xfer_handle, usbf_private_handle *,
-				      void **, u_int32_t *, usbf_status *);
+		     void **, u_int32_t *, usbf_status *);
 usbf_status	 usbf_transfer(usbf_xfer_handle);
 
 /*

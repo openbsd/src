@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.8 2007/06/13 06:25:03 mbalmer Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.9 2007/06/19 11:52:07 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -82,17 +82,18 @@ struct usbf_softc {
 
 #define DEVNAME(sc)	((sc)->sc_dev.dv_xname)
 
-int	    usbf_match(struct device *, void *, void *);
-void	    usbf_attach(struct device *, struct device *, void *);
-void	    usbf_create_thread(void *);
-void	    usbf_task_thread(void *);
+int	    	usbf_match(struct device *, void *, void *);
+void	    	usbf_attach(struct device *, struct device *, void *);
+void	    	usbf_create_thread(void *);
+void	    	usbf_task_thread(void *);
 
-usbf_status usbf_get_descriptor(usbf_device_handle, usb_device_request_t *, void **);
-void	    usbf_set_address(usbf_device_handle, u_int8_t);
-usbf_status usbf_set_config(usbf_device_handle, u_int8_t);
+usbf_status	usbf_get_descriptor(usbf_device_handle, usb_device_request_t *,
+		    void **);
+void		usbf_set_address(usbf_device_handle, u_int8_t);
+usbf_status	usbf_set_config(usbf_device_handle, u_int8_t);
 
 #ifdef USBF_DEBUG
-void	    usbf_dump_request(usbf_device_handle, usb_device_request_t *);
+void		usbf_dump_request(usbf_device_handle, usb_device_request_t *);
 #endif
 
 struct cfattach usbf_ca = {
@@ -255,8 +256,7 @@ usbf_task_thread(void *arg)
 			splx(s);
 			task->fun(task->arg);
 			s = splusb();
-			DPRINTF(1,("usbf_task_thread: done task=%p\n",
-			    task));
+			DPRINTF(1,("usbf_task_thread: done task=%p\n", task));
 		}
 	}
 	splx(s);
@@ -398,8 +398,7 @@ usbf_set_config(usbf_device_handle dev, u_int8_t new)
 		if (dev->function->methods->set_config)
 			err = fun->methods->set_config(fun, NULL);
 		if (err) {
-			DPRINTF(0,("usbf_set_config: %s\n",
-			    usbf_errstr(err)));
+			DPRINTF(0,("usbf_set_config: %s\n", usbf_errstr(err)));
 		}
 		dev->config = NULL;
 		return USBF_NORMAL_COMPLETION;
