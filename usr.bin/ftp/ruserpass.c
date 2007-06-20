@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.24 2007/06/06 19:15:33 pyr Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.25 2007/06/20 17:56:37 moritz Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.24 2007/06/06 19:15:33 pyr Exp $";
+static const char rcsid[] = "$OpenBSD: ruserpass.c,v 1.25 2007/06/20 17:56:37 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,9 +149,10 @@ next:
 			if ((t = token()) == -1)
 				goto bad;
 			if (t) {
-				if (*aname == 0)
-					*aname = strdup(tokval);
-				else {
+				if (*aname == 0) {
+					if ((*aname = strdup(tokval)) == NULL)
+						err(1, "strdup");
+				} else {
 					if (strcmp(*aname, tokval))
 						goto next;
 				}
@@ -167,8 +168,10 @@ next:
 			}
 			if ((t = token()) == -1)
 				goto bad;
-			if (t && *apass == 0)
-				*apass = strdup(tokval);
+			if (t && *apass == 0) {
+				if ((*apass = strdup(tokval)) == NULL)
+					err(1, "strdup");
+			}
 			break;
 		case ACCOUNT:
 			if (fstat(fileno(cfile), &stb) >= 0
@@ -179,8 +182,10 @@ next:
 			}
 			if ((t = token()) == -1)
 				goto bad;
-			if (t && *aacct == 0)
-				*aacct = strdup(tokval);
+			if (t && *aacct == 0) {
+				if ((*aacct = strdup(tokval)) == NULL)
+					err(1, "strdup");
+			}
 			break;
 		case MACDEF:
 			if (proxy) {
@@ -285,8 +290,8 @@ token(void)
 	cp = tokval;
 	if (c == '"') {
 		while ((c = fgetc(cfile)) != EOF && c != '"') {
-			if (c == '\\')
-				c = fgetc(cfile);
+			if (c == '\\' && (c = fgetc(cfile)) == EOF)
+				break;
 			*cp++ = c;
 			if (cp == tokval + sizeof(tokval)) {
 				warnx("Token in .netrc too long");
@@ -297,8 +302,8 @@ token(void)
 		*cp++ = c;
 		while ((c = fgetc(cfile)) != EOF
 		    && c != '\n' && c != '\t' && c != ' ' && c != ',') {
-			if (c == '\\')
-				c = fgetc(cfile);
+			if (c == '\\' && (c = fgetc(cfile)) == EOF)
+				break;
 			*cp++ = c;
 			if (cp == tokval + sizeof(tokval)) {
 				warnx("Token in .netrc too long");
