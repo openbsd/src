@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2007/05/07 18:42:13 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.18 2007/06/20 16:50:41 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -52,13 +52,13 @@
 
 
 /* Interrupt priority `levels'; not mutually exclusive. */
-#define	IPL_BIO		0	/* block I/O */
+#define	IPL_NONE	0	/* nothing */
+#define	IPL_BIO		1	/* block I/O */
 #define IPL_AUDIO	IPL_BIO
-#define	IPL_NET		1	/* network */
-#define	IPL_TTY		2	/* terminal */
-#define	IPL_VM		3	/* memory allocation */
-#define	IPL_CLOCK	4	/* clock */
-#define	IPL_NONE	5	/* nothing */
+#define	IPL_NET		2	/* network */
+#define	IPL_TTY		3	/* terminal */
+#define	IPL_VM		4	/* memory allocation */
+#define	IPL_CLOCK	5	/* clock */
 #define	IPL_HIGH	6	/* everything */
 #define	NIPLS		7	/* Number of levels */
 
@@ -85,7 +85,7 @@
 #define splnet()		splraise(imask[IPL_NET])
 #define spltty()		splraise(imask[IPL_TTY])
 #define splaudio()		splraise(imask[IPL_AUDIO])
-#define splclock()		splraise(SPL_CLOCKMASK|SINT_ALLMASK)
+#define splclock()		splraise(imask[IPL_CLOCK])
 #define splvm()			splraise(imask[IPL_VM])
 #define splsoftclock()		splraise(SINT_CLOCKMASK)
 #define splsoftnet()		splraise(SINT_NETMASK|SINT_CLOCKMASK)

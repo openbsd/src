@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.22 2007/06/18 20:24:50 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.23 2007/06/20 16:50:43 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -560,15 +560,14 @@ macebus_intr_makemasks(void)
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
-	 */
-	imask[IPL_VM] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
-
-	/*
+	 *
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
 	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_TTY] |= imask[IPL_NET];
+	imask[IPL_VM] |= imask[IPL_TTY];
+	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCKMASK;
 
 	/*
 	 * These are pseudo-levels.
