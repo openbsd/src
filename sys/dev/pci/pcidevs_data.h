@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1245 2007/06/18 12:20:00 martin Exp 
+ *	OpenBSD: pcidevs,v 1.1246 2007/06/20 04:07:01 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12264,6 +12264,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT82C576 3V",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_IDE,
+	    "CX700 IDE",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C585,
 	    "VT82C585 ISA",
 	},
@@ -12556,6 +12560,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT6420 SATA",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_UNICHROME2_1,
+	    "S3 UniChrome Pro II IGP",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6410,
 	    "VT6410 IDE",
 	},
@@ -12618,6 +12626,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_3,
 	    "CX700 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX700_1,
+	    "VX700 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PT880_3,
