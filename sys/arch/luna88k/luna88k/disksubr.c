@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.32 2007/06/19 12:33:59 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.33 2007/06/20 18:15:45 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -105,7 +105,7 @@ int disklabel_bsd_to_om(struct disklabel *, struct sun_disklabel *);
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct sun_disklabel *slp;
 	struct buf *bp = NULL;
@@ -166,8 +166,7 @@ done:
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
 	struct buf *bp = NULL;
 	int error;

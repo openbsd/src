@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.67 2007/06/18 05:30:54 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.68 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -68,7 +68,7 @@ extern void cdstrategy(struct buf *);
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct sun_disklabel *slp;
 	struct buf *bp = NULL;
@@ -104,7 +104,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto doslabel;
 
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -113,8 +112,10 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 
+#if NOTANYMORE
 	/* XXX because xd(4) & xy(4) still need it */
 	bcopy(bp->b_data, osdep->cd_block, sizeof(osdep->cd_block));
+#endif
 
 	slp = (struct sun_disklabel *)bp->b_data;
 	if (slp->sl_magic == SUN_DKMAGIC) {
@@ -127,7 +128,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 
 doslabel:
-	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
@@ -157,8 +158,7 @@ done:
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
 	struct buf *bp = NULL;
 	int error;
@@ -173,7 +173,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	/* Write out the updated label. */
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);

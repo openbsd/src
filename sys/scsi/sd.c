@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.134 2007/06/18 20:55:52 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.135 2007/06/20 18:15:47 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -88,8 +88,7 @@ int	sdactivate(struct device *, enum devact);
 int	sddetach(struct device *, int);
 
 void	sdminphys(struct buf *);
-void	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *,
-			    struct cpu_disklabel *, int);
+void	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *, int);
 void	sdstart(void *);
 void	sdrestart(void *);
 void	sddone(struct scsi_xfer *);
@@ -392,8 +391,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
 
 		/* Load the partition info if not already loaded. */
-		sdgetdisklabel(dev, sd, sd->sc_dk.dk_label,
-		    sd->sc_dk.dk_cpulabel, 0);
+		sdgetdisklabel(dev, sd, sd->sc_dk.dk_label, 0);
 		SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded\n"));
 	}
 
@@ -533,7 +531,6 @@ sdstrategy(struct buf *bp)
 	 */
 	if (DISKPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, sd->sc_dk.dk_label,
-	    sd->sc_dk.dk_cpulabel,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 
@@ -862,17 +859,13 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	switch (cmd) {
 	case DIOCRLDINFO:
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
-		sdgetdisklabel(dev, sd, lp, sd->sc_dk.dk_cpulabel, 0);
+		sdgetdisklabel(dev, sd, lp, 0);
 		bcopy(lp, sd->sc_dk.dk_label, sizeof(*lp));
 		free(lp, M_TEMP);
 		goto exit;
-	case DIOCGPDINFO: {
-			struct cpu_disklabel osdep;
-
-			sdgetdisklabel(dev, sd, (struct disklabel *)addr,
-			    &osdep, 1);
-			goto exit;
-		}
+	case DIOCGPDINFO:
+		sdgetdisklabel(dev, sd, (struct disklabel *)addr, 1);
+		goto exit;
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
@@ -896,13 +889,11 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		sd->flags |= SDF_LABELLING;
 
 		error = setdisklabel(sd->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0,
-		    sd->sc_dk.dk_cpulabel);
+		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
-				    sdstrategy, sd->sc_dk.dk_label,
-				    sd->sc_dk.dk_cpulabel);
+				    sdstrategy, sd->sc_dk.dk_label);
 		}
 
 		sd->flags &= ~SDF_LABELLING;
@@ -985,14 +976,13 @@ sd_ioctl_inquiry(struct sd_softc *sd, struct dk_inquiry *di)
  */
 void
 sdgetdisklabel(dev_t dev, struct sd_softc *sd, struct disklabel *lp,
-    struct cpu_disklabel *clp, int spoofonly)
+    int spoofonly)
 {
 	size_t len;
 	char *errstring, packname[sizeof(lp->d_packname) + 1];
 	char product[17], vendor[9];
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(clp, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sd->params.blksize;
 	lp->d_ntracks = sd->params.heads;
@@ -1049,8 +1039,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sd, struct disklabel *lp,
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), sdstrategy, lp, clp,
-	    spoofonly);
+	errstring = readdisklabel(DISKLABELDEV(dev), sdstrategy, lp, spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);*/
 	}

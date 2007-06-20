@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.50 2007/06/08 05:27:58 deraadt Exp $	*/
+/*	$OpenBSD: hd.c,v 1.51 2007/06/20 18:15:47 deraadt Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -237,8 +237,7 @@ int	hdident(struct device *, struct hd_softc *,
 	    struct hpibbus_attach_args *);
 void	hdreset(int, int, int);
 void	hdustart(struct hd_softc *);
-void	hdgetdisklabel(dev_t, struct hd_softc *, struct disklabel *,
-	    struct cpu_disklabel *, int);
+void	hdgetdisklabel(dev_t, struct hd_softc *, struct disklabel *, int);
 void	hdrestart(void *);
 struct buf *hdfinish(struct hd_softc *, struct buf *);
 
@@ -478,17 +477,15 @@ hdreset(ctlr, slave, punit)
  * Read or construct a disklabel
  */
 void
-hdgetdisklabel(dev, rs, lp, clp, spoofonly)
+hdgetdisklabel(dev, rs, lp, spoofonly)
 	dev_t dev;
 	struct hd_softc *rs;
 	struct disklabel *lp;
-	struct cpu_disklabel *clp;
 	int spoofonly;
 {
 	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(clp, sizeof(struct cpu_disklabel));
 
 	/*
 	 * Create a default disk label based on geometry.
@@ -526,7 +523,7 @@ hdgetdisklabel(dev, rs, lp, clp, spoofonly)
 	/*
 	 * Now try to read the disklabel
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), hdstrategy, lp, clp,
+	errstring = readdisklabel(DISKLABELDEV(dev), hdstrategy, lp,
 	    spoofonly);
 	if (errstring) {
 		/* printf("%s: %s\n", rs->sc_dev.dv_xname, errstring); */
@@ -561,8 +558,7 @@ hdopen(dev, flags, mode, p)
 	 */
 	if (rs->sc_dkdev.dk_openmask == 0) {
 		rs->sc_flags |= HDF_OPENING;
-		hdgetdisklabel(dev, rs, rs->sc_dkdev.dk_label,
-		    rs->sc_dkdev.dk_cpulabel, 0);
+		hdgetdisklabel(dev, rs, rs->sc_dkdev.dk_label, 0);
 		rs->sc_flags &= ~HDF_OPENING;
 	}
 
@@ -700,7 +696,6 @@ hdstrategy(bp)
 		bp->b_cylinder = bp->b_blkno;
 	} else {
 		if (bounds_check_with_label(bp, rs->sc_dkdev.dk_label,
-		    rs->sc_dkdev.dk_cpulabel,
 		    (rs->sc_flags & HDF_WLABEL) != 0) <= 0)
 			goto done;
 
@@ -1150,13 +1145,9 @@ hdioctl(dev, cmd, data, flag, p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	switch (cmd) {
+	switch (cmd)
 	case DIOCGPDINFO:
-	    {
-		struct cpu_disklabel osdep;
-
-		hdgetdisklabel(dev, sc, (struct disklabel *)data, &osdep, 1);
-	    }
+		hdgetdisklabel(dev, sc, (struct disklabel *)data, 1);
 		goto exit;
 
 	case DIOCGDINFO:
@@ -1192,13 +1183,11 @@ hdioctl(dev, cmd, data, flag, p)
 		sc->sc_flags |= HDF_WLABEL;
 
 		error = setdisklabel(sc->sc_dkdev.dk_label,
-		    (struct disklabel *)data, /* sc->sc_dkdev.dk_openmask */ 0,
-		    sc->sc_dkdev.dk_cpulabel);
+		    (struct disklabel *)data, /* sc->sc_dkdev.dk_openmask */ 0);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
-				    hdstrategy, sc->sc_dkdev.dk_label,
-				    sc->sc_dkdev.dk_cpulabel);
+				    hdstrategy, sc->sc_dkdev.dk_label);
 		}
 
 		sc->sc_flags &= ~HDF_WLABEL;

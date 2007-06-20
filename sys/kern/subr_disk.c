@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.60 2007/06/17 00:27:30 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.61 2007/06/20 18:15:47 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -368,13 +368,12 @@ checkdisklabel(void *rlp, struct disklabel *lp)
  */
 char *
 readdoslabel(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep,
-    int *partoffp, int *cylp, int spoofonly)
+    struct disklabel *lp, int *partoffp, int spoofonly)
 {
 	struct dos_partition dp[NDOSPART], *dp2;
 	u_int32_t extoff = 0;
 	daddr64_t part_blkno = DOSBBSECTOR;
-	int dospartoff = 0, cyl, i, ourpart = -1;
+	int dospartoff = 0, i, ourpart = -1;
 	int wander = 1, n = 0, loop = 0;
 
 	if (lp->d_secpercyl == 0)
@@ -383,7 +382,6 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 		return ("invalid label, d_secsize == 0");
 
 	/* do DOS partitions in the process of getting disklabel? */
-	cyl = DOS_LABELSECTOR / lp->d_secpercyl;
 
 	/*
 	 * Read dos partition table, follow extended partitions.
@@ -399,7 +397,6 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 		bp->b_blkno = part_blkno;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylinder = part_blkno / lp->d_secpercyl;
 		(*strat)(bp);
 		if (biowait(bp)) {
 /*wrong*/		if (partoffp)
@@ -425,7 +422,6 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			 */
 			dp2 = &dp[ourpart];
 			dospartoff = letoh32(dp2->dp_start) + part_blkno;
-			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
 			/* found our OpenBSD partition, finish up */
 			if (partoffp)
@@ -531,15 +527,12 @@ notfat:
 	/* record the OpenBSD partition's placement for the caller */
 	if (partoffp)
 		*partoffp = dospartoff;
-	if (cylp)
-		*cylp = cyl;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
 		return (NULL);
 
 	bp->b_blkno = dospartoff + DOS_LABELSECTOR;
-	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -555,8 +548,7 @@ notfat:
  * before setting it.
  */
 int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp,
-    u_int openmask, struct cpu_disklabel *osdep)
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -610,8 +602,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp,
  * early completion.
  */
 int
-bounds_check_with_label(struct buf *bp, struct disklabel *lp,
-    struct cpu_disklabel *osdep, int wlabel)
+bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
@@ -737,13 +728,10 @@ disk_attach(struct disk *diskp)
 	 * called during autoconfiguration.
 	 */
 	diskp->dk_label = malloc(sizeof(struct disklabel), M_DEVBUF, M_NOWAIT);
-	diskp->dk_cpulabel = malloc(sizeof(struct cpu_disklabel), M_DEVBUF,
-	    M_NOWAIT);
-	if ((diskp->dk_label == NULL) || (diskp->dk_cpulabel == NULL))
+	if (diskp->dk_label == NULL)
 		panic("disk_attach: can't allocate storage for disklabel");
 
 	bzero(diskp->dk_label, sizeof(struct disklabel));
-	bzero(diskp->dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	/*
 	 * Set the attached timestamp.
@@ -769,7 +757,6 @@ disk_detach(struct disk *diskp)
 	 * Free the space used by the disklabel structures.
 	 */
 	free(diskp->dk_label, M_DEVBUF);
-	free(diskp->dk_cpulabel, M_DEVBUF);
 
 	/*
 	 * Remove from the disklist.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.23 2007/06/08 05:35:31 deraadt Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.24 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -163,7 +163,7 @@ ra_putonline(ra)
 	ra->ra_state = DK_RDLABEL;
 	printf("%s", ra->ra_dev.dv_xname);
 	if ((msg = readdisklabel(MAKEDISKDEV(RAMAJOR, ra->ra_dev.dv_unit,
-	    RAW_PART), rastrategy, dl, NULL, 0)) != NULL) {
+	    RAW_PART), rastrategy, dl, 0)) != NULL) {
 		/*printf(": %s", msg);*/
 	} else {
 		ra->ra_havelabel = 1;
@@ -320,7 +320,7 @@ rastrategy(bp)
 	 * within the boundaries of the partition.
 	 */
 	if (bounds_check_with_label(bp, ra->ra_disk.dk_label,
-	    ra->ra_disk.dk_cpulabel, ra->ra_wlabel) <= 0)
+	    ra->ra_wlabel) <= 0)
 		goto done;
 
 	/* Make some statistics... /bqt */
@@ -391,10 +391,10 @@ raioctl(dev, cmd, data, flag, p)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
-			error = setdisklabel(lp, tp, 0, 0);
+			error = setdisklabel(lp, tp, 0);
 			if (error == 0 && cmd == DIOCWDINFO) {
 				ra->ra_wlabel = 1;
-				error = writedisklabel(dev, rastrategy, lp,0);
+				error = writedisklabel(dev, rastrategy, lp);
 				ra->ra_wlabel = 0;
 			}
 		}

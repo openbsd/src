@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.40 2007/06/17 00:27:28 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.41 2007/06/20 18:15:45 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg;
@@ -69,7 +69,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
@@ -105,8 +104,7 @@ done:
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;

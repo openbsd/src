@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.12 2007/06/15 02:28:49 todd Exp $	*/
+/*	$OpenBSD: presto.c,v 1.13 2007/06/20 18:15:47 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -294,8 +294,7 @@ prestostrategy(struct buf *bp)
 	/* Do not write on "no trespassing" areas... */
 	part = DISKPART(bp->b_dev);
 	if (part != RAW_PART &&
-	    bounds_check_with_label(bp, sc->sc_dk.dk_label,
-	    sc->sc_dk.dk_cpulabel, 1) <= 0)
+	    bounds_check_with_label(bp, sc->sc_dk.dk_label, 1) <= 0)
 		goto bad;
 
 	/* Bound the request size, then move data between buf and nvram */
@@ -341,8 +340,7 @@ prestoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 			return (EBADF);
 
 		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0,
-		    sc->sc_dk.dk_cpulabel);
+		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0);
 		return (error);
 
 	case DIOCWDINFO:
@@ -350,12 +348,10 @@ prestoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 			return (EBADF);
 
 		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0,
-		    sc->sc_dk.dk_cpulabel);
+		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0);
 		if (error == 0) {
 			error = writedisklabel(DISKLABELDEV(dev),
-			    prestostrategy, sc->sc_dk.dk_label,
-			    sc->sc_dk.dk_cpulabel);
+			    prestostrategy, sc->sc_dk.dk_label);
 		}
 
 		return (error);
@@ -372,7 +368,6 @@ presto_getdisklabel(dev_t dev, struct presto_softc *sc)
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
 
-	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 	bzero(sc->sc_dk.dk_label, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
@@ -393,6 +388,5 @@ presto_getdisklabel(dev_t dev, struct presto_softc *sc)
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
 
-	readdisklabel(DISKLABELDEV(dev), prestostrategy, sc->sc_dk.dk_label,
-	    sc->sc_dk.dk_cpulabel, 0);
+	readdisklabel(DISKLABELDEV(dev), prestostrategy, sc->sc_dk.dk_label, 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.53 2007/06/08 05:27:58 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.54 2007/06/20 18:15:47 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1786,14 +1786,12 @@ fdioctl(dev, cmd, addr, flag, p)
 			return (EBADF);
 
 		error = setdisklabel(fd->sc_dk.dk_label,
-				    (struct disklabel *)addr, 0,
-				    fd->sc_dk.dk_cpulabel);
+		    (struct disklabel *)addr, 0);
 		if (error)
 			return (error);
 
 		error = writedisklabel(DISKLABELDEV(dev), fdstrategy,
-				       fd->sc_dk.dk_label,
-				       fd->sc_dk.dk_cpulabel);
+		    fd->sc_dk.dk_label);
 		return (error);
 
 	case DIOCLOCK:
@@ -1952,11 +1950,9 @@ fdgetdisklabel(dev)
 	int unit = FDUNIT(dev);
 	struct fd_softc *fd = fd_cd.cd_devs[unit];
 	struct disklabel *lp = fd->sc_dk.dk_label;
-	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
 	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(clp, sizeof(struct cpu_disklabel));
 
 	lp->d_type = DTYPE_FLOPPY;
 	lp->d_secsize = FD_BSIZE(fd);
@@ -1979,7 +1975,7 @@ fdgetdisklabel(dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, clp, 0);
+	errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, 0);
 	if (errstring) {
 		/*printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);*/
 	}

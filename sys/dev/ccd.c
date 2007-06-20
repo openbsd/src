@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.77 2007/06/08 05:27:58 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.78 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -182,8 +182,7 @@ int	ccdinit(struct ccddevice *, char **, struct proc *);
 int	ccdlookup(char *, struct proc *p, struct vnode **);
 long	ccdbuffer(struct ccd_softc *, struct buf *, daddr64_t, caddr_t,
     long, struct ccdbuf **);
-void	ccdgetdisklabel(dev_t, struct ccd_softc *, struct disklabel *,
-    struct cpu_disklabel *, int);
+void	ccdgetdisklabel(dev_t, struct ccd_softc *, struct disklabel *, int);
 INLINE struct ccdbuf *getccdbuf(void);
 INLINE void putccdbuf(struct ccdbuf *);
 
@@ -589,7 +588,7 @@ ccdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	 * the in-core disklabel.
 	 */
 	if ((cs->sc_flags & CCDF_INITED) && (cs->sc_dkdev.dk_openmask == 0))
-		ccdgetdisklabel(dev, cs, lp, cs->sc_dkdev.dk_cpulabel, 0);
+		ccdgetdisklabel(dev, cs, lp, 0);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART) {
@@ -685,8 +684,7 @@ ccdstrategy(struct buf *bp)
 	 */
 	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, lp, cs->sc_dkdev.dk_cpulabel,
-	    wlabel) <= 0)
+	    bounds_check_with_label(bp, lp, wlabel) <= 0)
 		goto done;
 
 	bp->b_resid = bp->b_bcount;
@@ -1135,8 +1133,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		disk_attach(&cs->sc_dkdev);
 
 		/* Try and read the disklabel. */
-		ccdgetdisklabel(dev, cs, cs->sc_dkdev.dk_label,
-		    cs->sc_dkdev.dk_cpulabel, 0);
+		ccdgetdisklabel(dev, cs, cs->sc_dkdev.dk_label, 0);
 
 		ccdunlock(cs);
 		break;
@@ -1206,18 +1203,14 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		splx(s);
 		break;
 
-	case DIOCGPDINFO: {
-		struct cpu_disklabel osdep;
-
+	case DIOCGPDINFO:
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
 
-		ccdgetdisklabel(dev, cs, (struct disklabel *)data,
-		    &osdep, 1);
+		ccdgetdisklabel(dev, cs, (struct disklabel *)data, 1);
 
 		ccdunlock(cs);
 		break;
-	}
 
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(cs->sc_dkdev.dk_label);
@@ -1237,12 +1230,11 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		cs->sc_flags |= CCDF_LABELLING;
 
 		error = setdisklabel(cs->sc_dkdev.dk_label,
-		    (struct disklabel *)data, 0, cs->sc_dkdev.dk_cpulabel);
+		    (struct disklabel *)data, 0);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
-				    ccdstrategy, cs->sc_dkdev.dk_label,
-				    cs->sc_dkdev.dk_cpulabel);
+				    ccdstrategy, cs->sc_dkdev.dk_label);
 		}
 
 		cs->sc_flags &= ~CCDF_LABELLING;
@@ -1362,13 +1354,12 @@ ccdlookup(char *path, struct proc *p, struct vnode **vpp)
  */
 void
 ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
-    struct cpu_disklabel *clp, int spoofonly)
+    int spoofonly)
 {
 	struct ccdgeom *ccg = &cs->sc_geom;
 	char *errstring;
 
 	bzero(lp, sizeof(*lp));
-	bzero(clp, sizeof(*clp));
 
 	DL_SETDSIZE(lp, cs->sc_size);
 	lp->d_secsize = ccg->ccg_secsize;
@@ -1393,7 +1384,7 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
 	 * Call the generic disklabel extraction routine.
 	 */
 	errstring = readdisklabel(DISKLABELDEV(dev), ccdstrategy,
-	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel, spoofonly);
+	    cs->sc_dkdev.dk_label, spoofonly);
 	/* It's actually extremely common to have unlabeled ccds. */
 	if (errstring != NULL)
 		CCD_DPRINTF(CCDB_LABEL, ("%s: %s\n", cs->sc_xname, errstring));

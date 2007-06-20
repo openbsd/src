@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.7 2007/06/08 05:27:58 deraadt Exp $	*/
+/*	$OpenBSD: flash.c,v 1.8 2007/06/20 18:15:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -67,8 +67,7 @@ void	flashdone(void *);
 int	flashsafestrategy(struct flash_softc *, struct buf *);
 void	flashgetdefaultlabel(dev_t, struct flash_softc *,
     struct disklabel *);
-void	flashgetdisklabel(dev_t, struct flash_softc *, struct disklabel *,
-    struct cpu_disklabel *, int);
+void	flashgetdisklabel(dev_t, struct flash_softc *, struct disklabel *, int);
 
 /*
  * Driver attachment glue
@@ -700,8 +699,7 @@ flashopen(dev_t dev, int oflags, int devtype, struct proc *p)
 			sc->sc_flags |= FDK_LOADED;
 			if (flashsafe(dev))
 				sc->sc_flags |= FDK_SAFE;
-			flashgetdisklabel(dev, sc, sc->sc_dk.dk_label,
-			    sc->sc_dk.dk_cpulabel, 0);
+			flashgetdisklabel(dev, sc, sc->sc_dk.dk_label, 0);
 		}
 	} else if (((sc->sc_flags & FDK_SAFE) == 0) !=
 	    (flashsafe(dev) == 0)) {
@@ -812,8 +810,7 @@ flashstrategy(struct buf *bp)
 
 	/* Do bounds checking on partitions. */
 	if (flashpart(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, sc->sc_dk.dk_label,
-	    sc->sc_dk.dk_cpulabel, 0) <= 0)
+	    bounds_check_with_label(bp, sc->sc_dk.dk_label, 0) <= 0)
 		goto done;
 
 	/* Queue the transfer. */
@@ -1006,21 +1003,19 @@ flashgetdefaultlabel(dev_t dev, struct flash_softc *sc,
 
 void
 flashgetdisklabel(dev_t dev, struct flash_softc *sc,
-    struct disklabel *lp, struct cpu_disklabel *clp, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	char *errstring;
 	dev_t labeldev;
 
 	flashgetdefaultlabel(dev, sc, lp);
-	bzero(clp, sizeof(struct cpu_disklabel));
 
 	if (sc->sc_tag->default_disklabel != NULL)
-		sc->sc_tag->default_disklabel(sc->sc_cookie, dev, lp, clp);
+		sc->sc_tag->default_disklabel(sc->sc_cookie, dev, lp);
 
 	/* Call the generic disklabel extraction routine. */
 	labeldev = flashlabeldev(dev);
-	errstring = readdisklabel(labeldev, flashstrategy, lp, clp,
-	    spoofonly);
+	errstring = readdisklabel(labeldev, flashstrategy, lp, spoofonly);
 	if (errstring != NULL) {
 		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
 	}

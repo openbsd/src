@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.56 2007/06/18 08:41:04 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.57 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #include <sys/disk.h>
 
 char   *readdpmelabel(struct buf *, void (*)(struct buf *),
-	    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
+	    struct disklabel *, int *, int);
 
 /*
  * Attempt to read a disk label from a device
@@ -60,7 +60,7 @@ char   *readdpmelabel(struct buf *, void (*)(struct buf *),
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg;
@@ -72,11 +72,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	msg = readdpmelabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	msg = readdpmelabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
-	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
@@ -103,8 +103,7 @@ done:
 
 char *
 readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep,
-    int *partoffp, int *cylp, int spoofonly)
+    struct disklabel *lp, int *partoffp, int spoofonly)
 {
 	int i, part_cnt, n, hfspartoff = -1;
 	struct part_map_entry *part;
@@ -113,7 +112,6 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	bp->b_blkno = 1;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp))
 		return ("DPME partition I/O error");
@@ -132,7 +130,6 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 		bp->b_blkno = 1+i;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylinder = (1+i) / lp->d_secpercyl;
 		(*strat)(bp);
 		if (biowait(bp))
 			return ("DPME partition I/O error");
@@ -161,15 +158,12 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 
 	if (partoffp)
 		*partoffp = hfspartoff;
-	if (cylp)
-		*cylp = hfspartoff / lp->d_secpercyl;
 
 	if (spoofonly)
 		return (NULL);
 
 	/* next, dig out disk label */
 	bp->b_blkno = hfspartoff + LABELSECTOR;
-	bp->b_cylinder = hfspartoff / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -183,10 +177,9 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
-	int error = EIO, partoff = -1, cyl = 0;
+	int error = EIO, partoff = -1;
 	struct disklabel *dlp;
 	struct buf *bp = NULL;
 
@@ -194,13 +187,12 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readdpmelabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL &&
-	    readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL)
+	if (readdpmelabel(bp, strat, lp, &partoff, 1) != NULL &&
+	    readdoslabel(bp, strat, lp, &partoff, 1) != NULL)
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
-	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);

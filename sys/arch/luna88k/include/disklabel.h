@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.4 2007/06/19 12:33:59 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.5 2007/06/20 18:15:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,14 +36,5 @@
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
 #define	MAXPARTITIONS	16			/* number of partitions */
-
-/*
- * This holds a copy of the whole label block, saved in here by
- * readdisklabel() so that writedisklabel() can preserve the
- * parts of the label block outside of the actual label.
- * (i.e. Sun label info, etc.)
- */
-struct cpu_disklabel {
-};
 
 #endif /* _MACHINE_DISKLABEL_H_ */

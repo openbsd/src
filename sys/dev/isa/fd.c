@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.66 2007/06/08 05:27:58 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.67 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -960,7 +960,6 @@ fdioctl(dev, cmd, addr, flag, p)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct disklabel dl, *lp = &dl;
-	struct cpu_disklabel cdl;
 	char *errstring;
 	int error;
 
@@ -971,7 +970,6 @@ fdioctl(dev, cmd, addr, flag, p)
 		return (0);
 	case DIOCGDINFO:
 		bzero(lp, sizeof(*lp));
-		bzero(&cdl, sizeof(struct cpu_disklabel));
 
 		lp->d_secsize = FD_BSIZE(fd);
 		lp->d_secpercyl = fd->sc_type->seccyl;
@@ -991,8 +989,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp->d_magic2 = DISKMAGIC;
 		lp->d_checksum = dkcksum(lp);
 
-		errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp,
-		    &cdl, 0);
+		errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, 0);
 		if (errstring) {
 			/*printf("%s: %s\n", fd->sc_dev.dv_xname, errstring);*/
 		}
@@ -1010,11 +1007,11 @@ fdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		error = setdisklabel(lp, (struct disklabel *)addr, 0, NULL);
+		error = setdisklabel(lp, (struct disklabel *)addr, 0);
 		if (error)
 			return error;
 
-		error = writedisklabel(DISKLABELDEV(dev), fdstrategy, lp, NULL);
+		error = writedisklabel(DISKLABELDEV(dev), fdstrategy, lp);
 		return error;
 
         case FD_FORM:

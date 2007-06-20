@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.65 2007/06/18 20:55:52 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.66 2007/06/20 18:15:46 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -176,9 +176,7 @@ struct cfdriver wd_cd = {
 };
 
 void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
-void  wdgetdisklabel(dev_t dev, struct wd_softc *,
-				 struct disklabel *,
-				 struct cpu_disklabel *, int);
+void  wdgetdisklabel(dev_t dev, struct wd_softc *, struct disklabel *, int);
 void  wdstrategy(struct buf *);
 void  wdstart(void *);
 void  __wdstart(struct wd_softc*, struct buf *);
@@ -452,7 +450,7 @@ wdstrategy(struct buf *bp)
 	 * If end of partition, just return.
 	 */
 	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, wd->sc_dk.dk_label, wd->sc_dk.dk_cpulabel,
+	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -685,8 +683,7 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			wd_get_params(wd, AT_WAIT, &wd->sc_params);
 
 			/* Load the partition info if not already loaded. */
-			wdgetdisklabel(dev, wd, wd->sc_dk.dk_label,
-			    wd->sc_dk.dk_cpulabel, 0);
+			wdgetdisklabel(dev, wd, wd->sc_dk.dk_label, 0);
 		}
 	}
 
@@ -801,19 +798,17 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
  */
 void
 wdgetdisklabel(dev_t dev, struct wd_softc *wd, struct disklabel *lp,
-    struct cpu_disklabel *clp, int spoofonly)
+    int spoofonly)
 {
 	char *errstring;
 
 	WDCDEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 
-	bzero(clp, sizeof(struct cpu_disklabel));
-
 	wdgetdefaultlabel(wd, lp);
 
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
-	errstring = readdisklabel(DISKLABELDEV(dev), wdstrategy, lp, clp,
+	errstring = readdisklabel(DISKLABELDEV(dev), wdstrategy, lp,
 	    spoofonly);
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
@@ -843,18 +838,14 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 	switch (xfer) {
 	case DIOCRLDINFO:
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
-		wdgetdisklabel(dev, wd, lp, wd->sc_dk.dk_cpulabel, 0);
+		wdgetdisklabel(dev, wd, lp, 0);
 		bcopy(lp, wd->sc_dk.dk_label, sizeof(*lp));
 		free(lp, M_TEMP);
 		goto exit;
 
-	case DIOCGPDINFO: {
-			struct cpu_disklabel osdep;
-
-			wdgetdisklabel(dev, wd, (struct disklabel *)addr,
-			    &osdep, 1);
-			goto exit;
-		}
+	case DIOCGPDINFO:
+		wdgetdisklabel(dev, wd, (struct disklabel *)addr, 1);
+		goto exit;
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
@@ -878,15 +869,13 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		wd->sc_flags |= WDF_LABELLING;
 
 		error = setdisklabel(wd->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0,
-		    wd->sc_dk.dk_cpulabel);
+		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0);
 		if (error == 0) {
 			if (wd->drvp->state > RECAL)
 				wd->drvp->drive_flags |= DRIVE_RESET;
 			if (xfer == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
-				    wdstrategy, wd->sc_dk.dk_label,
-				    wd->sc_dk.dk_cpulabel);
+				    wdstrategy, wd->sc_dk.dk_label);
 		}
 
 		wd->sc_flags &= ~WDF_LABELLING;

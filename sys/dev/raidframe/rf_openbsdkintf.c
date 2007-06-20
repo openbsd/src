@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.40 2007/06/12 02:02:17 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.41 2007/06/20 18:18:47 deraadt Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ struct raid_softc **raid_scPtrs;
 
 void rf_shutdown_hook(RF_ThreadArg_t);
 void raidgetdefaultlabel(RF_Raid_t *, struct raid_softc *, struct disklabel *);
-void raidgetdisklabel(dev_t, struct disklabel *, struct cpu_disklabel *, int);
+void raidgetdisklabel(dev_t, struct disklabel *, int);
 void raidmakedisklabel(struct raid_softc *);
 
 int  raidlock(struct raid_softc *);
@@ -641,8 +641,7 @@ raidopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 
 	if ((rs->sc_flags & RAIDF_INITED) && (rs->sc_dkdev.dk_openmask == 0))
-		raidgetdisklabel(dev, rs->sc_dkdev.dk_label,
-		    rs->sc_dkdev.dk_cpulabel, 0);
+		raidgetdisklabel(dev, rs->sc_dkdev.dk_label, 0);
 
 	/* Make sure that this partition exists. */
 
@@ -791,8 +790,7 @@ raidstrategy(struct buf *bp)
 	 */
 	wlabel = rs->sc_flags & (RAIDF_WLABEL | RAIDF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART)
-		if (bounds_check_with_label(bp, lp, rs->sc_dkdev.dk_cpulabel,
-		    wlabel) <= 0) {
+		if (bounds_check_with_label(bp, lp, wlabel) <= 0) {
 			db1_printf(("Bounds check failed!!:%d %d\n",
 			    (int)bp->b_blkno, (int)wlabel));
 			biodone(bp);
@@ -1576,13 +1574,11 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		rs->sc_flags |= RAIDF_LABELLING;
 
-		error = setdisklabel(rs->sc_dkdev.dk_label,
-		    lp, 0, rs->sc_dkdev.dk_cpulabel);
+		error = setdisklabel(rs->sc_dkdev.dk_label, lp, 0);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
-				    raidstrategy, rs->sc_dkdev.dk_label,
-				    rs->sc_dkdev.dk_cpulabel);
+				    raidstrategy, rs->sc_dkdev.dk_label);
 		}
 
 		rs->sc_flags &= ~RAIDF_LABELLING;
@@ -1601,11 +1597,9 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			rs->sc_flags &= ~RAIDF_WLABEL;
 		break;
 
-	case DIOCGPDINFO: {
-		struct cpu_disklabel osdep;
-		raidgetdisklabel(dev, (struct disklabel *)data, &osdep, 1);
+	case DIOCGPDINFO:
+		raidgetdisklabel(dev, (struct disklabel *)data, 1);
 		break;
-	}
 
 	default:
 		retcode = ENOTTY;
@@ -2129,8 +2123,7 @@ raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs,
  * If one is not present, fake one up.
  */
 void
-raidgetdisklabel(dev_t dev, struct disklabel *lp, struct cpu_disklabel *clp,
-    int spoofonly)
+raidgetdisklabel(dev_t dev, struct disklabel *lp, int spoofonly)
 {
 	int unit = DISKUNIT(dev);
 	struct raid_softc *rs = &raid_softc[unit];
@@ -2142,7 +2135,6 @@ raidgetdisklabel(dev_t dev, struct disklabel *lp, struct cpu_disklabel *clp,
 	db1_printf(("Getting the disklabel...\n"));
 
 	bzero(lp, sizeof(*lp));
-	bzero(clp, sizeof(*clp));
 
 	raidPtr = raidPtrs[unit];
 
@@ -2152,7 +2144,7 @@ raidgetdisklabel(dev_t dev, struct disklabel *lp, struct cpu_disklabel *clp,
 	 * Call the generic disklabel extraction routine.
 	 */
 	errstring = readdisklabel(DISKLABELDEV(dev), raidstrategy, lp,
-	    clp, spoofonly);
+	    spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", rs->sc_xname, errstring);*/
 		return;

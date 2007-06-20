@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.49 2007/06/17 15:30:03 martin Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.50 2007/06/20 18:15:45 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ int whichType(struct partmapentry *);
 int fixPartTable(struct partmapentry *, long, char *);
 void setPart(struct partmapentry *, struct disklabel *, int, int);
 int getNamedType(struct partmapentry *, int, struct disklabel *, int, int, int *);
-char *read_mac_label(char *, struct disklabel *, struct cpu_disklabel *);
+char *read_mac_label(char *, struct disklabel *);
 
 /*
  * Find an entry in the disk label that is unused and return it
@@ -262,7 +262,7 @@ skip:
  *	disk.  This whole algorithm should probably be changed in the future.
  */
 char *
-read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
+read_mac_label(char *dlbuf, struct disklabel *lp)
 {
 	int i, num_parts, maxslot = RAW_PART;
 	struct partmapentry *pmap;
@@ -330,7 +330,7 @@ read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	u_int16_t *sbSigp;
@@ -347,7 +347,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = size;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
@@ -356,12 +355,12 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	sbSigp = (u_int16_t *)bp->b_data;
 	if (*sbSigp == 0x4552) {
-		msg = read_mac_label(bp->b_data, lp, osdep);
+		msg = read_mac_label(bp->b_data, lp);
 		if (msg == NULL)
 			goto done;
 	}
 
-	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
@@ -369,7 +368,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
@@ -408,8 +406,7 @@ done:
  * refuse to write a disklabel if the media has a MacOS signature.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
@@ -423,7 +420,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;

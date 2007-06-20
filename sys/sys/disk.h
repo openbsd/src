@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.16 2007/06/01 18:26:29 deraadt Exp $	*/
+/*	$OpenBSD: disk.h,v 1.17 2007/06/20 18:15:47 deraadt Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 
 struct buf;
 struct disklabel;
-struct cpu_disklabel;
 
 #define DS_DISKNAMELEN	16
 
@@ -108,7 +107,6 @@ struct disk {
 	 */
 	daddr64_t	dk_labelsector;		/* sector containing label */
 	struct disklabel *dk_label;	/* label */
-	struct cpu_disklabel *dk_cpulabel;
 };
 
 struct dkdriver {

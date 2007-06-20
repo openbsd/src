@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.53 2007/06/18 07:09:25 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.54 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg;
@@ -69,7 +69,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
@@ -98,8 +98,7 @@ done:
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
 	int error = EIO, partoff = -1, cyl = 0;
 	struct disklabel *dlp;
@@ -109,12 +108,11 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL)
+	if (readdoslabel(bp, strat, lp, &partoff, 1) != NULL)
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
-	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);

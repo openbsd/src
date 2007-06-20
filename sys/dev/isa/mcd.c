@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.48 2007/06/18 20:55:52 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.49 2007/06/20 18:15:46 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -217,8 +217,7 @@ struct cfdriver mcd_cd = {
 	NULL, "mcd", DV_DISK
 };
 
-void	mcdgetdisklabel(dev_t, struct mcd_softc *, struct disklabel *,
-			     struct cpu_disklabel *, int);
+void	mcdgetdisklabel(dev_t, struct mcd_softc *, struct disklabel *, int);
 int	mcd_get_parms(struct mcd_softc *);
 void	mcdstrategy(struct buf *);
 void	mcdstart(struct mcd_softc *);
@@ -387,8 +386,7 @@ mcdopen(dev, flag, fmt, p)
 				goto bad2;
 
 			/* Fabricate a disk label. */
-			mcdgetdisklabel(dev, sc, sc->sc_dk.dk_label,
-			    sc->sc_dk.dk_cpulabel, 0);
+			mcdgetdisklabel(dev, sc, sc->sc_dk.dk_label, 0);
 		}
 	}
 
@@ -511,7 +509,6 @@ mcdstrategy(bp)
 	 */
 	if (DISKPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, sc->sc_dk.dk_label,
-	    sc->sc_dk.dk_cpulabel,
 	    (sc->flags & (MCDF_WLABEL|MCDF_LABELLING)) != 0) <= 0)
 		goto done;
 	
@@ -632,7 +629,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 	switch (cmd) {
 	case DIOCRLDINFO:
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
-		mcdgetdisklabel(dev, sc, lp, sc->sc_dk.dk_cpulabel, 0);
+		mcdgetdisklabel(dev, sc, lp, 0);
 		bcopy(lp, sc->sc_dk.dk_label, sizeof(*lp));
 		free(lp, M_TEMP);
 		return 0;
@@ -658,8 +655,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 		sc->flags |= MCDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*sc->sc_dk.dk_openmask : */0,
-		    sc->sc_dk.dk_cpulabel);
+		    (struct disklabel *)addr, /*sc->sc_dk.dk_openmask : */0);
 		if (error == 0) {
 		}
 
@@ -733,17 +729,15 @@ mcdioctl(dev, cmd, addr, flag, p)
 }
 
 void
-mcdgetdisklabel(dev, sc, lp, clp, spoofonly)
+mcdgetdisklabel(dev, sc, lp, spoofonly)
 	dev_t dev;
 	struct mcd_softc *sc;
 	struct disklabel *lp;
-	struct cpu_disklabel *clp;
 	int spoofonly;
 {
 	char *errstring;
 	
 	bzero(lp, sizeof(struct disklabel));
-	bzero(clp, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sc->blksize;
 	lp->d_ntracks = 1;
@@ -770,8 +764,7 @@ mcdgetdisklabel(dev, sc, lp, clp, spoofonly)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), mcdstrategy, lp, clp,
-	    spoofonly);
+	errstring = readdisklabel(DISKLABELDEV(dev), mcdstrategy, lp, spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
 		return;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.9,v 1.11 2007/06/06 16:42:22 deraadt Exp $
+.\"	$OpenBSD: disklabel.9,v 1.12 2007/06/20 18:15:47 deraadt Exp $
 .\"	$NetBSD: disklabel.9,v 1.7 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2007 $
+.Dd $Mdocdate: June 20 2007 $
 .Dt DISKLABEL 9
 .Os
 .Sh NAME
@@ -49,13 +49,13 @@
 .Fd #include <sys/param.h>
 .Fd #include <sys/disklabel.h>
 .Ft char *
-.Fn readdisklabel "dev_t dev" "void (*strat)(struct buf *)" "struct disklabel *lp" "struct cpu_disklabel *osdep" "int spoofonly"
+.Fn readdisklabel "dev_t dev" "void (*strat)(struct buf *)" "struct disklabel *lp" "int spoofonly"
 .Ft int
-.Fn writedisklabel "dev_t dev" "void (*strat)(struct buf *)" "struct disklabel *lp" "struct cpu_disklabel *osdep"
+.Fn writedisklabel "dev_t dev" "void (*strat)(struct buf *)" "struct disklabel *lp"
 .Ft int
-.Fn setdisklabel "struct disklabel *olp" "struct disklabel *nlp" "u_int openmask" "struct cpu_disklabel *osdep"
+.Fn setdisklabel "struct disklabel *olp" "struct disklabel *nlp" "u_int openmask"
 .Ft int
-.Fn bounds_check_with_label "struct buf *bp" "struct disklabel *lp" "struct cpu_disklabel *osdep" "int wlabel"
+.Fn bounds_check_with_label "struct buf *bp" "struct disklabel *lp" "int wlabel"
 .Sh DESCRIPTION
 This collection of routines provides a disklabel management interface to
 kernel device drivers.
@@ -89,11 +89,6 @@ If the medium does not contain a native disklabel that can be read in directly
 or
 .Fa spoofonly
 argument is a true value,
-.Fn readdisklabel
-may resort to constructing a label from other machine-dependent information
-using the provided buffer passed in the
-.Fa osdep
-argument.
 If a disk label can not be found or constructed, a string containing
 an approximated description of the failure mode is returned.
 Otherwise the
@@ -109,15 +104,6 @@ Like
 .Fn readdisklabel ,
 it acquires and sets up an I/O buffer to pass to the strategy routine
 .Fa strat .
-.Fn writedisklabel
-may elect to do a machine-dependent conversion of the native disk label
-structure
-.Po
-using the buffer pointed at by
-.Fa osdep
-.Pc ,
-to store the disk label onto the medium in a format complying with
-architectural constraints.
 .Fn writedisklabel
 returns 0 on success and
 .Dv EINVAL

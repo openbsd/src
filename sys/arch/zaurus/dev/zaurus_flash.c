@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.3 2007/06/08 05:27:58 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.4 2007/06/20 18:15:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -115,8 +115,7 @@ u_int8_t zflash_reg8_read(void *, int);
 int	 zflash_regx_read_page(void *, caddr_t, caddr_t);
 void	 zflash_reg8_write(void *, int, u_int8_t);
 int	 zflash_regx_write_page(void *, caddr_t, caddr_t);
-void	 zflash_default_disklabel(void *, dev_t, struct disklabel *,
-	     struct cpu_disklabel *);
+void	 zflash_default_disklabel(void *, dev_t, struct disklabel *);
 int	 zflash_safe_strategy(void *, struct buf *);
 
 int	 zflash_safe_start(struct zflash_softc *, dev_t);
@@ -343,8 +342,7 @@ zflash_regx_write_page(void *arg, caddr_t data, caddr_t oob)
  * device is passed to us. We add the partitions besides RAW_PART.
  */
 void
-zflash_default_disklabel(void *arg, dev_t dev, struct disklabel *lp,
-    struct cpu_disklabel *clp)
+zflash_default_disklabel(void *arg, dev_t dev, struct disklabel *lp)
 {
 	struct zflash_softc *sc = arg;
 	long bsize = sc->sc_flash.sc_flashdev->pagesize;

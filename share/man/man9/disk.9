@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.24 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: disk.9,v 1.25 2007/06/20 18:15:47 deraadt Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 20 2007 $
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -91,7 +91,6 @@ struct disk {
 	 */
 	daddr_t	 dk_labelsector;	/* sector containing label */
 	struct disklabel *dk_label;	/* label */
-	struct cpu_disklabel *dk_cpulabel;
 };
 .Ed
 .Pp

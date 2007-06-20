@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.13 2007/06/18 17:11:06 deraadt Exp $ */
+/*	$OpenBSD: disklabel.h,v 1.14 2007/06/20 18:15:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -34,9 +34,6 @@
 #define LABELSECTOR     0                       /* sector containing label */
 #define LABELOFFSET	0			/* offset of label in sector */
 #define MAXPARTITIONS	16			/* number of partitions */
-
-struct cpu_disklabel {
-};
 
 /*
  * Note: this structure is exactly 512 bytes in size. If you move fields

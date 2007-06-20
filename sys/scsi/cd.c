@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.131 2007/06/18 20:55:52 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.132 2007/06/20 18:15:47 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -97,8 +97,7 @@ int	cddetach(struct device *, int);
 void	cdstart(void *);
 void	cdrestart(void *);
 void	cdminphys(struct buf *);
-void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *,
-			    struct cpu_disklabel *, int);
+void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
 void	cddone(struct scsi_xfer *);
 u_long	cd_size(struct cd_softc *, int);
 void	cd_kill_buffers(struct cd_softc *);
@@ -355,8 +354,7 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
 
 		/* Fabricate a disk label. */
-		cdgetdisklabel(dev, cd, cd->sc_dk.dk_label,
-		    cd->sc_dk.dk_cpulabel, 0);
+		cdgetdisklabel(dev, cd, cd->sc_dk.dk_label, 0);
 		SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated\n"));
 	}
 
@@ -490,7 +488,6 @@ cdstrategy(struct buf *bp)
 	 */
 	if (DISKPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, cd->sc_dk.dk_label,
-	    cd->sc_dk.dk_cpulabel,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 
@@ -826,7 +823,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	switch (cmd) {
 	case DIOCRLDINFO:
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
-		cdgetdisklabel(dev, cd, lp, cd->sc_dk.dk_cpulabel, 0);
+		cdgetdisklabel(dev, cd, lp, 0);
 		bcopy(lp, cd->sc_dk.dk_label, sizeof(*lp));
 		free(lp, M_TEMP);
 		break;
@@ -854,8 +851,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		cd->flags |= CDF_LABELLING;
 
 		error = setdisklabel(cd->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*cd->sc_dk.dk_openmask : */0,
-		    cd->sc_dk.dk_cpulabel);
+		    (struct disklabel *)addr, /*cd->sc_dk.dk_openmask : */0);
 		if (error == 0) {
 		}
 
@@ -1153,14 +1149,13 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
  */
 void
 cdgetdisklabel(dev_t dev, struct cd_softc *cd, struct disklabel *lp,
-    struct cpu_disklabel *clp, int spoofonly)
+    int spoofonly)
 {
 	struct cd_toc *toc;
 	char *errstring;
 	int tocidx, n, audioonly = 1;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(clp, sizeof(struct cpu_disklabel));
 
 	MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP, M_WAITOK);
 	bzero(toc, sizeof(*toc));
@@ -1210,7 +1205,7 @@ done:
 
 	if (!audioonly) {
 		errstring = readdisklabel(DISKLABELDEV(dev), cdstrategy, lp,
-		    clp, spoofonly);
+		    spoofonly);
 		/*if (errstring)
 			printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
 	}

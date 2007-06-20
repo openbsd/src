@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.19 2007/06/09 01:02:28 deraadt Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.20 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -364,7 +364,7 @@ hdattach(struct device *parent, struct device *self, void *aux)
 	dl = hd->sc_disk.dk_label;
 	hdmakelabel(dl, &hd->sc_xbn);
 	msg = readdisklabel(MAKEDISKDEV(HDMAJOR, hd->sc_dev.dv_unit, RAW_PART),
-	    hdstrategy, dl, NULL, 0);
+	    hdstrategy, dl, 0);
 	printf("%s: %luMB, %lu sectors\n",
 	    hd->sc_dev.dv_xname, DL_GETDSIZE(dl) / (1048576 / DEV_BSIZE),
 	    DL_GETDSIZE(dl));
@@ -449,8 +449,7 @@ hdstrategy(struct buf *bp)
 	sc = (void *)hd->sc_dev.dv_parent;
 
 	lp = hd->sc_disk.dk_label;
-	if ((bounds_check_with_label(bp, hd->sc_disk.dk_label,
-	    hd->sc_disk.dk_cpulabel, 1)) <= 0)
+	if ((bounds_check_with_label(bp, hd->sc_disk.dk_label, 1)) <= 0)
 		goto done;
 
 	if (bp->b_bcount == 0)
@@ -729,8 +728,8 @@ hdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			return EBADF;
 		else
 			err = (cmd == DIOCSDINFO ?
-			    setdisklabel(lp, (struct disklabel *)addr, 0, 0) :
-			    writedisklabel(dev, hdstrategy, lp, 0));
+			    setdisklabel(lp, (struct disklabel *)addr, 0) :
+			    writedisklabel(dev, hdstrategy, lp));
 		break;
 
 	case DIOCWLABEL:

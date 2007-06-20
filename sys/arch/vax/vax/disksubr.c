@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.52 2007/06/17 00:27:29 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.53 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg;
@@ -75,7 +75,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
@@ -112,8 +111,7 @@ done:
  * Always allow writing of disk label; even if the disk is unlabeled.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
@@ -124,7 +122,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);

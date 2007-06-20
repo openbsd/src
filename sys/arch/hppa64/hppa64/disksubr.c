@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.51 2007/06/18 21:45:21 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.52 2007/06/20 18:15:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -39,7 +39,7 @@
 #include <sys/disk.h>
 
 char   *readliflabel(struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
+    struct disklabel *, int *, int);
 
 /*
  * Attempt to read a disk label from a device
@@ -53,7 +53,7 @@ char   *readliflabel(struct buf *, void (*)(struct buf *),
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg;
@@ -65,11 +65,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	msg = readliflabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	msg = readliflabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
-	msg = readdoslabel(bp, strat, lp, osdep, NULL, NULL, spoofonly);
+	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
@@ -96,8 +96,7 @@ done:
 
 char *
 readliflabel(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep,
-    int *partoffp, int *cylp, int spoofonly)
+    struct disklabel *lp, int *partoffp, int spoofonly)
 {
 	struct buf *dbp = NULL;
 	struct lifdir *p;
@@ -109,7 +108,6 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	bp->b_blkno = btodb(LIF_VOLSTART);
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylinder = btodb(LIF_VOLSTART) / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp))
 		return "LIF volume header I/O error";
@@ -125,7 +123,6 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	dbp->b_blkno = lifstodb(lvp->vol_addr);
 	dbp->b_bcount = lp->d_secsize;
 	dbp->b_flags = B_BUSY | B_READ;
-	dbp->b_cylinder = dbp->b_blkno / lp->d_secpercyl;
 	(*strat)(dbp);
 
 	if (biowait(dbp)) {
@@ -158,7 +155,6 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		dbp->b_blkno = lifstodb(p->dir_addr);
 		dbp->b_bcount = lp->d_secsize;
 		dbp->b_flags = B_BUSY | B_READ;
-		dbp->b_cylinder = dbp->b_blkno / lp->d_secpercyl;
 		(*strat)(dbp);
 
 		if (biowait(dbp)) {
@@ -221,7 +217,6 @@ finished:
 		goto done;
 
 	bp->b_blkno = fsoff + LABELSECTOR;
-	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -246,8 +241,7 @@ done:
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
 	int error = EIO, partoff = -1, cyl = 0;
 	struct disklabel *dlp;
@@ -257,13 +251,12 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readliflabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL &&
-	    readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL)
+	if (readliflabel(bp, strat, lp, &partoff, 1) != NULL &&
+	    readdoslabel(bp, strat, lp, &partoff, 1) != NULL)
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
-	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);

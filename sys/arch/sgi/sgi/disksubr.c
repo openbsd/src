@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.1 2007/06/18 21:46:41 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.2 2007/06/20 18:15:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -43,7 +43,7 @@
 char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
     int, struct disklabel *, int);
 char   *readsgilabel(struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
+    struct disklabel *, int *, int);
 
 /*
  * Try to read a standard BSD disklabel at a certain sector.
@@ -58,7 +58,6 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *),
 		return (NULL);
 
 	bp->b_blkno = sec;
-	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -82,7 +81,7 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *),
  */
 char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep, int spoofonly)
+    struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	char *msg;
@@ -94,11 +93,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	msg = readsgilabel(bp, strat, lp, osdep, 0, 0, spoofonly);
+	msg = readsgilabel(bp, strat, lp, 0, spoofonly);
 	if (msg == NULL)
 		goto done;
 
-	msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
+	msg = readdoslabel(bp, strat, lp, 0, spoofonly);
 	if (msg == NULL)
 		goto done;
 
@@ -137,8 +136,7 @@ static struct {
 
 char *
 readsgilabel(struct buf *bp, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep,
-    int *partoffp, int *cylp, int spoofonly)
+    struct disklabel *lp, int *partoffp, int spoofonly)
 {
 	struct sgilabel *dlp;
 	char *msg = NULL;
@@ -146,7 +144,6 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 	int fsoffs = 0;
 
 	bp->b_blkno = 0;
-	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -217,7 +214,6 @@ finished:
 		goto done;
 
 	bp->b_blkno = fsoffs + LABELSECTOR;
-	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -240,10 +236,9 @@ done:
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp, struct cpu_disklabel *osdep)
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
-	int error = EIO, partoff = -1, cyl = 0;
+	int error = EIO, partoff = -1;
 	struct buf *bp = NULL;
 	struct disklabel *dlp;
 
@@ -251,13 +246,12 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	if (readsgilabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL &&
-	    readdoslabel(bp, strat, lp, osdep, &partoff, &cyl, 1) != NULL)
+	if (readsgilabel(bp, strat, lp, &partoff, 1) != NULL &&
+	    readdoslabel(bp, strat, lp, &partoff, 1) != NULL)
 		goto done;
 
 	/* Read it in, slap the new label in, and write it back out */
 	bp->b_blkno = partoff + LABELSECTOR;
-	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);

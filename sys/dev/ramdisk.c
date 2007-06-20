@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.36 2007/06/18 20:55:52 deraadt Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.37 2007/06/20 18:15:46 deraadt Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -99,8 +99,7 @@ struct rd_softc {
 
 void rdattach(int);
 void rd_attach(struct device *, struct device *, void *);
-void rdgetdisklabel(dev_t, struct rd_softc *, struct disklabel *,
-    struct cpu_disklabel *, int);
+void rdgetdisklabel(dev_t, struct rd_softc *, struct disklabel *, int);
 
 /*
  * Some ports (like i386) use a swapgeneric that wants to
@@ -236,8 +235,7 @@ rdsize(dev_t dev)
 	if (sc->sc_type == RD_UNCONFIGURED)
 		return 0;
 
-	rdgetdisklabel(dev, sc, sc->sc_dkdev.dk_label, sc->sc_dkdev.dk_cpulabel,
-	    0);
+	rdgetdisklabel(dev, sc, sc->sc_dkdev.dk_label, 0);
 	part = DISKPART(dev);
 	if (part >= sc->sc_dkdev.dk_label->d_npartitions)
 		return 0;
@@ -339,8 +337,7 @@ rdstrategy(bp)
 	/* Do not write on "no trespassing" areas... */
 	part = DISKPART(bp->b_dev);
 	if (part != RAW_PART &&
-	    bounds_check_with_label(bp, sc->sc_dkdev.dk_label,
-	      sc->sc_dkdev.dk_cpulabel, 1) <= 0)
+	    bounds_check_with_label(bp, sc->sc_dkdev.dk_label, 1) <= 0)
 		goto bad;
 
 	switch (sc->sc_type) {
@@ -410,21 +407,16 @@ rdioctl(dev, cmd, data, flag, proc)
 		if (sc->sc_type == RD_UNCONFIGURED)
 			break;
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
-		rdgetdisklabel(dev, sc, lp, sc->sc_dkdev.dk_cpulabel, 0);
+		rdgetdisklabel(dev, sc, lp, 0);
 		bcopy(lp, sc->sc_dkdev.dk_label, sizeof(*lp));
 		free(lp, M_TEMP);
 		return 0;
 
-	case DIOCGPDINFO: {
-			struct cpu_disklabel osdep;
-
-			if (sc->sc_type == RD_UNCONFIGURED) {
-				break;
-			}
-			rdgetdisklabel(dev, sc, (struct disklabel *)data,
-			    &osdep, 1);
-			return 0;
-		}
+	case DIOCGPDINFO:
+		if (sc->sc_type == RD_UNCONFIGURED)
+			break;
+		rdgetdisklabel(dev, sc, (struct disklabel *)data, 1);
+		return 0;
 
 	case DIOCGDINFO:
 		if (sc->sc_type == RD_UNCONFIGURED) {
@@ -448,13 +440,11 @@ rdioctl(dev, cmd, data, flag, proc)
 			return EBADF;
 
 		error = setdisklabel(sc->sc_dkdev.dk_label,
-		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0,
-		    sc->sc_dkdev.dk_cpulabel);
+		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
-				    rdstrategy, sc->sc_dkdev.dk_label,
-				    sc->sc_dkdev.dk_cpulabel);
+				    rdstrategy, sc->sc_dkdev.dk_label);
 		}
 
 		return error;
@@ -501,10 +491,9 @@ rdioctl(dev, cmd, data, flag, proc)
 
 void
 rdgetdisklabel(dev_t dev, struct rd_softc *sc, struct disklabel *lp,
-    struct cpu_disklabel *clp, int spoofonly)
+    int spoofonly)
 {
 	bzero(lp, sizeof(struct disklabel));
-	bzero(clp, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = 1;
@@ -531,7 +520,7 @@ rdgetdisklabel(dev_t dev, struct rd_softc *sc, struct disklabel *lp,
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	readdisklabel(DISKLABELDEV(dev), rdstrategy, lp, clp, spoofonly);
+	readdisklabel(DISKLABELDEV(dev), rdstrategy, lp, spoofonly);
 }
 
 /*
