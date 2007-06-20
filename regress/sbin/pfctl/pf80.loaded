@@ -1,36 +1,60 @@
 @0 nat pass on lo0 inet from 10.0.0.0/8 to 172.16.0.0/16 -> 172.16.0.1
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end d=end f=end p=end sa=4 sp=end da=4 dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @1 nat pass log on lo0 inet from 10.0.0.0/8 to 172.16.0.0/16 -> 172.16.0.1
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end d=end f=end p=end sa=4 sp=end da=4 dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @2 nat pass log (all) on lo0 inet from 10.0.0.0/8 to 172.16.0.0/16 -> 172.16.0.1
+  [ Skip steps: i=end d=end f=end p=end sa=4 sp=end da=4 dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@3 nat log on lo0 inet from 10.0.0.0/8 to 172.16.0.0/16 -> 172.16.0.1
+  [ Skip steps: i=end d=end f=end p=end sp=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@4 no nat log on lo0 inet from 20.0.0.0/8 to 192.168.0.0/24
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 rdr pass on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=4 dp=4 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @1 rdr pass log on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=4 dp=4 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @2 rdr pass log (all) on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=4 dp=4 ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@3 rdr log on lo0 inet proto tcp from any to 1.2.3.4 port = www -> 127.0.0.1 port 8080
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@4 no rdr log on lo0 inet proto tcp from any to 3.4.5.6 port = https
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 binat pass on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end d=end f=end p=end sa=4 sp=end da=4 dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @1 binat pass log on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ Skip steps: i=end d=end f=end p=end sa=4 sp=end da=4 dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @2 binat pass log (all) on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8
+  [ Skip steps: i=end d=end f=end p=end sa=4 sp=end da=4 dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@3 binat log on lo0 inet from 10.0.0.0/8 to 11.0.0.0/8 -> 12.0.0.0/8
+  [ Skip steps: i=end d=end f=end p=end sp=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@4 no binat log on lo0 inet from 20.0.0.0/8 to 13.0.0.0/8
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
