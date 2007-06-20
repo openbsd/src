@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssio.c,v 1.2 2007/06/19 22:51:26 kettenis Exp $	*/
+/*	$OpenBSD: ssio.c,v 1.3 2007/06/20 17:41:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -222,6 +222,14 @@ ssio_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_SP2BAR);
 	saa.saa_iobase &= 0xfffffffe;
 	saa.saa_irq = 3;
+	config_found(self, &saa, ssio_print);
+
+	/* Parallel Port. */
+	saa.saa_name = "lpt";
+	saa.saa_iot = sc->sc_iot;
+	saa.saa_iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_PPBAR);
+	saa.saa_iobase &= 0xfffffffe;
+	saa.saa_irq = 5;
 	config_found(self, &saa, ssio_print);
 
 	return;

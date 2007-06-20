@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.68 2007/06/19 22:51:26 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.69 2007/06/20 17:41:04 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -189,6 +189,9 @@ file	arch/hppa/dev/ssio.c			ssio
 
 attach	com at ssio with com_ssio
 file	arch/hppa/dev/com_ssio.c		com_ssio
+
+attach	lpt at ssio with lpt_ssio
+file	arch/hppa/dev/lpt_ssio.c		lpt_ssio
 
 ###
 

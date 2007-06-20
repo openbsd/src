@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.102 2007/06/19 22:51:26 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.103 2007/06/20 17:41:04 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -80,6 +80,7 @@ pci*	at ppb?
 ssio*	at pci?
 com0	at ssio? irq 4
 com1	at ssio? irq 3
+lpt0	at ssio?
 
 # CardBus bus support
 cbb*		at pci?
