@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.29 2007/06/20 16:50:39 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.30 2007/06/20 20:47:33 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -416,7 +416,7 @@ generic_intr_makemasks()
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < 5; level++) {
+	for (level = IPL_NONE; level < NIPLS; level++) {
 		register int irqs = 0;
 		for (irq = 0; irq < INTMASKSIZE; irq++)
 			if (intrlevel[irq] & (1 << level))

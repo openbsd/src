@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.23 2007/06/20 16:50:43 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.24 2007/06/20 20:47:34 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -549,7 +549,7 @@ macebus_intr_makemasks(void)
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < 5; level++) {
+	for (level = IPL_NONE; level < NIPLS; level++) {
 		int irqs = 0;
 		for (irq = 0; irq < INTMASKSIZE; irq++)
 			if (intrlevel[irq] & (1 << level))
