@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.43 2007/05/27 20:59:26 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.44 2007/06/20 17:29:36 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		faddr += NBPG;
 		taddr += NBPG;
 	}
-	pmap_update(pmap_kernel());
+	pmap_update(vm_map_pmap(phys_map));
 }
 
 /*
@@ -241,6 +241,8 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
+	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
+	pmap_update(vm_map_pmap(phys_map));
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

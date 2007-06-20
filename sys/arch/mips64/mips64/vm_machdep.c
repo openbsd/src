@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2007/05/27 20:59:25 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2007/06/20 17:29:36 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -220,6 +220,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		sz -= PAGE_SIZE;
 	}
+	pmap_update(vm_map_pmap(phys_map));
 }
 
 /*
@@ -239,6 +240,8 @@ vunmapbuf(bp, len)
 	}
 	addr = trunc_page((vaddr_t)bp->b_data);
 	sz = round_page(len + ((vaddr_t)bp->b_data - addr));
+	pmap_remove(vm_map_pmap(phys_map), addr, addr + sz);
+	pmap_update(vm_map_pmap(phys_map));
 	uvm_km_free_wakeup(phys_map, addr, sz);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

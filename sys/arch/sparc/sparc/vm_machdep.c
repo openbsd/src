@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.48 2007/05/27 20:59:26 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.49 2007/06/20 17:29:36 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -329,6 +329,8 @@ vunmapbuf(bp, sz)
 	off = (vaddr_t)bp->b_data - kva;
 	size = round_page(sz + off);
 
+	pmap_remove(pmap_kernel(), kva, kva + size);
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(kernel_map, kva, size);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

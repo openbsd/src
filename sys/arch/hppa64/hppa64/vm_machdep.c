@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 2007/06/05 17:15:22 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 2007/06/20 17:29:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -251,6 +251,8 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
+	pmap_kremove(addr, len);
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
