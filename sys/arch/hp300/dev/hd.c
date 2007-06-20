@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.51 2007/06/20 18:15:47 deraadt Exp $	*/
+/*	$OpenBSD: hd.c,v 1.52 2007/06/20 20:13:40 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -654,8 +654,8 @@ hdstrategy(bp)
 	int unit = DISKUNIT(bp->b_dev);
 	struct hd_softc *rs;
 	struct buf *dp;
+	struct disklabel *lp;
 	int s;
-	struct partition *pinfo;
 
 	rs = hdlookup(unit);
 	if (rs == NULL) {
@@ -670,6 +670,8 @@ hdstrategy(bp)
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
 
+	lp = rs->sc_dkdev.dk_label;
+
 	/*
 	 * If it's a null transfer, return immediately
 	 */
@@ -679,7 +681,7 @@ hdstrategy(bp)
 	/*
 	 * The transfer must be a whole number of blocks.
 	 */
-	if ((bp->b_bcount % rs->sc_dkdev.dk_label->d_secsize) != 0) {
+	if ((bp->b_bcount % lp->d_secsize) != 0) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -688,27 +690,12 @@ hdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process;
 	 * If end of partition, just return.
 	 */
-
- 	dp = &rs->sc_tab;
-
-	if (DISKPART(bp->b_dev) == RAW_PART) {
-		/* valid regardless of the disklabel */
-		bp->b_cylinder = bp->b_blkno;
-	} else {
-		if (bounds_check_with_label(bp, rs->sc_dkdev.dk_label,
-		    (rs->sc_flags & HDF_WLABEL) != 0) <= 0)
+	if (bounds_check_with_label(bp, lp,
+	    (rs->sc_flags & HDF_WLABEL) != 0) <= 0)
 			goto done;
 
-		/*
-		 * XXX Note that since b_cylinder is stored over b_resid, this  
-		 * XXX destroys the disksort ordering hint
-		 * XXX bounds_check_with_label() has put in there.
-		*/
-		pinfo = &rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		bp->b_cylinder = bp->b_blkno + DL_GETPOFFSET(pinfo);
-	}
-
 	s = splbio();
+ 	dp = &rs->sc_tab;
 	disksort(dp, bp);
 	if (dp->b_active == 0) {
 		dp->b_active = 1;
@@ -787,8 +774,10 @@ hdstart(arg)
 	void *arg;
 {
 	struct hd_softc *rs = arg;
+	struct disklabel *lp;
 	struct buf *bp = rs->sc_tab.b_actf;
-	int part, ctlr, slave;
+	int ctlr, slave;
+	daddr64_t bn;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
 	slave = rs->sc_slave;
@@ -799,13 +788,16 @@ again:
 		printf("hdstart(%s): bp %p, %c\n", rs->sc_dev.dv_xname, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
-	part = DISKPART(bp->b_dev);
+	lp = rs->sc_dkdev.dk_label;
+	bn = bp->b_blkno +
+	    DL_GETPOFFSET(&lp->d_partitions[DISKPART(bp->b_dev)]);
+
 	rs->sc_flags |= HDF_SEEK;
 	rs->sc_ioc.c_unit = C_SUNIT(rs->sc_punit);
 	rs->sc_ioc.c_volume = C_SVOL(0);
 	rs->sc_ioc.c_saddr = C_SADDR;
 	rs->sc_ioc.c_hiaddr = 0;
-	rs->sc_ioc.c_addr = HDBTOS(bp->b_cylinder);
+	rs->sc_ioc.c_addr = HDBTOS(bn);
 	rs->sc_ioc.c_nop2 = C_NOP;
 	rs->sc_ioc.c_slen = C_SLEN;
 	rs->sc_ioc.c_len = rs->sc_resid;

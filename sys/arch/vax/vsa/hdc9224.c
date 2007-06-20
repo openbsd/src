@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.20 2007/06/20 18:15:46 deraadt Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.21 2007/06/20 20:13:41 miod Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -142,7 +142,7 @@ struct	hdcsoftc {
 	caddr_t	sc_dmabase;		/* */
 	int	sc_dmasize;
 	caddr_t sc_bufaddr;		/* Current in-core address */
-	int sc_diskblk;			/* Current block on disk */
+	daddr64_t sc_diskblk;		/* Current block on disk */
 	int sc_bytecnt;			/* How much left to transfer */
 	int sc_xfer;			/* Current transfer size */
 	int sc_retries;
@@ -438,7 +438,6 @@ hdstrategy(struct buf *bp)
 	struct hdcsoftc *sc;
 	struct disklabel *lp;
 	int unit, s;
-	daddr64_t bn;
 
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > hd_cd.cd_ndevs || (hd = hd_cd.cd_devs[unit]) == NULL) {
@@ -454,17 +453,6 @@ hdstrategy(struct buf *bp)
 
 	if (bp->b_bcount == 0)
 		goto done;
-
-	/*
-	 * XXX Since we need to know blkno in hdcstart() and do not have a
-	 * b_rawblkno field in struct buf (yet), abuse b_cylinder to store
-	 * the block number instead of the cylinder number.
-	 * This will be suboptimal in disksort(), but not harmful. Of course,
-	 * this also truncates the block number at 4G, but there shouldn't be
-	 * any MFM disk that large.
-	 */
-	bn = bp->b_blkno + DL_GETPOFFSET(&lp->d_partitions[DISKPART(bp->b_dev)]);
-	bp->b_cylinder = bn;
 
 	s = splbio();
 	disksort(&sc->sc_buf_queue, bp);
@@ -504,22 +492,22 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	struct disklabel *lp;
 	struct hdsoftc *hd;
 	struct buf *dp, *bp;
-	int cn, sn, tn, bn, blks;
+	int cn, sn, tn, blks;
 	volatile char ch;
+	daddr64_t bn;
 
 	splassert(IPL_BIO);
 
 	if (sc->sc_active)
 		return; /* Already doing something */
 
-	if (ob == 0) {
+	if (ob == NULL) {
 		dp = &sc->sc_buf_queue;
 		if ((bp = dp->b_actf) == NULL)
 			return; /* Nothing to do */
+
 		dp->b_actf = bp->b_actf;
 		sc->sc_bufaddr = bp->b_data;
-		/* XXX see hdstrategy() comments regarding b_cylinder usage */
-		sc->sc_diskblk = bp->b_cylinder;
 		sc->sc_bytecnt = bp->b_bcount;
 		sc->sc_retries = 0;
 		bp->b_resid = 0;
@@ -527,12 +515,17 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 		bp = ob;
 
 	hd = hd_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	lp = hd->sc_disk.dk_label;
 	hdc_hdselect(sc, hd->sc_drive);
 	sc->sc_active = bp;
 
+	if (ob == NULL) {
+		sc->sc_diskblk = bp->b_blkno +
+		    DL_GETPOFFSET(&lp->d_partitions[DISKPART(bp->b_dev)]);
+	}
 	bn = sc->sc_diskblk;
-	lp = hd->sc_disk.dk_label;
-        if (bn) {
+
+        if (bn != 0) {
                 cn = bn / lp->d_secpercyl;
                 sn = bn % lp->d_secpercyl;
                 tn = sn / lp->d_nsectors;
