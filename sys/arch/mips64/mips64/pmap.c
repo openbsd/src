@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2007/05/03 19:34:00 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2007/06/20 16:51:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -272,12 +272,16 @@ pmap_create()
 {
 	pmap_t pmap;
 	vaddr_t va;
+	int s;
+
 extern struct vmspace vmspace0;
 extern struct user *proc0paddr;
 
 	DPRINTF(PDB_FOLLOW|PDB_CREATE, ("pmap_create()\n"));
 
+	s = splvm();
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
+	splx(s);
 	bzero(pmap, sizeof(*pmap));
 
 	simple_lock_init(&pmap->pm_lock);
@@ -314,7 +318,7 @@ extern struct user *proc0paddr;
 void
 pmap_destroy(pmap_t pmap)
 {
-	int count;
+	int s, count;
 
 	DPRINTF(PDB_FOLLOW|PDB_CREATE, ("pmap_destroy(%x)\n", pmap));
 
@@ -354,7 +358,9 @@ pmap_destroy(pmap_t pmap)
 #endif
 	}
 
+	s = splvm();
 	pool_put(&pmap_pmap_pool, pmap);
+	splx(s);
 }
 
 /*
@@ -429,10 +435,10 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				continue;
 			pmap->pm_stats.resident_count--;
 			pmap_remove_pv(pmap, sva, pfn_to_pad(entry));
+			pte->pt_entry = PG_NV | PG_G;
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			pte->pt_entry = PG_NV | PG_G;
 			tlb_flush_addr(sva);
 			stat_count(remove_stats.flushes);
 		}
@@ -488,6 +494,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	pv_entry_t pv;
 	vaddr_t va;
+	int s;
 
 	if (prot == VM_PROT_NONE) {
 		DPRINTF(PDB_REMOVE, ("pmap_page_protect(%p, %p)\n", pg, prot));
@@ -495,9 +502,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		DPRINTF(PDB_FOLLOW|PDB_PROTECT,
 			("pmap_page_protect(%p, %p)\n", pg, prot));
 	}
-
-	if (pg == NULL)
-		return;
 
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE:
@@ -508,6 +512,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
 		pv = pg_to_pvh(pg);
+		s = splvm();
 		/*
 		 * Loop over all current mappings setting/clearing as apropos.
 		 */
@@ -518,15 +523,18 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				    prot);
 			}
 		}
+		splx(s);
 		break;
 
 	/* remove_all */
 	default:
 		pv = pg_to_pvh(pg);
+		s = splvm();
 		while (pv->pv_pmap != NULL) {
 			va = pv->pv_va;
 			pmap_remove(pv->pv_pmap, va, va + PAGE_SIZE);
 		}
+		splx(s);
 	}
 }
 
@@ -544,9 +552,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	DPRINTF(PDB_FOLLOW|PDB_PROTECT,
 		("pmap_protect(%p, %p, %p, %p)\n", pmap, sva, eva, prot));
-
-	if (pmap == NULL)
-		return;
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
@@ -987,10 +992,12 @@ pmap_clear_modify(struct vm_page *pg)
 	pt_entry_t *pte;
 	unsigned entry;
 	boolean_t rv = FALSE;
+	int s;
 
 	DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%p)\n", VM_PAGE_TO_PHYS(pg)));
 
 	pv = pg_to_pvh(pg);
+	s = splvm();
 	if (pg->pg_flags & PV_ATTR_MOD) {
 		atomic_clearbits_int(&pg->pg_flags, PV_ATTR_MOD);
 		rv = TRUE;
@@ -1023,6 +1030,7 @@ pmap_clear_modify(struct vm_page *pg)
 			}
 		}
 	}
+	splx(s);
 
 	return rv;
 }
@@ -1099,14 +1107,14 @@ pmap_page_cache(vm_page_t pg, int mode)
 	pt_entry_t *pte;
 	u_int entry;
 	u_int newmode;
+	int s;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_page_uncache(%p)\n", pg));
 
 	newmode = mode & PV_UNCACHED ? PG_UNCACHED : PG_CACHED;
 	pv = pg_to_pvh(pg);
-	atomic_clearbits_int(&pg->pg_flags, PV_CACHED | PV_UNCACHED);
-	atomic_setbits_int(&pg->pg_flags, mode);
 
+	s = splvm();
 	for (; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pmap_kernel()) {
 			pte = kvtopte(pv->pv_va);
@@ -1130,6 +1138,9 @@ pmap_page_cache(vm_page_t pg, int mode)
 			}
 		}
 	}
+	atomic_clearbits_int(&pg->pg_flags, PV_CACHED | PV_UNCACHED);
+	atomic_setbits_int(&pg->pg_flags, mode);
+	splx(s);
 }
 
 /*
@@ -1212,9 +1223,11 @@ int
 pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 {
 	pv_entry_t pv, npv;
+	int s;
 
 	pv = pg_to_pvh(pg);
 
+	s = splvm();
 	if (pv->pv_pmap == NULL) {
 		/*
 		 * No entries yet, use header as the first entry
@@ -1277,8 +1290,10 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 			    pmap, va, VM_PAGE_TO_PHYS(pg)));
 
 		npv = pmap_pv_alloc();
-		if (npv == NULL)
+		if (npv == NULL) {
+			splx(s);
 			return ENOMEM;
+		}
 		npv->pv_va = va;
 		npv->pv_pmap = pmap;
 		npv->pv_next = pv->pv_next;
@@ -1288,6 +1303,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 			stat_count(enter_stats.secondpv);
 	}
 
+	splx(s);
 	return 0;
 }
 
@@ -1299,6 +1315,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 {
 	pv_entry_t pv, npv;
 	vm_page_t pg;
+	int s;
 
 	DPRINTF(PDB_FOLLOW|PDB_PVENTRY,
 		("pmap_remove_pv(%p, %p, %p)\n", pmap, va, pa));
@@ -1311,6 +1328,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		return;
 
 	pv = pg_to_pvh(pg);
+	s = splvm();
 	/*
 	 * If we are removing the first entry on the list, copy up
 	 * the next entry, if any, and free that pv item since the
@@ -1326,7 +1344,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 			atomic_clearbits_int(&pg->pg_flags,
 			    (PG_PMAP0 | PG_PMAP1 | PG_PMAP2 | PG_PMAP3) &
 			    ~PV_PRESERVE);
-			Mips_SyncDCachePage(pv->pv_va);
+			Mips_SyncDCachePage(va);
 		}
 		stat_count(remove_stats.pvfirst);
 	} else {
@@ -1345,6 +1363,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 #endif
 		}
 	}
+	splx(s);
 }
 
 /*==================================================================*/
