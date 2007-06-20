@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.122 2007/06/17 00:32:21 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.123 2007/06/20 19:16:53 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.122 2007/06/17 00:32:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.123 2007/06/20 19:16:53 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1693,13 +1693,25 @@ editor_countfree(struct disklabel *lp, u_int64_t *freep)
 	int i;
 
 	*freep = ending_sector - starting_sector;
+
 	for (i = 0; i < lp->d_npartitions; i++) {
-		    pp = &lp->d_partitions[i];
-		    if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
-			DL_GETPSIZE(pp) > 0 &&
-			DL_GETPOFFSET(pp) + DL_GETPSIZE(pp) <= ending_sector &&
-			DL_GETPOFFSET(pp) >= starting_sector)
-			*freep -= DL_GETPSIZE(pp);
+		pp = &lp->d_partitions[i];
+		if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
+		    DL_GETPSIZE(pp) > 0) {
+			u_int64_t s = DL_GETPOFFSET(pp);
+			u_int64_t sz = DL_GETPSIZE(pp);
+			u_int64_t e = s + sz;
+
+			/* do not count if completely out of 'b' area */
+			if (e < starting_sector || s >= ending_sector)
+				continue;
+
+			if (s < starting_sector)
+				sz -= starting_sector - s;
+			if (e > ending_sector)
+				sz -= e - ending_sector;
+			*freep -= sz;
+		}
 	}
 }
 
