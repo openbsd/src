@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.65 2007/06/13 18:05:27 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.66 2007/06/20 15:00:43 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -607,6 +607,9 @@ nfs_mount(mp, path, data, ndp, p)
 		return (EPROGMISMATCH);
 	if (error)
 		return (error);
+
+	if ((args.flags & (NFSMNT_NFSV3|NFSMNT_RDIRPLUS)) == NFSMNT_RDIRPLUS)
+		return (EINVAL);
 
 	if (nfs_niothreads < 0) {
 		nfs_niothreads = 4;
