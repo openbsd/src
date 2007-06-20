@@ -163,6 +163,7 @@ if ($opt_p) {
 elsif (@ARGV==0) {
 	for my $pkgname (installed_packages()) {
 		my $plist = OpenBSD::PackingList->from_installation($pkgname);
+		next unless defined $plist;
 		$plist->print_name($fh, info($plist));
 	}
 } else {

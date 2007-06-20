@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.61 2007/06/17 12:34:02 espie Exp $
+# $OpenBSD: pkg_info,v 1.62 2007/06/20 13:44:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -190,6 +190,7 @@ sub find_by_path
 			my $plist =
 				OpenBSD::PackingList->from_installation($pkg,
 				    \&OpenBSD::PackingList::ExtraInfoOnly);
+			next if !defined $plist;
 			add_to_path_info($plist->{extrainfo}->{subdir}, 
 			    $plist->pkgname);
 			if ($plist->has('pkgpath')) {
@@ -296,7 +297,8 @@ sub print_info
 			} else {
 				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 			}
-			Fatal "Bad packing list" unless defined $plist;
+			Fatal "Bad packing list for", $handle->url 
+			    unless defined $plist;
 		}
 		if ($opt_L) {
 			just_in_time_header($pkg, $handle ,\$done);

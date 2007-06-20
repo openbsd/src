@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.14 2007/06/09 11:16:54 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.15 2007/06/20 13:44:39 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -56,6 +56,7 @@ sub collision_report($$)
 			print "Looking for collisions in $pkg\n" if $state->{verbose};
 			my $plist = OpenBSD::PackingList->from_installation($pkg, 
 			    \&OpenBSD::PackingList::FilesOnly);
+			next if !defined $plist;
 			for my $item (@{$plist->{items}}) {
 				next unless $item->IsFile;
 				my $name = $item->fullname;

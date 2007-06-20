@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.79 2007/06/19 10:47:28 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.80 2007/06/20 13:44:39 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -419,14 +419,19 @@ sub from_installation
 	if ($code == \&DependOnly && defined $plist_cache->{$pkgname}) {
 	    return $plist_cache->{$pkgname};
 	}
-	my $plist =
-	    $o->fromfile(OpenBSD::PackageInfo::installed_contents($pkgname), 
-		$code);
+	my $filename = OpenBSD::PackageInfo::installed_contents($pkgname);
+	my $plist = $o->fromfile($filename, $code);
 	if (defined $plist && $code == \&DependOnly) {
 		$plist_cache->{$pkgname} = $plist;
 	} 
 	if (defined $plist) {
 		$plist->set_infodir(OpenBSD::PackageInfo::installed_info($pkgname));
+	}
+	if (!defined $plist) {
+		print STDERR "Warning: couldn't read packing-list from installed package $pkgname\n";
+		unless (-e $filename) {
+			print STDERR "File $filename does not exist\n";
+		}
 	}
 	return $plist;
 }
