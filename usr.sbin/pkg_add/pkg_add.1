@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.66 2007/06/17 10:35:55 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.67 2007/06/20 15:41:36 steven Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: June 17 2007 $
+.Dd $Mdocdate: June 20 2007 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ packages with the new.
 Each package name may be specified as a filename (which normally consists of the
 package name itself plus the
 .Dq .tgz
-suffix) or a URL referring to FTP, HTTP, or SCP locations.
+suffix) or a URL referring to FTP, HTTP, HTTPS, or SCP locations.
 The following examples are valid:
 .Pp
 .Li pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/m4-1.4.tgz
@@ -582,7 +582,7 @@ the directories named by
 are searched.
 It should contain a series of entries separated by colons.
 Each entry consists of a directory name, ending in a slash.
-URL schemes such as FTP, HTTP, or SCP are also appropriate.
+URL schemes such as FTP, HTTP, HTTPS, or SCP are also appropriate.
 The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
 period
