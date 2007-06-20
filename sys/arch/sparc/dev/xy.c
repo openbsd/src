@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.35 2007/06/07 14:38:39 deraadt Exp $	*/
+/*	$OpenBSD: xy.c,v 1.36 2007/06/20 18:16:24 deraadt Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -236,7 +236,6 @@ xygetdisklabel(xy, b)
 	void *b;
 {
 	char *err;
-	struct sun_disklabel *sdl;
 
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xy_labeldata = b;
@@ -246,12 +245,14 @@ xygetdisklabel(xy, b)
 	xy->sc_dk.dk_label->d_secpercyl = 1;
 
 	err = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
-					xydummystrat,
-				xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel, 0);
+	    xydummystrat, xy->sc_dk.dk_label, 0);
 	if (err) {
 		/*printf("%s: %s\n", xy->sc_dev.dv_xname, err);*/
 		return(XY_ERR_FAIL);
 	}
+
+#ifdef FIXME
+	struct sun_disklabel *sdl;
 
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xy->sc_dk.dk_cpulabel->cd_block;
@@ -265,6 +266,7 @@ xygetdisklabel(xy, b)
 		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 		xy->sc_dev.dv_xname, xy->pcyl);
 	}
+#endif
 
 	xy->ncyl = xy->sc_dk.dk_label->d_ncylinders;
 	xy->acyl = xy->sc_dk.dk_label->d_acylinders;
@@ -820,8 +822,7 @@ xyioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xy->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xy->sc_dk.dk_openmask : */ 0,
-		    xy->sc_dk.dk_cpulabel);
+		    (struct disklabel *) addr, /* xy->sc_dk.dk_openmask : */ 0);
 		if (error == 0) {
 			if (xy->state == XY_DRIVE_NOLABEL)
 				xy->state = XY_DRIVE_ONLINE;
@@ -841,8 +842,7 @@ xyioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xy->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xy->sc_dk.dk_openmask : */ 0,
-		    xy->sc_dk.dk_cpulabel);
+		    (struct disklabel *) addr, /* xy->sc_dk.dk_openmask : */ 0);
 		if (error == 0) {
 			if (xy->state == XY_DRIVE_NOLABEL)
 				xy->state = XY_DRIVE_ONLINE;
@@ -850,7 +850,7 @@ xyioctl(dev, command, addr, flag, p)
 			/* Simulate opening partition 0 so write succeeds. */
 			xy->sc_dk.dk_openmask |= (1 << 0);
 			error = writedisklabel(DISKLABELDEV(dev), xystrategy,
-			    xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
+			    xy->sc_dk.dk_label);
 			xy->sc_dk.dk_openmask =
 			    xy->sc_dk.dk_copenmask | xy->sc_dk.dk_bopenmask;
 		}
@@ -1032,7 +1032,7 @@ xystrategy(bp)
 	 * completion. */
 
 	if (bounds_check_with_label(bp, xy->sc_dk.dk_label,
-	    xy->sc_dk.dk_cpulabel, (xy->flags & XY_WLABEL) != 0) <= 0)
+	    (xy->flags & XY_WLABEL) != 0) <= 0)
 		goto done;
 
 	/*

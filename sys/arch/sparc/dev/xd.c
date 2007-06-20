@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.38 2007/06/07 03:42:51 deraadt Exp $	*/
+/*	$OpenBSD: xd.c,v 1.39 2007/06/20 18:16:24 deraadt Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -296,7 +296,6 @@ xdgetdisklabel(xd, b)
 	void *b;
 {
 	char *err;
-	struct sun_disklabel *sdl;
 
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xd_labeldata = b;
@@ -307,11 +306,14 @@ xdgetdisklabel(xd, b)
 
 	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
 			    xddummystrat,
-			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel, 0);
+			    xd->sc_dk.dk_label, 0);
 	if (err) {
 		/*printf("%s: %s\n", xd->sc_dev.dv_xname, err);*/
 		return(XD_ERR_FAIL);
 	}
+
+#ifdef FIXME
+	struct sun_disklabel *sdl;
 
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel->cd_block;
@@ -325,6 +327,7 @@ xdgetdisklabel(xd, b)
 		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 			xd->sc_dev.dv_xname, xd->pcyl);
 	}
+#endif
 
 	xd->ncyl = xd->sc_dk.dk_label->d_ncylinders;
 	xd->acyl = xd->sc_dk.dk_label->d_acylinders;
@@ -859,8 +862,7 @@ xdioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xd->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0,
-		    xd->sc_dk.dk_cpulabel);
+		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0);
 		if (error == 0) {
 			if (xd->state == XD_DRIVE_NOLABEL)
 				xd->state = XD_DRIVE_ONLINE;
@@ -880,8 +882,7 @@ xdioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xd->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0,
-		    xd->sc_dk.dk_cpulabel);
+		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0);
 		if (error == 0) {
 			if (xd->state == XD_DRIVE_NOLABEL)
 				xd->state = XD_DRIVE_ONLINE;
@@ -889,7 +890,7 @@ xdioctl(dev, command, addr, flag, p)
 			/* Simulate opening partition 0 so write succeeds. */
 			xd->sc_dk.dk_openmask |= (1 << 0);
 			error = writedisklabel(DISKLABELDEV(dev), xdstrategy,
-			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
+			    xd->sc_dk.dk_label);
 			xd->sc_dk.dk_openmask =
 			    xd->sc_dk.dk_copenmask | xd->sc_dk.dk_bopenmask;
 		}
@@ -1070,7 +1071,7 @@ xdstrategy(bp)
 	 * completion. */
 
 	if (bounds_check_with_label(bp, xd->sc_dk.dk_label,
-	    xd->sc_dk.dk_cpulabel, (xd->flags & XD_WLABEL) != 0) <= 0)
+	    (xd->flags & XD_WLABEL) != 0) <= 0)
 		goto done;
 
 	/*
