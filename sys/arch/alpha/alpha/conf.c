@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.54 2007/05/28 22:26:03 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.55 2007/06/20 18:28:56 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -96,6 +96,7 @@ cdev_decl(com);
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
+#include "wsmux.h"
 #include "midi.h"
 cdev_decl(midi);
 #include "sequencer.h"
@@ -203,6 +204,7 @@ struct cdevsw	cdevsw[] =
 	cdev_crypto_init(NCRYPTO,crypto), /* 57: /dev/crypto */
 	cdev_bktr_init(NBKTR,bktr),	/* 58: Bt848 video capture device */
 	cdev_radio_init(NRADIO,radio), /* 59: generic radio I/O */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 60: ws multiplexor */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
