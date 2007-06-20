@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.81 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.82 2007/06/20 15:03:40 thib Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -696,14 +696,14 @@ ufs_rename(void *v)
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
 		error = EXDEV;
 abortit:
-		VOP_ABORTOP(tdvp, tcnp); /* XXX, why not in NFS? */
+		VOP_ABORTOP(tdvp, tcnp);
 		if (tdvp == tvp)
 			vrele(tdvp);
 		else
 			vput(tdvp);
 		if (tvp)
 			vput(tvp);
-		VOP_ABORTOP(fdvp, fcnp); /* XXX, why not in NFS? */
+		VOP_ABORTOP(fdvp, fcnp);
 		vrele(fdvp);
 		vrele(fvp);
 		return (error);
