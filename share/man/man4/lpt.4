@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpt.4,v 1.6 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: lpt.4,v 1.7 2007/06/20 17:44:07 kettenis Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 20 2007 $
 .Dt LPT 4
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Pp
 .Cd "# hppa"
 .Cd "lpt0 at gsc? irq 7"
+.Cd "lpt0 at ssio?"
 .Pp
 .Cd "# sparc64"
 .Cd "lpt* at apio?"
