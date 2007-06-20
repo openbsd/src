@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.269 2007/06/02 18:44:44 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.270 2007/06/20 04:10:59 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -600,6 +600,10 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_VT6410, /* VIA VT6410 IDE */
 	  IDE_PCI_CLASS_OVERRIDE,
+	  apollo_chip_map
+	},
+	{ PCI_PRODUCT_VIATECH_CX700_IDE, /* VIA CX700 IDE */
+	  0,
 	  apollo_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT6420_SATA, /* VIA VT6420 SATA */
@@ -2965,7 +2969,8 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT6410) { 
+	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT6410) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_CX700_IDE)) { 
 		printf(": ATA133");
 		sc->sc_wdcdev.UDMA_cap = 6;
 	} else {
