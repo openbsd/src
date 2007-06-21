@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.250 2007/06/11 11:18:14 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.251 2007/06/21 11:55:54 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -696,6 +696,8 @@ struct pf_state_key_cmp {
 	u_int8_t	 pad;
 };
 
+TAILQ_HEAD(pf_statelist, pf_state);
+
 struct pf_state_key {
 	struct pf_state_host lan;
 	struct pf_state_host gwy;
@@ -707,7 +709,8 @@ struct pf_state_key {
 
 	RB_ENTRY(pf_state_key)	 entry_lan_ext;
 	RB_ENTRY(pf_state_key)	 entry_ext_gwy;
-	struct pf_state	*state;
+	struct pf_statelist	 states;
+	u_short		 refcnt;	/* same size as if_index */	 
 };
 
 
@@ -723,6 +726,7 @@ struct pf_state {
 	u_int32_t	 creatorid;
 	u_int32_t	 pad;
 
+	TAILQ_ENTRY(pf_state)	 next;
 	RB_ENTRY(pf_state)	 entry_id;
 	struct pf_state_key	*state_key;
 	u_int8_t	 log;

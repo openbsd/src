@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.545 2007/06/20 14:14:17 mpf Exp $ */
+/*	$OpenBSD: pf.c,v 1.546 2007/06/21 11:55:54 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -153,6 +153,9 @@ struct pf_rule		*pf_get_translation(struct pf_pdesc *, struct mbuf *,
 			    struct pf_addr *, u_int16_t,
 			    struct pf_addr *, u_int16_t,
 			    struct pf_addr *, u_int16_t *);
+void			 pf_attach_state(struct pf_state_key *,
+			    struct pf_state *, int);
+void			 pf_detach_state(struct pf_state *, int);
 int			 pf_test_rule(struct pf_rule **, struct pf_state **,
 			    int, struct pfi_kif *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, struct pf_rule **,
@@ -206,9 +209,11 @@ int			 pf_check_proto_cksum(struct mbuf *, int, int,
 			    u_int8_t, sa_family_t);
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
-struct pf_state		*pf_find_state_recurse(struct pfi_kif *,
+struct pf_state		*pf_find_state(struct pfi_kif *,
 			    struct pf_state_key_cmp *, u_int8_t);
 int			 pf_src_connlimit(struct pf_state **);
+void			 pf_stateins_err(const char *, struct pf_state *,
+			    struct pfi_kif *);
 int			 pf_check_congestion(struct ifqueue *);
 
 extern struct pool pfr_ktable_pl;
@@ -225,11 +230,9 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 #define STATE_LOOKUP()							\
 	do {								\
 		if (direction == PF_IN)					\
-			*state = pf_find_state_recurse(			\
-			    kif, &key, PF_EXT_GWY);			\
+			*state = pf_find_state(kif, &key, PF_EXT_GWY);	\
 		else							\
-			*state = pf_find_state_recurse(			\
-			    kif, &key, PF_LAN_EXT);			\
+			*state = pf_find_state(kif, &key, PF_LAN_EXT);	\
 		if (*state == NULL || (*state)->timeout == PFTM_PURGE)	\
 			return (PF_DROP);				\
 		if (direction == PF_OUT &&				\
@@ -291,6 +294,9 @@ RB_GENERATE(pf_state_tree_ext_gwy, pf_state_key,
     entry_ext_gwy, pf_state_compare_ext_gwy);
 RB_GENERATE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
+
+#define	PF_DT_SKIP_LANEXT	0x01
+#define	PF_DT_SKIP_EXTGWY	0x02
 
 static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
@@ -516,39 +522,40 @@ pf_find_state_byid(struct pf_state_cmp *key)
 }
 
 struct pf_state *
-pf_find_state_recurse(struct pfi_kif *kif, struct pf_state_key_cmp *key,
-    u_int8_t tree)
+pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int8_t tree)
 {
-	struct pf_state_key *sk;
+	struct pf_state_key	*sk;
+	struct pf_state		*s;
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
 	switch (tree) {
 	case PF_LAN_EXT:
-		if ((sk = RB_FIND(pf_state_tree_lan_ext, &kif->pfik_lan_ext,
-		    (struct pf_state_key *)key)) != NULL)
-			return (sk->state);
-		if ((sk = RB_FIND(pf_state_tree_lan_ext, &pfi_all->pfik_lan_ext,
-		    (struct pf_state_key *)key)) != NULL)
-			return (sk->state);
-		return (NULL);
+		sk = RB_FIND(pf_state_tree_lan_ext, &pfi_all->pfik_lan_ext,
+		    (struct pf_state_key *)key);
+		break;
 	case PF_EXT_GWY:
-		if ((sk = RB_FIND(pf_state_tree_ext_gwy, &kif->pfik_ext_gwy,
-		    (struct pf_state_key *)key)) != NULL)
-			return (sk->state);
-		if ((sk = RB_FIND(pf_state_tree_ext_gwy, &pfi_all->pfik_ext_gwy,
-		    (struct pf_state_key *)key)) != NULL)
-			return (sk->state);
-		return (NULL);
+		sk = RB_FIND(pf_state_tree_ext_gwy, &pfi_all->pfik_ext_gwy,
+		    (struct pf_state_key *)key);
+		break;
 	default:
-		panic("pf_find_state_recurse");
+		panic("pf_find_state");
 	}
+
+	/* list is sorted, if-bound states before floating ones */
+	if (sk != NULL)
+		TAILQ_FOREACH(s, &sk->states, next)
+			if (s->u.s.kif == pfi_all || s->u.s.kif == kif)
+				return (s);
+
+	return (NULL);
 }
 
 struct pf_state *
 pf_find_state_all(struct pf_state_key_cmp *key, u_int8_t tree, int *more)
 {
-	struct pf_state_key	*sk, *sks = NULL;
+	struct pf_state_key	*sk;
+	struct pf_state		*s, *ret = NULL;
 	struct pfi_kif		*kif;
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
@@ -557,34 +564,36 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int8_t tree, int *more)
 	case PF_LAN_EXT:
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
 			sk = RB_FIND(pf_state_tree_lan_ext,
-			    &kif->pfik_lan_ext, (struct pf_state_key *)key);
+			    &pfi_all->pfik_lan_ext, (struct pf_state_key *)key);
 			if (sk == NULL)
 				continue;
+			ret = TAILQ_FIRST(&sk->states);
 			if (more == NULL)
-				return (sk->state);
-			sks = sk;
-			(*more)++;
+				return (ret);
+			else
+				TAILQ_FOREACH(s, &sk->states, next)
+					(*more)++;
 		}
 		break;
 	case PF_EXT_GWY:
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
 			sk = RB_FIND(pf_state_tree_ext_gwy,
-			    &kif->pfik_ext_gwy, (struct pf_state_key *)key);
+			    &pfi_all->pfik_ext_gwy, (struct pf_state_key *)key);
 			if (sk == NULL)
 				continue;
+			ret = TAILQ_FIRST(&sk->states);
 			if (more == NULL)
-				return (sk->state);
-			sks = sk;
-			(*more)++;
+				return (ret);
+			else
+				TAILQ_FOREACH(s, &sk->states, next)
+					(*more)++;
 		}
 		break;
 	default:
 		panic("pf_find_state_all");
 	}
-	if (sks != NULL)
-		return (sks->state);
-	else
-		return (NULL);
+
+	return (ret);
 }
 
 void
@@ -781,52 +790,55 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 	return (0);
 }
 
+void
+pf_stateins_err(const char *tree, struct pf_state *s, struct pfi_kif *kif)
+{
+	struct pf_state_key	*sk = s->state_key;
+
+	if (pf_status.debug >= PF_DEBUG_MISC) {
+		printf("pf: state insert failed: %s %s", tree, kif->pfik_name);
+		printf(" lan: ");
+		pf_print_host(&sk->lan.addr, sk->lan.port,
+		    sk->af);
+		printf(" gwy: ");
+		pf_print_host(&sk->gwy.addr, sk->gwy.port,
+		    sk->af);
+		printf(" ext: ");
+		pf_print_host(&sk->ext.addr, sk->ext.port,
+		    sk->af);
+		if (s->sync_flags & PFSTATE_FROMSYNC)
+			printf(" (from sync)");
+		printf("\n");
+	}
+}
+
 int
 pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 {
-	struct pf_state_key *sk;
+	struct pf_state_key	*cur;
+	struct pf_state		*sp;
 
 	KASSERT(s->state_key != NULL);
-	sk = s->state_key;
-
-	/* Thou MUST NOT insert multiple duplicate keys */
 	s->u.s.kif = kif;
-	if (RB_INSERT(pf_state_tree_lan_ext, &kif->pfik_lan_ext, sk)) {
-		if (pf_status.debug >= PF_DEBUG_MISC) {
-			printf("pf: state insert failed: tree_lan_ext");
-			printf(" lan: ");
-			pf_print_host(&sk->lan.addr, sk->lan.port,
-			    sk->af);
-			printf(" gwy: ");
-			pf_print_host(&sk->gwy.addr, sk->gwy.port,
-			    sk->af);
-			printf(" ext: ");
-			pf_print_host(&sk->ext.addr, sk->ext.port,
-			    sk->af);
-			if (s->sync_flags & PFSTATE_FROMSYNC)
-				printf(" (from sync)");
-			printf("\n");
-		}
-		return (-1);
+
+	if ((cur = RB_INSERT(pf_state_tree_lan_ext, &pfi_all->pfik_lan_ext,
+	    s->state_key)) != NULL) {
+		/* key exists. check for same kif, if none, add to key */
+		TAILQ_FOREACH(sp, &cur->states, next)
+			if (sp->u.s.kif == kif) {	/* collision! */
+				pf_stateins_err("tree_lan_ext", s, kif);
+				return (-1);
+			}
+		pf_detach_state(s, PF_DT_SKIP_LANEXT|PF_DT_SKIP_EXTGWY);
+		pf_attach_state(cur, s, kif == pfi_all ? 1 : 0);
 	}
 
-	if (RB_INSERT(pf_state_tree_ext_gwy, &kif->pfik_ext_gwy, sk)) {
-		if (pf_status.debug >= PF_DEBUG_MISC) {
-			printf("pf: state insert failed: tree_ext_gwy");
-			printf(" lan: ");
-			pf_print_host(&sk->lan.addr, sk->lan.port,
-			    sk->af);
-			printf(" gwy: ");
-			pf_print_host(&sk->gwy.addr, sk->gwy.port,
-			    sk->af);
-			printf(" ext: ");
-			pf_print_host(&sk->ext.addr, sk->ext.port,
-			    sk->af);
-			if (s->sync_flags & PFSTATE_FROMSYNC)
-				printf(" (from sync)");
-			printf("\n");
-		}
-		RB_REMOVE(pf_state_tree_lan_ext, &kif->pfik_lan_ext, sk);
+	/* if cur != NULL, we already found a state key and attached to it */
+	if (cur == NULL && (cur = RB_INSERT(pf_state_tree_ext_gwy,
+	    &pfi_all->pfik_ext_gwy, s->state_key)) != NULL) {
+		/* must not happen. we must have found the sk above! */
+		pf_stateins_err("tree_ext_gwy", s, kif);
+		pf_detach_state(s, PF_DT_SKIP_EXTGWY);
 		return (-1);
 	}
 
@@ -843,8 +855,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 				printf(" (from sync)");
 			printf("\n");
 		}
-		RB_REMOVE(pf_state_tree_lan_ext, &kif->pfik_lan_ext, sk);
-		RB_REMOVE(pf_state_tree_ext_gwy, &kif->pfik_ext_gwy, sk);
+		pf_detach_state(s, 0);
 		return (-1);
 	}
 	TAILQ_INSERT_TAIL(&state_list, s, u.s.entry_list);
@@ -993,10 +1004,6 @@ pf_unlink_state(struct pf_state *cur)
 		    cur->src.seqhi, cur->src.seqlo + 1,
 		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag, NULL, NULL);
 	}
-	RB_REMOVE(pf_state_tree_ext_gwy,
-	    &cur->u.s.kif->pfik_ext_gwy, cur->state_key);
-	RB_REMOVE(pf_state_tree_lan_ext,
-	    &cur->u.s.kif->pfik_lan_ext, cur->state_key);
 	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
 #if NPFSYNC
 	if (cur->creatorid == pf_status.hostid)
@@ -1004,6 +1011,7 @@ pf_unlink_state(struct pf_state *cur)
 #endif
 	cur->timeout = PFTM_UNLINKED;
 	pf_src_tree_remove_state(cur);
+	pf_detach_state(cur, 0);
 }
 
 /* callers should be at splsoftnet and hold the
@@ -1033,7 +1041,6 @@ pf_free_state(struct pf_state *cur)
 	TAILQ_REMOVE(&state_list, cur, u.s.entry_list);
 	if (cur->tag)
 		pf_tag_unref(cur->tag);
-	pool_put(&pf_state_key_pl, cur->state_key);
 	pool_put(&pf_state_pl, cur);
 	pf_status.fcounters[FCNT_STATE_REMOVALS]++;
 	pf_status.states--;
@@ -2789,6 +2796,40 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 	}
 }
 
+void
+pf_attach_state(struct pf_state_key *sk, struct pf_state *s, int tail)
+{
+	s->state_key = sk;
+	sk->refcnt++;
+
+	/* list is sorted, if-bound states before floating */
+	if (tail)
+		TAILQ_INSERT_TAIL(&sk->states, s, next);
+	else
+		TAILQ_INSERT_HEAD(&sk->states, s, next);
+}
+
+void
+pf_detach_state(struct pf_state *s, int flags)
+{
+	struct pf_state_key	*sk = s->state_key;
+
+	if (sk == NULL)
+		return;
+
+	s->state_key = NULL;
+	TAILQ_REMOVE(&sk->states, s, next);
+	if (--sk->refcnt == 0) {
+		if (!(flags & PF_DT_SKIP_EXTGWY))
+			RB_REMOVE(pf_state_tree_ext_gwy,
+			    &pfi_all->pfik_ext_gwy, sk);
+		if (!(flags & PF_DT_SKIP_LANEXT))
+			RB_REMOVE(pf_state_tree_lan_ext,
+			    &pfi_all->pfik_lan_ext, sk);
+		pool_put(&pf_state_key_pl, sk);
+	}
+}
+
 struct pf_state_key *
 pf_alloc_state_key(struct pf_state *s)
 {
@@ -2797,8 +2838,8 @@ pf_alloc_state_key(struct pf_state *s)
 	if ((sk = pool_get(&pf_state_key_pl, PR_NOWAIT)) == NULL)
 		return (NULL);
 	bzero(sk, sizeof(*sk));
-	sk->state = s;
-	s->state_key = sk;
+	TAILQ_INIT(&sk->states);
+	pf_attach_state(sk, s, 0);
 
 	return (sk);
 }
