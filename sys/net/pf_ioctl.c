@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.180 2007/06/07 13:32:06 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.181 2007/06/21 19:31:49 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1207,6 +1207,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (rule->rt && !rule->direction)
 			error = EINVAL;
 #if NPFLOG > 0
+		if (!rule->log)
+			rule->logif = 0;
 		if (rule->logif >= PFLOGIFS_MAX)
 			error = EINVAL;
 #endif
@@ -1448,6 +1450,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = EBUSY;
 			if (newrule->rt && !newrule->direction)
 				error = EINVAL;
+#if NPFLOG > 0
+			if (!newrule->log)
+				newrule->logif = 0;
+			if (newrule->logif >= PFLOGIFS_MAX)
+				error = EINVAL;
+#endif
 			if (pf_rtlabel_add(&newrule->src.addr) ||
 			    pf_rtlabel_add(&newrule->dst.addr))
 				error = EBUSY;
