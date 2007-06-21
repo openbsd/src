@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssio.4,v 1.2 2007/06/20 14:23:51 jmc Exp $
+.\"	$OpenBSD: ssio.4,v 1.3 2007/06/21 09:40:51 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2007 $
+.Dd $Mdocdate: June 21 2007 $
 .Dt SSIO 4 hppa
 .Os
 .Sh NAME
@@ -31,6 +31,16 @@ It configures the Programmable Interrupt Controllers integrated on the chip
 to route interrupts for the integrated
 .Xr ohci 4
 USB controller (which appears as a separate PCI device).
+.Pp
+.Ox
+provides support for the following devices:
+.Pp
+.Bl -tag -width 12n -offset indent -compact
+.It Xr com 4
+serial communications interface
+.It Xr lpt 4
+parallel port driver
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4
