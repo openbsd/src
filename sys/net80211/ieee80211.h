@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.17 2007/06/17 09:05:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.18 2007/06/21 18:18:48 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -383,7 +383,7 @@ enum {
 	IEEE80211_ELEMID_IBSSPARMS		= 6,
 	IEEE80211_ELEMID_COUNTRY		= 7,
 	IEEE80211_ELEMID_QBSS_LOAD		= 11,
-	IEEE80211_ELEMID_EDCA_PARAMS		= 12,
+	IEEE80211_ELEMID_EDCAPARMS		= 12,
 	IEEE80211_ELEMID_CHALLENGE		= 16,
 	/* 17-31 reserved for challenge text extension */
 	IEEE80211_ELEMID_ERP			= 42,
