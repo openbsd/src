@@ -1,8 +1,9 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.28 2007/06/21 16:15:29 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.29 2007/06/21 18:20:18 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2007 Damien Bergamini
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,6 +69,10 @@ int	ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *,
 void	ieee80211_auth_open(struct ieee80211com *,
 	    const struct ieee80211_frame *, struct ieee80211_node *, int,
 	    u_int32_t, u_int16_t, u_int16_t);
+int	ieee80211_parse_edca_params_common(struct ieee80211com *,
+	    const u_int8_t *);
+int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
+int	ieee80211_parse_wmm_params(struct ieee80211com *, const u_int8_t *);
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *, int,
 	    u_int32_t);
 int	ieee80211_do_slow_print(struct ieee80211com *, int *);
@@ -926,6 +931,87 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 }
 #endif
 
+/* unaligned little endian access */
+#define LE_READ_2(p)					\
+	((u_int16_t)					\
+	 ((((const u_int8_t *)(p))[0]) |		\
+	  (((const u_int8_t *)(p))[1] <<  8)))
+#define LE_READ_4(p)					\
+	((u_int32_t)					\
+	 ((((const u_int8_t *)(p))[0])       |		\
+	  (((const u_int8_t *)(p))[1] <<  8) |		\
+	  (((const u_int8_t *)(p))[2] << 16) |		\
+	  (((const u_int8_t *)(p))[3] << 24)))
+
+int
+ieee80211_parse_edca_params_common(struct ieee80211com *ic,
+    const u_int8_t *frm)
+{
+	u_int updtcount;
+	int aci;
+
+	/*
+	 * Check if EDCA parameters have changed XXX if we miss more than
+	 * 15 consecutive beacons, we might not detect changes to EDCA
+	 * parameters due to wraparound of the 4-bit Update Count field.
+	 */
+	updtcount = frm[0] & 0xf;
+	if (updtcount == ic->ic_edca_updtcount)
+		return 0;	/* no changes to EDCA parameters, ignore */
+	ic->ic_edca_updtcount = updtcount;
+
+	frm += 2;	/* skip QoS Info + Reserved fields */
+
+	/* parse AC Parameter Records */
+	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
+		struct ieee80211_edca_ac_params *ac = &ic->ic_edca_ac[aci];
+
+		ac->ac_acm       = (frm[0] >> 4) & 0x1;
+		ac->ac_aifsn     = frm[0] & 0xf;
+		ac->ac_ecwmin    = frm[1] & 0xf;
+		ac->ac_ecwmax    = frm[1] >> 4;
+		ac->ac_txoplimit = LE_READ_2(frm + 2);
+		frm += 4;
+	}
+	/* give drivers a chance to update their settings */
+	if ((ic->ic_flags & IEEE80211_F_QOS) && ic->ic_updateedca != NULL)
+		(*ic->ic_updateedca)(ic);
+
+	return 0;
+}
+
+int
+ieee80211_parse_edca_params(struct ieee80211com *ic, const u_int8_t *frm)
+{
+	/* check IE length */
+	if (frm[1] < 18) {
+		IEEE80211_DPRINTF(("%s: invalid EDCA parameter set IE;"
+		    " length %u, expecting 18\n", __func__, frm[1]));
+		ic->ic_stats.is_rx_elem_toosmall++;
+		return 1;
+	}
+	return ieee80211_parse_edca_params_common(ic, frm + 2);
+}
+
+/*
+ * And now comes the Wi-Fi Alliance WMM compatibility mess.
+ * Most APs that advertise themselves as being 802.11e-compatible still
+ * continue to use the vendor-specific IE instead of the one defined in
+ * the IEEE standard.
+ */
+int
+ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
+{
+	/* check IE length */
+	if (frm[1] < 24) {
+		IEEE80211_DPRINTF(("%s: invalid WMM parameter set IE;"
+		    " length %u, expecting 24\n", __func__, frm[1]));
+		ic->ic_stats.is_rx_elem_toosmall++;
+		return 1;
+	}
+	return ieee80211_parse_edca_params_common(ic, frm + 8);
+}
+
 /*-
  * Beacon/Probe response frame format:
  * [8]    Timestamp
@@ -938,6 +1024,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
  * [tlv*] DS Parameter Set (802.11g)
  * [tlv]  ERP Information (802.11g)
  * [tlv]  Extended Supported Rates (802.11g)
+ * [tlv]  EDCA Parameter Set (802.11e)
+ * [tlv]  QoS Capability (Beacon only, 802.11e)
  */
 void
 ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
@@ -948,7 +1036,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *ssid, *rates, *xrates;
+	const u_int8_t *ssid, *rates, *xrates, *edca;
 	const u_int8_t *tstamp, *bintval, *capinfo, *country;
 	u_int8_t chan, bchan, fhindex, erp;
 	u_int16_t fhdwell;
@@ -982,7 +1070,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	tstamp  = frm;	frm += 8;
 	bintval = frm;	frm += 2;
 	capinfo = frm;	frm += 2;
-	ssid = rates = xrates = country = NULL;
+	ssid = rates = xrates = country = edca = NULL;
 	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
 	fhdwell = 0;
@@ -1030,6 +1118,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 				break;
 			}
 			erp = frm[2];
+			break;
+		case IEEE80211_ELEMID_EDCAPARMS:
+			edca = frm;
+			break;
+		case IEEE80211_ELEMID_QOS_CAP:
 			break;
 		default:
 			IEEE80211_DPRINTF2(("%s: element id %u/len %u "
@@ -1150,6 +1243,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			     IEEE80211_CAPINFO_SHORT_SLOTTIME));
 		}
 	}
+	if (edca != NULL && (ni->ni_flags & IEEE80211_NODE_QOS))
+		ieee80211_parse_edca_params(ic, edca);
 
 	if (ssid[1] != 0 && ni->ni_esslen == 0) {
 		/*
@@ -1317,6 +1412,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
  * [tlv] SSID
  * [tlv] Supported rates
  * [tlv] Extended Supported Rates (802.11g)
+ * [tlv] QoS Capability (802.11e)
  */
 void
 ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
@@ -1369,6 +1465,8 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_ELEMID_XRATES:
 			xrates = frm;
+			break;
+		case IEEE80211_ELEMID_QOS_CAP:
 			break;
 		}
 		frm += frm[1] + 2;
@@ -1445,6 +1543,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
  * [2]   Association ID (AID)
  * [tlv] Supported rates
  * [tlv] Extended Supported Rates (802.11g)
+ * [tlv] EDCA Parameter Set (802.11e)
  */
 void
 ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
@@ -1456,7 +1555,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *rates, *xrates;
+	const u_int8_t *rates, *xrates, *edca;
 	u_int16_t status;
 
 	if (ic->ic_opmode != IEEE80211_M_STA ||
@@ -1490,7 +1589,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_associd = letoh16(*(u_int16_t *)frm);
 	frm += 2;
 
-	rates = xrates = NULL;
+	rates = xrates = edca = NULL;
 	while (frm < efrm) {
 		switch (*frm) {
 		case IEEE80211_ELEMID_RATES:
@@ -1498,6 +1597,9 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_ELEMID_XRATES:
 			xrates = frm;
+			break;
+		case IEEE80211_ELEMID_EDCAPARMS:
+			edca = frm;
 			break;
 		}
 		frm += frm[1] + 2;
@@ -1510,6 +1612,15 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	if (ni->ni_rates.rs_nrates == 0)
 		return;
 
+	if (edca != NULL) {
+		/* force update of EDCA parameters */
+		ic->ic_edca_updtcount = -1;
+
+		if (ieee80211_parse_edca_params(ic, edca) == 0)
+			ni->ni_flags |= IEEE80211_NODE_QOS;
+		else	/* for Reassociation */
+			ni->ni_flags &= ~IEEE80211_NODE_QOS;
+	}
 	/*
 	 * Configure state now that we are associated.
 	 */
