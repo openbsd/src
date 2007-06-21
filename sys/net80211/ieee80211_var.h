@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.24 2007/06/21 18:21:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.25 2007/06/21 20:11:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -86,6 +86,27 @@ enum ieee80211_protmode {
 	IEEE80211_PROT_NONE	= 0,	/* no protection */
 	IEEE80211_PROT_CTSONLY	= 1,	/* CTS to self */
 	IEEE80211_PROT_RTSCTS	= 2	/* RTS-CTS */
+};
+
+/*
+ * 802.11i ciphers.
+ */
+enum ieee80211_cipher {
+	IEEE80211_CIPHER_NONE     = 0x00000000,
+	IEEE80211_CIPHER_USEGROUP = 0x00000001,
+	IEEE80211_CIPHER_WEP40    = 0x00000002,
+	IEEE80211_CIPHER_TKIP     = 0x00000004,
+	IEEE80211_CIPHER_CCMP     = 0x00000008,
+	IEEE80211_CIPHER_WEP104   = 0x00000010
+};
+
+/*
+ * 802.11i Authentication and Key Management.
+ */
+enum ieee80211_akm {
+	IEEE80211_AKM_NONE      = 0x00000000,
+	IEEE80211_AKM_IEEE8021X = 0x00000001,
+	IEEE80211_AKM_PSK       = 0x00000002
 };
 
 /*

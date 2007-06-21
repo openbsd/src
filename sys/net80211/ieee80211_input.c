@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.30 2007/06/21 19:48:48 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.31 2007/06/21 20:11:16 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -73,6 +73,9 @@ int	ieee80211_parse_edca_params_common(struct ieee80211com *,
 	    const u_int8_t *);
 int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
 int	ieee80211_parse_wmm_params(struct ieee80211com *, const u_int8_t *);
+int	ieee80211_parse_rsn(struct ieee80211com *, const u_int8_t *);
+enum	ieee80211_cipher ieee80211_parse_rsn_cipher(const u_int8_t[]);
+enum	ieee80211_akm ieee80211_parse_rsn_akm(const u_int8_t[]);
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *, int,
 	    u_int32_t);
 int	ieee80211_do_slow_print(struct ieee80211com *, int *);
@@ -943,6 +946,10 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	  (((const u_int8_t *)(p))[2] << 16) |		\
 	  (((const u_int8_t *)(p))[3] << 24)))
 
+/*-
+ * Parse an EDCA Parameter Set Information Element.
+ * See IEEE Std 802.11e-2005 - Section 7.3.2.27.
+ */
 int
 ieee80211_parse_edca_params_common(struct ieee80211com *ic,
     const u_int8_t *frm)
@@ -1013,6 +1020,140 @@ ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
 }
 
 /*-
+ * Parse an RSN Information Element.
+ * See IEEE Std 802.11i-2004 - Section 7.3.2.25.
+ */
+int
+ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm)
+{
+	const u_int8_t *efrm;
+	u_int16_t m, n, s;
+	u_int16_t cap;
+	enum ieee80211_cipher cipher_group;
+	u_int akm_mask, cipher_mask;
+
+	efrm = frm + frm[1];
+	frm += 2;
+
+	/* check Version field */
+	if (frm + 2 > efrm)
+		return 1;
+	if (LE_READ_2(frm) != 1)
+		return 1;
+	frm += 2;
+
+	/* all fields after the Version field are optional */
+
+	/* if Cipher Suite missing, default to CCMP */
+	cipher_group = cipher_mask = IEEE80211_CIPHER_CCMP;
+	/* if AKM Suite missing, default to 802.1X */
+	akm_mask = IEEE80211_AKM_IEEE8021X;
+
+	/* read Group Cipher Suite field */
+	if (frm + 4 > efrm)
+		return 0;
+	cipher_group = ieee80211_parse_rsn_cipher(frm);
+	if (cipher_group == IEEE80211_CIPHER_USEGROUP)
+		return 1;
+	frm += 4;
+
+	/* read Pairwise Cipher Suite Count field */
+	if (frm + 2 > efrm)
+		return 0;
+	m = LE_READ_2(frm);
+	frm += 2;
+
+	/* read Pairwise Cipher Suite List */
+	if (frm + m * 4 > efrm)
+		return 1;
+	cipher_mask = IEEE80211_CIPHER_NONE;
+	while (m-- > 0) {
+		cipher_mask |= ieee80211_parse_rsn_cipher(frm);
+		frm += 4;
+	}
+	if (cipher_mask & IEEE80211_CIPHER_USEGROUP) {
+		if (cipher_mask != IEEE80211_CIPHER_USEGROUP)
+			return 1;
+		if (cipher_group == IEEE80211_CIPHER_CCMP)
+			return 1;
+		cipher_mask = cipher_group;
+	}
+
+	/* read AKM Suite List Count field */
+	if (frm + 2 > efrm)
+		return 0;
+	n = LE_READ_2(frm);
+	frm += 2;
+
+	/* read AKM Suite List */
+	if (frm + n * 4 > efrm)
+		return 1;
+	akm_mask = IEEE80211_AKM_NONE;
+	while (n-- > 0) {
+		akm_mask |= ieee80211_parse_rsn_akm(frm);
+		frm += 4;
+	}
+
+	/* read RSN Capabilities field */
+	if (frm + 2 > efrm)
+		return 0;
+	cap = LE_READ_2(frm);
+	frm += 2;
+
+	/* read PMKID Count field */
+	if (frm + 2 > efrm)
+		return 0;
+	s = LE_READ_2(frm);
+	frm += 2;
+
+	/* read PMKID List */
+	if (frm + 16 * s > efrm)
+		return 1;
+	while (s-- > 0) {
+		/* ignore PMKIDs for now */
+		frm += 16;
+	}
+
+	return 0;
+}
+
+enum ieee80211_cipher
+ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
+{
+	/* from IEEE Std 802.11i-2004 - Table 20da */
+	if (memcmp(selector, IEEE80211_OUI, 3) == 0) {
+		switch (selector[3]) {
+		case 0:	/* use group cipher suite */
+			return IEEE80211_CIPHER_USEGROUP;
+		case 1:	/* WEP-40 */
+			return IEEE80211_CIPHER_WEP40;
+		case 2:	/* TKIP */
+			return IEEE80211_CIPHER_TKIP;
+		case 3:	/* CCMP (RSNA default) */
+			return IEEE80211_CIPHER_CCMP;
+		case 5:	/* WEP-104 */
+			return IEEE80211_CIPHER_WEP104;
+		}
+	}
+	return IEEE80211_CIPHER_NONE;	/* ignore unknown ciphers */
+}
+
+enum ieee80211_akm
+ieee80211_parse_rsn_akm(const u_int8_t selector[4])
+{
+	/* from IEEE Std 802.11i-2004 - Table 20dc */
+	if (memcmp(selector, IEEE80211_OUI, 3) == 0) {
+		switch (selector[3]) {
+		case 1:	/* IEEE 802.1X (RSNA default) */
+			return IEEE80211_AKM_IEEE8021X;
+		case 2:	/* PSK */
+			return IEEE80211_AKM_PSK;
+		}
+	}
+	return IEEE80211_AKM_NONE;	/* ignore unknown AKMs */
+}
+
+/*-
  * Beacon/Probe response frame format:
  * [8]    Timestamp
  * [2]    Beacon interval
@@ -1024,6 +1165,7 @@ ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
  * [tlv*] DS Parameter Set (802.11g)
  * [tlv]  ERP Information (802.11g)
  * [tlv]  Extended Supported Rates (802.11g)
+ * [tlv]  RSN (802.11i)
  * [tlv]  EDCA Parameter Set (802.11e)
  * [tlv]  QoS Capability (Beacon only, 802.11e)
  */
@@ -1036,8 +1178,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *ssid, *rates, *xrates, *edca, *wmm, *oui;
 	const u_int8_t *tstamp, *bintval, *capinfo, *country;
+	const u_int8_t *ssid, *rates, *xrates, *edca, *wmm, *oui;
+	const u_int8_t *rsn, *wpa;
 	u_int8_t chan, bchan, fhindex, erp;
 	u_int16_t fhdwell;
 	int is_new;
@@ -1070,7 +1213,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	tstamp  = frm;	frm += 8;
 	bintval = frm;	frm += 2;
 	capinfo = frm;	frm += 2;
-	ssid = rates = xrates = country = edca = wmm = NULL;
+	ssid = rates = xrates = country = edca = wmm = rsn = wpa = NULL;
 	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
 	fhdwell = 0;
@@ -1119,6 +1262,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			}
 			erp = frm[2];
 			break;
+		case IEEE80211_ELEMID_RSN:
+			rsn = frm;
+			break;
 		case IEEE80211_ELEMID_EDCAPARMS:
 			edca = frm;
 			break;
@@ -1132,6 +1278,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			oui = frm + 2;
 			if (memcmp(oui, MICROSOFT_OUI, 3) == 0) {
 				switch (oui[3]) {
+				case 1:	/* WPA */
+					wpa = frm;
+					break;
 				case 2:	/* WMM */
 					wmm = frm;
 					break;
@@ -1429,6 +1578,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
  * [tlv] SSID
  * [tlv] Supported rates
  * [tlv] Extended Supported Rates (802.11g)
+ * [tlv] RSN (802.11i)
  * [tlv] QoS Capability (802.11e)
  */
 void
@@ -1440,7 +1590,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *ssid, *rates, *xrates;
+	const u_int8_t *ssid, *rates, *xrates, *rsn, *wpa;
 	u_int16_t capinfo, bintval;
 	int reassoc, resp;
 
@@ -1471,7 +1621,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	bintval = letoh16(*(u_int16_t *)frm);	frm += 2;
 	if (reassoc)
 		frm += 6;	/* ignore current AP info */
-	ssid = rates = xrates = NULL;
+	ssid = rates = xrates = rsn = wpa = NULL;
 	while (frm < efrm) {
 		switch (*frm) {
 		case IEEE80211_ELEMID_SSID:
@@ -1482,6 +1632,9 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_ELEMID_XRATES:
 			xrates = frm;
+			break;
+		case IEEE80211_ELEMID_RSN:
+			rsn = frm;
 			break;
 		case IEEE80211_ELEMID_QOS_CAP:
 			break;
