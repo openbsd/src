@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.25 2007/04/12 13:24:39 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.26 2007/06/21 22:59:49 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -160,61 +160,4 @@ struct nfsnode {
  */
 extern TAILQ_HEAD(nfs_bufqhead, buf) nfs_bufq;
 
-#ifdef _KERNEL
-/*
- * Prototypes for NFS vnode operations
- */
-int	nfs_lookup(void *);
-int	nfs_create(void *);
-int	nfs_mknod(void *);
-int	nfs_open(void *);
-int	nfs_close(void *);
-int	nfsspec_close(void *);
-int	nfsfifo_close(void *);
-int	nfs_access(void *);
-int	nfsspec_access(void *);
-int	nfs_getattr(void *);
-int	nfs_setattr(void *);
-int	nfs_read(void *);
-int	nfs_write(void *);
-int	nfsspec_read(void *);
-int	nfsspec_write(void *);
-int	nfsfifo_read(void *);
-int	nfsfifo_write(void *);
-#define nfs_ioctl ((int (*)(void *))enoioctl)
-int	nfs_poll(void *);
-#define nfs_revoke vop_generic_revoke
-int	nfs_fsync(void *);
-int	nfs_remove(void *);
-int	nfs_link(void *);
-int	nfs_rename(void *);
-int	nfs_mkdir(void *);
-int	nfs_rmdir(void *);
-int	nfs_symlink(void *);
-int	nfs_readdir(void *);
-int	nfs_readlink(void *);
-int	nfs_inactive(void *);
-int	nfs_reclaim(void *);
-int	nfsfifo_reclaim(void *);
-#define nfs_lock ((int (*)(void *))vop_generic_lock)
-#define nfs_unlock ((int (*)(void *))vop_generic_unlock)
-#define nfs_islocked ((int (*)(void *))vop_generic_islocked)
-int	nfs_bmap(void *);
-int	nfs_strategy(void *);
-int	nfs_print(void *);
-int	nfs_pathconf(void *);
-int	nfs_advlock(void *);
-int	nfs_bwrite(void *);
-int	nfs_vget(struct mount *, ino_t, struct vnode **);
-
-/* other stuff */
-int	nfs_removeit(struct sillyrename *);
-int	nfs_nget(struct mount *,nfsfh_t *,int,struct nfsnode **);
-int	nfs_lookitup(struct vnode *,char *,int,struct ucred *,struct proc *,struct nfsnode **);
-int	nfs_sillyrename(struct vnode *,struct vnode *,struct componentname *);
-
-extern int (**nfsv2_vnodeop_p)(void *);
-
-#endif /* _KERNEL */
-
-#endif
+#endif		/* _NFS_NFSNODE_H_ */
