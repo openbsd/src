@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.29 2007/06/21 20:38:55 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.30 2007/06/21 21:06:12 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -649,6 +649,48 @@ ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
 	return frm;
 }
 
+/*
+ * Add a QoS Capability element to a frame.
+ */
+u_int8_t *
+ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
+{
+	*frm++ = IEEE80211_ELEMID_QOS_CAP;
+	*frm++ = 1;
+	*frm++ = 0;	/* QoS Info */
+
+	return frm;
+}
+
+/*
+ * Add an EDCA Parameter Set element to a frame.
+ */
+u_int8_t *
+ieee80211_add_edca_params(u_int8_t *frm, struct ieee80211com *ic)
+{
+	const struct ieee80211_edca_ac_params *edca;
+	int aci;
+
+	*frm++ = IEEE80211_ELEMID_EDCAPARMS;
+	*frm++ = 18;	/* length */
+	*frm++ = 0;	/* QoS Info */
+	*frm++ = 0;	/* reserved */
+
+	/* setup AC Parameter Records */
+	edca = ieee80211_qap_edca_table[ic->ic_curmode];
+	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
+		const struct ieee80211_edca_ac_params *ac = &edca[aci];
+
+		*frm++ = (aci << 5) | ((ac->ac_acm & 0x1) << 4) |
+			 (ac->ac_aifsn & 0xf);
+		*frm++ = (ac->ac_ecwmax << 4) |
+			 (ac->ac_ecwmin & 0xf);
+		*frm++ = ac->ac_txoplimit & 0xff;
+		*frm++ = ac->ac_txoplimit >> 8;
+	}
+	return frm;
+}
+
 struct mbuf *
 ieee80211_getmbuf(int flags, int type, u_int pktlen)
 {
@@ -730,6 +772,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[tlv] parameter set (IBSS)
 		 *	[tlv] extended rate phy (ERP)
 		 *	[tlv] extended supported rates
+		 *	[tlv] parameter set (EDCA)
 		 */
 		m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 		    8 +				/* time stamp */
@@ -740,7 +783,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    7 +				/* parameter set (FH/DS) */
 		    6 +				/* parameter set (IBSS) */
 		    2 + 1 +			/* extended rate phy (ERP) */
-		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
+		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
+		    2 +	18);			/* parameter set (EDCA) */
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
 		m->m_data += sizeof(struct ieee80211_frame);
@@ -800,6 +844,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if (ic->ic_curmode == IEEE80211_MODE_11G)
 			frm = ieee80211_add_erp(frm, ic);
 		frm = ieee80211_add_xrates(frm, &ic->ic_bss->ni_rates);
+		if (ic->ic_flags & IEEE80211_F_QOS)
+			frm = ieee80211_add_edca_params(frm, ic);
 		m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 		break;
 
@@ -870,6 +916,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[tlv] ssid
 		 *	[tlv] supported rates
 		 *	[tlv] extended supported rates
+		 *	[tlv] QoS Capability (802.11e)
 		 */
 		m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 		    2 +				/* capability information */
@@ -877,7 +924,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    IEEE80211_ADDR_LEN +	/* current AP address */
 		    2 + ni->ni_esslen +		/* ssid */
 		    2 + IEEE80211_RATE_SIZE +	/* supported rates */
-		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
+		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
+		    2 + 1);			/* QoS capability */
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
 		m->m_data += sizeof(struct ieee80211_frame);
@@ -914,6 +962,9 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
 		frm = ieee80211_add_rates(frm, &ni->ni_rates);
 		frm = ieee80211_add_xrates(frm, &ni->ni_rates);
+		if ((ic->ic_flags & IEEE80211_F_QOS) &&
+		    (ni->ni_flags & IEEE80211_NODE_QOS))
+			frm = ieee80211_add_qos_capability(frm, ic);
 		m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
 		timer = IEEE80211_TRANS_WAIT;
@@ -928,13 +979,15 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[2] association ID
 		 *	[tlv] supported rates
 		 *	[tlv] extended supported rates
+		 *	[tlv] parameter set (EDCA)
 		 */
 		m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 		    2 +				/* capability information */
 		    2 +				/* status */
 		    2 +				/* association ID */
 		    2 + IEEE80211_RATE_SIZE +	/* supported rates */
-		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
+		    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
+		    2 + 18);			/* parameter set (EDCA) */
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
 		m->m_data += sizeof(struct ieee80211_frame);
@@ -960,6 +1013,9 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 		frm = ieee80211_add_rates(frm, &ni->ni_rates);
 		frm = ieee80211_add_xrates(frm, &ni->ni_rates);
+		if ((ic->ic_flags & IEEE80211_F_QOS) &&
+		    (ni->ni_flags & IEEE80211_NODE_QOS))
+			frm = ieee80211_add_edca_params(frm, ic);
 		m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 		break;
 
@@ -1068,6 +1124,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	 *	[tlv] parameter set (IBSS/TIM)
 	 *	[tlv] extended rate phy (ERP)
 	 *	[tlv] extended supported rates
+	 *	[tlv] parameter set (EDCA)
 	 */
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    8 +				/* time stamp */
@@ -1078,7 +1135,8 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    2 + 1 +			/* parameter set (DS) */
 	    6 +				/* parameter set (IBSS/TIM) */
 	    2 + 1 +			/* extended rate phy (ERP) */
-	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
+	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
+	    2 + 18);			/* parameter set (EDCA) */
 	if (m == NULL)
 		return NULL;
 
@@ -1136,6 +1194,8 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
 	frm = ieee80211_add_xrates(frm, rs);
+	if (ic->ic_flags & IEEE80211_F_QOS)
+		frm = ieee80211_add_edca_params(frm, ic);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 	m->m_pkthdr.rcvif = (void *)ni;
 
