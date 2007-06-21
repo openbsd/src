@@ -1,9 +1,10 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.28 2007/06/16 11:59:58 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.29 2007/06/21 20:38:55 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2007 Damien Bergamini
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +31,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,13 +54,22 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#endif
+
+#if NVLAN > 0
+#include <net/if_types.h>
+#include <net/if_vlan_var.h>
 #endif
 
 #include <net80211/ieee80211_var.h>
 
-int ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
-    struct mbuf *, int);
-struct mbuf *ieee80211_getmbuf(int, int, u_int);
+enum	ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
+struct	mbuf *ieee80211_classify(struct ieee80211com *, struct mbuf *, int *);
+int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
+	    struct mbuf *, int);
+struct	mbuf *ieee80211_getmbuf(int, int, u_int);
 
 /*
  * IEEE 802.11 output routine. Normally this will directly call the
@@ -294,6 +305,126 @@ static const struct ieee80211_edca_ac_params
 		[EDCA_AC_VO] = { 2,  2, 1,  47 }
 	}
 };
+
+/*
+ * Return the EDCA Access Category to be used for transmitting a frame with
+ * user-priority `up'.
+ */
+enum ieee80211_edca_ac
+ieee80211_up_to_ac(struct ieee80211com *ic, int up)
+{
+	/* IEEE Std 802.11e-2005, table 20i */
+	static const enum ieee80211_edca_ac up_to_ac[] = {
+		EDCA_AC_BE,	/* BE */
+		EDCA_AC_BK,	/* BK */
+		EDCA_AC_BK,	/* -- */
+		EDCA_AC_BE,	/* EE */
+		EDCA_AC_VI,	/* CL */
+		EDCA_AC_VI,	/* VI */
+		EDCA_AC_VO,	/* VO */
+		EDCA_AC_VO	/* NC */
+	};
+	enum ieee80211_edca_ac ac;
+
+	ac = (up <= 7) ? up_to_ac[up] : EDCA_AC_BE;
+
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		return ac;
+
+	/*
+	 * We do not support the admission control procedure defined in
+	 * IEEE Std 802.11e-2005 section 9.9.3.1.2.  The spec says that
+	 * non-AP QSTAs that don't support this procedure shall use EDCA
+	 * parameters of a lower priority AC that does not require
+	 * admission control.
+	 */
+	while (ac != EDCA_AC_BK && ic->ic_edca_ac[ac].ac_acm) {
+		switch (ac) {
+		case EDCA_AC_BK:
+			/* can't get there */
+			break;
+		case EDCA_AC_BE:
+			/* BE shouldn't require admission control */
+			ac = EDCA_AC_BK;
+			break;
+		case EDCA_AC_VI:
+			ac = EDCA_AC_BE;
+			break;
+		case EDCA_AC_VO:
+			ac = EDCA_AC_VI;
+			break;
+		}
+	}
+	return ac;
+}
+
+/*
+ * Get mbuf's user-priority: if mbuf is not VLAN tagged, select user-priority
+ * based on the IP TOS precedence field.
+ */
+struct mbuf *
+ieee80211_classify(struct ieee80211com *ic, struct mbuf *m, int *up)
+{
+#ifdef INET
+	const struct ether_header *eh;
+#endif
+#if NVLAN > 0
+	if ((m->m_flags & M_PROTO1) == M_PROTO1 && m->m_pkthdr.rcvif != NULL) {
+		const struct ifvlan *ifv = m->m_pkthdr.rcvif->if_softc;
+
+		/* use VLAN 802.1D user-priority */
+		if (ifv->ifv_prio <= 7) {
+			*up = ifv->ifv_prio;
+			return m;
+		}
+	}
+#endif
+#ifdef INET
+	eh = mtod(m, struct ether_header *);
+	if (eh->ether_type == htons(ETHERTYPE_IP)) {
+		const struct ip *ip;
+
+		if (m->m_len < sizeof(*eh) + sizeof(*ip)) {
+			m = m_pullup(m, sizeof(*eh) + sizeof(*ip));
+			if (m == NULL)
+				return NULL;
+		}
+		ip = (struct ip *)(mtod(m, struct ether_header *) + 1);
+
+		/*
+		 * IP packet, map TOS precedence field.
+		 */
+		switch (ip->ip_tos & 0xfc) {
+		case IPTOS_PREC_PRIORITY:
+			*up = 2;
+			break;
+		case IPTOS_PREC_IMMEDIATE:
+			*up = 1;
+			break;
+		case IPTOS_PREC_FLASH:
+			*up = 3;
+			break;
+		case IPTOS_PREC_FLASHOVERRIDE:
+			*up = 4;
+			break;
+		case IPTOS_PREC_CRITIC_ECP:
+			*up = 5;
+			break;
+		case IPTOS_PREC_INTERNETCONTROL:
+			*up = 6;
+			break;
+		case IPTOS_PREC_NETCONTROL:
+			*up = 7;
+			break;
+		default:
+			*up = 0;
+		}
+		return m;
+	}
+#endif
+	*up = 0;	/* default to Best-Effort */
+	return m;
+}
 
 /*
  * Encapsulate an outbound data frame.  The mbuf chain is updated and
