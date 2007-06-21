@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.50 2007/06/21 10:18:27 jmc Exp $
+.\"     $OpenBSD: intro.4,v 1.51 2007/06/21 19:45:46 jmc Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -222,9 +222,8 @@ Tadpole PCMCIA Controller
 .Bl -tag -width 12n -compact -offset ind
 .It Xr clock 4
 SPARC64 FireHose Controller
-.\".It Xr fd 4
-.\"Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
-.\"floppy disk drive controller.
+.It Xr fdc 4
+NEC765 compatible floppy disk driver
 .It Xr led 4
 SPARC LED driver
 .It Xr openprom 4
