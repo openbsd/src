@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2007/06/17 12:59:52 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.45 2007/06/21 20:17:32 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -298,9 +298,7 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		sys_config.pci_mem[0].bus_reverse = my_endian;
 		sys_config.cpu[0].tlbwired = 2;
 
-#if 0
 		crime_configure_memory();
-#endif
 
 		sys_config.cpu[0].clock = 180000000;  /* Reasonable default */
 		cp = Bios_GetEnvironmentVariable("cpufreq");
