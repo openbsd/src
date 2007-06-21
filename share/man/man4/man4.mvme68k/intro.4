@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.23 2007/06/21 10:18:27 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.24 2007/06/21 19:56:54 jmc Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -97,40 +97,38 @@ Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width pcctwo(4) -compact -offset indent
-.\".It Xr cl 4
-.\"Cirrus Logic CL2400 serial controller.
-.\".It Xr flash 4
-.\"MVME162 on-board flash memory.
+.It Xr cl
+Cirrus Logic CL2400 serial controller
+.It Xr flash
+MVME162 on-board flash memory
 .It Xr ie 4
 Intel i82586 Ethernet device
-.\".It Xr ipic 4
-.\"MVME162
-.\".Tn Industry Pack
-.\"ports.
+.It Xr ipic
+MVME162 Industry Pack ports
 .It Xr le 4
 AMD LANCE Ethernet device
-.\" .It Xr lp 4
-.\" MVME147 printer interface.
-.\".It Xr mc 4
-.\"MVME162 MCchip.
-.\".It Xr memc 4
-.\"MVME1[67]x memory controller.
-.\".It Xr pcc 4
-.\"MVME147 PCC chip.
-.\".It Xr pcctwo 4
-.\"MVME1[67]7 PCC2 chip.
-.\".It Xr sram 4
-.\"MVME162 static memory.
+.It Xr lp
+MVME147 printer interface
+.It Xr mc
+MVME162 MCchip
+.It Xr memc
+MVME1[67]x memory controller
+.It Xr pcc
+MVME147 PCC chip
+.It Xr pcctwo
+MVME1[67]7 PCC2 chip
+.It Xr sram
+MVME162 static memory
 .It Xr ssh 4
 NCR 53c7xx SCSI driver
-.\".It Xr vme 4
-.\"VME bus support.
-.\".It Xr vs 4
-.\"MVME328 low level SCSI adapter interface.
-.\".It Xr wdsc 4
-.\"WD33C93 SCSI adapter interface.
-.\".It Xr zs 4
-.\"Zilog 8530 serial controller.
+.It Xr vme
+VME bus support
+.It Xr vs
+MVME328 low level SCSI adapter interface
+.It Xr wdsc
+WD33C93 SCSI adapter interface
+.It Xr zs
+Zilog 8530 serial controller
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
