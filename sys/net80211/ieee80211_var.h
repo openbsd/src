@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.23 2007/06/17 09:09:35 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.24 2007/06/21 18:21:01 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -134,11 +134,13 @@ struct ieee80211_channel {
  * 802.11e EDCA AC parameters.
  */
 struct ieee80211_edca_ac_params {
-	u_int8_t	ecwmin;		/* CWmin = 2^ECWmin - 1 */
-	u_int8_t	ecwmax;		/* CWmax = 2^ECWmax - 1 */
-	u_int8_t	aifsn;
-	u_int16_t	txoplimit;	/* 32TU */
+	u_int8_t	ac_ecwmin;	/* CWmin = 2^ECWmin - 1 */
+	u_int8_t	ac_ecwmax;	/* CWmax = 2^ECWmax - 1 */
+	u_int8_t	ac_aifsn;
+	u_int16_t	ac_txoplimit;	/* 32TU */
 #define IEEE80211_TXOP_TO_US(txop)	((txop) * 32)
+
+	u_int8_t	ac_acm;
 };
 
 #define	IEEE80211_PS_SLEEP	0x1	/* STA is in power saving mode */
@@ -228,6 +230,8 @@ struct ieee80211com {
 	struct timeval		ic_last_merge_print;	/* for rate-limiting
 							 * IBSS merge print-outs
 							 */
+	struct ieee80211_edca_ac_params ic_edca_ac[EDCA_NUM_AC];
+	u_int			ic_edca_updtcount;
 };
 #define	ic_if		ic_ac.ac_if
 #define	ic_softc	ic_if.if_softc
