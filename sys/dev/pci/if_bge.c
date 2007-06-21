@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.212 2007/05/03 10:11:25 tom Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.213 2007/06/21 01:11:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -157,8 +157,7 @@ void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 u_int8_t bge_eeprom_getbyte(struct bge_softc *, int, u_int8_t *);
 int bge_read_eeprom(struct bge_softc *, caddr_t, int, int);
 
-void bge_setmulti(struct bge_softc *);
-void bge_setpromisc(struct bge_softc *);
+void bge_iff(struct bge_softc *);
 
 int bge_alloc_jumbo_mem(struct bge_softc *);
 void *bge_jalloc(struct bge_softc *);
@@ -1061,52 +1060,38 @@ bge_init_tx_ring(struct bge_softc *sc)
 }
 
 void
-bge_setmulti(struct bge_softc *sc)
+bge_iff(struct bge_softc *sc)
 {
 	struct arpcom		*ac = &sc->arpcom;
 	struct ifnet		*ifp = &ac->ac_if;
 	struct ether_multi	*enm;
 	struct ether_multistep  step;
-	u_int32_t		hashes[4] = { 0, 0, 0, 0 };
-	u_int32_t		h;
-	int			i;
+	u_int8_t		hashes[16];
+	u_int32_t		h, rxmode;
 
 	/* First, zot all the existing filters. */
-	for (i = 0; i < 4; i++)
-		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0);
-
-	/* Now program new ones. */
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-allmulti:
-		for (i = 0; i < 4; i++)
-			CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0xFFFFFFFF);
-		return;
-	}
-
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
-		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x7F;
-		hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	for (i = 0; i < 4; i++)
-		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), hashes[i]);
-}
-
-void
-bge_setpromisc(struct bge_softc *sc)
-{
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
+	rxmode = CSR_READ_4(sc, BGE_RX_MODE) & ~BGE_RXMODE_RX_PROMISC;
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	memset(hashes, 0x00, sizeof(hashes));
 
 	if (ifp->if_flags & IFF_PROMISC)
-		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
-	else
-		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+		rxmode |= BGE_RXMODE_RX_PROMISC;
+	else if (ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		memset(hashes, 0xff, sizeof(hashes));
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+			setbit(hashes, h & 0x7F);
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
+	bus_space_write_raw_region_4(sc->bge_btag, sc->bge_bhandle, BGE_MAR0,
+	    hashes, sizeof(hashes));
+
+	CSR_WRITE_4(sc, BGE_RX_MODE, rxmode);
 }
 
 /*
@@ -2956,14 +2941,11 @@ bge_init(void *xsc)
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_LO, htons(m[0]));
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
 
-	/* Enable or disable promiscuous mode as needed. */
-	bge_setpromisc(sc);
-
 	/* Disable hardware decapsulation of vlan frames. */
 	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
 
-	/* Program multicast filter. */
-	bge_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	bge_iff(sc);
 
 	/* Init RX ring. */
 	bge_init_rx_ring_std(sc);
@@ -3150,26 +3132,10 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			/*
-			 * If only the state of the PROMISC flag changed,
-			 * then just use the 'set promisc mode' command
-			 * instead of reinitializing the entire NIC. Doing
-			 * a full re-init means reloading the firmware and
-			 * waiting for it to start up, which may take a
-			 * second or two.  Similarly for ALLMULTI.
-			 */
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ((ifp->if_flags ^ sc->bge_if_flags) &
-			     IFF_PROMISC)) {
-				bge_setpromisc(sc);
-				bge_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->bge_if_flags) & IFF_ALLMULTI) {
-				bge_setmulti(sc);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					bge_init(sc);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				bge_iff(sc);
+			else
+				bge_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				bge_stop(sc);
@@ -3184,7 +3150,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
-				bge_setmulti(sc);
+				bge_iff(sc);
 			error = 0;
 		}
 		break;
