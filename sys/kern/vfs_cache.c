@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.24 2007/05/30 04:27:42 beck Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.25 2007/06/21 12:05:14 pedro Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -89,10 +89,9 @@ struct pool nch_pool;
 u_long nextvnodeid;
 
 /*
- * Look for a the name in the cache. We don't do this
- * if the segment name is long, simply so the cache can avoid
- * holding long names (which would either waste space, or
- * add greatly to the complexity).
+ * Look for a name in the cache. We don't do this if the segment name is
+ * long, simply so the cache can avoid holding long names (which would
+ * either waste space, or add greatly to the complexity).
  *
  * Lookup is called with ni_dvp pointing to the directory to search,
  * ni_ptr pointing to the name of the entry being sought, ni_namelen
