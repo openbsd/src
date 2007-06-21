@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2006/11/04 02:08:25 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 2007/06/21 04:43:33 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -209,14 +209,15 @@ void
 microtime(struct timeval *tv)
 {
 	static struct timeval lasttime;
+	u_int32_t tcnt0;
 	int s;
 
 	s = splclock();
 	*tv = time;
+	tcnt0 = _reg_read_4(SH_(TCNT0));
 	splx(s);
 
-	tv->tv_usec += ((sh_clock.hz_cnt - _reg_read_4(SH_(TCNT0)))
-	    * 1000000) / sh_clock.tmuclk;
+	tv->tv_usec += ((sh_clock.hz_cnt - tcnt0) * 1000000) / sh_clock.tmuclk;
 	while (tv->tv_usec >= 1000000) {
 		tv->tv_usec -= 1000000;
 		tv->tv_sec++;
