@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.28 2006/02/26 21:10:54 otto Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.29 2007/06/21 03:13:14 ray Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,12 +25,13 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.28 2006/02/26 21:10:54 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.29 2007/06/21 03:13:14 ray Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 struct mbuf;
 struct rtentry;
@@ -455,10 +456,8 @@ lookup_protoid(const u_char *pi)
 char *
 etheraddr_string(register const u_char *ep)
 {
-	register u_int i, j;
-	register char *cp;
 	register struct enamemem *tp;
-	char buf[sizeof("00:00:00:00:00:00")];
+	struct ether_addr e;
 
 	tp = lookup_emem(ep);
 	if (tp->e_name)
@@ -473,18 +472,8 @@ etheraddr_string(register const u_char *ep)
 		}
 	}
 #endif
-	cp = buf;
-	if ((j = *ep >> 4) != 0)
-		*cp++ = hex[j];
-	*cp++ = hex[*ep++ & 0xf];
-	for (i = 5; (int)--i >= 0;) {
-		*cp++ = ':';
-		if ((j = *ep >> 4) != 0)
-			*cp++ = hex[j];
-		*cp++ = hex[*ep++ & 0xf];
-	}
-	*cp = '\0';
-	tp->e_name = savestr(buf);
+	memcpy(e.ether_addr_octet, ep, sizeof(e.ether_addr_octet));
+	tp->e_name = savestr(ether_ntoa(&e));
 	return (tp->e_name);
 }
 
