@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.29 2007/06/21 18:20:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.30 2007/06/21 19:48:48 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1036,7 +1036,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *ssid, *rates, *xrates, *edca;
+	const u_int8_t *ssid, *rates, *xrates, *edca, *wmm, *oui;
 	const u_int8_t *tstamp, *bintval, *capinfo, *country;
 	u_int8_t chan, bchan, fhindex, erp;
 	u_int16_t fhdwell;
@@ -1070,7 +1070,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	tstamp  = frm;	frm += 8;
 	bintval = frm;	frm += 2;
 	capinfo = frm;	frm += 2;
-	ssid = rates = xrates = country = edca = NULL;
+	ssid = rates = xrates = country = edca = wmm = NULL;
 	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
 	fhdwell = 0;
@@ -1123,6 +1123,20 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			edca = frm;
 			break;
 		case IEEE80211_ELEMID_QOS_CAP:
+			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (frm[1] < 4) {
+				ic->ic_stats.is_rx_elem_toosmall++;
+				break;
+			}
+			oui = frm + 2;
+			if (memcmp(oui, MICROSOFT_OUI, 3) == 0) {
+				switch (oui[3]) {
+				case 2:	/* WMM */
+					wmm = frm;
+					break;
+				}
+			}
 			break;
 		default:
 			IEEE80211_DPRINTF2(("%s: element id %u/len %u "
@@ -1243,9 +1257,12 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			     IEEE80211_CAPINFO_SHORT_SLOTTIME));
 		}
 	}
-	if (edca != NULL && (ni->ni_flags & IEEE80211_NODE_QOS))
-		ieee80211_parse_edca_params(ic, edca);
-
+	if (ni->ni_flags & IEEE80211_NODE_QOS) {
+		if (edca != NULL)
+			ieee80211_parse_edca_params(ic, edca);
+		else if (wmm != NULL)
+			ieee80211_parse_wmm_params(ic, edca);
+	}
 	if (ssid[1] != 0 && ni->ni_esslen == 0) {
 		/*
 		 * Update ESSID at probe response to adopt hidden AP by
@@ -1555,7 +1572,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *rates, *xrates, *edca;
+	const u_int8_t *rates, *xrates, *edca, *wmm, *oui;
 	u_int16_t status;
 
 	if (ic->ic_opmode != IEEE80211_M_STA ||
@@ -1589,7 +1606,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_associd = letoh16(*(u_int16_t *)frm);
 	frm += 2;
 
-	rates = xrates = edca = NULL;
+	rates = xrates = edca = wmm = NULL;
 	while (frm < efrm) {
 		switch (*frm) {
 		case IEEE80211_ELEMID_RATES:
@@ -1600,6 +1617,20 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_ELEMID_EDCAPARMS:
 			edca = frm;
+			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (frm[1] < 4) {
+				ic->ic_stats.is_rx_elem_toosmall++;
+				break;
+			}
+			oui = frm + 2;
+			if (memcmp(oui, MICROSOFT_OUI, 3) == 0) {
+				switch (oui[3]) {
+				case 2:	/* WMM */
+					wmm = frm;
+					break;
+				}
+			}
 			break;
 		}
 		frm += frm[1] + 2;
@@ -1612,11 +1643,14 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	if (ni->ni_rates.rs_nrates == 0)
 		return;
 
-	if (edca != NULL) {
+	if (edca != NULL || wmm != NULL) {
 		/* force update of EDCA parameters */
 		ic->ic_edca_updtcount = -1;
 
-		if (ieee80211_parse_edca_params(ic, edca) == 0)
+		if ((edca != NULL &&
+		     ieee80211_parse_edca_params(ic, edca) == 0) ||
+		    (wmm != NULL &&
+		     ieee80211_parse_wmm_params(ic, wmm) == 0))
 			ni->ni_flags |= IEEE80211_NODE_QOS;
 		else	/* for Reassociation */
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
