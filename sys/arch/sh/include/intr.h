@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2007/05/10 17:59:26 deraadt Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2007/06/21 04:37:54 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.22 2006/01/24 23:51:42 uwe Exp $	*/
 
 /*-
@@ -74,8 +74,9 @@ struct intc_intrhand {
 	int	ih_level;	/* SR.I[0:3] value */
 	int	ih_evtcode;	/* INTEVT or INTEVT2(SH7709/SH7709A) */
 	int	ih_idx;		/* evtcode -> intrhand mapping */
+	int	ih_irq;
 	struct evcount ih_count;
-	char *ih_name;
+	const char *ih_name;
 };
 
 /* from 0x200 by 0x20 -> from 0 by 1 */

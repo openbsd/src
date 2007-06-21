@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.6 2007/05/29 18:10:43 miod Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.7 2007/06/21 04:37:56 miod Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -138,7 +138,11 @@ intc_intr_establish(int evtcode, int trigger, int level,
 	ih->ih_arg	= ih_arg;
 	ih->ih_level	= level << 4;	/* convert to SR.IMASK format. */
 	ih->ih_evtcode	= evtcode;
-	ih->ih_name = (char *)name; /* XXX strdup? */
+	ih->ih_irq	= evtcode >> 5;
+	ih->ih_name	= name;
+	if (name)
+		evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
+		    &evcount_intr);
 
 	/* Map interrupt handler */
 	EVTCODE_TO_IH_INDEX(evtcode) = ih->ih_idx;
@@ -163,6 +167,8 @@ intc_intr_disestablish(void *arg)
 	/* Unmap interrupt handler */
 	EVTCODE_TO_IH_INDEX(evtcode) = 0;
 
+	if (ih->ih_name)
+		evcount_detach(&ih->ih_count);
 	intc_free_ih(ih);
 }
 
