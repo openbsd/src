@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.18 2007/06/21 18:18:48 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.19 2007/06/21 19:45:45 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -428,14 +428,6 @@ enum ieee80211_edca_ac {
 /* bits 3-6 reserved */
 #define	ATHEROS_CAP_BOOST			0x80
 
-#define	ATH_OUI			0x7f0300		/* Atheros OUI */
-#define	ATH_OUI_TYPE		0x01
-#define	ATH_OUI_VERSION		0x01
-
-#define	WPA_OUI			0xf25000
-#define	WPA_OUI_TYPE		0x01
-#define	WPA_OUI_VERSION		1		/* current supported version */
-
 #define	WPA_CSE_NULL		0x00
 #define	WPA_CSE_WEP40		0x01
 #define	WPA_CSE_TKIP		0x02
@@ -446,9 +438,6 @@ enum ieee80211_edca_ac {
 #define	WPA_ASE_NONE		0x00
 #define	WPA_ASE_8021X_UNSPEC	0x01
 #define	WPA_ASE_8021X_PSK	0x02
-
-#define	RSN_OUI			0xac0f00
-#define	RSN_OUI_VERSION		1		/* current supported version */
 
 #define	RSN_CSE_NULL		0x00
 #define	RSN_CSE_WEP40		0x01
@@ -461,9 +450,12 @@ enum ieee80211_edca_ac {
 #define	RSN_ASE_8021X_UNSPEC	0x01
 #define	RSN_ASE_8021X_PSK	0x02
 
-#define	WME_OUI			0xf25000
-#define	WME_OUI_TYPE		0x02
-#define	WME_OUI_VERSION		1
+/* Organizationally Unique Identifiers */
+/* See http://standards.ieee.org/regauth/oui/oui.txt for a list */
+#define ATHEROS_OUI	((const u_int8_t[]){ 0x00, 0x03, 0x7f })
+#define BROADCOM_OUI	((const u_int8_t[]){ 0c00, 0x90, 0x4c })
+#define IEEE80211_OUI	((const u_int8_t[]){ 0x00, 0x0f, 0xac })
+#define MICROSOFT_OUI	((const u_int8_t[]){ 0x00, 0x50, 0xf2 })
 
 /*
  * AUTH management packets
