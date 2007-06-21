@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.24 2007/06/20 20:47:34 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.25 2007/06/21 20:17:12 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -69,6 +69,9 @@ void macebus_do_pending_int(int);
 intrmask_t macebus_iointr(intrmask_t, struct trap_frame *);
 intrmask_t macebus_aux(intrmask_t, struct trap_frame *);
 
+bus_addr_t macebus_pa_to_device(paddr_t);
+paddr_t	macebus_device_to_pa(bus_addr_t);
+
 int maceticks;		/* Time tracker for special events */
 
 struct cfattach macebus_ca = {
@@ -121,7 +124,9 @@ struct machine_bus_dma_tag mace_bus_dma_tag = {
 	_dmamem_map,
 	_dmamem_unmap,
 	_dmamem_mmap,
-	NULL
+	macebus_pa_to_device,
+	macebus_device_to_pa,
+	CRIME_MEMORY_MASK
 };
 
 /*
@@ -427,6 +432,28 @@ mace_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
 {
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+/*
+ * Macebus bus_dma helpers.
+ * Mace accesses memory contiguously at 0x40000000 onwards.
+ */
+
+bus_addr_t
+macebus_pa_to_device(paddr_t pa)
+{
+	return (pa | CRIME_MEMORY_OFFSET);
+}
+
+paddr_t
+macebus_device_to_pa(bus_addr_t addr)
+{
+	paddr_t pa = (paddr_t)addr & CRIME_MEMORY_MASK;
+
+	if (pa >= 256 * 1024 * 1024)
+		pa |= CRIME_MEMORY_OFFSET;
+
+	return (pa);
 }
 
 /*

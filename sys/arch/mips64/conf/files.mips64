@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mips64,v 1.8 2007/06/18 21:46:41 deraadt Exp $
+#	$OpenBSD: files.mips64,v 1.9 2007/06/21 20:17:12 miod Exp $
 
 file	arch/mips64/mips64/mem.c
 file	arch/mips64/mips64/process_machdep.c
@@ -8,7 +8,6 @@ file	arch/mips64/mips64/vm_machdep.c
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c
 file	arch/mips64/mips64/cpu.c
-file	arch/mips64/mips64/busdma.c
 file	arch/mips64/mips64/interrupt.c
 file	arch/mips64/mips64/mainbus.c
 file	arch/mips64/mips64/pmap.c

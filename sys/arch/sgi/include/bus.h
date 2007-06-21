@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2006/05/27 00:29:55 krw Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2007/06/21 20:17:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -345,7 +345,13 @@ struct machine_bus_dma_tag {
 	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
-	paddr_t	dma_offs;
+
+	/*
+	 * internal memory address translation information.
+	 */
+	bus_addr_t (*_pa_to_device)(paddr_t);
+	paddr_t	(*_device_to_pa)(bus_addr_t);
+	bus_addr_t _dma_mask;
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: busdma.c,v 1.13 2007/05/30 19:44:26 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.1 2007/06/21 20:17:10 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -135,6 +135,7 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 
 	lastaddr = ~0;		/* XXX gcc */
 	bmask  = ~(map->_dm_boundary - 1);
+	bmask &= t->_dma_mask;
 
 	saved_buflen = buflen;
 	for (first = 1, seg = 0; buflen > 0; ) {
@@ -167,7 +168,8 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 		 * previous segment if possible.
 		 */
 		if (first) {
-			map->dm_segs[seg].ds_addr = curaddr + t->dma_offs;
+			map->dm_segs[seg].ds_addr =
+			    (*t->_pa_to_device)(curaddr);
 			map->dm_segs[seg].ds_len = sgsize;
 			map->dm_segs[seg].ds_vaddr = (vaddr_t)vaddr;
 			first = 0;
@@ -176,13 +178,14 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 			    (map->dm_segs[seg].ds_len + sgsize) <=
 			     map->_dm_maxsegsz &&
 			     (map->_dm_boundary == 0 ||
-			     ((map->dm_segs[seg].ds_addr - t->dma_offs) & bmask) ==
+			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)
 					break;
-				map->dm_segs[seg].ds_addr = curaddr + t->dma_offs;
+				map->dm_segs[seg].ds_addr =
+				    (*t->_pa_to_device)(curaddr);
 				map->dm_segs[seg].ds_len = sgsize;
 				map->dm_segs[seg].ds_vaddr = (vaddr_t)vaddr;
 			}
@@ -236,15 +239,15 @@ _dmamap_load_mbuf(t, map, m, flags)
 			if (pmap_extract(pmap_kernel(), vaddr, &pa) == FALSE)
 				panic("_dmamap_load_mbuf: pmap_extract(%x, %x) failed!",
 				    pmap_kernel(), vaddr);
-			pa += t->dma_offs;
 
-			if (i > 0 && pa == (map->dm_segs[i-1].ds_addr + map->dm_segs[i-1].ds_len)
+			if (i > 0 && pa == (*t->_device_to_pa)(map->dm_segs[i-1].ds_addr + map->dm_segs[i-1].ds_len)
 			    && ((map->dm_segs[i-1].ds_len + incr) < map->_dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
 				map->dm_segs[i-1].ds_len += incr;
 				continue;
 			}
-			map->dm_segs[i].ds_addr = pa;
+			map->dm_segs[i].ds_addr =
+			    (*t->_pa_to_device)(pa);
 			map->dm_segs[i].ds_vaddr = vaddr;
 			map->dm_segs[i].ds_len = incr;
 			i++;
@@ -297,6 +300,7 @@ _dmamap_load_raw(t, map, segs, nsegs, size, flags)
 		bus_addr_t bmask = ~(map->_dm_boundary - 1);
 		int i;
 
+		bmask &= t->_dma_mask;
 		for (i = 0; i < nsegs; i++) {
 			if (segs[i].ds_len > map->_dm_maxsegsz)
 				return (EINVAL);
@@ -457,7 +461,7 @@ _dmamem_free(t, segs, nsegs)
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
-			m = PHYS_TO_VM_PAGE(addr - t->dma_offs);
+			m = PHYS_TO_VM_PAGE((*t->_device_to_pa)(addr));
 			TAILQ_INSERT_TAIL(&mlist, m, pageq);
 		}
 	}
@@ -495,14 +499,14 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, addr - t->dma_offs,
+			pmap_enter(pmap_kernel(), va, (*t->_device_to_pa)(addr),
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 			segs[curseg].ds_vaddr = va;
 
 			if (flags & BUS_DMA_COHERENT &&
 			    sys_config.system_type == SGI_O2) 
-				pmap_page_cache(PHYS_TO_VM_PAGE(addr - t->dma_offs), PV_UNCACHED);
+				pmap_page_cache(PHYS_TO_VM_PAGE((*t->_device_to_pa)(addr)), PV_UNCACHED);
 		}
 	}
 
@@ -558,7 +562,7 @@ _dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (atop(segs[i].ds_addr + off - t->dma_offs));
+		return (atop((*t->_device_to_pa)(segs[i].ds_addr) + off));
 	}
 
 	/* Page not found. */
@@ -608,13 +612,13 @@ _dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 */
 	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
-	segs[curseg].ds_addr += t->dma_offs;
+	lastaddr = segs[curseg].ds_addr =
+	    (*t->_pa_to_device)(VM_PAGE_TO_PHYS(m));
 	segs[curseg].ds_len = PAGE_SIZE;
 	m = TAILQ_NEXT(m, pageq);
 
 	for (; m != TAILQ_END(&mlist); m = TAILQ_NEXT(m, pageq)) {
-		curaddr = VM_PAGE_TO_PHYS(m);
+		curaddr = (*t->_pa_to_device)(VM_PAGE_TO_PHYS(m));
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("vm_page_alloc_memory returned non-sensical"
@@ -626,7 +630,7 @@ _dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 			segs[curseg].ds_len += PAGE_SIZE;
 		else {
 			curseg++;
-			segs[curseg].ds_addr = curaddr + t->dma_offs;
+			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
 		lastaddr = curaddr;

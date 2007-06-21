@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.11 2006/12/14 17:36:12 kettenis Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.12 2007/06/21 20:17:12 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -49,6 +49,7 @@
 #include <dev/pci/pcivar.h>
 
 #include <mips64/archtype.h>
+#include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
 #include <sgi/pci/macepcibrvar.h>
 
@@ -77,6 +78,8 @@ void     *mace_pcibr_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
 void     mace_pcibr_intr_disestablish(void *, void *);
 
+bus_addr_t mace_pcibr_pa_to_device(paddr_t);
+paddr_t	mace_pcibr_device_to_pa(bus_addr_t);
 
 struct cfattach macepcibr_ca = {
 	sizeof(struct mace_pcibr_softc), mace_pcibrmatch, mace_pcibrattach,
@@ -132,7 +135,9 @@ struct machine_bus_dma_tag pci_bus_dma_tag = {
 	_dmamem_map,
 	_dmamem_unmap,
 	_dmamem_mmap,
-	NULL
+	mace_pcibr_pa_to_device,
+	mace_pcibr_device_to_pa,
+	CRIME_MEMORY_MASK
 };
 
 struct _perr_map {
@@ -239,7 +244,6 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_iot = sc->sc_io_bus_space;
 	pba.pba_memt = sc->sc_mem_bus_space;
 	pba.pba_dmat = malloc(sizeof(pci_bus_dma_tag), M_DEVBUF, M_NOWAIT);
-	pci_bus_dma_tag.dma_offs = 0x00000000;
 	*pba.pba_dmat = pci_bus_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
@@ -562,4 +566,26 @@ mace_pcib_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
 {
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+/*
+ * Mace PCI bus_dma helpers.
+ * The PCI bus accesses memory contiguously at 0x00000000 onwards.
+ */
+
+bus_addr_t
+mace_pcibr_pa_to_device(paddr_t pa)
+{
+	return (pa & CRIME_MEMORY_MASK);
+}
+
+paddr_t
+mace_pcibr_device_to_pa(bus_addr_t addr)
+{
+	paddr_t pa = (paddr_t)addr & CRIME_MEMORY_MASK;
+
+	if (pa >= 256 * 1024 * 1024)
+		pa |= CRIME_MEMORY_OFFSET;
+
+	return (pa);
 }

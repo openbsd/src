@@ -1,4 +1,4 @@
-/*	$OpenBSD: crimebus.h,v 1.5 2007/05/03 19:34:00 miod Exp $	*/
+/*	$OpenBSD: crimebus.h,v 1.6 2007/06/21 20:17:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.se).
@@ -99,6 +99,9 @@
 #define  CRIME_MEM_BANK_ADDR	   0x01f
 #define  CRIME_MEM_BANK_128MB	   0x100
 #define CRIME_MAX_BANKS		 8
+
+#define	CRIME_MEMORY_OFFSET	0x40000000	/* 1GB */
+#define	CRIME_MEMORY_MASK	0x3fffffff
 
 #define	CRIME_MEM_ERROR_STAT	 0x0250
 #define	CRIME_MEM_ERROR_ADDR	 0x0258

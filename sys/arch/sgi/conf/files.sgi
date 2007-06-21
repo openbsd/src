@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.12 2007/06/18 21:46:41 deraadt Exp $
+#	$OpenBSD: files.sgi,v 1.13 2007/06/21 20:17:12 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -10,6 +10,7 @@ maxusers 2 8 64
 
 file	arch/sgi/sgi/disksubr.c			disk
 file	arch/sgi/sgi/autoconf.c
+file	arch/sgi/sgi/bus_dma.c
 file	arch/sgi/sgi/conf.c
 file	arch/sgi/sgi/machdep.c
 file	arch/sgi/sgi/mutex.c
