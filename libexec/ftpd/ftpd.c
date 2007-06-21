@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.177 2007/06/19 06:48:23 ray Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.178 2007/06/21 02:22:51 ray Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.177 2007/06/19 06:48:23 ray Exp $";
+    "$OpenBSD: ftpd.c,v 1.178 2007/06/21 02:22:51 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -2881,7 +2881,6 @@ copy_dir(char *dir, struct passwd *pw)
 	char *cp;
 	char *newdir;
 	char *user = NULL;
-	size_t dirsiz;
 
 	/* Nothing to expand */
 	if (dir[0] != '~')
@@ -2890,7 +2889,7 @@ copy_dir(char *dir, struct passwd *pw)
 	/* "dir" is of form ~user/some/dir, lookup user. */
 	if (dir[1] != '/' && dir[1] != '\0') {
 		if ((cp = strchr(dir + 1, '/')) == NULL)
-		    cp = dir + strlen(dir);
+			cp = dir + strlen(dir);
 		if ((user = malloc((size_t)(cp - dir))) == NULL)
 			return (NULL);
 		strlcpy(user, dir + 1, (size_t)(cp - dir));
@@ -2908,16 +2907,13 @@ copy_dir(char *dir, struct passwd *pw)
 
 	/*
 	 * If there is no directory separator (/) then it is just pw_dir.
-	 * Otherwise, replace ~foo with  pw_dir.
+	 * Otherwise, replace ~foo with pw_dir.
 	 */
 	if ((cp = strchr(dir + 1, '/')) == NULL) {
 		newdir = strdup(pw->pw_dir);
 	} else {
-		dirsiz = strlen(cp) + strlen(pw->pw_dir) + 1;
-		if ((newdir = malloc(dirsiz)) == NULL)
+		if (asprintf(&newdir, "%s%s", pw->pw_dir, cp) == -1)
 			return (NULL);
-		strlcpy(newdir, pw->pw_dir, dirsiz);
-		strlcat(newdir, cp, dirsiz);
 	}
 
 	return(newdir);
