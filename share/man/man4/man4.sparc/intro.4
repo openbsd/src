@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.49 2007/06/21 08:49:20 jmc Exp $
+.\"     $OpenBSD: intro.4,v 1.50 2007/06/21 10:18:27 jmc Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -100,152 +100,141 @@ not all supported devices are listed.
 .Ss Audio interfaces
 .Bl -tag -width 12n -compact -offset ind
 .It Xr audioamd 4
-SPARC telephone quality audio device.
+SPARC telephone quality audio device
 .It Xr audiocs 4
-SPARC CS4231 audio device.
+SPARC CS4231 audio device
 .El
 .Ss Frame buffers
-.Bl -tag -width 12n -compact -offset ind
+.Bl -tag -width 14n -compact -offset ind
 .It Xr agten 4
-Fujitsu AG-10e frame buffer.
+Fujitsu AG-10e accelerated 24-bit color frame buffer
 .It Xr bwtwo 4
-Black and white SBus and obio (sun4) frame buffer.
+monochromatic frame buffer
 .It Xr cgeight 4
-24 bit VMEbus color frame buffer.
+24-bit color frame buffer
 .It Xr cgfour 4
-8 bit obio (sun4 P4 bus) color graphics frame buffer.
+8-bit color frame buffer
 .It Xr cgfourteen 4
-24 bit MBus color frame buffer.
+accelerated 8/24-bit color frame buffer
 .It Xr cgsix 4
-8 bit SBus and obio (sun4c & sun4m) color graphics frame buffer.
+accelerated 8-bit color frame buffer
 .It Xr cgthree 4
-8 bit VMEbus, SBus, and obio (sun4m) color graphics frame buffer.
+8-bit color frame buffer
 .It Xr cgtwelve 4
-24 bit SBus color frame buffer.
+accelerated 24-bit color frame buffer
 .It Xr cgtwo 4
-8 bit VMEbus color frame buffer.
+8-bit color frame buffer
 .It Xr mgx 4
-.Tn Southland Media Systems
-MGX and MGXPlus frame buffers.
+SMS MGX and MGXPlus accelerated 8/24-bit color frame buffers
 .It Xr rfx 4
-Vitec/Connectware/AP&D
-.Tn RasterFlex
-framebuffer series.
+Vitec/Connectware/AP&D RasterFlex framebuffer series
 .It Xr tcx 4
-8 or 24 bit SBus color graphics frame buffer.
+accelerated 8/24-bit color frame buffer
 .It Xr tvtwo 4
-Parallax XVideo and PowerVideo 24 bit SBus color frame buffer.
+accelerated 24-bit color frame buffer
 .It Xr vigra 4
-8 bit SBus color framebuffer with VGA-compatible modes and connector.
+8-bit SBus color frame buffer with VGA-compatible modes
 .It Xr zx 4
-24 bit accelerated SBus color frame buffer.
+accelerated 24-bit color frame buffer
 .El
 .Ss Network interfaces
 .Bl -tag -width 12n -compact -offset ind
 .It Xr be 4
-SPARC 10/100 Ethernet device.
+SPARC 10/100 Ethernet device
 .It Xr ep 4
-3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device.
+3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device
 .It Xr hme 4
-Sun Happy Meal 10/100 Ethernet device.
+Sun Happy Meal 10/100 Ethernet device
 .It Xr ie 4
-Intel i82586 Ethernet device.
+Intel i82586 Ethernet device
 .It Xo Xr le 4 ,
 .Xr lebuffer 4 ,
 .Xr ledma 4
 .Xc
-AMD LANCE Ethernet device.
+AMD LANCE Ethernet device
 .It Xr ne 4
-NE2000 and compatible 10/100 Ethernet device.
+NE2000 and compatible 10/100 Ethernet device
 .It Xr qe 4
-SPARC 10/100 Ethernet device.
+SPARC 10/100 Ethernet device
 .It Xr qec 4
-SPARC Quad Ethernet Controller.
+SPARC Quad Ethernet Controller
 .It Xr wi 4
-WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b wireless network device.
+WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b wireless network device
 .El
 .Ss PCMCIA bridges
 .Bl -tag -width 12n -compact -offset ind
 .It Xr stp 4
-SBus PCMCIA bridge.
+SBus PCMCIA bridge
 .El
 .Ss SCSI adapters
 .Bl -tag -width 12n -compact -offset ind
 .It Xr esp 4
-NCR53C90 ESP100 (Sun 4/300),
-.br
-ESP100A (sun4c),
-.br
-ESP200 (sun4m) SCSI controller,
-.br
-FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet SBus controller.
+ESP NCR 53c94 on-board or SBus SCSI interface
 .It Xr isp 4
-Qlogic ISP SBus SCSI controller.
+Qlogic based SCSI or Fibre Channel SCSI interface
 .It Xr si 4
-NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller.
+NCR 5380 Sun SCSI 3 VME SCSI controller
 .It Xr sw 4
-NCR5380 obio (Sun 4/100) "SCSI Weird" SCSI controller.
+NCR 5380 SCSI Weird Sun 4/100 on-board SCSI controller
 .El
 .Ss Serial and parallel interfaces
 .Bl -tag -width 12n -compact -offset ind
 .It Xr magma 4
-Magma serial/parallel communication boards.
+Magma Sp Serial/Parallel board device driver
 .It Xr spif 4
-.Tn Sun
-SUNW,spif serial/parallel communication boards.
+SBus (spiffy) Serial/Parallel Interface
 .It Xo Xr zs 4 ,
 .Xr zstty 4 ,
 .Xr zskbd 4
 .Xc
-Zilog 8530 serial controller (and serial keyboards).
+Zilog 8530 (ZSCC) serial communications driver
 .El
 .Ss SMD controllers
 .Bl -tag -width 12n -compact -offset ind
 .It Xr xd 4
-Xylogics 753/7053 VMEbus SMD disk controller.
+Xylogics 753 or 7053 VME SMD disk controller driver
 .It Xr xy 4
-Xylogics 450/451 VMEbus SMD disk controller.
+Xylogics 450 or 451 VME SMD disk controller driver
 .El
 .Ss Force CPU-5 specific devices
 .Bl -tag -width 12n -compact -offset ind
 .It Xr daadio 4
-MATRIX MD-DAADIO digital/analog and analog/digital parallel i/o board.
+MATRIX MD-DAADIO digital/analog, analog/digital, parallel I/O board
 .It Xr fga 4
-Force FGA5000 SBus/VME bridge.
+SPARC Force FGA5000 VME/SBus bridge driver
 .It Xr scf 4
-Force CPU-5 system configuration registers.
+SPARC Force sysconfig driver
 .El
 .Ss Tadpole SPARCbook specific devices
 .Bl -tag -width 12n -compact -offset ind
 .It Xr com 4
-Built-in modem.
+serial communications interface
 .It Xr pninek 4
-Weitek Power9000 frame buffer found on Tadpole SPARCbook 3.
+Weitek Power9000 accelerated frame buffer
 .It Xr pnozz 4
-Weitek Power9100 frame buffer found on Tadpole SPARCbook 3GS, 3GX, 3TX and 3XP.
+Weitek Power9100 accelerated frame buffer
 .It Xr tctrl 4
-Tadpole microcontroller interface.
+Tadpole Microcontroller Interface
 .It Xr tslot 4
-Tadpole PCMCIA controller.
+Tadpole PCMCIA Controller
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -compact -offset ind
 .It Xr clock 4
-Realtime clock.
-.It Xr fd 4
-Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
-floppy disk drive controller.
+SPARC64 FireHose Controller
+.\".It Xr fd 4
+.\"Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
+.\"floppy disk drive controller.
 .It Xr led 4
-Diagnostic LED display on sun4 and sun4m (4/600) machines.
+SPARC LED driver
 .It Xr openprom 4
-.Tn Sun
-Open boot PROM (what became IEEE 1275) configuration driver.
+OPENPROM and EEPROM interface
 .It Xr presto 4
-Prestoserve NVRAM.
+Prestoserve battery-backed memory
 .It Xr timer 4
-Onboard system timer.
+SPARC Timer
 .It Xr xbox 4
-SBus Expansion Subsystem.
+SPARC SBus Expansion Subsystem
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
