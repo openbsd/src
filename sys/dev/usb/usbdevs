@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.281 2007/06/19 23:57:19 jcs Exp $
+$OpenBSD: usbdevs,v 1.282 2007/06/22 12:41:10 grange Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -60,6 +60,7 @@ $OpenBSD: usbdevs,v 1.281 2007/06/19 23:57:19 jcs Exp $
 vendor UNKNOWN1		0x0053	Unknown vendor
 vendor UNKNOWN2		0x0105	Unknown vendor
 vendor EGALAX2		0x0123	eGalax
+vendor HUMAX		0x02ad	HUMAX
 vendor BWCT		0x03da	Bernd Walter Computer Technology
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
@@ -1284,6 +1285,9 @@ product HP2 C500		0x6002	PhotoSmart C500
 
 /* HUAWEI products */
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
+
+/* HUMAX products */
+product HUMAX PVRSMART		0x138c	PVR-SMART
 
 /* IBM Corporation */
 product IBM OPTTRAVELMOUSE	0x3107	Optical
