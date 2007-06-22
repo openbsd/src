@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.193 2007/05/31 23:18:25 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.194 2007/06/22 10:55:28 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -257,6 +257,7 @@ pgt*	at pci?				# Prism54 (only full-mac varients)
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 #rtw*	at pci?				# Realtek 8180
 wi*	at pci?				# WaveLAN IEEE 802.11DS
+malo*	at pci?				# Marvell Libertas
 
 vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics

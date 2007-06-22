@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.88 2007/05/28 21:22:55 cnst Exp $
+dnl	$OpenBSD: hardware,v 1.89 2007/06/22 10:55:28 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -615,6 +615,9 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		    PLANEX GW-DS54G
 		    SMC EZ Connect g 2.4GHz SMC2802W
 		    SMC 2802Wv2
+		Marvell Libertas based PCI IEEE 802.11b/g adapters [-]
+		    Netgear WG311v3
+		    Tenda TWL542P
 		Ralink RT2500 based PCI IEEE 802.11b/g adapters  [*]
 		    A-Link WL54H
 		    Amigo AWI-926W
