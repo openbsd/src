@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.77 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.78 2007/06/22 13:59:12 thib Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1491,6 +1491,8 @@ ffs_clusteralloc(struct inode *ip, int cg, daddr_t bpref, int len)
 	/*
 	 * Allocate the cluster that we have found.
 	 */
+	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+
 #ifdef DIAGNOSTIC
 	for (i = 1; i <= len; i++)
 		if (!ffs_isblock(fs, cg_blksfree(cgp), got - run + i))
