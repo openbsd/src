@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.13 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.14 2007/06/22 19:04:13 otto Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -47,12 +47,12 @@
 static void usage(void);
 
 static int
-ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
+ufsscan(int fd, daddr64_t beg, daddr64_t end, int flags)
 {
 	static char lastmount[MAXMNTLEN];
 	static u_int8_t buf[SBSIZE * SBCOUNT];
 	struct fs *sb;
-	daddr_t blk, lastblk;
+	daddr64_t blk, lastblk;
 	int n;
 
 	lastblk = -1;
@@ -69,20 +69,20 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 			sb = (struct fs*)(&buf[n]);
 			if (sb->fs_magic == FS_MAGIC) {
 				if (flags & FLAG_VERBOSE)
-					printf("block %d id %x,%x size %d\n",
+					printf("block %lld id %x,%x size %d\n",
 					    blk + (n/512), sb->fs_id[0],
 					    sb->fs_id[1], sb->fs_ffs1_size);
 
 				if (((blk+(n/512)) - lastblk) == (SBSIZE/512)) {
 					if (flags & FLAG_LABELS ) {
-						printf("X: %d %d 4.2BSD %d %d %d # %s\n",
-						    (daddr_t)((off_t)sb->fs_ffs1_size *
+						printf("X: %lld %lld 4.2BSD %d %d %d # %s\n",
+						    ((off_t)sb->fs_ffs1_size *
 						    sb->fs_fsize / 512),
 						    blk+(n/512)-(2*SBSIZE/512),
 						    sb->fs_fsize, sb->fs_bsize,
 						    sb->fs_cpg, lastmount);
 					} else {
-						printf("ffs at %d size %lld "
+						printf("ffs at %lld size %lld "
 						    "mount %s time %s",
 						    blk+(n/512)-(2*SBSIZE/512),
 						    (long long)(off_t)sb->fs_ffs1_size *
@@ -129,15 +129,20 @@ int
 main(int argc, char *argv[])
 {
 	int ch, fd, flags = 0;
-	daddr_t beg = 0, end = -1;
+	daddr64_t beg = 0, end = -1;
+	const char *errstr;
 
 	while ((ch = getopt(argc, argv, "lsvb:e:")) != -1)
 		switch(ch) {
 		case 'b':
-			beg = atoi(optarg);
+			beg = strtonum(optarg, 0, LLONG_MAX, &errstr);
+			if (errstr)
+				errx(1, "%s: %s", optarg, errstr);
 			break;
 		case 'e':
-			end = atoi(optarg);
+			end = strtonum(optarg, 0, LLONG_MAX, &errstr);
+			if (errstr)
+				errx(1, "%s: %s", optarg, errstr);
 			break;
 		case 'v':
 			flags |= FLAG_VERBOSE;
