@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.114 2007/02/14 00:53:48 jsg Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.115 2007/06/22 12:14:05 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -556,6 +556,29 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	if (sa->tdb_emxkey)
 		i+= PADUP(sa->tdb_emxkeylen) + sizeof(struct sadb_key);
 
+	if (sa->tdb_filter.sen_type) {
+		i += 2 * sizeof(struct sadb_protocol);
+
+		/* We'll need four of them: src, src mask, dst, dst mask. */
+		switch (sa->tdb_filter.sen_type) {
+#ifdef INET
+		case SENT_IP4:
+			i += 4 * PADUP(sizeof(struct sockaddr_in));
+			i += 4 * sizeof(struct sadb_address);
+			break;
+#endif /* INET */
+#ifdef INET6
+		case SENT_IP6:
+			i += 4 * PADUP(sizeof(struct sockaddr_in6));
+			i += 4 * sizeof(struct sadb_address);
+			break;
+#endif /* INET6 */
+		default:
+			rval = EINVAL;
+			goto ret;
+		}
+	}
+
 	if (sa->tdb_udpencap_port)
 		i+= sizeof(struct sadb_x_udpencap);
 
@@ -664,6 +687,11 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 		headers[SADB_EXT_KEY_ENCRYPT] = p;
 		export_key(&p, sa, PFKEYV2_ENCRYPTION_KEY);
 	}
+
+	/* Export flow/filter, if present */
+	if (sa->tdb_filter.sen_type)
+		export_flow(&p, IPSP_IPSEC_USE, &sa->tdb_filter,
+		    &sa->tdb_filtermask, headers);
 
 	/* Export UDP encapsulation port, if present */
 	if (sa->tdb_udpencap_port) {
