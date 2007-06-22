@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.23 2007/06/17 20:15:25 jasper Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.24 2007/06/22 09:55:17 jasper Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ u_long ext2gennumber;
 
 static int32_t	ext2fs_alloccg(struct inode *, int, int32_t, int);
 static u_long	ext2fs_dirpref(struct m_ext2fs *);
-static void	ext2fs_fserr(struct m_ext2fs *, u_int, char *);
+static void	ext2fs_fserr(struct m_ext2fs *, uid_t, char *);
 static u_long	ext2fs_hashalloc(struct inode *, int, long, int,
 		    int32_t (*)(struct inode *, int, int32_t, int));
 static int32_t	ext2fs_nodealloccg(struct inode *, int, int32_t, int);
@@ -597,8 +597,8 @@ ext2fs_mapsearch(struct m_ext2fs *fs, char *bbp, int32_t bpref)
  *	fs: error message
  */
 static void
-ext2fs_fserr(struct m_ext2fs *fs, u_int uid, char *cp)
+ext2fs_fserr(struct m_ext2fs *fs, uid_t uid, char *cp)
 {
 
-	log(LOG_ERR, "uid %d on %s: %s\n", uid, fs->e2fs_fsmnt, cp);
+	log(LOG_ERR, "uid %u on %s: %s\n", uid, fs->e2fs_fsmnt, cp);
 }
