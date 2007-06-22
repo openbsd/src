@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.26 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.27 2007/06/22 09:38:53 jasper Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ procfs_init(struct vfsconf *vfsp)
  * the vnode free list.
  */
 int
-procfs_allocvp(struct mount *mp, struct vnode **vpp, long pid, pfstype pfs_type)
+procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid, pfstype pfs_type)
 {
 	struct proc *p = curproc;
 	struct pfsnode *pfs;
@@ -120,7 +120,7 @@ loop:
 	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
 	vp->v_data = pfs;
 
-	pfs->pfs_pid = (pid_t) pid;
+	pfs->pfs_pid = pid;
 	pfs->pfs_type = pfs_type;
 	pfs->pfs_vnode = vp;
 	pfs->pfs_flags = 0;

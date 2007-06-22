@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.23 2005/12/11 21:30:31 miod Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.24 2007/06/22 09:38:53 jasper Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct vfs_namemap {
 int vfs_getuserstr(struct uio *, char *, int *);
 const vfs_namemap_t *vfs_findname(const vfs_namemap_t *, char *, int);
 
-int procfs_allocvp(struct mount *, struct vnode **, long, pfstype);
+int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype);
 int procfs_doctl(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
 int procfs_dofpregs(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
 int procfs_donote(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
