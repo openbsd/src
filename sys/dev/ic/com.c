@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.115 2007/05/08 21:28:11 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.116 2007/06/22 10:09:21 jasper Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -149,9 +149,7 @@ void   com_kgdb_putc(void *, int);
 #define	DEVCUA(x)	(minor(x) & 0x80)
 
 int
-comspeed(freq, speed)
-	long freq;
-	long speed;
+comspeed(long freq, long speed)
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -176,9 +174,7 @@ comspeed(freq, speed)
 
 #ifdef COM_CONSOLE
 int
-comprobe1(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+comprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int i, k;
 
@@ -200,9 +196,7 @@ comprobe1(iot, ioh)
 #endif
 
 int
-com_detach(self, flags)
-	struct device *self;
-	int flags;
+com_detach(struct device *self, int flags)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
@@ -239,9 +233,7 @@ com_detach(self, flags)
 }
 
 int
-com_activate(self, act)
-	struct device *self;
-	enum devact act;
+com_activate(struct device *self, enum devact act)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	int s, rv = 0;
@@ -272,10 +264,7 @@ com_activate(self, act)
 }
 
 int
-comopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+comopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = DEVUNIT(dev);
 	struct com_softc *sc;
@@ -484,10 +473,7 @@ comopen(dev, flag, mode, p)
 }
 
 int
-comclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+comclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = DEVUNIT(dev);
 	struct com_softc *sc = com_cd.cd_devs[unit];
@@ -536,8 +522,7 @@ comclose(dev, flag, mode, p)
 }
 
 void
-compwroff(sc)
-	struct com_softc *sc;
+compwroff(struct com_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -587,8 +572,7 @@ compwroff(sc)
 }
 
 void
-com_raisedtr(arg)
-	void *arg;
+com_raisedtr(void *arg)
 {
 	struct com_softc *sc = arg;
 
@@ -597,10 +581,7 @@ com_raisedtr(arg)
 }
 
 int
-comread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+comread(dev_t dev, struct uio *uio, int flag)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -609,10 +590,7 @@ comread(dev, uio, flag)
 }
 
 int
-comwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+comwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -621,8 +599,7 @@ comwrite(dev, uio, flag)
 }
 
 struct tty *
-comtty(dev)
-	dev_t dev;
+comtty(dev_t dev)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -631,8 +608,7 @@ comtty(dev)
 }
 
 static u_char
-tiocm_xxx2mcr(data)
-	int data;
+tiocm_xxx2mcr(int data)
 {
 	u_char m = 0;
 
@@ -644,12 +620,7 @@ tiocm_xxx2mcr(data)
 }
 
 int
-comioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = DEVUNIT(dev);
 	struct com_softc *sc = com_cd.cd_devs[unit];
@@ -765,9 +736,7 @@ comioctl(dev, cmd, data, flag, p)
 
 /* already called at spltty */
 int
-comparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+comparam(struct tty *tp, struct termios *t)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(tp->t_dev)];
 	bus_space_tag_t iot = sc->sc_iot;
@@ -906,8 +875,7 @@ comparam(tp, t)
 }
 
 void
-comstart(tp)
-	struct tty *tp;
+comstart(struct tty *tp)
 {
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(tp->t_dev)];
 	bus_space_tag_t iot = sc->sc_iot;
@@ -986,9 +954,7 @@ stopped:
  * Stop output on a line.
  */
 int
-comstop(tp, flag)
-	struct tty *tp;
-	int flag;
+comstop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -1001,8 +967,7 @@ comstop(tp, flag)
 }
 
 void
-comdiag(arg)
-	void *arg;
+comdiag(void *arg)
 {
 	struct com_softc *sc = arg;
 	int overflows, floods;
@@ -1022,14 +987,13 @@ comdiag(arg)
 }
 
 void
-comsoft(arg)
-	void *arg;
+comsoft(void *arg)
 {
 	struct com_softc *sc = (struct com_softc *)arg;
 	struct tty *tp;
-	register u_char *ibufp;
+	u_char *ibufp;
 	u_char *ibufend;
-	register int c;
+	int c;
 	int s;
 	static int lsrmap[8] = {
 		0,      TTY_PE,
@@ -1103,8 +1067,7 @@ out:
  */
 
 int
-kgdbintr(arg)
-	void *arg;
+kgdbintr(void *arg)
 {
 	struct com_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1150,8 +1113,7 @@ kgdbintr(arg)
 #endif /* KGDB */
 
 int
-comintr(arg)
-	void *arg;
+comintr(void *arg)
 {
 	struct com_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1171,7 +1133,7 @@ comintr(arg)
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
 
 		if (ISSET(lsr, LSR_RXRDY)) {
-			register u_char *p = sc->sc_ibufp;
+			u_char *p = sc->sc_ibufp;
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			softintr_schedule(sc->sc_si);
@@ -1270,9 +1232,7 @@ comintr(arg)
  */
 
 int
-com_common_getc(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+com_common_getc(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	int s = splhigh();
 	u_char stat, c;
@@ -1294,10 +1254,7 @@ com_common_getc(iot, ioh)
 }
 
 void
-com_common_putc(iot, ioh, c)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int c;
+com_common_putc(bus_space_tag_t iot, bus_space_handle_t ioh, int c)
 {
 	int s = spltty();
 	int timo;
@@ -1336,10 +1293,7 @@ com_common_putc(iot, ioh, c)
 }
 
 void
-cominit(iot, ioh, rate, frequency)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int rate, frequency;
+cominit(bus_space_tag_t iot, bus_space_handle_t ioh, int rate, int frequency)
 {
 	int s = splhigh();
 	u_char stat;
@@ -1364,8 +1318,7 @@ cominit(iot, ioh, rate, frequency)
 
 #ifdef COM_CONSOLE
 void  
-comcnprobe(cp)
-	struct consdev *cp;  
+comcnprobe(struct consdev *cp)
 {
 	/* XXX NEEDS TO BE FIXED XXX */
 #ifdef MD_ISA_IOT
@@ -1410,8 +1363,7 @@ comcnprobe(cp)
 }
 
 void
-comcninit(cp)
-	struct consdev *cp;
+comcninit(struct consdev *cp)
 {
 	comconsaddr = CONADDR;
 
@@ -1427,11 +1379,7 @@ comcninit(cp)
 
 
 int
-comcnattach(iot, iobase, rate, frequency, cflag)
-	bus_space_tag_t iot;
-	bus_addr_t iobase;
-	int rate, frequency;
-	tcflag_t cflag;
+comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency, tcflag_t cflag)
 {
 	static struct consdev comcons = {
 		NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL,
@@ -1456,8 +1404,7 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 }
 
 int
-comcngetc(dev)
-	dev_t dev;
+comcngetc(dev_t dev)
 {
 	return (com_common_getc(comconsiot, comconsioh));
 }
@@ -1466,17 +1413,13 @@ comcngetc(dev)
  * Console kernel output character routine.
  */
 void
-comcnputc(dev, c)
-	dev_t dev;
-	int c;
+comcnputc(dev_t dev, int c)
 {
 	com_common_putc(comconsiot, comconsioh, c);
 }
 
 void
-comcnpollc(dev, on)
-	dev_t dev;
-	int on;
+comcnpollc(dev_t dev, int on)
 {
 
 }
@@ -1484,7 +1427,8 @@ comcnpollc(dev, on)
 
 #ifdef KGDB
 int
-com_kgdb_attach(iot, iobase, rate, frequency, cflag)
+com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
+    int frequency,tcflag_t cflag)
 	bus_space_tag_t iot;
 	bus_addr_t iobase;
 	int rate, frequency;
@@ -1514,8 +1458,7 @@ com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 
 /* ARGSUSED */
 int
-com_kgdb_getc(arg)
-	void *arg;
+com_kgdb_getc(void *arg)
 {
 
 	return (com_common_getc(com_kgdb_iot, com_kgdb_ioh));
@@ -1523,9 +1466,7 @@ com_kgdb_getc(arg)
 
 /* ARGSUSED */
 void
-com_kgdb_putc(arg, c)
-	void *arg;
-	int c;
+com_kgdb_putc(void *arg, int c)
 {
 
 	return (com_common_putc(com_kgdb_iot, com_kgdb_ioh, c));
