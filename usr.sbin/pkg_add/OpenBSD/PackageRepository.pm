@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.47 2007/06/16 09:37:31 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.48 2007/06/23 17:55:12 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -113,7 +113,14 @@ sub close
 {
 	my ($self, $object, $hint) = @_;
 	close($object->{fh}) if defined $object->{fh};
-	waitpid($object->{pid2}, 0) if defined $object->{pid2};
+	if (defined $object->{pid2}) {
+		local $SIG{ALRM} = sub {
+			kill HUP => $object->{pid2};
+		};
+		alarm(30);
+		waitpid($object->{pid2}, 0);
+		alarm(0);
+	}
 	$self->parse_problems($object->{errors}, $hint) 
 	    if defined $object->{errors};
 	undef $object->{errors};
