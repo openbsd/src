@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.200 2007/06/17 10:39:39 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.201 2007/06/23 09:42:24 steven Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 17 2007 $
+.Dd $Mdocdate: June 23 2007 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -427,7 +427,7 @@ Run regression tests for the port.
 Essentially depend on a correct build and invoke
 .Bd -literal
 env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${REGRESS_FLAGS} \e
-	-f ${MAKE_FILE} ${REGRESS_TARGET}
+	-f ${MAKE_FILE} ${REGRESS_TARGET} ${REGRESS_LOG}
 .Ed
 .Pp
 If a port needs some other ports installed to run regression tests,
@@ -1488,6 +1488,10 @@ Defaults to ${MAKE_FLAGS}.
 Set to
 .Sq Yes
 if port needs human interaction to run its tests.
+.It Ev REGRESS_LOG
+Command used to log the results of regression tests to REGRESS_LOGFILE.
+.It Ev REGRESS_LOGFILE
+Log file containing the results of regression tests.
 .It Ev REGRESS_TARGET
 Target to run regression tests.
 Defaults to
