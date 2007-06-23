@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.116 2007/06/18 22:07:43 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.117 2007/06/23 19:14:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.116 2007/06/18 22:07:43 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.117 2007/06/23 19:14:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1013,10 +1013,10 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 		u_int32_t frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 		u_int32_t fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		if (p_size < 0)
-			fprintf(f, "  %c: %13llu %13llu ", 'a' + i,
+			fprintf(f, "  %c: %16llu %16llu ", 'a' + i,
 			    DL_GETPSIZE(pp), DL_GETPOFFSET(pp));
 		else
-			fprintf(f, "  %c: %12.*f%c %12.*f%c ", 'a' + i,
+			fprintf(f, "  %c: %15.*f%c %15.*f%c ", 'a' + i,
 			    unit == 'B' ? 0 : 1, p_size, unit,
 			    unit == 'B' ? 0 : 1, p_offset, unit);
 		if ((unsigned) pp->p_fstype < FSMAXTYPES)
@@ -1043,21 +1043,6 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 		if (mp != NULL) {
 			if (mp[i] != NULL)
 				fprintf(f, "# %s", mp[i]);
-		} else if (lp->d_secpercyl) {
-			fprintf(f, "# Cyl %5llu",
-			    DL_GETPOFFSET(pp) / lp->d_secpercyl);
-			if (DL_GETPOFFSET(pp) % lp->d_secpercyl)
-				putc('*', f);
-			else
-				putc(' ', f);
-			fprintf(f, "-%6llu",
-			    (DL_GETPOFFSET(pp) +
-			    DL_GETPSIZE(pp) + lp->d_secpercyl - 1) /
-			    lp->d_secpercyl - 1);
-			if ((DL_GETPOFFSET(pp) + DL_GETPSIZE(pp)) % lp->d_secpercyl)
-				putc('*', f);
-			else
-				putc(' ', f);
 		}
 		putc('\n', f);
 	}
@@ -1130,7 +1115,7 @@ display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
 		fprintf(f, "\n");
 	}
 	fprintf(f, "\n%hu partitions:\n", lp->d_npartitions);
-	fprintf(f, "#    %13.13s %13.13s  fstype [fsize bsize  cpg]\n",
+	fprintf(f, "#    %16.16s %16.16s  fstype [fsize bsize  cpg]\n",
 	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
 		display_partition(f, lp, mp, i, unit);
