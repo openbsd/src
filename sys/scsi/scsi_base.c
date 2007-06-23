@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.121 2007/05/31 18:21:44 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.122 2007/06/23 19:19:49 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -221,13 +221,15 @@ scsi_make_xs(struct scsi_link *sc_link, struct scsi_generic *scsi_cmd,
 /*
  * Find out from the device what its capacity is.
  */
-u_long
+daddr64_t
 scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 {
-	struct scsi_read_capacity	scsi_cmd;
-	struct scsi_read_cap_data	rdcap;
-	u_long				max_addr;
-	int				error;
+	struct scsi_read_cap_data_16 rdcap16;
+	struct scsi_read_capacity_16 rc16;
+	struct scsi_read_cap_data rdcap;
+	struct scsi_read_capacity rc;
+	daddr64_t max_addr;
+	int error;
 
 	if (blksize != NULL)
 		*blksize = 0;
@@ -235,15 +237,16 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	/*
 	 * make up a scsi command and ask the scsi driver to do it for you.
 	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = READ_CAPACITY;
+	bzero(&rc, sizeof(rc));
+	bzero(&rdcap, sizeof(rdcap));
+	rc.opcode = READ_CAPACITY;
 
 	/*
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), 2, 20000, NULL,
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&rc, sizeof(rc),
+	    (u_char *)&rdcap, sizeof(rdcap), 2, 20000, NULL,
 	    flags | SCSI_DATA_IN);
 	if (error) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY error (%#x)\n",
@@ -255,16 +258,30 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	if (blksize != NULL)
 		*blksize = _4btol(rdcap.length);
 
-	if (max_addr == 0xffffffffUL) {
-		/*
-		 * The device is reporting it has more than 2^32-1 sectors. The
-		 * 16-byte READ CAPACITY command must be issued to get full
-		 * capacity.
-		 */
-		sc_print_addr(sc_link);
-		printf("only the first 4,294,967,295 sectors will be used.\n");
-		return (0xffffffffUL);
+	if (max_addr != 0xffffffff)
+		return (max_addr + 1);
+
+	/*
+	 * The device has more than 2^32-1 sectors. Use 16-byte READ CAPACITY.
+	 */
+	 bzero(&rc16, sizeof(rc16));
+	 bzero(&rdcap16, sizeof(rdcap16));
+	 rc16.opcode = READ_CAPACITY_16;
+	 rc16.byte2 = SRC16_SERVICE_ACTION;
+	 _lto4b(sizeof(rdcap16), rc16.length);
+
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&rc16,
+	    sizeof(rc16), (u_char *)&rdcap16, sizeof(rdcap16), 2, 20000, NULL,
+	    flags | SCSI_DATA_IN);
+	if (error) {
+		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY 16 error (%#x)\n",
+		    error));
+		return (0);
 	}
+
+	max_addr = _8btol(rdcap16.addr);
+	if (blksize != NULL)
+		*blksize = _4btol(rdcap16.length);
 
 	return (max_addr + 1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.135 2007/06/20 18:15:47 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.136 2007/06/23 19:19:49 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -223,7 +223,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
 	case SDGP_RESULT_OK:
-		printf("%luMB, %lu cyl, %lu head, %lu sec, %lu bytes/sec, %lu sec total",
+		printf("%lldMB, %lu cyl, %lu head, %lu sec, %lu bytes/sec, %lld sec total",
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize, dp->disksize);
 		break;
@@ -1418,19 +1418,25 @@ validate:
 	}
 
 	/*
-	 * Use standard geometry values for anything we still don't know.
-	 */
-
-	dp->heads = (heads == 0) ? 255 : heads;
-	dp->sectors = (sectors == 0) ? 63 : sectors;
-	dp->rot_rate = (rpm == 0) ? 3600 : rpm;
-
-	/*
 	 * XXX THINK ABOUT THIS!!  Using values such that sectors * heads *
 	 * cyls is <= disk_size can lead to wasted space. We need a more
 	 * careful calculation/validation to make everything work out
 	 * optimally.
 	 */
+	if (dp->disksize > 0xffffffff && (dp->heads * dp->sectors) < 0xffff) {
+		dp->heads = 511;
+		dp->sectors = 255;
+		cyls = 0;
+	} else {
+		/*
+		 * Use standard geometry values for anything we still don't
+		 * know.
+		 */
+		dp->heads = (heads == 0) ? 255 : heads;
+		dp->sectors = (sectors == 0) ? 63 : sectors;
+		dp->rot_rate = (rpm == 0) ? 3600 : rpm;
+	}
+
 	dp->cyls = (cyls == 0) ? dp->disksize / (dp->heads * dp->sectors) :
 	    cyls;
 
