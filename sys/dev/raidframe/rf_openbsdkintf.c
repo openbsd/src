@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.41 2007/06/20 18:18:47 deraadt Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.42 2007/06/23 03:11:34 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -271,7 +271,6 @@ struct raid_softc **raid_scPtrs;
 void rf_shutdown_hook(RF_ThreadArg_t);
 void raidgetdefaultlabel(RF_Raid_t *, struct raid_softc *, struct disklabel *);
 void raidgetdisklabel(dev_t, struct disklabel *, int);
-void raidmakedisklabel(struct raid_softc *);
 
 int  raidlock(struct raid_softc *);
 void raidunlock(struct raid_softc *);
@@ -2148,7 +2147,6 @@ raidgetdisklabel(dev_t dev, struct disklabel *lp, int spoofonly)
 	if (errstring) {
 		/*printf("%s: %s\n", rs->sc_xname, errstring);*/
 		return;
-		/*raidmakedisklabel(rs);*/
 	}
 
 	/*
@@ -2173,28 +2171,6 @@ raidgetdisklabel(dev_t dev, struct disklabel *lp, int spoofonly)
 			    "exceeds the size of raid (%ld)\n",
 			    rs->sc_xname, 'a' + i, (long) rs->sc_size);
 	}
-}
-
-/*
- * Take care of things one might want to take care of in the event
- * that a disklabel isn't present.
- */
-void
-raidmakedisklabel(struct raid_softc *rs)
-{
-	struct disklabel *lp = rs->sc_dkdev.dk_label;
-	db1_printf(("Making a label..\n"));
-
-	/*
-	 * For historical reasons, if there's no disklabel present
-	 * the raw partition must be marked FS_BSDFFS.
-	 */
-
-	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
-
-	strncpy(lp->d_packname, "default label", sizeof(lp->d_packname));
-
-	lp->d_checksum = dkcksum(lp);
 }
 
 /*
