@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.12 2007/06/13 02:17:32 drahn Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.13 2007/06/23 18:51:45 drahn Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
 /*
 #include "machine/cpu.h"
 */
+
+#define ENABLE_DECREMENTER_WORKAROUND
 
 static int (*openfirmware)(void *);
 
@@ -97,7 +99,7 @@ _start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 
 	bat_init();
 	openfirmware = openfirm;	/* Save entry to Open Firmware */
-#if 0
+#ifdef ENABLE_DECREMENTER_WORKAROUND
 	patch_dec_intr();
 #endif
 	setup();
@@ -105,7 +107,7 @@ _start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 	exit();
 }
 
-#if 0
+#ifdef ENABLE_DECREMENTER_WORKAROUND
 void handle_decr_intr();
 __asm (	"	.globl handle_decr_intr\n"
 	"	.type handle_decr_intr@function\n"
