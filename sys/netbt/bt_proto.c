@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_proto.c,v 1.3 2007/06/01 02:46:11 uwe Exp $	*/
+/*	$OpenBSD: bt_proto.c,v 1.4 2007/06/24 20:55:27 uwe Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -63,7 +63,7 @@ struct protosw btsw[] = {
 
 struct domain btdomain = {
 	AF_BLUETOOTH, "bluetooth",
-	bt_init, NULL/*externalize*/, NULL/*dispose*/,
+	NULL/*init*/, NULL/*externalize*/, NULL/*dispose*/,
 	btsw, &btsw[sizeof(btsw) / sizeof(btsw[0])], NULL,
 	NULL/*rtattach*/, 32, sizeof(struct sockaddr_bt),
 	NULL/*ifattach*/, NULL/*ifdetach*/

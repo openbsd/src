@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_unit.c,v 1.6 2007/06/06 21:37:08 uwe Exp $	*/
+/*	$OpenBSD: hci_unit.c,v 1.7 2007/06/24 20:55:27 uwe Exp $	*/
 /*	$NetBSD: hci_unit.c,v 1.4 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
@@ -61,9 +61,6 @@ int hci_scorxq_max = 50;
  * bluetooth unit functions
  */
 
-void hci_enable_task(void *, void *);
-void hci_intr(void *);
-
 void
 hci_attach(struct hci_unit *unit)
 {
@@ -91,16 +88,6 @@ hci_detach(struct hci_unit *unit)
 	hci_disable(unit);
 
 	TAILQ_REMOVE(&hci_unit_list, unit, hci_next);
-}
-
-void
-hci_enable_task(void *arg0, void *arg1)
-{
-	struct hci_unit *unit = arg0;
-
-	unit->hci_flags |= BTF_UP;
-	if (hci_enable(unit) != 0)
-		unit->hci_flags &= ~BTF_UP;
 }
 
 int
