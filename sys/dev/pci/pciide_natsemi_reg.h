@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_natsemi_reg.h,v 1.6 2004/09/24 07:38:38 grange Exp $	*/
+/*	$OpenBSD: pciide_natsemi_reg.h,v 1.7 2007/06/24 12:41:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -50,7 +50,7 @@
 #define	NATSEMI_CTRL2_BARDIS	0x04		/* PCI BAR 2/3 disable */
 #define	NATSEMI_CTRL2_WATCHDOG	0x08		/* enable watchdog timer */
 #define	NATSEMI_CTRL2_BUF1BYP	0x10		/* bypass buffer 1 */
-#define	NATSEMI_CTRL2_BYF2BYP	0x20		/* bypass buffer 2 */
+#define	NATSEMI_CTRL2_BUF2BYP	0x20		/* bypass buffer 2 */
 #define	NATSEMI_CTRL2_IDE1MAP	0x40		/* IDE at bar 1 */
 #define	NATSEMI_CTRL2_IDE2MAP	0x80		/* IDE at bar 2 */
 
