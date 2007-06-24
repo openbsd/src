@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ssio.c,v 1.1 2007/06/19 22:51:26 kettenis Exp $	*/
+/*	$OpenBSD: com_ssio.c,v 1.2 2007/06/24 16:28:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -22,6 +22,7 @@
 #include <sys/tty.h>
 
 #include <machine/bus.h>
+#include <machine/iomod.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -65,6 +66,13 @@ com_ssio_attach(struct device *parent, struct device *self, void *aux)
 	    0, &sc->sc_ioh)) {
 		printf(": cannot map io space\n");
 		return;
+	}
+
+	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX &&
+	    PAGE0->mem_cons.pz_hpa == sc->sc_ioh) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, COM_NPORTS);
+		comcnattach(sc->sc_iot, sc->sc_iobase, comdefaultrate,
+		    COM_SSIO_FREQ, comconscflag);
 	}
 
 	sc->sc_frequency = COM_SSIO_FREQ;
