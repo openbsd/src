@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.39 2007/06/20 18:16:24 deraadt Exp $	*/
+/*	$OpenBSD: xd.c,v 1.40 2007/06/24 16:52:04 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -295,49 +295,51 @@ xdgetdisklabel(xd, b)
 	struct xd_softc *xd;
 	void *b;
 {
+	struct disklabel *lp = xd->sc_dk.dk_label;
+	struct sun_disklabel *sdl = b;
 	char *err;
+	extern char *disklabel_sun_to_bsd(struct sun_disklabel *,
+	    struct disklabel *);
+
+	bzero(lp, sizeof(struct disklabel));
+	if (sdl->sl_magic == SUN_DKMAGIC)
+		disklabel_sun_to_bsd(sdl, lp);
+	else {
+		/* Required parameters for readdisklabel() */
+		lp->d_secsize = XDFM_BPS;
+		lp->d_secpercyl = 1;
+	}
 
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xd_labeldata = b;
 
-	/* Required parameters for readdisklabel() */
-	xd->sc_dk.dk_label->d_secsize = XDFM_BPS;
-	xd->sc_dk.dk_label->d_secpercyl = 1;
-
 	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
-			    xddummystrat,
-			    xd->sc_dk.dk_label, 0);
+	    xddummystrat, lp, 0);
 	if (err) {
 		/*printf("%s: %s\n", xd->sc_dev.dv_xname, err);*/
-		return(XD_ERR_FAIL);
+		return (XD_ERR_FAIL);
 	}
 
-#ifdef FIXME
-	struct sun_disklabel *sdl;
-
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
-	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel->cd_block;
+	sdl = b;
 	if (sdl->sl_magic == SUN_DKMAGIC)
 		xd->pcyl = sdl->sl_pcylinders;
 	else {
 		printf("%s: WARNING: no `pcyl' in disk label.\n",
-							xd->sc_dev.dv_xname);
-		xd->pcyl = xd->sc_dk.dk_label->d_ncylinders +
-			xd->sc_dk.dk_label->d_acylinders;
+			xd->sc_dev.dv_xname);
+		xd->pcyl = lp->d_ncylinders +
+			lp->d_acylinders;
 		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
-			xd->sc_dev.dv_xname, xd->pcyl);
+		xd->sc_dev.dv_xname, xd->pcyl);
 	}
-#endif
 
-	xd->ncyl = xd->sc_dk.dk_label->d_ncylinders;
-	xd->acyl = xd->sc_dk.dk_label->d_acylinders;
-	xd->nhead = xd->sc_dk.dk_label->d_ntracks;
-	xd->nsect = xd->sc_dk.dk_label->d_nsectors;
-	xd->sectpercyl = xd->sc_dk.dk_label->d_secpercyl =
-	    xd->nhead * xd->nsect;
-	xd->sc_dk.dk_label->d_secsize = XDFM_BPS; /* not handled by
-						  * sun->bsd */
-	return(XD_ERR_AOK);
+	xd->ncyl = lp->d_ncylinders;
+	xd->acyl = lp->d_acylinders;
+	xd->nhead = lp->d_ntracks;
+	xd->nsect = lp->d_nsectors;
+	xd->sectpercyl = lp->d_secpercyl = xd->nhead * xd->nsect;
+	lp->d_secsize = XDFM_BPS; /* not handled by sun->bsd */
+	return (XD_ERR_AOK);
 }
 
 /*
@@ -644,7 +646,7 @@ xdattach(parent, self, aux)
 	xd->nhead = 1;
 	xd->nsect = 1;
 	xd->sectpercyl = 1;
-	for (lcv = 0; lcv < 126; lcv++)	/* init empty bad144 table */
+	for (lcv = 0; lcv < NBT_BAD; lcv++)	/* init empty bad144 table */
 		xd->dkb.bt_bad[lcv].bt_cyl = xd->dkb.bt_bad[lcv].bt_trksec = 0xffff;
 	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
 	XDC_DONE(xdc, rqno, err);
@@ -707,7 +709,7 @@ xdattach(parent, self, aux)
 
 	/* check dkbad for sanity */
 	dkb = (struct dkbad *) xa->buf;
-	for (lcv = 0; lcv < 126; lcv++) {
+	for (lcv = 0; lcv < NBT_BAD; lcv++) {
 		if ((dkb->bt_bad[lcv].bt_cyl == 0xffff ||
 				dkb->bt_bad[lcv].bt_cyl == 0) &&
 		     dkb->bt_bad[lcv].bt_trksec == 0xffff)
@@ -719,7 +721,7 @@ xdattach(parent, self, aux)
 		if ((dkb->bt_bad[lcv].bt_trksec & 0xff) >= xd->nsect)
 			break;
 	}
-	if (lcv != 126) {
+	if (lcv != NBT_BAD) {
 		printf("%s: warning: invalid bad144 sector!\n",
 			xd->sc_dev.dv_xname);
 	} else {

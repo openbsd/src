@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.68 2007/06/20 18:15:46 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.69 2007/06/24 16:52:05 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -46,7 +46,7 @@
 
 #include "cd.h"
 
-static	char *disklabel_sun_to_bsd(struct sun_disklabel *, struct disklabel *);
+	char *disklabel_sun_to_bsd(struct sun_disklabel *, struct disklabel *);
 static	int disklabel_bsd_to_sun(struct disklabel *, struct sun_disklabel *);
 static __inline u_int sun_extended_sum(struct sun_disklabel *, void *);
 
@@ -111,11 +111,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		msg = "disk label read error";
 		goto done;
 	}
-
-#if NOTANYMORE
-	/* XXX because xd(4) & xy(4) still need it */
-	bcopy(bp->b_data, osdep->cd_block, sizeof(osdep->cd_block));
-#endif
 
 	slp = (struct sun_disklabel *)bp->b_data;
 	if (slp->sl_magic == SUN_DKMAGIC) {
@@ -238,7 +233,7 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
  *
  * The BSD label is cleared out before this is called.
  */
-static char *
+char *
 disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 {
 	struct partition *npp;
