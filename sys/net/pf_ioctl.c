@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.181 2007/06/21 19:31:49 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -864,7 +864,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state_key *sk,
 	/* copy from state */
 	memcpy(&sp->id, &s->id, sizeof(sp->id));
 	sp->creatorid = s->creatorid;
-	strlcpy(sp->ifname, s->u.s.kif->pfik_name, sizeof(sp->ifname));
+	strlcpy(sp->ifname, s->kif->pfik_name, sizeof(sp->ifname));
 	pf_state_peer_to_pfsync(&s->src, &sp->src);
 	pf_state_peer_to_pfsync(&s->dst, &sp->dst);
 
@@ -912,7 +912,7 @@ pf_state_import(struct pfsync_state *sp, struct pf_state_key *sk,
 	/* copy to state */
 	memcpy(&s->id, &sp->id, sizeof(sp->id));
 	s->creatorid = sp->creatorid;
-	strlcpy(sp->ifname, s->u.s.kif->pfik_name, sizeof(sp->ifname));
+	strlcpy(sp->ifname, s->kif->pfik_name, sizeof(sp->ifname));
 	pf_state_peer_from_pfsync(&sp->src, &s->src);
 	pf_state_peer_from_pfsync(&sp->dst, &s->dst);
 
@@ -1562,7 +1562,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
 
 			if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
-			    s->u.s.kif->pfik_name)) {
+			    s->kif->pfik_name)) {
 #if NPFSYNC
 				/* don't send out individual delete messages */
 				s->sync_flags = PFSTATE_NOSYNC;
@@ -1617,7 +1617,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
 			    dst->port)) &&
 			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
-			    s->u.s.kif->pfik_name))) {
+			    s->kif->pfik_name))) {
 #if NPFSYNC > 0
 				/* send immediate delete of state */
 				pfsync_delete_state(s);
@@ -1723,7 +1723,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				p++;
 				nr++;
 			}
-			state = TAILQ_NEXT(state, u.s.entry_list);
+			state = TAILQ_NEXT(state, entry_list);
 		}
 
 		ps->ps_len = sizeof(struct pfsync_state) * nr;

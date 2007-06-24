@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.251 2007/06/21 11:55:54 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.252 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -722,42 +722,37 @@ struct pf_state_cmp {
 };
 
 struct pf_state {
-	u_int64_t	 id;
-	u_int32_t	 creatorid;
-	u_int32_t	 pad;
+	u_int64_t		 id;
+	u_int32_t		 creatorid;
+	u_int32_t		 pad;
 
+	TAILQ_ENTRY(pf_state)	 entry_list;
 	TAILQ_ENTRY(pf_state)	 next;
 	RB_ENTRY(pf_state)	 entry_id;
+	struct pf_state_peer	 src;
+	struct pf_state_peer	 dst;
+	union pf_rule_ptr	 rule;
+	union pf_rule_ptr	 anchor;
+	union pf_rule_ptr	 nat_rule;
+	struct pf_addr		 rt_addr;
 	struct pf_state_key	*state_key;
-	u_int8_t	 log;
-	u_int8_t	 allow_opts;
-	u_int8_t	 timeout;
-	u_int8_t	 sync_flags;
+	struct pfi_kif		*kif;
+	struct pfi_kif		*rt_kif;
+	struct pf_src_node	*src_node;
+	struct pf_src_node	*nat_src_node;
+	u_int64_t		 packets[2];
+	u_int64_t		 bytes[2];
+	u_int32_t		 creation;
+	u_int32_t		 expire;
+	u_int32_t		 pfsync_time;
+	u_int16_t		 tag;
+	u_int8_t		 log;
+	u_int8_t		 allow_opts;
+	u_int8_t		 timeout;
+	u_int8_t		 sync_flags;
 #define	PFSTATE_NOSYNC	 0x01
 #define	PFSTATE_FROMSYNC 0x02
 #define	PFSTATE_STALE	 0x04
-	union {
-		struct {
-			TAILQ_ENTRY(pf_state)	 entry_list;
-			struct pfi_kif		*kif;
-		} s;
-		char	 ifname[IFNAMSIZ];
-	} u;
-	struct pf_state_peer src;
-	struct pf_state_peer dst;
-	union pf_rule_ptr rule;
-	union pf_rule_ptr anchor;
-	union pf_rule_ptr nat_rule;
-	struct pf_addr	 rt_addr;
-	struct pfi_kif	*rt_kif;
-	struct pf_src_node	*src_node;
-	struct pf_src_node	*nat_src_node;
-	u_int64_t	 packets[2];
-	u_int64_t	 bytes[2];
-	u_int32_t	 creation;
-	u_int32_t	 expire;
-	u_int32_t	 pfsync_time;
-	u_int16_t	 tag;
 };
 
 

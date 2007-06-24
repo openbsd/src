@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.546 2007/06/21 11:55:54 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.547 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -545,7 +545,7 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int8_t tree)
 	/* list is sorted, if-bound states before floating ones */
 	if (sk != NULL)
 		TAILQ_FOREACH(s, &sk->states, next)
-			if (s->u.s.kif == pfi_all || s->u.s.kif == kif)
+			if (s->kif == pfi_all || s->kif == kif)
 				return (s);
 
 	return (NULL);
@@ -819,13 +819,13 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 	struct pf_state		*sp;
 
 	KASSERT(s->state_key != NULL);
-	s->u.s.kif = kif;
+	s->kif = kif;
 
 	if ((cur = RB_INSERT(pf_state_tree_lan_ext, &pfi_all->pfik_lan_ext,
 	    s->state_key)) != NULL) {
 		/* key exists. check for same kif, if none, add to key */
 		TAILQ_FOREACH(sp, &cur->states, next)
-			if (sp->u.s.kif == kif) {	/* collision! */
+			if (sp->kif == kif) {	/* collision! */
 				pf_stateins_err("tree_lan_ext", s, kif);
 				return (-1);
 			}
@@ -858,7 +858,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 		pf_detach_state(s, 0);
 		return (-1);
 	}
-	TAILQ_INSERT_TAIL(&state_list, s, u.s.entry_list);
+	TAILQ_INSERT_TAIL(&state_list, s, entry_list);
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
 	pfi_kif_ref(kif, PFI_KIF_REF_STATE);
@@ -1037,8 +1037,8 @@ pf_free_state(struct pf_state *cur)
 		if (--cur->anchor.ptr->states <= 0)
 			pf_rm_rule(NULL, cur->anchor.ptr);
 	pf_normalize_tcp_cleanup(cur);
-	pfi_kif_unref(cur->u.s.kif, PFI_KIF_REF_STATE);
-	TAILQ_REMOVE(&state_list, cur, u.s.entry_list);
+	pfi_kif_unref(cur->kif, PFI_KIF_REF_STATE);
+	TAILQ_REMOVE(&state_list, cur, entry_list);
 	if (cur->tag)
 		pf_tag_unref(cur->tag);
 	pool_put(&pf_state_pl, cur);
@@ -1062,7 +1062,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 		}
 
 		/* get next state, as cur may get deleted */
-		next = TAILQ_NEXT(cur, u.s.entry_list);
+		next = TAILQ_NEXT(cur, entry_list);
 
 		if (cur->timeout == PFTM_UNLINKED) {
 			/* free unlinked state */

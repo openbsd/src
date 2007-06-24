@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.80 2007/06/21 11:55:54 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.81 2007/06/24 11:17:13 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1183,7 +1183,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 		bcopy(&st->id, sp->id, sizeof(sp->id));
 		sp->creatorid = st->creatorid;
 
-		strlcpy(sp->ifname, st->u.s.kif->pfik_name, sizeof(sp->ifname));
+		strlcpy(sp->ifname, st->kif->pfik_name, sizeof(sp->ifname));
 		pf_state_host_hton(&sk->lan, &sp->lan);
 		pf_state_host_hton(&sk->gwy, &sp->gwy);
 		pf_state_host_hton(&sk->ext, &sp->ext);
@@ -1437,7 +1437,7 @@ pfsync_bulk_update(void *v)
 			}
 
 			/* figure next state to send */
-			state = TAILQ_NEXT(state, u.s.entry_list);
+			state = TAILQ_NEXT(state, entry_list);
 
 			/* wrap to start of list if we hit the end */
 			if (!state)
