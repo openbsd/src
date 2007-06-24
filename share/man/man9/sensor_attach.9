@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensor_attach.9,v 1.5 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: sensor_attach.9,v 1.6 2007/06/24 05:39:53 dlg Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\" Copyright (c) 2006 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 24 2007 $
 .Dt SENSOR_ATTACH 9
 .Os
 .Sh NAME
@@ -53,10 +53,10 @@
 .Ft struct ksensor
 .Fn "*sensor_find" "int devnum" "enum sensor_type stype" "int numt"
 .Pp
-.Ft int
+.Ft struct sensor_task *
 .Fn "sensor_task_register" "void *arg" "void (*func)(void *)" "int period"
 .Ft void
-.Fn "sensor_task_unregister" "void *arg"
+.Fn "sensor_task_unregister" "struct sensor_task *st"
 .Sh DESCRIPTION
 The
 sensors
@@ -132,10 +132,9 @@ parameter is the argument given to the
 function.
 The
 .Fn sensor_task_unregister
-removes all tasks previously registered with
-.Fn sensor_task_register
-with an argument of
-.Fa arg .
+removes the task specified with by the
+.Fa st
+argument.
 .Pp
 All the functions in the sensor framework must be called during
 .Xr autoconf 9
