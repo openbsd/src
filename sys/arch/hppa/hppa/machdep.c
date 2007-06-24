@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.158 2007/06/06 17:15:11 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.159 2007/06/24 17:00:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -159,7 +159,7 @@ paddr_t	avail_end;
  * Things for MI glue to stick on.
  */
 struct user *proc0paddr;
-long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) / sizeof(long)];
+long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 struct extent *hppa_ex;
 
 struct vm_map *exec_map = NULL;
