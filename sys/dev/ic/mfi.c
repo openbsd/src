@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.72 2007/05/29 22:17:50 todd Exp $ */
+/* $OpenBSD: mfi.c,v 1.73 2007/06/24 05:34:35 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1817,7 +1817,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
 	}
 
-	if (sensor_task_register(sc, mfi_refresh_sensors, 10) != 0)
+	if (sensor_task_register(sc, mfi_refresh_sensors, 10) == NULL)
 		goto bad;
 
 	sensordev_install(&sc->sc_sensordev);

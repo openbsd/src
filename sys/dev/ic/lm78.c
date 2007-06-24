@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.18 2007/05/26 22:47:39 cnst Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.19 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -399,7 +399,8 @@ lm_attach(struct lm_softc *sc)
 	if (sc->numsensors == 0)
 		return;
 
-	if (sensor_task_register(sc, lm_refresh, 5)) {
+	sc->sensortask = sensor_task_register(sc, lm_refresh, 5);
+	if (sc->sensortask == NULL) {
 		printf("%s: unable to register update task\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -425,7 +426,8 @@ lm_detach(struct lm_softc *sc)
 	for (i = 0; i < sc->numsensors; i++)
 		sensor_detach(&sc->sensordev, &sc->sensors[i]);
 
-	sensor_task_unregister(sc);
+	if (sc->sensortask != NULL)
+		sensor_task_unregister(sc->sensortask);
 
 	return 0;
 }

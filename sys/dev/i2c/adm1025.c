@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.24 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.25 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -179,7 +179,7 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[SMSC_TEMP2].desc, "External",
 	    sizeof(sc->sc_sensor[SMSC_TEMP2].desc));
 
-	if (sensor_task_register(sc, admtm_refresh, 5)) {
+	if (sensor_task_register(sc, admtm_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
 		return;
 	}

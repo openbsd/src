@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcu.c,v 1.6 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: fcu.c,v 1.7 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -98,7 +98,7 @@ fcu_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[FCU_PWM1 + i].desc));
 	}
 
-	if (sensor_task_register(sc, fcu_refresh, 5)) {
+	if (sensor_task_register(sc, fcu_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
 		return;
 	}

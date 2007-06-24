@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.17 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.18 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -231,7 +231,7 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[ADT_TACH3].type = SENSOR_FANRPM;
 	sc->sc_sensor[ADT_TACH4].type = SENSOR_FANRPM;
 
-	if (sensor_task_register(sc, adt_refresh, 5)) {
+	if (sensor_task_register(sc, adt_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
 		return;
 	}

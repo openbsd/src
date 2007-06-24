@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.26 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -151,7 +151,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	    xeon ? "Xeon" : "Internal",
 	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
 
-	if (sensor_task_register(sc, admtemp_refresh, 5)) {
+	if (sensor_task_register(sc, admtemp_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
 		return;
 	}

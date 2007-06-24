@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.63 2007/05/29 22:17:50 todd Exp $ */
+/*	$OpenBSD: arc.c,v 1.64 2007/06/24 05:34:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1564,7 +1564,7 @@ arc_create_sensors(void *xsc, void *arg)
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
 	}
 
-	if (sensor_task_register(sc, arc_refresh_sensors, 120) != 0)
+	if (sensor_task_register(sc, arc_refresh_sensors, 120) == NULL)
 		goto bad;
 
 	sensordev_install(&sc->sc_sensordev);

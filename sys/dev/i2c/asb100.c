@@ -1,4 +1,4 @@
-/*	$OpenBSD: asb100.c,v 1.9 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: asb100.c,v 1.10 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Damien Miller <djm@openbsd.org>
@@ -258,7 +258,7 @@ asbtm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP3].desc, "External",
 	    sizeof(sc->sc_sensor[ASB100_SENSOR_TEMP3].desc));
 
-	if (sensor_task_register(sc, asbtm_refresh, 5)) {
+	if (sensor_task_register(sc, asbtm_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
 		return;
 	}

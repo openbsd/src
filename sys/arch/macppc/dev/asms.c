@@ -1,4 +1,4 @@
-/*	$OpenBSD: asms.c,v 1.5 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: asms.c,v 1.6 2007/06/24 05:34:35 dlg Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -263,7 +263,7 @@ asms_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[ASMS_DATA_Z].desc, "Z_ACCEL",
 	    sizeof(sc->sc_sensor[ASMS_DATA_Z].desc));
 
-	if (sensor_task_register(sc, asms_refresh, 5)) {
+	if (sensor_task_register(sc, asms_refresh, 5) == NULL) {
 		printf(": unable to register update task\n");
 		return;
 	}

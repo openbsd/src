@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.81 2007/06/06 23:06:02 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.82 2007/06/24 05:34:35 dlg Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -2362,7 +2362,7 @@ sr_create_sensors(struct sr_discipline *sd)
 	sensor_attach(&sd->sd_vol.sv_sensordev, &sd->sd_vol.sv_sensor);
 
 	if (sc->sc_sensors_running == 0) {
-		if (sensor_task_register(sc, sr_refresh_sensors, 10) != 0)
+		if (sensor_task_register(sc, sr_refresh_sensors, 10) == NULL)
 			goto bad;
 		sc->sc_sensors_running = 1;
 	}

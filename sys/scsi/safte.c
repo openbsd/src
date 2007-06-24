@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.36 2007/06/01 22:58:50 cnst Exp $ */
+/*	$OpenBSD: safte.c,v 1.37 2007/06/24 05:34:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -72,6 +72,7 @@ struct safte_softc {
 	int			sc_nsensors;
 	struct safte_sensor	*sc_sensors;
 	struct ksensordev	sc_sensordev;
+	struct sensor_task	*sc_sensortask;
 
 	int			sc_celsius;
 	int			sc_ntemps;
@@ -180,16 +181,20 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (sc->sc_nsensors > 0 &&
-	    sensor_task_register(sc, safte_read_encstat, 10) != 0) {
-		printf("%s: unable to register update task\n", DEVNAME(sc));
-		sc->sc_nsensors = sc->sc_ntemps = 0;
-		free(sc->sc_sensors, M_DEVBUF);
-	} else {
-		for (i = 0; i < sc->sc_nsensors; i++)
-			sensor_attach(&sc->sc_sensordev, 
-			    &sc->sc_sensors[i].se_sensor);
-		sensordev_install(&sc->sc_sensordev);
+	if (sc->sc_nsensors > 0) {
+		sc->sc_sensortask = sensor_task_register(sc,
+		    safte_read_encstat, 10);
+		if (sc->sc_sensortask == NULL) {
+			printf("%s: unable to register update task\n",
+			    DEVNAME(sc));
+			sc->sc_nsensors = sc->sc_ntemps = 0;
+			free(sc->sc_sensors, M_DEVBUF);
+		} else {
+			for (i = 0; i < sc->sc_nsensors; i++)
+				sensor_attach(&sc->sc_sensordev, 
+				    &sc->sc_sensors[i].se_sensor);
+			sensordev_install(&sc->sc_sensordev);
+		}
 	}
 
 #if NBIO > 0
@@ -224,7 +229,7 @@ safte_detach(struct device *self, int flags)
 
 	if (sc->sc_nsensors > 0) {
 		sensordev_deinstall(&sc->sc_sensordev);
-		sensor_task_unregister(sc);
+		sensor_task_unregister(sc->sc_sensortask);
 
 		for (i = 0; i < sc->sc_nsensors; i++)
 			sensor_detach(&sc->sc_sensordev, 

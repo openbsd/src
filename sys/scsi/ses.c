@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.44 2007/05/04 23:44:37 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.45 2007/06/24 05:34:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -84,6 +84,7 @@ struct ses_softc {
 #endif
 	TAILQ_HEAD(, ses_sensor) sc_sensors;
 	struct ksensordev	sc_sensordev;
+	struct sensor_task	*sc_sensortask;
 };
 
 struct cfattach ses_ca = {
@@ -169,18 +170,24 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (!TAILQ_EMPTY(&sc->sc_sensors) &&
-	    sensor_task_register(sc, ses_refresh_sensors, 10) != 0) {
-		printf("%s: unable to register update task\n", DEVNAME(sc));
-		while (!TAILQ_EMPTY(&sc->sc_sensors)) {
-			sensor = TAILQ_FIRST(&sc->sc_sensors);
-			TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
-			free(sensor, M_DEVBUF);
+	if (!TAILQ_EMPTY(&sc->sc_sensors)) {
+		sc->sc_sensortask = sensor_task_register(sc,
+		    ses_refresh_sensors, 10);
+		if (sc->sc_sensortask == NULL) {
+			printf("%s: unable to register update task\n",
+			    DEVNAME(sc));
+			while (!TAILQ_EMPTY(&sc->sc_sensors)) {
+				sensor = TAILQ_FIRST(&sc->sc_sensors);
+				TAILQ_REMOVE(&sc->sc_sensors, sensor,
+				    se_entry);
+				free(sensor, M_DEVBUF);
+			}
+		} else {
+			TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry)
+				sensor_attach(&sc->sc_sensordev,
+				    &sensor->se_sensor);
+			sensordev_install(&sc->sc_sensordev);
 		}
-	} else {
-		TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry)
-			sensor_attach(&sc->sc_sensordev, &sensor->se_sensor);
-		sensordev_install(&sc->sc_sensordev);
 	}
 
 #if NBIO > 0
@@ -229,7 +236,7 @@ ses_detach(struct device *self, int flags)
 
 	if (!TAILQ_EMPTY(&sc->sc_sensors)) {
 		sensordev_deinstall(&sc->sc_sensordev);
-		sensor_task_unregister(sc);
+		sensor_task_unregister(sc->sc_sensortask);
 
 		while (!TAILQ_EMPTY(&sc->sc_sensors)) {
 			sensor = TAILQ_FIRST(&sc->sc_sensors);

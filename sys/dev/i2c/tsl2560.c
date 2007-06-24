@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsl2560.c,v 1.5 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: tsl2560.c,v 1.6 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -120,7 +120,7 @@ tsl_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 	sc->sc_sensor.type = SENSOR_LUX;
 
-	if (sensor_task_register(sc, tsl_refresh, 5)) {
+	if (sensor_task_register(sc, tsl_refresh, 5) == NULL) {
 		printf(": unable to register update task\n");
 		return;
 	}

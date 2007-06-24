@@ -1,4 +1,4 @@
-/*	$OpenBSD: owsbm.c,v 1.3 2007/06/01 23:35:00 cnst Exp $	*/
+/*	$OpenBSD: owsbm.c,v 1.4 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Aaron Linville <aaron@linville.org>
@@ -69,6 +69,8 @@ struct owsbm_softc {
 	struct ksensor		sc_voltage_vad; /* General purpose, AD = 0 */
 	struct ksensor		sc_voltage_cr; /* Current Register */
 
+	struct sensor_task	*sc_sensortask;
+
 	struct rwlock		sc_lock;
 };
 
@@ -132,7 +134,8 @@ owsbm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_voltage_cr.desc, "CR", sizeof(sc->sc_voltage_cr.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_voltage_cr);
 
-	if (sensor_task_register(sc, owsbm_update, 10)) {
+	sc->sc_sensortask = sensor_task_register(sc, owsbm_update, 10);
+	if (sc->sc_sensortask == NULL) {
 		printf(": unable to register owsbm update task\n");
 		return;
 	}
@@ -150,7 +153,8 @@ owsbm_detach(struct device *self, int flags)
 
 	rw_enter_write(&sc->sc_lock);
 	sensordev_deinstall(&sc->sc_sensordev);
-	sensor_task_unregister(sc);
+	if (sc->sc_sensortask != NULL)
+		sensor_task_unregister(sc->sc_sensortask);
 	rw_exit_write(&sc->sc_lock);
 
 	return (0);

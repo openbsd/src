@@ -1,4 +1,4 @@
-/*	$OpenBSD: gl518sm.c,v 1.5 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: gl518sm.c,v 1.6 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -155,7 +155,7 @@ glenv_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_fan2_div == -1)
 		sc->sc_sensor[GLENV_FAN2].flags |= SENSOR_FINVALID;
 
-	if (sensor_task_register(sc, glenv_refresh, 5)) {
+	if (sensor_task_register(sc, glenv_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
 		return;
 	}

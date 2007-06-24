@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.183 2007/05/31 18:39:03 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.184 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2474,7 +2474,7 @@ ami_create_sensors(struct ami_softc *sc)
 	if (sc->sc_bd == NULL)
 		goto bad;
 
-	if (sensor_task_register(sc, ami_refresh_sensors, 10) != 0)
+	if (sensor_task_register(sc, ami_refresh_sensors, 10) == NULL)
 		goto freebd;
 
 	sensordev_install(&sc->sc_sensordev);

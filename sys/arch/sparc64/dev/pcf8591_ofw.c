@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8591_ofw.c,v 1.3 2007/03/22 16:55:31 deraadt Exp $ */
+/*	$OpenBSD: pcf8591_ofw.c,v 1.4 2007/06/24 05:34:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller <djm@openbsd.org>
@@ -178,7 +178,7 @@ pcfadc_attach(struct device *parent, struct device *self, void *aux)
 			sensor_attach(&sc->sc_sensordev, 
 			    &sc->sc_channels[i].chan_sensor);
 
-	if (sensor_task_register(sc, pcfadc_refresh, 5)) {
+	if (sensor_task_register(sc, pcfadc_refresh, 5) == NULL) {
 		printf(": unable to register update task\n");
 		return;
 	}

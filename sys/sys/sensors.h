@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.23 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.24 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -153,8 +153,9 @@ void			 sensor_detach(struct ksensordev *, struct ksensor *);
 struct ksensor		*sensor_find(int, enum sensor_type, int);
 
 /* task scheduling */
-int		sensor_task_register(void *, void (*)(void *), int);
-void		sensor_task_unregister(void *);
+struct sensor_task;
+struct sensor_task	*sensor_task_register(void *, void (*)(void *), int);
+void			 sensor_task_unregister(struct sensor_task *);
 
 #endif	/* _KERNEL */
 

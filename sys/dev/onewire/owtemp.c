@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.7 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.8 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -53,6 +53,7 @@ struct owtemp_softc {
 
 	struct ksensor		sc_sensor;
 	struct ksensordev	sc_sensordev;
+	struct sensor_task	*sc_sensortask;
 	struct rwlock		sc_lock;
 };
 
@@ -100,7 +101,8 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 	sc->sc_sensor.type = SENSOR_TEMP;
 
-	if (sensor_task_register(sc, owtemp_update, 5)) {
+	sc->sc_sensortask = sensor_task_register(sc, owtemp_update, 5);
+	if (sc->sc_sensortask == NULL) {
 		printf(": unable to register update task\n");
 		return;
 	}
@@ -118,7 +120,8 @@ owtemp_detach(struct device *self, int flags)
 
 	rw_enter_write(&sc->sc_lock);
 	sensordev_deinstall(&sc->sc_sensordev);
-	sensor_task_unregister(sc);
+	if (sc->sc_sensortask != NULL)
+		sensor_task_unregister(sc->sc_sensortask);
 	rw_exit_write(&sc->sc_lock);
 
 	return (0);

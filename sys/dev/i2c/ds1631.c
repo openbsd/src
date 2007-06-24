@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.8 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.9 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -120,7 +120,7 @@ dostart:
 	strlcpy(sc->sc_sensor[MAXDS_TEMP].desc, "Internal",
 	    sizeof(sc->sc_sensor[MAXDS_TEMP].desc));
 
-	if (sensor_task_register(sc, maxds_refresh, 5)) {
+	if (sensor_task_register(sc, maxds_refresh, 5) == NULL) {
 		printf(", unable to register update task\n");
 		return;
 	}

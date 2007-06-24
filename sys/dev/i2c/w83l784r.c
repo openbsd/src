@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.11 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.12 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -219,7 +219,7 @@ wbenv_attach(struct device *parent, struct device *self, void *aux)
 	iic_ignore_addr(sc->sc_addr[2]);
 
  start:
-	if (sensor_task_register(sc, wbenv_refresh, 5)) {
+	if (sensor_task_register(sc, wbenv_refresh, 5) == NULL) {
 		printf("%s: unable to register update task\n",
 		    sc->sc_dev.dv_xname);
 		return;

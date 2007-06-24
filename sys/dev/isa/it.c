@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.22 2007/03/22 16:55:31 deraadt Exp $	*/
+/*	$OpenBSD: it.c,v 1.23 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -155,7 +155,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	it_setup_volt(sc, 3, 9);
 	it_setup_temp(sc, 12, 3);
 
-	if (sensor_task_register(sc, it_refresh, 5)) {
+	if (sensor_task_register(sc, it_refresh, 5) == NULL) {
 		printf("%s: unable to register update task\n",
 		    sc->sc_dev.dv_xname);
 		return;

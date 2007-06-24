@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.19 2007/06/04 18:42:05 deraadt Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.20 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -18,37 +18,23 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/kthread.h>
 #include <sys/queue.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/device.h>
 #include <sys/hotplug.h>
+#include <sys/timeout.h>
+#include <sys/workq.h>
 
 #include <sys/sensors.h>
 #include "hotplug.h"
 
 int			sensordev_count = 0;
-SLIST_HEAD(, ksensordev) sensordev_list = SLIST_HEAD_INITIALIZER(sensordev_list);
-
-struct sensor_task {
-	void				*arg;
-	void				(*func)(void *);
-
-	int				period;
-	time_t				nextrun;
-	volatile int			running;
-	TAILQ_ENTRY(sensor_task)	entry;
-};
-
-void	sensor_task_create(void *);
-void	sensor_task_thread(void *);
-void	sensor_task_schedule(struct sensor_task *);
-
-TAILQ_HEAD(, sensor_task) tasklist = TAILQ_HEAD_INITIALIZER(tasklist);
+SLIST_HEAD(, ksensordev) sensordev_list =
+    SLIST_HEAD_INITIALIZER(sensordev_list);
 
 void
 sensordev_install(struct ksensordev *sensdev)
@@ -176,100 +162,98 @@ sensor_find(int dev, enum sensor_type type, int numt)
 	return (NULL);
 }
 
-int
+struct sensor_task {
+	void				(*func)(void *);
+	void				*arg;
+
+	int				period;
+	struct timeout			timeout;
+	volatile enum {
+		ST_TICKING,
+		ST_WORKQ,
+		ST_RUNNING,
+		ST_DYING,
+		ST_DEAD
+	}				state;
+};
+
+void	sensor_task_tick(void *);
+void	sensor_task_work(void *, void *);
+
+struct sensor_task *
 sensor_task_register(void *arg, void (*func)(void *), int period)
 {
-	struct sensor_task	*st;
+	struct sensor_task *st;
 
 	st = malloc(sizeof(struct sensor_task), M_DEVBUF, M_NOWAIT);
 	if (st == NULL)
-		return (1);
+		return (NULL);
 
-	st->arg = arg;
 	st->func = func;
+	st->arg = arg;
 	st->period = period;
+	timeout_set(&st->timeout, sensor_task_tick, st);
 
-	st->running = 1;
+	sensor_task_tick(st);
 
-	if (TAILQ_EMPTY(&tasklist))
-		kthread_create_deferred(sensor_task_create, NULL);
-
-	st->nextrun = 0;
-	TAILQ_INSERT_HEAD(&tasklist, st, entry);
-	wakeup(&tasklist);
-
-	return (0);
+	return (st);
 }
 
 void
-sensor_task_unregister(void *arg)
+sensor_task_unregister(struct sensor_task *st)
 {
-	struct sensor_task	*st;
+	timeout_del(&st->timeout);
 
-	TAILQ_FOREACH(st, &tasklist, entry) {
-		if (st->arg == arg)
-			st->running = 0;
+	switch (st->state) {
+	case ST_TICKING:
+		free(st, M_DEVBUF);
+		break;
+
+	case ST_WORKQ:
+		st->state = ST_DYING;
+		break;
+
+	case ST_RUNNING:
+		st->state = ST_DYING;
+		while (st->state != ST_DEAD)
+			tsleep(st, 0, "stunr", 0);
+		break;
+	default:
+		panic("sensor_task_unregister: unexpected state %d",
+		    st->state);
 	}
 }
 
 void
-sensor_task_create(void *arg)
+sensor_task_tick(void *arg)
 {
-	if (kthread_create(sensor_task_thread, NULL, NULL, "sensors") != 0)
-		panic("sensors kthread");
+	struct sensor_task	*st = arg;
+
+	/* try to schedule the task */
+	if (workq_add_task(NULL, 0, sensor_task_work, st, NULL) != 0)
+		timeout_add(&st->timeout, hz/2);
+
+	st->state = ST_WORKQ;
 }
 
 void
-sensor_task_thread(void *arg)
+sensor_task_work(void *xst, void *arg)
 {
-	struct sensor_task	*st, *nst;
-	time_t			now;
+	struct sensor_task *st = xst;
 
-	while (!TAILQ_EMPTY(&tasklist)) {
-		while ((nst = TAILQ_FIRST(&tasklist))->nextrun >
-		    (now = time_uptime))
-			tsleep(&tasklist, PWAIT, "timeout",
-			    (nst->nextrun - now) * hz);
-
-		while ((st = nst) != NULL) {
-			nst = TAILQ_NEXT(st, entry);
-
-			if (st->nextrun > now)
-				break;
-
-			/* take it out while we work on it */
-			TAILQ_REMOVE(&tasklist, st, entry);
-
-			if (!st->running) {
-				free(st, M_DEVBUF);
-				continue;
-			}
-
-			/* run the task */
-			st->func(st->arg);
-			/* stick it back in the tasklist */
-			sensor_task_schedule(st);
-		}
+	if (st->state == ST_DYING) {
+		free(st, M_DEVBUF);
+		return;
 	}
 
-	kthread_exit(0);
-}
+	st->state = ST_RUNNING;
+	st->func(st->arg);
 
-void
-sensor_task_schedule(struct sensor_task *st)
-{
-	struct sensor_task 	*cst;
-
-	st->nextrun = time_uptime + st->period;
-
-	TAILQ_FOREACH(cst, &tasklist, entry) {
-		if (cst->nextrun > st->nextrun) {
-			TAILQ_INSERT_BEFORE(cst, st, entry);
-			return;
-		}
+	if (st->state == ST_DYING) {
+		st->state = ST_DEAD;
+		wakeup(st);
+	} else {
+		st->state = ST_TICKING;
+		timeout_add(&st->timeout, hz * st->period);
 	}
-
-	/* must be an empty list, or at the end of the list */
-	TAILQ_INSERT_TAIL(&tasklist, st, entry);
 }
-
