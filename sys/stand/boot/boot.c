@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.34 2007/06/13 02:17:32 drahn Exp $	*/
+/*	$OpenBSD: boot.c,v 1.35 2007/06/24 14:58:12 tom Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -49,7 +49,7 @@ struct cmd_state cmd;
 
 /* bootprompt can be set by MD code to avoid prompt first time round */
 int bootprompt = 1;
-const char *bootfile = KERNEL;
+char *kernelfile = KERNEL;		/* can be changed by MD code */
 
 void
 boot(dev_t bootdev)
@@ -64,7 +64,7 @@ boot(dev_t bootdev)
 	printf("%s\n", prog_ident);
 
 	devboot(bootdev, cmd.bootdev);
-	strlcpy(cmd.image, bootfile, sizeof(cmd.image));
+	strlcpy(cmd.image, kernelfile, sizeof(cmd.image));
 	cmd.boothowto = 0;
 	cmd.conf = "/etc/boot.conf";
 	cmd.addr = (void *)DEFAULT_KERNEL_ADDRESS;
@@ -89,10 +89,10 @@ boot(dev_t bootdev)
 		if (loadfile(cmd.path, marks, LOAD_ALL) >= 0)
 			break;
 
-		bootfile = KERNEL;
+		kernelfile = KERNEL;
 		try++;
-		strlcpy(cmd.image, bootfile, sizeof(cmd.image));
-		printf(" failed(%d). will try %s\n", errno, bootfile);
+		strlcpy(cmd.image, kernelfile, sizeof(cmd.image));
+		printf(" failed(%d). will try %s\n", errno, kernelfile);
 
 		if (try < 2) {
 			if (cmd.timeout > 0)

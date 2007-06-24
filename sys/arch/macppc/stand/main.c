@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2007/06/14 03:32:53 drahn Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 2007/06/24 14:58:12 tom Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ chain(void (*entry)(), char *args, void *ssym, void *esym)
 
 char bootline[512];
 
-extern const char *bootfile;
+extern char *kernelfile;
 int
 main()
 {
@@ -191,7 +191,7 @@ main()
 	prom2boot(bootdev);
 	get_alt_bootdev(bootdev, sizeof(bootdev), bootline, sizeof(bootline));
 	if (bootline[0] != '\0')
-		bootfile = bootline;
+		kernelfile = bootline;
 
 	OF_claim((void *)0x00100000, CLAIM_LIMIT, 0); /* XXX */
 	boot(0);
