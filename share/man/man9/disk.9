@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.25 2007/06/20 18:15:47 deraadt Exp $
+.\"	$OpenBSD: disk.9,v 1.26 2007/06/25 17:30:07 jmc Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 20 2007 $
+.Dd $Mdocdate: June 25 2007 $
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -62,25 +62,31 @@ structure, which is defined as follows:
 .Bd -literal
 struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
-	char	 *dk_name;	/* disk name */
-	int	 dk_bopenmask;	/* block devices open */
-	int	 dk_copenmask;	/* character devices open */
-	int	 dk_openmask;	/* composite (bopen|copen) */
-	int	 dk_state;	/* label state */
-	int	 dk_blkshift;	/* shift to convert DEV_BSIZE to blks */
-	int	 dk_byteshift;	/* shift to convert bytes to blks */
+	struct rwlock   dk_lock;        /* disk lock */
+	char	        *dk_name;	/* disk name */
+	int             dk_flags;       /* disk flags */
+#define DKF_CONSTRUCTED  0x0001
 
 	/*
 	 * Metrics data; note that some metrics may have no meaning
 	 * on certain types of disks.
 	 */
 	int	  dk_busy;	/* busy counter */
-	u_int64_t dk_xfer;	/* total number of transfers */
+	u_int64_t dk_rxfer;	/* total number of read transfers */
+	u_int64_t dk_wxfer;	/* total number of write transfers */
 	u_int64_t dk_seek;	/* total independent seek operations */
-	u_int64_t dk_bytes;	/* total bytes transferred */
+	u_int64_t dk_rbytes;	/* total bytes read */
+	u_int64_t dk_wbytes;	/* total bytes written */
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
+
+        int             dk_bopenmask;   /* block devices open */
+        int             dk_copenmask;   /* character devices open */
+        int             dk_openmask;    /* composite (bopen|copen) */
+        int             dk_state;       /* label state   ### */
+        int             dk_blkshift; /*shift to convert DEV_BSIZE to blks*/
+        int             dk_byteshift; /* shift to convert bytes to blks */
 
 	struct	dkdriver *dk_driver;	/* pointer to driver */
 
@@ -89,7 +95,7 @@ struct disk {
 	 * must be dynamically allocated, otherwise the size of this
 	 * structure becomes machine-dependent.
 	 */
-	daddr_t	 dk_labelsector;	/* sector containing label */
+	daddr64_t	dk_labelsector;	/* sector containing label */
 	struct disklabel *dk_label;	/* label */
 };
 .Ed
