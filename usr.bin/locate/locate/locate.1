@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.24 2007/05/31 19:20:12 jmc Exp $
+.\"	$OpenBSD: locate.1,v 1.25 2007/06/25 13:12:51 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.24 2007/05/31 19:20:12 jmc Exp $
+.\"	$Id: locate.1,v 1.25 2007/06/25 13:12:51 jmc Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 25 2007 $
 .Dt LOCATE 1
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@ of databases to be searched.
 .Pp
 .Ar database
 may be a colon-separated list of databases.
-A single colon is a reference to the default database.
+An empty database name is a reference to the default database.
 .Pp
 .Dl $ locate -d $HOME/lib/mydb: foo
 .Pp
@@ -164,7 +164,7 @@ instead of the
 .Xr stdio 3
 library.
 This is the default behavior.
-Usually faster in most cases.
+It performs better in most cases.
 .It Fl S
 Print some statistics about the database and exit.
 .It Fl s
