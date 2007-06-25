@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.29 2007/05/15 19:42:05 moritz Exp $	*/
+/*	$OpenBSD: tip.h,v 1.30 2007/06/25 15:57:28 jmc Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ int	intflag;		/* recognized interrupt */
 int	stoprompt;		/* for interrupting a prompt session */
 int	timedout;		/* ~> transfer timedout */
 int	cumode;			/* simulating the "cu" program */
-int	bits8;			/* terminal is is 8-bit mode */
+int	bits8;			/* terminal is 8-bit mode */
 #define STRIP_PAR	(bits8 ? 0377 : 0177)
 
 char	fname[PATH_MAX];	/* file name buffer for ~< */

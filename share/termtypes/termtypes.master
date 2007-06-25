@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.35 2005/10/26 20:44:29 otto Exp $
+# $OpenBSD: termtypes.master,v 1.36 2007/06/25 15:57:28 jmc Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -16822,7 +16822,7 @@ masscomp2|masscomp large screen version 2,
 #
 
 # CTRM terminal emulator
-# 1. underlining is not allowed with colors: first, is is simulated by 
+# 1. underlining is not allowed with colors: first, it is simulated by 
 # black on white, second, it disables background color manipulations.
 # 2. BLINKING, REVERSE and BOLD are allowed with colors,
 # so we have to save their status in the static registers A, B and H

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unifdef.c,v 1.12 2007/04/02 14:12:51 jmc Exp $	*/
+/*	$OpenBSD: unifdef.c,v 1.13 2007/06/25 15:57:28 jmc Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Tony Finch <dot@dotat.at>
  * Copyright (c) 1985, 1993
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.12 2007/04/02 14:12:51 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.13 2007/06/25 15:57:28 jmc Exp $";
 #endif
 
 /*
@@ -1078,7 +1078,7 @@ skipsym(const char *cp)
 }
 
 /*
- * Look for the symbol in the symbol table. If is is found, we return
+ * Look for the symbol in the symbol table. If it is found, we return
  * the symbol table index, else we return -1.
  */
 static int
