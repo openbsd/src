@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.19 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.20 2007/06/25 22:50:18 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -504,6 +504,10 @@ wb_match(struct lm_softc *sc)
 	case WB_CHIPID_W83627THF:
 		printf(": W83627THF\n");
 		lm_setup_sensors(sc, w83637hf_sensors);
+		break;
+	case WB_CHIPID_W83627EHF_A:
+		printf(": W83627EHF-A\n");
+		lm_setup_sensors(sc, w83627ehf_sensors);
 		break;
 	case WB_CHIPID_W83627EHF:
 		printf(": W83627EHF\n");

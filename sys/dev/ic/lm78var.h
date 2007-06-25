@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.13 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.14 2007/06/25 22:50:18 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -111,6 +111,7 @@
 #define WB_CHIPID_W83791SD	0x72
 #define WB_CHIPID_W83792D	0x7a
 #define WB_CHIPID_W83637HF	0x80
+#define WB_CHIPID_W83627EHF_A	0x88 /* early version, only for ASUS MBs */
 #define WB_CHIPID_W83627THF	0x90
 #define WB_CHIPID_W83627EHF	0xa1
 #define WB_CHIPID_W83627DHG	0xc1
