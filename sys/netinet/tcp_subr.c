@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.97 2007/06/15 18:23:06 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.98 2007/06/25 12:17:43 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1011,23 +1011,23 @@ tcp_mtudisc_increase(inp, errno)
 }
 
 #define TCP_ISS_CONN_INC 4096
-int tcp_iss_init;
-static u_char tcp_iss_secret[128];
-MD5_CTX tcp_iss_ctx;
+int tcp_secret_init;
+u_char tcp_secret[16];
+MD5_CTX tcp_secret_ctx;
 
 void
-tcp_set_iss(struct tcpcb *tp)
+tcp_set_iss_tsm(struct tcpcb *tp)
 {
 	MD5_CTX ctx;
-	tcp_seq digest[4];
+	u_int32_t digest[4];
 
-	if (tcp_iss_init == 0) {
-		arc4random_bytes(tcp_iss_secret, sizeof(tcp_iss_secret));
-		MD5Init(&tcp_iss_ctx);
-		MD5Update(&tcp_iss_ctx, tcp_iss_secret, sizeof(tcp_iss_secret));
-		tcp_iss_init = 1;
+	if (tcp_secret_init == 0) {
+		arc4random_bytes(tcp_secret, sizeof(tcp_secret));
+		MD5Init(&tcp_secret_ctx);
+		MD5Update(&tcp_secret_ctx, tcp_secret, sizeof(tcp_secret));
+		tcp_secret_init = 1;
 	}
-	ctx = tcp_iss_ctx;
+	ctx = tcp_secret_ctx;
 	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_lport, sizeof(u_short));
 	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_fport, sizeof(u_short));
 	if (tp->pf == AF_INET6) {
@@ -1044,40 +1044,7 @@ tcp_set_iss(struct tcpcb *tp)
 	MD5Final((u_char *)digest, &ctx);
 	tcp_iss += TCP_ISS_CONN_INC;
 	tp->iss = digest[0] + tcp_iss;
-}
-
-int tcp_tsm_init;
-static u_char tcp_tsm_secret[128];
-MD5_CTX tcp_tsm_ctx;
-
-void
-tcp_set_tsm(struct tcpcb *tp)
-{
-	MD5_CTX ctx;
-	u_int32_t digest[4];
-
-	if (tcp_tsm_init == 0) {
-		arc4random_bytes(tcp_tsm_secret, sizeof(tcp_tsm_secret));
-		MD5Init(&tcp_tsm_ctx);
-		MD5Update(&tcp_tsm_ctx, tcp_tsm_secret, sizeof(tcp_tsm_secret));
-		tcp_tsm_init = 1;
-	}
-	ctx = tcp_tsm_ctx;
-	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_lport, sizeof(u_short));
-	MD5Update(&ctx, (char *)&tp->t_inpcb->inp_fport, sizeof(u_short));
-	if (tp->pf == AF_INET6) {
-		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_laddr6,
-		    sizeof(struct in6_addr));
-		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_faddr6,
-		    sizeof(struct in6_addr));
-	} else {
-		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_laddr,
-		    sizeof(struct in_addr));
-		MD5Update(&ctx, (char *)&tp->t_inpcb->inp_faddr,
-		    sizeof(struct in_addr));
-	}
-	MD5Final((u_char *)digest, &ctx);
-	tp->ts_modulate = digest[0];
+	tp->ts_modulate = digest[1];
 }
 
 #ifdef TCP_SIGNATURE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.82 2007/06/15 18:23:07 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.83 2007/06/25 12:17:43 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -657,8 +657,7 @@ void	tcp_rndiss_init(void);
 tcp_seq	tcp_rndiss_next(void);
 u_int16_t
 	tcp_rndiss_encrypt(u_int16_t);
-void     tcp_set_iss(struct tcpcb *);
-void     tcp_set_tsm(struct tcpcb *);
+void     tcp_set_iss_tsm(struct tcpcb *);
 
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,
