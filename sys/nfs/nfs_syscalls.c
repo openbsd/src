@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.54 2007/05/31 20:03:43 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.55 2007/06/25 20:40:00 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ nfsrv_zapsock(slp)
 		slp->ns_fp = NULL;
 		so = slp->ns_so;
 		so->so_upcall = NULL;
-		soshutdown(so, 2);
+		soshutdown(so, SHUT_RDWR);
 		closef(fp, NULL);
 		if (slp->ns_nam)
 			MFREE(slp->ns_nam, m);
