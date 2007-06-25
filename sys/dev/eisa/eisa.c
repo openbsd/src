@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa.c,v 1.11 2003/04/27 11:22:52 ho Exp $	*/
+/*	$OpenBSD: eisa.c,v 1.12 2007/06/25 14:13:40 tom Exp $	*/
 /*	$NetBSD: eisa.c,v 1.15 1996/10/21 22:31:01 thorpej Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ eisaattach(parent, self, aux)
 
 #ifdef EISAVERBOSE
 /*
- * Descriptions of of known vendors and devices ("products").
+ * Descriptions of known vendors and devices ("products").
  */
 struct eisa_knowndev {
 	int	flags;
