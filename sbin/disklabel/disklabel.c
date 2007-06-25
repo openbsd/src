@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.117 2007/06/23 19:14:20 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.118 2007/06/25 22:53:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.117 2007/06/23 19:14:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.118 2007/06/25 22:53:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,6 +95,7 @@ int	bootsize;	/* size of remaining boot program */
 char	*xxboot;	/* primary boot */
 char	*bootxx;	/* secondary boot */
 char	boot0[MAXPATHLEN];
+void	setbootflag(struct disklabel *);
 #if NUMBOOT > 1
 char	boot1[MAXPATHLEN];
 #endif
@@ -127,7 +128,6 @@ char	*skip(char *);
 char	*word(char *);
 int	getasciilabel(FILE *, struct disklabel *);
 int	cmplabel(struct disklabel *, struct disklabel *);
-void	setbootflag(struct disklabel *);
 void	usage(void);
 u_int64_t getnum(char *, u_int64_t, u_int64_t, const char **);
 
@@ -311,7 +311,7 @@ main(int argc, char *argv[])
 				exit(1);
 		} else if (argc < 2 || argc > 3)
 			usage();
-		else	
+		else
 			makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
 		lp = makebootarea(bootarea, &lab, f);
 		*lp = lab;
@@ -409,7 +409,7 @@ cvtdisklabelv1(struct disklabel *lp)
 		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(v0pp->p_fsize,
 		    v0pp->p_frag);
 		pp->p_offseth = 0;
-		pp->p_sizeh = 0;	
+		pp->p_sizeh = 0;
 	}
 }
 
@@ -449,7 +449,7 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		 * otherwise we reject the request as meaningless. -wfj
 		 */
 		if (dosdp && DL_GETPSIZE(pp) && (dosdp->dp_typ == DOSPTYP_OPENBSD)) {
-		        sectoffset = (off_t)letoh32(dosdp->dp_start) *
+			sectoffset = (off_t)letoh32(dosdp->dp_start) *
 			    lp->d_secsize;
 		} else {
 			if (dosdp) {
@@ -621,7 +621,7 @@ readmbr(int f)
 	/*
 	 * This must be done this way due to alignment restrictions
 	 * in for example mips processors.
-         */
+	 */
 	dp = (struct dos_partition *)mbr;
 	if (lseek(f, (off_t)DOSBBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
@@ -1012,6 +1012,7 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 	if (DL_GETPSIZE(pp)) {
 		u_int32_t frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
 		u_int32_t fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
+
 		if (p_size < 0)
 			fprintf(f, "  %c: %16llu %16llu ", 'a' + i,
 			    DL_GETPSIZE(pp), DL_GETPOFFSET(pp));
@@ -1050,7 +1051,7 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 
 void
 display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
-     u_int64_t fr)
+    u_int64_t fr)
 {
 	int i, j;
 	double d;
@@ -1261,10 +1262,10 @@ word(char *cp)
 }
 
 /* Base the max value on the sizeof of the value we are reading */
-#define GETNUM(field, nptr, min, errstr) 				\
+#define GETNUM(field, nptr, min, errstr)				\
 	    getnum((nptr), (min),					\
-		sizeof(field) == 8 ? LLONG_MAX : 			\
-		(sizeof(field) == 4 ? UINT_MAX : 			\
+		sizeof(field) == 8 ? LLONG_MAX :			\
+		(sizeof(field) == 4 ? UINT_MAX :			\
 		(sizeof(field) == 2 ? USHRT_MAX : UCHAR_MAX)),  (errstr))
 
 u_int64_t
