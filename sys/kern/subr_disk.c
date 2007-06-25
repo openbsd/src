@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.61 2007/06/20 18:15:47 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.62 2007/06/25 16:11:42 otto Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int sz = howmany(bp->b_bcount, DEV_BSIZE);
+	daddr64_t sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* avoid division by zero */
 	if (lp->d_secpercyl == 0)
