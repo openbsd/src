@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.252 2007/06/24 11:17:13 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.253 2007/06/25 13:57:18 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -755,7 +755,6 @@ struct pf_state {
 #define	PFSTATE_STALE	 0x04
 };
 
-
 /*
  * Unified state structures for pulling states out of the kernel
  * used by pfsync(4) and the pf(4) ioctl.
@@ -1015,6 +1014,10 @@ RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state_key,
 TAILQ_HEAD(pfi_statehead, pfi_kif);
 RB_HEAD(pfi_ifhead, pfi_kif);
 
+/* state tables */
+extern struct pf_state_tree_lan_ext	 pf_statetbl_lan_ext;
+extern struct pf_state_tree_ext_gwy	 pf_statetbl_ext_gwy;
+
 /* keep synced with pfi_kif, used in RB_FIND */
 struct pfi_kif_cmp {
 	char				 pfik_name[IFNAMSIZ];
@@ -1027,8 +1030,6 @@ struct pfi_kif {
 	u_int64_t			 pfik_bytes[2][2][2];
 	u_int32_t			 pfik_tzero;
 	int				 pfik_flags;
-	struct pf_state_tree_lan_ext	 pfik_lan_ext;
-	struct pf_state_tree_ext_gwy	 pfik_ext_gwy;
 	TAILQ_ENTRY(pfi_kif)		 pfik_w_states;
 	void				*pfik_ah_cookie;
 	struct ifnet			*pfik_ifp;

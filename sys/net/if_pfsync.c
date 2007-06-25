@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.81 2007/06/24 11:17:13 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.82 2007/06/25 13:57:18 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -426,9 +426,9 @@ pfsync_input(struct mbuf *m, ...)
 				return;
 			}
 			for (sk = RB_MIN(pf_state_tree_lan_ext,
-			    &pfi_all->pfik_lan_ext); sk; sk = nextsk) {
+			    &pf_statetbl_lan_ext); sk; sk = nextsk) {
 				nextsk = RB_NEXT(pf_state_tree_lan_ext,
-				    &pfi_all->pfik_lan_ext, sk);
+				    &pf_statetbl_lan_ext, sk);
 				TAILQ_FOREACH(st, &sk->states, next) {
 					if (st->creatorid == creatorid) {
 						st->sync_flags |=

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.547 2007/06/24 11:17:13 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.548 2007/06/25 13:57:18 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -94,6 +94,10 @@
 /*
  * Global variables
  */
+
+/* state tables */
+struct pf_state_tree_lan_ext	 pf_statetbl_lan_ext;
+struct pf_state_tree_ext_gwy	 pf_statetbl_ext_gwy;
 
 struct pf_altqqueue	 pf_altqs[2];
 struct pf_palist	 pf_pabuf;
@@ -531,11 +535,11 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int8_t tree)
 
 	switch (tree) {
 	case PF_LAN_EXT:
-		sk = RB_FIND(pf_state_tree_lan_ext, &pfi_all->pfik_lan_ext,
+		sk = RB_FIND(pf_state_tree_lan_ext, &pf_statetbl_lan_ext,
 		    (struct pf_state_key *)key);
 		break;
 	case PF_EXT_GWY:
-		sk = RB_FIND(pf_state_tree_ext_gwy, &pfi_all->pfik_ext_gwy,
+		sk = RB_FIND(pf_state_tree_ext_gwy, &pf_statetbl_ext_gwy,
 		    (struct pf_state_key *)key);
 		break;
 	default:
@@ -564,7 +568,7 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int8_t tree, int *more)
 	case PF_LAN_EXT:
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
 			sk = RB_FIND(pf_state_tree_lan_ext,
-			    &pfi_all->pfik_lan_ext, (struct pf_state_key *)key);
+			    &pf_statetbl_lan_ext, (struct pf_state_key *)key);
 			if (sk == NULL)
 				continue;
 			ret = TAILQ_FIRST(&sk->states);
@@ -578,7 +582,7 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int8_t tree, int *more)
 	case PF_EXT_GWY:
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
 			sk = RB_FIND(pf_state_tree_ext_gwy,
-			    &pfi_all->pfik_ext_gwy, (struct pf_state_key *)key);
+			    &pf_statetbl_ext_gwy, (struct pf_state_key *)key);
 			if (sk == NULL)
 				continue;
 			ret = TAILQ_FIRST(&sk->states);
@@ -821,7 +825,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 	KASSERT(s->state_key != NULL);
 	s->kif = kif;
 
-	if ((cur = RB_INSERT(pf_state_tree_lan_ext, &pfi_all->pfik_lan_ext,
+	if ((cur = RB_INSERT(pf_state_tree_lan_ext, &pf_statetbl_lan_ext,
 	    s->state_key)) != NULL) {
 		/* key exists. check for same kif, if none, add to key */
 		TAILQ_FOREACH(sp, &cur->states, next)
@@ -835,7 +839,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 
 	/* if cur != NULL, we already found a state key and attached to it */
 	if (cur == NULL && (cur = RB_INSERT(pf_state_tree_ext_gwy,
-	    &pfi_all->pfik_ext_gwy, s->state_key)) != NULL) {
+	    &pf_statetbl_ext_gwy, s->state_key)) != NULL) {
 		/* must not happen. we must have found the sk above! */
 		pf_stateins_err("tree_ext_gwy", s, kif);
 		pf_detach_state(s, PF_DT_SKIP_EXTGWY);
@@ -2822,10 +2826,10 @@ pf_detach_state(struct pf_state *s, int flags)
 	if (--sk->refcnt == 0) {
 		if (!(flags & PF_DT_SKIP_EXTGWY))
 			RB_REMOVE(pf_state_tree_ext_gwy,
-			    &pfi_all->pfik_ext_gwy, sk);
+			    &pf_statetbl_ext_gwy, sk);
 		if (!(flags & PF_DT_SKIP_LANEXT))
 			RB_REMOVE(pf_state_tree_lan_ext,
-			    &pfi_all->pfik_lan_ext, sk);
+			    &pf_statetbl_lan_ext, sk);
 		pool_put(&pf_state_key_pl, sk);
 	}
 }
