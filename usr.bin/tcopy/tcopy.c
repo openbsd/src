@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcopy.c,v 1.9 2003/06/10 22:20:53 deraadt Exp $	*/
+/*	$OpenBSD: tcopy.c,v 1.10 2007/06/25 16:59:54 deraadt Exp $	*/
 /*	$NetBSD: tcopy.c,v 1.5 1997/04/15 07:23:08 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-static char rcsid[] = "$OpenBSD: tcopy.c,v 1.9 2003/06/10 22:20:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tcopy.c,v 1.10 2007/06/25 16:59:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -312,7 +312,7 @@ writeop(int fd, int type)
 	struct mtop op;
 
 	op.mt_op = type;
-	op.mt_count = (daddr_t)1;
+	op.mt_count = 1;
 	if (ioctl(fd, MTIOCTOP, (char *)&op) < 0)
 		err(6, "tape op");
 }
