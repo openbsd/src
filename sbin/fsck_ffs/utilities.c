@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.33 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.34 2007/06/25 19:59:55 otto Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.33 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.34 2007/06/25 19:59:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static const char rcsid[] = "$OpenBSD: utilities.c,v 1.33 2007/04/10 16:08:17 mi
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror(char *, daddr_t);
+static void rwerror(char *, daddr64_t);
 
 int
 ftypeok(union dinode *dp)
@@ -168,7 +168,7 @@ bufinit(void)
  * Manage a cache of directory blocks.
  */
 struct bufarea *
-getdatablk(daddr_t blkno, long size)
+getdatablk(daddr64_t blkno, long size)
 {
 	struct bufarea *bp;
 
@@ -195,9 +195,9 @@ foundit:
 }
 
 void
-getblk(struct bufarea *bp, daddr_t blk, long size)
+getblk(struct bufarea *bp, daddr64_t blk, long size)
 {
-	daddr_t dblk;
+	daddr64_t dblk;
 
 	dblk = fsbtodb(&sblock, blk);
 	if (bp->b_bno != dblk) {
@@ -217,7 +217,7 @@ flush(int fd, struct bufarea *bp)
 	if (!bp->b_dirty)
 		return;
 	if (bp->b_errs != 0)
-		pfatal("WRITING %sZERO'ED BLOCK %d TO DISK\n",
+		pfatal("WRITING %sZERO'ED BLOCK %lld TO DISK\n",
 		    (bp->b_errs == bp->b_size / dev_bsize) ? "" : "PARTIALLY ",
 		    bp->b_bno);
 	bp->b_dirty = 0;
@@ -234,12 +234,12 @@ flush(int fd, struct bufarea *bp)
 }
 
 static void
-rwerror(char *mesg, daddr_t blk)
+rwerror(char *mesg, daddr64_t blk)
 {
 
 	if (preen == 0)
 		printf("\n");
-	pfatal("CANNOT %s: BLK %d", mesg, blk);
+	pfatal("CANNOT %s: BLK %lld", mesg, blk);
 	if (reply("CONTINUE") == 0)
 		errexit("Program terminated\n");
 }
@@ -320,7 +320,7 @@ ckfini(int markclean)
 }
 
 int
-bread(int fd, char *buf, daddr_t blk, long size)
+bread(int fd, char *buf, daddr64_t blk, long size)
 {
 	char *cp;
 	int i, errs;
@@ -342,11 +342,11 @@ bread(int fd, char *buf, daddr_t blk, long size)
 		if (read(fd, cp, (int)secsize) != secsize) {
 			(void)lseek(fd, offset + i + secsize, SEEK_SET);
 			if (secsize != dev_bsize && dev_bsize != 1)
-				printf(" %ld (%ld),",
+				printf(" %lld (%lld),",
 				    (blk * dev_bsize + i) / secsize,
 				    blk + i / dev_bsize);
 			else
-				printf(" %ld,", blk + i / dev_bsize);
+				printf(" %lld,", blk + i / dev_bsize);
 			errs++;
 		}
 	}
@@ -355,7 +355,7 @@ bread(int fd, char *buf, daddr_t blk, long size)
 }
 
 void
-bwrite(int fd, char *buf, daddr_t blk, long size)
+bwrite(int fd, char *buf, daddr64_t blk, long size)
 {
 	int i;
 	char *cp;
@@ -378,7 +378,7 @@ bwrite(int fd, char *buf, daddr_t blk, long size)
 	for (cp = buf, i = 0; i < size; i += dev_bsize, cp += dev_bsize)
 		if (write(fd, cp, (int)dev_bsize) != dev_bsize) {
 			(void)lseek(fd, offset + i + dev_bsize, SEEK_SET);
-			printf(" %ld,", blk + i / dev_bsize);
+			printf(" %lld,", blk + i / dev_bsize);
 		}
 	printf("\n");
 	return;
@@ -431,7 +431,7 @@ allocblk(long frags)
  * Free a previously allocated block
  */
 void
-freeblk(daddr_t blkno, long frags)
+freeblk(daddr64_t blkno, long frags)
 {
 	struct inodesc idesc;
 

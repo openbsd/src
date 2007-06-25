@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.33 2007/06/01 14:26:08 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.34 2007/06/25 19:59:55 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.33 2007/06/01 14:26:08 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.34 2007/06/25 19:59:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,8 @@ pass5(void)
 	int inomapsize, blkmapsize;
 	struct fs *fs = &sblock;
 	struct cg *cg = &cgrp;
-	daddr_t dbase, dmax;
-	daddr_t d;
+	daddr64_t dbase, dmax;
+	daddr64_t d;
 	long i, j, k;
 	struct csum *cs;
 	struct csum_total cstotal;

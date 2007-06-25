@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.25 2007/06/01 23:42:35 pedro Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.26 2007/06/25 19:59:55 otto Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1.c,v 1.25 2007/06/01 23:42:35 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: pass1.c,v 1.26 2007/06/25 19:59:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ static const char rcsid[] = "$OpenBSD: pass1.c,v 1.25 2007/06/01 23:42:35 pedro 
 #include "extern.h"
 #include "fsutil.h"
 
-static daddr_t badblk;
-static daddr_t dupblk;
+static daddr64_t badblk;
+static daddr64_t dupblk;
 static void checkinode(ino_t, struct inodesc *);
 
 static ino_t info_inumber;
@@ -310,7 +310,7 @@ pass1check(struct inodesc *idesc)
 {
 	int res = KEEPON;
 	int anyout, nfrags;
-	daddr_t blkno = idesc->id_blkno;
+	daddr64_t blkno = idesc->id_blkno;
 	struct dups *dlp;
 	struct dups *new;
 

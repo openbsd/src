@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2007/06/25 19:59:55 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.31 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.32 2007/06/25 19:59:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ docheck(struct fstab *fsp)
 int
 checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 {
-	daddr_t n_ffree, n_bfree;
+	daddr64_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
 	int cylno;
@@ -267,25 +267,25 @@ checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 	 */
 	n_ffree = sblock.fs_cstotal.cs_nffree;
 	n_bfree = sblock.fs_cstotal.cs_nbfree;
-	pwarn("%d files, %d used, %d free ",
+	pwarn("%lld files, %lld used, %lld free ",
 	    n_files, n_blks, n_ffree + sblock.fs_frag * n_bfree);
-	printf("(%d frags, %d blocks, %lld.%lld%% fragmentation)\n",
+	printf("(%lld frags, %lld blocks, %lld.%lld%% fragmentation)\n",
 	    n_ffree, n_bfree, (n_ffree * 100) / sblock.fs_dsize,
 	    ((n_ffree * 1000 + sblock.fs_dsize / 2) / sblock.fs_dsize) % 10);
 	if (debug &&
 	    (n_files -= maxino - ROOTINO - sblock.fs_cstotal.cs_nifree))
-		printf("%d files missing\n", n_files);
+		printf("%lld files missing\n", n_files);
 	if (debug) {
 		n_blks += sblock.fs_ncg *
 			(cgdmin(&sblock, 0) - cgsblock(&sblock, 0));
 		n_blks += cgsblock(&sblock, 0) - cgbase(&sblock, 0);
 		n_blks += howmany(sblock.fs_cssize, sblock.fs_fsize);
 		if (n_blks -= maxfsblock - (n_ffree + sblock.fs_frag * n_bfree))
-			printf("%d blocks missing\n", n_blks);
+			printf("%lld blocks missing\n", n_blks);
 		if (duplist != NULL) {
 			printf("The following duplicate blocks remain:");
 			for (dp = duplist; dp; dp = dp->next)
-				printf(" %d,", dp->dup);
+				printf(" %lld,", dp->dup);
 			printf("\n");
 		}
 		if (zlnhead != NULL) {

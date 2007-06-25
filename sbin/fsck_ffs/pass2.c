@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.26 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.27 2007/06/25 19:59:55 otto Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.26 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.27 2007/06/25 19:59:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -508,6 +508,14 @@ again:
 static int
 blksort(const void *inpp1, const void *inpp2)
 {
-	return ((* (struct inoinfo **) inpp1)->i_blks[0] -
-		(* (struct inoinfo **) inpp2)->i_blks[0]);
+	daddr64_t d;
+
+	d = (* (struct inoinfo **) inpp1)->i_blks[0] -
+	    (* (struct inoinfo **) inpp2)->i_blks[0];
+	if (d < 0)
+		return (-1);
+	else if (d > 0)
+		return (1);
+	else
+		return (0);
 }

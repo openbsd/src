@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.20 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: dir.c,v 1.21 2007/06/25 19:59:55 otto Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.20 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: dir.c,v 1.21 2007/06/25 19:59:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ struct	odirtemplate odirhead = {
 static int expanddir(union dinode *, char *);
 static void freedir(ino_t, ino_t);
 static struct direct *fsck_readdir(struct inodesc *);
-static struct bufarea *getdirblk(daddr_t, long);
+static struct bufarea *getdirblk(daddr64_t, long);
 static int lftempname(char *, ino_t);
 static int mkentry(struct inodesc *);
 static int chgino(struct  inodesc *);
@@ -553,7 +553,7 @@ makeentry(ino_t parent, ino_t ino, char *name)
 static int
 expanddir(union dinode *dp, char *name)
 {
-	daddr_t lastbn, newblk;
+	daddr64_t lastbn, newblk;
 	struct bufarea *bp;
 	char *cp, firstblk[DIRBLKSIZ];
 	u_int64_t dis;
@@ -718,7 +718,7 @@ lftempname(char *bufp, ino_t ino)
  * Insure that it is held until another is requested.
  */
 static struct bufarea *
-getdirblk(daddr_t blkno, long size)
+getdirblk(daddr64_t blkno, long size)
 {
 
 	if (pdirbp != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.16 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.17 2007/06/25 19:59:55 otto Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass4.c,v 1.16 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass4.c,v 1.17 2007/06/25 19:59:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ pass4check(struct inodesc *idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;
-	daddr_t blkno = idesc->id_blkno;
+	daddr64_t blkno = idesc->id_blkno;
 
 	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
 		if (chkrange(blkno, 1)) {

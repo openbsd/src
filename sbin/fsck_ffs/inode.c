@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.29 2007/04/10 16:08:17 millert Exp $	*/
+/*	$OpenBSD: inode.c,v 1.30 2007/06/25 19:59:55 otto Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static const char rcsid[] = "$OpenBSD: inode.c,v 1.29 2007/04/10 16:08:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: inode.c,v 1.30 2007/06/25 19:59:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ iblock(struct inodesc *idesc, long ilevel, off_t isize)
  * Return 0 if in range, 1 if out of range.
  */
 int
-chkrange(daddr_t blk, int cnt)
+chkrange(daddr64_t blk, int cnt)
 {
 	int c;
 
@@ -247,17 +247,17 @@ chkrange(daddr_t blk, int cnt)
 	if (cnt > sblock.fs_frag ||
 	    fragnum(&sblock, blk) + cnt > sblock.fs_frag) {
 		if (debug)
-			printf("bad size: blk %ld, offset %i, size %d\n",
-			    (long)blk, (int)fragnum(&sblock, blk), cnt);
+			printf("bad size: blk %lld, offset %lld, size %d\n",
+			    blk, fragnum(&sblock, blk), cnt);
 		return (1);
 	}
 	c = dtog(&sblock, blk);
 	if (blk < cgdmin(&sblock, c)) {
 		if ((blk + cnt) > cgsblock(&sblock, c)) {
 			if (debug) {
-				printf("blk %d < cgdmin %d;",
+				printf("blk %lld < cgdmin %lld;",
 				    blk, cgdmin(&sblock, c));
-				printf(" blk + cnt %d > cgsbase %d\n",
+				printf(" blk + cnt %lld > cgsbase %lld\n",
 				    blk + cnt, cgsblock(&sblock, c));
 			}
 			return (1);
@@ -265,9 +265,9 @@ chkrange(daddr_t blk, int cnt)
 	} else {
 		if ((blk + cnt) > cgbase(&sblock, c+1)) {
 			if (debug)  {
-				printf("blk %d >= cgdmin %d;",
+				printf("blk %lld >= cgdmin %lld;",
 				    blk, cgdmin(&sblock, c));
-				printf(" blk + cnt %d > sblock.fs_fpg %d\n",
+				printf(" blk + cnt %lld > sblock.fs_fpg %d\n",
 				    blk+cnt, sblock.fs_fpg);
 			}
 			return (1);
@@ -282,7 +282,7 @@ chkrange(daddr_t blk, int cnt)
 union dinode *
 ginode(ino_t inumber)
 {
-	daddr_t iblk;
+	daddr64_t iblk;
 
 	if (inumber < ROOTINO || inumber > maxino)
 		errexit("bad inode number %d to ginode\n", inumber);
@@ -312,7 +312,7 @@ union dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
-	daddr_t dblk;
+	daddr64_t dblk;
 	union dinode *dp;
 	static caddr_t nextinop;
 
@@ -401,7 +401,7 @@ cacheino(union dinode *dp, ino_t inumber)
 	blks = howmany(DIP(dp, di_size), sblock.fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	inp = malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr_t));
+	inp = malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr64_t));
 	if (inp == NULL)
 		errexit("cannot allocate memory for inode cache\n");
 	inpp = &inphead[inumber % numdirs];
@@ -550,10 +550,10 @@ pinode(ino_t ino)
 }
 
 void
-blkerror(ino_t ino, char *type, daddr_t blk)
+blkerror(ino_t ino, char *type, daddr64_t blk)
 {
 
-	pfatal("%d %s I=%u", blk, type, ino);
+	pfatal("%lld %s I=%u", blk, type, ino);
 	printf("\n");
 	switch (statemap[ino]) {
 
