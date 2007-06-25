@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.15 2006/04/02 00:50:42 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.16 2007/06/25 20:22:00 deraadt Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.15 2006/04/02 00:50:42 deraadt Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.16 2007/06/25 20:22:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -168,11 +168,11 @@ isfree(struct ufs1_dinode *ip)
 static struct user {
 	uid_t uid;
 	char *name;
-	daddr_t space;
+	daddr64_t space;
 	long count;
-	daddr_t spc30;
-	daddr_t spc60;
-	daddr_t spc90;
+	daddr64_t spc30;
+	daddr64_t spc60;
+	daddr64_t spc90;
 } *users;
 static int nusers;
 
@@ -261,7 +261,7 @@ cmpusers(const void *v1, const void *v2)
 				    cmpusers))
 
 static void
-uses(uid_t uid, daddr_t blks, time_t act)
+uses(uid_t uid, daddr64_t blks, time_t act)
 {
 	static time_t today;
 	struct user *usr;
@@ -288,9 +288,9 @@ uses(uid_t uid, daddr_t blks, time_t act)
 #endif
 struct fsizes {
 	struct fsizes *fsz_next;
-	daddr_t fsz_first, fsz_last;
+	daddr64_t fsz_first, fsz_last;
 	ino_t fsz_count[FSZCNT];
-	daddr_t fsz_sz[FSZCNT];
+	daddr64_t fsz_sz[FSZCNT];
 } *fsizes;
 
 static void
@@ -312,7 +312,7 @@ dofsizes(int fd, struct fs *super, char *name)
 {
 	ino_t inode, maxino;
 	struct ufs1_dinode *ip;
-	daddr_t sz, ksz;
+	daddr64_t sz, ksz;
 	struct fsizes *fp, **fsp;
 	int i;
 
@@ -371,9 +371,9 @@ dofsizes(int fd, struct fs *super, char *name)
 	for (fp = fsizes; fp; fp = fp->fsz_next) {
 		for (i = 0; i < FSZCNT; i++) {
 			if (fp->fsz_count[i])
-				printf("%d\t%d\t%qd\n",
-				       fp->fsz_first + i, fp->fsz_count[i],
-				    (quad_t) SIZE(sz += fp->fsz_sz[i]));
+				printf("%d\t%d\t%lld\n",
+				    fp->fsz_first + i, fp->fsz_count[i],
+				    SIZE(sz += fp->fsz_sz[i]));
 		}
 	}
 }
@@ -403,15 +403,15 @@ douser(int fd, struct fs *super, char *name)
 	memcpy(usrs, users, nusers * sizeof(struct user));
 	sortusers(usrs);
 	for (usr = usrs, n = nusers; --n >= 0 && usr->count; usr++) {
-		printf("%5qd", (quad_t) SIZE(usr->space));
+		printf("%14lld", SIZE(usr->space));
 		if (count)
 			printf("\t%5ld", usr->count);
 		printf("\t%-8s", usr->name);
 		if (unused)
-			printf("\t%5qd\t%5qd\t%5qd",
-			       (quad_t) SIZE(usr->spc30),
-			       (quad_t) SIZE(usr->spc60),
-			       (quad_t) SIZE(usr->spc90));
+			printf("\t%14lld\t%14lld\t%14lld",
+			       SIZE(usr->spc30),
+			       SIZE(usr->spc60),
+			       SIZE(usr->spc90));
 		printf("\n");
 	}
 	free(usrs);
