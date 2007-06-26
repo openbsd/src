@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.199 2007/06/12 06:09:38 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.200 2007/06/26 02:21:02 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -92,7 +92,7 @@ static void	 checkin_mtimedate(struct checkin_params *);
 static void	 checkin_parsekeyword(char *, RCSNUM **, time_t *, char **,
     char **);
 static int	 checkin_update(struct checkin_params *);
-static void	 checkin_revert(struct checkin_params *);
+static int	 checkin_revert(struct checkin_params *);
 
 void
 checkin_usage(void)
@@ -452,14 +452,14 @@ checkin_update(struct checkin_params *pb)
 
 	/* Load file contents */
 	if ((bp = rcs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
-		goto fail;
+		return (-1);
 
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
 	if (pb->newrev != NULL && RCSNUM_ZERO_ENDING(pb->newrev))
 		pb->newrev = rcsnum_inc(pb->newrev);
 
 	if (checkin_checklock(pb) < 0)
-		goto fail;
+		return (-1);
 
 	/* If revision passed on command line is less than HEAD, bail.
 	 * XXX only applies to ci -r1.2 foo for example if HEAD is > 1.2 and
@@ -471,7 +471,7 @@ checkin_update(struct checkin_params *pb)
 		    pb->file->rf_path,
 		    rcsnum_tostr(pb->newrev, numb1, sizeof(numb1)),
 		    rcsnum_tostr(pb->frev, numb2, sizeof(numb2)));
-		goto fail;
+		return (-1);
 	}
 
 	/*
@@ -504,7 +504,7 @@ checkin_update(struct checkin_params *pb)
 	/* Get RCS patch */
 	if ((pb->deltatext = checkin_diff_file(pb)) == NULL) {
 		warnx("failed to get diff");
-		goto fail;
+		return (-1);
 	}
 
 	/*
@@ -512,8 +512,10 @@ checkin_update(struct checkin_params *pb)
 	 * the user and revert to latest version.
 	 */
 	if (!(pb->flags & FORCE) && (rcs_buf_len(pb->deltatext) < 1)) {
-		checkin_revert(pb);
-		goto out;
+		if (checkin_revert(pb) == -1)
+			return (-1);
+		else
+			return (0);
 	}
 
 	/* If no log message specified, get it interactively. */
@@ -549,7 +551,7 @@ checkin_update(struct checkin_params *pb)
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
 	    pb->rcs_msg, pb->date, pb->author) != 0) {
 		warnx("failed to add new revision");
-		goto fail;
+		return (-1);
 	}
 
 	/*
@@ -569,7 +571,7 @@ checkin_update(struct checkin_params *pb)
 	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL &&
 	    (checkin_attach_symbol(pb) < 0))
-		goto fail;
+		return (-1);
 
 	/* Set the state of this revision if specified. */
 	if (pb->state != NULL)
@@ -598,11 +600,8 @@ checkin_update(struct checkin_params *pb)
 		xfree(pb->rcs_msg);	/* free empty log message */
 		pb->rcs_msg = NULL;
 	}
-out:
-	return (0);
 
-fail:
-	return (-1);
+	return (0);
 }
 
 /*
@@ -629,7 +628,7 @@ checkin_init(struct checkin_params *pb)
 
 	/* Load file contents */
 	if ((bp = rcs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
-		goto fail;
+		return (-1);
 
 	/* Get default values from working copy if -k specified */
 	if (pb->flags & CI_KEYWORDSCAN)
@@ -643,7 +642,7 @@ checkin_init(struct checkin_params *pb)
 	if (pb->description == NULL &&
 	    rcs_set_description(pb->file, NULL) == -1) {
 		warn("%s", pb->filename);
-		goto fail;
+		return (-1);
 	}
 
 skipdesc:
@@ -671,7 +670,7 @@ skipdesc:
 	    (pb->rcs_msg == NULL ? "Initial revision" : pb->rcs_msg),
 	    pb->date, pb->author) != 0) {
 		warnx("failed to add new revision");
-		goto fail;
+		return (-1);
 	}
 
 	/*
@@ -687,12 +686,12 @@ skipdesc:
 	/* New head revision has to contain entire file; */
 	if (rcs_deltatext_set(pb->file, pb->file->rf_head, bp) == -1) {
 		warnx("failed to set new head revision");
-		goto fail;
+		return (-1);
 	}
 
 	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL && checkin_attach_symbol(pb) < 0)
-		goto fail;
+		return (-1);
 
 	/* Set the state of this revision if specified. */
 	if (pb->state != NULL)
@@ -724,8 +723,6 @@ skipdesc:
 	}
 
 	return (0);
-fail:
-	return (-1);
 }
 
 /*
@@ -771,7 +768,7 @@ checkin_attach_symbol(struct checkin_params *pb)
  * warn the user.
  *
  */
-static void
+static int
 checkin_revert(struct checkin_params *pb)
 {
 	char rbuf[16];
@@ -782,12 +779,29 @@ checkin_revert(struct checkin_params *pb)
 		(void)fprintf(stderr, "file is unchanged; reverting "
 		    "to previous revision %s\n", rbuf);
 
+	/* Attach a symbolic name to this revision if specified. */
+	if (pb->symbol != NULL) {
+		if (checkin_checklock(pb) == -1)
+			return (-1);
+
+		pb->newrev = pb->frev;
+		if (checkin_attach_symbol(pb) == -1)
+			return (-1);
+	}
+
 	pb->flags |= CO_REVERT;
 	(void)close(workfile_fd);
 	(void)unlink(pb->filename);
+	
+	/* If needed, write out RCSFILE before calling checkout_rev() */
+	if (pb->symbol != NULL)
+		rcs_write(pb->file);
+
 	if ((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 		checkout_rev(pb->file, pb->frev, pb->filename,
 		    pb->flags, pb->username, pb->author, NULL, NULL);
+
+	return (0);
 }
 
 /*
