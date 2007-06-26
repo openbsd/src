@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.10 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: scandir.c,v 1.11 2007/06/26 05:00:50 ray Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * struct dirent (through namelist). Returns -1 if there were any errors.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
@@ -73,8 +73,8 @@ scandir(const char *dirname, struct dirent ***namelist,
 	 * estimate the array size by taking the size of the directory file
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
-	arraysz = (stb.st_size / 24);
-	if (arraysz > SIZE_T_MAX / sizeof(struct dirent *)) {
+	arraysz = MAX(stb.st_size / 24, 16);
+	if (arraysz > SIZE_MAX / sizeof(struct dirent *)) {
 		errno = ENOMEM;
 		goto fail;
 	}
@@ -96,7 +96,9 @@ scandir(const char *dirname, struct dirent ***namelist,
 			if (fstat(dirp->dd_fd, &stb) < 0)
 				goto fail;
 
-			arraysz = stb.st_size / 12;
+			arraysz *= 2;
+			if (SIZE_MAX / sizeof(struct dirent *) < arraysz)
+				goto fail;
 			nnames = (struct dirent **)realloc((char *)names,
 				arraysz * sizeof(struct dirent *));
 			if (nnames == NULL)
