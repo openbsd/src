@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_ee.c,v 1.1 2005/11/14 23:25:43 brad Exp $ */
+/* $OpenBSD: ixgb_ee.c,v 1.2 2007/06/26 10:30:05 tom Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ ixgb_wait_eeprom_command(struct ixgb_hw *hw)
  * hw - Struct containing variables accessed by shared code
  *
  * Reads the first 64 16 bit words of the EEPROM and sums the values read.
- * If the the sum of the 64 16 bit words is 0xBABA, the EEPROM's checksum is
+ * If the sum of the 64 16 bit words is 0xBABA, the EEPROM's checksum is
  * valid.
  *
  * Returns:

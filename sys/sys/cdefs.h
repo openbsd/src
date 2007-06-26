@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.24 2006/12/23 15:00:14 miod Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.25 2007/06/26 10:30:05 tom Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -286,7 +286,7 @@
 
 /*
  * _ANSI_SOURCE means to expose ANSI C89 interfaces only.
- * If the the user defines it in addition to one of the POSIX or XOPEN
+ * If the user defines it in addition to one of the POSIX or XOPEN
  * macros, assume the POSIX/XOPEN macro(s) should take precedence.
  */
 #if defined(_ANSI_SOURCE) && !defined(__POSIX_VISIBLE) && \

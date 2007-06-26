@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfcomm_upper.c,v 1.1 2007/06/01 02:46:12 uwe Exp $	*/
+/*	$OpenBSD: rfcomm_upper.c,v 1.2 2007/06/26 10:30:05 tom Exp $	*/
 /*	$NetBSD: rfcomm_upper.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -367,7 +367,7 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
  * rfcomm_send(dlc, mbuf)
  *
  * Output data on DLC. This is streamed data, so we add it
- * to our buffer and start the the DLC, which will assemble
+ * to our buffer and start the DLC, which will assemble
  * packets and send them if it can.
  */
 int
