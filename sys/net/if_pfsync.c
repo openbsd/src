@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.82 2007/06/25 13:57:18 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -243,7 +243,9 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	 * If the ruleset checksums match, it's safe to associate the state
 	 * with the rule of that number.
 	 */
-	if (sp->rule != htonl(-1) && sp->anchor == htonl(-1) && chksum_flag)
+	if (sp->rule != htonl(-1) && sp->anchor == htonl(-1) && chksum_flag &&
+	    ntohl(sp->rule) <
+	    pf_main_ruleset.rules[PF_RULESET_FILTER].active.rcount)
 		r = pf_main_ruleset.rules[
 		    PF_RULESET_FILTER].active.ptr_array[ntohl(sp->rule)];
 	else
