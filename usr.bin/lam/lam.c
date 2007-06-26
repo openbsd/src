@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.12 2004/12/27 23:37:37 deraadt Exp $	*/
+/*	$OpenBSD: lam.c,v 1.13 2007/06/26 05:14:52 ray Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: lam.c,v 1.12 2004/12/27 23:37:37 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lam.c,v 1.13 2007/06/26 05:14:52 ray Exp $";
 #endif /* not lint */
 
 /*
@@ -48,9 +48,10 @@ static const char rcsid[] = "$OpenBSD: lam.c,v 1.12 2004/12/27 23:37:37 deraadt 
  *	Author:  John Kunze, UCB
  */
 
+#include <sys/param.h>
+
 #include <ctype.h>
 #include <err.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,9 +65,10 @@ struct	openfile {		/* open file structure */
 	char	eol;		/* end of line character */
 	char	*sepstring;	/* string to print before each line */
 	char	*format;	/* printf(3) style string spec. */
-}	input[OPEN_MAX];
+}	input[NOFILE_MAX + 1];	/* last one is for the last -s arg. */
+#define INPUTSIZE sizeof(input) / sizeof(*input)
 
-int	morefiles;		/* set by getargs(), changed by gatherline() */
+int	numfiles;		/* number of open files */
 int	nofinalnl;		/* normally append \n to each output line */
 char	line[BIGBUFSIZ];
 char	*linep;
@@ -79,19 +81,27 @@ char	*pad(struct openfile *);
 int
 main(int argc, char *argv[])
 {
-	struct	openfile *ip;
+	int i;
 
+	/* Process arguments, set numfiles to file argument count. */
 	getargs(argc, argv);
-	if (!morefiles)
+	if (numfiles == 0)
 		usage();
+	/* Concatenate lines from each file, then print. */
 	for (;;) {
 		linep = line;
-		for (ip = input; ip->fp != NULL; ip++)
-			linep = gatherline(ip);
-		if (!morefiles)
+		/*
+		 * For each file that has a line to print, numfile is
+		 * incremented.  Thus if numfiles is 0, we are done.
+		 */
+		numfiles = 0;
+		for (i = 0; i < INPUTSIZE - 1 && input[i].fp != NULL; i++)
+			linep = gatherline(&input[i]);
+		if (numfiles == 0)
 			exit(0);
 		fputs(line, stdout);
-		fputs(ip->sepstring, stdout);
+		/* Print terminating -s argument. */
+		fputs(input[i].sepstring, stdout);
 		if (!nofinalnl)
 			putchar('\n');
 	}
@@ -140,7 +150,10 @@ getargs(int argc, char *argv[])
 		case -1:
 			if (optind >= argc)
 				break;		/* to support "--" */
-			morefiles++;
+			/* This is a file, not a flag. */
+			++numfiles;
+			if (numfiles >= INPUTSIZE)
+				errx(1, "too many files");
 			if (strcmp(argv[optind], "-") == 0)
 				ip->fp = stdin;
 			else if ((ip->fp = fopen(argv[optind], "r")) == NULL)
@@ -181,6 +194,10 @@ pad(struct openfile *ip)
 	return (lp);
 }
 
+/*
+ * Grab line from file, appending to linep.  Increments numfiles if file
+ * is still open.
+ */
 char *
 gatherline(struct openfile *ip)
 {
@@ -201,9 +218,10 @@ gatherline(struct openfile *ip)
 		ip->eof = 1;
 		if (ip->fp == stdin)
 			fclose(stdin);
-		morefiles--;
 		return (pad(ip));
 	}
+	/* Something will be printed. */
+	numfiles++;
 	n = strlcpy(lp, ip->sepstring, line + sizeof(line) - lp);
 	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
 	n = snprintf(lp, line + sizeof(line) - lp, ip->format, s);
