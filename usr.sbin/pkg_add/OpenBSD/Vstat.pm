@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.41 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.42 2007/06/26 14:40:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -380,6 +380,16 @@ sub create_new
 	return $handle;
 }
 
+sub from_location
+{
+	my ($class, $location) = @_;
+	my $handle = $class->new;
+	$handle->{pkgname} = $location->{name};
+	$handle->{location} = $location;
+	$handle->{tweaked} = 0;
+	return $handle;
+}
+
 package OpenBSD::UpdateSet;
 sub new
 {
@@ -494,6 +504,14 @@ sub create_new
 	my ($class, $pkgname) = @_;
 	my $set = $class->new;
 	$set->add_newer(OpenBSD::Handle->create_new($pkgname));
+	return $set;
+}
+
+sub from_location
+{
+	my ($class, $location) = @_;
+	my $set = $class->new;
+	$set->add_newer(OpenBSD::Handle->from_location($location));
 	return $set;
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.58 2007/06/19 10:47:28 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.59 2007/06/26 14:40:25 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,8 @@
 use strict;
 use warnings;
 
+# generic dependencies lookup class: walk the dependency tree as far
+# as necessary to resolve dependencies
 package OpenBSD::lookup;
 
 sub lookup
@@ -54,7 +56,6 @@ sub lookup
 		return 1;
 	}
 	
-	$self->dependency_not_found($state, $obj);
 	return 0;
 }
 
@@ -134,12 +135,6 @@ sub find_elsewhere
 		}
     	}
 	return undef;
-}
-
-sub dependency_not_found
-{
-	my ($self, $state, $obj) = @_;
-	print "libspec $obj not found\n" if $state->{very_verbose};
 }
 
 package OpenBSD::lookup::tag;
@@ -228,17 +223,11 @@ sub add_todo
 
 	require OpenBSD::PackageName;
 
-	for my $fullname (@extra) {
+	for my $set (@extra) {
+		my $fullname = $set->handle->{pkgname};
 		$self->{to_install}->
-		    {OpenBSD::PackageName::url2pkgname($fullname)} = $fullname;
+		    {OpenBSD::PackageName::url2pkgname($fullname)} = $set;
 	}
-}
-
-sub add_new_dep
-{
-	my ($self, $pkgname, $satisfy) = @_;
-	push(@{$self->{deplist}}, $pkgname) if !is_installed($pkgname);
-	$self->{to_register}->{$pkgname} = $satisfy;
 }
 
 sub find_dep_in_repositories
@@ -246,21 +235,25 @@ sub find_dep_in_repositories
 	my ($self, $state, $dep) = @_;
 	require OpenBSD::PackageLocator;
 
-	my @candidates = OpenBSD::PackageLocator->match($dep->spec);
+	my @candidates = OpenBSD::PackageLocator->match_locations($dep->spec);
+	# XXX not really efficient, but hey
+	my %c = map {($_->{name}, $_)} @candidates;
+	my @pkgs = keys %c;
 	if (!$state->{forced}->{allversions}) {
-		@candidates = OpenBSD::PackageName::keep_most_recent(@candidates);
+		@pkgs = OpenBSD::PackageName::keep_most_recent(@pkgs);
 	}
-	if (@candidates == 1) {
-		return $candidates[0];
-	} elsif (@candidates > 1) {
+	if (@pkgs == 1) {
+		return $c{$pkgs[0]};
+	} elsif (@pkgs > 1) {
 		require OpenBSD::Interactive;
 
 		# put default first if available
-		@candidates = ((grep {$_ eq $dep->{def}} @candidates),
-		    (sort (grep {$_ ne $dep->{def}} @candidates)));
-		return OpenBSD::Interactive::ask_list(
+		@pkgs = ((grep {$_ eq $dep->{def}} @pkgs),
+		    (sort (grep {$_ ne $dep->{def}} @pkgs)));
+		my $good =  OpenBSD::Interactive::ask_list(
 		    'Ambiguous: choose dependency for '.$self->pkgname.': ',
-		    $state->{interactive}, @candidates);
+		    $state->{interactive}, @pkgs);
+		return $c{$good};
 	} else {
 		return;
 	}
@@ -282,28 +275,34 @@ sub solve_dependency
 	if ($state->{allow_replacing}) {
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 		if ($v) {
-			push(@{$self->{deplist}}, $v);
-			$self->{to_register}->{$v} = $dep;
-			return;
+			push(@{$self->{deplist}}, $self->{to_install}->{$v});
+			return $v;
 		}
 	}
 
-	if (!$v) {
-		$v = find_candidate($dep->spec, installed_packages());
+	$v = find_candidate($dep->spec, installed_packages());
+	if ($v) {
+		return $v;
 	}
-	if (!$v && !$state->{allow_replacing}) {
+	if (!$state->{allow_replacing}) {
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
+		if ($v) {
+			push(@{$self->{deplist}}, $self->{to_install}->{$v});
+			return $v;
+		}
 	}
 
-	if (!$v) {
-		$v = $self->find_dep_in_repositories($state, $dep);
+	$v = $self->find_dep_in_repositories($state, $dep);
+	if ($v) {
+		push(@{$self->{deplist}}, 
+		    OpenBSD::UpdateSet->from_location($v->openPackage));
+		return $v->{name};
 	}
+
 	# resort to default if nothing else
-	if (!$v) {
-		$v = $dep->{def};
-	}
-
-	$self->add_new_dep($v, $dep);
+	$v = $dep->{def};
+	push(@{$self->{deplist}}, OpenBSD::UpdateSet->create_new($v));
+	return $v;
 }
 
 sub solve_depends
@@ -313,7 +312,8 @@ sub solve_depends
 	$self->add_todo(@extra);
 
 	for my $dep (@{$self->{plist}->{depend}}) {
-		$self->solve_dependency($state, $dep);
+		my $v = $self->solve_dependency($state, $dep);
+		$self->{to_register}->{$v} = $dep;
 	}
 
 	return @{$self->{deplist}};
@@ -336,7 +336,9 @@ sub dump
 	if ($self->dependencies) {
 	    print "Dependencies for ", $self->pkgname, " resolve to: ", 
 	    	join(', ',  $self->dependencies);
-	    print " (todo: ", join(',', @{$self->{deplist}}), ")" 
+	    print " (todo: ", 
+	    	join(',', (map {$_->handle->{pkgname}} @{$self->{deplist}})), 
+		")" 
 	    	if @{$self->{deplist}} > 0;
 	    print "\n";
 	}

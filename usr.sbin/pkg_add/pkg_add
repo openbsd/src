@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.325 2007/06/17 10:44:01 espie Exp $
+# $OpenBSD: pkg_add,v 1.326 2007/06/26 14:40:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -55,7 +55,8 @@ sub build_deptree
 		$pkg = $tree->{$pkg};
 	}
 	for my $i (@deps) {
-		$tree->{$i} = $pkg unless defined $tree->{$i};
+		my $j = $i->handle->{pkgname};
+		$tree->{$j} = $pkg unless defined $tree->{$j};
 	}
 }
 
@@ -73,12 +74,6 @@ sub mark_installed
 {
 	my ($state, $pkg) = @_;
 	$state->{installed}->{$pkg} = 1;
-}
-
-sub mark_as_already_installed
-{
-	my ($state, $pkg) = @_;
-	$state->mark_installed($pkg);
 }
 
 sub is_installed
@@ -234,16 +229,6 @@ sub can_install
 }
 
 package main;
-
-sub prepare_to_add
-{
-	my ($pkg, $state) = @_;
-
-	my $set = OpenBSD::UpdateSet->create_new($pkg);
-	$set->complete($state);
-	return $set;
-}
-
 
 sub thunderbird_special_case
 {
@@ -418,17 +403,19 @@ sub really_add
 	$set->{solver}->adjust_old_dependencies($state);
 }
 
-sub install_package
+sub install_set
 {
-	my ($pkg, $state, @todo) = @_;
-	my $cache = $state->{cache};
+	my ($set, $state, @todo) = @_;
 
-	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = prepare_to_add($pkg, $state);
+	my $handle = $set->handle;
+	if ($state->is_installed($handle->{pkgname})) {
+		if (defined $handle->{location}) {
+			$handle->{location}->close_now;
+		}
+		return ();
 	}
 
-	my $set = $cache->{$pkg};
-	my $handle = $set->handle;
+	$set->complete($state);
 	if ($handle->has_error(OpenBSD::Handle::ALREADY_INSTALLED)) {
 		return ();
 	}
@@ -444,16 +431,11 @@ sub install_package
 	}
 
 	my $location = $handle->{location};
-	if ($state->is_installed($handle->{pkgname})) {
-		$location->close_now;
-		return ();
-	}
-
 	my $plist = $handle->{plist};
 
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($state->{arch})) {
-			print "$pkg is not for the right architecture\n";
+			print "$handle->{pkgname} is not for the right architecture\n";
 			return () unless $forced{arch};
 		}
 	}
@@ -464,8 +446,8 @@ sub install_package
 			$set->{solver}->dump;
 		}
 		if (@deps > 0) {
-			$state->build_deptree($pkg, @deps);
-			return (@deps, $pkg);
+			$state->build_deptree($handle->{pkgname}, @deps);
+			return (@deps, $set);
 		}
 	}
 
@@ -473,7 +455,7 @@ sub install_package
 	my @baddeps = $set->{solver}->check_depends;
 
 	if (@baddeps) {
-		print "Can't install $pkg: can't resolve ",
+		print "Can't install $handle->{pkgname}: can't resolve ",
 		    join(',', @baddeps), "\n";
 		$location->close_now;
 		$bad++;
@@ -682,9 +664,20 @@ if ($bad) {
 	exit(1);
 }
 
+# convert everything to UpdateSets
+
+my @todo2 = ();
+my $cache = {};
+for my $pkg (@todo) {
+	if (!defined $cache->{$pkg}) {
+		$cache->{$pkg} = OpenBSD::UpdateSet->create_new($pkg);
+	}
+	push(@todo2, $cache->{$pkg});
+}
+	
 eval {
-while (my $pkg = shift @todo) {
-	unshift(@todo, install_package($pkg, $state, @todo));
+while (my $set = shift @todo2) {
+	unshift(@todo2, install_set($set, $state, @todo2));
 }
 };
 
@@ -760,7 +753,7 @@ sub get_plist
 	}
 	my $plist = $location->plist;
 	unless (defined $plist) {
-		print "Can't find CONTENTS from $pkg\n";
+		print "Can't find CONTENTS from ", $location->url, "\n";
 		$location->close_with_client_error;
 		$location->wipe_info;
 		$handle->set_error(BAD_PACKAGE);
@@ -784,7 +777,7 @@ sub get_plist
 		    OpenBSD::Add::tweak_package_status($pkgname, $state);
 		print "Not reinstalling $pkgname\n" if $state->{verbose} and
 		    !$handle->{tweaked};
-		$state->mark_as_already_installed($pkgname);
+		$state->mark_as_installed($pkgname);
 		$location->close_now;
 		$location->wipe_info;
 		$handle->set_error(ALREADY_INSTALLED);
