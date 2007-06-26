@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.23 2006/09/25 06:03:29 otto Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.24 2007/06/26 17:51:28 moritz Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.23 2006/09/25 06:03:29 otto Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.24 2007/06/26 17:51:28 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -529,7 +529,7 @@ over:
 	{
 		if (parent == NULL)
 			fprintf(stderr,
-				"fortune:%s not a fortune file or directory\n",
+				"fortune: %s not a fortune file or directory\n",
 				path);
 		if (was_malloc)
 			free(path);
@@ -1141,6 +1141,11 @@ get_tbl(FILEDESC *fp)
 		fp->tbl.str_shortlen = ntohl(fp->tbl.str_shortlen);
 		fp->tbl.str_flags = ntohl(fp->tbl.str_flags);
 		(void) close(fd);
+
+		if (fp->tbl.str_numstr == 0) {
+			fprintf(stderr, "fortune: %s is empty\n", fp->path);
+			exit(1);
+		}
 	}
 	else {
 		zero_tbl(&fp->tbl);

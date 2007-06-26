@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.14 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.15 2007/06/26 17:51:28 moritz Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: strfile.c,v 1.14 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: strfile.c,v 1.15 2007/06/26 17:51:28 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -205,6 +205,8 @@ main(int ac, char *av[])
 
 	(void) fclose(inf);
 	Tbl.str_numstr = Num_pts - 1;
+	if (Tbl.str_numstr == 0)
+		Tbl.str_shortlen = 0;
 
 	if (Oflag)
 		do_order();
@@ -216,10 +218,10 @@ main(int ac, char *av[])
 
 	if (!Sflag) {
 		printf("\"%s\" created\n", Outfile);
-		if (Num_pts == 2)
+		if (Tbl.str_numstr == 1)
 			puts("There was 1 string");
 		else
-			printf("There were %ld strings\n", Num_pts - 1);
+			printf("There were %ld strings\n", Tbl.str_numstr);
 		printf("Longest string: %lu byte%s\n",
 			  (unsigned long) Tbl.str_longlen,
 		       Tbl.str_longlen == 1 ? "" : "s");
