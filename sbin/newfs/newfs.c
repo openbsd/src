@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.68 2007/06/10 19:11:43 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.69 2007/06/26 19:03:21 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ u_short	dkcksum(struct disklabel *);
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* 0 = 4.3BSD ffs, 1 = 4.4BSD ffs, 2 = ffs2 */
-int	fssize;			/* file system size */
+daddr64_t	fssize;			/* file system size */
 int	sectorsize;		/* bytes/sector */
 int	realsectorsize;		/* bytes/sector in hardware */
 int	fsize = 0;		/* fragment size */
@@ -264,7 +264,7 @@ main(int argc, char *argv[])
 			quiet = 1;
 			break;
 		case 's':
-			fssize = strtonum(optarg, 1, INT_MAX, &errstr);
+			fssize = strtonum(optarg, 1, LLONG_MAX, &errstr);
 			if (errstr)
 				fatal("file system size is %s: %s",
 				    errstr, optarg);
@@ -334,7 +334,8 @@ main(int argc, char *argv[])
 		mfsfakelabel.d_rpm = 3600;
 		mfsfakelabel.d_interleave = 1;
 		mfsfakelabel.d_npartitions = 1;
-		mfsfakelabel.d_partitions[0].p_size = 16384;
+		mfsfakelabel.d_version = 1;
+		DL_SETPSIZE(&mfsfakelabel.d_partitions[0], 16384);
 		mfsfakelabel.d_partitions[0].p_fragblock =
 		    DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
 		mfsfakelabel.d_partitions[0].p_cpg = 16;
@@ -409,7 +410,7 @@ main(int argc, char *argv[])
 			pp = &lp->d_partitions[0];
 		else
 			pp = &lp->d_partitions[*cp - 'a'];
-		if (pp->p_size == 0)
+		if (DL_GETPSIZE(pp) == 0)
 			fatal("%s: `%c' partition is unavailable",
 			    argv[0], *cp);
 		if (pp->p_fstype == FS_BOOT)
@@ -418,10 +419,10 @@ main(int argc, char *argv[])
 	}
 havelabel:
 	if (fssize == 0)
-		fssize = pp->p_size;
-	if (fssize > pp->p_size && !mfs)
-	       fatal("%s: maximum file system size on the `%c' partition is %d",
-			argv[0], *cp, pp->p_size);
+		fssize = DL_GETPSIZE(pp);
+	if (fssize > DL_GETPSIZE(pp) && !mfs)
+	       fatal("%s: maximum file system size on the `%c' partition is %lld",
+			argv[0], *cp, DL_GETPSIZE(pp));
 	if (sectorsize == 0) {
 		sectorsize = lp->d_secsize;
 		if (sectorsize <= 0)
@@ -457,13 +458,13 @@ havelabel:
 
 		sectorsize = DEV_BSIZE;
 		fssize /= secperblk;
-		pp->p_size /= secperblk;
+		DL_SETPSIZE(pp, DL_GETPSIZE(pp) / secperblk);
 	} else if (sectorsize > DEV_BSIZE) {
 		int blkpersec = sectorsize / DEV_BSIZE;
 
 		sectorsize = DEV_BSIZE;
 		fssize *= blkpersec;
-		pp->p_size *= blkpersec;
+		DL_SETPSIZE(pp, DL_GETPSIZE(pp) * blkpersec);
 	}
 #ifdef MFS
 	if (mfs) {
@@ -477,9 +478,9 @@ havelabel:
 
 	mkfs(pp, special, fsi, fso, mfsmode, mfsuid, mfsgid);
 	if (realsectorsize < DEV_BSIZE)
-		pp->p_size *= DEV_BSIZE / realsectorsize;
+		DL_SETPSIZE(pp, DL_GETPSIZE(pp) * DEV_BSIZE / realsectorsize);
 	else if (realsectorsize > DEV_BSIZE)
-		pp->p_size /= realsectorsize / DEV_BSIZE;
+		DL_SETPSIZE(pp, DL_GETPSIZE(pp) / realsectorsize / DEV_BSIZE);
 	if (!Nflag && memcmp(pp, &oldpartition, sizeof(oldpartition)))
 		rewritelabel(special, fso, lp);
 	if (!Nflag)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.68 2007/06/10 19:11:43 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.69 2007/06/26 19:03:21 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -84,7 +84,7 @@
 extern int	mfs;		/* run as the memory based filesystem */
 extern int	Nflag;		/* run mkfs without writing file system */
 extern int	Oflag;		/* format as an 4.3BSD file system */
-extern int	fssize;		/* file system size */
+extern daddr64_t fssize;	/* file system size */
 extern int	sectorsize;	/* bytes/sector */
 extern int	fsize;		/* fragment size */
 extern int	bsize;		/* block size */
@@ -191,8 +191,11 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 	 * Validate the given file system size.
 	 * Verify that its last block can actually be accessed.
 	 */
-	if (fssize <= 0)
-		errx(13, "preposterous size %u, max is %u", fssize, INT_MAX);
+	if (Oflag <= 1 && fssize > INT_MAX)
+		errx(13, "preposterous size %lld, max is %d", fssize, INT_MAX);
+	if (Oflag == 2 && fssize > MAXDISKSIZE)
+		errx(13, "preposterous size %lld, max is %lld", fssize,
+		    MAXDISKSIZE);
 
 	wtfs(fssize - 1, sectorsize, (char *)&sblock);
 
