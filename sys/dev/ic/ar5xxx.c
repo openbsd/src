@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.41 2007/05/09 16:41:14 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.42 2007/06/26 10:53:01 tom Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -626,14 +626,22 @@ ar5k_get_regdomain(struct ath_hal *hal)
 u_int32_t
 ar5k_bitswap(u_int32_t val, u_int bits)
 {
-	u_int32_t retval = 0, bit, i;
+	if (bits == 8) {
+		val = ((val & 0xF0) >>  4) | ((val & 0x0F) <<  4);
+		val = ((val & 0xCC) >>  2) | ((val & 0x33) <<  2);
+		val = ((val & 0xAA) >>  1) | ((val & 0x55) <<  1);
 
-	for (i = 0; i < bits; i++) {
-		bit = (val >> i) & 1;
-		retval = (retval << 1) | bit;
+		return val;
+	} else {
+		u_int32_t retval = 0, bit, i;
+
+		for (i = 0; i < bits; i++) {
+			bit = (val >> i) & 1;
+			retval = (retval << 1) | bit;
+		}
+
+		return retval;
 	}
-
-	return (retval);
 }
 
 u_int
