@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.20 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: log.h,v 1.21 2007/06/26 02:24:10 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,6 +35,12 @@
 #define LP_ERRNO	2
 #define LP_ABORT	3
 #define LP_TRACE	4
+
+#define LOG_REVSEP \
+"----------------------------"
+
+#define LOG_REVEND \
+ "============================================================================="
 
 void	cvs_log(u_int, const char *, ...) __attribute__((format(printf, 2, 3)));
 void	cvs_vlog(u_int, const char *, va_list);

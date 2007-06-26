@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.191 2007/06/04 21:54:26 niallo Exp $	*/
+/*	$OpenBSD: file.c,v 1.192 2007/06/26 02:24:10 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -338,7 +338,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	struct cvs_ent_line *line;
 	struct cvs_flisthead fl, dl;
 	CVSENTRIES *entlist;
-	char *buf, *ebuf, *cp, repo[MAXPATHLEN], fpath[MAXPATHLEN];
+	char *p, *buf, *ebuf, *cp, repo[MAXPATHLEN], fpath[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_file_walkdir(%s)", cf->file_path);
 
@@ -359,7 +359,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	    CVS_PATH_CVSDIR);
 
 	l = stat(fpath, &st);
-	if (cvs_cmdop != CVS_OP_IMPORT &&
+	if (cvs_cmdop != CVS_OP_IMPORT && cvs_cmdop != CVS_OP_RLOG &&
 	    (l == -1 || (l == 0 && !S_ISDIR(st.st_mode)))) {
 		return;
 	}
@@ -414,7 +414,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
-			(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+			len = xsnprintf(fpath, MAXPATHLEN, "%s/%s",
 			    cf->file_path, dp->d_name);
 
 			/*
@@ -461,17 +461,23 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
-			if (!(cr->flags & CR_RECURSE_DIRS) &&
-			    type == CVS_DIR) {
-				cp += dp->d_reclen;
-				continue;
-			}
-
 			switch (type) {
 			case CVS_DIR:
-				cvs_file_get(fpath, &dl);
+				if (cr->flags & CR_RECURSE_DIRS)
+					cvs_file_get(fpath, &dl);
 				break;
 			case CVS_FILE:
+				if ((p = strrchr(cf->file_path, '/')) &&
+				    !strcmp(p + 1, CVS_PATH_ATTIC)) {
+
+					*p = '\0';
+					len = xsnprintf(fpath, MAXPATHLEN,
+					    "%s/%s", cf->file_path, dp->d_name);
+					*p = '/';
+				}
+				if (fpath[len - 2] == ',' &&
+				    fpath[len - 1] == 'v')
+					fpath[len - 2] = '\0';
 				cvs_file_get(fpath, &fl);
 				break;
 			default:
@@ -611,7 +617,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	if (cf->file_type == CVS_DIR) {
 		if (cf->fd == -1 && stat(rcsfile, &st) != -1)
 			cf->file_status = DIR_CREATE;
-		else if (cf->file_ent != NULL)
+		else if (cf->file_ent != NULL || cvs_cmdop == CVS_OP_RLOG)
 			cf->file_status = FILE_UPTODATE;
 		else
 			cf->file_status = FILE_UNKNOWN;
@@ -627,6 +633,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		break;
 	case CVS_OP_IMPORT:
 	case CVS_OP_LOG:
+	case CVS_OP_RLOG:
 		rflags |= RCS_PARSE_FULLY;
 		break;
 	}

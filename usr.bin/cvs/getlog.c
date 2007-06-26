@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.71 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.72 2007/06/26 02:24:10 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -18,15 +18,10 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include "cvs.h"
 #include "remote.h"
-
-#define LOG_REVSEP \
-"----------------------------"
-
-#define LOG_REVEND \
- "============================================================================="
 
 #define L_HEAD		0x01
 #define L_HEAD_DESCR	0x02
@@ -47,6 +42,16 @@ char	*wlist = NULL;
 struct cvs_cmd cvs_cmd_log = {
 	CVS_OP_LOG, 0, "log",
 	{ "lo" },
+	"Print out history information for files",
+	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
+	"bd:hlNRr:s:tw:",
+	NULL,
+	cvs_getlog
+};
+
+struct cvs_cmd cvs_cmd_rlog = {
+	CVS_OP_RLOG, 0, "rlog",
+	{ "rlo" },
 	"Print out history information for files",
 	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
 	"bd:hlNRr:s:tw:",
@@ -131,6 +136,10 @@ cvs_getlog(int argc, char **argv)
 		if (runflags & L_LOGINS)
 			cvs_client_send_request("Argument -w%s", wlist);
 	} else {
+		if (cvs_command[0] == 'r' &&
+		    chdir(current_cvsroot->cr_dir) == -1)
+			fatal("cvs_server_log: %s", strerror(errno));
+
 		cr.fileproc = cvs_log_local;
 	}
 
@@ -144,7 +153,10 @@ cvs_getlog(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
-		cvs_client_send_request("log");
+		if (cvs_command[0] == 'r')
+			cvs_client_send_request("rlog");
+		else
+			cvs_client_send_request("log");
 		cvs_client_get_responses();
 	}
 
