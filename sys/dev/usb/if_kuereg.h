@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kuereg.h,v 1.8 2007/06/06 19:25:49 mk Exp $ */
+/*	$OpenBSD: if_kuereg.h,v 1.9 2007/06/26 06:33:17 jsg Exp $ */
 /*	$NetBSD: if_kuereg.h,v 1.11 2001/01/21 02:35:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -67,14 +67,18 @@ struct kue_ether_desc {
 	u_int8_t		kue_maxseg[2];
 	u_int8_t		kue_mcastfilt[2];
 	u_int8_t		kue_rsvd2;
-};
+} __packed;
 
 #define KUE_ETHERSTATS(x)	\
-	(*(u_int32_t *)&(x)->kue_desc.kue_etherstats)
+	(((x)->kue_desc.kue_etherstats[3] << 24) | \
+	 ((x)->kue_desc.kue_etherstats[2] << 16) | \
+	 ((x)->kue_desc.kue_etherstats[1] << 8) | \
+	  (x)->kue_desc.kue_etherstats[0])
 #define KUE_MAXSEG(x)		\
-	(*(u_int16_t *)&(x)->kue_desc.kue_maxseg)
+	(((x)->kue_desc.kue_maxseg[1] << 8) | (x)->kue_desc.kue_maxseg[0])
 #define KUE_MCFILTCNT(x)	\
-	((*(u_int16_t *)&(x)->kue_desc.kue_mcastfilt) & 0x7FFF)
+	((((x)->kue_desc.kue_mcastfilt[1] << 8) | \
+	   (x)->kue_desc.kue_mcastfilt[0]) & 0x7FFF)
 #define KUE_MCFILT(x, y)	\
 	(char *)&(sc->kue_mcfilters[y * ETHER_ADDR_LEN])
 
