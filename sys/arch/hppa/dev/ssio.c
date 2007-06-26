@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssio.c,v 1.3 2007/06/20 17:41:04 kettenis Exp $	*/
+/*	$OpenBSD: ssio.c,v 1.4 2007/06/26 17:53:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -29,6 +29,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciidereg.h>
 
 #include <hppa/dev/ssiovar.h>
 
@@ -124,6 +125,35 @@ int	ssio_print(void *, const char *);
 int
 ssio_match(struct device *parent, void *match, void *aux)
 {
+	struct pci_attach_args *pa = aux;
+	pcireg_t bhlc, id;
+	pcitag_t tag;
+
+	/*
+	 * The firmware doesn't always switch the IDE function into native
+	 * mode.  So we do that ourselves since it makes life much simpler.
+	 * Note that we have to do this in the match function since the
+	 * Legacy I/O function attaches after the IDE function.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_PC87415) {
+		bhlc = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+		if (!PCI_HDRTYPE_MULTIFN(bhlc))
+			return (0);
+
+		tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 1);
+		id = pci_conf_read(pa->pa_pc, tag, PCI_ID_REG);
+		if (PCI_VENDOR(id) != PCI_VENDOR_NS ||
+		    PCI_PRODUCT(id) != PCI_PRODUCT_NS_PC87560)
+			return (0);
+
+		pa->pa_class |= PCIIDE_INTERFACE_PCI(0) << PCI_INTERFACE_SHIFT;
+		pa->pa_class |= PCIIDE_INTERFACE_PCI(1) << PCI_INTERFACE_SHIFT;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG,
+		    pa->pa_class);
+		return (0);
+	}
+
 	return (pci_matchbyid((struct pci_attach_args *)aux, ssio_devices,
 	    sizeof(ssio_devices) / sizeof (ssio_devices[0])));
 }
@@ -167,22 +197,25 @@ ssio_attach(struct device *parent, struct device *self, void *aux)
 	 * We use the following interrupt mapping:
 	 *
 	 * USB (INTD#)		IRQ 1
+	 * IDE Channel 1	IRQ 5
 	 * Serial Port 1	IRQ 4
 	 * Serial Port 2	IRQ 3
-	 * Parallel Port	IRQ 5
+	 * Parallel Port	IRQ 7
 	 *
-	 * USB is set to level triggered, all others to edge triggered.
+	 * USB and IDE are set to level triggered, all others to edge
+	 * triggered.
 	 *
 	 * We disable all other interrupts since we don't need them.
 	 */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_DMA_RC2);
 	reg &= ~(SSIO_PCI_INT_TC1_MASK << SSIO_PCI_INT_TC1_SHIFT);
-	reg |= 0x02 << SSIO_PCI_INT_TC1_SHIFT;
+	reg |= 0x22 << SSIO_PCI_INT_TC1_SHIFT;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, SSIO_PCI_DMA_RC2, reg);
 
 	reg = 0;
 	reg |= 0x34 << SSIO_PCI_INT_RC1_SHIFT;	/* SP1, SP2 */
-	reg |= 0x05 << SSIO_PCI_INT_RC2_SHIFT;	/* PP */
+	reg |= 0x07 << SSIO_PCI_INT_RC2_SHIFT;	/* PP */
+	reg |= 0x05 << SSIO_PCI_INT_RC3_SHIFT;	/* IDE1 */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, SSIO_PCI_INT_TC2, reg);
 
 	reg = 0;
@@ -229,7 +262,7 @@ ssio_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_iot = sc->sc_iot;
 	saa.saa_iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_PPBAR);
 	saa.saa_iobase &= 0xfffffffe;
-	saa.saa_irq = 5;
+	saa.saa_irq = 7;
 	config_found(self, &saa, ssio_print);
 
 	return;
