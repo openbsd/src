@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.270 2007/06/20 04:10:59 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.271 2007/06/26 17:48:18 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -5106,7 +5106,7 @@ natsemi_pci_intr(void *arg)
 	struct pciide_channel *cp;
 	struct channel_softc *wdc_cp;
 	int i, rv, crv;
-	u_int8_t ide_dmactl, msk;
+	u_int8_t msk;
 
 	rv = 0;
 	msk = pciide_pci_read(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL2);
@@ -5122,22 +5122,16 @@ natsemi_pci_intr(void *arg)
 		if (msk & NATSEMI_CHMASK(i))
 			continue;
 
-		/* Get intr status */
-		ide_dmactl = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL(i));
+		if (pciide_intr_flag(cp) == 0)
+			continue;
 
-		if (ide_dmactl & IDEDMA_CTL_ERR)
-			printf("%s:%d: error intr\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, i);
-
-		if (ide_dmactl & IDEDMA_CTL_INTR) {
-			crv = wdcintr(wdc_cp);
-			if (crv == 0)
-				printf("%s:%d: bogus intr\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname, i);
-			else
-				rv = 1;
-		}
+		crv = wdcintr(wdc_cp);
+		if (crv == 0)
+			;		/* leave rv alone */
+		else if (crv == 1)
+			rv = 1;		/* claim the intr */
+		else if (rv == 0)	/* crv should be -1 in this case */
+			rv = crv;	/* if we've done no better, take it */
 	}
 	return (rv);
 }
