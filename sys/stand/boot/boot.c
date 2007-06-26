@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.35 2007/06/24 14:58:12 tom Exp $	*/
+/*	$OpenBSD: boot.c,v 1.36 2007/06/26 10:34:41 tom Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -54,6 +54,7 @@ char *kernelfile = KERNEL;		/* can be changed by MD code */
 void
 boot(dev_t bootdev)
 {
+	int fd;
 	int try = 0, st;
 	u_long marks[MARK_MAX];
 
@@ -86,8 +87,10 @@ boot(dev_t bootdev)
 
 		printf("booting %s: ", cmd.path);
 		marks[MARK_START] = (u_long)cmd.addr;
-		if (loadfile(cmd.path, marks, LOAD_ALL) >= 0)
+		if ((fd = loadfile(cmd.path, marks, LOAD_ALL)) != -1) {
+			close(fd);
 			break;
+		}
 
 		kernelfile = KERNEL;
 		try++;
