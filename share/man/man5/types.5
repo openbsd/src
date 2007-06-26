@@ -1,4 +1,4 @@
-.\"	$OpenBSD: types.5,v 1.13 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: types.5,v 1.14 2007/06/26 07:19:46 jmc Exp $
 .\"	$NetBSD: types.5,v 1.4 1997/07/10 06:56:38 mikel Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)types.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 26 2007 $
 .Dt TYPES 5
 .Os
 .Sh NAME
@@ -70,7 +70,9 @@ typedef	int64_t		quad_t;
 typedef	quad_t *	qaddr_t;
 
 typedef	char *		caddr_t;	/* core address */
-typedef	int32_t		daddr_t;	/* disk address */
+typedef	int32_t		daddr_t;	/* 32-bit disk address */
+typedef	int32_t		daddr32_t;	/* 32-bit disk address */
+typedef	int64_t		daddr64_t;	/* 64-bit disk address */
 typedef	int32_t		dev_t;		/* device number */
 typedef	u_int32_t	fixpt_t;	/* fixed point number */
 typedef	u_int32_t	gid_t;		/* group id */
