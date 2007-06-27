@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.55 2007/06/01 04:35:28 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.56 2007/06/27 19:15:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -141,7 +141,7 @@ void msk_reset(struct sk_if_softc *);
 int mskcprint(void *, const char *);
 int msk_intr(void *);
 void msk_intr_yukon(struct sk_if_softc *);
-__inline int msk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
+static __inline int msk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
 void msk_rxeof(struct sk_if_softc *, u_int16_t, u_int32_t);
 void msk_txeof(struct sk_if_softc *);
 int msk_encap(struct sk_if_softc *, struct mbuf *, u_int32_t *);
@@ -1587,7 +1587,7 @@ mskc_shutdown(void *v)
 	mskc_reset(sc);
 }
 
-__inline int
+static __inline int
 msk_rxvalid(struct sk_softc *sc, u_int32_t stat, u_int32_t len)
 {
 	if ((stat & (YU_RXSTAT_CRCERR | YU_RXSTAT_LONGERR |
