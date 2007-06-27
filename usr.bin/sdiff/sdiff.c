@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.20 2006/09/19 05:52:23 otto Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.21 2007/06/27 04:29:40 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -77,6 +77,7 @@ static struct option longopts[] = {
 	{ "diff-program",		required_argument,	NULL,	'F' },
 	{ "speed-large-files",		no_argument,		NULL,	'H' },
 	{ "ignore-matching-lines",	required_argument,	NULL,	'I' },
+	{ "ignore-case",		no_argument,		NULL,	'i' },
 	{ "left-column",		no_argument,		NULL,	'l' },
 	{ "output",			required_argument,	NULL,	'o' },
 	{ "strip-trailing-cr",		no_argument,		NULL,	'S' },
