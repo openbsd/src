@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.2 2004/03/22 15:06:59 tom Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.3 2007/06/27 20:29:38 mk Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -40,7 +40,7 @@ extern struct devsw netsw[];
 
 /* XXX use slot for 'rd' for 'hd' pseudo-device */
 const char bdevs[][4] = {
-	"wd", "", "fd", "wt", "sd", "st", "cd", "mcd",
+	"wd", "", "fd", "", "sd", "st", "cd", "mcd",
 	"", "", "", "", "", "", "", "scd", "", "hd", ""
 };
 const int nbdevs = NENTS(bdevs);
