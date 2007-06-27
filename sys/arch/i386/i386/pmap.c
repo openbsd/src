@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.118 2007/06/19 09:41:39 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.119 2007/06/27 16:16:53 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ extern vaddr_t pentium_idt_vaddr;
  */
 
 struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
-struct vm_page	*pmap_alloc_ptp(struct pmap *, int, boolean_t);
+struct vm_page	*pmap_alloc_ptp(struct pmap *, int, boolean_t, pt_entry_t);
 struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate */
@@ -1351,7 +1351,8 @@ pmap_remove_pv(struct vm_page *pg, struct pmap *pmap, vaddr_t va)
  */
 
 struct vm_page *
-pmap_alloc_ptp(struct pmap *pmap, int pde_index, boolean_t just_try)
+pmap_alloc_ptp(struct pmap *pmap, int pde_index, boolean_t just_try,
+    pt_entry_t pde_flags)
 {
 	struct vm_page *ptp;
 
@@ -1363,8 +1364,8 @@ pmap_alloc_ptp(struct pmap *pmap, int pde_index, boolean_t just_try)
 	/* got one! */
 	atomic_clearbits_int(&ptp->pg_flags, PG_BUSY);
 	ptp->wire_count = 1;	/* no mappings yet */
-	pmap->pm_pdir[pde_index] = (pd_entry_t)(VM_PAGE_TO_PHYS(ptp) | PG_u |
-	    PG_RW | PG_V | PG_M | PG_U);
+	pmap->pm_pdir[pde_index] = (pd_entry_t)(VM_PAGE_TO_PHYS(ptp) |
+	    PG_RW | PG_V | PG_M | PG_U | pde_flags);
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
 	pmap->pm_ptphint = ptp;
 	return(ptp);
@@ -1400,7 +1401,7 @@ pmap_get_ptp(struct pmap *pmap, int pde_index, boolean_t just_try)
 	}
 
 	/* allocate a new PTP (updates ptphint) */
-	return (pmap_alloc_ptp(pmap, pde_index, just_try));
+	return (pmap_alloc_ptp(pmap, pde_index, just_try, PG_u));
 }
 
 /*
@@ -2832,11 +2833,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 
-		while (!pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE))
+		while (!pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE, 0))
 			uvm_wait("pmap_growkernel");
-
-		/* PG_u not for kernel */
-		kpm->pm_pdir[PDSLOT_KERN + nkpde] &= ~PG_u;
 
 		/* distribute new kernel PTP to all active pmaps */
 		simple_lock(&pmaps_lock);
