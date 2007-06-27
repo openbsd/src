@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.94 2007/06/18 17:54:13 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.95 2007/06/27 03:58:16 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -314,9 +314,11 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 	    cf->file_name, rev, timebuf, kbuf, stickytag);
 
 	if (cvs_server_active == 0) {
-		ent = cvs_ent_open(cf->file_wd);
-		cvs_ent_add(ent, entry);
-		cvs_ent_close(ent, ENT_SYNC);
+		if (!(co_flags & CO_REMOVE)) {
+			ent = cvs_ent_open(cf->file_wd);
+			cvs_ent_add(ent, entry);
+			cvs_ent_close(ent, ENT_SYNC);
+		}
 	} else {
 		if ((p = strrchr(cf->file_rpath, ',')) != NULL)
 			*p = '\0';
@@ -330,12 +332,15 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 			cvs_server_update_entry("Checked-in", cf);
 		else if (co_flags & CO_MERGE)
 			cvs_server_update_entry("Merged", cf);
+		else if (co_flags & CO_REMOVE)
+			cvs_server_update_entry("Removed", cf);
 		else
 			cvs_server_update_entry("Updated", cf);
 
-		cvs_remote_output(entry);
+		if (!(co_flags & CO_REMOVE))
+			cvs_remote_output(entry);
 
-		if (!(co_flags & CO_COMMIT)) {
+		if (!(co_flags & CO_COMMIT) && !(co_flags & CO_REMOVE)) {
 			if (!(co_flags & CO_MERGE)) {
 				(void)xsnprintf(template, MAXPATHLEN,
 				    "%s/checkout.XXXXXXXXXX", cvs_tmpdir);

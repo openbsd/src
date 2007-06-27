@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.64 2007/06/26 02:24:10 niallo Exp $	*/
+/*	$OpenBSD: client.c,v 1.65 2007/06/27 03:58:16 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -767,10 +767,22 @@ cvs_client_merged(char *data)
 void
 cvs_client_removed(char *data)
 {
-	char *dir;
+	CVSENTRIES *entlist;
+	char *rpath, *filename, fpath[MAXPATHLEN];
 
-	dir = cvs_remote_input();
-	xfree(dir);
+	rpath = cvs_remote_input();
+	if ((filename = strrchr(rpath, '/')) == NULL)
+		fatal("bad rpath in cvs_client_removed: %s", rpath);
+	filename++;
+
+	entlist = cvs_ent_open(data);
+	cvs_ent_remove(entlist, filename);
+	cvs_ent_close(entlist, ENT_SYNC);
+
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", data, filename);
+	(void)unlink(fpath);
+
+	xfree(rpath);
 }
 
 void
