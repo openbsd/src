@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.27 2007/05/31 19:20:07 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.28 2007/06/27 21:10:39 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -23,7 +23,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 27 2007 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -307,7 +307,7 @@ The
 .Ic printf
 statement formats its expression list according to the format
 (see
-.Xr printf 3 ) .
+.Xr printf 1 ) .
 .Pp
 Patterns are arbitrary Boolean combinations
 (with
@@ -530,7 +530,7 @@ into one array element per character.
 The string resulting from formatting
 .Fa expr , ...
 according to the
-.Xr printf 3
+.Xr printf 1
 format
 .Fa fmt .
 .It Fn sub r t s
@@ -730,7 +730,6 @@ Print an error message to standard error:
 .Xr lex 1 ,
 .Xr printf 1 ,
 .Xr sed 1 ,
-.Xr printf 3 ,
 .Xr re_format 7 ,
 .Xr script 7
 .Pp
