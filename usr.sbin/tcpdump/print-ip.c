@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.32 2006/06/01 17:18:39 moritz Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.33 2007/06/27 18:15:25 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.32 2006/06/01 17:18:39 moritz Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.33 2007/06/27 18:15:25 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -373,14 +373,17 @@ ip_print(register const u_char *bp, register u_int length)
 	if ((intptr_t)ip & (sizeof(long)-1)) {
 		static u_char *abuf = NULL;
 		static int didwarn = 0;
+		int clen = snapend - bp;
 
+		if (clen > snaplen)
+			clen = snaplen;
 		if (abuf == NULL) {
 			abuf = (u_char *)malloc(snaplen);
 			if (abuf == NULL)
 				error("ip_print: malloc");
 		}
-		memcpy((char *)abuf, (char *)ip, min(length, snaplen));
-		snapend += abuf - (u_char *)ip;
+		memmove((char *)abuf, (char *)ip, min(length, clen));
+		snapend = abuf + clen;
 		packetp = abuf;
 		ip = (struct ip *)abuf;
 		/* We really want libpcap to give us aligned packets */

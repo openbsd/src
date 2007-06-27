@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.8 2007/05/06 09:51:33 claudio Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.9 2007/06/27 18:15:25 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -75,14 +75,17 @@ ip6_print(register const u_char *bp, register int length)
 	if ((intptr_t)ip6 & (sizeof(long)-1)) {
 		static u_char *abuf = NULL;
 		static int didwarn = 0;
+		int clen = snapend - bp;
+		if (clen > snaplen)
+			clen = snaplen;
 
 		if (abuf == NULL) {
 			abuf = (u_char *)malloc(snaplen);
 			if (abuf == NULL)
 				error("ip6_print: malloc");
 		}
-		memcpy((char *)abuf, (char *)ip6, min(length, snaplen));
-		snapend += abuf - (u_char *)ip6;
+		memmove((char *)abuf, (char *)ip6, min(length, clen));
+		snapend = abuf + clen;
 		packetp = abuf;
 		ip6 = (struct ip6_hdr *)abuf;
 		/* We really want libpcap to give us aligned packets */

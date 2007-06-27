@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.23 2004/02/04 08:35:12 otto Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.24 2007/06/27 18:15:25 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.23 2004/02/04 08:35:12 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.24 2007/06/27 18:15:25 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -226,14 +226,17 @@ ddp_print(register const u_char *bp, register u_int length, register int t,
 
 	if ((intptr_t)bp & (sizeof(long)-1)) {
 		static u_char *abuf = NULL;
+		int clen = snapend - bp;
+		if (clen > snaplen)
+			clen = snaplen;
 
 		if (abuf == NULL) {
 			abuf = (u_char *)malloc(snaplen);
 			if (abuf == NULL)
 				error("ddp_print: malloc");
 		}
-		memcpy(abuf, bp, min(length, snaplen));
-		snapend += abuf - bp;
+		memmove((char *)abuf, (char *)bp, min(length, clen));
+		snapend = abuf + clen;
 		packetp = abuf;
 		bp = abuf;
 	}
