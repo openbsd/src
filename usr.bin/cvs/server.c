@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.62 2007/06/26 02:24:10 niallo Exp $	*/
+/*	$OpenBSD: server.c,v 1.63 2007/06/27 20:42:19 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -114,6 +114,10 @@ cvs_server(int argc, char **argv)
 
 		if (req->hdlr == NULL)
 			fatal("opencvs server does not support '%s'", cmd);
+
+		if ((req->flags & REQ_NEEDDIR) && (server_currentdir == NULL))
+			fatal("`%s' needs a directory to be sent with "
+			    "the `Directory` request first", cmd);
 
 		(*req->hdlr)(data);
 		xfree(cmd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.21 2007/06/26 02:24:10 niallo Exp $	*/
+/*	$OpenBSD: remote.h,v 1.22 2007/06/27 20:42:19 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -35,6 +35,8 @@ struct cvs_resp {
 };
 
 #define	REQ_NEEDED	0x01
+#define REQ_NEEDDIR	0x02
+
 #define RESP_NEEDED	0x01
 
 extern int server_response;
