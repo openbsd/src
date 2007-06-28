@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.20 2007/05/30 03:30:21 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.21 2007/06/28 01:26:24 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -171,7 +171,7 @@ static void	 range(int, int, char *);
 static void	 uni_range(int, int);
 static void	 dump_context_vec(FILE *, FILE *, int);
 static void	 dump_unified_vec(FILE *, FILE *, int);
-static int	 prepare(int, FILE *, off_t, int);
+static void	 prepare(int, FILE *, off_t, int);
 static void	 prune(void);
 static void	 equiv(struct line *, int, struct line *, int, int *);
 static void	 unravel(int);
@@ -208,7 +208,7 @@ static int  *klist;		/* will be overlaid on file[0] after class */
 static int  *member;		/* will be overlaid on file[1] */
 static int   clen;
 static int   inifdef;		/* whether or not we are in a #ifdef block */
-static int   diff_len[2];
+static int   len[2];
 static int   pref, suff;	/* length of prefix and suffix */
 static int   slen[2];
 static int   anychange;
@@ -345,10 +345,8 @@ rcs_diffreg(const char *file1, const char *file2, BUF *out, int flags)
 		goto closem;
 	}
 
-	if (prepare(0, f1, stb1.st_size, flags) < 0 ||
-	    prepare(1, f2, stb2.st_size, flags) < 0) {
-		goto closem;
-	}
+	prepare(0, f1, stb1.st_size, flags);
+	prepare(1, f2, stb2.st_size, flags);
 
 	prune();
 	sort(sfile[0], slen[0]);
@@ -373,14 +371,14 @@ rcs_diffreg(const char *file1, const char *file2, BUF *out, int flags)
 	xfree(member);
 	xfree(class);
 
-	J = xrealloc(J, diff_len[0] + 2, sizeof(*J));
+	J = xrealloc(J, len[0] + 2, sizeof(*J));
 	unravel(klist[i]);
 	xfree(clist);
 	xfree(klist);
 
-	ixold = xrealloc(ixold, diff_len[0] + 2, sizeof(*ixold));
+	ixold = xrealloc(ixold, len[0] + 2, sizeof(*ixold));
 
-	ixnew = xrealloc(ixnew, diff_len[1] + 2, sizeof(*ixnew));
+	ixnew = xrealloc(ixnew, len[1] + 2, sizeof(*ixnew));
 	check(f1, f2, flags);
 	output(f1, f2, flags);
 
@@ -425,7 +423,7 @@ files_differ(FILE *f1, FILE *f2)
 	}
 }
 
-static int
+static void
 prepare(int i, FILE *fd, off_t filesize, int flags)
 {
 	struct line *p;
@@ -434,22 +432,20 @@ prepare(int i, FILE *fd, off_t filesize, int flags)
 
 	rewind(fd);
 
-	sz = ((size_t)filesize <= SIZE_MAX ? (size_t)filesize : SIZE_MAX) / 25;
+	sz = (filesize <= SIZE_MAX ? filesize : SIZE_MAX) / 25;
 	if (sz < 100)
 		sz = 100;
 
 	p = xcalloc(sz + 3, sizeof(*p));
 	for (j = 0; (h = readhash(fd, flags));) {
-		if (j == (int)sz) {
+		if (j == sz) {
 			sz = sz * 3 / 2;
 			p = xrealloc(p, sz + 3, sizeof(*p));
 		}
 		p[++j].value = h;
 	}
-	diff_len[i] = j;
+	len[i] = j;
 	file[i] = p;
-
-	return (0);
 }
 
 static void
@@ -457,19 +453,19 @@ prune(void)
 {
 	int i, j;
 
-	for (pref = 0; pref < diff_len[0] && pref < diff_len[1] &&
+	for (pref = 0; pref < len[0] && pref < len[1] &&
 	    file[0][pref + 1].value == file[1][pref + 1].value;
 	    pref++)
 		;
 	for (suff = 0;
-	    (suff < diff_len[0] - pref) && (suff < diff_len[1] - pref) &&
-	    (file[0][diff_len[0] - suff].value ==
-	    file[1][diff_len[1] - suff].value);
+	    (suff < len[0] - pref) && (suff < len[1] - pref) &&
+	    (file[0][len[0] - suff].value ==
+	    file[1][len[1] - suff].value);
 	    suff++)
 		;
 	for (j = 0; j < 2; j++) {
 		sfile[j] = file[j] + pref;
-		slen[j] = diff_len[j] - pref - suff;
+		slen[j] = len[j] - pref - suff;
 		for (i = 0; i <= slen[j]; i++)
 			sfile[j][i].serial = i;
 	}
@@ -620,9 +616,9 @@ unravel(int p)
 	struct cand *q;
 	int i;
 
-	for (i = 0; i <= diff_len[0]; i++)
+	for (i = 0; i <= len[0]; i++)
 		J[i] = i <= pref ? i :
-		    i > diff_len[0] - suff ? i + diff_len[1] - diff_len[0] : 0;
+		    i > len[0] - suff ? i + len[1] - len[0] : 0;
 	for (q = clist + p; q->y != 0; q = clist + q->pred)
 		J[q->x + pref] = q->y + pref;
 }
@@ -645,7 +641,7 @@ check(FILE *f1, FILE *f2, int flags)
 	ixold[0] = ixnew[0] = 0;
 	jackpot = 0;
 	ctold = ctnew = 0;
-	for (i = 1; i <= diff_len[0]; i++) {
+	for (i = 1; i <= len[0]; i++) {
 		if (J[i] == 0) {
 			ixold[i] = ctold += skipline(f1);
 			continue;
@@ -724,7 +720,7 @@ check(FILE *f1, FILE *f2, int flags)
 		ixnew[j] = ctnew;
 		j++;
 	}
-	for (; j <= diff_len[1]; j++)
+	for (; j <= len[1]; j++)
 		ixnew[j] = ctnew += skipline(f2);
 	/*
 	 * if (jackpot != 0)
@@ -795,9 +791,9 @@ output(FILE *f1, FILE *f2, int flags)
 
 	rewind(f1);
 	rewind(f2);
-	m = diff_len[0];
+	m = len[0];
 	J[0] = 0;
-	J[m + 1] = diff_len[1] + 1;
+	J[m + 1] = len[1] + 1;
 	for (i0 = 1; i0 <= m; i0 = i1 + 1) {
 		while (i0 <= m && J[i0] == J[i0 - 1] + 1)
 			i0++;
@@ -810,7 +806,7 @@ output(FILE *f1, FILE *f2, int flags)
 		change(f1, f2, i0, i1, j0, j1, flags);
 	}
 	if (m == 0)
-		change(f1, f2, 1, 0, 1, diff_len[1], flags);
+		change(f1, f2, 1, 0, 1, len[1], flags);
 	if (diff_format == D_IFDEF) {
 		for (;;) {
 #define	c i0
@@ -1218,9 +1214,9 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 
 	b = d = 0;		/* gcc */
 	lowa = MAX(1, cvp->a - diff_context);
-	upb = MIN(diff_len[0], context_vec_ptr->b + diff_context);
+	upb = MIN(len[0], context_vec_ptr->b + diff_context);
 	lowc = MAX(1, cvp->c - diff_context);
-	upd = MIN(diff_len[1], context_vec_ptr->d + diff_context);
+	upd = MIN(len[1], context_vec_ptr->d + diff_context);
 
 	diff_output("***************");
 	if ((flags & D_PROTOTYPE)) {
@@ -1323,9 +1319,9 @@ dump_unified_vec(FILE *f1, FILE *f2, int flags)
 
 	b = d = 0;		/* gcc */
 	lowa = MAX(1, cvp->a - diff_context);
-	upb = MIN(diff_len[0], context_vec_ptr->b + diff_context);
+	upb = MIN(len[0], context_vec_ptr->b + diff_context);
 	lowc = MAX(1, cvp->c - diff_context);
-	upd = MIN(diff_len[1], context_vec_ptr->d + diff_context);
+	upd = MIN(len[1], context_vec_ptr->d + diff_context);
 
 	diff_output("@@ -");
 	uni_range(lowa, upb);
