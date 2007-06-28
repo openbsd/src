@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.101 2007/06/27 03:58:16 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.102 2007/06/28 04:54:11 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -357,7 +357,8 @@ cvs_update_local(struct cvs_file *cf)
 		break;
 	case FILE_UNLINK:
 		(void)unlink(cf->file_path);
-		cvs_checkout_file(cf, cf->file_rcsrev, CO_REMOVE);
+		if (cvs_server_active == 1)
+			cvs_checkout_file(cf, cf->file_rcsrev, CO_REMOVE);
 	case FILE_REMOVE_ENTRY:
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_remove(entlist, cf->file_name);
