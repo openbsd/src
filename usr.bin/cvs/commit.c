@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.107 2007/06/18 17:54:13 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.108 2007/06/28 17:45:49 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -153,7 +153,10 @@ cvs_commit_check_files(struct cvs_file *cf)
 {
 	cvs_log(LP_TRACE, "cvs_commit_check_files(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL);
+	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL)
+		cvs_remote_classify_file(cf);
+	else
+		cvs_file_classify(cf, NULL);
 
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1)
