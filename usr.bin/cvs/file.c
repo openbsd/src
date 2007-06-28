@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.192 2007/06/26 02:24:10 niallo Exp $	*/
+/*	$OpenBSD: file.c,v 1.193 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -562,8 +562,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	int rflags, ismodified, rcsdead;
 	CVSENTRIES *entlist = NULL;
 	const char *state;
-	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN], r1[16], r2[16];
-	char *tfname, *tpath, *p;
+	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
+	char r1[CVS_REV_BUFSZ], r2[CVS_REV_BUFSZ], *tfname, *tpath, *p;
 
 	cvs_log(LP_TRACE, "cvs_file_classify(%s)", cf->file_path);
 

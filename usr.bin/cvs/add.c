@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.77 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: add.c,v 1.78 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -251,7 +251,7 @@ static void
 add_file(struct cvs_file *cf)
 {
 	int added, stop;
-	char revbuf[16];
+	char revbuf[CVS_REV_BUFSZ];
 	RCSNUM *head;
 
 	if (cf->file_rcs != NULL) {
@@ -333,7 +333,8 @@ static void
 add_entry(struct cvs_file *cf)
 {
 	FILE *fp;
-	char entry[CVS_ENT_MAXLINELEN], path[MAXPATHLEN], revbuf[16], tbuf[32];
+	char entry[CVS_ENT_MAXLINELEN], path[MAXPATHLEN];
+	char revbuf[CVS_REV_BUFSZ], tbuf[CVS_TIME_BUFSZ];
 	CVSENTRIES *entlist;
 
 	if (cvs_noexec == 1)

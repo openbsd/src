@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.95 2007/06/27 03:58:16 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.96 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -217,8 +217,9 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 	CVSENTRIES *ent;
 	struct timeval tv[2];
 	char *tosend;
-	char template[MAXPATHLEN], *p, entry[CVS_ENT_MAXLINELEN], rev[16];
-	char timebuf[64], kbuf[8], tbuf[32], stickytag[32];
+	char template[MAXPATHLEN], *p, entry[CVS_ENT_MAXLINELEN];
+	char kbuf[8], stickytag[32], rev[CVS_REV_BUFSZ];
+	char timebuf[CVS_TIME_BUFSZ], tbuf[CVS_TIME_BUFSZ];
 
 	exists = 0;
 	tosend = NULL;

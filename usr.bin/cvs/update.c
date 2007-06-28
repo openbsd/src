@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.102 2007/06/28 04:54:11 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.103 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -272,7 +272,7 @@ cvs_update_local(struct cvs_file *cf)
 {
 	int ret, flags;
 	CVSENTRIES *entlist;
-	char rbuf[16];
+	char rbuf[CVS_REV_BUFSZ];
 
 	cvs_log(LP_TRACE, "cvs_update_local(%s)", cf->file_path);
 
@@ -375,7 +375,7 @@ update_clear_conflict(struct cvs_file *cf)
 {
 	time_t now;
 	CVSENTRIES *entlist;
-	char *entry, revbuf[16], timebuf[32];
+	char *entry, revbuf[CVS_REV_BUFSZ], timebuf[CVS_TIME_BUFSZ];
 
 	cvs_log(LP_TRACE, "update_clear_conflict(%s)", cf->file_path);
 

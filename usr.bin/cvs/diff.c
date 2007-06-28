@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.119 2007/06/27 04:23:54 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.120 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -160,7 +160,7 @@ cvs_diff_local(struct cvs_file *cf)
 	BUF *b1;
 	struct stat st;
 	struct timeval tv[2], tv2[2];
-	char rbuf[16], *p1, *p2;
+	char rbuf[CVS_REV_BUFSZ], *p1, *p2;
 
 	r1 = NULL;
 	b1 = NULL;

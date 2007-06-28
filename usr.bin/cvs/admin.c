@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.50 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: admin.c,v 1.51 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -329,7 +329,7 @@ cvs_admin_local(struct cvs_file *cf)
 
 	if (orange != NULL) {
 		struct rcs_delta *rdp, *nrdp;
-		char b[16];
+		char b[CVS_REV_BUFSZ];
 
 		cvs_revision_select(cf->file_rcs, orange);
 		for (rdp = TAILQ_FIRST(&(cf->file_rcs->rf_delta));

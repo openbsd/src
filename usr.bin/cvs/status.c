@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.74 2007/06/01 17:47:47 niallo Exp $	*/
+/*	$OpenBSD: status.c,v 1.75 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -119,7 +119,7 @@ cvs_status_local(struct cvs_file *cf)
 	size_t len;
 	RCSNUM *head;
 	const char *status;
-	char buf[128], timebuf[32], revbuf[32];
+	char buf[128], timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
 	struct rcs_sym *sym;
 
 	cvs_log(LP_TRACE, "cvs_status_local(%s)", cf->file_path);

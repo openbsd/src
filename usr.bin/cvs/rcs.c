@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.213 2007/06/01 17:47:47 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.214 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -364,7 +364,7 @@ void
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[64], *fn, tmpdir[MAXPATHLEN];
+	char buf[1024], numbuf[CVS_REV_BUFSZ], *fn, tmpdir[MAXPATHLEN];
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
@@ -2458,7 +2458,7 @@ int
 rcs_rev_setlog(RCSFILE *rfp, RCSNUM *rev, const char *logtext)
 {
 	struct rcs_delta *rdp;
-	char buf[16];
+	char buf[CVS_REV_BUFSZ];
 
 	rcsnum_tostr(rev, buf, sizeof(buf));
 

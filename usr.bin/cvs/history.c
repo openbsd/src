@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.30 2007/06/28 04:48:52 joris Exp $	*/
+/*	$OpenBSD: history.c,v 1.31 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -63,7 +63,7 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 {
 	FILE *fp;
 	char *cwd;
-	char revbuf[64], repo[MAXPATHLEN], fpath[MAXPATHLEN];
+	char revbuf[CVS_REV_BUFSZ], repo[MAXPATHLEN], fpath[MAXPATHLEN];
 
 	if (cvs_nolog == 1)
 		return;

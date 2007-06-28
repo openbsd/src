@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.72 2007/06/26 02:24:10 niallo Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.73 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -171,7 +171,7 @@ cvs_log_local(struct cvs_file *cf)
 	struct rcs_lock *lkp;
 	struct rcs_delta *rdp;
 	struct rcs_access *acp;
-	char numb[32];
+	char numb[CVS_REV_BUFSZ];
 
 	cvs_log(LP_TRACE, "cvs_log_local(%s)", cf->file_path);
 
@@ -268,7 +268,7 @@ static void
 log_rev_print(struct rcs_delta *rdp)
 {
 	int i, found;
-	char numb[32], timeb[32];
+	char numb[CVS_REV_BUFSZ], timeb[CVS_TIME_BUFSZ];
 	struct cvs_argvector *sargv, *wargv;
 
 	i = found = 0;

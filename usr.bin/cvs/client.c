@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.66 2007/06/27 20:42:19 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.67 2007/06/28 21:38:09 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -436,7 +436,7 @@ void
 cvs_client_sendfile(struct cvs_file *cf)
 {
 	size_t len;
-	char rev[16], timebuf[64], sticky[32];
+	char rev[CVS_REV_BUFSZ], timebuf[CVS_TIME_BUFSZ], sticky[32];
 
 	if (cf->file_type != CVS_FILE)
 		return;
@@ -585,8 +585,8 @@ cvs_client_checkedin(char *data)
 {
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent, *newent;
-	char *dir, *e, entry[CVS_ENT_MAXLINELEN], rev[16], timebuf[64];
-	char sticky[CVS_ENT_MAXLINELEN];
+	char *dir, *e, entry[CVS_ENT_MAXLINELEN], rev[CVS_REV_BUFSZ];
+	char sticky[CVS_ENT_MAXLINELEN], timebuf[CVS_TIME_BUFSZ];
 
 	if (data == NULL)
 		fatal("Missing argument for Checked-in");
@@ -630,8 +630,9 @@ cvs_client_updated(char *data)
 	struct cvs_ent *e;
 	const char *errstr;
 	struct timeval tv[2];
-	char timebuf[32], repo[MAXPATHLEN], *rpath, entry[CVS_ENT_MAXLINELEN];
-	char *en, *mode, revbuf[32], *len, *fpath, *wdir;
+	char repo[MAXPATHLEN], entry[CVS_ENT_MAXLINELEN];
+	char timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
+	char *en, *mode, *len, *fpath, *rpath, *wdir;
 
 	if (data == NULL)
 		fatal("Missing argument for Updated");
@@ -712,7 +713,7 @@ cvs_client_merged(char *data)
 	CVSENTRIES *ent;
 	const char *errstr;
 	struct timeval tv[2];
-	char timebuf[32], *repo, *rpath, *entry, *mode;
+	char timebuf[CVS_TIME_BUFSZ], *repo, *rpath, *entry, *mode;
 	char *len, *fpath, *wdir;
 
 	if (data == NULL)
