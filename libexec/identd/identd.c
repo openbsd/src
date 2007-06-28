@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.42 2005/12/06 22:05:22 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.43 2007/06/28 21:43:36 millert Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -58,6 +58,7 @@ char   *charset_name = "";
 static pid_t child_pid;
 
 void		usage(void);
+void		sigchld(int);
 char *		gethost(struct sockaddr_storage *ss);
 
 void
@@ -271,14 +272,7 @@ main(int argc, char *argv[])
 		struct servent *sp;
 		int	fd;
 
-		if (fork())
-			exit(0);
-
-		close(0);
-		close(1);
-		close(2);
-
-		if (fork())
+		if (daemon(0, 0) != 0)
 			exit(0);
 
 		fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -341,6 +335,8 @@ main(int argc, char *argv[])
 		int	nfds, fd;
 		struct	pollfd pfd[1];
 
+		signal(SIGCHLD, sigchld);
+
 		/*
 		 * Loop and dispatch client handling processes
 		 */
@@ -402,8 +398,6 @@ main(int argc, char *argv[])
 			 * And fork, then close the fd if we are the parent.
 			 */
 			child_pid = fork();
-			while (waitpid(-1, NULL, WNOHANG) > 0)
-				;
 		} while (child_pid && (close(fd), 1));
 
 		/*
@@ -499,4 +493,14 @@ error(char *fmt, ...)
 		printf("%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
 	va_end(ap);
 	exit(1);
+}
+
+void
+sigchld(int signo)
+{
+	pid_t pid;
+
+	do {
+	    pid = waitpid(-1, NULL, WNOHANG);
+	} while (pid > 0 || (pid == -1 && errno == EINTR));
 }
