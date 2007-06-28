@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.13 2004/06/08 20:59:29 mcbride Exp $ */
+/*	$OpenBSD: ukc.c,v 1.14 2007/06/28 00:52:37 ray Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.13 2004/06/08 20:59:29 mcbride Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.14 2007/06/28 00:52:37 ray Exp $";
 #endif
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ int
 ukc(char *file, char *outfile, int uflag, int force)
 {
 	extern char *__progname;
-	int ret, i;
+	int i;
 	kvm_t *kd;
 	char errbuf[_POSIX2_LINE_MAX];
 	int histlen = 0, ok = 1;
@@ -76,13 +76,14 @@ ukc(char *file, char *outfile, int uflag, int force)
 
 	loadkernel(file);
 
-	ret = nlist(file, nl);
+	if (nlist(file, nl) == -1)
+		errx(1, "nlist: %s", file);
 
 	if (uflag) {
 		if ((kd = kvm_openfiles(NULL,NULL,NULL,O_RDONLY, errbuf)) == 0)
 			errx(1, "kvm_openfiles: %s", errbuf);
 
-		if ((ret = kvm_nlist(kd, knl)) == -1)
+		if (kvm_nlist(kd, knl) == -1)
 			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 
 		i = 0;
@@ -163,13 +164,13 @@ WARNING this kernel doesn't support pseudo devices.\n");
 	if (config()) {
 		if (force == 0 && outfile == NULL) {
 			fprintf(stderr, "not forced\n");
-			exit(1);
+			return (1);
 		}
 		if (outfile == NULL)
 			outfile = file;
 		if (ukc_mod_kernel == 0) {
 			fprintf(stderr, "Kernel not modified\n");
-			exit(1);
+			return (1);
 		} else {
 			printf ("Saving modified kernel.\n");
 			savekernel(outfile);
