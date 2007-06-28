@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.29 2007/06/20 16:25:46 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.30 2007/06/28 04:48:52 joris Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -77,8 +77,12 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 	cvs_log(LP_TRACE, "cvs_history_add(`%c', `%s', `%s')",
 	    historytab[type], (cf != NULL) ? cf->file_name : "", argument);
 
-	if ((cwd = getcwd(NULL, MAXPATHLEN)) == NULL)
-		fatal("cvs_history_add: getcwd: %s", strerror(errno));
+	if (cvs_server_active == 1) {
+		cwd = "<remote>";
+	} else {
+		if ((cwd = getcwd(NULL, MAXPATHLEN)) == NULL)
+			fatal("cvs_history_add: getcwd: %s", strerror(errno));
+	}
 
 	/* construct repository field */
 	if (cvs_cmdop != CVS_OP_CHECKOUT && cvs_cmdop != CVS_OP_EXPORT) {
@@ -126,7 +130,8 @@ cvs_history_add(int type, struct cvs_file *cf, const char *argument)
 		cvs_log(LP_ERR, "failed to add entry to history file");
 	}
 
-	xfree(cwd);
+	if (cvs_server_active != 1)
+		xfree(cwd);
 }
 
 int
