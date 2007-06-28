@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.21 2007/06/28 01:26:24 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.22 2007/06/28 05:01:39 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -63,6 +63,27 @@
  *
  *	@(#)diffreg.c   8.1 (Berkeley) 6/6/93
  */
+
+#include <sys/param.h>
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <err.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "buf.h"
+#include "diff.h"
+#include "xmalloc.h"
+
+/*
+ * diff - compare two files.
+ */
+
 /*
  *	Uses an algorithm due to Harold Stone, which finds
  *	a pair of longest identical subsequences in the two
@@ -125,22 +146,6 @@
  *	3*(number of k-candidates installed),  typically about
  *	6n words for files of length n.
  */
-
-#include <sys/param.h>
-#include <sys/stat.h>
-
-#include <ctype.h>
-#include <err.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
-#include "buf.h"
-#include "diff.h"
-#include "xmalloc.h"
 
 struct cand {
 	int	x;
@@ -227,6 +232,7 @@ static char lastbuf[FUNCTION_CONTEXT_SIZE];
 static int lastline;
 static int lastmatchline;
 BUF  *diffbuf = NULL;
+
 
 /*
  * chrtran points to one of 2 translation tables: cup2low if folding upper to
@@ -364,10 +370,7 @@ rcs_diffreg(const char *file1, const char *file2, BUF *out, int flags)
 	clen = 0;
 	clistlen = 100;
 	clist = xcalloc(clistlen, sizeof(*clist));
-
-	if ((i = stone(class, slen[0], member, klist, flags)) < 0)
-		goto closem;
-
+	i = stone(class, slen[0], member, klist, flags);
 	xfree(member);
 	xfree(class);
 
@@ -377,13 +380,12 @@ rcs_diffreg(const char *file1, const char *file2, BUF *out, int flags)
 	xfree(klist);
 
 	ixold = xrealloc(ixold, len[0] + 2, sizeof(*ixold));
-
 	ixnew = xrealloc(ixnew, len[1] + 2, sizeof(*ixnew));
 	check(f1, f2, flags);
 	output(f1, f2, flags);
 
 closem:
-	if (anychange == 1) {
+	if (anychange) {
 		if (rval == D_SAME)
 			rval = D_DIFFER;
 	}
@@ -457,10 +459,8 @@ prune(void)
 	    file[0][pref + 1].value == file[1][pref + 1].value;
 	    pref++)
 		;
-	for (suff = 0;
-	    (suff < len[0] - pref) && (suff < len[1] - pref) &&
-	    (file[0][len[0] - suff].value ==
-	    file[1][len[1] - suff].value);
+	for (suff = 0; suff < len[0] - pref && suff < len[1] - pref &&
+	    file[0][len[0] - suff].value == file[1][len[1] - suff].value;
 	    suff++)
 		;
 	for (j = 0; j < 2; j++) {
@@ -513,7 +513,7 @@ isqrt(int n)
 		x = n / x;
 		x += y;
 		x /= 2;
-	} while (x - y > 1 || x - y < -1);
+	} while ((x - y) > 1 || (x - y) < -1);
 
 	return (x);
 }
@@ -521,7 +521,6 @@ isqrt(int n)
 static int
 stone(int *a, int n, int *b, int *c, int flags)
 {
-	int ret;
 	int i, k, y, j, l;
 	int oldc, tc, oldl;
 	u_int numtries;
@@ -531,9 +530,7 @@ stone(int *a, int n, int *b, int *c, int flags)
 	    MAX(256, (u_int)isqrt(n));
 
 	k = 0;
-	if ((ret = newcand(0, 0, 0)) < 0)
-		return (-1);
-	c[0] = ret;
+	c[0] = newcand(0, 0, 0);
 	for (i = 1; i <= n; i++) {
 		j = a[i];
 		if (j == 0)
@@ -552,16 +549,12 @@ stone(int *a, int n, int *b, int *c, int flags)
 				if (clist[c[l]].y <= y)
 					continue;
 				tc = c[l];
-				if ((ret = newcand(i, y, oldc)) < 0)
-					return (-1);
-				c[l] = ret;
+				c[l] = newcand(i, y, oldc);
 				oldc = tc;
 				oldl = l;
 				numtries++;
 			} else {
-				if ((ret = newcand(i, y, oldc)) < 0)
-					return (-1);
-				c[l] = ret;
+				c[l] = newcand(i, y, oldc);
 				k++;
 				break;
 			}
@@ -723,8 +716,8 @@ check(FILE *f1, FILE *f2, int flags)
 	for (; j <= len[1]; j++)
 		ixnew[j] = ctnew += skipline(f2);
 	/*
-	 * if (jackpot != 0)
-	 *	printf("jackpot\n");
+	 * if (jackpot)
+	 *	fprintf(stderr, "jackpot\n");
 	 */
 }
 
@@ -879,10 +872,10 @@ ignoreline(char *line)
 static void
 change(FILE *f1, FILE *f2, int a, int b, int c, int d, int flags)
 {
-	int i;
 	static size_t max_context = 64;
 	char buf[64];
 	struct tm *t;
+	int i;
 
 	if (diff_format != D_IFDEF && a > b && c > d)
 		return;
@@ -961,8 +954,8 @@ proceed:
 		} else if (a > context_vec_ptr->b + (2 * diff_context) + 1 &&
 		    c > context_vec_ptr->d + (2 * diff_context) + 1) {
 			/*
-			 * If this change is more than 'diff_context' lines
-			 * from the previous change, dump the record and reset it.
+			 * If this change is more than 'diff_context' lines from the
+			 * previous change, dump the record and reset it.
 			 */
 			if (diff_format == D_CONTEXT)
 				dump_context_vec(f1, f2, flags);
@@ -1106,6 +1099,9 @@ readhash(FILE *f, int flags)
 		for (i = 0;;) {
 			switch (t = getc(f)) {
 			case '\t':
+			case '\r':
+			case '\v':
+			case '\f':
 			case ' ':
 				space++;
 				continue;
@@ -1137,7 +1133,7 @@ readhash(FILE *f, int flags)
 static int
 asciifile(FILE *f)
 {
-	char buf[BUFSIZ];
+	unsigned char buf[BUFSIZ];
 	size_t i, cnt;
 
 	if (f == NULL)
@@ -1153,7 +1149,7 @@ asciifile(FILE *f)
 
 #define begins_with(s, pre) (strncmp(s, pre, sizeof(pre)-1) == 0)
 
-static char*
+static char *
 match_function(const long *f, int pos, FILE *fp)
 {
 	unsigned char buf[FUNCTION_CONTEXT_SIZE];
@@ -1196,9 +1192,8 @@ match_function(const long *f, int pos, FILE *fp)
 		}
 		pos--;
 	}
-	return (lastmatchline > 0) ? lastbuf : NULL;
+	return lastmatchline > 0 ? lastbuf : NULL;
 }
-
 
 /* dump accumulated "context" diff changes */
 static void
@@ -1220,7 +1215,7 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 
 	diff_output("***************");
 	if ((flags & D_PROTOTYPE)) {
-		f = match_function(ixold, lowa - 1, f1);
+		f = match_function(ixold, lowa-1, f1);
 		if (f != NULL) {
 			diff_output(" ");
 			diff_output("%s", f);
@@ -1242,7 +1237,7 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 			do_output++;
 			break;
 		}
-	if (do_output != 0) {
+	if (do_output) {
 		while (cvp <= context_vec_ptr) {
 			a = cvp->a;
 			b = cvp->b;
@@ -1278,7 +1273,7 @@ dump_context_vec(FILE *f1, FILE *f2, int flags)
 			do_output++;
 			break;
 		}
-	if (do_output != 0) {
+	if (do_output) {
 		while (cvp <= context_vec_ptr) {
 			a = cvp->a;
 			b = cvp->b;
@@ -1329,7 +1324,7 @@ dump_unified_vec(FILE *f1, FILE *f2, int flags)
 	uni_range(lowc, upd);
 	diff_output(" @@");
 	if ((flags & D_PROTOTYPE)) {
-		f = match_function(ixold, lowa - 1, f1);
+		f = match_function(ixold, lowa-1, f1);
 		if (f != NULL) {
 			diff_output(" ");
 			diff_output("%s", f);
