@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.66 2007/06/04 12:20:24 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.67 2007/06/28 14:27:02 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.66 2007/06/04 12:20:24 henning Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.67 2007/06/28 14:27:02 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,55 +102,55 @@ struct nlist nl[] = {
 	{ "_mfchash" },
 #define N_VIFTABLE	17
 	{ "_viftable" },
-#define N_AHSTAT	21
+#define N_AHSTAT	18
 	{ "_ahstat"},
-#define N_ESPSTAT	22
+#define N_ESPSTAT	19
 	{ "_espstat"},
-#define N_IP4STAT	23
+#define N_IP4STAT	20
 	{ "_ipipstat"},
-#define N_DDPSTAT	24
+#define N_DDPSTAT	21
 	{ "_ddpstat"},
-#define N_DDPCB		25
+#define N_DDPCB		22
 	{ "_ddpcb"},
-#define N_ETHERIPSTAT	26
+#define N_ETHERIPSTAT	23
 	{ "_etheripstat"},
-#define N_IP6STAT	27
+#define N_IP6STAT	24
 	{ "_ip6stat" },
-#define N_ICMP6STAT	28
+#define N_ICMP6STAT	25
 	{ "_icmp6stat" },
-#define N_PIM6STAT	29
+#define N_PIM6STAT	26
 	{ "_pim6stat" },
-#define N_MRT6PROTO	30
+#define N_MRT6PROTO	27
 	{ "_ip6_mrtproto" },
-#define N_MRT6STAT	31
+#define N_MRT6STAT	28
 	{ "_mrt6stat" },
-#define N_MF6CTABLE	32
+#define N_MF6CTABLE	29
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	33
+#define N_MIF6TABLE	30
 	{ "_mif6table" },
-#define N_MBPOOL	34
+#define N_MBPOOL	31
 	{ "_mbpool" },
-#define N_MCLPOOL	35
+#define N_MCLPOOL	32
 	{ "_mclpool" },
-#define N_IPCOMPSTAT	36
+#define N_IPCOMPSTAT	33
 	{ "_ipcompstat" },
-#define N_RIP6STAT	37
+#define N_RIP6STAT	34
 	{ "_rip6stat" },
-#define N_CARPSTAT	38
+#define N_CARPSTAT	35
 	{ "_carpstats" },
-#define N_RAWIPTABLE	39
+#define N_RAWIPTABLE	36
 	{ "_rawcbtable" },
-#define N_RAWIP6TABLE	40
+#define N_RAWIP6TABLE	37
 	{ "_rawin6pcbtable" },
-#define N_PFSYNCSTAT	41
+#define N_PFSYNCSTAT	38
 	{ "_pfsyncstats" },
-#define N_PIMSTAT	42
+#define N_PIMSTAT	39
 	{ "_pimstat" },
-#define N_AF2RTAFIDX	43
+#define N_AF2RTAFIDX	40
 	{ "_af2rtafidx" },
-#define N_RTBLIDMAX	44
+#define N_RTBLIDMAX	41
 	{ "_rtbl_id_max" },
-#define N_RTMASK	45
+#define N_RTMASK	42
 	{ "_mask_rnhead" },
 	{ ""}
 };
