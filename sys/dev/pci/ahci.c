@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.119 2007/06/12 12:09:15 grange Exp $ */
+/*	$OpenBSD: ahci.c,v 1.120 2007/06/29 01:00:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -542,6 +542,31 @@ ahci_no_match(struct pci_attach_args *pa)
 {
 	return (0);
 }
+
+/* JMicron registers */
+#define JM_PCI_CTL0		0x40 /* control register 0 */
+#define  JM_PCI_CTL0_ROM_EN		(1<<31)	/* External Option ROM */
+#define  JM_PCI_CTL0_IDWR_EN		(1<<30) /* Device ID Write */
+#define  JM_PCI_CTL0_MSI64_EN		(1<<25) /* 64bit MSI Addr Mode */
+#define  JM_PCI_CTL0_MSI_EN		(1<<24) /* MSI Addr Mode */
+#define  JM_PCI_CTL0_IDEDMA_CFG		(1<<23) /* PCIIDE DMA Chan Cfg */
+#define  JM_PCI_CTL0_PCIIDE_CS		(1<<22) /* PCIIDE channels Swap */
+#define  JM_PCI_CTL0_SATA_PS		(1<<21) /* SATA channel M/S swap */
+#define  JM_PCI_CTL0_AHCI_PS		(1<<20) /* SATA AHCI ports swap */
+/* 19:18 Sub-Class Code Configuration for Function 1 */
+/* 17:16 Sub-Class Code Configuration for Function 0 */
+#define  JM_PCI_CTL0_SATA1_AHCI		(1<<15) /* SATA port 1 AHCI enable */
+#define  JM_PCI_CTL0_SATA1_IDE		(1<<14) /* SATA port 1 IDE enable */
+#define  JM_PCI_CTL0_SATA0_AHCI		(1<<13) /* SATA port 0 AHCI enable */
+#define  JM_PCI_CTL0_SATA0_IDE		(1<<12) /* SATA port 0 PCIIDE enable */
+#define  JM_PCI_CTL0_AHCI_F1		(1<<9) /* AHCI on function 1 */
+#define  JM_PCI_CTL0_AHCI_EN		(1<<8) /* ACHI enable */
+#define  JM_PCI_CTL0_PATA0_RST		(1<<6) /* PATA port 0 reset */
+#define  JM_PCI_CTL0_PATA0_EN		(1<<5) /* PATA port 0 enable */
+#define  JM_PCI_CTL0_PATA0_SEC		(1<<4) /* PATA 0 enable on 2nd chan */
+#define  JM_PCI_CTL0_PATA0_40P		(1<<3) /* PATA 0 40pin cable */
+#define  JM_PCI_CTL0_PCIIDE_F1		(1<<1) /* PCIIDE on function 1 */
+#define  JM_PCI_CTL0_PATA0_PRI		(1<<0) /* PATA 0 enable on 1st chan */
 
 int
 ahci_jmicron_match(struct pci_attach_args *pa)
