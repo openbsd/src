@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.21 2007/02/21 06:22:25 jmc Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.22 2007/06/29 03:37:09 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.21 2007/02/21 06:22:25 jmc Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.22 2007/06/29 03:37:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,11 +91,11 @@ struct quotaname {
 #define	HASGRP	2
 
 struct fileusage {
-	struct	fileusage *fu_next;
-	u_long	fu_curinodes;
-	u_long	fu_curblocks;
-	u_long	fu_id;
-	char	fu_name[1];
+	struct fileusage *fu_next;
+	u_int32_t	fu_curinodes;
+	u_int32_t	fu_curblocks;
+	u_int32_t	fu_id;	/* uid_t or gid_t */
+	char		fu_name[1];
 	/* actually bigger */
 };
 #define FUHASH 1024	/* must be power of two */
@@ -105,12 +105,12 @@ int	gflag;			/* check group quotas */
 int	uflag;			/* check user quotas */
 int	flags;			/* check flags (avd) */
 int	fi;			/* open disk file descriptor */
-u_long	highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
+u_int32_t highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
 
 struct fileusage *
-	 addid(u_long, int, char *);
+	 addid(u_int32_t, int, char *);
 char	*blockcheck(char *);
-void	 bread(daddr_t, char *, long);
+void	 bread(daddr64_t, char *, long);
 int	 chkquota(const char *, const char *, const char *, void *, pid_t *);
 void	 freeinodebuf(void);
 struct ufs1_dinode *
@@ -118,7 +118,7 @@ struct ufs1_dinode *
 int	 getquotagid(void);
 int	 hasquota(struct fstab *, int, char **);
 struct fileusage *
-	 lookup(u_long, int);
+	 lookup(u_int32_t, int);
 void	*needchk(struct fstab *);
 int	 oneof(char *, char*[], int);
 void	 resetinodebuf(void);
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	struct group *gr;
 	struct quotaname *auxdata;
 	int i, argnum, maxrun, errs, ch;
-	long done = 0;
+	u_int64_t done = 0;	/* XXX supports maximum 64 filesystems */
 	char *name;
 
 	errs = maxrun = 0;
@@ -173,13 +173,13 @@ main(int argc, char *argv[])
 	if (gflag) {
 		setgrent();
 		while ((gr = getgrent()) != 0)
-			(void) addid((u_long)gr->gr_gid, GRPQUOTA, gr->gr_name);
+			(void) addid(gr->gr_gid, GRPQUOTA, gr->gr_name);
 		endgrent();
 	}
 	if (uflag) {
 		setpwent();
 		while ((pw = getpwent()) != 0)
-			(void) addid((u_long)pw->pw_uid, USRQUOTA, pw->pw_name);
+			(void) addid(pw->pw_uid, USRQUOTA, pw->pw_name);
 		endpwent();
 	}
 	if (flags&CHECK_PREEN)
@@ -280,7 +280,7 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 				if ((mode = dp->di_mode & IFMT) == 0)
 					continue;
 				if (qnp->flags & HASGRP) {
-					fup = addid((u_long)dp->di_gid,
+					fup = addid(dp->di_gid,
 					    GRPQUOTA, NULL);
 					fup->fu_curinodes++;
 					if (mode == IFREG || mode == IFDIR ||
@@ -289,7 +289,7 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 						    dp->di_blocks;
 				}
 				if (qnp->flags & HASUSR) {
-					fup = addid((u_long)dp->di_uid,
+					fup = addid(dp->di_uid,
 					    USRQUOTA, NULL);
 					fup->fu_curinodes++;
 					if (mode == IFREG || mode == IFDIR ||
@@ -348,7 +348,7 @@ update(const char *fsname, const char *quotafile, int type)
 {
 	struct fileusage *fup;
 	FILE *qfi, *qfo;
-	u_long id, lastid;
+	u_int32_t id, lastid;
 	struct dqblk dqbuf;
 	static int warned = 0;
 	static struct dqblk zerodqbuf;
@@ -375,7 +375,7 @@ update(const char *fsname, const char *quotafile, int type)
 		(void) fclose(qfo);
 		return (1);
 	}
-	if (quotactl(fsname, QCMD(Q_SYNC, type), (u_long)0, (caddr_t)0) < 0 &&
+	if (quotactl(fsname, QCMD(Q_SYNC, type), 0, (caddr_t)0) < 0 &&
 	    errno == EOPNOTSUPP && !warned &&
 	    (flags&(CHECK_DEBUG|CHECK_VERBOSE))) {
 		warned++;
@@ -391,7 +391,7 @@ update(const char *fsname, const char *quotafile, int type)
 		    dqbuf.dqb_curblocks == fup->fu_curblocks) {
 			fup->fu_curinodes = 0;
 			fup->fu_curblocks = 0;
-			fseek(qfo, (long)sizeof(struct dqblk), 1);
+			fseek(qfo, (long)sizeof(struct dqblk), SEEK_CUR);
 			continue;
 		}
 		if (flags&(CHECK_DEBUG|CHECK_VERBOSE)) {
@@ -402,7 +402,7 @@ update(const char *fsname, const char *quotafile, int type)
 				(void)printf("\tinodes %d -> %ld",
 				    dqbuf.dqb_curinodes, fup->fu_curinodes);
 			if (dqbuf.dqb_curblocks != fup->fu_curblocks)
-				(void)printf("\tblocks %d -> %ld",
+				(void)printf("\tblocks %u -> %ld",
 				    dqbuf.dqb_curblocks, fup->fu_curblocks);
 			(void)printf("\n");
 		}
@@ -508,7 +508,7 @@ hasquota(struct fstab *fs, int type, char **qfnamep)
  * Lookup an id of a specific type.
  */
 struct fileusage *
-lookup(u_long id, int type)
+lookup(u_int32_t id, int type)
 {
 	struct fileusage *fup;
 
@@ -522,7 +522,7 @@ lookup(u_long id, int type)
  * Add a new file usage id if it does not already exist.
  */
 struct fileusage *
-addid(u_long id, int type, char *name)
+addid(u_int32_t id, int type, char *name)
 {
 	struct fileusage *fup, **fhp;
 	int len;
@@ -562,11 +562,11 @@ struct ufs1_dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
-	daddr_t dblk;
+	daddr64_t dblk;
 	static struct ufs1_dinode *dp;
 
 	if (inumber != nextino++ || inumber > maxino)
-		err(1, "bad inode number %d to nextinode", inumber);
+		err(1, "bad inode number %u to nextinode", inumber);
 	if (inumber >= lastinum) {
 		readcnt++;
 		dblk = fsbtodb(&sblock, ino_to_fsba(&sblock, lastinum));
@@ -627,10 +627,10 @@ freeinodebuf(void)
  * Read specified disk blocks.
  */
 void
-bread(daddr_t bno, char *buf, long cnt)
+bread(daddr64_t bno, char *buf, long cnt)
 {
 
 	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0 ||
 	    read(fi, buf, cnt) != cnt)
-		err(1, "block %u", bno);
+		err(1, "block %lld", bno);
 }

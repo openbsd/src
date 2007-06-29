@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.16 2007/03/19 13:27:47 pedro Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.17 2007/06/29 03:37:09 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: badsect.c,v 1.16 2007/03/19 13:27:47 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: badsect.c,v 1.17 2007/06/29 03:37:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,8 @@ static const char rcsid[] = "$OpenBSD: badsect.c,v 1.16 2007/03/19 13:27:47 pedr
 #include <unistd.h>
 #include <err.h>
 
-static int chkuse(daddr_t, int);
-static void rdfs(daddr_t, int, char *);
+static int chkuse(daddr64_t, int);
+static void rdfs(daddr64_t, int, char *);
 
 static union {
 	struct	fs fs;
@@ -90,7 +90,7 @@ static long	dev_bsize = 1;
 int
 main(int argc, char *argv[])
 {
-	daddr_t number;
+	daddr64_t number;
 	struct stat stbuf, devstat;
 	struct direct *dp;
 	DIR *dirp;
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 	rdfs(SBOFF, SBSIZE, (char *)fs);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	for (argc -= 2, argv += 2; argc > 0; argc--, argv++) {
-		number = atoi(*argv);
+		number = strtonum(*argv, 0, QUAD_MAX, NULL);
 		if (chkuse(number, 1))
 			continue;
 		if (mknod(*argv, S_IFMT|S_IRUSR|S_IWUSR,
@@ -154,26 +154,26 @@ main(int argc, char *argv[])
 }
 
 static int
-chkuse(daddr_t blkno, int cnt)
+chkuse(daddr64_t blkno, int cnt)
 {
 	int cg;
-	daddr_t fsbn, bn;
+	daddr64_t fsbn, bn;
 
 	fsbn = dbtofsb(fs, blkno);
-	if ((unsigned)(fsbn+cnt) > fs->fs_ffs1_size) {
-		fprintf(stderr, "block %d out of range of file system\n", blkno);
+	if (fsbn+cnt > fs->fs_ffs1_size) {
+		fprintf(stderr, "block %lld out of range of file system\n", blkno);
 		return (1);
 	}
 	cg = dtog(fs, fsbn);
 	if (fsbn < cgdmin(fs, cg)) {
 		if (cg == 0 || (fsbn+cnt) > cgsblock(fs, cg)) {
-			fprintf(stderr, "block %d in non-data area: cannot attach\n",
+			fprintf(stderr, "block %lld in non-data area: cannot attach\n",
 				blkno);
 			return (1);
 		}
 	} else {
 		if ((fsbn+cnt) > cgbase(fs, cg+1)) {
-			fprintf(stderr, "block %d in non-data area: cannot attach\n",
+			fprintf(stderr, "block %lld in non-data area: cannot attach\n",
 				blkno);
 			return (1);
 		}
@@ -187,7 +187,7 @@ chkuse(daddr_t blkno, int cnt)
 	}
 	bn = dtogd(fs, fsbn);
 	if (isclr(cg_blksfree(&acg), bn))
-		fprintf(stderr, "Warning: sector %d is in use\n", blkno);
+		fprintf(stderr, "Warning: sector %lld is in use\n", blkno);
 	return (0);
 }
 
@@ -195,7 +195,7 @@ chkuse(daddr_t blkno, int cnt)
  * read a block from the file system
  */
 static void
-rdfs(daddr_t bno, int size, char *bf)
+rdfs(daddr64_t bno, int size, char *bf)
 {
 	int n;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.30 2007/06/01 23:42:35 pedro Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.31 2007/06/29 03:37:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.30 2007/06/01 23:42:35 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.31 2007/06/29 03:37:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -231,7 +231,7 @@ void *
 getino(ino_t inum)
 {
 	static char *itab = NULL;
-	static daddr_t iblk = -1;
+	static daddr64_t iblk = -1;
 	void *dp;
 	size_t dsize;
 
