@@ -1,9 +1,9 @@
-.\" $OpenBSD: sdiff.1,v 1.14 2007/06/28 07:18:35 jmc Exp $
+.\" $OpenBSD: sdiff.1,v 1.15 2007/06/29 14:48:07 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: June 28 2007 $
+.Dd $Mdocdate: June 29 2007 $
 .Dt SDIFF 1
 .Os
 .Sh NAME
@@ -156,8 +156,8 @@ was written from scratch for the public domain by
 .Sh CAVEATS
 Although undocumented,
 .Nm
-supports all options supported by GNU sdiff.
-Some options require GNU diff.
+supports most long options supported by GNU sdiff,
+though some require GNU diff.
 .Pp
 Tabs are treated as anywhere from one to eight characters wide,
 depending on the current column.
