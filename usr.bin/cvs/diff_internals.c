@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.13 2007/05/30 03:30:21 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.14 2007/06/29 05:04:40 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -63,6 +63,24 @@
  *
  *	@(#)diffreg.c   8.1 (Berkeley) 6/6/93
  */
+
+#include <sys/param.h>
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <regex.h>
+#include <stddef.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "cvs.h"
+#include "diff.h"
+
+/*
+ * diff - compare two files.
+ */
+
 /*
  *	Uses an algorithm due to Harold Stone, which finds
  *	a pair of longest identical subsequences in the two
@@ -126,19 +144,6 @@
  *	6n words for files of length n.
  */
 
-#include <sys/param.h>
-#include <sys/stat.h>
-
-#include <ctype.h>
-#include <errno.h>
-#include <regex.h>
-#include <stddef.h>
-#include <string.h>
-#include <unistd.h>
-
-#include "cvs.h"
-#include "diff.h"
-
 struct cand {
 	int	x;
 	int	y;
@@ -168,7 +173,7 @@ static void	 range(int, int, char *);
 static void	 uni_range(int, int);
 static void	 dump_context_vec(FILE *, FILE *);
 static void	 dump_unified_vec(FILE *, FILE *);
-static int	 prepare(int, FILE *, off_t);
+static void	 prepare(int, FILE *, off_t);
 static void	 prune(void);
 static void	 equiv(struct line *, int, struct line *, int, int *);
 static void	 unravel(int);
@@ -206,7 +211,7 @@ static int  *klist;		/* will be overlaid on file[0] after class */
 static int  *member;		/* will be overlaid on file[1] */
 static int   clen;
 static int   inifdef;		/* whether or not we are in a #ifdef block */
-static int   diff_len[2];
+static int   len[2];
 static int   pref, suff;	/* length of prefix and suffix */
 static int   slen[2];
 static int   anychange;
@@ -225,6 +230,7 @@ static char lastbuf[FUNCTION_CONTEXT_SIZE];
 static int lastline;
 static int lastmatchline;
 BUF  *diffbuf = NULL;
+
 
 /*
  * chrtran points to one of 2 translation tables: cup2low if folding upper to
@@ -320,6 +326,7 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 		cvs_log(LP_ERR, "%s", file2);
 		goto closem;
 	}
+
 	switch (files_differ(f1, f2)) {
 	case 0:
 		goto closem;
@@ -334,10 +341,10 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 		rval = D_BINARY;
 		goto closem;
 	}
-	if (prepare(0, f1, stb1.st_size) < 0 ||
-	    prepare(1, f2, stb2.st_size) < 0) {
-		goto closem;
-	}
+
+	prepare(0, f1, stb1.st_size);
+	prepare(1, f2, stb2.st_size);
+
 	prune();
 	sort(sfile[0], slen[0]);
 	sort(sfile[1], slen[1]);
@@ -354,26 +361,22 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 	clen = 0;
 	clistlen = 100;
 	clist = xcalloc(clistlen, sizeof(*clist));
-
-	if ((i = stone(class, slen[0], member, klist)) < 0)
-		goto closem;
-
+	i = stone(class, slen[0], member, klist);
 	xfree(member);
 	xfree(class);
 
-	J = xrealloc(J, diff_len[0] + 2, sizeof(*J));
+	J = xrealloc(J, len[0] + 2, sizeof(*J));
 	unravel(klist[i]);
 	xfree(clist);
 	xfree(klist);
 
-	ixold = xrealloc(ixold, diff_len[0] + 2, sizeof(*ixold));
-
-	ixnew = xrealloc(ixnew, diff_len[1] + 2, sizeof(*ixnew));
+	ixold = xrealloc(ixold, len[0] + 2, sizeof(*ixold));
+	ixnew = xrealloc(ixnew, len[1] + 2, sizeof(*ixnew));
 	check(f1, f2);
 	output(f1, f2);
 
 closem:
-	if (anychange == 1) {
+	if (anychange) {
 		if (rval == D_SAME)
 			rval = D_DIFFER;
 	}
@@ -413,7 +416,7 @@ files_differ(FILE *f1, FILE *f2)
 	}
 }
 
-static int
+static void
 prepare(int i, FILE *fd, off_t filesize)
 {
 	struct line *p;
@@ -428,16 +431,14 @@ prepare(int i, FILE *fd, off_t filesize)
 
 	p = xcalloc(sz + 3, sizeof(*p));
 	for (j = 0; (h = readhash(fd));) {
-		if (j == (int)sz) {
+		if (j == sz) {
 			sz = sz * 3 / 2;
 			p = xrealloc(p, sz + 3, sizeof(*p));
 		}
 		p[++j].value = h;
 	}
-	diff_len[i] = j;
+	len[i] = j;
 	file[i] = p;
-
-	return (0);
 }
 
 static void
@@ -445,19 +446,17 @@ prune(void)
 {
 	int i, j;
 
-	for (pref = 0; pref < diff_len[0] && pref < diff_len[1] &&
+	for (pref = 0; pref < len[0] && pref < len[1] &&
 	    file[0][pref + 1].value == file[1][pref + 1].value;
 	    pref++)
 		;
-	for (suff = 0;
-	    (suff < diff_len[0] - pref) && (suff < diff_len[1] - pref) &&
-	    (file[0][diff_len[0] - suff].value ==
-	    file[1][diff_len[1] - suff].value);
+	for (suff = 0; suff < len[0] - pref && suff < len[1] - pref &&
+	    file[0][len[0] - suff].value == file[1][len[1] - suff].value;
 	    suff++)
 		;
 	for (j = 0; j < 2; j++) {
 		sfile[j] = file[j] + pref;
-		slen[j] = diff_len[j] - pref - suff;
+		slen[j] = len[j] - pref - suff;
 		for (i = 0; i <= slen[j]; i++)
 			sfile[j][i].serial = i;
 	}
@@ -505,7 +504,7 @@ isqrt(int n)
 		x = n / x;
 		x += y;
 		x /= 2;
-	} while (x - y > 1 || x - y < -1);
+	} while ((x - y) > 1 || (x - y) < -1);
 
 	return (x);
 }
@@ -513,7 +512,6 @@ isqrt(int n)
 static int
 stone(int *a, int n, int *b, int *c)
 {
-	int ret;
 	int i, k, y, j, l;
 	int oldc, tc, oldl;
 	u_int numtries;
@@ -522,9 +520,7 @@ stone(int *a, int n, int *b, int *c)
 	const u_int bound = dflag ? UINT_MAX : MAX(256, (u_int)isqrt(n));
 
 	k = 0;
-	if ((ret = newcand(0, 0, 0)) < 0)
-		return (-1);
-	c[0] = ret;
+	c[0] = newcand(0, 0, 0);
 	for (i = 1; i <= n; i++) {
 		j = a[i];
 		if (j == 0)
@@ -543,16 +539,12 @@ stone(int *a, int n, int *b, int *c)
 				if (clist[c[l]].y <= y)
 					continue;
 				tc = c[l];
-				if ((ret = newcand(i, y, oldc)) < 0)
-					return (-1);
-				c[l] = ret;
+				c[l] = newcand(i, y, oldc);
 				oldc = tc;
 				oldl = l;
 				numtries++;
 			} else {
-				if ((ret = newcand(i, y, oldc)) < 0)
-					return (-1);
-				c[l] = ret;
+				c[l] = newcand(i, y, oldc);
 				k++;
 				break;
 			}
@@ -607,9 +599,9 @@ unravel(int p)
 	struct cand *q;
 	int i;
 
-	for (i = 0; i <= diff_len[0]; i++)
+	for (i = 0; i <= len[0]; i++)
 		J[i] = i <= pref ? i :
-		    i > diff_len[0] - suff ? i + diff_len[1] - diff_len[0] : 0;
+		    i > len[0] - suff ? i + len[1] - len[0] : 0;
 	for (q = clist + p; q->y != 0; q = clist + q->pred)
 		J[q->x + pref] = q->y + pref;
 }
@@ -632,7 +624,7 @@ check(FILE *f1, FILE *f2)
 	ixold[0] = ixnew[0] = 0;
 	jackpot = 0;
 	ctold = ctnew = 0;
-	for (i = 1; i <= diff_len[0]; i++) {
+	for (i = 1; i <= len[0]; i++) {
 		if (J[i] == 0) {
 			ixold[i] = ctold += skipline(f1);
 			continue;
@@ -647,7 +639,7 @@ check(FILE *f1, FILE *f2)
 				d = getc(f2);
 				/*
 				 * GNU diff ignores a missing newline
-				 * in one file if bflag || wflag.
+				 * in one file for -b or -w.
 				 */
 				if ((bflag == 1 || wflag == 1) &&
 				    ((c == EOF && d == '\n') ||
@@ -710,11 +702,11 @@ check(FILE *f1, FILE *f2)
 		ixnew[j] = ctnew;
 		j++;
 	}
-	for (; j <= diff_len[1]; j++)
+	for (; j <= len[1]; j++)
 		ixnew[j] = ctnew += skipline(f2);
 	/*
-	 * if (jackpot != 0)
-	 *	cvs_printf("jackpot\n");
+	 * if (jackpot)
+	 *	fprintf(stderr, "jackpot\n");
 	 */
 }
 
@@ -781,9 +773,9 @@ output(FILE *f1, FILE *f2)
 
 	rewind(f1);
 	rewind(f2);
-	m = diff_len[0];
+	m = len[0];
 	J[0] = 0;
-	J[m + 1] = diff_len[1] + 1;
+	J[m + 1] = len[1] + 1;
 	for (i0 = 1; i0 <= m; i0 = i1 + 1) {
 		while (i0 <= m && J[i0] == J[i0 - 1] + 1)
 			i0++;
@@ -796,7 +788,7 @@ output(FILE *f1, FILE *f2)
 		change(f1, f2, i0, i1, j0, j1);
 	}
 	if (m == 0)
-		change(f1, f2, 1, 0, 1, diff_len[1]);
+		change(f1, f2, 1, 0, 1, len[1]);
 	if (diff_format == D_IFDEF) {
 		for (;;) {
 #define	c i0
@@ -869,10 +861,10 @@ ignoreline(char *line)
 static void
 change(FILE *f1, FILE *f2, int a, int b, int c, int d)
 {
-	int i;
 	static size_t max_context = 64;
 	char buf[64];
 	struct tm *t;
+	int i;
 
 	if (diff_format != D_IFDEF && a > b && c > d)
 		return;
@@ -1101,6 +1093,9 @@ readhash(FILE *f)
 		for (i = 0;;) {
 			switch (t = getc(f)) {
 			case '\t':
+			case '\r':
+			case '\v':
+			case '\f':
 			case ' ':
 				space++;
 				continue;
@@ -1132,7 +1127,7 @@ readhash(FILE *f)
 static int
 asciifile(FILE *f)
 {
-	char buf[BUFSIZ];
+	unsigned char buf[BUFSIZ];
 	size_t i, cnt;
 
 	if (aflag == 1 || f == NULL)
@@ -1148,7 +1143,7 @@ asciifile(FILE *f)
 
 #define begins_with(s, pre) (strncmp(s, pre, sizeof(pre)-1) == 0)
 
-static char*
+static char *
 match_function(const long *f, int pos, FILE *fp)
 {
 	unsigned char buf[FUNCTION_CONTEXT_SIZE];
@@ -1180,7 +1175,7 @@ match_function(const long *f, int pos, FILE *fp)
 					if (!state)
 						state = " (public)";
 				} else {
-					strlcpy(lastbuf, (const char *)buf,
+					strlcpy(lastbuf, buf,
 					    sizeof lastbuf);
 					if (state)
 						strlcat(lastbuf, state,
@@ -1192,9 +1187,8 @@ match_function(const long *f, int pos, FILE *fp)
 		}
 		pos--;
 	}
-	return (lastmatchline > 0) ? lastbuf : NULL;
+	return lastmatchline > 0 ? lastbuf : NULL;
 }
-
 
 /* dump accumulated "context" diff changes */
 static void
@@ -1210,13 +1204,13 @@ dump_context_vec(FILE *f1, FILE *f2)
 
 	b = d = 0;		/* gcc */
 	lowa = MAX(1, cvp->a - context);
-	upb = MIN(diff_len[0], context_vec_ptr->b + context);
+	upb = MIN(len[0], context_vec_ptr->b + context);
 	lowc = MAX(1, cvp->c - context);
-	upd = MIN(diff_len[1], context_vec_ptr->d + context);
+	upd = MIN(len[1], context_vec_ptr->d + context);
 
 	diff_output("***************");
 	if (diff_pflag == 1) {
-		f = match_function(ixold, lowa - 1, f1);
+		f = match_function(ixold, lowa-1, f1);
 		if (f != NULL) {
 			diff_output(" ");
 			diff_output("%s", f);
@@ -1238,7 +1232,7 @@ dump_context_vec(FILE *f1, FILE *f2)
 			do_output++;
 			break;
 		}
-	if (do_output != 0) {
+	if (do_output) {
 		while (cvp <= context_vec_ptr) {
 			a = cvp->a;
 			b = cvp->b;
@@ -1274,7 +1268,7 @@ dump_context_vec(FILE *f1, FILE *f2)
 			do_output++;
 			break;
 		}
-	if (do_output != 0) {
+	if (do_output) {
 		while (cvp <= context_vec_ptr) {
 			a = cvp->a;
 			b = cvp->b;
@@ -1315,9 +1309,9 @@ dump_unified_vec(FILE *f1, FILE *f2)
 
 	b = d = 0;		/* gcc */
 	lowa = MAX(1, cvp->a - context);
-	upb = MIN(diff_len[0], context_vec_ptr->b + context);
+	upb = MIN(len[0], context_vec_ptr->b + context);
 	lowc = MAX(1, cvp->c - context);
-	upd = MIN(diff_len[1], context_vec_ptr->d + context);
+	upd = MIN(len[1], context_vec_ptr->d + context);
 
 	diff_output("@@ -");
 	uni_range(lowa, upb);
@@ -1325,7 +1319,7 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	uni_range(lowc, upd);
 	diff_output(" @@");
 	if (diff_pflag == 1) {
-		f = match_function(ixold, lowa - 1, f1);
+		f = match_function(ixold, lowa-1, f1);
 		if (f != NULL) {
 			diff_output(" ");
 			diff_output("%s", f);

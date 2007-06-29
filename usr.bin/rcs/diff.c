@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.22 2007/06/28 05:01:39 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.23 2007/06/29 05:04:40 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1181,7 +1181,7 @@ match_function(const long *f, int pos, FILE *fp)
 					if (!state)
 						state = " (public)";
 				} else {
-					if (strlcpy(lastbuf, (const char *)buf,
+					if (strlcpy(lastbuf, buf,
 					    sizeof(lastbuf)) >= sizeof(lastbuf))
 						errx(1,
 						    "match_function: strlcpy");
