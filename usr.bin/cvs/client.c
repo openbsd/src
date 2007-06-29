@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.67 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.68 2007/06/29 12:42:05 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -98,7 +98,8 @@ struct cvs_req cvs_requests[] = {
 	{ "admin",			0,	cvs_server_admin, REQ_NEEDDIR },
 	{ "export",			0,	NULL, 0 },
 	{ "history",			0,	NULL, 0 },
-	{ "release",			0,	NULL, 0 },
+	{ "release",			0,	cvs_server_release,
+	    REQ_NEEDDIR },
 	{ "watch-on",			0,	NULL, 0 },
 	{ "watch-off",			0,	NULL, 0 },
 	{ "watch-add",			0,	NULL, 0 },
