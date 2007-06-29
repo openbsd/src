@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink.c,v 1.6 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: elink.c,v 1.7 2007/06/29 15:17:02 jasper Exp $	*/
 /*	$NetBSD: elink.c,v 1.9 1996/05/03 19:06:27 christos Exp $	*/
 
 /*
@@ -65,10 +65,7 @@ static int elink_all_resets_initialized;
  * NOTE: the caller MUST provide an i/o handle for ELINK_ID_PORT!
  */
 void
-elink_reset(iot, ioh, bus)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int bus;
+elink_reset(bus_space_tag_t iot, bus_space_handle_t ioh, int bus)
 {
 	struct elink_done_reset *er;
 
@@ -108,13 +105,10 @@ elink_reset(iot, ioh, bus)
  * NOTE: the caller MUST provide an i/o handle for ELINK_ID_PORT!
  */
 void
-elink_idseq(iot, ioh, p)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	register u_char p;
+elink_idseq(bus_space_tag_t iot, bus_space_handle_t ioh, u_char p)
 {
-	register int i;
-	register u_char c;
+	int i;
+	u_char c;
 
 	c = 0xff;
 	for (i = 255; i; i--) {
