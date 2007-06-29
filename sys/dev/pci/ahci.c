@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.121 2007/06/29 01:06:17 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.122 2007/06/29 01:27:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -553,8 +553,14 @@ ahci_no_match(struct pci_attach_args *pa)
 #define  JM_PCI_CTL0_PCIIDE_CS		(1<<22) /* PCIIDE channels Swap */
 #define  JM_PCI_CTL0_SATA_PS		(1<<21) /* SATA channel M/S swap */
 #define  JM_PCI_CTL0_AHCI_PS		(1<<20) /* SATA AHCI ports swap */
-/* 19:18 Sub-Class Code Configuration for Function 1 */
-/* 17:16 Sub-Class Code Configuration for Function 0 */
+#define  JM_PCI_CTL0_F1_SUBCLASS_M	0xc0000 /* subclass for func 1 */
+#define  JM_PCI_CTL0_F0_SUBCLASS_M	0x30000 /* subclass for func 0 */
+#define  JM_PCI_CTL0_SUBCLASS_IDE	0x0 /* IDE Controller */
+#define  JM_PCI_CTL0_SUBCLASS_RAID	0x1 /* RAID Controller */
+#define  JM_PCI_CTL0_SUBCLASS_AHCI	0x2 /* AHCI Controller */
+#define  JM_PCI_CTL0_SUBCLASS_OTHER	0x3 /* Other Mass Storage */
+#define  JM_PCI_CTL0_F1_SUBCLASS(_m)	((_m)<<18) /* subclass for func 1 */
+#define  JM_PCI_CTL0_F0_SUBCLASS(_m)	((_m)<<16) /* subclass for func 0 */
 #define  JM_PCI_CTL0_SATA1_AHCI		(1<<15) /* SATA port 1 AHCI enable */
 #define  JM_PCI_CTL0_SATA1_IDE		(1<<14) /* SATA port 1 IDE enable */
 #define  JM_PCI_CTL0_SATA0_AHCI		(1<<13) /* SATA port 0 AHCI enable */
@@ -574,6 +580,10 @@ ahci_no_match(struct pci_attach_args *pa)
 int
 ahci_jmicron_match(struct pci_attach_args *pa)
 {
+	/*
+	 * we're only ever going to configure function 0 as the ahci port,
+	 * so only match on it
+	 */
 	if (pa->pa_function != 0)
 		return (0);
 
@@ -583,13 +593,45 @@ ahci_jmicron_match(struct pci_attach_args *pa)
 int
 ahci_jmicron_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
-	u_int32_t			ccr;
+	u_int32_t			ctl0, ctl5;
 
-	/* Switch JMICRON ports to AHCI mode */
-	ccr = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
-	ccr &= ~0x0000ff00;
-	ccr |=  0x0000a100;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, ccr);
+	ctl0 = pci_conf_read(pa->pa_pc, pa->pa_tag, JM_PCI_CTL0);
+	ctl0 &= ~(JM_PCI_CTL0_PCIIDE_F1 | JM_PCI_CTL0_AHCI_EN | 
+	    JM_PCI_CTL0_AHCI_F1 | JM_PCI_CTL0_SATA0_IDE |
+	    JM_PCI_CTL0_SATA0_AHCI | JM_PCI_CTL0_SATA1_IDE |
+	    JM_PCI_CTL0_SATA1_AHCI | JM_PCI_CTL0_F1_SUBCLASS_M |
+	    JM_PCI_CTL0_F0_SUBCLASS_M | JM_PCI_CTL0_PCIIDE_CS |
+	    JM_PCI_CTL0_IDEDMA_CFG);
+
+	ctl5 = pci_conf_read(pa->pa_pc, pa->pa_tag, JM_PCI_CTL5);
+	ctl5 &= ~JM_PCI_CTL5_PATA1_PRI;
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_JMICRON_JMB360:
+		/* set to single function AHCI mode */
+		ctl0 |= JM_PCI_CTL0_AHCI_EN | JM_PCI_CTL0_SATA0_AHCI |
+		    JM_PCI_CTL0_SATA1_AHCI |
+		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_AHCI);
+		break;
+
+	case PCI_PRODUCT_JMICRON_JMB366:
+	case PCI_PRODUCT_JMICRON_JMB365:
+		/* wire the second PATA port in the right place */
+		ctl5 |= JM_PCI_CTL5_PATA1_PRI;
+		/* FALLTHROUGH */
+	case PCI_PRODUCT_JMICRON_JMB363:
+	case PCI_PRODUCT_JMICRON_JMB361:
+		/* enable AHCI and put IDE on the second function */
+		ctl0 |= JM_PCI_CTL0_PCIIDE_F1 | JM_PCI_CTL0_AHCI_EN |
+		    JM_PCI_CTL0_SATA0_AHCI | JM_PCI_CTL0_SATA1_AHCI |
+		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_AHCI) |
+		    JM_PCI_CTL0_F1_SUBCLASS(JM_PCI_CTL0_SUBCLASS_IDE) |
+		    JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG;
+                break;
+	}
+
+	pci_conf_write(pa->pa_pc, pa->pa_tag, JM_PCI_CTL0, ctl0);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, JM_PCI_CTL5, ctl5);
 
 	return (0);
 }
