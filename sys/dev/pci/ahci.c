@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.120 2007/06/29 01:00:38 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.121 2007/06/29 01:06:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -567,6 +567,9 @@ ahci_no_match(struct pci_attach_args *pa)
 #define  JM_PCI_CTL0_PATA0_40P		(1<<3) /* PATA 0 40pin cable */
 #define  JM_PCI_CTL0_PCIIDE_F1		(1<<1) /* PCIIDE on function 1 */
 #define  JM_PCI_CTL0_PATA0_PRI		(1<<0) /* PATA 0 enable on 1st chan */
+
+#define JM_PCI_CTL5		0x80 /* control register 8 */
+#define  JM_PCI_CTL5_PATA1_PRI		(1<<24) /* force PATA 1 on chan0 */
 
 int
 ahci_jmicron_match(struct pci_attach_args *pa)
