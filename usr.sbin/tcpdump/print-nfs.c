@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.14 2005/05/24 02:38:25 moritz Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.15 2007/06/29 11:39:25 thib Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -92,6 +92,14 @@ u_int32_t nfsv3_procid[NFS_NPROCS] = {
 	NFSPROC_NOOP,
 	NFSPROC_NOOP,
 	NFSPROC_NOOP
+};
+
+
+static struct tok nfsvers2str[] = {
+	{ NFS_VER2,	"NFSv2" },
+	{ NFS_VER3,	"NFSv3" },
+	{ NFS_VER4,	"NFSv4" },
+	{ 0, NULL }
 };
 
 /*
@@ -408,17 +416,22 @@ nfsreq_print(register const u_char *bp, u_int length,
 	register const struct rpc_msg *rp;
 	register const u_int32_t *dp;
 	nfstype type;
-	int v3;
+	int vers;
+	int v3 = 0;
 	u_int32_t proc;
 	struct nfsv3_sattr sa3;
 
 	nfserr = 0;		/* assume no error */
 	rp = (const struct rpc_msg *)bp;
-	printf("xid 0x%x %d", (u_int32_t)ntohl(rp->rm_xid), length);
+
+	vers = ntohl(rp->rm_call.cb_vers);
+	if (vers == NFS_VER3)
+		v3 = 1;
+
+	printf("xid 0x%x (%s) %d", (u_int32_t)ntohl(rp->rm_xid),
+	    tok2str(nfsvers2str, "Unk %i", vers), length);
 
 	xid_map_enter(rp, bp2);	/* record proc number for later on */
-
-	v3 = (ntohl(rp->rm_call.cb_vers) == NFS_VER3);
 	proc = ntohl(rp->rm_call.cb_proc);
 
 	if (!v3 && proc < NFS_NPROCS)
