@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtoul.3,v 1.17 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: strtoul.3,v 1.18 2007/06/29 18:54:37 millert Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 29 2007 $
 .Dt STRTOUL 3
 .Os
 .Sh NAME
@@ -175,6 +175,12 @@ and the global variable
 .Va errno
 is set to
 .Er ERANGE .
+If no conversion could be performed, 0 is returned;
+the global variable
+.Va errno
+is also set to
+.Er EINVAL,
+though this is not portable across all platforms.
 .Pp
 There is no way to determine if
 .Fn strtoul

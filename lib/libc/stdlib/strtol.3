@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.17 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: strtol.3,v 1.18 2007/06/29 18:54:37 millert Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 29 2007 $
 .Dt STRTOL 3
 .Os
 .Sh NAME
@@ -151,8 +151,14 @@ The
 .Fn strtoimax ,
 and
 .Fn strtoq
-functions returns the result of the conversion,
+functions return the result of the conversion,
 unless the value would underflow or overflow.
+If no conversion could be performed, 0 is returned;
+the global variable
+.Va errno
+is also set to
+.Er EINVAL,
+though this is not portable across all platforms.
 If overflow or underflow occurs,
 .Va errno
 is set to
