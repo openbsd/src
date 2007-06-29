@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.10 2007/03/07 06:23:04 miod Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.11 2007/06/29 04:32:39 deraadt Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -130,8 +130,8 @@ int cn_get_magic(char *magic, int len);
 
 #include <sparc64/dev/cons.h>
 
-static int pconsmatch(struct device *, void *, void *);
-static void pconsattach(struct device *, struct device *, void *);
+int pconsmatch(struct device *, void *, void *);
+void pconsattach(struct device *, struct device *, void *);
 
 struct cfattach pcons_ca = {
 	sizeof(struct pconssoftc), pconsmatch, pconsattach
@@ -150,7 +150,7 @@ extern struct consdev *cn_tab;
 
 cons_decl(prom_);
 
-static int
+int
 pconsmatch(parent, match, aux)
 	struct device *parent;
 	void *match;
@@ -163,9 +163,9 @@ pconsmatch(parent, match, aux)
 	    cn_tab->cn_getc == prom_cngetc);
 }
 
-static void pcons_poll(void *);
+void pcons_poll(void *);
 
-static void
+void
 pconsattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -205,8 +205,8 @@ pconsattach(parent, self, aux)
 	timeout_set(&sc->sc_poll_to, pcons_poll, sc);
 }
 
-static void pconsstart(struct tty *);
-static int pconsparam(struct tty *, struct termios *);
+void pconsstart(struct tty *);
+int pconsparam(struct tty *, struct termios *);
 
 int
 pconsopen(dev, flag, mode, p)
@@ -331,7 +331,7 @@ pconsstop(tp, flag)
 	return 0;
 }
 
-static void
+void
 pconsstart(tp)
 	struct tty *tp;
 {
@@ -365,7 +365,7 @@ pconsstart(tp)
 	splx(s);
 }
 
-static int
+int
 pconsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -376,7 +376,7 @@ pconsparam(tp, t)
 	return 0;
 }
 
-static void
+void
 pcons_poll(aux)
 	void *aux;
 {
