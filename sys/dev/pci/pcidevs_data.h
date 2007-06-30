@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1247 2007/06/22 20:13:04 todd Exp 
+ *	OpenBSD: pcidevs,v 1.1248 2007/06/30 15:20:42 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2502,6 +2502,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5424,
 	    "AR5424",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5416,
+	    "AR5416",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5418,
+	    "AR5418",
 	},
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210_AP,
@@ -6668,6 +6676,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82852GM Configuration",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82854_MCH,
+	    "82854 MCH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82854_IGD,
+	    "82854 Video",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_MCH,
 	    "E7520 MCH",
 	},
@@ -7792,6 +7808,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI-GPIB",
 	},
 	{
+	    PCI_VENDOR_NETCHIP, PCI_PRODUCT_NETCHIP_NET2282,
+	    "NET2282 USB",
+	},
+	{
 	    PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GXxR,
 	    "NXB-10GXxR (NX2031)",
 	},
@@ -8814,6 +8834,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6600GTAGP,
 	    "GeForce 6600 GT AGP",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6600_3,
+	    "GeForce 6600",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7800GS,
@@ -11372,6 +11396,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Memory Stick Slot",
 	},
 	{
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EASYIO,
+	    "EasyIO",
+	},
+	{
 	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_RIVA128,
 	    "Velocity128",
 	},
@@ -11600,6 +11628,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "TSB43AB23 FireWire",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB82AA2,
+	    "TSB82AA2 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AB21,
 	    "TSB43AB21 FireWire",
 	},
@@ -11738,6 +11770,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2031,
 	    "PCI2031 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2032,
+	    "PCI2032 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2250,
@@ -14052,6 +14088,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "AVM",
 	},
 	{
+	    PCI_VENDOR_STALLION,
+	    "Stallion Technologies",
+	},
+	{
 	    PCI_VENDOR_COREGA,
 	    "Corega",
 	},
@@ -14398,6 +14438,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_HAWKING,
 	    "Hawking Technology",
+	},
+	{
+	    PCI_VENDOR_NETCHIP,
+	    "NetChip Technology",
 	},
 	{
 	    PCI_VENDOR_I4,
