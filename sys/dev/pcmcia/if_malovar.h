@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.12 2007/06/17 20:00:30 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.13 2007/06/30 12:08:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -140,6 +140,11 @@ struct malo_cmd_body_assoc {
 	/* malo_cmd_tlv_rate */
 } __packed;
 
+struct malo_cmd_body_80211d {
+	uint16_t	action;
+	/* malo_cmd_tlv_80211d */
+} __packed;
+
 struct malo_cmd_body_bgscan_config {
 	uint16_t	action;
 	uint8_t		enable;
@@ -170,6 +175,7 @@ struct malo_cmd_body_rate {
 #define MALO_TLV_TYPE_RATES	0x0001
 #define MALO_TLV_TYPE_PHY	0x0003
 #define MALO_TLV_TYPE_CF	0x0004
+#define MALO_TLV_TYPE_80211D	0x0007
 #define MALO_TLV_TYPE_CHANLIST	0x0101
 #define MALO_TLV_TYPE_NUMPROBES	0x0102
 
@@ -195,6 +201,18 @@ struct malo_cmd_tlv_cf {
 	uint16_t	type;
 	uint16_t	size;
 	uint8_t		data[1];
+} __packed;
+
+struct malo_cmd_tlv_80211d_param {
+	uint8_t		firstchannel;
+	uint8_t		numchannels;
+	uint8_t		maxtxpower;
+} __packed;
+struct malo_cmd_tlv_80211d {
+	uint16_t	type;
+	uint16_t	size;
+	uint8_t		countrycode[3];
+	struct malo_cmd_tlv_80211d_param data[12];
 } __packed;
 
 struct malo_cmd_tlv_chanlist_param {

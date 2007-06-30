@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.19 2007/06/17 20:00:30 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.20 2007/06/30 12:08:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -100,6 +100,7 @@ int	cmalo_cmd_set_txpower(struct malo_softc *, int16_t);
 int	cmalo_cmd_set_antenna(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_macctrl(struct malo_softc *);
 int	cmalo_cmd_set_assoc(struct malo_softc *);
+int	cmalo_cmd_set_80211d(struct malo_softc *);
 int	cmalo_cmd_set_bgscan_config(struct malo_softc *);
 int	cmalo_cmd_set_bgscan_query(struct malo_softc *);
 int	cmalo_cmd_set_rate(struct malo_softc *);
@@ -592,10 +593,13 @@ cmalo_init(struct ifnet *ifp)
 	cmalo_cmd_set_snmp(sc, MALO_OID_RTSTRESH);
 	cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY);
 	cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH);
+	cmalo_cmd_set_snmp(sc, MALO_OID_80211D);
+	
+	cmalo_cmd_set_80211d(sc);
 
-	//cmalo_cmd_set_scan(sc);
+	cmalo_cmd_set_scan(sc);
 
-	cmalo_cmd_set_assoc(sc);
+	//cmalo_cmd_set_assoc(sc);
 
 	/* device up */
 	ifp->if_flags |= IFF_RUNNING;
@@ -1005,12 +1009,13 @@ cmalo_cmd_set_reset(struct malo_softc *sc)
 int
 cmalo_cmd_set_scan(struct malo_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_scan *body;
 	struct malo_cmd_tlv_ssid *body_ssid;
 	struct malo_cmd_tlv_chanlist *body_chanlist;
 	struct malo_cmd_tlv_rates *body_rates;
-	struct malo_cmd_tlv_numprobes *body_numprobes;
+	//struct malo_cmd_tlv_numprobes *body_numprobes;
 	uint16_t psize;
 	int i;
 
@@ -1023,11 +1028,12 @@ cmalo_cmd_set_scan(struct malo_softc *sc)
 	body = (struct malo_cmd_body_scan *)(hdr + 1);
 
 	body->bsstype = 0x03; /* any BSS */
+	memset(body->bssid, 0xff, ETHER_ADDR_LEN);
 
 	body_ssid = sc->sc_cmd + psize;
 	body_ssid->type = htole16(MALO_TLV_TYPE_SSID);
 	body_ssid->size = htole16(0);
-	psize += sizeof(*body_ssid);
+	psize += (sizeof(*body_ssid) - 1);
 
 	body_chanlist = sc->sc_cmd + psize;
 	body_chanlist->type = htole16(MALO_TLV_TYPE_CHANLIST);
@@ -1043,17 +1049,18 @@ cmalo_cmd_set_scan(struct malo_softc *sc)
 
 	body_rates = sc->sc_cmd + psize;
 	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
-	body_rates->size = htole16(ieee80211_std_rateset_11g.rs_nrates);
-	bcopy(ieee80211_std_rateset_11g.rs_rates, body_rates->data,
-	    ieee80211_std_rateset_11g.rs_nrates);
+	body_rates->size =
+	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rates->data,
+	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
 	psize += (sizeof(*body_rates) - 1) + body_rates->size;
-
+#if 0
 	body_numprobes = sc->sc_cmd + psize;
 	body_numprobes->type = htole16(MALO_TLV_TYPE_NUMPROBES);
 	body_numprobes->size = htole16(2);
 	body_numprobes->numprobes = htole16(1);
 	psize += sizeof(*body_numprobes);
-
+#endif
 	hdr->size = htole16(psize - sizeof(*hdr));
 
 	/* process command request */
@@ -1128,6 +1135,11 @@ cmalo_cmd_set_snmp(struct malo_softc *sc, uint16_t oid)
 		body->oid = htole16(MALO_OID_FRAGTRESH);
 		body->size = htole16(2);
 		*(uint16_t *)body->data = htole16(2346);
+		break;
+	case MALO_OID_80211D:
+		body->oid = htole16(MALO_OID_80211D);
+		body->size = htole16(2);
+		*(uint16_t *)body->data = htole16(1);
 		break;
 	default:
 		break;
@@ -1306,6 +1318,7 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 int
 cmalo_cmd_set_assoc(struct malo_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_assoc *body;
 	struct malo_cmd_tlv_ssid *body_ssid;
@@ -1345,13 +1358,58 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 
 	body_rates = sc->sc_cmd + psize;
 	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
-	body_rates->size = htole16(ieee80211_std_rateset_11g.rs_nrates);
-	bcopy(ieee80211_std_rateset_11g.rs_rates, body_rates->data,
-	    ieee80211_std_rateset_11g.rs_nrates);
+	body_rates->size =
+	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rates->data,
+	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
 	psize += (sizeof(*body_rates) - 1) + body_rates->size;
 
 	hdr->size = htole16(psize - sizeof(*hdr));
 
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_80211d(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_80211d *body;
+	struct malo_cmd_tlv_80211d *body_80211d;
+	uint16_t psize;
+	int i;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_80211D);
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_80211d *)(hdr + 1);
+
+	body->action = htole16(1);
+
+	body_80211d = sc->sc_cmd + psize;
+	body_80211d->type = htole16(MALO_TLV_TYPE_80211D);
+	body_80211d->size = htole16(sizeof(body_80211d->data) +
+	    sizeof(body_80211d->countrycode));
+	bcopy("EU ", body_80211d->countrycode,
+	    sizeof(body_80211d->countrycode));
+	for (i = 0; i < CHANNELS; i++) {
+		body_80211d->data[i].firstchannel = 1;
+		body_80211d->data[i].numchannels = 12;
+		body_80211d->data[i].maxtxpower = 10;
+	}
+	psize += sizeof(*body_80211d);
+
+	hdr->size = htole16(psize - sizeof(*hdr));
+	
 	/* process command request */
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
@@ -1466,6 +1524,8 @@ cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 	uc = (uint16_t *)sc->sc_cmd;
 	for (i = 0; i < psize / 2; i++)
 		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
+	if (psize & 0x0001)
+		MALO_WRITE_1(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_CMD_DL_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_CMD_DL_OVER);
 
@@ -1575,6 +1635,11 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_MACCTRL:
 		/* do nothing */
 		DPRINTF(1, "%s: got macctrl cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_80211D:
+		/* do nothing */
+		DPRINTF(1, "%s: got 80211d cmd response\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case MALO_CMD_BGSCAN_CONFIG:
