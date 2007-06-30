@@ -8,7 +8,7 @@
 <meta http-equiv="Content-type" content='text/html; charset="US-ASCII"'>
 <meta name="DC.Creator" content="Eggert, Paul">
 <meta name="DC.Contributor" content="Olson, Arthur David">
-<meta name="DC.Date" content="2007-02-22">
+<meta name="DC.Date" content="2007-03-13">
 <meta name="DC.Description"
  content="Sources of information about time zones and daylight saving time">
 <meta name="DC.Identifier" content="http://www.twinsun.com/tz/tz-link.htm">
@@ -18,7 +18,7 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	8.10
+@(#)tz-link.htm	8.11
 </address>
 <p>
 Please send corrections to this web page to the
@@ -49,6 +49,7 @@ C Library</a> used in
 <a href="http://www.cygwin.com/">Cygwin</a>,
 <a href="http://www.delorie.com/djgpp/"><abbr
 title="DJ's GNU Programming Platform">DJGPP</abbr></a>,
+<a href="http://www.ibm.com/servers/aix/">AIX</a>,
 <a href="http://www.hp.com/products1/unix/operating/">HP-UX</a>,
 <a href="http://www.sgi.com/developers/technology/irix/">IRIX</a>,
 <a href="http://www.apple.com/macosx/">Mac OS X</a>,
@@ -176,13 +177,18 @@ href="http://www.w3.org/2000/01/foo">schema</a> was sketched out.</li>
 <h2>Other <code>tz</code> compilers</h2>
 <ul>
 <li><a href="http://dialspace.dial.pipex.com/prod/dialspace/town/pipexdsl/s/asbm26/vzic/">Vzic iCalendar
-Timezone Converter</a> describes a program Vzic that compiles
+Timezone Converter</a> describes a <a
+href="http://en.wikipedia.org/wiki/C_%28programming_language%29">C</a>
+program that compiles
 <code>tz</code> source into iCalendar-compatible VTIMEZONE files.
 Vzic is freely
 available under the <a
 href="http://www.gnu.org/copyleft/gpl.html"><abbr>GNU</abbr>
 General Public License (<abbr
 title="General Public License">GPL</abbr>)</a>.</li>
+<li><a href="http://sourceforge.net/projects/tzical/">tziCal - tz
+database conversion utility</a> is like Vzic, except for the <a
+href="http://msdn.microsoft.com/netframework/">.NET framework</a>.</li>
 <li><a
 href="http://search.cpan.org/dist/DateTime-TimeZone/">DateTime::TimeZone</a>
 contains a script <code>parse_olson</code> that compiles
@@ -392,10 +398,10 @@ Zone Concepts</a> discusses terminological issues behind time zones.</li>
 <dd>The Parliamentary Library has commissioned <a
 href="http://www.aph.gov.au/LIBRARY/Pubs/rn/2006-07/07rn13.pdf">research
 note on daylight saving time in Australia</a>.
-The Bureau of Metrology publishes a list of
+The Bureau of Meteorology publishes a list of
 <a href="http://www.bom.gov.au/climate/averages/tables/dst_times.shtml">Implementation Dates of Daylight Savings Time within Australia</a>.</dd>
 <dt>Austria</dt>
-<dd>The Federal Office of Metrology and Surveying publishes a
+<dd>The National Metrology Institute publishes a
 table of <a href="http://www.metrologie.at/pdf/sommerzeit.pdf"
 hreflang="de">daylight saving time in Austria (in German)</a>.</dd>
 <dt>Belgium</dt>

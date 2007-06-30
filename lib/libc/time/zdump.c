@@ -1,8 +1,8 @@
-/*	$OpenBSD: zdump.c,v 1.19 2007/02/06 19:35:16 millert Exp $ */
+/*	$OpenBSD: zdump.c,v 1.20 2007/06/30 13:20:42 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** Feb 14, 2003 by Arthur David Olson.
-static char	elsieid[] = "@(#)zdump.c	8.3";
+static char	elsieid[] = "@(#)zdump.c	8.4";
 
 /*
 ** This code has been made independent of the rest of the time
@@ -422,7 +422,7 @@ _("%s: use of -v on system with floating time_t other than float or double\n"),
 			t = t1;
 			t1 = 2 * t1 + 1;
 		}
-		  
+
 		absolute_max_time = t;
 		t = -t;
 		absolute_min_time = t - 1;

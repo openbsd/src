@@ -1,4 +1,4 @@
-/*	$OpenBSD: ialloc.c,v 1.10 2005/08/08 08:05:38 espie Exp $ */
+/*	$OpenBSD: ialloc.c,v 1.11 2007/06/30 13:20:42 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** Feb 14, 2003 by Arthur David Olson (arthur_david_olson@nih.gov).
@@ -59,7 +59,7 @@ const char * const	new;
 		oldsize = strlen(old);
 	if ((result = irealloc(old, oldsize + newsize + 1)) != NULL)
 		if (new != NULL)
-			(void) strlcpy(result + oldsize, new, newsize + 1);
+			(void) memcpy(result + oldsize, new, newsize + 1);
 	return result;
 }
 

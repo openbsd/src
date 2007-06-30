@@ -1,5 +1,5 @@
-$OpenBSD: Theory,v 1.12 2007/02/06 19:35:16 millert Exp $
-@(#)Theory	8.1
+$OpenBSD: Theory,v 1.13 2007/06/30 13:20:42 millert Exp $
+@(#)Theory	8.2
 
 
 ----- Outline -----
@@ -66,11 +66,11 @@ POSIX has the following properties and limitations.
 			where week 1 is the first week in which day d appears,
 			and `5' stands for the last week in which day d appears
 			(which may be either the 4th or 5th week).
-	
+
 	Here is an example POSIX TZ string, for US Pacific time using rules
 	appropriate from 1987 through 2006:
 
-		TZ='PST8PDT,M4.1.0/02:00,M10.5.0/02:00'  
+		TZ='PST8PDT,M4.1.0/02:00,M10.5.0/02:00'
 
 	This POSIX TZ string is hard to remember, and mishandles time stamps
 	before 1987 and after 2006.  With this package you can use this
