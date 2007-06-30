@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.50 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.51 2007/06/30 08:23:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -37,7 +37,8 @@ int
 rcsmerge_main(int argc, char **argv)
 {
 	int fd, ch, flags, kflag, status;
-	char fpath[MAXPATHLEN], r1[16], r2[16], *rev_str1, *rev_str2;
+	char fpath[MAXPATHLEN], r1[RCS_REV_BUFSZ], r2[RCS_REV_BUFSZ];
+	char *rev_str1, *rev_str2;
 	RCSFILE *file;
 	RCSNUM *rev1, *rev2;
 	BUF *bp;

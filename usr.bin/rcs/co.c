@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.107 2007/06/08 16:45:52 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.108 2007/06/30 08:23:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -250,7 +250,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	BUF *bp;
 	u_int i;
 	int fd, lcount;
-	char buf[16];
+	char buf[RCS_REV_BUFSZ];
 	mode_t mode = DEFFILEMODE;
 	struct stat st;
 	struct rcs_delta *rdp;

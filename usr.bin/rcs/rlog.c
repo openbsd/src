@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.57 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.58 2007/06/30 08:23:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -173,7 +173,7 @@ rlog_main(int argc, char **argv)
 static void
 rlog_file(const char *fname, RCSFILE *file)
 {
-	char numb[64];
+	char numb[RCS_REV_BUFSZ];
 	u_int nrev;
 	struct rcs_sym *sym;
 	struct rcs_access *acp;
@@ -257,7 +257,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 {
 	int i, found;
 	struct tm t;
-	char *author, numb[64], *fmt, timeb[64];
+	char *author, numb[RCS_REV_BUFSZ], *fmt, timeb[RCS_TIME_BUFSZ];
 	struct rcs_argvector *largv, *sargv, *wargv;
 
 	i = found = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.138 2007/04/26 21:51:04 sobrado Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.139 2007/06/30 08:23:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -434,7 +434,7 @@ rcs_main(int argc, char **argv)
 		if (rcsflags & RCSPROG_LFLAG) {
 			RCSNUM *rev;
 			const char *username;
-			char rev_str[16];
+			char rev_str[RCS_REV_BUFSZ];
 
 			if ((username = getlogin()) == NULL)
 				err(1, "getlogin");
@@ -460,7 +460,7 @@ rcs_main(int argc, char **argv)
 		if (rcsflags & RCSPROG_UFLAG) {
 			RCSNUM *rev;
 			const char *username;
-			char rev_str[16];
+			char rev_str[RCS_REV_BUFSZ];
 
 			if ((username = getlogin()) == NULL)
 				err(1, "getlogin");
@@ -490,7 +490,7 @@ rcs_main(int argc, char **argv)
 
 		if (orange != NULL) {
 			struct rcs_delta *rdp, *nrdp;
-			char b[16];
+			char b[RCS_REV_BUFSZ];
 
 			rcs_rev_select(file, orange);
 			for (rdp = TAILQ_FIRST(&(file->rf_delta));
@@ -530,7 +530,7 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 {
 	char *rnum;
 	RCSNUM *rev;
-	char rbuf[16];
+	char rbuf[RCS_REV_BUFSZ];
 	int rm;
 
 	rm = 0;

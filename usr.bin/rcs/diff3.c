@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.21 2007/05/29 00:19:10 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.22 2007/06/30 08:23:49 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.21 2007/05/29 00:19:10 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.22 2007/06/30 08:23:49 xsa Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -282,7 +282,7 @@ BUF *
 rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 {
 	int argc;
-	char *argv[5], r1[16], r2[16];
+	char *argv[5], r1[RCS_REV_BUFSZ], r2[RCS_REV_BUFSZ];
 	char *dp13, *dp23, *path1, *path2, *path3;
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
 	size_t dlen, plen;

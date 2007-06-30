@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.49 2007/04/16 07:35:10 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.50 2007/06/30 08:23:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -134,7 +134,7 @@ rcsclean_file(char *fname, const char *rev_str)
 {
 	int fd, match;
 	RCSFILE *file;
-	char fpath[MAXPATHLEN], numb[64];
+	char fpath[MAXPATHLEN], numb[RCS_REV_BUFSZ];
 	RCSNUM *rev;
 	BUF *b1, *b2;
 	time_t rcs_mtime = -1;

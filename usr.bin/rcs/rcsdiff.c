@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.73 2007/04/26 21:50:17 sobrado Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.74 2007/06/30 08:23:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -282,7 +282,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 	struct stat st;
 	char *path1, *path2;
 	BUF *b1, *b2;
-	char rbuf[64];
+	char rbuf[RCS_REV_BUFSZ];
 	struct tm *tb;
 	struct timeval tv[2], tv2[2];
 
@@ -372,7 +372,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 	struct timeval tv[2], tv2[2];
 	BUF *b1, *b2;
 	int ret;
-	char *path1, *path2, rbuf1[64], rbuf2[64];
+	char *path1, *path2, rbuf1[RCS_REV_BUFSZ], rbuf2[RCS_REV_BUFSZ];
 
 	ret = D_ERROR;
 	b1 = b2 = NULL;

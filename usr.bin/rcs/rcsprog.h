@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.59 2006/08/11 08:18:19 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.60 2007/06/30 08:23:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -34,6 +34,9 @@
 
 #define RCS_DEFAULT_SUFFIX	",v/"
 #define RCS_TMPDIR_DEFAULT	"/tmp"
+
+#define RCS_REV_BUFSZ	64
+#define RCS_TIME_BUFSZ	64
 
 /* flags specific to ci.c */
 #define CI_SYMFORCE	(1<<0)

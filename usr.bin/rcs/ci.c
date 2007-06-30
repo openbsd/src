@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.200 2007/06/26 02:21:02 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.201 2007/06/30 08:23:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -344,7 +344,7 @@ checkin_diff_file(struct checkin_params *pb)
 {
 	char *path1, *path2;
 	BUF *b1, *b2, *b3;
-	char rbuf[64];
+	char rbuf[RCS_REV_BUFSZ];
 
 	b1 = b2 = b3 = NULL;
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
@@ -405,7 +405,7 @@ out:
 static char *
 checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2, int flags)
 {
-	char   *rcs_msg, nrev[16], prev[16];
+	char   *rcs_msg, nrev[RCS_REV_BUFSZ], prev[RCS_REV_BUFSZ];
 	const char *prompt =
 	    "enter log message, terminated with a single '.' or end of file:\n";
 	RCSNUM *tmprev;
@@ -439,7 +439,7 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2, int flags)
 static int
 checkin_update(struct checkin_params *pb)
 {
-	char numb1[64], numb2[64];
+	char numb1[RCS_REV_BUFSZ], numb2[RCS_REV_BUFSZ];
 	struct stat st;
 	BUF *bp;
 
@@ -614,7 +614,7 @@ static int
 checkin_init(struct checkin_params *pb)
 {
 	BUF *bp;
-	char numb[64];
+	char numb[RCS_REV_BUFSZ];
 	int fetchlog = 0;
 	struct stat st;
 
@@ -734,7 +734,7 @@ skipdesc:
 static int
 checkin_attach_symbol(struct checkin_params *pb)
 {
-	char rbuf[16];
+	char rbuf[RCS_REV_BUFSZ];
 	int ret;
 	if (!(pb->flags & QUIET))
 		printf("symbol: %s\n", pb->symbol);
@@ -771,7 +771,7 @@ checkin_attach_symbol(struct checkin_params *pb)
 static int
 checkin_revert(struct checkin_params *pb)
 {
-	char rbuf[16];
+	char rbuf[RCS_REV_BUFSZ];
 
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
 
