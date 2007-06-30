@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.4 2007/06/18 22:46:51 kettenis Exp $	*/
+/*	$OpenBSD: apic.c,v 1.5 2007/06/30 15:24:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -229,7 +229,7 @@ apic_intr(void *v)
 }
 
 /* Maximum number of supported interrupt routing entries. */
-#define MAX_INT_TBL_SZ	8
+#define MAX_INT_TBL_SZ	16
 
 void
 apic_get_int_tbl(struct elroy_softc *sc)
