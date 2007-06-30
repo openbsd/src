@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.70 2007/06/25 09:30:16 espie Exp $
+# $OpenBSD: Delete.pm,v 1.71 2007/06/30 11:35:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -24,27 +24,6 @@ use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
 use OpenBSD::Paths;
 use File::Basename;
-
-sub rename_file_to_temp
-{
-	my $i = shift;
-	require OpenBSD::Temp;
-
-	my $n = $i->fullname;
-
-	my ($fh, $j) = OpenBSD::Temp::permanent_file(undef, $n);
-	close $fh;
-	if (rename($n, $j)) {
-		print "Renaming old file $n to $j\n";
-		if ($i->{name} !~ m/^\//o && $i->cwd ne '.') {
-			my $c = $i->cwd;
-			$j =~ s|^\Q$c\E/||;
-		}
-		$i->{name} = $j;
-	} else {
-		print "Bad rename $n to $j: $!\n";
-	}
-}
 
 sub keep_old_files
 {
@@ -180,6 +159,27 @@ sub delete_plist
 }
 
 package OpenBSD::PackingElement;
+
+sub rename_file_to_temp
+{
+	my $self = shift;
+	require OpenBSD::Temp;
+
+	my $n = $self->fullname;
+
+	my ($fh, $j) = OpenBSD::Temp::permanent_file(undef, $n);
+	close $fh;
+	if (rename($n, $j)) {
+		print "Renaming old file $n to $j\n";
+		if ($self->{name} !~ m/^\//o && $self->cwd ne '.') {
+			my $c = $self->cwd;
+			$j =~ s|^\Q$c\E/||;
+		}
+		$self->{name} = $j;
+	} else {
+		print "Bad rename $n to $j: $!\n";
+	}
+}
 
 sub prepare_for_deletion
 {
@@ -430,7 +430,7 @@ sub copy_old_stuff
 	if (defined $self->{stillaround}) {
 		delete $self->{stillaround};
 		if ($state->{replacing}) {
-			rename_file_to_temp($self);
+			$self->rename_file_to_temp;
 		}
 		$self->add_object($plist);
 	}
