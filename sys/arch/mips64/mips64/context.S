@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.11 2007/05/09 19:19:26 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.12 2007/07/01 19:12:42 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -236,7 +236,7 @@ NON_LEAF(cpu_switch, FRAMESZ(CF_SZ), ra)
 	REG_S	ra, CF_RA_OFFS(sp)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	lw	t0, cpl
-	sw	t0, PCB_CONTEXT+13*REGSZ(t3)
+	REG_S	t0, PCB_CONTEXT+13*REGSZ(t3)
 #	lw	t2, cnt+V_SWTCH			# for statistics
 	REG_S	s0, PCB_CONTEXT+0*REGSZ(t3)	# do a 'savectx()'
 	REG_S	s1, PCB_CONTEXT+1*REGSZ(t3)
