@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.9 2005/07/08 12:34:36 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.10 2007/07/01 19:07:45 miod Exp $	*/
 /*	$NetBSD: power.c,v 1.2 1996/05/16 15:56:56 abrown Exp $ */
 
 /*
@@ -90,7 +90,7 @@ powerattach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	power_reg = mapdev(ra->ra_reg, 0, 0, sizeof(long));
+	power_reg = mapiodev(ra->ra_reg, 0, sizeof(long));
 
 	power_attached = 1;
 
