@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.5 2007/06/16 19:57:51 kettenis Exp $	*/
+/*	$OpenBSD: astro.c,v 1.6 2007/07/01 11:13:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -65,7 +65,20 @@ struct astro_regs {
 	u_int8_t	resv3[0x22000 - 0x03d8];
 	u_int64_t	func_id;
 	u_int64_t	func_class;
-	u_int8_t	resv4[0x22300 - 0x22010];
+	u_int8_t	resv4[0x22040 - 0x22010];
+	u_int64_t	rope_config;
+	u_int8_t	resv5[0x22050 - 0x22048];
+	u_int64_t	rope_debug;
+	u_int8_t	resv6[0x22200 - 0x22058];
+	u_int64_t	rope0_control;
+	u_int64_t	rope1_control;
+	u_int64_t	rope2_control;
+	u_int64_t	rope3_control;
+	u_int64_t	rope4_control;
+	u_int64_t	rope5_control;
+	u_int64_t	rope6_control;
+	u_int64_t	rope7_control;
+	u_int8_t	resv7[0x22300 - 0x22240];
 	u_int32_t	tlb_ibase;
 	u_int32_t	pad22300;
 	u_int32_t	tlb_imask;
