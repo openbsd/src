@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.6 2007/07/01 11:13:41 kettenis Exp $	*/
+/*	$OpenBSD: astro.c,v 1.7 2007/07/01 12:53:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -291,6 +291,18 @@ astro_attach(struct device *parent, struct device *self, void *aux)
 	}
 	pmap_update(pmap_kernel());
 	memset(sc->sc_pdir, 0, size);
+
+	/*
+	 * The PDC might have set up some devices to do DMA.  It will do
+	 * this for the onboard USB controller if an USB keyboard is used
+	 * for console input.  In that case, bad things will happen if we
+	 * enable iova space.  So reset the PDC devices before we do that.
+	 * Don't do this if we're using a serial console though, since it
+	 * will stop working if we do.  This is fine since the serial port
+	 * doesn't do DMA.
+	 */
+	if (PAGE0->mem_cons.pz_class != PCL_DUPLEX)
+		pdc_call((iodcio_t)pdc, 0, PDC_IO, PDC_IO_RESET_DEVICES);
 
 	/* Enable iova space. */
 	r->tlb_ibase = htole32(1);
