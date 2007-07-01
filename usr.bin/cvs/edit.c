@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.35 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.36 2007/07/01 10:43:13 xsa Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -256,8 +256,8 @@ cvs_edit_local(struct cvs_file *cf)
 	FILE *fp;
 	struct tm *t;
 	time_t now;
-	char bfpath[MAXPATHLEN], timebuf[64], thishost[MAXHOSTNAMELEN];
-	char wdir[MAXPATHLEN];
+	char timebuf[CVS_TIME_BUFSZ], thishost[MAXHOSTNAMELEN];
+	char bfpath[MAXPATHLEN], wdir[MAXPATHLEN];
 
 	if (cvs_noexec == 1)
 		return;
