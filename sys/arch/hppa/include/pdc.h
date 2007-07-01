@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.33 2007/05/21 23:00:19 kettenis Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.34 2007/07/01 12:14:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -273,6 +273,11 @@
 #define	PDC_EEPROM_WRITE_WORD	1
 #define	PDC_EEPROM_READ_BYTE	2
 #define	PDC_EEPROM_WRITE_BYTE	3
+
+#define	PDC_IO		135
+#define	PDC_IO_READ_AND_CLEAR_ERRORS	0
+#define	PDC_IO_RESET			1
+#define	PDC_IO_RESET_DEVICES		2
 
 #define	PDC_BROADCAST_RESET	136
 #define	PDC_DO_RESET		0
