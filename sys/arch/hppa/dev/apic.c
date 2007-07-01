@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.5 2007/06/30 15:24:49 kettenis Exp $	*/
+/*	$OpenBSD: apic.c,v 1.6 2007/07/01 14:20:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -20,6 +20,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
@@ -65,6 +66,7 @@ struct apic_iv {
 	int (*handler)(void *);
 	void *arg;
 	struct apic_iv *next;
+	struct evcount *cnt;
 };
 
 struct apic_iv *apic_intr_list[CPU_NINTS];
@@ -152,6 +154,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 	struct elroy_softc *sc = v;
 	volatile struct elroy_regs *r = sc->sc_regs;
 	hppa_hpa_t hpa = cpu_gethpa(0);
+	struct evcount *cnt;
 	struct apic_iv *aiv, *biv;
 	void *iv;
 	int irq = APIC_INT_IRQ(ih);
@@ -163,19 +166,30 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 		return (NULL);
 
 	aiv = malloc(sizeof(struct apic_iv), M_DEVBUF, M_NOWAIT);
-	if (aiv == NULL)
+	if (aiv == NULL) {
+		free(cnt, M_DEVBUF);
 		return NULL;
+	}
 
 	aiv->sc = sc;
 	aiv->ih = ih;
 	aiv->handler = handler;
 	aiv->arg = arg;
 	aiv->next = NULL;
+	aiv->cnt = NULL;
 	if (apic_intr_list[irq]) {
+		cnt = malloc(sizeof(struct evcount), M_DEVBUF, M_NOWAIT);
+		if (!cnt) {
+			free(aiv, M_DEVBUF);
+			return (NULL);
+		}
+
+		evcount_attach(cnt, name, NULL, &evcount_intr);
 		biv = apic_intr_list[irq];
 		while (biv->next)
 			biv = biv->next;
 		biv->next = aiv;
+		aiv->cnt = cnt;
 		return (arg);
 	}
 
@@ -217,7 +231,12 @@ apic_intr(void *v)
 	int claimed = 0;
 
 	while (iv) {
-		claimed |= iv->handler(iv->arg);
+		if (iv->handler(iv->arg)) {
+			if (iv->cnt)
+				iv->cnt->ec_count++;
+			else
+				claimed = 1;
+		}
 		iv = iv->next;
 	}
 
