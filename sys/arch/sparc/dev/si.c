@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.26 2007/06/09 14:21:44 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.27 2007/07/01 19:05:37 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -113,14 +113,6 @@
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
-
-#ifndef DDB
-#define	Debugger()
-#endif
-
-#ifndef DEBUG
-#define DEBUG XXX
-#endif
 
 #define COUNT_SW_LEFTOVERS	XXX	/* See sw DMA completion code */
 
@@ -505,7 +497,9 @@ si_minphys(struct buf *bp)
 #ifdef DEBUG
 		if (si_debug) {
 			printf("si_minphys len = 0x%x.\n", MAX_DMA_LEN);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
@@ -554,9 +548,11 @@ si_intr(void *arg)
 #ifdef DEBUG
 		if (!claimed) {
 			printf("si_intr: spurious from SBC\n");
+#ifdef DDB
 			if (si_debug & 4) {
 				Debugger();	/* XXX */
 			}
+#endif
 		}
 #endif
 	}
@@ -919,7 +915,9 @@ si_vme_dma_start(ncr_sc)
 	if (si->fifo_count != xlen) {
 		printf("si_dma_start: Fifo_count=0x%x, xlen=0x%x\n",
 		    si->fifo_count, xlen);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #endif
 
