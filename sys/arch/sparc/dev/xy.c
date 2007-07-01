@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.37 2007/06/24 16:52:04 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.38 2007/07/01 19:06:57 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -236,17 +236,16 @@ xygetdisklabel(xy, b)
 	void *b;
 {
 	struct disklabel *lp = xy->sc_dk.dk_label;
-	struct sun_disklabel *sdl = b;
+	struct sun_disklabel *sl = b;
 	char *err;
-	extern char *disklabel_sun_to_bsd(struct sun_disklabel *,
-	    struct disklabel *);
 
 	bzero(lp, sizeof(struct disklabel));
-	if (sdl->sl_magic == SUN_DKMAGIC)
-		disklabel_sun_to_bsd(sdl, lp);
-	else {
-		/* Required parameters for readdisklabel() */
-		lp->d_secsize = XYFM_BPS;
+	/* Required parameters for readdisklabel() */
+	lp->d_secsize = XYFM_BPS;
+	if (sl->sl_magic == SUN_DKMAGIC) {
+		lp->d_secpercyl = sl->sl_nsectors * sl->sl_ntracks;
+		DL_SETDSIZE(lp, (daddr64_t)lp->d_secpercyl * sl->sl_ncylinders);
+	} else {
 		lp->d_secpercyl = 1;
 	}
 
@@ -261,9 +260,9 @@ xygetdisklabel(xy, b)
 	}
 
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
-	sdl = b;
-	if (sdl->sl_magic == SUN_DKMAGIC)
-		xy->pcyl = sdl->sl_pcylinders;
+	sl = b;
+	if (sl->sl_magic == SUN_DKMAGIC)
+		xy->pcyl = sl->sl_pcylinders;
 	else {
 		printf("%s: WARNING: no `pcyl' in disk label.\n",
 			xy->sc_dev.dv_xname);
@@ -277,8 +276,7 @@ xygetdisklabel(xy, b)
 	xy->acyl = lp->d_acylinders;
 	xy->nhead = lp->d_ntracks;
 	xy->nsect = lp->d_nsectors;
-	xy->sectpercyl = lp->d_secpercyl = xy->nhead * xy->nsect;
-	lp->d_secsize = XYFM_BPS; /* not handled by sun->bsd */
+	xy->sectpercyl = lp->d_secpercyl;
 	return (XY_ERR_AOK);
 }
 

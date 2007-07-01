@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.69 2007/06/24 16:52:05 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.70 2007/07/01 19:06:58 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -46,7 +46,7 @@
 
 #include "cd.h"
 
-	char *disklabel_sun_to_bsd(struct sun_disklabel *, struct disklabel *);
+static	char *disklabel_sun_to_bsd(struct sun_disklabel *, struct disklabel *);
 static	int disklabel_bsd_to_sun(struct disklabel *, struct sun_disklabel *);
 static __inline u_int sun_extended_sum(struct sun_disklabel *, void *);
 
