@@ -953,6 +953,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/agpreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/agpvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ahcivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/auixpreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/auixpvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/autrireg.ph
