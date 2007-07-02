@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.10 2007/06/03 23:47:28 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.11 2007/07/02 22:09:01 canacar Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -132,9 +132,10 @@ int
 ieee80211_data(struct ieee80211_frame *wh, u_int len)
 {
 	u_int8_t *t = (u_int8_t *)wh;
+	struct ieee80211_frame_addr4 *w4;
 	u_int datalen;
 
-	TCHECK2(*t, sizeof(struct ieee80211_frame));
+	TCHECK(*wh);
 	t += sizeof(struct ieee80211_frame);
 	datalen = len - sizeof(struct ieee80211_frame);
 
@@ -146,7 +147,14 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 		llc_print(t, datalen, datalen, wh->i_addr3, wh->i_addr1);
 		break;
 	case IEEE80211_FC1_DIR_NODS:
+		llc_print(t, datalen, datalen, wh->i_addr2, wh->i_addr1);
+		break;
 	case IEEE80211_FC1_DIR_DSTODS:
+		w4 = (struct ieee80211_frame_addr4 *) wh;
+		TCHECK(*w4);
+		t = (u_int8_t *) (w4 + 1);
+		datalen = len - sizeof(*w4);
+		llc_print(t, datalen, datalen, w4->i_addr4, w4->i_addr3);
 		break;
 	}
 
