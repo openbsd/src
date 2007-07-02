@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.31 2007/06/21 20:11:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.32 2007/07/02 16:29:26 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1157,12 +1157,12 @@ ieee80211_parse_rsn_akm(const u_int8_t selector[4])
  * Beacon/Probe response frame format:
  * [8]    Timestamp
  * [2]    Beacon interval
- * [2]    Capability information
- * [tlv]  SSID
+ * [2]    Capability
+ * [tlv]  Service Set Identifier (SSID)
  * [tlv]  Supported rates
- * [tlv]  Country information
- * [tlv*] FH Parameter Set
+ * [tlv*] Frequency-Hopping (FH) Parameter Set
  * [tlv*] DS Parameter Set (802.11g)
+ * [tlv]  Country
  * [tlv]  ERP Information (802.11g)
  * [tlv]  Extended Supported Rates (802.11g)
  * [tlv]  RSN (802.11i)
@@ -1543,9 +1543,9 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
 	IEEE80211_VERIFY_LENGTH(efrm - frm, 6);
-	algo   = letoh16(*(u_int16_t *)frm);
-	seq    = letoh16(*(u_int16_t *)(frm + 2));
-	status = letoh16(*(u_int16_t *)(frm + 4));
+	algo   = LE_READ_2(frm); frm += 2;
+	seq    = LE_READ_2(frm); frm += 2;
+	status = LE_READ_2(frm); frm += 2;
 	IEEE80211_DPRINTF(("%s: auth %d seq %d from %s\n",
 	    __func__, algo, seq, ether_sprintf(wh->i_addr2)));
 
@@ -1553,7 +1553,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
 		ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq, status);
 #if 0
 	else if (algo == IEEE80211_AUTH_ALG_SHARED)
-		ieee80211_auth_shared(ic, wh, frm + 6, efrm, ni, rssi, rstamp,
+		ieee80211_auth_shared(ic, wh, frm, efrm, ni, rssi, rstamp,
 		    seq, status);
 #endif
 	else {
@@ -1617,10 +1617,10 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_assoc_bss++;
 		return;
 	}
-	capinfo = letoh16(*(u_int16_t *)frm);	frm += 2;
-	bintval = letoh16(*(u_int16_t *)frm);	frm += 2;
+	capinfo = LE_READ_2(frm); frm += 2;
+	bintval = LE_READ_2(frm); frm += 2;
 	if (reassoc)
-		frm += 6;	/* ignore current AP info */
+		frm += IEEE80211_ADDR_LEN;	/* skip current AP address */
 	ssid = rates = xrates = rsn = wpa = NULL;
 	while (frm < efrm) {
 		switch (*frm) {
@@ -1740,10 +1740,10 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 
 	IEEE80211_VERIFY_LENGTH(efrm - frm, 6);
 	ni = ic->ic_bss;
-	ni->ni_capinfo = letoh16(*(u_int16_t *)frm);
+	ni->ni_capinfo = LE_READ_2(frm);
 	frm += 2;
 
-	status = letoh16(*(u_int16_t *)frm);
+	status = LE_READ_2(frm);
 	frm += 2;
 	if (status != 0) {
 		if (ifp->if_flags & IFF_DEBUG)
@@ -1756,7 +1756,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_auth_fail++;
 		return;
 	}
-	ni->ni_associd = letoh16(*(u_int16_t *)frm);
+	ni->ni_associd = LE_READ_2(frm);
 	frm += 2;
 
 	rates = xrates = edca = wmm = NULL;
@@ -1852,7 +1852,7 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0,
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
 	IEEE80211_VERIFY_LENGTH(efrm - frm, 2);
-	reason = letoh16(*(u_int16_t *)frm);
+	reason = LE_READ_2(frm);
 	ic->ic_stats.is_rx_deauth++;
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
@@ -1893,7 +1893,7 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0,
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
 	IEEE80211_VERIFY_LENGTH(efrm - frm, 2);
-	reason = letoh16(*(u_int16_t *)frm);
+	reason = LE_READ_2(frm);
 	ic->ic_stats.is_rx_disassoc++;
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
