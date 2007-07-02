@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jmb.4,v 1.1 2007/07/02 01:57:54 dlg Exp $
+.\"	$OpenBSD: jmb.4,v 1.2 2007/07/02 10:18:02 jmc Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -28,7 +28,7 @@ JMicron JMB36x hardware can provide support for SATA devices using the Advanced
 Host Controller Interface for Serial ATA, and for PATA devices using PCI IDE
 controller specification.
 Since support for both SATA and PATA devices can be enabled on the same PCI
-device and we can only attach one driver per PCI device, the
+device but only one driver per PCI device can be attached, the
 .Nm
 driver acts as a nexus to other drivers that support the SATA and PATA
 functionality.
