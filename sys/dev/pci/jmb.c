@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.1 2007/07/02 01:14:36 dlg Exp $ */
+/*	$OpenBSD: jmb.c,v 1.2 2007/07/02 07:17:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -145,11 +145,9 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 		/* FALLTHROUGH */
 	case PCI_PRODUCT_JMICRON_JMB363:
 	case PCI_PRODUCT_JMICRON_JMB361:
-		/* enable AHCI and put IDE on the second function */
-		ctl0 |= JM_PCI_CTL0_PCIIDE_F1 | JM_PCI_CTL0_AHCI_EN |
+		/* enable AHCI */
+		ctl0 |= JM_PCI_CTL0_AHCI_EN |
 		    JM_PCI_CTL0_SATA0_AHCI | JM_PCI_CTL0_SATA1_AHCI |
-		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_AHCI) |
-		    JM_PCI_CTL0_F1_SUBCLASS(JM_PCI_CTL0_SUBCLASS_IDE) |
 		    JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG;
                 break;
 	}
