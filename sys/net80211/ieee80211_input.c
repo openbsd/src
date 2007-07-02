@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.32 2007/07/02 16:29:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.33 2007/07/02 20:21:46 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -69,13 +69,18 @@ int	ieee80211_setup_rates(struct ieee80211com *, struct ieee80211_node *,
 void	ieee80211_auth_open(struct ieee80211com *,
 	    const struct ieee80211_frame *, struct ieee80211_node *, int,
 	    u_int32_t, u_int16_t, u_int16_t);
-int	ieee80211_parse_edca_params_common(struct ieee80211com *,
+int	ieee80211_parse_edca_params_body(struct ieee80211com *,
 	    const u_int8_t *);
 int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
 int	ieee80211_parse_wmm_params(struct ieee80211com *, const u_int8_t *);
-int	ieee80211_parse_rsn(struct ieee80211com *, const u_int8_t *);
 enum	ieee80211_cipher ieee80211_parse_rsn_cipher(const u_int8_t[]);
 enum	ieee80211_akm ieee80211_parse_rsn_akm(const u_int8_t[]);
+int	ieee80211_parse_rsn_body(struct ieee80211com *,
+	    struct ieee80211_node *, const u_int8_t *, u_int);
+int	ieee80211_parse_rsn(struct ieee80211com *, struct ieee80211_node *,
+	    const u_int8_t *);
+int	ieee80211_parse_wpa(struct ieee80211com *, struct ieee80211_node *,
+	    const u_int8_t *);
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *, int,
 	    u_int32_t);
 int	ieee80211_do_slow_print(struct ieee80211com *, int *);
@@ -951,8 +956,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
  * See IEEE Std 802.11e-2005 - Section 7.3.2.27.
  */
 int
-ieee80211_parse_edca_params_common(struct ieee80211com *ic,
-    const u_int8_t *frm)
+ieee80211_parse_edca_params_body(struct ieee80211com *ic, const u_int8_t *frm)
 {
 	u_int updtcount;
 	int aci;
@@ -997,7 +1001,7 @@ ieee80211_parse_edca_params(struct ieee80211com *ic, const u_int8_t *frm)
 		ic->ic_stats.is_rx_elem_toosmall++;
 		return 1;
 	}
-	return ieee80211_parse_edca_params_common(ic, frm + 2);
+	return ieee80211_parse_edca_params_body(ic, frm + 2);
 }
 
 /*
@@ -1016,7 +1020,45 @@ ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
 		ic->ic_stats.is_rx_elem_toosmall++;
 		return 1;
 	}
-	return ieee80211_parse_edca_params_common(ic, frm + 8);
+	return ieee80211_parse_edca_params_body(ic, frm + 8);
+}
+
+enum ieee80211_cipher
+ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
+{
+	/* from IEEE Std 802.11i-2004 - Table 20da */
+	if (memcmp(selector, MICROSOFT_OUI, 3) == 0 ||	/* WPA1 */
+	    memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN (aka WPA2) */
+		switch (selector[3]) {
+		case 0:	/* use group cipher suite */
+			return IEEE80211_CIPHER_USEGROUP;
+		case 1:	/* WEP-40 */
+			return IEEE80211_CIPHER_WEP40;
+		case 2:	/* TKIP */
+			return IEEE80211_CIPHER_TKIP;
+		case 3:	/* CCMP (RSNA default) */
+			return IEEE80211_CIPHER_CCMP;
+		case 5:	/* WEP-104 */
+			return IEEE80211_CIPHER_WEP104;
+		}
+	}
+	return IEEE80211_CIPHER_NONE;	/* ignore unknown ciphers */
+}
+
+enum ieee80211_akm
+ieee80211_parse_rsn_akm(const u_int8_t selector[4])
+{
+	/* from IEEE Std 802.11i-2004 - Table 20dc */
+	if (memcmp(selector, MICROSOFT_OUI, 3) == 0 ||	/* WPA1 */
+	    memcmp(selector, IEEE80211_OUI, 3) == 0) {	/* RSN (aka WPA2) */
+		switch (selector[3]) {
+		case 1:	/* IEEE 802.1X (RSNA default) */
+			return IEEE80211_AKM_IEEE8021X;
+		case 2:	/* PSK */
+			return IEEE80211_AKM_PSK;
+		}
+	}
+	return IEEE80211_AKM_NONE;	/* ignore unknown AKMs */
 }
 
 /*-
@@ -1024,7 +1066,8 @@ ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
  * See IEEE Std 802.11i-2004 - Section 7.3.2.25.
  */
 int
-ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm)
+ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const u_int8_t *frm, u_int len)
 {
 	const u_int8_t *efrm;
 	u_int16_t m, n, s;
@@ -1032,12 +1075,9 @@ ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm)
 	enum ieee80211_cipher cipher_group;
 	u_int akm_mask, cipher_mask;
 
-	efrm = frm + frm[1];
-	frm += 2;
+	efrm = frm + len;
 
 	/* check Version field */
-	if (frm + 2 > efrm)
-		return 1;
 	if (LE_READ_2(frm) != 1)
 		return 1;
 	frm += 2;
@@ -1107,7 +1147,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm)
 	frm += 2;
 
 	/* read PMKID List */
-	if (frm + 16 * s > efrm)
+	if (frm + s * 16 > efrm)
 		return 1;
 	while (s-- > 0) {
 		/* ignore PMKIDs for now */
@@ -1117,40 +1157,32 @@ ieee80211_parse_rsn(struct ieee80211com *ic, const u_int8_t *frm)
 	return 0;
 }
 
-enum ieee80211_cipher
-ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
+int
+ieee80211_parse_rsn(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const u_int8_t *frm)
 {
-	/* from IEEE Std 802.11i-2004 - Table 20da */
-	if (memcmp(selector, IEEE80211_OUI, 3) == 0) {
-		switch (selector[3]) {
-		case 0:	/* use group cipher suite */
-			return IEEE80211_CIPHER_USEGROUP;
-		case 1:	/* WEP-40 */
-			return IEEE80211_CIPHER_WEP40;
-		case 2:	/* TKIP */
-			return IEEE80211_CIPHER_TKIP;
-		case 3:	/* CCMP (RSNA default) */
-			return IEEE80211_CIPHER_CCMP;
-		case 5:	/* WEP-104 */
-			return IEEE80211_CIPHER_WEP104;
-		}
+	/* check IE length */
+	if (frm[1] < 2) {
+		IEEE80211_DPRINTF(("%s: invalid RSN/WPA2 IE;"
+		    " length %u, expecting at least 2\n", __func__, frm[1]));
+		ic->ic_stats.is_rx_elem_toosmall++;
+		return 1;
 	}
-	return IEEE80211_CIPHER_NONE;	/* ignore unknown ciphers */
+	return ieee80211_parse_rsn_body(ic, ni, frm + 2, frm[1] - 2);
 }
 
-enum ieee80211_akm
-ieee80211_parse_rsn_akm(const u_int8_t selector[4])
+int
+ieee80211_parse_wpa(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const u_int8_t *frm)
 {
-	/* from IEEE Std 802.11i-2004 - Table 20dc */
-	if (memcmp(selector, IEEE80211_OUI, 3) == 0) {
-		switch (selector[3]) {
-		case 1:	/* IEEE 802.1X (RSNA default) */
-			return IEEE80211_AKM_IEEE8021X;
-		case 2:	/* PSK */
-			return IEEE80211_AKM_PSK;
-		}
+	/* check IE length */
+	if (frm[1] < 6) {
+		IEEE80211_DPRINTF(("%s: invalid WPA1 IE;"
+		    " length %u, expecting at least 6\n", __func__, frm[1]));
+		ic->ic_stats.is_rx_elem_toosmall++;
+		return 1;
 	}
-	return IEEE80211_AKM_NONE;	/* ignore unknown AKMs */
+	return ieee80211_parse_rsn_body(ic, ni, frm + 6, frm[1] - 6);
 }
 
 /*-
@@ -1660,6 +1692,11 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_assoc_notauth++;
 		return;
 	}
+	if (rsn != NULL)
+		ieee80211_parse_rsn(ic, ni, rsn);
+	else if (wpa != NULL)
+		ieee80211_parse_wpa(ic, ni, wpa);
+
 	/* discard challenge after association */
 	if (ni->ni_challenge != NULL) {
 		FREE(ni->ni_challenge, M_DEVBUF);
