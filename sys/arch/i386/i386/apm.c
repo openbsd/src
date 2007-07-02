@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.75 2007/05/29 08:22:14 gwk Exp $	*/
+/*	$OpenBSD: apm.c,v 1.76 2007/07/02 17:11:29 thib Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -45,7 +45,7 @@
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
@@ -75,9 +75,6 @@
 #define	DPRINTF(x)	/**/
 #endif
 
-#define	APM_LOCK(sc)	lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL)
-#define	APM_UNLOCK(sc)	lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL)
-
 struct cfdriver apm_cd = {
 	NULL, "apm", DV_DULL
 };
@@ -88,7 +85,7 @@ struct apm_softc {
 	int	sc_flags;
 	int	batt_life;
 	struct proc *sc_thread;
-	struct lock sc_lock;
+	struct rwlock sc_lock;
 };
 #define	SCFLAG_OREAD	0x0000001
 #define	SCFLAG_OWRITE	0x0000002
@@ -891,7 +888,7 @@ apmattach(struct device *parent, struct device *self, void *aux)
 			apm_perror("get power status", &regs);
 		apm_cpu_busy();
 
-		lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+		rw_init(&sc->sc_lock, "apmlk");
 
 		/*
 		 * Do a check once, ignoring any errors. This avoids
@@ -946,9 +943,9 @@ apm_thread(void *v)
 	struct apm_softc *sc = v;
 
 	for (;;) {
-		APM_LOCK(sc);
+		rw_enter_write(&sc->sc_lock);
 		(void) apm_periodic_check(sc);
-		APM_UNLOCK(sc);
+		rw_exit_write(&sc->sc_lock);
 		tsleep(&lbolt, PWAIT, "apmev", 0);
 	}
 }
@@ -970,7 +967,7 @@ apmopen(dev_t dev, int flag, int mode, struct proc *p)
 	DPRINTF(("apmopen: dev %d pid %d flag %x mode %x\n",
 	    APMDEV(dev), p->p_pid, flag, mode));
 
-	APM_LOCK(sc);
+	rw_enter_write(&sc->sc_lock);
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		if (!(flag & FWRITE)) {
@@ -994,7 +991,7 @@ apmopen(dev_t dev, int flag, int mode, struct proc *p)
 		error = ENXIO;
 		break;
 	}
-	APM_UNLOCK(sc);
+	rw_exit_write(&sc->sc_lock);
 	return error;
 }
 
@@ -1010,7 +1007,7 @@ apmclose(dev_t dev, int flag, int mode, struct proc *p)
 
 	DPRINTF(("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
 
-	APM_LOCK(sc);
+	rw_enter_write(&sc->sc_lock);
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		sc->sc_flags &= ~SCFLAG_OWRITE;
@@ -1019,7 +1016,7 @@ apmclose(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_flags &= ~SCFLAG_OREAD;
 		break;
 	}
-	APM_UNLOCK(sc);
+	rw_exit_write(&sc->sc_lock);
 	return 0;
 }
 
@@ -1035,7 +1032,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
 
-	APM_LOCK(sc);
+	rw_enter_write(&sc->sc_lock);
 	switch (cmd) {
 		/* some ioctl names from linux */
 	case APM_IOC_STANDBY:
@@ -1133,7 +1130,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = ENOTTY;
 	}
 
-	APM_UNLOCK(sc);
+	rw_exit_write(&sc->sc_lock);
 	return error;
 }
 
@@ -1142,9 +1139,9 @@ filt_apmrdetach(struct knote *kn)
 {
 	struct apm_softc *sc = (struct apm_softc *)kn->kn_hook;
 
-	APM_LOCK(sc);
+	rw_enter_write(&sc->sc_lock);
 	SLIST_REMOVE(&sc->sc_note, kn, knote, kn_selnext);
-	APM_UNLOCK(sc);
+	rw_exit_write(&sc->sc_lock);
 }
 
 int
@@ -1176,8 +1173,8 @@ apmkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = (caddr_t)sc;
 
-	APM_LOCK(sc);
+	rw_enter_write(&sc->sc_lock);
 	SLIST_INSERT_HEAD(&sc->sc_note, kn, kn_selnext);
-	APM_UNLOCK(sc);
+	rw_exit_write(&sc->sc_lock);
 	return (0);
 }

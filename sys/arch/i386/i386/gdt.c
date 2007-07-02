@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.26 2007/05/17 15:00:02 art Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.27 2007/07/02 17:11:29 thib Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/user.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm.h>
 
@@ -77,11 +78,8 @@ int gdt_size;		/* total number of GDT entries */
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
-struct simplelock gdt_simplelock;
-struct lock gdt_lock_store;
+struct rwlock gdt_lock_store = RWLOCK_INITIALIZER("gdtlk");
 
-static __inline void gdt_lock(void);
-static __inline void gdt_unlock(void);
 void gdt_grow(void);
 int gdt_get_slot(void);
 void gdt_put_slot(int);
@@ -90,19 +88,17 @@ void gdt_put_slot(int);
  * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
  * waiting for memory.
  */
-static __inline void
-gdt_lock()
-{
-	if (curproc != NULL)
-		lockmgr(&gdt_lock_store, LK_EXCLUSIVE, &gdt_simplelock);
-}
+#define gdt_lock()					\
+	do {						\
+		if (curproc != NULL)			\
+			rw_enter_write(&gdt_lock_store);\
+	} while (0)
 
-static __inline void
-gdt_unlock()
-{
-	if (curproc != NULL)
-		lockmgr(&gdt_lock_store, LK_RELEASE, &gdt_simplelock);
-}
+#define gdt_unlock()					\
+	do {						\
+		if (curproc != NULL)			\
+			rw_exit_write(&gdt_lock_store);	\
+	} while (0)
 
 /* XXX needs spinlocking if we ever mean to go finegrained. */
 void
@@ -131,9 +127,6 @@ gdt_init()
 	struct vm_page *pg;
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
-
-	simple_lock_init(&gdt_simplelock);
-	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
 
 	max_len = MAXGDTSIZ * sizeof(union descriptor);
 	min_len = MINGDTSIZ * sizeof(union descriptor);
