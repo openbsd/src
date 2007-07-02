@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jmb.4,v 1.2 2007/07/02 10:18:02 jmc Exp $
+.\"	$OpenBSD: jmb.4,v 1.3 2007/07/02 14:17:43 dlg Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Cd "jmb* at pci?"
 .Cd "ahci* at jmb?"
+.Cd "pciide* at jmb?"
 .Sh DESCRIPTION
 JMicron JMB36x hardware can provide support for SATA devices using the Advanced
 Host Controller Interface for Serial ATA, and for PATA devices using PCI IDE
@@ -33,11 +34,14 @@ device but only one driver per PCI device can be attached, the
 driver acts as a nexus to other drivers that support the SATA and PATA
 functionality.
 .Xr ahci 4
-supports the SATA functionality on these controllers.
+supports the SATA functionality, and
+.Xr pciide 4
+support the PATA functionality on these controllers.
 .Sh SEE ALSO
 .Xr ahci 4 ,
 .Xr intro 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Xr pciide 4
 .Sh HISTORY
 The
 .Nm

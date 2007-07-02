@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.72 2007/06/20 04:10:59 jsg Exp $
+.\"	$OpenBSD: pciide.4,v 1.73 2007/07/02 14:17:43 dlg Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 20 2007 $
+.Dd $Mdocdate: July 2 2007 $
 .Dt PCIIDE 4
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nd PCI IDE controller driver
 .Sh SYNOPSIS
 .Cd "pciide* at pci? flags 0x0000"
+.Cd "pciide* at jmb? flags 0x0000"
 .Pp
 .Cd "option PCIIDE_AMD756_ENABLEDMA"
 .Cd "option PCIIDE_CMD064x_DISABLE"
@@ -130,6 +131,7 @@ cause a machine hang.
 .Sh SEE ALSO
 .Xr atapiscsi 4 ,
 .Xr intro 4 ,
+.Xr jmb 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr wd 4 ,
