@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.221 2007/06/20 14:31:13 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.222 2007/07/02 09:15:25 dlg Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 20 2007 $
+.Dd $Mdocdate: July 2 2007 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -117,6 +117,8 @@ TRM-S1040 based PCI SCSI interface
 .Bl -tag -width 10n -offset ind -compact
 .It Xr ahci 4
 Advanced Host Controller Interface for Serial ATA
+.It Xr jmb 4
+JMicron JMB36x SATA and PATA controller
 .It Xr pciide 4
 PCI IDE controller driver
 .It Xr sili 4
