@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.21 2007/07/02 16:33:20 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.22 2007/07/02 18:16:35 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -168,7 +168,8 @@ struct ieee80211_mnf {
 #define	IEEE80211_FC1_RETRY			0x08
 #define	IEEE80211_FC1_PWR_MGT			0x10
 #define	IEEE80211_FC1_MORE_DATA			0x20
-#define	IEEE80211_FC1_WEP			0x40
+#define	IEEE80211_FC1_PROTECTED			0x40
+#define	IEEE80211_FC1_WEP			0x40	/* pre-RSNA compat */
 #define	IEEE80211_FC1_ORDER			0x80
 
 #define	IEEE80211_SEQ_FRAG_MASK			0x000f
