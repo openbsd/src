@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.24 2007/06/16 13:17:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.25 2007/07/02 16:46:44 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -110,6 +110,17 @@ ieee80211_node_attach(struct ifnet *ifp)
 		ic->ic_max_aid = 0;
 	} else
 		memset(ic->ic_aid_bitmap, 0, size);
+
+	if (ic->ic_caps & (IEEE80211_C_HOSTAP | IEEE80211_C_IBSS)) {
+		ic->ic_tim_len = howmany(ic->ic_max_aid, 8);
+		MALLOC(ic->ic_tim_bitmap, u_int8_t *, ic->ic_tim_len, M_DEVBUF,
+		    M_NOWAIT);
+		if (ic->ic_tim_bitmap == NULL) {
+			printf("%s: no memory for TIM bitmap!\n", __func__);
+			ic->ic_tim_len = 0;
+		} else
+			memset(ic->ic_tim_bitmap, 0, ic->ic_tim_len);
+	}
 }
 
 struct ieee80211_node *
@@ -152,6 +163,8 @@ ieee80211_node_detach(struct ifnet *ifp)
 	ieee80211_free_allnodes(ic);
 	if (ic->ic_aid_bitmap != NULL)
 		FREE(ic->ic_aid_bitmap, M_DEVBUF);
+	if (ic->ic_tim_bitmap != NULL)
+		FREE(ic->ic_tim_bitmap, M_DEVBUF);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.31 2007/07/02 16:19:49 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.32 2007/07/02 16:46:44 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -657,6 +657,43 @@ ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
 		erp |= IEEE80211_ERP_BARKER_MODE;
 	*frm++ = erp;
 	return frm;
+}
+
+/*
+ * Add a TIM element to a frame (see Annex L).
+ */
+u_int8_t *
+ieee80211_add_tim(u_int8_t *frm, struct ieee80211com *ic)
+{
+	u_int i, offset = 0, len;
+
+	/* find first non-zero octet in the virtual bit map */
+	for (i = 0; i < ic->ic_tim_len && ic->ic_tim_bitmap[i] == 0; i++);
+
+	/* clear the lsb as it is reserved for the broadcast indication bit */
+	if (i < ic->ic_tim_len)
+		offset = i & ~1;
+
+	/* find last non-zero octet in the virtual bit map */
+	for (i = ic->ic_tim_len - 1; i > 0 && ic->ic_tim_bitmap[i] != 0; i--);
+
+	len = i - offset + 1;
+
+	*frm++ = IEEE80211_ELEMID_TIM;
+	*frm++ = len + 3;		/* length */
+	*frm++ = ic->ic_dtim_count;	/* DTIM count */
+	*frm++ = ic->ic_dtim_period;	/* DTIM period */
+
+	/* Bitmap Control */
+	*frm = offset;
+	/* set broadcast/multicast indication bit if necessary */
+	if (ic->ic_dtim_count == 0 && ic->ic_tim_mcast)
+		*frm |= 0x01;
+	frm++;
+
+	/* Partial Virtual Bitmap */
+	memcpy(frm, &ic->ic_tim_bitmap[offset], len);
+	return frm + len;
 }
 
 /*
