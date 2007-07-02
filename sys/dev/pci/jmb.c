@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.3 2007/07/02 14:01:14 dlg Exp $ */
+/*	$OpenBSD: jmb.c,v 1.4 2007/07/02 14:10:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -104,6 +104,7 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args		*pa = aux, jpa;
 	u_int32_t			ctl0, ctl5;
+	int				sata = 0, pata = 0;
 
 	ctl0 = pci_conf_read(pa->pa_pc, pa->pa_tag, JM_PCI_CTL0);
 	ctl0 &= ~(JM_PCI_CTL0_PCIIDE_F1 | JM_PCI_CTL0_AHCI_EN | 
@@ -122,6 +123,7 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 		ctl0 |= JM_PCI_CTL0_AHCI_EN | JM_PCI_CTL0_SATA0_AHCI |
 		    JM_PCI_CTL0_SATA1_AHCI |
 		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_IDE);
+		sata = 1;
 		break;
 
 	case PCI_PRODUCT_JMICRON_JMB366:
@@ -136,7 +138,12 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 		    JM_PCI_CTL0_SATA0_AHCI | JM_PCI_CTL0_SATA1_AHCI |
 		    JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG |
 		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_AHCI);
-                break;
+		sata = pata = 1;
+		break;
+	case PCI_PRODUCT_JMICRON_JMB368:
+		ctl0 |= JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG;
+		pata = 1;
+		break;
 	}
 
 	pci_conf_write(pa->pa_pc, pa->pa_tag, JM_PCI_CTL0, ctl0);
@@ -146,17 +153,21 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 
 	jpa = *pa;
 
-	/* tweak the class to look like ahci, then try to attach it */
-	jpa.pa_class = (PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT) |
-	    (PCI_SUBCLASS_MASS_STORAGE_SATA << PCI_SUBCLASS_SHIFT) |
-	    (0x01 << PCI_INTERFACE_SHIFT); /* AHCI_PCI_INTERFACE */
-	config_found(self, &jpa, jmb_print);
+	if (sata) {
+		/* tweak the class to look like ahci, then try to attach it */
+		jpa.pa_class = (PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT) |
+		    (PCI_SUBCLASS_MASS_STORAGE_SATA << PCI_SUBCLASS_SHIFT) |
+		    (0x01 << PCI_INTERFACE_SHIFT); /* AHCI_PCI_INTERFACE */
+		config_found(self, &jpa, jmb_print);
+	}
 
-	/* set things up for pciide */
-	jpa.pa_class = (PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT) |
-	    (PCI_SUBCLASS_MASS_STORAGE_IDE << PCI_SUBCLASS_SHIFT) |
-	    (0x85 << PCI_INTERFACE_SHIFT);
-	config_found(self, &jpa, jmb_print);
+	if (pata) {
+		/* set things up for pciide */
+		jpa.pa_class = (PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT) |
+		    (PCI_SUBCLASS_MASS_STORAGE_IDE << PCI_SUBCLASS_SHIFT) |
+		    (0x85 << PCI_INTERFACE_SHIFT);
+		config_found(self, &jpa, jmb_print);
+	}
 }
 
 int
