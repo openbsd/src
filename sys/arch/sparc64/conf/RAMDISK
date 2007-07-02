@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.64 2007/05/26 16:52:10 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.65 2007/07/02 02:28:12 jsg Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -128,12 +128,18 @@ siop*	at pci?
 isp*	at pci?
 mpi*	at pci?
 sili*	at pci?
+arc*	at pci?
+jmb*	at pci?
+ahci*	at jmb?
+ahci*	at pci?
 
 option ISP_COMPILE_FW=1
 scsibus*	at siop?
 scsibus*	at isp?
 scsibus*	at mpi?
 scsibus*	at sili?
+scsibus*	at arc?
+scsibus*	at ahci?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
