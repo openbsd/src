@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.125 2007/07/02 01:29:54 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.126 2007/07/02 14:01:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -399,6 +399,10 @@ void			ahci_pci_attach(struct device *, struct device *,
 			    void *);
 
 struct cfattach ahci_pci_ca = {
+	sizeof(struct ahci_softc), ahci_pci_match, ahci_pci_attach
+};
+
+struct cfattach ahci_jmb_ca = {
 	sizeof(struct ahci_softc), ahci_pci_match, ahci_pci_attach
 };
 

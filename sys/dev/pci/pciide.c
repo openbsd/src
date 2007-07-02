@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.271 2007/06/26 17:48:18 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.272 2007/07/02 14:01:14 dlg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1062,6 +1062,22 @@ const struct pciide_product_desc pciide_ati_products[] = {
 };
 
 const struct pciide_product_desc pciide_jmicron_products[] = {
+	{ PCI_PRODUCT_JMICRON_JMB361,
+	  0,
+	  jmicron_chip_map
+	},
+	{ PCI_PRODUCT_JMICRON_JMB363,
+	  0,
+	  jmicron_chip_map
+	},
+	{ PCI_PRODUCT_JMICRON_JMB365,
+	  0,
+	  jmicron_chip_map
+	},
+	{ PCI_PRODUCT_JMICRON_JMB366,
+	  0,
+	  jmicron_chip_map
+	},
 	{ PCI_PRODUCT_JMICRON_JMB368,
 	  0,
 	  jmicron_chip_map
@@ -1119,7 +1135,11 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 int	pciide_match(struct device *, void *, void *);
 void	pciide_attach(struct device *, struct device *, void *);
 
-struct cfattach pciide_ca = {
+struct cfattach pciide_pci_ca = {
+	sizeof(struct pciide_softc), pciide_match, pciide_attach
+};
+
+struct cfattach pciide_jmb_ca = {
 	sizeof(struct pciide_softc), pciide_match, pciide_attach
 };
 

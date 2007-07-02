@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.2 2007/07/02 07:17:34 dlg Exp $ */
+/*	$OpenBSD: jmb.c,v 1.3 2007/07/02 14:01:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -30,10 +30,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <dev/ata/atascsi.h>
-
-#include <dev/pci/ahcivar.h>
 
 /* JMicron registers */
 #define JM_PCI_CTL0		0x40 /* control register 0 */
@@ -85,22 +81,13 @@ struct cfdriver jmb_cd = {
 	NULL, "jmb", DV_DULL
 };
 
-
-struct jmb_attach_args {
-	enum {
-		JMB_DEV_AHCI,
-		JMB_DEV_IDE
-	}			ja_dev;
-	struct pci_attach_args	*ja_pa;
-	pci_intr_handle_t	ja_ih;
-};
-
 static const struct pci_matchid jmb_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB360 },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB363 },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB365 },
-	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB366 }
+	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB366 },
+	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB368 }
 };
 
 int
@@ -109,14 +96,13 @@ jmb_match(struct device *parent, void *match, void *aux)
 	struct pci_attach_args		*pa = aux;
 
 	return (pci_matchbyid(pa, jmb_devices,
-	    sizeof(jmb_devices) / sizeof(jmb_devices[0])));
+	    sizeof(jmb_devices) / sizeof(jmb_devices[0])) * 3);
 }
 
 void
 jmb_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args		*pa = aux;
-	struct jmb_attach_args		ja;
+	struct pci_attach_args		*pa = aux, jpa;
 	u_int32_t			ctl0, ctl5;
 
 	ctl0 = pci_conf_read(pa->pa_pc, pa->pa_tag, JM_PCI_CTL0);
@@ -135,7 +121,7 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 		/* set to single function AHCI mode */
 		ctl0 |= JM_PCI_CTL0_AHCI_EN | JM_PCI_CTL0_SATA0_AHCI |
 		    JM_PCI_CTL0_SATA1_AHCI |
-		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_AHCI);
+		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_IDE);
 		break;
 
 	case PCI_PRODUCT_JMICRON_JMB366:
@@ -148,69 +134,42 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 		/* enable AHCI */
 		ctl0 |= JM_PCI_CTL0_AHCI_EN |
 		    JM_PCI_CTL0_SATA0_AHCI | JM_PCI_CTL0_SATA1_AHCI |
-		    JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG;
+		    JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG |
+		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_AHCI);
                 break;
 	}
 
 	pci_conf_write(pa->pa_pc, pa->pa_tag, JM_PCI_CTL0, ctl0);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, JM_PCI_CTL5, ctl5);
 
-	bzero(&ja, sizeof(ja));
-	ja.ja_pa = pa;
+	printf("\n");
 
-	if (pci_intr_map(pa, &ja.ja_ih) != 0) {
-		printf(": unable to map interrupt\n");
-		return;
-	}
-	printf(": %s\n", pci_intr_string(pa->pa_pc, ja.ja_ih));
+	jpa = *pa;
 
-	ja.ja_dev = JMB_DEV_AHCI;
-	config_found(self, &ja, jmb_print);
+	/* tweak the class to look like ahci, then try to attach it */
+	jpa.pa_class = (PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT) |
+	    (PCI_SUBCLASS_MASS_STORAGE_SATA << PCI_SUBCLASS_SHIFT) |
+	    (0x01 << PCI_INTERFACE_SHIFT); /* AHCI_PCI_INTERFACE */
+	config_found(self, &jpa, jmb_print);
 
-	ja.ja_dev = JMB_DEV_IDE;
-	config_found(self, &ja, jmb_print);
+	/* set things up for pciide */
+	jpa.pa_class = (PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT) |
+	    (PCI_SUBCLASS_MASS_STORAGE_IDE << PCI_SUBCLASS_SHIFT) |
+	    (0x85 << PCI_INTERFACE_SHIFT);
+	config_found(self, &jpa, jmb_print);
 }
 
 int
 jmb_print(void *aux, const char *pnp)
 {
-	struct jmb_attach_args		*ja = aux;
+	struct pci_attach_args		*pa = aux;
+	char				devinfo[256];
 
 	if (pnp != NULL) {
-		printf("\"%s\" at %s",
-		    (ja->ja_dev == JMB_DEV_AHCI) ? "sata" : "pata", pnp);
+		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo,
+		    sizeof(devinfo));
+		printf("%s at %s", devinfo, pnp);
 	}
 
 	return (UNCONF);
-}
-
-
-int			ahci_jmb_match(struct device *, void *, void *);
-void			ahci_jmb_attach(struct device *, struct device *,
-			    void *);
-
-struct cfattach ahci_jmb_ca = {
-	sizeof(struct ahci_softc), ahci_jmb_match, ahci_jmb_attach
-};
-
-int
-ahci_jmb_match(struct device *parent, void *match, void *aux)
-{
-	struct jmb_attach_args		*ja = aux;
-
-	if (ja->ja_dev == JMB_DEV_AHCI)
-		return (1);
-
-	return (0);
-}
-
-void
-ahci_jmb_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct ahci_softc		*sc = (struct ahci_softc *)self;
-	struct jmb_attach_args		*ja = aux;
-
-	printf(":");
-
-	ahci_attach(sc, ja->ja_pa, ja->ja_ih);
 }
