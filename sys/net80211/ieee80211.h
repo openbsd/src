@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.24 2007/07/02 20:42:30 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.25 2007/07/02 21:18:17 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -234,25 +234,6 @@ struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	/* FCS */
 } __packed;
 
-/*
- * BEACON management packets
- *
- *	octet timestamp[8]
- *	octet beacon interval[2]
- *	octet capability information[2]
- *	information element
- *		octet elemid
- *		octet length
- *		octet information[length]
- */
-
-typedef u_int8_t *ieee80211_mgt_beacon_t;
-
-#define	IEEE80211_BEACON_INTERVAL(beacon) \
-	((beacon)[8] | ((beacon)[9] << 8))
-#define	IEEE80211_BEACON_CAPABILITY(beacon) \
-	((beacon)[10] | ((beacon)[11] << 8))
-
 #define	IEEE80211_CAPINFO_ESS			0x0001
 #define	IEEE80211_CAPINFO_IBSS			0x0002
 #define	IEEE80211_CAPINFO_CF_POLLABLE		0x0004
@@ -305,25 +286,6 @@ typedef u_int8_t *ieee80211_mgt_beacon_t;
 	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 #define	IEEE80211_CHAN_TG \
 	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
-
-/*
- * 802.11i/WPA information element (maximally sized).
- */
-struct ieee80211_ie_wpa {
-	u_int8_t	wpa_id;		/* IEEE80211_ELEMID_VENDOR */
-	u_int8_t	wpa_len;	/* length in bytes */
-	u_int8_t	wpa_oui[3];	/* 0x00, 0x50, 0xf2 */
-	u_int8_t	wpa_type;	/* OUI type */
-	u_int16_t	wpa_version;	/* spec revision */
-	u_int32_t	wpa_mcipher[1];	/* multicast/group key cipher */
-	u_int16_t	wpa_uciphercnt;	/* # pairwise key ciphers */
-	u_int32_t	wpa_uciphers[8];/* ciphers */
-	u_int16_t	wpa_authselcnt;	/* authentication selector cnt*/
-	u_int32_t	wpa_authsels[8];/* selectors */
-	u_int16_t	wpa_caps;	/* 802.11i capabilities */
-	u_int16_t	wpa_pmkidcnt;	/* 802.11i pmkid count */
-	u_int16_t	wpa_pmkids[8];	/* 802.11i pmkids */
-} __packed;
 
 /*
  * Management information element payloads
