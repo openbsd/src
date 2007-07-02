@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.73 2007/04/25 21:40:35 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.74 2007/07/02 01:18:30 dlg Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -152,6 +152,8 @@ com2	at isa? port 0x3e8 irq 5
 #scsibus* at bha?
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+jmb*	at pci?			# JMicron JMB36x controllers
+ahci*	at jmb?
 ahci*	at pci?			# AHCI SATA controllers
 scsibus* at ahci?
 sili*	at pci?			# Silicon Image 3124/3132/3531 SATA controllers

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.187 2007/05/31 23:18:25 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.188 2007/07/02 01:18:30 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -259,6 +259,8 @@ lpt*	at puc?
 #scsibus* at bha?
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+jmb*	at pci?				# JMicron JMB36x controllers
+ahci*	at jmb?
 ahci*	at pci?				# AHCI SATA controllers
 scsibus* at ahci?
 sili*	at pci?				# Silicon Image 3124/3132/3531 SATA
