@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdrop.8,v 1.9 2007/05/31 19:20:29 jmc Exp $
+.\"	$OpenBSD: tcpdrop.8,v 1.10 2007/07/02 09:52:08 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 2 2007 $
 .Dt TCPDROP 8
 .Os
 .Sh NAME
@@ -61,3 +61,14 @@ Either of the following commands will drop the connection:
 .Sh SEE ALSO
 .Xr fstat 1 ,
 .Xr netstat 1
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 3.6 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+program was written by
+.An Markus Friedl Aq markus@openbsd.org .
