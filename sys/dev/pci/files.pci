@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.237 2007/07/02 00:46:22 dlg Exp $
+#	$OpenBSD: files.pci,v 1.238 2007/07/02 01:14:36 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -83,6 +83,13 @@ file	dev/pci/arc.c			arc
 device	ahci: scsi, atascsi
 attach	ahci at pci with ahci_pci
 file	dev/pci/ahci.c			ahci | ahci_pci
+
+# JMicron JMB36x controllers
+device	jmb {}
+attach	jmb at pci
+attach	ahci at jmb with ahci_jmb
+file	dev/pci/jmb.c			jmb | ahci_jmb
+
 
 # AMI MegaRAID Express x00/Elite 1500/Express 1x00 RAID Controllers
 attach	ami at pci with ami_pci
