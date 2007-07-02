@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.4 2007/07/02 14:10:13 dlg Exp $ */
+/*	$OpenBSD: jmb.c,v 1.5 2007/07/02 23:50:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -84,6 +84,7 @@ struct cfdriver jmb_cd = {
 static const struct pci_matchid jmb_devices[] = {
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB360 },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB361 },
+	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB362 },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB363 },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB365 },
 	{ PCI_VENDOR_JMICRON,	PCI_PRODUCT_JMICRON_JMB366 },
@@ -119,6 +120,7 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_JMICRON_JMB360:
+	case PCI_PRODUCT_JMICRON_JMB362:
 		/* set to single function AHCI mode */
 		ctl0 |= JM_PCI_CTL0_AHCI_EN | JM_PCI_CTL0_SATA0_AHCI |
 		    JM_PCI_CTL0_SATA1_AHCI |
