@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.65 2007/07/02 02:28:12 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.66 2007/07/02 14:29:37 dlg Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -131,6 +131,7 @@ sili*	at pci?
 arc*	at pci?
 jmb*	at pci?
 ahci*	at jmb?
+pciide*	at jmb?
 ahci*	at pci?
 
 option ISP_COMPILE_FW=1
