@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.20 2007/06/21 21:21:54 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.21 2007/07/02 16:33:20 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -267,12 +267,12 @@ typedef u_int8_t *ieee80211_mgt_beacon_t;
 /* bit 12 is reserved */
 #define	IEEE80211_CAPINFO_DSSSOFDM		0x2000
 #define IEEE80211_CAPINFO_DELAYED_B_ACK		0x4000
-#define IEEE80211_CAPINFO_IMMEDIATE_ACK		0x8000
+#define IEEE80211_CAPINFO_IMMEDIATE_B_ACK	0x8000
 #define IEEE80211_CAPINFO_BITS					\
 	"\10\01ESS\02IBSS\03CF_POLLABLE\04CF_POLLREQ"		\
 	"\05PRIVACY\06SHORT_PREAMBLE\07PBCC\10CHNL_AGILITY"	\
 	"\11SPECTRUM_MGMT\12QOS\13SHORT_SLOTTIME\14APSD"	\
-	"\16DSSSOFDM\17DELAYED_B_ACK\20IMMEDIATE_ACK"
+	"\16DSSSOFDM\17DELAYED_B_ACK\20IMMEDIATE_B_ACK"
 
 /* 
  * Channel attributes
@@ -431,54 +431,12 @@ enum ieee80211_edca_ac {
 /* bits 3-6 reserved */
 #define	ATHEROS_CAP_BOOST			0x80
 
-#define	WPA_CSE_NULL		0x00
-#define	WPA_CSE_WEP40		0x01
-#define	WPA_CSE_TKIP		0x02
-#define	WPA_CSE_WRAP		0x03		/* WPA2/802.11i */
-#define	WPA_CSE_CCMP		0x04
-#define	WPA_CSE_WEP104		0x05
-
-#define	WPA_ASE_NONE		0x00
-#define	WPA_ASE_8021X_UNSPEC	0x01
-#define	WPA_ASE_8021X_PSK	0x02
-
-#define	RSN_CSE_NULL		0x00
-#define	RSN_CSE_WEP40		0x01
-#define	RSN_CSE_TKIP		0x02
-#define	RSN_CSE_WRAP		0x03
-#define	RSN_CSE_CCMP		0x04
-#define	RSN_CSE_WEP104		0x05
-
-#define	RSN_ASE_NONE		0x00
-#define	RSN_ASE_8021X_UNSPEC	0x01
-#define	RSN_ASE_8021X_PSK	0x02
-
 /* Organizationally Unique Identifiers */
 /* See http://standards.ieee.org/regauth/oui/oui.txt for a list */
 #define ATHEROS_OUI	((const u_int8_t[]){ 0x00, 0x03, 0x7f })
 #define BROADCOM_OUI	((const u_int8_t[]){ 0c00, 0x90, 0x4c })
 #define IEEE80211_OUI	((const u_int8_t[]){ 0x00, 0x0f, 0xac })
 #define MICROSOFT_OUI	((const u_int8_t[]){ 0x00, 0x50, 0xf2 })
-
-/*
- * AUTH management packets
- *
- *	octet algo[2]
- *	octet seq[2]
- *	octet status[2]
- *	octet chal.id
- *	octet chal.length
- *	octet chal.text[253]
- */
-
-typedef u_int8_t *ieee80211_mgt_auth_t;
-
-#define	IEEE80211_AUTH_ALGORITHM(auth) \
-	((auth)[0] | ((auth)[1] << 8))
-#define	IEEE80211_AUTH_TRANSACTION(auth) \
-	((auth)[2] | ((auth)[3] << 8))
-#define	IEEE80211_AUTH_STATUS(auth) \
-	((auth)[4] | ((auth)[5] << 8))
 
 #define	IEEE80211_AUTH_ALG_OPEN			0x0000
 #define	IEEE80211_AUTH_ALG_SHARED		0x0001
@@ -497,7 +455,7 @@ enum {
 };
 
 /*
- * Reason codes
+ * Reason codes (see Table 22).
  *
  * Unlisted codes are reserved
  */
