@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.75 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.76 2007/07/03 12:29:52 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -171,7 +171,11 @@ cvs_status_local(struct cvs_file *cf)
 				fatal("cvs_status_local: truncation");
 		}
 
-		(void)xsnprintf(buf, sizeof(buf), "%s\t%s", revbuf, timebuf);
+		(void)strlcpy(buf, revbuf, sizeof(buf));
+		if (cvs_server_active == 0) {
+			(void)strlcat(buf, "\t", sizeof(buf));
+			(void)strlcat(buf, timebuf, sizeof(buf));
+		}
 	}
 
 	cvs_printf("   Working revision:\t%s\n", buf);
