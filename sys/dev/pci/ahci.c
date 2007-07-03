@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.127 2007/07/03 22:28:14 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.128 2007/07/03 22:33:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -437,8 +437,6 @@ struct cfdriver ahci_cd = {
 };
 
 
-int			ahci_attach(struct ahci_softc *,
-			    struct pci_attach_args *, pci_intr_handle_t);
 int			ahci_map_regs(struct ahci_softc *,
 			    struct pci_attach_args *);
 void			ahci_unmap_regs(struct ahci_softc *,
@@ -575,8 +573,11 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahci_softc		*sc = (struct ahci_softc *)self;
 	struct pci_attach_args		*pa = aux;
+	struct atascsi_attach_args	aaa;
 	const struct ahci_device	*ad;
 	pci_intr_handle_t		ih;
+	u_int32_t			cap, pi;
+	int				i;
 
 	ad = ahci_lookup_device(pa);
 	if (ad != NULL && ad->ad_attach != NULL) {
@@ -592,20 +593,9 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s,", pci_intr_string(pa->pa_pc, ih));
 
-	ahci_attach(sc, pa, ih);
-}
-
-int
-ahci_attach(struct ahci_softc *sc, struct pci_attach_args *pa,
-    pci_intr_handle_t ih)
-{
-	struct atascsi_attach_args	aaa;
-	u_int32_t			cap, pi;
-	int				i;
-
 	if (ahci_map_regs(sc, pa) != 0) {
 		/* error already printed by ahci_map_regs */
-		return (1);
+		return;
 	}
 
 	if (ahci_init(sc) != 0) {
@@ -710,7 +700,7 @@ noccc:
 	/* Enable interrupts */
 	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE | AHCI_REG_GHC_IE);
 
-	return (0);
+	return;
 
 freeports:
 	for (i = 0; i < AHCI_MAX_PORTS; i++)
@@ -720,7 +710,7 @@ unmap:
 	/* Disable controller */
 	ahci_write(sc, AHCI_REG_GHC, 0);
 	ahci_unmap_regs(sc, pa);
-	return (1);
+	return;
 }
 
 int
