@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.36 2007/07/03 16:10:38 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.37 2007/07/03 16:43:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -581,8 +581,53 @@ bad:
 	return NULL;
 }
 
+/* unaligned little endian access */
+#define LE_WRITE_2(p, v) do {			\
+	((u_int8_t *)(p))[0] = (v) & 0xff;	\
+	((u_int8_t *)(p))[1] = (v) >> 8;	\
+} while (0)
+
 /*
- * Add a supported rates element to a frame.
+ * Add a Capability Information field to a frame (see 7.3.1.4).
+ */
+u_int8_t *
+ieee80211_add_capinfo(u_int8_t *frm, struct ieee80211com *ic,
+    const struct ieee80211_node *ni)
+{
+	u_int16_t capinfo;
+
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		capinfo = IEEE80211_CAPINFO_IBSS;
+	else if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		capinfo = IEEE80211_CAPINFO_ESS;
+	else
+		capinfo = 0;
+	if (ic->ic_flags & IEEE80211_F_WEPON)
+		capinfo |= IEEE80211_CAPINFO_PRIVACY;
+	/* NB: some 11a AP's reject the request when short preamble is set */
+	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
+	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
+	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
+	LE_WRITE_2(frm, capinfo);
+	return frm + 2;
+}
+
+/*
+ * Add an SSID element to a frame (see 7.3.2.1).
+ */
+u_int8_t *
+ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
+{
+	*frm++ = IEEE80211_ELEMID_SSID;
+	*frm++ = len;
+	memcpy(frm, ssid, len);
+	return frm + len;
+}
+
+/*
+ * Add a supported rates element to a frame (see 7.3.2.2).
  */
 u_int8_t *
 ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
@@ -597,70 +642,38 @@ ieee80211_add_rates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 }
 
 /*
- * Add an extended supported rates element to a frame.
+ * Add a FH Parameter Set element to a frame (see 7.3.2.3).
  */
 u_int8_t *
-ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
+ieee80211_add_fh_params(u_int8_t *frm, struct ieee80211com *ic,
+    const struct ieee80211_node *ni)
 {
-	if (rs->rs_nrates > IEEE80211_RATE_SIZE) {
-		int nrates = rs->rs_nrates - IEEE80211_RATE_SIZE;
-		*frm++ = IEEE80211_ELEMID_XRATES;
-		*frm++ = nrates;
-		memcpy(frm, rs->rs_rates + IEEE80211_RATE_SIZE, nrates);
-		frm += nrates;
-	}
+	u_int chan = ieee80211_chan2ieee(ic, ni->ni_chan);
+
+	*frm++ = IEEE80211_ELEMID_FHPARMS;
+	*frm++ = 5;
+	LE_WRITE_2(frm, ni->ni_fhdwell); frm += 2;
+	*frm++ = IEEE80211_FH_CHANSET(chan);
+	*frm++ = IEEE80211_FH_CHANPAT(chan);
+	*frm++ = ni->ni_fhindex;
 	return frm;
 }
 
 /*
- * Add an SSID element to a frame.
+ * Add a DS Parameter Set element to a frame (see 7.3.2.4).
  */
 u_int8_t *
-ieee80211_add_ssid(u_int8_t *frm, const u_int8_t *ssid, u_int len)
+ieee80211_add_ds_params(u_int8_t *frm, struct ieee80211com *ic,
+    const struct ieee80211_node *ni)
 {
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = len;
-	memcpy(frm, ssid, len);
-	return frm + len;
-}
-
-/*
- * Add an ERP element to a frame.
- */
-u_int8_t *
-ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
-{
-	u_int8_t erp;
-
-	*frm++ = IEEE80211_ELEMID_ERP;
+	*frm++ = IEEE80211_ELEMID_DSPARMS;
 	*frm++ = 1;
-	erp = 0;
-	/*
-	 * The NonERP_Present bit shall be set to 1 when a NonERP STA
-	 * is associated with the BSS.
-	 */
-	if (ic->ic_nonerpsta != 0)
-		erp |= IEEE80211_ERP_NON_ERP_PRESENT;
-	/*
-	 * If one or more NonERP STAs are associated in the BSS, the
-	 * Use_Protection bit shall be set to 1 in transmitted ERP
-	 * Information Elements.
-	 */
-	if (ic->ic_flags & IEEE80211_F_USEPROT)
-		erp |= IEEE80211_ERP_USE_PROTECTION;
-	/*
-	 * The Barker_Preamble_Mode bit shall be set to 1 by the ERP
-	 * Information Element sender if one or more associated NonERP
-	 * STAs are not short preamble capable.
-	 */
-	if (!(ic->ic_flags & IEEE80211_F_SHPREAMBLE))
-		erp |= IEEE80211_ERP_BARKER_MODE;
-	*frm++ = erp;
+	*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
 	return frm;
 }
 
 /*
- * Add a TIM element to a frame (see Annex L).
+ * Add a TIM element to a frame (see 7.3.2.6 and Annex L).
  */
 u_int8_t *
 ieee80211_add_tim(u_int8_t *frm, struct ieee80211com *ic)
@@ -697,20 +710,19 @@ ieee80211_add_tim(u_int8_t *frm, struct ieee80211com *ic)
 }
 
 /*
- * Add a QoS Capability element to a frame.
+ * Add an IBSS Parameter Set element to a frame (see 7.3.2.7).
  */
 u_int8_t *
-ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
+ieee80211_add_ibss_params(u_int8_t *frm, const struct ieee80211_node *ni)
 {
-	*frm++ = IEEE80211_ELEMID_QOS_CAP;
-	*frm++ = 1;
-	*frm++ = 0;	/* QoS Info */
-
-	return frm;
+	*frm++ = IEEE80211_ELEMID_IBSSPARMS;
+	*frm++ = 2;
+	LE_WRITE_2(frm, 0);	/* TODO: ATIM window */
+	return frm + 2;
 }
 
 /*
- * Add an EDCA Parameter Set element to a frame.
+ * Add an EDCA Parameter Set element to a frame (see 7.3.2.29).
  */
 u_int8_t *
 ieee80211_add_edca_params(u_int8_t *frm, struct ieee80211com *ic)
@@ -732,8 +744,82 @@ ieee80211_add_edca_params(u_int8_t *frm, struct ieee80211com *ic)
 			 (ac->ac_aifsn & 0xf);
 		*frm++ = (ac->ac_ecwmax << 4) |
 			 (ac->ac_ecwmin & 0xf);
-		*frm++ = ac->ac_txoplimit & 0xff;
-		*frm++ = ac->ac_txoplimit >> 8;
+		LE_WRITE_2(frm, ac->ac_txoplimit); frm += 2;
+	}
+	return frm;
+}
+
+/*
+ * Add a Challenge Text element to a frame (see 7.3.2.8).
+ */
+u_int8_t *
+ieee80211_add_challenge(u_int8_t *frm, const u_int8_t *challenge, u_int len)
+{
+	*frm++ = IEEE80211_ELEMID_CHALLENGE;
+	*frm++ = len;
+	memcpy(frm, challenge, len);
+	return frm + len;
+}
+
+/*
+ * Add an ERP element to a frame (see 7.3.2.13).
+ */
+u_int8_t *
+ieee80211_add_erp(u_int8_t *frm, struct ieee80211com *ic)
+{
+	u_int8_t erp;
+
+	*frm++ = IEEE80211_ELEMID_ERP;
+	*frm++ = 1;
+	erp = 0;
+	/*
+	 * The NonERP_Present bit shall be set to 1 when a NonERP STA
+	 * is associated with the BSS.
+	 */
+	if (ic->ic_nonerpsta != 0)
+		erp |= IEEE80211_ERP_NON_ERP_PRESENT;
+	/*
+	 * If one or more NonERP STAs are associated in the BSS, the
+	 * Use_Protection bit shall be set to 1 in transmitted ERP
+	 * Information Elements.
+	 */
+	if (ic->ic_flags & IEEE80211_F_USEPROT)
+		erp |= IEEE80211_ERP_USE_PROTECTION;
+	/*
+	 * The Barker_Preamble_Mode bit shall be set to 1 by the ERP
+	 * Information Element sender if one or more associated NonERP
+	 * STAs are not short preamble capable.
+	 */
+	if (!(ic->ic_flags & IEEE80211_F_SHPREAMBLE))
+		erp |= IEEE80211_ERP_BARKER_MODE;
+	*frm++ = erp;
+	return frm;
+}
+
+/*
+ * Add a QoS Capability element to a frame (see 7.3.2.35).
+ */
+u_int8_t *
+ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
+{
+	*frm++ = IEEE80211_ELEMID_QOS_CAP;
+	*frm++ = 1;
+	*frm++ = 0;	/* QoS Info */
+	return frm;
+}
+
+/*
+ * Add an extended supported rates element to a frame (see 7.3.2.14).
+ */
+u_int8_t *
+ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
+{
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE) {
+		int nrates = rs->rs_nrates - IEEE80211_RATE_SIZE;
+		*frm++ = IEEE80211_ELEMID_XRATES;
+		*frm++ = nrates;
+		memcpy(frm, rs->rs_rates + IEEE80211_RATE_SIZE, nrates);
+		frm += nrates;
 	}
 	return frm;
 }
@@ -791,7 +877,7 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 /*-
- * Beacon/Probe response frame format:
+ * Probe response frame format:
  * [8]    Timestamp
  * [2]    Beacon interval
  * [2]    Capability
@@ -799,19 +885,16 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
  * [tlv]  Supported rates
  * [tlv*] Frequency-Hopping (FH) Parameter Set
  * [tlv*] DS Parameter Set (802.11g)
- * [tlv]  Country
  * [tlv]  ERP Information (802.11g)
  * [tlv]  Extended Supported Rates (802.11g)
  * [tlv]  RSN (802.11i)
  * [tlv]  EDCA Parameter Set (802.11e)
- * [tlv]  QoS Capability (Beacon only, 802.11e)
  */
 struct mbuf *
 ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct mbuf *m;
 	u_int8_t *frm;
-	u_int16_t capinfo;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    8 +				/* time stamp */
@@ -830,51 +913,22 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
-	memset(frm, 0, 8);	/* timestamp should be filled later */
+	memset(frm, 0, 8);	/* timestamp is set by hardware */
 	frm += 8;
-	*(u_int16_t *)frm = htole16(ic->ic_bss->ni_intval);
-	frm += 2;
-	if (ic->ic_opmode == IEEE80211_M_IBSS)
-		capinfo = IEEE80211_CAPINFO_IBSS;
-	else if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-		capinfo = IEEE80211_CAPINFO_ESS;
-	else
-		capinfo = 0;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
-		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-	*(u_int16_t *)frm = htole16(capinfo);
-	frm += 2;
+	LE_WRITE_2(frm, ic->ic_bss->ni_intval); frm += 2;
+	frm = ieee80211_add_capinfo(frm, ic, ni);
 
 	frm = ieee80211_add_ssid(frm, ic->ic_bss->ni_essid,
 	    ic->ic_bss->ni_esslen);
 	frm = ieee80211_add_rates(frm, &ic->ic_bss->ni_rates);
 
-	if (ic->ic_phytype == IEEE80211_T_FH) {
-		*frm++ = IEEE80211_ELEMID_FHPARMS;
-		*frm++ = 5;
-		*frm++ = ni->ni_fhdwell & 0x00ff;
-		*frm++ = (ni->ni_fhdwell >> 8) & 0x00ff;
-		*frm++ = IEEE80211_FH_CHANSET(
-		    ieee80211_chan2ieee(ic, ni->ni_chan));
-		*frm++ = IEEE80211_FH_CHANPAT(
-		    ieee80211_chan2ieee(ic, ni->ni_chan));
-		*frm++ = ni->ni_fhindex;
-	} else {
-		*frm++ = IEEE80211_ELEMID_DSPARMS;
-		*frm++ = 1;
-		*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
-	}
+	if (ic->ic_phytype == IEEE80211_T_FH)
+		frm = ieee80211_add_fh_params(frm, ic, ni);
+	else
+		frm = ieee80211_add_ds_params(frm, ic, ni);
 
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
-		*frm++ = 2;
-		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
-	}
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		frm = ieee80211_add_ibss_params(frm, ni);
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
 	frm = ieee80211_add_xrates(frm, &ic->ic_bss->ni_rates);
@@ -922,18 +976,17 @@ ieee80211_get_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 
 	frm = mtod(m, u_int8_t *);
-	((u_int16_t *)frm)[0] =
-	    (is_shared_key) ? htole16(IEEE80211_AUTH_ALG_SHARED) :
-	    htole16(IEEE80211_AUTH_ALG_OPEN);
-	((u_int16_t *)frm)[1] = htole16(seq);	/* sequence number */
-	((u_int16_t *)frm)[2] = htole16(status);/* status */
+	if (is_shared_key)
+		LE_WRITE_2(frm, IEEE80211_AUTH_ALG_SHARED);
+	else
+		LE_WRITE_2(frm, IEEE80211_AUTH_ALG_OPEN);
+	frm += 2;
+	LE_WRITE_2(frm, seq); frm += 2;
+	LE_WRITE_2(frm, status); frm += 2;
 
 	if (has_challenge && status == IEEE80211_STATUS_SUCCESS) {
-		((u_int16_t *)frm)[3] =
-		    htole16((IEEE80211_CHALLENGE_LEN << 8) |
-		    IEEE80211_ELEMID_CHALLENGE);
-		memcpy(&((u_int16_t *)frm)[4], ni->ni_challenge,
-		    IEEE80211_CHALLENGE_LEN);
+		frm = ieee80211_add_challenge(frm,
+		    (u_int8_t *)ni->ni_challenge, IEEE80211_CHALLENGE_LEN);
 		if (seq == IEEE80211_AUTH_SHARED_RESPONSE) {
 			IEEE80211_DPRINTF((
 			    "%s: request encrypt frame\n", __func__));
@@ -1014,17 +1067,14 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if ((ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME) &&
 	    (ic->ic_flags & IEEE80211_F_SHSLOT))
 		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-	*(u_int16_t *)frm = htole16(capinfo);
-	frm += 2;
+	LE_WRITE_2(frm, capinfo); frm += 2;
 
-	*(u_int16_t *)frm = htole16(ic->ic_lintval);
-	frm += 2;
+	LE_WRITE_2(frm, ic->ic_lintval); frm += 2;
 
 	if (reassoc == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
 		IEEE80211_ADDR_COPY(frm, ic->ic_bss->ni_bssid);
 		frm += IEEE80211_ADDR_LEN;
 	}
-
 	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
 	frm = ieee80211_add_rates(frm, &ni->ni_rates);
 	frm = ieee80211_add_xrates(frm, &ni->ni_rates);
@@ -1052,7 +1102,6 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct mbuf *m;
 	u_int8_t *frm;
-	u_int16_t capinfo;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    2 +				/* capability information */
@@ -1067,22 +1116,13 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
-	capinfo = IEEE80211_CAPINFO_ESS;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
-		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-	*(u_int16_t *)frm = htole16(capinfo);
-	frm += 2;
-
-	*(u_int16_t *)frm = htole16(status);
-	frm += 2;
+	frm = ieee80211_add_capinfo(frm, ic, ni);
+	LE_WRITE_2(frm, status); frm += 2;
 
 	if (status == IEEE80211_STATUS_SUCCESS)
-		*(u_int16_t *)frm = htole16(ni->ni_associd);
+		LE_WRITE_2(frm, ni->ni_associd);
+	else
+		LE_WRITE_2(frm, 0);
 	frm += 2;
 
 	frm = ieee80211_add_rates(frm, &ni->ni_rates);
@@ -1270,28 +1310,31 @@ ieee80211_get_cts_to_self(struct ieee80211com *ic, u_int16_t dur)
 	return m;
 }
 
+/*-
+ * Beacon frame format:
+ * [8]    Timestamp
+ * [2]    Beacon interval
+ * [2]    Capability
+ * [tlv]  Service Set Identifier (SSID)
+ * [tlv]  Supported rates
+ * [tlv*] Frequency-Hopping (FH) Parameter Set
+ * [tlv*] DS Parameter Set (802.11g)
+ * [tlv*] IBSS Parameter Set
+ * [tlv]  Traffic Indication Map (TIM)
+ * [tlv]  ERP Information (802.11g)
+ * [tlv]  Extended Supported Rates (802.11g)
+ * [tlv]  RSN (802.11i)
+ * [tlv]  EDCA Parameter Set (802.11e)
+ * [tlv]  QoS Capability (802.11e)
+ */
 struct mbuf *
 ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct ieee80211_frame *wh;
 	struct mbuf *m;
 	u_int8_t *frm;
-	u_int16_t capinfo;
 	struct ieee80211_rateset *rs;
 
-	/*
-	 * beacon frame format
-	 *	[8] time stamp
-	 *	[2] beacon interval
-	 *	[2] cabability information
-	 *	[tlv] ssid
-	 *	[tlv] supported rates
-	 *	[3] parameter set (DS)
-	 *	[tlv] parameter set (IBSS/TIM)
-	 *	[tlv] extended rate phy (ERP)
-	 *	[tlv] extended supported rates
-	 *	[tlv] parameter set (EDCA)
-	 */
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    8 +				/* time stamp */
 	    2 +				/* beacon interval */
@@ -1317,38 +1360,26 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	*(u_int16_t *)wh->i_seq = 0;
 
 	frm = (u_int8_t *)&wh[1];
-	bzero(frm, 8);	/* timestamp is set by hardware */
+	memset(frm, 0, 8);	/* timestamp is set by hardware */
 	frm += 8;
-	*(u_int16_t *)frm = htole16(ni->ni_intval);
-	frm += 2;
-	if (ic->ic_opmode == IEEE80211_M_IBSS)
-		capinfo = IEEE80211_CAPINFO_IBSS;
-	else if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-		capinfo = IEEE80211_CAPINFO_ESS;
-	else
-		capinfo = 0;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
-		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
-	*(u_int16_t *)frm = htole16(capinfo);
-	frm += 2;
+	LE_WRITE_2(frm, ni->ni_intval); frm += 2;
+	frm = ieee80211_add_capinfo(frm, ic, ni);
+
 	if (ic->ic_flags & IEEE80211_F_HIDENWID)
 		frm = ieee80211_add_ssid(frm, NULL, 0);
 	else
 		frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
+
 	rs = &ni->ni_rates;
 	frm = ieee80211_add_rates(frm, rs);
-	*frm++ = IEEE80211_ELEMID_DSPARMS;
-	*frm++ = 1;
-	*frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
+
+	if (ic->ic_phytype == IEEE80211_T_FH)
+		frm = ieee80211_add_fh_params(frm, ic, ni);
+	else
+		frm = ieee80211_add_ds_params(frm, ic, ni);
+
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
-		*frm++ = 2;
-		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
+		frm = ieee80211_add_ibss_params(frm, ni);
 	} else {
 		/* TODO: TIM */
 		*frm++ = IEEE80211_ELEMID_TIM;
@@ -1363,6 +1394,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	frm = ieee80211_add_xrates(frm, rs);
 	if (ic->ic_flags & IEEE80211_F_QOS)
 		frm = ieee80211_add_edca_params(frm, ic);
+
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 	m->m_pkthdr.rcvif = (void *)ni;
 
