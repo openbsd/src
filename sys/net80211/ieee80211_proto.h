@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.17 2007/07/03 16:43:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.18 2007/07/03 19:44:54 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -95,6 +95,8 @@ extern	u_int8_t *ieee80211_add_challenge(u_int8_t *, const u_int8_t *, u_int);
 extern	u_int8_t *ieee80211_add_erp(u_int8_t *, struct ieee80211com *);
 extern	u_int8_t *ieee80211_add_qos_capability(u_int8_t *,
 		struct ieee80211com *);
+extern	u_int8_t *ieee80211_add_rsn(u_int8_t *, struct ieee80211com *,
+		const struct ieee80211_node *);
 extern	u_int8_t *ieee80211_add_xrates(u_int8_t *,
 		const struct ieee80211_rateset *);
 extern	void ieee80211_print_essid(const u_int8_t *, int);

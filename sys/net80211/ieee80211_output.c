@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.37 2007/07/03 16:43:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.38 2007/07/03 19:44:54 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -805,6 +805,85 @@ ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
 	*frm++ = IEEE80211_ELEMID_QOS_CAP;
 	*frm++ = 1;
 	*frm++ = 0;	/* QoS Info */
+	return frm;
+}
+
+/*
+ * Add an RSN element to a frame (see 7.3.2.25).
+ */
+u_int8_t *
+ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
+    const struct ieee80211_node *ni)
+{
+	u_int8_t *plen, *pcount;
+	u_int16_t count;
+
+	*frm++ = IEEE80211_ELEMID_RSN;
+	plen = frm++;	/* length filled in later */
+
+	/* write Version field */
+	LE_WRITE_2(frm, 1); frm += 2;
+
+	/* write Group Cipher Suite field (see Table 20da) */
+	memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+	switch (ni->ni_group_cipher) {
+	case IEEE80211_CIPHER_WEP40:
+		*frm++ = 1;
+		break;
+	case IEEE80211_CIPHER_TKIP:
+		*frm++ = 2;
+		break;
+	case IEEE80211_CIPHER_CCMP:
+		*frm++ = 3;
+		break;
+	case IEEE80211_CIPHER_WEP104:
+		*frm++ = 5;
+		break;
+	case IEEE80211_CIPHER_USEGROUP:
+		/* can't get there */
+		panic("invalid group cipher!");
+		break;
+	}
+
+	pcount = frm; frm += 2;
+	count = 0;
+	/* write Pairwise Cipher Suite List */
+	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_TKIP) {
+		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		*frm++ = 2;
+		count++;
+	}
+	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_CCMP) {
+		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		*frm++ = 3;
+		count++;
+	}
+	/* write Pairwise Cipher Suite Count field */
+	LE_WRITE_2(pcount, count);
+
+	pcount = frm; frm += 2;
+	count = 0;
+	/* write AKM Suite List (see Table 20dc) */
+	if (ni->ni_akmset & IEEE80211_AKM_IEEE8021X) {
+		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		*frm++ = 1;
+		count++;
+	}
+	if (ni->ni_akmset & IEEE80211_AKM_PSK) {
+		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		*frm++ = 2;
+		count++;
+	}
+	/* write AKM Suite List Count field */
+	LE_WRITE_2(pcount, count);
+
+	/* write RSN Capabilities field */
+	LE_WRITE_2(frm, ni->ni_rsncaps); frm += 2;
+
+	/* no PMKID List for now */
+
+	/* write length field */
+	*plen = frm - plen + 1;
 	return frm;
 }
 

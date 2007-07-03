@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.15 2007/06/17 09:05:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.16 2007/07/03 19:44:54 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -109,9 +109,14 @@ struct ieee80211_node {
 #endif
 
 	/* power saving mode */
-
 	u_int8_t		ni_pwrsave;
 	struct ifqueue		ni_savedq;	/* packets queued for pspoll */
+
+	/* RSN */
+	u_int			ni_group_cipher;
+	u_int			ni_pairwise_cipherset;
+	u_int			ni_akmset;
+	u_int16_t		ni_rsncaps;
 
 	/* others */
 	u_int16_t		ni_associd;	/* assoc response */
@@ -124,6 +129,7 @@ struct ieee80211_node {
 	int			ni_txrate;	/* index to ni_rates[] */
 	int			ni_state;
 	u_int32_t		*ni_challenge;	/* shared-key challenge */
+
 	u_int8_t		ni_flags;	/* special-purpose state */
 #define IEEE80211_NODE_ERP	0x01
 #define IEEE80211_NODE_QOS	0x02
