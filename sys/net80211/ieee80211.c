@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.23 2007/06/16 13:17:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.24 2007/07/03 20:25:32 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -146,6 +146,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 	if (ic->ic_lintval == 0)
 		ic->ic_lintval = 100;		/* default sleep */
 	ic->ic_bmisstimeout = 7*ic->ic_lintval;	/* default 7 beacons */
+	ic->ic_dtim_period = 1;	/* all TIMs are DTIMs */
 
 	LIST_INSERT_HEAD(&ieee80211com_head, ic, ic_list);
 	ieee80211_node_attach(ifp);

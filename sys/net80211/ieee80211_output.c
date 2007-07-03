@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.38 2007/07/03 19:44:54 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.39 2007/07/03 20:25:32 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1421,7 +1421,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    2 + ni->ni_esslen +		/* ssid */
 	    2 + IEEE80211_RATE_SIZE +	/* supported rates */
 	    2 + 1 +			/* parameter set (DS) */
-	    6 +				/* parameter set (IBSS/TIM) */
+	    2 + 254 +			/* parameter set (IBSS/TIM) */
 	    2 + 1 +			/* extended rate phy (ERP) */
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
 	    2 + 18);			/* parameter set (EDCA) */
@@ -1457,17 +1457,11 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	else
 		frm = ieee80211_add_ds_params(frm, ic, ni);
 
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		frm = ieee80211_add_ibss_params(frm, ni);
-	} else {
-		/* TODO: TIM */
-		*frm++ = IEEE80211_ELEMID_TIM;
-		*frm++ = 4;	/* length */
-		*frm++ = 0;	/* DTIM count */ 
-		*frm++ = 1;	/* DTIM period */
-		*frm++ = 0;	/* bitmap control */
-		*frm++ = 0;	/* Partial Virtual Bitmap (variable length) */
-	}
+	else
+		frm = ieee80211_add_tim(frm, ic);
+
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
 	frm = ieee80211_add_xrates(frm, rs);
@@ -1484,11 +1478,10 @@ void
 ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct mbuf *m)
 {
-	/* Store the new packet on our queue, changing the TIM if necessary */
+	/* store the new packet on our queue, changing the TIM if necessary */
+	if (IF_IS_EMPTY(&ni->ni_savedq))
+		(*ic->ic_set_tim)(ic, ni->ni_associd, 1);
 
-	if (IF_IS_EMPTY(&ni->ni_savedq)) {
-		ic->ic_set_tim(ic, ni->ni_associd, 1);
-	}
 	if (ni->ni_savedq.ifq_len >= IEEE80211_PS_MAX_QUEUE) {
 		IF_DROP(&ni->ni_savedq);
 		m_freem(m);
@@ -1500,7 +1493,8 @@ ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni,
 			    IEEE80211_PS_MAX_QUEUE,
 			    ni->ni_savedq.ifq_drops);
 	} else {
-		/* Similar to ieee80211_mgmt_output, store the node in
+		/*
+		 * Similar to ieee80211_mgmt_output, store the node in
 		 * the rcvif field.
 		 */
 		IF_ENQUEUE(&ni->ni_savedq, m);

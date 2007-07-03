@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.25 2007/07/02 16:46:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.26 2007/07/03 20:25:32 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -81,6 +81,7 @@ struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_join_11g(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_11g(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_set_tim(struct ieee80211com *, int, int);
 
 #define M_80211_NODE	M_DEVBUF
 
@@ -118,8 +119,10 @@ ieee80211_node_attach(struct ifnet *ifp)
 		if (ic->ic_tim_bitmap == NULL) {
 			printf("%s: no memory for TIM bitmap!\n", __func__);
 			ic->ic_tim_len = 0;
-		} else
+		} else {
 			memset(ic->ic_tim_bitmap, 0, ic->ic_tim_len);
+			ic->ic_set_tim = ieee80211_set_tim;
+		}
 	}
 }
 
@@ -833,7 +836,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	ic->ic_nnodes--;
 	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
 		IF_PURGE(&ni->ni_savedq);
-		if (ic->ic_set_tim)
+		if (ic->ic_set_tim != NULL)
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 	}
 	if (RB_EMPTY(&ic->ic_tree))
@@ -1137,6 +1140,15 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 		bridge_update(&ic->ic_if,
 		    (struct ether_addr *)ni->ni_macaddr, 1);
 #endif
+}
+
+void
+ieee80211_set_tim(struct ieee80211com *ic, int aid, int set)
+{
+	if (set)
+		setbit(ic->ic_tim_bitmap, aid & ~0xc000);
+	else
+		clrbit(ic->ic_tim_bitmap, aid & ~0xc000);
 }
 
 /*

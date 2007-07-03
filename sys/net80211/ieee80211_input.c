@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.34 2007/07/03 17:04:13 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.35 2007/07/03 20:25:32 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -186,8 +186,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	}
 
 	if (ic->ic_set_tim != NULL &&
-	    (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT)
-	    && ni->ni_pwrsave == 0) {
+	    (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
+	    ni->ni_pwrsave == 0) {
 		/* turn on power save mode */
 
 		if (ifp->if_flags & IFF_DEBUG)
@@ -197,13 +197,12 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		ni->ni_pwrsave = IEEE80211_PS_SLEEP;
 	}
 	if (ic->ic_set_tim != NULL &&
-	    (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) == 0 &&
+	    !(wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) &&
 	    ni->ni_pwrsave != 0) {
 		/* turn off power save mode, dequeue stored packets */
 
 		ni->ni_pwrsave = 0;
-		if (ic->ic_set_tim)
-			ic->ic_set_tim(ic, ni->ni_associd, 0);
+		(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: power save mode off for %s\n",
@@ -2008,7 +2007,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	struct mbuf *m;
 	u_int16_t aid;
 
-	if (ic->ic_set_tim == NULL)  /* No powersaving functionality */
+	if (ic->ic_set_tim == NULL)  /* no powersaving functionality */
 		return;
 
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -2053,12 +2052,10 @@ ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	 * If there are more packets, set the more packets bit.
 	 */
 
-	if (IF_IS_EMPTY(&ni->ni_savedq)) {
-		if (ic->ic_set_tim)
-			ic->ic_set_tim(ic, ni->ni_associd, 0);
-	} else {
+	if (IF_IS_EMPTY(&ni->ni_savedq))
+		(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
+	else
 		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
-	}
 
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: enqueued power saving packet for station %s\n",
