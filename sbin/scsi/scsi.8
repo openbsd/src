@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.31 2007/05/31 19:19:47 jmc Exp $
+.\"	$OpenBSD: scsi.8,v 1.32 2007/07/03 18:26:32 krw Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -40,7 +40,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 3 2007 $
 .Dt SCSI 8
 .Os
 .Sh NAME
@@ -305,14 +305,14 @@ To verify that the device type for the disk
 is 0
 (direct access device):
 .Bd -literal -offset indent
-# scsi -f /dev/rsd0c -c "12 0 0 0 64 0" -i 64 "*b3 b5"
+# scsi -f /dev/rsd0c -c "12 0 0 0 64 0" -i 0x64 "*b3 b5"
 0
 .Ed
 .Pp
 To do an inquiry to
 .Pa /dev/rsd2c :
 .Bd -literal -offset indent
-# scsi -f /dev/rsd2c -c "12 0 0 0 64 0" -i 64 "s8 z8 z16 z4"
+# scsi -f /dev/rsd2c -c "12 0 0 0 64 0" -i 0x64 "s8 z8 z16 z4"
 FUJITSU M2654S-512 010P
 .Ed
 .Pp
