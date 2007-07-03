@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.33 2007/07/03 16:00:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.34 2007/07/03 16:03:48 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -749,8 +749,11 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 	if (pktlen > MCLBYTES)
 		panic("802.11 packet too large: %u", pktlen);
 	MGETHDR(m, flags, type);
-	if (m != NULL && pktlen > MHLEN)
+	if (m != NULL && pktlen > MHLEN) {
 		MCLGET(m, flags);
+		if (!(m->m_flags & M_EXT))
+			m = m_free(m);
+	}
 	return m;
 }
 
