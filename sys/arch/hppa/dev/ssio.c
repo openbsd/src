@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssio.c,v 1.4 2007/06/26 17:53:23 kettenis Exp $	*/
+/*	$OpenBSD: ssio.c,v 1.5 2007/07/03 20:49:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -25,6 +25,7 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
+#include <machine/iomod.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -32,6 +33,12 @@
 #include <dev/pci/pciidereg.h>
 
 #include <hppa/dev/ssiovar.h>
+
+#include "ukbd.h"
+#if NUKBD > 0
+#include <dev/usb/ohcireg.h>
+#include <dev/usb/ukbdvar.h>
+#endif
 
 /* PCI config space. */
 #define SSIO_PCI_DMA_RC2	0x64
@@ -167,6 +174,9 @@ ssio_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t reg;
+#if NUKBD > 0
+	pcitag_t tag;
+#endif
 
 	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, SSIO_PIC1, 2, 0, &sc->sc_ic1h)) {
@@ -264,6 +274,23 @@ ssio_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_iobase &= 0xfffffffe;
 	saa.saa_irq = 7;
 	config_found(self, &saa, ssio_print);
+
+#if NUKBD > 0
+	/*
+	 * If a USB keybard is used for console input, the firmware passes
+	 * the mmio address of the USB controller the keyboard is attached
+	 * to.  Since we know the USB controller is function 2 on the same
+	 * device and comes right after us (we're function 1 remember),
+	 * this is a convenient spot to mark the USB keyboard as console
+	 * if the address matches.
+	 */
+	tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 2);
+	reg = pci_conf_read(pa->pa_pc, tag, PCI_CBMEM);
+
+	if (PAGE0->mem_kbd.pz_class == PCL_KEYBD &&
+	    PAGE0->mem_kbd.pz_hpa == reg)
+		ukbd_cnattach();
+#endif
 
 	return;
 
