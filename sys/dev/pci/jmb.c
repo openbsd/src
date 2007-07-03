@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.5 2007/07/02 23:50:15 dlg Exp $ */
+/*	$OpenBSD: jmb.c,v 1.6 2007/07/03 01:08:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -108,44 +108,47 @@ jmb_attach(struct device *parent, struct device *self, void *aux)
 	int				sata = 0, pata = 0;
 
 	ctl0 = pci_conf_read(pa->pa_pc, pa->pa_tag, JM_PCI_CTL0);
-	ctl0 &= ~(JM_PCI_CTL0_PCIIDE_F1 | JM_PCI_CTL0_AHCI_EN | 
-	    JM_PCI_CTL0_AHCI_F1 | JM_PCI_CTL0_SATA0_IDE |
-	    JM_PCI_CTL0_SATA0_AHCI | JM_PCI_CTL0_SATA1_IDE |
-	    JM_PCI_CTL0_SATA1_AHCI | JM_PCI_CTL0_F1_SUBCLASS_M |
-	    JM_PCI_CTL0_F0_SUBCLASS_M | JM_PCI_CTL0_PCIIDE_CS |
-	    JM_PCI_CTL0_IDEDMA_CFG);
-
 	ctl5 = pci_conf_read(pa->pa_pc, pa->pa_tag, JM_PCI_CTL5);
-	ctl5 &= ~JM_PCI_CTL5_PATA1_PRI;
 
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_JMICRON_JMB360:
-	case PCI_PRODUCT_JMICRON_JMB362:
-		/* set to single function AHCI mode */
-		ctl0 |= JM_PCI_CTL0_AHCI_EN | JM_PCI_CTL0_SATA0_AHCI |
-		    JM_PCI_CTL0_SATA1_AHCI |
-		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_IDE);
-		sata = 1;
-		break;
+	/* configure sata bits if it is on this function */
+	if (pa->pa_function == (ISSET(ctl0, JM_PCI_CTL0_AHCI_F1) ? 1 : 0)) {
+		ctl0 &= ~(JM_PCI_CTL0_AHCI_EN | JM_PCI_CTL0_SATA0_IDE |
+		    JM_PCI_CTL0_SATA0_AHCI | JM_PCI_CTL0_SATA1_IDE |
+		    JM_PCI_CTL0_SATA1_AHCI);
 
-	case PCI_PRODUCT_JMICRON_JMB366:
-	case PCI_PRODUCT_JMICRON_JMB365:
-		/* wire the second PATA port in the right place */
-		ctl5 |= JM_PCI_CTL5_PATA1_PRI;
-		/* FALLTHROUGH */
-	case PCI_PRODUCT_JMICRON_JMB363:
-	case PCI_PRODUCT_JMICRON_JMB361:
-		/* enable AHCI */
-		ctl0 |= JM_PCI_CTL0_AHCI_EN |
-		    JM_PCI_CTL0_SATA0_AHCI | JM_PCI_CTL0_SATA1_AHCI |
-		    JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG |
-		    JM_PCI_CTL0_F0_SUBCLASS(JM_PCI_CTL0_SUBCLASS_AHCI);
-		sata = pata = 1;
-		break;
-	case PCI_PRODUCT_JMICRON_JMB368:
-		ctl0 |= JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG;
-		pata = 1;
-		break;
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_JMICRON_JMB360:
+		case PCI_PRODUCT_JMICRON_JMB361:
+		case PCI_PRODUCT_JMICRON_JMB362:
+		case PCI_PRODUCT_JMICRON_JMB363:
+		case PCI_PRODUCT_JMICRON_JMB365:
+		case PCI_PRODUCT_JMICRON_JMB366:
+			/* enable AHCI */
+			ctl0 |= JM_PCI_CTL0_AHCI_EN | JM_PCI_CTL0_SATA0_AHCI |
+			    JM_PCI_CTL0_SATA1_AHCI;
+			sata = 1;
+			break;
+		}
+	}
+
+	/* configure pata bits if it is on this function */
+	if (pa->pa_function == (ISSET(ctl0, JM_PCI_CTL0_PCIIDE_F1) ? 1 : 0)) {
+		ctl0 &= ~(JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG);
+		ctl5 &= ~JM_PCI_CTL5_PATA1_PRI;
+
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_JMICRON_JMB366:
+		case PCI_PRODUCT_JMICRON_JMB365:
+			/* wire the second PATA port in the right place */
+			ctl5 |= JM_PCI_CTL5_PATA1_PRI;
+			/* FALLTHROUGH */
+		case PCI_PRODUCT_JMICRON_JMB363:
+		case PCI_PRODUCT_JMICRON_JMB361:
+		case PCI_PRODUCT_JMICRON_JMB368:
+			ctl0 |= JM_PCI_CTL0_PCIIDE_CS | JM_PCI_CTL0_IDEDMA_CFG;
+			pata = 1;
+			break;
+		}
 	}
 
 	pci_conf_write(pa->pa_pc, pa->pa_tag, JM_PCI_CTL0, ctl0);
