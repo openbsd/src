@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.126 2007/07/02 14:01:13 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.127 2007/07/03 22:28:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -33,8 +33,6 @@
 
 #include <dev/ata/atascsi.h>
 
-#include <dev/pci/ahcivar.h>
-
 /* change to AHCI_DEBUG for dmesg spam */
 #define NO_AHCI_DEBUG
 
@@ -49,8 +47,6 @@ int ahcidebug = AHCI_D_VERBOSE;
 #else
 #define DPRINTF(m, f...)
 #endif
-
-#define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
 
 #define AHCI_PCI_BAR		0x24
 #define AHCI_PCI_INTERFACE	0x01
@@ -315,6 +311,9 @@ struct ahci_dmamem {
 #define AHCI_DMA_DVA(_adm)	((_adm)->adm_map->dm_segs[0].ds_addr)
 #define AHCI_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
 
+struct ahci_softc;
+struct ahci_port;
+
 struct ahci_ccb {
 	/* ATA xfer associated with this CCB.  Must be 1st struct member. */
 	struct ata_xfer		ccb_xa;
@@ -375,6 +374,33 @@ struct ahci_port {
 #endif
 };
 
+struct ahci_softc {
+	struct device		sc_dev;
+
+	void			*sc_ih;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	bus_size_t		sc_ios;
+	bus_dma_tag_t		sc_dmat;
+
+	int			sc_flags;
+#define AHCI_F_NO_NCQ			(1<<0)
+
+	u_int			sc_ncmds;
+
+	struct ahci_port	*sc_ports[AHCI_MAX_PORTS];
+
+	struct atascsi		*sc_atascsi;
+
+#ifdef AHCI_COALESCE
+	u_int32_t		sc_ccc_mask;
+	u_int32_t		sc_ccc_ports;
+	u_int32_t		sc_ccc_ports_cur;
+#endif
+};
+#define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
+
 struct ahci_device {
 	pci_vendor_id_t		ad_vendor;
 	pci_product_id_t	ad_product;
@@ -410,6 +436,9 @@ struct cfdriver ahci_cd = {
 	NULL, "ahci", DV_DULL
 };
 
+
+int			ahci_attach(struct ahci_softc *,
+			    struct pci_attach_args *, pci_intr_handle_t);
 int			ahci_map_regs(struct ahci_softc *,
 			    struct pci_attach_args *);
 void			ahci_unmap_regs(struct ahci_softc *,
