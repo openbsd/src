@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.64 2007/06/29 12:42:05 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.65 2007/07/03 13:22:43 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -315,7 +315,7 @@ cvs_server_directory(char *data)
 	else
 		p = xstrdup(repo + 1);
 
-	cvs_mkpath(p);
+	cvs_mkpath(p, NULL);
 
 	if ((dirn = basename(p)) == NULL)
 		fatal("cvs_server_directory: %s", strerror(errno));
@@ -646,13 +646,44 @@ void
 cvs_server_update_entry(const char *resp, struct cvs_file *cf)
 {
 	char *p;
+	char repo[MAXPATHLEN], fpath[MAXPATHLEN];
 
 	if ((p = strrchr(cf->file_rpath, ',')) != NULL)
 		*p = '\0';
 
+	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", repo, cf->file_name);
+
 	cvs_server_send_response("%s %s/", resp, cf->file_wd);
-	cvs_remote_output(cf->file_rpath);
+	cvs_remote_output(fpath);
 
 	if (p != NULL)
 		*p = ',';
+}
+
+void
+cvs_server_set_sticky(char *dir, char *tag)
+{
+	char fpath[MAXPATHLEN], tbuf[CVS_ENT_MAXLINELEN];
+
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	    current_cvsroot->cr_dir, dir);
+
+	(void)xsnprintf(tbuf, MAXPATHLEN, "T%s", tag);
+
+	cvs_server_send_response("Set-sticky %s", dir);
+	cvs_remote_output(fpath);
+	cvs_remote_output(tbuf);
+}
+
+void
+cvs_server_clear_sticky(char *dir)
+{
+	char fpath[MAXPATHLEN];
+
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+	    current_cvsroot->cr_dir, dir);
+
+	cvs_server_send_response("Clear-sticky %s", dir);
+	cvs_remote_output(fpath);
 }

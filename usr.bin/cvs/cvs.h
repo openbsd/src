@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.140 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.141 2007/07/03 13:22:42 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -298,6 +298,7 @@ extern char *cvs_rsh;
 extern char *cvs_tmpdir;
 extern char *import_repository;
 extern char *cvs_server_path;
+extern char *cvs_specified_tag;
 
 extern int  cvs_umask;
 extern int  verbosity;
@@ -311,6 +312,7 @@ extern int  cvs_readonly;
 extern int  cvs_readonlyfs;
 extern int  cvs_error;
 extern int  cvs_server_active;
+extern int  reset_stickies;
 
 extern struct cvs_cmd *cvs_cdt[];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.193 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.194 2007/07/03 13:22:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -338,7 +338,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	struct cvs_ent_line *line;
 	struct cvs_flisthead fl, dl;
 	CVSENTRIES *entlist;
-	char *p, *buf, *ebuf, *cp, repo[MAXPATHLEN], fpath[MAXPATHLEN];
+	char *buf, *ebuf, *cp, repo[MAXPATHLEN], fpath[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_file_walkdir(%s)", cf->file_path);
 
@@ -467,17 +467,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 					cvs_file_get(fpath, &dl);
 				break;
 			case CVS_FILE:
-				if ((p = strrchr(cf->file_path, '/')) &&
-				    !strcmp(p + 1, CVS_PATH_ATTIC)) {
-
-					*p = '\0';
-					len = xsnprintf(fpath, MAXPATHLEN,
-					    "%s/%s", cf->file_path, dp->d_name);
-					*p = '/';
-				}
-				if (fpath[len - 2] == ',' &&
-				    fpath[len - 1] == 'v')
-					fpath[len - 2] = '\0';
 				cvs_file_get(fpath, &fl);
 				break;
 			default:
@@ -563,7 +552,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	CVSENTRIES *entlist = NULL;
 	const char *state;
 	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
-	char r1[CVS_REV_BUFSZ], r2[CVS_REV_BUFSZ], *tfname, *tpath, *p;
+	char r1[CVS_REV_BUFSZ], r2[CVS_REV_BUFSZ];
 
 	cvs_log(LP_TRACE, "cvs_file_classify(%s)", cf->file_path);
 
@@ -571,7 +560,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cf->file_status = FILE_UPTODATE;
 		return;
 	}
-
 
 	cvs_get_repository_path(cf->file_wd, repo, MAXPATHLEN);
 	(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s",
@@ -584,22 +572,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	}
 
 	cf->file_rpath = xstrdup(rcsfile);
-	/* XXX: likely wrong place for this shit */
-	/* is this file in the Attic? */
-	if (cf->file_type == CVS_FILE
-	    && strstr(cf->file_rpath, CVS_PATH_ATTIC) != NULL) {
-		cf->in_attic = 1;
-		/* chop the 'Attic' out of cf->file_path */
-		if ((tfname = basename(cf->file_path)) == NULL)
-			fatal("cvs_file_classify: basename failure");
-		if ((tpath = dirname(cf->file_path)) == NULL)
-			fatal("cvs_file_classify: dirname failure");
-		if ((p = strstr(tpath, CVS_PATH_ATTIC)) == NULL)
-			fatal("cvs_file_classify: strstr failure");
-		strlcpy(cf->file_path, tpath, p - tpath + 1);
-		strlcat(cf->file_path, tfname, MAXPATHLEN);
-	}
-
 	entlist = cvs_ent_open(cf->file_wd);
 	cf->file_ent = cvs_ent_get(entlist, cf->file_name);
 
@@ -638,15 +610,27 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		break;
 	}
 
-	if (strncmp(cf->file_path, CVS_JUNK, strlen(CVS_JUNK)) == 0) {
-		cf->file_status = FILE_UNKNOWN;
-		return;
-	}
 	cf->repo_fd = open(cf->file_rpath, O_RDONLY);
 	if (cf->repo_fd != -1) {
 		cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd, rflags);
 		if (cf->file_rcs == NULL)
 			fatal("cvs_file_classify: failed to parse RCS");
+	} else {
+		(void)xsnprintf(rcsfile, MAXPATHLEN, "%s/%s/%s%s",
+		     repo, CVS_PATH_ATTIC, cf->file_name, RCS_FILE_EXT);
+
+		cf->repo_fd = open(rcsfile, O_RDONLY);
+		if (cf->repo_fd != -1) {
+			xfree(cf->file_rpath);
+			cf->file_rpath = xstrdup(rcsfile);
+			cf->file_rcs = rcs_open(cf->file_rpath,
+			    cf->repo_fd, rflags);
+			if (cf->file_rcs == NULL)
+				fatal("cvs_file_classify: failed to parse RCS");
+			cf->in_attic = 1;
+		} else {
+			cf->file_rcs = NULL;
+		}
 	}
 
 	if (tag != NULL && cf->file_rcs != NULL) {
@@ -771,7 +755,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 			}
 		}
 	} else if (cf->file_ent->ce_status == CVS_ENT_REG) {
-		if (cf->file_rcs == NULL || rcsdead == 1) {
+		if (cf->file_rcs == NULL || rcsdead == 1 ||
+		    (reset_stickies == 1 && cf->in_attic == 1)) {
 			if (cf->fd == -1) {
 				cvs_log(LP_NOTICE,
 				    "warning: %s's entry exists but"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.68 2007/06/29 12:42:05 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.69 2007/07/03 13:22:42 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -167,7 +167,7 @@ client_check_directory(char *data)
 
 	STRIP_SLASH(data);
 
-	cvs_mkpath(data);
+	cvs_mkpath(data, NULL);
 
 	if ((base = basename(data)) == NULL)
 		fatal("client_check_directory: overflow");
@@ -634,6 +634,7 @@ cvs_client_updated(char *data)
 	char repo[MAXPATHLEN], entry[CVS_ENT_MAXLINELEN];
 	char timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
 	char *en, *mode, *len, *fpath, *rpath, *wdir;
+	char sticky[CVS_ENT_MAXLINELEN];
 
 	if (data == NULL)
 		fatal("Missing argument for Updated");
@@ -674,9 +675,15 @@ cvs_client_updated(char *data)
 
 	e = cvs_ent_parse(en);
 	xfree(en);
+
+	sticky[0] = '\0';
+	if (e->ce_tag != NULL)
+		(void)xsnprintf(sticky, sizeof(sticky), "T%s", e->ce_tag);
+
 	rcsnum_tostr(e->ce_rev, revbuf, sizeof(revbuf));
-	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/", e->ce_name,
-	    revbuf, timebuf, e->ce_opts ? e->ce_opts : "");
+	(void)xsnprintf(entry, CVS_ENT_MAXLINELEN, "/%s/%s/%s/%s/%s",
+	    e->ce_name, revbuf, timebuf,
+	    e->ce_opts ? e->ce_opts : "", sticky);
 
 	cvs_ent_free(e);
 	ent = cvs_ent_open(wdir);
@@ -887,6 +894,8 @@ cvs_client_set_sticky(char *data)
 	xfree(dir);
 	tag = cvs_remote_input();
 
+	client_check_directory(data);
+
 	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s", data, CVS_PATH_TAG);
 
 	if ((fp = fopen(tagpath, "w+")) == NULL) {
@@ -916,8 +925,10 @@ cvs_client_clear_sticky(char *data)
 	dir = cvs_remote_input();
 	xfree(dir);
 
+	client_check_directory(data);
+
 	(void)xsnprintf(tagpath, MAXPATHLEN, "%s/%s", data, CVS_PATH_TAG);
-	(void)cvs_unlink(tagpath);
+	(void)unlink(tagpath);
 }
 
 

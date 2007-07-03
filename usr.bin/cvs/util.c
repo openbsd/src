@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.111 2007/05/29 00:19:10 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.112 2007/07/03 13:22:43 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "cvs.h"
+#include "remote.h"
 
 /* letter -> mode type map */
 static const int cvs_modetypes[26] = {
@@ -581,7 +582,7 @@ cvs_mkadmin(const char *path, const char *root, const char *repo,
 }
 
 void
-cvs_mkpath(const char *path)
+cvs_mkpath(const char *path, char *tag)
 {
 	FILE *fp;
 	size_t len;
@@ -636,7 +637,12 @@ cvs_mkpath(const char *path)
 			fatal("cvs_mkpath: %s: %s", rpath, strerror(errno));
 
 		cvs_mkadmin(rpath, current_cvsroot->cr_str, repo,
-		    NULL, NULL, 0);
+		    tag, NULL, 0);
+
+		if (cvs_server_active == 1 && strcmp(rpath, ".")) {
+			if (tag != NULL)
+				cvs_server_set_sticky(rpath, tag);
+		}
 	}
 
 	xfree(dir);
