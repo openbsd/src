@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.35 2007/07/03 16:07:10 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.36 2007/07/03 16:10:38 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -836,8 +836,10 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	frm += 2;
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		capinfo = IEEE80211_CAPINFO_IBSS;
-	else
+	else if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 		capinfo = IEEE80211_CAPINFO_ESS;
+	else
+		capinfo = 0;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
@@ -994,11 +996,12 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
-	capinfo = 0;
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
-		capinfo |= IEEE80211_CAPINFO_IBSS;
-	else		/* IEEE80211_M_STA */
-		capinfo |= IEEE80211_CAPINFO_ESS;
+		capinfo = IEEE80211_CAPINFO_IBSS;
+	else if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		capinfo = IEEE80211_CAPINFO_ESS;
+	else
+		capinfo = 0;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	/*
@@ -1318,11 +1321,12 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	frm += 8;
 	*(u_int16_t *)frm = htole16(ni->ni_intval);
 	frm += 2;
-	if (ic->ic_opmode == IEEE80211_M_IBSS) {
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		capinfo = IEEE80211_CAPINFO_IBSS;
-	} else {
+	else if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 		capinfo = IEEE80211_CAPINFO_ESS;
-	}
+	else
+		capinfo = 0;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
