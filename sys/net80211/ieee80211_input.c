@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.33 2007/07/02 20:21:46 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.34 2007/07/03 17:04:13 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -617,7 +617,9 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 #define IEEE80211_VERIFY_ELEMENT(__elem, __maxlen) do {			\
 	if ((__elem) == NULL) {						\
 		IEEE80211_DPRINTF(("%s: no " #__elem "in %s frame\n",	\
-			__func__, ieee80211_mgt_subtype_name[subtype >>	\
+			__func__, ieee80211_mgt_subtype_name[		\
+				(wh->i_fc[0] &				\
+				    IEEE80211_FC0_SUBTYPE_MASK) >>	\
 				IEEE80211_FC0_SUBTYPE_SHIFT]));		\
 		ic->ic_stats.is_rx_elem_missing++;			\
 		return;							\
@@ -625,9 +627,10 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if ((__elem)[1] > (__maxlen)) {					\
 		IEEE80211_DPRINTF(("%s: bad " #__elem " len %d in %s "	\
 			"frame from %s\n", __func__, (__elem)[1],	\
-			ieee80211_mgt_subtype_name[subtype >>		\
-				IEEE80211_FC0_SUBTYPE_SHIFT],		\
-			ether_sprintf(wh->i_addr2)));			\
+			ieee80211_mgt_subtype_name[(wh->i_fc[0] & 	\
+			        IEEE80211_FC0_SUBTYPE_MASK) >>		\
+			    IEEE80211_FC0_SUBTYPE_SHIFT],		\
+			ether_sprintf((u_int8_t *)wh->i_addr2)));	\
 		ic->ic_stats.is_rx_elem_toobig++;			\
 		return;							\
 	}								\
@@ -637,9 +640,10 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if ((_len) < (_minlen)) {					\
 		IEEE80211_DPRINTF(("%s: %s frame too short from %s\n",	\
 			__func__,					\
-			ieee80211_mgt_subtype_name[subtype >>		\
-				IEEE80211_FC0_SUBTYPE_SHIFT],		\
-			ether_sprintf(wh->i_addr2)));			\
+			ieee80211_mgt_subtype_name[(wh->i_fc[0] & 	\
+			        IEEE80211_FC0_SUBTYPE_MASK) >>		\
+			    IEEE80211_FC0_SUBTYPE_SHIFT],		\
+			ether_sprintf((u_int8_t *)wh->i_addr2)));	\
 		ic->ic_stats.is_rx_elem_toosmall++;			\
 		return;							\
 	}								\
@@ -648,12 +652,13 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 #ifdef IEEE80211_DEBUG
 void
 ieee80211_ssid_mismatch(struct ieee80211com *, const char *,
-    u_int8_t[IEEE80211_ADDR_LEN], const u_int8_t *);
+    const u_int8_t[IEEE80211_ADDR_LEN], const u_int8_t *);
 void
 ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
-    u_int8_t mac[IEEE80211_ADDR_LEN], const u_int8_t *ssid)
+    const u_int8_t mac[IEEE80211_ADDR_LEN], const u_int8_t *ssid)
 {
-	printf("[%s] %s req ssid mismatch: ", ether_sprintf(mac), tag);
+	printf("[%s] %s req ssid mismatch: ",
+	    ether_sprintf((u_int8_t *)mac), tag);
 	ieee80211_print_essid(ssid + 2, ssid[1]);
 	printf("\n");
 }
@@ -692,7 +697,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
 			IEEE80211_DPRINTF(("%s: discard auth from %s; "
 			    "state %u, seq %u\n", __func__,
-			    ether_sprintf(wh->i_addr2),
+			    ether_sprintf((u_int8_t *)wh->i_addr2),
 			    ic->ic_state, seq));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
@@ -710,7 +715,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		    seq != IEEE80211_AUTH_OPEN_REQUEST) {
 			IEEE80211_DPRINTF(("%s: discard auth from %s; "
 			    "state %u, seq %u\n", __func__,
-			    ether_sprintf(wh->i_addr2),
+			    ether_sprintf((u_int8_t *)wh->i_addr2),
 			    ic->ic_state, seq));
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
@@ -743,7 +748,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 			ic->ic_stats.is_rx_bad_auth++;
 			IEEE80211_DPRINTF(("%s: discard auth from %s; "
 			    "state %u, seq %u\n", __func__,
-			    ether_sprintf(wh->i_addr2),
+			    ether_sprintf((u_int8_t *)wh->i_addr2),
 			    ic->ic_state, seq));
 			return;
 		}
@@ -971,7 +976,7 @@ ieee80211_parse_edca_params_body(struct ieee80211com *ic, const u_int8_t *frm)
 		return 0;	/* no changes to EDCA parameters, ignore */
 	ic->ic_edca_updtcount = updtcount;
 
-	frm += 2;	/* skip QoS Info + Reserved fields */
+	frm += 2;	/* skip QoS Info & Reserved fields */
 
 	/* parse AC Parameter Records */
 	for (aci = 0; aci < EDCA_NUM_AC; aci++) {
@@ -1336,7 +1341,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 #endif
 	    isclr(ic->ic_chan_active, chan)) {
 		IEEE80211_DPRINTF(("%s: ignore %s with invalid channel "
-		    "%u\n", __func__, ISPROBE(subtype) ?
+		    "%u\n", __func__, ISPROBE(wh) ?
 		    "probe response" : "beacon", chan));
 		ic->ic_stats.is_rx_badchan++;
 		return;
@@ -1354,7 +1359,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		 *     different hop pattern in FH.
 		 */
 		IEEE80211_DPRINTF(("%s: ignore %s on channel %u marked "
-		    "for channel %u\n", __func__, ISPROBE(subtype) ?
+		    "for channel %u\n", __func__, ISPROBE(wh) ?
 		    "probe response" : "beacon", bchan, chan));
 		ic->ic_stats.is_rx_chanmismatch++;
 		return;
@@ -1376,10 +1381,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN)) {
 		printf("%s: %s%s on chan %u (bss chan %u) ",
 		    __func__, (ni == NULL ? "new " : ""),
-		    ISPROBE(subtype) ? "probe response" : "beacon",
+		    ISPROBE(wh) ? "probe response" : "beacon",
 		    chan, bchan);
 		ieee80211_print_essid(ssid + 2, ssid[1]);
-		printf(" from %s\n", ether_sprintf(wh->i_addr2));
+		printf(" from %s\n", ether_sprintf((u_int8_t *)wh->i_addr2));
 		printf("%s: caps 0x%x bintval %u erp 0x%x\n",
 			__func__, letoh16(*(u_int16_t *)capinfo),
 			letoh16(*(u_int16_t *)bintval), erp);
@@ -1416,8 +1421,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		if (ni->ni_erp != erp) {
 			IEEE80211_DPRINTF((
 			    "[%s] erp change: was 0x%x, now 0x%x\n",
-			    ether_sprintf(wh->i_addr2), ni->ni_erp,
-			    erp));
+			    ether_sprintf((u_int8_t *)wh->i_addr2),
+			    ni->ni_erp, erp));
 			if (ic->ic_curmode == IEEE80211_MODE_11G &&
 			    (erp & IEEE80211_ERP_USE_PROTECTION))
 				ic->ic_flags |= IEEE80211_F_USEPROT;
@@ -1539,7 +1544,7 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 		if (ni == NULL)
 			return;
 		IEEE80211_DPRINTF(("%s: new probe req from %s\n",
-		    __func__, ether_sprintf(wh->i_addr2)));
+		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
 	}
 	ni->ni_rssi = rssi;
 	ni->ni_rstamp = rstamp;
@@ -1548,7 +1553,7 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 	if (rate & IEEE80211_RATE_BASIC) {
 		IEEE80211_DPRINTF(("%s: rate negotiation failed: %s\n",
-		    __func__,ether_sprintf(wh->i_addr2)));
+		    __func__,ether_sprintf((u_int8_t *)wh->i_addr2)));
 	} else {
 		IEEE80211_SEND_MGMT(ic, ni,
 			IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
@@ -1579,7 +1584,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
 	seq    = LE_READ_2(frm); frm += 2;
 	status = LE_READ_2(frm); frm += 2;
 	IEEE80211_DPRINTF(("%s: auth %d seq %d from %s\n",
-	    __func__, algo, seq, ether_sprintf(wh->i_addr2)));
+	    __func__, algo, seq, ether_sprintf((u_int8_t *)wh->i_addr2)));
 
 	if (algo == IEEE80211_AUTH_ALG_OPEN)
 		ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq, status);
@@ -1591,7 +1596,7 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
 	else {
 		IEEE80211_DPRINTF(("%s: unsupported authentication "
 		    "algorithm %d from %s\n",
-		    __func__, algo, ether_sprintf(wh->i_addr2)));
+		    __func__, algo, ether_sprintf((u_int8_t *)wh->i_addr2)));
 		ic->ic_stats.is_rx_auth_unsupported++;
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			/* XXX hack to workaround calling convention */
@@ -1645,7 +1650,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	IEEE80211_VERIFY_LENGTH(efrm - frm, (reassoc ? 10 : 4));
 	if (!IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_bss->ni_bssid)) {
 		IEEE80211_DPRINTF(("%s: ignore other bss from %s\n",
-		    __func__, ether_sprintf(wh->i_addr2)));
+		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
 		ic->ic_stats.is_rx_assoc_bss++;
 		return;
 	}
@@ -1682,7 +1687,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		IEEE80211_DPRINTF(
 		    ("%s: deny %sassoc from %s, not authenticated\n",
 		    __func__, reassoc ? "re" : "",
-		    ether_sprintf(wh->i_addr2)));
+		    ether_sprintf((u_int8_t *)wh->i_addr2)));
 		ni = ieee80211_dup_bss(ic, wh->i_addr2);
 		if (ni != NULL) {
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -1710,7 +1715,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	    ((ic->ic_flags & IEEE80211_F_WEPON) ?
 	     IEEE80211_CAPINFO_PRIVACY : 0)) {
 		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
-		    __func__, ether_sprintf(wh->i_addr2)));
+		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
 		/* XXX what rate will we send this at? */
 		IEEE80211_SEND_MGMT(ic, ni, resp,
 		    IEEE80211_STATUS_BASIC_RATE);
@@ -1723,7 +1728,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 				IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 	if (ni->ni_rates.rs_nrates == 0) {
 		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
-		    __func__, ether_sprintf(wh->i_addr2)));
+		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
 		IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 		ni->ni_associd = 0;
 		IEEE80211_SEND_MGMT(ic, ni, resp,
