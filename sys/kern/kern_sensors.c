@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.20 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.21 2007/07/03 03:22:34 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -217,6 +217,7 @@ sensor_task_unregister(struct sensor_task *st)
 		st->state = ST_DYING;
 		while (st->state != ST_DEAD)
 			tsleep(st, 0, "stunr", 0);
+		free(st, M_DEVBUF);
 		break;
 	default:
 		panic("sensor_task_unregister: unexpected state %d",
@@ -227,7 +228,7 @@ sensor_task_unregister(struct sensor_task *st)
 void
 sensor_task_tick(void *arg)
 {
-	struct sensor_task	*st = arg;
+	struct sensor_task *st = arg;
 
 	/* try to schedule the task */
 	if (workq_add_task(NULL, 0, sensor_task_work, st, NULL) != 0)
