@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ttyname.3,v 1.16 2007/05/31 19:19:29 jmc Exp $
+.\"	$OpenBSD: ttyname.3,v 1.17 2007/07/03 14:45:34 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 3 2007 $
 .Dt TTYNAME 3
 .Os
 .Sh NAME
@@ -99,14 +99,16 @@ file entry.
 .Sh RETURN VALUES
 The
 .Fn ttyname
-and
-.Fn ttyname_r
-functions return the NUL-terminated name if the device is found and
+function returns the NUL-terminated name if the device is found and
 .Fn isatty
 is true; otherwise
 a null pointer is returned and
 .Va errno
 is set to indicate the error.
+.Pp
+The
+.Fn ttyname_r
+function returns zero if successful; otherwise an error number is returned.
 .Pp
 The
 .Fn isatty
@@ -127,7 +129,8 @@ the value zero is returned.
 .El
 .Sh ERRORS
 The
-.Fn ttyname
+.Fn ttyname ,
+.Fn ttyname_r ,
 and
 .Fn isatty
 functions will fail if:
