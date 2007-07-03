@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.123 2007/05/10 06:10:04 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.124 2007/07/03 11:32:27 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -372,6 +372,8 @@ proto		: /* empty */			{ $$ = 0; }
 			}
 
 		}
+		| PROTO ESP 			{ $$ = IPPROTO_ESP; }
+		| PROTO AH			{ $$ = IPPROTO_AH; }
 		;
 
 tmode		: /* empty */			{ $$ = IPSEC_TUNNEL; }
