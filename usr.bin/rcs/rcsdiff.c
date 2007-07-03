@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.74 2007/06/30 08:23:49 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.75 2007/07/03 00:56:23 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -349,7 +349,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		warn("utimes");
 
-	ret = rcs_diffreg(path1, path2, NULL, dflags);
+	ret = diffreg(path1, path2, NULL, dflags);
 
 out:
 	if (fd != -1)
@@ -430,7 +430,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		warn("utimes");
 
-	ret = rcs_diffreg(path1, path2, NULL, dflags);
+	ret = diffreg(path1, path2, NULL, dflags);
 
 out:
 	if (b1 != NULL)

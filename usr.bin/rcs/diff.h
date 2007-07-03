@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.6 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: diff.h,v 1.7 2007/07/03 00:56:23 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -96,7 +96,7 @@
 #define	D_IGNOREBLANKS	0x40	/* Ignore white space changes */
 
 /*
- * Status values for rcs_diffreg() return values
+ * Status values for diffreg() return values
  */
 #define	D_SAME		0	/* Files are the same */
 #define	D_DIFFER	1	/* Files are different */
@@ -112,7 +112,7 @@ struct rcs_lines;
 BUF		*rcs_diff3(RCSFILE *, char *, RCSNUM *, RCSNUM *, int);
 BUF		*merge_diff3(char **, int);
 void		diff_output(const char *, ...);
-int		rcs_diffreg(const char *, const char *, BUF *, int);
+int		diffreg(const char *, const char *, BUF *, int);
 int		ed_patch_lines(struct rcs_lines *, struct rcs_lines *);
 
 extern int       diff_context;

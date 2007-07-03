@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.22 2007/06/30 08:23:49 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.23 2007/07/03 00:56:23 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.22 2007/06/30 08:23:49 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.23 2007/07/03 00:56:23 ray Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -199,8 +199,8 @@ merge_diff3(char **av, int flags)
 	rcs_buf_free(b2);
 	b2 = NULL;
 
-	if ((rcs_diffreg(path1, path3, d1, 0) == D_ERROR) ||
-	    (rcs_diffreg(path2, path3, d2, 0) == D_ERROR)) {
+	if ((diffreg(path1, path3, d1, 0) == D_ERROR) ||
+	    (diffreg(path2, path3, d2, 0) == D_ERROR)) {
 		rcs_buf_free(diffb);
 		diffb = NULL;
 		goto out;
@@ -326,8 +326,8 @@ rcs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int flags)
 	rcs_buf_free(b2);
 	b2 = NULL;
 
-	if ((rcs_diffreg(path1, path3, d1, 0) == D_ERROR) ||
-	    (rcs_diffreg(path2, path3, d2, 0) == D_ERROR)) {
+	if ((diffreg(path1, path3, d1, 0) == D_ERROR) ||
+	    (diffreg(path2, path3, d2, 0) == D_ERROR)) {
 		rcs_buf_free(diffb);
 		diffb = NULL;
 		goto out;
