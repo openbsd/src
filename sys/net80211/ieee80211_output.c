@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.34 2007/07/03 16:03:48 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.35 2007/07/03 16:07:10 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -872,14 +872,6 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 		*frm++ = IEEE80211_ELEMID_IBSSPARMS;
 		*frm++ = 2;
 		*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
-	} else {	/* IEEE80211_M_HOSTAP */
-		/* TODO: TIM */
-		*frm++ = IEEE80211_ELEMID_TIM;
-		*frm++ = 4;	/* length */
-		*frm++ = 0;	/* DTIM count */
-		*frm++ = 1;	/* DTIM period */
-		*frm++ = 0;	/* bitmap control */
-		*frm++ = 0;	/* Partial Virtual Bitmap (variable) */
 	}
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
