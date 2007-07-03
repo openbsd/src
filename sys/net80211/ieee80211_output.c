@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.32 2007/07/02 16:46:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.33 2007/07/03 16:00:07 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1338,7 +1338,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	*(u_int16_t *)frm = htole16(capinfo);
 	frm += 2;
 	if (ic->ic_flags & IEEE80211_F_HIDENWID)
-		*frm++ = 0;
+		frm = ieee80211_add_ssid(frm, NULL, 0);
 	else
 		frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
 	rs = &ni->ni_rates;
