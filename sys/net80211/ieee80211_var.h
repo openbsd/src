@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.27 2007/07/03 20:25:33 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.28 2007/07/04 20:16:25 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -287,6 +287,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_F_SHPREAMBLE	0x00040000	/* STATUS: short preamble */
 #define IEEE80211_F_QOS		0x00080000	/* CONF: QoS enabled */
 #define	IEEE80211_F_USEPROT	0x00100000	/* STATUS: protection enabled */
+#define	IEEE80211_F_RSN		0x00200000	/* CONF: RSN enabled */
 #define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
 
 /* ic_caps */
@@ -301,7 +302,8 @@ extern struct ieee80211com_head ieee80211com_head;
 #define	IEEE80211_C_SHPREAMBLE	0x00000100	/* CAPABILITY: short preamble */
 #define	IEEE80211_C_MONITOR	0x00000200	/* CAPABILITY: monitor mode */
 #define IEEE80211_C_SCANALL	0x00000400	/* CAPABILITY: scan all chan */
-#define IEEE80211_C_QOS		0x00000800	/* CAPABILITY: QoS */
+#define IEEE80211_C_QOS		0x00000800	/* CAPABILITY: QoS avail */
+#define IEEE80211_C_RSN		0x00001000	/* CAPABILITY: RSN avail */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
