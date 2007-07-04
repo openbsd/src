@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.548 2007/06/25 13:57:18 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.549 2007/07/04 08:14:14 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2895,7 +2895,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		if (pd->af != AF_INET)
 			break;
 		sport = dport = pd->hdr.icmp->icmp_id;
-		hdrlen = sizeof(*pd->hdr.icmp);
 		icmptype = pd->hdr.icmp->icmp_type;
 		icmpcode = pd->hdr.icmp->icmp_code;
 
@@ -3035,7 +3034,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 				break;
 			}
 
-			rewrite++;
 			if (nr->natpass)
 				r = NULL;
 			pd->nat_rule = nr;
