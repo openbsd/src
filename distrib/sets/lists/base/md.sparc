@@ -521,7 +521,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/agpreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/agpvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ahcivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/auixpreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/auixpvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/autrireg.ph
