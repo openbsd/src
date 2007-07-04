@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.34 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.35 2007/07/04 20:43:44 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.34 2007/06/25 19:59:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.35 2007/07/04 20:43:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,8 @@ pass5(void)
 		     d += fs->fs_frag, i += fs->fs_frag) {
 			frags = 0;
 			for (j = 0; j < fs->fs_frag; j++) {
-				if (testbmap(d + j))
+				/* XXX macppc has problems with [daddr64_t] */
+				if (testbmap((u_int)d + j))
 					continue;
 				setbit(cg_blksfree(newcg), i + j);
 				frags++;
