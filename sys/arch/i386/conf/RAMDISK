@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.152 2007/05/29 18:18:19 tom Exp $
+#	$OpenBSD: RAMDISK,v 1.153 2007/07/04 19:27:48 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -236,8 +236,8 @@ dc*	at pci?				# 21143, "tulip" clone ethernet
 sis*	at pci?				# SiS 900/7016 ethernet
 #ste*	at pci?				# Sundance ST201 ethernet
 #ti*	at pci?				# Alteon Tigon 1Gb ethernet
-skc*	at pci?				# SysKonnect GEnesis 984x
-sk*	at skc?				#  each port of above
+#skc*	at pci?				# SysKonnect GEnesis 984x
+#sk*	at skc?				#  each port of above
 em*	at pci?				# Intel Pro/1000 ethernet
 #txp*	at pci?				# 3com 3CR990
 #nge*	at pci?				# NS DP83820/DP83821 GigE
