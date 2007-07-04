@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.98 2007/06/08 17:48:04 henning Exp $
+#	$OpenBSD: files.isa,v 1.99 2007/07/04 17:10:30 henning Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -178,12 +178,6 @@ file	dev/isa/if_el.c			el
 # 3Com 3C509 Ethernet controller
 attach	ep at isa with ep_isa: elink
 file	dev/isa/if_ep_isa.c		ep_isa
-
-# Fujitsu MB8696[05]-based boards
-# (Allied Telesis AT1700)
-device	fe: ether, ifnet
-attach	fe at isa
-file	dev/isa/if_fe.c			fe
 
 # Intel i82586-based boards
 # (AT&T StarLAN 10, AT&T EN100, AT&T StarLAN Fiber, 3Com 3C507)
