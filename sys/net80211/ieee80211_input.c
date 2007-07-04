@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.35 2007/07/03 20:25:32 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.36 2007/07/04 20:19:12 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1215,7 +1215,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *tstamp, *bintval, *capinfo, *country;
-	const u_int8_t *ssid, *rates, *xrates, *edca, *wmm, *oui;
+	const u_int8_t *ssid, *rates, *xrates, *edca, *wmm;
 	const u_int8_t *rsn, *wpa;
 	u_int8_t chan, bchan, fhindex, erp;
 	u_int16_t fhdwell;
@@ -1311,14 +1311,14 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 				ic->ic_stats.is_rx_elem_toosmall++;
 				break;
 			}
-			oui = frm + 2;
-			if (memcmp(oui, MICROSOFT_OUI, 3) == 0) {
-				switch (oui[3]) {
+			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
+				switch (frm[5]) {
 				case 1:	/* WPA */
 					wpa = frm;
 					break;
 				case 2:	/* WMM */
-					wmm = frm;
+					if (frm[1] >= 5 && frm[6] == 1)
+						wmm = frm;
 					break;
 				}
 			}
@@ -1766,7 +1766,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	struct ifnet *ifp = &ic->ic_if;
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *rates, *xrates, *edca, *wmm, *oui;
+	const u_int8_t *rates, *xrates, *edca, *wmm;
 	u_int16_t status;
 
 	if (ic->ic_opmode != IEEE80211_M_STA ||
@@ -1817,11 +1817,11 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 				ic->ic_stats.is_rx_elem_toosmall++;
 				break;
 			}
-			oui = frm + 2;
-			if (memcmp(oui, MICROSOFT_OUI, 3) == 0) {
-				switch (oui[3]) {
+			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
+				switch (frm[5]) {
 				case 2:	/* WMM */
-					wmm = frm;
+					if (frm[1] >= 5 && frm[6] == 1)
+						wmm = frm;
 					break;
 				}
 			}
