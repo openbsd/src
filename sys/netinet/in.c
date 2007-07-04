@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.47 2007/05/27 20:04:25 dlg Exp $	*/
+/*	$OpenBSD: in.c,v 1.48 2007/07/04 12:15:53 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -1012,6 +1012,7 @@ in_delmulti(inm)
 	struct in_multi *inm;
 {
 	struct ifreq ifr;
+	struct ifnet *ifp;
 	int s = splsoftnet();
 
 	if (--inm->inm_refcount == 0) {
@@ -1024,15 +1025,18 @@ in_delmulti(inm)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(inm, inm_list);
+		ifp = inm->inm_ia->ia_ifp;
 		IFAFREE(&inm->inm_ia->ia_ifa);
-		/*
-		 * Notify the network driver to update its multicast reception
-		 * filter.
-		 */
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
-		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI,
-							     (caddr_t)&ifr);
+
+		if (ifp) {
+			/*
+			 * Notify the network driver to update its multicast
+			 * reception filter.
+			 */
+			satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+			satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
+			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+		}
 		free(inm, M_IPMADDR);
 	}
 	splx(s);

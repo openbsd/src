@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.163 2007/06/17 21:01:32 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.164 2007/07/04 12:15:53 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -580,6 +580,7 @@ do { \
 		if (ifa == ifnet_addrs[ifp->if_index])
 			continue;
 
+		ifa->ifa_ifp = NULL;
 		IFAFREE(ifa);
 	}
 
@@ -589,6 +590,7 @@ do { \
 
 	if_free_sadl(ifp);
 
+	ifnet_addrs[ifp->if_index]->ifa_ifp = NULL;
 	IFAFREE(ifnet_addrs[ifp->if_index]);
 	ifnet_addrs[ifp->if_index] = NULL;
 
