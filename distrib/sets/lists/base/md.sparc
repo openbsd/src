@@ -330,7 +330,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/lsi64854var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/malo.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/max2820reg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mb86960reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mc146818reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mc6845.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mc6845reg.ph
@@ -444,7 +443,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/if_egreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/if_elreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/if_exreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/if_fereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/if_ie507.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/if_ieatt.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/if_iee16.ph

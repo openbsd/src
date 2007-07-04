@@ -286,7 +286,6 @@
 ./usr/include/dev/ic/lsi64854var.h
 ./usr/include/dev/ic/malo.h
 ./usr/include/dev/ic/max2820reg.h
-./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mc146818reg.h
 ./usr/include/dev/ic/mc6845.h
 ./usr/include/dev/ic/mc6845reg.h
@@ -400,7 +399,6 @@
 ./usr/include/dev/isa/if_egreg.h
 ./usr/include/dev/isa/if_elreg.h
 ./usr/include/dev/isa/if_exreg.h
-./usr/include/dev/isa/if_fereg.h
 ./usr/include/dev/isa/if_ie507.h
 ./usr/include/dev/isa/if_ieatt.h
 ./usr/include/dev/isa/if_iee16.h
