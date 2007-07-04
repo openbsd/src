@@ -1,5 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.16 2007/06/25 20:22:00 deraadt Exp $	*/
-/*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
+/*	$OpenBSD: quot.c,v 1.17 2007/07/04 17:14:45 millert Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,15 +32,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.16 2007/06/25 20:22:00 deraadt Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.17 2007/07/04 17:14:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/time.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,49 +76,85 @@ static int headerlen;
 #endif
 
 #define	INOCNT(fs)	((fs)->fs_ipg)
-#define	INOSZ(fs)	(sizeof(struct ufs1_dinode) * INOCNT(fs))
+#define	INOSZ(fs)	(((fs)->fs_magic == FS_UFS1_MAGIC ? \
+			    sizeof(struct ufs1_dinode) : \
+			    sizeof(struct ufs2_dinode)) * INOCNT(fs))
 
-static struct ufs1_dinode *
+union dinode {
+	struct ufs1_dinode dp1;
+	struct ufs2_dinode dp2;
+};
+#define	DIP(fs, dp, field) \
+	(((fs)->fs_magic == FS_UFS1_MAGIC) ? \
+	(dp)->dp1.field : (dp)->dp2.field)
+
+static union dinode *
 get_inode(int fd, struct fs *super, ino_t ino)
 {
-	static struct ufs1_dinode *ip;
+	static caddr_t ipbuf;
+	static struct cg *cgp;
 	static ino_t last;
+	static int cg;
+	struct ufs2_dinode *di2;
 
 	if (fd < 0) {		/* flush cache */
-		if (ip) {
-			free(ip);
-			ip = 0;
+		if (ipbuf) {
+			free(ipbuf);
+			ipbuf = NULL;
+			if (super != NULL && super->fs_magic == FS_UFS2_MAGIC) {
+				free(cgp);
+				cgp = NULL;
+			}
 		}
 		return 0;
 	}
 
-	if (!ip || ino < last || ino >= last + INOCNT(super)) {
-		if (!ip && !(ip = (struct ufs1_dinode *)malloc(INOSZ(super))))
+	if (!ipbuf || ino < last || ino >= last + INOCNT(super)) {
+		if (super->fs_magic == FS_UFS2_MAGIC &&
+		    (!cgp || cg != ino_to_cg(super, ino))) {
+			cg = ino_to_cg(super, ino);
+			if (!cgp && !(cgp = malloc(super->fs_cgsize)))
+				errx(1, "allocate cg");
+			if (pread(fd, cgp, super->fs_cgsize,
+			    (off_t)cgtod(super, cg) << super->fs_fshift)
+			    != super->fs_cgsize)
+			if (read(fd, cgp, super->fs_cgsize) != super->fs_cgsize)
+				err(1, "read cg");
+			if (!cg_chkmagic(cgp))
+				errx(1, "cg has bad magic");
+		}
+		if (!ipbuf && !(ipbuf = malloc(INOSZ(super))))
 			err(1, "allocate inodes");
 		last = (ino / INOCNT(super)) * INOCNT(super);
-		if (lseek(fd,
-			  (off_t)ino_to_fsba(super, last) << super->fs_fshift,
-			  SEEK_SET) < 0
-		    || read(fd, ip, INOSZ(super)) != INOSZ(super)) {
+		if (lseek(fd, (off_t)ino_to_fsba(super, last)
+		    << super->fs_fshift, SEEK_SET) < 0 ||
+		    read(fd, ipbuf, INOSZ(super)) != INOSZ(super)) {
 			err(1, "read inodes");
 		}
 	}
 
-	return ip + ino % INOCNT(super);
+	if (super->fs_magic == FS_UFS1_MAGIC)
+		return ((union dinode *)
+		    &((struct ufs1_dinode *)ipbuf)[ino % INOCNT(super)]);
+	di2 = &((struct ufs2_dinode *)ipbuf)[ino % INOCNT(super)];
+	/* If the inode is unused, it might be unallocated too, so zero it. */
+	if (isclr(cg_inosused(cgp), ino % super->fs_ipg))
+		memset(di2, 0, sizeof(*di2));
+	return ((union dinode *)di2);
 }
 
 #ifdef	COMPAT
-#define	actualblocks(super, ip)	((ip)->di_blocks / 2)
+#define	actualblocks(fs, ip)	(DIP(fs, dp, di_blocks) / 2)
 #else
-#define	actualblocks(super, ip)	((ip)->di_blocks)
+#define	actualblocks(fs, ip)	DIP(fs, dp, di_blocks)
 #endif
 
 static int
-virtualblocks(struct fs *super, struct ufs1_dinode *ip)
+virtualblocks(struct fs *super, union dinode *dp)
 {
 	off_t nblk, sz;
 
-	sz = ip->di_size;
+	sz = DIP(super, dp, di_size);
 #ifdef	COMPAT
 	if (lblkno(super, sz) >= NDADDR) {
 		nblk = blkroundup(super, sz);
@@ -148,19 +182,24 @@ virtualblocks(struct fs *super, struct ufs1_dinode *ip)
 }
 
 static int
-isfree(struct ufs1_dinode *ip)
+isfree(struct fs *super, union dinode *dp)
 {
 #ifdef	COMPAT
-	return (ip->di_mode&IFMT) == 0;
+	return (DIP(super, dp, di_mode) & IFMT) == 0;
 #else	/* COMPAT */
-	switch (ip->di_mode&IFMT) {
+	switch (DIP(super, dp, di_mode) & IFMT) {
 	case IFIFO:
 	case IFLNK:		/* should check FASTSYMLINK? */
 	case IFDIR:
 	case IFREG:
 		return 0;
-	default:
+	case IFCHR:
+	case IFBLK:
+	case IFSOCK:
+	case 0:
 		return 1;
+	default:
+		errx(1, "unknown IFMT 0%o", DIP(super, dp, di_mode) & IFMT);
 	}
 #endif
 }
@@ -311,7 +350,7 @@ static void
 dofsizes(int fd, struct fs *super, char *name)
 {
 	ino_t inode, maxino;
-	struct ufs1_dinode *ip;
+	union dinode *dp;
 	daddr64_t sz, ksz;
 	struct fsizes *fp, **fsp;
 	int i;
@@ -323,16 +362,16 @@ dofsizes(int fd, struct fs *super, char *name)
 #endif	/* COMPAT */
 	for (inode = 0; inode < maxino; inode++) {
 		errno = 0;
-		if ((ip = get_inode(fd, super, inode))
+		if ((dp = get_inode(fd, super, inode))
 #ifdef	COMPAT
-		    && ((ip->di_mode&IFMT) == IFREG
-			|| (ip->di_mode&IFMT) == IFDIR)
+		    && ((DIP(super, dp, di_mode) & IFMT) == IFREG
+			|| (DIP(super, dp, di_mode) & IFMT) == IFDIR)
 #else	/* COMPAT */
-		    && !isfree(ip)
+		    && !isfree(super, dp)
 #endif	/* COMPAT */
 		    ) {
-			sz = estimate ? virtualblocks(super, ip) :
-			    actualblocks(super, ip);
+			sz = estimate ? virtualblocks(super, dp) :
+			    actualblocks(super, dp);
 #ifdef	COMPAT
 			if (sz >= FSZCNT) {
 				fsizes->fsz_count[FSZCNT-1]++;
@@ -383,18 +422,18 @@ douser(int fd, struct fs *super, char *name)
 {
 	ino_t inode, maxino;
 	struct user *usr, *usrs;
-	struct ufs1_dinode *ip;
+	union dinode *dp;
 	int n;
 
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 	for (inode = 0; inode < maxino; inode++) {
 		errno = 0;
-		if ((ip = get_inode(fd, super, inode))
-		    && !isfree(ip))
-			uses(ip->di_uid,
-			     estimate ? virtualblocks(super, ip)
-				: actualblocks(super, ip),
-			    ip->di_atime);
+		if ((dp = get_inode(fd,super,inode))
+		    && !isfree(super, dp))
+			uses(DIP(super, dp, di_uid),
+			    estimate ? virtualblocks(super, dp) :
+				actualblocks(super, dp),
+			    DIP(super, dp, di_atime));
 		else if (errno)
 			err(1, "%s", name);
 	}
@@ -423,7 +462,7 @@ donames(int fd, struct fs *super, char *name)
 	int c;
 	ino_t inode, inode1;
 	ino_t maxino;
-	struct ufs1_dinode *ip;
+	union dinode *dp;
 
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 	/* first skip the name of the filesystem */
@@ -443,9 +482,8 @@ donames(int fd, struct fs *super, char *name)
 			continue;
 #endif
 		errno = 0;
-		if ((ip = get_inode(fd, super, inode))
-		    && !isfree(ip)) {
-			printf("%s\t", user(ip->di_uid)->name);
+		if ((dp = get_inode(fd, super, inode)) && !isfree(super, dp)) {
+			printf("%s\t", user(DIP(super, dp, di_uid))->name);
 			/* now skip whitespace */
 			while ((c = getchar()) == ' ' || c == '\t');
 			/* and print out the remainder of the input line */
@@ -478,7 +516,11 @@ usage(void)
 	exit(1);
 }
 
-static char superblock[SBSIZE];
+/*
+ * Possible superblock locations ordered from most to least likely.
+ */
+static int sblock_try[] = SBLOCKSEARCH;
+static char superblock[SBLOCKSIZE];
 
 #define	max(a,b)	MAX((a),(b))
 /*
@@ -510,7 +552,8 @@ ffs_oldfscompat(struct fs *fs)
 void
 quot(char *name, char *mp)
 {
-	int fd;
+	int i, fd;
+	struct fs *fs;
 
 	get_inode(-1, NULL, 0);		/* flush cache */
 	inituser();
@@ -523,21 +566,34 @@ quot(char *name, char *mp)
 		warn("%s", name);
 		return;
 	}
-	if (lseek(fd, SBOFF, SEEK_SET) != SBOFF
-	    || read(fd, superblock, SBSIZE) != SBSIZE
-	    || ((struct fs *)superblock)->fs_magic != FS_MAGIC
-	    || ((struct fs *)superblock)->fs_bsize > MAXBSIZE
-	    || ((struct fs *)superblock)->fs_bsize < sizeof(struct fs)) {
+	for (i = 0; sblock_try[i] != -1; i++) {
+		if (lseek(fd, sblock_try[i], 0) != sblock_try[i]) {
+			close(fd);
+			return;
+		}
+		if (read(fd, superblock, SBLOCKSIZE) != SBLOCKSIZE) {
+			close(fd);
+			return;
+		}
+		fs = (struct fs *)superblock;
+		if ((fs->fs_magic == FS_UFS1_MAGIC ||
+		    (fs->fs_magic == FS_UFS2_MAGIC &&
+		    fs->fs_sblockloc == sblock_try[i])) &&
+		    fs->fs_bsize <= MAXBSIZE &&
+		    fs->fs_bsize >= sizeof(struct fs))
+			break;
+	}
+	if (sblock_try[i] == -1) {
 		warnx("%s: not a BSD filesystem", name);
 		close(fd);
 		return;
 	}
-	ffs_oldfscompat((struct fs *)superblock);
+	ffs_oldfscompat(fs);
 	printf("%s:", name);
 	if (mp)
 		printf(" (%s)", mp);
 	putchar('\n');
-	(*func)(fd, (struct fs *)superblock, name);
+	(*func)(fd, fs, name);
 	close(fd);
 }
 
