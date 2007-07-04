@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.18 2007/06/16 13:29:11 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.19 2007/07/04 20:32:43 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ const char * const ieee80211_mgt_subtype_name[] = {
 	"assoc_req",	"assoc_resp",	"reassoc_req",	"reassoc_resp",
 	"probe_req",	"probe_resp",	"reserved#6",	"reserved#7",
 	"beacon",	"atim",		"disassoc",	"auth",
-	"deauth",	"reserved#13",	"reserved#14",	"reserved#15"
+	"deauth",	"action",	"action_noack",	"reserved#15"
 };
 const char * const ieee80211_state_name[IEEE80211_S_MAX] = {
 	"INIT",		/* IEEE80211_S_INIT */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.27 2007/07/03 15:22:15 claudio Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.28 2007/07/04 20:32:43 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -140,6 +140,8 @@ struct ieee80211_mnf {
 #define	IEEE80211_FC0_SUBTYPE_DISASSOC		0xa0
 #define	IEEE80211_FC0_SUBTYPE_AUTH		0xb0
 #define	IEEE80211_FC0_SUBTYPE_DEAUTH		0xc0
+#define IEEE80211_FC0_SUBTYPE_ACTION		0xd0
+#define IEEE80211_FC0_SUBTYPE_ACTION_NOACK	0xe0	/* 802.11n/D2.00 */
 /* for TYPE_CTL */
 #define	IEEE80211_FC0_SUBTYPE_PS_POLL		0xa0
 #define	IEEE80211_FC0_SUBTYPE_RTS		0xb0
@@ -401,17 +403,6 @@ enum ieee80211_edca_ac {
 #define IEEE80211_OUI	((const u_int8_t[]){ 0x00, 0x0f, 0xac })
 #define MICROSOFT_OUI	((const u_int8_t[]){ 0x00, 0x50, 0xf2 })
 
-/*
- * AUTH management packets
- *
- *	octet algo[2]
- *	octet seq[2]
- *	octet status[2]
- *	octet chal.id
- *	octet chal.length
- *	octet chal.text[253]
- */
-
 #define	IEEE80211_AUTH_ALGORITHM(auth) \
 	((auth)[0] | ((auth)[1] << 8))
 #define	IEEE80211_AUTH_TRANSACTION(auth) \
@@ -449,8 +440,10 @@ enum {
 	IEEE80211_REASON_ASSOC_LEAVE		= 8,
 	IEEE80211_REASON_ASSOC_NOT_AUTHED	= 9,
 
+	/* XXX the following two reason codes are not correct */
 	IEEE80211_REASON_RSN_REQUIRED		= 11,
 	IEEE80211_REASON_RSN_INCONSISTENT	= 12,
+
 	IEEE80211_REASON_IE_INVALID		= 13,
 	IEEE80211_REASON_MIC_FAILURE		= 14,
 
