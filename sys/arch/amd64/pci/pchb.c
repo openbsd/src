@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.9 2007/06/03 22:56:22 tedu Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.10 2007/07/04 21:30:48 ckuethe Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -160,8 +160,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	struct timeval tv1, tv2;
 	int i, r;
 
-	printf("\n");
-
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_AMD:
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -238,6 +236,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		}
 		break;
 	}
+	printf("\n");
 }
 
 int
