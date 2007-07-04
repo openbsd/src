@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.44 2007/06/10 11:38:27 sobrado Exp $	*/
+/*	$OpenBSD: part.c,v 1.45 2007/07/04 16:34:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -106,6 +106,7 @@ static const struct part_type {
 	{ 0x85, "Linux ext.  "},   /* Linux extended */
 	{ 0x86, "NT FAT VS   "},   /* NT FAT volume set */
 	{ 0x87, "NTFS VS     "},   /* NTFS volume set or HPFS mirrored */
+	{ 0x8E, "Linux LVM   "},   /* Linux LVM */
 	{ 0x93, "Amoeba FS   "},   /* Amoeba filesystem */
 	{ 0x94, "Amoeba BBT  "},   /* Amoeba bad block table */
 	{ 0x99, "Mylex       "},   /* Mylex EISA SCSI */
