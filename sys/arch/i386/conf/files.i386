@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.163 2007/05/31 18:52:27 uwe Exp $
+#	$OpenBSD: files.i386,v 1.164 2007/07/04 08:16:13 mpf Exp $
 #
 # new style config file for i386 architecture
 #
@@ -21,7 +21,6 @@ file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/est.c		!small_kernel & i686_cpu
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s	inet
-file	arch/i386/i386/ipx_cksum.c	ipx
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/via.c		i686_cpu
 file	arch/i386/i386/amd64errata.c	i686_cpu
