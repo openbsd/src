@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.39 2007/07/03 20:25:32 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.40 2007/07/04 20:18:00 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -827,6 +827,10 @@ ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
 	/* write Group Cipher Suite field (see Table 20da) */
 	memcpy(frm, IEEE80211_OUI, 3); frm += 3;
 	switch (ni->ni_group_cipher) {
+	case IEEE80211_CIPHER_USEGROUP:
+		/* can't get there */
+		panic("invalid group cipher!");
+		break;
 	case IEEE80211_CIPHER_WEP40:
 		*frm++ = 1;
 		break;
@@ -839,15 +843,16 @@ ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
 	case IEEE80211_CIPHER_WEP104:
 		*frm++ = 5;
 		break;
-	case IEEE80211_CIPHER_USEGROUP:
-		/* can't get there */
-		panic("invalid group cipher!");
-		break;
 	}
 
 	pcount = frm; frm += 2;
 	count = 0;
 	/* write Pairwise Cipher Suite List */
+	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_USEGROUP) {
+		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		*frm++ = 0;
+		count++;
+	}
 	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_TKIP) {
 		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
 		*frm++ = 2;
@@ -985,6 +990,7 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    6 +				/* parameter set (IBSS) */
 	    2 + 1 +			/* extended rate phy (ERP) */
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
+	    2 + 44 +			/* RSN (XXX 44) */
 	    2 +	18);			/* parameter set (EDCA) */
 	if (m == NULL)
 		return NULL;
@@ -1011,6 +1017,8 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
 	frm = ieee80211_add_xrates(frm, &ic->ic_bss->ni_rates);
+	if (ic->ic_flags & IEEE80211_F_RSN)
+		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
 	if (ic->ic_flags & IEEE80211_F_QOS)
 		frm = ieee80211_add_edca_params(frm, ic);
 
@@ -1121,6 +1129,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    2 + ni->ni_esslen +		/* ssid */
 	    2 + IEEE80211_RATE_SIZE +	/* supported rates */
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
+	    2 + 44 +			/* RSN (XXX 44) */
 	    2 + 1);			/* QoS capability */
 	if (m == NULL)
 		return NULL;
@@ -1157,6 +1166,8 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
 	frm = ieee80211_add_rates(frm, &ni->ni_rates);
 	frm = ieee80211_add_xrates(frm, &ni->ni_rates);
+	if (ic->ic_flags & IEEE80211_F_RSN)
+		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
 	if ((ic->ic_flags & IEEE80211_F_QOS) &&
 	    (ni->ni_flags & IEEE80211_NODE_QOS))
 		frm = ieee80211_add_qos_capability(frm, ic);
@@ -1424,6 +1435,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    2 + 254 +			/* parameter set (IBSS/TIM) */
 	    2 + 1 +			/* extended rate phy (ERP) */
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
+	    2 + 44 +			/* RSN (XXX 44) */
 	    2 + 18);			/* parameter set (EDCA) */
 	if (m == NULL)
 		return NULL;
@@ -1465,6 +1477,8 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
 	frm = ieee80211_add_xrates(frm, rs);
+	if (ic->ic_flags & IEEE80211_F_RSN)
+		frm = ieee80211_add_rsn(frm, ic, ni);
 	if (ic->ic_flags & IEEE80211_F_QOS)
 		frm = ieee80211_add_edca_params(frm, ic);
 
