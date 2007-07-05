@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2007/05/14 21:38:08 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2007/07/05 22:16:30 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -809,8 +809,6 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	vaddr_t onfault;
 	union sigval sv;
 
-	sv.sival_ptr = (void *)addr;
-
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
@@ -904,6 +902,12 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
+
+		if (type == T_FDMMU_MISS || (sfsr & SFSR_FV) == 0)
+			sv.sival_ptr = (void *)va;
+		else
+			sv.sival_ptr = (void *)sfva;
+
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %u killed: out of swap\n",
 			       p->p_pid, p->p_comm,
