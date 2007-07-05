@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.6 2007/03/27 15:57:20 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 2007/07/05 04:37:30 miod Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.6 2007/03/27 15:57:20 miod Exp $
+ *      $Id: db_disasm.c,v 1.7 2007/07/05 04:37:30 miod Exp $
  */
 
 #include <sys/param.h>
@@ -344,7 +344,8 @@ md_printins(int ins, int mdbdot)
 	case OP_J:
 	case OP_JAL:
 		db_printf("%s\t", op_name[i.JType.op]);
-		db_printf("0x%8x",(mdbdot & 0xF0000000) | (i.JType.target << 2));
+		db_printsym((mdbdot & ~0x0fffffffL) | (i.JType.target << 2),
+		    DB_STGY_PROC, db_printf);
 		delay = 1;
 		break;
 
