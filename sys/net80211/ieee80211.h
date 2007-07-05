@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.29 2007/07/05 20:11:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.30 2007/07/05 20:59:25 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -65,8 +65,6 @@ struct ieee80211_frame {
 	u_int8_t	i_addr2[IEEE80211_ADDR_LEN];
 	u_int8_t	i_addr3[IEEE80211_ADDR_LEN];
 	u_int8_t	i_seq[2];
-	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
-	/* see below */
 } __packed;
 
 struct ieee80211_qosframe {
@@ -77,8 +75,18 @@ struct ieee80211_qosframe {
 	u_int8_t	i_addr3[IEEE80211_ADDR_LEN];
 	u_int8_t	i_seq[2];
 	u_int8_t	i_qos[2];
-	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
-	/* see below */
+} __packed;
+
+/* 802.11n/D2.02 */
+struct ieee80211_htframe {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_addr1[IEEE80211_ADDR_LEN];
+	u_int8_t	i_addr2[IEEE80211_ADDR_LEN];
+	u_int8_t	i_addr3[IEEE80211_ADDR_LEN];
+	u_int8_t	i_seq[2];
+	u_int8_t	i_qos[2];
+	u_int8_t	i_ht[4];
 } __packed;
 
 struct ieee80211_frame_addr4 {
@@ -91,7 +99,6 @@ struct ieee80211_frame_addr4 {
 	u_int8_t	i_addr4[IEEE80211_ADDR_LEN];
 } __packed;
 
-
 struct ieee80211_qosframe_addr4 {
 	u_int8_t	i_fc[2];
 	u_int8_t	i_dur[2];
@@ -101,6 +108,19 @@ struct ieee80211_qosframe_addr4 {
 	u_int8_t	i_seq[2];
 	u_int8_t	i_addr4[IEEE80211_ADDR_LEN];
 	u_int8_t	i_qos[2];
+} __packed;
+
+/* 802.11n/D2.02 */
+struct ieee80211_htframe_addr4 {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_addr1[IEEE80211_ADDR_LEN];
+	u_int8_t	i_addr2[IEEE80211_ADDR_LEN];
+	u_int8_t	i_addr3[IEEE80211_ADDR_LEN];
+	u_int8_t	i_seq[2];
+	u_int8_t	i_addr4[IEEE80211_ADDR_LEN];
+	u_int8_t	i_qos[2];
+	u_int8_t	i_ht[4];
 } __packed;
 
 /*
