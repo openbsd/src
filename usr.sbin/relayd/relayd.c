@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.37 2007/06/19 06:29:20 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.38 2007/07/05 09:42:26 thib Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -105,7 +105,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "%s [-dnv] [-f file]\n", __progname);
+	fprintf(stderr, "%s [-dnv] [-D macro=value] [-f file]\n", __progname);
 	exit(1);
 }
 
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 	debug = 0;
 	conffile = CONF_FILE;
 
-	for (;(c = getopt(argc, argv, "dD:nf:v")) != -1;) {
+	while ((c = getopt(argc, argv, "dD:nf:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;

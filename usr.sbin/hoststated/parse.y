@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.49 2007/05/31 18:58:09 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.50 2007/07/05 09:42:26 thib Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -158,7 +158,7 @@ http_type	: STRING	{
 			} else if (strcmp("http", $1) == 0) {
 				$$ = 0;
 			} else {
-				yyerror("invalid check type: $1", $1);
+				yyerror("invalid check type: %s", $1);
 				free($1);
 				YYERROR;
 			}
@@ -171,7 +171,7 @@ proto_type	: TCP				{ $$ = RELAY_PROTO_TCP; }
 			if (strcmp("http", $1) == 0) {
 				$$ = RELAY_PROTO_HTTP;
 			} else {
-				yyerror("invalid protocol type: $1", $1);
+				yyerror("invalid protocol type: %s", $1);
 				free($1);
 				YYERROR;
 			}
@@ -396,7 +396,7 @@ table		: TABLE STRING	{
 				if (!strcmp(tb->conf.name, $2))
 					break;
 			if (tb != NULL) {
-				yyerror("table %s defined twice");
+				yyerror("table %s defined twice", $2);
 				free($2);
 				YYERROR;
 			}
@@ -1415,8 +1415,10 @@ parse_config(const char *filename, int opts)
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL ||
 	    (conf->tables = calloc(1, sizeof(*conf->tables))) == NULL ||
-	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL)
+	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL) {
+		warn("cannot allocate memory");
 		return (NULL);
+	}
 
 	last_host_id = last_table_id = last_service_id = last_proto_id =
 	    last_relay_id = 0;
