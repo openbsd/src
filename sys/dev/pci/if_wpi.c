@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.45 2007/06/16 14:15:37 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.46 2007/07/05 20:29:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -2499,7 +2499,8 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	frm = ieee80211_add_rates(frm, rs);
 
 	/* add supported xrates IE */
-	frm = ieee80211_add_xrates(frm, rs);
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
+		frm = ieee80211_add_xrates(frm, rs);
 
 	/* setup length of probe request */
 	hdr->paylen = htole16(frm - (uint8_t *)wh);

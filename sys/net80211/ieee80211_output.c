@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.41 2007/07/05 20:19:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.42 2007/07/05 20:29:22 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -932,14 +932,15 @@ ieee80211_add_wpa1(u_int8_t *frm, struct ieee80211com *ic,
 u_int8_t *
 ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
 {
-	if (rs->rs_nrates > IEEE80211_RATE_SIZE) {
-		int nrates = rs->rs_nrates - IEEE80211_RATE_SIZE;
-		*frm++ = IEEE80211_ELEMID_XRATES;
-		*frm++ = nrates;
-		memcpy(frm, rs->rs_rates + IEEE80211_RATE_SIZE, nrates);
-		frm += nrates;
-	}
-	return frm;
+	int nrates;
+
+	KASSERT(rs->rs_nrates > IEEE80211_RATE_SIZE);
+
+	*frm++ = IEEE80211_ELEMID_XRATES;
+	nrates = rs->rs_nrates - IEEE80211_RATE_SIZE;
+	*frm++ = nrates;
+	memcpy(frm, rs->rs_rates + IEEE80211_RATE_SIZE, nrates);
+	return frm + nrates;
 }
 
 struct mbuf *
@@ -972,7 +973,7 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct mbuf *m;
 	u_int8_t *frm;
-	enum ieee80211_phymode mode;
+	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    2 + ic->ic_des_esslen +
@@ -985,9 +986,10 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	frm = mtod(m, u_int8_t *);
 	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
-	mode = ieee80211_chan2mode(ic, ni->ni_chan);
-	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[mode]);
-	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[mode]);
+	rs = &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
+	frm = ieee80211_add_rates(frm, rs);
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
+		frm = ieee80211_add_xrates(frm, rs);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1013,6 +1015,7 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct mbuf *m;
 	u_int8_t *frm;
+	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    8 +				/* time stamp */
@@ -1040,7 +1043,8 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	frm = ieee80211_add_ssid(frm, ic->ic_bss->ni_essid,
 	    ic->ic_bss->ni_esslen);
-	frm = ieee80211_add_rates(frm, &ic->ic_bss->ni_rates);
+	rs = &ic->ic_bss->ni_rates;
+	frm = ieee80211_add_rates(frm, rs);
 
 	if (ic->ic_phytype == IEEE80211_T_FH)
 		frm = ieee80211_add_fh_params(frm, ic, ni);
@@ -1051,7 +1055,8 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 		frm = ieee80211_add_ibss_params(frm, ni);
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
-	frm = ieee80211_add_xrates(frm, &ic->ic_bss->ni_rates);
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
+		frm = ieee80211_add_xrates(frm, rs);
 	if (ic->ic_flags & IEEE80211_F_RSN)
 		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
 	if (ic->ic_flags & IEEE80211_F_QOS)
@@ -1158,6 +1163,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct mbuf *m;
 	u_int8_t *frm;
 	u_int16_t capinfo;
+	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    2 +				/* capability information */
@@ -1202,8 +1208,10 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 		frm += IEEE80211_ADDR_LEN;
 	}
 	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
-	frm = ieee80211_add_rates(frm, &ni->ni_rates);
-	frm = ieee80211_add_xrates(frm, &ni->ni_rates);
+	rs = &ni->ni_rates;
+	frm = ieee80211_add_rates(frm, rs);
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
+		frm = ieee80211_add_xrates(frm, rs);
 	if (ic->ic_flags & IEEE80211_F_RSN)
 		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
 	if ((ic->ic_flags & IEEE80211_F_QOS) &&
@@ -1232,6 +1240,7 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct mbuf *m;
 	u_int8_t *frm;
+	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    2 +				/* capability information */
@@ -1255,8 +1264,10 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 		LE_WRITE_2(frm, 0);
 	frm += 2;
 
-	frm = ieee80211_add_rates(frm, &ni->ni_rates);
-	frm = ieee80211_add_xrates(frm, &ni->ni_rates);
+	rs = &ni->ni_rates;
+	frm = ieee80211_add_rates(frm, rs);
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
+		frm = ieee80211_add_xrates(frm, rs);
 	if ((ic->ic_flags & IEEE80211_F_QOS) &&
 	    (ni->ni_flags & IEEE80211_NODE_QOS))
 		frm = ieee80211_add_edca_params(frm, ic);
@@ -1517,7 +1528,8 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
-	frm = ieee80211_add_xrates(frm, rs);
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
+		frm = ieee80211_add_xrates(frm, rs);
 	if (ic->ic_flags & IEEE80211_F_RSN)
 		frm = ieee80211_add_rsn(frm, ic, ni);
 	if (ic->ic_flags & IEEE80211_F_QOS)
