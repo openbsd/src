@@ -1,9 +1,10 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.13 2007/07/05 20:11:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.14 2007/07/05 20:18:02 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2007 Damien Bergamini
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
