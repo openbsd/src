@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.42 2007/07/05 20:29:22 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.43 2007/07/05 21:35:45 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1181,12 +1181,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
-	if (ic->ic_opmode == IEEE80211_M_IBSS)
-		capinfo = IEEE80211_CAPINFO_IBSS;
-	else if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-		capinfo = IEEE80211_CAPINFO_ESS;
-	else
-		capinfo = 0;
+	capinfo = IEEE80211_CAPINFO_ESS;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	/*
