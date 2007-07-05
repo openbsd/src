@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.79 2007/01/03 18:19:06 claudio Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.80 2007/07/05 20:31:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -2095,7 +2095,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		capinfo = IEEE80211_CAPINFO_IBSS;
 	else
-		capinfo = IEEE80211_CAPINFO_ESS;
+		capinfo = 0;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
