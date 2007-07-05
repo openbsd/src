@@ -1,4 +1,4 @@
-#	$OpenBSD: config.gcc,v 1.18 2007/01/17 15:06:16 tsi Exp $
+#	$OpenBSD: config.gcc,v 1.19 2007/07/05 18:59:27 kettenis Exp $
 # GCC build-, host- and target-specific configuration file.
 # Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
@@ -842,7 +842,7 @@ hppa64-*-openbsd*)
 	tmake_file="${tmake_file} pa/t-openbsd64"
 	;;
 hppa-*-openbsd*)
-	target_cpu_default="MASK_PA_11 | MASK_NO_SPACE_REGS"
+	target_cpu_default="MASK_PA_11"
 	tmake_file="t-libc-ok t-openbsd t-openbsd-thread pa/t-openbsd"
 	;;
 hppa1.1-*-pro*)
