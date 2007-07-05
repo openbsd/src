@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.104 2007/07/03 13:22:43 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.105 2007/07/05 23:03:32 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -208,6 +208,9 @@ cvs_update_leavedir(struct cvs_file *cf)
 
 		return;
 	}
+
+	if (cvs_server_active == 1 && !strcmp(cf->file_name, "."))
+		return;
 
 	if (fstat(cf->fd, &st) == -1)
 		fatal("cvs_update_leavedir: %s", strerror(errno));
