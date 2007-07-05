@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.28 2007/07/04 20:16:25 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.29 2007/07/05 20:19:21 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -288,6 +288,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define IEEE80211_F_QOS		0x00080000	/* CONF: QoS enabled */
 #define	IEEE80211_F_USEPROT	0x00100000	/* STATUS: protection enabled */
 #define	IEEE80211_F_RSN		0x00200000	/* CONF: RSN enabled */
+#define	IEEE80211_F_WPA1	0x00400000	/* CONF: WPA1 enabled */
 #define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
 
 /* ic_caps */

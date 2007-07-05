@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.40 2007/07/04 20:18:00 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.41 2007/07/05 20:19:21 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -69,6 +69,8 @@ enum	ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
 struct	mbuf *ieee80211_classify(struct ieee80211com *, struct mbuf *, int *);
 int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
 	    struct mbuf *, int);
+u_int8_t *ieee80211_add_rsn_body(u_int8_t *, struct ieee80211com *,
+	    const struct ieee80211_node *, int);
 struct	mbuf *ieee80211_getmbuf(int, int, u_int);
 struct	mbuf *ieee80211_get_probe_req(struct ieee80211com *,
 	    struct ieee80211_node *);
@@ -812,20 +814,18 @@ ieee80211_add_qos_capability(u_int8_t *frm, struct ieee80211com *ic)
  * Add an RSN element to a frame (see 7.3.2.25).
  */
 u_int8_t *
-ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
-    const struct ieee80211_node *ni)
+ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
+    const struct ieee80211_node *ni, int wpa1)
 {
-	u_int8_t *plen, *pcount;
+	const u_int8_t *oui = wpa1 ? MICROSOFT_OUI : IEEE80211_OUI;
+	u_int8_t *pcount;
 	u_int16_t count;
-
-	*frm++ = IEEE80211_ELEMID_RSN;
-	plen = frm++;	/* length filled in later */
 
 	/* write Version field */
 	LE_WRITE_2(frm, 1); frm += 2;
 
 	/* write Group Cipher Suite field (see Table 20da) */
-	memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+	memcpy(frm, oui, 3); frm += 3;
 	switch (ni->ni_group_cipher) {
 	case IEEE80211_CIPHER_USEGROUP:
 		/* can't get there */
@@ -849,17 +849,17 @@ ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
 	count = 0;
 	/* write Pairwise Cipher Suite List */
 	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_USEGROUP) {
-		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 0;
 		count++;
 	}
 	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_TKIP) {
-		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 2;
 		count++;
 	}
 	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_CCMP) {
-		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 3;
 		count++;
 	}
@@ -870,12 +870,12 @@ ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
 	count = 0;
 	/* write AKM Suite List (see Table 20dc) */
 	if (ni->ni_akmset & IEEE80211_AKM_IEEE8021X) {
-		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 1;
 		count++;
 	}
 	if (ni->ni_akmset & IEEE80211_AKM_PSK) {
-		memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+		memcpy(frm, oui, 3); frm += 3;
 		*frm++ = 2;
 		count++;
 	}
@@ -886,6 +886,40 @@ ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
 	LE_WRITE_2(frm, ni->ni_rsncaps); frm += 2;
 
 	/* no PMKID List for now */
+
+	return frm;
+}
+
+u_int8_t *
+ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
+    const struct ieee80211_node *ni)
+{
+	u_int8_t *plen;
+
+	*frm++ = IEEE80211_ELEMID_RSN;
+	plen = frm++;	/* length filled in later */
+	frm = ieee80211_add_rsn_body(frm, ic, ni, 0);
+
+	/* write length field */
+	*plen = frm - plen + 1;
+	return frm;
+}
+
+/*
+ * Add a vendor specific WPA1 element to a frame.
+ * This is required for compatibility with Wi-Fi Alliance WPA1/WPA1+WPA2.
+ */
+u_int8_t *
+ieee80211_add_wpa1(u_int8_t *frm, struct ieee80211com *ic,
+    const struct ieee80211_node *ni)
+{
+	u_int8_t *plen;
+
+	*frm++ = IEEE80211_ELEMID_VENDOR;
+	plen = frm++;	/* length filled in later */
+	memcpy(frm, MICROSOFT_OUI, 3); frm += 3;
+	*frm++ = 1;	/* WPA1 */
+	frm = ieee80211_add_rsn_body(frm, ic, ni, 1);
 
 	/* write length field */
 	*plen = frm - plen + 1;
@@ -991,7 +1025,8 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    2 + 1 +			/* extended rate phy (ERP) */
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
 	    2 + 44 +			/* RSN (XXX 44) */
-	    2 +	18);			/* parameter set (EDCA) */
+	    2 +	18 +			/* parameter set (EDCA) */
+	    2 + 48);			/* WPA (XXX 48) */
 	if (m == NULL)
 		return NULL;
 
@@ -1021,6 +1056,8 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
 	if (ic->ic_flags & IEEE80211_F_QOS)
 		frm = ieee80211_add_edca_params(frm, ic);
+	if (ic->ic_flags & IEEE80211_F_WPA1)
+		frm = ieee80211_add_wpa1(frm, ic, ic->ic_bss);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1130,7 +1167,8 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    2 + IEEE80211_RATE_SIZE +	/* supported rates */
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
 	    2 + 44 +			/* RSN (XXX 44) */
-	    2 + 1);			/* QoS capability */
+	    2 + 1 +			/* QoS capability */
+	    2 + 48);			/* WPA (XXX 48) */
 	if (m == NULL)
 		return NULL;
 
@@ -1171,6 +1209,8 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if ((ic->ic_flags & IEEE80211_F_QOS) &&
 	    (ni->ni_flags & IEEE80211_NODE_QOS))
 		frm = ieee80211_add_qos_capability(frm, ic);
+	if (ic->ic_flags & IEEE80211_F_WPA1)
+		frm = ieee80211_add_wpa1(frm, ic, ic->ic_bss);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1436,7 +1476,8 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    2 + 1 +			/* extended rate phy (ERP) */
 	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
 	    2 + 44 +			/* RSN (XXX 44) */
-	    2 + 18);			/* parameter set (EDCA) */
+	    2 + 18 +			/* parameter set (EDCA) */
+	    2 + 48);			/* WPA (XXX 48) */
 	if (m == NULL)
 		return NULL;
 
@@ -1481,6 +1522,8 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 		frm = ieee80211_add_rsn(frm, ic, ni);
 	if (ic->ic_flags & IEEE80211_F_QOS)
 		frm = ieee80211_add_edca_params(frm, ic);
+	if (ic->ic_flags & IEEE80211_F_WPA1)
+		frm = ieee80211_add_wpa1(frm, ic, ni);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 	m->m_pkthdr.rcvif = (void *)ni;
