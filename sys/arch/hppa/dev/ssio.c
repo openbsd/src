@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssio.c,v 1.5 2007/07/03 20:49:57 kettenis Exp $	*/
+/*	$OpenBSD: ssio.c,v 1.6 2007/07/05 11:28:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -353,6 +353,12 @@ ssio_print(void *aux, const char *pnp)
 	struct ssio_attach_args *saa = aux;
 
 	if (pnp)
-		printf("%s at %s\n", saa->saa_name, pnp);
+		printf("%s at %s offset\n", saa->saa_name, pnp);
+	if (saa->saa_iobase) {
+		printf(" offset %lx", saa->saa_iobase);
+		if (!pnp && saa->saa_irq >= 0)
+			printf(" irq %d", saa->saa_irq);
+	}
+
 	return (UNCONF);
 }
