@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.28 2007/07/04 20:32:43 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.29 2007/07/05 20:11:04 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -624,5 +624,15 @@ struct ieee80211_eapol_key {
 	u_int16_t	len;
 	u_int8_t	data[0];
 } __packed;
+
+/* Pairwise Transient Key (see 8.5.1.2) */
+struct ieee80211_ptk {
+	u_int8_t	kck[16];	/* Key Confirmation Key */
+	u_int8_t	kek[16];	/* Key Encryption Key */
+	u_int8_t	tk[32];		/* Temporal Key */
+} __packed;
+
+#define IEEE80211_PMKID_LEN	16
+#define IEEE80211_SMKID_LEN	16
 
 #endif /* _NET80211_IEEE80211_H_ */
