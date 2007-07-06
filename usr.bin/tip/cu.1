@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cu.1,v 1.4 2007/05/31 19:20:18 jmc Exp $
+.\"	$OpenBSD: cu.1,v 1.5 2007/07/06 07:13:41 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tip.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 6 2007 $
 .Dt CU 1
 .Os
 .Sh NAME
@@ -70,6 +70,26 @@ Either of the forms like
 or
 .Pa /dev/tty00
 are permitted.
+.Pp
+For reasons outlined in
+.Xr tty 4 ,
+.Xr cua 4
+devices should be used on architectures which have them.
+For those which do not,
+.Xr tty 4
+devices can be used.
+Users in group
+.Dq dialer
+are permitted to use
+.Xr cua 4
+devices by default;
+permissions on
+.Pa /dev/tty00
+or
+.Pa /dev/ttya
+can be changed,
+but they will revert to their defaults
+after an upgrade or (re)install.
 .It Fl o
 Use odd parity.
 If both
@@ -84,6 +104,11 @@ The default is 9600.
 .It Fl t
 Connect via a hard-wired connection to a host on a dial-up line.
 .El
+.Pp
+Line access is logged to
+.Pa /var/log/aculog .
+This file does not exist by default and has to be created
+to enable logging.
 .Pp
 Typed characters are normally transmitted directly to the remote
 machine (which does the echoing as well).
