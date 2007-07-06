@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.56 2007/07/06 03:20:07 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.57 2007/07/06 04:10:34 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -859,7 +859,6 @@ audio_init_ringbuffer(rp)
 	rp->stamp_last = 0;
 	rp->drops = 0;
 	rp->pdrops = 0;
-	rp->pause = 0;
 	rp->copying = 0;
 	rp->needfill = 0;
 	rp->mmapped = 0;
@@ -1044,10 +1043,12 @@ audio_open(dev, sc, flags, ifmt, p)
 	ai.record.encoding    = sc->sc_rparams.encoding;
 	ai.record.channels    = sc->sc_rparams.channels;
 	ai.record.precision   = sc->sc_rparams.precision;
+	ai.record.pause	      = 0;
 	ai.play.sample_rate   = sc->sc_pparams.sample_rate;
 	ai.play.encoding       = sc->sc_pparams.encoding;
 	ai.play.channels      = sc->sc_pparams.channels;
 	ai.play.precision     = sc->sc_pparams.precision;
+	ai.play.pause	      = 0;
 	ai.mode		      = mode;
 	sc->sc_pr.blksize = sc->sc_rr.blksize = 0; /* force recalculation */
 	error = audiosetinfo(sc, &ai);
@@ -1667,6 +1668,8 @@ audio_ioctl(dev, cmd, addr, flag, p)
 			splx(s);
 			return error;
 		}
+		sc->sc_rr.pause = 0;
+		sc->sc_pr.pause = 0;
 		if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pbus && pbus)
 			error = audiostartp(sc);
 		if (!error &&
