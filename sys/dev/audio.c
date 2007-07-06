@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.58 2007/07/06 04:12:50 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.59 2007/07/06 04:25:28 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1723,7 +1723,7 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	 * sample of what we write next?
 	 */
 	case AUDIO_WSEEK:
-		*(u_long *)addr = sc->sc_rr.used;
+		*(u_long *)addr = sc->sc_pr.used;
 		break;
 
 	case AUDIO_SETINFO:
