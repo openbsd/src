@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.8 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.9 2007/07/06 19:33:58 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -80,6 +80,7 @@ struct ieee80211_stats {
 	u_int32_t	is_scan_passive;	/* passive scans started */
 	u_int32_t	is_node_timeout;	/* nodes timed out inactivity */
 	u_int32_t	is_crypto_nomem;	/* no memory for crypto ctx */
+	u_int32_t	is_rx_assoc_badrsnie;	/* rx assoc w/ bad RSN IE */
 };
 
 #define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)

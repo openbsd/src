@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.38 2007/07/06 18:18:43 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.39 2007/07/06 19:33:58 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -830,7 +830,7 @@ ieee80211_parse_edca_params(struct ieee80211com *ic, const u_int8_t *frm)
 		IEEE80211_DPRINTF(("%s: invalid EDCA parameter set IE;"
 		    " length %u, expecting 18\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
-		return 1;
+		return IEEE80211_REASON_IE_INVALID;
 	}
 	return ieee80211_parse_edca_params_body(ic, frm + 2);
 }
@@ -849,7 +849,7 @@ ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
 		IEEE80211_DPRINTF(("%s: invalid WMM parameter set IE;"
 		    " length %u, expecting 24\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
-		return 1;
+		return IEEE80211_REASON_IE_INVALID;
 	}
 	return ieee80211_parse_edca_params_body(ic, frm + 8);
 }
@@ -902,30 +902,30 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	const u_int8_t *efrm;
 	u_int16_t m, n, s;
-	u_int16_t cap;
-	enum ieee80211_cipher cipher_group;
-	u_int akm_mask, cipher_mask;
+	u_int16_t rsncaps;
+	enum ieee80211_cipher group_cipher;
+	u_int akmset, pairwise_cipherset;
 
 	efrm = frm + len;
 
 	/* check Version field */
 	if (LE_READ_2(frm) != 1)
-		return 1;
+		return IEEE80211_REASON_RSN_IE_VER_UNSUP;
 	frm += 2;
 
 	/* all fields after the Version field are optional */
 
 	/* if Cipher Suite missing, default to CCMP */
-	cipher_group = cipher_mask = IEEE80211_CIPHER_CCMP;
+	group_cipher = pairwise_cipherset = IEEE80211_CIPHER_CCMP;
 	/* if AKM Suite missing, default to 802.1X */
-	akm_mask = IEEE80211_AKM_IEEE8021X;
+	akmset = IEEE80211_AKM_IEEE8021X;
 
 	/* read Group Cipher Suite field */
 	if (frm + 4 > efrm)
 		return 0;
-	cipher_group = ieee80211_parse_rsn_cipher(frm);
-	if (cipher_group == IEEE80211_CIPHER_USEGROUP)
-		return 1;
+	group_cipher = ieee80211_parse_rsn_cipher(frm);
+	if (group_cipher == IEEE80211_CIPHER_USEGROUP)
+		return IEEE80211_REASON_BAD_GROUP_CIPHER;
 	frm += 4;
 
 	/* read Pairwise Cipher Suite Count field */
@@ -936,18 +936,17 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* read Pairwise Cipher Suite List */
 	if (frm + m * 4 > efrm)
-		return 1;
-	cipher_mask = IEEE80211_CIPHER_NONE;
+		return IEEE80211_REASON_IE_INVALID;
+	pairwise_cipherset = IEEE80211_CIPHER_NONE;
 	while (m-- > 0) {
-		cipher_mask |= ieee80211_parse_rsn_cipher(frm);
+		pairwise_cipherset |= ieee80211_parse_rsn_cipher(frm);
 		frm += 4;
 	}
-	if (cipher_mask & IEEE80211_CIPHER_USEGROUP) {
-		if (cipher_mask != IEEE80211_CIPHER_USEGROUP)
-			return 1;
-		if (cipher_group == IEEE80211_CIPHER_CCMP)
-			return 1;
-		cipher_mask = cipher_group;
+	if (pairwise_cipherset & IEEE80211_CIPHER_USEGROUP) {
+		if (pairwise_cipherset != IEEE80211_CIPHER_USEGROUP)
+			return IEEE80211_REASON_BAD_PAIRWISE_CIPHER;
+		if (group_cipher == IEEE80211_CIPHER_CCMP)
+			return IEEE80211_REASON_BAD_PAIRWISE_CIPHER;
 	}
 
 	/* read AKM Suite List Count field */
@@ -958,17 +957,17 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* read AKM Suite List */
 	if (frm + n * 4 > efrm)
-		return 1;
-	akm_mask = IEEE80211_AKM_NONE;
+		return IEEE80211_REASON_IE_INVALID;
+	akmset = IEEE80211_AKM_NONE;
 	while (n-- > 0) {
-		akm_mask |= ieee80211_parse_rsn_akm(frm);
+		akmset |= ieee80211_parse_rsn_akm(frm);
 		frm += 4;
 	}
 
 	/* read RSN Capabilities field */
 	if (frm + 2 > efrm)
 		return 0;
-	cap = LE_READ_2(frm);
+	rsncaps = LE_READ_2(frm);
 	frm += 2;
 
 	/* read PMKID Count field */
@@ -978,12 +977,17 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
 	frm += 2;
 
 	/* read PMKID List */
-	if (frm + s * 16 > efrm)
-		return 1;
+	if (frm + s * IEEE80211_PMKID_LEN > efrm)
+		return IEEE80211_REASON_IE_INVALID;
 	while (s-- > 0) {
 		/* ignore PMKIDs for now */
-		frm += 16;
+		frm += IEEE80211_PMKID_LEN;
 	}
+
+	ni->ni_group_cipher = group_cipher;
+	ni->ni_pairwise_cipherset = pairwise_cipherset;
+	ni->ni_akmset = akmset;
+	ni->ni_rsncaps = rsncaps;
 
 	return 0;
 }
@@ -997,7 +1001,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, struct ieee80211_node *ni,
 		IEEE80211_DPRINTF(("%s: invalid RSN/WPA2 IE;"
 		    " length %u, expecting at least 2\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
-		return 1;
+		return IEEE80211_REASON_IE_INVALID;
 	}
 	return ieee80211_parse_rsn_body(ic, ni, frm + 2, frm[1] - 2);
 }
@@ -1011,7 +1015,7 @@ ieee80211_parse_wpa(struct ieee80211com *ic, struct ieee80211_node *ni,
 		IEEE80211_DPRINTF(("%s: invalid WPA1 IE;"
 		    " length %u, expecting at least 6\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
-		return 1;
+		return IEEE80211_REASON_IE_INVALID;
 	}
 	return ieee80211_parse_rsn_body(ic, ni, frm + 6, frm[1] - 6);
 }
@@ -1139,15 +1143,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 				break;
 			}
 			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
-				switch (frm[5]) {
-				case 1:	/* WPA */
+				if (frm[5] == 1)
 					wpa = frm;
-					break;
-				case 2:	/* WMM */
-					if (frm[1] >= 5 && frm[6] == 1)
-						wmm = frm;
-					break;
-				}
+				else if (frm[1] >= 5 &&
+				    frm[5] == 2 && frm[6] == 1)
+					wmm = frm;
 			}
 			break;
 		default:
@@ -1449,7 +1449,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *ssid, *rates, *xrates, *rsn, *wpa;
 	u_int16_t capinfo, bintval;
-	int reassoc, resp;
+	int reassoc, resp, reason = 0;
 
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
 	    ic->ic_state != IEEE80211_S_RUN)
@@ -1495,6 +1495,16 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_ELEMID_QOS_CAP:
 			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (frm[1] < 4) {
+				ic->ic_stats.is_rx_elem_toosmall++;
+				break;
+			}
+			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
+				if (frm[5] == 1)
+					wpa = frm;
+			}
+			break;
 		}
 		frm += frm[1] + 2;
 	}
@@ -1518,10 +1528,18 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 	if (rsn != NULL)
-		ieee80211_parse_rsn(ic, ni, rsn);
+		reason = ieee80211_parse_rsn(ic, ni, rsn);
 	else if (wpa != NULL)
-		ieee80211_parse_wpa(ic, ni, wpa);
-
+		reason = ieee80211_parse_wpa(ic, ni, wpa);
+	if (reason != 0) {
+		IEEE80211_DPRINTF(("%s: invalid RSN IE for %s\n",
+		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    reason);
+		ieee80211_node_leave(ic, ni);
+		ic->ic_stats.is_rx_assoc_badrsnie++;
+		return;
+	}
 	if (!(capinfo & IEEE80211_CAPINFO_ESS)) {
 		IEEE80211_DPRINTF(("%s: capinfo mismatch for %s\n",
 		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
@@ -1624,12 +1642,8 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 				break;
 			}
 			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
-				switch (frm[5]) {
-				case 2:	/* WMM */
-					if (frm[1] >= 5 && frm[6] == 1)
-						wmm = frm;
-					break;
-				}
+				if (frm[1] >= 5 && frm[5] == 2 && frm[6] == 1)
+					wmm = frm;
 			}
 			break;
 		}
