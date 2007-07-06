@@ -1,3 +1,4 @@
+.\"	$OpenBSD: audiotest_gsinfo.1,v 1.2 2007/07/06 00:51:11 jakemsr Exp $
 .\"
 .\" Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
 .\"
@@ -13,17 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\"	$Id: audiotest_gsinfo.1,v 1.1.1.1 2007/07/06 00:42:12 jakemsr Exp $
+.\"	$Id: audiotest_gsinfo.1,v 1.2 2007/07/06 00:51:11 jakemsr Exp $
 .\"
-.Dd $Mdocdate: July 5 2007
+.Dd $Mdocdate: July 6 2007 $
 .Dt AUDIOTEST_GSINFO 1
 .Os
 .Sh NAME
 .Nm audiotest_gsinfo
-.Nd test
-.Ar AUDIO_GETINFO
-and
-.Ar AUDIO_SETINFO
+.Nd test AUDIO_GETINFO and AUDIO_SETINFO
 .Sh SYNOPSIS
 .Nm audiotest_gsinfo
 .Bk -words
@@ -41,12 +39,13 @@ settings, then uses these settings in an
 .Ar AUDIO_SETINFO
 .Xr ioctl 2 .
 The options are as follows:
-.Bl -tag -width "-f device"
+.Bl -tag -width Ds
 .It Fl f Ar device
+The
 .Xr audio 4
 device to use.
-Defaults to
-.Dq /dev/audio .
+It defaults to
+.Pa /dev/audio .
 .El
 .Pp
 .Nm
@@ -105,7 +104,7 @@ ioctl, as well as the value it is using.
 If the ioctl fails,
 .Nm
 will print
-.Dq  <- ERROR
+.Dq <- ERROR
 immediately following the value.
 After all fields of the
 .Vt audio_info_t
@@ -113,8 +112,8 @@ structure have been used,
 .Nm
 will exit with status 1.
 .Sh SEE ALSO
-.Xr audio 4 ,
-.Xr ioctl 2
+.Xr ioctl 2 ,
+.Xr audio 4
 .Sh AUTHORS
 .Nm
 and this manual page were written by

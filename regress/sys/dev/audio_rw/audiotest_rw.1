@@ -1,3 +1,4 @@
+.\"	$OpenBSD: audiotest_rw.1,v 1.2 2007/07/06 00:51:11 jakemsr Exp $
 .\"
 .\" Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
 .\"
@@ -13,19 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\"	$Id: audiotest_rw.1,v 1.1.1.1 2007/07/06 00:43:38 jakemsr Exp $
+.\"	$Id: audiotest_rw.1,v 1.2 2007/07/06 00:51:11 jakemsr Exp $
 .\"
-.Dd $Mdocdate: June 13 2007
+.Dd $Mdocdate: July 6 2007 $
 .Dt AUDIOTEST_RW 1
 .Os
 .Sh NAME
 .Nm audiotest_rw
-.Nd test
-.Xr read 2
-and
-.Xr write 2
-with
-.Xr audio 4
+.Nd test read and write calls using audio
 .Sh SYNOPSIS
 .Nm audiotest_rw
 .Bk -words
@@ -104,7 +100,7 @@ and
 .Xr fwrite 3
 it to
 .Ar output .
-In neither
+If neither
 .Fl i
 nor
 .Fl o
@@ -113,19 +109,19 @@ are used
 will exit with an error.
 .Pp
 The options are as follows:
-.Bl -tag -width "-b buffersize"
+.Bl -tag -width Ds
 .It Fl b Ar buffersize
-Size of buffer for
+Buffer size for
 .Xr read 2
 and
 .Xr write 2
 operations, in bytes.
 Valid arguments are 32 to 65536 inclusive.
-Defaults to 8192.
+It defaults to 8192.
 .It Fl c Ar channels
 Number of audio channels.
 Valid arguments are 1 (mono) and 2 (stereo).
-Defaults to 2.
+It defaults to 2.
 .It Fl d
 Opens
 .Ar device
@@ -136,33 +132,34 @@ and
 options.
 If
 .Ar device
-does not support full-duplex operation
+does not support full-duplex operation,
 .Nm
 will exit with an error.
 .It Fl e Ar encoding
-Audio encoding to use.
+The audio encoding to use.
 .Ar encoding
 is the index of the encoding to use in the list of encodings supported by
-.Xr device ,
+.Ar device ,
 starting at 0.
-Defaults to 0.
+It defaults to 0.
 The list of upported encodings can be viewed with
 .Xr audioctl 1 :
 .Bd -literal -offset indent
 $ audioctl encodings
 .Ed
 .It Fl f Ar device
+The
 .Xr audio 4
 device to use.
-Defaults to
-.Dq /dev/audio .
+It defaults to
+.Pa /dev/audio .
 .It Fl i Ar input
-File from which raw (headerless) audio data will be read.
+The file from which raw (headerless) audio data will be read.
 .It Fl l Ar loops
-Number of times to read and/or write.
-Defaults to 64.
+The number of times to read and/or write.
+It defaults to 64.
 .It Fl o Ar output
-File to which raw (headerless) audio data will be written.
+The file to which raw (headerless) audio data will be written.
 .It Fl p
 Use
 .Xr poll 2
@@ -174,8 +171,8 @@ Using this option also causes
 .Ar device
 to be opened for non-blocking I/O.
 .It Fl r Ar samplerate
-Audio data sample rate in samples per second.
-Defaults to 48000.
+The audio data sample rate in samples per second.
+It defaults to 48000.
 .It Fl s
 Use
 .Xr select 2
@@ -197,12 +194,11 @@ are likely due to errors in
 .Xr audio 4
 documentation, the kernel's audio layer implementation, or audio
 device drivers.
-.Pp
 .Sh EXAMPLES
 The following command will open /dev/audio read-only, set /dev/audio
 to record mode with default parameters (channels:2
 encoding:0 sample rate 48000), and read data from /dev/audio and
-write it to the file test.pcm.
+write it to the file test.pcm:
 .Bd -literal -offset indent
 $ audiotest_rw -o test.pcm
 .Ed
@@ -210,7 +206,7 @@ $ audiotest_rw -o test.pcm
 The following command will open /dev/audio write-only, set /dev/audio
 to play mode with default parameters (channels:2
 encoding:0 sample rate 48000), and read data from the file test.pcm
-and write it to /dev/audio.
+and write it to /dev/audio:
 .Bd -literal -offset indent
 $ audiotest_rw -i test.pcm
 .Ed
@@ -219,7 +215,7 @@ The following command will open /dev/audio read-write, set /dev/audio
 to full-duplex mode with default parameters (channels:2
 encoding:0 sample rate 48000), read data from the file test.pcm
 and write it to /dev/audio, and read data from /dev/audio and
-write it to the file test2.pcm.
+write it to the file test2.pcm:
 .Bd -literal -offset indent
 $ audiotest_rw -i test.pcm -o test2.pcm
 .Ed
@@ -228,7 +224,7 @@ The following command will open /dev/audio read-only with non-blocking
 I/O, set /dev/audio to record mode with default parameters (channels:2
 encoding:0 sample rate 48000), and read data from /dev/audio and
 write it to the file test.pcm, using poll() to determine when data
-is ready to be read.
+is ready to be read:
 .Bd -literal -offset indent
 $ audiotest_rw -o test.pcm -p
 .Ed
@@ -238,7 +234,7 @@ I/o, set /dev/audio to full-duplex mode with default parameters (channels:2
 encoding:0 sample rate 48000), read data from the file test.pcm
 and write it to /dev/audio, and read data from /dev/audio and
 write it to the file test2.pcm, using select() to determine when data
-is ready for reading and/or writing on /dev/audio.
+is ready for reading and/or writing on /dev/audio:
 .Bd -literal -offset indent
 $ audiotest_rw -i test.pcm -o test2.pcm -s
 .Ed
