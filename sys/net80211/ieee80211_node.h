@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.16 2007/07/03 19:44:54 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.17 2007/07/06 18:18:43 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -128,7 +128,6 @@ struct ieee80211_node {
 	int			ni_inact;	/* inactivity mark count */
 	int			ni_txrate;	/* index to ni_rates[] */
 	int			ni_state;
-	u_int32_t		*ni_challenge;	/* shared-key challenge */
 
 	u_int8_t		ni_flags;	/* special-purpose state */
 #define IEEE80211_NODE_ERP	0x01

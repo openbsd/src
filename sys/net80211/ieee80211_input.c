@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.37 2007/07/06 17:58:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.38 2007/07/06 18:18:43 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -770,179 +770,6 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	}
 }
 
-#if 0
-/* TBD send appropriate responses on error? */
-void
-ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
-    u_int8_t *frm, u_int8_t *efrm, struct ieee80211_node *ni, int rssi,
-    u_int32_t rstamp, u_int16_t seq, u_int16_t status)
-{
-	struct ifnet *ifp = &ic->ic_if;
-	u_int8_t *challenge = NULL;
-	int i;
-
-	if ((ic->ic_flags & IEEE80211_F_WEPON) == 0) {
-		IEEE80211_DPRINTF(("%s: WEP is off\n", __func__));
-		return;
-	}
-
-	if (frm + 1 < efrm) {
-		if (frm[1] + 2 > efrm - frm) {
-			IEEE80211_DPRINTF(("elt %d %d bytes too long\n",
-			    frm[0], (frm[1] + 2) - (int)(efrm - frm)));
-			ic->ic_stats.is_rx_bad_auth++;
-			return;
-		}
-		if (*frm == IEEE80211_ELEMID_CHALLENGE)
-			challenge = frm;
-		frm += frm[1] + 2;
-	}
-	switch (seq) {
-	case IEEE80211_AUTH_SHARED_CHALLENGE:
-	case IEEE80211_AUTH_SHARED_RESPONSE:
-		if (challenge == NULL) {
-			IEEE80211_DPRINTF(("%s: no challenge sent\n",
-			    __func__));
-			ic->ic_stats.is_rx_bad_auth++;
-			return;
-		}
-		if (challenge[1] != IEEE80211_CHALLENGE_LEN) {
-			IEEE80211_DPRINTF(("%s: bad challenge len %d\n",
-			    __func__, challenge[1]));
-			ic->ic_stats.is_rx_bad_auth++;
-			return;
-		}
-	default:
-		break;
-	}
-	switch (ic->ic_opmode) {
-	case IEEE80211_M_MONITOR:
-	case IEEE80211_M_AHDEMO:
-	case IEEE80211_M_IBSS:
-		IEEE80211_DPRINTF(("%s: unexpected operating mode\n",
-		    __func__));
-		return;
-	case IEEE80211_M_HOSTAP:
-		if (ic->ic_state != IEEE80211_S_RUN) {
-			IEEE80211_DPRINTF(("%s: not running\n", __func__));
-			return;
-		}
-		switch (seq) {
-		case IEEE80211_AUTH_SHARED_REQUEST:
-			if (ni == ic->ic_bss) {
-				ni = ieee80211_alloc_node(ic, wh->i_addr2);
-				if (ni == NULL) {
-					ic->ic_stats.is_rx_nodealloc++;
-					return;
-				}
-				IEEE80211_ADDR_COPY(ni->ni_bssid,
-				    ic->ic_bss->ni_bssid);
-				ni->ni_rssi = rssi;
-				ni->ni_rstamp = rstamp;
-				ni->ni_chan = ic->ic_bss->ni_chan;
-			}
-			if (ni->ni_challenge == NULL)
-				ni->ni_challenge = (u_int32_t*)malloc(
-				    IEEE80211_CHALLENGE_LEN, M_DEVBUF,
-				    M_NOWAIT);
-			if (ni->ni_challenge == NULL) {
-				IEEE80211_DPRINTF(("%s: "
-				    "challenge alloc failed\n", __func__));
-				/* XXX statistic */
-				return;
-			}
-			for (i = IEEE80211_CHALLENGE_LEN / sizeof(u_int32_t);
-			     --i >= 0; )
-				ni->ni_challenge[i] = arc4random();
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: station %s shared key "
-				    "%sauthentication\n", ifp->if_xname,
-				    ether_sprintf(ni->ni_macaddr),
-				    ni->ni_state != IEEE80211_STA_CACHE ?
-				    "" : "re");
-			break;
-		case IEEE80211_AUTH_SHARED_RESPONSE:
-			if (ni == ic->ic_bss) {
-				IEEE80211_DPRINTF(("%s: unknown STA\n",
-				    __func__));
-				return;
-			}
-			if (ni->ni_challenge == NULL) {
-				IEEE80211_DPRINTF((
-				    "%s: no challenge recorded\n", __func__));
-				ic->ic_stats.is_rx_bad_auth++;
-				return;
-			}
-			if (memcmp(ni->ni_challenge, &challenge[2],
-			    challenge[1]) != 0) {
-				IEEE80211_DPRINTF(("%s: challenge mismatch\n",
-				    __func__));
-				ic->ic_stats.is_rx_auth_fail++;
-				return;
-			}
-			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: station %s authenticated "
-					"(shared key)\n", ifp->if_xname,
-					ether_sprintf(ni->ni_macaddr));
-			ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
-			break;
-		default:
-			IEEE80211_DPRINTF(("%s: bad seq %d from %s\n",
-			    __func__, seq, ether_sprintf(wh->i_addr2)));
-			ic->ic_stats.is_rx_bad_auth++;
-			return;
-		}
-		IEEE80211_SEND_MGMT(ic, ni,
-			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
-		break;
-
-	case IEEE80211_M_STA:
-		if (ic->ic_state != IEEE80211_S_AUTH)
-			return;
-		switch (seq) {
-		case IEEE80211_AUTH_SHARED_PASS:
-			if (ni->ni_challenge != NULL) {
-				FREE(ni->ni_challenge, M_DEVBUF);
-				ni->ni_challenge = NULL;
-			}
-			if (status != 0) {
-				printf("%s: %s: shared authentication failed "
-				    "(reason %d) for %s\n", ifp->if_xname,
-				    __func__, status,
-				    ether_sprintf(wh->i_addr3));
-				if (ni != ic->ic_bss)
-					ni->ni_fails++;
-				ic->ic_stats.is_rx_auth_fail++;
-				return;
-			}
-			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
-			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-			break;
-		case IEEE80211_AUTH_SHARED_CHALLENGE:
-			if (ni->ni_challenge == NULL)
-				ni->ni_challenge = (u_int32_t*)malloc(
-				    challenge[1], M_DEVBUF, M_NOWAIT);
-			if (ni->ni_challenge == NULL) {
-				IEEE80211_DPRINTF((
-				    "%s: challenge alloc failed\n", __func__));
-				/* XXX statistic */
-				return;
-			}
-			memcpy(ni->ni_challenge, &challenge[2], challenge[1]);
-			IEEE80211_SEND_MGMT(ic, ni,
-				IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
-			break;
-		default:
-			IEEE80211_DPRINTF(("%s: bad seq %d from %s\n",
-			    __func__, seq, ether_sprintf(wh->i_addr2)));
-			ic->ic_stats.is_rx_bad_auth++;
-			return;
-		}
-		break;
-	}
-}
-#endif
-
 /* unaligned little endian access */
 #define LE_READ_2(p)					\
 	((u_int16_t)					\
@@ -1564,7 +1391,6 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
  * [2]    Authentication algorithm number
  * [2]    Authentication transaction sequence number
  * [2]    Status code
- * [tlv*] Challenge text
  */
 void
 ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
@@ -1587,11 +1413,6 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
 
 	if (algo == IEEE80211_AUTH_ALG_OPEN)
 		ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq, status);
-#if 0
-	else if (algo == IEEE80211_AUTH_ALG_SHARED)
-		ieee80211_auth_shared(ic, wh, frm, efrm, ni, rssi, rstamp,
-		    seq, status);
-#endif
 	else {
 		IEEE80211_DPRINTF(("%s: unsupported authentication "
 		    "algorithm %d from %s\n",
@@ -1701,11 +1522,6 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	else if (wpa != NULL)
 		ieee80211_parse_wpa(ic, ni, wpa);
 
-	/* discard challenge after association */
-	if (ni->ni_challenge != NULL) {
-		FREE(ni->ni_challenge, M_DEVBUF);
-		ni->ni_challenge = NULL;
-	}
 	if (!(capinfo & IEEE80211_CAPINFO_ESS)) {
 		IEEE80211_DPRINTF(("%s: capinfo mismatch for %s\n",
 		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));

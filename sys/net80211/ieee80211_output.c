@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.43 2007/07/05 21:35:45 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.44 2007/07/06 18:18:43 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -191,13 +191,6 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
-
-	if ((m->m_flags & M_LINK0) != 0 && ni->ni_challenge != NULL) {
-		m->m_flags &= ~M_LINK0;
-		IEEE80211_DPRINTF(("%s: encrypting frame for %s\n", __func__,
-		    ether_sprintf(wh->i_addr1)));
-		wh->i_fc[1] |= IEEE80211_FC1_WEP;
-	}
 
 	if (ifp->if_flags & IFF_DEBUG) {
 		/* avoid to print too many frames */
@@ -752,18 +745,6 @@ ieee80211_add_edca_params(u_int8_t *frm, struct ieee80211com *ic)
 }
 
 /*
- * Add a Challenge Text element to a frame (see 7.3.2.8).
- */
-u_int8_t *
-ieee80211_add_challenge(u_int8_t *frm, const u_int8_t *challenge, u_int len)
-{
-	*frm++ = IEEE80211_ELEMID_CHALLENGE;
-	*frm++ = len;
-	memcpy(frm, challenge, len);
-	return frm + len;
-}
-
-/*
  * Add an ERP element to a frame (see 7.3.2.13).
  */
 u_int8_t *
@@ -1074,7 +1055,6 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
  * [2]    Authentication algorithm number
  * [2]    Authentication transaction sequence number
  * [2]    Status code
- * [tlv*] Challenge text
  */
 struct mbuf *
 ieee80211_get_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
@@ -1082,46 +1062,18 @@ ieee80211_get_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct mbuf *m;
 	u_int8_t *frm;
-	int has_challenge, is_shared_key;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-
-	has_challenge = (seq == IEEE80211_AUTH_SHARED_CHALLENGE ||
-	    seq == IEEE80211_AUTH_SHARED_RESPONSE) &&
-	    ni->ni_challenge != NULL;
-
-	is_shared_key = has_challenge || (ni->ni_challenge != NULL &&
-	    seq == IEEE80211_AUTH_SHARED_PASS);
-
-	if (has_challenge && status == IEEE80211_STATUS_SUCCESS) {
-		MH_ALIGN(m, 2 * 3 + 2 + IEEE80211_CHALLENGE_LEN);
-		m->m_pkthdr.len = m->m_len =
-		    2 * 3 + 2 + IEEE80211_CHALLENGE_LEN;
-	} else {
-		MH_ALIGN(m, 2 * 3);
-		m->m_pkthdr.len = m->m_len = 2 * 3;
-	}
+	MH_ALIGN(m, 2 * 3);
+	m->m_pkthdr.len = m->m_len = 2 * 3;
 
 	frm = mtod(m, u_int8_t *);
-	if (is_shared_key)
-		LE_WRITE_2(frm, IEEE80211_AUTH_ALG_SHARED);
-	else
-		LE_WRITE_2(frm, IEEE80211_AUTH_ALG_OPEN);
-	frm += 2;
+	LE_WRITE_2(frm, IEEE80211_AUTH_ALG_OPEN); frm += 2;
 	LE_WRITE_2(frm, seq); frm += 2;
-	LE_WRITE_2(frm, status); frm += 2;
+	LE_WRITE_2(frm, status);
 
-	if (has_challenge && status == IEEE80211_STATUS_SUCCESS) {
-		frm = ieee80211_add_challenge(frm,
-		    (u_int8_t *)ni->ni_challenge, IEEE80211_CHALLENGE_LEN);
-		if (seq == IEEE80211_AUTH_SHARED_RESPONSE) {
-			IEEE80211_DPRINTF((
-			    "%s: request encrypt frame\n", __func__));
-			m->m_flags |= M_LINK0; /* WEP-encrypt, please */
-		}
-	}
 	return m;
 }
 

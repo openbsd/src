@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.19 2007/07/05 20:19:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.20 2007/07/06 18:18:43 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -91,7 +91,6 @@ extern	u_int8_t *ieee80211_add_tim(u_int8_t *, struct ieee80211com *);
 extern	u_int8_t *ieee80211_add_ibss_params(u_int8_t *,
 		const struct ieee80211_node *);
 extern	u_int8_t *ieee80211_add_edca_params(u_int8_t *, struct ieee80211com *);
-extern	u_int8_t *ieee80211_add_challenge(u_int8_t *, const u_int8_t *, u_int);
 extern	u_int8_t *ieee80211_add_erp(u_int8_t *, struct ieee80211com *);
 extern	u_int8_t *ieee80211_add_qos_capability(u_int8_t *,
 		struct ieee80211com *);

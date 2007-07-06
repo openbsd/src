@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.27 2007/07/06 17:47:19 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.28 2007/07/06 18:18:43 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -536,10 +536,6 @@ ieee80211_node_alloc(struct ieee80211com *ic)
 void
 ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	if (ni->ni_challenge != NULL) {
-		FREE(ni->ni_challenge, M_DEVBUF);
-		ni->ni_challenge = NULL;
-	}
 }
 
 void
@@ -555,7 +551,6 @@ ieee80211_node_copy(struct ieee80211com *ic,
 {
 	ieee80211_node_cleanup(ic, dst);
 	*dst = *src;
-	dst->ni_challenge = NULL;
 }
 
 u_int8_t
