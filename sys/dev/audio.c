@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.57 2007/07/06 04:10:34 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.58 2007/07/06 04:12:50 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1284,7 +1284,7 @@ audio_read(dev, uio, ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		while (cb->used <= 0) {
-			if (!sc->sc_rbus) {
+			if (!sc->sc_rbus && !sc->sc_rr.pause) {
 				error = audiostartr(sc);
 				if (error) {
 					splx(s);
@@ -1893,12 +1893,12 @@ audio_mmap(dev, off, prot)
 		if (cb == &sc->sc_pr) {
 			audio_fill_silence(&sc->sc_pparams, cb->start, cb->bufsize);
 			s = splaudio();
-			if (!sc->sc_pbus)
+			if (!sc->sc_pbus && !sc->sc_pr.pause)
 				(void)audiostartp(sc);
 			splx(s);
 		} else {
 			s = splaudio();
-			if (!sc->sc_rbus)
+			if (!sc->sc_rbus && !sc->sc_rr.pause)
 				(void)audiostartr(sc);
 			splx(s);
 		}
@@ -2797,11 +2797,11 @@ audiosetinfo(sc, ai)
 		    sc->sc_rr.blksize != oldrblksize)
 			audio_calcwater(sc);
 		if ((sc->sc_mode & AUMODE_PLAY) &&
-		    pbus && !sc->sc_pbus)
+		    pbus && !sc->sc_pbus && !sc->sc_pr.pause)
 			error = audiostartp(sc);
 		if (!error &&
 		    (sc->sc_mode & AUMODE_RECORD) &&
-		    rbus && !sc->sc_rbus)
+		    rbus && !sc->sc_rbus && !sc->sc_rr.pause)
 			error = audiostartr(sc);
 	err:
 		splx(s);
