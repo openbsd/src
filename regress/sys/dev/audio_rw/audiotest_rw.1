@@ -1,0 +1,250 @@
+.\"
+.\" Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"	$Id: audiotest_rw.1,v 1.1.1.1 2007/07/06 00:43:38 jakemsr Exp $
+.\"
+.Dd $Mdocdate: June 13 2007
+.Dt AUDIOTEST_RW 1
+.Os
+.Sh NAME
+.Nm audiotest_rw
+.Nd test
+.Xr read 2
+and
+.Xr write 2
+with
+.Xr audio 4
+.Sh SYNOPSIS
+.Nm audiotest_rw
+.Bk -words
+.Op Fl dpsv
+.Op Fl b Ar buffersize
+.Op Fl c Ar channels
+.Op Fl e Ar encoding
+.Op Fl f Ar device
+.Op Fl i Ar input
+.Op Fl l Ar loops
+.Op Fl o Ar output
+.Op Fl r Ar samplerate
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+command reads data from and writes data to
+.Xr audio 4
+device
+.Ar device .
+The default
+.Ar device
+is
+.Pa /dev/audio .
+If the
+.Fl i
+option is used
+.Ar device
+will be opened write-only and
+.Nm
+will
+.Xr fread 3
+data from
+.Ar input
+and
+.Xr write 2
+it to
+.Ar device .
+If the
+.Fl o
+option is used
+.Ar device
+will be opened read-only and
+.Nm
+will
+.Xr read 2
+data from
+.Ar device
+and
+.Xr fwrite 3
+it to
+.Ar output .
+If both
+.Fl i
+and
+.Fl o
+are specified and
+.Ar device
+supports full-duplex operation,
+.Ar device
+will be opened read-write and
+.Nm
+will both
+.Xr fread 3
+data from
+.Ar input
+and
+.Xr write 2
+it to
+.Ar device
+and
+.Xr read 2
+data from
+.Ar device
+and
+.Xr fwrite 3
+it to
+.Ar output .
+In neither
+.Fl i
+nor
+.Fl o
+are used
+.Nm
+will exit with an error.
+.Pp
+The options are as follows:
+.Bl -tag -width "-b buffersize"
+.It Fl b Ar buffersize
+Size of buffer for
+.Xr read 2
+and
+.Xr write 2
+operations, in bytes.
+Valid arguments are 32 to 65536 inclusive.
+Defaults to 8192.
+.It Fl c Ar channels
+Number of audio channels.
+Valid arguments are 1 (mono) and 2 (stereo).
+Defaults to 2.
+.It Fl d
+Opens
+.Ar device
+read-write and sets full-duplex mode, regardless of
+.Fl i
+and
+.Fl o
+options.
+If
+.Ar device
+does not support full-duplex operation
+.Nm
+will exit with an error.
+.It Fl e Ar encoding
+Audio encoding to use.
+.Ar encoding
+is the index of the encoding to use in the list of encodings supported by
+.Xr device ,
+starting at 0.
+Defaults to 0.
+The list of upported encodings can be viewed with
+.Xr audioctl 1 :
+.Bd -literal -offset indent
+$ audioctl encodings
+.Ed
+.It Fl f Ar device
+.Xr audio 4
+device to use.
+Defaults to
+.Dq /dev/audio .
+.It Fl i Ar input
+File from which raw (headerless) audio data will be read.
+.It Fl l Ar loops
+Number of times to read and/or write.
+Defaults to 64.
+.It Fl o Ar output
+File to which raw (headerless) audio data will be written.
+.It Fl p
+Use
+.Xr poll 2
+to wait until data may be read without blocking on each
+.Xr read 2
+and to wait until data may be written without blocking on each
+.Xr write 2 .
+Using this option also causes
+.Ar device
+to be opened for non-blocking I/O.
+.It Fl r Ar samplerate
+Audio data sample rate in samples per second.
+Defaults to 48000.
+.It Fl s
+Use
+.Xr select 2
+to wait until data may be read without blocking on each
+.Xr read 2
+and to wait until data may be written without blocking on each
+.Xr write 2 .
+Using this option also causes
+.Ar device
+to be opened for non-blocking I/O.
+.El
+.Pp
+.Nm
+was written as a strict interpretation of
+.Xr audio 4 .
+Problems encountered while using
+.Nm
+are likely due to errors in
+.Xr audio 4
+documentation, the kernel's audio layer implementation, or audio
+device drivers.
+.Pp
+.Sh EXAMPLES
+The following command will open /dev/audio read-only, set /dev/audio
+to record mode with default parameters (channels:2
+encoding:0 sample rate 48000), and read data from /dev/audio and
+write it to the file test.pcm.
+.Bd -literal -offset indent
+$ audiotest_rw -o test.pcm
+.Ed
+.Pp
+The following command will open /dev/audio write-only, set /dev/audio
+to play mode with default parameters (channels:2
+encoding:0 sample rate 48000), and read data from the file test.pcm
+and write it to /dev/audio.
+.Bd -literal -offset indent
+$ audiotest_rw -i test.pcm
+.Ed
+.Pp
+The following command will open /dev/audio read-write, set /dev/audio
+to full-duplex mode with default parameters (channels:2
+encoding:0 sample rate 48000), read data from the file test.pcm
+and write it to /dev/audio, and read data from /dev/audio and
+write it to the file test2.pcm.
+.Bd -literal -offset indent
+$ audiotest_rw -i test.pcm -o test2.pcm
+.Ed
+.Pp
+The following command will open /dev/audio read-only with non-blocking
+I/O, set /dev/audio to record mode with default parameters (channels:2
+encoding:0 sample rate 48000), and read data from /dev/audio and
+write it to the file test.pcm, using poll() to determine when data
+is ready to be read.
+.Bd -literal -offset indent
+$ audiotest_rw -o test.pcm -p
+.Ed
+.Pp
+The following command will open /dev/audio read-write with non-blocking
+I/o, set /dev/audio to full-duplex mode with default parameters (channels:2
+encoding:0 sample rate 48000), read data from the file test.pcm
+and write it to /dev/audio, and read data from /dev/audio and
+write it to the file test2.pcm, using select() to determine when data
+is ready for reading and/or writing on /dev/audio.
+.Bd -literal -offset indent
+$ audiotest_rw -i test.pcm -o test2.pcm -s
+.Ed
+.Sh SEE ALSO
+.Xr audio 4
+.Sh AUTHORS
+.Nm
+and this manual page were written by
+.An Jacob Meuser Aq jakemsr@sdf.lonestar.org .
