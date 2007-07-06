@@ -1,3 +1,5 @@
+/*	$OpenBSD: audiotest_gsinfo.c,v 1.2 2007/07/06 01:00:02 jakemsr Exp $	*/
+
 /*
  * Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
  *
@@ -13,6 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 
 #include <sys/types.h>
 #include <sys/ioctl.h>

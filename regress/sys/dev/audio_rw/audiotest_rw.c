@@ -1,3 +1,5 @@
+/*	$OpenBSD: audiotest_rw.c,v 1.2 2007/07/06 01:00:02 jakemsr Exp $	*/
+
 /*
  * Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
  *
@@ -14,9 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * $Id: audiotest_rw.c,v 1.1.1.1 2007/07/06 00:43:38 jakemsr Exp $
- */
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
