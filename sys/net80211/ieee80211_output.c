@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.44 2007/07/06 18:18:43 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.45 2007/07/06 19:00:56 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -952,14 +952,16 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 struct mbuf *
 ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
+	const struct ieee80211_rateset *rs =
+	    &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
 	struct mbuf *m;
 	u_int8_t *frm;
-	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    2 + ic->ic_des_esslen +
-	    2 + IEEE80211_RATE_SIZE +
-	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE));
+	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
+	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
+		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0));
 	if (m == NULL)
 		return NULL;
 
@@ -967,7 +969,6 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	frm = mtod(m, u_int8_t *);
 	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
-	rs = &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
 	frm = ieee80211_add_rates(frm, rs);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
@@ -994,44 +995,38 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 struct mbuf *
 ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
+	const struct ieee80211_rateset *rs = &ic->ic_bss->ni_rates;
 	struct mbuf *m;
 	u_int8_t *frm;
-	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-	    8 +				/* time stamp */
-	    2 +				/* beacon interval */
-	    2 +				/* cabability information */
+	    8 + 2 + 2 +
 	    2 + ni->ni_esslen +		/* ssid */
-	    2 + IEEE80211_RATE_SIZE +	/* supported rates */
-	    7 +				/* parameter set (FH/DS) */
-	    6 +				/* parameter set (IBSS) */
-	    2 + 1 +			/* extended rate phy (ERP) */
-	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
-	    2 + 44 +			/* RSN (XXX 44) */
-	    2 +	18 +			/* parameter set (EDCA) */
-	    2 + 48);			/* WPA (XXX 48) */
+	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
+	    2 + ((ic->ic_phytype == IEEE80211_T_FH) ? 5 : 1) +
+	    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 2 + 2 : 0) +
+	    ((ic->ic_curmode == IEEE80211_MODE_11G) ? 2 + 1 : 0) +
+	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
+		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
+	    ((ic->ic_flags & IEEE80211_F_RSN) ? 2 + 44 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_WPA1) ? 2 + 48 : 0));
 	if (m == NULL)
 		return NULL;
 
 	m->m_data += sizeof(struct ieee80211_frame);
 
 	frm = mtod(m, u_int8_t *);
-	memset(frm, 0, 8);	/* timestamp is set by hardware */
-	frm += 8;
+	memset(frm, 0, 8); frm += 8;	/* timestamp is set by hardware */
 	LE_WRITE_2(frm, ic->ic_bss->ni_intval); frm += 2;
 	frm = ieee80211_add_capinfo(frm, ic, ni);
-
 	frm = ieee80211_add_ssid(frm, ic->ic_bss->ni_essid,
 	    ic->ic_bss->ni_esslen);
-	rs = &ic->ic_bss->ni_rates;
 	frm = ieee80211_add_rates(frm, rs);
-
 	if (ic->ic_phytype == IEEE80211_T_FH)
 		frm = ieee80211_add_fh_params(frm, ic, ni);
 	else
 		frm = ieee80211_add_ds_params(frm, ic, ni);
-
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		frm = ieee80211_add_ibss_params(frm, ni);
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
@@ -1112,21 +1107,22 @@ struct mbuf *
 ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
     int reassoc)
 {
+	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct mbuf *m;
 	u_int8_t *frm;
 	u_int16_t capinfo;
-	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-	    2 +				/* capability information */
-	    2 +				/* listen interval */
-	    IEEE80211_ADDR_LEN +	/* current AP address */
-	    2 + ni->ni_esslen +		/* ssid */
-	    2 + IEEE80211_RATE_SIZE +	/* supported rates */
-	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
-	    2 + 44 +			/* RSN (XXX 44) */
-	    2 + 1 +			/* QoS capability */
-	    2 + 48);			/* WPA (XXX 48) */
+	    2 +	2 +
+	    ((reassoc == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) ?
+		IEEE80211_ADDR_LEN : 0) +
+	    2 + ni->ni_esslen +
+	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
+	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
+		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
+	    ((ic->ic_flags & IEEE80211_F_RSN) ? 2 + 44 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 1 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_WPA1) ? 2 + 48 : 0));
 	if (m == NULL)
 		return NULL;
 
@@ -1136,10 +1132,6 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	capinfo = IEEE80211_CAPINFO_ESS;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
-	/*
-	 * NB: Some 11a AP's reject the request when
-	 *     short preamble is set.
-	 */
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
 		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
@@ -1147,15 +1139,12 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    (ic->ic_flags & IEEE80211_F_SHSLOT))
 		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
 	LE_WRITE_2(frm, capinfo); frm += 2;
-
 	LE_WRITE_2(frm, ic->ic_lintval); frm += 2;
-
 	if (reassoc == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
 		IEEE80211_ADDR_COPY(frm, ic->ic_bss->ni_bssid);
 		frm += IEEE80211_ADDR_LEN;
 	}
 	frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
-	rs = &ni->ni_rates;
 	frm = ieee80211_add_rates(frm, rs);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
@@ -1185,17 +1174,16 @@ struct mbuf *
 ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
     u_int16_t status)
 {
+	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct mbuf *m;
 	u_int8_t *frm;
-	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-	    2 +				/* capability information */
-	    2 +				/* status */
-	    2 +				/* association ID */
-	    2 + IEEE80211_RATE_SIZE +	/* supported rates */
-	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
-	    2 + 18);			/* parameter set (EDCA) */
+	    2 +	2 + 2 +
+	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
+	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
+		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
+	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0));
 	if (m == NULL)
 		return NULL;
 
@@ -1204,14 +1192,11 @@ ieee80211_get_assoc_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 	frm = mtod(m, u_int8_t *);
 	frm = ieee80211_add_capinfo(frm, ic, ni);
 	LE_WRITE_2(frm, status); frm += 2;
-
 	if (status == IEEE80211_STATUS_SUCCESS)
 		LE_WRITE_2(frm, ni->ni_associd);
 	else
 		LE_WRITE_2(frm, 0);
 	frm += 2;
-
-	rs = &ni->ni_rates;
 	frm = ieee80211_add_rates(frm, rs);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
@@ -1413,29 +1398,27 @@ ieee80211_get_cts_to_self(struct ieee80211com *ic, u_int16_t dur)
  * [tlv]  Extended Supported Rates (802.11g)
  * [tlv]  RSN (802.11i)
  * [tlv]  EDCA Parameter Set (802.11e)
- * [tlv]  QoS Capability (802.11e)
  */
 struct mbuf *
 ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
+	const struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct ieee80211_frame *wh;
 	struct mbuf *m;
 	u_int8_t *frm;
-	struct ieee80211_rateset *rs;
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
-	    8 +				/* time stamp */
-	    2 +				/* beacon interval */
-	    2 +				/* cabability information */
-	    2 + ni->ni_esslen +		/* ssid */
-	    2 + IEEE80211_RATE_SIZE +	/* supported rates */
-	    2 + 1 +			/* parameter set (DS) */
-	    2 + 254 +			/* parameter set (IBSS/TIM) */
-	    2 + 1 +			/* extended rate phy (ERP) */
-	    2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE) +
-	    2 + 44 +			/* RSN (XXX 44) */
-	    2 + 18 +			/* parameter set (EDCA) */
-	    2 + 48);			/* WPA (XXX 48) */
+	    8 +	2 + 2 +
+	    2 + ((ic->ic_flags & IEEE80211_F_HIDENWID) ? 0 : ni->ni_esslen) +
+	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
+	    2 + ((ic->ic_phytype == IEEE80211_T_FH) ? 5 : 1) +
+	    2 + ((ic->ic_opmode == IEEE80211_M_IBSS) ? 2 : 254) +
+	    ((ic->ic_curmode == IEEE80211_MODE_11G) ? 2 + 1 : 0) +
+	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
+		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
+	    ((ic->ic_flags & IEEE80211_F_RSN) ? 2 + 44 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_QOS) ? 2 + 18 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_WPA1) ? 2 + 48 : 0));
 	if (m == NULL)
 		return NULL;
 
@@ -1450,29 +1433,22 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	*(u_int16_t *)wh->i_seq = 0;
 
 	frm = (u_int8_t *)&wh[1];
-	memset(frm, 0, 8);	/* timestamp is set by hardware */
-	frm += 8;
+	memset(frm, 0, 8); frm += 8;	/* timestamp is set by hardware */
 	LE_WRITE_2(frm, ni->ni_intval); frm += 2;
 	frm = ieee80211_add_capinfo(frm, ic, ni);
-
 	if (ic->ic_flags & IEEE80211_F_HIDENWID)
 		frm = ieee80211_add_ssid(frm, NULL, 0);
 	else
 		frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);
-
-	rs = &ni->ni_rates;
 	frm = ieee80211_add_rates(frm, rs);
-
 	if (ic->ic_phytype == IEEE80211_T_FH)
 		frm = ieee80211_add_fh_params(frm, ic, ni);
 	else
 		frm = ieee80211_add_ds_params(frm, ic, ni);
-
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		frm = ieee80211_add_ibss_params(frm, ni);
 	else
 		frm = ieee80211_add_tim(frm, ic);
-
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
