@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.81 2007/07/05 21:38:19 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.82 2007/07/06 18:03:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1683,7 +1683,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *data, int size)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could allocate firmware DMA memory\n",
+		printf("%s: could not allocate firmware DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail2;
 	}
