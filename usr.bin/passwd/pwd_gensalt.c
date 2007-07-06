@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.25 2006/04/02 04:13:08 deraadt Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.26 2007/07/06 13:09:36 thib Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/syslimits.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
