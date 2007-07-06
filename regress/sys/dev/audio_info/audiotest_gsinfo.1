@@ -1,0 +1,121 @@
+.\"
+.\" Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"	$Id: audiotest_gsinfo.1,v 1.1.1.1 2007/07/06 00:42:12 jakemsr Exp $
+.\"
+.Dd $Mdocdate: July 5 2007
+.Dt AUDIOTEST_GSINFO 1
+.Os
+.Sh NAME
+.Nm audiotest_gsinfo
+.Nd test
+.Ar AUDIO_GETINFO
+and
+.Ar AUDIO_SETINFO
+.Sh SYNOPSIS
+.Nm audiotest_gsinfo
+.Bk -words
+.Op Fl f Ar device
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+command performs an
+.Ar AUDIO_GETINFO
+.Xr ioctl 2
+to get the current
+.Xr audio 4
+settings, then uses these settings in an
+.Ar AUDIO_SETINFO
+.Xr ioctl 2 .
+The options are as follows:
+.Bl -tag -width "-f device"
+.It Fl f Ar device
+.Xr audio 4
+device to use.
+Defaults to
+.Dq /dev/audio .
+.El
+.Pp
+.Nm
+first checks that an
+.Dv AUDIO_GETINFO
+ioctl will succeed.
+If it is not successful, it will exit with status 1.
+.Pp
+If it is successful,
+.Nm
+will perform an
+.Dv AUDIO_SETINFO
+ioctl, using the values in its
+.Vt audio_info_t
+argument that were received in the previous
+.Dv AUDIO_GETINFO
+ioctl.
+If the
+.Dv AUDIO_SETINFO
+ioctl is successful,
+.Nm
+will exit with status 0.
+.Pp
+If the
+.Dv AUDIO_SETINFO
+ioctl is not successful,
+.Nm
+will perform an
+.Dv AUDIO_SETINFO
+ioctl using the default
+.Vt audio_info_t
+values as given by
+.Dv AUDIO_INITINFO .
+If this
+.Dv AUDIO_SETINFO
+is not successful,
+.Nm
+will exit with status 1.
+.Pp
+Otherwise,
+.Nm
+will run a series of
+.Dv AUDIO_SETINFO
+ioctls where a single field in the
+.Vt audio_info_t
+structure is set to values from the
+.Dv AUDIO_GETINFO
+ioctl, the other values being default.
+As this series of ioctls is performed,
+.Nm
+will print the
+.Vt audio_info_t
+field that is using values from the
+.Dv AUDIO_GETINFO
+ioctl, as well as the value it is using.
+If the ioctl fails,
+.Nm
+will print
+.Dq  <- ERROR
+immediately following the value.
+After all fields of the
+.Vt audio_info_t
+structure have been used,
+.Nm
+will exit with status 1.
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr ioctl 2
+.Sh AUTHORS
+.Nm
+and this manual page were written by
+.An Jacob Meuser Aq jakemsr@sdf.lonestar.org .
