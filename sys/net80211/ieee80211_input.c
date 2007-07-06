@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.36 2007/07/04 20:19:12 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.37 2007/07/06 17:58:04 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1706,32 +1706,22 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		FREE(ni->ni_challenge, M_DEVBUF);
 		ni->ni_challenge = NULL;
 	}
-	/* XXX per-node cipher suite */
-	/* XXX some stations use the privacy bit for handling APs
-	       that suport both encrypted and unencrypted traffic */
-	if ((capinfo & IEEE80211_CAPINFO_ESS) == 0 ||
-	    (capinfo & IEEE80211_CAPINFO_PRIVACY) !=
-	    ((ic->ic_flags & IEEE80211_F_WEPON) ?
-	     IEEE80211_CAPINFO_PRIVACY : 0)) {
-		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
+	if (!(capinfo & IEEE80211_CAPINFO_ESS)) {
+		IEEE80211_DPRINTF(("%s: capinfo mismatch for %s\n",
 		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
-		/* XXX what rate will we send this at? */
-		IEEE80211_SEND_MGMT(ic, ni, resp,
-		    IEEE80211_STATUS_BASIC_RATE);
+		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_CAPINFO);
 		ieee80211_node_leave(ic, ni);
 		ic->ic_stats.is_rx_assoc_capmismatch++;
 		return;
 	}
-	ieee80211_setup_rates(ic, ni, rates, xrates,
-			IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
-				IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
+	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT |
+	    IEEE80211_F_DOFRATE | IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 	if (ni->ni_rates.rs_nrates == 0) {
 		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
 		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
 		IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 		ni->ni_associd = 0;
-		IEEE80211_SEND_MGMT(ic, ni, resp,
-			IEEE80211_STATUS_BASIC_RATE);
+		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_BASIC_RATE);
 		ic->ic_stats.is_rx_assoc_norate++;
 		return;
 	}
