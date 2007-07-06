@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiotest_rw.c,v 1.2 2007/07/06 01:00:02 jakemsr Exp $	*/
+/*	$OpenBSD: audiotest_rw.c,v 1.3 2007/07/06 15:56:15 jmc Exp $	*/
 
 /*
  * Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
@@ -45,8 +45,8 @@ void
 useage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-dpsv] [-b buffersize] [-c channels] [-e encoding]\n"
-	    "          [-f device] [-i input ] [-l loops] [-o output] [-r samplerate]\n",
+	    "usage: %s [-dpsv] [-b buffersize] [-c channels] [-e encoding]\n"
+	    "          [-f device] [-i input] [-l loops] [-o output] [-r samplerate]\n",
 	    __progname);
 	return;
 }
