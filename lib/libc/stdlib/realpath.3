@@ -28,16 +28,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.14 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: realpath.3,v 1.15 2007/07/06 15:42:04 millert Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 6 2007 $
 .Dt REALPATH 3
 .Os
 .Sh NAME
 .Nm realpath
 .Nd returns the canonicalized absolute pathname
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
+.Fd #include <limits.h>
 .Fd #include <stdlib.h>
 .Ft "char *"
 .Fn realpath "const char *pathname" "char resolved[PATH_MAX]"
