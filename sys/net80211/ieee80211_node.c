@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.26 2007/07/03 20:25:32 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.27 2007/07/06 17:47:19 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -766,8 +766,8 @@ struct ieee80211_node *
 ieee80211_find_rxnode(struct ieee80211com *ic,
     const struct ieee80211_frame *wh)
 {
+	static const u_int8_t zero[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	struct ieee80211_node *ni;
-	const static u_int8_t zero[IEEE80211_ADDR_LEN];
 	const u_int8_t *bssid;
 	int s;
 
