@@ -1,12 +1,12 @@
-/*	$OpenBSD: debug.h,v 1.3 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: debug.h,v 1.4 2007/07/07 08:22:55 millert Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
  * All rights reserved.
- * 
+ *
  * This code is derived from software contributed to Berkeley by
  * Christoph Herrmann and Thomas-Henning von Kamptz, Munich and Frankfurt.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -23,7 +23,7 @@
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,16 +37,11 @@
  * SUCH DAMAGE.
  *
  * $TSHeader: src/sbin/growfs/debug.h,v 1.2 2000/11/16 18:43:50 tom Exp $
- * $FreeBSD: src/sbin/growfs/debug.h,v 1.1 2000/12/09 15:27:35 tomsoft Exp $
+ * $FreeBSD: src/sbin/growfs/debug.h,v 1.3 2004/07/06 17:48:34 stefanf Exp $
  *
  */
 
 #ifdef FS_DEBUG
-
-/* ********************************************************** INCLUDES ***** */
-#include <sys/param.h>
-
-#include <ufs/ufs/dinode.h>
 
 void dbg_open(const char *);
 void dbg_close(void);
@@ -54,7 +49,9 @@ void dbg_dump_hex(struct fs *, const char *, unsigned char *);
 void dbg_dump_fs(struct fs *, const char *);
 void dbg_dump_cg(const char *, struct cg *);
 void dbg_dump_csum(const char *, struct csum *);
-void dbg_dump_ino(struct fs *, const char *, struct ufs1_dinode *);
+void dbg_dump_csum_total(const char *, struct csum_total *);
+void dbg_dump_ufs1_ino(struct fs *, const char *, struct ufs1_dinode *);
+void dbg_dump_ufs2_ino(struct fs *, const char *, struct ufs2_dinode *);
 void dbg_dump_iblk(struct fs *, const char *, char *, size_t);
 void dbg_dump_inmap(struct fs *, const char *, struct cg *);
 void dbg_dump_frmap(struct fs *, const char *, struct cg *);
@@ -68,19 +65,23 @@ void dbg_dump_sptbl(struct fs *, const char *, struct cg *);
 #define DBG_DUMP_FS(F,C) dbg_dump_fs((F),(C))
 #define DBG_DUMP_CG(F,C,M) dbg_dump_cg((C),(M))
 #define DBG_DUMP_CSUM(F,C,M) dbg_dump_csum((C),(M))
-#define DBG_DUMP_INO(F,C,M) dbg_dump_ino((F),(C),(M))
+#define DBG_DUMP_INO(F,C,M) (F)->fs_magic == FS_UFS1_MAGIC \
+	? dbg_dump_ufs1_ino((F),(C),(struct ufs1_dinode *)(M)) \
+	: dbg_dump_ufs2_ino((F),(C),(struct ufs2_dinode *)(M))
 #define DBG_DUMP_IBLK(F,C,M,L) dbg_dump_iblk((F),(C),(M),(L))
 #define DBG_DUMP_INMAP(F,C,M) dbg_dump_inmap((F),(C),(M))
 #define DBG_DUMP_FRMAP(F,C,M) dbg_dump_frmap((F),(C),(M))
 #define DBG_DUMP_CLMAP(F,C,M) dbg_dump_clmap((F),(C),(M))
 #define DBG_DUMP_CLSUM(F,C,M) dbg_dump_clsum((F),(C),(M))
+#ifdef NOT_CURRENTLY
 #define DBG_DUMP_SPTBL(F,C,M) dbg_dump_sptbl((F),(C),(M))
+#endif
 
 #define DL_TRC	0x01
 #define DL_INFO	0x02
 extern int _dbg_lvl_;
 
-#define DBG_FUNC(N) char __FKT__[] = (N);
+#define DBG_FUNC(N) char __FKT__[] = {N};
 #define DBG_ENTER if(_dbg_lvl_ & DL_TRC) {                                    \
 	fprintf(stderr, "~>%s: %s\n", __FILE__, __FKT__ );                    \
 	}

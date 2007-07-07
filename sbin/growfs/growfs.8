@@ -1,4 +1,4 @@
-.\" $OpenBSD: growfs.8,v 1.8 2007/05/31 19:19:44 jmc Exp $
+.\" $OpenBSD: growfs.8,v 1.9 2007/07/07 08:22:55 millert Exp $
 .\" Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
 .\" Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -36,9 +36,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $TSHeader: src/sbin/growfs/growfs.8,v 1.3 2000/12/12 19:31:00 tomsoft Exp $
-.\" $FreeBSD: src/sbin/growfs/growfs.8,v 1.18 2002/12/12 17:25:55 ru Exp $
+.\" $FreeBSD: src/sbin/growfs/growfs.8,v 1.24 2005/01/18 10:09:34 ru Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 7 2007 $
 .Dt GROWFS 8
 .Os
 .Sh NAME
@@ -66,8 +66,8 @@ utility extends the size of the file system on the specified special file.
 Currently
 .Nm
 can only enlarge unmounted file systems.
-Do not try enlarging a mounted file system \- your system may panic and you will
-not be able to use the file system any longer.
+Do not try enlarging a mounted file system \- your system may panic and
+you will not be able to use the file system any longer.
 Most of the
 .Xr newfs 8
 options cannot be changed by
