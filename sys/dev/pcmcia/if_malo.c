@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.20 2007/06/30 12:08:57 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.21 2007/07/07 21:17:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -593,9 +593,6 @@ cmalo_init(struct ifnet *ifp)
 	cmalo_cmd_set_snmp(sc, MALO_OID_RTSTRESH);
 	cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY);
 	cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH);
-	cmalo_cmd_set_snmp(sc, MALO_OID_80211D);
-	
-	cmalo_cmd_set_80211d(sc);
 
 	cmalo_cmd_set_scan(sc);
 
@@ -1050,9 +1047,9 @@ cmalo_cmd_set_scan(struct malo_softc *sc)
 	body_rates = sc->sc_cmd + psize;
 	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
 	body_rates->size =
-	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
-	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rates->data,
-	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates);
+	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates, body_rates->data,
+	    ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates);
 	psize += (sizeof(*body_rates) - 1) + body_rates->size;
 #if 0
 	body_numprobes = sc->sc_cmd + psize;
