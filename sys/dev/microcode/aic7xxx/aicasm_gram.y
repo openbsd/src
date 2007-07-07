@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: aicasm_gram.y,v 1.15 2007/05/28 22:17:21 pyr Exp $	*/
+/*	$OpenBSD: aicasm_gram.y,v 1.16 2007/07/07 23:59:36 krw Exp $	*/
 /*	$NetBSD: aicasm_gram.y,v 1.3 2003/04/19 19:26:11 fvdl Exp $	*/
 
 /*
@@ -1941,7 +1941,7 @@ yyerror(const char *string)
 static int
 is_download_const(expression_t *immed)
 {
-	if (!SLIST_EMPTY(&immed->referenced_syms))
+	if ((!SLIST_EMPTY(&immed->referenced_syms))
 	 && (SLIST_FIRST(&immed->referenced_syms)->symbol->type == DOWNLOAD_CONST))
 		return (TRUE);
 
