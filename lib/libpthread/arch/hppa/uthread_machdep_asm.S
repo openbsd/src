@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.2 2003/01/16 19:16:02 mickey Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.3 2007/07/07 15:46:56 kettenis Exp $	*/
 /*	Michael Shalayeff <mickey@openbsd.org>. Public Domain. */
 
 #include <machine/asm.h>
@@ -17,9 +17,18 @@
 ENTRY(_thread_machdep_init,FRAMESIZE)
 	ldo	7(arg1), arg1
 	dep	r0, 31, 3, arg1
+	ldo	HPPA_FRAME_SIZE(arg1), arg1
 	ldo	FRAMESIZE(arg1), t1
 	stw	t1, 0(arg0)
 	stw	arg1, 4(arg0)
+
+	bb,>=,n	arg3, 30, _thread$noplabel
+	depi	0, 31, 2, arg3
+	ldw	4(arg3), t1
+	ldw	0(arg3), arg3
+	stw	t1, 0x44(arg1)
+
+_thread$noplabel
 	bv	r0(rp)
 	stw	arg3, 0(arg1)
 EXIT(_thread_machdep_init)
@@ -50,6 +59,7 @@ ENTRY(_thread_machdep_switch,0)
 	stw	r16, 0x38(t1)
 	stw	r17, 0x3c(t1)
 	stw	r18, 0x40(t1)
+	stw	r19, 0x44(t1)
 
 	ldw	0(arg0), sp
 	ldw	4(arg0), t1
@@ -70,6 +80,7 @@ ENTRY(_thread_machdep_switch,0)
 	ldw	0x38(t1), r16
 	ldw	0x3c(t1), r17
 	ldw	0x40(t1), r18
+	ldw	0x44(t1), r19
 	bv	r0(rp)
 	ldo	-FRAMESIZE(sp), sp
 EXIT(_thread_machdep_switch)
