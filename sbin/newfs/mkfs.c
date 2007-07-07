@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.69 2007/06/26 19:03:21 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.70 2007/07/07 08:16:52 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -635,8 +635,7 @@ initcg(int cylno, time_t utime)
 	acg.cg_magic = CG_MAGIC;
 	acg.cg_cgx = cylno;
 	acg.cg_ffs2_niblk = sblock.fs_ipg;
-	acg.cg_initediblk = sblock.fs_ipg < 2 * INOPB(&sblock) ?
-	    sblock.fs_ipg : 2 * INOPB(&sblock);
+	acg.cg_initediblk = MIN(sblock.fs_ipg, 2 * INOPB(&sblock));
 	acg.cg_ndblk = dmax - cbase;
 
 	start = sizeof(struct cg);
@@ -723,8 +722,7 @@ initcg(int cylno, time_t utime)
 	start += sblock.fs_bsize;
 	dp1 = (struct ufs1_dinode *)(&iobuf[start]);
 	dp2 = (struct ufs2_dinode *)(&iobuf[start]);
-
-	for (i = 0; i < acg.cg_initediblk; i++) {
+	for (i = MIN(sblock.fs_ipg, 2 * INOPB(&sblock)); i != 0; i--) {
 		if (sblock.fs_magic == FS_UFS1_MAGIC) {
 			dp1->di_gen = (u_int32_t)arc4random();
 			dp1++;
@@ -733,7 +731,6 @@ initcg(int cylno, time_t utime)
 			dp2++;
 		}
 	}
-
 	wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)), iobufsize, iobuf);
 
 	if (Oflag <= 1) {
