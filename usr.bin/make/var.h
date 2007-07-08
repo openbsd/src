@@ -131,7 +131,7 @@ extern void Var_Dump(void);
 extern void Var_AddCmdline(const char *);
 
 /* stuff common to var.c and varparse.c */
-extern bool	oldVars;	/* Do old-style variable substitution */
+extern bool	errorIsOkay;	
 
 #define		VAR_GLOBAL	0 
 	/* Variables defined in a global context, e.g in the Makefile itself */

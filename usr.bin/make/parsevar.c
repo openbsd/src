@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.3 2007/07/08 17:44:20 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.4 2007/07/08 17:53:15 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ parse_variable_assignment(const char *line,
     if (type & VAR_SUBST) {
 	/*
 	 * Allow variables in the old value to be undefined, but leave their
-	 * invocation alone -- this is done by forcing oldVars to be false.
+	 * invocation alone -- this is done by forcing errorIsOkay to be false.
 	 * XXX: This can cause recursive variables, but that's not hard to do,
 	 * and this allows someone to do something like
 	 *
@@ -181,16 +181,16 @@ parse_variable_assignment(const char *line,
 	 *
 	 * And not get an error.
 	 */
-	bool   oldOldVars = oldVars;
+	bool   saved = errorIsOkay;
 
-	oldVars = false;
+	errorIsOkay = false;
 	/* ensure the variable is set to something to avoid `variable
 	 * is recursive' errors.  */
 	if (Var_Valuei(name.s, name.e) == NULL)
 	    Var_Seti(name.s, name.e, "", ctxt);
 
 	res2 = Var_Subst(arg, NULL, false);
-	oldVars = oldOldVars;
+	errorIsOkay = saved;
 
 	arg = res2;
     }
@@ -216,10 +216,11 @@ bool
 Parse_CmdlineVar(const char *line)
 {
 	bool result;
+	bool saved = errorIsOkay;
 
-	oldVars = false;
+	errorIsOkay = false;
 	result = parse_variable_assignment(line, VAR_CMD);
-	oldVars = true;
+	errorIsOkay = errorIsOkay;
 	return result;
 }
 

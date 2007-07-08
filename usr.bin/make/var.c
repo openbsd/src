@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.63 2007/07/08 17:49:55 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.64 2007/07/08 17:53:15 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ char	var_Error[] = "";
  * identical string instances...
  */
 static char	varNoError[] = "";
-bool 		oldVars;	/* variable substitution style */
+bool 		errorIsOkay;	
 static bool 	checkEnvFirst;	/* true if environment should be searched for
 			         * variables before the global context */
 
@@ -927,7 +927,7 @@ Var_Subst(const char *str, 	/* the string in which to substitute */
 	     * the variable and continue with the substitution. Otherwise,
 	     * store the dollar sign and advance str so we continue with
 	     * the string...  */
-	    if (oldVars)
+	    if (errorIsOkay)
 		str += length;
 	    else if (undefErr) {
 		/* If variable is undefined, complain and skip the
@@ -1087,7 +1087,7 @@ Var_Init(void)
     set_magic_shell_variable();
 
 
-    oldVars = true;
+    errorIsOkay = true;
     Var_setCheckEnvFirst(false);
 
     VarModifiers_Init();
