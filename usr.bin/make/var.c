@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.62 2007/07/08 17:44:20 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.63 2007/07/08 17:49:55 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -821,7 +821,7 @@ Var_Parse(const char *str, 	/* The string to parse */
 
     idx = quick_lookup(name.s, &name.e, &k);
     v = varfind(name.s, name.e, ctxt, idx, k);
-    if (v->flags & POISONS)
+    if (v != NULL && (v->flags & POISONS) != 0)
     	poison_check(v);
     if (v != NULL && (v->flags & VAR_DUMMY) == 0) {
 	if (v->flags & VAR_IN_USE)
@@ -963,6 +963,16 @@ Var_SubstVar(Buffer buf, 	/* To store result */
     const char *var, 		/* Named variable */
     const char *val)		/* Its value */
 {
+    /* we save the old value and affect the new value temporarily */
+    Var old;
+    const char *ename = NULL;
+    uint32_t k;
+    Var *me;
+    k = ohash_interval(var, &ename);
+    me = obtain_global_var(var, ename, k);
+    old = *me;			
+    var_init_string(me, val);
+    me->flags = VAR_SEEN_ENV;
 
     assert(*var != '\0');
 
@@ -1042,6 +1052,7 @@ Var_SubstVar(Buffer buf, 	/* To store result */
 	}
 	Buf_AddString(buf, val);
     }
+    *me = old;
 }
 
 static void
