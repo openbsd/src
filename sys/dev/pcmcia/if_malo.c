@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.21 2007/07/07 21:17:26 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.22 2007/07/08 10:09:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -92,6 +92,8 @@ int	cmalo_cmd_get_hwspec(struct malo_softc *);
 int	cmalo_cmd_rsp_hwspec(struct malo_softc *);
 int	cmalo_cmd_set_reset(struct malo_softc *);
 int	cmalo_cmd_set_scan(struct malo_softc *);
+int	cmalo_cmd_rsp_scan(struct malo_softc *);
+int	cmalo_parse_elements(struct malo_softc *, void *, int, int);
 int	cmalo_cmd_set_auth(struct malo_softc *);
 int	cmalo_cmd_set_snmp(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_radio(struct malo_softc *, uint16_t);
@@ -339,8 +341,10 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct malo_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_nodereq_all *na;
+	struct ieee80211_nodereq *nr;
 	struct ifaddr *ifa;
-	int s, error = 0;
+	int i, j, s, error = 0;
 
 	s = splnet();
 
@@ -361,6 +365,45 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				cmalo_stop(sc);
 		}
+		break;
+	case SIOCS80211SCAN:
+		cmalo_cmd_set_scan(sc);
+		break;
+	case SIOCG80211ALLNODES:
+		nr = NULL;
+		na = (struct ieee80211_nodereq_all *)data;
+
+		if ((nr = malloc(sizeof(*nr), M_DEVBUF, M_WAITOK)) == NULL)
+			break;
+
+		for (na->na_nodes = i = j = 0; i < sc->sc_networks_num &&
+		    (na->na_size >= j + sizeof(struct ieee80211_nodereq));
+		    i++) {
+			bzero(nr, sizeof(*nr));
+
+			IEEE80211_ADDR_COPY(nr->nr_macaddr,
+			    sc->sc_networks[i].bssid);
+			IEEE80211_ADDR_COPY(nr->nr_bssid,
+			    sc->sc_networks[i].bssid);
+			nr->nr_channel = sc->sc_networks[i].channel;
+			nr->nr_chan_flags = IEEE80211_CHAN_B; /* XXX */
+			nr->nr_rssi = sc->sc_networks[i].rssi;
+			nr->nr_max_rssi = 0; /* XXX */
+			nr->nr_nwid_len = strlen(sc->sc_networks[i].ssid);
+			bcopy(sc->sc_networks[i].ssid, nr->nr_nwid,
+			    nr->nr_nwid_len);
+			nr->nr_intval = sc->sc_networks[i].beaconintvl;
+			nr->nr_capinfo = sc->sc_networks[i].capinfo;
+			nr->nr_flags |= IEEE80211_NODEREQ_AP;
+
+			bcopy(nr, (caddr_t)na->na_node + j,
+			    sizeof(struct ieee80211_nodereq));
+			j += sizeof(struct ieee80211_nodereq);
+			na->na_nodes++;
+		}
+
+		if (nr)
+			free(nr, M_DEVBUF);
 		break;
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
@@ -593,8 +636,6 @@ cmalo_init(struct ifnet *ifp)
 	cmalo_cmd_set_snmp(sc, MALO_OID_RTSTRESH);
 	cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY);
 	cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH);
-
-	cmalo_cmd_set_scan(sc);
 
 	//cmalo_cmd_set_assoc(sc);
 
@@ -1066,6 +1107,87 @@ cmalo_cmd_set_scan(struct malo_softc *sc)
 
 	/* process command repsonse */
 	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_rsp_scan(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_rsp_scan *body;
+	struct malo_cmd_body_rsp_scan_set *set;
+	uint16_t psize;
+	int i;
+
+	bzero(sc->sc_networks, sizeof(sc->sc_networks));
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	body = (struct malo_cmd_body_rsp_scan *)(hdr + 1);
+
+	DPRINTF(1, "bufsize=%d, APs=%d\n", body->bufsize, body->numofset);
+	sc->sc_networks_num = body->numofset;
+
+	/* cycle through found networks */
+	for (i = 0; i < body->numofset; i++) {
+		set = (struct malo_cmd_body_rsp_scan_set *)(sc->sc_cmd + psize);
+
+		DPRINTF(1, "size=%d, bssid=%s, rssi=%d, beaconintvl=%d, "
+		    "capinfo=0x%04x\n",
+		    set->size, ether_sprintf(set->bssid), set->rssi,
+		    set->beaconintvl, set->capinfo);
+
+		/* save scan results */
+		bcopy(set->bssid, sc->sc_networks[i].bssid, sizeof(set->bssid));
+		bcopy(set->timestamp, sc->sc_networks[i].timestamp,
+		    sizeof(set->timestamp));
+		sc->sc_networks[i].rssi = set->rssi;
+		sc->sc_networks[i].beaconintvl = set->beaconintvl;
+		sc->sc_networks[i].capinfo = set->capinfo;
+		cmalo_parse_elements(sc, (set + 1),
+		    set->size - (sizeof(*set) - sizeof(set->size)), i);
+
+		psize += (set->size + sizeof(set->size));
+	}
+
+	return (0);
+}
+
+int
+cmalo_parse_elements(struct malo_softc *sc, void *buf, int size, int pos)
+{
+	uint8_t eid, len;
+	int i;
+
+	DPRINTF(2, "element_size=%d, element_pos=%d\n", size, pos);
+
+	for (i = 0; i < size; ) {
+		eid = *(uint8_t *)(buf + i);
+		i++;
+		len = *(uint8_t *)(buf + i);
+		i++;
+		DPRINTF(2, "eid=%d, len=%d, ", eid, len);
+
+		switch (eid) {
+		case IEEE80211_ELEMID_SSID:
+			bcopy(buf + i, sc->sc_networks[pos].ssid, len);
+			DPRINTF(2, "ssid=%s\n", sc->sc_networks[pos].ssid);
+			break;
+		case IEEE80211_ELEMID_RATES:
+			bcopy(buf + i, sc->sc_networks[pos].rates, len);
+			DPRINTF(2, "rates\n", sc->sc_networks[pos].rates);
+			break;
+		case IEEE80211_ELEMID_DSPARMS:
+			sc->sc_networks[pos].channel = *(uint8_t *)(buf + i);
+			DPRINTF(2, "chnl=%d\n", sc->sc_networks[pos].channel);
+			break;
+		default:
+			DPRINTF(2, "unknown\n");
+			break;
+		}
+
+		i += len;
+	}
 
 	return (0);
 }
@@ -1595,9 +1717,9 @@ cmalo_cmd_response(struct malo_softc *sc)
 		/* reset will not send back a response */
 		break;
 	case MALO_CMD_SCAN:
-		/* do nothing */
 		DPRINTF(1, "%s: got scan cmd response\n",
 		    sc->sc_dev.dv_xname);
+		cmalo_cmd_rsp_scan(sc);
 		break;
 	case MALO_CMD_AUTH:
 		/* do nothing */

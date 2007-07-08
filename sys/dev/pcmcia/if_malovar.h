@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.13 2007/06/30 12:08:57 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.14 2007/07/08 10:09:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -75,6 +75,19 @@ struct malo_cmd_body_scan {
 	/* malo_cmd_tlv_chanlist */
 	/* malo_cmd_tlv_rates */
 	/* malo_cmd_tlv_numprobes */
+} __packed;
+
+struct malo_cmd_body_rsp_scan {
+	uint16_t	bufsize;
+	uint8_t		numofset;
+} __packed;
+struct malo_cmd_body_rsp_scan_set {
+	uint16_t	size;
+	uint8_t		bssid[ETHER_ADDR_LEN];
+	uint8_t		rssi;
+	uint8_t		timestamp[8];
+	uint16_t	beaconintvl;
+	uint16_t	capinfo;
 } __packed;
 
 struct malo_cmd_body_auth {
@@ -263,6 +276,18 @@ struct malo_tx_desc {
 	uint8_t		reserved[2];
 } __packed;
 
+/* scanned networks */
+struct malo_networks {
+	uint8_t		bssid[ETHER_ADDR_LEN];
+	uint8_t		rssi;
+	uint8_t		timestamp[8];
+	uint16_t	beaconintvl;
+	uint16_t	capinfo;
+	uint8_t		ssid[32];
+	uint8_t		rates[14];
+	uint8_t		channel;
+} __packed;
+
 /*
  * Softc
  */
@@ -280,4 +305,6 @@ struct malo_softc {
 	uint8_t			 sc_cmd_running;
 	void			*sc_data;
 	uint8_t			 sc_curchan;
+	int			 sc_networks_num;
+	struct malo_networks	 sc_networks[12];
 };
