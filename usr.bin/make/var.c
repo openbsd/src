@@ -1,9 +1,9 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.61 2007/01/02 13:21:31 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.62 2007/07/08 17:44:20 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
- * Copyright (c) 1999,2000 Marc Espie.
+ * Copyright (c) 1999,2000,2007 Marc Espie.
  *
  * Extensive code modifications for the OpenBSD project.
  *
@@ -74,6 +74,7 @@
 #include "buf.h"
 #include "stats.h"
 #include "ohash.h"
+#include "pathnames.h"
 #include "varmodifiers.h"
 #include "var.h"
 #include "varname.h"
@@ -110,6 +111,15 @@ char	var_Error[] = "";
  * identical string instances...
  */
 static char	varNoError[] = "";
+bool 		oldVars;	/* variable substitution style */
+static bool 	checkEnvFirst;	/* true if environment should be searched for
+			         * variables before the global context */
+
+void
+Var_setCheckEnvFirst(bool yes)
+{
+	checkEnvFirst = yes;
+}
 
 /*
  * Variable values are obtained from four different contexts:
@@ -128,11 +138,8 @@ static char	varNoError[] = "";
  * The four contexts are searched in the reverse order from which they are
  * listed.
  */
-GSymT		*VAR_GLOBAL;	/* variables from the makefile */
-GSymT		*VAR_CMD;	/* variables defined on the command-line */
 
-static SymTable *CTXT_GLOBAL, *CTXT_CMD;
-
+static struct ohash global_variables;
 
 static char *varnames[] = {
     TARGET,
@@ -153,17 +160,17 @@ static char *varnames[] = {
     };
 
 
-#define FIND_MINE	0x1   /* look in CTXT_CMD and CTXT_GLOBAL */
-#define FIND_ENV	0x2   /* look in the environment */
-
 typedef struct Var_ {
     BUFFER	  val;		/* its value */
     unsigned int  flags;	/* miscellaneous status flags */
-#define VAR_IN_USE	1	/* Variable's value currently being used.
-				 * Used to avoid recursion */
-#define VAR_READ_ONLY	2	/* Environment variable not modifiable */
-#define VAR_FROM_ENV	4	/* Var was read from env */
-#define VAR_DUMMY	8	/* Var does not exist, actually */
+#define VAR_IN_USE	1	/* Variable's value currently being used. */
+				/* Used to avoid recursion */
+#define VAR_DUMMY	2	/* Placeholder: already looked up */
+#define VAR_FROM_CMD	4	/* From the command line */
+#define VAR_FROM_ENV	8	/* Read from environment */
+#define VAR_SEEN_ENV	16	/* Already seen environment */
+#define VAR_SHELL	32	/* magic, see posix */
+#define POISONS (POISON_NORMAL | POISON_EMPTY | POISON_NOT_DEFINED)
     char	  name[1];	/* the variable's name */
 }  Var;
 
@@ -173,18 +180,21 @@ static struct ohash_info var_info = {
     NULL, hash_alloc, hash_free, element_alloc };
 static int quick_lookup(const char *, const char **, uint32_t *);
 #define VarValue(v)	Buf_Retrieve(&((v)->val))
-static Var *varfind(const char *, const char *, SymTable *, int, int, uint32_t);
-static Var *VarFindi(const char *, const char *, SymTable *, int);
-static Var *VarAdd(const char *, const char *, uint32_t, const char *, GSymT *);
+static Var *varfind(const char *, const char *, SymTable *, int, uint32_t);
+static Var *find_global_var(const char *, const char *, uint32_t);
 static void VarDelete(Var *);
 static void VarPrintVar(Var *);
-static const char *context_name(GSymT *);
-static Var *new_var(const char *, const char *, const char *);
-static Var *getvar(GSymT *, const char *, const char *, uint32_t);
-static Var *create_var(const char *, const char *);
-static Var *var_from_env(const char *, const char *, uint32_t);
-static void var_init_string(Var *, const char *);
 
+static Var *obtain_global_var(const char *, const char *, uint32_t);
+static void fill_from_env(Var *);
+static Var *create_var(const char *, const char *);
+static void varq_set_append(int, const char *, GNode *, bool);
+static void var_init_string(Var *, const char *);
+static void var_set_string(Var *, const char *);
+static void var_append_string(Var *, const char *);
+static void var_set_append(const char *, const char *, const char *, int, bool);
+static void set_magic_shell_variable(void);
+static void poison_check(Var *);
 static const char *find_0(const char *);
 static const char *find_rparen(const char *);
 static const char *find_ket(const char *);
@@ -324,42 +334,43 @@ quick_lookup(const char *name, const char **enamePtr, uint32_t *pk)
     return -1;
 }
 
-void
-Varq_Set(int idx, const char *val, GNode *gn)
+static void
+varq_set_append(int idx, const char *val, GNode *gn, bool append)
 {
-    /* We only look for a variable in the given context since anything set
-     * here will override anything in a lower context, so there's not much
-     * point in searching them all just to save a bit of memory...  */
     Var *v = gn->context.locals[idx];
 
     if (v == NULL) {
-	v = new_var(varnames[idx], NULL, val);
+	v = create_var(varnames[idx], NULL);
+#ifdef STATS_VAR_LOOKUP
+	STAT_VAR_CREATION++;
+#endif
+	if (val != NULL)
+	    var_init_string(v, val);
+	else
+	    Buf_Init(&(v->val), 1);
 	v->flags = 0;
 	gn->context.locals[idx] = v;
     } else {
-	Buf_Reset(&(v->val));
+    	if (append)
+		Buf_AddSpace(&(v->val));
+	else
+		Buf_Reset(&(v->val));
 	Buf_AddString(&(v->val), val);
-
     }
     if (DEBUG(VAR))
-	printf("%s:%s = %s\n", gn->name, varnames[idx], val);
+	printf("%s:%s = %s\n", gn->name, varnames[idx], VarValue(v));
+}
+
+void
+Varq_Set(int idx, const char *val, GNode *gn)
+{
+    varq_set_append(idx, val, gn, false);
 }
 
 void
 Varq_Append(int idx, const char *val, GNode *gn)
 {
-    Var *v = gn->context.locals[idx];
-
-    if (v == NULL) {
-	v = new_var(varnames[idx], NULL, val);
-	v->flags = 0;
-	gn->context.locals[idx] = v;
-    } else {
-	Buf_AddSpace(&(v->val));
-	Buf_AddString(&(v->val), val);
-    }
-    if (DEBUG(VAR))
-	printf("%s:%s = %s\n", gn->name, varnames[idx], VarValue(v));
+    varq_set_append(idx, val, gn, true);
 }
 
 char *
@@ -373,21 +384,6 @@ Varq_Value(int idx, GNode *gn)
 	return VarValue(v);
 }
 
-static const char *
-context_name(GSymT *ctxt)
-{
-    if (ctxt == VAR_GLOBAL)
-	return "Global";
-    if (ctxt == VAR_CMD)
-	return "Command";
-    return "Error";
-}
-
-/* We separate var creation proper from setting of initial value:
- * VAR_DUMMY corresponds to `lazy' setup, e.g., always create global
- * variable at first lookup, and then fill it up when value is wanted.
- * This avoids looking through the environment several times.
- */
 static Var *
 create_var(const char *name, const char *ename)
 {
@@ -405,180 +401,114 @@ var_init_string(Var *v, const char *val)
     Buf_AddChars(&(v->val), len, val);
 }
 
-static Var *
-new_var(const char *name, const char *ename, const char *val)
+static void
+var_set_string(Var *v, const char *val)
 {
-    Var 	*v;
-
-    v = create_var(name, ename);
-#ifdef STATS_VAR_LOOKUP
-    STAT_VAR_CREATION++;
-#endif
-    if (val != NULL)
-	var_init_string(v, val);
-    else
-	Buf_Init(&(v->val), 1);
-
-    return v;
+    if ((v->flags & VAR_DUMMY) == 0) {
+	Buf_Reset(&(v->val));
+	Buf_AddString(&(v->val), val);
+    } else {
+    	var_init_string(v, val);
+	v->flags &= ~VAR_DUMMY;
+    }
 }
 
-static Var *
-var_from_env(const char *name, const char *ename, uint32_t k)
+static void
+var_append_string(Var *v, const char *val)
+{
+    if ((v->flags & VAR_DUMMY) == 0) {
+    	Buf_AddSpace(&(v->val));
+	Buf_AddString(&(v->val), val);
+    } else {
+    	var_init_string(v, val);
+	v->flags &= ~VAR_DUMMY;
+    }
+}
+
+static void
+fill_from_env(Var *v)
 {
     char	*env;
-    Var 	*v;
 
-    /* getenv requires a null-terminated name, so we create the var
-     * structure first.  */
-    v = create_var(name, ename);
     env = getenv(v->name);
     if (env == NULL)
-	v->flags = VAR_DUMMY;
+	v->flags |= VAR_SEEN_ENV;
     else {
-	var_init_string(v, env);
-	if (checkEnvFirst)
-	    v->flags = VAR_READ_ONLY | VAR_FROM_ENV;
-	else
-	    v->flags = VAR_FROM_ENV;
+    	var_set_string(v, env);
+	v->flags |= VAR_FROM_ENV | VAR_SEEN_ENV;
     }
 
 #ifdef STATS_VAR_LOOKUP
     STAT_VAR_FROM_ENV++;
 #endif
+}
 
-    ohash_insert(VAR_GLOBAL, ohash_lookup_interval(VAR_GLOBAL, name, ename, k), v);
+static Var *
+obtain_global_var(const char *name, const char *ename, uint32_t k)
+{
+	unsigned int slot;
+	Var *v;
+
+	slot = ohash_lookup_interval(&global_variables, name, ename, k);
+	v = ohash_find(&global_variables, slot);
+	if (v == NULL) {
+		v = create_var(name, ename);
+		v->flags = VAR_DUMMY;
+		ohash_insert(&global_variables, slot, v);
+	}
+	return v;
+}
+
+static void
+poison_check(Var *v)
+{
+	if (v->flags & POISON_NORMAL) {
+		Parse_Error(PARSE_FATAL, 
+		    "Poisoned variable %s has been referenced\n", v->name);
+		return;
+	}
+	if (v->flags & VAR_DUMMY) {
+		Parse_Error(PARSE_FATAL,
+		    "Poisoned variable %s is not defined\n", v->name);
+		return;
+	}
+	if (v->flags & POISON_EMPTY)
+		if (strcmp(VarValue(v), "") == 0)
+			Parse_Error(PARSE_FATAL, 
+			    "Poisoned variable %s is empty\n", v->name);
+}
+
+static Var *
+find_global_var(const char *name, const char *ename, uint32_t k)
+{
+    Var 		*v;
+
+    v = obtain_global_var(name, ename, k);
+
+    if ((v->flags & VAR_SEEN_ENV) == 0 &&
+    	(checkEnvFirst  && (v->flags & VAR_FROM_CMD) == 0 || 
+	    (v->flags & VAR_DUMMY) != 0))
+		fill_from_env(v);
+
     return v;
 }
 
 static Var *
-getvar(GSymT *ctxt, const char *name, const char *ename, uint32_t k)
-{
-    return ohash_find(ctxt, ohash_lookup_interval(ctxt, name, ename, k));
-}
-
-/*-
- *-----------------------------------------------------------------------
- * VarFindi --
- *	Find the given variable in the given context and any other contexts
- *	indicated.  if end is NULL, name is a string, otherwise, only
- *	the interval name - end  is concerned.
- *
- * Results:
- *	A pointer to the structure describing the desired variable or
- *	NULL if the variable does not exist.
- *-----------------------------------------------------------------------
- */
-static Var *
-VarFindi(const char	*name,	/* name to find */
-    const char		*ename,	/* end of name */
-    SymTable		*ctxt,	/* context in which to find it */
-    int 		flags)	/* FIND_MINE set means to look in the
-				 * CTXT_GLOBAL and CTXT_CMD contexts also.
-				 * FIND_ENV set means to look in the
-				 * environment */
-{
-    uint32_t		k;
-    int 		idx;
-
-#ifdef STATS_VAR_LOOKUP
-    STAT_VAR_FIND++;
-#endif
-
-    idx = quick_lookup(name, &ename, &k);
-    return varfind(name, ename, ctxt, flags, idx, k);
-}
-
-static Var *
-varfind(const char *name, const char *ename, SymTable *ctxt, int flags, 
+varfind(const char *name, const char *ename, SymTable *ctxt, 
     int idx, uint32_t k)
 {
-    Var 		*v;
-
     /* Handle local variables first */
     if (idx != -1) {
-    	if (ctxt != NULL && ctxt != CTXT_CMD && ctxt != CTXT_GLOBAL) {
+    	if (ctxt != NULL) {
 		if (idx < LOCAL_SIZE)
 		    return ctxt->locals[idx];
 		else
 		    return ctxt->locals[EXTENDED2SIMPLE(idx)];
 	} else
-	    return NULL;
+		return NULL;
+    } else {
+    	return find_global_var(name, ename, k);
     }
-    /* First look for the variable in the given context. If it's not there,
-       look for it in CTXT_CMD, CTXT_GLOBAL and the environment,
-       depending on the FIND_* flags in 'flags' */
-    if (ctxt == CTXT_CMD || ctxt == CTXT_GLOBAL)
-	v = getvar((GSymT *)ctxt, name, ename, k);
-    else
-    	v = NULL;
-
-    if (v == NULL)
-	switch (flags) {
-	case 0:
-	    break;
-	case FIND_MINE:
-	    if (ctxt != CTXT_CMD)
-		v = getvar(VAR_CMD, name, ename, k);
-	    if (v == NULL && ctxt != CTXT_GLOBAL)
-		v = getvar(VAR_GLOBAL, name, ename, k);
-	    break;
-	case FIND_ENV:
-	    v = var_from_env(name, ename, k);
-	    break;
-	case FIND_ENV | FIND_MINE:
-	    if (ctxt != CTXT_CMD)
-		v = getvar(VAR_CMD, name, ename, k);
-	    if (v == NULL) {
-		if (ctxt != CTXT_GLOBAL)
-		    v = getvar(VAR_GLOBAL, name, ename, k);
-		if (v == NULL)
-		    v = var_from_env(name, ename, k);
-		else if (checkEnvFirst && (v->flags & VAR_FROM_ENV) == 0) {
-		    char *env;
-
-		    env = getenv(v->name);
-		    if (env != NULL) {
-			Buf_Reset(&(v->val));
-			Buf_AddString(&(v->val), env);
-		    }
-		    /* XXX even if no such env variable, fake it, to avoid
-		     * further lookup */
-		    v->flags |= VAR_FROM_ENV;
-		}
-	    }
-	    break;
-	}
-    return v;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * VarAdd  --
- *	Add a new variable of name name and value val to the given context
- *
- * Results:
- *	The added variable.
- *
- * Side Effects:
- *	The new variable is placed in the given context.
- *	The name and val arguments are duplicated so they may
- *	safely be freed.
- *-----------------------------------------------------------------------
- */
-static Var *
-VarAdd(const char *name, const char *ename, uint32_t k, const char *val, 
-    GSymT *ctxt)
-{
-    Var   *v;
-
-    v = new_var(name, ename, val);
-
-    v->flags = 0;
-
-    ohash_insert(ctxt, ohash_lookup_interval(ctxt, name, ename, k), v);
-    if (DEBUG(VAR))
-	printf("%s:%s = %s\n", context_name(ctxt), v->name, val);
-    return v;
 }
 
 /*-
@@ -600,110 +530,150 @@ VarDelete(Var *v)
 void
 Var_Delete(const char *name)
 {
-    Var 	*v;
-    uint32_t 	k;
-    unsigned int slot;
-    const char 	*ename = NULL;
-    int		idx;
+	Var 	*v;
+	uint32_t 	k;
+	unsigned int slot;
+	const char 	*ename = NULL;
+	int		idx;
 
 
-    if (DEBUG(VAR))
-	printf("delete %s\n", name);
+	if (DEBUG(VAR))
+		printf("delete %s\n", name);
 
-    idx = quick_lookup(name, &ename, &k);
-    if (idx != -1)
-    	Parse_Error(PARSE_FATAL, "Trying to delete dynamic variable");
-    slot = ohash_lookup_interval(VAR_GLOBAL, name, ename, k);
-    v = ohash_find(VAR_GLOBAL, slot);
-    if (v != NULL && (v->flags & VAR_READ_ONLY) == 0) {
-	ohash_remove(VAR_GLOBAL, slot);
+	idx = quick_lookup(name, &ename, &k);
+	if (idx != -1)
+		Parse_Error(PARSE_FATAL, "Trying to delete dynamic variable");
+	slot = ohash_lookup_interval(&global_variables, name, ename, k);
+	v = ohash_find(&global_variables, slot);
+	
+	if (v == NULL)
+		return;
+	if (checkEnvFirst && (v->flags & VAR_FROM_ENV))
+		return;
+
+	if (v->flags & VAR_FROM_CMD)
+		return;
+
+	ohash_remove(&global_variables, slot);
 	VarDelete(v);
-    }
 }
 
-/* 	The variable is searched for only in its context before being
- *	created in that context. I.e. if the context is CTXT_GLOBAL,
- *	only CTXT_GLOBAL is searched. Likewise if it is CTXT_CMD, only
- *	CTXT_CMD is searched.
- */
-void
-Var_Seti(const char *name, const char *ename, const char *val, GSymT *ctxt)
+static void
+var_set_append(const char *name, const char *ename, const char *val, int ctxt,
+    bool append)
 {
-    Var   *v;
-    uint32_t	k;
-    int		idx;
+	Var   *v;
+	uint32_t	k;
+	int		idx;
 
-    idx = quick_lookup(name, &ename, &k);
-    if (idx != -1)
-    	Parse_Error(PARSE_FATAL, "Trying to set dynamic variable $%s",
-	    varnames[idx]);
-
-    /* We only look for a variable in the given context since anything set
-     * here will override anything in a lower context, so there's not much
-     * point in searching them all just to save a bit of memory...  */
-    v = varfind(name, ename, (SymTable *)ctxt, 0, idx, k);
-    if (v == NULL)
-	v = VarAdd(name, ename, k, val, ctxt);
-    else {
-	if ((v->flags & VAR_READ_ONLY) == 0) {
-	    if ((v->flags & VAR_DUMMY) == 0) {
-		Buf_Reset(&(v->val));
-		Buf_AddString(&(v->val), val);
-	    } else {
-		var_init_string(v, val);
-		v->flags &= ~VAR_DUMMY;
-	    }
-
+	idx = quick_lookup(name, &ename, &k);
+	if (idx != -1) {
+		Parse_Error(PARSE_FATAL, "Trying to %s dynamic variable $%s",
+		    append ? "append to" : "set", varnames[idx]);
+		return;
 	}
-    }
-    if (DEBUG(VAR))
-	printf("%s:%s = %s\n", context_name(ctxt), v->name, val);
-    /* Any variables given on the command line are automatically exported
-     * to the environment (as per POSIX standard).  */
-    if (ctxt == VAR_CMD)
-	esetenv(v->name, val);
+
+	v = find_global_var(name, ename, k);
+	if (v->flags & POISON_NORMAL)
+		Parse_Error(PARSE_FATAL, "Trying to %s poisoned variable %s\n",
+		    append ? "append to" : "set", v->name);
+	/* so can we write to it ? */
+	if (ctxt == VAR_CMD) { 	/* always for command line */
+		(append ? var_append_string : var_set_string)(v, val);
+		v->flags |= VAR_FROM_CMD;
+		if ((v->flags & VAR_SHELL) == 0) {
+			/* Any variables given on the command line are 
+			 * automatically exported to the environment,
+			 * except for SHELL (as per POSIX standard).  
+			 */
+			esetenv(v->name, val);
+	    	}
+		if (DEBUG(VAR))
+			printf("command:%s = %s\n", v->name, VarValue(v));
+	} else if ((v->flags & VAR_FROM_CMD) == 0 &&
+	     (!checkEnvFirst || (v->flags & VAR_FROM_ENV) == 0)) {
+		(append ? var_append_string : var_set_string)(v, val);
+		if (DEBUG(VAR))
+			printf("global:%s = %s\n", v->name, VarValue(v));
+	} else if (DEBUG(VAR))
+			printf("overriden:%s = %s\n", v->name, VarValue(v));
 }
 
 void
-Var_Appendi(const char *name, const char *ename, const char *val, GSymT *ctxt)
+Var_Seti(const char *name, const char *ename, const char *val, int ctxt)
 {
-    Var   *v;
-    uint32_t	k;
-    int		idx;
+	var_set_append(name, ename, val, ctxt, false);
+}
 
-    assert(ctxt == VAR_GLOBAL || ctxt == VAR_CMD);
+void
+Var_Appendi(const char *name, const char *ename, const char *val, int ctxt)
+{
+	var_set_append(name, ename, val, ctxt, true);
+}
 
-    idx = quick_lookup(name, &ename, &k);
-    if (idx != -1)
-    	Parse_Error(PARSE_FATAL, "Trying to append to dynamic variable $%s",
-	    varnames[idx]);
+void
+Var_MarkPoisoned(const char *name, const char *ename, unsigned int type)
+{
+	Var   *v;
+	uint32_t	k;
+	int		idx;
+	idx = quick_lookup(name, &ename, &k);
 
-    v = varfind(name, ename, (SymTable *)ctxt, FIND_ENV, idx, k);
-
-    if ((v->flags & VAR_READ_ONLY) == 0) {
-	if ((v->flags & VAR_DUMMY) == 0) {
-	    Buf_AddSpace(&(v->val));
-	    Buf_AddString(&(v->val), val);
-	} else {
-	    var_init_string(v, val);
-	    v->flags &= ~VAR_DUMMY;
+	if (idx != -1) {
+		Parse_Error(PARSE_FATAL, 
+		    "Trying to poison dynamic variable $%s",
+		    varnames[idx]);
+		return;
 	}
 
-    }
-    if (DEBUG(VAR))
-	printf("%s:%s = %s\n", context_name(ctxt), v->name, VarValue(v));
+	v = find_global_var(name, ename, k);
+	v->flags |= type;
+	if (v->flags & POISON_NORMAL) {
+		if (v->flags & VAR_DUMMY)
+			return;
+		if (v->flags & VAR_FROM_ENV)
+			return;
+		Parse_Error(PARSE_FATAL,
+		    "Poisoned variable %s is already set\n", v->name);
+	}
 }
 
 char *
 Var_Valuei(const char *name, const char *ename)
 {
-    Var 	   *v;
+	Var 	   *v;
+	uint32_t		k;
+	int 		idx;
 
-    v = VarFindi(name, ename, NULL, FIND_ENV | FIND_MINE);
-    if (v != NULL && (v->flags & VAR_DUMMY) == 0)
-	return VarValue(v);
-    else
+	idx = quick_lookup(name, &ename, &k);
+	if (idx == -1) {
+		v = find_global_var(name, ename, k);
+		if (v->flags & POISONS)
+		    poison_check(v);
+		if ((v->flags & VAR_DUMMY) == 0)
+			return VarValue(v);
+	}
+
 	return NULL;
+}
+
+bool
+Var_Definedi(const char *name, const char *ename)
+{
+	Var 	   	*v;
+	uint32_t	k;
+	int 		idx;
+
+	idx = quick_lookup(name, &ename, &k);
+	if (idx == -1) {
+		v = find_global_var(name, ename, k);
+		if (v->flags & POISON_NORMAL)
+		    poison_check(v);
+		if ((v->flags & VAR_DUMMY) == 0)
+			return true;
+	}
+
+	return false;
 }
 
 static const char *
@@ -850,7 +820,9 @@ Var_Parse(const char *str, 	/* The string to parse */
     }
 
     idx = quick_lookup(name.s, &name.e, &k);
-    v = varfind(name.s, name.e, ctxt, FIND_ENV | FIND_MINE, idx, k);
+    v = varfind(name.s, name.e, ctxt, idx, k);
+    if (v->flags & POISONS)
+    	poison_check(v);
     if (v != NULL && (v->flags & VAR_DUMMY) == 0) {
 	if (v->flags & VAR_IN_USE)
 	    Fatal("Variable %s is recursive.", v->name);
@@ -888,7 +860,7 @@ Var_Parse(const char *str, 	/* The string to parse */
 	/* Dynamic source */
 	if (idx != -1) {
 	    /* can't be expanded for now: copy the var spec instead. */
-	    if (ctxt == NULL || ctxt == CTXT_GLOBAL || ctxt == CTXT_CMD) {
+	    if (ctxt == NULL) {
 		*freePtr = true;
 		val = Str_dupi(start, start+ *lengthPtr);
 	    } else {
@@ -1072,6 +1044,22 @@ Var_SubstVar(Buffer buf, 	/* To store result */
     }
 }
 
+static void
+set_magic_shell_variable()
+{
+    const char *name = "SHELL";
+    const char *ename = NULL;
+    uint32_t k;
+    Var *v;
+    k = ohash_interval(name, &ename);
+    v = create_var(name, ename);
+    ohash_insert(&global_variables, 
+    	ohash_lookup_interval(&global_variables, name, ename, k), v);
+	/* the environment shall not affect it */
+    v->flags = VAR_SHELL | VAR_SEEN_ENV;
+    var_init_string(v, _PATH_BSHELL);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Var_Init --
@@ -1084,14 +1072,12 @@ Var_SubstVar(Buffer buf, 	/* To store result */
 void
 Var_Init(void)
 {
-    static GSymT global_vars, cmd_vars;
+    ohash_init(&global_variables, 10, &var_info);
+    set_magic_shell_variable();
 
-    VAR_GLOBAL = &global_vars;
-    VAR_CMD = &cmd_vars;
-    ohash_init(VAR_GLOBAL, 10, &var_info);
-    ohash_init(VAR_CMD, 5, &var_info);
-    CTXT_GLOBAL = (SymTable *)VAR_GLOBAL;
-    CTXT_CMD = (SymTable *)VAR_CMD;
+
+    oldVars = true;
+    Var_setCheckEnvFirst(false);
 
     VarModifiers_Init();
 }
@@ -1104,11 +1090,8 @@ Var_End(void)
     Var *v;
     unsigned int i;
 
-    for (v = ohash_first(VAR_GLOBAL, &i); v != NULL;
-	v = ohash_next(VAR_GLOBAL, &i))
-	    VarDelete(v);
-    for (v = ohash_first(VAR_CMD, &i); v != NULL;
-	v = ohash_next(VAR_CMD, &i))
+    for (v = ohash_first(&global_variables, &i); v != NULL;
+	v = ohash_next(&global_variables, &i))
 	    VarDelete(v);
 }
 #endif
@@ -1140,14 +1123,10 @@ Var_Dump(void)
 
     printf("#*** Global Variables:\n");
 
-    for (v = ohash_first(VAR_GLOBAL, &i); v != NULL;
-	v = ohash_next(VAR_GLOBAL, &i))
+    for (v = ohash_first(&global_variables, &i); v != NULL;
+	v = ohash_next(&global_variables, &i))
 	VarPrintVar(v);
 
-    printf("#*** Command-line Variables:\n");
-
-    for (v = ohash_first(VAR_CMD, &i); v != NULL; v = ohash_next(VAR_CMD, &i))
-	VarPrintVar(v);
 }
 
 static const char *quotable = " \t\n\\'\"";
@@ -1165,8 +1144,11 @@ Var_AddCmdline(const char *name)
 
     Buf_Init(&buf, MAKE_BSIZE);
 
-    for (v = ohash_first(VAR_CMD, &i); v != NULL;
-	v = ohash_next(VAR_CMD, &i)) {
+    for (v = ohash_first(&global_variables, &i); v != NULL;
+	v = ohash_next(&global_variables, &i)) {
+		if (!(v->flags & VAR_FROM_CMD)) {
+			continue;
+		}
 		/* We assume variable names don't need quoting */
 		Buf_AddString(&buf, v->name);
 		Buf_AddChar(&buf, '=');

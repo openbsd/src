@@ -1,7 +1,7 @@
 #ifndef PARSEVAR_H
 #define PARSEVAR_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.h,v 1.1 2001/05/23 12:34:48 espie Exp $ */
+/*	$OpenBSD: parsevar.h,v 1.2 2007/07/08 17:44:20 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -31,9 +31,13 @@
  *	Functions to parse variable assignments
  */
 
-/* wasvar = Parse_DoVar(str, ctxt);
- *	Parses variable assignment str  and adds it to context ctxt. 
+/* wasvar = Parse_DoVar(str);
+ *	Parses variable assignment str.
  *	Returns false if this is something else. */
-extern bool Parse_DoVar(const char *, GSymT *);
+extern bool Parse_DoVar(const char *);
+/* wasvar = Parse_CmdlineVar(str, ctxt);
+ *	Parses variable assignment str, given on the command line.
+ *	Returns false if this is something else. */
+extern bool Parse_CmdlineVar(const char *);
 
 #endif

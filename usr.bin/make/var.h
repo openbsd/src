@@ -32,26 +32,26 @@ extern void Var_End(void);
 #define Var_End()
 #endif
 
-extern GSymT	*VAR_GLOBAL;	/* Variables defined in a global context, e.g
-				 * in the Makefile itself */
-extern GSymT	*VAR_CMD;	/* Variables defined on the command line */
+extern void Var_setCheckEnvFirst(bool);
 
 /* Global contexts handling. */
 /* value = Var_Valuei(name, end);
  *	Returns value of global variable name/end, or NULL if inexistent. */
 extern char *Var_Valuei(const char *, const char *);
 #define Var_Value(n)	Var_Valuei(n, NULL)
+/* Only check if variable is defined */
+extern bool Var_Definedi(const char *, const char *);
 
 /* Var_Seti(name, end, val, ctxt);
  *	Sets value val of variable name/end in context ctxt.  Copies val. */
 extern void Var_Seti(const char *, const char *, const char *,
-	GSymT *);
+	int);
 #define Var_Set(n, v, ctxt)	Var_Seti(n, NULL, v, ctxt)
 /* Var_Appendi(name, end, val, cxt);
  *	Appends value val to variable name/end in context ctxt, defining it
  *	if it does not already exist, and inserting one space otherwise. */
 extern void Var_Appendi(const char *, const char *,
-	const char *, GSymT  *);
+	const char *, int);
 #define Var_Append(n, v, ctxt)	Var_Appendi(n, NULL, v, ctxt)
 	
 /* Var_Delete(name);
@@ -130,10 +130,20 @@ extern void Var_Dump(void);
  *	Used to propagate variable values to submakes through MAKEFLAGS.  */
 extern void Var_AddCmdline(const char *);
 
-
+/* stuff common to var.c and varparse.c */
 extern bool	oldVars;	/* Do old-style variable substitution */
 
-extern bool	checkEnvFirst;	/* true if environment should be searched for
-				 * variables before the global context */
+#define		VAR_GLOBAL	0 
+	/* Variables defined in a global context, e.g in the Makefile itself */
+#define		VAR_CMD		1
+	/* Variables defined on the command line */
+
+#define POISON_INVALID 		0
+#define POISON_DEFINED 		1
+#define POISON_NORMAL		64
+#define POISON_EMPTY		128
+#define POISON_NOT_DEFINED	256
+
+extern void Var_MarkPoisoned(const char *, const char *, unsigned int);
 
 #endif

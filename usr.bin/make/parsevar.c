@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.2 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.3 2007/07/08 17:44:20 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 
 static const char *find_op1(const char *);
 static const char *find_op2(const char *);
+static bool parse_variable_assignment(const char *, int);
 
 static const char *
 find_op1(const char *p)
@@ -68,9 +69,9 @@ find_op2(const char *p)
     return p;
 }
 
-bool
-Parse_DoVar(const char *line, 
-    GSymT *ctxt) 		/* Context in which to do the assignment */
+static bool
+parse_variable_assignment(const char *line, 
+    int ctxt) 			/* Context in which to do the assignment */
 {
     const char	*arg;
     char	*res1 = NULL, *res2 = NULL;
@@ -82,7 +83,7 @@ Parse_DoVar(const char *line,
     int		    type;	/* Type of assignment */
     struct Name	    name;
 
-    arg = VarName_Get(line, &name, (SymTable *)ctxt, true,
+    arg = VarName_Get(line, &name, NULL, true,
 	FEATURES(FEATURE_SUNSHCMD) ? find_op1 : find_op2);
 
     while (isspace(*arg))
@@ -147,7 +148,7 @@ Parse_DoVar(const char *line,
     while (isspace(*arg))
     	arg++;
     /* If the variable already has a value, we don't do anything.  */
-    if ((type & VAR_OPT) && Var_Valuei(name.s, name.e) != NULL) {
+    if ((type & VAR_OPT) && Var_Definedi(name.s, name.e)) {
 	VarName_Free(&name);
 	return true;
     }
@@ -188,7 +189,7 @@ Parse_DoVar(const char *line,
 	if (Var_Valuei(name.s, name.e) == NULL)
 	    Var_Seti(name.s, name.e, "", ctxt);
 
-	res2 = Var_Subst(arg, (SymTable *)ctxt, false);
+	res2 = Var_Subst(arg, NULL, false);
 	oldVars = oldOldVars;
 
 	arg = res2;
@@ -203,5 +204,22 @@ Parse_DoVar(const char *line,
     free(res2);
     free(res1);
     return true;
+}
+
+bool
+Parse_DoVar(const char *line)
+{
+	return parse_variable_assignment(line, VAR_GLOBAL);
+}
+
+bool
+Parse_CmdlineVar(const char *line)
+{
+	bool result;
+
+	oldVars = false;
+	result = parse_variable_assignment(line, VAR_CMD);
+	oldVars = true;
+	return result;
 }
 

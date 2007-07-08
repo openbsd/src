@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.c,v 1.33 2007/03/20 03:50:39 tedu Exp $	*/
+/*	$OpenBSD: cond.c,v 1.34 2007/07/08 17:44:20 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -247,10 +247,7 @@ CondGetArg(const char **linePtr, struct Name *arg, const char *func,
 static bool
 CondDoDefined(struct Name *arg)
 {
-    if (Var_Valuei(arg->s, arg->e) != NULL)
-	return true;
-    else
-	return false;
+    return Var_Definedi(arg->s, arg->e);
 }
 
 /*-
@@ -1024,6 +1021,12 @@ Cond_Eval(const char *line)
     	if (k == K_COND_UNDEF && len == strlen(COND_UNDEF) &&
 	    strncmp(line, COND_UNDEF, len) == 0)
 	    return COND_ISUNDEF;
+	else
+	    return COND_INVALID;
+    case K_COND_POISON % MAGICSLOTS2:
+    	if (k == K_COND_POISON && len == strlen(COND_POISON) &&
+	    strncmp(line, COND_POISON, len) == 0)
+	    return COND_ISPOISON;
 	else
 	    return COND_INVALID;
     case K_COND_INCLUDE % MAGICSLOTS2:

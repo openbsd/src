@@ -2,7 +2,7 @@
 #define DEFINES_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: defines.h,v 1.2 2002/02/19 19:39:38 millert Exp $ */
+/*	$OpenBSD: defines.h,v 1.3 2007/07/08 17:44:20 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -46,9 +46,6 @@ typedef struct List_ *Lst;
 
 struct SymTable_;
 typedef struct SymTable_ SymTable;
-
-struct ohash;
-typedef struct ohash GSymT;
 
 struct Buffer_;
 typedef struct Buffer_ *Buffer;

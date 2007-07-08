@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.69 2006/09/26 18:20:50 mk Exp $ */
+/*	$OpenBSD: main.c,v 1.70 2007/07/08 17:44:20 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -99,8 +99,6 @@ bool 		touchFlag;	/* -t flag */
 bool 		usePipes;	/* !-P flag */
 bool 		ignoreErrors;	/* -i flag */
 bool 		beSilent;	/* -s flag */
-bool 		oldVars;	/* variable substitution style */
-bool 		checkEnvFirst;	/* -e flag */
 
 static void		MainParseArgs(int, char **);
 static char *		chdir_verify_path(const char *);
@@ -140,7 +138,7 @@ posixParseOptLetter(int c)
 		keepgoing = false;
 		break;
 	case 'e':
-		checkEnvFirst = true;
+		Var_setCheckEnvFirst(true);
 		break;
 	case 'i':
 		ignoreErrors = true;
@@ -300,7 +298,7 @@ MainParseArgs(int argc, char **argv)
 		case -1:
 			/* Check for variable assignments and targets. */
 			if (argv[optind] != NULL &&
-			    !Parse_DoVar(argv[optind], VAR_CMD)) {
+			    !Parse_CmdlineVar(argv[optind])) {
 				if (!*argv[optind])
 					Punt("illegal (null) argument.");
 				Lst_AtEnd(create, estrdup(argv[optind]));
@@ -318,8 +316,6 @@ MainParseArgs(int argc, char **argv)
 	 */
 	if (!compatMake && !forceJobs)
 		compatMake = true;
-
-	oldVars = true;
 }
 
 /*-

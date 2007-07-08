@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.71 2007/03/20 03:50:39 tedu Exp $	*/
+/*	$OpenBSD: parse.c,v 1.72 2007/07/08 17:44:20 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -213,6 +213,7 @@ static void ParseDoDependency(char *);
 static void ParseAddCmd(void *, void *);
 static void ParseHasCommands(void *);
 static void ParseDoInclude(char *);
+static void ParseDoPoison(char *);
 static void ParseTraditionalInclude(char *);
 static void ParseConditionalInclude(char *);
 static void ParseLookupIncludeFile(char *, char *, bool, bool);
@@ -1337,6 +1338,68 @@ ParseLookupIncludeFile(char *spec, char *endSpec, bool isSystem,
 }
 
 
+static void
+ParseDoPoison(char *line)
+{
+	char *p = line;
+	int type = POISON_NORMAL;
+	bool not = false;
+	bool paren_to_match = false;
+	char *name, *ename;
+
+	while (isspace(*p))
+		p++;
+	if (*p == '!') {
+		not = true;
+		p++;
+	}
+	while (isspace(*p))
+		p++;
+	if (strncmp(p, "defined", 7) == 0) {
+		type = POISON_DEFINED;
+		p += 7;
+	} else if (strncmp(p, "empty", 5) == 0) {
+		type = POISON_EMPTY;
+		p += 5;
+	}
+	while (isspace(*p))
+		p++;
+	if (*p == '(') {
+		paren_to_match = true;
+		p++;
+	}
+	while (isspace(*p))
+		p++;
+	name = ename = p;
+	while (*p != '\0' && !isspace(*p)) {
+		if (*p == ')' && paren_to_match) {
+			paren_to_match = false;
+			p++;
+			break;
+		}
+		p++;
+		ename = p;
+	}
+	while (isspace(*p))
+		p++;
+	switch(type) {
+	case POISON_NORMAL:
+	case POISON_EMPTY:
+		if (not)
+			type = POISON_INVALID;
+		break;
+	case POISON_DEFINED:
+		if (not)
+			type = POISON_NOT_DEFINED;
+		else
+			type = POISON_INVALID;
+		break;
+	}
+	if ((*p != '\0' && *p != '#') || type == POISON_INVALID)
+		Parse_Error(PARSE_FATAL, "Invalid syntax for .poison: %s", 
+		    line);
+	Var_MarkPoisoned(name, ename, type);
+}
 
 
 /* Strip comments from the line. May return either a copy of the line, or
@@ -1420,6 +1483,9 @@ ParseIsCond(Buffer linebuf, Buffer copy, char *line)
     }
     case COND_ISINCLUDE:
 	ParseDoInclude(line + 7);
+	return true;
+    case COND_ISPOISON:
+    	ParseDoPoison(line + 6);
 	return true;
     case COND_ISUNDEF: {
 	char *cp;
@@ -1520,7 +1586,7 @@ Parse_File(
 
 		    if (inDependency)
 			ParseFinishDependency();
-		    if (Parse_DoVar(stripped, VAR_GLOBAL))
+		    if (Parse_DoVar(stripped))
 			inDependency = false;
 		    else {
 			size_t pos;
