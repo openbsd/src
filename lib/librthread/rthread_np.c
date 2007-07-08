@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.4 2006/04/12 13:34:12 henning Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.5 2007/07/08 01:53:46 kurt Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -18,12 +18,15 @@
  */
 
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/lock.h>
+#include <sys/resource.h>
 #include <sys/queue.h>
 
 #include <errno.h>
 #include <pthread.h>
 #include <pthread_np.h>
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -58,32 +61,34 @@ pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 	char *base;
 	size_t pgsz;
 	int ret;
+	struct rlimit rl;
 
 	if (thread->stack) {
 		base = thread->stack->base;
 #if !defined(MACHINE_STACK_GROWS_UP)
-		base += thread->stack->len;
+		base += (ptrdiff_t)thread->stack->len;
 #endif
 		sinfo->ss_sp = base;
 		sinfo->ss_size = thread->stack->len;
 		sinfo->ss_flags = 0;
 		ret = 0;
 	} else if (thread == &_initial_thread) {
-		pgsz = sysconf(_SC_PAGESIZE);
+		if (getrlimit(RLIMIT_STACK, &rl) != 0)
+			return (EAGAIN);
+		pgsz = (size_t)sysconf(_SC_PAGESIZE);
 		if (pgsz == (size_t)-1)
-			ret = EAGAIN;
-		else {
-#if defined(MACHINE_STACK_GROWS_UP)
-			base = (caddr_t) USRSTACK;
-#else
-			base = (caddr_t) ((USRSTACK - DFLSSIZ) & ~(pgsz - 1));
-			base += DFLSSIZ;
-#endif
-			sinfo->ss_sp = base;
-			sinfo->ss_size = DFLSSIZ;
-			sinfo->ss_flags = 0;
-			ret = 0;
-		}
+			return (EAGAIN);
+		/*
+		 * round_page() stack rlim_cur and
+		 * trunc_page() USRSTACK to be consistent with
+		 * the way the kernel sets up the stack.
+		 */
+		sinfo->ss_size = (size_t)rl.rlim_cur;
+		sinfo->ss_size += (pgsz - 1);
+		sinfo->ss_size &= ~(pgsz - 1);
+		sinfo->ss_sp = (caddr_t) (USRSTACK & ~(pgsz - 1));
+		sinfo->ss_flags = 0;
+		ret = 0;
 
 	} else
 		ret = EAGAIN;
