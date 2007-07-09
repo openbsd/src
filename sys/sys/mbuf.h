@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.89 2007/06/11 11:18:14 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.90 2007/07/09 19:41:53 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -299,24 +299,6 @@ struct mbuf {
 	MCLINITREFERENCE(m); \
 } while (/* CONSTCOND */ 0)
 
-#define	_MEXTREMOVE(m) do { \
-	if (MCLISREFERENCED(m)) { \
-		_MCLDEREFERENCE(m); \
-	} else if ((m)->m_flags & M_CLUSTER) { \
-		pool_put(&mclpool, (m)->m_ext.ext_buf); \
-	} else if ((m)->m_ext.ext_free) { \
-		(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf, \
-		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg); \
-	} else { \
-		free((m)->m_ext.ext_buf,(m)->m_ext.ext_type); \
-	} \
-	(m)->m_flags &= ~(M_CLUSTER|M_EXT); \
-	(m)->m_ext.ext_size = 0;	/* why ??? */ \
-} while (/* CONSTCOND */ 0)
-
-#define	MEXTREMOVE(m) \
-	MBUFLOCK(_MEXTREMOVE((m));)
-
 /*
  * Reset the data pointer on an mbuf.
  */
@@ -337,17 +319,7 @@ do {									\
  * Free a single mbuf and associated external storage.
  * Place the successor, if any, in n.
  */
-#define	MFREE(m, n) \
-	MBUFLOCK( \
-		mbstat.m_mtypes[(m)->m_type]--; \
-		if ((m)->m_flags & M_PKTHDR) \
-			m_tag_delete_chain((m)); \
-		if ((m)->m_flags & M_EXT) { \
-			_MEXTREMOVE((m)); \
-		} \
-		(n) = (m)->m_next; \
-		pool_put(&mbpool, (m)); \
-	)
+#define	MFREE(m, n) n = m_free((m))
 
 /*
  * Move just m_pkthdr from from to to,
