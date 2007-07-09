@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.31 2007/06/29 03:37:09 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.32 2007/07/09 17:12:17 thib Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.31 2007/06/29 03:37:09 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.32 2007/07/09 17:12:17 thib Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,6 +81,7 @@ static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.31 2007/06/29 03:37:09 d
     ((struct ufs2_dinode *)(dp))->field)
 
 char	*disk;		/* name of the disk file */
+char	rdisk[PATH_MAX];/* resolved name of the disk file */
 int	diskfd;		/* disk file descriptor */
 struct	fs *sblock;	/* the file system super block */
 char	sblock_buf[MAXBSIZE];
@@ -495,7 +496,7 @@ main(int argc, char *argv[])
 	struct fstab *fsp;
 	unsigned long ulval;
 	ssize_t n;
-	char *ep;
+	char *ep, *odisk;
 	int c, i;
 
 	while ((c = getopt(argc, argv, "af:i:ms")) != -1)
@@ -544,7 +545,10 @@ main(int argc, char *argv[])
 	if (optind != argc - 1 || (mflag && format))
 		usage();
 
-	disk = argv[optind];
+	odisk = argv[optind];
+	if (realpath(odisk, rdisk) == NULL)
+		err(1, "cannot find real path for %s", odisk);
+	disk = rdisk;
 
 	if (stat(disk, &stblock) < 0)
 		err(1, "cannot stat %s", disk);
@@ -553,7 +557,7 @@ main(int argc, char *argv[])
 		disk = rawname(disk);
 	} else if (!S_ISCHR(stblock.st_mode)) {
 		if ((fsp = getfsfile(disk)) == NULL)
-			err(1, "cound not find file system %s", disk);
+			err(1, "could not find file system %s", disk);
                 disk = rawname(fsp->fs_spec);
         }
 
