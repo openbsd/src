@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.17 2007/06/04 15:10:12 henning Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.18 2007/07/09 06:01:05 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.17 2007/06/04 15:10:12 henning Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.18 2007/07/09 06:01:05 canacar Exp $ (LBL)";
 #endif
 
 #ifdef PPP
@@ -77,6 +77,7 @@ static struct protonames protonames[] = {
 	{ PPP_PAP,	"PAP" },	/* Password Authentication Protocol */
 	{ PPP_LQR,	"LQR" },	/* Link Quality Report protocol */
 	{ PPP_CHAP,	"CHAP" },	/* Cryptographic Handshake Auth. Proto */
+	{ PPP_IPV6,	"IPV6" },	/* Internet Protocol v6 */
 };
 
 /* LCP */
@@ -540,6 +541,10 @@ ppp_if_print(user, h, p)
 	case ETHERTYPE_IP:
 		ip_print((const u_char *)(p + PPP_HDRLEN), length);
 		break;
+	case PPP_IPV6:
+	case ETHERTYPE_IPV6:
+		ip6_print((const u_char *)(p + PPP_HDRLEN), length);
+		break;
 	case PPP_IPX:
 	case ETHERTYPE_IPX:
 		ipx_print((const u_char *)(p + PPP_HDRLEN), length);
@@ -659,6 +664,9 @@ ppp_ether_if_print(user, h, p)
 				break;
 			case PPP_IP:
 				ip_print(p + 2, length - 2);
+				break;
+			case PPP_IPV6:
+				ip6_print(p + 2, length - 2);
 				break;
 			case PPP_IPX:
 				ipx_print(p + 2, length - 2);
@@ -828,6 +836,9 @@ pppoe_if_print(ethertype, p, length, caplen)
 					break;
 				case PPP_IP:
 					ip_print(p + 2, length - 2);
+					break;
+				case PPP_IPV6:
+					ip6_print(p + 2, length - 2);
 					break;
 				case PPP_IPX:
 					ipx_print(p + 2, length - 2);
