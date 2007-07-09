@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.16 2004/05/19 02:32:35 tedu Exp $ */
+/*	$OpenBSD: file.h,v 1.17 2007/07/09 16:39:48 dim Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -28,7 +28,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.16 2004/05/19 02:32:35 tedu Exp $
+ * @(#)$Id: file.h,v 1.17 2007/07/09 16:39:48 dim Exp $
  */
 
 #ifndef __file_h__
@@ -177,7 +177,7 @@ struct magic_set {
 	/* Accumulation buffer */
 	char *buf;
 	char *ptr;
-	size_t len;
+	size_t left;
 	size_t size;
 	/* Printable buffer */
 	char *pbuf;

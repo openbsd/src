@@ -1,4 +1,4 @@
-/* $OpenBSD: funcs.c,v 1.3 2005/04/11 16:31:35 deraadt Exp $ */
+/* $OpenBSD: funcs.c,v 1.4 2007/07/09 16:39:48 dim Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -29,13 +29,15 @@
  */
 #include "file.h"
 #include "magic.h"
+#include <limits.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: funcs.c,v 1.3 2005/04/11 16:31:35 deraadt Exp $")
+FILE_RCSID("@(#)$Id: funcs.c,v 1.4 2007/07/09 16:39:48 dim Exp $")
 #endif	/* lint */
 /*
  * Like printf, only we print to a buffer and advance it.
@@ -44,28 +46,39 @@ protected int
 file_printf(struct magic_set *ms, const char *fmt, ...)
 {
 	va_list ap;
-	size_t len;
+	int len;
+	size_t size;
 	char *buf;
+	ptrdiff_t diff;
 
 	va_start(ap, fmt);
 
-	len = vsnprintf(ms->o.ptr, ms->o.len, fmt, ap);
-	if (len == -1 || len >= ms->o.len) {
+	len = vsnprintf(ms->o.ptr, ms->o.left, fmt, ap);
+	if (len == -1) {
+		file_error(ms, errno, "vsnprintf failed");
+		return -1;
+	} else if (len >= ms->o.left) {
 		va_end(ap);
-		if ((buf = realloc(ms->o.buf, len + 1024)) == NULL) {
+		size = (ms->o.size - ms->o.left) + len + 1024;
+		if ((buf = realloc(ms->o.buf, size)) == NULL) {
 			file_oomem(ms);
 			return -1;
 		}
-		ms->o.ptr = buf + (ms->o.ptr - ms->o.buf);
+		diff = ms->o.ptr - ms->o.buf;
+		ms->o.ptr = buf + diff;
 		ms->o.buf = buf;
-		ms->o.len = ms->o.size - (ms->o.ptr - ms->o.buf);
-		ms->o.size = len + 1024;
+		ms->o.left = size - diff;
+		ms->o.size = size;
 
 		va_start(ap, fmt);
-		len = vsnprintf(ms->o.ptr, ms->o.len, fmt, ap);
+		len = vsnprintf(ms->o.ptr, ms->o.left, fmt, ap);
+		if (len == -1) {
+			file_error(ms, errno, "vsnprintf failed");
+			return -1;
+		}
 	}
 	ms->o.ptr += len;
-	ms->o.len -= len;
+	ms->o.left -= len;
 	va_end(ap);
 	return 0;
 }
@@ -152,8 +165,8 @@ file_reset(struct magic_set *ms)
 protected const char *
 file_getbuffer(struct magic_set *ms)
 {
-	char *nbuf, *op, *np;
-	size_t nsize;
+	char *pbuf, *op, *np;
+	size_t psize, len;
 
 	if (ms->haderr)
 		return NULL;
@@ -161,14 +174,20 @@ file_getbuffer(struct magic_set *ms)
 	if (ms->flags & MAGIC_RAW)
 		return ms->o.buf;
 
-	nsize = ms->o.len * 4 + 1;
-	if (ms->o.psize < nsize) {
-		if ((nbuf = realloc(ms->o.pbuf, nsize)) == NULL) {
+	len = ms->o.size - ms->o.left;
+	if (len > (SIZE_T_MAX - 1) / 4) {
+		file_oomem(ms);
+		return NULL;
+	}
+	/* * 4 is for octal representation, + 1 is for NUL */
+	psize = len * 4 + 1;
+	if (ms->o.psize < psize) {
+		if ((pbuf = realloc(ms->o.pbuf, psize)) == NULL) {
 			file_oomem(ms);
 			return NULL;
 		}
-		ms->o.psize = nsize;
-		ms->o.pbuf = nbuf;
+		ms->o.psize = psize;
+		ms->o.pbuf = pbuf;
 	}
 
 	for (np = ms->o.pbuf, op = ms->o.buf; *op; op++) {
