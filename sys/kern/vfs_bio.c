@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.97 2007/06/17 20:06:10 jasper Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.98 2007/07/09 15:30:25 miod Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -462,16 +462,17 @@ bread_cluster(struct vnode *vp, daddr64_t blkno, int size, struct buf **rbpp)
 
 	*rbpp = bio_doread(vp, blkno, size, 0);
 
-	size = round_page(size);
-	howmany = MAXPHYS / size;
+	if (size != round_page(size))
+		return (biowait(*rbpp));
 
 	if (VOP_BMAP(vp, blkno + 1, NULL, &sblkno, &maxra))
 		return (biowait(*rbpp));
-	maxra++; 
 
+	maxra++; 
 	if (sblkno == -1 || maxra < 2)
 		return (biowait(*rbpp));
 
+	howmany = MAXPHYS / size;
 	if (howmany > maxra)
 		howmany = maxra;
 
