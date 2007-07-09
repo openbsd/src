@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.4 2007/07/08 17:53:15 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.5 2007/07/09 08:07:00 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ Parse_CmdlineVar(const char *line)
 
 	errorIsOkay = false;
 	result = parse_variable_assignment(line, VAR_CMD);
-	errorIsOkay = errorIsOkay;
+	errorIsOkay = saved;
 	return result;
 }
 
