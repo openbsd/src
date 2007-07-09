@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.25 2007/06/21 20:17:12 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.26 2007/07/09 21:40:24 jasper Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -786,13 +786,13 @@ macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
 	mask = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_MISC_REG);
 	mask |= MACE_ISA_MISC_RLED_OFF | MACE_ISA_MISC_GLED_OFF;
 
-	/* GREEN - User mode */
+	/* GREEN - Idle */
 	/* AMBER - System mode */
-	/* RED   - IDLE */
+	/* RED   - User Mode */
 	if (cf->sr & SR_KSU_USER) {
-		mask &= ~MACE_ISA_MISC_GLED_OFF;
-	} else if (cf->pc >= (long)idle && cf->pc < (long)e_idle) {
 		mask &= ~MACE_ISA_MISC_RLED_OFF;
+	} else if (cf->pc >= (long)idle && cf->pc < (long)e_idle) {
+		mask &= ~MACE_ISA_MISC_GLED_OFF;	
 	} else {
 		mask &= ~(MACE_ISA_MISC_RLED_OFF | MACE_ISA_MISC_GLED_OFF);
 	}
