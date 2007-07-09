@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.69 2007/07/08 17:44:20 espie Exp $
+.\"	$OpenBSD: make.1,v 1.70 2007/07/09 14:47:29 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 8 2007 $
+.Dd $Mdocdate: July 9 2007 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -845,25 +845,17 @@ Un-define the specified global variable.
 Only global variables may be un-defined.
 .It Ic .poison Ar variable
 Poison the specified global variable.
-Any further reference to 
+Any further reference to
 .Ar variable
 will be flagged as an error.
-.It Xo
-.Ic \&.poison \&!defined 
-.Po Ar variable
-.Pc
-.Xc
+.It Ic .poison !defined Pq Ar variable
 It is an error to try to use the value of
 .Ar variable
-in a context  where it is not defined.
-.It Xo
-.Ic \&.poison empty
-.Po Ar variable
-.Pc
-.Xc
+in a context where it is not defined.
+.It Ic .poison empty Pq Ar variable
 It is an error to try to use the value of
 .Ar variable
-in a context  where it is not defined or empty.
+in a context where it is not defined or empty.
 .It Xo
 .Ic \&.if
 .Oo \&! Oc Ns Ar expression
