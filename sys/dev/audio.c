@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.61 2007/07/09 09:13:04 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.62 2007/07/09 09:18:47 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1812,7 +1812,7 @@ audio_selwakeup(struct audio_softc *sc, int play)
 #define	AUDIO_FILTWRITE(sc) ( \
     (!sc->sc_full_duplex && (sc->sc_mode & AUMODE_RECORD)) ||		\
     (!(sc->sc_mode & AUMODE_PLAY_ALL) && sc->sc_playdrop > 0) || 	\
-    (sc->sc_pr.used < sc->sc_pr.usedhigh))
+    (sc->sc_pr.used * sc->sc_pparams.factor <= sc->sc_pr.usedlow))
 
 int
 audio_poll(dev, events, p)
