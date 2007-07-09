@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varname.c,v 1.2 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: varname.c,v 1.3 2007/07/09 12:29:45 espie Exp $	*/
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -42,7 +42,7 @@ VarName_Get(const char *start, struct Name *name, SymTable *ctxt, bool err, cons
 	/* If we don't want recursive variables, we skip over '$' */
 	if (!FEATURES(FEATURE_RECVARS)) {
 		while (*p == '$')
-		    p = cont(p);
+			p = cont(p);
 	}
 	if (*p != '$') {
 		name->s = start;
