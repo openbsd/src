@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.23 2006/01/20 09:50:31 jakemsr Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.24 2007/07/10 22:04:28 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -2130,8 +2130,6 @@ emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 	if (mode == AUMODE_PLAY)
 		b16 = (p->precision == 16);
 	else {
-		p->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		p->precision = 16;
 		b16 = 1;
 		if (p->precision == 8)
 			p->factor *= 2;
