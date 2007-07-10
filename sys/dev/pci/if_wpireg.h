@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.15 2007/06/16 14:15:37 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.16 2007/07/10 18:29:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -49,7 +49,6 @@
 #define WPI_TEMPERATURE		0x060
 #define WPI_CHICKEN		0x100
 #define WPI_PLL_CTL		0x20c
-#define WPI_FW_TARGET		0x410
 #define WPI_WRITE_MEM_ADDR  	0x444
 #define WPI_READ_MEM_ADDR   	0x448
 #define WPI_WRITE_MEM_DATA  	0x44c
@@ -92,10 +91,10 @@
 #define WPI_MEM_UCODE_SIZE	0x340c
 #define WPI_MEM_UCODE_BASE	0x3800
 
-#define WPI_MEM_MAIN_TEXT_BASE	0x3490
-#define WPI_MEM_MAIN_TEXT_SIZE	0x3494
-#define WPI_MEM_MAIN_DATA_BASE	0x3498
-#define WPI_MEM_MAIN_DATA_SIZE	0x349c
+#define WPI_MEM_TEXT_BASE	0x3490
+#define WPI_MEM_TEXT_SIZE	0x3494
+#define WPI_MEM_DATA_BASE	0x3498
+#define WPI_MEM_DATA_SIZE	0x349c
 
 
 /* possible flags for register WPI_HWCONFIG */
@@ -108,9 +107,8 @@
 /* possible flags for registers WPI_READ_MEM_ADDR/WPI_WRITE_MEM_ADDR */
 #define WPI_MEM_4	((sizeof (uint32_t) - 1) << 24)
 
-/* possible values for WPI_FW_TARGET */
+/* possible values for WPI_MEM_UCODE_DST */
 #define WPI_FW_TEXT	0x00000000
-#define WPI_FW_DATA	0x00800000
 
 /* possible flags for WPI_GPIO_STATUS */
 #define WPI_POWERED		(1 << 9)
@@ -143,7 +141,8 @@
 #define	WPI_RX_IDLE	(1 << 24)
 
 /* possible flags for register WPI_UC_CTL */
-#define WPI_UC_RUN	(1 << 30)
+#define WPI_UC_ENABLE	(1 << 30)
+#define WPI_UC_RUN	(1 << 31)
 
 /* possible flags for register WPI_INTR_CSR */
 #define WPI_ALIVE_INTR	(1 << 0)
@@ -571,14 +570,18 @@ struct wpi_firmware_hdr {
 	uint32_t	version;
 	uint32_t	main_textsz;
 	uint32_t	main_datasz;
+	uint32_t	init_textsz;
+	uint32_t	init_datasz;
 	uint32_t	boot_textsz;
-	uint32_t	boot_datasz;
 } __packed;
 
 #define WPI_FW_MAIN_TEXT_MAXSZ	(80 * 1024)
 #define WPI_FW_MAIN_DATA_MAXSZ	(32 * 1024)
+#define WPI_FW_INIT_TEXT_MAXSZ	(80 * 1024)
+#define WPI_FW_INIT_DATA_MAXSZ	(32 * 1024)
 #define WPI_FW_BOOT_TEXT_MAXSZ	(80 * 1024)
-#define WPI_FW_BOOT_DATA_MAXSZ	(32 * 1024)
+
+#define WPI_FW_UPDATED	(1 << 31)
 
 /*
  * Offsets into EEPROM.
