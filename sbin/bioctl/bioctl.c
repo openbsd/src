@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.58 2007/06/04 05:28:43 todd Exp $       */
+/* $OpenBSD: bioctl.c,v 1.59 2007/07/10 15:46:54 henning Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -46,6 +46,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <util.h>
+#include <vis.h>
 
 struct locator {
 	int		channel;
@@ -65,6 +66,8 @@ void			bio_setblink(char *, char *, int);
 void			bio_blink(char *, int, int);
 void			bio_createraid(u_int16_t, char *);
 u_int32_t		bio_createflags(char *);
+char			*bio_vis(char *);
+void			bio_diskinq(char *);
 
 int			devh = -1;
 int			human;
@@ -82,13 +85,13 @@ main(int argc, char *argv[])
 	char			*bioc_dev = NULL, *sd_dev = NULL;
 	char			*realname = NULL, *al_arg = NULL;
 	char			*bl_arg = NULL, *dev_list = NULL;
-	int			ch, rv, blink = 0;
+	int			ch, rv, blink = 0, diskinq = 0;
 	u_int16_t		cr_level = 0;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:C:c:l:u:H:ha:iv")) != -1) {
+	while ((ch = getopt(argc, argv, "b:C:c:l:u:H:ha:ivq")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -131,6 +134,9 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose = 1;
 			break;
+		case 'q':
+			diskinq = 1;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
@@ -169,7 +175,9 @@ main(int argc, char *argv[])
 	} else
 		errx(1, "need -d or -f parameter");
 
-	if (func & BIOC_INQ) {
+	if (diskinq) {
+		bio_diskinq(sd_dev);
+	} else if (func & BIOC_INQ) {
 		bio_inq(sd_dev);
 	} else if (func == BIOC_ALARM) {
 		bio_alarm(al_arg);
@@ -196,7 +204,7 @@ usage(void)
 	extern char		*__progname;
 
 	fprintf(stderr,
-		"usage: %s [-hiv] [-a alarm-function] "
+		"usage: %s [-hivq] [-a alarm-function] "
 		"[-b channel:target[.lun]]\n"
 		"\t[-C flag[,flag,...]] [-c raidlevel] "
 		"[-H channel:target[.lun]]\n"
@@ -253,7 +261,10 @@ bio_inq(char *name)
 
 	rv = ioctl(devh, BIOCINQ, &bi);
 	if (rv == -1) {
-		warn("BIOCINQ");
+		if (errno == ENOTTY)
+			bio_diskinq(name);
+		else
+			warn("BIOCINQ");
 		return;
 	}
 
@@ -706,4 +717,36 @@ bio_createflags(char *lst)
 	}
 
 	return (flags);
+}
+
+#define BIOCTL_VIS_NBUF		4
+#define BIOCTL_VIS_BUFLEN	80
+
+char *
+bio_vis(char *s)
+{
+	static char	 rbuf[BIOCTL_VIS_NBUF][BIOCTL_VIS_BUFLEN];
+	static uint	 idx = 0;
+	char		*buf;
+
+	buf = rbuf[idx++];
+	if (idx == BIOCTL_VIS_NBUF)
+		idx = 0;
+
+	strnvis(buf, s, BIOCTL_VIS_BUFLEN, VIS_NL|VIS_CSTYLE);
+	return (buf);
+}
+
+void
+bio_diskinq(char *sd_dev)
+{
+	struct dk_inquiry	di;
+
+	if (ioctl(devh, DIOCINQ, &di) == -1) {
+		warn("DIOCINQ");
+		return;
+	}
+
+	printf("%s: <%s, %s, %s>, serial %s\n", sd_dev, bio_vis(di.vendor),
+	    bio_vis(di.product), bio_vis(di.revision), bio_vis(di.serial));
 }
