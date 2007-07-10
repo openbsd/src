@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.159 2007/06/24 17:00:50 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.160 2007/07/10 17:28:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1432,8 +1432,8 @@ sys_sigreturn(p, v, retval)
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr->u_pcb.pcb_fpregs,
 	    sizeof(ksc.sc_fpregs));
 
-	tf->tf_iioq_head = ksc.sc_pcoqh;
-	tf->tf_iioq_tail = ksc.sc_pcoqt;
+	tf->tf_iioq_head = ksc.sc_pcoqh | HPPA_PC_PRIV_USER;
+	tf->tf_iioq_tail = ksc.sc_pcoqt | HPPA_PC_PRIV_USER;
 	tf->tf_ipsw = ksc.sc_ps;
 
 #ifdef DEBUG
