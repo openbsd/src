@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.549 2007/07/04 08:14:14 mpf Exp $ */
+/*	$OpenBSD: pf.c,v 1.550 2007/07/10 15:58:37 kurt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -560,41 +560,29 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int8_t tree, int *more)
 {
 	struct pf_state_key	*sk;
 	struct pf_state		*s, *ret = NULL;
-	struct pfi_kif		*kif;
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
 	switch (tree) {
 	case PF_LAN_EXT:
-		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
-			sk = RB_FIND(pf_state_tree_lan_ext,
-			    &pf_statetbl_lan_ext, (struct pf_state_key *)key);
-			if (sk == NULL)
-				continue;
-			ret = TAILQ_FIRST(&sk->states);
-			if (more == NULL)
-				return (ret);
-			else
-				TAILQ_FOREACH(s, &sk->states, next)
-					(*more)++;
-		}
+		sk = RB_FIND(pf_state_tree_lan_ext,
+		    &pf_statetbl_lan_ext, (struct pf_state_key *)key);
 		break;
 	case PF_EXT_GWY:
-		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
-			sk = RB_FIND(pf_state_tree_ext_gwy,
-			    &pf_statetbl_ext_gwy, (struct pf_state_key *)key);
-			if (sk == NULL)
-				continue;
-			ret = TAILQ_FIRST(&sk->states);
-			if (more == NULL)
-				return (ret);
-			else
-				TAILQ_FOREACH(s, &sk->states, next)
-					(*more)++;
-		}
+		sk = RB_FIND(pf_state_tree_ext_gwy,
+		    &pf_statetbl_ext_gwy, (struct pf_state_key *)key);
 		break;
 	default:
 		panic("pf_find_state_all");
+	}
+
+	if (sk != NULL) {
+		ret = TAILQ_FIRST(&sk->states);
+		if (more == NULL)
+			return (ret);
+
+		TAILQ_FOREACH(s, &sk->states, next)
+			(*more)++;
 	}
 
 	return (ret);
