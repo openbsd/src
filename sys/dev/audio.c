@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.62 2007/07/09 09:18:47 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.63 2007/07/10 08:45:37 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1812,7 +1812,7 @@ audio_selwakeup(struct audio_softc *sc, int play)
 #define	AUDIO_FILTWRITE(sc) ( \
     (!sc->sc_full_duplex && (sc->sc_mode & AUMODE_RECORD)) ||		\
     (!(sc->sc_mode & AUMODE_PLAY_ALL) && sc->sc_playdrop > 0) || 	\
-    (sc->sc_pr.used * sc->sc_pparams.factor <= sc->sc_pr.usedlow))
+    (sc->sc_pr.used <= sc->sc_pr.usedlow))
 
 int
 audio_poll(dev, events, p)
@@ -2037,7 +2037,7 @@ audio_pint(v)
 	cb->outp += blksize;
 	if (cb->outp >= cb->end)
 		cb->outp = cb->start;
-	cb->stamp += blksize / sc->sc_pparams.factor;
+	cb->stamp += blksize;
 	if (cb->mmapped) {
 		DPRINTFN(5, ("audio_pint: mmapped outp=%p cc=%d inp=%p\n",
 		    cb->outp, blksize, cb->inp));
