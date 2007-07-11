@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.22 2007/06/29 03:37:09 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.23 2007/07/11 13:40:24 millert Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.22 2007/06/29 03:37:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.23 2007/07/11 13:40:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,10 +77,24 @@ char *quotagroup = QUOTAGROUP;
 union {
 	struct	fs	sblk;
 	char	dummy[MAXBSIZE];
-} un;
-#define	sblock	un.sblk
+} sb_un;
+#define	sblock	sb_un.sblk
+union {
+	struct	cg	cgblk;
+	char	dummy[MAXBSIZE];
+} cg_un;
+#define	cgblk	cg_un.cgblk
+
 long dev_bsize;
 long maxino;
+
+union dinode {
+	struct ufs1_dinode dp1;
+	struct ufs2_dinode dp2;
+};
+#define	DIP(dp, field) \
+	((sblock.fs_magic == FS_UFS1_MAGIC) ? \
+	(dp)->dp1.field : (dp)->dp2.field)
 
 struct quotaname {
 	long	flags;
@@ -113,7 +127,7 @@ char	*blockcheck(char *);
 void	 bread(daddr64_t, char *, long);
 int	 chkquota(const char *, const char *, const char *, void *, pid_t *);
 void	 freeinodebuf(void);
-struct ufs1_dinode *
+union dinode *
 	 getnextinode(ino_t);
 int	 getquotagid(void);
 int	 hasquota(struct fstab *, int, char **);
@@ -121,7 +135,7 @@ struct fileusage *
 	 lookup(u_int32_t, int);
 void	*needchk(struct fstab *);
 int	 oneof(char *, char*[], int);
-void	 resetinodebuf(void);
+void	 setinodebuf(ino_t);
 int	 update(const char *, const char *, int);
 void	 usage(void);
 
@@ -245,7 +259,12 @@ needchk(struct fstab *fs)
 }
 
 /*
- * Scan the specified filesystem to check quota(s) present on it.
+ * Possible superblock locations ordered from most to least likely.
+ */
+static int sblock_try[] = SBLOCKSEARCH;
+
+/*
+ * Scan the specified file system to check quota(s) present on it.
  */
 int
 chkquota(const char *vfstype, const char *fsname, const char *mntpt,
@@ -253,10 +272,11 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 {
 	struct quotaname *qnp = auxarg;
 	struct fileusage *fup;
-	struct ufs1_dinode *dp;
+	union dinode *dp;
 	int cg, i, mode, errs = 0, status;
-	ino_t ino;
+	ino_t ino, inosused;
 	pid_t pid;
+	char *cp;
 
 	switch (pid = fork()) {
 	case -1:	/* error */
@@ -267,35 +287,77 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 			err(1, "%s", fsname);
 		sync();
 		dev_bsize = 1;
-		bread(SBOFF, (char *)&sblock, (long)SBSIZE);
+		for (i = 0; sblock_try[i] != -1; i++) {
+			bread(sblock_try[i], (char *)&sblock, (long)SBLOCKSIZE);
+			if ((sblock.fs_magic == FS_UFS1_MAGIC ||
+			     (sblock.fs_magic == FS_UFS2_MAGIC &&
+			      sblock.fs_sblockloc ==
+				  numfrags(&sblock, sblock_try[i]))) &&
+			    sblock.fs_bsize <= MAXBSIZE &&
+			    sblock.fs_bsize >= sizeof(struct fs))
+				break;
+		}
+		if (sblock_try[i] == -1) {
+			warn("Cannot find file system superblock");
+			return (1);
+		}
 		dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 		maxino = sblock.fs_ncg * sblock.fs_ipg;
-		resetinodebuf();
-		for (ino = 0, cg = 0; cg < sblock.fs_ncg; cg++) {
-			for (i = 0; i < sblock.fs_ipg; i++, ino++) {
-				if (ino < ROOTINO)
+		for (cg = 0; cg < sblock.fs_ncg; cg++) {
+			ino = cg * sblock.fs_ipg;
+			setinodebuf(ino);
+			bread(fsbtodb(&sblock, cgtod(&sblock, cg)),
+			    (char *)(&cgblk), sblock.fs_cgsize);
+			if (sblock.fs_magic == FS_UFS2_MAGIC)
+				inosused = cgblk.cg_initediblk;
+			else
+				inosused = sblock.fs_ipg;
+			/*
+			 * If we are using soft updates, then we can trust the
+			 * cylinder group inode allocation maps to tell us which
+			 * inodes are allocated. We will scan the used inode map
+			 * to find the inodes that are really in use, and then
+			 * read only those inodes in from disk.
+			 */
+			if (sblock.fs_flags & FS_DOSOFTDEP) {
+				if (!cg_chkmagic(&cgblk))
+					errx(1, "CG %d: BAD MAGIC NUMBER\n", cg);
+				cp = &cg_inosused(&cgblk)[(inosused - 1) / CHAR_BIT];
+				for ( ; inosused > 0; inosused -= CHAR_BIT, cp--) {
+					if (*cp == 0)
+						continue;
+					for (i = 1 << (CHAR_BIT - 1); i > 0; i >>= 1) {
+						if (*cp & i)
+							break;
+						inosused--;
+					}
+					break;
+				}
+				if (inosused <= 0)
 					continue;
-				if ((dp = getnextinode(ino)) == NULL)
-					continue;
-				if ((mode = dp->di_mode & IFMT) == 0)
+			}
+			for (i = 0; i < inosused; i++, ino++) {
+				if ((dp = getnextinode(ino)) == NULL ||
+				    ino < ROOTINO ||
+				    (mode = DIP(dp, di_mode) & IFMT) == 0)
 					continue;
 				if (qnp->flags & HASGRP) {
-					fup = addid(dp->di_gid,
+					fup = addid(DIP(dp, di_gid),
 					    GRPQUOTA, NULL);
 					fup->fu_curinodes++;
 					if (mode == IFREG || mode == IFDIR ||
 					    mode == IFLNK)
 						fup->fu_curblocks +=
-						    dp->di_blocks;
+						    DIP(dp, di_blocks);
 				}
 				if (qnp->flags & HASUSR) {
-					fup = addid(dp->di_uid,
+					fup = addid(DIP(dp, di_uid),
 					    USRQUOTA, NULL);
 					fup->fu_curinodes++;
 					if (mode == IFREG || mode == IFDIR ||
 					    mode == IFLNK)
 						fup->fu_curblocks +=
-						    dp->di_blocks;
+						    DIP(dp, di_blocks);
 				}
 			}
 		}
@@ -399,10 +461,10 @@ update(const char *fsname, const char *quotafile, int type)
 				printf("%s: ", fsname);
 			printf("%-8s fixed:", fup->fu_name);
 			if (dqbuf.dqb_curinodes != fup->fu_curinodes)
-				(void)printf("\tinodes %d -> %ld",
+				(void)printf("\tinodes %d -> %u",
 				    dqbuf.dqb_curinodes, fup->fu_curinodes);
 			if (dqbuf.dqb_curblocks != fup->fu_curblocks)
-				(void)printf("\tblocks %u -> %ld",
+				(void)printf("\tblocks %u -> %u",
 				    dqbuf.dqb_curblocks, fup->fu_curblocks);
 			(void)printf("\n");
 		}
@@ -544,8 +606,7 @@ addid(u_int32_t id, int type, char *name)
 	if (name)
 		memcpy(fup->fu_name, name, len + 1);
 	else
-		(void)snprintf(fup->fu_name, len, "%lu",
-		    id); /* 1 byte extra */
+		(void)snprintf(fup->fu_name, len, "%u", id);
 	return (fup);
 }
 
@@ -553,19 +614,20 @@ addid(u_int32_t id, int type, char *name)
  * Special purpose version of ginode used to optimize pass
  * over all the inodes in numerical order.
  */
-ino_t nextino, lastinum;
-long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
-struct ufs1_dinode *inodebuf;
-#define	INOBUFSIZE	56*1024	/* size of buffer to read inodes */
+static ino_t nextino, lastinum, lastvalidinum;
+static long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
+static caddr_t inodebuf;
+#define	INOBUFSIZE	56*1024		/* size of buffer to read inodes */
 
-struct ufs1_dinode *
+union dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
 	daddr64_t dblk;
-	static struct ufs1_dinode *dp;
+	union dinode *dp;
+	static caddr_t nextinop;
 
-	if (inumber != nextino++ || inumber > maxino)
+	if (inumber != nextino++ || inumber > lastvalidinum)
 		err(1, "bad inode number %u to nextinode", inumber);
 	if (inumber >= lastinum) {
 		readcnt++;
@@ -577,38 +639,51 @@ getnextinode(ino_t inumber)
 			size = inobufsize;
 			lastinum += fullcnt;
 		}
-		bread(dblk, (char *)inodebuf, size);
-		dp = inodebuf;
+		/*
+		 * If bread returns an error, it will already have zeroed
+		 * out the buffer, so we do not need to do so here.
+		 */
+		bread(dblk, inodebuf, size);
+		nextinop = inodebuf;
 	}
-	return (dp++);
+	dp = (union dinode *)nextinop;
+	if (sblock.fs_magic == FS_UFS1_MAGIC)
+		nextinop += sizeof(struct ufs1_dinode);
+	else
+		nextinop += sizeof(struct ufs2_dinode);
+	return (dp);
 }
 
 /*
  * Prepare to scan a set of inodes.
  */
 void
-resetinodebuf(void)
+setinodebuf(ino_t inum)
 {
 
-	nextino = 0;
-	lastinum = 0;
+	if (inum % sblock.fs_ipg != 0)
+		errx(1, "bad inode number %d to setinodebuf", inum);
+	lastvalidinum = inum + sblock.fs_ipg - 1;
+	nextino = inum;
+	lastinum = inum;
 	readcnt = 0;
+	if (inodebuf != NULL)
+		return;
 	inobufsize = blkroundup(&sblock, INOBUFSIZE);
-	fullcnt = inobufsize / sizeof(struct ufs1_dinode);
+	fullcnt = inobufsize / ((sblock.fs_magic == FS_UFS1_MAGIC) ?
+	    sizeof(struct ufs1_dinode) : sizeof(struct ufs2_dinode));
 	readpercg = sblock.fs_ipg / fullcnt;
 	partialcnt = sblock.fs_ipg % fullcnt;
-	partialsize = partialcnt * sizeof(struct ufs1_dinode);
+	partialsize = partialcnt * ((sblock.fs_magic == FS_UFS1_MAGIC) ?
+	    sizeof(struct ufs1_dinode) : sizeof(struct ufs2_dinode));
 	if (partialcnt != 0) {
 		readpercg++;
 	} else {
 		partialcnt = fullcnt;
 		partialsize = inobufsize;
 	}
-	if (inodebuf == NULL &&
-	   (inodebuf = malloc((u_int)inobufsize)) == NULL)
-		err(1, "%s", strerror(errno));
-	while (nextino < ROOTINO)
-		getnextinode(nextino);
+	if ((inodebuf = malloc((unsigned)inobufsize)) == NULL)
+		errx(1, "cannot allocate space for inode buffer");
 }
 
 /*
@@ -632,5 +707,5 @@ bread(daddr64_t bno, char *buf, long cnt)
 
 	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0 ||
 	    read(fi, buf, cnt) != cnt)
-		err(1, "block %lld", bno);
+		err(1, "bread failed on block %lld", (long long)bno);
 }
