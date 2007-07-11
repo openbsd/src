@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.47 2007/07/10 18:29:38 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.48 2007/07/11 16:50:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -1003,7 +1003,6 @@ wpi_load_microcode(struct wpi_softc *sc, const uint8_t *ucode, int size)
 	return 0;
 }
 
-
 int
 wpi_load_firmware(struct wpi_softc *sc)
 {
@@ -1034,8 +1033,8 @@ wpi_load_firmware(struct wpi_softc *sc)
 	hdr = (const struct wpi_firmware_hdr *)fw;
 	main_textsz = letoh32(hdr->main_textsz);
 	main_datasz = letoh32(hdr->main_datasz);
-	init_textsz = htole32(hdr->init_textsz);
-	init_datasz = htole32(hdr->init_datasz);
+	init_textsz = letoh32(hdr->init_textsz);
+	init_datasz = letoh32(hdr->init_datasz);
 	boot_textsz = letoh32(hdr->boot_textsz);
 
 	/* sanity-check firmware segments sizes */
