@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.49 2007/06/19 16:45:15 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.50 2007/07/11 14:10:25 pyr Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -115,7 +115,7 @@ typedef struct {
 %token	DEMOTE
 %token	ERROR
 %token	<v.string>	STRING
-%type	<v.number>	number yesno no optlist, optlist_l option
+%type	<v.number>	number yesno no optlist, optlist_l option demotecount
 %type	<v.string>	string
 
 %%
@@ -475,12 +475,16 @@ area		: AREA STRING {
 		}
 		;
 
+demotecount	: number	{ $$ = $1; }
+		| /*empty*/	{ $$ = 1; }
+		;
+
 areaopts_l	: areaopts_l areaoptsl nl
 		| areaoptsl optnl
 		;
 
 areaoptsl	: interface
-		| DEMOTE STRING	number	{
+		| DEMOTE STRING	demotecount {
 			if ($3 > 255) {
 				yyerror("demote count too big: max 255");
 				free($2);
