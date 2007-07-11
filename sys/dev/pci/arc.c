@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.64 2007/06/24 05:34:35 dlg Exp $ */
+/*	$OpenBSD: arc.c,v 1.65 2007/07/11 19:01:30 otto Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1111,7 +1111,7 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 		 * except to say that if it has no capacity then it isn't there.
 		 * Ignore passthru volumes, bioc_vol doesn't understand them.
 		 */
-		if (volinfo->capacity != 0 &&
+		if ((volinfo->capacity != 0 || volinfo->capacity2 != 0) &&
 		    volinfo->raid_level != ARC_FW_VOL_RAIDLEVEL_PASSTHRU)
 			nvols++;
 	}
@@ -1151,7 +1151,7 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 		if (error != 0)
 			goto out;
 
-		if (volinfo->capacity == 0 ||
+		if ((volinfo->capacity == 0 && volinfo->capacity2 == 0) ||
 		    volinfo->raid_level == ARC_FW_VOL_RAIDLEVEL_PASSTHRU)
 			continue;
 
@@ -1161,7 +1161,8 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 		nvols++;
 	}
 
-	if (nvols != vol || volinfo->capacity == 0 ||
+	if (nvols != vol ||
+	    (volinfo->capacity == 0 && volinfo->capacity2 == 0) ||
 	    volinfo->raid_level == ARC_FW_VOL_RAIDLEVEL_PASSTHRU) {
 		error = ENODEV;
 		goto out;
@@ -1178,6 +1179,7 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	struct arc_fw_volinfo		*volinfo;
 	struct scsi_link		*sc_link;
 	struct device			*dev;
+	u_int64_t			blocks;
 	u_int32_t			status;
 	int				error = 0;
 
@@ -1211,7 +1213,9 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 		bv->bv_percent = letoh32(volinfo->progress) / 10;
 	}
 
-	bv->bv_size = (u_int64_t)letoh32(volinfo->capacity) * ARC_BLOCKSIZE;
+	blocks = (u_int64_t)letoh32(volinfo->capacity2) << 32;
+	blocks += (u_int64_t)letoh32(volinfo->capacity);
+	bv->bv_size = blocks * ARC_BLOCKSIZE; /* XXX */
 
 	switch (volinfo->raid_level) {
 	case ARC_FW_VOL_RAIDLEVEL_0:
@@ -1256,6 +1260,7 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	struct arc_fw_raidinfo		*raidinfo;
 	struct arc_fw_diskinfo		*diskinfo;
 	int				error = 0;
+	u_int64_t			blocks;
 	char				model[81];
 	char				serial[41];
 	char				rev[17];
@@ -1316,7 +1321,9 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	bd->bd_lun = 0;
 
 	bd->bd_status = BIOC_SDONLINE;
-	bd->bd_size = (u_int64_t)letoh32(diskinfo->capacity) * ARC_BLOCKSIZE;
+	blocks = (u_int64_t)letoh32(diskinfo->capacity2) << 32;
+	blocks += (u_int64_t)letoh32(diskinfo->capacity);
+	bd->bd_size = blocks * ARC_BLOCKSIZE; /* XXX */
 
 	scsi_strvis(model, diskinfo->model, sizeof(diskinfo->model));
 	scsi_strvis(serial, diskinfo->serial, sizeof(diskinfo->serial));
