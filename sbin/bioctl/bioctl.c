@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.59 2007/07/10 15:46:54 henning Exp $       */
+/* $OpenBSD: bioctl.c,v 1.60 2007/07/11 07:40:11 jmc Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -204,7 +204,7 @@ usage(void)
 	extern char		*__progname;
 
 	fprintf(stderr,
-		"usage: %s [-hivq] [-a alarm-function] "
+		"usage: %s [-hiqv] [-a alarm-function] "
 		"[-b channel:target[.lun]]\n"
 		"\t[-C flag[,flag,...]] [-c raidlevel] "
 		"[-H channel:target[.lun]]\n"
