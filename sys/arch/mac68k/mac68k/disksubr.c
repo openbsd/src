@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.50 2007/06/20 18:15:45 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.51 2007/07/11 04:53:42 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -344,6 +344,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk(size);
 	bp->b_dev = dev;
 
+	if (spoofonly)
+		goto doslabel;
+
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = size;
 	bp->b_flags = B_BUSY | B_READ;
@@ -360,10 +363,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 			goto done;
 	}
 
-	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
-	if (msg == NULL)
-		goto done;
-
 	/* Get a MI label */
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
@@ -375,6 +374,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 
 	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	if (msg == NULL)
+		goto done;
+
+doslabel:
+	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
 	if (msg == NULL)
 		goto done;
 
