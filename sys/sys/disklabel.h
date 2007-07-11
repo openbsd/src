@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.38 2007/06/20 18:15:47 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.39 2007/07/11 04:50:43 miod Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ struct	__partitionv0 {		/* the partition table */
 
 #define DISKLABELV1_FFS_BSIZE(i) ((i) == 0 ? 0 : (1 << (((i) >> 3) + 12)))
 #define DISKLABELV1_FFS_FRAG(i) ((i) == 0 ? 0 : (1 << (((i) & 0x07) - 1)))
-#define DISKLABELV1_FFS_FSIZE(i) ((i) == 0 ? 0 : \
+#define DISKLABELV1_FFS_FSIZE(i) (DISKLABELV1_FFS_FRAG(i) == 0 ? 0 : \
 	(DISKLABELV1_FFS_BSIZE(i) / DISKLABELV1_FFS_FRAG(i)))
 
 #define DL_GETPSIZE(p)		(((u_int64_t)(p)->p_sizeh << 32) + (p)->p_size)
