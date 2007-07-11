@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.91 2007/06/01 20:23:26 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.92 2007/07/11 15:32:22 millert Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4718,7 +4718,8 @@ softdep_fsync_mountdev(vp, waitfor)
 		 */
 		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
-	drain_output(vp, 1);
+	if (waitfor == MNT_WAIT)
+		drain_output(vp, 1);
 	FREE_LOCK(&lk);
 }
 
