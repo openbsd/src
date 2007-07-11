@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.20 2007/02/14 23:38:20 deraadt Exp $
+#	$OpenBSD: list,v 1.21 2007/07/11 01:50:40 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -18,7 +18,6 @@ LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mv
-LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
 LINK	instbin					bin/stty

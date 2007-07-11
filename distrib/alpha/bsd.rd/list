@@ -1,6 +1,7 @@
 LINK	instbin					bin/dd
 LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/dhclient
+LINK	instbin					bin/mt bin/eject
 
 # firmwares that might need loading
 #COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
