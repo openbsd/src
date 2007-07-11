@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.6 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.7 2007/07/11 18:21:35 miod Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -78,9 +78,6 @@ struct cfdriver shpcic_cd = {
 
 /* There can be only one. */
 int shpcic_found = 0;
-
-/* PCIC intr priotiry */
-static int shpcic_intr_priority[2] = { IPL_BIO, IPL_BIO };
 
 static const struct shpcic_product *shpcic_lookup(void);
 
@@ -241,8 +238,8 @@ shpcic_attach(struct device *parent, struct device *self, void *aux)
 	_reg_write_4(SH4_PCICR, PCICR_BASE | PCICR_CFINIT);
 
 	/* set PCI controller interrupt priority */
-	intpri_intr_priority(SH4_INTEVT_PCIERR, shpcic_intr_priority[0]);
-	intpri_intr_priority(SH4_INTEVT_PCISERR, shpcic_intr_priority[1]);
+	intpri_intr_priority(SH4_INTEVT_PCIERR, IPL_BIO);	/* IPL_HIGH? */
+	intpri_intr_priority(SH4_INTEVT_PCISERR, IPL_BIO);	/* IPL_HIGH? */
 
 	sc->sc_membus_space.bus_base = SH4_PCIC_MEM;
 	sc->sc_membus_space.bus_size = SH4_PCIC_MEM_SIZE;
@@ -327,67 +324,6 @@ shpcic_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	_reg_write_4(SH4_PCIPDR, data);
 	_reg_write_4(SH4_PCIPAR, 0);
 	splx(s);
-}
-
-int
-shpcic_set_intr_priority(int intr, int level)
-{
-	int evtcode;
-
-	if ((intr != 0) && (intr != 1)) {
-		return (-1);
-	}
-	if ((level < IPL_NONE) || (level > IPL_HIGH)) {
-		return (-1);
-	}
-
-	if (intr == 0) {
-		evtcode = SH4_INTEVT_PCIERR;
-	} else {
-		evtcode = SH4_INTEVT_PCISERR;
-	}
-
-	intpri_intr_priority(evtcode, shpcic_intr_priority[intr]);
-	shpcic_intr_priority[intr] = level;
-
-	return (0);
-}
-
-void *
-shpcic_intr_establish(int evtcode, int (*ih_func)(void *), void *ih_arg,
-    const char *ih_name)
-{
-	int level;
-
-	switch (evtcode) {
-	case SH4_INTEVT_PCISERR:
-		level = shpcic_intr_priority[1];
-		break;
-
-	case SH4_INTEVT_PCIDMA3:
-	case SH4_INTEVT_PCIDMA2:
-	case SH4_INTEVT_PCIDMA1:
-	case SH4_INTEVT_PCIDMA0:
-	case SH4_INTEVT_PCIPWON:
-	case SH4_INTEVT_PCIPWDWN:
-	case SH4_INTEVT_PCIERR:
-		level = shpcic_intr_priority[0];
-		break;
-
-	default:
-		printf("shpcic_intr_establish: unknown evtcode = 0x%08x\n",
-		    evtcode);
-		return NULL;
-	}
-
-	return intc_intr_establish(evtcode, IST_LEVEL, level, ih_func, ih_arg,
-	    ih_name);
-}
-
-void
-shpcic_intr_disestablish(void *ih)
-{
-	intc_intr_disestablish(ih);
 }
 
 /*
