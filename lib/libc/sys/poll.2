@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.20 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: poll.2,v 1.21 2007/07/11 08:12:15 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 11 2007 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -237,6 +237,12 @@ was too large.
 .Xr read 2 ,
 .Xr select 2 ,
 .Xr write 2
+.Sh STANDARDS
+The
+.Fn poll
+function is compliant with the
+.St -xpg4.3
+specification.
 .Sh HISTORY
 A
 .Fn poll
