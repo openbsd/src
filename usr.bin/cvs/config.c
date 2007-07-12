@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.9 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: config.c,v 1.10 2007/07/12 17:54:58 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -40,9 +40,11 @@ cvs_parse_configfile(void)
 
 	cvs_log(LP_TRACE, "cvs_parse_configfile(%s)", fpath);
 
-	if ((fp = fopen(fpath, "r")) == NULL)
-		fatal("cvs_config_parse: %s: %s",
-		    CVS_PATH_CONFIG, strerror(errno));
+	if ((fp = fopen(fpath, "r")) == NULL) {
+		if (errno != ENOENT)
+			cvs_log(LP_ERRNO, "%s", CVS_PATH_CONFIG);
+		return;
+	}
 
 	lbuf = NULL;
 	while ((buf = fgetln(fp, &len))) {
