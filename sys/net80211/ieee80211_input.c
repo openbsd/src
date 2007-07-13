@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.41 2007/07/13 19:26:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.42 2007/07/13 19:32:53 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1602,7 +1602,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *rates, *xrates, *edca, *wmm;
-	u_int16_t status;
+	u_int16_t capinfo, status, associd;
 	u_int8_t rate;
 
 	if (ic->ic_opmode != IEEE80211_M_STA ||
@@ -1617,11 +1617,8 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 
 	IEEE80211_VERIFY_LENGTH(efrm - frm, 6);
 	ni = ic->ic_bss;
-	ni->ni_capinfo = LE_READ_2(frm);
-	frm += 2;
-
-	status = LE_READ_2(frm);
-	frm += 2;
+	capinfo = LE_READ_2(frm); frm += 2;
+	status =  LE_READ_2(frm); frm += 2;
 	if (status != 0) {
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: %sassociation failed (reason %d)"
@@ -1633,8 +1630,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_auth_fail++;
 		return;
 	}
-	ni->ni_associd = LE_READ_2(frm);
-	frm += 2;
+	associd = LE_READ_2(frm); frm += 2;
 
 	rates = xrates = edca = wmm = NULL;
 	while (frm + 2 <= efrm) {
@@ -1676,6 +1672,8 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_assoc_norate++;
 		return;
 	}
+	ni->ni_capinfo = capinfo;
+	ni->ni_associd = associd;
 	if (edca != NULL || wmm != NULL) {
 		/* force update of EDCA parameters */
 		ic->ic_edca_updtcount = -1;
