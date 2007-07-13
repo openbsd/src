@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.42 2007/07/13 19:32:53 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.43 2007/07/13 19:56:03 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1025,7 +1025,6 @@ ieee80211_parse_wpa1(struct ieee80211com *ic, struct ieee80211_node *ni,
  * [tlv]  Supported rates
  * [tlv*] Frequency-Hopping (FH) Parameter Set
  * [tlv*] DS Parameter Set (802.11g)
- * [tlv]  Country
  * [tlv]  ERP Information (802.11g)
  * [tlv]  Extended Supported Rates (802.11g)
  * [tlv]  RSN (802.11i)
@@ -1041,11 +1040,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *tstamp, *bintval, *capinfo, *country;
-	const u_int8_t *ssid, *rates, *xrates, *edca, *wmm;
+	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edca, *wmm;
 	const u_int8_t *rsn, *wpa;
+	u_int16_t capinfo, bintval, fhdwell;
 	u_int8_t chan, bchan, fhindex, erp;
-	u_int16_t fhdwell;
 	int is_new;
 
 	/*
@@ -1073,10 +1071,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
 	IEEE80211_VERIFY_LENGTH(efrm - frm, 12);
-	tstamp  = frm;	frm += 8;
-	bintval = frm;	frm += 2;
-	capinfo = frm;	frm += 2;
-	ssid = rates = xrates = country = edca = wmm = rsn = wpa = NULL;
+	tstamp  = frm; frm += 8;
+	bintval = LE_READ_2(frm); frm += 2;
+	capinfo = LE_READ_2(frm); frm += 2;
+	ssid = rates = xrates = edca = wmm = rsn = wpa = NULL;
 	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
 	fhdwell = 0;
@@ -1093,9 +1091,6 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_ELEMID_RATES:
 			rates = frm;
-			break;
-		case IEEE80211_ELEMID_COUNTRY:
-			country = frm;
 			break;
 		case IEEE80211_ELEMID_FHPARMS:
 			if (ic->ic_phytype != IEEE80211_T_FH)
@@ -1214,15 +1209,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		ieee80211_print_essid(ssid + 2, ssid[1]);
 		printf(" from %s\n", ether_sprintf((u_int8_t *)wh->i_addr2));
 		printf("%s: caps 0x%x bintval %u erp 0x%x\n",
-			__func__, letoh16(*(u_int16_t *)capinfo),
-			letoh16(*(u_int16_t *)bintval), erp);
-		if (country) {
-			int i;
-			printf("%s: country info", __func__);
-			for (i = 0; i < country[1]; i++)
-				printf(" %02x", country[i+2]);
-			printf("\n");
-		}
+			__func__, capinfo, bintval, erp);
 	}
 #endif
 
@@ -1263,12 +1250,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 		 * since last beacon and give the driver a chance to
 		 * update the hardware.
 		 */
-		if ((ni->ni_capinfo ^ letoh16(*(u_int16_t *)capinfo)) &
+		if ((ni->ni_capinfo ^ capinfo) &
 		    IEEE80211_CAPINFO_SHORT_SLOTTIME) {
 			ieee80211_set_shortslottime(ic,
 			    ic->ic_curmode == IEEE80211_MODE_11A ||
-			    (letoh16(*(u_int16_t *)capinfo) &
-			     IEEE80211_CAPINFO_SHORT_SLOTTIME));
+			    (capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
 		}
 	}
 	if (ni->ni_flags & IEEE80211_NODE_QOS) {
@@ -1290,8 +1276,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_rssi = rssi;
 	ni->ni_rstamp = rstamp;
 	memcpy(ni->ni_tstamp, tstamp, sizeof(ni->ni_tstamp));
-	ni->ni_intval = letoh16(*(u_int16_t *)bintval);
-	ni->ni_capinfo = letoh16(*(u_int16_t *)capinfo);
+	ni->ni_intval = bintval;
+	ni->ni_capinfo = capinfo;
 	/* XXX validate channel # */
 	ni->ni_chan = &ic->ic_channels[chan];
 	ni->ni_fhdwell = fhdwell;
