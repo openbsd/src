@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.53 2007/06/20 18:15:46 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.54 2007/07/13 20:24:44 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
 #include <machine/cpu.h>
 
 #include <vax/mscp/mscp.h> /* For disk encoding scheme */
+
+#include "mba.h"
 
 /*
  * Attempt to read a disk label from a device
@@ -156,6 +158,7 @@ disk_printtype(int unit, int type)
 	printf("%d\n", MSCP_MID_NUM(type));
 }
 
+#if NMBA > 0
 /*
  * Be sure that the pages we want to do DMA to is actually there
  * by faking page-faults if necessary. If given a map-register address,
@@ -200,3 +203,4 @@ disk_reallymapin(struct buf *bp, pt_entry_t *map, int reg, int flag)
 		*(int *)io = 0;
 	}
 }
+#endif
