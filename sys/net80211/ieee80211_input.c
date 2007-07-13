@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.40 2007/07/13 19:09:23 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.41 2007/07/13 19:26:09 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1082,8 +1082,12 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 	fhdwell = 0;
 	fhindex = 0;
 	erp = 0;
-	while (frm < efrm) {
-		switch (*frm) {
+	while (frm + 2 <= efrm) {
+		if (frm + 2 + frm[1] > efrm) {
+			ic->ic_stats.is_rx_elem_toosmall++;
+			return;
+		}
+		switch (frm[0]) {
 		case IEEE80211_ELEMID_SSID:
 			ssid = frm;
 			break;
@@ -1094,19 +1098,24 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			country = frm;
 			break;
 		case IEEE80211_ELEMID_FHPARMS:
-			if (ic->ic_phytype == IEEE80211_T_FH) {
-				fhdwell = (frm[3] << 8) | frm[2];
-				chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
-				fhindex = frm[6];
+			if (ic->ic_phytype != IEEE80211_T_FH)
+				break;
+			if (frm[1] < 5) {
+				ic->ic_stats.is_rx_elem_toosmall++;
+				break;
 			}
+			fhdwell = LE_READ_2(frm + 2);
+			chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
+			fhindex = frm[6];
 			break;
 		case IEEE80211_ELEMID_DSPARMS:
-			/*
-			 * XXX hack this since depending on phytype
-			 * is problematic for multi-mode devices.
-			 */
-			if (ic->ic_phytype != IEEE80211_T_FH)
-				chan = frm[2];
+			if (ic->ic_phytype == IEEE80211_T_FH)
+				break;
+			if (frm[1] < 1) {
+				ic->ic_stats.is_rx_elem_toosmall++;
+				break;
+			}
+			chan = frm[2];
 			break;
 		case IEEE80211_ELEMID_TIM:
 			break;
@@ -1116,11 +1125,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			xrates = frm;
 			break;
 		case IEEE80211_ELEMID_ERP:
-			if (frm[1] != 1) {
-				IEEE80211_DPRINTF(("%s: invalid ERP "
-				    "element; length %u, expecting "
-				    "1\n", __func__, frm[1]));
-				ic->ic_stats.is_rx_elem_toobig++;
+			if (frm[1] < 1) {
+				ic->ic_stats.is_rx_elem_toosmall++;
 				break;
 			}
 			erp = frm[2];
@@ -1152,7 +1158,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m0,
 			ic->ic_stats.is_rx_elem_unknown++;
 			break;
 		}
-		frm += frm[1] + 2;
+		frm += 2 + frm[1];
 	}
 	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
 	IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
@@ -1337,8 +1343,12 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
 
 	ssid = rates = xrates = NULL;
-	while (frm < efrm) {
-		switch (*frm) {
+	while (frm + 2 <= efrm) {
+		if (frm + 2 + frm[1] > efrm) {
+			ic->ic_stats.is_rx_elem_toosmall++;
+			return;
+		}
+		switch (frm[0]) {
 		case IEEE80211_ELEMID_SSID:
 			ssid = frm;
 			break;
@@ -1349,7 +1359,7 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 			xrates = frm;
 			break;
 		}
-		frm += frm[1] + 2;
+		frm += 2 + frm[1];
 	}
 	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
 	IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
@@ -1476,8 +1486,12 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	if (reassoc)
 		frm += IEEE80211_ADDR_LEN;	/* skip current AP address */
 	ssid = rates = xrates = rsn = wpa = NULL;
-	while (frm < efrm) {
-		switch (*frm) {
+	while (frm + 2 <= efrm) {
+		if (frm + 2 + frm[1] > efrm) {
+			ic->ic_stats.is_rx_elem_toosmall++;
+			return;
+		}
+		switch (frm[0]) {
 		case IEEE80211_ELEMID_SSID:
 			ssid = frm;
 			break;
@@ -1503,7 +1517,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			}
 			break;
 		}
-		frm += frm[1] + 2;
+		frm += 2 + frm[1];
 	}
 	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
 	IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
@@ -1623,8 +1637,12 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	frm += 2;
 
 	rates = xrates = edca = wmm = NULL;
-	while (frm < efrm) {
-		switch (*frm) {
+	while (frm + 2 <= efrm) {
+		if (frm + 2 + frm[1] > efrm) {
+			ic->ic_stats.is_rx_elem_toosmall++;
+			return;
+		}
+		switch (frm[0]) {
 		case IEEE80211_ELEMID_RATES:
 			rates = frm;
 			break;
@@ -1645,7 +1663,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 			}
 			break;
 		}
-		frm += frm[1] + 2;
+		frm += 2 + frm[1];
 	}
 
 	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
