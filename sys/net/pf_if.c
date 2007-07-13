@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.46 2006/12/13 09:01:59 itojun Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,6 @@
 #endif /* INET6 */
 
 struct pfi_kif		 *pfi_all = NULL;
-struct pfi_statehead	  pfi_statehead;
 struct pool		  pfi_addr_pl;
 struct pfi_ifhead	  pfi_ifs;
 long			  pfi_update = 1;
@@ -89,7 +88,6 @@ pfi_initialize(void)
 	if (pfi_all != NULL)	/* already initialized */
 		return;
 
-	TAILQ_INIT(&pfi_statehead);
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr);
 	pfi_buffer_max = 64;
@@ -132,8 +130,7 @@ pfi_kif_ref(struct pfi_kif *kif, enum pfi_kif_refs what)
 		kif->pfik_rules++;
 		break;
 	case PFI_KIF_REF_STATE:
-		if (!kif->pfik_states++)
-			TAILQ_INSERT_TAIL(&pfi_statehead, kif, pfik_w_states);
+		kif->pfik_states++;
 		break;
 	default:
 		panic("pfi_kif_ref with unknown type");
@@ -161,8 +158,7 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 			printf("pfi_kif_unref: state refcount <= 0\n");
 			return;
 		}
-		if (!--kif->pfik_states)
-			TAILQ_REMOVE(&pfi_statehead, kif, pfik_w_states);
+		kif->pfik_states--;
 		break;
 	default:
 		panic("pfi_kif_unref with unknown type");
