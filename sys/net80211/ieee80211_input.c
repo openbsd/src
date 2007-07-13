@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.39 2007/07/06 19:33:58 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.40 2007/07/13 19:09:23 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -79,7 +79,7 @@ int	ieee80211_parse_rsn_body(struct ieee80211com *,
 	    struct ieee80211_node *, const u_int8_t *, u_int);
 int	ieee80211_parse_rsn(struct ieee80211com *, struct ieee80211_node *,
 	    const u_int8_t *);
-int	ieee80211_parse_wpa(struct ieee80211com *, struct ieee80211_node *,
+int	ieee80211_parse_wpa1(struct ieee80211com *, struct ieee80211_node *,
 	    const u_int8_t *);
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *, int,
 	    u_int32_t);
@@ -497,9 +497,12 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 	}
 	memcpy(&wh, mtod(m, caddr_t), sizeof(wh));
 	llc = (struct llc *)(mtod(m, caddr_t) + sizeof(wh));
-	if (llc->llc_dsap == LLC_SNAP_LSAP && llc->llc_ssap == LLC_SNAP_LSAP &&
-	    llc->llc_control == LLC_UI && llc->llc_snap.org_code[0] == 0 &&
-	    llc->llc_snap.org_code[1] == 0 && llc->llc_snap.org_code[2] == 0) {
+	if (llc->llc_dsap == LLC_SNAP_LSAP &&
+	    llc->llc_ssap == LLC_SNAP_LSAP &&
+	    llc->llc_control == LLC_UI &&
+	    llc->llc_snap.org_code[0] == 0 &&
+	    llc->llc_snap.org_code[1] == 0 &&
+	    llc->llc_snap.org_code[2] == 0) {
 		m_adj(m, sizeof(wh) + sizeof(struct llc) - sizeof(*eh));
 		llc = NULL;
 	} else {
@@ -586,7 +589,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
  */
 int
 ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
-	const u_int8_t *rates, const u_int8_t *xrates, int flags)
+    const u_int8_t *rates, const u_int8_t *xrates, int flags)
 {
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 
@@ -782,9 +785,8 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	  (((const u_int8_t *)(p))[2] << 16) |		\
 	  (((const u_int8_t *)(p))[3] << 24)))
 
-/*-
- * Parse an EDCA Parameter Set Information Element.
- * See IEEE Std 802.11e-2005 - Section 7.3.2.27.
+/*
+ * Parse an EDCA Parameter Set element (see 7.3.2.27).
  */
 int
 ieee80211_parse_edca_params_body(struct ieee80211com *ic, const u_int8_t *frm)
@@ -835,12 +837,6 @@ ieee80211_parse_edca_params(struct ieee80211com *ic, const u_int8_t *frm)
 	return ieee80211_parse_edca_params_body(ic, frm + 2);
 }
 
-/*
- * And now comes the Wi-Fi Alliance WMM compatibility mess.
- * Most APs that advertise themselves as being 802.11e-compatible still
- * continue to use the vendor-specific IE instead of the one defined in
- * the IEEE standard.
- */
 int
 ieee80211_parse_wmm_params(struct ieee80211com *ic, const u_int8_t *frm)
 {
@@ -892,9 +888,8 @@ ieee80211_parse_rsn_akm(const u_int8_t selector[4])
 	return IEEE80211_AKM_NONE;	/* ignore unknown AKMs */
 }
 
-/*-
- * Parse an RSN Information Element.
- * See IEEE Std 802.11i-2004 - Section 7.3.2.25.
+/*
+ * Parse an RSN element (see 7.3.2.25).
  */
 int
 ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
@@ -916,9 +911,10 @@ ieee80211_parse_rsn_body(struct ieee80211com *ic, struct ieee80211_node *ni,
 	/* all fields after the Version field are optional */
 
 	/* if Cipher Suite missing, default to CCMP */
-	group_cipher = pairwise_cipherset = IEEE80211_CIPHER_CCMP;
+	ni->ni_group_cipher = IEEE80211_CIPHER_CCMP;
+	ni->ni_pairwise_cipherset = IEEE80211_CIPHER_CCMP;
 	/* if AKM Suite missing, default to 802.1X */
-	akmset = IEEE80211_AKM_IEEE8021X;
+	ni->ni_akmset = IEEE80211_AKM_IEEE8021X;
 
 	/* read Group Cipher Suite field */
 	if (frm + 4 > efrm)
@@ -1007,7 +1003,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 
 int
-ieee80211_parse_wpa(struct ieee80211com *ic, struct ieee80211_node *ni,
+ieee80211_parse_wpa1(struct ieee80211com *ic, struct ieee80211_node *ni,
     const u_int8_t *frm)
 {
 	/* check IE length */
@@ -1375,11 +1371,11 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_rssi = rssi;
 	ni->ni_rstamp = rstamp;
 	rate = ieee80211_setup_rates(ic, ni, rates, xrates,
-			IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
-			IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
+	    IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE | IEEE80211_F_DONEGO |
+	    IEEE80211_F_DODEL);
 	if (rate & IEEE80211_RATE_BASIC) {
-		IEEE80211_DPRINTF(("%s: rate negotiation failed: %s\n",
-		    __func__,ether_sprintf((u_int8_t *)wh->i_addr2)));
+		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
+		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
 	} else {
 		IEEE80211_SEND_MGMT(ic, ni,
 			IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
@@ -1388,9 +1384,9 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 
 /*-
  * Authentication frame format:
- * [2]    Authentication algorithm number
- * [2]    Authentication transaction sequence number
- * [2]    Status code
+ * [2] Authentication algorithm number
+ * [2] Authentication transaction sequence number
+ * [2] Status code
  */
 void
 ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0,
@@ -1450,6 +1446,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	const u_int8_t *ssid, *rates, *xrates, *rsn, *wpa;
 	u_int16_t capinfo, bintval;
 	int reassoc, resp, reason = 0;
+	u_int8_t rate;
 
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
 	    ic->ic_state != IEEE80211_S_RUN)
@@ -1530,7 +1527,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	if (rsn != NULL)
 		reason = ieee80211_parse_rsn(ic, ni, rsn);
 	else if (wpa != NULL)
-		reason = ieee80211_parse_wpa(ic, ni, wpa);
+		reason = ieee80211_parse_wpa1(ic, ni, wpa);
 	if (reason != 0) {
 		IEEE80211_DPRINTF(("%s: invalid RSN IE for %s\n",
 		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
@@ -1548,14 +1545,14 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_assoc_capmismatch++;
 		return;
 	}
-	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT |
-	    IEEE80211_F_DOFRATE | IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
-	if (ni->ni_rates.rs_nrates == 0) {
+	rate = ieee80211_setup_rates(ic, ni, rates, xrates,
+	    IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE | IEEE80211_F_DONEGO |
+	    IEEE80211_F_DODEL);
+	if (rate & IEEE80211_RATE_BASIC) {
 		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
 		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
-		IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
-		ni->ni_associd = 0;
 		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_BASIC_RATE);
+		ieee80211_node_leave(ic, ni);
 		ic->ic_stats.is_rx_assoc_norate++;
 		return;
 	}
@@ -1592,6 +1589,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *rates, *xrates, *edca, *wmm;
 	u_int16_t status;
+	u_int8_t rate;
 
 	if (ic->ic_opmode != IEEE80211_M_STA ||
 	    ic->ic_state != IEEE80211_S_ASSOC) {
@@ -1651,12 +1649,15 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	}
 
 	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
-	ieee80211_setup_rates(ic, ni, rates, xrates,
-			IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
-			IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
-	if (ni->ni_rates.rs_nrates == 0)
+	rate = ieee80211_setup_rates(ic, ni, rates, xrates,
+	    IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE | IEEE80211_F_DONEGO |
+	    IEEE80211_F_DODEL);
+	if (rate & IEEE80211_RATE_BASIC) {
+		IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
+		    __func__, ether_sprintf((u_int8_t *)wh->i_addr2)));
+		ic->ic_stats.is_rx_assoc_norate++;
 		return;
-
+	}
 	if (edca != NULL || wmm != NULL) {
 		/* force update of EDCA parameters */
 		ic->ic_edca_updtcount = -1;
