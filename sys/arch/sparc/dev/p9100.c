@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.44 2007/02/25 18:14:48 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.45 2007/07/13 19:18:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, 2006, Miodrag Vallat.
@@ -72,13 +72,6 @@
 #undef	FIDDLE_WITH_PCI_REGISTERS
 
 /*
- * Built-in LCD panel geometry
- */
-
-#define	LCD_WIDTH	800
-#define	LCD_HEIGHT	600
-
-/*
  * SBus registers mappings
  */
 #define	P9100_NREG		4
@@ -120,6 +113,8 @@ struct p9100_softc {
 	u_int		sc_mapheight;
 	u_int		sc_mapdepth;
 #endif
+	u_int		sc_lcdheight;	/* LCD panel geometry */
+	u_int		sc_lcdwidth;
 
 	u_int32_t	sc_junk;	/* throwaway value */
 };
@@ -316,27 +311,14 @@ p9100attach(struct device *parent, struct device *self, void *args)
 		break;
 	}
 
-	fb_setsize(&sc->sc_sunfb, 8, LCD_WIDTH, LCD_HEIGHT, node,
-	    ca->ca_bustype);
+	fb_setsize(&sc->sc_sunfb, 8, 800, 600, node, ca->ca_bustype);
 
-#if 0
 	/*
-	 * The PROM will initialize us in 800x600x8 mode anyway. If it
-	 * does not, we'll force this mode right now.
+	 * We expect the PROM to initialize us in the best 8 bit mode
+	 * supported by the LCD (640x480 on 3XP, 800x600 on 3GS/3GX).
 	 */
-	if (sc->sc_sunfb.sf_width != LCD_WIDTH || sc->sc_sunfb.sf_depth != 8 ||
-	    sc->sc_sunfb.sf_height != LCD_HEIGHT || force_reset != 0) {
-		sc->sc_sunfb.sf_width = LCD_WIDTH;
-		sc->sc_sunfb.sf_height = LCD_HEIGHT;
-		sc->sc_sunfb.sf_depth = 8;
-		sc->sc_sunfb.sf_linebytes = LCD_WIDTH;
-
-		printf("\n");
-		p9100_initialize_ramdac(sc, LCD_WIDTH, 8);
-		printf("%s", self->dv_xname);
-		clear = 1;
-	}
-#endif
+	sc->sc_lcdwidth = sc->sc_sunfb.sf_width;
+	sc->sc_lcdheight = sc->sc_sunfb.sf_height;
 
 #if NTCTRL > 0
 	/*
@@ -345,8 +327,8 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	 * Eventually this will become runtime user-selectable.
 	 */
 
-	sc->sc_mapwidth = LCD_WIDTH;
-	sc->sc_mapheight = LCD_HEIGHT;
+	sc->sc_mapwidth = sc->sc_lcdwidth;
+	sc->sc_mapheight = sc->sc_lcdheight;
 	sc->sc_mapdepth = 8;
 
 	if (sc->sc_mapwidth != sc->sc_sunfb.sf_width ||
@@ -358,7 +340,8 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	    sc->sc_vramsize = round_page(ra->ra_reg[P9100_REG_VRAM].rr_len));
 	ri->ri_hw = sc;
 
-	printf(": rev %x, %dx%d\n", scr & SCR_ID_MASK, LCD_WIDTH, LCD_HEIGHT);
+	printf(": rev %x, %dx%d\n", scr & SCR_ID_MASK,
+	    sc->sc_lcdwidth, sc->sc_lcdheight);
 
 	/* Disable frame buffer interrupts */
 	P9100_SELECT_SCR(sc);
@@ -408,7 +391,8 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Plug-in accelerated console operations.
 	 */
-	if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0)
+	if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0 ||
+	    sc->sc_sunfb.sf_width == 800)
 		p9100_ras_init(sc);
 
 	/* enable video */
@@ -455,11 +439,12 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		case WSDISPLAYIO_MODE_EMUL:
 #if NTCTRL > 0
 			if (ISSET(sc->sc_flags, SCF_MAPPEDSWITCH))
-				p9100_initialize_ramdac(sc, LCD_WIDTH, 8);
+				p9100_initialize_ramdac(sc, sc->sc_lcdwidth, 8);
 #endif
 			fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 			/* Restore proper acceleration state as well */
-			if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0)
+			if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0 ||
+			    sc->sc_sunfb.sf_width == 800)
 				p9100_ras_init(sc);
 			break;
 		}
@@ -476,8 +461,8 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		} else
 #endif
 		{
-			wdf->width  = LCD_WIDTH;
-			wdf->height = LCD_HEIGHT;
+			wdf->width  = sc->sc_lcdwidth;
+			wdf->height = sc->sc_lcdheight;
 			wdf->depth  = 8;
 			wdf->cmsize = 256;
 		}
@@ -1329,7 +1314,7 @@ p9100_initialize_ramdac(struct p9100_softc *sc, u_int width, u_int depth)
 	/*
 	 * ... unless it does not fit.
 	 */
-	if (width != LCD_WIDTH) {
+	if (width != sc->sc_lcdwidth) {
 		CLR(sc->sc_flags, SCF_INTERNAL);
 		tadpole_set_video(0);
 	} else {
@@ -1349,9 +1334,10 @@ p9100_prom(void *v)
 
 	if (ISSET(sc->sc_flags, SCF_MAPPEDSWITCH) &&
 	    sc->sc_mapmode != WSDISPLAYIO_MODE_EMUL) {
-		p9100_initialize_ramdac(sc, LCD_WIDTH, 8);
+		p9100_initialize_ramdac(sc, sc->sc_lcdwidth, 8);
 		fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
-		if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0)
+		if (sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags != 0 ||
+		    sc->sc_sunfb.sf_width == 800)
 			p9100_ras_init(sc);
 	}
 }
