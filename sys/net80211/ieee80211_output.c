@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.45 2007/07/06 19:00:56 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.46 2007/07/13 19:59:56 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1001,7 +1001,7 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	m = ieee80211_getmbuf(M_DONTWAIT, MT_DATA,
 	    8 + 2 + 2 +
-	    2 + ni->ni_esslen +		/* ssid */
+	    2 + ni->ni_esslen +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    2 + ((ic->ic_phytype == IEEE80211_T_FH) ? 5 : 1) +
 	    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 2 + 2 : 0) +
@@ -1047,9 +1047,9 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 /*-
  * Authentication frame format:
- * [2]    Authentication algorithm number
- * [2]    Authentication transaction sequence number
- * [2]    Status code
+ * [2] Authentication algorithm number
+ * [2] Authentication transaction sequence number
+ * [2] Status code
  */
 struct mbuf *
 ieee80211_get_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
@@ -1340,10 +1340,9 @@ ieee80211_get_rts(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	struct mbuf *m;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		ic->ic_stats.is_tx_nombuf++;
+	if (m == NULL)
 		return NULL;
-	}
+
 	m->m_pkthdr.len = m->m_len = sizeof (struct ieee80211_frame_rts);
 
 	rts = mtod(m, struct ieee80211_frame_rts *);
@@ -1367,10 +1366,9 @@ ieee80211_get_cts_to_self(struct ieee80211com *ic, u_int16_t dur)
 	struct mbuf *m;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		ic->ic_stats.is_tx_nombuf++;
+	if (m == NULL)
 		return NULL;
-	}
+
 	m->m_pkthdr.len = m->m_len = sizeof (struct ieee80211_frame_cts);
 
 	cts = mtod(m, struct ieee80211_frame_cts *);
