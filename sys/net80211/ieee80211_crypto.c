@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.15 2007/07/14 19:58:04 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.16 2007/07/14 20:00:33 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -76,14 +76,14 @@ struct vector {
 
 void	ieee80211_crc_init(void);
 u_int32_t ieee80211_crc_update(u_int32_t, const u_int8_t *, int);
-void	ieee80211_hmac_md5_v(const struct vector *, int, const uint8_t *,
-	    size_t, uint8_t digest[]);
-void	ieee80211_hmac_md5(const u_int8_t *, size_t, const uint8_t *, size_t,
-	    uint8_t digest[]);
-void	ieee80211_hmac_sha1_v(const struct vector *, int, const uint8_t *,
-	    size_t, uint8_t digest[]);
-void	ieee80211_hmac_sha1(const u_int8_t *, size_t, const uint8_t *, size_t,
-	    uint8_t digest[]);
+void	ieee80211_hmac_md5_v(const struct vector *, int, const u_int8_t *,
+	    size_t, u_int8_t digest[]);
+void	ieee80211_hmac_md5(const u_int8_t *, size_t, const u_int8_t *, size_t,
+	    u_int8_t digest[]);
+void	ieee80211_hmac_sha1_v(const struct vector *, int, const u_int8_t *,
+	    size_t, u_int8_t digest[]);
+void	ieee80211_hmac_sha1(const u_int8_t *, size_t, const u_int8_t *, size_t,
+	    u_int8_t digest[]);
 void	ieee80211_prf(const u_int8_t *, size_t, struct vector *, int,
 	    u_int8_t *, size_t);
 void	ieee80211_derive_ptk(const u_int8_t *, size_t, const u_int8_t *,
@@ -363,12 +363,12 @@ ieee80211_crc_update(u_int32_t crc, const u_int8_t *buf, int len)
 }
 
 void
-ieee80211_hmac_md5_v(const struct vector *vec, int vcnt, const uint8_t *key,
-    size_t key_len, uint8_t digest[MD5_DIGEST_LENGTH])
+ieee80211_hmac_md5_v(const struct vector *vec, int vcnt, const u_int8_t *key,
+    size_t key_len, u_int8_t digest[MD5_DIGEST_LENGTH])
 {
 	MD5_CTX ctx;
-	uint8_t k_pad[MD5_BLOCK_LENGTH];
-	uint8_t tk[MD5_DIGEST_LENGTH];
+	u_int8_t k_pad[MD5_BLOCK_LENGTH];
+	u_int8_t tk[MD5_DIGEST_LENGTH];
 	int i;
 
 	if (key_len > MD5_BLOCK_LENGTH) {
@@ -404,8 +404,8 @@ ieee80211_hmac_md5_v(const struct vector *vec, int vcnt, const uint8_t *key,
 
 /* wrapper around ieee80211_hmac_md5_v */
 void
-ieee80211_hmac_md5(const u_int8_t *text, size_t text_len, const uint8_t *key,
-    size_t key_len, uint8_t digest[MD5_DIGEST_LENGTH])
+ieee80211_hmac_md5(const u_int8_t *text, size_t text_len, const u_int8_t *key,
+    size_t key_len, u_int8_t digest[MD5_DIGEST_LENGTH])
 {
 	struct vector vec;
 	vec.base = text;
@@ -414,12 +414,12 @@ ieee80211_hmac_md5(const u_int8_t *text, size_t text_len, const uint8_t *key,
 }
 
 void
-ieee80211_hmac_sha1_v(const struct vector *vec, int vcnt, const uint8_t *key,
-    size_t key_len, uint8_t digest[SHA1_DIGEST_LENGTH])
+ieee80211_hmac_sha1_v(const struct vector *vec, int vcnt, const u_int8_t *key,
+    size_t key_len, u_int8_t digest[SHA1_DIGEST_LENGTH])
 {
 	SHA1_CTX ctx;
-	uint8_t k_pad[SHA1_BLOCK_LENGTH];
-	uint8_t tk[SHA1_DIGEST_LENGTH];
+	u_int8_t k_pad[SHA1_BLOCK_LENGTH];
+	u_int8_t tk[SHA1_DIGEST_LENGTH];
 	int i;
 
 	if (key_len > SHA1_BLOCK_LENGTH) {
@@ -455,8 +455,8 @@ ieee80211_hmac_sha1_v(const struct vector *vec, int vcnt, const uint8_t *key,
 
 /* wrapper around ieee80211_hmac_sha1_v */
 void
-ieee80211_hmac_sha1(const u_int8_t *text, size_t text_len, const uint8_t *key,
-    size_t key_len, uint8_t digest[SHA1_DIGEST_LENGTH])
+ieee80211_hmac_sha1(const u_int8_t *text, size_t text_len, const u_int8_t *key,
+    size_t key_len, u_int8_t digest[SHA1_DIGEST_LENGTH])
 {
 	struct vector vec;
 	vec.base = text;
