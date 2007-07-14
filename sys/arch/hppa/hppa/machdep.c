@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.160 2007/07/10 17:28:32 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.161 2007/07/14 22:41:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1434,6 +1434,14 @@ sys_sigreturn(p, v, retval)
 
 	tf->tf_iioq_head = ksc.sc_pcoqh | HPPA_PC_PRIV_USER;
 	tf->tf_iioq_tail = ksc.sc_pcoqt | HPPA_PC_PRIV_USER;
+	if ((tf->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE)
+		tf->tf_iisq_head = HPPA_SID_KERNEL;
+	else
+		tf->tf_iisq_head = p->p_addr->u_pcb.pcb_space;
+	if ((tf->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE)
+		tf->tf_iisq_tail = HPPA_SID_KERNEL;
+	else
+		tf->tf_iisq_tail = p->p_addr->u_pcb.pcb_space;
 	tf->tf_ipsw = ksc.sc_ps;
 
 #ifdef DEBUG
