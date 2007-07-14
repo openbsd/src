@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.4 2007/06/16 09:37:31 espie Exp $
+# $OpenBSD: Paths.pm,v 1.5 2007/07/14 21:50:05 ajacoutot Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -23,6 +23,7 @@ package OpenBSD::Paths;
 # Commands
 sub ldconfig() { '/sbin/ldconfig' }
 sub chroot() { '/usr/sbin/chroot' }
+sub mkfontscale() { '/usr/X11R6/bin/mkfontscale' }
 sub mkfontdir() { '/usr/X11R6/bin/mkfontdir' }
 sub fc_cache() { '/usr/X11R6/bin/fc-cache' }
 sub install_info() { '/usr/bin/install-info' }
@@ -56,7 +57,7 @@ sub portsdir() { '/usr/ports' }
 sub library_dirs() { ("/usr", "/usr/X11R6") }
 sub master_keys() { ("/etc/master_key") }
 
-sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1") }
+sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1", "fonts.scale") }
 sub man_cruft() { ("whatis.db") }
 sub info_cruft() { ("dir") }
 

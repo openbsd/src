@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.142 2007/06/18 10:47:03 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.143 2007/07/14 21:50:05 ajacoutot Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1237,6 +1237,7 @@ sub finish_fontdirs
 		map { update_fontalias($_) } @l unless $state->{not};
 		print "You may wish to update your font path for ", join(' ', @l), "\n";
 		return if $state->{not};
+		run_if_exists($state, OpenBSD::Paths->mkfontscale, @l);
 		run_if_exists($state, OpenBSD::Paths->mkfontdir, @l);
 
 		map { restore_fontdir($_) } @l;
