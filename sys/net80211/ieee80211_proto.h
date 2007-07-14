@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.20 2007/07/06 18:18:43 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.21 2007/07/14 19:58:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ extern	struct mbuf *ieee80211_beacon_alloc(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *,
 		struct mbuf *);
-extern	struct mbuf *ieee80211_decap(struct ifnet *, struct mbuf *);
+extern	struct mbuf *ieee80211_decap(struct ifnet *, struct mbuf *, int);
 #define	ieee80211_new_state(_ic, _nstate, _arg) \
 	(((_ic)->ic_newstate)((_ic), (_nstate), (_arg)))
 extern	u_int8_t *ieee80211_add_capinfo(u_int8_t *, struct ieee80211com *,

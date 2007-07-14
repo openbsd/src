@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.43 2007/07/13 19:56:03 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.44 2007/07/14 19:58:05 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -117,9 +117,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	struct ieee80211_frame *wh;
 	struct ether_header *eh;
 	struct mbuf *m1;
-	int error, len;
+	int error, hdrlen, len;
 	u_int8_t dir, type, subtype;
-	u_int16_t rxseq;
+	u_int16_t orxseq, nrxseq;
 
 	if (ni == NULL)
 		panic("null mode");
@@ -156,6 +156,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+
 	/*
 	 * NB: We are not yet prepared to handle control frames,
 	 *     but permitting drivers to send them to us allows
@@ -163,26 +164,36 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	 */
 	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame)) {
 		IEEE80211_DPRINTF2(("%s: frame too short (2), len %u\n",
-			__func__, m->m_pkthdr.len));
+		    __func__, m->m_pkthdr.len));
 		ic->ic_stats.is_rx_tooshort++;
 		goto out;
 	}
 	if (ic->ic_state != IEEE80211_S_SCAN) {
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
-		rxseq = ni->ni_rxseq;
-		ni->ni_rxseq =
-		    letoh16(*(u_int16_t *)wh->i_seq) >> IEEE80211_SEQ_SEQ_SHIFT;
+		if (type == IEEE80211_FC0_TYPE_DATA &&
+		    (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)) {
+			struct ieee80211_qosframe *qwh =
+			    (struct ieee80211_qosframe *)wh;
+			int tid = qwh->i_qos[0] & IEEE80211_QOS_TID;
+			orxseq = ni->ni_qos_rxseqs[tid];
+			nrxseq = ni->ni_qos_rxseqs[tid] =
+			    letoh16(*(u_int16_t *)qwh->i_seq) >>
+				IEEE80211_SEQ_SEQ_SHIFT;
+		} else {
+			orxseq = ni->ni_rxseq;
+			nrxseq = ni->ni_rxseq =
+			    letoh16(*(u_int16_t *)wh->i_seq) >>
+				IEEE80211_SEQ_SEQ_SHIFT;
+		}
 		/* TODO: fragment */
 		if ((wh->i_fc[1] & IEEE80211_FC1_RETRY) &&
-		    rxseq == ni->ni_rxseq) {
+		    orxseq == nrxseq) {
 			/* duplicate, silently discarded */
 			ic->ic_stats.is_rx_dup++; /* XXX per-station stat */
 			goto out;
 		}
 		ni->ni_inact = 0;
-		if (ic->ic_opmode == IEEE80211_M_MONITOR)
-			goto out;
 	}
 
 	if (ic->ic_set_tim != NULL &&
@@ -309,8 +320,13 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			}
 			break;
 		case IEEE80211_M_MONITOR:
-			break;
+			/* can't get there */
+			goto out;
 		}
+		if (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)
+			hdrlen = sizeof(struct ieee80211_qosframe);
+		else
+			hdrlen = sizeof(struct ieee80211_frame);
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 			if (ic->ic_flags & IEEE80211_F_WEPON) {
 				m = ieee80211_wep_crypt(ifp, m, 0);
@@ -329,7 +345,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
 #endif
-		m = ieee80211_decap(ifp, m);
+		m = ieee80211_decap(ifp, m, hdrlen);
 		if (m == NULL) {
 			IEEE80211_DPRINTF(("%s: "
 			    "decapsulation error for src %s\n",
@@ -484,29 +500,29 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 }
 
 struct mbuf *
-ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
+ieee80211_decap(struct ifnet *ifp, struct mbuf *m, int hdrlen)
 {
-	struct ether_header *eh;
 	struct ieee80211_frame wh;
+	struct ether_header *eh;
 	struct llc *llc;
 
-	if (m->m_len < sizeof(wh) + sizeof(*llc)) {
-		m = m_pullup(m, sizeof(wh) + sizeof(*llc));
+	if (m->m_len < hdrlen + sizeof(*llc)) {
+		m = m_pullup(m, hdrlen + sizeof(*llc));
 		if (m == NULL)
 			return NULL;
 	}
 	memcpy(&wh, mtod(m, caddr_t), sizeof(wh));
-	llc = (struct llc *)(mtod(m, caddr_t) + sizeof(wh));
+	llc = (struct llc *)(mtod(m, caddr_t) + hdrlen);
 	if (llc->llc_dsap == LLC_SNAP_LSAP &&
 	    llc->llc_ssap == LLC_SNAP_LSAP &&
 	    llc->llc_control == LLC_UI &&
 	    llc->llc_snap.org_code[0] == 0 &&
 	    llc->llc_snap.org_code[1] == 0 &&
 	    llc->llc_snap.org_code[2] == 0) {
-		m_adj(m, sizeof(wh) + sizeof(struct llc) - sizeof(*eh));
+		m_adj(m, hdrlen + sizeof(struct llc) - sizeof(*eh));
 		llc = NULL;
 	} else {
-		m_adj(m, sizeof(wh) - sizeof(*eh));
+		m_adj(m, hdrlen - sizeof(*eh));
 	}
 	eh = mtod(m, struct ether_header *);
 	switch (wh.i_fc[1] & IEEE80211_FC1_DIR_MASK) {

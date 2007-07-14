@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.14 2007/07/05 20:18:02 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.15 2007/07/14 19:58:04 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -171,8 +171,14 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 		if (n->m_flags & M_EXT)
 			n->m_len = n->m_ext.ext_size;
 	}
-	len = sizeof(struct ieee80211_frame);
-	memcpy(mtod(n, caddr_t), mtod(m, caddr_t), len);
+	wh = mtod(m, struct ieee80211_frame *);
+	if ((wh->i_fc[0] &
+	     (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
+		len = sizeof(struct ieee80211_qosframe);
+	else
+		len = sizeof(struct ieee80211_frame);
+	memcpy(mtod(n, caddr_t), wh, len);
 	wh = mtod(n, struct ieee80211_frame *);
 	left -= len;
 	moff = len;

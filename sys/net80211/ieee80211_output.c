@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.46 2007/07/13 19:59:56 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.47 2007/07/14 19:58:05 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 #include <net80211/ieee80211_var.h>
 
 enum	ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
-struct	mbuf *ieee80211_classify(struct ieee80211com *, struct mbuf *, int *);
+int	ieee80211_classify(struct ieee80211com *, struct mbuf *);
 int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
 	    struct mbuf *, int);
 u_int8_t *ieee80211_add_rsn_body(u_int8_t *, struct ieee80211com *,
@@ -370,10 +370,10 @@ ieee80211_up_to_ac(struct ieee80211com *ic, int up)
 
 /*
  * Get mbuf's user-priority: if mbuf is not VLAN tagged, select user-priority
- * based on the IP TOS precedence field.
+ * based on the DSCP (Differentiated Services Codepoint) field.
  */
-struct mbuf *
-ieee80211_classify(struct ieee80211com *ic, struct mbuf *m, int *up)
+int
+ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 {
 #ifdef INET
 	const struct ether_header *eh;
@@ -383,57 +383,37 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m, int *up)
 		const struct ifvlan *ifv = m->m_pkthdr.rcvif->if_softc;
 
 		/* use VLAN 802.1D user-priority */
-		if (ifv->ifv_prio <= 7) {
-			*up = ifv->ifv_prio;
-			return m;
-		}
+		if (ifv->ifv_prio <= 7)
+			return ifv->ifv_prio;
 	}
 #endif
 #ifdef INET
 	eh = mtod(m, struct ether_header *);
 	if (eh->ether_type == htons(ETHERTYPE_IP)) {
-		const struct ip *ip;
-
-		if (m->m_len < sizeof(*eh) + sizeof(*ip)) {
-			m = m_pullup(m, sizeof(*eh) + sizeof(*ip));
-			if (m == NULL)
-				return NULL;
-		}
-		ip = (struct ip *)(mtod(m, struct ether_header *) + 1);
-
+		const struct ip *ip = (const struct ip *)(eh + 1);
 		/*
-		 * IP packet, map TOS precedence field.
+		 * Map Differentiated Services Codepoint field (see RFC2474).
+		 * Preserves backward compatibility with IP Precedence field.
 		 */
 		switch (ip->ip_tos & 0xfc) {
 		case IPTOS_PREC_PRIORITY:
-			*up = 2;
-			break;
+			return 2;
 		case IPTOS_PREC_IMMEDIATE:
-			*up = 1;
-			break;
+			return 1;
 		case IPTOS_PREC_FLASH:
-			*up = 3;
-			break;
+			return 3;
 		case IPTOS_PREC_FLASHOVERRIDE:
-			*up = 4;
-			break;
+			return 4;
 		case IPTOS_PREC_CRITIC_ECP:
-			*up = 5;
-			break;
+			return 5;
 		case IPTOS_PREC_INTERNETCONTROL:
-			*up = 6;
-			break;
+			return 6;
 		case IPTOS_PREC_NETCONTROL:
-			*up = 7;
-			break;
-		default:
-			*up = 0;
+			return 7;
 		}
-		return m;
 	}
 #endif
-	*up = 0;	/* default to Best-Effort */
-	return m;
+	return 0;	/* default to Best-Effort */
 }
 
 /*
@@ -455,7 +435,8 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	struct llc *llc;
 	struct m_tag *mtag;
 	u_int8_t *addr;
-	u_int dlt;
+	u_int dlt, hdrlen;
+	int addqos, tid;
 
 	/* Handle raw frames if mbuf is tagged as 802.11 */
 	if ((mtag = m_tag_find(m, PACKET_TAG_DLT, NULL)) != NULL) {
@@ -521,6 +502,15 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	}
 	ni->ni_inact = 0;
 
+	if ((ic->ic_flags & IEEE80211_F_QOS) &&
+	    (ni->ni_flags & IEEE80211_NODE_QOS)) {
+		tid = ieee80211_classify(ic, m);
+		hdrlen = sizeof(struct ieee80211_qosframe);
+		addqos = 1;
+	} else {
+		hdrlen = sizeof(struct ieee80211_frame);
+		addqos = 0;
+	}
 	m_adj(m, sizeof(struct ether_header) - sizeof(struct llc));
 	llc = mtod(m, struct llc *);
 	llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
@@ -529,7 +519,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	llc->llc_snap.org_code[1] = 0;
 	llc->llc_snap.org_code[2] = 0;
 	llc->llc_snap.ether_type = eh.ether_type;
-	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
+	M_PREPEND(m, hdrlen, M_DONTWAIT);
 	if (m == NULL) {
 		ic->ic_stats.is_tx_nombuf++;
 		goto bad;
@@ -537,9 +527,20 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA;
 	*(u_int16_t *)&wh->i_dur[0] = 0;
-	*(u_int16_t *)&wh->i_seq[0] =
-	    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
-	ni->ni_txseq++;
+	if (addqos) {
+		struct ieee80211_qosframe *qwh =
+		    (struct ieee80211_qosframe *)wh;
+		qwh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
+		qwh->i_qos[0] = tid & IEEE80211_QOS_TID;
+		qwh->i_qos[1] = 0;	/* no TXOP requested */
+		*(u_int16_t *)&qwh->i_seq[0] =
+		    htole16(ni->ni_qos_txseqs[tid] << IEEE80211_SEQ_SEQ_SHIFT);
+		ni->ni_qos_txseqs[tid]++;
+	} else {
+		*(u_int16_t *)&wh->i_seq[0] =
+		    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
+		ni->ni_txseq++;
+	}
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		wh->i_fc[1] = IEEE80211_FC1_DIR_TODS;
