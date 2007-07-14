@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2006/09/26 06:11:42 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.24 2007/07/14 19:06:48 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1999/11/05 19:14:56 scottr Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ mac68k_calibrate_delay()
 		printf("mac68k_calibrate_delay(): entering timing loop\n");
 #endif
 
-	(void)spl0();
+	(void)_spl(IPLTOPSL(mac68k_machine.via1_ipl) - 1);
 
 	for (sum = 0, n = 8; n > 0; n--) {
 		delay_flag = 1;
