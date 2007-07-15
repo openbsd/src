@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.40 2007/05/28 22:26:03 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.41 2007/07/15 19:25:49 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -281,21 +281,3 @@ iskmemdev(dev)
 {
 	return (major(dev) == mem_no && minor(dev) < 2);
 }
-
-#include <dev/cons.h>
-
-cons_decl(pdc);
-cons_decl(ws);
-cons_decl(com);
-
-struct  consdev constab[] = {
-	cons_init(pdc),		/* XXX you'd better leave it here for pdc.c */
-#if NWSDISPLAY > 0
-	cons_init(ws),
-#endif
-#if NCOM > 0
-	cons_init(com),
-#endif
-	{ 0 }
-};
-

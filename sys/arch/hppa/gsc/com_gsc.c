@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.20 2004/09/19 17:50:30 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.21 2007/07/15 19:25:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -42,6 +42,8 @@
 #include <hppa/dev/cpudevs.h>
 #include <hppa/gsc/gscbusvar.h>
 
+#define COM_GSC_FREQ	7372800
+
 struct com_gsc_regs {
 	u_int8_t reset;
 };
@@ -77,31 +79,26 @@ com_gsc_attach(parent, self, aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;
-	struct com_gsc_regs *regs;
-	int rj16 = 0;
 
-	sc->sc_frequency = COM_FREQ;
 	sc->sc_iot = ga->ga_iot;
 	sc->sc_iobase = (bus_addr_t)ga->ga_hpa;
 	if (ga->ga_type.iodc_sv_model != HPPA_FIO_GRJ16)
 		sc->sc_iobase += IOMOD_DEVOFFSET;
-	else
-		rj16++;
 
-	if (sc->sc_iobase == CONADDR && comconsioh)
-		sc->sc_ioh = comconsioh;
-	else if (bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS,
+	if (bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS,
 	    0, &sc->sc_ioh)) {
 		printf(": cannot map io space\n");
 		return;
 	}
 
-	regs = (struct com_gsc_regs *)ga->ga_hpa;
-	if (!rj16 && sc->sc_iobase != CONADDR) {
-		/*regs->reset = 0xd0;*/
-		DELAY(1000);
+	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX &&
+	    PAGE0->mem_cons.pz_hpa == ga->ga_hpa) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, COM_NPORTS);
+		comcnattach(sc->sc_iot, sc->sc_iobase, comdefaultrate,
+		    COM_GSC_FREQ, comconscflag);
 	}
 
+	sc->sc_frequency = COM_GSC_FREQ;
 	com_attach_subr(sc);
 
 	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.116 2007/06/22 10:09:21 jasper Exp $	*/
+/*	$OpenBSD: com.c,v 1.117 2007/07/15 19:25:49 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1325,8 +1325,6 @@ comcnprobe(struct consdev *cp)
 	bus_space_tag_t iot = MD_ISA_IOT;
 #elif defined(__sgi__)
 	bus_space_tag_t iot = sys_config.cons_iot;
-#elif defined(hppa)
-	bus_space_tag_t iot = &hppa_bustag;
 #else
 	bus_space_tag_t iot = 0;
 #endif
@@ -1339,11 +1337,7 @@ comcnprobe(struct consdev *cp)
 	comconsiot = iot;
 	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh))
 		return;
-#ifdef __hppa__
-	found = 1;
-#else
 	found = comprobe1(iot, ioh);
-#endif
 	bus_space_unmap(iot, ioh, COM_NPORTS);
 	if (!found)
 		return;
