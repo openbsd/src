@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.34 2007/07/01 12:14:13 kettenis Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -107,6 +107,7 @@
 #define	PDC_CHASSIS_DISP	0	/* update display */
 #define	PDC_CHASSIS_WARN	1	/* return warnings */
 #define	PDC_CHASSIS_ALL		2	/* update display & return warnings */
+#define	PDC_CHASSIS_INFO	128	/* return led/lcd info */
 
 #define	PDC_PIM		3	/* access Processor Internal Memory */
 #define	PDC_PIM_HPMC		0	/* read High Pri Mach Chk data */
@@ -633,6 +634,25 @@ struct pdc_lan_station_id {	/* PDC_LAN_STATION_ID */
 #define	PDC_OSTAT_WARN	0x5	/* battery dying, etc */
 #define	PDC_OSTAT_RUN	0x6	/* OS running */
 #define	PDC_OSTAT_ON	0x7	/* all on */
+
+struct pdc_chassis_info {
+	u_int	size;
+	u_int	max_size;
+	u_int	filler[30];
+};
+
+struct pdc_chassis_lcd {
+	u_int	model : 16,
+		width : 16;
+	u_int	cmd_addr;
+	u_int	data_addr;
+	u_int	delay;
+	u_int8_t line[2];
+	u_int8_t enabled;
+	u_int8_t heartbeat[3];
+	u_int8_t disk[3];
+	u_int	filler[25];
+};
 
 /* dp_flags */
 #define	PZF_AUTOBOOT	0x80	/* These two are PDC flags for how to locate */
