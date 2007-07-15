@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.65 2007/05/29 21:00:50 jason Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.66 2007/07/15 20:11:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -26,6 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "lcd.h"
 #include "power.h"
 
 #undef BTLBDEBUG
@@ -40,6 +41,7 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 
+#include <machine/bus.h>
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
@@ -65,6 +67,8 @@ struct cfdriver mainbus_cd = {
 
 struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
+struct pdc_chassis_info pdc_chassis_info PDC_ALIGNMENT;
+struct pdc_chassis_lcd pdc_chassis_lcd PDC_ALIGNMENT;
 
 /* from machdep.c */
 extern struct extent *hppa_ex;
@@ -1031,7 +1035,7 @@ mbattach(parent, self, aux)
 	sc->sc_hpa = pdc_hpa.hpa;
 
 	/* PDC first */
-	bzero (&nca, sizeof(nca));
+	bzero(&nca, sizeof(nca));
 	nca.ca_name = "pdc";
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
@@ -1039,7 +1043,7 @@ mbattach(parent, self, aux)
 
 #if NPOWER > 0
 	/* get some power */
-	bzero (&nca, sizeof(nca));
+	bzero(&nca, sizeof(nca));
 	nca.ca_name = "power";
 	nca.ca_irq = -1;
 	if (!pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER,
@@ -1051,7 +1055,23 @@ mbattach(parent, self, aux)
 	config_found(self, &nca, mbprint);
 #endif
 
-	bzero (&nca, sizeof(nca));
+#if NLCD > 0
+	if (!pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_INFO,
+	    &pdc_chassis_info, &pdc_chassis_lcd, sizeof(pdc_chassis_lcd)) &&
+	    pdc_chassis_lcd.enabled) {
+		bzero(&nca, sizeof(nca));
+		nca.ca_name = "lcd";
+		nca.ca_irq = -1;
+		nca.ca_iot = &hppa_bustag;
+		nca.ca_hpa = pdc_chassis_lcd.cmd_addr;
+		nca.ca_hpamask = HPPA_IOBEGIN;
+		nca.ca_pdc_iodc_read = (void *)&pdc_chassis_lcd;
+
+		config_found(self, &nca, mbprint);
+	}
+#endif
+
+	bzero(&nca, sizeof(nca));
 	nca.ca_hpa = 0;
 	nca.ca_irq = -1;
 	nca.ca_hpamask = HPPA_IOBEGIN;

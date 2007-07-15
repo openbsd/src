@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.70 2007/07/15 19:25:49 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.71 2007/07/15 20:11:12 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -104,6 +104,10 @@ file	arch/hppa/dev/pdc.c			pdc
 device	power
 attach	power at gedoens
 file	arch/hppa/dev/power.c			power needs-flag
+
+device	lcd
+attach	lcd at gedoens
+file	arch/hppa/dev/lcd.c			lcd needs-flag
 
 device	mem
 attach	mem at gedoens
