@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.17 2007/07/16 21:14:58 pyr Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.18 2007/07/16 21:15:36 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -220,7 +220,7 @@ send_icmp(int s, short event, void *arg)
 
 			r = sendto(s, packet, sizeof(packet), 0, to, slen);
 			if (r == -1) {
-				if (errno == EAGAIN && errno == EINTR)
+				if (errno == EAGAIN || errno == EINTR)
 					goto retry;
 				host->flags |= F_CHECK_SENT|F_CHECK_DONE;
 				host->up = HOST_DOWN;
