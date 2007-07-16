@@ -1,4 +1,4 @@
-/*	$OpenBSD: swaplist.c,v 1.4 2002/07/03 22:32:34 deraadt Exp $	*/
+/*	$OpenBSD: swaplist.c,v 1.5 2007/07/16 20:59:47 millert Exp $	*/
 /*	$NetBSD: swaplist.c,v 1.8 1998/10/08 10:00:31 mrg Exp $	*/
 
 /*
@@ -30,16 +30,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/stat.h>
 #include <sys/swap.h>
 
-#include <unistd.h>
 #include <err.h>
-#include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
+#include <unistd.h>
 
 #define	dbtoqb(b) dbtob((int64_t)(b))
 
