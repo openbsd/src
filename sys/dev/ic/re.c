@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.73 2007/06/06 22:02:31 pvalchev Exp $	*/
+/*	$OpenBSD: re.c,v 1.74 2007/07/16 19:15:01 millert Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -826,10 +826,10 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	/* Reset the adapter. */
 	re_reset(sc);
 
-	sc->rl_eewidth = 6;
+	sc->rl_eewidth = RL_9356_ADDR_LEN;
 	re_read_eeprom(sc, (caddr_t)&re_did, 0, 1);
 	if (re_did != 0x8129)
-		sc->rl_eewidth = 8;
+		sc->rl_eewidth = RL_9346_ADDR_LEN;
 
 	/*
 	 * Get station address from the EEPROM.

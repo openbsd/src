@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.39 2007/06/06 22:02:31 pvalchev Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.40 2007/07/16 19:15:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -311,6 +311,9 @@
 
 /* 9346/9356 EEPROM commands */
 
+#define RL_9346_ADDR_LEN	6	/* 93C46 1K: 128x16 */
+#define RL_9356_ADDR_LEN	8	/* 93C56 2K: 256x16 */
+ 
 #define RL_9346_WRITE		0x5
 #define RL_9346_READ		0x6
 #define RL_9346_ERASE		0x7
