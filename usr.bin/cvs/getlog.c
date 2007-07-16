@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.73 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.74 2007/07/16 12:16:01 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -201,7 +201,10 @@ cvs_log_local(struct cvs_file *cf)
 	}
 
 	cvs_printf("\nRCS file: %s", cf->file_rpath);
-	cvs_printf("\nWorking file: %s", cf->file_path);
+
+	if (cvs_cmdop != CVS_OP_RLOG)
+		cvs_printf("\nWorking file: %s", cf->file_path);
+
 	cvs_printf("\nhead:");
 	if (cf->file_rcs->rf_head != NULL)
 		cvs_printf(" %s", rcsnum_tostr(cf->file_rcs->rf_head,
