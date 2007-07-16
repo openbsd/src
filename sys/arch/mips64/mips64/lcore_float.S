@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.13 2007/05/07 18:42:13 kettenis Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.14 2007/07/16 20:23:09 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -553,10 +553,7 @@ LEAF(cp1_get_prid, 0)
 	li	a0, SR_COP_1_BIT
 	or	v1, a0
 	mtc0	v1, COP_0_STATUS_REG
-	nop
-	nop
-	nop
-	nop
+	ITLBNOPFIX
 	cfc1	v0, FPC_ID
 	xor	v1, a0
 	mtc0	v1, COP_0_STATUS_REG

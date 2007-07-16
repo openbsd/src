@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.6 2007/07/16 20:20:08 miod Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.7 2007/07/16 20:23:09 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -94,6 +94,7 @@ LEAF(enableintr, 0)
 	nop
 	or	v1, v0, SR_INT_ENAB
 	mtc0	v1, COP_0_STATUS_REG	# enable all interrupts
+	ITLBNOPFIX
 	j	ra
 	nop
 END(enableintr)
@@ -103,16 +104,7 @@ LEAF(disableintr, 0)
 	nop
 	and	v1, v0, ~SR_INT_ENAB
 	mtc0	v1, COP_0_STATUS_REG	# disable all interrupts
-	nop				# Propagate new status
-	nop
-	nop
-	nop				# so int's are off before
-	nop				# return to caller.
-	nop				# total 10 nops to handle
-	nop				# RM7000 1.x bug.
-	nop
-	nop
-	nop
+	ITLBNOPFIX			# Propagate new status
 	j	ra
 	nop
 END(disableintr)
@@ -137,32 +129,14 @@ LEAF(updateimask, 0)
 	and	v0, a0, SR_INT_MASK
 	or	v1, v0
 	mtc0	v1, COP_0_STATUS_REG
-	nop				# total 10 nops to handle
-	nop				# RM7000 1.x bug.
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
+	ITLBNOPFIX
 	jr	ra
 	move	v0, v1
 END(updateimask)
 
 LEAF(setsr, 0)
 	mtc0	a0, COP_0_STATUS_REG
-	nop				# total 10 nops to handle
-	nop				# RM7000 1.x bug.
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
+	ITLBNOPFIX
 	jr	ra
 	move	v0, a0
 END(setsr)
