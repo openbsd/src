@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensor_attach.9,v 1.7 2007/06/24 07:21:22 jmc Exp $
+.\"	$OpenBSD: sensor_attach.9,v 1.8 2007/07/16 00:20:23 cnst Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\" Copyright (c) 2006 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 24 2007 $
+.Dd $Mdocdate: July 16 2007 $
 .Dt SENSOR_ATTACH 9
 .Os
 .Sh NAME
@@ -131,18 +131,16 @@ parameter is the argument given to the
 .Fa func
 function.
 .Fn sensor_task_unregister
-removes the task specified by the
+ensures that the task specified by the
 .Fa st
-argument.
+argument is no longer running, and then removes it from the queue.
 .Pp
 All the functions in the sensor framework must be called during
 .Xr autoconf 9
 or from a process context.
 Additionally,
 .Fn sensor_task_unregister
-must not be called while a function previously registered with
-.Fn sensor_task_register
-is running.
+must not be called from the sensor task that it is about to remove.
 .Sh SEE ALSO
 .Xr sysctl 8 ,
 .Xr autoconf 9
