@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.15 2007/07/16 18:40:18 jmc Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.16 2007/07/16 18:43:05 jmc Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.15 2007/07/16 18:40:18 jmc Exp $";
+static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.16 2007/07/16 18:43:05 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -220,6 +220,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "lastcomm [-f file] [command ...] [user ...] [terminal ...]\n");
+	    "usage: lastcomm [-f file] [command ...] [user ...] [terminal ...]\n");
 	exit(1);
 }
