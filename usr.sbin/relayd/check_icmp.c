@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.16 2007/05/31 03:24:05 pyr Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.17 2007/07/16 21:14:58 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -33,7 +33,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <err.h>
 
 #include <openssl/ssl.h>
 
@@ -56,7 +55,7 @@ icmp_setup(struct hoststated *env, struct ctl_icmp_event *cie, int af)
 	if (af == AF_INET6)
 		proto = IPPROTO_ICMPV6;
 	if ((cie->s = socket(af, SOCK_RAW, proto)) < 0)
-		err(1, "icmp_init: socket");
+		fatal("icmp_init: socket");
 	session_socket_blockmode(cie->s, BM_NONBLOCK);
 	cie->env = env;
 	cie->af = af;
