@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2007/05/25 20:47:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2007/07/16 20:21:20 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -199,12 +199,13 @@ trap(trapframe)
 	 * If it was off disable all (splhigh) so we don't accidently
 	 * enable it when doing a spllower().
 	 */
-/*XXX do in locore? */
 	if (trapframe->sr & SR_INT_ENAB) {
+		if (type != T_BREAK) {
 #ifndef IMASK_EXTERNAL
-		updateimask(trapframe->cpl);
+			updateimask(trapframe->cpl);
 #endif
-		enableintr();
+			enableintr();
+		}
 	} else
 		splhigh();
 
