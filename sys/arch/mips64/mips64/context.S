@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.12 2007/07/01 19:12:42 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.13 2007/07/16 20:22:18 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -155,7 +155,6 @@ END(remrunqueue)
  */
 LEAF(idle, 0)
 _idle:
-	PTR_S	zero, curproc		# set curproc NULL for stats
 	sw	zero, cpl		# lower to spl0
 	lw	t0, ipending
 	beqz	t0, 1f
@@ -163,7 +162,7 @@ _idle:
 	jal	setsoftintr0
 	nop
 1:
-	mfc0	a0, COP_0_STATUS_REG
+	mfc0	a0, COP_0_STATUS_REG	# ... and enable interrupts
 	li	a1, SR_INT_ENAB
 	or	a0, a0, a1
 	mtc0	a0, COP_0_STATUS_REG
@@ -184,8 +183,6 @@ _idle:
 	sb	t0, 0x0d(t2)
 #endif
 1:
-	beq	t1, zero, 2f		# check if stuck in idle!
-	addu	t1, t1, 1
 	lw	t0, whichqs		# look for non-empty queue
 	beq	t0, zero, 1b
 	nop
@@ -195,10 +192,6 @@ _idle:
 	sb	t0, 0x0c(t2)
 #endif
 	b	sw1			# Hey, time to do some work!
-	nop
-2:
-	break   BREAK_SOVER_VAL		# interrupt stuck!?
-	b	1b
 	nop
 	jr	ra			# DDB trace
 	nop
@@ -223,8 +216,12 @@ LEAF(switch_exit, 0)
 	nop
 
 	PTR_S	zero, curproc
+	b	sw0
+	nop
+	jr	ra			# DDB trace
+	nop
 END(switch_exit)
-	/* FALL THROUGH TO cpu switch! */
+
 /*
  * cpu_switch()
  * Find the highest priority process and resume it.
@@ -237,7 +234,6 @@ NON_LEAF(cpu_switch, FRAMESZ(CF_SZ), ra)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	lw	t0, cpl
 	REG_S	t0, PCB_CONTEXT+13*REGSZ(t3)
-#	lw	t2, cnt+V_SWTCH			# for statistics
 	REG_S	s0, PCB_CONTEXT+0*REGSZ(t3)	# do a 'savectx()'
 	REG_S	s1, PCB_CONTEXT+1*REGSZ(t3)
 	REG_S	s2, PCB_CONTEXT+2*REGSZ(t3)
@@ -253,6 +249,8 @@ NON_LEAF(cpu_switch, FRAMESZ(CF_SZ), ra)
 	REG_S	t0, PCB_CONTEXT+11*REGSZ(t3)
 	REG_S	t1, PCB_CONTEXT+12*REGSZ(t3)
 
+sw0:
+#	lw	t2, cnt+V_SWTCH			# for statistics
 	lw	t1, whichqs			# look for non-empty queue
 #	addu	t2, t2, 1
 #	sw	t2, cnt+V_SWTCH
