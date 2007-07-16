@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2007/06/21 20:17:32 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.46 2007/07/16 20:20:09 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -846,8 +846,8 @@ setregs(p, pack, stack, retval)
 #else
 	p->p_md.md_regs->sr = SR_KSU_USER|SR_XX|SR_EXL|SR_INT_ENAB;
 #endif
-	p->p_md.md_regs->sr |= (idle_mask << 8) & SR_INT_MASK;
-	p->p_md.md_regs->ic = idle_mask & IC_INT_MASK;
+	p->p_md.md_regs->sr |= idle_mask & SR_INT_MASK;
+	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
 	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;

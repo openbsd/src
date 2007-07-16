@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.5 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.6 2007/07/16 20:20:08 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -125,6 +125,8 @@ LEAF(updateimask, 0)
 	cfc0	v0, COP_0_ICR
 	li	v1, ~IC_INT_MASK
 	and	v1, v0
+	sll	v0, a0, 8
+	and	v0, IC_INT_MASK
 	and	v0, a0, IC_INT_MASK
 	or	v1, v0
 	ctc0	v1, COP_0_ICR
@@ -132,8 +134,7 @@ LEAF(updateimask, 0)
 	mfc0	v0, COP_0_STATUS_REG
 	li	v1, ~SR_INT_MASK
 	and	v1, v0
-	sll	v0, a0, 8
-	and	v0, SR_INT_MASK
+	and	v0, a0, SR_INT_MASK
 	or	v1, v0
 	mtc0	v1, COP_0_STATUS_REG
 	nop				# total 10 nops to handle
