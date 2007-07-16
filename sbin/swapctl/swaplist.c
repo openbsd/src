@@ -1,4 +1,4 @@
-/*	$OpenBSD: swaplist.c,v 1.5 2007/07/16 20:59:47 millert Exp $	*/
+/*	$OpenBSD: swaplist.c,v 1.6 2007/07/16 21:05:46 millert Exp $	*/
 /*	$NetBSD: swaplist.c,v 1.8 1998/10/08 10:00:31 mrg Exp $	*/
 
 /*
@@ -39,16 +39,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#define	dbtoqb(b) dbtob((int64_t)(b))
-
-/*
- * NOTE:  This file is separate from swapctl.c so that pstat can grab it.
- */
-
 #include "swapctl.h"
 
+#define	dbtoqb(b) dbtob((int64_t)(b))
+
 void
-list_swap(int pri, int kflag, int pflag, int tflag, int dolong)
+list_swap(int pri, int kflag, int pflag, int dolong)
 {
 	struct	swapent *sep, *fsep;
 	long	blocksize;
@@ -73,7 +69,7 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong)
 		    rnswap, nswap);
 
 	pathmax = 11;
-	if (dolong && tflag == 0) {
+	if (dolong) {
 		if (kflag) {
 			header = "1K-blocks";
 			blocksize = 1024;
@@ -98,7 +94,7 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong)
 		totalsize += size;
 		totalinuse += inuse;
 
-		if (dolong && tflag == 0) {
+		if (dolong) {
 			(void)printf("%-*s %*ld ", pathmax, sep->se_path, hlen,
 			    (long)(dbtoqb(size) / blocksize));
 
@@ -109,11 +105,7 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong)
 			    sep->se_priority);
 		}
 	}
-	if (tflag)
-		(void)printf("%dM/%dM swap space\n",
-		    (int)(dbtoqb(totalinuse) / (1024 * 1024)),
-		    (int)(dbtoqb(totalsize) / (1024 * 1024)));
-	else if (dolong == 0)
+	if (dolong == 0)
 		    printf("total: %ldk bytes allocated = %ldk used, "
 			   "%ldk available\n",
 		    (long)(dbtoqb(totalsize) / 1024),
