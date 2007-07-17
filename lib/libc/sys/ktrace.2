@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.18 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: ktrace.2,v 1.19 2007/07/17 16:30:10 jmc Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 17 2007 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -136,6 +136,12 @@ record.
 The type specific records are defined in the
 .Aq Pa sys/ktrace.h
 include file.
+.Pp
+The
+.Fa pid
+parameter refers to a process ID.
+If it is negative,
+it refers to a process group ID.
 .Sh RETURN VALUES
 On successful completion a value of 0 is returned.
 Otherwise, a value of \-1 is returned and
