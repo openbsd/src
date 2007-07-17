@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.70 2007/07/17 16:13:39 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.71 2007/07/17 20:29:58 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -82,7 +82,7 @@ struct cvs_req cvs_requests[] = {
 	    REQ_NEEDDIR },
 	{ "diff",			0,	cvs_server_diff, REQ_NEEDDIR },
 	{ "log",			0,	cvs_server_log, REQ_NEEDDIR },
-	{ "rlog",			0,	cvs_server_rlog, REQ_NEEDDIR },
+	{ "rlog",			0,	cvs_server_rlog, 0 },
 	{ "add",			0,	cvs_server_add, REQ_NEEDDIR },
 	{ "remove",			0,	cvs_server_remove,
 	    REQ_NEEDDIR },
