@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.15 2007/07/16 21:05:46 millert Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.16 2007/07/17 18:26:05 jmc Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -282,9 +282,7 @@ swapon_command(int argc, char **argv)
 	return (0);
 
  swapon_usage:
-	fprintf(stderr, "usage: %s -a [-t blk|noblk]\n"
-			"       %s <path> ...\n",
-	    __progname, __progname);
+	fprintf(stderr, "usage: %s -a | path\n", __progname);
 	return (1);
 }
 
