@@ -1,4 +1,4 @@
-/*	$OpenBSD: auconv.c,v 1.6 2003/06/27 00:23:43 jason Exp $ */
+/*	$OpenBSD: auconv.c,v 1.7 2007/07/17 08:35:33 jakemsr Exp $ */
 /*	$NetBSD: auconv.c,v 1.3 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ linear16_to_ulinear8_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
-	while (--cc >= 0) {
+	while ((cc -= 2) >= 0) {
 		*q++ = p[1] ^ 0x80;
 		p += 2;
 	}
@@ -211,7 +211,7 @@ linear16_to_ulinear8_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
-	while (--cc >= 0) {
+	while ((cc -= 2) >= 0) {
 		*q++ = p[0] ^ 0x80;
 		p += 2;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.c,v 1.12 2005/04/14 01:24:20 pascoe Exp $ */
+/*	$OpenBSD: mulaw.c,v 1.13 2007/07/17 08:35:33 jakemsr Exp $ */
 /*	$NetBSD: mulaw.c,v 1.15 2001/01/18 20:28:20 jdolecek Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ slinear16_to_mulaw_le(void *v, u_char* p, int cc)
 {
 	u_char *q = p + 1;	/* q points higher byte. */
 
-	while (--cc >= 0) {
+	while ((cc-= 2) >= 0) {
 		*p++ = lintomulaw[*q ^ 0x80];
 		q +=2 ;
 	}
@@ -490,7 +490,7 @@ slinear16_to_alaw_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
-	while (--cc >= 0) {
+	while ((cc -= 2) >= 0) {
 		*p = lintoalaw[q[1] ^ 0x80];
 		++p;
 		q += 2;
@@ -503,7 +503,7 @@ slinear16_to_alaw_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
-	while (--cc >= 0) {
+	while ((cc -= 2) >= 0) {
 		*p = lintoalaw[q[0] ^ 0x80];
 		++p;
 		q += 2;
