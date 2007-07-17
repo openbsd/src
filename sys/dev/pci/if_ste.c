@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.38 2006/07/08 19:56:38 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.39 2007/07/17 17:15:34 jasper Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -79,46 +79,46 @@
 
 #include <dev/pci/if_stereg.h>
 
-int ste_probe(struct device *, void *, void *);
-void ste_attach(struct device *, struct device *, void *);
-int ste_intr(void *);
-void ste_shutdown(void *);
-void ste_init(void *);
-void ste_rxeoc(struct ste_softc *);
-void ste_rxeof(struct ste_softc *);
-void ste_txeoc(struct ste_softc *);
-void ste_txeof(struct ste_softc *);
-void ste_stats_update(void *);
-void ste_stop(struct ste_softc *);
-void ste_reset(struct ste_softc *);
-int ste_ioctl(struct ifnet *, u_long, caddr_t);
-int ste_encap(struct ste_softc *, struct ste_chain *,
-					struct mbuf *);
-void ste_start(struct ifnet *);
-void ste_watchdog(struct ifnet *);
-int ste_newbuf(struct ste_softc *,
-					struct ste_chain_onefrag *,
-					struct mbuf *);
-int ste_ifmedia_upd(struct ifnet *);
-void ste_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+int	ste_probe(struct device *, void *, void *);
+void	ste_attach(struct device *, struct device *, void *);
+int	ste_intr(void *);
+void	ste_shutdown(void *);
+void	ste_init(void *);
+void	ste_rxeoc(struct ste_softc *);
+void	ste_rxeof(struct ste_softc *);
+void	ste_txeoc(struct ste_softc *);
+void	ste_txeof(struct ste_softc *);
+void	ste_stats_update(void *);
+void	ste_stop(struct ste_softc *);
+void	ste_reset(struct ste_softc *);
+int	ste_ioctl(struct ifnet *, u_long, caddr_t);
+int	ste_encap(struct ste_softc *, struct ste_chain *,
+	    struct mbuf *);
+void	ste_start(struct ifnet *);
+void	ste_watchdog(struct ifnet *);
+int	ste_newbuf(struct ste_softc *,
+	    struct ste_chain_onefrag *,
+	    struct mbuf *);
+int	ste_ifmedia_upd(struct ifnet *);
+void	ste_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-void ste_mii_sync(struct ste_softc *);
-void ste_mii_send(struct ste_softc *, u_int32_t, int);
-int ste_mii_readreg(struct ste_softc *,
-					struct ste_mii_frame *);
-int ste_mii_writereg(struct ste_softc *,
-					struct ste_mii_frame *);
-int ste_miibus_readreg(struct device *, int, int);
-void ste_miibus_writereg(struct device *, int, int, int);
-void ste_miibus_statchg(struct device *);
+void	ste_mii_sync(struct ste_softc *);
+void	ste_mii_send(struct ste_softc *, u_int32_t, int);
+int	ste_mii_readreg(struct ste_softc *,
+	    struct ste_mii_frame *);
+int	ste_mii_writereg(struct ste_softc *,
+	    struct ste_mii_frame *);
+int	ste_miibus_readreg(struct device *, int, int);
+void	ste_miibus_writereg(struct device *, int, int, int);
+void	ste_miibus_statchg(struct device *);
 
-int ste_eeprom_wait(struct ste_softc *);
-int ste_read_eeprom(struct ste_softc *, caddr_t, int,
-							int, int);
-void ste_wait(struct ste_softc *);
-void ste_setmulti(struct ste_softc *);
-int ste_init_rx_list(struct ste_softc *);
-void ste_init_tx_list(struct ste_softc *);
+int	ste_eeprom_wait(struct ste_softc *);
+int	ste_read_eeprom(struct ste_softc *, caddr_t, int,
+	    int, int);
+void	ste_wait(struct ste_softc *);
+void	ste_setmulti(struct ste_softc *);
+int	ste_init_rx_list(struct ste_softc *);
+void	ste_init_tx_list(struct ste_softc *);
 
 #define STE_SETBIT4(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | x)
@@ -142,13 +142,21 @@ void ste_init_tx_list(struct ste_softc *);
 #define MII_SET(x)		STE_SETBIT1(sc, STE_PHYCTL, x)
 #define MII_CLR(x)		STE_CLRBIT1(sc, STE_PHYCTL, x) 
 
+struct cfattach ste_ca = {
+	sizeof(struct ste_softc), ste_probe, ste_attach
+};
+
+struct cfdriver ste_cd = {
+	0, "ste", DV_IFNET
+};
+
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-void ste_mii_sync(sc)
-	struct ste_softc		*sc;
+void
+ste_mii_sync(struct ste_softc *sc)
 {
-	register int		i;
+	int		i;
 
 	MII_SET(STE_PHYCTL_MDIR|STE_PHYCTL_MDATA);
 
@@ -165,12 +173,10 @@ void ste_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-void ste_mii_send(sc, bits, cnt)
-	struct ste_softc		*sc;
-	u_int32_t		bits;
-	int			cnt;
+void
+ste_mii_send(struct ste_softc *sc, u_int32_t bits, int cnt)
 {
-	int			i;
+	int		i;
 
 	MII_CLR(STE_PHYCTL_MCLK);
 
@@ -190,12 +196,10 @@ void ste_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-int ste_mii_readreg(sc, frame)
-	struct ste_softc		*sc;
-	struct ste_mii_frame	*frame;
-	
+int
+ste_mii_readreg(struct ste_softc *sc, struct ste_mii_frame *frame)
 {
-	int			i, ack, s;
+	int		ack, i, s;
 
 	s = splnet();
 
@@ -282,12 +286,10 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-int ste_mii_writereg(sc, frame)
-	struct ste_softc		*sc;
-	struct ste_mii_frame	*frame;
-	
+int
+ste_mii_writereg(struct ste_softc *sc, struct ste_mii_frame *frame)
 {
-	int			s;
+	int		s;
 
 	s = splnet();
 	/*
@@ -328,9 +330,8 @@ int ste_mii_writereg(sc, frame)
 	return(0);
 }
 
-int ste_miibus_readreg(self, phy, reg)
-	struct device		*self;
-	int			phy, reg;
+int
+ste_miibus_readreg(struct device *self, int phy, int reg)
 {
 	struct ste_softc	*sc = (struct ste_softc *)self;
 	struct ste_mii_frame	frame;
@@ -347,9 +348,8 @@ int ste_miibus_readreg(self, phy, reg)
 	return(frame.mii_data);
 }
 
-void ste_miibus_writereg(self, phy, reg, data)
-	struct device		*self;
-	int			phy, reg, data;
+void
+ste_miibus_writereg(struct device *self, int phy, int reg, int data)
 {
 	struct ste_softc	*sc = (struct ste_softc *)self;
 	struct ste_mii_frame	frame;
@@ -365,8 +365,8 @@ void ste_miibus_writereg(self, phy, reg, data)
 	return;
 }
 
-void ste_miibus_statchg(self)
-	struct device		*self;
+void
+ste_miibus_statchg(struct device *self)
 {
 	struct ste_softc	*sc = (struct ste_softc *)self;
 	struct mii_data		*mii;
@@ -395,8 +395,8 @@ void ste_miibus_statchg(self)
 	return;
 }
  
-int ste_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+int
+ste_ifmedia_upd(struct ifnet *ifp)
 {
 	struct ste_softc	*sc;
 	struct mii_data		*mii;
@@ -414,9 +414,8 @@ int ste_ifmedia_upd(ifp)
 	return(0);
 }
 
-void ste_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+void
+ste_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ste_softc	*sc;
 	struct mii_data		*mii;
@@ -431,10 +430,10 @@ void ste_ifmedia_sts(ifp, ifmr)
 	return;
 }
 
-void ste_wait(sc)
-	struct ste_softc		*sc;
+void
+ste_wait(struct ste_softc *sc)
 {
-	register int		i;
+	int		i;
 
 	for (i = 0; i < STE_TIMEOUT; i++) {
 		if (!(CSR_READ_4(sc, STE_DMACTL) & STE_DMACTL_DMA_HALTINPROG))
@@ -451,10 +450,10 @@ void ste_wait(sc)
  * The EEPROM is slow: give it time to come ready after issuing
  * it a command.
  */
-int ste_eeprom_wait(sc)
-	struct ste_softc		*sc;
+int
+ste_eeprom_wait(struct ste_softc *sc)
 {
-	int			i;
+	int		i;
 
 	DELAY(1000);
 
@@ -478,12 +477,8 @@ int ste_eeprom_wait(sc)
  * Read a sequence of words from the EEPROM. Note that ethernet address
  * data is stored in the EEPROM in network byte order.
  */
-int ste_read_eeprom(sc, dest, off, cnt, swap)
-	struct ste_softc		*sc;
-	caddr_t			dest;
-	int			off;
-	int			cnt;
-	int			swap;
+int
+ste_read_eeprom(struct ste_softc *sc, caddr_t dest, int off, int cnt, int swap)
 {
 	int			err = 0, i;
 	u_int16_t		word = 0, *ptr;
@@ -507,8 +502,8 @@ int ste_read_eeprom(sc, dest, off, cnt, swap)
 	return(err ? 1 : 0);
 }
 
-void ste_setmulti(sc)
-	struct ste_softc	*sc;
+void
+ste_setmulti(struct ste_softc *sc)
 {
 	struct ifnet		*ifp;
 	struct arpcom		*ac = &sc->arpcom;
@@ -556,8 +551,8 @@ allmulti:
 	return;
 }
 
-int ste_intr(xsc)
-	void			*xsc;
+int
+ste_intr(void *xsc)
 {
 	struct ste_softc	*sc;
 	struct ifnet		*ifp;
@@ -637,8 +632,8 @@ ste_rxeoc(struct ste_softc *sc)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-void ste_rxeof(sc)
-	struct ste_softc		*sc;
+void
+ste_rxeof(struct ste_softc *sc)
 {
         struct mbuf		*m;
         struct ifnet		*ifp;
@@ -718,8 +713,8 @@ void ste_rxeof(sc)
 	return;
 }
 
-void ste_txeoc(sc)
-	struct ste_softc	*sc;
+void
+ste_txeoc(struct ste_softc *sc)
 {
 	u_int8_t		txstat;
 	struct ifnet		*ifp;
@@ -756,8 +751,8 @@ void ste_txeoc(sc)
 	return;
 }
 
-void ste_txeof(sc)
-	struct ste_softc	*sc;
+void
+ste_txeof(struct ste_softc *sc)
 {
 	struct ste_chain	*cur_tx = NULL;
 	struct ifnet		*ifp;
@@ -787,8 +782,8 @@ void ste_txeof(sc)
 	return;
 }
 
-void ste_stats_update(xsc)
-	void			*xsc;
+void
+ste_stats_update(void *xsc)
 {
 	struct ste_softc	*sc;
 	struct ifnet		*ifp;
@@ -830,15 +825,13 @@ const struct pci_matchid ste_devices[] = {
 	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_1 },
 	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_2 },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX }
-};
 
 /*
  * Probe for a Sundance ST201 chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
  */
-int ste_probe(parent, match, aux)
-	struct device		*parent;
-	void			*match, *aux;
+int
+ste_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, ste_devices,
 	    sizeof(ste_devices)/sizeof(ste_devices[0])));
@@ -848,9 +841,8 @@ int ste_probe(parent, match, aux)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void ste_attach(parent, self, aux)
-	struct device		*parent, *self;
-	void			*aux;
+void
+ste_attach(struct device *parent, struct device *self, void *aux)
 {
 	const char		*intrstr = NULL;
 	pcireg_t		command;
@@ -1003,10 +995,8 @@ fail_1:
 	bus_space_unmap(sc->ste_btag, sc->ste_bhandle, size);
 }
 
-int ste_newbuf(sc, c, m)
-	struct ste_softc	*sc;
-	struct ste_chain_onefrag	*c;
-	struct mbuf		*m;
+int
+ste_newbuf(struct ste_softc *sc, struct ste_chain_onefrag *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
 
@@ -1036,8 +1026,8 @@ int ste_newbuf(sc, c, m)
 	return(0);
 }
 
-int ste_init_rx_list(sc)
-	struct ste_softc	*sc;
+int
+ste_init_rx_list(struct ste_softc *sc)
 {
 	struct ste_chain_data	*cd;
 	struct ste_list_data	*ld;
@@ -1069,8 +1059,8 @@ int ste_init_rx_list(sc)
 	return(0);
 }
 
-void ste_init_tx_list(sc)
-	struct ste_softc	*sc;
+void
+ste_init_tx_list(struct ste_softc *sc)
 {
 	struct ste_chain_data	*cd;
 	struct ste_list_data	*ld;
@@ -1098,8 +1088,8 @@ void ste_init_tx_list(sc)
 	return;
 }
 
-void ste_init(xsc)
-	void			*xsc;
+void
+ste_init(void *xsc)
 {
 	struct ste_softc	*sc = (struct ste_softc *)xsc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
@@ -1210,8 +1200,8 @@ void ste_init(xsc)
 	return;
 }
 
-void ste_stop(sc)
-	struct ste_softc	*sc;
+void
+ste_stop(struct ste_softc *sc)
 {
 	int			i;
 	struct ifnet		*ifp;
@@ -1256,8 +1246,8 @@ void ste_stop(sc)
 	return;
 }
 
-void ste_reset(sc)
-	struct ste_softc	*sc;
+void
+ste_reset(struct ste_softc *sc)
 {
 	int		i;
 
@@ -1280,10 +1270,8 @@ void ste_reset(sc)
 		    sc->sc_dev.dv_xname);
 }
 
-int ste_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+int
+ste_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct ste_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
@@ -1369,10 +1357,8 @@ int ste_ioctl(ifp, command, data)
 	return(error);
 }
 
-int ste_encap(sc, c, m_head)
-	struct ste_softc	*sc;
-	struct ste_chain	*c;
-	struct mbuf		*m_head;
+int
+ste_encap(struct ste_softc *sc, struct ste_chain *c, struct mbuf *m_head)
 {
 	int			frag = 0;
 	struct ste_frag		*f = NULL;
@@ -1430,8 +1416,8 @@ encap_retry:
 	return(0);
 }
 
-void ste_start(ifp)
-	struct ifnet		*ifp;
+void
+ste_start(struct ifnet *ifp)
 {
 	struct ste_softc	*sc;
 	struct mbuf		*m_head = NULL;
@@ -1510,8 +1496,8 @@ void ste_start(ifp)
 	return;
 }
 
-void ste_watchdog(ifp)
-	struct ifnet		*ifp;
+void
+ste_watchdog(struct ifnet *ifp)
 {
 	struct ste_softc	*sc;
 
@@ -1533,19 +1519,10 @@ void ste_watchdog(ifp)
 	return;
 }
 
-void ste_shutdown(v)
-	void			*v;
+void
+ste_shutdown(void *v)
 {
 	struct ste_softc	*sc = (struct ste_softc *)v;
 
 	ste_stop(sc);
 }
-
-struct cfattach ste_ca = {
-	sizeof(struct ste_softc), ste_probe, ste_attach
-};
-
-struct cfdriver ste_cd = {
-	0, "ste", DV_IFNET
-};
-
