@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.64 2007/07/14 02:31:33 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.65 2007/07/17 10:35:10 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1237,13 +1237,14 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 		if (n < cc)
 			cc = n;	/* don't read beyond end of buffer */
 
-		if (uio->uio_resid < cc)
-			cc = uio->uio_resid; /* and no more than we want */
+		 /* and no more than we want */
+		if (uio->uio_resid < cc / sc->sc_rparams.factor)
+			cc = uio->uio_resid * sc->sc_rparams.factor;
 
 		if (sc->sc_rparams.sw_code)
 			sc->sc_rparams.sw_code(sc->hw_hdl, outp, cc);
 		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
-		error = uiomove(outp, cc, uio);
+		error = uiomove(outp, cc / sc->sc_rparams.factor, uio);
 		used -= cc;
 		outp += cc;
 		if (outp >= cb->end)
