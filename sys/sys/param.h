@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.70 2007/05/28 21:02:49 thib Exp $	*/
+/*	$OpenBSD: param.h,v 1.71 2007/07/17 18:53:03 otto Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -176,10 +176,10 @@
 #endif
 
 /* Bit map related macros. */
-#define	setbit(a,i)	((a)[(i)/NBBY] |= 1<<((i)%NBBY))
-#define	clrbit(a,i)	((a)[(i)/NBBY] &= ~(1<<((i)%NBBY)))
-#define	isset(a,i)	((a)[(i)/NBBY] & (1<<((i)%NBBY)))
-#define	isclr(a,i)	(((a)[(i)/NBBY] & (1<<((i)%NBBY))) == 0)
+#define	setbit(a,i)	((a)[(i)>>3] |= 1<<((i)&(NBBY-1)))
+#define	clrbit(a,i)	((a)[(i)>>3] &= ~(1<<((i)&(NBBY-1))))
+#define	isset(a,i)	((a)[(i)>>3] & (1<<((i)&(NBBY-1))))
+#define	isclr(a,i)	(((a)[(i)>>3] & (1<<((i)&(NBBY-1)))) == 0)
 
 /* Macros for counting and rounding. */
 #ifndef howmany
