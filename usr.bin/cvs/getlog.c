@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.74 2007/07/16 12:16:01 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.75 2007/07/17 19:56:08 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -136,7 +136,7 @@ cvs_getlog(int argc, char **argv)
 		if (runflags & L_LOGINS)
 			cvs_client_send_request("Argument -w%s", wlist);
 	} else {
-		if (cvs_command[0] == 'r' &&
+		if (cvs_cmdop == CVS_OP_RLOG &&
 		    chdir(current_cvsroot->cr_dir) == -1)
 			fatal("cvs_server_log: %s", strerror(errno));
 
@@ -153,10 +153,10 @@ cvs_getlog(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
-		if (cvs_command[0] == 'r')
-			cvs_client_send_request("rlog");
-		else
-			cvs_client_send_request("log");
+
+		cvs_client_send_request((cvs_cmdop == CVS_OP_RLOG) ?
+		    "rlog" : "log");
+
 		cvs_client_get_responses();
 	}
 
