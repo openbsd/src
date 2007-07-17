@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.39 2007/07/17 17:15:34 jasper Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.40 2007/07/17 23:25:15 krw Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -825,6 +825,7 @@ const struct pci_matchid ste_devices[] = {
 	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_1 },
 	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_2 },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX }
+};	
 
 /*
  * Probe for a Sundance ST201 chip. Check the PCI vendor and device
