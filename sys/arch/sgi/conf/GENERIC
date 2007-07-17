@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.20 2007/05/20 14:10:46 miod Exp $
+#	$OpenBSD: GENERIC,v 1.21 2007/07/17 21:28:48 jakemsr Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -103,6 +103,8 @@ ukphy*		at mii?		# "unknown" PHYs
 
 #### Audio
 audio*		at mavb?
+emu*		at pci?
+audio*		at emu?
 
 #### WS console
 #wsdisplay*	at vga?
