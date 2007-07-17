@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.75 2007/07/17 19:56:08 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.76 2007/07/17 19:59:25 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -138,7 +138,7 @@ cvs_getlog(int argc, char **argv)
 	} else {
 		if (cvs_cmdop == CVS_OP_RLOG &&
 		    chdir(current_cvsroot->cr_dir) == -1)
-			fatal("cvs_server_log: %s", strerror(errno));
+			fatal("cvs_getlog: %s", strerror(errno));
 
 		cr.fileproc = cvs_log_local;
 	}
