@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.65 2007/07/17 10:35:10 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.66 2007/07/17 22:59:19 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2643,10 +2643,14 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			audio_calc_blksize(sc, AUMODE_PLAY);
 			sc->sc_blkset = 0;
 		} else {
-			int bs = ai->blocksize;
-			if (hw->round_blocksize)
-				bs = hw->round_blocksize(sc->hw_hdl, bs);
-			sc->sc_pr.blksize = sc->sc_rr.blksize = bs;
+			int rbs = ai->blocksize * sc->sc_rparams.factor;
+			int pbs = ai->blocksize * sc->sc_pparams.factor;
+			if (hw->round_blocksize) {
+				rbs = hw->round_blocksize(sc->hw_hdl, rbs);
+				pbs = hw->round_blocksize(sc->hw_hdl, pbs);
+			}
+			sc->sc_rr.blksize = rbs;
+			sc->sc_pr.blksize = pbs;
 			sc->sc_blkset = 1;
 		}
 	}
@@ -2748,8 +2752,8 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 	} else
 		ai->monitor_gain = 0;
 
-	p->seek = sc->sc_pr.used;
-	r->seek = sc->sc_rr.used;
+	p->seek = sc->sc_pr.used / sc->sc_pparams.factor;
+	r->seek = sc->sc_rr.used / sc->sc_rparams.factor;
 
 	p->samples = sc->sc_pr.stamp - sc->sc_pr.drops;
 	r->samples = sc->sc_rr.stamp - sc->sc_rr.drops;
@@ -2771,10 +2775,10 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 	p->active = sc->sc_pbus;
 	r->active = sc->sc_rbus;
 
-	p->buffer_size = sc->sc_pr.bufsize;
-	r->buffer_size = sc->sc_rr.bufsize;
+	p->buffer_size = sc->sc_pr.bufsize / sc->sc_pparams.factor;
+	r->buffer_size = sc->sc_rr.bufsize / sc->sc_rparams.factor;
 
-	if ((ai->blocksize = sc->sc_pr.blksize) != 0) {
+	if ((ai->blocksize = sc->sc_pr.blksize / sc->sc_pparams.factor) != 0) {
 		ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
 		ai->lowat = sc->sc_pr.usedlow / sc->sc_pr.blksize;
 	} else {
