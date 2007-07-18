@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.66 2007/07/17 22:59:19 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.67 2007/07/18 18:34:32 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2611,27 +2611,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			return(error);
 	}
 
-	if (p->pause != (u_char)~0) {
-		sc->sc_pr.pause = p->pause;
-		if (!p->pause && !sc->sc_pbus && (sc->sc_mode & AUMODE_PLAY)) {
-			s = splaudio();
-			error = audiostartp(sc);
-			splx(s);
-			if (error)
-				return error;
-		}
-	}
-	if (r->pause != (u_char)~0) {
-		sc->sc_rr.pause = r->pause;
-		if (!r->pause && !sc->sc_rbus && (sc->sc_mode & AUMODE_RECORD)) {
-			s = splaudio();
-			error = audiostartr(sc);
-			splx(s);
-			if (error)
-				return error;
-		}
-	}
-
 	if (ai->blocksize != ~0) {
 		/* Block size specified explicitly. */
 		if (!cleared)
@@ -2706,6 +2685,27 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	if (ai->hiwat != ~0 || ai->lowat != ~0) {
 		if (sc->sc_pr.usedlow > sc->sc_pr.usedhigh - sc->sc_pr.blksize)
 			sc->sc_pr.usedlow = sc->sc_pr.usedhigh - sc->sc_pr.blksize;
+	}
+
+	if (p->pause != (u_char)~0) {
+		sc->sc_pr.pause = p->pause;
+		if (!p->pause && !sc->sc_pbus && (sc->sc_mode & AUMODE_PLAY)) {
+			s = splaudio();
+			error = audiostartp(sc);
+			splx(s);
+			if (error)
+				return error;
+		}
+	}
+	if (r->pause != (u_char)~0) {
+		sc->sc_rr.pause = r->pause;
+		if (!r->pause && !sc->sc_rbus && (sc->sc_mode & AUMODE_RECORD)) {
+			s = splaudio();
+			error = audiostartr(sc);
+			splx(s);
+			if (error)
+				return error;
+		}
 	}
 
 	return (0);
