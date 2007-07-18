@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.17 2007/07/18 18:10:31 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.18 2007/07/18 18:16:33 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -65,6 +65,7 @@
 #include <crypto/arc4.h>
 #include <crypto/md5.h>
 #include <crypto/sha1.h>
+#include <crypto/rijndael.h>
 #define	arc4_ctxlen()			sizeof (struct rc4_ctx)
 #define	arc4_setkey(_c,_k,_l)		rc4_keysetup(_c,_k,_l)
 #define	arc4_encrypt(_c,_d,_s,_l)	rc4_crypt(_c,_s,_d,_l)
@@ -76,6 +77,10 @@ struct vector {
 
 void	ieee80211_crc_init(void);
 u_int32_t ieee80211_crc_update(u_int32_t, const u_int8_t *, int);
+void	ieee80211_aes_key_wrap(const u_int8_t *, size_t, const u_int8_t *,
+	    size_t, u_int8_t *);
+int	ieee80211_aes_key_unwrap(const u_int8_t *, size_t, const u_int8_t *,
+	    u_int8_t *, size_t);
 void	ieee80211_hmac_md5_v(const struct vector *, int, const u_int8_t *,
 	    size_t, u_int8_t digest[]);
 void	ieee80211_hmac_md5(const u_int8_t *, size_t, const u_int8_t *, size_t,
@@ -360,6 +365,75 @@ ieee80211_crc_update(u_int32_t crc, const u_int8_t *buf, int len)
 	for (endbuf = buf + len; buf < endbuf; buf++)
 		crc = ieee80211_crc_table[(crc ^ *buf) & 0xff] ^ (crc >> 8);
 	return crc;
+}
+
+/*
+ * AES Key Wrap Algorithm (see RFC 3394).
+ */
+static const u_int8_t aes_key_wrap_iv[8] =
+	{ 0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6, 0xa6 };
+
+void
+ieee80211_aes_key_wrap(const u_int8_t *kek, size_t kek_len, const u_int8_t *pt,
+    size_t len, u_int8_t *ct)
+{
+	rijndael_ctx ctx;
+	u_int8_t *a, *r, ar[16];
+	u_int64_t t, b[2];
+	size_t i;
+	int j;
+
+	a = ct;
+	memcpy(a, aes_key_wrap_iv, 8);	/* default IV */
+	memcpy(ct + 8, pt, len * 8);
+
+	rijndael_set_key_enc_only(&ctx, (u_int8_t *)kek, kek_len * 8);
+
+	for (j = 0, t = 1; j < 6; j++) {
+		r = ct + 8;
+		for (i = 0; i < len; i++, t++) {
+			memcpy(ar, a, 8);
+			memcpy(ar + 8, r, 8);
+			rijndael_encrypt(&ctx, ar, (u_int8_t *)b);
+			b[0] ^= htobe64(t);
+			memcpy(a, &b[0], 8);
+			memcpy(r, &b[1], 8);
+
+			r += 8;
+		}
+	}
+}
+
+int
+ieee80211_aes_key_unwrap(const u_int8_t *kek, size_t kek_len,
+    const u_int8_t *ct, u_int8_t *pt, size_t len)
+{
+	rijndael_ctx ctx;
+	u_int8_t a[8], *r, b[16];
+	u_int64_t t, ar[2];
+	size_t i;
+	int j;
+
+	memcpy(a, ct, 8);
+	/* allow ciphertext and plaintext to overlap (ct == pt) */
+	ovbcopy(ct + 8, pt, len * 8);
+
+	rijndael_set_key(&ctx, (u_int8_t *)kek, kek_len * 8);
+
+	for (j = 0, t = 6 * len; j < 6; j++) {
+		r = pt + (len - 1) * 8;
+		for (i = 0; i < len; i++, t--) {
+			memcpy(&ar[0], a, 8);
+			ar[0] ^= htobe64(t);
+			memcpy(&ar[1], r, 8);
+			rijndael_decrypt(&ctx, (u_int8_t *)ar, b);
+			memcpy(a, b, 8);
+			memcpy(r, b + 8, 8);
+
+			r -= 8;
+		}
+	}
+	return memcmp(a, aes_key_wrap_iv, 8) != 0;
 }
 
 void
