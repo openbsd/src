@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.47 2007/06/03 22:14:07 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.48 2007/07/18 13:34:23 mcbride Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -272,7 +272,7 @@ get_avg_idle_up(void)
 	long change, cp_time[CPUSTATES];
 	int cp_time_mib[] = {CTL_KERN, KERN_CPTIME};
 	size_t cp_time_sz = sizeof(cp_time);
-	int i, idle, sum;
+	int i, idle, sum = 0;
 
 	if (sysctl(cp_time_mib, 2, &cp_time, &cp_time_sz, NULL, 0) < 0)
 		syslog(LOG_INFO, "cannot read kern.cp_time");
