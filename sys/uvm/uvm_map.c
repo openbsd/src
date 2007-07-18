@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.96 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.97 2007/07/18 17:00:20 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1921,7 +1921,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 			if (newentry->object.uvm_obj->pgops->pgo_reference)
 				newentry->object.uvm_obj->pgops->
 				    pgo_reference(newentry->object.uvm_obj);
-				newentry->offset = entry->offset + fudge;
+			newentry->offset = entry->offset + fudge;
 		} else {
 			newentry->offset = 0;
 		}
