@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.19 2007/07/18 18:10:31 damien Exp $ */
+/*	$OpenBSD: acx100.c,v 1.20 2007/07/18 19:24:21 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -692,7 +692,7 @@ acx100_set_wepkey(struct acx_softc *sc, struct ieee80211_key *k, int k_idx)
 
 	if (k->k_len > ACX100_WEPKEY_LEN) {
 		printf("%s: %dth WEP key size beyond %d\n",
-		    ifp->if_xname, wk_idx, ACX100_WEPKEY_LEN);
+		    ifp->if_xname, k_idx, ACX100_WEPKEY_LEN);
 		return EINVAL;
 	}
 
