@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.550 2007/07/10 15:58:37 kurt Exp $ */
+/*	$OpenBSD: pf.c,v 1.551 2007/07/18 15:39:44 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2860,7 +2860,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int16_t		 sport, dport;
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
-	if (pf_check_congestion(ifq)) {
+	if (direction == PF_IN && pf_check_congestion(ifq)) {
 		REASON_SET(&reason, PFRES_CONGEST);
 		return (PF_DROP);
 	}
