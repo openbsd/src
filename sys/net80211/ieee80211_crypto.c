@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.18 2007/07/18 18:16:33 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.19 2007/07/18 19:47:44 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -383,9 +383,10 @@ ieee80211_aes_key_wrap(const u_int8_t *kek, size_t kek_len, const u_int8_t *pt,
 	size_t i;
 	int j;
 
+	/* allow ciphertext and plaintext to overlap (ct == pt) */
+	ovbcopy(pt, ct + 8, len * 8);
 	a = ct;
 	memcpy(a, aes_key_wrap_iv, 8);	/* default IV */
-	memcpy(ct + 8, pt, len * 8);
 
 	rijndael_set_key_enc_only(&ctx, (u_int8_t *)kek, kek_len * 8);
 
@@ -476,7 +477,6 @@ ieee80211_hmac_md5_v(const struct vector *vec, int vcnt, const u_int8_t *key,
 	MD5Final(digest, &ctx);
 }
 
-/* wrapper around ieee80211_hmac_md5_v */
 void
 ieee80211_hmac_md5(const u_int8_t *text, size_t text_len, const u_int8_t *key,
     size_t key_len, u_int8_t digest[MD5_DIGEST_LENGTH])
@@ -527,7 +527,6 @@ ieee80211_hmac_sha1_v(const struct vector *vec, int vcnt, const u_int8_t *key,
 	SHA1Final(digest, &ctx);
 }
 
-/* wrapper around ieee80211_hmac_sha1_v */
 void
 ieee80211_hmac_sha1(const u_int8_t *text, size_t text_len, const u_int8_t *key,
     size_t key_len, u_int8_t digest[SHA1_DIGEST_LENGTH])
