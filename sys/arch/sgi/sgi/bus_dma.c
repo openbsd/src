@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.1 2007/06/21 20:17:10 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.2 2007/07/18 20:03:51 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -371,7 +371,7 @@ _dmamap_sync(t, map, addr, size, op)
 		ssize = map->dm_segs[curseg].ds_len;
 		vaddr = map->dm_segs[curseg].ds_vaddr;
 
-		if (addr > 0) {
+		if (addr != 0) {
 			if (addr >= ssize) {
 				addr -= ssize;
 				ssize = 0;
@@ -381,11 +381,15 @@ _dmamap_sync(t, map, addr, size, op)
 				addr = 0;
 			}
 		}
-		if (ssize > size) {
+		if (ssize > size)
 			ssize = size;
+
+		if (IS_XKPHYS(vaddr) && XKPHYS_TO_CCA(vaddr) == CCA_NC) {
+			size -= ssize;
+			ssize = 0;
 		}
 
-		if (ssize) {
+		if (ssize != 0) {
 #ifdef DEBUG_BUSDMASYNC_FRAG
 	printf(" syncing %p:%p ", vaddr, ssize);
 	if (op & BUS_DMASYNC_PREWRITE) printf("PRW ");
@@ -483,8 +487,19 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	vaddr_t va;
+	paddr_t pa;
 	bus_addr_t addr;
 	int curseg;
+
+	if (nsegs == 1) {
+		if (flags & BUS_DMA_COHERENT)
+			*kvap = (caddr_t)PHYS_TO_XKPHYS(segs[0].ds_addr,
+			    CCA_NC);
+		else
+			*kvap = (caddr_t)PHYS_TO_XKPHYS(segs[0].ds_addr,
+			    CCA_NONCOHERENT);
+		return (0);
+	}
 
 	size = round_page(size);
 	va = uvm_km_valloc(kernel_map, size);
@@ -499,15 +514,18 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, (*t->_device_to_pa)(addr),
+			pa = (*t->_device_to_pa)(addr);
+			pmap_enter(pmap_kernel(), va, pa,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 			segs[curseg].ds_vaddr = va;
 
 			if (flags & BUS_DMA_COHERENT &&
 			    sys_config.system_type == SGI_O2) 
-				pmap_page_cache(PHYS_TO_VM_PAGE((*t->_device_to_pa)(addr)), PV_UNCACHED);
+				pmap_page_cache(PHYS_TO_VM_PAGE(pa),
+				    PV_UNCACHED);
 		}
+		pmap_update(pmap_kernel());
 	}
 
 	return (0);
@@ -523,18 +541,17 @@ _dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
-
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
-		panic("_dmamem_unmap");
-#endif
+	if (IS_XKPHYS((vaddr_t)kva))
+		return;
 
 	size = round_page(size);
+	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t

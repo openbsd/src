@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.19 2007/06/18 20:25:53 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.20 2007/07/18 20:03:50 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,6 +80,7 @@
 #define	XKPHYS_TO_PHYS(x)	((paddr_t)(x) & 0x0000000fffffffffUL)
 #define	PHYS_TO_XKPHYS(x,c)	((paddr_t)(x) | XKPHYS_BASE | (c) << 59)
 #define	IS_XKPHYS(va)		(((va) >> 62) == 2)
+#define	XKPHYS_TO_CCA(x)	(((x) >> 59) & 0x07)
 #endif
 
 #ifdef _KERNEL
@@ -519,14 +520,14 @@ extern u_int32_t cpu_counter_last;      /* Last compare value loaded    */
  *  Low level access routines to CPU registers
  */
 
-void setsoftintr0(void);
-void clearsoftintr0(void);
-void setsoftintr1(void);
-void clearsoftintr1(void);
+void	setsoftintr0(void);
+void	clearsoftintr0(void);
+void	setsoftintr1(void);
+void	clearsoftintr1(void);
 u_int32_t enableintr(void);
 u_int32_t disableintr(void);
 u_int32_t updateimask(intrmask_t);
-void setsr(u_int32_t);
+void	setsr(u_int32_t);
 u_int32_t getsr(void);
 
 #endif /* _KERNEL */
