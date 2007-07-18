@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.97 2007/07/03 13:22:42 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.98 2007/07/18 08:17:27 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -107,6 +107,9 @@ cvs_export(int argc, char **argv)
 			flags &= ~CR_RECURSE_DIRS;
 			break;
 		case 'R':
+			break;
+		case 'r':
+			cvs_specified_tag = optarg;
 			break;
 		default:
 			fatal("%s", cvs_cmd_export.cmd_synopsis);
