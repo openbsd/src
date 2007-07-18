@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.67 2007/07/18 18:34:32 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.68 2007/07/18 19:27:08 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	void *hdlp = sa->hdl;
 	int error;
 	mixer_devinfo_t mi;
-	int iclass, oclass;
+	int iclass, oclass, mclass;
 
 	printf("\n");
 
@@ -292,7 +292,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	audio_init_ringbuffer(&sc->sc_pr);
 	audio_calcwater(sc);
 
-	iclass = oclass = -1;
+	iclass = oclass = mclass = -1;
 	sc->sc_inports.index = -1;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
@@ -310,6 +310,9 @@ audioattach(struct device *parent, struct device *self, void *aux)
 			iclass = mi.index;
 		if (mi.type == AUDIO_MIXER_CLASS &&
 		    strcmp(mi.label.name, AudioCmonitor) == 0)
+			mclass = mi.index;
+		if (mi.type == AUDIO_MIXER_CLASS &&
+		    strcmp(mi.label.name, AudioCoutputs) == 0)
 			oclass = mi.index;
 	}
 	for(mi.index = 0; ; mi.index++) {
@@ -321,7 +324,10 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		    AudioNsource, AudioNrecord, itable);
 		au_check_ports(sc, &sc->sc_outports, &mi, oclass,
 		    AudioNoutput, AudioNmaster, otable);
-		if (mi.mixer_class == oclass &&
+		if (mi.mixer_class == mclass &&
+		    (strcmp(mi.label.name, AudioNmonitor) == 0))
+			sc->sc_monitor_port = mi.index;
+		if ((sc->sc_monitor_port == -1) && (mi.mixer_class == oclass) &&
 		    (strcmp(mi.label.name, AudioNmonitor) == 0))
 			sc->sc_monitor_port = mi.index;
 	}
