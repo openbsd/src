@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2007/07/16 20:20:09 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.47 2007/07/18 20:05:25 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -238,8 +238,6 @@ mips_init(int argc, void *argv)
 	int i;
 	caddr_t sd;
 	extern char start[], edata[], end[];
-	extern char tlb_miss[], e_tlb_miss[];
-	extern char xtlb_miss[], e_xtlb_miss[];
 	extern char tlb_miss_tramp[], e_tlb_miss_tramp[];
 	extern char xtlb_miss_tramp[], e_xtlb_miss_tramp[];
 	extern char exception[], e_exception[];
@@ -591,22 +589,12 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 
 
 	/*
-	 * Copy down exception vector code. If code is to large
-	 * copy down trampolines instead of doing a panic.
+	 * Copy down exception vector code.
 	 */
-	if (e_tlb_miss - tlb_miss > 0x80) {
-		printf("NOTE: TLB code too large, using trampolines\n");
-		bcopy(tlb_miss_tramp, (char *)TLB_MISS_EXC_VEC,
-		    e_tlb_miss_tramp - tlb_miss_tramp);
-		bcopy(xtlb_miss_tramp, (char *)XTLB_MISS_EXC_VEC,
-		    e_xtlb_miss_tramp - xtlb_miss_tramp);
-	} else {
-		bcopy(tlb_miss, (char *)TLB_MISS_EXC_VEC,
-		    e_tlb_miss - tlb_miss);
-		bcopy(xtlb_miss, (char *)XTLB_MISS_EXC_VEC,
-		    e_xtlb_miss - xtlb_miss);
-	}
-
+	bcopy(tlb_miss_tramp, (char *)TLB_MISS_EXC_VEC,
+	    e_tlb_miss_tramp - tlb_miss_tramp);
+	bcopy(xtlb_miss_tramp, (char *)XTLB_MISS_EXC_VEC,
+	    e_xtlb_miss_tramp - xtlb_miss_tramp);
 	bcopy(exception, (char *)CACHE_ERR_EXC_VEC, e_exception - exception);
 	bcopy(exception, (char *)GEN_EXC_VEC, e_exception - exception);
 
