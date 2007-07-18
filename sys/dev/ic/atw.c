@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.53 2007/06/07 20:20:15 damien Exp $	*/
+/*	$OpenBSD: atw.c,v 1.54 2007/07/18 18:22:26 damien Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2228,17 +2228,17 @@ atw_write_wep(struct atw_softc *sc)
 
 #if 0
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		if (ic->ic_nw_keys[i].wk_len > 5) {
+		if (ic->ic_nw_keys[i].k_len > 5) {
 			buf[i][1] = ATW_WEP_ENABLED | ATW_WEP_104BIT;
-		} else if (ic->ic_nw_keys[i].wk_len != 0) {
+		} else if (ic->ic_nw_keys[i].k_len != 0) {
 			buf[i][1] = ATW_WEP_ENABLED;
 		} else {
 			buf[i][1] = 0;
 			continue;
 		}
-		buf[i][0] = ic->ic_nw_keys[i].wk_key[0];
-		memcpy(&buf[i][2], &ic->ic_nw_keys[i].wk_key[1],
-		    ic->ic_nw_keys[i].wk_len - 1);
+		buf[i][0] = ic->ic_nw_keys[i].k_key[0];
+		memcpy(&buf[i][2], &ic->ic_nw_keys[i].k_key[1],
+		    ic->ic_nw_keys[i].k_len - 1);
 	}
 
 	reg = ATW_READ(sc, ATW_MACTEST);
