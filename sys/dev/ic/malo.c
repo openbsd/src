@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.71 2007/05/29 18:03:25 claudio Exp $ */
+/*	$OpenBSD: malo.c,v 1.72 2007/07/18 18:10:31 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -295,8 +295,8 @@ static char *
 static char *
 	malo_cmd_string_result(uint16_t result);
 int	malo_cmd_get_spec(struct malo_softc *sc);
-int	malo_cmd_set_wepkey(struct malo_softc *sc, struct ieee80211_wepkey *wk,
-	    uint16_t wk_i);
+int	malo_cmd_set_wepkey(struct malo_softc *sc, struct ieee80211_key *k,
+	    uint16_t k_index);
 int	malo_cmd_set_prescan(struct malo_softc *sc);
 int	malo_cmd_set_postscan(struct malo_softc *sc, uint8_t *macaddr,
 	    uint8_t ibsson);
@@ -1946,12 +1946,12 @@ malo_set_wepkey(struct malo_softc *sc)
 	int i;
 
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		struct ieee80211_wepkey *wk = &ic->ic_nw_keys[i];
+		struct ieee80211_key *k = &ic->ic_nw_keys[i];
 
-		if (wk->wk_len == 0)
+		if (k->k_len == 0)
 			continue;
 
-		if (malo_cmd_set_wepkey(sc, wk, i))
+		if (malo_cmd_set_wepkey(sc, k, i))
 			return (ENXIO);
 	}
 
@@ -2123,8 +2123,8 @@ malo_cmd_get_spec(struct malo_softc *sc)
 }
 
 int
-malo_cmd_set_wepkey(struct malo_softc *sc, struct ieee80211_wepkey *wk,
-    uint16_t wk_index)
+malo_cmd_set_wepkey(struct malo_softc *sc, struct ieee80211_key *k,
+    uint16_t k_index)
 {
 	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
 	struct malo_cmd_wepkey *body;
@@ -2138,9 +2138,9 @@ malo_cmd_set_wepkey(struct malo_softc *sc, struct ieee80211_wepkey *wk,
 	bzero(body, sizeof(*body));
 	body->action = htole16(1);
 	body->flags = 0;
-	body->index = wk_index;
-	body->len = wk->wk_len;
-	memcpy(body->value, wk->wk_key, wk->wk_len);
+	body->index = k_index;
+	body->len = k->k_len;
+	memcpy(body->value, k->k_key, k->k_len);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_cmd_dmam, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);

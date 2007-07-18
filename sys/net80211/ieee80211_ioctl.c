@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.18 2007/06/16 13:17:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.19 2007/07/18 18:10:31 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211chanreq *chanreq;
 	struct ieee80211_channel *chan;
 	struct ieee80211_txpower *txpower;
-	struct ieee80211_wepkey keys[IEEE80211_WEP_NKID];
+	struct ieee80211_key keys[IEEE80211_WEP_NKID];
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
@@ -203,27 +203,27 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* check and copy keys */
 		memset(keys, 0, sizeof(keys));
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			keys[i].wk_len = nwkey->i_key[i].i_keylen;
+			keys[i].k_len = nwkey->i_key[i].i_keylen;
 			/*
 			 * Limit the maximal allowed key size to 
 			 * IEEE80211_KEYBUF_SIZE bytes.
 			 */
-			if (keys[i].wk_len > sizeof(keys[i].wk_key)) {
+			if (keys[i].k_len > sizeof(keys[i].k_key)) {
 				error = EINVAL;
 				break;
 			}
-			if (keys[i].wk_len <= 0)
+			if (keys[i].k_len <= 0)
 				continue;
 			if ((error = copyin(nwkey->i_key[i].i_keydat,
-			    keys[i].wk_key, keys[i].wk_len)) != 0)
+			    keys[i].k_key, keys[i].k_len)) != 0)
 				break;
 		}
 		if (error)
 			break;
 		i = nwkey->i_defkid - 1;
 		if (i < 0 || i >= IEEE80211_WEP_NKID ||
-		    keys[i].wk_len == 0 ||
-		    (keys[i].wk_len == -1 && ic->ic_nw_keys[i].wk_len == 0)) {
+		    keys[i].k_len == 0 ||
+		    (keys[i].k_len == -1 && ic->ic_nw_keys[i].k_len == 0)) {
 			if (nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
 				error = EINVAL;
 				break;
@@ -236,11 +236,17 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		else
 			ic->ic_flags |= IEEE80211_F_WEPON;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			if (keys[i].wk_len < 0)
+			struct ieee80211_key *k = &ic->ic_nw_keys[i];
+			if (keys[i].k_len < 0)
 				continue;
-			ic->ic_nw_keys[i].wk_len = keys[i].wk_len;
-			memcpy(ic->ic_nw_keys[i].wk_key, keys[i].wk_key,
-			    sizeof(keys[i].wk_key));
+			if (keys[i].k_len == 0)
+				k->k_cipher = IEEE80211_CIPHER_NONE;
+			else if (keys[i].k_len <= 5)
+				k->k_cipher = IEEE80211_CIPHER_WEP40;
+			else
+				k->k_cipher = IEEE80211_CIPHER_WEP104;
+			k->k_len = keys[i].k_len;
+			memcpy(k->k_key, keys[i].k_key, sizeof(keys[i].k_key));
 		}
 		error = ENETRESET;
 		break;
@@ -257,10 +263,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			/* do not show any keys to non-root user */
 			if ((error = suser(curproc, 0)) != 0)
 				break;
-			nwkey->i_key[i].i_keylen = ic->ic_nw_keys[i].wk_len;
-			if ((error = copyout(ic->ic_nw_keys[i].wk_key,
+			nwkey->i_key[i].i_keylen = ic->ic_nw_keys[i].k_len;
+			if ((error = copyout(ic->ic_nw_keys[i].k_key,
 			    nwkey->i_key[i].i_keydat,
-			    ic->ic_nw_keys[i].wk_len)) != 0)
+			    ic->ic_nw_keys[i].k_len)) != 0)
 				break;
 		}
 		break;

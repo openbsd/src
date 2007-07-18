@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.66 2007/01/03 18:19:06 claudio Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.67 2007/07/18 18:10:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1682,7 +1682,7 @@ ipw_config(struct ipw_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ipw_security security;
-	struct ieee80211_wepkey *k;
+	struct ieee80211_key *k;
 	struct ipw_wep_key wepkey;
 	struct ipw_scan_options options;
 	struct ipw_configuration config;
@@ -1821,13 +1821,13 @@ ipw_config(struct ipw_softc *sc)
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		k = ic->ic_nw_keys;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++, k++) {
-			if (k->wk_len == 0)
+			if (k->k_len == 0)
 				continue;
 
 			wepkey.idx = i;
-			wepkey.len = k->wk_len;
+			wepkey.len = k->k_len;
 			bzero(wepkey.key, sizeof wepkey.key);
-			bcopy(k->wk_key, wepkey.key, k->wk_len);
+			bcopy(k->k_key, wepkey.key, k->k_len);
 			DPRINTF(("Setting wep key index %u len %u\n",
 			    wepkey.idx, wepkey.len));
 			error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY, &wepkey,

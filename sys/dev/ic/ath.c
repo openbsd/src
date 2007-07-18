@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.65 2007/06/16 13:17:05 damien Exp $  */
+/*      $OpenBSD: ath.c,v 1.66 2007/07/18 18:10:31 damien Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1146,15 +1146,13 @@ ath_initkeytable(struct ath_softc *sc)
 
 	/* XXX maybe should reset all keys when !WEPON */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		struct ieee80211_wepkey *k = &ic->ic_nw_keys[i];
-		if (k->wk_len == 0)
+		struct ieee80211_key *k = &ic->ic_nw_keys[i];
+		if (k->k_len == 0)
 			ath_hal_reset_key(ah, i);
 		else {
 			HAL_KEYVAL hk;
 
 			bzero(&hk, sizeof(hk));
-			bcopy(k->wk_key, hk.wk_key, k->wk_len);
-
 			/*
 			 * Pad the key to a supported key length. It
 			 * is always a good idea to use full-length
@@ -1162,14 +1160,13 @@ ath_initkeytable(struct ath_softc *sc)
 			 * to be the default behaviour used by many
 			 * implementations.
 			 */
-			if (k->wk_len <= AR5K_KEYVAL_LENGTH_40)
+			if (k->k_cipher == IEEE80211_CIPHER_WEP40)
 				hk.wk_len = AR5K_KEYVAL_LENGTH_40;
-			else if (k->wk_len <= AR5K_KEYVAL_LENGTH_104)
+			else if (k->k_cipher == IEEE80211_CIPHER_WEP104)
 				hk.wk_len = AR5K_KEYVAL_LENGTH_104;
-			else if (k->wk_len <= AR5K_KEYVAL_LENGTH_128)
-				hk.wk_len = AR5K_KEYVAL_LENGTH_128;
 			else
 				return (EINVAL);
+			bcopy(k->k_key, hk.wk_key, hk.wk_len);
 
 			if (ath_hal_set_key(ah, i, &hk) != AH_TRUE)
 				return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.99 2007/06/14 10:11:15 mbalmer Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.100 2007/07/18 18:10:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1979,9 +1979,9 @@ ural_init(struct ifnet *ifp)
 	 * Copy WEP keys into adapter's memory (SEC_CSR0 to SEC_CSR31).
 	 */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		struct ieee80211_wepkey *wk = &ic->ic_nw_keys[i];
+		struct ieee80211_key *k = &ic->ic_nw_keys[i];
 		ural_write_multi(sc, RAL_SEC_CSR0 + i * IEEE80211_KEYBUF_SIZE,
-		    wk->wk_key, IEEE80211_KEYBUF_SIZE);
+		    k->k_key, IEEE80211_KEYBUF_SIZE);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.18 2007/02/28 09:26:26 claudio Exp $ */
+/*	$OpenBSD: acx100.c,v 1.19 2007/07/18 18:10:31 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -112,8 +112,7 @@ int	acx100_set_txpower(struct acx_softc *);
 void	acx100_set_fw_txdesc_rate(struct acx_softc *,
 	    struct acx_txbuf *, int);
 void	acx100_set_bss_join_param(struct acx_softc *, void *, int);
-int	acx100_set_wepkey(struct acx_softc *, struct ieee80211_wepkey *,
-	    int);
+int	acx100_set_wepkey(struct acx_softc *, struct ieee80211_key *, int);
 void	acx100_proc_wep_rxbuf(struct acx_softc *, struct mbuf *, int *);
 
 /*
@@ -686,24 +685,24 @@ acx100_set_bss_join_param(struct acx_softc *sc, void *param, int dtim_intvl)
 }
 
 int
-acx100_set_wepkey(struct acx_softc *sc, struct ieee80211_wepkey *wk, int wk_idx)
+acx100_set_wepkey(struct acx_softc *sc, struct ieee80211_key *k, int k_idx)
 {
 	struct acx100_conf_wepkey conf_wk;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	if (wk->wk_len > ACX100_WEPKEY_LEN) {
+	if (k->k_len > ACX100_WEPKEY_LEN) {
 		printf("%s: %dth WEP key size beyond %d\n",
 		    ifp->if_xname, wk_idx, ACX100_WEPKEY_LEN);
 		return EINVAL;
 	}
 
 	conf_wk.action = ACX100_WEPKEY_ACT_ADD;
-	conf_wk.key_len = wk->wk_len;
-	conf_wk.key_idx = wk_idx;
-	bcopy(wk->wk_key, conf_wk.key, wk->wk_len);
+	conf_wk.key_len = k->k_len;
+	conf_wk.key_idx = k_idx;
+	bcopy(k->k_key, conf_wk.key, k->k_len);
 	if (acx_set_conf(sc, ACX_CONF_WEPKEY, &conf_wk, sizeof(conf_wk)) != 0) {
 		printf("%s: %s set %dth WEP key failed\n",
-		    ifp->if_xname, __func__, wk_idx);
+		    ifp->if_xname, __func__, k_idx);
 		return ENXIO;
 	}
 	return 0;

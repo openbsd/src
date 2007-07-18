@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.17 2007/04/11 20:31:38 claudio Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.18 2007/07/18 18:10:31 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -423,7 +423,7 @@ struct acx_softc {
 
 	int			(*chip_set_wepkey)
 				(struct acx_softc *,
-				 struct ieee80211_wepkey *, int);
+				 struct ieee80211_key *, int);
 
 	int			(*chip_read_config)
 				(struct acx_softc *, struct acx_config *);

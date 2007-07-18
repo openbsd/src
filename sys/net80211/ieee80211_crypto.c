@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.16 2007/07/14 20:00:33 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.17 2007/07/18 18:10:31 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -218,9 +218,9 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	 */
 	bzero(&keybuf, sizeof(keybuf));
 	memcpy(keybuf, ivp, IEEE80211_WEP_IVLEN);
-	memcpy(keybuf + IEEE80211_WEP_IVLEN, ic->ic_nw_keys[kid].wk_key,
-	    ic->ic_nw_keys[kid].wk_len);
-	len = klen_round(IEEE80211_WEP_IVLEN + ic->ic_nw_keys[kid].wk_len);
+	memcpy(keybuf + IEEE80211_WEP_IVLEN, ic->ic_nw_keys[kid].k_key,
+	    ic->ic_nw_keys[kid].k_len);
+	len = klen_round(IEEE80211_WEP_IVLEN + ic->ic_nw_keys[kid].k_len);
 	arc4_setkey(ctx, keybuf, len);
 
 	/* encrypt with calculating CRC */

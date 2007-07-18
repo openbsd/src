@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.85 2007/06/14 10:11:15 mbalmer Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.86 2007/07/18 18:10:31 damien Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -689,11 +689,11 @@ atu_initial_config(struct atu_softc *sc)
 	cmd.PrivacyInvoked = (ic->ic_flags & IEEE80211_F_WEPON) ? 1 : 0;
 
 	cmd.ExcludeUnencrypted = 0;
-	switch (ic->ic_nw_keys[ic->ic_wep_txkey].wk_len) {
-	case 5:
+	switch (ic->ic_nw_keys[ic->ic_wep_txkey].k_cipher) {
+	case IEEE80211_CIPHER_WEP40:
 		cmd.EncryptionType = ATU_WEP_40BITS;
 		break;
-	case 13:
+	case IEEE80211_CIPHER_WEP104:
 		cmd.EncryptionType = ATU_WEP_104BITS;
 		break;
 	default:
@@ -703,8 +703,8 @@ atu_initial_config(struct atu_softc *sc)
 
 	cmd.WEP_DefaultKeyID = ic->ic_wep_txkey;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key,
-		    ic->ic_nw_keys[i].wk_len);
+		memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].k_key,
+		    ic->ic_nw_keys[i].k_len);
 	}
 
 	/* Setting the SSID here doesn't seem to do anything */

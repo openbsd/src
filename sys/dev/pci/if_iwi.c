@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.82 2007/07/06 18:03:42 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.83 2007/07/18 18:10:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -1358,8 +1358,9 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 
 	if (desc->wh.i_fc[1] & IEEE80211_FC1_WEP) {
 		desc->wep_txkey = ic->ic_wep_txkey |
-		    (ic->ic_nw_keys[ic->ic_wep_txkey].wk_len <= 5) ?
-			IWI_DATA_KEY_WEP40 : IWI_DATA_KEY_WEP104;
+		    ((ic->ic_nw_keys[ic->ic_wep_txkey].k_cipher ==
+			IEEE80211_CIPHER_WEP40) ? IWI_DATA_KEY_WEP40 :
+		    IWI_DATA_KEY_WEP104);
 	} else {
 		desc->flags |= IWI_DATA_FLAG_NO_WEP;
 		desc->wep_txkey = 0;
@@ -1803,7 +1804,7 @@ iwi_config(struct iwi_softc *sc)
 	struct iwi_configuration config;
 	struct iwi_rateset rs;
 	struct iwi_txpower power;
-	struct ieee80211_wepkey *k;
+	struct ieee80211_key *k;
 	struct iwi_wep_key wepkey;
 	uint32_t data;
 	int error, nchan, i;
@@ -1934,9 +1935,9 @@ iwi_config(struct iwi_softc *sc)
 		for (i = 0; i < IEEE80211_WEP_NKID; i++, k++) {
 			wepkey.cmd = IWI_WEP_KEY_CMD_SETKEY;
 			wepkey.idx = i;
-			wepkey.len = k->wk_len;
+			wepkey.len = k->k_len;
 			bzero(wepkey.key, sizeof wepkey.key);
-			bcopy(k->wk_key, wepkey.key, k->wk_len);
+			bcopy(k->k_key, wepkey.key, k->k_len);
 			DPRINTF(("Setting wep key index %u len %u\n",
 			    wepkey.idx, wepkey.len));
 			error = iwi_cmd(sc, IWI_CMD_SET_WEP_KEY, &wepkey,

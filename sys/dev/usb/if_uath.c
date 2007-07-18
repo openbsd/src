@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.26 2007/06/14 10:11:15 mbalmer Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.27 2007/07/18 18:10:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -174,8 +174,7 @@ int	uath_reset(struct uath_softc *);
 int	uath_reset_tx_queues(struct uath_softc *);
 int	uath_wme_init(struct uath_softc *);
 int	uath_set_chan(struct uath_softc *, struct ieee80211_channel *);
-int	uath_set_key(struct uath_softc *, const struct ieee80211_wepkey *,
-	    int);
+int	uath_set_key(struct uath_softc *, const struct ieee80211_key *, int);
 int	uath_set_keys(struct uath_softc *);
 int	uath_set_rates(struct uath_softc *, const struct ieee80211_rateset *);
 int	uath_set_rxfilter(struct uath_softc *, uint32_t, uint32_t);
@@ -1751,8 +1750,7 @@ uath_set_chan(struct uath_softc *sc, struct ieee80211_channel *c)
 }
 
 int
-uath_set_key(struct uath_softc *sc, const struct ieee80211_wepkey *wk,
-    int index)
+uath_set_key(struct uath_softc *sc, const struct ieee80211_key *k, int index)
 {
 	struct uath_cmd_crypto crypto;
 	int i;
@@ -1771,10 +1769,10 @@ uath_set_key(struct uath_softc *sc, const struct ieee80211_wepkey *wk,
 	 * Each byte of the key must be XOR'ed with 10101010 before being
 	 * transmitted to the firmware.
 	 */
-	for (i = 0; i < wk->wk_len; i++)
-		crypto.key[i] = wk->wk_key[i] ^ 0xaa;
+	for (i = 0; i < k->k_len; i++)
+		crypto.key[i] = k->k_key[i] ^ 0xaa;
 
-	DPRINTF(("setting crypto key index=%d len=%d\n", index, wk->wk_len));
+	DPRINTF(("setting crypto key index=%d len=%d\n", index, k->k_len));
 	return uath_cmd_write(sc, UATH_CMD_CRYPTO, &crypto, sizeof crypto, 0);
 }
 
@@ -1785,10 +1783,9 @@ uath_set_keys(struct uath_softc *sc)
 	int i, error;
 
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		const struct ieee80211_wepkey *wk = &ic->ic_nw_keys[i];
+		const struct ieee80211_key *k = &ic->ic_nw_keys[i];
 
-		if (wk->wk_len > 0 &&
-		    (error = uath_set_key(sc, wk, i)) != 0)
+		if (k->k_len > 0 && (error = uath_set_key(sc, k, i)) != 0)
 			return error;
 	}
 	return uath_set_key(sc, &ic->ic_nw_keys[ic->ic_wep_txkey],

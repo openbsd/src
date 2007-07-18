@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.74 2007/05/03 21:24:56 mglocker Exp $ */
+/*	$OpenBSD: acx.c,v 1.75 2007/07/18 18:10:31 damien Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -497,13 +497,13 @@ acx_set_crypt_keys(struct acx_softc *sc)
 	int i, error, got_wk = 0;
 
 	for (i = 0; i < IEEE80211_WEP_NKID; ++i) {
-		struct ieee80211_wepkey *wk = &ic->ic_nw_keys[i];
+		struct ieee80211_key *k = &ic->ic_nw_keys[i];
 
-		if (wk->wk_len == 0)
+		if (k->k_len == 0)
 			continue;
 
 		if (sc->chip_hw_crypt) {
-			error = sc->chip_set_wepkey(sc, wk, i);
+			error = sc->chip_set_wepkey(sc, k, i);
 			if (error)
 				return (error);
 			got_wk = 1;

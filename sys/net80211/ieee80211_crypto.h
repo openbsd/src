@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.2 2007/06/06 19:31:07 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.3 2007/07/18 18:10:31 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -36,11 +36,34 @@
 /*
  * 802.11 protocol crypto-related definitions.
  */
+
+/*
+ * 802.11i ciphers.
+ */
+enum ieee80211_cipher {
+	IEEE80211_CIPHER_NONE     = 0x00000000,
+	IEEE80211_CIPHER_USEGROUP = 0x00000001,
+	IEEE80211_CIPHER_WEP40    = 0x00000002,
+	IEEE80211_CIPHER_TKIP     = 0x00000004,
+	IEEE80211_CIPHER_CCMP     = 0x00000008,
+	IEEE80211_CIPHER_WEP104   = 0x00000010
+};
+
+/*
+ * 802.11i Authentication and Key Management.
+ */
+enum ieee80211_akm {
+	IEEE80211_AKM_NONE	= 0x00000000,
+	IEEE80211_AKM_IEEE8021X	= 0x00000001,
+	IEEE80211_AKM_PSK	= 0x00000002
+};
+
 #define	IEEE80211_KEYBUF_SIZE	16
 
-struct ieee80211_wepkey {
-	int			wk_len;
-	u_int8_t		wk_key[IEEE80211_KEYBUF_SIZE];
+struct ieee80211_key {
+	enum ieee80211_cipher	k_cipher;
+	int			k_len;
+	u_int8_t		k_key[IEEE80211_KEYBUF_SIZE];
 };
 
 extern	void ieee80211_crypto_attach(struct ifnet *);

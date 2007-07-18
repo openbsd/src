@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.42 2007/05/22 04:29:16 ray Exp $  */
+/*	$OpenBSD: pgt.c,v 1.43 2007/07/18 18:10:31 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2775,32 +2775,32 @@ badopmode:
 			keyobj.pok_length = min(sizeof(keyobj.pok_key),
 			    IEEE80211_KEYBUF_SIZE);
 			keyobj.pok_length = min(keyobj.pok_length,
-			    ic->ic_nw_keys[0].wk_len);
-			bcopy(ic->ic_nw_keys[0].wk_key, keyobj.pok_key,
+			    ic->ic_nw_keys[0].k_len);
+			bcopy(ic->ic_nw_keys[0].k_key, keyobj.pok_key,
 			    keyobj.pok_length);
 			SETOID(PGT_OID_DEFAULT_KEY0, &keyobj, sizeof(keyobj));
 			/* key 2 */
 			keyobj.pok_length = min(sizeof(keyobj.pok_key),
 			    IEEE80211_KEYBUF_SIZE);
 			keyobj.pok_length = min(keyobj.pok_length,
-			    ic->ic_nw_keys[1].wk_len);
-			bcopy(ic->ic_nw_keys[1].wk_key, keyobj.pok_key,
+			    ic->ic_nw_keys[1].k_len);
+			bcopy(ic->ic_nw_keys[1].k_key, keyobj.pok_key,
 			    keyobj.pok_length);
 			SETOID(PGT_OID_DEFAULT_KEY1, &keyobj, sizeof(keyobj));
 			/* key 3 */
 			keyobj.pok_length = min(sizeof(keyobj.pok_key),
 			    IEEE80211_KEYBUF_SIZE);
 			keyobj.pok_length = min(keyobj.pok_length,
-			    ic->ic_nw_keys[2].wk_len);
-			bcopy(ic->ic_nw_keys[2].wk_key, keyobj.pok_key,
+			    ic->ic_nw_keys[2].k_len);
+			bcopy(ic->ic_nw_keys[2].k_key, keyobj.pok_key,
 			    keyobj.pok_length);
 			SETOID(PGT_OID_DEFAULT_KEY2, &keyobj, sizeof(keyobj));
 			/* key 4 */
 			keyobj.pok_length = min(sizeof(keyobj.pok_key),
 			    IEEE80211_KEYBUF_SIZE);
 			keyobj.pok_length = min(keyobj.pok_length,
-			    ic->ic_nw_keys[3].wk_len);
-			bcopy(ic->ic_nw_keys[3].wk_key, keyobj.pok_key,
+			    ic->ic_nw_keys[3].k_len);
+			bcopy(ic->ic_nw_keys[3].k_key, keyobj.pok_key,
 			    keyobj.pok_length);
 			SETOID(PGT_OID_DEFAULT_KEY3, &keyobj, sizeof(keyobj));
 
