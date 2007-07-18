@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2007/06/20 16:51:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 2007/07/18 20:06:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -820,7 +820,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		entry = pte->pt_entry;
 		if (!(entry & PG_V))
 			continue;
-		Mips_SyncDCachePage(va);
+		Mips_HitSyncDCache(va, PAGE_SIZE);
 		pte->pt_entry = PG_NV | PG_G;
 		tlb_flush_addr(va);
 	}
@@ -978,7 +978,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	if (sf) {
 		Mips_HitSyncDCache(s, PAGE_SIZE);
 	}
-	Mips_SyncDCachePage(d);
+	Mips_HitSyncDCache(d, PAGE_SIZE);
 }
 
 /*
