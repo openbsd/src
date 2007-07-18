@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.112 2007/06/02 01:29:11 pvalchev Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.113 2007/07/18 14:19:48 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -99,6 +99,7 @@ int		 fork_privchld(int, int);
 #define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 time_t	scripttime;
+static FILE *leaseFile;
 
 int
 findproto(char *cp, int n)
@@ -351,6 +352,8 @@ main(int argc, char *argv[])
 	if ((fd = open(path_dhclient_db, O_RDONLY|O_EXLOCK|O_CREAT, 0)) == -1)
 		error("can't open and lock %s: %m", path_dhclient_db);
 	read_client_leases();
+	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
+		error("can't open %s: %m", path_dhclient_db);
 	rewrite_client_leases();
 	close(fd);
 
@@ -1457,21 +1460,16 @@ free_client_lease(struct client_lease *lease)
 	free(lease);
 }
 
-FILE *leaseFile;
-
 void
 rewrite_client_leases(void)
 {
 	struct client_lease *lp;
 
-	if (!leaseFile) {
-		leaseFile = fopen(path_dhclient_db, "w");
-		if (!leaseFile)
-			error("can't create %s: %m", path_dhclient_db);
-	} else {
-		fflush(leaseFile);
-		rewind(leaseFile);
-	}
+	if (!leaseFile)	/* XXX */
+		error("lease file not open");
+
+	fflush(leaseFile);
+	rewind(leaseFile);
 
 	for (lp = client->leases; lp; lp = lp->next)
 		write_client_lease(lp, 1);
@@ -1502,11 +1500,8 @@ write_client_lease(struct client_lease *lease, int rewrite)
 	if (lease->is_static)
 		return;
 
-	if (!leaseFile) {	/* XXX */
-		leaseFile = fopen(path_dhclient_db, "w");
-		if (!leaseFile)
-			error("can't create %s: %m", path_dhclient_db);
-	}
+	if (!leaseFile)	/* XXX */
+		error("lease file not open");
 
 	fprintf(leaseFile, "lease {\n");
 	if (lease->is_bootp)
