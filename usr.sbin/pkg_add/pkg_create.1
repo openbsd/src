@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.43 2007/06/17 10:35:55 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.44 2007/07/18 05:58:32 ajacoutot Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: June 17 2007 $
+.Dd $Mdocdate: July 18 2007 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -436,6 +436,8 @@ from
 .Pa font.alias-*
 fragments, execute
 .Xr mkfontdir 1 ,
+.Xr mkfontscale 1
+and
 .Xr fc-cache 1
 when needed.
 Delete extra files at
