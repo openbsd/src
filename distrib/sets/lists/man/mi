@@ -1210,6 +1210,7 @@
 ./usr/share/man/cat4/hppa/io.0
 ./usr/share/man/cat4/hppa/kmem.0
 ./usr/share/man/cat4/hppa/lasi.0
+./usr/share/man/cat4/hppa/lcd.0
 ./usr/share/man/cat4/hppa/mem.0
 ./usr/share/man/cat4/hppa/mongoose.0
 ./usr/share/man/cat4/hppa/pdc.0
