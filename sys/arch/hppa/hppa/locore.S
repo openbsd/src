@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.154 2007/05/26 00:36:03 krw Exp $	*/
+/*	$OpenBSD: locore.S,v 1.155 2007/07/20 22:09:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1481,7 +1481,7 @@ EXIT($dtlb_l)
 		/* fix prom mappings */		! \
 	extrd,s	r17, 46, 8, r1			! \
 	addi,<>	0x10, r1, r0			! \
-	depdi	0, 42, 8, r17			! \
+	depdi	0, 38, 4, r17			! \
 		/* weak ordering, dyn bp */	! \
 	depwi	1, 31, 2, r16			! \
 	depdi	0, 44, 30, r25			! \
