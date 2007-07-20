@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.13 2005/05/26 04:34:51 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.14 2007/07/20 20:52:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -34,6 +34,7 @@
 #include <sys/user.h>
 
 #include <machine/cpufunc.h>
+#include <machine/frame.h>
 
 int
 process_read_regs(p, regs)
@@ -140,8 +141,8 @@ process_write_regs(p, regs)
 	tf->tf_ret1 = regs->r_regs[29];
 	tf->tf_sp   = regs->r_regs[30];
 	tf->tf_r31  = regs->r_regs[31];
-	tf->tf_iioq_head = regs->r_pc | 3;
-	tf->tf_iioq_tail = regs->r_npc | 3;
+	tf->tf_iioq_head = regs->r_pc | HPPA_PC_PRIV_USER;
+	tf->tf_iioq_tail = regs->r_npc | HPPA_PC_PRIV_USER;
 
 	return (0);
 }
@@ -171,8 +172,8 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	p->p_md.md_regs->tf_iioq_tail = 4 +
-	    (p->p_md.md_regs->tf_iioq_head = (register_t)addr | 3);
+	p->p_md.md_regs->tf_iioq_head = (register_t)addr | HPPA_PC_PRIV_USER;
+	p->p_md.md_regs->tf_iioq_tail = p->p_md.md_regs->tf_iioq_head + 4;
 
 	return (0);
 }
