@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.9 2006/03/05 21:48:56 miod Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.10 2007/07/20 19:00:35 claudio Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -135,7 +135,6 @@ struct router_info {
  */
 struct in_multi {
 	struct	in_addr inm_addr;	/* IP multicast address */
-	struct	ifnet *inm_ifp;		/* back pointer to ifnet */
 	struct	in_ifaddr *inm_ia;	/* back pointer to in_ifaddr */
 	u_int	inm_refcount;		/* no. membership claims by sockets */
 	u_int	inm_timer;		/* IGMP membership report timer */

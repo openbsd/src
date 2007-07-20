@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.48 2007/07/04 12:15:53 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.49 2007/07/20 19:00:35 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -969,7 +969,6 @@ in_addmulti(ap, ifp)
 			return (NULL);
 		}
 		inm->inm_addr = *ap;
-		inm->inm_ifp = ifp;
 		inm->inm_refcount = 1;
 		IFP_TO_IA(ifp, ia);
 		if (ia == NULL) {

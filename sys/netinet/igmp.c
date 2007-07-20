@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.23 2007/05/27 20:05:37 dlg Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.24 2007/07/20 19:00:35 claudio Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ rti_fill(inm)
 	struct router_info *rti;
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
-		if (rti->rti_ifp == inm->inm_ifp) {
+		if (rti->rti_ifp == inm->inm_ia->ia_ifp) {
 			inm->inm_rti = rti;
 			if (rti->rti_type == IGMP_v1_ROUTER)
 				return (IGMP_v1_HOST_MEMBERSHIP_REPORT);
@@ -72,7 +72,7 @@ rti_fill(inm)
 					   M_MRTABLE, M_NOWAIT);
 	if (rti == NULL)
 		return (-1);
-	rti->rti_ifp = inm->inm_ifp;
+	rti->rti_ifp = inm->inm_ia->ia_ifp;
 	rti->rti_type = IGMP_v2_ROUTER;
 	rti->rti_next = rti_head;
 	rti_head = rti;
@@ -203,7 +203,7 @@ igmp_input(struct mbuf *m, ...)
 			 */
 			IN_FIRST_MULTI(step, inm);
 			while (inm != NULL) {
-				if (inm->inm_ifp == ifp &&
+				if (inm->inm_ia->ia_ifp == ifp &&
 				    inm->inm_timer == 0 &&
 				    !IN_LOCAL_GROUP(inm->inm_addr.s_addr)) {
 					inm->inm_state = IGMP_DELAYING_MEMBER;
@@ -234,7 +234,7 @@ igmp_input(struct mbuf *m, ...)
 			 */
 			IN_FIRST_MULTI(step, inm);
 			while (inm != NULL) {
-				if (inm->inm_ifp == ifp &&
+				if (inm->inm_ia->ia_ifp == ifp &&
 				    !IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 				    (ip->ip_dst.s_addr == INADDR_ALLHOSTS_GROUP ||
 				     ip->ip_dst.s_addr == inm->inm_addr.s_addr)) {
@@ -401,7 +401,7 @@ igmp_joingroup(inm)
 	inm->inm_state = IGMP_IDLE_MEMBER;
 
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
-	    (inm->inm_ifp->if_flags & IFF_LOOPBACK) == 0) {
+	    (inm->inm_ia->ia_ifp->if_flags & IFF_LOOPBACK) == 0) {
 		if ((i = rti_fill(inm)) == -1) {
 			splx(s);
 			return;
@@ -425,7 +425,7 @@ igmp_leavegroup(inm)
 	case IGMP_DELAYING_MEMBER:
 	case IGMP_IDLE_MEMBER:
 		if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
-		    (inm->inm_ifp->if_flags & IFF_LOOPBACK) == 0)
+		    (inm->inm_ia->ia_ifp->if_flags & IFF_LOOPBACK) == 0)
 			if (inm->inm_rti->rti_type != IGMP_v1_ROUTER)
 				igmp_sendpkt(inm, IGMP_HOST_LEAVE_MESSAGE,
 				    INADDR_ALLROUTERS_GROUP);
@@ -539,7 +539,7 @@ igmp_sendpkt(inm, type, addr)
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 
-	imo.imo_multicast_ifp = inm->inm_ifp;
+	imo.imo_multicast_ifp = inm->inm_ia->ia_ifp;
 	imo.imo_multicast_ttl = 1;
 #ifdef RSVP_ISI
 	imo.imo_multicast_vif = -1;
