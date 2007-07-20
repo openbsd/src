@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.72 2007/07/08 17:44:20 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.73 2007/07/20 12:32:45 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1495,8 +1495,7 @@ ParseIsCond(Buffer linebuf, Buffer copy, char *line)
 	    line++;
 	for (cp = line; !isspace(*cp) && *cp != '\0';)
 	    cp++;
-	*cp = '\0';
-	Var_Delete(line);
+	Var_Deletei(line, cp);
 	return true;
     }
     default:

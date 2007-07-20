@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.14 2005/07/15 20:43:23 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.15 2007/07/20 12:32:45 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -112,9 +112,8 @@ typedef struct {
 } VarPattern;
 
 struct LoopStuff {
-    char	*var;
+    struct LoopVar	*var;
     char	*expand;
-    SymTable	*ctxt;
     bool	err;
 };
 
@@ -423,7 +422,7 @@ finish_loop(const char *s, const struct Name *n UNUSED , void *p)
 {
 	struct LoopStuff *l = (struct LoopStuff *)p;
 
-	return Var_Subst(s, l->ctxt, l->err);
+	return Var_Subst(s, NULL,  l->err);
 }
 
 static int
@@ -1173,7 +1172,7 @@ free_looparg(void *arg)
 {
     struct LoopStuff *l = (struct LoopStuff *)arg;
 
-    free(l->var);
+    Var_DeleteLoopVar(l->var);
     free(l->expand);
 }
 
@@ -1198,18 +1197,19 @@ get_loop(const char **p, SymTable *ctxt, bool err, int endc)
 {
     static struct LoopStuff	loop;
     const char *s;
+    const char *var;
 
     s = *p +1;
 
     loop.var = NULL;
     loop.expand = NULL;
-    loop.ctxt =ctxt;
     loop.err = err;
-    loop.var = LoopGrab(&s);
-    if (loop.var != NULL) {
+    var = LoopGrab(&s);
+    if (var != NULL) {
     	loop.expand = LoopGrab(&s);
 	if (*s == endc || *s == ':') {
 	    *p = s;
+	    loop.var = Var_NewLoopVar(var, NULL);
 	    return &loop;
 	}
     }
@@ -1372,10 +1372,11 @@ do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 
 char *
 VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt, 
-    bool err, bool *freePtr, const char *start, int endc, size_t *lengthPtr)
+    bool err, bool *freePtr, const char *start, int paren, size_t *lengthPtr)
 {
     const char	*tstr;
     bool	atstart;    /* Some ODE modifiers only make sense at start */
+    char endc = paren == '(' ? ')' : '}';
 
     tstr = start;
     /*

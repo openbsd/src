@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.65 2007/07/20 12:18:47 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.66 2007/07/20 12:32:45 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -98,9 +98,9 @@ char	var_Error[] = "";
  * identical string instances...
  */
 static char	varNoError[] = "";
-bool 		errorIsOkay;	
-static bool 	checkEnvFirst;	/* true if environment should be searched for
-			         * variables before the global context */
+bool		errorIsOkay;	
+static bool	checkEnvFirst;	/* true if environment should be searched for
+				 * variables before the global context */
 
 void
 Var_setCheckEnvFirst(bool yes)
@@ -109,42 +109,56 @@ Var_setCheckEnvFirst(bool yes)
 }
 
 /*
- * Variable values are obtained from four different contexts:
- *	1) the process environment. The process environment itself
- *	   may not be changed, but these variables may be modified,
- *	   unless make is invoked with -e, in which case those variables
- *	   are unmodifiable and supersede the global context.
- *	2) the global context. Variables set in the Makefile are located in
- *	    the global context. It is the penultimate context searched when
- *	    substituting.
- *	3) the command-line context. All variables set on the command line
- *	   are placed in this context. They are UNALTERABLE once placed here.
- *	4) the local context. Each target has associated with it a context
- *	   list. On this list are located the structures describing such
- *	   local variables as $(@) and $(*)
- * The four contexts are searched in the reverse order from which they are
- * listed.
+ * The rules for variable look-up are complicated.
+ *
+ * - Dynamic variables like $@ and $* are special. They always pertain to
+ * a given variable.  In this implementation of make, it is an error to
+ * try to affect them manually. They are stored in a local symtable directly
+ * inside the gnode.
+ *
+ * Global variables can be obtained:
+ * - from the command line
+ * - from the environment
+ * - from the Makefile proper.
+ * All of these are stored in a hash global_variables.
+ *
+ * Variables set on the command line override Makefile contents, are
+ * passed to submakes (see Var_AddCmdLine), and are also exported to the
+ * environment.
+ *
+ * Without -e (!checkEnvFirst), make will see variables set in the
+ * Makefile, and default to the environment otherwise.
+ *
+ * With -e (checkEnvFirst), make will see the environment first, and that
+ * will override anything that's set in the Makefile (but not set on
+ * the command line).
+ *
+ * The SHELL variable is very special: it is never obtained from the
+ * environment, and never passed to the environment.
  */
 
-static char *varnames[] = {
-    TARGET,
-    PREFIX,
-    ARCHIVE,
-    MEMBER,
-    OODATE,
-    ALLSRC,
-    IMPSRC,
-    FTARGET,
-    DTARGET,
-    FPREFIX,
-    DPREFIX,
-    FARCHIVE,
-    DARCHIVE,
-    FMEMBER,
-    DMEMBER
-    };
+/* definitions pertaining to dynamic variables */
 
-/* retrieve the hashed values  for well-known variables.  */
+/* full names of dynamic variables */
+static char *varnames[] = {
+	TARGET,
+	PREFIX,
+	ARCHIVE,
+	MEMBER,
+	OODATE,
+	ALLSRC,
+	IMPSRC,
+	FTARGET,
+	DTARGET,
+	FPREFIX,
+	DPREFIX,
+	FARCHIVE,
+	DARCHIVE,
+	FMEMBER,
+	DMEMBER
+};
+
+/* hashed names of dynamic variables */
 #include    "varhashconsts.h"
 
 /* extended indices for System V stuff */
@@ -157,291 +171,348 @@ static char *varnames[] = {
 #define FMEMBER_INDEX	13
 #define DMEMBER_INDEX	14
 
+#define GLOBAL_INDEX	-1
+
 #define EXTENDED2SIMPLE(i)	(((i)-LOCAL_SIZE)/2)
 #define IS_EXTENDED_F(i)	((i)%2 == 1)
 
+
 static struct ohash global_variables;
 
+
 typedef struct Var_ {
-    BUFFER	  val;		/* its value */
-    unsigned int  flags;	/* miscellaneous status flags */
+	BUFFER val;		/* the variable value */
+	unsigned int flags;	/* miscellaneous status flags */
 #define VAR_IN_USE	1	/* Variable's value currently being used. */
-				/* Used to avoid recursion */
-#define VAR_DUMMY	2	/* Placeholder: already looked up */
-#define VAR_FROM_CMD	4	/* From the command line */
-#define VAR_FROM_ENV	8	/* Read from environment */
-#define VAR_SEEN_ENV	16	/* Already seen environment */
-#define VAR_SHELL	32	/* magic, see posix */
+				/* (Used to avoid recursion) */
+#define VAR_DUMMY	2	/* Variable is currently just a name */
+				/* In particular: BUFFER is invalid */
+#define VAR_FROM_CMD	4	/* Special source: command line */
+#define VAR_FROM_ENV	8	/* Special source: environment */
+#define VAR_SEEN_ENV	16	/* No need to go look up environment again */
+#define VAR_SHELL	32	/* Magic behavior */
+				
 #define POISONS (POISON_NORMAL | POISON_EMPTY | POISON_NOT_DEFINED)
-    char	  name[1];	/* the variable's name */
+				/* Defined in var.h */
+	char name[1];		/* the variable's name */
 }  Var;
 
 
 static struct ohash_info var_info = {
 	offsetof(Var, name),
-    NULL, hash_alloc, hash_free, element_alloc };
-static int quick_lookup(const char *, const char **, uint32_t *);
-#define VarValue(v)	Buf_Retrieve(&((v)->val))
-static Var *varfind(const char *, const char *, SymTable *, int, uint32_t);
-static Var *find_global_var(const char *, const char *, uint32_t);
-static void VarDelete(Var *);
-static void VarPrintVar(Var *);
+	NULL,
+	hash_alloc, hash_free, element_alloc
+};
 
-static Var *obtain_global_var(const char *, const char *, uint32_t);
+static int classify_var(const char *, const char **, uint32_t *);
+static Var *find_any_var(const char *, const char *, SymTable *, int, uint32_t);
+static Var *find_global_var(const char *, const char *, uint32_t);
+static Var *find_global_var_without_env(const char *, const char *, uint32_t);
 static void fill_from_env(Var *);
 static Var *create_var(const char *, const char *);
+static void var_set_initial_value(Var *, const char *);
+static void var_set_value(Var *, const char *);
+#define var_get_value(v)	Buf_Retrieve(&((v)->val))
+static void var_append_value(Var *, const char *);
+static void poison_check(Var *);
 static void varq_set_append(int, const char *, GNode *, bool);
-static void var_init_string(Var *, const char *);
-static void var_set_string(Var *, const char *);
-static void var_append_string(Var *, const char *);
 static void var_set_append(const char *, const char *, const char *, int, bool);
 static void set_magic_shell_variable(void);
-static void poison_check(Var *);
-static const char *find_0(const char *);
+
+static void delete_var(Var *);
+static void print_var(Var *);
+
+
 static const char *find_rparen(const char *);
 static const char *find_ket(const char *);
 typedef const char * (*find_t)(const char *);
 static find_t find_pos(int);
 
-static int
-quick_lookup(const char *name, const char **enamePtr, uint32_t *pk)
-{
-    size_t len;
 
-    *pk = ohash_interval(name, enamePtr);
-    len = *enamePtr - name;
-	/* substitute short version for long local name */
-    switch (*pk % MAGICSLOTS1) { 	    /* MAGICSLOTS should be the    */
-    case K_LONGALLSRC % MAGICSLOTS1:	    /* smallest constant yielding  */
-					    /* distinct case values	   */
-	if (*pk == K_LONGALLSRC && len == strlen(LONGALLSRC) && 
-	    strncmp(name, LONGALLSRC, len) == 0)
-	    return ALLSRC_INDEX;
-	break;
-    case K_LONGARCHIVE % MAGICSLOTS1:
-	if (*pk == K_LONGARCHIVE && len == strlen(LONGARCHIVE) &&
-	    strncmp(name, LONGARCHIVE, len) == 0)
-	    return ARCHIVE_INDEX;
-	break;
-    case K_LONGIMPSRC % MAGICSLOTS1:
-	if (*pk == K_LONGIMPSRC && len == strlen(LONGIMPSRC) &&
-	    strncmp(name, LONGIMPSRC, len) == 0)
-	    return IMPSRC_INDEX;
-	break;
-    case K_LONGMEMBER % MAGICSLOTS1:
-	if (*pk == K_LONGMEMBER && len == strlen(LONGMEMBER) &&
-	    strncmp(name, LONGMEMBER, len) == 0)
-	    return MEMBER_INDEX;
-	break;
-    case K_LONGOODATE % MAGICSLOTS1:
-	if (*pk == K_LONGOODATE && len == strlen(LONGOODATE) &&
-	    strncmp(name, LONGOODATE, len) == 0)
-	    return OODATE_INDEX;
-	break;
-    case K_LONGPREFIX % MAGICSLOTS1:
-	if (*pk == K_LONGPREFIX && len == strlen(LONGPREFIX) &&
-	    strncmp(name, LONGPREFIX, len) == 0)
-	    return PREFIX_INDEX;
-	break;
-    case K_LONGTARGET % MAGICSLOTS1:
-	if (*pk == K_LONGTARGET && len == strlen(LONGTARGET) &&
-	    strncmp(name, LONGTARGET, len) == 0)
-	    return TARGET_INDEX;
-	break;
-    case K_TARGET % MAGICSLOTS1:
-	if (name[0] == TARGET[0] && len == 1)
-	    return TARGET_INDEX;
-	break;
-    case K_OODATE % MAGICSLOTS1:
-	if (name[0] == OODATE[0] && len == 1)
-	    return OODATE_INDEX;
-	break;
-    case K_ALLSRC % MAGICSLOTS1:
-	if (name[0] == ALLSRC[0] && len == 1)
-	    return ALLSRC_INDEX;
-	break;
-    case K_IMPSRC % MAGICSLOTS1:
-	if (name[0] == IMPSRC[0] && len == 1)
-	    return IMPSRC_INDEX;
-	break;
-    case K_PREFIX % MAGICSLOTS1:
-	if (name[0] == PREFIX[0] && len == 1)
-	    return PREFIX_INDEX;
-	break;
-    case K_ARCHIVE % MAGICSLOTS1:
-	if (name[0] == ARCHIVE[0] && len == 1)
-	    return ARCHIVE_INDEX;
-	break;
-    case K_MEMBER % MAGICSLOTS1:
-	if (name[0] == MEMBER[0] && len == 1)
-	    return MEMBER_INDEX;
-	break;
-    case K_FTARGET % MAGICSLOTS1:
-    	if (name[0] == FTARGET[0] && name[1] == FTARGET[1] && len == 2)
-	    return FTARGET_INDEX;
-	break;
-    case K_DTARGET % MAGICSLOTS1:
-    	if (name[0] == DTARGET[0] && name[1] == DTARGET[1] && len == 2)
-	    return DTARGET_INDEX;
-	break;
-    case K_FPREFIX % MAGICSLOTS1:
-    	if (name[0] == FPREFIX[0] && name[1] == FPREFIX[1] && len == 2)
-	    return FPREFIX_INDEX;
-	break;
-    case K_DPREFIX % MAGICSLOTS1:
-    	if (name[0] == DPREFIX[0] && name[1] == DPREFIX[1] && len == 2)
-	    return DPREFIX_INDEX;
-	break;
-    case K_FARCHIVE % MAGICSLOTS1:
-    	if (name[0] == FARCHIVE[0] && name[1] == FARCHIVE[1] && len == 2)
-	    return FARCHIVE_INDEX;
-	break;
-    case K_DARCHIVE % MAGICSLOTS1:
-    	if (name[0] == DARCHIVE[0] && name[1] == DARCHIVE[1] && len == 2)
-	    return DARCHIVE_INDEX;
-	break;
-    case K_FMEMBER % MAGICSLOTS1:
-    	if (name[0] == FMEMBER[0] && name[1] == FMEMBER[1] && len == 2)
-	    return FMEMBER_INDEX;
-	break;
-    case K_DMEMBER % MAGICSLOTS1:
-    	if (name[0] == DMEMBER[0] && name[1] == DMEMBER[1] && len == 2)
-	    return DMEMBER_INDEX;
-	break;
-    default:
-	break;
-    }
-    return -1;
+
+/* Variable lookup function: return idx for dynamic variable, or
+ * GLOBAL_INDEX if name is not dynamic. Set up *pk for further use.
+ */
+static int
+classify_var(const char *name, const char **enamePtr, uint32_t *pk)
+{
+	size_t len;
+
+	*pk = ohash_interval(name, enamePtr);
+	len = *enamePtr - name;
+	    /* substitute short version for long local name */
+	switch (*pk % MAGICSLOTS1) {	/* MAGICSLOTS should be the    */
+	case K_LONGALLSRC % MAGICSLOTS1:/* smallest constant yielding  */
+					/* distinct case values	   */
+		if (*pk == K_LONGALLSRC && len == strlen(LONGALLSRC) &&
+		    strncmp(name, LONGALLSRC, len) == 0)
+			return ALLSRC_INDEX;
+		break;
+	case K_LONGARCHIVE % MAGICSLOTS1:
+		if (*pk == K_LONGARCHIVE && len == strlen(LONGARCHIVE) &&
+		    strncmp(name, LONGARCHIVE, len) == 0)
+			return ARCHIVE_INDEX;
+		break;
+	case K_LONGIMPSRC % MAGICSLOTS1:
+		if (*pk == K_LONGIMPSRC && len == strlen(LONGIMPSRC) &&
+		    strncmp(name, LONGIMPSRC, len) == 0)
+			return IMPSRC_INDEX;
+		break;
+	case K_LONGMEMBER % MAGICSLOTS1:
+		if (*pk == K_LONGMEMBER && len == strlen(LONGMEMBER) &&
+		    strncmp(name, LONGMEMBER, len) == 0)
+			return MEMBER_INDEX;
+		break;
+	case K_LONGOODATE % MAGICSLOTS1:
+		if (*pk == K_LONGOODATE && len == strlen(LONGOODATE) &&
+		    strncmp(name, LONGOODATE, len) == 0)
+			return OODATE_INDEX;
+		break;
+	case K_LONGPREFIX % MAGICSLOTS1:
+		if (*pk == K_LONGPREFIX && len == strlen(LONGPREFIX) &&
+		    strncmp(name, LONGPREFIX, len) == 0)
+			return PREFIX_INDEX;
+		break;
+	case K_LONGTARGET % MAGICSLOTS1:
+		if (*pk == K_LONGTARGET && len == strlen(LONGTARGET) &&
+		    strncmp(name, LONGTARGET, len) == 0)
+			return TARGET_INDEX;
+		break;
+	case K_TARGET % MAGICSLOTS1:
+		if (name[0] == TARGET[0] && len == 1)
+			return TARGET_INDEX;
+		break;
+	case K_OODATE % MAGICSLOTS1:
+		if (name[0] == OODATE[0] && len == 1)
+			return OODATE_INDEX;
+		break;
+	case K_ALLSRC % MAGICSLOTS1:
+		if (name[0] == ALLSRC[0] && len == 1)
+			return ALLSRC_INDEX;
+		break;
+	case K_IMPSRC % MAGICSLOTS1:
+		if (name[0] == IMPSRC[0] && len == 1)
+			return IMPSRC_INDEX;
+		break;
+	case K_PREFIX % MAGICSLOTS1:
+		if (name[0] == PREFIX[0] && len == 1)
+			return PREFIX_INDEX;
+		break;
+	case K_ARCHIVE % MAGICSLOTS1:
+		if (name[0] == ARCHIVE[0] && len == 1)
+			return ARCHIVE_INDEX;
+		break;
+	case K_MEMBER % MAGICSLOTS1:
+		if (name[0] == MEMBER[0] && len == 1)
+			return MEMBER_INDEX;
+		break;
+	case K_FTARGET % MAGICSLOTS1:
+		if (name[0] == FTARGET[0] && name[1] == FTARGET[1] && len == 2)
+			return FTARGET_INDEX;
+		break;
+	case K_DTARGET % MAGICSLOTS1:
+		if (name[0] == DTARGET[0] && name[1] == DTARGET[1] && len == 2)
+			return DTARGET_INDEX;
+		break;
+	case K_FPREFIX % MAGICSLOTS1:
+		if (name[0] == FPREFIX[0] && name[1] == FPREFIX[1] && len == 2)
+			return FPREFIX_INDEX;
+		break;
+	case K_DPREFIX % MAGICSLOTS1:
+		if (name[0] == DPREFIX[0] && name[1] == DPREFIX[1] && len == 2)
+			return DPREFIX_INDEX;
+		break;
+	case K_FARCHIVE % MAGICSLOTS1:
+		if (name[0] == FARCHIVE[0] && name[1] == FARCHIVE[1] &&
+		    len == 2)
+			return FARCHIVE_INDEX;
+		break;
+	case K_DARCHIVE % MAGICSLOTS1:
+		if (name[0] == DARCHIVE[0] && name[1] == DARCHIVE[1] &&
+		    len == 2)
+			return DARCHIVE_INDEX;
+		break;
+	case K_FMEMBER % MAGICSLOTS1:
+		if (name[0] == FMEMBER[0] && name[1] == FMEMBER[1] && len == 2)
+			return FMEMBER_INDEX;
+		break;
+	case K_DMEMBER % MAGICSLOTS1:
+		if (name[0] == DMEMBER[0] && name[1] == DMEMBER[1] && len == 2)
+		    return DMEMBER_INDEX;
+		break;
+	default:
+		break;
+	}
+	return GLOBAL_INDEX;
 }
 
+
+/***
+ ***	Internal handling of variables.
+ ***/
+
+
+/* Create a new variable, does not initialize anything except the name.
+ * in particular, buffer is invalid, and flag value is invalid. Accordingly,
+ * must either:
+ * - set flags to VAR_DUMMY
+ * - set flags to !VAR_DUMMY, and initialize buffer, for instance with
+ * var_set_initial_value().
+ */
 static Var *
 create_var(const char *name, const char *ename)
 {
-    return ohash_create_entry(&var_info, name, &ename);
+	return ohash_create_entry(&var_info, name, &ename);
 }
 
-/* Set the initial value a var should have */
-static void
-var_init_string(Var *v, const char *val)
-{
-    size_t len;
-
-    len = strlen(val);
-    Buf_Init(&(v->val), len+1);
-    Buf_AddChars(&(v->val), len, val);
-}
-
-static void
-var_set_string(Var *v, const char *val)
-{
-    if ((v->flags & VAR_DUMMY) == 0) {
-	Buf_Reset(&(v->val));
-	Buf_AddString(&(v->val), val);
-    } else {
-    	var_init_string(v, val);
-	v->flags &= ~VAR_DUMMY;
-    }
-}
-
-static void
-var_append_string(Var *v, const char *val)
-{
-    if ((v->flags & VAR_DUMMY) == 0) {
-    	Buf_AddSpace(&(v->val));
-	Buf_AddString(&(v->val), val);
-    } else {
-    	var_init_string(v, val);
-	v->flags &= ~VAR_DUMMY;
-    }
-}
-
-/*-
- *-----------------------------------------------------------------------
- * VarDelete  --
- *	Delete a variable and all the space associated with it.
- *-----------------------------------------------------------------------
+/* Initial version of var_set_value(), to be called after create_var().
  */
 static void
-VarDelete(Var *v)
+var_set_initial_value(Var *v, const char *val)
 {
-    if ((v->flags & VAR_DUMMY) == 0)
-	Buf_Destroy(&(v->val));
-    free(v);
+	size_t len;
+
+	len = strlen(val);
+	Buf_Init(&(v->val), len+1);
+	Buf_AddChars(&(v->val), len, val);
+}
+
+/* Normal version of var_set_value(), to be called after variable is fully
+ * initialized.
+ */
+static void
+var_set_value(Var *v, const char *val)
+{
+	if ((v->flags & VAR_DUMMY) == 0) {
+		Buf_Reset(&(v->val));
+		Buf_AddString(&(v->val), val);
+	} else {
+		var_set_initial_value(v, val);
+		v->flags &= ~VAR_DUMMY;
+	}
+}
+
+/* Add to a variable, insert a separating space if the variable was already
+ * defined.
+ */
+static void
+var_append_value(Var *v, const char *val)
+{
+	if ((v->flags & VAR_DUMMY) == 0) {
+		Buf_AddSpace(&(v->val));
+		Buf_AddString(&(v->val), val);
+	} else {
+		var_set_initial_value(v, val);
+		v->flags &= ~VAR_DUMMY;
+	}
+}
+
+
+/* Delete a variable and all the space associated with it.
+ */
+static void
+delete_var(Var *v)
+{
+	if ((v->flags & VAR_DUMMY) == 0)
+		Buf_Destroy(&(v->val));
+	free(v);
 }
 
 
 
+
+/***
+ ***	Dynamic variable handling.
+ ***/
+
+
+
+/* create empty symtable.
+ * XXX: to save space, dynamic variables may be NULL pointers.
+ */
 void
 SymTable_Init(SymTable *ctxt)
 {
-    static SymTable sym_template;	
-    memcpy(ctxt, &sym_template, sizeof(*ctxt));
+	static SymTable sym_template;	
+	memcpy(ctxt, &sym_template, sizeof(*ctxt));
 }
 
+/* free symtable.
+ */
 #ifdef CLEANUP
 void
 SymTable_Destroy(SymTable *ctxt)
 {
-    int i;
+	int i;
 
-    for (i = 0; i < LOCAL_SIZE; i++)
-	if (ctxt->locals[i] != NULL)
-	    VarDelete(ctxt->locals[i]);
+	for (i = 0; i < LOCAL_SIZE; i++)
+		if (ctxt->locals[i] != NULL)
+			delete_var(ctxt->locals[i]);
 }
 #endif
 
+/* set or append to dynamic variable.
+ */
 static void
 varq_set_append(int idx, const char *val, GNode *gn, bool append)
 {
-    Var *v = gn->context.locals[idx];
+	Var *v = gn->context.locals[idx];
 
-    if (v == NULL) {
-	v = create_var(varnames[idx], NULL);
+	if (v == NULL) {
+		v = create_var(varnames[idx], NULL);
 #ifdef STATS_VAR_LOOKUP
-	STAT_VAR_CREATION++;
+		STAT_VAR_CREATION++;
 #endif
-	if (val != NULL)
-	    var_init_string(v, val);
-	else
-	    Buf_Init(&(v->val), 1);
-	v->flags = 0;
-	gn->context.locals[idx] = v;
-    } else {
-    	if (append)
-		Buf_AddSpace(&(v->val));
-	else
-		Buf_Reset(&(v->val));
-	Buf_AddString(&(v->val), val);
-    }
-    if (DEBUG(VAR))
-	printf("%s:%s = %s\n", gn->name, varnames[idx], VarValue(v));
+		if (val != NULL)
+			var_set_initial_value(v, val);
+		else
+			Buf_Init(&(v->val), 1);
+		v->flags = 0;
+		gn->context.locals[idx] = v;
+	} else {
+		if (append)
+			Buf_AddSpace(&(v->val));
+		else
+			Buf_Reset(&(v->val));
+		Buf_AddString(&(v->val), val);
+	}
+	if (DEBUG(VAR))
+		printf("%s:%s = %s\n", gn->name, varnames[idx],
+		    var_get_value(v));
 }
 
 void
 Varq_Set(int idx, const char *val, GNode *gn)
 {
-    varq_set_append(idx, val, gn, false);
+	varq_set_append(idx, val, gn, false);
 }
 
 void
 Varq_Append(int idx, const char *val, GNode *gn)
 {
-    varq_set_append(idx, val, gn, true);
+	varq_set_append(idx, val, gn, true);
 }
 
 char *
 Varq_Value(int idx, GNode *gn)
 {
-    Var *v = gn->context.locals[idx];
+	Var *v = gn->context.locals[idx];
 
-    if (v == NULL)
-    	return NULL;
-    else
-	return VarValue(v);
+	if (v == NULL)
+		return NULL;
+	else
+		return var_get_value(v);
 }
 
+/***
+ ***	Global variable handling.
+ ***/
+
+/* Create a new global var if necessary, and set it up correctly.
+ * Do not take environment into account.
+ */
 static Var *
-obtain_global_var(const char *name, const char *ename, uint32_t k)
+find_global_var_without_env(const char *name, const char *ename, uint32_t k)
 {
 	unsigned int slot;
 	Var *v;
@@ -456,50 +527,55 @@ obtain_global_var(const char *name, const char *ename, uint32_t k)
 	return v;
 }
 
+/* Helper for find_global_var(): grab environment value if needed.
+ */
 static void
 fill_from_env(Var *v)
 {
-    char	*env;
+	char	*env;
 
-    env = getenv(v->name);
-    if (env == NULL)
-	v->flags |= VAR_SEEN_ENV;
-    else {
-    	var_set_string(v, env);
-	v->flags |= VAR_FROM_ENV | VAR_SEEN_ENV;
-    }
+	env = getenv(v->name);
+	if (env == NULL)
+		v->flags |= VAR_SEEN_ENV;
+	else {
+		var_set_value(v, env);
+		v->flags |= VAR_FROM_ENV | VAR_SEEN_ENV;
+	}
 
 #ifdef STATS_VAR_LOOKUP
-    STAT_VAR_FROM_ENV++;
+	STAT_VAR_FROM_ENV++;
 #endif
 }
 
+/* Find global var, and obtain its value from the environment if needed.
+ */
 static Var *
 find_global_var(const char *name, const char *ename, uint32_t k)
 {
-    Var 		*v;
+	Var *v;
 
-    v = obtain_global_var(name, ename, k);
+	v = find_global_var_without_env(name, ename, k);
 
-    if ((v->flags & VAR_SEEN_ENV) == 0 &&
-    	(checkEnvFirst  && (v->flags & VAR_FROM_CMD) == 0 || 
-	    (v->flags & VAR_DUMMY) != 0))
-		fill_from_env(v);
+	if ((v->flags & VAR_SEEN_ENV) == 0 &&
+	    (checkEnvFirst  && (v->flags & VAR_FROM_CMD) == 0 ||
+		(v->flags & VAR_DUMMY) != 0))
+		    fill_from_env(v);
 
-    return v;
+	return v;
 }
 
-
+/* mark variable as poisoned, in a given setup.
+ */
 void
 Var_MarkPoisoned(const char *name, const char *ename, unsigned int type)
 {
 	Var   *v;
 	uint32_t	k;
 	int		idx;
-	idx = quick_lookup(name, &ename, &k);
+	idx = classify_var(name, &ename, &k);
 
-	if (idx != -1) {
-		Parse_Error(PARSE_FATAL, 
+	if (idx != GLOBAL_INDEX) {
+		Parse_Error(PARSE_FATAL,
 		    "Trying to poison dynamic variable $%s",
 		    varnames[idx]);
 		return;
@@ -507,6 +583,9 @@ Var_MarkPoisoned(const char *name, const char *ename, unsigned int type)
 
 	v = find_global_var(name, ename, k);
 	v->flags |= type;
+	/* POISON_NORMAL is not lazy: if the variable already exists in
+	 * the Makefile, then it's a mistake.
+	 */
 	if (v->flags & POISON_NORMAL) {
 		if (v->flags & VAR_DUMMY)
 			return;
@@ -517,11 +596,13 @@ Var_MarkPoisoned(const char *name, const char *ename, unsigned int type)
 	}
 }
 
+/* Check if there's any reason not to use the variable in this context.
+ */
 static void
 poison_check(Var *v)
 {
 	if (v->flags & POISON_NORMAL) {
-		Parse_Error(PARSE_FATAL, 
+		Parse_Error(PARSE_FATAL,
 		    "Poisoned variable %s has been referenced\n", v->name);
 		return;
 	}
@@ -531,32 +612,33 @@ poison_check(Var *v)
 		return;
 	}
 	if (v->flags & POISON_EMPTY)
-		if (strcmp(VarValue(v), "") == 0)
-			Parse_Error(PARSE_FATAL, 
+		if (strcmp(var_get_value(v), "") == 0)
+			Parse_Error(PARSE_FATAL,
 			    "Poisoned variable %s is empty\n", v->name);
 }
 
+/* Delete global variable.
+ */
 void
-Var_Delete(const char *name)
+Var_Deletei(const char *name, const char *ename)
 {
-	Var 	*v;
-	uint32_t 	k;
+	Var *v;
+	uint32_t k;
 	unsigned int slot;
-	const char 	*ename = NULL;
-	int		idx;
+	int idx;
 
-
-	if (DEBUG(VAR))
-		printf("delete %s\n", name);
-
-	idx = quick_lookup(name, &ename, &k);
-	if (idx != -1)
-		Parse_Error(PARSE_FATAL, "Trying to delete dynamic variable");
+	idx = classify_var(name, &ename, &k);
+	if (idx != GLOBAL_INDEX) {
+		Parse_Error(PARSE_FATAL,
+		    "Trying to delete dynamic variable $%s", varnames[idx]);
+		return;
+	}
 	slot = ohash_lookup_interval(&global_variables, name, ename, k);
 	v = ohash_find(&global_variables, slot);
 	
 	if (v == NULL)
 		return;
+
 	if (checkEnvFirst && (v->flags & VAR_FROM_ENV))
 		return;
 
@@ -564,19 +646,21 @@ Var_Delete(const char *name)
 		return;
 
 	ohash_remove(&global_variables, slot);
-	VarDelete(v);
+	delete_var(v);
 }
 
+/* Set or add a global variable, in VAR_CMD or VAR_GLOBAL context.
+ */
 static void
 var_set_append(const char *name, const char *ename, const char *val, int ctxt,
     bool append)
 {
-	Var   *v;
-	uint32_t	k;
-	int		idx;
+	Var *v;
+	uint32_t k;
+	int idx;
 
-	idx = quick_lookup(name, &ename, &k);
-	if (idx != -1) {
+	idx = classify_var(name, &ename, &k);
+	if (idx != GLOBAL_INDEX) {
 		Parse_Error(PARSE_FATAL, "Trying to %s dynamic variable $%s",
 		    append ? "append to" : "set", varnames[idx]);
 		return;
@@ -587,25 +671,25 @@ var_set_append(const char *name, const char *ename, const char *val, int ctxt,
 		Parse_Error(PARSE_FATAL, "Trying to %s poisoned variable %s\n",
 		    append ? "append to" : "set", v->name);
 	/* so can we write to it ? */
-	if (ctxt == VAR_CMD) { 	/* always for command line */
-		(append ? var_append_string : var_set_string)(v, val);
+	if (ctxt == VAR_CMD) {	/* always for command line */
+		(append ? var_append_value : var_set_value)(v, val);
 		v->flags |= VAR_FROM_CMD;
 		if ((v->flags & VAR_SHELL) == 0) {
-			/* Any variables given on the command line are 
+			/* Any variables given on the command line are
 			 * automatically exported to the environment,
-			 * except for SHELL (as per POSIX standard).  
+			 * except for SHELL (as per POSIX standard).
 			 */
 			esetenv(v->name, val);
-	    	}
+		}
 		if (DEBUG(VAR))
-			printf("command:%s = %s\n", v->name, VarValue(v));
+			printf("command:%s = %s\n", v->name, var_get_value(v));
 	} else if ((v->flags & VAR_FROM_CMD) == 0 &&
 	     (!checkEnvFirst || (v->flags & VAR_FROM_ENV) == 0)) {
-		(append ? var_append_string : var_set_string)(v, val);
+		(append ? var_append_value : var_set_value)(v, val);
 		if (DEBUG(VAR))
-			printf("global:%s = %s\n", v->name, VarValue(v));
+			printf("global:%s = %s\n", v->name, var_get_value(v));
 	} else if (DEBUG(VAR))
-			printf("overriden:%s = %s\n", v->name, VarValue(v));
+		printf("overriden:%s = %s\n", v->name, var_get_value(v));
 }
 
 void
@@ -620,69 +704,86 @@ Var_Appendi(const char *name, const char *ename, const char *val, int ctxt)
 	var_set_append(name, ename, val, ctxt, true);
 }
 
+/* XXX different semantics for Var_Valuei() and Var_Definedi():
+ * references to poisoned value variables will error out in Var_Valuei(),
+ * but not in Var_Definedi(), so the following construct works:
+ *	.poison BINDIR
+ *	BINDIR ?= /usr/bin
+ */
 char *
 Var_Valuei(const char *name, const char *ename)
 {
-	Var 	   *v;
-	uint32_t		k;
-	int 		idx;
+	Var *v;
+	uint32_t k;
+	int idx;
 
-	idx = quick_lookup(name, &ename, &k);
-	if (idx == -1) {
-		v = find_global_var(name, ename, k);
-		if (v->flags & POISONS)
-		    poison_check(v);
-		if ((v->flags & VAR_DUMMY) == 0)
-			return VarValue(v);
+	idx = classify_var(name, &ename, &k);
+	if (idx != GLOBAL_INDEX) {
+		Parse_Error(PARSE_FATAL,
+		    "Trying to get value of dynamic variable $%s",
+			varnames[idx]);
+		return NULL;
 	}
-
-	return NULL;
+	v = find_global_var(name, ename, k);
+	if (v->flags & POISONS)
+		poison_check(v);
+	if ((v->flags & VAR_DUMMY) == 0)
+		return var_get_value(v);
+	else
+		return NULL;
 }
 
 bool
 Var_Definedi(const char *name, const char *ename)
 {
-	Var 	   	*v;
-	uint32_t	k;
-	int 		idx;
+	Var *v;
+	uint32_t k;
+	int idx;
 
-	idx = quick_lookup(name, &ename, &k);
-	if (idx == -1) {
+	idx = classify_var(name, &ename, &k);
+	/* We don't bother writing an error message for dynamic variables,
+	 * these will be caught when getting set later, usually.
+	 */
+	if (idx == GLOBAL_INDEX) {
 		v = find_global_var(name, ename, k);
 		if (v->flags & POISON_NORMAL)
-		    poison_check(v);
+			poison_check(v);
 		if ((v->flags & VAR_DUMMY) == 0)
 			return true;
 	}
-
 	return false;
 }
 
+
+/***
+ ***	Substitution functions, handling both global and dynamic variables.
+ ***/
+
+
+/* XXX contrary to find_global_var(), find_any_var() can return NULL pointers.
+ */
 static Var *
-varfind(const char *name, const char *ename, SymTable *ctxt, 
+find_any_var(const char *name, const char *ename, SymTable *ctxt,
     int idx, uint32_t k)
 {
-    /* Handle local variables first */
-    if (idx != -1) {
-    	if (ctxt != NULL) {
-		if (idx < LOCAL_SIZE)
-		    return ctxt->locals[idx];
-		else
-		    return ctxt->locals[EXTENDED2SIMPLE(idx)];
-	} else
-		return NULL;
-    } else {
-    	return find_global_var(name, ename, k);
-    }
+	/* Handle local variables first */
+	if (idx != GLOBAL_INDEX) {
+		if (ctxt != NULL) {
+			if (idx < LOCAL_SIZE)
+				return ctxt->locals[idx];
+			else
+				return ctxt->locals[EXTENDED2SIMPLE(idx)];
+		} else
+			return NULL;
+	} else {
+		return find_global_var(name, ename, k);
+	}
 }
 
-static const char *
-find_0(const char *p)
-{
-	while (*p != '$' && *p != '\0' && *p != ':')
-		p++;
-	return p;
-}
+/* All the scanning functions needed to account for all the forms of
+ * variable names that exist:
+ *	$A, ${AB}, $(ABC), ${A:mod}, $(A:mod)
+ */
 
 static const char *
 find_rparen(const char *p)
@@ -700,397 +801,427 @@ find_ket(const char *p)
 	return p;
 }
 
+/* Figure out what kind of name we're looking for from a start character.
+ */
 static find_t
 find_pos(int c)
 {
 	switch(c) {
-	case '\0':
-		return find_0;
-	case ')':
+	case '(':
 		return find_rparen;
-	case '}':
+	case '{':
 		return find_ket;
 	default:
-		return 0;
+		Parse_Error(PARSE_FATAL,
+		    "Wrong character in variable spec %c (can't happen)");
+		return find_rparen;
 	}
 }
 
 size_t
 Var_ParseSkip(const char *str, SymTable *ctxt, bool *result)
 {
-    const char	*tstr;		/* Pointer into str */
-    Var 	*v;		/* Variable in invocation */
-    char	endc;		/* Ending character when variable in parens
-				 * or braces */
-    const char	*start;
-    size_t	length;
-    struct Name name;
+	const char *tstr;	/* Pointer into str */
+	Var *v;			/* Variable in invocation */
+	char paren;		/* Parenthesis or brace or nothing */
+	const char *start;
+	size_t length;
+	struct Name name;
 
-    v = NULL;
-    start = str;
-    str++;
-
-    if (*str != '(' && *str != '{') {
-	name.tofree = false;
-	tstr = str + 1;
-	length = 2;
-	endc = '\0';
-    } else {
-	endc = *str == '(' ? ')' : '}';
+	v = NULL;
+	start = str;
 	str++;
 
-	/* Find eventual modifiers in the variable */
-	tstr = VarName_Get(str, &name, ctxt, false, find_pos(endc));
-	VarName_Free(&name);
-	length = tstr - start;
-	if (*tstr != 0)
-	    length++;
-    }
+	if (*str != '(' && *str != '{') {
+		name.tofree = false;
+		tstr = str + 1;
+		length = 2;
+		paren = '\0';
+	} else {
+		paren = *str;
+		str++;
 
-    if (result != NULL)
-	*result = true;
-    if (*tstr == ':' && endc != '\0')
-	 if (VarModifiers_Apply(NULL, NULL, ctxt, true, NULL, tstr, endc,
-	    &length) == var_Error)
-		if (result != NULL)
-		    *result = false;
-    return length;
+		/* Find eventual modifiers in the variable */
+		tstr = VarName_Get(str, &name, ctxt, false, find_pos(paren));
+		VarName_Free(&name);
+		length = tstr - start;
+		if (*tstr != 0)
+			length++;
+	}
+
+	if (result != NULL)
+		*result = true;
+	if (*tstr == ':' && paren != '\0')
+		 if (VarModifiers_Apply(NULL, NULL, ctxt, true, NULL, tstr,
+		    paren, &length) == var_Error)
+			if (result != NULL)
+				*result = false;
+	return length;
 }
 
 /* As of now, Var_ParseBuffer is just a wrapper around Var_Parse. For
  * speed, it may be better to revisit the implementation to do things
  * directly. */
 bool
-Var_ParseBuffer(Buffer buf, const char *str, SymTable *ctxt, bool err, 
+Var_ParseBuffer(Buffer buf, const char *str, SymTable *ctxt, bool err,
     size_t *lengthPtr)
 {
-    char	*result;
-    bool	freeIt;
+	char *result;
+	bool freeIt;
 
-    result = Var_Parse(str, ctxt, err, lengthPtr, &freeIt);
-    if (result == var_Error)
-	return false;
+	result = Var_Parse(str, ctxt, err, lengthPtr, &freeIt);
+	if (result == var_Error)
+		return false;
 
-    Buf_AddString(buf, result);
-    if (freeIt)
-	free(result);
-    return true;
+	Buf_AddString(buf, result);
+	if (freeIt)
+		free(result);
+	return true;
 }
 
 char *
-Var_Parse(const char *str, 	/* The string to parse */
-    SymTable *ctxt, 		/* The context for the variable */
-    bool err, 			/* true if undefined variables are an error */
-    size_t *lengthPtr, 		/* OUT: The length of the specification */
+Var_Parse(const char *str,	/* The string to parse */
+    SymTable *ctxt,		/* The context for the variable */
+    bool err,			/* true if undefined variables are an error */
+    size_t *lengthPtr,		/* OUT: The length of the specification */
     bool *freePtr)		/* OUT: true if caller should free result */
 {
-    const char	*tstr;		/* Pointer into str */
-    Var 	*v;		/* Variable in invocation */
-    char	endc;		/* Ending character when variable in parens
-				 * or braces */
-    struct Name	name;
-    const char	*start;
-    char	*val;		/* Variable value  */
-    uint32_t	k;
-    int 	idx;
+	const char *tstr;	/* Pointer into str */
+	Var *v;			/* Variable in invocation */
+	char paren;		/* Parenthesis or brace or nothing */
+	struct Name name;
+	const char *start;
+	char *val;		/* Variable value  */
+	uint32_t k;
+	int idx;
 
-    *freePtr = false;
-    start = str++;
+	*freePtr = false;
+	start = str++;
 
-    val = NULL;
-    v = NULL;
-    idx = -1;
+	val = NULL;
+	v = NULL;
+	idx = GLOBAL_INDEX;
 
-    if (*str != '(' && *str != '{') {
-    	name.s = str;
-	name.e = str+1;
-	name.tofree = false;
-	tstr = str + 1;
-	*lengthPtr = 2;
-	endc = '\0';
-    } else {
-	endc = *str == '(' ? ')' : '}';
-	str++;
+	if (*str != '(' && *str != '{') {
+		name.s = str;
+		name.e = str+1;
+		name.tofree = false;
+		tstr = str + 1;
+		*lengthPtr = 2;
+		paren = '\0';
+	} else {
+		paren = *str;
+		str++;
 
-	/* Find eventual modifiers in the variable */
-	tstr = VarName_Get(str, &name, ctxt, false, find_pos(endc));
-	*lengthPtr = tstr - start;
-	if (*tstr != '\0')
-		(*lengthPtr)++;
-    }
-
-    idx = quick_lookup(name.s, &name.e, &k);
-    v = varfind(name.s, name.e, ctxt, idx, k);
-    if (v != NULL && (v->flags & POISONS) != 0)
-    	poison_check(v);
-    if (v != NULL && (v->flags & VAR_DUMMY) == 0) {
-	if (v->flags & VAR_IN_USE)
-	    Fatal("Variable %s is recursive.", v->name);
-	    /*NOTREACHED*/
-	else
-	    v->flags |= VAR_IN_USE;
-
-	/* Before doing any modification, we have to make sure the value
-	 * has been fully expanded. If it looks like recursion might be
-	 * necessary (there's a dollar sign somewhere in the variable's value)
-	 * we just call Var_Subst to do any other substitutions that are
-	 * necessary. Note that the value returned by Var_Subst will have
-	 * been dynamically-allocated, so it will need freeing when we
-	 * return.  */
-	val = VarValue(v);
-	if (idx == -1) {
-	    if (strchr(val, '$') != NULL) {
-		val = Var_Subst(val, ctxt, err);
-		*freePtr = true;
-	    }
-	} else if (idx >= LOCAL_SIZE) {
-	    if (IS_EXTENDED_F(idx))
-		val = Var_GetTail(val);
-	    else
-		val = Var_GetHead(val);
-	    *freePtr = true;
+		/* Find eventual modifiers in the variable */
+		tstr = VarName_Get(str, &name, ctxt, false, find_pos(paren));
+		*lengthPtr = tstr - start;
+		if (*tstr != '\0')
+			(*lengthPtr)++;
 	}
-	v->flags &= ~VAR_IN_USE;
-    }
-    if (*tstr == ':' && endc != '\0')
-	val = VarModifiers_Apply(val, &name, ctxt, err, freePtr, tstr, endc,
-	    lengthPtr);
-    if (val == NULL) {
-	val = err ? var_Error : varNoError;
-	/* Dynamic source */
-	if (idx != -1) {
-	    /* can't be expanded for now: copy the var spec instead. */
-	    if (ctxt == NULL) {
-		*freePtr = true;
-		val = Str_dupi(start, start+ *lengthPtr);
-	    } else {
-	    /* somehow, this should have been expanded already. */
-		GNode *n;
 
-		n = (GNode *)(((char *)ctxt) - offsetof(GNode, context));
-		if (idx >= LOCAL_SIZE)
-			idx = EXTENDED2SIMPLE(idx);
-		switch(idx) {
-		case IMPSRC_INDEX:
-		    Fatal("Using $< in a non-suffix rule context is a GNUmake idiom (line %lu of %s)",
-			n->lineno, n->fname);
-		default:
-		    Error("Using undefined dynamic variable $%s (line %lu of %s)", 
-			varnames[idx], n->lineno, n->fname);
-		    break;
+	idx = classify_var(name.s, &name.e, &k);
+	v = find_any_var(name.s, name.e, ctxt, idx, k);
+	if (v != NULL && (v->flags & POISONS) != 0)
+		poison_check(v);
+	if (v != NULL && (v->flags & VAR_DUMMY) == 0) {
+		if (v->flags & VAR_IN_USE)
+			Fatal("Variable %s is recursive.", v->name);
+			/*NOTREACHED*/
+		else
+			v->flags |= VAR_IN_USE;
+
+		/* Before doing any modification, we have to make sure the
+		 * value has been fully expanded. If it looks like recursion
+		 * might be necessary (there's a dollar sign somewhere in
+		 * the variable's value) we just call Var_Subst to do any
+		 * other substitutions that are necessary. Note that the
+		 * value returned by Var_Subst will have been dynamically
+		 * allocated, so it will need freeing when we return.
+		 */
+		val = var_get_value(v);
+		if (idx == GLOBAL_INDEX) {
+			if (strchr(val, '$') != NULL) {
+				val = Var_Subst(val, ctxt, err);
+				*freePtr = true;
+			}
+		} else if (idx >= LOCAL_SIZE) {
+			if (IS_EXTENDED_F(idx))
+				val = Var_GetTail(val);
+			else
+				val = Var_GetHead(val);
+			*freePtr = true;
 		}
-	    }
+		v->flags &= ~VAR_IN_USE;
 	}
-    }
-    VarName_Free(&name);
-    return val;
+	if (*tstr == ':' && paren != '\0')
+		val = VarModifiers_Apply(val, &name, ctxt, err, freePtr,
+		    tstr, paren, lengthPtr);
+	if (val == NULL) {
+		val = err ? var_Error : varNoError;
+		/* Dynamic source */
+		if (idx != GLOBAL_INDEX) {
+			/* can't be expanded for now: copy the spec instead. */
+			if (ctxt == NULL) {
+				*freePtr = true;
+				val = Str_dupi(start, start+ *lengthPtr);
+			} else {
+			/* somehow, this should have been expanded already. */
+				GNode *n;
+
+				/* XXX */
+				n = (GNode *)(((char *)ctxt) -
+				    offsetof(GNode, context));
+				if (idx >= LOCAL_SIZE)
+					idx = EXTENDED2SIMPLE(idx);
+				switch(idx) {
+				case IMPSRC_INDEX:
+					Fatal(
+"Using $< in a non-suffix rule context is a GNUmake idiom (line %lu of %s)",
+					    n->lineno, n->fname);
+				default:
+					Error(
+"Using undefined dynamic variable $%s (line %lu of %s)",
+					    varnames[idx], n->lineno, n->fname);
+					break;
+				}
+			}
+		}
+	}
+	VarName_Free(&name);
+	return val;
 }
 
+
 char *
-Var_Subst(const char *str, 	/* the string in which to substitute */
-    SymTable *ctxt, 		/* the context wherein to find variables */
+Var_Subst(const char *str,	/* the string in which to substitute */
+    SymTable *ctxt,		/* the context wherein to find variables */
     bool undefErr)		/* true if undefineds are an error */
 {
-    BUFFER	  buf;		/* Buffer for forming things */
-    static bool errorReported;  /* Set true if an error has already
-				 * been reported to prevent a plethora
-				 * of messages when recursing */
+	BUFFER buf;		/* Buffer for forming things */
+	static bool errorReported;
 
-    Buf_Init(&buf, MAKE_BSIZE);
-    errorReported = false;
+	Buf_Init(&buf, MAKE_BSIZE);
+	errorReported = false;
 
-    for (;;) {
-	char		*val;	/* Value to substitute for a variable */
-	size_t		length; /* Length of the variable invocation */
-	bool 	doFree; 	/* Set true if val should be freed */
-	const char *cp;
+	for (;;) {
+		char *val;	/* Value to substitute for a variable */
+		size_t length;	/* Length of the variable invocation */
+		bool doFree;	/* Set true if val should be freed */
+		const char *cp;
 
-	/* copy uninteresting stuff */
-	for (cp = str; *str != '\0' && *str != '$'; str++)
-	    ;
-	Buf_Addi(&buf, cp, str);
-	if (*str == '\0')
-	    break;
-	if (str[1] == '$') {
-	    /* A dollar sign may be escaped with another dollar sign.  */
-	    Buf_AddChar(&buf, '$');
-	    str += 2;
-	    continue;
+		/* copy uninteresting stuff */
+		for (cp = str; *str != '\0' && *str != '$'; str++)
+			;
+		Buf_Addi(&buf, cp, str);
+		if (*str == '\0')
+			break;
+		if (str[1] == '$') {
+			/* A $ may be escaped with another $. */
+			Buf_AddChar(&buf, '$');
+			str += 2;
+			continue;
+		}
+		val = Var_Parse(str, ctxt, undefErr, &length, &doFree);
+		/* When we come down here, val should either point to the
+		 * value of this variable, suitably modified, or be NULL.
+		 * Length should be the total length of the potential
+		 * variable invocation (from $ to end character...) */
+		if (val == var_Error || val == varNoError) {
+			/* If errors are not an issue, skip over the variable
+			 * and continue with the substitution. Otherwise, store
+			 * the dollar sign and advance str so we continue with
+			 * the string...  */
+			if (errorIsOkay)
+				str += length;
+			else if (undefErr) {
+				/* If variable is undefined, complain and
+				 * skip the variable name. The complaint
+				 * will stop us from doing anything when
+				 * the file is parsed.  */
+				if (!errorReported)
+					Parse_Error(PARSE_FATAL,
+					     "Undefined variable \"%.*s\"",
+					     length, str);
+				str += length;
+				errorReported = true;
+			} else {
+				Buf_AddChar(&buf, *str);
+				str++;
+			}
+		} else {
+			/* We've now got a variable structure to store in.
+			 * But first, advance the string pointer.  */
+			str += length;
+
+			/* Copy all the characters from the variable value
+			 * straight into the new string.  */
+			Buf_AddString(&buf, val);
+			if (doFree)
+				free(val);
+		}
 	}
-	val = Var_Parse(str, ctxt, undefErr, &length, &doFree);
-	/* When we come down here, val should either point to the
-	 * value of this variable, suitably modified, or be NULL.
-	 * Length should be the total length of the potential
-	 * variable invocation (from $ to end character...) */
-	if (val == var_Error || val == varNoError) {
-	    /* If performing old-time variable substitution, skip over
-	     * the variable and continue with the substitution. Otherwise,
-	     * store the dollar sign and advance str so we continue with
-	     * the string...  */
-	    if (errorIsOkay)
-		str += length;
-	    else if (undefErr) {
-		/* If variable is undefined, complain and skip the
-		 * variable. The complaint will stop us from doing anything
-		 * when the file is parsed.  */
-		if (!errorReported)
-		    Parse_Error(PARSE_FATAL,
-				 "Undefined variable \"%.*s\"",length,str);
-		str += length;
-		errorReported = true;
-	    } else {
-		Buf_AddChar(&buf, *str);
-		str++;
-	    }
-	} else {
-	    /* We've now got a variable structure to store in. But first,
-	     * advance the string pointer.  */
-	    str += length;
+	return  Buf_Retrieve(&buf);
+}
 
-	    /* Copy all the characters from the variable value straight
-	     * into the new string.  */
-	    Buf_AddString(&buf, val);
-	    if (doFree)
-		free(val);
-	}
-    }
-    return  Buf_Retrieve(&buf);
+
+/***
+ ***	Supplementary support for .for loops.
+ ***/
+
+
+
+struct LoopVar
+{
+	Var old;	/* keep old variable value (before the loop) */
+	Var *me;	/* the variable we're dealing with */
+};
+
+
+struct LoopVar *
+Var_NewLoopVar(const char *name, const char *ename)
+{
+	struct LoopVar *l;
+	uint32_t k;
+
+	l = emalloc(sizeof(struct LoopVar));
+
+	/* we obtain a new variable quickly, make a snapshot of its old
+	 * value, and make sure the environment cannot touch us.
+	 */
+	/* XXX: should we avoid dynamic variables ? */
+	k = ohash_interval(name, &ename);
+
+	l->me = find_global_var_without_env(name, ename, k);
+	l->old = *(l->me);			
+	l->me->flags |= VAR_SEEN_ENV;
+	return l;
 }
 
 void
-Var_SubstVar(Buffer buf, 	/* To store result */
-    const char *str, 		/* The string in which to substitute */
-    const char *var, 		/* Named variable */
+Var_DeleteLoopVar(struct LoopVar *l)
+{
+	*(l->me) = l->old;
+	free(l);
+}
+
+void
+Var_SubstVar(Buffer buf,	/* To store result */
+    const char *str,		/* The string in which to substitute */
+    struct LoopVar *l,		/* Handle */
     const char *val)		/* Its value */
 {
-    /* we save the old value and affect the new value temporarily */
-    Var old;
-    const char *ename = NULL;
-    uint32_t k;
-    Var *me;
-    k = ohash_interval(var, &ename);
-    me = obtain_global_var(var, ename, k);
-    old = *me;			
-    var_init_string(me, val);
-    me->flags = VAR_SEEN_ENV;
+	const char *var = l->me->name;
 
-    assert(*var != '\0');
+	var_set_value(l->me, val);
 
-    for (;;) {
-	const char *start;
-	/* Copy uninteresting stuff */
-	for (start = str; *str != '\0' && *str != '$'; str++)
-	    ;
-	Buf_Addi(buf, start, str);
+	for (;;) {
+		const char *start;
+		/* Copy uninteresting stuff */
+		for (start = str; *str != '\0' && *str != '$'; str++)
+			;
+		Buf_Addi(buf, start, str);
 
-	start = str;
-	if (*str++ == '\0')
-	    break;
-	str++;
-	/* and escaped dollars */
-	if (start[1] == '$') {
-	    Buf_Addi(buf, start, start+2);
-	    continue;
+		start = str;
+		if (*str++ == '\0')
+			break;
+		str++;
+		/* and escaped dollars */
+		if (start[1] == '$') {
+			Buf_Addi(buf, start, start+2);
+			continue;
+		}
+		/* Simple variable, if it's not us, copy.  */
+		if (start[1] != '(' && start[1] != '{') {
+			if (start[1] != *var || var[1] != '\0') {
+				Buf_AddChars(buf, 2, start);
+				continue;
+		    }
+		} else {
+			const char *p;
+			char paren = start[1];
+
+
+			/* Find the end of the variable specification.  */
+			p = find_pos(paren)(str);
+			/* A variable inside the variable. We don't know how to
+			 * expand the external variable at this point, so we
+			 * try  again with the nested variable.	*/
+			if (*p == '$') {
+				Buf_Addi(buf, start, p);
+				str = p;
+				continue;
+			}
+
+			if (strncmp(var, str, p - str) != 0 ||
+				var[p - str] != '\0') {
+				/* Not the variable we want to expand.	*/
+				Buf_Addi(buf, start, p);
+				str = p;
+				continue;
+			}
+			if (*p == ':') {
+				size_t length;	/* Length of variable name */
+				bool doFree;	/* should val be freed ? */
+				char *newval;	
+				struct Name name;
+
+				length = p - str + 1;
+				doFree = false;
+				name.s = var;
+				name.e = var + (p-str);
+
+				/* val won't be freed since !doFree, but
+				 * VarModifiers_Apply doesn't know that,
+				 * hence the cast. */
+				newval = VarModifiers_Apply((char *)val, &name,
+				    NULL, false, &doFree, p, paren, &length);
+				Buf_AddString(buf, newval);
+				if (doFree)
+					free(newval);
+				str += length;
+				continue;
+			} else
+				str = p+1;
+		}
+		Buf_AddString(buf, val);
 	}
-	/* Simple variable, if it's not us, copy.  */
-	if (start[1] != '(' && start[1] != '{') {
-	    if (start[1] != *var || var[1] != '\0') {
-		Buf_AddChars(buf, 2, start);
-		continue;
-	    }
-	} else {
-	    const char *p;
-	    char endc;
-
-	    if (start[1] == '(')
-		endc = ')';
-	    else
-		endc = '}';
-
-	    /* Find the end of the variable specification.  */
-	    p = str;
-	    while (*p != '\0' && *p != ':' && *p != endc && *p != '$')
-		p++;
-	    /* A variable inside the variable.	We don't know how to
-	     * expand the external variable at this point, so we try
-	     * again with the nested variable.	*/
-	    if (*p == '$') {
-		Buf_Addi(buf, start, p);
-		str = p;
-		continue;
-	    }
-
-	    if (strncmp(var, str, p - str) != 0 ||
-		var[p - str] != '\0') {
-		/* Not the variable we want to expand.	*/
-		Buf_Addi(buf, start, p);
-		str = p;
-		continue;
-	    }
-	    if (*p == ':') {
-		size_t	length; 	/* Length of the variable invocation */
-		bool doFree; 	/* Set true if val should be freed */
-		char	*newval;	/* Value substituted for a variable */
-		struct Name name;
-
-		length = p - str + 1;
-		doFree = false;
-		name.s = var;
-		name.e = var + (p-str);
-
-		/* val won't be freed since doFree == false, but
-		 * VarModifiers_Apply doesn't know that, hence the cast. */
-		newval = VarModifiers_Apply((char *)val, &name, NULL, false,
-		    &doFree, p, endc, &length);
-		Buf_AddString(buf, newval);
-		if (doFree)
-		    free(newval);
-		str += length;
-		continue;
-	    } else
-		str = p+1;
-	}
-	Buf_AddString(buf, val);
-    }
-    *me = old;
 }
+
+/***
+ ***	Odds and ends
+ ***/
 
 static void
 set_magic_shell_variable()
 {
-    const char *name = "SHELL";
-    const char *ename = NULL;
-    uint32_t k;
-    Var *v;
-    k = ohash_interval(name, &ename);
-    v = create_var(name, ename);
-    ohash_insert(&global_variables, 
-    	ohash_lookup_interval(&global_variables, name, ename, k), v);
-	/* the environment shall not affect it */
-    v->flags = VAR_SHELL | VAR_SEEN_ENV;
-    var_init_string(v, _PATH_BSHELL);
+	const char *name = "SHELL";
+	const char *ename = NULL;
+	uint32_t k;
+	Var *v;
+
+	k = ohash_interval(name, &ename);
+	v = find_global_var_without_env(name, ename, k);
+	var_set_value(v, _PATH_BSHELL);
+	/* XXX the environment shall never affect it */
+	v->flags = VAR_SHELL | VAR_SEEN_ENV;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Init --
+/*
+ * Var_Init
  *	Initialize the module
- *
- * Side Effects:
- *	The CTXT_CMD and CTXT_GLOBAL contexts are initialized
- *-----------------------------------------------------------------------
  */
 void
 Var_Init(void)
 {
-    ohash_init(&global_variables, 10, &var_info);
-    set_magic_shell_variable();
+	ohash_init(&global_variables, 10, &var_info);
+	set_magic_shell_variable();
 
 
-    errorIsOkay = true;
-    Var_setCheckEnvFirst(false);
+	errorIsOkay = true;
+	Var_setCheckEnvFirst(false);
 
-    VarModifiers_Init();
+	VarModifiers_Init();
 }
 
 
@@ -1098,12 +1229,12 @@ Var_Init(void)
 void
 Var_End(void)
 {
-    Var *v;
-    unsigned int i;
+	Var *v;
+	unsigned int i;
 
-    for (v = ohash_first(&global_variables, &i); v != NULL;
-	v = ohash_next(&global_variables, &i))
-	    VarDelete(v);
+	for (v = ohash_first(&global_variables, &i); v != NULL;
+	    v = ohash_next(&global_variables, &i))
+		delete_var(v);
 }
 #endif
 
@@ -1112,64 +1243,66 @@ static const char *interpret(int);
 static const char *
 interpret(int f)
 {
-    if (f & VAR_DUMMY)
-	return "(D)";
-    return "";
+	if (f & VAR_DUMMY)
+		return "(D)";
+	return "";
 }
 
 
-/****************** PRINT DEBUGGING INFO *****************/
 static void
-VarPrintVar(Var *v)
+print_var(Var *v)
 {
-    printf("%-16s%s = %s\n", v->name, interpret(v->flags),
-	(v->flags & VAR_DUMMY) == 0 ? VarValue(v) : "(none)");
+	printf("%-16s%s = %s\n", v->name, interpret(v->flags),
+	    (v->flags & VAR_DUMMY) == 0 ? var_get_value(v) : "(none)");
 }
 
 void
 Var_Dump(void)
 {
-    Var *v;
-    unsigned int i;
+	Var *v;
+	unsigned int i;
 
-    printf("#*** Global Variables:\n");
+	printf("#*** Global Variables:\n");
 
-    for (v = ohash_first(&global_variables, &i); v != NULL;
-	v = ohash_next(&global_variables, &i))
-	VarPrintVar(v);
-
+	for (v = ohash_first(&global_variables, &i); v != NULL;
+	    v = ohash_next(&global_variables, &i))
+		print_var(v);
 }
 
 static const char *quotable = " \t\n\\'\"";
 
-/* In POSIX mode, variable assignments passed on the command line are
+/* POSIX says that variable assignments passed on the command line should be
  * propagated to sub makes through MAKEFLAGS.
  */
 void
 Var_AddCmdline(const char *name)
 {
-    Var *v;
-    unsigned int i;
-    BUFFER buf;
-    char *s;
+	Var *v;
+	unsigned int i;
+	BUFFER buf;
+	char *s;
 
-    Buf_Init(&buf, MAKE_BSIZE);
+	Buf_Init(&buf, MAKE_BSIZE);
 
-    for (v = ohash_first(&global_variables, &i); v != NULL;
-	v = ohash_next(&global_variables, &i)) {
+	for (v = ohash_first(&global_variables, &i); v != NULL;
+	    v = ohash_next(&global_variables, &i)) {
+		/* This is not as expensive as it looks: this function is
+		 * called before parsing Makefiles, so there are just a
+		 * few non cmdling variables in there.
+		 */
 		if (!(v->flags & VAR_FROM_CMD)) {
 			continue;
 		}
 		/* We assume variable names don't need quoting */
 		Buf_AddString(&buf, v->name);
 		Buf_AddChar(&buf, '=');
-		for (s = VarValue(v); *s != '\0'; s++) {
+		for (s = var_get_value(v); *s != '\0'; s++) {
 			if (strchr(quotable, *s))
 				Buf_AddChar(&buf, '\\');
 			Buf_AddChar(&buf, *s);
 		}
 		Buf_AddSpace(&buf);
-    }
-    Var_Append(name, Buf_Retrieve(&buf), VAR_GLOBAL);
-    Buf_Destroy(&buf);
+	}
+	Var_Append(name, Buf_Retrieve(&buf), VAR_GLOBAL);
+	Buf_Destroy(&buf);
 }

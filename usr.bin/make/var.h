@@ -34,16 +34,19 @@ extern void Var_End(void);
 
 extern void Var_setCheckEnvFirst(bool);
 
-/* Global contexts handling. */
+/* Global variable handling. */
 /* value = Var_Valuei(name, end);
  *	Returns value of global variable name/end, or NULL if inexistent. */
 extern char *Var_Valuei(const char *, const char *);
 #define Var_Value(n)	Var_Valuei(n, NULL)
-/* Only check if variable is defined */
+
+/* isDefined = Var_Definedi(name, end);
+ *	Checks whether global variable name/end is defined. */
 extern bool Var_Definedi(const char *, const char *);
 
 /* Var_Seti(name, end, val, ctxt);
- *	Sets value val of variable name/end in context ctxt.  Copies val. */
+ *	Sets value val of variable name/end.  Copies val.
+ *	ctxt can be VAR_CMD (command line) or VAR_GLOBAL (normal variable). */
 extern void Var_Seti(const char *, const char *, const char *,
 	int);
 #define Var_Set(n, v, ctxt)	Var_Seti(n, NULL, v, ctxt)
@@ -54,11 +57,11 @@ extern void Var_Appendi(const char *, const char *,
 	const char *, int);
 #define Var_Append(n, v, ctxt)	Var_Appendi(n, NULL, v, ctxt)
 	
-/* Var_Delete(name);
- *	Deletes a variable from the global context.  */
-extern void Var_Delete(const char *);
+/* Var_Deletei(name, end);
+ *	Deletes a global variable. */
+extern void Var_Deletei(const char *, const char *);
 
-/* Local context handling */
+/* Dynamic variable indices */
 #define TARGET_INDEX	0
 #define PREFIX_INDEX	1
 #define ARCHIVE_INDEX	2
@@ -66,8 +69,14 @@ extern void Var_Delete(const char *);
 #define OODATE_INDEX	4
 #define ALLSRC_INDEX	5
 #define IMPSRC_INDEX	6
+/* value = Varq_Value(index, node);
+ *	Returns value of dynamic variable for a given node. */
 extern char *Varq_Value(int,  GNode *);
+/* Varq_Set(index, val, node);
+ *	Sets value of dynamic variable for a given node. Copies val. */
 extern void Varq_Set(int, const char *, GNode *);
+/* Varq_Append(index, val, node);
+ *	Appends to value of dynamic variable for a given node. */
 extern void Varq_Append(int, const char *, GNode *);
 
 /* SymTable_Init(t);
@@ -112,14 +121,22 @@ extern bool Var_ParseBuffer(Buffer, const char *, SymTable *,
  *	encountered. The result is always a copy that should be free. */
 extern char *Var_Subst(const char *, SymTable *, bool);
 
-/* Var_SubstVar(buf, str, varname, val);
- *	Substitutes variable varname with value val in string str, adding
- *	the result to buffer buf.  undefs are never error. */
-extern void Var_SubstVar(Buffer, const char *, const char *, const char *);
 
-/* Note that substituting to a buffer in Var_Subst is not useful. On the
- * other hand, handling intervals in Var_Subst and Var_Parse would be
- * useful, but this is hard. */
+/* For loop handling.
+ *	// Create handle for variable name.
+ *	handle = Var_NewLoopVar(name, end);
+ *	// set up buffer
+ *	for (...)
+ *		// Substitute val for variable in str, and accumulate in buffer
+ *		Var_SubstVar(buffer, str, handle, val);
+ *	// Free handle
+ *	Var_DeleteLoopVar(handle);
+ */
+struct LoopVar;	/* opaque handle */
+struct LoopVar *Var_NewLoopVar(const char *, const char *);
+void Var_DeleteLoopVar(struct LoopVar *);
+extern void Var_SubstVar(Buffer, const char *, struct LoopVar *, const char *);
+
 
 /* Var_Dump();
  *	Print out all global variables. */
@@ -133,13 +150,13 @@ extern void Var_AddCmdline(const char *);
 /* stuff common to var.c and varparse.c */
 extern bool	errorIsOkay;	
 
-#define		VAR_GLOBAL	0 
+#define		VAR_GLOBAL	0
 	/* Variables defined in a global context, e.g in the Makefile itself */
 #define		VAR_CMD		1
 	/* Variables defined on the command line */
 
-#define POISON_INVALID 		0
-#define POISON_DEFINED 		1
+#define POISON_INVALID		0
+#define POISON_DEFINED		1
 #define POISON_NORMAL		64
 #define POISON_EMPTY		128
 #define POISON_NOT_DEFINED	256

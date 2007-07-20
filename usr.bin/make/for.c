@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: for.c,v 1.31 2007/03/20 03:50:39 tedu Exp $	*/
+/*	$OpenBSD: for.c,v 1.32 2007/07/20 12:32:45 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -162,7 +162,7 @@ For_Eval(const char *line)
 	/* End of variable list ? */
 	if (endVar - wrd == 2 && wrd[0] == 'i' && wrd[1] == 'n')
 	    break;
-	Lst_AtEnd(&arg->vars, Str_dupi(wrd, endVar));
+	Lst_AtEnd(&arg->vars, Var_NewLoopVar(wrd, endVar));
 	arg->nvars++;
     }
     if (arg->nvars == 0) {
@@ -268,7 +268,7 @@ For_Run(For *arg)
     arg->var = NULL;
     Lst_ForEach(&arg->lst, ForExec, arg);
     Buf_Destroy(&arg->buf);
-    Lst_Destroy(&arg->vars, (SimpleProc)free);
+    Lst_Destroy(&arg->vars, (SimpleProc)Var_DeleteLoopVar);
     Lst_Destroy(&arg->lst, (SimpleProc)free);
     free(arg);
 }
