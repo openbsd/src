@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.12 2007/04/19 16:15:41 art Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.13 2007/07/20 19:48:15 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -1146,10 +1146,9 @@ pmap_zero_page_uncached_pae(paddr_t pa)
 		panic("pmap_zero_page_uncached: lock botch");
 #endif
 
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
-	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_N);	/* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-	pagezero(zerova, PAGE_SIZE);				/* zero */
+	pagezero(zerova, PAGE_SIZE);			/* zero */
 	*zpte = 0;					/* zap! */
 
 	return (TRUE);
