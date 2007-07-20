@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.39 2007/06/05 18:11:49 kurt Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.40 2007/07/20 22:34:40 kettenis Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -370,8 +370,11 @@ _thread_init(void)
 	if (_thread_pfd_table == NULL)
 		PANIC("Cannot allocate memory for pollfd table");
 
-	/* initialize the fd table */
+	/* Initialize the fd table: */
 	_thread_fd_init();
+
+	/* Initialize the key table: */
+	_thread_key_init();
 
 	/* Initialise the garbage collector mutex and condition variable. */
 	if (pthread_mutex_init(&_gc_mutex,NULL) != 0 ||

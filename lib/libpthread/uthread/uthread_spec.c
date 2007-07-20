@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_spec.c,v 1.8 2006/04/02 21:38:57 djm Exp $	*/
+/*	$OpenBSD: uthread_spec.c,v 1.9 2007/07/20 22:34:40 kettenis Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -42,6 +42,15 @@
 
 /* Static variables: */
 static	struct pthread_key key_table[PTHREAD_KEYS_MAX];
+
+void
+_thread_key_init(void)
+{
+	int key;
+
+	for (key = 0; key < PTHREAD_KEYS_MAX; key++)
+		_SPINLOCK_INIT(&key_table[key].lock);
+}
 
 int
 pthread_key_create(pthread_key_t * key, void (*destructor) (void *))

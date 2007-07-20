@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.67 2007/06/05 18:11:49 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.68 2007/07/20 22:34:40 kettenis Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1166,6 +1166,7 @@ void	_thread_kern_sched_state_unlock(enum pthread_state, spinlock_t *,
 void    _thread_kern_set_timeout(const struct timespec *);
 void    _thread_kern_sig_defer(void);
 void    _thread_kern_sig_undefer(void);
+void	_thread_key_init(void);
 void	_thread_kill_siginfo(int);
 void    _thread_sig_handler(int, siginfo_t *, struct sigcontext *);
 int	_thread_sig_handle(int, struct sigcontext *);
