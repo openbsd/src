@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.60 2007/06/15 11:41:48 mbalmer Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.61 2007/07/20 14:31:17 mbalmer Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1166,16 +1166,16 @@ uhci_intr1(uhci_softc_t *sc)
 	int status;
 	int ack;
 
+	status = UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS;
+	if (status == 0)	/* The interrupt was not for us. */
+		return (0);
+
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 15) {
 		DPRINTF(("%s: uhci_intr1\n", sc->sc_bus.bdev.dv_xname));
 		uhci_dumpregs(sc);
 	}
 #endif
-
-	status = UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS;
-	if (status == 0)	/* The interrupt was not for us. */
-		return (0);
 
 	if (sc->sc_suspend != PWR_RESUME) {
 		printf("%s: interrupt while not operating ignored\n",
