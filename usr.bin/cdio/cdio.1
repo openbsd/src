@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.44 2007/05/31 19:20:08 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.45 2007/07/20 09:06:17 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 20 2007 $
 .Dt CDIO 1
 .Os
 .Sh NAME
@@ -80,9 +80,11 @@ Print as much information as possible.
 The available commands are listed below.
 Only as many characters as are required to uniquely identify a command
 need be specified.
-The word
+If no command is given,
+only a track number or range,
+then
 .Ic play
-may be omitted.
+is assumed.
 .Bl -tag -width Ds
 .It Ic blank
 Minimally blank the disc.
@@ -103,8 +105,9 @@ command.
 .It Ic cdplay Op Ar track1-trackN ...
 Play specified tracks from disk.
 Unlike
-.Ic cdrip
-it rips tracks from disk and outputs audio data to
+.Ic play ,
+the CD player need not be connected to an audio device;
+instead it rips tracks from disk and outputs audio data to
 .Pa /dev/audio .
 Both individual tracks and track ranges may be specified.
 If range is specified in descending order tracks will be played in descending order.
