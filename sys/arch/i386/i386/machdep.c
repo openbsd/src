@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.402 2007/06/07 11:20:58 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.403 2007/07/20 17:04:14 mk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3524,19 +3524,12 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 	    pa += PAGE_SIZE, va += PAGE_SIZE, map_size -= PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 
-		/*
-		 * PG_N doesn't exist on 386's, so we assume that
-		 * the mainboard has wired up device space non-cacheable
-		 * on those machines.
-		 */
-		if (cpu_class != CPUCLASS_386) {
-			pte = kvtopte(va);
-			if (cacheable)
-				*pte &= ~PG_N;
-			else
-				*pte |= PG_N;
-			pmap_tlb_shootpage(pmap_kernel(), va);
-		}
+		pte = kvtopte(va);
+		if (cacheable)
+			*pte &= ~PG_N;
+		else
+			*pte |= PG_N;
+		pmap_tlb_shootpage(pmap_kernel(), va);
 	}
 
 	pmap_tlb_shootwait();
