@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lcd.4,v 1.1 2007/07/15 20:12:44 kettenis Exp $
+.\"	$OpenBSD: lcd.4,v 1.2 2007/07/20 22:41:57 kettenis Exp $
 .\"
 .\" Copyright (c) 2007 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2007 $
+.Dd $Mdocdate: July 20 2007 $
 .Dt LCD 4 hppa
 .Os
 .Sh NAME
@@ -27,8 +27,16 @@ The
 .Nm
 driver provides support for the front panel LCD display found on newer
 HP PA-RISC workstations and servers.
+This LCD can be made to show a heartbeat based on the load average by
+setting the
+.Xr sysctl 3
+variable
+.Ar machdep.led_blink
+to a non-zero value.
 .Sh SEE ALSO
-.Xr intro 4
+.Xr sysctl 3 ,
+.Xr intro 4 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
