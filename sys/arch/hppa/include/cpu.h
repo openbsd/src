@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.50 2007/05/15 16:03:52 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.51 2007/07/20 22:12:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -190,13 +190,27 @@ int	cpu_dump(void);
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_FPU			2	/* int: fpu present/enabled */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
+#define	CPU_LED_BLINK		3	/* int: twiddle heartbeat LED/LCD */
+#define	CPU_MAXID		4	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "fpu", CTLTYPE_INT }, \
+	{ "led_blink", CTLTYPE_INT }, \
 }
+
+#ifdef _KERNEL
+#include <sys/queue.h>
+
+struct blink_led {
+	void (*bl_func)(void *, int);
+	void *bl_arg;
+	SLIST_ENTRY(blink_led) bl_next;
+};
+
+extern void blink_led_register(struct blink_led *);
+#endif
 #endif
 
 #endif /* _MACHINE_CPU_H_ */

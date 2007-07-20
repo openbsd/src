@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.162 2007/07/15 19:25:49 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.163 2007/07/20 22:12:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -141,6 +141,8 @@ u_int	fpu_version;
 int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 #endif
 
+int	led_blink;
+
 /*
  * exported methods for cpus
  */
@@ -172,6 +174,7 @@ static __inline void fall(int, int, int, int, int);
 void dumpsys(void);
 void hpmc_dump(void);
 void cpuid(void);
+void blink_led_timeout(void *);
 
 /*
  * wide used hardware params
@@ -1611,6 +1614,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	extern u_int fpu_enable;
 	extern int cpu_fpuena;
 	dev_t consdev;
+	int oldval, ret;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -1631,6 +1635,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			mtctl(0, CR_CCR);
 		}
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_fpuena));
+	case CPU_LED_BLINK:
+		oldval = led_blink;
+		ret = sysctl_int(oldp, oldlenp, newp, newlen, &led_blink);
+		/*
+		 * If we were false and are now true, start the timer.
+		 */
+		if (!oldval && led_blink > oldval)
+			blink_led_timeout(NULL);
+		return (ret);
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1648,4 +1661,52 @@ consinit(void)
 	/*
 	 * Initial console setup has been done in pdc_init().
 	 */
+}
+
+
+struct blink_led_softc {
+	SLIST_HEAD(, blink_led) bls_head;
+	int bls_on;
+	struct timeout bls_to;
+} blink_sc = { SLIST_HEAD_INITIALIZER(bls_head), 0 };
+
+void
+blink_led_register(struct blink_led *l)
+{
+	if (SLIST_EMPTY(&blink_sc.bls_head)) {
+		timeout_set(&blink_sc.bls_to, blink_led_timeout, &blink_sc);
+		blink_sc.bls_on = 0;
+		if (led_blink)
+			timeout_add(&blink_sc.bls_to, 1);
+	}
+	SLIST_INSERT_HEAD(&blink_sc.bls_head, l, bl_next);
+}
+
+void
+blink_led_timeout(void *vsc)
+{
+	struct blink_led_softc *sc = &blink_sc;
+	struct blink_led *l;
+	int t;
+
+	if (SLIST_EMPTY(&sc->bls_head))
+		return;
+
+	SLIST_FOREACH(l, &sc->bls_head, bl_next) {
+		(*l->bl_func)(l->bl_arg, sc->bls_on);
+	}
+	sc->bls_on = !sc->bls_on;
+
+	if (!led_blink)
+		return;
+
+	/*
+	 * Blink rate is:
+	 *      full cycle every second if completely idle (loadav = 0)
+	 *      full cycle every 2 seconds if loadav = 1
+	 *      full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	t = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	timeout_add(&sc->bls_to, t);
 }
