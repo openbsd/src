@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.104 2007/07/14 11:52:30 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.105 2007/07/20 22:10:16 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -43,6 +43,7 @@ mainbus0 at root		# root bus
 mem*	at mainbus0 flags 0x0000	# /dev/*mem and memory controller
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 power0	at mainbus0		# power/fail manager (iv 30)
+lcd0	at mainbus0		# LCD
 cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
 #fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
 #pmu*	at mainbus0 irq 29	# HP PA-RISC performance monitor unit
