@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.64 2007/07/08 17:53:15 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.65 2007/07/20 12:18:47 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -85,19 +85,6 @@
 #include "symtable.h"
 #include "gnode.h"
 
-/* extended indices for System V stuff */
-#define FTARGET_INDEX	7
-#define DTARGET_INDEX	8
-#define FPREFIX_INDEX	9
-#define DPREFIX_INDEX	10
-#define FARCHIVE_INDEX	11
-#define DARCHIVE_INDEX	12
-#define FMEMBER_INDEX	13
-#define DMEMBER_INDEX	14
-
-#define EXTENDED2SIMPLE(i)	(((i)-LOCAL_SIZE)/2)
-#define IS_EXTENDED_F(i)	((i)%2 == 1)
-
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst
  * to determine if there was an error in parsing -- easier than returning
@@ -139,8 +126,6 @@ Var_setCheckEnvFirst(bool yes)
  * listed.
  */
 
-static struct ohash global_variables;
-
 static char *varnames[] = {
     TARGET,
     PREFIX,
@@ -159,6 +144,23 @@ static char *varnames[] = {
     DMEMBER
     };
 
+/* retrieve the hashed values  for well-known variables.  */
+#include    "varhashconsts.h"
+
+/* extended indices for System V stuff */
+#define FTARGET_INDEX	7
+#define DTARGET_INDEX	8
+#define FPREFIX_INDEX	9
+#define DPREFIX_INDEX	10
+#define FARCHIVE_INDEX	11
+#define DARCHIVE_INDEX	12
+#define FMEMBER_INDEX	13
+#define DMEMBER_INDEX	14
+
+#define EXTENDED2SIMPLE(i)	(((i)-LOCAL_SIZE)/2)
+#define IS_EXTENDED_F(i)	((i)%2 == 1)
+
+static struct ohash global_variables;
 
 typedef struct Var_ {
     BUFFER	  val;		/* its value */
@@ -200,28 +202,6 @@ static const char *find_rparen(const char *);
 static const char *find_ket(const char *);
 typedef const char * (*find_t)(const char *);
 static find_t find_pos(int);
-
-/* retrieve the hashed values  for well-known variables.  */
-#include    "varhashconsts.h"
-
-void
-SymTable_Init(SymTable *ctxt)
-{
-    static SymTable sym_template;	
-    memcpy(ctxt, &sym_template, sizeof(*ctxt));
-}
-
-#ifdef CLEANUP
-void
-SymTable_Destroy(SymTable *ctxt)
-{
-    int i;
-
-    for (i = 0; i < LOCAL_SIZE; i++)
-	if (ctxt->locals[i] != NULL)
-	    VarDelete(ctxt->locals[i]);
-}
-#endif
 
 static int
 quick_lookup(const char *name, const char **enamePtr, uint32_t *pk)
@@ -334,6 +314,82 @@ quick_lookup(const char *name, const char **enamePtr, uint32_t *pk)
     return -1;
 }
 
+static Var *
+create_var(const char *name, const char *ename)
+{
+    return ohash_create_entry(&var_info, name, &ename);
+}
+
+/* Set the initial value a var should have */
+static void
+var_init_string(Var *v, const char *val)
+{
+    size_t len;
+
+    len = strlen(val);
+    Buf_Init(&(v->val), len+1);
+    Buf_AddChars(&(v->val), len, val);
+}
+
+static void
+var_set_string(Var *v, const char *val)
+{
+    if ((v->flags & VAR_DUMMY) == 0) {
+	Buf_Reset(&(v->val));
+	Buf_AddString(&(v->val), val);
+    } else {
+    	var_init_string(v, val);
+	v->flags &= ~VAR_DUMMY;
+    }
+}
+
+static void
+var_append_string(Var *v, const char *val)
+{
+    if ((v->flags & VAR_DUMMY) == 0) {
+    	Buf_AddSpace(&(v->val));
+	Buf_AddString(&(v->val), val);
+    } else {
+    	var_init_string(v, val);
+	v->flags &= ~VAR_DUMMY;
+    }
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * VarDelete  --
+ *	Delete a variable and all the space associated with it.
+ *-----------------------------------------------------------------------
+ */
+static void
+VarDelete(Var *v)
+{
+    if ((v->flags & VAR_DUMMY) == 0)
+	Buf_Destroy(&(v->val));
+    free(v);
+}
+
+
+
+void
+SymTable_Init(SymTable *ctxt)
+{
+    static SymTable sym_template;	
+    memcpy(ctxt, &sym_template, sizeof(*ctxt));
+}
+
+#ifdef CLEANUP
+void
+SymTable_Destroy(SymTable *ctxt)
+{
+    int i;
+
+    for (i = 0; i < LOCAL_SIZE; i++)
+	if (ctxt->locals[i] != NULL)
+	    VarDelete(ctxt->locals[i]);
+}
+#endif
+
 static void
 varq_set_append(int idx, const char *val, GNode *gn, bool append)
 {
@@ -385,44 +441,19 @@ Varq_Value(int idx, GNode *gn)
 }
 
 static Var *
-create_var(const char *name, const char *ename)
+obtain_global_var(const char *name, const char *ename, uint32_t k)
 {
-    return ohash_create_entry(&var_info, name, &ename);
-}
+	unsigned int slot;
+	Var *v;
 
-/* Set the initial value a var should have */
-static void
-var_init_string(Var *v, const char *val)
-{
-    size_t len;
-
-    len = strlen(val);
-    Buf_Init(&(v->val), len+1);
-    Buf_AddChars(&(v->val), len, val);
-}
-
-static void
-var_set_string(Var *v, const char *val)
-{
-    if ((v->flags & VAR_DUMMY) == 0) {
-	Buf_Reset(&(v->val));
-	Buf_AddString(&(v->val), val);
-    } else {
-    	var_init_string(v, val);
-	v->flags &= ~VAR_DUMMY;
-    }
-}
-
-static void
-var_append_string(Var *v, const char *val)
-{
-    if ((v->flags & VAR_DUMMY) == 0) {
-    	Buf_AddSpace(&(v->val));
-	Buf_AddString(&(v->val), val);
-    } else {
-    	var_init_string(v, val);
-	v->flags &= ~VAR_DUMMY;
-    }
+	slot = ohash_lookup_interval(&global_variables, name, ename, k);
+	v = ohash_find(&global_variables, slot);
+	if (v == NULL) {
+		v = create_var(name, ename);
+		v->flags = VAR_DUMMY;
+		ohash_insert(&global_variables, slot, v);
+	}
+	return v;
 }
 
 static void
@@ -444,19 +475,46 @@ fill_from_env(Var *v)
 }
 
 static Var *
-obtain_global_var(const char *name, const char *ename, uint32_t k)
+find_global_var(const char *name, const char *ename, uint32_t k)
 {
-	unsigned int slot;
-	Var *v;
+    Var 		*v;
 
-	slot = ohash_lookup_interval(&global_variables, name, ename, k);
-	v = ohash_find(&global_variables, slot);
-	if (v == NULL) {
-		v = create_var(name, ename);
-		v->flags = VAR_DUMMY;
-		ohash_insert(&global_variables, slot, v);
+    v = obtain_global_var(name, ename, k);
+
+    if ((v->flags & VAR_SEEN_ENV) == 0 &&
+    	(checkEnvFirst  && (v->flags & VAR_FROM_CMD) == 0 || 
+	    (v->flags & VAR_DUMMY) != 0))
+		fill_from_env(v);
+
+    return v;
+}
+
+
+void
+Var_MarkPoisoned(const char *name, const char *ename, unsigned int type)
+{
+	Var   *v;
+	uint32_t	k;
+	int		idx;
+	idx = quick_lookup(name, &ename, &k);
+
+	if (idx != -1) {
+		Parse_Error(PARSE_FATAL, 
+		    "Trying to poison dynamic variable $%s",
+		    varnames[idx]);
+		return;
 	}
-	return v;
+
+	v = find_global_var(name, ename, k);
+	v->flags |= type;
+	if (v->flags & POISON_NORMAL) {
+		if (v->flags & VAR_DUMMY)
+			return;
+		if (v->flags & VAR_FROM_ENV)
+			return;
+		Parse_Error(PARSE_FATAL,
+		    "Poisoned variable %s is already set\n", v->name);
+	}
 }
 
 static void
@@ -477,55 +535,6 @@ poison_check(Var *v)
 			Parse_Error(PARSE_FATAL, 
 			    "Poisoned variable %s is empty\n", v->name);
 }
-
-static Var *
-find_global_var(const char *name, const char *ename, uint32_t k)
-{
-    Var 		*v;
-
-    v = obtain_global_var(name, ename, k);
-
-    if ((v->flags & VAR_SEEN_ENV) == 0 &&
-    	(checkEnvFirst  && (v->flags & VAR_FROM_CMD) == 0 || 
-	    (v->flags & VAR_DUMMY) != 0))
-		fill_from_env(v);
-
-    return v;
-}
-
-static Var *
-varfind(const char *name, const char *ename, SymTable *ctxt, 
-    int idx, uint32_t k)
-{
-    /* Handle local variables first */
-    if (idx != -1) {
-    	if (ctxt != NULL) {
-		if (idx < LOCAL_SIZE)
-		    return ctxt->locals[idx];
-		else
-		    return ctxt->locals[EXTENDED2SIMPLE(idx)];
-	} else
-		return NULL;
-    } else {
-    	return find_global_var(name, ename, k);
-    }
-}
-
-/*-
- *-----------------------------------------------------------------------
- * VarDelete  --
- *	Delete a variable and all the space associated with it.
- *-----------------------------------------------------------------------
- */
-static void
-VarDelete(Var *v)
-{
-    if ((v->flags & VAR_DUMMY) == 0)
-	Buf_Destroy(&(v->val));
-    free(v);
-}
-
-
 
 void
 Var_Delete(const char *name)
@@ -611,33 +620,6 @@ Var_Appendi(const char *name, const char *ename, const char *val, int ctxt)
 	var_set_append(name, ename, val, ctxt, true);
 }
 
-void
-Var_MarkPoisoned(const char *name, const char *ename, unsigned int type)
-{
-	Var   *v;
-	uint32_t	k;
-	int		idx;
-	idx = quick_lookup(name, &ename, &k);
-
-	if (idx != -1) {
-		Parse_Error(PARSE_FATAL, 
-		    "Trying to poison dynamic variable $%s",
-		    varnames[idx]);
-		return;
-	}
-
-	v = find_global_var(name, ename, k);
-	v->flags |= type;
-	if (v->flags & POISON_NORMAL) {
-		if (v->flags & VAR_DUMMY)
-			return;
-		if (v->flags & VAR_FROM_ENV)
-			return;
-		Parse_Error(PARSE_FATAL,
-		    "Poisoned variable %s is already set\n", v->name);
-	}
-}
-
 char *
 Var_Valuei(const char *name, const char *ename)
 {
@@ -674,6 +656,24 @@ Var_Definedi(const char *name, const char *ename)
 	}
 
 	return false;
+}
+
+static Var *
+varfind(const char *name, const char *ename, SymTable *ctxt, 
+    int idx, uint32_t k)
+{
+    /* Handle local variables first */
+    if (idx != -1) {
+    	if (ctxt != NULL) {
+		if (idx < LOCAL_SIZE)
+		    return ctxt->locals[idx];
+		else
+		    return ctxt->locals[EXTENDED2SIMPLE(idx)];
+	} else
+		return NULL;
+    } else {
+    	return find_global_var(name, ename, k);
+    }
 }
 
 static const char *
