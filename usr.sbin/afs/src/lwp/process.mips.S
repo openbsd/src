@@ -25,6 +25,16 @@
 
 #undef RCSID
 
+#ifdef __LP64__
+#define	REGSIZE	8
+#define	REG_S	sd
+#define	REG_L	ld
+#else
+#define	REGSIZE	4
+#define	REG_S	sw
+#define	REG_L	lw
+#endif
+	
 #ifdef HAVE_PIC
 	.option	pic2
 
@@ -33,12 +43,16 @@
 #elif defined(HAVE_REGDEF_H)
 #include <regdef.h>
 #endif
-	
+
 /* 9 sregs, ra, 6 fp regs, gp, pad to 8 byte boundary */
-#define regspace 9 * 4 + 4 + 6 * 8 + 4 + 4
+#ifdef __LP64__
+#define regspace 9 * REGSIZE + REGSIZE + 6 * 8 + REGSIZE
+#else
+#define regspace 9 * REGSIZE + REGSIZE + 6 * 8 + 4 + REGSIZE
+#endif
 #define floats 0
 #define registers floats + 6 * 8
-#define returnaddr regspace - 4
+#define returnaddr regspace - REGSIZE
 #define topstack 0
 #define GPOFF	regspace - 8
 	.globl savecontext /* MIPS' C compiler doesnt prepend underscores. */
@@ -56,17 +70,17 @@ savecontext:
         .set    reorder
 	.frame	sp, regspace, ra
 /* Save registers. */
-	sw	s0, registers + 0(sp)
-	sw	s1, registers + 4(sp)
-	sw	s2, registers + 8(sp)
-	sw	s3, registers + 12(sp)
-	sw	s4, registers + 16(sp)
-	sw	s5, registers + 20(sp)
-	sw	s6, registers + 24(sp)
-	sw	s7, registers + 28(sp)
-	sw	s8, registers + 32(sp)
+	REG_S	s0, registers + (0 * REGSIZE)(sp)
+	REG_S	s1, registers + (1 * REGSIZE)(sp)
+	REG_S	s2, registers + (2 * REGSIZE)(sp)
+	REG_S	s3, registers + (3 * REGSIZE)(sp)
+	REG_S	s4, registers + (4 * REGSIZE)(sp)
+	REG_S	s5, registers + (5 * REGSIZE)(sp)
+	REG_S	s6, registers + (6 * REGSIZE)(sp)
+	REG_S	s7, registers + (7 * REGSIZE)(sp)
+	REG_S	s8, registers + (8 * REGSIZE)(sp)
 /* Save return address */
-	sw	ra, returnaddr(sp)
+	REG_S	ra, returnaddr(sp)
 	.mask	0xc0ff0000, -4
 /* Need to save floating point registers? */
 	s.d	$f20, floats + 0(sp)
@@ -76,12 +90,13 @@ savecontext:
 	s.d	$f28, floats + 32(sp)
 	s.d	$f30, floats + 40(sp)
 	.fmask	0x55400000, regspace
-	sw	sp, topstack(a1)
+	REG_S	sp, topstack(a1)
 	beq	a2, $0, samestack
 	move	sp, a2
 samestack:
 	move	t9, a0
 	j	t9
+	 nop
 	.end	savecontext
 
 	.globl	returnto
@@ -91,18 +106,18 @@ returnto:
         .cpload t9                      # set up gp for KPIC
         .set    reorder
 
-	lw	sp, topstack(a0)
-	lw	s0, registers + 0(sp)
-	lw	s1, registers + 4(sp)
-	lw	s2, registers + 8(sp)
-	lw	s3, registers + 12(sp)
-	lw	s4, registers + 16(sp)
-	lw	s5, registers + 20(sp)
-	lw	s6, registers + 24(sp)
-	lw	s7, registers + 28(sp)
-	lw	s8, registers + 32(sp)
+	REG_L	sp, topstack(a0)
+	REG_L	s0, registers + (0 * REGSIZE)(sp)
+	REG_L	s1, registers + (1 * REGSIZE)(sp)
+	REG_L	s2, registers + (2 * REGSIZE)(sp)
+	REG_L	s3, registers + (3 * REGSIZE)(sp)
+	REG_L	s4, registers + (4 * REGSIZE)(sp)
+	REG_L	s5, registers + (5 * REGSIZE)(sp)
+	REG_L	s6, registers + (6 * REGSIZE)(sp)
+	REG_L	s7, registers + (7 * REGSIZE)(sp)
+	REG_L	s8, registers + (8 * REGSIZE)(sp)
 /* Save return address */
-	lw	ra, returnaddr(sp)
+	REG_L	ra, returnaddr(sp)
 /* Need to save floating point registers? */
 	l.d	$f20, floats + 0(sp)
 	l.d	$f22, floats + 8(sp)
@@ -123,12 +138,14 @@ returnto:
  * Written by Zalman Stern April 30th, 1989.
  */
 
-#if defined(HAVE_REGDEF_H)	
+#if defined(HAVE_MACHINE_REGDEF_H) || defined(__OpenBSD__)
+#include <machine/regdef.h>
+#elif defined(HAVE_REGDEF_H)
 #include <regdef.h> /* Allow use of symbolic names for registers. */
 #else
 #define sp     $29
 #define ra     $31
-#define t0     $8
+#define t0     $8	/* XXX this only works for 32 bit systems */
 #define a0     $4
 #define a1     $5
 #define a2     $6
@@ -143,10 +160,10 @@ returnto:
 #define s8     $30
 #endif
 	
-#define regspace 9 * 4 + 4 + 6 * 8
+#define regspace 9 * REGSIZE + REGSIZE + 6 * 8
 #define floats 0
 #define registers floats + 6 * 8
-#define returnaddr regspace - 4
+#define returnaddr regspace - REGSIZE
 #define topstack 0
 	.globl savecontext /* MIPS' C compiler doesnt prepend underscores. */
 	.ent savecontext /* Insert debugger information. */
@@ -157,17 +174,17 @@ savecontext:
 	subu	sp, regspace
 	.frame	sp, regspace, ra
 /* Save registers. */
-	sw	s0, registers + 0(sp)
-	sw	s1, registers + 4(sp)
-	sw	s2, registers + 8(sp)
-	sw	s3, registers + 12(sp)
-	sw	s4, registers + 16(sp)
-	sw	s5, registers + 20(sp)
-	sw	s6, registers + 24(sp)
-	sw	s7, registers + 28(sp)
-	sw	s8, registers + 32(sp)
+	REG_S	s0, registers + (0 * REGSIZE)(sp)
+	REG_S	s1, registers + (1 * REGSIZE)(sp)
+	REG_S	s2, registers + (2 * REGSIZE)(sp)
+	REG_S	s3, registers + (3 * REGSIZE)(sp)
+	REG_S	s4, registers + (4 * REGSIZE)(sp)
+	REG_S	s5, registers + (5 * REGSIZE)(sp)
+	REG_S	s6, registers + (6 * REGSIZE)(sp)
+	REG_S	s7, registers + (7 * REGSIZE)(sp)
+	REG_S	s8, registers + (8 * REGSIZE)(sp)
 /* Save return address */
-	sw	ra, returnaddr(sp)
+	REG_S	ra, returnaddr(sp)
 	.mask	0xc0ff0000, -4
 /* Need to save floating point registers? */
 	s.d	$f20, floats + 0(sp)
@@ -177,7 +194,7 @@ savecontext:
 	s.d	$f28, floats + 32(sp)
 	s.d	$f30, floats + 40(sp)
 	.fmask	0x55400000, regspace
-	sw	sp, topstack(a1)
+	REG_S	sp, topstack(a1)
 	beq	a2, $0, samestack
 	addu	sp, $0, a2
 samestack:
@@ -187,18 +204,18 @@ samestack:
 	.globl	returnto
 	.ent	returnto
 returnto:
-	lw	sp, topstack(a0)
-	lw	s0, registers + 0(sp)
-	lw	s1, registers + 4(sp)
-	lw	s2, registers + 8(sp)
-	lw	s3, registers + 12(sp)
-	lw	s4, registers + 16(sp)
-	lw	s5, registers + 20(sp)
-	lw	s6, registers + 24(sp)
-	lw	s7, registers + 28(sp)
-	lw	s8, registers + 32(sp)
+	REG_L	sp, topstack(a0)
+	REG_L	s0, registers + (0 * REGSIZE)(sp)
+	REG_L	s1, registers + (1 * REGSIZE)(sp)
+	REG_L	s2, registers + (2 * REGSIZE)(sp)
+	REG_L	s3, registers + (3 * REGSIZE)(sp)
+	REG_L	s4, registers + (4 * REGSIZE)(sp)
+	REG_L	s5, registers + (5 * REGSIZE)(sp)
+	REG_L	s6, registers + (6 * REGSIZE)(sp)
+	REG_L	s7, registers + (7 * REGSIZE)(sp)
+	REG_L	s8, registers + (8 * REGSIZE)(sp)
 /* Save return address */
-	lw	ra, returnaddr(sp)
+	REG_L	ra, returnaddr(sp)
 /* Need to save floating point registers? */
 	l.d	$f20, floats + 0(sp)
 	l.d	$f22, floats + 8(sp)
@@ -208,6 +225,5 @@ returnto:
 	l.d	$f30, floats + 40(sp)
 	addu	sp, regspace
 	sw	$0, PRE_Block
-	j	ra
 	.end	returnto
 #endif	/* HAVE_PIC */
