@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.183 2007/06/04 21:34:01 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.184 2007/07/21 20:22:03 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: June 4 2007 $
+.Dd $Mdocdate: July 21 2007 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -938,7 +938,8 @@ the semaphores terminates unexpectedly.
 Default value is 10.
 .El
 .Ss Operation Related Options
-.Bl -ohang
+.Pp
+.Bl -ohang -compact
 .It Cd option NKMEMPAGES=value
 .It Cd option NKMEMPAGES_MIN=value
 .It Cd option NKMEMPAGES_MAX=value
@@ -964,11 +965,13 @@ These options are provided in the event the computed value is
 insufficient resulting in an
 .Dq out of space in kmem_map
 panic.
+.Pp
 .It Cd option NBUF=value
 .It Cd option BUFPAGES=value
 These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
+.Pp
 .It Cd option APM_NOPRINT
 This option is supported on the i386 architecture.
 When enabled, kernel messages regarding the status of the automatic power
@@ -980,6 +983,7 @@ status can still be obtained using
 .Xr apm 8
 and/or
 .Xr apmd 8 .
+.Pp
 .It Cd option \&"TIMEZONE=value\&"
 .Ar value
 indicates the time zone offset of the hardware realtime clock device,
@@ -997,6 +1001,7 @@ should be
 as Tokyo local time is 9 hours ahead of UTC.
 Double quotes are needed when specifying a negative
 .Ar value .
+.Pp
 .It Cd option DST=value
 If
 .Ar value
