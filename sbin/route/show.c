@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.58 2007/06/04 12:23:44 henning Exp $	*/
+/*	$OpenBSD: show.c,v 1.59 2007/07/21 15:43:01 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -149,6 +149,8 @@ p_rttables(int af, u_int tableid)
 	if (buf) {
 		for (next = buf; next < lim; next += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)next;
+			if (rtm->rtm_version != RTM_VERSION)
+				continue;
 			sa = (struct sockaddr *)(rtm + 1);
 			if (af != AF_UNSPEC && sa->sa_family != af)
 				continue;
