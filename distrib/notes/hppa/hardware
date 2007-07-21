@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.27 2007/05/28 09:00:55 martin Exp $
+dnl	$OpenBSD: hardware,v 1.28 2007/07/21 16:39:18 kettenis Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -53,6 +53,21 @@ Supported devices {:-include-:}:
 		3Com 3cSOHO adapter
 		3Com 3c900B-FL and 3c900B-FL/FX fiber optic adapters
 		3Com 3c555/3c556/3c556B MiniPCI adapters
+	SysKonnect and Marvell based adapters (not bootable), including:
+		SysKonnect SK-9821 (1000baseT)
+		SysKonnect SK-9822 (dual 1000baseT)
+		SysKonnect SK-9841 (1000baseLX)
+		SysKonnect SK-9842 (dual 1000baseLX)
+		SysKonnect SK-9843 (1000baseSX)
+		SysKonnect SK-9844 (dual 1000baseSX)
+		SysKonnect SK-9521 v2.0 (1000baseT 32-bit)
+		SysKonnect SK-9821 v2.0 (1000baseT)
+		SysKonnect SK-9843 v2.0 (1000baseSX)
+		3Com 3c940 (1000baseT)
+		D-Link DGE-530T (1000baseT)
+		Linksys EG1032v2 (1000baseT)
+		Linksys EG1064v2 (1000baseT)
+		SMC 9452TX (1000baseT)
 - SCSI controllers
 	built-in 53C700 SCSI (oosiop)
 	built-in 53C710 SCSI (osiop)
