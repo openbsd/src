@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.56 2007/06/12 16:26:37 mbalmer Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.57 2007/07/21 16:28:50 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1338,7 +1338,6 @@ void
 usb_disconnect_port(struct usbd_port *up, struct device *parent)
 {
 	usbd_device_handle dev = up->device;
-	char *hubname = parent->dv_xname;
 	int i;
 
 	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n",
@@ -1354,11 +1353,11 @@ usb_disconnect_port(struct usbd_port *up, struct device *parent)
 	if (dev->subdevs != NULL) {
 		DPRINTFN(3,("usb_disconnect_port: disconnect subdevs\n"));
 		for (i = 0; dev->subdevs[i]; i++) {
-			printf("%s: at %s", dev->subdevs[i]->dv_xname,
-			    hubname);
+			DPRINTF(("%s: at %s", dev->subdevs[i]->dv_xname,
+			    parent->dv_xname));
 			if (up->portno != 0)
-				printf(" port %d", up->portno);
-			printf(" (addr %d) disconnected\n", dev->address);
+				DPRINTF((" port %d", up->portno));
+			DPRINTF((" (addr %d) disconnected\n", dev->address));
 			config_detach(dev->subdevs[i], DETACH_FORCE);
 			dev->subdevs[i] = 0;
 		}
