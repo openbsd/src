@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpgrp.2,v 1.13 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: getpgrp.2,v 1.14 2007/07/21 20:35:28 jmc Exp $
 .\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,11 +30,12 @@
 .\"
 .\"     @(#)getpgrp.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 21 2007 $
 .Dt GETPGRP 2
 .Os
 .Sh NAME
-.Nm getpgrp
+.Nm getpgrp ,
+.Nm getpgid
 .Nd get process group
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
@@ -49,6 +50,11 @@ The process group of the
 .Fa pid
 process is returned by
 .Fn getpgid .
+If
+.Fa pid
+is zero,
+.Fn getpgid
+returns the process group of the current process.
 .Pp
 Process groups are used for distribution of signals, and
 by terminals to arbitrate requests for their input: processes
@@ -56,7 +62,7 @@ that have the same process group as the terminal are foreground
 and may read, while others will block with a signal if they attempt
 to read.
 .Pp
-This call is thus used by programs such as
+These calls are thus used by programs such as
 .Xr csh 1
 to create
 process groups
