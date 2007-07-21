@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.76 2007/07/06 04:08:46 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.77 2007/07/21 01:19:52 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -263,8 +263,8 @@ ne*	at pcmcia?			# PCMCIA based NE2000
 #sm*	at pcmcia?			# PCMCIA based sm
 #xe*	at pcmcia?			# Xircom ethernet
 #fpa*	at pci?				# DEC DEFPA FDDI
-xl*	at pci?				# 3C9xx ethernet
-xl*	at cardbus?			# 3C575 ethernet
+#xl*	at pci?				# 3C9xx ethernet
+#xl*	at cardbus?			# 3C575 ethernet
 rl*	at pci?				# RealTek 81[23]9 ethernet
 rl*	at cardbus?			# RealTek 81[23]9 ethernet
 #epic*	at pci?				# SMC EPIC/100 ethernet
