@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.70 2007/07/08 17:44:20 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.71 2007/07/21 14:41:07 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ main(int argc, char **argv)
 	 */
 	if (!machine) {
 #ifndef MAKE_BOOTSTRAP
-	    struct utsname utsname;
+	    static struct utsname utsname;
 
 	    if (uname(&utsname) == -1) {
 		    perror("make: uname");
