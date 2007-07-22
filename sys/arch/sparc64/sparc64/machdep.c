@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.92 2007/07/22 21:33:04 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1584,14 +1584,11 @@ int sparc_bus_alloc(bus_space_tag_t, bus_space_tag_t, bus_addr_t, bus_addr_t,
 void sparc_bus_free(bus_space_tag_t, bus_space_tag_t, bus_space_handle_t,
     bus_size_t);
 
-vaddr_t iobase = IODEV_BASE;
-struct extent *io_space = NULL;
-
 int
 sparc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t	addr,
     bus_size_t size, int flags, bus_space_handle_t *hp)
 {
-	vaddr_t v;
+	vaddr_t va;
 	u_int64_t pa;
 	paddr_t	pm_flags = 0;
 	vm_prot_t pm_prot = VM_PROT_READ;
@@ -1600,16 +1597,6 @@ sparc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t	addr,
 		hp->bh_ptr = addr;
 		return (0);
 	}
-
-	if (iobase == NULL)
-		iobase = IODEV_BASE;
-	if (io_space == NULL)
-		/*
-		 * And set up IOSPACE extents.
-		 */
-		io_space = extent_create("IOSPACE",
-		    (u_long)IODEV_BASE, (u_long)IODEV_END, M_DEVBUF, 0, 0,
-		    EX_NOWAIT);
 
 	if (size == 0) {
 		char buf[80];
@@ -1656,18 +1643,14 @@ sparc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t	addr,
 	if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0)
 		pm_flags |= PMAP_NC;
 
-	{ /* scope */
-		int err = extent_alloc(io_space, size, NBPG, 0, 0,
-		    EX_NOWAIT | EX_BOUNDZERO, (u_long *)&v);
-		if (err)
-			panic("sparc_bus_map: cannot allocate io_space: %d",
-			    err);
-	}
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		return (ENOMEM);
 
 	/* note: preserve page offset */
-	hp->bh_ptr = v | ((u_long)addr & PGOFSET);
+	hp->bh_ptr = va | (addr & PGOFSET);
 
-	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
+	pa = trunc_page(addr);
 	if ((flags & BUS_SPACE_MAP_READONLY) == 0)
 		pm_prot |= VM_PROT_WRITE;
 
@@ -1687,9 +1670,9 @@ sparc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t	addr,
 		BUS_SPACE_PRINTF(BSDB_MAPDETAIL, ("\nsparc_bus_map: phys %llx "
 		    "virt %p hp->bh_ptr %llx", (unsigned long long)pa,
 		    (char *)v, (unsigned long long)hp->bh_ptr));
-		pmap_enter(pmap_kernel(), v, pa | pm_flags, pm_prot,
+		pmap_enter(pmap_kernel(), va, pa | pm_flags, pm_prot,
 			pm_prot|PMAP_WIRED);
-		v += PAGE_SIZE;
+		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
 	pmap_update(pmap_kernel());
@@ -1767,16 +1750,14 @@ sparc_bus_unmap(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t bh,
 {
 	vaddr_t va = trunc_page((vaddr_t)bh.bh_ptr);
 	vaddr_t endva = va + round_page(size);
-	int error;
 
 	if (PHYS_ASI(t0->asi))
 		return (0);
 
-	error = extent_free(io_space, va, size, EX_NOWAIT);
-	if (error)
-		printf("\nsparc_bus_unmap: extent free says %d", error);
-
 	pmap_remove(pmap_kernel(), va, endva);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, va, endva - va);
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.25 2007/05/28 21:02:49 thib Exp $	*/
+/*	$OpenBSD: param.h,v 1.26 2007/07/22 21:33:04 kettenis Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -149,8 +149,6 @@ extern int nbpg, pgofset, pgshift;
  * KERNEND+0x010000:	64K locked TTE -- different for each CPU
  *			Contains interrupt stack, cpu_info structure,
  *			and 32KB kernel TSB.
- * KERNEND+0x020000:	IODEV_BASE -- begin mapping IO devices here.
- * 0x00000000fe000000:	IODEV_END -- end of device mapping space.
  *
  */
 #define	KERNBASE	0x001000000	/* start of kernel virtual space */
@@ -168,8 +166,6 @@ extern int nbpg, pgofset, pgshift;
 #define INTSTACK	(      KERNEND + 8*_MAXNBPG)/* 64K after kernel end */
 #define	EINTSTACK	(     INTSTACK + 2*USPACE)	/* 32KB */
 #define	CPUINFO_VA	(    EINTSTACK)
-#define	IODEV_BASE	(   CPUINFO_VA + 8*_MAXNBPG)/* 64K long */
-#define	IODEV_END	0x0f0000000UL		/* 16 MB of iospace */
 
 /*
  * Constants related to network buffer management.
