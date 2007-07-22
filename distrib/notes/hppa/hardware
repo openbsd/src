@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.29 2007/07/21 16:41:03 kettenis Exp $
+dnl	$OpenBSD: hardware,v 1.30 2007/07/22 04:41:33 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -61,6 +61,22 @@ Supported devices {:-include-:}:
 		Netgear GA302T
 		SysKonnect SK-9D21
 		SysKonnect SK-9D41
+	Realtek 8129/8139 based PCI Ethernet adapters (rl), including:
+		Accton MPX 5030/5038
+		Allied Telesyn AT2550
+		Corega FEther CB-TXD 10/100 Ethernet 
+		D-Link DFE530TX+, DFE538TX
+		Encore ENL832-TX-RENT 10/100 M PCI
+		Genius GF100TXR
+		KTX-9130TX 10/100 Fast Ethernet
+		Longshine LCS-8038TX-R
+		NDC NE100TX-E
+		Netgear FA311 v2
+		Netronix EA-1210 Net Ether 10/100
+		Nortel BayStack 21
+		OvisLink LEF-8129TX, LEF-8139TX
+		SMC EZ Card 10/100 PCI 1211-TX
+		TRENDnet TE100-PCBUSR CardBus 
 	SysKonnect and Marvell based adapters (not bootable), including:
 		SysKonnect SK-9821 (1000baseT)
 		SysKonnect SK-9822 (dual 1000baseT)
