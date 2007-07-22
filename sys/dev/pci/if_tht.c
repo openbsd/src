@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.106 2007/05/28 06:34:06 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.107 2007/07/22 03:53:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1801,10 +1801,10 @@ tht_write_region(struct tht_softc *sc, bus_size_t r, void *buf, size_t len)
 }
 
 int
-tht_wait_eq(struct tht_softc *sp, bus_size_t r, u_int32_t m, u_int32_t v,
+tht_wait_eq(struct tht_softc *sc, bus_size_t r, u_int32_t m, u_int32_t v,
     int timeout)
 {
-	while ((tht_read(sp, r) & m) != v) {
+	while ((tht_read(sc, r) & m) != v) {
 		if (timeout == 0)
 			return (0);
 
@@ -1816,10 +1816,10 @@ tht_wait_eq(struct tht_softc *sp, bus_size_t r, u_int32_t m, u_int32_t v,
 }
 
 int
-tht_wait_ne(struct tht_softc *sp, bus_size_t r, u_int32_t m, u_int32_t v,
+tht_wait_ne(struct tht_softc *sc, bus_size_t r, u_int32_t m, u_int32_t v,
     int timeout)
 {
-	while ((tht_read(sp, r) & m) == v) {
+	while ((tht_read(sc, r) & m) == v) {
 		if (timeout == 0)
 			return (0);
 
