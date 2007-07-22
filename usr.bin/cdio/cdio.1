@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.45 2007/07/20 09:06:17 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.46 2007/07/22 21:27:55 sobrado Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 20 2007 $
+.Dd $Mdocdate: July 22 2007 $
 .Dt CDIO 1
 .Os
 .Sh NAME
@@ -94,14 +94,6 @@ In case of multiple matches, reissue the command with
 .Ar n .
 .It Ic cdid
 Print the disc ID that will be used for matching with the CDDB.
-.It Ic cdrip Op Ar track1-trackN ...
-Rip specified tracks from disk.
-Audio tracks are saved as WAVE sound files.
-All tracks will be saved in the current working directory.
-If parameters are omitted, all tracks are ripped.
-Both individual tracks and track ranges may be specified, in the same format as the
-.Ic cdplay
-command.
 .It Ic cdplay Op Ar track1-trackN ...
 Play specified tracks from disk.
 Unlike
@@ -113,6 +105,14 @@ Both individual tracks and track ranges may be specified.
 If range is specified in descending order tracks will be played in descending order.
 If the first value in the range is omitted, tracks from first track on disk to the specified one will be played.
 If the last value in the range is omitted, tracks from the specified track to the last track on disk will be played.
+.It Ic cdrip Op Ar track1-trackN ...
+Rip specified tracks from disk.
+Audio tracks are saved as WAVE sound files.
+All tracks will be saved in the current working directory.
+If parameters are omitted, all tracks are ripped.
+Both individual tracks and track ranges may be specified, in the same format as the
+.Ic cdplay
+command.
 .It Ic close
 Inject the disc.
 .It Ic debug Ar on | off
