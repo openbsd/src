@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.163 2007/07/20 22:12:39 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.164 2007/07/22 19:24:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -733,31 +733,6 @@ delay(us)
 		us -= n;
 	}
 }
-
-void
-microtime(struct timeval *tv)
-{
-	extern u_long cpu_itmr;
-	u_long itmr, mask;
-	int s;
-
-	s = splhigh();
-	tv->tv_sec  = time.tv_sec;
-	tv->tv_usec = time.tv_usec;
-
-	rsm(PSL_I, mask);
-	mfctl(CR_ITMR, itmr);
-	itmr -= cpu_itmr;
-	ssm(PSL_I, mask);
-	splx(s);
-
-	tv->tv_usec += itmr * cpu_ticksdenom / cpu_ticksnum;
-	if (tv->tv_usec >= 1000000) {
-		tv->tv_usec -= 1000000;
-		tv->tv_sec++;
-	}
-}
-
 
 static __inline void
 fall(c_base, c_count, c_loop, c_stride, data)
