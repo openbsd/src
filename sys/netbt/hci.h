@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci.h,v 1.8 2007/06/24 20:55:27 uwe Exp $	*/
+/*	$OpenBSD: hci.h,v 1.9 2007/07/22 21:05:00 gwk Exp $	*/
 /*	$NetBSD: hci.h,v 1.10 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.8 2007/06/24 20:55:27 uwe Exp $
+ * $Id: hci.h,v 1.9 2007/07/22 21:05:00 gwk Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -474,8 +474,8 @@ typedef hci_status_rp	hci_exit_periodic_inquiry_rp;
 #define HCI_OCF_CREATE_CON				0x0005
 #define HCI_CMD_CREATE_CON				0x0405
 typedef struct {
-	bdaddr_t	bdaddr;             /* destination address */
-	uint16_t	pkt_type;           /* packet type */
+	bdaddr_t	bdaddr;		    /* destination address */
+	uint16_t	pkt_type;	    /* packet type */
 	uint8_t		page_scan_rep_mode; /* page scan repetition mode */
 	uint8_t		page_scan_mode;     /* reserved - set to 0x00 */
 	uint16_t	clock_offset;       /* clock offset */
@@ -530,7 +530,7 @@ typedef struct {
 #define HCI_OCF_LINK_KEY_REP				0x000b
 #define HCI_CMD_LINK_KEY_REP				0x040B
 typedef struct {
-	bdaddr_t	bdaddr;            /* remote address */
+	bdaddr_t	bdaddr;		   /* remote address */
 	uint8_t		key[HCI_KEY_SIZE]; /* key */
 } __attribute__ ((__packed__)) hci_link_key_rep_cp;
 
@@ -553,8 +553,8 @@ typedef struct {
 #define HCI_OCF_PIN_CODE_REP				0x000d
 #define HCI_CMD_PIN_CODE_REP				0x040D
 typedef struct {
-	bdaddr_t	bdaddr;               /* remote address */
-	uint8_t		pin_size;             /* pin code length (in bytes) */
+	bdaddr_t	bdaddr;		      /* remote address */
+	uint8_t		pin_size;	      /* pin code length (in bytes) */
 	uint8_t		pin[HCI_PIN_SIZE];    /* pin code */
 } __attribute__ ((__packed__)) hci_pin_code_rep_cp;
 
@@ -592,7 +592,7 @@ typedef struct {
 #define HCI_OCF_SET_CON_ENCRYPTION			0x0013
 #define HCI_CMD_SET_CON_ENCRYPTION			0x0413
 typedef struct {
-	uint16_t	con_handle;        /* connection handle */
+	uint16_t	con_handle;	   /* connection handle */
 	uint8_t		encryption_enable; /* 0x00 - disable, 0x01 - enable */
 } __attribute__ ((__packed__)) hci_set_con_encryption_cp;
 /* No return parameter(s) */
@@ -614,7 +614,7 @@ typedef struct {
 #define HCI_OCF_REMOTE_NAME_REQ				0x0019
 #define HCI_CMD_REMOTE_NAME_REQ				0x0419
 typedef struct {
-	bdaddr_t	bdaddr;             /* remote address */
+	bdaddr_t	bdaddr;		    /* remote address */
 	uint8_t		page_scan_rep_mode; /* page scan repetition mode */
 	uint8_t		page_scan_mode;     /* page scan mode */
 	uint16_t	clock_offset;       /* clock offset */
@@ -624,12 +624,12 @@ typedef struct {
 #define HCI_OCF_REMOTE_NAME_REQ_CANCEL			0x001a
 #define HCI_CMD_REMOTE_NAME_REQ_CANCEL			0x041A
 typedef struct {
-	bdaddr_t	bdaddr;             /* remote address */
+	bdaddr_t	bdaddr;		/* remote address */
 } __attribute__ ((__packed__)) hci_remote_name_req_cancel_cp;
 
 typedef struct {
 	uint8_t		status;		/* 0x00 - success */
-	bdaddr_t	bdaddr;         /* remote address */
+	bdaddr_t	bdaddr;		/* remote address */
 } __attribute__ ((__packed__)) hci_remote_name_req_cancel_rp;
 
 #define HCI_OCF_READ_REMOTE_FEATURES			0x001b
@@ -763,11 +763,11 @@ typedef struct {
 #define HCI_CMD_QOS_SETUP				0x0807
 typedef struct {
 	uint16_t	con_handle;      /* connection handle */
-	uint8_t		flags;           /* reserved for future use */
+	uint8_t		flags;		 /* reserved for future use */
 	uint8_t		service_type;    /* service type */
 	uint32_t	token_rate;      /* bytes per second */
 	uint32_t	peak_bandwidth;  /* bytes per second */
-	uint32_t	latency;         /* microseconds */
+	uint32_t	latency;	 /* microseconds */
 	uint32_t	delay_variation; /* microseconds */
 } __attribute__ ((__packed__)) hci_qos_setup_cp;
 /* No return parameter(s) */
@@ -870,7 +870,7 @@ typedef hci_status_rp	hci_reset_rp;
 #define HCI_OCF_SET_EVENT_FILTER			0x0005
 #define HCI_CMD_SET_EVENT_FILTER			0x0C05
 typedef struct {
-	uint8_t		filter_type;           /* filter type */
+	uint8_t		filter_type;	       /* filter type */
 	uint8_t		filter_condition_type; /* filter condition type */
 /* variable size condition
 	uint8_t		condition[]; -- conditions */
@@ -918,7 +918,7 @@ typedef struct {
 } __attribute__ ((__packed__)) hci_read_stored_link_key_cp;
 
 typedef struct {
-	uint8_t		status;        /* 0x00 - success */
+	uint8_t		status;	       /* 0x00 - success */
 	uint16_t	max_num_keys;  /* Max. number of keys */
 	uint16_t	num_keys_read; /* Number of stored keys */
 } __attribute__ ((__packed__)) hci_read_stored_link_key_rp;
@@ -933,7 +933,7 @@ typedef struct {
 } __attribute__ ((__packed__)) hci_write_stored_link_key_cp;
 
 typedef struct {
-	uint8_t		status;           /* 0x00 - success */
+	uint8_t		status;		  /* 0x00 - success */
 	uint8_t		num_keys_written; /* # of keys successfully written */
 } __attribute__ ((__packed__)) hci_write_stored_link_key_rp;
 
@@ -945,7 +945,7 @@ typedef struct {
 } __attribute__ ((__packed__)) hci_delete_stored_link_key_cp;
 
 typedef struct {
-	uint8_t		status;           /* 0x00 - success */
+	uint8_t		status;		  /* 0x00 - success */
 	uint16_t	num_keys_deleted; /* Number of keys deleted */
 } __attribute__ ((__packed__)) hci_delete_stored_link_key_rp;
 
@@ -961,7 +961,7 @@ typedef hci_status_rp	hci_write_local_name_rp;
 #define HCI_CMD_READ_LOCAL_NAME				0x0C14
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;                   /* 0x00 - success */
+	uint8_t		status;			  /* 0x00 - success */
 	char		name[HCI_UNIT_NAME_SIZE]; /* unit name */
 } __attribute__ ((__packed__)) hci_read_local_name_rp;
 
@@ -1017,7 +1017,7 @@ typedef hci_status_rp	hci_write_scan_enable_rp;
 #define HCI_CMD_READ_PAGE_SCAN_ACTIVITY			0x0C1B
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;             /* 0x00 - success */
+	uint8_t		status;		    /* 0x00 - success */
 	uint16_t	page_scan_interval; /* interval * 0.625 msec */
 	uint16_t	page_scan_window;   /* window * 0.625 msec */
 } __attribute__ ((__packed__)) hci_read_page_scan_activity_rp;
@@ -1035,7 +1035,7 @@ typedef hci_status_rp	hci_write_page_scan_activity_rp;
 #define HCI_CMD_READ_INQUIRY_SCAN_ACTIVITY		0x0C1D
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;                /* 0x00 - success */
+	uint8_t		status;		       /* 0x00 - success */
 	uint16_t	inquiry_scan_interval; /* interval * 0.625 msec */
 	uint16_t	inquiry_scan_window;   /* window * 0.625 msec */
 } __attribute__ ((__packed__)) hci_read_inquiry_scan_activity_rp;
@@ -1069,7 +1069,7 @@ typedef hci_status_rp	hci_write_auth_enable_rp;
 #define HCI_CMD_READ_ENCRYPTION_MODE			0x0C21
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;          /* 0x00 - success */
+	uint8_t		status;		 /* 0x00 - success */
 	uint8_t		encryption_mode; /* encryption mode */
 } __attribute__ ((__packed__)) hci_read_encryption_mode_rp;
 
@@ -1085,7 +1085,7 @@ typedef hci_status_rp	hci_write_encryption_mode_rp;
 #define HCI_CMD_READ_UNIT_CLASS				0x0C23
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;                 /* 0x00 - success */
+	uint8_t		status;		/* 0x00 - success */
 	uint8_t		uclass[HCI_CLASS_SIZE]; /* unit class */
 } __attribute__ ((__packed__)) hci_read_unit_class_rp;
 
@@ -1157,7 +1157,7 @@ typedef hci_status_rp	hci_write_num_broadcast_retrans_rp;
 #define HCI_CMD_READ_HOLD_MODE_ACTIVITY			0x0C2B
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;             /* 0x00 - success */
+	uint8_t		status;		    /* 0x00 - success */
 	uint8_t		hold_mode_activity; /* Hold mode activities */
 } __attribute__ ((__packed__)) hci_read_hold_mode_activity_rp;
 
@@ -1283,7 +1283,7 @@ typedef hci_status_rp	hci_write_iac_lap_rp;
 #define HCI_CMD_READ_PAGE_SCAN_PERIOD			0x0C3B
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;                /* 0x00 - success */
+	uint8_t		status;		       /* 0x00 - success */
 	uint8_t		page_scan_period_mode; /* Page scan period mode */
 } __attribute__ ((__packed__)) hci_read_page_scan_period_rp;
 
@@ -1300,7 +1300,7 @@ typedef hci_status_rp	hci_write_page_scan_period_rp;
 #define HCI_CMD_READ_PAGE_SCAN				0x0C3D
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;         /* 0x00 - success */
+	uint8_t		status;		/* 0x00 - success */
 	uint8_t		page_scan_mode; /* Page scan mode */
 } __attribute__ ((__packed__)) hci_read_page_scan_rp;
 
@@ -1401,7 +1401,7 @@ typedef hci_status_rp	hci_write_afh_assessment_rp;
 #define HCI_CMD_READ_LOCAL_VER				0x1001
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;         /* 0x00 - success */
+	uint8_t		status;		/* 0x00 - success */
 	uint8_t		hci_version;    /* HCI version */
 	uint16_t	hci_revision;   /* HCI revision */
 	uint8_t		lmp_version;    /* LMP version */
@@ -1421,7 +1421,7 @@ typedef struct {
 #define HCI_CMD_READ_LOCAL_FEATURES			0x1003
 /* No command parameter(s) */
 typedef struct {
-	uint8_t		status;                      /* 0x00 - success */
+	uint8_t		status;			     /* 0x00 - success */
 	uint8_t		features[HCI_FEATURES_SIZE]; /* LMP features bitmsk*/
 } __attribute__ ((__packed__)) hci_read_local_features_rp;
 
@@ -1615,28 +1615,28 @@ typedef struct {
 } __attribute__ ((__packed__)) hci_inquiry_result_ep;
 
 typedef struct {
-	bdaddr_t	bdaddr;                   /* unit address */
+	bdaddr_t	bdaddr;			  /* unit address */
 	uint8_t		page_scan_rep_mode;       /* page scan rep. mode */
 	uint8_t		page_scan_period_mode;    /* page scan period mode */
-	uint8_t		page_scan_mode;           /* page scan mode */
+	uint8_t		page_scan_mode;		  /* page scan mode */
 	uint8_t		uclass[HCI_CLASS_SIZE];   /* unit class */
-	uint16_t	clock_offset;             /* clock offset */
+	uint16_t	clock_offset;		  /* clock offset */
 } __attribute__ ((__packed__)) hci_inquiry_response;
 
 #define HCI_EVENT_CON_COMPL			0x03
 typedef struct {
-	uint8_t		status;          /* 0x00 - success */
+	uint8_t		status;		 /* 0x00 - success */
 	uint16_t	con_handle;      /* Connection handle */
-	bdaddr_t	bdaddr;          /* remote unit address */
+	bdaddr_t	bdaddr;		 /* remote unit address */
 	uint8_t		link_type;       /* Link type */
 	uint8_t		encryption_mode; /* Encryption mode */
 } __attribute__ ((__packed__)) hci_con_compl_ep;
 
 #define HCI_EVENT_CON_REQ			0x04
 typedef struct {
-	bdaddr_t	bdaddr;                 /* remote unit address */
+	bdaddr_t	bdaddr;		/* remote unit address */
 	uint8_t		uclass[HCI_CLASS_SIZE]; /* remote unit class */
-	uint8_t		link_type;              /* link type */
+	uint8_t		link_type;	/* link type */
 } __attribute__ ((__packed__)) hci_con_req_ep;
 
 #define HCI_EVENT_DISCON_COMPL			0x05
@@ -1654,16 +1654,16 @@ typedef struct {
 
 #define HCI_EVENT_REMOTE_NAME_REQ_COMPL		0x07
 typedef struct {
-	uint8_t		status;                   /* 0x00 - success */
-	bdaddr_t	bdaddr;                   /* remote unit address */
+	uint8_t		status;			  /* 0x00 - success */
+	bdaddr_t	bdaddr;			  /* remote unit address */
 	char		name[HCI_UNIT_NAME_SIZE]; /* remote unit name */
 } __attribute__ ((__packed__)) hci_remote_name_req_compl_ep;
 
 #define HCI_EVENT_ENCRYPTION_CHANGE		0x08
 typedef struct {
-	uint8_t		status;            /* 0x00 - success */
-	uint16_t	con_handle;        /* Connection handle */
-	uint8_t		encryption_enable; /* 0x00 - disable */
+	uint8_t		status;			  /* 0x00 - success */
+	uint16_t	con_handle;		  /* Connection handle */
+	uint8_t		encryption_enable;	  /* 0x00 - disable */
 } __attribute__ ((__packed__)) hci_encryption_change_ep;
 
 #define HCI_EVENT_CHANGE_CON_LINK_KEY_COMPL	0x09
@@ -1681,14 +1681,14 @@ typedef struct {
 
 #define HCI_EVENT_READ_REMOTE_FEATURES_COMPL	0x0b
 typedef struct {
-	uint8_t		status;                      /* 0x00 - success */
-	uint16_t	con_handle;                  /* Connection handle */
+	uint8_t		status;			     /* 0x00 - success */
+	uint16_t	con_handle;		     /* Connection handle */
 	uint8_t		features[HCI_FEATURES_SIZE]; /* LMP features bitmsk*/
 } __attribute__ ((__packed__)) hci_read_remote_features_compl_ep;
 
 #define HCI_EVENT_READ_REMOTE_VER_INFO_COMPL	0x0c
 typedef struct {
-	uint8_t		status;         /* 0x00 - success */
+	uint8_t		status;		/* 0x00 - success */
 	uint16_t	con_handle;     /* Connection handle */
 	uint8_t		lmp_version;    /* LMP version */
 	uint16_t	manufacturer;   /* Hardware manufacturer name */
@@ -1697,13 +1697,13 @@ typedef struct {
 
 #define HCI_EVENT_QOS_SETUP_COMPL		0x0d
 typedef struct {
-	uint8_t		status;          /* 0x00 - success */
+	uint8_t		status;		 /* 0x00 - success */
 	uint16_t	con_handle;      /* connection handle */
-	uint8_t		flags;           /* reserved for future use */
+	uint8_t		flags;		 /* reserved for future use */
 	uint8_t		service_type;    /* service type */
 	uint32_t	token_rate;      /* bytes per second */
 	uint32_t	peak_bandwidth;  /* bytes per second */
-	uint32_t	latency;         /* microseconds */
+	uint32_t	latency;	 /* microseconds */
 	uint32_t	delay_variation; /* microseconds */
 } __attribute__ ((__packed__)) hci_qos_setup_compl_ep;
 
@@ -1774,9 +1774,9 @@ typedef struct {
 
 #define HCI_EVENT_LINK_KEY_NOTIFICATION		0x18
 typedef struct {
-	bdaddr_t	bdaddr;            /* remote unit address */
+	bdaddr_t	bdaddr;		   /* remote unit address */
 	uint8_t		key[HCI_KEY_SIZE]; /* link key */
-	uint8_t		key_type;          /* type of the key */
+	uint8_t		key_type;	   /* type of the key */
 } __attribute__ ((__packed__)) hci_link_key_notification_ep;
 
 #define HCI_EVENT_LOOPBACK_COMMAND		0x19
@@ -1815,13 +1815,13 @@ typedef struct {
 /* Page Scan Mode Change Event is deprecated */
 #define HCI_EVENT_PAGE_SCAN_MODE_CHANGE		0x1f
 typedef struct {
-	bdaddr_t	bdaddr;         /* destination address */
+	bdaddr_t	bdaddr;		/* destination address */
 	uint8_t		page_scan_mode; /* page scan mode */
 } __attribute__ ((__packed__)) hci_page_scan_mode_change_ep;
 
 #define HCI_EVENT_PAGE_SCAN_REP_MODE_CHANGE	0x20
 typedef struct {
-	bdaddr_t	bdaddr;             /* destination address */
+	bdaddr_t	bdaddr;		    /* destination address */
 	uint8_t		page_scan_rep_mode; /* page scan repetition mode */
 } __attribute__ ((__packed__)) hci_page_scan_rep_mode_change_ep;
 

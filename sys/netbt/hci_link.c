@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_link.c,v 1.4 2007/06/19 08:12:35 uwe Exp $	*/
+/*	$OpenBSD: hci_link.c,v 1.5 2007/07/22 21:05:00 gwk Exp $	*/
 /*	$NetBSD: hci_link.c,v 1.11 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -834,7 +834,8 @@ hci_sco_recv(struct mbuf *m, struct hci_unit *unit)
 	}
 
 	if (m->m_pkthdr.len != hdr.length) {
-		printf("%s: bad SCO packet length (%d != %d)\n", unit->hci_devname, m->m_pkthdr.len, hdr.length);
+		printf("%s: bad SCO packet length (%d != %d)\n",
+		    unit->hci_devname, m->m_pkthdr.len, hdr.length);
 		goto bad;
 	}
 #endif

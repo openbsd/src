@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_signal.c,v 1.1 2007/05/30 03:42:53 uwe Exp $	*/
+/*	$OpenBSD: l2cap_signal.c,v 1.2 2007/07/22 21:05:00 gwk Exp $	*/
 /*	$NetBSD: l2cap_signal.c,v 1.8 2007/05/16 18:34:49 plunky Exp $	*/
 
 /*-
@@ -1094,7 +1094,8 @@ l2cap_send_disconnect_req(struct l2cap_channel *chan)
  * Send Connect Response
  */
 int
-l2cap_send_connect_rsp(struct hci_link *link, uint8_t ident, uint16_t dcid, uint16_t scid, uint16_t result)
+l2cap_send_connect_rsp(struct hci_link *link, uint8_t ident, uint16_t dcid,
+    uint16_t scid, uint16_t result)
 {
 	l2cap_con_rsp_cp cp;
 
