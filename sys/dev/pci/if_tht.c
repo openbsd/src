@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.107 2007/07/22 03:53:06 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.108 2007/07/22 03:54:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1084,7 +1084,7 @@ tht_down(struct tht_softc *sc)
 		return;
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE | IFF_ALLMULTI);
 
 	while (tht_fifo_writable(sc, &sc->sc_txt) < sc->sc_txt.tf_len &&
 	    tht_fifo_readable(sc, &sc->sc_txf) > 0)
