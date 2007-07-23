@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.35 2007/05/28 22:37:14 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -221,6 +221,8 @@ _mkdev(cd, cd*, {-dodisk2 cd $U major_cd_b major_cd_c $U 0{--}ifstep(cd)-})dnl
 __devitem(mcd, mcd*, Mitsumi CD-ROM drives)dnl
 _mkdev(mcd, mcd*, {-dodisk2 mcd $U major_mcd_b major_mcd_c $U 0{--}ifstep(mcd)dnl
 -})dnl
+__devitem(bthub, {-bthub*-}, Bluetooth Hubs)dnl
+_mcdev(bthub, bthub*, bthub, {-major_bthub_c-})dnl
 __devitem(ch, {-ch*-}, SCSI media changers)dnl
 _mcdev(ch, ch*, ch, {-major_ch_c-}, 660, operator)dnl
 __devitem(uk, uk*, Unknown SCSI devices)dnl
