@@ -1,8 +1,8 @@
-#	$OpenBSD: files.bluetooth,v 1.3 2007/07/23 16:54:51 mk Exp $
+#	$OpenBSD: files.bluetooth,v 1.4 2007/07/23 22:42:27 mk Exp $
 #
 # Config file and device description for machine-independent Bluetooth code.
 # Included by ports that support Bluetooth host controllers.
 
 device bthub {}
 attach bthub at btbus
-file dev/bluetooth/bthub.c		bthub needs-count
+file dev/bluetooth/bthub.c		bthub needs-flag
