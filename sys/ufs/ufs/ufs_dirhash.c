@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.14 2006/06/21 09:50:52 mickey Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.15 2007/07/23 17:28:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -1062,7 +1062,7 @@ ufsdirhash_init()
 	    "dirhash", &pool_allocator_nointr);
 	pool_sethiwat(&ufsdirhash_pool, 512);
 	TAILQ_INIT(&ufsdirhash_list);
-#if defined (__sparc__)
+#if defined (__sparc__) && !defined (__sparc64__)
 	if (!CPU_ISSUN4OR4C)
 #elif defined (__vax__)
 	if (0)
