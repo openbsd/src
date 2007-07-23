@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.51 2007/06/19 16:45:15 reyk Exp $ */
+/*	$OpenBSD: kroute.c,v 1.52 2007/07/23 12:21:35 pyr Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -320,6 +320,7 @@ void
 kr_show_route(struct imsg *imsg)
 {
 	struct kroute_node	*kr;
+	struct kroute_node	*kn;
 	int			 flags;
 	struct in_addr		 addr;
 
@@ -332,8 +333,12 @@ kr_show_route(struct imsg *imsg)
 		memcpy(&flags, imsg->data, sizeof(flags));
 		RB_FOREACH(kr, kroute_tree, &krt)
 			if (!flags || kr->r.flags & flags) {
-				main_imsg_compose_ospfe(IMSG_CTL_KROUTE,
-				    imsg->hdr.pid, &kr->r, sizeof(kr->r));
+				kn = kr;
+				do {
+					main_imsg_compose_ospfe(IMSG_CTL_KROUTE,
+					    imsg->hdr.pid,
+					    &kn->r, sizeof(kn->r));
+				} while ((kn = kn->next) != NULL);
 			}
 		break;
 	case IMSG_CTL_KROUTE_ADDR:
