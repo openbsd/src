@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.70 2007/07/21 16:27:38 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.71 2007/07/23 20:15:45 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -81,6 +81,10 @@ pci*	at elroy?
 
 ppb*	at pci?
 pci*	at ppb?
+
+ssio*	at pci?
+com0	at ssio? irq 4
+com1	at ssio? irq 3
 
 # CardBus bus support
 cbb*		at pci?
