@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.24 2007/07/23 03:03:58 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.25 2007/07/23 03:21:57 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2579,10 +2579,10 @@ static const mixer_item_t stac7661_mixer_items[] = {
 #define STAC7661_DAC_SPEAKER   0x05
 #define STAC7661_TARGET_MASTER -1
 
-	{{0, {AudioNmicrophone".mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT, 0, 0,
+	{{0, {AudioNvolume"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD, 0, 0,
 	    ENUM_OFFON}, 0x09, MI_TARGET_INAMP(0)},
-	{{0, {AudioNmicrophone}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT, 0, 0,
-	    .un.v={{""}, 2, MIXER_DELTA(35)}}, 0x09, MI_TARGET_INAMP(0)},
+	{{0, {AudioNvolume}, AUDIO_MIXER_VALUE, AZ_CLASS_RECORD, 0, 0,
+	    .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x09, MI_TARGET_INAMP(0)},
 	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
 	  0, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x02, STAC7661_TARGET_MASTER},
 	{{0, {AudioNmaster"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
