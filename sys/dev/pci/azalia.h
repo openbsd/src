@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.10 2007/05/02 17:01:22 deanna Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.11 2007/07/23 02:03:42 deanna Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -507,10 +507,9 @@ typedef struct {
 #define MI_TARGET_CONNLIST	0x101
 #define MI_TARGET_PINDIR	0x102 /* for bidirectional pin */
 #define MI_TARGET_PINBOOST	0x103 /* for headphone pin */
-#define MI_TARGET_PINCTRL	0x104 /* for enabling/disabling pins */
-#define MI_TARGET_DAC		0x105
-#define MI_TARGET_ADC		0x106
-#define MI_TARGET_VOLUME	0x107
+#define MI_TARGET_DAC		0x104
+#define MI_TARGET_ADC		0x105
+#define MI_TARGET_VOLUME	0x106
 } mixer_item_t;
 
 #define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \

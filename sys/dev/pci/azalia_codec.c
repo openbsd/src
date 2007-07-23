@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.22 2007/07/07 16:33:38 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.23 2007/07/23 02:03:42 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@ int	azalia_generic_mixer_delete(codec_t *);
 int	azalia_generic_mixer_ensure_capacity(codec_t *, size_t);
 int	azalia_generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
 int	azalia_generic_mixer_set(codec_t *, nid_t, int, const mixer_ctrl_t *);
+int 	azalia_generic_mixer_pinctrl(codec_t *, nid_t, uint32_t);
 u_char	azalia_generic_mixer_from_device_value
 	(const codec_t *, nid_t, int, uint32_t );
 uint32_t azalia_generic_mixer_to_device_value
@@ -1221,28 +1222,6 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_
 			return err;
 	}
 
-	/* 
-	 * pin control: enable/disable.  for bidirectional pins, set
-	 * direction with MI_TARGET_PINDIR after enabling.
-	 */
-
-	else if (target == MI_TARGET_PINCTRL) {
-		if (mc->un.ord >= 2)
-			return EINVAL;
-		err = this->comresp(this, nid,
-		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
-		if (err)
-			return err;
-		if (mc->un.ord == 0)	/* disable */
-			result &= ~(CORB_PWC_OUTPUT | CORB_PWC_INPUT);
-		else
-			result |= CORB_PWC_OUTPUT | CORB_PWC_INPUT;
-		err = this->comresp(this, nid,
-		    CORB_SET_PIN_WIDGET_CONTROL, result, &result);
-		if (err)
-			return err;
-	}
-
 	/* pin headphone-boost */
 	else if (target == MI_TARGET_PINBOOST) {
 		if (mc->un.ord >= 2)
@@ -1303,6 +1282,21 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_
 		return -1;
 	}
 	return 0;
+}
+
+int
+azalia_generic_mixer_pinctrl(codec_t *this, nid_t nid, uint32_t value)
+{
+	int err;
+	uint32_t result;
+
+	err = this->comresp(this, nid, CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+	if (err)
+		return err;
+	result &= ~(CORB_PWC_OUTPUT | CORB_PWC_INPUT);
+	result |= value & (CORB_PWC_OUTPUT | CORB_PWC_INPUT);
+	return this->comresp(this, nid,
+	    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
 }
 
 u_char
@@ -2362,8 +2356,6 @@ int
 azalia_stac9200_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
-	int err;
-	uint32_t value;
 
 	this->nmixers = sizeof(stac9200_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
@@ -2401,31 +2393,8 @@ azalia_stac9200_mixer_init(codec_t *this)
 	    CORB_SET_UNSOLICITED_RESPONSE,
 	    CORB_UNSOL_ENABLE | STAC9200_EVENT_HP, NULL);
 
-	/* make initial hp vs speaker choice */
+	azalia_stac9200_unsol_event(this, STAC9200_EVENT_HP);
 
-	err = this->comresp(this, STAC9200_NID_HP,
-	    CORB_GET_PIN_SENSE, 0, &value);
-	if (err)
-		return err;
-	if (value & CORB_PS_PRESENCE) {
-		mc.un.ord = 0;
-		azalia_generic_mixer_set(this, STAC9200_NID_SPEAKER,
-		    MI_TARGET_PINCTRL, &mc);
-		mc.un.ord = 1;
-		azalia_generic_mixer_set(this, STAC9200_NID_HP,
-		    MI_TARGET_PINCTRL, &mc);
-		azalia_generic_mixer_set(this, STAC9200_NID_HP,
-		    MI_TARGET_PINDIR, &mc);
-	} else {
-		mc.un.ord = 0;
-		azalia_generic_mixer_set(this, STAC9200_NID_HP,
-		    MI_TARGET_PINCTRL, &mc);
-		mc.un.ord = 1;
-		azalia_generic_mixer_set(this, STAC9200_NID_SPEAKER,
-		    MI_TARGET_PINCTRL, &mc);
-		azalia_generic_mixer_set(this, STAC9200_NID_SPEAKER,
-		    MI_TARGET_PINDIR, &mc);
-	}
 	return 0;
 }
 int
@@ -2433,37 +2402,21 @@ azalia_stac9200_unsol_event(codec_t *this, int tag)
 {
 	int err;
 	uint32_t value;
-	mixer_ctrl_t mc;
 
 	switch (tag) {
 	case STAC9200_EVENT_HP:
 		err = this->comresp(this, STAC9200_NID_HP,
 		    CORB_GET_PIN_SENSE, 0, &value);
 		if (err)
-			return err;
+			break;
 		if (value & CORB_PS_PRESENCE) {
 			DPRINTF(("%s: headphone inserted\n", __func__));
-			mc.un.ord = 0; /* disable */
-			azalia_generic_mixer_set(this, 
-			    STAC9200_NID_SPEAKER,
-			    MI_TARGET_PINCTRL, &mc);
-			mc.un.ord = 1; /* enable and direction output */
-			azalia_generic_mixer_set(this, STAC9200_NID_HP,
-			    MI_TARGET_PINCTRL, &mc);
-			azalia_generic_mixer_set(this, STAC9200_NID_HP,
-			    MI_TARGET_PINDIR, &mc);
+			azalia_generic_mixer_pinctrl(this, 
+			    STAC9200_NID_SPEAKER, 0);
 		} else {
 			DPRINTF(("%s: headphone pulled\n", __func__));
-			mc.un.ord = 0;
-			azalia_generic_mixer_set(this, STAC9200_NID_HP,
-			    MI_TARGET_PINCTRL, &mc);
-			mc.un.ord = 1;
-			azalia_generic_mixer_set(this,
-			    STAC9200_NID_SPEAKER,
-			    MI_TARGET_PINCTRL, &mc);
-			azalia_generic_mixer_set(this, 
-			    STAC9200_NID_SPEAKER,
-			    MI_TARGET_PINDIR, &mc);
+			azalia_generic_mixer_pinctrl(this, 
+			    STAC9200_NID_SPEAKER, CORB_PWC_OUTPUT);
 		}
 		break;
 	default:
