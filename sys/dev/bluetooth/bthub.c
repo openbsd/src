@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthub.c,v 1.2 2007/07/23 13:30:21 mk Exp $	*/
+/*	$OpenBSD: bthub.c,v 1.3 2007/07/23 14:45:38 mk Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -45,7 +45,7 @@ struct cfdriver bthub_cd = {
 int
 bthub_match(struct device *parent, void *match, void *aux)
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -75,16 +75,14 @@ bthub_detach(struct device *self, int flags)
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
 
-	return 0;
+	return (0);
 }
 
-int bthubopen(dev_t dev, int flag, int mode, struct proc *p)
+int
+bthubopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct device *dv;
 	struct bthub_softc *sc;
-
-	if (minor(dev) != 0)
-		return (ENXIO);
 
 	dv = device_lookup(&bthub_cd, minor(dev));
 	if (dv == NULL)
@@ -99,7 +97,7 @@ int bthubopen(dev_t dev, int flag, int mode, struct proc *p)
 	sc->sc_open = 1;
 	device_unref(dv);
 
-	return 0;
+	return (0);
 }
 
 int
@@ -119,6 +117,6 @@ bthubclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 bthubioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return ENOTTY;
+	return (ENOTTY);
 }
 
