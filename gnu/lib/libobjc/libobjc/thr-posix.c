@@ -96,6 +96,7 @@ __objc_thread_detach(void (*func)(void *arg), void *arg)
 int
 __objc_thread_set_priority(int priority)
 {
+#ifndef __OpenBSD__
   pthread_t thread_id = pthread_self();
   int policy;
   struct sched_param params;
@@ -123,6 +124,7 @@ __objc_thread_set_priority(int priority)
       if (pthread_setschedparam(thread_id, policy, &params) == 0)
         return 0;
     }
+#endif
   return -1;
 }
 
@@ -130,6 +132,9 @@ __objc_thread_set_priority(int priority)
 int
 __objc_thread_get_priority(void)
 {
+#ifdef __OpenBSD__
+  return OBJC_THREAD_INTERACTIVE_PRIORITY;
+#else
   int policy;
   struct sched_param params;
 
@@ -137,6 +142,7 @@ __objc_thread_get_priority(void)
     return params.sched_priority;
   else
     return -1;
+#endif
 }
 
 /* Yield our process time to another thread. */

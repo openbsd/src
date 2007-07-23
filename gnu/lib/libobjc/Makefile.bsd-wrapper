@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2006/08/28 20:49:50 tsi Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2007/07/23 17:24:06 kurt Exp $
 
 LIB=		objc
 
@@ -44,8 +44,7 @@ SRCS=archive.c class.c encoding.c gc.c hash.c init.c linking.m misc.c \
 nil_method.c NXConstStr.m Object.m objects.c Protocol.m sarray.c  \
 selector.c sendmsg.c thr.c 
 
-# XXX need to check how threads work.
-SRCS+=thr-single.c
+SRCS+=thr-posix.c
 
 includes:
 	install -d -m 755 -o $(BINOWN) -g $(BINGRP) \
