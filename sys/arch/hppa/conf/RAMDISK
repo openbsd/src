@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.71 2007/07/23 20:15:45 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.72 2007/07/23 20:24:25 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -249,7 +249,7 @@ em*	at pci?			# Intel Pro/1000 ethernet
 #de*	at eisa?
 dc*	at pci?			# 21143, "tulip" clone ethernet
 #dc*	at cardbus?
-#rl*	at pci?			# RealTek 81[23]9 ethernet
+rl*	at pci?			# RealTek 81[23]9 ethernet
 #rl*	at cardbus?
 #ep*	at pci?			# 3c59x ethernet
 #ep*	at eisa?		# 3c579 ethernet
@@ -290,6 +290,7 @@ brgphy*		at mii?		# Broadcom 10/100/1000 PHYs
 bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 xmphy*		at mii?		# XaQti XMAC-II PHYs
+rlphy*		at mii?		# Realtek 8139 internal PHYs
 ukphy*		at mii?		# generic unknown PHYs
 
 # MI devices
