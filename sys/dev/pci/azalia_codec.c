@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.25 2007/07/23 03:21:57 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.26 2007/07/23 03:25:11 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2550,7 +2550,7 @@ azalia_stac9221_gpio_unmute(codec_t *this, int pin)
 }
 
 /* ----------------------------------------------------------------
- * Sony VAIO FE and SE
+ * Sony VAIO FE and SZ
  * ---------------------------------------------------------------- */
 
 int
