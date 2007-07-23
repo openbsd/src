@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthub.c,v 1.1 2007/05/31 04:04:56 uwe Exp $	*/
+/*	$OpenBSD: bthub.c,v 1.2 2007/07/23 13:30:21 mk Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -17,13 +17,17 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/vnode.h>
 
 #include <netbt/bluetooth.h>
 
 struct bthub_softc {
 	struct device sc_dev;
+	int sc_open;
 };
 
 int	bthub_match(struct device *, void *, void *);
@@ -48,6 +52,9 @@ void
 bthub_attach(struct device *parent, struct device *self, void *aux)
 {
 	bdaddr_t *addr = aux;
+	struct bthub_softc *sc = (struct bthub_softc *)self;
+
+	sc->sc_open = 0;
 
 	printf(" %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    addr->b[5], addr->b[4], addr->b[3],
@@ -57,5 +64,61 @@ bthub_attach(struct device *parent, struct device *self, void *aux)
 int
 bthub_detach(struct device *self, int flags)
 {
+	int maj, mn;
+
+	/* Locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == bthubopen)
+			break;
+
+	/* Nuke the vnodes for any open instances (calls close) */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
 	return 0;
 }
+
+int bthubopen(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct device *dv;
+	struct bthub_softc *sc;
+
+	if (minor(dev) != 0)
+		return (ENXIO);
+
+	dv = device_lookup(&bthub_cd, minor(dev));
+	if (dv == NULL)
+		return (ENXIO);
+
+	sc = (struct bthub_softc *)dv;
+	if (sc->sc_open) {
+		device_unref(dv);
+		return (EBUSY);
+	}
+
+	sc->sc_open = 1;
+	device_unref(dv);
+
+	return 0;
+}
+
+int
+bthubclose(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct device *dv;
+	struct bthub_softc *sc;
+
+	dv = device_lookup(&bthub_cd, minor(dev));
+	sc = (struct bthub_softc *)dv;
+	sc->sc_open = 0;
+	device_unref(dv);
+
+	return (0);
+}
+
+int
+bthubioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	return ENOTTY;
+}
+

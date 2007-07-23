@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.117 2007/05/29 19:03:35 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.118 2007/07/23 13:30:21 mk Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ cdev_decl(music);
 #include "joy.h"
 #include "acpi.h"
 #include "apm.h"
+#include "bthub.h"
 #include "pctr.h"
 #include "bios.h"
 #include "iop.h"
@@ -307,6 +308,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gpio_init(NGPIO,gpio),	/* 83: GPIO interface */
 	cdev_nvram_init(NNVRAM,nvram),	/* 84: NVRAM interface */
 	cdev_acpi_init(NACPI,acpi),	/* 85: ACPI */
+	cdev_bthub_init(NBTHUB,bthub),	/* 86: bthub */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
