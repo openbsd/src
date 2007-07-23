@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.23 2007/07/23 02:03:42 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.24 2007/07/23 03:03:58 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -110,6 +110,8 @@ int	azalia_stac9221_apple_init_dacgroup(codec_t *);
 int	azalia_stac9221_gpio_unmute(codec_t *, int);
 int	azalia_stac7661_init_dacgroup(codec_t *);
 int	azalia_stac7661_mixer_init(codec_t *);
+int	azalia_stac7661_set_port(codec_t *, mixer_ctrl_t *);
+int	azalia_stac7661_get_port(codec_t *, mixer_ctrl_t *);
 
 int
 azalia_codec_init_vtbl(codec_t *this)
@@ -193,6 +195,8 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Sigmatel 83847661";
 		this->init_dacgroup = azalia_stac7661_init_dacgroup;
 		this->mixer_init = azalia_stac7661_mixer_init;
+		this->get_port = azalia_stac7661_get_port;
+		this->set_port = azalia_stac7661_set_port;
 		break;
 	}
 	return 0;
@@ -2571,20 +2575,28 @@ static const mixer_item_t stac7661_mixer_items[] = {
 	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
 	{{AZ_CLASS_RECORD, {AudioCrecord}, AUDIO_MIXER_CLASS, AZ_CLASS_RECORD, 0, 0}, 0},
 
+#define STAC7661_DAC_HP        0x02
+#define STAC7661_DAC_SPEAKER   0x05
+#define STAC7661_TARGET_MASTER -1
+
 	{{0, {AudioNmicrophone".mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT, 0, 0,
 	    ENUM_OFFON}, 0x09, MI_TARGET_INAMP(0)},
 	{{0, {AudioNmicrophone}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT, 0, 0,
 	    .un.v={{""}, 2, MIXER_DELTA(35)}}, 0x09, MI_TARGET_INAMP(0)},
+	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x02, STAC7661_TARGET_MASTER},
+	{{0, {AudioNmaster"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x02, STAC7661_TARGET_MASTER},
+	{{0, {AudioNvolume".knob"}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 1, MIXER_DELTA(15)}}, 0x17, MI_TARGET_VOLUME},
 	{{0, {AudioNheadphone".mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	    0, 0, ENUM_OFFON}, 0x02, MI_TARGET_OUTAMP},
 	{{0, {AudioNheadphone}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	    0, 0, .un.v={{""}, 2, MIXER_DELTA(65)}}, 0x02, MI_TARGET_OUTAMP},
+	    0, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x02, MI_TARGET_OUTAMP},
 	{{0, {AudioNspeaker".mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	    0, 0, ENUM_OFFON}, 0x05, MI_TARGET_OUTAMP},
 	{{0, {AudioNspeaker}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	    0, 0, .un.v={{""}, 2, MIXER_DELTA(65)}}, 0x05, MI_TARGET_OUTAMP},
-	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	    0, 0, .un.v={{""}, 1, MIXER_DELTA(15)}}, 0x17, MI_TARGET_VOLUME},
+	    0, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x05, MI_TARGET_OUTAMP}
 };
 
 int
@@ -2614,13 +2626,48 @@ azalia_stac7661_mixer_init(codec_t *this)
 	mc.un.ord = 1;          /* select mic for recording */
 	azalia_generic_mixer_set(this, 0x15, MI_TARGET_CONNLIST, &mc);
 	mc.type = AUDIO_MIXER_VALUE;
-	mc.un.value.num_channels = 2;
-	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x02, MI_TARGET_OUTAMP);
-	mc.un.value.level[1] = mc.un.value.level[0];
-	azalia_generic_mixer_set(this, 0x02, MI_TARGET_OUTAMP, &mc);
-	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x05, MI_TARGET_OUTAMP);
-	mc.un.value.level[1] = mc.un.value.level[0];
-	azalia_generic_mixer_set(this, 0x05, MI_TARGET_OUTAMP, &mc);
+	mc.un.value.num_channels = 1;
+	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x17, MI_TARGET_VOLUME);
+	azalia_generic_mixer_set(this, 0x17, MI_TARGET_VOLUME, &mc);
 
 	return 0;
+}
+
+int
+azalia_stac7661_set_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+	int err;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	if (mc->type != m->devinfo.type)
+		return EINVAL;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if (m->target == STAC7661_TARGET_MASTER) {
+		err = azalia_generic_mixer_set(this, STAC7661_DAC_HP,
+		    MI_TARGET_OUTAMP, mc);
+		err = azalia_generic_mixer_set(this, STAC7661_DAC_SPEAKER,
+		    MI_TARGET_OUTAMP, mc);
+		return err;
+	}
+	return azalia_generic_mixer_set(this, m->nid, m->target, mc);
+}
+int
+azalia_stac7661_get_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	mc->type = m->devinfo.type;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if (m->target == STAC7661_TARGET_MASTER)
+		return azalia_generic_mixer_get(this, m->nid,
+		    MI_TARGET_OUTAMP, mc);
+	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
 }
