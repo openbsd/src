@@ -933,11 +933,11 @@ static int apprentice(server_rec *s, pool *p)
     /* parse it */
     for (lineno = 1; fgets(line, sizeof(line), f) != NULL; lineno++) {
 	int ws_offset;
-	char *p;
+	char *pl;
 
 	/* delete newline */
-	if ((p = strchr(line, '\n')) != NULL)
-	    *p = '\0';
+	if ((pl = strchr(line, '\n')) != NULL)
+	    *pl = '\0';
 
 	/* skip leading whitespace */
 	ws_offset = 0;
