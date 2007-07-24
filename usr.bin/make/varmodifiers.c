@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.16 2007/07/24 18:52:47 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.17 2007/07/24 18:56:15 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*

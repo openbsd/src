@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.57 2007/07/24 18:52:47 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.58 2007/07/24 18:56:15 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*

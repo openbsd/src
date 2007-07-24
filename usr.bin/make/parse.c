@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.74 2007/07/24 18:52:47 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.75 2007/07/24 18:56:15 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*

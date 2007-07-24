@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.68 2007/07/24 18:52:47 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.69 2007/07/24 18:56:15 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -227,6 +227,9 @@ static const char *find_rparen(const char *);
 static const char *find_ket(const char *);
 typedef const char * (*find_t)(const char *);
 static find_t find_pos(int);
+static void push_used(Var *);
+static void pop_used(Var *);
+static char *get_expanded_value(Var *, int, SymTable *, bool, bool *);
 
 
 
@@ -880,6 +883,80 @@ Var_ParseBuffer(Buffer buf, const char *str, SymTable *ctxt, bool err,
 	return true;
 }
 
+/* Helper function for Var_Parse: still recursive, but we tag what variables
+ * we expand for better error messages.
+ */
+#define MAX_DEPTH 350
+static Var *call_trace[MAX_DEPTH];
+static int current_depth = 0;
+
+static void 
+push_used(Var *v)
+{
+	if (v->flags & VAR_IN_USE) {
+		int i;
+		fprintf(stderr, "Problem with variable expansion chain: ");
+		for (i = 0; 
+		    i < (current_depth > MAX_DEPTH ? MAX_DEPTH : current_depth); 
+		    i++)
+			fprintf(stderr, "%s -> ", call_trace[i]->name);
+		fprintf(stderr, "%s\n", v->name);
+		Fatal("\tVariable %s is recursive.", v->name);
+		/*NOTREACHED*/
+	}
+
+	v->flags |= VAR_IN_USE;
+	if (current_depth < MAX_DEPTH)
+		call_trace[current_depth] = v;
+	current_depth++;
+}
+
+static void
+pop_used(Var *v)
+{
+	v->flags &= ~VAR_IN_USE;
+	current_depth--;
+}
+
+static char *
+get_expanded_value(Var *v, int idx, SymTable *ctxt, bool err, bool *freePtr)
+{
+	char *val;
+
+	if (v == NULL)
+		return NULL;
+
+	if ((v->flags & POISONS) != 0)
+		poison_check(v);
+	if ((v->flags & VAR_DUMMY) != 0)
+		return NULL;
+
+	/* Before doing any modification, we have to make sure the
+	 * value has been fully expanded. If it looks like recursion
+	 * might be necessary (there's a dollar sign somewhere in
+	 * the variable's value) we just call Var_Subst to do any
+	 * other substitutions that are necessary. Note that the
+	 * value returned by Var_Subst will have been dynamically
+	 * allocated, so it will need freeing when we return.
+	 */
+	val = var_get_value(v);
+	if (idx == GLOBAL_INDEX) {
+		if (strchr(val, '$') != NULL) {
+			push_used(v);
+			val = Var_Subst(val, ctxt, err);
+			pop_used(v);
+			*freePtr = true;
+		}
+	} else if (idx >= LOCAL_SIZE) {
+		if (IS_EXTENDED_F(idx))
+			val = Var_GetTail(val);
+		else
+			val = Var_GetHead(val);
+		*freePtr = true;
+	}
+	return val;
+}
+
 char *
 Var_Parse(const char *str,	/* The string to parse */
     SymTable *ctxt,		/* The context for the variable */
@@ -923,38 +1000,7 @@ Var_Parse(const char *str,	/* The string to parse */
 
 	idx = classify_var(name.s, &name.e, &k);
 	v = find_any_var(name.s, name.e, ctxt, idx, k);
-	if (v != NULL && (v->flags & POISONS) != 0)
-		poison_check(v);
-	if (v != NULL && (v->flags & VAR_DUMMY) == 0) {
-		if (v->flags & VAR_IN_USE)
-			Fatal("Variable %s is recursive.", v->name);
-			/*NOTREACHED*/
-		else
-			v->flags |= VAR_IN_USE;
-
-		/* Before doing any modification, we have to make sure the
-		 * value has been fully expanded. If it looks like recursion
-		 * might be necessary (there's a dollar sign somewhere in
-		 * the variable's value) we just call Var_Subst to do any
-		 * other substitutions that are necessary. Note that the
-		 * value returned by Var_Subst will have been dynamically
-		 * allocated, so it will need freeing when we return.
-		 */
-		val = var_get_value(v);
-		if (idx == GLOBAL_INDEX) {
-			if (strchr(val, '$') != NULL) {
-				val = Var_Subst(val, ctxt, err);
-				*freePtr = true;
-			}
-		} else if (idx >= LOCAL_SIZE) {
-			if (IS_EXTENDED_F(idx))
-				val = Var_GetTail(val);
-			else
-				val = Var_GetHead(val);
-			*freePtr = true;
-		}
-		v->flags &= ~VAR_IN_USE;
-	}
+	val = get_expanded_value(v, idx, ctxt, err, freePtr);
 	if (*tstr == ':' && paren != '\0')
 		val = VarModifiers_Apply(val, &name, ctxt, err, freePtr,
 		    tstr, paren, lengthPtr);
