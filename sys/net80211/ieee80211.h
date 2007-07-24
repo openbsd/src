@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.30 2007/07/05 20:59:25 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.31 2007/07/24 16:44:01 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -607,42 +607,53 @@ enum {
 
 /*
  * The RSNA key descriptor used by IEEE 802.11 does not use the IEEE 802.1X
- * key descriptor.  Instead, it uses the key descriptor described below.
+ * key descriptor.  Instead, it uses the key descriptor described in 8.5.2.
  */
+#define EAPOL_VERSION	2
+
 #define EAPOL_KEY_NONCE_LEN	32
 #define EAPOL_KEY_IV_LEN	16
 #define EAPOL_KEY_MIC_LEN	16
 
-/* from Std 802.11i-2004 section 8.5.2 */
 struct ieee80211_eapol_key {
+	u_int8_t	version;
 	u_int8_t	type;
-/* IEEE Std 802.1X-2004, section 7.6.1 */
+/* IEEE Std 802.1X-2004, 7.5.4 (only type EAPOL-Key is used here) */
+#define EAP_PACKET	0
+#define EAPOL_START	1
+#define EAPOL_LOGOFF	2
+#define EAPOL_KEY	3
+#define EAPOL_ASF_ALERT	4
+
+	u_int8_t	len[2];
+	u_int8_t	desc;
+/* IEEE Std 802.1X-2004, 7.6.1 */
 #define EAPOL_KEY_TYPE_RC4		1	/* deprecated */
 #define EAPOL_KEY_TYPE_IEEE80211	2
 
-	u_int16_t	info;
-#define EAPOL_KEY_VERSION_MASK		0x7
-#define EAPOL_KEY_VERSION_SHIFT		0
-#define EAPOL_KEY_VERSION_MD5_RC4	1
-#define EAPOL_KEY_VERSION_SHA1_AES	2
-#define EAPOL_KEY_PAIRWISE		(1 <<  3)
-#define EAPOL_KEY_INSTALL		(1 <<  6)	/* I */
-#define EAPOL_KEY_KEYACK		(1 <<  7)	/* A */
-#define EAPOL_KEY_KEYMIC		(1 <<  8)	/* M */
-#define EAPOL_KEY_SECURE		(1 <<  9)	/* S */
-#define EAPOL_KEY_ERROR			(1 << 10)
-#define EAPOL_KEY_REQUEST		(1 << 11)
-#define EAPOL_KEY_ENCRYPTED		(1 << 12)
+	u_int8_t	info[2];
+#define EAPOL_KEY_VERSION_MASK	0x7
+#define EAPOL_KEY_DESC_V1	1
+#define EAPOL_KEY_DESC_V2	2
+#define EAPOL_KEY_PAIRWISE	(1 <<  3)
+#define EAPOL_KEY_INSTALL	(1 <<  6)	/* I */
+#define EAPOL_KEY_KEYACK	(1 <<  7)	/* A */
+#define EAPOL_KEY_KEYMIC	(1 <<  8)	/* M */
+#define EAPOL_KEY_SECURE	(1 <<  9)	/* S */
+#define EAPOL_KEY_ERROR		(1 << 10)
+#define EAPOL_KEY_REQUEST	(1 << 11)
+#define EAPOL_KEY_ENCRYPTED	(1 << 12)
+#define EAPOL_KEY_ENCRYPTED	(1 << 12)
+#define EAPOL_KEY_SMK		(1 << 13)
 
-	u_int16_t	keylen;
-	u_int64_t	replay_cnt;
+	u_int8_t	keylen[2];
+	u_int8_t	replaycnt[8];
 	u_int8_t	nonce[EAPOL_KEY_NONCE_LEN];
 	u_int8_t	iv[EAPOL_KEY_IV_LEN];
-	u_int64_t	rsc;
+	u_int8_t	rsc[8];
 	u_int8_t	reserved[8];
 	u_int8_t	mic[EAPOL_KEY_MIC_LEN];
-	u_int16_t	len;
-	u_int8_t	data[0];
+	u_int8_t	paylen[2];
 } __packed;
 
 /* Pairwise Transient Key (see 8.5.1.2) */
