@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.70 2007/07/24 18:58:48 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.71 2007/07/24 19:00:17 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -825,7 +825,6 @@ bool
 Var_ParseSkip(const char **pstr, SymTable *ctxt)
 {
 	const char *tstr;
-	Var *v;
 	const char *str = *pstr;
 	struct Name name;
 	bool result;
