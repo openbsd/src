@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.21 2007/07/24 16:53:03 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.22 2007/07/24 18:42:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -66,9 +66,6 @@
 #include <crypto/md5.h>
 #include <crypto/sha1.h>
 #include <crypto/rijndael.h>
-#define	arc4_ctxlen()			sizeof (struct rc4_ctx)
-#define	arc4_setkey(_c,_k,_l)		rc4_keysetup(_c,_k,_l)
-#define	arc4_encrypt(_c,_d,_s,_l)	rc4_crypt(_c,_s,_d,_l)
 
 struct vector {
 	const void	*base;
@@ -146,7 +143,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 
 	n0 = NULL;
 	if ((ctx = ic->ic_wep_ctx) == NULL) {
-		ctx = malloc(arc4_ctxlen(), M_DEVBUF, M_NOWAIT);
+		ctx = malloc(sizeof(struct rc4_ctx), M_DEVBUF, M_NOWAIT);
 		if (ctx == NULL) {
 			ic->ic_stats.is_crypto_nomem++;
 			goto fail;
@@ -228,7 +225,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	memcpy(keybuf + IEEE80211_WEP_IVLEN, ic->ic_nw_keys[kid].k_key,
 	    ic->ic_nw_keys[kid].k_len);
 	len = klen_round(IEEE80211_WEP_IVLEN + ic->ic_nw_keys[kid].k_len);
-	arc4_setkey(ctx, keybuf, len);
+	rc4_keysetup(ctx, keybuf, len);
 
 	/* encrypt with calculating CRC */
 	crc = ~0;
@@ -263,8 +260,8 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 		}
 		if (len > left)
 			len = left;
-		arc4_encrypt(ctx, mtod(n, caddr_t) + noff,
-		    mtod(m, caddr_t) + moff, len);
+		rc4_crypt(ctx, mtod(m, caddr_t) + moff,
+		    mtod(n, caddr_t) + noff, len);
 		if (txflag)
 			crc = ieee80211_crc_update(crc,
 			    mtod(m, u_int8_t *) + moff, len);
@@ -291,7 +288,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 			n->m_len = sizeof(crcbuf);
 			noff = 0;
 		}
-		arc4_encrypt(ctx, mtod(n, caddr_t) + noff, crcbuf,
+		rc4_crypt(ctx, crcbuf, mtod(n, caddr_t) + noff,
 		    sizeof(crcbuf));
 	} else {
 		n->m_len = noff;
@@ -300,8 +297,8 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 			if (len > m->m_len - moff)
 				len = m->m_len - moff;
 			if (len > 0)
-				arc4_encrypt(ctx, crcbuf + noff,
-				    mtod(m, caddr_t) + moff, len);
+				rc4_crypt(ctx, mtod(m, caddr_t) + moff,
+				    crcbuf + noff, len);
 			m = m->m_next;
 			moff = 0;
 		}
