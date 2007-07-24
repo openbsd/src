@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.7 2007/06/12 15:16:10 msf Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.8 2007/07/24 12:42:32 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -157,19 +157,19 @@ imsg_create(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
 	struct buf	*wbuf;
 	struct imsg_hdr	 hdr;
 
-	if (datalen > MAX_IMSGSIZE - IMSG_HEADER_SIZE) {
+	datalen += IMSG_HEADER_SIZE;
+	if (datalen > MAX_IMSGSIZE) {
 		log_warnx("imsg_create: len %u > MAX_IMSGSIZE; "
 		    "type %u peerid %lu", datalen + IMSG_HEADER_SIZE,
 		    type, peerid);
 		return (NULL);
 	}
 
-	hdr.len = (u_int16_t)(datalen + IMSG_HEADER_SIZE);
 	hdr.type = type;
 	hdr.peerid = peerid;
 	if ((hdr.pid = pid) == 0)
 		hdr.pid = ibuf->pid;
-	if ((wbuf = buf_open(hdr.len)) == NULL) {
+	if ((wbuf = buf_dynamic(datalen, MAX_IMSGSIZE)) == NULL) {
 		log_warn("imsg_create: buf_open");
 		return (NULL);
 	}
@@ -194,8 +194,11 @@ imsg_add(struct buf *msg, void *data, u_int16_t datalen)
 int
 imsg_close(struct imsgbuf *ibuf, struct buf *msg)
 {
-	int	n;
+	int		 n;
+	struct imsg_hdr	*hdr;
 
+	hdr = (struct imsg_hdr *)msg->buf;
+	hdr->len = (u_int16_t)msg->wpos;
 	if ((n = buf_close(&ibuf->w, msg)) < 0) {
 			log_warnx("imsg_close: buf_close error");
 			buf_free(msg);
