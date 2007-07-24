@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.20 2007/07/24 16:49:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.21 2007/07/24 16:53:03 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -700,4 +700,149 @@ ieee80211_derive_smkid(const u_int8_t *smk, size_t smk_len,
 	ieee80211_hmac_sha1_v(vec, 5, smk, smk_len, hash);
 	/* use the first 128 bits of the HMAC-SHA1 */
 	memcpy(smkid, hash, IEEE80211_SMKID_LEN);
+}
+
+/* unaligned big endian access */
+#define BE_READ_2(p)				\
+	((u_int16_t)				\
+         ((((const u_int8_t *)(p))[0] << 8) |	\
+          (((const u_int8_t *)(p))[1])))
+
+#define BE_WRITE_2(p, v) do {			\
+	((u_int8_t *)(p))[0] = (v) >> 8;	\
+	((u_int8_t *)(p))[1] = (v) & 0xff;	\
+} while (0)
+
+/*
+ * Compute the Key MIC field of an EAPOL-Key frame using the specified Key
+ * Confirmation Key (KCK).  The hash function can be either HMAC-MD5 or
+ * HMAC-SHA1 depending on the EAPOL-Key Key Descriptor Version.
+ */
+void
+ieee80211_eapol_key_mic(struct ieee80211_eapol_key *key, const u_int8_t *kck)
+{
+	u_int8_t hash[SHA1_DIGEST_LENGTH];
+	u_int16_t len, info;
+
+	len  = BE_READ_2(key->len);
+	info = BE_READ_2(key->info);
+	KASSERT(!(info & EAPOL_KEY_KEYMIC));
+
+	switch (info & EAPOL_KEY_VERSION_MASK) {
+	case EAPOL_KEY_DESC_V1:
+		ieee80211_hmac_md5(kck, 16, (u_int8_t *)key, len, key->mic);
+		break;
+	case EAPOL_KEY_DESC_V2:
+		ieee80211_hmac_sha1(kck, 16, (u_int8_t *)key, len, hash);
+		/* truncate HMAC-SHA1 to its 128 MSBs */
+		memcpy(key->mic, hash, EAPOL_KEY_MIC_LEN);
+		break;
+	}
+
+	/* set the Key MIC field */
+	info |= EAPOL_KEY_KEYMIC;
+	BE_WRITE_2(key->info, info);
+}
+
+/*
+ * Encrypt the Key Data field of an EAPOL-Key frame using the specified Key
+ * Encryption Key (KEK).  The encryption algorithm can be either ARC4 or
+ * AES Key Wrap depending on the EAPOL-Key Key Descriptor Version.
+ */
+void
+ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
+    struct ieee80211_eapol_key *key, const u_int8_t *kek)
+{
+	struct rc4_ctx ctx;
+	u_int8_t buf[EAPOL_KEY_IV_LEN + 16];
+	u_int16_t len, info;
+	u_int8_t *data;
+	int n;
+
+	len  = BE_READ_2(key->paylen);
+	info = BE_READ_2(key->info);
+	/* should not come here if key data is already encrypted */
+	KASSERT(!(info & EAPOL_KEY_ENCRYPTED));
+	data = (u_int8_t *)(key + 1);
+
+	switch (info & EAPOL_KEY_VERSION_MASK) {
+	case EAPOL_KEY_DESC_V1:
+		/* set IV to the lower 16 octets of our global key counter */
+		memcpy(key->iv, ic->ic_globalcnt + 16, 16);
+		/* increment our global key counter (256-bit, big-endian) */
+		for (n = 31; n >= 0 && ++ic->ic_globalcnt[n] == 0; n--);
+
+		/* concatenate the EAPOL-Key IV field and the KEK */
+		memcpy(buf, key->iv, EAPOL_KEY_IV_LEN);
+		memcpy(buf + EAPOL_KEY_IV_LEN, kek, 16);
+
+		rc4_keysetup(&ctx, buf, sizeof buf);
+#ifdef notyet
+		/* discard the first 256 octets of the ARC4 key stream */
+		rc4_skip(&ctx, RC4STATE);
+#endif
+		rc4_crypt(&ctx, data, data, len);
+		break;
+	case EAPOL_KEY_DESC_V2:
+		if (len < 16 || (len & 7) != 0) {
+			/* insert padding */
+			data[len++] = IEEE80211_ELEMID_VENDOR;
+			n = (len < 16) ? 16 - len : 8 - (len & 7);
+			memset(&data[len], 0, n);
+			len += n;
+		}
+		ieee80211_aes_key_wrap(kek, 16, data, len / 8, data);
+		len += 8;	/* AES Key Wrap adds 8 bytes */
+		/* update key data length */
+		BE_WRITE_2(key->paylen, len);
+		break;
+	}
+
+	/* set the Encrypted Key Data field */
+	info |= EAPOL_KEY_ENCRYPTED;
+	BE_WRITE_2(key->info, info);
+}
+
+/*
+ * Decrypt the Key Data field of an EAPOL-Key frame using the specified Key
+ * Encryption Key (KEK).  The encryption algorithm can be either ARC4 or
+ * AES Key Wrap depending on the EAPOL-Key Key Descriptor Version.
+ */
+int
+ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
+    const u_int8_t *kek)
+{
+	struct rc4_ctx ctx;
+	u_int8_t buf[EAPOL_KEY_IV_LEN + 16];
+	u_int16_t len, info;
+	u_int8_t *data;
+
+	len  = BE_READ_2(key->paylen);
+	info = BE_READ_2(key->info);
+	/* should not come here if key data is not encrypted */
+	KASSERT(info & EAPOL_KEY_ENCRYPTED);
+	data = (u_int8_t *)(key + 1);
+
+	switch (info & EAPOL_KEY_VERSION_MASK) {
+	case EAPOL_KEY_DESC_V1:
+		/* concatenate the EAPOL-Key IV field and the KEK */
+		memcpy(buf, key->iv, EAPOL_KEY_IV_LEN);
+		memcpy(buf + EAPOL_KEY_IV_LEN, kek, 16);
+
+		rc4_keysetup(&ctx, buf, sizeof buf);
+#ifdef notyet
+		/* discard the first 256 octets of the ARC4 key stream */
+		rc4_skip(&ctx, RC4STATE);
+#endif
+		rc4_crypt(&ctx, data, data, len);
+		return 0;
+	case EAPOL_KEY_DESC_V2:
+		/* Key Data Length must be a multiple of 8 */
+		if (len < 16 + 8 || (len & 7) != 0)
+			return 1;
+		len = (len / 8) - 1;
+		return ieee80211_aes_key_unwrap(kek, 16, data, data, len);
+	}
+
+	return 1;	/* unknown Key Descriptor Version */
 }
