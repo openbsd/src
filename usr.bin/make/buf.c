@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: buf.c,v 1.20 2004/04/07 13:11:35 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.21 2007/07/24 21:09:07 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -91,17 +91,17 @@
  *	the end of the buffer to terminate the string.	*/
 #define BufExpand(bp,nb)				\
 do {							\
-    size_t   occupied = (bp)->inPtr - (bp)->buffer;	\
-    size_t   size = (bp)->endPtr - (bp)->buffer;	\
-    DO_STAT_BUF(bp, nb);				\
+	size_t   occupied = (bp)->inPtr - (bp)->buffer;	\
+	size_t   size = (bp)->endPtr - (bp)->buffer;	\
+	DO_STAT_BUF(bp, nb);				\
 							\
-    do {						\
-	size *= 2 ;					\
-    } while (size - occupied < (nb)+1+BUF_MARGIN);	\
-    (bp)->buffer = (bp)->inPtr = (bp)->endPtr = 	\
-	erealloc((bp)->buffer, size);			\
-    (bp)->inPtr += occupied;				\
-    (bp)->endPtr += size;				\
+	do {						\
+		size *= 2 ;				\
+	} while (size - occupied < (nb)+1+BUF_MARGIN);	\
+	(bp)->buffer = (bp)->inPtr = (bp)->endPtr = 	\
+		erealloc((bp)->buffer, size);		\
+	(bp)->inPtr += occupied;			\
+	(bp)->endPtr += size;				\
 } while (0);
 
 #define BUF_DEF_SIZE	256	/* Default buffer size */
@@ -112,7 +112,7 @@ do {							\
 void
 BufOverflow(Buffer bp)
 {
-    BufExpand(bp, 1);
+	BufExpand(bp, 1);
 }
 
 
@@ -120,11 +120,11 @@ void
 Buf_AddChars(Buffer bp, size_t numBytes, const char *bytesPtr)
 {
 
-    if ((size_t)(bp->endPtr - bp->inPtr) < numBytes+1)
-	BufExpand(bp, numBytes);
+	if ((size_t)(bp->endPtr - bp->inPtr) < numBytes+1)
+		BufExpand(bp, numBytes);
 
-    memcpy(bp->inPtr, bytesPtr, numBytes);
-    bp->inPtr += numBytes;
+	memcpy(bp->inPtr, bytesPtr, numBytes);
+	bp->inPtr += numBytes;
 }
 
 
@@ -132,24 +132,24 @@ void
 Buf_Init(Buffer bp, size_t size)
 {
 #ifdef STATS_BUF
-    STAT_TOTAL_BUFS++;
-    if (size == 0)
-	STAT_DEFAULT_BUFS++;
-    if (size == 1)
-	STAT_WEIRD_BUFS++;
+	STAT_TOTAL_BUFS++;
+	if (size == 0)
+		STAT_DEFAULT_BUFS++;
+	if (size == 1)
+		STAT_WEIRD_BUFS++;
 #endif
-    if (size == 0)
-	size = BUF_DEF_SIZE;
-    bp->inPtr = bp->endPtr = bp->buffer = emalloc(size);
-    bp->endPtr += size;
+	if (size == 0)
+		size = BUF_DEF_SIZE;
+	bp->inPtr = bp->endPtr = bp->buffer = emalloc(size);
+	bp->endPtr += size;
 }
 
 void
 Buf_KillTrailingSpaces(Buffer bp)
 {
-    while (bp->inPtr > bp->buffer + 1 && isspace(bp->inPtr[-1])) {
-	if (bp->inPtr[-2] == '\\')
-	    break;
-	bp->inPtr--;
-    }
+	while (bp->inPtr > bp->buffer + 1 && isspace(bp->inPtr[-1])) {
+		if (bp->inPtr[-2] == '\\')
+		    break;
+		bp->inPtr--;
+	}
 }
