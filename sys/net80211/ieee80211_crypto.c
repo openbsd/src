@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.22 2007/07/24 18:42:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.23 2007/07/24 18:44:36 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -95,11 +95,6 @@ void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, u_int8_t *);
 void	ieee80211_derive_gtk(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, u_int8_t *, size_t);
-void	ieee80211_derive_stk(const u_int8_t *, size_t, const u_int8_t *,
-	    const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *,
-	    size_t);
-void	ieee80211_derive_smkid(const u_int8_t *, size_t, const u_int8_t *,
-	    const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *);
 
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
@@ -637,66 +632,6 @@ ieee80211_derive_gtk(const u_int8_t *gmk, size_t gmk_len, const u_int8_t *aa,
 	vec[2].len  = EAPOL_KEY_NONCE_LEN;
 
 	ieee80211_prf(gmk, gmk_len, vec, 3, gtk, gtk_len);
-}
-
-/*
- * Derive Station to Station Transient Key (STK) (see 8.5.1.4).
- */
-void
-ieee80211_derive_stk(const u_int8_t *smk, size_t smk_len, const u_int8_t *imac,
-    const u_int8_t *pmac, const u_int8_t *inonce, const u_int8_t *pnonce,
-    u_int8_t *stk, size_t stk_len)
-{
-	struct vector vec[6];	/* +1 for PRF */
-	int ret;
-
-	vec[0].base = "Peer key expansion";
-	vec[0].len  = 19;	/* include trailing '\0' */
-
-	ret = memcmp(imac, pmac, IEEE80211_ADDR_LEN) < 0;
-	/* Min(MAC_I,MAC_P) */
-	vec[1].base = ret ? imac : pmac;
-	vec[1].len  = IEEE80211_ADDR_LEN;
-	/* Max(MAC_I,MAC_P) */
-	vec[2].base = ret ? pmac : imac;
-	vec[2].len  = IEEE80211_ADDR_LEN;
-
-	ret = memcmp(inonce, pnonce, EAPOL_KEY_NONCE_LEN) < 0;
-	/* Min(INonce,PNonce) */
-	vec[3].base = ret ? inonce : pnonce;
-	vec[3].len  = EAPOL_KEY_NONCE_LEN;
-	/* Max(INonce,PNonce) */
-	vec[4].base = ret ? pnonce : inonce;
-	vec[4].len  = EAPOL_KEY_NONCE_LEN;
-
-	ieee80211_prf(smk, smk_len, vec, 5, stk, stk_len);
-}
-
-/*
- * Derive Station to Station Master Key Identifier (SMKID) (see 8.5.1.4).
- */
-void
-ieee80211_derive_smkid(const u_int8_t *smk, size_t smk_len,
-    const u_int8_t *imac, const u_int8_t *pmac, const u_int8_t *inonce,
-    const u_int8_t *pnonce, u_int8_t *smkid)
-{
-	struct vector vec[5];
-	u_int8_t hash[SHA1_DIGEST_LENGTH];
-
-	vec[0].base = "SMK Name";
-	vec[0].len  = 8;	/* does *not* include trailing '\0' */
-	vec[1].base = pnonce;
-	vec[1].len  = EAPOL_KEY_NONCE_LEN;
-	vec[2].base = pmac;
-	vec[2].len  = IEEE80211_ADDR_LEN;
-	vec[3].base = inonce;
-	vec[3].len  = EAPOL_KEY_NONCE_LEN;
-	vec[4].base = imac;
-	vec[4].len  = IEEE80211_ADDR_LEN;
-
-	ieee80211_hmac_sha1_v(vec, 5, smk, smk_len, hash);
-	/* use the first 128 bits of the HMAC-SHA1 */
-	memcpy(smkid, hash, IEEE80211_SMKID_LEN);
 }
 
 /* unaligned big endian access */
