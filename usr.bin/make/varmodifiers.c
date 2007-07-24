@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.17 2007/07/24 18:56:15 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.18 2007/07/24 18:58:48 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1372,11 +1372,12 @@ do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 
 char *
 VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt, 
-    bool err, bool *freePtr, const char *start, int paren, size_t *lengthPtr)
+    bool err, bool *freePtr, const char **pscan, int paren)
 {
     const char	*tstr;
     bool	atstart;    /* Some ODE modifiers only make sense at start */
     char endc = paren == '(' ? ')' : '}';
+    const char *start = *pscan;
 
     tstr = start;
     /*
@@ -1456,13 +1457,12 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 	if (DEBUG(VAR))
 	    printf("Result is \"%s\"\n", str);
     }
-    if (*tstr == '\0') {
+    if (*tstr == '\0')
 	Error("Unclosed variable specification");
-	/* make tstr point at the last char of the variable specification */
-	tstr--;
-    }
+    else
+    	tstr++;
 
-    *lengthPtr += tstr - start;
+    *pscan = tstr;
     return str;
 }
 

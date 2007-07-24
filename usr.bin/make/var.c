@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.69 2007/07/24 18:56:15 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.70 2007/07/24 18:58:48 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -826,40 +826,33 @@ Var_ParseSkip(const char **pstr, SymTable *ctxt)
 {
 	const char *tstr;
 	Var *v;
-	char paren;
 	const char *str = *pstr;
-	const char *start;
-	size_t length;
 	struct Name name;
 	bool result;
+	bool has_modifier = false;
 
-	v = NULL;
-	start = str;
-	str++;
-
-	if (*str != '(' && *str != '{') {
-		name.tofree = false;
-		tstr = str + 1;
-		length = 2;
-		paren = '\0';
-	} else {
-		paren = *str;
-		str++;
-
+	switch(str[1]) {
+	case '(':
+	case '{':
 		/* Find eventual modifiers in the variable */
-		tstr = VarName_Get(str, &name, ctxt, false, find_pos(paren));
+		tstr = VarName_Get(str+2, &name, ctxt, false, find_pos(str[1]));
 		VarName_Free(&name);
-		length = tstr - start;
-		if (*tstr != 0)
-			length++;
+		if (*tstr == ':')
+			has_modifier = true;
+		else if (*tstr != '\0') {
+			tstr++;
+		}
+		break;
+	default:
+		tstr = str + 2;
+		break;
 	}
-
 	result = true;
-	if (*tstr == ':' && paren != '\0')
-		 if (VarModifiers_Apply(NULL, NULL, ctxt, true, NULL, tstr,
-		    paren, &length) == var_Error)
+	if (has_modifier)
+		 if (VarModifiers_Apply(NULL, NULL, ctxt, true, NULL, &tstr,
+		    str[1]) == var_Error)
 			result = false;
-	*pstr += length;
+	*pstr = tstr;
 	return result;
 }
 
@@ -964,46 +957,41 @@ Var_Parse(const char *str,	/* The string to parse */
     size_t *lengthPtr,		/* OUT: The length of the specification */
     bool *freePtr)		/* OUT: true if caller should free result */
 {
-	const char *tstr;	/* Pointer into str */
-	Var *v;			/* Variable in invocation */
-	char paren;		/* Parenthesis or brace or nothing */
+	const char *tstr;
+	Var *v;
 	struct Name name;
-	const char *start;
-	char *val;		/* Variable value  */
+	char *val;
 	uint32_t k;
 	int idx;
+	bool has_modifier = false;
 
 	*freePtr = false;
-	start = str++;
 
-	val = NULL;
-	v = NULL;
-	idx = GLOBAL_INDEX;
-
-	if (*str != '(' && *str != '{') {
-		name.s = str;
-		name.e = str+1;
-		name.tofree = false;
-		tstr = str + 1;
-		*lengthPtr = 2;
-		paren = '\0';
-	} else {
-		paren = *str;
-		str++;
-
+	switch(str[1]) {
+	case '(':
+	case '{':
 		/* Find eventual modifiers in the variable */
-		tstr = VarName_Get(str, &name, ctxt, false, find_pos(paren));
-		*lengthPtr = tstr - start;
-		if (*tstr != '\0')
-			(*lengthPtr)++;
+		tstr = VarName_Get(str+2, &name, ctxt, false, find_pos(str[1]));
+		if (*tstr == ':')
+			has_modifier = true;
+		else if (*tstr != '\0')
+			tstr++;
+		break;
+	default:
+		name.s = str+1;
+		name.e = str+2;
+		name.tofree = false;
+		tstr = str + 2;
+		break;
 	}
 
 	idx = classify_var(name.s, &name.e, &k);
 	v = find_any_var(name.s, name.e, ctxt, idx, k);
 	val = get_expanded_value(v, idx, ctxt, err, freePtr);
-	if (*tstr == ':' && paren != '\0')
+	if (has_modifier) {
 		val = VarModifiers_Apply(val, &name, ctxt, err, freePtr,
-		    tstr, paren, lengthPtr);
+		    &tstr, str[1]);
+	}
 	if (val == NULL) {
 		val = err ? var_Error : varNoError;
 		/* Dynamic source */
@@ -1011,7 +999,7 @@ Var_Parse(const char *str,	/* The string to parse */
 			/* can't be expanded for now: copy the spec instead. */
 			if (ctxt == NULL) {
 				*freePtr = true;
-				val = Str_dupi(start, start+ *lengthPtr);
+				val = Str_dupi(str, tstr);
 			} else {
 			/* somehow, this should have been expanded already. */
 				GNode *n;
@@ -1036,6 +1024,7 @@ Var_Parse(const char *str,	/* The string to parse */
 		}
 	}
 	VarName_Free(&name);
+	*lengthPtr = tstr - str;
 	return val;
 }
 
@@ -1210,12 +1199,10 @@ Var_SubstVar(Buffer buf,	/* To store result */
 				continue;
 			}
 			if (*p == ':') {
-				size_t length;	/* Length of variable name */
 				bool doFree;	/* should val be freed ? */
 				char *newval;	
 				struct Name name;
 
-				length = p - str + 1;
 				doFree = false;
 				name.s = var;
 				name.e = var + (p-str);
@@ -1223,12 +1210,12 @@ Var_SubstVar(Buffer buf,	/* To store result */
 				/* val won't be freed since !doFree, but
 				 * VarModifiers_Apply doesn't know that,
 				 * hence the cast. */
-				newval = VarModifiers_Apply((char *)val, &name,
-				    NULL, false, &doFree, p, paren, &length);
+				newval = VarModifiers_Apply((char *)val, 
+				    &name, NULL, false, &doFree, &p, paren);
 				Buf_AddString(buf, newval);
 				if (doFree)
 					free(newval);
-				str += length;
+				str = p;
 				continue;
 			} else
 				str = p+1;

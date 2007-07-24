@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.73 2007/07/24 18:56:15 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.74 2007/07/24 18:58:48 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
