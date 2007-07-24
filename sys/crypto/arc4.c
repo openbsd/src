@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4.c,v 1.1 2003/10/07 07:07:14 markus Exp $	*/
+/*	$OpenBSD: arc4.c,v 1.2 2007/07/24 19:35:20 damien Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -55,5 +55,15 @@ rc4_crypt(struct rc4_ctx *ctx, u_char *src, u_char *dst,
 		RC4SWAP(ctx->x, ctx->y);
 		dst[i] = src[i] ^ ctx->state[
 		   (ctx->state[ctx->x] + ctx->state[ctx->y]) % RC4STATE];
+	}
+}
+
+void
+rc4_skip(struct rc4_ctx *ctx, u_int32_t len)
+{
+	for (; len > 0; len--) {
+		ctx->x = (ctx->x + 1) % RC4STATE;
+		ctx->y = (ctx->state[ctx->x] + ctx->y) % RC4STATE;
+		RC4SWAP(ctx->x, ctx->y);
 	}
 }

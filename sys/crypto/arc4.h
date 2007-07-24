@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4.h,v 1.1 2003/10/07 07:07:14 markus Exp $	*/
+/*	$OpenBSD: arc4.h,v 1.2 2007/07/24 19:35:20 damien Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -25,3 +25,4 @@ struct rc4_ctx {
 
 void	rc4_keysetup(struct rc4_ctx *, u_char *, u_int32_t);
 void	rc4_crypt(struct rc4_ctx *, u_char *, u_char *, u_int32_t);
+void	rc4_skip(struct rc4_ctx *, u_int32_t);
