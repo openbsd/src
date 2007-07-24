@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_syms.c,v 1.8 2003/03/28 23:33:27 mickey Exp $	*/
+/*	$OpenBSD: elf_syms.c,v 1.9 2007/07/24 21:08:49 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -268,7 +268,7 @@ int
 elf_lookup(struct pstate *ps, const char *name, reg *res)
 {
 	struct sym_table *st;
-	Elf_Sym *s;
+	Elf_Sym *s = NULL;
 
 	TAILQ_FOREACH(st, &ps->ps_syms, st_list) {
 		if ((s = elf_lookup_table(ST_TO_ESH(st), name)) != NULL)
