@@ -90,7 +90,7 @@
 ./usr/lib/libmenu.so.3.0
 ./usr/lib/libmilter.so.2.0
 ./usr/lib/libncurses.so.10.0
-./usr/lib/libobjc.so.3.0
+./usr/lib/libobjc.so.4
 ./usr/lib/libocurses.so.5.0
 ./usr/lib/libossaudio.so.3.0
 ./usr/lib/libotermcap.so.5.0
