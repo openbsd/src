@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.5 2007/07/09 08:07:00 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.6 2007/07/24 19:12:59 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -46,164 +46,165 @@ static bool parse_variable_assignment(const char *, int);
 static const char *
 find_op1(const char *p)
 {
-    for(;; p++) {
-    	if (isspace(*p) || *p == '$' || *p == '\0')
-	    break;
-	if (p[strspn(p, "?:!+")] == '=')
-	    break;
-	if (p[0] == ':' && p[1] == 's' && p[2] == 'h')
-	    break;
-    }
-    return p;
+	for(;; p++) {
+		if (isspace(*p) || *p == '$' || *p == '\0')
+			break;
+		if (p[strspn(p, "?:!+")] == '=')
+			break;
+		if (p[0] == ':' && p[1] == 's' && p[2] == 'h')
+			break;
+	}
+	return p;
 }
 
 static const char *
 find_op2(const char *p)
 {
-    for(;; p++) {
-    	if (isspace(*p) || *p == '$' || *p == '\0')
-	    break;
-	if (p[strspn(p, "?:!+")] == '=')
-	    break;
-    }
-    return p;
+	for(;; p++) {
+		if (isspace(*p) || *p == '$' || *p == '\0')
+			break;
+		if (p[strspn(p, "?:!+")] == '=')
+			break;
+	}
+	return p;
 }
 
 static bool
-parse_variable_assignment(const char *line, 
-    int ctxt) 			/* Context in which to do the assignment */
+parse_variable_assignment(const char *line, int ctxt)
 {
-    const char	*arg;
-    char	*res1 = NULL, *res2 = NULL;
+	const char *arg;
+	char *res1 = NULL, *res2 = NULL;
 #define VAR_NORMAL	0
 #define VAR_SUBST	1
 #define VAR_APPEND	2
 #define VAR_SHELL	4
 #define VAR_OPT		8
-    int		    type;	/* Type of assignment */
-    struct Name	    name;
+	int type;	/* Type of assignment */
+	struct Name name;
 
-    arg = VarName_Get(line, &name, NULL, true,
-	FEATURES(FEATURE_SUNSHCMD) ? find_op1 : find_op2);
+	arg = VarName_Get(line, &name, NULL, true,
+	    FEATURES(FEATURE_SUNSHCMD) ? find_op1 : find_op2);
 
-    while (isspace(*arg))
-    	arg++;
+	while (isspace(*arg))
+		arg++;
 
-    type = VAR_NORMAL;
+	type = VAR_NORMAL;
 
-    while (*arg != '=' && !isspace(*arg)) {
-	/* Check operator type.  */
-	switch (*arg++) {
-	case '+':
-	    if (type & (VAR_OPT|VAR_APPEND)) {
-	    	VarName_Free(&name);
-		return false;
-	    }
-	    type |= VAR_APPEND;
-	    break;
+	while (*arg != '=' && !isspace(*arg)) {
+		/* Check operator type.  */
+		switch (*arg++) {
+		case '+':
+			if (type & (VAR_OPT|VAR_APPEND)) {
+				VarName_Free(&name);
+				return false;
+			}
+			type |= VAR_APPEND;
+			break;
 
-	case '?':
-	    if (type & (VAR_OPT|VAR_APPEND)) {
-	    	VarName_Free(&name);
-		return false;
-	    }
-	    type |= VAR_OPT;
-	    break;
+		case '?':
+			if (type & (VAR_OPT|VAR_APPEND)) {
+				VarName_Free(&name);
+				return false;
+			}
+			type |= VAR_OPT;
+			break;
 
-	case ':':
-	    if (FEATURES(FEATURE_SUNSHCMD) && strncmp(arg, "sh", 2) == 0) {
-		type = VAR_SHELL;
-		arg += 2;
-		while (*arg != '=' && *arg != '\0')
-			arg++;
-	    } else {
-	    	if (type & VAR_SUBST) {
-		    VarName_Free(&name);
-		    return false;
+		case ':':
+			if (FEATURES(FEATURE_SUNSHCMD) && 
+			    strncmp(arg, "sh", 2) == 0) {
+				type = VAR_SHELL;
+				arg += 2;
+				while (*arg != '=' && *arg != '\0')
+					arg++;
+			} else {
+				if (type & VAR_SUBST) {
+					VarName_Free(&name);
+					return false;
+				}
+				type |= VAR_SUBST;
+			}
+			break;
+
+		case '!':
+			if (type & VAR_SHELL) {
+				VarName_Free(&name);
+				return false;
+			}
+			type |= VAR_SHELL;
+			break;
+
+		default:
+			VarName_Free(&name);
+			return false;
 		}
-		type |= VAR_SUBST;
-	    }
-	    break;
-
-	case '!':
-	    if (type & VAR_SHELL) {
-	    	VarName_Free(&name);
-		return false;
-	    }
-	    type |= VAR_SHELL;
-	    break;
-
-	default:
-	    VarName_Free(&name);
-	    return false;
 	}
-    }
 
-    /* Check validity of operator */
-    if (*arg++ != '=') {
-	VarName_Free(&name);
-	return false;
-    }
+	/* Check validity of operator */
+	if (*arg++ != '=') {
+		VarName_Free(&name);
+		return false;
+	}
 
-    while (isspace(*arg))
-    	arg++;
-    /* If the variable already has a value, we don't do anything.  */
-    if ((type & VAR_OPT) && Var_Definedi(name.s, name.e)) {
+	while (isspace(*arg))
+		arg++;
+	/* If the variable already has a value, we don't do anything.  */
+	if ((type & VAR_OPT) && Var_Definedi(name.s, name.e)) {
+		VarName_Free(&name);
+		return true;
+	}
+	if (type & VAR_SHELL) {
+		char *err;
+
+		if (strchr(arg, '$') != NULL) {
+			char *sub;
+			/* There's a dollar sign in the command, so perform
+			 * variable expansion on the whole thing. */
+			sub = Var_Subst(arg, NULL, true);
+			res1 = Cmd_Exec(sub, &err);
+			free(sub);
+		} else
+			res1 = Cmd_Exec(arg, &err);
+
+		if (err)
+			Parse_Error(PARSE_WARNING, err, arg);
+		arg = res1;
+	}
+	if (type & VAR_SUBST) {
+		/*
+		 * Allow variables in the old value to be undefined, but leave
+		 * their invocation alone -- this is done by forcing
+		 * errorIsOkay to be false.  
+		 * XXX: This can cause recursive variables, but that's not 
+		 * hard to do, and this allows someone to do something like
+		 *
+		 *  CFLAGS = $(.INCLUDES) 
+		 *  CFLAGS := -I.. $(CFLAGS)
+		 *
+		 * And not get an error.
+		 */
+		bool   saved = errorIsOkay;
+
+		errorIsOkay = false;
+		/* ensure the variable is set to something to avoid `variable
+		 * is recursive' errors.  */
+		if (Var_Valuei(name.s, name.e) == NULL)
+			Var_Seti(name.s, name.e, "", ctxt);
+
+		res2 = Var_Subst(arg, NULL, false);
+		errorIsOkay = saved;
+
+		arg = res2;
+	}
+
+	if (type & VAR_APPEND)
+		Var_Appendi(name.s, name.e, arg, ctxt);
+	else
+		Var_Seti(name.s, name.e, arg, ctxt);
+
 	VarName_Free(&name);
+	free(res2);
+	free(res1);
 	return true;
-    }
-    if (type & VAR_SHELL) {
-	char *err;
-
-	if (strchr(arg, '$') != NULL) {
-	    char *sub;
-	    /* There's a dollar sign in the command, so perform variable
-	     * expansion on the whole thing. */
-	    sub = Var_Subst(arg, NULL, true);
-	    res1 = Cmd_Exec(sub, &err);
-	    free(sub);
-	} else
-	    res1 = Cmd_Exec(arg, &err);
-
-	if (err)
-	    Parse_Error(PARSE_WARNING, err, arg);
-	arg = res1;
-    }
-    if (type & VAR_SUBST) {
-	/*
-	 * Allow variables in the old value to be undefined, but leave their
-	 * invocation alone -- this is done by forcing errorIsOkay to be false.
-	 * XXX: This can cause recursive variables, but that's not hard to do,
-	 * and this allows someone to do something like
-	 *
-	 *  CFLAGS = $(.INCLUDES)
-	 *  CFLAGS := -I.. $(CFLAGS)
-	 *
-	 * And not get an error.
-	 */
-	bool   saved = errorIsOkay;
-
-	errorIsOkay = false;
-	/* ensure the variable is set to something to avoid `variable
-	 * is recursive' errors.  */
-	if (Var_Valuei(name.s, name.e) == NULL)
-	    Var_Seti(name.s, name.e, "", ctxt);
-
-	res2 = Var_Subst(arg, NULL, false);
-	errorIsOkay = saved;
-
-	arg = res2;
-    }
-
-    if (type & VAR_APPEND)
-	Var_Appendi(name.s, name.e, arg, ctxt);
-    else
-	Var_Seti(name.s, name.e, arg, ctxt);
-
-    VarName_Free(&name);
-    free(res2);
-    free(res1);
-    return true;
 }
 
 bool
