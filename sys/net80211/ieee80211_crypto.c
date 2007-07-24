@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.19 2007/07/18 19:47:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.20 2007/07/24 16:49:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -107,10 +107,12 @@ void	ieee80211_derive_smkid(const u_int8_t *, size_t, const u_int8_t *,
 void
 ieee80211_crypto_attach(struct ifnet *ifp)
 {
-	/*
-	 * Setup crypto support.
-	 */
+	struct ieee80211com *ic = (void *)ifp;
+
 	ieee80211_crc_init();
+
+	/* initialize 256-bit global key counter to a random value */
+	get_random_bytes(ic->ic_globalcnt, EAPOL_KEY_NONCE_LEN);
 }
 
 void
