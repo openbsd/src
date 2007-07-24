@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_syms.c,v 1.10 2003/04/25 20:07:09 pvalchev Exp $	*/
+/*	$OpenBSD: aout_syms.c,v 1.11 2007/07/24 21:11:02 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -238,7 +238,7 @@ int
 aout_lookup(struct pstate *ps, const char *name, reg *res)
 {
 	struct sym_table *st;
-	struct nlist *s;
+	struct nlist *s = NULL;
 	int first = 1;
 	char *sname = (char *)name;
 
