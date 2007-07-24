@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.8 2007/07/21 15:43:42 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.9 2007/07/24 20:36:34 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -243,7 +243,6 @@ p_rtentry(struct rt_msghdr *rtm)
 	struct sockaddr	*mask, *rti_info[RTAX_MAX];
 	char		 ifbuf[IF_NAMESIZE];
 
-
 	if (sa->sa_family == AF_KEY)
 		return;
 
@@ -377,11 +376,11 @@ p_encap(struct sockaddr *sa, struct sockaddr *mask, int width)
 	else
 		cp = routename(sa);
 	switch (sa->sa_family) {
+	case AF_INET:
+		port = ntohs(((struct sockaddr_in *)sa)->sin_port);
+		break;
 	case AF_INET6:
 		port = ntohs(((struct sockaddr_in6 *)sa)->sin6_port);
-		break;
-	default:
-		port = ntohs(((struct sockaddr_in *)sa)->sin_port);
 		break;
 	}
 	if (width < 0)
@@ -399,6 +398,7 @@ p_protocol(struct sadb_protocol *sap, struct sockaddr *sa, struct sadb_protocol
     *saft, int proto)
 {
 	printf("%-6u", sap->sadb_protocol_proto);
+
 	if (sa)
 		p_sockaddr(sa, NULL, 0, -1);
 	else
@@ -574,7 +574,7 @@ routename(struct sockaddr *sa)
 			struct sockaddr_rtlabel *sr;
 
 			sr = (struct sockaddr_rtlabel *)sa;
-			strlcpy(name, sr->sr_label, sizeof(name));
+			(void)strlcpy(name, sr->sr_label, sizeof(name));
 			return (name);
 		}
 		/* FALLTHROUGH */
