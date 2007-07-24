@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.123 2007/06/20 19:16:53 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.124 2007/07/24 15:11:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.123 2007/06/20 19:16:53 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.124 2007/07/24 15:11:53 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -169,7 +169,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 	if (label.d_interleave == 0)
 		label.d_interleave = 1;
 
-	puts("\nInitial label editor (enter '?' for help at any prompt)");
+	puts("Initial label editor (enter '?' for help at any prompt)");
 	lastlabel = label;
 	for (;;) {
 		fputs("> ", stdout);
@@ -1671,15 +1671,15 @@ find_bounds(struct disklabel *lp)
 			starting_sector = 63;
 		}
 
-		printf("\nTreating sectors %llu-%llu as the OpenBSD portion of the "
-		    "disk.\nYou can use the 'b' command to change this.\n",
+		printf("Treating sectors %llu-%llu as the OpenBSD portion of the "
+		    "disk.\nYou can use the 'b' command to change this.\n\n",
 		    starting_sector, ending_sector);
 	}
 #elif (NUMBOOT == 1)
 	/* Boot blocks take up the first cylinder */
 	starting_sector = lp->d_secpercyl;
-	printf("\nReserving the first data cylinder for boot blocks.\n"
-	    "You can use the 'b' command to change this.\n");
+	printf("Reserving the first data cylinder for boot blocks.\n"
+	    "You can use the 'b' command to change this.\n\n");
 #endif
 }
 
