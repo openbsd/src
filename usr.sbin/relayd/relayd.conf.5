@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.45 2007/05/31 19:20:24 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.46 2007/07/24 17:51:33 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 24 2007 $
 .Dt HOSTSTATED.CONF 5
 .Os
 .Sh NAME
@@ -672,7 +672,7 @@ interval 5
 table phphosts {
 	timeout 300
 	real port 8080
-	check http "/" digest 630aa3c2f...
+	check http "/" digest "630aa3c2f..."
 	host $www1
 	host $www2
 	host $www3
