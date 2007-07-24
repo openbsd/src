@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.23 2007/07/24 18:44:36 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.24 2007/07/24 19:39:22 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -709,19 +709,17 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
 		memcpy(buf + EAPOL_KEY_IV_LEN, kek, 16);
 
 		rc4_keysetup(&ctx, buf, sizeof buf);
-#ifdef notyet
 		/* discard the first 256 octets of the ARC4 key stream */
 		rc4_skip(&ctx, RC4STATE);
-#endif
 		rc4_crypt(&ctx, data, data, len);
 		break;
 	case EAPOL_KEY_DESC_V2:
 		if (len < 16 || (len & 7) != 0) {
 			/* insert padding */
-			data[len++] = IEEE80211_ELEMID_VENDOR;
 			n = (len < 16) ? 16 - len : 8 - (len & 7);
-			memset(&data[len], 0, n);
-			len += n;
+			data[len++] = IEEE80211_ELEMID_VENDOR;
+			memset(&data[len], 0, n - 1);
+			len += n - 1;
 		}
 		ieee80211_aes_key_wrap(kek, 16, data, len / 8, data);
 		len += 8;	/* AES Key Wrap adds 8 bytes */
@@ -762,10 +760,8 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 		memcpy(buf + EAPOL_KEY_IV_LEN, kek, 16);
 
 		rc4_keysetup(&ctx, buf, sizeof buf);
-#ifdef notyet
 		/* discard the first 256 octets of the ARC4 key stream */
 		rc4_skip(&ctx, RC4STATE);
-#endif
 		rc4_crypt(&ctx, data, data, len);
 		return 0;
 	case EAPOL_KEY_DESC_V2:
