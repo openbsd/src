@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.48 2007/07/11 16:50:12 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.49 2007/07/24 16:07:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -783,6 +783,9 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	timeout_del(&sc->calib_to);
 
+	if (ic->ic_state == IEEE80211_S_SCAN)
+		ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
 		/* make the link LED blink while we're scanning */
@@ -1554,7 +1557,6 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
     int ac)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct wpi_tx_ring *ring = &sc->txq[ac];
 	struct wpi_tx_desc *desc;
 	struct wpi_tx_data *data;
@@ -1562,21 +1564,12 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	struct wpi_cmd_data *tx;
 	struct ieee80211_frame *wh;
 	struct mbuf *mnew;
-	int i, rate, error;
+	int i, rate, error, ovhd = 0;
 
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
 
 	wh = mtod(m0, struct ieee80211_frame *);
-
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		m0 = ieee80211_wep_crypt(ifp, m0, 1);
-		if (m0 == NULL)
-			return ENOBUFS;
-
-		/* packet header may have moved, reset our local pointer */
-		wh = mtod(m0, struct ieee80211_frame *);
-	}
 
 	/* pickup a rate */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
@@ -1624,6 +1617,20 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	/* no need to zero tx, all fields are reinitialized here */
 	tx->flags = 0;
 
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
+		const struct ieee80211_key *key =
+		    &ic->ic_nw_keys[ic->ic_wep_txkey];
+		if (key->k_cipher == IEEE80211_CIPHER_WEP40)
+			tx->security = WPI_CIPHER_WEP40;
+		else
+			tx->security = WPI_CIPHER_WEP104;
+		tx->security |= ic->ic_wep_txkey << 6;
+		memcpy(&tx->key[3], key->k_key, key->k_len);
+		/* compute crypto overhead */
+		ovhd = IEEE80211_WEP_TOTLEN;
+	} else
+		tx->security = 0;
+
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		tx->id = WPI_ID_BSS;
 		tx->flags |= htole32(WPI_TX_NEED_ACK);
@@ -1633,7 +1640,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	/* check if RTS/CTS or CTS-to-self protection must be used */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		/* multicast frames are not sent at OFDM rates in 802.11b/g */
-		if (m0->m_pkthdr.len + IEEE80211_CRC_LEN >
+		if (m0->m_pkthdr.len + ovhd + IEEE80211_CRC_LEN >
 		    ic->ic_rtsthreshold) {
 			tx->flags |= htole32(WPI_TX_NEED_RTS |
 			    WPI_TX_FULL_TXOP);

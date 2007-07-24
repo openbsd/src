@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.16 2007/07/10 18:29:38 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.17 2007/07/24 16:07:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -198,6 +198,7 @@ struct wpi_rx_desc {
 	uint32_t	len;
 	uint8_t		type;
 #define WPI_UC_READY		  1
+#define WPI_ADD_NODE_DONE	 24
 #define WPI_RX_DONE		 27
 #define WPI_TX_DONE		 28
 #define WPI_START_SCAN		130
@@ -323,7 +324,7 @@ struct wpi_cmd_tsf {
 /* structure for WPI_CMD_ADD_NODE */
 struct wpi_node_info {
 	uint8_t		control;
-#define WPI_NODE_UPDATE	(1 << 0)
+#define WPI_NODE_UPDATE		(1 << 0)
 
 	uint8_t		reserved1[3];
 	uint8_t		bssid[IEEE80211_ADDR_LEN];
@@ -333,15 +334,17 @@ struct wpi_node_info {
 #define WPI_ID_BROADCAST	24
 
 	uint8_t		flags;
+#define WPI_FLAG_SET_KEY	(1 << 0)
+
 	uint16_t	reserved3;
-	uint16_t	key_flags;
+	uint16_t	security;
 	uint8_t		tkip;
 	uint8_t		reserved4;
 	uint16_t	ttak[5];
 	uint16_t	reserved5;
 	uint8_t		key[IEEE80211_KEYBUF_SIZE];
 	uint32_t	action;
-#define WPI_ACTION_SET_RATE	4
+#define WPI_ACTION_SET_RATE	(1 << 2)
 
 	uint32_t	mask;
 	uint16_t	tid;
@@ -373,6 +376,11 @@ struct wpi_cmd_data {
 	uint8_t		id;
 	uint8_t		tid;
 	uint8_t		security;
+#define WPI_CIPHER_WEP40	1
+#define WPI_CIPHER_CCMP		2
+#define WPI_CIPHER_TKIP		3
+#define WPI_CIPHER_WEP104	9
+
 	uint8_t		key[IEEE80211_KEYBUF_SIZE];
 	uint8_t		tkip[IEEE80211_WEP_MICLEN];
 	uint32_t	fnext;
