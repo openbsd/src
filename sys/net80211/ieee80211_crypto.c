@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.24 2007/07/24 19:39:22 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.25 2007/07/24 20:34:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -674,6 +674,29 @@ ieee80211_eapol_key_mic(struct ieee80211_eapol_key *key, const u_int8_t *kck)
 	/* set the Key MIC field */
 	info |= EAPOL_KEY_KEYMIC;
 	BE_WRITE_2(key->info, info);
+}
+
+/*
+ * Check the MIC of a received EAPOL-Key frame using the specified Key
+ * Confirmation Key (KCK).
+ */
+int
+ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *key,
+    const u_int8_t *kck)
+{
+	u_int8_t mic[EAPOL_KEY_MIC_LEN];
+	u_int16_t info;
+
+	info = BE_READ_2(key->info);
+	KASSERT(info & EAPOL_KEY_KEYMIC);
+
+	memcpy(mic, key->mic, EAPOL_KEY_MIC_LEN);
+	memset(key->mic, 0, EAPOL_KEY_MIC_LEN);
+	info &= ~EAPOL_KEY_KEYMIC;
+	BE_WRITE_2(key->info, info);
+	ieee80211_eapol_key_mic(key, kck);
+
+	return memcmp(key->mic, mic, EAPOL_KEY_MIC_LEN) != 0;
 }
 
 /*

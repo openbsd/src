@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.22 2007/07/24 16:53:03 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.23 2007/07/24 20:34:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -107,6 +107,8 @@ extern	int ieee80211_ibss_merge(struct ieee80211com *,
 extern	void ieee80211_reset_erp(struct ieee80211com *);
 extern	void ieee80211_set_shortslottime(struct ieee80211com *, int);
 extern	void ieee80211_eapol_key_mic(struct ieee80211_eapol_key *,
+		const u_int8_t *);
+extern	int ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *,
 		const u_int8_t *);
 extern	void ieee80211_eapol_key_encrypt(struct ieee80211com *,
 		struct ieee80211_eapol_key *, const u_int8_t *);
