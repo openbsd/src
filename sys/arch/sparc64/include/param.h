@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.26 2007/07/22 21:33:04 kettenis Exp $	*/
+/*	$OpenBSD: param.h,v 1.27 2007/07/24 15:45:10 kettenis Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -93,17 +93,6 @@
 #define	ALIGNBYTES		0xf
 #define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-
-
-/*
- * The following variables are always defined and initialized (in locore)
- * so independently compiled modules (e.g. LKMs) can be used irrespective
- * of the `options SUN4?' combination a particular kernel was configured with.
- * See also the definitions of NBPG, PGOFSET and PGSHIFT below.
- */
-#if (defined(_KERNEL) || defined(_STANDALONE)) && !defined(_LOCORE)
-extern int nbpg, pgofset, pgshift;
-#endif
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
@@ -221,23 +210,9 @@ extern void	delay(unsigned int);
 #define CPU_SUN4U	3
 
 /*
- * Shorthand CPU-type macros. Enumerate all seven cases.
- * Let compiler optimize away code conditional on constants.
- *
  * On a sun4u machine, the page size is 8192.
- *
- * Note that whenever the macros defined below evaluate to expressions
- * involving variables, the kernel will perform slightly worse due to the
- * extra memory references they'll generate.
  */
 
-#define CPU_ISSUN4U	(1)
-#define CPU_ISSUN4MOR4U	(1)
-#define CPU_ISSUN4M	(0)
-#define CPU_ISSUN4C	(0)
-#define CPU_ISSUN4	(0)
-#define CPU_ISSUN4OR4C	(0)
-#define CPU_ISSUN4COR4M	(0)
 #define	NBPG		8192		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		13		/* log2(NBPG) */
