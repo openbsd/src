@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.56 2006/09/24 09:04:05 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.57 2007/07/24 18:52:47 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1199,7 +1199,7 @@ SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 	    } else if (*cp2 == '$')
 		/* Start of a variable spec -- contact variable module
 		 * to find the end so we can skip over it.  */
-		cp2 += Var_ParseSkip(cp2, &pgn->context, NULL);
+		Var_ParseSkip(&cp2, &pgn->context);
 	    else if (*cp2 == '\\' && cp2[1] != '\0')
 		/* Escaped something -- skip over it.  */
 		cp2+=2;

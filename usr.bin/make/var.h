@@ -101,11 +101,10 @@ extern char *Var_Parse(const char *, SymTable *, bool, size_t *,
  * callers who don't care don't need to. */
 extern char	var_Error[];	
 
-/* length = Var_ParseSkip(varspec, ctxt, &ok);
- *	Parses a variable specification and returns the specification
- *	length. Fills ok if the varspec is correct, that pointer can be
- *	NULL if this information is not needed.  */
-extern size_t Var_ParseSkip(const char *, SymTable *, bool *);
+/* ok = Var_ParseSkip(&varspec, ctxt, &ok);
+ *	Parses a variable specification and returns true if the varspec 
+ *	is correct. Advances pointer past specification.  */
+extern bool Var_ParseSkip(const char **, SymTable *);
 
 /* ok = Var_ParseBuffer(buf, varspec, ctxt, undef_is_bad, &length);
  *	Similar to Var_Parse, except the value is directly appended to

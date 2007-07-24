@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.67 2007/07/22 17:56:50 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.68 2007/07/24 18:52:47 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -818,15 +818,17 @@ find_pos(int c)
 	}
 }
 
-size_t
-Var_ParseSkip(const char *str, SymTable *ctxt, bool *result)
+bool
+Var_ParseSkip(const char **pstr, SymTable *ctxt)
 {
-	const char *tstr;	/* Pointer into str */
-	Var *v;			/* Variable in invocation */
-	char paren;		/* Parenthesis or brace or nothing */
+	const char *tstr;
+	Var *v;
+	char paren;
+	const char *str = *pstr;
 	const char *start;
 	size_t length;
 	struct Name name;
+	bool result;
 
 	v = NULL;
 	start = str;
@@ -849,14 +851,13 @@ Var_ParseSkip(const char *str, SymTable *ctxt, bool *result)
 			length++;
 	}
 
-	if (result != NULL)
-		*result = true;
+	result = true;
 	if (*tstr == ':' && paren != '\0')
 		 if (VarModifiers_Apply(NULL, NULL, ctxt, true, NULL, tstr,
 		    paren, &length) == var_Error)
-			if (result != NULL)
-				*result = false;
-	return length;
+			result = false;
+	*pstr += length;
+	return result;
 }
 
 /* As of now, Var_ParseBuffer is just a wrapper around Var_Parse. For

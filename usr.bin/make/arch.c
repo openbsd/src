@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.56 2007/03/20 03:50:39 tedu Exp $ */
+/*	$OpenBSD: arch.c,v 1.57 2007/07/24 18:52:47 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -241,10 +241,7 @@ Arch_ParseArchive(char **linePtr,   /* Pointer to start of specification */
 
     for (cp = libName; *cp != '(' && *cp != '\0';) {
 	if (*cp == '$') {
-	    bool ok;
-
-	    cp += Var_ParseSkip(cp, ctxt, &ok);
-	    if (ok == false)
+	    if (!Var_ParseSkip(&cp, ctxt))
 		return false;
 	    subLibName = true;
 	} else
@@ -266,9 +263,7 @@ Arch_ParseArchive(char **linePtr,   /* Pointer to start of specification */
 	memberName = cp;
 	while (*cp != '\0' && *cp != ')' && !isspace(*cp)) {
 	    if (*cp == '$') {
-		bool ok;
-		cp += Var_ParseSkip(cp, ctxt, &ok);
-		if (ok == false)
+		if (!Var_ParseSkip(&cp, ctxt))
 		    return false;
 		doSubst = true;
 	    } else
