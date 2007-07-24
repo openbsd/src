@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.59 2007/07/21 15:43:01 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.60 2007/07/24 20:22:23 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -287,7 +287,6 @@ void
 p_pfkentry(struct sadb_msg *msg)
 {
 	static int	 	 old = 0;
-	struct sadb_ext		*ext;
 	struct sadb_address	*saddr;
 	struct sadb_protocol	*sap, *saft;
 	struct sockaddr		*sa, *mask;
@@ -522,14 +521,14 @@ routename(struct sockaddr *sa)
 		first = 0;
 		if (gethostname(domain, sizeof(domain)) == 0 &&
 		    (cp = strchr(domain, '.')))
-			strlcpy(domain, cp + 1, sizeof(domain));
+			(void)strlcpy(domain, cp + 1, sizeof(domain));
 		else
 			domain[0] = '\0';
 		cp = NULL;
 	}
 
 	if (sa->sa_len == 0) {
-		strlcpy(line, "default", sizeof(line));
+		(void)strlcpy(line, "default", sizeof(line));
 		return (line);
 	}
 
@@ -568,12 +567,12 @@ routename(struct sockaddr *sa)
 			struct sockaddr_rtlabel *sr;
 
 			sr = (struct sockaddr_rtlabel *)sa;
-			strlcpy(name, sr->sr_label, sizeof(name));
+			(void)strlcpy(name, sr->sr_label, sizeof(name));
 			return (name);
 		}
 		/* FALLTHROUGH */
 	default:
-		snprintf(line, sizeof(line), "(%d) %s",
+		(void)snprintf(line, sizeof(line), "(%d) %s",
 		    sa->sa_family, any_ntoa(sa));
 		break;
 	}
@@ -764,14 +763,11 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 	case AF_INET:
 		return netname4(((struct sockaddr_in *)sa)->sin_addr.s_addr,
 		    (struct sockaddr_in *)mask);
-
 	case AF_INET6:
 		return netname6((struct sockaddr_in6 *)sa,
 		    (struct sockaddr_in6 *)mask);
-
 	case AF_LINK:
 		return (link_print(sa));
-
 	default:
 		snprintf(line, sizeof(line), "af %d: %s",
 		    sa->sa_family, any_ntoa(sa));
@@ -808,7 +804,7 @@ link_print(struct sockaddr *sa)
 
 	if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 	    sdl->sdl_slen == 0) {
-		snprintf(line, sizeof(line), "link#%d", sdl->sdl_index);
+		(void)snprintf(line, sizeof(line), "link#%d", sdl->sdl_index);
 		return (line);
 	}
 	switch (sdl->sdl_type) {
