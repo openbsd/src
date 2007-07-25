@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.56 2007/06/19 14:42:09 pyr Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.57 2007/07/25 19:11:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -257,14 +257,14 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	struct iface	*iface = NULL;
 	struct kif	*kif;
 	struct auth_md	 md;
-	int		 n, link_ok, stub_changed;
+	int		 n, link_ok, stub_changed, shut = 0;
 
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
-			fatalx("pipe closed");
+			shut = 1;
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -378,7 +378,13 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	if (!shut)
+		imsg_event_add(ibuf);
+	else {
+		/* this pipe is dead, so remove the event handler */
+		event_del(&ibuf->ev);
+		event_loopexit(NULL);
+	}
 }
 
 /* ARGSUSED */
@@ -395,7 +401,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 	struct lsa_entry	*le;
 	struct imsg		 imsg;
 	struct abr_rtr		 ar;
-	int			 n, noack = 0;
+	int			 n, noack = 0, shut = 0;
 	u_int16_t		 l, age;
 
 	switch (event) {
@@ -403,7 +409,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
-			fatalx("pipe closed");
+			shut = 1;
 		break;
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
@@ -641,7 +647,13 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	if (!shut)
+		imsg_event_add(ibuf);
+	else {
+		/* this pipe is dead, so remove the event handler */
+		event_del(&ibuf->ev);
+		event_loopexit(NULL);
+	}
 }
 
 struct iface *
