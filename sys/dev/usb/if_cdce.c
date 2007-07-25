@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.34 2007/07/23 16:41:15 mbalmer Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.35 2007/07/25 16:42:24 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -72,6 +72,14 @@
 #include <dev/usb/usbcdc.h>
 
 #include <dev/usb/if_cdcereg.h>
+
+#ifdef CDCE_DEBUG
+#define DPRINTFN(n, x)	do { if (cdcedebug > (n)) printf x; } while (0)
+int cdcedebug = 0;
+#else
+#define DPRINTFN(n, x)
+#endif
+#define DPRINTF(x)	DPRINTFN(0, x)
 
 int	 cdce_tx_list_init(struct cdce_softc *);
 int	 cdce_rx_list_init(struct cdce_softc *);
@@ -213,8 +221,11 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (data_ifcno == -1) {
+		DPRINTF(("cdce_attach: no union interface\n"));
 		sc->cdce_data_iface = sc->cdce_ctl_iface;
 	} else {
+		DPRINTF(("cdce_attach: union interface: ctl=%d, data=%d\n",
+		    ctl_ifcno, data_ifcno));
 		for (i = 0; i < uaa->nifaces; i++) {
 			if (uaa->ifaces[i] != NULL) {
 				id = usbd_get_interface_descriptor(
@@ -244,8 +255,6 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
-			printf("%s: status change notification available\n",
-			    sc->cdce_dev.dv_xname);
 			sc->cdce_intr_no = ed->bEndpointAddress;
 			sc->cdce_intr_size = sizeof(sc->cdce_intr_buf);
 		}
@@ -277,17 +286,19 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			sc->cdce_bulkout_no = ed->bEndpointAddress;
-		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
-			/* XXX: CDC spec defines an interrupt pipe, but it is
-			 * not needed for simple host-to-host applications. */
-		} else {
+		}
+#ifdef CDCE_DEBUG
+		else if (UE_GET_DIR(ed->bEndpointAddress) != UE_DIR_IN &&
+		    UE_GET_XFERTYPE(ed->bmAttributes) != UE_INTERRUPT) {
 			printf("%s: unexpected endpoint, ep=%x attr=%x\n",
 			    sc->cdce_dev.dv_xname, ed->bEndpointAddress,
 			    ed->bmAttributes);
 		}
+#endif
 	    }
 	    if ((sc->cdce_bulkin_no != -1) && (sc->cdce_bulkout_no != -1)) {
+		DPRINTF(("cdce_attach: intr=0x%x, in=0x%x, out=0x%x\n",
+		    sc->cdce_intr_no, sc->cdce_bulkin_no, sc->cdce_bulkout_no));
 		goto found;
 	    }
 	}
@@ -602,6 +613,7 @@ cdce_init(void *xsc)
 	s = splnet();
 
 	if (sc->cdce_intr_no != -1 && sc->cdce_intr_pipe == NULL) {
+		DPRINTFN(1, ("cdce_init: establish interrupt pipe\n"));
 		err = usbd_open_pipe_intr(sc->cdce_ctl_iface, sc->cdce_intr_no,
 		    USBD_SHORT_XFER_OK, &sc->cdce_intr_pipe, sc,
 		    &sc->cdce_intr_buf, sc->cdce_intr_size, cdce_intr,
@@ -897,7 +909,7 @@ cdce_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		printf("cdce_intr: status=%d\n", status);
+		DPRINTFN(2, ("cdce_intr: status=%d\n", status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->cdce_intr_pipe);
 		return;
@@ -908,25 +920,27 @@ cdce_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	if (buf->bmRequestType == UCDC_NOTIFICATION) {
 		switch (buf->bNotification) {
 		    case UCDC_N_NETWORK_CONNECTION:
-			printf("%s: network %s\n", sc->cdce_dev.dv_xname,
-			    UGETW(buf->wValue) ? "connected" : "disconnected");
+			DPRINTFN(1, ("cdce_intr: network %s\n",
+			    UGETW(buf->wValue) ? "connected" : "disconnected"));
 			break;
 		    case UCDC_N_CONNECTION_SPEED_CHANGE:
 			speed = (usb_cdc_connection_speed_t *)&buf->data;
-			printf("%s: upstream %d bps, downstream %d bps\n",
-			    sc->cdce_dev.dv_xname, UGETDW(speed->dwUSBitRate),
-			    UGETDW(speed->dwDSBitRate));
+			DPRINTFN(1, ("cdce_intr: up=%d, down=%d\n",
+			    UGETDW(speed->dwUSBitRate),
+			    UGETDW(speed->dwDSBitRate)));
 			break;
 		    default:
-			printf("%s: bNotification 0x%x\n",
-			    sc->cdce_dev.dv_xname, buf->bNotification);
+			DPRINTF(("cdce_intr: bNotification 0x%x\n",
+			    buf->bNotification));
 		}
-	} else {
-		printf("%s: bmRequestType=%d ", sc->cdce_dev.dv_xname,
-		    buf->bmRequestType);
+	}
+#ifdef CDCE_DEBUG
+	else {
+		printf("cdce_intr: bmRequestType=%d ", buf->bmRequestType);
 		printf("wValue=%d wIndex=%d wLength=%d\n", UGETW(buf->wValue),
 		    UGETW(buf->wIndex), UGETW(buf->wLength));
 	}
+#endif
 }
 
 
