@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.91 2007/05/16 17:27:30 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.92 2007/07/25 23:11:52 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -279,8 +279,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		p2->p_p->ps_cred->p_refcnt = 1;
 		crhold(p1->p_ucred);
 	}
-
-	TAILQ_INIT(&p2->p_selects);
 
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
