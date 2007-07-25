@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.9 2007/07/24 20:36:34 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.10 2007/07/25 11:50:47 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -95,7 +95,6 @@ static const struct bits bits[] = {
 	{ 0 }
 };
 
-void	 pr_rthdr(int, int);
 void	 p_rtentry(struct rt_msghdr *);
 void	 p_pfkentry(struct sadb_msg *);
 void	 pr_family(int);
@@ -112,13 +111,13 @@ void	 index_pfk(struct sadb_msg *, void **);
  * Print routing tables.
  */
 void
-p_rttables(int af)
+p_rttables(int af, u_int tableid)
 {
 	struct rt_msghdr *rtm;
 	struct sadb_msg *msg;
 	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
-	int mib[6];
+	int mib[7];
 	struct sockaddr *sa;
 
 	mib[0] = CTL_NET;
@@ -127,12 +126,14 @@ p_rttables(int af)
 	mib[3] = af;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	mib[6] = tableid;
+
+	if (sysctl(mib, 7, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed > 0) {
 		if ((buf = malloc(needed)) == 0)
 			err(1, NULL);
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		if (sysctl(mib, 7, buf, &needed, NULL, 0) < 0)
 			err(1, "sysctl of routing table");
 		lim = buf + needed;
 	}

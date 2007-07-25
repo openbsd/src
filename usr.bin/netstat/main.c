@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.67 2007/06/28 14:27:02 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.68 2007/07/25 11:50:47 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.67 2007/06/28 14:27:02 claudio Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.68 2007/07/25 11:50:47 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char *rcsid = "$OpenBSD: main.c,v 1.67 2007/06/28 14:27:02 claudio Exp $"
 #include <sys/protosw.h>
 #include <sys/socket.h>
 
+#include <net/route.h>
 #include <netinet/in.h>
 
 #include <ctype.h>
@@ -242,6 +243,7 @@ main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
+	const char *errstr;
 	struct protoent *p;
 	struct protox *tp = NULL; /* for printing cblocks & stats */
 	int ch;
@@ -249,10 +251,11 @@ main(int argc, char *argv[])
 	char buf[_POSIX2_LINE_MAX];
 	gid_t gid;
 	u_long pcbaddr = 0;
+	u_int tableid = 0;
 
 	af = AF_UNSPEC;
 
-	while ((ch = getopt(argc, argv, "AabdFf:gI:ilM:mN:np:P:qrstuvW:w:")) != -1)
+	while ((ch = getopt(argc, argv, "AabdFf:gI:ilM:mN:np:P:qrsT:tuvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -346,6 +349,11 @@ main(int argc, char *argv[])
 		case 's':
 			++sflag;
 			break;
+		case 'T':
+			tableid = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
+			if (errstr)
+				errx(1, "invalid table id: %s", errstr);
+			break;
 		case 't':
 			tflag = 1;
 			break;
@@ -397,7 +405,7 @@ main(int argc, char *argv[])
 		if (sflag)
 			rt_stats(1, 0);
 		else
-			p_rttables(af);
+			p_rttables(af, tableid);
 		exit(0);
 	}
 	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
@@ -628,7 +636,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n"
-	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
+	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system] [-T tableid]\n"
 	    "       %s [-bdn] [-I interface] [-M core] [-N system] [-w wait]\n"
 	    "       %s [-M core] [-N system] -P pcbaddr\n"
 	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
