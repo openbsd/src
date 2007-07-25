@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2007/05/29 19:03:35 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 2007/07/25 18:45:25 todd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -143,6 +143,7 @@ cdev_decl(mcd);
 #include "sequencer.h"
 cdev_decl(music);
 #include "acpi.h"
+#include "bthub.h"
 #include "iop.h"
 #ifdef XFS
 #include <xfs/nxfs.h>
@@ -280,6 +281,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
 	cdev_acpi_init(NACPI,acpi),	/* 83: ACPI */
+	cdev_bthub_init(NBTHUB,bthub),	/* 84: bthub */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
