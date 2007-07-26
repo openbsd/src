@@ -25,9 +25,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: cdce.4,v 1.12 2007/05/31 19:19:49 jmc Exp $
+.\" $OpenBSD: cdce.4,v 1.13 2007/07/26 08:16:09 jmc Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 26 2007 $
 .Dt CDCE 4
 .Os
 .Sh NAME
@@ -46,6 +46,8 @@ including the following:
 .It
 Acer Labs USB 2.0 Data Link
 .It
+FRITZ!Box Fon ata 1020
+.It
 G.Mate YP3X00
 .It
 Motorola USBNET
@@ -55,6 +57,10 @@ NetChip EthernetGadget
 Prolific PL-2501
 .It
 Sharp Zaurus
+.It
+Sony Ericsson K610i
+.It
+Zyxel P-971M
 .El
 .Pp
 The USB bridge appears as a regular network interface on both sides,
@@ -71,14 +77,13 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "cdce%d: no union descriptor"
-The driver couldn't fetch an interface descriptor from the USB
-device.
-For a manually added USB vendor/product, the CDCE_NO_UNION flag
-can be tried to work around the missing descriptor.
+.It "cdce%d: extra ethernet descriptor"
+There is more than one Ethernet descriptor.
 .It "cdce%d: no data interface"
-.It "cdce%d: could not read endpoint descriptor"
-.It "cdce%d: unexpected endpoint"
+The data interface announced by the union descriptor cannot be found.
+.It "cdce%d: no descriptor for interrupt endpoint %d"
+.It "cdce%d: interface alternate setting %d failed"
+.It "cdce%d: no descriptor for bulk endpoint %d"
 .It "cdce%d: could not find data bulk in/out"
 For a manually added USB vendor/product, these errors indicate
 that the bridge is not compatible with the driver.
@@ -89,9 +94,9 @@ before a timeout expired.
 .It "cdce%d: no memory for rx list -- packet dropped!"
 Memory allocation through MGETHDR or MCLGET failed, the system
 is running low on mbufs.
-.It "cdce%d: abort/close rx/tx pipe failed"
+.It "cdce%d: abort/close rx/tx/interrupt pipe failed"
 .It "cdce%d: rx/tx list init failed"
-.It "cdce%d: open rx/tx pipe failed"
+.It "cdce%d: open rx/tx/interrupt pipe failed"
 .It "cdce%d: usb error on rx/tx"
 .El
 .Sh SEE ALSO
@@ -107,7 +112,6 @@ is running low on mbufs.
 .Re
 .Rs
 .%T "Data sheet Prolific PL-2501 Host-to-Host Bridge/Network Controller"
-.%O http://tech.prolific.com.tw/visitor/fcabdl.asp?fid=20679530
 .Re
 .Sh HISTORY
 The
