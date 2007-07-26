@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.13 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.14 2007/07/26 16:11:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -157,8 +157,8 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	/* Allocate space for rdfd. */
 	maxfd = STDIN_FILENO;
 	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
-		if (F_ISSET(sp, SC_SCRIPT) && sp->script->sh_master > maxfd)
-			maxfd = sp->script->sh_master;
+		if (F_ISSET(tsp, SC_SCRIPT) && tsp->script->sh_master > maxfd)
+			maxfd = tsp->script->sh_master;
 	rdfd = (fd_set *)malloc(howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
 	if (rdfd == NULL)
 		goto err;
@@ -240,8 +240,8 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 loop:		memset(rdfd, 0, howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
 		FD_SET(STDIN_FILENO, rdfd);
 		CIRCLEQ_FOREACH(tsp, &gp->dq, q)
-			if (F_ISSET(sp, SC_SCRIPT))
-				FD_SET(sp->script->sh_master, rdfd);
+			if (F_ISSET(tsp, SC_SCRIPT))
+				FD_SET(tsp->script->sh_master, rdfd);
 		switch (select(maxfd + 1, rdfd, NULL, NULL, NULL)) {
 		case 0:
 			abort();
