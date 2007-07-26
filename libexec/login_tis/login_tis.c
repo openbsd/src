@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.5 2006/04/10 20:50:12 deraadt Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.6 2007/07/26 17:48:41 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -232,7 +232,7 @@ main(int argc, char *argv[])
 		}
 		if (rtype == error) {
 			/* didn't read the challenge ourselves so just guess */
-			if (strcmp(chalbuf, "Password: ") == 0)
+			if (strcmp(chalbuf, "Password:") == 0)
 				rtype = password;
 			else
 				rtype = challenge;
@@ -639,7 +639,7 @@ tis_authorize(struct tis_connection *tc, const char *user,
 	else if (tis_recv(tc, buf, sizeof(buf)) < 0)
 		resp = error;
 	else if (strncmp(buf, "password", 8) == 0) {
-		strlcpy(obuf, "Password: ", TIS_BUFSIZ);
+		strlcpy(obuf, "Password:", TIS_BUFSIZ);
 		resp = password;
 	} else if (strncmp(buf, "challenge ", 10) == 0) {
 		strlcpy(obuf, buf + 10, TIS_BUFSIZ);

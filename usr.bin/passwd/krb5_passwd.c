@@ -111,7 +111,7 @@ krb5_passwd(int argc, char **argv)
 	krb5_data_zero(&result_code_string);
 	krb5_data_zero(&result_string);
 
-	if (des_read_pw_string(pwbuf, sizeof(pwbuf), "New password: ", 1) != 0)
+	if (des_read_pw_string(pwbuf, sizeof(pwbuf), "New password:", 1) != 0)
 		return 1;
 
 	ret = krb5_change_password (context, &cred, pwbuf, &result_code,

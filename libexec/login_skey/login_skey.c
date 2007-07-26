@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.18 2007/05/25 21:27:15 krw Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.19 2007/07/26 17:48:41 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 	switch (mode) {
 	case MODE_LOGIN:
 		haskey = (skeychallenge2(fd, &skey, user, challenge) == 0);
-		strlcat(challenge, "\nS/Key Password: ", sizeof(challenge));
+		strlcat(challenge, "\nS/Key Password:", sizeof(challenge));
 
 		/* time out getting passphrase after 2 minutes to avoid a DoS */
 		if (haskey)
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 
 	case MODE_CHALLENGE:
 		haskey = (skeychallenge2(fd, &skey, user, challenge) == 0);
-		strlcat(challenge, "\nS/Key Password: ", sizeof(challenge));
+		strlcat(challenge, "\nS/Key Password:", sizeof(challenge));
 		fprintf(back, BI_VALUE " challenge %s\n",
 		    auth_mkvalue(challenge));
 		fprintf(back, BI_CHALLENGE "\n");
