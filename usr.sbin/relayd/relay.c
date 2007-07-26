@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.35 2007/06/19 06:29:20 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.36 2007/07/26 23:29:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -856,17 +856,11 @@ relay_handle_http(struct ctl_relay_event *cre, struct protonode *pn,
 		    pk->key, pk->value);
 		break;
 	case NODE_ACTION_EXPECT:
-		DPRINTF("relay_handle_http: expect '%s: %s'",
-		    pn->key, pn->value);
-		if (fnmatch(pn->value, pk->value, FNM_CASEFOLD) == 0) {
-			if (pn->flags & PNFLAG_MARK)
-				cre->marked++;
-			cre->nodes[pn->id] = 1;
-		}
 		ret = PN_PASS;
-		break;
+		/* FALLTHROUGH */
 	case NODE_ACTION_FILTER:
-		DPRINTF("relay_handle_http: filter '%s: %s'",
+		DPRINTF("relay_handle_http: %s '%s: %s'",
+		    (pn->action == NODE_ACTION_EXPECT) ? "expect" : "filter",
 		    pn->key, pn->value);
 		if (fnmatch(pn->value, pk->value, FNM_CASEFOLD) == 0) {
 			if (pn->flags & PNFLAG_MARK)
