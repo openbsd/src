@@ -427,7 +427,7 @@ B<sudo> utilizes the following environment variables:
 =head1 FILES
 
  @sysconfdir@/sudoers		List of who can run what
- @timedir@	    Directory containing timestamps
+ @timedir@		Directory containing timestamps
 
 =head1 EXAMPLES
 
