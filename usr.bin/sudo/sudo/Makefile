@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2004/09/28 15:10:51 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/07/26 16:10:16 millert Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../auth
 
@@ -6,13 +6,33 @@ PROG=	sudo
 BINOWN=	root
 BINMODE=4555
 LINKS=  ${BINDIR}/sudo ${BINDIR}/sudoedit
-MLINKS= sudo.8 sudoedit.8
 
+SRCS=	check.c env.c getspwuid.c interfaces.c logging.c memrchr.c parse.c \
+	set_perms.c sudo.c tgetpass.c zero_bytes.c sudo_auth.c bsdauth.c \
+	sudo_edit.c
 
 BINDIR=	/usr/bin
-MAN=	sudo.8 sudoers.5
+POD2MAN=/usr/bin/pod2man
 
-SRCS=	check.c env.c getspwuid.c interfaces.c logging.c parse.c set_perms.c \
-	sudo.c tgetpass.c zero_bytes.c sudo_auth.c bsdauth.c sudo_edit.c
+MAN=	sudo.8 sudoers.5
+MLINKS= sudo.8 sudoedit.8
+VERSION!=uname -rs
+MANDATE!=date '+%B %e, %Y'
+
+CLEANFILES+= ${MAN}
+
+sudo.8: sudo.pod
+	sed -f ${.CURDIR}/../varsub ${.ALLSRC} | ${POD2MAN} --quotes=none \
+	    --name="SUDO" --section=8 --release="${VERSION}" \
+	    --date="${MANDATE}" --center="OpenBSD Reference Manual" | \
+	    sed '1s/^/.if n .ll 78n /' > $@
+
+sudoers.5: sudoers.pod
+	sed -f ${.CURDIR}/../varsub ${.ALLSRC} | ${POD2MAN} --quotes=none \
+	    --name="SUDOERS" --section=5 --release="${VERSION}" \
+	    --date="${MANDATE}" --center="OpenBSD Reference Manual" | \
+	    sed '1s/^/.if n .ll 78n /' > $@
+
+afterdepend: ${MAN}
 
 .include <bsd.prog.mk>

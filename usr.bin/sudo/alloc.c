@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: alloc.c,v 1.23 2004/06/01 16:23:32 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: alloc.c,v 1.23.2.3 2007/06/12 01:43:01 millert Exp $";
 #endif /* lint */
 
 /*
@@ -179,7 +179,9 @@ int
 #ifdef __STDC__
 easprintf(char **ret, const char *fmt, ...)
 #else
-easprintf(va_alist)
+easprintf(ret, fmt, va_alist)
+    char **ret;
+    const char *fmt;
     va_dcl
 #endif
 {
@@ -188,12 +190,7 @@ easprintf(va_alist)
 #ifdef __STDC__
     va_start(ap, fmt);
 #else
-    char **ret;
-    const char *fmt;
-
     va_start(ap);
-    ret = va_arg(ap, char **);
-    fmt = va_arg(ap, const char *);
 #endif
     len = vasprintf(ret, fmt, ap);
     va_end(ap);
@@ -218,4 +215,15 @@ evasprintf(ret, format, args)
     if ((len = vasprintf(ret, format, args)) == -1)
 	errx(1, "unable to allocate memory");
     return(len);
+}
+
+/*
+ * Wrapper for free(3) so we can depend on C89 semantics.
+ */
+void
+efree(ptr)
+    VOID *ptr;
+{
+    if (ptr != NULL)
+	free(ptr);
 }

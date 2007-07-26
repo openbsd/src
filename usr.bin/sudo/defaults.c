@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001, 2003-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: defaults.c,v 1.48 2004/06/06 23:58:10 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: defaults.c,v 1.48.2.5 2007/06/18 15:51:35 millert Exp $";
 #endif /* lint */
 
 /*
@@ -375,10 +375,8 @@ init_defaults()
 	for (def = sudo_defs_table; def->name; def++)
 	    switch (def->type & T_MASK) {
 		case T_STR:
-		    if (def->sd_un.str) {
-			free(def->sd_un.str);
-			def->sd_un.str = NULL;
-		    }
+		    efree(def->sd_un.str);
+		    def->sd_un.str = NULL;
 		    break;
 		case T_LIST:
 		    list_op(NULL, 0, def, freeall);
@@ -438,6 +436,7 @@ init_defaults()
 #ifdef ENV_EDITOR
     def_env_editor = TRUE;
 #endif
+    def_env_reset = TRUE;
     def_set_logname = TRUE;
 
     /* Syslog options need special care since they both strings and ints */
@@ -585,8 +584,7 @@ store_str(val, def, op)
     int op;
 {
 
-    if (def->sd_un.str)
-	free(def->sd_un.str);
+    efree(def->sd_un.str);
     if (op == FALSE)
 	def->sd_un.str = NULL;
     else
@@ -735,8 +733,8 @@ list_op(val, len, def, op)
 	for (cur = def->sd_un.list; cur; ) {
 	    tmp = cur;
 	    cur = tmp->next;
-	    free(tmp->value);
-	    free(tmp);
+	    efree(tmp->value);
+	    efree(tmp);
 	}
 	def->sd_un.list = NULL;
 	return;
@@ -753,8 +751,8 @@ list_op(val, len, def, op)
 		prev->next = cur->next;
 	    else
 		def->sd_un.list = cur->next;
-	    free(cur->value);
-	    free(cur);
+	    efree(cur->value);
+	    efree(cur);
 	    break;
 	}
     }

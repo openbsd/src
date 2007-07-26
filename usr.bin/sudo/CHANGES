@@ -94,7 +94,7 @@ CHANGES from sudo 1.3
 31) Native Solaris 2 port from Matthew.Stier@aisg.com
 
 32) Now use sysconf(2) instead of getdtablesize(2) if it is available
-    (see change #31).  Because of the getdtablesize() emulation for
+    (see change #31).  Because of the the getdtablesize() emulation for
     hpux is no longer necessary.
 
 33) Now only do a getcwd(3) or getwd(3) once and do it as the real user.
@@ -1793,3 +1793,143 @@ Sudo 1.6.8p8 released.
      safe_cmnd.
 
 Sudo 1.6.8p9 released.
+
+567) Added PS4 and SHELLOPTS to the list of variables to remove from
+     the environment.
+
+Sudo 1.6.8p10 released.
+
+567) Added JAVA_TOOL_OPTIONS to the list of variables to remove from
+     the environment.
+
+Sudo 1.6.8p11 released.
+
+567) Added PERLLIB, PERL5LIB and PERL5OPT to the list of variables to
+     remove from the environment.
+
+Sudo 1.6.8p12 released.
+
+568) Fixed a file descriptor leak when the lecture file option is enabled.
+
+569) Added to the list of variables to remove from the environment.
+
+570) Fixed a Kerberos V security issue that could allow a
+     user to authenticate using a fake KDC.
+
+571) Pulled in updated configure and libtool from sudo 1.7.
+
+572) PAM is now the default on systems where it is supported.
+
+573) Removed POSIX saved uid use; the stay_setuid option now
+     requires the setreuid() or setresuid() functions to work.
+
+574) Regenerated configure with up to date autoconf and libtool.
+
+575) Fixed fd leak when lecture file option is enabled.
+
+576) Removed used of POSIX saved uids.  The stay_setuid
+     option now requires setreuid() or setresuid().
+
+577) PAM fixes.  If the user enters ^C at the password prompt,
+     abort instead of trying to authenticate with an empty password
+     (which causes an annoying delay).  Also Call pam_open_session()
+     and pam_close_session() to give pam_limits a chance to run.
+
+578) Security fix for Kerberos5.  If we cannot get a valid service
+     key using the default keytab it is a fatal error.  Now uses
+     krb5_verify_user() and krb5_init_secure_context() if they
+     are available.
+
+579) Fixed securid5 authentication.
+
+580) Added fcntl F_CLOSEM support to closefrom().
+
+581) Added NOEXEC support for AIX 5.3.
+
+582) Sudo now uses the supplemental group vector for matching.
+     This fixes problems with split group lines in /etc/group
+     as well as multiple group sources in nsswitch.conf.
+
+583) Added more environment variables to remove by default.
+
+584) Mail from sudo now includes an Auto-Submitted: auto-generated
+     header ala rfc 3834.
+
+585) Reworked the environment handling code.
+
+586) Remove the --with-execv option, it was not useful.
+
+587) Use TCSADRAIN instead of TCSAFLUSH in tgetpass() since
+     some OSes have issues with TCSAFLUSH.
+
+588) Use glob(3) instead of fnmatch(3) for matching pathnames
+     and stat() each result that matches the basename of the user's
+     command.  This makes "cd /usr/bin ; sudo ./blah" work when
+     sudoers allows /usr/bin/blah.
+
+589) Reworked the syslog long line splitting code based on changes
+     from Eygene Ryabinkin.
+
+590) Sudo can now with deal more than 32 network interfaces on
+     Solaris.
+
+591) Visudo will now honor command line arguments in the EDITOR or
+     VISUAL environment variables if env_editor is enabled.
+
+592) LDAP now honors rootbinddn, timelimit and bind_timelimit in
+     /etc/ldap.conf.
+
+593) For LDAP, do a sub tree search instead of a base search (one
+     level in the tree only) for sudo right objects.  This allows
+     system administrators to categorize the rights in a tree to
+     make them easier to manage.
+
+594) The env_reset option is now enabled by default.  Commands run
+     through sudo now receive a minimal environment with certain
+     variables passed through and/or checked.  The list of variables
+     allowed is configurable via the env_keep and env_check options
+     in sudoers.
+
+595) Added support for Solaris 10 resource control limits using
+     the "project" interface.
+
+596) Moved LDAP schema data into separate files.
+
+597) Sudo no longer assumes that gr_mem in struct group is non-NULL.
+
+598) Added support for setting environment variables on the command
+     line if the command has the SETENV attribute set in sudoers.
+
+599) Added a -E flag to preserve the environment if the SETENV attribute
+     has been set.
+
+600) The sudoers2ldif script now parses Runas users.
+
+601) The -- flag now behaves as documented.
+
+602) sudo -k/-K no longer cares if the timestamp is in the future.
+
+603) When searching for the command, sudo now uses the effective gid
+     of the runas user.
+
+604) Sudo no longer updates the timestamp if not validated by sudoers.
+
+605) Now rebuild environment regardless of how sudo was invoked.
+
+606) More accurate usage() when called as sudoedit.
+
+607) Command line environment variables are now treated like
+     normal environment variables unless the SETENV tag is set.
+     
+608) Better explanation of environment handling in the sudo man page.
+
+Sudo 1.6.9 released.
+
+609) Worked around a bug ins some PAM implementations that caused a crash
+     when no tty was present.
+
+610) Fixed a crash on some platforms in the error logging function.
+
+611) Documentation improvements.
+
+Sudo 1.6.9p1 released.

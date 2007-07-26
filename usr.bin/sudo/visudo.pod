@@ -1,0 +1,197 @@
+=cut
+Copyright (c) 1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Sponsored in part by the Defense Advanced Research Projects
+Agency (DARPA) and Air Force Research Laboratory, Air Force
+Materiel Command, USAF, under agreement number F39502-99-1-0512.
+
+$Sudo: visudo.pod,v 1.38.2.6 2007/07/26 14:04:54 millert Exp $
+=pod
+
+=head1 NAME
+
+visudo - edit the sudoers file
+
+=head1 SYNOPSIS
+
+B<visudo> [B<-c>] [B<-q>] [B<-s>] [B<-V>] [B<-f> I<sudoers>]
+
+=head1 DESCRIPTION
+
+B<visudo> edits the I<sudoers> file in a safe fashion, analogous to
+L<vipw(8)>.  B<visudo> locks the I<sudoers> file against multiple
+simultaneous edits, provides basic sanity checks, and checks
+for parse errors.  If the I<sudoers> file is currently being
+edited you will receive a message to try again later.
+
+There is a hard-coded list of editors that B<visudo> will use set
+at compile-time that may be overridden via the I<editor> I<sudoers>
+C<Default> variable.  This list defaults to the path to L<vi(1)> on
+your system, as determined by the I<configure> script.  Normally,
+B<visudo> does not honor the C<VISUAL> or C<EDITOR> environment
+variables unless they contain an editor in the aforementioned editors
+list.  However, if B<visudo> is configured with the I<--with-enveditor>
+flag or the I<env_editor> C<Default> variable is set in I<sudoers>,
+B<visudo> will use any the editor defines by C<VISUAL> or C<EDITOR>.
+Note that this can be a security hole since it allows the user to
+execute any program they wish simply by setting C<VISUAL> or C<EDITOR>.
+
+B<visudo> parses the I<sudoers> file after the edit and will
+not save the changes if there is a syntax error.  Upon finding
+an error, B<visudo> will print a message stating the line number(s)
+where the error occurred and the user will receive the
+"What now?" prompt.  At this point the user may enter "e"
+to re-edit the I<sudoers> file, "x" to exit without
+saving the changes, or "Q" to quit and save changes.  The
+"Q" option should be used with extreme care because if B<visudo>
+believes there to be a parse error, so will B<sudo> and no one
+will be able to B<sudo> again until the error is fixed.
+If "e" is typed to edit the  I<sudoers> file after a parse error
+has been detected, the cursor will be placed on the line where the
+error occurred (if the editor supports this feature).
+
+=head1 OPTIONS
+
+B<visudo> accepts the following command line options:
+
+=over 4
+
+=item -c
+
+Enable B<check-only> mode.  The existing I<sudoers> file will be
+checked for syntax and a message will be printed to the
+standard output detailing the status of I<sudoers>.
+If the syntax check completes successfully, B<visudo> will
+exit with a value of 0.  If a syntax error is encountered,
+B<visudo> will exit with a value of 1.
+
+=item -f
+
+Specify and alternate I<sudoers> file location.  With this option
+B<visudo> will edit (or check) the I<sudoers> file of your choice,
+instead of the default, F<@sysconfdir@/sudoers>.  The lock file used
+is the specified I<sudoers> file with ".tmp" appended to it.
+
+=item -q
+
+Enable B<quiet> mode.  In this mode details about syntax errors
+are not printed.  This option is only useful when combined with
+the B<-c> flag.
+
+=item -s
+
+Enable B<strict> checking of the I<sudoers> file.  If an alias is
+used before it is defined, B<visudo> will consider this a parse
+error.  Note that it is not possible to differentiate between an
+alias and a hostname or username that consists solely of uppercase
+letters, digits, and the underscore ('_') character.
+
+=item -V
+
+The B<-V> (version) option causes B<visudo> to print its version number
+and exit.
+
+=back
+
+=head1 ENVIRONMENT
+
+The following environment variables are used only if B<visudo>
+was configured with the I<--with-env-editor> option:
+
+ VISUAL			Invoked by visudo as the editor to use
+ EDITOR			Used by visudo if VISUAL is not set
+
+=head1 FILES
+
+ @sysconfdir@/sudoers		List of who can run what
+ @sysconfdir@/sudoers.tmp	Lock file for visudo
+
+=head1 DIAGNOSTICS
+
+=over 4
+
+=item sudoers file busy, try again later.
+
+Someone else is currently editing the I<sudoers> file.
+
+=item @sysconfdir@/sudoers.tmp: Permission denied
+
+You didn't run B<visudo> as root.
+
+=item Can't find you in the passwd database
+
+Your userid does not appear in the system passwd file.
+
+=item Warning: undeclared Alias referenced near ...
+
+Either you are using a {User,Runas,Host,Cmnd}_Alias before
+defining it or you have a user or hostname listed that
+consists solely of uppercase letters, digits, and the
+underscore ('_') character.  If the latter, you can ignore
+the warnings (B<sudo> will not complain).  In B<-s> (strict)
+mode these are errors, not warnings.
+
+=item Warning: runas_default set after old value is in use ...
+
+You have a I<runas_default> Defaults setting listed in the I<sudoers>
+file after its value has already been used.  This means that entries
+prior to the I<runas_default> setting will match based on the default
+value of I<runas_default> (C<@runas_default@>) whereas entries
+B<after> the I<runas_default> setting will match based on the new
+value.  This is usually unintentional and in most cases the
+<runas_default> setting should be placed before any C<Runas_Alias>
+or User specifications.  In B<-s> (strict) mode this is an error,
+not a warning.
+
+=back
+
+=head1 SEE ALSO
+
+L<vi(1)>, L<sudoers(5)>, L<sudo(8)>, L<vipw(8)>
+
+=head1 AUTHOR
+
+Many people have worked on I<sudo> over the years; this version of
+B<visudo> was written by:
+
+ Todd Miller
+
+See the HISTORY file in the sudo distribution or visit
+http://www.sudo.ws/sudo/history.html for more details.
+
+=head1 CAVEATS
+
+There is no easy way to prevent a user from gaining a root shell if 
+the editor used by B<visudo> allows shell escapes.
+
+=head1 BUGS
+
+If you feel you have found a bug in B<visudo>, please submit a bug report
+at http://www.sudo.ws/sudo/bugs/
+
+=head1 SUPPORT
+
+Limited free support is available via the sudo-users mailing list,
+see http://www.sudo.ws/mailman/listinfo/sudo-users to subscribe or
+search the archives.
+
+=head1 DISCLAIMER
+
+B<visudo> is provided ``AS IS'' and any express or implied warranties,
+including, but not limited to, the implied warranties of merchantability
+and fitness for a particular purpose are disclaimed.  See the LICENSE
+file distributed with B<sudo> or http://www.sudo.ws/sudo/license.html
+for complete details.

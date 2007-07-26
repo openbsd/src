@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,32 +48,40 @@
 #endif /* HAVE_ERR_H */
 #include <ctype.h>
 #include <pwd.h>
+#include <grp.h>
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <time.h>
+#if TIME_WITH_SYS_TIME
+# include <time.h>
+#endif
+#ifndef HAVE_TIMESPEC
+# include <emul/timespec.h>
+#endif
 
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo_edit.c,v 1.16 2004/09/15 16:16:20 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_edit.c,v 1.6.2.7 2007/07/08 18:44:41 millert Exp $";
 #endif /* lint */
 
 extern sigaction_t saved_sa_int, saved_sa_quit, saved_sa_tstp, saved_sa_chld;
+extern char **environ;
 
 /*
  * Wrapper to allow users to edit privileged files with their own uid.
  */
-int sudo_edit(argc, argv)
+int sudo_edit(argc, argv, envp)
     int argc;
     char **argv;
+    char **envp;
 {
     ssize_t nread, nwritten;
     pid_t kidpid, pid;
     const char *tmpdir;
     char **nargv, **ap, *editor, *cp;
     char buf[BUFSIZ];
-    int i, ac, ofd, tfd, nargc, rval, tmplen;
+    int error, i, ac, ofd, tfd, nargc, rval, tmplen, wasblank;
     sigaction_t sa;
     struct stat sb;
     struct timespec ts1, ts2;
@@ -102,36 +110,38 @@ int sudo_edit(argc, argv)
     /*
      * For each file specified by the user, make a temporary version
      * and copy the contents of the original to it.
-     * XXX - It would be nice to lock the original files but that means
-     *       keeping an extra fd open for each file.
      */
     tf = emalloc2(argc - 1, sizeof(*tf));
     memset(tf, 0, (argc - 1) * sizeof(*tf));
     for (i = 0, ap = argv + 1; i < argc - 1 && *ap != NULL; i++, ap++) {
+	error = -1;
 	set_perms(PERM_RUNAS);
-	ofd = open(*ap, O_RDONLY, 0644);
-	if (ofd != -1) {
+
+	/*
+	 * We close the password file before we try to open the user-specified
+	 * path to prevent the opening of things like /dev/fd/4.
+	 */
+	endpwent();
+	if ((ofd = open(*ap, O_RDONLY, 0644)) != -1 || errno == ENOENT) {
+	    if (ofd == -1) {
+		memset(&sb, 0, sizeof(sb));		/* new file */
+		error = 0;
+	    } else {
 #ifdef HAVE_FSTAT
-	    if (fstat(ofd, &sb) != 0) {
+		error = fstat(ofd, &sb);
 #else
-	    if (stat(tf[i].ofile, &sb) != 0) {
+		error = stat(tf[i].ofile, &sb);
 #endif
-		close(ofd);	/* XXX - could reset errno */
-		ofd = -1;
 	    }
 	}
 	set_perms(PERM_ROOT);
-	if (ofd == -1) {
-	    if (errno != ENOENT) {
+	if (error || !S_ISREG(sb.st_mode)) {
+	    if (error)
 		warn("%s", *ap);
-		argc--;
-		i--;
-		continue;
-	    }
-	    memset(&sb, 0, sizeof(sb));
-	} else if (!S_ISREG(sb.st_mode)) {
-	    warnx("%s: not a regular file", *ap);
-	    close(ofd);
+	    else
+		warnx("%s: not a regular file", *ap);
+	    if (ofd != -1)
+		close(ofd);
 	    argc--;
 	    i--;
 	    continue;
@@ -189,6 +199,7 @@ int sudo_edit(argc, argv)
      * based on def_env_editor or def_editor since the editor runs with
      * the uid of the invoking user, not the runas (privileged) user.
      */
+    environ = envp;
     if (((editor = getenv("VISUAL")) != NULL && *editor != '\0') ||
 	((editor = getenv("EDITOR")) != NULL && *editor != '\0')) {
 	editor = estrdup(editor);
@@ -204,9 +215,13 @@ int sudo_edit(argc, argv)
      * line args so look for those and alloc space for them too.
      */
     nargc = argc;
-    for (cp = editor + 1; *cp != '\0'; cp++) {
-	if (isblank((unsigned char)cp[0]) && !isblank((unsigned char)cp[-1]))
+    for (wasblank = FALSE, cp = editor; *cp != '\0'; cp++) {
+	if (isblank((unsigned char) *cp))
+	    wasblank = TRUE;
+	else if (wasblank) {
+	    wasblank = FALSE;
 	    nargc++;
+	}
     }
     nargv = (char **) emalloc2(nargc + 1, sizeof(char *));
     ac = 0;
@@ -238,6 +253,9 @@ int sudo_edit(argc, argv)
 	(void) sigaction(SIGQUIT, &saved_sa_quit, NULL);
 	(void) sigaction(SIGCHLD, &saved_sa_chld, NULL);
 	set_perms(PERM_FULL_USER);
+	endpwent();
+	endgrent();
+	closefrom(STDERR_FILENO + 1);
 	execvp(nargv[0], nargv);
 	warn("unable to execute %s", nargv[0]);
 	_exit(127);
@@ -246,7 +264,7 @@ int sudo_edit(argc, argv)
     /*
      * Wait for status from the child.  Most modern kernels
      * will not let an unprivileged child process send a
-     * signal to its privileged parent to we have to request
+     * signal to its privileged parent so we have to request
      * status when the child is stopped and then send the
      * same signal to our own pid.
      */
@@ -271,42 +289,44 @@ int sudo_edit(argc, argv)
 
     /* Copy contents of temp files to real ones */
     for (i = 0; i < argc - 1; i++) {
+	error = -1;
 	set_perms(PERM_USER);
-	tfd = open(tf[i].tfile, O_RDONLY, 0644);
+	if ((tfd = open(tf[i].tfile, O_RDONLY, 0644)) != -1) {
+#ifdef HAVE_FSTAT
+	    error = fstat(tfd, &sb);
+#else
+	    error = stat(tf[i].tfile, &sb);
+#endif
+	}
 	set_perms(PERM_ROOT);
-	if (tfd < 0) {
-	    warn("unable to read %s", tf[i].tfile);
+	if (error || !S_ISREG(sb.st_mode)) {
+	    if (error)
+		warn("%s", tf[i].tfile);
+	    else
+		warnx("%s: not a regular file", tf[i].tfile);
 	    warnx("%s left unmodified", tf[i].ofile);
+	    if (tfd != -1)
+		close(tfd);
 	    continue;
 	}
-#ifdef HAVE_FSTAT
-	if (fstat(tfd, &sb) == 0) {
-	    if (!S_ISREG(sb.st_mode)) {
-		warnx("%s: not a regular file", tf[i].tfile);
-		warnx("%s left unmodified", tf[i].ofile);
+	if (tf[i].osize == sb.st_size && tf[i].omtim.tv_sec == mtim_getsec(sb)
+	    && tf[i].omtim.tv_nsec == mtim_getnsec(sb)) {
+	    /*
+	     * If mtime and size match but the user spent no measurable
+	     * time in the editor we can't tell if the file was changed.
+	     */
+#ifdef HAVE_TIMESPECSUB2
+	    timespecsub(&ts1, &ts2);
+#else
+	    timespecsub(&ts1, &ts2, &ts2);
+#endif
+	    if (timespecisset(&ts2)) {
+		warnx("%s unchanged", tf[i].ofile);
+		unlink(tf[i].tfile);
+		close(tfd);
 		continue;
 	    }
-	    if (tf[i].osize == sb.st_size &&
-		tf[i].omtim.tv_sec == mtim_getsec(sb) &&
-		tf[i].omtim.tv_nsec == mtim_getnsec(sb)) {
-		/*
-		 * If mtime and size match but the user spent no measurable
-		 * time in the editor we can't tell if the file was changed.
-		 */
-#ifdef HAVE_TIMESPECSUB2
-		timespecsub(&ts1, &ts2);
-#else
-		timespecsub(&ts1, &ts2, &ts2);
-#endif
-		if (timespecisset(&ts2)) {
-		    warnx("%s unchanged", tf[i].ofile);
-		    unlink(tf[i].tfile);
-		    close(tfd);
-		    continue;
-		}
-	    }
 	}
-#endif
 	set_perms(PERM_RUNAS);
 	ofd = open(tf[i].ofile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
 	set_perms(PERM_ROOT);

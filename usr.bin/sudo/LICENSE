@@ -18,10 +18,10 @@ Sudo is distributed under the following ISC-style license:
    Agency (DARPA) and Air Force Research Laboratory, Air Force
    Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-Additionally, err.c, lsearch.c, fnmatch.c, getcwd.c, snprintf.c, strcasecmp.c,
-fnmatch.h, err.h, and fnmatch.3 bear the following UCB license:
+Additionally, fnmatch.c, fnmatch.h, getcwd.c, glob.c, glob.h, mkstemp.c
+and snprintf.c bear the following UCB license:
 
-   Copyright (c) 1987, 1989, 1990, 1991, 1993, 1994
+   Copyright (c) 1987, 1989, 1990, 1991, 1992, 1993, 1994
 	The Regents of the University of California.  All rights reserved.
 
    Redistribution and use in source and binary forms, with or without

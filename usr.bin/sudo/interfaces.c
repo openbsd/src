@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,7 @@ struct mbuf;
 struct rtentry;
 #endif
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -65,6 +65,7 @@ struct rtentry;
 # include "emul/err.h"
 #endif /* HAVE_ERR_H */
 #include <netdb.h>
+#include <errno.h>
 #ifdef _ISC
 # include <sys/stream.h>
 # include <sys/sioctl.h>
@@ -88,7 +89,7 @@ struct rtentry;
 #include "interfaces.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: interfaces.c,v 1.72 2004/02/13 21:36:43 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: interfaces.c,v 1.72.2.4 2007/06/14 16:24:09 millert Exp $";
 #endif /* lint */
 
 
@@ -151,7 +152,7 @@ load_interfaces()
 #ifdef HAVE_FREEIFADDRS
     freeifaddrs(ifaddrs);
 #else
-    free(ifaddrs);
+    efree(ifaddrs);
 #endif
 }
 
@@ -187,14 +188,14 @@ load_interfaces()
 	ifconf->ifc_len = len - sizeof(struct ifconf);
 	ifconf->ifc_buf = (caddr_t) (ifconf_buf + sizeof(struct ifconf));
 
-	/* Networking may not be installed in kernel... */
 #ifdef _ISC
 	STRSET(SIOCGIFCONF, (caddr_t) ifconf, len);
 	if (ioctl(sock, I_STR, (caddr_t) &strioctl) < 0) {
 #else
-	if (ioctl(sock, SIOCGIFCONF, (caddr_t) ifconf) < 0) {
+	/* Note that some kernels return EINVAL if the buffer is too small */
+	if (ioctl(sock, SIOCGIFCONF, (caddr_t) ifconf) < 0 && errno != EINVAL) {
 #endif /* _ISC */
-	    free(ifconf_buf);
+	    efree(ifconf_buf);
 	    (void) close(sock);
 	    return;
 	}
@@ -284,9 +285,9 @@ load_interfaces()
 	    interfaces = (struct interface *) erealloc3(interfaces,
 		num_interfaces, sizeof(struct interface));
 	else
-	    free(interfaces);
+	    efree(interfaces);
     }
-    free(ifconf_buf);
+    efree(ifconf_buf);
     (void) close(sock);
 }
 

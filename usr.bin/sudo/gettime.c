@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,16 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/time.h>
-#include <time.h>
 #include <stdio.h>
+#if TIME_WITH_SYS_TIME
+# include <time.h>
+#endif
+#ifndef HAVE_TIMESPEC
+# include <emul/timespec.h>
+#endif
 
-#include "config.h"
 #include <compat.h>
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: gettime.c,v 1.1 2004/09/08 15:47:09 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: gettime.c,v 1.6.2.5 2007/06/12 01:28:41 millert Exp $";
 #endif /* lint */
 
 /*

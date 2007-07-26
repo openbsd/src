@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005, 2007
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +21,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +48,9 @@
 #ifdef HAVE_FNMATCH
 # include <fnmatch.h>
 #endif /* HAVE_FNMATCH */
+#ifdef HAVE_EXTENDED_GLOB
+# include <glob.h>
+#endif /* HAVE_EXTENDED_GLOB */
 #ifdef HAVE_NETGROUP_H
 # include <netgroup.h>
 #endif /* HAVE_NETGROUP_H */
@@ -80,9 +84,12 @@
 #ifndef HAVE_FNMATCH
 # include "emul/fnmatch.h"
 #endif /* HAVE_FNMATCH */
+#ifndef HAVE_EXTENDED_GLOB
+# include "emul/glob.h"
+#endif /* HAVE_EXTENDED_GLOB */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.161 2004/08/24 18:01:13 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.10 2007/07/06 19:34:20 millert Exp $";
 #endif /* lint */
 
 /*
@@ -107,7 +114,6 @@ sudoers_lookup(pwflag)
     int pwflag;
 {
     int error, nopass;
-    enum def_tupple pwcheck;
 
     /* We opened _PATH_SUDOERS in check_sudoers() so just rewind it. */
     rewind(sudoers_fp);
@@ -117,7 +123,7 @@ sudoers_lookup(pwflag)
     /* Allocate space for data structures in the parser. */
     init_parser();
 
-    /* If pwcheck *could* be "all" or "any", keep more state. */
+    /* Keep more state for pseudo-commands so that listpw and verifypw work */
     if (pwflag > 0)
 	keepall = TRUE;
 
@@ -135,15 +141,6 @@ sudoers_lookup(pwflag)
     }
 
     /*
-     * The pw options may have changed during sudoers parse so we
-     * wait until now to set this.
-     */
-    if (pwflag)
-	pwcheck = (pwflag == -1) ? never : sudo_defs_table[pwflag].sd_un.tuple;
-    else
-	pwcheck = 0;
-
-    /*
      * Assume the worst.  If the stack is empty the user was
      * not mentioned at all.
      */
@@ -151,7 +148,7 @@ sudoers_lookup(pwflag)
 	error = VALIDATE_NOT_OK;
     else
 	error = VALIDATE_NOT_OK | FLAG_NOPASS;
-    if (pwcheck) {
+    if (pwflag) {
 	SET(error, FLAG_NO_CHECK);
     } else {
 	SET(error, FLAG_NO_HOST);
@@ -167,6 +164,9 @@ sudoers_lookup(pwflag)
     nopass = -1;
     if (pwflag) {
 	int found;
+	enum def_tupple pwcheck;
+
+	pwcheck = (pwflag == -1) ? never : sudo_defs_table[pwflag].sd_un.tuple;
 
 	if (pwcheck == always && def_authenticate)
 	    nopass = FLAG_CHECK_USER;
@@ -200,7 +200,8 @@ sudoers_lookup(pwflag)
 		    set_perms(PERM_ROOT);
 		    return(VALIDATE_OK |
 			(no_passwd == TRUE ? FLAG_NOPASS : 0) |
-			(no_execve == TRUE ? FLAG_NOEXEC : 0));
+			(no_execve == TRUE ? FLAG_NOEXEC : 0) |
+			(setenv_ok == TRUE ? FLAG_SETENV : 0));
 		} else if ((runas_matches == TRUE && cmnd_matches == FALSE) ||
 		    (runas_matches == FALSE && cmnd_matches == TRUE)) {
 		    /*
@@ -209,7 +210,8 @@ sudoers_lookup(pwflag)
 		    set_perms(PERM_ROOT);
 		    return(VALIDATE_NOT_OK |
 			(no_passwd == TRUE ? FLAG_NOPASS : 0) |
-			(no_execve == TRUE ? FLAG_NOEXEC : 0));
+			(no_execve == TRUE ? FLAG_NOEXEC : 0) |
+			(setenv_ok == TRUE ? FLAG_SETENV : 0));
 		}
 	    }
 	    top--;
@@ -236,7 +238,8 @@ command_matches(sudoers_cmnd, sudoers_args)
 {
     struct stat sudoers_stat;
     struct dirent *dent;
-    char buf[PATH_MAX];
+    char **ap, *base, buf[PATH_MAX];
+    glob_t gl;
     DIR *dirp;
 
     /* Check for pseudo-commands */
@@ -254,8 +257,7 @@ command_matches(sudoers_cmnd, sudoers_args)
 	    (!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
 	    (sudoers_args &&
 	     fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
-	    if (safe_cmnd)
-		free(safe_cmnd);
+	    efree(safe_cmnd);
 	    safe_cmnd = estrdup(sudoers_cmnd);
 	    return(TRUE);
 	} else
@@ -268,20 +270,45 @@ command_matches(sudoers_cmnd, sudoers_args)
      */
     if (has_meta(sudoers_cmnd)) {
 	/*
-	 * Return true if fnmatch(3) succeeds AND
+	 * Return true if we find a match in the glob(3) results AND
 	 *  a) there are no args in sudoers OR
 	 *  b) there are no args on command line and none required by sudoers OR
 	 *  c) there are args in sudoers and on command line and they match
 	 * else return false.
+	 *
+	 * Could optimize patterns ending in "/*" to "/user_base"
 	 */
-	if (fnmatch(sudoers_cmnd, user_cmnd, FNM_PATHNAME) != 0)
+#define GLOB_FLAGS	(GLOB_NOSORT | GLOB_MARK | GLOB_BRACE | GLOB_TILDE)
+	if (glob(sudoers_cmnd, GLOB_FLAGS, NULL, &gl) != 0) {
+	    globfree(&gl);
 	    return(FALSE);
+	}
+	/* For each glob match, compare basename, st_dev and st_ino. */
+	for (ap = gl.gl_pathv; *ap != NULL; ap++) {
+	    /* only stat if basenames are the same */
+	    if ((base = strrchr(*ap, '/')) != NULL)
+		base++;
+	    else
+		base = *ap;
+	    if (strcmp(user_base, base) != 0 ||
+		stat(*ap, &sudoers_stat) == -1)
+		continue;
+	    if (user_stat->st_dev == sudoers_stat.st_dev &&
+		user_stat->st_ino == sudoers_stat.st_ino) {
+		efree(safe_cmnd);
+		safe_cmnd = estrdup(*ap);
+		break;
+	    }
+	}
+	globfree(&gl);
+	if (*ap == NULL)
+	    return(FALSE);
+
 	if (!sudoers_args ||
 	    (!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
 	    (sudoers_args &&
 	     fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
-	    if (safe_cmnd)
-		free(safe_cmnd);
+	    efree(safe_cmnd);
 	    safe_cmnd = estrdup(user_cmnd);
 	    return(TRUE);
 	} else
@@ -294,8 +321,6 @@ command_matches(sudoers_cmnd, sudoers_args)
 	 * Check to make sure this is not a directory spec (doesn't end in '/')
 	 */
 	if (sudoers_cmnd[dlen - 1] != '/') {
-	    char *base;
-
 	    /* Only proceed if user_base and basename(sudoers_cmnd) match */
 	    if ((base = strrchr(sudoers_cmnd, '/')) == NULL)
 		base = sudoers_cmnd;
@@ -318,8 +343,7 @@ command_matches(sudoers_cmnd, sudoers_args)
 		(!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
 		(sudoers_args &&
 		 fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
-		if (safe_cmnd)
-		    free(safe_cmnd);
+		efree(safe_cmnd);
 		safe_cmnd = estrdup(sudoers_cmnd);
 		return(TRUE);
 	    } else
@@ -347,8 +371,7 @@ command_matches(sudoers_cmnd, sudoers_args)
 		continue;
 	    if (user_stat->st_dev == sudoers_stat.st_dev &&
 		user_stat->st_ino == sudoers_stat.st_ino) {
-		if (safe_cmnd)
-		    free(safe_cmnd);
+		efree(safe_cmnd);
 		safe_cmnd = estrdup(buf);
 		break;
 	    }
@@ -456,6 +479,7 @@ usergr_matches(group, user, pw)
     struct group *grp;
     gid_t pw_gid;
     char **cur;
+    int n;
 
     /* make sure we have a valid usergroup, sudo style */
     if (*group++ != '%')
@@ -473,10 +497,18 @@ usergr_matches(group, user, pw)
     if (grp->gr_gid == pw_gid)
 	return(TRUE);
 
-    /* check to see if user is explicitly listed in the group */
-    for (cur = grp->gr_mem; *cur; cur++) {
-	if (strcmp(*cur, user) == 0)
+    /*
+     * If the user has a supplementary group vector, check it first.
+     */
+    for (n = user_ngroups; n != 0; n--) {
+	if (grp->gr_gid == user_groups[n])
 	    return(TRUE);
+    }
+    if (grp->gr_mem != NULL) {
+	for (cur = grp->gr_mem; *cur; cur++) {
+	    if (strcmp(*cur, user) == 0)
+		return(TRUE);
+	}
     }
 
     return(FALSE);
@@ -494,11 +526,10 @@ netgr_matches(netgr, host, shost, user)
     char *shost;
     char *user;
 {
+    static char *domain;
 #ifdef HAVE_GETDOMAINNAME
-    static char *domain = (char *) -1;
-#else
-    static char *domain = NULL;
-#endif /* HAVE_GETDOMAINNAME */
+    static int initialized;
+#endif
 
     /* make sure we have a valid netgroup, sudo style */
     if (*netgr++ != '+')
@@ -506,12 +537,13 @@ netgr_matches(netgr, host, shost, user)
 
 #ifdef HAVE_GETDOMAINNAME
     /* get the domain name (if any) */
-    if (domain == (char *) -1) {
+    if (!initialized) {
 	domain = (char *) emalloc(MAXHOSTNAMELEN);
 	if (getdomainname(domain, MAXHOSTNAMELEN) == -1 || *domain == '\0') {
-	    free(domain);
+	    efree(domain);
 	    domain = NULL;
 	}
+	initialized = 1;
     }
 #endif /* HAVE_GETDOMAINNAME */
 

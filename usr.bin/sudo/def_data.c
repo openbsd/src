@@ -256,6 +256,10 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"If LDAP directory is up, do we ignore local sudoers file",
 	NULL,
     }, {
+	"setenv", T_FLAG,
+	"Allow users to set arbitrary environment variables",
+	NULL,
+    }, {
 	NULL, 0, NULL
     }
 };

@@ -1,6 +1,6 @@
-dnl Local m4 macors for autoconf (used by sudo)
+dnl Local m4 macros for autoconf (used by sudo)
 dnl
-dnl Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
+dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
 dnl XXX - should cache values in all cases!!!
 dnl
@@ -214,21 +214,15 @@ dnl
 dnl check for working fnmatch(3)
 dnl
 AC_DEFUN(SUDO_FUNC_FNMATCH,
-[AC_MSG_CHECKING(for working fnmatch with FNM_CASEFOLD)
+[AC_MSG_CHECKING([for working fnmatch with FNM_CASEFOLD])
 AC_CACHE_VAL(sudo_cv_func_fnmatch,
 [rm -f conftestdata; > conftestdata
 AC_TRY_RUN([#include <fnmatch.h>
-main() { exit(fnmatch("/*/bin/echo *", "/usr/bin/echo just a test", FNM_CASEFOLD)); }
-], sudo_cv_func_fnmatch=yes, sudo_cv_func_fnmatch=no,
-  sudo_cv_func_fnmatch=no)
-rm -f core core.* *.core])dnl
+main() { exit(fnmatch("/*/bin/echo *", "/usr/bin/echo just a test", FNM_CASEFOLD)); }], [sudo_cv_func_fnmatch=yes], [sudo_cv_func_fnmatch=no],
+  [sudo_cv_func_fnmatch=no])
+rm -f core core.* *.core])
 AC_MSG_RESULT($sudo_cv_func_fnmatch)
-if test $sudo_cv_func_fnmatch = yes; then
-  [$1]
-else
-  [$2]
-fi
-])
+AS_IF([test $sudo_cv_func_fnmatch = yes], [$1], [$2])])
 
 dnl
 dnl check for isblank(3)
@@ -300,13 +294,24 @@ AC_DEFINE_UNQUOTED(MAX_UID_T_LEN, $sudo_cv_uid_t_len, [Define to the max length 
 ])
 
 dnl
-dnl check for "long long"
-dnl XXX hard to cache since it includes 2 tests
+dnl Check for presence of long long and for sizeof(long long) == sizeof(long)
 dnl
-AC_DEFUN(SUDO_LONG_LONG, [AC_MSG_CHECKING(for long long support)
-AC_TRY_LINK(, [long long foo = 1000; foo /= 10;], AC_DEFINE(HAVE_LONG_LONG, 1, [Define if your compiler supports the "long long" type.])
-[AC_TRY_RUN([main() {if (sizeof(long long) == sizeof(long)) exit(0); else exit(1);}], AC_DEFINE(LONG_IS_QUAD, 1, [Define if sizeof(long) == sizeof(long long).]))]
-AC_MSG_RESULT(yes), AC_MSG_RESULT(no))])
+AC_DEFUN(SUDO_TYPE_LONG_LONG,
+[AC_CHECK_TYPES(long long, [AC_DEFINE(HAVE_LONG_LONG, 1, [Define if your compiler supports the "long long" type.])]
+[AC_MSG_CHECKING(for long and long long equivalence)
+AC_CACHE_VAL(sudo_cv_type_long_is_quad,
+[AC_TRY_RUN([
+main() {
+if (sizeof(long long) == sizeof(long)) exit(0);
+else exit(1);
+}], [sudo_cv_type_long_is_quad=yes],
+[sudo_cv_type_long_is_quad=no], [sudo_cv_type_long_is_quad=no])
+rm -f core core.* *.core])dnl
+AC_MSG_RESULT($sudo_cv_type_long_is_quad)
+if test $sudo_cv_type_long_is_quad = yes; then
+  AC_DEFINE(LONG_IS_QUAD, 1, [Define if sizeof(long) == sizeof(long long).])
+fi
+])])
 
 dnl
 dnl append a libpath to an LDFLAGS style variable
@@ -320,6 +325,29 @@ AC_DEFUN(SUDO_APPEND_LIBPATH, [
     if test X"$blibpath" != X"" -a "$1" = "SUDO_LDFLAGS"; then
 	blibpath_add="${blibpath_add}:$2"
     fi
+])
+
+dnl
+dnl Add a (potentially exclusive) auth method
+dnl $1 - auth name
+dnl $2 - object file to add to AUTH_OBJS
+dnl $3 - set if method is exclusive
+dnl
+AC_DEFUN(SUDO_ADD_AUTH, [
+if test X"$AUTH_EXCL" != X""; then
+    AC_MSG_ERROR(["cannot mix $1 with an exclusive authentication method such as $AUTH_EXCL"])
+elif test X"$3" != X"" -a X"$AUTH_OBJS" != X"" -a X"$AUTH_OBJS" != X"passwd.o"; then
+    _AUTH=`echo "$AUTH_OBJS" | sed 's/\.o//g'`
+    AC_MSG_ERROR(["cannot mix $1 with other authentication methods (such as $_AUTH)"])
+fi
+if test X"$3" != X""; then
+    AUTH_OBJS="$2"
+    AUTH_EXCL="$1"
+elif test X"$AUTH_OBJS" = X""; then
+    AUTH_OBJS="$2"
+else
+    AUTH_OBJS="$AUTH_OBJS $2"
+fi
 ])
 
 dnl

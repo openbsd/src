@@ -1,36 +1,36 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.420 2004/09/08 15:49:25 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.15 2007/07/22 22:43:50 millert Exp $
 dnl
-dnl Copyright (c) 1994-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT(sudo, 1.6.8)
+AC_INIT([sudo], [1.6.9])
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
-dnl This won't work before AC_INIT()
+dnl This won't work before AC_INIT
 dnl
-AC_MSG_NOTICE([Configuring Sudo version 1.6.8])
+AC_MSG_NOTICE([Configuring Sudo version 1.6.9])
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
 AC_SUBST(LIBTOOL)
-AC_SUBST(CFLAGS)dnl
-AC_SUBST(PROGS)dnl
-AC_SUBST(CPPFLAGS)dnl
-AC_SUBST(LDFLAGS)dnl
-AC_SUBST(SUDO_LDFLAGS)dnl
-AC_SUBST(SUDO_OBJS)dnl
-AC_SUBST(LIBS)dnl
-AC_SUBST(SUDO_LIBS)dnl
-AC_SUBST(NET_LIBS)dnl
-AC_SUBST(AFS_LIBS)dnl
-AC_SUBST(OSDEFS)dnl
-AC_SUBST(AUTH_OBJS)dnl
-AC_SUBST(MANTYPE)dnl
-AC_SUBST(MAN_POSTINSTALL)dnl
-AC_SUBST(SUDOERS_MODE)dnl
-AC_SUBST(SUDOERS_UID)dnl
-AC_SUBST(SUDOERS_GID)dnl
+AC_SUBST(CFLAGS)
+AC_SUBST(PROGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+AC_SUBST(SUDO_LDFLAGS)
+AC_SUBST(SUDO_OBJS)
+AC_SUBST(LIBS)
+AC_SUBST(SUDO_LIBS)
+AC_SUBST(NET_LIBS)
+AC_SUBST(AFS_LIBS)
+AC_SUBST(OSDEFS)
+AC_SUBST(AUTH_OBJS)
+AC_SUBST(MANTYPE)
+AC_SUBST(MAN_POSTINSTALL)
+AC_SUBST(SUDOERS_MODE)
+AC_SUBST(SUDOERS_UID)
+AC_SUBST(SUDOERS_GID)
 AC_SUBST(DEV)
 AC_SUBST(mansectsu)
 AC_SUBST(mansectform)
@@ -38,6 +38,7 @@ AC_SUBST(mansrcdir)
 AC_SUBST(NOEXECDIR)
 AC_SUBST(noexec_file)
 AC_SUBST(INSTALL_NOEXEC)
+AC_SUBST(DONT_LEAK_PATH_INFO)
 dnl
 dnl Variables that get substituted in docs (not overridden by environment)
 dnl
@@ -66,6 +67,7 @@ AC_SUBST(passwd_tries)
 AC_SUBST(tty_tickets)
 AC_SUBST(insults)
 AC_SUBST(root_sudo)
+AC_SUBST(path_info)
 dnl
 dnl Initial values for above
 dnl
@@ -93,24 +95,30 @@ passwd_tries=3
 tty_tickets=off
 insults=off
 root_sudo=on
+path_info=on
 INSTALL_NOEXEC=
 dnl
 dnl Initial values for Makefile variables listed above
 dnl May be overridden by environment variables..
 dnl
 PROGS="sudo visudo"
-test -n "$MANTYPE" || MANTYPE="man"
-test -n "$mansrcdir" || mansrcdir="."
-test -n "$SUDOERS_MODE" || SUDOERS_MODE=0440
-test -n "$SUDOERS_UID" || SUDOERS_UID=0
-test -n "$SUDOERS_GID" || SUDOERS_GID=0
+: ${MANTYPE='man'}
+: ${mansrcdir='.'}
+: ${SUDOERS_MODE='0440'}
+: ${SUDOERS_UID='0'}
+: ${SUDOERS_GID='0'}
 DEV="#"
+AUTH_OBJS=passwd.o
 
 dnl
 dnl Other vaiables
 dnl
 CHECKSHADOW=true
 CHECKSIA=true
+shadow_defs=
+shadow_funcs=
+shadow_libs=
+shadow_libs_optional=
 
 dnl
 dnl Override default configure dirs...
@@ -126,8 +134,7 @@ dnl
 
 AC_ARG_WITH(otp-only, [  --with-otp-only         deprecated],
 [case $with_otp_only in
-    yes)	with_passwd=no
-		AC_DEFINE(WITHOUT_PASSWD)
+    yes)	AUTH_OBJS=`echo "$AUTH_OBJS"|sed -e 's/^passwd\.o *//'`
 		AC_MSG_NOTICE([--with-otp-only option deprecated, treating as --without-passwd])
 		;;
 esac])
@@ -155,16 +162,14 @@ esac])
 
 AC_ARG_WITH(rpath, [  --with-rpath            pass -R flag in addition to -L for lib paths],
 [case $with_rpath in
-    yes)	;;
-    no)		;;
+    yes|no)	;;
     *)		AC_MSG_ERROR(["--with-rpath does not take an argument."])
 		;;
 esac])
 
-AC_ARG_WITH(blibpath, [  --with-blibpath[=PATH]  pass -blibpath flag to ld for additional lib paths],
+AC_ARG_WITH(blibpath, [  --with-blibpath[=PATH]    pass -blibpath flag to ld for additional lib paths],
 [case $with_blibpath in
-    yes)	;;
-    no)		;;
+    yes|no)	;;
     *)		AC_MSG_NOTICE([will pass -blibpath:${with_blibpath} to the loader.])
 		;;
 esac])
@@ -236,8 +241,8 @@ AC_ARG_WITH(csops, [  --with-csops            add CSOps standard options],
 		with_classic_insults=yes
 		with_csops_insults=yes
 		with_env_editor=yes
-		test -n "$mansectsu" || mansectsu=8
-		test -n "$mansectform" || mansectform=5
+		: ${mansectsu='8'}
+		: ${mansectform='5'}
 		;;
     no)		;;
     *)		AC_MSG_WARN([Ignoring unknown argument to --with-csops: $with_csops])
@@ -247,7 +252,7 @@ esac])
 AC_ARG_WITH(passwd, [  --without-passwd        don't use passwd/shadow file for authentication],
 [case $with_passwd in
     yes)	;;
-    no)		AC_DEFINE(WITHOUT_PASSWD)
+    no)		AUTH_OBJS=`echo "$AUTH_OBJS"|sed -e 's/^passwd\.o *//'`
 		AC_MSG_CHECKING(whether to use shadow/passwd file authentication)
 		AC_MSG_RESULT(no)
 		;;
@@ -255,29 +260,31 @@ AC_ARG_WITH(passwd, [  --without-passwd        don't use passwd/shadow file for 
 		;;
 esac])
 
-AC_ARG_WITH(skey, [  --with-skey[=DIR]       enable S/Key support ],
+AC_ARG_WITH(skey, [  --with-skey[=DIR]         enable S/Key support ],
 [case $with_skey in
-    no)		with_skey="";;
+    no)		with_skey=""
+		;;
     *)		if test -n "$with_opie"; then
 		    AC_MSG_ERROR(["cannot use both S/Key and OPIE"])
 		fi
     		AC_DEFINE(HAVE_SKEY)
 		AC_MSG_CHECKING(whether to try S/Key authentication)
 		AC_MSG_RESULT(yes)
-		AUTH_OBJS="${AUTH_OBJS} rfc1938.o"
+		SUDO_ADD_AUTH([S/Key], [rfc1938.o])
 		;;
 esac])
 
-AC_ARG_WITH(opie, [  --with-opie[=DIR]       enable OPIE support ],
+AC_ARG_WITH(opie, [  --with-opie[=DIR]         enable OPIE support ],
 [case $with_opie in
-    no)		with_opie="";;
+    no)		with_opie=""
+		;;
     *)		if test -n "$with_skey"; then
 		    AC_MSG_ERROR(["cannot use both S/Key and OPIE"])
 		fi
 		AC_DEFINE(HAVE_OPIE)
 		AC_MSG_CHECKING(whether to try NRL OPIE authentication)
 		AC_MSG_RESULT(yes)
-		AUTH_OBJS="${AUTH_OBJS} rfc1938.o"
+		SUDO_ADD_AUTH([NRL OPIE], [rfc1938.o])
 		;;
 esac])
 
@@ -300,7 +307,7 @@ AC_ARG_WITH(SecurID, [  --with-SecurID[[=DIR]]    enable SecurID support],
     *)		AC_DEFINE(HAVE_SECURID)
 		AC_MSG_CHECKING(whether to use SecurID for authentication)
 		AC_MSG_RESULT(yes)
-		with_passwd=no
+		# AUTH_OBJS updated later
 		;;
 esac])
 
@@ -310,8 +317,7 @@ AC_ARG_WITH(fwtk, [  --with-fwtk[[=DIR]]       enable FWTK AuthSRV support],
     *)		AC_DEFINE(HAVE_FWTK)
 		AC_MSG_CHECKING(whether to use FWTK AuthSRV for authentication)
 		AC_MSG_RESULT(yes)
-		with_passwd=no
-		AUTH_OBJS="fwtk.o"
+		SUDO_ADD_AUTH([FWTK AuthSRV], [fwtk.o], [true])
 		;;
 esac])
 
@@ -331,28 +337,16 @@ AC_ARG_WITH(kerb5, [  --with-kerb5[[=DIR]]      enable Kerberos V support],
 		;;
 esac])
 
-AC_ARG_WITH(authenticate, [  --with-authenticate     enable AIX general authentication support],
-[case $with_authenticate in
-    yes)	AC_DEFINE(HAVE_AUTHENTICATE)
-		AC_MSG_CHECKING(whether to use AIX general authentication)
-		AC_MSG_RESULT(yes)
-		with_passwd=no
-		AUTH_OBJS="aix_auth.o"
-		;;
-    no)		;;
-    *)		AC_MSG_ERROR(["--with-authenticate does not take an argument."])
+AC_ARG_WITH(aixauth, [  --with-aixauth          enable AIX general authentication support],
+[case $with_aixauth in
+    yes|no)	;;
+    *)		AC_MSG_ERROR(["--with-aixauth does not take an argument."])
 		;;
 esac])
 
 AC_ARG_WITH(pam, [  --with-pam              enable PAM support],
 [case $with_pam in
-    yes)	AC_DEFINE(HAVE_PAM)
-		AC_MSG_CHECKING(whether to use PAM authentication)
-		AC_MSG_RESULT(yes)
-		with_passwd=no
-		AUTH_OBJS="pam.o"
-		;;
-    no)		;;
+    yes|no)	;;
     *)		AC_MSG_ERROR(["--with-pam does not take an argument."])
 		;;
 esac])
@@ -362,7 +356,7 @@ AC_ARG_WITH(AFS, [  --with-AFS              enable AFS support],
     yes)	AC_DEFINE(HAVE_AFS)
 		AC_MSG_CHECKING(whether to try AFS (kerberos) authentication)
 		AC_MSG_RESULT(yes)
-		AUTH_OBJS="${AUTH_OBJS} afs.o"
+		SUDO_ADD_AUTH([AFS], [afs.o])
 		;;
     no)		;;
     *)		AC_MSG_ERROR(["--with-AFS does not take an argument."])
@@ -374,7 +368,7 @@ AC_ARG_WITH(DCE, [  --with-DCE              enable DCE support],
     yes)	AC_DEFINE(HAVE_DCE)
 		AC_MSG_CHECKING(whether to try DCE (kerberos) authentication)
 		AC_MSG_RESULT(yes)
-		AUTH_OBJS="${AUTH_OBJS} dce.o"
+		SUDO_ADD_AUTH([DCE], [dce.o])
 		;;
     no)		;;
     *)		AC_MSG_ERROR(["--with-DCE does not take an argument."])
@@ -390,10 +384,16 @@ esac])
 
 AC_ARG_WITH(bsdauth, [  --with-bsdauth          enable BSD authentication support],
 [case $with_bsdauth in
-    yes)	with_logincap=yes
-		;;
-    no)		;;
+    yes|no)	;;
     *)		AC_MSG_ERROR(["--with-bsdauth does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(project, [  --with-project          enable Solaris project support],
+[case $with_project in
+    yes|no)	;;
+    no)	;;
+    *)		AC_MSG_ERROR(["--with-project does not take an argument."])
 		;;
 esac])
 
@@ -812,17 +812,6 @@ esac])
 AC_DEFINE_UNQUOTED(PASSWORD_TIMEOUT, $password_timeout, [The passwd prompt timeout (in minutes).])
 AC_MSG_RESULT($password_timeout)
 
-AC_ARG_WITH(execv, [  --with-execv            use execv() instead of execvp()],
-[case $with_execv in
-    yes)	AC_MSG_CHECKING(whether to use execvp or execv)
-		AC_MSG_RESULT(execv)
-		AC_DEFINE(USE_EXECV)
-		;;
-    no)		;;
-    *)		AC_MSG_ERROR(["--with-execv does not take an argument."])
-		;;
-esac])
-
 AC_MSG_CHECKING(whether to use per-tty ticket files)
 AC_ARG_WITH(tty-tickets, [  --with-tty-tickets      use a different ticket file for each tty],
 [case $with_tty_tickets in
@@ -907,7 +896,7 @@ AC_ARG_WITH(goons-insults, [  --with-goons-insults    include the insults from t
 		;;
 esac])
 
-AC_ARG_WITH(ldap, [  --with-ldap[[=DIR]]     enable LDAP support],
+AC_ARG_WITH(ldap, [  --with-ldap[[=DIR]]       enable LDAP support],
 [case $with_ldap in
     no)		with_ldap="";;
     *)		AC_DEFINE(HAVE_LDAP)
@@ -917,6 +906,8 @@ AC_ARG_WITH(ldap, [  --with-ldap[[=DIR]]     enable LDAP support],
 esac])
 AC_ARG_WITH(ldap-conf-file, [  --with-ldap-conf-file   path to LDAP configuration file],
 [AC_DEFINE_UNQUOTED(_PATH_LDAP_CONF, "$with_ldap_conf_file", [Path to the ldap.conf file])])
+AC_ARG_WITH(ldap-secret-file, [  --with-ldap-secret-file path to LDAP secret pasdword file],
+[AC_DEFINE_UNQUOTED(_PATH_LDAP_SECRET, "$with_ldap_secret_file", [Path to the ldap.secret file])])
 
 AC_ARG_WITH(pc-insults, [  --with-pc-insults       replace politically incorrect insults with less offensive ones],
 [case $with_pc_insults in
@@ -1020,28 +1011,13 @@ AC_ARG_ENABLE(setreuid,
 ])
 
 AC_ARG_ENABLE(setresuid,
-[  --disable-setresuid      Don't try to use the setresuid() function],
+[  --disable-setresuid     Don't try to use the setresuid() function],
 [ case "$enableval" in
     no)		SKIP_SETRESUID=yes
 		;;
     *)		;;
   esac
 ])
-
-AC_MSG_CHECKING(whether to disable use of POSIX saved ids)
-AC_ARG_ENABLE(saved-ids,
-[  --disable-saved-ids     Don't try to use POSIX saved ids],
-[ case "$enableval" in
-    yes)	AC_MSG_RESULT(no)
-		;;
-    no)		AC_MSG_RESULT(yes)
-		AC_DEFINE(NO_SAVED_IDS)
-		;;
-    *)		AC_MSG_RESULT(no)
-    		AC_MSG_WARN([Ignoring unknown argument to --enable-saved-ids: $enableval])
-		;;
-  esac
-], AC_MSG_RESULT(no))
 
 AC_MSG_CHECKING(whether to disable shadow password support)
 AC_ARG_ENABLE(shadow,
@@ -1127,6 +1103,7 @@ AC_ARG_ENABLE(path_info,
 		;;
     no)		AC_MSG_RESULT(yes)
 		AC_DEFINE(DONT_LEAK_PATH_INFO)
+		path_info=off
 		;;
     *)		AC_MSG_RESULT(no)
 		AC_MSG_WARN([Ignoring unknown argument to --enable-path-info: $enableval])
@@ -1137,7 +1114,7 @@ AC_ARG_ENABLE(path_info,
 dnl
 dnl If we don't have egrep we can't do anything...
 dnl
-AC_CHECK_PROG(EGREPPROG, egrep, egrep, )
+AC_CHECK_PROG(EGREPPROG, egrep, egrep)
 if test -z "$EGREPPROG"; then
     AC_MSG_ERROR([Sorry, configure requires egrep to run.])
 fi
@@ -1153,17 +1130,16 @@ dnl
 dnl C compiler checks
 dnl
 AC_ISC_POSIX
-AC_PROG_CC_STDC
 AC_PROG_CPP
 
 dnl
 dnl Libtool magic; enable shared libs and disable static libs
+dnl XXX - disable static, require shared
 dnl
 AC_CANONICAL_HOST
-AC_CANONICAL_SYSTEM
-AC_ENABLE_SHARED
-AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
+AC_CANONICAL_TARGET([])
+LT_PREREQ([1.9f])
+LT_INIT([disable-static])
 
 dnl
 dnl Defer with_noexec until after libtool magic runs
@@ -1174,7 +1150,7 @@ else
     eval _shrext="$shrext"
 fi
 AC_MSG_CHECKING(path to sudo_noexec.so)
-AC_ARG_WITH(noexec, [  --with-noexec[=PATH]    fully qualified pathname of sudo_noexec.so],
+AC_ARG_WITH(noexec, [  --with-noexec[=PATH]      fully qualified pathname of sudo_noexec.so],
 [case $with_noexec in
     yes)	with_noexec="$libexecdir/sudo_noexec$_shrext"
 		;;
@@ -1194,9 +1170,9 @@ fi
 dnl
 dnl Find programs we use
 dnl
-AC_CHECK_PROG(UNAMEPROG, uname, uname, )
-AC_CHECK_PROG(TRPROG, tr, tr, )
-AC_CHECK_PROG(NROFFPROG, nroff, nroff, )
+AC_CHECK_PROG(UNAMEPROG, uname, uname)
+AC_CHECK_PROG(TRPROG, tr, tr)
+AC_CHECK_PROG(NROFFPROG, nroff, nroff)
 if test -z "$NROFFPROG"; then
     MANTYPE="cat"
     mansrcdir='$(srcdir)'
@@ -1224,10 +1200,12 @@ dnl We want to be able to differentiate between different rev's
 dnl
 if test -n "$host_os"; then
     OS=`echo $host_os | sed 's/[[0-9]].*//'`
-    OSREV=`echo $host_os | sed 's/^[[^0-9]]*\([[0-9]][[0-9]]*\).*$/\1/'`
+    OSREV=`echo $host_os | sed 's/^[[^0-9\.]]*\([[0-9\.]]*\).*$/\1/'`
+    OSMAJOR=`echo $OSREV | sed 's/\..*$//'`
 else
     OS="unknown"
     OSREV=0
+    OSMAJOR=0
 fi
 
 case "$host" in
@@ -1237,36 +1215,32 @@ case "$host" in
 
 		# system headers lack prototypes but gcc helps...
 		if test -n "$GCC"; then
-		    CPPFLAGS="${CPPFLAGS} -D__USE_FIXED_PROTOTYPES__"
+		    OSDEFS="${OSDEFS} -D__USE_FIXED_PROTOTYPES__"
 		fi
 
-		# check for password adjunct functions (shadow passwords)
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_FUNCS(getpwanam issecure, , [break])
-		    CHECKSHADOW="false"
-		fi
+		shadow_funcs="getpwanam issecure"
 		;;
     *-*-solaris2*)
 		# To get the crypt(3) prototype (so we pass -Wall)
-		CPPFLAGS="${CPPFLAGS} -D__EXTENSIONS__"
+		OSDEFS="${OSDEFS} -D__EXTENSIONS__"
 		# AFS support needs -lucb
 		if test "$with_AFS" = "yes"; then
 		    AFS_LIBS="-lc -lucb"
 		fi
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
-		test -n "$with_rpath" || with_rpath=yes
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
+		: ${with_rpath='yes'}
+		: ${with_pam='maybe'}
 		;;
     *-*-aix*)
 		# To get all prototypes (so we pass -Wall)
-		CPPFLAGS="${CPPFLAGS} -D_XOPEN_EXTENDED_SOURCE"
-		SUDO_DEFINE(_ALL_SOURCE)
+		OSDEFS="${OSDEFS} -D_XOPEN_EXTENDED_SOURCE -D_ALL_SOURCE"
 		SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-bI:\$(srcdir)/aixcrypt.exp"
 		if test X"$with_blibpath" != X"no"; then
 		    AC_MSG_CHECKING([if linker accepts -Wl,-blibpath])
 		    O_LDFLAGS="$LDFLAGS"
-		    LDFLAGS="$LDFLAGS -Wl,-blibpath:/usr/lib:/lib"
-		    AC_TRY_LINK([], [], [
+		    LDFLAGS="$O_LDFLAGS -Wl,-blibpath:/usr/lib:/lib"
+		    AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])], [
 			if test -n "$with_blibpath" -a "$with_blibpath" != "yes"; then
 			    blibpath="$with_blibpath"
 			elif test -n "$GCC"; then
@@ -1278,22 +1252,23 @@ case "$host" in
 		    ], [AC_MSG_RESULT(no)])
 		fi
 		LDFLAGS="$O_LDFLAGS"
+
+		# check for authenticate(3)
+		if test X"$with_aixauth" = X""; then
+		    AC_CHECK_FUNCS(authenticate, [with_aixauth=maybe])
+		fi
 		;;
     *-*-hiuxmpp*)
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"; SECUREWARE=1], AC_CHECK_LIB(security, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lsecurity"; LIBS="${LIBS} -lsecurity"; SECUREWARE=1]))
-		    CHECKSHADOW="false"
-		fi
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
 		;;
     *-*-hpux*)
 		# AFS support needs -lBSD
 		if test "$with_AFS" = "yes"; then
 		    AFS_LIBS="-lc -lBSD"
 		fi
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
 
 		case "$host" in
 			*-*-hpux[1-8].*)
@@ -1309,10 +1284,7 @@ case "$host" in
 			*-*-hpux9.*)
 			    AC_DEFINE(BROKEN_SYSLOG)
 
-			    if test "$CHECKSHADOW" = "true"; then
-				AC_CHECK_FUNCS(getspwuid)
-				CHECKSHADOW="false"
-			    fi
+			    shadow_funcs="getspwuid"
 
 			    # DCE support (requires ANSI C compiler)
 			    if test "$with_DCE" = "yes"; then
@@ -1323,16 +1295,13 @@ case "$host" in
 			    fi
 			;;
 			*-*-hpux10.*)
-			    if test "$CHECKSHADOW" = "true"; then
-				AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) AC_CHECK_LIB(sec, iscomsec, AC_DEFINE(HAVE_ISCOMSEC)) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"; SECUREWARE=1])
-				CHECKSHADOW="false"
-			    fi
+			    shadow_funcs="getprpwnam iscomsec"
+			    shadow_libs="-lsec"
 			;;
 			*)
-			if test "$CHECKSHADOW" = "true"; then
-			    AC_CHECK_LIB(sec, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"])
-			    CHECKSHADOW="false"
-			fi
+			    shadow_funcs="getspnam iscomsec"
+			    shadow_libs="-lsec"
+			    : ${with_pam='maybe'}
 			;;
 		esac
 		;;
@@ -1355,45 +1324,38 @@ case "$host" in
 		  esac
 		], AC_MSG_RESULT(no))
 
-		# use SIA by default, if we have it, else SecureWare
-		# unless overridden on the command line
-		if test "$CHECKSIA" = "true"; then
-		    AC_CHECK_FUNC(sia_ses_init, [AC_DEFINE(HAVE_SIA)] [
-		    if test -n "$with_skey" -o -n "$with_opie" -o -n "$with_otp_only" -o -n "$with_long_otp_prompt" -o -n "$with_SecurID" -o -n "$with_fwtk" -o -n "$with_kerb4" -o -n "$with_kerb5" -o -n "$with_pam" -o -n "$with_AFS" -o -n "$with_DCE"; then
-			AC_MSG_ERROR(["you cannot mix SIA and other authentication schemes.  You can turn off SIA support via the --disable-sia option"])
-		    fi]; CHECKSHADOW=false)
-		fi
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_LIB(security, getprpwnam, SECUREWARE=1)
-		    CHECKSHADOW="false"
+		shadow_funcs="getprpwnam dispcrypt"
+		# OSF/1 4.x and higher need -ldb too
+		if test $OSMAJOR -lt 4; then
+		    shadow_libs="-lsecurity -laud -lm"
+		else
+		    shadow_libs="-lsecurity -ldb -laud -lm"
 		fi
 
-		if test -n "$SECUREWARE"; then
-		    AC_DEFINE(HAVE_GETPRPWNAM)
-		    # -ldb includes bogus versions of snprintf/vsnprintf
-		    AC_CHECK_FUNCS(snprintf, , [NEED_SNPRINTF=1])
-		    AC_CHECK_FUNCS(vsnprintf, , [NEED_SNPRINTF=1])
-		    # 4.x and higher need -ldb too...
-		    AC_CHECK_LIB(db, dbopen, [SUDO_LIBS="${SUDO_LIBS} -lsecurity -ldb -laud -lm"; LIBS="${LIBS} -lsecurity -ldb -laud -lm"], [SUDO_LIBS="${SUDO_LIBS} -lsecurity -ldb -laud -lm"; LIBS="${LIBS} -lsecurity -ldb -laud -lm"])
-		    AC_CHECK_FUNCS(dispcrypt)
-		    AC_MSG_CHECKING([for broken /usr/include/prot.h])
-		    AC_TRY_COMPILE([
+		# use SIA by default, if we have it
+		if test "$CHECKSIA" = "true"; then
+		    AC_CHECK_FUNCS(sia_ses_init, [found=true], [found=false])
+		    if test "$found" = "true"; then
+			SUDO_ADD_AUTH([SIA], [sia.o], [true])
+			CHECKSHADOW=false
+		    fi
+		fi
+		if test "$CHECKSHADOW" = "true"; then
+		    # prot.h is included when using shadow passwords
+		    AC_MSG_CHECKING([for broken prot.h])
+		    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/security.h>
 #include <prot.h>
-		    ], [exit(0);], AC_MSG_RESULT(no),
-		    [AC_MSG_RESULT([yes, fixing locally])
+		    ]], [[exit(0);]])], [AC_MSG_RESULT(no)], [AC_MSG_RESULT([yes, fixing locally])
 		    sed 's:<acl.h>:<sys/acl.h>:g' < /usr/include/prot.h > prot.h
 		    ])
-		elif test "$CHECKSIA" = "true"; then
-		    with_passwd=no
-		    AUTH_OBJS="sia.o"
 		fi
-		test -n "$mansectsu" || mansectsu=8
-		test -n "$mansectform" || mansectform=4
+		: ${mansectsu='8'}
+		: ${mansectform='4'}
 		;;
     *-*-irix*)
-		CPPFLAGS="${CPPFLAGS} -D_BSD_TYPES"
+		OSDEFS="${OSDEFS} -D_BSD_TYPES"
 		if test -z "$NROFFPROG"; then
 		    MAN_POSTINSTALL='	/bin/rm -f $(mandirsu)/sudo.$(mansectsu).z $(mandirsu)/visudo.$(mansectsu).z $(mandirform)/sudoers.$(mansectform).z ; /usr/bin/pack $(mandirsu)/sudo.$(mansectsu) $(mandirsu)/visudo.$(mansectsu) $(mandirform)/sudoers.$(mansectform)'
 		    if test "$prefix" = "/usr/local" -a "$mandir" = '$(prefix)/man'; then
@@ -1413,43 +1375,40 @@ case "$host" in
 		    fi
 		fi
 		# IRIX <= 4 needs -lsun
-		if test "$OSREV" -le 4; then
+		if test "$OSMAJOR" -le 4; then
 		    AC_CHECK_LIB(sun, getpwnam, [LIBS="${LIBS} -lsun"])
 		fi
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
 		;;
     *-*-linux*)
+		OSDEFS="${OSDEFS} -D_GNU_SOURCE"
 		# Some Linux versions need to link with -lshadow
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_FUNCS(getspnam, , [AC_CHECK_LIB(shadow, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lshadow"; LIBS="${LIBS} -lshadow"])])
-		    CHECKSHADOW="false"
-		fi
+		shadow_funcs="getspnam"
+		shadow_libs_optional="-lshadow"
+		: ${with_pam='maybe'}
 		;;
     *-convex-bsd*)
-		SUDO_DEFINE(_CONVEX_SOURCE)
+		OSDEFS="${OSDEFS} -D_CONVEX_SOURCE"
 		if test -z "$GCC"; then
 		    CFLAGS="${CFLAGS} -D__STDC__"
 		fi
 
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lprot"; LIBS="${LIBS} -lprot"; OSDEFS="${OSDEFS} -D_AUDIT -D_ACL -DSecureWare"; SECUREWARE=1])
-		    CHECKSHADOW="false"
-		fi
+		shadow_defs="-D_AUDIT -D_ACL -DSecureWare"
+		shadow_funcs="getprpwnam"
+		shadow_libs="-lprot"
 		;;
     *-*-ultrix*)
 		OS="ultrix"
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_LIB(auth, getauthuid, AC_DEFINE(HAVE_GETAUTHUID) [SUDO_LIBS="${SUDO_LIBS} -lauth"; LIBS="${LIBS} -lauth"])
-		    CHECKSHADOW="false"
-		fi
+		shadow_funcs="getauthuid"
+		shadow_libs="-lauth"
 		;;
     *-*-riscos*)
 		LIBS="${LIBS} -lsun -lbsd"
 		CPPFLAGS="${CPPFLAGS} -I/usr/include -I/usr/include/bsd"
 		OSDEFS="${OSDEFS} -D_MIPS"
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
 		;;
     *-*-isc*)
 		OSDEFS="${OSDEFS} -D_ISC"
@@ -1457,89 +1416,99 @@ case "$host" in
 		SUDO_LIBS="${SUDO_LIBS} -lcrypt"
 		LIBS="${LIBS} -lcrypt"
 
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_LIB(sec, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"])
-		    CHECKSHADOW="false"
-		fi
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
+		shadow_funcs="getspnam"
+		shadow_libs="-lsec"
+
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
 		;;
     *-*-sco*|*-sco-*)
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_LIB(prot, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lprot -lx"; LIBS="${LIBS} -lprot -lx"; SECUREWARE=1], , -lx)
-		    AC_CHECK_LIB(gen, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lgen"; LIBS="${LIBS} -lgen"])
-		    CHECKSHADOW="false"
-		fi
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
+		shadow_funcs="getprpwnam"
+		shadow_libs="-lprot -lx"
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
 		;;
     m88k-motorola-sysv*)
 		# motorolla's cc (a variant of gcc) does -O but not -O2
 		CFLAGS=`echo $CFLAGS | sed 's/-O2/-O/g'`
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
 		;;
     *-sequent-sysv*)
-		if test "$CHECKSHADOW" = "true"; then
-		    AC_CHECK_LIB(sec, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"])
-		    CHECKSHADOW="false"
-		fi
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
-		test -n "$with_rpath" || with_rpath=yes
+		shadow_funcs="getspnam"
+		shadow_libs="-lsec"
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
+		: ${with_rpath='yes'}
 		;;
     *-ncr-sysv4*|*-ncr-sysvr4*)
 		AC_CHECK_LIB(c89, strcasecmp, AC_DEFINE(HAVE_STRCASECMP) [LIBS="${LIBS} -lc89"; ac_cv_func_strcasecmp=yes])
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
-		test -n "$with_rpath" || with_rpath=yes
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
+		: ${with_rpath='yes'}
 		;;
     *-ccur-sysv4*|*-ccur-sysvr4*)
 		LIBS="${LIBS} -lgen"
 		SUDO_LIBS="${SUDO_LIBS} -lgen"
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
-		test -n "$with_rpath" || with_rpath=yes
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
+		: ${with_rpath='yes'}
 		;;
     *-*-bsdi*)
 		SKIP_SETREUID=yes
 		# Use shlicc for BSD/OS [23].x unless asked to do otherwise
 		if test "${with_CC+set}" != set -a "$ac_cv_prog_CC" = gcc; then
-		    case "$OSREV" in
+		    case "$OSMAJOR" in
 			2|3)	AC_MSG_NOTICE([using shlicc as CC])
 				ac_cv_prog_CC=shlicc
 				CC="$ac_cv_prog_CC"
 				;;
 		    esac
 		fi
+		# Check for newer BSD auth API (just check for >= 3.0?)
+		if test -z "$with_bsdauth"; then
+		    AC_CHECK_FUNCS(auth_challenge, [with_bsdauth=maybe])
+		fi
 		;;
     *-*-freebsd*)
 		# FreeBSD has a real setreuid(2) starting with 2.1 and
 		# backported to 2.0.5.  We just take 2.1 and above...
-		case "`echo $host_os | sed 's/^freebsd\([[0-9\.]]*\).*$/\1/'`" in
+		case "$OSREV" in
 		0.*|1.*|2.0*)
 		    SKIP_SETREUID=yes
 		    ;;
 		esac
-		if test "$with_logincap" = "yes"; then
-		    SUDO_LIBS="${SUDO_LIBS} -lutil"
-		fi
 		if test "$with_skey" = "yes"; then
 		     SUDO_LIBS="${SUDO_LIBS} -lmd"
 		fi
 		if test "$CHECKSHADOW" = "true"; then
 		    CHECKSHADOW="false"
 		fi
+		: ${with_pam='maybe'}
+		: ${with_logincap='maybe'}
 		;;
     *-*-*openbsd*)
+		# OpenBSD has a real setreuid(2) starting with 3.3 but
+		# we will use setreuid(2) instead.
 		SKIP_SETREUID=yes
 		if test "$CHECKSHADOW" = "true"; then
 		    CHECKSHADOW="false"
 		fi
+		# OpenBSD >= 3.0 supports BSD auth
+		if test -z "$with_bsdauth"; then
+		    case "$OSREV" in
+		    [0-2].*)
+			;;
+		    *)
+			with_bsdauth=maybe
+			;;
+		    esac
+		fi
+		: ${with_logincap='maybe'}
 		;;
     *-*-*netbsd*)
 		# NetBSD has a real setreuid(2) starting with 1.3.2
-		case "`echo $host_os | sed 's/^netbsd\([[0-9\.]]*\).*$/\1/'`" in
+		case "$OSREV" in
 		0.9*|1.[012]*|1.3|1.3.1)
 		    SKIP_SETREUID=yes
 		    ;;
@@ -1547,6 +1516,19 @@ case "$host" in
 		if test "$CHECKSHADOW" = "true"; then
 		    CHECKSHADOW="false"
 		fi
+		: ${with_logincap='maybe'}
+		dnl future versions of NetBSD (> 2.0) may include pam
+		: ${with_pam='maybe'}
+		;;
+    *-*-dragonfly*)
+		if test "$with_skey" = "yes"; then
+		     SUDO_LIBS="${SUDO_LIBS} -lmd"
+		fi
+		if test "$CHECKSHADOW" = "true"; then
+		    CHECKSHADOW="false"
+		fi
+		: ${with_pam='yes'}
+		: ${with_logincap='yes'}
 		;;
     *-*-*bsd*)
 		if test "$CHECKSHADOW" = "true"; then
@@ -1558,6 +1540,8 @@ case "$host" in
 		if test "$CHECKSHADOW" = "true"; then
 		    CHECKSHADOW="false"
 		fi
+		: ${with_pam='yes'}
+		: ${with_logincap='yes'}
 		;;
     *-*-nextstep*)
 		# lockf() on is broken on the NeXT -- use flock instead
@@ -1565,21 +1549,24 @@ case "$host" in
 		ac_cv_func_flock=yes
 		;;
     *-*-*sysv4*)
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
-		test -n "$with_rpath" || with_rpath=yes
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
+		: ${with_rpath='yes'}
 		;;
     *-*-sysv*)
-		test -n "$mansectsu" || mansectsu=1m
-		test -n "$mansectform" || mansectform=4
+		: ${mansectsu='1m'}
+		: ${mansectform='4'}
+		;;
+    *-gnu*)
+		OSDEFS="${OSDEFS} -D_GNU_SOURCE"
 		;;
 esac
 
 dnl
 dnl Use BSD-style man sections by default
 dnl
-test -n "$mansectsu" || mansectsu=8
-test -n "$mansectform" || mansectform=5
+: ${mansectsu='8'}
+: ${mansectform='5'}
 
 dnl
 dnl Add in any libpaths or libraries specified via configure
@@ -1599,17 +1586,6 @@ if test -n "$with_libraries"; then
 	esac
 	LIBS="${LIBS} ${i}"
     done
-fi
-
-dnl
-dnl Check for shadow password routines if we have not already done so.
-dnl We check for SVR4-style first and then SecureWare-style.
-dnl
-if test "$CHECKSHADOW" = "true"; then
-    AC_CHECK_FUNCS(getspnam, [CHECKSHADOW="false"], [AC_CHECK_LIB(gen, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lgen"; LIBS="${LIBS} -lgen"])])
-fi
-if test "$CHECKSHADOW" = "true"; then
-    AC_CHECK_FUNC(getprpwnam, [AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1], AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"], AC_CHECK_LIB(security, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lsecurity"; LIBS="${LIBS} -lsecurity"], AC_CHECK_LIB(prot, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lprot"; LIBS="${LIBS} -lprot"])))])
 fi
 
 dnl
@@ -1635,8 +1611,9 @@ dnl Header file checks
 dnl
 AC_HEADER_STDC
 AC_HEADER_DIRENT
+AC_HEADER_TIME
 AC_CHECK_HEADERS(malloc.h paths.h utime.h netgroup.h sys/sockio.h sys/bsdtypes.h sys/select.h)
-AC_CHECK_HEADERS(err.h, , [AC_LIBOBJ(err)])
+AC_CHECK_HEADERS([err.h], [], [AC_LIBOBJ(err)])
 dnl ultrix termio/termios are broken
 if test "$OS" != "ultrix"; then
     AC_SYS_POSIX_TERMIOS
@@ -1646,11 +1623,12 @@ if test "$OS" != "ultrix"; then
 	AC_CHECK_HEADERS(termio.h)
     fi
 fi
-if test "$with_logincap" = "yes"; then
+if test ${with_logincap-'no'} != "no"; then
     AC_CHECK_HEADERS(login_cap.h)
 fi
-if test "$with_bsdauth" = "yes"; then
-    AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H) [with_passwd=no; AUTH_OBJS=bsdauth.o], -)
+if test ${with_project-'no'} != "no"; then
+    AC_CHECK_HEADER(project.h, AC_DEFINE(HAVE_PROJECT_H)
+	[SUDO_LIBS="${SUDO_LIBS} -lproject"], -)
 fi
 dnl
 dnl typedef checks
@@ -1659,18 +1637,22 @@ AC_TYPE_MODE_T
 AC_TYPE_UID_T
 AC_CHECK_TYPES([sig_atomic_t], , [AC_DEFINE(sig_atomic_t, int)], [#include <sys/types.h>
 #include <signal.h>])
-AC_CHECK_TYPES([sigaction_t], [AC_DEFINE(HAVE_SIGACTION_T)], ,[#include <sys/types.h>
+AC_CHECK_TYPES([sigaction_t], [AC_DEFINE(HAVE_SIGACTION_T)], [], [#include <sys/types.h>
 #include <signal.h>])
-AC_CHECK_TYPE([struct timespec], [AC_DEFINE(HAVE_TIMESPEC)], , [#include <sys/types.h>
-#include <sys/time.h>
-#include <time.h>])
+AC_CHECK_TYPE([struct timespec], [AC_DEFINE(HAVE_TIMESPEC)], [], [#include <sys/types.h>
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# include <sys/time.h>
+#endif])
 SUDO_TYPE_SIZE_T
 SUDO_TYPE_SSIZE_T
 SUDO_TYPE_DEV_T
 SUDO_TYPE_INO_T
 SUDO_FULL_VOID
 SUDO_UID_T_LEN
-SUDO_LONG_LONG
+SUDO_TYPE_LONG_LONG
 SUDO_SOCK_SA_LEN
 dnl
 dnl only set RETSIGTYPE if it is not set already
@@ -1683,51 +1665,62 @@ dnl
 dnl Function checks
 dnl
 AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf tzset \
-	       strftime setrlimit initgroups fstat gettimeofday)
-AC_CHECK_FUNCS(seteuid, , [AC_DEFINE(NO_SAVED_IDS)])
+	       strftime setrlimit initgroups getgroups fstat gettimeofday \
+	       setlocale)
 if test -z "$SKIP_SETRESUID"; then
     AC_CHECK_FUNCS(setresuid, [SKIP_SETREUID=yes])
 fi
 if test -z "$SKIP_SETREUID"; then
-    AC_CHECK_FUNCS(setreuid)
+    AC_CHECK_FUNCS(setreuid, [SKIP_SETEUID=yes])
+fi
+if test -z "$SKIP_SETEUID"; then
+    AC_CHECK_FUNCS(seteuid)
 fi
 if test X"$with_interfaces" != X"no"; then
     AC_CHECK_FUNCS(getifaddrs, [AC_CHECK_FUNCS(freeifaddrs)])
 fi
-if test -n "$SECUREWARE"; then
-    AC_CHECK_FUNCS(bigcrypt set_auth_parameters initprivs)
-fi
 if test -z "$BROKEN_GETCWD"; then
     AC_REPLACE_FUNCS(getcwd)
 fi
+AC_CHECK_FUNCS(glob, [AC_MSG_CHECKING(for GLOB_BRACE and GLOB_TILDE in glob.h)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <glob.h>]], [[int i = GLOB_BRACE | GLOB_TILDE; (void)i;]])], [AC_DEFINE(HAVE_EXTENDED_GLOB)
+    AC_MSG_RESULT(yes)], [AC_LIBOBJ(glob)
+    AC_MSG_RESULT(no)])], [AC_LIBOBJ(glob)])
 AC_CHECK_FUNCS(lockf flock, [break])
 AC_CHECK_FUNCS(waitpid wait3, [break])
 AC_CHECK_FUNCS(innetgr _innetgr, [AC_CHECK_FUNCS(getdomainname) [break]])
-AC_CHECK_FUNCS(lsearch, , [AC_CHECK_LIB(compat, lsearch, AC_CHECK_HEADER(search.h, AC_DEFINE(HAVE_LSEARCH) [LIBS="${LIBS} -lcompat"], AC_LIBOBJ(lsearch), -), AC_LIBOBJ(lsearch))])
+AC_CHECK_FUNCS(lsearch, [], [AC_CHECK_LIB([compat], [lsearch], [AC_CHECK_HEADER([search.h], [AC_DEFINE(HAVE_LSEARCH)] [LIBS="${LIBS} -lcompat"], [AC_LIBOBJ(lsearch)], -)], [AC_LIBOBJ(lsearch)])])
 AC_CHECK_FUNCS(utimes, [AC_CHECK_FUNCS(futimes futimesat, [break])], [AC_CHECK_FUNCS(futime) AC_LIBOBJ(utimes)])
-SUDO_FUNC_FNMATCH(AC_DEFINE(HAVE_FNMATCH), AC_LIBOBJ(fnmatch))
+SUDO_FUNC_FNMATCH([AC_DEFINE(HAVE_FNMATCH)], [AC_LIBOBJ(fnmatch)])
 SUDO_FUNC_ISBLANK
-AC_REPLACE_FUNCS(strerror strcasecmp sigaction strlcpy strlcat closefrom)
+AC_REPLACE_FUNCS(memrchr strerror strcasecmp sigaction strlcpy strlcat)
+AC_CHECK_FUNCS(closefrom, [], [AC_LIBOBJ(closefrom)
+    AC_CHECK_DECL(F_CLOSEM, AC_DEFINE(HAVE_FCNTL_CLOSEM), [],
+	[ #include <limits.h>
+	  #include <fcntl.h> ])
+])
+AC_CHECK_FUNCS(mkstemp, [], [SUDO_OBJS="${SUDO_OBJS} mkstemp.o"
+    AC_CHECK_FUNCS(random lrand48, [break])
+])
 AC_CHECK_FUNCS(snprintf vsnprintf asprintf vasprintf, , [NEED_SNPRINTF=1])
 if test X"$ac_cv_type_struct_timespec" != X"no"; then
     AC_CHECK_MEMBER([struct stat.st_mtim], AC_DEFINE(HAVE_ST_MTIM), [AC_CHECK_MEMBER([struct stat.st_mtimespec], AC_DEFINE([HAVE_ST_MTIMESPEC]))])
     AC_MSG_CHECKING([for two-parameter timespecsub])
-    AC_TRY_COMPILE([#include <sys/types.h>
-#include <sys/time.h>], [struct timespec ts1, ts2;
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+#include <sys/time.h>]], [[struct timespec ts1, ts2;
 ts1.tv_sec = 1; ts1.tv_nsec = 0; ts2.tv_sec = 0; ts2.tv_nsec = 0;
 #ifndef timespecsub
 #error missing timespecsub
 #endif
-timespecsub(&ts1, &ts2);],
-	[AC_DEFINE(HAVE_TIMESPECSUB2)
-	AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
+timespecsub(&ts1, &ts2);]])], [AC_DEFINE(HAVE_TIMESPECSUB2)
+    AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
 fi
 dnl
 dnl Check for the dirfd function/macro.  If not found, look for dd_fd in DIR.
 dnl
-AC_TRY_LINK([#include <sys/types.h>
-#include <$ac_header_dirent>], [DIR d; (void)dirfd(&d);], [AC_DEFINE(HAVE_DIRFD)], [AC_TRY_LINK([#include <sys/types.h>
-#include <$ac_header_dirent>], [DIR d; (void)&d.dd_fd;], [AC_DEFINE(HAVE_DD_FD)], [])])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+#include <$ac_header_dirent>]], [[DIR d; (void)dirfd(&d);]])], [AC_DEFINE(HAVE_DIRFD)], [AC_TRY_LINK([#include <sys/types.h>
+#include <$ac_header_dirent>], [DIR d; (void)&d.dd_fd;], [AC_DEFINE(HAVE_DD_FD)])])
 dnl
 dnl If NEED_SNPRINTF is set, add snprintf.c to LIBOBJS
 dnl (it contains snprintf, vsnprintf, asprintf, and vasprintf)
@@ -1771,8 +1764,7 @@ dnl
 AC_CHECK_FUNCS(getprogname, , [
     AC_MSG_CHECKING([for __progname])
     AC_CACHE_VAL(sudo_cv___progname, [
-    AC_TRY_LINK(, [extern char *__progname; (void)puts(__progname);],
-    [sudo_cv___progname=yes], [sudo_cv___progname=no])])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[extern char *__progname; (void)puts(__progname);]])], [sudo_cv___progname=yes], [sudo_cv___progname=no])])
     if test "$sudo_cv___progname" = "yes"; then
 	AC_DEFINE(HAVE___PROGNAME)
     else
@@ -1794,7 +1786,7 @@ if test -n "$with_kerb4"; then
 	O_CPPFLAGS="$CPPFLAGS"
 	for dir in "" "kerberosIV/" "krb4/" "kerberos4/" "kerberosv4/"; do
 	    CPPFLAGS="$O_CPPFLAGS -I/usr/include/${dir}"
-	    AC_PREPROC_IFELSE([#include <krb.h>], [found=yes; break], )
+	    AC_PREPROC_IFELSE([#include <krb.h>], [found=yes; break])
 	done
 	test X"$found" = X"no" && CPPFLAGS="$O_CPPFLAGS"
     else
@@ -1817,8 +1809,7 @@ if test -n "$with_kerb4"; then
     dnl Try to determine whether we have KTH or MIT/CNS Kerberos IV
     dnl
     AC_MSG_CHECKING(whether we are using KTH Kerberos IV)
-    AC_TRY_COMPILE([#include <krb.h>], [const char *tmp = krb4_version;],
-	[
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <krb.h>]], [[const char *tmp = krb4_version;]])], [
 	    AC_MSG_RESULT(yes)
 	    K4LIBS="${K4LIBS} -lcom_err"
 	    AC_CHECK_LIB(roken, main, [K4LIBS="${K4LIBS} -lroken"])
@@ -1837,7 +1828,7 @@ if test -n "$with_kerb4"; then
     ], [$K4LIBS])
     LDFLAGS="$O_LDFLAGS"
     SUDO_LIBS="${SUDO_LIBS} $K4LIBS"
-    AUTH_OBJS="${AUTH_OBJS} kerb4.o"
+    SUDO_ADD_AUTH([Kerberos 4], [kerb4.o])
 fi
 
 dnl
@@ -1848,17 +1839,18 @@ if test "$with_kerb5" = "yes"; then
     AC_CHECK_PROG(KRB5CONFIG, krb5-config, yes, "")
     if test -n "$KRB5CONFIG"; then
 	AC_DEFINE(HAVE_KERB5)
-	AUTH_OBJS="${AUTH_OBJS} kerb5.o"
+	SUDO_ADD_AUTH([Kerberos 5], [kerb5.o])
 	CPPFLAGS="$CPPFLAGS `krb5-config --cflags`"
 	SUDO_LIBS="$SUDO_LIBS `krb5-config --libs`"
 	dnl
 	dnl Try to determine whether we have Heimdal or MIT Kerberos
 	dnl
 	AC_MSG_CHECKING(whether we are using Heimdal)
-	AC_TRY_COMPILE([#include <krb5.h>], [const char *tmp = heimdal_version;],
-	    [
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <krb5.h>]], [[const char *tmp = heimdal_version;]])], [
 		AC_MSG_RESULT(yes)
 		AC_DEFINE(HAVE_HEIMDAL)
+	    ] , [
+		AC_MSG_RESULT(no)
 	    ]
 	)
     fi
@@ -1873,7 +1865,7 @@ if test -n "$with_kerb5" -a -z "$KRB5CONFIG"; then
 	O_CPPFLAGS="$CPPFLAGS"
 	for dir in "" "kerberosV/" "krb5/" "kerberos5/" "kerberosv5/"; do
 	    CPPFLAGS="$O_CPPFLAGS -I/usr/include/${dir}"
-	    AC_PREPROC_IFELSE([#include <krb5.h>], [found=yes; break], )
+	    AC_PREPROC_IFELSE([#include <krb5.h>], [found=yes; break])
 	done
 	if test X"$found" = X"no"; then
 	    CPPFLAGS="$O_CPPFLAGS"
@@ -1889,33 +1881,94 @@ if test -n "$with_kerb5" -a -z "$KRB5CONFIG"; then
     dnl Try to determine whether we have Heimdal or MIT Kerberos
     dnl
     AC_MSG_CHECKING(whether we are using Heimdal)
-    AC_TRY_COMPILE([#include <krb5.h>], [const char *tmp = heimdal_version;],
-	[
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <krb5.h>]], [[const char *tmp = heimdal_version;]])], [
 	    AC_MSG_RESULT(yes)
 	    AC_DEFINE(HAVE_HEIMDAL)
-	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -ldes -lcom_err -lasn1"
+	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lcrypto -ldes -lcom_err -lasn1"
 	    AC_CHECK_LIB(roken, main, [SUDO_LIBS="${SUDO_LIBS} -lroken"])
 	], [
 	    AC_MSG_RESULT(no)
 	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lk5crypto -lcom_err"
-	]
-    )
-    AUTH_OBJS="${AUTH_OBJS} kerb5.o"
+	
+    ])
+    SUDO_ADD_AUTH([Kerberos 5], [kerb5.o])
+    _LIBS="$LIBS"
+    LIBS="${LIBS} ${SUDO_LIBS}"
+    AC_CHECK_FUNCS(krb5_verify_user krb5_init_secure_context)
+    LIBS="$_LIBS"
 fi
 
 dnl
-dnl Extra PAM foolishness
+dnl Some systems put login_cap(3) in libutil
 dnl
-if test "$with_pam" = "yes"; then
+if test "$with_logincap" = "yes"; then
+    case "$OS" in
+	freebsd|netbsd)	SUDO_LIBS="${SUDO_LIBS} -lutil"
+	;;
+    esac
+fi
+
+dnl
+dnl PAM support.  Systems that might support PAM set with_pam=maybe
+dnl and we do that actual tests here.
+dnl
+if test ${with_pam-'no'} != "no"; then
     dnl
     dnl Linux may need this
     dnl
-    AC_HAVE_LIBRARY(dl, SUDO_LIBS="${SUDO_LIBS} -lpam -ldl", SUDO_LIBS="${SUDO_LIBS} -lpam")
+    AC_CHECK_LIB([dl], [main], [SUDO_LIBS="${SUDO_LIBS} -lpam -ldl"], [SUDO_LIBS="${SUDO_LIBS} -lpam"])
+    ac_cv_lib_dl=ac_cv_lib_dl_main
+
     dnl
     dnl Some PAM implementations (MacOS X for example) put the PAM headers
     dnl in /usr/include/pam instead of /usr/include/security...
     dnl
-    AC_CHECK_HEADERS([pam/pam_appl.h])
+    AC_CHECK_HEADERS([security/pam_appl.h] [pam/pam_appl.h], [with_pam=yes; break])
+    if test "$with_pam" = "yes"; then
+	AC_DEFINE(HAVE_PAM)
+	SUDO_ADD_AUTH([PAM], [pam.o], [true])
+	CHECKSHADOW=false
+    fi
+fi
+
+dnl
+dnl Check for shadow password routines if we have not already done so.
+dnl If there is a specific list of functions to check we do that first.
+dnl Otherwise, we check for SVR4-style and then SecureWare-style.
+dnl
+if test "$CHECKSHADOW" = "true" -a -n "$shadow_funcs"; then
+    _LIBS="$LIBS"
+    LIBS="$LIBS $shadow_libs"
+    found=no
+    AC_CHECK_FUNCS($shadow_funcs, [found=yes])
+    if test "$found" = "yes"; then
+	SUDO_LIBS="$SUDO_LIBS $shadow_libs"
+    elif test -n "$shadow_libs_optional"; then
+	LIBS="$LIBS $shadow_libs_optional"
+	AC_CHECK_FUNCS($shadow_funcs, [found=yes])
+	if test "$found" = "yes"; then
+	    SUDO_LIBS="$SUDO_LIBS $shadow_libs $shadow_libs_optional"
+	fi
+    fi
+    if test "$found" = "yes"; then
+	case "$shadow_funcs" in
+	    *getprpwnam*) SECUREWARE=1;;
+	esac
+	test -n "$shadow_defs" && OSDEFS="${OSDEFS} $shadow_defs"
+    else
+	LIBS="$_LIBS"
+    fi
+    CHECKSHADOW=false
+fi
+if test "$CHECKSHADOW" = "true"; then
+    AC_CHECK_FUNCS(getspnam, [CHECKSHADOW="false"], [AC_CHECK_LIB(gen, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lgen"; LIBS="${LIBS} -lgen"])])
+fi
+if test "$CHECKSHADOW" = "true"; then
+    AC_CHECK_FUNC(getprpwnam, [AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1], AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"], AC_CHECK_LIB(security, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lsecurity"; LIBS="${LIBS} -lsecurity"], AC_CHECK_LIB(prot, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lprot"; LIBS="${LIBS} -lprot"])))])
+fi
+if test -n "$SECUREWARE"; then
+    AC_CHECK_FUNCS(bigcrypt set_auth_parameters initprivs)
+    SUDO_ADD_AUTH([SecureWare], [secureware.o])
 fi
 
 dnl
@@ -1987,7 +2040,7 @@ if test -n "$with_skey"; then
 	O_CPPFLAGS="$CPPFLAGS"
 	for dir in "" "/usr/local" "/usr/contrib"; do
 	    test -n "$dir" && CPPFLAGS="$O_CPPFLAGS -I${dir}/include"
-	    AC_PREPROC_IFELSE([#include <skey.h>], [found=yes; break], )
+	    AC_PREPROC_IFELSE([#include <skey.h>], [found=yes; break])
 	done
 	if test "$found" = "no" -o -z "$dir"; then
 	    CPPFLAGS="$O_CPPFLAGS"
@@ -2020,7 +2073,7 @@ if test -n "$with_opie"; then
 	O_CPPFLAGS="$CPPFLAGS"
 	for dir in "" "/usr/local" "/usr/contrib"; do
 	    test -n "$dir" && CPPFLAGS="$O_CPPFLAGS -I${dir}/include"
-	    AC_PREPROC_IFELSE([#include <opie.h>], [found=yes; break], )
+	    AC_PREPROC_IFELSE([#include <opie.h>], [found=yes; break])
 	done
 	if test "$found" = "no" -o -z "$dir"; then
 	    CPPFLAGS="$O_CPPFLAGS"
@@ -2040,7 +2093,7 @@ fi
 dnl
 dnl extra SecurID lib + includes
 dnl
-if test -n "$with_SecurID" -a "$with_SecurID" != "no"; then
+if test ${with_SecurID-'no'} != "no"; then
     if test "$with_SecurID" != "yes"; then
 	:
     elif test -d /usr/ace/examples; then
@@ -2056,13 +2109,13 @@ if test -n "$with_SecurID" -a "$with_SecurID" != "no"; then
     #
     AC_CHECK_LIB(aceclnt, SD_Init,
 	[
-	    AUTH_OBJS="securid5.o"
+	    SUDO_ADD_AUTH([SecurID 5], [securid5.o], true)
 	    SUDO_LIBS="${SUDO_LIBS} -laceclnt -lpthread"
 	]
 	[
 	    SUDO_APPEND_LIBPATH(SUDO_LDFLAGS, [${with_SecurID}])
 	], [
-	    AUTH_OBJS="securid.o"
+	    SUDO_ADD_AUTH([SecurID], [securid.o], true)
 	    SUDO_LIBS="${SUDO_LIBS} ${with_SecurID}/sdiclient.a"
 	],
 	[
@@ -2085,19 +2138,36 @@ if test -n "$with_fwtk"; then
 fi
 
 dnl
-dnl extra 'authenticate' lib (AIX only?)
+dnl AIX general authentication
+dnl If set to "maybe" only enable if no other exclusive method in use.
 dnl
-if test "$with_authenticate" = "yes"; then
-    SUDO_LIBS="${SUDO_LIBS} -ls"
+if test ${with_aixauth-'no'} != "no"; then
+    if test X"$with_aixauth" != X"maybe" -o X"$AUTH_EXCL" = X""; then
+	AC_MSG_NOTICE([using AIX general authentication])
+	AC_DEFINE(HAVE_AIXAUTH)
+	SUDO_ADD_AUTH([AIX general authentication], [aix_auth.o], [true])
+	SUDO_LIBS="${SUDO_LIBS} -ls"
+    fi
+fi
+
+dnl
+dnl BSD authentication
+dnl If set to "maybe" only enable if no other exclusive method in use.
+dnl
+if test ${with_bsdauth-'no'} != "no"; then
+    if test X"$with_bsdauth" != X"maybe" -o X"$AUTH_EXCL" = X""; then
+	AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H)
+	    [SUDO_ADD_AUTH([BSD authentication], [bsdauth.o], [true])], -)
+    fi
 fi
 
 dnl
 dnl extra lib and .o file for LDAP support
 dnl
 if test -n "$with_ldap"; then
+    _LDFLAGS="$LDFLAGS"
     if test "$with_ldap" != "yes"; then
 	SUDO_APPEND_LIBPATH(SUDO_LDFLAGS, [${with_ldap}/lib])
-	_LDFLAGS="$LDFLAGS"
 	SUDO_APPEND_LIBPATH(LDFLAGS, [${with_ldap}/lib])
 	CPPFLAGS="${CPPFLAGS} -I${with_ldap}/include"
 	with_ldap=yes
@@ -2111,21 +2181,21 @@ if test -n "$with_ldap"; then
     for l in -lldap -llber '-lssl -lcrypto'; do
 	LIBS="${LIBS} $l"
 	LDAP_LIBS="${LDAP_LIBS} $l"
-	AC_TRY_LINK([#include <sys/types.h>
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 	#include <lber.h>
-	#include <ldap.h>], [(void)ldap_init(0, 0)], [found=yes; break], [])
+	#include <ldap.h>]], [[(void)ldap_init(0, 0)]])], [found=yes; break])
     done
-    dnl if nothing linked just try with -ldap
+    dnl if nothing linked just try with -lldap
     if test "$found" = "no"; then
-	LDAP_LIBS=" -ldap"
-	AC_MSG_RESULT([not found, using -ldap])
+	LDAP_LIBS=" -lldap"
+	AC_MSG_RESULT([not found, using -lldap])
     else
 	AC_MSG_RESULT([$LDAP_LIBS])
     fi
     dnl try again w/o explicitly including lber.h
     AC_MSG_CHECKING([whether lber.h is needed])
-    AC_TRY_LINK([#include <sys/types.h>
-    #include <ldap.h>], [(void)ldap_init(0, 0)], [AC_MSG_RESULT([no])], [
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+    #include <ldap.h>]], [[(void)ldap_init(0, 0)]])], [AC_MSG_RESULT([no])], [
     AC_MSG_RESULT([yes])
     AC_DEFINE(HAVE_LBER_H)])
 
@@ -2134,6 +2204,8 @@ if test -n "$with_ldap"; then
     SUDO_LIBS="${SUDO_LIBS}${LDAP_LIBS}"
     LIBS="$_LIBS"
     LDFLAGS="$_LDFLAGS"
+    # XXX - OpenLDAP has deprecated ldap_get_values()
+    CPPFLAGS="${CPPFLAGS} -DLDAP_DEPRECATED"
 fi
 
 dnl
@@ -2157,18 +2229,18 @@ SUDO_TIMEDIR
 dnl
 dnl Use passwd (and secureware) auth modules?
 dnl
-if test "$with_passwd" = "no"; then
+case "$AUTH_OBJS" in
+*passwd.o*)
+    ;;
+*)
     AC_DEFINE(WITHOUT_PASSWD)
     if test -z "$AUTH_OBJS"; then
 	AC_MSG_ERROR([no authentication methods defined.])
     fi
-else
-    if test -n "$SECUREWARE"; then
-	AUTH_OBJS="${AUTH_OBJS} passwd.o secureware.o"
-    else
-	AUTH_OBJS="${AUTH_OBJS} passwd.o"
-    fi
-fi
+    ;;
+esac
+_AUTH=`echo "$AUTH_OBJS" | sed 's/\.o//g'`
+AC_MSG_NOTICE([using the following authentication methods: $_AUTH])
 
 dnl
 dnl LIBS may contain duplicates from SUDO_LIBS or NET_LIBS so prune it.
@@ -2214,7 +2286,8 @@ fi
 dnl
 dnl Substitute into the Makefile and man pages
 dnl
-AC_OUTPUT([Makefile sudo.man visudo.man sudoers.man])
+AC_CONFIG_FILES([Makefile sudo.man visudo.man sudoers.man])
+AC_OUTPUT
 
 dnl
 dnl Spew any text the user needs to know about
@@ -2239,11 +2312,14 @@ AH_TEMPLATE(FQDN, [Define to 1 if you want to require fully qualified hosts in s
 AH_TEMPLATE(GOONS_INSULTS, [Define to 1 if you want insults from the "Goon Show".])
 AH_TEMPLATE(HAL_INSULTS, [Define to 1 if you want 2001-like insults.])
 AH_TEMPLATE(HAVE_AFS, [Define to 1 if you use AFS.])
-AH_TEMPLATE(HAVE_AUTHENTICATE, [Define to 1 if you use AIX general authentication.])
+AH_TEMPLATE(HAVE_AIXAUTH, [Define to 1 if you use AIX general authentication.])
 AH_TEMPLATE(HAVE_BSD_AUTH_H, [Define to 1 if you use BSD authentication.])
 AH_TEMPLATE(HAVE_DCE, [Define to 1 if you use OSF DCE.])
 AH_TEMPLATE(HAVE_DD_FD, [Define to 1 if your `DIR' contains dd_fd.])
 AH_TEMPLATE(HAVE_DIRFD, [Define to 1 if you have the `dirfd' function or macro.])
+AH_TEMPLATE(HAVE_DISPCRYPT, [Define to 1 if you have the `dispcrypt' function.])
+AH_TEMPLATE(HAVE_EXTENDED_GLOB, [Define to 1 if your glob.h defines the GLOB_BRACE and GLOB_TILDE flags.])
+AH_TEMPLATE(HAVE_FCNTL_CLOSEM, [Define to 1 if your system has the F_CLOSEM fcntl.])
 AH_TEMPLATE(HAVE_FNMATCH, [Define to 1 if you have the `fnmatch' function.])
 AH_TEMPLATE(HAVE_FWTK, [Define to 1 if you use the FWTK authsrv daemon.])
 AH_TEMPLATE(HAVE_GETAUTHUID, [Define to 1 if you have the `getauthuid' function. (ULTRIX 4.x  shadow passwords)])
@@ -2260,6 +2336,7 @@ AH_TEMPLATE(HAVE_LBER_H, [Define to 1 if your LDAP needs <lber.h>. (OpenLDAP doe
 AH_TEMPLATE(HAVE_LDAP, [Define to 1 if you use LDAP for sudoers.])
 AH_TEMPLATE(HAVE_OPIE, [Define to 1 if you use NRL OPIE.])
 AH_TEMPLATE(HAVE_PAM, [Define to 1 if you use PAM authentication.])
+AH_TEMPLATE(HAVE_PROJECT_H, [Define to 1 if you have the <project.h> header file.])
 AH_TEMPLATE(HAVE_SECURID, [Define to 1 if you use SecurID for authentication.])
 AH_TEMPLATE(HAVE_SIA, [Define to 1 if you use SIA authentication.])
 AH_TEMPLATE(HAVE_SIGACTION_T, [Define to 1 if <signal.h> has the sigaction_t typedef.])
@@ -2279,7 +2356,6 @@ AH_TEMPLATE(NO_AUTHENTICATION, [Define to 1 if you don't want sudo to prompt for
 AH_TEMPLATE(NO_LECTURE, [Define to 1 if you don't want users to get the lecture the first they user sudo.])
 AH_TEMPLATE(NO_ROOT_MAILER, [Define to avoid runing the mailer as root.])
 AH_TEMPLATE(NO_ROOT_SUDO, [Define to 1 if root should not be allowed to use sudo.])
-AH_TEMPLATE(NO_SAVED_IDS, [Define to avoid using POSIX saved ids.])
 AH_TEMPLATE(PC_INSULTS, [Define to 1 to replace politically incorrect insults with less offensive ones.])
 AH_TEMPLATE(SECURE_PATH, [Define to 1 to override the user's path with a built-in one.])
 AH_TEMPLATE(SEND_MAIL_WHEN_NOT_OK, [Define to 1 to send mail when the user is not allowed to run a command.])
@@ -2288,48 +2364,30 @@ AH_TEMPLATE(SEND_MAIL_WHEN_NO_USER, [Define to 1 to send mail when the user is n
 AH_TEMPLATE(SHELL_IF_NO_ARGS, [Define to 1 if you want sudo to start a shell if given no arguments.])
 AH_TEMPLATE(SHELL_SETS_HOME, [Define to 1 if you want sudo to set $HOME in shell mode.])
 AH_TEMPLATE(STUB_LOAD_INTERFACES, [Define to 1 if the code in interfaces.c does not compile for you.])
-AH_TEMPLATE(USE_EXECV, [Define to 1 if you wish to use execv() instead of execvp() when running programs.])
 AH_TEMPLATE(USE_INSULTS, [Define to 1 if you want to insult the user for entering an incorrect password.])
 AH_TEMPLATE(USE_STOW, [Define to 1 if you use GNU stow packaging.])
 AH_TEMPLATE(USE_TTY_TICKETS, [Define to 1 if you want a different ticket file for each tty.])
-AH_TEMPLATE(WITHOUT_PASSWD, [Define to avoid using the passwd/shadow file for authentication.])
 AH_TEMPLATE(WITHOUT_PASSWD, [Define to avoid using the passwd/shadow file for authentication.])
 AH_TEMPLATE(sig_atomic_t, [Define to `int' if <signal.h> does not define.])
 
 dnl
 dnl Bits to copy verbatim into config.h.in
 dnl
-AH_VERBATIM([_GNU_SOURCE],
-[/* Enable GNU extensions on systems that have them. */
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE	1
-#endif])
-
-AH_VERBATIM([_ALL_SOURCE],
-[/* Enable non-POSIX extensions on AIX. */
-#ifndef _ALL_SOURCE
-# undef _ALL_SOURCE
-#endif])
-
-AH_VERBATIM([_CONVEX_SOURCE],
-[/* Enable non-POSIX extensions on ConvexOS. */
-#ifndef _CONVEX_SOURCE
-# undef _CONVEX_SOURCE
-#endif])
-
 AH_TOP([#ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H])
 
 AH_BOTTOM([/*
  * Macros to pull sec and nsec parts of mtime from struct stat.
+ * We need to be able to convert between timeval and timespec
+ * so the last 3 digits of tv_nsec are not significant.
  */
 #ifdef HAVE_ST_MTIM
 # define mtim_getsec(_x)	((_x).st_mtim.tv_sec)
-# define mtim_getnsec(_x)	((_x).st_mtim.tv_nsec)
+# define mtim_getnsec(_x)	(((_x).st_mtim.tv_nsec / 1000) * 1000)
 #else
 # ifdef HAVE_ST_MTIMESPEC
 #  define mtim_getsec(_x)	((_x).st_mtimespec.tv_sec)
-#  define mtim_getnsec(_x)	((_x).st_mtimespec.tv_nsec)
+#  define mtim_getnsec(_x)	(((_x).st_mtimespec.tv_nsec / 1000) * 1000)
 # else
 #  define mtim_getsec(_x)	((_x).st_mtime)
 #  define mtim_getnsec(_x)	(0)
@@ -2353,12 +2411,6 @@ AH_BOTTOM([/*
 #else
 # define stat_sudoers	lstat
 #endif
-
-#ifdef USE_EXECV
-# define EXECV	execv
-#else
-# define EXECV	execvp
-#endif /* USE_EXECV */
 
 /* Macros to set/clear/test flags. */
 #undef SET

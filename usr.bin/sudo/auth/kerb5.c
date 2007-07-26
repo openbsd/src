@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999,2001,2003-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,23 +46,27 @@
 #endif /* HAVE_UNISTD_H */
 #include <pwd.h>
 #include <krb5.h>
+#ifdef HAVE_HEIMDAL
+#include <com_err.h>
+#endif
 
 #include "sudo.h"
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: kerb5.c,v 1.23 2004/06/07 00:02:56 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: kerb5.c,v 1.23.2.4 2007/06/12 01:28:42 millert Exp $";
 #endif /* lint */
 
 #ifdef HAVE_HEIMDAL
 # define extract_name(c, p)		krb5_principal_get_comp_string(c, p, 1)
 # define krb5_free_data_contents(c, d)	krb5_data_free(d)
-# define ENCTYPE_DES_CBC_MD5		ETYPE_DES_CBC_MD5	/* XXX */
 #else
 # define extract_name(c, p)		(krb5_princ_component(c, p, 1)->data)
 #endif
 
+#ifndef HAVE_KRB5_VERIFY_USER
 static int verify_krb_v5_tgt __P((krb5_context, krb5_ccache, char *));
+#endif
 static struct _sudo_krb5_data {
     krb5_context	sudo_context;
     krb5_principal	princ;
@@ -87,7 +91,12 @@ kerb5_init(pw, promptp, auth)
 
     auth->data = (VOID *) &sudo_krb5_data; /* Stash all our data here */
 
-    if ((error = krb5_init_context(&(sudo_krb5_data.sudo_context))))
+#ifdef HAVE_KRB5_INIT_SECURE_CONTEXT
+    error = krb5_init_secure_context(&(sudo_krb5_data.sudo_context));
+#else
+    error = krb5_init_context(&(sudo_krb5_data.sudo_context));
+#endif
+    if (error)
 	return(AUTH_FAILURE);
     sudo_context = sudo_krb5_data.sudo_context;
 
@@ -150,6 +159,26 @@ kerb5_init(pw, promptp, auth)
     return(AUTH_SUCCESS);
 }
 
+#ifdef HAVE_KRB5_VERIFY_USER
+int
+kerb5_verify(pw, pass, auth)
+    struct passwd *pw;
+    char *pass;
+    sudo_auth *auth;
+{
+    krb5_context	sudo_context;
+    krb5_principal	princ;
+    krb5_ccache		ccache;
+    krb5_error_code	error;
+
+    sudo_context = ((sudo_krb5_datap) auth->data)->sudo_context;
+    princ = ((sudo_krb5_datap) auth->data)->princ;
+    ccache = ((sudo_krb5_datap) auth->data)->ccache;
+
+    error = krb5_verify_user(sudo_context, princ, ccache, pass, 1, NULL);
+    return (error ? AUTH_FAILURE : AUTH_SUCCESS);
+}
+#else
 int
 kerb5_verify(pw, pass, auth)
     struct passwd *pw;
@@ -195,6 +224,7 @@ kerb5_verify(pw, pass, auth)
     krb5_free_cred_contents(sudo_context, &creds);
     return (error ? AUTH_FAILURE : AUTH_SUCCESS);
 }
+#endif
 
 int
 kerb5_cleanup(pw, auth)
@@ -220,6 +250,7 @@ kerb5_cleanup(pw, auth)
     return(AUTH_SUCCESS);
 }
 
+#ifndef HAVE_KRB5_VERIFY_USER
 /*
  * This routine with some modification is from the MIT V5B6 appl/bsd/login.c
  *
@@ -269,12 +300,11 @@ verify_krb_v5_tgt(sudo_context, ccache, auth_name)
      * and enctype is currently ignored anyhow.)
      */
     if ((error = krb5_kt_read_service_key(sudo_context, NULL, princ, 0,
-					 ENCTYPE_DES_CBC_MD5, &keyblock))) {
+					 0, &keyblock))) {
 	/* Keytab or service key does not exist. */
 	log_error(NO_EXIT,
 		  "%s: host service key not found: %s", auth_name,
 		  error_message(error));
-	error = 0;
 	goto cleanup;
     }
     if (keyblock)
@@ -303,3 +333,4 @@ cleanup:
 		  error_message(error));
     return(error);
 }
+#endif

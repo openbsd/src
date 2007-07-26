@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: sudo_auth.h,v 1.20 2004/02/13 21:36:47 millert Exp $
+ * $Sudo: sudo_auth.h,v 1.20.2.2 2007/06/12 01:28:42 millert Exp $
  */
 
 #ifndef SUDO_AUTH_H
@@ -96,7 +96,7 @@ int securid_verify __P((struct passwd *pw, char *pass, sudo_auth *auth));
 #  define AUTH_STANDALONE \
 	AUTH_ENTRY(0, "sia", \
 	    NULL, sia_setup, sia_verify, sia_cleanup)
-#elif defined(HAVE_AUTHENTICATE)
+#elif defined(HAVE_AIXAUTH)
 #  define AUTH_STANDALONE \
 	AUTH_ENTRY(0, "aixauth", \
 	    NULL, NULL, aixauth_verify, NULL)

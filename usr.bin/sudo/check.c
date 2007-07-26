@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,11 +56,14 @@
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
+#ifndef HAVE_TIMESPEC
+# include <emul/timespec.h>
+#endif
 
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.226 2004/09/08 15:48:23 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: check.c,v 1.223.2.9 2007/07/06 19:52:13 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -69,6 +72,10 @@ static const char rcsid[] = "$Sudo: check.c,v 1.226 2004/09/08 15:48:23 millert 
 #define TS_MISSING		2
 #define TS_NOFILE		3
 #define TS_ERROR		4
+
+/* Flags for timestamp_status() */
+#define TS_MAKE_DIRS		1
+#define TS_REMOVE		2
 
 static void  build_timestamp	__P((char **, char **));
 static int   timestamp_status	__P((char *, char *, char *, int));
@@ -81,8 +88,8 @@ static void  update_timestamp	__P((char *, char *));
  * verify who he/she is.
  */
 void
-check_user(override)
-    int override;
+check_user(validated)
+    int validated;
 {
     char *timestampdir = NULL;
     char *timestampfile = NULL;
@@ -93,8 +100,9 @@ check_user(override)
 	return;
 
     build_timestamp(&timestampdir, &timestampfile);
-    status = timestamp_status(timestampdir, timestampfile, user_name, TRUE);
-    if (override || status != TS_CURRENT) {
+    status = timestamp_status(timestampdir, timestampfile, user_name,
+	TS_MAKE_DIRS);
+    if (status != TS_CURRENT || ISSET(validated, FLAG_CHECK_USER)) {
 	lecture(status);
 
 	/* Expand any escapes in the prompt. */
@@ -103,11 +111,11 @@ check_user(override)
 
 	verify_user(auth_pw, prompt);
     }
-    if (status != TS_ERROR)
+    /* Only update timestamp if user was validated. */
+    if (status != TS_ERROR && ISSET(validated, VALIDATE_OK))
 	update_timestamp(timestampdir, timestampfile);
-    free(timestampdir);
-    if (timestampfile)
-	free(timestampfile);
+    efree(timestampdir);
+    efree(timestampfile);
 }
 
 /*
@@ -129,6 +137,7 @@ lecture(status)
     if (def_lecture_file && (fp = fopen(def_lecture_file, "r")) != NULL) {
 	while ((nread = fread(buf, sizeof(char), sizeof(buf), fp)) != 0)
 	    fwrite(buf, nread, 1, stderr);
+	fclose(fp);
     } else {
 	(void) fputs("\n\
 We trust you have received the usual lecture from the local System\n\
@@ -349,11 +358,11 @@ build_timestamp(timestampdir, timestampfile)
  * Check the timestamp file and directory and return their status.
  */
 static int
-timestamp_status(timestampdir, timestampfile, user, make_dirs)
+timestamp_status(timestampdir, timestampfile, user, flags)
     char *timestampdir;
     char *timestampfile;
     char *user;
-    int make_dirs;
+    int flags;
 {
     struct stat sb;
     time_t now;
@@ -373,7 +382,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
     if (lstat(dirparent, &sb) == 0) {
 	if (!S_ISDIR(sb.st_mode))
 	    log_error(NO_EXIT, "%s exists but is not a directory (0%o)",
-		dirparent, sb.st_mode);
+		dirparent, (unsigned int) sb.st_mode);
 	else if (sb.st_uid != timestamp_uid)
 	    log_error(NO_EXIT, "%s owned by uid %lu, should be uid %lu",
 		dirparent, (unsigned long) sb.st_uid,
@@ -381,7 +390,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 	else if ((sb.st_mode & 0000022))
 	    log_error(NO_EXIT,
 		"%s writable by non-owner (0%o), should be mode 0700",
-		dirparent, sb.st_mode);
+		dirparent, (unsigned int) sb.st_mode);
 	else {
 	    if ((sb.st_mode & 0000777) != 0700)
 		(void) chmod(dirparent, 0700);
@@ -391,7 +400,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 	log_error(NO_EXIT|USE_ERRNO, "can't stat %s", dirparent);
     } else {
 	/* No dirparent, try to make one. */
-	if (make_dirs) {
+	if (ISSET(flags, TS_MAKE_DIRS)) {
 	    if (mkdir(dirparent, S_IRWXU))
 		log_error(NO_EXIT|USE_ERRNO, "can't mkdir %s",
 		    dirparent);
@@ -420,7 +429,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 		    status = TS_MISSING;
 	    } else
 		log_error(NO_EXIT, "%s exists but is not a directory (0%o)",
-		    timestampdir, sb.st_mode);
+		    timestampdir, (unsigned int) sb.st_mode);
 	} else if (sb.st_uid != timestamp_uid)
 	    log_error(NO_EXIT, "%s owned by uid %lu, should be uid %lu",
 		timestampdir, (unsigned long) sb.st_uid,
@@ -428,7 +437,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 	else if ((sb.st_mode & 0000022))
 	    log_error(NO_EXIT,
 		"%s writable by non-owner (0%o), should be mode 0700",
-		timestampdir, sb.st_mode);
+		timestampdir, (unsigned int) sb.st_mode);
 	else {
 	    if ((sb.st_mode & 0000777) != 0700)
 		(void) chmod(timestampdir, 0700);
@@ -441,9 +450,9 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 
     /*
      * If there is no user ticket dir, AND we are in tty ticket mode,
-     * AND the make_dirs flag is set, create the user ticket dir.
+     * AND the TS_MAKE_DIRS flag is set, create the user ticket dir.
      */
-    if (status == TS_MISSING && timestampfile && make_dirs) {
+    if (status == TS_MISSING && timestampfile && ISSET(flags, TS_MAKE_DIRS)) {
 	if (mkdir(timestampdir, S_IRWXU) == -1) {
 	    status = TS_ERROR;
 	    log_error(NO_EXIT|USE_ERRNO, "can't mkdir %s", timestampdir);
@@ -460,7 +469,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 	    if (!S_ISREG(sb.st_mode)) {
 		status = TS_ERROR;
 		log_error(NO_EXIT, "%s exists but is not a regular file (0%o)",
-		    timestampfile, sb.st_mode);
+		    timestampfile, (unsigned int) sb.st_mode);
 	    } else {
 		/* If bad uid or file mode, complain and kill the bogus file. */
 		if (sb.st_uid != timestamp_uid) {
@@ -472,7 +481,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 		} else if ((sb.st_mode & 0000022)) {
 		    log_error(NO_EXIT,
 			"%s writable by non-owner (0%o), should be mode 0600",
-			timestampfile, sb.st_mode);
+			timestampfile, (unsigned int) sb.st_mode);
 		    (void) unlink(timestampfile);
 		} else {
 		    /* If not mode 0600, fix it. */
@@ -489,9 +498,9 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
     }
 
     /*
-     * If the file/dir exists, check its mtime.
+     * If the file/dir exists and we are not removing it, check its mtime.
      */
-    if (status == TS_OLD) {
+    if (status == TS_OLD && !ISSET(flags, TS_REMOVE)) {
 	/* Negative timeouts only expire manually (sudo -k). */
 	if (def_timestamp_timeout < 0 && sb.st_mtime != 0)
 	    status = TS_CURRENT;
@@ -536,7 +545,8 @@ remove_timestamp(remove)
     int status;
 
     build_timestamp(&timestampdir, &timestampfile);
-    status = timestamp_status(timestampdir, timestampfile, user_name, FALSE);
+    status = timestamp_status(timestampdir, timestampfile, user_name,
+	TS_REMOVE);
     if (status == TS_OLD || status == TS_CURRENT) {
 	path = timestampfile ? timestampfile : timestampdir;
 	if (remove) {
@@ -556,7 +566,6 @@ remove_timestamp(remove)
 	}
     }
 
-    free(timestampdir);
-    if (timestampfile)
-	free(timestampfile);
+    efree(timestampdir);
+    efree(timestampfile);
 }

@@ -1,6 +1,48 @@
 Notes on upgrading from an older release
 ========================================
 
+o Upgrading from a version prior to 1.6.9:
+
+    Starting with sudo 1.6.9, if an OS supports a modular authentication
+    method such as PAM, it will be used by default by configure.
+
+    Environment variable handling has changed significantly in sudo
+    1.6.9.  Prior to version 1.6.9, sudo would preserve the user's
+    environment, pruning out potentially dangerous variables.
+    Beginning with sudo 1.6.9, the envionment is reset to a default
+    set of values with only a small number of "safe" variables
+    preserved.  To preserve specific environment variables, add
+    them to the "env_keep" list in sudoers.  E.g.
+
+	Defaults env_keep += "EDITOR"
+
+    The old behavior can be restored by negating the "env_reset"
+    option in sudoers.  E.g.
+
+	Defaults !env_reset
+
+    There have  also been changes to how the "env_keep" and
+    "env_check" options behave.
+
+    Prior to sudo 1.6.9, the TERM and PATH environment variables
+    would always be preserved even if the env_keep option was
+    redefined.  That is no longer the case.  Consequently, if
+    env_keep is set with "=" and not simply appended to (i.e. using
+    "+="), PATH and TERM must be explicitly included in the list
+    of environment variables to keep.  The LOGNAME, SHELL, USER,
+    and USERNAME environment variables are still always set.
+
+    Additionally, the env_check setting previously had no effect
+    when env_reset was set (which is now on by default).  Starting
+    with sudo 1.6.9, environment variables listed in env_check are
+    also preserved in the env_reset case, provided that they do not
+    contain a '/' or '%' character.  Note that it is not necessary
+    to also list a variable in env_keep--having it in env_check is
+    sufficent.
+
+    The default lists of variables to be preserved and/or checked
+    are displayed when sudo is run by root with the -V flag.
+
 o Upgrading from a version prior to 1.6.8:
 
     Prior to sudo 1.6.8, if /var/run did not exist, sudo would put

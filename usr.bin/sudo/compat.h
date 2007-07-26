@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: compat.h,v 1.80 2004/09/10 16:31:15 millert Exp $
+ * $Sudo: compat.h,v 1.76.2.4 2007/06/12 01:28:41 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -35,6 +35,29 @@
 #  define __P(args)		()
 # endif
 #endif /* __P */
+
+/* Define away __attribute__ for non-gcc or old gcc */
+#if !defined(__GNUC__) || __GNUC__ < 2 || __GNUC__ == 2 && __GNUC_MINOR__ < 5
+# define __attribute__(x)
+#endif
+ 
+/* For silencing gcc warnings about rcsids */
+#ifndef __unused
+# if defined(__GNUC__) && (__GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ > 7)
+#  define __unused      __attribute__((__unused__))
+# else
+#  define __unused
+# endif
+#endif
+
+/* For catching format string mismatches */
+#ifndef __printflike
+# if defined(__GNUC__) && (__GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+#  define __printflike(f, v)    __attribute__((__format__ (__printf__, f, v)))
+# else
+#  define __printflike(f, v)
+# endif
+#endif
 
 /*
  * Some systems lack full limit definitions.
@@ -231,13 +254,6 @@ extern const char *__progname;
 const char *getprogname __P((void));
 #endif /* HAVE___PROGNAME */
 #endif /* !HAVE_GETPROGNAME */
-
-#ifndef HAVE_TIMESPEC
-struct timespec {
-    time_t	tv_sec;
-    long	tv_nsec;
-};
-#endif /* !HAVE_TIMESPEC */
 
 #ifndef timespecclear
 # define timespecclear(ts)	(ts)->tv_sec = (ts)->tv_nsec = 0

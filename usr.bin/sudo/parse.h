@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1996,1998-2000,2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2000, 2004, 2007
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: parse.h,v 1.14 2004/08/02 18:44:58 millert Exp $
+ * $Sudo: parse.h,v 1.14.2.1 2007/06/23 21:36:48 millert Exp $
  */
 
 #ifndef _SUDO_PARSE_H
@@ -33,6 +34,7 @@ struct matchstack {
 	int runas;
 	int nopass;
 	int noexec;
+	int setenv;
 };
 
 /*
@@ -50,6 +52,7 @@ struct sudo_command {
 #define runas_matches	(match[top-1].runas)
 #define no_passwd	(match[top-1].nopass)
 #define no_execve	(match[top-1].noexec)
+#define setenv_ok	(match[top-1].setenv)
 
 /*
  * Structure containing command matches if "sudo -l" is used.
@@ -63,6 +66,7 @@ struct command_match {
     size_t cmnd_size;
     int nopasswd;
     int noexecve;
+    int setenv;
 };
 
 /*

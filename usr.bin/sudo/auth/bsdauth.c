@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2000-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: bsdauth.c,v 1.16 2004/06/07 00:02:56 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: bsdauth.c,v 1.16.2.2 2007/06/12 01:28:42 millert Exp $";
 #endif /* lint */
 
 extern char *login_style;		/* from sudo.c */

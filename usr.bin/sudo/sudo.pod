@@ -1,0 +1,518 @@
+=cut
+Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Sponsored in part by the Defense Advanced Research Projects
+Agency (DARPA) and Air Force Research Laboratory, Air Force
+Materiel Command, USAF, under agreement number F39502-99-1-0512.
+
+$Sudo: sudo.pod,v 1.70.2.12 2007/07/26 14:04:54 millert Exp $
+=pod
+
+=head1 NAME
+
+sudo, sudoedit - execute a command as another user
+
+=head1 SYNOPSIS
+
+B<sudo> B<-h> | B<-K> | B<-k> | B<-L> | B<-l> | B<-V> | B<-v>
+
+B<sudo> [B<-bEHPS>] S<[B<-a> I<auth_type>]>
+S<[B<-c> I<class>|I<->]> S<[B<-p> I<prompt>]> S<[B<-u> I<username>|I<#uid>]>
+S<[B<VAR>=I<value>]> S<{B<-i> | B<-s> | I<command>}>
+
+B<sudoedit> [B<-S>] S<[B<-a> I<auth_type>]> S<[B<-c> I<class>|I<->]>
+S<[B<-p> I<prompt>]> S<[B<-u> I<username>|I<#uid>]>
+file ...
+
+=head1 DESCRIPTION
+
+B<sudo> allows a permitted user to execute a I<command> as the
+superuser or another user, as specified in the I<sudoers> file.
+The real and effective uid and gid are set to match those of the
+target user as specified in the passwd file and the group vector
+is initialized based on the group file (unless the B<-P> option was
+specified).  If the invoking user is root or if the target user is
+the same as the invoking user, no password is required.  Otherwise,
+B<sudo> requires that users authenticate themselves with a password
+by default (NOTE: in the default configuration this is the user's
+password, not the root password).  Once a user has been authenticated,
+a timestamp is updated and the user may then use sudo without a
+password for a short period of time (C<@timeout@> minutes unless
+overridden in I<sudoers>).
+
+When invoked as B<sudoedit>, the B<-e> option (described below),
+is implied.
+
+B<sudo> determines who is an authorized user by consulting the file
+F<@sysconfdir@/sudoers>.  By giving B<sudo> the B<-v> flag, a user
+can update the time stamp without running a I<command.> The password
+prompt itself will also time out if the user's password is not
+entered within C<@password_timeout@> minutes (unless overridden via
+I<sudoers>).
+
+If a user who is not listed in the I<sudoers> file tries to run a
+command via B<sudo>, mail is sent to the proper authorities, as
+defined at configure time or in the I<sudoers> file (defaults to
+C<@mailto@>).  Note that the mail will not be sent if an unauthorized
+user tries to run sudo with the B<-l> or B<-v> flags.  This allows
+users to determine for themselves whether or not they are allowed
+to use B<sudo>.
+
+If B<sudo> is run by root and the C<SUDO_USER> environment variable
+is set, B<sudo> will use this value to determine who the actual
+user is.  This can be used by a user to log commands through sudo
+even when a root shell has been invoked.  It also allows the B<-e>
+flag to remain useful even when being run via a sudo-run script or
+program.  Note however, that the sudoers lookup is still done for
+root, not the user specified by C<SUDO_USER>.
+
+B<sudo> can log both successful and unsuccessful attempts (as well
+as errors) to syslog(3), a log file, or both.  By default B<sudo>
+will log via syslog(3) but this is changeable at configure time
+or via the I<sudoers> file.
+
+=head1 OPTIONS
+
+B<sudo> accepts the following command line options:
+
+=over 4
+
+=item -a
+
+The B<-a> (I<authentication type>) option causes B<sudo> to use the
+specified authentication type when validating the user, as allowed
+by C</etc/login.conf>.  The system administrator may specify a list
+of sudo-specific authentication methods by adding an "auth-sudo"
+entry in C</etc/login.conf>.  This option is only available on systems
+that support BSD authentication.
+
+=item -b
+
+The B<-b> (I<background>) option tells B<sudo> to run the given
+command in the background.  Note that if you use the B<-b>
+option you cannot use shell job control to manipulate the process.
+
+=item -c
+
+The B<-c> (I<class>) option causes B<sudo> to run the specified command
+with resources limited by the specified login class.  The I<class>
+argument can be either a class name as defined in C</etc/login.conf>,
+or a single '-' character.  Specifying a I<class> of C<-> indicates
+that the command should be run restricted by the default login
+capabilities for the user the command is run as.  If the I<class>
+argument specifies an existing user class, the command must be run
+as root, or the B<sudo> command must be run from a shell that is already
+root.  This option is only available on systems with BSD login classes.
+
+=item -E
+
+The B<-E> (I<preserve> environment) option will override the
+I<env_reset> option in L<sudoers(5)>).  It is only
+available when either the matching command has the C<SETENV> tag
+or the I<setenv> option is set in L<sudoers(5)>.
+
+=item -e
+
+The B<-e> (I<edit>) option indicates that, instead of running
+a command, the user wishes to edit one or more files.  In lieu
+of a command, the string "sudoedit" is used when consulting
+the I<sudoers> file.  If the user is authorized by I<sudoers>
+the following steps are taken:
+
+=over 8
+
+=item 1.
+
+Temporary copies are made of the files to be edited with the owner
+set to the invoking user.
+
+=item 2.
+
+The editor specified by the C<VISUAL> or C<EDITOR> environment
+variables is run to edit the temporary files.  If neither C<VISUAL>
+nor C<EDITOR> are set, the program listed in the I<editor> I<sudoers>
+variable is used.
+
+=item 3.
+
+If they have been modified, the temporary files are copied back to
+their original location and the temporary versions are removed.
+
+=back
+
+If the specified file does not exist, it will be created.  Note
+that unlike most commands run by B<sudo>, the editor is run with
+the invoking user's environment unmodified.  If, for some reason,
+B<sudo> is unable to update a file with its edited version, the
+user will receive a warning and the edited copy will remain in a
+temporary file.
+
+=item -H
+
+The B<-H> (I<HOME>) option sets the C<HOME> environment variable
+to the homedir of the target user (root by default) as specified
+in passwd(5).  By default, B<sudo> does not modify C<HOME>
+(see I<set_home> and I<always_set_home> in L<sudoers(5)>).
+
+=item -h
+
+The B<-h> (I<help>) option causes B<sudo> to print a usage message and exit.
+
+=item -i
+
+The B<-i> (I<simulate initial login>) option runs the shell specified
+in the L<passwd(5)> entry of the user that the command is
+being run as.  The command name argument given to the shell begins
+with a `C<->' to tell the shell to run as a login shell.  B<sudo>
+attempts to change to that user's home directory before running the
+shell.  It also initializes the environment, leaving I<TERM>
+unchanged, setting I<HOME>, I<SHELL>, I<USER>, I<LOGNAME>, and
+I<PATH>, and unsetting all other environment variables.  Note that
+because the shell to use is determined before the I<sudoers> file
+is parsed, a I<runas_default> setting in I<sudoers> will specify
+the user to run the shell as but will not affect which shell is
+actually run.
+
+=item -K
+
+The B<-K> (sure I<kill>) option is like B<-k> except that it removes
+the user's timestamp entirely.  Like B<-k>, this option does not
+require a password.
+
+=item -k
+
+The B<-k> (I<kill>) option to B<sudo> invalidates the user's timestamp
+by setting the time on it to the Epoch.  The next time B<sudo> is
+run a password will be required.  This option does not require a password
+and was added to allow a user to revoke B<sudo> permissions from a .logout
+file.
+
+=item -L
+
+The B<-L> (I<list> defaults) option will list out the parameters
+that may be set in a I<Defaults> line along with a short description
+for each.  This option is useful in conjunction with L<grep(1)>.
+
+=item -l
+
+The B<-l> (I<list>) option will list out the allowed (and
+forbidden) commands for the invoking user on the current host.
+
+=item -P
+
+The B<-P> (I<preserve> group vector) option causes B<sudo> to
+preserve the invoking user's group vector unaltered.  By default,
+B<sudo> will initialize the group vector to the list of groups the
+target user is in.  The real and effective group IDs, however, are
+still set to match the target user.
+
+=item -p
+
+The B<-p> (I<prompt>) option allows you to override the default
+password prompt and use a custom one.  The following percent (`C<%>')
+escapes are supported:
+
+=over 8
+
+=item C<%H>
+
+expanded to the local hostname including the domain name
+(on if the machine's hostname is fully qualified or the I<fqdn>
+I<sudoers> option is set)
+
+=item C<%h>
+
+expanded to the local hostname without the domain name
+
+=item C<%U>
+
+expanded to the login name of the user the command will
+be run as (defaults to root)
+
+=item C<%u>
+
+expanded to the invoking user's login name
+
+=item C<%%>
+
+two consecutive C<%> characters are collapsed into a single C<%> character
+
+=back
+
+=item -S
+
+The B<-S> (I<stdin>) option causes B<sudo> to read the password from
+the standard input instead of the terminal device.
+
+=item -s
+
+The B<-s> (I<shell>) option runs the shell specified by the I<SHELL>
+environment variable if it is set or the shell as specified
+in L<passwd(5)>.
+
+=item -u
+
+The B<-u> (I<user>) option causes B<sudo> to run the specified command
+as a user other than I<root>.  To specify a I<uid> instead of a
+I<username>, use I<#uid>.  Note that if the I<targetpw> Defaults
+option is set (see L<sudoers(5)>) it is not possible
+to run commands with a uid not listed in the password database.
+
+=item -V
+
+The B<-V> (I<version>) option causes B<sudo> to print the version
+number and exit.  If the invoking user is already root the B<-V>
+option will print out a list of the defaults B<sudo> was compiled
+with as well as the machine's local network addresses.
+
+=item -v
+
+If given the B<-v> (I<validate>) option, B<sudo> will update the
+user's timestamp, prompting for the user's password if necessary.
+This extends the B<sudo> timeout for another C<@timeout@> minutes
+(or whatever the timeout is set to in I<sudoers>) but does not run
+a command.
+
+=item --
+
+The B<--> flag indicates that B<sudo> should stop processing command
+line arguments.  It is most useful in conjunction with the B<-s> flag.
+
+=back
+
+Environment variables to be set for the command may also be passed
+on the command line in the form of B<VAR>=I<value>, e.g.
+B<LD_LIBRARY_PATH>=I</usr/local/pkg/lib>.  Variables passed on the
+command line are subject to the same restrictions as normal environment
+variables with one important exception.  If the I<setenv> option
+is set in I<sudoers> or the command to be run has the C<SETENV> tag
+set the user may set variables that would overwise be forbidden.
+See L<sudoers(5)> for more information.
+
+=head1 RETURN VALUES
+
+Upon successful execution of a program, the return value from B<sudo>
+will simply be the return value of the program that was executed.
+
+Otherwise, B<sudo> quits with an exit value of 1 if there is a
+configuration/permission problem or if B<sudo> cannot execute the
+given command.  In the latter case the error string is printed to
+stderr.  If B<sudo> cannot L<stat(2)> one or more entries in the user's
+C<PATH> an error is printed on stderr.  (If the directory does not
+exist or if it is not really a directory, the entry is ignored and
+no error is printed.)  This should not happen under normal
+circumstances.  The most common reason for L<stat(2)> to return
+"permission denied" is if you are running an automounter and one
+of the directories in your C<PATH> is on a machine that is currently
+unreachable.
+
+=head1 SECURITY NOTES
+
+B<sudo> tries to be safe when executing external commands.
+
+There are two distinct ways to deal with environment variables.
+By default, the I<env_reset> I<sudoers> option is enabled.
+This causes commands to be executed with a minimal environment
+containing C<TERM>, C<PATH>, C<HOME>, C<SHELL>, C<LOGNAME>, C<USER>
+and C<USERNAME> in addition to variables from the invoking process
+permitted by the I<env_check> and I<env_keep> I<sudoers> options.
+There is effectively a whitelist for environment variables.
+
+If, however, the I<env_reset> option is disabled in I<sudoers>, any
+variables not explicitly denied by the I<env_check> and I<env_delete>
+options are inherited from the invoking process.  In this case,
+I<env_check> and I<env_delete> behave like a blacklist.  Since it
+is not possible to blacklist all potentially dangerous environment
+variables, use of the default I<env_reset> behavior is encouraged.
+
+In all cases, environment variables with a value beginning with
+C<()> are removed as they could be interpreted as B<bash> functions.
+The list of environment variables that B<sudo> allows or denies is
+contained in the output of C<sudo -V> when run as root.
+
+Note that the dynamic linker on most operating systems will remove
+variables that can control dynamic linking from the environment of
+setuid executables, including B<sudo>.  Depending on the operating
+system this may include C<_RLD*>, C<DYLD_*>, C<LD_*>, C<LDR_*>,
+C<LIBPATH>, C<SHLIB_PATH>, and others.  These type of variables are
+removed from the environment before B<sudo> even begins execution
+and, as such, it is not possible for B<sudo> to preserve them.
+
+To prevent command spoofing, B<sudo> checks "." and "" (both denoting
+current directory) last when searching for a command in the user's
+PATH (if one or both are in the PATH).  Note, however, that the
+actual C<PATH> environment variable is I<not> modified and is passed
+unchanged to the program that B<sudo> executes.
+
+B<sudo> will check the ownership of its timestamp directory
+(F<@timedir@> by default) and ignore the directory's contents if
+it is not owned by root or if it is writable by a user other than
+root.  On systems that allow non-root users to give away files via
+L<chown(2)>, if the timestamp directory is located in a directory
+writable by anyone (e.g., F</tmp>), it is possible for a user to
+create the timestamp directory before B<sudo> is run.  However,
+because B<sudo> checks the ownership and mode of the directory and
+its contents, the only damage that can be done is to "hide" files
+by putting them in the timestamp dir.  This is unlikely to happen
+since once the timestamp dir is owned by root and inaccessible by
+any other user, the user placing files there would be unable to get
+them back out.  To get around this issue you can use a directory
+that is not world-writable for the timestamps (F</var/adm/sudo> for
+instance) or create F<@timedir@> with the appropriate owner (root)
+and permissions (0700) in the system startup files.
+
+B<sudo> will not honor timestamps set far in the future.
+Timestamps with a date greater than current_time + 2 * C<TIMEOUT>
+will be ignored and sudo will log and complain.  This is done to
+keep a user from creating his/her own timestamp with a bogus
+date on systems that allow users to give away files.
+
+Please note that B<sudo> will normally only log the command it
+explicitly runs.  If a user runs a command such as C<sudo su> or
+C<sudo sh>, subsequent commands run from that shell will I<not> be
+logged, nor will B<sudo>'s access control affect them.  The same
+is true for commands that offer shell escapes (including most
+editors).  Because of this, care must be taken when giving users
+access to commands via B<sudo> to verify that the command does not
+inadvertently give the user an effective root shell.  For more
+information, please see the C<PREVENTING SHELL ESCAPES> section in
+L<sudoers(5)>.
+
+=head1 ENVIRONMENT
+
+B<sudo> utilizes the following environment variables:
+
+ EDITOR			Default editor to use in -e (sudoedit) mode if
+			VISUAL is not set
+
+ HOME			In -s or -H mode (or if sudo was configured with
+			the --enable-shell-sets-home option), set to
+			homedir of the target user
+
+ PATH			Set to a sane value if sudo was configured with
+			the --with-secure-path option
+
+ SHELL			Used to determine shell to run with -s option
+
+ SUDO_PROMPT		Used as the default password prompt
+
+ SUDO_COMMAND		Set to the command run by sudo
+
+ SUDO_USER		Set to the login of the user who invoked sudo
+
+ SUDO_UID		Set to the uid of the user who invoked sudo
+
+ SUDO_GID		Set to the gid of the user who invoked sudo
+
+ SUDO_PS1		If set, PS1 will be set to its value
+
+ USER			Set to the target user (root unless the -u option
+			is specified)
+
+ VISUAL			Default editor to use in -e (sudoedit) mode
+
+=head1 FILES
+
+ @sysconfdir@/sudoers		List of who can run what
+ @timedir@	    Directory containing timestamps
+
+=head1 EXAMPLES
+
+Note: the following examples assume suitable L<sudoers(5)> entries.
+
+To get a file listing of an unreadable directory:
+
+ $ sudo ls /usr/local/protected
+
+To list the home directory of user yazza on a machine where the
+file system holding ~yazza is not exported as root:
+
+ $ sudo -u yazza ls ~yazza
+
+To edit the F<index.html> file as user www:
+
+ $ sudo -u www vi ~www/htdocs/index.html
+
+To shutdown a machine:
+
+ $ sudo shutdown -r +15 "quick reboot"
+
+To make a usage listing of the directories in the /home
+partition.  Note that this runs the commands in a sub-shell
+to make the C<cd> and file redirection work.
+
+ $ sudo sh -c "cd /home ; du -s * | sort -rn > USAGE"
+
+=head1 SEE ALSO
+
+L<grep(1)>, L<su(1)>, L<stat(2)>, L<login_cap(3)>, L<passwd(5)>,
+L<sudoers(5)>, L<visudo(8)>
+
+=head1 AUTHORS
+
+Many people have worked on B<sudo> over the years; this
+version consists of code written primarily by:
+
+	Todd C. Miller
+	Chris Jepeway
+
+See the HISTORY file in the B<sudo> distribution or visit
+http://www.sudo.ws/sudo/history.html for a short history
+of B<sudo>.
+
+=head1 CAVEATS
+
+There is no easy way to prevent a user from gaining a root shell
+if that user is allowed to run arbitrary commands via B<sudo>.
+Also, many programs (such as editors) allow the user to run commands
+via shell escapes, thus avoiding B<sudo>'s checks.  However, on
+most systems it is possible to prevent shell escapes with B<sudo>'s
+I<noexec> functionality.  See the L<sudoers(5)> manual
+for details.
+
+It is not meaningful to run the C<cd> command directly via sudo, e.g.,
+
+ $ sudo cd /usr/local/protected
+
+since when the command exits the parent process (your shell) will
+still be the same.  Please see the EXAMPLES section for more information.
+
+If users have sudo C<ALL> there is nothing to prevent them from
+creating their own program that gives them a root shell regardless
+of any '!' elements in the user specification.
+
+Running shell scripts via B<sudo> can expose the same kernel bugs that
+make setuid shell scripts unsafe on some operating systems (if your OS
+has a /dev/fd/ directory, setuid shell scripts are generally safe).
+
+=head1 BUGS
+
+If you feel you have found a bug in B<sudo>, please submit a bug report
+at http://www.sudo.ws/sudo/bugs/
+
+=head1 SUPPORT
+
+Limited free support is available via the sudo-users mailing list,
+see http://www.sudo.ws/mailman/listinfo/sudo-users to subscribe or
+search the archives.
+
+=head1 DISCLAIMER
+
+B<sudo> is provided ``AS IS'' and any express or implied warranties,
+including, but not limited to, the implied warranties of merchantability
+and fitness for a particular purpose are disclaimed.  See the LICENSE
+file distributed with B<sudo> or http://www.sudo.ws/sudo/license.html
+for complete details.

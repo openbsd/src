@@ -185,3 +185,6 @@ env_keep
 ignore_local_sudoers
 	T_FLAG
 	"If LDAP directory is up, do we ignore local sudoers file"
+setenv
+	T_FLAG
+	"Allow users to set arbitrary environment variables"

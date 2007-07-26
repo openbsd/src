@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,14 +56,14 @@
 #include "sudo_auth.h"
 
 /* Only OpenPAM and Linux PAM use const qualifiers. */
-#if defined(_OPENPAM) || defined(__LIBPAM_VERSION)
+#if defined(_OPENPAM) || defined(__LIBPAM_VERSION) || defined(__LINUX_PAM__)
 # define PAM_CONST	const
 #else
 # define PAM_CONST
 #endif
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: pam.c,v 1.43 2004/06/28 14:51:50 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.43.2.4 2007/07/22 12:14:53 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -94,7 +94,14 @@ pam_init(pw, promptp, auth)
 	log_error(USE_ERRNO|NO_EXIT|NO_MAIL, "unable to initialize PAM");
 	return(AUTH_FATAL);
     }
-    if (strcmp(user_tty, "unknown"))
+    /*
+     * Some versions of pam_lastlog have a bug that
+     * will cause a crash if PAM_TTY is not set so if
+     * there is no tty, set PAM_TTY to the empty string.
+     */
+    if (strcmp(user_tty, "unknown") == 0)
+	(void) pam_set_item(pamh, PAM_TTY, "");
+    else
 	(void) pam_set_item(pamh, PAM_TTY, user_tty);
 
     return(AUTH_SUCCESS);
@@ -175,6 +182,8 @@ int
 pam_prep_user(pw)
     struct passwd *pw;
 {
+    int eval;
+
     if (pamh == NULL)
 	pam_init(pw, NULL, NULL);
 
@@ -194,6 +203,18 @@ pam_prep_user(pw)
      * We can't call pam_acct_mgmt() with Linux-PAM for a similar reason.
      */
     (void) pam_setcred(pamh, PAM_ESTABLISH_CRED);
+
+    /*
+     * To fully utilize PAM sessions we would need to keep a
+     * sudo process around until the command exits.  However, we
+     * can at least cause pam_limits to be run by opening and then
+     * immediately closing the session.
+     */
+    if ((eval = pam_open_session(pamh, 0)) != PAM_SUCCESS) {
+	(void) pam_end(pamh, eval | PAM_DATA_SILENT);
+	return(AUTH_FAILURE);
+    }
+    (void) pam_close_session(pamh, 0);
 
     if (pam_end(pamh, PAM_SUCCESS | PAM_DATA_SILENT) == PAM_SUCCESS)
 	return(AUTH_SUCCESS);
@@ -235,7 +256,12 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		    p = pm->msg;
 		/* Read the password. */
 		pass = tgetpass(p, def_passwd_timeout * 60, flags);
-		pr->resp = estrdup(pass ? pass : "");
+		if (pass == NULL) {
+		    /* We got ^C instead of a password; abort quickly. */
+		    nil_pw = 1;
+		    goto err;
+		}
+		pr->resp = estrdup(pass);
 		if (*pr->resp == '\0')
 		    nil_pw = 1;		/* empty password */
 		else
@@ -252,20 +278,23 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		}
 		break;
 	    default:
-		/* Zero and free allocated memory and return an error. */
-		for (pr = *response, n = num_msg; n--; pr++) {
-		    if (pr->resp != NULL) {
-			zero_bytes(pr->resp, strlen(pr->resp));
-			free(pr->resp);
-			pr->resp = NULL;
-		    }
-		}
-		zero_bytes(*response, num_msg * sizeof(struct pam_response));
-		free(*response);
-		*response = NULL;
-		return(PAM_CONV_ERR);
+		goto err;
 	}
     }
 
     return(PAM_SUCCESS);
+
+err:
+    /* Zero and free allocated memory and return an error. */
+    for (pr = *response, n = num_msg; n--; pr++) {
+	if (pr->resp != NULL) {
+	    zero_bytes(pr->resp, strlen(pr->resp));
+	    free(pr->resp);
+	    pr->resp = NULL;
+	}
+    }
+    zero_bytes(*response, num_msg * sizeof(struct pam_response));
+    free(*response);
+    *response = NULL;
+    return(PAM_CONV_ERR);
 }

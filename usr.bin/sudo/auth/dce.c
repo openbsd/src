@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 1996, 1998, 1999, 2001, 2002
- *	Todd C. Miller <Todd.Miller@courtesan.com>.
+ * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,7 +32,7 @@
  *  DCE 1.1).
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +65,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: dce.c,v 1.11 2004/02/13 21:36:47 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: dce.c,v 1.11.2.2 2007/06/12 01:28:42 millert Exp $";
 #endif /* lint */
 
 static int check_dce_status __P((error_status_t, char *));

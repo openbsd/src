@@ -114,6 +114,8 @@
 #define I_ENV_KEEP              56
 #define def_ignore_local_sudoers (sudo_defs_table[57].sd_un.flag)
 #define I_IGNORE_LOCAL_SUDOERS  57
+#define def_setenv              (sudo_defs_table[58].sd_un.flag)
+#define I_SETENV                58
 
 enum def_tupple {
 	never,

@@ -5,16 +5,17 @@ use strict;
 # Converts a sudoers file to LDIF format in prepration for loading into
 # the LDAP server.
 #
-# $Sudo: sudoers2ldif,v 1.2 2004/02/13 02:08:27 aaron Exp $
+# $Sudo: sudoers2ldif,v 1.2.2.1 2007/06/28 14:45:19 millert Exp $
 #
 
 # BUGS:
 #   Does not yet handle multiple lines with : in them
-#   Does not yet handle runas (xxx) syntax.
 #   Does not yet remove quotation marks from options
 #   Does not yet escape + at the beginning of a dn
 #   Does not yet handle line wraps correctly
 #   Does not yet handle multiple roles with same name (needs tiebreaker)
+#   Sudoers entries can have multiple Runas entries that override former ones,
+#	with LDAP sudoRunas applies to all commands in a sudoRole
 
 my %UA;
 my %HA;
@@ -79,6 +80,12 @@ while (<>){
       # will clobber options
       print "sudoUser: $_\n"   foreach expand(\%UA,@users);
       print "sudoHost: $_\n"   foreach expand(\%HA,@hosts);
+      my $runas = undef;
+      foreach (@cmds) {
+	if (s/^\(([^\)]+)\)\s*//) {
+	  print "sudoRunas: $_\n" foreach expand(\%UA, split(/,\s*/, $1));
+	}
+      }
       print "sudoCommand: $_\n" foreach expand(\%CA,@cmds);
       print "sudoOption: $_\n" foreach @options;
       print "\n";
@@ -103,6 +110,8 @@ sub expand{
     s/PASSWD:\s*// && push @options,"authenticate";
     s/NOEXEC:\s*// && push @options,"noexec";
     s/EXEC:\s*// && push @options,"!noexec";
+    s/SETENV:\s*// && push @options,"setenv";
+    s/NOSETENV:\s*// && push @options,"!setenv";
     s/\w+://; # silently remove other directives
     s/\s+$//; # right trim
   }

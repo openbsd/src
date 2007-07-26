@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@
 # include <floss.h>
 #endif
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,7 +70,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111 2004/06/06 23:58:11 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.2 2007/06/12 01:26:35 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
@@ -97,7 +97,7 @@ static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111 2004/06/06 23:58:11 mille
 # define TERM			termios
 # define tflags			c_lflag
 # define term_getattr(f, t)	tcgetattr(f, t)
-# define term_setattr(f, t)	tcsetattr(f, TCSAFLUSH|TCSASOFT, t)
+# define term_setattr(f, t)	tcsetattr(f, TCSADRAIN|TCSASOFT, t)
 #else
 # ifdef HAVE_TERMIO_H
 # define TERM			termio

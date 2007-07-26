@@ -1,6 +1,7 @@
 %{
 /*
- * Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2004, 2007
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +23,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +55,7 @@
 #include <sudo.tab.h>
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.lex,v 1.132 2004/05/17 20:51:13 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.lex,v 1.132.2.3 2007/06/23 21:36:48 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */
@@ -226,6 +227,16 @@ NOEXEC[[:blank:]]*:	{
 EXEC[[:blank:]]*:	{
 			    	LEXTRACE("EXEC ");
 			    	return(EXEC);
+			}
+
+SETENV[[:blank:]]*:	{
+			    	LEXTRACE("SETENV ");
+			    	return(SETENV);
+			}
+
+NOSETENV[[:blank:]]*:	{
+			    	LEXTRACE("NOSETENV ");
+			    	return(NOSETENV);
 			}
 
 \+{WORD}		{
@@ -433,8 +444,7 @@ fill_args(s, len, addspace)
 	    (char *) realloc(yylval.command.args, arg_size) :
 	    (char *) malloc(arg_size);
 	if (p == NULL) {
-	    if (yylval.command.args != NULL)
-		free(yylval.command.args);
+	    efree(yylval.command.args);
 	    yyerror("unable to allocate memory");
 	    return;
 	} else

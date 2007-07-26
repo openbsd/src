@@ -18,7 +18,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: pathnames.h.in,v 1.52 2004/08/27 03:44:35 aaron Exp $
+ * $Sudo: pathnames.h.in,v 1.51.2.3 2007/06/19 21:25:48 millert Exp $
  */
 
 /*
@@ -36,6 +36,10 @@
 #ifndef _PATH_TTY
 #define _PATH_TTY		"/dev/tty"
 #endif /* _PATH_TTY */
+
+#ifndef _PATH_DEVNULL
+#define _PATH_DEVNULL		"/dev/null"
+#endif /* _PATH_DEVNULL */
 
 #ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH		"/usr/bin:/bin"
@@ -112,3 +116,7 @@
 #ifndef _PATH_LDAP_CONF
 #define	_PATH_LDAP_CONF	"/etc/ldap.conf"
 #endif /* _PATH_LDAP_CONF */
+
+#ifndef _PATH_LDAP_SECRET
+#define _PATH_LDAP_SECRET	"/etc/ldap.secret"
+#endif /* _PATH_LDAP_SECRET */

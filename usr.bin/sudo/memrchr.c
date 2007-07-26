@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2007 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -12,17 +12,37 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Sponsored in part by the Defense Advanced Research Projects
- * Agency (DARPA) and Air Force Research Laboratory, Air Force
- * Materiel Command, USAF, under agreement number F39502-99-1-0512.
- *
- * $Sudo: version.h,v 1.66.2.4 2007/07/26 14:05:55 millert Exp $
  */
 
-#ifndef _SUDO_VERSION_H
-#define _SUDO_VERSION_H
+#include <sys/types.h>
+#include <config.h>
+#include <compat.h>
 
-static const char version[] = "1.6.9p1";
+#ifndef lint
+__unused static const char rcsid[] = "$Sudo: memrchr.c,v 1.1.2.2 2007/06/19 21:00:35 millert Exp $";
+#endif /* lint */
 
-#endif /* _SUDO_VERSION_H */
+#include <sys/types.h>
+#include <config.h>
+
+/*
+ * Reverse memchr()
+ * Find the last occurence of 'c' in the buffer 's' of size 'n'.
+ */
+VOID *
+memrchr(s, c, n)
+    const VOID *s;
+    int c;
+    size_t n;
+{
+    const unsigned char *cp;
+
+    if (n != 0) {
+	cp = (unsigned char *)s + n;
+	do {
+	    if (*(--cp) == (unsigned char)c)
+		return((VOID *)cp);
+	} while (--n != 0);
+    }
+    return((VOID *)0);
+}

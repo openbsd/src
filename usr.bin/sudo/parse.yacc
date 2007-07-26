@@ -1,6 +1,7 @@
 %{
 /*
- * Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2004, 2007
+ *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +30,7 @@
  *       list_matches() can format things the way it wants.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,7 +72,7 @@
 #endif /* HAVE_LSEARCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.yacc,v 1.204 2004/08/11 18:29:10 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.yacc,v 1.204.2.5 2007/07/09 21:53:01 millert Exp $";
 #endif /* lint */
 
 /*
@@ -124,6 +125,7 @@ int top = 0, stacksize = 0;
 	match[top].runas  = UNSPEC; \
 	match[top].nopass = def_authenticate ? UNSPEC : TRUE; \
 	match[top].noexec = def_noexec ? TRUE : UNSPEC; \
+	match[top].setenv = def_setenv ? TRUE : UNSPEC; \
 	top++; \
     } while (0)
 
@@ -139,6 +141,7 @@ int top = 0, stacksize = 0;
 	match[top].runas  = match[top-1].runas; \
 	match[top].nopass = match[top-1].nopass; \
 	match[top].noexec = match[top-1].noexec; \
+	match[top].setenv = match[top-1].setenv; \
 	top++; \
     } while (0)
 
@@ -242,6 +245,8 @@ yyerror(s)
 %token <tok> 	 PASSWD			/* passwd req for command (default) */
 %token <tok> 	 NOEXEC			/* preload dummy execve() for cmnd */
 %token <tok> 	 EXEC			/* don't preload dummy execve() */
+%token <tok> 	 SETENV			/* user may set environment for cmnd */
+%token <tok> 	 NOSETENV		/* user may not set environment */
 %token <tok>	 ALL			/* ALL keyword */
 %token <tok>	 COMMENT		/* comment and/or carriage return */
 %token <tok>	 HOSTALIAS		/* Host_Alias keyword */
@@ -321,7 +326,7 @@ defaults_entry	:	DEFVAR {
 				yyerror(NULL);
 				YYERROR;
 			    }
-			    free($1);
+			    efree($1);
 			}
 		|	'!' DEFVAR {
 			    if (defaults_matches == TRUE &&
@@ -329,7 +334,7 @@ defaults_entry	:	DEFVAR {
 				yyerror(NULL);
 				YYERROR;
 			    }
-			    free($2);
+			    efree($2);
 			}
 		|	DEFVAR '=' WORD {
 			    if (defaults_matches == TRUE &&
@@ -337,8 +342,8 @@ defaults_entry	:	DEFVAR {
 				yyerror(NULL);
 				YYERROR;
 			    }
-			    free($1);
-			    free($3);
+			    efree($1);
+			    efree($3);
 			}
 		|	DEFVAR '+' WORD {
 			    if (defaults_matches == TRUE &&
@@ -346,8 +351,8 @@ defaults_entry	:	DEFVAR {
 				yyerror(NULL);
 				YYERROR;
 			    }
-			    free($1);
-			    free($3);
+			    efree($1);
+			    efree($3);
 			}
 		|	DEFVAR '-' WORD {
 			    if (defaults_matches == TRUE &&
@@ -355,8 +360,8 @@ defaults_entry	:	DEFVAR {
 				yyerror(NULL);
 				YYERROR;
 			    }
-			    free($1);
-			    free($3);
+			    efree($1);
+			    efree($3);
 			}
 		;
 
@@ -374,6 +379,7 @@ privilege	:	hostlist '=' cmndspeclist {
 			    runas_matches = UNSPEC;
 			    no_passwd = def_authenticate ? UNSPEC : TRUE;
 			    no_execve = def_noexec ? TRUE : UNSPEC;
+			    setenv_ok = def_setenv ? TRUE : UNSPEC;
 			}
 		;
 
@@ -393,21 +399,21 @@ host		:	ALL {
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			}
 		|	NETGROUP {
 			    if (netgr_matches($1, user_host, user_shost, NULL))
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			}
 		|	WORD {
 			    if (hostname_matches(user_shost, user_host, $1) == 0)
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			}
 		|	ALIAS {
 			    aliasinfo *aip = find_alias($1, HOST_ALIAS);
@@ -429,7 +435,7 @@ host		:	ALL {
 				}
 				$$ = NOMATCH;
 			    }
-			    free($1);
+			    efree($1);
 			}
 		;
 
@@ -549,7 +555,7 @@ runasuser	:	WORD {
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			    used_runas = TRUE;
 			}
 		|	USERGROUP {
@@ -564,7 +570,7 @@ runasuser	:	WORD {
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			    used_runas = TRUE;
 			}
 		|	NETGROUP {
@@ -579,7 +585,7 @@ runasuser	:	WORD {
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			    used_runas = TRUE;
 			}
 		|	ALIAS {
@@ -609,7 +615,7 @@ runasuser	:	WORD {
 				}
 				$$ = NOMATCH;
 			    }
-			    free($1);
+			    efree($1);
 			    used_runas = TRUE;
 			}
 		|	ALL {
@@ -625,7 +631,7 @@ runasuser	:	WORD {
 		;
 
 cmndtag		:	/* empty */ {
-			    /* Inherit {NOPASSWD,PASSWD,NOEXEC,EXEC} status. */
+			    /* Inherit {NO,}{PASSWD,EXEC,SETENV} status. */
 			    if (printmatches == TRUE && host_matches == TRUE &&
 				user_matches == TRUE) {
 				if (no_passwd == TRUE)
@@ -636,6 +642,10 @@ cmndtag		:	/* empty */ {
 				    cm_list[cm_list_len].noexecve = TRUE;
 				else
 				    cm_list[cm_list_len].noexecve = FALSE;
+				if (setenv_ok == TRUE)
+				    cm_list[cm_list_len].setenv = TRUE;
+				else
+				    cm_list[cm_list_len].setenv = FALSE;
 			    }
 			}
 		|	cmndtag NOPASSWD {
@@ -662,6 +672,18 @@ cmndtag		:	/* empty */ {
 				user_matches == TRUE)
 				cm_list[cm_list_len].noexecve = FALSE;
 			}
+		|	cmndtag SETENV {
+			    setenv_ok = TRUE;
+			    if (printmatches == TRUE && host_matches == TRUE &&
+				user_matches == TRUE)
+				cm_list[cm_list_len].setenv = TRUE;
+			}
+		|	cmndtag NOSETENV {
+			    setenv_ok = FALSE;
+			    if (printmatches == TRUE && host_matches == TRUE &&
+				user_matches == TRUE)
+				cm_list[cm_list_len].setenv = FALSE;
+			}
 		;
 
 cmnd		:	ALL {
@@ -675,6 +697,8 @@ cmnd		:	ALL {
 				}
 			    }
 
+			    efree(safe_cmnd);
+			    safe_cmnd = NULL;
 			    $$ = TRUE;
 			}
 		|	ALIAS {
@@ -704,7 +728,7 @@ cmnd		:	ALL {
 				}
 				$$ = NOMATCH;
 			    }
-			    free($1);
+			    efree($1);
 			}
 		|	 COMMAND {
 			    if (printmatches == TRUE) {
@@ -727,9 +751,8 @@ cmnd		:	ALL {
 			    else
 				$$ = NOMATCH;
 
-			    free($1.cmnd);
-			    if ($1.args)
-				free($1.args);
+			    efree($1.cmnd);
+			    efree($1.args);
 			}
 		;
 
@@ -771,7 +794,7 @@ cmndalias	:	ALIAS {
 				YYERROR;
 			    }
 			    pop;
-			    free($1);
+			    efree($1);
 
 			    if (printmatches == TRUE)
 				in_alias = FALSE;
@@ -800,7 +823,7 @@ runasalias	:	ALIAS {
 				yyerror(NULL);
 				YYERROR;
 			    }
-			    free($1);
+			    efree($1);
 
 			    if (printmatches == TRUE)
 				in_alias = FALSE;
@@ -818,7 +841,7 @@ useralias	:	ALIAS { push; }	'=' userlist {
 				YYERROR;
 			    }
 			    pop;
-			    free($1);
+			    efree($1);
 			}
 		;
 
@@ -839,21 +862,21 @@ user		:	WORD {
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			}
 		|	USERGROUP {
 			    if (usergr_matches($1, user_name, sudo_user.pw))
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			}
 		|	NETGROUP {
 			    if (netgr_matches($1, NULL, NULL, user_name))
 				$$ = TRUE;
 			    else
 				$$ = NOMATCH;
-			    free($1);
+			    efree($1);
 			}
 		|	ALIAS {
 			    aliasinfo *aip = find_alias($1, USER_ALIAS);
@@ -875,7 +898,7 @@ user		:	WORD {
 				}
 				$$ = NOMATCH;
 			    }
-			    free($1);
+			    efree($1);
 			}
 		|	ALL {
 			    $$ = TRUE;
@@ -1084,6 +1107,12 @@ list_matches()
 	else if (cm_list[count].nopasswd == FALSE && !def_authenticate)
 	    (void) fputs("PASSWD: ", stdout);
 
+	/* Is setenv enabled? */
+	if (cm_list[count].setenv == TRUE && !def_setenv)
+	    (void) fputs("SETENV: ", stdout);
+	else if (cm_list[count].setenv == FALSE && def_setenv)
+	    (void) fputs("NOSETENV: ", stdout);
+
 	/* Print the actual command or expanded Cmnd_Alias. */
 	key.alias = cm_list[count].cmnd;
 	key.type = CMND_ALIAS;
@@ -1096,17 +1125,17 @@ list_matches()
 
     /* Be nice and free up space now that we are done. */
     for (count = 0; count < ga_list_len; count++) {
-	free(ga_list[count].alias);
-	free(ga_list[count].entries);
+	efree(ga_list[count].alias);
+	efree(ga_list[count].entries);
     }
-    free(ga_list);
+    efree(ga_list);
     ga_list = NULL;
 
     for (count = 0; count < cm_list_len; count++) {
-	free(cm_list[count].runas);
-	free(cm_list[count].cmnd);
+	efree(cm_list[count].runas);
+	efree(cm_list[count].cmnd);
     }
-    free(cm_list);
+    efree(cm_list);
     cm_list = NULL;
     cm_list_len = 0;
     cm_list_size = 0;
@@ -1168,8 +1197,8 @@ reset_aliases()
 
     if (aliases) {
 	for (n = 0; n < naliases; n++)
-	    free(aliases[n].name);
-	free(aliases);
+	    efree(aliases[n].name);
+	efree(aliases);
 	aliases = NULL;
     }
     naliases = nslots = 0;
@@ -1211,6 +1240,7 @@ expand_match_list()
     cm_list[cm_list_len].runas = cm_list[cm_list_len].cmnd = NULL;
     cm_list[cm_list_len].nopasswd = FALSE;
     cm_list[cm_list_len].noexecve = FALSE;
+    cm_list[cm_list_len].setenv = FALSE;
 }
 
 /*
@@ -1223,7 +1253,7 @@ init_parser()
 
     /* Free up old data structures if we run the parser more than once. */
     if (match) {
-	free(match);
+	efree(match);
 	match = NULL;
 	top = 0;
 	parse_error = FALSE;

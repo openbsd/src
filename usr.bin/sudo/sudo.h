@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: sudo.h,v 1.213 2004/09/08 15:48:23 millert Exp $
+ * $Sudo: sudo.h,v 1.209.2.10 2007/07/06 14:14:34 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -49,6 +49,9 @@ struct sudo_user {
     char *cmnd_base;
     char *cmnd_safe;
     char *class_name;
+    int ngroups;
+    gid_t *groups;
+    struct list_member *env_vars;
 };
 
 /*
@@ -65,6 +68,7 @@ struct sudo_user {
 #define FLAG_NO_HOST		0x080
 #define FLAG_NO_CHECK		0x100
 #define FLAG_NOEXEC		0x200
+#define FLAG_SETENV		0x400
 
 /*
  * Pseudo-boolean values
@@ -86,35 +90,35 @@ struct sudo_user {
 #define NOT_FOUND_DOT		-1
 
 /*
- * Various modes sudo can be in (based on arguments) in octal
+ * Various modes sudo can be in (based on arguments) in hex
  */
-#define MODE_RUN                 000001
-#define MODE_VALIDATE            000002
-#define MODE_INVALIDATE          000004
-#define MODE_KILL                000010
-#define MODE_VERSION             000020
-#define MODE_HELP                000040
-#define MODE_LIST                000100
-#define MODE_LISTDEFS            000200
-#define MODE_BACKGROUND          000400
-#define MODE_SHELL               001000
-#define MODE_LOGIN_SHELL         002000
-#define MODE_IMPLIED_SHELL       004000
-#define MODE_RESET_HOME          010000
-#define MODE_PRESERVE_GROUPS     020000
-#define MODE_EDIT                040000
+#define MODE_RUN		0x0001
+#define MODE_EDIT		0x0002
+#define MODE_VALIDATE		0x0004
+#define MODE_INVALIDATE		0x0008
+#define MODE_KILL		0x0010
+#define MODE_VERSION		0x0020
+#define MODE_HELP		0x0040
+#define MODE_LIST		0x0080
+#define MODE_LISTDEFS		0x0100
+#define MODE_BACKGROUND		0x0200
+#define MODE_SHELL		0x0400
+#define MODE_LOGIN_SHELL	0x0800
+#define MODE_IMPLIED_SHELL	0x1000
+#define MODE_RESET_HOME		0x2000
+#define MODE_PRESERVE_GROUPS	0x4000
+#define MODE_PRESERVE_ENV	0x8000
 
 /*
  * Used with set_perms()
  */
 #define PERM_ROOT                0x00
-#define PERM_FULL_ROOT           0x01
-#define PERM_USER                0x02
-#define PERM_FULL_USER           0x03
-#define PERM_SUDOERS             0x04
-#define PERM_RUNAS               0x05
-#define PERM_FULL_RUNAS          0x06
-#define PERM_TIMESTAMP           0x07
+#define PERM_USER                0x01
+#define PERM_FULL_USER           0x02
+#define PERM_SUDOERS             0x03
+#define PERM_RUNAS               0x04
+#define PERM_FULL_RUNAS          0x05
+#define PERM_TIMESTAMP           0x06
 
 /*
  * Shortcuts for sudo_user contents.
@@ -125,6 +129,8 @@ struct sudo_user {
 #define user_gid		(sudo_user.pw->pw_gid)
 #define user_dir		(sudo_user.pw->pw_dir)
 #define user_shell		(sudo_user.shell)
+#define user_ngroups		(sudo_user.ngroups)
+#define user_groups		(sudo_user.groups)
 #define user_tty		(sudo_user.tty)
 #define user_cwd		(sudo_user.cwd)
 #define user_runas		(sudo_user.runas)
@@ -183,16 +189,20 @@ int utimes		__P((const char *, const struct timeval *));
 int futimes		__P((int, const struct timeval *));
 #endif
 #ifndef HAVE_SNPRINTF
-int snprintf		__P((char *, size_t, const char *, ...));
+int snprintf		__P((char *, size_t, const char *, ...))
+			    __printflike(3, 4);
 #endif
 #ifndef HAVE_VSNPRINTF
-int vsnprintf		__P((char *, size_t, const char *, va_list));
+int vsnprintf		__P((char *, size_t, const char *, va_list))
+			    __printflike(3, 0);
 #endif
 #ifndef HAVE_ASPRINTF
-int asprintf		__P((char **, const char *, ...));
+int asprintf		__P((char **, const char *, ...))
+			    __printflike(2, 3);
 #endif
 #ifndef HAVE_VASPRINTF
-int vasprintf		__P((char **, const char *, va_list));
+int vasprintf		__P((char **, const char *, va_list))
+			    __printflike(2, 0);
 #endif
 #ifndef HAVE_STRCASECMP
 int strcasecmp		__P((const char *, const char *));
@@ -202,6 +212,12 @@ size_t strlcat		__P((char *, const char *, size_t));
 #endif
 #ifndef HAVE_STRLCPY
 size_t strlcpy		__P((char *, const char *, size_t));
+#endif
+#ifndef HAVE_MEMRCHR
+VOID *memrchr		__P((const VOID *, int, size_t));
+#endif
+#ifndef HAVE_MKSTEMP
+int mkstemp		__P((char *));
 #endif
 char *sudo_goodpath	__P((const char *, struct stat *));
 char *tgetpass		__P((const char *, int, int));
@@ -213,9 +229,7 @@ int sudoers_lookup	__P((int));
 int sudo_ldap_check	__P((int));
 void sudo_ldap_list_matches __P((void));
 #endif
-void set_perms_nosuid	__P((int));
-void set_perms_posix	__P((int));
-void set_perms_suid	__P((int));
+void set_perms		__P((int));
 void remove_timestamp	__P((int));
 int check_secureware	__P((char *));
 void sia_attempt_auth	__P((void));
@@ -227,8 +241,11 @@ VOID *emalloc2		__P((size_t, size_t));
 VOID *erealloc		__P((VOID *, size_t));
 VOID *erealloc3		__P((VOID *, size_t, size_t));
 char *estrdup		__P((const char *));
-int easprintf		__P((char **, const char *, ...));
-int evasprintf		__P((char **, const char *, va_list));
+int easprintf		__P((char **, const char *, ...))
+			    __printflike(2, 3);
+int evasprintf		__P((char **, const char *, va_list))
+			    __printflike(2, 0);
+void efree		__P((VOID *));
 void dump_defaults	__P((void));
 void dump_auth_methods	__P((void));
 void init_envtables	__P((void));
@@ -251,8 +268,6 @@ extern struct passwd *auth_pw;
 extern FILE *sudoers_fp;
 extern int tgetpass_flags;
 extern uid_t timestamp_uid;
-
-extern void (*set_perms) __P((int));
 #endif
 #ifndef errno
 extern int errno;

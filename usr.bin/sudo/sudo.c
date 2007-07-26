@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,7 @@
 # include <floss.h>
 #endif
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -69,7 +69,12 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <grp.h>
-#include <time.h>
+#if TIME_WITH_SYS_TIME
+# include <time.h>
+#endif
+#ifdef HAVE_SETLOCALE
+# include <locale.h>
+#endif
 #include <netinet/in.h>
 #include <netdb.h>
 #if defined(HAVE_GETPRPWNAM) && defined(HAVE_SET_AUTH_PARAMETERS)
@@ -87,30 +92,39 @@
 #  define LOGIN_DEFROOTCLASS	"daemon"
 # endif
 #endif
+#ifdef HAVE_PROJECT_H
+# include <project.h>
+# include <sys/task.h>
+#endif
 
 #include "sudo.h"
 #include "interfaces.h"
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.370 2004/08/24 18:01:13 millert Exp $";
+__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.26 2007/07/22 19:21:01 millert Exp $";
 #endif /* lint */
 
 /*
  * Prototypes
  */
-static int init_vars			__P((int));
+static int init_vars			__P((int, char **));
 static int parse_args			__P((int, char **));
 static void check_sudoers		__P((void));
 static void initial_setup		__P((void));
 static void set_loginclass		__P((struct passwd *));
-static void usage			__P((int));
+static void set_project			__P((struct passwd *));
+static void usage			__P((int))
+					    __attribute__((__noreturn__));
+static void usage_excl			__P((int))
+					    __attribute__((__noreturn__));
 static void usage_excl			__P((int));
 static struct passwd *get_authpw	__P((void));
-extern int sudo_edit			__P((int, char **));
+extern int sudo_edit			__P((int, char **, char **));
 extern void list_matches		__P((void));
 extern char **rebuild_env		__P((char **, int, int));
-extern char **zero_env			__P((char **));
+extern void validate_env_vars		__P((struct list_member *));
+extern char **insert_env_vars		__P((char **, struct list_member *));
 extern struct passwd *sudo_getpwnam	__P((const char *));
 extern struct passwd *sudo_getpwuid	__P((uid_t));
 extern struct passwd *sudo_pwdup	__P((const struct passwd *));
@@ -139,7 +153,6 @@ login_cap_t *lc;
 char *login_style;
 #endif /* HAVE_BSD_AUTH_H */
 sigaction_t saved_sa_int, saved_sa_quit, saved_sa_tstp, saved_sa_chld;
-void (*set_perms) __P((int));
 
 
 int
@@ -153,10 +166,13 @@ main(argc, argv, envp)
     int cmnd_status;
     int sudo_mode;
     int pwflag;
-    char **new_environ;
     sigaction_t sa;
     extern int printmatches;
     extern char **environ;
+
+#ifdef HAVE_SETLOCALE
+    setlocale(LC_ALL, "");
+#endif
 
     Argv = argv;
     if ((Argc = argc) < 1)
@@ -169,9 +185,6 @@ main(argc, argv, envp)
     initprivs();
 # endif
 #endif /* HAVE_GETPRPWNAM && HAVE_SET_AUTH_PARAMETERS */
-
-    /* Zero out the environment. */
-    environ = zero_env(envp);
 
     if (geteuid() != 0)
 	errx(1, "must be setuid root");
@@ -192,7 +205,7 @@ main(argc, argv, envp)
     (void) sigaction(SIGCHLD, &sa, &saved_sa_chld);
 
     /*
-     * Turn off core dumps, close open files and setup set_perms().
+     * Turn off core dumps and close open files.
      */
     initial_setup();
     setpwent();
@@ -217,6 +230,7 @@ main(argc, argv, envp)
 		(void) printf("Sudo version %s\n", version);
 		if (getuid() == 0) {
 		    putchar('\n');
+		    (void) printf("Sudoers path: %s\n", _PATH_SUDOERS);
 		    dump_auth_methods();
 		    dump_defaults();
 		    dump_interfaces();
@@ -250,7 +264,7 @@ main(argc, argv, envp)
     if (user_cmnd == NULL && NewArgc == 0)
 	usage(1);
 
-    cmnd_status = init_vars(sudo_mode);
+    cmnd_status = init_vars(sudo_mode, environ);
 
 #ifdef HAVE_LDAP
     validated = sudo_ldap_check(pwflag);
@@ -276,23 +290,7 @@ main(argc, argv, envp)
 	validated = sudoers_lookup(pwflag);
     }
     if (safe_cmnd == NULL)
-	safe_cmnd = user_cmnd;
-
-    /*
-     * If we are using set_perms_posix() and the stay_setuid flag was not set,
-     * set the real, effective and saved uids to 0 and use set_perms_nosuid()
-     * instead of set_perms_posix().
-     */
-#if !defined(HAVE_SETRESUID) && !defined(HAVE_SETREUID) && \
-    !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
-    if (!def_stay_setuid && set_perms == set_perms_posix) {
-	if (setuid(0)) {
-	    perror("setuid(0)");
-	    exit(1);
-	}
-	set_perms = set_perms_nosuid;
-    }
-#endif
+	safe_cmnd = estrdup(user_cmnd);
 
     /*
      * Look up the timestamp dir owner if one is specified.
@@ -336,11 +334,6 @@ main(argc, argv, envp)
     if (ISSET(sudo_mode, MODE_IMPLIED_SHELL) && !def_shell_noargs)
 	usage(1);
 
-    /* May need to set $HOME to target user if we are running a command. */
-    if (ISSET(sudo_mode, MODE_RUN) && (def_always_set_home ||
-	(ISSET(sudo_mode, MODE_SHELL) && def_set_home)))
-	SET(sudo_mode, MODE_RESET_HOME);
-
     /* Bail if a tty is required and we don't have one.  */
     if (def_requiretty) {
 	if ((fd = open(_PATH_TTY, O_RDWR|O_NOCTTY)) == -1)
@@ -349,28 +342,29 @@ main(argc, argv, envp)
 	    (void) close(fd);
     }
 
+    /* User may have overriden environment resetting via the -E flag. */
+    if (ISSET(sudo_mode, MODE_PRESERVE_ENV) && ISSET(validated, FLAG_SETENV))
+	def_env_reset = FALSE;
+
+    /* Build a new environment that avoids any nasty bits. */
+    environ = rebuild_env(environ, sudo_mode, ISSET(validated, FLAG_NOEXEC));
+
     /* Fill in passwd struct based on user we are authenticating as.  */
     auth_pw = get_authpw();
 
     /* Require a password if sudoers says so.  */
     if (!ISSET(validated, FLAG_NOPASS))
-	check_user(ISSET(validated, FLAG_CHECK_USER));
+	check_user(validated);
 
     /* If run as root with SUDO_USER set, set sudo_user.pw to that user. */
     if (user_uid == 0 && prev_user != NULL && strcmp(prev_user, "root") != 0) {
 	    struct passwd *pw;
 
 	    if ((pw = sudo_getpwnam(prev_user)) != NULL) {
-		    free(sudo_user.pw);
+		    efree(sudo_user.pw);
 		    sudo_user.pw = pw;
 	    }
     }
-
-    /* Build a new environment that avoids any nasty bits if we have a cmnd. */
-    if (ISSET(sudo_mode, MODE_RUN))
-	new_environ = rebuild_env(envp, sudo_mode, ISSET(validated, FLAG_NOEXEC));
-    else
-	new_environ = envp;
 
     if (ISSET(validated, VALIDATE_OK)) {
 	/* Finally tell the user if the command did not exist. */
@@ -380,6 +374,15 @@ main(argc, argv, envp)
 	} else if (cmnd_status == NOT_FOUND) {
 	    warnx("%s: command not found", user_cmnd);
 	    exit(1);
+	}
+
+	/* If user specified env vars make sure sudoers allows it. */
+	if (ISSET(sudo_mode, MODE_RUN) && !ISSET(validated, FLAG_SETENV)) {
+	    if (ISSET(sudo_mode, MODE_PRESERVE_ENV))
+		log_error(NO_MAIL,
+		    "sorry, you are not allowed to preserve the environment");
+	    else
+		validate_env_vars(sudo_user.env_vars);
 	}
 
 	log_auth(validated, 1);
@@ -410,9 +413,6 @@ main(argc, argv, envp)
 	endpwent();
 	endgrent();
 
-	/* Install the real environment. */
-	environ = new_environ;
-
 	if (ISSET(sudo_mode, MODE_LOGIN_SHELL)) {
 	    char *p;
 
@@ -428,7 +428,10 @@ main(argc, argv, envp)
 	}
 
 	if (ISSET(sudo_mode, MODE_EDIT))
-	    exit(sudo_edit(NewArgc, NewArgv));
+	    exit(sudo_edit(NewArgc, NewArgv, envp));
+
+	/* Insert user-specified environment variables. */
+	environ = insert_env_vars(environ, sudo_user.env_vars);
 
 	/* Restore signal handlers before we exec. */
 	(void) sigaction(SIGINT, &saved_sa_int, NULL);
@@ -440,13 +443,19 @@ main(argc, argv, envp)
 	if (ISSET(sudo_mode, MODE_BACKGROUND) && fork() > 0)
 	    exit(0);
 	else
-	    EXECV(safe_cmnd, NewArgv);	/* run the command */
+	    execve(safe_cmnd, NewArgv, environ);
 #else
 	exit(0);
 #endif /* PROFILING */
 	/*
 	 * If we got here then the exec() failed...
 	 */
+	if (errno == ENOEXEC) {
+	    NewArgv--;			/* at least one extra slot... */
+	    NewArgv[0] = "sh";
+	    NewArgv[1] = safe_cmnd;
+	    execve(_PATH_BSHELL, NewArgv, environ);
+	}
 	warn("unable to execute %s", safe_cmnd);
 	exit(127);
     } else if (ISSET(validated, FLAG_NO_USER) || (validated & FLAG_NO_HOST)) {
@@ -485,10 +494,11 @@ main(argc, argv, envp)
  * load the ``interfaces'' array.
  */
 static int
-init_vars(sudo_mode)
+init_vars(sudo_mode, envp)
     int sudo_mode;
+    char **envp;
 {
-    char *p, thost[MAXHOSTNAMELEN];
+    char *p, **ep, thost[MAXHOSTNAMELEN];
     int nohostname, rval;
 
     /* Sanity check command from user. */
@@ -536,6 +546,24 @@ init_vars(sudo_mode)
     } else
 	user_tty = "unknown";
 
+    for (ep = envp; *ep; ep++) {
+	switch (**ep) {
+	    case 'P':
+		if (strncmp("PATH=", *ep, 5) == 0)
+		    user_path = *ep + 5;
+		break;
+	    case 'S':
+		if (strncmp("SHELL=", *ep, 6) == 0)
+		    user_shell = *ep + 6;
+		else if (!user_prompt && strncmp("SUDO_PROMPT=", *ep, 12) == 0)
+		    user_prompt = *ep + 12;
+		else if (strncmp("SUDO_USER=", *ep, 10) == 0)
+		    prev_user = *ep + 10;
+		break;
+
+	    }
+    }
+
     /*
      * Get a local copy of the user's struct passwd with the shadow password
      * if necessary.  It is assumed that euid is 0 at this point so we
@@ -565,6 +593,15 @@ init_vars(sudo_mode)
 	user_shell = sudo_user.pw->pw_shell;
 
     /* It is now safe to use log_error() and set_perms() */
+
+#ifdef HAVE_GETGROUPS
+    if ((user_ngroups = getgroups(0, NULL)) > 0) {
+	user_groups = emalloc2(user_ngroups, sizeof(gid_t));
+	if (getgroups(user_ngroups, user_groups) < 0)
+	    log_error(USE_ERRNO|MSG_ONLY, "can't get group vector");
+    } else
+	user_ngroups = 0;
+#endif
 
     if (def_fqdn)
 	set_fqdn();			/* may call log_error() */
@@ -596,7 +633,9 @@ init_vars(sudo_mode)
     if ((sudo_mode & (MODE_SHELL | MODE_EDIT))) {
 	char **dst, **src = NewArgv;
 
-	NewArgv = (char **) emalloc2((++NewArgc + 1), sizeof(char *));
+	/* Allocate an extra slot for execve() failure (ENOEXEC). */
+	NewArgv = (char **) emalloc2((++NewArgc + 2), sizeof(char *));
+	NewArgv++;
 	if (ISSET(sudo_mode, MODE_EDIT))
 	    NewArgv[0] = "sudoedit";
 	else if (ISSET(sudo_mode, MODE_LOGIN_SHELL))
@@ -608,11 +647,14 @@ init_vars(sudo_mode)
 
 	/* copy the args from NewArgv */
 	for (dst = NewArgv + 1; (*dst = *src) != NULL; ++src, ++dst)
-	    ;
+	    continue;
     }
 
     /* Set login class if applicable. */
     set_loginclass(sudo_user.pw);
+
+    /* Set project if applicable. */
+    set_project(runas_pw);
 
     /* Resolve the path and return. */
     rval = FOUND;
@@ -686,149 +728,167 @@ parse_args(argc, argv)
     } else
 	rval = MODE_RUN;
 
-    if (NewArgc == 0 && rval == MODE_RUN) {	/* no options and no command */
-	SET(rval, (MODE_IMPLIED_SHELL | MODE_SHELL));
-	return(rval);
-    }
+    while (NewArgc > 0) {
+	if (NewArgv[0][0] == '-') {
+	    if (NewArgv[0][1] != '\0' && NewArgv[0][2] != '\0')
+		warnx("please use single character options");
 
-    while (NewArgc > 0 && NewArgv[0][0] == '-') {
-	if (NewArgv[0][1] != '\0' && NewArgv[0][2] != '\0')
-	    warnx("please use single character options");
+	    switch (NewArgv[0][1]) {
+		case 'p':
+		    /* Must have an associated prompt. */
+		    if (NewArgv[1] == NULL)
+			usage(1);
 
-	switch (NewArgv[0][1]) {
-	    case 'p':
-		/* Must have an associated prompt. */
-		if (NewArgv[1] == NULL)
-		    usage(1);
+		    user_prompt = NewArgv[1];
 
-		user_prompt = NewArgv[1];
+		    NewArgc--;
+		    NewArgv++;
+		    break;
+		case 'u':
+		    /* Must have an associated runas user. */
+		    if (NewArgv[1] == NULL)
+			usage(1);
 
-		NewArgc--;
-		NewArgv++;
-		break;
-	    case 'u':
-		/* Must have an associated runas user. */
-		if (NewArgv[1] == NULL)
-		    usage(1);
+		    user_runas = &NewArgv[1];
 
-		user_runas = &NewArgv[1];
-
-		NewArgc--;
-		NewArgv++;
-		break;
+		    NewArgc--;
+		    NewArgv++;
+		    break;
 #ifdef HAVE_BSD_AUTH_H
-	    case 'a':
-		/* Must have an associated authentication style. */
-		if (NewArgv[1] == NULL)
-		    usage(1);
+		case 'a':
+		    /* Must have an associated authentication style. */
+		    if (NewArgv[1] == NULL)
+			usage(1);
 
-		login_style = NewArgv[1];
+		    login_style = NewArgv[1];
 
-		NewArgc--;
-		NewArgv++;
-		break;
+		    NewArgc--;
+		    NewArgv++;
+		    break;
 #endif
 #ifdef HAVE_LOGIN_CAP_H
-	    case 'c':
-		/* Must have an associated login class. */
-		if (NewArgv[1] == NULL)
-		    usage(1);
+		case 'c':
+		    /* Must have an associated login class. */
+		    if (NewArgv[1] == NULL)
+			usage(1);
 
-		login_class = NewArgv[1];
-		def_use_loginclass = TRUE;
+		    login_class = NewArgv[1];
+		    def_use_loginclass = TRUE;
 
-		NewArgc--;
-		NewArgv++;
-		break;
+		    NewArgc--;
+		    NewArgv++;
+		    break;
 #endif
-	    case 'b':
-		SET(rval, MODE_BACKGROUND);
-		break;
-	    case 'e':
-		rval = MODE_EDIT;
-		if (excl && excl != 'e')
-		    usage_excl(1);
-		excl = 'e';
-		break;
-	    case 'v':
-		rval = MODE_VALIDATE;
-		if (excl && excl != 'v')
-		    usage_excl(1);
-		excl = 'v';
-		break;
-	    case 'i':
-		SET(rval, (MODE_LOGIN_SHELL | MODE_SHELL));
-		def_env_reset = TRUE;
-		if (excl && excl != 'i')
-		    usage_excl(1);
-		excl = 'i';
-		break;
-	    case 'k':
-		rval = MODE_INVALIDATE;
-		if (excl && excl != 'k')
-		    usage_excl(1);
-		excl = 'k';
-		break;
-	    case 'K':
-		rval = MODE_KILL;
-		if (excl && excl != 'K')
-		    usage_excl(1);
-		excl = 'K';
-		break;
-	    case 'L':
-		rval = MODE_LISTDEFS;
-		if (excl && excl != 'L')
-		    usage_excl(1);
-		excl = 'L';
-		break;
-	    case 'l':
-		rval = MODE_LIST;
-		if (excl && excl != 'l')
-		    usage_excl(1);
-		excl = 'l';
-		break;
-	    case 'V':
-		rval = MODE_VERSION;
-		if (excl && excl != 'V')
-		    usage_excl(1);
-		excl = 'V';
-		break;
-	    case 'h':
-		rval = MODE_HELP;
-		if (excl && excl != 'h')
-		    usage_excl(1);
-		excl = 'h';
-		break;
-	    case 's':
-		SET(rval, MODE_SHELL);
-		if (excl && excl != 's')
-		    usage_excl(1);
-		excl = 's';
-		break;
-	    case 'H':
-		SET(rval, MODE_RESET_HOME);
-		break;
-	    case 'P':
-		SET(rval, MODE_PRESERVE_GROUPS);
-		break;
-	    case 'S':
-		SET(tgetpass_flags, TGP_STDIN);
-		break;
-	    case '-':
-		NewArgc--;
-		NewArgv++;
-		if (rval == MODE_RUN)
-		    SET(rval, (MODE_IMPLIED_SHELL | MODE_SHELL));
-		return(rval);
-	    case '\0':
-		warnx("'-' requires an argument");
-		usage(1);
-	    default:
-		warnx("illegal option `%s'", NewArgv[0]);
-		usage(1);
+		case 'b':
+		    SET(rval, MODE_BACKGROUND);
+		    break;
+		case 'e':
+		    rval = MODE_EDIT;
+		    if (excl && excl != 'e')
+			usage_excl(1);
+		    excl = 'e';
+		    break;
+		case 'v':
+		    rval = MODE_VALIDATE;
+		    if (excl && excl != 'v')
+			usage_excl(1);
+		    excl = 'v';
+		    break;
+		case 'i':
+		    SET(rval, (MODE_LOGIN_SHELL | MODE_SHELL));
+		    def_env_reset = TRUE;
+		    if (excl && excl != 'i')
+			usage_excl(1);
+		    excl = 'i';
+		    break;
+		case 'k':
+		    rval = MODE_INVALIDATE;
+		    if (excl && excl != 'k')
+			usage_excl(1);
+		    excl = 'k';
+		    break;
+		case 'K':
+		    rval = MODE_KILL;
+		    if (excl && excl != 'K')
+			usage_excl(1);
+		    excl = 'K';
+		    break;
+		case 'L':
+		    rval = MODE_LISTDEFS;
+		    if (excl && excl != 'L')
+			usage_excl(1);
+		    excl = 'L';
+		    break;
+		case 'l':
+		    rval = MODE_LIST;
+		    if (excl && excl != 'l')
+			usage_excl(1);
+		    excl = 'l';
+		    break;
+		case 'V':
+		    rval = MODE_VERSION;
+		    if (excl && excl != 'V')
+			usage_excl(1);
+		    excl = 'V';
+		    break;
+		case 'h':
+		    rval = MODE_HELP;
+		    if (excl && excl != 'h')
+			usage_excl(1);
+		    excl = 'h';
+		    break;
+		case 's':
+		    SET(rval, MODE_SHELL);
+		    if (excl && excl != 's')
+			usage_excl(1);
+		    excl = 's';
+		    break;
+		case 'H':
+		    SET(rval, MODE_RESET_HOME);
+		    break;
+		case 'P':
+		    SET(rval, MODE_PRESERVE_GROUPS);
+		    break;
+		case 'S':
+		    SET(tgetpass_flags, TGP_STDIN);
+		    break;
+		case 'E':
+		    SET(rval, MODE_PRESERVE_ENV);
+		    break;
+		case '-':
+		    NewArgc--;
+		    NewArgv++;
+		    goto args_done;
+		case '\0':
+		    warnx("'-' requires an argument");
+		    usage(1);
+		default:
+		    warnx("illegal option `%s'", NewArgv[0]);
+		    usage(1);
+	    }
+	} else if (NewArgv[0][0] != '/' && strchr(NewArgv[0], '=') != NULL) {
+	    /* Could be an environment variable. */
+	    struct list_member *ev;
+	    ev = emalloc(sizeof(*ev));
+	    ev->value = NewArgv[0];
+	    ev->next = sudo_user.env_vars;
+	    sudo_user.env_vars = ev;
+	} else {
+	    /* Not an arg */
+	    break;
 	}
 	NewArgc--;
 	NewArgv++;
+    }
+args_done:
+
+    if (ISSET(rval, MODE_EDIT) &&
+	(ISSET(rval, MODE_PRESERVE_ENV) || sudo_user.env_vars != NULL)) {
+	if (ISSET(rval, MODE_PRESERVE_ENV))
+	    warnx("the `-E' option is not valid in edit mode");
+	if (sudo_user.env_vars != NULL)
+	    warnx("you may not specify environment variables in edit mode");
+	usage(1);
     }
 
     if (user_runas != NULL && !ISSET(rval, (MODE_EDIT|MODE_RUN))) {
@@ -836,10 +896,11 @@ parse_args(argc, argv)
 	    warnx("the `-u' and '-%c' options may not be used together", excl);
 	usage(1);
     }
-
     if ((NewArgc == 0 && (rval & MODE_EDIT)) ||
 	(NewArgc > 0 && !(rval & (MODE_RUN | MODE_EDIT))))
 	usage(1);
+    if (NewArgc == 0 && rval == MODE_RUN)
+	SET(rval, (MODE_IMPLIED_SHELL | MODE_SHELL));
 
     return(rval);
 }
@@ -892,7 +953,8 @@ check_sudoers()
 	log_error(0, "%s is zero length", _PATH_SUDOERS);
     else if ((statbuf.st_mode & 07777) != SUDOERS_MODE)
 	log_error(0, "%s is mode 0%o, should be 0%o", _PATH_SUDOERS,
-	    (statbuf.st_mode & 07777), SUDOERS_MODE);
+	    (unsigned int) (statbuf.st_mode & 07777),
+	    (unsigned int) SUDOERS_MODE);
     else if (statbuf.st_uid != SUDOERS_UID)
 	log_error(0, "%s is owned by uid %lu, should be %lu", _PATH_SUDOERS,
 	    (unsigned long) statbuf.st_uid, (unsigned long) SUDOERS_UID);
@@ -921,11 +983,11 @@ check_sudoers()
 
 /*
  * Close all open files (except std*) and turn off core dumps.
- * Also sets the set_perms() pointer to the correct function.
  */
 static void
 initial_setup()
 {
+    int miss[3], devnull = -1;
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
     struct rlimit rl;
 
@@ -938,25 +1000,24 @@ initial_setup()
     (void) setrlimit(RLIMIT_CORE, &rl);
 #endif /* RLIMIT_CORE && !SUDO_DEVEL */
 
-    closefrom(STDERR_FILENO + 1);
-
     /*
-     * Make set_perms point to the correct function.
-     * If we are using setresuid() or setreuid() we only need to set this
-     * once.  If we are using POSIX saved uids we will switch to
-     * set_perms_nosuid after sudoers has been parsed if the "stay_suid"
-     * option is not set.
+     * stdin, stdout and stderr must be open; set them to /dev/null
+     * if they are closed and close all other fds.
      */
-#if defined(HAVE_SETRESUID) || defined(HAVE_SETREUID)
-    set_perms = set_perms_suid;
-#else
-# if !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
-    if (sysconf(_SC_SAVED_IDS) == 1 && sysconf(_SC_VERSION) >= 199009)
-	set_perms = set_perms_posix;
-    else
-# endif
-	set_perms = set_perms_nosuid;
-#endif /* HAVE_SETRESUID || HAVE_SETREUID */
+    miss[STDIN_FILENO] = fcntl(STDIN_FILENO, F_GETFL, 0) == -1;
+    miss[STDOUT_FILENO] = fcntl(STDOUT_FILENO, F_GETFL, 0) == -1;
+    miss[STDERR_FILENO] = fcntl(STDERR_FILENO, F_GETFL, 0) == -1;
+    if (miss[STDIN_FILENO] || miss[STDOUT_FILENO] || miss[STDERR_FILENO]) {
+	if ((devnull = open(_PATH_DEVNULL, O_RDWR, 0644)) != -1) {
+	    if (miss[STDIN_FILENO])
+		(void) dup2(devnull, STDIN_FILENO);
+	    if (miss[STDOUT_FILENO])
+		(void) dup2(devnull, STDOUT_FILENO);
+	    if (miss[STDERR_FILENO])
+		(void) dup2(devnull, STDERR_FILENO);
+	}
+    }
+    closefrom(STDERR_FILENO + 1);
 }
 
 #ifdef HAVE_LOGIN_CAP_H
@@ -1001,6 +1062,72 @@ set_loginclass(pw)
 }
 #endif /* HAVE_LOGIN_CAP_H */
 
+#ifdef HAVE_PROJECT_H
+static void
+set_project(pw)
+    struct passwd *pw;
+{
+    int errflags = NO_MAIL|MSG_ONLY|NO_EXIT;
+    int errval;
+    struct project proj;
+    struct project *resultp = '\0';
+    char buf[1024];
+
+    /*
+     * Collect the default project for the user and settaskid
+     */
+    setprojent();
+    if (resultp = getdefaultproj(pw->pw_name, &proj, buf, sizeof(buf))) {
+	errval = setproject(resultp->pj_name, pw->pw_name, TASK_NORMAL);
+	if (errval != 0) {
+	    switch(errval) {
+	    case SETPROJ_ERR_TASK:
+		if (errno == EAGAIN)
+		    log_error(errflags, "resource control limit has been reached");
+		else if (errno == ESRCH)
+		    log_error(errflags, "user \"%s\" is not a member of "
+			"project \"%s\"", pw->pw_name, resultp->pj_name);
+		else if (errno == EACCES)
+		    log_error(errflags, "the invoking task is final");
+		else
+		    log_error(errflags, "could not join project \"%s\"",
+			resultp->pj_name);
+		break;
+	    case SETPROJ_ERR_POOL:
+		if (errno == EACCES)
+		    log_error(errflags, "no resource pool accepting "
+			    "default bindings exists for project \"%s\"",
+			    resultp->pj_name);
+		else if (errno == ESRCH)
+		    log_error(errflags, "specified resource pool does "
+			    "not exist for project \"%s\"", resultp->pj_name);
+		else
+		    log_error(errflags, "could not bind to default "
+			    "resource pool for project \"%s\"", resultp->pj_name);
+		break;
+	    default:
+		if (errval <= 0) {
+		    log_error(errflags, "setproject failed for project \"%s\"",
+			resultp->pj_name);
+		} else {
+		    log_error(errflags, "warning, resource control assignment "
+			"failed for project \"%s\"", resultp->pj_name);
+		}
+	    }
+	}
+    } else {
+	log_error(errflags, "getdefaultproj() error: %s", strerror(errno));
+    }
+    endprojent();
+}
+#else
+static void
+set_project(pw)
+    struct passwd *pw;
+{
+}
+#endif /* HAVE_PROJECT_H */
+
 /*
  * Look up the fully qualified domain name and set user_host and user_shost.
  */
@@ -1015,8 +1142,8 @@ set_fqdn()
 	    "unable to lookup %s via gethostbyname()", user_host);
     } else {
 	if (user_shost != user_host)
-	    free(user_shost);
-	free(user_host);
+	    efree(user_shost);
+	efree(user_host);
 	user_host = estrdup(hp->h_name);
     }
     if ((p = strchr(user_host, '.'))) {
@@ -1039,7 +1166,7 @@ set_runaspw(user)
     if (runas_pw != NULL) {
 	if (user_runas != &def_runas_default)
 	    return(TRUE);		/* don't override -u option */
-	free(runas_pw);
+	efree(runas_pw);
     }
     if (*user == '#') {
 	runas_pw = sudo_getpwuid(atoi(user + 1));
@@ -1095,7 +1222,7 @@ static void
 usage_excl(exit_val)
     int exit_val;
 {
-    warnx("Only one of the -e, -h, -k, -K, -l, -s, -v or -V options may be used");
+    warnx("Only one of the -e, -h, i, -k, -K, -l, -s, -v or -V options may be used");
     usage(exit_val);
 }
 
@@ -1106,10 +1233,14 @@ static void
 usage(exit_val)
     int exit_val;
 {
-    char **p;
-    int linelen, linemax, ulen;
-    static char *uvec[] = {
-	" [-HPSb]",
+    char **p, **uvec[4];
+    int i, linelen, linemax, ulen;
+    static char *uvec1[] = {
+	" -h | -K | -k | -L | -l | -V | -v",
+	NULL
+    };
+    static char *uvec2[] = {
+	" [-bEHPS]",
 #ifdef HAVE_BSD_AUTH_H
 	" [-a auth_type]",
 #endif
@@ -1118,41 +1249,57 @@ usage(exit_val)
 #endif
 	" [-p prompt]",
 	" [-u username|#uid]",
-	" { -e file [...] | -i | -s | <command> }",
+	" [VAR=value]",
+	" {-i | -s | <command>}",
+	NULL
+    };
+    static char *uvec3[] = {
+	" -e",
+	" [-S]",
+#ifdef HAVE_BSD_AUTH_H
+	" [-a auth_type]",
+#endif
+#ifdef HAVE_LOGIN_CAP_H
+	" [-c class|-]",
+#endif
+	" [-p prompt]",
+	" [-u username|#uid]",
+	" file ...",
 	NULL
     };
 
     /*
-     * For sudoedit, replace the last entry in the usage vector.
-     * For sudo, print the secondary usage.
+     * Use usage vectors appropriate to the progname.
      */
     if (strcmp(getprogname(), "sudoedit") == 0) {
-	/* Replace the last entry in the usage vector. */
-	for (p = uvec; p[1] != NULL; p++)
-	    continue;
-	*p = " file [...]";
+	uvec[0] = uvec3 + 1;
+	uvec[1] = NULL;
     } else {
-	fprintf(stderr, "usage: %s -K | -L | -V | -h | -k | -l | -v\n",
-	    getprogname());
+	uvec[0] = uvec1;
+	uvec[1] = uvec2;
+	uvec[2] = uvec3;
+	uvec[3] = NULL;
     }
 
     /*
-     * Print the main usage and wrap lines as needed.
+     * Print usage and wrap lines as needed.
      * Assumes an 80-character wide terminal, which is kind of bogus...
      */
     ulen = (int)strlen(getprogname()) + 7;
     linemax = 80;
-    linelen = linemax - ulen;
-    printf("usage: %s", getprogname());
-    for (p = uvec; *p != NULL; p++) {
-	if (linelen == linemax || (linelen -= strlen(*p)) >= 0) {
-	    fputs(*p, stdout);
-	} else {
-	    p--;
-	    linelen = linemax;
-	    printf("\n%*s", ulen, "");
+    for (i = 0; uvec[i] != NULL; i++) {
+	linelen = linemax - ulen;
+	printf("usage: %s", getprogname());
+	for (p = uvec[i]; *p != NULL; p++) {
+	    if (linelen == linemax || (linelen -= strlen(*p)) >= 0) {
+		fputs(*p, stdout);
+	    } else {
+		p--;
+		linelen = linemax;
+		printf("\n%*s", ulen, "");
+	    }
 	}
+	putchar('\n');
     }
-    putchar('\n');
     exit(exit_val);
 }

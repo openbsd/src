@@ -1,0 +1,1309 @@
+=cut
+Copyright (c) 1994-1996,1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Sponsored in part by the Defense Advanced Research Projects
+Agency (DARPA) and Air Force Research Laboratory, Air Force
+Materiel Command, USAF, under agreement number F39502-99-1-0512.
+
+$Sudo: sudoers.pod,v 1.95.2.14 2007/07/26 14:04:54 millert Exp $
+=pod
+
+=head1 NAME
+
+sudoers - list of which users may execute what
+
+=head1 DESCRIPTION
+
+The I<sudoers> file is composed of two types of entries: aliases
+(basically variables) and user specifications (which specify who
+may run what).
+
+When multiple entries match for a user, they are applied in order.
+Where there are multiple matches, the last match is used (which is
+not necessarily the most specific match).
+
+The I<sudoers> grammar will be described below in Extended Backus-Naur
+Form (EBNF).  Don't despair if you don't know what EBNF is; it is
+fairly simple, and the definitions below are annotated.
+
+=head2 Quick guide to EBNF
+
+EBNF is a concise and exact way of describing the grammar of a language.
+Each EBNF definition is made up of I<production rules>.  E.g.,
+
+ symbol ::= definition | alternate1 | alternate2 ...
+
+Each I<production rule> references others and thus makes up a
+grammar for the language.  EBNF also contains the following
+operators, which many readers will recognize from regular
+expressions.  Do not, however, confuse them with "wildcard"
+characters, which have different meanings.
+
+=over 8
+
+=item C<?>
+
+Means that the preceding symbol (or group of symbols) is optional.
+That is, it may appear once or not at all.
+
+=item C<*>
+
+Means that the preceding symbol (or group of symbols) may appear
+zero or more times.
+
+=item C<+>
+
+Means that the preceding symbol (or group of symbols) may appear
+one or more times.
+
+=back
+
+Parentheses may be used to group symbols together.  For clarity,
+we will use single quotes ('') to designate what is a verbatim character
+string (as opposed to a symbol name).
+
+=head2 Aliases
+
+There are four kinds of aliases: C<User_Alias>, C<Runas_Alias>,
+C<Host_Alias> and C<Cmnd_Alias>.
+
+ Alias ::= 'User_Alias'  User_Alias (':' User_Alias)* |
+	   'Runas_Alias' Runas_Alias (':' Runas_Alias)* |
+	   'Host_Alias'  Host_Alias (':' Host_Alias)* |
+	   'Cmnd_Alias'  Cmnd_Alias (':' Cmnd_Alias)*
+
+ User_Alias ::= NAME '=' User_List
+
+ Runas_Alias ::= NAME '=' Runas_List
+
+ Host_Alias ::= NAME '=' Host_List
+
+ Cmnd_Alias ::= NAME '=' Cmnd_List
+
+ NAME ::= [A-Z]([A-Z][0-9]_)*
+
+Each I<alias> definition is of the form
+
+ Alias_Type NAME = item1, item2, ...
+
+where I<Alias_Type> is one of C<User_Alias>, C<Runas_Alias>, C<Host_Alias>,
+or C<Cmnd_Alias>.  A C<NAME> is a string of uppercase letters, numbers,
+and underscore characters ('_').  A C<NAME> B<must> start with an
+uppercase letter.  It is possible to put several alias definitions
+of the same type on a single line, joined by a colon (':').  E.g.,
+
+ Alias_Type NAME = item1, item2, item3 : NAME = item4, item5
+
+The definitions of what constitutes a valid I<alias> member follow.
+
+ User_List ::= User |
+	       User ',' User_List
+
+ User ::= '!'* username |
+	  '!'* '%'group |
+	  '!'* '+'netgroup |
+	  '!'* User_Alias
+
+A C<User_List> is made up of one or more usernames, system groups
+(prefixed with '%'), netgroups (prefixed with '+') and other aliases.
+Each list item may be prefixed with one or more '!' operators.
+An odd number of '!' operators negate the value of the item; an even
+number just cancel each other out.
+
+ Runas_List ::= Runas_User |
+		Runas_User ',' Runas_List
+
+ Runas_User ::= '!'* username |
+	        '!'* '#'uid |
+	        '!'* '%'group |
+	        '!'* +netgroup |
+	        '!'* Runas_Alias
+
+A C<Runas_List> is similar to a C<User_List> except that it can
+also contain uids (prefixed with '#') and instead of C<User_Alias>es
+it can contain C<Runas_Alias>es.  Note that usernames and groups
+are matched as strings.  In other words, two users (groups) with
+the same uid (gid) are considered to be distinct.  If you wish to
+match all usernames with the same uid (e.g.E<nbsp>root and toor), you
+can use a uid instead (#0 in the example given).
+
+ Host_List ::= Host |
+	       Host ',' Host_List
+
+ Host ::= '!'* hostname |
+	  '!'* ip_addr |
+	  '!'* network(/netmask)? |
+	  '!'* '+'netgroup |
+	  '!'* Host_Alias
+
+A C<Host_List> is made up of one or more hostnames, IP addresses,
+network numbers, netgroups (prefixed with '+') and other aliases.
+Again, the value of an item may be negated with the '!' operator.
+If you do not specify a netmask along with the network number,
+B<sudo> will query each of the local host's network interfaces and,
+if the network number corresponds to one of the hosts's network
+interfaces, the corresponding netmask will be used.  The netmask
+may be specified either in dotted quad notation (e.g.E<nbsp>255.255.255.0)
+or CIDR notation (number of bits, e.g.E<nbsp>24).  A hostname may
+include shell-style wildcards (see the L<Wildcards> section below),
+but unless the C<hostname> command on your machine returns the fully
+qualified hostname, you'll need to use the I<fqdn> option for
+wildcards to be useful.
+
+ Cmnd_List ::= Cmnd |
+	       Cmnd ',' Cmnd_List
+
+ commandname ::= filename |
+	         filename args |
+	         filename '""'
+
+ Cmnd ::= '!'* commandname |
+	  '!'* directory |
+	  '!'* "sudoedit" |
+	  '!'* Cmnd_Alias
+
+A C<Cmnd_List> is a list of one or more commandnames, directories, and other
+aliases.  A commandname is a fully qualified filename which may include
+shell-style wildcards (see the L<Wildcards> section below).  A simple
+filename allows the user to run the command with any arguments he/she
+wishes.  However, you may also specify command line arguments (including
+wildcards).  Alternately, you can specify C<""> to indicate that the command
+may only be run B<without> command line arguments.  A directory is a
+fully qualified pathname ending in a '/'.  When you specify a directory
+in a C<Cmnd_List>, the user will be able to run any file within that directory
+(but not in any subdirectories therein).
+
+If a C<Cmnd> has associated command line arguments, then the arguments
+in the C<Cmnd> must match exactly those given by the user on the command line
+(or match the wildcards if there are any).  Note that the following
+characters must be escaped with a '\' if they are used in command
+arguments: ',', ':', '=', '\'.  The special command C<"sudoedit">
+is used to permit a user to run B<sudo> with the B<-e> flag (or
+as B<sudoedit>).  It may take command line arguments just as
+a normal command does.
+
+=head2 Defaults
+
+Certain configuration options may be changed from their default
+values at runtime via one or more C<Default_Entry> lines.  These
+may affect all users on any host, all users on a specific host, a
+specific user, or commands being run as a specific user.
+
+ Default_Type ::= 'Defaults' |
+		  'Defaults' '@' Host |
+		  'Defaults' ':' User |
+		  'Defaults' '>' RunasUser
+
+ Default_Entry ::= Default_Type Parameter_List
+
+ Parameter_List ::= Parameter |
+		    Parameter ',' Parameter_List
+
+ Parameter ::= Parameter '=' Value |
+	       Parameter '+=' Value |
+	       Parameter '-=' Value |
+	       '!'* Parameter
+
+Parameters may be B<flags>, B<integer> values, B<strings>, or B<lists>.
+Flags are implicitly boolean and can be turned off via the '!'
+operator.  Some integer, string and list parameters may also be
+used in a boolean context to disable them.  Values may be enclosed
+in double quotes (C<">) when they contain multiple words.  Special
+characters may be escaped with a backslash (C<\>).
+
+Lists have two additional assignment operators, C<+=> and C<-=>.
+These operators are used to add to and delete from a list respectively.
+It is not an error to use the C<-=> operator to remove an element
+that does not exist in a list.
+
+See L</"SUDOERS OPTIONS"> for a list of supported Defaults parameters.
+
+=head2 User Specification
+
+ User_Spec ::= User_List Host_List '=' Cmnd_Spec_List \
+	       (':' Host_List '=' Cmnd_Spec_List)*
+
+ Cmnd_Spec_List ::= Cmnd_Spec |
+		    Cmnd_Spec ',' Cmnd_Spec_List
+
+ Cmnd_Spec ::= Runas_Spec? Tag_Spec* Cmnd
+
+ Runas_Spec ::= '(' Runas_List ')'
+
+ Tag_Spec ::= ('NOPASSWD:' | 'PASSWD:' | 'NOEXEC:' | 'EXEC:' |
+	       'SETENV:' | 'NOSETENV:')
+
+A B<user specification> determines which commands a user may run
+(and as what user) on specified hosts.  By default, commands are
+run as B<root>, but this can be changed on a per-command basis.
+
+Let's break that down into its constituent parts:
+
+=head2 Runas_Spec
+
+A C<Runas_Spec> is simply a C<Runas_List> (as defined above)
+enclosed in a set of parentheses.  If you do not specify a
+C<Runas_Spec> in the user specification, a default C<Runas_Spec>
+of B<root> will be used.  A C<Runas_Spec> sets the default for
+commands that follow it.  What this means is that for the entry:
+
+ dgb	boulder = (operator) /bin/ls, /bin/kill, /usr/bin/lprm
+
+The user B<dgb> may run F</bin/ls>, F</bin/kill>, and
+F</usr/bin/lprm> -- but only as B<operator>.  E.g.,
+
+ $ sudo -u operator /bin/ls.
+
+It is also possible to override a C<Runas_Spec> later on in an
+entry.  If we modify the entry like so:
+
+ dgb	boulder = (operator) /bin/ls, (root) /bin/kill, /usr/bin/lprm
+
+Then user B<dgb> is now allowed to run F</bin/ls> as B<operator>,
+but  F</bin/kill> and F</usr/bin/lprm> as B<root>.
+
+=head2 Tag_Spec
+
+A command may have zero or more tags associated with it.  There are
+six possible tag values, C<NOPASSWD>, C<PASSWD>, C<NOEXEC>, C<EXEC>,
+C<SETENV> and C<NOSETENV>.
+Once a tag is set on a C<Cmnd>, subsequent C<Cmnd>s in the
+C<Cmnd_Spec_List>, inherit the tag unless it is overridden by the
+opposite tag (i.e.: C<PASSWD> overrides C<NOPASSWD> and C<NOEXEC>
+overrides C<EXEC>).
+
+=head3 NOPASSWD and PASSWD
+
+By default, B<sudo> requires that a user authenticate him or herself
+before running a command.  This behavior can be modified via the
+C<NOPASSWD> tag.  Like a C<Runas_Spec>, the C<NOPASSWD> tag sets
+a default for the commands that follow it in the C<Cmnd_Spec_List>.
+Conversely, the C<PASSWD> tag can be used to reverse things.
+For example:
+
+ ray	rushmore = NOPASSWD: /bin/kill, /bin/ls, /usr/bin/lprm
+
+would allow the user B<ray> to run F</bin/kill>, F</bin/ls>, and
+F</usr/bin/lprm> as root on the machine rushmore as B<root> without
+authenticating himself.  If we only want B<ray> to be able to
+run F</bin/kill> without a password the entry would be:
+
+ ray	rushmore = NOPASSWD: /bin/kill, PASSWD: /bin/ls, /usr/bin/lprm
+
+Note, however, that the C<PASSWD> tag has no effect on users who are
+in the group specified by the I<exempt_group> option.
+
+By default, if the C<NOPASSWD> tag is applied to any of the entries
+for a user on the current host, he or she will be able to run
+C<sudo -l> without a password.  Additionally, a user may only run
+C<sudo -v> without a password if the C<NOPASSWD> tag is present
+for all a user's entries that pertain to the current host.
+This behavior may be overridden via the verifypw and listpw options.
+
+=head3 NOEXEC and EXEC
+
+If B<sudo> has been compiled with I<noexec> support and the underlying
+operating system supports it, the C<NOEXEC> tag can be used to prevent
+a dynamically-linked executable from running further commands itself.
+
+In the following example, user B<aaron> may run F</usr/bin/more>
+and F</usr/bin/vi> but shell escapes will be disabled.
+
+ aaron	shanty = NOEXEC: /usr/bin/more, /usr/bin/vi
+
+See the L<PREVENTING SHELL ESCAPES> section below for more details
+on how C<NOEXEC> works and whether or not it will work on your system.
+
+=head3 SETENV and NOSETENV
+
+These tags override the value of the I<setenv> option on a per-command
+basis.  Note that if C<SETENV> has been set for a command, any
+environment variables set on the command line way are not subject
+to the restrictions imposed by I<env_check>, I<env_delete>, or
+I<env_keep>.  As such, only trusted users should be allowed to set
+variables in this manner.
+
+=head2 Wildcards
+
+B<sudo> allows shell-style I<wildcards> (aka meta or glob characters)
+to be used in pathnames as well as command line arguments in the
+I<sudoers> file.  Wildcard matching is done via the B<POSIX>
+L<fnmatch(3)> routine.  Note that these are I<not> regular expressions.
+
+=over 8
+
+=item C<*>
+
+Matches any set of zero or more characters.
+
+=item C<?>
+
+Matches any single character.
+
+=item C<[...]>
+
+Matches any character in the specified range.
+
+=item C<[!...]>
+
+Matches any character B<not> in the specified range.
+
+=item C<\x>
+
+For any character "x", evaluates to "x".  This is used to
+escape special characters such as: "*", "?", "[", and "}".
+
+=back
+
+Note that a forward slash ('/') will B<not> be matched by
+wildcards used in the pathname.  When matching the command
+line arguments, however, a slash B<does> get matched by
+wildcards.  This is to make a path like:
+
+    /usr/bin/*
+
+match F</usr/bin/who> but not F</usr/bin/X11/xterm>.
+
+=head2 Exceptions to wildcard rules
+
+The following exceptions apply to the above rules:
+
+=over 8
+
+=item C<"">
+
+If the empty string C<""> is the only command line argument in the
+I<sudoers> entry it means that command is not allowed to be run
+with B<any> arguments.
+
+=back
+
+=head2 Other special characters and reserved words
+
+The pound sign ('#') is used to indicate a comment (unless it is
+part of a #include directive or unless it occurs in the context of
+a user name and is followed by one or more digits, in which case
+it is treated as a uid).  Both the comment character and any text
+after it, up to the end of the line, are ignored.
+
+The reserved word B<ALL> is a built-in I<alias> that always causes
+a match to succeed.  It can be used wherever one might otherwise
+use a C<Cmnd_Alias>, C<User_Alias>, C<Runas_Alias>, or C<Host_Alias>.
+You should not try to define your own I<alias> called B<ALL> as the
+built-in alias will be used in preference to your own.  Please note
+that using B<ALL> can be dangerous since in a command context, it
+allows the user to run B<any> command on the system.
+
+An exclamation point ('!') can be used as a logical I<not> operator
+both in an I<alias> and in front of a C<Cmnd>.  This allows one to
+exclude certain values.  Note, however, that using a C<!> in
+conjunction with the built-in C<ALL> alias to allow a user to
+run "all but a few" commands rarely works as intended (see SECURITY
+NOTES below).
+
+Long lines can be continued with a backslash ('\') as the last
+character on the line.
+
+Whitespace between elements in a list as well as special syntactic
+characters in a I<User Specification> ('=', ':', '(', ')') is optional.
+
+The following characters must be escaped with a backslash ('\') when
+used as part of a word (e.g.E<nbsp>a username or hostname):
+'@', '!', '=', ':', ',', '(', ')', '\'.
+
+=head1 SUDOERS OPTIONS
+
+B<sudo>'s behavior can be modified by C<Default_Entry> lines, as
+explained earlier.  A list of all supported Defaults parameters,
+grouped by type, are listed below.
+
+B<Flags>:
+
+=over 12
+
+=item always_set_home
+
+If set, B<sudo> will set the C<HOME> environment variable to the home
+directory of the target user (which is root unless the B<-u> option is used).
+This effectively means that the B<-H> flag is always implied.
+This flag is I<off> by default.
+
+=item authenticate
+
+If set, users must authenticate themselves via a password (or other
+means of authentication) before they may run commands.  This default
+may be overridden via the C<PASSWD> and C<NOPASSWD> tags.
+This flag is I<on> by default.
+
+=item env_editor
+
+If set, B<visudo> will use the value of the EDITOR or VISUAL
+environment variables before falling back on the default editor list.
+Note that this may create a security hole as it allows the user to
+run any arbitrary command as root without logging.  A safer alternative
+is to place a colon-separated list of editors in the C<editor>
+variable.  B<visudo> will then only use the EDITOR or VISUAL if
+they match a value specified in C<editor>.  This flag is I<@env_editor@> by
+default.
+
+=item env_reset
+
+If set, B<sudo> will reset the environment to only contain the
+LOGNAME, SHELL, USER, USERNAME and the C<SUDO_*> variables.  Any
+variables in the caller's environment that match the C<env_keep>
+and C<env_check> lists are then added.  The default contents of the
+C<env_keep> and C<env_check> lists are displayed when B<sudo> is
+run by root with the I<-V> option.  If B<sudo> was compiled with
+the C<SECURE_PATH> option, its value will be used for the C<PATH>
+environment variable.  This flag is I<on> by default.
+
+=item fqdn
+
+Set this flag if you want to put fully qualified hostnames in the
+I<sudoers> file.  I.e., instead of myhost you would use myhost.mydomain.edu.
+You may still use the short form if you wish (and even mix the two).
+Beware that turning on I<fqdn> requires B<sudo> to make DNS lookups
+which may make B<sudo> unusable if DNS stops working (for example
+if the machine is not plugged into the network).  Also note that
+you must use the host's official name as DNS knows it.  That is,
+you may not use a host alias (C<CNAME> entry) due to performance
+issues and the fact that there is no way to get all aliases from
+DNS.  If your machine's hostname (as returned by the C<hostname>
+command) is already fully qualified you shouldn't need to set
+I<fqdn>.  This flag is I<@fqdn@> by default.
+
+=item ignore_dot
+
+If set, B<sudo> will ignore '.' or '' (current dir) in the C<PATH>
+environment variable; the C<PATH> itself is not modified.  This
+flag is I<@ignore_dot@> by default.  Currently, while it is possible
+to set I<ignore_dot> in I<sudoers>, its value is not used.  This option
+should be considered read-only (it will be fixed in a future version
+of B<sudo>).
+
+=item ignore_local_sudoers
+
+If set via LDAP, parsing of @sysconfdir@/sudoers will be skipped.
+This is intended for Enterprises that wish to prevent the usage of local
+sudoers files so that only LDAP is used.  This thwarts the efforts of
+rogue operators who would attempt to add roles to @sysconfdir@/sudoers.
+When this option is present, @sysconfdir@/sudoers does not even need to exist. 
+Since this option tells B<sudo> how to behave when no specific LDAP entries
+have been matched, this sudoOption is only meaningful for the cn=defaults
+section.  This flag is I<off> by default.
+
+=item insults
+
+If set, B<sudo> will insult users when they enter an incorrect
+password.  This flag is I<@insults@> by default.
+
+=item log_host
+
+If set, the hostname will be logged in the (non-syslog) B<sudo> log file.
+This flag is I<off> by default.
+
+=item log_year
+
+If set, the four-digit year will be logged in the (non-syslog) B<sudo> log file.
+This flag is I<off> by default.
+
+=item long_otp_prompt
+
+When validating with a One Time Password (OPT) scheme such as
+B<S/Key> or B<OPIE>, a two-line prompt is used to make it easier
+to cut and paste the challenge to a local window.  It's not as
+pretty as the default but some people find it more convenient.  This
+flag is I<@long_otp_prompt@> by default.
+
+=item mail_always
+
+Send mail to the I<mailto> user every time a users runs B<sudo>.
+This flag is I<off> by default.
+
+=item mail_badpass
+
+Send mail to the I<mailto> user if the user running B<sudo> does not
+enter the correct password.  This flag is I<off> by default.
+
+=item mail_no_host
+
+If set, mail will be sent to the I<mailto> user if the invoking
+user exists in the I<sudoers> file, but is not allowed to run
+commands on the current host.  This flag is I<@mail_no_host@> by default.
+
+=item mail_no_perms
+
+If set, mail will be sent to the I<mailto> user if the invoking
+user is allowed to use B<sudo> but the command they are trying is not
+listed in their I<sudoers> file entry or is explicitly denied.
+This flag is I<@mail_no_perms@> by default.
+
+=item mail_no_user
+
+If set, mail will be sent to the I<mailto> user if the invoking
+user is not in the I<sudoers> file.  This flag is I<@mail_no_user@>
+by default.
+
+=item noexec
+
+If set, all commands run via B<sudo> will behave as if the C<NOEXEC>
+tag has been set, unless overridden by a C<EXEC> tag.  See the
+description of I<NOEXEC and EXEC> below as well as the L<PREVENTING SHELL
+ESCAPES> section at the end of this manual.  This flag is I<off> by default.
+
+=item path_info
+
+Normally, B<sudo> will tell the user when a command could not be
+found in their C<PATH> environment variable.  Some sites may wish
+to disable this as it could be used to gather information on the
+location of executables that the normal user does not have access
+to.  The disadvantage is that if the executable is simply not in
+the user's C<PATH>, B<sudo> will tell the user that they are not
+allowed to run it, which can be confusing.  This flag is I<@path_info@>
+by default.
+
+=item preserve_groups
+
+By default B<sudo> will initialize the group vector to the list of
+groups the target user is in.  When I<preserve_groups> is set, the
+user's existing group vector is left unaltered.  The real and
+effective group IDs, however, are still set to match the target
+user.  This flag is I<off> by default.
+
+=item requiretty
+
+If set, B<sudo> will only run when the user is logged in to a real
+tty.  This will disallow things like C<"rsh somehost sudo ls"> since
+L<rsh(1)> does not allocate a tty.  Because it is not possible to turn
+off echo when there is no tty present, some sites may wish to set
+this flag to prevent a user from entering a visible password.  This
+flag is I<off> by default.
+
+=item root_sudo
+
+If set, root is allowed to run B<sudo> too.  Disabling this prevents users
+from "chaining" B<sudo> commands to get a root shell by doing something
+like C<"sudo sudo /bin/sh">.  Note, however, that turning off I<root_sudo>
+will also prevent root and from running B<sudoedit>.
+Disabling I<root_sudo> provides no real additional security; it
+exists purely for historical reasons.
+This flag is I<@root_sudo@> by default.
+
+=item rootpw
+
+If set, B<sudo> will prompt for the root password instead of the password
+of the invoking user.  This flag is I<off> by default.
+
+=item runaspw
+
+If set, B<sudo> will prompt for the password of the user defined by the
+I<runas_default> option (defaults to C<@runas_default@>) instead of the
+password of the invoking user.  This flag is I<off> by default.
+
+=item set_home
+
+If set and B<sudo> is invoked with the B<-s> flag the C<HOME>
+environment variable will be set to the home directory of the target
+user (which is root unless the B<-u> option is used).  This effectively
+makes the B<-s> flag imply B<-H>.  This flag is I<off> by default.
+
+=item set_logname
+
+Normally, B<sudo> will set the C<LOGNAME>, C<USER> and C<USERNAME>
+environment variables to the name of the target user (usually root
+unless the B<-u> flag is given).  However, since some programs
+(including the RCS revision control system) use C<LOGNAME> to
+determine the real identity of the user, it may be desirable to
+change this behavior.  This can be done by negating the set_logname
+option.  Note that if the I<env_reset> option has not been disabled,
+entries in the I<env_keep> list will override the value of
+I<set_logname>.  This flag is I<off> by default.
+
+=item setenv
+
+Allow the user to disable the I<env_reset> option from the command
+line.  Additionally, environment variables set via the command line
+are not subject to the restrictions imposed by I<env_check>,
+I<env_delete>, or I<env_keep>.  As such, only trusted users should
+be allowed to set variables in this manner.  This flag is I<off>
+by default.
+
+=item shell_noargs
+
+If set and B<sudo> is invoked with no arguments it acts as if the
+B<-s> flag had been given.  That is, it runs a shell as root (the
+shell is determined by the C<SHELL> environment variable if it is
+set, falling back on the shell listed in the invoking user's
+/etc/passwd entry if not).  This flag is I<off> by default.
+
+=item stay_setuid
+
+Normally, when B<sudo> executes a command the real and effective
+UIDs are set to the target user (root by default).  This option
+changes that behavior such that the real UID is left as the invoking
+user's UID.  In other words, this makes B<sudo> act as a setuid
+wrapper.  This can be useful on systems that disable some potentially
+dangerous functionality when a program is run setuid.  This option
+is only effective on systems with either the setreuid() or setresuid()
+function.  This flag is I<off> by default.
+
+=item targetpw
+
+If set, B<sudo> will prompt for the password of the user specified by
+the B<-u> flag (defaults to C<root>) instead of the password of the
+invoking user.  Note that this precludes the use of a uid not listed
+in the passwd database as an argument to the B<-u> flag.
+This flag is I<off> by default.
+
+=item tty_tickets
+
+If set, users must authenticate on a per-tty basis.  Normally,
+B<sudo> uses a directory in the ticket dir with the same name as
+the user running it.  With this flag enabled, B<sudo> will use a
+file named for the tty the user is logged in on in that directory.
+This flag is I<@tty_tickets@> by default.
+
+=item use_loginclass
+
+If set, B<sudo> will apply the defaults specified for the target user's
+login class if one exists.  Only available if B<sudo> is configured with
+the --with-logincap option.  This flag is I<off> by default.
+
+=back
+
+B<Integers>:
+
+=over 12
+
+=item passwd_tries
+
+The number of tries a user gets to enter his/her password before
+B<sudo> logs the failure and exits.  The default is C<@passwd_tries@>.
+
+=back
+
+B<Integers that can be used in a boolean context>:
+
+=over 12
+
+=item loglinelen
+
+Number of characters per line for the file log.  This value is used
+to decide when to wrap lines for nicer log files.  This has no
+effect on the syslog log file, only the file log.  The default is
+C<@loglen@> (use 0 or negate the option to disable word wrap).
+
+=item passwd_timeout
+
+Number of minutes before the B<sudo> password prompt times out.
+The default is C<@password_timeout@>; set this to C<0> for no password timeout.
+
+=item timestamp_timeout
+
+Number of minutes that can elapse before B<sudo> will ask for a
+passwd again.  The default is C<@timeout@>.  Set this to C<0> to always
+prompt for a password.
+If set to a value less than C<0> the user's timestamp will never
+expire.  This can be used to allow users to create or delete their
+own timestamps via C<sudo -v> and C<sudo -k> respectively.
+
+=item umask
+
+Umask to use when running the command.  Negate this option or set
+it to 0777 to preserve the user's umask.  The default is C<@sudo_umask@>.
+
+=back
+
+B<Strings>:
+
+=over 12
+
+=item badpass_message
+
+Message that is displayed if a user enters an incorrect password.
+The default is C<@badpass_message@> unless insults are enabled.
+
+=item editor
+
+A colon (':') separated list of editors allowed to be used with
+B<visudo>.  B<visudo> will choose the editor that matches the user's
+EDITOR environment variable if possible, or the first editor in the
+list that exists and is executable.  The default is the path to vi
+on your system.
+
+=item mailsub
+
+Subject of the mail sent to the I<mailto> user. The escape C<%h>
+will expand to the hostname of the machine.
+Default is C<@mailsub@>.
+
+=item noexec_file
+
+Path to a shared library containing dummy versions of the execv(),
+execve() and fexecve() library functions that just return an error.
+This is used to implement the I<noexec> functionality on systems that
+support C<LD_PRELOAD> or its equivalent.  Defaults to F<@noexec_file@>.
+
+=item passprompt
+
+The default prompt to use when asking for a password; can be overridden
+via the B<-p> option or the C<SUDO_PROMPT> environment variable.
+The following percent (`C<%>') escapes are supported:
+
+=over 8
+
+=item C<%H>
+
+expanded to the local hostname including the domain name
+(on if the machine's hostname is fully qualified or the I<fqdn>
+option is set)
+
+=item C<%h>
+
+expanded to the local hostname without the domain name
+
+=item C<%U>
+
+expanded to the login name of the user the command will
+be run as (defaults to root)
+
+=item C<%u>
+
+expanded to the invoking user's login name
+
+=item C<%%>
+
+two consecutive C<%> characters are collapsed into a single C<%> character
+
+=back
+
+The default value is C<@passprompt@>.
+
+=item runas_default
+
+The default user to run commands as if the B<-u> flag is not specified
+on the command line.  This defaults to C<@runas_default@>.
+Note that if I<runas_default> is set it B<must> occur before
+any C<Runas_Alias> specifications.
+
+=item syslog_badpri
+
+Syslog priority to use when user authenticates unsuccessfully.
+Defaults to C<@badpri@>.
+
+=item syslog_goodpri
+
+Syslog priority to use when user authenticates successfully.
+Defaults to C<@goodpri@>.
+
+=item timestampdir
+
+The directory in which B<sudo> stores its timestamp files.
+The default is F<@timedir@>.
+
+=item timestampowner
+
+The owner of the timestamp directory and the timestamps stored therein.
+The default is C<root>.
+
+=back
+
+B<Strings that can be used in a boolean context>:
+
+=over 12
+
+=item exempt_group
+
+Users in this group are exempt from password and PATH requirements.
+This is not set by default.
+
+=item lecture
+
+This option controls when a short lecture will be printed along with
+the password prompt.  It has the following possible values:
+
+=over 8
+
+=item always
+
+Always lecture the user.
+
+=item never
+
+Never lecture the user.
+
+=item once
+
+Only lecture the user the first time they run B<sudo>.
+
+=back
+
+If no value is specified, a value of I<once> is implied.
+Negating the option results in a value of I<never> being used.
+The default value is I<@lecture@>.
+
+=item lecture_file
+
+Path to a file containing an alternate B<sudo> lecture that will
+be used in place of the standard lecture if the named file exists.
+By default, B<sudo> uses a built-in lecture.
+
+=item listpw
+
+This option controls when a password will be required when a
+user runs B<sudo> with the B<-l> flag.  It has the following possible values:
+
+=over 8
+
+=item all
+
+All the user's I<sudoers> entries for the current host must have
+the C<NOPASSWD> flag set to avoid entering a password.
+
+=item always
+
+The user must always enter a password to use the B<-l> flag.
+
+=item any
+
+At least one of the user's I<sudoers> entries for the current host
+must have the C<NOPASSWD> flag set to avoid entering a password.
+
+=item never
+
+The user need never enter a password to use the B<-l> flag.
+
+=back
+
+If no value is specified, a value of I<any> is implied.
+Negating the option results in a value of I<never> being used.
+The default value is I<any>.
+
+=item logfile
+
+Path to the B<sudo> log file (not the syslog log file).  Setting a path
+turns on logging to a file; negating this option turns it off.
+By default, B<sudo> logs via syslog.
+
+=item mailerflags
+
+Flags to use when invoking mailer. Defaults to B<-t>.
+
+=item mailerpath
+
+Path to mail program used to send warning mail.
+Defaults to the path to sendmail found at configure time.
+
+=item mailto
+
+Address to send warning and error mail to.  The address should
+be enclosed in double quotes (C<">) to protect against B<sudo>
+interpreting the C<@> sign.  Defaults to C<@mailto@>.
+
+=item syslog
+
+Syslog facility if syslog is being used for logging (negate to
+disable syslog logging).  Defaults to C<@logfac@>.
+
+=item verifypw
+
+This option controls when a password will be required when a user runs
+B<sudo> with the B<-v> flag.  It has the following possible values:
+
+=over 8
+
+=item all
+
+All the user's I<sudoers> entries for the current host must have
+the C<NOPASSWD> flag set to avoid entering a password.
+
+=item always
+
+The user must always enter a password to use the B<-v> flag.
+
+=item any
+
+At least one of the user's I<sudoers> entries for the current host
+must have the C<NOPASSWD> flag set to avoid entering a password.
+
+=item never
+
+The user need never enter a password to use the B<-v> flag.
+
+=back
+
+If no value is specified, a value of I<all> is implied.
+Negating the option results in a value of I<never> being used.
+The default value is I<all>.
+
+=back
+
+B<Lists that can be used in a boolean context>:
+
+=over 12
+
+=item env_check
+
+Environment variables to be removed from the user's environment if
+the variable's value contains C<%> or C</> characters.  This can
+be used to guard against printf-style format vulnerabilities in
+poorly-written programs.  The argument may be a double-quoted,
+space-separated list or a single value without double-quotes.  The
+list can be replaced, added to, deleted from, or disabled by using
+the C<=>, C<+=>, C<-=>, and C<!> operators respectively.  Regardless
+of whether the C<env_reset> option is enabled or disabled, variables
+specified by C<env_check> will be preserved in the environment if
+they pass the aforementioned check.  The default list of environment
+variables to check is displayed when B<sudo> is run by root with
+the I<-V> option.
+
+=item env_delete
+
+Environment variables to be removed from the user's environment.
+The argument may be a double-quoted, space-separated list or a
+single value without double-quotes.  The list can be replaced, added
+to, deleted from, or disabled by using the C<=>, C<+=>, C<-=>, and
+C<!> operators respectively.  The default list of environment
+variables to remove is displayed when B<sudo> is run by root with the
+I<-V> option.  Note that many operating systems will remove potentially
+dangerous variables from the environment of any setuid process (such
+as B<sudo>).
+
+=item env_keep
+
+Environment variables to be preserved in the user's environment
+when the I<env_reset> option is in effect.  This allows fine-grained
+control over the environment B<sudo>-spawned processes will receive.
+The argument may be a double-quoted, space-separated list or a
+single value without double-quotes.  The list can be replaced, added
+to, deleted from, or disabled by using the C<=>, C<+=>, C<-=>, and
+C<!> operators respectively.  The default list of variables to keep
+is displayed when B<sudo> is run by root with the I<-V> option.
+
+=back
+
+When logging via L<syslog(3)>, B<sudo> accepts the following values
+for the syslog facility (the value of the B<syslog> Parameter):
+B<authpriv> (if your OS supports it), B<auth>, B<daemon>, B<user>,
+B<local0>, B<local1>, B<local2>, B<local3>, B<local4>, B<local5>,
+B<local6>, and B<local7>.  The following syslog priorities are
+supported: B<alert>, B<crit>, B<debug>, B<emerg>, B<err>, B<info>,
+B<notice>, and B<warning>.
+
+=head1 FILES
+
+ @sysconfdir@/sudoers		List of who can run what
+ /etc/group		Local groups file
+ /etc/netgroup		List of network groups
+
+=head1 EXAMPLES
+
+Since the I<sudoers> file is parsed in a single pass, order is
+important.  In general, you should structure I<sudoers> such that
+the C<Host_Alias>, C<User_Alias>, and C<Cmnd_Alias> specifications
+come first, followed by any C<Default_Entry> lines, and finally the
+C<Runas_Alias> and user specifications.  The basic rule of thumb
+is you cannot reference an Alias that has not already been defined.
+
+Below are example I<sudoers> entries.  Admittedly, some of
+these are a bit contrived.  First, we define our I<aliases>:
+
+ # User alias specification
+ User_Alias	FULLTIMERS = millert, mikef, dowdy
+ User_Alias	PARTTIMERS = bostley, jwfox, crawl
+ User_Alias	WEBMASTERS = will, wendy, wim
+
+ # Runas alias specification
+ Runas_Alias	OP = root, operator
+ Runas_Alias	DB = oracle, sybase
+
+ # Host alias specification
+ Host_Alias	SPARC = bigtime, eclipse, moet, anchor :\
+		SGI = grolsch, dandelion, black :\
+		ALPHA = widget, thalamus, foobar :\
+		HPPA = boa, nag, python
+ Host_Alias	CUNETS = 128.138.0.0/255.255.0.0
+ Host_Alias	CSNETS = 128.138.243.0, 128.138.204.0/24, 128.138.242.0
+ Host_Alias	SERVERS = master, mail, www, ns
+ Host_Alias	CDROM = orion, perseus, hercules
+
+ # Cmnd alias specification
+ Cmnd_Alias	DUMPS = /usr/bin/mt, /usr/sbin/dump, /usr/sbin/rdump,\
+			/usr/sbin/restore, /usr/sbin/rrestore
+ Cmnd_Alias	KILL = /usr/bin/kill
+ Cmnd_Alias	PRINTING = /usr/sbin/lpc, /usr/bin/lprm
+ Cmnd_Alias	SHUTDOWN = /usr/sbin/shutdown
+ Cmnd_Alias	HALT = /usr/sbin/halt
+ Cmnd_Alias	REBOOT = /usr/sbin/reboot
+ Cmnd_Alias	SHELLS = /usr/bin/sh, /usr/bin/csh, /usr/bin/ksh, \
+			 /usr/local/bin/tcsh, /usr/bin/rsh, \
+			 /usr/local/bin/zsh
+ Cmnd_Alias	SU = /usr/bin/su
+
+Here we override some of the compiled in default values.  We want
+B<sudo> to log via L<syslog(3)> using the I<auth> facility in all
+cases.  We don't want to subject the full time staff to the B<sudo>
+lecture, user B<millert> need not give a password, and we don't
+want to reset the C<LOGNAME>, C<USER> or C<USERNAME> environment
+variables when running commands as root.  Additionally, on the
+machines in the I<SERVERS> C<Host_Alias>, we keep an additional
+local log file and make sure we log the year in each log line since
+the log entries will be kept around for several years.
+
+ # Override built-in defaults
+ Defaults		syslog=auth
+ Defaults>root		!set_logname
+ Defaults:FULLTIMERS	!lecture
+ Defaults:millert	!authenticate
+ Defaults@SERVERS	log_year, logfile=/var/log/sudo.log
+ Defaults!PAGERS	noexec
+
+The I<User specification> is the part that actually determines who may
+run what.
+
+ root		ALL = (ALL) ALL
+ %wheel		ALL = (ALL) ALL
+
+We let B<root> and any user in group B<wheel> run any command on any
+host as any user.
+
+ FULLTIMERS	ALL = NOPASSWD: ALL
+
+Full time sysadmins (B<millert>, B<mikef>, and B<dowdy>) may run any
+command on any host without authenticating themselves.
+
+ PARTTIMERS	ALL = ALL
+
+Part time sysadmins (B<bostley>, B<jwfox>, and B<crawl>) may run any
+command on any host but they must authenticate themselves first
+(since the entry lacks the C<NOPASSWD> tag).
+
+ jack		CSNETS = ALL
+
+The user B<jack> may run any command on the machines in the I<CSNETS> alias
+(the networks C<128.138.243.0>, C<128.138.204.0>, and C<128.138.242.0>).
+Of those networks, only C<128.138.204.0> has an explicit netmask (in
+CIDR notation) indicating it is a class C network.  For the other
+networks in I<CSNETS>, the local machine's netmask will be used
+during matching.
+
+ lisa		CUNETS = ALL
+
+The user B<lisa> may run any command on any host in the I<CUNETS> alias
+(the class B network C<128.138.0.0>).
+
+ operator	ALL = DUMPS, KILL, SHUTDOWN, HALT, REBOOT, PRINTING,\
+		sudoedit /etc/printcap, /usr/oper/bin/
+
+The B<operator> user may run commands limited to simple maintenance.
+Here, those are commands related to backups, killing processes, the
+printing system, shutting down the system, and any commands in the
+directory F</usr/oper/bin/>.
+
+ joe		ALL = /usr/bin/su operator
+
+The user B<joe> may only L<su(1)> to operator.
+
+ pete		HPPA = /usr/bin/passwd [A-z]*, !/usr/bin/passwd root
+
+The user B<pete> is allowed to change anyone's password except for
+root on the I<HPPA> machines.  Note that this assumes L<passwd(1)>
+does not take multiple usernames on the command line.
+
+ bob		SPARC = (OP) ALL : SGI = (OP) ALL
+
+The user B<bob> may run anything on the I<SPARC> and I<SGI> machines
+as any user listed in the I<OP> C<Runas_Alias> (B<root> and B<operator>).
+
+ jim		+biglab = ALL
+
+The user B<jim> may run any command on machines in the I<biglab> netgroup.
+B<sudo> knows that "biglab" is a netgroup due to the '+' prefix.
+
+ +secretaries	ALL = PRINTING, /usr/bin/adduser, /usr/bin/rmuser
+
+Users in the B<secretaries> netgroup need to help manage the printers
+as well as add and remove users, so they are allowed to run those
+commands on all machines.
+
+ fred		ALL = (DB) NOPASSWD: ALL
+
+The user B<fred> can run commands as any user in the I<DB> C<Runas_Alias>
+(B<oracle> or B<sybase>) without giving a password.
+
+ john		ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
+
+On the I<ALPHA> machines, user B<john> may su to anyone except root
+but he is not allowed to give L<su(1)> any flags.
+
+ jen		ALL, !SERVERS = ALL
+
+The user B<jen> may run any command on any machine except for those
+in the I<SERVERS> C<Host_Alias> (master, mail, www and ns).
+
+ jill		SERVERS = /usr/bin/, !SU, !SHELLS
+
+For any machine in the I<SERVERS> C<Host_Alias>, B<jill> may run
+any commands in the directory /usr/bin/ except for those commands
+belonging to the I<SU> and I<SHELLS> C<Cmnd_Aliases>.
+
+ steve		CSNETS = (operator) /usr/local/op_commands/
+
+The user B<steve> may run any command in the directory /usr/local/op_commands/
+but only as user operator.
+
+ matt		valkyrie = KILL
+
+On his personal workstation, valkyrie, B<matt> needs to be able to
+kill hung processes.
+
+ WEBMASTERS	www = (www) ALL, (root) /usr/bin/su www
+
+On the host www, any user in the I<WEBMASTERS> C<User_Alias> (will,
+wendy, and wim), may run any command as user www (which owns the
+web pages) or simply L<su(1)> to www.
+
+ ALL		CDROM = NOPASSWD: /sbin/umount /CDROM,\
+		/sbin/mount -o nosuid\,nodev /dev/cd0a /CDROM
+
+Any user may mount or unmount a CD-ROM on the machines in the CDROM
+C<Host_Alias> (orion, perseus, hercules) without entering a password.
+This is a bit tedious for users to type, so it is a prime candidate
+for encapsulating in a shell script.
+
+=head1 SECURITY NOTES
+
+It is generally not effective to "subtract" commands from C<ALL>
+using the '!' operator.  A user can trivially circumvent this
+by copying the desired command to a different name and then
+executing that.  For example:
+
+    bill	ALL = ALL, !SU, !SHELLS
+
+Doesn't really prevent B<bill> from running the commands listed in
+I<SU> or I<SHELLS> since he can simply copy those commands to a
+different name, or use a shell escape from an editor or other
+program.  Therefore, these kind of restrictions should be considered
+advisory at best (and reinforced by policy).
+
+=head1 PREVENTING SHELL ESCAPES
+
+Once B<sudo> executes a program, that program is free to do whatever
+it pleases, including run other programs.  This can be a security
+issue since it is not uncommon for a program to allow shell escapes,
+which lets a user bypass B<sudo>'s access control and logging.
+Common programs that permit shell escapes include shells (obviously),
+editors, paginators, mail and terminal programs.
+
+There are two basic approaches to this problem:
+
+=over 10
+
+=item restrict
+
+Avoid giving users access to commands that allow the user to run
+arbitrary commands.  Many editors have a restricted mode where shell
+escapes are disabled, though B<sudoedit> is a better solution to
+running editors via B<sudo>.  Due to the large number of programs that
+offer shell escapes, restricting users to the set of programs that
+do not if often unworkable.
+
+=item noexec
+
+Many systems that support shared libraries have the ability to
+override default library functions by pointing an environment
+variable (usually C<LD_PRELOAD>) to an alternate shared library.
+On such systems, B<sudo>'s I<noexec> functionality can be used to
+prevent a program run by B<sudo> from executing any other programs.
+Note, however, that this applies only to native dynamically-linked
+executables.  Statically-linked executables and foreign executables
+running under binary emulation are not affected.
+
+To tell whether or not B<sudo> supports I<noexec>, you can run
+the following as root:
+
+    sudo -V | grep "dummy exec"
+
+If the resulting output contains a line that begins with:
+
+    File containing dummy exec functions:
+
+then B<sudo> may be able to replace the exec family of functions
+in the standard library with its own that simply return an error.
+Unfortunately, there is no foolproof way to know whether or not
+I<noexec> will work at compile-time.  I<noexec> should work on
+SunOS, Solaris, *BSD, Linux, IRIX, Tru64 UNIX, MacOS X, and HP-UX
+11.x.  It is known B<not> to work on AIX and UnixWare.  I<noexec>
+is expected to work on most operating systems that support the
+C<LD_PRELOAD> environment variable.  Check your operating system's
+manual pages for the dynamic linker (usually ld.so, ld.so.1, dyld,
+dld.sl, rld, or loader) to see if C<LD_PRELOAD> is supported.
+
+To enable I<noexec> for a command, use the C<NOEXEC> tag as documented
+in the User Specification section above.  Here is that example again:
+
+ aaron	shanty = NOEXEC: /usr/bin/more, /usr/bin/vi
+
+This allows user B<aaron> to run F</usr/bin/more> and F</usr/bin/vi>
+with I<noexec> enabled.  This will prevent those two commands from
+executing other commands (such as a shell).  If you are unsure
+whether or not your system is capable of supporting I<noexec> you
+can always just try it out and see if it works.
+
+=back
+
+Note that restricting shell escapes is not a panacea.  Programs
+running as root are still capable of many potentially hazardous
+operations (such as changing or overwriting files) that could lead
+to unintended privilege escalation.  In the specific case of an
+editor, a safer approach is to give the user permission to run
+B<sudoedit>.
+
+=head1 SEE ALSO
+
+L<rsh(1)>, L<su(1)>, L<fnmatch(3)>, L<sudo(8)>, L<visudo(8)>
+
+=head1 CAVEATS
+
+The I<sudoers> file should B<always> be edited by the B<visudo>
+command which locks the file and does grammatical checking. It is
+imperative that I<sudoers> be free of syntax errors since B<sudo>
+will not run with a syntactically incorrect I<sudoers> file.
+
+When using netgroups of machines (as opposed to users), if you
+store fully qualified hostnames in the netgroup (as is usually the
+case), you either need to have the machine's hostname be fully qualified
+as returned by the C<hostname> command or use the I<fqdn> option in
+I<sudoers>.
+
+=head1 BUGS
+
+If you feel you have found a bug in B<sudo>, please submit a bug report
+at http://www.sudo.ws/sudo/bugs/
+
+=head1 SUPPORT
+
+Limited free support is available via the sudo-users mailing list,
+see http://www.sudo.ws/mailman/listinfo/sudo-users to subscribe or
+search the archives.
+
+=head1 DISCLAIMER
+
+B<sudo> is provided ``AS IS'' and any express or implied warranties,
+including, but not limited to, the implied warranties of merchantability
+and fitness for a particular purpose are disclaimed.  See the LICENSE
+file distributed with B<sudo> or http://www.sudo.ws/sudo/license.html
+for complete details.

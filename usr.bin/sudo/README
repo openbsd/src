@@ -1,4 +1,4 @@
-This is Sudo version 1.6.8
+This is Sudo version 1.6.9
 
 The sudo philosophy
 ===================
@@ -51,15 +51,11 @@ mirror.
 Building the release
 ====================
 Please read the installation guide in the `INSTALL' file before
-trying to build sudo.  The `RUNSON' file contains a list of of
-platforms that this version of sudo is known to work on.  If you
-can add to this list, please send mail to sudo@sudo.ws.  If
-something goes wrong you may want to refer to the `TROUBLESHOOTING'
-file.
+trying to build sudo.
 
 Copyright
 =========
-Sudo is distributed under a BSD-style license.
+Sudo is distributed under an ISC-style license.
 Please refer to the `LICENSE' file included with the release for details.
 
 Mailing lists

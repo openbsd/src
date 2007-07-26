@@ -21,12 +21,6 @@ the POSIX sysconf(2) it will be used instead of getdtablesize(2).
 ulimit(2) or getrlimit(2) can also be used on some OS's.  If all
 else fails you can use the value of NOFILE in <sys/param.h>.
 
-Also, some operating systems have a broken implementation of POSIX
-saved IDs.  If sudo prints the error message "seteuid(0) failed,
-your operating system may have broken POSIX saved ID support" this
-means saved IDs are not implemented properly.  You should run
-configure with the "--disable-saved-ids" option and rebuild sudo.
-
 Sudo tries to clear the environment of dangerous environment variables
 such as LD_* to prevent shared library spoofing.  If you are porting
 sudo to a new OS that has shared libraries you'll want to mask out

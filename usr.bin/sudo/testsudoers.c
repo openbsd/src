@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@
 
 #define _SUDO_MAIN
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,7 +75,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88 2004/08/02 18:44:58 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88.2.4 2007/06/12 01:43:01 millert Exp $";
 #endif /* lint */
 
 
@@ -84,7 +84,6 @@ static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88 2004/08/02 18:44:58 mil
  */
 void init_parser	__P((void));
 void dumpaliases	__P((void));
-void set_perms_dummy	__P((int));
 
 /*
  * Globals
@@ -97,7 +96,6 @@ struct interface *interfaces;
 struct sudo_user sudo_user;
 extern int clearaliases;
 extern int pedantic;
-void (*set_perms) __P((int)) = set_perms_dummy;
 
 /*
  * Returns TRUE if "s" has shell meta characters in it,
@@ -300,7 +298,7 @@ netgr_matches(netgr, host, shost, user)
 	domain = (char *) emalloc(MAXHOSTNAMELEN);
 
 	if (getdomainname(domain, MAXHOSTNAMELEN) != 0 || *domain == '\0') {
-	    free(domain);
+	    efree(domain);
 	    domain = NULL;
 	}
     }
@@ -317,7 +315,7 @@ netgr_matches(netgr, host, shost, user)
 }
 
 void
-set_perms_dummy(i)
+set_perms(i)
     int i;
 {
     return;

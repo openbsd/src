@@ -47,6 +47,9 @@
 /* Define to 1 if you use AFS. */
 #undef HAVE_AFS
 
+/* Define to 1 if you use AIX general authentication. */
+#undef HAVE_AIXAUTH
+
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 
@@ -57,8 +60,11 @@
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
-/* Define to 1 if you use AIX general authentication. */
+/* Define to 1 if you have the `authenticate' function. */
 #undef HAVE_AUTHENTICATE
+
+/* Define to 1 if you have the `auth_challenge' function. */
+#undef HAVE_AUTH_CHALLENGE
 
 /* Define to 1 if you have the `bigcrypt' function. */
 #undef HAVE_BIGCRYPT
@@ -87,6 +93,12 @@
 
 /* Define to 1 if you have the <err.h> header file. */
 #undef HAVE_ERR_H
+
+/* Define to 1 if your glob.h defines the GLOB_BRACE and GLOB_TILDE flags. */
+#undef HAVE_EXTENDED_GLOB
+
+/* Define to 1 if your system has the F_CLOSEM fcntl. */
+#undef HAVE_FCNTL_CLOSEM
 
 /* Define to 1 if you have the `flock' function. */
 #undef HAVE_FLOCK
@@ -122,6 +134,9 @@
 /* Define to 1 if you have the `getdomainname' function. */
 #undef HAVE_GETDOMAINNAME
 
+/* Define to 1 if you have the `getgroups' function. */
+#undef HAVE_GETGROUPS
+
 /* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
 
@@ -146,6 +161,9 @@
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the `glob' function. */
+#undef HAVE_GLOB
 
 /* Define to 1 if your Kerberos is Heimdal. */
 #undef HAVE_HEIMDAL
@@ -179,6 +197,12 @@
 /* Define to 1 if you use Kerberos V. */
 #undef HAVE_KERB5
 
+/* Define to 1 if you have the `krb5_init_secure_context' function. */
+#undef HAVE_KRB5_INIT_SECURE_CONTEXT
+
+/* Define to 1 if you have the `krb5_verify_user' function. */
+#undef HAVE_KRB5_VERIFY_USER
+
 /* Define to 1 if your LDAP needs <lber.h>. (OpenLDAP does not) */
 #undef HAVE_LBER_H
 
@@ -200,6 +224,9 @@
 /* Define if your compiler supports the "long long" type. */
 #undef HAVE_LONG_LONG
 
+/* Define to 1 if you have the `lrand48' function. */
+#undef HAVE_LRAND48
+
 /* Define to 1 if you have the `lsearch' function. */
 #undef HAVE_LSEARCH
 
@@ -215,8 +242,14 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `memrchr' function. */
+#undef HAVE_MEMRCHR
+
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
+
+/* Define to 1 if you have the `mkstemp' function. */
+#undef HAVE_MKSTEMP
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
@@ -236,14 +269,26 @@
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
+/* Define to 1 if you have the <project.h> header file. */
+#undef HAVE_PROJECT_H
+
+/* Define to 1 if you have the `random' function. */
+#undef HAVE_RANDOM
+
 /* Define if your struct sockadr has an sa_len field. */
 #undef HAVE_SA_LEN
 
 /* Define to 1 if you use SecurID for authentication. */
 #undef HAVE_SECURID
 
+/* Define to 1 if you have the <security/pam_appl.h> header file. */
+#undef HAVE_SECURITY_PAM_APPL_H
+
 /* Define to 1 if you have the `seteuid' function. */
 #undef HAVE_SETEUID
+
+/* Define to 1 if you have the `setlocale' function. */
+#undef HAVE_SETLOCALE
 
 /* Define to 1 if you have the `setresuid' function. */
 #undef HAVE_SETRESUID
@@ -259,6 +304,9 @@
 
 /* Define to 1 if you use SIA authentication. */
 #undef HAVE_SIA
+
+/* Define to 1 if you have the `sia_ses_init' function. */
+#undef HAVE_SIA_SES_INIT
 
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
@@ -353,8 +401,8 @@
 /* Define to 1 if you have struct timespec in sys/time.h */
 #undef HAVE_TIMESPEC
 
-/* Define to 1 if you have a timespecsub macro or function that takes
-   two arguments (not three) */
+/* Define to 1 if you have a timespecsub macro or function that takes two
+   arguments (not three) */
 #undef HAVE_TIMESPECSUB2
 
 /* Define to 1 if you have the `tzset' function. */
@@ -408,6 +456,10 @@
 /* Define to 1 if you want a two line OTP (S/Key or OPIE) prompt. */
 #undef LONG_OTP_PROMPT
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* The subject of the mail sent by sudo to the MAILTO user/address. */
 #undef MAILSUBJECT
 
@@ -433,9 +485,6 @@
 
 /* Define to 1 if root should not be allowed to use sudo. */
 #undef NO_ROOT_SUDO
-
-/* Define to avoid using POSIX saved ids. */
-#undef NO_SAVED_IDS
 
 /* The default password prompt. */
 #undef PASSPROMPT
@@ -481,9 +530,9 @@
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.
-        STACK_DIRECTION > 0 => grows toward higher addresses
-        STACK_DIRECTION < 0 => grows toward lower addresses
-        STACK_DIRECTION = 0 => direction of growth unknown */
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
 #undef STACK_DIRECTION
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -498,12 +547,11 @@
 /* The number of minutes before sudo asks for a password again. */
 #undef TIMEOUT
 
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
 /* The number of tries a user gets to enter their password. */
 #undef TRIES_FOR_PASSWORD
-
-/* Define to 1 if you wish to use execv() instead of execvp() when running
-   programs. */
-#undef USE_EXECV
 
 /* Define to 1 if you want to insult the user for entering an incorrect
    password. */
@@ -522,20 +570,14 @@
 /* Define to avoid using the passwd/shadow file for authentication. */
 #undef WITHOUT_PASSWD
 
-/* Enable non-POSIX extensions on AIX. */
-#ifndef _ALL_SOURCE
-# undef _ALL_SOURCE
-#endif
+/* Path to the ldap.conf file */
+#undef _PATH_LDAP_CONF
 
-/* Enable non-POSIX extensions on ConvexOS. */
-#ifndef _CONVEX_SOURCE
-# undef _CONVEX_SOURCE
-#endif
+/* Path to the ldap.secret file */
+#undef _PATH_LDAP_SECRET
 
-/* Enable GNU extensions on systems that have them. */
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE	1
-#endif
+/* The fully qualified pathname of sudo_noexec.so */
+#undef _PATH_SUDO_NOEXEC
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
@@ -570,14 +612,16 @@
 
 /*
  * Macros to pull sec and nsec parts of mtime from struct stat.
+ * We need to be able to convert between timeval and timespec
+ * so the last 3 digits of tv_nsec are not significant.
  */
 #ifdef HAVE_ST_MTIM
 # define mtim_getsec(_x)	((_x).st_mtim.tv_sec)
-# define mtim_getnsec(_x)	((_x).st_mtim.tv_nsec)
+# define mtim_getnsec(_x)	(((_x).st_mtim.tv_nsec / 1000) * 1000)
 #else
 # ifdef HAVE_ST_MTIMESPEC
 #  define mtim_getsec(_x)	((_x).st_mtimespec.tv_sec)
-#  define mtim_getnsec(_x)	((_x).st_mtimespec.tv_nsec)
+#  define mtim_getnsec(_x)	(((_x).st_mtimespec.tv_nsec / 1000) * 1000)
 # else
 #  define mtim_getsec(_x)	((_x).st_mtime)
 #  define mtim_getnsec(_x)	(0)
@@ -601,12 +645,6 @@
 #else
 # define stat_sudoers	lstat
 #endif
-
-#ifdef USE_EXECV
-# define EXECV	execv
-#else
-# define EXECV	execvp
-#endif /* USE_EXECV */
 
 /* Macros to set/clear/test flags. */
 #undef SET

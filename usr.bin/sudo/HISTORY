@@ -7,7 +7,7 @@ version, credited to Phil Betchel, Cliff Spencer, Gretchen Phillips,
 John LoVerso and Don Gworek, was posted to the net.sources newsgroup
 in December of 1985.
 
-In the Summer of 1986, Garth Snyder released and enhanced version
+In the Summer of 1986, Garth Snyder released an enhanced version
 of sudo. For the next 5 years, sudo was fed and watered by a handful
 of folks at CU-Boulder, including Bob Coggeshall, Bob Manchek, and
 Trent Hein.
@@ -33,10 +33,12 @@ In 1999, the "CU" prefix was dropped from the name since there has
 been no formal release of sudo from "The Root Group" since 1991
 (the original authors now work elsewhere).  As of version 1.6, Sudo
 no longer contains any of the original "Root Group" code and is
-available with a BSD-style license.
+available under an ISC-style license.
 
 In 2004, Todd incorporated as GratiSoft, Inc. to provide commercial
 support and enhancements to the sudo community.
+
+In 2005, GratiSoft was put on hold.
 
 sudo, in its current form, is maintained by:
 

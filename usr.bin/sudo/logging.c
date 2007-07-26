@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@
 # include <floss.h>
 #endif
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,7 +60,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: logging.c,v 1.168 2004/05/17 20:08:46 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: logging.c,v 1.168.2.11 2007/07/24 15:52:37 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -132,46 +132,45 @@ do_syslog(pri, msg)
     int pri;
     char *msg;
 {
-    size_t count;
-    char *p;
-    char *tmp;
-    char save;
+    size_t len, maxlen;
+    char *p, *tmp, save;
+    const char *fmt;
+    const char fmt_first[] = "%8s : %s";
+    const char fmt_contd[] = "%8s : (command continued) %s";
 
     /*
      * Log the full line, breaking into multiple syslog(3) calls if necessary
      */
-    for (p = msg, count = 0; *p && count < strlen(msg) / MAXSYSLOGLEN + 1;
-	count++) {
-	if (strlen(p) > MAXSYSLOGLEN) {
+    fmt = fmt_first;
+    maxlen = MAXSYSLOGLEN - (sizeof(fmt_first) - 6 + strlen(user_name));
+    for (p = msg; *p != '\0'; ) {
+	len = strlen(p);
+	if (len > maxlen) {
 	    /*
 	     * Break up the line into what will fit on one syslog(3) line
-	     * Try to break on a word boundary if possible.
+	     * Try to avoid breaking words into several lines if possible.
 	     */
-	    for (tmp = p + MAXSYSLOGLEN; tmp > p && *tmp != ' '; tmp--)
-		;
-	    if (tmp <= p)
-		tmp = p + MAXSYSLOGLEN;
+	    tmp = memrchr(p, ' ', maxlen);
+	    if (tmp == NULL)
+		tmp = p + maxlen;
 
 	    /* NULL terminate line, but save the char to restore later */
 	    save = *tmp;
 	    *tmp = '\0';
 
-	    if (count == 0)
-		mysyslog(pri, "%8s : %s", user_name, p);
-	    else
-		mysyslog(pri, "%8s : (command continued) %s", user_name, p);
+	    mysyslog(pri, fmt, user_name, p);
 
 	    *tmp = save;			/* restore saved character */
 
-	    /* Eliminate leading whitespace */
-	    for (p = tmp; *p != ' ' && *p !='\0'; p++)
+	    /* Advance p and eliminate leading whitespace */
+	    for (p = tmp; *p == ' '; p++)
 		;
 	} else {
-	    if (count == 0)
-		mysyslog(pri, "%8s : %s", user_name, p);
-	    else
-		mysyslog(pri, "%8s : (command continued) %s", user_name, p);
+	    mysyslog(pri, fmt, user_name, p);
+	    p += len;
 	}
+	fmt = fmt_contd;
+	maxlen = MAXSYSLOGLEN - (sizeof(fmt_contd) - 6 + strlen(user_name));
     }
 }
 
@@ -193,12 +192,12 @@ do_logfile(msg)
 	easprintf(&full_line, "Can't open log file: %s: %s",
 	    def_logfile, strerror(errno));
 	send_mail(full_line);
-	free(full_line);
+	efree(full_line);
     } else if (!lock_file(fileno(fp), SUDO_LOCK)) {
 	easprintf(&full_line, "Can't lock log file: %s: %s",
 	    def_logfile, strerror(errno));
 	send_mail(full_line);
-	free(full_line);
+	efree(full_line);
     } else {
 	if (def_loglinelen == 0) {
 	    /* Don't pretty-print long log file lines (hard to grep) */
@@ -263,7 +262,7 @@ do_logfile(msg)
 		    beg = NULL;			/* exit condition */
 		}
 	    }
-	    free(full_line);
+	    efree(full_line);
 	}
 	(void) fflush(fp);
 	(void) lock_file(fileno(fp), SUDO_UNLOCK);
@@ -280,6 +279,7 @@ log_auth(status, inform_user)
     int status;
     int inform_user;
 {
+    char *evstr = NULL;
     char *message;
     char *logline;
     int pri;
@@ -301,9 +301,21 @@ log_auth(status, inform_user)
     else
 	message = "unknown error ; ";
 
-    easprintf(&logline, "%sTTY=%s ; PWD=%s ; USER=%s ; COMMAND=%s%s%s",
-	message, user_tty, user_cwd, *user_runas, user_cmnd,
-	user_args ? " " : "", user_args ? user_args : "");
+    if (sudo_user.env_vars != NULL) {
+	size_t len = 7; /* " ; ENV=" */
+	struct list_member *cur;
+	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next)
+	    len += strlen(cur->value) + 1;
+	evstr = emalloc(len);
+	strlcpy(evstr, " ; ENV=", len);
+	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next) {
+	    strlcat(evstr, cur->value, len);
+	    strlcat(evstr, " ", len);		/* NOTE: last one will fail */
+	}
+    }
+    easprintf(&logline, "%sTTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s%s%s",
+	message, user_tty, user_cwd, *user_runas, evstr ? evstr : "",
+	user_cmnd, user_args ? " " : "", user_args ? user_args : "");
 
     mail_auth(status, logline);		/* send mail based on status */
 
@@ -333,30 +345,29 @@ log_auth(status, inform_user)
     if (def_logfile)
 	do_logfile(logline);
 
-    free(logline);
+    efree(evstr);
+    efree(logline);
 }
 
 void
 #ifdef __STDC__
 log_error(int flags, const char *fmt, ...)
 #else
-log_error(va_alist)
+log_error(flags, fmt, va_alist)
+    int flags;
+    const char *fmt;
     va_dcl
 #endif
 {
     int serrno = errno;
     char *message;
     char *logline;
+    char *evstr = NULL;
     va_list ap;
 #ifdef __STDC__
     va_start(ap, fmt);
 #else
-    int flags;
-    const char *fmt;
-
     va_start(ap);
-    flags = va_arg(ap, int);
-    fmt = va_arg(ap, const char *);
 #endif
 
     /* Become root if we are not already to avoid user control */
@@ -367,35 +378,50 @@ log_error(va_alist)
     evasprintf(&message, fmt, ap);
     va_end(ap);
 
-    if (flags & MSG_ONLY)
+    if (sudo_user.env_vars != NULL) {
+	size_t len = 7; /* " ; ENV=" */
+	struct list_member *cur;
+	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next)
+	    len += strlen(cur->value) + 1;
+	evstr = emalloc(len);
+	strlcpy(evstr, " ; ENV=", len);
+	for (cur = sudo_user.env_vars; cur != NULL; cur = cur->next) {
+	    strlcat(evstr, cur->value, len);
+	    strlcat(evstr, " ", len);		/* NOTE: last one will fail */
+	}
+    }
+
+    if (ISSET(flags, MSG_ONLY))
 	logline = message;
-    else if (flags & USE_ERRNO) {
+    else if (ISSET(flags, USE_ERRNO)) {
 	if (user_args) {
 	    easprintf(&logline,
-		"%s: %s ; TTY=%s ; PWD=%s ; USER=%s ; COMMAND=%s %s",
+		"%s: %s ; TTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s %s",
 		message, strerror(serrno), user_tty, user_cwd, *user_runas,
-		user_cmnd, user_args);
+		evstr ? evstr : "", user_cmnd, user_args);
 	} else {
 	    easprintf(&logline,
-		"%s: %s ; TTY=%s ; PWD=%s ; USER=%s ; COMMAND=%s", message,
-		strerror(serrno), user_tty, user_cwd, *user_runas, user_cmnd);
+		"%s: %s ; TTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s", message,
+		strerror(serrno), user_tty, user_cwd, *user_runas,
+		evstr ? evstr : "", user_cmnd);
 	}
     } else {
 	if (user_args) {
 	    easprintf(&logline,
-		"%s ; TTY=%s ; PWD=%s ; USER=%s ; COMMAND=%s %s", message,
-		user_tty, user_cwd, *user_runas, user_cmnd, user_args);
+		"%s ; TTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s %s", message,
+		user_tty, user_cwd, *user_runas, evstr ? evstr : "",
+		user_cmnd, user_args);
 	} else {
 	    easprintf(&logline,
-		"%s ; TTY=%s ; PWD=%s ; USER=%s ; COMMAND=%s", message,
-		user_tty, user_cwd, *user_runas, user_cmnd);
+		"%s ; TTY=%s ; PWD=%s ; USER=%s%s ; COMMAND=%s", message,
+		user_tty, user_cwd, *user_runas, evstr ? evstr : "", user_cmnd);
 	}
     }
 
     /*
      * Tell the user.
      */
-    if (flags & USE_ERRNO)
+    if (ISSET(flags, USE_ERRNO))
 	warn("%s", message);
     else
 	warnx("%s", message);
@@ -403,7 +429,7 @@ log_error(va_alist)
     /*
      * Send a copy of the error via mail.
      */
-    if (!(flags & NO_MAIL))
+    if (!ISSET(flags, NO_MAIL))
 	send_mail(logline);
 
     /*
@@ -414,11 +440,11 @@ log_error(va_alist)
     if (def_logfile)
 	do_logfile(logline);
 
-    free(message);
+    efree(message);
     if (logline != message)
-	free(logline);
+	efree(logline);
 
-    if (!(flags & NO_EXIT))
+    if (!ISSET(flags, NO_EXIT))
 	exit(1);
 }
 
@@ -441,6 +467,7 @@ send_mail(line)
 	"HOME=/",
 	"PATH=/usr/bin:/bin",
 	"LOGNAME=root",
+	"USERNAME=root",
 	"USER=root",
 	NULL
     };
@@ -499,7 +526,7 @@ send_mail(line)
 		 * (so user cannot kill it) or as the user (for the paranoid).
 		 */
 #ifndef NO_ROOT_MAILER
-		set_perms(PERM_FULL_ROOT);
+		set_perms(PERM_ROOT);
 		execve(mpath, argv, root_envp);
 #else
 		set_perms(PERM_FULL_USER);
@@ -514,9 +541,8 @@ send_mail(line)
     mail = fdopen(pfd[1], "w");
 
     /* Pipes are all setup, send message via sendmail. */
-    (void) fprintf(mail, "Auto-Submitted: auto-generated\n"
-	"To: %s\nFrom: %s\nSubject: ",
-	def_mailto, user_name);
+    (void) fprintf(mail, "To: %s\nFrom: %s\nAuto-Submitted: %s\nSubject: ",
+	def_mailto, user_name, "auto-generated");
     for (p = def_mailsub; *p; p++) {
 	/* Expand escapes in the subject */
 	if (*p == '%' && *(p+1) != '%') {
@@ -538,9 +564,9 @@ send_mail(line)
 	get_timestr(), user_name, line);
     fclose(mail);
 
+    (void) sigprocmask(SIG_SETMASK, &oset, NULL);
     /* If mailer is done, wait for it now.  If not, we'll get it later.  */
     reapchild(SIGCHLD);
-    (void) sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
 /*

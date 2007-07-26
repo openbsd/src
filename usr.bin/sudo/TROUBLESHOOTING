@@ -17,13 +17,6 @@ A) Sudo must be setuid root to do its work.  You need to do something like
    your $PATH before the directory containing sudo.  If you are going
    to have '.' in your path you should make sure it is at the end.
 
-Q) Sudo compiles but when I run it I get "seteuid(0) failed, your operating
-   system may have broken POSIX saved ID support\nTry running configure with
-   --disable-saved-ids" and sudo quits.
-A) The operating system you are running probably has broken support for
-   POSIX saved IDs.  You should run configure with the "--disable-saved-ids"
-   option and rebuild sudo.
-
 Q) Sudo never gives me a chance to enter a password using PAM, it just
    says 'Sorry, try again.' three times and exits.
 A) You didn't setup PAM to work with sudo.  On Redhat Linux or Fedora
@@ -182,4 +175,5 @@ A) The default user sudo tries to run things as is always root, even if
    would achieve the desired result ofr the preceding sudoers fragment.
 
 Q) How do you pronounce `sudo'?
-A) soo-doo (for superuser do).
+A) The official pronunciation is soo-doo (for su "do").  However, an
+   alternate pronunciation, a homophone of "pseudo", is also common.

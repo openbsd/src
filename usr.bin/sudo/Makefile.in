@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
+# Copyright (c) 1996, 1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.253 2004/09/15 20:11:22 millert Exp $
+# $Sudo: Makefile.in,v 1.246.2.10 2007/07/26 14:05:55 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -100,11 +100,11 @@ PROGS = @PROGS@
 
 SRCS = alloc.c alloca.c check.c closefrom.c def_data.c defaults.c env.c err.c \
        fileops.c find_path.c fnmatch.c getcwd.c getprogname.c getspwuid.c \
-       gettime.c goodpath.c interfaces.c ldap.c lex.yy.c lsearch.c logging.c \
-       parse.c parse.lex parse.yacc set_perms.c sigaction.c snprintf.c \
-       strcasecmp.c strerror.c strlcat.c strlcpy.c sudo.c sudo_noexec.c \
-       sudo.tab.c sudo_edit.c testsudoers.c tgetpass.c utimes.c visudo.c \
-       zero_bytes.c $(AUTH_SRCS)
+       gettime.c glob.c goodpath.c interfaces.c ldap.c lex.yy.c lsearch.c \
+       logging.c memrchr.c mkstemp.c parse.c parse.lex parse.yacc set_perms.c \
+       sigaction.c snprintf.c strcasecmp.c strerror.c strlcat.c strlcpy.c \
+       sudo.c sudo_noexec.c sudo.tab.c sudo_edit.c testsudoers.c tgetpass.c \
+       utimes.c visudo.c zero_bytes.c $(AUTH_SRCS)
 
 AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 	    auth/kerb4.c auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
@@ -114,7 +114,7 @@ AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 HDRS = compat.h def_data.h defaults.h ins_2001.h ins_classic.h ins_csops.h \
        ins_goons.h insults.h interfaces.h logging.h parse.h sudo.h sudo.tab.h \
        version.h auth/sudo_auth.h emul/err.h emul/fnmatch.h emul/search.h \
-       emul/utime.h
+       emul/utime.h emul/glob.h emul/timespec.h
 
 AUTH_OBJS = sudo_auth.o @AUTH_OBJS@
 
@@ -130,17 +130,18 @@ TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6.8p9
+VERSION = 1.6.9p1
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES HISTORY INSTALL INSTALL.configure \
-	    LICENSE Makefile.in PORTING README README.LDAP RUNSON TODO \
-	    TROUBLESHOOTING UPGRADE aclocal.m4 acsite.m4 aixcrypt.exp \
-	    config.guess config.h.in config.sub configure configure.in \
-	    def_data.in fnmatch.3 indent.pro install-sh ltmain.sh mkdefaults \
-	    mkinstalldirs pathnames.h.in sample.pam sample.syslog.conf \
-	    sample.sudoers sudo.cat sudo.man.in sudo.pod sudoers sudoers.cat \
-	    sudoers.man.in sudoers.pod sudoers2ldif visudo.cat visudo.man.in \
-	    visudo.pod auth/API
+            LICENSE Makefile.in PORTING README README.LDAP TODO \
+            TROUBLESHOOTING UPGRADE aclocal.m4 acsite.m4 aixcrypt.exp \
+            config.guess config.h.in config.sub configure configure.in \
+            def_data.in fnmatch.3 indent.pro install-sh ltmain.sh \
+            mkdefaults mkinstalldirs pathnames.h.in sample.pam \
+            sample.syslog.conf sample.sudoers schema.OpenLDAP \
+            schema.iPlanet sudo.cat sudo.man.in sudo.pod sudoers \
+            sudoers.cat sudoers.man.in sudoers.pod sudoers2ldif \
+            visudo.cat visudo.man.in visudo.pod auth/API
 
 BINFILES= BUGS CHANGES HISTORY LICENSE README TODO TROUBLESHOOTING \
 	  UPGRADE install-sh mkinstalldirs sample.syslog.conf sample.sudoers \
@@ -179,6 +180,9 @@ visudo: $(VISUDOBJS) $(LIBOBJS)
 
 testsudoers: $(TESTOBJS) $(LIBOBJS)
 	$(CC) -o $@ $(TESTOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
+
+sudo_noexec.lo: $(srcdir)/sudo_noexec.c
+	$(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo_noexec.c
 
 sudo_noexec.la: sudo_noexec.lo
 	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ sudo_noexec.lo -avoid-version -rpath $(noexecdir)
@@ -224,7 +228,10 @@ sudo.tab.o: sudo.tab.c $(SUDODEP) parse.h sudo.tab.c sudo.tab.h
 defaults.o: defaults.c $(SUDODEP) def_data.c auth/sudo_auth.h
 fnmatch.o: fnmatch.c config.h compat.h emul/fnmatch.h
 getcwd.o: getcwd.c config.h compat.h
+glob.o: glob.c config.h compat.h emul/glob.h
 lsearch.o: lsearch.c config.h compat.h emul/search.h
+memrchr.o: memrchr.c config.h compat.h
+mkstemp.o: mkstemp.c config.h compat.h
 snprintf.o: snprintf.c config.h compat.h
 strcasecmp.o: strcasecmp.c config.h
 strlcat.o: strlcat.c config.h
@@ -232,6 +239,7 @@ strlcpy.o: strlcpy.c config.h
 strerror.o: strerror.c config.h
 utime.o: utime.c config.h pathnames.h compat.h emul/utime.h
 ldap.o: ldap.c $(SUDODEP) parse.h
+sudo_edit.o: sudo_edit.c $(SUDODEP)
 
 # Authentication functions live in "auth" dir and so need extra care
 sudo_auth.o: $(authdir)/sudo_auth.c $(AUTHDEP) $(INSDEP)

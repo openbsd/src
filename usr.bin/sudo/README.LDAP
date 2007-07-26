@@ -12,6 +12,8 @@ Some have attempted to workaround this by synchronizing changes via
 RCS/CVS/RSYNC/RDIST/RCP/SCP and even NFS.  Many have asked for a Hesiod, NIS,
 or LDAP patch for sudo, so here is my attempt at LDAP'izing sudo.
 
+For information on OpenLDAP, please see http://www.openldap.org/.
+
 Definitions
 ===========
 Many times the word 'Directory' is used in the document to refer to the LDAP
@@ -92,23 +94,21 @@ Design Features
 Build instructions
 ==================
 The most simplest way to build sudo with LDAP support is to include the
-'--with-ldap' option.  I recommend including the '--with-pam' option on those
-system with PAM so that if you decide to use LDAP for authentication, you won't
-need to recompile sudo.
+'--with-ldap' option.
 
-  $ ./configure --with-ldap --with-pam
+  $ ./configure --with-ldap
 
-If your ldap libraries and headers are in a non standard place, you will need
-to specify them at configure time.
+If your ldap libraries and headers are in a non-standard place, you will need
+to specify them at configure time.  E.g.
 
-  $ ./configure --with-ldap=/usr/local/ldapsdk --with-pam
+  $ ./configure --with-ldap=/usr/local/ldapsdk
 
-Sudo is tested against OpenLDAP's implementation.  Other LDAP implementations
-may require adding '-lldif' to SUDO_LIBS in the Makefile.
+Sudo is developed using OpenLDAP.  Other LDAP implementations may
+require adding '-lldif' to SUDO_LIBS in the Makefile.
 
-Your Mileage may vary.  Please let Aaron Spangler <aaron@spangler.ods.org>
-know what combinations worked best for your OS & LDAP Combinations so we can
-improve sudo.
+Your Mileage may vary.  Please let the sudo workers mailing list
+<sudo-workers@sudo.ws> know what combinations worked best for your
+OS and LDAP Combinations so we can improve sudo.
 
 More Build Notes:
 HP-UX 11.23 (gcc3) Galen Johnson <Galen.Johnson@sas.com>
@@ -116,69 +116,15 @@ HP-UX 11.23 (gcc3) Galen Johnson <Galen.Johnson@sas.com>
 
 Schema Changes
 ==============
-Add the following schema to your LDAP server so that it may contain sudoer
-content.  In OpenLDAP, simply place this into a new file and 'include' it
-in your slapd.conf and restart slapd.  For other LDAP servers, provide this
-to your LDAP Administrator.  Make sure to index the attribute 'sudoUser'.
+Add the appropriate schema to your LDAP server so that it may contain
+sudoers content.
 
+For OpenLDAP, simply copy schema.OpenLDAP to the schema directory
+(e.g. /etc/openldap/schema) and 'include' it in your slapd.conf and
+restart slapd.  For other LDAP servers, provide this to your LDAP
+Administrator.  Make sure to index the attribute 'sudoUser'.
 
-  #
-  #  schema file for sudo
-  #
-
-  attributetype ( 1.3.6.1.4.1.15953.9.1.1
-        NAME 'sudoUser'
-        DESC 'User(s) who may  run sudo'
-        EQUALITY caseExactIA5Match
-        SUBSTR caseExactIA5SubstringsMatch
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-  attributetype ( 1.3.6.1.4.1.15953.9.1.2
-        NAME 'sudoHost'
-        DESC 'Host(s) who may run sudo'
-        EQUALITY caseExactIA5Match
-        SUBSTR caseExactIA5SubstringsMatch
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-  attributetype ( 1.3.6.1.4.1.15953.9.1.3
-        NAME 'sudoCommand'
-        DESC 'Command(s) to be executed by sudo'
-        EQUALITY caseExactIA5Match
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-  attributetype ( 1.3.6.1.4.1.15953.9.1.4
-        NAME 'sudoRunAs'
-        DESC 'User(s) impersonated by sudo'
-        EQUALITY caseExactIA5Match
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-  attributetype ( 1.3.6.1.4.1.15953.9.1.5
-        NAME 'sudoOption'
-        DESC 'Options(s) followed by sudo'
-        EQUALITY caseExactIA5Match
-        SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
-
-  objectclass ( 1.3.6.1.4.1.15953.9.2.1 NAME 'sudoRole' SUP top STRUCTURAL
-        DESC 'Sudoer Entries'
-        MUST ( cn )
-        MAY ( sudoUser $ sudoHost $ sudoCommand $ sudoRunAs $ sudoOption $
-              description )
-        )
-
-  #
-  # Same thing as above, but imports better into SunONE or iPlanet
-  # (remove any leading spaces and save to a seperate file)
-  #
-
-  dn: cn=schema
-  attributeTypes: ( 1.3.6.1.4.1.15953.9.1.1 NAME 'sudoUser' DESC 'User(s) who may  run sudo' EQUALITY caseExactIA5Match SUBSTR caseExactIA5SubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 X-ORIGIN 'SUDO' )
-  attributeTypes: ( 1.3.6.1.4.1.15953.9.1.2 NAME 'sudoHost' DESC 'Host(s) who may run sudo' EQUALITY caseExactIA5Match SUBSTR caseExactIA5SubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 X-ORIGIN 'SUDO' )
-  attributeTypes: ( 1.3.6.1.4.1.15953.9.1.3 NAME 'sudoCommand' DESC 'Command(s) to be executed by sudo' EQUALITY caseExactIA5Match SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 X-ORIGIN 'SUDO' )
-  attributeTypes: ( 1.3.6.1.4.1.15953.9.1.4 NAME 'sudoRunAs' DESC 'User(s) impersonated by sudo' EQUALITY caseExactIA5Match SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 X-ORIGIN 'SUDO' )
-  attributeTypes: ( 1.3.6.1.4.1.15953.9.1.5 NAME 'sudoOption' DESC 'Options(s) followed by sudo' EQUALITY caseExactIA5Match SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 X-ORIGIN 'SUDO' )
-  objectClasses: ( 1.3.6.1.4.1.15953.9.2.1 NAME 'sudoRole' SUP top STRUCTURAL DESC 'Sudoer Entries' MUST ( cn ) MAY ( sudoUser $ sudoHost $ sudoCommand $ sudoRunAs $ sudoOption $ description ) X-ORIGIN 'SUDO' )
-
-
+For the SunONE or iPlanet LDAP server, use the schema.iPlanet file.
 
 Importing /etc/sudoers to LDAP
 ==============================
@@ -186,6 +132,14 @@ Importing is a two step process.
 
 Step 1:
 Ask your LDAP Administrator where to create the ou=SUDOers container.
+
+For instance, if using OpenLDAP:
+
+  dn: ou=SUDOers,dc=example,dc=com
+  objectClass: top
+  objectClass: organizationalUnit
+  ou: SUDOers
+
 (An example location is shown below).  Then use the provided script to convert
 your sudoers file into LDIF format.  The script will also convert any default
 options.
@@ -258,6 +212,7 @@ when you imported the sudoers.  Below is an example /etc/ldap.conf
   # optional proxy credentials
   #binddn        <who to search as>
   #bindpw        <password>
+  #rootbinddn    <who to search as, uses /etc/ldap.passwd for bindpw>
   #
   # LDAP Protocol Version defaults to 3
   #ldap_version 3
@@ -348,7 +303,7 @@ Here is an example:
   sudoCommand: !/bin/sh
   sudoCommand: ALL
 
-Another difference is that negations on the Host are User (or Runas) are
+Another difference is that negations on the Host, User or Runas are
 currently ignorred.  For example, these attributes do not work how they first
 seem.  If you desperately want this to be changed, contact Aaron Spangler
 (aaron@spangler.ods.org).

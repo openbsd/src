@@ -16,13 +16,14 @@
 # Runas alias specification
 
 # User privilege specification
-root	ALL=(ALL) ALL
+root	ALL=(ALL) SETENV: ALL
 
 # Uncomment to allow people in group wheel to run all commands
-# %wheel	ALL=(ALL)	ALL
+# and set environment variables.
+# %wheel	ALL=(ALL) SETENV: ALL
 
 # Same thing without a password
-# %wheel	ALL=(ALL)	NOPASSWD: ALL
+# %wheel	ALL=(ALL) NOPASSWD: SETENV: ALL
 
 # Samples
 # %users  ALL=/sbin/mount /cdrom,/sbin/umount /cdrom

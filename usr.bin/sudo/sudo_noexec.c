@@ -14,17 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <errno.h>
+#ifndef HAVE_TIMESPEC
+# include <time.h>
+#endif
 #ifdef __STDC__
 # include <stdarg.h>
 #else
 # include <varargs.h>
 #endif
 
+#include <compat.h>
+
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo_noexec.c,v 1.11 2005/03/10 15:09:28 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_noexec.c,v 1.5.2.2 2007/06/12 00:56:43 millert Exp $";
 #endif /* lint */
 
 /*

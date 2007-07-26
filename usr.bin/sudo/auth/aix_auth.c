@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,9 +47,13 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: aix_auth.c,v 1.18 2004/02/13 21:36:47 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.18.2.3 2007/06/21 22:29:15 millert Exp $";
 #endif /* lint */
 
+/*
+ * For a description of the AIX authentication API, see
+ * http://publib16.boulder.ibm.com/doc_link/en_US/a_doc_lib/libs/basetrf1/authenticate.htm
+ */
 int
 aixauth_verify(pw, prompt, auth)
     struct passwd *pw;
@@ -57,14 +61,16 @@ aixauth_verify(pw, prompt, auth)
     sudo_auth *auth;
 {
     char *pass;
-    char *message;
+    char *message = NULL;
     int reenter = 1;
     int rval = AUTH_FAILURE;
 
     pass = tgetpass(prompt, def_passwd_timeout * 60, tgetpass_flags);
     if (pass) {
-	if (authenticate(pw->pw_name, (char *)pass, &reenter, &message) == 0)
+	/* XXX - should probably print message on failure. */
+	if (authenticate(pw->pw_name, pass, &reenter, &message) == 0)
 	    rval = AUTH_SUCCESS;
+	free(message);
 	zero_bytes(pass, strlen(pass));
     }
     return(rval);

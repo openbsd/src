@@ -46,7 +46,8 @@
 #endif
 
 void log_auth			__P((int, int));
-void log_error			__P((int flags, const char *fmt, ...));
+void log_error			__P((int flags, const char *fmt, ...))
+				    __printflike(2, 3);
 RETSIGTYPE reapchild		__P((int));
 
 #endif /* _LOGGING_H */

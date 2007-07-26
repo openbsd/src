@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2002 Michael Stroucken <michael@stroucken.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -22,7 +22,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: securid5.c,v 1.6 2004/02/13 21:36:47 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: securid5.c,v 1.6.2.2 2007/06/12 00:56:44 millert Exp $";
 #endif /* lint */
 
 /*
@@ -126,6 +126,10 @@ securid_setup(pw, promptp, auth)
     retval = SD_Lock(*sd, pw->pw_name);
 
     switch (retval) {
+	case ACM_OK:
+		warnx("User ID locked for SecurID Authentication");
+		return(AUTH_SUCCESS);
+
         case ACE_UNDEFINED_USERNAME:
 		warnx("invalid username length for SecurID");
 		return(AUTH_FATAL);
@@ -138,9 +142,9 @@ securid_setup(pw, promptp, auth)
 		warnx("SecurID communication failed");
 		return(AUTH_FATAL);
 
-	case ACM_OK:
-		warnx("User ID locked for SecurID Authentication");
-		return(AUTH_SUCCESS);
+	default:
+		warnx("unknown SecurID error");
+		return(AUTH_FATAL);
 	}
 }
 
@@ -170,6 +174,10 @@ securid_verify(pw, pass, auth)
 
     /* Have ACE verify password */
     switch (SD_Check(*sd, pass, pw->pw_name)) {
+	case ACM_OK:
+		rval = AUTH_SUCESS;
+		break;
+
 	case ACE_UNDEFINED_PASSCODE:
 		warnx("invalid passcode length for SecurID");
 		rval = AUTH_FATAL;
@@ -183,6 +191,7 @@ securid_verify(pw, pass, auth)
 	case ACE_ERR_INVALID_HANDLE:
 		warnx("invalid Authentication Handle for SecurID");
 		rval = AUTH_FATAL;
+		break;
 
 	case ACM_ACCESS_DENIED:
 		rval = AUTH_FAILURE;
@@ -215,6 +224,11 @@ then enter the new token code.\n", \
 		SD_Pin(*sd, "");
 		fprintf(stderr, "Your SecurID access has not yet been set up.\n");
 		fprintf(stderr, "Please set up a PIN before you try to authenticate.\n");
+		rval = AUTH_FATAL;
+		break;
+
+	default:
+		warnx("unknown SecurID error");
 		rval = AUTH_FATAL;
 		break;
     }
