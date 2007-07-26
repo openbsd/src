@@ -1,4 +1,4 @@
-/*	$OpenBSD: swaplist.c,v 1.6 2007/07/16 21:05:46 millert Exp $	*/
+/*	$OpenBSD: swaplist.c,v 1.7 2007/07/26 17:03:05 deraadt Exp $	*/
 /*	$NetBSD: swaplist.c,v 1.8 1998/10/08 10:00:31 mrg Exp $	*/
 
 /*
@@ -51,16 +51,15 @@ list_swap(int pri, int kflag, int pflag, int dolong)
 	char	*header;
 	size_t	l;
 	int	hlen, totalsize, size, totalinuse, inuse, ncounted, pathmax;
-	int	rnswap, nswap = swapctl(SWAP_NSWAP, 0, 0), i;
+	int	rnswap, nswap, i;
 
-	if (nswap < 1) {
-		puts("no swap devices configured");
-		exit(0);
-	}
+	nswap = swapctl(SWAP_NSWAP, 0, 0);
+	if (nswap < 1)
+		errx(1, "no swap devices configured");
 
-	fsep = sep = (struct swapent *)malloc(nswap * sizeof(*sep));
+	fsep = sep = (struct swapent *)calloc(nswap, sizeof(*sep));
 	if (sep == NULL)
-		err(1, "malloc");
+		err(1, "calloc");
 	rnswap = swapctl(SWAP_STATS, (void *)sep, nswap);
 	if (rnswap < 0)
 		err(1, "SWAP_STATS");
@@ -106,8 +105,8 @@ list_swap(int pri, int kflag, int pflag, int dolong)
 		}
 	}
 	if (dolong == 0)
-		    printf("total: %ldk bytes allocated = %ldk used, "
-			   "%ldk available\n",
+		printf("total: %ldk bytes allocated = %ldk used, "
+		   "%ldk available\n",
 		    (long)(dbtoqb(totalsize) / 1024),
 		    (long)(dbtoqb(totalinuse) / 1024),
 		    (long)(dbtoqb(totalsize - totalinuse) / 1024));
@@ -119,5 +118,5 @@ list_swap(int pri, int kflag, int pflag, int dolong)
 		    (long)(dbtoqb(totalsize - totalinuse) / blocksize),
 		    (double)(totalinuse) / (double)totalsize * 100.0);
 	if (fsep)
-		(void)free(fsep);
+		free(fsep);
 }
