@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.27 2007/07/27 13:59:27 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.28 2007/07/27 14:01:16 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -827,7 +827,7 @@ void
 anykey(void)
 {
 	int ch;
-	size_t len;
+	ssize_t len;
 
 	standoutp();
 	addstrp("Hit any key to continue: ");
