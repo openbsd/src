@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.25 2007/05/29 00:56:56 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.26 2007/07/27 13:57:50 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -183,22 +183,22 @@ display_init(struct statics * statics)
 		/* save pointers and allocate space for names */
 		procstate_names = statics->procstate_names;
 		num_procstates = string_count(procstate_names);
-		lprocstates = malloc(num_procstates * sizeof(int));
+		lprocstates = calloc(num_procstates, sizeof(int));
 		if (lprocstates == NULL)
 			err(1, NULL);
 
 		cpustate_names = statics->cpustate_names;
 		num_cpustates = string_count(cpustate_names);
-		lcpustates = malloc(ncpu * sizeof(int64_t *));
+		lcpustates = calloc(ncpu, sizeof(int64_t *));
 		if (lcpustates == NULL)
 			err(1, NULL);
 		for (cpu = 0; cpu < ncpu; cpu++) {
-			lcpustates[cpu] = malloc(num_cpustates * sizeof(int64_t));
+			lcpustates[cpu] = calloc(num_cpustates, sizeof(int64_t));
 			if (lcpustates[cpu] == NULL)
 				err(1, NULL);
 		}
 		
-		cpustate_columns = malloc(num_cpustates * sizeof(int));
+		cpustate_columns = calloc(num_cpustates, sizeof(int));
 		if (cpustate_columns == NULL)
 			err(1, NULL);
 

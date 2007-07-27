@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.61 2007/05/29 00:56:56 otto Exp $	 */
+/* $OpenBSD: machine.c,v 1.62 2007/07/27 13:57:50 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -162,12 +162,12 @@ machine_init(struct statics *statics)
 	mib[1] = HW_NCPU;
 	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1)
 		return (-1);
-	cpu_states = malloc(ncpu * CPUSTATES * sizeof(int64_t));
+	cpu_states = calloc(ncpu, CPUSTATES * sizeof(int64_t));
 	if (cpu_states == NULL)
 		err(1, NULL);
-	cp_time = malloc(ncpu * sizeof(int64_t *));
-	cp_old  = malloc(ncpu * sizeof(int64_t *));
-	cp_diff = malloc(ncpu * sizeof(int64_t *));
+	cp_time = calloc(ncpu, sizeof(int64_t *));
+	cp_old  = calloc(ncpu, sizeof(int64_t *));
+	cp_diff = calloc(ncpu, sizeof(int64_t *));
 	if (cp_time == NULL || cp_old == NULL || cp_diff == NULL)
 		err(1, NULL);
 	for (cpu = 0; cpu < ncpu; cpu++) {
@@ -709,7 +709,7 @@ swapmode(int *used, int *total)
 	if (nswap == 0)
 		return 0;
 
-	swdev = malloc(nswap * sizeof(*swdev));
+	swdev = calloc(nswap, sizeof(*swdev));
 	if (swdev == NULL)
 		return 0;
 

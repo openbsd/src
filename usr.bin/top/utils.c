@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.19 2007/07/16 15:14:33 otto Exp $	 */
+/* $OpenBSD: utils.c,v 1.20 2007/07/27 13:57:50 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -167,7 +167,7 @@ argparse(char *line, int *cntp)
 	cnt += 3;
 
 	/* allocate a char * array to hold the pointers */
-	if ((argarray = malloc(cnt * sizeof(char *))) == NULL)
+	if ((argarray = calloc(cnt, sizeof(char *))) == NULL)
 		err(1, NULL);
 
 	/* allocate another array to hold the strings themselves */
