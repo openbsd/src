@@ -1,3 +1,4 @@
+/*	$OpenBSD: btdev.h,v 1.2 2007/07/27 20:22:12 xsa Exp $	*/
 /*	$NetBSD: btdev.h,v 1.6 2007/04/21 06:15:22 plunky Exp $	*/
 
 /*-
