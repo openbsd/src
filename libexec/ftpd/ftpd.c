@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.178 2007/06/21 02:22:51 ray Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.179 2007/07/27 14:12:46 moritz Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.178 2007/06/21 02:22:51 ray Exp $";
+    "$OpenBSD: ftpd.c,v 1.179 2007/07/27 14:12:46 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -2794,6 +2794,7 @@ logxfer(char *name, off_t size, time_t start)
 		    'o', ((guest) ? 'a' : 'r'),
 		    vpw, 0 /* none yet */,
 		    ((guest) ? "*" : pw->pw_name), dhostname);
+		free(vpw);
 
 		if (len >= sizeof(buf) || len == -1) {
 			if ((len = strlen(buf)) == 0)
@@ -2801,7 +2802,6 @@ logxfer(char *name, off_t size, time_t start)
 			buf[len - 1] = '\n';
 		}
 		write(statfd, buf, len);
-		free(vpw);
 	}
 }
 
