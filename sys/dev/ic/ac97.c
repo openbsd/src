@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.62 2007/07/09 01:24:54 jakemsr Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.63 2007/07/27 01:48:04 ian Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -377,7 +377,8 @@ const struct ac97_codecid {
 }, ac97_cx[] = {
 	{ 0x21, 0xff, 0, 0,	"HSD11246" },
 	{ 0x28, 0xf8, 7, 0,	"CX20468",	ac97_cx20468_init },
-	{ 0x30, 0xff, 0, 0,	"CX?????", },
+	{ 0x30, 0xff, 0, 0,	"CXT48", },
+	{ 0x42, 0xff, 0, 0,	"CXT66", },
 }, ac97_dt[] = {
 	{ 0x00, 0xff, 0, 0,	"DT0398" },
 }, ac97_em[] = {
