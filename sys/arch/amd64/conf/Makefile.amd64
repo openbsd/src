@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.10 2006/11/07 09:09:42 otto Exp $
+#	$OpenBSD: Makefile.amd64,v 1.11 2007/07/27 13:39:00 deraadt Exp $
 
 # Makefile for OpenBSD
 #
@@ -33,7 +33,7 @@ S!=	cd ../../../..; pwd
 .endif
 AMD64=	$S/arch/amd64
 
-INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Damd64 -Dx86_64
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main -Wno-sign-compare \

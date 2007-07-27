@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.7 2007/04/25 21:40:35 deraadt Exp $
+#	$OpenBSD: disktab,v 1.8 2007/07/27 13:39:00 deraadt Exp $
 
 # Disk geometry and partition layout tables.
 # Key:
@@ -49,7 +49,7 @@ floppy5|5in|5.25in High Density Floppy:\
 	:pc#2400:oc#0:bc#4096:fc#512:
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
-	:ty=ramdisk:se#512:nt#2:ns#128:nc#16:\
-	:pa#4096:oa#0:ta=4.2BSD:ba#4096:fa#512:\
+	:ty=ramdisk:se#512:nt#2:ns#140:nc#16:\
+	:pa#4480:oa#0:ta=4.2BSD:ba#4480:fa#512:\
 	:pb#0:ob#0:tb=swap:\
-	:pc#4096:oc#0:
+	:pc#4480:oc#0:
