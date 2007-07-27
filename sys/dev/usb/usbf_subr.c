@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.9 2007/06/15 11:41:48 mbalmer Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.10 2007/07/27 09:16:09 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -308,8 +308,8 @@ usbf_add_string(usbf_device_handle dev, const char *string)
 	    dev->string_id == USBF_STRING_ID_MAX)
 		return USBF_EMPTY_STRING_ID;
 
-	if ((len = strlen(string)) > USB_MAX_STRING_LEN)
-		len = USB_MAX_STRING_LEN;
+	if ((len = strlen(string)) >= USB_MAX_STRING_LEN)
+		len = USB_MAX_STRING_LEN - 1;
 
 	oldsize = dev->sdesc_size;
 	newsize = oldsize + 2 + 2 * len;
@@ -322,7 +322,7 @@ usbf_add_string(usbf_device_handle dev, const char *string)
 	sd = (usb_string_descriptor_t *)((char *)sd + oldsize);
 	sd->bLength = newsize - oldsize;
 	sd->bDescriptorType = UDESC_STRING;
-	for (i = 0; string[i] != '\0'; i++)
+	for (i = 0; string[i] != '\0' && i < len; i++)
 		USETW(sd->bString[i], string[i]);
 
 	id = dev->string_id++;

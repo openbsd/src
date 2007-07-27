@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.28 2007/06/17 07:53:11 mbalmer Exp $ */
+/*	$OpenBSD: usb.h,v 1.29 2007/07/27 09:16:09 mbalmer Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -251,12 +251,21 @@ typedef struct {
 } __packed usb_endpoint_descriptor_t;
 #define USB_ENDPOINT_DESCRIPTOR_SIZE 7
 
+/*
+ * Note: The length of the USB string descriptor is stored in a one byte
+ * value and can therefore be no longer than 255 bytes.  Two bytes are
+ * used for the length itself and the descriptor type, a theoretical maximum
+ * of 253 bytes is left for the actual string data.  Since the strings are
+ * encoded as 2-byte unicode characters, only 252 bytes or 126 two-byte
+ * characters can be used.  USB_MAX_STRING_LEN is defined as 127, leaving
+ * space for the terminal '\0' character in C strings.
+ */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
-	uWord		bString[127];
+	uWord		bString[126];
 } __packed usb_string_descriptor_t;
-#define USB_MAX_STRING_LEN 128
+#define USB_MAX_STRING_LEN 127
 #define USB_LANGUAGE_TABLE 0	/* # of the string language id table */
 
 /* Hub specific request */
