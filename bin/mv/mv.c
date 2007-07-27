@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.33 2007/02/16 09:04:34 moritz Exp $	*/
+/*	$OpenBSD: mv.c,v 1.34 2007/07/27 02:49:38 ray Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.33 2007/02/16 09:04:34 moritz Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.34 2007/07/27 02:49:38 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ int
 fastcopy(char *from, char *to, struct stat *sbp)
 {
 	struct timeval tval[2];
-	static u_int blen;
+	static u_int32_t blen;
 	static char *bp;
 	int nread, from_fd, to_fd;
 	int badchown = 0, serrno = 0;
@@ -290,9 +290,13 @@ fastcopy(char *from, char *to, struct stat *sbp)
 	}
 	(void) fchmod(to_fd, sbp->st_mode & ~(S_ISUID|S_ISGID));
 
-	if (!blen && !(bp = malloc(blen = sbp->st_blksize))) {
-		warn(NULL);
-		return (1);
+	if (!blen) {
+		blen = sbp->st_blksize;
+		if ((bp = malloc(blen)) == NULL) {
+			warn(NULL);
+			blen = 0;
+			return (1);
+		}
 	}
 	while ((nread = read(from_fd, bp, blen)) > 0)
 		if (write(to_fd, bp, nread) != nread) {
