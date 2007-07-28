@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.3 2007/07/18 18:10:31 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.4 2007/07/28 11:01:19 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -61,7 +61,13 @@ enum ieee80211_akm {
 #define	IEEE80211_KEYBUF_SIZE	16
 
 struct ieee80211_key {
+	u_int8_t		k_id;		/* identifier (0-3) */
 	enum ieee80211_cipher	k_cipher;
+	u_int			k_flags;
+#define IEEE80211_KEY_GROUP	0x00000001	/* group key */
+#define IEEE80211_KEY_TX	0x00000002	/* Tx+Rx */
+
+	u_int64_t		k_rsc;		/* receive sequence counter */
 	int			k_len;
 	u_int8_t		k_key[IEEE80211_KEYBUF_SIZE];
 };
@@ -69,4 +75,9 @@ struct ieee80211_key {
 extern	void ieee80211_crypto_attach(struct ifnet *);
 extern	void ieee80211_crypto_detach(struct ifnet *);
 extern	struct mbuf *ieee80211_wep_crypt(struct ifnet *, struct mbuf *, int);
+extern	void ieee80211_derive_ptk(const u_int8_t *, size_t, const u_int8_t *,
+	    const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *,
+	    size_t);
+extern	int ieee80211_cipher_keylen(enum ieee80211_cipher);
+
 #endif /* _NET80211_IEEE80211_CRYPTO_H_ */

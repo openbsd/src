@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.25 2007/07/24 20:34:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.26 2007/07/28 11:01:19 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -88,9 +88,6 @@ void	ieee80211_hmac_sha1(const u_int8_t *, size_t, const u_int8_t *, size_t,
 	    u_int8_t digest[]);
 void	ieee80211_prf(const u_int8_t *, size_t, struct vector *, int,
 	    u_int8_t *, size_t);
-void	ieee80211_derive_ptk(const u_int8_t *, size_t, const u_int8_t *,
-	    const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *,
-	    size_t);
 void	ieee80211_derive_pmkid(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, u_int8_t *);
 void	ieee80211_derive_gtk(const u_int8_t *, size_t, const u_int8_t *,
@@ -656,22 +653,22 @@ ieee80211_eapol_key_mic(struct ieee80211_eapol_key *key, const u_int8_t *kck)
 	u_int8_t hash[SHA1_DIGEST_LENGTH];
 	u_int16_t len, info;
 
-	len  = BE_READ_2(key->len);
+	len  = BE_READ_2(key->len) + 4;
 	info = BE_READ_2(key->info);
 	KASSERT(!(info & EAPOL_KEY_KEYMIC));
 
 	switch (info & EAPOL_KEY_VERSION_MASK) {
 	case EAPOL_KEY_DESC_V1:
-		ieee80211_hmac_md5(kck, 16, (u_int8_t *)key, len, key->mic);
+		ieee80211_hmac_md5(kck, 16, &key->version, len, key->mic);
 		break;
 	case EAPOL_KEY_DESC_V2:
-		ieee80211_hmac_sha1(kck, 16, (u_int8_t *)key, len, hash);
+		ieee80211_hmac_sha1(kck, 16, &key->version, len, hash);
 		/* truncate HMAC-SHA1 to its 128 MSBs */
 		memcpy(key->mic, hash, EAPOL_KEY_MIC_LEN);
 		break;
 	}
 
-	/* set the Key MIC field */
+	/* set the Key MIC bit */
 	info |= EAPOL_KEY_KEYMIC;
 	BE_WRITE_2(key->info, info);
 }
@@ -709,7 +706,7 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, const u_int8_t *kek)
 {
 	struct rc4_ctx ctx;
-	u_int8_t buf[EAPOL_KEY_IV_LEN + 16];
+	u_int8_t keybuf[EAPOL_KEY_IV_LEN + 16];
 	u_int16_t len, info;
 	u_int8_t *data;
 	int n;
@@ -728,10 +725,10 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
 		for (n = 31; n >= 0 && ++ic->ic_globalcnt[n] == 0; n--);
 
 		/* concatenate the EAPOL-Key IV field and the KEK */
-		memcpy(buf, key->iv, EAPOL_KEY_IV_LEN);
-		memcpy(buf + EAPOL_KEY_IV_LEN, kek, 16);
+		memcpy(keybuf, key->iv, EAPOL_KEY_IV_LEN);
+		memcpy(keybuf + EAPOL_KEY_IV_LEN, kek, 16);
 
-		rc4_keysetup(&ctx, buf, sizeof buf);
+		rc4_keysetup(&ctx, keybuf, sizeof keybuf);
 		/* discard the first 256 octets of the ARC4 key stream */
 		rc4_skip(&ctx, RC4STATE);
 		rc4_crypt(&ctx, data, data, len);
@@ -751,7 +748,7 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
 		break;
 	}
 
-	/* set the Encrypted Key Data field */
+	/* set the Encrypted Key Data bit */
 	info |= EAPOL_KEY_ENCRYPTED;
 	BE_WRITE_2(key->info, info);
 }
@@ -766,7 +763,7 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
     const u_int8_t *kek)
 {
 	struct rc4_ctx ctx;
-	u_int8_t buf[EAPOL_KEY_IV_LEN + 16];
+	u_int8_t keybuf[EAPOL_KEY_IV_LEN + 16];
 	u_int16_t len, info;
 	u_int8_t *data;
 
@@ -779,10 +776,10 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 	switch (info & EAPOL_KEY_VERSION_MASK) {
 	case EAPOL_KEY_DESC_V1:
 		/* concatenate the EAPOL-Key IV field and the KEK */
-		memcpy(buf, key->iv, EAPOL_KEY_IV_LEN);
-		memcpy(buf + EAPOL_KEY_IV_LEN, kek, 16);
+		memcpy(keybuf, key->iv, EAPOL_KEY_IV_LEN);
+		memcpy(keybuf + EAPOL_KEY_IV_LEN, kek, 16);
 
-		rc4_keysetup(&ctx, buf, sizeof buf);
+		rc4_keysetup(&ctx, keybuf, sizeof keybuf);
 		/* discard the first 256 octets of the ARC4 key stream */
 		rc4_skip(&ctx, RC4STATE);
 		rc4_crypt(&ctx, data, data, len);
@@ -791,9 +788,29 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 		/* Key Data Length must be a multiple of 8 */
 		if (len < 16 + 8 || (len & 7) != 0)
 			return 1;
-		len = (len / 8) - 1;
-		return ieee80211_aes_key_unwrap(kek, 16, data, data, len);
+		len -= 8;	/* AES Key Wrap adds 8 bytes */
+		return ieee80211_aes_key_unwrap(kek, 16, data, data, len / 8);
 	}
 
 	return 1;	/* unknown Key Descriptor Version */
+}
+
+/*
+ * Return the length in bytes of keys used by the specified cipher.
+ */
+int
+ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
+{
+	switch (cipher) {
+	case IEEE80211_CIPHER_WEP40:
+		return 5;
+	case IEEE80211_CIPHER_TKIP:
+		return 32;
+	case IEEE80211_CIPHER_CCMP:
+		return 16;
+	case IEEE80211_CIPHER_WEP104:
+		return 13;
+	default:	/* unknown cipher */
+		return 0;
+	}
 }
