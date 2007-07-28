@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.47 2007/07/14 19:58:05 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.48 2007/07/28 11:24:06 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -65,6 +65,8 @@
 
 #include <net80211/ieee80211_var.h>
 
+#include <dev/rndvar.h>
+
 enum	ieee80211_edca_ac ieee80211_up_to_ac(struct ieee80211com *, int);
 int	ieee80211_classify(struct ieee80211com *, struct mbuf *);
 int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
@@ -86,6 +88,11 @@ struct	mbuf *ieee80211_get_assoc_resp(struct ieee80211com *,
 	    struct ieee80211_node *, u_int16_t);
 struct	mbuf *ieee80211_get_disassoc(struct ieee80211com *,
 	    struct ieee80211_node *, u_int16_t);
+int	ieee80211_send_eapol_key(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_node *);
+u_int8_t *ieee80211_add_gtk_kde(u_int8_t *, const struct ieee80211_key *);
+u_int8_t *ieee80211_add_pmkid_kde(u_int8_t *, const u_int8_t *);
+struct	mbuf *ieee80211_get_eapol_key(int, int, u_int);
 
 
 /*
@@ -500,10 +507,20 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		ic->ic_stats.is_tx_nonode++;
 		goto bad;
 	}
+#if 0
+	if (!ni->ni_port_valid && eh.ether_type != htons(ETHERTYPE_PAE)) {
+		IEEE80211_DPRINTF(("%s: port not valid: %s\n",
+		    __func__, ether_sprintf(eh.ether_dhost)));
+		ic->ic_stats.is_tx_noauth++;
+		goto bad;
+	}
+#endif
 	ni->ni_inact = 0;
 
 	if ((ic->ic_flags & IEEE80211_F_QOS) &&
-	    (ni->ni_flags & IEEE80211_NODE_QOS)) {
+	    (ni->ni_flags & IEEE80211_NODE_QOS) &&
+	    /* do not QoS-encapsulate EAPOL frames */
+	    eh.ether_type != htons(ETHERTYPE_PAE)) {
 		tid = ieee80211_classify(ic, m);
 		hdrlen = sizeof(struct ieee80211_qosframe);
 		addqos = 1;
@@ -1331,7 +1348,7 @@ bad:
 }
 
 /*
- * Build a RTS (Request To Send) control frame.
+ * Build a RTS (Request To Send) control frame (see 7.2.1.1).
  */
 struct mbuf *
 ieee80211_get_rts(struct ieee80211com *ic, const struct ieee80211_frame *wh,
@@ -1358,7 +1375,7 @@ ieee80211_get_rts(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 }
 
 /*
- * Build a CTS-to-self (Clear To Send) control frame.
+ * Build a CTS-to-self (Clear To Send) control frame (see 7.2.1.2).
  */
 struct mbuf *
 ieee80211_get_cts_to_self(struct ieee80211com *ic, u_int16_t dur)
@@ -1463,6 +1480,420 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	m->m_pkthdr.rcvif = (void *)ni;
 
 	return m;
+}
+
+/* unaligned big endian access */
+#define BE_READ_2(p)				\
+	((u_int16_t)(p)[0] << 8 | (u_int16_t)(p)[1])
+
+#define BE_WRITE_2(p, v) do {			\
+	(p)[0] = (v) >>  8; (p)[1] = (v);	\
+} while (0)
+
+#define BE_WRITE_8(p, v) do {			\
+	(p)[0] = (v) >> 56; (p)[1] = (v) >> 48;	\
+	(p)[2] = (v) >> 40; (p)[3] = (v) >> 32;	\
+	(p)[4] = (v) >> 24; (p)[5] = (v) >> 16;	\
+	(p)[6] = (v) >>  8; (p)[7] = (v);	\
+} while (0)
+
+/* unaligned little endian access */
+#define LE_WRITE_8(p, v) do {			\
+	(p)[7] = (v) >> 56; (p)[6] = (v) >> 48;	\
+	(p)[5] = (v) >> 40; (p)[4] = (v) >> 32;	\
+	(p)[3] = (v) >> 24; (p)[2] = (v) >> 16;	\
+	(p)[1] = (v) >>  8; (p)[0] = (v);	\
+} while (0)
+
+int
+ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct ether_header *eh;
+	struct ieee80211_eapol_key *key;
+	u_int16_t len, info;
+	int s, error;
+
+	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
+	if (m == NULL)
+		return ENOMEM;
+	eh = mtod(m, struct ether_header *);
+	eh->ether_type = ETHERTYPE_PAE;
+	IEEE80211_ADDR_COPY(eh->ether_shost, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(eh->ether_dhost, ni->ni_macaddr);
+
+	key = (struct ieee80211_eapol_key *)&eh[1];
+	key->version = EAPOL_VERSION;
+	key->type = EAPOL_KEY;
+	key->desc = EAPOL_KEY_DESC_IEEE80211;	/* XXX WPA1 */
+
+	info = BE_READ_2(key->info);
+	/* use V2 descriptor only when pairwise cipher is CCMP */
+	info |= (ni->ni_pairwise_cipher != IEEE80211_CIPHER_CCMP) ?
+	    EAPOL_KEY_DESC_V1 : EAPOL_KEY_DESC_V2;
+	BE_WRITE_2(key->info, info);
+	BE_WRITE_2(key->paylen, m->m_len - sizeof(*key));
+
+	KASSERT((info & (EAPOL_KEY_ENCRYPTED | EAPOL_KEY_KEYMIC)) == 0 ||
+	    ni->ni_ptk_ok);
+
+	if (info & EAPOL_KEY_ENCRYPTED) {
+		info &= ~EAPOL_KEY_ENCRYPTED;
+		BE_WRITE_2(key->info, info);
+		ieee80211_eapol_key_encrypt(ic, key, ni->ni_ptk.kek);
+	}
+
+	if (info & EAPOL_KEY_KEYMIC) {
+		info &= ~EAPOL_KEY_KEYMIC;
+		BE_WRITE_2(key->info, info);
+		ieee80211_eapol_key_mic(key, ni->ni_ptk.kck);
+	}
+
+	/* write packet body length field */
+	len = BE_READ_2(key->paylen);
+	BE_WRITE_2(key->len, sizeof(*key) + len);
+
+	s = splnet();
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error) {
+		splx(s);
+		return error;
+	}
+	ifp->if_obytes += m->m_pkthdr.len;
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+	splx(s);
+
+	return 0;
+}
+
+/*
+ * Add a GTK KDE to an EAPOL-Key frame (see Figure 144).
+ */
+u_int8_t *
+ieee80211_add_gtk_kde(u_int8_t *frm, const struct ieee80211_key *k)
+{
+	KASSERT(k->k_flags & IEEE80211_KEY_GROUP);
+
+	*frm++ = IEEE80211_ELEMID_VENDOR;
+	*frm++ = 6 + k->k_len;
+	memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+	*frm++ = IEEE80211_KDE_GTK;
+	*frm = k->k_id & 3;
+	if (k->k_flags & IEEE80211_KEY_TX)
+		*frm |= 1 << 2;	/* set the Tx bit */
+	frm++;
+	*frm++ = 0;	/* reserved */
+	memcpy(frm, k->k_key, k->k_len);
+	return frm + k->k_len;
+}
+
+/*
+ * Add a PMKID KDE to an EAPOL-Key frame (see Figure 146).
+ */
+u_int8_t *
+ieee80211_add_pmkid_kde(u_int8_t *frm, const u_int8_t *pmkid)
+{
+	*frm++ = IEEE80211_ELEMID_VENDOR;
+	*frm++ = 20;
+	memcpy(frm, IEEE80211_OUI, 3); frm += 3;
+	*frm++ = IEEE80211_KDE_PMKID;
+	memcpy(frm, pmkid, IEEE80211_PMKID_LEN);
+	return frm + IEEE80211_PMKID_LEN;
+}
+
+struct mbuf *
+ieee80211_get_eapol_key(int flags, int type, u_int pktlen)
+{
+	struct mbuf *m;
+
+	pktlen += sizeof(struct ether_header) +
+	    sizeof(struct ieee80211_eapol_key);
+
+	if (pktlen > MCLBYTES)
+		panic("EAPOL-Key frame too large: %u", pktlen);
+	MGETHDR(m, flags, type);
+	if (m != NULL && pktlen > MHLEN) {
+		MCLGET(m, flags);
+		if (!(m->m_flags & M_EXT))
+			m = m_free(m);
+	}
+	m->m_data += sizeof(struct ether_header);
+	return m;
+}
+
+/*
+ * 4-Way Handshake Message 1 is sent by the authenticator to the supplicant
+ * (see 8.5.3.1).
+ */
+int
+ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct ieee80211_eapol_key *key;
+	struct mbuf *m;
+	u_int16_t info;
+	u_int8_t *pmkid;
+	u_int8_t *frm;
+
+	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
+	    2 + 20);
+	if (m == NULL)
+		return ENOMEM;
+	key = mtod(m, struct ieee80211_eapol_key *);
+	memset(key, 0, sizeof(*key));
+
+	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_KEYACK;
+	BE_WRITE_2(key->info, info);
+
+	/* generate a new nonce ANonce */
+	get_random_bytes(ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
+	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
+
+	/* XXX retrieve PMKID from the PMKSA cache */
+
+	frm = (u_int8_t *)&key[1];
+	frm = ieee80211_add_pmkid_kde(frm, pmkid);
+
+	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: sending msg %d/%d of the %s handshake to %s\n",
+		    ic->ic_if.if_xname, 1, 4, "4-way",
+		    ether_sprintf(ni->ni_macaddr));
+
+	return ieee80211_send_eapol_key(ic, m, ni);
+}
+
+/*
+ * 4-Way Handshake Message 2 is sent by the supplicant to the authenticator
+ * (see 8.5.3.2).
+ */
+int
+ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct ieee80211_eapol_key *key;
+	struct mbuf *m;
+	u_int16_t info;
+	u_int8_t *frm;
+
+	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
+	    2 + 44);
+	if (m == NULL)
+		return ENOMEM;
+	key = mtod(m, struct ieee80211_eapol_key *);
+	memset(key, 0, sizeof(*key));
+
+	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_KEYMIC;
+	BE_WRITE_2(key->info, info);
+
+	/* copy key replay counter from authenticator */
+	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+
+	/* XXX memcpy(key->nonce, snonce, EAPOL_KEY_NONCE_LEN); */
+
+	frm = (u_int8_t *)&key[1];
+	/* add the RSN IE used in the (Re)Association Request */
+	frm = ieee80211_add_rsn(frm, ic, ni);
+
+	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: sending msg %d/%d of the %s handshake to %s\n",
+		    ic->ic_if.if_xname, 2, 4, "4-way",
+		    ether_sprintf(ni->ni_macaddr));
+
+	return ieee80211_send_eapol_key(ic, m, ni);
+}
+
+/*
+ * 4-Way Handshake Message 3 is sent by the authenticator to the supplicant
+ * (see 8.5.3.3).
+ */
+int
+ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct ieee80211_eapol_key *key;
+	struct ieee80211_key *gtk;
+	struct mbuf *m;
+	u_int16_t info;
+	u_int8_t *frm;
+
+	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
+	    2 + 44 +
+	    2 + 6 + gtk->k_len +
+	    8);
+	if (m == NULL)
+		return ENOMEM;
+	key = mtod(m, struct ieee80211_eapol_key *);
+	memset(key, 0, sizeof(*key));
+
+	/* XXX no need to encrypt if GTK is not included */
+	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_INSTALL | EAPOL_KEY_KEYACK |
+	    EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE | EAPOL_KEY_ENCRYPTED;
+	BE_WRITE_2(key->info, info);
+
+	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+	/* use same Nonce as Message 1 */
+	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
+
+	frm = (u_int8_t *)&key[1];
+	/* add the RSN IE included in Beacon/Probe Response */
+	frm = ieee80211_add_rsn(frm, ic, ni);
+	/* XXX always include GTK? */
+	frm = ieee80211_add_gtk_kde(frm, gtk);
+	LE_WRITE_8(key->rsc, gtk->k_rsc);
+
+	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: sending msg %d/%d of the %s handshake to %s\n",
+		    ic->ic_if.if_xname, 3, 4, "4-way",
+		    ether_sprintf(ni->ni_macaddr));
+
+	return ieee80211_send_eapol_key(ic, m, ni);
+}
+
+/*
+ * 4-Way Handshake Message 4 is sent by the supplicant to the authenticator
+ * (see 8.5.3.4).
+ */
+int
+ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct ieee80211_eapol_key *key;
+	struct mbuf *m;
+	u_int16_t info;
+
+	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA, 8);
+	if (m == NULL)
+		return ENOMEM;
+	key = mtod(m, struct ieee80211_eapol_key *);
+	memset(key, 0, sizeof(*key));
+
+	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE;
+	BE_WRITE_2(key->info, info);
+
+	/* copy key replay counter from authenticator */
+	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+
+	/* empty key data field */
+	m->m_pkthdr.len = m->m_len = sizeof(*key);
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: sending msg %d/%d of the %s handshake to %s\n",
+		    ic->ic_if.if_xname, 4, 4, "4-way",
+		    ether_sprintf(ni->ni_macaddr));
+
+	return ieee80211_send_eapol_key(ic, m, ni);
+}
+
+/*
+ * Group Key Handshake Message 1 is sent by the authenticator to the
+ * supplicant (see 8.5.4.1).
+ */
+int
+ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct ieee80211_eapol_key *key;
+	struct ieee80211_key *gtk;
+	struct mbuf *m;
+	u_int16_t info;
+	u_int8_t *frm;
+
+	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
+	    2 + 6 + gtk->k_len +
+	    8);
+	if (m == NULL)
+		return ENOMEM;
+	key = mtod(m, struct ieee80211_eapol_key *);
+	memset(key, 0, sizeof(*key));
+
+	info = EAPOL_KEY_KEYACK | EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE |
+	    EAPOL_KEY_ENCRYPTED;
+	BE_WRITE_2(key->info, info);
+
+	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+
+	frm = (u_int8_t *)&key[1];
+	frm = ieee80211_add_gtk_kde(frm, gtk);
+	LE_WRITE_8(key->rsc, gtk->k_rsc);
+
+	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: sending msg %d/%d of the %s handshake to %s\n",
+		    ic->ic_if.if_xname, 1, 2, "group key",
+		    ether_sprintf(ni->ni_macaddr));
+
+	return ieee80211_send_eapol_key(ic, m, ni);
+}
+
+/*
+ * Group Key Handshake Message 2 is sent by the supplicant to the
+ * authenticator (see 8.5.4.2).
+ */
+int
+ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct ieee80211_eapol_key *key;
+	u_int16_t info;
+	struct mbuf *m;
+
+	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA, 0);
+	if (m == NULL)
+		return ENOMEM;
+	key = mtod(m, struct ieee80211_eapol_key *);
+	memset(key, 0, sizeof(*key));
+
+	info = EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE;
+	BE_WRITE_2(key->info, info);
+
+	/* copy key replay counter from authenticator */
+	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+
+	/* empty key data field */
+	m->m_pkthdr.len = m->m_len = sizeof(*key);
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: sending msg %d/%d of the %s handshake to %s\n",
+		    ic->ic_if.if_xname, 2, 2, "group key",
+		    ether_sprintf(ni->ni_macaddr));
+
+	return ieee80211_send_eapol_key(ic, m, ni);
+}
+
+/*
+ * EAPOL-Key Request frames are sent by the supplicant to request that the
+ * authenticator initiate either a 4-Way Handshake or Group Key Handshake
+ * and to report a MIC failure in a TKIP MSDU.
+ */
+int
+ieee80211_send_eapol_key_req(struct ieee80211com *ic,
+    struct ieee80211_node *ni, int is4way)
+{
+	struct ieee80211_eapol_key *key;
+	struct mbuf *m;
+	u_int16_t info;
+
+	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA, 0);
+	if (m == NULL)
+		return ENOMEM;
+	key = mtod(m, struct ieee80211_eapol_key *);
+	memset(key, 0, sizeof(*key));
+
+	info = is4way ? EAPOL_KEY_PAIRWISE : 0;
+	BE_WRITE_2(key->info, info);
+
+	/* use our separate key replay counter for key requests */
+	BE_WRITE_8(key->replaycnt, ic->ic_keyreplaycnt);
+	ic->ic_keyreplaycnt++;
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: sending EAPOL-Key request to %s\n",
+		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+
+	return ieee80211_send_eapol_key(ic, m, ni);
 }
 
 void
