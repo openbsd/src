@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.31 2007/07/24 16:44:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.32 2007/07/28 10:55:29 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -628,8 +628,9 @@ struct ieee80211_eapol_key {
 	u_int8_t	len[2];
 	u_int8_t	desc;
 /* IEEE Std 802.1X-2004, 7.6.1 */
-#define EAPOL_KEY_TYPE_RC4		1	/* deprecated */
-#define EAPOL_KEY_TYPE_IEEE80211	2
+#define EAPOL_KEY_DESC_RC4		  1	/* deprecated */
+#define EAPOL_KEY_DESC_IEEE80211	  2
+#define EAPOL_KEY_DESC_WPA1		254	/* non-standard WPA1 */
 
 	u_int8_t	info[2];
 #define EAPOL_KEY_VERSION_MASK	0x7
@@ -642,7 +643,6 @@ struct ieee80211_eapol_key {
 #define EAPOL_KEY_SECURE	(1 <<  9)	/* S */
 #define EAPOL_KEY_ERROR		(1 << 10)
 #define EAPOL_KEY_REQUEST	(1 << 11)
-#define EAPOL_KEY_ENCRYPTED	(1 << 12)
 #define EAPOL_KEY_ENCRYPTED	(1 << 12)
 #define EAPOL_KEY_SMK		(1 << 13)
 
@@ -665,5 +665,18 @@ struct ieee80211_ptk {
 
 #define IEEE80211_PMKID_LEN	16
 #define IEEE80211_SMKID_LEN	16
+
+/*
+ * Key Data Encapsulation (see Table 62).
+ */
+enum {
+	IEEE80211_KDE_GTK	= 1,
+	IEEE80211_KDE_MACADDR	= 3,
+	IEEE80211_KDE_PMKID	= 4,
+	IEEE80211_KDE_SMK	= 5,
+	IEEE80211_KDE_NONCE	= 6,
+	IEEE80211_KDE_LIFETIME	= 7,
+	IEEE80211_KDE_ERROR	= 8
+};
 
 #endif /* _NET80211_IEEE80211_H_ */
