@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.17 2007/07/06 18:18:43 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.18 2007/07/28 11:09:03 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -114,9 +114,18 @@ struct ieee80211_node {
 
 	/* RSN */
 	u_int			ni_group_cipher;
+	enum ieee80211_cipher	ni_pairwise_cipher;
 	u_int			ni_pairwise_cipherset;
+	enum ieee80211_akm	ni_akm;
 	u_int			ni_akmset;
 	u_int16_t		ni_rsncaps;
+	int			ni_port_valid;
+	u_int8_t		ni_nonce[EAPOL_KEY_NONCE_LEN];
+	u_int64_t		ni_replaycnt;
+	u_int8_t		*ni_rsnie;
+	struct ieee80211_ptk	ni_ptk;
+	u_int8_t		ni_ptk_ok;
+	u_int8_t		ni_key_count;
 
 	/* others */
 	u_int16_t		ni_associd;	/* assoc response */
