@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.18 2007/04/10 14:26:17 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.19 2007/07/28 13:22:22 kettenis Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -704,8 +704,11 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	int phc_node;
 	int rc = -1;
 
-	/* Don't need to map OBP interrupt, it's already */
-	if (*interrupt & 0x20)
+	/*
+	 * Don't try to map interrupts for onboard devices, or if the
+	 * interrupt is already fully specified.
+	 */
+	if (*interrupt & 0x20 || *interrupt & 0x7c0)
 		return validlen;
 
 	/*
