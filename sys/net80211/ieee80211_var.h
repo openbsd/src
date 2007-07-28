@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.31 2007/07/24 16:49:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.32 2007/07/28 11:13:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -160,6 +160,8 @@ struct ieee80211com {
 				    int, int, u_int32_t);
 	int			(*ic_send_mgmt)(struct ieee80211com *,
 				    struct ieee80211_node *, int, int);
+	void			(*ic_recv_eapol)(struct ieee80211com *,
+				    struct mbuf *, struct ieee80211_node *);
 	int			(*ic_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 	void			(*ic_newassoc)(struct ieee80211com *,
@@ -167,6 +169,11 @@ struct ieee80211com {
 	void			(*ic_updateslot)(struct ieee80211com *);
 	void			(*ic_updateedca)(struct ieee80211com *);
 	void			(*ic_set_tim)(struct ieee80211com *, int, int);
+	int			(*ic_set_key)(struct ieee80211com *,
+				    struct ieee80211_node *,
+				    const struct ieee80211_key *);
+	void			(*ic_delete_key)(struct ieee80211com *,
+				    struct ieee80211_node *, int);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];
 	struct ieee80211_channel ic_channels[IEEE80211_CHAN_MAX+1];
@@ -233,6 +240,7 @@ struct ieee80211com {
 	struct ieee80211_edca_ac_params ic_edca_ac[EDCA_NUM_AC];
 	u_int			ic_edca_updtcount;
 	u_int8_t		ic_globalcnt[EAPOL_KEY_NONCE_LEN];
+	u_int64_t		ic_keyreplaycnt;
 
 	u_int8_t		*ic_tim_bitmap;
 	u_int			ic_tim_len;
