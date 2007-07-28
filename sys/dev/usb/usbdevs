@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.282 2007/06/22 12:41:10 grange Exp $
+$OpenBSD: usbdevs,v 1.283 2007/07/28 01:18:15 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2146,6 +2146,7 @@ product SPEEDDRAGON MS3303H	0x110b	MS3303H Serial
 product SPHAIRON UB801R		0x0110	UB801R
 
 /* STMicroelectronics products */
+product STMICRO BIOMETRIC_COPR	0x2016	Biometric Coprocessor
 product STMICRO COMMUNICATOR	0x7554	Communicator
 
 /* STSN products */
