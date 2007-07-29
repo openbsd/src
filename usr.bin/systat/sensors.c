@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.11 2007/03/23 14:48:22 ckuethe Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.12 2007/07/29 04:51:59 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -27,7 +27,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -103,8 +102,7 @@ fetchsensors(void)
 				if (sensor.flags & SENSOR_FINVALID)
 					continue;
 				sensor_cnt++;
-				if (sensor_cnt > 0)
-					printline();
+				printline();
 			}
 		}
 	}
@@ -119,7 +117,6 @@ const char *drvstat[] = {
 void
 showsensors(void)
 {
-	row = 2;
 	if (sensor_cnt == 0)
 		mvwaddstr(wnd, row, 0, "No sensors found.");
 }
@@ -127,7 +124,6 @@ showsensors(void)
 int
 initsensors(void)
 {
-	fetchsensors();
 	return (1);
 }
 
@@ -183,7 +179,7 @@ printline(void)
 		mvwprintw(wnd, row, 24, "%10lld", sensor.value);
 		break;
 	}
-	if (strlen(sensor.desc) >= 1)
+	if (sensor.desc[0] != '\0')
 		mvwprintw(wnd, row, 58, "(%s)", sensor.desc);
 
 	switch (sensor.status) {
