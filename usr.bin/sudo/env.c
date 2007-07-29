@@ -52,7 +52,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: env.c,v 1.39.2.15 2007/07/09 19:15:43 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: env.c,v 1.39.2.16 2007/07/29 20:10:19 millert Exp $";
 #endif /* lint */
 
 /*
@@ -629,7 +629,7 @@ insert_env_vars(envp, env_vars)
 	    env.env_size = evlen + 1 + 128;
 	    env.envp = emalloc2(env.env_size, sizeof(char *));
 	}
-	memcpy(env.envp, envp, evlen + 1);
+	memcpy(env.envp, envp, (evlen + 1) * sizeof(char *));
 	env.env_len = evlen;
     }
 
