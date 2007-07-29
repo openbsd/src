@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensor_attach.9,v 1.8 2007/07/16 00:20:23 cnst Exp $
+.\"	$OpenBSD: sensor_attach.9,v 1.9 2007/07/29 21:09:38 cnst Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\" Copyright (c) 2006 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2007 $
+.Dd $Mdocdate: July 29 2007 $
 .Dt SENSOR_ATTACH 9
 .Os
 .Sh NAME
@@ -43,15 +43,15 @@
 .Fn "sensordev_install" "struct ksensordev *sensdev"
 .Ft void
 .Fn "sensordev_deinstall" "struct ksensordev *sensdev"
-.Ft struct ksensordev
-.Fn "*sensordev_get" "int devnum"
+.Ft struct ksensordev *
+.Fn "sensordev_get" "int devnum"
 .Pp
 .Ft void
 .Fn "sensor_attach" "struct ksensordev *sensdev" "struct ksensor *sens"
 .Ft void
 .Fn "sensor_detach" "struct ksensordev *sensdev" "struct ksensor *sens"
-.Ft struct ksensor
-.Fn "*sensor_find" "int devnum" "enum sensor_type stype" "int numt"
+.Ft struct ksensor *
+.Fn "sensor_find" "int devnum" "enum sensor_type stype" "int numt"
 .Pp
 .Ft struct sensor_task *
 .Fn "sensor_task_register" "void *arg" "void (*func)(void *)" "int period"
