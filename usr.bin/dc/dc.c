@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.9 2006/03/25 07:49:56 otto Exp $	*/
+/*	$OpenBSD: dc.c,v 1.10 2007/07/29 17:12:18 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: dc.c,v 1.9 2006/03/25 07:49:56 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dc.c,v 1.10 2007/07/29 17:12:18 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/stat.h>
@@ -36,7 +36,8 @@ extern char		*__progname;
 static __dead void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-x] [-e expr] [file]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-x] [-e expression] [file]\n",
+	    __progname);
 	exit(1);
 }
 
