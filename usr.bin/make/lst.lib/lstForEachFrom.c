@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstForEachFrom.c,v 1.15 2007/01/04 17:55:35 espie Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.16 2007/07/29 13:49:54 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -57,27 +57,27 @@
 void
 Lst_ForEachFrom(LstNode ln, ForEachProc proc, void *d)
 {
-    LstNode	tln;
+	LstNode	tln;
 
-    for (tln = ln; tln != NULL; tln = tln->nextPtr)
-	(*proc)(tln->datum, d);
+	for (tln = ln; tln != NULL; tln = tln->nextPtr)
+		(*proc)(tln->datum, d);
 }
 
 void
 Lst_Every(Lst l, SimpleProc proc)
 {
-    LstNode tln;
+	LstNode tln;
 
-    for (tln = l->firstPtr; tln != NULL; tln = tln->nextPtr)
-	(*proc)(tln->datum);
+	for (tln = l->firstPtr; tln != NULL; tln = tln->nextPtr)
+		(*proc)(tln->datum);
 }
 
 void
 Lst_ForEachNodeWhile(Lst l, ForEachNodeWhileProc proc, void *d)
 {
-	LstNode it;
+	    LstNode it;
 
-	for (it = l->firstPtr; it != NULL; it = it->nextPtr)
-		if ((*proc)(it, d) == 0)
-			return;
+	    for (it = l->firstPtr; it != NULL; it = it->nextPtr)
+		    if ((*proc)(it, d) == 0)
+				return;
 }

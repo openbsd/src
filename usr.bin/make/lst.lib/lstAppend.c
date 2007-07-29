@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstAppend.c,v 1.16 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.17 2007/07/29 13:49:54 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -60,46 +60,46 @@
 void
 Lst_Append(Lst l, LstNode after, void *d)
 {
-    LstNode	nLNode;
+	LstNode	nLNode;
 
-    if (after == NULL && !Lst_IsEmpty(l))
-	return;
+	if (after == NULL && !Lst_IsEmpty(l))
+		return;
 
-    if (after != NULL && Lst_IsEmpty(l))
-	return;
+	if (after != NULL && Lst_IsEmpty(l))
+		return;
 
-    PAlloc(nLNode, LstNode);
-    nLNode->datum = d;
+	PAlloc(nLNode, LstNode);
+	nLNode->datum = d;
 
-    if (after == NULL) {
-	nLNode->nextPtr = nLNode->prevPtr = NULL;
-	l->firstPtr = l->lastPtr = nLNode;
-    } else {
-	nLNode->prevPtr = after;
-	nLNode->nextPtr = after->nextPtr;
+	if (after == NULL) {
+		nLNode->nextPtr = nLNode->prevPtr = NULL;
+		l->firstPtr = l->lastPtr = nLNode;
+	} else {
+		nLNode->prevPtr = after;
+		nLNode->nextPtr = after->nextPtr;
 
-	after->nextPtr = nLNode;
-	if (nLNode->nextPtr != NULL)
-	    nLNode->nextPtr->prevPtr = nLNode;
+		after->nextPtr = nLNode;
+		if (nLNode->nextPtr != NULL)
+			nLNode->nextPtr->prevPtr = nLNode;
 
-	if (after == l->lastPtr)
-	    l->lastPtr = nLNode;
-    }
+		if (after == l->lastPtr)
+			l->lastPtr = nLNode;
+	}
 }
 
 void
 Lst_AtEnd(Lst l, void *d)
 {
-    LstNode	ln;
+	LstNode	ln;
 
-    PAlloc(ln, LstNode);
-    ln->datum = d;
+	PAlloc(ln, LstNode);
+	ln->datum = d;
 
-    ln->prevPtr = l->lastPtr;
-    ln->nextPtr = NULL;
-    if (l->lastPtr == NULL)
-	l->firstPtr = ln;
-    else
-	l->lastPtr->nextPtr = ln;
-    l->lastPtr = ln;
+	ln->prevPtr = l->lastPtr;
+	ln->nextPtr = NULL;
+	if (l->lastPtr == NULL)
+		l->firstPtr = ln;
+	else
+		l->lastPtr->nextPtr = ln;
+	l->lastPtr = ln;
 }

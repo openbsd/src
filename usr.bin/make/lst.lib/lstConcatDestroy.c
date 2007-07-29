@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstConcatDestroy.c,v 1.7 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: lstConcatDestroy.c,v 1.8 2007/07/29 13:49:54 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -57,21 +57,21 @@
 void
 Lst_ConcatDestroy(Lst l1, Lst l2)
 {
-    if (l2->firstPtr != NULL) {
-	/*
-	 * So long as the second list isn't empty, we just link the
-	 * first element of the second list to the last element of the
-	 * first list. If the first list isn't empty, we then link the
-	 * last element of the list to the first element of the second list
-	 * The last element of the second list, if it exists, then becomes
-	 * the last element of the first list.
-	 */
-	l2->firstPtr->prevPtr = l1->lastPtr;
-	if (l1->lastPtr != NULL)
-	    l1->lastPtr->nextPtr = l2->firstPtr;
-	else
-	    l1->firstPtr = l2->firstPtr;
-	l1->lastPtr = l2->lastPtr;
-    }
+	if (l2->firstPtr != NULL) {
+		/*
+		 * So long as the second list isn't empty, we just link the
+		 * first element of the second list to the last element of the
+		 * first list. If the first list isn't empty, we then link the
+		 * last element of the list to the first element of the second
+		 * list The last element of the second list, if it exists, then
+		 * becomes the last element of the first list.
+		 */
+		l2->firstPtr->prevPtr = l1->lastPtr;
+		if (l1->lastPtr != NULL)
+			l1->lastPtr->nextPtr = l2->firstPtr;
+		else
+			l1->firstPtr = l2->firstPtr;
+		l1->lastPtr = l2->lastPtr;
+	}
 }
 

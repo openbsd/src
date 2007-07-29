@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstConcat.c,v 1.16 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: lstConcat.c,v 1.17 2007/07/29 13:49:54 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -60,36 +60,36 @@
 void
 Lst_Concat(Lst l1, Lst l2)
 {
-    LstNode		ln;	/* original LstNode */
-    LstNode		nln;	/* new LstNode */
-    LstNode		last;	/* the last element in the list. Keeps
-				 * bookkeeping until the end */
-    if (l2->firstPtr != NULL) {
-	/* The loop simply goes through the entire second list creating new
-	 * LstNodes and filling in the nextPtr, and prevPtr to fit into l1
-	 * and its datum field from the datum field of the corresponding
-	 * element in l2. The 'last' node follows the last of the new nodes
-	 * along until the entire l2 has been appended.  Only then does the
-	 * bookkeeping catch up with the changes. During the first iteration
-	 * of the loop, if 'last' is NULL, the first list must have been empty
-	 * so the newly-created node is made the first node of the list.  */
-	for (last = l1->lastPtr, ln = l2->firstPtr;
-	     ln != NULL;
-	     ln = ln->nextPtr) {
-	    PAlloc(nln, LstNode);
-	    nln->datum = ln->datum;
-	    if (last != NULL)
-		last->nextPtr = nln;
-	    else
-		l1->firstPtr = nln;
-	    nln->prevPtr = last;
-	    last = nln;
-	}
+	LstNode ln;	/* original LstNode */
+	LstNode nln;	/* new LstNode */
+	LstNode last;	/* the last element in the list. Keeps
+			 * bookkeeping until the end */
+	if (l2->firstPtr != NULL) {
+		/* The loop simply goes through the entire second list creating
+		 * new LstNodes and filling in the nextPtr, and prevPtr to fit
+		 * into l1 and its datum field from the datum field of the
+		 * corresponding element in l2. The 'last' node follows the
+		 * last of the new nodes along until the entire l2 has been
+		 * appended.  Only then does the bookkeeping catch up with the
+		 * changes. During the first iteration of the loop, if 'last'
+		 * is NULL, the first list must have been empty so the
+		 * newly-created node is made the first node of the list.  */
+		for (last = l1->lastPtr, ln = l2->firstPtr; ln != NULL;
+		     ln = ln->nextPtr) {
+			PAlloc(nln, LstNode);
+			nln->datum = ln->datum;
+			if (last != NULL)
+				last->nextPtr = nln;
+			else
+				l1->firstPtr = nln;
+			nln->prevPtr = last;
+			last = nln;
+		}
 
-	/* Finish bookkeeping. The last new element becomes the last element
-	 * of l1.  */
-	l1->lastPtr = last;
-	last->nextPtr = NULL;
-    }
+		/* Finish bookkeeping. The last new element becomes the last
+		 * element of l1.  */
+		l1->lastPtr = last;
+		last->nextPtr = NULL;
+	}
 }
 

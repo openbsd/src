@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstAddNew.c,v 1.4 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: lstAddNew.c,v 1.5 2007/07/29 13:49:54 espie Exp $	*/
 /* ex:ts=8 sw=4:
  */
 
@@ -39,11 +39,11 @@
 bool
 Lst_AddNew(Lst l, void *d)
 {
-    if (Lst_Member(l, d) != NULL)
-	return false;
-    else {
-	Lst_AtEnd(l, d);
-	return true;
-    }
+	if (Lst_Member(l, d) != NULL)
+		return false;
+	else {
+		Lst_AtEnd(l, d);
+		return true;
+	}
 }
 

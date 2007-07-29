@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDestroy.c,v 1.16 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: lstDestroy.c,v 1.17 2007/07/29 13:49:54 espie Exp $	*/
 /*	$NetBSD: lstDestroy.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -57,20 +57,20 @@
 void
 Lst_Destroy(Lst l, SimpleProc freeProc)
 {
-    LstNode	ln;
-    LstNode	tln;
+	LstNode	ln;
+	LstNode	tln;
 
-    if (freeProc) {
-	for (ln = l->firstPtr; ln != NULL; ln = tln) {
-	     tln = ln->nextPtr;
-	     (*freeProc)(ln->datum);
-	     free(ln);
+	if (freeProc) {
+		for (ln = l->firstPtr; ln != NULL; ln = tln) {
+			 tln = ln->nextPtr;
+			 (*freeProc)(ln->datum);
+			 free(ln);
+		}
+	} else {
+		for (ln = l->firstPtr; ln != NULL; ln = tln) {
+			 tln = ln->nextPtr;
+			 free(ln);
+		}
 	}
-    } else {
-	for (ln = l->firstPtr; ln != NULL; ln = tln) {
-	     tln = ln->nextPtr;
-	     free(ln);
-	}
-    }
 }
 

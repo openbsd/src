@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstRemove.c,v 1.15 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: lstRemove.c,v 1.16 2007/07/29 13:49:54 espie Exp $	*/
 /*	$NetBSD: lstRemove.c,v 1.5 1996/11/06 17:59:50 christos Exp $	*/
 
 /*
@@ -58,24 +58,24 @@
 void
 Lst_Remove(Lst l, LstNode ln)
 {
-    if (ln == NULL)
-	return;
+	if (ln == NULL)
+		return;
 
-    /* unlink it from the list */
-    if (ln->nextPtr != NULL)
-	ln->nextPtr->prevPtr = ln->prevPtr;
-    if (ln->prevPtr != NULL)
-	ln->prevPtr->nextPtr = ln->nextPtr;
+	/* unlink it from the list */
+	if (ln->nextPtr != NULL)
+		ln->nextPtr->prevPtr = ln->prevPtr;
+	if (ln->prevPtr != NULL)
+		ln->prevPtr->nextPtr = ln->nextPtr;
 
-    /* if either the firstPtr or lastPtr of the list point to this node,
-     * adjust them accordingly */
-    if (l->firstPtr == ln)
-	l->firstPtr = ln->nextPtr;
-    if (l->lastPtr == ln)
-	l->lastPtr = ln->prevPtr;
+	/* if either the firstPtr or lastPtr of the list point to this node,
+	 * adjust them accordingly */
+	if (l->firstPtr == ln)
+		l->firstPtr = ln->nextPtr;
+	if (l->lastPtr == ln)
+		l->lastPtr = ln->prevPtr;
 
-    /* note that the datum is unmolested. The caller must free it as
-     * necessary and as expected.  */
-    free(ln);
+	/* note that the datum is unmolested. The caller must free it as
+	 * necessary and as expected.  */
+	free(ln);
 }
 

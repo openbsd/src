@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDeQueue.c,v 1.15 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: lstDeQueue.c,v 1.16 2007/07/29 13:49:54 espie Exp $	*/
 /*	$NetBSD: lstDeQueue.c,v 1.5 1996/11/06 17:59:36 christos Exp $	*/
 
 /*
@@ -57,20 +57,20 @@
 void *
 Lst_DeQueue(Lst l)
 {
-    void	  *rd;
-    LstNode	  tln;
+	void *rd;
+	LstNode tln;
 
-    tln = l->firstPtr;
-    if (tln == NULL)
-	return NULL;
+	tln = l->firstPtr;
+	if (tln == NULL)
+		return NULL;
 
-    rd = tln->datum;
-    l->firstPtr = tln->nextPtr;
-    if (l->firstPtr)
-	l->firstPtr->prevPtr = NULL;
-    else
-	l->lastPtr = NULL;
-    free(tln);
-    return rd;
+	rd = tln->datum;
+	l->firstPtr = tln->nextPtr;
+	if (l->firstPtr)
+		l->firstPtr->prevPtr = NULL;
+	else
+		l->lastPtr = NULL;
+	free(tln);
+	return rd;
 }
 

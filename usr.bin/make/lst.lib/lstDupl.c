@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDupl.c,v 1.18 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: lstDupl.c,v 1.19 2007/07/29 13:49:54 espie Exp $	*/
 /*	$NetBSD: lstDupl.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -59,16 +59,16 @@
 Lst
 Lst_Clone(Lst nl, Lst l, DuplicateProc copyProc)
 {
-    LstNode	  ln;
+	LstNode ln;
 
-    Lst_Init(nl);
+	Lst_Init(nl);
 
-    for (ln = l->firstPtr; ln != NULL; ln = ln->nextPtr) {
-	if (copyProc != NOCOPY)
-	    Lst_AtEnd(nl, (*copyProc)(ln->datum));
-	else
-	    Lst_AtEnd(nl, ln->datum);
-    }
-    return nl;
+	for (ln = l->firstPtr; ln != NULL; ln = ln->nextPtr) {
+		if (copyProc != NOCOPY)
+			Lst_AtEnd(nl, (*copyProc)(ln->datum));
+		else
+			Lst_AtEnd(nl, ln->datum);
+	}
+	return nl;
 }
 
