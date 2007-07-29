@@ -1005,6 +1005,8 @@ B<notice>, and B<warning>.
 
 =head1 FILES
 
+=over 4
+
 =item F<@sysconfdir@/sudoers>C<		>
 List of who can run what
 
@@ -1013,6 +1015,8 @@ Local groups file
 
 =item F</etc/netgroup>C<		>
 List of network groups
+
+=back
 
 =head1 EXAMPLES
 
