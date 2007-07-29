@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: visudo.pod,v 1.38.2.7 2007/07/26 20:36:17 millert Exp $
+$Sudo: visudo.pod,v 1.38.2.8 2007/07/29 23:09:47 millert Exp $
 =pod
 
 =head1 NAME
@@ -116,8 +116,13 @@ was configured with the I<--with-env-editor> option:
 
 =head1 FILES
 
-F<@sysconfdir@/sudoers>		List of who can run what
-F<@sysconfdir@/sudoers.tmp>	Lock file for visudo
+=over 4
+
+=item F<@sysconfdir@/sudoers>C<    		>List of who can run what
+
+=item F<@sysconfdir@/sudoers.tmp>C<		>Lock file for visudo
+
+=back 4
 
 =head1 DIAGNOSTICS
 
