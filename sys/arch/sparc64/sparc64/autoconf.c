@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.67 2007/06/01 19:25:10 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.68 2007/07/29 20:22:07 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1118,9 +1118,19 @@ device_register(struct device *dev, void *aux)
 	if (strcmp("wd", devname) == 0) {
 		/* IDE disks. */
 		struct ata_atapi_attach *aa = aux;
+		u_int channel, drive;
 
-		if ((bp->val[0] / 2) == aa->aa_channel &&
-		    (bp->val[0] % 2) == aa->aa_drv_data->drive) {
+		if (strcmp(bp->name, "ata") == 0 &&
+		    bp->val[0] == aa->aa_channel) {
+			channel = bp->val[0]; bp++;
+			drive = bp->val[0];
+		} else {
+			channel = bp->val[0] / 2;
+			drive = bp->val[0] % 2;
+		}
+
+		if (channel == aa->aa_channel &&
+		    drive == aa->aa_drv_data->drive) {
 			nail_bootdev(dev, bp);
 			return;
 		}
