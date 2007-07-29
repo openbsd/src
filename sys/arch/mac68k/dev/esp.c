@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.26 2006/03/13 19:39:52 brad Exp $	*/
+/*	$OpenBSD: esp.c,v 1.27 2007/07/29 21:24:02 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.17 1998/09/05 15:15:35 pk Exp $	*/
 
 /*
@@ -603,7 +603,7 @@ esp_iosb_have_dreq(esc)
 /* Faster spl constructs, without saving old values */
 #define	__splx(s)	__asm __volatile ("movew %0,sr" : : "di" (s));
 #define	__splvm()	__splx(mac68k_vmipl)
-#define	__splbio()	__splx(mac68k_bioipl)
+#define	__splbio()	__splx(PSL_S | PSL_IPL2)
 
 void
 esp_quick_dma_go(sc)

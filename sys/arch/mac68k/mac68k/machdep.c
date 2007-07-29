@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.141 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.142 2007/07/29 21:24:05 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -1472,7 +1472,6 @@ setmachdep()
 	current_mac_model = cpui;
 
 	mac68k_machine.via1_ipl = 1;
-	mac68k_machine.via2_ipl = 2;
 	mac68k_machine.aux_interrupts = 0;
 
 	/*
@@ -1530,7 +1529,6 @@ setmachdep()
 		via_reg(VIA1, vBufB) &= (0xff ^ DB1O_AuxIntEnb);
 		via_reg(VIA1, vDirB) |= DB1O_AuxIntEnb;
 		mac68k_machine.via1_ipl = 6;
-		mac68k_machine.via2_ipl = 2;
 
 		break;
 	case MACH_CLASSAV:

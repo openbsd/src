@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.44 2007/05/30 17:10:44 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.45 2007/07/29 21:24:05 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -240,7 +240,6 @@ struct mac68k_machine_S {
 	int			sonic;		/* Has SONIC e-net */
 
 	int			via1_ipl;
-	int			via2_ipl;
 	int			aux_interrupts;
 };
 

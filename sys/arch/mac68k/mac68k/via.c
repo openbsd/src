@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.28 2006/06/30 15:12:47 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.29 2007/07/29 21:24:05 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -148,14 +148,12 @@ via_init()
 			break;
 		}
 
-		intr_establish(via2_intr, NULL, mac68k_machine.via2_ipl,
-		    "via2");
+		intr_establish(via2_intr, NULL, 2, "via2");
 	} else if (current_mac_model->class == MACH_CLASSIIfx) { /* OSS */
 		volatile u_char *ossintr;
 		ossintr = (volatile u_char *)Via2Base + 6;
 		*ossintr = 0;
-		intr_establish(oss_intr, NULL, mac68k_machine.via2_ipl,
-		    "via2");
+		intr_establish(oss_intr, NULL, 2, "via2");
 	} else {	/* RBV */
 		if (current_mac_model->class == MACH_CLASSIIci) {
 			/*
@@ -163,8 +161,7 @@ via_init()
 			 */
 			via2_reg(rBufB) |= DB2O_CEnable;
 		}
-		intr_establish(rbv_intr, NULL, mac68k_machine.via2_ipl,
-		    "via2");
+		intr_establish(rbv_intr, NULL, 2, "via2");
 
 		nubus_intr.vh_ipl = 1;
 		nubus_intr.vh_fn = rbv_nubus_intr;
