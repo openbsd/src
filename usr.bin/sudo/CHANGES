@@ -1933,3 +1933,8 @@ Sudo 1.6.9 released.
 611) Documentation improvements.
 
 Sudo 1.6.9p1 released.
+
+612) Fixed updating of the saved environment when the environ pointer
+     gets changed out from underneath us.
+
+Sudo 1.6.9p2 released.
