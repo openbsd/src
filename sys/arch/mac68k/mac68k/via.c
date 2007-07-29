@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.29 2007/07/29 21:24:05 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.30 2007/07/29 21:25:23 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -295,7 +295,7 @@ rbv_intr(void *arg)
 	return (1);
 }
 
-static int nubus_intr_mask = 0;
+int nubus_intr_mask = 0;
 
 void
 add_nubus_intr(int slot, int (*func)(void *), void *client_data,
@@ -308,13 +308,14 @@ add_nubus_intr(int slot, int (*func)(void *), void *client_data,
 	 * Map Nubus slot 0 to "slot" 15; see note on Nubus slot
 	 * interrupt tables.
 	 */
-	if (slot == 0)
-		slot = 15;
-	slot -= 9;
 #ifdef DIAGNOSTIC
-	if (slot < 0 || slot > 7)
+	if (slot != 0 && (slot < 9 || slot > 14))
 		panic("add_nubus_intr: wrong slot %d", slot + 9);
 #endif
+	if (slot == 0)
+		slot = 15 - 9;
+	else
+		slot -= 9;
 
 	s = splhigh();
 
