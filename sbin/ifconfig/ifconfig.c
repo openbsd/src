@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.183 2007/07/30 12:34:30 pyr Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.184 2007/07/30 14:13:29 pyr Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -771,7 +771,8 @@ printif(char *ifname, int ifaliases)
 	const char *namep;
 	char *oname = NULL;
 	struct ifreq *ifrp;
-	int nlen = 0, count = 0, noinet = 1;
+	int count = 0, noinet = 1;
+	size_t nlen = 0;
 
 	if (ifname) {
 		if ((oname = strdup(ifname)) == NULL)
