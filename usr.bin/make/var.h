@@ -44,18 +44,20 @@ extern char *Var_Valuei(const char *, const char *);
  *	Checks whether global variable name/end is defined. */
 extern bool Var_Definedi(const char *, const char *);
 
-/* Var_Seti(name, end, val, ctxt);
+/* Var_Seti_with_ctxt(name, end, val, ctxt);
  *	Sets value val of variable name/end.  Copies val.
  *	ctxt can be VAR_CMD (command line) or VAR_GLOBAL (normal variable). */
-extern void Var_Seti(const char *, const char *, const char *,
+extern void Var_Seti_with_ctxt(const char *, const char *, const char *,
 	int);
-#define Var_Set(n, v, ctxt)	Var_Seti(n, NULL, v, ctxt)
-/* Var_Appendi(name, end, val, cxt);
+#define Var_Set(n, v)	Var_Seti_with_ctxt(n, NULL, v, VAR_GLOBAL)
+#define Var_Seti(n, e, v) Var_Seti_with_ctxt(n, e, v, VAR_GLOBAL)
+/* Var_Appendi_with_ctxt(name, end, val, cxt);
  *	Appends value val to variable name/end in context ctxt, defining it
  *	if it does not already exist, and inserting one space otherwise. */
-extern void Var_Appendi(const char *, const char *,
+extern void Var_Appendi_with_ctxt(const char *, const char *,
 	const char *, int);
-#define Var_Append(n, v, ctxt)	Var_Appendi(n, NULL, v, ctxt)
+#define Var_Append(n, v)	Var_Appendi_with_ctxt(n, NULL, v, VAR_GLOBAL)
+#define Var_Appendi(n, e, v) 	Var_Appendi_with_ctxt(n, e, v, VAR_GLOBAL)
 	
 /* Var_Deletei(name, end);
  *	Deletes a global variable. */

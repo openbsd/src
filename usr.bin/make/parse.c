@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.77 2007/07/30 09:32:02 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.78 2007/07/30 09:51:53 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -436,7 +436,7 @@ ParseDoSrc(
 	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
 	 */
-	Var_Append(".TARGETS", src, VAR_GLOBAL);
+	Var_Append(".TARGETS", src);
 	return;
 
     case Order:

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.75 2007/07/30 09:39:18 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.76 2007/07/30 09:51:53 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -134,9 +134,9 @@ static void record_option(int c, const char *arg)
 	opt[0] = '-';
 	opt[1] = c;
 	opt[2] = '\0';
-	Var_Append(MAKEFLAGS, opt, VAR_GLOBAL);
+	Var_Append(MAKEFLAGS, opt);
 	if (arg != NULL)
-		Var_Append(MAKEFLAGS, arg, VAR_GLOBAL);
+		Var_Append(MAKEFLAGS, arg);
 }
 
 static void
@@ -220,7 +220,7 @@ MainParseArgs(int argc, char **argv)
 		c = optend ? -1 : getopt(argc, argv, OPTFLAGS);
 		switch (c) {
 		case 'D':
-			Var_Set(optarg, "1", VAR_GLOBAL);
+			Var_Set(optarg, "1");
 			record_option(c, optarg);
 			break;
 		case 'I':
@@ -691,8 +691,8 @@ main(int argc, char **argv)
 
 	if (d.object != d.current)
 		Dir_AddDir(dirSearchPath, d.current);
-	Var_Set(".CURDIR", d.current, VAR_GLOBAL);
-	Var_Set(".OBJDIR", d.object, VAR_GLOBAL);
+	Var_Set(".CURDIR", d.current);
+	Var_Set(".OBJDIR", d.object);
 
 	/*
 	 * Initialize various variables.
@@ -700,12 +700,12 @@ main(int argc, char **argv)
 	 *	.MAKEFLAGS gets set to the empty string just in case.
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
-	Var_Set("MAKE", argv[0], VAR_GLOBAL);
-	Var_Set(".MAKE", argv[0], VAR_GLOBAL);
-	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
-	Var_Set("MFLAGS", "", VAR_GLOBAL);
-	Var_Set("MACHINE", machine, VAR_GLOBAL);
-	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
+	Var_Set("MAKE", argv[0]);
+	Var_Set(".MAKE", argv[0]);
+	Var_Set(MAKEFLAGS, "");
+	Var_Set("MFLAGS", "");
+	Var_Set("MACHINE", machine);
+	Var_Set("MACHINE_ARCH", machine_arch);
 
 	/*
 	 * First snag any flags out of the MAKEFLAGS environment variable.
@@ -731,10 +731,10 @@ main(int argc, char **argv)
 		for (ln = Lst_First(create); ln != NULL; ln = Lst_Adv(ln)) {
 			char *name = (char *)Lst_Datum(ln);
 
-			Var_Append(".TARGETS", name, VAR_GLOBAL);
+			Var_Append(".TARGETS", name);
 		}
 	} else
-		Var_Set(".TARGETS", "", VAR_GLOBAL);
+		Var_Set(".TARGETS", "");
 
 
 	/*
@@ -747,7 +747,7 @@ main(int argc, char **argv)
 
 	read_all_make_rules(noBuiltins, &makefiles, &d);
 
-	Var_Append("MFLAGS", Var_Value(MAKEFLAGS), VAR_GLOBAL);
+	Var_Append("MFLAGS", Var_Value(MAKEFLAGS));
 
 	/* Install all the flags into the MAKEFLAGS env variable. */
 	if (((p = Var_Value(MAKEFLAGS)) != NULL) && *p)
@@ -844,7 +844,7 @@ ReadMakefile(void *p, void *q)
 	char *name;
 
 	if (!strcmp(fname, "-")) {
-		Var_Set("MAKEFILE", "", VAR_GLOBAL);
+		Var_Set("MAKEFILE", "");
 		Parse_File(estrdup("(stdin)"), stdin);
 	} else {
 		if ((stream = fopen(fname, "r")) != NULL)
@@ -873,7 +873,7 @@ ReadMakefile(void *p, void *q)
 		 * placement of the setting here means it gets set to the last
 		 * makefile specified, as it is set by SysV make.
 		 */
-found:		Var_Set("MAKEFILE", fname, VAR_GLOBAL);
+found:		Var_Set("MAKEFILE", fname);
 		Parse_File(fname, stream);
 	}
 	return true;

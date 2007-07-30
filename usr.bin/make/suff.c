@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.59 2007/07/24 18:58:48 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.60 2007/07/30 09:51:53 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -792,9 +792,9 @@ Suff_DoPaths(void)
 	    Lst_Clone(&s->searchPath, dirSearchPath, Dir_CopyDir);
     }
 
-    Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", &inIncludes), VAR_GLOBAL);
+    Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", &inIncludes));
     free(ptr);
-    Var_Set(".LIBS", ptr = Dir_MakeFlags("-L", &inLibs), VAR_GLOBAL);
+    Var_Set(".LIBS", ptr = Dir_MakeFlags("-L", &inLibs));
     free(ptr);
 
     Lst_Destroy(&inIncludes, Dir_Destroy);

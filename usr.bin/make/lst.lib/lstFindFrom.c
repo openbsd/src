@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstFindFrom.c,v 1.15 2007/07/29 13:49:54 espie Exp $	*/
+/*	$OpenBSD: lstFindFrom.c,v 1.16 2007/07/30 09:51:53 espie Exp $	*/
 /*	$NetBSD: lstFindFrom.c,v 1.6 1996/11/06 17:59:40 christos Exp $ */
 
 /*

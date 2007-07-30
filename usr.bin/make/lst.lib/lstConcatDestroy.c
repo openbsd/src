@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstConcatDestroy.c,v 1.8 2007/07/29 13:49:54 espie Exp $	*/
+/*	$OpenBSD: lstConcatDestroy.c,v 1.9 2007/07/30 09:51:53 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*

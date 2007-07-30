@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDupl.c,v 1.19 2007/07/29 13:49:54 espie Exp $	*/
+/*	$OpenBSD: lstDupl.c,v 1.20 2007/07/30 09:51:53 espie Exp $	*/
 /*	$NetBSD: lstDupl.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*

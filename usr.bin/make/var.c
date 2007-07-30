@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.72 2007/07/30 09:47:21 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.73 2007/07/30 09:51:53 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -697,13 +697,15 @@ var_set_append(const char *name, const char *ename, const char *val, int ctxt,
 }
 
 void
-Var_Seti(const char *name, const char *ename, const char *val, int ctxt)
+Var_Seti_with_ctxt(const char *name, const char *ename, const char *val, 
+    int ctxt)
 {
 	var_set_append(name, ename, val, ctxt, false);
 }
 
 void
-Var_Appendi(const char *name, const char *ename, const char *val, int ctxt)
+Var_Appendi_with_ctxt(const char *name, const char *ename, const char *val, 
+    int ctxt)
 {
 	var_set_append(name, ename, val, ctxt, true);
 }
@@ -854,6 +856,7 @@ parse_base_variable_name(const char **pstr, struct Name *name, SymTable *ctxt)
 bool
 Var_ParseSkip(const char **pstr, SymTable *ctxt)
 {
+	Var *v;
 	const char *str = *pstr;
 	struct Name name;
 	bool result;
@@ -1340,6 +1343,6 @@ Var_AddCmdline(const char *name)
 		}
 		Buf_AddSpace(&buf);
 	}
-	Var_Append(name, Buf_Retrieve(&buf), VAR_GLOBAL);
+	Var_Append(name, Buf_Retrieve(&buf));
 	Buf_Destroy(&buf);
 }
