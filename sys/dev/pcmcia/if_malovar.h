@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.14 2007/07/08 10:09:03 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.15 2007/07/30 21:45:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -191,6 +191,7 @@ struct malo_cmd_body_rate {
 #define MALO_TLV_TYPE_80211D	0x0007
 #define MALO_TLV_TYPE_CHANLIST	0x0101
 #define MALO_TLV_TYPE_NUMPROBES	0x0102
+#define MALO_TLV_TYPE_PASSEID	0x010a
 
 struct malo_cmd_tlv_ssid {
 	uint16_t	type;
@@ -246,6 +247,12 @@ struct malo_cmd_tlv_numprobes {
 	uint16_t	type;
 	uint16_t	size;
 	uint16_t	numprobes;
+} __packed;
+
+struct malo_cmd_tlv_passeid {
+	uint16_t        type;
+	uint16_t        size;
+	uint8_t         data[1];
 } __packed;
 
 /* RX descriptor */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.22 2007/07/08 10:09:02 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.23 2007/07/30 21:45:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -256,10 +256,17 @@ malo_pcmcia_activate(struct device *dev, enum devact act)
 uint8_t ap[] = { 0x00, 0x17, 0x9a, 0x44, 0xda, 0x83 };
 uint8_t chan[] = { 0x01 };
 uint8_t ssid[] = "nazgul";
-#endif
+
 uint8_t ap[] = { 0x00, 0x15, 0xe9, 0xa4, 0x6e, 0xd1 };
 uint8_t chan[] = { 0x04 };
 uint8_t ssid[] = "foobar";
+#endif
+
+uint8_t ap[] = { 0x00, 0x04, 0x75, 0x88, 0xa5, 0xb4 };
+uint8_t chan[] = { 0x04 };
+uint8_t ssid[] = "foobar";
+
+uint8_t rates[] = { 0x01, 0x04, 0x82, 0x84, 0x0b, 0x16 };
 
 void
 cmalo_attach(void *arg)
@@ -637,7 +644,7 @@ cmalo_init(struct ifnet *ifp)
 	cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY);
 	cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH);
 
-	//cmalo_cmd_set_assoc(sc);
+	cmalo_cmd_set_assoc(sc);
 
 	/* device up */
 	ifp->if_flags |= IFF_RUNNING;
@@ -1175,7 +1182,7 @@ cmalo_parse_elements(struct malo_softc *sc, void *buf, int size, int pos)
 			break;
 		case IEEE80211_ELEMID_RATES:
 			bcopy(buf + i, sc->sc_networks[pos].rates, len);
-			DPRINTF(2, "rates\n", sc->sc_networks[pos].rates);
+			DPRINTF(2, "rates\n");
 			break;
 		case IEEE80211_ELEMID_DSPARMS:
 			sc->sc_networks[pos].channel = *(uint8_t *)(buf + i);
@@ -1444,6 +1451,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	struct malo_cmd_tlv_phy *body_phy;
 	struct malo_cmd_tlv_cf *body_cf;
 	struct malo_cmd_tlv_rates *body_rates;
+	struct malo_cmd_tlv_passeid *body_passeid;
 	uint16_t psize;
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
@@ -1455,7 +1463,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	body = (struct malo_cmd_body_assoc *)(hdr + 1);
 
 	bcopy(ap, body->peermac, ETHER_ADDR_LEN);
-	body->capinfo = htole16(IEEE80211_CAPINFO_ESS);	
+	body->capinfo = htole16(IEEE80211_CAPINFO_ESS);
 	body->listenintrv = htole16(10);
 
 	body_ssid = sc->sc_cmd + psize;
@@ -1473,15 +1481,22 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	body_cf = sc->sc_cmd + psize;
 	body_cf->type = htole16(MALO_TLV_TYPE_CF);
 	body_cf->size = htole16(0);
-	psize += sizeof(*body_cf);
+	psize += (sizeof(*body_cf) - 1);
 
 	body_rates = sc->sc_cmd + psize;
 	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
 	body_rates->size =
-	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
-	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11G].rs_rates, body_rates->data,
-	    ic->ic_sup_rates[IEEE80211_MODE_11G].rs_nrates);
+	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates);
+	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates, body_rates->data,
+	    ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates);
 	psize += (sizeof(*body_rates) - 1) + body_rates->size;
+
+	/* hack to correct FW's wrong generated rates-element-id */
+	body_passeid = sc->sc_cmd + psize;
+	body_passeid->type = htole16(MALO_TLV_TYPE_PASSEID);
+	body_passeid->size = htole16(6);
+	bcopy(rates, body_passeid->data, 6);
+	psize += (sizeof(*body_passeid) - 1) + body_passeid->size;
 
 	hdr->size = htole16(psize - sizeof(*hdr));
 
