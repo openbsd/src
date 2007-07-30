@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.51 2007/01/04 17:55:35 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.52 2007/07/30 09:49:00 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -169,8 +169,6 @@ CompatRunCommand(LstNode cmdNode,/* Command to execute */
     char	  ** volatile av; /* Argument vector for thing to exec */
     int 	  argc; 	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
-    bool	  local;	/* true if command should be executed
-				 * locally */
     char	  *cmd = (char *)Lst_Datum(cmdNode);
     GNode	  *gn = (GNode *)gnp;
     static char *shargv[4] = { _PATH_BSHELL };
@@ -271,22 +269,17 @@ CompatRunCommand(LstNode cmdNode,/* Command to execute */
 	}
     }
 
-    local = true;
-
     /* Fork and execute the single command. If the fork fails, we abort.  */
     cpid = fork();
     if (cpid == -1)
 	Fatal("Could not fork");
     if (cpid == 0) {
-	if (local) {
 	    execvp(av[0], av);
 	    if (errno == ENOENT)
 		fprintf(stderr, "%s: not found\n", av[0]);
 	    else
 		perror(av[0]);
-	} else
-	    (void)execv(av[0], av);
-	_exit(1);
+	    _exit(1);
     }
     if (bp) {
 	free(av);
