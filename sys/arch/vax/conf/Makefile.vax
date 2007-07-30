@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.27 2006/07/27 05:58:12 miod Exp $
+#	$OpenBSD: Makefile.vax,v 1.28 2007/07/30 16:23:33 thib Exp $
 #	$NetBSD: Makefile.vax,v 1.49 1999/07/26 05:20:49 cgd Exp $
 
 # Makefile for OpenBSD/vax
@@ -62,7 +62,7 @@ S!=	cd ../../../..; pwd
 .endif
 VAX=	$S/arch/vax
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-D_VAX_INLINE_
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \

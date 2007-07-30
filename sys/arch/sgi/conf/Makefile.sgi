@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.15 2007/04/21 20:07:24 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.16 2007/07/30 16:23:33 thib Exp $
 
 # Makefile for OpenBSD
 #
@@ -45,7 +45,7 @@ S!=	cd ../../../..; pwd
 SGI=$S/arch/sgi
 MIPS64=	$S/arch/mips64
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__sgi__
 CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \

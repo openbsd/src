@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.2 2006/07/27 05:58:11 miod Exp $
+#	$OpenBSD: Makefile.aviion,v 1.3 2007/07/30 16:23:33 thib Exp $
 #
 # Makefile for OpenBSD
 #
@@ -34,7 +34,7 @@ S!=	cd ../../../..; pwd
 AVIION=	$S/arch/aviion
 M88K=	$S/arch/m88k
 
-INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Daviion -Dm88k
 CWARNFLAGS=	-Wall -Werror -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main -Wstrict-prototypes \

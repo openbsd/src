@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.39 2006/07/27 05:58:11 miod Exp $
+#	$OpenBSD: Makefile.hp300,v 1.40 2007/07/30 16:23:33 thib Exp $
 #	$NetBSD: Makefile.hp300,v 1.54 1997/04/01 23:16:41 scottr Exp $
 
 # Makefile for OpenBSD
@@ -35,7 +35,7 @@ S!=	cd ../../../..; pwd
 HP300=	$S/arch/hp300
 M68K=	$S/arch/m68k
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dhp300
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \

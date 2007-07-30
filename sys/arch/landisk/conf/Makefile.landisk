@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.3 2006/10/06 22:26:10 miod Exp $
+#	$OpenBSD: Makefile.landisk,v 1.4 2007/07/30 16:23:33 thib Exp $
 #
 # Makefile for OpenBSD/landisk
 #
@@ -36,7 +36,7 @@ S!=	cd ../../../..; pwd
 LANDISK=	$S/arch/landisk
 SH=		$S/arch/sh
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dlandisk
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main \

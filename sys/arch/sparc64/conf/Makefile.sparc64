@@ -12,7 +12,7 @@ S!=	cd ../../../..; pwd
 .endif
 SPARC64=	$S/arch/sparc64
 
-INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \

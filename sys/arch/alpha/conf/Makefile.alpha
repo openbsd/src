@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.38 2006/07/27 05:58:09 miod Exp $
+#	$OpenBSD: Makefile.alpha,v 1.39 2007/07/30 16:23:33 thib Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -28,7 +28,7 @@ S!=	cd ../../../..; pwd
 .endif
 ALPHA=	$S/arch/alpha
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha
 
 CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \

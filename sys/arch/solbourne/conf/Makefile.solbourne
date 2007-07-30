@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.solbourne,v 1.3 2006/07/27 05:58:12 miod Exp $
+#	$OpenBSD: Makefile.solbourne,v 1.4 2007/07/30 16:23:33 thib Exp $
 
 # Makefile for OpenBSD
 #
@@ -33,7 +33,7 @@ S!=	cd ../../../..; pwd
 .endif
 SOLBOURNE=	$S/arch/solbourne
 
-INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+INCLUDES=	-nostdinc -I. -I$S -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dsparc -Dsolbourne
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \

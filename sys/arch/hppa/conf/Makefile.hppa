@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.27 2006/07/27 05:58:11 miod Exp $
+#	$OpenBSD: Makefile.hppa,v 1.28 2007/07/30 16:23:33 thib Exp $
 
 # Makefile for OpenBSD
 #
@@ -33,7 +33,7 @@ S!=	cd ../../../..; pwd
 .endif
 HPPA=	$S/arch/hppa
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+INCLUDES=	-I. -I$S -I$S/arch -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dhppa
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
