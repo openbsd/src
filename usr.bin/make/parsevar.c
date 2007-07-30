@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.6 2007/07/24 19:12:59 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.7 2007/07/30 09:29:53 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -74,12 +74,13 @@ parse_variable_assignment(const char *line, int ctxt)
 {
 	const char *arg;
 	char *res1 = NULL, *res2 = NULL;
+#define VAR_INVALID	-1
 #define VAR_NORMAL	0
 #define VAR_SUBST	1
 #define VAR_APPEND	2
 #define VAR_SHELL	4
 #define VAR_OPT		8
-	int type;	/* Type of assignment */
+	int type;	
 	struct Name name;
 
 	arg = VarName_Get(line, &name, NULL, true,
@@ -90,23 +91,21 @@ parse_variable_assignment(const char *line, int ctxt)
 
 	type = VAR_NORMAL;
 
-	while (*arg != '=' && !isspace(*arg)) {
+	while (*arg != '=') {
 		/* Check operator type.  */
 		switch (*arg++) {
 		case '+':
-			if (type & (VAR_OPT|VAR_APPEND)) {
-				VarName_Free(&name);
-				return false;
-			}
-			type |= VAR_APPEND;
+			if (type & (VAR_OPT|VAR_APPEND))
+				type = VAR_INVALID;
+			else
+				type |= VAR_APPEND;
 			break;
 
 		case '?':
-			if (type & (VAR_OPT|VAR_APPEND)) {
-				VarName_Free(&name);
-				return false;
-			}
-			type |= VAR_OPT;
+			if (type & (VAR_OPT|VAR_APPEND))
+				type = VAR_INVALID;
+			else 
+				type |= VAR_OPT;
 			break;
 
 		case ':':
@@ -117,34 +116,31 @@ parse_variable_assignment(const char *line, int ctxt)
 				while (*arg != '=' && *arg != '\0')
 					arg++;
 			} else {
-				if (type & VAR_SUBST) {
-					VarName_Free(&name);
-					return false;
-				}
-				type |= VAR_SUBST;
+				if (type & VAR_SUBST)
+					type = VAR_INVALID;
+				else
+					type |= VAR_SUBST;
 			}
 			break;
 
 		case '!':
-			if (type & VAR_SHELL) {
-				VarName_Free(&name);
-				return false;
-			}
-			type |= VAR_SHELL;
+			if (type & VAR_SHELL)
+				type = VAR_INVALID;
+			else
+				type |= VAR_SHELL;
 			break;
 
 		default:
+			type = VAR_INVALID;
+			break;
+		}
+		if (type == VAR_INVALID) {
 			VarName_Free(&name);
 			return false;
 		}
 	}
 
-	/* Check validity of operator */
-	if (*arg++ != '=') {
-		VarName_Free(&name);
-		return false;
-	}
-
+	arg++;
 	while (isspace(*arg))
 		arg++;
 	/* If the variable already has a value, we don't do anything.  */
@@ -187,7 +183,7 @@ parse_variable_assignment(const char *line, int ctxt)
 		errorIsOkay = false;
 		/* ensure the variable is set to something to avoid `variable
 		 * is recursive' errors.  */
-		if (Var_Valuei(name.s, name.e) == NULL)
+		if (!Var_Definedi(name.s, name.e))
 			Var_Seti(name.s, name.e, "", ctxt);
 
 		res2 = Var_Subst(arg, NULL, false);
