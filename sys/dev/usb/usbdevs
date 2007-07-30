@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.283 2007/07/28 01:18:15 jasper Exp $
+$OpenBSD: usbdevs,v 1.284 2007/07/30 14:11:27 todd Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -978,6 +978,7 @@ product DAVICOM DM9601		0x9601	DM9601
 product DAVICOM WK668		0x0668	HenTong WK-668
 
 /* Dell products */
+product DELL AXIM		0x4005	Axim X51v
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
 product DELL BLUETOOTH350	0x8103	Bluetooth 350
 product DELL W5500		0x8115	W5500 HSDPA 
@@ -1647,6 +1648,7 @@ product MOSCHIP MCS7830		0x7830	MCS7830 Ethernet
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
 product MOTOROLA2 T720C		0x2822	T720c
+product MOTOROLA2 V360		0x4902	V360
 product MOTOROLA2 USBLAN	0x600c	USBLAN
 product MOTOROLA2 USBLAN2	0x6027	USBLAN
 product MOTOROLA SB4100		0x4100	SB4100 Cable Modem
