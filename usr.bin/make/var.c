@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.71 2007/07/24 19:00:17 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.72 2007/07/30 09:47:21 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -230,6 +230,7 @@ static find_t find_pos(int);
 static void push_used(Var *);
 static void pop_used(Var *);
 static char *get_expanded_value(Var *, int, SymTable *, bool, bool *);
+static bool parse_base_variable_name(const char **, struct Name *, SymTable *);
 
 
 
@@ -821,21 +822,18 @@ find_pos(int c)
 	}
 }
 
-bool
-Var_ParseSkip(const char **pstr, SymTable *ctxt)
+static bool 
+parse_base_variable_name(const char **pstr, struct Name *name, SymTable *ctxt)
 {
-	const char *tstr;
 	const char *str = *pstr;
-	struct Name name;
-	bool result;
+	const char *tstr;
 	bool has_modifier = false;
 
 	switch(str[1]) {
 	case '(':
 	case '{':
 		/* Find eventual modifiers in the variable */
-		tstr = VarName_Get(str+2, &name, ctxt, false, find_pos(str[1]));
-		VarName_Free(&name);
+		tstr = VarName_Get(str+2, name, ctxt, false, find_pos(str[1]));
 		if (*tstr == ':')
 			has_modifier = true;
 		else if (*tstr != '\0') {
@@ -843,9 +841,27 @@ Var_ParseSkip(const char **pstr, SymTable *ctxt)
 		}
 		break;
 	default:
+		name->s = str+1;
+		name->e = str+2;
+		name->tofree = false;
 		tstr = str + 2;
 		break;
 	}
+	*pstr = tstr;
+	return has_modifier;
+}
+
+bool
+Var_ParseSkip(const char **pstr, SymTable *ctxt)
+{
+	const char *str = *pstr;
+	struct Name name;
+	bool result;
+	bool has_modifier;
+	const char *tstr = str;
+	
+	has_modifier = parse_base_variable_name(&tstr, &name, ctxt);
+	VarName_Free(&name);
 	result = true;
 	if (has_modifier)
 		 if (VarModifiers_Apply(NULL, NULL, ctxt, true, NULL, &tstr,
@@ -962,27 +978,13 @@ Var_Parse(const char *str,	/* The string to parse */
 	char *val;
 	uint32_t k;
 	int idx;
-	bool has_modifier = false;
+	bool has_modifier;
 
 	*freePtr = false;
 
-	switch(str[1]) {
-	case '(':
-	case '{':
-		/* Find eventual modifiers in the variable */
-		tstr = VarName_Get(str+2, &name, ctxt, false, find_pos(str[1]));
-		if (*tstr == ':')
-			has_modifier = true;
-		else if (*tstr != '\0')
-			tstr++;
-		break;
-	default:
-		name.s = str+1;
-		name.e = str+2;
-		name.tofree = false;
-		tstr = str + 2;
-		break;
-	}
+	tstr = str;
+
+	has_modifier = parse_base_variable_name(&tstr, &name, ctxt);
 
 	idx = classify_var(name.s, &name.e, &k);
 	v = find_any_var(name.s, name.e, ctxt, idx, k);
