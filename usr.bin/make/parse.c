@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.76 2007/07/24 18:58:48 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.77 2007/07/30 09:32:02 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -209,6 +209,9 @@ static void ParseDoSrc(int, const char *);
 static int ParseFindMain(void *, void *);
 static void ParseAddDir(void *, void *);
 static void ParseClearPath(void *);
+
+static void add_target_node(const char *);
+static void add_target_nodes(const char *);
 static void ParseDoDependency(char *);
 static void ParseAddCmd(void *, void *);
 static void ParseHasCommands(void *);
@@ -552,6 +555,48 @@ ParseClearPath(void *p)
     Lst_Init(path);
 }
 
+static void
+add_target_node(const char *line)
+{
+	GNode *gn;
+
+	if (!Suff_IsTransform(line))
+		gn = Targ_FindNode(line, TARG_CREATE);
+	else
+		gn = Suff_AddTransform(line);
+
+	if (gn != NULL)
+		Array_AtEnd(&gtargets, gn);
+}
+
+static void
+add_target_nodes(const char *line)
+{
+
+	if (Dir_HasWildcards(line)) {
+		/*
+		 * Targets are to be sought only in the current directory,
+		 * so create an empty path for the thing. Note we need to
+		 * use Dir_Destroy in the destruction of the path as the
+		 * Dir module could have added a directory to the path...
+		 */
+		char *targName;
+		LIST emptyPath;
+		LIST curTargs;
+
+		Lst_Init(&emptyPath);
+		Lst_Init(&curTargs);
+		Dir_Expand(line, &emptyPath, &curTargs);
+		Lst_Destroy(&emptyPath, Dir_Destroy);
+		while ((targName = (char *)Lst_DeQueue(&curTargs)) != NULL) {
+			add_target_node(line);
+		}
+		Lst_Destroy(&curTargs, NOFREE);
+	} else {
+		add_target_node(line);
+	}
+}
+
 /*-
  *---------------------------------------------------------------------
  * ParseDoDependency  --
@@ -781,43 +826,7 @@ ParseDoDependency(char *line)	/* the line to parse */
 	 * the end of the targets list
 	 */
 	if (specType == Not && *line != '\0') {
-	    char *targName;
-
-	    if (Dir_HasWildcards(line)) {
-		/*
-		 * Targets are to be sought only in the current directory,
-		 * so create an empty path for the thing. Note we need to
-		 * use Dir_Destroy in the destruction of the path as the
-		 * Dir module could have added a directory to the path...
-		 */
-		LIST	    emptyPath;
-		LIST	    curTargs;	/* list of target names to be found 
-					 * and added to the targets list */
-
-		Lst_Init(&emptyPath);
-		Lst_Init(&curTargs);
-		Dir_Expand(line, &emptyPath, &curTargs);
-		Lst_Destroy(&emptyPath, Dir_Destroy);
-	    while ((targName = (char *)Lst_DeQueue(&curTargs)) != NULL) {
-		    if (!Suff_IsTransform(targName))
-		    gn = Targ_FindNode(targName, TARG_CREATE);
-		    else
-		    gn = Suff_AddTransform(targName);
-
-		    if (gn != NULL)
-			Array_AtEnd(&gtargets, gn);
-		}
-		Lst_Destroy(&curTargs, NOFREE);
-	    } else {
-		if (!Suff_IsTransform(line))
-		    gn = Targ_FindNode(line, TARG_CREATE);
-		else
-		    gn = Suff_AddTransform(line);
-
-		if (gn != NULL)
-		    Array_AtEnd(&gtargets, gn);
-		/* Don't need the list of target names anymore...  */
-	    }
+	    add_target_nodes(line);
 	} else if (specType == ExPath && *line != '.' && *line != '\0')
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
 
