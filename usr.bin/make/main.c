@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.74 2007/07/24 18:58:48 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.75 2007/07/30 09:39:18 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -100,28 +100,43 @@ bool 		usePipes;	/* !-P flag */
 bool 		ignoreErrors;	/* -i flag */
 bool 		beSilent;	/* -s flag */
 
-static void		MainParseArgs(int, char **);
-static char *		chdir_verify_path(const char *);
-static int		ReadMakefile(void *, void *);
-static void		add_dirpath(Lst, const char *);
-static void		usage(void);
-static void		posixParseOptLetter(int);
-static void		record_option(int, const char *);
+struct dirs {
+	char *current;
+	char *object;
+};
 
-static char *curdir;			/* startup directory */
-static char *objdir;			/* where we chdir'ed to */
+static void MainParseArgs(int, char **);
+static void add_dirpath(Lst, const char *);
+static void usage(void);
+static void posixParseOptLetter(int);
+static void record_option(int, const char *);
+
+static char *figure_out_MACHINE(void);
+static char *figure_out_MACHINE_ARCH(void);
+static void no_fd_limits(void);
+
+static char *chdir_verify_path(const char *, struct dirs *);
+static char *concat_verify(const char *, const char *, char, struct dirs *);
+static char *figure_out_CURDIR(void);
+static void setup_CURDIR_OBJDIR(struct dirs *, const char *);
+
+static void setup_VPATH(void);
+
+static void read_all_make_rules(bool, Lst, struct dirs *);
+static void read_makefile_list(Lst, struct dirs *);
+static int ReadMakefile(void *, void *);
 
 
 static void record_option(int c, const char *arg)
 {
     char opt[3];
 
-    opt[0] = '-';
-    opt[1] = c;
-    opt[2] = '\0';
-    Var_Append(MAKEFLAGS, opt, VAR_GLOBAL);
-    if (arg != NULL)
-    	Var_Append(MAKEFLAGS, arg, VAR_GLOBAL);
+	opt[0] = '-';
+	opt[1] = c;
+	opt[2] = '\0';
+	Var_Append(MAKEFLAGS, opt, VAR_GLOBAL);
+	if (arg != NULL)
+		Var_Append(MAKEFLAGS, arg, VAR_GLOBAL);
 }
 
 static void
@@ -373,45 +388,245 @@ Main_ParseArgLine(const char *line) 	/* Line to fracture */
 	free(argv);
 }
 
-char *
-chdir_verify_path(const char *path)
-{
-    struct stat sb;
-
-    if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-	if (chdir(path)) {
-	    (void)fprintf(stderr, "make warning: %s: %s.\n",
-		  path, strerror(errno));
-	    return NULL;
-	} else {
-	    if (path[0] != '/')
-	    	return Str_concat(curdir, path, '/');
-	    else
-		return estrdup(path);
-	}
-    }
-
-    return NULL;
-}
-
-
 /* Add a :-separated path to a Lst of directories.  */
 static void
 add_dirpath(Lst l, const char *n)
 {
-    const char *start;
-    const char *cp;
+	const char *start;
+	const char *cp;
 
-    for (start = n;;) {
-	for (cp = start; *cp != '\0' && *cp != ':';)
-	    cp++;
-	Dir_AddDiri(l, start, cp);
-	if (*cp == '\0')
-	    break;
-	else
-	    start= cp+1;
-    }
+	for (start = n;;) {
+		for (cp = start; *cp != '\0' && *cp != ':';)
+			cp++;
+		Dir_AddDiri(l, start, cp);
+		if (*cp == '\0')
+			break;
+		else
+			start= cp+1;
+	}
 }
+
+/*
+ * Get the name of this type of MACHINE from utsname so we can share an 
+ * executable for similar machines. (i.e. m68k: amiga hp300, mac68k, sun3, ...)
+ *
+ * Note that both MACHINE and MACHINE_ARCH are decided at
+ * run-time.
+ */
+static char *
+figure_out_MACHINE()
+{
+	char *r = getenv("MACHINE");
+	if (r == NULL) {
+#ifndef MAKE_BOOTSTRAP
+		static struct utsname utsname;
+
+		if (uname(&utsname) == -1) {
+			perror("make: uname");
+			exit(2);
+		}
+		r = utsname.machine;
+#else
+		r = MACHINE;
+#endif
+	}
+	return r;
+}
+
+static char *
+figure_out_MACHINE_ARCH()
+{
+	char *r = getenv("MACHINE_ARCH");
+	if (r == NULL) {
+#ifndef MACHINE_ARCH
+		r = "unknown";	/* XXX: no uname -p yet */
+#else
+		r = MACHINE_ARCH;
+#endif
+	}
+	return r;
+}
+
+/* get rid of resource limit on file descriptors */
+static void
+no_fd_limits()
+{
+#ifdef RLIMIT_NOFILE
+	struct rlimit rl;
+	if (getrlimit(RLIMIT_NOFILE, &rl) != -1 &&
+	    rl.rlim_cur != rl.rlim_max) {
+		rl.rlim_cur = rl.rlim_max;
+		(void)setrlimit(RLIMIT_NOFILE, &rl);
+	}
+#endif
+}
+
+static char *
+figure_out_CURDIR()
+{
+	char *dir, *cwd;
+	struct stat sa, sb;
+
+	/* curdir is cwd... */
+	cwd = dogetcwd();
+	if (cwd == NULL) {
+		(void)fprintf(stderr, "make: %s.\n", strerror(errno));
+		exit(2);
+	}
+
+	if (stat(cwd, &sa) == -1) {
+		(void)fprintf(stderr, "make: %s: %s.\n", cwd, strerror(errno));
+		exit(2);
+	}
+
+	/* ...but we can use the alias $PWD if we can prove it is the same 
+	 * directory */
+	if ((dir = getenv("PWD")) != NULL) {
+		if (stat(dir, &sb) == 0 && sa.st_ino == sb.st_ino &&
+		    sa.st_dev == sb.st_dev)
+		    	free(cwd);
+			return estrdup(dir);
+	}
+
+	return cwd;
+}
+
+static char *
+chdir_verify_path(const char *path, struct dirs *d)
+{
+	struct stat sb;
+
+	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+		if (chdir(path)) {
+			(void)fprintf(stderr, "make warning: %s: %s.\n",
+			      path, strerror(errno));
+			return NULL;
+		} else {
+			if (path[0] != '/')
+				return Str_concat(d->current, path, '/');
+			else
+				return estrdup(path);
+		}
+	}
+
+	return NULL;
+}
+
+static char *
+concat_verify(const char *p1, const char *p2, char c, struct dirs *d)
+{
+	char *tmp = Str_concat(p1, p2, c);
+	char *result = chdir_verify_path(tmp, d);
+	free(tmp);
+	return result;
+}
+
+static void
+setup_CURDIR_OBJDIR(struct dirs *d, const char *machine)
+{
+	char *path, *prefix;
+
+	d->current = figure_out_CURDIR();
+	d->object = NULL;
+	/*
+	 * If the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
+	 * exists, change into it and build there.  (If a .${MACHINE} suffix
+	 * exists, use that directory instead).
+	 * Otherwise check MAKEOBJDIRPREFIX`cwd` (or by default,
+	 * _PATH_OBJDIRPREFIX`cwd`) and build there if it exists.
+	 * If all fails, use the current directory to build.
+	 *
+	 * Once things are initted,
+	 * have to add the original directory to the search path,
+	 * and modify the paths for the Makefiles appropriately.  The
+	 * current directory is also placed as a variable for make scripts.
+	 */
+	if ((prefix = getenv("MAKEOBJDIRPREFIX")) != NULL) {
+		d->object = concat_verify(prefix, d->current, 0, d);
+	} else if ((path = getenv("MAKEOBJDIR")) != NULL) {
+		d->object = chdir_verify_path(path, d);
+	} else {
+		path = _PATH_OBJDIR;
+		prefix = _PATH_OBJDIRPREFIX;
+		d->object = concat_verify(path, machine, '.', d);
+		if (!d->object)
+			d->object=chdir_verify_path(path, d);
+		if (!d->object)
+			d->object = concat_verify(prefix, d->current, 0, d);
+	}
+	if (d->object == NULL)
+		d->object = d->current;
+}
+
+#ifdef CLEANUP
+static void
+free_CURDIR_OBJDIR(struct dirs *d)
+{
+	if (d->object != d->current)
+		free(d->object);
+	free(d->current);
+}
+#endif
+
+
+/*
+ * if the VPATH variable is defined, add its contents to the search path.
+ * Uses the same format as the PATH env variable, i.e.,
+ * <directory>:<directory>:<directory>...
+ */
+static void
+setup_VPATH()
+{
+	if (Var_Value("VPATH") != NULL) {
+		char *vpath;
+
+		vpath = Var_Subst("${VPATH}", NULL, false);
+		add_dirpath(dirSearchPath, vpath);
+		(void)free(vpath);
+	}
+}
+
+static void
+read_makefile_list(Lst mk, struct dirs *d)
+{
+	LstNode ln;
+	ln = Lst_Find(mk, ReadMakefile, d);
+	if (ln != NULL)
+		Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
+}
+
+static void
+read_all_make_rules(bool noBuiltins, Lst makefiles, struct dirs *d)
+{
+	/*
+	 * Read in the built-in rules first, followed by the specified
+	 * makefile(s), or the default BSDmakefile, Makefile or
+	 * makefile, in that order.
+	 */
+	if (!noBuiltins) {
+		LIST sysMkPath; 		/* Path of sys.mk */
+
+		Lst_Init(&sysMkPath);
+		Dir_Expand(_PATH_DEFSYSMK, sysIncPath, &sysMkPath);
+		if (Lst_IsEmpty(&sysMkPath))
+			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
+
+		read_makefile_list(&sysMkPath, d);
+#ifdef CLEANUP
+		Lst_Destroy(&sysMkPath, (SimpleProc)free);
+#endif
+	}
+
+	if (!Lst_IsEmpty(makefiles)) {
+		read_makefile_list(makefiles, d);
+	} else if (!ReadMakefile("BSDmakefile", d))
+		if (!ReadMakefile("makefile", d))
+			(void)ReadMakefile("Makefile", d);
+
+	/* Always read a .depend file, if it exists. */
+	(void)ReadMakefile(".depend", d);
+}
+
 
 int main(int, char **);
 /*-
@@ -436,118 +651,16 @@ main(int argc, char **argv)
 {
 	static LIST targs;	/* target nodes to create */
 	bool outOfDate = true;	/* false if all targets up to date */
-	struct stat sb, sa;
-	char *p, *path, *pathp, *pwd;
-	char *mdpath;
-	char *machine = getenv("MACHINE");
-	char *machine_arch = getenv("MACHINE_ARCH");
+	char *machine = figure_out_MACHINE();
+	char *machine_arch = figure_out_MACHINE_ARCH();
 	const char *syspath = _PATH_DEFSYSPATH;
+	char *p;
+	static struct dirs d;
 
-#ifdef RLIMIT_NOFILE
-	/*
-	 * get rid of resource limit on file descriptors
-	 */
-	{
-		struct rlimit rl;
-		if (getrlimit(RLIMIT_NOFILE, &rl) != -1 &&
-		    rl.rlim_cur != rl.rlim_max) {
-			rl.rlim_cur = rl.rlim_max;
-			(void)setrlimit(RLIMIT_NOFILE, &rl);
-		}
-	}
-#endif
-	/*
-	 * Find where we are and take care of PWD for the automounter...
-	 * All this code is so that we know where we are when we start up
-	 * on a different machine with pmake.
-	 */
-	if ((curdir = dogetcwd()) == NULL) {
-		(void)fprintf(stderr, "make: %s.\n", strerror(errno));
-		exit(2);
-	}
+	no_fd_limits();
+	setup_CURDIR_OBJDIR(&d, machine);
 
-	if (stat(curdir, &sa) == -1) {
-	    (void)fprintf(stderr, "make: %s: %s.\n",
-			  curdir, strerror(errno));
-	    exit(2);
-	}
-
-	if ((pwd = getenv("PWD")) != NULL) {
-	    if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
-		sa.st_dev == sb.st_dev) {
-		    free(curdir);
-		    curdir = estrdup(pwd);
-	    }
-	}
-
-	/*
-	 * Get the name of this type of MACHINE from utsname
-	 * so we can share an executable for similar machines.
-	 * (i.e. m68k: amiga hp300, mac68k, sun3, ...)
-	 *
-	 * Note that both MACHINE and MACHINE_ARCH are decided at
-	 * run-time.
-	 */
-	if (!machine) {
-#ifndef MAKE_BOOTSTRAP
-	    static struct utsname utsname;
-
-	    if (uname(&utsname) == -1) {
-		    perror("make: uname");
-		    exit(2);
-	    }
-	    machine = utsname.machine;
-#else
-	    machine = MACHINE;
-#endif
-	}
-
-	if (!machine_arch) {
-#ifndef MACHINE_ARCH
-	    machine_arch = "unknown";	/* XXX: no uname -p yet */
-#else
-	    machine_arch = MACHINE_ARCH;
-#endif
-	}
-
-	/*
-	 * If the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
-	 * exists, change into it and build there.  (If a .${MACHINE} suffix
-	 * exists, use that directory instead).
-	 * Otherwise check MAKEOBJDIRPREFIX`cwd` (or by default,
-	 * _PATH_OBJDIRPREFIX`cwd`) and build there if it exists.
-	 * If all fails, use the current directory to build.
-	 *
-	 * Once things are initted,
-	 * have to add the original directory to the search path,
-	 * and modify the paths for the Makefiles appropriately.  The
-	 * current directory is also placed as a variable for make scripts.
-	 */
-	mdpath = NULL;
-	if (!(pathp = getenv("MAKEOBJDIRPREFIX"))) {
-		if (!(path = getenv("MAKEOBJDIR"))) {
-			path = _PATH_OBJDIR;
-			pathp = _PATH_OBJDIRPREFIX;
-			mdpath = Str_concat(path, machine, '.');
-			if (!(objdir = chdir_verify_path(mdpath)))
-				if (!(objdir=chdir_verify_path(path))) {
-					free(mdpath);
-					mdpath = Str_concat(pathp, curdir, 0);
-					if (!(objdir=chdir_verify_path(mdpath)))
-						objdir = curdir;
-				}
-		}
-		else if (!(objdir = chdir_verify_path(path)))
-			objdir = curdir;
-	}
-	else {
-		mdpath = Str_concat(pathp, curdir, 0);
-		if (!(objdir = chdir_verify_path(mdpath)))
-			objdir = curdir;
-	}
-	free(mdpath);
-
-	esetenv("PWD", objdir);
+	esetenv("PWD", d.object);
 	unsetenv("CDPATH");
 
 	Static_Lst_Init(create);
@@ -576,10 +689,10 @@ main(int argc, char **argv)
 	 */
 	Init();
 
-	if (objdir != curdir)
-		Dir_AddDir(dirSearchPath, curdir);
-	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
-	Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
+	if (d.object != d.current)
+		Dir_AddDir(dirSearchPath, d.current);
+	Var_Set(".CURDIR", d.current, VAR_GLOBAL);
+	Var_Set(".OBJDIR", d.object, VAR_GLOBAL);
 
 	/*
 	 * Initialize various variables.
@@ -632,60 +745,15 @@ main(int argc, char **argv)
 	if (Lst_IsEmpty(sysIncPath))
 	    add_dirpath(sysIncPath, syspath);
 
-	/*
-	 * Read in the built-in rules first, followed by the specified
-	 * makefile(s), or the default BSDmakefile, Makefile or
-	 * makefile, in that order.
-	 */
-	if (!noBuiltins) {
-		LstNode ln;
-		LIST sysMkPath; 		/* Path of sys.mk */
+	read_all_make_rules(noBuiltins, &makefiles, &d);
 
-		Lst_Init(&sysMkPath);
-		Dir_Expand(_PATH_DEFSYSMK, sysIncPath, &sysMkPath);
-		if (Lst_IsEmpty(&sysMkPath))
-			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
-		ln = Lst_Find(&sysMkPath, ReadMakefile, NULL);
-		if (ln != NULL)
-			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
-#ifdef CLEANUP
-		Lst_Destroy(&sysMkPath, (SimpleProc)free);
-#endif
-	}
-
-	if (!Lst_IsEmpty(&makefiles)) {
-		LstNode ln;
-
-		ln = Lst_Find(&makefiles, ReadMakefile, NULL);
-		if (ln != NULL)
-			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
-	} else if (!ReadMakefile("BSDmakefile", NULL))
-		if (!ReadMakefile("makefile", NULL))
-			(void)ReadMakefile("Makefile", NULL);
-
-	/* Always read a .depend file, if it exists. */
-	(void)ReadMakefile(".depend", NULL);
-
-	Var_Append("MFLAGS", Var_Value(MAKEFLAGS),
-	    VAR_GLOBAL);
+	Var_Append("MFLAGS", Var_Value(MAKEFLAGS), VAR_GLOBAL);
 
 	/* Install all the flags into the MAKEFLAGS env variable. */
 	if (((p = Var_Value(MAKEFLAGS)) != NULL) && *p)
 		esetenv("MAKEFLAGS", p);
 
-	/*
-	 * For compatibility, look at the directories in the VPATH variable
-	 * and add them to the search path, if the variable is defined. The
-	 * variable's value is in the same format as the PATH envariable, i.e.
-	 * <directory>:<directory>:<directory>...
-	 */
-	if (Var_Value("VPATH") != NULL) {
-	    char *vpath;
-
-	    vpath = Var_Subst("${VPATH}", NULL, false);
-	    add_dirpath(dirSearchPath, vpath);
-	    (void)free(vpath);
-	}
+	setup_VPATH();
 
 	/* Now that all search paths have been read for suffixes et al, it's
 	 * time to add the default search path to their lists...  */
@@ -697,40 +765,43 @@ main(int argc, char **argv)
 
 	/* Print the values of any variables requested by the user.  */
 	if (!Lst_IsEmpty(&varstoprint)) {
-	    LstNode ln;
+		LstNode ln;
 
-	    for (ln = Lst_First(&varstoprint); ln != NULL; ln = Lst_Adv(ln)) {
-		    char *value = Var_Value((char *)Lst_Datum(ln));
+		for (ln = Lst_First(&varstoprint); ln != NULL; 
+		    ln = Lst_Adv(ln)) {
+			char *value = Var_Value((char *)Lst_Datum(ln));
 
-		    printf("%s\n", value ? value : "");
-	    }
-	} else {
-	    /* Have now read the entire graph and need to make a list of targets
-	     * to create. If none was given on the command line, we consult the
-	     * parsing module to find the main target(s) to create.  */
-	    if (Lst_IsEmpty(create))
-		Parse_MainName(&targs);
-	    else
-		Targ_FindList(&targs, create);
-
-	    if (compatMake)
-		/* Compat_Init will take care of creating all the targets as
-		 * well as initializing the module.  */
-	    	Compat_Run(&targs);
-	    else {
-		/* Initialize job module before traversing the graph, now that
-		 * any .BEGIN and .END targets have been read.	This is done
-		 * only if the -q flag wasn't given (to prevent the .BEGIN from
-		 * being executed should it exist).  */
-		if (!queryFlag) {
-			if (maxLocal == -1)
-				maxLocal = maxJobs;
-			Job_Init(maxJobs, maxLocal);
+			printf("%s\n", value ? value : "");
 		}
+	} else {
+		/* Have now read the entire graph and need to make a list 
+		 * of targets to create. If none was given on the command 
+		 * line, we consult the parsing module to find the main 
+		 * target(s) to create.  */
+		if (Lst_IsEmpty(create))
+			Parse_MainName(&targs);
+		else
+			Targ_FindList(&targs, create);
 
-		/* Traverse the graph, checking on all the targets.  */
-		outOfDate = Make_Run(&targs);
-	    }
+		if (compatMake)
+			/* Compat_Init will take care of creating all the 
+			 * targets as well as initializing the module.  */
+			Compat_Run(&targs);
+		else {
+			/* Initialize job module before traversing the graph, 
+			 * now that any .BEGIN and .END targets have been 
+			 * read. This is done only if the -q flag wasn't given 
+			 * (to prevent the .BEGIN from being executed should 
+			 * it exist).  */
+			if (!queryFlag) {
+				if (maxLocal == -1)
+					maxLocal = maxJobs;
+				Job_Init(maxJobs, maxLocal);
+			}
+
+			/* Traverse the graph, checking on all the targets.  */
+			outOfDate = Make_Run(&targs);
+		}
 	}
 
 #ifdef CLEANUP
@@ -745,9 +816,7 @@ main(int argc, char **argv)
 		Targ_PrintGraph(2);
 
 #ifdef CLEANUP
-	if (objdir != curdir)
-	    free(objdir);
-	free(curdir);
+	free_CURDIR_OBJDIR(&d);
 	End();
 #endif
 	if (queryFlag && outOfDate)
@@ -767,9 +836,10 @@ main(int argc, char **argv)
  *	lots
  */
 static bool
-ReadMakefile(void *p, void *q UNUSED)
+ReadMakefile(void *p, void *q)
 {
 	char *fname = (char *)p;	/* makefile to read */
+	struct dirs *d = (struct dirs *)q;
 	FILE *stream;
 	char *name;
 
@@ -780,15 +850,15 @@ ReadMakefile(void *p, void *q UNUSED)
 		if ((stream = fopen(fname, "r")) != NULL)
 			goto found;
 		/* if we've chdir'd, rebuild the path name */
-		if (curdir != objdir && *fname != '/') {
+		if (d->current != d->object && *fname != '/') {
 			char *path;
 
-			path = Str_concat(curdir, fname, '/');
+			path = Str_concat(d->current, fname, '/');
 			if ((stream = fopen(path, "r")) == NULL)
-			    free(path);
+				free(path);
 			else {
-			    fname = path;
-			    goto found;
+				fname = path;
+				goto found;
 			}
 		}
 		/* look in -I and system include directories. */
