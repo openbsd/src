@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.182 2007/06/19 06:24:28 pyr Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.183 2007/07/30 12:34:30 pyr Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -777,7 +777,7 @@ printif(char *ifname, int ifaliases)
 		if ((oname = strdup(ifname)) == NULL)
 			err(1, "strdup");
 		nlen = strlen(oname);
-		if (!isdigit(oname[nlen - 1]))	/* is it a group? */
+		if (nlen && !isdigit(oname[nlen - 1]))	/* is it a group? */
 			if (printgroup(oname, ifaliases) != -1)
 				return;
 	}
@@ -788,7 +788,7 @@ printif(char *ifname, int ifaliases)
 	namep = NULL;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (oname) {
-			if (isdigit(oname[nlen - 1])) {
+			if (nlen && isdigit(oname[nlen - 1])) {
 				/* must have exact match */
 				if (strcmp(oname, ifa->ifa_name) != 0)
 					continue;
