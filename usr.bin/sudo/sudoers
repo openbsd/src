@@ -13,6 +13,9 @@
 
 # Defaults specification
 
+# Uncomment to preserve the environment for users in group wheel
+#Defaults:%wheel !env_reset
+
 # Runas alias specification
 
 # User privilege specification
