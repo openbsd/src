@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.73 2007/07/30 09:51:53 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.74 2007/07/30 10:03:11 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1104,6 +1104,22 @@ Var_Subst(const char *str,	/* the string in which to substitute */
 	return  Buf_Retrieve(&buf);
 }
 
+static BUFFER subst_buffer;
+
+/* we would like to subst on intervals, but it's complicated, so we cheat 
+ * by storing the interval in a static buffer. 
+ */
+char *
+Var_Substi(const char *str, const char *estr, SymTable *ctxt, bool undefErr)
+{
+	/* delimited string: no need to copy */
+	if (estr == NULL || *estr == '\0')
+		return Var_Subst(str, ctxt, undefErr);
+
+	Buf_Reset(&subst_buffer);
+	Buf_Addi(&subst_buffer, str, estr);
+	return Var_Subst(Buf_Retrieve(&subst_buffer), ctxt, undefErr);
+}
 
 /***
  ***	Supplementary support for .for loops.
@@ -1262,6 +1278,7 @@ Var_Init(void)
 	Var_setCheckEnvFirst(false);
 
 	VarModifiers_Init();
+	Buf_Init(&subst_buffer, MAKE_BSIZE);
 }
 
 

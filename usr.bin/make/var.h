@@ -121,6 +121,9 @@ extern bool Var_ParseBuffer(Buffer, const char *, SymTable *,
  *	Emit a PARSE_FATAL error if undef_is_bad and an undef variable is
  *	encountered. The result is always a copy that should be free. */
 extern char *Var_Subst(const char *, SymTable *, bool);
+/* subst = Var_Substi(str, estr, ctxt, undef_if_bad);
+ */
+extern char *Var_Substi(const char *, const char *, SymTable *, bool);
 
 
 /* For loop handling.
