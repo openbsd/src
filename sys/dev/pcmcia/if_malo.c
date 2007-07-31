@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.23 2007/07/30 21:45:31 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.24 2007/07/31 09:34:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -59,6 +59,7 @@
  * Driver for the Marvell 88W8385 CF chip.
  */
 
+#define CMALO_DEBUG
 #ifdef CMALO_DEBUG
 int cmalo_d = 2;
 #define DPRINTF(l, x...)	do { if ((l) <= cmalo_d) printf(x); } while (0)
@@ -877,35 +878,25 @@ void
 cmalo_start(struct ifnet *ifp)
 {
 	struct malo_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct mbuf *m;
 
+	/* don't transmit packets if interface is busy or down */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	for (;;) {
-		/* mgmt frames */
-		IF_POLL(&ic->ic_mgtq, m);
-		if (m != NULL) {
-			IF_DEQUEUE(&ic->ic_mgtq, m);
-			/* all mgmt frames are handled by the FW */
-			continue;
-		}
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m == NULL)
+		return;
 
-		/* data frames */
-		IFQ_POLL(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
+
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-		if (cmalo_tx(sc, m) != 0) {
-			ifp->if_oerrors++;
-			break;
-		}
-	}
+
+	if (cmalo_tx(sc, m) != 0)
+		ifp->if_oerrors++;
 }
 
 int
