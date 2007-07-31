@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.28 2007/07/31 16:14:26 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.29 2007/07/31 17:06:25 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2327,23 +2327,29 @@ static const mixer_item_t stac9200_mixer_items[] = {
 	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
 	{{AZ_CLASS_RECORD, {AudioCrecord}, AUDIO_MIXER_CLASS, AZ_CLASS_RECORD, 0, 0}, 0},
 
+	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  4, 0, .un.v={{""}, 2, MIXER_DELTA(31)}}, 0x0b, MI_TARGET_OUTAMP},
+	{{0, {AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 3, ENUM_OFFON}, 0x0b, MI_TARGET_OUTAMP},
+	{{0, {AudioNvolume}, AUDIO_MIXER_VALUE, AZ_CLASS_RECORD,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x0a, MI_TARGET_OUTAMP},
+	{{0, {AudioNvolume"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, ENUM_OFFON}, 0x0a, MI_TARGET_OUTAMP},
+	{{0, {AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD,
+	  0, 0, .un.e={5, {{{AudioNline}, 0}, {{AudioNmicrophone}, 1},
+			   {{AudioNline"2"}, 2}, {{AudioNline"3"}, 3},
+			   {{AudioNcd}, 4}}}},
+	 0x0c, MI_TARGET_CONNLIST},
+	{{0, {AudioNmicrophone}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(4)}}, 0x0c, MI_TARGET_OUTAMP},
+	{{0, {AudioNmicrophone"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x0c, MI_TARGET_OUTAMP},
 	{{0, {AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	  0, 0, .un.e={3, {{{AudioNdac}, 0}, {{"digital-in"}, 1}, {{"selector"}, 2}}}},
 	 0x07, MI_TARGET_CONNLIST},
 	{{0, {"digital."AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	  0, 0, .un.e={2, {{{AudioNdac}, 0}, {{"selector"}, 1}}}},
 	 0x09, MI_TARGET_CONNLIST}, /* AudioNdac is not accurate name */
-	{{0, {"selector."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 0, ENUM_OFFON}, 0x0a, MI_TARGET_OUTAMP},
-	{{0, {"selector"}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	  0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x0a, MI_TARGET_OUTAMP},
-	{{0, {AudioNmaster"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 0, ENUM_OFFON}, 0x0b, MI_TARGET_OUTAMP},
-	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	  0, 0, .un.v={{""}, 2, MIXER_DELTA(31)}}, 0x0b, MI_TARGET_OUTAMP},
-	{{0, {"selector."AudioNsource}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
-	  0, 0, .un.e={3, {{{"mic1"}, 0}, {{"mic2"}, 1}, {{AudioNcd}, 4}}}},
-	 0x0c, MI_TARGET_CONNLIST},
 	{{0, {AudioNheadphone".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	  0, 0, ENUM_OFFON}, 0x0d, MI_TARGET_PINBOOST},
 	{{0, {AudioNspeaker".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
