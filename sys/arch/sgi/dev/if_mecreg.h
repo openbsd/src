@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mecreg.h,v 1.1 2004/08/10 07:30:57 mickey Exp $	*/
+/*	$OpenBSD: if_mecreg.h,v 1.2 2007/07/31 19:10:22 deraadt Exp $	*/
 /*	$NetBSD: if_mecreg.h,v 1.2 2004/07/11 03:13:04 tsutsui Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 /*
- * MACE MAC110 ethernet register definitions
+ * MACE MAC110 Ethernet register definitions
  */
 
 #define MEC_MAC_CONTROL			0x00

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.11 2007/04/26 17:02:40 miod Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.12 2007/07/31 19:10:22 deraadt Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -61,7 +61,7 @@
  */
 
 /*
- * MACE MAC-110 ethernet driver
+ * MACE MAC-110 Ethernet driver
  */
 
 #include "bpfilter.h"
@@ -269,7 +269,7 @@ struct mec_softc {
 	bus_space_tag_t sc_st;		/* bus_space tag */
 	bus_space_handle_t sc_sh;	/* bus_space handle */
 	bus_dma_tag_t sc_dmat;		/* bus_dma tag */
-	void *sc_sdhook;		/* shoutdown hook */
+	void *sc_sdhook;		/* shutdown hook */
 
 	struct mii_data sc_mii;		/* MII/media information */
 	int sc_phyaddr;			/* MII address */
@@ -278,7 +278,7 @@ struct mec_softc {
 	bus_dmamap_t sc_cddmamap;	/* bus_dma map for control data */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
-	/* pointer to allocalted control data */
+	/* pointer to allocated control data */
 	struct mec_control_data *sc_control_data;
 #define sc_txdesc	sc_control_data->mcd_txdesc
 #define sc_rxdesc	sc_control_data->mcd_rxdesc
@@ -394,7 +394,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	 * BUS_DMA_COHERENT (which disables cache) may cause some performance
 	 * issue on copying data from the RX buffer to mbuf on normal memory,
 	 * though we have to make sure all bus_dmamap_sync(9) ops are called
-	 * proprely in that case.
+	 * properly in that case.
 	 */
 	if ((err = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct mec_control_data),
@@ -432,7 +432,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_tick_ch, mec_tick, sc);
 
-	/* use ethernet address from ARCBIOS */
+	/* use Ethernet address from ARCBIOS */
 	enaddr_aton(bios_enaddr, sc->sc_ac.ac_enaddr);
 
 	/* reset device */
@@ -707,7 +707,7 @@ mec_reset(struct mec_softc *sc)
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, 0);
 	delay(1000);
 
-	/* set ethernet address */
+	/* set Ethernet address */
 	address = 0;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		address = address << 8;
@@ -715,7 +715,7 @@ mec_reset(struct mec_softc *sc)
 	}
 	bus_space_write_8(st, sh, MEC_STATION, address);
 
-	/* Default to 100/half and let autonegotiation work its magic */
+	/* Default to 100/half and let auto-negotiation work its magic */
 	control = MEC_MAC_SPEED_SELECT | MEC_MAC_FILTER_MATCHMULTI |
 	    MEC_MAC_IPG_DEFAULT;
 
@@ -800,12 +800,12 @@ mec_start(struct ifnet *ifp)
 		} else {
 			/*
 			 * If the packet won't fit the buffer in txdesc,
-			 * we have to use concatinate pointer to handle it.
+			 * we have to use concatenate pointer to handle it.
 			 * While MEC can handle up to three segments to
-			 * concatinate, MEC requires that both the second and
+			 * concatenate, MEC requires that both the second and
 			 * third segments have to be 8 byte aligned.
 			 * Since it's unlikely for mbuf clusters, we use
-			 * only the first concatinate pointer. If the packet
+			 * only the first concatenate pointer. If the packet
 			 * doesn't fit in one DMA segment, allocate new mbuf
 			 * and copy the packet to it.
 			 *
@@ -931,7 +931,7 @@ mec_start(struct ifnet *ifp)
 #endif
 
 		/*
-		 * setup the transmit descriptor.
+		 * Setup the transmit descriptor.
 		 */
 
 		/* TXINT bit will be set later on the last packet */
@@ -995,7 +995,7 @@ mec_start(struct ifnet *ifp)
 
 		/*
 		 * If the transmitter was idle,
-		 * reset the txdirty pointer and reenable TX interrupt.
+		 * reset the txdirty pointer and re-enable TX interrupt.
 		 */
 		if (opending == 0) {
 			sc->sc_txdirty = firsttx;
@@ -1326,7 +1326,7 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 		}
 
 		/*
-		 * now allocate an mbuf (and possibly a cluster) to hold
+		 * Now allocate an mbuf (and possibly a cluster) to hold
 		 * the received packet.
 		 */
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1347,7 +1347,7 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 		}
 
 		/*
-		 * Note MEC chip seems to insert 2 byte paddingat the start of
+		 * Note MEC chip seems to insert 2 byte padding at the start of
 		 * RX buffer, but we copy whole buffer to avoid unaligned copy.
 		 */
 		MEC_RXBUFSYNC(sc, i, len + ETHER_ALIGN, BUS_DMASYNC_POSTREAD);
@@ -1369,7 +1369,7 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack it its for us.
+		 * pass it up the stack it is for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
