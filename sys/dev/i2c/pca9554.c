@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.12 2007/07/31 21:18:49 cnst Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.13 2007/07/31 21:24:37 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -118,7 +118,7 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 
 	for (i = 0; i < PCAGPIO_NPINS; i++) {
-		sc->sc_sensor[i].type = SENSOR_INTEGER;
+		sc->sc_sensor[i].type = SENSOR_INDICATOR;
 		if ((sc->sc_control & (1 << i)) == 0) {
 			snprintf(sc->sc_sensor[i].desc,
 			    sizeof(sc->sc_sensor[i].desc), "out%d", i);
