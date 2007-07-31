@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.27 2007/07/23 03:41:03 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.28 2007/07/31 16:14:26 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1320,7 +1320,11 @@ azalia_generic_mixer_from_device_value(const codec_t *this, nid_t nid, int targe
 		printf("unknown target: %d\n", target);
 		dmax = 255;
 	}
-	return dv * AUDIO_MAX_GAIN / dmax;
+	if (dv <= 0 || dmax == 0)
+		return AUDIO_MIN_GAIN;
+	if (dv >= dmax)
+		return AUDIO_MAX_GAIN - AUDIO_MAX_GAIN % dmax;
+	return dv * (AUDIO_MAX_GAIN - AUDIO_MAX_GAIN % dmax) / dmax;
 #else
 	return dv;
 #endif
@@ -1343,7 +1347,11 @@ azalia_generic_mixer_to_device_value(const codec_t *this, nid_t nid, int target,
 		printf("unknown target: %d\n", target);
 		dmax = 255;
 	}
-	return uv * dmax / AUDIO_MAX_GAIN;
+	if (uv <= AUDIO_MIN_GAIN || dmax == 0)
+		return 0;
+	if (uv >= AUDIO_MAX_GAIN - AUDIO_MAX_GAIN % dmax)
+		return dmax;
+	return uv * dmax / (AUDIO_MAX_GAIN - AUDIO_MAX_GAIN % dmax);
 #else
 	return uv;
 #endif
