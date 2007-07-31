@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.26 2007/07/31 22:01:37 claudio Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.27 2007/07/31 23:00:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -836,9 +836,11 @@ cmalo_rx(struct malo_softc *sc)
 	DPRINTF(2, "RX status=%d, pkglen=%d, pkgoffset=%d\n",
 	    rxdesc->status, rxdesc->pkglen, rxdesc->pkgoffset);
 
-	if (rxdesc->status != MALO_RX_STATUS_OK)
+	if (rxdesc->status != MALO_RX_STATUS_OK) {
 		/* RX packet is not OK */
+		splx(s);
 		return;
+	}
 
 	/* remove the LLC / SNAP header */
 	data = sc->sc_data + rxdesc->pkgoffset;
@@ -850,12 +852,14 @@ cmalo_rx(struct malo_softc *sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
 		ifp->if_ierrors++;
+		splx(s);
 		return;
 	}
 	MCLGET(m, M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
 		ifp->if_ierrors++;
 		m_freem(m);
+		splx(s);
 		return;
 	}
 	m->m_pkthdr.rcvif = ifp;
