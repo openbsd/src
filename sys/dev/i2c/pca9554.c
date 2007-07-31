@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.11 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.12 2007/07/31 21:18:49 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -141,8 +141,8 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	printf(":");
-	if (8 - outputs)
-		printf(" %d inputs", 8 - outputs);
+	if (PCAGPIO_NPINS - outputs)
+		printf(" %d inputs", PCAGPIO_NPINS - outputs);
 	if (outputs)
 		printf(" %d outputs", outputs);
 	printf("\n");
