@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.179 2007/07/27 14:12:46 moritz Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.180 2007/07/31 03:35:04 ray Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.179 2007/07/27 14:12:46 moritz Exp $";
+    "$OpenBSD: ftpd.c,v 1.180 2007/07/31 03:35:04 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -282,11 +282,12 @@ main(int argc, char *argv[])
 {
 	socklen_t addrlen;
 	int ch, on = 1, tos;
-	char *cp, line[LINE_MAX];
+	char line[LINE_MAX];
 	FILE *fp;
 	struct hostent *hp;
 	struct sigaction sa;
 	int error = 0;
+	const char *errstr;
 
 	tzset();		/* in case no timezone database in ~ftp */
 	sigfillset(&allsigs);	/* used to block signals while root */
@@ -332,13 +333,26 @@ main(int argc, char *argv[])
 			break;
 
 		case 't':
-			timeout = atoi(optarg);
+			timeout = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr) {
+				syslog(LOG_ERR,
+				    "%s is a bad value for -t, aborting",
+				    optarg);
+				exit(2);
+			}
 			if (maxtimeout < timeout)
 				maxtimeout = timeout;
 			break;
 
 		case 'T':
-			maxtimeout = atoi(optarg);
+			maxtimeout = strtonum(optarg, 0, INT_MAX,
+			    &errstr);
+			if (errstr) {
+				syslog(LOG_ERR,
+				    "%s is a bad value for -T, aborting",
+				    optarg);
+				exit(2);
+			}
 			if (timeout > maxtimeout)
 				timeout = maxtimeout;
 			break;
@@ -350,13 +364,14 @@ main(int argc, char *argv[])
 			umaskchange = 0;
 
 			val = strtol(optarg, &p, 8);
-			if (*p != '\0' || val < 0 || (val & ~ACCESSPERMS)) {
+			if (*optarg == '\0' || *p != '\0' || val < 0 ||
+			    (val & ~ACCESSPERMS)) {
 				syslog(LOG_ERR,
-				    "%s is a bad value for -u, aborting..",
+				    "%s is a bad value for -u, aborting",
 				    optarg);
 				exit(2);
-			} else
-				defumask = val;
+			}
+			defumask = val;
 			break;
 		    }
 
@@ -558,8 +573,7 @@ main(int argc, char *argv[])
 		ctrl_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
 #else
 		while (fgets(line, sizeof(line), fd) != NULL) {
-			if ((cp = strchr(line, '\n')) != NULL)
-				*cp = '\0';
+			line[strcspn(line, "\n")] = '\0';
 			lreply(530, "%s", line);
 		}
 		(void) fflush(stdout);
@@ -600,8 +614,7 @@ main(int argc, char *argv[])
 	/* If logins are disabled, print out the message. */
 	if ((fp = fopen(_PATH_NOLOGIN, "r")) != NULL) {
 		while (fgets(line, sizeof(line), fp) != NULL) {
-			if ((cp = strchr(line, '\n')) != NULL)
-				*cp = '\0';
+			line[strcspn(line, "\n")] = '\0';
 			lreply(530, "%s", line);
 		}
 		(void) fflush(stdout);
@@ -611,8 +624,7 @@ main(int argc, char *argv[])
 	}
 	if ((fp = fopen(_PATH_FTPWELCOME, "r")) != NULL) {
 		while (fgets(line, sizeof(line), fp) != NULL) {
-			if ((cp = strchr(line, '\n')) != NULL)
-				*cp = '\0';
+			line[strcspn(line, "\n")] = '\0';
 			lreply(220, "%s", line);
 		}
 		(void) fflush(stdout);
@@ -1100,11 +1112,10 @@ pass(char *passwd)
 	 */
 	motd = login_getcapstr(lc, "welcome", NULL, NULL);
 	if ((fp = fopen(motd ? motd : _PATH_FTPLOGINMESG, "r")) != NULL) {
-		char *cp, line[LINE_MAX];
+		char line[LINE_MAX];
 
 		while (fgets(line, sizeof(line), fp) != NULL) {
-			if ((cp = strchr(line, '\n')) != NULL)
-				*cp = '\0';
+			line[strcspn(line, "\n")] = '\0';
 			lreply(230, "%s", line);
 		}
 		(void) fflush(stdout);
@@ -2019,10 +2030,7 @@ nack(char *s)
 void
 yyerror(char *s)
 {
-	char *cp;
-
-	if ((cp = strchr(cbuf,'\n')))
-		*cp = '\0';
+	cbuf[strcspn(cbuf, "\n")] = '\0';
 	reply(500, "'%s': command not understood.", cbuf);
 }
 
@@ -2060,11 +2068,10 @@ cwd(char *path)
 		perror_reply(550, path);
 	else {
 		if ((message = fopen(_PATH_CWDMESG, "r")) != NULL) {
-			char *cp, line[LINE_MAX];
+			char line[LINE_MAX];
 
 			while (fgets(line, sizeof(line), message) != NULL) {
-				if ((cp = strchr(line, '\n')) != NULL)
-					*cp = '\0';
+				line[strcspn(line, "\n")] = '\0';
 				lreply(250, "%s", line);
 			}
 			(void) fflush(stdout);
