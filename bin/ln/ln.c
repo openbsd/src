@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.14 2006/04/25 04:38:26 deraadt Exp $	*/
+/*	$OpenBSD: ln.c,v 1.15 2007/07/31 03:03:12 ray Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: ln.c,v 1.14 2006/04/25 04:38:26 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ln.c,v 1.15 2007/07/31 03:03:12 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,13 +115,20 @@ main(int argc, char *argv[])
 	exit(exitval);
 }
 
+ /*
+  * Nomenclature warning!
+  *
+  * In this source "target" and "source" are used the opposite way they
+  * are used in the ln(1) manual.  Here "target" is the existing file and
+  * "source" specifies the to-be-created link to "target".
+  */
 int
 linkit(char *target, char *source, int isdir)
 {
 	struct stat sb;
 	char *p, path[MAXPATHLEN];
 	int (*statf)(const char *, struct stat *);
-	int n;
+	int exists, n;
 
 	if (!sflag) {
 		/* If target doesn't exist, quit now. */
@@ -154,6 +161,30 @@ linkit(char *target, char *source, int isdir)
 		source = path;
 	}
 
+	exists = (lstat(source, &sb) == 0);
+	/*
+	 * If doing hard links and the source (destination) exists and it
+	 * actually is the same file like the target (existing file), we
+	 * complain that the files are identical.  If -f is specified, we
+	 * accept the job as already done and return with success.
+	 */
+	if (exists && !sflag) {
+		struct stat tsb;
+
+		if (stat(target, &tsb) != 0) {
+			warn("%s: disappeared", target);
+			return (1);
+		}
+
+		if (tsb.st_dev == sb.st_dev && tsb.st_ino == sb.st_ino) {
+			warnx("%s and %s are identical (nothing done).",
+			    target, source);
+			if (fflag)
+				return (0);
+			else
+				return (1);
+		}
+	}
 	/*
 	 * If the file exists, and -f was specified, unlink it.
 	 * Attempt the link.
