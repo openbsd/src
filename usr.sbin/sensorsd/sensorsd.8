@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.11 2007/05/31 19:20:29 jmc Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.12 2007/07/31 06:56:24 robert Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -15,13 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 31 2007 $
 .Dt SENSORSD 8
 .Os
 .Sh NAME
 .Nm sensorsd
 .Nd monitor hardware sensors
 .Sh SYNOPSIS
+.Op Fl d
 .Nm sensorsd
 .Sh DESCRIPTION
 The
@@ -44,6 +45,15 @@ Limit and command values for a particular sensor may be specified in the
 configuration file.
 This file is reloaded upon receiving
 .Dv SIGHUP .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/sensorsd.conf"
 .It /etc/sensorsd.conf
