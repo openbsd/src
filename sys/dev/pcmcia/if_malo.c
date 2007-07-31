@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.24 2007/07/31 09:34:55 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.25 2007/07/31 14:57:58 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -814,7 +814,9 @@ cmalo_rx(struct malo_softc *sc)
 	struct mbuf *m;
 	uint8_t *data;
 	uint16_t psize, *uc;
-	int i;
+	int i, s;
+
+	s = splnet();
 
 	/* read the whole RX packet which is always 802.3 */
 	psize = MALO_READ_2(sc, MALO_REG_DATA_READ_LEN);
@@ -872,6 +874,8 @@ cmalo_rx(struct malo_softc *sc)
 		ether_input_mbuf(ifp, m);
 		ifp->if_ipackets++;
 	}
+
+	splx(s);
 }
 
 void
@@ -902,6 +906,7 @@ cmalo_start(struct ifnet *ifp)
 int
 cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 {
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct malo_tx_desc *txdesc = sc->sc_data;
 	struct mbuf *m0;
 	uint8_t *data;
@@ -935,7 +940,7 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_TX_DL_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_TX_DL_OVER);
 
-	/* XXX ifp->if_flags |= IFF_OACTIVE ??? */
+	ifp->if_flags |= IFF_OACTIVE;
 
 	DPRINTF(2, "%s: TX status=%d, pkglen=%d, pkgoffset=%d\n",
 	    sc->sc_dev.dv_xname, txdesc->status, m->m_pkthdr.len,
