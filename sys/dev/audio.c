@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.68 2007/07/18 19:27:08 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.69 2007/07/31 03:11:14 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2359,8 +2359,8 @@ au_set_port(struct audio_softc *sc, struct au_mixer_ports *ports, u_int port)
 	mixer_ctrl_t ct;
 	int i, error;
 
-	if (port == 0 && ports->allports == 0)
-		return 0;	/* allow this special case */
+	if (port == 0)	/* allow this special case */
+		return 0;
 
 	if (ports->index == -1)
 		return EINVAL;
