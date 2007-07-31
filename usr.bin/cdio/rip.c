@@ -1,3 +1,5 @@
+/*	$OpenBSD: rip.c,v 1.6 2007/07/31 21:21:11 deraadt Exp $	*/
+
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
  *
@@ -356,6 +358,7 @@ read_data_sector(u_int32_t lba, u_char *sec, u_int32_t secsize)
 int
 read_track(int fd, struct track_info *ti)
 {
+	struct timeval tv, otv, atv;
 	u_int32_t i, blksize, n_sec;
 	u_char *sec;
 	int error;
@@ -366,9 +369,19 @@ read_track(int fd, struct track_info *ti)
 	if (sec == NULL)
 		return (-1);
 
+	timerclear(&otv);
+	atv.tv_sec = 1;
+	atv.tv_usec = 0;
+
 	for (i = 0; i < n_sec; ) {
-		fprintf(stderr, "track %u '%c' %08u/%08u %3u%%\r", ti->track,
-		    (ti->isaudio) ? 'a' : 'd', i, n_sec, 100 * i / n_sec);
+		gettimeofday(&tv, NULL);
+		if (timercmp(&tv, &otv, >)) {
+			fprintf(stderr, "\rtrack %u '%c' %08u/%08u %3u%%",
+			    ti->track,
+			    (ti->isaudio) ? 'a' : 'd', i, n_sec,
+			    100 * i / n_sec);
+			timeradd(&tv, &atv, &otv);
+		}
 
 		error = read_data_sector(i + ti->start_lba, sec, blksize);
 		if (error == 0) {
@@ -388,7 +401,8 @@ read_track(int fd, struct track_info *ti)
 	}
 
 	free(sec);
-	fprintf(stderr, "track %u '%c' %08u/%08u 100%%\n", ti->track,
+	fprintf(stderr, "\rtrack %u '%c' %08u/%08u 100%%\n",
+	    ti->track,
 	    (ti->isaudio) ? 'a' : 'd', i, n_sec);
 	return (0);
 }
