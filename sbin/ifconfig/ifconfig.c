@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.184 2007/07/30 14:13:29 pyr Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.185 2007/07/31 06:37:48 pyr Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2837,10 +2837,10 @@ setvlanprio(const char *val, int d)
 void
 setvlandev(const char *val, int d)
 {
-	struct vlanreq vreq;
-
-	if (!__have_tag)
-		errx(1, "must specify both vlan tag and device");
+	struct vlanreq	 vreq;
+	int		 tag;
+	size_t		 skip;
+	const char	*estr;
 
 	bzero((char *)&vreq, sizeof(struct vlanreq));
 	ifr.ifr_data = (caddr_t)&vreq;
@@ -2849,7 +2849,15 @@ setvlandev(const char *val, int d)
 		err(1, "SIOCGETVLAN");
 
 	(void) strlcpy(vreq.vlr_parent, val, sizeof(vreq.vlr_parent));
-	vreq.vlr_tag = __tag;
+
+	if (!__have_tag && vreq.vlr_tag == 0) {
+		skip = strcspn(ifr.ifr_name, "0123456789");
+		tag = strtonum(ifr.ifr_name + skip, 1, 4095, &estr);
+		if (estr != NULL)
+			errx(1, "invalid vlan tag and device specification");
+		vreq.vlr_tag = tag;
+	} else if (__have_tag)
+		vreq.vlr_tag = __tag;
 
 	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETVLAN");
