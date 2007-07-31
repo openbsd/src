@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.25 2007/07/31 14:57:58 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.26 2007/07/31 22:01:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -59,7 +59,6 @@
  * Driver for the Marvell 88W8385 CF chip.
  */
 
-#define CMALO_DEBUG
 #ifdef CMALO_DEBUG
 int cmalo_d = 2;
 #define DPRINTF(l, x...)	do { if ((l) <= cmalo_d) printf(x); } while (0)
@@ -908,10 +907,9 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct malo_tx_desc *txdesc = sc->sc_data;
-	struct mbuf *m0;
 	uint8_t *data;
 	uint16_t psize, *uc;
-	int i, off;
+	int i;
 
 	bzero(sc->sc_data, sizeof(*txdesc));
 	psize = sizeof(*txdesc) + m->m_pkthdr.len;
@@ -923,12 +921,8 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	bcopy(data, txdesc->dstaddrhigh, ETHER_ADDR_LEN);
 
 	/* copy mbuf data to the buffer */
-	off = sizeof(*txdesc);
-	for (m0 = m; m0; m0 = m0->m_next) {
-		data = mtod(m0, uint8_t *);
-		bcopy(data, sc->sc_data + off, m0->m_len);
-		off += m0->m_len;
-	}
+	m_copydata(m, 0, m->m_pkthdr.len, sc->sc_data + sizeof(*txdesc));
+	m_freem(m);
 
 	/* send TX packet to the device */
 	MALO_WRITE_2(sc, MALO_REG_DATA_WRITE_LEN, psize);
@@ -943,7 +937,7 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	ifp->if_flags |= IFF_OACTIVE;
 
 	DPRINTF(2, "%s: TX status=%d, pkglen=%d, pkgoffset=%d\n",
-	    sc->sc_dev.dv_xname, txdesc->status, m->m_pkthdr.len,
+	    sc->sc_dev.dv_xname, txdesc->status, letoh16(txdesc->pkglen),
 	    sizeof(*txdesc));
 
 	return (0);
