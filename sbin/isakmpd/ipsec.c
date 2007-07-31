@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.128 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.129 2007/07/31 20:59:33 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1935,7 +1935,7 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 			return -1;
 		}
 		if (text2sockaddr(netmask, NULL, mask, af, 1)) {
-			log_print("ipsec_id_build: invalid section %s "
+			log_print("ipsec_get_id: invalid section %s "
 			    "network %s", section, netmask);
 			free(*addr);
 			return -1;
