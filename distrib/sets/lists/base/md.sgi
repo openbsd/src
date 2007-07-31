@@ -2311,6 +2311,10 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/zlib.ph
+./usr/libdata/perl5/site_perl/misp64-openbsd/dev/bluetooth
+./usr/libdata/perl5/site_perl/misp64-openbsd/dev/bluetooth/btdev.ph
+./usr/libdata/perl5/site_perl/misp64-openbsd/dev/bluetooth/bthid.ph
+./usr/libdata/perl5/site_perl/misp64-openbsd/dev/bluetooth/bthidev.ph
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/mips64-openbsd

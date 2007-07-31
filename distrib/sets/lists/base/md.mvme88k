@@ -598,6 +598,10 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/audiovar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/biovar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/bluetooth
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/bluetooth/btdev.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/bluetooth/bthid.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/bluetooth/bthidev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/cardbus/cardbus_exrom.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/cardbus/cardbusvar.ph
