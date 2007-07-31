@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.49 2007/05/11 02:07:47 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.50 2007/07/31 03:44:21 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -6,7 +6,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
