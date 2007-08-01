@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.c,v 1.7 2007/08/01 15:43:56 deraadt Exp $	*/
+/*	$OpenBSD: core.c,v 1.8 2007/08/01 15:44:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Jean-Francois Brousseau <krapht@secureops.com>
  * All rights reserved. 
@@ -128,6 +128,12 @@ free_core(struct pstate *ps)
 		free(cf->segs);
 		cf->segs = NULL;
 	}
+
+	if (cf->chdr != NULL) {
+		munmap(cf->chdr, cf->cfstat.st_size);
+		cf->chdr = NULL;
+	}
+
 }
 
 void
