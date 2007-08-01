@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.31 2006/11/11 22:21:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.32 2007/08/01 21:31:06 deraadt Exp $
 
 SUBDIR=	special notes
 
 .if	make(obj)
 SUBDIR+=crunch
-SUBDIR+=alpha amd64 armish cats hp300 hppa i386 landisk mac68k macppc \
+SUBDIR+=alpha amd64 armish hp300 hppa i386 landisk mac68k macppc \
 	mvme68k mvme88k mvmeppc sgi sparc sparc64 vax zaurus
 .elif exists(${MACHINE})
 SUBDIR+=${MACHINE}

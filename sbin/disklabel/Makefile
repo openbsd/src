@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2007/06/18 07:37:24 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.47 2007/08/01 21:34:01 deraadt Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -32,7 +32,7 @@ CFLAGS+= -DDOSLABEL
 CFLAGS+= -DSEEALSO="\"fdisk(8), installboot(8)\""
 .endif
 
-.if (${MACHINE} == "armish") || (${MACHINE} == "cats")
+.if (${MACHINE} == "armish")
 CFLAGS+= -DDOSLABEL
 CFLAGS+= -DSEEALSO="\"fdisk(8)\""
 .endif

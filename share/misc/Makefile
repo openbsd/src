@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2004/11/19 18:18:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2007/08/01 21:31:45 deraadt Exp $
 #	from: @(#)Makefile	5.13 (Berkeley) 5/7/91
 
 FILES=	airport ascii birthtoken countrycodes eqnchar getopt \
@@ -7,7 +7,7 @@ FILES=	airport ascii birthtoken countrycodes eqnchar getopt \
 	zipcodes 
 
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
-    (${MACHINE} == "alpha") || (${MACHINE} == "cats")
+    (${MACHINE} == "alpha")
 SUBDIR=	pcvtfonts
 .endif
 
