@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2007/07/26 16:10:16 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2007/08/01 22:37:28 millert Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../auth
 
@@ -6,6 +6,7 @@ PROG=	sudo
 BINOWN=	root
 BINMODE=4555
 LINKS=  ${BINDIR}/sudo ${BINDIR}/sudoedit
+CFLAGS+=-DSUDO_DEVEL
 
 SRCS=	check.c env.c getspwuid.c interfaces.c logging.c memrchr.c parse.c \
 	set_perms.c sudo.c tgetpass.c zero_bytes.c sudo_auth.c bsdauth.c \
