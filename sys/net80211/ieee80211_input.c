@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.49 2007/08/01 12:26:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.50 2007/08/01 12:32:26 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1899,7 +1899,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
+	if (ni->ni_replaycnt && BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
 		return;
 
 	/* save authenticator's nonce (ANonce) */
@@ -1928,11 +1928,13 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 		}
 		frm += 2 + frm[1];
 	}
-	/* check that we have a valid PMKID KDE */
-	if (pmkid == NULL || pmkid[1] - 4 < 16)
+	/* check that the PMKID KDE is valid */
+	if (pmkid != NULL && pmkid[1] - 4 < 16)
 		return;
 
-	/* do not update replaycnt since the frame contains no MIC */
+	/* update the last seen value of the key replay counter field */
+	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
+	/* do not set ni_replaycnt_ok since the frame contains no MIC */
 
 	/* generate a new nonce (SNonce) */
 	get_random_bytes(snonce, EAPOL_KEY_NONCE_LEN);
@@ -2088,6 +2090,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 
 	/* update the last seen value of the key replay counter field */
 	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
+	ni->ni_replaycnt_ok = 1;
 
 	/*
 	 * If a second RSN information element is present, use its pairwise
