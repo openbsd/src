@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.39 2007/03/19 09:29:33 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.40 2007/08/01 13:18:18 martin Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -103,8 +103,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
-#include <i386/isa/timerreg.h>
 
 void	spinwait(int);
 int	clockintr(void *);
@@ -205,7 +205,7 @@ initrtclock(void)
 	mtx_enter(&timer_mutex);
 
 	/* initialize 8253 clock */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
 	outb(IO_TIMER1, TIMER_DIV(hz) % 256);
@@ -266,12 +266,12 @@ gettick(void)
 
 		disable_intr();
 
-		v1 = inb(TIMER_CNTR0);
-		v1 |= inb(TIMER_CNTR0) << 8;
-		v2 = inb(TIMER_CNTR0);
-		v2 |= inb(TIMER_CNTR0) << 8;
-		v3 = inb(TIMER_CNTR0);
-		v3 |= inb(TIMER_CNTR0) << 8;
+		v1 = inb(IO_TIMER1 + TIMER_CNTR0);
+		v1 |= inb(IO_TIMER1 + TIMER_CNTR0) << 8;
+		v2 = inb(IO_TIMER1 + TIMER_CNTR0);
+		v2 |= inb(IO_TIMER1 + TIMER_CNTR0) << 8;
+		v3 = inb(IO_TIMER1 + TIMER_CNTR0);
+		v3 |= inb(IO_TIMER1 + TIMER_CNTR0) << 8;
 
 		enable_intr();
 
@@ -316,9 +316,9 @@ gettick(void)
 		ef = read_eflags();
 		disable_intr();
 		/* Select counter 0 and latch it. */
-		outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-		lo = inb(TIMER_CNTR0);
-		hi = inb(TIMER_CNTR0);
+		outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+		lo = inb(IO_TIMER1 + TIMER_CNTR0);
+		hi = inb(IO_TIMER1 + TIMER_CNTR0);
 
 		write_eflags(ef);
 		mtx_leave(&timer_mutex);
@@ -702,7 +702,7 @@ i8254_inittimecounter_simple(void)
 	i8254_timecounter.tc_frequency = TIMER_FREQ;
 
 	mtx_enter(&timer_mutex);
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
 	outb(IO_TIMER1, tval & 0xff);
 	outb(IO_TIMER1, tval >> 8);
 
@@ -728,9 +728,9 @@ i8254_get_timecount(struct timecounter *tc)
 	ef = read_eflags();
 	disable_intr();
 
-	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = inb(TIMER_CNTR0);
-	hi = inb(TIMER_CNTR0);
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+	lo = inb(IO_TIMER1 + TIMER_CNTR0);
+	hi = inb(IO_TIMER1 + TIMER_CNTR0);
 
 	count = rtclock_tval - ((hi << 8) | lo);
 

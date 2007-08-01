@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.16 2007/05/25 15:55:26 art Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.17 2007/08/01 13:18:18 martin Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -63,7 +63,7 @@
 #include <machine/i82489var.h>
 #include <machine/pctr.h>
 
-#include <i386/isa/timerreg.h>	/* XXX for TIMER_FREQ */
+#include <dev/ic/i8253reg.h>
 
 struct evcount clk_count;
 struct evcount ipi_count;

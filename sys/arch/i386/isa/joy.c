@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.12 2006/09/19 11:06:34 jsg Exp $	*/
+/*	$OpenBSD: joy.c,v 1.13 2007/08/01 13:18:18 martin Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
-#include <i386/isa/timerreg.h>
+#include <dev/ic/i8253reg.h>
 #include <i386/isa/joyreg.h>
 
 static int	joy_get_tick(void);
@@ -167,9 +167,9 @@ joy_get_tick(void)
 {
 	int low, high;
 
-	outb(TIMER_MODE, TIMER_SEL0);
-	low = inb(TIMER_CNTR0);
-	high = inb(TIMER_CNTR0);
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0);
+	low = inb(IO_TIMER1 + TIMER_CNTR0);
+	high = inb(IO_TIMER1 + TIMER_CNTR0);
 
 	return (high << 8) | low;
 }
