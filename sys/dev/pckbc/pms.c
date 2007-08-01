@@ -1,4 +1,4 @@
-/* $OpenBSD: psm.c,v 1.5 2007/04/10 22:37:17 miod Exp $ */
+/* $OpenBSD: pms.c,v 1.1 2007/08/01 12:16:59 kettenis Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 
 #include <dev/ic/pckbcvar.h>
 
-#include <dev/pckbc/psmreg.h>
+#include <dev/pckbc/pmsreg.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
