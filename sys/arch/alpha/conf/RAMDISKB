@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.30 2006/03/12 17:29:48 martin Exp $
+#	$OpenBSD: RAMDISKB,v 1.31 2007/08/01 16:30:00 miod Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -68,7 +68,7 @@ pci*	at ppb?
 # PCI devices
 ahc*	at pci?				# AHA-28xx SCSI (NOT 64-BIT)
 de*	at pci?				# 21x4[012]-based Ethernet
-#dc*	at pci?				# 21143, "tulip" clone ethernet
+dc*	at pci?				# 21143, "tulip" clone ethernet
 fxp*	at pci?				# EtherExpress 10/100B ethernet cards
 #ne*	at pci?				# NE2000-compat ethernet cards
 #en*	at pci?				# ENI PCI ATM (untested)
@@ -89,14 +89,19 @@ isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #option ISP_COMPILE_12160_FW=1
 
 # Media Independent Interface (mii) drivers
+amphy*	at mii?				# AMD 79C873 PHYs
+bmtphy*	at mii?				# Broadcom 10/100 PHYs
+dcphy*	at mii?				# Digital Clone PHYs
 #exphy*	at mii?				# 3Com internal PHYs
 #inphy*	at mii?				# Intel 82555 PHYs
-#icsphy*	at mii?			# ICS 1890 PHYs
-#lxtphy*	at mii?			# Level1 LXT970 PHYs
-#nsphy*	at mii?				# NS and compatible PHYs
+#icsphy* at mii?			# ICS 1890 PHYs
+lxtphy* at mii?				# Level1 LXT970 PHYs
+mtdphy* at mii?				# Myson MTD972 PHYs
+nsphy*	at mii?				# NS and compatible PHYs
+nsphyter* at mii?			# NS and compatible PHYs
 #qsphy*	at mii?				# Quality Semi QS6612 PHYs
-#sqphy*	at mii?				# Seeq 8x220 PHYs
-#mtdphy*	at mii?			# Myson MTD972 PHYs
+sqphy*	at mii?				# Seeq 8x220 PHYs
+tqphy*	at mii?				# TDK 78Q212x PHYs
 ukphy*	at mii?				# "unknown" PHYs
 
 # ISA/EISA bus support

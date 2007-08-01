@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.57 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.58 2007/08/01 16:30:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -145,19 +145,10 @@ dc_pci_match(parent, match, aux)
 	    PCI_REVISION(pa->pa_class) == 0x21)
 		return (1);
 
-	/*
-	 * Since dc doesn't fit on the alpha floppy, we want de to win by
-	 * default on alpha so that RAMDISK* and GENERIC will use the same
-	 * driver.
-	 */
 	for (t = dc_devs; t->dc_vid != 0; t++) {
 		if ((PCI_VENDOR(pa->pa_id) == t->dc_vid) &&
 		    (PCI_PRODUCT(pa->pa_id) == t->dc_did)) {
-#ifdef __alpha__
-			return (1);
-#else
 			return (3);
-#endif
 		}
 	}
 
