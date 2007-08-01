@@ -52,7 +52,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: env.c,v 1.39.2.16 2007/07/29 20:10:19 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: env.c,v 1.39.2.17 2007/07/31 18:04:31 millert Exp $";
 #endif /* lint */
 
 /*
@@ -173,7 +173,7 @@ static const char *initial_badenv_table[] = {
     "TMPPREFIX",		/* zsh, prefix for temporary files */
     "PYTHONHOME",		/* python, module search path */
     "PYTHONPATH",		/* python, search path */
-    "PYTHONINSPEC",		/* python, allow inspection */
+    "PYTHONINSPECT",		/* python, allow inspection */
     "RUBYLIB",			/* ruby, library load path */
     "RUBYOPT",			/* ruby, extra command line options */
     NULL
