@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.56 2007/08/01 15:40:40 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.57 2007/08/01 16:16:09 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2297,8 +2297,9 @@ void
 ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
-	struct ieee80211_key k;
+	struct ieee80211_key *k;
 	u_int16_t info;
+	u_int8_t kid;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
@@ -2318,19 +2319,21 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	info = BE_READ_2(key->info);
 
 	/* install the GTK */
-	memset(&k, 0, sizeof k);
-	k.k_id = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
-	k.k_cipher = ni->ni_group_cipher;
-	k.k_flags = IEEE80211_KEY_GROUP;
+	kid = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
+	k = &ic->ic_nw_keys[kid];
+	memset(k, 0, sizeof(*k));
+	k->k_id = kid;
+	k->k_cipher = ni->ni_group_cipher;
+	k->k_flags = IEEE80211_KEY_GROUP;
 	if (info & EAPOL_KEY_WPA_TX)
-		k.k_flags |= IEEE80211_KEY_TX;
-	k.k_len = BE_READ_2(key->keylen);
+		k->k_flags |= IEEE80211_KEY_TX;
+	k->k_len = BE_READ_2(key->keylen);
 	/* check that key length matches group cipher */
-	if (k.k_len != ieee80211_cipher_keylen(k.k_cipher))
+	if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
 		return;
-	memcpy(k.k_key, (u_int8_t *)&key[1], k.k_len);
-	k.k_rsc = LE_READ_8(key->rsc);
-	if ((*ic->ic_set_key)(ic, ni, &k) != 0)
+	memcpy(k->k_key, (u_int8_t *)&key[1], k->k_len);
+	k->k_rsc = LE_READ_8(key->rsc);
+	if ((*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
 	/* update the last seen value of the key replay counter field */
