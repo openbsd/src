@@ -1,4 +1,4 @@
-/*      $OpenBSD: ab.c,v 1.1.1.1 2007/07/31 20:31:42 kurt Exp $       */
+/*      $OpenBSD: ab.c,v 1.2 2007/08/01 12:53:28 kurt Exp $       */
 
 /*
  * Copyright (c) 2007 Kurt Miller <kurt@openbsd.org>
@@ -17,14 +17,15 @@
  */
 
 #include <err.h>
-#include <stdio.h>
 
 void *hidden_check = &hidden_check;
-__asm(".hidden  hidden_check");
+__asm(".hidden hidden_check");
+
+extern void *libab_hidden_val;
 
 void test_ab()
 {
-	printf("libaa:\thidden_check = %p\n", hidden_check);
+	libab_hidden_val = hidden_check;
 	if (hidden_check != &hidden_check)
 		errx(1, "libab: hidden_check != &hidden_check\n");
 }
