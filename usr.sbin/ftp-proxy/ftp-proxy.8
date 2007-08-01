@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.9 2007/08/01 09:31:41 henning Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.10 2007/08/01 15:45:41 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -22,6 +22,7 @@
 .Nd Internet File Transfer Protocol proxy daemon
 .Sh SYNOPSIS
 .Nm ftp-proxy
+.Bk -words
 .Op Fl 6Adrv
 .Op Fl a Ar address
 .Op Fl b Ar address
@@ -31,8 +32,9 @@
 .Op Fl p Ar port
 .Op Fl q Ar queue
 .Op Fl R Ar address
-.Op Fl t Ar timeout
 .Op Fl T Ar tag
+.Op Fl t Ar timeout
+.Ek
 .Sh DESCRIPTION
 .Nm
 is a proxy for the Internet File Transfer Protocol.
@@ -129,16 +131,16 @@ connections to another proxy.
 .It Fl r
 Rewrite sourceport to 20 in active mode to suit ancient clients that insist
 on this RFC property.
+.It Fl T Ar tag
+Automatically tag packets passing through the
+.Xr pf 4
+rule with the name supplied.
 .It Fl t Ar timeout
 Number of seconds that the control connection can be idle, before the
 proxy will disconnect.
 The maximum is 86400 seconds, which is also the default.
 Do not set this too low, because the control connection is usually
 idle when large data transfers are taking place.
-.It Fl T Ar tag
-Automatically tag packets passing through the
-.Xr pf 4
-rule with the name supplied.
 .It Fl v
 Set the 'log' flag on pf rules committed by
 .Nm .
