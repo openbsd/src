@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.13 2006/12/30 13:24:00 camield Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.14 2007/08/01 09:31:41 henning Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -113,7 +113,7 @@ char ntop_buf[NTOP_BUFS][INET6_ADDRSTRLEN];
 
 struct sockaddr_storage fixed_server_ss, fixed_proxy_ss;
 char *fixed_server, *fixed_server_port, *fixed_proxy, *listen_ip, *listen_port,
-    *qname;
+    *qname, *tagname;
 int anonymous_only, daemonize, id_count, ipv6_mode, loglevel, max_sessions,
     rfc_mode, session_count, timeout, verbose;
 extern char *__progname;
@@ -588,6 +588,7 @@ main(int argc, char *argv[])
 	max_sessions	= 100;
 	qname		= NULL;
 	rfc_mode	= 0;
+	tagname		= NULL;
 	timeout		= 24 * 3600;
 	verbose		= 0;
 
@@ -595,7 +596,7 @@ main(int argc, char *argv[])
 	id_count	= 1;
 	session_count	= 0;
 
-	while ((ch = getopt(argc, argv, "6Aa:b:D:dm:P:p:q:R:rt:v")) != -1) {
+	while ((ch = getopt(argc, argv, "6Aa:b:D:dm:P:p:q:R:rT:t:v")) != -1) {
 		switch (ch) {
 		case '6':
 			ipv6_mode = 1;
@@ -639,6 +640,11 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			rfc_mode = 1;
+			break;
+		case 'T':
+			if (strlen(optarg) >= PF_TAG_NAME_SIZE)
+				errx(1, "tagname too long");
+			tagname = optarg;
 			break;
 		case 't':
 			timeout = strtonum(optarg, 0, 86400, &errstr);
@@ -720,7 +726,7 @@ main(int argc, char *argv[])
 	freeaddrinfo(res);
 
 	/* Initialize pf. */
-	init_filter(qname, verbose);
+	init_filter(qname, tagname, verbose);
 
 	if (daemonize) {
 		if (daemon(0, 0) == -1)
@@ -1088,6 +1094,6 @@ usage(void)
 {
 	fprintf(stderr, "usage: %s [-6Adrv] [-a address] [-b address]"
 	    " [-D level] [-m maxsessions]\n                 [-P port]"
-	    " [-p port] [-q queue] [-R address] [-t timeout]\n", __progname);
+	    " [-p port] [-q queue] [-R address] [-T tag] [-t timeout]\n", __progname);
 	exit(1);
 }

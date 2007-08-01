@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.8 2007/05/31 19:20:23 jmc Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.9 2007/08/01 09:31:41 henning Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 1 2007 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Op Fl q Ar queue
 .Op Fl R Ar address
 .Op Fl t Ar timeout
+.Op Fl T Ar tag
 .Sh DESCRIPTION
 .Nm
 is a proxy for the Internet File Transfer Protocol.
@@ -134,6 +135,10 @@ proxy will disconnect.
 The maximum is 86400 seconds, which is also the default.
 Do not set this too low, because the control connection is usually
 idle when large data transfers are taking place.
+.It Fl T Ar tag
+Automatically tag packets passing through the
+.Xr pf 4
+rule with the name supplied.
 .It Fl v
 Set the 'log' flag on pf rules committed by
 .Nm .
