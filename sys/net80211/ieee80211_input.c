@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.55 2007/08/01 15:22:12 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.56 2007/08/01 15:40:40 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2041,7 +2041,7 @@ void
 ieee80211_recv_4way_msg3(struct ieee80211com *ic,
     const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
-	struct ieee80211_key k;
+	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *rsn1, *rsn2, *gtk;
 
@@ -2120,35 +2120,41 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	}
 
 	/* install the PTK */
-	memset(&k, 0, sizeof k);
-	k.k_cipher = ni->ni_pairwise_cipher;
-	k.k_flags = IEEE80211_KEY_TX;
-	k.k_len = BE_READ_2(key->keylen);
+	k = &ni->ni_pairwise_key;
+	memset(k, 0, sizeof(*k));
+	k->k_cipher = ni->ni_pairwise_cipher;
+	k->k_flags = IEEE80211_KEY_TX;
+	k->k_len = BE_READ_2(key->keylen);
 	/* check that key length matches pairwise cipher */
-	if (k.k_len != ieee80211_cipher_keylen(k.k_cipher))
+	if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
 		return;
-	memcpy(k.k_key, ni->ni_ptk.tk, k.k_len);
-	if ((*ic->ic_set_key)(ic, ni, &k) != 0)
+	memcpy(k->k_key, ni->ni_ptk.tk, k->k_len);
+	if ((*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
 	if (gtk != NULL) {
+		u_int8_t kid;
+
 		/* check that the GTK KDE is valid */
 		if (gtk[1] - 4 < 2)
 			return;
+
 		/* install the GTK */
-		memset(&k, 0, sizeof k);
-		k.k_id = gtk[6] & 3;
-		k.k_cipher = ni->ni_group_cipher;
-		k.k_flags = IEEE80211_KEY_GROUP;
+		kid = gtk[6] & 3;
+		k = &ic->ic_nw_keys[kid];
+		memset(k, 0, sizeof(*k));
+		k->k_id = kid;
+		k->k_cipher = ni->ni_group_cipher;
+		k->k_flags = IEEE80211_KEY_GROUP;
 		if (gtk[6] & (1 << 2))	/* Tx bit */
-			k.k_flags |= IEEE80211_KEY_TX;
-		k.k_len = gtk[1] - 6;
+			k->k_flags |= IEEE80211_KEY_TX;
+		k->k_len = gtk[1] - 6;
 		/* check that key length matches group cipher */
-		if (k.k_len != ieee80211_cipher_keylen(k.k_cipher))
+		if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
 			return;	/* XXX PTK already installed! */
-		memcpy(k.k_key, &gtk[7], k.k_len);
-		k.k_rsc = LE_READ_8(key->rsc);
-		if ((*ic->ic_set_key)(ic, ni, &k) != 0)
+		memcpy(k->k_key, &gtk[7], k->k_len);
+		k->k_rsc = LE_READ_8(key->rsc);
+		if ((*ic->ic_set_key)(ic, ni, k) != 0)
 			return;
 	}
 
@@ -2172,7 +2178,7 @@ void
 ieee80211_recv_4way_msg4(struct ieee80211com *ic,
     const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
-	struct ieee80211_key k;
+	struct ieee80211_key *k;
 
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
@@ -2184,12 +2190,13 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 	/* empty key data field */
 
 	/* install the PTK */
-	memset(&k, 0, sizeof k);
-	k.k_cipher = ni->ni_pairwise_cipher;
-	k.k_flags = IEEE80211_KEY_TX;
-	k.k_len = ieee80211_cipher_keylen(k.k_cipher);
-	memcpy(k.k_key, ni->ni_ptk.tk, k.k_len);
-	if ((*ic->ic_set_key)(ic, ni, &k) != 0)
+	k = &ni->ni_pairwise_key;
+	memset(k, 0, sizeof(*k));
+	k->k_cipher = ni->ni_pairwise_cipher;
+	k->k_flags = IEEE80211_KEY_TX;
+	k->k_len = ieee80211_cipher_keylen(k->k_cipher);
+	memcpy(k->k_key, ni->ni_ptk.tk, k->k_len);
+	if ((*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
@@ -2215,9 +2222,10 @@ void
 ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
     const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
-	struct ieee80211_key k;
+	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *gtk;
+	u_int8_t kid;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
@@ -2256,19 +2264,21 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	if (gtk[1] - 4 < 2)
 		return;
 	/* install the GTK */
-	memset(&k, 0, sizeof k);
-	k.k_id = gtk[6] & 3;
-	k.k_cipher = ni->ni_group_cipher;
-	k.k_flags = IEEE80211_KEY_GROUP;
+	kid = gtk[6] & 3;
+	k = &ic->ic_nw_keys[kid];
+	memset(k, 0, sizeof(*k));
+	k->k_id = kid;
+	k->k_cipher = ni->ni_group_cipher;
+	k->k_flags = IEEE80211_KEY_GROUP;
 	if (gtk[6] & (1 << 2))	/* Tx bit */
-		k.k_flags |= IEEE80211_KEY_TX;
-	k.k_len = gtk[1] - 6;
+		k->k_flags |= IEEE80211_KEY_TX;
+	k->k_len = gtk[1] - 6;
 	/* check that key length matches group cipher */
-	if (k.k_len != ieee80211_cipher_keylen(k.k_cipher))
+	if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
 		return;
-	memcpy(k.k_key, &gtk[7], k.k_len);
-	k.k_rsc = LE_READ_8(key->rsc);
-	if ((*ic->ic_set_key)(ic, ni, &k) != 0)
+	memcpy(k->k_key, &gtk[7], k->k_len);
+	k->k_rsc = LE_READ_8(key->rsc);
+	if ((*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
 	/* update the last seen value of the key replay counter field */

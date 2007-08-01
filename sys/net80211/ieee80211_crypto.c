@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.29 2007/08/01 12:59:33 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.30 2007/08/01 15:40:40 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -74,6 +74,10 @@ struct vector {
 
 void	ieee80211_crc_init(void);
 u_int32_t ieee80211_crc_update(u_int32_t, const u_int8_t *, int);
+struct mbuf *ieee80211_ccmp_encrypt(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_key *);
+struct mbuf *ieee80211_ccmp_decrypt(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_key *);
 void	ieee80211_aes_key_wrap(const u_int8_t *, size_t, const u_int8_t *,
 	    size_t, u_int8_t *);
 int	ieee80211_aes_key_unwrap(const u_int8_t *, size_t, const u_int8_t *,
@@ -113,6 +117,150 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 		free(ic->ic_wep_ctx, M_DEVBUF);
 		ic->ic_wep_ctx = NULL;
 	}
+}
+
+struct mbuf *
+ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni)
+{
+	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
+
+	/* select the key for encryption */
+	wh = mtod(m0, struct ieee80211_frame *);
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	    ni->ni_pairwise_cipher == IEEE80211_CIPHER_USEGROUP)
+		k = &ic->ic_nw_keys[ic->ic_wep_txkey];
+	else
+		k = &ni->ni_pairwise_key;
+
+	switch (k->k_cipher) {
+	case IEEE80211_CIPHER_CCMP:
+		m0 = ieee80211_ccmp_encrypt(ic, m0, k);
+		break;
+	case IEEE80211_CIPHER_WEP40:
+	case IEEE80211_CIPHER_WEP104:
+		m0 = ieee80211_wep_crypt(&ic->ic_if, m0, 1);
+		break;
+	default:
+		/* should not get there */
+		m_freem(m0);
+		m0 = NULL;
+	}
+	return m0;
+}
+
+struct mbuf *
+ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni)
+{
+	struct ieee80211_frame *wh;
+	struct ieee80211_key *k;
+
+	/* select the key for decryption */
+	wh = mtod(m0, struct ieee80211_frame *);
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	    ni->ni_pairwise_cipher == IEEE80211_CIPHER_USEGROUP) {
+		size_t hdrlen = sizeof(*wh);	/* XXX QoS */
+		u_int8_t *ivp = (u_int8_t *)wh + hdrlen;
+		/* key identifier is always located at the same index */
+		int kid = ivp[IEEE80211_WEP_IVLEN] >> 6;
+		k = &ic->ic_nw_keys[kid];
+	} else
+		k = &ni->ni_pairwise_key;
+
+	switch (k->k_cipher) {
+	case IEEE80211_CIPHER_CCMP:
+		m0 = ieee80211_ccmp_decrypt(ic, m0, k);
+		break;
+	case IEEE80211_CIPHER_WEP40:
+	case IEEE80211_CIPHER_WEP104:
+		m0 = ieee80211_wep_crypt(&ic->ic_if, m0, 0);
+		break;
+	default:
+		/* should not get there */
+		m_freem(m0);
+		m0 = NULL;
+	}
+	return m0;
+}
+
+#define IEEE80211_CCMP_HDRLEN	8
+#define IEEE80211_CCMP_MICLEN	8
+
+struct mbuf *
+ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_key *k)
+{
+	struct ieee80211_frame *wh;
+	size_t hdrlen = sizeof(*wh);	/* XXX QoS */
+	u_int8_t *ivp;
+
+	M_PREPEND(m0, IEEE80211_CCMP_HDRLEN, M_NOWAIT);
+	if (m0 == NULL)
+		return m0;
+	wh = mtod(m0, struct ieee80211_frame *);
+	ovbcopy(mtod(m0, u_int8_t *) + IEEE80211_CCMP_HDRLEN, wh, hdrlen);
+	ivp = (u_int8_t *)wh + hdrlen;
+
+	k->k_tsc++;	/* increment the 48-bit PN */
+	ivp[0] = k->k_tsc;		/* PN0 */
+	ivp[1] = k->k_tsc >> 8;		/* PN1 */
+	ivp[2] = 0;			/* Rsvd */
+	ivp[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;	/* KeyID | ExtIV */
+	ivp[4] = k->k_tsc >> 16;	/* PN2 */
+	ivp[5] = k->k_tsc >> 24;	/* PN3 */
+	ivp[6] = k->k_tsc >> 32;	/* PN4 */
+	ivp[7] = k->k_tsc >> 40;	/* PN5 */
+
+	/* XXX encrypt payload if HW encryption not supported */
+
+	return m0;
+}
+
+struct mbuf *
+ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_key *k)
+{
+	struct ieee80211_frame *wh;
+	size_t hdrlen = sizeof(*wh);	/* XXX QoS */
+	u_int64_t pn;
+	u_int8_t *ivp;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	ivp = (u_int8_t *)wh + hdrlen;
+
+	/* check that ExtIV bit is be set */
+	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
+		m_freem(m0);
+		return NULL;
+	}
+	/* extract the 48-bit PN from the CCMP header */
+	pn = (u_int64_t)ivp[0]       |
+	     (u_int64_t)ivp[1] <<  8 |
+	     (u_int64_t)ivp[4] << 16 |
+	     (u_int64_t)ivp[5] << 24 |
+	     (u_int64_t)ivp[6] << 32 |
+	     (u_int64_t)ivp[7] << 40;
+	/* NB: the keys are refreshed, we'll never overflow the 48 bits */
+	if (pn <= k->k_rsc) {
+		/* replayed frame, discard */
+		/* XXX statistics */
+		m_freem(m0);
+		return NULL;
+	}
+
+	/* XXX decrypt payload if HW encryption not supported */
+
+	ovbcopy(mtod(m0, u_int8_t *),
+	    mtod(m0, u_int8_t *) + IEEE80211_CCMP_HDRLEN, hdrlen);
+	m_adj(m0, IEEE80211_CCMP_HDRLEN);
+	m_adj(m0, -IEEE80211_CCMP_MICLEN);
+
+	/* update last seen packet number */
+	k->k_rsc = pn;
+
+	return m0;
 }
 
 /* Round up to a multiple of IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN */

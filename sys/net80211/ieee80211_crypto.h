@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.5 2007/08/01 12:37:46 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.6 2007/08/01 15:40:40 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -73,8 +73,16 @@ struct ieee80211_key {
 	u_int8_t		k_key[IEEE80211_KEYBUF_SIZE];
 };
 
+/* forward references */
+struct ieee80211com;
+struct ieee80211_node;
+
 extern	void ieee80211_crypto_attach(struct ifnet *);
 extern	void ieee80211_crypto_detach(struct ifnet *);
+extern	struct mbuf *ieee80211_encrypt(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_node *);
+extern	struct mbuf *ieee80211_decrypt(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_node *);
 extern	struct mbuf *ieee80211_wep_crypt(struct ifnet *, struct mbuf *, int);
 extern	void ieee80211_derive_ptk(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *,
