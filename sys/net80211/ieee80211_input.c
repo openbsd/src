@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.50 2007/08/01 12:32:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.51 2007/08/01 12:43:58 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1899,7 +1899,8 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	if (ni->ni_replaycnt && BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
+	if (ni->ni_replaycnt_ok &&
+	    BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
 		return;
 
 	/* save authenticator's nonce (ANonce) */
@@ -1997,6 +1998,16 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 		case IEEE80211_ELEMID_RSN:
 			rsn = frm;
 			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (frm[1] < 4)
+				break;
+			if (memcmp(&frm[2], MICROSOFT_OUI, 3) == 0) {
+				switch (frm[5]) {
+				case 1:	/* WPA */
+					rsn = frm;
+					break;
+				}
+			}
 		}
 		frm += 2 + frm[1];
 	}
@@ -2066,6 +2077,12 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 				switch (frm[5]) {
 				case IEEE80211_KDE_GTK:
 					gtk = frm;
+					break;
+				}
+			} else if (memcmp(&frm[2], MICROSOFT_OUI, 3) == 0) {
+				switch (frm[5]) {
+				case 1:	/* WPA */
+					rsn1 = frm;
 					break;
 				}
 			}
