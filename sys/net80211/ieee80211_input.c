@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.46 2007/08/01 11:59:40 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.47 2007/08/01 12:02:50 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2420,7 +2420,7 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 	} else if (info & EAPOL_KEY_PAIRWISE) {
 		/* 4-Way Handshake */
 		if (info & EAPOL_KEY_KEYMIC) {
-			if (info & EAPOL_KEY_KEYACK) {
+			if (!(info & EAPOL_KEY_KEYACK)) {
 				if (info & EAPOL_KEY_SECURE)
 					ieee80211_recv_4way_msg4(ic, key, ni);
 				else
