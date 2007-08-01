@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.51 2007/08/01 12:26:16 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.52 2007/08/01 12:47:55 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1663,7 +1663,8 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
  * (see 8.5.3.2).
  */
 int
-ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni)
+ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const u_int8_t *snonce)
 {
 	struct ieee80211_eapol_key *key;
 	struct mbuf *m;
@@ -1683,7 +1684,7 @@ ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni)
 	/* copy key replay counter from authenticator */
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 
-	/* XXX memcpy(key->nonce, snonce, EAPOL_KEY_NONCE_LEN); */
+	memcpy(key->nonce, snonce, EAPOL_KEY_NONCE_LEN);
 
 	frm = (u_int8_t *)&key[1];
 	/* add the RSN IE used in the (Re)Association Request */

@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.51 2007/08/01 12:43:58 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.52 2007/08/01 12:47:55 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1957,7 +1957,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* send message 2 to authenticator */
-	ieee80211_send_4way_msg2(ic, ni);
+	ieee80211_send_4way_msg2(ic, ni, snonce);
 }
 
 /*

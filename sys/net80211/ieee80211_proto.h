@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.24 2007/07/28 11:24:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.25 2007/08/01 12:47:55 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ extern	struct mbuf *ieee80211_beacon_alloc(struct ieee80211com *,
 extern	int ieee80211_send_4way_msg1(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	int ieee80211_send_4way_msg2(struct ieee80211com *,
-		struct ieee80211_node *);
+		struct ieee80211_node *, const u_int8_t *);
 extern	int ieee80211_send_4way_msg3(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	int ieee80211_send_4way_msg4(struct ieee80211com *,
