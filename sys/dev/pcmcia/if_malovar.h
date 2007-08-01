@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.16 2007/07/31 23:19:40 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.17 2007/08/01 11:30:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -315,4 +315,5 @@ struct malo_softc {
 	int			 sc_aps_num;
 	int			 sc_aps_best;
 	struct malo_aps		 sc_aps[12];
+	struct timeout		 sc_scan_to;
 };

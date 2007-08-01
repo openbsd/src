@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.28 2007/07/31 23:19:40 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.29 2007/08/01 11:30:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -632,11 +632,9 @@ cmalo_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-		ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
-		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
-	} else
+	else
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	return (0);
@@ -679,6 +677,12 @@ int
 cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct malo_softc *sc = ic->ic_if.if_softc;
+	enum ieee80211_state ostate;
+
+	ostate = ic->ic_state;
+
+	if (ostate == nstate)
+		goto out;
 
 	switch (nstate) {
 		case IEEE80211_S_INIT:
@@ -689,19 +693,18 @@ cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			DPRINTF(1, "%s: newstate is IEEE80211_S_SCAN\n",
 			    sc->sc_dev.dv_xname);
 			cmalo_cmd_set_scan(sc);
-			break;
+			cmalo_select_network(sc);
+			if (!sc->sc_aps_num)
+				/* no AP found */
+				break;
 		case IEEE80211_S_AUTH:
 			DPRINTF(1, "%s: newstate is IEEE80211_S_AUTH\n",
 			    sc->sc_dev.dv_xname);
-			if (sc->sc_aps_num == 0)
-				break;
-			cmalo_select_network(sc);
 			cmalo_cmd_set_auth(sc);
 		case IEEE80211_S_ASSOC:
 			DPRINTF(1, "%s: newstate is IEEE80211_S_ASSOC\n",
 			    sc->sc_dev.dv_xname);
 			cmalo_cmd_set_assoc(sc);
-			break;
 		case IEEE80211_S_RUN:
 			DPRINTF(1, "%s: newstate is IEEE80211_S_RUN\n",
 			    sc->sc_dev.dv_xname);
@@ -710,6 +713,7 @@ cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			break;
 	}
 
+out:
 	return (sc->sc_newstate(ic, nstate, arg));
 }
 
@@ -976,7 +980,7 @@ cmalo_hexdump(void *buf, int len)
 #ifdef CMALO_DEBUG
 	int i;
 
-	if (cmalo_d <= 2) {
+	if (cmalo_d >= 2) {
 		for (i = 0; i < len; i++) {
 			if (i % 16 == 0)
 				printf("%s%5i:", i ? "\n" : "", i);
@@ -1725,6 +1729,10 @@ cmalo_cmd_response(struct malo_softc *sc)
 	}
 	hdr->cmd &= ~MALO_CMD_RESP;
 
+	/* association cmd response is special */
+	if (hdr->cmd == 0x0012)
+		hdr->cmd = MALO_CMD_ASSOC;
+
 	/* to which command does the response belong */
 	switch (hdr->cmd) {
 	case MALO_CMD_HWSPEC:
@@ -1773,6 +1781,11 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_MACCTRL:
 		/* do nothing */
 		DPRINTF(1, "%s: got macctrl cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_ASSOC:
+		/* do nothing */
+		DPRINTF(1, "%s: got assoc cmd response\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case MALO_CMD_80211D:
