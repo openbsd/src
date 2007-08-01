@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.58 2007/08/01 16:23:48 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.59 2007/08/01 18:14:00 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2129,7 +2129,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
 		return;
 	memcpy(k->k_key, ni->ni_ptk.tk, k->k_len);
-	if ((*ic->ic_set_key)(ic, ni, k) != 0)
+	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
 	if (gtk != NULL) {
@@ -2154,7 +2154,8 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			return;	/* XXX PTK already installed! */
 		memcpy(k->k_key, &gtk[7], k->k_len);
 		k->k_rsc = LE_READ_8(key->rsc);
-		if ((*ic->ic_set_key)(ic, ni, k) != 0)
+		if (ic->ic_set_key != NULL &&
+		    (*ic->ic_set_key)(ic, ni, k) != 0)
 			return;
 	}
 
@@ -2196,7 +2197,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 	k->k_flags = IEEE80211_KEY_TX;
 	k->k_len = ieee80211_cipher_keylen(k->k_cipher);
 	memcpy(k->k_key, ni->ni_ptk.tk, k->k_len);
-	if ((*ic->ic_set_key)(ic, ni, k) != 0)
+	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
@@ -2278,7 +2279,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		return;
 	memcpy(k->k_key, &gtk[7], k->k_len);
 	k->k_rsc = LE_READ_8(key->rsc);
-	if ((*ic->ic_set_key)(ic, ni, k) != 0)
+	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
 	/* update the last seen value of the key replay counter field */
@@ -2333,7 +2334,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 		return;
 	memcpy(k->k_key, (u_int8_t *)&key[1], k->k_len);
 	k->k_rsc = LE_READ_8(key->rsc);
-	if ((*ic->ic_set_key)(ic, ni, k) != 0)
+	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
 	/* update the last seen value of the key replay counter field */
