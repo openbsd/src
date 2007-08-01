@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.52 2007/08/01 12:47:55 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.53 2007/08/01 13:10:01 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1625,7 +1625,7 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct ieee80211_eapol_key *key;
 	struct mbuf *m;
-	u_int16_t info;
+	u_int16_t info, keylen;
 	u_int8_t *pmkid;
 	u_int8_t *frm;
 
@@ -1644,6 +1644,9 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 
 	/* XXX retrieve PMKID from the PMKSA cache */
+
+	keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
+	BE_WRITE_2(key->keylen, keylen);
 
 	frm = (u_int8_t *)&key[1];
 	frm = ieee80211_add_pmkid_kde(frm, pmkid);
@@ -1710,7 +1713,7 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct ieee80211_eapol_key *key;
 	struct ieee80211_key *gtk;
 	struct mbuf *m;
-	u_int16_t info;
+	u_int16_t info, keylen;
 	u_int8_t *frm;
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
@@ -1730,6 +1733,9 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 	/* use same Nonce as Message 1 */
 	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
+
+	keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
+	BE_WRITE_2(key->keylen, keylen);
 
 	frm = (u_int8_t *)&key[1];
 	/* add the RSN IE included in Beacon/Probe Response */
