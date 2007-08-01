@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.45 2007/07/28 11:24:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.46 2007/08/01 11:59:40 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -902,7 +902,7 @@ ieee80211_parse_rsn_cipher(const u_int8_t selector[4])
 			return IEEE80211_CIPHER_WEP40;
 		case 2:	/* TKIP */
 			return IEEE80211_CIPHER_TKIP;
-		case 3:	/* CCMP (RSNA default) */
+		case 4:	/* CCMP (RSNA default) */
 			return IEEE80211_CIPHER_CCMP;
 		case 5:	/* WEP-104 */
 			return IEEE80211_CIPHER_WEP104;

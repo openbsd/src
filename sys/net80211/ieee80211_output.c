@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.48 2007/07/28 11:24:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.49 2007/08/01 11:59:40 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -837,7 +837,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 		*frm++ = 2;
 		break;
 	case IEEE80211_CIPHER_CCMP:
-		*frm++ = 3;
+		*frm++ = 4;
 		break;
 	case IEEE80211_CIPHER_WEP104:
 		*frm++ = 5;
@@ -859,7 +859,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	}
 	if (ni->ni_pairwise_cipherset & IEEE80211_CIPHER_CCMP) {
 		memcpy(frm, oui, 3); frm += 3;
-		*frm++ = 3;
+		*frm++ = 4;
 		count++;
 	}
 	/* write Pairwise Cipher Suite Count field */
