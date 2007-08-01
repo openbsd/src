@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.14 2006/11/25 20:47:17 mbalmer Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.15 2007/08/01 13:07:08 mk Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -31,7 +31,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
