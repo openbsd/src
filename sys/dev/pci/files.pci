@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.239 2007/07/02 14:01:13 dlg Exp $
+#	$OpenBSD: files.pci,v 1.240 2007/08/01 13:09:03 mk Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -460,7 +460,7 @@ file	dev/pci/if_ste.c		ste
 # Industrial Computer Source WDT-50x
 device	wdt: pcibus
 attach	wdt at pci
-file	dev/pci/wdt.c			wdt	needs-flag
+file	dev/pci/wdt.c			wdt
 
 # Quancom PWDOG1
 device	pwdog: pcibus
