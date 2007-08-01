@@ -12,6 +12,7 @@
 # Cmnd alias specification
 
 # Defaults specification
+Defaults env_keep +="DESTDIR FETCH_CMD FTPMODE PKG_DBDIR PKG_DESTDIR PKG_CACHE PKG_PATH PKG_TMPDIR RELEASEDIR"
 
 # Uncomment to preserve the environment for users in group wheel
 #Defaults:%wheel !env_reset
