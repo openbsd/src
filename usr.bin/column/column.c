@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.13 2007/05/01 01:26:23 jdixon Exp $	*/
+/*	$OpenBSD: column.c,v 1.14 2007/08/01 13:30:21 millert Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.13 2007/05/01 01:26:23 jdixon Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.14 2007/08/01 13:30:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: column.c,v 1.13 2007/05/01 01:26:23 jdixon Exp 
 
 void  c_columnate(void);
 void *emalloc(size_t);
+void *erealloc(void *, size_t);
 void  input(FILE *);
 void  maketbl(void);
 void  print(void);
@@ -218,9 +219,9 @@ maketbl(void)
 	TBL *t;
 	int coloff, cnt;
 	char *p, **lp;
-	int *lens, *lens2, maxcols;
+	int *lens, maxcols;
 	TBL *tbl;
-	char **cols, **cols2;
+	char **cols;
 
 	t = tbl = emalloc(entries * sizeof(TBL));
 	cols = emalloc((maxcols = DEFCOLS) * sizeof(char *));
@@ -229,17 +230,13 @@ maketbl(void)
 		for (coloff = 0, p = *lp; (cols[coloff] = strtok(p, separator));
 		    p = NULL)
 			if (++coloff == maxcols) {
-				if (!(cols2 = realloc(cols, (u_int)maxcols +
-				    DEFCOLS * sizeof(char *))) ||
-				    !(lens2 = realloc(lens,
-				    (u_int)maxcols + DEFCOLS * sizeof(int))))
-					err(1, NULL);
-				cols = cols2;
-				lens = lens2;
-				memset(lens + maxcols, 0,
-				    DEFCOLS * sizeof(int));
 				maxcols += DEFCOLS;
+				cols = erealloc(cols, maxcols * sizeof(char *));
+				lens = erealloc(lens, maxcols * sizeof(int));
+				memset(lens + coloff, 0, DEFCOLS * sizeof(int));
 			}
+		if (coloff == 0)
+			continue;
 		t->list = emalloc(coloff * sizeof(char *));
 		t->len = emalloc(coloff * sizeof(int));
 		for (t->cols = coloff; --coloff >= 0;) {
@@ -250,10 +247,12 @@ maketbl(void)
 		}
 	}
 	for (cnt = 0, t = tbl; cnt < entries; ++cnt, ++t) {
-		for (coloff = 0; coloff < t->cols  - 1; ++coloff)
-			(void)printf("%s%*s", t->list[coloff],
-			    lens[coloff] - t->len[coloff] + 2, " ");
-		(void)printf("%s\n", t->list[coloff]);
+		if (t->cols > 0) {
+			for (coloff = 0; coloff < t->cols - 1; ++coloff)
+				(void)printf("%s%*s", t->list[coloff],
+				    lens[coloff] - t->len[coloff] + 2, " ");
+			(void)printf("%s\n", t->list[coloff]);
+		}
 	}
 }
 
@@ -283,13 +282,8 @@ input(FILE *fp)
 		if (maxlength < len)
 			maxlength = len;
 		if (entries == maxentry) {
-			char **nlist;	
-			size_t nsize = maxentry + DEFNUM;
-
-			if (!(nlist = realloc(list, nsize * sizeof(char *))))
-				err(1, NULL);
-			list = nlist;
-			maxentry = nsize;
+			maxentry += DEFNUM;
+			list = erealloc(list, maxentry * sizeof(char *));
 		}
 		if (!(list[entries++] = strdup(buf)))
 			err(1, NULL);
@@ -304,6 +298,16 @@ emalloc(size_t size)
 	if (!(p = malloc(size)))
 		err(1, NULL);
 	memset(p, 0, size);
+	return (p);
+}
+
+void *
+erealloc(void *oldp, size_t size)
+{
+	void *p;
+
+	if (!(p = realloc(oldp, size)))
+		err(1, NULL);
 	return (p);
 }
 
