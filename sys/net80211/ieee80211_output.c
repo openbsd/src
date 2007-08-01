@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.49 2007/08/01 11:59:40 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.50 2007/08/01 12:15:48 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1519,7 +1519,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	if (m == NULL)
 		return ENOMEM;
 	eh = mtod(m, struct ether_header *);
-	eh->ether_type = ETHERTYPE_PAE;
+	eh->ether_type = htons(ETHERTYPE_PAE);
 	IEEE80211_ADDR_COPY(eh->ether_shost, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(eh->ether_dhost, ni->ni_macaddr);
 
@@ -1533,26 +1533,19 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	info |= (ni->ni_pairwise_cipher != IEEE80211_CIPHER_CCMP) ?
 	    EAPOL_KEY_DESC_V1 : EAPOL_KEY_DESC_V2;
 	BE_WRITE_2(key->info, info);
-	BE_WRITE_2(key->paylen, m->m_len - sizeof(*key));
+
+	len = m->m_len - sizeof(struct ether_header);
+	BE_WRITE_2(key->paylen, len - sizeof(*key));
+	BE_WRITE_2(key->len, len - 4);
 
 	KASSERT((info & (EAPOL_KEY_ENCRYPTED | EAPOL_KEY_KEYMIC)) == 0 ||
 	    ni->ni_ptk_ok);
 
-	if (info & EAPOL_KEY_ENCRYPTED) {
-		info &= ~EAPOL_KEY_ENCRYPTED;
-		BE_WRITE_2(key->info, info);
+	if (info & EAPOL_KEY_ENCRYPTED)
 		ieee80211_eapol_key_encrypt(ic, key, ni->ni_ptk.kek);
-	}
 
-	if (info & EAPOL_KEY_KEYMIC) {
-		info &= ~EAPOL_KEY_KEYMIC;
-		BE_WRITE_2(key->info, info);
+	if (info & EAPOL_KEY_KEYMIC)
 		ieee80211_eapol_key_mic(key, ni->ni_ptk.kck);
-	}
-
-	/* write packet body length field */
-	len = BE_READ_2(key->paylen);
-	BE_WRITE_2(key->len, sizeof(*key) + len);
 
 	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);

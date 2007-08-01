@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.26 2007/07/28 11:01:19 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.27 2007/08/01 12:15:48 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -655,22 +655,17 @@ ieee80211_eapol_key_mic(struct ieee80211_eapol_key *key, const u_int8_t *kck)
 
 	len  = BE_READ_2(key->len) + 4;
 	info = BE_READ_2(key->info);
-	KASSERT(!(info & EAPOL_KEY_KEYMIC));
 
 	switch (info & EAPOL_KEY_VERSION_MASK) {
 	case EAPOL_KEY_DESC_V1:
-		ieee80211_hmac_md5(kck, 16, &key->version, len, key->mic);
+		ieee80211_hmac_md5((u_int8_t *)key, len, kck, 16, key->mic);
 		break;
 	case EAPOL_KEY_DESC_V2:
-		ieee80211_hmac_sha1(kck, 16, &key->version, len, hash);
+		ieee80211_hmac_sha1((u_int8_t *)key, len, kck, 16, hash);
 		/* truncate HMAC-SHA1 to its 128 MSBs */
 		memcpy(key->mic, hash, EAPOL_KEY_MIC_LEN);
 		break;
 	}
-
-	/* set the Key MIC bit */
-	info |= EAPOL_KEY_KEYMIC;
-	BE_WRITE_2(key->info, info);
 }
 
 /*
@@ -682,15 +677,9 @@ ieee80211_eapol_key_check_mic(struct ieee80211_eapol_key *key,
     const u_int8_t *kck)
 {
 	u_int8_t mic[EAPOL_KEY_MIC_LEN];
-	u_int16_t info;
-
-	info = BE_READ_2(key->info);
-	KASSERT(info & EAPOL_KEY_KEYMIC);
 
 	memcpy(mic, key->mic, EAPOL_KEY_MIC_LEN);
 	memset(key->mic, 0, EAPOL_KEY_MIC_LEN);
-	info &= ~EAPOL_KEY_KEYMIC;
-	BE_WRITE_2(key->info, info);
 	ieee80211_eapol_key_mic(key, kck);
 
 	return memcmp(key->mic, mic, EAPOL_KEY_MIC_LEN) != 0;
@@ -713,8 +702,6 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
 
 	len  = BE_READ_2(key->paylen);
 	info = BE_READ_2(key->info);
-	/* should not come here if key data is already encrypted */
-	KASSERT(!(info & EAPOL_KEY_ENCRYPTED));
 	data = (u_int8_t *)(key + 1);
 
 	switch (info & EAPOL_KEY_VERSION_MASK) {
@@ -745,12 +732,10 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
 		len += 8;	/* AES Key Wrap adds 8 bytes */
 		/* update key data length */
 		BE_WRITE_2(key->paylen, len);
+		/* update packet body length */
+		BE_WRITE_2(key->len, sizeof(*key) + len - 4);
 		break;
 	}
-
-	/* set the Encrypted Key Data bit */
-	info |= EAPOL_KEY_ENCRYPTED;
-	BE_WRITE_2(key->info, info);
 }
 
 /*
