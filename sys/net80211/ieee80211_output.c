@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.50 2007/08/01 12:15:48 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.51 2007/08/01 12:26:16 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -900,7 +900,7 @@ ieee80211_add_rsn(u_int8_t *frm, struct ieee80211com *ic,
 	frm = ieee80211_add_rsn_body(frm, ic, ni, 0);
 
 	/* write length field */
-	*plen = frm - plen + 1;
+	*plen = frm - plen - 1;
 	return frm;
 }
 
@@ -921,7 +921,7 @@ ieee80211_add_wpa1(u_int8_t *frm, struct ieee80211com *ic,
 	frm = ieee80211_add_rsn_body(frm, ic, ni, 1);
 
 	/* write length field */
-	*plen = frm - plen + 1;
+	*plen = frm - plen - 1;
 	return frm;
 }
 

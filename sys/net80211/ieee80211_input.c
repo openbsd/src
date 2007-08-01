@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.48 2007/08/01 12:23:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.49 2007/08/01 12:26:16 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1052,7 +1052,7 @@ ieee80211_parse_wpa1(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ic->ic_stats.is_rx_elem_toosmall++;
 		return IEEE80211_REASON_IE_INVALID;
 	}
-	return ieee80211_parse_rsn_body(ic, ni, frm + 6, frm[1] - 6);
+	return ieee80211_parse_rsn_body(ic, ni, frm + 6, frm[1] - 4);
 }
 
 /*-
