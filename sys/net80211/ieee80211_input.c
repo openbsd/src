@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.57 2007/08/01 16:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.58 2007/08/01 16:23:48 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2519,6 +2519,8 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 			ieee80211_recv_4way_msg1(ic, key, ni);
 	} else {
 		/* Group Key Handshake */
+		if (!(info & EAPOL_KEY_KEYMIC))
+			goto out;
 		if (info & EAPOL_KEY_KEYACK) {
 			if (key->desc == EAPOL_KEY_DESC_WPA1)
 				ieee80211_recv_wpa_group_msg1(ic, key, ni);
