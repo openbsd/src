@@ -1308,7 +1308,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pckbc
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pckbc/pckbdreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pckbc/pckbdvar.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pckbc/psmreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pckbc/pmsreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pckbc/wskbdmap_mfii.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pcmcia
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pcmcia/cfxgareg.ph

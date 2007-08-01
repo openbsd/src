@@ -622,7 +622,7 @@
 ./usr/include/dev/pckbc
 ./usr/include/dev/pckbc/pckbdreg.h
 ./usr/include/dev/pckbc/pckbdvar.h
-./usr/include/dev/pckbc/psmreg.h
+./usr/include/dev/pckbc/pmsreg.h
 ./usr/include/dev/pckbc/wskbdmap_mfii.h
 ./usr/include/dev/pcmcia
 ./usr/include/dev/pcmcia/cfxgareg.h

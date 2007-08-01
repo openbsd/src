@@ -603,7 +603,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pckbc
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pckbc/pckbdreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pckbc/pckbdvar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pckbc/psmreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pckbc/pmsreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pckbc/wskbdmap_mfii.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pcmcia
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pcmcia/cfxgareg.ph
