@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.25 2006/04/07 22:41:33 jsg Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.26 2007/08/01 21:37:21 miod Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -805,7 +805,7 @@ cs4280_intr(p)
 #if 1
 		/* XXX:
 		 * It seems "Transmit Buffer Full" never activate until EOI
-		 * is deliverd.  Shall I throw EOI top of this routine ?
+		 * is delivered.  Shall I throw EOI top of this routine ?
 		 */
 		if ((BA0READ4(sc, CS4280_MIDSR) & MIDSR_TBF) == 0) {
 			DPRINTF(("w: "));
