@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.28 2007/08/01 12:23:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.29 2007/08/01 12:59:33 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -779,7 +779,7 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 }
 
 /*
- * Return the length in bytes of keys used by the specified cipher.
+ * Return the length in bytes of a cipher suite key (see Table 60).
  */
 int
 ieee80211_cipher_keylen(enum ieee80211_cipher cipher)

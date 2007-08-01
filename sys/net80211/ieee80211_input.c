@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.52 2007/08/01 12:47:55 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.53 2007/08/01 12:59:33 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -106,8 +106,10 @@ void	ieee80211_recv_4way_msg3(struct ieee80211com *,
 	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_4way_msg4(struct ieee80211com *,
 	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
-void	ieee80211_recv_group_msg1(struct ieee80211com *,
+void	ieee80211_recv_rsn_group_msg1(struct ieee80211com *,
 	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+void	ieee80211_recv_wpa_group_msg1(struct ieee80211com *,
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_group_msg2(struct ieee80211com *,
 	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_eapol_key_req(struct ieee80211com *,
@@ -2090,7 +2092,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		}
 		frm += 2 + frm[1];
 	}
-	/* first RSN IE is mandatory */
+	/* first WPA/RSN IE is mandatory */
 	if (rsn1 == NULL)
 		return;
 	/* key data must be encrypted if GTK is included */
@@ -2207,7 +2209,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
  * supplicant (see 8.5.4.1).
  */
 void
-ieee80211_recv_group_msg1(struct ieee80211com *ic,
+ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
     const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	struct ieee80211_key k;
@@ -2262,6 +2264,58 @@ ieee80211_recv_group_msg1(struct ieee80211com *ic,
 	if (k.k_len != ieee80211_cipher_keylen(k.k_cipher))
 		return;
 	memcpy(k.k_key, &gtk[7], k.k_len);
+	k.k_rsc = LE_READ_8(key->rsc);
+	if ((*ic->ic_set_key)(ic, ni, &k) != 0)
+		return;
+
+	/* update the last seen value of the key replay counter field */
+	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: received msg %d/%d of the %s handshake from %s\n",
+		    ic->ic_if.if_xname, 1, 2, "group key",
+		    ether_sprintf(ni->ni_macaddr));
+
+	/* send message 2 to authenticator */
+	ieee80211_send_group_msg2(ic, ni);
+}
+
+void
+ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+{
+	struct ieee80211_key k;
+	u_int16_t info;
+
+	if (ic->ic_opmode != IEEE80211_M_STA &&
+	    ic->ic_opmode != IEEE80211_M_IBSS)
+		return;
+
+	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
+		return;
+
+	/*
+	 * EAPOL-Key data field is encrypted even though WPA1 doesn't set
+	 * the ENCRYPTED bit in the info field.
+	 */
+	if (!ni->ni_ptk_ok ||
+	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
+		return;
+
+	info = BE_READ_2(key->info);
+
+	/* install the GTK */
+	memset(&k, 0, sizeof k);
+	k.k_id = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
+	k.k_cipher = ni->ni_group_cipher;
+	k.k_flags = IEEE80211_KEY_GROUP;
+	if (info & EAPOL_KEY_WPA_TX)
+		k.k_flags |= IEEE80211_KEY_TX;
+	k.k_len = BE_READ_2(key->keylen);
+	/* check that key length matches group cipher */
+	if (k.k_len != ieee80211_cipher_keylen(k.k_cipher))
+		return;
+	memcpy(k.k_key, (u_int8_t *)&key[1], k.k_len);
 	k.k_rsc = LE_READ_8(key->rsc);
 	if ((*ic->ic_set_key)(ic, ni, &k) != 0)
 		return;
@@ -2448,9 +2502,12 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 			ieee80211_recv_4way_msg1(ic, key, ni);
 	} else {
 		/* Group Key Handshake */
-		if (info & EAPOL_KEY_KEYACK)
-			ieee80211_recv_group_msg1(ic, key, ni);
-		else
+		if (info & EAPOL_KEY_KEYACK) {
+			if (key->desc == EAPOL_KEY_DESC_WPA1)
+				ieee80211_recv_wpa_group_msg1(ic, key, ni);
+			else
+				ieee80211_recv_rsn_group_msg1(ic, key, ni);
+		} else
 			ieee80211_recv_group_msg2(ic, key, ni);
 	}
  out:
