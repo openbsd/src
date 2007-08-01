@@ -1845,8 +1845,6 @@
 ./usr/share/man/cat2/armish/arm_sync_icache.0
 ./usr/share/man/cat2/bind.0
 ./usr/share/man/cat2/brk.0
-./usr/share/man/cat2/cats/arm_drain_writebuf.0
-./usr/share/man/cat2/cats/arm_sync_icache.0
 ./usr/share/man/cat2/chdir.0
 ./usr/share/man/cat2/chflags.0
 ./usr/share/man/cat2/chmod.0

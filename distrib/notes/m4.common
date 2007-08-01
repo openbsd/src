@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.73 2007/05/07 17:58:03 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.74 2007/08/01 21:23:23 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -22,7 +22,6 @@ define(`MACHINE_ARCH',
 MACHINE,amiga,m68k,
 MACHINE,armish,arm,
 MACHINE,aviion,m88k,
-MACHINE,cats,arm,
 MACHINE,hp300,m68k,
 MACHINE,landisk,sh,
 MACHINE,luna88k,m88k,

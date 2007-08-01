@@ -56,7 +56,6 @@
 ./usr/share/man/cat1/cap_mkdb.0
 ./usr/share/man/cat1/captoinfo.0
 ./usr/share/man/cat1/cat.0
-./usr/share/man/cat1/cats
 ./usr/share/man/cat1/cd.0
 ./usr/share/man/cat1/cdio.0
 ./usr/share/man/cat1/checknr.0
@@ -580,7 +579,6 @@
 ./usr/share/man/cat2/alpha
 ./usr/share/man/cat2/amd64
 ./usr/share/man/cat2/armish
-./usr/share/man/cat2/cats
 ./usr/share/man/cat2/i386
 ./usr/share/man/cat2/zaurus
 ./usr/share/man/cat3
@@ -588,7 +586,6 @@
 ./usr/share/man/cat3/amd64
 ./usr/share/man/cat3/armish
 ./usr/share/man/cat3/aviion
-./usr/share/man/cat3/cats
 ./usr/share/man/cat3/hp300
 ./usr/share/man/cat3/hppa
 ./usr/share/man/cat3/hppa64
@@ -1090,13 +1087,6 @@
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/carp.0
 ./usr/share/man/cat4/cas.0
-./usr/share/man/cat4/cats
-./usr/share/man/cat4/cats/autoconf.0
-./usr/share/man/cat4/cats/fcom.0
-./usr/share/man/cat4/cats/footbridge.0
-./usr/share/man/cat4/cats/intro.0
-./usr/share/man/cat4/cats/kmem.0
-./usr/share/man/cat4/cats/mem.0
 ./usr/share/man/cat4/cbb.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
@@ -1834,7 +1824,6 @@
 ./usr/share/man/cat5/bridgename.if.0
 ./usr/share/man/cat5/bsd.port.mk.0
 ./usr/share/man/cat5/bsd.regress.mk.0
-./usr/share/man/cat5/cats
 ./usr/share/man/cat5/changelist.0
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
@@ -2065,14 +2054,6 @@
 ./usr/share/man/cat8/bootparamd.0
 ./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
-./usr/share/man/cat8/cats
-./usr/share/man/cat8/cats/MAKEDEV.0
-./usr/share/man/cat8/cats/boot_cats.0
-./usr/share/man/cat8/cats/fdisk.0
-./usr/share/man/cat8/cats/kbd.0
-./usr/share/man/cat8/cats/wsconscfg.0
-./usr/share/man/cat8/cats/wsconsctl.0
-./usr/share/man/cat8/cats/wsfontload.0
 ./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/chat.0
 ./usr/share/man/cat8/chown.0
@@ -2528,7 +2509,6 @@
 ./usr/share/man/cat9/amd64
 ./usr/share/man/cat9/armish
 ./usr/share/man/cat9/aviion
-./usr/share/man/cat9/cats
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa
 ./usr/share/man/cat9/hppa64
@@ -2550,7 +2530,6 @@
 ./usr/share/man/man1/amd64
 ./usr/share/man/man1/armish
 ./usr/share/man/man1/aviion
-./usr/share/man/man1/cats
 ./usr/share/man/man1/hp300
 ./usr/share/man/man1/hppa
 ./usr/share/man/man1/hppa64
@@ -2575,7 +2554,6 @@
 ./usr/share/man/man4/amd64
 ./usr/share/man/man4/armish
 ./usr/share/man/man4/aviion
-./usr/share/man/man4/cats
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/hppa
 ./usr/share/man/man4/hppa64
@@ -2600,7 +2578,6 @@
 ./usr/share/man/man8/amd64
 ./usr/share/man/man8/armish
 ./usr/share/man/man8/aviion
-./usr/share/man/man8/cats
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hppa
 ./usr/share/man/man8/hppa64
@@ -2623,7 +2600,6 @@
 ./usr/share/man/ps1/amd64
 ./usr/share/man/ps1/armish
 ./usr/share/man/ps1/aviion
-./usr/share/man/ps1/cats
 ./usr/share/man/ps1/hp300
 ./usr/share/man/ps1/hppa
 ./usr/share/man/ps1/hppa64
@@ -2645,7 +2621,6 @@
 ./usr/share/man/ps2/amd64
 ./usr/share/man/ps2/armish
 ./usr/share/man/ps2/aviion
-./usr/share/man/ps2/cats
 ./usr/share/man/ps2/i386
 ./usr/share/man/ps2/zaurus
 ./usr/share/man/ps3
@@ -2653,7 +2628,6 @@
 ./usr/share/man/ps3/amd64
 ./usr/share/man/ps3/armish
 ./usr/share/man/ps3/aviion
-./usr/share/man/ps3/cats
 ./usr/share/man/ps3/hp300
 ./usr/share/man/ps3/hppa
 ./usr/share/man/ps3/hppa64
@@ -2676,7 +2650,6 @@
 ./usr/share/man/ps4/amd64
 ./usr/share/man/ps4/armish
 ./usr/share/man/ps4/aviion
-./usr/share/man/ps4/cats
 ./usr/share/man/ps4/hp300
 ./usr/share/man/ps4/hppa
 ./usr/share/man/ps4/hppa64
@@ -2698,7 +2671,6 @@
 ./usr/share/man/ps5/amd64
 ./usr/share/man/ps5/armish
 ./usr/share/man/ps5/aviion
-./usr/share/man/ps5/cats
 ./usr/share/man/ps5/hp300
 ./usr/share/man/ps5/hppa
 ./usr/share/man/ps5/hppa64
@@ -2722,7 +2694,6 @@
 ./usr/share/man/ps8/amd64
 ./usr/share/man/ps8/armish
 ./usr/share/man/ps8/aviion
-./usr/share/man/ps8/cats
 ./usr/share/man/ps8/hp300
 ./usr/share/man/ps8/hppa
 ./usr/share/man/ps8/hppa64
@@ -2744,7 +2715,6 @@
 ./usr/share/man/ps9/amd64
 ./usr/share/man/ps9/armish
 ./usr/share/man/ps9/aviion
-./usr/share/man/ps9/cats
 ./usr/share/man/ps9/hp300
 ./usr/share/man/ps9/hppa
 ./usr/share/man/ps9/hppa64
