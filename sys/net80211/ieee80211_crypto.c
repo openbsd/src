@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.27 2007/08/01 12:15:48 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.28 2007/08/01 12:23:26 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -754,8 +754,6 @@ ieee80211_eapol_key_decrypt(struct ieee80211_eapol_key *key,
 
 	len  = BE_READ_2(key->paylen);
 	info = BE_READ_2(key->info);
-	/* should not come here if key data is not encrypted */
-	KASSERT(info & EAPOL_KEY_ENCRYPTED);
 	data = (u_int8_t *)(key + 1);
 
 	switch (info & EAPOL_KEY_VERSION_MASK) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.32 2007/07/28 10:55:29 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.33 2007/08/01 12:23:26 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -609,7 +609,7 @@ enum {
  * The RSNA key descriptor used by IEEE 802.11 does not use the IEEE 802.1X
  * key descriptor.  Instead, it uses the key descriptor described in 8.5.2.
  */
-#define EAPOL_VERSION	2
+#define EAPOL_VERSION	1
 
 #define EAPOL_KEY_NONCE_LEN	32
 #define EAPOL_KEY_IV_LEN	16
@@ -645,6 +645,10 @@ struct ieee80211_eapol_key {
 #define EAPOL_KEY_REQUEST	(1 << 11)
 #define EAPOL_KEY_ENCRYPTED	(1 << 12)
 #define EAPOL_KEY_SMK		(1 << 13)
+/* WPA1 compatibility */
+#define EAPOL_KEY_WPA_KID_MASK	0x3
+#define EAPOL_KEY_WPA_KID_SHIFT	4
+#define EAPOL_KEY_WPA_TX	EAPOL_KEY_INSTALL
 
 	u_int8_t	keylen[2];
 	u_int8_t	replaycnt[8];

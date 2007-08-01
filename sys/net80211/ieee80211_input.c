@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.47 2007/08/01 12:02:50 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.48 2007/08/01 12:23:26 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2369,9 +2369,6 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 		goto out;
 
 	key = mtod(m0, struct ieee80211_eapol_key *);
-
-	if (key->version < EAPOL_VERSION)
-		goto out;
 
 	if (key->type != EAPOL_KEY ||
 	    (key->desc != EAPOL_KEY_DESC_IEEE80211 &&
