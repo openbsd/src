@@ -1,9 +1,9 @@
-/*	$OpenBSD: earlysig.c,v 1.1 2005/08/08 18:53:36 otto Exp $	*/
+/*	$OpenBSD: earlysig.c,v 1.2 2007/08/01 21:32:53 miod Exp $	*/
 
 /*
  * Public domain.  2005, Otto Moerbeek
  *
- * Try to create the case where a signal is deliverd to a proces before
+ * Try to create the case where a signal is delivered to a process before
  * fork() returns.
  */
 
