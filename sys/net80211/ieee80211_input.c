@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.53 2007/08/01 12:59:33 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.54 2007/08/01 13:25:19 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2123,7 +2123,10 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	memset(&k, 0, sizeof k);
 	k.k_cipher = ni->ni_pairwise_cipher;
 	k.k_flags = IEEE80211_KEY_TX;
-	k.k_len = ieee80211_cipher_keylen(k.k_cipher);
+	k.k_len = BE_READ_2(key->keylen);
+	/* check that key length matches pairwise cipher */
+	if (k.k_len != ieee80211_cipher_keylen(k.k_cipher))
+		return;
 	memcpy(k.k_key, ni->ni_ptk.tk, k.k_len);
 	if ((*ic->ic_set_key)(ic, ni, &k) != 0)
 		return;
@@ -2430,7 +2433,7 @@ ieee80211_print_eapol_key(struct ieee80211com *ic,
 
 /*
  * Process an incoming EAPOL frame.  Notice that we are only interested in
- * EAPOL-Key frames with an IEEE 802.11 descriptor type.
+ * EAPOL-Key frames with an IEEE 802.11 or WPA1 descriptor type.
  */
 void
 ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
@@ -2439,9 +2442,10 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_eapol_key *key;
 	u_int16_t info;
 
-	if (m0->m_len < sizeof(*key))
+	if (m0->m_len < sizeof(struct ether_header) + sizeof(*key))
 		goto out;
 
+	m_adj(m, sizeof(struct ether_header));
 	key = mtod(m0, struct ieee80211_eapol_key *);
 
 	if (key->type != EAPOL_KEY ||
