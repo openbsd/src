@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.30 2007/08/02 10:59:31 claudio Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.31 2007/08/02 21:15:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -84,6 +84,7 @@ int	cmalo_intr(void *);
 void	cmalo_intr_mask(struct malo_softc *, int);
 void	cmalo_rx(struct malo_softc *);
 void	cmalo_start(struct ifnet *);
+void	cmalo_watchdog(struct ifnet *);
 int	cmalo_tx(struct malo_softc *, struct mbuf *);
 void	cmalo_tx_done(struct malo_softc *);
 void	cmalo_select_network(struct malo_softc *);
@@ -287,7 +288,7 @@ cmalo_attach(void *arg)
 	ifp->if_ioctl = cmalo_ioctl;
 	ifp->if_init = cmalo_init;
 	ifp->if_start = cmalo_start;
-	//ifp->if_watchdog = cmalo_watchdog;
+	ifp->if_watchdog = cmalo_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
@@ -903,6 +904,17 @@ cmalo_start(struct ifnet *ifp)
 		ifp->if_oerrors++;
 }
 
+void
+cmalo_watchdog(struct ifnet *ifp)
+{
+	struct malo_softc *sc = ifp->if_softc;
+
+	DPRINTF(1, "%s: watchdog timeout\n", sc->sc_dev.dv_xname);
+
+	/* accept TX packets again */
+	ifp->if_flags &= ~IFF_OACTIVE;
+}
+
 int
 cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 {
@@ -936,6 +948,7 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_TX_DL_OVER);
 
 	ifp->if_flags |= IFF_OACTIVE;
+	ifp->if_timer = 5;
 
 	DPRINTF(2, "%s: TX status=%d, pkglen=%d, pkgoffset=%d\n",
 	    sc->sc_dev.dv_xname, txdesc->status, letoh16(txdesc->pkglen),
@@ -953,6 +966,7 @@ cmalo_tx_done(struct malo_softc *sc)
 
 	ifp->if_opackets++;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_timer = 0;
 	cmalo_start(ifp);
 }
 
