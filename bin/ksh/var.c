@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.30 2006/05/21 18:40:39 otto Exp $	*/
+/*	$OpenBSD: var.c,v 1.31 2007/08/02 10:50:25 fgsch Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -346,6 +346,7 @@ intval(struct tbl *vp)
 int
 setstr(struct tbl *vq, const char *s, int error_ok)
 {
+	const char *fs = NULL;
 	int no_ro_check = error_ok & 0x4;
 	error_ok &= ~0x4;
 	if ((vq->flag & RDONLY) && !no_ro_check) {
@@ -367,7 +368,7 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 		vq->flag &= ~(ISSET|ALLOC);
 		vq->type = 0;
 		if (s && (vq->flag & (UCASEV_AL|LCASEV|LJUST|RJUST)))
-			s = formatstr(vq, s);
+			fs = s = formatstr(vq, s);
 		if ((vq->flag&EXPORT))
 			export(vq, s);
 		else {
@@ -381,6 +382,8 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 	vq->flag |= ISSET;
 	if ((vq->flag&SPECIAL))
 		setspec(vq);
+	if (fs)
+		afree((char *)fs, ATEMP);
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.30 2006/04/10 14:38:59 jaredy Exp $	*/
+/*	$OpenBSD: eval.c,v 1.31 2007/08/02 10:50:25 fgsch Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -840,6 +840,7 @@ comsub(Expand *xp, char *cp)
 	s->start = s->str = cp;
 	sold = source;
 	t = compile(s);
+	afree(s, ATEMP);
 	source = sold;
 
 	if (t == NULL)

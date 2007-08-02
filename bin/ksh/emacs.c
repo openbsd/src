@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.40 2006/07/10 17:12:41 beck Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.41 2007/08/02 10:50:25 fgsch Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -123,7 +123,7 @@ static int      x_search(char *, int, int);
 static int      x_match(char *, char *);
 static void	x_redraw(int);
 static void     x_push(int);
-static char *   x_mapin(const char *);
+static char *   x_mapin(const char *, Area *);
 static char *   x_mapout(int);
 static void     x_print(int, int);
 static void	x_adjust(void);
@@ -1244,11 +1244,11 @@ x_stuff(int c)
 }
 
 static char *
-x_mapin(const char *cp)
+x_mapin(const char *cp, Area *area)
 {
 	char *new, *op;
 
-	op = new = str_save(cp, ATEMP);
+	op = new = str_save(cp, area);
 	while (*cp) {
 		/* XXX -- should handle \^ escape? */
 		if (*cp == '^') {
@@ -1333,7 +1333,7 @@ x_bind( const char *a1, const char *a2,
 		return 0;
 	}
 
-	m1 = x_mapin(a1);
+	m2 = m1 = x_mapin(a1, ATEMP);
 	prefix = key = 0;
 	for (;; m1++) {
 		key = *m1 & CHARMASK;
@@ -1344,6 +1344,7 @@ x_bind( const char *a1, const char *a2,
 		else
 			break;
 	}
+	afree(m2, ATEMP);
 
 	if (a2 == NULL) {
 		x_print(prefix, key);
@@ -1369,8 +1370,7 @@ x_bind( const char *a1, const char *a2,
 #endif /* 0 */
 	} else {
 		f = XFUNC_ins_string;
-		m2 = x_mapin(a2);
-		sp = str_save(m2, AEDIT);
+		sp = x_mapin(a2, AEDIT);
 	}
 
 	if (x_tab[prefix][key] == XFUNC_ins_string && x_atab[prefix][key])

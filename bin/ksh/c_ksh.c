@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.29 2006/03/12 00:26:58 deraadt Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.30 2007/08/02 10:50:25 fgsch Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -23,6 +23,7 @@ c_cd(char **wp)
 	char *dir, *try, *pwd;
 	int phys_path;
 	char *cdpath;
+	char *fdir = NULL;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != -1)
 		switch (optc) {
@@ -84,7 +85,7 @@ c_cd(char **wp)
 		olen = strlen(wp[0]);
 		nlen = strlen(wp[1]);
 		elen = strlen(current_wd + ilen + olen) + 1;
-		dir = alloc(ilen + nlen + elen, ATEMP);
+		fdir = dir = alloc(ilen + nlen + elen, ATEMP);
 		memcpy(dir, current_wd, ilen);
 		memcpy(dir + ilen, wp[1], nlen);
 		memcpy(dir + ilen + nlen, current_wd + ilen + olen, elen);
@@ -116,6 +117,8 @@ c_cd(char **wp)
 			bi_errorf("%s: bad directory", dir);
 		else
 			bi_errorf("%s - %s", try, strerror(errno));
+		if (fdir)
+			afree(fdir, ATEMP);
 		return 1;
 	}
 
@@ -149,6 +152,9 @@ c_cd(char **wp)
 	if (printpath || cdnode)
 		shprintf("%s\n", pwd);
 
+	if (fdir)
+		afree(fdir, ATEMP);
+
 	return 0;
 }
 
@@ -157,7 +163,7 @@ c_pwd(char **wp)
 {
 	int optc;
 	int physical = Flag(FPHYSICAL);
-	char *p;
+	char *p, *freep = NULL;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != -1)
 		switch (optc) {
@@ -181,7 +187,7 @@ c_pwd(char **wp)
 	if (p && access(p, R_OK) < 0)
 		p = (char *) 0;
 	if (!p) {
-		p = ksh_get_wd((char *) 0, 0);
+		freep = p = ksh_get_wd((char *) 0, 0);
 		if (!p) {
 			bi_errorf("can't get current directory - %s",
 			    strerror(errno));
@@ -189,6 +195,8 @@ c_pwd(char **wp)
 		}
 	}
 	shprintf("%s\n", p);
+	if (freep)
+		afree(freep, ATEMP);
 	return 0;
 }
 

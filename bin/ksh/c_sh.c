@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.35 2006/04/10 14:38:59 jaredy Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.36 2007/08/02 10:50:25 fgsch Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -414,6 +414,7 @@ int
 c_eval(char **wp)
 {
 	struct source *s;
+	int rv;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
@@ -447,7 +448,9 @@ c_eval(char **wp)
 		exstat = subst_exstat;
 	}
 
-	return shell(s, false);
+	rv = shell(s, false);
+	afree(s, ATEMP);
+	return (rv);
 }
 
 int
@@ -595,7 +598,8 @@ c_brkcont(char **wp)
 		 * shall be used.  Doesn't say to print an error but we
 		 * do anyway 'cause the user messed up.
 		 */
-		last_ep->flags &= ~EF_BRKCONT_PASS;
+		if (last_ep)
+			last_ep->flags &= ~EF_BRKCONT_PASS;
 		warningf(true, "%s: can only %s %d level(s)",
 		    wp[0], wp[0], n - quit);
 	}
