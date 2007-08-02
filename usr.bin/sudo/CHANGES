@@ -1938,3 +1938,8 @@ Sudo 1.6.9p1 released.
      gets changed out from underneath us.
 
 Sudo 1.6.9p2 released.
+
+613) Fixed a bug related to supplemental group matching introduced
+     in 1.6.9.
+
+Sudo 1.6.9p3 released.
