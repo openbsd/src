@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1252 2007/07/29 13:51:12 ckuethe Exp 
+ *	OpenBSD: pcidevs,v 1.1253 2007/08/02 07:33:58 jakemsr Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12428,6 +12428,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900,
+	    "P4M900 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
 	    "VT8371 Host",
 	},
@@ -12560,6 +12564,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_1,
+	    "P4M900 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C416,
 	    "VT82C416 IDE",
 	},
@@ -12610,6 +12618,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_3,
 	    "VT3351 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_2,
+	    "P4M900 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PCI,
@@ -12876,6 +12888,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_3,
+	    "P4M900 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_PPB_1,
 	    "VT8237A PCI-PCI",
 	},
@@ -12928,6 +12944,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_4,
+	    "P4M900 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M890_IOAPIC,
 	    "P4M890 IOAPIC",
 	},
@@ -12948,6 +12968,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT3351 IOAPIC",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_IOAPIC,
+	    "P4M900 IOAPIC",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
 	    "RhineII",
 	},
@@ -12964,6 +12988,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "P4M890 Security",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_6,
+	    "P4M900 Security",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M800_7,
 	    "K8M800 Host",
 	},
@@ -12978,6 +13006,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M890_7,
 	    "K8M890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_7,
+	    "P4M900 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_7,
@@ -13060,6 +13092,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "P4M890 PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_PPB_1,
+	    "P4M900 PCI-PCI",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633_AGP,
 	    "VT8633 AGP",
 	},
@@ -13102,6 +13138,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M890_PPB_2,
 	    "P4M890 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4M900_PPB_2,
+	    "P4M900 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_D,
