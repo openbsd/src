@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.27 2005/03/18 13:30:53 miod Exp $
+dnl	$OpenBSD: xfer,v 1.28 2007/08/02 17:33:12 david Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -27,7 +27,7 @@ Creating a PXE network bootable setup using OpenBSD or other Un*x-like system:
 	refer to the relevant man pages or administrator's guide for the
 	host system.
 
-	The DHCP server should return "pxeboot" to i386 clients as the
+	The DHCP server should return "pxeboot" to MACHINE clients as the
 	network boot program.  Both pxeboot and the bsd.rd install kernel
 	should be copied to the TFTP server's root directory.
 

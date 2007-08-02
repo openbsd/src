@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.16 2005/08/19 12:45:10 jmc Exp $
+dnl	$OpenBSD: prep,v 1.17 2007/08/02 17:33:12 david Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of Open Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -21,7 +21,7 @@ To shut down, type "shut-down" and press return
  ok
 0 >
 
-If you are installing OpenBSD/macppc on an Xserve, you will need
+If you are installing OpenBSD/MACHINE on an Xserve, you will need
 to do so in headless mode.  This means you must remove the graphics
 card and use the serial console.  To bring up Open Firmware via
 the serial console, hold down the System Identifier button while
