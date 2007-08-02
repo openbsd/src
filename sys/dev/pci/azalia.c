@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.28 2007/06/19 00:06:51 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.29 2007/08/02 17:13:31 reyk Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1050,6 +1050,7 @@ azalia_codec_init(codec_t *this)
 {
 	uint32_t rev, id, result;
 	int err, addr, n, i;
+	const char *vendor;
 
 	this->comresp = azalia_codec_comresp;
 	addr = this->address;
@@ -1069,9 +1070,13 @@ azalia_codec_init(codec_t *this)
 	azalia_codec_init_vtbl(this);
 
 	printf("%s: codec:", XNAME(this->az));
-	if (this->name == NULL)
-		printf(" 0x%04x/0x%04x", id >> 16, id & 0xffff);
-	else
+	if (this->name == NULL) {
+		vendor = pci_findvendor(id >> 16);
+		if (vendor == NULL)
+			printf(" 0x%04x/0x%04x", id >> 16, id & 0xffff);
+		else
+			printf(" %s/0x%04x", vendor, id & 0xffff);
+	} else
 		printf(" %s", this->name);
 	printf(" (rev. %u.%u), HDA version %u.%u\n",
 	    COP_RID_REVISION(rev), COP_RID_STEPPING(rev),
