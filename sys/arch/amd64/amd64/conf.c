@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2007/07/25 18:45:25 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 2007/08/02 16:40:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -103,6 +103,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
         (dev_type_stop((*))) enodev, 0,  dev_init(c,n,select), \
         (dev_type_mmap((*))) enodev, 0 }
 
+/* open, close, read */
+#define cdev_nvram_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev, 0 }
+
 
 #define	mmread	mmrw
 #define	mmwrite	mmrw
@@ -161,6 +168,8 @@ cdev_decl(xfs_dev);
 #include "cz.h"
 cdev_decl(cztty);
 #include "radio.h"
+#include "nvram.h"
+cdev_decl(nvram);
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -282,6 +291,7 @@ struct cdevsw	cdevsw[] =
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
 	cdev_acpi_init(NACPI,acpi),	/* 83: ACPI */
 	cdev_bthub_init(NBTHUB,bthub),	/* 84: bthub */
+	cdev_nvram_init(NNVRAM,nvram),	/* 85: NVRAM interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.13 2007/08/02 16:40:27 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -107,7 +107,7 @@
 #endif
 
 #include <dev/ic/mc146818reg.h>
-#include <i386/isa/nvram.h>
+#include <amd64/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
 int     cpu_match(struct device *, void *, void *);

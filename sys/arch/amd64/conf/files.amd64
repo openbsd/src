@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.32 2007/06/04 20:22:08 ckuethe Exp $
+#	$OpenBSD: files.amd64,v 1.33 2007/08/02 16:40:27 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -163,6 +163,9 @@ file	dev/isa/fdc.c				fdc needs-flag
 device	fd: disk, isa_dma
 attach	fd at fdc
 file	dev/isa/fd.c				fd needs-flag
+
+pseudo-device	nvram
+file	arch/amd64/amd64/nvram.c	nvram needs-flag
 
 #
 # USB

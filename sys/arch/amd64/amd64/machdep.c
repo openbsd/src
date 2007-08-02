@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2007/06/06 17:15:11 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 2007/08/02 16:40:27 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -127,6 +127,7 @@
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
 #include <dev/ic/i8042reg.h>
+#include <amd64/isa/nvram.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>

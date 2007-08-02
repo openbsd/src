@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2007/05/03 18:51:08 grange Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 2007/08/02 16:40:27 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/i8253reg.h>
-#include <i386/isa/nvram.h>
+#include <amd64/isa/nvram.h>
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
 
