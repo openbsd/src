@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.31 2007/08/02 10:50:25 fgsch Exp $	*/
+/*	$OpenBSD: var.c,v 1.32 2007/08/02 10:56:25 fgsch Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -981,7 +981,7 @@ setspec(struct tbl *vp)
 			afree(tmpdir, APERM);
 			tmpdir = (char *) 0;
 		}
-		/* Use tmpdir iff it is an absolute path, is writable and
+		/* Use tmpdir if it is an absolute path, is writable and
 		 * searchable and is a directory...
 		 */
 		{

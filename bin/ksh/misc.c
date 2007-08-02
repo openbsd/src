@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.30 2006/03/12 00:26:58 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.31 2007/08/02 10:56:25 fgsch Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -495,7 +495,7 @@ gmatch(const char *s, const char *p, int isfile)
 		return 0;
 	se = s + strlen(s);
 	pe = p + strlen(p);
-	/* isfile is false iff no syntax check has been done on
+	/* isfile is false if no syntax check has been done on
 	 * the pattern.  If check fails, just to a strcmp().
 	 */
 	if (!isfile && !has_globbing(p, pe)) {
