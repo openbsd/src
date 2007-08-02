@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.70 2007/08/02 07:15:49 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.71 2007/08/02 07:24:46 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1424,10 +1424,10 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	if (!(sc->sc_mode & AUMODE_PLAY_ALL) && sc->sc_playdrop > 0) {
-		n = min(sc->sc_playdrop, uio->uio_resid);
+		n = min(sc->sc_playdrop, uio->uio_resid * sc->sc_pparams.factor);
 		DPRINTF(("audio_write: playdrop %d\n", n));
-		uio->uio_offset += n;
-		uio->uio_resid -= n;
+		uio->uio_offset += n / sc->sc_pparams.factor;
+		uio->uio_resid -= n / sc->sc_pparams.factor;
 		sc->sc_playdrop -= n;
 		if (uio->uio_resid == 0)
 			return 0;
@@ -1606,13 +1606,28 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	/*
 	 * Number of read (write) samples dropped.  We don't know where or
 	 * when they were dropped.
+	 * 
+	 * The audio_ringbuffer->drops count is the number of buffer
+	 * sample size bytes.  Convert it to userland sample size bytes,
+	 * then convert to samples.  There is no easy way to get the
+	 * buffer sample size, but the userland sample size can be
+	 * calculated with userland channels and userland precision.
+	 *
+	 * original formula:
+	 *  sc->sc_rr.drops /
+	 *  sc->sc_rparams.factor /
+	 *  (sc->sc_rparams.channels * (sc->sc_rparams.precision / NBBY))
 	 */
 	case AUDIO_RERROR:
-		*(int *)addr = sc->sc_rr.drops;
+		*(int *)addr = (sc->sc_rr.drops * NBBY) /
+		    (sc->sc_rparams.factor * sc->sc_rparams.channels *
+		    sc->sc_rparams.precision);
 		break;
 
 	case AUDIO_PERROR:
-		*(int *)addr = sc->sc_pr.drops;
+		*(int *)addr = (sc->sc_pr.drops * NBBY) /
+		    (sc->sc_pparams.factor * sc->sc_pparams.channels *
+		    sc->sc_pparams.precision);
 		break;
 
 	/*
@@ -1952,7 +1967,7 @@ audio_pint(void *v)
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp;
-	int cc, ccr;
+	int cc;
 	int blksize;
 	int error;
 
@@ -2012,12 +2027,11 @@ audio_pint(void *v)
 		} else {
 			inp = cb->inp;
 			cc = blksize - (inp - cb->start) % blksize;
-			ccr = cc / sc->sc_pparams.factor;
 			if (cb->pause)
-				cb->pdrops += ccr;
+				cb->pdrops += cc;
 			else {
-				cb->drops += ccr;
-				sc->sc_playdrop += ccr;
+				cb->drops += cc;
+				sc->sc_playdrop += cc;
 			}
 			audio_pint_silence(sc, cb, inp, cc);
 			inp += cc;
