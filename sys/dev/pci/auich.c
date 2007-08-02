@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.63 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: auich.c,v 1.64 2007/08/02 07:43:41 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -902,28 +902,63 @@ auich_set_params(v, setmode, usemode, play, rec)
 		rec->sw_code = 0;
 		switch(rec->encoding) {
 		case AUDIO_ENCODING_ULAW:
-			rec->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (rec->precision == 8)
-				rec->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (rec->precision == 16)
-				rec->sw_code = change_sign16;
+			rec->sw_code = slinear16_to_mulaw_le;
+			rec->factor = 2;
 			break;
 		case AUDIO_ENCODING_ALAW:
-			rec->sw_code = ulinear8_to_alaw;
+			rec->sw_code = slinear16_to_alaw_le;
+			rec->factor = 2;
+			break;
+		case AUDIO_ENCODING_SLINEAR_LE:
+			switch (rec->precision) {
+			case 8:
+				rec->sw_code = linear16_to_linear8_le;
+				rec->factor = 2;
+				break;
+			case 16:
+				break;
+			default:
+				return (EINVAL);
+			}
+			break;
+		case AUDIO_ENCODING_ULINEAR_LE:
+			switch (rec->precision) {
+			case 8:
+				rec->sw_code = linear16_to_ulinear8_le;
+				rec->factor = 2;
+				break;
+			case 16:
+				rec->sw_code = change_sign16_le;
+				break;
+			default:
+				return (EINVAL);
+			}
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (rec->precision == 16)
+			switch (rec->precision) {
+			case 8:
+				rec->sw_code = linear16_to_linear8_le;
+				rec->factor = 2;
+				break;
+			case 16:
 				rec->sw_code = swap_bytes;
-			else
-				rec->sw_code = change_sign8;
+				break;
+			default:
+				return (EINVAL);
+			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (rec->precision == 16)
-				rec->sw_code = swap_bytes_change_sign16;
+			switch (rec->precision) {
+			case 8:
+				rec->sw_code = linear16_to_ulinear8_le;
+				rec->factor = 2;
+				break;
+			case 16:
+				rec->sw_code = change_sign16_swap_bytes_le;
+				break;
+			default:
+				return (EINVAL);
+			}
 			break;
 		default:
 			return (EINVAL);
