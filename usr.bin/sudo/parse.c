@@ -89,7 +89,7 @@
 #endif /* HAVE_EXTENDED_GLOB */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.10 2007/07/06 19:34:20 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.11 2007/08/02 02:09:10 millert Exp $";
 #endif /* lint */
 
 /*
@@ -479,7 +479,7 @@ usergr_matches(group, user, pw)
     struct group *grp;
     gid_t pw_gid;
     char **cur;
-    int n;
+    int i;
 
     /* make sure we have a valid usergroup, sudo style */
     if (*group++ != '%')
@@ -500,8 +500,8 @@ usergr_matches(group, user, pw)
     /*
      * If the user has a supplementary group vector, check it first.
      */
-    for (n = user_ngroups; n != 0; n--) {
-	if (grp->gr_gid == user_groups[n])
+    for (i = 0; i < user_ngroups; i++) {
+	if (grp->gr_gid == user_groups[i])
 	    return(TRUE);
     }
     if (grp->gr_mem != NULL) {
