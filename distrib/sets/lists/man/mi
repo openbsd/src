@@ -1035,6 +1035,7 @@
 ./usr/share/man/cat4/amd64/ioapic.0
 ./usr/share/man/cat4/amd64/kmem.0
 ./usr/share/man/cat4/amd64/mem.0
+./usr/share/man/cat4/amd64/nvram.0
 ./usr/share/man/cat4/amdiic.0
 ./usr/share/man/cat4/amdpm.0
 ./usr/share/man/cat4/ami.0
