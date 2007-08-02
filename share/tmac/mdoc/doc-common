@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.54 2007/07/25 20:07:27 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.55 2007/08/02 07:13:27 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -173,7 +173,6 @@
 .	if "\\$3"arc" .as vT \ (ARC)
 .	if "\\$3"armish" .as vT \ (ARMISH)
 .	if "\\$3"aviion" .as vT \ (AViiON)
-.	if "\\$3"cats" .as vT \ (Cats)
 .	if "\\$3"hp300" .as vT \ (HP300)
 .	if "\\$3"hppa" .as vT \ (HPPA)
 .	if "\\$3"hppa64" .as vT \ (HPPA64)
