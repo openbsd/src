@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.6 2007/07/31 21:21:11 deraadt Exp $	*/
+/*	$OpenBSD: rip.c,v 1.7 2007/08/02 07:31:16 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -451,7 +451,7 @@ play_next_track(struct track_info *info)
 	    S_IRUSR | S_IWUSR);
 	if (info->fd == -1) {
 		warnx("can't open /dev/audio");
-		return (NXTRACK_SKIP);	/* just skip this track */
+		return (NXTRACK_FAIL);
 	}
 
 	fd = open("/dev/audioctl", O_RDWR);
@@ -518,20 +518,18 @@ rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 			}
 
 			error = next_track(&info);
-			if (error == NXTRACK_SKIP)
-				continue;
-			else if (error == NXTRACK_FAIL) {
+			if (error == NXTRACK_FAIL) {
 				error = -1;
 				break;
-			}
+			} else if (error != NXTRACK_SKIP) {
+				error = read_track(fd, &info);
+				close(info.fd);
 
-			error = read_track(fd, &info);
-			close(info.fd);
-
-			if (error != 0) {
-				warnx("can't rip %u track",
-				    toc_buffer[i].track);
-				break;
+				if (error != 0) {
+					warnx("can't rip %u track",
+					    toc_buffer[i].track);
+					break;
+				}
 			}
 		}
 
