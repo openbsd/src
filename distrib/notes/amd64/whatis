@@ -1,5 +1,5 @@
-dnl	$OpenBSD: whatis,v 1.4 2005/03/18 13:29:45 miod Exp $
+dnl	$OpenBSD: whatis,v 1.5 2007/08/02 03:43:54 david Exp $
 
 OpenBSD/MACHINE runs on computers equipped with AMD Athlon64 processors.
-Machines with compatible processors (such as Intels EM64T processors)
+Machines with compatible processors (such as Intel's EM64T processors)
 are also supported.
