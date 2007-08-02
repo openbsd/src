@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.46 2006/04/10 14:38:59 jaredy Exp $	*/
+/*	$OpenBSD: exec.c,v 1.47 2007/08/02 10:52:10 fgsch Exp $	*/
 
 /*
  * execute command tree
@@ -875,7 +875,13 @@ findcom(const char *name, int flags)
 		npath = search(name, flags & FC_DEFPATH ? def_path : path,
 		    X_OK, &tp->u2.errno_);
 		if (npath) {
-			tp->val.s = tp == &temp ? npath : str_save(npath, APERM);
+			if (tp == &temp) {
+				tp->val.s = npath;
+			} else {
+				tp->val.s = str_save(npath, APERM);
+				if (npath != name)
+					afree(npath, ATEMP);
+			}
 			tp->flag |= ISSET|ALLOC;
 		} else if ((flags & FC_FUNC) &&
 		    (fpath = str_val(global("FPATH"))) != null &&
