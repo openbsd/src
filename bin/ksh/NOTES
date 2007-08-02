@@ -1,4 +1,4 @@
-$OpenBSD: NOTES,v 1.10 2007/08/02 10:56:25 fgsch Exp $
+$OpenBSD: NOTES,v 1.11 2007/08/02 11:05:54 fgsch Exp $
 
 General features of at&t ksh88 that are not (yet) in pdksh:
     - exported aliases and functions (not in ksh93).
@@ -507,7 +507,7 @@ POSIX sh questions (references are to POSIX 1003.2-1992)
 	  bar?)
 	- what action should be taken if there is an error doing a dup due
 	  to system limits (eg, not enough feil destriptors): is this
-	  a "redirection error" (in which case a script will exit if the
+	  a "redirection error" (in which case a script will exit iff the
 	  error occured while executing a special built-in)?
 	  IMHO, shell should exit script.  Couldn't find a blanket statement
 	  like "if shell encounters an unexpected system error, it shall

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.32 2007/08/02 10:56:25 fgsch Exp $	*/
+/*	$OpenBSD: eval.c,v 1.33 2007/08/02 11:05:54 fgsch Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -681,7 +681,7 @@ expand(char *cp,	/* input word */
 static int
 varsub(Expand *xp, char *sp, char *word,
     int *stypep,	/* becomes qualifier type */
-    int *slenp)		/* " " len (=, :=, etc.) valid if *stypep != 0 */
+    int *slenp)		/* " " len (=, :=, etc.) valid iff *stypep != 0 */
 {
 	int c;
 	int state;	/* next state: XBASE, XARG, XSUB, XNULLSUB */

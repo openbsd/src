@@ -57,7 +57,7 @@ Version 5.2.13
     * editing: completion after "cmd " now completes files (was command).
 
 
-$OpenBSD: NEWS,v 1.14 2007/08/02 10:56:25 fgsch Exp $
+$OpenBSD: NEWS,v 1.15 2007/08/02 11:05:54 fgsch Exp $
 
 Version 5.2.12
 
@@ -262,7 +262,7 @@ Version 5.2.3
 
 * test -o option: if option starts with a !, the test is negated.  The test
   always fails if the option doesn't exist (so [ -o foo -o -o !foo ] is true
-  if option foo exists).
+  iff option foo exists).
 
 * new option: set -o nohup (currently on by default) - if set, running jobs
   are not kill -HUP'd when a login shell exits; if clear, they are.  In
