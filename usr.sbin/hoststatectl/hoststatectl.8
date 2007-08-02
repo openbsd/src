@@ -1,4 +1,4 @@
-.\" $OpenBSD: hoststatectl.8,v 1.9 2007/05/31 19:20:24 jmc Exp $
+.\" $OpenBSD: hoststatectl.8,v 1.10 2007/08/02 16:10:58 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 2 2007 $
 .Dt HOSTSTATECTL 8
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@ Start checking its health again.
 .It Cm monitor
 Continuously report any changes in the host checking engine and the
 pf engine.
+.It Cm reload
+Reload the configuration file.
 .It Cm service disable Op Ar name | id
 Disable a service.
 If it has
