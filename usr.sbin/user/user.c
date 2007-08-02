@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.71 2007/04/05 01:34:57 tedu Exp $ */
+/* $OpenBSD: user.c,v 1.72 2007/08/02 16:18:05 deraadt Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1063,11 +1063,21 @@ adduser(char *login_name, user_t *up)
 		errx(EXIT_FAILURE, "already a `%s' user", login_name);
 	}
 	if (up->u_flags & F_HOMEDIR) {
-		(void) strlcpy(home, up->u_home, sizeof(home));
+		if (strlcpy(home, up->u_home, sizeof(home)) >= sizeof(home)) {
+			(void) close(ptmpfd);
+			pw_abort();
+			errx(EXIT_FAILURE, "home directory `%s' too long",
+			    up->u_home);
+		}
 	} else {
 		/* if home directory hasn't been given, make it up */
-		(void) snprintf(home, sizeof(home), "%s/%s", up->u_basedir,
-		    login_name);
+		if (snprintf(home, sizeof(home), "%s/%s", up->u_basedir,
+		    login_name) >= sizeof(home)) {
+			(void) close(ptmpfd);
+			pw_abort();
+			errx(EXIT_FAILURE, "home directory `%s/%s' too long",
+			    up->u_basedir, login_name);
+		}
 	}
 	if (!scantime(&inactive, up->u_inactive)) {
 		warnx("Warning: inactive time `%s' invalid, password expiry off",
@@ -1806,7 +1816,10 @@ usermod(int argc, char **argv)
 			u.u_flags |= F_GROUP;
 			break;
 		case 'l':
-			(void) strlcpy(newuser, optarg, sizeof(newuser));
+			if (strlcpy(newuser, optarg, sizeof(newuser)) >=
+			    sizeof(newuser))
+				errx(EXIT_FAILURE, "username `%s' too long",
+				    optarg);
 			have_new_user = 1;
 			u.u_flags |= F_USERNAME;
 			break;
