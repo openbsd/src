@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.26 2004/07/02 12:59:44 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.27 2007/08/02 03:23:37 david Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -58,7 +58,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.26 2004/07/02 12:59:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.27 2007/08/02 03:23:37 david Exp $";
 #endif
 #endif /* not lint */
 
@@ -1239,7 +1239,7 @@ do_shell(char *filename)
 }
 
 /*
- * Search for nth ocurrence of regular expression contained in buf in the file
+ * Search for nth occurrence of regular expression contained in buf in the file
  */
 int
 search(char *buf, FILE *file, int n)

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.420 2007/07/27 01:34:32 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.421 2007/08/02 03:23:37 david Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -988,7 +988,7 @@ __EOT
 #
 # *NOTE*
 #	1) quotes around $1 are required to preserve trailing or
-#	   embeddded blanks in usercodes and passwords.
+#	   embedded blanks in usercodes and passwords.
 #	2) substitute '%' FIRST so it doesn't eliminate '%' chars we insert.
 encode_for_url() {
 	echo "$1" | sed -e "
@@ -1058,7 +1058,7 @@ install_url() {
 	ask_yn "Display the list of known $_url_type servers?"
 	if [[ $resp == y ]]; then
 		# ftp.openbsd.org == 129.128.5.191 and will remain at
-		# that address for the forseeable future.
+		# that address for the foreseeable future.
 		echo -n "Getting the list from 129.128.5.191 (ftp.openbsd.org)..."
 		ftp $_ftp_active -V -a -o - \
 			ftp://129.128.5.191/$FTPDIR/ftplist 2>/tmp/ftplisterr \
