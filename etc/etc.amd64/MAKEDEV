@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.18 2007/07/25 18:48:35 todd Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.19 2007/08/02 16:40:26 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.36 2007/07/23 23:21:25 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -83,6 +83,7 @@
 #	joy*	Joystick driver
 #	lkm	Loadable kernel modules interface
 #	music*	MIDI devices
+#	nvram	NVRAM access
 #	pci*	PCI bus devices
 #	pctr*	PC Performance Tuning Register access device
 #	pf*	Packet Filter
@@ -308,6 +309,10 @@ pctr)
 pci*)
 	M pci$U	c 72 $U 600
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
+	;;
+
+nvram)
+	M nvram c 85 0 440 kmem
 	;;
 
 music*)
@@ -564,12 +569,12 @@ local)
 	;;
 
 all)
-	R bthub0 bthub1 bthub2 bktr0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1
-	R vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2
-	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 bio
-	R pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
-	R fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 hotplug ptm gpr0
-	R local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall rmidi0
+	R bthub0 bthub1 bthub2 nvram bktr0 ccd0 ccd1 ccd2 ccd3 vnd0
+	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1
+	R tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	R bio pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B
+	R fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 hotplug ptm
+	R gpr0 local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall rmidi0
 	R rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0
 	R radio0 music0 speaker audio0 uk0 random joy0 joy1 lpa0 lpa1
 	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyc0 ttyc1
