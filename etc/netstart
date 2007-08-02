@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.115 2006/11/15 06:28:33 itojun Exp $
+#	$OpenBSD: netstart,v 1.116 2007/08/02 03:19:10 david Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -301,10 +301,6 @@ if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 		echo "WARNING: inconsistent config - check /etc/sysctl.conf for IPv6 autoconf"
 	fi
 fi
-if [ "$ip6kernel" = "YES" ]; then
-	# this is to make sure DAD is completed before going further.
-	sleep `sysctl -n net.inet6.ip6.dad_count`
-fi
 
 # The trunk interfaces need to come up first in this list.
 # The vlan interfaces need to come up after trunk.
@@ -381,3 +377,8 @@ for bn in /etc/bridgename.*; do
 
 	bridgestart $if
 done
+
+if [ "$ip6kernel" = "YES" ]; then
+	# this is to make sure DAD is completed before going further.
+	sleep `sysctl -n net.inet6.ip6.dad_count`
+fi
