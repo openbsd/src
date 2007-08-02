@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.9 2005/01/14 22:47:06 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.10 2007/08/02 23:10:05 ray Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -36,8 +36,10 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <a.out.h>
 
@@ -180,6 +182,17 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	} else {
+		struct stat sstat;
+
+		if (fstat(STDIN_FILENO, &sstat) == -1) {
+			perror("fstat");
+			exit(1);
+		}
+		if (S_ISREG(sstat.st_mode) &&
+		    sstat.st_size > rd_root_size_val) {
+			fprintf(stderr, "ramdisk too small\n");
+			exit(1);
+		}
 		n = read(STDIN_FILENO, dataseg + rd_root_image_off,
 		    rd_root_size_val);
 		if (n < 0) {
