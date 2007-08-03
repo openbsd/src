@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.27 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.28 2007/08/03 18:41:44 millert Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -62,9 +62,8 @@ struct dquot {
 	LIST_ENTRY(dquot) dq_hash;	/* hash list */
 	TAILQ_ENTRY(dquot) dq_freelist;	/* free list */
 	u_int16_t dq_flags;		/* flags, see below */
-	u_int16_t dq_cnt;		/* count of active references */
-	u_int16_t dq_spare;		/* unused spare padding */
 	u_int16_t dq_type;		/* quota type of this dquot */
+	u_int32_t dq_cnt;		/* count of active references */
 	u_int32_t dq_id;		/* identifier this applies to */
 	struct  vnode *dq_vp;           /* file backing this quota */
 	struct  ucred  *dq_cred;        /* credentials for writing file */
