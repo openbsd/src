@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.60 2007/08/03 16:51:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.61 2007/08/03 20:18:42 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2152,7 +2152,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		/* check that key length matches group cipher */
 		if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
 			return;	/* XXX PTK already installed! */
-		memcpy(k->k_key, &gtk[7], k->k_len);
+		memcpy(k->k_key, &gtk[8], k->k_len);
 		k->k_rsc = LE_READ_8(key->rsc);
 		if (ic->ic_set_key != NULL &&
 		    (*ic->ic_set_key)(ic, ni, k) != 0)
@@ -2264,6 +2264,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	/* check that the GTK KDE is valid */
 	if (gtk[1] - 4 < 2)
 		return;
+
 	/* install the GTK */
 	kid = gtk[6] & 3;
 	k = &ic->ic_nw_keys[kid];
@@ -2277,7 +2278,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	/* check that key length matches group cipher */
 	if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
 		return;
-	memcpy(k->k_key, &gtk[7], k->k_len);
+	memcpy(k->k_key, &gtk[8], k->k_len);
 	k->k_rsc = LE_READ_8(key->rsc);
 	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
@@ -2430,7 +2431,7 @@ ieee80211_print_eapol_key(struct ieee80211com *ic,
 	for (i = 0; i < EAPOL_KEY_NONCE_LEN; i++)
 		printf("%02x", key->nonce[i]);
 	printf("\n");
-	printf("EAPOL-Key IV=0x");
+	printf("Key IV=0x");
 	for (i = 0; i < EAPOL_KEY_IV_LEN; i++)
 		printf("%02x", key->iv[i]);
 	printf("\n");
