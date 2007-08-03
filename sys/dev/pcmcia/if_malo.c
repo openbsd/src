@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.31 2007/08/02 21:15:50 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.32 2007/08/03 08:27:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -810,9 +810,9 @@ cmalo_rx(struct malo_softc *sc)
 	struct mbuf *m;
 	uint8_t *data;
 	uint16_t psize, *uc;
-	int i, s;
+	int i;
 
-	s = splnet();
+	splassert(IPL_NET);
 
 	/* read the whole RX packet which is always 802.3 */
 	psize = MALO_READ_2(sc, MALO_REG_DATA_READ_LEN);
@@ -833,11 +833,9 @@ cmalo_rx(struct malo_softc *sc)
 	DPRINTF(2, "RX status=%d, pkglen=%d, pkgoffset=%d\n",
 	    rxdesc->status, rxdesc->pkglen, rxdesc->pkgoffset);
 
-	if (rxdesc->status != MALO_RX_STATUS_OK) {
+	if (rxdesc->status != MALO_RX_STATUS_OK)
 		/* RX packet is not OK */
-		splx(s);
 		return;
-	}
 
 	/* remove the LLC / SNAP header */
 	data = sc->sc_data + rxdesc->pkgoffset;
@@ -846,24 +844,9 @@ cmalo_rx(struct malo_softc *sc)
 	rxdesc->pkglen -= sizeof(struct llc);
 
 	/* prepare mbuf */
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		ifp->if_ierrors++;
-		splx(s);
-		return;
-	}
-	MCLGET(m, M_DONTWAIT);
-	if (!(m->m_flags & M_EXT)) {
-		ifp->if_ierrors++;
-		m_freem(m);
-		splx(s);
-		return;
-	}
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = m->m_len = rxdesc->pkglen;
-	m->m_data += ETHER_ALIGN;
-	data = mtod(m, uint8_t *);
-	bcopy(sc->sc_data + rxdesc->pkgoffset, data, m->m_pkthdr.len);
+	m = m_devget(sc->sc_data + rxdesc->pkgoffset - ETHER_ALIGN,
+	    rxdesc->pkglen + ETHER_ALIGN, 0, ifp, NULL);
+	m_adj(m, ETHER_ALIGN);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -875,8 +858,6 @@ cmalo_rx(struct malo_softc *sc)
 		ether_input_mbuf(ifp, m);
 		ifp->if_ipackets++;
 	}
-
-	splx(s);
 }
 
 void
@@ -924,6 +905,8 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	uint16_t psize, *uc;
 	int i;
 
+	splassert(IPL_NET);
+
 	bzero(sc->sc_data, sizeof(*txdesc));
 	psize = sizeof(*txdesc) + m->m_pkthdr.len;
 	data = mtod(m, uint8_t *);
@@ -961,6 +944,8 @@ void
 cmalo_tx_done(struct malo_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
+
+	splassert(IPL_NET);
 
 	DPRINTF(2, "%s: TX done\n", sc->sc_dev.dv_xname);
 
