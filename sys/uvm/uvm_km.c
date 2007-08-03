@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.63 2007/04/29 15:46:42 art Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.64 2007/08/03 22:49:07 art Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -534,10 +534,20 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 		}
 		simple_unlock(&uvm.kernel_object->vmobjlock);
 		if (__predict_false(pg == NULL)) {
-			uvm_wait("km_alloc1w");	/* wait for memory */
-			continue;
+			if (curproc == uvm.pagedaemon_proc) {
+				/*
+				 * It is unfeasible for the page daemon to
+				 * sleep for memory, so free what we have
+				 * allocated and fail.
+				 */
+				uvm_unmap(map, kva, loopva - kva);
+				return (NULL);
+			} else {
+				uvm_wait("km_alloc1w");	/* wait for memory */
+				continue;
+			}
 		}
-		
+
 		/*
 		 * map it in; note we're never called with an intrsafe
 		 * object, so we always use regular old pmap_enter().
