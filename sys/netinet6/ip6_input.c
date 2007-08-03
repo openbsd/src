@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.77 2007/05/28 17:16:39 henning Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.78 2007/08/03 06:43:12 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -415,10 +415,11 @@ ip6_input(m)
 		if (in6m)
 			ours = 1;
 #ifdef MROUTING
-		else if (!ip6_mforwarding || !ip6_mrouter) {
+		else if (!ip6_mforwarding || !ip6_mrouter)
 #else
-		else {
+		else
 #endif
+		{
 			ip6stat.ip6s_notmember++;
 			if (!IN6_IS_ADDR_MC_LINKLOCAL(&ip6->ip6_dst))
 				ip6stat.ip6s_cantforward++;
@@ -731,13 +732,15 @@ ip6_check_rh0hdr(struct mbuf *m)
 	do {
 		switch (proto) {
 		case IPPROTO_ROUTING:
-			if (rh_cnt++)
+			if (rh_cnt++) {
 				/* more then one rh header present */
 				return (1);
+			}
 
-			if (off + sizeof(opt6) > lim)
+			if (off + sizeof(opt6) > lim) {
 				/* packet to short to make sense */
 				return (1);
+			}
 
 			m_copydata(m, off, sizeof(rthdr), (caddr_t)&rthdr);
 
@@ -751,13 +754,14 @@ ip6_check_rh0hdr(struct mbuf *m)
 		case IPPROTO_HOPOPTS:
 		case IPPROTO_DSTOPTS:
 			/* get next header and header length */
-			if (off + sizeof(opt6) > lim)
+			if (off + sizeof(opt6) > lim) {
 				/*
 				 * Packet to short to make sense, we could
 				 * reject the packet but as a router we 
 				 * should not do that so forward it.
 				 */
 				return (0);
+			}
 
 			m_copydata(m, off, sizeof(opt6), (caddr_t)&opt6);
 
