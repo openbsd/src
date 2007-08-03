@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.59 2007/08/01 18:14:00 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.60 2007/08/03 16:51:06 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -2020,7 +2020,7 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	 * The RSN IE must match bit-wise with what the STA included in its
 	 * (Re)Association Request.
 	 */
-	if (rsn[1] != ni->ni_rsnie[1] ||
+	if (ni->ni_rsnie == NULL || rsn[1] != ni->ni_rsnie[1] ||
 	    memcmp(rsn, ni->ni_rsnie, 2 + rsn[1]) != 0)
 		return;
 
@@ -2103,7 +2103,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	 * Check that first RSN IE is identical to the one received in
 	 * the beacon or probe response frame.
 	 */
-	if (rsn1[1] != ni->ni_rsnie[1] ||
+	if (ni->ni_rsnie == NULL || rsn1[1] != ni->ni_rsnie[1] ||
 	    memcmp(rsn1, ni->ni_rsnie, 2 + rsn1[1]) != 0)
 		return;
 
@@ -2291,7 +2291,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* send message 2 to authenticator */
-	ieee80211_send_group_msg2(ic, ni);
+	ieee80211_send_group_msg2(ic, ni, k);
 }
 
 void
@@ -2346,7 +2346,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* send message 2 to authenticator */
-	ieee80211_send_group_msg2(ic, ni);
+	ieee80211_send_group_msg2(ic, ni, k);
 }
 
 /*
@@ -2436,7 +2436,7 @@ ieee80211_print_eapol_key(struct ieee80211com *ic,
 	printf("\n");
 	printf("Key RSC=0x");
 	for (i = 0; i < 8; i++)
-		printf("%02x", key->replaycnt[i]);
+		printf("%02x", key->rsc[i]);
 	printf("\n");
 	printf("Key MIC=0x");
 	for (i = 0; i < EAPOL_KEY_MIC_LEN; i++)
@@ -2462,9 +2462,7 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 	m_adj(m0, sizeof(struct ether_header));
 	key = mtod(m0, struct ieee80211_eapol_key *);
 
-	if (key->type != EAPOL_KEY ||
-	    (key->desc != EAPOL_KEY_DESC_IEEE80211 &&
-	     key->desc != EAPOL_KEY_DESC_WPA1))
+	if (key->type != EAPOL_KEY || key->desc != ni->ni_eapol_desc)
 		goto out;
 
 	/* check packet body length */

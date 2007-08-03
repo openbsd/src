@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.30 2007/08/01 15:40:40 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.31 2007/08/03 16:51:06 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -78,6 +78,10 @@ struct mbuf *ieee80211_ccmp_encrypt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_key *);
 struct mbuf *ieee80211_ccmp_decrypt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_key *);
+struct mbuf *ieee80211_tkip_encrypt(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_key *);
+struct mbuf *ieee80211_tkip_decrypt(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_key *);
 void	ieee80211_aes_key_wrap(const u_int8_t *, size_t, const u_int8_t *,
 	    size_t, u_int8_t *);
 int	ieee80211_aes_key_unwrap(const u_int8_t *, size_t, const u_int8_t *,
@@ -135,12 +139,15 @@ ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 		k = &ni->ni_pairwise_key;
 
 	switch (k->k_cipher) {
-	case IEEE80211_CIPHER_CCMP:
-		m0 = ieee80211_ccmp_encrypt(ic, m0, k);
-		break;
 	case IEEE80211_CIPHER_WEP40:
 	case IEEE80211_CIPHER_WEP104:
 		m0 = ieee80211_wep_crypt(&ic->ic_if, m0, 1);
+		break;
+	case IEEE80211_CIPHER_TKIP:
+		m0 = ieee80211_tkip_encrypt(ic, m0, k);
+		break;
+	case IEEE80211_CIPHER_CCMP:
+		m0 = ieee80211_ccmp_encrypt(ic, m0, k);
 		break;
 	default:
 		/* should not get there */
@@ -170,12 +177,15 @@ ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		k = &ni->ni_pairwise_key;
 
 	switch (k->k_cipher) {
-	case IEEE80211_CIPHER_CCMP:
-		m0 = ieee80211_ccmp_decrypt(ic, m0, k);
-		break;
 	case IEEE80211_CIPHER_WEP40:
 	case IEEE80211_CIPHER_WEP104:
 		m0 = ieee80211_wep_crypt(&ic->ic_if, m0, 0);
+		break;
+	case IEEE80211_CIPHER_TKIP:
+		m0 = ieee80211_tkip_decrypt(ic, m0, k);
+		break;
+	case IEEE80211_CIPHER_CCMP:
+		m0 = ieee80211_ccmp_decrypt(ic, m0, k);
 		break;
 	default:
 		/* should not get there */
@@ -259,6 +269,87 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 
 	/* update last seen packet number */
 	k->k_rsc = pn;
+
+	return m0;
+}
+
+#define IEEE80211_TKIP_HDRLEN	8
+#define IEEE80211_TKIP_MICLEN	8
+#define IEEE80211_TKIP_ICVLEN	4
+
+struct mbuf *
+ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_key *k)
+{
+	struct ieee80211_frame *wh;
+	size_t hdrlen = sizeof(*wh);	/* XXX QoS */
+	u_int8_t *ivp;
+
+	M_PREPEND(m0, IEEE80211_TKIP_HDRLEN, M_NOWAIT);
+	if (m0 == NULL)
+		return m0;
+	wh = mtod(m0, struct ieee80211_frame *);
+	ovbcopy(mtod(m0, u_int8_t *) + IEEE80211_TKIP_HDRLEN, wh, hdrlen);
+	ivp = (u_int8_t *)wh + hdrlen;
+
+	ivp[0] = k->k_tsc >> 8;		/* TSC1 */
+	/* WEP Seed = (TSC1 | 0x20) & 0x7f (see 8.3.2.2) */
+	ivp[1] = (ivp[0] | 0x20) & 0x7f;
+	ivp[2] = k->k_tsc;		/* TSC0 */
+	ivp[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;	/* KeyID | ExtIV */
+	ivp[4] = k->k_tsc >> 16;	/* TSC2 */
+	ivp[5] = k->k_tsc >> 24;	/* TSC3 */
+	ivp[6] = k->k_tsc >> 32;	/* TSC4 */
+	ivp[7] = k->k_tsc >> 40;	/* TSC5 */
+
+	/* XXX encrypt payload if HW encryption not supported */
+
+	k->k_tsc++;	/* increment the 48-bit TSC */
+
+	return m0;
+}
+
+struct mbuf *
+ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_key *k)
+{
+	struct ieee80211_frame *wh;
+	size_t hdrlen = sizeof(*wh);	/* XXX QoS */
+	u_int64_t tsc;
+	u_int8_t *ivp;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	ivp = (u_int8_t *)wh + hdrlen;
+
+	/* check that ExtIV bit is be set */
+	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
+		m_freem(m0);
+		return NULL;
+	}
+	/* extract the 48-bit TSC from the TKIP header */
+	tsc = (u_int64_t)ivp[2]       |
+	      (u_int64_t)ivp[0] <<  8 |
+	      (u_int64_t)ivp[4] << 16 |
+	      (u_int64_t)ivp[5] << 24 |
+	      (u_int64_t)ivp[6] << 32 |
+	      (u_int64_t)ivp[7] << 40;
+	/* NB: the keys are refreshed, we'll never overflow the 48 bits */
+	if (tsc <= k->k_rsc) {
+		/* replayed frame, discard */
+		/* XXX statistics */
+		m_freem(m0);
+		return NULL;
+	}
+
+	/* XXX decrypt payload if HW encryption not supported */
+
+	ovbcopy(mtod(m0, u_int8_t *),
+	    mtod(m0, u_int8_t *) + IEEE80211_TKIP_HDRLEN, hdrlen);
+	m_adj(m0, IEEE80211_TKIP_HDRLEN);
+	m_adj(m0, -IEEE80211_TKIP_ICVLEN);
+
+	/* update last seen packet number */
+	k->k_rsc = tsc;
 
 	return m0;
 }

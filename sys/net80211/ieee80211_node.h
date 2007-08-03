@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.20 2007/08/01 15:40:40 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.21 2007/08/03 16:51:06 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@ struct ieee80211_node {
 	u_int			ni_akmset;
 	u_int16_t		ni_rsncaps;
 	int			ni_port_valid;
+	u_int8_t		ni_eapol_desc;
 	u_int8_t		ni_nonce[EAPOL_KEY_NONCE_LEN];
 	u_int64_t		ni_replaycnt;
 	u_int8_t		ni_replaycnt_ok;

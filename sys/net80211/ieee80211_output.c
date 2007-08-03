@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.53 2007/08/01 13:10:01 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.54 2007/08/03 16:51:06 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1104,6 +1104,7 @@ ieee80211_get_deauth(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (m == NULL)
 		return NULL;
 	MH_ALIGN(m, 2);
+
 	m->m_pkthdr.len = m->m_len = 2;
 	*mtod(m, u_int16_t *) = htole16(reason);
 
@@ -1526,7 +1527,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	key = (struct ieee80211_eapol_key *)&eh[1];
 	key->version = EAPOL_VERSION;
 	key->type = EAPOL_KEY;
-	key->desc = EAPOL_KEY_DESC_IEEE80211;	/* XXX WPA1 */
+	key->desc = ni->ni_eapol_desc;
 
 	info = BE_READ_2(key->info);
 	/* use V2 descriptor only when pairwise cipher is CCMP */
@@ -1630,7 +1631,7 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	u_int8_t *frm;
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    2 + 20);
+	    (ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) ? 2 + 20 : 0);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
@@ -1643,13 +1644,15 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	get_random_bytes(ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 
-	/* XXX retrieve PMKID from the PMKSA cache */
-
 	keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
 	BE_WRITE_2(key->keylen, keylen);
 
 	frm = (u_int8_t *)&key[1];
-	frm = ieee80211_add_pmkid_kde(frm, pmkid);
+	/* WPA1 does not have PMKID KDE */
+	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) {
+		/* XXX retrieve PMKID from the PMKSA cache */
+		frm = ieee80211_add_pmkid_kde(frm, pmkid);
+	}
 
 	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
 
@@ -1675,7 +1678,7 @@ ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int8_t *frm;
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    2 + 44);
+	    2 + 48);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
@@ -1687,11 +1690,19 @@ ieee80211_send_4way_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
 	/* copy key replay counter from authenticator */
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 
+	/* copy the supplicant's nonce (SNonce) */
 	memcpy(key->nonce, snonce, EAPOL_KEY_NONCE_LEN);
 
 	frm = (u_int8_t *)&key[1];
-	/* add the RSN IE used in the (Re)Association Request */
-	frm = ieee80211_add_rsn(frm, ic, ni);
+	/* add the WPA/RSN IE used in the (Re)Association Request */
+	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
+		u_int16_t keylen;
+		frm = ieee80211_add_wpa1(frm, ic, ni);
+		/* WPA1 sets the key length field here */
+		keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
+		BE_WRITE_2(key->keylen, keylen);
+	} else	/* RSN */
+		frm = ieee80211_add_rsn(frm, ic, ni);
 
 	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
 
@@ -1717,32 +1728,38 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 	u_int8_t *frm;
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    2 + 44 +
-	    2 + 6 + gtk->k_len +
+	    2 + 48 +
+	    ((ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) ?
+		2 + 6 + gtk->k_len : 0) +
 	    8);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
 	memset(key, 0, sizeof(*key));
 
-	/* XXX no need to encrypt if GTK is not included */
 	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_INSTALL | EAPOL_KEY_KEYACK |
-	    EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE | EAPOL_KEY_ENCRYPTED;
-	BE_WRITE_2(key->info, info);
+	    EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE;
 
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
-	/* use same Nonce as Message 1 */
+	/* use same nonce as in Message 1 */
 	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 
 	keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
 	BE_WRITE_2(key->keylen, keylen);
 
 	frm = (u_int8_t *)&key[1];
-	/* add the RSN IE included in Beacon/Probe Response */
-	frm = ieee80211_add_rsn(frm, ic, ni);
-	/* XXX always include GTK? */
-	frm = ieee80211_add_gtk_kde(frm, gtk);
-	LE_WRITE_8(key->rsc, gtk->k_rsc);
+	/* add the WPA/RSN IE included in Beacon/Probe Response */
+	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) {
+		frm = ieee80211_add_rsn(frm, ic, ic->ic_bss);
+		/* RSN: encapsulate the GTK and ask for encryption */
+		frm = ieee80211_add_gtk_kde(frm, gtk);
+		LE_WRITE_8(key->rsc, gtk->k_rsc);
+		info |= EAPOL_KEY_ENCRYPTED;
+	} else	/* WPA1 */
+		frm = ieee80211_add_wpa1(frm, ic, ic->ic_bss);
+
+	/* write the key info field */
+	BE_WRITE_2(key->info, info);
 
 	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
 
@@ -1765,7 +1782,7 @@ ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct mbuf *m;
 	u_int16_t info;
 
-	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA, 8);
+	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA, 0);
 	if (m == NULL)
 		return ENOMEM;
 	key = mtod(m, struct ieee80211_eapol_key *);
@@ -1776,6 +1793,13 @@ ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	/* copy key replay counter from authenticator */
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+
+	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
+		u_int16_t keylen;
+		/* WPA1 sets the key length field here */
+		keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
+		BE_WRITE_2(key->keylen, keylen);
+	}
 
 	/* empty key data field */
 	m->m_pkthdr.len = m->m_len = sizeof(*key);
@@ -1802,7 +1826,8 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	u_int8_t *frm;
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
-	    2 + 6 + gtk->k_len +
+	    ((ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) ?
+		gtk->k_len : 2 + 6 + gtk->k_len) +
 	    8);
 	if (m == NULL)
 		return ENOMEM;
@@ -1811,13 +1836,25 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	info = EAPOL_KEY_KEYACK | EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE |
 	    EAPOL_KEY_ENCRYPTED;
-	BE_WRITE_2(key->info, info);
 
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 
 	frm = (u_int8_t *)&key[1];
-	frm = ieee80211_add_gtk_kde(frm, gtk);
+	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
+		/* WPA1 does not have GTK KDE */
+		BE_WRITE_2(key->keylen, gtk->k_len);
+		memcpy(frm, gtk->k_key, gtk->k_len);
+		frm += gtk->k_len;
+		info |= gtk->k_id << EAPOL_KEY_WPA_KID_SHIFT;
+		if (gtk->k_flags & IEEE80211_KEY_TX)
+			info |= EAPOL_KEY_WPA_TX;
+	} else	/* RSN */
+		frm = ieee80211_add_gtk_kde(frm, gtk);
+
 	LE_WRITE_8(key->rsc, gtk->k_rsc);
+
+	/* write the key info field */
+	BE_WRITE_2(key->info, info);
 
 	m->m_pkthdr.len = m->m_len = frm - (u_int8_t *)key;
 
@@ -1834,7 +1871,8 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
  * authenticator (see 8.5.4.2).
  */
 int
-ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni)
+ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni,
+    const struct ieee80211_key *gtk)
 {
 	struct ieee80211_eapol_key *key;
 	u_int16_t info;
@@ -1847,10 +1885,18 @@ ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni)
 	memset(key, 0, sizeof(*key));
 
 	info = EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE;
-	BE_WRITE_2(key->info, info);
 
 	/* copy key replay counter from authenticator */
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
+
+	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
+		/* WPA1 sets the key length and key id fields here */
+		BE_WRITE_2(key->keylen, gtk->k_len);
+		info |= (gtk->k_id & 3) << EAPOL_KEY_WPA_KID_SHIFT;
+	}
+
+	/* write the key info field */
+	BE_WRITE_2(key->info, info);
 
 	/* empty key data field */
 	m->m_pkthdr.len = m->m_len = sizeof(*key);
@@ -1870,11 +1916,10 @@ ieee80211_send_group_msg2(struct ieee80211com *ic, struct ieee80211_node *ni)
  */
 int
 ieee80211_send_eapol_key_req(struct ieee80211com *ic,
-    struct ieee80211_node *ni, int is4way)
+    struct ieee80211_node *ni, u_int16_t info, u_int64_t tsc)
 {
 	struct ieee80211_eapol_key *key;
 	struct mbuf *m;
-	u_int16_t info;
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA, 0);
 	if (m == NULL)
@@ -1882,8 +1927,11 @@ ieee80211_send_eapol_key_req(struct ieee80211com *ic,
 	key = mtod(m, struct ieee80211_eapol_key *);
 	memset(key, 0, sizeof(*key));
 
-	info = is4way ? EAPOL_KEY_PAIRWISE : 0;
 	BE_WRITE_2(key->info, info);
+
+	/* in case of TKIP MIC failure, fill the RSC field */
+	if (info & EAPOL_KEY_ERROR)
+		LE_WRITE_8(key->rsc, tsc);
 
 	/* use our separate key replay counter for key requests */
 	BE_WRITE_8(key->replaycnt, ic->ic_keyreplaycnt);
