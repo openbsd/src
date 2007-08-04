@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.85 2007/06/08 22:57:43 jasper Exp $
+#	$OpenBSD: files.sparc64,v 1.86 2007/08/04 16:46:03 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -290,6 +290,12 @@ include	"dev/usb/files.usb"
 # Bluetooth
 #
 include "dev/bluetooth/files.bluetooth"
+
+#
+# Cardbus
+#
+include "dev/cardbus/files.cardbus"
+file	arch/sparc64/sparc64/rbus_machdep.c	cardbus
 
 #
 # Machine-dependent I2C drivers
