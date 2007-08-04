@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.32 2007/08/03 08:27:15 claudio Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.33 2007/08/04 12:02:36 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -60,7 +60,7 @@
  */
 
 #ifdef CMALO_DEBUG
-int cmalo_d = 2;
+int cmalo_d = 1;
 #define DPRINTF(l, x...)	do { if ((l) <= cmalo_d) printf(x); } while (0)
 #else
 #define DPRINTF(l, x...)
@@ -702,10 +702,12 @@ cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			DPRINTF(1, "%s: newstate is IEEE80211_S_AUTH\n",
 			    sc->sc_dev.dv_xname);
 			cmalo_cmd_set_auth(sc);
+			/* FALLTHROUGH */
 		case IEEE80211_S_ASSOC:
 			DPRINTF(1, "%s: newstate is IEEE80211_S_ASSOC\n",
 			    sc->sc_dev.dv_xname);
 			cmalo_cmd_set_assoc(sc);
+			/* FALLTHROUGH */
 		case IEEE80211_S_RUN:
 			DPRINTF(1, "%s: newstate is IEEE80211_S_RUN\n",
 			    sc->sc_dev.dv_xname);
@@ -746,10 +748,10 @@ int
 cmalo_intr(void *arg)
 {
 	struct malo_softc *sc = arg;
-	uint16_t intr;
+	uint16_t intr = 0;
 
+	/* read interrupt reason */
 	intr = MALO_READ_2(sc, MALO_REG_HOST_INTR_CAUSE);
-
 	if (intr == 0) {
 		/* interrupt not for us */
 		return (0);
@@ -758,6 +760,16 @@ cmalo_intr(void *arg)
 		/* card has been detached */
 		return (0);
 	}
+
+	/* disable interrupts */
+	cmalo_intr_mask(sc, 0);
+
+	/* acknowledge interrupt */
+	MALO_WRITE_2(sc, MALO_REG_HOST_INTR_CAUSE,
+	    intr & MALO_VAL_HOST_INTR_MASK_ON);
+
+	/* enable interrupts */
+	cmalo_intr_mask(sc, 1);
 
 	DPRINTF(2, "%s: interrupt handler called (intr = 0x%04x)\n",
 	    sc->sc_dev.dv_xname, intr);
@@ -772,10 +784,6 @@ cmalo_intr(void *arg)
 		/* command response */
 		sc->sc_cmd_running = 0;
 
-	/* acknowledge interrupt */
-	intr &= MALO_VAL_HOST_INTR_MASK_ON;
-	MALO_WRITE_2(sc, MALO_REG_HOST_INTR_CAUSE, intr);
-
 	return (1);
 }
 
@@ -786,7 +794,7 @@ cmalo_intr_mask(struct malo_softc *sc, int enable)
 
 	val16 = MALO_READ_2(sc, MALO_REG_HOST_INTR_MASK);
 
-	DPRINTF(1, "%s: intr mask changed from 0x%04x ",
+	DPRINTF(3, "%s: intr mask changed from 0x%04x ",
 	    sc->sc_dev.dv_xname, val16);
 
 	if (enable)
@@ -798,7 +806,7 @@ cmalo_intr_mask(struct malo_softc *sc, int enable)
 
 	val16 = MALO_READ_2(sc, MALO_REG_HOST_INTR_MASK);
 
-	DPRINTF(1, "to 0x%04x\n", val16);
+	DPRINTF(3, "to 0x%04x\n", val16);
 }
 
 void
@@ -970,7 +978,7 @@ cmalo_select_network(struct malo_softc *sc)
 		}
 	}
 
-	DPRINTF(2, "best network found is %s\n",
+	DPRINTF(1, "best network found is %s\n",
 	    sc->sc_aps[sc->sc_aps_best].ssid);
 }
 
