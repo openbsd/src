@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.34 2007/05/02 02:20:37 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.35 2007/08/04 14:37:34 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -88,7 +88,6 @@ int
 ahc_attach(struct ahc_softc *ahc)
 {
 	struct scsibus_attach_args saa;
-	char ahc_info[256];
 	int s;
 
         s = splbio();
@@ -110,10 +109,13 @@ ahc_attach(struct ahc_softc *ahc)
 		ahc->sc_channel_b.adapter_target = ahc->our_id_b;
 	}
 
+#ifndef DEBUG		
 	if (bootverbose) {
+		char ahc_info[256];
 		ahc_controller_info(ahc, ahc_info, sizeof ahc_info);
 		printf("%s: %s\n", ahc->sc_dev.dv_xname, ahc_info);
 	}
+#endif
 
 	ahc_intr_enable(ahc, TRUE);
 
