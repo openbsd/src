@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.183 2007/07/02 14:29:37 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.184 2007/08/04 16:49:04 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -208,6 +208,12 @@ onewire* at uow?
 # Bluetooth bus support
 #bthub*	at ubt?
 
+# CardBus bus support
+cardbus* at cardslot?
+pcmcia*	at cardslot?
+cbb*	at pci?
+cardslot* at cbb?
+
 #### Standard system devices -- all required for a given architecture
 
 auxio*	at ebus?
@@ -414,6 +420,7 @@ lpt*		at apio?
 stp*		at sbus?		# STP4020
 pcmcia*		at stp?
 #com*		at pcmcia?		# PCMCIA modems/serial ports
+ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
 wi*		at pci?			# WaveLAN IEEE 802.11DS
 wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
 
