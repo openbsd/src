@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.22 2007/05/29 09:54:25 sobrado Exp $	*/
+/*	$OpenBSD: bus.h,v 1.23 2007/08/04 16:44:15 kettenis Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -219,6 +219,8 @@ struct sparc_bus_space_tag {
 		int (*)(void *), void *,
 		const char *);
 
+	bus_addr_t (*sparc_bus_addr)(bus_space_tag_t,
+		bus_space_tag_t, bus_space_handle_t);
 };
 
 /*

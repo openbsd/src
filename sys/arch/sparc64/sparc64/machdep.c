@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.92 2007/07/22 21:33:04 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.93 2007/08/04 16:44:15 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1570,6 +1570,8 @@ int sparc_bus_protect(bus_space_tag_t, bus_space_tag_t, bus_space_handle_t,
     bus_size_t, int);
 int sparc_bus_unmap(bus_space_tag_t, bus_space_tag_t, bus_space_handle_t,
     bus_size_t);
+bus_addr_t sparc_bus_addr(bus_space_tag_t, bus_space_tag_t,
+    bus_space_handle_t);
 int sparc_bus_subregion(bus_space_tag_t, bus_space_tag_t,  bus_space_handle_t,
     bus_size_t, bus_size_t, bus_space_handle_t *);
 paddr_t sparc_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
@@ -1774,6 +1776,19 @@ sparc_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 	return ((paddr + off) | PMAP_NC);
 }
 
+bus_addr_t
+sparc_bus_addr(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h)
+{
+	paddr_t addr;
+
+	if (PHYS_ASI(t0->asi))
+		return h.bh_ptr;
+
+	if (!pmap_extract(pmap_kernel(), h.bh_ptr, &addr))
+		return (-1);
+	return addr;
+}
+
 void *
 bus_intr_allocate(bus_space_tag_t t, int (*handler)(void *), void *arg,
     int number, int pil,
@@ -1872,7 +1887,8 @@ static const struct sparc_bus_space_tag _mainbus_space_tag = {
 	sparc_bus_subregion,		/* bus_space_subregion */
 	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
-	sparc_mainbus_intr_establish	/* bus_intr_establish */
+	sparc_mainbus_intr_establish,	/* bus_intr_establish */
+	sparc_bus_addr			/* bus_space_addr */
 };
 const bus_space_tag_t mainbus_space_tag = &_mainbus_space_tag;
 

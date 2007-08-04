@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.51 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.52 2007/08/04 16:44:15 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ void psycho_get_bus_range(int, int *);
 void psycho_get_ranges(int, struct psycho_ranges **, int *);
 void psycho_set_intr(struct psycho_softc *, int, void *, 
     u_int64_t *, u_int64_t *, const char *);
-bus_space_tag_t _psycho_alloc_bus_tag(struct psycho_pbm *,
+bus_space_tag_t psycho_alloc_bus_tag(struct psycho_pbm *,
     const char *, int, int, int);
 
 /* Interrupt handlers */
@@ -96,10 +96,12 @@ void psycho_iommu_init(struct psycho_softc *, int);
  * bus space and bus dma support for UltraSPARC `psycho'.  note that most
  * of the bus dma support is provided by the iommu dvma controller.
  */
+int psycho_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
+    bus_size_t, int, bus_space_handle_t *);
 paddr_t psycho_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
     int, int);
-int _psycho_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
-    bus_size_t, int, bus_space_handle_t *);
+bus_addr_t psycho_bus_addr(bus_space_tag_t, bus_space_tag_t,
+    bus_space_handle_t);
 void *psycho_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *, const char *);
 
@@ -854,7 +856,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 bus_space_tag_t
 psycho_alloc_mem_tag(struct psycho_pbm *pp)
 {
-	return (_psycho_alloc_bus_tag(pp, "mem",
+	return (psycho_alloc_bus_tag(pp, "mem",
 	    0x02,	/* 32-bit mem space (where's the #define???) */
 	    ASI_PRIMARY, ASI_PRIMARY_LITTLE));
 }
@@ -862,7 +864,7 @@ psycho_alloc_mem_tag(struct psycho_pbm *pp)
 bus_space_tag_t
 psycho_alloc_io_tag(struct psycho_pbm *pp)
 {
-	return (_psycho_alloc_bus_tag(pp, "io",
+	return (psycho_alloc_bus_tag(pp, "io",
 	    0x01,	/* IO space (where's the #define???) */
 	    ASI_PHYS_NON_CACHED_LITTLE, ASI_PHYS_NON_CACHED));
 }
@@ -870,13 +872,13 @@ psycho_alloc_io_tag(struct psycho_pbm *pp)
 bus_space_tag_t
 psycho_alloc_config_tag(struct psycho_pbm *pp)
 {
-	return (_psycho_alloc_bus_tag(pp, "cfg",
+	return (psycho_alloc_bus_tag(pp, "cfg",
 	    0x00,	/* Config space (where's the #define???) */
 	    ASI_PHYS_NON_CACHED_LITTLE, ASI_PHYS_NON_CACHED));
 }
 
 bus_space_tag_t
-_psycho_alloc_bus_tag(struct psycho_pbm *pp,
+psycho_alloc_bus_tag(struct psycho_pbm *pp,
     const char *name, int ss, int asi, int sasi)
 {
 	struct psycho_softc *sc = pp->pp_sc;
@@ -896,8 +898,9 @@ _psycho_alloc_bus_tag(struct psycho_pbm *pp,
 	bt->default_type = ss;
 	bt->asi = asi;
 	bt->sasi = sasi;
-	bt->sparc_bus_map = _psycho_bus_map;
+	bt->sparc_bus_map = psycho_bus_map;
 	bt->sparc_bus_mmap = psycho_bus_mmap;
+	bt->sparc_bus_addr = psycho_bus_addr;
 	bt->sparc_intr_establish = psycho_intr_establish;
 
 	return (bt);
@@ -940,13 +943,13 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
  */
 
 int
-_psycho_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
+psycho_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
     bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct psycho_pbm *pp = t->cookie;
 	int i, ss;
 
-	DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_map: type %d off %qx sz %qx "
+	DPRINTF(PDB_BUSMAP, ("\npsycho_bus_map: type %d off %qx sz %qx "
 	    "flags %d", t->default_type, (unsigned long long)offset,
 	    (unsigned long long)size, flags));
 
@@ -954,7 +957,7 @@ _psycho_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
 
 	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
-		printf("\n_psycho_bus_map: invalid parent");
+		printf("\npsycho_bus_map: invalid parent");
 		return (EINVAL);
 	}
 
@@ -998,7 +1001,7 @@ psycho_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 	    prot, flags, (unsigned long long)paddr));
 
 	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
-		printf("\n_psycho_bus_mmap: invalid parent");
+		printf("\npsycho_bus_mmap: invalid parent");
 		return (-1);
 	}
 
@@ -1012,11 +1015,41 @@ psycho_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 
 		paddr = pp->pp_range[i].phys_lo + offset;
 		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi << 32);
-		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: mapping paddr "
+		DPRINTF(PDB_BUSMAP, ("\npsycho_bus_mmap: mapping paddr "
 		    "space %lx offset %lx paddr %qx",
 		    (long)ss, (long)offset,
 		    (unsigned long long)paddr));
 		return ((*t->sparc_bus_mmap)(t, t0, paddr, off, prot, flags));
+	}
+
+	return (-1);
+}
+
+bus_addr_t
+psycho_bus_addr(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h)
+{
+	struct psycho_pbm *pp = t->cookie;
+	bus_addr_t addr;
+	int i, ss;
+
+	ss = t->default_type;
+
+	if (t->parent == 0 || t->parent->sparc_bus_addr == 0) {
+		printf("\npsycho_bus_addr: invalid parent");
+		return (-1);
+	}
+
+	t = t->parent;
+
+	addr = ((*t->sparc_bus_addr)(t, t0, h));
+	if (addr == -1)
+		return (-1);
+
+	for (i = 0; i < pp->pp_nrange; i++) {
+		if (((pp->pp_range[i].cspace >> 24) & 0x03) != ss)
+			continue;
+
+		return (BUS_ADDR_PADDR(addr) - pp->pp_range[i].phys_lo);
 	}
 
 	return (-1);
