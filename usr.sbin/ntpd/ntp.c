@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.98 2007/01/15 08:19:11 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.99 2007/08/04 02:58:02 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -253,9 +253,12 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 
 		if (last_sensor_scan == 0 ||
 		    last_sensor_scan + SENSOR_SCAN_INTERVAL < getmonotime()) {
-			sensor_scan();
+			sensors_cnt = sensor_scan();
 			last_sensor_scan = getmonotime();
 		}
+		if (!TAILQ_EMPTY(&conf->ntp_conf_sensors) && sensors_cnt == 0 &&
+		    nextaction > last_sensor_scan + SENSOR_SCAN_INTERVAL)
+			nextaction = last_sensor_scan + SENSOR_SCAN_INTERVAL;
 		sensors_cnt = 0;
 		TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
 			if (conf->settime && s->offsets[0].offset)

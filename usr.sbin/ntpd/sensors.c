@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.32 2007/01/23 17:44:38 claudio Exp $ */
+/*	$OpenBSD: sensors.c,v 1.33 2007/08/04 02:58:02 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -45,16 +45,21 @@ sensor_init(void)
 	TAILQ_INIT(&conf->ntp_sensors);
 }
 
-void
+int
 sensor_scan(void)
 {
-	int		i;
+	int		i, n;
 	char		d[MAXDEVNAMLEN];
 	struct sensor	s;
 
+	n = 0;
 	for (i = 0; i < MAXSENSORDEVICES; i++)
-		if (sensor_probe(i, d, &s))
+		if (sensor_probe(i, d, &s)) {
 			sensor_add(i, d);
+			n++;
+		}
+
+	return n;
 }
 
 int

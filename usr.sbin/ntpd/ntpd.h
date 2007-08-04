@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.84 2007/04/30 01:33:33 deraadt Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.85 2007/08/04 02:58:02 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -308,7 +308,7 @@ struct s_fixedpt	d_to_sfp(double);
 
 /* sensors.c */
 void			sensor_init(void);
-void			sensor_scan(void);
+int			sensor_scan(void);
 void			sensor_query(struct ntp_sensor *);
 int			sensor_hotplugfd(void);
 void			sensor_hotplugevent(int);
