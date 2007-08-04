@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.3 2004/10/01 04:08:46 jsg Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.4 2007/08/04 19:40:25 reyk Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ agp_intel_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 	sc->sc_methods = &agp_intel_methods;
 	sc->sc_chipc = isc;
 
-	if (agp_map_aperture(sc) != 0) {
+	if (agp_map_aperture(sc, AGP_APBASE, PCI_MAPREG_TYPE_MEM) != 0) {
 		printf(": can't map aperture\n");
 		free(isc, M_DEVBUF);
 		sc->sc_chipc = NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.5 2007/01/30 21:12:14 dim Exp $ */
+/* $OpenBSD: agp.c,v 1.6 2007/08/04 19:40:25 reyk Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -350,14 +350,14 @@ pciagp_set_pchb(struct pci_attach_args *pa)
 }
 
 int
-agp_map_aperture(struct vga_pci_softc *sc)
+agp_map_aperture(struct vga_pci_softc *sc, u_int32_t bar, u_int32_t memtype)
 {
 	/*
 	 * Find and the aperture. Don't map it (yet), this would
 	 * eat KVA.
 	 */
-	if (pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, AGP_APBASE,
-	    PCI_MAPREG_TYPE_MEM, &sc->sc_apaddr, &sc->sc_apsize,
+	if (pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, bar,
+	    memtype, &sc->sc_apaddr, &sc->sc_apsize,
 	    &sc->sc_apflags) != 0)
 		return ENXIO;
 

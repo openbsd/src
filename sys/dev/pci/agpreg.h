@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.6 2006/02/11 21:15:21 matthieu Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.7 2007/08/04 19:40:25 reyk Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -148,11 +148,15 @@
 /*
  * Memory mapped register offsets for i810 chipset.
  */
-#define AGP_I810_PGTBL_CTL	0x2020
-#define AGP_I810_DRT		0x3000
-#define AGP_I810_DRT_UNPOPULATED 0x00
-#define AGP_I810_DRT_POPULATED	0x01
-#define AGP_I810_GTT		0x10000
+#define AGP_I810_PGTBL_CTL		0x2020
+#define AGP_I810_PGTBL_SIZE_MASK	0x0000000e
+#define AGP_I810_PGTBL_SIZE_512KB	(0 << 1)
+#define AGP_I810_PGTBL_SIZE_256KB	(1 << 1)
+#define AGP_I810_PGTBL_SIZE_128KB	(2 << 1)
+#define AGP_I810_DRT			0x3000
+#define AGP_I810_DRT_UNPOPULATED	0x00
+#define AGP_I810_DRT_POPULATED		0x01
+#define AGP_I810_GTT			0x10000
 
 /*
  * Config registers for i830MG device 0
@@ -162,7 +166,7 @@
 #define AGP_I830_GCC1_DEV2              0x08
 #define AGP_I830_GCC1_DEV2_ENABLED      0x00
 #define AGP_I830_GCC1_DEV2_DISABLED     0x08
-#define AGP_I830_GCC1_GMS               0x70
+#define AGP_I830_GCC1_GMS               0xf0
 #define AGP_I830_GCC1_GMS_STOLEN_512    0x20
 #define AGP_I830_GCC1_GMS_STOLEN_1024   0x30
 #define AGP_I830_GCC1_GMS_STOLEN_8192   0x40
@@ -202,5 +206,23 @@
 #define AGP_I915_MSAC_GMASIZE		0x02
 #define AGP_I915_MSAC_GMASIZE_128	0x02
 #define AGP_I915_MSAC_GMASIZE_256	0x00
+
+/*
+ * G965 registers
+ */
+#define AGP_I965_GMADR			0x18
+#define AGP_I965_MMADR			0x10
+#define AGP_I965_MSAC			0x62
+#define AGP_I965_MSAC_GMASIZE		0x06
+#define AGP_I965_MSAC_GMASIZE_128	0x00
+#define AGP_I965_MSAC_GMASIZE_256	0x02
+#define AGP_I965_MSAC_GMASIZE_512	0x06
+#define AGP_I965_GTT			0x80000
+
+/*
+ * G33 registers
+ */
+#define AGP_G33_GCC1_GMS_STOLEN_128M	0x80
+#define AGP_G33_GCC1_GMS_STOLEN_256M	0x90
 
 #endif /* !_PCI_AGPREG_H_ */

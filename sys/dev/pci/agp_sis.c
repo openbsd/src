@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.2 2002/07/25 23:31:04 fgsch Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.3 2007/08/04 19:40:25 reyk Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@ agp_sis_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 	sc->sc_methods = &agp_sis_methods;
 	sc->sc_chipc = ssc;
 
-	if (agp_map_aperture(sc) != 0) {
+	if (agp_map_aperture(sc, AGP_APBASE, PCI_MAPREG_TYPE_MEM) != 0) {
 		printf(": can't map aperture\n");
 		free(ssc, M_DEVBUF);
 		return (ENXIO);
