@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.29 2007/05/28 16:14:27 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.30 2007/08/04 16:39:15 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -424,6 +424,12 @@ pci_intr_map(pa, ihp)
 		return ((*pa->pa_pc->intr_map)(pa, ihp));
 	else
 		return (0);
+}
+
+int
+pci_intr_line(pci_intr_handle_t ih)
+{
+	return (ih);
 }
 
 const char *
