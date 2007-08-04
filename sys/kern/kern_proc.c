@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.33 2007/04/03 08:05:43 art Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.34 2007/08/04 02:43:54 ckuethe Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -424,7 +424,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'n':
-		db_printf("   PID  %5s  %5s  %5s  S  %10s  %-9s  %-16s\n",
+		db_printf("   PID  %5s  %5s  %5s  S  %10s  %-12s  %-16s\n",
 		    "PPID", "PGRP", "UID", "FLAGS", "WAIT", "COMMAND");
 		break;
 	case 'w':
@@ -449,7 +449,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 			case 'n':
 				db_printf("%5d  %5d  %5d  %d  %#10x  "
-				    "%-9.9s  %-16s\n",
+				    "%-12.12s  %-16s\n",
 				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
 				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
 				    (p->p_wchan && p->p_wmesg) ?
