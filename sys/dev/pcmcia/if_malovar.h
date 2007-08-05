@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.18 2007/08/05 09:09:15 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.19 2007/08/05 10:05:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -93,6 +93,24 @@ struct malo_cmd_body_rsp_scan_set {
 struct malo_cmd_body_auth {
 	uint8_t		peermac[ETHER_ADDR_LEN];
 	uint8_t		authtype;
+} __packed;
+
+#define MALO_WEP_ACTION_TYPE_ADD	0x02
+#define MALO_WEP_ACTION_TYPE_REMOVE	0x04
+#define MALO_WEP_ACTION_TYPE_DEFAULT	0x08
+#define MALO_WEP_KEY_TYPE_40BIT		0x01
+#define MALO_WEP_KEY_TYPE_104BIT	0x02
+struct malo_cmd_body_wep {
+	uint16_t	action;
+	uint16_t	key_index;
+	uint8_t		key_type_1;
+	uint8_t		key_type_2;
+	uint8_t		key_type_3;
+	uint8_t		key_type_4;
+	uint8_t		key_value_1[16];
+	uint8_t		key_value_2[16];
+	uint8_t		key_value_3[16];
+	uint8_t		key_value_4[16];
 } __packed;
 
 #define MALO_OID_BSS		0x00

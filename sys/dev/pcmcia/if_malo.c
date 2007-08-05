@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.35 2007/08/05 09:09:15 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.36 2007/08/05 10:05:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -89,6 +89,7 @@ int	cmalo_tx(struct malo_softc *, struct mbuf *);
 void	cmalo_tx_done(struct malo_softc *);
 void	cmalo_select_network(struct malo_softc *);
 void	cmalo_reflect_network(struct malo_softc *);
+int	cmalo_wep(struct malo_softc *);
 
 void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
@@ -98,6 +99,8 @@ int	cmalo_cmd_set_scan(struct malo_softc *);
 int	cmalo_cmd_rsp_scan(struct malo_softc *);
 int	cmalo_parse_elements(struct malo_softc *, void *, int, int);
 int	cmalo_cmd_set_auth(struct malo_softc *);
+int	cmalo_cmd_set_wep(struct malo_softc *, uint16_t,
+	    struct ieee80211_key *);
 int	cmalo_cmd_set_snmp(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_radio(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_channel(struct malo_softc *, uint16_t);
@@ -622,6 +625,10 @@ cmalo_init(struct ifnet *ifp)
 		return (EIO);
 	if (cmalo_cmd_set_channel(sc, sc->sc_curchan) != 0)
 		return (EIO);
+	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
+		if (cmalo_wep(sc) != 0)
+			return (EIO);
+	}
 
 	cmalo_cmd_set_rate(sc);
 
@@ -1026,6 +1033,27 @@ cmalo_reflect_network(struct malo_softc *sc)
 	ic->ic_bss->ni_chan = &ic->ic_channels[chan];
 }
 
+int
+cmalo_wep(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	int i;
+
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		struct ieee80211_key *key = &ic->ic_nw_keys[i];
+
+		if (!key->k_len)
+			continue;
+
+		DPRINTF(1, "%s: setting wep key for index %d\n",
+		    sc->sc_dev.dv_xname, i);
+
+		cmalo_cmd_set_wep(sc, i, key);
+	}
+
+	return (0);
+}
+
 void
 cmalo_hexdump(void *buf, int len)
 {
@@ -1278,6 +1306,65 @@ cmalo_cmd_set_auth(struct malo_softc *sc)
 
 	bcopy(sc->sc_net[sc->sc_net_cur].bssid, body->peermac, ETHER_ADDR_LEN);
 	body->authtype = 0;
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
+cmalo_cmd_set_wep(struct malo_softc *sc, uint16_t index,
+    struct ieee80211_key *key)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_wep *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_WEP);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_wep *)(hdr + 1);
+
+	body->action = htole16(MALO_WEP_ACTION_TYPE_ADD);
+	body->key_index = htole16(index);
+
+	if (body->key_index == 0) {
+		if (key->k_len > 5)
+			body->key_type_1 = MALO_WEP_KEY_TYPE_104BIT;
+		else
+			body->key_type_1 = MALO_WEP_KEY_TYPE_40BIT;
+		bcopy(key->k_key, body->key_value_1, key->k_len);
+	}
+	if (body->key_index == 1) {
+		if (key->k_len > 5)
+			body->key_type_2 = MALO_WEP_KEY_TYPE_104BIT;
+		else
+			body->key_type_2 = MALO_WEP_KEY_TYPE_40BIT;
+		bcopy(key->k_key, body->key_value_2, key->k_len);
+	}
+	if (body->key_index == 2) {
+		if (key->k_len > 5)
+			body->key_type_3 = MALO_WEP_KEY_TYPE_104BIT;
+		else
+			body->key_type_3 = MALO_WEP_KEY_TYPE_40BIT;
+		bcopy(key->k_key, body->key_value_3, key->k_len);
+	}
+	if (body->key_index == 3) {
+		if (key->k_len > 5)
+			body->key_type_4 = MALO_WEP_KEY_TYPE_104BIT;
+		else
+			body->key_type_4 = MALO_WEP_KEY_TYPE_40BIT;
+		bcopy(key->k_key, body->key_value_4, key->k_len);
+	}
 
 	/* process command request */
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
@@ -1804,6 +1891,11 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_AUTH:
 		/* do nothing */
 		DPRINTF(1, "%s: got auth cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_WEP:
+		/* do nothing */
+		DPRINTF(1, "%s: got wep cmd response\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case MALO_CMD_SNMP:
