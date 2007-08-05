@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.107 2007/07/22 04:41:33 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.108 2007/08/05 19:10:47 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -248,7 +248,7 @@ scsibus* at mpi?
 #bha*	at pci?
 #scsibus* at bha?
 
-#siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide Diff)
+siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide Diff)
 siop*	at pci?			# NCR 538XX SCSI controllers(new)
 scsibus* at siop?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
