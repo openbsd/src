@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.37 2007/08/05 14:00:37 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.38 2007/08/05 14:53:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -108,6 +108,7 @@ int	cmalo_cmd_set_txpower(struct malo_softc *, int16_t);
 int	cmalo_cmd_set_antenna(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_macctrl(struct malo_softc *);
 int	cmalo_cmd_set_assoc(struct malo_softc *);
+int	cmalo_cmd_rsp_assoc(struct malo_softc *);
 int	cmalo_cmd_set_80211d(struct malo_softc *);
 int	cmalo_cmd_set_bgscan_config(struct malo_softc *);
 int	cmalo_cmd_set_bgscan_query(struct malo_softc *);
@@ -1657,6 +1658,22 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 }
 
 int
+cmalo_cmd_rsp_assoc(struct malo_softc *sc)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_rsp_assoc *body;
+
+	body = (struct malo_cmd_body_rsp_assoc *)(hdr + 1);
+
+	if (body->status) {
+		DPRINTF(1, "%s: association failed (status %d)!\n",
+		    sc->sc_dev.dv_xname, body->status);
+	}
+
+	return (0);
+}
+
+int
 cmalo_cmd_set_80211d(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
@@ -1931,6 +1948,7 @@ cmalo_cmd_response(struct malo_softc *sc)
 		/* do nothing */
 		DPRINTF(1, "%s: got assoc cmd response\n",
 		    sc->sc_dev.dv_xname);
+		cmalo_cmd_rsp_assoc(sc);
 		break;
 	case MALO_CMD_80211D:
 		/* do nothing */

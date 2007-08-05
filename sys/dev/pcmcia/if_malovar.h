@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.19 2007/08/05 10:05:57 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.20 2007/08/05 14:53:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -169,6 +169,14 @@ struct malo_cmd_body_assoc {
 	/* malo_cmd_tlv_phy */
 	/* malo_cmd_tlv_cf */
 	/* malo_cmd_tlv_rate */
+} __packed;
+
+struct malo_cmd_body_rsp_assoc {
+	uint16_t	capinfo;
+	uint16_t	status;
+	uint16_t	assoc_id;
+	uint16_t	info_len;
+	/* uint8_t	info[270] */
 } __packed;
 
 struct malo_cmd_body_80211d {
