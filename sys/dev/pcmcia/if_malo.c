@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.36 2007/08/05 10:05:57 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.37 2007/08/05 14:00:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -294,7 +294,6 @@ cmalo_attach(void *arg)
 	ifp->if_watchdog = cmalo_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	ic->ic_opmode = IEEE80211_M_STA;
