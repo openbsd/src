@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.90 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: policy.c,v 1.91 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2096,11 +2096,11 @@ keynote_certreq_validate(u_int8_t *data, u_int32_t len)
 }
 
 /* Beats me what we should be doing with this.  */
-void *
-keynote_certreq_decode(u_int8_t *data, u_int32_t len)
+int
+keynote_certreq_decode(void **pdata, u_int8_t *data, u_int32_t len)
 {
 	/* XXX */
-	return NULL;
+	return 0;
 }
 
 void
@@ -2301,4 +2301,11 @@ void *
 keynote_from_printable(char *cert)
 {
 	return strdup(cert);
+}
+
+/* Number of CAs we trust (currently this is x509 only) */
+int
+keynote_ca_count(void)
+{
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.h,v 1.16 2005/04/05 22:53:50 cloder Exp $	 */
+/* $OpenBSD: policy.h,v 1.17 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
 
 /*
@@ -54,7 +54,7 @@ extern int      keynote_cert_validate(void *);
 extern int      keynote_cert_insert(int, void *);
 extern void     keynote_cert_free(void *);
 extern int      keynote_certreq_validate(u_int8_t *, u_int32_t);
-extern void    *keynote_certreq_decode(u_int8_t *, u_int32_t);
+extern int      keynote_certreq_decode(void **, u_int8_t *, u_int32_t);
 extern void     keynote_free_aca(void *);
 extern int	keynote_cert_obtain(u_int8_t *, size_t, void *,
 		    u_int8_t **, u_int32_t *);
@@ -65,4 +65,5 @@ extern void    *keynote_cert_dup(void *);
 extern void     keynote_serialize(void *, u_int8_t **, u_int32_t *);
 extern char    *keynote_printable(void *);
 extern void    *keynote_from_printable(char *);
+extern int	keynote_ca_count(void);
 #endif	/* _POLICY_H_ */

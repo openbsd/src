@@ -1,4 +1,4 @@
-/* $OpenBSD: cert.h,v 1.14 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: cert.h,v 1.15 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -52,6 +52,7 @@
  * cert_printable - for X509, the hex representation of the serialized form;
  *                  for KeyNote, itself.
  * cert_from_printable - the reverse of cert_printable
+ * ca_count - how many CAs we have in our store (for CERT_REQ processing)
  */
 
 struct cert_handler {
@@ -63,7 +64,7 @@ struct cert_handler {
 	int	 (*cert_insert)(int, void *);
 	void	 (*cert_free)(void *);
 	int	 (*certreq_validate)(u_int8_t *, u_int32_t);
-	void	*(*certreq_decode)(u_int8_t *, u_int32_t);
+	int	 (*certreq_decode)(void **, u_int8_t *, u_int32_t);
 	void	 (*free_aca)(void *);
 	int	 (*cert_obtain)(u_int8_t *, size_t, void *, u_int8_t **,
 		     u_int32_t *);
@@ -74,6 +75,7 @@ struct cert_handler {
 	void	 (*cert_serialize) (void *, u_int8_t **, u_int32_t *);
 	char	*(*cert_printable) (void *);
 	void	*(*cert_from_printable) (char *);
+	int	 (*ca_count)(void);
 };
 
 /* The acceptable authority of cert request.  */
@@ -85,6 +87,10 @@ struct certreq_aca {
 
 	/* If data is a null pointer, everything is acceptable.  */
 	void	*data;
+
+	/* Copy of raw CA value received */
+	u_int32_t raw_ca_len;
+	void	*raw_ca;
 };
 
 struct certreq_aca *certreq_decode(u_int16_t, u_int8_t *, u_int32_t);

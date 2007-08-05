@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.32 2006/07/02 13:19:00 hshoexer Exp $	 */
+/* $OpenBSD: exchange.h,v 1.33 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -224,6 +224,7 @@ struct exchange {
 #define EXCHANGE_FLAG_OPENBSD		0x0200	/* Peer is OpenBSD */
 
 extern int      exchange_add_certs(struct message *);
+extern int      exchange_add_certreqs(struct message *);
 extern void     exchange_finalize(struct message *);
 extern void     exchange_free(struct exchange *);
 extern void     exchange_free_aca_list(struct exchange *);

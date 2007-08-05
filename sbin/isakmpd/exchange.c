@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.130 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: exchange.c,v 1.131 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1593,6 +1593,8 @@ exchange_free_aca_list(struct exchange *exchange)
 
 	for (aca = TAILQ_FIRST(&exchange->aca_list); aca;
 	    aca = TAILQ_FIRST(&exchange->aca_list)) {
+		if (aca->raw_ca)
+			free(aca->raw_ca);
 		if (aca->data) {
 			if (aca->handler)
 				aca->handler->free_aca(aca->data);
@@ -1601,6 +1603,58 @@ exchange_free_aca_list(struct exchange *exchange)
 		TAILQ_REMOVE(&exchange->aca_list, aca, link);
 		free(aca);
 	}
+}
+
+/* Add any CERTREQs we should send.  */
+int
+exchange_add_certreqs(struct message *msg)
+{
+	struct exchange *exchange = msg->exchange;
+	struct certreq_aca *aca;
+	u_int8_t *buf;
+
+	/*
+	 * Some peers (e.g. Cisco IOS) won't send their cert unless we
+	 * specifically ask beforehand with CERTREQ.  We reflect any
+	 * CERTREQs we receive from the initiator in order to do this.
+	 * This avoids leaking information about which CAs we trust,
+	 * and works in the most common case where both ends trust the
+	 * same CA.
+	 */
+	for (aca = TAILQ_FIRST(&exchange->aca_list); aca;
+	    aca = TAILQ_NEXT(aca, link)) {
+
+		/* But only do this if we have at least one CA */
+		if (aca->handler != NULL && aca->handler->ca_count() == 0) {
+			LOG_DBG((LOG_EXCHANGE, 10,
+			    "exchange_add_certreqs: no CA, so not "
+			    "sending a CERTREQ"));
+			continue;
+		}
+
+		if (aca->raw_ca_len) {
+			buf = malloc(ISAKMP_CERTREQ_SZ + aca->raw_ca_len);
+			if (buf == NULL) {
+				log_error("exchange_add_certreqs: "
+				    "malloc (%lu) failed",
+				    ISAKMP_CERTREQ_SZ +
+				    (unsigned long)aca->raw_ca_len);
+				return -1;
+			}
+
+			buf[ISAKMP_CERTREQ_TYPE_OFF] = aca->id;
+			memcpy(buf + ISAKMP_CERTREQ_AUTHORITY_OFF,
+			    aca->raw_ca, aca->raw_ca_len);
+
+			if (message_add_payload(msg, ISAKMP_PAYLOAD_CERT_REQ,
+			    buf, ISAKMP_CERTREQ_SZ + aca->raw_ca_len, 1)) {
+				free(buf);
+				return -1;
+			}
+		}
+	}
+
+	return 0;
 }
 
 /* Obtain certificates from acceptable certification authority.  */

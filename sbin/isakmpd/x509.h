@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.21 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: x509.h,v 1.22 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -61,7 +61,7 @@ struct X509_STORE;
 /* Functions provided by cert handler.  */
 
 int             x509_certreq_validate(u_int8_t *, u_int32_t);
-void           *x509_certreq_decode(u_int8_t *, u_int32_t);
+int             x509_certreq_decode(void **, u_int8_t *, u_int32_t);
 void            x509_cert_free(void *);
 void           *x509_cert_get(u_int8_t *, u_int32_t);
 int             x509_cert_get_key(void *, void *);
@@ -76,6 +76,7 @@ void           *x509_cert_dup(void *);
 void            x509_serialize(void *, u_int8_t **, u_int32_t *);
 char           *x509_printable(void *);
 void           *x509_from_printable(char *);
+int		x509_ca_count(void);
 
 /* Misc. X509 certificate functions.  */
 
@@ -84,7 +85,7 @@ int             x509_cert_insert(int, void *);
 int             x509_cert_subjectaltname(X509 * cert, u_char **, u_int *);
 X509           *x509_from_asn(u_char *, u_int);
 int             x509_generate_kn(int, X509 *);
-int             x509_read_from_dir(X509_STORE *, char *, int);
+int             x509_read_from_dir(X509_STORE *, char *, int, int *);
 int             x509_read_crls_from_dir(X509_STORE *, char *);
 
 #endif				/* _X509_H_ */

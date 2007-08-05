@@ -1,4 +1,4 @@
-/* $OpenBSD: cert.c,v 1.31 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: cert.c,v 1.32 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -49,7 +49,8 @@ struct cert_handler cert_handler[] = {
 	x509_cert_insert, x509_cert_free,
 	x509_certreq_validate, x509_certreq_decode, x509_free_aca,
 	x509_cert_obtain, x509_cert_get_key, x509_cert_get_subjects,
-	x509_cert_dup, x509_serialize, x509_printable, x509_from_printable
+	x509_cert_dup, x509_serialize, x509_printable, x509_from_printable,
+	x509_ca_count
     },
     {
 	ISAKMP_CERTENC_KEYNOTE,
@@ -58,7 +59,7 @@ struct cert_handler cert_handler[] = {
 	keynote_certreq_validate, keynote_certreq_decode, keynote_free_aca,
 	keynote_cert_obtain, keynote_cert_get_key, keynote_cert_get_subjects,
 	keynote_cert_dup, keynote_serialize, keynote_printable,
-	keynote_from_printable
+	keynote_from_printable, keynote_ca_count
     },
 };
 
@@ -118,18 +119,32 @@ certreq_decode(u_int16_t type, u_int8_t *data, u_int32_t datalen)
 
 	aca.id = type;
 	aca.handler = handler;
+	aca.data = aca.raw_ca = NULL;
 
 	if (datalen > 0) {
-		aca.data = handler->certreq_decode(data, datalen);
-		if (!aca.data)
+		int rc;
+
+		rc = handler->certreq_decode(&aca.data, data, datalen);
+		if (!rc)
 			return 0;
-	} else
-		aca.data = 0;
+
+		aca.raw_ca = malloc(datalen);
+		if (aca.raw_ca == NULL) {
+			log_error("certreq_decode: malloc (%lu) failed",
+			    (unsigned long)datalen);
+			handler->free_aca(aca.data);
+			return 0;
+		}
+
+		memcpy(aca.raw_ca, data, datalen);
+	}
+	aca.raw_ca_len = datalen;
 
 	ret = malloc(sizeof aca);
 	if (!ret) {
 		log_error("certreq_decode: malloc (%lu) failed",
 		    (unsigned long)sizeof aca);
+		free(aca.raw_ca);
 		handler->free_aca(aca.data);
 		return 0;
 	}

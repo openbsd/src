@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.69 2007/05/07 18:19:56 cloder Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.70 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -546,6 +546,11 @@ ike_phase_1_send_KE_NONCE(struct message *msg, size_t nonce_sz)
 	/* Generate a nonce, and add it to the message.  */
 	if (exchange_gen_nonce(msg, nonce_sz)) {
 		/* XXX Log?  */
+		return -1;
+	}
+	/* Are there any CERTREQs to send? */
+	if (exchange_add_certreqs(msg)) {
+		/* XXX Log? */
 		return -1;
 	}
 	/* Try to add certificates which are acceptable for the CERTREQs */

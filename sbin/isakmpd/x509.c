@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.109 2007/04/16 13:01:39 moritz Exp $	 */
+/* $OpenBSD: x509.c,v 1.110 2007/08/05 09:43:09 tom Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -77,6 +77,8 @@ static int	 x509_hash_enter(X509 *);
  */
 static X509_STORE *x509_certs = 0;
 static X509_STORE *x509_cas = 0;
+
+static int n_x509_cas = 0;
 
 /* Initial number of bits used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -571,7 +573,7 @@ x509_hash_enter(X509 *cert)
 /* X509 Certificate Handling functions.  */
 
 int
-x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
+x509_read_from_dir(X509_STORE *ctx, char *name, int hash, int *pcount)
 {
 	FILE		*certfp;
 	X509		*cert;
@@ -628,6 +630,10 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 			    "failed for %s", file);
 			continue;
 		}
+
+		if (pcount != NULL)
+			(*pcount)++;
+
 		if (!X509_STORE_add_cert(ctx, cert)) {
 			/*
 			 * This is actually expected if we have several
@@ -752,7 +758,7 @@ x509_cert_init(void)
 		log_print("x509_cert_init: creating new X509_STORE failed");
 		return 0;
 	}
-	if (!x509_read_from_dir(x509_cas, dirname, 0)) {
+	if (!x509_read_from_dir(x509_cas, dirname, 0, &n_x509_cas)) {
 		log_print("x509_cert_init: x509_read_from_dir failed");
 		return 0;
 	}
@@ -771,7 +777,7 @@ x509_cert_init(void)
 		log_print("x509_cert_init: creating new X509_STORE failed");
 		return 0;
 	}
-	if (!x509_read_from_dir(x509_certs, dirname, 1)) {
+	if (!x509_read_from_dir(x509_certs, dirname, 1, NULL)) {
 		log_print("x509_cert_init: x509_read_from_dir failed");
 		return 0;
 	}
@@ -949,8 +955,8 @@ x509_certreq_validate(u_int8_t *asn, u_int32_t len)
 }
 
 /* Decode the BER Encoding of a RDNSequence in the CERT_REQ payload.  */
-void *
-x509_certreq_decode(u_int8_t *asn, u_int32_t len)
+int
+x509_certreq_decode(void **pdata, u_int8_t *asn, u_int32_t len)
 {
 #if 0
 	/* XXX This needs to be done later.  */
@@ -993,7 +999,7 @@ x509_certreq_decode(u_int8_t *asn, u_int32_t len)
 fail:
 	asn_free(&aca);
 #endif
-	return 0;
+	return 1;
 }
 
 void
@@ -1001,11 +1007,13 @@ x509_free_aca(void *blob)
 {
 	struct x509_aca *aca = blob;
 
-	free(aca->name1.type);
-	free(aca->name1.val);
+	if (aca != NULL) {
+		free(aca->name1.type);
+		free(aca->name1.val);
 
-	free(aca->name2.type);
-	free(aca->name2.val);
+		free(aca->name2.type);
+		free(aca->name2.val);
+	}
 }
 
 X509 *
@@ -1338,3 +1346,9 @@ x509_DN_string(u_int8_t *asn1, size_t sz)
 	return strdup(buf);
 }
 
+/* Number of CAs we trust (to decide whether we can send CERT_REQ) */
+int
+x509_ca_count(void)
+{
+	return n_x509_cas;
+}
