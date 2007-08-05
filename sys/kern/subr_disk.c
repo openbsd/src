@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.63 2007/08/05 03:24:58 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.64 2007/08/05 04:26:21 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ checkdisklabel(void *rlp, struct disklabel *lp)
 	if (msg)
 		return (msg);
 
-	/* Initial passed in lp contains the real disk size */
+	/* Initial passed in lp contains the real disk size. */
 	disksize = DL_GETDSIZE(lp);
 
 	if (lp != dlp)
@@ -335,21 +335,19 @@ checkdisklabel(void *rlp, struct disklabel *lp)
 		}
 	}
 
-#ifdef noonecares
+#ifdef DEBUG
 	if (DL_GETDSIZE(lp) != disksize)
-		printf("new disklabel disk size different %lld != %lld\n",
-		    DL_GETDSIZE(lp), disksize);
+		printf("on-disk disklabel has incorrect disksize (%lld)\n",
+		    DL_GETDSIZE(lp));
+	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) != disksize)
+		printf("on-disk disklabel RAW_PART has incorrect size (%lld)\n",
+		    DL_GETPSIZE(&lp->d_partitions[RAW_PART]));
+	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0)
+		printf("on-disk disklabel RAW_PART offset != 0 (%lld)\n",
+		    DL_GETPOFFSET(&lp->d_partitions[RAW_PART]));
 #endif
 	DL_SETDSIZE(lp, disksize);
-
-	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) != DL_GETDSIZE(lp))
-		printf("new disklabel raw disk size different %lld != %lld\n",
-		    DL_GETPSIZE(&lp->d_partitions[RAW_PART]), DL_GETDSIZE(lp));
-	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
-
-	if (DL_GETPOFFSET(&lp->d_partitions[RAW_PART]) != 0)
-		printf("new disklabel raw disk offset different %lld != %lld\n",
-		    DL_GETPOFFSET(&lp->d_partitions[RAW_PART]), 0);
+	DL_SETPSIZE(&lp->d_partitions[RAW_PART], disksize);
 	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
 
 	lp->d_checksum = 0;
@@ -540,7 +538,7 @@ notfat:
 		return ("disk label I/O error");
 
 	/* sub-MBR disklabels are always at a LABELOFFSET of 0 */
-	return checkdisklabel(bp->b_data + 0, lp);
+	return checkdisklabel(bp->b_data, lp);
 }
 
 /*
