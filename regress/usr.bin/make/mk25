@@ -1,0 +1,9 @@
+# $OpenBSD: mk25,v 1.1 2007/08/05 11:10:11 espie Exp $
+# verify that curly targets work correctly
+
+.PHONY: a b c d all
+
+all: a b c d
+
+{a,b,c,d}:
+	@echo "Building $@"

@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.24 2006/09/17 19:02:13 espie Exp $
+# $OpenBSD: Makefile,v 1.25 2007/08/05 11:10:11 espie Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 t25 t26 t27
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 t25 t26 t27 t28
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -115,6 +115,9 @@ t27:
 	rm -f ${.OBJDIR}/t27.3rd
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk24 t27.3rd 2>/dev/null; then false; fi
 
+t28:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk25 all >/dev/null
+	
 z.a:
 	touch $@
 
