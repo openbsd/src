@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.15 2007/02/28 09:26:26 claudio Exp $ */
+/*	$OpenBSD: acx111.c,v 1.16 2007/08/05 21:37:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -104,7 +104,6 @@
 #define ACX111_RATE_72		0x0400
 #define ACX111_RATE_96		0x0800
 #define ACX111_RATE_108		0x1000
-#define ACX111_RATE(rate)	[rate] = ACX111_RATE_##rate
 
 /* XXX skip ACX111_RATE_44 */
 #define ACX111_RATE_ALL		0x1eff
@@ -256,18 +255,18 @@ static const uint16_t acx111_reg[ACXREG_MAX] = {
 
 /* XXX */
 static uint16_t	acx111_rate_map[109] = {
-	ACX111_RATE(2),
-	ACX111_RATE(4),
-	ACX111_RATE(11),
-	ACX111_RATE(22),
-	ACX111_RATE(12),
-	ACX111_RATE(18),
-	ACX111_RATE(24),
-	ACX111_RATE(36),
-	ACX111_RATE(48),
-	ACX111_RATE(72),
-	ACX111_RATE(96),
-	ACX111_RATE(108)
+	ACX111_RATE_2,
+	ACX111_RATE_4,
+	ACX111_RATE_11,
+	ACX111_RATE_22,
+	ACX111_RATE_12,
+	ACX111_RATE_18,
+	ACX111_RATE_24,
+	ACX111_RATE_36,
+	ACX111_RATE_48,
+	ACX111_RATE_72,
+	ACX111_RATE_96,
+	ACX111_RATE_108
 };
 
 void
