@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.79 2007/07/30 10:03:11 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.80 2007/08/05 11:00:58 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -592,7 +592,7 @@ add_target_nodes(const char *line)
 		Dir_Expand(line, &emptyPath, &curTargs);
 		Lst_Destroy(&emptyPath, Dir_Destroy);
 		while ((targName = (char *)Lst_DeQueue(&curTargs)) != NULL) {
-			add_target_node(line);
+			add_target_node(targName);
 		}
 		Lst_Destroy(&curTargs, NOFREE);
 	} else {
