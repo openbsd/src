@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.54 2007/08/03 16:51:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.55 2007/08/05 21:41:11 claudio Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -701,7 +701,7 @@ ieee80211_add_tim(u_int8_t *frm, struct ieee80211com *ic)
 		offset = i & ~1;
 
 	/* find last non-zero octet in the virtual bit map */
-	for (i = ic->ic_tim_len - 1; i > 0 && ic->ic_tim_bitmap[i] != 0; i--);
+	for (i = ic->ic_tim_len - 1; i > 0 && ic->ic_tim_bitmap[i] == 0; i--);
 
 	len = i - offset + 1;
 
