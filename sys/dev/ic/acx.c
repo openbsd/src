@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.75 2007/07/18 18:10:31 damien Exp $ */
+/*	$OpenBSD: acx.c,v 1.76 2007/08/05 22:40:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1179,7 +1179,7 @@ acx_txeof(struct acx_softc *sc)
 
 			wn->amn.amn_txcnt++;
 			if (ntries > 0) {
-				DPRINTF(("%s: tx intr ntries %d\n",
+				DPRINTFN(2, ("%s: tx intr ntries %d\n",
 				    sc->sc_dev.dv_xname, ntries));
 				wn->amn.amn_retrycnt++;
 			}
@@ -2369,19 +2369,36 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 	    ACX_TMPLT_PROBE_REQ_SIZ(len)));
 }
 
+struct mbuf *ieee80211_get_probe_resp(struct ieee80211com *,
+    struct ieee80211_node *);
+
 int
 acx_set_probe_resp_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct acx_tmplt_probe_resp resp;
+	struct ieee80211_frame *wh;
 	struct mbuf *m;
 	int len;
 
 	bzero(&resp, sizeof(resp));
 
-	m = ieee80211_beacon_alloc(ic, ni);
+	m = ieee80211_get_probe_resp(ic, ni);
 	if (m == NULL)
 		return (1);
+	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
+	if (m == NULL)
+		return (1);
+	wh = mtod(m, struct ieee80211_frame *);
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    IEEE80211_FC0_SUBTYPE_PROBE_RESP;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(u_int16_t *)&wh->i_dur[0] = 0;
+	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
+	*(u_int16_t *)wh->i_seq = 0;
+
 	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&resp.data);
 	len = m->m_pkthdr.len + sizeof(resp.size);
 	m_freem(m); 
