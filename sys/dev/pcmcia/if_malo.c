@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.38 2007/08/05 14:53:02 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.39 2007/08/05 14:59:58 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -910,7 +910,7 @@ cmalo_watchdog(struct ifnet *ifp)
 {
 	struct malo_softc *sc = ifp->if_softc;
 
-	DPRINTF(1, "%s: watchdog timeout\n", sc->sc_dev.dv_xname);
+	DPRINTF(2, "%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	/* accept TX packets again */
 	ifp->if_flags &= ~IFF_OACTIVE;
