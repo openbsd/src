@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.18 2006/11/10 20:44:07 mk Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.19 2007/08/05 14:25:48 fgsch Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.18 2006/11/10 20:44:07 mk Exp $";
+static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.19 2007/08/05 14:25:48 fgsch Exp $";
 #endif
 
 #include <ctype.h>
@@ -45,13 +45,28 @@ static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.18 2006/11/10 20:44:07 mk E
 #include "ypdb.h"
 #include "ypdef.h"
 
+char *
+findlast(const char *b, int c, size_t len)
+{
+	const char *p;
+
+	if (len != 0) {
+		p = b + len - 1;
+		do {
+			if (*p == c)
+				return ((char *)p);
+		} while (p-- != b);
+	}
+	return (NULL);
+}
+
 static void
-split_address(char *address, int len, char *user, char *host)
+split_address(char *address, size_t len, char *user, char *host)
 {
 	char *c, *s, *r;
 	int  i = 0;
 
-	if (strchr(address, '@')) {
+	if (memchr(address, '@', len)) {
 		s = user;
 		for (c = address; i < len; i++) {
 			if (*c == '@') {
@@ -65,7 +80,7 @@ split_address(char *address, int len, char *user, char *host)
 		*s = '\0';
 	}
 
-	if ((r = strrchr(address, '!'))) {
+	if ((r = findlast(address, '!',  len))) {
 		s = host;
 		for (c = address; i < len; i++) {
 			if (c == r) {
@@ -81,13 +96,13 @@ split_address(char *address, int len, char *user, char *host)
 }
 
 static int
-check_host(char *address, char *host, int dflag, int uflag, int Eflag)
+check_host(char *address, size_t len, char *host, int dflag, int uflag, int Eflag)
 {
 	u_char answer[PACKETSZ];
 	int  status;
 
-	if ((dflag && strchr(address, '@')) ||
-	    (uflag && strchr(address, '!')))
+	if ((dflag && memchr(address, '@', len)) ||
+	    (uflag && memchr(address, '!', len)))
 		return(0);
 
 	if ((_res.options & RES_INIT) == 0)
@@ -252,17 +267,18 @@ fail:
 			continue;			/* Sendmail token */
 		if (strncmp(key.dptr, "YP_", 3)==0)	/* YP token */
 			continue;
-		if (strchr(val.dptr, ','))
+		if (memchr(val.dptr, ',', val.dsize))
 			continue;			/* List... */
-		if (strchr(val.dptr, '|'))
+		if (memchr(val.dptr, '|', val.dsize))
 			continue;			/* Pipe... */
 
-		if (!(strchr(val.dptr, '@') || strchr(val.dptr, '!')))
+		if (!(memchr(val.dptr, '@', val.dsize) ||
+		    memchr(val.dptr, '!', val.dsize)))
 			continue;		/* Skip local users */
 
 		split_address(val.dptr, val.dsize, user, host);
 
-		if (eflag && check_host(val.dptr, host, dflag, uflag, Eflag)) {
+		if (eflag && check_host(val.dptr, val.dsize, host, dflag, uflag, Eflag)) {
 			printf("Invalid host %s in %*.*s:%*.*s\n",
 			    host, key.dsize, key.dsize, key.dptr,
 			    val.dsize, val.dsize, val.dptr);
