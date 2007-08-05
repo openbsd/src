@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.34 2007/08/05 00:24:39 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.35 2007/08/05 09:09:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -253,7 +253,6 @@ malo_pcmcia_activate(struct device *dev, enum devact act)
 /*
  * Driver.
  */
-
 void
 cmalo_attach(void *arg)
 {
@@ -369,24 +368,24 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((nr = malloc(sizeof(*nr), M_DEVBUF, M_WAITOK)) == NULL)
 			break;
 
-		for (na->na_nodes = i = j = 0; i < sc->sc_aps_num &&
+		for (na->na_nodes = i = j = 0; i < sc->sc_net_num &&
 		    (na->na_size >= j + sizeof(struct ieee80211_nodereq));
 		    i++) {
 			bzero(nr, sizeof(*nr));
 
 			IEEE80211_ADDR_COPY(nr->nr_macaddr,
-			    sc->sc_aps[i].bssid);
+			    sc->sc_net[i].bssid);
 			IEEE80211_ADDR_COPY(nr->nr_bssid,
-			    sc->sc_aps[i].bssid);
-			nr->nr_channel = sc->sc_aps[i].channel;
+			    sc->sc_net[i].bssid);
+			nr->nr_channel = sc->sc_net[i].channel;
 			nr->nr_chan_flags = IEEE80211_CHAN_B; /* XXX */
-			nr->nr_rssi = sc->sc_aps[i].rssi;
+			nr->nr_rssi = sc->sc_net[i].rssi;
 			nr->nr_max_rssi = 0; /* XXX */
-			nr->nr_nwid_len = strlen(sc->sc_aps[i].ssid);
-			bcopy(sc->sc_aps[i].ssid, nr->nr_nwid,
+			nr->nr_nwid_len = strlen(sc->sc_net[i].ssid);
+			bcopy(sc->sc_net[i].ssid, nr->nr_nwid,
 			    nr->nr_nwid_len);
-			nr->nr_intval = sc->sc_aps[i].beaconintvl;
-			nr->nr_capinfo = sc->sc_aps[i].capinfo;
+			nr->nr_intval = sc->sc_net[i].beaconintvl;
+			nr->nr_capinfo = sc->sc_net[i].capinfo;
 			nr->nr_flags |= IEEE80211_NODEREQ_AP;
 
 			bcopy(nr, (caddr_t)na->na_node + j,
@@ -695,7 +694,7 @@ cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			DPRINTF(1, "%s: newstate is IEEE80211_S_SCAN\n",
 			    sc->sc_dev.dv_xname);
 			cmalo_cmd_set_scan(sc);
-			if (!sc->sc_aps_num) {
+			if (!sc->sc_net_num) {
 				/* no networks found */
 				DPRINTF(1, "%s: no networks found!\n",
 				    sc->sc_dev.dv_xname);
@@ -976,13 +975,13 @@ cmalo_select_network(struct malo_softc *sc)
 	int i, best_rssi;
 
 	/* reset last selected network */
-	sc->sc_aps_best = 0;
+	sc->sc_net_cur = 0;
 
 	/* get desired network */
 	if (ic->ic_des_esslen) {
-		for (i = 0; i < sc->sc_aps_num; i++) {
-			if (!strcmp(ic->ic_des_essid, sc->sc_aps[i].ssid)) {
-				sc->sc_aps_best = i;
+		for (i = 0; i < sc->sc_net_num; i++) {
+			if (!strcmp(ic->ic_des_essid, sc->sc_net[i].ssid)) {
+				sc->sc_net_cur = i;
 				DPRINTF(1, "%s: desired network found (%s)\n",
 				    sc->sc_dev.dv_xname, ic->ic_des_essid);
 				return;
@@ -994,15 +993,15 @@ cmalo_select_network(struct malo_softc *sc)
 	}
 
 	/* get network with best signal strength */
-	best_rssi = sc->sc_aps[0].rssi;
-	for (i = 0; i < sc->sc_aps_num; i++) {
-		if (best_rssi < sc->sc_aps[i].rssi) {
-			best_rssi = sc->sc_aps[i].rssi;
-			sc->sc_aps_best = i;
+	best_rssi = sc->sc_net[0].rssi;
+	for (i = 0; i < sc->sc_net_num; i++) {
+		if (best_rssi < sc->sc_net[i].rssi) {
+			best_rssi = sc->sc_net[i].rssi;
+			sc->sc_net_cur = i;
 		}
 	}
 	DPRINTF(1, "%s: best network found (%s)\n",
-	    sc->sc_dev.dv_xname, sc->sc_aps[sc->sc_aps_best].ssid);
+	    sc->sc_dev.dv_xname, sc->sc_net[sc->sc_net_cur].ssid);
 }
 
 void
@@ -1015,15 +1014,15 @@ cmalo_reflect_network(struct malo_softc *sc)
 
 	/* BSSID */
 	IEEE80211_ADDR_COPY(ic->ic_bss->ni_bssid,
-	    sc->sc_aps[sc->sc_aps_best].bssid);
+	    sc->sc_net[sc->sc_net_cur].bssid);
 
 	/* SSID */
-	ic->ic_bss->ni_esslen = strlen(sc->sc_aps[sc->sc_aps_best].ssid);
-	bcopy(sc->sc_aps[sc->sc_aps_best].ssid, ic->ic_bss->ni_essid,
+	ic->ic_bss->ni_esslen = strlen(sc->sc_net[sc->sc_net_cur].ssid);
+	bcopy(sc->sc_net[sc->sc_net_cur].ssid, ic->ic_bss->ni_essid,
 	    ic->ic_bss->ni_esslen);
 
 	/* channel */
-	chan = letoh32(sc->sc_aps[sc->sc_aps_best].channel);
+	chan = letoh32(sc->sc_net[sc->sc_net_cur].channel);
 	ic->ic_bss->ni_chan = &ic->ic_channels[chan];
 }
 
@@ -1189,13 +1188,13 @@ cmalo_cmd_rsp_scan(struct malo_softc *sc)
 	uint16_t psize;
 	int i;
 
-	bzero(sc->sc_aps, sizeof(sc->sc_aps));
+	bzero(sc->sc_net, sizeof(sc->sc_net));
 	psize = sizeof(*hdr) + sizeof(*body);
 
 	body = (struct malo_cmd_body_rsp_scan *)(hdr + 1);
 
 	DPRINTF(1, "bufsize=%d, APs=%d\n", body->bufsize, body->numofset);
-	sc->sc_aps_num = body->numofset;
+	sc->sc_net_num = body->numofset;
 
 	/* cycle through found networks */
 	for (i = 0; i < body->numofset; i++) {
@@ -1207,12 +1206,12 @@ cmalo_cmd_rsp_scan(struct malo_softc *sc)
 		    set->beaconintvl, set->capinfo);
 
 		/* save scan results */
-		bcopy(set->bssid, sc->sc_aps[i].bssid, sizeof(set->bssid));
-		bcopy(set->timestamp, sc->sc_aps[i].timestamp,
+		bcopy(set->bssid, sc->sc_net[i].bssid, sizeof(set->bssid));
+		bcopy(set->timestamp, sc->sc_net[i].timestamp,
 		    sizeof(set->timestamp));
-		sc->sc_aps[i].rssi = set->rssi;
-		sc->sc_aps[i].beaconintvl = set->beaconintvl;
-		sc->sc_aps[i].capinfo = set->capinfo;
+		sc->sc_net[i].rssi = set->rssi;
+		sc->sc_net[i].beaconintvl = set->beaconintvl;
+		sc->sc_net[i].capinfo = set->capinfo;
 		cmalo_parse_elements(sc, (set + 1),
 		    set->size - (sizeof(*set) - sizeof(set->size)), i);
 
@@ -1239,16 +1238,16 @@ cmalo_parse_elements(struct malo_softc *sc, void *buf, int size, int pos)
 
 		switch (eid) {
 		case IEEE80211_ELEMID_SSID:
-			bcopy(buf + i, sc->sc_aps[pos].ssid, len);
-			DPRINTF(2, "ssid=%s\n", sc->sc_aps[pos].ssid);
+			bcopy(buf + i, sc->sc_net[pos].ssid, len);
+			DPRINTF(2, "ssid=%s\n", sc->sc_net[pos].ssid);
 			break;
 		case IEEE80211_ELEMID_RATES:
-			bcopy(buf + i, sc->sc_aps[pos].rates, len);
+			bcopy(buf + i, sc->sc_net[pos].rates, len);
 			DPRINTF(2, "rates\n");
 			break;
 		case IEEE80211_ELEMID_DSPARMS:
-			sc->sc_aps[pos].channel = *(uint8_t *)(buf + i);
-			DPRINTF(2, "chnl=%d\n", sc->sc_aps[pos].channel);
+			sc->sc_net[pos].channel = *(uint8_t *)(buf + i);
+			DPRINTF(2, "chnl=%d\n", sc->sc_net[pos].channel);
 			break;
 		default:
 			DPRINTF(2, "unknown\n");
@@ -1277,7 +1276,7 @@ cmalo_cmd_set_auth(struct malo_softc *sc)
 	hdr->result = 0;
 	body = (struct malo_cmd_body_auth *)(hdr + 1);
 
-	bcopy(sc->sc_aps[sc->sc_aps_best].bssid, body->peermac, ETHER_ADDR_LEN);
+	bcopy(sc->sc_net[sc->sc_net_cur].bssid, body->peermac, ETHER_ADDR_LEN);
 	body->authtype = 0;
 
 	/* process command request */
@@ -1523,21 +1522,21 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	hdr->result = 0;
 	body = (struct malo_cmd_body_assoc *)(hdr + 1);
 
-	bcopy(sc->sc_aps[sc->sc_aps_best].bssid, body->peermac, ETHER_ADDR_LEN);
-	body->capinfo = htole16(sc->sc_aps[sc->sc_aps_best].capinfo);
+	bcopy(sc->sc_net[sc->sc_net_cur].bssid, body->peermac, ETHER_ADDR_LEN);
+	body->capinfo = htole16(sc->sc_net[sc->sc_net_cur].capinfo);
 	body->listenintrv = htole16(10);
 
 	body_ssid = sc->sc_cmd + psize;
 	body_ssid->type = htole16(MALO_TLV_TYPE_SSID);
-	body_ssid->size = htole16(strlen(sc->sc_aps[sc->sc_aps_best].ssid));
-	bcopy(sc->sc_aps[sc->sc_aps_best].ssid, body_ssid->data,
+	body_ssid->size = htole16(strlen(sc->sc_net[sc->sc_net_cur].ssid));
+	bcopy(sc->sc_net[sc->sc_net_cur].ssid, body_ssid->data,
 	    body_ssid->size);
 	psize += (sizeof(*body_ssid) - 1) + body_ssid->size;
 
 	body_phy = sc->sc_cmd + psize;
 	body_phy->type = htole16(MALO_TLV_TYPE_PHY);
 	body_phy->size = htole16(1);
-	bcopy(&sc->sc_aps[sc->sc_aps_best].channel, body_phy->data, 1);
+	bcopy(&sc->sc_net[sc->sc_net_cur].channel, body_phy->data, 1);
 	psize += sizeof(*body_phy);
 
 	body_cf = sc->sc_cmd + psize;
@@ -1547,8 +1546,8 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 
 	body_rates = sc->sc_cmd + psize;
 	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
-	body_rates->size = htole16(strlen(sc->sc_aps[sc->sc_aps_best].rates));
-	bcopy(sc->sc_aps[sc->sc_aps_best].rates, body_rates->data,
+	body_rates->size = htole16(strlen(sc->sc_net[sc->sc_net_cur].rates));
+	bcopy(sc->sc_net[sc->sc_net_cur].rates, body_rates->data,
 	    body_rates->size);
 	psize += (sizeof(*body_rates) - 1) + body_rates->size;
 
@@ -1751,7 +1750,7 @@ cmalo_cmd_response(struct malo_softc *sc)
 	uint16_t psize, *uc;
 	int i, s;
 
-	s = splnet(); /* XXX */
+	s = splnet();
 
 	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
 
@@ -1778,6 +1777,7 @@ cmalo_cmd_response(struct malo_softc *sc)
 	if (!(hdr->cmd & MALO_CMD_RESP)) {
 		printf("%s: got invalid command response (0x%04x)!\n",
 		    sc->sc_dev.dv_xname, hdr->cmd);
+		splx(s);
 		return (EIO);
 	}
 	hdr->cmd &= ~MALO_CMD_RESP;

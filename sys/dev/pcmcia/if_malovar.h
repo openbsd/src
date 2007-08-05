@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.17 2007/08/01 11:30:22 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.18 2007/08/05 09:09:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -283,8 +283,8 @@ struct malo_tx_desc {
 	uint8_t		reserved[2];
 } __packed;
 
-/* scanned AP's */
-struct malo_aps {
+/* scanned network */
+struct malo_networks {
 	uint8_t		bssid[ETHER_ADDR_LEN];
 	uint8_t		rssi;
 	uint8_t		timestamp[8];
@@ -312,8 +312,8 @@ struct malo_softc {
 	uint8_t			 sc_cmd_running;
 	void			*sc_data;
 	uint8_t			 sc_curchan;
-	int			 sc_aps_num;
-	int			 sc_aps_best;
-	struct malo_aps		 sc_aps[12];
+	int			 sc_net_num;
+	int			 sc_net_cur;
+	struct malo_networks	 sc_net[12];
 	struct timeout		 sc_scan_to;
 };
