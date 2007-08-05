@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.33 2007/08/04 12:02:36 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.34 2007/08/05 00:24:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -88,6 +88,7 @@ void	cmalo_watchdog(struct ifnet *);
 int	cmalo_tx(struct malo_softc *, struct mbuf *);
 void	cmalo_tx_done(struct malo_softc *);
 void	cmalo_select_network(struct malo_softc *);
+void	cmalo_reflect_network(struct malo_softc *);
 
 void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
@@ -635,8 +636,8 @@ cmalo_init(struct ifnet *ifp)
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	else
-		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+
+	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	return (0);
 }
@@ -694,23 +695,28 @@ cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			DPRINTF(1, "%s: newstate is IEEE80211_S_SCAN\n",
 			    sc->sc_dev.dv_xname);
 			cmalo_cmd_set_scan(sc);
-			cmalo_select_network(sc);
-			if (!sc->sc_aps_num)
-				/* no AP found */
+			if (!sc->sc_aps_num) {
+				/* no networks found */
+				DPRINTF(1, "%s: no networks found!\n",
+				    sc->sc_dev.dv_xname);
 				break;
+			}
+			cmalo_select_network(sc);
+			cmalo_cmd_set_auth(sc);
+			cmalo_cmd_set_assoc(sc);
+			break;
 		case IEEE80211_S_AUTH:
 			DPRINTF(1, "%s: newstate is IEEE80211_S_AUTH\n",
 			    sc->sc_dev.dv_xname);
-			cmalo_cmd_set_auth(sc);
-			/* FALLTHROUGH */
+			break;
 		case IEEE80211_S_ASSOC:
 			DPRINTF(1, "%s: newstate is IEEE80211_S_ASSOC\n",
 			    sc->sc_dev.dv_xname);
-			cmalo_cmd_set_assoc(sc);
-			/* FALLTHROUGH */
+			break;
 		case IEEE80211_S_RUN:
 			DPRINTF(1, "%s: newstate is IEEE80211_S_RUN\n",
 			    sc->sc_dev.dv_xname);
+			cmalo_reflect_network(sc);
 			break;
 		default:
 			break;
@@ -966,10 +972,28 @@ cmalo_tx_done(struct malo_softc *sc)
 void
 cmalo_select_network(struct malo_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	int i, best_rssi;
 
-	/* get AP with best signal strength */
+	/* reset last selected network */
 	sc->sc_aps_best = 0;
+
+	/* get desired network */
+	if (ic->ic_des_esslen) {
+		for (i = 0; i < sc->sc_aps_num; i++) {
+			if (!strcmp(ic->ic_des_essid, sc->sc_aps[i].ssid)) {
+				sc->sc_aps_best = i;
+				DPRINTF(1, "%s: desired network found (%s)\n",
+				    sc->sc_dev.dv_xname, ic->ic_des_essid);
+				return;
+			}
+		}
+		DPRINTF(1, "%s: desired network not found in scan results "
+		    "(%s)!\n",
+		    sc->sc_dev.dv_xname, ic->ic_des_essid);
+	}
+
+	/* get network with best signal strength */
 	best_rssi = sc->sc_aps[0].rssi;
 	for (i = 0; i < sc->sc_aps_num; i++) {
 		if (best_rssi < sc->sc_aps[i].rssi) {
@@ -977,9 +1001,30 @@ cmalo_select_network(struct malo_softc *sc)
 			sc->sc_aps_best = i;
 		}
 	}
+	DPRINTF(1, "%s: best network found (%s)\n",
+	    sc->sc_dev.dv_xname, sc->sc_aps[sc->sc_aps_best].ssid);
+}
 
-	DPRINTF(1, "best network found is %s\n",
-	    sc->sc_aps[sc->sc_aps_best].ssid);
+void
+cmalo_reflect_network(struct malo_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint32_t chan;
+
+	/* reflect active network to our 80211 stack */
+
+	/* BSSID */
+	IEEE80211_ADDR_COPY(ic->ic_bss->ni_bssid,
+	    sc->sc_aps[sc->sc_aps_best].bssid);
+
+	/* SSID */
+	ic->ic_bss->ni_esslen = strlen(sc->sc_aps[sc->sc_aps_best].ssid);
+	bcopy(sc->sc_aps[sc->sc_aps_best].ssid, ic->ic_bss->ni_essid,
+	    ic->ic_bss->ni_esslen);
+
+	/* channel */
+	chan = letoh32(sc->sc_aps[sc->sc_aps_best].channel);
+	ic->ic_bss->ni_chan = &ic->ic_channels[chan];
 }
 
 void
