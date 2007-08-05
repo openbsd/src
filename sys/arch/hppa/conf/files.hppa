@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.71 2007/07/15 20:11:12 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.72 2007/08/05 19:09:52 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -184,8 +184,8 @@ attach	sti at gedoens with sti_gedoens
 file	arch/hppa/dev/sti_sgc.c			sti_gedoens
 file	arch/hppa/dev/sti_pci_machdep.c		sti_pci
 
-attach	siop at gedoens with siop_sgc
-file	arch/hppa/dev/siop_sgc.c		siop_sgc
+attach	siop at gedoens with siop_gedoens
+file	arch/hppa/dev/siop_sgc.c		siop_gedoens
 
 device	ssio {[irq = -1]}
 attach	ssio at pci
