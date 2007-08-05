@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.567 2007/07/02 14:29:37 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.568 2007/08/05 17:01:25 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -561,6 +561,7 @@ pgt*	at pci?				# Prism54 (only full-mac varients)
 pgt*	at cardbus?			# Prism54 (only full-mac varients)
 malo*	at pci?				# Marvell Libertas
 malo*	at cardbus?			# Marvell Libertas
+malo*	at pcmcia?			# Marvell 88W8385
 mbg*	at pci?				# Meinberg Funkuhren radio clocks
 
 # Media Independent Interface (mii) drivers

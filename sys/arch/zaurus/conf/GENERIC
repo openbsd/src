@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.64 2007/05/31 23:18:25 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.65 2007/08/05 17:01:25 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -156,6 +156,7 @@ pcmcia*		at pxapcic?
 # PCMCIA (CF) devices
 com*		at pcmcia?		# PCMCIA modems/serial ports
 wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
+malo*		at pcmcia?		# Marvell 88W8385
 ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
 wdc*		at pcmcia?		# hard disk controller
 #cfxga*		at pcmcia?		# VoyagerVGA frame buffer
