@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.47 2007/05/08 03:16:16 deraadt Exp $ */
+/*	$OpenBSD: siop.c,v 1.48 2007/08/05 19:05:09 kettenis Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ siop_script_read(sc, offset)
 		return bus_space_read_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
 		    offset * 4);
 	} else {
-		return letoh32(sc->sc_c.sc_script[offset]);
+		return siop_ctoh32(&sc->sc_c, sc->sc_c.sc_script[offset]);
 	}
 }
 
@@ -178,7 +178,7 @@ siop_script_write(sc, offset, val)
 		bus_space_write_4(sc->sc_c.sc_ramt, sc->sc_c.sc_ramh,
 		    offset * 4, val);
 	} else {
-		sc->sc_c.sc_script[offset] = htole32(val);
+		sc->sc_c.sc_script[offset] = siop_htoc32(&sc->sc_c, val);
 	}
 }
 
@@ -263,30 +263,32 @@ siop_reset(sc)
 	} else {
 		for (j = 0;
 		    j < (sizeof(siop_script) / sizeof(siop_script[0])); j++) {
-			sc->sc_c.sc_script[j] = htole32(siop_script[j]);
+			sc->sc_c.sc_script[j] =
+			    siop_htoc32(&sc->sc_c, siop_script[j]);
 		}
 		for (j = 0; j <
 		    (sizeof(E_abs_msgin_Used) / sizeof(E_abs_msgin_Used[0]));
 		    j++) {
 			sc->sc_c.sc_script[E_abs_msgin_Used[j]] =
-			    htole32(sc->sc_c.sc_scriptaddr + Ent_msgin_space);
+			    siop_htoc32(&sc->sc_c,
+				sc->sc_c.sc_scriptaddr + Ent_msgin_space);
 		}
 		if (sc->sc_c.features & SF_CHIP_LED0) {
 			for (j = 0; j < (sizeof(siop_led_on) /
 			    sizeof(siop_led_on[0])); j++)
 				sc->sc_c.sc_script[
 				    Ent_led_on1 / sizeof(siop_led_on[0]) + j
-				    ] = htole32(siop_led_on[j]);
+				    ] = siop_htoc32(&sc->sc_c, siop_led_on[j]);
 			for (j = 0; j < (sizeof(siop_led_on) /
 			    sizeof(siop_led_on[0])); j++)
 				sc->sc_c.sc_script[
 				    Ent_led_on2 / sizeof(siop_led_on[0]) + j
-				    ] = htole32(siop_led_on[j]);
+				    ] = siop_htoc32(&sc->sc_c, siop_led_on[j]);
 			for (j = 0; j < (sizeof(siop_led_off) /
 			    sizeof(siop_led_off[0])); j++)
 				sc->sc_c.sc_script[
 				   Ent_led_off / sizeof(siop_led_off[0]) + j
-				   ] = htole32(siop_led_off[j]);
+				   ] = siop_htoc32(&sc->sc_c, siop_led_off[j]);
 		}
 	}
 	sc->script_free_lo = sizeof(siop_script) / sizeof(siop_script[0]);
@@ -470,7 +472,8 @@ siop_intr(v)
 			if (siop_cmd)
 				printf("last msg_in=0x%x status=0x%x\n",
 				    siop_cmd->cmd_tables->msg_in[0],
-				    letoh32(siop_cmd->cmd_tables->status));
+				    siop_ctoh32(&sc->sc_c,
+					siop_cmd->cmd_tables->status));
 			else
 				printf("current DSA invalid\n");
 			need_reset = 1;
@@ -595,7 +598,7 @@ siop_intr(v)
 			 */
 			 if (siop_cmd) {
 				siop_cmd->cmd_tables->status =
-				    htole32(SCSI_CHECK);
+				    siop_htoc32(&sc->sc_c, SCSI_CHECK);
 				goto end;
 			}
 			printf("%s: unexpected disconnect without "
@@ -830,7 +833,7 @@ scintr:
 			if (msgin == MSG_IGN_WIDE_RESIDUE) {
 			/* use the extmsgdata table to get the second byte */
 				siop_cmd->cmd_tables->t_extmsgdata.count =
-				    htole32(1);
+				    siop_htoc32(&sc->sc_c, 1);
 				siop_table_sync(siop_cmd,
 				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 				CALL_SCRIPT(Ent_get_extmsgdata);
@@ -843,7 +846,8 @@ scintr:
 			printf("unhandled message 0x%x\n",
 			    siop_cmd->cmd_tables->msg_in[0]);
 			siop_cmd->cmd_tables->msg_out[0] = MSG_MESSAGE_REJECT;
-			siop_cmd->cmd_tables->t_msgout.count= htole32(1);
+			siop_cmd->cmd_tables->t_msgout.count =
+			    siop_htoc32(&sc->sc_c, 1);
 			siop_table_sync(siop_cmd,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			CALL_SCRIPT(Ent_send_msgout);
@@ -861,7 +865,8 @@ scintr:
 				    sc->sc_c.sc_dev.dv_xname,
 				    siop_cmd->cmd_tables->msg_in[1]);
 			siop_cmd->cmd_tables->t_extmsgdata.count =
-			    htole32(siop_cmd->cmd_tables->msg_in[1] - 1);
+			    siop_htoc32(&sc->sc_c,
+			        siop_cmd->cmd_tables->msg_in[1] - 1);
 			siop_table_sync(siop_cmd,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			CALL_SCRIPT(Ent_get_extmsgdata);
@@ -967,7 +972,8 @@ scintr:
 			}
 			/* send a message reject */
 			siop_cmd->cmd_tables->msg_out[0] = MSG_MESSAGE_REJECT;
-			siop_cmd->cmd_tables->t_msgout.count = htole32(1);
+			siop_cmd->cmd_tables->t_msgout.count =
+			    siop_htoc32(&sc->sc_c, 1);
 			siop_table_sync(siop_cmd,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			CALL_SCRIPT(Ent_send_msgout);
@@ -1015,9 +1021,10 @@ scintr:
 #ifdef SIOP_DEBUG_INTR
 			printf("done, DSA=0x%lx target id 0x%x last msg "
 			    "in=0x%x status=0x%x\n", (u_long)siop_cmd->cmd_c.dsa,
-			    letoh32(siop_cmd->cmd_tables->id),
+			    siop_ctoh32(&sc->sc_c, siop_cmd->cmd_tables->id),
 			    siop_cmd->cmd_tables->msg_in[0],
-			    letoh32(siop_cmd->cmd_tables->status));
+			    siop_ctoh32(&sc->sc_c,
+				siop_cmd->cmd_tables->status));
 #endif
 			INCSTAT(siop_stat_intr_done);
 			/* update resid.  */
@@ -1063,7 +1070,7 @@ end:
 	 * Otherwise wait for siop_scsicmd_end(), we may need to cleanup the
 	 * queue
 	 */
-	xs->status = letoh32(siop_cmd->cmd_tables->status);
+	xs->status = siop_ctoh32(&sc->sc_c, siop_cmd->cmd_tables->status);
 	if (xs->status == SCSI_OK)
 		CALL_SCRIPT(Ent_script_sched);
 	else
@@ -1161,7 +1168,7 @@ siop_scsicmd_end(siop_cmd)
 		int error;
 		bzero(cmd, sizeof(*cmd));
 		siop_cmd->cmd_c.siop_tables->cmd.count =
-		   htole32(sizeof(struct scsi_sense));
+		   siop_htoc32(&sc->sc_c, sizeof(struct scsi_sense));
 		cmd->opcode = REQUEST_SENSE;
 		cmd->byte2 = xs->sc_link->lun << 5;
 		cmd->unused[0] = cmd->unused[1] = 0;
@@ -1438,7 +1445,8 @@ siop_scsicmd(xs)
 	bzero(&siop_cmd->cmd_c.siop_tables->xscmd,
 	    sizeof(siop_cmd->cmd_c.siop_tables->xscmd));
 	bcopy(xs->cmd, &siop_cmd->cmd_c.siop_tables->xscmd, xs->cmdlen);
-	siop_cmd->cmd_c.siop_tables->cmd.count = htole32(xs->cmdlen);
+	siop_cmd->cmd_c.siop_tables->cmd.count =
+	    siop_htoc32(&sc->sc_c, xs->cmdlen);
 
 	/* load the DMA maps */
 	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
@@ -1635,8 +1643,8 @@ again:
 		/* Ok, we can add the tag message */
 		if (tag > 0) {
 #ifdef DIAGNOSTIC
-			int msgcount =
-			    letoh32(siop_cmd->cmd_tables->t_msgout.count);
+			int msgcount = siop_ctoh32(&sc->sc_c,
+			    siop_cmd->cmd_tables->t_msgout.count);
 			if (msgcount != 1)
 				printf("%s:%d:%d: tag %d with msgcount %d\n",
 				    sc->sc_c.sc_dev.dv_xname, target, lun, tag,
@@ -1650,7 +1658,8 @@ again:
 				siop_cmd->cmd_tables->msg_out[1] =
 				    MSG_ORDERED_Q_TAG;
 			siop_cmd->cmd_tables->msg_out[2] = tag;
-			siop_cmd->cmd_tables->t_msgout.count = htole32(3);
+			siop_cmd->cmd_tables->t_msgout.count =
+			    siop_htoc32(&sc->sc_c, 3);
 		}
 		/* note that we started a new command */
 		newcmd = 1;
@@ -1677,7 +1686,8 @@ again:
 		/* CMD script: MOVE MEMORY addr */
 		siop_xfer = (struct siop_xfer*)siop_cmd->cmd_tables;
 		siop_xfer->resel[E_ldsa_abs_slot_Used[0]] =
-		    htole32(sc->sc_c.sc_scriptaddr + Ent_script_sched_slot0 + slot * 8);
+		    siop_htoc32(&sc->sc_c, sc->sc_c.sc_scriptaddr +
+		        Ent_script_sched_slot0 + slot * 8);
 		siop_table_sync(siop_cmd, BUS_DMASYNC_PREWRITE);
 		/* scheduler slot: JUMP ldsa_select */
 		siop_script_write(sc,
@@ -1758,12 +1768,13 @@ siop_dump_script(sc)
 	int i;
 	for (i = 0; i < PAGE_SIZE / 4; i += 2) {
 		printf("0x%04x: 0x%08x 0x%08x", i * 4,
-		    letoh32(sc->sc_c.sc_script[i]),
-		    letoh32(sc->sc_c.sc_script[i+1]));
-		if ((letoh32(sc->sc_c.sc_script[i]) & 0xe0000000) ==
-		    0xc0000000) {
+		    siop_ctoh32(&sc->sc_c, sc->sc_c.sc_script[i]),
+		    siop_ctoh32(&sc->sc_c, sc->sc_c.sc_script[i+1]));
+		if ((siop_ctoh32(&sc->sc_c,
+		     sc->sc_c.sc_script[i]) & 0xe0000000) == 0xc0000000) {
 			i++;
-			printf(" 0x%08x", letoh32(sc->sc_c.sc_script[i+1]));
+			printf(" 0x%08x", siop_ctoh32(&sc->sc_c,
+			    sc->sc_c.sc_script[i+1]));
 		}
 		printf("\n");
 	}
@@ -1774,7 +1785,7 @@ void
 siop_morecbd(sc)
 	struct siop_softc *sc;
 {
-	int error, i, j, s;
+	int error, off, i, j, s;
 	bus_dma_segment_t seg;
 	int rseg;
 	struct siop_cbd *newcbd;
@@ -1845,6 +1856,7 @@ siop_morecbd(sc)
 	}
 
 	/* Use two loops since bailing out above releases allocated memory */
+	off = (sc->sc_c.features & SF_CHIP_BE) ? 3 : 0;
 	for (i = 0; i < SIOP_NCMDPB; i++) {
 		newcbd->cmds[i].cmd_c.siop_sc = &sc->sc_c;
 		newcbd->cmds[i].siop_cbdp = newcbd;
@@ -1855,58 +1867,60 @@ siop_morecbd(sc)
 		    i * sizeof(struct siop_xfer);
 		newcbd->cmds[i].cmd_c.dsa = dsa;
 		newcbd->cmds[i].cmd_c.status = CMDST_FREE;
-		xfer->siop_tables.t_msgout.count= htole32(1);
-		xfer->siop_tables.t_msgout.addr = htole32(dsa);
-		xfer->siop_tables.t_msgin.count= htole32(1);
-		xfer->siop_tables.t_msgin.addr = htole32(dsa +
-				offsetof(struct siop_common_xfer, msg_in));
-		xfer->siop_tables.t_extmsgin.count= htole32(2);
-		xfer->siop_tables.t_extmsgin.addr = htole32(dsa +
-				offsetof(struct siop_common_xfer, msg_in) + 1);
-		xfer->siop_tables.t_extmsgdata.addr = htole32(dsa +
-				offsetof(struct siop_common_xfer, msg_in) + 3);
-		xfer->siop_tables.t_status.count= htole32(1);
-		xfer->siop_tables.t_status.addr = htole32(dsa +
-				offsetof(struct siop_common_xfer, status));
-		xfer->siop_tables.cmd.count= htole32(0);
-		xfer->siop_tables.cmd.addr = htole32(dsa +
-				offsetof(struct siop_common_xfer, xscmd));
+		xfer->siop_tables.t_msgout.count= siop_htoc32(&sc->sc_c, 1);
+		xfer->siop_tables.t_msgout.addr = siop_htoc32(&sc->sc_c, dsa);
+		xfer->siop_tables.t_msgin.count= siop_htoc32(&sc->sc_c, 1);
+		xfer->siop_tables.t_msgin.addr = siop_htoc32(&sc->sc_c,
+		    dsa + offsetof(struct siop_common_xfer, msg_in));
+		xfer->siop_tables.t_extmsgin.count= siop_htoc32(&sc->sc_c, 2);
+		xfer->siop_tables.t_extmsgin.addr = siop_htoc32(&sc->sc_c,
+		    dsa + offsetof(struct siop_common_xfer, msg_in) + 1);
+		xfer->siop_tables.t_extmsgdata.addr = siop_htoc32(&sc->sc_c,
+		    dsa + offsetof(struct siop_common_xfer, msg_in) + 3);
+		xfer->siop_tables.t_status.count= siop_htoc32(&sc->sc_c, 1);
+		xfer->siop_tables.t_status.addr = siop_htoc32(&sc->sc_c,
+		    dsa + offsetof(struct siop_common_xfer, status) + off);
+		xfer->siop_tables.cmd.count = siop_htoc32(&sc->sc_c, 0);
+		xfer->siop_tables.cmd.addr = siop_htoc32(&sc->sc_c,
+		    dsa + offsetof(struct siop_common_xfer, xscmd));
 		/* The select/reselect script */
 		scr = &xfer->resel[0];
 		for (j = 0; j < sizeof(load_dsa) / sizeof(load_dsa[0]); j++)
-			scr[j] = htole32(load_dsa[j]);
+			scr[j] = siop_htoc32(&sc->sc_c, load_dsa[j]);
 		/*
 		 * 0x78000000 is a 'move data8 to reg'. data8 is the second
 		 * octet, reg offset is the third.
 		 */
-		scr[Ent_rdsa0 / 4] =
-		    htole32(0x78100000 | ((dsa & 0x000000ff) <<  8));
-		scr[Ent_rdsa1 / 4] =
-		    htole32(0x78110000 | ( dsa & 0x0000ff00       ));
-		scr[Ent_rdsa2 / 4] =
-		    htole32(0x78120000 | ((dsa & 0x00ff0000) >>  8));
-		scr[Ent_rdsa3 / 4] =
-		    htole32(0x78130000 | ((dsa & 0xff000000) >> 16));
-		scr[E_ldsa_abs_reselected_Used[0]] =
-		    htole32(sc->sc_c.sc_scriptaddr + Ent_reselected);
-		scr[E_ldsa_abs_reselect_Used[0]] =
-		    htole32(sc->sc_c.sc_scriptaddr + Ent_reselect);
-		scr[E_ldsa_abs_selected_Used[0]] =
-		    htole32(sc->sc_c.sc_scriptaddr + Ent_selected);
-		scr[E_ldsa_abs_data_Used[0]] =
-		    htole32(dsa + sizeof(struct siop_common_xfer) +
-		    Ent_ldsa_data);
+		scr[Ent_rdsa0 / 4] = siop_htoc32(&sc->sc_c,
+		    0x78100000 | ((dsa & 0x000000ff) <<  8));
+		scr[Ent_rdsa1 / 4] = siop_htoc32(&sc->sc_c,
+		    0x78110000 | ( dsa & 0x0000ff00       ));
+		scr[Ent_rdsa2 / 4] = siop_htoc32(&sc->sc_c,
+		    0x78120000 | ((dsa & 0x00ff0000) >>  8));
+		scr[Ent_rdsa3 / 4] = siop_htoc32(&sc->sc_c,
+		    0x78130000 | ((dsa & 0xff000000) >> 16));
+		scr[E_ldsa_abs_reselected_Used[0]] = siop_htoc32(&sc->sc_c,
+		    sc->sc_c.sc_scriptaddr + Ent_reselected);
+		scr[E_ldsa_abs_reselect_Used[0]] = siop_htoc32(&sc->sc_c,
+		    sc->sc_c.sc_scriptaddr + Ent_reselect);
+		scr[E_ldsa_abs_selected_Used[0]] = siop_htoc32(&sc->sc_c,
+		    sc->sc_c.sc_scriptaddr + Ent_selected);
+		scr[E_ldsa_abs_data_Used[0]] = siop_htoc32(&sc->sc_c,
+		    dsa + sizeof(struct siop_common_xfer) + Ent_ldsa_data);
 		/* JUMP foo, IF FALSE - used by MOVE MEMORY to clear the slot */
-		scr[Ent_ldsa_data / 4] = htole32(0x80000000);
+		scr[Ent_ldsa_data / 4] = siop_htoc32(&sc->sc_c, 0x80000000);
 		s = splbio();
 		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
 		splx(s);
 #ifdef SIOP_DEBUG
 		printf("tables[%d]: in=0x%x out=0x%x status=0x%x "
 		    "offset=0x%x\n", i,
-		    letoh32(newcbd->cmds[i].cmd_tables->t_msgin.addr),
-		    letoh32(newcbd->cmds[i].cmd_tables->t_msgout.addr),
-		    letoh32(newcbd->cmds[i].cmd_tables->t_status.addr));
+		    siop_ctoh32(&sc->sc_c,
+			newcbd->cmds[i].cmd_tables->t_msgin.addr),
+		    siop_ctoh32(&sc->sc_c,
+			newcbd->cmds[i].cmd_tables->t_msgout.addr),
+		    siop_ctoh32(&sc->sc_c,
+			newcbd->cmds[i].cmd_tables->t_status.addr));
 #endif
 	}
 	s = splbio();
@@ -1962,10 +1976,11 @@ siop_get_lunsw(sc)
 		for (i = 0; i < sizeof(lun_switch) / sizeof(lun_switch[0]);
 		    i++)
 			sc->sc_c.sc_script[sc->script_free_lo + i] =
-			    htole32(lun_switch[i]);
+			    siop_htoc32(&sc->sc_c, lun_switch[i]);
 		sc->sc_c.sc_script[
 		    sc->script_free_lo + E_abs_lunsw_return_Used[0]] =
-		    htole32(sc->sc_c.sc_scriptaddr + Ent_lunsw_return);
+		    siop_htoc32(&sc->sc_c,
+			sc->sc_c.sc_scriptaddr + Ent_lunsw_return);
 	}
 	lunsw->lunsw_off = sc->script_free_lo;
 	lunsw->lunsw_size = sizeof(lun_switch) / sizeof(lun_switch[0]);
@@ -2120,7 +2135,7 @@ siop_add_dev(sc, target, lun)
 			    i < sizeof(tag_switch) / sizeof(tag_switch[0]);
 			    i++) {
 				sc->sc_c.sc_script[sc->script_free_hi + i] =
-				    htole32(tag_switch[i]);
+				    siop_htoc32(&sc->sc_c, tag_switch[i]);
 			}
 		}
 		siop_script_write(sc,
