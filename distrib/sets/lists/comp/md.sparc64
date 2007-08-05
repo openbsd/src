@@ -198,6 +198,7 @@
 ./usr/include/sparc64/psl.h
 ./usr/include/sparc64/pte.h
 ./usr/include/sparc64/ptrace.h
+./usr/include/sparc64/rbus_machdep.h
 ./usr/include/sparc64/reg.h
 ./usr/include/sparc64/reloc.h
 ./usr/include/sparc64/setjmp.h
