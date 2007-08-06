@@ -1,0 +1,23 @@
+# $OpenBSD: mk26,v 1.1 2007/08/06 06:52:30 espie Exp $
+
+# Very bizarre make rule: names like -llib are expected to not correspond
+# to normal files.
+
+all: t29.targ t29.targ2
+
+# if there is no rules, we just silently accept the dependency
+t29.targ: -lm
+	touch $@
+
+# if there is a set of rules, we transparently go through the dependencies
+t29.targ2: -lt29
+	touch $@
+
+-lt29: t29dep
+	touch libt29.a
+
+t29dep:
+	touch $@
+
+
+.PHONY: all 

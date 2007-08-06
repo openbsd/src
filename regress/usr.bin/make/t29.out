@@ -1,0 +1,4 @@
+touch t29.targ
+touch t29dep
+touch libt29.a
+touch t29.targ2
