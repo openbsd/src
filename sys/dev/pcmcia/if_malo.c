@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.40 2007/08/05 16:04:44 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.41 2007/08/06 14:21:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -391,8 +391,10 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			nr->nr_capinfo = sc->sc_net[i].capinfo;
 			nr->nr_flags |= IEEE80211_NODEREQ_AP;
 
-			bcopy(nr, (caddr_t)na->na_node + j,
-			    sizeof(struct ieee80211_nodereq));
+			if (copyout(nr, (caddr_t)na->na_node + j,
+			    sizeof(struct ieee80211_nodereq)))
+				break;
+
 			j += sizeof(struct ieee80211_nodereq);
 			na->na_nodes++;
 		}
@@ -1013,7 +1015,7 @@ void
 cmalo_reflect_network(struct malo_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint32_t chan;
+	uint8_t chan;
 
 	/* reflect active network to our 80211 stack */
 
@@ -1027,7 +1029,7 @@ cmalo_reflect_network(struct malo_softc *sc)
 	    ic->ic_bss->ni_esslen);
 
 	/* channel */
-	chan = letoh32(sc->sc_net[sc->sc_net_cur].channel);
+	chan = sc->sc_net[sc->sc_net_cur].channel;
 	ic->ic_bss->ni_chan = &ic->ic_channels[chan];
 }
 
@@ -1185,7 +1187,7 @@ cmalo_cmd_set_scan(struct malo_softc *sc)
 	    htole16(ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates);
 	bcopy(ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates, body_rates->data,
 	    ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates);
-	psize += (sizeof(*body_rates) - 1) + body_rates->size;
+	psize += (sizeof(*body_rates) - 1) + letoh16(body_rates->size);
 #if 0
 	body_numprobes = sc->sc_cmd + psize;
 	body_numprobes->type = htole16(MALO_TLV_TYPE_NUMPROBES);
@@ -1219,12 +1221,18 @@ cmalo_cmd_rsp_scan(struct malo_softc *sc)
 
 	body = (struct malo_cmd_body_rsp_scan *)(hdr + 1);
 
+	body->bufsize = letoh16(body->bufsize);
+
 	DPRINTF(1, "bufsize=%d, APs=%d\n", body->bufsize, body->numofset);
 	sc->sc_net_num = body->numofset;
 
 	/* cycle through found networks */
 	for (i = 0; i < body->numofset; i++) {
 		set = (struct malo_cmd_body_rsp_scan_set *)(sc->sc_cmd + psize);
+
+		set->size = letoh16(set->size);
+		set->beaconintvl = letoh16(set->beaconintvl);
+		set->capinfo = letoh16(set->capinfo);
 
 		DPRINTF(1, "size=%d, bssid=%s, rssi=%d, beaconintvl=%d, "
 		    "capinfo=0x%04x\n",
@@ -1616,7 +1624,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	body_ssid->size = htole16(strlen(sc->sc_net[sc->sc_net_cur].ssid));
 	bcopy(sc->sc_net[sc->sc_net_cur].ssid, body_ssid->data,
 	    body_ssid->size);
-	psize += (sizeof(*body_ssid) - 1) + body_ssid->size;
+	psize += (sizeof(*body_ssid) - 1) + letoh16(body_ssid->size);
 
 	body_phy = sc->sc_cmd + psize;
 	body_phy->type = htole16(MALO_TLV_TYPE_PHY);
@@ -1634,14 +1642,14 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	body_rates->size = htole16(strlen(sc->sc_net[sc->sc_net_cur].rates));
 	bcopy(sc->sc_net[sc->sc_net_cur].rates, body_rates->data,
 	    body_rates->size);
-	psize += (sizeof(*body_rates) - 1) + body_rates->size;
+	psize += (sizeof(*body_rates) - 1) + letoh16(body_rates->size);
 
 	/* hack to correct FW's wrong generated rates-element-id */
 	body_passeid = sc->sc_cmd + psize;
 	body_passeid->type = htole16(MALO_TLV_TYPE_PASSEID);
 	body_passeid->size = body_rates->size;
 	bcopy(body_rates->data, body_passeid->data, body_rates->size);
-	psize += (sizeof(*body_passeid) - 1) + body_passeid->size;
+	psize += (sizeof(*body_passeid) - 1) + letoh16(body_passeid->size);
 
 	hdr->size = htole16(psize - sizeof(*hdr));
 
