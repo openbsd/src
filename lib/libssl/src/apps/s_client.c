@@ -243,6 +243,7 @@ int MAIN(int argc, char **argv)
 	char *cbuf=NULL,*sbuf=NULL,*mbuf=NULL;
 	int cbuf_len,cbuf_off;
 	int sbuf_len,sbuf_off;
+	int mbuf_len,mbuf_off;
 	fd_set readfds,writefds;
 	char *port=PORT_STR;
 	int full_log=1;
@@ -291,7 +292,7 @@ int MAIN(int argc, char **argv)
 
 	if (	((cbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
 		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
-		((mbuf=OPENSSL_malloc(BUFSIZZ)) == NULL))
+		((mbuf=OPENSSL_malloc(BUFSIZZ + 1)) == NULL))	/* NUL byte */
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -596,22 +597,41 @@ re_start:
 	cbuf_off=0;
 	sbuf_len=0;
 	sbuf_off=0;
+	mbuf_len=0;
+	mbuf_off=0;
 
 	/* This is an ugly hack that does a lot of assumptions */
 	if (starttls_proto == 1)
 		{
-		BIO_read(sbio,mbuf,BUFSIZZ);
+		mbuf_off = mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+		if (mbuf_len == -1)
+			{
+			BIO_printf(bio_err,"BIO_read failed\n");
+			goto end;
+			}
 		BIO_printf(sbio,"EHLO some.host.name\r\n");
-		BIO_read(sbio,mbuf,BUFSIZZ);
+		mbuf_len = BIO_read(sbio,mbuf + mbuf_off,BUFSIZZ - mbuf_off);
+		if (mbuf_len == -1)
+			{
+			BIO_printf(bio_err,"BIO_read failed\n");
+			goto end;
+			}
 		BIO_printf(sbio,"STARTTLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
 	if (starttls_proto == 2)
 		{
-		BIO_read(sbio,mbuf,BUFSIZZ);
+		mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+		if (mbuf_len == -1)
+			{
+			BIO_printf(bio_err,"BIO_read failed\n");
+			goto end;
+			}
 		BIO_printf(sbio,"STLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
+
+	mbuf[mbuf_off + mbuf_len] = '\0';
 
 	for (;;)
 		{
