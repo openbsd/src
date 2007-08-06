@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.140 2007/06/14 20:36:34 otto Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.141 2007/08/06 16:58:26 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1059,12 +1059,8 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 			type |= F_WAIT;
 		VOP_UNLOCK(vp, 0, p);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
-		if (error) {
-			/* closef will vn_close the file for us. */
-			fdremove(fdp, indx);
-			closef(fp, p);
-			return (error);
-		}
+		if (error)
+			goto bad;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		fp->f_flag |= FHASLOCK;
 	}
