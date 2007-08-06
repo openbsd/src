@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp.1,v 1.16 2007/05/31 19:20:17 jmc Exp $
+.\"	$OpenBSD: tftp.1,v 1.17 2007/08/06 19:16:06 sobrado Exp $
 .\"	$NetBSD: tftp.1,v 1.5 1995/08/18 14:45:44 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tftp.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 6 2007 $
 .Dt TFTP 1
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ is running, it issues the prompt
 and recognizes the following commands:
 .Pp
 .Bl -tag -width verbose -compact
-.It Ic \&? Ar command-name Op Ar ...
+.It Ic \&? Ar command-name ...
 Print help information.
 .Pp
 .It Ic ascii
@@ -109,8 +109,7 @@ commands.
 .Ic get Oo Ar host1 : Oc Ns
 .Ar file1
 .Oo Ar host2 : Oc Ns
-.Ar file2
-.Ar ...
+.Ar file2 ...
 .Oo Ar hostN : Oc Ns
 .Ar fileN
 .Xc

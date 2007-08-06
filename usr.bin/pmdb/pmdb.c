@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.20 2006/12/20 06:45:10 steven Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.21 2007/08/06 19:16:05 sobrado Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -84,7 +84,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-c core] [-p pid] <program> args\n",
+	fprintf(stderr, "usage: %s [-c core] [-p pid] program ...\n",
 	    __progname);
 	exit(1);
 }

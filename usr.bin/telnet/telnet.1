@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.39 2007/05/31 19:20:17 jmc Exp $
+.\"	$OpenBSD: telnet.1,v 1.40 2007/08/06 19:16:05 sobrado Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 6 2007 $
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -321,7 +321,7 @@ and
 .Ic display
 commands).
 .Bl -tag -width "mode type"
-.It Ic auth Ar argument Op Ar ...
+.It Ic auth Ar argument ...
 The
 .Ic auth
 command manipulates the information sent through the
@@ -353,13 +353,13 @@ authentication.
 Close a
 .Tn TELNET
 session and return to command mode.
-.It Ic display Ar argument Op Ar ...
+.It Ic display Ar argument ...
 Displays all, or some, of the
 .Ic set
 and
 .Ic toggle
 values (see below).
-.It Ic encrypt Ar argument Op Ar ...
+.It Ic encrypt Ar argument ...
 The
 .Ic encrypt
 command manipulates the information sent through the
@@ -437,7 +437,7 @@ or
 .Ic encrypt stop
 commands.
 .El
-.It Ic environ Ar arguments Op Ar ...
+.It Ic environ Ar argument ...
 The
 .Ic environ
 command is used to manipulate the
@@ -630,7 +630,7 @@ Close any open
 session and exit
 .Nm telnet .
 An end-of-file (in command mode) will also close a session and exit.
-.It Ic send Ar arguments
+.It Ic send Ar argument ...
 Sends one or more special character sequences to the remote host.
 The following are the arguments which may be specified
 (more than one argument may be specified at a time):
@@ -1188,7 +1188,7 @@ Show the current status of
 .Nm telnet .
 This includes the peer one is connected to, as well
 as the current mode.
-.It Ic toggle Ar arguments Op Ar ...
+.It Ic toggle Ar argument ...
 Toggle (between
 .Dv TRUE
 and

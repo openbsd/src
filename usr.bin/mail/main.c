@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2004/04/19 10:17:18 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2007/08/06 19:16:06 sobrado Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.19 2004/04/19 10:17:18 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.20 2007/08/06 19:16:06 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -291,8 +291,8 @@ usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-Iinv] [-b list] [-c list] "
-	    "[-s subject] to-addr [...]\n", __progname);
-	fprintf(stderr, "       %*s [-sendmail-options [...]]\n",
+	    "[-s subject] to-addr ...\n", __progname);
+	fprintf(stderr, "       %*s [-sendmail-options ...]\n",
 	    (int)strlen(__progname), "");
 	fprintf(stderr, "       %s [-IiNnv] -f [name]\n", __progname);
 	fprintf(stderr, "       %s [-IiNnv] [-u user]\n", __progname);

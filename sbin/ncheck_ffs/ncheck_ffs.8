@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.21 2007/05/31 19:19:46 jmc Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.22 2007/08/06 19:16:05 sobrado Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 6 2007 $
 .Dt NCHECK_FFS 8
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nm ncheck_ffs
 .Op Fl ams
 .Op Fl f Ar format
-.Op Fl i Ar number Op Ar ...
+.Op Fl i Ar number ...
 .Ar filesystem
 .Sh DESCRIPTION
 .Nm
@@ -110,7 +110,7 @@ the character following the backslash.
 The device name is not printed on the first line of output when the
 .Fl f
 option is specified.
-.It Fl i Ar number Op Ar ...
+.It Fl i Ar number ...
 Report only those files whose inode numbers are as listed.
 .It Fl m
 Give more verbose information on inodes.

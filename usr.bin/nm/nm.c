@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.29 2005/01/03 14:49:39 espie Exp $	*/
+/*	$OpenBSD: nm.c,v 1.30 2007/08/06 19:16:06 sobrado Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.29 2005/01/03 14:49:39 espie Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.30 2007/08/06 19:16:06 sobrado Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -1081,7 +1081,7 @@ usage(void)
 	if (issize)
 		fprintf(stderr, "usage: %s [-tw] [file ...]\n", __progname);
 	else
-		fprintf(stderr, "usage: %s [-aABCegnoprsuvVw] [file ...]\n",
+		fprintf(stderr, "usage: %s [-aCegnoprsuVw] [file ...]\n",
 		    __progname);
 	exit(1);
 }

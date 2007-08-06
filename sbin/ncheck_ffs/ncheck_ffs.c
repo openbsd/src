@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.32 2007/07/09 17:12:17 thib Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.33 2007/08/06 19:16:05 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.32 2007/07/09 17:12:17 thib Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.33 2007/08/06 19:16:05 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -484,7 +484,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-ams] [-f format] [-i number [...]] filesystem\n",
+	fprintf(stderr,
+	    "usage: %s [-ams] [-f format] [-i number ...] filesystem\n",
 	    __progname);
 	exit(3);
 }

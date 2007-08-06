@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.17 2007/06/29 03:37:09 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.18 2007/08/06 19:16:05 sobrado Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: badsect.c,v 1.17 2007/06/29 03:37:09 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: badsect.c,v 1.18 2007/08/06 19:16:05 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 	int len;
 
 	if (argc < 3) {
-		fprintf(stderr, "usage: badsect bbdir blkno [ blkno ]\n");
+		fprintf(stderr, "usage: badsect bbdir sector ...\n");
 		exit(1);
 	}
 	if (chdir(argv[1]) < 0 || stat(".", &stbuf) < 0)

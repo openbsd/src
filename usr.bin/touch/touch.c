@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.16 2007/06/18 11:20:58 millert Exp $	*/
+/*	$OpenBSD: touch.c,v 1.17 2007/08/06 19:16:06 sobrado Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -296,6 +296,7 @@ usage(void)
 	extern char	*__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-acm] [-r file] [-t time] file ...\n", __progname);
+	    "usage: %s [-acm] [-r file] [-t [[CC]YY]MMDDhhmm[.SS]] file ...\n",
+	    __progname);
 	exit(1);
 }

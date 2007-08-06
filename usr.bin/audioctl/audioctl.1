@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.20 2007/05/31 19:20:07 jmc Exp $
+.\" $OpenBSD: audioctl.1,v 1.21 2007/08/06 19:16:06 sobrado Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 6 2007 $
 .Dt AUDIOCTL 1
 .Os
 .Sh NAME
@@ -47,13 +47,11 @@
 .Nm audioctl
 .Op Fl f Ar file
 .Op Fl n
-.Ar name
-.Op Ar ...
+.Ar name ...
 .Nm audioctl
 .Op Fl f Ar file
 .Op Fl n
-.Ar name Ns = Ns Ar value
-.Op Ar ...
+.Ar name Ns = Ns Ar value ...
 .Sh DESCRIPTION
 The
 .Nm

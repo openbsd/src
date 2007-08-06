@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.128 2007/05/27 21:14:06 ray Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.129 2007/08/06 19:16:06 sobrado Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -119,7 +119,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-flnQqRrtVvw] [-d root] [-e editor] [-s var=val]\n"
-	    "           [-T tmpdir] [-z level] command [...]\n", __progname);
+	    "           [-T tmpdir] [-z level] command ...\n", __progname);
 	exit(1);
 }
 

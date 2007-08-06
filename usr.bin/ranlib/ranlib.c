@@ -1,4 +1,4 @@
-/*	$OpenBSD: ranlib.c,v 1.6 2003/06/12 20:58:10 deraadt Exp $	*/
+/*	$OpenBSD: ranlib.c,v 1.7 2007/08/06 19:16:06 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ranlib.c	5.6 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: ranlib.c,v 1.6 2003/06/12 20:58:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ranlib.c,v 1.7 2007/08/06 19:16:06 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,6 +86,6 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: ranlib [-t] archive ...\n");
+	(void)fprintf(stderr, "usage: ranlib [-t] file ...\n");
 	exit(1);
 }

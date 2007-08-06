@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.15 2006/05/04 05:55:33 ray Exp $	*/
+/*	$OpenBSD: paste.c,v 1.16 2007/08/06 19:16:06 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.15 2006/05/04 05:55:33 ray Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.16 2007/08/06 19:16:06 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -255,7 +255,7 @@ void
 usage(void)
 {
 	extern char *__progname;
-	(void)fprintf(stderr, "usage: %s [-s] [-d delimiters] file ...\n",
-		      __progname);
+	(void)fprintf(stderr, "usage: %s [-s] [-d list] file ...\n",
+	    __progname);
 	exit(1);
 }

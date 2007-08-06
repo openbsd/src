@@ -1,4 +1,4 @@
-/*      $OpenBSD: apropos.c,v 1.12 2006/04/02 21:38:56 djm Exp $      */
+/*      $OpenBSD: apropos.c,v 1.13 2007/08/06 19:16:06 sobrado Exp $      */
 /*      $NetBSD: apropos.c,v 1.5 1995/09/04 20:46:20 tls Exp $      */
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: apropos.c,v 1.12 2006/04/02 21:38:56 djm Exp $";
+static char rcsid[] = "$OpenBSD: apropos.c,v 1.13 2007/08/06 19:16:06 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -217,6 +217,6 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: apropos [-C file] [-M path] [-m path] keyword [...]\n");
+	    "usage: apropos [-C file] [-M path] [-m path] keyword ...\n");
 	exit(1);
 }

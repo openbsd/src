@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.34 2007/06/04 20:40:10 otto Exp $	*/
+/*	$OpenBSD: man.c,v 1.35 2007/08/06 19:16:06 sobrado Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.34 2007/06/04 20:40:10 otto Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.35 2007/08/06 19:16:06 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -790,7 +790,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-achw] [-C file] [-M path] [-m path] "
-	    "[-S subsection] [-s section]\n\t   [section] name [...]\n",
+	    "[-S subsection] [-s section]\n\t   [section] name ...\n",
 	    __progname);
 	(void)fprintf(stderr, "       %s -f command\n", __progname);
 	(void)fprintf(stderr, "       %s -k keyword\n", __progname);

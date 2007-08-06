@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.12 2006/03/14 19:36:44 moritz Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.13 2007/08/06 19:16:06 sobrado Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -323,8 +323,8 @@ usage(void)
 
 	fprintf(stderr,
 	    "usage: %s [-f file] [-n] -a\n"
-	    "       %s [-f file] [-n] name [...]\n"
-	    "       %s [-f file] [-n] name=value [...]\n", __progname,
+	    "       %s [-f file] [-n] name ...\n"
+	    "       %s [-f file] [-n] name=value ...\n", __progname,
 		__progname, __progname);
 
 	exit(1);
