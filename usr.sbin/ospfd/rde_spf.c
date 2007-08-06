@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.62 2007/06/19 16:45:15 reyk Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.63 2007/08/06 11:32:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -774,8 +774,10 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh,
 			rn->invalid = 0;
 
 			r->invalid = 0;
-			return;
+			break;
 		}
+		if (rn)
+			continue;
 
 		if ((rn = calloc(1, sizeof(struct rt_nexthop))) == NULL)
 			fatal("rt_nexthop_add");
@@ -867,8 +869,9 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
      struct in_addr adv_rtr, enum path_type p_type, enum dst_type d_type,
      u_int8_t flags, u_int32_t tag)
 {
-	struct rt_node	*rte;
-	int		 better = 0, equal = 0;
+	struct rt_node		*rte;
+	struct rt_nexthop	*rn;
+	int			 better = 0, equal = 0;
 
 	if (vnh == NULL || TAILQ_EMPTY(vnh))	/* XXX remove */
 		fatalx("rt_update: invalid nexthop");
@@ -936,7 +939,8 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
 			return;
 
 		if (better) {
-			rt_nexthop_clear(rte);
+			TAILQ_FOREACH(rn, &rte->nexthop, entry)
+				rn->invalid = 1;
 
 			rte->area = area;
 			rte->cost = cost;
