@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020reg.h,v 1.5 2004/03/02 23:10:18 miod Exp $	*/
+/*	$OpenBSD: stp4020reg.h,v 1.6 2007/08/06 15:13:47 tom Exp $	*/
 /*	$NetBSD: stp4020reg.h,v 1.1 1998/11/22 22:14:35 pk Exp $	*/
 
 /*-
@@ -206,7 +206,7 @@
  *
  *	Each window has two window control registers associated with it to
  *	control the window's PCMCIA bus timing parameters, PC card address
- *	space that that window maps, and the base address in the
+ *	space that the window maps, and the base address in the
  *	selected PC card's address space."
  */
 #define	STP4020_WINDOW_SIZE		(1024*1024) /* 1MB */
