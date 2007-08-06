@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.77 2007/02/14 00:53:47 jsg Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.78 2007/08/06 08:28:09 tom Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -821,7 +821,7 @@ wdc_atapi_send_packet(chp, xfer, timeout, ret)
 	 * Limit length to what can be stuffed into the cylinder register
 	 * (16 bits).  Some CD-ROMs seem to interpret '0' as 65536,
 	 * but not all devices do that and it's not obvious from the
-	 * ATAPI spec that that behaviour should be expected.  If more
+	 * ATAPI spec that this behaviour should be expected.  If more
 	 * data is necessary, multiple data transfer phases will be done.
 	 */
 

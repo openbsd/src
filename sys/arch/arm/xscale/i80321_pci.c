@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_pci.c,v 1.2 2006/05/29 17:27:31 drahn Exp $	*/
+/*	$OpenBSD: i80321_pci.c,v 1.3 2007/08/06 08:28:09 tom Exp $	*/
 /*	$NetBSD: i80321_pci.c,v 1.7 2005/12/15 01:44:00 briggs Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ i80321_pci_conf_setup(struct i80321_softc *sc, pcitag_t tag, int offset,
 		if (ps->ps_d > (31 - 16))
 			return (1);
 		/*
-		 * NOTE: PCI-X requires that that devices updated their
+		 * NOTE: PCI-X requires that devices update their
 		 * PCIXSR on every config write with the device number
 		 * specified in AD[15:11].  If we don't set this field,
 		 * each device could end of thinking it is at device 0,

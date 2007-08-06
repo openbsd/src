@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.18 2006/10/28 06:34:19 otto Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.19 2007/08/06 08:28:09 tom Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ bpf_validate(f, len)
 			break;
 		case BPF_JMP:
 			/*
-			 * Check that that jumps are forward, and within 
+			 * Check that jumps are forward, and within 
 			 * the code block.
 			 */
 			from = i + 1;

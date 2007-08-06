@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.33 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.34 2007/08/06 08:28:09 tom Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -197,7 +197,7 @@ ncr53c9x_attach(sc, adapter, dev)
 	/*
 	 * Allocate SCSI message buffers.
 	 * Front-ends can override allocation to avoid alignment
-	 * handling in the DMA engines. Note that that ncr53c9x_msgout()
+	 * handling in the DMA engines. Note that ncr53c9x_msgout()
 	 * can request a 1 byte DMA transfer.
 	 */
 	if (sc->sc_omess == NULL)
