@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.11 2007/03/29 15:00:15 gwk Exp $	*/
+/*	$OpenBSD: bios.c,v 1.12 2007/08/06 16:12:25 gwk Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -77,6 +77,9 @@ void
 bios_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bios_softc *sc = (struct bios_softc *)self;
+	struct smbios_struct_bios *sb;
+	struct smbtable bios;
+	char scratch[64];
 	vaddr_t va;
 	paddr_t pa, end;
 	u_int8_t *p;
@@ -121,6 +124,22 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 
 		printf(": SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
 		    hdr->majrev, hdr->minrev, hdr->addr, hdr->count);
+
+		bios.cookie = 0;
+		if (smbios_find_table(SMBIOS_TYPE_BIOS, &bios)) {
+			sb = bios.tblhdr;
+			printf("\n%s:", sc->sc_dev.dv_xname);
+			if ((smbios_get_string(&bios, sb->vendor,
+			    scratch, sizeof(scratch))) != NULL)
+				printf(" vendor %s", scratch);
+			if ((smbios_get_string(&bios, sb->version,
+			    scratch, sizeof(scratch))) != NULL)
+				printf(" version \"%s\"", scratch);
+			if ((smbios_get_string(&bios, sb->release,
+			    scratch, sizeof(scratch))) != NULL)
+				printf(" date %s", scratch);
+		}
+
 		smbios_info(sc->sc_dev.dv_xname);
 		break;
 	}
