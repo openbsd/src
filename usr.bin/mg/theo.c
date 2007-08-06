@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.99 2006/06/01 00:38:35 kjell Exp $	*/
+/*	$OpenBSD: theo.c,v 1.100 2007/08/06 01:08:52 djm Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -144,7 +144,8 @@ static const char *talk[] = {
 	"wavelan is a battle field",
 	"You are in a maze of gpio pins, all alike, all undocumented, and a few are wired to bombs.",
 	"And that is why humppa sucks... cause it has no cause.",
-	"cache aliasing is a problem that would have stopped in 1992 if someone had killed about 5 people who worked at Sun."
+	"cache aliasing is a problem that would have stopped in 1992 if someone had killed about 5 people who worked at Sun.",
+	"Don't spread rumours about me being gentle.",
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
