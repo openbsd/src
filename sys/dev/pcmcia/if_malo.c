@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.41 2007/08/06 14:21:24 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.42 2007/08/06 22:51:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -831,18 +831,20 @@ cmalo_rx(struct malo_softc *sc)
 	struct malo_rx_desc *rxdesc;
 	struct mbuf *m;
 	uint8_t *data;
-	uint16_t psize, *uc;
+	uint16_t psize;
 	int i;
 
 	splassert(IPL_NET);
 
 	/* read the whole RX packet which is always 802.3 */
 	psize = MALO_READ_2(sc, MALO_REG_DATA_READ_LEN);
-	uc = (uint16_t *)sc->sc_data;
-	for (i = 0; i < psize / 2; i++)
-		uc[i] = htole16(MALO_READ_2(sc, MALO_REG_DATA_READ));
-	if (psize & 0x0001)
-		uc[i] = MALO_READ_1(sc, MALO_REG_DATA_READ);
+	if (psize & 0x0001) {
+		MALO_READ_MULTI_2(sc, MALO_REG_DATA_READ, sc->sc_data,
+		    psize - 1);
+		data = (uint8_t *)sc->sc_data;
+		data[psize - 1] = MALO_READ_1(sc, MALO_REG_DATA_READ);
+	} else 
+		MALO_READ_MULTI_2(sc, MALO_REG_DATA_READ, sc->sc_data, psize);
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_RX_DL_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_RX_DL_OVER);
 
@@ -922,8 +924,7 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct malo_tx_desc *txdesc = sc->sc_data;
 	uint8_t *data;
-	uint16_t psize, *uc;
-	int i;
+	uint16_t psize;
 
 	splassert(IPL_NET);
 
@@ -942,11 +943,13 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 
 	/* send TX packet to the device */
 	MALO_WRITE_2(sc, MALO_REG_DATA_WRITE_LEN, psize);
-	uc = (uint16_t *)sc->sc_data;
-	for (i = 0; i < psize / 2; i++)
-		MALO_WRITE_2(sc, MALO_REG_DATA_WRITE, uc[i]);
-	if (psize & 0x0001)
-		MALO_WRITE_1(sc, MALO_REG_DATA_WRITE, uc[i]);
+	if (psize & 0x0001) {
+		MALO_WRITE_MULTI_2(sc, MALO_REG_DATA_WRITE, sc->sc_data,
+		    psize - 1);
+		data = (uint8_t *)sc->sc_data;
+		MALO_WRITE_1(sc, MALO_REG_DATA_WRITE, data[psize - 1]);
+	} else
+		MALO_WRITE_MULTI_2(sc, MALO_REG_DATA_WRITE, sc->sc_data, psize);
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_TX_DL_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_TX_DL_OVER);
 

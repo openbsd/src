@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.20 2007/08/05 14:53:02 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.21 2007/08/06 22:51:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -22,14 +22,14 @@
 #define MALO_READ_2(sc, reg) \
 	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg))
 #define	MALO_READ_MULTI_2(sc, reg, off, size) \
-	bus_space_read_multi_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (off), \
+	bus_space_read_raw_multi_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (off), \
 	(size))
 #define MALO_WRITE_1(sc, reg, val) \
 	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
 #define MALO_WRITE_2(sc, reg, val) \
 	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
 #define MALO_WRITE_MULTI_2(sc, reg, off, size) \
-	bus_space_write_multi_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (off), \
+	bus_space_write_raw_multi_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (off), \
 	(size))
 
 /* miscellaneous */
