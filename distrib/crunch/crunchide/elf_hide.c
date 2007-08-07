@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.10 2006/03/23 02:49:59 deraadt Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.11 2007/08/07 05:42:05 ray Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -29,12 +29,13 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include <sys/exec.h>
 #ifdef _NLIST_DO_ELF
 #include <sys/exec_elf.h>
@@ -383,8 +384,8 @@ reorder_syms(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 
 	tmpsymtab = (Elf_Sym *) calloc(1, symtabsize);
 	symmap = (Symmap *) calloc(nsyms, sizeof(Symmap));
-
-	assert(NULL != tmpsymtab);
+	if (!tmpsymtab || !symmap)
+		errx(5, "calloc: %s", strerror(ENOMEM));
 
 	bcopy(symtab, tmpsymtab, symtabsize);
 
