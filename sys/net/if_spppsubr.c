@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.52 2007/06/06 10:04:36 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.53 2007/08/07 17:15:13 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -500,7 +500,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		default:
 			if (sp->state[IDX_LCP] == STATE_OPENED)
 				sppp_cp_send (sp, PPP_LCP, PROTO_REJ,
-				    ++sp->pp_seq, m->m_pkthdr.len + 2, prej);
+				    ++sp->pp_seq, m->m_len + 2, prej);
 			if (debug)
 				log(LOG_DEBUG,
 				    SPP_FMT "invalid input protocol "
