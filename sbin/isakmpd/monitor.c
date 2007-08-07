@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.69 2007/04/08 11:15:30 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.70 2007/08/07 20:09:39 markus Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -517,6 +517,7 @@ m_priv_getfd(void)
 	must_read(&mode, sizeof mode);
 
 	if (m_priv_local_sanitize_path(path, sizeof path, flags) != 0) {
+		log_print("m_priv_getfd: illegal path \"%s\"", path);
 		err = EACCES;
 		v = -1;
 	} else {
@@ -707,7 +708,6 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 		return 0;
 
 bad_path:
-	log_print("m_priv_local_sanitize_path: illegal path \"%.1023s\"", path);
 	return 1;
 }
 
@@ -801,6 +801,7 @@ m_priv_req_readdir()
 	char path[MAXPATHLEN];
 	DIR *dp;
 	struct dirent *file;
+	struct stat sb;
 	int off, size, fd, ret, serrno;
 
 	must_read(&len, sizeof len);
@@ -829,18 +830,18 @@ m_priv_req_readdir()
 	while ((file = readdir(dp)) != NULL) {
 		strlcpy(path + off, file->d_name, size);
 
-		if (file->d_type != DT_REG && file->d_type != DT_LNK)
-				continue;
-
 		if (m_priv_local_sanitize_path(path, sizeof path, O_RDONLY)
-		    != 0) {
-			log_errorx("m_priv_req_readdir: invalid dir entry");
+		    != 0)
 			continue;
-		}
 		fd = open(path, O_RDONLY, 0);
 		if (fd == -1) {
 			log_error("m_priv_req_readdir: open "
 			    "(\"%s\", O_RDONLY, 0) failed", path);
+			continue;
+		}
+		if ((fstat(fd, &sb) == -1) ||
+		    !(S_ISREG(sb.st_mode) || S_ISLNK(sb.st_mode))) {
+			close(fd);
 			continue;
 		}
 
