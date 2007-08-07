@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.68 2007/07/29 20:22:07 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.69 2007/08/07 21:20:54 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1042,10 +1042,11 @@ device_register(struct device *dev, void *aux)
 	busname = busdev->dv_cfdata->cf_driver->cd_name;
 	if (strcmp(busname, "mainbus") == 0 || strcmp(busname, "upa") == 0)
 		node = ma->ma_node;
+	else if (strcmp(busname, "sbus") == 0 ||
+	    strcmp(busname, "dma") == 0 || strcmp(busname, "ledma") == 0)
+		node = sa->sa_node;
 	else if (strcmp(busname, "pci") == 0)
 		node = PCITAG_NODE(pa->pa_tag);
-	else if (strcmp(busname, "sbus") == 0)
-		node = sa->sa_node;
 
 	if (node == bootnode) {
 		nail_bootdev(dev, bp);
