@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1253 2007/08/02 07:33:58 jakemsr Exp 
+ *	OpenBSD: pcidevs,v 1.1254 2007/08/07 08:37:39 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -997,6 +997,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_X1600_M	0x71c5		/* Radeon Mobility X1600 */
 #define	PCI_PRODUCT_ATI_RADEON_X1600_PRO	0x71c2		/* Radeon X1600 PRO */
 #define	PCI_PRODUCT_ATI_RADEON_X1600_PRO2	0x71e2		/* Radeon X1600 PRO (Secondary) */
+#define	PCI_PRODUCT_ATI_RV530_M56	0x71d4		/* Mobility FireGL V5250 */
 #define	PCI_PRODUCT_ATI_RADEON_RX1650_XT	0x7291		/* Radeon RX1650 XT */
 #define	PCI_PRODUCT_ATI_RADEON_RX1650_XT2	0x72b1		/* Radeon RX1650 XT (Secondary) */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */

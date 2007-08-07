@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1253 2007/08/02 07:33:58 jakemsr Exp 
+ *	OpenBSD: pcidevs,v 1.1254 2007/08/07 08:37:39 matthieu Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2438,6 +2438,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1600_PRO2,
 	    "Radeon X1600 PRO (Secondary)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV530_M56,
+	    "Mobility FireGL V5250",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT,
