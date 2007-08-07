@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.8 2007/08/07 09:48:23 markus Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -42,6 +42,8 @@
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
 #include <crypto/rijndael.h>
+#include <crypto/xform.h>
+#include <crypto/cryptosoft.h>
 #endif
 
 #define SB_GLD_MSR_CAP		0x58002000	/* RO - Capabilities */
@@ -151,6 +153,7 @@ struct glxsb_session {
 	uint8_t		ses_iv[SB_AES_BLOCK_SIZE];
 	int		ses_klen;
 	int		ses_used;
+	struct swcr_data *ses_swd;
 };
 #endif /* CRYPTO */
 
@@ -310,6 +313,12 @@ glxsb_crypto_setup(struct glxsb_softc *sc)
 
 	bzero(algs, sizeof(algs));
 	algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_RIPEMD160_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA2_256_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA2_384_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	sc->sc_cid = crypto_get_driverid(0);
 	if (sc->sc_cid < 0)
@@ -330,11 +339,12 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 {
 	struct glxsb_softc *sc = glxsb_sc;
 	struct glxsb_session *ses = NULL;
-	int sesn;
+	struct auth_hash	*axf;
+	struct cryptoini	*c;
+	struct swcr_data	*swd;
+	int sesn, i;
 
-	if (sc == NULL || sidp == NULL || cri == NULL ||
-	    cri->cri_next != NULL || cri->cri_alg != CRYPTO_AES_CBC ||
-	    cri->cri_klen != 128)
+	if (sc == NULL || sidp == NULL || cri == NULL)
 		return (EINVAL);
 
 	for (sesn = 0; sesn < sc->sc_nsessions; sesn++) {
@@ -362,11 +372,92 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 	bzero(ses, sizeof(*ses));
 	ses->ses_used = 1;
 
-	get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
-	ses->ses_klen = cri->cri_klen;
+	for (c = cri; c != NULL; c = c->cri_next) {
+		switch (c->cri_alg) {
+		case CRYPTO_AES_CBC:
+			if (c->cri_klen != 128) {
+				glxsb_crypto_freesession(sesn);
+				return (EINVAL);
+			}
 
-	/* Copy the key (Geode LX wants the primary key only) */
-	bcopy(cri->cri_key, ses->ses_key, sizeof(ses->ses_key));
+			get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
+			ses->ses_klen = c->cri_klen;
+
+			/* Copy the key (Geode LX wants the primary key only) */
+			bcopy(c->cri_key, ses->ses_key, sizeof(ses->ses_key));
+			break;
+
+		case CRYPTO_MD5_HMAC:
+			axf = &auth_hash_hmac_md5_96;
+			goto authcommon;
+		case CRYPTO_SHA1_HMAC:
+			axf = &auth_hash_hmac_sha1_96;
+			goto authcommon;
+		case CRYPTO_RIPEMD160_HMAC:
+			axf = &auth_hash_hmac_ripemd_160_96;
+			goto authcommon;
+		case CRYPTO_SHA2_256_HMAC:
+			axf = &auth_hash_hmac_sha2_256_96;
+			goto authcommon;
+		case CRYPTO_SHA2_384_HMAC:
+			axf = &auth_hash_hmac_sha2_384_96;
+			goto authcommon;
+		case CRYPTO_SHA2_512_HMAC:
+			axf = &auth_hash_hmac_sha2_512_96;
+		authcommon:
+			MALLOC(swd, struct swcr_data *,
+			    sizeof(struct swcr_data), M_CRYPTO_DATA,
+			    M_NOWAIT);
+			if (swd == NULL) {
+				glxsb_crypto_freesession(sesn);
+				return (ENOMEM);
+			}
+			bzero(swd, sizeof(struct swcr_data));
+			ses->ses_swd = swd;
+
+			swd->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
+			    M_NOWAIT);
+			if (swd->sw_ictx == NULL) {
+				glxsb_crypto_freesession(sesn);
+				return (ENOMEM);
+			}
+
+			swd->sw_octx = malloc(axf->ctxsize, M_CRYPTO_DATA,
+			    M_NOWAIT);
+			if (swd->sw_octx == NULL) {
+				glxsb_crypto_freesession(sesn);
+				return (ENOMEM);
+			}
+
+			for (i = 0; i < c->cri_klen / 8; i++)
+				c->cri_key[i] ^= HMAC_IPAD_VAL;
+
+			axf->Init(swd->sw_ictx);
+			axf->Update(swd->sw_ictx, c->cri_key, c->cri_klen / 8);
+			axf->Update(swd->sw_ictx, hmac_ipad_buffer,
+			    HMAC_BLOCK_LEN - (c->cri_klen / 8));
+
+			for (i = 0; i < c->cri_klen / 8; i++)
+				c->cri_key[i] ^= (HMAC_IPAD_VAL ^
+				    HMAC_OPAD_VAL);
+
+			axf->Init(swd->sw_octx);
+			axf->Update(swd->sw_octx, c->cri_key, c->cri_klen / 8);
+			axf->Update(swd->sw_octx, hmac_opad_buffer,
+			    HMAC_BLOCK_LEN - (c->cri_klen / 8));
+
+			for (i = 0; i < c->cri_klen / 8; i++)
+				c->cri_key[i] ^= HMAC_OPAD_VAL;
+
+			swd->sw_axf = axf;
+			swd->sw_alg = c->cri_alg;
+
+			break;
+		default:
+			glxsb_crypto_freesession(sesn);
+			return (EINVAL);
+		}
+	}
 
 	*sidp = GLXSB_SID(0, sesn);
 	return (0);
@@ -376,6 +467,8 @@ int
 glxsb_crypto_freesession(uint64_t tid)
 {
 	struct glxsb_softc *sc = glxsb_sc;
+	struct swcr_data *swd;
+	struct auth_hash *axf;
 	int sesn;
 	uint32_t sid = ((uint32_t)tid) & 0xffffffff;
 
@@ -384,6 +477,20 @@ glxsb_crypto_freesession(uint64_t tid)
 	sesn = GLXSB_SESSION(sid);
 	if (sesn >= sc->sc_nsessions)
 		return (EINVAL);
+	if (sc->sc_sessions[sesn].ses_swd) {
+		swd = sc->sc_sessions[sesn].ses_swd;
+		axf = swd->sw_axf;
+
+		if (swd->sw_ictx) {
+			bzero(swd->sw_ictx, axf->ctxsize);
+			free(swd->sw_ictx, M_CRYPTO_DATA);
+		}
+		if (swd->sw_octx) {
+			bzero(swd->sw_octx, axf->ctxsize);
+			free(swd->sw_octx, M_CRYPTO_DATA);
+		}
+		FREE(swd, M_CRYPTO_DATA);
+	}
 	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 	return (0);
 }
@@ -458,41 +565,36 @@ glxsb_aes(struct glxsb_softc *sc, uint32_t control, uint32_t psrc,
 	printf("%s: operation failed to complete\n", sc->sc_dev.dv_xname);
 }
 
-int
-glxsb_crypto_process(struct cryptop *crp)
+static int
+glxsb_crypto_swauth(struct cryptop *crp, struct cryptodesc *crd,
+    struct swcr_data *sw, caddr_t buf)
 {
-	struct glxsb_softc *sc = glxsb_sc;
-	struct glxsb_session *ses;
-	struct cryptodesc *crd;
+	int	type;
+
+	if (crp->crp_flags & CRYPTO_F_IMBUF)
+		type = CRYPTO_BUF_MBUF;
+	else
+		type = CRYPTO_BUF_IOV;
+		
+	return (swcr_authcompute(crp, crd, sw, buf, type));
+}
+
+static int
+glxsb_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
+    struct glxsb_session *ses, struct glxsb_softc *sc, caddr_t buf)
+{
 	char *op_src, *op_dst;
 	uint32_t op_psrc, op_pdst;
 	uint8_t op_iv[SB_AES_BLOCK_SIZE], *piv;
-	int sesn, err = 0;
+	int err = 0;
 	int len, tlen, xlen;
 	int offset;
 	uint32_t control;
-	int s;
 
-	s = splnet();
-
-	if (crp == NULL || crp->crp_callback == NULL) {
+	if (crd == NULL || (crd->crd_len % SB_AES_BLOCK_SIZE) != 0) {
 		err = EINVAL;
 		goto out;
 	}
-	crd = crp->crp_desc;
-	if (crd == NULL || crd->crd_next != NULL ||
-	    crd->crd_alg != CRYPTO_AES_CBC ||
-	    (crd->crd_len % SB_AES_BLOCK_SIZE) != 0) {
-		err = EINVAL;
-		goto out;
-	}
-
-	sesn = GLXSB_SESSION(crp->crp_sid);
-	if (sesn >= sc->sc_nsessions) {
-		err = EINVAL;
-		goto out;
-	}
-	ses = &sc->sc_sessions[sesn];
 
 	/* How much of our buffer will we need to use? */
 	xlen = crd->crd_len > GLXSB_MAX_AES_LEN ?
@@ -605,8 +707,65 @@ glxsb_crypto_process(struct cryptop *crp)
 	}
 
 	/* All AES processing has now been done. */
-
 	bzero(sc->sc_dma.dma_vaddr, xlen * 2);
+
+out:
+	return (err);
+}
+
+int
+glxsb_crypto_process(struct cryptop *crp)
+{
+	struct glxsb_softc *sc = glxsb_sc;
+	struct glxsb_session *ses;
+	struct cryptodesc *crd;
+	int sesn,err = 0;
+	int s;
+
+	s = splnet();
+
+	if (crp == NULL || crp->crp_callback == NULL) {
+		err = EINVAL;
+		goto out;
+	}
+	crd = crp->crp_desc;
+	if (crd == NULL) {
+		err = EINVAL;
+		goto out;
+	}
+
+	sesn = GLXSB_SESSION(crp->crp_sid);
+	if (sesn >= sc->sc_nsessions) {
+		err = EINVAL;
+		goto out;
+	}
+	ses = &sc->sc_sessions[sesn];
+
+	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+		switch (crd->crd_alg) {
+		case CRYPTO_AES_CBC:
+			if ((err = glxsb_crypto_encdec(crp, crd, ses, sc,
+			    crp->crp_buf)) != 0)
+				goto out;
+			break;
+
+		case CRYPTO_MD5_HMAC:
+		case CRYPTO_SHA1_HMAC:
+		case CRYPTO_RIPEMD160_HMAC:
+		case CRYPTO_SHA2_256_HMAC:
+		case CRYPTO_SHA2_384_HMAC:
+		case CRYPTO_SHA2_512_HMAC:
+			if ((err = glxsb_crypto_swauth(crp, crd, ses->ses_swd,
+			    crp->crp_buf)) != 0)
+				goto out;
+			break;
+
+		default:
+			err = EINVAL;
+			goto out;
+		}
+	}
+
 out:
 	crp->crp_etype = err;
 	crypto_done(crp);
