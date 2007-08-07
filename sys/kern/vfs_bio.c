@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.98 2007/07/09 15:30:25 miod Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.99 2007/08/07 04:32:45 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -84,6 +84,8 @@ u_long	bufhash;
 
 
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
+int bqpages[BQUEUES];		/* pages allocated, per queue */
+int bqpagelow;
 int needbuffer;
 struct bio_ops bioops;
 
@@ -162,6 +164,7 @@ void
 bremfree(struct buf *bp)
 {
 	struct bqueues *dp = NULL;
+	int queue;
 
 	/*
 	 * We only calculate the head of the freelist when removing
@@ -178,9 +181,12 @@ bremfree(struct buf *bp)
 			panic("bremfree: lost tail");
 	}
 	numfreepages -= btoc(bp->b_bufsize);
-	if (!ISSET(bp->b_flags, B_DELWRI))
+	if (!ISSET(bp->b_flags, B_DELWRI)) {
+		int qs = bp->b_bufsize;
+		queue = size2cqueue(&qs);
 		numcleanpages -= btoc(bp->b_bufsize);
-	else
+		bqpages[queue] -= btoc(bp->b_bufsize);
+	} else
 		numdirtypages -= btoc(bp->b_bufsize);
 	TAILQ_REMOVE(dp, bp, b_freelist);
 }
@@ -188,7 +194,7 @@ bremfree(struct buf *bp)
 void
 buf_init(struct buf *bp, int size)
 {
-	int npages;
+	int npages, queue;
 
 	splassert(IPL_BIO);
 
@@ -198,10 +204,12 @@ buf_init(struct buf *bp, int size)
 	bp->b_freelist.tqe_next = NOLIST;
 	bp->b_synctime = time_uptime + 300;
 	bp->b_dev = NODEV;
+	queue = size2cqueue(&size);
 	LIST_INIT(&bp->b_dep);
 	numbufpages += npages;
 	numfreepages += npages;
 	numcleanpages += npages;
+	bqpages[queue] += npages;
 	if (maxcleanpages < numcleanpages)
 		maxcleanpages = numcleanpages;
 }
@@ -338,6 +346,12 @@ bufinit(void)
 	minaddr = vm_map_min(kernel_map);
 	buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    ptoa(bufpages), 0, FALSE, NULL);
+
+	/* 
+	 * XXX don't starve any one queue below 5% of the total number
+	 * of buffer cache pages.
+	 */
+	bqpagelow = bufpages / 20; 
 
 	bufhashtbl = hashinit(bufpages / 4, M_CACHE, M_WAITOK, &bufhash);
 	hidirtypages = (bufpages / 4) * 3;
@@ -769,6 +783,7 @@ brelse(struct buf *bp)
 		qs = bp->b_bufsize;
 		queue = size2cqueue(&qs);
 		numcleanpages += btoc(bp->b_bufsize);
+		bqpages[queue] += btoc(bp->b_bufsize);
 		if (maxcleanpages < numcleanpages)
 			maxcleanpages = numcleanpages;
 		binsheadfree(bp, &bufqueues[queue]);
@@ -784,6 +799,7 @@ brelse(struct buf *bp)
 
 		if (!ISSET(bp->b_flags, B_DELWRI)) {
 			numcleanpages += btoc(bp->b_bufsize);
+			bqpages[queue] += btoc(bp->b_bufsize);
 			if (maxcleanpages < numcleanpages)
 				maxcleanpages = numcleanpages;
 			bufq = &bufqueues[queue];
@@ -960,11 +976,14 @@ getsome:
 	queue = size2cqueue(&qs);
 	bp = buf_get(qs); /* XXX use qs instead and no need in buf_get? */
 	if (bp == NULL) {
-		/* no free ones, try to reuse a clean one.. */
-		for (bp = TAILQ_FIRST(&bufqueues[queue]);
-		     bp != NULL && queue < BQUEUES; queue++) {
-				/* XXX */
-		}
+		/*
+		 * No free ones, try to reuse a clean one of the same or
+		 * larger size.
+		 */
+		do {
+			bp = TAILQ_FIRST(&bufqueues[queue]);
+			queue++;
+		} while (bp == NULL && queue < BQUEUES);
 	}
 	if (bp == NULL) {
 		/* we couldn't reuse a free one, nothing of the right size */
@@ -975,7 +994,9 @@ getsome:
 		int freemax = 20; 
 		for (q = 1; q < BQUEUES; q++) {
 			int i = freemax;
-			while ((bp = TAILQ_FIRST(&bufqueues[q])) && i--) {
+			while (bqpages[q] > bqpagelow
+			    && (bp = TAILQ_FIRST(&bufqueues[q]))
+			    && i--) {
 				gotsome++;
 				bremfree(bp);
 				if (LIST_FIRST(&bp->b_dep) != NULL)

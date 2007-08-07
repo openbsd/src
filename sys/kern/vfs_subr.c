@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.154 2007/06/01 17:29:10 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.155 2007/08/07 04:32:45 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -120,12 +120,7 @@ void
 vntblinit(void)
 {
 	/* buffer cache may need a vnode for each buffer */
-	/* 
-	 * XXX note this is different from desiredvnodes, which is
-	 * XXX the old static value computed from MAXUSERS which is
-	 * XXX used for sizing may other subsystems (namecache, softdeps, etc)
-	 */
-	maxvnodes = bufpages;
+	maxvnodes = desiredvnodes;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
 	    &pool_allocator_nointr);
 	TAILQ_INIT(&vnode_hold_list);
