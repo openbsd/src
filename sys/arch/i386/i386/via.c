@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.10 2007/05/27 07:17:47 tedu Exp $	*/
+/*	$OpenBSD: via.c,v 1.11 2007/08/07 09:45:24 markus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -188,6 +188,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				cw0 = C3_CRYPT_CWLO_KEY256;
 				break;
 			default:
+				viac3_crypto_freesession(sesn);
 				return (EINVAL);
 			}
 			cw0 |= C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_SW |
@@ -276,6 +277,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 			break;
 		default:
+			viac3_crypto_freesession(sesn);
 			return (EINVAL);
 		}
 	}
