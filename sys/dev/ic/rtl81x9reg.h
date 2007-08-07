@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.40 2007/07/16 19:15:01 millert Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.41 2007/08/07 12:19:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -894,7 +894,7 @@ struct rl_softc {
 
 #define RL_PSTATE_MASK		0x0003
 #define RL_PSTATE_D0		0x0000
-#define RL_PSTATE_D1		0x0002
+#define RL_PSTATE_D1		0x0001
 #define RL_PSTATE_D2		0x0002
 #define RL_PSTATE_D3		0x0003
 #define RL_PME_EN		0x0010
