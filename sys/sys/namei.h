@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.19 2007/06/02 01:34:50 thib Exp $	*/
+/*	$OpenBSD: namei.h,v 1.20 2007/08/07 07:41:59 thib Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ struct nameidata {
 		char	*cn_pnbuf;	/* pathname buffer */
 		char	*cn_nameptr;	/* pointer to looked up name */
 		long	cn_namelen;	/* length of looked up component */
-		u_long	cn_hash;	/* hash value of looked up name */
+		u_int32_t cn_hash;	/* hash value of looked up name */
 		long	cn_consume;	/* chars to consume in lookup() */
 	} ni_cnd;
 };

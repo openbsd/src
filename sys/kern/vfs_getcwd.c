@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.11 2007/05/30 04:27:42 beck Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.12 2007/08/07 07:41:59 thib Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -213,9 +213,11 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 {
 	struct vnode *lvp, *uvp = NULL;
 	struct proc *p = curproc;
+	char *obp;
 	int error, vpid;
 
 	lvp = *lvpp;
+	obp = *bpp;	/* Save orginal position to restore to on error */
 
 	error = cache_revlookup(lvp, uvpp, bpp, bufp);
 	if (error) {
@@ -254,8 +256,10 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 		*uvpp = NULL;
 		
 		error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
-		if (!error)
+		if (!error) {
+			*bpp = obp; /* restore the buffer */
 			return (-1);
+		}
 	}
 
 	vrele(lvp);
