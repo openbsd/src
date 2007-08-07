@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.42 2007/08/06 22:51:18 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.43 2007/08/07 11:44:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -796,7 +796,7 @@ cmalo_intr(void *arg)
 		cmalo_rx(sc);
 	if (intr & MALO_VAL_HOST_INTR_CMD)
 		/* command response */
-		sc->sc_cmd_running = 0;
+		wakeup(sc);
 
 	return (1);
 }
@@ -1840,13 +1840,7 @@ cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 		return (0);
 
 	/* wait for the command response */
-	sc->sc_cmd_running = 1;
-	for (i = 0; i < 1000; i++) {
-		if (sc->sc_cmd_running == 0)
-			break;
-		tsleep(sc, 0, "malocmd", 1);
-	}
-	if (sc->sc_cmd_running) {
+	if (tsleep(sc, 0, "malocmd", 500)) {
 		printf("%s: timeout while waiting for cmd response!\n",
 		    sc->sc_dev.dv_xname);
 		return (EIO);
