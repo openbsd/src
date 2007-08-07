@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.51 2006/11/17 09:21:52 jmc Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.52 2007/08/07 11:30:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -735,9 +735,10 @@ pipeclose(struct pipe *cpipe)
 		 * If the other side is blocked, wake it up saying that
 		 * we want to close it down.
 		 */
+		cpipe->pipe_state |= PIPE_EOF;
 		while (cpipe->pipe_busy) {
 			wakeup(cpipe);
-			cpipe->pipe_state |= PIPE_WANT | PIPE_EOF;
+			cpipe->pipe_state |= PIPE_WANT;
 			tsleep(cpipe, PRIBIO, "pipecl", 0);
 		}
 
