@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.71 2007/08/02 07:24:46 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.72 2007/08/08 05:51:23 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -940,9 +940,11 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	sc->sc_eof = 0;
 	sc->sc_playdrop = 0;
 
-	sc->sc_full_duplex =
+	sc->sc_full_duplex = 0;
+/* doesn't always work right on SB.
 		(flags & (FWRITE|FREAD)) == (FWRITE|FREAD) &&
 		(sc->hw_if->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX);
+*/
 
 	mode = 0;
 	if (flags & FREAD) {
