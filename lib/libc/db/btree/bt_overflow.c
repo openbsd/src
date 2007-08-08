@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_overflow.c,v 1.9 2005/08/05 13:02:59 espie Exp $	*/
+/*	$OpenBSD: bt_overflow.c,v 1.10 2007/08/08 23:57:19 ray Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -89,7 +89,7 @@ __ovfl_get(BTREE *t, void *p, size_t *ssz, void **buf, size_t *bufsz)
 #endif
 	/* Make the buffer bigger as necessary. */
 	if (*bufsz < sz) {
-		tp = (char *)(*buf == NULL ? malloc(sz) : realloc(*buf, sz));
+		tp = realloc(*buf, sz);
 		if (tp == NULL)
 			return (RET_ERROR);
 		*buf = tp;

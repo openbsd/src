@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_utils.c,v 1.9 2005/08/05 13:03:00 espie Exp $	*/
+/*	$OpenBSD: bt_utils.c,v 1.10 2007/08/08 23:57:19 ray Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -80,8 +80,7 @@ __bt_ret(BTREE *t, EPG *e, DBT *key, DBT *rkey, DBT *data, DBT *rdata, int copy)
 		key->data = rkey->data;
 	} else if (copy || F_ISSET(t, B_DB_LOCK)) {
 		if (bl->ksize > rkey->size) {
-			p = (void *)(rkey->data == NULL ?
-			    malloc(bl->ksize) : realloc(rkey->data, bl->ksize));
+			p = realloc(rkey->data, bl->ksize);
 			if (p == NULL)
 				return (RET_ERROR);
 			rkey->data = p;
@@ -107,9 +106,7 @@ dataonly:
 	} else if (copy || F_ISSET(t, B_DB_LOCK)) {
 		/* Use +1 in case the first record retrieved is 0 length. */
 		if (bl->dsize + 1 > rdata->size) {
-			p = (void *)(rdata->data == NULL ?
-			    malloc(bl->dsize + 1) :
-			    realloc(rdata->data, bl->dsize + 1));
+			p = realloc(rdata->data, bl->dsize + 1);
 			if (p == NULL)
 				return (RET_ERROR);
 			rdata->data = p;
