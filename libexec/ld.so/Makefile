@@ -1,6 +1,16 @@
-#	$OpenBSD: Makefile,v 1.35 2006/12/26 22:36:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.36 2007/08/08 21:04:13 deraadt Exp $
 
 SUBDIR=ldconfig ldd
+
+MAN=	ld.so.1
+
+.include <bsd.own.mk>
+.if defined(NOPIC)
+NOPROG=
+.else
+PROG=	ld.so
+.endif
+
 VPATH=${.CURDIR}/../../lib/libc/string
 
 SRCS=	ldasm.S loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
@@ -11,8 +21,6 @@ SRCS+=	library_mquery.c
 SRCS+=	library.c
 .endif
 
-PROG=	ld.so
-MAN=	ld.so.1
 
 .include "${.CURDIR}/${MACHINE_ARCH}/Makefile.inc"
 .PATH:	${.CURDIR}/${MACHINE_ARCH}
