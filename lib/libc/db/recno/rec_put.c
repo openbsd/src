@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_put.c,v 1.10 2005/08/05 13:03:00 espie Exp $	*/
+/*	$OpenBSD: rec_put.c,v 1.11 2007/08/08 07:16:50 ray Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -79,9 +79,7 @@ __rec_put(const DB *dbp, DBT *key, const DBT *data, u_int flags)
 			goto einval;
 
 		if (t->bt_rdata.size < t->bt_reclen) {
-			tp = t->bt_rdata.data == NULL ?
-			    malloc(t->bt_reclen) :
-			    realloc(t->bt_rdata.data, t->bt_reclen);
+			tp = realloc(t->bt_rdata.data, t->bt_reclen);
 			if (tp == NULL)
 				return (RET_ERROR);
 			t->bt_rdata.data = tp;

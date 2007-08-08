@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_get.c,v 1.10 2005/08/05 13:03:00 espie Exp $	*/
+/*	$OpenBSD: rec_get.c,v 1.11 2007/08/08 07:16:50 ray Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -119,9 +119,7 @@ __rec_fpipe(BTREE *t, recno_t top)
 	void *tp;
 
 	if (t->bt_rdata.size < t->bt_reclen) {
-		tp = t->bt_rdata.data == NULL ?
-		    malloc(t->bt_reclen) :
-		    realloc(t->bt_rdata.data, t->bt_reclen);
+		tp = realloc(t->bt_rdata.data, t->bt_reclen);
 		if (tp == NULL)
 			return (RET_ERROR);
 		t->bt_rdata.data = tp;
@@ -192,9 +190,7 @@ __rec_vpipe(BTREE *t, recno_t top)
 			if (sz == 0) {
 				len = p - (u_char *)t->bt_rdata.data;
 				t->bt_rdata.size += (sz = 256);
-				tp = t->bt_rdata.data == NULL ?
-				    malloc(t->bt_rdata.size) :
-				    realloc(t->bt_rdata.data, t->bt_rdata.size);
+				tp = realloc(t->bt_rdata.data, t->bt_rdata.size);
 				if (tp == NULL)
 					return (RET_ERROR);
 				t->bt_rdata.data = tp;
@@ -231,9 +227,7 @@ __rec_fmap(BTREE *t, recno_t top)
 	void *tp;
 
 	if (t->bt_rdata.size < t->bt_reclen) {
-		tp = t->bt_rdata.data == NULL ?
-		    malloc(t->bt_reclen) :
-		    realloc(t->bt_rdata.data, t->bt_reclen);
+		tp = realloc(t->bt_rdata.data, t->bt_reclen);
 		if (tp == NULL)
 			return (RET_ERROR);
 		t->bt_rdata.data = tp;
