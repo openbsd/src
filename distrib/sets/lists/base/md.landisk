@@ -2224,7 +2224,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/zlib.ph
-./usr/libexec/ld.so
 ./usr/local/libdata/perl5/site_perl/sh-openbsd
 ./usr/mdec/boot
 ./usr/mdec/mbr
