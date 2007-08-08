@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcspn.3,v 1.8 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: strcspn.3,v 1.9 2007/08/08 07:20:45 ray Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 8 2007 $
 .Dt STRCSPN 3
 .Os
 .Sh NAME
@@ -71,6 +71,18 @@ char *charset = "bar";
 size_t span;
 
 span = strcspn(s, charset);
+.Ed
+.Pp
+The following removes the first (if any) newline character from string
+.Fa line .
+This is useful for trimming the newline after a
+.Xr fgets 3
+call.
+.Bd -literal -offset indent
+char line[BUFSIZ];
+
+if (fgets(line, sizeof(line), fp) != NULL)
+	line[strcspn(line, "\en")] = '\e0';
 .Ed
 .Sh SEE ALSO
 .Xr memchr 3 ,
