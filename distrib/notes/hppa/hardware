@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.30 2007/07/22 04:41:33 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.31 2007/08/08 18:34:58 kettenis Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -95,7 +95,7 @@ Supported devices {:-include-:}:
 - SCSI controllers
 	built-in 53C700 SCSI (oosiop)
 	built-in 53C710 SCSI (osiop)
-	53C8xx-based SCSI (siop)
+	53C720/53C8xx-based SCSI (siop)
 	Adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
 	    AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897
 	    and AIC-7899 based host adapters (ahc) (not bootable), including:
@@ -248,6 +248,7 @@ Supported devices {:-include-:}:
 - Miscellaneous devices:
 	battery-backed real time clock
 	``soft'' power button as available on some models (power)
+	LCD display available on some models (lcd)
 
 If your hardware is not listed above, there is currently no support for it
 in this release.
