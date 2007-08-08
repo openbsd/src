@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.12 2007/05/21 22:10:45 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.13 2007/08/08 18:54:29 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -473,12 +473,14 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(mp_isa_bus->mb_idx, line, ihp) == 0) {
+		if (mp_isa_bus != NULL &&
+		    intr_find_mpmapping(mp_isa_bus->mb_idx, line, ihp) == 0) {
 			*ihp |= line;
 			return 0;
 		}
 #if NEISA > 0
-		if (intr_find_mpmapping(mp_eisa_bus->mb_idx, line, ihp) == 0) {
+		if (mp_eisa_bus != NULL &&
+		    intr_find_mpmapping(mp_eisa_bus->mb_idx, line, ihp) == 0) {
 			*ihp |= line;
 			return 0;
 		}
