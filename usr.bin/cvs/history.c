@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.32 2007/07/03 13:22:43 joris Exp $	*/
+/*	$OpenBSD: history.c,v 1.33 2007/08/09 05:56:44 ray Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -52,7 +52,7 @@ const char historytab[] = {
 	'M',
 	'A',
 	'R',
-	NULL
+	'\0'
 };
 
 #define HISTORY_ALL_USERS		0x01
