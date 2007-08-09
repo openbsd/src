@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.14 2007/07/08 20:43:15 jasper Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.15 2007/08/09 00:03:16 ray Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -843,7 +843,7 @@ aic_done(struct aic_softc *sc, struct aic_acb *acb)
 #ifdef AIC_DEBUG
 	if ((aic_debug & AIC_SHOWMISC) != 0) {
 		if (xs->resid != 0)
-			printf("resid=%d ", xs->resid);
+			printf("resid=%lu ", (u_long)xs->resid);
 		if (xs->error == XS_SENSE)
 			printf("sense=0x%02x\n", xs->sense.error_code);
 		else
@@ -1000,8 +1000,8 @@ nextbyte:
 		case MSG_CMDCOMPLETE:
 			if ((long)sc->sc_dleft < 0) {
 				sc_link = acb->xs->sc_link;
-				printf("%s: %d extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, -sc->sc_dleft,
+				printf("%s: %lu extra bytes from %d:%d\n",
+				    sc->sc_dev.dv_xname, (u_long)-sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
 				acb->data_length = 0;
 			}
@@ -1943,7 +1943,7 @@ dophase:
 	case PH_DATAOUT:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
-		AIC_MISC(("dataout dleft=%d ", sc->sc_dleft));
+		AIC_MISC(("dataout dleft=%lu ", (u_long)sc->sc_dleft));
 		n = aic_dataout_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
@@ -1953,7 +1953,7 @@ dophase:
 	case PH_DATAIN:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
-		AIC_MISC(("datain %d ", sc->sc_dleft));
+		AIC_MISC(("datain %lu ", (u_long)sc->sc_dleft));
 		n = aic_datain_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
