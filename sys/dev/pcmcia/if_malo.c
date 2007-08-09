@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.46 2007/08/09 11:33:54 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.47 2007/08/09 14:50:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -615,6 +615,9 @@ cmalo_init(struct ifnet *ifp)
 	DPRINTF(1, "%s: current channel is %d\n",
 	    sc->sc_dev.dv_xname, sc->sc_curchan);
 
+	/* we are context save here for FW commands */
+	sc->sc_cmd_ctxsave = 1;
+
 	/* setup device */
 	if (cmalo_cmd_set_macctrl(sc) != 0)
 		return (EIO);
@@ -647,6 +650,9 @@ cmalo_init(struct ifnet *ifp)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 
 	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+
+	/* we are not context save anymore for FW commands */
+	sc->sc_cmd_ctxsave = 0;
 
 	return (0);
 }
@@ -795,9 +801,12 @@ cmalo_intr(void *arg)
 	if (intr & MALO_VAL_HOST_INTR_RX)
 		/* RX frame received */
 		cmalo_rx(sc);
-	if (intr & MALO_VAL_HOST_INTR_CMD)
+	if (intr & MALO_VAL_HOST_INTR_CMD) {
 		/* command response */
 		wakeup(sc);
+		if (!sc->sc_cmd_ctxsave)
+			cmalo_cmd_response(sc);
+	}
 	if (intr & MALO_VAL_HOST_INTR_EVENT)
 		/* event */
 		cmalo_event(sc);
@@ -993,9 +1002,17 @@ cmalo_event(struct malo_softc *sc)
 	event = event >> 8;
 
 	switch (event) {
-	case MALO_EVENT_DISSASOC:
+	case MALO_EVENT_DEAUTH:
+		DPRINTF(1, "%s: got deauthentication event (0x%04x)\n",
+		    sc->sc_dev.dv_xname, event);
+		/* try to associate again */
+		cmalo_cmd_set_assoc(sc);
+		break;
+	case MALO_EVENT_DISASSOC:
 		DPRINTF(1, "%s: got disassociation event (0x%04x)\n",
 		    sc->sc_dev.dv_xname, event);
+		/* try to associate again */
+		cmalo_cmd_set_assoc(sc);
 		break;
 	default:
 		DPRINTF(1, "%s: got unknown event (0x%04x)\n",
@@ -1686,6 +1703,11 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	hdr->size = htole16(psize - sizeof(*hdr));
 
 	/* process command request */
+	if (!sc->sc_cmd_ctxsave) {
+		if (cmalo_cmd_request(sc, psize, 1) != 0)
+			return (EIO);
+		return (0);
+	}
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 

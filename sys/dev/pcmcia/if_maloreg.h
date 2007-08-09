@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_maloreg.h,v 1.13 2007/08/09 09:40:01 mglocker Exp $ */
+/*	$OpenBSD: if_maloreg.h,v 1.14 2007/08/09 14:50:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -79,4 +79,5 @@
 #define MALO_CMD_MACCTRL_PROMISC_ON	0x0080
 
 /* events */
-#define MALO_EVENT_DISSASOC		0x0009
+#define MALO_EVENT_DEAUTH		0x0008
+#define MALO_EVENT_DISASSOC		0x0009
