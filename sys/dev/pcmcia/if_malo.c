@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.47 2007/08/09 14:50:06 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.48 2007/08/09 15:10:41 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -631,16 +631,18 @@ cmalo_init(struct ifnet *ifp)
 		return (EIO);
 	if (cmalo_cmd_set_channel(sc, sc->sc_curchan) != 0)
 		return (EIO);
+	if (cmalo_cmd_set_rate(sc) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_snmp(sc, MALO_OID_RTSTRESH) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY) != 0)
+		return (EIO);
+	if (cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH) != 0)
+		return (EIO);
 	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
 		if (cmalo_wep(sc) != 0)
 			return (EIO);
 	}
-
-	cmalo_cmd_set_rate(sc);
-
-	cmalo_cmd_set_snmp(sc, MALO_OID_RTSTRESH);
-	cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY);
-	cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH);
 
 	/* device up */
 	ifp->if_flags |= IFF_RUNNING;
