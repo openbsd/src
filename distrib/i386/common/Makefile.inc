@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.19 2007/06/17 00:28:21 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.20 2007/08/09 12:48:07 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -99,7 +99,9 @@ install:
 .ifndef NOBSDRD
 	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
 .endif
+.ifndef NOFS
 	cp ${FS} ${DESTDIR}/snapshot/${FS}
+.endif
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
