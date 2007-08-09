@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.48 2007/08/09 15:10:41 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.49 2007/08/09 21:24:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -608,10 +608,12 @@ cmalo_init(struct ifnet *ifp)
 		cmalo_intr_mask(sc, 1);
 	}
 
+	/* reset association state flag */
+	sc->sc_flags &= ~MALO_ASSOC_FAILED;
+
 	/* get current channel */
         ic->ic_bss->ni_chan = ic->ic_ibss_chan;
         sc->sc_curchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-
 	DPRINTF(1, "%s: current channel is %d\n",
 	    sc->sc_dev.dv_xname, sc->sc_curchan);
 
@@ -648,10 +650,13 @@ cmalo_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	/* start network */
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-
-	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+	if (sc->sc_flags & MALO_ASSOC_FAILED)
+		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+	else
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	/* we are not context save anymore for FW commands */
 	sc->sc_cmd_ctxsave = 0;
@@ -1730,7 +1735,10 @@ cmalo_cmd_rsp_assoc(struct malo_softc *sc)
 	if (body->status) {
 		DPRINTF(1, "%s: association failed (status %d)!\n",
 		    sc->sc_dev.dv_xname, body->status);
-	}
+		sc->sc_flags |= MALO_ASSOC_FAILED;
+	} else
+		DPRINTF(1, "%s: association successful\n",
+		    sc->sc_dev.dv_xname, body->status);
 
 	return (0);
 }

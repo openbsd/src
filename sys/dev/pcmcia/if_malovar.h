@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.23 2007/08/09 14:50:06 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.24 2007/08/09 21:24:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -41,6 +41,7 @@
 /* device flags */
 #define MALO_DEVICE_ATTACHED	(1 << 0)
 #define MALO_FW_LOADED		(1 << 1)
+#define MALO_ASSOC_FAILED	(1 << 2)
 
 /*
  * FW command structures
