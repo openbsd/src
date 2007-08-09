@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcmds.c,v 1.17 2007/03/20 03:56:13 tedu Exp $	*/
+/*	$OpenBSD: netcmds.c,v 1.18 2007/08/09 02:38:09 ray Exp $	*/
 /*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netcmds.c,v 1.17 2007/03/20 03:56:13 tedu Exp $";
+static char rcsid[] = "$OpenBSD: netcmds.c,v 1.18 2007/08/09 02:38:09 ray Exp $";
 #endif /* not lint */
 
 /*
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: netcmds.c,v 1.17 2007/03/20 03:56:13 tedu Exp $
 
 #include <arpa/inet.h>
 
+#include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +69,8 @@ static	struct hitem {
 	int	onoff;
 } *hosts;
 
-int nports, nhosts, protos;
+size_t nports, nhosts;
+int protos;
 
 static void changeitems(char *, int);
 static int selectproto(char *);
@@ -209,10 +211,13 @@ selectport(long port, int onoff)
 			p->onoff = onoff;
 			return (0);
 		}
-	if (nports == 0)
-		ports = (struct pitem *)malloc(sizeof (*p));
-	else
-		ports = (struct pitem *)realloc(ports, (nports+1)*sizeof (*p));
+	if (nports + 1 > SIZE_MAX / sizeof(*p) ||
+	    (p = realloc(ports, (nports + 1) * sizeof(*p))) == NULL) {
+		error("selectport: %s", strerror(ENOMEM));
+		die();
+	}
+	ports = p;
+
 	p = &ports[nports++];
 	p->port = port;
 	p->onoff = onoff;
@@ -295,10 +300,13 @@ selecthost(struct sockaddr *sa, int onoff)
 		}
 	if (sa->sa_len > sizeof(struct sockaddr_storage))
 		return (-1);	/*XXX*/
-	if (nhosts == 0)
-		hosts = (struct hitem *)malloc(sizeof (*p));
-	else
-		hosts = (struct hitem *)realloc(hosts, (nhosts+1)*sizeof (*p));
+	if (nhosts + 1 > SIZE_MAX / sizeof(*p) ||
+	    (p = realloc(hosts, (nhosts + 1) * sizeof(*p))) == NULL) {
+		error("selecthost: %s", strerror(ENOMEM));
+		die();
+	}
+	hosts = p;
+
 	p = &hosts[nhosts++];
 	memcpy(&p->addr, sa, sa->sa_len);
 	p->onoff = onoff;

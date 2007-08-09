@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.18 2007/04/24 06:32:08 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.19 2007/08/09 02:38:09 ray Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -49,8 +49,8 @@ extern int	CMDLINE;
 extern int	dk_ndrive;
 extern int	hz, stathz;
 extern double	naptime;
-extern int	nhosts;
-extern int	nports;
+extern size_t	nhosts;
+extern size_t	nports;
 extern int	protos;
 extern int	verbose;
 extern int	nflag;
