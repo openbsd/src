@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.154 2007/06/01 17:29:10 beck Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.155 2007/08/09 04:12:12 cnst Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1815,7 +1815,7 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* Grab a copy, to clear the kernel pointers */
 	us = malloc(sizeof(*us), M_TEMP, M_WAITOK);
 	bzero(us, sizeof(*us));
-	memcpy(us->desc, ks->desc, sizeof(ks->desc));
+	memcpy(us->desc, ks->desc, sizeof(us->desc));
 	us->tv = ks->tv;
 	us->value = ks->value;
 	us->type = ks->type;
