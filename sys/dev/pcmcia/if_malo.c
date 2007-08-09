@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.43 2007/08/07 11:44:44 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.44 2007/08/09 08:53:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -87,6 +87,7 @@ void	cmalo_start(struct ifnet *);
 void	cmalo_watchdog(struct ifnet *);
 int	cmalo_tx(struct malo_softc *, struct mbuf *);
 void	cmalo_tx_done(struct malo_softc *);
+void	cmalo_event(struct malo_softc *);
 void	cmalo_select_network(struct malo_softc *);
 void	cmalo_reflect_network(struct malo_softc *);
 int	cmalo_wep(struct malo_softc *);
@@ -797,6 +798,9 @@ cmalo_intr(void *arg)
 	if (intr & MALO_VAL_HOST_INTR_CMD)
 		/* command response */
 		wakeup(sc);
+	if (intr & MALO_VAL_HOST_INTR_EVENT)
+		/* event */
+		cmalo_event(sc);
 
 	return (1);
 }
@@ -976,6 +980,31 @@ cmalo_tx_done(struct malo_softc *sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 	cmalo_start(ifp);
+}
+
+void
+cmalo_event(struct malo_softc *sc)
+{
+	uint16_t event;
+
+	/* read event reason */
+	event = MALO_READ_2(sc, MALO_REG_CARD_STATUS);
+	event &= MALO_VAL_CARD_STATUS_MASK;
+	event = event >> 8;
+
+	switch (event) {
+	case MALO_EVENT_DISSASOC:
+		DPRINTF(1, "%s: got disassociation event (0x%04x)\n",
+		    sc->sc_dev.dv_xname, event);
+		break;
+	default:
+		DPRINTF(1, "%s: got unknown event (0x%04x)\n",
+		    sc->sc_dev.dv_xname, event);
+		break;
+	}
+
+	/* clear event */
+	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_CMD_DL_OVER);
 }
 
 void
