@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.44 2007/08/09 08:53:22 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.45 2007/08/09 09:40:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1003,7 +1003,7 @@ cmalo_event(struct malo_softc *sc)
 		break;
 	}
 
-	/* clear event */
+	/* acknowledge event */
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_CMD_DL_OVER);
 }
 

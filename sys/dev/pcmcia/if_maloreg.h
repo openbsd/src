@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_maloreg.h,v 1.12 2007/08/09 08:53:22 mglocker Exp $ */
+/*	$OpenBSD: if_maloreg.h,v 1.13 2007/08/09 09:40:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -36,11 +36,11 @@
 
 /* register values */
 #define MALO_VAL_SCRATCH_READY		0x00
-#define MALO_VAL_SCRATCH_FW_LOADED	0x5a
-#define MALO_VAL_HOST_INTR_MASK_ON	0x001f
 #define MALO_VAL_TX_DL_OVER		0x01
 #define MALO_VAL_RX_DL_OVER		0x02
 #define MALO_VAL_CMD_DL_OVER		0x04
+#define MALO_VAL_SCRATCH_FW_LOADED	0x5a
+#define MALO_VAL_HOST_INTR_MASK_ON	0x001f
 #define MALO_VAL_CARD_STATUS_MASK	0x7f00
 
 /* interrupt reasons */
