@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.124 2007/07/03 11:32:27 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.125 2007/08/10 12:32:12 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1537,8 +1537,6 @@ ifa_load(void)
 			    ifa->ifa_netmask)->sin6_addr,
 			    sizeof(struct in6_addr));
 		}
-		if ((n->name = strdup(ifa->ifa_name)) == NULL)
-			err(1, "ifa_load: strdup");
 		n->next = NULL;
 		n->tail = n;
 		if (h == NULL)
