@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.11 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.12 2007/08/10 14:25:08 fgsch Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -56,6 +56,8 @@
 #include <machine/conf.h>
 
 #include <dev/ofw/openfirm.h>
+
+#define OPROMMAXPARAM		32
 
 static	int lastnode;			/* speed hack */
 extern	int optionsnode;		/* node ID of ROM's options */
@@ -205,7 +207,11 @@ openpromioctl(dev, cmd, data, flags, p)
 		error = openpromgetstr(op->op_namelen, op->op_name, &name);
 		if (error)
 			break;
-		value = nextprop = malloc(op->op_buflen, M_TEMP, M_WAITOK);
+		if (op->op_buflen <= 0) {
+			error = ENAMETOOLONG;
+			break;
+		}
+		value = nextprop = malloc(OPROMMAXPARAM, M_TEMP, M_WAITOK);
 		if (nextprop == NULL) {
 			error = ENOMEM;
 			break;
