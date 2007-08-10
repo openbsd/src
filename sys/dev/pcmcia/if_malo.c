@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.49 2007/08/09 21:24:02 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.50 2007/08/10 10:42:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -340,6 +340,7 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211_nodereq_all *na;
 	struct ieee80211_nodereq *nr;
 	struct ifaddr *ifa;
+	struct ifreq *ifr;
 	int i, j, s, error = 0;
 
 	s = splnet();
@@ -361,6 +362,15 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				cmalo_stop(sc);
 		}
+		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		ifr = (struct ifreq *)data;
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &ic->ic_ac) :
+		    ether_delmulti(ifr, &ic->ic_ac);
+		if (error == ENETRESET)
+			error = 0;
 		break;
 	case SIOCS80211SCAN:
 		cmalo_cmd_set_scan(sc);
