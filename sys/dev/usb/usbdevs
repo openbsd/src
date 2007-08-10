@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.284 2007/07/30 14:11:27 todd Exp $
+$OpenBSD: usbdevs,v 1.285 2007/08/10 06:31:17 xsa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -979,6 +979,7 @@ product DAVICOM WK668		0x0668	HenTong WK-668
 
 /* Dell products */
 product DELL AXIM		0x4005	Axim X51v
+product DELL BC02		0x8000	BC02 Bluetooth
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
 product DELL BLUETOOTH350	0x8103	Bluetooth 350
 product DELL W5500		0x8115	W5500 HSDPA 
@@ -1632,6 +1633,7 @@ product MINOLTA DIMAGEA1	0x401a	Dimage A1
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
 product MITSUMI MOUSE		0x6407	Mouse
+product MITSUMI BLUETOOTH	0x641f	Bluetooth
 product MITSUMI FDD		0x6901	FDD
 
 /* Mobile Action products */
@@ -2209,6 +2211,7 @@ product TDK UPA9664		0x0115	USB-PDC Adapter UPA9664
 product TDK UCA1464		0x0116	USB-cdmaOne Adapter UCA1464
 product TDK UHA6400		0x0117	USB-PHS Adapter UHA6400
 product TDK UPA6400		0x0118	USB-PHS Adapter UPA6400
+product TDK BLUETOOTH		0x0309	Bluetooth
 
 /* TEAC products */
 product TEAC FD05PUB		0x0000	FD-05PUB
