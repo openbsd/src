@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.50 2007/08/10 10:42:03 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.51 2007/08/10 14:31:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1689,7 +1689,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	body_ssid->type = htole16(MALO_TLV_TYPE_SSID);
 	body_ssid->size = htole16(strlen(sc->sc_net[sc->sc_net_cur].ssid));
 	bcopy(sc->sc_net[sc->sc_net_cur].ssid, body_ssid->data,
-	    body_ssid->size);
+	    letoh16(body_ssid->size));
 	psize += (sizeof(*body_ssid) - 1) + letoh16(body_ssid->size);
 
 	body_phy = sc->sc_cmd + psize;
@@ -1707,14 +1707,14 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	body_rates->type = htole16(MALO_TLV_TYPE_RATES);
 	body_rates->size = htole16(strlen(sc->sc_net[sc->sc_net_cur].rates));
 	bcopy(sc->sc_net[sc->sc_net_cur].rates, body_rates->data,
-	    body_rates->size);
+	    letoh16(body_rates->size));
 	psize += (sizeof(*body_rates) - 1) + letoh16(body_rates->size);
 
 	/* hack to correct FW's wrong generated rates-element-id */
 	body_passeid = sc->sc_cmd + psize;
 	body_passeid->type = htole16(MALO_TLV_TYPE_PASSEID);
 	body_passeid->size = body_rates->size;
-	bcopy(body_rates->data, body_passeid->data, body_rates->size);
+	bcopy(body_rates->data, body_passeid->data, letoh16(body_rates->size));
 	psize += (sizeof(*body_passeid) - 1) + letoh16(body_passeid->size);
 
 	hdr->size = htole16(psize - sizeof(*hdr));
