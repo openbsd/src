@@ -1,46 +1,47 @@
-#	$OpenBSD: Makefile,v 1.2 2007/08/10 03:02:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/08/10 12:29:53 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 CDROM=		install${OSrev}.iso
-RELXDIR=	/home/relx-alpha
-RELDIR?=	/home/rel-alpha
+RELXDIR=	/home/relx-${MACHINE}
+RELDIR?=	/home/rel-${MACHINE}
 
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
 		${RELDIR}/man${OSrev}.tgz ${RELDIR}/misc${OSrev}.tgz \
 		${RELDIR}/bsd ${RELDIR}/bsd.rd \
-		${RELDIR}/INSTALL.alpha
+		${RELDIR}/INSTALL.${MACHINE}
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
-		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz
+		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
+		${RELXDIR}/xserv${OSrev}.tgz
 
 all: ${CDROM}
 
 ${CDROM}: ${BASE} ${XBASE}
 	-rm -rf ${.OBJDIR}/cd-dir
-	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/alpha
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
-	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/alpha
-	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/alpha
+	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
-	cp -p ${RELDIR}/boot ${.OBJDIR}/cd-dir/${OSREV}/alpha
-	cp -p ${RELDIR}/bootxx ${.OBJDIR}/cd-dir/${OSREV}/alpha
+	cp -p ${RELDIR}/boot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp -p ${RELDIR}/bootxx ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	(mkhybrid -a -R -v -v -T -L -d -D -N -o ${.OBJDIR}/${CDROM} \
-	    -A "OpenBSD ${OSREV} alpha Install CD" \
+	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/alpha   ${OSREV} Install CD" \
+	    -V "OpenBSD/${MACHINE}   ${OSREV} Install CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log
 	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
 	mount -t cd9660 /dev/svnd0a /mnt
 	/usr/mdec/installboot -v \
-	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/alpha/boot$$" | cut -d' ' -f1` \
-	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/alpha/boot$$" | cut -d' ' -f2` \
-	    /mnt/${OSREV}/alpha/boot /usr/mdec/bootxx /dev/rsvnd0c
-	#disklabel -w svnd0 fakecdrom "OpenBSD/alpha   "
+	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f1` \
+	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f2` \
+	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rsvnd0c
+	#disklabel -w svnd0 fakecdrom "OpenBSD/${MACHINE}   "
 	umount /mnt
 	vnconfig -u svnd0
 
