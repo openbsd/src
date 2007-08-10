@@ -1,7 +1,8 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.15 2007/06/05 04:10:56 jmc Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.16 2007/08/10 20:30:14 cnst Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
+.\" Copyright (c) 2007 Constantine A. Murenin <cnst@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,21 +16,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2007 $
+.Dd $Mdocdate: August 10 2007 $
 .Dt SENSORSD.CONF 5
 .Os
 .Sh NAME
 .Nm sensorsd.conf
 .Nd configuration file for sensorsd
-.Sh SYNOPSIS
-.Nm sensorsd.conf
 .Sh DESCRIPTION
 The
 .Nm
 file is read by
 .Xr sensorsd 8
 to configure hardware sensor monitoring.
-Each valid sensor registered in the system
+Each sensor registered in the system
 is matched by at most one entry in
 .Nm ,
 which may specify high and low limits,
@@ -57,7 +56,7 @@ The following attributes may be used:
 .Pp
 .Bl -tag -width "commandXX" -offset indent -compact
 .It Li command
-Specify a command to be executed if limits are crossed.
+Specify a command to be executed on state change.
 .It Li high
 Specify an upper limit.
 .It Li low
@@ -70,15 +69,20 @@ The values for temperature sensors can be given in degrees Celsius or
 Fahrenheit, for voltage sensors in volts, and fan speed sensors take a
 unit-less number representing RPM.
 .Pp
-Sensors that provide status (such as from
+Sensors that provide status (such as those from
 .Xr bio 4 ,
 .Xr esm 4 ,
 or
 .Xr ipmi 4 )
-do not require boundary values specified (that otherwise will be
-ignored) and simply trigger on status transitions.
+do not require boundary values specified
+and simply trigger on status transitions.
+If boundaries are specified nonetheless,
+then they are used in addition to automatic status monitoring,
+unless the
+.Dq istatus
+attribute is specified to ignore status values that are provided by the drivers.
 .Pp
-The command is executed on transitions out of, and back into, given limits.
+The command is executed when there is any change in sensor state.
 Tokens in the command are substituted as follows:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
@@ -151,3 +155,22 @@ The
 .Nm
 file format first appeared in
 .Ox 3.5 .
+The format was altered in
+.Ox 4.1
+to accommodate hierarchical device-based sensor addressing.
+The
+.Dq istatus
+attribute was introduced in
+.Ox 4.2 .
+.Sh CAVEATS
+Alert functionality is triggered every time there is a change in sensor state;
+for example, when
+.Xr sensorsd 8
+is started,
+the status of each monitored sensor changes
+from undefined to whatever it is.
+One must keep this in mind when using commands
+that may unconditionally perform adverse actions (e.g.\&
+.Xr shutdown 8 ) ,
+as they will be executed even when all sensors perform to specification.
+If this is undesirable, then a wrapper shell script should be used instead.
