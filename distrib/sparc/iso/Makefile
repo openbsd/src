@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2007/08/10 02:28:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2007/08/10 03:02:38 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -7,20 +7,23 @@ TOP=	${.CURDIR}/..
 CDROM=	install${OSrev}.iso
 RELXDIR=	/home/relx-sparc
 RELDIR?=	/home/rel-sparc
+
+BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
+		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
+		${RELDIR}/man${OSrev}.tgz ${RELDIR}/misc${OSrev}.tgz \
+		${RELDIR}/bsd ${RELDIR}/bsd.rd \
+		${RELDIR}/INSTALL.sparc
+XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
+		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz
+
 all: ${CDROM}
 
-${CDROM}:
+${CDROM}: ${BASE} ${XBASE}
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/sparc
 
-	cp -p ${RELDIR}/{base,comp,etc,game,man,misc}${OSrev}.tgz \
-	    ${.OBJDIR}/cd-dir/${OSREV}/sparc
-	cp -p ${RELDIR}/{bsd,bsd.rd} \
-	    ${.OBJDIR}/cd-dir/${OSREV}/sparc
-	cp -p ${RELXDIR}/{xbase,xetc,xfont,xserv,xshare}${OSrev}.tgz \
-	    ${.OBJDIR}/cd-dir/${OSREV}/sparc
-	cp -p ${RELDIR}/INSTALL.sparc \
-	    ${.OBJDIR}/cd-dir/${OSREV}/sparc
+	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/sparc
+	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/sparc
 
 	ln -f ${.OBJDIR}/cd-dir/${OSREV}/sparc/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
 	ln -f ${.OBJDIR}/cd-dir/bsd.rd ${.OBJDIR}/cd-dir/bsd
