@@ -1,7 +1,8 @@
-.\"	$OpenBSD: sensorsd.8,v 1.13 2007/07/31 08:11:36 jmc Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.14 2007/08/10 21:03:05 cnst Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
+.\" Copyright (c) 2007 Constantine A. Murenin <cnst@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,30 +16,38 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2007 $
+.Dd $Mdocdate: August 10 2007 $
 .Dt SENSORSD 8
 .Os
 .Sh NAME
 .Nm sensorsd
-.Nd monitor hardware sensors
+.Nd hardware sensors monitor and alerter
 .Sh SYNOPSIS
 .Nm sensorsd
 .Op Fl d
 .Sh DESCRIPTION
 The
 .Nm
-utility retrieves sensor monitoring data like fan speeds,
-temperatures, voltages, and
+utility retrieves sensor monitoring data like fan speed,
+temperature, voltage and
 .Xr ami 4
 logical disk status via
 .Xr sysctl 3 .
-If the data is out of given limits, an alert is sent using
+When the state of any monitored sensor changes, an alert is sent using
 .Xr syslog 3
 and a command, if specified, is executed.
 .Pp
 By default,
 .Nm
-also monitors status changes on all sensors that keep their state.
+monitors status changes on all sensors that keep their state,
+thus sensors that automatically provide status do not require
+any additional configuration.
+In addition, for every sensor,
+no matter whether it automatically provides its state or not,
+custom low and high limits may be set,
+so that a local notion of sensor status can be computed by
+.Nm ,
+indicating whether the sensor is within or is exceeding its limits.
 .Pp
 Limit and command values for a particular sensor may be specified in the
 .Xr sensorsd.conf 5
