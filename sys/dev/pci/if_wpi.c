@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.49 2007/07/24 16:07:47 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.50 2007/08/10 16:29:27 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -316,7 +316,7 @@ wpi_attach(struct device *parent, struct device *self, void *aux)
 	/* register thermal sensor with the sensor framework */
 	strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof sc->sensordev.xname);
-	strlcpy(sc->sensor.desc, "temperature 0..285",
+	strlcpy(sc->sensor.desc, "temperature 0 - 285",
 	    sizeof sc->sensor.desc);
 	sc->sensor.type = SENSOR_INTEGER;	/* not in muK! */
 	/* temperature invalid until interface is up */
