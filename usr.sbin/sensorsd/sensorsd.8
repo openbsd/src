@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.15 2007/08/11 20:36:33 cnst Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.16 2007/08/11 20:45:35 cnst Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -79,3 +79,14 @@ The
 .Nm
 program first appeared in
 .Ox 3.5 .
+.Sh CAVEATS
+Certain sensors may flip status from time to time.
+To guard against false reports,
+.Nm
+implements a state dumping mechanism.
+However, this inevitably introduces
+an additional delay in status reporting and command execution,
+e.g. one may notice that
+.Nm
+makes its initial report about the state of monitored sensors
+not immediately, but either 1 or 2 minutes after it is being started up.
