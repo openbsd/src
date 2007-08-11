@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.105 2007/07/07 06:54:09 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.106 2007/08/11 02:48:32 jsg Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 7 2007 $
+.Dd $Mdocdate: August 11 2007 $
 .Dt SPAMD 8
 .Os
 .Sh NAME
@@ -593,6 +593,10 @@ required traps to be entered into the database including the enclosing
 \*(Lt\*(Gt characters;
 current versions expect only the email address without the enclosing
 \*(Lt\*(Gt characters.
+.Pp
+Blacklisted hosts are no longer stored in the 
+.Aq spamd
+table when operating in greylisting mode for performance reasons.
 .Sh BUGS
 .Nm
 currently uses the user
