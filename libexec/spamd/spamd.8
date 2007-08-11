@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.106 2007/08/11 02:48:32 jsg Exp $
+.\"	$OpenBSD: spamd.8,v 1.107 2007/08/11 06:09:02 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -594,9 +594,9 @@ required traps to be entered into the database including the enclosing
 current versions expect only the email address without the enclosing
 \*(Lt\*(Gt characters.
 .Pp
-Blacklisted hosts are no longer stored in the 
+Blacklisted hosts are no longer stored in the
 .Aq spamd
-table when operating in greylisting mode for performance reasons.
+table when operating in default mode for performance reasons.
 .Sh BUGS
 .Nm
 currently uses the user
