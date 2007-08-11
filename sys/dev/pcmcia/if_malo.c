@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.51 2007/08/10 14:31:57 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.52 2007/08/11 16:22:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -300,10 +300,7 @@ cmalo_attach(void *arg)
 
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
-	ic->ic_caps =
-	    IEEE80211_C_MONITOR |
-	    IEEE80211_C_IBSS |
-	    IEEE80211_C_WEP;
+	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_WEP;
 
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
