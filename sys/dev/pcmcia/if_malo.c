@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.52 2007/08/11 16:22:37 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.53 2007/08/11 21:30:30 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -284,6 +284,9 @@ cmalo_attach(void *arg)
 
 	/* enable interrupts */
 	cmalo_intr_mask(sc, 1);
+
+	/* we are context save here for FW commands */
+	sc->sc_cmd_ctxsave = 1;
 
 	/* get hardware specs */
 	cmalo_cmd_get_hwspec(sc);
@@ -623,9 +626,6 @@ cmalo_init(struct ifnet *ifp)
         sc->sc_curchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	DPRINTF(1, "%s: current channel is %d\n",
 	    sc->sc_dev.dv_xname, sc->sc_curchan);
-
-	/* we are context save here for FW commands */
-	sc->sc_cmd_ctxsave = 1;
 
 	/* setup device */
 	if (cmalo_cmd_set_macctrl(sc) != 0)
