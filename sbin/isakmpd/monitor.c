@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.70 2007/08/07 20:09:39 markus Exp $	 */
+/* $OpenBSD: monitor.c,v 1.71 2007/08/11 00:20:30 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -500,7 +500,7 @@ m_priv_getfd(void)
 {
 	char	path[MAXPATHLEN];
 	size_t	len;
-	int	v, flags;
+	int	v, flags, ret;
 	int	err = 0;
 	mode_t	mode;
 
@@ -516,8 +516,10 @@ m_priv_getfd(void)
 	must_read(&flags, sizeof flags);
 	must_read(&mode, sizeof mode);
 
-	if (m_priv_local_sanitize_path(path, sizeof path, flags) != 0) {
-		log_print("m_priv_getfd: illegal path \"%s\"", path);
+	if ((ret = m_priv_local_sanitize_path(path, sizeof path, flags))
+	    != 0) {
+		if (ret == 1)
+			log_print("m_priv_getfd: illegal path \"%s\"", path);
 		err = EACCES;
 		v = -1;
 	} else {
@@ -694,8 +696,12 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 
 	if (realpath(path, new_path) == NULL ||
 	    realpath("/var/run", var_run) == NULL) {
+		/*
+                 * We could not decide wether the path is ok or not.
+                 * Indicate this be returning 2.
+		 */
 		if (errno == ENOENT)
-			return 1;
+			return 2;
 		goto bad_path;
 	}
 	strlcat(var_run, "/", sizeof(var_run));
