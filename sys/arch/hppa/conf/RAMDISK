@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.73 2007/08/05 19:10:47 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.74 2007/08/14 13:50:14 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -234,8 +234,10 @@ scsibus* at mpi?
 #bha*	at pci?
 #scsibus* at bha?
 
-siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide Diff)
-siop*	at pci?			# NCR 538XX SCSI controllers(new)
+siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide HVD)
+siop*	at phantomas? irq 3
+siop*	at uturn? irq 3
+siop*	at pci?			# NCR 53C8XX SCSI controllers
 scsibus* at siop?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
 #scsibus* at ahd?
