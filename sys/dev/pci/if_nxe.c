@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.4 2007/08/14 23:34:35 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.5 2007/08/14 23:45:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -56,9 +56,91 @@
 #define NXE_PCI_BAR_MEM_128MB		(128 * 1024 * 1024)
 #define NXE_PCI_BAR_DOORBELL	0x20 /* bar 4 */
 
-int			nxe_match(struct device *, void *, void *);
-void			nxe_attach(struct device *, struct device *, void *);
-int			nxe_intr(void *);
+/*
+ * doorbell register space
+ */
+
+#define NXE_DB			0x00000000
+#define  NXE_DB_PEGID			0x00000003
+#define  NXE_DB_PEGID_RX		0x00000001 /* rx unit */
+#define  NXE_DB_PEGID_TX		0x00000002 /* tx unit */
+#define  NXE_DB_PRIVID			0x00000004 /* must be set */
+#define  NXE_DB_COUNT(_c)		((_c)<<3) /* count */
+#define  NXE_DB_CTXID(_c)		((_c)<<18) /* context id */
+#define  NXE_DB_OPCODE_RX_PROD		0x00000000
+#define  NXE_DB_OPCODE_RX_JUMBO_PROD	0x10000000
+#define  NXE_DB_OPCODE_RX_LRO_PROD	0x20000000
+#define  NXE_DB_OPCODE_CMD_PROD		0x30000000
+#define  NXE_DB_OPCODE_UPD_CONS		0x40000000
+#define  NXE_DB_OPCODE_RESET_CTX	0x50000000
+
+/*
+ * register space
+ */
+
+/* different PCI functions use different registers sometimes */
+#define _F(_f)			((_f) * 0x20)
+
+/*
+ * driver ref section 4.2
+ *
+ * All the hardware registers are mapped in memory. Apart from the registers
+ * for the individual hardware blocks, the memory map includes a large number
+ * of software definable registers.
+ *
+ * The following table gives the memory map in the PCI address space.
+ */
+
+#define NXE_MAP_DDR_NET		0x00000000
+#define NXE_MAP_DDR_MD		0x02000000
+#define NXE_MAP_QDR_NET		0x04000000
+#define NXE_MAP_DIRECT_CRB	0x04400000
+#define NXE_MAP_OCM0		0x05000000
+#define NXE_MAP_OCM1		0x05100000
+#define NXE_MAP_CRB		0x06000000
+
+/*
+ * Since there are a large number of registers they do not fit in a single
+ * PCI addressing range. Hence two windows are defined. The window starts at
+ * NXE_MAP_CRB, and extends to the end of the register map. The window is set
+ * using the NXE_REG_WINDOW_CRB register. The format of the NXE_REG_WINDOW_CRB
+ * register is as follows:
+ */
+
+#define NXE_WIN_CRB(_f)		(0x06110210 + _F(_f))
+#define  NXE_WIN_CRB_0			(0<<25)
+#define  NXE_WIN_CRB_1			(1<<25)
+
+/*
+ * The memory map inside the register windows are divided into a set of blocks.
+ * Each register block is owned by one hardware agent. The following table
+ * gives the memory map of the various register blocks in window 0. These
+ * registers are all in the CRB register space, so the offsets given here are
+ * relative to the base of the CRB offset region (NXE_MAP_CRB).
+ */
+
+#define NXE_W0_PCIE		0x00100000 /* PCI Express */
+#define NXE_W0_NIU		0x00600000 /* Network Interface Unit */
+#define NXE_W0_PPE_0		0x01100000 /* Protocol Processing Engine 0 */
+#define NXE_W0_PPE_1		0x01200000 /* Protocol Processing Engine 1 */
+#define NXE_W0_PPE_2		0x01300000 /* Protocol Processing Engine 2 */
+#define NXE_W0_PPE_3		0x01400000 /* Protocol Processing Engine 3 */
+#define NXE_W0_PPE_D		0x01500000 /* PPE D-cache */
+#define NXE_W0_PPE_I		0x01600000 /* PPE I-cache */
+
+/*
+ * These are the register blocks inside window 1.
+ */
+
+#define NXE_W1_PCIE		0x00100000
+#define NXE_W1_SW		0x00200000
+#define NXE_W1_SIR		0x01200000
+#define NXE_W1_ROMUSB		0x01300000
+
+
+/*
+ * autoconf glue
+ */
 
 struct nxe_softc {
 	struct device		sc_dev;
@@ -74,6 +156,10 @@ struct nxe_softc {
 
 	void			*sc_ih;
 };
+
+int			nxe_match(struct device *, void *, void *);
+void			nxe_attach(struct device *, struct device *, void *);
+int			nxe_intr(void *);
 
 struct cfattach nxe_ca = {
 	sizeof(struct nxe_softc),
