@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.11 2007/08/07 09:45:24 markus Exp $	*/
+/*	$OpenBSD: via.c,v 1.12 2007/08/14 20:10:05 henric Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -538,6 +538,9 @@ viac3_rnd(void *v)
 	struct timeout *tmo = v;
 	unsigned int *p, i, rv, creg0, len = VIAC3_RNG_BUFSIZ;
 	static int buffer[VIAC3_RNG_BUFSIZ + 2];	/* XXX why + 2? */
+#ifdef MULTIPROCESSOR
+	int s = splipi();
+#endif
 
 	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
@@ -552,6 +555,10 @@ viac3_rnd(void *v)
 	    : "memory", "cc");
 
 	lcr0(creg0);
+
+#ifdef MULTIPROCESSOR
+	splx(s);
+#endif
 
 	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
 		add_true_randomness(*p);
