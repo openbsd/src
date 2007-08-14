@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.29 2006/03/30 21:06:29 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.30 2007/08/14 13:30:45 aanriot Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.29 2006/03/30 21:06:29 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.30 2007/08/14 13:30:45 aanriot Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -172,17 +172,20 @@ yp_passwd(char *username)
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPPASSWDPROC_UPDATE,
 	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
-	if (r)
-		warnx("rpc to yppasswdd failed.");
-	else if (status) {
+	if (r) {
+		printf("rpc to yppasswdd failed.\n");
+		free(yppasswd.newpw.pw_passwd);
+		return (1);
+	} else if (status) {
 		printf("Couldn't change YP password.\n");
 		free(yppasswd.newpw.pw_passwd);
 		return (1);
+	} else {
+		printf("The YP password has been changed on %s, "
+	 	    "the master YP passwd server.\n", master);
+		free(yppasswd.newpw.pw_passwd);
+		return (0);
 	}
-	printf("The YP password has been changed on %s, "
-	    "the master YP passwd server.\n", master);
-	free(yppasswd.newpw.pw_passwd);
-	return (0);
 }
 
 char *
