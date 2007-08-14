@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.11 2007/07/02 22:09:01 canacar Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.12 2007/08/14 19:10:45 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -474,12 +474,12 @@ ieee802_11_if_print(u_char *user, const struct pcap_pkthdr *h,
 	packetp = p;
 	snapend = p + h->caplen;
 
-	if (ieee80211_print(wh, (u_int)h->caplen) != 0)
+	if (ieee80211_print(wh, (u_int)h->len) != 0)
 		printf("[|802.11]");
 
 	if (!ieee80211_encap) {
 		if (xflag)
-			default_print(p, (u_int)h->caplen);
+			default_print(p, (u_int)h->len);
 		putchar('\n');
 	}
 }
@@ -504,7 +504,7 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 	TCHECK(*rh);
 
-	len = h->caplen;
+	len = h->len;
 	rh_len = letoh16(rh->it_len);
 	if (rh->it_version != 0) {
 		printf("[?radiotap + 802.11 v:%u]", rh->it_version);
@@ -694,7 +694,7 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
  out:
 	if (!ieee80211_encap) {
 		if (xflag)
-			default_print(p, h->caplen);
+			default_print(p, h->len);
 		putchar('\n');
 	}
 }
