@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.53 2007/08/07 17:15:13 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.54 2007/08/14 18:11:46 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -466,6 +466,25 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		++ifp->if_ierrors;
 		++ifp->if_iqdrops;
 		m_freem (m);
+		return;
+	}
+
+	if (m->m_pkthdr.len > MCLBYTES) {
+		/* Too large packet, drop it. */
+		if (debug)
+			log(LOG_DEBUG,
+			    SPP_FMT "input packet is too large, %d bytes\n",
+			    SPP_ARGS(ifp), m->m_pkthdr.len);
+		goto drop;
+	}
+
+	m = m_pullup2(m, m->m_pkthdr.len);
+	if (m == NULL) {
+		if (debug)
+			log(LOG_DEBUG,
+			    SPP_FMT "m_pullup2() failed!\n", SPP_ARGS(ifp));
+		++ifp->if_ierrors;
+		++ifp->if_iqdrops;
 		return;
 	}
 
