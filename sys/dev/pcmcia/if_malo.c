@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.54 2007/08/14 05:12:45 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.55 2007/08/14 22:33:17 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -56,7 +56,7 @@
 #include <dev/pcmcia/if_maloreg.h>
 
 /*
- * Driver for the Marvell 88W8385 CF chip.
+ * Driver for the Marvell 88W8385 chip (Compact Flash).
  */
 
 #ifdef CMALO_DEBUG
@@ -131,10 +131,10 @@ struct malo_pcmcia_softc {
 
 struct cfattach malo_pcmcia_ca = {
 	sizeof(struct malo_pcmcia_softc),
-	    malo_pcmcia_match,
-	    malo_pcmcia_attach,
-	    malo_pcmcia_detach,
-	    malo_pcmcia_activate
+	malo_pcmcia_match,
+	malo_pcmcia_attach,
+	malo_pcmcia_detach,
+	malo_pcmcia_activate
 };
 
 int
