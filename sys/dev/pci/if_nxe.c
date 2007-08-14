@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.1 2007/08/14 23:16:43 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.2 2007/08/14 23:29:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -48,11 +48,31 @@
 #include <netinet/if_ether.h>
 #endif
 
+/*
+ * PCI configuration space registers
+ */
+
+#define NXE_PCI_BAR_MEM		0x10 /* bar 0 */
+#define NXE_PCI_BAR_MEM_128MB		(128 * 1024 * 1024)
+#define NXE_PCI_BAR_DOORBELL	0x20 /* bar 4 */
+
 int			nxe_match(struct device *, void *, void *);
 void			nxe_attach(struct device *, struct device *, void *);
+int			nxe_intr(void *);
 
 struct nxe_softc {
 	struct device		sc_dev;
+
+	bus_dma_tag_t		sc_dmat;
+
+	bus_space_tag_t		sc_memt;
+	bus_space_handle_t	sc_memh;
+	bus_size_t		sc_mems;
+	bus_space_tag_t		sc_dbt;
+	bus_space_handle_t	sc_dbh;
+	bus_size_t		sc_dbs;
+
+	void			*sc_ih;
 };
 
 struct cfattach nxe_ca = {
@@ -91,5 +111,40 @@ nxe_match(struct device *parent, void *match, void *aux)
 void
 nxe_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct nxe_softc		*sc = (struct nxe_softc *)self;
+	struct pci_attach_args		*pa = aux;
+	pcireg_t			memtype;
+
+	sc->sc_dmat = pa->pa_dmat;
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NXE_PCI_BAR_MEM);
+	if (pci_mapreg_map(pa, NXE_PCI_BAR_MEM, memtype, 0, &sc->sc_memt,
+	    &sc->sc_memh, NULL, &sc->sc_mems, 0) != 0) {
+		printf(": unable to map host registers\n");
+		return;
+        }
+	if (sc->sc_mems != NXE_PCI_BAR_MEM_128MB) {
+		printf(": unexpected register map size\n");
+		goto unmap_mem;
+	}
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NXE_PCI_BAR_DOORBELL);
+	if (pci_mapreg_map(pa, NXE_PCI_BAR_DOORBELL, memtype, 0, &sc->sc_dbt,
+	    &sc->sc_dbh, NULL, &sc->sc_dbs, 0) != 0) {
+		printf(": unable to map doorbell registers\n");
+		goto unmap_mem;
+	}
+
 	printf("\n");
+	return;
+
+unmap_mem:
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+	sc->sc_mems = 0;
+}
+
+int
+nxe_intr(void *xsc)
+{
+	return (0);
 }
