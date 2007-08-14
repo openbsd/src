@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.16 2007/08/10 20:30:14 cnst Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.17 2007/08/14 16:52:22 cnst Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2007 $
+.Dd $Mdocdate: August 14 2007 $
 .Dt SENSORSD.CONF 5
 .Os
 .Sh NAME
@@ -116,18 +116,23 @@ Configuration file for
 .El
 .Sh EXAMPLES
 In the following configuration file,
-if hw.sensors.ipmi0.temp0 goes above 80C, the command
+if hw.sensors.ipmi0.temp0 transitions 80C or
+if its status as provided by
+.Xr ipmi 4
+changes, the command
 .Pa /etc/sensorsd/log_warning
 will be executed,
 with the sensor type, number and current value passed to it.
-Alerts will be sent if hw.sensors.ipmi0.temp1 goes above 170F;
-if hw.sensors.lm0.volt3 goes below 4.8V or above 5.2V;
+Alerts will be sent
+if hw.sensors.lm0.volt3 transitions to being within or outside
+a range of 4.8V and 5.2V;
 if the speed of the fan attached to hw.sensors.lm0.fan1
-goes below 1000RPM or above 8000RPM;
+transitions to being below or above 1000RPM;
 if any RAID volume drive
-goes into a state other than
+changes its status from, for example,
 .Dq OK ,
-such as drive failure, rebuild, or a complete failure, the command
+such as in the case of drive failure, rebuild, or a complete failure,
+the command
 .Pa /etc/sensorsd/drive
 will be executed, with the sensor number passed to it; however,
 no alerts will be generated for status changes on timedelta sensors.
@@ -137,9 +142,8 @@ each time those sensors undergo status transitions.
 .Bd -literal -offset indent
 # Comments are allowed
 hw.sensors.ipmi0.temp0:high=80C:command=/etc/sensorsd/log_warning %t %n %2
-hw.sensors.ipmi0.temp1:high=170F
 hw.sensors.lm0.volt3:low=4.8V:high=5.2V
-hw.sensors.lm0.fan1:low=1000:high=8000
+hw.sensors.lm0.fan1:low=1000
 drive:command=/etc/sensorsd/drive %n
 timedelta:istatus	#ignore status changes for timedelta
 .Ed
