@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.53 2007/08/11 21:30:30 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.54 2007/08/14 05:12:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1888,18 +1888,19 @@ cmalo_cmd_set_rate(struct malo_softc *sc)
 int
 cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 {
-	uint16_t *uc;
-	int i;
+	uint8_t *cmd;
 
 	cmalo_hexdump(sc->sc_cmd, psize);
 
 	/* send command request */
 	MALO_WRITE_2(sc, MALO_REG_CMD_WRITE_LEN, psize);
-	uc = (uint16_t *)sc->sc_cmd;
-	for (i = 0; i < psize / 2; i++)
-		MALO_WRITE_2(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
-	if (psize & 0x0001)
-		MALO_WRITE_1(sc, MALO_REG_CMD_WRITE, htole16(uc[i]));
+	if (psize & 0x0001) {
+		MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, sc->sc_cmd,
+		    psize - 1);
+		cmd = (uint8_t *)sc->sc_cmd;
+		MALO_WRITE_1(sc, MALO_REG_CMD_WRITE, cmd[psize - 1]);
+	} else
+		MALO_WRITE_MULTI_2(sc, MALO_REG_CMD_WRITE, sc->sc_cmd, psize);
 	MALO_WRITE_1(sc, MALO_REG_HOST_STATUS, MALO_VAL_CMD_DL_OVER);
 	MALO_WRITE_2(sc, MALO_REG_CARD_INTR_CAUSE, MALO_VAL_CMD_DL_OVER);
 
@@ -1921,8 +1922,9 @@ int
 cmalo_cmd_response(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
-	uint16_t psize, *uc;
-	int i, s;
+	uint16_t psize;
+	uint8_t *cmd;
+	int s;
 
 	s = splnet();
 
@@ -1930,9 +1932,13 @@ cmalo_cmd_response(struct malo_softc *sc)
 
 	/* read the whole command response */
 	psize = MALO_READ_2(sc, MALO_REG_CMD_READ_LEN);
-	uc = (uint16_t *)sc->sc_cmd;
-	for (i = 0; i < psize / 2; i++)
-		uc[i] = htole16(MALO_READ_2(sc, MALO_REG_CMD_READ));
+	if (psize & 0x0001) {
+		MALO_READ_MULTI_2(sc, MALO_REG_CMD_READ, sc->sc_cmd,
+		    psize - 1);
+		cmd = (uint8_t *)sc->sc_cmd;
+		cmd[psize - 1] = MALO_READ_1(sc, MALO_REG_CMD_READ);
+	} else
+		MALO_READ_MULTI_2(sc, MALO_REG_CMD_READ, sc->sc_cmd, psize);
 
 	cmalo_hexdump(sc->sc_cmd, psize);
 
