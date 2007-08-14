@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.11 2007/08/07 05:42:05 ray Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.12 2007/08/14 20:43:10 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -303,9 +303,7 @@ hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 	Elf_Sym        *psymtab;
 
 #ifdef __mips__
-	int             f;
-	sleep(1);
-	f = time(NULL) * 200;
+	u_int32_t f = arc4random();
 #endif
 
 	for (i = 0; i < (symtabsize / sizeof(Elf_Sym)); i++) {
@@ -327,25 +325,17 @@ hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 #else
 			/*
 			 * XXX This is a small ugly hack to be able to use
-			 * chrunchide with MIPS.
-			 */
-			/*
+			 * XXX chrunchide with MIPS.
 			 * XXX Because MIPS needs global symbols to stay
-			 * global (has to do with GOT)
-			 */
-			/*
-			 * XXX we mess around with the symbol names instead.
-			 * For most uses this
-			 */
-			/*
-			 * XXX will be no problem, symbols are stripped
-			 * anyway. However, if many
-			 */
-			/* XXX one character symbols exist, names may clash.
+			 * XXX global (has to do with GOT), we mess around
+			 * XXX with the symbol names instead. For most uses
+			 * XXX this will be no problem, symbols are stripped
+			 * XXX anyway. However, if many one character
+			 * XXX symbols exist, names may clash.
 			 */
 			{
-				char           *p;
-				int             n, z;
+				char *p;
+				u_int32_t n, z;
 
 				z = f++;
 				p = get_str(psymtab->st_name);
@@ -356,7 +346,7 @@ hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 					p[n] = z;
 					z >>= 8;
 					while (p[n] == 0)
-						p[n] += rand();
+						p[n] += arc4random();
 				}
 			}
 
