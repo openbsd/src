@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.17 2007/05/29 21:09:43 robert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.18 2007/08/14 15:18:07 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -62,6 +62,8 @@
 #define	CPU_ALLOWAPERTURE	6	/* int: allow mmap of /dev/xf86 */
 #define CPU_APMWARN		7	/* APM battery warning percentage */
 #define CPU_KBDRESET		8	/* int: console keyboard reset */
+		/*		9	   formerly int: CPU_ZTSRAWMODE */
+		/*		10	   formerly struct: CPU_ZTSSCALE */
 #define	CPU_MAXSPEED		11	/* int: number of valid machdep ids */
 #define CPU_LIDSUSPEND		12	/* int: closing lid causes suspend */
 #define	CPU_MAXID		13	/* number of valid machdep ids */
@@ -76,9 +78,11 @@
 	{ "allowaperture", CTLTYPE_INT }, \
 	{ "apmwarn", CTLTYPE_INT }, \
 	{ "kbdreset", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 	{ "maxspeed", CTLTYPE_INT }, \
 	{ "lidsuspend", CTLTYPE_INT } \
-}    
+}
 
 #ifdef _KERNEL
 
