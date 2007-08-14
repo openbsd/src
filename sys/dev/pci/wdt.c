@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.15 2007/08/01 13:07:08 mk Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.16 2007/08/14 07:16:26 mk Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -100,8 +100,6 @@ const struct pci_matchid wdt_devices[] = {
 #define WDT_START_BUZZER	4
 #define WDT_TEMPERATURE		5
 #define WDT_STOP_BUZZER		5
-
-#define UNIT(dev)		(minor(dev))
 
 int
 wdtprobe(struct device *parent, void *match, void *aux)
