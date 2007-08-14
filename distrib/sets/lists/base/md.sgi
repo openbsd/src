@@ -1133,7 +1133,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/pci/if_nfereg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/pci/if_nfevar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/pci/if_ngereg.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/pci/if_nxreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/pci/if_san_common.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/pci/if_san_front_end.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/pci/if_san_obsd.ph
