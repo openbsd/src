@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.241 2007/08/14 18:54:39 reyk Exp $
+#	$OpenBSD: files.pci,v 1.242 2007/08/14 23:16:43 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -350,6 +350,11 @@ file	dev/pci/ixgb_hw.c		ixgb
 device	xge: ether, ifnet, ifmedia
 attach	xge  at pci
 file	dev/pci/if_xge.c		xge
+
+# NetXen NX2031/NX2035 10Gb Ethernet
+device	nxe: ether, ifnet, ifmedia
+attach	nxe at pci
+file	dev/pci/if_nxe.c		nxe
 
 # Tehuti Networks 10Gb Ethernet
 device	thtc {}
