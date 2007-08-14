@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.5 2007/08/14 23:45:25 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.6 2007/08/14 23:55:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -150,11 +150,15 @@ struct nxe_softc {
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
 	bus_size_t		sc_mems;
+	bus_space_handle_t	sc_crbh;
 	bus_space_tag_t		sc_dbt;
 	bus_space_handle_t	sc_dbh;
 	bus_size_t		sc_dbs;
 
 	void			*sc_ih;
+
+	int			sc_function;
+	int			sc_window;
 };
 
 int			nxe_match(struct device *, void *, void *);
@@ -176,6 +180,11 @@ struct cfdriver nxe_cd = {
 /* low level hardware access goo */
 u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
 void			nxe_write(struct nxe_softc *, bus_size_t, u_int32_t);
+
+int			nxe_crb_set(struct nxe_softc *, int);
+u_int32_t		nxe_crb_read(struct nxe_softc *, bus_size_t);
+void			nxe_crb_write(struct nxe_softc *, bus_size_t,
+			    u_int32_t);
 
 /* misc bits */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
@@ -212,6 +221,8 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t			memtype;
 
 	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_function = pa->pa_function;
+	sc->sc_window = -1;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NXE_PCI_BAR_MEM);
 	if (pci_mapreg_map(pa, NXE_PCI_BAR_MEM, memtype, 0, &sc->sc_memt,
@@ -224,10 +235,18 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap_mem;
 	}
 
+	/* set up the CRB window */
+	if (bus_space_subregion(sc->sc_memt, sc->sc_memh, NXE_MAP_CRB,
+	    sc->sc_mems - NXE_MAP_CRB, &sc->sc_crbh) != 0) {
+		printf(": unable to create CRB window\n");
+		goto unmap_mem;
+	}
+
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NXE_PCI_BAR_DOORBELL);
 	if (pci_mapreg_map(pa, NXE_PCI_BAR_DOORBELL, memtype, 0, &sc->sc_dbt,
 	    &sc->sc_dbh, NULL, &sc->sc_dbs, 0) != 0) {
 		printf(": unable to map doorbell registers\n");
+		/* bus_space(9) says i dont have to unmap subregions */
 		goto unmap_mem;
 	}
 
@@ -258,5 +277,36 @@ nxe_write(struct nxe_softc *sc, bus_size_t r, u_int32_t v)
 {
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, r, v);
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+nxe_crb_set(struct nxe_softc *sc, int window)
+{
+	int			oldwindow = sc->sc_window;
+
+	if (sc->sc_window != window) {
+		sc->sc_window = window;
+
+		nxe_write(sc, NXE_WIN_CRB(sc->sc_function),
+		    window ? NXE_WIN_CRB_1 : NXE_WIN_CRB_0);
+	}
+
+	return (oldwindow);
+}
+
+u_int32_t
+nxe_crb_read(struct nxe_softc *sc, bus_size_t r)
+{
+	bus_space_barrier(sc->sc_memt, sc->sc_crbh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_memt, sc->sc_crbh, r));
+}
+
+void
+nxe_crb_write(struct nxe_softc *sc, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(sc->sc_memt, sc->sc_crbh, r, v);
+	bus_space_barrier(sc->sc_memt, sc->sc_crbh, r, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
