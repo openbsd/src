@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.17 2007/08/14 16:52:22 cnst Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.18 2007/08/14 17:10:02 cnst Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -68,6 +68,11 @@ Ignore status provided by the driver.
 The values for temperature sensors can be given in degrees Celsius or
 Fahrenheit, for voltage sensors in volts, and fan speed sensors take a
 unit-less number representing RPM.
+Values for all other types of sensors can be specified
+in the same units as they appear under the
+.Xr sysctl 8
+.Va hw.sensors
+tree.
 .Pp
 Sensors that provide status (such as those from
 .Xr bio 4 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.33 2007/06/01 22:41:12 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.34 2007/08/14 17:10:02 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -483,11 +483,17 @@ print_sensor(enum sensor_type type, int64_t value)
 	case SENSOR_AMPS:
 		snprintf(fbuf, RFBUFSIZ, "%.2f A", value / 1000000.0);
 		break;
+	case SENSOR_WATTHOUR:
+		snprintf(fbuf, RFBUFSIZ, "%.2f Wh", value / 1000000.0);
+		break;
+	case SENSOR_AMPHOUR:
+		snprintf(fbuf, RFBUFSIZ, "%.2f Ah", value / 1000000.0);
+		break;
 	case SENSOR_INDICATOR:
 		snprintf(fbuf, RFBUFSIZ, "%s", value? "On" : "Off");
 		break;
 	case SENSOR_INTEGER:
-		snprintf(fbuf, RFBUFSIZ, "%lld raw", value);
+		snprintf(fbuf, RFBUFSIZ, "%lld", value);
 		break;
 	case SENSOR_PERCENT:
 		snprintf(fbuf, RFBUFSIZ, "%.2f%%", value / 1000.0);
@@ -496,11 +502,14 @@ print_sensor(enum sensor_type type, int64_t value)
 		snprintf(fbuf, RFBUFSIZ, "%.2f lx", value / 1000000.0);
 		break;
 	case SENSOR_DRIVE:
-		if (0 < value && value < sizeof(drvstat)/sizeof(drvstat[0])) {
+		if (0 < value && value < sizeof(drvstat)/sizeof(drvstat[0]))
 			snprintf(fbuf, RFBUFSIZ, "%s", drvstat[value]);
-			break;
-		}
-		/* FALLTHROUGH */
+		else
+			snprintf(fbuf, RFBUFSIZ, "%lld ???", value);
+		break;
+	case SENSOR_TIMEDELTA:
+		snprintf(fbuf, RFBUFSIZ, "%.6f secs", value / 1000000000.0);
+		break;
 	default:
 		snprintf(fbuf, RFBUFSIZ, "%lld ???", value);
 	}
@@ -606,8 +615,14 @@ get_val(char *buf, int upper, enum sensor_type type)
 	case SENSOR_DRIVE:
 		rval = val;
 		break;
+	case SENSOR_AMPS:
+	case SENSOR_WATTHOUR:
+	case SENSOR_AMPHOUR:
 	case SENSOR_LUX:
 		rval = val * 1000 * 1000;
+		break;
+	case SENSOR_TIMEDELTA:
+		rval = val * 1000 * 1000 * 1000;
 		break;
 	default:
 		errx(1, "unsupported sensor type");
