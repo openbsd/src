@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.113 2007/07/18 14:19:48 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.114 2007/08/14 15:29:18 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -60,10 +60,11 @@
 #include "dhcpd.h"
 #include "privsep.h"
 
-#define	CLIENT_PATH "PATH=/usr/bin:/usr/sbin:/bin:/sbin"
+#define	CLIENT_PATH 		"PATH=/usr/bin:/usr/sbin:/bin:/sbin"
+#define DEFAULT_LEASE_TIME	43200	/* 12 hours... */
+#define TIME_MAX		2147483647
 
 time_t cur_time;
-time_t default_lease_time = 43200; /* 12 hours... */
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = NULL;
@@ -78,8 +79,6 @@ int routefd = -1;
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
 struct in_addr inaddr_any;
 struct sockaddr_in sockaddr_broadcast;
-
-#define TIME_MAX 2147483647
 
 struct interface_info *ifi;
 struct client_state *client;
@@ -603,7 +602,7 @@ dhcpack(struct iaddr client_addr, struct option_data *options)
 		client->new->expiry =
 		    getULong(client->new->options[DHO_DHCP_LEASE_TIME].data);
 	else
-		client->new->expiry = default_lease_time;
+		client->new->expiry = DEFAULT_LEASE_TIME;
 	/* A number that looks negative here is really just very large,
 	   because the lease expiry offset is unsigned. */
 	if (client->new->expiry < 0)
