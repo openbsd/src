@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.2 2007/08/14 23:29:49 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.3 2007/08/14 23:31:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -104,6 +104,9 @@ int
 nxe_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args		*pa = aux;
+
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_NETWORK)
+		return (0);
 
 	return (pci_matchbyid(pa, nxe_devices, sizeofa(nxe_devices)));
 }
