@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.3 2007/08/14 23:31:37 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.4 2007/08/14 23:34:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -87,8 +87,15 @@ struct cfdriver nxe_cd = {
 	DV_IFNET
 };
 
+/* low level hardware access goo */
+u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
+void			nxe_write(struct nxe_softc *, bus_size_t, u_int32_t);
+
+/* misc bits */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
 #define sizeofa(_a)	(sizeof(_a) / sizeof((_a)[0]))
+
+/* let's go! */
 
 const struct pci_matchid nxe_devices[] = {
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GXxR },
@@ -125,7 +132,7 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_memh, NULL, &sc->sc_mems, 0) != 0) {
 		printf(": unable to map host registers\n");
 		return;
-        }
+	}
 	if (sc->sc_mems != NXE_PCI_BAR_MEM_128MB) {
 		printf(": unexpected register map size\n");
 		goto unmap_mem;
@@ -150,4 +157,20 @@ int
 nxe_intr(void *xsc)
 {
 	return (0);
+}
+
+u_int32_t
+nxe_read(struct nxe_softc *sc, bus_size_t r)
+{
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_memt, sc->sc_memh, r));
+}
+
+void
+nxe_write(struct nxe_softc *sc, bus_size_t r, u_int32_t v)
+{
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, r, v);
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
