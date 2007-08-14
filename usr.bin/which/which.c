@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.13 2004/09/24 19:45:27 fgsch Exp $	*/
+/*	$OpenBSD: which.c,v 1.14 2007/08/14 17:41:10 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint                                                              
-static const char rcsid[] = "$OpenBSD: which.c,v 1.13 2004/09/24 19:45:27 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: which.c,v 1.14 2007/08/14 17:41:10 sobrado Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/param.h>
@@ -170,6 +170,6 @@ findprog(char *prog, char *path, int progmode, int allmatches)
 __dead void
 usage(void)
 {
-	(void) fprintf(stderr, "Usage: %s [-a] name [...]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-a] name ...\n", __progname);
 	exit(1);
 }

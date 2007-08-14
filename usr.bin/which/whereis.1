@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whereis.1,v 1.10 2007/05/31 19:20:20 jmc Exp $
+.\"	$OpenBSD: whereis.1,v 1.11 2007/08/14 17:41:10 sobrado Exp $
 .\"	$NetBSD: whereis.1,v 1.4 1995/08/31 21:54:51 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)whereis.1	8.3 (Berkeley) 4/27/95
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 14 2007 $
 .Dt WHEREIS 1
 .Os
 .Sh NAME
@@ -38,7 +38,8 @@
 .Nd locate programs
 .Sh SYNOPSIS
 .Nm whereis
-.Ar name Op Ar ...
+.Op Fl a
+.Ar name ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -51,6 +52,12 @@ The path searched is the string returned by the
 utility for the
 .Dq user.cs_path
 string.
+.Pp
+If the
+.Fl a
+flag is given,
+.Nm
+will return a list of all matches instead of just the first match.
 .Pp
 The
 .Nm
