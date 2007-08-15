@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.32 2007/08/15 05:34:08 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.33 2007/08/15 06:14:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -683,6 +683,9 @@ struct nxe_softc {
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
 
+	struct nxe_pkt_list	*sc_tx_pkts;
+	struct nxe_pkt_list	*sc_rx_pkts;
+
 	/* allocations for the hw */
 	struct nxe_dmamem	*sc_dummy_dma;
 
@@ -730,7 +733,7 @@ int			nxe_ioctl(struct ifnet *, u_long, caddr_t);
 void			nxe_start(struct ifnet *);
 void			nxe_watchdog(struct ifnet *);
 
-int			nxe_up(struct nxe_softc *);
+void			nxe_up(struct nxe_softc *);
 void			nxe_iff(struct nxe_softc *);
 void			nxe_down(struct nxe_softc *);
 
@@ -973,7 +976,7 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = ENETRESET;
 			else
-				error = nxe_up(sc);
+				nxe_up(sc);
 		} else {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				nxe_down(sc);
@@ -1004,16 +1007,24 @@ err:
 	return (error);
 }
 
-int
+void
 nxe_up(struct nxe_softc *sc)
 {
-	int				error;
+	if (nxe_up_fw(sc) != 0)
+		return;
 
-	error = nxe_up_fw(sc);
-	if (error)
-		return (error);
+	sc->sc_tx_pkts = nxe_pkt_alloc(sc, 128, NXE_TXD_MAX_SEGS);
+	if (sc->sc_tx_pkts == NULL)
+		return;
+	sc->sc_rx_pkts = nxe_pkt_alloc(sc, 128, NXE_RXD_MAX_SEGS);
+	if (sc->sc_rx_pkts == NULL)
+		goto free_tx_pkts;
 
-	return (0);
+
+	return;
+
+free_tx_pkts:
+	nxe_pkt_free(sc, sc->sc_tx_pkts);
 }
 
 int
@@ -1026,7 +1037,7 @@ nxe_up_fw(struct nxe_softc *sc)
 		return (0);
 
 	if (r != NXE_1_SW_CMDPEG_STATE_DONE)
-		return (EIO);
+		return (1);
 
 	nxe_crb_write(sc, NXE_1_SW_NIC_CAP_HOST, NXE_1_SW_NIC_CAP_HOST_DEF);
 	nxe_crb_write(sc, NXE_1_SW_MPORT_MODE, NXE_1_SW_MPORT_MODE_MULTI);
@@ -1035,7 +1046,7 @@ nxe_up_fw(struct nxe_softc *sc)
 	/* XXX busy wait in a process context is naughty */
 	if (!nxe_crb_wait(sc, NXE_1_SW_STATUS_STATE(sc->sc_function),
 	    0xffffffff, NXE_1_SW_STATUS_STATE_READY, 1000))
-		return (EIO);
+		return (1);
 
 	return (0);
 }
@@ -1049,7 +1060,12 @@ nxe_iff(struct nxe_softc *sc)
 void
 nxe_down(struct nxe_softc *sc)
 {
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
 
+	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE | IFF_ALLMULTI);
+
+	nxe_pkt_free(sc, sc->sc_rx_pkts);
+	nxe_pkt_free(sc, sc->sc_tx_pkts);
 }
 
 void
