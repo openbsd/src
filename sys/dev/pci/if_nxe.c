@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.29 2007/08/15 04:44:02 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.30 2007/08/15 04:47:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/sensors.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -610,6 +611,9 @@ struct nxe_softc {
 	struct timeout		sc_tick;
 	struct ksensor		sc_sensor;
 	struct ksensordev	sc_sensor_dev;
+
+	/* ioctl lock */
+	struct rwlock		sc_lock;
 };
 
 int			nxe_match(struct device *, void *, void *);
@@ -749,6 +753,8 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_function = pa->pa_function;
 	sc->sc_window = -1;
 
+	rw_init(&sc->sc_lock, NULL);
+
 	if (nxe_pci_map(sc, pa) != 0) {
 		/* error already printed by nxe_pci_map() */
 		return;
@@ -863,6 +869,7 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	int				error;
 	int				s;
 
+	rw_enter_write(&sc->sc_lock);
 	s = splnet();
 
 	error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
@@ -912,6 +919,7 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 err:
 	splx(s);
+	rw_exit_write(&sc->sc_lock);
 	return (error);
 }
 
