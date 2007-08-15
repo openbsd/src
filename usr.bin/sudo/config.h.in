@@ -124,6 +124,9 @@
 /* Define to 1 if you use the FWTK authsrv daemon. */
 #undef HAVE_FWTK
 
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
 /* Define to 1 if you have the `getauthuid' function. (ULTRIX 4.x shadow
    passwords) */
 #undef HAVE_GETAUTHUID

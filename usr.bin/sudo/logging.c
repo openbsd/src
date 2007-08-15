@@ -60,7 +60,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: logging.c,v 1.168.2.11 2007/07/24 15:52:37 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: logging.c,v 1.168.2.12 2007/08/08 20:07:45 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -135,8 +135,8 @@ do_syslog(pri, msg)
     size_t len, maxlen;
     char *p, *tmp, save;
     const char *fmt;
-    const char fmt_first[] = "%8s : %s";
-    const char fmt_contd[] = "%8s : (command continued) %s";
+    const char *fmt_first = "%8s : %s";
+    const char *fmt_contd = "%8s : (command continued) %s";
 
     /*
      * Log the full line, breaking into multiple syslog(3) calls if necessary

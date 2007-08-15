@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.15 2007/07/22 22:43:50 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.18 2007/08/15 13:48:51 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -1147,7 +1147,7 @@ dnl
 if test "$enable_shared" = "no"; then
     with_noexec=no
 else
-    eval _shrext="$shrext"
+    eval _shrext="$shrext_cmds"
 fi
 AC_MSG_CHECKING(path to sudo_noexec.so)
 AC_ARG_WITH(noexec, [  --with-noexec[=PATH]      fully qualified pathname of sudo_noexec.so],
@@ -1666,7 +1666,7 @@ dnl Function checks
 dnl
 AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf tzset \
 	       strftime setrlimit initgroups getgroups fstat gettimeofday \
-	       setlocale)
+	       setlocale getaddrinfo)
 if test -z "$SKIP_SETRESUID"; then
     AC_CHECK_FUNCS(setresuid, [SKIP_SETREUID=yes])
 fi
@@ -1720,7 +1720,7 @@ dnl Check for the dirfd function/macro.  If not found, look for dd_fd in DIR.
 dnl
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 #include <$ac_header_dirent>]], [[DIR d; (void)dirfd(&d);]])], [AC_DEFINE(HAVE_DIRFD)], [AC_TRY_LINK([#include <sys/types.h>
-#include <$ac_header_dirent>], [DIR d; (void)&d.dd_fd;], [AC_DEFINE(HAVE_DD_FD)])])
+#include <$ac_header_dirent>], [DIR d; memset(&d, 0, sizeof(d)); return(d.dd_fd);], [AC_DEFINE(HAVE_DD_FD)])])
 dnl
 dnl If NEED_SNPRINTF is set, add snprintf.c to LIBOBJS
 dnl (it contains snprintf, vsnprintf, asprintf, and vasprintf)

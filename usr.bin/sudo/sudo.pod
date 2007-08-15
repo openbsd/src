@@ -1,5 +1,6 @@
 =cut
-Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
+Copyright (c) 1994-1996, 1998-2005, 2007
+	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +19,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.70.2.15 2007/07/29 23:09:47 millert Exp $
+$Sudo: sudo.pod,v 1.70.2.18 2007/08/13 16:23:31 millert Exp $
 =pod
 
 =head1 NAME
@@ -58,7 +59,7 @@ is implied.
 
 B<sudo> determines who is an authorized user by consulting the file
 F<@sysconfdir@/sudoers>.  By giving B<sudo> the B<-v> flag, a user
-can update the time stamp without running a I<command.> The password
+can update the time stamp without running a I<command>. The password
 prompt itself will also time out if the user's password is not
 entered within C<@password_timeout@> minutes (unless overridden via
 I<sudoers>).
@@ -94,9 +95,9 @@ B<sudo> accepts the following command line options:
 
 The B<-a> (I<authentication type>) option causes B<sudo> to use the
 specified authentication type when validating the user, as allowed
-by C</etc/login.conf>.  The system administrator may specify a list
+by F</etc/login.conf>.  The system administrator may specify a list
 of sudo-specific authentication methods by adding an "auth-sudo"
-entry in C</etc/login.conf>.  This option is only available on systems
+entry in F</etc/login.conf>.  This option is only available on systems
 that support BSD authentication.
 
 =item -b
@@ -119,7 +120,7 @@ root.  This option is only available on systems with BSD login classes.
 
 =item -E
 
-The B<-E> (I<preserve> environment) option will override the
+The B<-E> (I<preserve> I<environment>) option will override the
 I<env_reset> option in L<sudoers(5)>).  It is only
 available when either the matching command has the C<SETENV> tag
 or the I<setenv> option is set in L<sudoers(5)>.
@@ -132,7 +133,7 @@ of a command, the string "sudoedit" is used when consulting
 the I<sudoers> file.  If the user is authorized by I<sudoers>
 the following steps are taken:
 
-=over 8
+=over 4
 
 =item 1.
 
@@ -213,7 +214,7 @@ forbidden) commands for the invoking user on the current host.
 
 =item -P
 
-The B<-P> (I<preserve> group vector) option causes B<sudo> to
+The B<-P> (I<preserve> I<group vector>) option causes B<sudo> to
 preserve the invoking user's group vector unaltered.  By default,
 B<sudo> will initialize the group vector to the list of groups the
 target user is in.  The real and effective group IDs, however, are
@@ -225,7 +226,7 @@ The B<-p> (I<prompt>) option allows you to override the default
 password prompt and use a custom one.  The following percent (`C<%>')
 escapes are supported:
 
-=over 8
+=over 4
 
 =item C<%H>
 
@@ -265,11 +266,13 @@ in L<passwd(5)>.
 
 =item -u
 
-The B<-u> (I<user>) option causes B<sudo> to run the specified command
-as a user other than I<root>.  To specify a I<uid> instead of a
-I<username>, use I<#uid>.  Note that if the I<targetpw> Defaults
-option is set (see L<sudoers(5)>) it is not possible
-to run commands with a uid not listed in the password database.
+The B<-u> (I<user>) option causes B<sudo> to run the specified
+command as a user other than I<root>.  To specify a I<uid> instead
+of a I<username>, use I<#uid>.  When running commands as a I<uid>,
+many shells require that the '#' be escaped with a backslash ('\').
+Note that if the I<targetpw> Defaults option is set (see L<sudoers(5)>)
+it is not possible to run commands with a uid not listed in the
+password database.
 
 =item -V
 
@@ -395,44 +398,66 @@ L<sudoers(5)>.
 
 B<sudo> utilizes the following environment variables:
 
- EDITOR			Default editor to use in -e (sudoedit) mode if
-			VISUAL is not set
+=over 16
 
- HOME			In -s or -H mode (or if sudo was configured with
-			the --enable-shell-sets-home option), set to
-			homedir of the target user
+=item C<EDITOR>
 
- PATH			Set to a sane value if sudo was configured with
-			the --with-secure-path option
+Default editor to use in B<-e> (sudoedit) mode if C<VISUAL> is not set
 
- SHELL			Used to determine shell to run with -s option
+=item C<HOME>
 
- SUDO_PROMPT		Used as the default password prompt
+In B<-s> or B<-H> mode (or if sudo was configured with the
+--enable-shell-sets-home option), set to homedir of the target user
 
- SUDO_COMMAND		Set to the command run by sudo
+=item C<PATH>
 
- SUDO_USER		Set to the login of the user who invoked sudo
+Set to a sane value if the I<secure_path> sudoers option is set.
 
- SUDO_UID		Set to the uid of the user who invoked sudo
+=item C<SHELL>
 
- SUDO_GID		Set to the gid of the user who invoked sudo
+Used to determine shell to run with C<-s> option
 
- SUDO_PS1		If set, PS1 will be set to its value
+=item C<SUDO_PROMPT>
 
- USER			Set to the target user (root unless the -u option
-			is specified)
+Used as the default password prompt
 
- VISUAL			Default editor to use in -e (sudoedit) mode
+=item C<SUDO_COMMAND>
+
+Set to the command run by sudo
+
+=item C<SUDO_USER>
+
+Set to the login of the user who invoked sudo
+
+=item C<SUDO_UID>
+
+Set to the uid of the user who invoked sudo
+
+=item C<SUDO_GID>
+
+Set to the gid of the user who invoked sudo
+
+=item C<SUDO_PS1>
+
+If set, C<PS1> will be set to its value
+
+=item C<USER>
+
+Set to the target user (root unless the B<-u> option is specified)
+
+=item C<VISUAL>
+
+Default editor to use in B<-e> (sudoedit) mode
+
+=back
 
 =head1 FILES
 
 =over 4
 
-=item F<@sysconfdir@/sudoers>C<		>
-List of who can run what
+=item F<@sysconfdir@/sudoers>C<		>List of who can run what
 
-=item F<@timedir@>C<		>
-Directory containing timestamps
+=item F<@timedir@>C<		>Directory containing timestamps
 
 =back
 

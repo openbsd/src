@@ -72,7 +72,7 @@
 #endif /* HAVE_LSEARCH */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.yacc,v 1.204.2.5 2007/07/09 21:53:01 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.yacc,v 1.204.2.6 2007/08/13 16:30:02 millert Exp $";
 #endif /* lint */
 
 /*
@@ -232,7 +232,7 @@ yyerror(s)
 %token <command> COMMAND		/* absolute pathname w/ optional args */
 %token <string>  ALIAS			/* an UPPERCASE alias name */
 %token <string>	 DEFVAR			/* a Defaults variable name */
-%token <string>  NTWKADDR		/* w.x.y.z */
+%token <string>  NTWKADDR		/* w.x.y.z or ipv6 address */
 %token <string>  NETGROUP		/* a netgroup (+NAME) */
 %token <string>  USERGROUP		/* a usergroup (%NAME) */
 %token <string>  WORD			/* a word */

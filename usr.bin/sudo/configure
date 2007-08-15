@@ -10386,7 +10386,7 @@ CC="$lt_save_CC"
 if test "$enable_shared" = "no"; then
     with_noexec=no
 else
-    eval _shrext="$shrext"
+    eval _shrext="$shrext_cmds"
 fi
 echo "$as_me:$LINENO: checking path to sudo_noexec.so" >&5
 echo $ECHO_N "checking path to sudo_noexec.so... $ECHO_C" >&6
@@ -14232,9 +14232,10 @@ esac
 
 
 
+
 for ac_func in strchr strrchr memchr memcpy memset sysconf tzset \
 	       strftime setrlimit initgroups getgroups fstat gettimeofday \
-	       setlocale
+	       setlocale getaddrinfo
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -16175,7 +16176,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-(void)isblank(1);
+return (isblank('a'));
   ;
   return 0;
 }
@@ -17167,7 +17168,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-DIR d; (void)&d.dd_fd;
+DIR d; memset(&d, 0, sizeof(d)); return(d.dd_fd);
   ;
   return 0;
 }

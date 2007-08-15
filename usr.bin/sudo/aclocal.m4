@@ -229,7 +229,7 @@ dnl check for isblank(3)
 dnl
 AC_DEFUN([SUDO_FUNC_ISBLANK],
   [AC_CACHE_CHECK([for isblank], sudo_cv_func_isblank,
-    [AC_TRY_LINK([#include <ctype.h>], [(void)isblank(1);],
+    [AC_TRY_LINK([#include <ctype.h>], [return (isblank('a'));],
     sudo_cv_func_isblank=yes, sudo_cv_func_isblank=no)])
 ] [
   if test "$sudo_cv_func_isblank" = "yes"; then

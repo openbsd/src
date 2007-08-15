@@ -1,5 +1,6 @@
 =cut
-Copyright (c) 1994-1996,1998-2005 Todd C. Miller <Todd.Miller@courtesan.com>
+Copyright (c) 1994-1996, 1998-2005, 2007
+	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +19,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.95.2.16 2007/07/29 23:09:47 millert Exp $
+$Sudo: sudoers.pod,v 1.95.2.19 2007/08/13 16:30:02 millert Exp $
 =pod
 
 =head1 NAME
@@ -52,7 +53,7 @@ operators, which many readers will recognize from regular
 expressions.  Do not, however, confuse them with "wildcard"
 characters, which have different meanings.
 
-=over 8
+=over 4
 
 =item C<?>
 
@@ -156,8 +157,9 @@ If you do not specify a netmask along with the network number,
 B<sudo> will query each of the local host's network interfaces and,
 if the network number corresponds to one of the hosts's network
 interfaces, the corresponding netmask will be used.  The netmask
-may be specified either in dotted quad notation (e.g.E<nbsp>255.255.255.0)
-or CIDR notation (number of bits, e.g.E<nbsp>24).  A hostname may
+may be specified either in standard IP address notation
+(e.g.E<nbsp>255.255.255.0 or ffff:ffff:ffff:ffff::),
+or CIDR notation (number of bits, e.g.E<nbsp>24 or 64).  A hostname may
 include shell-style wildcards (see the L<Wildcards> section below),
 but unless the C<hostname> command on your machine returns the fully
 qualified hostname, you'll need to use the I<fqdn> option for
@@ -432,7 +434,7 @@ grouped by type, are listed below.
 
 B<Flags>:
 
-=over 12
+=over 16
 
 =item always_set_home
 
@@ -686,7 +688,7 @@ the --with-logincap option.  This flag is I<off> by default.
 
 B<Integers>:
 
-=over 12
+=over 16
 
 =item passwd_tries
 
@@ -697,7 +699,7 @@ B<sudo> logs the failure and exits.  The default is C<@passwd_tries@>.
 
 B<Integers that can be used in a boolean context>:
 
-=over 12
+=over 16
 
 =item loglinelen
 
@@ -729,7 +731,7 @@ it to 0777 to preserve the user's umask.  The default is C<@sudo_umask@>.
 
 B<Strings>:
 
-=over 12
+=over 16
 
 =item badpass_message
 
@@ -763,7 +765,7 @@ The default prompt to use when asking for a password; can be overridden
 via the B<-p> option or the C<SUDO_PROMPT> environment variable.
 The following percent (`C<%>') escapes are supported:
 
-=over 8
+=over 4
 
 =item C<%H>
 
@@ -953,7 +955,7 @@ The default value is I<all>.
 
 B<Lists that can be used in a boolean context>:
 
-=over 12
+=over 16
 
 =item env_check
 
@@ -1061,6 +1063,7 @@ these are a bit contrived.  First, we define our I<aliases>:
 			 /usr/local/bin/tcsh, /usr/bin/rsh, \
 			 /usr/local/bin/zsh
  Cmnd_Alias	SU = /usr/bin/su
+ Cmnd_Alias	PAGERS = /usr/bin/more, /usr/bin/pg, /usr/bin/less
 
 Here we override some of the compiled in default values.  We want
 B<sudo> to log via L<syslog(3)> using the I<auth> facility in all
@@ -1070,7 +1073,9 @@ want to reset the C<LOGNAME>, C<USER> or C<USERNAME> environment
 variables when running commands as root.  Additionally, on the
 machines in the I<SERVERS> C<Host_Alias>, we keep an additional
 local log file and make sure we log the year in each log line since
-the log entries will be kept around for several years.
+the log entries will be kept around for several years.  Lastly, we
+disable shell escapes for the commands in the PAGERS C<Cmnd_Alias>
+(F</usr/bin/more>, F</usr/bin/pg> and F</usr/bin/less>).
 
  # Override built-in defaults
  Defaults		syslog=auth
@@ -1166,7 +1171,7 @@ in the I<SERVERS> C<Host_Alias> (master, mail, www and ns).
  jill		SERVERS = /usr/bin/, !SU, !SHELLS
 
 For any machine in the I<SERVERS> C<Host_Alias>, B<jill> may run
-any commands in the directory /usr/bin/ except for those commands
+any commands in the directory F</usr/bin/> except for those commands
 belonging to the I<SU> and I<SHELLS> C<Cmnd_Aliases>.
 
  steve		CSNETS = (operator) /usr/local/op_commands/

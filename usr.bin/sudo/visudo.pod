@@ -1,5 +1,5 @@
 =cut
-Copyright (c) 1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
+Copyright (c) 1996,1998-2005, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: visudo.pod,v 1.38.2.8 2007/07/29 23:09:47 millert Exp $
+$Sudo: visudo.pod,v 1.38.2.9 2007/08/13 16:23:31 millert Exp $
 =pod
 
 =head1 NAME
@@ -111,8 +111,17 @@ and exit.
 The following environment variables are used only if B<visudo>
 was configured with the I<--with-env-editor> option:
 
- VISUAL			Invoked by visudo as the editor to use
- EDITOR			Used by visudo if VISUAL is not set
+=over 16
+
+=item C<VISUAL>
+
+Invoked by visudo as the editor to use
+
+=item C<EDITOR>
+
+Used by visudo if VISUAL is not set
+
+=back
 
 =head1 FILES
 
@@ -122,7 +131,7 @@ was configured with the I<--with-env-editor> option:
 
 =item F<@sysconfdir@/sudoers.tmp>C<		>Lock file for visudo
 
-=back 4
+=back
 
 =head1 DIAGNOSTICS
 

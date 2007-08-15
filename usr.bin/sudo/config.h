@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.4 2007/07/26 16:10:15 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 2007/08/15 14:22:39 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -20,6 +20,7 @@
 #define HAVE_FSTAT 1
 #define HAVE_FUTIMES 1
 #define HAVE_GETCWD 1
+#define HAVE_GETADDRINFO 1
 #define HAVE_GETDOMAINNAME 1
 #define HAVE_GETGROUPS 1
 #define HAVE_GETIFADDRS 1

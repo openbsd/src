@@ -1943,3 +1943,11 @@ Sudo 1.6.9p2 released.
      in 1.6.9.
 
 Sudo 1.6.9p3 released.
+
+614) Added IPv6 support from YOSHIFUJI Hideaki.
+
+615) Fixed sudo_noexec installation path.
+
+616) Fixed a K&R compilation error.
+
+Sudo 1.6.9p4 released.

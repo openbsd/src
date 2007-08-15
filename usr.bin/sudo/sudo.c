@@ -102,7 +102,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.26 2007/07/22 19:21:01 millert Exp $";
+__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.29 2007/08/15 13:48:56 millert Exp $";
 #endif /* lint */
 
 /*
@@ -596,7 +596,7 @@ init_vars(sudo_mode, envp)
 
 #ifdef HAVE_GETGROUPS
     if ((user_ngroups = getgroups(0, NULL)) > 0) {
-	user_groups = emalloc2(user_ngroups, sizeof(gid_t));
+	user_groups = emalloc2(user_ngroups, MAX(sizeof(gid_t), sizeof(int)));
 	if (getgroups(user_ngroups, user_groups) < 0)
 	    log_error(USE_ERRNO|MSG_ONLY, "can't get group vector");
     } else
@@ -914,7 +914,6 @@ check_sudoers()
 {
     struct stat statbuf;
     int rootstat, i;
-    char c;
 
     /*
      * Fix the mode and group on sudoers file from old default.
@@ -966,7 +965,9 @@ check_sudoers()
 	for (i = 0; i < 10 ; i++) {
 	    errno = 0;
 	    if ((sudoers_fp = fopen(_PATH_SUDOERS, "r")) == NULL ||
-		fread(&c, sizeof(c), 1, sudoers_fp) != 1) {
+		fgetc(sudoers_fp) == EOF) {
+		if (sudoers_fp != NULL)
+		    fclose(sudoers_fp);
 		sudoers_fp = NULL;
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
 		    break;
@@ -1134,17 +1135,33 @@ set_project(pw)
 void
 set_fqdn()
 {
+#ifdef HAVE_GETADDRINFO
+    struct addrinfo *res0, hint;
+#else
     struct hostent *hp;
+#endif
     char *p;
 
+#ifdef HAVE_GETADDRINFO
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_family = PF_UNSPEC;
+    hint.ai_flags = AI_CANONNAME;
+    if (getaddrinfo(user_host, NULL, &hint, &res0) != 0) {
+#else
     if (!(hp = gethostbyname(user_host))) {
+#endif
 	log_error(MSG_ONLY|NO_EXIT,
-	    "unable to lookup %s via gethostbyname()", user_host);
+	    "unable to resolve host %s", user_host);
     } else {
 	if (user_shost != user_host)
 	    efree(user_shost);
 	efree(user_host);
+#ifdef HAVE_GETADDRINFO
+	user_host = estrdup(res0->ai_canonname);
+	freeaddrinfo(res0);
+#else
 	user_host = estrdup(hp->h_name);
+#endif
     }
     if ((p = strchr(user_host, '.'))) {
 	*p = '\0';
