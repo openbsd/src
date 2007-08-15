@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.25 2007/08/15 03:18:44 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.26 2007/08/15 03:52:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -547,6 +547,19 @@ struct nxe_dmamem {
 #define NXE_DMA_DVA(_ndm)	((_ndm)->ndm_map->dm_segs[0].ds_addr)
 #define NXE_DMA_KVA(_ndm)	((void *)(_ndm)->ndm_kva)
 
+struct nxe_pkt {
+	u_int16_t		pkt_id;
+	bus_dmamap_t		pkt_dmap;
+	struct mbuf		*pkt_m;
+	TAILQ_ENTRY(nxe_pkt)	pkt_link;
+};
+
+struct nxe_pkt_list {
+	struct nxe_pkt		*npl_pkts;
+	TAILQ_HEAD(, nxe_pkt)	npl_free;
+	TAILQ_HEAD(, nxe_pkt)	npl_used;
+};
+
 /*
  * autoconf glue
  */
@@ -625,6 +638,15 @@ void			nxe_watchdog(struct ifnet *);
 /* ifmedia operations */
 int			nxe_media_change(struct ifnet *);
 void			nxe_media_status(struct ifnet *, struct ifmediareq *);
+
+/* pkts */
+struct nxe_pkt_list	*nxe_pkt_alloc(struct nxe_softc *, u_int, int);
+void			nxe_pkt_free(struct nxe_softc *,
+			    struct nxe_pkt_list *);
+void			nxe_pkt_put(struct nxe_pkt_list *, struct nxe_pkt *);
+struct nxe_pkt		*nxe_pkt_get(struct nxe_pkt_list *);
+struct nxe_pkt		*nxe_pkt_used(struct nxe_pkt_list *);
+
 
 /* wrapper around dmaable memory allocations */
 struct nxe_dmamem	*nxe_dmamem_alloc(struct nxe_softc *, bus_size_t,
@@ -1111,6 +1133,79 @@ nxe_tick(void *xsc)
 	}
 
 	timeout_add(&sc->sc_tick, hz * 5);
+}
+
+struct nxe_pkt_list *
+nxe_pkt_alloc(struct nxe_softc *sc, u_int npkts, int nsegs)
+{
+	struct nxe_pkt_list		*npl;
+	struct nxe_pkt			*pkt;
+	int				i;
+
+	npl = malloc(sizeof(struct nxe_pkt_list), M_DEVBUF, M_WAITOK);
+	bzero(npl, sizeof(struct nxe_pkt_list));
+
+	pkt = malloc(sizeof(struct nxe_pkt) * npkts, M_DEVBUF, M_WAITOK);
+	bzero(pkt, sizeof(struct nxe_pkt) * npkts);
+
+	npl->npl_pkts = pkt;
+	TAILQ_INIT(&npl->npl_free);
+	TAILQ_INIT(&npl->npl_used);
+	for (i = 0; i < npkts; i++) {
+		pkt = &npl->npl_pkts[i];
+
+		pkt->pkt_id = i;
+		if (bus_dmamap_create(sc->sc_dmat, NXE_MAX_PKTLEN, nsegs,
+		    NXE_MAX_PKTLEN, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &pkt->pkt_dmap) != 0) {
+			nxe_pkt_free(sc, npl);
+			return (NULL);
+		}
+
+		TAILQ_INSERT_TAIL(&npl->npl_free, pkt, pkt_link);
+	}
+
+	return (npl);
+}
+
+void
+nxe_pkt_free(struct nxe_softc *sc, struct nxe_pkt_list *npl)
+{
+	struct nxe_pkt			*pkt;
+
+	while ((pkt = nxe_pkt_get(npl)) != NULL)
+		bus_dmamap_destroy(sc->sc_dmat, pkt->pkt_dmap);
+
+	free(npl->npl_pkts, M_DEVBUF);
+	free(npl, M_DEVBUF);
+}
+
+struct nxe_pkt *
+nxe_pkt_get(struct nxe_pkt_list *npl)
+{
+	struct nxe_pkt			*pkt;
+
+	pkt = TAILQ_FIRST(&npl->npl_free);
+	if (pkt != NULL) {
+		TAILQ_REMOVE(&npl->npl_free, pkt, pkt_link);
+		TAILQ_INSERT_TAIL(&npl->npl_used, pkt, pkt_link);
+	}
+
+	return (pkt);
+}
+
+void
+nxe_pkt_put(struct nxe_pkt_list *npl, struct nxe_pkt *pkt)
+{
+	TAILQ_REMOVE(&npl->npl_used, pkt, pkt_link);
+	TAILQ_INSERT_TAIL(&npl->npl_free, pkt, pkt_link);
+
+}
+
+struct nxe_pkt *
+nxe_pkt_used(struct nxe_pkt_list *npl)
+{
+	return (TAILQ_FIRST(&npl->npl_used));
 }
 
 struct nxe_dmamem *
