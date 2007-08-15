@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.12 2007/08/15 00:23:09 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.13 2007/08/15 00:30:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -209,6 +209,155 @@ int nxedebug = 0;
 #define NXE_1_ROM_TIME_PARM	0x01310020
 #define NXE_1_ROM_CLK_DIV	0x01310024
 #define NXE_1_ROM_MISS_INSTR	0x01310028
+
+/*
+ * flash memory layout
+ *
+ * These are offsets of memory accessable via the ROM Registers above
+ */
+#define NXE_FLASH_CRBINIT	0x00000000 /* crb init section */
+#define NXE_FLASH_BRDCFG	0x00004000 /* board config */
+#define NXE_FLASH_INITCODE	0x00006000 /* pegtune code */
+#define NXE_FLASH_BOOTLD	0x00010000 /* boot loader */
+#define NXE_FLASH_IMAGE		0x00043000 /* compressed image */
+#define NXE_FLASH_SECONDARY	0x00200000 /* backup image */
+#define NXE_FLASH_PXE		0x003d0000 /* pxe image */
+#define NXE_FLASH_USER		0x003e8000 /* user region for new boards */
+#define NXE_FLASH_VPD		0x003e8c00 /* vendor private data */
+#define NXE_FLASH_LICENSE	0x003e9000 /* firmware license */
+#define NXE_FLASH_FIXED		0x003f0000 /* backup of crbinit */
+
+
+/*
+ * misc hardware details
+ */
+#define NXE_MAX_PORTS		4
+#define NXE_MAX_PORT_LLADDRS	32
+#define NXE_MAX_PKTLEN		(64 * 1024)
+
+
+/*
+ * hardware structures
+ */
+
+struct nxe_info {
+	u_int32_t		ni_hdrver;
+#define NXE_INFO_HDRVER_1		0x00000001
+
+	u_int32_t		ni_board_mfg;
+	u_int32_t		ni_board_type;
+#define NXE_BRDTYPE_P1_BD		0x0000
+#define NXE_BRDTYPE_P1_SB		0x0001
+#define NXE_BRDTYPE_P1_SMAX		0x0002
+#define NXE_BRDTYPE_P1_SOCK		0x0003
+#define NXE_BRDTYPE_P2_SOCK_31		0x0008
+#define NXE_BRDTYPE_P2_SOCK_35		0x0009
+#define NXE_BRDTYPE_P2_SB35_4G		0x000a
+#define NXE_BRDTYPE_P2_SB31_10G		0x000b
+#define NXE_BRDTYPE_P2_SB31_2G		0x000c
+#define NXE_BRDTYPE_P2_SB31_10G_IMEZ	0x000d
+#define NXE_BRDTYPE_P2_SB31_10G_HMEZ	0x000e
+#define NXE_BRDTYPE_P2_SB31_10G_CX4	0x000f
+	u_int32_t		ni_board_num;
+
+	u_int32_t		ni_chip_id;
+	u_int32_t		ni_chip_minor;
+	u_int32_t		ni_chip_major;
+	u_int32_t		ni_chip_pkg;
+	u_int32_t		ni_chip_lot;
+
+	u_int32_t		ni_port_mask;
+	u_int32_t		ni_peg_mask;
+	u_int32_t		ni_icache;
+	u_int32_t		ni_dcache;
+	u_int32_t		ni_casper;
+
+	u_int32_t		ni_lladdr0_low;
+	u_int32_t		ni_lladdr1_low;
+	u_int32_t		ni_lladdr2_low;
+	u_int32_t		ni_lladdr3_low;
+
+	u_int32_t		ni_mnsync_mode;
+	u_int32_t		ni_mnsync_shift_cclk;
+	u_int32_t		ni_mnsync_shift_mclk;
+	u_int32_t		ni_mnwb_enable;
+	u_int32_t		ni_mnfreq_crystal;
+	u_int32_t		ni_mnfreq_speed;
+	u_int32_t		ni_mnorg;
+	u_int32_t		ni_mndepth;
+	u_int32_t		ni_mnranks0;
+	u_int32_t		ni_mnranks1;
+	u_int32_t		ni_mnrd_latency0;
+	u_int32_t		ni_mnrd_latency1;
+	u_int32_t		ni_mnrd_latency2;
+	u_int32_t		ni_mnrd_latency3;
+	u_int32_t		ni_mnrd_latency4;
+	u_int32_t		ni_mnrd_latency5;
+	u_int32_t		ni_mnrd_latency6;
+	u_int32_t		ni_mnrd_latency7;
+	u_int32_t		ni_mnrd_latency8;
+	u_int32_t		ni_mndll[18];
+	u_int32_t		ni_mnddr_mode;
+	u_int32_t		ni_mnddr_extmode;
+	u_int32_t		ni_mntiming0;
+	u_int32_t		ni_mntiming1;
+	u_int32_t		ni_mntiming2;
+
+	u_int32_t		ni_snsync_mode;
+	u_int32_t		ni_snpt_mode;
+	u_int32_t		ni_snecc_enable;
+	u_int32_t		ni_snwb_enable;
+	u_int32_t		ni_snfreq_crystal;
+	u_int32_t		ni_snfreq_speed;
+	u_int32_t		ni_snorg;
+	u_int32_t		ni_sndepth;
+	u_int32_t		ni_sndll;
+	u_int32_t		ni_snrd_latency;
+
+	u_int32_t		ni_lladdr0_high;
+	u_int32_t		ni_lladdr1_high;
+	u_int32_t		ni_lladdr2_high;
+	u_int32_t		ni_lladdr3_high;
+
+	u_int32_t		ni_magic;
+#define NXE_INFO_MAGIC			0x12345678
+
+	u_int32_t		ni_mnrd_imm;
+	u_int32_t		ni_mndll_override;
+} __packed;
+
+struct nxe_imageinfo {
+	u_int32_t		nim_bootld_ver;
+	u_int32_t		nim_bootld_size;
+
+	u_int8_t		nim_img_ver_major;
+	u_int8_t		nim_img_ver_minor;
+	u_int16_t		nim_img_ver_build;
+
+	u_int32_t		min_img_size;
+} __packed;
+
+struct nxe_lladdr {
+	u_int8_t		pad[2];
+	u_int8_t		lladdr[6];
+} __packed;
+
+struct nxe_userinfo {
+	u_int8_t		nu_flash_md5[1024];
+
+	struct nxe_imageinfo	nu_imageinfo;
+
+	u_int32_t		nu_primary;
+	u_int32_t		nu_secondary;
+
+	u_int64_t		nu_lladdr[NXE_MAX_PORTS][NXE_MAX_PORT_LLADDRS];
+
+	u_int32_t		nu_subsys_id;
+
+	u_int8_t		nu_serial[32];
+
+	u_int32_t		nu_bios_ver;
+} __packed;
 
 
 /*
