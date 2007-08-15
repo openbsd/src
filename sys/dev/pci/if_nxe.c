@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.13 2007/08/15 00:30:30 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.14 2007/08/15 00:33:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -402,6 +402,7 @@ struct cfdriver nxe_cd = {
 /* init code */
 int			nxe_pci_map(struct nxe_softc *,
 			    struct pci_attach_args *);
+void			nxe_pci_unmap(struct nxe_softc *);
 
 /* low level hardware access goo */
 u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
@@ -508,6 +509,16 @@ unmap_mem:
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 	sc->sc_mems = 0;
 	return (1);
+}
+
+void
+nxe_pci_unmap(struct nxe_softc *sc)
+{
+	bus_space_unmap(sc->sc_dbt, sc->sc_dbh, sc->sc_dbs);
+	sc->sc_dbs = 0;
+	/* bus_space(9) says i dont have to unmap the crb subregion */
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+	sc->sc_mems = 0;
 }
 
 int
