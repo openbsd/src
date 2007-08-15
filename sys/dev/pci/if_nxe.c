@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.20 2007/08/15 01:22:06 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.21 2007/08/15 01:26:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -532,6 +532,17 @@ struct nxe_board {
 	u_int			brd_mode;
 };
 
+struct nxe_dmamem {
+	bus_dmamap_t		ndm_map;
+	bus_dma_segment_t	ndm_seg;
+	size_t			ndm_size;
+	caddr_t			ndm_kva;
+};
+#define NXE_DMA_MAP(_ndm)	((_ndm)->ndm_map)
+#define NXE_DMA_LEN(_ndm)	((_ndm)->ndm_size)
+#define NXE_DMA_DVA(_ndm)	((_ndm)->ndm_map->dm_segs[0].ds_addr)
+#define NXE_DMA_KVA(_ndm)	((void *)(_ndm)->ndm_kva)
+
 /*
  * autoconf glue
  */
@@ -586,6 +597,12 @@ void			nxe_pci_unmap(struct nxe_softc *);
 
 int			nxe_board_info(struct nxe_softc *sc);
 int			nxe_user_info(struct nxe_softc *sc);
+
+/* wrapper around dmaable memory allocations */
+struct nxe_dmamem	*nxe_dmamem_alloc(struct nxe_softc *, bus_size_t,
+			    bus_size_t);
+void			nxe_dmamem_free(struct nxe_softc *,
+			    struct nxe_dmamem *);
 
 /* low level hardware access goo */
 u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
@@ -820,6 +837,57 @@ nxe_user_info(struct nxe_softc *sc)
 out:
 	free(nu, M_TEMP);
 	return (rv);
+}
+
+struct nxe_dmamem *
+nxe_dmamem_alloc(struct nxe_softc *sc, bus_size_t size, bus_size_t align)
+{
+	struct nxe_dmamem		*ndm;
+	int				nsegs;
+
+	ndm = malloc(sizeof(struct nxe_dmamem), M_DEVBUF, M_WAITOK);
+	bzero(ndm, sizeof(struct nxe_dmamem));
+	ndm->ndm_size = size;
+
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ndm->ndm_map) != 0)
+		goto ndmfree;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, size, align, 0, &ndm->ndm_seg, 1,
+	    &nsegs, BUS_DMA_WAITOK) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(sc->sc_dmat, &ndm->ndm_seg, nsegs, size,
+	    &ndm->ndm_kva, BUS_DMA_WAITOK) != 0)
+		goto free;
+
+	if (bus_dmamap_load(sc->sc_dmat, ndm->ndm_map, ndm->ndm_kva, size,
+	    NULL, BUS_DMA_WAITOK) != 0)
+		goto unmap;
+
+	bzero(ndm->ndm_kva, size);
+
+	return (ndm);
+
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, ndm->ndm_kva, size);
+free:
+	bus_dmamem_free(sc->sc_dmat, &ndm->ndm_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
+ndmfree:
+	free(ndm, M_DEVBUF);
+
+	return (NULL);
+}
+
+void
+nxe_dmamem_free(struct nxe_softc *sc, struct nxe_dmamem *ndm)
+{
+	bus_dmamem_unmap(sc->sc_dmat, ndm->ndm_kva, ndm->ndm_size);
+	bus_dmamem_free(sc->sc_dmat, &ndm->ndm_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
+	free(ndm, M_DEVBUF);
 }
 
 u_int32_t
