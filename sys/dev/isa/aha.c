@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.56 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: aha.c,v 1.57 2007/08/15 02:04:30 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1413,6 +1413,7 @@ aha_poll(sc, xs, count)
 	int count;
 {
 	int iobase = sc->sc_iobase;
+	int s;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1420,8 +1421,11 @@ aha_poll(sc, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (inb(iobase + AHA_INTR_PORT) & AHA_INTR_ANYINTR)
+		if (inb(iobase + AHA_INTR_PORT) & AHA_INTR_ANYINTR) {
+			s = splbio();
 			ahaintr(sc);
+			splx(s);
+		}
 		if (xs->flags & ITSDONE)
 			return (0);
 		delay(1000);	/* only happens in boot so ok */
