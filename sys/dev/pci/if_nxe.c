@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.8 2007/08/15 00:07:06 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.9 2007/08/15 00:13:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -253,11 +253,16 @@ struct cfdriver nxe_cd = {
 /* low level hardware access goo */
 u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
 void			nxe_write(struct nxe_softc *, bus_size_t, u_int32_t);
+int			nxe_wait(struct nxe_softc *, bus_size_t, u_int32_t,
+			    u_int32_t, u_int);
 
 int			nxe_crb_set(struct nxe_softc *, int);
 u_int32_t		nxe_crb_read(struct nxe_softc *, bus_size_t);
 void			nxe_crb_write(struct nxe_softc *, bus_size_t,
 			    u_int32_t);
+int			nxe_crb_wait(struct nxe_softc *, bus_size_t,
+			    u_int32_t, u_int32_t, u_int);
+
 
 /* misc bits */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
@@ -354,6 +359,22 @@ nxe_write(struct nxe_softc *sc, bus_size_t r, u_int32_t v)
 }
 
 int
+nxe_wait(struct nxe_softc *sc, bus_size_t r, u_int32_t m, u_int32_t v,
+    u_int timeout)
+{
+	while ((nxe_read(sc, r) & m) != v) {
+		if (timeout == 0)
+			return (0);
+
+		delay(1000);
+		timeout--;
+	}
+
+	return (1);
+}
+
+
+int
 nxe_crb_set(struct nxe_softc *sc, int window)
 {
 	int			oldwindow = sc->sc_window;
@@ -383,3 +404,19 @@ nxe_crb_write(struct nxe_softc *sc, bus_size_t r, u_int32_t v)
 	bus_space_barrier(sc->sc_memt, sc->sc_crbh, r, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
+
+int
+nxe_crb_wait(struct nxe_softc *sc, bus_size_t r, u_int32_t m, u_int32_t v,
+    u_int timeout)
+{
+	while ((nxe_crb_read(sc, r) & m) != v) {
+		if (timeout == 0)
+			return (0);
+
+		delay(1000);
+		timeout--;
+	}
+
+	return (1);
+}
+
