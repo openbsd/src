@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.16 2007/08/15 00:52:27 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.17 2007/08/15 00:54:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -399,6 +399,9 @@ struct nxe_softc {
 	int			sc_window;
 
 	const struct nxe_board	*sc_board;
+
+	struct arpcom		sc_ac;
+	struct ifmedia		sc_media;
 };
 
 int			nxe_match(struct device *, void *, void *);
