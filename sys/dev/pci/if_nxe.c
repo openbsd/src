@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.34 2007/08/15 06:45:15 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.35 2007/08/15 07:03:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1086,15 +1086,36 @@ nxe_up(struct nxe_softc *sc)
 		ring->r_size = htole32(nr->nr_nentries);
 
 		sc->sc_rx_rings[i] = nr;
+		nxe_ring_sync(sc, sc->sc_rx_rings[i], BUS_DMASYNC_PREWRITE);
 	}
 
+	/* nothing can possibly go wrong now */
+	nxe_ring_sync(sc, sc->sc_status_ring, BUS_DMASYNC_PREREAD);
+	nxe_ring_sync(sc, sc->sc_cmd_ring, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_ctx),
+	    0, NXE_DMA_LEN(sc->sc_ctx), 
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	nxe_crb_write(sc, NXE_1_SW_CONTEXT_ADDR_LO(sc->sc_function),
+	    (u_int32_t)dva);
+	nxe_crb_write(sc, NXE_1_SW_CONTEXT_ADDR_HI(sc->sc_function),
+	    (u_int32_t)(dva >> 32));
+        nxe_crb_write(sc, NXE_1_SW_CONTEXT(sc->sc_port),
+	    NXE_1_SW_CONTEXT_SIG(sc->sc_port));
+
 	SET(ifp->if_flags, IFF_RUNNING);
+	CLR(ifp->if_flags, IFF_OACTIVE);
+
+	/* enable interrupts */
 
 	return;
 
 free_rx_rings:
-	while (i > 0)
-		nxe_ring_free(sc, sc->sc_rx_rings[--i]);
+	while (i > 0) {
+		i--;
+		nxe_ring_sync(sc, sc->sc_rx_rings[i], BUS_DMASYNC_POSTWRITE);
+		nxe_ring_free(sc, sc->sc_rx_rings[i]);
+	}
 
 	nxe_ring_free(sc, sc->sc_status_ring);
 free_cmd_ring:
@@ -1145,8 +1166,18 @@ nxe_down(struct nxe_softc *sc)
 
 	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE | IFF_ALLMULTI);
 
-	for (i = 0; i < NXE_NRING; i++)
+	/* XXX turn the chip off */
+
+	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_ctx),
+	    0, NXE_DMA_LEN(sc->sc_ctx), 
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	nxe_ring_sync(sc, sc->sc_cmd_ring, BUS_DMASYNC_POSTWRITE);
+	nxe_ring_sync(sc, sc->sc_status_ring, BUS_DMASYNC_POSTREAD);
+
+	for (i = 0; i < NXE_NRING; i++) {
+		nxe_ring_sync(sc, sc->sc_rx_rings[i], BUS_DMASYNC_POSTWRITE);
 		nxe_ring_free(sc, sc->sc_rx_rings[i]);
+	}
 	nxe_ring_free(sc, sc->sc_status_ring);
 	nxe_ring_free(sc, sc->sc_cmd_ring);
 	nxe_dmamem_free(sc, sc->sc_ctx);
