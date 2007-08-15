@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.18 2007/08/15 01:15:48 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.19 2007/08/15 01:21:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -175,6 +175,13 @@ int nxedebug = 0;
  * to the start of the CRB window space.
  */
 
+/* Interrupts */
+#define NXE_ISR_VECTOR		0x06110100 /* Interrupt Vector */
+#define  NXE_ISR_VECTOR_FUNC(_f)	(0x08 << (_f))
+#define NXE_ISR_MASK		0x06110104 /* Interrupt Mask */
+#define NXE_ISR_TARGET_STATUS	0x06110118
+#define NXE_ISR_TARGET_MASK	0x06110128
+
 /* lock registers (semaphores between chipset and driver) */
 #define NXE_SEM_ROM_LOCK	0x0611c010 /* ROM access lock */
 #define NXE_SEM_ROM_UNLOCK	0x0611c014
@@ -185,10 +192,41 @@ int nxedebug = 0;
 /*
  * Network Interface Unit (NIU) Registers
  */
- 
+
 #define NXE_0_NIU_MODE		0x00600000
 #define  NXE_0_NIU_MODE_XGE		(1<<2) /* XGE interface enabled */
 #define  NXE_0_NIU_MODE_GBE		(1<<1) /* 4 GbE interfaces enabled */
+#define NXE_0_NIU_SINGLE_TERM	0x00600004
+
+#define NXE_0_NIU_RESET_XG	0x0060001c /* reset XG */
+#define NXE_0_NIU_RESET_FIFO	0x00600088 /* reset sys fifos */
+
+#define _P(_p)			((_p) * 0x10000)
+
+#define NXE_0_XG_CFG0(_p)	(0x00670000 + _P(_p))
+#define  NXE_0_XG_CFG0_TX_EN		(1<<0) /* TX enable */
+#define  NXE_0_XG_CFG0_TX_SYNC		(1<<1) /* TX synced */
+#define  NXE_0_XG_CFG0_RX_EN		(1<<2) /* RX enable */
+#define  NXE_0_XG_CFG0_RX_SYNC		(1<<3) /* RX synced */
+#define  NXE_0_XG_CFG0_TX_FLOWCTL	(1<<4) /* enable pause frame gen */
+#define  NXE_0_XG_CFG0_RX_FLOWCTL	(1<<5) /* act on rxed pause frames */
+#define  NXE_0_XG_CFG0_LOOPBACK		(1<<8) /* tx appears on rx */
+#define  NXE_0_XG_CFG0_TX_RST_PB	(1<<15) /* reset frm tx proto block */
+#define  NXE_0_XG_CFG0_RX_RST_PB	(1<<16) /* reset frm rx proto block */
+#define  NXE_0_XG_CFG0_TX_RST_MAC	(1<<17) /* reset frm tx multiplexer */
+#define  NXE_0_XG_CFG0_RX_RST_MAC	(1<<18) /* reset ctl frms and timers */
+#define  NXE_0_XG_CFG0_SOFT_RST		(1<<31) /* soft reset */
+#define NXE_0_XG_CFG1(_p)	(0x00670004 + _P(_p))
+#define  NXE_0_XG_CFG1_REM_CRC		(1<<0) /* enable crc removal */
+#define  NXE_0_XG_CFG1_CRC_EN		(1<<1) /* append crc to tx frames */
+#define  NXE_0_XG_CFG1_NO_MAX		(1<<5) /* rx all frames despite size */
+#define  NXE_0_XG_CFG1_WIRE_LO_ERR	(1<<6) /* recognize local err */
+#define  NXE_0_XG_CFG1_PAUSE_FR_DIS	(1<<8) /* disable pause frame detect */
+#define  NXE_0_XG_CFG1_SEQ_ERR_EN	(1<<10) /* enable seq err detection */
+#define  NXE_0_XG_CFG1_MULTICAST	(1<<12) /* accept all multicast */
+#define  NXE_0_XG_CFG1_PROMISC		(1<<13) /* accept all multicast */
+#define NXE_0_XG_MAC_LO(_p)	(0x00670010 + _P(_p))
+#define NXE_0_XG_MAC_HI(_p)	(0x0067000c + _P(_p))
 
 /*
  * Software Defined Registers
@@ -200,6 +238,110 @@ int nxedebug = 0;
 #define NXE_1_SW_PHY_LOCK_ID	0x00202120
 #define  NXE_1_SW_PHY_LOCK_ID_DRV	0x44524956
 
+/* firmware version */
+#define NXE_1_SW_FWVER_MAJOR	0x00202150 /* Major f/w version */
+#define NXE_1_SW_FWVER_MINOR	0x00202154 /* Minor f/w version */
+#define NXE_1_SW_FWVER_BUILD	0x00202158 /* Build/Sub f/w version */
+
+/* misc */
+#define NXE_1_SW_CMD_ADDR_HI	0x00202218 /* cmd ring phys addr */
+#define NXE_1_SW_CMD_ADDR_LO	0x0020221c /* cmd ring phys addr */
+#define NXE_1_SW_CMD_SIZE	0x002022c8 /* entries in the cmd ring */
+#define NXE_1_SW_DUMMY_ADDR_HI	0x0020223c /* hi address of dummy buf */
+#define NXE_1_SW_DUMMY_ADDR_LO	0x00202240 /* lo address of dummy buf */
+
+static const u_int32_t nxe_regmap[][4] = {
+#define NXE_1_SW_CMD_PRODUCER(_f)	(nxe_regmap[0][(_f)])
+    { 0x00202208, 0x002023ac, 0x002023b8, 0x002023d0 },
+#define NXE_1_SW_CMD_CONSUMER(_f)	(nxe_regmap[1][(_f)])
+    { 0x0020220c, 0x002023b0, 0x002023bc, 0x002023d4 },
+
+#define NXE_1_SW_CONTEXT(_p)		(nxe_regmap[2][(_p)])
+#define NXE_1_SW_CONTEXT_SIG(_p)	(0xdee0 | (_p))
+    { 0x0020238c, 0x00202390, 0x0020239c, 0x002023a4 },
+#define NXE_1_SW_CONTEXT_ADDR_LO(_p)	(nxe_regmap[3][(_p)])
+    { 0x00202388, 0x00202390, 0x00202398, 0x002023a0 },
+#define NXE_1_SW_CONTEXT_ADDR_HI(_p)	(nxe_regmap[4][(_p)])
+    { 0x002023c0, 0x002023c4, 0x002023c8, 0x002023cc },
+
+#define NXE_1_SW_INT_MASK(_p)		(nxe_regmap[5][(_p)])
+    { 0x002023d8, 0x082023e0, 0x082023e4, 0x082023e8 },
+
+#define NXE_1_SW_RX_PRODUCER(_c)	(nxe_regmap[6][(_c)])
+    { 0x00202300, 0x00202344, 0x002023d8, 0x0020242c },
+#define NXE_1_SW_RX_CONSUMER(_c)	(nxe_regmap[7][(_c)])
+    { 0x00202304, 0x00202348, 0x002023dc, 0x00202430 },
+#define NXE_1_SW_RX_RING(_c)		(nxe_regmap[8][(_c)])
+    { 0x00202308, 0x0020234c, 0x002023f0, 0x00202434 },
+#define NXE_1_SW_RX_SIZE(_c)		(nxe_regmap[9][(_c)])
+    { 0x0020230c, 0x00202350, 0x002023f4, 0x00202438 },
+
+#define NXE_1_SW_RX_JUMBO_PRODUCER(_c)	(nxe_regmap[10][(_c)])
+    { 0x00202310, 0x00202354, 0x002023f8, 0x0020243c },
+#define NXE_1_SW_RX_JUMBO_CONSUMER(_c)	(nxe_regmap[11][(_c)])
+    { 0x00202314, 0x00202358, 0x002023fc, 0x00202440 },
+#define NXE_1_SW_RX_JUMBO_RING(_c)	(nxe_regmap[12][(_c)])
+    { 0x00202318, 0x0020235c, 0x00202400, 0x00202444 },
+#define NXE_1_SW_RX_JUMBO_SIZE(_c)	(nxe_regmap[13][(_c)])
+    { 0x0020231c, 0x00202360, 0x00202404, 0x00202448 },
+
+#define NXE_1_SW_RX_LRO_PRODUCER(_c)	(nxe_regmap[14][(_c)])
+    { 0x00202320, 0x00202364, 0x00202408, 0x0020244c },
+#define NXE_1_SW_RX_LRO_CONSUMER(_c)	(nxe_regmap[15][(_c)])
+    { 0x00202324, 0x00202368, 0x0020240c, 0x00202450 },
+#define NXE_1_SW_RX_LRO_RING(_c)	(nxe_regmap[16][(_c)])
+    { 0x00202328, 0x0020236c, 0x00202410, 0x00202454 },
+#define NXE_1_SW_RX_LRO_SIZE(_c)	(nxe_regmap[17][(_c)])
+    { 0x0020232c, 0x00202370, 0x00202414, 0x00202458 },
+
+#define NXE_1_SW_STATUS_RING(_c)	(nxe_regmap[18][(_c)])
+    { 0x00202330, 0x00202374, 0x00202418, 0x0020245c },
+#define NXE_1_SW_STATUS_PRODUCER(_c)	(nxe_regmap[19][(_c)])
+    { 0x00202334, 0x00202378, 0x0020241c, 0x00202460 },
+#define NXE_1_SW_STATUS_CONSUMER(_c)	(nxe_regmap[20][(_c)])
+    { 0x00202338, 0x0020237c, 0x00202420, 0x00202464 },
+#define NXE_1_SW_STATUS_STATE(_c)	(nxe_regmap[21][(_c)])
+    { 0x0020233c, 0x00202380, 0x00202424, 0x00202468 },
+#define NXE_1_SW_STATUS_SIZE(_c)	(nxe_regmap[22][(_c)])
+    { 0x00202340, 0x00202384, 0x00202428, 0x0020246c }
+};
+
+
+#define NXE_1_SW_BOOTLD_CONFIG	0x002021fc
+#define  NXE_1_SW_BOOTLD_CONFIG_ROM	0x00000000
+#define  NXE_1_SW_BOOTLD_CONFIG_RAM	0x12345678
+
+#define NXE_1_SW_CMDPEG_STATE	0x00202250 /* init status */
+#define  NXE_1_SW_CMDPEG_STATE_START	0xff00 /* init starting */
+#define  NXE_1_SW_CMDPEG_STATE_DONE	0xff01 /* init complete */
+#define  NXE_1_SW_CMDPEG_STATE_ACK	0xf00f /* init ack */
+#define  NXE_1_SW_CMDPEG_STATE_ERROR	0xffff /* init failed */
+
+#define NXE_1_SW_XG_STATE	0x00202294 /* phy state */
+#define  NXE_1_SW_XG_STATE_PORT(_r, _p)	(((_r)>>8*(_p))&0xff)
+#define  NXE_1_SW_XG_STATE_UP		(1<<4)
+#define  NXE_1_SW_XG_STATE_DOWN		(1<<5)
+
+#define NXE_1_SW_MPORT_MODE	0x002022c4
+#define  NXE_1_SW_MPORT_MODE_SINGLE	0x1111
+#define  NXE_1_SW_MPORT_MODE_MULTI	0x2222
+
+#define NXE_1_SW_NIC_CAP_HOST	0x002023a8 /* host capabilities */
+#define  NXE_1_SW_NIC_CAP_HOST_DEF	0x1 /* nfi */
+
+#define  NXE_1_SW_DRIVER_VER	0x002024a0 /* host driver version */
+
+
+#define NXE_1_SW_TEMP		0x002023b4 /* Temperature sensor */
+#define  NXE_1_SW_TEMP_STATE(_x)	((_x)&0xffff) /* Temp state */
+#define  NXE_1_SW_TEMP_STATE_NONE	0x0000
+#define  NXE_1_SW_TEMP_STATE_OK		0x0001
+#define  NXE_1_SW_TEMP_STATE_WARN	0x0002
+#define  NXE_1_SW_TEMP_STATE_CRIT	0x0003
+#define  NXE_1_SW_TEMP_VAL(_x)		(((_x)>>16)&0xffff) /* Temp value */
+
+#define NXE_1_SW_V2P(_f)	(0x00202490+((_f)*4)) /* virtual to phys */
+
 /*
  * ROMUSB Registers
  */
@@ -207,6 +349,13 @@ int nxedebug = 0;
 #define  NXE_1_ROMUSB_STATUS_DONE	(1<<1)
 #define NXE_1_ROMUSB_SW_RESET	0x01300008
 #define NXE_1_ROMUSB_SW_RESET_DEF	0xffffffff
+
+#define NXE_1_CASPER_RESET	0x01300038
+#define  NXE_1_CASPER_RESET_ENABLE	0x1
+#define  NXE_1_CASPER_RESET_DISABLE	0x1
+
+#define NXE_1_GLB_PEGTUNE	0x0130005c /* reset register */
+#define  NXE_1_GLB_PEGTUNE_DONE		0x00000001
 
 #define NXE_1_GLB_CHIPCLKCTL	0x013000a8
 #define NXE_1_GLB_CHIPCLKCTL_ON		0x00003fff
