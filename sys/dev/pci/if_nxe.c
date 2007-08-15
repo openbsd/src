@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.15 2007/08/15 00:43:43 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.16 2007/08/15 00:52:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -397,6 +397,8 @@ struct nxe_softc {
 
 	int			sc_function;
 	int			sc_window;
+
+	const struct nxe_board	*sc_board;
 };
 
 int			nxe_match(struct device *, void *, void *);
@@ -419,6 +421,8 @@ struct cfdriver nxe_cd = {
 int			nxe_pci_map(struct nxe_softc *,
 			    struct pci_attach_args *);
 void			nxe_pci_unmap(struct nxe_softc *);
+
+int			nxe_board_info(struct nxe_softc *sc);
 
 /* low level hardware access goo */
 u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
@@ -494,7 +498,15 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 
 	nxe_crb_set(sc, 1);
 
+	if (nxe_board_info(sc) != 0) {
+		/* error already printed by nxe_board_info() */
+		goto unmap;
+	}
+
 	printf("\n");
+	return;
+unmap:
+	nxe_pci_unmap(sc);
 }
 
 int
@@ -550,6 +562,52 @@ int
 nxe_intr(void *xsc)
 {
 	return (0);
+}
+
+int
+nxe_board_info(struct nxe_softc *sc)
+{
+	struct nxe_info			*ni;
+	int				rv = 1;
+	int				i;
+
+	ni = malloc(sizeof(struct nxe_info), M_NOWAIT, M_TEMP);
+	if (ni == NULL) {
+		printf(": unable to allocate temporary memory\n");
+		return (1);
+	}
+
+	if (nxe_rom_read_region(sc, NXE_FLASH_BRDCFG, ni,
+	    sizeof(struct nxe_info)) != 0) {
+		printf(": unable to read board info\n");
+		goto out;
+	}
+                 
+	if (ni->ni_hdrver != NXE_INFO_HDRVER_1) {
+		printf(": unexpected board info header version 0x%08x\n",
+		    ni->ni_hdrver);
+		goto out;
+	}
+	if (ni->ni_magic != NXE_INFO_MAGIC) {
+		printf(": board info magic is invalid\n");
+		goto out;
+	}
+
+	for (i = 0; i < sizeofa(nxe_boards); i++) {
+		if (ni->ni_board_type == nxe_boards[i].brd_type) {
+			sc->sc_board = &nxe_boards[i];
+			break;
+		}
+	}
+	if (sc->sc_board == NULL) {
+		printf(": unknown board type %04x\n", ni->ni_board_type);
+		goto out;
+	}
+
+	rv = 0;
+out:
+	free(ni, M_TEMP);
+	return (rv);
 }
 
 u_int32_t
