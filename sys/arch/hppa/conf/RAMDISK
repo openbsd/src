@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.74 2007/08/14 13:50:14 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.75 2007/08/15 09:06:54 kettenis Exp $
 #
 # Diskless kernel config
 #
@@ -163,8 +163,10 @@ ural*	at uhub?		# Ralink RT2500
 
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*
+sti0	at uturn? irq 11
 sti1	at mainbus0 irq 12
 sti1	at phantomas0 irq 12
+sti1	at uturn? irq 12
 sti*	at pci?			# EG-PCI, FX*
 
 #medusa* at mainbus? irq 4	# FDDI
