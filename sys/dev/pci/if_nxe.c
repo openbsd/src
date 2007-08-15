@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.9 2007/08/15 00:13:50 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.10 2007/08/15 00:16:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -263,6 +263,13 @@ void			nxe_crb_write(struct nxe_softc *, bus_size_t,
 int			nxe_crb_wait(struct nxe_softc *, bus_size_t,
 			    u_int32_t, u_int32_t, u_int);
 
+int			nxe_rom_lock(struct nxe_softc *);
+void			nxe_rom_unlock(struct nxe_softc *);
+int			nxe_rom_read(struct nxe_softc *, u_int32_t,
+			    u_int32_t *);
+int			nxe_rom_read_region(struct nxe_softc *, u_int32_t,
+			    void *, size_t);
+
 
 /* misc bits */
 #define DEVNAME(_sc)	((_sc)->sc_dev.dv_xname)
@@ -420,3 +427,79 @@ nxe_crb_wait(struct nxe_softc *sc, bus_size_t r, u_int32_t m, u_int32_t v,
 	return (1);
 }
 
+int
+nxe_rom_lock(struct nxe_softc *sc)
+{
+	if (!nxe_wait(sc, NXE_SEM_ROM_LOCK, 0xffffffff,
+	    NXE_SEM_DONE, 10000))
+		return (1);
+	nxe_crb_write(sc, NXE_1_SW_ROM_LOCK_ID, NXE_1_SW_ROM_LOCK_ID);
+
+	return (0);
+}
+
+void
+nxe_rom_unlock(struct nxe_softc *sc)
+{
+	nxe_read(sc, NXE_SEM_ROM_UNLOCK);
+}
+
+int
+nxe_rom_read(struct nxe_softc *sc, u_int32_t r, u_int32_t *v)
+{
+	int			rv = 1;
+
+	DASSERT(sc->sc_window == 1);
+
+	if (nxe_rom_lock(sc) != 0)
+		return (1);
+
+	/* set the rom address */
+	nxe_crb_write(sc, NXE_1_ROM_ADDR, r);
+
+	/* set the xfer len */
+	nxe_crb_write(sc, NXE_1_ROM_ABYTE_CNT, 3);
+	delay(100); /* used to prevent bursting on the chipset */
+	nxe_crb_write(sc, NXE_1_ROM_DBYTE_CNT, 0);
+
+	/* set opcode and wait for completion */
+	nxe_crb_write(sc, NXE_1_ROM_OPCODE, NXE_1_ROM_OPCODE_READ);
+	if (!nxe_crb_wait(sc, NXE_1_ROMUSB_STATUS, NXE_1_ROMUSB_STATUS_DONE,
+	    NXE_1_ROMUSB_STATUS_DONE, 100))
+		goto err;
+
+	/* reset counters */
+	nxe_crb_write(sc, NXE_1_ROM_ABYTE_CNT, 0);
+	delay(100);
+	nxe_crb_write(sc, NXE_1_ROM_DBYTE_CNT, 0);
+
+	*v = nxe_crb_read(sc, NXE_1_ROM_RDATA);
+
+	rv = 0;
+err:
+	nxe_rom_unlock(sc);
+	return (rv);
+}
+
+int
+nxe_rom_read_region(struct nxe_softc *sc, u_int32_t r, void *buf,
+    size_t buflen)
+{
+	u_int32_t		*databuf = buf;
+	int			i;
+
+#ifdef NXE_DEBUG
+	if ((buflen % 4) != 0)
+		panic("nxe_read_rom_region: buflen is wrong (%d)", buflen);
+#endif
+
+	buflen = buflen / 4;
+	for (i = 0; i < buflen; i++) {
+		if (nxe_rom_read(sc, r, &databuf[i]) != 0)
+			return (1);
+
+		r += sizeof(u_int32_t);
+	}
+
+	return (0);
+}
