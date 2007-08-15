@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.7 2007/08/15 00:05:17 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.8 2007/08/15 00:07:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -47,6 +47,17 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
+
+#ifdef NXE_DEBUG
+int nxedebug = 0;
+
+#define DPRINTF(l, f...)	do { if (nxedebug & (l)) printf(f); } while (0)
+#define DASSERT(_a)		assert(_a)
+#else
+#define DPRINTF(l, f...)
+#define DASSERT(_a)
+#endif
+
 
 /*
  * PCI configuration space registers
