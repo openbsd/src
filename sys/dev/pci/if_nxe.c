@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.6 2007/08/14 23:55:04 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.7 2007/08/15 00:05:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -136,6 +136,68 @@
 #define NXE_W1_SW		0x00200000
 #define NXE_W1_SIR		0x01200000
 #define NXE_W1_ROMUSB		0x01300000
+
+/*
+ * Global registers
+ */
+#define NXE_BOOTLD_START	0x00010000
+
+
+/*
+ * driver ref section 5
+ *
+ * CRB Window Register Descriptions
+ */
+
+/*
+ * PCI Express Registers
+ *
+ * Despite being in the CRB window space, they can be accessed via both
+ * windows. This means they are accessable "globally" without going relative
+ * to the start of the CRB window space.
+ */
+
+/* lock registers (semaphores between chipset and driver) */
+#define NXE_SEM_ROM_LOCK	0x0611c010 /* ROM access lock */
+#define NXE_SEM_ROM_UNLOCK	0x0611c014
+#define NXE_SEM_PHY_LOCK	0x0611c018 /* PHY access lock */
+#define NXE_SEM_PHY_UNLOCK	0x0611c01c
+#define  NXE_SEM_DONE			0x1
+
+/*
+ * Software Defined Registers
+ */
+
+/* chipset state registers */
+#define NXE_1_SW_ROM_LOCK_ID	0x00202100
+#define  NXE_1_SW_ROM_LOCK_ID_DRV	0x0d417340
+#define NXE_1_SW_PHY_LOCK_ID	0x00202120
+#define  NXE_1_SW_PHY_LOCK_ID_DRV	0x44524956
+
+/*
+ * ROMUSB Registers
+ */
+#define NXE_1_ROMUSB_STATUS	0x01300004 /* ROM Status */
+#define  NXE_1_ROMUSB_STATUS_DONE	(1<<1)
+#define NXE_1_ROMUSB_SW_RESET	0x01300008
+#define NXE_1_ROMUSB_SW_RESET_DEF	0xffffffff
+
+#define NXE_1_GLB_CHIPCLKCTL	0x013000a8
+#define NXE_1_GLB_CHIPCLKCTL_ON		0x00003fff
+
+/* ROM Registers */
+#define NXE_1_ROM_CONTROL	0x01310000
+#define NXE_1_ROM_OPCODE	0x01310004
+#define  NXE_1_ROM_OPCODE_READ		0x0000000b
+#define NXE_1_ROM_ADDR		0x01310008
+#define NXE_1_ROM_WDATA		0x0131000c
+#define NXE_1_ROM_ABYTE_CNT	0x01310010
+#define NXE_1_ROM_DBYTE_CNT	0x01310014 /* dummy byte count */
+#define NXE_1_ROM_RDATA		0x01310018
+#define NXE_1_ROM_AGT_TAG	0x0131001c
+#define NXE_1_ROM_TIME_PARM	0x01310020
+#define NXE_1_ROM_CLK_DIV	0x01310024
+#define NXE_1_ROM_MISS_INSTR	0x01310028
 
 
 /*
