@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.30 2007/08/15 04:47:12 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.31 2007/08/15 05:23:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -306,6 +306,7 @@ static const u_int32_t nxe_regmap[][4] = {
 #define NXE_1_SW_STATUS_CONSUMER(_c)	(nxe_regmap[20][(_c)])
     { 0x00202338, 0x0020237c, 0x00202420, 0x00202464 },
 #define NXE_1_SW_STATUS_STATE(_c)	(nxe_regmap[21][(_c)])
+#define  NXE_1_SW_STATUS_STATE_READY		0x0000ff01
     { 0x0020233c, 0x00202380, 0x00202424, 0x00202468 },
 #define NXE_1_SW_STATUS_SIZE(_c)	(nxe_regmap[22][(_c)])
     { 0x00202340, 0x00202384, 0x00202428, 0x0020246c }
@@ -655,6 +656,8 @@ int			nxe_up(struct nxe_softc *);
 void			nxe_iff(struct nxe_softc *);
 void			nxe_down(struct nxe_softc *);
 
+int			nxe_up_fw(struct nxe_softc *);
+
 /* ifmedia operations */
 int			nxe_media_change(struct ifnet *);
 void			nxe_media_status(struct ifnet *, struct ifmediareq *);
@@ -926,6 +929,35 @@ err:
 int
 nxe_up(struct nxe_softc *sc)
 {
+	int				error;
+
+	error = nxe_up_fw(sc);
+	if (error)
+		return (error);
+
+	return (0);
+}
+
+int
+nxe_up_fw(struct nxe_softc *sc)
+{
+	u_int32_t			r;
+
+	r = nxe_crb_read(sc, NXE_1_SW_CMDPEG_STATE);
+	if (r == NXE_1_SW_CMDPEG_STATE_ACK)
+		return (0);
+
+	if (r != NXE_1_SW_CMDPEG_STATE_DONE)
+		return (EIO);
+
+	nxe_crb_write(sc, NXE_1_SW_NIC_CAP_HOST, NXE_1_SW_NIC_CAP_HOST_DEF);
+	nxe_crb_write(sc, NXE_1_SW_MPORT_MODE, NXE_1_SW_MPORT_MODE_MULTI);
+	nxe_crb_write(sc, NXE_1_SW_CMDPEG_STATE, NXE_1_SW_CMDPEG_STATE_ACK);
+
+	/* XXX busy wait in a process context is naughty */
+	if (!nxe_crb_wait(sc, NXE_1_SW_STATUS_STATE(sc->sc_function),
+	    0xffffffff, NXE_1_SW_STATUS_STATE_READY, 1000))
+		return (EIO);
 
 	return (0);
 }
