@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.33 2007/08/15 06:14:00 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.34 2007/08/15 06:45:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -689,6 +689,13 @@ struct nxe_softc {
 	/* allocations for the hw */
 	struct nxe_dmamem	*sc_dummy_dma;
 
+	struct nxe_dmamem	*sc_ctx;
+	u_int32_t		*sc_cmd_consumer;
+
+	struct nxe_ring		*sc_cmd_ring;
+	struct nxe_ring		*sc_rx_rings[NXE_NRING];
+	struct nxe_ring		*sc_status_ring;
+
 	/* monitoring */
 	struct timeout		sc_tick;
 	struct ksensor		sc_sensor;
@@ -1010,9 +1017,22 @@ err:
 void
 nxe_up(struct nxe_softc *sc)
 {
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	static const u_int		rx_ring_sizes[] = { 16384, 1024, 128 };
+	struct {
+		struct nxe_ctx			ctx;
+		u_int32_t			cmd_consumer;
+	} __packed			*dmamem;
+	struct nxe_ctx			*ctx;
+	struct nxe_ctx_ring		*ring;
+	struct nxe_ring			*nr;
+	u_int64_t			dva;
+	int				i;
+
 	if (nxe_up_fw(sc) != 0)
 		return;
 
+	/* allocate pkt lists */
 	sc->sc_tx_pkts = nxe_pkt_alloc(sc, 128, NXE_TXD_MAX_SEGS);
 	if (sc->sc_tx_pkts == NULL)
 		return;
@@ -1020,9 +1040,69 @@ nxe_up(struct nxe_softc *sc)
 	if (sc->sc_rx_pkts == NULL)
 		goto free_tx_pkts;
 
+	/* allocate the context memory and the consumer field */
+	sc->sc_ctx = nxe_dmamem_alloc(sc, sizeof(*dmamem), PAGE_SIZE);
+	if (sc->sc_ctx == NULL)
+		goto free_rx_pkts;
+
+	dmamem = NXE_DMA_KVA(sc->sc_ctx);
+	dva = NXE_DMA_DVA(sc->sc_ctx);
+
+	ctx = &dmamem->ctx;
+	ctx->ctx_cmd_consumer_addr = htole64(dva + sizeof(dmamem->ctx));
+	ctx->ctx_id = htole32(sc->sc_function);
+
+	sc->sc_cmd_consumer = &dmamem->cmd_consumer;
+
+	/* allocate the cmd/tx ring */
+	sc->sc_cmd_ring = nxe_ring_alloc(sc,
+	    sizeof(struct nxe_tx_desc), 1024 /* XXX */);
+	if (sc->sc_cmd_ring == NULL)
+		goto free_ctx;
+
+	ctx->ctx_cmd_ring.r_addr =
+	    htole64(NXE_DMA_DVA(sc->sc_cmd_ring->nr_dmamem));
+	ctx->ctx_cmd_ring.r_size = htole64(sc->sc_cmd_ring->nr_nentries);
+
+	/* allocate the status ring */
+	sc->sc_status_ring = nxe_ring_alloc(sc,
+	    sizeof(struct nxe_status_desc), 16384 /* XXX */);
+	if (sc->sc_status_ring == NULL)
+		goto free_cmd_ring;
+
+	ctx->ctx_status_ring_addr =
+	    htole64(NXE_DMA_DVA(sc->sc_status_ring->nr_dmamem));
+	ctx->ctx_status_ring_size = htole64(sc->sc_status_ring->nr_nentries);
+
+	/* allocate the rx rings */
+	for (i = 0; i < NXE_NRING; i++) {
+		ring = &ctx->ctx_rx_rings[i];
+		nr = nxe_ring_alloc(sc, sizeof(struct nxe_rx_desc),
+		    rx_ring_sizes[i]);
+		if (nr == NULL)
+			goto free_rx_rings;
+
+		ring->r_addr = htole64(NXE_DMA_DVA(nr->nr_dmamem));
+		ring->r_size = htole32(nr->nr_nentries);
+
+		sc->sc_rx_rings[i] = nr;
+	}
+
+	SET(ifp->if_flags, IFF_RUNNING);
 
 	return;
 
+free_rx_rings:
+	while (i > 0)
+		nxe_ring_free(sc, sc->sc_rx_rings[--i]);
+
+	nxe_ring_free(sc, sc->sc_status_ring);
+free_cmd_ring:
+	nxe_ring_free(sc, sc->sc_cmd_ring);
+free_ctx:
+	nxe_dmamem_free(sc, sc->sc_ctx);
+free_rx_pkts:
+	nxe_pkt_free(sc, sc->sc_rx_pkts);
 free_tx_pkts:
 	nxe_pkt_free(sc, sc->sc_tx_pkts);
 }
@@ -1061,9 +1141,15 @@ void
 nxe_down(struct nxe_softc *sc)
 {
 	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	int				i;
 
 	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE | IFF_ALLMULTI);
 
+	for (i = 0; i < NXE_NRING; i++)
+		nxe_ring_free(sc, sc->sc_rx_rings[i]);
+	nxe_ring_free(sc, sc->sc_status_ring);
+	nxe_ring_free(sc, sc->sc_cmd_ring);
+	nxe_dmamem_free(sc, sc->sc_ctx);
 	nxe_pkt_free(sc, sc->sc_rx_pkts);
 	nxe_pkt_free(sc, sc->sc_tx_pkts);
 }
