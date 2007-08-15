@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.69 2007/05/31 19:19:58 jmc Exp $
+.\" $OpenBSD: ports.7,v 1.70 2007/08/15 14:20:54 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 15 2007 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -326,11 +326,8 @@ The ports tree can be used concurrently for building several ports at the
 same time, thanks to a locking mechanism.
 By default, this mechanism is disabled.
 Defining
-.Ev LOCKDIR ,
-.Ev LOCK_CMD ,
-and
-.Ev UNLOCK_CMD
-to proper values will activate it.
+.Ev LOCKDIR 
+to a proper value will activate it.
 .Pp
 All locks will be stored in
 .Pa ${LOCKDIR} .
@@ -341,6 +338,12 @@ should be used to release it.
 .Pp
 Locks are named ${LOCKDIR}/${FULLPKGNAME}.lock,
 or ${LOCKDIR}/${DISTFILE}.lock for distfiles fetching.
+.Pp
+The default values of
+.Ev LOCK_CMD
+and
+.Ev UNLOCK_CMD
+are appropriate for most uses.
 .Pp
 The locking protocol follows a big-lock model: each top-level target
 in a port directory will acquire the corresponding lock, complete its job,
