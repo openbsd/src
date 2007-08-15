@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.31 2007/05/24 13:17:26 krw Exp $
+#	$OpenBSD: install.md,v 1.32 2007/08/15 15:33:20 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@ __EOT
 		case $_resp in
 		m|mbr)	export disklabeltype=MBR
 			md_prep_MBR $_disk || continue
-			disklabel -w -d $_disk
+			disklabel $_disk 2>/dev/null | grep -q "^  i:" || \
+				disklabel -w -d $_disk
 			newfs -t msdos ${_disk}i
 			break
 			;;
