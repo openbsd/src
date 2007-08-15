@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.27 2007/08/15 04:29:38 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.28 2007/08/15 04:42:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -646,6 +646,10 @@ int			nxe_ioctl(struct ifnet *, u_long, caddr_t);
 void			nxe_start(struct ifnet *);
 void			nxe_watchdog(struct ifnet *);
 
+int			nxe_up(struct nxe_softc *);
+void			nxe_iff(struct nxe_softc *);
+void			nxe_down(struct nxe_softc *);
+
 /* ifmedia operations */
 int			nxe_media_change(struct ifnet *);
 void			nxe_media_status(struct ifnet *, struct ifmediareq *);
@@ -854,6 +858,7 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct nxe_softc		*sc = ifp->if_softc;
 	struct ifreq			*ifr = (struct ifreq *)addr;
+	struct ifaddr			*ifa;
 	int				error;
 	int				s;
 
@@ -866,6 +871,26 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	timeout_del(&sc->sc_tick);
 
 	switch (cmd) {
+	case SIOCSIFADDR:
+		SET(ifp->if_flags, IFF_UP);
+#ifdef INET
+		ifa = (struct ifaddr *)addr;
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(&sc->sc_ac, ifa);
+#endif
+		/* FALLTHROUGH */
+	case SIOCSIFFLAGS:
+		if (ISSET(ifp->if_flags, IFF_UP)) {
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				error = ENETRESET;
+			else
+				error = nxe_up(sc);
+		} else {
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				nxe_down(sc);
+		}
+		break;
+
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
@@ -876,11 +901,36 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		break;
 	}
 
+	if (error == ENETRESET) {
+		if (ISSET(ifp->if_flags, IFF_RUNNING))
+			nxe_iff(sc);
+		error = 0;
+	}
+
 	nxe_tick(sc);
 
 err:
 	splx(s);
 	return (error);
+}
+
+int
+nxe_up(struct nxe_softc *sc)
+{
+
+	return (0);
+}
+
+void
+nxe_iff(struct nxe_softc *sc)
+{
+
+}
+
+void
+nxe_down(struct nxe_softc *sc)
+{
+
 }
 
 void
