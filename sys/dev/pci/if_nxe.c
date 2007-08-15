@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.39 2007/08/15 10:14:59 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.40 2007/08/15 10:24:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -905,7 +905,8 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf(": firmware %d.%d.%d address %s\n",
+	printf(": %s firmware %d.%d.%d address %s\n",
+	    pci_intr_string(pa->pa_pc, ih),
 	    sc->sc_fw_major, sc->sc_fw_minor, sc->sc_fw_build,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 	return;
