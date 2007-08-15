@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.17 2007/08/15 00:54:41 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.18 2007/08/15 01:15:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -57,6 +57,13 @@ int nxedebug = 0;
 #define DPRINTF(l, f...)
 #define DASSERT(_a)
 #endif
+
+/* this driver likes firmwares around this version */
+#define NXE_VERSION_MAJOR	3
+#define NXE_VERSION_MINOR	4
+#define NXE_VERSION_BUILD	31
+#define NXE_VERSION \
+    ((NXE_VERSION_MAJOR << 16)|(NXE_VERSION_MINOR << 8)|(NXE_VERSION_BUILD))
 
 
 /*
@@ -399,6 +406,9 @@ struct nxe_softc {
 	int			sc_window;
 
 	const struct nxe_board	*sc_board;
+	u_int			sc_fw_major;
+	u_int			sc_fw_minor;
+	u_int			sc_fw_build;
 
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
@@ -426,6 +436,7 @@ int			nxe_pci_map(struct nxe_softc *,
 void			nxe_pci_unmap(struct nxe_softc *);
 
 int			nxe_board_info(struct nxe_softc *sc);
+int			nxe_user_info(struct nxe_softc *sc);
 
 /* low level hardware access goo */
 u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
@@ -506,7 +517,14 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
-	printf("\n");
+	if (nxe_user_info(sc) != 0) {
+		/* error already printed by nxe_board_info() */
+		goto unmap;
+	}
+
+	printf(": firmware %d.%d.%d address %s\n",
+	    sc->sc_fw_major, sc->sc_fw_minor, sc->sc_fw_build,
+	    ether_sprintf(sc->sc_ac.ac_enaddr));
 	return;
 unmap:
 	nxe_pci_unmap(sc);
@@ -610,6 +628,48 @@ nxe_board_info(struct nxe_softc *sc)
 	rv = 0;
 out:
 	free(ni, M_TEMP);
+	return (rv);
+}
+
+int
+nxe_user_info(struct nxe_softc *sc)
+{
+	struct nxe_userinfo		*nu;
+	u_int64_t			lladdr;
+	struct nxe_lladdr		*la;
+	int				rv = 1;
+
+	nu = malloc(sizeof(struct nxe_userinfo), M_NOWAIT, M_TEMP);
+	if (nu == NULL) {
+		printf(": unable to allocate temp memory\n");
+		return (1);
+	}
+	if (nxe_rom_read_region(sc, NXE_FLASH_USER, nu,
+	    sizeof(struct nxe_userinfo)) != 0) {
+		printf(": unable to read user info\n");
+		goto out;
+	}
+
+	sc->sc_fw_major = nu->nu_imageinfo.nim_img_ver_major;
+	sc->sc_fw_minor = nu->nu_imageinfo.nim_img_ver_minor;
+	sc->sc_fw_build = letoh16(nu->nu_imageinfo.nim_img_ver_build);
+
+	if (sc->sc_fw_major > NXE_VERSION_MAJOR ||
+	    sc->sc_fw_major < NXE_VERSION_MAJOR ||
+	    sc->sc_fw_minor > NXE_VERSION_MINOR ||
+	    sc->sc_fw_minor < NXE_VERSION_MINOR) {
+		printf(": firmware %d.%d.%d is unsupported by this driver\n",
+		    sc->sc_fw_major, sc->sc_fw_minor, sc->sc_fw_build);
+		goto out;
+	}
+
+	lladdr = swap64(nu->nu_lladdr[sc->sc_function][0]);
+	la = (struct nxe_lladdr *)&lladdr;
+	bcopy(la->lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
+
+	rv = 0;
+out:
+	free(nu, M_TEMP);
 	return (rv);
 }
 
