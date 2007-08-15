@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.24 2007/08/15 03:07:50 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.25 2007/08/15 03:18:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -582,7 +582,7 @@ struct nxe_softc {
 	struct nxe_dmamem	*sc_dummy_dma;
 
 	/* monitoring */
-	struct timeout		sc_sensor_tick;
+	struct timeout		sc_tick;
 	struct ksensor		sc_sensor;
 	struct ksensordev	sc_sensor_dev;
 };
@@ -614,7 +614,8 @@ int			nxe_init(struct nxe_softc *);
 void			nxe_mountroot(void *);
 
 /* chip state */
-void			nxe_sensor_tick(void *);
+void			nxe_tick(void *);
+void			nxe_link_state(struct nxe_softc *);
 
 /* interface operations */
 int			nxe_ioctl(struct ifnet *, u_long, caddr_t);
@@ -808,16 +809,33 @@ int
 nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 {
 	struct nxe_softc		*sc = ifp->if_softc;
+	struct ifreq			*ifr = (struct ifreq *)addr;
 	int				error;
+	int				s;
+
+	s = splnet();
 
 	error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
 	if (error > 0)
 		goto err;
 
-	/* switch statement goes here */
-	error = ENOTTY;
+	timeout_del(&sc->sc_tick);
+
+	switch (cmd) {
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	nxe_tick(sc);
 
 err:
+	splx(s);
 	return (error);
 }
 
@@ -843,6 +861,33 @@ nxe_media_change(struct ifnet *ifp)
 void
 nxe_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
+	struct nxe_softc		*sc = ifp->if_softc;
+
+	imr->ifm_active = IFM_ETHER | IFM_AUTO;
+	imr->ifm_status = IFM_AVALID;
+
+	nxe_link_state(sc);
+	if (LINK_STATE_IS_UP(ifp->if_link_state))
+		imr->ifm_status |= IFM_ACTIVE;
+}
+
+void
+nxe_link_state(struct nxe_softc *sc)
+{
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	int				link_state = LINK_STATE_DOWN;
+	u_int32_t			r;
+
+	DASSERT(sc->sc_window == 1);
+
+	r = nxe_crb_read(sc, NXE_1_SW_XG_STATE);
+	if (NXE_1_SW_XG_STATE_PORT(r, sc->sc_function) & NXE_1_SW_XG_STATE_UP)
+		link_state = LINK_STATE_UP;
+
+	if (ifp->if_link_state != link_state) {
+		ifp->if_link_state = link_state;
+		if_link_state_change(ifp);
+	}
 }
 
 int
@@ -941,9 +986,9 @@ nxe_init(struct nxe_softc *sc)
 
 	/* stop the chip from processing */
 	nxe_crb_write(sc, NXE_1_SW_CMD_PRODUCER(sc->sc_function), 0);
-        nxe_crb_write(sc, NXE_1_SW_CMD_CONSUMER(sc->sc_function), 0);
-        nxe_crb_write(sc, NXE_1_SW_CMD_ADDR_HI, 0);
-        nxe_crb_write(sc, NXE_1_SW_CMD_ADDR_LO, 0);
+	nxe_crb_write(sc, NXE_1_SW_CMD_CONSUMER(sc->sc_function), 0);
+	nxe_crb_write(sc, NXE_1_SW_CMD_ADDR_HI, 0);
+	nxe_crb_write(sc, NXE_1_SW_CMD_ADDR_LO, 0);
 
 	/*
 	 * if this is the first port on the device it needs some special
@@ -1007,8 +1052,8 @@ nxe_mountroot(void *arg)
 	    NXE_1_SW_CMDPEG_STATE_DONE, 10000)) {
 		printf("%s: firmware bootstrap failed, code 0x%08x\n",
 		    DEVNAME(sc), nxe_crb_read(sc, NXE_1_SW_CMDPEG_STATE));
-                return;
-        }
+		return;
+	}
 
 	sc->sc_port = nxe_crb_read(sc, NXE_1_SW_V2P(sc->sc_function));
 	if (sc->sc_port == 0x55555555)
@@ -1024,12 +1069,12 @@ nxe_mountroot(void *arg)
 	sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor);
 	sensordev_install(&sc->sc_sensor_dev);
 
-	timeout_set(&sc->sc_sensor_tick, nxe_sensor_tick, sc);
-	nxe_sensor_tick(sc);
+	timeout_set(&sc->sc_tick, nxe_tick, sc);
+	nxe_tick(sc);
 }
 
 void
-nxe_sensor_tick(void *xsc)
+nxe_tick(void *xsc)
 {
 	struct nxe_softc		*sc = xsc;
 	u_int32_t			temp;
@@ -1039,6 +1084,7 @@ nxe_sensor_tick(void *xsc)
 	s = splnet();
 	window = nxe_crb_set(sc, 1);
 	temp = nxe_crb_read(sc, NXE_1_SW_TEMP);
+	nxe_link_state(sc);
 	nxe_crb_set(sc, window);
 	splx(s);
 
@@ -1064,7 +1110,7 @@ nxe_sensor_tick(void *xsc)
 		break;
 	}
 
-	timeout_add(&sc->sc_sensor_tick, hz * 60);
+	timeout_add(&sc->sc_tick, hz * 5);
 }
 
 struct nxe_dmamem *
