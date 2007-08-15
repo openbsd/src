@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.38 2007/08/15 07:46:02 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.39 2007/08/15 10:14:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -729,6 +729,7 @@ void			nxe_pci_unmap(struct nxe_softc *);
 int			nxe_board_info(struct nxe_softc *);
 int			nxe_user_info(struct nxe_softc *);
 int			nxe_init(struct nxe_softc *);
+void			nxe_uninit(struct nxe_softc *);
 void			nxe_mountroot(void *);
 
 /* chip state */
@@ -843,6 +844,7 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nxe_softc		*sc = (struct nxe_softc *)self;
 	struct pci_attach_args		*pa = aux;
+	pci_intr_handle_t		ih;
 	struct ifnet			*ifp;
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -873,6 +875,17 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
+	if (pci_intr_map(pa, &ih) != 0) {
+		printf(": unable to map interrupt\n");
+		goto uninit;
+	}
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
+	    nxe_intr, sc, DEVNAME(sc));
+	if (sc->sc_ih == NULL) {
+		printf(": unable to establish interrupt\n");
+		goto uninit;
+	}
+
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -896,6 +909,9 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_fw_major, sc->sc_fw_minor, sc->sc_fw_build,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 	return;
+
+uninit:
+	nxe_uninit(sc);
 unmap:
 	nxe_pci_unmap(sc);
 }
@@ -1575,6 +1591,16 @@ err:
 	    0, NXE_DMA_LEN(sc->sc_dummy_dma), BUS_DMASYNC_POSTREAD);
 	nxe_dmamem_free(sc, sc->sc_dummy_dma);
 	return (1);
+}
+
+void
+nxe_uninit(struct nxe_softc *sc)
+{
+	if (sc->sc_function == 0) {
+		bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_dummy_dma),
+		    0, NXE_DMA_LEN(sc->sc_dummy_dma), BUS_DMASYNC_POSTREAD);
+		nxe_dmamem_free(sc, sc->sc_dummy_dma);
+	}
 }
 
 void
