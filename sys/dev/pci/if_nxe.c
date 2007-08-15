@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.10 2007/08/15 00:16:22 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.11 2007/08/15 00:22:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -250,6 +250,10 @@ struct cfdriver nxe_cd = {
 	DV_IFNET
 };
 
+/* init code */
+int			nxe_pci_map(struct nxe_softc *,
+			    struct pci_attach_args *);
+
 /* low level hardware access goo */
 u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
 void			nxe_write(struct nxe_softc *, bus_size_t, u_int32_t);
@@ -303,17 +307,29 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nxe_softc		*sc = (struct nxe_softc *)self;
 	struct pci_attach_args		*pa = aux;
-	pcireg_t			memtype;
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_function = pa->pa_function;
 	sc->sc_window = -1;
 
+	if (nxe_pci_map(sc, pa) != 0) {
+		/* error already printed by nxe_pci_map() */
+		return;
+	}
+
+	printf("\n");
+}
+
+int
+nxe_pci_map(struct nxe_softc *sc, struct pci_attach_args *pa)
+{
+	pcireg_t			memtype;
+
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NXE_PCI_BAR_MEM);
 	if (pci_mapreg_map(pa, NXE_PCI_BAR_MEM, memtype, 0, &sc->sc_memt,
 	    &sc->sc_memh, NULL, &sc->sc_mems, 0) != 0) {
 		printf(": unable to map host registers\n");
-		return;
+		return (1);
 	}
 	if (sc->sc_mems != NXE_PCI_BAR_MEM_128MB) {
 		printf(": unexpected register map size\n");
@@ -335,12 +351,12 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap_mem;
 	}
 
-	printf("\n");
-	return;
+	return (0);
 
 unmap_mem:
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 	sc->sc_mems = 0;
+	return (1);
 }
 
 int
