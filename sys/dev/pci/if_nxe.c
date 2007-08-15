@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.28 2007/08/15 04:42:47 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.29 2007/08/15 04:44:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/sensors.h>
 
