@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.35 2007/08/15 07:03:23 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.36 2007/08/15 07:06:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -741,6 +741,7 @@ void			nxe_start(struct ifnet *);
 void			nxe_watchdog(struct ifnet *);
 
 void			nxe_up(struct nxe_softc *);
+void			nxe_lladdr(struct nxe_softc *);
 void			nxe_iff(struct nxe_softc *);
 void			nxe_down(struct nxe_softc *);
 
@@ -1100,8 +1101,12 @@ nxe_up(struct nxe_softc *sc)
 	    (u_int32_t)dva);
 	nxe_crb_write(sc, NXE_1_SW_CONTEXT_ADDR_HI(sc->sc_function),
 	    (u_int32_t)(dva >> 32));
-        nxe_crb_write(sc, NXE_1_SW_CONTEXT(sc->sc_port),
+	nxe_crb_write(sc, NXE_1_SW_CONTEXT(sc->sc_port),
 	    NXE_1_SW_CONTEXT_SIG(sc->sc_port));
+
+	nxe_crb_set(sc, 0);
+	nxe_lladdr(sc);
+	nxe_crb_set(sc, 1);
 
 	SET(ifp->if_flags, IFF_RUNNING);
 	CLR(ifp->if_flags, IFF_OACTIVE);
@@ -1150,6 +1155,20 @@ nxe_up_fw(struct nxe_softc *sc)
 		return (1);
 
 	return (0);
+}
+
+void
+nxe_lladdr(struct nxe_softc *sc)
+{
+	u_int8_t			*lladdr = sc->sc_ac.ac_enaddr;
+
+	DASSERT(sc->sc_window == 0);
+
+	nxe_crb_write(sc, NXE_0_XG_MAC_LO(sc->sc_port),
+	    (lladdr[0] << 24) | (lladdr[1] << 16));
+	nxe_crb_write(sc, NXE_0_XG_MAC_HI(sc->sc_port),
+	    (lladdr[2] << 24) | (lladdr[3] << 16) |
+	    (lladdr[4] << 8)  | (lladdr[5] << 0));
 }
 
 void
