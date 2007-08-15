@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.26 2007/08/15 03:52:50 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.27 2007/08/15 04:29:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -560,6 +560,17 @@ struct nxe_pkt_list {
 	TAILQ_HEAD(, nxe_pkt)	npl_used;
 };
 
+struct nxe_ring {
+	struct nxe_dmamem	*nr_dmamem;
+	u_int8_t		*nr_pos;
+
+	u_int			nr_slot;
+	int			nr_ready;
+
+	size_t			nr_desclen;
+	u_int			nr_nentries;
+};
+
 /*
  * autoconf glue
  */
@@ -638,6 +649,17 @@ void			nxe_watchdog(struct ifnet *);
 /* ifmedia operations */
 int			nxe_media_change(struct ifnet *);
 void			nxe_media_status(struct ifnet *, struct ifmediareq *);
+
+
+/* ring handling */
+struct nxe_ring		*nxe_ring_alloc(struct nxe_softc *, size_t, u_int);
+void			nxe_ring_sync(struct nxe_softc *, struct nxe_ring *,
+			    int);
+void			nxe_ring_free(struct nxe_softc *, struct nxe_ring *);
+int			nxe_ring_readable(struct nxe_ring *, int);
+int			nxe_ring_writeable(struct nxe_ring *, int);
+void			*nxe_ring_cur(struct nxe_softc *, struct nxe_ring *);
+void			*nxe_ring_next(struct nxe_softc *, struct nxe_ring *);
 
 /* pkts */
 struct nxe_pkt_list	*nxe_pkt_alloc(struct nxe_softc *, u_int, int);
@@ -1133,6 +1155,82 @@ nxe_tick(void *xsc)
 	}
 
 	timeout_add(&sc->sc_tick, hz * 5);
+}
+
+
+struct nxe_ring *
+nxe_ring_alloc(struct nxe_softc *sc, size_t desclen, u_int nentries)
+{
+	struct nxe_ring			*nr;
+
+	nr = malloc(sizeof(struct nxe_ring), M_DEVBUF, M_WAITOK);
+
+	nr->nr_dmamem = nxe_dmamem_alloc(sc, desclen * nentries, PAGE_SIZE);
+	if (nr->nr_dmamem == NULL) {
+		free(nr, M_DEVBUF);
+		return (NULL);
+	}
+
+	nr->nr_pos = NXE_DMA_KVA(nr->nr_dmamem);
+	nr->nr_slot = 0;
+	nr->nr_desclen = desclen;
+	nr->nr_nentries = nentries;
+
+	return (nr);
+}
+
+void
+nxe_ring_sync(struct nxe_softc *sc, struct nxe_ring *nr, int flags)
+{
+	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(nr->nr_dmamem),
+	    0, NXE_DMA_LEN(nr->nr_dmamem), flags);
+}
+
+void
+nxe_ring_free(struct nxe_softc *sc, struct nxe_ring *nr)
+{
+	nxe_dmamem_free(sc, nr->nr_dmamem);
+	free(nr, M_DEVBUF);
+}
+
+int
+nxe_ring_readable(struct nxe_ring *nr, int producer)
+{
+	nr->nr_ready = producer - nr->nr_slot;
+	if (nr->nr_ready < 0)
+		nr->nr_ready += nr->nr_nentries;
+
+	return (nr->nr_ready);
+}
+
+int
+nxe_ring_writeable(struct nxe_ring *nr, int consumer)
+{
+	nr->nr_ready = consumer - nr->nr_slot;
+	if (nr->nr_ready <= 0)
+		nr->nr_ready += nr->nr_nentries;
+
+	return (nr->nr_ready);
+}
+
+void *
+nxe_ring_cur(struct nxe_softc *sc, struct nxe_ring *nr)
+{
+	return (nr->nr_pos);
+}
+
+void *
+nxe_ring_next(struct nxe_softc *sc, struct nxe_ring *nr)
+{
+	if (++nr->nr_slot >= nr->nr_nentries) {
+		nr->nr_slot = 0;
+		nr->nr_pos = NXE_DMA_KVA(nr->nr_dmamem);
+	} else
+		nr->nr_pos += nr->nr_desclen;
+
+	nr->nr_ready--;
+
+	return (nr->nr_pos);
 }
 
 struct nxe_pkt_list *
