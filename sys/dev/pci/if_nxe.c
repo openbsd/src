@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.36 2007/08/15 07:06:36 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.37 2007/08/15 07:17:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1002,8 +1002,11 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	}
 
 	if (error == ENETRESET) {
-		if (ISSET(ifp->if_flags, IFF_RUNNING))
+		if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+			nxe_crb_set(sc, 0);
 			nxe_iff(sc);
+			nxe_crb_set(sc, 1);
+		}
 		error = 0;
 	}
 
@@ -1094,7 +1097,7 @@ nxe_up(struct nxe_softc *sc)
 	nxe_ring_sync(sc, sc->sc_status_ring, BUS_DMASYNC_PREREAD);
 	nxe_ring_sync(sc, sc->sc_cmd_ring, BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_ctx),
-	    0, NXE_DMA_LEN(sc->sc_ctx), 
+	    0, NXE_DMA_LEN(sc->sc_ctx),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	nxe_crb_write(sc, NXE_1_SW_CONTEXT_ADDR_LO(sc->sc_function),
@@ -1106,6 +1109,7 @@ nxe_up(struct nxe_softc *sc)
 
 	nxe_crb_set(sc, 0);
 	nxe_lladdr(sc);
+	nxe_iff(sc);
 	nxe_crb_set(sc, 1);
 
 	SET(ifp->if_flags, IFF_RUNNING);
@@ -1174,7 +1178,23 @@ nxe_lladdr(struct nxe_softc *sc)
 void
 nxe_iff(struct nxe_softc *sc)
 {
+	struct ifnet			*ifp = &sc->sc_ac.ac_if;
+	u_int32_t			cfg1 = 0x1447; /* XXX */
 
+	DASSERT(sc->sc_window == 0);
+
+	CLR(ifp->if_flags, IFF_ALLMULTI);
+	if (sc->sc_ac.ac_multirangecnt > 0 || sc->sc_ac.ac_multicnt > 0) {
+		cfg1 |= NXE_0_XG_CFG1_MULTICAST;
+		SET(ifp->if_flags, IFF_ALLMULTI);
+	}
+
+	if (ISSET(ifp->if_flags, IFF_PROMISC))
+		cfg1 |= NXE_0_XG_CFG1_PROMISC;
+
+	nxe_crb_write(sc, NXE_0_XG_CFG0(sc->sc_port),
+	    NXE_0_XG_CFG0_TX_EN | NXE_0_XG_CFG0_RX_EN);
+	nxe_crb_write(sc, NXE_0_XG_CFG1(sc->sc_port), cfg1);
 }
 
 void
@@ -1188,7 +1208,7 @@ nxe_down(struct nxe_softc *sc)
 	/* XXX turn the chip off */
 
 	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_ctx),
-	    0, NXE_DMA_LEN(sc->sc_ctx), 
+	    0, NXE_DMA_LEN(sc->sc_ctx),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	nxe_ring_sync(sc, sc->sc_cmd_ring, BUS_DMASYNC_POSTWRITE);
 	nxe_ring_sync(sc, sc->sc_status_ring, BUS_DMASYNC_POSTREAD);
