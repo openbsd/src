@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.21 2007/08/15 01:26:36 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.22 2007/08/15 02:40:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -249,6 +249,7 @@ int nxedebug = 0;
 #define NXE_1_SW_CMD_SIZE	0x002022c8 /* entries in the cmd ring */
 #define NXE_1_SW_DUMMY_ADDR_HI	0x0020223c /* hi address of dummy buf */
 #define NXE_1_SW_DUMMY_ADDR_LO	0x00202240 /* lo address of dummy buf */
+#define  NXE_1_SW_DUMMY_ADDR_LEN	1024
 
 static const u_int32_t nxe_regmap[][4] = {
 #define NXE_1_SW_CMD_PRODUCER(_f)	(nxe_regmap[0][(_f)])
@@ -349,6 +350,7 @@ static const u_int32_t nxe_regmap[][4] = {
 #define  NXE_1_ROMUSB_STATUS_DONE	(1<<1)
 #define NXE_1_ROMUSB_SW_RESET	0x01300008
 #define NXE_1_ROMUSB_SW_RESET_DEF	0xffffffff
+#define NXE_1_ROMUSB_SW_RESET_BOOT	0x0080000f
 
 #define NXE_1_CASPER_RESET	0x01300038
 #define  NXE_1_CASPER_RESET_ENABLE	0x1
@@ -563,6 +565,7 @@ struct nxe_softc {
 	void			*sc_ih;
 
 	int			sc_function;
+	int			sc_port;
 	int			sc_window;
 
 	const struct nxe_board	*sc_board;
@@ -572,6 +575,10 @@ struct nxe_softc {
 
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
+
+	/* allocations for the hw */
+	struct nxe_dmamem	*sc_dummy_dma;
+
 };
 
 int			nxe_match(struct device *, void *, void *);
@@ -595,8 +602,10 @@ int			nxe_pci_map(struct nxe_softc *,
 			    struct pci_attach_args *);
 void			nxe_pci_unmap(struct nxe_softc *);
 
-int			nxe_board_info(struct nxe_softc *sc);
-int			nxe_user_info(struct nxe_softc *sc);
+int			nxe_board_info(struct nxe_softc *);
+int			nxe_user_info(struct nxe_softc *);
+int			nxe_init(struct nxe_softc *);
+void			nxe_mountroot(void *);
 
 /* wrapper around dmaable memory allocations */
 struct nxe_dmamem	*nxe_dmamem_alloc(struct nxe_softc *, bus_size_t,
@@ -688,6 +697,11 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
+	if (nxe_init(sc) != 0) {
+		/* error already printed by nxe_init() */
+		goto unmap;
+	}
+
 	printf(": firmware %d.%d.%d address %s\n",
 	    sc->sc_fw_major, sc->sc_fw_minor, sc->sc_fw_build,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
@@ -727,6 +741,7 @@ nxe_pci_map(struct nxe_softc *sc, struct pci_attach_args *pa)
 		goto unmap_mem;
 	}
 
+	mountroothook_establish(nxe_mountroot, sc);
 	return (0);
 
 unmap_mem:
@@ -837,6 +852,92 @@ nxe_user_info(struct nxe_softc *sc)
 out:
 	free(nu, M_TEMP);
 	return (rv);
+}
+
+int
+nxe_init(struct nxe_softc *sc)
+{
+	u_int64_t			dva;
+	u_int32_t			r;
+
+	/* stop the chip from processing */
+	nxe_crb_write(sc, NXE_1_SW_CMD_PRODUCER(sc->sc_function), 0);
+        nxe_crb_write(sc, NXE_1_SW_CMD_CONSUMER(sc->sc_function), 0);
+        nxe_crb_write(sc, NXE_1_SW_CMD_ADDR_HI, 0);
+        nxe_crb_write(sc, NXE_1_SW_CMD_ADDR_LO, 0);
+
+	/*
+	 * if this is the first port on the device it needs some special
+	 * treatment to get things going.
+	 */
+	if (sc->sc_function == 0) {
+		/* init adapter offload */
+		sc->sc_dummy_dma = nxe_dmamem_alloc(sc,
+		    NXE_1_SW_DUMMY_ADDR_LEN, PAGE_SIZE);
+		if (sc->sc_dummy_dma == NULL) {
+			printf(": unable to allocate dummy memory\n");
+			return (1);
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_dummy_dma),
+		    0, NXE_DMA_LEN(sc->sc_dummy_dma), BUS_DMASYNC_PREREAD);
+
+		dva = NXE_DMA_DVA(sc->sc_dummy_dma);
+		nxe_crb_write(sc, NXE_1_SW_DUMMY_ADDR_HI, dva >> 32);
+		nxe_crb_write(sc, NXE_1_SW_DUMMY_ADDR_LO, dva);
+
+		r = nxe_crb_read(sc, NXE_1_SW_BOOTLD_CONFIG);
+		if (r == 0x55555555) {
+			r = nxe_crb_read(sc, NXE_1_ROMUSB_SW_RESET);
+			if (r != NXE_1_ROMUSB_SW_RESET_BOOT) {
+				printf(": unexpected boot state\n");
+				goto err;
+			}
+
+			/* clear */
+			nxe_crb_write(sc, NXE_1_SW_BOOTLD_CONFIG, 0);
+		}
+
+		/* start the device up */
+		nxe_crb_write(sc, NXE_1_SW_DRIVER_VER, NXE_VERSION);
+		nxe_crb_write(sc, NXE_1_GLB_PEGTUNE, NXE_1_GLB_PEGTUNE_DONE);
+
+		/*
+		 * the firmware takes a long time to boot, so we'll check
+		 * it later on, and again when we want to bring a port up.
+		 */
+	}
+
+	return (0);
+
+err:
+	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_dummy_dma),
+	    0, NXE_DMA_LEN(sc->sc_dummy_dma), BUS_DMASYNC_POSTREAD);
+	nxe_dmamem_free(sc, sc->sc_dummy_dma);
+	return (1);
+}
+
+void
+nxe_mountroot(void *arg)
+{
+	struct nxe_softc		*sc = arg;
+
+	DASSERT(sc->sc_window == 1);
+
+	if (!nxe_crb_wait(sc, NXE_1_SW_CMDPEG_STATE, 0xffffffff,
+	    NXE_1_SW_CMDPEG_STATE_DONE, 10000)) {
+		printf("%s: firmware bootstrap failed, code 0x%08x\n",
+		    DEVNAME(sc), nxe_crb_read(sc, NXE_1_SW_CMDPEG_STATE));
+                return;
+        }
+
+	sc->sc_port = nxe_crb_read(sc, NXE_1_SW_V2P(sc->sc_function));
+	if (sc->sc_port == 0x55555555)
+		sc->sc_port = sc->sc_function;
+
+	nxe_crb_write(sc, NXE_1_SW_NIC_CAP_HOST, NXE_1_SW_NIC_CAP_HOST_DEF);
+	nxe_crb_write(sc, NXE_1_SW_MPORT_MODE, NXE_1_SW_MPORT_MODE_MULTI);
+	nxe_crb_write(sc, NXE_1_SW_CMDPEG_STATE, NXE_1_SW_CMDPEG_STATE_ACK);
 }
 
 struct nxe_dmamem *
