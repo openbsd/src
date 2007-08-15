@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.37 2007/08/15 07:17:38 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.38 2007/08/15 07:46:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -762,6 +762,10 @@ int			nxe_ring_writeable(struct nxe_ring *, int);
 void			*nxe_ring_cur(struct nxe_softc *, struct nxe_ring *);
 void			*nxe_ring_next(struct nxe_softc *, struct nxe_ring *);
 
+struct mbuf		*nxe_load_pkt(struct nxe_softc *, bus_dmamap_t,
+			    struct mbuf *);
+struct mbuf		*nxe_coalesce_m(struct mbuf *);
+
 /* pkts */
 struct nxe_pkt_list	*nxe_pkt_alloc(struct nxe_softc *, u_int, int);
 void			nxe_pkt_free(struct nxe_softc *,
@@ -1227,7 +1231,154 @@ nxe_down(struct nxe_softc *sc)
 void
 nxe_start(struct ifnet *ifp)
 {
+	struct nxe_softc		*sc = ifp->if_softc;
+	struct nxe_ring			*nr = sc->sc_cmd_ring;
+	struct nxe_tx_desc		*txd;
+	struct nxe_pkt			*pkt;
+	struct mbuf			*m;
+	bus_dmamap_t			dmap;
+	bus_dma_segment_t		*segs;
+	int				nsegs;
 
+	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
+	    ISSET(ifp->if_flags, IFF_OACTIVE) ||
+	    IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
+
+	if (nxe_ring_writeable(nr, 0 /* XXX */) < NXE_TXD_DESCS) {
+		SET(ifp->if_flags, IFF_OACTIVE);
+		return;
+	}
+
+	nxe_ring_sync(sc, nr, BUS_DMASYNC_POSTWRITE);
+	txd = nxe_ring_cur(sc, nr);
+	bzero(txd, sizeof(struct nxe_tx_desc));
+
+	do {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+
+		pkt = nxe_pkt_get(sc->sc_tx_pkts);
+		if (pkt == NULL) {
+			SET(ifp->if_flags, IFF_OACTIVE);
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+		dmap = pkt->pkt_dmap;
+		m = nxe_load_pkt(sc, dmap, m);
+		if (m == NULL) {
+			nxe_pkt_put(sc->sc_tx_pkts, pkt);
+			ifp->if_oerrors++;
+			break;
+		}
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
+		pkt->pkt_m = m;
+
+		txd->tx_flags = htole16(NXE_TXD_F_OPCODE_TX);
+		txd->tx_nbufs = dmap->dm_nsegs;
+		txd->tx_length = htole16(dmap->dm_mapsize);
+		txd->tx_id = pkt->pkt_id;
+		txd->tx_port = sc->sc_port;
+
+		segs = dmap->dm_segs;
+		nsegs = dmap->dm_nsegs;
+		do {
+			switch ((nsegs > NXE_TXD_SEGS) ?
+			    NXE_TXD_SEGS : nsegs) {
+			case 4:
+				txd->tx_addr_4 = htole64(segs[3].ds_addr);
+				txd->tx_slen_4 = htole32(segs[3].ds_len);
+			case 3:
+				txd->tx_addr_3 = htole64(segs[2].ds_addr);
+				txd->tx_slen_3 = htole32(segs[2].ds_len);
+			case 2:
+				txd->tx_addr_2 = htole64(segs[1].ds_addr);
+				txd->tx_slen_2 = htole32(segs[1].ds_len);
+			case 1:
+				txd->tx_addr_1 = htole64(segs[0].ds_addr);
+				txd->tx_slen_1 = htole32(segs[0].ds_len);
+				break;
+			default:
+				panic("%s: unexpected segments in tx map",
+				    DEVNAME(sc));
+			}
+
+			nsegs -= NXE_TXD_SEGS;
+			segs += NXE_TXD_SEGS;
+
+			txd = nxe_ring_next(sc, nr);
+			bzero(txd, sizeof(struct nxe_tx_desc));
+		} while (nsegs > 0);
+
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		ifp->if_opackets++;
+	} while (nr->nr_ready >= NXE_TXD_DESCS);
+
+	nxe_ring_sync(sc, nr, BUS_DMASYNC_PREWRITE);
+	nxe_crb_write(sc, NXE_1_SW_CMD_PRODUCER(sc->sc_function), nr->nr_slot);
+}
+
+struct mbuf *
+nxe_coalesce_m(struct mbuf *m)
+{
+	struct mbuf			*m0;
+
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == NULL)
+		goto err;
+
+	if (m->m_pkthdr.len > MHLEN) {
+		MCLGET(m0, M_DONTWAIT);
+		if (!(m0->m_flags & M_EXT)) {
+			m_freem(m0);
+			m0 = NULL;
+			goto err;
+		}
+	}
+
+	m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
+	m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
+
+err:
+	m_freem(m);
+	return (m0);
+}
+
+struct mbuf *
+nxe_load_pkt(struct nxe_softc *sc, bus_dmamap_t dmap, struct mbuf *m)
+{
+	switch (bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m, BUS_DMA_NOWAIT)) {
+	case 0:
+		break;
+
+	case EFBIG:
+		m = nxe_coalesce_m(m);
+		if (m == NULL)
+			break;
+
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmap, m,
+		    BUS_DMA_NOWAIT) == 0)
+			break;
+
+		/* we get here on error */
+		/* FALLTHROUGH */
+	default:
+		m_freem(m);
+		m = NULL;
+		break;
+	}
+
+	return (m);
 }
 
 void
