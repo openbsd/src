@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.23 2007/08/15 02:49:42 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.24 2007/08/15 03:07:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -613,8 +613,17 @@ int			nxe_user_info(struct nxe_softc *);
 int			nxe_init(struct nxe_softc *);
 void			nxe_mountroot(void *);
 
-/* runtime entry points */
+/* chip state */
 void			nxe_sensor_tick(void *);
+
+/* interface operations */
+int			nxe_ioctl(struct ifnet *, u_long, caddr_t);
+void			nxe_start(struct ifnet *);
+void			nxe_watchdog(struct ifnet *);
+
+/* ifmedia operations */
+int			nxe_media_change(struct ifnet *);
+void			nxe_media_status(struct ifnet *, struct ifmediareq *);
 
 /* wrapper around dmaable memory allocations */
 struct nxe_dmamem	*nxe_dmamem_alloc(struct nxe_softc *, bus_size_t,
@@ -684,6 +693,7 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nxe_softc		*sc = (struct nxe_softc *)self;
 	struct pci_attach_args		*pa = aux;
+	struct ifnet			*ifp;
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_function = pa->pa_function;
@@ -710,6 +720,25 @@ nxe_attach(struct device *parent, struct device *self, void *aux)
 		/* error already printed by nxe_init() */
 		goto unmap;
 	}
+
+	ifp = &sc->sc_ac.ac_if;
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_ioctl = nxe_ioctl;
+	ifp->if_start = nxe_start;
+	ifp->if_watchdog = nxe_watchdog;
+	ifp->if_hardmtu = MCLBYTES - ETHER_HDR_LEN - ETHER_CRC_LEN;
+	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
+	IFQ_SET_MAXLEN(&ifp->if_snd, 512); /* XXX */
+	IFQ_SET_READY(&ifp->if_snd);
+
+	ifmedia_init(&sc->sc_media, 0, nxe_media_change, nxe_media_status);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+
+	if_attach(ifp);
+	ether_ifattach(ifp);
 
 	printf(": firmware %d.%d.%d address %s\n",
 	    sc->sc_fw_major, sc->sc_fw_minor, sc->sc_fw_build,
@@ -773,6 +802,47 @@ int
 nxe_intr(void *xsc)
 {
 	return (0);
+}
+
+int
+nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
+{
+	struct nxe_softc		*sc = ifp->if_softc;
+	int				error;
+
+	error = ether_ioctl(ifp, &sc->sc_ac, cmd, addr);
+	if (error > 0)
+		goto err;
+
+	/* switch statement goes here */
+	error = ENOTTY;
+
+err:
+	return (error);
+}
+
+void
+nxe_start(struct ifnet *ifp)
+{
+
+}
+
+void
+nxe_watchdog(struct ifnet *ifp)
+{
+	/* do nothing */
+}
+
+int
+nxe_media_change(struct ifnet *ifp)
+{
+	/* ignore for now */
+	return (0);
+}
+
+void
+nxe_media_status(struct ifnet *ifp, struct ifmediareq *imr)
+{
 }
 
 int
