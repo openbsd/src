@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.19 2007/08/15 01:21:03 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.20 2007/08/15 01:22:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -752,7 +752,7 @@ nxe_board_info(struct nxe_softc *sc)
 		printf(": unable to read board info\n");
 		goto out;
 	}
-                 
+
 	if (ni->ni_hdrver != NXE_INFO_HDRVER_1) {
 		printf(": unexpected board info header version 0x%08x\n",
 		    ni->ni_hdrver);
@@ -852,7 +852,6 @@ nxe_wait(struct nxe_softc *sc, bus_size_t r, u_int32_t m, u_int32_t v,
 
 	return (1);
 }
-
 
 int
 nxe_crb_set(struct nxe_softc *sc, int window)
