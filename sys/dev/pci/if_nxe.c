@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.22 2007/08/15 02:40:15 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.23 2007/08/15 02:49:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -27,6 +27,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/timeout.h>
+#include <sys/sensors.h>
 
 #include <machine/bus.h>
 
@@ -579,6 +581,10 @@ struct nxe_softc {
 	/* allocations for the hw */
 	struct nxe_dmamem	*sc_dummy_dma;
 
+	/* monitoring */
+	struct timeout		sc_sensor_tick;
+	struct ksensor		sc_sensor;
+	struct ksensordev	sc_sensor_dev;
 };
 
 int			nxe_match(struct device *, void *, void *);
@@ -606,6 +612,9 @@ int			nxe_board_info(struct nxe_softc *);
 int			nxe_user_info(struct nxe_softc *);
 int			nxe_init(struct nxe_softc *);
 void			nxe_mountroot(void *);
+
+/* runtime entry points */
+void			nxe_sensor_tick(void *);
 
 /* wrapper around dmaable memory allocations */
 struct nxe_dmamem	*nxe_dmamem_alloc(struct nxe_softc *, bus_size_t,
@@ -938,6 +947,54 @@ nxe_mountroot(void *arg)
 	nxe_crb_write(sc, NXE_1_SW_NIC_CAP_HOST, NXE_1_SW_NIC_CAP_HOST_DEF);
 	nxe_crb_write(sc, NXE_1_SW_MPORT_MODE, NXE_1_SW_MPORT_MODE_MULTI);
 	nxe_crb_write(sc, NXE_1_SW_CMDPEG_STATE, NXE_1_SW_CMDPEG_STATE_ACK);
+
+	sc->sc_sensor.type = SENSOR_TEMP;
+	strlcpy(sc->sc_sensor_dev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensor_dev.xname));
+	sensor_attach(&sc->sc_sensor_dev, &sc->sc_sensor);
+	sensordev_install(&sc->sc_sensor_dev);
+
+	timeout_set(&sc->sc_sensor_tick, nxe_sensor_tick, sc);
+	nxe_sensor_tick(sc);
+}
+
+void
+nxe_sensor_tick(void *xsc)
+{
+	struct nxe_softc		*sc = xsc;
+	u_int32_t			temp;
+	int				window;
+	int				s;
+
+	s = splnet();
+	window = nxe_crb_set(sc, 1);
+	temp = nxe_crb_read(sc, NXE_1_SW_TEMP);
+	nxe_crb_set(sc, window);
+	splx(s);
+
+	sc->sc_sensor.value = NXE_1_SW_TEMP_VAL(temp) * 1000000 + 273150000;
+	sc->sc_sensor.flags = 0;
+
+	switch (NXE_1_SW_TEMP_STATE(temp)) {
+	case NXE_1_SW_TEMP_STATE_NONE:
+		sc->sc_sensor.status = SENSOR_S_UNSPEC;
+		break;
+	case NXE_1_SW_TEMP_STATE_OK:
+		sc->sc_sensor.status = SENSOR_S_OK;
+		break;
+	case NXE_1_SW_TEMP_STATE_WARN:
+		sc->sc_sensor.status = SENSOR_S_WARN;
+		break;
+	case NXE_1_SW_TEMP_STATE_CRIT:
+		/* we should probably bring things down if this is true */
+		sc->sc_sensor.status = SENSOR_S_CRIT;
+		break;
+	default:
+		sc->sc_sensor.flags = SENSOR_FUNKNOWN;
+		break;
+	}
+
+	timeout_add(&sc->sc_sensor_tick, hz * 60);
 }
 
 struct nxe_dmamem *
