@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.14 2007/08/01 09:31:41 henning Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.15 2007/08/15 15:18:02 camield Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -102,6 +102,7 @@ u_int16_t pick_proxy_port(void);
 void	proxy_reply(int, struct sockaddr *, u_int16_t);
 void	server_error(struct bufferevent *, short, void *);
 int	server_parse(struct session *s);
+int	allow_data_connection(struct session *s);
 void	server_read(struct bufferevent *, void *);
 const char *sock_ntop(struct sockaddr *);
 void	usage(void);
@@ -149,8 +150,19 @@ client_parse(struct session *s)
 		return (1);
 
 	if (linebuf[0] == 'P' || linebuf[0] == 'p' ||
-	    linebuf[0] == 'E' || linebuf[0] == 'e')
-		return (client_parse_cmd(s));
+	    linebuf[0] == 'E' || linebuf[0] == 'e') {
+		if (!client_parse_cmd(s))
+			return (0);
+
+		/*
+		 * Allow active mode connections immediately, instead of
+		 * waiting for a positive reply from the server.  Some
+		 * rare servers/proxies try to probe or setup the data
+		 * connection before an actual transfer request.
+		 */
+		if (s->cmd == CMD_PORT || s->cmd == CMD_EPRT)
+			return (allow_data_connection(s));
+	}
 	
 	if (anonymous_only && (linebuf[0] == 'U' || linebuf[0] == 'u'))
 		return (client_parse_anon(s));
@@ -894,11 +906,25 @@ server_error(struct bufferevent *bufev, short what, void *arg)
 int
 server_parse(struct session *s)
 {
-	struct sockaddr *client_sa, *orig_sa, *proxy_sa, *server_sa;
-	int prepared = 0;
-
 	if (s->cmd == CMD_NONE || linelen < 4 || linebuf[0] != '2')
 		goto out;
+
+	if ((s->cmd == CMD_PASV && strncmp("227 ", linebuf, 4) == 0) ||
+	    (s->cmd == CMD_EPSV && strncmp("229 ", linebuf, 4) == 0))
+		return (allow_data_connection(s));
+
+ out:
+	s->cmd = CMD_NONE;
+	s->port = 0;
+
+	return (1);
+}
+
+int
+allow_data_connection(struct session *s)
+{
+	struct sockaddr *client_sa, *orig_sa, *proxy_sa, *server_sa;
+	int prepared = 0;
 
 	/*
 	 * The pf rules below do quite some NAT rewriting, to keep up
@@ -924,8 +950,7 @@ server_parse(struct session *s)
 		orig_sa = sstosa(&s->server_ss);
 
 	/* Passive modes. */
-	if ((s->cmd == CMD_PASV && strncmp("227 ", linebuf, 4) == 0) ||
-	    (s->cmd == CMD_EPSV && strncmp("229 ", linebuf, 4) == 0)) {
+	if (s->cmd == CMD_PASV || s->cmd == CMD_EPSV) {
 		s->port = parse_port(s->cmd);
 		if (s->port < MIN_PORT) {
 			logmsg(LOG_CRIT, "#%d bad port in '%s'", s->id,
@@ -966,8 +991,7 @@ server_parse(struct session *s)
 	}
 
 	/* Active modes. */
-	if ((s->cmd == CMD_PORT || s->cmd == CMD_EPRT) &&
-	    strncmp("200 ", linebuf, 4) == 0) {
+	if (s->cmd == CMD_PORT || s->cmd == CMD_EPRT) {
 		logmsg(LOG_INFO, "#%d active: server to client port %d"
 		    " via port %d", s->id, s->port, s->proxy_port);
 
@@ -1017,7 +1041,6 @@ server_parse(struct session *s)
 			goto fail;
 	}
 
- out:
 	s->cmd = CMD_NONE;
 	s->port = 0;
 
