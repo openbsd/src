@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.14 2007/08/15 00:33:45 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.15 2007/08/15 00:43:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -174,6 +174,14 @@ int nxedebug = 0;
 #define NXE_SEM_PHY_LOCK	0x0611c018 /* PHY access lock */
 #define NXE_SEM_PHY_UNLOCK	0x0611c01c
 #define  NXE_SEM_DONE			0x1
+
+/*
+ * Network Interface Unit (NIU) Registers
+ */
+ 
+#define NXE_0_NIU_MODE		0x00600000
+#define  NXE_0_NIU_MODE_XGE		(1<<2) /* XGE interface enabled */
+#define  NXE_0_NIU_MODE_GBE		(1<<1) /* 4 GbE interfaces enabled */
 
 /*
  * Software Defined Registers
@@ -359,6 +367,14 @@ struct nxe_userinfo {
 	u_int32_t		nu_bios_ver;
 } __packed;
 
+/*
+ * driver definitions
+ */
+
+struct nxe_board {
+	u_int32_t		brd_type;
+	u_int			brd_mode;
+};
 
 /*
  * autoconf glue
@@ -439,6 +455,15 @@ const struct pci_matchid nxe_devices[] = {
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_HMEZ },
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_IMEZ_2 },
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_HMEZ_2 }
+};
+
+const struct nxe_board nxe_boards[] = {
+	{ NXE_BRDTYPE_P2_SB35_4G,	NXE_0_NIU_MODE_GBE },
+	{ NXE_BRDTYPE_P2_SB31_10G,	NXE_0_NIU_MODE_XGE },
+	{ NXE_BRDTYPE_P2_SB31_2G,	NXE_0_NIU_MODE_GBE },
+	{ NXE_BRDTYPE_P2_SB31_10G_IMEZ,	NXE_0_NIU_MODE_XGE },
+	{ NXE_BRDTYPE_P2_SB31_10G_HMEZ,	NXE_0_NIU_MODE_XGE },
+	{ NXE_BRDTYPE_P2_SB31_10G_CX4,	NXE_0_NIU_MODE_XGE }
 };
 
 int
