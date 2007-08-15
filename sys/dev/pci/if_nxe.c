@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.31 2007/08/15 05:23:47 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.32 2007/08/15 05:34:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -528,6 +528,84 @@ struct nxe_userinfo {
 	u_int8_t		nu_serial[32];
 
 	u_int32_t		nu_bios_ver;
+} __packed;
+
+/* hw structures actually used in the io path */
+
+struct nxe_ctx_ring {
+	u_int64_t		r_addr;
+	u_int32_t		r_size;
+	u_int32_t		r_reserved;
+};
+
+#define NXE_RING_RX		0
+#define NXE_RING_RX_JUMBO	1
+#define NXE_RING_RX_LRO		2
+#define NXE_NRING		3
+
+struct nxe_ctx {
+	u_int64_t		ctx_cmd_consumer_addr;
+
+	struct nxe_ctx_ring	ctx_cmd_ring;
+
+	struct nxe_ctx_ring	ctx_rx_rings[NXE_NRING];
+
+	u_int64_t		ctx_status_ring_addr;
+	u_int32_t		ctx_status_ring_size;
+
+	u_int32_t		ctx_id;
+} __packed;
+
+struct nxe_tx_desc {
+	u_int8_t		tx_tcp_offset;
+	u_int8_t		tx_ip_offset;
+	u_int16_t		tx_flags;
+#define NXE_TXD_F_OPCODE_TX		(0x01 << 7)
+
+	u_int8_t		tx_nbufs;
+	u_int16_t		tx_length; /* XXX who makes a 24bit field? */
+	u_int8_t		tx_length_hi;
+
+	u_int64_t		tx_addr_2;
+
+	u_int16_t		tx_id;
+	u_int16_t		tx_mss;
+
+	u_int8_t		tx_port;
+	u_int8_t		tx_tso_hdr_len;
+	u_int16_t		tx_ipsec_id;
+
+	u_int64_t		tx_addr_3;
+
+	u_int64_t		tx_addr_1;
+
+	u_int16_t		tx_slen_1;
+	u_int16_t		tx_slen_2;
+	u_int16_t		tx_slen_3;
+	u_int16_t		tx_slen_4;
+
+	u_int64_t		tx_addr_4;
+
+	u_int64_t		tx_reserved;
+} __packed;
+#define NXE_TXD_SEGS		4
+#define NXE_TXD_DESCS		8
+#define NXE_TXD_MAX_SEGS	(NXE_TXD_SEGS * NXE_TXD_DESCS)
+
+struct nxe_rx_desc {
+	u_int16_t		rx_id;
+	u_int16_t		rx_flags;
+	u_int32_t		rx_len; /* packet length */
+	u_int64_t		rx_addr;
+} __packed;
+#define NXE_RXD_MAX_SEGS		1
+
+struct nxe_status_desc {
+	u_int8_t		st_lro;
+	u_int8_t		st_owner;
+	u_int16_t		st_id;
+	u_int16_t		st_len;
+	u_int16_t		st_flags;
 } __packed;
 
 /*
