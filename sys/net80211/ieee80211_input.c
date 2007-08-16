@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.62 2007/08/14 20:33:47 bluhm Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.63 2007/08/16 14:59:14 deraadt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -355,9 +355,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				ic->ic_stats.is_rx_nowep++;
 				goto out;
 			}
-		} else if (ic->ic_flags & IEEE80211_F_WEPON) {
-			ic->ic_stats.is_rx_unencrypted++;
-			goto out;
 		}
 #if NBPFILTER > 0
 		/* copy to listener after decrypt */
