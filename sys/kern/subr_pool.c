@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.54 2007/05/28 23:46:28 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.55 2007/08/16 15:18:54 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1913,7 +1913,7 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 	simple_unlock(&pool_head_slock);
 	splx(s);
 
-	if (lookfor != 0 && foundpool == NULL)
+	if (*name != KERN_POOL_NPOOLS && foundpool == NULL)
 		return (ENOENT);
 
 	switch (*name) {
