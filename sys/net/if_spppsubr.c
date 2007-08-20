@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.54 2007/08/14 18:11:46 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.55 2007/08/20 16:46:00 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -444,7 +444,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifqueue *inq = 0;
 	struct sppp *sp = (struct sppp *)ifp;
 	struct timeval tv;
-	void *prej;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	int s;
 
@@ -469,28 +468,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	if (m->m_pkthdr.len > MCLBYTES) {
-		/* Too large packet, drop it. */
-		if (debug)
-			log(LOG_DEBUG,
-			    SPP_FMT "input packet is too large, %d bytes\n",
-			    SPP_ARGS(ifp), m->m_pkthdr.len);
-		goto drop;
-	}
-
-	m = m_pullup2(m, m->m_pkthdr.len);
-	if (m == NULL) {
-		if (debug)
-			log(LOG_DEBUG,
-			    SPP_FMT "m_pullup2() failed!\n", SPP_ARGS(ifp));
-		++ifp->if_ierrors;
-		++ifp->if_iqdrops;
-		return;
-	}
-
 	if (sp->pp_flags & PP_NOFRAMING) {
-		prej = mtod(m, void *);
-		memcpy(&ht.protocol, prej, sizeof(ht.protocol));
+		memcpy(&ht.protocol, mtod(m, char *), sizeof(ht.protocol));
 		m_adj(m, 2);
 		ht.control = PPP_UI;
 		ht.address = PPP_ALLSTATIONS;
@@ -498,8 +477,18 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		/* Get PPP header. */
 		h = mtod (m, struct ppp_header*);
-		prej = &h->protocol;
 		m_adj (m, PPP_HEADER_LEN);
+	}
+
+	/* preserve the alignment */
+	m = m_pulldown(m, 0, m->m_pkthdr.len, NULL);
+	if (m == NULL) {
+		if (debug)
+			log(LOG_DEBUG,
+			    SPP_FMT "Failed to align packet!\n", SPP_ARGS(ifp));
+		++ifp->if_ierrors;
+		++ifp->if_iqdrops;
+		return;
 	}
 
 	switch (h->address) {
@@ -519,7 +508,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		default:
 			if (sp->state[IDX_LCP] == STATE_OPENED)
 				sppp_cp_send (sp, PPP_LCP, PROTO_REJ,
-				    ++sp->pp_seq, m->m_len + 2, prej);
+				    ++sp->pp_seq, 2, &h->protocol);
 			if (debug)
 				log(LOG_DEBUG,
 				    SPP_FMT "invalid input protocol "
