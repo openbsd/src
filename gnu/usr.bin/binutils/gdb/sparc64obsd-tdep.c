@@ -263,7 +263,8 @@ sparc64obsd_trapframe_sniffer (struct frame_info *next_frame)
     return NULL;
 
   find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
-  if (name && strcmp (name, "Lslowtrap_reenter") == 0)
+  if (name && ((strcmp (name, "Lslowtrap_reenter") == 0)
+	       || (strcmp (name, "Ldatafault_internal") == 0)))
     return &sparc64obsd_trapframe_unwind;
 
   return NULL;
