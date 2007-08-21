@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.h,v 1.8 2002/05/09 14:12:17 itojun Exp $	*/
+/*	$OpenBSD: faithd.h,v 1.9 2007/08/21 22:18:41 krw Exp $	*/
 /*	$KAME: faithd.h,v 1.9 2002/05/09 09:41:24 itojun Exp $	*/
 
 /*
@@ -48,8 +48,6 @@ extern void exit_failure(const char *, ...)
 #define DEFAULT_PATH	(DEFAULT_DIR "/" DEFAULT_NAME)
 
 #define FTP_PORT	21
-#define RLOGIN_PORT	513
-#define RSH_PORT	514
 
 #define RETURN_SUCCESS	0
 #define RETURN_FAILURE	1
