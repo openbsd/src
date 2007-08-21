@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.86 2007/08/04 16:46:03 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.87 2007/08/21 21:45:29 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -230,8 +230,6 @@ file	arch/sparc64/fpu/fpu_mul.c
 file	arch/sparc64/fpu/fpu_sqrt.c
 file	arch/sparc64/fpu/fpu_subr.c
 
-# N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
-# identified the exact problem yet.  NOOPT_C suffices for now.
 file	arch/sparc64/sparc64/autoconf.c
 file	arch/sparc64/sparc64/busop.c
 file	arch/sparc64/sparc64/cache.c
@@ -253,9 +251,6 @@ file	arch/sparc64/sparc64/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c
 file	arch/sparc64/sparc64/pmap.c
 file	arch/sparc64/sparc64/process_machdep.c
-# the following overrides the generic "sys_process.c"
-# commented out by deraadt
-#file	arch/sparc64/sparc64/sys_process.c
 file	arch/sparc64/sparc64/sys_machdep.c
 file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
