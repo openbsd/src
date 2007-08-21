@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.30 2007/08/21 20:29:25 millert Exp $
+.\"	$OpenBSD: sort.1,v 1.31 2007/08/21 21:22:37 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -137,7 +137,9 @@ option.)
 .It Fl r
 Reverse the sense of comparisons.
 .It Fl s
-Enable stable sort. Use additional resources (see sradixsort(3)).
+Enable stable sort.
+Uses additional resources (see
+.Xr sradixsort 3 ) .
 .El
 .Pp
 The treatment of field separators can be altered using these options:
