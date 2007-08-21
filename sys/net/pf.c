@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.551 2007/07/18 15:39:44 mpf Exp $ */
+/*	$OpenBSD: pf.c,v 1.552 2007/08/21 15:57:27 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4369,8 +4369,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				dst = &(*state)->dst;
 			}
 
-			if (src->wscale && dst->wscale &&
-			    !(th.th_flags & TH_SYN))
+			if (src->wscale && dst->wscale)
 				dws = dst->wscale & PF_WSCALE_MASK;
 			else
 				dws = 0;
