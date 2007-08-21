@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.67 2007/02/19 08:50:43 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.68 2007/08/21 18:44:52 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
