@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.34 2007/03/13 17:33:58 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.35 2007/08/21 20:29:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.34 2007/03/13 17:33:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.35 2007/08/21 20:29:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ u_char ascii[NBINS], Rascii[NBINS], RFtable[NBINS], Ftable[NBINS];
  * masks of ignored characters.  Alltable is 256 ones
  */
 u_char dtable[NBINS], itable[NBINS], alltable[NBINS];
-int SINGL_FLD = 0, SEP_FLAG = 0, UNIQUE = 0;
+int SINGL_FLD = 0, SEP_FLAG = 0, UNIQUE = 0, STABLE = 0;
 struct coldesc *clist;
 int ncols = 0;
 int ND = 10;			/* limit on number of -k options. */
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 	fixit(&argc, argv);
 	if (!issetugid() && (outfile = getenv("TMPDIR")))
 		tmpdir = outfile;
-	while ((ch = getopt(argc, argv, "bcdfik:mHno:rR:t:T:uy:z")) != -1) {
+	while ((ch = getopt(argc, argv, "bcdfik:mHno:rR:t:T:uy:zs")) != -1) {
 		switch (ch) {
 		case 'b': fldtab->flags |= BI | BT;
 			break;
@@ -191,6 +191,9 @@ main(int argc, char *argv[])
 			REC_D = '\0';
 			d_mask['\n'] = d_mask[' '];
 			d_mask[REC_D] = REC_D_F;
+			break;
+		case 's':
+			STABLE = 1;
 			break;
 		case '?':
 		default:
@@ -340,7 +343,7 @@ usage(char *msg)
 
 	if (msg != NULL)
 		warnx("%s", msg);
-	(void)fprintf(stderr, "usage: %s [-bcdfHimnruz] "
+	(void)fprintf(stderr, "usage: %s [-bcdfHimnruzs] "
 	    "[-k field1[,field2]] [-o output] [-R char]\n"
 	    "\t[-T dir] [-t char] [file ...]\n", __progname);
 	exit(2);

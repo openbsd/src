@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.11 2006/02/14 14:45:36 jmc Exp $	*/
+/*	$OpenBSD: fields.c,v 1.12 2007/08/21 20:29:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.11 2006/02/14 14:45:36 jmc Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.12 2007/08/21 20:29:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ enterkey(RECHEADER *keybuf,	/* pointer to start of key */
 		    fieldtable->flags)) == NULL)
 			return (1);
 
-	if (UNIQUE)
+	if (UNIQUE || STABLE)
 		*(keypos-1) = REC_D;
 	keybuf->offset = keypos - keybuf->data;
 	keybuf->length = keybuf->offset + line->size;
@@ -196,7 +196,7 @@ enterfield(u_char *tablepos, u_char *endkey, struct field *cur_fld, int gflags)
  * To avoid confusing the exponent and the mantissa, use a field delimiter
  * if the exponent is exactly 61, 61+252, etc--this is ok, since it's the
  * only time a field delimiter can come in that position.
- * Reverse order is done analagously.
+ * Reverse order is done analogously.
  */
 
 u_char *

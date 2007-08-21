@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.29 2007/05/31 19:20:16 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.30 2007/08/21 20:29:25 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 21 2007 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd sort or merge text files
 .Sh SYNOPSIS
 .Nm sort
-.Op Fl bcdfHimnruz
+.Op Fl bcdfHimnrsuz
 .Sm off
 .Op Fl k\ \& Ar field1 Op , Ar field2
 .Sm on
@@ -136,6 +136,8 @@ option no longer implies the
 option.)
 .It Fl r
 Reverse the sense of comparisons.
+.It Fl s
+Enable stable sort. Use additional resources (see sradixsort(3)).
 .El
 .Pp
 The treatment of field separators can be altered using these options:

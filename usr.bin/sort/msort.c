@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.20 2007/03/13 17:33:58 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.21 2007/08/21 20:29:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.20 2007/03/13 17:33:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.21 2007/08/21 20:29:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,7 @@ cmp(RECHEADER *rec1, RECHEADER *rec2)
 	for (cwts = wts; cwts; cwts = (cwts == wts1 ? 0 : wts1)) {
 		pos1 = rec1->data;
 		pos2 = rec2->data;
-		if (!SINGL_FLD && UNIQUE)
+		if (!SINGL_FLD && (UNIQUE || STABLE))
 			end = pos1 + min(rec1->offset, rec2->offset);
 		else
 			end = pos1 + min(rec1->length, rec2->length);

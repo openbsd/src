@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.18 2007/03/13 17:33:58 millert Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.19 2007/08/21 20:29:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.18 2007/03/13 17:33:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.19 2007/08/21 20:29:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,9 +173,17 @@ fsort(int binno, int depth, union f_handle infiles, int nfiles, FILE *outfp,
 		}
 		get = getnext;
 		if (!ntfiles && !mfct) {	/* everything in memory--pop */
-			if (nelem > 1 && radixsort((const u_char **)keylist,
-			    nelem, weights, REC_D))
-				err(2, NULL);
+			if (nelem > 1) {
+				if (STABLE) {
+					i = sradixsort((const u_char **)keylist,
+					    nelem, weights, REC_D);
+				} else {
+					i = radixsort((const u_char **)keylist,
+					    nelem, weights, REC_D);
+				}
+				if (i)
+					err(2, NULL);
+			}
 			append(keylist, nelem, depth, outfp, putline, ftbl);
 			break;					/* pop */
 		}

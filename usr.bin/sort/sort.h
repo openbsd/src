@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.h,v 1.6 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: sort.h,v 1.7 2007/08/21 20:29:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -133,7 +133,7 @@ extern int PANIC;	/* maximum depth of fsort before fmerge is called */
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
 extern u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
 extern u_char d_mask[NBINS];
-extern int SINGL_FLD, SEP_FLAG, UNIQUE;
+extern int SINGL_FLD, SEP_FLAG, UNIQUE, STABLE;
 extern int REC_D;
 extern char *tmpdir;
 extern int ND;		/* limit on number of -k options. */
