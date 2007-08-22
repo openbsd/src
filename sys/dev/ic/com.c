@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.117 2007/07/15 19:25:49 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.118 2007/08/22 09:22:30 jasper Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1422,11 +1422,7 @@ comcnpollc(dev_t dev, int on)
 #ifdef KGDB
 int
 com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
-    int frequency,tcflag_t cflag)
-	bus_space_tag_t iot;
-	bus_addr_t iobase;
-	int rate, frequency;
-	tcflag_t cflag;
+    int frequency, tcflag_t cflag)
 {
 #ifdef COM_CONSOLE
 	if (iot == comconsiot && iobase == comconsaddr) {
