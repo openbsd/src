@@ -8,7 +8,7 @@
 <meta http-equiv="Content-type" content='text/html; charset="US-ASCII"'>
 <meta name="DC.Creator" content="Eggert, Paul">
 <meta name="DC.Contributor" content="Olson, Arthur David">
-<meta name="DC.Date" content="2007-03-13">
+<meta name="DC.Date" content="2007-08-17">
 <meta name="DC.Description"
  content="Sources of information about time zones and daylight saving time">
 <meta name="DC.Identifier" content="http://www.twinsun.com/tz/tz-link.htm">
@@ -18,14 +18,15 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	8.11
+@(#)tz-link.htm	8.12
 </address>
 <p>
 Please send corrections to this web page to the
 <a href="mailto:tz@elsie.nci.nih.gov">time zone mailing list</a>.</p>
 <h2>The <code>tz</code> database</h2>
 <p>
-The public-domain time zone database contains code and data
+The <a href="http://en.wikipedia.org/wiki/Public_domain">public-domain</a>
+time zone database contains code and data
 that represent the history of local time
 for many representative locations around the globe.
 It is updated periodically to reflect changes made by political bodies
@@ -50,8 +51,6 @@ C Library</a> used in
 <a href="http://www.delorie.com/djgpp/"><abbr
 title="DJ's GNU Programming Platform">DJGPP</abbr></a>,
 <a href="http://www.ibm.com/servers/aix/">AIX</a>,
-<a href="http://www.hp.com/products1/unix/operating/">HP-UX</a>,
-<a href="http://www.sgi.com/developers/technology/irix/">IRIX</a>,
 <a href="http://www.apple.com/macosx/">Mac OS X</a>,
 <a href="http://h71000.www7.hp.com/">OpenVMS</a>,
 <a href="http://www.oracle.com/database/index.html">Oracle Database</a>,
@@ -213,7 +212,8 @@ contains a class
 <code>tz</code> source into a Joda-specific binary format. Joda Time
 is freely available under a <abbr>BSD</abbr>-style license.</li>
 <li><a href="http://mozware.free.fr/devtools/xmlDate/">xmlDate</a>
-contains <a href="http://www.mozilla.org/js/">JavaScript</a> code that
+contains <a
+href="http://en.wikipedia.org/wiki/JavaScript">JavaScript</a> code that
 parses <samp>tz</samp> source into an internal object that represents
 a time zone. It is freely available under the GPL.</li>
 <li><a href="http://sourceforge.net/projects/pytz/">PyTZ - Python Time
@@ -251,7 +251,8 @@ This library is freely available under the
 (<abbr title="Lesser General Public License">LGPL</abbr>)</a>,
 and is widely used in <abbr>GNU</abbr>/Linux systems.</li>
 <li><a href="http://www.bmsi.com/java/#TZ">ZoneInfo.java</a>
-is a <code>tz</code> binary file reader written in Java.
+is a <code>tz</code> binary file reader written in <a
+href="http://en.wikipedia.org/wiki/Java_%28programming_language%29">Java</a>.
 It is freely available under the <abbr>LGPL</abbr>.</li>
 <li>Tcl, mentioned above, also contains a
 <code>tz</code> binary file reader.</li>
@@ -274,6 +275,12 @@ href="http://users.skynet.be/Peter.Verthez/projects/intclock/">International
 clock (intclock)</a> is a multi-timezone clock for
 <abbr>GNU</abbr>/Linux and similar systems. It is freely available
 under the <abbr>GPL</abbr>.</li>
+<li><a href="http://www.codeplex.com/publicdomain">PublicDomain</a>
+has a copy of a recent <code>tz</code> database, accessed via a <a
+href="http://en.wikipedia.org/wiki/C_Sharp">C#</a> library. As its
+name suggests, it is in the public domain. Only current time stamps
+are well supported; historical data are compiled into the runtime but
+are not easily accessible.</li>
 <li><a href="http://java.sun.com/">Sun Java</a> releases since 1.4
 contain a copy of a subset of a recent <code>tz</code> database in a
 Java-specific format.</li>
@@ -329,7 +336,7 @@ below.</li>
 <li>The <a href="https://www.cia.gov/">United States Central
 Intelligence Agency (<abbr
 title="Central Intelligence Agency">CIA</abbr>)</a> publishes a <a
-href="https://www.cia.gov/cia/publications/factbook/reference_maps/pdf/time_zones.pdf">time
+href="https://www.cia.gov/library/publications/the-world-factbook/reference_maps/pdf/time_zones.pdf">time
 zone map</a>; the
 <a
 href="http://www.lib.utexas.edu/maps/world.html">Perry-Casta&ntilde;eda
@@ -348,6 +355,10 @@ but the maps are more up to date.</li>
 </ul>
 <h2>Time zone boundaries</h2>
 <ul>
+<li><a href="http://www.efele.net/maps/">A map of the TZ timezones in
+the US</a> contains a <a
+href="http://en.wikipedia.org/wiki/Shapefile">shapefile</a> of the
+<code>tz</code> regions in the US.</li>
 <li><a href="http://www.statoids.com/statoids.html">Administrative Divisions
 of Countries ("Statoids")</a> contains detailed lists of
 <code>tz</code>-related zone subdivision data.</li>
@@ -367,6 +378,15 @@ Zones of the United States</a> in the public domain.</li>
 <li>The GeoCommunity lists several commercial sources for <a
 href="http://spatialnews.geocomm.com/features/timezones/">International
 Time Zones and Time Zone Data</a>.</li>
+<li>A ship within the <a
+href="http://en.wikipedia.org/wiki/Territorial_waters">territorial
+waters</a> of any nation uses that nation's time. In international
+waters, time zone boundaries are meridians 15&deg; apart, except that
+UTC&minus;12 and UTC+12 are each 7.5&deg; wide and are separated by
+the 180&deg; meridian (not by the International Date Line, which is
+for land and territorial waters only). A captain can change ship's
+clocks any time after entering a new time zone; midnight changes are
+common.</li>
 </ul>
 <h2>Civil time concepts and history</h2>
 <ul>
