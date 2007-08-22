@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.50 2007/08/10 16:29:27 jasper Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.51 2007/08/22 19:50:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -1234,29 +1234,37 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		return;
 	}
 
-	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-	if (mnew == NULL) {
-		ifp->if_ierrors++;
-		return;
-	}
-	if ((rbuf = wpi_alloc_rbuf(sc)) == NULL) {
-		m_freem(mnew);
-		ifp->if_ierrors++;
-		return;
-	}
- 	/* attach Rx buffer to mbuf */
-	MEXTADD(mnew, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf, rbuf);
-
 	m = data->m;
-	data->m = mnew;
-
-	/* update Rx descriptor */
-	ring->desc[ring->cur] = htole32(rbuf->paddr);
-
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
 	m->m_data = (caddr_t)(head + 1);
 	m->m_pkthdr.len = m->m_len = letoh16(head->len);
+
+	if ((rbuf = SLIST_FIRST(&sc->rxq.freelist)) != NULL) {
+		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+		if (mnew == NULL) {
+			ifp->if_ierrors++;
+			return;
+		}
+
+		/* attach Rx buffer to mbuf */
+		MEXTADD(mnew, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf,
+		    rbuf);
+		SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
+
+		data->m = mnew;
+
+		/* update Rx descriptor */
+		ring->desc[ring->cur] = htole32(rbuf->paddr);
+	} else {
+		/* no free rbufs, copy frame */
+		m = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+		if (m == NULL) {
+			/* no free mbufs either, drop frame */
+			ifp->if_ierrors++;
+			return;
+		}
+	}
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -1389,7 +1397,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 	hw = letoh32(sc->shared->next);
 	while (sc->rxq.cur != hw) {
 		struct wpi_rx_data *data = &sc->rxq.data[sc->rxq.cur];
-		struct wpi_rx_desc *desc = mtod(data->m, struct wpi_rx_desc *);
+		struct wpi_rx_desc *desc = (void *)data->m->m_ext.ext_buf;
 
 		DPRINTFN(4, ("rx notification qid=%x idx=%d flags=%x type=%d "
 		    "len=%d\n", desc->qid, desc->idx, desc->flags, desc->type,
