@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.70 2007/08/15 14:20:54 espie Exp $
+.\" $OpenBSD: ports.7,v 1.71 2007/08/22 06:57:06 jmc Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: August 15 2007 $
+.Dd $Mdocdate: August 22 2007 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -326,7 +326,7 @@ The ports tree can be used concurrently for building several ports at the
 same time, thanks to a locking mechanism.
 By default, this mechanism is disabled.
 Defining
-.Ev LOCKDIR 
+.Ev LOCKDIR
 to a proper value will activate it.
 .Pp
 All locks will be stored in
