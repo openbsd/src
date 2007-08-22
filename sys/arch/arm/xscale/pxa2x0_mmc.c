@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.2 2007/03/18 22:14:52 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.3 2007/08/22 18:47:16 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -99,7 +99,6 @@ struct cfdriver pxammc_cd = {
 	NULL, "pxammc", DV_DULL
 };
 
-#define SDMMC_DEBUG
 #ifdef SDMMC_DEBUG
 int sdhcdebug = 0;	/* XXX must be named sdhcdebug for sdmmc.c */
 #define DPRINTF(n,s)	do { if ((n) <= sdhcdebug) printf s; } while (0)
