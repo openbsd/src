@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.40 2007/02/20 21:15:01 tom Exp $	*/
+/*	$OpenBSD: bus.h,v 1.41 2007/08/22 21:28:41 marco Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -731,6 +731,19 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 /* Compatibility defines */
 #define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
 #define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
+#define	BUS_SPACE_MAP_CACHEABLE		0x0001
+#define	BUS_SPACE_MAP_LINEAR		0x0002
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x0008
+
+/*
+ *	void *bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ *  (XXX not enforced)
+ */
+#define bus_space_vaddr(t, h) \
+	((t) == I386_BUS_SPACE_IO ? (void *)(NULL) : (void *)(h))
 
 /*
  * Flags used in various bus DMA methods.
