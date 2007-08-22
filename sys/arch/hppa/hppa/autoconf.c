@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.50 2007/06/01 22:40:33 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.51 2007/08/22 19:32:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -258,7 +258,7 @@ pdc_scanbus(self, ca, maxmod, hpa)
 
 				for (ia = 0; !(error = pdc_call((iodcio_t)pdc,
 				    0, PDC_SYSMAP, PDC_SYSMAP_ADDR, &pdc_addr,
-				    im, ia)) && ia < nca.ca_naddrs; ia++) {
+				    im, ia + 1)) && ia < nca.ca_naddrs; ia++) {
 					nca.ca_addrs[ia].addr = pdc_addr.hpa;
 					nca.ca_addrs[ia].size =
 					    pdc_addr.size << PGSHIFT;
