@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.55 2007/08/05 21:41:11 claudio Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.56 2007/08/22 20:40:34 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1530,7 +1530,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	key->desc = ni->ni_eapol_desc;
 
 	info = BE_READ_2(key->info);
-	/* use V2 descriptor only when pairwise cipher is CCMP */
+	/* use V2 descriptor iff pairwise cipher is CCMP */
 	info |= (ni->ni_pairwise_cipher != IEEE80211_CIPHER_CCMP) ?
 	    EAPOL_KEY_DESC_V1 : EAPOL_KEY_DESC_V2;
 	BE_WRITE_2(key->info, info);
@@ -1738,7 +1738,7 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 	memset(key, 0, sizeof(*key));
 
 	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_INSTALL | EAPOL_KEY_KEYACK |
-	    EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE;
+	    EAPOL_KEY_KEYMIC;
 
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
 	/* use same nonce as in Message 1 */
@@ -1754,7 +1754,7 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 		/* RSN: encapsulate the GTK and ask for encryption */
 		frm = ieee80211_add_gtk_kde(frm, gtk);
 		LE_WRITE_8(key->rsc, gtk->k_rsc);
-		info |= EAPOL_KEY_ENCRYPTED;
+		info |= EAPOL_KEY_ENCRYPTED | EAPOL_KEY_SECURE;
 	} else	/* WPA1 */
 		frm = ieee80211_add_wpa1(frm, ic, ic->ic_bss);
 
@@ -1788,8 +1788,7 @@ ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
 	key = mtod(m, struct ieee80211_eapol_key *);
 	memset(key, 0, sizeof(*key));
 
-	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_KEYMIC | EAPOL_KEY_SECURE;
-	BE_WRITE_2(key->info, info);
+	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_KEYMIC;
 
 	/* copy key replay counter from authenticator */
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
@@ -1799,7 +1798,11 @@ ieee80211_send_4way_msg4(struct ieee80211com *ic, struct ieee80211_node *ni)
 		/* WPA1 sets the key length field here */
 		keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
 		BE_WRITE_2(key->keylen, keylen);
-	}
+	} else
+		info |= EAPOL_KEY_SECURE;
+
+	/* write the key info field */
+	BE_WRITE_2(key->info, info);
 
 	/* empty key data field */
 	m->m_pkthdr.len = m->m_len = sizeof(*key);
@@ -1838,7 +1841,12 @@ ieee80211_send_group_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    EAPOL_KEY_ENCRYPTED;
 
 	BE_WRITE_8(key->replaycnt, ni->ni_replaycnt);
-
+#if 0
+	/* use global counter as GNonce */
+	ieee80211_derive_gtk(ic->ic_gmk, IEEE80211_PMK_LEN, ic->ic_myaddr,
+	    ic->ic_globalcnt, &gtk, sizeof gtk);
+	/* XXX increment global counter */
+#endif
 	frm = (u_int8_t *)&key[1];
 	if (ni->ni_eapol_desc == EAPOL_KEY_DESC_WPA1) {
 		/* WPA1 does not have GTK KDE */

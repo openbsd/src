@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.32 2007/07/28 11:13:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.33 2007/08/22 20:40:34 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -241,6 +241,7 @@ struct ieee80211com {
 	u_int			ic_edca_updtcount;
 	u_int8_t		ic_globalcnt[EAPOL_KEY_NONCE_LEN];
 	u_int64_t		ic_keyreplaycnt;
+	u_int8_t		ic_psk[IEEE80211_PMK_LEN];
 
 	u_int8_t		*ic_tim_bitmap;
 	u_int			ic_tim_len;

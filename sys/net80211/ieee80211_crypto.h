@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.6 2007/08/01 15:40:40 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.7 2007/08/22 20:40:34 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -60,6 +60,14 @@ enum ieee80211_akm {
 
 #define	IEEE80211_KEYBUF_SIZE	16
 
+#define IEEE80211_TKIP_HDRLEN	8
+#define IEEE80211_TKIP_MICLEN	8
+#define IEEE80211_TKIP_ICVLEN	4
+#define IEEE80211_CCMP_HDRLEN	8
+#define IEEE80211_CCMP_MICLEN	8
+
+#define IEEE80211_PMK_LEN	32
+
 struct ieee80211_key {
 	u_int8_t		k_id;		/* identifier (0-3) */
 	enum ieee80211_cipher	k_cipher;
@@ -71,6 +79,8 @@ struct ieee80211_key {
 	u_int64_t		k_tsc;
 	int			k_len;
 	u_int8_t		k_key[IEEE80211_KEYBUF_SIZE];
+	u_int8_t		k_rxmic[IEEE80211_TKIP_MICLEN];
+	u_int8_t		k_txmic[IEEE80211_TKIP_MICLEN];
 };
 
 /* forward references */
@@ -88,5 +98,9 @@ extern	void ieee80211_derive_ptk(const u_int8_t *, size_t, const u_int8_t *,
 	    const u_int8_t *, const u_int8_t *, const u_int8_t *, u_int8_t *,
 	    size_t);
 extern	int ieee80211_cipher_keylen(enum ieee80211_cipher);
+extern	void ieee80211_map_ptk(const struct ieee80211_ptk *,
+	    enum ieee80211_cipher, struct ieee80211_key *);
+extern	void ieee80211_map_gtk(const u_int8_t *, enum ieee80211_cipher, int,
+	    int, u_int64_t, struct ieee80211_key *);
 
 #endif /* _NET80211_IEEE80211_CRYPTO_H_ */

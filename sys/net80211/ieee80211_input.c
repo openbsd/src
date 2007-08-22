@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.63 2007/08/16 14:59:14 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.64 2007/08/22 20:40:34 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1034,9 +1034,9 @@ ieee80211_parse_rsn(struct ieee80211com *ic, struct ieee80211_node *ni,
     const u_int8_t *frm)
 {
 	/* check IE length */
-	if (frm[1] < 2) {
+	if (frm[1] < 4) {
 		IEEE80211_DPRINTF(("%s: invalid RSN/WPA2 IE;"
-		    " length %u, expecting at least 2\n", __func__, frm[1]));
+		    " length %u, expecting at least 4\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
 		return IEEE80211_REASON_IE_INVALID;
 	}
@@ -1048,9 +1048,9 @@ ieee80211_parse_wpa1(struct ieee80211com *ic, struct ieee80211_node *ni,
     const u_int8_t *frm)
 {
 	/* check IE length */
-	if (frm[1] < 6) {
+	if (frm[1] < 8) {
 		IEEE80211_DPRINTF(("%s: invalid WPA1 IE;"
-		    " length %u, expecting at least 6\n", __func__, frm[1]));
+		    " length %u, expecting at least 8\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
 		return IEEE80211_REASON_IE_INVALID;
 	}
@@ -1932,7 +1932,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 		frm += 2 + frm[1];
 	}
 	/* check that the PMKID KDE is valid */
-	if (pmkid != NULL && pmkid[1] - 4 < 16)
+	if (pmkid != NULL && pmkid[1] < 4 + 16)
 		return;
 
 	/* update the last seen value of the key replay counter field */
@@ -1945,7 +1945,9 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	if (ni->ni_akm == IEEE80211_AKM_IEEE8021X) {
 		/* XXX find the PMK in the PMKSA cache using the PMKID */
 	} else {
-		/* XXX the PMK is the PSK */
+		/* the PMK is the PSK */
+		pmk = ic->ic_psk;
+		pmk_len = IEEE80211_PMK_LEN;
 	}
 
 	/* derive PTK from PMK */
@@ -1982,12 +1984,6 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt)
 		return;
 
-	/* derive PTK from PMK */
-	ieee80211_derive_ptk(pmk, pmk_len, ic->ic_myaddr, ni->ni_macaddr,
-	    ni->ni_nonce, key->nonce, (u_int8_t *)&ni->ni_ptk,
-	    sizeof(ni->ni_ptk));
-	ni->ni_ptk_ok = 1;
-
 	/* parse key data field (shall contain an RSN IE) */
 	frm = (const u_int8_t *)&key[1];
 	efrm = frm + BE_READ_2(key->paylen);
@@ -2021,8 +2017,18 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 	 * (Re)Association Request.
 	 */
 	if (ni->ni_rsnie == NULL || rsn[1] != ni->ni_rsnie[1] ||
-	    memcmp(rsn, ni->ni_rsnie, 2 + rsn[1]) != 0)
+	    memcmp(rsn, ni->ni_rsnie, 2 + rsn[1]) != 0) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_IE_INVALID);
+		ieee80211_node_leave(ic, ni);
 		return;
+	}
+
+	/* derive PTK from PMK */
+	ieee80211_derive_ptk(pmk, pmk_len, ic->ic_myaddr, ni->ni_macaddr,
+	    ni->ni_nonce, key->nonce, (u_int8_t *)&ni->ni_ptk,
+	    sizeof(ni->ni_ptk));
+	ni->ni_ptk_ok = 1;
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
@@ -2105,11 +2111,8 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	 */
 	if (ni->ni_rsnie == NULL || rsn1[1] != ni->ni_rsnie[1] ||
 	    memcmp(rsn1, ni->ni_rsnie, 2 + rsn1[1]) != 0)
+		/*ieee80211_new_state();*/
 		return;
-
-	/* update the last seen value of the key replay counter field */
-	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
-	ni->ni_replaycnt_ok = 1;
 
 	/*
 	 * If a second RSN information element is present, use its pairwise
@@ -2117,50 +2120,13 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	 */
 	if (rsn2 != NULL) {
 		/* XXX ieee80211_parse_rsn(rsn2); */
+		/*ieee80211_new_state();*/
+		return;
 	}
 
-	/* install the PTK */
-	k = &ni->ni_pairwise_key;
-	memset(k, 0, sizeof(*k));
-	k->k_cipher = ni->ni_pairwise_cipher;
-	k->k_flags = IEEE80211_KEY_TX;
-	k->k_len = BE_READ_2(key->keylen);
-	/* check that key length matches pairwise cipher */
-	if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
-		return;
-	memcpy(k->k_key, ni->ni_ptk.tk, k->k_len);
-	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
-		return;
-
-	if (gtk != NULL) {
-		u_int8_t kid;
-
-		/* check that the GTK KDE is valid */
-		if (gtk[1] - 4 < 2)
-			return;
-
-		/* install the GTK */
-		kid = gtk[6] & 3;
-		k = &ic->ic_nw_keys[kid];
-		memset(k, 0, sizeof(*k));
-		k->k_id = kid;
-		k->k_cipher = ni->ni_group_cipher;
-		k->k_flags = IEEE80211_KEY_GROUP;
-		if (gtk[6] & (1 << 2))	/* Tx bit */
-			k->k_flags |= IEEE80211_KEY_TX;
-		k->k_len = gtk[1] - 6;
-		/* check that key length matches group cipher */
-		if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
-			return;	/* XXX PTK already installed! */
-		memcpy(k->k_key, &gtk[8], k->k_len);
-		k->k_rsc = LE_READ_8(key->rsc);
-		if (ic->ic_set_key != NULL &&
-		    (*ic->ic_set_key)(ic, ni, k) != 0)
-			return;
-	}
-
-	/* mark the PAE port as valid */
-	ni->ni_port_valid = 1;
+	/* update the last-seen value of the key replay counter field */
+	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
+	ni->ni_replaycnt_ok = 1;
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
@@ -2168,7 +2134,42 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* send message 4 to authenticator */
-	ieee80211_send_4way_msg4(ic, ni);
+	if (ieee80211_send_4way_msg4(ic, ni) != 0)
+		return;
+
+	/* check that key length matches that of pairwise cipher */
+	if (BE_READ_2(key->keylen) !=
+	    ieee80211_cipher_keylen(ni->ni_pairwise_cipher))
+		return;
+	/* install the PTK */
+	k = &ni->ni_pairwise_key;
+	ieee80211_map_ptk(&ni->ni_ptk, ni->ni_pairwise_cipher, k);
+	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
+		return;
+
+	if (gtk != NULL) {
+		u_int64_t rsc;
+		u_int8_t kid;
+
+		/* check that the GTK KDE is valid */
+		if (gtk[1] < 4 + 2)
+			return;
+		/* check that key length matches that of group cipher */
+		if (gtk[1] - 6 != ieee80211_cipher_keylen(ni->ni_group_cipher))
+			return;	/* XXX PTK already installed! */
+		/* install the GTK */
+		kid = gtk[6] & 3;
+		rsc = LE_READ_8(key->rsc);
+		k = &ic->ic_nw_keys[kid];
+		ieee80211_map_gtk(&gtk[8], ni->ni_group_cipher, kid,
+		    gtk[6] & (1 << 2), rsc, k);
+		if (ic->ic_set_key != NULL &&
+		    (*ic->ic_set_key)(ic, ni, k) != 0)
+			return;
+	}
+
+	/* mark the PAE port as valid */
+	ni->ni_port_valid = 1;
 }
 
 /*
@@ -2192,11 +2193,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 
 	/* install the PTK */
 	k = &ni->ni_pairwise_key;
-	memset(k, 0, sizeof(*k));
-	k->k_cipher = ni->ni_pairwise_cipher;
-	k->k_flags = IEEE80211_KEY_TX;
-	k->k_len = ieee80211_cipher_keylen(k->k_cipher);
-	memcpy(k->k_key, ni->ni_ptk.tk, k->k_len);
+	ieee80211_map_ptk(&ni->ni_ptk, ni->ni_pairwise_cipher, k);
 	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
@@ -2213,6 +2210,8 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
 		    ic->ic_if.if_xname, 4, 4, "4-way",
 		    ether_sprintf(ni->ni_macaddr));
+
+	/* XXX start a group key handshake w/ WPA1 */
 }
 
 /*
@@ -2226,6 +2225,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *gtk;
+	u_int64_t rsc;
 	u_int8_t kid;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
@@ -2262,24 +2262,17 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		return;
 
 	/* check that the GTK KDE is valid */
-	if (gtk[1] - 4 < 2)
+	if (gtk[1] < 4 + 2)
 		return;
-
+	/* check that key length matches that of group cipher */
+	if (gtk[1] - 6 != ieee80211_cipher_keylen(ni->ni_group_cipher))
+		return;
 	/* install the GTK */
 	kid = gtk[6] & 3;
+	rsc = LE_READ_8(key->rsc);
 	k = &ic->ic_nw_keys[kid];
-	memset(k, 0, sizeof(*k));
-	k->k_id = kid;
-	k->k_cipher = ni->ni_group_cipher;
-	k->k_flags = IEEE80211_KEY_GROUP;
-	if (gtk[6] & (1 << 2))	/* Tx bit */
-		k->k_flags |= IEEE80211_KEY_TX;
-	k->k_len = gtk[1] - 6;
-	/* check that key length matches group cipher */
-	if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
-		return;
-	memcpy(k->k_key, &gtk[8], k->k_len);
-	k->k_rsc = LE_READ_8(key->rsc);
+	ieee80211_map_gtk(&gtk[8], ni->ni_group_cipher, kid,
+	    gtk[6] & (1 << 2), rsc, k);
 	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 
@@ -2300,6 +2293,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	struct ieee80211_key *k;
+	u_int64_t rsc;
 	u_int16_t info;
 	u_int8_t kid;
 
@@ -2320,21 +2314,16 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 
 	info = BE_READ_2(key->info);
 
+	/* check that key length matches that of group cipher */
+	if (BE_READ_2(key->keylen) !=
+	    ieee80211_cipher_keylen(ni->ni_group_cipher))
+		return;
 	/* install the GTK */
 	kid = (info >> EAPOL_KEY_WPA_KID_SHIFT) & 3;
+	rsc = LE_READ_8(key->rsc);
 	k = &ic->ic_nw_keys[kid];
-	memset(k, 0, sizeof(*k));
-	k->k_id = kid;
-	k->k_cipher = ni->ni_group_cipher;
-	k->k_flags = IEEE80211_KEY_GROUP;
-	if (info & EAPOL_KEY_WPA_TX)
-		k->k_flags |= IEEE80211_KEY_TX;
-	k->k_len = BE_READ_2(key->keylen);
-	/* check that key length matches group cipher */
-	if (k->k_len != ieee80211_cipher_keylen(k->k_cipher))
-		return;
-	memcpy(k->k_key, (u_int8_t *)&key[1], k->k_len);
-	k->k_rsc = LE_READ_8(key->rsc);
+	ieee80211_map_gtk((u_int8_t *)&key[1], ni->ni_group_cipher, kid,
+	    info & EAPOL_KEY_WPA_TX, rsc, k);
 	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
 		return;
 

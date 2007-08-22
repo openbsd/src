@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.31 2007/08/03 16:51:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.32 2007/08/22 20:40:34 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -195,9 +195,6 @@ ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	return m0;
 }
 
-#define IEEE80211_CCMP_HDRLEN	8
-#define IEEE80211_CCMP_MICLEN	8
-
 struct mbuf *
 ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
@@ -272,10 +269,6 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 
 	return m0;
 }
-
-#define IEEE80211_TKIP_HDRLEN	8
-#define IEEE80211_TKIP_MICLEN	8
-#define IEEE80211_TKIP_ICVLEN	4
 
 struct mbuf *
 ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
@@ -1035,4 +1028,50 @@ ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
 	default:	/* unknown cipher */
 		return 0;
 	}
+}
+
+/*
+ * Map PTK to IEEE 802.11 key (see 8.6).
+ */
+void
+ieee80211_map_ptk(const struct ieee80211_ptk *ptk,
+    enum ieee80211_cipher cipher, struct ieee80211_key *k)
+{
+	memset(k, 0, sizeof(*k));
+	k->k_cipher = cipher;
+	k->k_flags = IEEE80211_KEY_TX;
+	k->k_len = ieee80211_cipher_keylen(cipher);
+	if (cipher == IEEE80211_CIPHER_TKIP) {
+		memcpy(k->k_key, ptk->tk, 16);
+		/* use bits 128-191 as the Michael key for AA->SPA */
+		memcpy(k->k_rxmic, &ptk->tk[16], 8);
+		/* use bits 192-255 as the Michael key for SPA->AA */
+		memcpy(k->k_rxmic, &ptk->tk[24], 8);
+	} else
+		memcpy(k->k_key, ptk->tk, k->k_len);
+}
+
+/*
+ * Map GTK to IEEE 802.11 key (see 8.6).
+ */
+void
+ieee80211_map_gtk(const u_int8_t *gtk, enum ieee80211_cipher cipher, int kid,
+    int txflag, u_int64_t rsc, struct ieee80211_key *k)
+{
+	memset(k, 0, sizeof(*k));
+	k->k_id = kid;
+	k->k_cipher = cipher;
+	k->k_flags = IEEE80211_KEY_GROUP;
+	if (txflag)
+		k->k_flags |= IEEE80211_KEY_TX;
+	k->k_len = ieee80211_cipher_keylen(cipher);
+	k->k_rsc = rsc;
+	if (cipher == IEEE80211_CIPHER_TKIP) {
+		memcpy(k->k_key, gtk, 16);
+		/* use bits 128-191 as the Michael key for AA->SPA */
+		memcpy(k->k_rxmic, &gtk[16], 8);
+		/* use bits 192-255 as the Michael key for SPA->AA */
+		memcpy(k->k_txmic, &gtk[24], 8);
+	} else
+		memcpy(k->k_key, gtk, k->k_len);
 }
