@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.49 2007/01/15 08:19:11 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.50 2007/08/22 21:04:30 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,6 +48,7 @@ volatile sig_atomic_t	 quit = 0;
 volatile sig_atomic_t	 reconfig = 0;
 volatile sig_atomic_t	 sigchld = 0;
 struct imsgbuf		*ibuf;
+int			 debugsyslog = 0;
 
 void
 sighdlr(int sig)
@@ -71,7 +72,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dSs] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-dSsv] [-f file]\n", __progname);
 	exit(1);
 }
 
@@ -95,7 +96,7 @@ main(int argc, char *argv[])
 	log_init(1);		/* log to stderr until daemonized */
 	res_init();		/* XXX */
 
-	while ((ch = getopt(argc, argv, "df:sS")) != -1) {
+	while ((ch = getopt(argc, argv, "df:sSv")) != -1) {
 		switch (ch) {
 		case 'd':
 			lconf.debug = 1;
@@ -108,6 +109,9 @@ main(int argc, char *argv[])
 			break;
 		case 'S':
 			lconf.settime = 0;
+			break;
+		case 'v':
+			debugsyslog = 1;
 			break;
 		default:
 			usage();

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.18 2007/05/31 19:20:26 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.19 2007/08/22 21:04:30 ckuethe Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 22 2007 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm ntpd
 .Bk -words
-.Op Fl dSs
+.Op Fl dSsv
 .Op Fl f Ar file
 .Ek
 .Sh DESCRIPTION
@@ -100,6 +100,10 @@ eliminating the need to run
 .Xr rdate 8
 before starting
 .Nm .
+.It Fl v
+This option allows
+.Nm
+to send DEBUG priority messages to syslog.
 .El
 .Sh FILES
 .Bl -tag -width "/var/db/ntpd.driftXXX" -compact
