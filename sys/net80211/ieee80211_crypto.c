@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.32 2007/08/22 20:40:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.33 2007/08/22 20:52:26 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -123,21 +123,20 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 	}
 }
 
-struct mbuf *
-ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
+struct ieee80211_key *
+ieee80211_get_txkey(struct ieee80211com *ic, const struct ieee80211_frame *wh,
     struct ieee80211_node *ni)
 {
-	struct ieee80211_frame *wh;
-	struct ieee80211_key *k;
-
-	/* select the key for encryption */
-	wh = mtod(m0, struct ieee80211_frame *);
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    ni->ni_pairwise_cipher == IEEE80211_CIPHER_USEGROUP)
-		k = &ic->ic_nw_keys[ic->ic_wep_txkey];
-	else
-		k = &ni->ni_pairwise_key;
+		return &ic->ic_nw_keys[ic->ic_wep_txkey];
+	return &ni->ni_pairwise_key;
+}
 
+struct mbuf *
+ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_key *k)
+{
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
 	case IEEE80211_CIPHER_WEP104:

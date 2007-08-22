@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.7 2007/08/22 20:40:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.8 2007/08/22 20:52:26 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -89,8 +89,10 @@ struct ieee80211_node;
 
 extern	void ieee80211_crypto_attach(struct ifnet *);
 extern	void ieee80211_crypto_detach(struct ifnet *);
+extern	struct ieee80211_key *ieee80211_get_txkey(struct ieee80211com *,
+	    const struct ieee80211_frame *, struct ieee80211_node *);
 extern	struct mbuf *ieee80211_encrypt(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *);
+	    struct ieee80211_key *);
 extern	struct mbuf *ieee80211_decrypt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *);
 extern	struct mbuf *ieee80211_wep_crypt(struct ifnet *, struct mbuf *, int);
