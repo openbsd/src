@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.5 2005/03/05 11:02:35 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.6 2007/08/22 15:50:05 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -65,7 +65,7 @@ sub scan_manpages($)
 	    	$subjects = OpenBSD::Makewhatis::Formated::handle($file, $_);
 	    }
 	} else {
-	    print STDERR "Can't find type of $_";
+	    print STDERR "Can't find type of $_\n";
 	    next;
 	}
 	if ($picky) {
