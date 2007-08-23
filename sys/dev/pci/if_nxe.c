@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.41 2007/08/23 11:41:10 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.42 2007/08/23 11:44:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1211,10 +1211,10 @@ nxe_lladdr(struct nxe_softc *sc)
 	DASSERT(sc->sc_window == 0);
 
 	nxe_crb_write(sc, NXE_0_XG_MAC_LO(sc->sc_port),
-	    (lladdr[0] << 24) | (lladdr[1] << 16));
+	    (lladdr[0] << 16) | (lladdr[1] << 24));
 	nxe_crb_write(sc, NXE_0_XG_MAC_HI(sc->sc_port),
-	    (lladdr[2] << 24) | (lladdr[3] << 16) |
-	    (lladdr[4] << 8)  | (lladdr[5] << 0));
+	    (lladdr[2] << 0)  | (lladdr[3] << 8) |
+	    (lladdr[4] << 16) | (lladdr[5] << 24));
 }
 
 void
