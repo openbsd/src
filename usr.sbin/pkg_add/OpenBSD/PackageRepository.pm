@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.48 2007/06/23 17:55:12 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.49 2007/08/23 09:09:49 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -121,7 +121,7 @@ sub close
 		waitpid($object->{pid2}, 0);
 		alarm(0);
 	}
-	$self->parse_problems($object->{errors}, $hint) 
+	$self->parse_problems($object->{errors}, $hint, $object) 
 	    if defined $object->{errors};
 	undef $object->{errors};
 	$object->deref;
@@ -184,7 +184,7 @@ sub grabPlist
 
 sub parse_problems
 {
-	my ($self, $filename, $hint) = @_;
+	my ($self, $filename, $hint, $object) = @_;
 	unlink $filename;
 }
 
@@ -528,10 +528,14 @@ sub grabPlist
 
 sub parse_problems
 {
-	my ($self, $filename, $hint) = @_;
+	my ($self, $filename, $hint, $object) = @_;
 	CORE::open(my $fh, '<', $filename) or return;
 
 	my $baseurl = $self->url;
+	my $url = $baseurl;
+	if (defined $object) {
+		$url = $object->url;
+	}
 	local $_;
 	my $notyet = 1;
 	while(<$fh>) {
@@ -554,7 +558,7 @@ sub parse_problems
 			next if m/^421\s+/o;
 		}
 		if ($notyet) {
-			print STDERR "Error from $baseurl:\n" if $notyet;
+			print STDERR "Error from $url:\n" if $notyet;
 			$notyet = 0;
 		}
 		if (m/^421\s+/o ||
@@ -568,7 +572,7 @@ sub parse_problems
 		print STDERR  $_;
 	}
 	CORE::close($fh);
-	$self->SUPER::parse_problems($filename, $hint);
+	$self->SUPER::parse_problems($filename, $hint, $object);
 }
 
 sub list
