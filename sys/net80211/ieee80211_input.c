@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.64 2007/08/22 20:40:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.65 2007/08/23 16:53:51 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -1034,13 +1034,13 @@ ieee80211_parse_rsn(struct ieee80211com *ic, struct ieee80211_node *ni,
     const u_int8_t *frm)
 {
 	/* check IE length */
-	if (frm[1] < 4) {
+	if (frm[1] < 2) {
 		IEEE80211_DPRINTF(("%s: invalid RSN/WPA2 IE;"
-		    " length %u, expecting at least 4\n", __func__, frm[1]));
+		    " length %u, expecting at least 2\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
 		return IEEE80211_REASON_IE_INVALID;
 	}
-	return ieee80211_parse_rsn_body(ic, ni, frm + 2, frm[1] - 2);
+	return ieee80211_parse_rsn_body(ic, ni, frm + 2, frm[1]);
 }
 
 int
@@ -1048,9 +1048,9 @@ ieee80211_parse_wpa1(struct ieee80211com *ic, struct ieee80211_node *ni,
     const u_int8_t *frm)
 {
 	/* check IE length */
-	if (frm[1] < 8) {
+	if (frm[1] < 6) {
 		IEEE80211_DPRINTF(("%s: invalid WPA1 IE;"
-		    " length %u, expecting at least 8\n", __func__, frm[1]));
+		    " length %u, expecting at least 6\n", __func__, frm[1]));
 		ic->ic_stats.is_rx_elem_toosmall++;
 		return IEEE80211_REASON_IE_INVALID;
 	}
@@ -2009,8 +2009,11 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 		}
 		frm += 2 + frm[1];
 	}
-	if (rsn == NULL)
+	if (rsn == NULL) {
+		/* no RSN/WPA IE, must be message 4 of the 4-Way Handshake */
+		ieee80211_recv_4way_msg4(ic, key, ni);
 		return;
+	}
 
 	/*
 	 * The RSN IE must match bit-wise with what the STA included in its
@@ -2182,12 +2185,10 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 {
 	struct ieee80211_key *k;
 
-	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
-	    ic->ic_opmode != IEEE80211_M_IBSS)
-		return;
-
-	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt)
-		return;
+	/*
+	 * ic->ic_opmode and key->replaycnt have already been validated by
+	 * ieee80211_recv_4way_msg2() from where we're called.
+	 */
 
 	/* empty key data field */
 
@@ -2497,13 +2498,10 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 	} else if (info & EAPOL_KEY_PAIRWISE) {
 		/* 4-Way Handshake */
 		if (info & EAPOL_KEY_KEYMIC) {
-			if (!(info & EAPOL_KEY_KEYACK)) {
-				if (info & EAPOL_KEY_SECURE)
-					ieee80211_recv_4way_msg4(ic, key, ni);
-				else
-					ieee80211_recv_4way_msg2(ic, key, ni);
-			} else
+			if (info & EAPOL_KEY_KEYACK)
 				ieee80211_recv_4way_msg3(ic, key, ni);
+			else
+				ieee80211_recv_4way_msg2(ic, key, ni);
 		} else
 			ieee80211_recv_4way_msg1(ic, key, ni);
 	} else {
