@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.35 2007/01/11 21:58:05 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.36 2007/08/23 19:13:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -57,10 +57,6 @@
 /* gecko optional graphics (these share the onboard's prom) */
 char sti_sgc_opt[] = { 0x17, 0x20, 0x30, 0x40, 0x70, 0xc0, 0xd0 };
 
-/* internal EG */
-#define	STI_INEG_REV	0x60
-#define	STI_INEG_PROM	0xf0011000
-
 extern struct cfdriver sti_cd;
 
 int	sti_sgc_probe(struct device *, void *, void *);
@@ -92,10 +88,8 @@ sti_sgc_getrom(int unit, struct confargs *ca)
 	}
 
 	if (rom < HPPA_IOBEGIN) {
-		if (unit == 0 &&
-		    ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
-		    ca->ca_type.iodc_revision == STI_INEG_REV)
-			rom = STI_INEG_PROM;
+		if (ca->ca_naddrs > 0)
+			rom = ca->ca_addrs[0].addr;
 		else
 			rom = ca->ca_hpa;
 	}
