@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.65 2007/08/23 16:53:51 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.66 2007/08/23 16:59:32 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -114,6 +114,31 @@ void	ieee80211_recv_group_msg2(struct ieee80211com *,
 	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_eapol_key_req(struct ieee80211com *,
 	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+
+/*
+ * Retrieve the length in bytes of a 802.11 header.
+ */
+u_int
+ieee80211_get_hdrlen(const void *data)
+{
+	const u_int8_t *fc = data;
+	u_int size = sizeof(struct ieee80211_frame);
+
+	/* NB: doesn't work with control frames */
+	KASSERT((fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL);
+
+	if ((fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
+		size += IEEE80211_ADDR_LEN;		/* i_addr4 */
+	if ((fc[0] & (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS)) {
+		size += sizeof(u_int16_t);		/* i_qos */
+		if (fc[1] & IEEE80211_FC1_ORDER)
+			size += sizeof(u_int32_t);	/* i_ht */
+	} else if ((fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	     IEEE80211_FC0_TYPE_MGT && (fc[1] & IEEE80211_FC1_ORDER))
+		size += sizeof(u_int32_t);		/* i_ht */
+	return size;
+}
 
 /*
  * Process a received frame.  The node associated with the sender
