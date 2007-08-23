@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.42 2007/08/23 11:44:49 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.43 2007/08/23 11:57:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1932,12 +1932,16 @@ int
 nxe_crb_set(struct nxe_softc *sc, int window)
 {
 	int			oldwindow = sc->sc_window;
+	u_int32_t		r;
 
 	if (sc->sc_window != window) {
 		sc->sc_window = window;
 
-		nxe_write(sc, NXE_WIN_CRB(sc->sc_function),
-		    window ? NXE_WIN_CRB_1 : NXE_WIN_CRB_0);
+		r = window ? NXE_WIN_CRB_1 : NXE_WIN_CRB_0;
+		nxe_write(sc, NXE_WIN_CRB(sc->sc_function), r);
+
+		if (nxe_read(sc, NXE_WIN_CRB(sc->sc_function)) != r)
+			printf("%s: crb window hasnt moved\n");
 	}
 
 	return (oldwindow);
