@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.8 2007/08/22 20:52:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.9 2007/08/23 16:50:30 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.h,v 1.2 2003/09/14 01:14:55 dyoung Exp $	*/
 
 /*-
@@ -82,6 +82,14 @@ struct ieee80211_key {
 	u_int8_t		k_rxmic[IEEE80211_TKIP_MICLEN];
 	u_int8_t		k_txmic[IEEE80211_TKIP_MICLEN];
 };
+
+/* pseudo-header used for TKIP MIC computation */
+struct ieee80211_tkip_frame {
+	u_int8_t	i_da[IEEE80211_ADDR_LEN];
+	u_int8_t	i_sa[IEEE80211_ADDR_LEN];
+	u_int8_t	i_pri;
+	u_int8_t	i_pad[3];
+} __packed;
 
 /* forward references */
 struct ieee80211com;
