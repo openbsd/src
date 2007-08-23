@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.110 2007/08/15 09:06:54 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.111 2007/08/23 21:03:21 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -226,6 +226,7 @@ ie0	at gsc0 irq 8		# 82C596DX/CA ether
 #ie*	at isa? port 0x300 irq 10
 #ie*	at pci?
 #tms*	at gsc? irq 10		# TMS380C26 Network Controller
+#siop*	at gsc? irq 3		# NCR 53C720 (Fast-Wide HVD)
 osiop*	at gsc? irq 9		# NCR 53C710 (Narrow SE)
 #osiop* at eisa?
 scsibus* at osiop?
@@ -250,7 +251,7 @@ scsibus* at mpi?
 #bha*	at pci?
 #scsibus* at bha?
 
-siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide HVD)
+siop*	at mainbus? irq 3	# NCR 53C720 (Fast-Wide HVD)
 siop*	at phantomas? irq 3
 siop*	at uturn? irq 3
 siop*	at pci?			# NCR 53C8XX SCSI controllers
