@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.40 2007/08/15 10:24:54 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.41 2007/08/23 11:41:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -84,8 +84,8 @@ int nxedebug = 0;
 
 #define NXE_DB			0x00000000
 #define  NXE_DB_PEGID			0x00000003
-#define  NXE_DB_PEGID_RX		0x00000001 /* rx unit */
-#define  NXE_DB_PEGID_TX		0x00000002 /* tx unit */
+#define  NXE_DB_PEGID_TX		0x00000001 /* rx unit */
+#define  NXE_DB_PEGID_RX		0x00000002 /* tx unit */
 #define  NXE_DB_PRIVID			0x00000004 /* must be set */
 #define  NXE_DB_COUNT(_c)		((_c)<<3) /* count */
 #define  NXE_DB_CTXID(_c)		((_c)<<18) /* context id */
@@ -201,6 +201,7 @@ int nxedebug = 0;
 #define  NXE_0_NIU_MODE_XGE		(1<<2) /* XGE interface enabled */
 #define  NXE_0_NIU_MODE_GBE		(1<<1) /* 4 GbE interfaces enabled */
 #define NXE_0_NIU_SINGLE_TERM	0x00600004
+#define NXE_0_NIU_INT_MASK	0x00600040
 
 #define NXE_0_NIU_RESET_XG	0x0060001c /* reset XG */
 #define NXE_0_NIU_RESET_FIFO	0x00600088 /* reset sys fifos */
@@ -229,8 +230,26 @@ int nxedebug = 0;
 #define  NXE_0_XG_CFG1_SEQ_ERR_EN	(1<<10) /* enable seq err detection */
 #define  NXE_0_XG_CFG1_MULTICAST	(1<<12) /* accept all multicast */
 #define  NXE_0_XG_CFG1_PROMISC		(1<<13) /* accept all multicast */
+#define NXE_0_XG_IPG(_p)	(0x00670008 + _P(_p))
 #define NXE_0_XG_MAC_LO(_p)	(0x00670010 + _P(_p))
 #define NXE_0_XG_MAC_HI(_p)	(0x0067000c + _P(_p))
+#define NXE_0_XG_STATUS(_p)	(0x00670018 + _P(_p))
+#define NXE_0_XG_MTU(_p)	(0x0067001c + _P(_p))
+#define NXE_0_XG_PAUSE_FRM(_p)	(0x00670020 + _P(_p))
+#define NXE_0_XG_TX_BYTES(_p)	(0x00670024 + _P(_p))
+#define NXE_0_XG_TX_PKTS(_p)	(0x00670028 + _P(_p))
+#define NXE_0_XG_RX_BYTES(_p)	(0x0067002c + _P(_p))
+#define NXE_0_XG_RX_PKTS(_p)	(0x00670030 + _P(_p))
+#define NXE_0_XG_AGGR_ERRS(_p)	(0x00670034 + _P(_p))
+#define NXE_0_XG_MCAST_PKTS(_p)	(0x00670038 + _P(_p))
+#define NXE_0_XG_UCAST_PKTS(_p)	(0x0067003c + _P(_p))
+#define NXE_0_XG_CRC_ERRS(_p)	(0x00670040 + _P(_p))
+#define NXE_0_XG_OVERSIZE(_p)	(0x00670044 + _P(_p))
+#define NXE_0_XG_UNDERSIZE(_p)	(0x00670048 + _P(_p))
+#define NXE_0_XG_LOCAL_ERRS(_p)	(0x0067004c + _P(_p))
+#define NXE_0_XG_REMOTE_ERRS(_p) (0x00670050 + _P(_p))
+#define NXE_0_XG_CNTL_CHARS(_p)	(0x00670054 + _P(_p))
+#define NXE_0_XG_PAUSE_PKTS(_p)	(0x00670058 + _P(_p))
 
 /*
  * Software Defined Registers
@@ -270,7 +289,7 @@ static const u_int32_t nxe_regmap[][4] = {
     { 0x002023c0, 0x002023c4, 0x002023c8, 0x002023cc },
 
 #define NXE_1_SW_INT_MASK(_p)		(nxe_regmap[5][(_p)])
-    { 0x002023d8, 0x082023e0, 0x082023e4, 0x082023e8 },
+    { 0x002023d8, 0x002023e0, 0x002023e4, 0x002023e8 },
 
 #define NXE_1_SW_RX_PRODUCER(_c)	(nxe_regmap[6][(_c)])
     { 0x00202300, 0x00202344, 0x002023d8, 0x0020242c },
@@ -332,10 +351,12 @@ static const u_int32_t nxe_regmap[][4] = {
 #define  NXE_1_SW_MPORT_MODE_SINGLE	0x1111
 #define  NXE_1_SW_MPORT_MODE_MULTI	0x2222
 
-#define NXE_1_SW_NIC_CAP_HOST	0x002023a8 /* host capabilities */
-#define  NXE_1_SW_NIC_CAP_HOST_DEF	0x1 /* nfi */
+#define NXE_1_SW_INT_VECTOR	0x002022d4
 
-#define  NXE_1_SW_DRIVER_VER	0x002024a0 /* host driver version */
+#define NXE_1_SW_NIC_CAP_HOST	0x002023a8 /* host capabilities */
+#define NXE_1_SW_NIC_CAP_FW	0x002023dc /* firmware capabilities */
+#define  NXE_1_SW_NIC_CAP_PORTINTR	0x1 /* per port interrupts */
+#define NXE_1_SW_DRIVER_VER	0x002024a0 /* host driver version */
 
 
 #define NXE_1_SW_TEMP		0x002023b4 /* Temperature sensor */
@@ -1170,7 +1191,7 @@ nxe_up_fw(struct nxe_softc *sc)
 	if (r != NXE_1_SW_CMDPEG_STATE_DONE)
 		return (1);
 
-	nxe_crb_write(sc, NXE_1_SW_NIC_CAP_HOST, NXE_1_SW_NIC_CAP_HOST_DEF);
+	nxe_crb_write(sc, NXE_1_SW_NIC_CAP_HOST, NXE_1_SW_NIC_CAP_PORTINTR);
 	nxe_crb_write(sc, NXE_1_SW_MPORT_MODE, NXE_1_SW_MPORT_MODE_MULTI);
 	nxe_crb_write(sc, NXE_1_SW_CMDPEG_STATE, NXE_1_SW_CMDPEG_STATE_ACK);
 
@@ -1622,7 +1643,7 @@ nxe_mountroot(void *arg)
 	if (sc->sc_port == 0x55555555)
 		sc->sc_port = sc->sc_function;
 
-	nxe_crb_write(sc, NXE_1_SW_NIC_CAP_HOST, NXE_1_SW_NIC_CAP_HOST_DEF);
+	nxe_crb_write(sc, NXE_1_SW_NIC_CAP_HOST, NXE_1_SW_NIC_CAP_PORTINTR);
 	nxe_crb_write(sc, NXE_1_SW_MPORT_MODE, NXE_1_SW_MPORT_MODE_MULTI);
 	nxe_crb_write(sc, NXE_1_SW_CMDPEG_STATE, NXE_1_SW_CMDPEG_STATE_ACK);
 
