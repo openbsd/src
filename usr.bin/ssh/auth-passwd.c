@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-passwd.c,v 1.41 2007/08/23 02:49:43 djm Exp $ */
+/* $OpenBSD: auth-passwd.c,v 1.42 2007/08/23 02:55:51 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,6 +38,7 @@
 
 #include <sys/types.h>
 
+#include <login_cap.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
@@ -57,7 +58,6 @@ extern ServerOptions options;
 int sys_auth_passwd(Authctxt *, const char *);
 
 extern login_cap_t *lc;
-
 
 #define DAY		(24L * 60 * 60) /* 1 day in seconds */
 #define TWO_WEEKS	(2L * 7 * DAY)	/* 2 weeks in seconds */

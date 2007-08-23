@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.c,v 1.76 2007/08/23 02:49:43 djm Exp $ */
+/* $OpenBSD: auth.c,v 1.77 2007/08/23 02:55:51 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -29,6 +29,7 @@
 
 #include <errno.h>
 #include <libgen.h>
+#include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdarg.h>
