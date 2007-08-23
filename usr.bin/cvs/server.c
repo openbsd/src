@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.65 2007/07/03 13:22:43 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.66 2007/08/23 13:17:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -448,6 +448,18 @@ cvs_server_argument(char *data)
 void
 cvs_server_argumentx(char *data)
 {
+	int idx;
+	size_t len;
+
+	if (server_argc < 0)
+		fatal("Protocol Error: ArgumentX without previous argument");
+
+	idx = server_argc - 1;
+
+	len = strlen(server_argv[idx]) + strlen(data) + 2;
+	server_argv[idx] = xrealloc(server_argv[idx], len, sizeof(char));
+	strlcat(server_argv[idx], "\n", len);
+	strlcat(server_argv[idx], data, len);
 }
 
 void
