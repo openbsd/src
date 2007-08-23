@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.44 2007/08/23 12:10:38 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.45 2007/08/23 13:31:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1152,6 +1152,8 @@ nxe_up(struct nxe_softc *sc)
 	    NXE_1_SW_CONTEXT_SIG(sc->sc_port));
 
 	nxe_crb_set(sc, 0);
+	nxe_crb_write(sc, NXE_0_XG_MTU(sc->sc_function),
+	    MCLBYTES - ETHER_ALIGN);
 	nxe_lladdr(sc);
 	nxe_iff(sc);
 	nxe_crb_set(sc, 1);
