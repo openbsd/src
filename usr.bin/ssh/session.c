@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.221 2007/01/21 01:41:54 stevesk Exp $ */
+/* $OpenBSD: session.c,v 1.222 2007/08/23 02:49:43 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -120,9 +120,7 @@ const char *original_command = NULL;
 #define MAX_SESSIONS 10
 Session	sessions[MAX_SESSIONS];
 
-#ifdef HAVE_LOGIN_CAP
 login_cap_t *lc;
-#endif
 
 static int is_child = 0;
 
@@ -625,12 +623,8 @@ do_motd(void)
 	char buf[256];
 
 	if (options.print_motd) {
-#ifdef HAVE_LOGIN_CAP
 		f = fopen(login_getcapstr(lc, "welcome", "/etc/motd",
 		    "/etc/motd"), "r");
-#else
-		f = fopen("/etc/motd", "r");
-#endif
 		if (f) {
 			while (fgets(buf, sizeof(buf), f))
 				fputs(buf, stdout);
@@ -654,13 +648,8 @@ check_quietlogin(Session *s, const char *command)
 	if (command != NULL)
 		return 1;
 	snprintf(buf, sizeof(buf), "%.200s/.hushlogin", pw->pw_dir);
-#ifdef HAVE_LOGIN_CAP
 	if (login_getcapbool(lc, "hushlogin", 0) || stat(buf, &st) >= 0)
 		return 1;
-#else
-	if (stat(buf, &st) >= 0)
-		return 1;
-#endif
 	return 0;
 }
 
@@ -782,14 +771,10 @@ do_setup_env(Session *s, const char *shell)
 		child_set_env(&env, &envsize, "USER", pw->pw_name);
 		child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
 		child_set_env(&env, &envsize, "HOME", pw->pw_dir);
-#ifdef HAVE_LOGIN_CAP
 		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETPATH) < 0)
 			child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
 		else
 			child_set_env(&env, &envsize, "PATH", getenv("PATH"));
-#else
-		child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
-#endif
 
 		snprintf(buf, sizeof buf, "%.200s/%.50s",
 			 _PATH_MAILDIR, pw->pw_name);
@@ -940,14 +925,9 @@ do_nologin(struct passwd *pw)
 	FILE *f = NULL;
 	char buf[1024];
 
-#ifdef HAVE_LOGIN_CAP
 	if (!login_getcapbool(lc, "ignorenologin", 0) && pw->pw_uid)
 		f = fopen(login_getcapstr(lc, "nologin", _PATH_NOLOGIN,
 		    _PATH_NOLOGIN), "r");
-#else
-	if (pw->pw_uid)
-		f = fopen(_PATH_NOLOGIN, "r");
-#endif
 	if (f) {
 		/* /etc/nologin exists.  Print its contents and exit. */
 		logit("User %.100s not allowed because %s exists",
@@ -964,29 +944,11 @@ void
 do_setusercontext(struct passwd *pw)
 {
 	if (getuid() == 0 || geteuid() == 0) {
-#ifdef HAVE_LOGIN_CAP
 		if (setusercontext(lc, pw, pw->pw_uid,
 		    (LOGIN_SETALL & ~LOGIN_SETPATH)) < 0) {
 			perror("unable to set user context");
 			exit(1);
 		}
-#else
-		if (setlogin(pw->pw_name) < 0)
-			error("setlogin failed: %s", strerror(errno));
-		if (setgid(pw->pw_gid) < 0) {
-			perror("setgid");
-			exit(1);
-		}
-		/* Initialize the group list. */
-		if (initgroups(pw->pw_name, pw->pw_gid) < 0) {
-			perror("initgroups");
-			exit(1);
-		}
-		endgrent();
-
-		/* Permanently switch to the desired uid. */
-		permanently_set_uid(pw);
-#endif
 	}
 	if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
 		fatal("Failed to set uids to %u.", (u_int) pw->pw_uid);
@@ -1107,9 +1069,7 @@ do_child(Session *s, const char *command)
 	 */
 	env = do_setup_env(s, shell);
 
-#ifdef HAVE_LOGIN_CAP
 	shell = login_getcapstr(lc, "shell", (char *)shell, (char *)shell);
-#endif
 
 	/* we have to stash the hostname before we close our socket. */
 	if (options.use_login)
@@ -1160,10 +1120,8 @@ do_child(Session *s, const char *command)
 	if (chdir(pw->pw_dir) < 0) {
 		fprintf(stderr, "Could not chdir to home directory %s: %s\n",
 		    pw->pw_dir, strerror(errno));
-#ifdef HAVE_LOGIN_CAP
 		if (login_getcapbool(lc, "requirehome", 0))
 			exit(1);
-#endif
 	}
 
 	if (!options.use_login)

@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-passwd.c,v 1.40 2006/08/03 03:34:41 deraadt Exp $ */
+/* $OpenBSD: auth-passwd.c,v 1.41 2007/08/23 02:49:43 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -56,9 +56,7 @@ extern Buffer loginmsg;
 extern ServerOptions options;
 int sys_auth_passwd(Authctxt *, const char *);
 
-#ifdef HAVE_LOGIN_CAP
 extern login_cap_t *lc;
-#endif
 
 
 #define DAY		(24L * 60 * 60) /* 1 day in seconds */
@@ -108,14 +106,12 @@ warn_expiry(Authctxt *authctxt, auth_session_t *as)
 
 	pwtimeleft = auth_check_change(as);
 	actimeleft = auth_check_expire(as);
-#ifdef HAVE_LOGIN_CAP
 	if (authctxt->valid) {
 		pwwarntime = login_getcaptime(lc, "password-warn", TWO_WEEKS,
 		    TWO_WEEKS);
 		acwarntime = login_getcaptime(lc, "expire-warn", TWO_WEEKS,
 		    TWO_WEEKS);
 	}
-#endif
 	if (pwtimeleft != 0 && pwtimeleft < pwwarntime) {
 		daysleft = pwtimeleft / DAY + 1;
 		snprintf(buf, sizeof(buf),
