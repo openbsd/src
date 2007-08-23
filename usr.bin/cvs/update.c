@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.105 2007/07/05 23:03:32 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.106 2007/08/23 13:11:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -40,7 +40,7 @@ struct cvs_cmd cvs_cmd_update = {
 	"Bring work tree in sync with repository",
 	"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k mode] "
 	"[-t id] ...",
-	"ACD:dfI:j:k:lPpQqRr:t:",
+	"ACD:dfI:j:k:lPpQqRr:t:u",
 	NULL,
 	cvs_update
 };
@@ -92,6 +92,8 @@ cvs_update(int argc, char **argv)
 			break;
 		case 'r':
 			cvs_specified_tag = optarg;
+			break;
+		case 'u':
 			break;
 		default:
 			fatal("%s", cvs_cmd_update.cmd_synopsis);
