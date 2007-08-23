@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.45 2007/08/23 13:31:39 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.46 2007/08/23 13:52:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -650,7 +650,7 @@ struct nxe_dmamem {
 #define NXE_DMA_KVA(_ndm)	((void *)(_ndm)->ndm_kva)
 
 struct nxe_pkt {
-	u_int16_t		pkt_id;
+	int			pkt_id;
 	bus_dmamap_t		pkt_dmap;
 	struct mbuf		*pkt_m;
 	TAILQ_ENTRY(nxe_pkt)	pkt_link;
@@ -712,6 +712,7 @@ struct nxe_softc {
 
 	struct nxe_dmamem	*sc_ctx;
 	u_int32_t		*sc_cmd_consumer;
+	u_int32_t		sc_cmd_consumer_cur;
 
 	struct nxe_ring		*sc_cmd_ring;
 	struct nxe_ring		*sc_rx_rings[NXE_NRING];
@@ -760,6 +761,7 @@ void			nxe_link_state(struct nxe_softc *);
 /* interface operations */
 int			nxe_ioctl(struct ifnet *, u_long, caddr_t);
 void			nxe_start(struct ifnet *);
+int			nxe_complete(struct nxe_softc *);
 void			nxe_watchdog(struct ifnet *);
 
 void			nxe_up(struct nxe_softc *);
@@ -1101,6 +1103,7 @@ nxe_up(struct nxe_softc *sc)
 	ctx->ctx_id = htole32(sc->sc_function);
 
 	sc->sc_cmd_consumer = &dmamem->cmd_consumer;
+	sc->sc_cmd_consumer_cur = 0;
 
 	/* allocate the cmd/tx ring */
 	sc->sc_cmd_ring = nxe_ring_alloc(sc,
@@ -1287,7 +1290,7 @@ nxe_start(struct ifnet *ifp)
 	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
-	if (nxe_ring_writeable(nr, 0 /* XXX */) < NXE_TXD_DESCS) {
+	if (nxe_ring_writeable(nr, sc->sc_cmd_consumer_cur) < NXE_TXD_DESCS) {
 		SET(ifp->if_flags, IFF_OACTIVE);
 		return;
 	}
@@ -1327,7 +1330,6 @@ nxe_start(struct ifnet *ifp)
 		txd->tx_flags = htole16(NXE_TXD_F_OPCODE_TX);
 		txd->tx_nbufs = dmap->dm_nsegs;
 		txd->tx_length = htole16(dmap->dm_mapsize);
-		txd->tx_id = pkt->pkt_id;
 		txd->tx_port = sc->sc_port;
 
 		segs = dmap->dm_segs;
@@ -1356,6 +1358,8 @@ nxe_start(struct ifnet *ifp)
 			nsegs -= NXE_TXD_SEGS;
 			segs += NXE_TXD_SEGS;
 
+			pkt->pkt_id = nr->nr_slot;
+
 			txd = nxe_ring_next(sc, nr);
 			bzero(txd, sizeof(struct nxe_tx_desc));
 		} while (nsegs > 0);
@@ -1368,6 +1372,52 @@ nxe_start(struct ifnet *ifp)
 
 	nxe_ring_sync(sc, nr, BUS_DMASYNC_PREWRITE);
 	nxe_crb_write(sc, NXE_1_SW_CMD_PRODUCER(sc->sc_function), nr->nr_slot);
+}
+
+int
+nxe_complete(struct nxe_softc *sc)
+{
+	struct nxe_pkt			*pkt;
+	int				new_cons, cur_cons;
+	int				rv = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_ctx),
+	    0, NXE_DMA_LEN(sc->sc_ctx),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	new_cons = letoh32(*sc->sc_cmd_consumer);
+	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_ctx),
+	    0, NXE_DMA_LEN(sc->sc_ctx),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	cur_cons = sc->sc_cmd_consumer_cur;
+	pkt = nxe_pkt_used(sc->sc_tx_pkts);
+
+	while (pkt != NULL && cur_cons != new_cons) {
+		if (pkt->pkt_id == cur_cons) {
+			bus_dmamap_sync(sc->sc_dmat, pkt->pkt_dmap,
+			    0, pkt->pkt_dmap->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			    bus_dmamap_unload(sc->sc_dmat, pkt->pkt_dmap);
+
+			m_freem(pkt->pkt_m);
+
+			nxe_pkt_put(sc->sc_tx_pkts, pkt);
+
+			pkt = nxe_pkt_used(sc->sc_tx_pkts);
+		}
+
+		cur_cons++;
+		cur_cons %= sc->sc_cmd_ring->nr_nentries;
+
+		rv = 1;
+	}
+
+	if (rv == 1) {
+		sc->sc_cmd_consumer_cur = cur_cons;
+		CLR(sc->sc_ac.ac_if.if_flags, IFF_OACTIVE);
+	}
+
+	return (rv);
 }
 
 struct mbuf *
