@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.43 2007/08/23 11:57:47 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.44 2007/08/23 12:10:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -808,6 +808,8 @@ u_int32_t		nxe_read(struct nxe_softc *, bus_size_t);
 void			nxe_write(struct nxe_softc *, bus_size_t, u_int32_t);
 int			nxe_wait(struct nxe_softc *, bus_size_t, u_int32_t,
 			    u_int32_t, u_int);
+
+void			nxe_doorbell(struct nxe_softc *, u_int32_t);
 
 int			nxe_crb_set(struct nxe_softc *, int);
 u_int32_t		nxe_crb_read(struct nxe_softc *, bus_size_t);
@@ -1926,6 +1928,14 @@ nxe_wait(struct nxe_softc *sc, bus_size_t r, u_int32_t m, u_int32_t v,
 	}
 
 	return (1);
+}
+
+void
+nxe_doorbell(struct nxe_softc *sc, u_int32_t v)
+{
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, NXE_DB, v);
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, NXE_DB, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 int
