@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.30 2007/06/04 20:48:23 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.31 2007/08/23 09:09:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -101,7 +101,7 @@ sub rebuildp
 	if ($p == -1) {
 		return $pkg;
 	}
-	if ($pkg =~ m/^(.*?)(\-\d[^-]*)(.*)$/o) {
+	if ($pkg =~ m/^(.*?)(\-\d[^-v]*)(.*)$/o) {
 		return "$1$2p$p$3";
 	} else {
 		return $pkg."p".$p;
