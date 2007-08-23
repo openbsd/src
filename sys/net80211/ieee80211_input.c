@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.66 2007/08/23 16:59:32 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.67 2007/08/23 18:44:00 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -81,6 +81,7 @@ int	ieee80211_parse_rsn(struct ieee80211com *, struct ieee80211_node *,
 	    const u_int8_t *);
 int	ieee80211_parse_wpa1(struct ieee80211com *, struct ieee80211_node *,
 	    const u_int8_t *);
+int	ieee80211_save_ie(const u_int8_t *, u_int8_t **);
 void	ieee80211_recv_pspoll(struct ieee80211com *, struct mbuf *, int,
 	    u_int32_t);
 int	ieee80211_do_slow_print(struct ieee80211com *, int *);
@@ -1080,6 +1081,23 @@ ieee80211_parse_wpa1(struct ieee80211com *ic, struct ieee80211_node *ni,
 		return IEEE80211_REASON_IE_INVALID;
 	}
 	return ieee80211_parse_rsn_body(ic, ni, frm + 6, frm[1] - 4);
+}
+
+/*
+ * Create a copy of an information element.
+ */
+int
+ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
+{
+	if (*ie == NULL || (*ie)[1] != frm[1]) {
+		if (*ie != NULL)
+			FREE(*ie, M_DEVBUF);
+		MALLOC(*ie, u_int8_t *, 2 + frm[1], M_DEVBUF, M_NOWAIT);
+		if (*ie == NULL)
+			return ENOMEM;
+	}
+	memcpy(*ie, frm, 2 + frm[1]);
+	return 0;
 }
 
 /*-
