@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.33 2007/08/22 20:52:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.34 2007/08/23 16:49:57 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -1045,7 +1045,7 @@ ieee80211_map_ptk(const struct ieee80211_ptk *ptk,
 		/* use bits 128-191 as the Michael key for AA->SPA */
 		memcpy(k->k_rxmic, &ptk->tk[16], 8);
 		/* use bits 192-255 as the Michael key for SPA->AA */
-		memcpy(k->k_rxmic, &ptk->tk[24], 8);
+		memcpy(k->k_txmic, &ptk->tk[24], 8);
 	} else
 		memcpy(k->k_key, ptk->tk, k->k_len);
 }
