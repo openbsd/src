@@ -164,6 +164,8 @@
 
       <li><a href="#rlimitnproc">RLimitNPROC</a></li>
 
+      <li><a href="#rlimitnofile">RLimitNOFILE</a></li>
+
       <li><a href="#satisfy">Satisfy</a></li>
 
       <li><a href="#scoreboardfile">ScoreBoardFile</a></li>
@@ -3382,6 +3384,47 @@ Syntax OK
 
     <p>See also <a href="#rlimitmem">RLimitMEM</a> or <a
     href="#rlimitcpu">RLimitCPU</a>.</p>
+    <hr />
+
+    <h2><a id="rlimitnofile" name="rlimitnofile">RLimitNOFILE
+    directive</a></h2>
+
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> RLimitNOFILE
+    <em>number</em>|max [<em>number</em>|max]<br />
+     <a href="directive-dict.html#Default"
+    rel="Help"><strong>Default:</strong></a> <em>Unset; uses
+    operating system defaults</em> <br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual
+    host<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> core<br />
+     <a href="directive-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a> RLimitNOFILE is
+    only available in Apache 1.2 and later 
+
+    <p>Takes 1 or 2 parameters. The first parameter sets the soft
+    resource limit for all processes and the second parameter sets
+    the maximum resource limit. Either parameter can be a number,
+    or <code>max</code> to indicate to the server that the limit
+    should be set to the maximum allowed by the operating system
+    configuration. Raising the maximum resource limit requires that
+    the server is running as root, or in the initial startup
+    phase.</p>
+
+    <p>This applies to processes forked off from Apache children
+    servicing requests, not the Apache children themselves. This
+    includes CGI scripts and SSI exec commands, but not any
+    processes forked off from the Apache parent such as piped
+    logs.</p>
+
+    <p>Process limits control the number of open files per user.</p>
+
+    <p>Note: If CGI processes are <strong>not</strong> running
+    under userids other than the web server userid, this directive
+    will limit the number of files that the server itself can
+    open.</p>
     <hr />
 
     <h2><a id="satisfy" name="satisfy">Satisfy directive</a></h2>

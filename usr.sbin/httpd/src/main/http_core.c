@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.21 2006/02/22 15:07:12 henning Exp $ */
+/* $OpenBSD: http_core.c,v 1.22 2007/08/24 11:31:29 mbalmer Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -136,6 +136,7 @@ static void *create_core_dir_config(pool *a, char *dir)
     conf->limit_cpu = NULL;
     conf->limit_mem = NULL;
     conf->limit_nproc = NULL;
+    conf->limit_nofile = NULL;
 
     conf->limit_req_body = 0;
     conf->sec = ap_make_array(a, 2, sizeof(void *));
@@ -255,6 +256,9 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
     }
     if (new->limit_nproc) {
         conf->limit_nproc = new->limit_nproc;
+    }
+    if (new->limit_nofile) {
+        conf->limit_nofile = new->limit_nofile;
     }
 
     if (new->limit_req_body) {
@@ -2367,6 +2371,13 @@ static const char *set_limit_nproc(cmd_parms *cmd, core_dir_config *conf,
     return NULL;
 }
 
+static const char *set_limit_nofile(cmd_parms *cmd, core_dir_config *conf,  
+				   char *arg, char * arg2)
+{
+    set_rlimit(cmd, &conf->limit_nofile, arg, arg2, RLIMIT_NOFILE);
+    return NULL;
+}
+
 static const char *set_bind_address(cmd_parms *cmd, void *dummy, char *arg) 
 {
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -3182,6 +3193,9 @@ static const command_rec core_cmds[] = {
 { "RLimitNPROC",
   set_limit_nproc, (void*)XtOffsetOf(core_dir_config, limit_nproc),
    OR_ALL, TAKE12, "soft/hard limits for max number of processes per uid" },
+{ "RLimitNOFILE",
+  set_limit_nofile, (void*)XtOffsetOf(core_dir_config, limit_nofile),
+   OR_ALL, TAKE12, "soft/hard limits for max number of files per process" },
 { "BindAddress", set_bind_address, NULL, RSRC_CONF, TAKE1,
   "'*', a numeric IP address, or the name of a host with a unique IP address"},
 { "Listen", set_listener, NULL, RSRC_CONF, TAKE1,

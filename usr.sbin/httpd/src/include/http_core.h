@@ -280,6 +280,7 @@ typedef struct {
     struct rlimit *limit_cpu;
     struct rlimit *limit_mem;
     struct rlimit *limit_nproc;
+    struct rlimit *limit_nofile;
     unsigned long limit_req_body;  /* limit on bytes in request msg body */
 
     /* logging options */
