@@ -41,9 +41,11 @@ AUTOLOAD {
 	if (defined($filename = $INC{"$pkg.pm"})) {
 	    if ($is_macos) {
 		$pkg =~ tr#/#:#;
-		$filename =~ s#^(.*)$pkg\.pm\z#$1auto:$pkg:$func.al#s;
+		$filename = undef
+		  unless $filename =~ s#^(.*)$pkg\.pm\z#$1auto:$pkg:$func.al#s;
 	    } else {
-		$filename =~ s#^(.*)$pkg\.pm\z#$1auto/$pkg/$func.al#s;
+		$filename = undef
+		  unless $filename =~ s#^(.*)$pkg\.pm\z#$1auto/$pkg/$func.al#s;
 	    }
 
 	    # if the file exists, then make sure that it is a
@@ -52,7 +54,7 @@ AUTOLOAD {
 	    # (and failing) to find the 'lib/auto/foo/bar.al' because it
 	    # looked for 'lib/lib/auto/foo/bar.al', given @INC = ('lib').
 
-	    if (-r $filename) {
+	    if (defined $filename and -r $filename) {
 		unless ($filename =~ m|^/|s) {
 		    if ($is_dosish) {
 			unless ($filename =~ m{^([a-z]:)?[\\/]}is) {
