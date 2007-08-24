@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.11 2007/08/23 02:48:04 deraadt Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.12 2007/08/24 01:16:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -44,6 +44,7 @@ struct uberry_softc {
 	usbd_interface_handle		sc_iface;
 };
 
+#define UBERRY_INTERFACE_NO		0
 #define UBERRY_CONFIG_NO		1
 
 struct usb_devno const uberry_devices[] = {
@@ -100,7 +101,7 @@ uberry_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
 	usbd_devinfo_free(devinfop);
 
-	/* Enable the device, then it cannot idle, and will charge */
+	/* Enable configuration, to keep it connected... */
 	if (usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1) != 0) {
 		printf("%s: could not set configuration no\n",
 		    sc->sc_dev.dv_xname);
@@ -114,12 +115,29 @@ uberry_attach(struct device *parent, struct device *self, void *aux)
 	else {
 		printf("... requesting higher-power charging\n");
 		uberry_charge(sc);
-		usb_needs_reattach(sc->sc_udev);
+		/*
+		 * Older berry's will disconnect/reconnect at this
+		 * point, and come back requesting higher power
+		 */
+	}
+
+	/* On the Pearl, request a change to Dual mode */
+	if (UGETW(dd->idProduct) == USB_PRODUCT_RIM_PEARL)
+		uberry_pearlmode(sc);
+
+	/* Enable the device, then it cannot idle, and will charge */
+	if (usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1) != 0) {
+		printf("%s: could not set configuration no\n",
+		    sc->sc_dev.dv_xname);
+		return;
 	}
 
 	if (UGETW(dd->idProduct) == USB_PRODUCT_RIM_PEARL) {
-		/* Request a change to Dual mode */
-		uberry_pearlmode(sc);
+		/*
+		 * Pearl does not disconnect/reconnect by itself,
+		 * and therefore needs to be told to reset, so that
+		 * it can come back in Dual mode.
+		 */
 		usb_needs_reattach(sc->sc_udev);
 	}
 
