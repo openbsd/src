@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.47 2007/08/24 13:15:04 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.48 2007/08/24 13:22:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -709,6 +709,7 @@ struct nxe_softc {
 
 	/* allocations for the hw */
 	struct nxe_dmamem	*sc_dummy_dma;
+	struct nxe_dmamem	*sc_dummy_rx;
 
 	struct nxe_dmamem	*sc_ctx;
 	u_int32_t		*sc_cmd_consumer;
@@ -1125,6 +1126,11 @@ nxe_up(struct nxe_softc *sc)
 	    htole64(NXE_DMA_DVA(sc->sc_status_ring->nr_dmamem));
 	ctx->ctx_status_ring_size = htole32(sc->sc_status_ring->nr_nentries);
 
+	/* allocate something to point the jumbo and lro rings at */
+	sc->sc_dummy_rx = nxe_dmamem_alloc(sc, NXE_MAX_PKTLEN, PAGE_SIZE);
+	if (sc->sc_dummy_rx == NULL)
+		goto free_status_ring;
+
 	/* allocate the rx rings */
 	for (i = 0; i < NXE_NRING; i++) {
 		ring = &ctx->ctx_rx_rings[i];
@@ -1141,6 +1147,8 @@ nxe_up(struct nxe_softc *sc)
 	}
 
 	/* nothing can possibly go wrong now */
+	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_dummy_rx),
+	    0, NXE_DMA_LEN(sc->sc_dummy_rx), BUS_DMASYNC_PREREAD);
 	nxe_ring_sync(sc, sc->sc_status_ring, BUS_DMASYNC_PREREAD);
 	nxe_ring_sync(sc, sc->sc_cmd_ring, BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_ctx),
@@ -1175,6 +1183,8 @@ free_rx_rings:
 		nxe_ring_free(sc, sc->sc_rx_rings[i]);
 	}
 
+	nxe_dmamem_free(sc, sc->sc_dummy_rx);
+free_status_ring:
 	nxe_ring_free(sc, sc->sc_status_ring);
 free_cmd_ring:
 	nxe_ring_free(sc, sc->sc_cmd_ring);
@@ -1261,11 +1271,14 @@ nxe_down(struct nxe_softc *sc)
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	nxe_ring_sync(sc, sc->sc_cmd_ring, BUS_DMASYNC_POSTWRITE);
 	nxe_ring_sync(sc, sc->sc_status_ring, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, NXE_DMA_MAP(sc->sc_dummy_rx),
+	    0, NXE_DMA_LEN(sc->sc_dummy_rx), BUS_DMASYNC_POSTREAD);
 
 	for (i = 0; i < NXE_NRING; i++) {
 		nxe_ring_sync(sc, sc->sc_rx_rings[i], BUS_DMASYNC_POSTWRITE);
 		nxe_ring_free(sc, sc->sc_rx_rings[i]);
 	}
+	nxe_dmamem_free(sc, sc->sc_dummy_rx);
 	nxe_ring_free(sc, sc->sc_status_ring);
 	nxe_ring_free(sc, sc->sc_cmd_ring);
 	nxe_dmamem_free(sc, sc->sc_ctx);
