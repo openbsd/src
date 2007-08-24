@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.39 2007/02/18 23:50:47 ray Exp $ */
+/*	$OpenBSD: arp.c,v 1.40 2007/08/24 13:12:16 claudio Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -435,6 +435,8 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
 		sin = (struct sockaddr_inarp *)(rtm + 1);
 		sdl = (struct sockaddr_dl *)(sin + 1);
 		if (addr) {
