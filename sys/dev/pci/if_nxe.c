@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.46 2007/08/23 13:52:29 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.47 2007/08/24 13:15:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1113,7 +1113,7 @@ nxe_up(struct nxe_softc *sc)
 
 	ctx->ctx_cmd_ring.r_addr =
 	    htole64(NXE_DMA_DVA(sc->sc_cmd_ring->nr_dmamem));
-	ctx->ctx_cmd_ring.r_size = htole64(sc->sc_cmd_ring->nr_nentries);
+	ctx->ctx_cmd_ring.r_size = htole32(sc->sc_cmd_ring->nr_nentries);
 
 	/* allocate the status ring */
 	sc->sc_status_ring = nxe_ring_alloc(sc,
@@ -1123,7 +1123,7 @@ nxe_up(struct nxe_softc *sc)
 
 	ctx->ctx_status_ring_addr =
 	    htole64(NXE_DMA_DVA(sc->sc_status_ring->nr_dmamem));
-	ctx->ctx_status_ring_size = htole64(sc->sc_status_ring->nr_nentries);
+	ctx->ctx_status_ring_size = htole32(sc->sc_status_ring->nr_nentries);
 
 	/* allocate the rx rings */
 	for (i = 0; i < NXE_NRING; i++) {
