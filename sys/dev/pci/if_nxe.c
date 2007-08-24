@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.48 2007/08/24 13:22:42 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.49 2007/08/24 13:54:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -181,10 +181,10 @@ int nxedebug = 0;
 
 /* Interrupts */
 #define NXE_ISR_VECTOR		0x06110100 /* Interrupt Vector */
-#define  NXE_ISR_VECTOR_FUNC(_f)	(0x08 << (_f))
 #define NXE_ISR_MASK		0x06110104 /* Interrupt Mask */
 #define NXE_ISR_TARGET_STATUS	0x06110118
 #define NXE_ISR_TARGET_MASK	0x06110128
+#define  NXE_ISR_MINE(_f)		(0x08 << (_f))
 
 /* lock registers (semaphores between chipset and driver) */
 #define NXE_SEM_ROM_LOCK	0x0611c010 /* ROM access lock */
@@ -996,7 +996,20 @@ nxe_pci_unmap(struct nxe_softc *sc)
 int
 nxe_intr(void *xsc)
 {
-	return (0);
+	struct nxe_softc		*sc = xsc;
+	u_int32_t			vector;
+
+	DASSERT(sc->sc_window == 1);
+
+	vector = nxe_crb_read(sc, NXE_1_SW_INT_VECTOR);
+	if (!ISSET(vector, NXE_ISR_MINE(sc->sc_function)))
+		return (0);
+
+	nxe_crb_write(sc, NXE_1_SW_INT_VECTOR, 0x80 << sc->sc_function);
+
+	/* the interrupt is mine! we should do some work now */
+
+	return (1);
 }
 
 int
