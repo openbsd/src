@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.72 2007/08/05 19:09:52 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.73 2007/08/24 15:17:52 kettenis Exp $
 #
 # hppa-specific configuration info
 
@@ -228,6 +228,9 @@ file	arch/hppa/gsc/mongoose_gsc.c		mg_gsc
 
 attach	ie at gsc with ie_gsc
 file	arch/hppa/gsc/if_ie_gsc.c		ie_gsc
+
+attach	siop at gsc with siop_gsc
+file	arch/hppa/gsc/siop_gsc.c		siop_gsc
 
 attach	osiop at gsc with osiop_gsc
 file	arch/hppa/gsc/osiop_gsc.c		osiop_gsc
