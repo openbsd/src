@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.49 2007/08/24 13:54:10 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.50 2007/08/24 14:02:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1091,6 +1091,7 @@ nxe_up(struct nxe_softc *sc)
 	struct nxe_ctx_ring		*ring;
 	struct nxe_ring			*nr;
 	u_int64_t			dva;
+	u_int32_t			intr_scheme;
 	int				i;
 
 	if (nxe_up_fw(sc) != 0)
@@ -1186,6 +1187,13 @@ nxe_up(struct nxe_softc *sc)
 	CLR(ifp->if_flags, IFF_OACTIVE);
 
 	/* enable interrupts */
+	intr_scheme = nxe_crb_read(sc, NXE_1_SW_NIC_CAP_FW);
+	if (intr_scheme != NXE_1_SW_NIC_CAP_PORTINTR)
+		nxe_write(sc, NXE_ISR_MASK, 0x77f);
+	nxe_crb_write(sc, NXE_1_SW_INT_MASK(sc->sc_function), 0x1);
+	if (intr_scheme != NXE_1_SW_NIC_CAP_PORTINTR)
+		nxe_crb_write(sc, NXE_1_SW_INT_VECTOR, 0x0);
+	nxe_write(sc, NXE_ISR_TARGET_MASK, 0xbff);
 
 	return;
 
