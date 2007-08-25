@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.110 2007/06/06 17:15:11 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.111 2007/08/25 21:49:05 kettenis Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -865,17 +865,17 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("total memory = %ld (%ldK)\n", ptoa((u_long)totalphysmem),
-	    ptoa((u_long)totalphysmem) / 1024);
-	printf("(%ld reserved for PROM, ", ptoa((u_long)resvmem));
-	printf("%ld used by OpenBSD)\n", ptoa((u_long)physmem));
+	printf("total memory = %lu (%luK)\n", ptoa((psize_t)totalphysmem),
+	    ptoa((psize_t)totalphysmem) / 1024);
+	printf("(%lu reserved for PROM, ", ptoa((psize_t)resvmem));
+	printf("%lu used by OpenBSD)\n", ptoa((psize_t)physmem));
 	if (unusedmem) {
-		printf("WARNING: unused memory = %ld (%ldK)\n",
-		    ptoa((u_long)unusedmem), ptoa((u_long)unusedmem) / 1024);
+		printf("WARNING: unused memory = %lu (%luK)\n",
+		    ptoa((psize_t)unusedmem), ptoa((psize_t)unusedmem) / 1024);
 	}
 	if (unknownmem) {
-		printf("WARNING: %ld (%ldK) of memory with unknown purpose\n",
-		    ptoa((u_long)unknownmem), ptoa((u_long)unknownmem) / 1024);
+		printf("WARNING: %lu (%luK) of memory with unknown purpose\n",
+		    ptoa((psize_t)unknownmem), ptoa((psize_t)unknownmem) / 1024);
 	}
 
 	/*
@@ -902,8 +902,8 @@ cpu_startup()
 #if defined(DEBUG)
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail memory = %ld (%ldK)\n", (long)ptoa(uvmexp.free),
-	    (long)ptoa(uvmexp.free) / 1024);
+	printf("avail memory = %lu (%luK)\n", ptoa((psize_t)uvmexp.free),
+	    ptoa((psize_t)uvmexp.free) / 1024);
 #if 0
 	{
 		extern u_long pmap_pages_stolen;
