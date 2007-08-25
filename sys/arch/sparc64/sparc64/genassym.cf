@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.16 2007/05/28 23:10:10 beck Exp $
+#	$OpenBSD: genassym.cf,v 1.17 2007/08/25 22:09:03 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -93,6 +93,7 @@ include <machine/db_machdep.h>
 endif
 include <machine/pmap.h>
 include <machine/cpu.h>
+include <machine/mutex.h>
 
 include <machine/bsd_openprom.h>
 include <machine/reg.h>
@@ -277,3 +278,8 @@ export	TLB_E
 export	TLB_P
 export	TLB_W
 export	TLB_G
+
+struct	mutex
+member	mtx_wantipl
+member	mtx_oldipl
+member	mtx_owner
