@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.73 2007/08/25 20:55:04 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.74 2007/08/25 20:57:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -346,7 +346,7 @@ malo_intr(void *arg)
 	}
 
 	if (status & ~0x7)
-		DPRINTF(("%s: unkown interrupt %x\n", sc->sc_dev.dv_xname,
+		DPRINTF(("%s: unknown interrupt %x\n", sc->sc_dev.dv_xname,
 		    status));
 
 	/* just ack the interrupt */
