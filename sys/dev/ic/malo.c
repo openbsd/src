@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.72 2007/07/18 18:10:31 damien Exp $ */
+/*	$OpenBSD: malo.c,v 1.73 2007/08/25 20:55:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2038,13 +2038,17 @@ malo_cmd_string(uint16_t cmd)
 		char		*cmd_string;
 	} cmds[] = {
 		{ MALO_CMD_GET_HW_SPEC,		"GetHwSpecifications"	},
+		{ MALO_CMD_SET_WEPKEY,		"SetWep"		},
 		{ MALO_CMD_SET_RADIO,		"SetRadio"		},
+		{ MALO_CMD_SET_AID,		"SetAid"		},
 		{ MALO_CMD_SET_TXPOWER,		"SetTxPower"		},
 		{ MALO_CMD_SET_ANTENNA,		"SetAntenna"		},
 		{ MALO_CMD_SET_PRESCAN,		"SetPrescan"		},
 		{ MALO_CMD_SET_POSTSCAN,	"SetPostscan"		},
+		{ MALO_CMD_SET_RATE,		"SetRate"		},
 		{ MALO_CMD_SET_CHANNEL,		"SetChannel"		},
 		{ MALO_CMD_SET_RTS,		"SetRTS"		},
+		{ MALO_CMD_SET_SLOT,		"SetSlot"		},
 	};
 
 	for (i = 0; i < sizeof(cmds) / sizeof(cmds[0]); i++)
