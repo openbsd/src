@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 2007/08/04 16:44:15 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.94 2007/08/25 19:05:56 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -246,8 +246,8 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	printf("real mem = %lu (%luMB)\n", ctob(physmem),
-	    ctob(physmem)/1024/1024);
+	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
+	    ptoa((psize_t)physmem)/1024/1024);
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
@@ -276,8 +276,8 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024/1024);
+	printf("avail mem = %lu (%luMB)\n", ptoa((psize_t)uvmexp.free),
+	    ptoa((psize_t)uvmexp.free)/1024/1024);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
