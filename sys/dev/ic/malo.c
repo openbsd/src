@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.75 2007/08/25 23:59:11 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.76 2007/08/26 08:49:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2058,7 +2058,7 @@ malo_cmd_get_spec(struct malo_softc *sc)
 	if (malo_send_cmd_dma(sc, sc->sc_cmd_dmaaddr) != 0)
 		return (ETIMEDOUT);
 
-	/* XXX get the data from the buffer and feed it to ieee80211 */
+	/* get the data from the buffer */
 	DPRINTF(("%s: get_hw_spec: V%x R%x, #WCB %d, #Mcast %d, Regcode %d, "
 	    "#Ant %d\n", sc->sc_dev.dv_xname, htole16(spec->HwVersion),
 	    htole32(spec->FWReleaseNumber), htole16(spec->NumOfWCB),
