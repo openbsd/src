@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ci.1,v 1.34 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: ci.1,v 1.35 2007/08/26 21:35:43 sobrado Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 26 2007 $
 .Dt CI 1
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Op Fl u Ns Op Ar rev
 .Op Fl w Ns Ar username
 .Op Fl x Ns Ar suffixes
+.Op Fl z Ns Ar tz
 .Ar
 .Ek
 .Sh DESCRIPTION
@@ -170,6 +171,13 @@ Specifies the suffixes for RCS files.
 Suffixes should be separated by the
 .Sq /
 character.
+.It Fl z Ns Ar tz
+Specify the date output format in keyword substitution, and the
+default time zone for
+.Ar date
+used in the
+.Fl d
+option.
 .El
 .Pp
 .Ex -std ci
