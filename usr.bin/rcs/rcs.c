@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.41 2007/07/03 00:56:23 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.42 2007/08/27 19:18:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1726,7 +1726,7 @@ rcs_parse_init(RCSFILE *rfp)
 	pdp->rp_pttype = RCS_TOK_ERR;
 
 	if ((pdp->rp_file = fdopen(rfp->rf_fd, "r")) == NULL)
-		err(1, "fopen: `%s'", rfp->rf_path);
+		err(1, "fdopen: `%s'", rfp->rf_path);
 
 	pdp->rp_buf = xmalloc((size_t)RCS_BUFSIZE);
 	pdp->rp_blen = RCS_BUFSIZE;
