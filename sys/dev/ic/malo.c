@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.76 2007/08/26 08:49:55 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.77 2007/08/27 19:11:13 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -294,6 +294,7 @@ int	malo_cmd_set_txpower(struct malo_softc *sc, unsigned int powerlevel);
 int	malo_cmd_set_rts(struct malo_softc *sc, uint32_t threshold);
 int	malo_cmd_set_slot(struct malo_softc *sc, uint8_t slot);
 int	malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate);
+void	malo_cmd_response(struct malo_softc *sc);
 
 int
 malo_intr(void *arg)
@@ -311,22 +312,9 @@ malo_intr(void *arg)
 	if (status & 0x2)
 		malo_rx_intr(sc);
 	if (status & 0x4) {
-		struct malo_cmdheader *hdr = sc->sc_cmd_mem;
-
-		if (letoh16(hdr->result) != MALO_CMD_RESULT_OK) {
-			printf("%s: firmware cmd %s failed with %s\n",
-			    sc->sc_dev.dv_xname,
-			    malo_cmd_string(hdr->cmd),
-			    malo_cmd_string_result(hdr->result));
-		}
-#ifdef MALO_DEBUG
-		printf("%s: cmd answer for %s=%s\n",
-		    sc->sc_dev.dv_xname,
-		    malo_cmd_string(hdr->cmd),
-		    malo_cmd_string_result(hdr->result));
-		if (malo_debug > 2)
-			malo_hexdump(hdr, letoh16(hdr->size));
-#endif
+		/* XXX cmd done interrupt handling doesn't work yet */
+		DPRINTF(("%s: got cmd done interrupt\n", sc->sc_dev.dv_xname));
+		//malo_cmd_response(sc);
 	}
 
 	if (status & ~0x7)
@@ -526,9 +514,13 @@ malo_send_cmd_dma(struct malo_softc *sc, bus_addr_t addr)
 		if (hdr->cmd & htole16(0x8000))
 			break;
 	}
-
-	if (i == 10)
+	if (i == 10) {
+		printf("%s: timeout while waiting for cmd response!\n",
+		    sc->sc_dev.dv_xname);
 		return (ETIMEDOUT);
+	}
+
+	malo_cmd_response(sc);
 
 	return (0);
 }
@@ -2329,4 +2321,27 @@ malo_cmd_set_rate(struct malo_softc *sc, uint8_t rate)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	return (malo_send_cmd_dma(sc, sc->sc_cmd_dmaaddr));
+}
+
+void
+malo_cmd_response(struct malo_softc *sc)
+{
+	struct malo_cmdheader *hdr = sc->sc_cmd_mem;
+
+	if (letoh16(hdr->result) != MALO_CMD_RESULT_OK) {
+		printf("%s: firmware cmd %s failed with %s\n",
+		    sc->sc_dev.dv_xname,
+		    malo_cmd_string(hdr->cmd),
+		    malo_cmd_string_result(hdr->result));
+	}
+
+#ifdef MALO_DEBUG
+	printf("%s: cmd answer for %s=%s\n",
+	    sc->sc_dev.dv_xname,
+	    malo_cmd_string(hdr->cmd),
+	    malo_cmd_string_result(hdr->result));
+
+	if (malo_debug > 2)
+		malo_hexdump(hdr, letoh16(hdr->size));
+#endif
 }
