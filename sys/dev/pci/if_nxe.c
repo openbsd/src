@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.50 2007/08/24 14:02:55 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.51 2007/08/27 01:11:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -765,6 +765,8 @@ void			nxe_start(struct ifnet *);
 int			nxe_complete(struct nxe_softc *);
 void			nxe_watchdog(struct ifnet *);
 
+void			nxe_rx_start(struct nxe_softc *);
+
 void			nxe_up(struct nxe_softc *);
 void			nxe_lladdr(struct nxe_softc *);
 void			nxe_iff(struct nxe_softc *);
@@ -1505,6 +1507,68 @@ nxe_load_pkt(struct nxe_softc *sc, bus_dmamap_t dmap, struct mbuf *m)
 	}
 
 	return (m);
+}
+
+void
+nxe_rx_start(struct nxe_softc *sc)
+{
+	struct nxe_ring			*nr = sc->sc_rx_rings[NXE_RING_RX];
+	struct nxe_rx_desc		*rxd;
+	struct nxe_pkt			*pkt;
+	struct mbuf			*m;
+
+	if (nxe_ring_writeable(nr, 0) == 0)
+		return;
+
+	nxe_ring_sync(sc, nr, BUS_DMASYNC_POSTWRITE);
+	rxd = nxe_ring_cur(sc, nr);
+
+	for (;;) {
+		pkt = nxe_pkt_get(sc->sc_rx_pkts);
+		if (pkt == NULL)
+			goto done;
+
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL)
+			goto put_pkt;
+
+		MCLGET(m, M_DONTWAIT);
+		if (!ISSET(m->m_flags, M_EXT))
+			goto free_m;
+
+		m->m_data += ETHER_ALIGN;
+		m->m_len = m->m_pkthdr.len = MCLBYTES - ETHER_ALIGN;
+
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, pkt->pkt_dmap, m,
+		    BUS_DMA_NOWAIT) != 0)
+			goto free_m;
+
+		pkt->pkt_m = m;
+
+		bzero(rxd, sizeof(struct nxe_rx_desc));
+		rxd->rx_len = htole32(m->m_len);
+		rxd->rx_id = pkt->pkt_id;
+		rxd->rx_addr = htole64(pkt->pkt_dmap->dm_segs[0].ds_addr);
+
+		bus_dmamap_sync(sc->sc_dmat, pkt->pkt_dmap, 0,
+		    pkt->pkt_dmap->dm_mapsize, BUS_DMASYNC_PREREAD);
+
+		rxd = nxe_ring_next(sc, nr);
+
+		if (nr->nr_ready == 0)
+			goto done;
+	}
+
+free_m:
+	m_freem(m);
+put_pkt:
+	nxe_pkt_put(sc->sc_rx_pkts, pkt);
+done:
+	nxe_ring_sync(sc, nr, BUS_DMASYNC_PREWRITE);
+	nxe_crb_write(sc, NXE_1_SW_RX_PRODUCER(sc->sc_function), nr->nr_slot);
+	nxe_doorbell(sc, NXE_DB_PEGID_RX | NXE_DB_PRIVID |
+	    NXE_DB_OPCODE_RX_PROD |
+	    NXE_DB_COUNT(nr->nr_slot) | NXE_DB_CTXID(sc->sc_function));
 }
 
 void
