@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.67 2007/08/23 18:44:00 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.68 2007/08/27 18:53:27 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -100,21 +100,21 @@ void	ieee80211_recv_deauth(struct ieee80211com *, struct mbuf *,
 void	ieee80211_recv_disassoc(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int, u_int32_t);
 void	ieee80211_recv_4way_msg1(struct ieee80211com *,
-	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_4way_msg2(struct ieee80211com *,
-	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_4way_msg3(struct ieee80211com *,
-	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_4way_msg4(struct ieee80211com *,
-	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_rsn_group_msg1(struct ieee80211com *,
-	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_wpa_group_msg1(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_group_msg2(struct ieee80211com *,
-	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_eapol_key_req(struct ieee80211com *,
-	    const struct ieee80211_eapol_key *, struct ieee80211_node *);
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 
 /*
  * Retrieve the length in bytes of a 802.11 header.
@@ -1932,7 +1932,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
  */
 void
 ieee80211_recv_4way_msg1(struct ieee80211com *ic,
-    const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	u_int8_t snonce[EAPOL_KEY_NONCE_LEN];
 	const u_int8_t *frm, *efrm;
@@ -1996,7 +1996,6 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	/* derive PTK from PMK */
 	ieee80211_derive_ptk(pmk, pmk_len, ni->ni_macaddr, ic->ic_myaddr,
 	    ni->ni_nonce, snonce, (u_int8_t *)&ni->ni_ptk, sizeof(ni->ni_ptk));
-	ni->ni_ptk_ok = 1;
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
@@ -2013,7 +2012,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
  */
 void
 ieee80211_recv_4way_msg2(struct ieee80211com *ic,
-    const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *rsn;
@@ -2058,6 +2057,15 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 		return;
 	}
 
+	/* derive PTK from PMK */
+	ieee80211_derive_ptk(pmk, pmk_len, ic->ic_myaddr, ni->ni_macaddr,
+	    ni->ni_nonce, key->nonce, (u_int8_t *)&ni->ni_ptk,
+	    sizeof(ni->ni_ptk));
+
+	/* check Key MIC field using KCK */
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+		return;
+
 	/*
 	 * The RSN IE must match bit-wise with what the STA included in its
 	 * (Re)Association Request.
@@ -2069,12 +2077,6 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 		ieee80211_node_leave(ic, ni);
 		return;
 	}
-
-	/* derive PTK from PMK */
-	ieee80211_derive_ptk(pmk, pmk_len, ic->ic_myaddr, ni->ni_macaddr,
-	    ni->ni_nonce, key->nonce, (u_int8_t *)&ni->ni_ptk,
-	    sizeof(ni->ni_ptk));
-	ni->ni_ptk_ok = 1;
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
@@ -2091,11 +2093,12 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
  */
 void
 ieee80211_recv_4way_msg3(struct ieee80211com *ic,
-    const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *rsn1, *rsn2, *gtk;
+	u_int16_t info;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
@@ -2106,6 +2109,17 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 
 	/* check that ANonce matches the one received in message 1 */
 	if (memcmp(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN) != 0)
+		return;
+
+	info = BE_READ_2(key->info);
+
+	/* check Key MIC field using KCK */
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+		return;
+
+	/* if encrypted, decrypt Key Data field using KEK */
+	if ((info & EAPOL_KEY_ENCRYPTED) &&
+	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
 		return;
 
 	/* parse key data field */
@@ -2148,7 +2162,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	if (rsn1 == NULL)
 		return;
 	/* key data must be encrypted if GTK is included */
-	if (gtk != NULL && !(BE_READ_2(key->info) & EAPOL_KEY_ENCRYPTED))
+	if (gtk != NULL && !(info & EAPOL_KEY_ENCRYPTED))
 		return;
 
 	/*
@@ -2224,7 +2238,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
  */
 void
 ieee80211_recv_4way_msg4(struct ieee80211com *ic,
-    const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	struct ieee80211_key *k;
 
@@ -2232,6 +2246,10 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 	 * ic->ic_opmode and key->replaycnt have already been validated by
 	 * ieee80211_recv_4way_msg2() from where we're called.
 	 */
+
+	/* check Key MIC field using KCK */
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+		return;
 
 	/* empty key data field */
 
@@ -2264,12 +2282,13 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
  */
 void
 ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
-    const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	struct ieee80211_key *k;
 	const u_int8_t *frm, *efrm;
 	const u_int8_t *gtk;
 	u_int64_t rsc;
+	u_int16_t info;
 	u_int8_t kid;
 
 	if (ic->ic_opmode != IEEE80211_M_STA &&
@@ -2277,6 +2296,17 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		return;
 
 	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
+		return;
+
+	info = BE_READ_2(key->info);
+
+	/* check Key MIC field using KCK */
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+		return;
+
+	/* check that encrypted and decrypt Key Data field using KEK */
+	if (!(info & EAPOL_KEY_ENCRYPTED) ||
+	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
 		return;
 
 	/* parse key data field (shall contain a GTK KDE) */
@@ -2302,7 +2332,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 		}
 		frm += 2 + frm[1];
 	}
-	if (gtk == NULL || !(BE_READ_2(key->info) & EAPOL_KEY_ENCRYPTED))
+	if (gtk == NULL)
 		return;
 
 	/* check that the GTK KDE is valid */
@@ -2348,12 +2378,15 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 	if (BE_READ_8(key->replaycnt) <= ni->ni_replaycnt)
 		return;
 
+	/* check Key MIC field using KCK */
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+		return;
+
 	/*
 	 * EAPOL-Key data field is encrypted even though WPA1 doesn't set
 	 * the ENCRYPTED bit in the info field.
 	 */
-	if (!ni->ni_ptk_ok ||
-	    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
+	if (ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
 		return;
 
 	info = BE_READ_2(key->info);
@@ -2389,13 +2422,17 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
  */
 void
 ieee80211_recv_group_msg2(struct ieee80211com *ic,
-    const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
 	    ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
 	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt)
+		return;
+
+	/* check Key MIC field using KCK */
+	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
 		return;
 
 	/* empty key data field */
@@ -2418,7 +2455,7 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
  */
 void
 ieee80211_recv_eapol_key_req(struct ieee80211com *ic,
-    const struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
 {
 	u_int16_t info;
 
@@ -2513,25 +2550,9 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 #endif
 	info = BE_READ_2(key->info);
 
-	if (info & (EAPOL_KEY_KEYMIC | EAPOL_KEY_ENCRYPTED)) {
-		/* check that we have a valid PTK or TPTK */
-		if (!ni->ni_ptk_ok)
-			goto out;
-
-		if (ni->ni_pairwise_cipher == IEEE80211_CIPHER_CCMP &&
-		    (info & EAPOL_KEY_VERSION_MASK) != EAPOL_KEY_DESC_V2)
-			goto out;
-
-		/* check Key MIC field using KCK */
-		if ((info & EAPOL_KEY_KEYMIC) &&
-		    ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
-			goto out;
-
-		/* decrypt Key Data field using KEK */
-		if ((info & EAPOL_KEY_ENCRYPTED) &&
-		    ieee80211_eapol_key_decrypt(key, ni->ni_ptk.kek) != 0)
-			goto out;
-	}
+	if (ni->ni_pairwise_cipher == IEEE80211_CIPHER_CCMP &&
+	    (info & EAPOL_KEY_VERSION_MASK) != EAPOL_KEY_DESC_V2)
+		goto out;
 
 	/* determine message type (see 8.5.3.7) */
 	if (info & EAPOL_KEY_REQUEST) {

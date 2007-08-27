@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.56 2007/08/22 20:40:34 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.57 2007/08/27 18:53:27 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1538,9 +1538,6 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 	len = m->m_len - sizeof(struct ether_header);
 	BE_WRITE_2(key->paylen, len - sizeof(*key));
 	BE_WRITE_2(key->len, len - 4);
-
-	KASSERT((info & (EAPOL_KEY_ENCRYPTED | EAPOL_KEY_KEYMIC)) == 0 ||
-	    ni->ni_ptk_ok);
 
 	if (info & EAPOL_KEY_ENCRYPTED)
 		ieee80211_eapol_key_encrypt(ic, key, ni->ni_ptk.kek);

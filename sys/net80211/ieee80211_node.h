@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.21 2007/08/03 16:51:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.22 2007/08/27 18:53:27 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -127,7 +127,6 @@ struct ieee80211_node {
 	u_int8_t		*ni_rsnie;
 	struct ieee80211_key	ni_pairwise_key;
 	struct ieee80211_ptk	ni_ptk;
-	u_int8_t		ni_ptk_ok;
 	u_int8_t		ni_key_count;
 
 	/* others */
