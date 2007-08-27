@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.57 2007/08/27 18:53:27 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.58 2007/08/27 20:14:21 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1627,6 +1627,10 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	u_int8_t *pmkid;
 	u_int8_t *frm;
 
+	ni->ni_rsn_state = RSNA_PTKSTART;
+	if (++ni->ni_rsn_tocnt == 3)
+		return 0;	/* XXX move to RSNA_DISCONNECT */
+
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
 	    (ni->ni_eapol_desc == EAPOL_KEY_DESC_IEEE80211) ? 2 + 20 : 0);
 	if (m == NULL)
@@ -1637,8 +1641,7 @@ ieee80211_send_4way_msg1(struct ieee80211com *ic, struct ieee80211_node *ni)
 	info = EAPOL_KEY_PAIRWISE | EAPOL_KEY_KEYACK;
 	BE_WRITE_2(key->info, info);
 
-	/* generate a new nonce ANonce */
-	get_random_bytes(ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
+	/* copy the authenticator's nonce (ANonce) */
 	memcpy(key->nonce, ni->ni_nonce, EAPOL_KEY_NONCE_LEN);
 
 	keylen = ieee80211_cipher_keylen(ni->ni_pairwise_cipher);
@@ -1723,6 +1726,10 @@ ieee80211_send_4way_msg3(struct ieee80211com *ic, struct ieee80211_node *ni)
 	struct mbuf *m;
 	u_int16_t info, keylen;
 	u_int8_t *frm;
+
+	ni->ni_rsn_state = RSNA_PTKINITNEGOTIATING;
+	if (++ni->ni_rsn_tocnt == 3)
+		return 0;	/* XXX move to RSNA_KEYERROR */
 
 	m = ieee80211_get_eapol_key(M_DONTWAIT, MT_DATA,
 	    2 + 48 +

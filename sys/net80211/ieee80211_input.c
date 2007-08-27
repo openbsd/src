@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.68 2007/08/27 18:53:27 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.69 2007/08/27 20:14:21 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -102,10 +102,13 @@ void	ieee80211_recv_disassoc(struct ieee80211com *, struct mbuf *,
 void	ieee80211_recv_4way_msg1(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_4way_msg2(struct ieee80211com *,
-	    struct ieee80211_eapol_key *, struct ieee80211_node *);
+	    struct ieee80211_eapol_key *, struct ieee80211_node *,
+	    const u_int8_t *);
 void	ieee80211_recv_4way_msg3(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_4way_msg4(struct ieee80211com *,
+	    struct ieee80211_eapol_key *, struct ieee80211_node *);
+void	ieee80211_recv_4way_msg2or4(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
 void	ieee80211_recv_rsn_group_msg1(struct ieee80211com *,
 	    struct ieee80211_eapol_key *, struct ieee80211_node *);
@@ -2012,50 +2015,18 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
  */
 void
 ieee80211_recv_4way_msg2(struct ieee80211com *ic,
-    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni,
+    const u_int8_t *rsn)
 {
-	const u_int8_t *frm, *efrm;
-	const u_int8_t *rsn;
 	const u_int8_t *pmk;
 	size_t pmk_len;
 
-	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
-	    ic->ic_opmode != IEEE80211_M_IBSS)
+	/* discard if we're not expecting this message */
+	if (ni->ni_rsn_state != RSNA_PTKSTART &&
+	    ni->ni_rsn_state != RSNA_PTKCALCNEGOTIATING)
 		return;
 
-	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt)
-		return;
-
-	/* parse key data field (shall contain an RSN IE) */
-	frm = (const u_int8_t *)&key[1];
-	efrm = frm + BE_READ_2(key->paylen);
-
-	rsn = NULL;
-	while (frm + 2 <= efrm) {
-		if (frm + 2 + frm[1] > efrm)
-			break;
-		switch (frm[0]) {
-		case IEEE80211_ELEMID_RSN:
-			rsn = frm;
-			break;
-		case IEEE80211_ELEMID_VENDOR:
-			if (frm[1] < 4)
-				break;
-			if (memcmp(&frm[2], MICROSOFT_OUI, 3) == 0) {
-				switch (frm[5]) {
-				case 1:	/* WPA */
-					rsn = frm;
-					break;
-				}
-			}
-		}
-		frm += 2 + frm[1];
-	}
-	if (rsn == NULL) {
-		/* no RSN/WPA IE, must be message 4 of the 4-Way Handshake */
-		ieee80211_recv_4way_msg4(ic, key, ni);
-		return;
-	}
+	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING;
 
 	/* derive PTK from PMK */
 	ieee80211_derive_ptk(pmk, pmk_len, ic->ic_myaddr, ni->ni_macaddr,
@@ -2077,6 +2048,9 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 		ieee80211_node_leave(ic, ni);
 		return;
 	}
+
+	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING_2;
+	ni->ni_rsn_tocnt = 0;
 
 	if (ic->ic_if.if_flags & IFF_DEBUG)
 		printf("%s: received msg %d/%d of the %s handshake from %s\n",
@@ -2242,14 +2216,15 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 {
 	struct ieee80211_key *k;
 
-	/*
-	 * ic->ic_opmode and key->replaycnt have already been validated by
-	 * ieee80211_recv_4way_msg2() from where we're called.
-	 */
+	/* discard if we're not expecting this message */
+	if (ni->ni_rsn_state != RSNA_PTKINITNEGOTIATING)
+		return;
 
 	/* check Key MIC field using KCK */
 	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
 		return;
+
+	ni->ni_rsn_state = RSNA_PTKINITDONE;
 
 	/* empty key data field */
 
@@ -2274,6 +2249,51 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 		    ether_sprintf(ni->ni_macaddr));
 
 	/* XXX start a group key handshake w/ WPA1 */
+}
+
+/*
+ * Differentiate Message 2 from Message 4 of the 4-Way Handshake based on
+ * the presence of an RSN or WPA Information Element.
+ */
+void
+ieee80211_recv_4way_msg2or4(struct ieee80211com *ic,
+    struct ieee80211_eapol_key *key, struct ieee80211_node *ni)
+{
+	const u_int8_t *frm, *efrm;
+	const u_int8_t *rsn;
+
+	if (BE_READ_8(key->replaycnt) != ni->ni_replaycnt)
+		return;
+
+	/* parse key data field (check if an RSN IE is present) */
+	frm = (const u_int8_t *)&key[1];
+	efrm = frm + BE_READ_2(key->paylen);
+
+	rsn = NULL;
+	while (frm + 2 <= efrm) {
+		if (frm + 2 + frm[1] > efrm)
+			break;
+		switch (frm[0]) {
+		case IEEE80211_ELEMID_RSN:
+			rsn = frm;
+			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (frm[1] < 4)
+				break;
+			if (memcmp(&frm[2], MICROSOFT_OUI, 3) == 0) {
+				switch (frm[5]) {
+				case 1:	/* WPA */
+					rsn = frm;
+					break;
+				}
+			}
+		}
+		frm += 2 + frm[1];
+	}
+	if (rsn != NULL)
+		ieee80211_recv_4way_msg2(ic, key, ni, rsn);
+	else
+		ieee80211_recv_4way_msg4(ic, key, ni);
 }
 
 /*
@@ -2565,7 +2585,7 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 			if (info & EAPOL_KEY_KEYACK)
 				ieee80211_recv_4way_msg3(ic, key, ni);
 			else
-				ieee80211_recv_4way_msg2(ic, key, ni);
+				ieee80211_recv_4way_msg2or4(ic, key, ni);
 		} else
 			ieee80211_recv_4way_msg1(ic, key, ni);
 	} else {
