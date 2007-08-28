@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.3 2007/06/17 14:51:21 kettenis Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.4 2007/08/28 21:19:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -345,6 +345,12 @@ elroy_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
 #endif
 }
 #endif
+
+void *
+elroy_vaddr(void *v, bus_space_handle_t h)
+{
+	return ((void *)h);
+}
 
 u_int8_t
 elroy_r1(void *v, bus_space_handle_t h, bus_size_t o)
@@ -905,7 +911,7 @@ const struct hppa_bus_space_tag elroy_iomemt = {
 	NULL,
 
 	NULL, elroy_unmap, elroy_subregion, NULL, elroy_free,
-	elroy_barrier, NULL,
+	elroy_barrier, elroy_vaddr,
 	elroy_r1,    elroy_r2,    elroy_r4,    elroy_r8,
 	elroy_w1,    elroy_w2,    elroy_w4,    elroy_w8,  
 	elroy_rm_1,  elroy_rm_2,  elroy_rm_4,  elroy_rm_8,

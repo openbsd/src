@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.22 2007/05/23 18:07:19 kettenis Exp $	*/
+/*	$OpenBSD: dino.c,v 1.23 2007/08/28 21:19:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -179,6 +179,7 @@ void	dino_unmap(void *, bus_space_handle_t, bus_size_t);
 void	dino_free(void *, bus_space_handle_t, bus_size_t);
 void	dino_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
 void *	dino_alloc_parent(struct device *, struct pci_attach_args *, int);
+void *	dino_vaddr(void *, bus_space_handle_t);
 u_int8_t dino_r1(void *, bus_space_handle_t, bus_size_t);
 u_int16_t dino_r2(void *, bus_space_handle_t, bus_size_t);
 u_int32_t dino_r4(void *, bus_space_handle_t, bus_size_t);
@@ -633,6 +634,15 @@ dino_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
 	return rbus_new_root_share(tag, ex, start, size, 0);
 }
 #endif
+
+void *
+dino_vaddr(void *v, bus_space_handle_t h)
+{
+	if (h & 0xf0000000)
+		return ((void *)h);
+	else
+		return (NULL);
+}
 
 u_int8_t
 dino_r1(void *v, bus_space_handle_t h, bus_size_t o)
@@ -1475,7 +1485,7 @@ const struct hppa_bus_space_tag dino_iomemt = {
 	NULL,
 
 	NULL, dino_unmap, dino_subregion, NULL, dino_free,
-	dino_barrier, NULL,
+	dino_barrier, dino_vaddr,
 	dino_r1,    dino_r2,    dino_r4,    dino_r8,
 	dino_w1,    dino_w2,    dino_w4,    dino_w8,
 	dino_rm_1,  dino_rm_2,  dino_rm_4,  dino_rm_8,
