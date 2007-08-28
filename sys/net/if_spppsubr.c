@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.55 2007/08/20 16:46:00 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.56 2007/08/28 15:59:18 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -481,14 +481,16 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	/* preserve the alignment */
-	m = m_pulldown(m, 0, m->m_pkthdr.len, NULL);
-	if (m == NULL) {
-		if (debug)
-			log(LOG_DEBUG,
-			    SPP_FMT "Failed to align packet!\n", SPP_ARGS(ifp));
-		++ifp->if_ierrors;
-		++ifp->if_iqdrops;
-		return;
+	if (m->m_len < m->m_pkthdr.len) {
+		m = m_pullup2(m, m->m_pkthdr.len);
+		if (m == NULL) {
+			if (debug)
+				log(LOG_DEBUG,
+				    SPP_FMT "Failed to align packet!\n", SPP_ARGS(ifp));
+			++ifp->if_ierrors;
+			++ifp->if_iqdrops;
+			return;
+		}
 	}
 
 	switch (h->address) {
