@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.77 2007/08/27 19:11:13 mglocker Exp $ */
+/*	$OpenBSD: malo.c,v 1.78 2007/08/28 17:04:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -53,12 +53,10 @@
 #include <dev/ic/malo.h>
 
 #ifdef MALO_DEBUG
-#define DPRINTF(x)	do { if (malo_debug > 0) printf x; } while (0)
-#define DPRINTFN(n, x)	do { if (malo_debug >= (n)) printf x; } while (0)
-int malo_debug = 1;
+int malo_d = 1;
+#define DPRINTF(l, x...)	do { if ((l) <= malo_d) printf(x); } while (0)
 #else
-#define DPRINTF(x)
-#define DPRINTFN(n, x)
+#define DPRINTF(l, x...)
 #endif
 
 /* internal structures and defines */
@@ -313,13 +311,13 @@ malo_intr(void *arg)
 		malo_rx_intr(sc);
 	if (status & 0x4) {
 		/* XXX cmd done interrupt handling doesn't work yet */
-		DPRINTF(("%s: got cmd done interrupt\n", sc->sc_dev.dv_xname));
+		DPRINTF(1, "%s: got cmd done interrupt\n", sc->sc_dev.dv_xname);
 		//malo_cmd_response(sc);
 	}
 
 	if (status & ~0x7)
-		DPRINTF(("%s: unknown interrupt %x\n", sc->sc_dev.dv_xname,
-		    status));
+		DPRINTF(1, "%s: unknown interrupt %x\n",
+		    sc->sc_dev.dv_xname, status);
 
 	/* just ack the interrupt */
 	malo_ctl_write4(sc, 0x0c30, 0);
@@ -846,7 +844,7 @@ malo_init(struct ifnet *ifp)
 	uint8_t chan;
 	int error;
 
-	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
+	DPRINTF(1, "%s: %s\n", ifp->if_xname, __func__);
 
 	/* if interface already runs stop it first */
 	if (ifp->if_flags & IFF_RUNNING)
@@ -926,8 +924,8 @@ malo_init(struct ifnet *ifp)
 
 fail:
 	/* reset adapter */
-	DPRINTF(("%s: malo_init failed, reseting card\n",
-	    sc->sc_dev.dv_xname));
+	DPRINTF(1, "%s: malo_init failed, reseting card\n",
+	    sc->sc_dev.dv_xname);
 	malo_ctl_write4(sc, 0x0c18, (1 << 15));
 	return (error);
 }
@@ -1012,7 +1010,7 @@ malo_start(struct ifnet *ifp)
 	struct mbuf *m0;
 	struct ieee80211_node *ni;
 
-	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1072,7 +1070,7 @@ malo_stop(struct malo_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 
-	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
+	DPRINTF(1, "%s: %s\n", ifp->if_xname, __func__);
 
 	/* reset adapter */
 	if (ifp->if_flags & IFF_RUNNING)
@@ -1110,7 +1108,7 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	uint8_t chan;
 	int rate;
 
-	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	ostate = ic->ic_state;
 	timeout_del(&sc->sc_scan_to);
@@ -1121,8 +1119,8 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_SCAN:
 		if (ostate == IEEE80211_S_INIT) {
 			if (malo_cmd_set_prescan(sc) != 0)
-				DPRINTF(("%s: can't set prescan\n",
-				    sc->sc_dev.dv_xname));
+				DPRINTF(1, "%s: can't set prescan\n",
+				    sc->sc_dev.dv_xname);
 		} else {
 			chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 
@@ -1131,13 +1129,13 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		timeout_add(&sc->sc_scan_to, hz / 2);
 		break;
 	case IEEE80211_S_AUTH:
-		DPRINTF(("newstate AUTH\n"));
+		DPRINTF(1, "%s: newstate AUTH\n", sc->sc_dev.dv_xname);
 		malo_cmd_set_postscan(sc, ic->ic_myaddr, 1);
 		chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 		malo_cmd_set_channel(sc, chan);
 		break;
 	case IEEE80211_S_ASSOC:
-		DPRINTF(("newstate ASSOC\n"));
+		DPRINTF(1, "%s: newstate ASSOC\n", sc->sc_dev.dv_xname);
 		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 			malo_cmd_set_radio(sc, 1, 3); /* short preamble */
 		else
@@ -1158,7 +1156,7 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		malo_set_slot(sc);
 		break;
 	case IEEE80211_S_RUN:
-		DPRINTF(("newstate RUN\n"));
+		DPRINTF(1, "%s: newstate RUN\n", sc->sc_dev.dv_xname);
 		break;
 	default:
 		break;
@@ -1192,7 +1190,7 @@ malo_media_change(struct ifnet *ifp)
 {
 	int error;
 
-	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
+	DPRINTF(1, "%s: %s\n", ifp->if_xname, __func__);
 
 	error = ieee80211_media_change(ifp);
 	if (error != ENETRESET)
@@ -1303,7 +1301,7 @@ malo_next_scan(void *arg)
 	struct ifnet *ifp = &ic->ic_if;
 	int s;
 
-	DPRINTF(("%s: %s\n", ifp->if_xname, __func__));
+	DPRINTF(1, "%s: %s\n", ifp->if_xname, __func__);
 
 	s = splnet();
 
@@ -1323,7 +1321,7 @@ malo_tx_intr(struct malo_softc *sc)
 	struct malo_node *rn;
 	int stat;
 
-	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	stat = sc->sc_txring.stat;
 	for (;;) {
@@ -1343,11 +1341,13 @@ malo_tx_intr(struct malo_softc *sc)
 		/* check TX state */
 		switch (letoh32(desc->status) & 0x1) {
 		case 0x1:
-			DPRINTFN(2, ("data frame was sent successfully\n"));
+			DPRINTF(2, "%s: data frame was sent successfully\n",
+			    sc->sc_dev.dv_xname);
 			ifp->if_opackets++;
 			break;
 		default:
-			DPRINTF(("data frame sending error\n"));
+			DPRINTF(1, "%s: data frame sending error\n",
+			    sc->sc_dev.dv_xname);
 			ifp->if_oerrors++;
 			break;
 		}
@@ -1367,7 +1367,8 @@ malo_tx_intr(struct malo_softc *sc)
 		desc->status = 0;
 		desc->len = 0;
 
-		DPRINTFN(2, ("tx done idx=%u\n", sc->sc_txring.stat));
+		DPRINTF(2, "%s: tx done idx=%u\n",
+		    sc->sc_txring.stat, sc->sc_dev.dv_xname);
 
 		sc->sc_txring.queued--;
 next:
@@ -1392,7 +1393,7 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ieee80211_frame *wh;
 	int error;
 
-	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
@@ -1479,8 +1480,8 @@ malo_tx_mgt(struct malo_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
 	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(2, ("%s: sending mgmt frame, pktlen=%u, idx=%u\n",
-	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur));
+	DPRINTF(2, "%s: sending mgmt frame, pktlen=%u, idx=%u\n",
+	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur);
 
 	sc->sc_txring.queued++;
 	sc->sc_txring.cur = (sc->sc_txring.cur + 1) % MALO_TX_RING_COUNT;
@@ -1504,7 +1505,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	struct mbuf *mnew;
 	int error;
 
-	DPRINTFN(2, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
+	DPRINTF(2, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
 
 	desc = &sc->sc_txring.desc[sc->sc_txring.cur];
 	data = &sc->sc_txring.data[sc->sc_txring.cur];
@@ -1597,8 +1598,8 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 	    sc->sc_txring.cur * sizeof(struct malo_tx_desc),
 	    sizeof(struct malo_tx_desc), BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(2, ("%s: sending data frame, pktlen=%u, idx=%u\n",
-	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur));
+	DPRINTF(2, "%s: sending data frame, pktlen=%u, idx=%u\n",
+	    sc->sc_dev.dv_xname, m0->m_pkthdr.len, sc->sc_txring.cur);
 
 	sc->sc_txring.queued++;
 	sc->sc_txring.cur = (sc->sc_txring.cur + 1) % MALO_TX_RING_COUNT;
@@ -1644,13 +1645,14 @@ malo_rx_intr(struct malo_softc *sc)
 		    sc->sc_rxring.cur * sizeof(struct malo_rx_desc),
 		    sizeof(struct malo_rx_desc), BUS_DMASYNC_POSTREAD);
 
-		DPRINTFN(3, ("rx intr idx=%d, rxctrl=0x%02x, rssi=%d, "
+		DPRINTF(3, "%s: rx intr idx=%d, rxctrl=0x%02x, rssi=%d, "
 		    "status=0x%02x, channel=%d, len=%d, res1=%02x, rate=%d, "
 		    "physdata=0x%04x, physnext=0x%04x, qosctrl=%02x, res2=%d\n",
+		    sc->sc_dev.dv_xname,
 		    sc->sc_rxring.cur, desc->rxctrl, desc->rssi, desc->status,
 		    desc->channel, letoh16(desc->len), desc->reserved1,
 		    desc->datarate, letoh32(desc->physdata),
-		    letoh32(desc->physnext), desc->qosctrl, desc->reserved2));
+		    letoh32(desc->physnext), desc->qosctrl, desc->reserved2);
 
 		if ((desc->rxctrl & 0x80) == 0)
 			break;
@@ -1784,7 +1786,7 @@ malo_load_bootimg(struct malo_softc *sc)
 	 * the ARM cpu. I don't know why we need to instruct the DMA
 	 * engine to move the code. This is a big riddle without docu.
 	 */
-	DPRINTF(("%s: loading boot firmware\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, "%s: loading boot firmware\n", sc->sc_dev.dv_xname);
 	malo_mem_write2(sc, 0xbef8, 0x001);
 	malo_mem_write2(sc, 0xbefa, size);
 	malo_mem_write4(sc, 0xbefc, 0);
@@ -1820,7 +1822,7 @@ malo_load_bootimg(struct malo_softc *sc)
 	malo_mem_write4(sc, 0xbefc, 0);
 	malo_send_cmd(sc, 0xc000bef8);
 
-	DPRINTF(("%s: boot firmware loaded\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, "%s: boot firmware loaded\n", sc->sc_dev.dv_xname);
 
 	return (0);
 }
@@ -1842,7 +1844,7 @@ malo_load_firmware(struct malo_softc *sc)
 		return (EIO);
 	}
 
-	DPRINTF(("%s: uploading firmware\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, "%s: uploading firmware\n", sc->sc_dev.dv_xname);
 
 	hdr = sc->sc_cmd_mem;
 	data = hdr + 1;
@@ -1866,7 +1868,7 @@ malo_load_firmware(struct malo_softc *sc)
 	}
 	free(ucode, M_DEVBUF);
 
-	DPRINTF(("%s: firmware upload finished\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, "%s: firmware upload finished\n", sc->sc_dev.dv_xname);
 
 	/*
 	 * send a command with size 0 to tell that the firmware has been
@@ -1884,7 +1886,7 @@ malo_load_firmware(struct malo_softc *sc)
 	    BUS_DMASYNC_POSTWRITE);
 	delay(100);
 
-	DPRINTF(("%s: loading firmware\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, "%s: loading firmware\n", sc->sc_dev.dv_xname);
 
 	/* wait until firmware has been loaded */
 	for (i = 0; i < 200; i++) {
@@ -1900,7 +1902,7 @@ malo_load_firmware(struct malo_softc *sc)
 		return (ETIMEDOUT);
 	}
 
-	DPRINTF(("%s: firmware loaded\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, "%s: firmware loaded\n", sc->sc_dev.dv_xname);
 
 	return (0);
 }
@@ -2051,11 +2053,11 @@ malo_cmd_get_spec(struct malo_softc *sc)
 		return (ETIMEDOUT);
 
 	/* get the data from the buffer */
-	DPRINTF(("%s: get_hw_spec: V%x R%x, #WCB %d, #Mcast %d, Regcode %d, "
+	DPRINTF(1, "%s: get_hw_spec: V%x R%x, #WCB %d, #Mcast %d, Regcode %d, "
 	    "#Ant %d\n", sc->sc_dev.dv_xname, htole16(spec->HwVersion),
 	    htole32(spec->FWReleaseNumber), htole16(spec->NumOfWCB),
 	    htole16(spec->NumOfMCastAdr), htole16(spec->RegionCode),
-	    htole16(spec->NumberOfAntenna)));
+	    htole16(spec->NumberOfAntenna));
 
 	/* tell the DMA engine where our rings are */
 	malo_mem_write4(sc, letoh32(spec->RxPdRdPtr) & 0xffff,
@@ -2341,7 +2343,7 @@ malo_cmd_response(struct malo_softc *sc)
 	    malo_cmd_string(hdr->cmd),
 	    malo_cmd_string_result(hdr->result));
 
-	if (malo_debug > 2)
+	if (malo_d > 2)
 		malo_hexdump(hdr, letoh16(hdr->size));
 #endif
 }
