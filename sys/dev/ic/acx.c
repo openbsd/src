@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.76 2007/08/05 22:40:38 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.77 2007/08/28 18:34:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1524,7 +1524,7 @@ acx_load_base_firmware(struct acx_softc *sc, const char *name)
 	error = loadfirmware(name, &ucode, &size);
 
 	if (error != 0) {
-		printf("%s: error %d, could not read microcode %s!\n",
+		printf("%s: error %d, could not read firmware %s\n",
 		    ifp->if_xname, error, name);
 		return (EIO);
 	}
@@ -1573,7 +1573,7 @@ acx_load_radio_firmware(struct acx_softc *sc, const char *name)
 	error = loadfirmware(name, &ucode, &size);
 
 	if (error != 0) {
-		printf("%s: error %d, could not read microcode %s!\n",
+		printf("%s: error %d, could not read firmware %s\n",
 		    ifp->if_xname, error, name);
 		return (EIO);
 	}

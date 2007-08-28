@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.36 2007/03/08 18:50:57 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.37 2007/08/28 18:34:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2429,7 +2429,7 @@ rt2661_init(struct ifnet *ifp)
 	uint8_t *ucode;
 	size_t size;
 	uint32_t tmp, sta[3];
-	int i, ntries;
+	int i, ntries, error;
 
 	/* for CardBus, power on the socket */
 	if (!(sc->sc_flags & RT2661_ENABLED)) {
@@ -2456,9 +2456,9 @@ rt2661_init(struct ifnet *ifp)
 			break;
 		}
 
-		if (loadfirmware(name, &ucode, &size) != 0) {
-			printf("%s: could not read microcode %s\n",
-			    sc->sc_dev.dv_xname, name);
+		if ((error = loadfirmware(name, &ucode, &size)) != 0) {
+			printf("%s: error %d, could not read firmware %s\n",
+			    sc->sc_dev.dv_xname, error, name);
 			rt2661_stop(ifp, 1);
 			return EIO;
 		}

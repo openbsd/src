@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.83 2007/07/18 18:10:31 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.84 2007/08/28 18:34:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -2151,8 +2151,8 @@ iwi_init(struct ifnet *ifp)
 	}
 
 	if ((error = loadfirmware(name, &data, &size)) != 0) {
-		printf("%s: could not read firmware %s\n",
-		    sc->sc_dev.dv_xname, name);
+		printf("%s: error %d, could not read firmware %s\n",
+		    sc->sc_dev.dv_xname, error, name);
 		goto fail1;
 	}
 

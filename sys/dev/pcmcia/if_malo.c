@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.55 2007/08/14 22:33:17 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.56 2007/08/28 18:34:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -452,8 +452,8 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 
 	/* read helper firmware image */
 	if ((error = loadfirmware(name, &ucode, &usize)) != 0) {
-		printf("%s: can't read microcode %s (error %d)!\n",
-		    sc->sc_dev.dv_xname, name, error);
+		printf("%s: error %d, could not read firmware %s\n",
+		    sc->sc_dev.dv_xname, error, name);
 		return (EIO);
 	}
 
@@ -511,8 +511,8 @@ cmalo_fw_load_main(struct malo_softc *sc)
 
 	/* read main firmware image */
 	if ((error = loadfirmware(name, &ucode, &usize)) != 0) {
-		printf("%s: can't read microcode %s (error %d)!\n",
-		    sc->sc_dev.dv_xname, name, error);
+		printf("%s: error %d, could not read firmware %s\n",
+		    sc->sc_dev.dv_xname, error, name);
 		return (EIO);
 	}
 

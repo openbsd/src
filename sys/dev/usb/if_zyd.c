@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.58 2007/06/14 10:11:15 mbalmer Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.59 2007/08/28 18:34:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -256,8 +256,8 @@ zyd_attachhook(void *xsc)
 
 	fwname = (sc->mac_rev == ZYD_ZD1211) ? "zd1211" : "zd1211b";
 	if ((error = loadfirmware(fwname, &fw, &size)) != 0) {
-		printf("%s: could not read firmware file %s (error=%d)\n",
-		    sc->sc_dev.dv_xname, fwname, error);
+		printf("%s: error %d, could not read firmware file %s\n",
+		    sc->sc_dev.dv_xname, error, fwname);
 		return;
 	}
 
