@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.287 2007/08/23 01:30:52 deraadt Exp $
+$OpenBSD: usbdevs,v 1.288 2007/08/28 09:44:17 henning Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -187,6 +187,7 @@ vendor ROCKFIRE		0x0583	Rockfire
 vendor RATOC		0x0584	RATOC Systems
 vendor ZYXEL		0x0586	ZyXEL Communication
 vendor ALCOR		0x058f	Alcor Micro
+vendor OMRON		0x0590	OMRON Corporation
 vendor IOMEGA		0x059b	Iomega
 vendor ATREND		0x059c	A-Trend Technology
 vendor AID		0x059d	Advanced Input Devices
@@ -1755,6 +1756,9 @@ product SIIG2 USBTOETHER	0x0109	USB TO Ethernet
 /* OmniVision Technologies, Inc. products */
 product OMNIVISION OV511	0x0511	OV511
 product OMNIVISION OV511PLUS	0xa511	OV511+
+
+/* OMRON products */
+product OMRON BX35F		0x0058	OMRON BX35F
 
 /* OnSpec Electronic, Inc. */
 product ONSPEC MD2		0x0103	disk
