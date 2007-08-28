@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.57 2007/08/13 20:27:13 krw Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.58 2007/08/28 12:52:06 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.57 2007/08/13 20:27:13 krw Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.58 2007/08/28 12:52:06 markus Exp $ (LBL)";
 #endif
 
 /*
@@ -71,6 +71,7 @@ int aflag;			/* translate network and broadcast addresses */
 int dflag;			/* print filter code */
 int eflag;			/* print ethernet header */
 int fflag;			/* don't translate "foreign" IP address */
+int Iflag;			/* include interface in output */
 int Lflag;			/* List available link types */
 int nflag;			/* leave addresses as numbers */
 int Nflag;			/* remove domains from printed host names */
@@ -87,6 +88,7 @@ int Xflag;			/* print packet in emacs-hexl style */
 int packettype;
 
 char *program_name;
+char *device = NULL;
 
 int32_t thiszone;		/* seconds offset from gmt to local time */
 
@@ -214,7 +216,7 @@ main(int argc, char **argv)
 {
 	int cnt = -1, op, i;
 	bpf_u_int32 localnet, netmask;
-	char *cp, *infile = NULL, *device = NULL, *RFileName = NULL;
+	char *cp, *infile = NULL, *RFileName = NULL;
 	char ebuf[PCAP_ERRBUF_SIZE], *WFileName = NULL;
 	pcap_handler printer;
 	struct bpf_program *fcode;
@@ -235,7 +237,7 @@ main(int argc, char **argv)
 
 	opterr = 0;
 	while ((op = getopt(argc, argv,
-	    "ac:deE:fF:i:lLnNOopqr:s:StT:vw:xXy:Y")) != -1)
+	    "ac:deE:fF:i:IlLnNOopqr:s:StT:vw:xXy:Y")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -265,6 +267,10 @@ main(int argc, char **argv)
 
 		case 'i':
 			device = optarg;
+			break;
+
+		case 'I':
+			++Iflag;
 			break;
 
 		case 'l':
@@ -663,7 +669,7 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-"Usage: %s [-adefLlNnOopqStvXx] [-c count] [-E [espalg:]espkey] [-F file]\n",
+"Usage: %s [-adefILlNnOopqStvXx] [-c count] [-E [espalg:]espkey] [-F file]\n",
 	    program_name);
 	(void)fprintf(stderr,
 "\t       [-i interface] [-r file] [-s snaplen] [-T type] [-w file]\n");

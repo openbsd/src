@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.64 2007/05/31 19:20:29 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.65 2007/08/28 12:52:06 markus Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 28 2007 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 .Sh SYNOPSIS
 .Nm tcpdump
 .Bk -words
-.Op Fl adefLlNnOopqStvXx
+.Op Fl adefILlNnOopqStvXx
 .Op Fl c Ar count
 .Oo Fl E Oo Ar espalg : Oc Ns
 .Ar espkey Oc
@@ -104,6 +104,8 @@ internet addresses numerically rather than symbolically.
 This option is intended to get around serious brain damage in
 Sun's yp server \(em usually it hangs forever translating non-local
 internet numbers.
+.It Fl I
+Print the interface on each dump line.
 .It Fl i Ar interface
 Listen on
 .Ar interface .

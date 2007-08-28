@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.54 2006/06/01 17:18:38 moritz Exp $	*/
+/*	$OpenBSD: interface.h,v 1.55 2007/08/28 12:52:06 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.54 2006/06/01 17:18:38 moritz Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.55 2007/08/28 12:52:06 markus Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -40,6 +40,7 @@ extern int aflag;		/* translate network and broadcast addresses */
 extern int dflag;		/* print filter code */
 extern int eflag;		/* print ethernet header */
 extern int fflag;		/* don't translate "foreign" IP address */
+extern int Iflag;		/* include interface in output */
 extern int nflag;		/* leave addresses as numbers */
 extern int Nflag;		/* remove domains from printed host names */
 extern int oflag;		/* OS fingerprint */
@@ -51,6 +52,7 @@ extern int xflag;		/* print packet in hex */
 extern int Xflag;		/* print packet in hex/ascii */
 
 extern int packettype;		/* as specified by -T */
+extern char *device;		/* as specified by -i  */
 #define PT_VAT		1	/* Visual Audio Tool */
 #define PT_WB		2	/* distributed White Board */
 #define PT_RPC		3	/* Remote Procedure Call */
