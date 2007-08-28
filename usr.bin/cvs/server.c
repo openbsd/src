@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.66 2007/08/23 13:17:53 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.67 2007/08/28 19:10:18 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -565,7 +565,7 @@ void
 cvs_server_release(char *data)
 {
 	if (chdir(server_currentdir) == -1)
-		fatal("cvs_server_init: %s", strerror(errno));
+		fatal("cvs_server_release: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_RELEASE;
 	cvs_release(server_argc, server_argv);
@@ -617,7 +617,7 @@ cvs_server_rlog(char *data)
 	    cvsroot->cr_dir, server_currentdir);
 
 	if (chdir(fpath) == -1)
-		fatal("cvs_server_log: %s", strerror(errno));
+		fatal("cvs_server_rlog: %s", strerror(errno));
 
 	cvs_cmdop = CVS_OP_RLOG;
 	cvs_getlog(server_argc, server_argv);
