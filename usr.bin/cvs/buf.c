@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.63 2007/08/29 09:35:42 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.64 2007/08/29 21:15:06 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -110,7 +110,7 @@ cvs_buf_load_fd(int fd, u_int flags)
 		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
 		if (ret == -1)
-			fatal("cvs_buf_load: read: %s", strerror(errno));
+			fatal("cvs_buf_load_fd: read: %s", strerror(errno));
 		else if (ret == 0)
 			break;
 
