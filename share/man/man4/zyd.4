@@ -1,4 +1,4 @@
-.\" $OpenBSD: zyd.4,v 1.23 2007/05/31 19:19:53 jmc Exp $
+.\" $OpenBSD: zyd.4,v 1.24 2007/08/29 20:09:30 damien Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 29 2007 $
 .Dt ZYD 4
 .Os
 .Sh NAME
@@ -255,8 +255,8 @@ Join an existing BSS network,
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "zyd%d: could not read firmware file %s (error=%d)"
-For some reason, the driver was unable to read the firmware file from the
+.It "zyd%d: error %d, could not read firmware %s"
+For some reason, the driver was unable to read the firmware image from the
 filesystem.
 The file might be missing or corrupted.
 .It "zyd%d: could not load firmware (error=%d)"

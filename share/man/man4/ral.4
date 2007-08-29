@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.71 2007/07/21 11:35:57 sobrado Exp $
+.\" $OpenBSD: ral.4,v 1.72 2007/08/29 20:09:30 damien Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2007 $
+.Dd $Mdocdate: August 29 2007 $
 .Os
 .Dt RAL 4
 .Sh NAME
@@ -438,8 +438,8 @@ Join an existing BSS network,
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "ral%d: could not read microcode %s"
-For some reason, the driver was unable to read the microcode file from the
+.It "ral%d: error %d, could not read firmware %s"
+For some reason, the driver was unable to read the firmware image from the
 filesystem.
 The file might be missing or corrupted.
 .It "ral%d: could not load 8051 microcode"

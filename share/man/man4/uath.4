@@ -1,4 +1,4 @@
-.\" $OpenBSD: uath.4,v 1.8 2007/05/31 19:19:52 jmc Exp $
+.\" $OpenBSD: uath.4,v 1.9 2007/08/29 20:09:30 damien Exp $
 .\"
 .\" Copyright (c) 2006
 .\"     Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 29 2007 $
 .Os
 .Dt UATH 4
 .Sh NAME
@@ -285,8 +285,9 @@ Join an existing BSS network,
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "uath%d: could not read firmware (error=%d)"
-The driver was unable to read the firmware file from the filesystem.
+.It "uath%d: error %d, could not read firmware %s"
+For some reason, the driver was unable to read the firmware image from the
+filesystem.
 The file might be missing or corrupted.
 .It "uath%d: could not load firmware (error=%s)"
 An error occurred while attempting to upload the firmware to the onboard
