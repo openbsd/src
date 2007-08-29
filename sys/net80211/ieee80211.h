@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.33 2007/08/01 12:23:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.34 2007/08/29 19:57:17 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -419,7 +419,7 @@ enum ieee80211_edca_ac {
 /* Organizationally Unique Identifiers */
 /* See http://standards.ieee.org/regauth/oui/oui.txt for a list */
 #define ATHEROS_OUI	((const u_int8_t[]){ 0x00, 0x03, 0x7f })
-#define BROADCOM_OUI	((const u_int8_t[]){ 0c00, 0x90, 0x4c })
+#define BROADCOM_OUI	((const u_int8_t[]){ 0x00, 0x90, 0x4c })
 #define IEEE80211_OUI	((const u_int8_t[]){ 0x00, 0x0f, 0xac })
 #define MICROSOFT_OUI	((const u_int8_t[]){ 0x00, 0x50, 0xf2 })
 
