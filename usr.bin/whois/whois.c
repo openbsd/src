@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.40 2007/08/06 19:16:06 sobrado Exp $   */
+/*      $OpenBSD: whois.c,v 1.41 2007/08/29 08:59:18 henning Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -55,6 +55,7 @@
 #define	RUNICHOST	"whois.ripn.net"
 #define	MNICHOST	"whois.ra.net"
 #define LNICHOST	"whois.lacnic.net"
+#define	AFNICHOST	"whois.afrinic.net"
 #define SNICHOST	"whois.6bone.net"
 #define BNICHOST	"whois.registro.br"
 #define	QNICHOST_TAIL	".whois-servers.net"
@@ -66,7 +67,8 @@
 #define WHOIS_QUICK		0x02
 
 const char *port_whois = WHOIS_PORT;
-const char *ip_whois[] = { LNICHOST, RNICHOST, PNICHOST, BNICHOST, NULL };
+const char *ip_whois[] = { LNICHOST, RNICHOST, PNICHOST, BNICHOST,
+    AFNICHOST, NULL };
 
 __dead void usage(void);
 int whois(const char *, const char *, const char *, int);
