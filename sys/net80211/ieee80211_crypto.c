@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.34 2007/08/23 16:49:57 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.35 2007/08/29 19:54:46 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -167,7 +167,7 @@ ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	wh = mtod(m0, struct ieee80211_frame *);
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    ni->ni_pairwise_cipher == IEEE80211_CIPHER_USEGROUP) {
-		size_t hdrlen = sizeof(*wh);	/* XXX QoS */
+		int hdrlen = ieee80211_get_hdrlen(wh);
 		u_int8_t *ivp = (u_int8_t *)wh + hdrlen;
 		/* key identifier is always located at the same index */
 		int kid = ivp[IEEE80211_WEP_IVLEN] >> 6;
@@ -199,9 +199,11 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
 {
 	struct ieee80211_frame *wh;
-	size_t hdrlen = sizeof(*wh);	/* XXX QoS */
 	u_int8_t *ivp;
+	int hdrlen;
 
+	wh = mtod(m0, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
 	M_PREPEND(m0, IEEE80211_CCMP_HDRLEN, M_NOWAIT);
 	if (m0 == NULL)
 		return m0;
@@ -229,11 +231,12 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
 {
 	struct ieee80211_frame *wh;
-	size_t hdrlen = sizeof(*wh);	/* XXX QoS */
 	u_int64_t pn;
 	u_int8_t *ivp;
+	int hdrlen;
 
 	wh = mtod(m0, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
 	ivp = (u_int8_t *)wh + hdrlen;
 
 	/* check that ExtIV bit is be set */
@@ -274,9 +277,11 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
 {
 	struct ieee80211_frame *wh;
-	size_t hdrlen = sizeof(*wh);	/* XXX QoS */
 	u_int8_t *ivp;
+	int hdrlen;
 
+	wh = mtod(m0, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
 	M_PREPEND(m0, IEEE80211_TKIP_HDRLEN, M_NOWAIT);
 	if (m0 == NULL)
 		return m0;
@@ -306,11 +311,12 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
 {
 	struct ieee80211_frame *wh;
-	size_t hdrlen = sizeof(*wh);	/* XXX QoS */
 	u_int64_t tsc;
 	u_int8_t *ivp;
+	int hdrlen;
 
 	wh = mtod(m0, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
 	ivp = (u_int8_t *)wh + hdrlen;
 
 	/* check that ExtIV bit is be set */
@@ -399,12 +405,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 			n->m_len = n->m_ext.ext_size;
 	}
 	wh = mtod(m, struct ieee80211_frame *);
-	if ((wh->i_fc[0] &
-	     (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
-	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
-		len = sizeof(struct ieee80211_qosframe);
-	else
-		len = sizeof(struct ieee80211_frame);
+	len = ieee80211_get_hdrlen(wh);
 	memcpy(mtod(n, caddr_t), wh, len);
 	wh = mtod(n, struct ieee80211_frame *);
 	left -= len;

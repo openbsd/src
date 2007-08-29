@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.69 2007/08/27 20:14:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.70 2007/08/29 19:54:46 damien Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -368,10 +368,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			/* can't get there */
 			goto out;
 		}
-		if (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)
-			hdrlen = sizeof(struct ieee80211_qosframe);
-		else
-			hdrlen = sizeof(struct ieee80211_frame);
+
+		hdrlen = ieee80211_get_hdrlen(wh);
+
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 			if (ic->ic_flags & IEEE80211_F_WEPON) {
 				m = ieee80211_wep_crypt(ifp, m, 0);
@@ -1981,10 +1980,6 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	if (pmkid != NULL && pmkid[1] < 4 + 16)
 		return;
 
-	/* update the last seen value of the key replay counter field */
-	ni->ni_replaycnt = BE_READ_8(key->replaycnt);
-	/* do not set ni_replaycnt_ok since the frame contains no MIC */
-
 	/* generate a new nonce (SNonce) */
 	get_random_bytes(snonce, EAPOL_KEY_NONCE_LEN);
 
@@ -2018,6 +2013,7 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
     struct ieee80211_eapol_key *key, struct ieee80211_node *ni,
     const u_int8_t *rsn)
 {
+	struct ieee80211_ptk tptk;
 	const u_int8_t *pmk;
 	size_t pmk_len;
 
@@ -2028,14 +2024,16 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 
 	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING;
 
-	/* derive PTK from PMK */
+	/* derive TPTK from PMK */
 	ieee80211_derive_ptk(pmk, pmk_len, ic->ic_myaddr, ni->ni_macaddr,
-	    ni->ni_nonce, key->nonce, (u_int8_t *)&ni->ni_ptk,
-	    sizeof(ni->ni_ptk));
+	    ni->ni_nonce, key->nonce, (u_int8_t *)&tptk, sizeof(tptk));
 
 	/* check Key MIC field using KCK */
-	if (ieee80211_eapol_key_check_mic(key, ni->ni_ptk.kck) != 0)
+	if (ieee80211_eapol_key_check_mic(key, tptk.kck) != 0)
 		return;
+
+	/* use TPTK as PTK now that MIC is verified */
+	memcpy(&ni->ni_ptk, &tptk, sizeof(tptk));
 
 	/*
 	 * The RSN IE must match bit-wise with what the STA included in its
@@ -2140,13 +2138,14 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		return;
 
 	/*
-	 * Check that first RSN IE is identical to the one received in
+	 * Check that first WPA/RSN IE is identical to the one received in
 	 * the beacon or probe response frame.
 	 */
 	if (ni->ni_rsnie == NULL || rsn1[1] != ni->ni_rsnie[1] ||
-	    memcmp(rsn1, ni->ni_rsnie, 2 + rsn1[1]) != 0)
+	    memcmp(rsn1, ni->ni_rsnie, 2 + rsn1[1]) != 0) {
 		/*ieee80211_new_state();*/
 		return;
+	}
 
 	/*
 	 * If a second RSN information element is present, use its pairwise
@@ -2169,18 +2168,22 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 
 	/* send message 4 to authenticator */
 	if (ieee80211_send_4way_msg4(ic, ni) != 0)
-		return;
+		return;	/* ..authenticator will timeout */
 
-	/* check that key length matches that of pairwise cipher */
-	if (BE_READ_2(key->keylen) !=
-	    ieee80211_cipher_keylen(ni->ni_pairwise_cipher))
-		return;
-	/* install the PTK */
-	k = &ni->ni_pairwise_key;
-	ieee80211_map_ptk(&ni->ni_ptk, ni->ni_pairwise_cipher, k);
-	if (ic->ic_set_key != NULL && (*ic->ic_set_key)(ic, ni, k) != 0)
-		return;
-
+	if (info & EAPOL_KEY_INSTALL) {
+		/* check that key length matches that of pairwise cipher */
+		if (BE_READ_2(key->keylen) !=
+		    ieee80211_cipher_keylen(ni->ni_pairwise_cipher))
+			return;
+		/* install the PTK */
+		k = &ni->ni_pairwise_key;
+		ieee80211_map_ptk(&ni->ni_ptk, ni->ni_pairwise_cipher, k);
+		if (ic->ic_set_key != NULL &&
+		    (*ic->ic_set_key)(ic, ni, k) != 0) {
+			/* XXX deauthenticate */
+			return;
+		}
+	}
 	if (gtk != NULL) {
 		u_int64_t rsc;
 		u_int8_t kid;
@@ -2198,12 +2201,18 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 		ieee80211_map_gtk(&gtk[8], ni->ni_group_cipher, kid,
 		    gtk[6] & (1 << 2), rsc, k);
 		if (ic->ic_set_key != NULL &&
-		    (*ic->ic_set_key)(ic, ni, k) != 0)
+		    (*ic->ic_set_key)(ic, ni, k) != 0) {
+			/* XXX deauthenticate */
 			return;
+		}
 	}
-
-	/* mark the PAE port as valid */
-	ni->ni_port_valid = 1;
+	if (info & EAPOL_KEY_SECURE) {
+		if (ic->ic_opmode == IEEE80211_M_IBSS) {
+			if (++ni->ni_key_count == 2)
+				ni->ni_port_valid = 1;
+		} else
+			ni->ni_port_valid = 1;
+	}
 }
 
 /*
@@ -2545,7 +2554,7 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni)
 {
 	struct ieee80211_eapol_key *key;
-	u_int16_t info;
+	u_int16_t info, desc;
 
 	if (m0->m_len < sizeof(struct ether_header) + sizeof(*key))
 		goto out;
@@ -2570,8 +2579,13 @@ ieee80211_recv_eapol(struct ieee80211com *ic, struct mbuf *m0,
 #endif
 	info = BE_READ_2(key->info);
 
+	/* discard EAPOL-Key frames with an unknown descriptor version */
+	desc = info & EAPOL_KEY_VERSION_MASK;
+	if (desc != EAPOL_KEY_DESC_V1 && desc != EAPOL_KEY_DESC_V2)
+		goto out;
+
 	if (ni->ni_pairwise_cipher == IEEE80211_CIPHER_CCMP &&
-	    (info & EAPOL_KEY_VERSION_MASK) != EAPOL_KEY_DESC_V2)
+	    desc != EAPOL_KEY_DESC_V2)
 		goto out;
 
 	/* determine message type (see 8.5.3.7) */
