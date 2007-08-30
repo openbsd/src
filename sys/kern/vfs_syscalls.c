@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.141 2007/08/06 16:58:26 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.142 2007/08/30 12:35:27 thib Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -158,7 +158,6 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 			vput(vp);
 			return (error);
 		}
-		VOP_UNLOCK(vp, 0, p);
 		mp->mnt_flag |= SCARG(uap, flags) & (MNT_RELOAD | MNT_UPDATE);
 		goto update;
 	}
@@ -269,7 +268,7 @@ update:
 		mp->mnt_stat.f_ctime = time_second;
 	}
 	if (mp->mnt_flag & MNT_UPDATE) {
-		vrele(vp);
+		vput(vp);
 		if (mp->mnt_flag & MNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
 		mp->mnt_flag &=~
