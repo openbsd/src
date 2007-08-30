@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.12 2007/08/24 01:16:36 deraadt Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.13 2007/08/30 05:06:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -47,9 +47,12 @@ struct uberry_softc {
 #define UBERRY_INTERFACE_NO		0
 #define UBERRY_CONFIG_NO		1
 
+/*
+ * Do not match on the following device, because it is type umass
+ * { USB_VENDOR_RIM, USB_PRODUCT_RIM_PEARL_DUAL },
+ */
 struct usb_devno const uberry_devices[] = {
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY },
-	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_PEARL_DUAL },
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_PEARL }
 };
 
@@ -103,8 +106,12 @@ uberry_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Enable configuration, to keep it connected... */
 	if (usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1) != 0) {
-		printf("%s: could not set configuration no\n",
-		    sc->sc_dev.dv_xname);
+		/*
+		 * Really ancient (ie. 7250) devices when off will
+		 * only charge at 100mA when turned off.
+		 */
+		printf("%s: Charging at %dmA\n", sc->sc_dev.dv_xname,
+		    sc->sc_udev->power);
 		return;
 	}
 
@@ -152,7 +159,6 @@ uberry_detach(struct device *self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    &sc->sc_dev);
-
 	return 0;
 }
 

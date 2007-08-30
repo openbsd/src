@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.288 2007/08/28 09:44:17 henning Exp $
+$OpenBSD: usbdevs,v 1.289 2007/08/30 05:06:21 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1942,7 +1942,7 @@ product REALTEK RTL8187		0x8187	RTL8187
 
 /* Research In Motion products */
 product RIM BLACKBERRY		0x0001	Blackberry
-product RIM PEARL_DUAL		0x0004	Blackberry pearl dual
+product RIM PEARL_DUAL		0x0004	RIM Mass Storage Device
 product RIM PEARL		0x0006	Blackberry pearl
 
 /* Roland products */
