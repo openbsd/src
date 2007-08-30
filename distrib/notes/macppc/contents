@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.20 2006/08/16 20:49:30 aanriot Exp $
+dnl	$OpenBSD: contents,v 1.21 2007/08/30 04:21:16 deraadt Exp $
 TopPart
 
 OpenBSDdistsets
@@ -6,6 +6,8 @@ OpenBSDdistsets
 OpenBSDbsd
 
 OpenBSDrd
+
+OpenBSDinstalliso
 
 OpenBSDcd
 

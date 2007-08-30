@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.19 2006/08/16 20:49:30 aanriot Exp $
+dnl	$OpenBSD: contents,v 1.20 2007/08/30 04:21:16 deraadt Exp $
 TopPart
 
 dnl uncomment as stuff becomes available
@@ -14,10 +14,6 @@ dnl	floppyC{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
 dnl			this one features most of the cardbus and
 dnl			PCMCIA drivers; see below.
 
-	cdrom{:--:}OSrev.fs	The MACHINE boot and installation 2.88MB
-			floppy image that contains almost all OpenBSD
-			drivers; see below.
-
 	pxeboot		i386-specific second-stage PXE bootstrap (for
 			network installs); see below.
 
@@ -28,6 +24,8 @@ OpenBSDbsd
 OpenBSDbsdmp
 
 OpenBSDrd
+
+OpenBSDinstalliso
 
 OpenBSDcd
 

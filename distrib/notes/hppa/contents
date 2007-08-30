@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.16 2006/02/28 20:42:35 miod Exp $
+dnl	$OpenBSD: contents,v 1.17 2007/08/30 04:21:16 deraadt Exp $
 TopPart
 
 OpenBSDdistsets
@@ -6,6 +6,10 @@ OpenBSDdistsets
 OpenBSDbsd
 
 OpenBSDrd
+
+OpenBSDinstalliso
+
+OpenBSDcd
 
 	lif{:--:}OSrev.fs	A LIF bootable miniroot image, suitable for network
 			boot.
