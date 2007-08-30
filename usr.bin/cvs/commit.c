@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.108 2007/06/28 17:45:49 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.109 2007/08/30 11:07:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -133,7 +133,8 @@ cvs_commit(int argc, char **argv)
 		if (!(flags & CR_RECURSE_DIRS))
 			cvs_client_send_request("Argument -l");
 
-		cvs_client_send_request("Argument -m%s", logmsg);
+		if (logmsg != NULL)
+			cvs_client_send_logmsg(logmsg);
 
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");

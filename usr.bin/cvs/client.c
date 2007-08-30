@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.71 2007/07/17 20:29:58 xsa Exp $	*/
+/*	$OpenBSD: client.c,v 1.72 2007/08/30 11:07:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -374,6 +374,27 @@ cvs_client_get_responses(void)
 		cvs_client_read_response();
 
 	end_of_response = 0;
+}
+
+void
+cvs_client_send_logmsg(char *msg)
+{
+	char *buf, *p, *q;
+
+	(void)xasprintf(&buf, "%s\n", msg);
+
+	cvs_client_send_request("Argument -m");
+	if ((p = strchr(buf, '\n')) != NULL)
+		*p++ = '\0';
+	cvs_client_send_request("Argument %s", buf);
+	for (q = p; p != NULL; q = p) {
+		if ((p = strchr(q, '\n')) != NULL) {
+			*p++ = '\0';
+			cvs_client_send_request("Argumentx %s", q);
+		}
+	}
+
+	free(buf);
 }
 
 void

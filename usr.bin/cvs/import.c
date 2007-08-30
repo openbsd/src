@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.74 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.75 2007/08/30 11:07:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -114,7 +114,7 @@ cvs_import(int argc, char **argv)
 		if (kflag != RCS_KWEXP_DEFAULT)
 			cvs_client_send_request("Argument -k%s", koptstr);
 
-		cvs_client_send_request("Argument -m%s", logmsg);
+		cvs_client_send_logmsg(logmsg);
 		cvs_client_send_request("Argument %s", import_repository);
 		cvs_client_send_request("Argument %s", vendor_tag);
 		cvs_client_send_request("Argument %s", release_tag);
