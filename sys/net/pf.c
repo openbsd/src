@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.555 2007/08/30 09:28:48 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.556 2007/08/30 10:43:43 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1295,6 +1295,7 @@ pf_addr_wrap_neq(struct pf_addr_wrap *aw1, struct pf_addr_wrap *aw2)
 		return (1);
 	switch (aw1->type) {
 	case PF_ADDR_ADDRMASK:
+	case PF_ADDR_RANGE:
 		if (PF_ANEQ(&aw1->v.a.addr, &aw2->v.a.addr, 0))
 			return (1);
 		if (PF_ANEQ(&aw1->v.a.mask, &aw2->v.a.mask, 0))
