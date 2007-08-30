@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.39 2007/05/11 11:29:26 xsa Exp $	*/
+/*	$OpenBSD: root.c,v 1.40 2007/08/30 11:19:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -47,18 +47,6 @@ const char *cvs_methods[] = {
 #define CVS_NBMETHODS	(sizeof(cvs_methods)/sizeof(cvs_methods[0]))
 
 /*
- * CVSROOT cache
- *
- * Whenever cvsroot_parse() gets called for a specific string, it first
- * checks in the cache to see if there is already a parsed version of the
- * same string and returns a pointer to it in case one is found (it also
- * increases the reference count).  Otherwise, it does the parsing and adds
- * the result to the cache for future hits.
- */
-static TAILQ_HEAD(, cvsroot) cvs_rcache = TAILQ_HEAD_INITIALIZER(cvs_rcache);
-static void cvsroot_free(struct cvsroot *);
-
-/*
  * cvsroot_parse()
  *
  * Parse a CVS root string (as found in CVS/Root files or the CVSROOT
@@ -68,29 +56,18 @@ static void cvsroot_free(struct cvsroot *);
  * Returns a pointer to the allocated information on success, or NULL
  * on failure.
  */
-struct cvsroot *
+static struct cvsroot *
 cvsroot_parse(const char *str)
 {
 	u_int i;
 	char *cp, *sp, *pp;
 	const char *errstr;
-	struct cvsroot *root;
+	static struct cvsroot *root = NULL;
 
-	/*
-	 * Look if we have it in cache, if we found it add it to the cache
-	 * at the first position again.
-	 */
-	TAILQ_FOREACH(root, &cvs_rcache, root_cache) {
-		if (root->cr_str != NULL && strcmp(str, root->cr_str) == 0) {
-			TAILQ_REMOVE(&cvs_rcache, root, root_cache);
-			TAILQ_INSERT_HEAD(&cvs_rcache, root, root_cache);
-			root->cr_ref++;
-			return (root);
-		}
-	}
+	if (root != NULL)
+		return (root);
 
 	root = xcalloc(1, sizeof(*root));
-	root->cr_ref = 1;
 	root->cr_method = CVS_METHOD_NONE;
 	CVS_RSTVR(root);
 
@@ -126,7 +103,6 @@ cvsroot_parse(const char *str)
 		if (root->cr_method == CVS_METHOD_NONE)
 			root->cr_method = CVS_METHOD_LOCAL;
 		/* stop here, it's just a path */
-		TAILQ_INSERT_HEAD(&cvs_rcache, root, root_cache);
 		return (root);
 	}
 
@@ -173,42 +149,7 @@ cvsroot_parse(const char *str)
 			root->cr_method = CVS_METHOD_LOCAL;
 	}
 
-	/* add to the cache */
-	TAILQ_INSERT_HEAD(&cvs_rcache, root, root_cache);
 	return (root);
-}
-
-/*
- * cvsroot_remove()
- *
- * Remove a CVSROOT structure from the cache, and free it.
- */
-void
-cvsroot_remove(struct cvsroot *root)
-{
-	root->cr_ref--;
-	if (root->cr_ref == 0) {
-		TAILQ_REMOVE(&cvs_rcache, root, root_cache);
-		cvsroot_free(root);
-	}
-}
-
-/*
- * cvsroot_free()
- *
- * Free a CVSROOT structure previously allocated and returned by
- * cvsroot_parse().
- */
-static void
-cvsroot_free(struct cvsroot *root)
-{
-	if (root->cr_str != NULL)
-		xfree(root->cr_str);
-	if (root->cr_buf != NULL)
-		xfree(root->cr_buf);
-	if (root->cr_version != NULL)
-		xfree(root->cr_version);
-	xfree(root);
 }
 
 /*

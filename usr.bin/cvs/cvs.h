@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.141 2007/07/03 13:22:42 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.142 2007/08/30 11:19:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -209,7 +209,6 @@ struct cvsroot {
 	char   *cr_host;
 	char   *cr_dir;
 	u_int   cr_port;
-	u_int   cr_ref;
 
 	/* connection data */
 	u_int   cr_flags;
@@ -369,9 +368,7 @@ void		cvs_parse_tagfile(char *, char **, char **, int *);
 void		cvs_write_tagfile(const char *, char *, char *, int);
 
 /* root.c */
-struct cvsroot	*cvsroot_parse(const char *);
 struct cvsroot	*cvsroot_get(const char *);
-void		 cvsroot_remove(struct cvsroot *);
 
 /* logmsg.c */
 char *	cvs_logmsg_read(const char *path);
