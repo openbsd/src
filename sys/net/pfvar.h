@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.254 2007/07/13 09:17:48 markus Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.255 2007/08/30 09:28:48 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -112,7 +112,8 @@ enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS,
 enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
 	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN };
 enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
-	  PF_ADDR_TABLE, PF_ADDR_RTLABEL, PF_ADDR_URPFFAILED };
+	  PF_ADDR_TABLE, PF_ADDR_RTLABEL, PF_ADDR_URPFFAILED,
+	  PF_ADDR_RANGE };
 #define PF_POOL_TYPEMASK	0x0f
 #define PF_POOL_STICKYADDR	0x20
 #define	PF_WSCALE_FLAG		0x80
@@ -329,6 +330,9 @@ struct pfi_dynaddr {
 		    !pfr_match_addr((aw)->p.tbl, (x), (af))) ||		\
 		((aw)->type == PF_ADDR_DYNIFTL &&			\
 		    !pfi_match_addr((aw)->p.dyn, (x), (af))) || 	\
+		((aw)->type == PF_ADDR_RANGE &&				\
+		    !pf_match_addr_range(&(aw)->v.a.addr,		\
+		    &(aw)->v.a.mask, (x), (af))) || 			\
 		((aw)->type == PF_ADDR_ADDRMASK &&			\
 		    !PF_AZERO(&(aw)->v.a.mask, (af)) &&			\
 		    !PF_MATCHA(0, &(aw)->v.a.addr,			\
@@ -1611,6 +1615,8 @@ int	pflog_packet(struct pfi_kif *, struct mbuf *, sa_family_t, u_int8_t,
 	    u_int8_t, struct pf_rule *, struct pf_rule *, struct pf_ruleset *,
 	    struct pf_pdesc *);
 int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
+	    struct pf_addr *, sa_family_t);
+int	pf_match_addr_range(struct pf_addr *, struct pf_addr *,
 	    struct pf_addr *, sa_family_t);
 int	pf_match(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
 int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);

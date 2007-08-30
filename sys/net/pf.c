@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.554 2007/08/28 16:09:12 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.555 2007/08/30 09:28:48 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1788,6 +1788,44 @@ pf_match_addr(u_int8_t n, struct pf_addr *a, struct pf_addr *m,
 		else
 			return (0);
 	}
+}
+
+/*
+ * Return 1 if b <= a <= e, otherwise return 0.
+ */
+int
+pf_match_addr_range(struct pf_addr *b, struct pf_addr *e,
+    struct pf_addr *a, sa_family_t af)
+{
+	switch (af) {
+#ifdef INET
+	case AF_INET:
+		if ((a->addr32[0] < b->addr32[0]) ||
+		    (a->addr32[0] > e->addr32[0]))
+			return (0);
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6: {
+		int	i;
+
+		/* check a >= b */
+		for (i = 0; i < 4; ++i)
+			if (a->addr32[i] > b->addr32[i])
+				break;
+			else if (a->addr32[i] < b->addr32[i])
+				return (0);
+		/* check a <= e */
+		for (i = 0; i < 4; ++i)
+			if (a->addr32[i] < e->addr32[i])
+				break;
+			else if (a->addr32[i] > e->addr32[i])
+				return (0);
+		break;
+	}
+#endif /* INET6 */
+	}
+	return (1);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.519 2007/06/21 19:30:03 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.520 2007/08/30 09:28:49 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1244,6 +1244,10 @@ table_opt	: STRING		{
 				switch (n->addr.type) {
 				case PF_ADDR_ADDRMASK:
 					continue; /* ok */
+				case PF_ADDR_RANGE:
+					yyerror("address ranges are not "
+					    "permitted inside tables");
+					break;
 				case PF_ADDR_DYNIFTL:
 					yyerror("dynamic addresses are not "
 					    "permitted inside tables");
@@ -2494,6 +2498,39 @@ host		: STRING			{
 			}
 			free($1);
 
+		}
+		| STRING '-' STRING		{
+			struct node_host *b, *e;
+
+			if ((b = host($1)) == NULL || (e = host($3)) == NULL) {
+				free($1);
+				free($3);
+				yyerror("could not parse host specification");
+				YYERROR;
+			}
+			if (b->af != e->af ||
+			    b->addr.type != PF_ADDR_ADDRMASK ||
+			    e->addr.type != PF_ADDR_ADDRMASK ||
+			    unmask(&b->addr.v.a.mask, b->af) !=
+			    (b->af == AF_INET ? 32 : 128) ||
+			    unmask(&e->addr.v.a.mask, e->af) !=
+			    (e->af == AF_INET ? 32 : 128) ||
+			    b->next != NULL || b->not ||
+			    e->next != NULL || e->not) {
+				free(b);
+				free(e);
+				free($1);
+				free($3);
+				yyerror("invalid address range");
+				YYERROR;
+			}
+			memcpy(&b->addr.v.a.mask, &e->addr.v.a.addr,
+			    sizeof(b->addr.v.a.mask));
+			b->addr.type = PF_ADDR_RANGE;
+			$$ = b;
+			free(e);
+			free($1);
+			free($3);
 		}
 		| STRING '/' number		{
 			char	*buf;
