@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.14 2006/12/27 19:11:08 kettenis Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.15 2007/08/30 16:41:03 ckuethe Exp $	*/
 /*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -114,6 +114,8 @@ static const struct mii_phydesc inphys[] = {
 	  MII_STR_INTEL_I82562EM },
 	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I82562ET,
 	  MII_STR_INTEL_I82562ET },
+	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I82562G,
+	  MII_STR_INTEL_I82562G },
 
 	{ 0,			0,
 	  NULL },
