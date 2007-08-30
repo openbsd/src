@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.88 2006/11/28 18:20:03 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.89 2007/08/30 16:40:26 ckuethe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.85 2006/11/28 18:19:49 brad Exp 
+ *	OpenBSD: miidevs,v 1.86 2007/08/30 16:40:10 ckuethe Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -285,6 +285,8 @@
 #define	MII_STR_xxINTEL_I82553	"i82553 10/100 PHY"
 #define	MII_MODEL_INTEL_I82555	0x0015
 #define	MII_STR_INTEL_I82555	"i82555 10/100 PHY"
+#define	MII_MODEL_INTEL_I82562G	0x0031
+#define	MII_STR_INTEL_I82562G	"i82562G 10/100 PHY"
 #define	MII_MODEL_INTEL_I82562EM	0x0032
 #define	MII_STR_INTEL_I82562EM	"i82562EM 10/100 PHY"
 #define	MII_MODEL_INTEL_I82562ET	0x0033
