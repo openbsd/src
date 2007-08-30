@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.556 2007/08/30 10:43:43 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.557 2007/08/30 13:07:06 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -214,7 +214,7 @@ int			 pf_check_proto_cksum(struct mbuf *, int, int,
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
 struct pf_state		*pf_find_state(struct pfi_kif *,
-			    struct pf_state_key_cmp *, u_int8_t);
+			    struct pf_state_key_cmp *, u_int);
 int			 pf_src_connlimit(struct pf_state **);
 void			 pf_stateins_err(const char *, struct pf_state *,
 			    struct pfi_kif *);
@@ -233,10 +233,7 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 
 #define STATE_LOOKUP()							\
 	do {								\
-		if (direction == PF_IN)					\
-			*state = pf_find_state(kif, &key, PF_EXT_GWY);	\
-		else							\
-			*state = pf_find_state(kif, &key, PF_LAN_EXT);	\
+		*state = pf_find_state(kif, &key, direction);		\
 		if (*state == NULL || (*state)->timeout == PFTM_PURGE)	\
 			return (PF_DROP);				\
 		if (direction == PF_OUT &&				\
@@ -526,19 +523,19 @@ pf_find_state_byid(struct pf_state_cmp *key)
 }
 
 struct pf_state *
-pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int8_t tree)
+pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir)
 {
 	struct pf_state_key	*sk;
 	struct pf_state		*s;
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	switch (tree) {
-	case PF_LAN_EXT:
+	switch (dir) {
+	case PF_OUT:
 		sk = RB_FIND(pf_state_tree_lan_ext, &pf_statetbl_lan_ext,
 		    (struct pf_state_key *)key);
 		break;
-	case PF_EXT_GWY:
+	case PF_IN:
 		sk = RB_FIND(pf_state_tree_ext_gwy, &pf_statetbl_ext_gwy,
 		    (struct pf_state_key *)key);
 		break;
@@ -556,19 +553,19 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int8_t tree)
 }
 
 struct pf_state *
-pf_find_state_all(struct pf_state_key_cmp *key, u_int8_t tree, int *more)
+pf_find_state_all(struct pf_state_key_cmp *key, u_int dir, int *more)
 {
 	struct pf_state_key	*sk;
 	struct pf_state		*s, *ret = NULL;
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	switch (tree) {
-	case PF_LAN_EXT:
+	switch (dir) {
+	case PF_OUT:
 		sk = RB_FIND(pf_state_tree_lan_ext,
 		    &pf_statetbl_lan_ext, (struct pf_state_key *)key);
 		break;
-	case PF_EXT_GWY:
+	case PF_IN:
 		sk = RB_FIND(pf_state_tree_ext_gwy,
 		    &pf_statetbl_ext_gwy, (struct pf_state_key *)key);
 		break;
@@ -2306,15 +2303,15 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP ||
 		    proto == IPPROTO_ICMP)) {
 			key.gwy.port = dport;
-			if (pf_find_state_all(&key, PF_EXT_GWY, NULL) == NULL)
+			if (pf_find_state_all(&key, PF_IN, NULL) == NULL)
 				return (0);
 		} else if (low == 0 && high == 0) {
 			key.gwy.port = *nport;
-			if (pf_find_state_all(&key, PF_EXT_GWY, NULL) == NULL)
+			if (pf_find_state_all(&key, PF_IN, NULL) == NULL)
 				return (0);
 		} else if (low == high) {
 			key.gwy.port = htons(low);
-			if (pf_find_state_all(&key, PF_EXT_GWY, NULL) == NULL) {
+			if (pf_find_state_all(&key, PF_IN, NULL) == NULL) {
 				*nport = htons(low);
 				return (0);
 			}
@@ -2331,7 +2328,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 			/* low <= cut <= high */
 			for (tmp = cut; tmp <= high; ++(tmp)) {
 				key.gwy.port = htons(tmp);
-				if (pf_find_state_all(&key, PF_EXT_GWY, NULL) ==
+				if (pf_find_state_all(&key, PF_IN, NULL) ==
 				    NULL) {
 					*nport = htons(tmp);
 					return (0);
@@ -2339,7 +2336,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 			}
 			for (tmp = cut - 1; tmp >= low; --(tmp)) {
 				key.gwy.port = htons(tmp);
-				if (pf_find_state_all(&key, PF_EXT_GWY, NULL) ==
+				if (pf_find_state_all(&key, PF_IN, NULL) ==
 				    NULL) {
 					*nport = htons(tmp);
 					return (0);

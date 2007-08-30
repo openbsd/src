@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.183 2007/08/30 13:07:06 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1793,13 +1793,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				key.ext.port = pnl->dport;
 				PF_ACPY(&key.gwy.addr, &pnl->saddr, pnl->af);
 				key.gwy.port = pnl->sport;
-				state = pf_find_state_all(&key, PF_EXT_GWY, &m);
+				state = pf_find_state_all(&key, PF_IN, &m);
 			} else {
 				PF_ACPY(&key.lan.addr, &pnl->daddr, pnl->af);
 				key.lan.port = pnl->dport;
 				PF_ACPY(&key.ext.addr, &pnl->saddr, pnl->af);
 				key.ext.port = pnl->sport;
-				state = pf_find_state_all(&key, PF_LAN_EXT, &m);
+				state = pf_find_state_all(&key, PF_OUT, &m);
 			}
 			if (m > 1)
 				error = E2BIG;	/* more than one state */
