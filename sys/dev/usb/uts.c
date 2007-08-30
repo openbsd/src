@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.17 2007/06/14 10:11:16 mbalmer Exp $ */
+/*	$OpenBSD: uts.c,v 1.18 2007/08/30 18:49:29 matthieu Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -428,14 +428,15 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 
 	/* x/y values are not reliable if there is no pressure */
 	if (down) {
-		if (sc->sc_tsscale.swapxy) {	/* Swap X/Y-Axis */
+
+		if (sc->sc_tsscale.swapxy && !sc->sc_rawmode) {	
+			/* Swap X/Y-Axis */
 			tp.y = x;
 			tp.x = y;
 		} else {
 			tp.x = x;
 			tp.y = y;
 		}
-
 		if (!sc->sc_rawmode) {
 			/* Scale down to the screen resolution. */
 			tp.x = ((tp.x - sc->sc_tsscale.minx) *
