@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.49 2007/06/05 00:38:24 deraadt Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.50 2007/08/31 08:38:08 thib Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1914,14 +1914,11 @@ uvm_vnp_setsize(vp, newsize)
  *    other processes attempting a sync will sleep on this lock
  *    until we are done.
  */
-
 void
-uvm_vnp_sync(mp)
-	struct mount *mp;
+uvm_vnp_sync(struct mount *mp)
 {
 	struct uvm_vnode *uvn;
 	struct vnode *vp;
-	boolean_t got_lock;
 
 	/*
 	 * step 1: ensure we are only ones using the uvn_sync_q by locking
@@ -1936,35 +1933,21 @@ uvm_vnp_sync(mp)
 	SIMPLEQ_INIT(&uvn_sync_q);
 	LIST_FOREACH(uvn, &uvn_wlist, u_wlist) {
 
-		vp = (struct vnode *) uvn;
+		vp = (struct vnode *)uvn;
 		if (mp && vp->v_mount != mp)
 			continue;
 
-		/* attempt to gain reference */
-		while ((got_lock = simple_lock_try(&uvn->u_obj.vmobjlock)) ==
-								FALSE &&
-				(uvn->u_flags & UVM_VNODE_BLOCKED) == 0)
-			/* spin */;
-
 		/*
-		 * we will exit the loop if either if the following are true:
-		 *  - we got the lock [always true if NCPU == 1]
-		 *  - we failed to get the lock but noticed the vnode was
-		 *	"blocked" -- in this case the vnode must be a dying
-		 *	vnode, and since dying vnodes are in the process of
-		 *	being flushed out, we can safely skip this one
-		 *
-		 * we want to skip over the vnode if we did not get the lock,
-		 * or if the vnode is already dying (due to the above logic).
+		 * If the vnode is "blocked" it means it must be dying, which
+		 * in turn means its in the process of being flushed out so
+		 * we can safely skip it.
 		 *
 		 * note that uvn must already be valid because we found it on
 		 * the wlist (this also means it can't be ALOCK'd).
 		 */
-		if (!got_lock || (uvn->u_flags & UVM_VNODE_BLOCKED) != 0) {
-			if (got_lock)
-				simple_unlock(&uvn->u_obj.vmobjlock);
-			continue;		/* skip it */
-		}
+		if ((uvn->u_flags & UVM_VNODE_BLOCKED) != 0)
+			continue;
+
 
 		/*
 		 * gain reference.   watch out for persisting uvns (need to
@@ -1973,28 +1956,18 @@ uvm_vnp_sync(mp)
 		if (uvn->u_obj.uo_refs == 0)
 			VREF(vp);
 		uvn->u_obj.uo_refs++;
-		simple_unlock(&uvn->u_obj.vmobjlock);
 
-		/*
-		 * got it!
-		 */
 		SIMPLEQ_INSERT_HEAD(&uvn_sync_q, uvn, u_syncq);
 	}
 
-	/*
-	 * step 3: we now have a list of uvn's that may need cleaning.
-	 * we are holding the uvn_sync_lock.
-	 */
-
+	/* step 3: we now have a list of uvn's that may need cleaning. */
 	SIMPLEQ_FOREACH(uvn, &uvn_sync_q, u_syncq) {
-		simple_lock(&uvn->u_obj.vmobjlock);
 #ifdef DEBUG
 		if (uvn->u_flags & UVM_VNODE_DYING) {
 			printf("uvm_vnp_sync: dying vnode on sync list\n");
 		}
 #endif
-		uvn_flush(&uvn->u_obj, 0, 0,
-		    PGO_CLEANIT|PGO_ALLPAGES|PGO_DOACTCLUST);
+		uvn_flush(&uvn->u_obj, 0, 0, PGO_CLEANIT|PGO_ALLPAGES|PGO_DOACTCLUST);
 
 		/*
 		 * if we have the only reference and we just cleaned the uvn,
@@ -2008,14 +1981,9 @@ uvm_vnp_sync(mp)
 			uvn->u_flags &= ~UVM_VNODE_WRITEABLE;
 		}
 
-		simple_unlock(&uvn->u_obj.vmobjlock);
-
 		/* now drop our reference to the uvn */
 		uvn_detach(&uvn->u_obj);
 	}
 
-	/*
-	 * done!  release sync lock
-	 */
 	rw_exit_write(&uvn_sync_lock);
 }
