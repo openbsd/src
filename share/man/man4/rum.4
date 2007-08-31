@@ -1,4 +1,4 @@
-.\" $OpenBSD: rum.4,v 1.27 2007/05/31 19:19:51 jmc Exp $
+.\" $OpenBSD: rum.4,v 1.28 2007/08/31 22:06:26 deraadt Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 31 2007 $
 .Os
 .Dt RUM 4
 .Sh NAME
@@ -298,7 +298,7 @@ Join an existing BSS network,
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "rum%d: failed loadfirmware of file %s"
+.It "rum%d: error %d, could not read firmware %s"
 For some reason, the driver was unable to read the microcode file from the
 filesystem.
 The file might be missing or corrupted.
