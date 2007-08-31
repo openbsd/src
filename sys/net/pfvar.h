@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.256 2007/08/30 13:07:06 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.257 2007/08/31 12:37:50 thib Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1273,10 +1273,6 @@ struct pf_altq {
 	} pq_u;
 
 	u_int32_t		 qid;		/* return value */
-};
-
-struct pf_tag {
-	u_int16_t	tag;		/* tag id */
 };
 
 struct pf_tagname {
