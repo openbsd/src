@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.242 2007/08/14 23:16:43 dlg Exp $
+#	$OpenBSD: files.pci,v 1.243 2007/08/31 16:18:57 marco Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -220,6 +220,11 @@ file	dev/pci/sli_pci.c		sli_pci
 # Silicon Image 3124/3132/3531 SATALink
 attach	sili at pci with sili_pci
 file	dev/pci/sili_pci.c		sili_pci
+
+# QLogic iSCSI HBAs
+device	qli: scsi
+attach	qli at pci with qli_pci
+file	dev/pci/qli_pci.c		qli_pci
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet, ifmedia
