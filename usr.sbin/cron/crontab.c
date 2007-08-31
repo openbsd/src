@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.51 2007/02/19 00:08:38 jmc Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.52 2007/08/31 23:14:21 ray Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -21,7 +21,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.51 2007/02/19 00:08:38 jmc Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.52 2007/08/31 23:14:21 ray Exp $";
 
 /* crontab - install and manage per-user crontab files
  * vix 02may87 [RCS has the rest of the log]
@@ -50,6 +50,7 @@ static	FILE		*NewCrontab;
 static	int		CheckErrorCount;
 static	enum opt_t	Option;
 static	struct passwd	*pw;
+int			editit(const char *);
 static	void		list_cmd(void),
 			delete_cmd(void),
 			edit_cmd(void),
@@ -279,7 +280,7 @@ check_error(const char *msg) {
 
 static void
 edit_cmd(void) {
-	char n[MAX_FNAME], q[MAX_TEMPSTR], *editor;
+	char n[MAX_FNAME], q[MAX_TEMPSTR];
 	FILE *f;
 	int ch, t, x;
 	struct stat statbuf, xstatbuf;
@@ -371,11 +372,6 @@ edit_cmd(void) {
 		exit(ERROR_EXIT);
 	}
 
-	if (((editor = getenv("VISUAL")) == NULL || *editor == '\0') &&
-	    ((editor = getenv("EDITOR")) == NULL || *editor == '\0')) {
-		editor = EDITOR;
-	}
-
 	/* we still have the file open.  editors will generally rewrite the
 	 * original file rather than renaming/unlinking it and starting a
 	 * new one; even backup files are supposed to be made by copying
@@ -383,64 +379,11 @@ edit_cmd(void) {
 	 * then don't use it.  the security problems are more severe if we
 	 * close and reopen the file around the edit.
 	 */
-
-	switch (pid = fork()) {
-	case -1:
-		perror("fork");
+	if (editit(Filename) == -1) {
+		warn("error starting editor");
 		goto fatal;
-	case 0:
-		/* child */
-		if (setgid(MY_GID(pw)) < 0) {
-			perror("setgid(getgid())");
-			exit(ERROR_EXIT);
-		}
-		if (chdir(_PATH_TMP) < 0) {
-			perror(_PATH_TMP);
-			exit(ERROR_EXIT);
-		}
-		if (snprintf(q, sizeof q, "%s %s", editor, Filename) >= sizeof(q)) {
-			fprintf(stderr, "%s: editor command line too long\n",
-			    ProgramName);
-			exit(ERROR_EXIT);
-		}
-		execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", q, (char *)NULL);
-		perror(editor);
-		exit(ERROR_EXIT);
-		/*NOTREACHED*/
-	default:
-		/* parent */
-		break;
 	}
 
-	/* parent */
-	for (;;) {
-		xpid = waitpid(pid, &waiter, WUNTRACED);
-		if (xpid == -1) {
-			if (errno != EINTR)
-				fprintf(stderr, "%s: waitpid() failed waiting for PID %ld from \"%s\": %s\n",
-					ProgramName, (long)pid, editor, strerror(errno));
-		} else if (xpid != pid) {
-			fprintf(stderr, "%s: wrong PID (%ld != %ld) from \"%s\"\n",
-				ProgramName, (long)xpid, (long)pid, editor);
-			goto fatal;
-		} else if (WIFSTOPPED(waiter)) {
-			kill(getpid(), WSTOPSIG(waiter));
-		} else if (WIFEXITED(waiter) && WEXITSTATUS(waiter)) {
-			fprintf(stderr, "%s: \"%s\" exited with status %d\n",
-				ProgramName, editor, WEXITSTATUS(waiter));
-			goto fatal;
-		} else if (WIFSIGNALED(waiter)) {
-			fprintf(stderr,
-				"%s: \"%s\" killed; signal %d (%score dumped)\n",
-				ProgramName, editor, WTERMSIG(waiter),
-				WCOREDUMP(waiter) ?"" :"no ");
-			goto fatal;
-		} else
-			break;
-	}
-	(void)signal(SIGHUP, SIG_DFL);
-	(void)signal(SIGINT, SIG_DFL);
-	(void)signal(SIGQUIT, SIG_DFL);
 	if (fstat(t, &statbuf) < 0) {
 		perror("fstat");
 		goto fatal;
@@ -643,6 +586,63 @@ done:
 		TempFilename[0] = '\0';
 	}
 	return (error);
+}
+
+/*
+ * Execute an editor on the specified pathname, which is interpreted
+ * from the shell.  This means flags may be included.
+ *
+ * Returns -1 on error, or the exit value on success.
+ */
+int
+editit(const char *pathname)
+{
+	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
+	sig_t sighup, sigint, sigquit;
+	pid_t pid;
+	int saved_errno, st;
+
+	ed = getenv("VISUAL");
+	if (ed == NULL || ed[0] == '\0')
+		ed = getenv("EDITOR");
+	if (ed == NULL || ed[0] == '\0')
+		ed = _PATH_VI;
+	if (asprintf(&p, "%s %s", ed, pathname) == -1)
+		return (-1);
+	argp[2] = p;
+
+	sighup = signal(SIGHUP, SIG_IGN);
+	sigint = signal(SIGINT, SIG_IGN);
+	sigquit = signal(SIGQUIT, SIG_IGN);
+	if ((pid = fork()) == -1)
+		goto fail;
+	if (pid == 0) {
+		setgid(getgid());
+		setuid(getuid());
+		execv(_PATH_BSHELL, argp);
+		_exit(127);
+	}
+	while (waitpid(pid, &st, 0) == -1)
+		if (errno != EINTR)
+			goto fail;
+	free(p);
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	if (!WIFEXITED(st)) {
+		errno = EINTR;
+		return (-1);
+	}
+	return (WEXITSTATUS(st));
+
+ fail:
+	saved_errno = errno;
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	free(p);
+	errno = saved_errno;
+	return (-1);
 }
 
 static void

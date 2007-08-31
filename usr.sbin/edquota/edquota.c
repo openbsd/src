@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.46 2007/08/06 19:16:07 sobrado Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.47 2007/08/31 23:14:21 ray Exp $";
 #endif /* not lint */
 
 /*
@@ -81,7 +81,7 @@ int	getentry(char *, int, u_int *);
 struct quotause *
 	getprivs(u_int, int);
 void	putprivs(long, int, struct quotause *);
-int	editit(char *);
+int	editit(const char *);
 int	writeprivs(struct quotause *, int, char *, int);
 int	readprivs(struct quotause *, int);
 int	writetimes(struct quotause *, int, int);
@@ -162,7 +162,11 @@ main(int argc, char *argv[])
 			unlink(tmpfil);
 			exit(1);
 		}
-		if (editit(tmpfil) && readtimes(protoprivs, tmpfd))
+		if (editit(tmpfil) == -1) {
+			unlink(tmpfil);
+			err(1, "error starting editor");
+		}
+		if (readtimes(protoprivs, tmpfd))
 			putprivs(0, quotatype, protoprivs);
 		freeprivs(protoprivs);
 		unlink(tmpfil);
@@ -174,7 +178,11 @@ main(int argc, char *argv[])
 		curprivs = getprivs(id, quotatype);
 		if (writeprivs(curprivs, tmpfd, *argv, quotatype) == 0)
 			continue;
-		if (editit(tmpfil) && readprivs(curprivs, tmpfd))
+		if (editit(tmpfil) == -1) {
+			warn("error starting editor");
+			continue;
+		}
+		if (readprivs(curprivs, tmpfd))
 			putprivs(id, quotatype, curprivs);
 		freeprivs(curprivs);
 	}
@@ -344,62 +352,58 @@ putprivs(long id, int quotatype, struct quotause *quplist)
 }
 
 /*
- * Take a list of privileges and get it edited.
+ * Execute an editor on the specified pathname, which is interpreted
+ * from the shell.  This means flags may be included.
+ *
+ * Returns -1 on error, or the exit value on success.
  */
 int
-editit(char *tmpfile)
+editit(const char *pathname)
 {
-	pid_t pid, xpid;
-	char *argp[] = {"sh", "-c", NULL, NULL};
-	char *ed, *p;
-	sigset_t mask, omask;
-	int stat;
+	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
+	sig_t sighup, sigint, sigquit;
+	pid_t pid;
+	int saved_errno, st;
 
-	if ((ed = getenv("EDITOR")) == (char *)0)
+	ed = getenv("VISUAL");
+	if (ed == NULL || ed[0] == '\0')
+		ed = getenv("EDITOR");
+	if (ed == NULL || ed[0] == '\0')
 		ed = _PATH_VI;
-	if (asprintf(&p, "%s %s", ed, tmpfile) == -1)
-		return (0);
+	if (asprintf(&p, "%s %s", ed, pathname) == -1)
+		return (-1);
 	argp[2] = p;
 
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGINT);
-	sigaddset(&mask, SIGQUIT);
-	sigaddset(&mask, SIGHUP);
-	sigprocmask(SIG_SETMASK, &mask, &omask);
- top:
-	if ((pid = fork()) < 0) {
-		if (errno == EPROCLIM) {
-			warnx("you have too many processes");
-			free(p);
-			return(0);
-		}
-		if (errno == EAGAIN) {
-			sleep(1);
-			goto top;
-		}
-		perror("fork");
-		free(p);
-		return(0);
-	}
+	sighup = signal(SIGHUP, SIG_IGN);
+	sigint = signal(SIGINT, SIG_IGN);
+	sigquit = signal(SIGQUIT, SIG_IGN);
+	if ((pid = fork()) == -1)
+		goto fail;
 	if (pid == 0) {
-		sigprocmask(SIG_SETMASK, &omask, NULL);
-		setgid(getgid());
-		setuid(getuid());
 		execv(_PATH_BSHELL, argp);
 		_exit(127);
 	}
+	while (waitpid(pid, &st, 0) == -1)
+		if (errno != EINTR)
+			goto fail;
 	free(p);
-	for (;;) {
-		xpid = waitpid(pid, (int *)&stat, WUNTRACED);
-		if (WIFSTOPPED(stat))
-			raise(WSTOPSIG(stat));
-		else if (WIFEXITED(stat))
-			break;
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	if (!WIFEXITED(st)) {
+		errno = EINTR;
+		return (-1);
 	}
-	sigprocmask(SIG_SETMASK, &omask, NULL);
-	if (!WIFEXITED(stat) || WEXITSTATUS(stat) != 0)
-		return(0);
-	return(1);
+	return (WEXITSTATUS(st));
+
+ fail:
+	saved_errno = errno;
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	free(p);
+	errno = saved_errno;
+	return (-1);
 }
 
 /*

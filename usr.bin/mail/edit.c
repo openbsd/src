@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.14 2006/10/10 21:38:16 cloder Exp $	*/
+/*	$OpenBSD: edit.c,v 1.15 2007/08/31 23:14:21 ray Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -34,13 +34,19 @@
 #if 0
 static const char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: edit.c,v 1.14 2006/10/10 21:38:16 cloder Exp $";
+static const char rcsid[] = "$OpenBSD: edit.c,v 1.15 2007/08/31 23:14:21 ray Exp $";
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include "rcv.h"
+#include <errno.h>
 #include <fcntl.h>
 #include "extern.h"
+
+int editit(const char *, const char *);
 
 /*
  * Mail -- a mail program
@@ -184,9 +190,16 @@ run_editor(FILE *fp, off_t size, int type, int readonly)
 		goto out;
 	}
 	nf = NULL;
-	if ((edit = value(type == 'e' ? "EDITOR" : "VISUAL")) == NULL)
-		edit = type == 'e' ? _PATH_EX : _PATH_VI;
-	if (run_command(edit, 0, 0, -1, tempname, NULL, NULL) < 0) {
+	if (type == 'e') {
+		edit = value("EDITOR");
+		if (edit == NULL || edit[0] == '\0')
+			edit = _PATH_EX;
+	} else {
+		edit = value("VISUAL");
+		if (edit == NULL || edit[0] == '\0')
+			edit = _PATH_VI;
+	}
+	if (editit(edit, tempname) == -1) {
 		(void)rm(tempname);
 		goto out;
 	}
@@ -217,4 +230,60 @@ run_editor(FILE *fp, off_t size, int type, int readonly)
 	(void)rm(tempname);
 out:
 	return(nf);
+}
+
+/*
+ * Execute an editor on the specified pathname, which is interpreted
+ * from the shell.  This means flags may be included.
+ *
+ * Returns -1 on error, or the exit value on success.
+ */
+int
+editit(const char *ed, const char *pathname)
+{
+	char *argp[] = {"sh", "-c", NULL, NULL}, *p;
+	sig_t sighup, sigint, sigquit;
+	pid_t pid;
+	int saved_errno, st;
+
+	if (ed == NULL)
+		ed = getenv("VISUAL");
+	if (ed == NULL || ed[0] == '\0')
+		ed = getenv("EDITOR");
+	if (ed == NULL || ed[0] == '\0')
+		ed = _PATH_VI;
+	if (asprintf(&p, "%s %s", ed, pathname) == -1)
+		return (-1);
+	argp[2] = p;
+
+	sighup = signal(SIGHUP, SIG_IGN);
+	sigint = signal(SIGINT, SIG_IGN);
+	sigquit = signal(SIGQUIT, SIG_IGN);
+	if ((pid = fork()) == -1)
+		goto fail;
+	if (pid == 0) {
+		execv(_PATH_BSHELL, argp);
+		_exit(127);
+	}
+	while (waitpid(pid, &st, 0) == -1)
+		if (errno != EINTR)
+			goto fail;
+	free(p);
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	if (!WIFEXITED(st)) {
+		errno = EINTR;
+		return (-1);
+	}
+	return (WEXITSTATUS(st));
+
+ fail:
+	saved_errno = errno;
+	(void)signal(SIGHUP, sighup);
+	(void)signal(SIGINT, sigint);
+	(void)signal(SIGQUIT, sigquit);
+	free(p);
+	errno = saved_errno;
+	return (-1);
 }
