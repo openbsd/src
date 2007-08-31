@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1254 2007/08/07 08:37:39 matthieu Exp 
+ *	OpenBSD: pcidevs,v 1.1255 2007/08/31 03:51:04 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2264,6 +2264,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RX480 Host",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD580_HB,
+	    "RD580 Host",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480,
 	    "Radeon XPRESS 200",
 	},
@@ -2450,6 +2454,46 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT2,
 	    "Radeon RX1650 XT (Secondary)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_HB,
+	    "RS690 Host",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PCIE_1,
+	    "RS690 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690M_PCIE_1,
+	    "RS690M PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PCIE_2,
+	    "RS690 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PCIE_4,
+	    "RS690 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PCIE_5,
+	    "RS690 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_HDA,
+	    "RS690 HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1250,
+	    "Radeon X1250",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400_M72,
+	    "Mobility Radeon HD 2400",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690M_HDA,
+	    "RS690M HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_AGP,
@@ -6364,6 +6408,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801H LPC",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_LPC,
+	    "82801HEM LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HH_LPC,
 	    "82801HH LPC",
 	},
@@ -6421,6 +6469,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_UHCI_3,
+	    "82801H USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_UHCI_6,
 	    "82801H USB",
 	},
 	{
@@ -6582,6 +6634,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GM_MCH,
 	    "82965GM MCH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GM_PCIE,
+	    "82965GM PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GM_IGD_1,
@@ -9276,6 +9332,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce4 Ti 4200 Go",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7900GT,
+	    "GeForce 7900 GT/GTO",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7600GT_2,
 	    "GeForce 7600 GT",
 	},
@@ -9680,6 +9740,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 6100 nForce 430",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6100_405,
+	    "GeForce 6100 nForce 405",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_ISA,
 	    "MCP61 ISA",
 	},
@@ -9758,6 +9822,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA3,
 	    "MCP61 SATA",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFX570M,
+	    "Quadro FX 570M",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
@@ -11856,8 +11924,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCIXX12 Secure Data",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCIXX12_SM,
+	    "PCIXX12 Smart Card",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1620_MISC,
 	    "PCI1620 Misc",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_XIO2000A,
+	    "XIO2000A PCIE-PCI",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
