@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2006/04/27 15:17:12 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2007/08/31 20:11:09 marco Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -953,6 +953,19 @@ bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
 		__asm __volatile("lfence");
 }
 
+#define	BUS_SPACE_MAP_CACHEABLE		0x0001
+#define	BUS_SPACE_MAP_LINEAR		0x0002
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x0008
+
+/*
+ *	void *bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+ *
+ * Get the kernel virtual address for the mapped bus space.
+ * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
+ *  (XXX not enforced)
+ */
+#define bus_space_vaddr(t, h) \
+	((t) == X86_BUS_SPACE_IO ? (void *)(NULL) : (void *)(h))
 /*
  * Flags used in various bus DMA methods.
  */

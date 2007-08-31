@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.6 2007/05/27 08:59:25 art Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.7 2007/08/31 20:11:09 marco Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -113,6 +113,8 @@ x86_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 */
 	if (t == X86_BUS_SPACE_IO) {
 		ex = ioport_ex;
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (EINVAL);
 	} else if (t == X86_BUS_SPACE_MEM)
 		ex = iomem_ex;
 	else
