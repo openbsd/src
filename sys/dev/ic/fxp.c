@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.87 2007/06/06 09:43:44 henning Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.88 2007/08/31 22:06:02 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1821,8 +1821,8 @@ fxp_load_ucode(struct fxp_softc *sc)
 
 	error = loadfirmware(uc->uname, (u_char **)&ucode_buf, &ucode_len);
 	if (error) {
-		printf("%s: failed loadfirmware of file %s: errno %d\n",
-		    sc->sc_dev.dv_xname, uc->uname, error);
+		printf("%s: error %d, could not read firmware %s\n",
+		    sc->sc_dev.dv_xname, error, uc->uname);
 		sc->sc_flags |= FXPF_UCODE;
 		return;
 	}
