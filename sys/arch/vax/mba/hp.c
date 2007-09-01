@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.18 2007/06/07 05:22:32 deraadt Exp $ */
+/*	$OpenBSD: hp.c,v 1.19 2007/09/01 12:45:42 miod Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -58,7 +58,6 @@
 #include <machine/pte.h>
 #include <machine/mtpr.h>
 #include <machine/cpu.h>
-#include <machine/rpb.h>
 
 #include <vax/mba/mbavar.h>
 #include <vax/mba/mbareg.h>

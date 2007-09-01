@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.13 2005/07/02 09:28:40 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.14 2007/09/01 12:45:40 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -92,7 +92,6 @@
 
 #include <machine/cpu.h>
 #include <machine/nexus.h>
-#include <machine/rpb.h>
 #include <machine/scb.h>
 
 #include <dev/ic/am7990reg.h>

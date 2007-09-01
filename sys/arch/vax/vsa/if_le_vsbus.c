@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vsbus.c,v 1.9 2004/07/07 23:10:46 deraadt Exp $	*/
+/*	$OpenBSD: if_le_vsbus.c,v 1.10 2007/09/01 12:45:42 miod Exp $	*/
 /*	$NetBSD: if_le_vsbus.c,v 1.10 2000/06/29 07:14:18 mrg Exp $	*/
 
 /*-
@@ -92,7 +92,6 @@
 #include <machine/cpu.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
-#include <machine/rpb.h>
 #include <machine/bus.h>
 #include <machine/vsbus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.21 2007/06/20 20:13:41 miod Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.22 2007/09/01 12:45:42 miod Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -78,7 +78,6 @@
 #include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/vsbus.h>
-#include <machine/rpb.h>
 #include <machine/scb.h>
 
 #include <arch/vax/mscp/mscp.h> /* For DEC disk encoding */
