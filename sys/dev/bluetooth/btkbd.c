@@ -1,4 +1,4 @@
-/*	$OpenBSD: btkbd.c,v 1.1 2007/07/27 16:52:24 gwk Exp $	*/
+/*	$OpenBSD: btkbd.c,v 1.2 2007/09/01 17:06:26 xsa Exp $	*/
 /*	$NetBSD: btkbd.c,v 1.7 2007/07/09 21:00:31 ad Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ struct btkbd_softc {
 #endif
 };
 
-int	btkbd_match(struct device *, struct cfdata *, void *);
+int	btkbd_match(struct device *, void *, void *);
 void	btkbd_attach(struct device *, struct device *, void *);
 int	btkbd_detach(struct device *, int);
 
@@ -124,7 +124,7 @@ const struct cfattach btkbd_ca = {
 
 int	btkbd_enable(void *, int);
 void	btkbd_set_leds(void *, int);
-int	btkbd_ioctl(void *, unsigned long, void *, int, struct lwp *);
+int	btkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wskbd_accessops btkbd_accessops = {
 	btkbd_enable,
@@ -150,7 +150,7 @@ const struct wskbd_mapdata btkbd_keymapdata = {
 void btkbd_input(struct bthidev *, uint8_t *, int);
 
 /* internal prototypes */
-const char *btkbd_parse_desc(struct btkbd_softc *, int, const void *, int);
+const char *btkbd_parse_desc(struct btkbd_softc *, int, void *, int);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #ifdef BTKBD_REPEAT
@@ -160,7 +160,7 @@ void btkbd_repeat(void *);
 
 
 int
-btkbd_match(struct device *self, struct cfdata *cfdata, void *aux)
+btkbd_match(struct device *self, void *match, void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 
@@ -226,7 +226,7 @@ btkbd_detach(struct device *self, int flags)
 }
 
 const char *
-btkbd_parse_desc(struct btkbd_softc *sc, int id, const void *desc, int dlen)
+btkbd_parse_desc(struct btkbd_softc *sc, int id, void *desc, int dlen)
 {
 	struct hid_data *d;
 	struct hid_item h;
@@ -326,22 +326,22 @@ btkbd_set_leds(void *self, int leds)
 }
 
 int
-btkbd_ioctl(void *self, unsigned long cmd, void *data, int flag, struct lwp *l)
+btkbd_ioctl(void *self, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct btkbd_softc *sc = (struct btkbd_softc *)self;
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_BLUETOOTH;
-		break;
+		return 0;
 
 	case WSKBDIO_SETLEDS:
 		btkbd_set_leds(sc, *(int *)data);
-		break;
+		return 0;
 
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_leds;
-		break;
+		return 0;
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
@@ -349,14 +349,10 @@ btkbd_ioctl(void *self, unsigned long cmd, void *data, int flag, struct lwp *l)
 #ifdef BTKBD_REPEAT
 		timeout_del(&sc->sc_repeat);
 #endif
-		break;
+		return 0;
 #endif
-
-	default:
-		return EPASSTHROUGH;
 	}
-
-	return 0;
+	return -1;
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.85 2007/06/17 20:06:10 jasper Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.86 2007/09/01 17:06:26 xsa Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -176,7 +176,9 @@
 #define M_UDFFENTRY	141	/* UDF file entry */
 #define M_UDFFID	142	/* UDF file id */
 
-#define	M_LAST		143	/* Must be last type + 1 */
+#define	M_BTHIDEV	143	/* Bluetooth HID */
+
+#define	M_LAST		144	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -307,6 +309,7 @@
 	"UDF mount",	/* 140 M_UDFMOUNT */ \
 	"UDF file entry",	/* 141 M_UDFFENTRY */ \
 	"UDF file id",	/* 142 M_UDFFID */ \
+	"Bluetooth HID",	/* 143 M_BTHIDEV */ \
 }
 
 struct kmemstats {

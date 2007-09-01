@@ -1,4 +1,4 @@
-/*	$OpenBSD: btms.c,v 1.1 2007/07/27 16:52:24 gwk Exp $	*/
+/*	$OpenBSD: btms.c,v 1.2 2007/09/01 17:06:26 xsa Exp $	*/
 /*	$NetBSD: btms.c,v 1.6 2007/03/04 06:01:45 christos Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ struct btms_softc {
 #define BTMS_HASZ		(1 << 1)	/* has Z direction */
 #define BTMS_HASW		(1 << 2)	/* has W direction */
 
-int	btms_match(struct device *, struct cfdata *, void *);
+int	btms_match(struct device *, void *, void *);
 void	btms_attach(struct device *, struct device *, void *);
 int	btms_detach(struct device *, int);
 
@@ -98,7 +98,7 @@ const struct cfattach btms_ca = {
 
 /* wsmouse(4) accessops */
 int	btms_enable(void *);
-int	btms_ioctl(void *, unsigned long, void *, int, struct lwp *);
+int	btms_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	btms_disable(void *);
 
 const struct wsmouse_accessops btms_accessops = {
@@ -108,11 +108,11 @@ const struct wsmouse_accessops btms_accessops = {
 };
 
 /* bthid methods */
-void btms_input(struct bthidev *, uint8_t *, int);
+void	btms_input(struct bthidev *, uint8_t *, int);
 
 
 int
-btms_match(struct device *parent, struct cfdata *match, void *aux)
+btms_match(struct device *parent, void *match, void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 
@@ -257,20 +257,17 @@ btms_enable(void *self)
 }
 
 int
-btms_ioctl(void *self, unsigned long cmd, void *data, int flag, struct lwp *l)
+btms_ioctl(void *self, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	/* struct btms_softc *sc = (struct btms_softc *)self; */
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(uint *)data = WSMOUSE_TYPE_BLUETOOTH;
-		break;
-
-	default:
-		return EPASSTHROUGH;
+		*(u_int *)data = WSMOUSE_TYPE_BLUETOOTH;
+		return 0;
 	}
 
-	return 0;
+	return -1;
 }
 
 void
