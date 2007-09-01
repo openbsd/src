@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.47 2007/03/15 10:22:30 art Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.48 2007/09/01 15:14:44 martin Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -676,9 +676,9 @@ svr4_sys_break(p, v, retval)
 	if (diff > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return ENOMEM;
 
-	old = round_page(old + ctob(vm->vm_dsize));
-	DPRINTF(("break(2): dsize = %x ctob %x\n",
-		 vm->vm_dsize, ctob(vm->vm_dsize)));
+	old = round_page(old + ptoa(vm->vm_dsize));
+	DPRINTF(("break(2): dsize = %x ptoa %x\n",
+		 vm->vm_dsize, ptoa(vm->vm_dsize)));
 
 	diff = new - old;
 	DPRINTF(("break(3): old %lx new %lx diff %x\n", old, new, diff));

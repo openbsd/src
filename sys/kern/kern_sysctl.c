@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.155 2007/08/09 04:12:12 cnst Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.156 2007/09/01 15:14:44 martin Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -567,10 +567,10 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case HW_BYTEORDER:
 		return (sysctl_rdint(oldp, oldlenp, newp, BYTE_ORDER));
 	case HW_PHYSMEM:
-		return (sysctl_rdint(oldp, oldlenp, newp, ctob(physmem)));
+		return (sysctl_rdint(oldp, oldlenp, newp, ptoa(physmem)));
 	case HW_USERMEM:
 		return (sysctl_rdint(oldp, oldlenp, newp,
-		    ctob(physmem - uvmexp.wired)));
+		    ptoa(physmem - uvmexp.wired)));
 	case HW_PAGESIZE:
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_DISKNAMES:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.404 2007/08/22 21:28:41 marco Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.405 2007/09/01 15:14:44 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -392,7 +392,7 @@ cpu_startup()
 	 */
 	pa = avail_end;
 	va = (vaddr_t)msgbufp;
-	for (i = 0; i < btoc(MSGBUFSIZE); i++) {
+	for (i = 0; i < atop(MSGBUFSIZE); i++) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE);
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
@@ -413,8 +413,8 @@ cpu_startup()
 	curcpu()->ci_feature_flags = cpu_feature;
 	identifycpu(curcpu());
 
-	printf("real mem  = %llu (%lluMB)\n", ctob((unsigned long long)physmem),
-	    ctob((unsigned long long)physmem)/1024U/1024U);
+	printf("real mem  = %llu (%lluMB)\n", ptoa((unsigned long long)physmem),
+	    ptoa((unsigned long long)physmem)/1024U/1024U);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -552,7 +552,7 @@ setup_buffers()
 	 * of the memory below 4GB.
 	 */
 	if (bufpages == 0)
-		bufpages = btoc(avail_end) * bufcachepercent / 100;
+		bufpages = atop(avail_end) * bufcachepercent / 100;
 
 	/* Restrict to at most 25% filled kvm */
 	if (bufpages >
@@ -2571,7 +2571,7 @@ dumpsys()
 	for (i = 0; !error && i < ndumpmem; i++) {
 
 		npg = dumpmem[i].end - dumpmem[i].start;
-		maddr = ctob(dumpmem[i].start);
+		maddr = ptoa(dumpmem[i].start);
 		blkno = dumplo + btodb(maddr) + 1;
 #if 0
 		printf("(%d %lld %d) ", maddr, blkno, npg);
@@ -2581,7 +2581,7 @@ dumpsys()
 			/* Print out how many MBs we have more to go. */
 			if (dbtob(blkno - dumplo) % (1024 * 1024) < NBPG)
 				printf("%d ",
-				    (ctob(dumpsize) - maddr) / (1024 * 1024));
+				    (ptoa(dumpsize) - maddr) / (1024 * 1024));
 #if 0
 			printf("(%x %lld) ", maddr, blkno);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.25 2006/01/19 17:54:52 mickey Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.26 2007/09/01 15:14:44 martin Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ linux_e_proc_init(p, vmspace)
 
 	/* Set the process idea of the break to the real value */
 	((struct linux_emuldata *)(p->p_emuldata))->p_break = 
-	    vmspace->vm_daddr + ctob(vmspace->vm_dsize);
+	    vmspace->vm_daddr + ptoa(vmspace->vm_dsize);
 }
 
 void

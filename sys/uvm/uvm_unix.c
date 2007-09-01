@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.28 2007/04/11 12:51:51 miod Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.29 2007/09/01 15:14:44 martin Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -134,9 +134,9 @@ uvm_grow(p, sp)
 	 * For common case of already allocated (from trap).
 	 */
 #ifdef MACHINE_STACK_GROWS_UP
-	if (sp < USRSTACK + ctob(vm->vm_ssize))
+	if (sp < USRSTACK + ptoa(vm->vm_ssize))
 #else
-	if (sp >= USRSTACK - ctob(vm->vm_ssize))
+	if (sp >= USRSTACK - ptoa(vm->vm_ssize))
 #endif
 		return;
 
@@ -222,13 +222,13 @@ uvm_coredump(p, vp, cred, chdr)
 
 #ifdef MACHINE_STACK_GROWS_UP
 		if (USRSTACK <= start && start < (USRSTACK + MAXSSIZ)) {
-			end = round_page(USRSTACK + ctob(vm->vm_ssize));
+			end = round_page(USRSTACK + ptoa(vm->vm_ssize));
 			if (start >= end)
 				continue;
 			start = USRSTACK;
 #else
 		if (start >= (vaddr_t)vm->vm_maxsaddr) {
-			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
+			start = trunc_page(USRSTACK - ptoa(vm->vm_ssize));
 
 			if (start >= end)
 				continue;

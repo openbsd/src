@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.40 2007/06/18 08:30:07 jasper Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.41 2007/09/01 15:14:44 martin Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -584,7 +584,7 @@ procfs_getattr(void *v)
 
 	case Pmem:
 		vap->va_bytes = vap->va_size =
-			ctob(procp->p_vmspace->vm_tsize +
+			ptoa(procp->p_vmspace->vm_tsize +
 				    procp->p_vmspace->vm_dsize +
 				    procp->p_vmspace->vm_ssize);
 		break;

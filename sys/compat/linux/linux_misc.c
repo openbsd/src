@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.60 2007/02/06 18:42:37 art Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.61 2007/09/01 15:14:44 martin Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1494,7 +1494,7 @@ linux_sys_sysinfo(p, v, retval)
 	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
-	si.totalram = ctob(physmem);
+	si.totalram = ptoa(physmem);
 	si.freeram = uvmexp.free * uvmexp.pagesize;
 	si.sharedram = 0;/* XXX */
 	si.bufferram = bufpages * PAGE_SIZE;

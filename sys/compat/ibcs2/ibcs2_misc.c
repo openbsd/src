@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.28 2004/06/22 23:52:18 jfb Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.29 2007/09/01 15:14:44 martin Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -1357,7 +1357,7 @@ ibcs2_sys_sysi86(p, v, retval)
 		return EINVAL;
 
 	case IBCS2_SI86PHYSMEM:
-                *retval = ctob(physmem);
+                *retval = ptoa(physmem);
 		break;
 
 	default:
