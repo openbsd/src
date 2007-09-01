@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.52 2007/08/31 23:14:21 ray Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.53 2007/09/01 02:25:26 ray Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -21,12 +21,14 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.52 2007/08/31 23:14:21 ray Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.53 2007/09/01 02:25:26 ray Exp $";
 
 /* crontab - install and manage per-user crontab files
  * vix 02may87 [RCS has the rest of the log]
  * vix 26jan87 [original]
  */
+
+#include <err.h>
 
 #define	MAIN_PROGRAM
 
@@ -286,8 +288,6 @@ edit_cmd(void) {
 	struct stat statbuf, xstatbuf;
 	struct timespec mtimespec;
 	struct timeval tv[2];
-	WAIT_T waiter;
-	PID_T pid, xpid;
 
 	log_it(RealUser, Pid, "BEGIN EDIT", User);
 	if (snprintf(n, sizeof n, "%s/%s", SPOOL_DIR, User) >= sizeof(n)) {
