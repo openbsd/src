@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2007/06/21 04:41:21 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 2007/09/01 12:08:17 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -618,7 +618,7 @@ void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	boolean_t kernel = pmap == pmap_kernel();
-	pt_entry_t *pte, entry;
+	pt_entry_t *pte, entry, protbits;
 	vaddr_t va;
 	paddr_t pa;
 	struct vm_page *pg;
@@ -630,6 +630,22 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
+	}
+
+	switch (prot) {
+	default:
+		panic("pmap_protect: invalid protection mode %x", prot);
+		/* NOTREACHED */
+	case VM_PROT_READ:
+		/* FALLTHROUGH */
+	case VM_PROT_READ | VM_PROT_EXECUTE:
+		protbits = kernel ? PG_PR_KRO : PG_PR_URO;
+		break;
+	case VM_PROT_READ | VM_PROT_WRITE:
+		/* FALLTHROUGH */
+	case VM_PROT_ALL:
+		protbits = kernel ? PG_PR_KRW : PG_PR_URW;
+		break;
 	}
 
 	for (va = sva; va < eva; va += PAGE_SIZE) {
@@ -645,22 +661,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				sh_dcache_wbinv_range_index(va, PAGE_SIZE);
 		}
 
-		entry &= ~PG_PR_MASK;
-		switch (prot) {
-		default:
-			panic("pmap_protect: invalid protection mode %x", prot);
-			/* NOTREACHED */
-		case VM_PROT_READ:
-			/* FALLTHROUGH */
-		case VM_PROT_READ | VM_PROT_EXECUTE:
-			entry |= kernel ? PG_PR_KRO : PG_PR_URO;
-			break;
-		case VM_PROT_READ | VM_PROT_WRITE:
-			/* FALLTHROUGH */
-		case VM_PROT_ALL:
-			entry |= kernel ? PG_PR_KRW : PG_PR_URW;
-			break;
-		}
+		entry = (entry & ~PG_PR_MASK) | protbits;
 		*pte = entry;
 
 		if (pmap->pm_asid != -1)
@@ -1035,7 +1036,7 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
 
 /*
  * int __pmap_asid_alloc(void):
- *	Allocate new ASID. if all ASID is used, steal from other process.
+ *	Allocate new ASID. if all ASID are used, steal from other process.
  */
 int
 __pmap_asid_alloc()
