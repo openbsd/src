@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.89 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.90 2007/09/01 18:49:28 henning Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 #include <sys/socketvar.h>
 #include <sys/proc.h>
 #include <sys/domain.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/route.h>

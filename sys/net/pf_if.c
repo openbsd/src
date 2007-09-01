@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.48 2007/09/01 18:49:27 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -41,6 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/time.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

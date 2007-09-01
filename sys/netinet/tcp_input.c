@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.207 2007/06/15 18:23:06 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.208 2007/09/01 18:49:28 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -75,6 +75,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 
 #include <dev/rndvar.h>
 

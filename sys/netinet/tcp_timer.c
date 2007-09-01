@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.39 2007/06/15 18:23:07 markus Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.40 2007/09/01 18:49:28 henning Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 
 #include <net/route.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.70 2007/05/23 11:53:45 markus Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.71 2007/09/01 18:49:27 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/route.h>
