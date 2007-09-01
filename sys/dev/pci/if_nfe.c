@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.69 2007/03/02 00:16:59 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.70 2007/09/01 19:19:39 ckuethe Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -150,7 +150,11 @@ const struct pci_matchid nfe_devices[] = {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN1 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN2 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN3 },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN4 }
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN4 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN1 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN3 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN4 }
 };
 
 int
@@ -203,10 +207,6 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	nfe_get_macaddr(sc, sc->sc_arpcom.ac_enaddr);
-	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-
 	sc->sc_flags = 0;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -218,6 +218,8 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP51_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP51_LAN2:
+		sc->sc_flags |= NFE_40BIT_ADDR;
+		break;
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN3:
@@ -226,7 +228,11 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP67_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP67_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP67_LAN4:
-		sc->sc_flags |= NFE_40BIT_ADDR;
+	case PCI_PRODUCT_NVIDIA_MCP73_LAN1:
+	case PCI_PRODUCT_NVIDIA_MCP73_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP73_LAN3:
+	case PCI_PRODUCT_NVIDIA_MCP73_LAN4:
+		sc->sc_flags |= NFE_40BIT_ADDR | NFE_CORRECT_MACADDR;
 		break;
 	case PCI_PRODUCT_NVIDIA_CK804_LAN1:
 	case PCI_PRODUCT_NVIDIA_CK804_LAN2:
@@ -238,7 +244,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN4:
-		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR;
+		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_CORRECT_MACADDR;
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN2:
@@ -250,6 +256,9 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	/* enable jumbo frames for adapters that support it */
 	if (sc->sc_flags & NFE_JUMBO_SUP)
 		sc->sc_flags |= NFE_USE_JUMBO;
+
+	nfe_get_macaddr(sc, sc->sc_arpcom.ac_enaddr);
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Allocate Tx and Rx rings.
@@ -1725,15 +1734,28 @@ nfe_get_macaddr(struct nfe_softc *sc, uint8_t *addr)
 {
 	uint32_t tmp;
 
-	tmp = NFE_READ(sc, NFE_MACADDR_LO);
-	addr[0] = (tmp >> 8) & 0xff;
-	addr[1] = (tmp & 0xff);
+	if (sc->sc_flags & NFE_CORRECT_MACADDR) {
+		tmp = NFE_READ(sc, NFE_MACADDR_HI);
+		addr[0] = (tmp & 0xff);
+		addr[1] = (tmp >>  8) & 0xff;
+		addr[2] = (tmp >> 16) & 0xff;
+		addr[3] = (tmp >> 24) & 0xff;
 
-	tmp = NFE_READ(sc, NFE_MACADDR_HI);
-	addr[2] = (tmp >> 24) & 0xff;
-	addr[3] = (tmp >> 16) & 0xff;
-	addr[4] = (tmp >>  8) & 0xff;
-	addr[5] = (tmp & 0xff);
+		tmp = NFE_READ(sc, NFE_MACADDR_LO);
+		addr[4] = (tmp & 0xff);
+		addr[5] = (tmp >> 8) & 0xff;
+
+	} else {
+		tmp = NFE_READ(sc, NFE_MACADDR_LO);
+		addr[0] = (tmp >> 8) & 0xff;
+		addr[1] = (tmp & 0xff);
+
+		tmp = NFE_READ(sc, NFE_MACADDR_HI);
+		addr[2] = (tmp >> 24) & 0xff;
+		addr[3] = (tmp >> 16) & 0xff;
+		addr[4] = (tmp >>  8) & 0xff;
+		addr[5] = (tmp & 0xff);
+	}
 }
 
 void
