@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.67 2006/11/03 23:45:26 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.68 2007/09/01 10:26:25 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -765,6 +765,8 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_baudrate = 10000000;
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/*
 	 * Do MII setup.
