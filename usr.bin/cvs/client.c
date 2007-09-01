@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.72 2007/08/30 11:07:18 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.73 2007/09/01 15:41:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -394,7 +394,7 @@ cvs_client_send_logmsg(char *msg)
 		}
 	}
 
-	free(buf);
+	xfree(buf);
 }
 
 void
