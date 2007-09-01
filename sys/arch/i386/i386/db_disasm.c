@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.14 2006/09/19 11:06:33 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.15 2007/09/01 11:54:02 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /*
@@ -1089,6 +1089,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	int	imm2;
 	int	len;
 	struct i_addr	address;
+	char	tmpfmt[24];
 
 	get_value_inc(inst, loc, 1, FALSE);
 	short_addr = FALSE;
@@ -1284,31 +1285,37 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		    case I:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, FALSE);
-			db_printf("$%#n", imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    imm, DB_FORMAT_N, 1, 0));
 			break;
 		    case Is:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, TRUE);
-			db_printf("$%#r", imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    imm, DB_FORMAT_R, 1, 0));
 			break;
 		    case Ib:
 			get_value_inc(imm, loc, 1, FALSE);
-			db_printf("$%#n", imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    imm, DB_FORMAT_N, 1, 0));
 			break;
 		    case Iba:
 			get_value_inc(imm, loc, 1, FALSE);
 			if (imm != 0x0a)
-				db_printf("$%#n", imm);
+				db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+				    imm, DB_FORMAT_N, 1, 0));
 			break;
 		    case Ibs:
 			get_value_inc(imm, loc, 1, TRUE);
 			if (size == WORD)
 				imm &= 0xFFFF;
-			db_printf("$%#r", imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    imm, DB_FORMAT_R, 1, 0));
 			break;
 		    case Iw:
 			get_value_inc(imm, loc, 2, FALSE);
-			db_printf("$%#n", imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    imm, DB_FORMAT_N, 1, 0));
 			break;
 		    case O:
 			if (short_addr)
@@ -1316,7 +1323,8 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 			else
 				get_value_inc(displ, loc, 4, TRUE);
 			if (seg)
-				db_printf("%s:%#r",seg, displ);
+				db_printf("%s:%s", seg, db_format(tmpfmt,
+				    sizeof tmpfmt, displ, DB_FORMAT_R, 1, 0));
 			else
 				db_printsym((db_addr_t)displ, DB_STGY_ANY,
 				    db_printf);
@@ -1345,7 +1353,10 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		    case OS:
 			get_value_inc(imm, loc, len, FALSE);	/* offset */
 			get_value_inc(imm2, loc, 2, FALSE);	/* segment */
-			db_printf("$%#n,%#n", imm2, imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    imm2, DB_FORMAT_N, 1, 0));
+			db_printf(",%s", db_format(tmpfmt, sizeof tmpfmt,
+			    imm, DB_FORMAT_N, 1, 0));
 			break;
 		}
 	}

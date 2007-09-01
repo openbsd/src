@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.6 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 2007/09/01 11:54:02 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -1093,6 +1093,7 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	int	repe, repne;
 	struct i_addr	address;
 	db_addr_t	loc_orig = loc;
+	char	tmpfmt[24];
 
 	get_value_inc(inst, loc, 1, FALSE);
 	short_addr = FALSE;
@@ -1324,36 +1325,44 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 		case I:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, FALSE);
-			db_printf("$%#n", (int)imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    (int)imm, DB_FORMAT_N, 1, 0));
 			break;
 		case Is:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, TRUE);
-			db_printf("$%#r", (int)imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    (int)imm, DB_FORMAT_R, 1, 0));
 			break;
 		case Ib:
 			get_value_inc(imm, loc, 1, FALSE);
-			db_printf("$%#n", (int)imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    (int)imm, DB_FORMAT_N, 1, 0));
 			break;
 		case Iba:
 			get_value_inc(imm, loc, 1, FALSE);
 			if (imm != 0x0a)
-				db_printf("$%#n", (int)imm);
+				db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+				    (int)imm, DB_FORMAT_N, 1, 0));
 			break;
 		case Ibs: //XXX
 			get_value_inc(imm, loc, 1, TRUE);
 			if (size == WORD)
 				imm &= 0xFFFF;
-			db_printf("$%#r", (int)imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    (int)imm, DB_FORMAT_R, 1, 0));
 			break;
 		case Iw:
 			get_value_inc(imm, loc, 2, FALSE);
-			db_printf("$%#n", (int)imm);
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			    (int)imm, DB_FORMAT_N, 1, 0));
 			break;
 		case Iq:
 			get_value_inc(imm, loc, 8, TRUE);
-			db_printf("$%#r %#r", (int)((imm >> 32) & 0xffffffff),
-			    (int)(imm & 0xffffffff));
+			db_printf("$%s", db_format(tmpfmt, sizeof tmpfmt,
+			   (int)((imm >> 32) & 0xffffffff), DB_FORMAT_R, 1, 0));
+			db_printf(" %s", db_format(tmpfmt, sizeof tmpfmt,
+			   (int)(imm & 0xffffffff), DB_FORMAT_R, 1, 0));
 			break;
 		case O: //XXX
 			if (short_addr)
@@ -1361,7 +1370,8 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 			else
 				get_value_inc(displ, loc, 4, TRUE);
 			if (seg)
-				db_printf("%s:%#r",seg, displ);
+				db_printf("%s:%s", seg, db_format(tmpfmt,
+				    sizeof tmpfmt, displ, DB_FORMAT_R, 1, 0));
 			else
 				db_printsym((db_addr_t)displ, DB_STGY_ANY,
 				    db_printf);

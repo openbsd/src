@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.13 2007/03/15 17:10:22 miod Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.14 2007/09/01 11:54:03 miod Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -186,6 +186,7 @@ void
 db_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_expr_t	value;
+	char		tmpfmt[24];
 
 	if (modif[0] != '\0')
 		db_print_format = modif[0];
@@ -195,13 +196,15 @@ db_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		db_printsym((db_addr_t)addr, DB_STGY_ANY, db_printf);
 		break;
 	case 'r':
-		db_printf("%*r", sizeof(db_expr_t) * 2 * 6 / 5, addr);
+		db_printf("%s", db_format(tmpfmt, sizeof tmpfmt, addr,
+		    DB_FORMAT_R, 0, sizeof(db_expr_t) * 2 * 6 / 5));
 		break;
 	case 'x':
 		db_printf("%*x", sizeof(db_expr_t) * 2, addr);
 		break;
 	case 'z':
-		db_printf("%*z", sizeof(db_expr_t) * 2, addr);
+		db_printf("%s", db_format(tmpfmt, sizeof tmpfmt, addr,
+		    DB_FORMAT_Z, 0, sizeof(db_expr_t) * 2));
 		break;
 	case 'd':
 		db_printf("%*d", sizeof(db_expr_t) * 2 * 6 / 5, addr);
