@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.62 2007/02/25 18:21:24 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.63 2007/09/01 19:32:19 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.62 2007/02/25 18:21:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.63 2007/09/01 19:32:19 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -604,7 +604,7 @@ static void
 allocinfo(struct Info *s)
 {
 
-	s->intrcnt = (u_quad_t *) malloc(nintr * sizeof(u_quad_t));
+	s->intrcnt = (u_quad_t *) calloc(nintr, sizeof(u_quad_t));
 	if (s->intrcnt == NULL)
 		errx(2, "out of memory");
 }

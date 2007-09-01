@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.19 2007/02/25 18:21:24 deraadt Exp $	*/
+/*	$OpenBSD: swap.c,v 1.20 2007/09/01 19:32:19 deraadt Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: swap.c,v 1.19 2007/02/25 18:21:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: swap.c,v 1.20 2007/09/01 19:32:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -98,7 +98,7 @@ fetchswap(void)
 
 	if (swap_devices)
 		(void)free(swap_devices);
-	swap_devices = (struct swapent *)malloc(nswap * sizeof(*swap_devices));
+	swap_devices = (struct swapent *)calloc(nswap, sizeof(*swap_devices));
 	if (swap_devices == NULL)
 		/* XXX */ ;	/* XXX systat doesn't do errors! */
 
