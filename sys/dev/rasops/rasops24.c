@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops24.c,v 1.5 2002/07/27 22:17:49 miod Exp $	*/
+/*	$OpenBSD: rasops24.c,v 1.6 2007/09/01 12:58:19 miod Exp $	*/
 /*	$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -149,15 +149,14 @@ rasops24_putchar(cookie, row, col, uc, attr)
 	clr[0] = ri->ri_devcmap[((u_int)attr >> 16) & 0xf];
 
 	if (uc == ' ') {
-		u_char c = clr[0];
 		while (height--) {
 			dp = rp;
 			rp += ri->ri_stride;
 
 			for (cnt = width; cnt; cnt--) {
-				*dp++ = c >> 16;
-				*dp++ = c >> 8;
-				*dp++ = c;
+				*dp++ = clr[0] >> 16;
+				*dp++ = clr[0] >> 8;
+				*dp++ = clr[0];
 			}
 		}
 	} else {
@@ -187,14 +186,12 @@ rasops24_putchar(cookie, row, col, uc, attr)
 
 	/* Do underline */
 	if ((attr & 1) != 0) {
-		u_char c = clr[1];
-
 		rp -= ri->ri_stride << 1;
 
 		while (width--) {
-			*rp++ = c >> 16;
-			*rp++ = c >> 8;
-			*rp++ = c;
+			*rp++ = clr[1] >> 16;
+			*rp++ = clr[1] >> 8;
+			*rp++ = clr[1];
 		}
 	}
 }
