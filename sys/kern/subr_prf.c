@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.70 2007/04/26 20:28:25 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.71 2007/09/01 11:54:49 miod Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -582,9 +582,7 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
  * this version based on vfprintf() from libc which was derived from
  * software contributed to Berkeley by Chris Torek.
  *
- * Two additional formats:
- *
- * The format %b is supported to decode error registers.
+ * The additional format %b is supported to decode error registers.
  * Its usage is:
  *
  *	printf("reg=%b\n", regval, "<base><arg>*");
@@ -762,43 +760,6 @@ reswitch:	switch (ch) {
 			continue;	/* no output */
 		}
 
-#ifdef DDB
-		/* XXX: non-standard '%r' format (print int in db_radix) */
-		case 'r':
-			if ((oflags & TODDB) == 0)
-				goto default_case;
-
-			if (db_radix == 16)
-				goto case_z;	/* signed hex */
-			_uquad = SARG();
-			if ((quad_t)_uquad < 0) {
-				_uquad = -_uquad;
-				sign = '-';
-			}
-			base = (db_radix == 8) ? OCT : DEC;
-			goto number;
-
-
-		/* XXX: non-standard '%z' format ("signed hex", a "hex %i")*/
-		case 'z':
-		case_z:
-			if ((oflags & TODDB) == 0)
-				goto default_case;
-
-			xdigs = "0123456789abcdef";
-			ch = 'x';	/* the 'x' in '0x' (below) */
-			_uquad = SARG();
-			base = HEX;
-			/* leading 0x/X only if non-zero */
-			if (flags & ALT && _uquad != 0)
-				flags |= HEXPREFIX;
-			if ((quad_t)_uquad < 0) {
-				_uquad = -_uquad;
-				sign = '-';
-			}
-			goto number;
-#endif
-
 		case ' ':
 			/*
 			 * ``If the space and + flags both appear, the space
@@ -890,28 +851,6 @@ reswitch:	switch (ch) {
 			base = DEC;
 			goto number;
 		case 'n':
-#ifdef DDB
-		/* XXX: non-standard '%n' format */
-		/*
-		 * XXX: HACK!   DDB wants '%n' to be a '%u' printed
-		 * in db_radix format.   this should die since '%n'
-		 * is already defined in standard printf to write
-		 * the number of chars printed so far to the arg (which
-		 * should be a pointer.
-		 */
-			if (oflags & TODDB) {
-				if (db_radix == 16)
-					ch = 'x';	/* convert to %x */
-				else if (db_radix == 8)
-					ch = 'o';	/* convert to %o */
-				else
-					ch = 'u';	/* convert to %u */
-
-				/* ... and start again */
-				goto reswitch;
-			}
-
-#endif
 			if (flags & QUADINT)
 				*va_arg(ap, quad_t *) = ret;
 			else if (flags & LONGINT)
@@ -1041,9 +980,6 @@ number:			if ((dprec = prec) >= 0)
 		skipsize:
 			break;
 		default:	/* "%?" prints ?, unless ? is NUL */
-#ifdef DDB
-		default_case:	/* DDB */
-#endif
 			if (ch == '\0')
 				goto done;
 			/* pretend it was %c with argument ch */
