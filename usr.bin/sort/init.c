@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.10 2007/04/02 08:04:52 moritz Exp $	*/
+/*	$OpenBSD: init.c,v 1.11 2007/09/01 18:13:58 kili Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.10 2007/04/02 08:04:52 moritz Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.11 2007/09/01 18:13:58 kili Exp $";
 #endif
 #endif /* not lint */
 
@@ -215,11 +215,10 @@ optval(int desc, int tcolflag)
 void
 fixit(int *argc, char **argv)
 {
-	int i, j;
+	int i, j, n;
 	long v, w, x;
 	char *p, *ep;
 	char buf[128], *bufp, *bufend;
-	size_t n;
 
 	bufend = buf + sizeof(buf);
 	for (i = 1; i < *argc; i++) {
