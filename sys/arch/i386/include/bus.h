@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.41 2007/08/22 21:28:41 marco Exp $	*/
+/*	$OpenBSD: bus.h,v 1.42 2007/09/01 03:41:17 marco Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -740,7 +740,6 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
  *
  * Get the kernel virtual address for the mapped bus space.
  * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
- *  (XXX not enforced)
  */
 #define bus_space_vaddr(t, h) \
 	((t) == I386_BUS_SPACE_IO ? (void *)(NULL) : (void *)(h))
