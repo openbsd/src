@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2007/06/03 20:16:08 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2007/09/02 15:19:23 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.41 2007/06/03 20:16:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.42 2007/09/02 15:19:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -652,7 +652,7 @@ obsolete(int *argcp, char **argvp[])
 		return;
 
 	/* Allocate space for new arguments. */
-	if ((*argvp = nargv = malloc((argc + 1) * sizeof(char *))) == NULL ||
+	if ((*argvp = nargv = calloc(argc + 1, sizeof(char *))) == NULL ||
 	    (p = flagsp = malloc(strlen(ap) + 2)) == NULL)
 		err(1, NULL);
 

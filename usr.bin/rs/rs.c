@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.17 2006/04/17 09:45:00 moritz Exp $	*/
+/*	$OpenBSD: rs.c,v 1.18 2007/09/02 15:19:34 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: rs.c,v 1.17 2006/04/17 09:45:00 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: rs.c,v 1.18 2007/09/02 15:19:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -281,7 +281,7 @@ prepfile(void)
 			*ep = *(ep - nelem);
 		nelem = lp - elem;
 	}
-	if (!(colwidths = (short *) malloc(ocols * sizeof(short))))
+	if (!(colwidths = (short *) calloc(ocols, sizeof(short))))
 		errx(1, "malloc:  No gutter space");
 	if (flags & SQUEEZE) {
 		if (flags & TRANSPOSE)

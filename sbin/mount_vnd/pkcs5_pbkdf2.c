@@ -155,7 +155,7 @@ pkcs5_pbkdf2(u_int8_t **r, int dkLen, const u_int8_t *P, int Plen,
 	l = (dkLen + PRF_BLOCKLEN - 1) / PRF_BLOCKLEN;
 
 	/* allocate the output */
-	*r = malloc(l * PRF_BLOCKLEN);
+	*r = calloc(l, PRF_BLOCKLEN);
 	if (!*r)
 		return -1;
 

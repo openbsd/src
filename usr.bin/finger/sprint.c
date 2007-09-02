@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.11 2005/08/23 13:43:53 espie Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.12 2007/09/02 15:19:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static const char rcsid[] = "$OpenBSD: sprint.c,v 1.11 2005/08/23 13:43:53 espie Exp $";
+static const char rcsid[] = "$OpenBSD: sprint.c,v 1.12 2007/09/02 15:19:32 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -141,7 +141,7 @@ sort(void)
 	PERSON *pn, **lp;
 	PERSON **list;
 
-	if (!(list = (PERSON **)malloc((u_int)(entries * sizeof(PERSON *)))))
+	if (!(list = (PERSON **)calloc((u_int)entries, sizeof(PERSON *))))
 		err(1, "malloc");
 	for (lp = list, pn = phead; pn != NULL; pn = pn->next)
 		*lp++ = pn;

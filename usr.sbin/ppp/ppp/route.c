@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.34 2005/07/17 20:43:14 brad Exp $
+ * $OpenBSD: route.c,v 1.35 2007/09/02 15:19:39 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -262,7 +262,7 @@ Index2Nam(int idx)
           if (had)
             newifs = (char **)realloc(ifs, sizeof(char *) * have);
           else
-            newifs = (char **)malloc(sizeof(char *) * have);
+            newifs = (char **)calloc(sizeof(char *), have);
           if (!newifs) {
             log_Printf(LogDEBUG, "Index2Nam: %s\n", strerror(errno));
             route_nifs = 0;

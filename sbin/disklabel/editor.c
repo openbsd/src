@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.124 2007/07/24 15:11:53 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.125 2007/09/02 15:19:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.124 2007/07/24 15:11:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.125 2007/09/02 15:19:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1428,7 +1428,7 @@ sort_partitions(struct disklabel *lp, u_int16_t *npart)
 	}
 
 	/* Create an array of pointers to the partition data */
-	if ((spp = malloc(sizeof(struct partition *) * npartitions)) == NULL)
+	if ((spp = calloc(npartitions, sizeof(struct partition *))) == NULL)
 		errx(4, "out of memory");
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
 		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&

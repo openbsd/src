@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.34 2006/12/26 20:59:23 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.35 2007/09/02 15:19:32 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -509,6 +509,16 @@ grep_malloc(size_t size)
 
 	if ((ptr = malloc(size)) == NULL)
 		err(2, "malloc");
+	return ptr;
+}
+
+void *
+grep_calloc(size_t nmemb, size_t size)
+{
+	void	*ptr;
+
+	if ((ptr = calloc(nmemb, size)) == NULL)
+		err(2, "calloc");
 	return ptr;
 }
 

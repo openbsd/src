@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2007/06/04 14:59:45 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2007/09/02 15:19:39 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.46 2007/06/04 14:59:45 henning Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.47 2007/09/02 15:19:39 deraadt Exp $";
 #endif
 #endif
 
@@ -1657,7 +1657,7 @@ script_setenv(var, value)
 	}
     } else {
 	i = 0;
-	script_env = (char **) malloc(16 * sizeof(char *));
+	script_env = (char **) calloc(16, sizeof(char *));
 	if (script_env == 0)
 	    novm("script_setenv");
 	s_env_nalloc = 16;

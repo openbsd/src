@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.186 2007/08/25 20:05:30 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.187 2007/09/02 15:19:23 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -896,7 +896,7 @@ list_cloners(void)
 	if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
 		err(1, "SIOCIFGCLONERS for count");
 
-	buf = malloc(ifcr.ifcr_total * IFNAMSIZ);
+	buf = calloc(ifcr.ifcr_total, IFNAMSIZ);
 	if (buf == NULL)
 		err(1, "unable to allocate cloner name buffer");
 
@@ -2307,7 +2307,7 @@ status(int link, struct sockaddr_dl *sdl)
 		goto proto_status;
 	}
 
-	media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
+	media_list = (int *)calloc(ifmr.ifm_count, sizeof(int));
 	if (media_list == NULL)
 		err(1, "malloc");
 	ifmr.ifm_ulist = media_list;

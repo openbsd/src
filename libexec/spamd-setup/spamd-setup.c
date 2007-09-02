@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.32 2007/02/27 02:10:58 beck Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.33 2007/09/02 15:19:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -311,7 +311,7 @@ open_file(char *method, char *file)
 		return (i);
 	} else if (strcmp(method, "exec") == 0) {
 		len = strlen(file);
-		argv = malloc(len * sizeof(char *));
+		argv = calloc(len, sizeof(char *));
 		if (argv == NULL)
 			errx(1, "malloc failed");
 		for (ap = argv; ap < &argv[len - 1] &&
@@ -540,7 +540,7 @@ collapse_blacklist(struct bl *bl, size_t blc)
 
 	if (blc == 0)
 		return (NULL);
-	cl = malloc(((blc / 2) + 1) * sizeof(struct cidr));
+	cl = calloc(((blc / 2) + 1), sizeof(struct cidr));
 	if (cl == NULL) {
 		return (NULL);
 	}

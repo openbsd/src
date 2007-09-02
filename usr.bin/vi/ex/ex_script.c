@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.13 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.14 2007/09/02 15:19:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -388,7 +388,7 @@ sscr_input(sp)
 	CIRCLEQ_FOREACH(sp, &gp->dq, q)
 		if (F_ISSET(sp, SC_SCRIPT) && sp->script->sh_master > maxfd)
 			maxfd = sp->script->sh_master;
-	rdfd = (fd_set *)malloc(howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
+	rdfd = (fd_set *)calloc(howmany(maxfd + 1, NFDBITS), sizeof(fd_mask));
 	if (rdfd == NULL) {
 		msgq(sp, M_SYSERR, "malloc");
 		return (1);

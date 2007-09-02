@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.16 2006/03/31 05:36:36 deraadt Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.17 2007/09/02 15:19:17 deraadt Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -176,7 +176,7 @@ regcomp(regex_t *preg, const char *pattern, int cflags)
 	if (g == NULL)
 		return(REG_ESPACE);
 	p->ssize = len/(size_t)2*(size_t)3 + (size_t)1;	/* ugh */
-	p->strip = (sop *)malloc(p->ssize * sizeof(sop));
+	p->strip = (sop *)calloc(p->ssize, sizeof(sop));
 	p->slen = 0;
 	if (p->strip == NULL) {
 		free((char *)g);
@@ -1031,7 +1031,7 @@ allocset(struct parse *p)
 		assert(nc % CHAR_BIT == 0);
 		nbytes = nc / CHAR_BIT * css;
 		if (p->g->sets == NULL)
-			p->g->sets = (cset *)malloc(nc * sizeof(cset));
+			p->g->sets = (cset *)calloc(nc, sizeof(cset));
 		else {
 			cset *ptr;
 			ptr = (cset *)realloc((char *)p->g->sets,

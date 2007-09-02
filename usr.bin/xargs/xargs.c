@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.24 2005/11/01 04:52:59 deraadt Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.25 2007/09/02 15:19:36 deraadt Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: xargs.c,v 1.24 2005/11/01 04:52:59 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: xargs.c,v 1.25 2007/09/02 15:19:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 	 * NULL.
 	 */
 	linelen = 1 + argc + nargs + 1;
-	if ((av = bxp = malloc(linelen * sizeof(char **))) == NULL)
+	if ((av = bxp = calloc(linelen, sizeof(char **))) == NULL)
 		err(1, NULL);
 
 	/*
@@ -423,7 +423,7 @@ prerun(int argc, char *argv[])
 	 * Allocate memory to hold the argument list, and
 	 * a NULL at the tail.
 	 */
-	tmp = malloc((argc + 1) * sizeof(char**));
+	tmp = calloc(argc + 1, sizeof(char**));
 	if (tmp == NULL)
 		err(1, NULL);
 	tmp2 = tmp;

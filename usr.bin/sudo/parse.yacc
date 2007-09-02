@@ -1019,7 +1019,7 @@ more_aliases()
 
     nslots += MOREALIASES;
     if (nslots == MOREALIASES)
-	aliases = (aliasinfo *) malloc(nslots * sizeof(aliasinfo));
+	aliases = (aliasinfo *) calloc(nslots, sizeof(aliasinfo));
     else
 	aliases = (aliasinfo *) realloc(aliases, nslots * sizeof(aliasinfo));
 

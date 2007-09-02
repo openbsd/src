@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.18 2007/03/05 20:29:14 millert Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.19 2007/09/02 15:19:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -88,7 +88,7 @@ _ng_sl_init(void)
 
 	sl->sl_cur = 0;
 	sl->sl_max = 20;
-	sl->sl_str = malloc(sl->sl_max * sizeof(char *));
+	sl->sl_str = calloc(sl->sl_max, sizeof(char *));
 	if (sl->sl_str == NULL)
 		return NULL;
 	return sl;

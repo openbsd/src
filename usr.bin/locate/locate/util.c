@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2003/11/08 19:17:29 jmc Exp $
+/*	$OpenBSD: util.c,v 1.10 2007/09/02 15:19:33 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.9 2003/11/08 19:17:29 jmc Exp $
+ * $Id: util.c,v 1.10 2007/09/02 15:19:33 deraadt Exp $
  */
 
 
@@ -115,7 +115,7 @@ colon(dbv, path, dot)
 			else {
 				/* a string */
 				slen = ch - c;
-				if ((p = malloc(sizeof(char) * (slen + 1)))
+				if ((p = calloc(sizeof(char), slen + 1))
 				    == NULL)
 					err(1, "malloc");
 				bcopy(c, p, slen);

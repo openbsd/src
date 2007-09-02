@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.13 2006/02/09 09:54:47 otto Exp $	*/
+/*	$OpenBSD: grep.h,v 1.14 2007/09/02 15:19:32 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -82,6 +82,7 @@ extern char	 re_error[RE_ERROR_BUF + 1];	/* Seems big enough */
 int		 procfile(char *fn);
 int		 grep_tree(char **argv);
 void		*grep_malloc(size_t size);
+void		*grep_calloc(size_t nmemb, size_t size);
 void		*grep_realloc(void *ptr, size_t size);
 void		 printline(str_t *line, int sep);
 int		 fastcomp(fastgrep_t *, const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.36 2007/03/18 16:28:10 mickey Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.37 2007/09/02 15:19:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: nlist.c,v 1.36 2007/03/18 16:28:10 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: nlist.c,v 1.37 2007/09/02 15:19:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -317,7 +317,7 @@ __elf_knlist(int fd, DB *db, int ksyms)
 	    !IS_ELF(eh))
 		return (1);
 
-	sh = (Elf_Shdr *)malloc(sizeof(Elf_Shdr) * eh.e_shnum);
+	sh = (Elf_Shdr *)calloc(sizeof(Elf_Shdr), eh.e_shnum);
 	if (sh == NULL)
 		errx(1, "cannot allocate %d bytes for symbol header",
 		    sizeof(Elf_Shdr) * eh.e_shnum);

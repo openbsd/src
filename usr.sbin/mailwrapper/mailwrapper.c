@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.16 2004/07/06 03:38:14 millert Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.17 2007/09/02 15:19:39 deraadt Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ initarg(struct arglist *al)
 {
 	al->argc = 0;
 	al->maxc = 10;
-	if ((al->argv = malloc(al->maxc * sizeof(char *))) == NULL)
+	if ((al->argv = calloc(al->maxc, sizeof(char *))) == NULL)
 		err(1, "malloc");
 }
 

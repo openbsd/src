@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.10 2006/03/26 20:58:51 djm Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.11 2007/09/02 15:19:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -209,7 +209,7 @@ pcap_list_datalinks(pcap_t *p, int **dlt_buffer)
 		**dlt_buffer = p->linktype;
 		return (1);
 	} else {
-		*dlt_buffer = (int*)malloc(sizeof(**dlt_buffer) * p->dlt_count);
+		*dlt_buffer = (int*)calloc(sizeof(**dlt_buffer), p->dlt_count);
 		if (*dlt_buffer == NULL) {
 			(void)snprintf(p->errbuf, sizeof(p->errbuf),
 			    "malloc: %s", pcap_strerror(errno));

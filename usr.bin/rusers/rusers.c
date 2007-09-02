@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.28 2007/05/25 21:27:16 krw Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.29 2007/09/02 15:19:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -47,7 +47,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.28 2007/05/25 21:27:16 krw Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.29 2007/09/02 15:19:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -260,7 +260,7 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 
 	if (up->uia_cnt == 0)
 		ut = NULL;
-	else if ((ut = malloc(up->uia_cnt * sizeof(*ut))) == NULL)
+	else if ((ut = calloc(up->uia_cnt, sizeof(*ut))) == NULL)
 		err(1, NULL);
 	entry->users = ut;
 	entry->count = up->uia_cnt;
@@ -315,7 +315,7 @@ rusers_reply_3(char *replyp, struct sockaddr_in *raddrp)
 
 	if (up3->utmp_array_len == 0)
 		ut = NULL;
-	else if ((ut = malloc(up3->utmp_array_len * sizeof(*ut))) == NULL)
+	else if ((ut = calloc(up3->utmp_array_len, sizeof(*ut))) == NULL)
 		err(1, NULL);
 	entry->users = ut;
 	entry->count = up3->utmp_array_len;
@@ -689,7 +689,7 @@ expandhosts(void)
 	for (i = 0, count = 0; i < nentries; i++)
 		count += hostinfo[i].count;
 
-	new_hostinfo = (struct host_info *)malloc(sizeof(*entry) * count);
+	new_hostinfo = (struct host_info *)calloc(sizeof(*entry), count);
 	if (new_hostinfo == NULL)
 		err(1, NULL);
 	for (i = 0, entry = new_hostinfo; i < nentries; i++) {

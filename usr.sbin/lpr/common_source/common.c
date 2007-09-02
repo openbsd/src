@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.31 2007/03/16 20:03:48 stevesk Exp $	*/
+/*	$OpenBSD: common.c,v 1.32 2007/09/02 15:19:38 deraadt Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.31 2007/03/16 20:03:48 stevesk Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.32 2007/09/02 15:19:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,7 @@ getq(struct queue ***namelist)
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
 	arraysz = (stbuf.st_size / 24);
-	queue = (struct queue **)malloc(arraysz * sizeof(struct queue *));
+	queue = (struct queue **)calloc(arraysz, sizeof(struct queue *));
 	if (queue == NULL)
 		goto errdone;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bm.c,v 1.6 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: bm.c,v 1.7 2007/09/02 15:19:18 deraadt Exp $ */
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -104,7 +104,7 @@ bm_comp(u_char const *pb, size_t len, u_char const *freq)
 		goto mem;
 	memcpy(pat->pat, pb, pat->patlen);
 						/* get skip delta */
-	if ((pat->delta = malloc(256 * sizeof(*d))) == NULL)
+	if ((pat->delta = calloc(256, sizeof(*d))) == NULL)
 		goto mem;
 	for (j = 0, d = pat->delta; j < 256; j++)
 		d[j] = pat->patlen;

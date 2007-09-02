@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.8 2005/11/06 00:56:51 jsg Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.9 2007/09/02 15:19:33 deraadt Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -321,7 +321,7 @@ playdata(u_char *buf, u_int tot, char *name)
 	}
 	if (ntrks == 0)
 		return;
-	tracks = malloc(ntrks * sizeof(struct track));
+	tracks = calloc(ntrks, sizeof(struct track));
 	if (tracks == NULL)
 		err(1, "malloc() tracks failed");
 	for (t = 0; t < ntrks; ) {

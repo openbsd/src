@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.17 2007/07/04 17:14:45 millert Exp $	*/
+/*	$OpenBSD: quot.c,v 1.18 2007/09/02 15:19:40 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.17 2007/07/04 17:14:45 millert Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.18 2007/09/02 15:19:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -437,7 +437,7 @@ douser(int fd, struct fs *super, char *name)
 		else if (errno)
 			err(1, "%s", name);
 	}
-	if (!(usrs = (struct user *)malloc(nusers * sizeof(struct user))))
+	if (!(usrs = (struct user *)calloc(nusers, sizeof(struct user))))
 		err(1, "allocate users");
 	memcpy(usrs, users, nusers * sizeof(struct user));
 	sortusers(usrs);

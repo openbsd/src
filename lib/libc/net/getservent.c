@@ -1,4 +1,4 @@
-/*	$OpenBSD: getservent.c,v 1.11 2006/01/17 15:41:52 millert Exp $ */
+/*	$OpenBSD: getservent.c,v 1.12 2007/09/02 15:19:17 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -104,7 +104,7 @@ again:
 	se->s_proto = cp;
 	if (sd->aliases == NULL) {
 		sd->maxaliases = 10;
-		sd->aliases = malloc(sd->maxaliases * sizeof(char *));
+		sd->aliases = calloc(sd->maxaliases, sizeof(char *));
 		if (sd->aliases == NULL) {
 			serrno = errno;
 			endservent_r(sd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.64 2006/06/04 01:39:32 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.65 2007/09/02 15:19:40 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.64 2006/06/04 01:39:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.65 2007/09/02 15:19:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1015,7 +1015,7 @@ swapmode(void)
 		    "Total", hlen, 0, 0, 0, 0.0);
 		return;
 	}
-	if ((swdev = malloc(nswap * sizeof(*swdev))) == NULL)
+	if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL)
 		err(1, "malloc");
 	if (swapctl(SWAP_STATS, swdev, nswap) == -1)
 		err(1, "swapctl");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwinit.c,v 1.17 2006/01/02 16:20:56 millert Exp $	*/
+/*	$OpenBSD: wwinit.c,v 1.18 2007/09/02 15:19:35 deraadt Exp $	*/
 /*	$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: wwinit.c,v 1.17 2006/01/02 16:20:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwinit.c,v 1.18 2007/09/02 15:19:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -265,7 +265,7 @@ wwinit()
 	for (i = 0; i < wwnrow; i++)
 		wwtouched[i] = 0;
 
-	wwupd = (struct ww_update *) malloc(wwnrow * sizeof *wwupd);
+	wwupd = (struct ww_update *) calloc(wwnrow, sizeof *wwupd);
 	if (wwupd == 0) {
 		wwerrno = WWE_NOMEM;
 		goto bad;

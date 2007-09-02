@@ -1,4 +1,4 @@
-/*	$OpenBSD: hcreate.c,v 1.3 2005/10/10 17:37:44 espie Exp $	*/
+/*	$OpenBSD: hcreate.c,v 1.4 2007/09/02 15:19:17 deraadt Exp $	*/
 /*	$NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ hcreate(size_t nel)
 	
 	/* Allocate the table. */
 	htablesize = nel;
-	htable = malloc(htablesize * sizeof htable[0]);
+	htable = calloc(htablesize, sizeof htable[0]);
 	if (htable == NULL) {
 		errno = ENOMEM;
 		return 0;

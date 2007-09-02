@@ -1,4 +1,4 @@
-/*	$OpenBSD: clit.c,v 1.5 2003/10/31 08:47:31 otto Exp $	*/
+/*	$OpenBSD: clit.c,v 1.6 2007/09/02 15:19:33 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -186,7 +186,7 @@ cmdloop(void *arg)
 
 	stop = 0;
 
-	if ((argv = malloc(sizeof(char *) * maxargs)) == NULL)
+	if ((argv = calloc(sizeof(char *), maxargs)) == NULL)
 		err(1, "malloc");
 
 	while (!stop && (elline = el_gets(el, &cnt)) != NULL) {

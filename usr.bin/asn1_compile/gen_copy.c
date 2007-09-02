@@ -108,7 +108,7 @@ copy_type (const char *from, const char *to, const Type *t)
       char *T;
 
       fprintf (codefile, "if(((%s)->val = "
-	       "malloc((%s)->len * sizeof(*(%s)->val))) == NULL && (%s)->len != 0)\n", 
+	       "calloc((%s)->len, sizeof(*(%s)->val))) == NULL && (%s)->len != 0)\n", 
 	       to, from, to, from);
       fprintf (codefile, "return ENOMEM;\n");
       fprintf(codefile,

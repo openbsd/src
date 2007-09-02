@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.26 2006/04/09 04:40:35 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.27 2007/09/02 15:19:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -180,7 +180,7 @@ login_getstyle(login_cap_t *lc, char *style, char *atype)
 		while (*ta)
 			if (*ta++ == ',')
 				++i;
-		f2 = authtypes = malloc(sizeof(char *) * i);
+		f2 = authtypes = calloc(sizeof(char *), i);
 		if (!authtypes) {
 			syslog(LOG_ERR, "malloc: %m");
 			free(f1);

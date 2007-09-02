@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.14 2007/05/29 06:28:15 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.15 2007/09/02 15:19:23 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ setup(char *dev)
 	 * read in the summary info.
 	 */
 
-	sblock.e2fs_gd = malloc(sblock.e2fs_ngdb * sblock.e2fs_bsize);
+	sblock.e2fs_gd = calloc(sblock.e2fs_ngdb, sblock.e2fs_bsize);
 	if (sblock.e2fs_gd == NULL)
 		errexit("out of memory\n");
 	asked = 0;

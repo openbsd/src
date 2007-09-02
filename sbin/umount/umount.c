@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.18 2007/01/28 16:23:58 bluhm Exp $	*/
+/*	$OpenBSD: umount.c,v 1.19 2007/09/02 15:19:25 deraadt Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.18 2007/01/28 16:23:58 bluhm Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.19 2007/09/02 15:19:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -335,7 +335,7 @@ maketypelist(char *fslist)
 		++nextcp;
 
 	/* Build an array of that many types. */
-	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
+	if ((av = typelist = calloc(i + 1, sizeof(char *))) == NULL)
 		err(1, NULL);
 	av[0] = fslist;
 	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')); i++) {

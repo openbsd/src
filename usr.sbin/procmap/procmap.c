@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.25 2007/05/31 18:22:25 thib Exp $ */
+/*	$OpenBSD: procmap.c,v 1.26 2007/09/02 15:19:40 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -870,7 +870,7 @@ load_name_cache(kvm_t *kd)
 	LIST_INIT(&lcache);
 
 	_KDEREF(kd, nchash_addr, &nchash, sizeof(nchash));
-	nchashtbl = malloc(sizeof(nchashtbl) * (int)nchash);
+	nchashtbl = calloc(sizeof(nchashtbl), (int)nchash);
 	if (nchashtbl == NULL)
 		err(1, "load_name_cache");
 	_KDEREF(kd, nchashtbl_addr, nchashtbl,

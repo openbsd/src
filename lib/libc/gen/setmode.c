@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.19 2006/03/12 18:36:46 otto Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.20 2007/09/02 15:19:16 deraadt Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ setmode(const char *p)
 
 	setlen = SET_LEN + 2;
 	
-	if ((set = malloc((u_int)(sizeof(BITCMD) * setlen))) == NULL)
+	if ((set = calloc((u_int)sizeof(BITCMD), setlen)) == NULL)
 		return (NULL);
 	saveset = set;
 	endset = set + (setlen - 2);

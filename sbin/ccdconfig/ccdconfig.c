@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.32 2007/08/06 19:16:05 sobrado Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.33 2007/09/02 15:19:23 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -278,7 +278,7 @@ do_single(int argc, char *argv[], int action)
 	}
 
 	/* Next is the list of disks to make the ccd from. */
-	disks = malloc(argc * sizeof(char *));
+	disks = calloc(argc, sizeof(char *));
 	if (disks == NULL) {
 		warnx("no memory to configure ccd");
 		goto done;

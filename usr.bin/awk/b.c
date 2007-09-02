@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.13 2006/03/19 18:17:11 pvalchev Exp $	*/
+/*	$OpenBSD: b.c,v 1.14 2007/09/02 15:19:31 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -84,8 +84,8 @@ fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 
 	if (setvec == 0) {	/* first time through any RE */
 		maxsetvec = MAXLIN;
-		setvec = (int *) malloc(maxsetvec * sizeof(int));
-		tmpset = (int *) malloc(maxsetvec * sizeof(int));
+		setvec = (int *) calloc(maxsetvec, sizeof(int));
+		tmpset = (int *) calloc(maxsetvec, sizeof(int));
 		if (setvec == 0 || tmpset == 0)
 			overflo("out of space initializing makedfa");
 	}

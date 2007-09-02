@@ -76,7 +76,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $OpenBSD: mrinfo.c,v 1.21 2005/06/20 14:48:26 robert Exp $";
+    "@(#) $OpenBSD: mrinfo.c,v 1.22 2007/09/02 15:19:39 deraadt Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
@@ -355,7 +355,7 @@ main(int argc, char *argv[])
 	if ((target_addr = inet_addr(host)) != -1) {
 		hp = &bogus;
 		hp->h_length = sizeof(target_addr);
-		if (!(hp->h_addr_list = (char **)malloc(2 * sizeof(char *))))
+		if (!(hp->h_addr_list = (char **)calloc(2, sizeof(char *))))
 			err(1, "can't allocate memory");
 		if (!(hp->h_addr_list[0] = malloc(hp->h_length)))
 			err(1, "can't allocate memory");

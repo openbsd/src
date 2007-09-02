@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.16 2005/11/23 02:43:45 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.17 2007/09/02 15:19:31 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -61,7 +61,7 @@ void recinit(unsigned int n)
 {
 	record = (char *) malloc(n);
 	fields = (char *) malloc(n);
-	fldtab = (Cell **) malloc((nfields+1) * sizeof(Cell *));
+	fldtab = (Cell **) calloc((nfields+1), sizeof(Cell *));
 	if (record == NULL || fields == NULL || fldtab == NULL)
 		FATAL("out of space for $0 and fields");
 

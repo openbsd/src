@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.46 2007/05/05 17:13:01 stevesk Exp $ */
+/*	$OpenBSD: lpd.c,v 1.47 2007/09/02 15:19:38 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.46 2007/05/05 17:13:01 stevesk Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.47 2007/09/02 15:19:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -794,7 +794,7 @@ socksetup(int af, int options, const char *port)
 		for (r = res; r; r = r->ai_next, maxs++)
 			;
 		if (socks == NULL) {
-			socks = malloc((maxs + 1) * sizeof(int));
+			socks = calloc(maxs + 1, sizeof(int));
 			if (socks)
 				*socks = 0; /* num of sockets ctr at start */
 		} else {

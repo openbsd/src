@@ -1,4 +1,4 @@
-/*	$OpenBSD: undo.c,v 1.8 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: undo.c,v 1.9 2007/09/02 15:19:07 deraadt Exp $	*/
 /*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: undo.c,v 1.8 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: undo.c,v 1.9 2007/09/02 15:19:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ push_undo_stack(int type, int from, int to)
 
 #if defined(sun) || defined(NO_REALLOC_NULL)
 	if (ustack == NULL &&
-	    (ustack = (undo_t *) malloc((usize = USIZE) * sizeof(undo_t))) == NULL) {
+	    (ustack = (undo_t *) calloc((usize = USIZE), sizeof(undo_t))) == NULL) {
 		perror(NULL);
 		seterrmsg("out of memory");
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.23 2005/06/16 14:51:21 millert Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.24 2007/09/02 15:19:25 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: interactive.c,v 1.23 2005/06/16 14:51:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: interactive.c,v 1.24 2007/09/02 15:19:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -535,7 +535,7 @@ printlist(char *name, char *basename)
 		while ((dp = rst_readdir(dirp)))
 			entries++;
 		rst_closedir(dirp);
-		list = (struct afile *)malloc(entries * sizeof(struct afile));
+		list = (struct afile *)calloc(entries, sizeof(struct afile));
 		if (list == NULL) {
 			fprintf(stderr, "ls: out of memory\n");
 			return;

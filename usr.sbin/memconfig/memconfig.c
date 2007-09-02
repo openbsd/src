@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.11 2006/03/14 19:23:16 moritz Exp $ */
+/* $OpenBSD: memconfig.c,v 1.12 2007/09/02 15:19:39 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -134,7 +134,7 @@ mrgetall(int memfd, int *nmr)
 		err(1, "can't size range descriptor array");
 
 	*nmr = mro.mo_arg[0];
-	mrd = malloc(*nmr * sizeof(struct mem_range_desc));
+	mrd = calloc(*nmr, sizeof(struct mem_range_desc));
 	if (mrd == NULL)
 		errx(1, "can't allocate %zu bytes for %d range descriptors",
 		     *nmr * sizeof(struct mem_range_desc), *nmr);

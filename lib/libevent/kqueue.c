@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.22 2007/03/19 15:12:49 millert Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.23 2007/09/02 15:19:18 deraadt Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -111,12 +111,12 @@ kq_init(void)
 	kqueueop->kq = kq;
 
 	/* Initalize fields */
-	kqueueop->changes = malloc(NEVENT * sizeof(struct kevent));
+	kqueueop->changes = calloc(NEVENT, sizeof(struct kevent));
 	if (kqueueop->changes == NULL) {
 		free (kqueueop);
 		return (NULL);
 	}
-	kqueueop->events = malloc(NEVENT * sizeof(struct kevent));
+	kqueueop->events = calloc(NEVENT, sizeof(struct kevent));
 	if (kqueueop->events == NULL) {
 		free (kqueueop->changes);
 		free (kqueueop);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.18 2005/03/10 01:36:37 cloder Exp $	*/
+/*	$OpenBSD: scm.c,v 1.19 2007/09/02 15:19:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -576,7 +576,7 @@ samehost()		/* is remote host same as local host? */
 		if ((nint = ifc.ifc_len / sizeof(struct ifreq)) <= 0)
 			return (0);
 		intp = (struct in_addr *)
-			malloc (nint * sizeof(struct in_addr));
+			calloc (nint, sizeof(struct in_addr));
 		if ((ifp = intp) == 0)
 			logquit (1, "no space for interfaces");
 		for (ifr = ifc.ifc_req, n = nint; n > 0; --n, ifr++) {

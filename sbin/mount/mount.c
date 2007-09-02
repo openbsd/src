@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.45 2007/06/01 05:37:14 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.46 2007/09/02 15:19:24 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.45 2007/06/01 05:37:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.46 2007/09/02 15:19:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -390,7 +390,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	}
 
 	argvsize = 64;
-	if((argv = malloc(argvsize * sizeof(char*))) == NULL)
+	if((argv = calloc(argvsize, sizeof(char *))) == NULL)
 		err(1, "malloc");
 	argc = 0;
 	argv[argc++] = NULL;	/* this should be a full path name */
@@ -652,7 +652,7 @@ maketypelist(char *fslist)
 		++nextcp;
 
 	/* Build an array of that many types. */
-	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
+	if ((av = typelist = calloc(i + 1, sizeof(char *))) == NULL)
 		err(1, NULL);
 	av[0] = fslist;
 	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')); i++) {

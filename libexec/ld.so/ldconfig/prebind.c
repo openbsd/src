@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.8 2006/11/13 13:13:14 drahn Exp $ */
+/* $OpenBSD: prebind.c,v 1.9 2007/09/02 15:19:20 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -625,7 +625,7 @@ elf_load_object(void *pexe, const char *name)
 		object->dyn.strtab = str;
 		strt = str;
 
-		sym = malloc(object->nchains * sizeof(Elf_Sym));
+		sym = calloc(object->nchains, sizeof(Elf_Sym));
 		if (sym == NULL) {
 			printf("unable to allocate symtab for %s\n",
 			    name);
@@ -1410,7 +1410,7 @@ void
 elf_init_objarray(void)
 {
 	objarray_sz = 512;
-	objarray = xmalloc(sizeof (objarray[0]) * objarray_sz);
+	objarray = xcalloc(sizeof (objarray[0]), objarray_sz);
 }
 
 void

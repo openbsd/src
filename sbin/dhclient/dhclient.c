@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.114 2007/08/14 15:29:18 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.115 2007/09/02 15:19:23 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1571,7 +1571,7 @@ priv_script_init(char *reason, char *medium)
 	client->scriptEnvsize = 100;
 	if (client->scriptEnv == NULL)
 		client->scriptEnv =
-		    malloc(client->scriptEnvsize * sizeof(char *));
+		    calloc(client->scriptEnvsize, sizeof(char *));
 	if (client->scriptEnv == NULL)
 		error("script_init: no memory for environment");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwopen.c,v 1.10 2003/07/10 00:06:52 david Exp $	*/
+/*	$OpenBSD: wwopen.c,v 1.11 2007/09/02 15:19:35 deraadt Exp $	*/
 /*	$NetBSD: wwopen.c,v 1.6 1996/02/08 21:08:04 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: wwopen.c,v 1.10 2003/07/10 00:06:52 david Exp $";
+static char rcsid[] = "$OpenBSD: wwopen.c,v 1.11 2007/09/02 15:19:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ wwopen(type, oflags, nrow, ncol, row, col, nline)
 		for (j = w->ww_b.l; j < w->ww_b.r; j++)
 			w->ww_buf[i][j].c_w = ' ';
 
-	w->ww_nvis = (short *)malloc(w->ww_w.nr * sizeof (short));
+	w->ww_nvis = (short *)calloc(w->ww_w.nr, sizeof (short));
 	if (w->ww_nvis == 0) {
 		wwerrno = WWE_NOMEM;
 		goto bad;

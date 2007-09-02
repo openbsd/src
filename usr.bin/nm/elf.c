@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.17 2007/04/18 19:03:04 miod Exp $	*/
+/*	$OpenBSD: elf.c,v 1.18 2007/09/02 15:19:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: elf.c,v 1.17 2007/04/18 19:03:04 miod Exp $";
+static const char rcsid[] = "$OpenBSD: elf.c,v 1.18 2007/09/02 15:19:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -148,7 +148,7 @@ elf_load_shdrs(const char *name, FILE *fp, off_t foff, Elf_Ehdr *head)
 
 	elf_fix_header(head);
 
-	if ((shdr = malloc(head->e_shentsize * head->e_shnum)) == NULL) {
+	if ((shdr = calloc(head->e_shentsize, head->e_shnum)) == NULL) {
 		warn("%s: malloc shdr", name);
 		return (NULL);
 	}
@@ -174,7 +174,7 @@ elf_load_phdrs(const char *name, FILE *fp, off_t foff, Elf_Ehdr *head)
 {
 	Elf_Phdr *phdr;
 
-	if ((phdr = malloc(head->e_phentsize * head->e_phnum)) == NULL) {
+	if ((phdr = calloc(head->e_phentsize, head->e_phnum)) == NULL) {
 		warn("%s: malloc phdr", name);
 		return (NULL);
 	}
@@ -473,7 +473,7 @@ elf_symloadx(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 					MUNMAP(stab, *pstabsize);
 				return (1);
 			}
-			if ((*psnames = malloc(*pnrawnames * sizeof(np))) == NULL) {
+			if ((*psnames = calloc(*pnrawnames, sizeof(np))) == NULL) {
 				warn("%s: malloc snames", name);
 				if (stab)
 					MUNMAP(stab, *pstabsize);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.110 2007/08/05 09:43:09 tom Exp $	 */
+/* $OpenBSD: x509.c,v 1.111 2007/09/02 15:19:24 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -482,7 +482,7 @@ x509_hash_init(void)
 			}
 		free(x509_tab);
 	}
-	x509_tab = malloc((bucket_mask + 1) * sizeof(struct x509_list));
+	x509_tab = calloc(bucket_mask + 1, sizeof(struct x509_list));
 	if (!x509_tab)
 		log_fatal("x509_hash_init: malloc (%lu) failed",
 		    (bucket_mask + 1) *
@@ -1149,7 +1149,7 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 		    *cnt * (unsigned long)sizeof **id);
 		goto fail;
 	}
-	*id_len = malloc(*cnt * sizeof **id_len);
+	*id_len = calloc(*cnt, sizeof **id_len);
 	if (!*id_len) {
 		log_print("x509_cert_get_subject: malloc (%lu) failed",
 		    *cnt * (unsigned long)sizeof **id_len);

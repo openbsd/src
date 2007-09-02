@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.32 2007/06/03 20:16:08 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.33 2007/09/02 15:19:25 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.32 2007/06/03 20:16:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.33 2007/09/02 15:19:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ newtapebuf(long size)
 		return;
 	if (tapebuf != NULL)
 		free(tapebuf);
-	tapebuf = malloc(size * TP_BSIZE);
+	tapebuf = calloc(size, TP_BSIZE);
 	if (tapebuf == NULL)
 		errx(1, "Cannot allocate space for tape buffer");
 	tapebufsize = size;

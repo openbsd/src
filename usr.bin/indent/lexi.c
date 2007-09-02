@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.12 2005/03/06 14:34:25 millert Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.13 2007/09/02 15:19:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: lexi.c,v 1.12 2005/03/06 14:34:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: lexi.c,v 1.13 2007/09/02 15:19:32 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -579,7 +579,7 @@ addkey(char *key, int val)
 	 */
 	nspecials = sizeof (specialsinit) / sizeof (specialsinit[0]);
 	maxspecials = nspecials + (nspecials >> 2);
-	specials = (struct templ *)malloc(maxspecials * sizeof specials[0]);
+	specials = (struct templ *)calloc(maxspecials, sizeof specials[0]);
 	if (specials == NULL)
 	    err(1, NULL);
 	memcpy(specials, specialsinit, sizeof specialsinit);

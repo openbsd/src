@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.5 2007/09/02 15:19:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)spell.c	8.1 (Berkeley) 6/6/93";
 #else
 #endif
-static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.5 2007/09/02 15:19:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -292,7 +292,7 @@ main(int argc, char **argv)
 		usage();
 
 	/* Open and mmap the word/stop lists. */
-	if ((wlists = malloc(sizeof(struct wlist) * (argc + 1))) == NULL)
+	if ((wlists = calloc(sizeof(struct wlist), (argc + 1))) == NULL)
 		err(1, "malloc");
 	for (i = 0; argc--; i++) {
 		wlists[i].fd = open(argv[i], O_RDONLY, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xx.c,v 1.7 2003/07/18 23:11:43 david Exp $	*/
+/*	$OpenBSD: xx.c,v 1.8 2007/09/02 15:19:36 deraadt Exp $	*/
 /*	$NetBSD: xx.c,v 1.3 1995/09/28 10:36:03 tls Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)xx.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: xx.c,v 1.7 2003/07/18 23:11:43 david Exp $";
+static char rcsid[] = "$OpenBSD: xx.c,v 1.8 2007/09/02 15:19:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ xxinit()
 	/* ccinit may choose to change xxbufsize */
 	if (tt.tt_ntoken > 0 && ccinit() < 0)
 		return -1;
-	xxbuf = malloc(xxbufsize * sizeof *xxbuf);
+	xxbuf = calloc(xxbufsize, sizeof *xxbuf);
 	if (xxbuf == 0) {
 		wwerrno = WWE_NOMEM;
 		return -1;

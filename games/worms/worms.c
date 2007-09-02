@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.17 2004/11/29 08:52:29 jsg Exp $	*/
+/*	$OpenBSD: worms.c,v 1.18 2007/09/02 15:19:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.17 2004/11/29 08:52:29 jsg Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.18 2007/09/02 15:19:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,7 @@ main(int argc, char *argv[])
 		}
 
 	srandomdev();
-	if (!(worm = malloc((size_t)number * sizeof(struct worm))))
+	if (!(worm = calloc((size_t)number, sizeof(struct worm))))
 		nomem();
 	initscr();
 	curs_set(0);
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 	last = CO - 1;
 	bottom = LI - 1;
 	if (!(ip = malloc((size_t)(LI * CO * sizeof(short)))) ||
-	    !(ref = malloc((size_t)(LI * sizeof(short *))))) {
+	    !(ref = calloc((size_t)LI, sizeof(short *)))) {
 		endwin();
 		nomem();
 	}
@@ -257,14 +257,14 @@ main(int argc, char *argv[])
 		*ip++ = 0;
 	for (n = number, w = &worm[0]; --n >= 0; w++) {
 		w->orientation = w->head = 0;
-		if (!(ip = malloc((size_t)(length * sizeof(short))))) {
+		if (!(ip = calloc((size_t)length, sizeof(short)))) {
 			endwin();
 			nomem();
 		}
 		w->xpos = ip;
 		for (x = length; --x >= 0;)
 			*ip++ = -1;
-		if (!(ip = malloc((size_t)(length * sizeof(short))))) {
+		if (!(ip = calloc((size_t)length, sizeof(short)))) {
 			endwin();
 			nomem();
 		}

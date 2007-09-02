@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.52 2007/06/18 11:20:58 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.53 2007/09/02 15:19:31 deraadt Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.52 2007/06/18 11:20:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.53 2007/09/02 15:19:31 deraadt Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -489,7 +489,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	int i, shortformat, numjobs, maxjobs;
 
 	if (argc) {
-		if ((uids = malloc(sizeof(uid_t) * argc)) == NULL)
+		if ((uids = calloc(sizeof(uid_t), argc)) == NULL)
 			panic("Insufficient virtual memory");
 
 		for (i = 0; i < argc; i++) {
@@ -524,7 +524,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	 */
 	numjobs = 0;
 	maxjobs = stbuf.st_nlink + 4;
-	atjobs = (struct atjob **)malloc(maxjobs * sizeof(struct atjob *));
+	atjobs = (struct atjob **)calloc(maxjobs, sizeof(struct atjob *));
 	if (atjobs == NULL)
 		panic("Insufficient virtual memory");
 
@@ -663,8 +663,8 @@ process_jobs(int argc, char **argv, int what)
 	uids = NULL;
 	jobs_len = uids_len = 0;
 	if (argc > 0) {
-		if ((jobs = malloc(sizeof(char *) * argc)) == NULL ||
-		    (uids = malloc(sizeof(uid_t) * argc)) == NULL)
+		if ((jobs = calloc(sizeof(char *), argc)) == NULL ||
+		    (uids = calloc(sizeof(uid_t), argc)) == NULL)
 			panic("Insufficient virtual memory");
 
 		for (i = 0; i < argc; i++) {

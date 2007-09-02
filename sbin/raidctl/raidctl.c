@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.27 2007/02/21 16:33:09 jmc Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.28 2007/09/02 15:19:24 deraadt Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -1159,7 +1159,7 @@ open_device(fdidpair **devfd, char *name)
 		}
 	}
 
-	if ((*devfd = malloc(nfd * sizeof(fdidpair))) == NULL)
+	if ((*devfd = calloc(nfd, sizeof(fdidpair))) == NULL)
 		errx(1, "malloc() error");
 
 	i = nfd;
@@ -1205,7 +1205,7 @@ get_all_devices(char ***diskarray, const char *genericname)
 		fp++;
 	}
 
-	*diskarray = (char**) malloc(numdevs * sizeof(void*));
+	*diskarray = (char**) calloc(numdevs, sizeof(void*));
 	i = 0;
 	fp = disks;
 	while ((p = strsep(&fp, ",")) != NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.7 2003/07/10 00:06:52 david Exp $	*/
+/*	$OpenBSD: compress.c,v 1.8 2007/09/02 15:19:35 deraadt Exp $	*/
 /*	$NetBSD: compress.c,v 1.3 1995/09/28 10:34:13 tls Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)compress.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: compress.c,v 1.7 2003/07/10 00:06:52 david Exp $";
+static char rcsid[] = "$OpenBSD: compress.c,v 1.8 2007/09/02 15:19:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,29 +238,29 @@ ccinit()
 #endif
 #undef C
 	if ((cc_output = (struct cc **)
-	     malloc(cc_bufsize * sizeof *cc_output)) == 0)
+	     calloc(cc_bufsize, sizeof *cc_output)) == 0)
 		goto nomem;
 	if ((cc_hashcodes = (short *)
-	     malloc(cc_bufsize * sizeof *cc_hashcodes)) == 0)
+	     calloc(cc_bufsize, sizeof *cc_hashcodes)) == 0)
 		goto nomem;
-	if ((cc_htab = (struct cc **) malloc(HSIZE * sizeof *cc_htab)) == 0)
+	if ((cc_htab = (struct cc **) calloc(HSIZE, sizeof *cc_htab)) == 0)
 		goto nomem;
 	if ((cc_tokens = (struct cc **)
-	     malloc((cc_ntoken + tt.tt_token_max - tt.tt_token_min + 1) *
-		    sizeof *cc_tokens)) == 0)
+	     malloc(cc_ntoken + tt.tt_token_max - tt.tt_token_min + 1),
+		    sizeof *cc_tokens) == 0)
 		goto nomem;
 	if ((cc_undo = (struct cc_undo *)
-	     malloc(cc_bufsize * sizeof *cc_undo)) == 0)
+	     calloc(cc_bufsize, sizeof *cc_undo)) == 0)
 		goto nomem;
 	for (i = tt.tt_token_min; i <= tt.tt_token_max; i++)
 		if ((cc_places[i] = (short *)
-		     malloc(cc_bufsize * sizeof **cc_places)) == 0)
+		     calloc(cc_bufsize, sizeof **cc_places)) == 0)
 			goto nomem;
 	cc_q0a.qforw = cc_q0a.qback = &cc_q0a;
 	cc_q0b.qforw = cc_q0b.qback = &cc_q0b;
 	cc_q1a.qforw = cc_q1a.qback = &cc_q1a;
 	cc_q1b.qforw = cc_q1b.qback = &cc_q1b;
-	if ((p = (struct cc *) malloc(cc_ntoken * sizeof *p)) == 0)
+	if ((p = (struct cc *) calloc(cc_ntoken, sizeof *p)) == 0)
 		goto nomem;
 	for (i = 0; i < tt.tt_ntoken; i++) {
 		p->code = i;

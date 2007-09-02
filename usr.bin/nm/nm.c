@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.30 2007/08/06 19:16:06 sobrado Exp $	*/
+/*	$OpenBSD: nm.c,v 1.31 2007/09/02 15:19:33 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.30 2007/08/06 19:16:06 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.31 2007/09/02 15:19:33 deraadt Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -692,12 +692,12 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 		nrawnames = head->aout.a_syms / sizeof(*names);
 #endif
 		/* get memory for the symbol table */
-		if ((names = malloc(nrawnames * sizeof(struct nlist))) == NULL) {
+		if ((names = calloc(nrawnames, sizeof(struct nlist))) == NULL) {
 			warn("%s: malloc names", name);
 			return (1);
 		}
 
-		if ((snames = malloc(nrawnames * sizeof(struct nlist *))) == NULL) {
+		if ((snames = calloc(nrawnames, sizeof(struct nlist *))) == NULL) {
 			warn("%s: malloc snames", name);
 			free(names);
 			return (1);

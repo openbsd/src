@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.26 2006/04/20 16:51:32 deraadt Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.27 2007/09/02 15:19:36 deraadt Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ char *banner[] =
     "#if __GNUC__ >= 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ >= 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.26 2006/04/20 16:51:32 deraadt Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.27 2007/09/02 15:19:36 deraadt Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -165,13 +165,13 @@ char *body[] =
     "        newsize = YYMAXDEPTH;",
     "    i = yyssp - yyss;",
     "    newss = yyss ? (short *)realloc(yyss, newsize * sizeof *newss) :",
-    "      (short *)malloc(newsize * sizeof *newss);",
+    "      (short *)calloc(newsize, sizeof *newss);",
     "    if (newss == NULL)",
     "        goto bail;",
     "    yyss = newss;",
     "    yyssp = newss + i;",
     "    newvs = yyvs ? (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs) :",
-    "      (YYSTYPE *)malloc(newsize * sizeof *newvs);",
+    "      (YYSTYPE *)calloc(newsize, sizeof *newvs);",
     "    if (newvs == NULL)",
     "        goto bail;",
     "    yyvs = newvs;",

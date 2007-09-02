@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.18 2006/09/01 01:13:25 mpf Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.19 2007/09/02 15:19:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -487,7 +487,7 @@ pfkey_snapshot(void *v)
 				continue;
 
 			/* Allocate msgbuffer, net_queue() will free it. */
-			sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
+			sendbuf = (u_int8_t *)calloc(m->sadb_msg_len, CHUNK);
 			if (sendbuf) {
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,
@@ -517,7 +517,7 @@ pfkey_snapshot(void *v)
 				continue;
 
 			/* Allocate msgbuffer, freed by net_queue(). */
-			sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
+			sendbuf = (u_int8_t *)calloc(m->sadb_msg_len, CHUNK);
 			if (sendbuf) {
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,

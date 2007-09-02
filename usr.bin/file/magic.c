@@ -1,4 +1,4 @@
-/* $OpenBSD: magic.c,v 1.3 2007/07/09 16:39:48 dim Exp $ */
+/* $OpenBSD: magic.c,v 1.4 2007/09/02 15:19:32 deraadt Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -66,7 +66,7 @@
 #include "patchlevel.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: magic.c,v 1.3 2007/07/09 16:39:48 dim Exp $")
+FILE_RCSID("@(#)$Id: magic.c,v 1.4 2007/09/02 15:19:32 deraadt Exp $")
 #endif	/* lint */
 
 #ifdef __EMX__
@@ -104,7 +104,8 @@ magic_open(int flags)
 		free(ms);
 		return NULL;
 	}
-	ms->c.off = malloc((ms->c.len = 10) * sizeof(*ms->c.off));
+	ms->c.len = 10;
+	ms->c.off = calloc(ms->c.len, sizeof(*ms->c.off));
 	if (ms->c.off == NULL) {
 		free(ms->o.pbuf);
 		free(ms->o.buf);
