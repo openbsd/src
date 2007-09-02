@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.34 2006/01/19 20:06:55 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.35 2007/09/02 23:50:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.34 2006/01/19 20:06:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.35 2007/09/02 23:50:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -239,7 +239,7 @@ init_bmachine(bool extended_registers)
 	bmachine.reg_array_size = bmachine.extended_regs ?
 	    REG_ARRAY_SIZE_BIG : REG_ARRAY_SIZE_SMALL;
 
-	bmachine.reg = malloc(bmachine.reg_array_size *
+	bmachine.reg = calloc(bmachine.reg_array_size,
 	    sizeof(bmachine.reg[0]));
 	if (bmachine.reg == NULL)
 		err(1, NULL);
@@ -255,7 +255,7 @@ init_bmachine(bool extended_registers)
 		stack_init(&bmachine.reg[i]);
 
 	bmachine.readstack_sz = READSTACK_SIZE;
-	bmachine.readstack = malloc(sizeof(struct source) *
+	bmachine.readstack = calloc(sizeof(struct source),
 	    bmachine.readstack_sz);
 	if (bmachine.readstack == NULL)
 		err(1, NULL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.131 2007/08/05 09:43:09 tom Exp $	 */
+/* $OpenBSD: exchange.c,v 1.132 2007/09/02 23:50:04 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -411,8 +411,7 @@ exchange_init(void)
 	int	i;
 
 	bucket_mask = (1 << INITIAL_BUCKET_BITS) - 1;
-	exchange_tab = malloc((bucket_mask + 1) *
-	    sizeof(struct exchange_list));
+	exchange_tab = calloc(bucket_mask + 1, sizeof(struct exchange_list));
 	if (!exchange_tab)
 		log_fatal("exchange_init: out of memory");
 	for (i = 0; i <= bucket_mask; i++)
