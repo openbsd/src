@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 2007/06/21 04:43:33 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 2007/09/02 21:18:08 hshoexer Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@
  * OpenBSD/sh clock module
  *  + default 64Hz
  *  + use TMU channel 0 as clock interrupt source.
- *  + use TMU channel 1 and 2 as emulated software interrupt soruce.
+ *  + use TMU channel 1 and 2 as emulated software interrupt source.
  *  + If RTC module is active, TMU channel 0 input source is RTC output.
  *    (1.6384kHz)
  */

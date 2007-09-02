@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 2007/05/20 20:16:08 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 2007/09/02 21:18:08 hshoexer Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.17 2006/03/04 01:55:03 uwe Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@
 /* top of stack */
 #define	USRSTACK		VM_MAXUSER_ADDRESS
 
-/* Virtual memory resoruce limit. */
+/* Virtual memory resource limit. */
 #define	MAXTSIZ			(64 * 1024 * 1024)	/* max text size */
 #ifndef MAXDSIZ
 #define	MAXDSIZ			(512 * 1024 * 1024)	/* max data size */
