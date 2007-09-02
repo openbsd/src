@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.67 2007/08/28 19:10:18 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.68 2007/09/02 12:13:00 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -89,6 +90,14 @@ cvs_server(int argc, char **argv)
 	char *cmd, *data;
 	struct cvs_req *req;
 
+	if (argc > 1)
+		fatal("server does not take any extra arguments");
+
+	setvbuf(stdin, NULL, _IOLBF, 0);
+	setvbuf(stdout, NULL, _IOLBF, 0);
+
+	cvs_server_active = 1;
+
 	server_argv[0] = xstrdup("server");
 
 	(void)xasprintf(&cvs_server_path, "%s/cvs-serv%d", cvs_tmpdir,
@@ -145,7 +154,14 @@ cvs_server_send_response(char *fmt, ...)
 void
 cvs_server_root(char *data)
 {
-	fatal("duplicate Root request from client, violates the protocol");
+	if (data == NULL)
+		fatal("Missing argument for Root");
+
+	if (current_cvsroot != NULL)
+		return;
+
+	if (data[0] != '/' || (current_cvsroot = cvsroot_get(data)) == NULL)
+		fatal("Invalid Root specified!");
 }
 
 void
@@ -294,6 +310,9 @@ cvs_server_directory(char *data)
 {
 	CVSENTRIES *entlist;
 	char *dir, *repo, *parent, entry[CVS_ENT_MAXLINELEN], *dirn, *p;
+
+	if (current_cvsroot == NULL)
+		fatal("No Root specified for Directory");
 
 	dir = cvs_remote_input();
 	STRIP_SLASH(dir);

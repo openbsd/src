@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.129 2007/08/06 19:16:06 sobrado Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.130 2007/09/02 12:13:00 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -132,7 +132,6 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	struct stat st;
 	char fpath[MAXPATHLEN];
-	char *root, *rootp;
 
 	tzset();
 
@@ -241,18 +240,9 @@ main(int argc, char **argv)
 	cvs_file_init();
 
 	if (cvs_cmdop == CVS_OP_SERVER) {
-		if (cmd_argc > 1)
-			fatal("server does not take any extra arguments");
-
-		setvbuf(stdin, NULL, _IOLBF, 0);
-		setvbuf(stdout, NULL, _IOLBF, 0);
-
-		cvs_server_active = 1;
-		root = cvs_remote_input();
-		if ((rootp = strchr(root, ' ')) == NULL)
-			fatal("bad Root request");
-		cvs_rootstr = xstrdup(rootp + 1);
-		xfree(root);
+		cmdp->cmd(cmd_argc, cmd_argv);
+		cvs_cleanup();
+		return (0);
 	}
 
 	if ((current_cvsroot = cvsroot_get(".")) == NULL) {
