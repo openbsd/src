@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.35 2007/03/20 10:30:32 mickey Exp $	*/
+/*	$OpenBSD: aac.c,v 1.36 2007/09/02 12:12:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1592,7 +1592,7 @@ aac_init(struct aac_softc *sc)
 	 * therefore 'assuming' that this value is in 16MB units (2^24).
 	 * Round up since the granularity is so high.
 	 */
-	ip->HostPhysMemPages = ctob(physmem) / AAC_PAGE_SIZE;
+	ip->HostPhysMemPages = ptoa(physmem) / AAC_PAGE_SIZE;
 	if (sc->flags & AAC_FLAGS_BROKEN_MEMMAP) {
 		ip->HostPhysMemPages =
 		    (ip->HostPhysMemPages + AAC_PAGE_SIZE) / AAC_PAGE_SIZE;
