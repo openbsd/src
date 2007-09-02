@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1256 2007/08/31 16:12:50 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1257 2007/09/02 10:05:13 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1513,6 +1513,9 @@
 #define	PCI_PRODUCT_ENDACE_DAG423GE	0x423e		/* Endace Dag4.23GE */
 
 /* ENE Technology products */
+#define	PCI_PRODUCT_ENE_MEMSTICK	0x0530		/* Memory Stick */
+#define	PCI_PRODUCT_ENE_SDCARD	0x0550		/* SD Controller */
+#define	PCI_PRODUCT_ENE_SDMMC	0x0551		/* SD/MMC */
 #define	PCI_PRODUCT_ENE_CB1211	0x1211		/* CB-1211 CardBus */
 #define	PCI_PRODUCT_ENE_CB1225	0x1225		/* CB-1225 CardBus */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB-1410 CardBus */

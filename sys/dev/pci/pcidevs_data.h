@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1256 2007/08/31 16:12:50 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1257 2007/09/02 10:05:13 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4082,6 +4082,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG423GE,
 	    "Endace Dag4.23GE",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_MEMSTICK,
+	    "Memory Stick",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_SDCARD,
+	    "SD Controller",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_SDMMC,
+	    "SD/MMC",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211,
