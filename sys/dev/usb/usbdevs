@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.290 2007/08/31 17:01:39 sturm Exp $
+$OpenBSD: usbdevs,v 1.291 2007/09/02 04:13:33 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -389,6 +389,7 @@ vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics
 vendor ASIX		0x0b95	ASIX Electronics
 vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
+vendor HTC		0x0bb4	HTC
 vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
@@ -1286,6 +1287,9 @@ product HP 568J			0x1116  Jornada 568
 
 /* HP products */
 product HP2 C500		0x6002	PhotoSmart C500
+
+/* HTC products */
+product HTC PPC6700MODEM	0x00cf	PPC6700 Modem
 
 /* HUAWEI products */
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
