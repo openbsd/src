@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.73 2007/09/01 15:41:34 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.74 2007/09/02 11:11:12 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -324,22 +324,6 @@ cvs_client_send_request(char *fmt, ...)
 		*s = ' ';
 
 	cvs_log(LP_TRACE, "%s", data);
-
-	if (cvs_client_inlog_fd != -1) {
-		BUF *bp;
-
-		bp = cvs_buf_alloc(strlen(data), BUF_AUTOEXT);
-
-		if (cvs_buf_append(bp, data, strlen(data)) < 0)
-			fatal("cvs_client_send_request: cvs_buf_append");
-
-		cvs_buf_putc(bp, '\n');
-
-		if (cvs_buf_write_fd(bp, cvs_client_inlog_fd) < 0)
-			fatal("cvs_client_send_request: cvs_buf_write_fd");
-
-		cvs_buf_free(bp);
-	}
 
 	cvs_remote_output(data);
 	xfree(data);

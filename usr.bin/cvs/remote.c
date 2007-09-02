@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.15 2007/05/16 19:40:45 xsa Exp $	*/
+/*	$OpenBSD: remote.c,v 1.16 2007/09/02 11:11:12 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -56,6 +56,7 @@ void
 cvs_remote_output(const char *data)
 {
 	FILE *out;
+	char nl = '\n';
 
 	if (cvs_server_active)
 		out = stdout;
@@ -64,6 +65,11 @@ cvs_remote_output(const char *data)
 
 	fputs(data, out);
 	fputs("\n", out);
+
+	if (cvs_server_active == 0 && cvs_client_inlog_fd != -1) {
+		(void)write(cvs_client_inlog_fd, data, strlen(data));
+		(void)write(cvs_client_inlog_fd, &nl, 1);
+	}
 }
 
 char *
@@ -71,6 +77,7 @@ cvs_remote_input(void)
 {
 	FILE *in;
 	size_t len;
+	char nl = '\n';
 	char *data, *ldata;
 
 	if (cvs_server_active)
@@ -101,19 +108,8 @@ cvs_remote_input(void)
 	}
 
 	if (cvs_server_active == 0 && cvs_client_outlog_fd != -1) {
-		BUF *bp;
-
-		bp = cvs_buf_alloc(strlen(ldata), BUF_AUTOEXT);
-
-		if (cvs_buf_append(bp, ldata, strlen(ldata)) < 0)
-			fatal("cvs_remote_input: cvs_buf_append");
-
-		cvs_buf_putc(bp, '\n');
-
-		if (cvs_buf_write_fd(bp, cvs_client_outlog_fd) < 0)
-			fatal("cvs_remote_input: cvs_buf_write_fd");
-
-		cvs_buf_free(bp);
+		(void)write(cvs_client_outlog_fd, data, strlen(data));
+		(void)write(cvs_client_outlog_fd, &nl, 1);
 	}
 
 	return (ldata);
