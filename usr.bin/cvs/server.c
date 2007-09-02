@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.68 2007/09/02 12:13:00 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.69 2007/09/02 12:16:24 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -572,8 +572,14 @@ cvs_server_diff(char *data)
 void
 cvs_server_init(char *data)
 {
-	if (chdir(server_currentdir) == -1)
-		fatal("cvs_server_init: %s", strerror(errno));
+	if (data == NULL)
+		fatal("Missing argument for init");
+
+	if (current_cvsroot != NULL)
+		fatal("Root in combination with init is not supported");
+
+	if ((current_cvsroot = cvsroot_get(data)) == NULL)
+		fatal("Invalid argument for init");
 
 	cvs_cmdop = CVS_OP_INIT;
 	cvs_init(server_argc, server_argv);
