@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.75 2007/08/30 11:07:18 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.76 2007/09/02 11:31:35 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -257,7 +257,8 @@ import_new(struct cvs_file *cf)
 	if (rcs_rev_add(cf->file_rcs, brev, logmsg, tstamp, NULL) == -1)
 		fatal("import_new: failed to create first branch revision");
 
-	if (rcs_rev_add(cf->file_rcs, RCS_HEAD_REV, logmsg, tstamp, NULL) == -1)
+	if (rcs_rev_add(cf->file_rcs, RCS_HEAD_REV, "Initial revision",
+	    tstamp, NULL) == -1)
 		fatal("import_new: failed to create first revision");
 
 	if ((rdp = rcs_findrev(cf->file_rcs, cf->file_rcs->rf_head)) == NULL)
