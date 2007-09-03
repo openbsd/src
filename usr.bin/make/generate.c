@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: generate.c,v 1.7 2007/07/08 17:44:20 espie Exp $ */
+/*	$OpenBSD: generate.c,v 1.8 2007/09/03 13:56:56 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	t = table[tn-1];
 	slots = atoi(argv[2]);
 	if (slots) {
-		occupied = malloc(sizeof(char *) * slots);
+		occupied = calloc(sizeof(char *), slots);
 		if (!occupied)
 			exit(1);
 		for (i = 0; i < slots; i++)
