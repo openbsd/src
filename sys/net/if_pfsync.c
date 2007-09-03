@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.84 2007/09/01 18:49:27 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.85 2007/09/03 06:15:06 joel Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -462,9 +462,9 @@ pfsync_input(struct mbuf *m, ...)
 			    sp->direction > PF_OUT ||
 			    (sp->af != AF_INET && sp->af != AF_INET6)) {
 				if (pf_status.debug >= PF_DEBUG_MISC)
-					printf("pfsync_insert: PFSYNC_ACT_INS: "
+					printf("pfsync_input: PFSYNC_ACT_INS: "
 					    "invalid value\n");
-				pfsyncstats.pfsyncs_badstate++;
+				pfsyncstats.pfsyncs_badval++;
 				continue;
 			}
 
@@ -496,9 +496,9 @@ pfsync_input(struct mbuf *m, ...)
 			    sp->src.state > PF_TCPS_PROXY_DST ||
 			    sp->dst.state > PF_TCPS_PROXY_DST) {
 				if (pf_status.debug >= PF_DEBUG_MISC)
-					printf("pfsync_insert: PFSYNC_ACT_UPD: "
+					printf("pfsync_input: PFSYNC_ACT_UPD: "
 					    "invalid value\n");
-				pfsyncstats.pfsyncs_badstate++;
+				pfsyncstats.pfsyncs_badval++;
 				continue;
 			}
 
@@ -560,7 +560,7 @@ pfsync_input(struct mbuf *m, ...)
 					     : "partial"), sfail,
 					    betoh64(st->id),
 					    ntohl(st->creatorid));
-				pfsyncstats.pfsyncs_badstate++;
+				pfsyncstats.pfsyncs_stale++;
 
 				if (!(sp->sync_flags & PFSTATE_STALE)) {
 					/* we have a better state, send it */
@@ -627,10 +627,10 @@ pfsync_input(struct mbuf *m, ...)
 			    up->src.state > PF_TCPS_PROXY_DST ||
 			    up->dst.state > PF_TCPS_PROXY_DST) {
 				if (pf_status.debug >= PF_DEBUG_MISC)
-					printf("pfsync_insert: "
+					printf("pfsync_input: "
 					    "PFSYNC_ACT_UPD_C: "
 					    "invalid value\n");
-				pfsyncstats.pfsyncs_badstate++;
+				pfsyncstats.pfsyncs_badval++;
 				continue;
 			}
 
@@ -686,7 +686,7 @@ pfsync_input(struct mbuf *m, ...)
 					    "creatorid: %08x\n", sfail,
 					    betoh64(st->id),
 					    ntohl(st->creatorid));
-				pfsyncstats.pfsyncs_badstate++;
+				pfsyncstats.pfsyncs_stale++;
 
 				/* we have a better state, send it out */
 				if ((!stale || update_requested) &&
