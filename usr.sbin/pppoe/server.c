@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.12 2004/05/06 20:29:04 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.13 2007/09/03 14:26:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -93,7 +93,7 @@ server_mode(int bpffd, u_int8_t *sysname, u_int8_t *srvname,
 		if (n > oldmax) {
 			if (fdsp != NULL)
 				free(fdsp);
-			fdsp = (fd_set *)malloc(howmany(n, NFDBITS) *
+			fdsp = (fd_set *)calloc(howmany(n, NFDBITS),
 			    sizeof(fd_mask));
 			if (fdsp == NULL)
 				break;

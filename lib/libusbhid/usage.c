@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.12 2007/03/20 03:42:52 tedu Exp $	*/
+/*	$OpenBSD: usage.c,v 1.13 2007/09/03 14:26:54 deraadt Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ hid_start(const char *hidname)
 			curpage->usage = no;
 			curpage->pagesize = 0;
 			curpage->pagesizemax = 10;
-			curpage->page_contents = malloc(curpage->pagesizemax *
+			curpage->page_contents = calloc(curpage->pagesizemax,
 			    sizeof (struct usage_in_page));
 			if (!curpage->page_contents)
 				goto fail;

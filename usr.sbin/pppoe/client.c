@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.20 2004/09/03 06:37:14 tedu Exp $	*/
+/*	$OpenBSD: client.c,v 1.21 2007/09/03 14:26:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -100,7 +100,7 @@ client_mode(int bfd, u_int8_t *sysname, u_int8_t *srvname, struct ether_addr *my
 		if (max > oldmax) {
 			if (fdsp != NULL)
 				free(fdsp);
-			fdsp = (fd_set *)malloc(howmany(max, NFDBITS) *
+			fdsp = (fd_set *)calloc(howmany(max, NFDBITS),
 			    sizeof(fd_mask));
 			if (fdsp == NULL) {
 				r = -1;

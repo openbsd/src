@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.65 2007/09/02 15:19:40 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.66 2007/09/03 14:26:54 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.65 2007/09/02 15:19:40 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.66 2007/09/03 14:26:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -716,8 +716,8 @@ kinfo_vnodes(int *avnodes)
 			err(1, "sysctl(KERN_NUMVNODES) failed");
 	} else
 		KGET(V_NUMV, numvnodes);
-	if ((vbuf = malloc((numvnodes + 20) *
-	    (sizeof(struct vnode *) + sizeof(struct vnode)))) == NULL)
+	if ((vbuf = calloc(numvnodes + 20,
+	    sizeof(struct vnode *) + sizeof(struct vnode))) == NULL)
 		err(1, "malloc: vnode buffer");
 	bp = vbuf;
 	evbuf = vbuf + (numvnodes + 20) *

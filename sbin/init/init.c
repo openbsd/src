@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.39 2006/06/22 00:25:22 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.40 2007/09/03 14:26:54 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.39 2006/06/22 00:25:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.40 2007/09/03 14:26:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -824,7 +824,7 @@ char **
 construct_argv(char *command)
 {
 	int argc = 0;
-	char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1) *
+	char **argv = (char **) calloc((strlen(command) + 1) / 2 + 1,
 	    sizeof (char *));
 	static const char separators[] = " \t";
 
