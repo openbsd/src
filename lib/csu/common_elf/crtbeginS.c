@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.7 2004/01/26 20:04:11 espie Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.8 2007/09/03 14:40:16 millert Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -43,6 +43,21 @@
 #include <stdlib.h>
 #include "md_init.h"
 #include "extern.h"
+
+/*
+ * Include support for the __cxa_atexit/__cxa_finalize C++ abi for
+ * gcc > 2.x. __dso_handle is NULL in the main program and a unique
+ * value for each C++ shared library. For more info on this API, see:
+ *
+ *     http://www.codesourcery.com/cxx-abi/abi.html#dso-dtor
+ */
+
+#if (__GNUC__ > 2)
+void *__dso_handle = &__dso_handle;
+__asm(".hidden  __dso_handle");
+
+extern void __cxa_finalize(void *) __attribute__((weak));
+#endif
 
 static init_f __CTOR_LIST__[1]
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
@@ -111,6 +126,12 @@ _do_fini(void)
 	static int finalized = 0;
 	if (!finalized) {
 		finalized = 1;
+
+#if (__GNUC__ > 2)
+		if (__cxa_finalize != NULL)
+			__cxa_finalize(__dso_handle);
+#endif
+
 		/*
 		 * since the _init() function sets up the destructors to 
 		 * be called by atexit, do not call the destructors here.

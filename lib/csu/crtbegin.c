@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.11 2004/10/26 20:18:24 kettenis Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.12 2007/09/03 14:40:16 millert Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -58,6 +58,19 @@ void __register_frame_info(const void *begin, struct dwarf2_eh_object *ob)
 
 static const char __EH_FRAME_BEGIN__[]
     __attribute__((section(".eh_frame"), aligned(4))) = { };
+
+/*
+ * Include support for the __cxa_atexit/__cxa_finalize C++ abi for
+ * gcc > 2.x. __dso_handle is NULL in the main program and a unique
+ * value for each C++ shared library. For more info on this API, see:
+ *
+ *     http://www.codesourcery.com/cxx-abi/abi.html#dso-dtor
+ */
+
+#if (__GNUC__ > 2)
+void *__dso_handle = NULL;
+__asm(".hidden  __dso_handle");
+#endif
 
 static const init_f __CTOR_LIST__[1]
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */

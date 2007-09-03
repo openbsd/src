@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.h,v 1.6 2003/07/31 07:08:42 deraadt Exp $ */
+/*	$OpenBSD: atexit.h,v 1.7 2007/09/03 14:40:16 millert Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -34,8 +34,18 @@ struct atexit {
 	struct atexit *next;		/* next in list */
 	int ind;			/* next index in this table */
 	int max;			/* max entries >= ATEXIT_SIZE */
-	void (*fns[1])(void);		/* the table itself */
+	struct atexit_fn {
+		union {
+			void (*std_func)(void);
+			void (*cxa_func)(void *);
+		} fn_ptr;
+		void *fn_arg;		/* argument for CXA callback */
+		void *fn_dso;		/* shared module handle */
+	} fns[1];			/* the table itself */
 };
 
 extern int __atexit_invalid;
 extern struct atexit *__atexit;		/* points to head of LIFO stack */
+
+int	__cxa_atexit(void (*)(void *), void *, void *);
+void	__cxa_finalize(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.11 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: exit.c,v 1.12 2007/09/03 14:40:16 millert Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -50,20 +50,10 @@ int     __isthreaded    = 0;
 void
 exit(int status)
 {
-	struct atexit *p, *q;
-	int n, pgsize = getpagesize();
-
-	if (!__atexit_invalid) {
-		p = __atexit;
-		while (p != NULL) {
-			for (n = p->ind; --n >= 0;)
-				if (p->fns[n] != NULL)
-					(*p->fns[n])();
-			q = p;
-			p = p->next;
-			munmap(q, pgsize);
-		}
-	}
-	/* cleanup, if registered, was called through fns[0] in the last page */
+	/*
+	 * Call functions registered by atexit() or _cxa_atexit()
+	 * (including the stdio cleanup routine) and then _exit().
+	 */
+	__cxa_finalize(NULL);
 	_exit(status);
 }

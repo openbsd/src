@@ -1,4 +1,4 @@
-/*	$OpenBSD: abort.c,v 1.14 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: abort.c,v 1.15 2007/09/03 14:40:16 millert Exp $ */
 /*
  * Copyright (c) 1985 Regents of the University of California.
  * All rights reserved.
@@ -54,11 +54,14 @@ abort(void)
 	 * POSIX requires we flush stdio buffers on abort
 	 */
 	if (cleanup_called == 0) {
+		/* the cleanup routine lives in fns[0] on the last page */
 		while (p != NULL && p->next != NULL)
 			p = p->next;
-		if (p != NULL && p->fns[0] != NULL) {
+		/* the check for fn_dso == NULL is mostly paranoia */
+		if (p != NULL && p->fns[0].fn_dso == NULL &&
+		    p->fns[0].fn_ptr.std_func != NULL) {
 			cleanup_called = 1;
-			(*p->fns[0])();
+			(*p->fns[0].fn_ptr.std_func)();
 		}
 	}
 

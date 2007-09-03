@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.12 2006/02/22 07:16:32 otto Exp $ */
+/*	$OpenBSD: atexit.c,v 1.13 2007/09/03 14:40:16 millert Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -45,17 +45,22 @@ struct atexit *__atexit;
  * function pointer in the first allocated page (the last one in
  * the linked list) is reserved for the cleanup function.
  *
- * Outside the following two functions, all pages are mprotect()'ed
+ * Outside the following functions, all pages are mprotect()'ed
  * to prevent unintentional/malicious corruption.
  */
 
 /*
- * Register a function to be performed at exit.
+ * Register a function to be performed at exit or when a shared object
+ * with the given dso handle is unloaded dynamically.  Also used as
+ * the backend for atexit().  For more info on this API, see:
+ *
+ *	http://www.codesourcery.com/cxx-abi/abi.html#dso-dtor
  */
 int
-atexit(void (*fn)(void))
+__cxa_atexit(void (*func)(void *), void *arg, void *dso)
 {
-	struct atexit *p;
+	struct atexit *p = __atexit;
+	struct atexit_fn *fnp;
 	int pgsize = getpagesize();
 	int ret = -1;
 
@@ -75,7 +80,7 @@ atexit(void (*fn)(void))
 		if (p == MAP_FAILED)
 			goto unlock;
 		if (__atexit == NULL) {
-			p->fns[0] = NULL;
+			memset(&p->fns[0], 0, sizeof(p->fns[0]));
 			p->ind = 1;
 		} else
 			p->ind = 0;
@@ -86,7 +91,10 @@ atexit(void (*fn)(void))
 		if (__atexit_invalid)
 			__atexit_invalid = 0;
 	}
-	p->fns[p->ind++] = fn;
+	fnp = &p->fns[p->ind++];
+	fnp->fn_ptr.cxa_func = func;
+	fnp->fn_arg = arg;
+	fnp->fn_dso = dso;
 	if (mprotect(p, pgsize, PROT_READ))
 		goto unlock;
 	ret = 0;
@@ -96,10 +104,75 @@ unlock:
 }
 
 /*
+ * Register a function to be performed at exit.
+ */
+int
+atexit(void (*func)(void))
+{
+	return (__cxa_atexit((void (*)(void *))func, NULL, NULL));
+}
+
+/*
+ * Call all handlers registered with __cxa_atexit() for the shared
+ * object owning 'dso'.
+ * Note: if 'dso' is NULL, then all remaining handlers are called.
+ */
+void
+__cxa_finalize(void *dso)
+{
+	struct atexit *p, *q;
+	struct atexit_fn fn;
+	int n, pgsize = getpagesize();
+	static int call_depth;
+
+	if (__atexit_invalid)
+		return;
+
+	call_depth++;
+
+	for (p = __atexit; p != NULL; p = p->next) {
+		for (n = p->ind; --n >= 0;) {
+			if (p->fns[n].fn_ptr.cxa_func == NULL)
+				continue;	/* already called */
+			if (dso != NULL && dso != p->fns[n].fn_dso)
+				continue;	/* wrong DSO */
+
+			/*
+			 * Mark handler as having been already called to avoid
+			 * dupes and loops, then call the appropriate function.
+			 */
+			fn = p->fns[n];
+			if (mprotect(p, pgsize, PROT_READ | PROT_WRITE) == 0) {
+				p->fns[n].fn_ptr.cxa_func = NULL;
+				mprotect(p, pgsize, PROT_READ);
+			}
+			if (dso != NULL)
+				(*fn.fn_ptr.cxa_func)(fn.fn_arg);
+			else
+				(*fn.fn_ptr.std_func)();
+		}
+	}
+
+	/*
+	 * If called via exit(), unmap the pages since we have now run
+	 * all the handlers.  We defer this until calldepth == 0 so that
+	 * we don't unmap things prematurely if called recursively.
+	 */
+	if (dso == NULL && --call_depth == 0) {
+		for (p = __atexit; p != NULL; ) {
+			q = p;
+			p = p->next;
+			munmap(q, pgsize);
+		}
+		__atexit = NULL;
+	}
+}
+
+/*
  * Register the cleanup function
  */
 void
-__atexit_register_cleanup(void (*fn)(void))
+__atexit_register_cleanup(void (*func)(void))
 {
 	struct atexit *p;
 	int pgsize = getpagesize();
@@ -126,7 +199,9 @@ __atexit_register_cleanup(void (*fn)(void))
 		if (mprotect(p, pgsize, PROT_READ | PROT_WRITE))
 			goto unlock;
 	}
-	p->fns[0] = fn;
+	p->fns[0].fn_ptr.std_func = func;
+	p->fns[0].fn_arg = NULL;
+	p->fns[0].fn_dso = NULL;
 	mprotect(p, pgsize, PROT_READ);
 unlock:
 	_ATEXIT_UNLOCK();
