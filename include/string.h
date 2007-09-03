@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.17 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: string.h,v 1.18 2007/09/03 14:36:40 millert Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@ typedef	__size_t	size_t;
 
 __BEGIN_DECLS
 void	*memchr(const void *, int, size_t);
+void	*memrchr(const void *, int, size_t);
 int	 memcmp(const void *, const void *, size_t);
 void	*memcpy(void *, const void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,3)))

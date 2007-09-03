@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: memchr.3,v 1.7 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: memchr.3,v 1.8 2007/09/03 14:36:40 millert Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2007 $
 .Dt MEMCHR 3
 .Os
 .Sh NAME
@@ -41,6 +41,8 @@
 .Fd #include <string.h>
 .Ft void *
 .Fn memchr "const void *b" "int c" "size_t len"
+.Ft void *
+.Fn memrchr "const void *b" "int c" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn memchr
@@ -50,10 +52,21 @@ function locates the first occurrence of
 .Li unsigned char )
 in string
 .Fa b .
+.Pp
+The
+.Fn memrchr
+function behaves like
+.Fn memchr ,
+except that it locates the last occurrence of
+.Fa c
+in string
+.Fa b .
 .Sh RETURN VALUES
 The
 .Fn memchr
-function returns a pointer to the byte located, or
+and
+.Fn memrchr
+functions return a pointer to the byte located, or
 .Dv NULL
 if no such byte exists within
 .Fa len
@@ -72,3 +85,9 @@ The
 .Fn memchr
 function conforms to
 .St -ansiC .
+.Pp
+The
+.Fn memrchr       
+function is an
+.Ox
+extension.
