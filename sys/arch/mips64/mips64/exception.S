@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.13 2007/05/25 20:47:19 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.14 2007/09/03 01:15:50 krw Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -219,7 +219,7 @@ END(k_intr)
  *	Handle an interrupt in user mode. Save the relevant user
  *	registers into the u.u_pcb struct. This will allow us
  *	to preempt the interrupted process. Full save is held
- *	off though until a switch() really is requiered.
+ *	off though until a switch() really is required.
  */
 NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	.set	noat

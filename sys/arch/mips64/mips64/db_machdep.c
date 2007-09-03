@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.11 2007/05/03 19:34:00 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.12 2007/09/03 01:15:50 krw Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -441,7 +441,7 @@ done:
  *	both the address for a branch taken and for not taken, NOT! :-)
  *	MipsEmulateBranch will do the job to find out _exactly_ which
  *	address we will end up at so the 'dual bp' method is not
- *	requiered.
+ *	required.
  */
 db_addr_t
 next_instr_address(db_addr_t pc, boolean_t bd)
