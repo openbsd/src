@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.40 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: intro.2,v 1.41 2007/09/03 14:37:52 millert Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2007 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -426,6 +426,11 @@ A numerical result of the function was too large to be stored in the
 caller provided space.
 .It Er 88 ECANCELED Em "Operation canceled" .
 The requested operation was canceled.
+.It Er 89 EIDRM Em "Identifier removed" .
+An IPC identifier was removed while the current process was waiting on it.
+.It Er 90 ENOMSG Em "No message of the desired type".
+An IPC message queue does not contain a message of the desired type,
+or a message catalog does not contain the requested message.
 .El
 .Sh DEFINITIONS
 .Bl -tag -width Ds

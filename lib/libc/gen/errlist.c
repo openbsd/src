@@ -1,4 +1,4 @@
-/*	$OpenBSD: errlist.c,v 1.11 2007/05/21 17:01:49 jasper Exp $ */
+/*	$OpenBSD: errlist.c,v 1.12 2007/09/03 14:37:52 millert Exp $ */
 /*
  * Copyright (c) 1982, 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -142,5 +142,7 @@ const char *const
 						/* 87 - EOVERFLOW */
 	"Value too large to be stored in data type",
 	"Operation canceled",			/* 88 - ECANCELED */
+	"Identifier removed",			/* 89 - EIDRM */
+	"No message of desired type",		/* 90 - ENOMSG */
 };
 int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };

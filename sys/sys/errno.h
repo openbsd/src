@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.19 2007/05/21 17:01:49 jasper Exp $	*/
+/*	$OpenBSD: errno.h,v 1.20 2007/09/03 14:37:52 millert Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -163,7 +163,11 @@
 #define	EMEDIUMTYPE	86		/* Wrong Medium Type */
 #define	EOVERFLOW	87		/* Conversion overflow */
 #define	ECANCELED	88		/* Operation canceled */
-#define	ELAST		88		/* Must be equal largest errno */
+#endif /* __BSD_VISIBLE */
+#define	EIDRM		89		/* Identifier removed */
+#define	ENOMSG		90		/* No message of desired type */
+#if __BSD_VISIBLE
+#define	ELAST		90		/* Must be equal largest errno */
 #endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
