@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.405 2007/09/01 15:14:44 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.406 2007/09/03 01:09:09 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3970,7 +3970,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
