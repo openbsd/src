@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.23 2007/03/03 23:16:02 jmc Exp $	*/
+/*	$OpenBSD: pr.c,v 1.24 2007/09/03 05:40:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.23 2007/03/03 23:16:02 jmc Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.24 2007/09/03 05:40:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -210,7 +210,7 @@ onecol(int argc, char *argv[])
     /*
      * allocate line buffer
      */
-    if ((obuf = malloc((unsigned)(LBUF + off)*sizeof(char))) == NULL) {
+    if ((obuf = malloc((unsigned)LBUF + off)) == NULL) {
 	mfail();
 	return(1);
     }
@@ -218,7 +218,7 @@ onecol(int argc, char *argv[])
     /*
      * allocate header buffer
      */
-    if ((hbuf = malloc((unsigned)(HDBUF + offst)*sizeof(char))) == NULL) {
+    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL) {
 	mfail();
 	return(1);
     }
@@ -376,7 +376,7 @@ vertcol(int argc, char *argv[])
     /*
      * allocate page buffer
      */
-    if ((buf = malloc((unsigned)lines*mxlen*sizeof(char))) == NULL) {
+    if ((buf = malloc(unsigned)lines*mxlen)) == NULL) {
 	mfail();
 	return(1);
     }
@@ -384,7 +384,7 @@ vertcol(int argc, char *argv[])
     /*
      * allocate page header
      */
-    if ((hbuf = malloc((unsigned)(HDBUF + offst)*sizeof(char))) == NULL) {
+    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL) {
 	mfail();
 	return(1);
     }
@@ -397,7 +397,7 @@ vertcol(int argc, char *argv[])
      * col pointers when no headers
      */
     mvc = lines * clcnt;
-    if ((vc=(struct vcol *)malloc((unsigned)mvc*sizeof(struct vcol))) == NULL) {
+    if ((vc=(struct vcol *)calloc((unsigned)mvc, sizeof(struct vcol))) == NULL) {
 	mfail();
 	return(1);
     }
@@ -405,7 +405,7 @@ vertcol(int argc, char *argv[])
     /*
      * pointer into page where last data per line is located
      */
-    if ((lstdat = (char **)malloc((unsigned)lines*sizeof(char *))) == NULL){
+    if ((lstdat = (char **)calloc((unsigned)lines, sizeof(char *))) == NULL){
 	mfail();
 	return(1);
     }
@@ -413,11 +413,11 @@ vertcol(int argc, char *argv[])
     /*
      * fast index lookups to locate start of lines
      */
-    if ((indy = (int *)malloc((unsigned)lines*sizeof(int))) == NULL) {
+    if ((indy = (int *)calloc((unsigned)lines, sizeof(int))) == NULL) {
 	mfail();
 	return(1);
     }
-    if ((lindy = (int *)malloc((unsigned)lines*sizeof(int))) == NULL) {
+    if ((lindy = (int *)calloc((unsigned)lines, sizeof(int))) == NULL) {
 	mfail();
 	return(1);
     }
@@ -688,7 +688,7 @@ horzcol(int argc, char *argv[])
     int ips = 0;
     int ops = 0;
 
-    if ((buf = malloc((unsigned)(pgwd+offst+1)*sizeof(char))) == NULL) {
+    if ((buf = malloc((unsigned)pgwd + offst + 1)) == NULL) {
 	mfail();
 	return(1);
     }
@@ -696,7 +696,7 @@ horzcol(int argc, char *argv[])
     /*
      * page header
      */
-    if ((hbuf = malloc((unsigned)(HDBUF + offst)*sizeof(char))) == NULL) {
+    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL) {
 	mfail();
 	return(1);
     }
@@ -896,7 +896,7 @@ mulfile(int argc, char *argv[])
     /*
      * array of FILE *, one for each operand
      */
-    if ((fbuf = (FILE **)malloc((unsigned)clcnt*sizeof(FILE *))) == NULL) {
+    if ((fbuf = (FILE **)calloc((unsigned)clcnt, sizeof(FILE *))) == NULL) {
 	mfail();
 	return(1);
     }
@@ -904,7 +904,7 @@ mulfile(int argc, char *argv[])
     /*
      * array of int *, one for each operand
      */
-    if ((rc = (int *)malloc((unsigned)clcnt*sizeof(int))) == NULL) {
+    if ((rc = (int *)calloc((unsigned)clcnt, sizeof(int))) == NULL) {
 	mfail();
 	return(1);
     }
@@ -912,7 +912,7 @@ mulfile(int argc, char *argv[])
     /*
      * page header
      */
-    if ((hbuf = malloc((unsigned)(HDBUF + offst)*sizeof(char))) == NULL) {
+    if ((hbuf = malloc((unsigned)HDBUF + offst)) == NULL) {
 	mfail();
 	return(1);
     }
@@ -965,7 +965,7 @@ mulfile(int argc, char *argv[])
     /*
      * line buffer
      */
-    if ((buf = malloc((unsigned)(pgwd+offst+1)*sizeof(char))) == NULL) {
+    if ((buf = malloc((unsigned)pgwd + offst + 1)) == NULL) {
 	mfail();
 	return(1);
     }
