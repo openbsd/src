@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.48 2007/09/03 14:37:02 millert Exp $
+.\"	$OpenBSD: malloc.3,v 1.49 2007/09/03 21:38:34 millert Exp $
 .\"
 .Dd $Mdocdate: September 3 2007 $
 .Dt MALLOC 3
@@ -125,9 +125,9 @@ The
 .Fn free
 function causes the space pointed to by
 .Fa ptr
-to be deallocated, that is, at least made available for further allocation,
-but if possible, it will be passed back to the kernel with
-.Xr sbrk 2 .
+to be either placed on a list of free pages to make it available for future
+allocation or, if required, to be returned to the kernel using
+.Xr munmap 2 .
 If
 .Fa ptr
 is a null pointer, no action occurs.
@@ -449,6 +449,8 @@ We found something we didn't understand.
 .El
 .Sh SEE ALSO
 .Xr brk 2 ,
+.Xr mmap 2 ,
+.Xr munmap 2 ,
 .Xr alloca 3 ,
 .Xr getpagesize 3
 .Sh STANDARDS
