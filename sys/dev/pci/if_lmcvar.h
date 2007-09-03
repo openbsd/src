@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmcvar.h,v 1.10 2006/03/25 22:41:45 djm Exp $ */
+/*	$OpenBSD: if_lmcvar.h,v 1.11 2007/09/03 00:47:37 krw Exp $ */
 /*	$NetBSD: if_lmcvar.h,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -276,7 +276,7 @@ typedef struct {
  */
 struct lmc___softc {
     struct device lmc_dev;		/* base device */
-    void *lmc_ih;			/* intrrupt vectoring */
+    void *lmc_ih;			/* interrupt vectoring */
     void *lmc_ats;			/* shutdown hook */
     bus_space_tag_t lmc_bustag;
     bus_space_handle_t lmc_bushandle;	/* CSR region handle */
