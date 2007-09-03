@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.36 2007/08/02 10:50:25 fgsch Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.37 2007/09/03 13:54:23 otto Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -648,7 +648,6 @@ c_unset(char **wp)
 {
 	char *id;
 	int optc, unset_var = 1;
-	int ret = 0;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "fv")) != -1)
 		switch (optc) {
@@ -666,18 +665,15 @@ c_unset(char **wp)
 		if (unset_var) {	/* unset variable */
 			struct tbl *vp = global(id);
 
-			if (!(vp->flag & ISSET))
-			    ret = 1;
 			if ((vp->flag&RDONLY)) {
 				bi_errorf("%s is read only", vp->name);
 				return 1;
 			}
 			unset(vp, strchr(id, '[') ? 1 : 0);
 		} else {		/* unset function */
-			if (define(id, (struct op *) NULL))
-				ret = 1;
+			define(id, (struct op *) NULL);
 		}
-	return ret;
+	return 0;
 }
 
 static void
