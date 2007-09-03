@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.7 2007/05/12 19:59:01 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.8 2007/09/03 00:38:34 krw Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -123,10 +123,10 @@
 #define SOFT_INT1	U(0x69000004) 	/* software interrupt CPU 1 */
 #define SOFT_INT2	U(0x69000008) 	/* software interrupt CPU 2 */
 #define SOFT_INT3	U(0x6900000C)	/* software interrupt CPU 3 */
-#define SOFT_INT_FLAG0	U(0x6B000000) 	/* sfotware interrupt flag CPU 0 */
-#define SOFT_INT_FLAG1	U(0x6B000000) 	/* sfotware interrupt flag CPU 1 */
-#define SOFT_INT_FLAG2	U(0x6B000000) 	/* sfotware interrupt flag CPU 2 */
-#define SOFT_INT_FLAG3	U(0x6B000000) 	/* sfotware interrupt flag CPU 3  */
+#define SOFT_INT_FLAG0	U(0x6B000000) 	/* software interrupt flag CPU 0 */
+#define SOFT_INT_FLAG1	U(0x6B000000) 	/* software interrupt flag CPU 1 */
+#define SOFT_INT_FLAG2	U(0x6B000000) 	/* software interrupt flag CPU 2 */
+#define SOFT_INT_FLAG3	U(0x6B000000) 	/* software interrupt flag CPU 3  */
 #define  SOFT_INT_BIT	31		/* software interrupt flag bit */
 #define RESET_CPU0	U(0x6D000000) 	/* reset CPU 0 */
 #define RESET_CPU1	U(0x6D000004) 	/* reset CPU 1 */
