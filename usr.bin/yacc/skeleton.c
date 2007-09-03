@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.27 2007/09/02 15:19:36 deraadt Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.28 2007/09/03 21:14:58 deraadt Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ char *banner[] =
     "#if __GNUC__ >= 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ >= 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.27 2007/09/02 15:19:36 deraadt Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.28 2007/09/03 21:14:58 deraadt Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -164,14 +164,23 @@ char *body[] =
     "    else if ((newsize *= 2) > YYMAXDEPTH)",
     "        newsize = YYMAXDEPTH;",
     "    i = yyssp - yyss;",
+    "#ifdef SIZE_MAX",
+    "#define YY_SIZE_MAX SIZE_MAX",
+    "#else",
+    "#define YY_SIZE_MAX 0xffffffffU",
+    "#endif",
+    "    if (newsize && YY_SIZE_MAX / newsize < sizeof *newss)",
+    "        goto bail;",
     "    newss = yyss ? (short *)realloc(yyss, newsize * sizeof *newss) :",
-    "      (short *)calloc(newsize, sizeof *newss);",
+    "      (short *)malloc(newsize * sizeof *newss); /* overflow check above */",
     "    if (newss == NULL)",
     "        goto bail;",
     "    yyss = newss;",
     "    yyssp = newss + i;",
+    "    if (newsize && YY_SIZE_MAX / newsize < sizeof *newvs)",
+    "        goto bail;",
     "    newvs = yyvs ? (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs) :",
-    "      (YYSTYPE *)calloc(newsize, sizeof *newvs);",
+    "      (YYSTYPE *)malloc(newsize * sizeof *newvs); /* overflow check above */",
     "    if (newvs == NULL)",
     "        goto bail;",
     "    yyvs = newvs;",
