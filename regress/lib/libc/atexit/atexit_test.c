@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit_test.c,v 1.5 2003/09/02 23:52:16 david Exp $ */
+/*	$OpenBSD: atexit_test.c,v 1.6 2007/09/03 14:42:44 millert Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	/* this is supposed to segfault */
 	if (!strcmp(argv[1], "-invalid-atexit")) {
 		signal(SIGSEGV, handle_signal);
-		__atexit->fns[0] = handle_invalid;
+		__atexit->fns[0].fn_ptr.std_func = handle_invalid;
 	} else if (!strcmp(argv[1], "-invalid-cleanup")) {
 		struct atexit *p = __atexit;
 
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 			p = p->next;
 		if (p == NULL)
 			fprintf(stderr, "p == NULL, no page found\n");
-		p->fns[0] = handle_invalid;
+		p->fns[0].fn_ptr.std_func = handle_invalid;
 	}
 	__atexit_register_cleanup(handle_cleanup);
 	counter = 0;
