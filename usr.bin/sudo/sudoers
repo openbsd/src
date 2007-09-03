@@ -1,4 +1,4 @@
-# $OpenBSD: sudoers,v 1.12 2007/08/09 16:12:08 ajacoutot Exp $
+# $OpenBSD: sudoers,v 1.13 2007/09/03 13:40:02 ajacoutot Exp $
 #
 # sudoers file.
 #
@@ -14,7 +14,9 @@
 # Cmnd alias specification
 
 # Defaults specification
-Defaults env_keep +="DESTDIR FETCH_CMD FLAVOR FTPMODE MAKE MULTI_PACKAGES OKAY_FILES PKG_DBDIR PKG_DESTDIR PKG_CACHE PKG_PATH PKG_TMPDIR PORTSDIR RELEASEDIR SUBPACKAGE"
+Defaults env_keep +="DESTDIR FETCH_CMD FLAVOR FTPMODE GROUP MAKE MULTI_PACKAGES"
+Defaults env_keep +="OKAY_FILES OWNER PKG_DBDIR PKG_DESTDIR PKG_CACHE PKG_PATH"
+Defaults env_keep +="PKG_TMPDIR PORTSDIR RELEASEDIR SUBPACKAGE"
 
 # Uncomment to preserve the environment for users in group wheel
 #Defaults:%wheel !env_reset
