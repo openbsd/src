@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.98 2007/09/03 19:04:43 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.99 2007/09/03 19:05:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -448,8 +448,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 * unique.
 		 */
 		if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
-		    iicprobe(0x3f) == 0x73)
-			name = "lm93";
+		    (iicprobe(0x3f) == 0x73 || iicprobe(0x3f) == 0x72) &&
+		    iicprobe(0x00) == 0x00)
+			name = "lm93";	/* product 0x72 is the prototype */
 		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3f) == 0x68)
 			name = "lm96000";	/* adt7460 compat? */
@@ -728,7 +729,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			 */
 			name = "w83781d";
 		}
-	} else if (addr == iicprobe (0x4a) && iicprobe(0x4e) == 0x50 &&
+	} else if (addr == iicprobe(0x4a) && iicprobe(0x4e) == 0x50 &&
 	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
 		name = "w83l784r";
 	} else if (addr == 0x2d && iicprobe(0x4e) == 0x60 &&
@@ -801,9 +802,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	 * dangerous writes.
 	 */
 	if (name == NULL && (addr & 0x7c) == 0x48 &&	/* addr 0b1001xxx */
- 	    (iicprobew(0xaa) & 0x0007) == 0x0000 &&
- 	    (iicprobew(0xa1) & 0x0007) == 0x0000 &&
- 	    (iicprobew(0xa2) & 0x0007) == 0x0000 &&
+	    (iicprobew(0xaa) & 0x0007) == 0x0000 &&
+	    (iicprobew(0xa1) & 0x0007) == 0x0000 &&
+	    (iicprobew(0xa2) & 0x0007) == 0x0000 &&
 	    (iicprobe(0xac) & 0x10) == 0x00) {
 		if ((iicprobe(0xac) & 0x7e) == 0x0a &&
 		    iicprobe(0xab) == 0x00 && iicprobe(0xa8) == 0x00)
