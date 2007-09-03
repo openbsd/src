@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.5 2007/08/15 14:22:39 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.6 2007/09/03 15:19:55 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -38,6 +38,7 @@
 #define HAVE_MEMCHR 1
 #define HAVE_MEMCPY 1
 #define HAVE_MEMORY_H 1
+#define HAVE_MEMRCHR 1
 #define HAVE_MEMSET 1
 #define HAVE_MKSTEMP 1
 #define HAVE_NETGROUP_H 1

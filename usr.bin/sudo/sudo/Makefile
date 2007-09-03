@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2007/08/01 22:37:28 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2007/09/03 15:19:55 millert Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../auth
 
@@ -8,9 +8,8 @@ BINMODE=4555
 LINKS=  ${BINDIR}/sudo ${BINDIR}/sudoedit
 CFLAGS+=-DSUDO_DEVEL
 
-SRCS=	check.c env.c getspwuid.c interfaces.c logging.c memrchr.c parse.c \
-	set_perms.c sudo.c tgetpass.c zero_bytes.c sudo_auth.c bsdauth.c \
-	sudo_edit.c
+SRCS=	check.c env.c getspwuid.c interfaces.c logging.c parse.c set_perms.c \
+	sudo.c tgetpass.c zero_bytes.c sudo_auth.c bsdauth.c sudo_edit.c
 
 BINDIR=	/usr/bin
 POD2MAN=/usr/bin/pod2man
