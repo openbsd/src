@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.46 2006/06/18 11:47:45 pascoe Exp $	*/
+/*	$OpenBSD: route.h,v 1.47 2007/09/03 15:24:49 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -59,30 +59,30 @@ struct route {
  * retransmission behavior and are included in the routing structure.
  */
 struct rt_kmetrics {
-	u_long	rmx_locks;	/* Kernel must leave these values alone */
-	u_long	rmx_mtu;	/* MTU for this path */
-	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
-	u_long	rmx_pksent;	/* packets sent using this route */
+	u_int64_t	rmx_pksent;	/* packets sent using this route */
+	u_int		rmx_locks;	/* Kernel must leave these values */
+	u_int		rmx_mtu;	/* MTU for this path */
+	u_int		rmx_expire;	/* lifetime for route, e.g. redirect */
+	u_int		rmx_pad;
 };
 
 /*
  * Huge version for userland compatibility.
  */
 struct rt_metrics {
-	u_long	rmx_locks;	/* Kernel must leave these values alone */
-	u_long	rmx_mtu;	/* MTU for this path */
-	u_long	rmx_hopcount;	/* max hops expected */
-	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
-	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
-	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
-	u_long	rmx_ssthresh;	/* outbound gateway buffer limit (deprecated) */
-	u_long	rmx_rtt;	/* estimated round trip time (deprecated) */
-	u_long	rmx_rttvar;	/* estimated rtt variance (deprecated) */
-	u_long	rmx_pksent;	/* packets sent using this route */
+	u_int64_t	rmx_pksent;	/* packets sent using this route */
+	u_int		rmx_locks;	/* Kernel must leave these values */
+	u_int		rmx_mtu;	/* MTU for this path */
+	u_int		rmx_expire;	/* lifetime for route, e.g. redirect */
+	u_int		rmx_refcnt;	/* # references hold */
+	/* some apps may still need these no longer used metrics */
+	u_int		rmx_hopcount;	/* max hops expected */
+	u_int		rmx_recvpipe;	/* inbound delay-bandwidth product */
+	u_int		rmx_sendpipe;	/* outbound delay-bandwidth product */
+	u_int		rmx_ssthresh;	/* outbound gateway buffer limit */
+	u_int		rmx_rtt;	/* estimated round trip time */
+	u_int		rmx_rttvar;	/* estimated rtt variance */
 };
-/* XXX overloading some values that are no longer used. */
-#define rmx_refcnt rmx_rttvar	/* # held references only used by sysctl */
-#define	rmx_rt_tableid rmx_rtt	/* routing table ID */
 
 /*
  * rmx_rtt and rmx_rttvar are stored as microseconds;
@@ -172,21 +172,57 @@ struct rt_msghdr {
 	u_short	rtm_msglen;	/* to skip over non-understood messages */
 	u_char	rtm_version;	/* future binary compatibility */
 	u_char	rtm_type;	/* message type */
+	u_short	rtm_hdrlen;	/* sizeof(rt_msghdr) to skip over the header */
+	u_short	rtm_index;	/* index for associated ifp */
+	u_short rtm_tableid;	/* routing table id */
+	u_char	rtm_prio;	/* routing priority */
+	u_char	rtm_pad;
+	int	rtm_addrs;	/* bitmask identifying sockaddrs in msg */
+	int	rtm_flags;	/* flags, incl. kern & message, e.g. DONE */
+	int	rtm_fmask;	/* bitmask used in RTM_CHANGE message */
+	pid_t	rtm_pid;	/* identify sender */
+	int	rtm_seq;	/* for sender to identify action */
+	int	rtm_errno;	/* why failed */
+	u_int	rtm_inits;	/* which metrics we are initializing */
+	struct	rt_metrics rtm_rmx; /* metrics themselves */
+};
+/* overload no longer used field */
+#define rtm_use	rtm_rmx.rmx_pksent
+
+/*
+ * Comaptibility structures for version 3 messages.
+ * Keep them till after OpenBSD 4.4
+ */
+struct rt_ometrics {
+	u_long	rmx_locks;	/* Kernel must leave these values alone */
+	u_long	rmx_mtu;	/* MTU for this path */
+	u_long	rmx_hopcount;	/* max hops expected (deprecated) */
+	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
+	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
+	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
+	u_long	rmx_ssthresh;	/* outbound gateway buffer limit (deprecated) */
+	u_long	rmx_rtt;	/* overloaded with rmx_rt_tableid */
+	u_long	rmx_rttvar;	/* estimated rtt variance (deprecated) */
+	u_long	rmx_pksent;	/* packets sent using this route */
+};
+
+struct rt_omsghdr {
+	u_short	rtm_msglen;	/* to skip over non-understood messages */
+	u_char	rtm_version;	/* future binary compatibility */
+	u_char	rtm_type;	/* message type */
 	u_short	rtm_index;	/* index for associated ifp */
 	int	rtm_flags;	/* flags, incl. kern & message, e.g. DONE */
 	int	rtm_addrs;	/* bitmask identifying sockaddrs in msg */
 	pid_t	rtm_pid;	/* identify sender */
 	int	rtm_seq;	/* for sender to identify action */
 	int	rtm_errno;	/* why failed */
-	int	rtm_use;	/* deprecated use rtm_rmx->rmx_pksent */
-#define rtm_fmask	rtm_use	/* bitmask used in RTM_CHANGE message */
+	int	rtm_fmask;	/* was once rtm_use */
 	u_long	rtm_inits;	/* which metrics we are initializing */
-	struct	rt_metrics rtm_rmx; /* metrics themselves */
+	struct	rt_ometrics rtm_rmx; /* metrics themselves */
 };
-/* overload no longer used field */
-#define rtm_tableid	rtm_rmx.rmx_rt_tableid
 
-#define RTM_VERSION	3	/* Up the ante and ignore older versions */
+#define RTM_OVERSION	3	/* provide some minimal backward compat */
+#define RTM_VERSION	4	/* Up the ante and ignore older versions */
 
 #define RTM_ADD		0x1	/* Add Route */
 #define RTM_DELETE	0x2	/* Delete Route */
