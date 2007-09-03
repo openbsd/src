@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.147 2007/06/23 16:15:26 reyk Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.148 2007/09/03 06:10:54 joel Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1598,6 +1598,7 @@ carp_master_down(void *v)
 #endif /* INET6 */
 		carp_setrun(sc, 0);
 		carp_setroute(sc, RTM_ADD);
+		carpstats.carps_preempt++;
 		break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.100 2007/06/19 05:28:30 ray Exp $	*/
+/*	$OpenBSD: inet.c,v 1.101 2007/09/03 06:10:54 joel Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.100 2007/06/19 05:28:30 ray Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.101 2007/09/03 06:10:54 joel Exp $";
 #endif
 #endif /* not lint */
 
@@ -950,6 +950,7 @@ carp_stats(u_long off, char *name)
 	p(carps_opackets, "\t%llu packet%s sent (IPv4)\n");
 	p(carps_opackets6, "\t%llu packet%s sent (IPv6)\n");
 	p2(carps_onomem, "\t\t%llu send failed due to mbuf memory error\n");
+	p(carps_preempt, "\t%llu transition%s to master\n");
 #undef p
 #undef p2
 }
