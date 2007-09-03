@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.86 2007/02/12 20:00:14 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.87 2007/09/03 14:37:02 millert Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -250,9 +250,9 @@ static char	*malloc_func;
 /*
  * Necessary function declarations.
  */
-static void	*imalloc(size_t size);
+static void	*imalloc(size_t size, int zero_fill);
 static void	ifree(void *ptr);
-static void	*irealloc(void *ptr, size_t size);
+static void	*irealloc(void *ptr, size_t size, int zero_fill);
 static void	*malloc_bytes(size_t size);
 
 static struct pginfo *pginfo_list;
@@ -1188,7 +1188,7 @@ malloc_bytes(size_t size)
  * Allocate a piece of memory
  */
 static void *
-imalloc(size_t size)
+imalloc(size_t size, int zero_fill)
 {
 	void		*result;
 	int		ptralloc = 0;
@@ -1218,7 +1218,7 @@ imalloc(size_t size)
 	if (malloc_abort == 1 && result == NULL)
 		wrterror("allocation failed");
 
-	if (malloc_zero && result != NULL)
+	if ((malloc_zero || zero_fill) && result != NULL)
 		memset(result, 0, size);
 
 	if (result && ptralloc)
@@ -1230,7 +1230,7 @@ imalloc(size_t size)
  * Change the size of an allocation.
  */
 static void *
-irealloc(void *ptr, size_t size)
+irealloc(void *ptr, size_t size, int zero_fill)
 {
 	void		*p;
 	size_t		osize;
@@ -1253,7 +1253,7 @@ irealloc(void *ptr, size_t size)
 		if (size <= PTR_SIZE)
 			return (ptr);
 
-		p = imalloc(size);
+		p = imalloc(size, zero_fill);
 		if (p)
 			memcpy(p, ptr, PTR_SIZE);
 		ifree(ptr);
@@ -1315,7 +1315,9 @@ irealloc(void *ptr, size_t size)
 
 		if (!malloc_realloc && size <= osize &&
 		    size > osize - malloc_pagesize) {
-			if (malloc_junk)
+			if (zero_fill)
+				memset((char *)ptr + size, 0, osize - size);
+			else if (malloc_junk)
 				memset((char *)ptr + size, SOME_JUNK, osize - size);
 			return (ptr);	/* ..don't do anything else. */
 		}
@@ -1338,7 +1340,9 @@ irealloc(void *ptr, size_t size)
 
 		if (!malloc_realloc && size <= osize &&
 		    (size > osize / 2 || osize == malloc_minsize)) {
-			if (malloc_junk)
+			if (zero_fill)
+				memset((char *) ptr + size, 0, osize - size);
+			else if (malloc_junk)
 				memset((char *) ptr + size, SOME_JUNK, osize - size);
 			return (ptr);	/* ..don't do anything else. */
 		}
@@ -1347,7 +1351,7 @@ irealloc(void *ptr, size_t size)
 		return (NULL);
 	}
 
-	p = imalloc(size);
+	p = imalloc(size, zero_fill);
 
 	if (p != NULL) {
 		/* copy the lesser of the two sizes, and free the old one */
@@ -1876,7 +1880,7 @@ malloc(size_t size)
 		malloc_recurse();
 		return (NULL);
 	}
-	r = imalloc(size);
+	r = imalloc(size, 0);
 	UTRACE(0, size, r);
 	malloc_active--;
 	_MALLOC_UNLOCK();
@@ -1907,8 +1911,8 @@ free(void *ptr)
 	return;
 }
 
-void *
-realloc(void *ptr, size_t size)
+static void *
+_realloc(void *ptr, size_t size, int zero_fill)
 {
 	void		*r;
 
@@ -1920,9 +1924,9 @@ realloc(void *ptr, size_t size)
 	}
 
 	if (ptr == NULL)
-		r = imalloc(size);
+		r = imalloc(size, zero_fill);
 	else
-		r = irealloc(ptr, size);
+		r = irealloc(ptr, size, zero_fill);
 
 	UTRACE(ptr, size, r);
 	malloc_active--;
@@ -1932,4 +1936,20 @@ realloc(void *ptr, size_t size)
 		errno = ENOMEM;
 	}
 	return (r);
+}
+
+void *
+realloc(void *ptr, size_t size)
+{
+	return (_realloc(ptr, size, 0));
+}
+
+void *
+recalloc(void *ptr, size_t nmemb, size_t size)
+{
+	if (nmemb && SIZE_MAX / nmemb < size) {
+		errno = ENOMEM;
+		return (NULL);
+	}
+	return (_realloc(ptr, nmemb * size, 1));
 }

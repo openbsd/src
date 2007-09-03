@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.35 2006/01/13 17:58:09 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.36 2007/09/03 14:37:02 millert Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/stdlib ${LIBCSRCDIR}/stdlib
@@ -55,7 +55,7 @@ MLINKS+=insque.3 remque.3
 MLINKS+=labs.3 llabs.3
 MLINKS+=lsearch.3 lfind.3
 MLINKS+=malloc.3 free.3 malloc.3 realloc.3 malloc.3 calloc.3
-MLINKS+=malloc.3 cfree.3 malloc.3 malloc.conf.5
+MLINKS+=malloc.3 recalloc.3 malloc.3 cfree.3 malloc.3 malloc.conf.5
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=radixsort.3 sradixsort.3
 MLINKS+=rand.3 srand.3 rand.3 rand_r.3

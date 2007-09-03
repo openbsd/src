@@ -30,15 +30,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.47 2007/08/08 21:24:29 millert Exp $
+.\"	$OpenBSD: malloc.3,v 1.48 2007/09/03 14:37:02 millert Exp $
 .\"
-.Dd $Mdocdate: August 8 2007 $
+.Dd $Mdocdate: September 3 2007 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
 .Nm malloc ,
 .Nm calloc ,
 .Nm realloc ,
+.Nm recalloc ,
 .Nm free ,
 .Nm cfree
 .Nd memory allocation and deallocation
@@ -50,6 +51,8 @@
 .Fn calloc "size_t nmemb" "size_t size"
 .Ft void *
 .Fn realloc "void *ptr" "size_t size"
+.Ft void *
+.Fn recalloc "void *ptr" "size_t nmemb" "size_t size"
 .Ft void
 .Fn free "void *ptr"
 .Ft void
@@ -203,7 +206,18 @@ if ((newp = realloc(p, num * size)) == NULL) {
 	...
 .Ed
 .Pp
-Malloc will first look for a symbolic link called
+The
+.Fn recalloc
+function is similar to
+.Fn realloc
+except that it shares semantics with
+.Fn calloc
+rather than
+.Fn malloc .
+Newly allocated space is initialized to zero and the resulting size is
+checked for integer overflow.
+.Pp
+These functions will first look for a symbolic link called
 .Pa /etc/malloc.conf
 and next check the environment for a variable called
 .Ev MALLOC_OPTIONS
@@ -258,6 +272,8 @@ sizeof(ptr) errors where sizeof(*ptr) is meant.
 .Dq realloc .
 Always reallocate when
 .Fn realloc
+or
+.Fn recalloc
 is called, even if the initial allocation was big enough.
 This can substantially aid in compacting memory.
 .\".Pp
@@ -440,6 +456,12 @@ The
 .Fn malloc
 function conforms to
 .St -ansiC .
+.Pp
+The
+.Fn recalloc
+function is an
+.Ox
+extension.
 .Sh HISTORY
 The present implementation of
 .Fn malloc

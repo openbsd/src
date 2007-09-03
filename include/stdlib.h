@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.39 2006/09/17 16:48:04 djm Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.40 2007/09/03 14:37:02 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -128,6 +128,7 @@ void	*malloc(size_t);
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
 void	*realloc(void *, size_t);
+void	*recalloc(void *, size_t, size_t);
 void	 srand(unsigned);
 double	 strtod(const char *, char **);
 long	 strtol(const char *, char **, int);
