@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.14 2006/07/27 00:45:59 brad Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.15 2007/09/03 08:52:03 jakemsr Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -81,31 +81,21 @@ int cmpcidebug = 0;
 /*
  * Low-level HW interface
  */
-__inline uint8_t cmpci_mixerreg_read(struct cmpci_softc *,
-						 uint8_t);
-__inline void cmpci_mixerreg_write(struct cmpci_softc *,
-					       uint8_t, uint8_t);
-__inline void cmpci_reg_partial_write_1(struct cmpci_softc *,
-						    int, int,
+uint8_t cmpci_mixerreg_read(struct cmpci_softc *, uint8_t);
+void cmpci_mixerreg_write(struct cmpci_softc *, uint8_t, uint8_t);
+void cmpci_reg_partial_write_1(struct cmpci_softc *, int, int,
 						    unsigned, unsigned);
-__inline void cmpci_reg_partial_write_4(struct cmpci_softc *,
-						    int, int,
+void cmpci_reg_partial_write_4(struct cmpci_softc *, int, int,
 						    uint32_t, uint32_t);
-__inline void cmpci_reg_set_1(struct cmpci_softc *,
-					  int, uint8_t);
-__inline void cmpci_reg_clear_1(struct cmpci_softc *,
-					    int, uint8_t);
-__inline void cmpci_reg_set_4(struct cmpci_softc *,
-					  int, uint32_t);
-__inline void cmpci_reg_clear_4(struct cmpci_softc *,
-					    int, uint32_t);
-__inline void cmpci_reg_set_reg_misc(struct cmpci_softc *,
-						 uint32_t);
-__inline void cmpci_reg_clear_reg_misc(struct cmpci_softc *,
-						   uint32_t);
+void cmpci_reg_set_1(struct cmpci_softc *, int, uint8_t);
+void cmpci_reg_clear_1(struct cmpci_softc *, int, uint8_t);
+void cmpci_reg_set_4(struct cmpci_softc *, int, uint32_t);
+void cmpci_reg_clear_4(struct cmpci_softc *, int, uint32_t);
+void cmpci_reg_set_reg_misc(struct cmpci_softc *, uint32_t);
+void cmpci_reg_clear_reg_misc(struct cmpci_softc *, uint32_t);
 int cmpci_rate_to_index(int);
-__inline int cmpci_index_to_rate(int);
-__inline int cmpci_index_to_divider(int);
+int cmpci_index_to_rate(int);
+int cmpci_index_to_divider(int);
 
 int cmpci_adjust(int, int);
 void cmpci_set_mixer_gain(struct cmpci_softc *, int);
@@ -202,7 +192,7 @@ struct audio_hw_if cmpci_hw_if = {
  */
 
 /* mixer register read/write */
-__inline uint8_t
+uint8_t
 cmpci_mixerreg_read(struct cmpci_softc *sc, uint8_t no)
 {
 	uint8_t ret;
@@ -214,7 +204,7 @@ cmpci_mixerreg_read(struct cmpci_softc *sc, uint8_t no)
 	return ret;
 }
 
-__inline void
+void
 cmpci_mixerreg_write(struct cmpci_softc *sc, uint8_t no, uint8_t val)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, CMPCI_REG_SBADDR, no);
@@ -224,7 +214,7 @@ cmpci_mixerreg_write(struct cmpci_softc *sc, uint8_t no, uint8_t val)
 }
 
 /* register partial write */
-__inline void
+void
 cmpci_reg_partial_write_1(struct cmpci_softc *sc, int no, int shift,
     unsigned mask, unsigned val)
 {
@@ -234,7 +224,7 @@ cmpci_reg_partial_write_1(struct cmpci_softc *sc, int no, int shift,
 	delay(10);
 }
 
-__inline void
+void
 cmpci_reg_partial_write_4(struct cmpci_softc *sc, int no, int shift,
     uint32_t mask, uint32_t val)
 {
@@ -245,7 +235,7 @@ cmpci_reg_partial_write_4(struct cmpci_softc *sc, int no, int shift,
 }
 
 /* register set/clear bit */
-__inline void
+void
 cmpci_reg_set_1(struct cmpci_softc *sc, int no, uint8_t mask)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, no,
@@ -253,7 +243,7 @@ cmpci_reg_set_1(struct cmpci_softc *sc, int no, uint8_t mask)
 	delay(10);
 }
 
-__inline void
+void
 cmpci_reg_clear_1(struct cmpci_softc *sc, int no, uint8_t mask)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, no,
@@ -261,7 +251,7 @@ cmpci_reg_clear_1(struct cmpci_softc *sc, int no, uint8_t mask)
 	delay(10);
 }
 
-__inline void
+void
 cmpci_reg_set_4(struct cmpci_softc *sc, int no, uint32_t mask)
 {
 	/* use cmpci_reg_set_reg_misc() for CMPCI_REG_MISC */
@@ -272,7 +262,7 @@ cmpci_reg_set_4(struct cmpci_softc *sc, int no, uint32_t mask)
 	delay(10);
 }
 
-__inline void
+void
 cmpci_reg_clear_4(struct cmpci_softc *sc, int no, uint32_t mask)
 {
 	/* use cmpci_reg_clear_reg_misc() for CMPCI_REG_MISC */
@@ -287,7 +277,7 @@ cmpci_reg_clear_4(struct cmpci_softc *sc, int no, uint32_t mask)
  * The CMPCI_REG_MISC register needs special handling, since one of
  * its bits has different read/write values.
  */
-__inline void
+void
 cmpci_reg_set_reg_misc(struct cmpci_softc *sc, uint32_t mask)
 {
 	sc->sc_reg_misc |= mask;
@@ -296,7 +286,7 @@ cmpci_reg_set_reg_misc(struct cmpci_softc *sc, uint32_t mask)
 	delay(10);
 }
 
-__inline void
+void
 cmpci_reg_clear_reg_misc(struct cmpci_softc *sc, uint32_t mask)
 {
 	sc->sc_reg_misc &= ~mask;
@@ -334,13 +324,13 @@ cmpci_rate_to_index(int rate)
 	return i;  /* 48000 */
 }
 
-__inline int
+int
 cmpci_index_to_rate(int index)
 {
 	return cmpci_rate_table[index].rate;
 }
 
-__inline int
+int
 cmpci_index_to_divider(int index)
 {
 	return cmpci_rate_table[index].divider;
