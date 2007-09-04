@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.106 2007/08/23 13:11:14 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.107 2007/09/04 17:57:41 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -452,11 +452,11 @@ update_has_conflict_markers(struct cvs_file *cf)
 			continue;
 
 		if (!strncmp(lp->l_line, RCS_CONFLICT_MARKER1,
-		    strlen(RCS_CONFLICT_MARKER1)) ||
+		    sizeof(RCS_CONFLICT_MARKER1) - 1) ||
 		    !strncmp(lp->l_line, RCS_CONFLICT_MARKER2,
-		    strlen(RCS_CONFLICT_MARKER2)) ||
+		    sizeof(RCS_CONFLICT_MARKER2) - 1) ||
 		    !strncmp(lp->l_line, RCS_CONFLICT_MARKER3,
-		    strlen(RCS_CONFLICT_MARKER3))) {
+		    sizeof(RCS_CONFLICT_MARKER3) - 1)) {
 			conflict = 1;
 			break;
 		}

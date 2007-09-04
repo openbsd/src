@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.45 2007/05/29 00:19:10 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.46 2007/09/04 17:57:41 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -284,7 +284,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 			 * so the .0. is removed.
 			 */
 			if (!strncmp(s, RCS_MAGIC_BRANCH,
-			    strlen(RCS_MAGIC_BRANCH))) {
+			    sizeof(RCS_MAGIC_BRANCH) - 1)) {
 				nump->rn_id[nump->rn_len - 1] =
 				    nump->rn_id[nump->rn_len];
 				nump->rn_len--;
