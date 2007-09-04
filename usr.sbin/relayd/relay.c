@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.37 2007/09/04 10:32:54 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.38 2007/09/04 10:58:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1492,6 +1492,12 @@ relay_accept(int fd, short sig, void *arg)
 	bcopy(&con->tv_start, &con->tv_last, sizeof(con->tv_last));
 	bcopy(&ss, &con->in.ss, sizeof(con->in.ss));
 
+	relay_sessions++;
+	TAILQ_INSERT_HEAD(&rlay->sessions, con, entry);
+
+	/* Increment the per-relay session counter */
+	rlay->stats[proc_id].last++;
+
 	/* Pre-allocate output buffer */
 	con->out.output = evbuffer_new();
 	if (con->out.output == NULL) {
@@ -1508,15 +1514,11 @@ relay_accept(int fd, short sig, void *arg)
 
 	if (rlay->conf.flags & F_NATLOOK) {
 		if ((cnl = (struct ctl_natlook *)
-		    calloc(1, sizeof(struct ctl_natlook))) == NULL)
-			goto err;
+		    calloc(1, sizeof(struct ctl_natlook))) == NULL) {
+			relay_close(con, "failed to allocate nat lookup");
+			return;
+		}
 	}
-
-	relay_sessions++;
-	TAILQ_INSERT_HEAD(&rlay->sessions, con, entry);
-
-	/* Increment the per-relay session counter */
-	rlay->stats[proc_id].last++;
 
 	if (rlay->conf.flags & F_NATLOOK && cnl != NULL) {
 		con->cnl = cnl;;
