@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.42 2007/08/30 11:07:18 joris Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.43 2007/09/04 11:47:14 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -170,7 +170,7 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 		(void)fflush(stdout);
 
 		c = getc(stdin);
-		if (c == 'a') {
+		if (c == EOF || c == 'a') {
 			fatal("Aborted by user");
 		} else if (c == '\n' || c == 'c') {
 			logmsg = xstrdup("");
