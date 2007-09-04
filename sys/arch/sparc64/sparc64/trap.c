@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2007/07/05 22:16:30 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2007/09/04 20:36:52 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -543,15 +543,6 @@ badtrap:
 			*fs = initfpstate;
 			fs->fs_qsize = 0;
 			p->p_md.md_fpstate = fs;
-		}
-		/*
-		 * If we have not found an FPU, we have to emulate it.
-		 *
-		 * Since All UltraSPARC CPUs have an FPU how can this happen?
-		 */
-		if (!foundfpu) {
-			trapsignal(p, SIGILL, 0, ILL_COPROC, sv);
-			break;
 		}
 
 		/*

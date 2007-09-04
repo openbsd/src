@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.20 2007/05/02 18:46:07 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.21 2007/09/04 20:36:52 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -79,7 +79,6 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	cpu_model[100];
 
 struct	proc *fpproc;
-int	foundfpu;
 int	want_ast;
 extern	int want_resched;
 
@@ -92,8 +91,6 @@ struct cfattach cpu_ca = {
 };
 
 extern struct cfdriver cpu_cd;
-
-static char *fsrtoname(int, int, int, char *, size_t);
 
 #define	IU_IMPL(v)	((((u_int64_t)(v))&VER_IMPL) >> VER_IMPL_SHIFT)
 #define	IU_VERS(v)	((((u_int64_t)(v))&VER_MASK) >> VER_MASK_SHIFT)
@@ -123,14 +120,12 @@ cpu_attach(parent, dev, aux)
 {
 	int node;
 	long clk;
-	int impl, vers, fver;
+	int impl, vers;
 	char *cpuname;
-	char *fpuname;
 	struct mainbus_attach_args *ma = aux;
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
 	char *sep;
-	char fpbuf[40];
 	register int i, l;
 	u_int64_t ver;
 	extern u_int64_t cpu_clockrate[];
@@ -148,15 +143,9 @@ cpu_attach(parent, dev, aux)
 	 */
 	fpstate->fs_fsr = 7 << FSR_VER_SHIFT;	/* 7 is reserved for "none" */
 	savefpstate(fpstate);
-	fver = (fpstate->fs_fsr >> FSR_VER_SHIFT) & (FSR_VER >> FSR_VER_SHIFT);
 	ver = getver();
 	impl = IU_IMPL(ver);
 	vers = IU_VERS(ver);
-	if (fver != 7) {
-		foundfpu = 1;
-		fpuname = fsrtoname(impl, vers, fver, fpbuf, sizeof fpbuf);
-	} else
-		fpuname = "no";
 
 	/* tell them what we have */
 	node = ma->ma_node;
@@ -175,9 +164,8 @@ cpu_attach(parent, dev, aux)
 	cpuname = getpropstring(node, "name");
 	if (strcmp(cpuname, "cpu") == 0)
 		cpuname = getpropstring(node, "compatible");
-	snprintf(cpu_model, sizeof cpu_model,
-		"%s (rev %d.%d) @ %s MHz, %s FPU", cpuname,
-		vers >> 4, vers & 0xf, clockfreq(clk), fpuname);
+	snprintf(cpu_model, sizeof cpu_model, "%s (rev %d.%d) @ %s MHz",
+	    cpuname, vers >> 4, vers & 0xf, clockfreq(clk));
 	printf(": %s\n", cpu_model);
 
 	cacheinfo.c_physical = 1; /* Dunno... */
@@ -290,88 +278,6 @@ cpu_attach(parent, dev, aux)
 
 		cacheinfo.c_dcache_flush_page = us3_dcache_flush_page;
 	}
-}
-
-/*
- * The following tables convert <IU impl, IU version, FPU version> triples
- * into names for the CPU and FPU chip.  In most cases we do not need to
- * inspect the FPU version to name the IU chip, but there is one exception
- * (for Tsunami), and this makes the tables the same.
- *
- * The table contents (and much of the structure here) are from Guy Harris.
- *
- */
-struct info {
-	u_char	valid;
-	u_char	iu_impl;
-	u_char	iu_vers;
-	u_char	fpu_vers;
-	char	*name;
-};
-
-#define	ANY	0xff	/* match any FPU version (or, later, IU version) */
-
-
-/* NB: table order matters here; specific numbers must appear before ANY. */
-static struct info fpu_types[] = {
-	/*
-	 * Vendor 0, IU Fujitsu0.
-	 */
-	{ 1, 0x0, ANY, 0, "MB86910 or WTL1164/5" },
-	{ 1, 0x0, ANY, 1, "MB86911 or WTL1164/5" },
-	{ 1, 0x0, ANY, 2, "L64802 or ACT8847" },
-	{ 1, 0x0, ANY, 3, "WTL3170/2" },
-	{ 1, 0x0, 4,   4, "on-chip" },		/* Swift */
-	{ 1, 0x0, ANY, 4, "L64804" },
-
-	/*
-	 * Vendor 1, IU ROSS0/1 or Pinnacle.
-	 */
-	{ 1, 0x1, 0xf, 0, "on-chip" },		/* Pinnacle */
-	{ 1, 0x1, ANY, 0, "L64812 or ACT8847" },
-	{ 1, 0x1, ANY, 1, "L64814" },
-	{ 1, 0x1, ANY, 2, "TMS390C602A" },
-	{ 1, 0x1, ANY, 3, "RT602 or WTL3171" },
-
-	/*
-	 * Vendor 2, IU BIT0.
-	 */
-	{ 1, 0x2, ANY, 0, "B5010 or B5110/20 or B5210" },
-
-	/*
-	 * Vendor 4, Texas Instruments.
-	 */
-	{ 1, 0x4, ANY, 0, "on-chip" },		/* Viking */
-	{ 1, 0x4, ANY, 4, "on-chip" },		/* Tsunami */
-
-	/*
-	 * Vendor 5, IU Matsushita0.
-	 */
-	{ 1, 0x5, ANY, 0, "on-chip" },
-
-	/*
-	 * Vendor 9, Weitek.
-	 */
-	{ 1, 0x9, ANY, 3, "on-chip" },
-
-	{ 0 }
-};
-
-static char *
-fsrtoname(impl, vers, fver, buf, buflen)
-	register int impl, vers, fver;
-	char *buf;
-	size_t buflen;
-{
-	register struct info *p;
-
-	for (p = fpu_types; p->valid; p++)
-		if (p->iu_impl == impl &&
-		    (p->iu_vers == vers || p->iu_vers == ANY) &&
-		    (p->fpu_vers == fver))
-			return (p->name);
-	snprintf(buf, buflen, "version %x", fver);
-	return (buf);
 }
 
 struct cfdriver cpu_cd = {

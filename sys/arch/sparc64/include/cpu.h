@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.40 2007/05/14 21:38:08 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.41 2007/09/04 20:36:52 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -191,7 +191,6 @@ extern	int want_ast;
  * XXX this must be per-cpu (eventually)
  */
 extern	struct proc *fpproc;	/* FPU owner */
-extern	int foundfpu;		/* true => we have an FPU */
 
 /* machdep.c */
 int	ldcontrolb(caddr_t);
