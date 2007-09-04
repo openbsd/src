@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hoststated.conf.5,v 1.46 2007/07/24 17:51:33 pyr Exp $
+.\"	$OpenBSD: hoststated.conf.5,v 1.47 2007/09/04 14:15:05 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 24 2007 $
+.Dd $Mdocdate: September 4 2007 $
 .Dt HOSTSTATED.CONF 5
 .Os
 .Sh NAME
@@ -149,18 +149,40 @@ method.
 Only one health-checking method can be used per table.
 Table specific configuration directives are described below.
 .Bl -tag -width Ds
-.It Ic check http Ar path Ic code Ar number
+.It Xo
+.Ic check http Ar path
+.Op Ic host Ar hostname
+.Ic code Ar number
+.Xc
 For each host in the table, verify that retrieving the URL
 .Ar path
 gives the HTTP return code
 .Ar number .
-.It Ic check https Ar path Ic code Ar number
+If
+.Ar hostname
+is specified, it is used as the
+.Dq Host:
+header to query a specific hostname at target host.
+.It Xo
+.Ic check https Ar path
+.Op Ic host Ar hostname
+.Ic code Ar number
+.Xc
 This has the same effect as above but wraps the HTTP request in SSL.
-.It Ic check http Ar path Ic digest Ar string
+.It Xo
+.Ic check http Ar path
+.Op Ic host Ar hostname
+.Ic digest Ar string
+.Xc
 For each host in the table, verify that retrieving the URL
 .Ar path
 produces a content whose SHA1 digest is
 .Ar digest .
+If
+.Ar hostname
+is specified, it is used as the
+.Dq Host:
+header to query a specific hostname at target host.
 The digest does not take the HTTP headers into account.
 To compute the digest, use this simple command:
 .Bd -literal -offset indent
@@ -172,7 +194,11 @@ that can be used as is in a digest statement:
 .Bd -literal -offset indent
 a9993e36476816aba3e25717850c26c9cd0d89d
 .Ed
-.It Ic check https Ar path Ic digest Ar string
+.It Xo
+.Ic check http Ar path
+.Op Ic host Ar hostname
+.Ic digest Ar string
+.Xc
 This has the same effect as above but wraps the HTTP request in SSL.
 .It Ic check icmp
 Ping hosts in this table to determine whether they are up or not.

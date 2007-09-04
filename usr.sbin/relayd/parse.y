@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2007/07/05 09:42:26 thib Exp $	*/
+/*	$OpenBSD: parse.y,v 1.51 2007/09/04 14:15:05 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -115,7 +115,7 @@ typedef struct {
 %token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY IP
 %token	ERROR
 %token	<v.string>	STRING
-%type	<v.string>	interface
+%type	<v.string>	interface hostname
 %type	<v.number>	number port http_type loglevel sslcache optssl dstport
 %type	<v.number>	proto_type dstmode docheck retry log flag direction
 %type	<v.host>	host
@@ -165,6 +165,17 @@ http_type	: STRING	{
 			free($1);
 		}
 		;
+
+hostname	: /* empty */		{
+			$$ = strdup("");
+			if ($$ == NULL)
+				fatal("calloc");
+		}
+		| HOST STRING	{
+			if (asprintf(&$$, "Host: %s\r\n", $2) == -1)
+				fatal("asprintf");
+		}
+		;		
 
 proto_type	: TCP				{ $$ = RELAY_PROTO_TCP; }
 		| STRING			{
@@ -458,42 +469,44 @@ tableoptsl	: host			{
 			conf->flags |= F_SSL;
 			table->conf.flags |= F_SSL;
 		}
-		| CHECK http_type STRING CODE number {
+		| CHECK http_type STRING hostname CODE number {
 			if ($2) {
 				conf->flags |= F_SSL;
 				table->conf.flags |= F_SSL;
 			}
 			table->conf.check = CHECK_HTTP_CODE;
-			table->conf.retcode = $5;
+			table->conf.retcode = $6;
 			if (asprintf(&table->sendbuf,
-			    "HEAD %s HTTP/1.0\r\n\r\n", $3) == -1)
+			    "HEAD %s HTTP/1.0\r\n%s\r\n", $3, $4) == -1)
 				fatal("asprintf");
 			free($3);
+			free($4);
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
 			table->sendbuf_len = strlen(table->sendbuf);
 		}
-		| CHECK http_type STRING DIGEST STRING {
+		| CHECK http_type STRING hostname DIGEST STRING {
 			if ($2) {
 				conf->flags |= F_SSL;
 				table->conf.flags |= F_SSL;
 			}
 			table->conf.check = CHECK_HTTP_DIGEST;
 			if (asprintf(&table->sendbuf,
-			    "GET %s HTTP/1.0\r\n\r\n", $3) == -1)
+			    "GET %s HTTP/1.0\r\n%s\r\n", $3, $4) == -1)
 				fatal("asprintf");
 			free($3);
+			free($4);
 			if (table->sendbuf == NULL)
 				fatal("out of memory");
 			table->sendbuf_len = strlen(table->sendbuf);
-			if (strlcpy(table->conf.digest, $5,
+			if (strlcpy(table->conf.digest, $6,
 			    sizeof(table->conf.digest)) >=
 			    sizeof(table->conf.digest)) {
 				yyerror("http digest truncated");
-				free($5);
+				free($6);
 				YYERROR;
 			}
-			free($5);
+			free($6);
 		}
 		| CHECK SEND sendbuf EXPECT STRING optssl {
 			table->conf.check = CHECK_SEND_EXPECT;
