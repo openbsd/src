@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.20 2007/09/04 01:05:20 fgsch Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.21 2007/09/04 14:37:53 fgsch Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.20 2007/09/04 01:05:20 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.21 2007/09/04 14:37:53 fgsch Exp $";
 #endif
 
 #include <ctype.h>
@@ -45,21 +45,6 @@ static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.20 2007/09/04 01:05:20 fgsc
 #include <err.h>
 #include "ypdb.h"
 #include "ypdef.h"
-
-char *
-findlast(const char *b, int c, size_t len)
-{
-	const char *p;
-
-	if (len != 0) {
-		p = b + len - 1;
-		do {
-			if (*p == c)
-				return ((char *)p);
-		} while (p-- != b);
-	}
-	return (NULL);
-}
 
 static void
 split_address(char *address, size_t len, char *user, char *host)
@@ -81,7 +66,7 @@ split_address(char *address, size_t len, char *user, char *host)
 		*s = '\0';
 	}
 
-	if ((r = findlast(address, '!',  len))) {
+	if ((r = memrchr(address, '!',  len))) {
 		s = host;
 		for (c = address; i < len; i++) {
 			if (c == r) {
