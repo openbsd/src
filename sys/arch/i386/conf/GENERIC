@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.569 2007/08/31 16:27:23 marco Exp $
+#	$OpenBSD: GENERIC,v 1.570 2007/09/04 20:19:24 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -139,6 +139,7 @@ adt*	at iic?				# Analog Devices ADT7460
 lm*	at iic?				# LM78/79 and clones
 lmenv*	at iic?				# National Semiconductor LM87
 lmtemp*	at iic?				# NS LM75/LM77 temperature sensor
+lmn*	at iic?				# NS LM93
 maxds*	at iic?				# Maxim DS1631/1624/1721
 maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 asbtm*	at iic?				# Asus ASB100
