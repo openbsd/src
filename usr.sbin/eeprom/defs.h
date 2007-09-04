@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.4 2002/02/17 19:42:36 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.5 2007/09/04 23:28:26 fgsch Exp $	*/
 /*	$NetBSD: defs.h,v 1.2 1996/02/28 01:13:20 thorpej Exp $	*/
 
 /*-
@@ -109,5 +109,6 @@ void	ee_verifychecksums(void);
 #ifdef __sparc__
 /* Sparc Openprom handlers. */
 char	*op_handler(char *, char *);
-void	op_dump(void);
+void	 op_dump(void);
+void	 op_tree(void);
 #endif /* __sparc__ */

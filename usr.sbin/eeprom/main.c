@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2005/05/02 02:29:27 djm Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2007/09/04 23:28:26 fgsch Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <err.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #ifdef __sparc__
@@ -51,7 +52,7 @@
 
 #include <machine/openpromio.h>
 
-static	char *system = NULL;
+static	char *nlistf = NULL;
 #endif /* __sparc__ */
 
 #include <machine/eeprom.h>
@@ -110,6 +111,7 @@ int	cksumfail = 0;
 u_short	writecount;
 int	eval = 0;
 int	use_openprom = 0;
+int	print_tree = 0;
 int	verbose = 0;
 
 extern	char *__progname;
@@ -121,7 +123,7 @@ main(int argc, char *argv[])
 	char *cp, line[BUFSIZE];
 #ifdef __sparc__
 	gid_t gid;
-	char *optstring = "cf:ivN:-";
+	char *optstring = "cf:ipvN:-";
 #else
 	char *optstring = "cf:i-";
 #endif /* __sparc__ */
@@ -144,12 +146,16 @@ main(int argc, char *argv[])
 			ignore_checksum = 1;
 			break;
 #ifdef __sparc__
+		case 'p':
+			print_tree = 1;
+			break;
+
 		case 'v':
 			verbose = 1;
 			break;
 
 		case 'N':
-			system = optarg;
+			nlistf = optarg;
 			break;
 
 #endif /* __sparc__ */
@@ -162,13 +168,17 @@ main(int argc, char *argv[])
 	argv += optind;
 
 #ifdef __sparc__
-	if (system != NULL) {
+	if (nlistf != NULL) {
 		gid = getgid();
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
 	}
 	if (getcputype() != CPU_SUN4)
 		use_openprom = 1;
+	if (print_tree && use_openprom) {
+		op_tree();
+		exit(0);
+	}
 #endif /* __sparc__ */
 
 	if (use_openprom == 0) {
@@ -293,7 +303,7 @@ usage(void)
 
 #ifdef __sparc__
 	fprintf(stderr, "usage: %s %s %s\n", __progname,
-	    "[-] [-c] [-f device] [-i] [-v]",
+	    "[-] [-c] [-f device] [-i] [-p] [-v]",
 	    "[-N system] [field[=value] ...]");
 #else
 	fprintf(stderr, "usage: %s %s\n", __progname,
