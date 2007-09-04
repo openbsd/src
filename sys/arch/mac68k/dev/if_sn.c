@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.46 2007/01/12 16:31:21 martin Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.47 2007/09/04 17:55:15 miod Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -861,6 +861,8 @@ snintr(void *arg)
 			if (isr & ISR_RFO)
 				printf("%s: receive FIFO overrun\n",
 				    sc->sc_dev.dv_xname);
+			if (isr & (ISR_RDE | ISR_RBE | ISR_RBAE /* | ISR_RFO */))
+				snreset(sc);
 		}
 		if (isr & (ISR_CRC | ISR_FAE | ISR_MP)) {
 #ifdef notdef
