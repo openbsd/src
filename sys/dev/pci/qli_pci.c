@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.1 2007/08/31 16:18:57 marco Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.2 2007/09/04 23:03:59 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -46,7 +46,7 @@
 
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
-#define QLI_DEBUG
+/* #define QLI_DEBUG */
 #ifdef QLI_DEBUG
 #define DPRINTF(x...)		do { if (qli_debug) printf(x); } while(0)
 #define DNPRINTF(n,x...)	do { if (qli_debug & n) printf(x); } while(0)
@@ -96,6 +96,7 @@ struct qli_softc {
 	u_int32_t		sc_resource;	/* nr for semaphores */
 
 	struct rwlock		sc_lock;
+	struct rwlock		sc_mbox_lock;
 };
 
 int		qli_scsi_cmd(struct scsi_xfer *);
@@ -115,6 +116,7 @@ void		qli_hw_reset(struct qli_softc *);
 int		qli_soft_reset(struct qli_softc *);
 int		qli_get_fw_state(struct qli_softc *, u_int32_t *);
 int		qli_start_firmware(struct qli_softc *);
+int		qli_mgmt(struct qli_softc *, int, u_int32_t *);
 int		qli_intr(void *);
 int		qli_attach(struct qli_softc *);
 #ifndef SMALL_KERNEL
@@ -240,7 +242,7 @@ qli_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_QLOGIC_ISP4010_HBA;
 
 	if (qli_attach(sc)) {
-		printf(": %s can't attach\n", DEVNAME(sc));
+		printf("%s: can't attach\n", DEVNAME(sc));
 		goto intrdis;
 	}
 
@@ -599,15 +601,89 @@ done:
 }
 
 int
+qli_mgmt(struct qli_softc *sc, int len, u_int32_t *mbox)
+{
+	int			rv = 1, s, i;
+	u_int32_t		x;
+
+	DNPRINTF(QLI_D_MISC, "%s: qli_mgmt\n", DEVNAME(sc));
+
+	if (!mbox)
+		goto done;
+
+	s = splbio();
+	rw_enter_write(&sc->sc_mbox_lock);
+
+	if (qli_read(sc, &sc->sc_reg->qlr_ctrl_status) &
+	    QLI_REG_CTRLSTAT_SCSI_PROC_INTR) {
+		/* this should not happen */
+		printf("%s: qli_mgmt called while interrupt is pending\n",
+		    DEVNAME(sc));
+		qli_intr(sc);
+	}
+
+	/* mbox[0] needs to be written last so write backwards */
+	DNPRINTF(QLI_D_MISC, "%s: qli_mgmt: ", DEVNAME(sc));
+	for (i = QLI_MBOX_SIZE - 1; i >= 0; i--) {
+		DNPRINTF(QLI_D_MISC, "mbox[%d] = 0x%08x ", i, mbox[i]);
+		qli_write(sc, &sc->sc_reg->qlr_mbox[i], i < len ? mbox[i] : 0);
+	}
+	DNPRINTF(QLI_D_MISC, "\n");
+
+	/* notify chip it has to deal with mailbox */
+	qli_write(sc, &sc->sc_reg->qlr_ctrl_status,
+	    QLI_SET_MASK(QLI_REG_CTRLSTAT_EP_INTR));
+
+	/* wait for completion */
+	if (cold)
+		for (i = 0; i < 6000000 /* up to a minute */; i++) {
+			delay(10);
+			if ((qli_read(sc, &sc->sc_reg->qlr_ctrl_status) &
+			    (QLI_REG_CTRLSTAT_SCSI_RESET_INTR |
+			    QLI_REG_CTRLSTAT_SCSI_COMPL_INTR |
+			    QLI_REG_CTRLSTAT_SCSI_PROC_INTR)))
+				break;
+		}
+	else {
+		/* XXX tsleep */
+	}
+
+	DNPRINTF(QLI_D_MISC, "%s: qli_mgmt: ", DEVNAME(sc));
+	for (i = 0; i < QLI_MBOX_SIZE; i++) {
+		DNPRINTF(QLI_D_MISC, "mbox[%d] = 0x%08x ", i, qli_read(sc,
+		    &sc->sc_reg->qlr_mbox[i]));
+	}
+	DNPRINTF(QLI_D_MISC, "\n");
+
+	x = qli_read(sc, &sc->sc_reg->qlr_mbox[0]);
+	switch (x) {
+	case QLI_MBOX_STATUS_COMMAND_COMPLETE:
+		for (i = 0; i < QLI_MBOX_SIZE; i++)
+			mbox[i] = qli_read(sc, &sc->sc_reg->qlr_mbox[i]);
+		rv = 0;
+		break;
+	default:
+		printf("%s: qli_mgmt: mailbox failed opcode 0x%08x failed "
+		    "with error code 0x%08x\n", DEVNAME(sc), mbox[0], x);
+	}
+
+	rw_exit_write(&sc->sc_mbox_lock);
+	splx(s);
+done:
+	return (rv);
+}
+
+int
 qli_attach(struct qli_softc *sc)
 {
 	/* struct scsibus_attach_args saa; */
 	int			rv = 1;
-	u_int32_t		f;
+	u_int32_t		f, mbox[QLI_MBOX_SIZE];
 
 	DNPRINTF(QLI_D_MISC, "%s: qli_attach\n", DEVNAME(sc));
 
 	rw_init(&sc->sc_lock, "qli_lock");
+	rw_init(&sc->sc_mbox_lock, "qli_mbox_lock");
 
 	if (sc->sc_ql4010)
 		sc->sc_resource = QLI_SEM_4010_SCSI;
@@ -619,7 +695,19 @@ qli_attach(struct qli_softc *sc)
 	DNPRINTF(QLI_D_MISC, "%s: qli_attach resource: %d\n", DEVNAME(sc),
 	    sc->sc_resource);
 
-	qli_start_firmware(sc);
+	if (qli_start_firmware(sc)) {
+		printf("%s: could not start firmware\n", DEVNAME(sc));
+		goto done;
+	}
+
+	bzero(mbox, sizeof(mbox));
+	mbox[0] = QLI_MBOX_OPC_ABOUT_FIRMWARE;
+	if (qli_mgmt(sc, 4, mbox)) {
+		printf("%s: about firmware command failed\n", DEVNAME(sc));
+		goto done;
+	}
+	printf("%s: version %d.%d.%d.%d\n", DEVNAME(sc), mbox[1], mbox[2],
+	    mbox[3], mbox[4]);
 
 #if NBIO > 0
 	if (bio_register(&sc->sc_dev, qli_ioctl) != 0)
@@ -633,17 +721,20 @@ qli_attach(struct qli_softc *sc)
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
 
+done:
 	return (rv);
 }
 
 int
 qli_scsi_cmd(struct scsi_xfer *xs)
 {
+#ifdef QLI_DEBUG
 	struct scsi_link	*link = xs->sc_link;
 	struct qli_softc	*sc = link->adapter_softc;
 
 	DNPRINTF(QLI_D_CMD, "%s: qli_scsi_cmd opcode: %#x\n",
 	    DEVNAME(sc), xs->cmd->opcode);
+#endif
 
 	goto stuffup;
 

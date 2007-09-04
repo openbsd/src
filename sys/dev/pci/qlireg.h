@@ -1,4 +1,4 @@
-/* $OpenBSD: qlireg.h,v 1.1 2007/08/31 16:18:57 marco Exp $ */
+/* $OpenBSD: qlireg.h,v 1.2 2007/09/04 23:03:59 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -319,6 +319,7 @@ struct qli_reg {
 	QLI_SEM_4022_DRIVER_MASK)
 
 /* mailbox commands */
+#define QLI_MBOX_OPC_ABOUT_FIRMWARE			(0x09)
 #define QLI_MBOX_OPC_GET_FW_STATE			(0x69)
 		/* mbox 1 firmware state */
 #define		QLI_MBOX_STATE_READY			(0x0<<0)
