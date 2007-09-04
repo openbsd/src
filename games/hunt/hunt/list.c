@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.4 2001/06/04 02:41:34 d Exp $	*/
+/*	$OpenBSD: list.c,v 1.5 2007/09/04 22:39:31 hshoexer Exp $	*/
 /*
  * Copyright 2001, David Leonard. All rights reserved.
  * Redistribution and use in source and binary forms with or without
@@ -107,7 +107,7 @@ next_driver_fd(fd)
 			drivers = realloc(drivers, sizeof *driver * maxdrivers);
 		} else {
 			maxdrivers = 16;
-			drivers = malloc(sizeof *driver * maxdrivers);
+			drivers = calloc(sizeof *driver, maxdrivers);
 		}
 		if (drivers == NULL)
 			err(1, "malloc");

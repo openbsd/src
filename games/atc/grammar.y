@@ -1,4 +1,4 @@
-/*	$OpenBSD: grammar.y,v 1.4 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.5 2007/09/04 22:39:31 hshoexer Exp $	*/
 /*	$NetBSD: grammar.y,v 1.3 1995/03/21 15:03:59 cgd Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: grammar.y,v 1.4 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: grammar.y,v 1.5 2007/09/04 22:39:31 hshoexer Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,8 +172,8 @@ Bpoint:
 		{
 		if (sp->num_beacons % REALLOC == 0) {
 			if (sp->beacon == NULL)
-				sp->beacon = (BEACON *) malloc((sp->num_beacons
-					+ REALLOC) * sizeof (BEACON));
+				sp->beacon = (BEACON *) calloc((sp->num_beacons
+					+ REALLOC), sizeof (BEACON));
 			else
 				sp->beacon = (BEACON *) realloc(sp->beacon,
 					(sp->num_beacons + REALLOC) * 
@@ -202,8 +202,8 @@ Epoint:
 
 		if (sp->num_exits % REALLOC == 0) {
 			if (sp->exit == NULL)
-				sp->exit = (EXIT *) malloc((sp->num_exits + 
-					REALLOC) * sizeof (EXIT));
+				sp->exit = (EXIT *) calloc((sp->num_exits + 
+					REALLOC), sizeof (EXIT));
 			else
 				sp->exit = (EXIT *) realloc(sp->exit,
 					(sp->num_exits + REALLOC) * 
@@ -235,8 +235,8 @@ Apoint:
 
 		if (sp->num_airports % REALLOC == 0) {
 			if (sp->airport == NULL)
-				sp->airport=(AIRPORT *)malloc((sp->num_airports
-					+ REALLOC) * sizeof(AIRPORT));
+				sp->airport=(AIRPORT *)calloc((sp->num_airports
+					+ REALLOC), sizeof(AIRPORT));
 			else
 				sp->airport = (AIRPORT *) realloc(sp->airport,
 					(sp->num_airports + REALLOC) * 
@@ -266,8 +266,8 @@ Lline:
 		{
 		if (sp->num_lines % REALLOC == 0) {
 			if (sp->line == NULL)
-				sp->line = (LINE *) malloc((sp->num_lines + 
-					REALLOC) * sizeof (LINE));
+				sp->line = (LINE *) calloc((sp->num_lines + 
+					REALLOC), sizeof (LINE));
 			else
 				sp->line = (LINE *) realloc(sp->line,
 					(sp->num_lines + REALLOC) *
