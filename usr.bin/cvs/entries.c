@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.79 2007/07/03 13:22:42 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.80 2007/09/04 19:07:04 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -200,18 +200,6 @@ cvs_ent_get(CVSENTRIES *ep, const char *name)
 
 	ent = cvs_ent_parse(l->buf);
 	return (ent);
-}
-
-int
-cvs_ent_exists(CVSENTRIES *ep, const char *name)
-{
-	struct cvs_ent_line *l;
-
-	l = ent_get_line(ep, name);
-	if (l == NULL)
-		return (0);
-
-	return (1);
 }
 
 void

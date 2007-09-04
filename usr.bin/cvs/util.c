@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.114 2007/09/02 11:40:03 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.115 2007/09/04 19:07:04 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -701,38 +701,6 @@ cvs_freelines(struct cvs_lines *lines)
 	}
 
 	xfree(lines);
-}
-
-BUF *
-cvs_patchfile(u_char *data, size_t dlen, u_char *patch, size_t plen,
-    int (*p)(struct cvs_lines *, struct cvs_lines *))
-{
-	struct cvs_lines *dlines, *plines;
-	struct cvs_line *lp;
-	BUF *res;
-
-	if ((dlines = cvs_splitlines(data, dlen)) == NULL)
-		return (NULL);
-
-	if ((plines = cvs_splitlines(patch, plen)) == NULL)
-		return (NULL);
-
-	if (p(dlines, plines) < 0) {
-		cvs_freelines(dlines);
-		cvs_freelines(plines);
-		return (NULL);
-	}
-
-	res = cvs_buf_alloc(1024, BUF_AUTOEXT);
-	TAILQ_FOREACH(lp, &dlines->l_lines, l_list) {
-		if (lp->l_line == NULL)
-			continue;
-		cvs_buf_append(res, lp->l_line, lp->l_len);
-	}
-
-	cvs_freelines(dlines);
-	cvs_freelines(plines);
-	return (res);
 }
 
 /*
