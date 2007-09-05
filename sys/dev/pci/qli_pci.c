@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.4 2007/09/05 11:13:20 marco Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.5 2007/09/05 22:39:15 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -59,9 +59,11 @@
 #define	QLI_D_MEM		0x0040
 #define	QLI_D_CCB		0x0080
 #define	QLI_D_SEM		0x0100
+#define	QLI_D_MBOX		0x0200
 #else
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)
+#define qli_dump_mbox(x, y)
 #endif
 
 #ifdef QLI_DEBUG
@@ -75,6 +77,7 @@ u_int32_t	qli_debug = 0
 		    | QLI_D_MEM
 		    | QLI_D_CCB
 		    | QLI_D_SEM
+		    | QLI_D_MBOX
 		;
 #endif
 
@@ -107,7 +110,15 @@ struct qli_softc {
 	u_int32_t		sc_resource;	/* nr for semaphores */
 
 	struct rwlock		sc_lock;
+
+	/* mailbox members */
 	struct rwlock		sc_mbox_lock;
+	u_int32_t		sc_mbox[QLI_MBOX_SIZE];
+	int			sc_mbox_flags;
+#define QLI_MBOX_F_INVALID	(0x00)
+#define QLI_MBOX_F_PENDING	(0x01)
+#define QLI_MBOX_F_WAKEUP	(0x02)
+#define QLI_MBOX_F_POLL		(0x04)
 };
 
 struct qli_mem	*qli_allocmem(struct qli_softc *, size_t);
@@ -116,6 +127,8 @@ int		qli_scsi_cmd(struct scsi_xfer *);
 int		qli_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 		    struct proc *);
 void		qliminphys(struct buf *bp);
+void		qli_disable_interrupts(struct qli_softc *);
+void		qli_enable_interrupts(struct qli_softc *);
 int		qli_pci_find_device(void *);
 int		qli_pci_match(struct device *, void *, void *);
 void		qli_pci_attach(struct device *, struct device *, void *);
@@ -136,6 +149,9 @@ int		qli_attach(struct qli_softc *);
 int		qli_create_sensors(struct qli_softc *);
 #endif /* SMALL_KERNEL */
 
+#ifdef QLI_DEBUG
+void		qli_dump_mbox(struct qli_softc *, u_int32_t *);
+#endif /* QLI_DEBUG */
 
 struct scsi_adapter qli_switch = {
 	qli_scsi_cmd, qliminphys, 0, 0, qli_scsi_ioctl
@@ -334,10 +350,35 @@ qliminphys(struct buf *bp)
 {
 	DNPRINTF(QLI_D_MISC, "qliminphys: %d\n", bp->b_bcount);
 
-	/* XXX currently using QLI_MAXFER = MAXPHYS */
 	if (bp->b_bcount > QLI_MAXFER)
 		bp->b_bcount = QLI_MAXFER;
 	minphys(bp);
+}
+
+void
+qli_disable_interrupts(struct qli_softc *sc)
+{
+	DNPRINTF(QLI_D_INTR, "%s: qli_disable_interrupts\n", DEVNAME(sc));
+
+	if (sc->sc_ql4010)
+		qli_write(sc, &sc->sc_reg->qlr_ctrl_status,
+		    QLI_CLR_MASK(QLI_REG_CTRLSTAT_SCSI_INTR_ENABLE));
+	else
+		qli_write(sc, &sc->sc_reg->u1.isp4022.q22_intr_mask,
+		    QLI_CLR_MASK(QLI_REG_CTRLSTAT_SCSI_INTR_ENABLE_4022));
+}
+
+void
+qli_enable_interrupts(struct qli_softc *sc)
+{
+	DNPRINTF(QLI_D_INTR, "%s: qli_enable_interrupts\n", DEVNAME(sc));
+
+	if (sc->sc_ql4010)
+		qli_write(sc, &sc->sc_reg->qlr_ctrl_status,
+		    QLI_SET_MASK(QLI_REG_CTRLSTAT_SCSI_INTR_ENABLE));
+	else
+		qli_write(sc, &sc->sc_reg->u1.isp4022.q22_intr_mask,
+		    QLI_SET_MASK(QLI_REG_CTRLSTAT_SCSI_INTR_ENABLE_4022));
 }
 
 void
@@ -689,7 +730,7 @@ qli_mgmt(struct qli_softc *sc, int len, u_int32_t *mbox)
 	int			rv = 1, s, i;
 	u_int32_t		x;
 
-	DNPRINTF(QLI_D_MISC, "%s: qli_mgmt\n", DEVNAME(sc));
+	DNPRINTF(QLI_D_MBOX, "%s: qli_mgmt: cold: %d\n", DEVNAME(sc), cold);
 
 	if (!mbox)
 		goto done;
@@ -705,45 +746,44 @@ qli_mgmt(struct qli_softc *sc, int len, u_int32_t *mbox)
 		qli_intr(sc);
 	}
 
+	qli_dump_mbox(sc, mbox);
+
 	/* mbox[0] needs to be written last so write backwards */
-	DNPRINTF(QLI_D_MISC, "%s: qli_mgmt: ", DEVNAME(sc));
-	for (i = QLI_MBOX_SIZE - 1; i >= 0; i--) {
-		DNPRINTF(QLI_D_MISC, "mbox[%d] = 0x%08x ", i, mbox[i]);
+	for (i = QLI_MBOX_SIZE - 1; i >= 0; i--)
 		qli_write(sc, &sc->sc_reg->qlr_mbox[i], i < len ? mbox[i] : 0);
-	}
-	DNPRINTF(QLI_D_MISC, "\n");
 
 	/* notify chip it has to deal with mailbox */
 	qli_write(sc, &sc->sc_reg->qlr_ctrl_status,
 	    QLI_SET_MASK(QLI_REG_CTRLSTAT_EP_INTR));
 
 	/* wait for completion */
-	if (cold)
+	if (cold) {
+		sc->sc_mbox_flags = QLI_MBOX_F_POLL;
 		for (i = 0; i < 6000000 /* up to a minute */; i++) {
 			delay(10);
 			if ((qli_read(sc, &sc->sc_reg->qlr_ctrl_status) &
 			    (QLI_REG_CTRLSTAT_SCSI_RESET_INTR |
 			    QLI_REG_CTRLSTAT_SCSI_COMPL_INTR |
-			    QLI_REG_CTRLSTAT_SCSI_PROC_INTR)))
+			    QLI_REG_CTRLSTAT_SCSI_PROC_INTR))) {
+			    	qli_intr(sc);
 				break;
+			}
 		}
-	else {
-		/* XXX tsleep */
+	} else {
+		sc->sc_mbox_flags = QLI_MBOX_F_PENDING;
+		while ((sc->sc_mbox_flags & QLI_MBOX_F_WAKEUP) == 0)
+			tsleep(sc->sc_mbox, PRIBIO, "qli_mgmt", 0);
 	}
 
-	DNPRINTF(QLI_D_MISC, "%s: qli_mgmt: ", DEVNAME(sc));
-	for (i = 0; i < QLI_MBOX_SIZE; i++) {
-		DNPRINTF(QLI_D_MISC, "mbox[%d] = 0x%08x ", i, qli_read(sc,
-		    &sc->sc_reg->qlr_mbox[i]));
-	}
-	DNPRINTF(QLI_D_MISC, "\n");
-
-	x = qli_read(sc, &sc->sc_reg->qlr_mbox[0]);
+	x = sc->sc_mbox[0];
 	switch (x) {
 	case QLI_MBOX_STATUS_COMMAND_COMPLETE:
 		for (i = 0; i < QLI_MBOX_SIZE; i++)
-			mbox[i] = qli_read(sc, &sc->sc_reg->qlr_mbox[i]);
+			mbox[i] = sc->sc_mbox[i];
+		sc->sc_mbox_flags = QLI_MBOX_F_INVALID;
 		rv = 0;
+
+		qli_dump_mbox(sc, mbox);
 		break;
 	default:
 		printf("%s: qli_mgmt: mailbox failed opcode 0x%08x failed "
@@ -792,6 +832,18 @@ qli_attach(struct qli_softc *sc)
 	printf("%s: version %d.%d.%d.%d\n", DEVNAME(sc), mbox[1], mbox[2],
 	    mbox[3], mbox[4]);
 
+	/* get state */
+	bzero(mbox, sizeof(mbox));
+	if (qli_get_fw_state(sc, mbox)) {
+		printf("%s: get firmware state command failed\n", DEVNAME(sc));
+		goto done;
+	}
+
+	/* XXX initialize firmware */
+
+	/* enable interrupts */
+	qli_enable_interrupts(sc);
+
 #if NBIO > 0
 	if (bio_register(&sc->sc_dev, qli_ioctl) != 0)
 		panic("%s: controller registration failed", DEVNAME(sc));
@@ -833,13 +885,71 @@ stuffup:
 int
 qli_intr(void *arg)
 {
-#ifdef QLI_DEBUG
 	struct qli_softc	*sc = arg;
+	int			claimed = 0, i;
+	u_int32_t		intr, mbox_status;
 
-	DNPRINTF(QLI_D_INTR, "%s: qli_intr %#x\n", DEVNAME(sc), sc);
-#endif
+	intr = qli_read(sc, &sc->sc_reg->qlr_ctrl_status);
+	if ((intr & (QLI_REG_CTRLSTAT_SCSI_RESET_INTR |
+	    QLI_REG_CTRLSTAT_SCSI_COMPL_INTR |
+	    QLI_REG_CTRLSTAT_SCSI_PROC_INTR |
+	    QLI_REG_CTRLSTAT_FATAL_ERROR)) == 0)
+		goto done;
 
-	return (0);
+	DNPRINTF(QLI_D_INTR, "%s: qli_intr %#x cs: 0x%08x\n", DEVNAME(sc), sc,
+	    intr);
+
+	if (intr & QLI_REG_CTRLSTAT_SCSI_RESET_INTR) {
+		/* chip requests soft reset */
+		/* XXX */
+		panic("%s: qli_intr chip reset not implemented", DEVNAME(sc));
+	}
+	
+	if (intr & QLI_REG_CTRLSTAT_FATAL_ERROR) {
+		/* reset firmware */
+		/* XXX */
+		panic("%s: qli_intr chip hang recovery not implemented",
+		    DEVNAME(sc));
+	}
+
+	if (intr & QLI_REG_CTRLSTAT_SCSI_COMPL_INTR) {
+		/* io completion */
+		/* XXX */
+		panic("%s: qli_intr io completion not implemented\n",
+		    DEVNAME(sc));
+	}
+	
+	if (intr & QLI_REG_CTRLSTAT_SCSI_PROC_INTR) {
+		/* mailbox completion */
+		mbox_status = qli_read(sc, &sc->sc_reg->qlr_mbox[0]);
+		switch (mbox_status >> QLI_MBOX_TYPE_SHIFT) {
+		case QLI_MBOX_COMPLETION_STATUS:
+			for (i = 0; i < QLI_MBOX_SIZE; i++)
+				sc->sc_mbox[i] = qli_read(sc,
+				    &sc->sc_reg->qlr_mbox[i]);
+			qli_write(sc, &sc->sc_reg->qlr_ctrl_status,
+			    QLI_SET_MASK(QLI_REG_CTRLSTAT_SCSI_PROC_INTR));
+			if (sc->sc_mbox_flags & QLI_MBOX_F_PENDING) {
+				sc->sc_mbox_flags |= QLI_MBOX_F_WAKEUP;
+				wakeup(sc->sc_mbox);
+			}
+			claimed = 1;
+			break;
+		case QLI_MBOX_ASYNC_EVENT_STATUS:
+			printf("%s: unhandled async event 0x%08x\n",
+			    DEVNAME(sc),
+			    qli_read(sc, &sc->sc_reg->qlr_mbox[0]));
+			break;
+		default:
+			printf("%s: invalid mailbox return 0x%08x\n",
+			    DEVNAME(sc),
+			    qli_read(sc, &sc->sc_reg->qlr_mbox[0]));
+			break;
+		}
+	}
+	
+done:
+	return (claimed);
 }
 
 int
@@ -910,3 +1020,19 @@ qli_create_sensors(struct qli_softc *sc)
 	return (1);
 }
 #endif /* SMALL_KERNEL */
+
+#ifdef QLI_DEBUG
+void
+qli_dump_mbox(struct qli_softc *sc, u_int32_t *mbox)
+{
+	int			i;
+
+	if ((qli_debug & QLI_D_MBOX) == 0)
+		return;
+
+	printf("%s: qli_dump_mbox: ", DEVNAME(sc));
+	for (i = 0; i < QLI_MBOX_SIZE; i++)
+		printf("mbox[%d] = 0x%08x ", i, mbox[i]);
+	printf("\n");
+}
+#endif /* QLI_DEBUG */

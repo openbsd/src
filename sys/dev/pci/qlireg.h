@@ -1,4 +1,4 @@
-/* $OpenBSD: qlireg.h,v 1.3 2007/09/05 06:20:30 davec Exp $ */
+/* $OpenBSD: qlireg.h,v 1.4 2007/09/05 22:39:15 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -184,6 +184,7 @@ struct qli_reg {
 		} __packed isp4010;
 		struct {
 			u_int32_t	q22_intr_mask;
+#define QLI_REG_CTRLSTAT_SCSI_INTR_ENABLE_4022	(0x1<<2) /* 4022 */
 			u_int32_t	q22_nvram;
 			u_int32_t	q22_sem;
 		} __packed isp4022;
@@ -358,8 +359,10 @@ struct qli_reg {
 #define		QLI_MBOX_ASTATE_IPV6_ADDR0_EXPIRED	(0x1<<26)
 #define		QLI_MBOX_ASTATE_IPV6_ADDR1_STATE	(0x1<<27)
 #define		QLI_MBOX_ASTATE_IPV6_ADDR1_EXPIRED	(0x1<<28)
+#define QLI_MBOX_OPC_NOOP				(0xFF)
 
 /* mailbox status */
+#define QLI_MBOX_TYPE_SHIFT				(12)
 #define QLI_MBOX_COMPLETION_STATUS			(4)
 #define QLI_MBOX_STATUS_BUSY				(0x0007)
 #define QLI_MBOX_STATUS_INTERMEDIATE_COMPLETION		(0x1000)
@@ -371,6 +374,17 @@ struct qli_reg {
 #define QLI_MBOX_STATUS_COMMAND_PARAMETER_ERROR		(0x4006)
 #define QLI_MBOX_STATUS_TARGET_MODE_INIT_FAIL		(0x4007)
 #define QLI_MBOX_STATUS_INITIATOR_MODE_INIT_FAIL	(0x4008)
+
+/* async events */
+#define QLI_MBOX_ASYNC_EVENT_STATUS			(8)
+#define QLI_MBOX_AES_SYSTEM_ERROR			(0x8002)
+#define QLI_MBOX_AES_REQUEST_TRANSFER_ERROR		(0x8003)
+#define QLI_MBOX_AES_RESPONSE_TRANSFER_ERROR		(0x8004)
+#define QLI_MBOX_AES_PROTOCOL_STATISTIC_ALARM		(0x8005)
+#define QLI_MBOX_AES_SCSI_COMMAND_PDU_REJECTED		(0x8006)
+#define QLI_MBOX_AES_LINK_UP				(0x8010)
+#define QLI_MBOX_AES_LINK_DOWN				(0x8011)
+#define QLI_MBOX_AES_DATABASE_CHANGED			(0x8014)
 
 /* external hardware config */
 #define QLI_EXT_HW_CFG(s) (s->sc_ql4010 ? \
