@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.39 2007/09/05 08:48:42 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.40 2007/09/05 10:25:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -2364,10 +2364,10 @@ RB_GENERATE(proto_tree, protonode, nodes, relay_proto_cmp);
 int
 relay_session_cmp(struct session *a, struct session *b)
 {
-	struct relay	*rlay = (struct relay *)a->relay;
+	struct relay	*rlay = (struct relay *)b->relay;
 	struct protocol	*proto = rlay->proto;
 
-	if (proto->cmp != NULL)
+	if (proto != NULL && proto->cmp != NULL)
 		return ((*proto->cmp)(a, b));
 
 	return ((int)a->id - b->id);
