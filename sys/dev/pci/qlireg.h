@@ -1,4 +1,4 @@
-/* $OpenBSD: qlireg.h,v 1.2 2007/09/04 23:03:59 marco Exp $ */
+/* $OpenBSD: qlireg.h,v 1.3 2007/09/05 06:20:30 davec Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -124,36 +124,36 @@ struct qli_ram_regs {
 	u_int32_t		qrr_res[28];
 } __packed;
 
-struct qli_prot_regs {
-	u_int32_t		qpr_mac_tx_frame_count;
-	u_int32_t		qpr_mac_tx_byte_count;
-	u_int32_t		qpr_mac_rx_frame_count;
-	u_int32_t		qpr_mac_rx_byte_count;
-	u_int32_t		qpr_mac_crc_err_count;
-	u_int32_t		qpr_mac_enc_err_count;
-	u_int32_t		qpr_mac_rx_length_err_count;
-	u_int32_t		qpr_ip_tx_packet_count;
-	u_int32_t		qpr_ip_tx_byte_count;
-	u_int32_t		qpr_ip_tx_fragment_count;
-	u_int32_t		qpr_ip_rx_packet_count;
-	u_int32_t		qpr_ip_rx_byte_count;
-	u_int32_t		qpr_ip_rx_fragment_count;
-	u_int32_t		qpr_ip_datagram_reassembly_count;
-	u_int32_t		qpr_ip_v6_rx_packet_count;
-	u_int32_t		qpr_ip_err_packet_count;
-	u_int32_t		qpr_ip_reassembly_err_count;
-	u_int32_t		qpr_tcp_tx_segment_count;
-	u_int32_t		qpr_tcp_tx_byte_count;
-	u_int32_t		qpr_tcp_rx_segment_count;
-	u_int32_t		qpr_tcp_rx_byte_count;
-	u_int32_t		qpr_tcp_timer_exp_count;
-	u_int32_t		qpr_tcp_rx_ack_count;
-	u_int32_t		qpr_tcp_tx_ack_count;
-	u_int32_t		qpr_tcp_rx_errOOO_count;
-	u_int32_t		qpr_res0;
-	u_int32_t		qpr_tcp_rx_window_probe_update_count;
-	u_int32_t		qpr_ecc_err_correction_count;
-	u_int32_t		qpr_res1[16];
+struct qli_stat_regs{
+	u_int32_t		qsr_mac_tx_frame_count;
+	u_int32_t		qsr_mac_tx_byte_count;
+	u_int32_t		qsr_mac_rx_frame_count;
+	u_int32_t		qsr_mac_rx_byte_count;
+	u_int32_t		qsr_mac_crc_err_count;
+	u_int32_t		qsr_mac_enc_err_count;
+	u_int32_t		qsr_mac_rx_length_err_count;
+	u_int32_t		qsr_ip_tx_packet_count;
+	u_int32_t		qsr_ip_tx_byte_count;
+	u_int32_t		qsr_ip_tx_fragment_count;
+	u_int32_t		qsr_ip_rx_packet_count;
+	u_int32_t		qsr_ip_rx_byte_count;
+	u_int32_t		qsr_ip_rx_fragment_count;
+	u_int32_t		qsr_ip_datagram_reassembly_count;
+	u_int32_t		qsr_ip_v6_rx_packet_count;
+	u_int32_t		qsr_ip_err_packet_count;
+	u_int32_t		qsr_ip_reassembly_err_count;
+	u_int32_t		qsr_tcp_tx_segment_count;
+	u_int32_t		qsr_tcp_tx_byte_count;
+	u_int32_t		qsr_tcp_rx_segment_count;
+	u_int32_t		qsr_tcp_rx_byte_count;
+	u_int32_t		qsr_tcp_timer_exp_count;
+	u_int32_t		qsr_tcp_rx_ack_count;
+	u_int32_t		qsr_tcp_tx_ack_count;
+	u_int32_t		qsr_tcp_rx_errOOO_count;
+	u_int32_t		qsr_res0;
+	u_int32_t		qsr_tcp_rx_window_probe_update_count;
+	u_int32_t		qsr_ecc_err_correction_count;
+	u_int32_t		qsr_res1[16];
 } __packed;
 
 #define QLI_MBOX_SIZE				8
@@ -218,7 +218,7 @@ struct qli_reg {
 				struct qli_port_regs	q22_pr;
 				struct qli_mem_regs	q22_mr;
 				struct qli_ram_regs	q22_rr;
-				struct qli_prot_regs	q22_prr;
+				struct qli_stat_regs	q22_sr;
 				u_int32_t		q22_union[44];
 			};
 
@@ -359,7 +359,7 @@ struct qli_reg {
 #define		QLI_MBOX_ASTATE_IPV6_ADDR1_STATE	(0x1<<27)
 #define		QLI_MBOX_ASTATE_IPV6_ADDR1_EXPIRED	(0x1<<28)
 
-/* maiblox status */
+/* mailbox status */
 #define QLI_MBOX_COMPLETION_STATUS			(4)
 #define QLI_MBOX_STATUS_BUSY				(0x0007)
 #define QLI_MBOX_STATUS_INTERMEDIATE_COMPLETION		(0x1000)
