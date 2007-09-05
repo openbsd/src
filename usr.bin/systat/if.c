@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.10 2007/04/14 23:07:44 tedu Exp $ */
+/*	$OpenBSD: if.c,v 1.11 2007/09/05 20:31:34 mk Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -31,13 +31,13 @@
 static  enum state { BOOT, TIME, RUN } state = TIME;
 
 struct ifcount {
-	u_long		ifc_ib;			/* input bytes */
-	u_long		ifc_ip;			/* input packets */
-	u_long		ifc_ie;			/* input errors */
-	u_long		ifc_ob;			/* output bytes */
-	u_long		ifc_op;			/* output packets */
-	u_long		ifc_oe;			/* output errors */
-	u_long		ifc_co;			/* collisions */
+	u_int64_t	ifc_ib;			/* input bytes */
+	u_int64_t	ifc_ip;			/* input packets */
+	u_int64_t	ifc_ie;			/* input errors */
+	u_int64_t	ifc_ob;			/* output bytes */
+	u_int64_t	ifc_op;			/* output packets */
+	u_int64_t	ifc_oe;			/* output errors */
+	u_int64_t	ifc_co;			/* collisions */
 	int		ifc_flags;		/* up / down */
 	int		ifc_state;		/* link state */
 } sum;
@@ -198,7 +198,7 @@ labelifstat(void)
 	mvwaddstr(wnd, 1, INSET+74, "Colls");
 }
 
-#define FMT "%-8.8s %2s%2s  %10lu %8lu %6lu   %10lu %8lu %6lu   %6lu "
+#define FMT "%-8.8s %2s%2s  %10llu %8llu %6llu   %10llu %8llu %6llu   %6llu "
 
 const char *
 showlinkstate(int state)
