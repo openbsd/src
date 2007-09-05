@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2007/06/16 08:58:33 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.66 2007/09/05 08:04:49 moritz Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.65 2007/06/16 08:58:33 espie Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.66 2007/09/05 08:04:49 moritz Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -373,12 +373,12 @@ lostpeer(void)
 	alarmtimer(0);
 	if (connected) {
 		if (cout != NULL) {
-			(void)shutdown(fileno(cout), 1+1);
+			(void)shutdown(fileno(cout), SHUT_RDWR);
 			(void)fclose(cout);
 			cout = NULL;
 		}
 		if (data >= 0) {
-			(void)shutdown(data, 1+1);
+			(void)shutdown(data, SHUT_RDWR);
 			(void)close(data);
 			data = -1;
 		}
@@ -387,7 +387,7 @@ lostpeer(void)
 	pswitch(1);
 	if (connected) {
 		if (cout != NULL) {
-			(void)shutdown(fileno(cout), 1+1);
+			(void)shutdown(fileno(cout), SHUT_RDWR);
 			(void)fclose(cout);
 			cout = NULL;
 		}
