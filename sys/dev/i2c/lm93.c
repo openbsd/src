@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm93.c,v 1.2 2007/09/05 03:11:32 deraadt Exp $	*/
+/*	$OpenBSD: lm93.c,v 1.3 2007/09/05 16:23:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -22,21 +22,6 @@
 #include <sys/sensors.h>
 
 #include <dev/i2c/i2cvar.h>
-
-/*
- * iic0: addr 0x2e
- * 3e=01 3f=73 50=26 51=28 52=16 54=25 55=27 56=c4 57=c3 58=c1 59=bf 5a=bf
- * 5b=bf 5c=d1 5d=d3 5e=c3 5f=c3 60=8c 61=fa 62=f6 63=bd 64=31 65=c4 6b=09
- * 6e=04 6f=03 70=d4 71=03 72=88 73=03 74=fc 78=80 79=80 7a=80 7b=80 7c=80
- * 7d=32 7e=80 7f=80 80=50 81=50 82=7f 83=7f 90=ac 91=d3 92=ac 93=d3 94=ac
- * 95=d3 96=ac 97=d3 98=ac 99=d3 9a=ac 9b=d3 9c=a3 9d=f6 9e=a3 9f=f6 a0=ac
- * a1=d3 a2=ac a3=d3 a4=ac a5=d3 a6=ac a7=d3 a8=ac a9=d3 aa=ac ab=d3 ac=0f
- * ad=70 ae=ac af=d3 b2=17 b3=17 b4=a0 b5=1d b6=a0 b7=1d b8=a0 b9=1d ba=fc
- * c0=55 c1=44 c3=3a c7=11 c8=0c c9=02 cc=03 cd=30 d0=37 d1=37 d2=7f d3=7f
- * d6=0a db=0a e3=81 e4=02 e6=0f e8=08 e9=07 eb=07 ed=3f f0=91 f1=91 f2=08
- * f3=08 f4=06 f5=10 f6=04 f7=08 f8=0c f9=20 fa=08 fb=08 fc=10 fd=09 fe=91
- * ff=09
-*/
 
 /* LM93 registers */
 #define LM93_CPU1_TEMP		0x50
