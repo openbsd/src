@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.24 2007/05/31 19:20:20 jmc Exp $
+.\"	$OpenBSD: lint.1,v 1.25 2007/09/05 16:32:17 fgsch Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 5 2007 $
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -360,6 +360,12 @@ preceding where the
 warning occurred.
 .It Li /* LONGLONG */
 Suppress complaints about use of long long integer types.
+.It Li /* NORETURN */
+tells
+.Nm
+that the function will never return, which means any code
+following a call to this function is unreachable.  This directive should
+be placed immediately preceding the function.
 .It Li /* NOTREACHED */
 At appropriate points, inhibit complaints about unreachable code.
 (This comment is typically placed just after calls to functions

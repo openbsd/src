@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.30 2006/05/29 20:47:22 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.31 2007/09/05 16:32:17 fgsch Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.30 2006/05/29 20:47:22 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.31 2007/09/05 16:32:17 fgsch Exp $";
 #endif
 
 #include <stdlib.h>
@@ -999,6 +999,7 @@ directive(void)
  *	LINTLIBRARY
  *	LINTED NOSTRICT
  *	LONGLONG
+ *	NORETURN
  *	NOTREACHED
  *	PRINTFLIKEn
  *	PROTOLIB
@@ -1020,13 +1021,13 @@ comment(void)
 		{ "CONSTCOND",		0,	constcond	},
 		{ "CONSTANTCOND",	0,	constcond	},
 		{ "CONSTANTCONDITION",	0,	constcond	},
-		{ "NORETURN",		1,	noreturn	},
 		{ "FALLTHRU",		0,	fallthru	},
 		{ "FALLTHROUGH",	0,	fallthru	},
 		{ "LINTLIBRARY",	0,	lintlib		},
 		{ "LINTED",		0,	linted		},
 		{ "LINTUSED",		0,	lintused	},
 		{ "LONGLONG",		0,	longlong	},
+		{ "NORETURN",		1,	noreturn	},
 		{ "NOSTRICT",		0,	linted		},
 		{ "NOTREACHED",		0,	notreach	},
 		{ "PRINTFLIKE",		1,	printflike	},
