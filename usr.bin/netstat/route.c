@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.74 2006/11/17 01:11:23 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.75 2007/09/05 20:29:05 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.74 2006/11/17 01:11:23 itojun Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.75 2007/09/05 20:29:05 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,7 @@ p_krtentry(struct rtentry *rt)
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8ld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6ld ", rt->rt_rmx.rmx_mtu);
+		printf("%6u ", rt->rt_rmx.rmx_mtu);
 	else
 		printf("%6s ", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
@@ -310,7 +310,7 @@ p_krtentry(struct rtentry *rt)
 	}
 	putchar('\n');
 	if (vflag)
-		printf("\texpire   %10lu%c\n",
+		printf("\texpire   %10u%c\n",
 		    rt->rt_rmx.rmx_expire,
 		    (rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ');
 }
