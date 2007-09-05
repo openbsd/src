@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.13 2007/09/03 14:40:16 millert Exp $ */
+/*	$OpenBSD: atexit.c,v 1.14 2007/09/05 20:47:47 chl Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "atexit.h"
 #include "thread_private.h"
