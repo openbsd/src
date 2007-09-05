@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.99 2007/09/03 19:05:05 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.100 2007/09/05 17:22:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -484,7 +484,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adt7470";
 		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3d) == 0x76)
-			name = "adt7476";
+			name = "adt7476"; /* or adt7476a */
 		else if (addr == 0x2e && iicprobe(0x3d) == 0x75)
 			name = "adt7475";
 		else if (iicprobe(0x3d) == 0x27 &&
@@ -493,9 +493,12 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		else if (iicprobe(0x3d) == 0x27 &&
 		    (iicprobe(0x3f) == 0x62 || iicprobe(0x3f) == 0x6a))
 			name = "adt7460";	/* complete check */
+		else if ((addr == 0x2c || addr == 0x2e) &&
+		    iicprobe(0x3d) == 0x62 && iicprobe(0x3f) == 0x04)
+			name = "adt7462";
 		else if (addr == 0x2e &&
 		    iicprobe(0x3d) == 0x68 && (iicprobe(0x3f) & 0xf0) == 0x70)
-			name = "adt7467";
+			name = "adt7467"; /* or adt7468 */
 		else if (iicprobe(0x3d) == 0x33)
 			name = "adm1033";
                 else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
