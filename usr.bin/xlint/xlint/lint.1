@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.25 2007/09/05 16:32:17 fgsch Exp $
+.\"	$OpenBSD: lint.1,v 1.26 2007/09/05 19:31:21 jmc Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -317,7 +317,7 @@ first pass reads standard C source files.
 recognizes the following C comments as commands.
 .Bl -tag -width Fl
 .It Li /* ARGSUSED Ns Ar n Li */
-makes
+Make
 .Nm
 check only the first
 .Ar n
@@ -330,11 +330,11 @@ option for the next function).
 .Li /* CONSTANTCOND */ No or
 .Li /* CONSTANTCONDITION */
 .Xc
-suppress complaints about constant operands for the next expression.
+Suppress complaints about constant operands for the next expression.
 .It Li /*\ FALLTHRU\ */ No or Xo
 .Li /* FALLTHROUGH */
 .Xc
-suppress complaints about fall through to a
+Suppress complaints about fall through to a
 .Sy case
 or
 .Sy default
@@ -352,7 +352,7 @@ Also shut off complaints about unused function arguments.
 .Op Ar comment
 .Li */
 .Xc
-Suppresses any intra-file warning except those dealing with
+Suppress any intra-file warning except those dealing with
 unused variables or functions.
 This directive should be placed on the line immediately
 preceding where the
@@ -361,18 +361,18 @@ warning occurred.
 .It Li /* LONGLONG */
 Suppress complaints about use of long long integer types.
 .It Li /* NORETURN */
-tells
+Tell
 .Nm
 that the function will never return, which means any code
-following a call to this function is unreachable.  This directive should
-be placed immediately preceding the function.
+following a call to this function is unreachable.
+This directive should be placed immediately preceding the function.
 .It Li /* NOTREACHED */
 At appropriate points, inhibit complaints about unreachable code.
-(This comment is typically placed just after calls to functions
+This comment is typically placed just after calls to functions
 like
-.Xr exit 3 ) .
+.Xr exit 3 .
 .It Li /* PRINTFLIKE Ns Ar n Li */
-makes
+Make
 .Nm
 check the first
 .Pq Ar n Ns -1
@@ -383,7 +383,7 @@ argument is interpreted as a
 .Sy printf
 format string that is used to check the remaining arguments.
 .It Li /* PROTOLIB Ns Ar n Li */
-causes
+Cause
 .Nm
 to treat function declaration prototypes as function definitions
 if
@@ -396,7 +396,7 @@ If
 .Ar n
 is zero, function prototypes will be treated normally.
 .It Li /* SCANFLIKE Ns Ar n Li */
-makes
+Make
 .Nm
 check the first
 .Pq Ar n Ns -1
