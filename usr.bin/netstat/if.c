@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.51 2007/06/15 01:25:05 ray Exp $	*/
+/*	$OpenBSD: if.c,v 1.52 2007/09/05 20:27:04 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.51 2007/06/15 01:25:05 ray Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.52 2007/09/05 20:27:04 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,8 @@ intpr(int interval, u_long ifnetaddr)
 		struct in6_ifaddr in6;
 #endif
 	} ifaddr;
-	u_long total, ifaddraddr;
+	u_int64_t total;
+	u_long ifaddraddr;
 	struct sockaddr *sa;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	char name[IFNAMSIZ];
@@ -310,10 +311,10 @@ intpr(int interval, u_long ifnetaddr)
 			ifaddraddr = (u_long)TAILQ_NEXT(&ifaddr.ifa, ifa_list);
 		}
 		if (bflag)
-			printf("%10lu %10lu",
+			printf("%10llu %10llu",
 			    ifnet.if_ibytes, ifnet.if_obytes);
 		else
-			printf("%8lu %5lu %8lu %5lu %5lu",
+			printf("%8llu %5llu %8llu %5llu %5llu",
 			    ifnet.if_ipackets, ifnet.if_ierrors,
 			    ifnet.if_opackets, ifnet.if_oerrors,
 			    ifnet.if_collisions);
