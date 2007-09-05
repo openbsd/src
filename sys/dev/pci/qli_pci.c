@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.2 2007/09/04 23:03:59 marco Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.3 2007/09/05 11:05:44 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -375,12 +375,20 @@ qli_soft_reset(struct qli_softc *sc)
 int
 qli_get_fw_state(struct qli_softc *sc, u_int32_t *mbox)
 {
+	int			rv = 1;
+
 	DNPRINTF(QLI_D_MISC, "%s: qli_get_fw_state\n", DEVNAME(sc));
 
-	DNPRINTF(QLI_D_MISC, "%s: qli_get_fw_state: not implemented yet\n",
-	    DEVNAME(sc));
+	bzero(mbox, sizeof(mbox));
+	mbox[0] = QLI_MBOX_OPC_GET_FW_STATE;
+	if (qli_mgmt(sc, 1, mbox))
+		goto done;
 
-	return (1);
+	DNPRINTF(QLI_D_MISC, "%s: qli_get_fw_state: state: 0x%08x\n",
+	    DEVNAME(sc), mbox[1]);
+	rv = 0;
+done:
+	return (rv);
 }
 
 int
@@ -555,7 +563,7 @@ qli_start_firmware(struct qli_softc *sc)
 		    "firmware\n", DEVNAME(sc));
 
 		/* stuff random value in mbox[7] to randomize source ports */
-		/* XXX use random ne instead of 123  */
+		/* XXX use random ne instead of 1234  */
 		qli_write(sc, &sc->sc_reg->qlr_mbox[7], 1234);
 
 		/* XXX linux driver sets ACB v2 into mbox[6] */
