@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.56 2007/08/28 15:59:18 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.57 2007/09/05 21:01:49 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -8,6 +8,9 @@
  *
  * Heavily revamped to conform to RFC 1661.
  * Copyright (C) 1997, Joerg Wunsch.
+ *
+ * RFC2472 IPv6CP support.
+ * Copyright (C) 2000, Jun-ichiro itojun Hagino <itojun@iijlab.net>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -78,8 +81,10 @@
 # else
 #  include <net/ethertypes.h>
 # endif
-#else
-# error Huh? sppp without INET?
+#endif
+
+#ifdef INET6
+#include <netinet6/in6_var.h>
 #endif
 
 #include <net/if_sppp.h>
@@ -129,10 +134,12 @@
 #define PPP_ISO		0x0023		/* ISO OSI Protocol */
 #define PPP_XNS		0x0025		/* Xerox NS Protocol */
 #define PPP_IPX		0x002b		/* Novell IPX Protocol */
+#define PPP_IPV6	0x0057		/* Internet Protocol v6 */
 #define PPP_LCP		0xc021		/* Link Control Protocol */
 #define PPP_PAP		0xc023		/* Password Authentication Protocol */
 #define PPP_CHAP	0xc223		/* Challenge-Handshake Auth Protocol */
 #define PPP_IPCP	0x8021		/* Internet Protocol Control Protocol */
+#define PPP_IPV6CP	0x8057		/* IPv6 Control Protocol */
 
 #define CONF_REQ	1		/* PPP configure request */
 #define CONF_ACK	2		/* PPP configure acknowledge */
@@ -158,6 +165,9 @@
 #define IPCP_OPT_ADDRESSES	1	/* both IP addresses; deprecated */
 #define IPCP_OPT_COMPRESSION	2	/* IP compression protocol (VJ) */
 #define IPCP_OPT_ADDRESS	3	/* local IP address */
+
+#define IPV6CP_OPT_IFID		1	/* interface identifier */
+#define IPV6CP_OPT_COMPRESSION	2	/* IPv6 compression protocol */
 
 #define PAP_REQ			1	/* PAP name/password request */
 #define PAP_ACK			2	/* PAP acknowledge */
@@ -340,6 +350,27 @@ HIDE void sppp_ipcp_tls(struct sppp *sp);
 HIDE void sppp_ipcp_tlf(struct sppp *sp);
 HIDE void sppp_ipcp_scr(struct sppp *sp);
 
+HIDE void sppp_ipv6cp_init(struct sppp *sp);
+HIDE void sppp_ipv6cp_up(struct sppp *sp);
+HIDE void sppp_ipv6cp_down(struct sppp *sp);
+HIDE void sppp_ipv6cp_open(struct sppp *sp);
+HIDE void sppp_ipv6cp_close(struct sppp *sp);
+HIDE void sppp_ipv6cp_TO(void *sp);
+HIDE int sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len);
+HIDE void sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len);
+HIDE void sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len);
+HIDE void sppp_ipv6cp_tlu(struct sppp *sp);
+HIDE void sppp_ipv6cp_tld(struct sppp *sp);
+HIDE void sppp_ipv6cp_tls(struct sppp *sp);
+HIDE void sppp_ipv6cp_tlf(struct sppp *sp);
+HIDE void sppp_ipv6cp_scr(struct sppp *sp);
+HIDE const char *sppp_ipv6cp_opt_name(u_char opt);
+HIDE void sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src,
+			       struct in6_addr *dst, struct in6_addr *srcmask);
+HIDE void sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src);
+HIDE void sppp_gen_ip6_addr(struct sppp *sp, struct in6_addr *addr);
+HIDE void sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest);
+
 HIDE void sppp_pap_input(struct sppp *sp, struct mbuf *m);
 HIDE void sppp_pap_init(struct sppp *sp);
 HIDE void sppp_pap_open(struct sppp *sp);
@@ -391,11 +422,31 @@ static const struct cp lcp = {
 };
 
 static const struct cp ipcp = {
-	PPP_IPCP, IDX_IPCP, CP_NCP, "ipcp",
+	PPP_IPCP, IDX_IPCP,
+#ifdef INET	/* don't run IPCP if there's no IPv4 support */
+	CP_NCP,
+#else
+	0,
+#endif
+	"ipcp",
 	sppp_ipcp_up, sppp_ipcp_down, sppp_ipcp_open, sppp_ipcp_close,
 	sppp_ipcp_TO, sppp_ipcp_RCR, sppp_ipcp_RCN_rej, sppp_ipcp_RCN_nak,
 	sppp_ipcp_tlu, sppp_ipcp_tld, sppp_ipcp_tls, sppp_ipcp_tlf,
 	sppp_ipcp_scr
+};
+
+static const struct cp ipv6cp = {
+	PPP_IPV6CP, IDX_IPV6CP,
+#ifdef INET6	/*don't run IPv6CP if there's no IPv6 support*/
+	CP_NCP,
+#else
+	0,
+#endif
+	"ipv6cp",
+	sppp_ipv6cp_up, sppp_ipv6cp_down, sppp_ipv6cp_open, sppp_ipv6cp_close,
+	sppp_ipv6cp_TO, sppp_ipv6cp_RCR, sppp_ipv6cp_RCN_rej, sppp_ipv6cp_RCN_nak,
+	sppp_ipv6cp_tlu, sppp_ipv6cp_tld, sppp_ipv6cp_tls, sppp_ipv6cp_tlf,
+	sppp_ipv6cp_scr
 };
 
 static const struct cp pap = {
@@ -417,6 +468,7 @@ static const struct cp chap = {
 static const struct cp *cps[IDX_COUNT] = {
 	&lcp,			/* IDX_LCP */
 	&ipcp,			/* IDX_IPCP */
+	&ipv6cp,		/* IDX_IPV6CP */
 	&pap,			/* IDX_PAP */
 	&chap,			/* IDX_CHAP */
 };
@@ -547,6 +599,20 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			break;
 #endif
+#ifdef INET6
+		case PPP_IPV6CP:
+			if (sp->pp_phase == PHASE_NETWORK)
+				sppp_cp_input(&ipv6cp, sp, m);
+			m_freem (m);
+			return;
+		case PPP_IPV6:
+			if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
+				schednetisr (NETISR_IPV6);
+				inq = &ip6intrq;
+				sp->pp_last_activity = tv.tv_sec;
+			}
+			break;
+#endif
 		}
 		break;
 	case CISCO_MULTICAST:
@@ -573,6 +639,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		case ETHERTYPE_IP:
 			schednetisr (NETISR_IP);
 			inq = &ipintrq;
+			break;
+#endif
+#ifdef INET6
+		case ETHERTYPE_IPV6:
+			schednetisr (NETISR_IPV6);
+			inq = &ip6intrq;
 			break;
 #endif
 		}
@@ -742,6 +814,26 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		}
 		break;
 #endif
+#ifdef INET6
+	case AF_INET6:   /* Internet Protocol v6 */
+		if (sp->pp_flags & PP_CISCO)
+			protocol = htons (ETHERTYPE_IPV6);
+		else {
+			/*
+			 * Don't choke with an ENETDOWN early.  It's
+			 * possible that we just started dialing out,
+			 * so don't drop the packet immediately.  If
+			 * we notice that we run out of buffer space
+			 * below, we will however remember that we are
+			 * not ready to carry IPv6 packets, and return
+			 * ENETDOWN, as opposed to ENOBUFS.
+			 */
+			protocol = htons(PPP_IPV6);
+			if (sp->state[IDX_IPV6CP] != STATE_OPENED)
+				rv = ENETDOWN;
+		}
+		break;
+#endif
 	default:
 		m_freem(m);
 		++ifp->if_oerrors;
@@ -839,6 +931,7 @@ sppp_attach(struct ifnet *ifp)
 
 	sppp_lcp_init(sp);
 	sppp_ipcp_init(sp);
+	sppp_ipv6cp_init(sp);
 	sppp_pap_init(sp);
 	sppp_chap_init(sp);
 }
@@ -2971,8 +3064,499 @@ sppp_ipcp_scr(struct sppp *sp)
 	sppp_cp_send(sp, PPP_IPCP, CONF_REQ, sp->confid[IDX_IPCP], i, &opt);
 }
 
+/*
+ *--------------------------------------------------------------------------*
+ *                                                                          *
+ *                      The IPv6CP implementation.                          *
+ *                                                                          *
+ *--------------------------------------------------------------------------*
+ */
 
-/*
+#ifdef INET6
+HIDE void
+sppp_ipv6cp_init(struct sppp *sp)
+{
+	sp->ipv6cp.opts = 0;
+	sp->ipv6cp.flags = 0;
+	sp->state[IDX_IPV6CP] = STATE_INITIAL;
+	sp->fail_counter[IDX_IPV6CP] = 0;
+#if defined (__FreeBSD__)
+	callout_handle_init(&sp->ch[IDX_IPV6CP]);
+#endif
+}
+
+HIDE void
+sppp_ipv6cp_up(struct sppp *sp)
+{
+	sppp_up_event(&ipv6cp, sp);
+}
+
+HIDE void
+sppp_ipv6cp_down(struct sppp *sp)
+{
+	sppp_down_event(&ipv6cp, sp);
+}
+
+HIDE void
+sppp_ipv6cp_open(struct sppp *sp)
+{
+	STDDCL;
+	struct in6_addr myaddr, hisaddr;
+
+#ifdef IPV6CP_MYIFID_DYN
+	sp->ipv6cp.flags &= ~(IPV6CP_MYIFID_SEEN|IPV6CP_MYIFID_DYN);
+#else
+	sp->ipv6cp.flags &= ~IPV6CP_MYIFID_SEEN;
+#endif
+
+	sppp_get_ip6_addrs(sp, &myaddr, &hisaddr, 0);
+	/*
+	 * If we don't have our address, this probably means our
+	 * interface doesn't want to talk IPv6 at all.  (This could
+	 * be the case if somebody wants to speak only IPX, for
+	 * example.)  Don't open IPv6CP in this case.
+	 */
+	if (IN6_IS_ADDR_UNSPECIFIED(&myaddr)) {
+		/* XXX this message should go away */
+		if (debug)
+			log(LOG_DEBUG, SPP_FMT "ipv6cp_open(): no IPv6 interface\n",
+			    SPP_ARGS(ifp));
+		return;
+	}
+	sp->ipv6cp.flags |= IPV6CP_MYIFID_SEEN;
+	sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
+	sppp_open_event(&ipv6cp, sp);
+}
+
+HIDE void
+sppp_ipv6cp_close(struct sppp *sp)
+{
+	sppp_close_event(&ipv6cp, sp);
+}
+
+HIDE void
+sppp_ipv6cp_TO(void *cookie)
+{
+	sppp_to_event(&ipv6cp, (struct sppp *)cookie);
+}
+
+HIDE int
+sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
+{
+	u_char *buf, *r, *p;
+	struct ifnet *ifp = &sp->pp_if;
+	int rlen, origlen, debug = ifp->if_flags & IFF_DEBUG;
+	struct in6_addr myaddr, desiredaddr, suggestaddr;
+	int ifidcount;
+	int type;
+	int collision, nohisaddr;
+
+	len -= 4;
+	origlen = len;
+	/*
+	 * Make sure to allocate a buf that can at least hold a
+	 * conf-nak with an `address' option.  We might need it below.
+	 */
+	buf = r = malloc ((len < 6? 6: len), M_TEMP, M_NOWAIT);
+	if (! buf)
+		return (0);
+
+	/* pass 1: see if we can recognize them */
+	if (debug)
+		log(LOG_DEBUG, "%s: ipv6cp parse opts:",
+		    SPP_ARGS(ifp));
+	p = (void *)(h + 1);
+	ifidcount = 0;
+	for (rlen=0; len>1 && p[1]; len-=p[1], p+=p[1]) {
+		/* Sanity check option length */
+		if (p[1] < 2 || p[1] > len) {
+			free(buf, M_TEMP);
+			return (-1);
+		}
+		if (debug)
+			addlog(" %s", sppp_ipv6cp_opt_name(*p));
+		switch (*p) {
+		case IPV6CP_OPT_IFID:
+			if (len >= 10 && p[1] == 10 && ifidcount == 0) {
+				/* correctly formed address option */
+				ifidcount++;
+				continue;
+			}
+			if (debug)
+				addlog(" [invalid]");
+			break;
+#ifdef notyet
+		case IPV6CP_OPT_COMPRESSION:
+			if (len >= 4 && p[1] >= 4) {
+				/* correctly formed compress option */
+				continue;
+			}
+			if (debug)
+				addlog(" [invalid]");
+			break;
+#endif
+		default:
+			/* Others not supported. */
+			if (debug)
+				addlog(" [rej]");
+			break;
+		}
+		/* Add the option to rejected list. */
+		bcopy (p, r, p[1]);
+		r += p[1];
+		rlen += p[1];
+	}
+	if (rlen) {
+		if (debug)
+			addlog(" send conf-rej\n");
+		sppp_cp_send(sp, PPP_IPV6CP, CONF_REJ, h->ident, rlen, buf);
+		goto end;
+	} else if (debug)
+		addlog("\n");
+
+	/* pass 2: parse option values */
+	sppp_get_ip6_addrs(sp, &myaddr, 0, 0);
+	if (debug)
+		log(LOG_DEBUG, "%s: ipv6cp parse opt values: ",
+		       SPP_ARGS(ifp));
+	p = (void *)(h + 1);
+	len = origlen;
+	type = CONF_ACK;
+	for (rlen=0; len>1 && p[1]; len-=p[1], p+=p[1]) {
+		if (debug)
+			addlog(" %s", sppp_ipv6cp_opt_name(*p));
+		switch (*p) {
+#ifdef notyet
+		case IPV6CP_OPT_COMPRESSION:
+			continue;
+#endif
+		case IPV6CP_OPT_IFID:
+			memset(&desiredaddr, 0, sizeof(desiredaddr));
+			bcopy(&p[2], &desiredaddr.s6_addr[8], 8);
+			collision = (memcmp(&desiredaddr.s6_addr[8],
+					&myaddr.s6_addr[8], 8) == 0);
+			nohisaddr = IN6_IS_ADDR_UNSPECIFIED(&desiredaddr);
+
+			desiredaddr.s6_addr16[0] = htons(0xfe80);
+
+			if (!collision && !nohisaddr) {
+				/* no collision, hisaddr known - Conf-Ack */
+				type = CONF_ACK;
+
+				if (debug) {
+					addlog(" %s [%s]",
+					    ip6_sprintf(&desiredaddr),
+					    sppp_cp_type_name(type));
+				}
+				continue;
+			}
+
+			memset(&suggestaddr, 0, sizeof(&suggestaddr));
+			if (collision && nohisaddr) {
+				/* collision, hisaddr unknown - Conf-Rej */
+				type = CONF_REJ;
+				memset(&p[2], 0, 8);
+			} else {
+				/*
+				 * - no collision, hisaddr unknown, or
+				 * - collision, hisaddr known
+				 * Conf-Nak, suggest hisaddr
+				 */
+				type = CONF_NAK;
+				sppp_suggest_ip6_addr(sp, &suggestaddr);
+				bcopy(&suggestaddr.s6_addr[8], &p[2], 8);
+			}
+			if (debug)
+				addlog(" %s [%s]", ip6_sprintf(&desiredaddr),
+				    sppp_cp_type_name(type));
+			break;
+		}
+		/* Add the option to nak'ed list. */
+		bcopy (p, r, p[1]);
+		r += p[1];
+		rlen += p[1];
+	}
+
+	if (rlen == 0 && type == CONF_ACK) {
+		if (debug)
+			addlog(" send %s\n", sppp_cp_type_name(type));
+		sppp_cp_send(sp, PPP_IPV6CP, type, h->ident, origlen, h + 1);
+	} else {
+#ifdef notdef
+		if (type == CONF_ACK)
+			panic("IPv6CP RCR: CONF_ACK with non-zero rlen");
+#endif
+
+		if (debug) {
+			addlog(" send %s suggest %s\n",
+			    sppp_cp_type_name(type), ip6_sprintf(&suggestaddr));
+		}
+		sppp_cp_send(sp, PPP_IPV6CP, type, h->ident, rlen, buf);
+	}
+
+end:
+	free(buf, M_TEMP);
+	return (rlen == 0);
+}
+
+HIDE void
+sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
+{
+	u_char *p;
+	struct ifnet *ifp = &sp->pp_if;
+	int debug = ifp->if_flags & IFF_DEBUG;
+
+	len -= 4;
+
+	if (debug)
+		log(LOG_DEBUG, "%s: ipv6cp rej opts:",
+		    SPP_ARGS(ifp));
+
+	p = (void *)(h + 1);
+	for (; len > 1 && p[1]; len -= p[1], p += p[1]) {
+		if (p[1] < 2 || p[1] > len)
+			return;
+		if (debug)
+			addlog(" %s", sppp_ipv6cp_opt_name(*p));
+		switch (*p) {
+		case IPV6CP_OPT_IFID:
+			/*
+			 * Peer doesn't grok address option.  This is
+			 * bad.  XXX  Should we better give up here?
+			 */
+			sp->ipv6cp.opts &= ~(1 << IPV6CP_OPT_IFID);
+			break;
+#ifdef notyet
+		case IPV6CP_OPT_COMPRESS:
+			sp->ipv6cp.opts &= ~(1 << IPV6CP_OPT_COMPRESS);
+			break;
+#endif
+		}
+	}
+	if (debug)
+		addlog("\n");
+	return;
+}
+
+HIDE void
+sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
+{
+	u_char *p;
+	struct ifnet *ifp = &sp->pp_if;
+	int debug = ifp->if_flags & IFF_DEBUG;
+	struct in6_addr suggestaddr;
+
+	len -= 4;
+
+	if (debug)
+		log(LOG_DEBUG, SPP_FMT "ipv6cp nak opts: ",
+		    SPP_ARGS(ifp));
+
+	p = (void*) (h+1);
+	for (; len > 1; len -= p[1], p += p[1]) {
+		if (p[1] < 2 || p[1] > len)
+			return;
+		if (debug)
+			addlog("%s ", sppp_ipv6cp_opt_name(*p));
+		switch (*p) {
+		case IPV6CP_OPT_IFID:
+			/*
+			 * Peer doesn't like our local ifid.  See
+			 * if we can do something for him.  We'll drop
+			 * him our address then.
+			 */
+			if (len < 10 || p[1] != 10)
+				break;
+			memset(&suggestaddr, 0, sizeof(suggestaddr));
+			suggestaddr.s6_addr16[0] = htons(0xfe80);
+			bcopy(&p[2], &suggestaddr.s6_addr[8], 8);
+
+			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
+			if (debug)
+				addlog(" [suggestaddr %s]",
+				       ip6_sprintf(&suggestaddr));
+#ifdef IPV6CP_MYIFID_DYN
+			/*
+			 * When doing dynamic address assignment,
+			 * we accept his offer.
+			 */
+			if (sp->ipv6cp.flags & IPV6CP_MYIFID_DYN) {
+				struct in6_addr lastsuggest;
+				/*
+				 * If <suggested myaddr from peer> equals to
+				 * <hisaddr we have suggested last time>,
+				 * we have a collision.  generate new random
+				 * ifid.
+				 */
+				sppp_suggest_ip6_addr(sp,&lastsuggest);
+				if (IN6_ARE_ADDR_EQUAL(&suggestaddr,
+						 &lastsuggest)) {
+					if (debug)
+						addlog(" [random]");
+					sppp_gen_ip6_addr(sp, &suggestaddr);
+				}
+				sppp_set_ip6_addr(sp, &suggestaddr);
+				if (debug)
+					addlog(" [agree]");
+				sp->ipv6cp.flags |= IPV6CP_MYIFID_SEEN;
+			}
+#else
+			/*
+			 * Since we do not do dynamic address assignment,
+			 * we ignore it and thus continue to negotiate
+			 * our already existing value.  This can possibly
+			 * go into infinite request-reject loop.
+			 *
+			 * This is not likely because we normally use
+			 * ifid based on MAC-address.
+			 * If you have no ethernet card on the node, too bad.
+			 * XXX should we use fail_counter?
+			 */
+#endif
+			break;
+#ifdef notyet
+		case IPV6CP_OPT_COMPRESS:
+			/*
+			 * Peer wants different compression parameters.
+			 */
+			break;
+#endif
+		}
+	}
+	if (debug)
+		addlog("\n");
+}
+
+HIDE void
+sppp_ipv6cp_tlu(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_tld(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_tls(struct sppp *sp)
+{
+	/* indicate to LCP that it must stay alive */
+	sp->lcp.protos |= (1 << IDX_IPV6CP);
+}
+
+HIDE void
+sppp_ipv6cp_tlf(struct sppp *sp)
+{
+	/* we no longer need LCP */
+	sp->lcp.protos &= ~(1 << IDX_IPV6CP);
+	sppp_lcp_check_and_close(sp);
+}
+
+HIDE void
+sppp_ipv6cp_scr(struct sppp *sp)
+{
+	char opt[10 /* ifid */ + 4 /* compression, minimum */];
+	struct in6_addr ouraddr;
+	int i = 0;
+
+	if (sp->ipv6cp.opts & (1 << IPV6CP_OPT_IFID)) {
+		sppp_get_ip6_addrs(sp, &ouraddr, 0, 0);
+		opt[i++] = IPV6CP_OPT_IFID;
+		opt[i++] = 10;
+		bcopy(&ouraddr.s6_addr[8], &opt[i], 8);
+		i += 8;
+	}
+
+#ifdef notyet
+	if (sp->ipv6cp.opts & (1 << IPV6CP_OPT_COMPRESSION)) {
+		opt[i++] = IPV6CP_OPT_COMPRESSION;
+		opt[i++] = 4;
+p		opt[i++] = 0;   /* TBD */
+		opt[i++] = 0;   /* TBD */
+		/* variable length data may follow */
+	}
+#endif
+
+	sp->confid[IDX_IPV6CP] = ++sp->pp_seq;
+	sppp_cp_send(sp, PPP_IPV6CP, CONF_REQ, sp->confid[IDX_IPV6CP], i, &opt);
+}
+#else /*INET6*/
+HIDE void
+sppp_ipv6cp_init(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_up(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_down(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_open(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_close(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_TO(void *sp)
+{
+}
+
+HIDE int
+sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h,
+		int len)
+{
+	return 0;
+}
+
+HIDE void
+sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h,
+		    int len)
+{
+}
+
+HIDE void
+sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h,
+		    int len)
+{
+}
+
+HIDE void
+sppp_ipv6cp_tlu(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_tld(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_tls(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_tlf(struct sppp *sp)
+{
+}
+
+HIDE void
+sppp_ipv6cp_scr(struct sppp *sp)
+{
+}
+#endif /*INET6*/
+
+/*
  *--------------------------------------------------------------------------*
  *                                                                          *
  *                        The CHAP implementation.                          *
@@ -4113,6 +4697,124 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	}
 }
 
+
+#ifdef INET6
+/*
+ * Get both IPv6 addresses.
+ */
+HIDE void
+sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
+		   struct in6_addr *srcmask)
+{
+	struct ifnet *ifp = &sp->pp_if;
+	struct ifaddr *ifa;
+	struct sockaddr_in6 *si, *sm;
+	struct in6_addr ssrc, ddst;
+
+	sm = NULL;
+	bzero(&ssrc, sizeof(ssrc));
+	bzero(&ddst, sizeof(ddst));
+	/*
+	 * Pick the first link-local AF_INET6 address from the list,
+	 * aliases don't make any sense on a p2p link anyway.
+	 */
+	si = 0;
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			si = (struct sockaddr_in6 *)ifa->ifa_addr;
+			sm = (struct sockaddr_in6 *)ifa->ifa_netmask;
+			if (si && IN6_IS_ADDR_LINKLOCAL(&si->sin6_addr))
+				break;
+		}
+	}
+
+	if (ifa) {
+		if (si && !IN6_IS_ADDR_UNSPECIFIED(&si->sin6_addr)) {
+			bcopy(&si->sin6_addr, &ssrc, sizeof(ssrc));
+			if (srcmask) {
+				bcopy(&sm->sin6_addr, srcmask,
+				    sizeof(*srcmask));
+			}
+		}
+
+		si = (struct sockaddr_in6 *)ifa->ifa_dstaddr;
+		if (si && !IN6_IS_ADDR_UNSPECIFIED(&si->sin6_addr))
+			bcopy(&si->sin6_addr, &ddst, sizeof(ddst));
+	}
+
+	if (dst)
+		bcopy(&ddst, dst, sizeof(*dst));
+	if (src)
+		bcopy(&ssrc, src, sizeof(*src));
+}
+
+#ifdef IPV6CP_MYIFID_DYN
+/*
+ * Generate random ifid.
+ */
+HIDE void
+sppp_gen_ip6_addr(struct sppp *sp, struct in6_addr *addr)
+{
+	/* TBD */
+}
+
+/*
+ * Set my IPv6 address.  Must be called at splimp.
+ */
+HIDE void
+sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
+{
+	struct ifnet *ifp = &sp->pp_if;
+	struct ifaddr *ifa;
+	struct sockaddr_in6 *sin6;
+
+	/*
+	 * Pick the first link-local AF_INET6 address from the list,
+	 * aliases don't make any sense on a p2p link anyway.
+	 */
+
+	sin6 = NULL;
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if (sin6 && IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				break;
+		}
+	}
+
+	if (ifa && sin6) {
+		struct sockaddr_in6 new_sin6 = *sin6;
+		bcopy(src, &new_sin6.sin6_addr, sizeof(new_sin6.sin6_addr));
+		dohooks(ifp->if_addrhooks, 0);
+	}
+}
+#endif
+
+/*
+ * Suggest a candidate address to be used by peer.
+ */
+HIDE void
+sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
+{
+	struct in6_addr myaddr;
+	struct timeval tv;
+
+	sppp_get_ip6_addrs(sp, &myaddr, 0, 0);
+
+	myaddr.s6_addr[8] &= ~0x02;	/* u bit to "local" */
+	getmicrouptime(&tv);
+	if ((tv.tv_usec & 0xff) == 0 && (tv.tv_sec & 0xff) == 0) {
+		myaddr.s6_addr[14] ^= 0xff;
+		myaddr.s6_addr[15] ^= 0xff;
+	} else {
+		myaddr.s6_addr[14] ^= (tv.tv_usec & 0xff);
+		myaddr.s6_addr[15] ^= (tv.tv_sec & 0xff);
+	}
+	if (suggest)
+		bcopy(&myaddr, suggest, sizeof(myaddr));
+}
+#endif /*INET6*/
+
 HIDE int
 sppp_params(struct sppp *sp, u_long cmd, void *data)
 {
@@ -4306,6 +5008,20 @@ sppp_ipcp_opt_name(u_char opt)
 	snprintf (buf, sizeof buf, "0x%x", opt);
 	return buf;
 }
+
+#ifdef INET6
+HIDE const char *
+sppp_ipv6cp_opt_name(u_char opt)
+{
+	static char buf[12];
+	switch (opt) {
+	case IPV6CP_OPT_IFID:		return "ifid";
+	case IPV6CP_OPT_COMPRESSION:	return "compression";
+	}
+	snprintf (buf, sizeof buf, "0x%x", opt);
+	return buf;
+}
+#endif
 
 HIDE const char *
 sppp_state_name(int state)
