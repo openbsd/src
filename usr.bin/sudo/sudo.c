@@ -102,7 +102,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.29 2007/08/15 13:48:56 millert Exp $";
+__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.30 2007/08/18 12:25:41 millert Exp $";
 #endif /* lint */
 
 /*
@@ -1251,9 +1251,15 @@ usage(exit_val)
     int exit_val;
 {
     char **p, **uvec[4];
-    int i, linelen, linemax, ulen;
+    int i, linelen, linemax, ulen, plen;
     static char *uvec1[] = {
-	" -h | -K | -k | -L | -l | -V | -v",
+	" -h |",
+	" -K |",
+	" -k |",
+	" -L |",
+	" -l |",
+	" -V |",
+	" -v",
 	NULL
     };
     static char *uvec2[] = {
@@ -1305,14 +1311,16 @@ usage(exit_val)
     ulen = (int)strlen(getprogname()) + 7;
     linemax = 80;
     for (i = 0; uvec[i] != NULL; i++) {
-	linelen = linemax - ulen;
 	printf("usage: %s", getprogname());
+	linelen = linemax - ulen;
 	for (p = uvec[i]; *p != NULL; p++) {
-	    if (linelen == linemax || (linelen -= strlen(*p)) >= 0) {
+	    plen = (int)strlen(*p);
+	    if (linelen >= plen || linelen == linemax - ulen) {
 		fputs(*p, stdout);
+		linelen -= plen;
 	    } else {
 		p--;
-		linelen = linemax;
+		linelen = linemax - ulen;
 		printf("\n%*s", ulen, "");
 	    }
 	}

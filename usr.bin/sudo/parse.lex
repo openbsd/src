@@ -55,7 +55,7 @@
 #include <sudo.tab.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.lex,v 1.132.2.4 2007/08/13 16:30:02 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.lex,v 1.132.2.7 2007/08/25 02:48:01 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */
@@ -67,11 +67,15 @@ static int sawspace = 0;
 static int arg_len = 0;
 static int arg_size = 0;
 
-static void fill		__P((char *, int));
+static int ipv6_valid		__P((const char *s));
+static void _fill		__P((char *, int, int));
+static void append		__P((char *, int));
 static void fill_cmnd		__P((char *, int));
 static void fill_args		__P((char *, int, int));
 extern void reset_aliases	__P((void));
 extern void yyerror		__P((char *));
+
+#define fill(a, b)		_fill(a, b, 0)
 
 /* realloc() to size + COMMANDARGINC to make room for command args */
 #define COMMANDARGINC	64
@@ -83,14 +87,14 @@ extern void yyerror		__P((char *));
 #endif
 %}
 
-HEXDIGIT		[0-9A-Fa-f]{1,4}
+HEX16			[0-9A-Fa-f]{1,4}
 OCTET			(1?[0-9]{1,2})|(2[0-4][0-9])|(25[0-5])
-DOTTEDQUAD		{OCTET}(\.{OCTET}){3}
-IPV6ADDR		\:\:|({HEXDIGIT}\:){7}{HEXDIGIT}|({HEXDIGIT}\:){5}{HEXDIGIT}\:{DOTTEDQUAD}|({HEXDIGIT}\:){1,7}\:|({HEXDIGIT}\:){1,6}(\:{HEXDIGIT}){1}|({HEXDIGIT}\:){1,5}(\:{HEXDIGIT}){2}|({HEXDIGIT}\:){1,2}\:{DOTTEDQUAD}|({HEXDIGIT}\:){1,4}(\:{HEXDIGIT}){3}|({HEXDIGIT}\:){1,4}(\:{HEXDIGIT}){1}\:{DOTTEDQUAD}|({HEXDIGIT}\:){1,3}(\:{HEXDIGIT}){4}|({HEXDIGIT}\:){1,3}(\:{HEXDIGIT}){2}\:{DOTTEDQUAD}|({HEXDIGIT}\:){1,2}(\:{HEXDIGIT}){5}|({HEXDIGIT}\:){1,2}(\:{HEXDIGIT}){3}\:{DOTTEDQUAD}|({HEXDIGIT}\:){1}(\:{HEXDIGIT}){6}|({HEXDIGIT}\:){1}(\:{HEXDIGIT}){4}\:{DOTTEDQUAD}|\:(\:{HEXDIGIT}){1,7}|\:(\:{HEXDIGIT}){1,5}\:{DOTTEDQUAD}
+IPV4ADDR		{OCTET}(\.{OCTET}){3}
+IPV6ADDR		({HEX16}?:){2,7}{HEX16}?|({HEX16}?:){2,6}:{IPV4ADDR}
 
 HOSTNAME		[[:alnum:]_-]+
 WORD			([^#>@!=:,\(\) \t\n\\]|\\[^\n])+
-ENVAR			([^#!=, \t\n\\]|\\[^\n])([^#=, \t\n\\]|\\[^\n])*
+ENVAR			([^#!=, \t\n\\\"]|\\[^\n])([^#=, \t\n\\]|\\[^\n])*
 DEFVAR			[a-z_]+
 
 /* XXX - convert GOTRUNAS to exclusive state (GOTDEFS cannot be) */
@@ -99,6 +103,7 @@ DEFVAR			[a-z_]+
 %x	GOTCMND
 %x	STARTDEFS
 %x	INDEFS
+%x	INSTR
 
 %%
 <GOTDEFS>[[:blank:]]+	BEGIN STARTDEFS;
@@ -132,16 +137,39 @@ DEFVAR			[a-z_]+
 			    return('-');
 			}			/* return '-' */
 
-    \"([^\"]|\\\")+\"	{
-			    LEXTRACE("WORD(1) ");
-			    fill(yytext + 1, yyleng - 2);
-			    return(WORD);
+    \"			{
+			    LEXTRACE("BEGINSTR ");
+			    yylval.string = NULL;
+			    BEGIN INSTR;
 			}
 
     {ENVAR}		{
 			    LEXTRACE("WORD(2) ");
 			    fill(yytext, yyleng);
 			    return(WORD);
+			}
+}
+
+<INSTR>{
+    \\\n[[:blank:]]*	{
+			    /* Line continuation char followed by newline. */
+			    ++sudolineno;
+			    LEXTRACE("\n");
+			}
+
+    \"			{
+			    LEXTRACE("ENDSTR ");
+			    BEGIN INDEFS;
+			    return(WORD);
+			}
+
+    ([^\"\n]|\\\")+	{
+			    LEXTRACE("STRBODY ");
+			    /* Push back line continuation char if present */
+			    if (yyleng > 2 && yytext[yyleng - 1] == '\\' &&
+				isspace((unsigned char)yytext[yyleng - 2]))
+				yyless(yyleng - 1);
+			    append(yytext, yyleng);
 			}
 }
 
@@ -256,25 +284,33 @@ NOSETENV[[:blank:]]*:	{
 			    return(USERGROUP);
 			}
 
-{DOTTEDQUAD}(\/{DOTTEDQUAD})? {
+{IPV4ADDR}(\/{IPV4ADDR})? {
 			    fill(yytext, yyleng);
 			    LEXTRACE("NTWKADDR ");
 			    return(NTWKADDR);
 			}
 
-{DOTTEDQUAD}\/([12][0-9]*|3[0-2]*) {
+{IPV4ADDR}\/([12][0-9]*|3[0-2]*) {
 			    fill(yytext, yyleng);
 			    LEXTRACE("NTWKADDR ");
 			    return(NTWKADDR);
 			}
 
 {IPV6ADDR}(\/{IPV6ADDR})? {
+			    if (!ipv6_valid(yytext)) {
+				LEXTRACE("ERROR ");
+				return(ERROR);
+			    }
 			    fill(yytext, yyleng);
 			    LEXTRACE("NTWKADDR ");
 			    return(NTWKADDR);
 			}
 
 {IPV6ADDR}\/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]) {
+			    if (!ipv6_valid(yytext)) {
+				LEXTRACE("ERROR ");
+				return(ERROR);
+			    }
 			    fill(yytext, yyleng);
  			    LEXTRACE("NTWKADDR ");
  			    return(NTWKADDR);
@@ -302,6 +338,13 @@ NOSETENV[[:blank:]]*:	{
 			    fill(yytext, yyleng);
 			    LEXTRACE("WORD(3) ");
 			    return(WORD);
+			}
+
+<GOTRUNAS>#[^0-9-].*\n	{
+			    BEGIN INITIAL;
+			    ++sudolineno;
+			    LEXTRACE("\n");
+			    return(COMMENT);
 			}
 
 <GOTRUNAS>\)		{
@@ -394,26 +437,42 @@ sudoedit		{
 
 %%
 static void
-fill(s, len)
-    char *s;
-    int len;
+_fill(src, len, olen)
+    char *src;
+    int len, olen;
 {
     int i, j;
+    char *dst;
 
-    yylval.string = (char *) malloc(len + 1);
-    if (yylval.string == NULL) {
+    dst = olen ? realloc(yylval.string, olen + len + 1) : malloc(len + 1);
+    if (dst == NULL) {
 	yyerror("unable to allocate memory");
 	return;
     }
+    yylval.string = dst;
 
     /* Copy the string and collapse any escaped characters. */
+    dst += olen;
     for (i = 0, j = 0; i < len; i++, j++) {
-	if (s[i] == '\\' && i != len - 1)
-	    yylval.string[j] = s[++i];
+	if (src[i] == '\\' && i != len - 1)
+	    dst[j] = src[++i];
 	else
-	    yylval.string[j] = s[i];
+	    dst[j] = src[i];
     }
-    yylval.string[j] = '\0';
+    dst[j] = '\0';
+}
+
+static void
+append(src, len)
+    char *src;
+    int len;
+{
+    int olen = 0;
+
+    if (yylval.string != NULL)
+	olen = strlen(yylval.string);
+
+    _fill(src, len, olen);
 }
 
 static void
@@ -473,6 +532,29 @@ fill_args(s, len, addspace)
     if (strlcpy(p, s, arg_size - (p - yylval.command.args)) != len)
 	yyerror("fill_args: buffer overflow");	/* paranoia */
     arg_len = new_len;
+}
+
+/*
+ * Check to make sure an IPv6 address does not contain multiple instances
+ * of the string "::".  Assumes strlen(s) >= 1.
+ * Returns TRUE if address is valid else FALSE.
+ */
+static int
+ipv6_valid(s)
+    const char *s;
+{
+    int nmatch = 0;
+
+    for (; *s != '\0'; s++) {
+	if (s[0] == ':' && s[1] == ':') {
+	    if (++nmatch > 1)
+		break;
+	}
+	if (s[0] == '/')
+	    nmatch = 0;			/* reset if we hit netmask */
+    }
+
+    return (nmatch <= 1);
 }
 
 int

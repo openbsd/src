@@ -65,7 +65,7 @@
 #include "parse.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.11.2.15 2007/07/18 11:13:50 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.11.2.16 2007/09/04 14:58:46 millert Exp $";
 #endif /* lint */
 
 #ifndef LINE_MAX
@@ -219,12 +219,30 @@ sudo_ldap_check_runas(ld, entry)
      * what the user specified on the command line.
      */
     if (!v)
-	ret = !strcasecmp(*user_runas, def_runas_default);
+	ret = !strcasecmp(runas_pw->pw_name, def_runas_default);
 
     /* walk through values returned, looking for a match */
     for (p = v; p && *p && !ret; p++) {
-	if (!strcasecmp(*p, *user_runas) || !strcasecmp(*p, "ALL")) 
-	    ret = TRUE;
+	switch (*p[0]) {
+	case '+':
+	    if (netgr_matches(*p, NULL, NULL, runas_pw->pw_name))
+		ret = TRUE;
+	    break;
+	case '%':
+	    if (usergr_matches(*p, runas_pw->pw_name, runas_pw))
+		ret = TRUE;
+	    break;
+	case 'A':
+	    if (strcmp(*p, "ALL") == 0) {
+		ret = TRUE;
+		break;
+	    }
+	    /* FALLTHROUGH */
+	default:
+	    if (strcasecmp(*p, runas_pw->pw_name) == 0)
+		ret = TRUE;
+	    break;
+	}
 	DPRINTF(("ldap sudoRunAs '%s' ... %s", *p,
 	    ret ? "MATCH!" : "not"), 2);
     }

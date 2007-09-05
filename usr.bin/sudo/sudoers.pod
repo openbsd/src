@@ -19,7 +19,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.95.2.19 2007/08/13 16:30:02 millert Exp $
+$Sudo: sudoers.pod,v 1.95.2.20 2007/08/27 19:52:28 millert Exp $
 =pod
 
 =head1 NAME
@@ -205,9 +205,9 @@ may affect all users on any host, all users on a specific host, a
 specific user, or commands being run as a specific user.
 
  Default_Type ::= 'Defaults' |
-		  'Defaults' '@' Host |
-		  'Defaults' ':' User |
-		  'Defaults' '>' RunasUser
+		  'Defaults' '@' Host_List |
+		  'Defaults' ':' User_List |
+		  'Defaults' '>' Runas_List
 
  Default_Entry ::= Default_Type Parameter_List
 

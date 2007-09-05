@@ -75,7 +75,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88.2.4 2007/06/12 01:43:01 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.88.2.5 2007/08/25 02:45:09 millert Exp $";
 #endif /* lint */
 
 
@@ -173,18 +173,83 @@ command_matches(path, sudoers_args)
     }
 }
 
-int
-addr_matches(n)
+static int
+addr_matches_if(n)
     char *n;
 {
     int i;
-    char *m;
-    struct in_addr addr, mask;
+    struct in_addr addr;
+    struct interface *ifp;
+#ifdef AF_INET6
+    struct in6_addr addr6;
+    int j;
+#endif
+    int family;
 
-    /* If there's an explicit netmask, use it. */
-    if ((m = strchr(n, '/'))) {
-	*m++ = '\0';
+#ifdef AF_INET6
+    if (inet_pton(AF_INET6, n, &addr6) > 0) {
+	family = AF_INET6;
+    } else
+#endif
+    {
+	family = AF_INET;
 	addr.s_addr = inet_addr(n);
+    }
+
+    for (i = 0; i < num_interfaces; i++) {
+	ifp = &interfaces[i];
+	if (ifp->family != family)
+	    continue;
+	switch(family) {
+	    case AF_INET:
+		if (ifp->addr.ip4.s_addr == addr.s_addr ||
+		    (ifp->addr.ip4.s_addr & ifp->netmask.ip4.s_addr)
+		    == addr.s_addr)
+		    return(TRUE);
+		break;
+#ifdef AF_INET6
+	    case AF_INET6:
+		if (memcmp(ifp->addr.ip6.s6_addr, addr6.s6_addr,
+		    sizeof(addr6.s6_addr)) == 0)
+		    return(TRUE);
+		for (j = 0; j < sizeof(addr6.s6_addr); j++) {
+		    if ((ifp->addr.ip6.s6_addr[j] & ifp->netmask.ip6.s6_addr[j]) != addr6.s6_addr[j])
+			break;
+		}
+		if (j == sizeof(addr6.s6_addr))
+		    return(TRUE);
+#endif /* AF_INET6 */
+	}
+    }
+
+    return(FALSE);
+}
+
+static int
+addr_matches_if_netmask(n, m)
+    char *n;
+    char *m;
+{
+    int i;
+    struct in_addr addr, mask;
+    struct interface *ifp;
+#ifdef AF_INET6
+    struct in6_addr addr6, mask6;
+    int j;
+#endif
+    int family;
+
+#ifdef AF_INET6
+    if (inet_pton(AF_INET6, n, &addr6) > 0)
+	family = AF_INET6;
+    else
+#endif
+    {
+	family = AF_INET;
+	addr.s_addr = inet_addr(n);
+    }
+
+    if (family == AF_INET) {
 	if (strchr(m, '.'))
 	    mask.s_addr = inet_addr(m);
 	else {
@@ -194,22 +259,66 @@ addr_matches(n)
 	    mask.s_addr <<= i;
 	    mask.s_addr = htonl(mask.s_addr);
 	}
-	*(m - 1) = '/';
+    }
+#ifdef AF_INET6
+    else {
+	if (inet_pton(AF_INET6, m, &mask6) <= 0) {
+	    j = atoi(m);
+	    for (i = 0; i < 16; i++) {
+		if (j < i * 8)
+		    mask6.s6_addr[i] = 0;
+		else if (i * 8 + 8 <= j)
+		    mask6.s6_addr[i] = 0xff;
+		else
+		    mask6.s6_addr[i] = 0xff00 >> (j - i * 8);
+	    }
+	}
+    }
+#endif /* AF_INET6 */
 
-	for (i = 0; i < num_interfaces; i++)
-	    if ((interfaces[i].addr.s_addr & mask.s_addr) == addr.s_addr)
-		return(TRUE);
-    } else {
-	addr.s_addr = inet_addr(n);
-
-	for (i = 0; i < num_interfaces; i++)
-	    if (interfaces[i].addr.s_addr == addr.s_addr ||
-		(interfaces[i].addr.s_addr & interfaces[i].netmask.s_addr)
-		== addr.s_addr)
-		return(TRUE);
+    for (i = 0; i < num_interfaces; i++) {
+	ifp = &interfaces[i];
+	if (ifp->family != family)
+	    continue;
+	switch(family) {
+	    case AF_INET:
+		if ((ifp->addr.ip4.s_addr & mask.s_addr) == addr.s_addr)
+		    return(TRUE);
+#ifdef AF_INET6
+	    case AF_INET6:
+		for (j = 0; j < sizeof(addr6.s6_addr); j++) {
+		    if ((ifp->addr.ip6.s6_addr[j] & mask6.s6_addr[j]) != addr6.s6_addr[j])
+			break;
+		}
+		if (j == sizeof(addr6.s6_addr))
+		    return(TRUE);
+#endif /* AF_INET6 */
+	}
     }
 
     return(FALSE);
+}
+
+/*
+ * Returns TRUE if "n" is one of our ip addresses or if
+ * "n" is a network that we are on, else returns FALSE.
+ */
+int
+addr_matches(n)
+    char *n;
+{
+    char *m;
+    int retval;
+
+    /* If there's an explicit netmask, use it. */
+    if ((m = strchr(n, '/'))) {
+	*m++ = '\0';
+	retval = addr_matches_if_netmask(n, m);
+	*(m - 1) = '/';
+    } else
+	retval = addr_matches_if(n);
+
+    return(retval);
 }
 
 int

@@ -1951,3 +1951,17 @@ Sudo 1.6.9p3 released.
 616) Fixed a K&R compilation error.
 
 Sudo 1.6.9p4 released.
+
+617) Fixed a bug in the IP address matching introduced by the IPV6 merge.
+
+618) For "visudo -f file" we now use the permissions of the original file
+     and not the hard-coded sudoers owner/group/mode.  This makes
+     it possible to use visudo with a revision control system.
+
+619) Fixed sudoedit when used on a non-existent file.
+
+620) Regenerated configure using autoconf 2.6.1 and libtool 1.5.24.
+
+621) Groups and netgroups are now valid in an LDAP sudoRunas statement.
+
+Sudo 1.6.9p5 released.

@@ -90,7 +90,7 @@
 #endif /* HAVE_EXTENDED_GLOB */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.12 2007/08/13 16:30:02 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.160.2.13 2007/08/25 02:37:11 millert Exp $";
 #endif /* lint */
 
 /*
@@ -394,18 +394,17 @@ addr_matches_if(n)
     struct in6_addr addr6;
     int j;
 #endif
-    int family = AF_UNSPEC;
+    int family;
 
 #ifdef AF_INET6
     if (inet_pton(AF_INET6, n, &addr6) > 0) {
 	family = AF_INET6;
     } else
-#else
+#endif
     {
 	family = AF_INET;
 	addr.s_addr = inet_addr(n);
     }
-#endif
 
     for (i = 0; i < num_interfaces; i++) {
 	ifp = &interfaces[i];
@@ -448,18 +447,17 @@ addr_matches_if_netmask(n, m)
     struct in6_addr addr6, mask6;
     int j;
 #endif
-    int family = AF_UNSPEC;
+    int family;
 
 #ifdef AF_INET6
     if (inet_pton(AF_INET6, n, &addr6) > 0)
 	family = AF_INET6;
     else
-#else
+#endif
     {
 	family = AF_INET;
 	addr.s_addr = inet_addr(n);
     }
-#endif
 
     if (family == AF_INET) {
 	if (strchr(m, '.'))

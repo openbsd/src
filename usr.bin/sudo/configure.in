@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.18 2007/08/15 13:48:51 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.21 2007/09/05 22:16:57 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -108,7 +108,11 @@ PROGS="sudo visudo"
 : ${SUDOERS_UID='0'}
 : ${SUDOERS_GID='0'}
 DEV="#"
-AUTH_OBJS=passwd.o
+AUTH_OBJS=
+AUTH_REG=
+AUTH_EXCL=
+AUTH_EXCL_DEF=
+AUTH_DEF=passwd
 
 dnl
 dnl Other vaiables
@@ -134,7 +138,7 @@ dnl
 
 AC_ARG_WITH(otp-only, [  --with-otp-only         deprecated],
 [case $with_otp_only in
-    yes)	AUTH_OBJS=`echo "$AUTH_OBJS"|sed -e 's/^passwd\.o *//'`
+    yes)	with_passwd="no"
 		AC_MSG_NOTICE([--with-otp-only option deprecated, treating as --without-passwd])
 		;;
 esac])
@@ -251,10 +255,10 @@ esac])
 
 AC_ARG_WITH(passwd, [  --without-passwd        don't use passwd/shadow file for authentication],
 [case $with_passwd in
-    yes)	;;
-    no)		AUTH_OBJS=`echo "$AUTH_OBJS"|sed -e 's/^passwd\.o *//'`
-		AC_MSG_CHECKING(whether to use shadow/passwd file authentication)
-		AC_MSG_RESULT(no)
+    yes|no)	AC_MSG_CHECKING(whether to use shadow/passwd file authentication)
+		AC_MSG_RESULT($with_passwd)
+		AUTH_DEF=""
+		test "$with_passwd" = "yes" && AUTH_REG="$AUTH_REG passwd"
 		;;
     *)		AC_MSG_ERROR(["Sorry, --with-passwd does not take an argument."])
 		;;
@@ -264,13 +268,10 @@ AC_ARG_WITH(skey, [  --with-skey[=DIR]         enable S/Key support ],
 [case $with_skey in
     no)		with_skey=""
 		;;
-    *)		if test -n "$with_opie"; then
-		    AC_MSG_ERROR(["cannot use both S/Key and OPIE"])
-		fi
-    		AC_DEFINE(HAVE_SKEY)
+    *)		AC_DEFINE(HAVE_SKEY)
 		AC_MSG_CHECKING(whether to try S/Key authentication)
 		AC_MSG_RESULT(yes)
-		SUDO_ADD_AUTH([S/Key], [rfc1938.o])
+		AUTH_REG="$AUTH_REG S/Key"
 		;;
 esac])
 
@@ -278,13 +279,10 @@ AC_ARG_WITH(opie, [  --with-opie[=DIR]         enable OPIE support ],
 [case $with_opie in
     no)		with_opie=""
 		;;
-    *)		if test -n "$with_skey"; then
-		    AC_MSG_ERROR(["cannot use both S/Key and OPIE"])
-		fi
-		AC_DEFINE(HAVE_OPIE)
+    *)		AC_DEFINE(HAVE_OPIE)
 		AC_MSG_CHECKING(whether to try NRL OPIE authentication)
 		AC_MSG_RESULT(yes)
-		SUDO_ADD_AUTH([NRL OPIE], [rfc1938.o])
+		AUTH_REG="$AUTH_REG NRL_OPIE"
 		;;
 esac])
 
@@ -307,7 +305,7 @@ AC_ARG_WITH(SecurID, [  --with-SecurID[[=DIR]]    enable SecurID support],
     *)		AC_DEFINE(HAVE_SECURID)
 		AC_MSG_CHECKING(whether to use SecurID for authentication)
 		AC_MSG_RESULT(yes)
-		# AUTH_OBJS updated later
+		AUTH_EXCL="$AUTH_EXCL SecurID"
 		;;
 esac])
 
@@ -317,7 +315,7 @@ AC_ARG_WITH(fwtk, [  --with-fwtk[[=DIR]]       enable FWTK AuthSRV support],
     *)		AC_DEFINE(HAVE_FWTK)
 		AC_MSG_CHECKING(whether to use FWTK AuthSRV for authentication)
 		AC_MSG_RESULT(yes)
-		SUDO_ADD_AUTH([FWTK AuthSRV], [fwtk.o], [true])
+		AUTH_EXCL="$AUTH_EXCL FWTK"
 		;;
 esac])
 
@@ -326,6 +324,7 @@ AC_ARG_WITH(kerb4, [  --with-kerb4[[=DIR]]      enable Kerberos IV support],
     no)		with_kerb4="";;
     *)		AC_MSG_CHECKING(whether to try kerberos IV authentication)
 		AC_MSG_RESULT(yes)
+		AUTH_REG="$AUTH_REG kerb4"
 		;;
 esac])
 
@@ -334,19 +333,22 @@ AC_ARG_WITH(kerb5, [  --with-kerb5[[=DIR]]      enable Kerberos V support],
     no)		with_kerb5="";;
     *)		AC_MSG_CHECKING(whether to try Kerberos V authentication)
 		AC_MSG_RESULT(yes)
+		AUTH_REG="$AUTH_REG kerb5"
 		;;
 esac])
 
 AC_ARG_WITH(aixauth, [  --with-aixauth          enable AIX general authentication support],
 [case $with_aixauth in
-    yes|no)	;;
+    yes)	AUTH_EXCL="$AUTH_EXCL AIX_AUTH";;
+    no)		;;
     *)		AC_MSG_ERROR(["--with-aixauth does not take an argument."])
 		;;
 esac])
 
 AC_ARG_WITH(pam, [  --with-pam              enable PAM support],
 [case $with_pam in
-    yes|no)	;;
+    yes)	AUTH_EXCL="$AUTH_EXCL PAM";;
+    no)		;;
     *)		AC_MSG_ERROR(["--with-pam does not take an argument."])
 		;;
 esac])
@@ -356,7 +358,7 @@ AC_ARG_WITH(AFS, [  --with-AFS              enable AFS support],
     yes)	AC_DEFINE(HAVE_AFS)
 		AC_MSG_CHECKING(whether to try AFS (kerberos) authentication)
 		AC_MSG_RESULT(yes)
-		SUDO_ADD_AUTH([AFS], [afs.o])
+		AUTH_REG="$AUTH_REG AFS"
 		;;
     no)		;;
     *)		AC_MSG_ERROR(["--with-AFS does not take an argument."])
@@ -368,7 +370,7 @@ AC_ARG_WITH(DCE, [  --with-DCE              enable DCE support],
     yes)	AC_DEFINE(HAVE_DCE)
 		AC_MSG_CHECKING(whether to try DCE (kerberos) authentication)
 		AC_MSG_RESULT(yes)
-		SUDO_ADD_AUTH([DCE], [dce.o])
+		AUTH_REG="$AUTH_REG DCE"
 		;;
     no)		;;
     *)		AC_MSG_ERROR(["--with-DCE does not take an argument."])
@@ -384,7 +386,8 @@ esac])
 
 AC_ARG_WITH(bsdauth, [  --with-bsdauth          enable BSD authentication support],
 [case $with_bsdauth in
-    yes|no)	;;
+    yes)	AUTH_EXCL="$AUTH_EXCL BSD_AUTH";;
+    no)		;;
     *)		AC_MSG_ERROR(["--with-bsdauth does not take an argument."])
 		;;
 esac])
@@ -1134,12 +1137,11 @@ AC_PROG_CPP
 
 dnl
 dnl Libtool magic; enable shared libs and disable static libs
-dnl XXX - disable static, require shared
 dnl
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET([])
-LT_PREREQ([1.9f])
-LT_INIT([disable-static])
+AC_DISABLE_STATIC
+AC_PROG_LIBTOOL
 
 dnl
 dnl Defer with_noexec until after libtool magic runs
@@ -1230,7 +1232,7 @@ case "$host" in
 		: ${mansectsu='1m'}
 		: ${mansectform='4'}
 		: ${with_rpath='yes'}
-		: ${with_pam='maybe'}
+		test -z "$with_pam" && AUTH_EXCL_DEF="PAM"
 		;;
     *-*-aix*)
 		# To get all prototypes (so we pass -Wall)
@@ -1253,9 +1255,9 @@ case "$host" in
 		fi
 		LDFLAGS="$O_LDFLAGS"
 
-		# check for authenticate(3)
+		# Use authenticate(3) as the default authentication method
 		if test X"$with_aixauth" = X""; then
-		    AC_CHECK_FUNCS(authenticate, [with_aixauth=maybe])
+		    AC_CHECK_FUNCS(authenticate, [AUTH_EXCL_DEF="AIX_AUTH"])
 		fi
 		;;
     *-*-hiuxmpp*)
@@ -1301,7 +1303,7 @@ case "$host" in
 			*)
 			    shadow_funcs="getspnam iscomsec"
 			    shadow_libs="-lsec"
-			    : ${with_pam='maybe'}
+			    test -z "$with_pam" && AUTH_EXCL_DEF="PAM"
 			;;
 		esac
 		;;
@@ -1311,7 +1313,7 @@ case "$host" in
 
 		AC_MSG_CHECKING(whether to disable sia support on Digital UNIX)
 		AC_ARG_ENABLE(sia,
-		[  --disable-sia           Never use SIA on Digital UNIX],
+		[  --disable-sia           Disable SIA on Digital UNIX],
 		[ case "$enableval" in
 		    yes)	AC_MSG_RESULT(no)
 				;;
@@ -1333,24 +1335,21 @@ case "$host" in
 		fi
 
 		# use SIA by default, if we have it
-		if test "$CHECKSIA" = "true"; then
-		    AC_CHECK_FUNCS(sia_ses_init, [found=true], [found=false])
-		    if test "$found" = "true"; then
-			SUDO_ADD_AUTH([SIA], [sia.o], [true])
-			CHECKSHADOW=false
-		    fi
-		fi
-		if test "$CHECKSHADOW" = "true"; then
-		    # prot.h is included when using shadow passwords
-		    AC_MSG_CHECKING([for broken prot.h])
-		    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+		test "$CHECKSIA" = "true" && AUTH_EXCL_DEF="SIA"
+
+		#
+		# Some versions of Digital Unix ship with a broken
+		# copy of prot.h, which we need for shadow passwords.
+		# XXX - make should remove this as part of distclean
+		#
+		AC_MSG_CHECKING([for broken prot.h])
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/security.h>
 #include <prot.h>
-		    ]], [[exit(0);]])], [AC_MSG_RESULT(no)], [AC_MSG_RESULT([yes, fixing locally])
-		    sed 's:<acl.h>:<sys/acl.h>:g' < /usr/include/prot.h > prot.h
-		    ])
-		fi
+		]], [[exit(0);]])], [AC_MSG_RESULT(no)], [AC_MSG_RESULT([yes, fixing locally])
+		sed 's:<acl.h>:<sys/acl.h>:g' < /usr/include/prot.h > prot.h
+		])
 		: ${mansectsu='8'}
 		: ${mansectform='4'}
 		;;
@@ -1386,7 +1385,7 @@ case "$host" in
 		# Some Linux versions need to link with -lshadow
 		shadow_funcs="getspnam"
 		shadow_libs_optional="-lshadow"
-		: ${with_pam='maybe'}
+		test -z "$with_pam" && AUTH_EXCL_DEF="PAM"
 		;;
     *-convex-bsd*)
 		OSDEFS="${OSDEFS} -D_CONVEX_SOURCE"
@@ -1467,7 +1466,7 @@ case "$host" in
 		fi
 		# Check for newer BSD auth API (just check for >= 3.0?)
 		if test -z "$with_bsdauth"; then
-		    AC_CHECK_FUNCS(auth_challenge, [with_bsdauth=maybe])
+		    AC_CHECK_FUNCS(auth_challenge, [AUTH_EXCL_DEF="BSD_AUTH"])
 		fi
 		;;
     *-*-freebsd*)
@@ -1481,26 +1480,22 @@ case "$host" in
 		if test "$with_skey" = "yes"; then
 		     SUDO_LIBS="${SUDO_LIBS} -lmd"
 		fi
-		if test "$CHECKSHADOW" = "true"; then
-		    CHECKSHADOW="false"
-		fi
-		: ${with_pam='maybe'}
+		CHECKSHADOW="false"
+		test -z "$with_pam" && AUTH_EXCL_DEF="PAM"
 		: ${with_logincap='maybe'}
 		;;
     *-*-*openbsd*)
 		# OpenBSD has a real setreuid(2) starting with 3.3 but
 		# we will use setreuid(2) instead.
 		SKIP_SETREUID=yes
-		if test "$CHECKSHADOW" = "true"; then
-		    CHECKSHADOW="false"
-		fi
+		CHECKSHADOW="false"
 		# OpenBSD >= 3.0 supports BSD auth
 		if test -z "$with_bsdauth"; then
 		    case "$OSREV" in
 		    [0-2].*)
 			;;
 		    *)
-			with_bsdauth=maybe
+			AUTH_EXCL_DEF="BSD_AUTH"
 			;;
 		    esac
 		fi
@@ -1513,34 +1508,25 @@ case "$host" in
 		    SKIP_SETREUID=yes
 		    ;;
 		esac
-		if test "$CHECKSHADOW" = "true"; then
-		    CHECKSHADOW="false"
-		fi
+		CHECKSHADOW="false"
+		test -z "$with_pam" && AUTH_EXCL_DEF="PAM"
 		: ${with_logincap='maybe'}
-		dnl future versions of NetBSD (> 2.0) may include pam
-		: ${with_pam='maybe'}
 		;;
     *-*-dragonfly*)
 		if test "$with_skey" = "yes"; then
 		     SUDO_LIBS="${SUDO_LIBS} -lmd"
 		fi
-		if test "$CHECKSHADOW" = "true"; then
-		    CHECKSHADOW="false"
-		fi
-		: ${with_pam='yes'}
+		CHECKSHADOW="false"
+		test -z "$with_pam" && AUTH_EXCL_DEF="PAM"
 		: ${with_logincap='yes'}
 		;;
     *-*-*bsd*)
-		if test "$CHECKSHADOW" = "true"; then
-		    CHECKSHADOW="false"
-		fi
+		CHECKSHADOW="false"
 		;;
     *-*-darwin*)
 		SKIP_SETREUID=yes
-		if test "$CHECKSHADOW" = "true"; then
-		    CHECKSHADOW="false"
-		fi
-		: ${with_pam='yes'}
+		CHECKSHADOW="false"
+		test -z "$with_pam" && AUTH_EXCL_DEF="PAM"
 		: ${with_logincap='yes'}
 		;;
     *-*-nextstep*)
@@ -1561,6 +1547,27 @@ case "$host" in
 		OSDEFS="${OSDEFS} -D_GNU_SOURCE"
 		;;
 esac
+
+dnl
+dnl Check for mixing mutually exclusive and regular auth methods
+dnl
+AUTH_REG=${AUTH_REG# }
+AUTH_EXCL=${AUTH_EXCL# }
+if test -n "$AUTH_EXCL"; then
+    set -- $AUTH_EXCL
+    if test $# != 1; then
+	AC_MSG_ERROR([More than one mutually exclusive authentication method specified: $AUTH_EXCL])
+    fi
+    if test -n "$AUTH_REG"; then
+	AC_MSG_ERROR([Cannot mix mutually exclusive ($AUTH_EXCL) and regular ($AUTH_REG) authentication methods])
+    fi
+fi
+dnl
+dnl Only one of S/Key and OPIE may be specified
+dnl
+if test X"${with_skey}${with_opie}" = X"yesyes"; then
+    AC_MSG_ERROR(["cannot use both S/Key and OPIE"])
+fi
 
 dnl
 dnl Use BSD-style man sections by default
@@ -1729,12 +1736,6 @@ if test -n "$NEED_SNPRINTF"; then
     AC_LIBOBJ(snprintf)
 fi
 dnl
-dnl if crypt(3) not in libc, look elsewhere
-dnl
-if test -z "$LIB_CRYPT" -a "$with_pam" != "yes"; then
-    AC_CHECK_FUNC(crypt, , [AC_CHECK_LIB(crypt, crypt, [SUDO_LIBS="${SUDO_LIBS} -lcrypt"; LIBS="${LIBS} -lcrypt"], AC_CHECK_LIB(crypt_d, crypt, [SUDO_LIBS="${SUDO_LIBS} -lcrypt_d"; LIBS="${LIBS} -lcrypt_d"], AC_CHECK_LIB(ufc, crypt, [SUDO_LIBS="${SUDO_LIBS} -lufc"; LIBS="${LIBS} -lufc"])))])
-fi
-dnl
 dnl If socket(2) not in libc, check -lsocket and -linet
 dnl May need to link with *both* -lnsl and -lsocket due to unresolved symbols
 dnl In this case we look for main(), not socket() to avoid using a cached value
@@ -1772,10 +1773,156 @@ AC_CHECK_FUNCS(getprogname, , [
     fi
     AC_MSG_RESULT($sudo_cv___progname)
 ])
+
+dnl
+dnl Mutually exclusive auth checks come first, followed by
+dnl non-exclusive ones.  Note: passwd must be last of all!
+dnl
+
+dnl
+dnl Convert default authentication methods to with_* if
+dnl no explicit authentication scheme was specified.
+dnl
+if test -z "${AUTH_EXCL}${AUTH_REG}" -a -n "$AUTH_EXCL_DEF"; then
+    for auth in $AUTH_EXCL_DEF; do
+	case $auth in
+	    AIX_AUTH)	with_aixauth=maybe;;
+	    BSD_AUTH)	with_bsdauth=maybe;;
+	    PAM)	with_pam=maybe;;
+	    SIA)	CHECKSIA=true;;
+	esac
+    done
+fi
+
+dnl
+dnl PAM support.  Systems that use PAM by default set with_pam=default
+dnl and we do the actual tests here.
+dnl
+if test ${with_pam-"no"} != "no"; then
+    dnl
+    dnl Linux may need this
+    dnl
+    AC_CHECK_LIB([dl], [main], [SUDO_LIBS="${SUDO_LIBS} -lpam -ldl"], [SUDO_LIBS="${SUDO_LIBS} -lpam"])
+    ac_cv_lib_dl=ac_cv_lib_dl_main
+
+    dnl
+    dnl Some PAM implementations (MacOS X for example) put the PAM headers
+    dnl in /usr/include/pam instead of /usr/include/security...
+    dnl
+    AC_CHECK_HEADERS([security/pam_appl.h] [pam/pam_appl.h], [with_pam=yes; break])
+    if test "$with_pam" = "yes"; then
+	AC_DEFINE(HAVE_PAM)
+	AUTH_OBJS="$AUTH_OBJS pam.o";
+	AUTH_EXCL=PAM
+    fi
+fi
+
+dnl
+dnl AIX general authentication
+dnl If set to "maybe" only enable if no other exclusive method in use.
+dnl
+if test ${with_aixauth-'no'} != "no"; then
+    if test X"$with_aixauth" != X"maybe" -o X"$AUTH_EXCL" = X""; then
+	AC_MSG_NOTICE([using AIX general authentication])
+	AC_DEFINE(HAVE_AIXAUTH)
+	AUTH_OBJS="$AUTH_OBJS aix_auth.o";
+	SUDO_LIBS="${SUDO_LIBS} -ls"
+	AUTH_EXCL=AIX_AUTH
+    fi
+fi
+
+dnl
+dnl BSD authentication
+dnl If set to "maybe" only enable if no other exclusive method in use.
+dnl
+if test ${with_bsdauth-'no'} != "no"; then
+    AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H)
+	[AUTH_OBJS="$AUTH_OBJS bsdauth.o"]
+	[BSDAUTH_USAGE='[[-a auth_type]] ']
+	[AUTH_EXCL=BSD_AUTH],
+	[AC_MSG_ERROR([BSD authentication was specified but bsd_auth.h could not be found])])
+fi
+
+dnl
+dnl SIA authentication for Tru64 Unix
+dnl
+if test ${CHECKSIA-'false'} = "true"; then
+    AC_CHECK_FUNCS(sia_ses_init, [found=true], [found=false])
+    if test "$found" = "true"; then
+	AUTH_EXCL=SIA
+	AUTH_OBJS="$AUTH_OBJS sia.o"
+    fi
+fi
+
+dnl
+dnl extra FWTK libs + includes
+dnl
+if test ${with_fwtk-'no'} != "no"; then
+    if test "$with_fwtk" != "yes"; then
+	SUDO_APPEND_LIBPATH(SUDO_LDFLAGS, [${with_fwtk}])
+	CPPFLAGS="${CPPFLAGS} -I${with_fwtk}"
+	with_fwtk=yes
+    fi
+    SUDO_LIBS="${SUDO_LIBS} -lauth -lfwall"
+    AUTH_OBJS="$AUTH_OBJS fwtk.o"
+fi
+
+dnl
+dnl extra SecurID lib + includes
+dnl
+if test ${with_SecurID-'no'} != "no"; then
+    if test "$with_SecurID" != "yes"; then
+	:
+    elif test -d /usr/ace/examples; then
+	with_SecurID=/usr/ace/examples
+    else
+	with_SecurID=/usr/ace
+    fi
+    CPPFLAGS="${CPPFLAGS} -I${with_SecurID}"
+    _LDFLAGS="${LDFLAGS}"
+    SUDO_APPEND_LIBPATH(LDFLAGS, [${with_SecurID}])
+    #
+    # Determine whether to use the new or old SecurID API
+    #
+    AC_CHECK_LIB(aceclnt, SD_Init,
+	[
+	    AUTH_OBJS="$AUTH_OBJS securid5.o";
+	    SUDO_LIBS="${SUDO_LIBS} -laceclnt -lpthread"
+	]
+	[
+	    SUDO_APPEND_LIBPATH(SUDO_LDFLAGS, [${with_SecurID}])
+	], [
+	    AUTH_OBJS="$AUTH_OBJS securid.o";
+	    SUDO_LIBS="${SUDO_LIBS} ${with_SecurID}/sdiclient.a"
+	],
+	[
+	    -lpthread
+	]
+    )
+    LDFLAGS="${_LDFLAGS}"
+fi
+
+dnl
+dnl Non-mutually exclusive auth checks come next.
+dnl Note: passwd must be last of all!
+dnl
+
+dnl
+dnl Convert default authentication methods to with_* if
+dnl no explicit authentication scheme was specified.
+dnl
+if test -z "${AUTH_EXCL}" -a -n "$AUTH_DEF"; then
+    for auth in $AUTH_DEF; do
+	case $auth in
+	    passwd)	: ${with_passwd='maybe'};;
+	esac
+    done
+fi
+
 dnl
 dnl Kerberos IV
 dnl
-if test -n "$with_kerb4"; then
+if test ${with_kerb4-'no'} != "no"; then
     AC_DEFINE(HAVE_KERB4)
     dnl
     dnl Use the specified directory, if any, else search for correct inc dir
@@ -1828,18 +1975,18 @@ if test -n "$with_kerb4"; then
     ], [$K4LIBS])
     LDFLAGS="$O_LDFLAGS"
     SUDO_LIBS="${SUDO_LIBS} $K4LIBS"
-    SUDO_ADD_AUTH([Kerberos 4], [kerb4.o])
+    AUTH_OBJS="$AUTH_OBJS kerb4.o"
 fi
 
 dnl
 dnl Kerberos V
 dnl There is an easy way and a hard way...
 dnl
-if test "$with_kerb5" = "yes"; then
+if test ${with_kerb5-'no'} != "no"; then
     AC_CHECK_PROG(KRB5CONFIG, krb5-config, yes, "")
     if test -n "$KRB5CONFIG"; then
 	AC_DEFINE(HAVE_KERB5)
-	SUDO_ADD_AUTH([Kerberos 5], [kerb5.o])
+	AUTH_OBJS="$AUTH_OBJS kerb5.o"
 	CPPFLAGS="$CPPFLAGS `krb5-config --cflags`"
 	SUDO_LIBS="$SUDO_LIBS `krb5-config --libs`"
 	dnl
@@ -1849,13 +1996,13 @@ if test "$with_kerb5" = "yes"; then
 	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <krb5.h>]], [[const char *tmp = heimdal_version;]])], [
 		AC_MSG_RESULT(yes)
 		AC_DEFINE(HAVE_HEIMDAL)
-	    ] , [
+	    ], [
 		AC_MSG_RESULT(no)
 	    ]
 	)
     fi
 fi
-if test -n "$with_kerb5" -a -z "$KRB5CONFIG"; then
+if test ${with_kerb5-'no'} != "no" -a -z "$KRB5CONFIG"; then
     AC_DEFINE(HAVE_KERB5)
     dnl
     dnl Use the specified directory, if any, else search for correct inc dir
@@ -1891,7 +2038,7 @@ if test -n "$with_kerb5" -a -z "$KRB5CONFIG"; then
 	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lk5crypto -lcom_err"
 	
     ])
-    SUDO_ADD_AUTH([Kerberos 5], [kerb5.o])
+    AUTH_OBJS="$AUTH_OBJS kerb5.o"
     _LIBS="$LIBS"
     LIBS="${LIBS} ${SUDO_LIBS}"
     AC_CHECK_FUNCS(krb5_verify_user krb5_init_secure_context)
@@ -1901,7 +2048,7 @@ fi
 dnl
 dnl Some systems put login_cap(3) in libutil
 dnl
-if test "$with_logincap" = "yes"; then
+if test ${with_logincap-'no'} = "yes"; then
     case "$OS" in
 	freebsd|netbsd)	SUDO_LIBS="${SUDO_LIBS} -lutil"
 	;;
@@ -1909,72 +2056,9 @@ if test "$with_logincap" = "yes"; then
 fi
 
 dnl
-dnl PAM support.  Systems that might support PAM set with_pam=maybe
-dnl and we do that actual tests here.
-dnl
-if test ${with_pam-'no'} != "no"; then
-    dnl
-    dnl Linux may need this
-    dnl
-    AC_CHECK_LIB([dl], [main], [SUDO_LIBS="${SUDO_LIBS} -lpam -ldl"], [SUDO_LIBS="${SUDO_LIBS} -lpam"])
-    ac_cv_lib_dl=ac_cv_lib_dl_main
-
-    dnl
-    dnl Some PAM implementations (MacOS X for example) put the PAM headers
-    dnl in /usr/include/pam instead of /usr/include/security...
-    dnl
-    AC_CHECK_HEADERS([security/pam_appl.h] [pam/pam_appl.h], [with_pam=yes; break])
-    if test "$with_pam" = "yes"; then
-	AC_DEFINE(HAVE_PAM)
-	SUDO_ADD_AUTH([PAM], [pam.o], [true])
-	CHECKSHADOW=false
-    fi
-fi
-
-dnl
-dnl Check for shadow password routines if we have not already done so.
-dnl If there is a specific list of functions to check we do that first.
-dnl Otherwise, we check for SVR4-style and then SecureWare-style.
-dnl
-if test "$CHECKSHADOW" = "true" -a -n "$shadow_funcs"; then
-    _LIBS="$LIBS"
-    LIBS="$LIBS $shadow_libs"
-    found=no
-    AC_CHECK_FUNCS($shadow_funcs, [found=yes])
-    if test "$found" = "yes"; then
-	SUDO_LIBS="$SUDO_LIBS $shadow_libs"
-    elif test -n "$shadow_libs_optional"; then
-	LIBS="$LIBS $shadow_libs_optional"
-	AC_CHECK_FUNCS($shadow_funcs, [found=yes])
-	if test "$found" = "yes"; then
-	    SUDO_LIBS="$SUDO_LIBS $shadow_libs $shadow_libs_optional"
-	fi
-    fi
-    if test "$found" = "yes"; then
-	case "$shadow_funcs" in
-	    *getprpwnam*) SECUREWARE=1;;
-	esac
-	test -n "$shadow_defs" && OSDEFS="${OSDEFS} $shadow_defs"
-    else
-	LIBS="$_LIBS"
-    fi
-    CHECKSHADOW=false
-fi
-if test "$CHECKSHADOW" = "true"; then
-    AC_CHECK_FUNCS(getspnam, [CHECKSHADOW="false"], [AC_CHECK_LIB(gen, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lgen"; LIBS="${LIBS} -lgen"])])
-fi
-if test "$CHECKSHADOW" = "true"; then
-    AC_CHECK_FUNC(getprpwnam, [AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1], AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"], AC_CHECK_LIB(security, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lsecurity"; LIBS="${LIBS} -lsecurity"], AC_CHECK_LIB(prot, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lprot"; LIBS="${LIBS} -lprot"])))])
-fi
-if test -n "$SECUREWARE"; then
-    AC_CHECK_FUNCS(bigcrypt set_auth_parameters initprivs)
-    SUDO_ADD_AUTH([SecureWare], [secureware.o])
-fi
-
-dnl
 dnl extra AFS libs and includes
 dnl
-if test "$with_AFS" = "yes"; then
+if test ${with_AFS-'no'} = "yes"; then
 
     # looks like the "standard" place for AFS libs is /usr/afsws/lib
     AFSLIBDIRS="/usr/lib/afs /usr/afsws/lib /usr/afsws/lib/afs"
@@ -2014,21 +2098,24 @@ if test "$with_AFS" = "yes"; then
     if test -z "$FOUND_AFSLIBDIR"; then
 	AC_MSG_WARN([Unable to locate AFS include dir, you may have to edit the Makefile and add -I/path/to/afs/includes to CPPFLAGS or rerun configure with the --with-incpath options.])
     fi
+
+    AUTH_OBJS="$AUTH_OBJS afs.o"
 fi
 
 dnl
 dnl extra DCE obj + lib
 dnl Order of libs in HP-UX 10.x is important, -ldce must be last.
 dnl
-if test "$with_DCE" = "yes"; then
+if test ${with_DCE-'no'} = "yes"; then
     DCE_OBJS="${DCE_OBJS} dce_pwent.o"
     SUDO_LIBS="${SUDO_LIBS} -ldce"
+    AUTH_OBJS="$AUTH_OBJS dce.o"
 fi
 
 dnl
 dnl extra S/Key lib and includes
 dnl
-if test -n "$with_skey"; then
+if test ${with_skey-'no'} = "yes"; then
     O_LDFLAGS="$LDFLAGS"
     if test "$with_skey" != "yes"; then
 	CPPFLAGS="${CPPFLAGS} -I${with_skey}/include"
@@ -2056,12 +2143,13 @@ if test -n "$with_skey"; then
     AC_CHECK_LIB(skey, skeyaccess, AC_DEFINE(HAVE_SKEYACCESS))
     LDFLAGS="$O_LDFLAGS"
     SUDO_LIBS="${SUDO_LIBS} -lskey"
+    AUTH_OBJS="$AUTH_OBJS rfc1938.o"
 fi
 
 dnl
 dnl extra OPIE lib and includes
 dnl
-if test -n "$with_opie"; then
+if test ${with_opie-'no'} = "yes"; then
     O_LDFLAGS="$LDFLAGS"
     if test "$with_opie" != "yes"; then
 	CPPFLAGS="${CPPFLAGS} -I${with_opie}/include"
@@ -2088,83 +2176,62 @@ if test -n "$with_opie"; then
     AC_CHECK_LIB(opie, main, [found=yes], [AC_MSG_WARN([Unable to locate libopie.a, you will have to edit the Makefile and add -L/path/to/opie/lib to SUDO_LDFLAGS])])
     LDFLAGS="$O_LDFLAGS"
     SUDO_LIBS="${SUDO_LIBS} -lopie"
+    AUTH_OBJS="$AUTH_OBJS rfc1938.o"
 fi
 
 dnl
-dnl extra SecurID lib + includes
+dnl Check for shadow password routines if we have not already done so.
+dnl If there is a specific list of functions to check we do that first.
+dnl Otherwise, we check for SVR4-style and then SecureWare-style.
 dnl
-if test ${with_SecurID-'no'} != "no"; then
-    if test "$with_SecurID" != "yes"; then
-	:
-    elif test -d /usr/ace/examples; then
-	with_SecurID=/usr/ace/examples
-    else
-	with_SecurID=/usr/ace
+if test ${with_passwd-'no'} != "no"; then
+    dnl
+    dnl if crypt(3) not in libc, look elsewhere
+    dnl
+    if test -z "$LIB_CRYPT" -a "$with_passwd" != "no"; then
+	AC_SEARCH_LIBS([crypt], [crypt crypt_d ufc], [test -n "$ac_lib" && SUDO_LIBS="${SUDO_LIBS} $ac_res"])
     fi
-    CPPFLAGS="${CPPFLAGS} -I${with_SecurID}"
-    _LDFLAGS="${LDFLAGS}"
-    SUDO_APPEND_LIBPATH(LDFLAGS, [${with_SecurID}])
-    #
-    # Determine whether to use the new or old SecurID API
-    #
-    AC_CHECK_LIB(aceclnt, SD_Init,
-	[
-	    SUDO_ADD_AUTH([SecurID 5], [securid5.o], true)
-	    SUDO_LIBS="${SUDO_LIBS} -laceclnt -lpthread"
-	]
-	[
-	    SUDO_APPEND_LIBPATH(SUDO_LDFLAGS, [${with_SecurID}])
-	], [
-	    SUDO_ADD_AUTH([SecurID], [securid.o], true)
-	    SUDO_LIBS="${SUDO_LIBS} ${with_SecurID}/sdiclient.a"
-	],
-	[
-	    -lpthread
-	]
-    )
-    LDFLAGS="${_LDFLAGS}"
-fi
 
-dnl
-dnl extra FWTK libs + includes
-dnl
-if test -n "$with_fwtk"; then
-    if test "$with_fwtk" != "yes"; then
-	SUDO_APPEND_LIBPATH(SUDO_LDFLAGS, [${with_fwtk}])
-	CPPFLAGS="${CPPFLAGS} -I${with_fwtk}"
-	with_fwtk=yes
+    if test "$CHECKSHADOW" = "true" -a -n "$shadow_funcs"; then
+	_LIBS="$LIBS"
+	LIBS="$LIBS $shadow_libs"
+	found=no
+	AC_CHECK_FUNCS($shadow_funcs, [found=yes])
+	if test "$found" = "yes"; then
+	    SUDO_LIBS="$SUDO_LIBS $shadow_libs"
+	elif test -n "$shadow_libs_optional"; then
+	    LIBS="$LIBS $shadow_libs_optional"
+	    AC_CHECK_FUNCS($shadow_funcs, [found=yes])
+	    if test "$found" = "yes"; then
+		SUDO_LIBS="$SUDO_LIBS $shadow_libs $shadow_libs_optional"
+	    fi
+	fi
+	if test "$found" = "yes"; then
+	    case "$shadow_funcs" in
+		*getprpwnam*) SECUREWARE=1;;
+	    esac
+	    test -n "$shadow_defs" && OSDEFS="${OSDEFS} $shadow_defs"
+	else
+	    LIBS="$_LIBS"
+	fi
+	CHECKSHADOW=false
     fi
-    SUDO_LIBS="${SUDO_LIBS} -lauth -lfwall"
-fi
-
-dnl
-dnl AIX general authentication
-dnl If set to "maybe" only enable if no other exclusive method in use.
-dnl
-if test ${with_aixauth-'no'} != "no"; then
-    if test X"$with_aixauth" != X"maybe" -o X"$AUTH_EXCL" = X""; then
-	AC_MSG_NOTICE([using AIX general authentication])
-	AC_DEFINE(HAVE_AIXAUTH)
-	SUDO_ADD_AUTH([AIX general authentication], [aix_auth.o], [true])
-	SUDO_LIBS="${SUDO_LIBS} -ls"
+    if test "$CHECKSHADOW" = "true"; then
+	AC_SEARCH_LIBS([getspnam], [gen], [AC_DEFINE(HAVE_GETSPNAM)] [CHECKSHADOW=false; test -n "$ac_lib" && SUDO_LIBS="${SUDO_LIBS} $ac_res"])
     fi
-fi
-
-dnl
-dnl BSD authentication
-dnl If set to "maybe" only enable if no other exclusive method in use.
-dnl
-if test ${with_bsdauth-'no'} != "no"; then
-    if test X"$with_bsdauth" != X"maybe" -o X"$AUTH_EXCL" = X""; then
-	AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H)
-	    [SUDO_ADD_AUTH([BSD authentication], [bsdauth.o], [true])], -)
+    if test "$CHECKSHADOW" = "true"; then
+	AC_SEARCH_LIBS([getprpwnam], [sec security prot], [AC_DEFINE(HAVE_GETPRPWNAM)] [CHECKSHADOW=false; SECUREWARE=1; test -n "$ac_lib" && SUDO_LIBS="${SUDO_LIBS} $ac_res"])
+    fi
+    if test -n "$SECUREWARE"; then
+	AC_CHECK_FUNCS(bigcrypt set_auth_parameters initprivs)
+	AUTH_OBJS="$AUTH_OBJS secureware.o"
     fi
 fi
 
 dnl
 dnl extra lib and .o file for LDAP support
 dnl
-if test -n "$with_ldap"; then
+if test ${with_ldap-'no'} != "no"; then
     _LDFLAGS="$LDFLAGS"
     if test "$with_ldap" != "yes"; then
 	SUDO_APPEND_LIBPATH(SUDO_LDFLAGS, [${with_ldap}/lib])
@@ -2229,8 +2296,9 @@ SUDO_TIMEDIR
 dnl
 dnl Use passwd (and secureware) auth modules?
 dnl
-case "$AUTH_OBJS" in
-*passwd.o*)
+case "$with_passwd" in
+yes|maybe)
+    AUTH_OBJS="$AUTH_OBJS passwd.o"
     ;;
 *)
     AC_DEFINE(WITHOUT_PASSWD)
@@ -2239,6 +2307,7 @@ case "$AUTH_OBJS" in
     fi
     ;;
 esac
+AUTH_OBJS=${AUTH_OBJS# }
 _AUTH=`echo "$AUTH_OBJS" | sed 's/\.o//g'`
 AC_MSG_NOTICE([using the following authentication methods: $_AUTH])
 

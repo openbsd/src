@@ -386,8 +386,8 @@ The following options are also configurable at runtime:
   --with-passprompt="PASSWORD PROMPT"
 	Default prompt to use when asking for a password; can be overridden
 	via the -p option and the SUDO_PROMPT environment variable. Supports
-	two escapes: "%u" expands to the user's login name and "%h" expands
-	to the local hostname.  Default is "Password:".
+	the "%H", "%h", "%U" and "%u" escapes as documented in the sudo
+	manual page.  The default value is "Password:".
 
   --with-badpass-message="BAD PASSWORD MESSAGE"
 	Message that is displayed if a user enters an incorrect password.

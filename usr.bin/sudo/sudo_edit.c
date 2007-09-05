@@ -62,7 +62,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_edit.c,v 1.6.2.7 2007/07/08 18:44:41 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_edit.c,v 1.6.2.8 2007/09/03 20:28:31 millert Exp $";
 #endif /* lint */
 
 extern sigaction_t saved_sa_int, saved_sa_quit, saved_sa_tstp, saved_sa_chld;
@@ -135,7 +135,7 @@ int sudo_edit(argc, argv, envp)
 	    }
 	}
 	set_perms(PERM_ROOT);
-	if (error || !S_ISREG(sb.st_mode)) {
+	if (error || (ofd != -1 && !S_ISREG(sb.st_mode))) {
 	    if (error)
 		warn("%s", *ap);
 	    else

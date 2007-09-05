@@ -328,29 +328,6 @@ AC_DEFUN(SUDO_APPEND_LIBPATH, [
 ])
 
 dnl
-dnl Add a (potentially exclusive) auth method
-dnl $1 - auth name
-dnl $2 - object file to add to AUTH_OBJS
-dnl $3 - set if method is exclusive
-dnl
-AC_DEFUN(SUDO_ADD_AUTH, [
-if test X"$AUTH_EXCL" != X""; then
-    AC_MSG_ERROR(["cannot mix $1 with an exclusive authentication method such as $AUTH_EXCL"])
-elif test X"$3" != X"" -a X"$AUTH_OBJS" != X"" -a X"$AUTH_OBJS" != X"passwd.o"; then
-    _AUTH=`echo "$AUTH_OBJS" | sed 's/\.o//g'`
-    AC_MSG_ERROR(["cannot mix $1 with other authentication methods (such as $_AUTH)"])
-fi
-if test X"$3" != X""; then
-    AUTH_OBJS="$2"
-    AUTH_EXCL="$1"
-elif test X"$AUTH_OBJS" = X""; then
-    AUTH_OBJS="$2"
-else
-    AUTH_OBJS="$AUTH_OBJS $2"
-fi
-])
-
-dnl
 dnl private versions of AC_DEFINE and AC_DEFINE_UNQUOTED that don't support
 dnl tracing that we use to define paths for pathnames.h so autoheader doesn't
 dnl put them in config.h.in.  An awful hack.
