@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.54 2007/09/05 07:32:33 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.55 2007/09/05 08:48:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -402,9 +402,10 @@ struct session {
 	struct evbuffer			*log;
 	void				*relay;
 	struct ctl_natlook		*cnl;
-	TAILQ_ENTRY(session)		 entry;
+
+	SPLAY_ENTRY(session)		 nodes;
 };
-TAILQ_HEAD(sessionlist, session);
+SPLAY_HEAD(session_tree, session);
 
 enum nodeaction {
 	NODE_ACTION_NONE	= 0,
@@ -489,6 +490,9 @@ struct protocol {
 	struct proto_tree	 request_tree;
 	int			 response_nodes;
 	struct proto_tree	 response_tree;
+
+	int			(*cmp)(struct session *, struct session *);
+
 	TAILQ_ENTRY(protocol)	 entry;
 };
 TAILQ_HEAD(protolist, protocol);
@@ -530,7 +534,7 @@ struct relay {
 
 	struct ctl_stats	 stats[RELAY_MAXPROC + 1];
 
-	struct sessionlist	 sessions;
+	struct session_tree	 sessions;
 };
 TAILQ_HEAD(relaylist, relay);
 
@@ -689,8 +693,10 @@ void	 hce_notify_done(struct host *, const char *);
 pid_t	 relay(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
 	    int [2], int [RELAY_MAXPROC][2]);
 void	 relay_notify_done(struct host *, const char *);
+int	 relay_session_cmp(struct session *, struct session *);
 
 RB_PROTOTYPE(proto_tree, protonode, nodes, relay_proto_cmp);
+SPLAY_PROTOTYPE(session_tree, session, nodes, relay_session_cmp);
 
 /* check_icmp.c */
 void	 icmp_init(struct hoststated *);

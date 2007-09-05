@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.38 2007/09/04 10:58:08 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.39 2007/09/05 08:48:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -260,7 +260,7 @@ relay_shutdown(void)
 		if (rlay->conf.flags & F_DISABLE)
 			continue;
 		close(rlay->s);
-		while ((con = TAILQ_FIRST(&rlay->sessions)) != NULL)
+		while ((con = SPLAY_ROOT(&rlay->sessions)) != NULL)
 			relay_close(con, "shutdown");
 	}
 	usleep(200);	/* XXX relay needs to shutdown last */
@@ -467,9 +467,10 @@ relay_statistics(int fd, short events, void *arg)
 		imsg_compose(ibuf_pfe, IMSG_STATISTICS, 0, 0, -1,
 		    &crs, sizeof(crs));
 
-		for (con = TAILQ_FIRST(&rlay->sessions);
+		for (con = SPLAY_ROOT(&rlay->sessions);
 		    con != NULL; con = next_con) {
-			next_con = TAILQ_NEXT(con, entry);
+			next_con = SPLAY_NEXT(session_tree,
+			    &rlay->sessions, con);
 			timersub(&tv_now, &con->tv_last, &tv);
 			if (timercmp(&tv, &rlay->conf.timeout, >=))
 				relay_close(con, "hard timeout");
@@ -1493,7 +1494,7 @@ relay_accept(int fd, short sig, void *arg)
 	bcopy(&ss, &con->in.ss, sizeof(con->in.ss));
 
 	relay_sessions++;
-	TAILQ_INSERT_HEAD(&rlay->sessions, con, entry);
+	SPLAY_INSERT(session_tree, &rlay->sessions, con);
 
 	/* Increment the per-relay session counter */
 	rlay->stats[proc_id].last++;
@@ -1720,7 +1721,7 @@ relay_close(struct session *con, const char *msg)
 	struct relay	*rlay = (struct relay *)con->relay;
 	char		 ibuf[128], obuf[128], *ptr = NULL;
 
-	TAILQ_REMOVE(&rlay->sessions, con, entry);
+	SPLAY_REMOVE(session_tree, &rlay->sessions, con);
 
 	event_del(&con->ev);
 	if (con->in.bev != NULL)
@@ -2359,3 +2360,17 @@ relay_proto_cmp(struct protonode *a, struct protonode *b)
 }
 
 RB_GENERATE(proto_tree, protonode, nodes, relay_proto_cmp);
+
+int
+relay_session_cmp(struct session *a, struct session *b)
+{
+	struct relay	*rlay = (struct relay *)a->relay;
+	struct protocol	*proto = rlay->proto;
+
+	if (proto->cmp != NULL)
+		return ((*proto->cmp)(a, b));
+
+	return ((int)a->id - b->id);
+}
+
+SPLAY_GENERATE(session_tree, session, nodes, relay_session_cmp);
