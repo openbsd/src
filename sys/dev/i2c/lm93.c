@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm93.c,v 1.1 2007/09/04 20:19:22 deraadt Exp $	*/
+/*	$OpenBSD: lm93.c,v 1.2 2007/09/05 03:11:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -157,7 +157,11 @@ struct cfdriver lmn_cd = {
 int
 lmn_match(struct device *parent, void *match, void *aux)
 {
-	return (1);
+	struct i2c_attach_args *ia = aux;
+
+	if (strcmp(ia->ia_name, "lm93") == 0)
+		return (1);
+	return (0);
 }
 
 void
