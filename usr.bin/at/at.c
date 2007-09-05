@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.53 2007/09/02 15:19:31 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.54 2007/09/05 08:02:21 moritz Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.53 2007/09/02 15:19:31 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.54 2007/09/05 08:02:21 moritz Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -486,7 +486,8 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	long l;
 	char queue, *ep;
 	DIR *spool;
-	int i, shortformat, numjobs, maxjobs;
+	int i, shortformat;
+	size_t numjobs, maxjobs;
 
 	if (argc) {
 		if ((uids = calloc(sizeof(uid_t), argc)) == NULL)
@@ -580,7 +581,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 		job->mode = stbuf.st_mode;
 		job->queue = queue;
 		if (numjobs == maxjobs) {
-			int newjobs = maxjobs * 2;
+			size_t newjobs = maxjobs * 2;
 			newatjobs = realloc(atjobs, newjobs * sizeof(job));
 			if (newatjobs == NULL)
 				panic("Insufficient virtual memory");
@@ -596,7 +597,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 		if (numjobs == 0 && !shortformat)
 			fprintf(stderr, "no files in queue.\n");
 		else if (count_only)
-			printf("%d\n", numjobs);
+			printf("%zu\n", numjobs);
 		free(atjobs);
 		return;
 	}
