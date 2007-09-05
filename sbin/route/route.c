@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.110 2007/06/04 12:23:43 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.111 2007/09/05 20:30:21 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ void
 set_metric(char *value, int key)
 {
 	int flag = 0;
-	u_long noval, *valp = &noval;
+	u_int noval, *valp = &noval;
 
 	switch (key) {
 	case K_MTU:
@@ -1236,12 +1236,12 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 #define msec(u)	(((u) + 500) / 1000)		/* usec to msec */
 
 	printf("%s\n", "     use  hopcount       mtu    expire");
-	printf("%8lu  ", rtm->rtm_rmx.rmx_pksent);
-	printf("%8lu%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
-	printf("%8lu%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
+	printf("%8llu  ", rtm->rtm_rmx.rmx_pksent);
+	printf("%8u%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
+	printf("%8u%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
 	if (rtm->rtm_rmx.rmx_expire)
 		rtm->rtm_rmx.rmx_expire -= time(NULL);
-	printf("%8ld%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+	printf("%8d%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
 #undef lock
 #undef msec
 #define	RTA_IGN	(RTA_DST|RTA_GATEWAY|RTA_NETMASK|RTA_IFP|RTA_IFA|RTA_BRD)
