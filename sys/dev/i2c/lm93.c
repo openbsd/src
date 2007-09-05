@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm93.c,v 1.3 2007/09/05 16:23:30 deraadt Exp $	*/
+/*	$OpenBSD: lm93.c,v 1.4 2007/09/05 20:40:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -99,7 +99,7 @@ struct {
 	{ LMN_IN4_V, LM93_IN4_V, "FSB_Vtt 1.6V", 1600, 0 },
 	{ LMN_IN5_V, LM93_IN5_V, "3GIO 2V ", 2000, 0 },
 	{ LMN_IN6_V, LM93_IN6_V, "ICH_Core 2V", 2000, 0 },
-	{ LMN_IN7_V, LM93_IN7_V, "Vccp1 1.6V", 1600, 0,},
+	{ LMN_IN7_V, LM93_IN7_V, "Vccp1 1.6V", 1600, 0 },
 	{ LMN_IN8_V, LM93_IN8_V, "Vccp2 1.6V", 1600, 0 },
 	{ LMN_IN9_V, LM93_IN9_V, "+3.3V", 4400, 0 },
 	{ LMN_IN10_V, LM93_IN10_V, "+5V", 6667, 0 },
