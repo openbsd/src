@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.13 2007/06/06 19:42:28 mk Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.14 2007/09/05 23:36:12 jakemsr Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ sequencerread(dev_t dev, struct uio *uio, int ioflag)
 		     sc, uio->uio_resid, ioflag));
 
 	if (sc->mode == SEQ_OLD) {
-		DPRINTFN(-1,("sequencerread: old read\n"));
+		DPRINTF(("sequencerread: old read\n"));
 		return (EINVAL); /* XXX unimplemented */
 	}
 
@@ -593,7 +593,7 @@ sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	}
 
 	default:
-		DPRINTFN(-1,("sequencer_ioctl: unimpl %08lx\n", cmd));
+		DPRINTF(("sequencer_ioctl: unimpl %08lx\n", cmd));
 		error = ENOTTY;
 		break;
 	}
@@ -667,7 +667,7 @@ seq_do_command(struct sequencer_softc *sc, seq_event_rec *b)
 			return (ENXIO);
 		return (midiseq_putc(sc->devs[dev], b->arr[1]));
 	default:
-		DPRINTFN(-1,("seq_do_command: unimpl command %02x\n",
+		DPRINTF(("seq_do_command: unimpl command %02x\n",
 			     SEQ_CMD(b)));
 		return (EINVAL);
 	}
@@ -708,7 +708,7 @@ seq_do_chnvoice(struct sequencer_softc *sc, seq_event_rec *b)
 		error = midiseq_keypressure(md, voice, note, parm);
 		break;
 	default:
-		DPRINTFN(-1,("seq_do_chnvoice: unimpl command %02x\n", cmd));
+		DPRINTF(("seq_do_chnvoice: unimpl command %02x\n", cmd));
 		error = EINVAL;
 		break;
 	}
@@ -755,7 +755,7 @@ seq_do_chncommon(struct sequencer_softc *sc, seq_event_rec *b)
 		error = midiseq_chnpressure(md, chan, p1);
 		break;
 	default:
-		DPRINTFN(-1,("seq_do_chncommon: unimpl command %02x\n", cmd));
+		DPRINTF(("seq_do_chncommon: unimpl command %02x\n", cmd));
 		error = EINVAL;
 		break;
 	}
@@ -1195,7 +1195,7 @@ midiseq_loadpatch(struct midi_dev *md, struct sysex_info *sysex, struct uio *uio
 	int i, cc, error;
 
 	if (sysex->key != SEQ_SYSEX_PATCH) {
-		DPRINTFN(-1,("midiseq_loadpatch: bad patch key 0x%04x\n",
+		DPRINTF(("midiseq_loadpatch: bad patch key 0x%04x\n",
 			     sysex->key));
 		return (EINVAL);
 	}
