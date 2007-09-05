@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.19 2007/09/02 15:19:16 deraadt Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.20 2007/09/05 08:12:15 moritz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -217,8 +217,8 @@ getnetgroup(char **pp)
 #ifdef DEBUG_NG
 	{
 		char buf[1024];
-		(void) fprintf(stderr, "netgroup %s\n",
-		    _ng_print(buf, sizeof(buf), ng));
+		_ng_print(buf, sizeof(buf), ng);
+		fprintf(stderr, "netgroup %s\n", buf);
 	}
 #endif
 	return ng;
