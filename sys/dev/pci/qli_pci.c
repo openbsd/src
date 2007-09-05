@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.3 2007/09/05 11:05:44 marco Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.4 2007/09/05 11:13:20 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -78,6 +78,17 @@ u_int32_t	qli_debug = 0
 		;
 #endif
 
+struct qli_mem {
+	bus_dmamap_t		am_map;
+	bus_dma_segment_t	am_seg;
+	size_t			am_size;
+	caddr_t			am_kva;
+};
+
+#define QLIMEM_MAP(_am)		((_am)->am_map)
+#define QLIMEM_DVA(_am)		((_am)->am_map->dm_segs[0].ds_addr)
+#define QLIMEM_KVA(_am)		((void *)(_am)->am_kva)
+
 struct qli_softc {
 	struct device		sc_dev;
 
@@ -99,6 +110,8 @@ struct qli_softc {
 	struct rwlock		sc_mbox_lock;
 };
 
+struct qli_mem	*qli_allocmem(struct qli_softc *, size_t);
+void		qli_freemem(struct qli_softc *, struct qli_mem *);
 int		qli_scsi_cmd(struct scsi_xfer *);
 int		qli_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 		    struct proc *);
@@ -252,6 +265,68 @@ intrdis:
 unmap:
 	sc->sc_ih = NULL;
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsize);
+}
+
+struct qli_mem *
+qli_allocmem(struct qli_softc *sc, size_t size)
+{
+	struct qli_mem		*mm;
+	int			nsegs;
+
+	DNPRINTF(QLI_D_MEM, "%s: qli_allocmem: %d\n", DEVNAME(sc),
+	    size);
+
+	mm = malloc(sizeof(struct qli_mem), M_DEVBUF, M_NOWAIT);
+	if (mm == NULL)
+		return (NULL);
+
+	memset(mm, 0, sizeof(struct qli_mem));
+	mm->am_size = size;
+
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mm->am_map) != 0)
+		goto amfree; 
+
+	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &mm->am_seg, 1,
+	    &nsegs, BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(sc->sc_dmat, &mm->am_seg, nsegs, size, &mm->am_kva,
+	    BUS_DMA_NOWAIT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(sc->sc_dmat, mm->am_map, mm->am_kva, size, NULL,
+	    BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	DNPRINTF(QLI_D_MEM, "  kva: %p  dva: %p  map: %p\n",
+	    mm->am_kva, mm->am_map->dm_segs[0].ds_addr, mm->am_map);
+
+	memset(mm->am_kva, 0, size);
+	return (mm);
+
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, mm->am_kva, size);
+free:
+	bus_dmamem_free(sc->sc_dmat, &mm->am_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, mm->am_map);
+amfree:
+	free(mm, M_DEVBUF);
+
+	return (NULL);
+}
+
+void
+qli_freemem(struct qli_softc *sc, struct qli_mem *mm)
+{
+	DNPRINTF(QLI_D_MEM, "%s: qli_freemem: %p\n", DEVNAME(sc), mm);
+
+	bus_dmamap_unload(sc->sc_dmat, mm->am_map);
+	bus_dmamem_unmap(sc->sc_dmat, mm->am_kva, mm->am_size);
+	bus_dmamem_free(sc->sc_dmat, &mm->am_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, mm->am_map);
+	free(mm, M_DEVBUF);
 }
 
 void
