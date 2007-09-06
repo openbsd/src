@@ -1,7 +1,7 @@
-/*	$OpenBSD: lm93.c,v 1.5 2007/09/06 15:09:59 deraadt Exp $	*/
+/*	$OpenBSD: lm93.c,v 1.6 2007/09/06 15:10:52 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2005 Mark Kettenis
+ * Copyright (c) 2007 Theo de Raadt
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
