@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_trunk.c,v 1.33 2007/09/06 16:14:05 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.34 2007/09/06 16:22:55 reyk Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
