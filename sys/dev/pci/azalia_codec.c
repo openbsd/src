@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.29 2007/07/31 17:06:25 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.30 2007/09/06 22:52:05 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ int	azalia_stac9200_mixer_init(codec_t *);
 int	azalia_stac9200_unsol_event(codec_t *, int);
 int	azalia_stac9221_apple_mixer_init(codec_t *);
 int	azalia_stac9221_apple_init_dacgroup(codec_t *);
+int	azalia_stac9221_apple_unsol_event(codec_t *, int);
 int	azalia_stac9221_gpio_unmute(codec_t *, int);
 int	azalia_stac7661_init_dacgroup(codec_t *);
 int	azalia_stac7661_mixer_init(codec_t *);
@@ -175,7 +176,7 @@ azalia_codec_init_vtbl(codec_t *this)
 			    azalia_stac9221_apple_init_dacgroup;
 			this->mixer_init =
 			    azalia_stac9221_apple_mixer_init;
-			break;
+			this->unsol_event = azalia_stac9221_apple_unsol_event;
 		}
 		break;
 	case 0x83847683:
@@ -2538,7 +2539,50 @@ azalia_stac9221_apple_mixer_init(codec_t *this)
 	azalia_stac9221_gpio_unmute(this, 0);
 	azalia_stac9221_gpio_unmute(this, 1);
 
+#define APPLE_EVENT_HP         1
+#define APPLE_NID_HP           0x0a
+#define APPLE_NID_SPEAKER      0x0c
+#define APPLE_NID_LINE         0x0d
+
+	/* register hp unsolicited event */
+	this->comresp(this, APPLE_NID_HP, CORB_SET_UNSOLICITED_RESPONSE,
+	    CORB_UNSOL_ENABLE | APPLE_EVENT_HP, NULL);
+
+        azalia_stac9221_apple_unsol_event(this, APPLE_EVENT_HP);
+
 	return 0;
+}
+
+int
+azalia_stac9221_apple_unsol_event(codec_t *this, int tag)
+{
+	int err;
+	uint32_t value;
+
+	switch (tag) {
+	case APPLE_EVENT_HP:
+		err = this->comresp(this, APPLE_NID_HP,
+		    CORB_GET_PIN_SENSE, 0, &value);
+		if (err)
+			break;
+		if (value & CORB_PS_PRESENCE) {
+			DPRINTF(("%s: headphone inserted\n", __func__));
+			azalia_generic_mixer_pinctrl(this,
+			    APPLE_NID_SPEAKER, 0);
+			azalia_generic_mixer_pinctrl(this,
+			    APPLE_NID_LINE, 0);
+		} else {
+			DPRINTF(("%s: headphone pulled\n", __func__));
+			azalia_generic_mixer_pinctrl(this,
+			    APPLE_NID_SPEAKER, CORB_PWC_OUTPUT);
+			azalia_generic_mixer_pinctrl(this,
+			    APPLE_NID_LINE, CORB_PWC_OUTPUT);
+		}
+		break;
+	default:
+		DPRINTF(("%s: unknown tag: %d\n", __func__, tag));
+	}
+        return 0;
 }
 
 int
