@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.2 2007/09/06 16:51:49 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.3 2007/09/06 19:33:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -359,7 +359,6 @@ iwn_sensor_attach(struct iwn_softc *sc)
 {
 	strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof sc->sensordev.xname);
-	strlcpy(sc->sensor.desc, "temperature", sizeof sc->sensor.desc);
 	sc->sensor.type = SENSOR_TEMP;
 	/* temperature invalid until interface is up */
 	sc->sensor.value = 0;
@@ -1368,7 +1367,7 @@ iwn_rx_statistics(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 		DPRINTFN(2, ("temperature=%d\n", temp));
 
 		/* update temperature sensor */
-		sc->sensor.value = temp;
+		sc->sensor.value = IWN_CTOMUK(temp);
 
 		/* update Tx power if need be */
 		iwn_power_calibration(sc, temp);
@@ -3507,7 +3506,7 @@ iwn_init(struct ifnet *ifp)
 	sc->rawtemp = sc->ucode_info.temp[3].chan20MHz;
 	sc->temp = iwn_get_temperature(sc);
 	DPRINTF(("temperature=%d\n", sc->temp));
-	sc->sensor.value = sc->temp;
+	sc->sensor.value = IWN_CTOMUK(sc->temp);
 	sc->sensor.flags &= ~SENSOR_FINVALID;
 
 	if ((error = iwn_config(sc)) != 0) {

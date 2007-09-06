@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.1 2007/09/06 16:37:03 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.2 2007/09/06 19:33:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -586,6 +586,7 @@ struct iwn_critical_temp {
 /* degK <-> degC conversion macros */
 #define IWN_CTOK(c)	((c) + 273)
 #define IWN_KTOC(k)	((k) - 273)
+#define IWN_CTOMUK(c)	(((c) * 1000000) + 273150000)
 } __packed;
 
 /* structure for command IWN_SENSITIVITY */
