@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.6 2007/09/06 03:55:19 davec Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.7 2007/09/06 14:19:38 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -46,53 +46,6 @@
 
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
-/* #define QLI_DEBUG */
-#define QLI_DEBUG
-#ifdef QLI_DEBUG
-#define DPRINTF(x...)		do { if (qli_debug) printf(x); } while(0)
-#define DNPRINTF(n,x...)	do { if (qli_debug & n) printf(x); } while(0)
-#define	QLI_D_CMD		0x0001
-#define	QLI_D_INTR		0x0002
-#define	QLI_D_MISC		0x0004
-#define	QLI_D_DMA		0x0008
-#define	QLI_D_IOCTL		0x0010
-#define	QLI_D_RW		0x0020
-#define	QLI_D_MEM		0x0040
-#define	QLI_D_CCB		0x0080
-#define	QLI_D_SEM		0x0100
-#define	QLI_D_MBOX		0x0200
-#else
-#define DPRINTF(x...)
-#define DNPRINTF(n,x...)
-#define qli_dump_mbox(x, y)
-#endif
-
-#ifdef QLI_DEBUG
-u_int32_t	qli_debug = 0
-		    | QLI_D_CMD
-		    | QLI_D_INTR
-		    | QLI_D_MISC
-		    | QLI_D_DMA
-		    | QLI_D_IOCTL
-		    | QLI_D_RW
-		    | QLI_D_MEM
-		    | QLI_D_CCB
-		    | QLI_D_SEM
-		    | QLI_D_MBOX
-		;
-#endif
-
-struct qli_mem {
-	bus_dmamap_t		am_map;
-	bus_dma_segment_t	am_seg;
-	size_t			am_size;
-	caddr_t			am_kva;
-};
-
-#define QLIMEM_MAP(_am)		((_am)->am_map)
-#define QLIMEM_DVA(_am)		((_am)->am_map->dm_segs[0].ds_addr)
-#define QLIMEM_KVA(_am)		((void *)(_am)->am_kva)
-
 struct qli_softc {
 	struct device		sc_dev;
 
@@ -121,6 +74,52 @@ struct qli_softc {
 #define QLI_MBOX_F_WAKEUP	(0x02)
 #define QLI_MBOX_F_POLL		(0x04)
 };
+
+/* #define QLI_DEBUG */
+#ifdef QLI_DEBUG
+#define DPRINTF(x...)		do { if (qli_debug) printf(x); } while(0)
+#define DNPRINTF(n,x...)	do { if (qli_debug & n) printf(x); } while(0)
+#define	QLI_D_CMD		0x0001
+#define	QLI_D_INTR		0x0002
+#define	QLI_D_MISC		0x0004
+#define	QLI_D_DMA		0x0008
+#define	QLI_D_IOCTL		0x0010
+#define	QLI_D_RW		0x0020
+#define	QLI_D_MEM		0x0040
+#define	QLI_D_CCB		0x0080
+#define	QLI_D_SEM		0x0100
+#define	QLI_D_MBOX		0x0200
+
+u_int32_t	qli_debug = 0
+		    | QLI_D_CMD
+		    | QLI_D_INTR
+		    | QLI_D_MISC
+		    | QLI_D_DMA
+		    | QLI_D_IOCTL
+		    | QLI_D_RW
+		    | QLI_D_MEM
+		    | QLI_D_CCB
+		    | QLI_D_SEM
+		    | QLI_D_MBOX
+		;
+
+void		qli_dump_mbox(struct qli_softc *, u_int32_t *);
+#else
+#define DPRINTF(x...)
+#define DNPRINTF(n,x...)
+#define qli_dump_mbox(x, y)
+#endif /* QLI_DEBUG */
+
+struct qli_mem {
+	bus_dmamap_t		am_map;
+	bus_dma_segment_t	am_seg;
+	size_t			am_size;
+	caddr_t			am_kva;
+};
+
+#define QLIMEM_MAP(_am)		((_am)->am_map)
+#define QLIMEM_DVA(_am)		((_am)->am_map->dm_segs[0].ds_addr)
+#define QLIMEM_KVA(_am)		((void *)(_am)->am_kva)
 
 struct qli_mem	*qli_allocmem(struct qli_softc *, size_t);
 void		qli_freemem(struct qli_softc *, struct qli_mem *);
@@ -152,10 +151,6 @@ int		qli_attach(struct qli_softc *);
 #ifndef SMALL_KERNEL
 int		qli_create_sensors(struct qli_softc *);
 #endif /* SMALL_KERNEL */
-
-#ifdef QLI_DEBUG
-void		qli_dump_mbox(struct qli_softc *, u_int32_t *);
-#endif /* QLI_DEBUG */
 
 struct scsi_adapter qli_switch = {
 	qli_scsi_cmd, qliminphys, 0, 0, qli_scsi_ioctl
