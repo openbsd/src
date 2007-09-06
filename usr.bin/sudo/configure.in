@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.21 2007/09/05 22:16:57 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.22 2007/09/06 11:18:04 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -118,7 +118,7 @@ dnl
 dnl Other vaiables
 dnl
 CHECKSHADOW=true
-CHECKSIA=true
+CHECKSIA=
 shadow_defs=
 shadow_funcs=
 shadow_libs=
@@ -1311,11 +1311,13 @@ case "$host" in
 		# ignore envariables wrt dynamic lib path
 		SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-no_library_replacement"
 
+		: ${CHECKSIA='true'}
 		AC_MSG_CHECKING(whether to disable sia support on Digital UNIX)
 		AC_ARG_ENABLE(sia,
 		[  --disable-sia           Disable SIA on Digital UNIX],
 		[ case "$enableval" in
 		    yes)	AC_MSG_RESULT(no)
+				CHECKSIA=true
 				;;
 		    no)		AC_MSG_RESULT(yes)
 				CHECKSIA=false

@@ -2110,7 +2110,7 @@ AUTH_EXCL_DEF=
 AUTH_DEF=passwd
 
 CHECKSHADOW=true
-CHECKSIA=true
+CHECKSIA=
 shadow_defs=
 shadow_funcs=
 shadow_libs=
@@ -11544,6 +11544,7 @@ _ACEOF
 		# ignore envariables wrt dynamic lib path
 		SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-no_library_replacement"
 
+		: ${CHECKSIA='true'}
 		{ echo "$as_me:$LINENO: checking whether to disable sia support on Digital UNIX" >&5
 echo $ECHO_N "checking whether to disable sia support on Digital UNIX... $ECHO_C" >&6; }
 		# Check whether --enable-sia was given.
@@ -11551,6 +11552,7 @@ if test "${enable_sia+set}" = set; then
   enableval=$enable_sia;  case "$enableval" in
 		    yes)	{ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
+				CHECKSIA=true
 				;;
 		    no)		{ echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
