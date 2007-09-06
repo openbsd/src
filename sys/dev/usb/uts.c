@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.18 2007/08/30 18:49:29 matthieu Exp $ */
+/*	$OpenBSD: uts.c,v 1.19 2007/09/06 20:28:56 matthieu Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
@@ -87,6 +87,7 @@ struct uts_softc {
 };
 
 struct uts_pos {
+	int	down;
 	int	x;
 	int	y;
 	int	z;	/* touch pressure */
@@ -388,7 +389,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 {
 	struct uts_softc *sc = addr;
 	u_char *p = sc->sc_ibuf;
-	int down, x, y;
+	int down, x, y, z;
 
 	switch (sc->sc_product) {
 	case USB_PRODUCT_FTDI_ITM_TOUCH:
@@ -396,6 +397,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 		x = ((p[0] & 0x1f) << 7) | (p[3] & 0x7f);  
 		/* Invert the Y coordinate */
 		y = 0x0fff - abs(((p[1] & 0x1f) << 7) | (p[4] & 0x7f));
+		z = ((p[2] & 0x1) << 7) | (p[5] & 0x7f);
 		sc->sc_pkts = 0x8;
 		break;
 	case USB_PRODUCT_EGALAX_TPANEL:
@@ -410,6 +412,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 			/* Invert the X coordiate */
 			x = 0x07ff - abs(((p[3] & 0x0f) << 7) | (p[4] & 0x7f));
 			y = ((p[1] & 0x0f) << 7) | (p[2] & 0x7f);
+			z = down;
 			sc->sc_pkts = 0x5;
 			break;
 		case USB_VENDOR_GUNZE:
@@ -417,6 +420,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 			/* Invert the X coordinate */
 			x = 0x0fff - abs(((p[0] & 0x1f) << 7) | (p[2] & 0x7f));
 			y = ((p[1] & 0x1f) << 7) | (p[3] & 0x7f);
+			z = (down != 0);
 			sc->sc_pkts = 0x4;
 			break;
 		}
@@ -446,13 +450,12 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 			    sc->sc_tsscale.resy) /
 			    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny);
 		}
-		tp.z = 1;
 	} else {
 		tp.x = sc->sc_oldx;
 		tp.y = sc->sc_oldy;
-		tp.z = 0;
 	}
-
+	tp.z = z;
+	tp.down = down;
 	return (tp);
 }
 
@@ -485,10 +488,10 @@ uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 	}
 
-	DPRINTF(("%s: tp.z = %d, tp.x = %d, tp.y = %d\n",
-	    sc->sc_dev.dv_xname, tp.z, tp.x, tp.y));
+	DPRINTF(("%s: tp.down = %d, tp.z = %d, tp.x = %d, tp.y = %d\n",
+		sc->sc_dev.dv_xname, tp.down, tp.z, tp.x, tp.y));
 
-	wsmouse_input(sc->sc_wsmousedev, tp.z, tp.x, tp.y, 0, 0,
+	wsmouse_input(sc->sc_wsmousedev, tp.down, tp.x, tp.y, tp.z, 0,
 		WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
 		WSMOUSE_INPUT_ABSOLUTE_Z); 
 	sc->sc_oldy = tp.y;
