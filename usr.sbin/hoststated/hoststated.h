@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.55 2007/09/05 08:48:42 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.56 2007/09/06 19:55:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -638,6 +638,7 @@ void	fatalx(const char *);
 const char *host_status(enum host_status);
 const char *table_check(enum table_check);
 const char *print_availability(u_long, u_long);
+const char *print_host(struct sockaddr_storage *, char *, size_t);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);

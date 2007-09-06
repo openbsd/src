@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2007/05/29 17:12:04 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.6 2007/09/06 19:55:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -26,6 +26,8 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <net/if.h>
+
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <stdarg.h>
@@ -213,4 +215,18 @@ print_availability(u_long cnt, u_long up)
 	bzero(buf, sizeof(buf));
 	snprintf(buf, sizeof(buf), "%.2f%%", (double)up / cnt * 100);
 	return (buf);
+}
+
+const char *
+print_host(struct sockaddr_storage *ss, char *buf, size_t len)
+{
+	int af = ss->ss_family;
+	void *ptr;
+
+	bzero(buf, len);
+	if (af == AF_INET)
+		ptr = &((struct sockaddr_in *)ss)->sin_addr;
+	else
+		ptr = &((struct sockaddr_in6 *)ss)->sin6_addr;
+	return (inet_ntop(af, ptr, buf, len));
 }

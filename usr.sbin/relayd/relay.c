@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.40 2007/09/05 10:25:13 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.41 2007/09/06 19:55:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -74,7 +74,6 @@ void		 relay_natlook(int, short, void *);
 int		 relay_connect(struct session *);
 void		 relay_connected(int, short, void *);
 
-const char	*relay_host(struct sockaddr_storage *, char *, size_t);
 u_int32_t	 relay_hash_addr(struct sockaddr_storage *, u_int32_t);
 int		 relay_from_table(struct session *);
 
@@ -781,7 +780,7 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 
 	if (strstr(val, "$REMOTE_") != NULL) {
 		if (strstr(val, "$REMOTE_ADDR") != NULL) {
-			if (relay_host(&cre->ss, ibuf, sizeof(ibuf)) == NULL)
+			if (print_host(&cre->ss, ibuf, sizeof(ibuf)) == NULL)
 				return (NULL);
 			if (expand_string(buf, len,
 			    "$REMOTE_ADDR", ibuf) != 0)
@@ -796,7 +795,7 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 	}
 	if (strstr(val, "$SERVER_") != NULL) {
 		if (strstr(val, "$SERVER_ADDR") != NULL) {
-			if (relay_host(&rlay->conf.ss,
+			if (print_host(&rlay->conf.ss,
 			    ibuf, sizeof(ibuf)) == NULL)
 				return (NULL);
 			if (expand_string(buf, len,
@@ -1434,20 +1433,6 @@ relay_error(struct bufferevent *bev, short error, void *arg)
 	relay_close(con, "buffer event error");
 }
 
-const char *
-relay_host(struct sockaddr_storage *ss, char *buf, size_t len)
-{
-	int af = ss->ss_family;
-	void *ptr;
-
-	bzero(buf, len);
-	if (af == AF_INET)
-		ptr = &((struct sockaddr_in *)ss)->sin_addr;
-	else
-		ptr = &((struct sockaddr_in6 *)ss)->sin6_addr;
-	return (inet_ntop(af, ptr, buf, len));
-}
-
 void
 relay_accept(int fd, short sig, void *arg)
 {
@@ -1732,8 +1717,8 @@ relay_close(struct session *con, const char *msg)
 	if (env->opts & HOSTSTATED_OPT_LOGUPDATE) {
 		bzero(&ibuf, sizeof(ibuf));
 		bzero(&obuf, sizeof(obuf));
-		(void)relay_host(&con->in.ss, ibuf, sizeof(ibuf));
-		(void)relay_host(&con->out.ss, obuf, sizeof(obuf));
+		(void)print_host(&con->in.ss, ibuf, sizeof(ibuf));
+		(void)print_host(&con->out.ss, obuf, sizeof(obuf));
 		if (EVBUFFER_LENGTH(con->log) &&
 		    evbuffer_add_printf(con->log, "\r\n") != -1)
 			ptr = evbuffer_readline(con->log);
@@ -1992,7 +1977,7 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if (!SSL_CTX_set_cipher_list(ctx, proto->sslciphers))
 		goto err;
 
-	if (relay_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)
+	if (print_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)
 		goto err;
 
 	/* Load the certificate */
