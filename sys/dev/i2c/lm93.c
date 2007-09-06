@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm93.c,v 1.4 2007/09/05 20:40:55 deraadt Exp $	*/
+/*	$OpenBSD: lm93.c,v 1.5 2007/09/06 15:09:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -107,7 +107,7 @@ struct {
 	{ LMN_IN12_V, LM93_IN12_V, "Mem_Core 2.6V", 2625, 0 },
 	{ LMN_IN13_V, LM93_IN13_V, "Mem_Vtt 1.3V", 1312, 0 },
 	{ LMN_IN14_V, LM93_IN14_V, "Gbit_Core 1.3V", 1312, 0 },
-	{ LMN_IN15_V, LM93_IN15_V, "-12V", 1236*10, 0 },
+	{ LMN_IN15_V, LM93_IN15_V, "-12V", -1236*10, 0 },
 	{ LMN_IN16_V, LM93_IN16_V, "+3.3V S/B", 3600, 0 },
 
 	{ LMN_TACH1, LM93_TACH1L, "tach1", 0, 0 },
