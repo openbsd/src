@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.1 2007/09/06 16:37:03 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.2 2007/09/06 16:51:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -3381,8 +3381,11 @@ iwn_hw_config(struct iwn_softc *sc)
 {
 	uint32_t tmp, hw;
 
+#ifdef notyet
 	/* enable interrupts mitigation */
+	/* XXX generates way too much interrupts (vmstat -i) !! */
 	IWN_WRITE(sc, IWN_INTR_MIT, 512 / 32);
+#endif
 
 	/* voodoo from the reference driver */
 	tmp = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_CLASS_REG);
