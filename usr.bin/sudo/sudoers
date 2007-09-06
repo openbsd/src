@@ -1,3 +1,5 @@
+# $OpenBSD: sudoers,v 1.15 2007/09/06 11:05:21 millert Exp $
+#
 # sudoers file.
 #
 # This file MUST be edited with the 'visudo' command as root.
@@ -12,6 +14,12 @@
 # Cmnd alias specification
 
 # Defaults specification
+Defaults env_keep +="DESTDIR FETCH_CMD FLAVOR FTPMODE GROUP MAKE MULTI_PACKAGES"
+Defaults env_keep +="OKAY_FILES OWNER PKG_DBDIR PKG_DESTDIR PKG_CACHE PKG_PATH"
+Defaults env_keep +="PKG_TMPDIR PORTSDIR RELEASEDIR SUBPACKAGE"
+
+# Uncomment to preserve the environment for users in group wheel
+#Defaults:%wheel !env_reset
 
 # Runas alias specification
 
