@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm93.c,v 1.6 2007/09/06 15:10:52 deraadt Exp $	*/
+/*	$OpenBSD: lm93.c,v 1.7 2007/09/06 16:39:06 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Theo de Raadt
@@ -88,19 +88,19 @@ struct {
 	u_short		mVscale;
 	u_short		tempscale;		/* else a fan */
 } lmn_worklist[] = {
-	{ LMN_CPU1_TEMP, LM93_CPU1_TEMP, "CPU1", 0, 1 },
-	{ LMN_CPU2_TEMP, LM93_CPU2_TEMP, "CPU2", 0, 1 },
+	{ LMN_CPU1_TEMP, LM93_CPU1_TEMP, "CPU", 0, 1 },
+	{ LMN_CPU2_TEMP, LM93_CPU2_TEMP, "CPU", 0, 1 },
 	{ LMN_INT_TEMP, LM93_INT_TEMP, "Internal", 0, 1 },
 	{ LMN_EXT_TEMP, LM93_EXT_TEMP, "External", 0, 1 },
 
-	{ LMN_IN1_V, LM93_IN1_V, "+12V1", 1236*10, 0 },
-	{ LMN_IN2_V, LM93_IN2_V, "+12V2", 1236*10, 0 },
-	{ LMN_IN3_V, LM93_IN3_V, "+12V3", 1236*10, 0 },
+	{ LMN_IN1_V, LM93_IN1_V, "+12V", 1236*10, 0 },
+	{ LMN_IN2_V, LM93_IN2_V, "+12V", 1236*10, 0 },
+	{ LMN_IN3_V, LM93_IN3_V, "+12V", 1236*10, 0 },
 	{ LMN_IN4_V, LM93_IN4_V, "FSB_Vtt 1.6V", 1600, 0 },
 	{ LMN_IN5_V, LM93_IN5_V, "3GIO 2V ", 2000, 0 },
 	{ LMN_IN6_V, LM93_IN6_V, "ICH_Core 2V", 2000, 0 },
-	{ LMN_IN7_V, LM93_IN7_V, "Vccp1 1.6V", 1600, 0 },
-	{ LMN_IN8_V, LM93_IN8_V, "Vccp2 1.6V", 1600, 0 },
+	{ LMN_IN7_V, LM93_IN7_V, "Vccp 1.6V", 1600, 0 },
+	{ LMN_IN8_V, LM93_IN8_V, "Vccp 1.6V", 1600, 0 },
 	{ LMN_IN9_V, LM93_IN9_V, "+3.3V", 4400, 0 },
 	{ LMN_IN10_V, LM93_IN10_V, "+5V", 6667, 0 },
 	{ LMN_IN11_V, LM93_IN11_V, "SCSI_Core 3.3V", 3333, 0 },
@@ -110,10 +110,10 @@ struct {
 	{ LMN_IN15_V, LM93_IN15_V, "-12V", -1236*10, 0 },
 	{ LMN_IN16_V, LM93_IN16_V, "+3.3V S/B", 3600, 0 },
 
-	{ LMN_TACH1, LM93_TACH1L, "tach1", 0, 0 },
-	{ LMN_TACH2, LM93_TACH2L, "tach2", 0, 0 },
-	{ LMN_TACH3, LM93_TACH3L, "tach3", 0, 0 },
-	{ LMN_TACH4, LM93_TACH4L, "tach4", 0, 0 }
+	{ LMN_TACH1, LM93_TACH1L, "", 0, 0 },
+	{ LMN_TACH2, LM93_TACH2L, "", 0, 0 },
+	{ LMN_TACH3, LM93_TACH3L, "", 0, 0 },
+	{ LMN_TACH4, LM93_TACH4L, "", 0, 0 }
 };
 
 struct lmn_softc {
