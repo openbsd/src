@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.14 2005/08/08 08:05:35 espie Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.15 2007/09/06 08:26:12 moritz Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -243,7 +243,7 @@ load_locale_sub(int category, const char *locname, int isspecial)
 
 	switch (category) {
 	case LC_CTYPE:
-		if (_xpg4_setrunelocale(locname) == -1)
+		if (_xpg4_setrunelocale(locname))
 			return -1;
 		__install_currentrunelocale_ctype();
 		break;
