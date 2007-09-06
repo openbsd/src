@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.29 2007/08/02 17:13:31 reyk Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.30 2007/09/06 22:47:46 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1998,8 +1998,8 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			break;
 		}
 		if (i == codec->nformats) {
-			printf("didn't find Record format %u/%u/%u\n",
-			    r->encoding, r->precision, r->channels);
+			DPRINTF(("%s: can't find record format %u/%u/%u\n",
+			    __func__, r->encoding, r->precision, r->channels));
 			return (EINVAL);
 		}
 		for (j = 0; j < codec->formats[i].frequency_type; j++) {
@@ -2008,8 +2008,8 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			break;
 		}
 		if (j == codec->formats[i].frequency_type) {
-			printf("didn't find Record rate %u\n",
-			    r->sample_rate);
+			DPRINTF(("%s: can't find record rate %u\n",
+			    __func__, r->sample_rate));
 			return (EINVAL);
 		}
 		r->sw_code = rswcode;
@@ -2031,8 +2031,8 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			break;
 		}
 		if (i == codec->nformats) {
-			printf("can't find playback format %u/%u/%u\n",
-			    r->encoding, r->precision, r->channels);
+			DPRINTF(("%s: can't find playback format %u/%u/%u\n",
+			    __func__, p->encoding, p->precision, p->channels));
 			return (EINVAL);
 		}
 		for (j = 0; j < codec->formats[i].frequency_type; j++) {
@@ -2041,8 +2041,8 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			break;
 		}
 		if (j == codec->formats[i].frequency_type) {
-			printf("can't find playback rate %u\n",
-			    p->sample_rate);
+			DPRINTF(("%s: can't find playback rate %u\n",
+			    __func__, p->sample_rate));
 			return (EINVAL);
 		}
 		p->sw_code = pswcode;
