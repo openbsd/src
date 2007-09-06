@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.5 2006/07/19 20:58:45 fgsch Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.6 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -84,6 +84,11 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TI_PCI7XX1_SD &&
             pa->pa_function == 4)
 		sdhc_takecontroller(pa);
+
+	/* ENE controllers break if set to 0V bus power */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENE &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENE_SDCARD)
+		sc->sc.sc_flags |= SDHC_F_NOPWR0;
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.21 2007/05/31 23:37:21 uwe Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.22 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -390,7 +390,8 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 	/*
 	 * Disable bus power before voltage change.
 	 */
-	HWRITE1(hp, SDHC_POWER_CTL, 0);
+	if (!(hp->sc->sc_flags & SDHC_F_NOPWR0))
+		HWRITE1(hp, SDHC_POWER_CTL, 0);
 
 	/* If power is disabled, reset the host and return now. */
 	if (ocr == 0) {
