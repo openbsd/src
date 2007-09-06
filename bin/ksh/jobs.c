@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.35 2006/02/06 16:47:07 jmc Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.36 2007/09/06 19:57:47 otto Exp $	*/
 
 /*
  * Process and job control
@@ -246,11 +246,17 @@ j_change(void)
 	int i;
 
 	if (Flag(FMONITOR)) {
-		/* Don't call tcgetattr() 'til we own the tty process group */
-		tty_init(false);
+		int use_tty;
+
+		if (Flag(FTALKING)) {
+			/* Don't call tcgetattr() 'til we own the tty process group */
+			use_tty = 1;
+			tty_init(false);
+		} else
+			use_tty = 0;
 
 		/* no controlling tty, no SIGT* */
-		ttypgrp_ok = tty_fd >= 0 && tty_devtty;
+		ttypgrp_ok = use_tty && tty_fd >= 0 && tty_devtty;
 
 		if (ttypgrp_ok && (our_pgrp = getpgrp()) < 0) {
 			warningf(false, "j_init: getpgrp() failed: %s",
@@ -296,8 +302,10 @@ j_change(void)
 				our_pgrp = kshpid;
 			}
 		}
-		if (!ttypgrp_ok)
-			warningf(false, "warning: won't have full job control");
+		if (use_tty) {
+			if (!ttypgrp_ok)
+				warningf(false, "warning: won't have full job control");
+		}
 		if (tty_fd >= 0)
 			tcgetattr(tty_fd, &tty_state);
 	} else {
