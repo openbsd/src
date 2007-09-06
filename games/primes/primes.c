@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: primes.c,v 1.14 2007/09/06 20:50:55 chl Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: primes.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: primes.c,v 1.14 2007/09/06 20:50:55 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,8 +196,7 @@ read_num_buf(void)
 				err(1, "stdin");
 			exit(0);
 		}
-		if (*(p = buf + strlen(buf) - 1) == '\n')
-			*p = '\0';
+		buf[strcspn(buf, "\n")] = '\0';
 		for (p = buf; isblank(*p); ++p);
 		if (*p == '\0')
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.16 2006/03/12 00:32:50 deraadt Exp $	*/
+/*	$OpenBSD: factor.c,v 1.17 2007/09/06 20:50:55 chl Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.16 2006/03/12 00:32:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.17 2007/09/06 20:50:55 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,8 +118,7 @@ main(int argc, char *argv[])
 					err(1, "stdin");
 				exit (0);
 			}
-			if (*(p = buf + strlen(buf) - 1) == '\n')
-				*p = '\0';
+			buf[strcspn(buf, "\n")] = '\0';
 			for (p = buf; isblank(*p); ++p);
 			if (*p == '\0')
 				continue;
