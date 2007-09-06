@@ -1,4 +1,4 @@
-/* $OpenBSD: qlireg.h,v 1.4 2007/09/05 22:39:15 marco Exp $ */
+/* $OpenBSD: qlireg.h,v 1.5 2007/09/06 03:55:19 davec Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -417,3 +417,30 @@ struct qli_reg {
 #define		QLI_EXT_HW_CFG_DDR_DRIVE_STRENGTH_15MA	(0x2000)
 #define		QLI_EXT_HW_CFG_DDR_DRIVE_STRENGTH_18MA	(0x4000)
 #define		QLI_EXT_HW_CFG_DDR_DRIVE_STRENGTH_24MA	(0x6000)
+
+/* nvram */
+#define QLI_NVRAM_MASK					(0xf<<16)
+#define QLI_NVRAM(s) (s->sc_ql4010 ? \
+	&s->sc_reg->u1.isp4010.q10_nvram : \
+	&s->sc_reg->u1.isp4022.q22_nvram)
+
+#define QLI_NVRAM_CLOCK					(0x1<<0)
+#define QLI_NVRAM_SELECT				(0x1<<1)
+#define QLI_NVRAM_DATA_OUT				(0x1<<2)
+#define QLI_NVRAM_DATA_IN				(0x1<<3)
+
+#define QLI_NVRAM_SIZE_4010				(0x100)
+#define QLI_NVRAM_SIZE_4022				(0x400)
+#define QLI_NVRAM_SIZE(s) (s->sc_ql4010 ? \
+	QLI_NVRAM_SIZE_4010 : QLI_NVRAM_SIZE_4022)
+
+#define QLI_NVRAM_NUM_CMD_BITS				(0x2)
+#define QLI_NVRAM_CMD_READ				(0x2)
+
+#define QLI_NVRAM_NUM_ADDR_BITS_4010			(0x8)
+#define QLI_NVRAM_NUM_ADDR_BITS_4022			(0xa)
+#define QLI_NVRAM_NUM_ADDR_BITS(s) (s->sc_ql4010 ? \
+	QLI_NVRAM_NUM_ADDR_BITS_4010 : \
+	QLI_NVRAM_NUM_ADDR_BITS_4022)
+
+#define QLI_NVRAM_NUM_DATA_BITS				(0x10)

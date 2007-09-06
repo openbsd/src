@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.5 2007/09/05 22:39:15 marco Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.6 2007/09/06 03:55:19 davec Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -47,6 +47,7 @@
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
 /* #define QLI_DEBUG */
+#define QLI_DEBUG
 #ifdef QLI_DEBUG
 #define DPRINTF(x...)		do { if (qli_debug) printf(x); } while(0)
 #define DNPRINTF(n,x...)	do { if (qli_debug & n) printf(x); } while(0)
@@ -135,6 +136,9 @@ void		qli_pci_attach(struct device *, struct device *, void *);
 int		qli_ioctl(struct device *, u_long, caddr_t);
 int		qli_lock_sem(struct qli_softc *, u_int32_t, u_int32_t);
 void		qli_unlock_sem(struct qli_softc *, u_int32_t);
+void		qli_eeprom_out(struct qli_softc *, u_int32_t);
+u_int16_t	qli_read_nvram(struct qli_softc *, u_int32_t);
+int		qli_validate_nvram(struct qli_softc *);
 int		qli_lock_driver(struct qli_softc *);
 void		qli_write(struct qli_softc *, volatile u_int32_t *, u_int32_t);
 u_int32_t	qli_read(struct qli_softc *, volatile u_int32_t *);
@@ -564,9 +568,99 @@ qli_lock_sem(struct qli_softc *sc, u_int32_t shift, u_int32_t mask)
 	return (rv);
 }
 
-int
-qli_start_firmware(struct qli_softc *sc)
+void
+qli_eeprom_out(struct qli_softc *sc, u_int32_t data)
 {
+	qli_write(sc, QLI_NVRAM(sc), data);
+	delay(1);
+}
+
+u_int16_t
+qli_read_nvram(struct qli_softc *sc, u_int32_t offset)
+{
+	int			i;
+	u_int32_t		s, mask, data; 
+	u_int16_t		val = 0;
+#ifdef QLI_DEBUG
+	u_int32_t		qli_debug_save = qli_debug;
+
+	qli_debug = 0;
+#endif /* QLI_DEBUG */
+
+	/* select chip */
+	s = QLI_NVRAM_MASK | QLI_NVRAM_SELECT;
+	qli_eeprom_out(sc, s);
+
+	/* start bit */
+	qli_eeprom_out(sc, s | QLI_NVRAM_DATA_OUT);
+	qli_eeprom_out(sc, s | QLI_NVRAM_DATA_OUT | QLI_NVRAM_CLOCK);
+	qli_eeprom_out(sc, s | QLI_NVRAM_DATA_OUT); /* clock low */
+
+	/* send read command */
+	mask = 1 << (QLI_NVRAM_NUM_CMD_BITS - 1);
+	for (i = 0; i < QLI_NVRAM_NUM_CMD_BITS; i++) {
+		data = ((QLI_NVRAM_CMD_READ << i) & mask) ?
+		    QLI_NVRAM_DATA_OUT : 0;
+
+		qli_eeprom_out(sc, s | data);
+		qli_eeprom_out(sc, s | data | QLI_NVRAM_CLOCK);
+		qli_eeprom_out(sc, s | data);
+	}
+
+	/* send read address */
+	mask = 1 << (QLI_NVRAM_NUM_ADDR_BITS(sc) - 1);
+	for (i = 0; i < QLI_NVRAM_NUM_ADDR_BITS(sc); i++) {
+		data = ((offset << i) & mask) ? QLI_NVRAM_DATA_OUT : 0;
+		qli_eeprom_out(sc, s | data);
+		qli_eeprom_out(sc, s | data | QLI_NVRAM_CLOCK);
+		qli_eeprom_out(sc, s | data);
+	}
+
+	/* read data */
+	for (i = 0; i < QLI_NVRAM_NUM_DATA_BITS; i++) {
+		qli_eeprom_out(sc, s | QLI_NVRAM_CLOCK);
+		qli_eeprom_out(sc, s);
+		data = (qli_read(sc, QLI_NVRAM(sc)) & QLI_NVRAM_DATA_IN) ?
+		    1 : 0; 
+		val = (val << 1) | data;
+	}
+
+	/* deselect chip */
+	s = QLI_NVRAM_MASK;
+	qli_write(sc, QLI_NVRAM(sc), s);
+
+#ifdef QLI_DEBUG
+	qli_debug = qli_debug_save;
+#endif /* QLI_DEBUG */
+
+	DNPRINTF(QLI_D_RW, "%s: qli_nvram_read 0x%x 0x%04x\n", DEVNAME(sc),
+	    offset, val);
+
+	return (val);
+}
+
+int
+qli_validate_nvram(struct qli_softc *sc)
+{
+	int			i, rv = 1;
+	u_int16_t		nvram_checksum = 0;
+
+	DNPRINTF(QLI_D_MISC, "%s: qli_validate_nvram\n", DEVNAME(sc));
+
+	for (i = 0; i < QLI_NVRAM_SIZE(sc); i++)
+		nvram_checksum += qli_read_nvram(sc, i);
+
+	DNPRINTF(QLI_D_MISC, "%s: nvram checksum 0x%04x\n", DEVNAME(sc),
+	    nvram_checksum);
+
+	if (nvram_checksum == 0)
+		rv = 0;
+
+	return (rv);
+}
+
+int
+qli_start_firmware(struct qli_softc *sc) {
 	int			rv = 1, reset_required = 1, config_required = 0;
 	int			boot_required = 0, i;
 	u_int32_t		mbox[QLI_MBOX_SIZE], r;
@@ -645,7 +739,7 @@ qli_start_firmware(struct qli_softc *sc)
 			goto unlock_driver;
 		}
 
-		if (0 /*qli_validate_nvram(sc)*/) {
+		if (qli_validate_nvram(sc)) {
 			printf("%s: invalid NVRAM checksum.  Flash your "
 			    "controller", DEVNAME(sc));
 
