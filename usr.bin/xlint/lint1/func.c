@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.18 2006/05/29 20:47:22 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.19 2007/09/06 22:02:03 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.18 2006/05/29 20:47:22 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.19 2007/09/06 22:02:03 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -660,7 +660,7 @@ switch2(void)
 
 	if (cstk->c_break) {
 		/*
-		 * end of switch alway reached (c_break is only set if the
+		 * end of switch always reached (c_break is only set if the
 		 * break statement can be reached).
 		 */
 		reached = 1;

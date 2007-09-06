@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem1.c,v 1.10 2006/03/08 07:18:51 moritz Exp $	*/
+/*	$OpenBSD: mem1.c,v 1.11 2007/09/06 22:02:03 cloder Exp $	*/
 /*	$NetBSD: mem1.c,v 1.2 1995/07/03 21:24:25 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mem1.c,v 1.10 2006/03/08 07:18:51 moritz Exp $";
+static char rcsid[] = "$OpenBSD: mem1.c,v 1.11 2007/09/06 22:02:03 cloder Exp $";
 #endif
 
 #include <sys/types.h>
@@ -129,8 +129,8 @@ getfnid(const char *s)
 /*
  * Memory for declarations and other things which must be available
  * until the end of a block (or the end of the translation unit)
- * are assoziated with the level (mblklev) of the block (or wiht 0).
- * Because these memory is allocated in large blocks associated with
+ * are associated with the level (mblklev) of the block (or with 0).
+ * Because this memory is allocated in large blocks associated with
  * a given level it can be freed easily at the end of a block.
  */
 #define	ML_INC	((size_t)32)		/* Increment for length of *mblks */
