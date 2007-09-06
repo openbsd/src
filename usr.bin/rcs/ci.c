@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.202 2007/07/03 00:56:23 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.203 2007/09/06 19:38:47 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -466,7 +466,7 @@ checkin_update(struct checkin_params *pb)
 	 * there is no lock set for the user.
 	 */
 	if (pb->newrev != NULL &&
-	    rcsnum_cmp(pb->newrev, pb->frev, 0) > 0) {
+	    rcsnum_cmp(pb->newrev, pb->frev, 0) != -1) {
 		warnx("%s: revision %s too low; must be higher than %s",
 		    pb->file->rf_path,
 		    rcsnum_tostr(pb->newrev, numb1, sizeof(numb1)),
