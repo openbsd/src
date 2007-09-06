@@ -13,7 +13,7 @@
  *
  * ISBN 3-924521-59-X
  *
- * $OpenBSD: calendar.geschichte,v 1.7 2006/11/09 15:00:43 mickey Exp $
+ * $OpenBSD: calendar.geschichte,v 1.8 2007/09/06 17:45:19 bernd Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_geschichte_
@@ -125,14 +125,15 @@ LANG=de_DE.ISO_8859-1
 08/12	deutsch-sowjetischer Gewaltverzichtsvertrag, Moskau 1970
 08/14	Wahl zum ersten deutschen Bundestag, 1949
 09/03	Vier-Mächte-Abkommen über Berlin, 1971
-09/05	Entführung und Ermordung von Arbeitgeberpräsident Schleyer,
-	Entführung einer Lufthansa-Maschine nach Mogadischu, 1977
+09/05	Entführung von Arbeitgeberpräsident Schleyer, 1977
 09/07	DDR-Staatsratsvorsitzender Honecker in der Bundesrepublik, 1987
 09/12	Wahl von Theodor Heuss (FDP) zum Bundespräsidenten, 1949
 09/15	Wahl von Konrad Adenauer (CDU) zum Bundeskanzler, 1949
 09/17	Bruch der Sozialliberalen Koalition, 1982
 09/18	Aufnahme von Bundesrepublik und DDR in die UNO, 1973
 10/01	Ablösung von Bundeskanzler Schmidt durch Kohl, 1982
+10/13	Entführung der Lufthansa-Maschine "Landshut" nach Mogadischu, 1977
+10/18	Ermordung von Arbeitgeberpräsident Schleyer, 1977
 10/23	Volksabstimmung im Saargebiet, 1955
 12/02	Washingtoner Abkommen über Bi-Zone, 1946
 12/07	deutsch-polnischer Vertrag, Warschau 1970
