@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.42 2007/06/26 10:53:01 tom Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.43 2007/09/07 10:57:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -174,13 +174,11 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 	}
 
 	if ((hal = malloc(sizeof(struct ath_hal),
-		 M_DEVBUF, M_NOWAIT)) == NULL) {
+		 M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
 		*status = ENOMEM;
 		AR5K_PRINT("out of memory\n");
 		return (NULL);
 	}
-
-	bzero(hal, sizeof(struct ath_hal));
 
 	hal->ah_sc = sc;
 	hal->ah_st = st;
@@ -397,7 +395,7 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 	HAL_CHANNEL *all_channels;
 
 	if ((all_channels = malloc(sizeof(HAL_CHANNEL) * max_channels,
-	    M_TEMP, M_NOWAIT)) == NULL)
+	    M_TEMP, M_NOWAIT|M_ZERO)) == NULL)
 		return (AH_FALSE);
 
 	i = c = 0;
@@ -1498,7 +1496,7 @@ ar5k_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 	if (hal->ah_rf_banks == NULL) {
 		/* XXX do extra checks? */
 		if ((hal->ah_rf_banks = malloc(hal->ah_rf_banks_size,
-		    M_DEVBUF, M_NOWAIT)) == NULL) {
+		    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
 			AR5K_PRINT("out of memory\n");
 			return (AH_FALSE);
 		}
