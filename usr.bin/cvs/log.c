@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.40 2007/06/26 02:24:10 niallo Exp $	*/
+/*	$OpenBSD: log.c,v 1.41 2007/09/07 23:59:01 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -94,7 +94,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		else
 			putc('C', out);
 		(void)fputs("-> ", out);
-	} else {
+	} else if (level != LP_RCS) {
 		(void)fputs(__progname, out);
 		if (cvs_command != NULL) {
 			/*

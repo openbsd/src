@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.21 2007/06/26 02:24:10 niallo Exp $	*/
+/*	$OpenBSD: log.h,v 1.22 2007/09/07 23:59:01 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,6 +35,7 @@
 #define LP_ERRNO	2
 #define LP_ABORT	3
 #define LP_TRACE	4
+#define LP_RCS		5
 
 #define LOG_REVSEP \
 "----------------------------"

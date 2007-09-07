@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.108 2007/09/07 23:05:04 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.109 2007/09/07 23:59:01 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -321,10 +321,13 @@ cvs_update_local(struct cvs_file *cf)
 
 	if (print_stdout && cf->file_status != FILE_UNKNOWN) {
 		rcsnum_tostr(cf->file_rcsrev, rbuf, sizeof(rbuf));
-		if (verbosity > 1)
-			cvs_printf("%s\nChecking out %s\n"
-			    "RCS:\t%s\nVERS:\t%s\n***************\n",
-			    RCS_DIFF_DIV, cf->file_path, cf->file_rpath, rbuf);
+		if (verbosity > 1) {
+			cvs_log(LP_RCS, RCS_DIFF_DIV);
+			cvs_log(LP_RCS, "Checking out %s", cf->file_path);
+			cvs_log(LP_RCS, "RCS:  %s", cf->file_rpath);
+			cvs_log(LP_RCS, "VERS: %s", rbuf);
+			cvs_log(LP_RCS, "***************");
+		}
 		cvs_checkout_file(cf, cf->file_rcsrev, CO_DUMP);
 		return;
 	}
