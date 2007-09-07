@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.98 2007/05/02 15:17:11 jason Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.99 2007/09/07 20:55:26 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.98 2007/05/02 15:17:11 jason Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.99 2007/09/07 20:55:26 bluhm Exp $";
 #endif
 #endif /* not lint */
 
@@ -1765,6 +1765,7 @@ double_rbuf(int fd)
 {
 	socklen_t slen, len;
 
+	slen = sizeof(len);
 	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len, &slen) == 0) {
 		len *= 2;
 		setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len, slen);
