@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.99 2007/07/25 08:45:24 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.100 2007/09/07 19:36:05 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -21,6 +21,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -173,8 +174,21 @@ checkout_check_repository(int argc, char **argv)
 		    current_cvsroot->cr_dir, argv[i]);
 
 		if (stat(repo, &st) == -1) {
-			cvs_log(LP_ERR, "cannot find module `%s' - ignored",
-			    argv[i]);
+			/* check if a single file was requested */
+			strlcat(repo, RCS_FILE_EXT, MAXPATHLEN);
+
+			if (stat(repo, &st) == -1) {
+				cvs_log(LP_ERR,
+				    "cannot find module `%s' - ignored",
+				    argv[i]);
+				continue;
+			}
+
+			cr.fileproc = cvs_update_local;
+			cr.flags = flags;
+			cvs_mkpath(dirname(argv[i]), cvs_specified_tag);
+			cvs_file_run(1, &(argv[i]), &cr);
+
 			continue;
 		}
 
