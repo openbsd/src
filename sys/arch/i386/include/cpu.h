@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.95 2007/06/07 11:20:58 dim Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.96 2007/09/07 08:37:38 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -114,7 +114,6 @@ struct cpu_info {
 	u_long		ci_flags;	/* flags; see below */
 	u_int32_t	ci_ipis; 	/* interprocessor interrupts pending */
 	int		sc_apic_version;/* local APIC version */
-	u_int64_t	ci_tscbase;
 
 	u_int32_t	ci_level;
 	u_int32_t	ci_vendor[4];

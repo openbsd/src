@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.17 2007/08/01 13:18:18 martin Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.18 2007/09/07 08:37:38 art Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -218,16 +218,10 @@ u_int32_t lapic_delaytab[26];
 u_int64_t scaled_pentium_mhz;
 
 void
-lapic_clockintr(arg)
-	void *arg;
+lapic_clockintr(void *arg)
 {
-	struct cpu_info *ci = curcpu();
 	struct clockframe *frame = arg;
 
-	if (CPU_IS_PRIMARY(ci)) {
-		ci->ci_tscbase = rdtsc();
-		i386_broadcast_ipi(I386_IPI_MICROSET);
-	}
 	hardclock(frame);
 
 	clk_count.ec_count++;
@@ -422,45 +416,6 @@ lapic_delay(int usec)
 		otick = tick;
 	}
 }
-
-#define LAPIC_TICK_THRESH 200
-
-/*
- * An IPI handler to record current timer value
- */
-void
-i386_ipi_microset(struct cpu_info *ci)
-{
-	ci->ci_tscbase = rdtsc();
-}
-
-#if 0
-/*
- * XXX need to make work correctly on other than cpu 0.
- */
-void
-lapic_microtime(tv)
-	struct timeval *tv;
-{
-	struct cpu_info *ci = curcpu();
-	struct timeval now;
-	u_int64_t tmp;
-
-	disable_intr();
-	now = time;
-	tmp = rdtsc() - ci->ci_tscbase;
-	enable_intr();
-
-	now.tv_usec += (tmp * scaled_pentium_mhz) >> 32;
-
-	while (now.tv_usec >= 1000000) {
-		now.tv_sec += 1;
-		now.tv_usec -= 1000000;
-	}
-
-	*tv = now;
-}
-#endif
 
 /*
  * XXX the following belong mostly or partly elsewhere..

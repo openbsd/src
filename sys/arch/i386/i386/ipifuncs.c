@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.8 2007/05/25 15:55:26 art Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.9 2007/09/07 08:37:38 art Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -74,10 +74,8 @@ void i386_ipi_flush_fpu(struct cpu_info *);
 void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
-	i386_ipi_microset,
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
-	NULL,
 #if 0
 	i386_reload_mtrr,
 	gdt_reload_cpu,

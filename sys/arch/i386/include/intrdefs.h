@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.8 2007/04/21 21:06:15 gwk Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.9 2007/09/07 08:37:38 art Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
@@ -108,19 +108,17 @@
 #define IDT_INTR_HIGH	0xef
 
 #define I386_IPI_HALT		0x00000001
-#define I386_IPI_MICROSET	0x00000002
-#define I386_IPI_FLUSH_FPU	0x00000004
-#define I386_IPI_SYNCH_FPU	0x00000008
-#define I386_IPI_TLB		0x00000010
-#define I386_IPI_MTRR		0x00000020
-#define I386_IPI_GDT		0x00000040
-#define I386_IPI_DDB		0x00000080	/* synchronize while in ddb */
-#define I386_IPI_SETPERF	0x00000100
+#define I386_IPI_FLUSH_FPU	0x00000002
+#define I386_IPI_SYNCH_FPU	0x00000004
+#define I386_IPI_MTRR		0x00000008
+#define I386_IPI_GDT		0x00000010
+#define I386_IPI_DDB		0x00000020	/* synchronize while in ddb */
+#define I386_IPI_SETPERF	0x00000040
 
-#define I386_NIPI	9
+#define I386_NIPI	7
 
-#define I386_IPI_NAMES { "halt IPI", "timeset IPI", "FPU flush IPI", \
-			 "FPU synch IPI", "TLB shootdown IPI", \
+#define I386_IPI_NAMES { "halt IPI", "FPU flush IPI", \
+			 "FPU synch IPI", \
 			 "MTRR update IPI", "GDT update IPI", \
 			 "DDB IPI", "setperf IPI" }
 

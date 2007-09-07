@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.32 2007/05/25 15:55:27 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.33 2007/09/07 08:37:38 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ int i386_fast_ipi(struct cpu_info *, int);
 void i386_broadcast_ipi(int);
 void i386_multicast_ipi(int, int);
 void i386_ipi_handler(void);
-void i386_ipi_microset(struct cpu_info *);
 void i386_intlock(int);
 void i386_intunlock(int);
 void i386_softintlock(void);
