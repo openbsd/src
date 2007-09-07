@@ -1,4 +1,4 @@
-.\" $OpenBSD: hoststatectl.8,v 1.10 2007/08/02 16:10:58 pyr Exp $
+.\" $OpenBSD: hoststatectl.8,v 1.11 2007/09/07 08:33:31 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2007 $
+.Dd $Mdocdate: September 7 2007 $
 .Dt HOSTSTATECTL 8
 .Os
 .Sh NAME
@@ -61,6 +61,8 @@ Show detailed status of hosts, tables, and services.
 Show detailed status of relays including the current and average
 access statistics.
 The statistics will be updated every minute.
+.It Cm show sessions
+Dump the complete list of running relay sessions.
 .It Cm show summary
 Display a list of all relays, services, tables, and hosts.
 .It Cm table disable Op Ar name | id

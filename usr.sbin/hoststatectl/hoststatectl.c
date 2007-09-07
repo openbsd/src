@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststatectl.c,v 1.21 2007/09/07 08:31:36 reyk Exp $	*/
+/*	$OpenBSD: hoststatectl.c,v 1.22 2007/09/07 08:33:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -44,6 +44,7 @@
 
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *, int);
+int		 show_session_msg(struct imsg *);
 int		 show_command_output(struct imsg *);
 char		*print_service_status(int);
 char		*print_host_status(int, int);
@@ -146,6 +147,9 @@ main(int argc, char *argv[])
 		printf("Type\t%4s\t%-24s\t%-7s\tStatus\n",
 		    "Id", "Name", "Avlblty");
 		break;
+	case SHOW_SESSIONS:
+		imsg_compose(ibuf, IMSG_CTL_SESSION, 0, 0, -1, NULL, 0);
+		break;
 	case SERV_ENABLE:
 		imsg_compose(ibuf, IMSG_CTL_SERVICE_ENABLE, 0, 0, -1,
 		    &res->id, sizeof(res->id));
@@ -201,6 +205,9 @@ main(int argc, char *argv[])
 			case SHOW_HOSTS:
 			case SHOW_RELAYS:
 				done = show_summary_msg(&imsg, res->action);
+				break;
+			case SHOW_SESSIONS:
+				done = show_session_msg(&imsg);
 				break;
 			case SERV_DISABLE:
 			case SERV_ENABLE:
@@ -372,6 +379,39 @@ show_summary_msg(struct imsg *imsg, int type)
 		return (1);
 	default:
 		errx(1, "wrong message in summary: %u", imsg->hdr.type);
+		break;
+	}
+	return (0);
+}
+
+int
+show_session_msg(struct imsg *imsg)
+{
+	struct session		*con;
+	char			 a[128], b[128];
+	struct timeval		 tv_now;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SESSION:
+		con = imsg->data;
+
+		(void)print_host(&con->in.ss, a, sizeof(a));
+		(void)print_host(&con->out.ss, b, sizeof(b));
+		printf("session %u:%u %s:%u -> %s:%u\t%s\n",
+		    imsg->hdr.peerid, con->id,
+		    a, ntohs(con->in.port), b, ntohs(con->out.port),
+		    con->done ? "DONE" : "RUNNING");
+
+		if (gettimeofday(&tv_now, NULL))
+			fatal("show_session_msg: gettimeofday");
+		print_time(&tv_now, &con->tv_start, a, sizeof(a));
+		print_time(&tv_now, &con->tv_last, b, sizeof(b));
+		printf("\tage %s, idle %s, relay %u\n", a, b, con->relayid);
+		break;
+	case IMSG_CTL_END:
+		return (1);
+	default:
+		errx(1, "wrong message in session: %u", imsg->hdr.type);
 		break;
 	}
 	return (0);
