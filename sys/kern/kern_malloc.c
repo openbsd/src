@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.71 2007/09/01 15:14:44 martin Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.72 2007/09/07 10:22:15 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -158,8 +158,11 @@ malloc(unsigned long size, int type, int flags)
 #endif
 
 #ifdef MALLOC_DEBUG
-	if (debug_malloc(size, type, flags, (void **)&va))
+	if (debug_malloc(size, type, flags, (void **)&va)) {
+		if ((flags & M_ZERO) && va != NULL)
+			memset(va, 0, size);
 		return (va);
+	}
 #endif
 
 	if (size > 65535 * PAGE_SIZE) {
@@ -329,6 +332,9 @@ out:
 out:
 #endif
 	splx(s);
+
+	if ((flags & M_ZERO) && va != NULL)
+		memset(va, 0, size);
 	return (va);
 }
 
@@ -600,8 +606,8 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 					totlen += strlen(memname[i]);
 				totlen++;
 			}
-			memall = malloc(totlen + M_LAST, M_SYSCTL, M_WAITOK);
-			bzero(memall, totlen + M_LAST);
+			memall = malloc(totlen + M_LAST, M_SYSCTL,
+			    M_WAITOK|M_ZERO);
 			for (siz = 0, i = 0; i < M_LAST; i++) {
 				snprintf(memall + siz, 
 				    totlen + M_LAST - siz,

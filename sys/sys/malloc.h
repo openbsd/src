@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.86 2007/09/01 17:06:26 xsa Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.87 2007/09/07 10:22:15 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #define	M_WAITOK	0x0000
 #define	M_NOWAIT	0x0001
 #define M_CANFAIL	0x0002
+#define	M_ZERO		0x0004
 
 /*
  * Types of memory to be allocated
