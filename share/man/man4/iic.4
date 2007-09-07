@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.59 2007/09/04 20:52:13 deraadt Exp $
+.\"	$OpenBSD: iic.4,v 1.60 2007/09/07 21:25:18 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2007 $
+.Dd $Mdocdate: September 7 2007 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -104,6 +104,8 @@ VIA SMBus controller
 .Bl -tag -width 13n -compact
 .It Xr adc 4
 Analog Devices AD7416/AD7417/7418 temperature sensor
+.It Xr adl 4
+Andigilog aSC7621 temperature, voltage, and fan sensor
 .It Xr admcts 4
 Analog Devices ADM1026 temperature and voltage sensor
 .It Xr admlc 4
