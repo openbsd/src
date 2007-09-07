@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.17 2007/06/12 15:16:10 msf Exp $	*/
+/*	$OpenBSD: control.c,v 1.18 2007/09/07 08:20:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -224,6 +224,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_SHOW_SUM:
 			show(c);
+			break;
+		case IMSG_CTL_SESSION:
+			show_sessions(c);
 			break;
 		case IMSG_CTL_SERVICE_DISABLE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(id))

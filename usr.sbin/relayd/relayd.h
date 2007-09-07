@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.58 2007/09/07 07:59:18 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.59 2007/09/07 08:20:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -105,6 +105,7 @@ enum imsg_type {
 	IMSG_CTL_TABLE,
 	IMSG_CTL_HOST,
 	IMSG_CTL_RELAY,
+	IMSG_CTL_SESSION,
 	IMSG_CTL_TABLE_CHANGED,
 	IMSG_CTL_PULL_RULESET,
 	IMSG_CTL_PUSH_RULESET,
@@ -389,6 +390,7 @@ TAILQ_HEAD(servicelist, service);
 
 struct session {
 	objid_t				 id;
+	objid_t				 relayid;
 	struct ctl_relay_event		 in;
 	struct ctl_relay_event		 out;
 	u_int32_t			 outkey;
@@ -669,6 +671,7 @@ int	 imsg_get_fd(struct imsgbuf *);
 pid_t	 pfe(struct hoststated *, int [2], int [2], int [RELAY_MAXPROC][2],
 	    int [2], int [RELAY_MAXPROC][2]);
 void	 show(struct ctl_conn *);
+void	 show_sessions(struct ctl_conn *);
 int	 enable_service(struct ctl_conn *, struct ctl_id *);
 int	 enable_table(struct ctl_conn *, struct ctl_id *);
 int	 enable_host(struct ctl_conn *, struct ctl_id *);

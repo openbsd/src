@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.41 2007/09/06 19:55:45 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.42 2007/09/07 08:20:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1467,6 +1467,7 @@ relay_accept(int fd, short sig, void *arg)
 	con->out.con = con;
 	con->relay = rlay;
 	con->id = ++relay_conid;
+	con->relayid = rlay->conf.id;
 	con->outkey = rlay->dstkey;
 	con->in.tree = &proto->request_tree;
 	con->out.tree = &proto->response_tree;
@@ -1477,6 +1478,15 @@ relay_accept(int fd, short sig, void *arg)
 		goto err;
 	bcopy(&con->tv_start, &con->tv_last, sizeof(con->tv_last));
 	bcopy(&ss, &con->in.ss, sizeof(con->in.ss));
+	con->out.port = rlay->conf.dstport;
+	switch (ss.ss_family) {
+	case AF_INET:
+		con->in.port = ((struct sockaddr_in *)&ss)->sin_port;
+		break;
+	case AF_INET6:
+		con->in.port = ((struct sockaddr_in6 *)&ss)->sin6_port;
+		break;
+	}
 
 	relay_sessions++;
 	SPLAY_INSERT(session_tree, &rlay->sessions, con);
@@ -1783,6 +1793,7 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
+	struct relay		*rlay;
 	struct session		*con;
 	struct ctl_natlook	 cnl;
 	struct timeval		 tv;
@@ -1884,6 +1895,14 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			evtimer_set(&con->ev, relay_natlook, con);
 			bzero(&tv, sizeof(tv));
 			evtimer_add(&con->ev, &tv);
+			break;
+		case IMSG_CTL_SESSION:
+			TAILQ_FOREACH(rlay, &env->relays, entry)
+				SPLAY_FOREACH(con, session_tree,
+				    &rlay->sessions)
+					imsg_compose(ibuf, IMSG_CTL_SESSION,
+					    0, 0, -1, con, sizeof(*con));
+			imsg_compose(ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 			break;
 		default:
 			log_debug("relay_dispatch_msg: unexpected imsg %d",

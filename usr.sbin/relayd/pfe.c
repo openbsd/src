@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.33 2007/06/19 13:06:00 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.34 2007/09/07 08:20:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -553,6 +553,58 @@ show(struct ctl_conn *c)
 	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }
 
+void
+show_sessions(struct ctl_conn *c)
+{
+	int		 n, proc, done;
+	struct imsg	 imsg;
+
+	for (proc = 0; proc < env->prefork_relay; proc++) {
+		/*
+		 * Request all the running sessions from the process
+		 */
+		imsg_compose(&ibuf_relay[proc],
+		    IMSG_CTL_SESSION, 0, 0, -1, NULL, 0);
+		while (ibuf_relay[proc].w.queued)
+			if (msgbuf_write(&ibuf_relay[proc].w) < 0)
+				fatalx("write error");
+
+		/*
+		 * Wait for the reply and forward the messages to the
+		 * control connection.
+		 */
+		done = 0;
+		while (!done) {
+			do {
+				if ((n = imsg_read(&ibuf_relay[proc])) == -1)
+					fatalx("imsg_read error");
+			} while (n == -2); /* handle non-blocking I/O */
+			while (!done) {
+				if ((n = imsg_get(&ibuf_relay[proc],
+				    &imsg)) == -1)
+					fatalx("imsg_get error");
+				if (n == 0)
+					break;
+				switch (imsg.hdr.type) {
+				case IMSG_CTL_SESSION:
+					imsg_compose(&c->ibuf,
+					    IMSG_CTL_SESSION, proc, 0, -1,
+					    imsg.data, sizeof(struct session));
+					break;
+				case IMSG_CTL_END:
+					done = 1;
+					break;
+				default:
+					fatalx("wrong message for session");
+					break;
+				}
+				imsg_free(&imsg);
+			}
+		}
+	}
+
+	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+}
 
 int
 disable_service(struct ctl_conn *c, struct ctl_id *id)
