@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.22 2007/09/06 11:18:04 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.23 2007/09/06 16:19:57 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -118,7 +118,6 @@ dnl
 dnl Other vaiables
 dnl
 CHECKSHADOW=true
-CHECKSIA=
 shadow_defs=
 shadow_funcs=
 shadow_libs=
