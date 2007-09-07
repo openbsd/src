@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.52 2007/09/05 08:48:42 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.53 2007/09/07 07:54:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -1003,6 +1003,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			free($2);
 			rlay->conf.dsttable = tb->conf.id;
 			rlay->dsttable = tb;
+			rlay->conf.dstport = tb->conf.port;
 			rlay->conf.dstmode = $4;
 			rlay->conf.dstcheck = $5;
 			rlay->dsttable->conf.flags |= F_USED;
