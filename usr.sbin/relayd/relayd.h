@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.57 2007/09/07 07:52:14 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.58 2007/09/07 07:59:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -248,7 +248,6 @@ struct ctl_relay_event {
 
 	u_int8_t		*buf;
 	int			 buflen;
-	u_int8_t		 flags;
 };
 
 struct ctl_natlook {
