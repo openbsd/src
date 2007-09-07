@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.5 2007/09/07 19:32:09 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.6 2007/09/07 20:02:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -1573,38 +1573,48 @@ iwn_intr(void *arg)
 {
 	struct iwn_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	uint32_t r;
-
-	r = IWN_READ(sc, IWN_INTR);
-	if (r == 0 || r == 0xffffffff)
-		return 0;	/* not for us */
-
-	DPRINTFN(6, ("interrupt reg=%x\n", r));
+	uint32_t r1, r2;
 
 	/* disable interrupts */
 	IWN_WRITE(sc, IWN_MASK, 0);
-	/* ack interrupts */
-	IWN_WRITE(sc, IWN_INTR, r);
 
-	if (r & IWN_RF_TOGGLED) {
+	r1 = IWN_READ(sc, IWN_INTR);
+	r2 = IWN_READ(sc, IWN_INTR_STATUS);
+
+	if (r1 == 0 && r2 == 0) {
+		if (ifp->if_flags & IFF_UP)
+			IWN_WRITE(sc, IWN_MASK, IWN_INTR_MASK);
+		return 0;	/* not for us */
+	}
+
+	if (r1 == 0xffffffff)
+		return 0;	/* hardware gone */
+
+	/* ack interrupts */
+	IWN_WRITE(sc, IWN_INTR, r1);
+	IWN_WRITE(sc, IWN_INTR_STATUS, r2);
+
+	DPRINTFN(6, ("interrupt reg1=%x reg2=%x\n", r1, r2));
+
+	if (r1 & IWN_RF_TOGGLED) {
 		uint32_t tmp = IWN_READ(sc, IWN_GPIO_CTL);
 		printf("%s: RF switch: radio %s\n", sc->sc_dev.dv_xname,
 		    (tmp & IWN_GPIO_RF_ENABLED) ? "enabled" : "disabled");
 	}
-	if (r & IWN_CT_REACHED) {
+	if (r1 & IWN_CT_REACHED) {
 		printf("%s: critical temperature reached!\n",
 		    sc->sc_dev.dv_xname);
 	}
-	if (r & (IWN_SW_ERROR | IWN_HW_ERROR)) {
+	if (r1 & (IWN_SW_ERROR | IWN_HW_ERROR)) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
 		ifp->if_flags &= ~IFF_UP;
 		iwn_stop(ifp, 1);
 		return 1;
 	}
-	if (r & (IWN_RX_INTR | IWN_SW_RX_INTR))
+	if (r1 & (IWN_RX_INTR | IWN_SW_RX_INTR))
 		iwn_notif_intr(sc);
 
-	if (r & IWN_ALIVE_INTR)
+	if (r1 & IWN_ALIVE_INTR)
 		wakeup(sc);
 
 	/* re-enable interrupts */
@@ -3381,8 +3391,7 @@ iwn_hw_config(struct iwn_softc *sc)
 	uint32_t tmp, hw;
 
 	/* enable interrupts mitigation */
-	/* XXX generates way too much interrupts (vmstat -i) !! */
-	IWN_WRITE(sc, IWN_INTR_MIT, 0 /* 512 / 32 */);
+	IWN_WRITE(sc, IWN_INTR_MIT, 512 / 32);
 
 	/* voodoo from the reference driver */
 	tmp = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_CLASS_REG);
