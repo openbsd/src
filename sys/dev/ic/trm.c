@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.7 2005/12/03 16:53:16 krw Exp $
+/*	$OpenBSD: trm.c,v 1.8 2007/09/07 17:41:09 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -2424,13 +2424,12 @@ trm_initACB(struct trm_softc *sc, int unit)
 			continue;
 
 		for (lun = 0; lun < TRM_MAX_LUNS; lun++) {
-			pDCB = (struct trm_dcb *)malloc(sizeof(struct trm_dcb), M_DEVBUF, M_NOWAIT);
+			pDCB = (struct trm_dcb *)malloc(sizeof(struct trm_dcb),
+			    M_DEVBUF, M_NOWAIT | M_ZERO);
 			sc->pDCB[target][lun] = pDCB;
 			
 			if (pDCB == NULL)
 				continue;
-
-			bzero(pDCB, sizeof(struct trm_dcb));
 
 			pDCB->target     = target;
 			pDCB->lun        = lun;

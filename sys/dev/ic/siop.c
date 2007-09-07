@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.48 2007/08/05 19:05:09 kettenis Exp $ */
+/*	$OpenBSD: siop.c,v 1.49 2007/09/07 17:41:09 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1393,8 +1393,8 @@ siop_scsicmd(xs)
 			sc->sc_c.sc_dev.dv_xname, target);
 #endif
 		sc->sc_c.targets[target] =
-		    malloc(sizeof(struct siop_target),
-			M_DEVBUF, M_NOWAIT);
+		    malloc(sizeof(struct siop_target), M_DEVBUF,
+		        M_NOWAIT | M_ZERO);
 		if (sc->sc_c.targets[target] == NULL) {
 			printf("%s: can't malloc memory for "
 			    "target %d\n", sc->sc_c.sc_dev.dv_xname,
@@ -1402,7 +1402,6 @@ siop_scsicmd(xs)
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
-		bzero(sc->sc_c.targets[target], sizeof(struct siop_target));
 		siop_target =
 		    (struct siop_target*)sc->sc_c.targets[target];
 		siop_target->target_c.status = TARST_PROBING;
@@ -1427,7 +1426,7 @@ siop_scsicmd(xs)
 	if (siop_target->siop_lun[lun] == NULL) {
 		siop_target->siop_lun[lun] =
 		    malloc(sizeof(struct siop_lun), M_DEVBUF,
-		    M_NOWAIT);
+		    M_NOWAIT | M_ZERO);
 		if (siop_target->siop_lun[lun] == NULL) {
 			printf("%s: can't alloc siop_lun for "
 			    "target %d lun %d\n",
@@ -1435,7 +1434,6 @@ siop_scsicmd(xs)
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
-		bzero(siop_target->siop_lun[lun], sizeof(struct siop_lun));
 	}
 	siop_cmd->cmd_c.siop_target = sc->sc_c.targets[target];
 	siop_cmd->cmd_c.xs = xs;
@@ -1794,23 +1792,21 @@ siop_morecbd(sc)
 	u_int32_t *scr;
 
 	/* allocate a new list head */
-	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT);
+	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (newcbd == NULL) {
 		printf("%s: can't allocate memory for command descriptors "
 		    "head\n", sc->sc_c.sc_dev.dv_xname);
 		return;
 	}
-	bzero(newcbd, sizeof(struct siop_cbd));
 
 	/* allocate cmd list */
 	newcbd->cmds = malloc(sizeof(struct siop_cmd) * SIOP_NCMDPB,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (newcbd->cmds == NULL) {
 		printf("%s: can't allocate memory for command descriptors\n",
 		    sc->sc_c.sc_dev.dv_xname);
 		goto bad3;
 	}
-	bzero(newcbd->cmds, sizeof(struct siop_cmd) * SIOP_NCMDPB);
 	error = bus_dmamem_alloc(sc->sc_c.sc_dmat, PAGE_SIZE, PAGE_SIZE, 0, &seg,
 	    1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
@@ -1958,10 +1954,9 @@ siop_get_lunsw(sc)
 		TAILQ_REMOVE(&sc->lunsw_list, lunsw, next);
 		return lunsw;
 	}
-	lunsw = malloc(sizeof(struct siop_lunsw), M_DEVBUF, M_NOWAIT);
+	lunsw = malloc(sizeof(struct siop_lunsw), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (lunsw == NULL)
 		return NULL;
-	bzero(lunsw, sizeof(struct siop_lunsw));
 #ifdef SIOP_DEBUG
 	printf("allocating lunsw at offset %d\n", sc->script_free_lo);
 #endif
