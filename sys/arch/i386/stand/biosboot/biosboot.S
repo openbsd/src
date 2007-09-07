@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.38 2007/05/31 23:34:46 weingart Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.39 2007/09/07 09:43:35 weingart Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -548,7 +548,7 @@ done_load:
 
 	/*
 	 * Check the magic signature at the beginning of /boot.
-	 * Since /boot is now ELF, this should be 0xFF E L F.
+	 * Since /boot is now ELF, this should be 0x7F E L F.
 	 */
 	movw	$(LOADADDR >> 4), %ax	/* Target segment */
 	movw	%ax, %es
