@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.86 2007/06/12 19:29:23 thib Exp $ */
+/*	$OpenBSD: mpi.c,v 1.87 2007/09/07 12:11:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -733,11 +733,10 @@ mpi_dmamem_alloc(struct mpi_softc *sc, size_t size)
 	struct mpi_dmamem		*mdm;
 	int				nsegs;
 
-	mdm = malloc(sizeof(struct mpi_dmamem), M_DEVBUF, M_NOWAIT);
+	mdm = malloc(sizeof(struct mpi_dmamem), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (mdm == NULL)
 		return (NULL);
 
-	bzero(mdm, sizeof(struct mpi_dmamem));
 	mdm->mdm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
@@ -798,12 +797,11 @@ mpi_alloc_ccbs(struct mpi_softc *sc)
 	TAILQ_INIT(&sc->sc_ccb_free);
 
 	sc->sc_ccbs = malloc(sizeof(struct mpi_ccb) * sc->sc_maxcmds,
-	    M_DEVBUF, M_WAITOK|M_CANFAIL);
+	    M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
 	if (sc->sc_ccbs == NULL) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
 		return (1);
 	}
-	bzero(sc->sc_ccbs, sizeof(struct mpi_ccb) * sc->sc_maxcmds);
 
 	sc->sc_requests = mpi_dmamem_alloc(sc,
 	    MPI_REQUEST_SIZE * sc->sc_maxcmds);
