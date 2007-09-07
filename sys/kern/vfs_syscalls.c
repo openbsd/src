@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.142 2007/08/30 12:35:27 thib Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.143 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -237,8 +237,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	 * Allocate and initialize the file system.
 	 */
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
-		M_MOUNT, M_WAITOK);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
+		M_MOUNT, M_WAITOK|M_ZERO);
 	(void) vfs_busy(mp, VB_READ|VB_NOWAIT);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;

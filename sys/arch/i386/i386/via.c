@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.12 2007/08/14 20:10:05 henric Exp $	*/
+/*	$OpenBSD: via.c,v 1.13 2007/09/07 15:00:19 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -107,9 +107,9 @@ viac3_crypto_setup(void)
 {
 	int algs[CRYPTO_ALGORITHM_MAX + 1];
 
-	if ((vc3_sc = malloc(sizeof(*vc3_sc), M_DEVBUF, M_NOWAIT)) == NULL)
+	if ((vc3_sc = malloc(sizeof(*vc3_sc), M_DEVBUF,
+	    M_NOWAIT|M_ZERO)) == NULL)
 		return;		/* YYY bitch? */
-	bzero(vc3_sc, sizeof(*vc3_sc));
 
 	bzero(algs, sizeof(algs));
 	algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
@@ -228,14 +228,12 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_SHA2_512_HMAC:
 			axf = &auth_hash_hmac_sha2_512_96;
 		authcommon:
-			MALLOC(swd, struct swcr_data *,
-			    sizeof(struct swcr_data), M_CRYPTO_DATA,
-			    M_NOWAIT);
+			swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
+			    M_NOWAIT|M_ZERO);
 			if (swd == NULL) {
 				viac3_crypto_freesession(sesn);
 				return (ENOMEM);
 			}
-			bzero(swd, sizeof(struct swcr_data));
 			ses->swd = swd;
 
 			swd->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.34 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.35 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -524,10 +524,9 @@ uao_create(size, flags)
 				panic("uao_create: hashinit swhash failed");
 		} else {
 			aobj->u_swslots = malloc(pages * sizeof(int),
-			    M_UVMAOBJ, mflags);
+			    M_UVMAOBJ, mflags|M_ZERO);
 			if (aobj->u_swslots == NULL)
 				panic("uao_create: malloc swslots failed");
-			memset(aobj->u_swslots, 0, pages * sizeof(int));
 		}
 
 		if (flags) {

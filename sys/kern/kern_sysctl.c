@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.156 2007/09/01 15:14:44 martin Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.157 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1692,8 +1692,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 		*sizep = 0;
 		return (ENOMEM);
 	}
-	buf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
-	bzero(buf, min(tsize, buflen));
+	buf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK|M_ZERO);
 
 	switch (*name) {
 #ifdef SYSVMSG
@@ -1791,8 +1790,7 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			return (ENOENT);
 
 		/* Grab a copy, to clear the kernel pointers */
-		usd = malloc(sizeof(*usd), M_TEMP, M_WAITOK);
-		bzero(usd, sizeof(*usd));
+		usd = malloc(sizeof(*usd), M_TEMP, M_WAITOK|M_ZERO);
 		usd->num = ksd->num;
 		strlcpy(usd->xname, ksd->xname, sizeof(usd->xname));
 		memcpy(usd->maxnumt, ksd->maxnumt, sizeof(usd->maxnumt));
@@ -1813,8 +1811,7 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOENT);
 
 	/* Grab a copy, to clear the kernel pointers */
-	us = malloc(sizeof(*us), M_TEMP, M_WAITOK);
-	bzero(us, sizeof(*us));
+	us = malloc(sizeof(*us), M_TEMP, M_WAITOK|M_ZERO);
 	memcpy(us->desc, ks->desc, sizeof(us->desc));
 	us->tv = ks->tv;
 	us->value = ks->value;

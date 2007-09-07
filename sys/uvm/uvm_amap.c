@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.39 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.40 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -902,7 +902,7 @@ amap_pp_establish(struct vm_amap *amap)
 {
 
 	amap->am_ppref = malloc(sizeof(int) * amap->am_maxslot,
-	    M_UVMAMAP, M_NOWAIT);
+	    M_UVMAMAP, M_NOWAIT|M_ZERO);
 
 	/*
 	 * if we fail then we just won't use ppref for this amap
@@ -915,7 +915,6 @@ amap_pp_establish(struct vm_amap *amap)
 	/*
 	 * init ppref
 	 */
-	memset(amap->am_ppref, 0, sizeof(int) * amap->am_maxslot);
 	pp_setreflen(amap->am_ppref, 0, amap->am_ref, amap->am_nslot);
 }
 

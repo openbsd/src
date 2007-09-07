@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.33 2006/08/10 17:03:48 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.34 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -72,11 +72,9 @@ seminit(void)
 	pool_init(&semu_pool, SEMUSZ, 0, 0, 0, "semupl",
 	    &pool_allocator_nointr);
 	sema = malloc(seminfo.semmni * sizeof(struct semid_ds *),
-	    M_SEM, M_WAITOK);
-	bzero(sema, seminfo.semmni * sizeof(struct semid_ds *));
+	    M_SEM, M_WAITOK|M_ZERO);
 	semseqs = malloc(seminfo.semmni * sizeof(unsigned short),
-	    M_SEM, M_WAITOK);
-	bzero(semseqs, seminfo.semmni * sizeof(unsigned short));
+	    M_SEM, M_WAITOK|M_ZERO);
 	SLIST_INIT(&semu_list);
 }
 
@@ -416,8 +414,7 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 		}
 		semaptr_new = pool_get(&sema_pool, PR_WAITOK);
 		semaptr_new->sem_base = malloc(nsems * sizeof(struct sem),
-		    M_SEM, M_WAITOK);
-		bzero(semaptr_new->sem_base, nsems * sizeof(struct sem));
+		    M_SEM, M_WAITOK|M_ZERO);
 	}
 
 	if (key != IPC_PRIVATE) {
@@ -851,16 +848,13 @@ sysctl_sysvsem(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 		/* Expand semsegs and semseqs arrays */
 		sema_new = malloc(val * sizeof(struct semid_ds *),
-		    M_SEM, M_WAITOK);
+		    M_SEM, M_WAITOK|M_ZERO);
 		bcopy(sema, sema_new,
 		    seminfo.semmni * sizeof(struct semid_ds *));
-		bzero(sema_new + seminfo.semmni,
-		    (val - seminfo.semmni) * sizeof(struct semid_ds *));
-		newseqs = malloc(val * sizeof(unsigned short), M_SEM, M_WAITOK);
+		newseqs = malloc(val * sizeof(unsigned short), M_SEM,
+		    M_WAITOK|M_ZERO);
 		bcopy(semseqs, newseqs,
 		    seminfo.semmni * sizeof(unsigned short));
-		bzero(newseqs + seminfo.semmni,
-		    (val - seminfo.semmni) * sizeof(unsigned short));
 		free(sema, M_SEM);
 		free(semseqs, M_SEM);
 		sema = sema_new;

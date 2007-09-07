@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_stat.h,v 1.14 2006/01/16 13:11:06 mickey Exp $	*/
+/*	$OpenBSD: uvm_stat.h,v 1.15 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: uvm_stat.h,v 1.19 2001/02/04 10:55:58 mrg Exp $	*/
 
 /*
@@ -162,8 +162,7 @@ do { \
 	simple_lock_init(&(NAME).l); \
 	(NAME).e = (struct uvm_history_ent *) \
 		malloc(sizeof(struct uvm_history_ent) * (N), M_TEMP, \
-		    M_WAITOK); \
-	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (N)); \
+		    M_WAITOK|M_ZERO); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 } while (0)
 

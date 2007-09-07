@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.52 2007/05/30 05:36:36 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.53 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -411,10 +411,10 @@ config_make_softc(struct device *parent, struct cfdata *cf)
 		panic("config_make_softc");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF, M_NOWAIT);
+	dev = malloc(ca->ca_devsize, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!dev)
 		panic("config_make_softc: allocation for device softc failed");
-	bzero(dev, ca->ca_devsize);
+
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
@@ -451,11 +451,10 @@ config_make_softc(struct device *parent, struct cfdata *cf)
 		while (new <= dev->dv_unit)
 			new *= 2;
 		cd->cd_ndevs = new;
-		nsp = malloc(new * sizeof(void *), M_DEVBUF, M_NOWAIT);	
+		nsp = malloc(new * sizeof(void *), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (nsp == 0)
 			panic("config_make_softc: %sing dev array",
 			    old != 0 ? "expand" : "creat");
-		bzero(nsp + old, (new - old) * sizeof(void *));
 		if (old != 0) {
 			bcopy(cd->cd_devs, nsp, old * sizeof(void *));
 			free(cd->cd_devs, M_DEVBUF);

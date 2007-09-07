@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.18 2005/12/21 12:43:49 jsg Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.19 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -64,13 +64,11 @@ int
 clalloc(struct clist *clp, int size, int quot)
 {
 
-	clp->c_cs = malloc(size, M_TTYS, M_WAITOK);
-	bzero(clp->c_cs, size);
+	clp->c_cs = malloc(size, M_TTYS, M_WAITOK|M_ZERO);
 
-	if (quot) {
-		clp->c_cq = malloc(QMEM(size), M_TTYS, M_WAITOK);
-		bzero(clp->c_cq, QMEM(size));
-	} else
+	if (quot)
+		clp->c_cq = malloc(QMEM(size), M_TTYS, M_WAITOK|M_ZERO);
+	else
 		clp->c_cq = (u_char *)0;
 
 	clp->c_cf = clp->c_cl = (u_char *)0;

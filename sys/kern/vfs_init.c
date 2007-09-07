@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.19 2007/05/29 16:25:07 thib Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.20 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -117,8 +117,7 @@ vfs_opv_init_explicit(struct vnodeopv_desc *vfs_opv_desc)
 	if (opv_desc_vector == NULL) {
 		/* XXX - shouldn't be M_VNODE */
 		opv_desc_vector = malloc(vfs_opv_numops * sizeof(PFI),
-		    M_VNODE, M_WAITOK);
-		bzero(opv_desc_vector, vfs_opv_numops * sizeof(PFI));
+		    M_VNODE, M_WAITOK|M_ZERO);
 		*(vfs_opv_desc->opv_desc_vector_p) = opv_desc_vector;
 		DODEBUG(printf("vector at %p allocated\n",
 		    opv_desc_vector));

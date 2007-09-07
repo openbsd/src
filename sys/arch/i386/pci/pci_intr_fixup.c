@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.57 2007/07/07 13:52:42 grange Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.58 2007/09/07 15:00:19 art Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -306,10 +306,8 @@ pciintr_link_alloc(pci_chipset_tag_t pc, struct pcibios_intr_routing *pir, int p
 		}
 	}
 
-	if ((l = malloc(sizeof(*l), M_DEVBUF, M_NOWAIT)) == NULL)
+	if ((l = malloc(sizeof(*l), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (NULL);
-
-	memset(l, 0, sizeof(*l));
 
 	l->link = link;
 	l->bitmap = pir->linkmap[pin].bitmap;

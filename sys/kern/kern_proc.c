@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.34 2007/08/04 02:43:54 ckuethe Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.35 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -124,8 +124,7 @@ uid_find(uid_t uid)
 			break;
 	if (uip)
 		return (uip);
-	MALLOC(nuip, struct uidinfo *, sizeof(*nuip), M_PROC, M_WAITOK);
-	/* may have slept, have to check again */
+	nuip = malloc(sizeof(*nuip), M_PROC, M_WAITOK|M_ZERO);
 	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid)
 			break;
@@ -133,7 +132,6 @@ uid_find(uid_t uid)
 		free(nuip, M_PROC);
 		return (uip);
 	}
-	bzero(nuip, sizeof(*nuip));
 	nuip->ui_uid = uid;
 	LIST_INSERT_HEAD(uipp, nuip, ui_hash);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.64 2007/08/05 04:26:21 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.65 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -725,11 +725,10 @@ disk_attach(struct disk *diskp)
 	 * it's not safe to sleep here, since we're probably going to be
 	 * called during autoconfiguration.
 	 */
-	diskp->dk_label = malloc(sizeof(struct disklabel), M_DEVBUF, M_NOWAIT);
+	diskp->dk_label = malloc(sizeof(struct disklabel), M_DEVBUF,
+	    M_NOWAIT|M_ZERO);
 	if (diskp->dk_label == NULL)
 		panic("disk_attach: can't allocate storage for disklabel");
-
-	bzero(diskp->dk_label, sizeof(struct disklabel));
 
 	/*
 	 * Set the attached timestamp.
@@ -911,11 +910,10 @@ bufq_default_alloc(void)
 {
 	struct bufq_default *bq;
 
-	bq = malloc(sizeof(*bq), M_DEVBUF, M_NOWAIT);
+	bq = malloc(sizeof(*bq), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (bq == NULL)
 		panic("bufq_default_alloc: no memory");
 
-	memset(bq, 0, sizeof(*bq));
 	bq->bufq.bufq_free = bufq_default_free;
 	bq->bufq.bufq_add = bufq_default_add;
 	bq->bufq.bufq_get = bufq_default_get;

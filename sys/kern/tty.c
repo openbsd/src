@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.72 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.73 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2235,8 +2235,8 @@ ttymalloc(void)
 {
 	struct tty *tp;
 
-	MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-	bzero(tp, sizeof *tp);
+	tp = malloc(sizeof(struct tty), M_TTYS, M_WAITOK|M_ZERO);
+
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);

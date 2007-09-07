@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.72 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.73 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -344,11 +344,10 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 	 * we may not call malloc with M_WAITOK.  This consumes only
 	 * 8KB memory for a 256MB swap partition.
 	 */
-	sdp->swd_decrypt = malloc(SWD_DCRYPT_SIZE(npages), M_VMSWAP, M_WAITOK);
-	memset(sdp->swd_decrypt, 0, SWD_DCRYPT_SIZE(npages));
+	sdp->swd_decrypt = malloc(SWD_DCRYPT_SIZE(npages), M_VMSWAP,
+	    M_WAITOK|M_ZERO);
 	sdp->swd_keys = malloc((npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key),
-			       M_VMSWAP, M_WAITOK);
-	memset(sdp->swd_keys, 0, (npages >> SWD_KEY_SHIFT) * sizeof(struct swap_key));
+	    M_VMSWAP, M_WAITOK|M_ZERO);
 	sdp->swd_nkeys = 0;
 }
 
@@ -799,9 +798,8 @@ sys_swapctl(p, v, retval)
 			simple_unlock(&uvm.swap_data_lock);
 			break;
 		}
-		sdp = malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
+		sdp = malloc(sizeof *sdp, M_VMSWAP, M_WAITOK|M_ZERO);
 		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
-		memset(sdp, 0, sizeof(*sdp));
 		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
@@ -2091,9 +2089,8 @@ swapmount()
 		return;
 	}
 
-	sdp = malloc(sizeof(*sdp), M_VMSWAP, M_WAITOK);
+	sdp = malloc(sizeof(*sdp), M_VMSWAP, M_WAITOK|M_ZERO);
 	spp = malloc(sizeof(*spp), M_VMSWAP, M_WAITOK);
-	memset(sdp, 0, sizeof(*sdp));
 
 	sdp->swd_flags = SWF_FAKE;
 	sdp->swd_dev = swap_dev;

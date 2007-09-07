@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.47 2007/05/29 10:44:28 sturm Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.48 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -535,11 +535,9 @@ shminit(void)
 	    sizeof(struct shm_handle), 0, 0, 0, "shmpl",
 	    &pool_allocator_nointr);
 	shmsegs = malloc(shminfo.shmmni * sizeof(struct shmid_ds *),
-	    M_SHM, M_WAITOK);
-	bzero(shmsegs, shminfo.shmmni * sizeof(struct shmid_ds *));
+	    M_SHM, M_WAITOK|M_ZERO);
 	shmseqs = malloc(shminfo.shmmni * sizeof(unsigned short),
-	    M_SHM, M_WAITOK);
-	bzero(shmseqs, shminfo.shmmni * sizeof(unsigned short));
+	    M_SHM, M_WAITOK|M_ZERO);
 
 	shminfo.shmmax *= PAGE_SIZE;	/* actually in pages */
 	shm_last_free = 0;
@@ -601,18 +599,15 @@ sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 		/* Expand shmsegs and shmseqs arrays */
 		newsegs = malloc(val * sizeof(struct shmid_ds *),
-		    M_SHM, M_WAITOK);
+		    M_SHM, M_WAITOK|M_ZERO);
 		bcopy(shmsegs, newsegs,
 		    shminfo.shmmni * sizeof(struct shmid_ds *));
-		bzero(newsegs + shminfo.shmmni,
-		    (val - shminfo.shmmni) * sizeof(struct shmid_ds *));
 		free(shmsegs, M_SHM);
 		shmsegs = newsegs;
-		newseqs = malloc(val * sizeof(unsigned short), M_SHM, M_WAITOK);
+		newseqs = malloc(val * sizeof(unsigned short), M_SHM,
+		    M_WAITOK|M_ZERO);
 		bcopy(shmseqs, newseqs,
 		    shminfo.shmmni * sizeof(unsigned short));
-		bzero(newseqs + shminfo.shmmni,
-		    (val - shminfo.shmmni) * sizeof(unsigned short));
 		free(shmseqs, M_SHM);
 		shmseqs = newseqs;
 		shminfo.shmmni = val;

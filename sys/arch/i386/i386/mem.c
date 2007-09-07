@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.33 2007/09/01 15:14:44 martin Exp $ */
+/*	$OpenBSD: mem.c,v 1.34 2007/09/07 15:00:19 art Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -183,9 +183,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				break;
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(zeropage, PAGE_SIZE);
+				zeropage = malloc(PAGE_SIZE, M_TEMP,
+				    M_WAITOK|M_ZERO);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);

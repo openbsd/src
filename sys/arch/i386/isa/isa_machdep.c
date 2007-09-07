@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.60 2007/04/28 03:55:40 jsg Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.61 2007/09/07 15:00:19 art Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -710,11 +710,10 @@ _isa_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * Allocate our cookie.
 	 */
 	if ((cookiestore = malloc(cookiesize, M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
+	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)|M_ZERO)) == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
-	bzero(cookiestore, cookiesize);
 	cookie = (struct i386_isa_dma_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
 	map->_dm_cookie = cookie;

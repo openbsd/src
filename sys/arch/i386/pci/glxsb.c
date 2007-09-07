@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.8 2007/08/07 09:48:23 markus Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.9 2007/09/07 15:00:19 art Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -405,14 +405,12 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_SHA2_512_HMAC:
 			axf = &auth_hash_hmac_sha2_512_96;
 		authcommon:
-			MALLOC(swd, struct swcr_data *,
-			    sizeof(struct swcr_data), M_CRYPTO_DATA,
-			    M_NOWAIT);
+			swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
+			    M_NOWAIT|M_ZERO);
 			if (swd == NULL) {
 				glxsb_crypto_freesession(sesn);
 				return (ENOMEM);
 			}
-			bzero(swd, sizeof(struct swcr_data));
 			ses->ses_swd = swd;
 
 			swd->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,

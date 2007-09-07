@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.155 2007/08/07 04:32:45 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.156 2007/09/07 15:00:20 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -199,8 +199,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 			break;
 	if (vfsp == NULL)
 		return (ENODEV);
-	mp = malloc(sizeof(struct mount), M_MOUNT, M_WAITOK);
-	bzero(mp, sizeof(struct mount));
+	mp = malloc(sizeof(struct mount), M_MOUNT, M_WAITOK|M_ZERO);
 	(void)vfs_busy(mp, VB_READ|VB_NOWAIT);
 	LIST_INIT(&mp->mnt_vnodelist);
 	mp->mnt_vfc = vfsp;
@@ -1428,8 +1427,7 @@ vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
 	    argp->ex_addrlen < 0 || argp->ex_masklen < 0)
 		return (EINVAL);
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
-	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
-	bzero(np, i);
+	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK|M_ZERO);
 	saddr = (struct sockaddr *)(np + 1);
 	error = copyin(argp->ex_addr, saddr, argp->ex_addrlen);
 	if (error)
