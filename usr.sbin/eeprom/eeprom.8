@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.17 2007/09/04 23:28:26 fgsch Exp $
+.\"	$OpenBSD: eeprom.8,v 1.18 2007/09/07 13:54:43 jmc Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 4 2007 $
+.Dd $Mdocdate: September 7 2007 $
 .Dt EEPROM 8
 .Os
 .Sh NAME
@@ -43,17 +43,12 @@
 .Nd display or modify contents of the EEPROM or OpenPROM
 .Sh SYNOPSIS
 .Nm eeprom
-.Op Fl
-.Op Fl c
+.Op Fl cipv
 .Op Fl f Ar device
-.Op Fl i
-.Op Fl p
-.Op Fl v
 .Op Fl N Ar system
 .Oo
-.Ar field Ns Oo
-.Li = Ns Ar value
-.Oc ...
+.Ar field Ns Op = Ns Ar value
+.Ar ...
 .Oc
 .Sh DESCRIPTION
 .Nm eeprom
@@ -65,7 +60,7 @@ will list all of the known fields and their corresponding values.
 When given the name of a specific field,
 .Nm eeprom
 will display that value or set it if the field name is followed by
-.Dq =
+.Sq =
 and a value.
 Only the superuser may modify the contents of the EEPROM or OpenPROM.
 .Pp
@@ -91,17 +86,17 @@ If checksum values are incorrect,
 .Nm eeprom
 will ignore them and continue after displaying a warning.
 This flag is quietly ignored on systems with an OpenPROM.
+.It Fl N Ar system
+Use the system image
+.Ar system
+instead of the default
+.Pa /bsd .
 .It Fl p
 On systems with an OpenPROM, display the tree derivated from it and exit.
 This flag is quietly ignored on systems with an EEPROM.
 .It Fl v
 On systems with an OpenPROM, be verbose when setting a value.
 Systems with an EEPROM are always verbose.
-.It Fl N Ar system
-Use the system image
-.Ar system
-instead of the default
-.Pa /bsd .
 .El
 .Sh FIELDS AND VALUES
 The following fields and values are for systems with an EEPROM:

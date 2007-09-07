@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2007/09/04 23:28:26 fgsch Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2007/09/07 13:54:43 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -302,12 +302,13 @@ usage(void)
 {
 
 #ifdef __sparc__
-	fprintf(stderr, "usage: %s %s %s\n", __progname,
-	    "[-] [-c] [-f device] [-i] [-p] [-v]",
-	    "[-N system] [field[=value] ...]");
+	fprintf(stderr,
+	    "usage: %s [-cipv] [-f device] [-N system] [field[=value] ...]\n",
+	    __progname);
 #else
-	fprintf(stderr, "usage: %s %s\n", __progname,
-	    "[-] [-c] [-f device] [-i] [field[=value] ...]");
+	fprintf(stderr,
+	    "usage: %s [-ci] [-f device] [field[=value] ...]\n",
+	    __progname);
 #endif /* __sparc__ */
 	exit(1);
 }
