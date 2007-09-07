@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.194 2007/07/03 13:22:42 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.195 2007/09/07 23:30:30 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -87,6 +87,9 @@ cvs_file_init(void)
 	/* standard patterns to ignore */
 	for (i = 0; i < (int)(sizeof(cvs_ign_std)/sizeof(char *)); i++)
 		cvs_file_ignore(cvs_ign_std[i], &cvs_ign_pats);
+
+	if (cvs_homedir == NULL)
+		return;
 
 	/* read the cvsignore file in the user's home directory, if any */
 	(void)xsnprintf(path, MAXPATHLEN, "%s/.cvsignore", cvs_homedir);

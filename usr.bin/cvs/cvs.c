@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.130 2007/09/02 12:13:00 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.131 2007/09/07 23:30:30 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -157,9 +157,9 @@ main(int argc, char **argv)
 	}
 
 	if ((cvs_homedir = getenv("HOME")) == NULL) {
-		if ((pw = getpwuid(getuid())) == NULL)
-			fatal("getpwuid failed");
-		cvs_homedir = pw->pw_dir;
+		if ((pw = getpwuid(getuid())) != NULL)
+			cvs_homedir = pw->pw_dir;
+
 	}
 
 	if ((envstr = getenv("TMPDIR")) != NULL)
@@ -184,7 +184,7 @@ main(int argc, char **argv)
 	else if (!S_ISDIR(st.st_mode))
 		fatal("`%s' is not valid temporary directory", cvs_tmpdir);
 
-	if (cvs_readrc == 1) {
+	if (cvs_readrc == 1 && cvs_homedir != NULL) {
 		cvs_read_rcfile();
 
 		if (cvs_defargs != NULL) {
