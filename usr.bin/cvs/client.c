@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.75 2007/09/02 12:16:24 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.76 2007/09/07 19:18:41 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -279,20 +279,23 @@ cvs_client_connect_to_server(void)
 	if (cvs_noexec == 1)
 		cvs_client_send_request("Global_option -n");
 
-	if (verbosity == 0)
+	switch (verbosity) {
+	case 0:
 		cvs_client_send_request("Global_option -Q");
-
-	/* Be quiet. This is the default in OpenCVS. */
-	cvs_client_send_request("Global_option -q");
+		break;
+	case 1:
+		/* Be quiet. This is the default in OpenCVS. */
+		cvs_client_send_request("Global_option -q");
+		break;
+	default:
+		break;
+	}
 
 	if (cvs_readonly == 1)
 		cvs_client_send_request("Global_option -r");
 
 	if (cvs_trace == 1)
 		cvs_client_send_request("Global_option -t");
-
-	if (verbosity == 2)
-		cvs_client_send_request("Global_option -V");
 
 	/* XXX: If 'Set' is supported? */
 	TAILQ_FOREACH(vp, &cvs_variables, cv_link)

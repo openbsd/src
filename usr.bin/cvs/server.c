@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.69 2007/09/02 12:16:24 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.70 2007/09/07 19:18:41 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -92,6 +92,9 @@ cvs_server(int argc, char **argv)
 
 	if (argc > 1)
 		fatal("server does not take any extra arguments");
+
+	/* Be on server-side very verbose per default. */
+	verbosity = 2;
 
 	setvbuf(stdin, NULL, _IOLBF, 0);
 	setvbuf(stdout, NULL, _IOLBF, 0);
@@ -278,14 +281,14 @@ cvs_server_globalopt(char *data)
 	if (!strcmp(data, "-Q"))
 		verbosity = 0;
 
+	if (!strcmp(data, "-q"))
+		verbosity = 1;
+
 	if (!strcmp(data, "-r"))
 		cvs_readonly = 1;
 
 	if (!strcmp(data, "-t"))
 		cvs_trace = 1;
-
-	if (!strcmp(data, "-V"))
-		verbosity = 2;
 }
 
 void
