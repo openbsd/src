@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.33 2007/09/02 15:19:25 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.34 2007/09/07 16:30:25 chl Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.33 2007/09/02 15:19:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.34 2007/09/07 16:30:25 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -334,10 +334,10 @@ again:
 		do	{
 			fprintf(stderr, "Specify next volume #: ");
 			(void)fflush(stderr);
-			(void)fgets(buf, TP_BSIZE, terminal);
-		} while (!feof(terminal) && buf[0] == '\n');
-		if (feof(terminal))
-			exit(1);
+			if (fgets(buf, sizeof buf, terminal) == NULL ||
+			    feof(terminal))
+				exit(1);
+		} while (buf[0] == '\n');
 		newvol = atoi(buf);
 		if (newvol <= 0) {
 			fprintf(stderr,
@@ -353,11 +353,9 @@ again:
 	fprintf(stderr, "Enter ``none'' if there are no more tapes\n");
 	fprintf(stderr, "otherwise enter tape name (default: %s) ", magtape);
 	(void)fflush(stderr);
-	if (fgets(buf, TP_BSIZE, terminal) == NULL || feof(terminal))
+	if (fgets(buf, sizeof buf, terminal) == NULL || feof(terminal))
 		exit(1);
-	i = strlen(buf);
-	if (i > 0 && buf[--i] == '\n')
-		buf[i] = '\0';
+	buf[strcspn(buf, "\n")] = '\0';
 	if (strcmp(buf, "none") == 0) {
 		terminateinput();
 		return;
