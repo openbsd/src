@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.32 2007/07/27 03:03:37 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.33 2007/09/07 03:50:42 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -311,6 +311,10 @@ k7pnow_acpi_states(struct k7pnow_cpu_state * cstate, struct acpicpu_pss *pss,
 		state.fid = PN7_ACPI_CTRL_TO_FID(ctrl);
 		state.vid = PN7_ACPI_CTRL_TO_VID(ctrl);
 
+		if ((cstate->flags & PN7_FLAG_ERRATA_A0) &&
+		    (k7pnow_fid_to_mult[state.fid] % 10) == 5)
+			continue;
+
 		state.freq = pss[n].pss_core_freq;
 		j = n;
 		while (j > 0 && cstate->state_table[j - 1].freq > state.freq) {
@@ -354,6 +358,7 @@ k7pnow_acpi_init(struct k7pnow_cpu_state *cstate, uint64_t status)
 	if (cstate->n_states == 0)
 		return 0;
 
+	curs = k7pnow_acpi_states(cstate, pss, cstate->n_states, status);
 	/* 
 	 * XXX: Some BIOS supplied _PSS implementations have the wrong
 	 * maximum frequency, if we encounter one of these punt and 
@@ -363,7 +368,6 @@ k7pnow_acpi_init(struct k7pnow_cpu_state *cstate, uint64_t status)
 	if (mfid != cstate->state_table[cstate->n_states - 1].fid) {
 		return 0;
 	}
-	curs = k7pnow_acpi_states(cstate, pss, cstate->n_states, status);
 
 	acpicpu_set_notify(k7pnow_acpi_pss_changed);
 	ctrl = pss[curs].pss_ctrl;
@@ -417,14 +421,12 @@ k7_powernow_init(void)
 
 	cstate->fsb = cpuspeed / (k7pnow_fid_to_mult[currentfid]/10);
 
+	if (!k7pnow_states(cstate, ci->ci_signature, maxfid, startvid))
+		if (!k7pnow_states(cstate, regs[0], maxfid, startvid)) {
 #if NACPICPU > 0
-	/* If we have it try ACPI */
-	if (!k7pnow_acpi_init(cstate, status))
+			/* If we have it try ACPI */
+			k7pnow_acpi_init(cstate, status);
 #endif
-	{
-		/* if the base CPUID signature fails to match try, the extended one */
-		if (!k7pnow_states(cstate, ci->ci_signature, maxfid, startvid))
-			k7pnow_states(cstate, regs[0], maxfid, startvid);
 	}
 
 	if (cstate->n_states) {
