@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.13 2005/08/01 21:58:01 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.14 2007/09/07 18:21:40 fgsch Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -845,10 +845,9 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		}
 		if (state->pf == NULL) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
-			    M_NOWAIT);
+			    M_NOWAIT|M_ZERO);
 			if (state->pf == NULL)
 				panic("pcmcia_parse_cis_tuple");
-			bzero(state->pf, sizeof(*state->pf));
 			state->pf->number = state->count++;
 			state->pf->last_config_index = -1;
 			SIMPLEQ_INIT(&state->pf->cfe_head);
@@ -886,10 +885,9 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			}
 			if (state->pf == NULL) {
 				state->pf = malloc(sizeof(*state->pf),
-				    M_DEVBUF, M_NOWAIT);
+				    M_DEVBUF, M_NOWAIT|M_ZERO);
 				if (state->pf == NULL)
 					panic("pcmcia_parse_cis_tuple");
-				bzero(state->pf, sizeof(*state->pf));
 				state->pf->number = state->count++;
 				state->pf->last_config_index = -1;
 				SIMPLEQ_INIT(&state->pf->cfe_head);

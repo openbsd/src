@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.37 2006/04/16 20:43:12 miod Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.38 2007/09/07 18:21:40 fgsch Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -200,10 +200,9 @@ pcmcia_card_attach(dev)
 	 * want to probe.  Fixup a function element for it.
 	 */
 	if (SIMPLEQ_FIRST(&sc->card.pf_head) == NULL) {
-		pf = malloc(sizeof *pf, M_DEVBUF, M_NOWAIT);
+		pf = malloc(sizeof *pf, M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (pf == NULL)
 			panic("pcmcia_card_attach");
-		bzero(pf, sizeof *pf);
 		pf->number = 0;
 		pf->pf_flags = PFF_FAKE;
 		pf->last_config_index = -1;
