@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc7621.c,v 1.1 2007/09/07 19:17:26 kettenis Exp $	*/
+/*	$OpenBSD: asc7621.c,v 1.2 2007/09/07 23:56:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -245,7 +245,7 @@ adl_refresh(void *arg)
 		} else if (adl_worklist[i].mVscale) {
 			volt = ((hdata << 8 | ldata)) >> (16 - 10);
 			volt = volt * adl_worklist[i].mVscale / (192 << 2);
-			sc->sc_sensor[i].value = volt;
+			sc->sc_sensor[i].value = volt * 1000;
 		} else {
 			/*
 			 * Inversed to ensure that the LS byte will be read
