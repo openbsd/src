@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.557 2007/08/30 13:07:06 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.558 2007/09/07 20:34:10 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3273,7 +3273,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (!state_icmp && (r->keep_state || nr != NULL ||
 	    (pd->flags & PFDESC_TCP_NORM))) {
 		/* create new state */
-		u_int16_t	 len;
 		struct pf_state	*s = NULL;
 		struct pf_state_key *sk = NULL;
 		struct pf_src_node *sn = NULL;
@@ -3332,9 +3331,8 @@ cleanup:
 			s->log |= nr->log & PF_LOG_ALL;
 		switch (pd->proto) {
 		case IPPROTO_TCP:
-			len = pd->tot_len - off - (th->th_off << 2);
 			s->src.seqlo = ntohl(th->th_seq);
-			s->src.seqhi = s->src.seqlo + len + 1;
+			s->src.seqhi = s->src.seqlo + pd->p_len + 1;
 			if ((th->th_flags & (TH_SYN|TH_ACK)) ==
 			TH_SYN && r->keep_state == PF_STATE_MODULATE) {
 				/* Generate sequence number modulator */
