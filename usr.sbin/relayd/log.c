@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2007/09/06 19:55:45 reyk Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 2007/09/07 07:52:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -229,4 +229,20 @@ print_host(struct sockaddr_storage *ss, char *buf, size_t len)
 	else
 		ptr = &((struct sockaddr_in6 *)ss)->sin6_addr;
 	return (inet_ntop(af, ptr, buf, len));
+}
+
+const char *
+print_time(struct timeval *a, struct timeval *b, char *buf, size_t len)
+{
+	struct timeval		tv;
+	u_long			h, sec, min;
+
+	timerclear(&tv);
+	timersub(a, b, &tv);
+	sec = tv.tv_sec % 60;
+	min = tv.tv_sec / 60 % 60;
+	h = tv.tv_sec / 60 / 60;
+
+	snprintf(buf, len, "%.2lu:%.2lu:%.2lu", h, min, sec);
+	return (buf);
 }
