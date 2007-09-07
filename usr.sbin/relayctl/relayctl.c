@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.20 2007/06/12 18:09:00 pyr Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.21 2007/09/07 08:31:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -198,13 +198,9 @@ main(int argc, char *argv[])
 				break;
 			switch (res->action) {
 			case SHOW_SUM:
-				done = show_summary_msg(&imsg, SHOW_SUM);
-				break;
 			case SHOW_HOSTS:
-				done = show_summary_msg(&imsg, SHOW_HOSTS);
-				break;
 			case SHOW_RELAYS:
-				done = show_summary_msg(&imsg, SHOW_RELAYS);
+				done = show_summary_msg(&imsg, res->action);
 				break;
 			case SERV_DISABLE:
 			case SERV_ENABLE:
