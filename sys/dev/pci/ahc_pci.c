@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.51 2007/05/14 01:37:50 deraadt Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.52 2007/09/07 18:07:06 krw Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.51 2007/05/14 01:37:50 deraadt Exp $
+ * $Id: ahc_pci.c,v 1.52 2007/09/07 18:07:06 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -755,12 +755,13 @@ ahc_pci_attach(parent, self, aux)
 		return;
 
 	/* Keep information about the PCI bus */
-	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF, M_NOWAIT);
+	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (bd == NULL) {
-		printf("%s: unable to allocate bus-specific data\n", ahc_name(ahc));
+		printf("%s: unable to allocate bus-specific data\n",
+		    ahc_name(ahc));
 		return;
 	}
-	memset(bd, 0, sizeof(struct ahc_pci_busdata));
 
 	bd->pc = pa->pa_pc;
 	bd->tag = pa->pa_tag;
@@ -967,13 +968,11 @@ ahc_pci_attach(parent, self, aux)
 			ahc->features &= ~AHC_ULTRA;
 	}
 
-	ahc->seep_config = malloc(sizeof(*ahc->seep_config),
-				  M_DEVBUF, M_NOWAIT);
+	ahc->seep_config = malloc(sizeof(*ahc->seep_config), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (ahc->seep_config == NULL)
 		goto error_out;
 	
-	memset(ahc->seep_config, 0, sizeof(*ahc->seep_config));
-
 	/* See if we have a SEEPROM and perform auto-term */
 	ahc_check_extport(ahc, &sxfrctl1);
 
