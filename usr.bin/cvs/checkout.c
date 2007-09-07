@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.100 2007/09/07 19:36:05 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.101 2007/09/07 23:05:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -32,6 +32,7 @@
 static void checkout_check_repository(int, char **);
 static void checkout_repository(const char *, const char *);
 
+extern int print_stdout;
 extern int prune_dirs;
 extern int build_dirs;
 
@@ -73,6 +74,10 @@ cvs_checkout(int argc, char **argv)
 			break;
 		case 'P':
 			prune_dirs = 1;
+			break;
+		case 'p':
+			print_stdout = 1;
+			cvs_noexec = 1;
 			break;
 		case 'R':
 			break;
@@ -150,6 +155,9 @@ checkout_check_repository(int argc, char **argv)
 
 		if (cvs_cmdop == CVS_OP_CHECKOUT && prune_dirs == 1)
 			cvs_client_send_request("Argument -P");
+
+		if (print_stdout == 1)
+			cvs_client_send_request("Argument -p");
 
 		cr.enterdir = NULL;
 		cr.leavedir = NULL;
@@ -248,13 +256,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 	    (cvs_server_active) ? "to client" : "to disk");
 
 	if (co_flags & CO_DUMP) {
-		if (cvs_server_active) {
-			cvs_printf("dump file %s to client\n", cf->file_path);
-		} else {
-			rcs_rev_write_fd(cf->file_rcs, rnum,
-			    STDOUT_FILENO, 1);
-		}
-
+		rcs_rev_write_fd(cf->file_rcs, rnum, STDOUT_FILENO, 1);
 		return;
 	}
 

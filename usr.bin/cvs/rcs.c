@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.216 2007/08/27 19:18:05 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.217 2007/09/07 23:05:04 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2782,6 +2782,7 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 	struct rcs_delta *rdp;
 	struct cvs_lines *lines;
 	struct cvs_line *lp;
+	extern int print_stdout;
 
 	expand = 0;
 	lines = rcs_rev_getlines(rfp, rev);
@@ -2805,6 +2806,16 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 
 		if (expand)
 			rcs_kwexp_line(rfp->rf_path, rdp, lp, expmode);
+
+		/*
+		 * Solely for the checkout and update -p options.
+		 */
+		if (cvs_server_active == 1 &&
+		    (cvs_cmdop == CVS_OP_CHECKOUT ||
+		    cvs_cmdop == CVS_OP_UPDATE) && print_stdout == 1) {
+			if (write(fd, "M ", 2) == -1)
+				fatal("rcs_rev_write_fd: %s", strerror(errno));
+		}
 
 		if (write(fd, lp->l_line, lp->l_len) == -1)
 			fatal("rcs_rev_write_fd: %s", strerror(errno));

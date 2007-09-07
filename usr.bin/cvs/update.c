@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.107 2007/09/04 17:57:41 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.108 2007/09/07 23:05:04 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -27,7 +27,7 @@
 #include "remote.h"
 
 int	prune_dirs = 0;
-int	print = 0;
+int	print_stdout = 0;
 int	build_dirs = 0;
 int	reset_stickies = 0;
 char *cvs_specified_tag = NULL;
@@ -82,7 +82,7 @@ cvs_update(int argc, char **argv)
 			prune_dirs = 1;
 			break;
 		case 'p':
-			print = 1;
+			print_stdout = 1;
 			cvs_noexec = 1;
 			break;
 		case 'Q':
@@ -118,7 +118,7 @@ cvs_update(int argc, char **argv)
 			cvs_client_send_request("Argument -l");
 		if (prune_dirs)
 			cvs_client_send_request("Argument -P");
-		if (print)
+		if (print_stdout)
 			cvs_client_send_request("Argument -p");
 
 		cr.enterdir = NULL;
@@ -319,7 +319,7 @@ cvs_update_local(struct cvs_file *cf)
 			cvs_server_clear_sticky(cf->file_wd);
 	}
 
-	if (print && cf->file_status != FILE_UNKNOWN) {
+	if (print_stdout && cf->file_status != FILE_UNKNOWN) {
 		rcsnum_tostr(cf->file_rcsrev, rbuf, sizeof(rbuf));
 		if (verbosity > 1)
 			cvs_printf("%s\nChecking out %s\n"
