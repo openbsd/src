@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.132 2007/06/20 18:15:47 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.133 2007/09/07 16:15:48 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1866,10 +1866,9 @@ dvd_read_disckey(cd, s)
 	struct scsi_read_dvd_structure_data *buf;
 	int error;
 
-	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK);
+	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK | M_ZERO);
 	if (buf == NULL)
 		return (ENOMEM);
-	bzero(buf, sizeof(*buf));
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
@@ -1922,10 +1921,9 @@ dvd_read_manufact(cd, s)
 	struct scsi_read_dvd_structure_data *buf;
 	int error;
 
-	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK);
+	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK | M_ZERO);
 	if (buf == NULL)
 		return (ENOMEM);
-	bzero(buf, sizeof(*buf));
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;

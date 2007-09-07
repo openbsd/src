@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.37 2007/06/24 05:34:35 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.38 2007/09/07 16:15:49 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -293,7 +293,7 @@ safte_read_config(struct safte_softc *sc)
 		(config.doorlock ? 1 : 0) + (config.alarm ? 1 : 0);
 
 	sc->sc_sensors = malloc(sc->sc_nsensors * sizeof(struct safte_sensor),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL) {
 		free(sc->sc_encbuf, M_DEVBUF);
 		sc->sc_encbuf = NULL;
@@ -304,8 +304,6 @@ safte_read_config(struct safte_softc *sc)
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
 
-	memset(sc->sc_sensors, 0,
-	    sc->sc_nsensors * sizeof(struct safte_sensor));
 	s = sc->sc_sensors;
 
 	for (i = 0; i < config.nfans; i++) {
@@ -561,9 +559,8 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	if (slot >= sc->sc_nslots)
 		return (ENODEV);
 
-	op = malloc(sizeof(struct safte_slotop), M_TEMP, 0);
+	op = malloc(sizeof(struct safte_slotop), M_TEMP, M_ZERO);
 
-	memset(op, 0, sizeof(struct safte_slotop));
 	op->opcode = SAFTE_WRITE_SLOTOP;
 	op->slot = slot;
 	op->flags |= wantblink ? SAFTE_SLOTOP_IDENTIFY : 0;
