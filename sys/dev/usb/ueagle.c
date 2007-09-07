@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.21 2007/06/14 10:11:15 mbalmer Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.22 2007/09/07 19:05:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -31,7 +31,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
 

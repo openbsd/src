@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.28 2007/08/28 18:34:38 deraadt Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.29 2007/09/07 19:05:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -37,7 +37,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/conf.h>
 #include <sys/device.h>

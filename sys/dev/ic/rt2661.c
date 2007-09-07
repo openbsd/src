@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.37 2007/08/28 18:34:38 deraadt Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.38 2007/09/07 19:05:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -419,7 +419,7 @@ rt2661_alloc_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring,
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	ring->data = malloc(count * sizeof (struct rt2661_tx_data), M_DEVBUF,
-	    M_NOWAIT);
+	    M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
 		    sc->sc_dev.dv_xname);
@@ -427,7 +427,6 @@ rt2661_alloc_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring,
 		goto fail;
 	}
 
-	memset(ring->data, 0, count * sizeof (struct rt2661_tx_data));
 	for (i = 0; i < count; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    RT2661_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
@@ -562,7 +561,7 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
 	ring->data = malloc(count * sizeof (struct rt2661_rx_data), M_DEVBUF,
-	    M_NOWAIT);
+	    M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate soft data\n",
 		    sc->sc_dev.dv_xname);
@@ -573,7 +572,6 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
 	 */
-	memset(ring->data, 0, count * sizeof (struct rt2661_rx_data));
 	for (i = 0; i < count; i++) {
 		struct rt2661_rx_desc *desc = &sc->rxq.desc[i];
 		struct rt2661_rx_data *data = &sc->rxq.data[i];
@@ -672,12 +670,8 @@ rt2661_free_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring)
 struct ieee80211_node *
 rt2661_node_alloc(struct ieee80211com *ic)
 {
-	struct rt2661_node *rn;
-
-	rn = malloc(sizeof (struct rt2661_node), M_DEVBUF, M_NOWAIT);
-	if (rn != NULL)
-		bzero(rn, sizeof (struct rt2661_node));
-	return (struct ieee80211_node *)rn;
+	return malloc(sizeof (struct rt2661_node), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 }
 
 int

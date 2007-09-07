@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.52 2007/08/28 18:34:38 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.53 2007/09/07 19:05:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -648,14 +648,12 @@ wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int count,
 	}
 
 	ring->data = malloc(count * sizeof (struct wpi_tx_data), M_DEVBUF,
-	    M_NOWAIT);
+	    M_NOWAIT | M_ZERO);
 	if (ring->data == NULL) {
 		printf("%s: could not allocate tx data slots\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
-
-	memset(ring->data, 0, count * sizeof (struct wpi_tx_data));
 
 	for (i = 0; i < count; i++) {
 		struct wpi_tx_data *data = &ring->data[i];
@@ -735,12 +733,7 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 struct ieee80211_node *
 wpi_node_alloc(struct ieee80211com *ic)
 {
-	struct wpi_node *wn;
-
-	wn = malloc(sizeof (struct wpi_node), M_DEVBUF, M_NOWAIT);
-	if (wn != NULL)
-		memset(wn, 0, sizeof (struct wpi_node));
-	return (struct ieee80211_node *)wn;
+	return malloc(sizeof (struct wpi_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 }
 
 void

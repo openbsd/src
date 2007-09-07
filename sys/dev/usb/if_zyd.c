@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.59 2007/08/28 18:34:38 deraadt Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.60 2007/09/07 19:05:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -643,12 +643,7 @@ zyd_free_rx_list(struct zyd_softc *sc)
 struct ieee80211_node *
 zyd_node_alloc(struct ieee80211com *ic)
 {
-	struct zyd_node *zn;
-
-	zn = malloc(sizeof (struct zyd_node), M_DEVBUF, M_NOWAIT);
-	if (zn != NULL)
-		bzero(zn, sizeof (struct zyd_node));
-	return (struct ieee80211_node *)zn;
+	return malloc(sizeof (struct zyd_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 }
 
 int
