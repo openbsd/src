@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.19 2007/06/02 18:39:57 jsg Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.20 2007/09/07 05:32:38 gwk Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -178,10 +178,11 @@ ichss_present(struct pci_attach_args *pa)
 	pcitag_t br_tag;
 	pcireg_t br_id, br_class;
 	struct cpu_info *ci;
-	int family, model, stepping, brandid;
+	int family, model, stepping, brandid, ret;
 
+	ret = 0;
 	if (setperf_prio > 2)
-		return (0);
+		return (ret);
 
 	ci = curcpu();
 	family = (ci->ci_signature >> 8) & 15;
@@ -190,44 +191,58 @@ ichss_present(struct pci_attach_args *pa)
 	brandid = cpu_miscinfo & 0xff; /* XXX should put this in ci */
 
 	/*
-	 * This form of SpeedStep works only on Intel Mobile Pentium 4.
-	 * Intel Celeron processors don't support it.  However, they
-	 * can be coupled with ICH southbridges that do, causing false
-	 * positives.  So we ensure that we are running on Intel Mobile
-	 * Pentium 4.
-	 * This heuristic comes from the Linux speedstep-ich driver.
+	 * This form of SpeedStep works only with certain Intel processors.
+	 * However, other processors can be coupled with these ICH southbridges
+	 * causing false positives. This heuristic comes partly from the 
+	 * Linux speedstep-ich driver.
 	 */
-	if (!(family == 15 && model == 2 &&
-	    ((stepping == 4 && (brandid == 14 || brandid == 15)) ||
-	    (stepping == 7 && brandid == 14) ||
-	    (stepping == 9 && (brandid == 14 || strncasecmp(cpu_model, p4hint,
-	    sizeof(p4hint) - 1) == 0)))))
-		return (0);
-
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DBM_LPC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC)
-		return (1);
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC) {
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC) {
+		if (family == 15 && model == 2) {
+			switch(stepping) {
+			case 4:
+				if (brandid == 14 || brandid == 15)
+					ret = 1;
+				break;
+			case 7:
+				if (brandid == 14)
+					ret = 1;
+				break;
+			case 9:
+				if (brandid == 14 && strncasecmp(cpu_model,
+				    p4hint, sizeof(p4hint)-1) == 0) {
+					ret = 1;
+				}
+				break;
+			}
+		} else if (family == 6 && model == 11) {
+			if (stepping == 1)
+				ret = 1;
+		}
+
 		/*
 		 * Old revisions of the 82815 hostbridge found on
 		 * Dell Inspirons 8000 and 8100 don't support
 		 * SpeedStep.
 		 */
-		/*
-		 * XXX: dev 0 func 0 is not always a hostbridge,
-		 * should be converted to use pchb(4) hook.
-		 */
-		br_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 0, 0);
-		br_id = pci_conf_read(pa->pa_pc, br_tag, PCI_ID_REG);
-		br_class = pci_conf_read(pa->pa_pc, br_tag, PCI_CLASS_REG);
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC) {
+			/*
+			 * XXX: dev 0 func 0 is not always a hostbridge,
+			 * should be converted to use pchb(4) hook.
+			 */
+			br_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 0, 0);
+			br_id = pci_conf_read(pa->pa_pc, br_tag, PCI_ID_REG);
+			br_class = pci_conf_read(pa->pa_pc, br_tag, PCI_CLASS_REG);
 
-		if (PCI_PRODUCT(br_id) == PCI_PRODUCT_INTEL_82815_FULL_HUB &&
-		    PCI_REVISION(br_class) < 5)
-			return (0);
-		return (1);
+			if (PCI_PRODUCT(br_id) == PCI_PRODUCT_INTEL_82815_FULL_HUB &&
+			    PCI_REVISION(br_class) < 5) {
+				ret = 0;
+			}
+		}
 	}
 
-	return (0);
+	return (ret);
 }
 
 void
