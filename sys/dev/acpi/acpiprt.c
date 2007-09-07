@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiprt.c,v 1.16 2007/02/23 00:04:40 jordan Exp $	*/
+/*	$OpenBSD: acpiprt.c,v 1.17 2007/09/07 19:48:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,6 +31,7 @@
 #include <dev/acpi/dsdt.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
 #include <machine/i82093reg.h>
@@ -95,7 +96,7 @@ acpiprt_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": bus %d (%s)", sc->sc_bus, sc->sc_devnode->parent->name);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PRT", 0, NULL, &res)) {
+	if (aml_evalnode(sc->sc_acpi, sc->sc_devnode, 0, NULL, &res)) {
 		printf(": no PCI interrupt routing table\n");
 		return;
 	}
@@ -284,7 +285,35 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 	if (parent == NULL)
 		return 0;
 
-	if (aml_evalname(sc->sc_acpi, parent, "_ADR", 0, NULL, &res) == 0) {
+	/*
+	 * If our parent is a a bridge, it might have an address descriptor
+	 * that tells us our bus number.
+	 */
+	if (aml_evalname(sc->sc_acpi, parent, "_CRS.", 0, NULL, &res) == 0) {
+		rv = -1;
+	  	if (res.type == AML_OBJTYPE_BUFFER)
+			aml_parse_resource(res.length, res.v_buffer, 
+			    acpiprt_getminbus, &rv);
+		aml_freevalue(&res);
+		if (rv != -1)
+			return rv;
+	}
+
+	/*
+	 * If our parent is the root of the bus, it should specify the
+	 * base bus number.
+	 */
+	if (aml_evalname(sc->sc_acpi, parent, "_BBN.", 0, NULL, &res) == 0) {
+		rv = aml_val2int(&res);
+		aml_freevalue(&res);
+		return (rv);
+	}
+
+	/*
+	 * If our parent is a PCI-PCI bridge, get our bus number from its
+	 * PCI config space.
+	 */
+	if (aml_evalname(sc->sc_acpi, parent, "_ADR.", 0, NULL, &res) == 0) {
 		bus = acpiprt_getpcibus(sc, parent);
 		dev = ACPI_PCI_DEV(aml_val2int(&res) << 16);
 		func = ACPI_PCI_FN(aml_val2int(&res) << 16);
@@ -298,27 +327,19 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 			return (-1);
 
 		tag = pci_make_tag(pc, bus, dev, func);
+
+		/* Check whether the device is really there. */
+		reg = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID)
+			return (-1);
+
+		/* Fetch bus number from PCI config space. */
 		reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
 		if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
 		    PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI) {
 			reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
 			return (PPB_BUSINFO_SECONDARY(reg));
 		}
-	}
-
-	if (aml_evalname(sc->sc_acpi, parent, "_CRS", 0, NULL, &res) == 0) {
-		rv = -1;
-	  	if (res.type == AML_OBJTYPE_BUFFER)
-			aml_parse_resource(res.length, res.v_buffer, 
-			    acpiprt_getminbus, &rv);
-		aml_freevalue(&res);
-		if (rv != -1)
-			return rv;
-	}
-	if (aml_evalname(sc->sc_acpi, parent, "_BBN", 0, NULL, &res) == 0) {
-		rv = aml_val2int(&res);
-		aml_freevalue(&res);
-		return (rv);
 	}
 
 	return (0);
