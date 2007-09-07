@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.64 2007/09/03 15:24:49 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.65 2007/09/07 11:15:19 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -234,15 +234,22 @@ route_output(struct mbuf *m, ...)
 	rtm->rtm_pid = curproc->p_pid;
 	if (rtm->rtm_hdrlen == 0)	/* old client */
 		rtm->rtm_hdrlen = sizeof(struct rt_msghdr);
+	if (len < rtm->rtm_hdrlen) {
+		dst = 0;
+		error = EINVAL;
+		goto flush;
+	}
 
 	tableid = rtm->rtm_tableid;
 	if (!rtable_exists(tableid)) {
 		if (rtm->rtm_type == RTM_ADD) {
 			if (rtable_add(tableid)) {
+				dst = 0;
 				error = EINVAL;
 				goto flush;
 			}
 		} else {
+			dst = 0;
 			error = EINVAL;
 			goto flush;
 		}
