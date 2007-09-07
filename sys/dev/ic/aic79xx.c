@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.39 2007/05/09 19:24:56 miod Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.40 2007/09/07 17:58:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -2818,7 +2818,7 @@ ahd_alloc_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel)
 	 && ahd->enabled_targets[scsi_id] != master_tstate)
 		panic("%s: ahd_alloc_tstate - Target already allocated",
 		      ahd_name(ahd));
-	tstate = malloc(sizeof(*tstate), M_DEVBUF, M_NOWAIT);
+	tstate = malloc(sizeof(*tstate), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (tstate == NULL)
 		return (NULL);
 
@@ -2837,8 +2837,7 @@ ahd_alloc_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel)
 			memset(&tstate->transinfo[i].goal, 0,
 			      sizeof(tstate->transinfo[i].goal));
 		}
-	} else
-		memset(tstate, 0, sizeof(*tstate));
+	}
 	ahd->enabled_targets[scsi_id] = tstate;
 	return (tstate);
 }
@@ -6190,13 +6189,10 @@ ahd_init(struct ahd_softc *ahd)
 	AHD_ASSERT_MODES(ahd, AHD_MODE_SCSI_MSK, AHD_MODE_SCSI_MSK);
 
 	ahd->stack_size = ahd_probe_stack_size(ahd);
-	ahd->saved_stack = malloc(ahd->stack_size * sizeof(uint16_t),
-				  M_DEVBUF, M_NOWAIT);
+	ahd->saved_stack = malloc(ahd->stack_size * sizeof(uint16_t), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (ahd->saved_stack == NULL)
 		return (ENOMEM);
-
-	/* Zero the memory */
-        memset(ahd->saved_stack, 0, ahd->stack_size * sizeof(uint16_t));
 
 	/*
 	 * Verify that the compiler hasn't over-agressively
@@ -9608,14 +9604,13 @@ ahd_handle_en_lun(struct ahd_softc *ahd, struct cam_sim *sim, union ccb *ccb)
 				return;
 			}
 		}
-		lstate = malloc(sizeof(*lstate), M_DEVBUF, M_NOWAIT);
+		lstate = malloc(sizeof(*lstate), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (lstate == NULL) {
 			xpt_print_path(ccb->ccb_h.path);
 			printf("Couldn't allocate lstate\n");
 			ccb->ccb_h.status = CAM_RESRC_UNAVAIL;
 			return;
 		}
-		memset(lstate, 0, sizeof(*lstate));
 		status = xpt_create_path(&lstate->path, /*periph*/NULL,
 					 xpt_path_path_id(ccb->ccb_h.path),
 					 xpt_path_target_id(ccb->ccb_h.path),

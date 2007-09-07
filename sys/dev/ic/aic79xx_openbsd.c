@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.26 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.27 2007/09/07 17:58:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -609,10 +609,9 @@ ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg)
 {
 	if (sizeof(struct ahd_platform_data) > 0) {
 		ahd->platform_data = malloc(sizeof(struct ahd_platform_data),
-		    M_DEVBUF, M_NOWAIT);
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ahd->platform_data == NULL)
 			return (ENOMEM);
-		bzero(ahd->platform_data, sizeof(struct ahd_platform_data));
 	}	
 
 	return (0);

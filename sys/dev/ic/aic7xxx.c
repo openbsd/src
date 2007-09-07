@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.76 2007/05/26 21:53:16 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.77 2007/09/07 17:58:39 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.76 2007/05/26 21:53:16 krw Exp $
+ * $Id: aic7xxx.c,v 1.77 2007/09/07 17:58:39 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -1644,8 +1644,7 @@ ahc_alloc_tstate(struct ahc_softc *ahc, u_int scsi_id, char channel)
 	    && ahc->enabled_targets[scsi_id] != master_tstate)
 		panic("%s: ahc_alloc_tstate - Target already allocated",
 		      ahc_name(ahc));
-	tstate = (struct ahc_tmode_tstate*)malloc(sizeof(*tstate),
-						   M_DEVBUF, M_NOWAIT);
+	tstate = malloc(sizeof(*tstate), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (tstate == NULL)
 		return (NULL);
 
@@ -1665,8 +1664,7 @@ ahc_alloc_tstate(struct ahc_softc *ahc, u_int scsi_id, char channel)
 			memset(&tstate->transinfo[i].goal, 0,
 			      sizeof(tstate->transinfo[i].goal));
 		}
-	} else
-		memset(tstate, 0, sizeof(*tstate));
+	}
 	ahc->enabled_targets[scsi_id] = tstate;
 	return (tstate);
 }
@@ -3889,11 +3887,10 @@ ahc_softc_init(struct ahc_softc *ahc)
 	ahc->pause = ahc->unpause | PAUSE; 
 	/* XXX The shared scb data stuff should be deprecated */
 	if (ahc->scb_data == NULL) {
-		ahc->scb_data = malloc(sizeof(*ahc->scb_data),
-				       M_DEVBUF, M_NOWAIT);
+		ahc->scb_data = malloc(sizeof(*ahc->scb_data), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (ahc->scb_data == NULL)
 			return (ENOMEM);
-		memset(ahc->scb_data, 0, sizeof(*ahc->scb_data));
 	}
 
 	return (0);
@@ -4253,12 +4250,10 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	SLIST_INIT(&scb_data->sg_maps);
 
 	/* Allocate SCB resources */
-	scb_data->scbarray =
-	    (struct scb *)malloc(sizeof(struct scb) * AHC_SCB_MAX_ALLOC,
-				 M_DEVBUF, M_NOWAIT);
+	scb_data->scbarray = malloc(sizeof(struct scb) * AHC_SCB_MAX_ALLOC,
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (scb_data->scbarray == NULL)
 		return (ENOMEM);
-	memset(scb_data->scbarray, 0, sizeof(struct scb) * AHC_SCB_MAX_ALLOC);
 
 	/* Determine the number of hardware SCBs and initialize them */
 
@@ -4418,11 +4413,10 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 		int error;
 
 		if (sizeof(*pdata) > 0) { 
-			pdata = (struct scb_platform_data *)
-			    malloc(sizeof(*pdata), M_DEVBUF, M_NOWAIT);
+			pdata = malloc(sizeof(*pdata), M_DEVBUF,
+			    M_NOWAIT | M_ZERO);
 			if (pdata == NULL)
 				break;
-			bzero(pdata, sizeof(*pdata));
 		}
 
 		next_scb->platform_data = pdata;
@@ -6877,14 +6871,13 @@ ahc_handle_en_lun(struct ahc_softc *ahc, struct cam_sim *sim, union ccb *ccb)
 				return;
 			}
 		}
-		lstate = malloc(sizeof(*lstate), M_DEVBUF, M_NOWAIT);
+		lstate = malloc(sizeof(*lstate), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (lstate == NULL) {
 			xpt_print_path(ccb->ccb_h.path);
 			printf("Couldn't allocate lstate\n");
 			ccb->ccb_h.status = CAM_RESRC_UNAVAIL;
 			return;
 		}
-		memset(lstate, 0, sizeof(*lstate));
 		status = xpt_create_path(&lstate->path, /*periph*/NULL,
 					 xpt_path_path_id(ccb->ccb_h.path),
 					 xpt_path_target_id(ccb->ccb_h.path),

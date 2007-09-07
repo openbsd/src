@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.35 2007/08/04 14:37:34 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.36 2007/09/07 17:58:39 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -699,10 +699,9 @@ ahc_platform_alloc(struct ahc_softc *ahc, void *platform_arg)
 {
 	if (sizeof(struct ahc_platform_data) > 0) {
 		ahc->platform_data = malloc(sizeof(struct ahc_platform_data),
-		    M_DEVBUF, M_NOWAIT);
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ahc->platform_data == NULL)
 			return (ENOMEM);
-		bzero(ahc->platform_data, sizeof(struct ahc_platform_data));
 	}
 
 	return (0);
