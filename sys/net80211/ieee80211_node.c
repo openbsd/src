@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.28 2007/07/06 18:18:43 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.29 2007/09/07 20:23:30 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -104,25 +104,22 @@ ieee80211_node_attach(struct ifnet *ifp)
 	else if (ic->ic_max_aid > IEEE80211_AID_MAX)
 		ic->ic_max_aid = IEEE80211_AID_MAX;
 	size = howmany(ic->ic_max_aid, 32) * sizeof(u_int32_t);
-	MALLOC(ic->ic_aid_bitmap, u_int32_t *, size, M_DEVBUF, M_NOWAIT);
+	ic->ic_aid_bitmap = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ic->ic_aid_bitmap == NULL) {
 		/* XXX no way to recover */
 		printf("%s: no memory for AID bitmap!\n", __func__);
 		ic->ic_max_aid = 0;
-	} else
-		memset(ic->ic_aid_bitmap, 0, size);
+	}
 
 	if (ic->ic_caps & (IEEE80211_C_HOSTAP | IEEE80211_C_IBSS)) {
 		ic->ic_tim_len = howmany(ic->ic_max_aid, 8);
-		MALLOC(ic->ic_tim_bitmap, u_int8_t *, ic->ic_tim_len, M_DEVBUF,
-		    M_NOWAIT);
+		ic->ic_tim_bitmap = malloc(ic->ic_tim_len, M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (ic->ic_tim_bitmap == NULL) {
 			printf("%s: no memory for TIM bitmap!\n", __func__);
 			ic->ic_tim_len = 0;
-		} else {
-			memset(ic->ic_tim_bitmap, 0, ic->ic_tim_len);
+		} else
 			ic->ic_set_tim = ieee80211_set_tim;
-		}
 	}
 }
 
@@ -525,12 +522,8 @@ ieee80211_get_rate(struct ieee80211com *ic)
 struct ieee80211_node *
 ieee80211_node_alloc(struct ieee80211com *ic)
 {
-	struct ieee80211_node *ni;
-	MALLOC(ni, struct ieee80211_node *, sizeof(struct ieee80211_node),
-	    M_80211_NODE, M_NOWAIT);
-	if (ni != NULL)
-		memset(ni, 0, sizeof(struct ieee80211_node));
-	return ni;
+	return malloc(sizeof(struct ieee80211_node), M_80211_NODE,
+	    M_NOWAIT | M_ZERO);
 }
 
 void
