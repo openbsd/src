@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.2 2007/09/06 19:33:20 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.3 2007/09/07 19:32:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -432,6 +432,7 @@ struct iwn_cmd_data {
 #define IWN_TX_BT_DISABLE	(1 << 12)	/* bluetooth coexistence */
 #define IWN_TX_AUTO_SEQ		(1 << 13)
 #define IWN_TX_INSERT_TSTAMP	(1 << 16)
+#define IWN_TX_NEED_PADDING	(1 << 20)
 
 	uint8_t		ntries;
 	uint8_t		bluetooth;

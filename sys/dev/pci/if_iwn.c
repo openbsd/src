@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.4 2007/09/07 19:05:05 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.5 2007/09/07 19:32:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -1659,7 +1659,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	uint32_t flags;
 	uint8_t type;
 	u_int hdrlen;
-	int i, rate, error, ovhd = 0;
+	int i, rate, error, pad, ovhd = 0;
 
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
@@ -1766,6 +1766,13 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	} else
 		tx->timeout = htole16(0);
 
+	if (hdrlen & 3) {
+		/* first segment's length must be a multiple of 4 */
+		flags |= IWN_TX_NEED_PADDING;
+		pad = 4 - (hdrlen & 3);
+	} else
+		pad = 0;
+
 	tx->flags = htole32(flags);
 	tx->len = htole16(m0->m_pkthdr.len);
 	tx->rate = iwn_plcp_signal(rate);
@@ -1843,7 +1850,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	/* first scatter/gather segment is used by the tx data command */
 	IWN_SET_DESC_NSEGS(desc, 1 + data->map->dm_nsegs);
-	IWN_SET_DESC_SEG(desc, 0, paddr, 4 + sizeof (*tx) + hdrlen);
+	IWN_SET_DESC_SEG(desc, 0, paddr, 4 + sizeof (*tx) + hdrlen + pad);
 	for (i = 1; i <= data->map->dm_nsegs; i++) {
 		IWN_SET_DESC_SEG(desc, i, data->map->dm_segs[i - 1].ds_addr,
 		     data->map->dm_segs[i - 1].ds_len);
@@ -3373,11 +3380,9 @@ iwn_hw_config(struct iwn_softc *sc)
 {
 	uint32_t tmp, hw;
 
-#ifdef notyet
 	/* enable interrupts mitigation */
 	/* XXX generates way too much interrupts (vmstat -i) !! */
-	IWN_WRITE(sc, IWN_INTR_MIT, 512 / 32);
-#endif
+	IWN_WRITE(sc, IWN_INTR_MIT, 0 /* 512 / 32 */);
 
 	/* voodoo from the reference driver */
 	tmp = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_CLASS_REG);
