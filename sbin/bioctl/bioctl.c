@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.60 2007/07/11 07:40:11 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.61 2007/09/08 07:21:29 henning Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -264,7 +264,7 @@ bio_inq(char *name)
 		if (errno == ENOTTY)
 			bio_diskinq(name);
 		else
-			warn("BIOCINQ");
+			err(1, "BIOCINQ");
 		return;
 	}
 
@@ -277,10 +277,8 @@ bio_inq(char *name)
 		bv.bv_seconds = 0;
 
 		rv = ioctl(devh, BIOCVOL, &bv);
-		if (rv == -1) {
-			warn("BIOCVOL");
-			return;
-		}
+		if (rv == -1)
+			err(1, "BIOCVOL");
 
 		if (name && strcmp(name, bv.bv_dev) != 0)
 			continue;
@@ -350,10 +348,8 @@ bio_inq(char *name)
 			bd.bd_volid = i;
 
 			rv = ioctl(devh, BIOCDISK, &bd);
-			if (rv == -1) {
-				warn("BIOCDISK");
-				return;
-			}
+			if (rv == -1)
+				err(1, "BIOCDISK");
 
 			switch (bd.bd_status) {
 			case BIOC_SDONLINE:
@@ -447,15 +443,12 @@ bio_alarm(char *arg)
 		break;
 
 	default:
-		warnx("invalid alarm function: %s", arg);
-		return;
+		errx(1, "invalid alarm function: %s", arg);
 	}
 
 	rv = ioctl(devh, BIOCALARM, &ba);
-	if (rv == -1) {
-		warn("BIOCALARM");
-		return;
-	}
+	if (rv == -1)
+		err(1, "BIOCALARM");
 
 	if (arg[0] == 'g') {
 		printf("alarm is currently %s\n",
@@ -483,10 +476,8 @@ bio_setstate(char *arg)
 	bs.bs_lun = location.lun;
 
 	rv = ioctl(devh, BIOCSETSTATE, &bs);
-	if (rv == -1) {
-		warn("BIOCSETSTATE");
-		return;
-	}
+	if (rv == -1)
+		err(1, "BIOCSETSTATE");
 }
 
 void
@@ -519,20 +510,16 @@ bio_setblink(char *name, char *arg, int blink)
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_cookie = bl.bl_cookie;
 	rv = ioctl(devh, BIOCINQ, &bi);
-	if (rv == -1) {
-		warn("BIOCINQ");
-		return;
-	}
+	if (rv == -1)
+		err(1, "BIOCINQ");
 
 	for (v = 0; v < bi.bi_novol; v++) {
 		memset(&bv, 0, sizeof(bv));
 		bv.bv_cookie = bl.bl_cookie;
 		bv.bv_volid = v;
 		rv = ioctl(devh, BIOCVOL, &bv);
-		if (rv == -1) {
-			warn("BIOCVOL");
-			return;
-		}
+		if (rv == -1)
+			err(1, "BIOCVOL");
 
 		if (name && strcmp(name, bv.bv_dev) != 0)
 			continue;
@@ -544,10 +531,8 @@ bio_setblink(char *name, char *arg, int blink)
 			bd.bd_diskid = d;
 
 			rv = ioctl(devh, BIOCDISK, &bd);
-			if (rv == -1) {
-				warn("BIOCDISK");
-				return;
-			}
+			if (rv == -1)
+				err(1, "BIOCDISK");
 
 			if (bd.bd_channel == location.channel &&
 			    bd.bd_target == location.target &&
@@ -590,7 +575,7 @@ bio_blink(char *enclosure, int target, int blinktype)
 
 	rv = ioctl(bioh, BIOCBLINK, &blink);
 	if (rv == -1)
-		warn("BIOCBLINK");
+		err(1, "BIOCBLINK");
 
 	close(bioh);
 }
@@ -635,12 +620,9 @@ bio_createraid(u_int16_t level, char *dev_list)
 	create.bc_flags = BIOC_SCDEVT | cflags;
 
 	rv = ioctl(devh, BIOCCREATERAID, &create);
-	if (rv == -1) {
-		warn("BIOCCREATERAID");
-		goto done;
-	}
+	if (rv == -1)
+		err(1, "BIOCCREATERAID");
 
-done:
 	free(dt);
 }
 
@@ -742,10 +724,8 @@ bio_diskinq(char *sd_dev)
 {
 	struct dk_inquiry	di;
 
-	if (ioctl(devh, DIOCINQ, &di) == -1) {
-		warn("DIOCINQ");
-		return;
-	}
+	if (ioctl(devh, DIOCINQ, &di) == -1)
+		err(1, "DIOCINQ");
 
 	printf("%s: <%s, %s, %s>, serial %s\n", sd_dev, bio_vis(di.vendor),
 	    bio_vis(di.product), bio_vis(di.revision), bio_vis(di.serial));
