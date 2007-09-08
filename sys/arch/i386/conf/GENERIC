@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.571 2007/09/06 16:37:03 damien Exp $
+#	$OpenBSD: GENERIC,v 1.572 2007/09/08 08:45:13 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -129,6 +129,7 @@ viasio*	at isa? port 0x4e flags 0x0000
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
 
 adc*	at iic?				# Analog Devices AD7416/AD7417/7418
+adl*	at iic?				# Andigilog aSC7621
 admtemp* at iic?			# Analog Devices ADM1021
 admlc*	at iic?				# Analog Devices ADM1024
 admcts*	at iic?				# Analog Devices ADM1026
@@ -136,10 +137,10 @@ admtm*	at iic?				# Analog Devices ADM1025
 admtmp*	at iic?				# Analog Devices ADM1030
 admtt*	at iic?				# Analog Devices ADM1031
 adt*	at iic?				# Analog Devices ADT7460
-lm*	at iic?				# LM78/79 and clones
+lm*	at iic?				# National Semiconductor LM78/79
 lmenv*	at iic?				# National Semiconductor LM87
-lmtemp*	at iic?				# NS LM75/LM77 temperature sensor
-lmn*	at iic?				# NS LM93
+lmtemp*	at iic?				# National Semiconductor LM75/LM77
+lmn*	at iic?				# National Semiconductor LM93
 maxds*	at iic?				# Maxim DS1631/1624/1721
 maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 asbtm*	at iic?				# Asus ASB100

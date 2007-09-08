@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.193 2007/09/06 16:37:03 damien Exp $
+#	$OpenBSD: GENERIC,v 1.194 2007/09/08 08:44:22 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -91,6 +91,7 @@ amdpm*	at pci?			# AMD-7xx/8111 and NForce SMBus controller
 iic*	at amdpm?
 
 adc*	at iic?			# Analog Devices AD7416/AD7417/7418
+adl*	at iic?			# Andigilog aSC7621
 admtemp* at iic?		# Analog Devices ADM1021
 admlc*	at iic?			# Analog Devices ADM1024
 admtm*	at iic?			# Analog Devices ADM1025
@@ -98,10 +99,10 @@ admcts*	at iic?			# Analog Devices ADM1026
 admtmp*	at iic?			# Analog Devices ADM1030
 admtt*	at iic?			# Analog Devices ADM1031
 adt*	at iic?			# Analog Devices ADT7460
-lm*	at iic?			# LM78/79 and clones
+lm*	at iic?			# National Semiconductor LM78/79
 lmenv*	at iic?			# National Semiconductor LM87
-lmtemp*	at iic?			# NS LM75/LM77 temperature sensor
-lmn*	at iic?				# NS LM93
+lmtemp*	at iic?			# National Semiconductor LM75/LM77
+lmn*	at iic?			# National Semiconductor LM93
 maxds*	at iic?			# Maxim DS1631
 maxtmp*	at iic?			# Maxim MAX6642/MAX6690
 
