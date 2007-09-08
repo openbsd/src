@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64.h,v 1.6 2003/12/17 03:51:48 jason Exp $	*/
+/*	$OpenBSD: sparc64.h,v 1.7 2007/09/08 17:48:12 kettenis Exp $	*/
 /*	$NetBSD: sparc64.h,v 1.3 2000/10/20 05:47:03 mrg Exp $	*/
 
 /*
@@ -50,6 +50,8 @@ paddr_t prom_alloc_phys(int len, int align);
 paddr_t prom_claim_phys(paddr_t phys, int len);
 int prom_free_phys(paddr_t paddr, int len);
 paddr_t prom_get_msgbuf(int len, int align);
+void prom_start_cpu(int cpu, void *func, long arg);
+void prom_start_cpu_by_cpuid(int cpu, void *func, long arg);
 
 /*
  * Debug
