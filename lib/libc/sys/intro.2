@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.41 2007/09/03 14:37:52 millert Exp $
+.\"	$OpenBSD: intro.2,v 1.42 2007/09/08 18:56:26 otto Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 3 2007 $
+.Dd $Mdocdate: September 8 2007 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -342,7 +342,7 @@ A path name lookup involved more than 32
 symbolic links.
 .It Er 63 ENAMETOOLONG Em "File name too long" .
 A component of a path name exceeded 255
-.Pq Dv MAXNAMELEN
+.Pq Dv MAXNAMLEN
 characters, or an entire path name exceeded 1023
 .Pq Dv MAXPATHLEN Ns -1
 characters.
@@ -570,7 +570,7 @@ which uniquely identifies an access path to that file or socket from
 a given process or any of its children.
 .It File Name
 Names consisting of up to 255
-.Pq Dv MAXNAMELEN
+.Pq Dv MAXNAMLEN
 characters may be used to name
 an ordinary file, special file, or directory.
 .Pp
@@ -594,7 +594,7 @@ file names because of the special meaning attached to these characters
 by the shell.
 .Pp
 Note also that
-.Pq Dv MAXNAMELEN
+.Pq Dv MAXNAMLEN
 is an upper limit fixed by the kernel, meant to be used for sizing buffers.
 Some filesystems may have additional restrictions.
 These can be queried using
