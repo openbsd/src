@@ -1933,7 +1933,6 @@
 ./usr/sbin/usermod
 ./usr/sbin/vipw
 ./usr/sbin/visudo
-./usr/sbin/vnconfig
 ./usr/sbin/vos
 ./usr/sbin/watchdogd
 ./usr/sbin/ypbind
@@ -2882,6 +2881,7 @@
 ./usr/share/zoneinfo/America/Indiana/Knox
 ./usr/share/zoneinfo/America/Indiana/Marengo
 ./usr/share/zoneinfo/America/Indiana/Petersburg
+./usr/share/zoneinfo/America/Indiana/Tell_City
 ./usr/share/zoneinfo/America/Indiana/Vevay
 ./usr/share/zoneinfo/America/Indiana/Vincennes
 ./usr/share/zoneinfo/America/Indiana/Winamac
@@ -3461,6 +3461,7 @@
 ./usr/share/zoneinfo/posix/America/Indiana/Knox
 ./usr/share/zoneinfo/posix/America/Indiana/Marengo
 ./usr/share/zoneinfo/posix/America/Indiana/Petersburg
+./usr/share/zoneinfo/posix/America/Indiana/Tell_City
 ./usr/share/zoneinfo/posix/America/Indiana/Vevay
 ./usr/share/zoneinfo/posix/America/Indiana/Vincennes
 ./usr/share/zoneinfo/posix/America/Indiana/Winamac
@@ -4041,6 +4042,7 @@
 ./usr/share/zoneinfo/right/America/Indiana/Knox
 ./usr/share/zoneinfo/right/America/Indiana/Marengo
 ./usr/share/zoneinfo/right/America/Indiana/Petersburg
+./usr/share/zoneinfo/right/America/Indiana/Tell_City
 ./usr/share/zoneinfo/right/America/Indiana/Vevay
 ./usr/share/zoneinfo/right/America/Indiana/Vincennes
 ./usr/share/zoneinfo/right/America/Indiana/Winamac

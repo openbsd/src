@@ -74,7 +74,7 @@
 ./usr/lib/gcc-lib/hppa-unknown-openbsd4.2/3.3.5/collect2
 ./usr/lib/gcc-lib/hppa-unknown-openbsd4.2/3.3.5/specs
 ./usr/lib/libasn1.so.16.0
-./usr/lib/libc.so.41.0
+./usr/lib/libc.so.42.0
 ./usr/lib/libcom_err.so.16.0
 ./usr/lib/libcrypto.so.13.0
 ./usr/lib/libcurses.so.10.0
@@ -105,7 +105,7 @@
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libssl.so.11.0
-./usr/lib/libstdc++.so.42.0
+./usr/lib/libstdc++.so.44.0
 ./usr/lib/libtermcap.so.10.0
 ./usr/lib/libtermlib.so.10.0
 ./usr/lib/libusbhid.so.3.0
@@ -1122,6 +1122,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_ipwvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_iwireg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_iwivar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_iwnreg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_iwnvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_ixgb.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_ixgb_osdep.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_lgereg.ph
@@ -1202,6 +1204,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/qlireg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/safereg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/safevar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/siop_pci_common.ph

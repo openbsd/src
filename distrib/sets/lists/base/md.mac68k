@@ -29,7 +29,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.2/2.95.3/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.2/2.95.3/specs
 ./usr/lib/libasn1.so.16.0
-./usr/lib/libc.so.41.0
+./usr/lib/libc.so.42.0
 ./usr/lib/libcom_err.so.16.0
 ./usr/lib/libcrypto.so.13.0
 ./usr/lib/libcurses.so.10.0
@@ -1075,6 +1075,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_ipwvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_iwireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_iwivar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_iwnreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_iwnvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_ixgb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_ixgb_osdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_lgereg.ph
@@ -1155,6 +1157,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/qlireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/safereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/safevar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/siop_pci_common.ph

@@ -990,6 +990,7 @@
 ./usr/share/man/cat4/acx.0
 ./usr/share/man/cat4/adc.0
 ./usr/share/man/cat4/addcom.0
+./usr/share/man/cat4/adl.0
 ./usr/share/man/cat4/admcts.0
 ./usr/share/man/cat4/admlc.0
 ./usr/share/man/cat4/admtemp.0
@@ -1280,6 +1281,7 @@
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/it.0
 ./usr/share/man/cat4/iwi.0
+./usr/share/man/cat4/iwn.0
 ./usr/share/man/cat4/ixgb.0
 ./usr/share/man/cat4/jmb.0
 ./usr/share/man/cat4/keynote.0
@@ -1299,6 +1301,7 @@
 ./usr/share/man/cat4/lm.0
 ./usr/share/man/cat4/lmc.0
 ./usr/share/man/cat4/lmenv.0
+./usr/share/man/cat4/lmn.0
 ./usr/share/man/cat4/lmtemp.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
@@ -1672,6 +1675,7 @@
 ./usr/share/man/cat4/ubsa.0
 ./usr/share/man/cat4/ubsec.0
 ./usr/share/man/cat4/ubt.0
+./usr/share/man/cat4/uchcom.0
 ./usr/share/man/cat4/ucom.0
 ./usr/share/man/cat4/ucycom.0
 ./usr/share/man/cat4/udav.0

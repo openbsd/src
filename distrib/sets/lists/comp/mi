@@ -527,6 +527,8 @@
 ./usr/include/dev/pci/if_ipwvar.h
 ./usr/include/dev/pci/if_iwireg.h
 ./usr/include/dev/pci/if_iwivar.h
+./usr/include/dev/pci/if_iwnreg.h
+./usr/include/dev/pci/if_iwnvar.h
 ./usr/include/dev/pci/if_ixgb.h
 ./usr/include/dev/pci/if_ixgb_osdep.h
 ./usr/include/dev/pci/if_lgereg.h
@@ -607,6 +609,7 @@
 ./usr/include/dev/pci/plx9060var.h
 ./usr/include/dev/pci/ppbreg.h
 ./usr/include/dev/pci/pucvar.h
+./usr/include/dev/pci/qlireg.h
 ./usr/include/dev/pci/safereg.h
 ./usr/include/dev/pci/safevar.h
 ./usr/include/dev/pci/siop_pci_common.h
@@ -4483,6 +4486,7 @@
 ./usr/share/man/cat3/memcmp.0
 ./usr/share/man/cat3/memcpy.0
 ./usr/share/man/cat3/memmove.0
+./usr/share/man/cat3/memrchr.0
 ./usr/share/man/cat3/memset.0
 ./usr/share/man/cat3/menu.0
 ./usr/share/man/cat3/menu_attributes.0
@@ -4857,6 +4861,7 @@
 ./usr/share/man/cat3/readskey.0
 ./usr/share/man/cat3/realloc.0
 ./usr/share/man/cat3/realpath.0
+./usr/share/man/cat3/recalloc.0
 ./usr/share/man/cat3/recno.0
 ./usr/share/man/cat3/redrawwin.0
 ./usr/share/man/cat3/refresh.0
