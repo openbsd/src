@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.43 2007/06/01 19:25:09 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.44 2007/09/08 09:28:49 martin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -334,10 +334,9 @@ device_register(dev, aux)
 	 * we can mount as root.
 	 */
 	dd = (struct dev_data *)malloc(sizeof(struct dev_data),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dd == NULL)
 		panic("device_register: can't allocate dev_data");
-	bzero(dd, sizeof(struct dev_data));
 
 	dd->dd_dev = dev;
 
