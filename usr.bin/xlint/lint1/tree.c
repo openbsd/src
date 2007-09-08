@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.44 2006/10/26 22:36:54 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.45 2007/09/08 17:49:19 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.44 2006/10/26 22:36:54 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.45 2007/09/08 17:49:19 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3109,9 +3109,6 @@ funccall(tnode_t *func, tnode_t *args)
 		fcop = ICALL;
 	}
 
-	if (func->tn_sym->s_noreturn)
-		notreach(0);
-
 	/*
 	 * after cconv() func will always be a pointer to a function
 	 * if it is a valid function designator.
@@ -3327,7 +3324,11 @@ expr(tnode_t *tn, int vctx, int tctx)
 				warning(161);
 			}
 		}
+	} else if (tn->tn_op == CALL && tn->tn_left->tn_op == AMPER) {
+		if (tn->tn_left->tn_left->tn_sym->s_noreturn)
+			reached = rchflg = 0;
 	}
+
 	if (!modtab[tn->tn_op].m_sideeff) {
 		/*
 		 * for left operands of COMMA this warning is already
