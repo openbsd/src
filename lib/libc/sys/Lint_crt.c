@@ -1,6 +1,6 @@
-/*	$OpenBSD: Lint_crt.c,v 1.1 2005/11/29 21:29:15 deraadt Exp $	*/
+/*	$OpenBSD: Lint_crt.c,v 1.2 2007/09/08 19:42:36 otto Exp $	*/
 
-/* Publid domain, Theo de Raadt, 2005 */
+/* Public domain, Theo de Raadt, 2005 */
 
 #include <unistd.h>
 
