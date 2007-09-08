@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.48 2007/06/14 10:11:15 mbalmer Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.49 2007/09/08 17:34:54 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -101,7 +101,6 @@ struct mixerctl {
 #define MIX_UNSIGNED(n) ((n) == MIX_UNSIGNED_16)
 	int		minval, maxval;
 	u_int		delta;
-	u_int		mul;
 	u_int8_t	class;
 	char		ctlname[MAX_AUDIO_DEV_LEN];
 	char		*ctlunit;
@@ -265,6 +264,7 @@ usbd_status uaudio_identify
 	(struct uaudio_softc *, const usb_config_descriptor_t *);
 
 int	uaudio_signext(int, int);
+int	uaudio_unsignext(int, int);
 int	uaudio_value2bsd(struct mixerctl *, int);
 int	uaudio_bsd2value(struct mixerctl *, int);
 int	uaudio_get(struct uaudio_softc *, int, int, int, int, int);
@@ -604,7 +604,7 @@ uaudio_find_iface(const char *buf, int size, int *offsp, int subtype)
 void
 uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 {
-	int res;
+	int res, range;
 	size_t len;
 	struct mixerctl *nmc;
 
@@ -639,18 +639,16 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 			uaudio_get(sc, GET_MIN, UT_READ_CLASS_INTERFACE,
 				   mc->wValue[0], mc->wIndex,
 				   MIX_SIZE(mc->type)));
-		mc->maxval = 1 + uaudio_signext(mc->type,
+		mc->maxval = uaudio_signext(mc->type,
 			uaudio_get(sc, GET_MAX, UT_READ_CLASS_INTERFACE,
 				   mc->wValue[0], mc->wIndex,
 				   MIX_SIZE(mc->type)));
-		mc->mul = mc->maxval - mc->minval;
-		if (mc->mul == 0)
-			mc->mul = 1;
+		range = mc->maxval - mc->minval;
 		res = uaudio_get(sc, GET_RES, UT_READ_CLASS_INTERFACE,
 				 mc->wValue[0], mc->wIndex,
 				 MIX_SIZE(mc->type));
-		if (res > 0)
-			mc->delta = (res * 255 + mc->mul/2) / mc->mul;
+		if (res > 0 && range > 0)
+			mc->delta = (res * 255 + res - 1) / range;
 	}
 
 	sc->sc_ctls[sc->sc_nctls++] = *mc;
@@ -836,7 +834,6 @@ uaudio_add_selector(struct uaudio_softc *sc, const struct io_terminal *iot, int 
 	mix.ctlunit = "";
 	mix.minval = 1;
 	mix.maxval = d->bNrInPins;
-	mix.mul = mix.maxval - mix.minval;
 	wp = snprintf(mix.ctlname, MAX_AUDIO_DEV_LEN, "sel%d-", d->bUnitId);
 	for (i = 1; i <= d->bNrInPins; i++) {
 		wp += snprintf(mix.ctlname + wp, MAX_AUDIO_DEV_LEN - wp,
@@ -2298,8 +2295,21 @@ uaudio_signext(int type, int val)
 }
 
 int
+uaudio_unsignext(int type, int val)
+{
+	if (!MIX_UNSIGNED(type)) {
+		if (MIX_SIZE(type) == 2)
+			val = (u_int16_t)val;
+		else
+			val = (u_int8_t)val;
+	}
+	return (val);
+}
+
+int
 uaudio_value2bsd(struct mixerctl *mc, int val)
 {
+	int range;
 	DPRINTFN(5, ("uaudio_value2bsd: type=%03x val=%d min=%d max=%d ",
 		     mc->type, val, mc->minval, mc->maxval));
 	if (mc->type == MIX_ON_OFF) {
@@ -2307,9 +2317,14 @@ uaudio_value2bsd(struct mixerctl *mc, int val)
 	} else if (mc->type == MIX_SELECTOR) {
 		if (val < mc->minval || val > mc->maxval)
 			val = mc->minval;
-	} else
-		val = ((uaudio_signext(mc->type, val) - mc->minval) * 255
-			+ mc->mul/2) / mc->mul;
+	} else {
+		range = mc->maxval - mc->minval;
+		if (range == 0) 
+			val = 0;
+		else
+			val = 255 * (uaudio_signext(mc->type, val) - 
+			    mc->minval) / range;
+	}
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
 }
@@ -2325,7 +2340,8 @@ uaudio_bsd2value(struct mixerctl *mc, int val)
 		if (val < mc->minval || val > mc->maxval)
 			val = mc->minval;
 	} else
-		val = (val + mc->delta/2) * mc->mul / 255 + mc->minval;
+		val = uaudio_unsignext(mc->type, 
+		    val * (mc->maxval - mc->minval) / 255 + mc->minval);
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
 }
