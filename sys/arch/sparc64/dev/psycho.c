@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.52 2007/08/04 16:44:15 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.53 2007/09/08 10:50:04 martin Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -343,11 +343,10 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate our psycho_pbm
 	 */
-	pp = sc->sc_psycho_this = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
+	pp = sc->sc_psycho_this = malloc(sizeof *pp, M_DEVBUF,
+		M_NOWAIT | M_ZERO);
 	if (pp == NULL)
 		panic("could not allocate psycho pbm");
-
-	memset(pp, 0, sizeof *pp);
 
 	pp->pp_sc = sc;
 
@@ -448,11 +447,9 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		 * For the moment, 32KB should be more than enough.
 		 */
 		sc->sc_is = malloc(sizeof(struct iommu_state),
-			M_DEVBUF, M_NOWAIT);
+			M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (sc->sc_is == NULL)
 			panic("psycho_attach: malloc iommu_state");
-
-		memset(sc->sc_is, 0, sizeof *sc->sc_is);
 
 		if (getproplen(sc->sc_node, "no-streaming-cache") < 0) {
 			struct strbuf_ctl *sb = &pp->pp_sb;
@@ -884,12 +881,10 @@ psycho_alloc_bus_tag(struct psycho_pbm *pp,
 	struct psycho_softc *sc = pp->pp_sc;
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bt == NULL)
 		panic("could not allocate psycho bus tag");
 
-	bzero(bt, sizeof *bt);
-	
 	snprintf(bt->name, sizeof(bt->name), "%s-pbm_%s(%d-%2.2x)",
 	    sc->sc_dev.dv_xname, name, ss, asi); 
 
@@ -913,11 +908,10 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
 	bus_dma_tag_t dt, pdt = sc->sc_dmatag;
 
 	dt = (bus_dma_tag_t)malloc(sizeof(struct sparc_bus_dma_tag),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dt == NULL)
 		panic("could not allocate psycho dma tag");
 
-	bzero(dt, sizeof *dt);
 	dt->_cookie = pp;
 	dt->_parent = pdt;
 	dt->_dmamap_create	= psycho_dmamap_create;
