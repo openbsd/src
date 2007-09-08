@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.65 2007/09/07 11:15:19 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.66 2007/09/08 16:55:05 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -691,6 +691,9 @@ again:
 				rw->w_where = 0;
 		}
 	}
+	if (cp)		/* clear the message header */
+		bzero(cp0, hlen);
+
 	if (cp && vers != RTM_OVERSION) {
 		struct rt_msghdr *rtm = (struct rt_msghdr *)cp0;
 
@@ -906,11 +909,9 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
-		rtm->rtm_use = 0;
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt;
 		rtm->rtm_index = rt->rt_ifp->if_index;
-		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;
 		if ((error = copyout(rtm, w->w_where, size)) != 0)
 			w->w_where = NULL;
@@ -923,11 +924,9 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_omsghdr *rtm = (struct rt_omsghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
-		rtm->rtm_use = 0;
 		rtm->rtm_rmx.rmx_locks = rt->rt_rmx.rmx_locks;
 		rtm->rtm_rmx.rmx_mtu = rt->rt_rmx.rmx_mtu;
 		rtm->rtm_index = rt->rt_ifp->if_index;
-		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;
 		if ((error = copyout(rtm, w->w_where, size)) != 0)
 			w->w_where = NULL;
