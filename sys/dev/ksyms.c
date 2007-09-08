@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.17 2006/07/12 18:09:24 martin Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.18 2007/09/08 17:59:23 gilles Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -132,12 +132,11 @@ ksymsattach(num)
 		struct exec *k1;
 
 		ksym_head_size = __LDPGSZ;
-		ksym_head = malloc(ksym_head_size, M_DEVBUF, M_NOWAIT);
+		ksym_head = malloc(ksym_head_size, M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (ksym_head == NULL) {
 			printf("failed to allocate memory for /dev/ksyms\n");
 			return;
 		}
-		bzero(ksym_head, ksym_head_size);
 
 		k1 = (struct exec *)ksym_head;
 

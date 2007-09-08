@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.37 2007/06/20 18:15:46 deraadt Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.38 2007/09/08 17:59:23 gilles Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -147,8 +147,7 @@ rdattach(n)
 
 	/* Attach as if by autoconfig. */
 	for (i = 0; i < n; i++) {
-		sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
-		bzero((caddr_t)sc, sizeof(*sc));
+		sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 		if (snprintf(sc->sc_dev.dv_xname, sizeof(sc->sc_dev.dv_xname),
 		    "rd%d", i) >= sizeof(sc->sc_dev.dv_xname)) {
 			printf("rdattach: device name too long\n");

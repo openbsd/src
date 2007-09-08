@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.79 2007/09/01 15:28:39 thib Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.80 2007/09/08 17:59:23 gilles Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -239,9 +239,9 @@ ccdattach(int num)
 	}
 
 	ccd_softc = (struct ccd_softc *)malloc(num * sizeof(struct ccd_softc),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	ccddevs = (struct ccddevice *)malloc(num * sizeof(struct ccddevice),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if ((ccd_softc == NULL) || (ccddevs == NULL)) {
 		printf("WARNING: no memory for concatenated disks\n");
 		if (ccd_softc != NULL)
@@ -254,8 +254,6 @@ ccdattach(int num)
 		rw_init(&ccd_softc[i].sc_rwlock, "ccdlock");
 	}
 	numccd = num;
-	bzero(ccd_softc, num * sizeof(struct ccd_softc));
-	bzero(ccddevs, num * sizeof(struct ccddevice));
 
 	pool_init(&ccdbufpl, sizeof(struct ccdbuf), 0, 0, 0, "ccdbufpl", NULL);
 	pool_setlowat(&ccdbufpl, 16);
@@ -292,8 +290,7 @@ ccdinit(struct ccddevice *ccd, char **cpaths, struct proc *p)
 
 	/* Allocate space for the component info. */
 	cs->sc_cinfo = malloc(cs->sc_nccdisks * sizeof(struct ccdcinfo),
-	    M_DEVBUF, M_WAITOK);
-	bzero(cs->sc_cinfo, cs->sc_nccdisks * sizeof(struct ccdcinfo));
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/*
 	 * Verify that each component piece exists and record
@@ -479,8 +476,7 @@ ccdinterleave(struct ccd_softc *cs)
 	 * Chances are this is too big, but we don't care.
 	 */
 	size = (cs->sc_nccdisks + 1) * sizeof(struct ccdiinfo);
-	cs->sc_itable = (struct ccdiinfo *)malloc(size, M_DEVBUF, M_WAITOK);
-	bzero((caddr_t)cs->sc_itable, size);
+	cs->sc_itable = (struct ccdiinfo *)malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/*
 	 * Trivial case: no interleave (actually interleave of disk size).
@@ -728,8 +724,7 @@ ccdstart(struct ccd_softc *cs, struct buf *bp)
 	 * Allocate component buffers
 	 */
 	cbpp = malloc(2 * cs->sc_nccdisks * sizeof(struct ccdbuf *), M_DEVBUF,
-	    M_WAITOK);
-	bzero(cbpp, 2 * cs->sc_nccdisks * sizeof(struct ccdbuf *));
+	    M_WAITOK|M_ZERO);
 	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
 		rcount = ccdbuffer(cs, bp, bn, addr, bcount, cbpp);

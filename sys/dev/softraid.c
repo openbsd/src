@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.82 2007/06/24 05:34:35 dlg Exp $ */
+/* $OpenBSD: softraid.c,v 1.83 2007/09/08 17:59:23 gilles Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -248,9 +248,7 @@ sr_alloc_ccb(struct sr_discipline *sd)
 		return (1);
 
 	sd->sd_ccb = malloc(sizeof(struct sr_ccb) *
-	    sd->sd_max_wu * sd->sd_max_ccb_per_wu, M_DEVBUF, M_WAITOK);
-	memset(sd->sd_ccb, 0, sizeof(struct sr_ccb) *
-	    sd->sd_max_wu * sd->sd_max_ccb_per_wu);
+	    sd->sd_max_wu * sd->sd_max_ccb_per_wu, M_DEVBUF, M_WAITOK|M_ZERO);
 	TAILQ_INIT(&sd->sd_ccb_freeq);
 	for (i = 0; i < sd->sd_max_wu * sd->sd_max_ccb_per_wu; i++) {
 		ccb = &sd->sd_ccb[i];
@@ -342,8 +340,7 @@ sr_alloc_wu(struct sr_discipline *sd)
 	sd->sd_wu_pending = no_wu;
 
 	sd->sd_wu = malloc(sizeof(struct sr_workunit) * no_wu,
-	    M_DEVBUF, M_WAITOK);
-	memset(sd->sd_wu, 0, sizeof(struct sr_workunit) * no_wu);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 	TAILQ_INIT(&sd->sd_wu_freeq);
 	TAILQ_INIT(&sd->sd_wu_pendq);
 	TAILQ_INIT(&sd->sd_wu_defq);
@@ -766,15 +763,13 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	if (bc->bc_dev_list_len > BIOC_CRMAXLEN)
 		goto unwind;
 
-	dt = malloc(bc->bc_dev_list_len, M_DEVBUF, M_WAITOK);
-	bzero(dt, bc->bc_dev_list_len);
+	dt = malloc(bc->bc_dev_list_len, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (user)
 		copyin(bc->bc_dev_list, dt, bc->bc_dev_list_len);
 	else
 		bcopy(bc->bc_dev_list, dt, bc->bc_dev_list_len);
 
-	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK);
-	memset(sd, 0, sizeof(struct sr_discipline));
+	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK|M_ZERO);
 	sd->sd_sc = sc;
 
 	no_chunk = bc->bc_dev_list_len / sizeof(dev_t);
@@ -784,13 +779,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		goto unwind;
 
 	/* in memory copy of metadata */
-	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK);
-	bzero(sd->sd_meta, SR_META_SIZE  * 512);
+	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/* we have a valid list now create an array index */
 	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *) * no_chunk,
-	    M_DEVBUF, M_WAITOK);
-	bzero(sd->sd_vol.sv_chunks, sizeof(struct sr_chunk *) * no_chunk);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/* force the raid volume by clearing metadata region */
 	if (bc->bc_flags & BIOC_SCFORCE) {
@@ -1028,8 +1021,7 @@ sr_open_chunks(struct sr_softc *sc, struct sr_chunk_head *cl, dev_t *dt,
 
 	/* fill out chunk list */
 	for (i = 0; i < no_chunk; i++) {
-		ch_entry = malloc(sizeof(struct sr_chunk), M_DEVBUF, M_WAITOK);
-		bzero(ch_entry, sizeof(struct sr_chunk));
+		ch_entry = malloc(sizeof(struct sr_chunk), M_DEVBUF, M_WAITOK|M_ZERO);
 		/* keep disks in user supplied order */
 		if (ch_prev)
 			SLIST_INSERT_AFTER(ch_prev, ch_entry, src_link);
@@ -1112,8 +1104,7 @@ sr_read_meta(struct sr_discipline *sd)
 
 	DNPRINTF(SR_D_META, "%s: sr_read_meta\n", DEVNAME(sc));
 
-	m = malloc(sz , M_DEVBUF, M_WAITOK);
-	bzero(m, sz);
+	m = malloc(sz , M_DEVBUF, M_WAITOK|M_ZERO);
 
 	SLIST_FOREACH(ch_entry, cl, src_link) {
 		bzero(&b, sizeof(b));
@@ -1794,8 +1785,7 @@ sr_clear_metadata(struct sr_discipline *sd)
 
 	DNPRINTF(SR_D_META, "%s: sr_clear_metadata\n", DEVNAME(sc));
 
-	m = malloc(sz , M_DEVBUF, M_WAITOK);
-	bzero(m, sz);
+	m = malloc(sz , M_DEVBUF, M_WAITOK|M_ZERO);
 
 	SLIST_FOREACH(ch_entry, cl, src_link) {
 		bzero(&b, sizeof(b));
@@ -2108,11 +2098,9 @@ sr_boot_assembly(struct sr_softc *sc)
 			sm = (struct sr_metadata *)bp->b_data;
 			if (!sr_validate_metadata(sc, devr, sm)) {
 				/* we got one; save it off */
-				mle = malloc(sizeof(*mle), M_DEVBUF, M_WAITOK);
-				bzero(mle, sizeof(*mle));
+				mle = malloc(sizeof(*mle), M_DEVBUF, M_WAITOK|M_ZERO);
 				mle->sml_metadata = malloc(sz, M_DEVBUF,
-				    M_WAITOK);
-				bzero(mle->sml_metadata, sz);
+				    M_WAITOK|M_ZERO);
 				bcopy(sm, mle->sml_metadata, sz);
 				mle->sml_mm = devr;
 				SLIST_INSERT_HEAD(&mlh, mle, sml_link);
@@ -2913,8 +2901,7 @@ sr_raidc_getcryptop(struct sr_workunit *wu, int encrypt)
 	DNPRINTF(SR_D_DIS, "%s: sr_raidc_getcryptop wu: %p encrypt: %d\n",
 	    DEVNAME(sd->sd_sc), wu, encrypt);
 
-	uio = malloc(sizeof(*uio), M_DEVBUF, M_WAITOK);
-	memset(uio, 0, sizeof(*uio));
+	uio = malloc(sizeof(*uio), M_DEVBUF, M_WAITOK|M_ZERO);
 	uio->uio_iov = malloc(sizeof(*uio->uio_iov), M_DEVBUF, M_WAITOK);
 	uio->uio_iovcnt = 1;
 	uio->uio_iov->iov_base = xs->data;
