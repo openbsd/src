@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.7 2007/09/06 14:19:38 marco Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.8 2007/09/08 02:52:29 davec Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -300,7 +300,7 @@ qli_allocmem(struct qli_softc *sc, size_t size)
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mm->am_map) != 0)
-		goto amfree; 
+		goto amfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &mm->am_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT) != 0)
@@ -574,7 +574,7 @@ u_int16_t
 qli_read_nvram(struct qli_softc *sc, u_int32_t offset)
 {
 	int			i;
-	u_int32_t		s, mask, data; 
+	u_int32_t		s, mask, data;
 	u_int16_t		val = 0;
 #ifdef QLI_DEBUG
 	u_int32_t		qli_debug_save = qli_debug;
@@ -616,7 +616,7 @@ qli_read_nvram(struct qli_softc *sc, u_int32_t offset)
 		qli_eeprom_out(sc, s | QLI_NVRAM_CLOCK);
 		qli_eeprom_out(sc, s);
 		data = (qli_read(sc, QLI_NVRAM(sc)) & QLI_NVRAM_DATA_IN) ?
-		    1 : 0; 
+		    1 : 0;
 		val = (val << 1) | data;
 	}
 
@@ -628,10 +628,10 @@ qli_read_nvram(struct qli_softc *sc, u_int32_t offset)
 	qli_debug = qli_debug_save;
 #endif /* QLI_DEBUG */
 
-	DNPRINTF(QLI_D_RW, "%s: qli_nvram_read 0x%x 0x%04x\n", DEVNAME(sc),
-	    offset, val);
+	DNPRINTF(QLI_D_RW, "%s: qli_read_nvram 0x%x 0x%04x\n", DEVNAME(sc),
+	    offset, letoh16(val));
 
-	return (val);
+	return (letoh16(val));
 }
 
 int
@@ -743,14 +743,8 @@ qli_start_firmware(struct qli_softc *sc) {
 			else
 				r = QLI_EXT_HW_CFG_DEFAULT_QL4022;
 		} else {
-			/* XXX success, get NVRAM settings instead of default */
-			if (sc->sc_ql4010)
-				r = QLI_EXT_HW_CFG_DEFAULT_QL4010;
-			else
-				r = QLI_EXT_HW_CFG_DEFAULT_QL4022;
-			printf("%s: fixme, get NVRAM settings, using defaults"
-			    " for now\n", DEVNAME(sc));
-
+			r = (u_int32_t)qli_read_nvram(sc,
+			    QLI_NVRAM_EXT_HW_CFG(sc));
 		}
 
 		/* upper 16 bits are write mask; enable everything */
@@ -993,7 +987,7 @@ qli_intr(void *arg)
 		/* XXX */
 		panic("%s: qli_intr chip reset not implemented", DEVNAME(sc));
 	}
-	
+
 	if (intr & QLI_REG_CTRLSTAT_FATAL_ERROR) {
 		/* reset firmware */
 		/* XXX */
@@ -1007,7 +1001,7 @@ qli_intr(void *arg)
 		panic("%s: qli_intr io completion not implemented\n",
 		    DEVNAME(sc));
 	}
-	
+
 	if (intr & QLI_REG_CTRLSTAT_SCSI_PROC_INTR) {
 		/* mailbox completion */
 		mbox_status = qli_read(sc, &sc->sc_reg->qlr_mbox[0]);
@@ -1036,7 +1030,7 @@ qli_intr(void *arg)
 			break;
 		}
 	}
-	
+
 done:
 	return (claimed);
 }
