@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.17 2007/08/25 22:09:03 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.18 2007/09/08 17:13:18 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -118,6 +118,7 @@ member	p_wchan
 member	p_vmspace
 member	p_pid
 member	P_FPSTATE	p_md.md_fpstate
+member	P_MD_ASTPENDING	p_md.md_astpending
 
 export	SRUN
 export	SONPROC

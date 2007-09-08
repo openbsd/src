@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.78 2007/05/28 23:10:10 beck Exp $	*/
+/*	$OpenBSD: locore.s,v 1.79 2007/09/08 17:13:18 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3628,7 +3628,7 @@ return_from_trap:
 	btst	TSTATE_PRIV, %g1		! returning to userland?
 	CHKPT %g4, %g7, 6
 	bz,pt	%icc, rft_user
-	 sethi	%hi(_C_LABEL(want_ast)), %g7	! first instr of rft_user
+	 sethi	%hi(CURPROC), %g7		! first instr of rft_user
 
 /*
  * Return from trap, to kernel.
@@ -3672,8 +3672,9 @@ rft_wcnt:	.word 0
 	.text
 
 rft_user:
-!	sethi	%hi(_C_LABEL(want_ast)), %g7	! (done above)
-	lduw	[%g7 + %lo(_C_LABEL(want_ast))], %g7! want AST trap?
+!	sethi	%hi(CURPROC), %g7		! (done above)
+	ldx	[%g7 + %lo(CURPROC)], %g7
+	lduw	[%g7 + %lo(P_MD_ASTPENDING)], %g7! want AST trap?
 	brnz,pn	%g7, softtrap			! yes, re-enter trap with type T_AST
 	 mov	T_AST, %g4
 
@@ -3805,7 +3806,7 @@ rft_user:
 	tst	%g5
 	tnz	%icc, 1; nop			! Debugger if we still have saved windows
 	bne,a	rft_user			! Try starting over again
-	 sethi	%hi(_C_LABEL(want_ast)), %g7
+	 sethi	%hi(CURPROC), %g7
 #endif	/* DEBUG */
 	/*
 	 * Set up our return trapframe so we can recover if we trap from here

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.21 2007/09/04 20:36:52 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.22 2007/09/08 17:13:17 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -79,8 +79,6 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	cpu_model[100];
 
 struct	proc *fpproc;
-int	want_ast;
-extern	int want_resched;
 
 /* The CPU configuration driver. */
 static void cpu_attach(struct device *, struct device *, void *);
@@ -283,3 +281,11 @@ cpu_attach(parent, dev, aux)
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
+
+void
+need_resched(struct cpu_info *ci)
+{
+	ci->ci_want_resched = 1;
+	if (ci->ci_curproc != NULL)
+		aston(ci->ci_curproc);
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.41 2007/09/04 20:36:52 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.42 2007/09/08 17:13:17 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -159,13 +159,13 @@ struct clockframe {
 
 void setsoftnet(void);
 
-extern	int want_ast;
+#define aston(p)	((p)->p_md.md_astpending = 1)
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)	(ci->ci_want_resched = 1, want_ast = 1)
+extern void need_resched(struct cpu_info *);
 
 /*
  * This is used during profiling to integrate system time.
@@ -177,13 +177,9 @@ extern	int want_ast;
  * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	do { want_ast = 1; } while (0)
+#define	need_proftick(p)	aston(p)
 
-/*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
- */
-#define	signotify(p)		(want_ast = 1)
+void signotify(struct proc *);
 
 /*
  * Only one process may own the FPU state.
