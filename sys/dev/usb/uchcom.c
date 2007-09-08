@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.1 2007/09/08 02:15:52 jsg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.2 2007/09/08 04:05:36 jsg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #include <dev/usb/ucomvar.h>
 
 #ifdef UCHCOM_DEBUG
-#define DPRINTFN(n, x)  if (uchcomdebug > (n)) logprintf x
+#define DPRINTFN(n, x)  do { if (uchcomdebug > (n)) printf x; } while (0)
 int	uchcomdebug = 0;
 #else
 #define DPRINTFN(n, x)
