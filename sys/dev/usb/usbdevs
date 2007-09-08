@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.292 2007/09/06 20:41:19 fkr Exp $
+$OpenBSD: usbdevs,v 1.293 2007/09/08 19:36:42 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1296,6 +1296,7 @@ product HTC PPC6700MODEM	0x00cf	PPC6700 Modem
 
 /* HUAWEI products */
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
+product HUAWEI E220		0x1003	HUAWEI Mobile E220
 
 /* HUMAX products */
 product HUMAX PVRSMART		0x138c	PVR-SMART
