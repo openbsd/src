@@ -1,4 +1,4 @@
-/* $OpenBSD: qlireg.h,v 1.5 2007/09/06 03:55:19 davec Exp $ */
+/* $OpenBSD: qlireg.h,v 1.6 2007/09/08 02:53:08 davec Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -444,3 +444,9 @@ struct qli_reg {
 	QLI_NVRAM_NUM_ADDR_BITS_4022)
 
 #define QLI_NVRAM_NUM_DATA_BITS				(0x10)
+
+#define QLI_NVRAM_EXT_HW_CFG_4010			(0xc)
+#define QLI_NVRAM_EXT_HW_CFG_4022			(0x14)
+#define QLI_NVRAM_EXT_HW_CFG(s) (s->sc_ql4010 ? \
+	QLI_NVRAM_EXT_HW_CFG_4010 : \
+	QLI_NVRAM_EXT_HW_CFG_4022)
