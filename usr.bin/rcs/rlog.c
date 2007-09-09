@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.58 2007/06/30 08:23:49 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.59 2007/09/09 17:01:38 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -53,7 +53,7 @@ void
 rlog_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rlog [-bhLNqRtV] [-ddates] [-l[lockers]] [-r[revs]]\n"
+	    "usage: rlog [-bhLNRtV] [-ddates] [-l[lockers]] [-r[revs]]\n"
 	    "            [-sstates] [-w[logins]] [-xsuffixes]\n"
 	    "            [-ztz] file ...\n");
 }
@@ -63,11 +63,11 @@ rlog_main(int argc, char **argv)
 {
 	RCSFILE *file;
 	int Rflag;
-	int i, ch, fd;
+	int i, ch, fd, status;
 	char fpath[MAXPATHLEN];
 
 	rcsnum_flags |= RCSNUM_NO_MAGIC;
-	hflag = Rflag = rflag = 0;
+	hflag = Rflag = rflag = status = 0;
 	while ((ch = rcs_getopt(argc, argv, RLOG_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'h':
@@ -144,12 +144,15 @@ rlog_main(int argc, char **argv)
 		fd = rcs_choosefile(argv[i], fpath, sizeof(fpath));
 		if (fd < 0) {
 			warn("%s", fpath);
+			status = 1;
 			continue;
 		}
 
 		if ((file = rcs_open(fpath, fd,
-		    RCS_READ|RCS_PARSE_FULLY)) == NULL)
+		    RCS_READ|RCS_PARSE_FULLY)) == NULL) {
+			status = 1;
 			continue;
+		}
 
 		if (Lflag == 1 && TAILQ_EMPTY(&(file->rf_locks))) {
 			rcs_close(file);
@@ -167,7 +170,7 @@ rlog_main(int argc, char **argv)
 		rcs_close(file);
 	}
 
-	return (0);
+	return (status);
 }
 
 static void
