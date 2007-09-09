@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.115 2007/09/04 19:07:04 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.116 2007/09/09 20:24:06 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -37,6 +37,8 @@
 
 #include "cvs.h"
 #include "remote.h"
+
+extern int print_stdout;
 
 /* letter -> mode type map */
 static const int cvs_modetypes[26] = {
@@ -501,6 +503,14 @@ cvs_get_repository_name(const char *dir, char *dst, size_t len)
 {
 	FILE *fp;
 	char *s, fpath[MAXPATHLEN];
+
+	/* During checkout -p, do not use any locally available files. */
+	if (cvs_cmdop == CVS_OP_CHECKOUT && print_stdout) {
+		dst[0] = '\0';
+		if (strlcat(dst, dir, len) >= len)
+			fatal("cvs_get_repository_name: truncation");
+		return;
+	}
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
 	    dir, CVS_PATH_REPOSITORY);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.195 2007/09/07 23:30:30 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.196 2007/09/09 20:24:06 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -41,6 +41,8 @@
 #define CVS_IGN_STATIC	0x01	/* pattern is static, no need to glob */
 
 #define CVS_CHAR_ISMETA(c)	((c == '*') || (c == '?') || (c == '['))
+
+extern int print_stdout;
 
 /*
  * Standard patterns to ignore.
@@ -269,10 +271,15 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 				goto next;
 			}
 		} else if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
-			if (stat(d, &st) == -1) {
-				cvs_log(LP_ERRNO, "%s", d);
-				goto next;
-			}
+			/*
+			 * During checkout -p, do not use any locally
+			 * available directories.
+			 */
+			if (cvs_cmdop != CVS_OP_CHECKOUT || !print_stdout)
+				if (stat(d, &st) == -1) {
+					cvs_log(LP_ERRNO, "%s", d);
+					goto next;
+				}
 
 			cvs_get_repository_path(d, repo, MAXPATHLEN);
 			(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",

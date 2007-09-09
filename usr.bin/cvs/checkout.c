@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.101 2007/09/07 23:05:04 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.102 2007/09/09 20:24:06 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -141,6 +141,8 @@ checkout_check_repository(int argc, char **argv)
 	struct stat st;
 	struct cvs_recursion cr;
 
+	build_dirs = print_stdout ? 0 : 1;
+
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 
@@ -161,7 +163,7 @@ checkout_check_repository(int argc, char **argv)
 
 		cr.enterdir = NULL;
 		cr.leavedir = NULL;
-		cr.fileproc = cvs_client_sendfile;
+		cr.fileproc = NULL;
 		cr.flags = flags;
 
 		cvs_file_run(argc, argv, &cr);
@@ -194,13 +196,16 @@ checkout_check_repository(int argc, char **argv)
 
 			cr.fileproc = cvs_update_local;
 			cr.flags = flags;
-			cvs_mkpath(dirname(argv[i]), cvs_specified_tag);
+
+			if (build_dirs == 1)
+				cvs_mkpath(dirname(argv[i]), cvs_specified_tag);
 			cvs_file_run(1, &(argv[i]), &cr);
 
 			continue;
 		}
 
-		cvs_mkpath(argv[i], cvs_specified_tag);
+		if (build_dirs == 1)
+			cvs_mkpath(argv[i], cvs_specified_tag);
 		checkout_repository(repo, argv[i]);
 	}
 }
@@ -217,7 +222,6 @@ checkout_repository(const char *repobase, const char *wdbase)
 	cvs_history_add((cvs_cmdop == CVS_OP_CHECKOUT) ?
 	    CVS_HISTORY_CHECKOUT : CVS_HISTORY_EXPORT, NULL, wdbase);
 
-	build_dirs = 1;
 	cr.enterdir = cvs_update_enterdir;
 	cr.leavedir = cvs_update_leavedir;
 	cr.fileproc = cvs_update_local;
