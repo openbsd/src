@@ -1,4 +1,4 @@
-.\"	$OpenBSD: thmc.4,v 1.2 2007/09/09 00:47:46 deraadt Exp $
+.\"	$OpenBSD: thmc.4,v 1.3 2007/09/09 15:59:47 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -15,17 +15,17 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: September 9 2007 $
-.Dt TMHC 4
+.Dt THMC 4
 .Os
 .Sh NAME
-.Nm tmhc
-.Nd TI TMHC50, Analog ADM1022/1028 temperature sensor
+.Nm thmc
+.Nd TI THMC50, Analog ADM1022/1028 temperature sensor
 .Sh SYNOPSIS
-.Cd "tmhc* at iic?"
+.Cd "thmc* at iic?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides minimal support for the TI TMHC50, Analog ADM1022
+driver provides minimal support for the TI THMC50, Analog ADM1022
 and Analog ADM1028 temperature sensor.
 The device possesses internal and external temperature sensors,
 These values are made available through the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmhc50.c,v 1.1 2007/09/09 00:20:30 deraadt Exp $	*/
+/*	$OpenBSD: thmc50.c,v 1.1 2007/09/09 15:59:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Theo de Raadt

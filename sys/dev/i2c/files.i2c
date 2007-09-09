@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.39 2007/09/09 00:20:30 deraadt Exp $
+# $OpenBSD: files.i2c,v 1.40 2007/09/09 15:59:47 deraadt Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -134,6 +134,6 @@ attach	adl at i2c
 file	dev/i2c/asc7621.c			adl
 
 # TI TMHC50 / Analog ADM1022
-device	tmhc
-attach	tmhc at i2c
-file	dev/i2c/tmhc50.c			tmhc
+device	thmc
+attach	thmc at i2c
+file	dev/i2c/thmc50.c			thmc
