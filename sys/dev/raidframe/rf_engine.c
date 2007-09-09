@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.15 2003/04/27 11:22:54 ho Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.16 2007/09/09 16:50:23 krw Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 
 /*
@@ -163,12 +163,10 @@ rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		    (initproc)?"Starting":"Creating");
 	}
 	if (rf_hook_cookies == NULL) {
-		rf_hook_cookies =
-		    malloc(numraid * sizeof(void *),
-			   M_RAIDFRAME, M_NOWAIT);
+		rf_hook_cookies = malloc(numraid * sizeof(void *), M_RAIDFRAME,
+		    M_NOWAIT | M_ZERO);
 		if (rf_hook_cookies == NULL)
 			return (ENOMEM);
-		bzero(rf_hook_cookies, numraid * sizeof(void *));
 	}
 #ifdef	RAID_AUTOCONFIG
 	if (initproc == NULL) {

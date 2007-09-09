@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.42 2007/06/23 03:11:34 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.43 2007/09/09 16:50:23 krw Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -388,24 +388,19 @@ raidattach(int num)
 	 * This lets us lock the device and what-not when it gets opened.
 	 */
 
-	raid_softc = (struct raid_softc *)
-		malloc(num * sizeof(struct raid_softc), M_RAIDFRAME, M_NOWAIT);
+	raid_softc = malloc(num * sizeof(struct raid_softc), M_RAIDFRAME,
+	    M_NOWAIT | M_ZERO);
 	if (raid_softc == NULL) {
 		printf("WARNING: no memory for RAIDframe driver\n");
 		return;
 	}
 
-	bzero(raid_softc, num * sizeof (struct raid_softc));
-
-	raid_scPtrs = (struct raid_softc **)
-		malloc(num * sizeof(struct raid_softc *), M_RAIDFRAME,
-		    M_NOWAIT);
+	raid_scPtrs = malloc(num * sizeof(struct raid_softc *), M_RAIDFRAME,
+	    M_NOWAIT | M_ZERO);
 	if (raid_scPtrs == NULL) {
 		printf("WARNING: no memory for RAIDframe driver\n");
 		return;
 	}
-
-	bzero(raid_scPtrs, num * sizeof (struct raid_softc *));
 
 	raidrootdev = (struct device *)malloc(num * sizeof(struct device),
 	    M_RAIDFRAME, M_NOWAIT);
@@ -1649,12 +1644,11 @@ raidinit(RF_Raid_t *raidPtr)
 	 * config_attach the raid device into the device tree.
 	 * For autoconf rootdev selection...
 	 */
-	cf = malloc(sizeof(struct cfdata), M_RAIDFRAME, M_NOWAIT);
+	cf = malloc(sizeof(struct cfdata), M_RAIDFRAME, M_NOWAIT | M_ZERO);
 	if (cf == NULL) {
 		printf("WARNING: no memory for cfdata struct\n");
 		return;
 	}
-	bzero(cf, sizeof(struct cfdata));
 
 	cf->cf_attach = &raid_ca;
 	cf->cf_driver = &raid_cd;
@@ -3424,15 +3418,12 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 
 	/* 1. Create a config structure. */
 
-	config = (RF_Config_t *)malloc(sizeof(RF_Config_t), M_RAIDFRAME,
-	    M_NOWAIT);
+	config = malloc(sizeof(RF_Config_t), M_RAIDFRAME, M_NOWAIT | M_ZERO);
 	if (config==NULL) {
 		printf("Out of mem!?!?\n");
 				/* XXX Do something more intelligent here. */
 		return(1);
 	}
-
-	memset(config, 0, sizeof(RF_Config_t));
 
 	/* XXX raidID needs to be set correctly... */
 

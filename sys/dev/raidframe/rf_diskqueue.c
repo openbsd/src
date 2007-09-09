@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_diskqueue.c,v 1.7 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_diskqueue.c,v 1.8 2007/09/09 16:50:23 krw Exp $	*/
 /*	$NetBSD: rf_diskqueue.c,v 1.13 2000/03/04 04:22:34 oster Exp $	*/
 
 /*
@@ -163,13 +163,10 @@ int
 rf_init_dqd(RF_DiskQueueData_t *dqd)
 {
 
-	dqd->bp = (struct buf *) malloc(sizeof(struct buf), M_RAIDFRAME,
-	    M_NOWAIT);
+	dqd->bp = malloc(sizeof(struct buf), M_RAIDFRAME, M_NOWAIT | M_ZERO);
 	if (dqd->bp == NULL) {
 		return (ENOMEM);
 	}
-	/* If you don't do it, nobody else will... */
-	memset(dqd->bp, 0, sizeof(struct buf));
 
 	return (0);
 }
