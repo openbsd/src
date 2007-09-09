@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.49 2007/09/08 17:34:54 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.50 2007/09/09 01:00:35 fgsch Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1827,12 +1827,11 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 	ibufend = ibuf + aclen;
 	dp = (const usb_descriptor_t *)ibuf;
 	ndps = 0;
-	iot = malloc(sizeof(struct io_terminal) * 256, M_TEMP, M_NOWAIT);
+	iot = malloc(sizeof(struct io_terminal) * 256, M_TEMP, M_NOWAIT|M_ZERO);
 	if (iot == NULL) {
 		printf("%s: no memory\n", __func__);
 		return USBD_NOMEM;
 	}
-	bzero(iot, sizeof(struct io_terminal) * 256);
 	for (;;) {
 		ibuf += dp->bLength;
 		if (ibuf >= ibufend)

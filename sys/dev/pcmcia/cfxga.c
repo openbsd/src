@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.14 2006/11/29 19:11:17 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.15 2007/09/09 01:00:35 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -223,13 +223,12 @@ cfxga_install_function(struct pcmcia_function *pf)
 
 	/* Create a simple cfe. */
 	cfe = (struct pcmcia_config_entry *)malloc(sizeof *cfe,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (cfe == NULL) {
 		DPRINTF(("%s: cfe allocation failed\n", __func__));
 		return (ENOMEM);
 	}
 
-	bzero(cfe, sizeof *cfe);
 	cfe->number = 42;	/* have to put some value... */
 	cfe->flags = PCMCIA_CFE_IO16;
 	cfe->iftype = PCMCIA_IFTYPE_MEMORY;
@@ -441,10 +440,10 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct rasops_info *ri;
 	u_int mode, width, height, depth, scrsize;
 
-	scr = malloc(sizeof *scr, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	scr = malloc(sizeof *scr, M_DEVBUF,
+	    (cold ? M_NOWAIT : M_WAITOK) | M_ZERO);
 	if (scr == NULL)
 		return (ENOMEM);
-	bzero(scr, sizeof *scr);
 
 	mode = type - sc->sc_wsd;
 #ifdef DIAGNOSTIC
@@ -506,12 +505,12 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	 * emulation mode.
 	 */
 	scrsize = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
-	scr->scr_mem = malloc(scrsize, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	scr->scr_mem = malloc(scrsize, M_DEVBUF,
+	    (cold ? M_NOWAIT : M_WAITOK) | M_ZERO);
 	if (scr->scr_mem == NULL) {
 		free(scr, M_DEVBUF);
 		return (ENOMEM);
 	}
-	bzero(scr->scr_mem, scrsize);
 
 	ri->ri_ops.copycols = cfxga_copycols;
 	ri->ri_ops.copyrows = cfxga_copyrows;

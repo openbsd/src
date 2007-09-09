@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.27 2007/06/14 10:11:16 mbalmer Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.28 2007/09/09 01:00:35 fgsch Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -259,12 +259,11 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: %d report ids\n", sc->sc_dev.dv_xname, nrepid);
 	nrepid++;
 	sc->sc_subdevs = malloc(nrepid * sizeof(struct device *),
-	    M_USBDEV, M_NOWAIT);
+	    M_USBDEV, M_NOWAIT|M_ZERO);
 	if (sc->sc_subdevs == NULL) {
 		printf("%s: no memory\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	bzero(sc->sc_subdevs, nrepid * sizeof(struct device *));
 	sc->sc_nrepid = nrepid;
 	sc->sc_isize = 0;
 

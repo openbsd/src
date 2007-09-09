@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.57 2007/07/21 16:28:50 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.58 2007/09/09 01:00:35 fgsch Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -887,12 +887,11 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 		uaa.ifaces = ifaces;
 		uaa.nifaces = nifaces;
 		len = (nifaces+1) * sizeof dv;
-		dev->subdevs = malloc(len, M_USB, M_NOWAIT);
+		dev->subdevs = malloc(len, M_USB, M_NOWAIT|M_ZERO);
 		if (dev->subdevs == NULL) {
 			free(ifaces, M_USB);
 			return (USBD_NOMEM);
 		}
-		bzero(dev->subdevs, len);
 
 		found = 0;
 		for (i = 0; i < nifaces; i++) {

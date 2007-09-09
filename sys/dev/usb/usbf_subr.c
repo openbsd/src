@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.10 2007/07/27 09:16:09 mbalmer Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.11 2007/09/09 01:00:35 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -151,11 +151,10 @@ usbf_new_device(struct device *parent, usbf_bus_handle bus, int depth,
 	KASSERT(up->device == NULL);
 #endif
 
-	dev = malloc(sizeof(*dev), M_USB, M_NOWAIT);
+	dev = malloc(sizeof(*dev), M_USB, M_NOWAIT|M_ZERO);
 	if (dev == NULL)
 		return USBF_NOMEM;
 
-	bzero(dev, sizeof *dev);
 	dev->bus = bus;
 	dev->string_id = USBF_STRING_ID_MIN;
 	SIMPLEQ_INIT(&dev->configs);
@@ -397,23 +396,21 @@ usbf_add_config(usbf_device_handle dev, usbf_config_handle *ucp)
 	struct usbf_config *uc;
 	usb_config_descriptor_t *cd;
 
-	uc = malloc(sizeof *uc, M_USB, M_NOWAIT);
+	uc = malloc(sizeof *uc, M_USB, M_NOWAIT|M_ZERO);
 	if (uc == NULL)
 		return USBF_NOMEM;
 
-	cd = malloc(sizeof *cd, M_USB, M_NOWAIT);
+	cd = malloc(sizeof *cd, M_USB, M_NOWAIT|M_ZERO);
 	if (cd == NULL) {
 		free(uc, M_USB);
 		return USBF_NOMEM;
 	}
 
-	bzero(uc, sizeof *uc);
 	uc->uc_device = dev;
 	uc->uc_cdesc = cd;
 	uc->uc_cdesc_size = sizeof *cd;
 	SIMPLEQ_INIT(&uc->iface_head);
 
-	bzero(cd, sizeof *cd);
 	cd->bLength = USB_CONFIG_DESCRIPTOR_SIZE;
 	cd->bDescriptorType = UDESC_CONFIG;
 	USETW(cd->wTotalLength, USB_CONFIG_DESCRIPTOR_SIZE);
@@ -475,23 +472,21 @@ usbf_add_interface(usbf_config_handle uc, u_int8_t bInterfaceClass,
 	if (uc->uc_closed)
 		return USBF_INVAL;
 
-	ui = malloc(sizeof *ui, M_USB, M_NOWAIT);
+	ui = malloc(sizeof *ui, M_USB, M_NOWAIT|M_ZERO);
 	if (ui == NULL)
 		return USBF_NOMEM;
 
-	id = malloc(sizeof *id, M_USB, M_NOWAIT);
+	id = malloc(sizeof *id, M_USB, M_NOWAIT|M_ZERO);
 	if (id == NULL) {
 		free(ui, M_USB);
 		return USBF_NOMEM;
 	}
 
-	bzero(ui, sizeof *ui);
 	ui->config = uc;
 	ui->idesc = id;
 	LIST_INIT(&ui->pipes);
 	SIMPLEQ_INIT(&ui->endpoint_head);
 
-	bzero(id, sizeof *id);
 	id->bLength = USB_INTERFACE_DESCRIPTOR_SIZE;
 	id->bDescriptorType = UDESC_INTERFACE;
 	id->bInterfaceNumber = uc->uc_cdesc->bNumInterface;
@@ -518,21 +513,19 @@ usbf_add_endpoint(usbf_interface_handle ui, u_int8_t bEndpointAddress,
 	if (ui->config->uc_closed)
 		return USBF_INVAL;
 
-	ue = malloc(sizeof *ue, M_USB, M_NOWAIT);
+	ue = malloc(sizeof *ue, M_USB, M_NOWAIT|M_ZERO);
 	if (ue == NULL)
 		return USBF_NOMEM;
 
-	ed = malloc(sizeof *ed, M_USB, M_NOWAIT);
+	ed = malloc(sizeof *ed, M_USB, M_NOWAIT|M_ZERO);
 	if (ed == NULL) {
 		free(ue, M_USB);
 		return USBF_NOMEM;
 	}
 
-	bzero(ue, sizeof *ue);
 	ue->iface = ui;
 	ue->edesc = ed;
 
-	bzero(ed, sizeof *ed);
 	ed->bLength = USB_ENDPOINT_DESCRIPTOR_SIZE;
 	ed->bDescriptorType = UDESC_ENDPOINT;
 	ed->bEndpointAddress = bEndpointAddress;
