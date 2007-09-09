@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_c.c,v 1.4 2007/05/18 14:41:55 art Exp $	*/
+/*	$OpenBSD: locore_c.c,v 1.5 2007/09/09 11:57:55 miod Exp $	*/
 /*	$NetBSD: locore_c.c,v 1.13 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -117,7 +117,7 @@
 #include <sys/sched.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <sh/locore.h>
 #include <sh/cpu.h>
@@ -219,7 +219,10 @@ void
 idle()
 {
 	spl0();
-	uvm_pageidlezero();
+#if 0
+	if (uvm.page_idle_zero)
+		uvm_pageidlezero();
+#endif
 	__asm volatile("sleep");
 	splsched();
 }
