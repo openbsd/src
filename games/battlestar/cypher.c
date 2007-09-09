@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.15 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.16 2007/09/09 17:10:02 ray Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -34,14 +34,48 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cypher.c,v 1.15 2004/07/10 07:26:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cypher.c,v 1.16 2007/09/09 17:10:02 ray Exp $";
 #endif
 #endif /* not lint */
+
+#include <stdarg.h>
 
 #include "extern.h"
 #include "pathnames.h"
 
 static void verb_with_all(unsigned int *, int, int (*)(void), const char *);
+
+/*
+ * Prompt user to input an integer, which is stored in *value.
+ * On failure prints a warning, leaves *value untouched, and returns -1.
+ */
+int
+getnum(int *value, const char *fmt, ...)
+{
+	char buffer[BUFSIZ];
+	va_list ap;
+	const char *errstr;
+	int n;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	fflush(stdout);
+	va_end(ap);
+
+	if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+		warnx("error reading input");
+		return (-1);
+	}
+	buffer[strcspn(buffer, "\n")] = '\0';
+
+	n = strtonum(buffer, INT_MIN, INT_MAX, &errstr);
+	if (errstr) {
+		warnx("number %s: %s", errstr, buffer);
+		return (-1);
+	}
+	*value = n;
+	return (0);
+}
 
 /* returns 0 if error or no more commands to do,
  *         1 if there are more commands remaining on the current input line
@@ -52,7 +86,6 @@ cypher(void)
 	int     n;
 	int     junk;
 	int     lflag = -1;
-	char    buffer[10];
 	char   *filename, *rfilename;
 	size_t  filename_len;
 
@@ -288,41 +321,15 @@ cypher(void)
 
 		case SU:
 			if (wiz || tempwiz) {
-				printf("\nRoom (was %d) = ", position);
-				fgets(buffer, 10, stdin);
-				if (*buffer != '\n')
-					sscanf(buffer, "%d", &position);
-				printf("Time (was %d) = ", ourtime);
-				fgets(buffer, 10, stdin);
-				if (*buffer != '\n')
-					sscanf(buffer, "%d", &ourtime);
-				printf("Fuel (was %d) = ", fuel);
-				fgets(buffer, 10, stdin);
-				if (*buffer != '\n')
-					sscanf(buffer, "%d", &fuel);
-				printf("Torps (was %d) = ", torps);
-				fgets(buffer, 10, stdin);
-				if (*buffer != '\n')
-					sscanf(buffer, "%d", &torps);
-				printf("CUMBER (was %d) = ", CUMBER);
-				fgets(buffer, 10, stdin);
-				if (*buffer != '\n')
-					sscanf(buffer, "%d", &CUMBER);
-				printf("WEIGHT (was %d) = ", WEIGHT);
-				fgets(buffer, 10, stdin);
-				if (*buffer != '\n')
-					sscanf(buffer, "%d", &WEIGHT);
-				printf("Clock (was %d) = ", ourclock);
-				fgets(buffer, 10, stdin);
-				if (*buffer != '\n')
-					sscanf(buffer, "%d", &ourclock);
-				printf("Wizard (was %d, %d) = ", wiz, tempwiz);
-				fgets(buffer, 10, stdin);
-				if (*buffer != '\n') {
-					sscanf(buffer, "%d", &junk);
-					if (!junk)
-						tempwiz = wiz = 0;
-				}
+				getnum(&position, "\nRoom (was %d) = ", position);
+				getnum(&ourtime, "Time (was %d) = ", ourtime);
+				getnum(&fuel, "Fuel (was %d) = ", fuel);
+				getnum(&torps, "Torps (was %d) = ", torps);
+				getnum(&CUMBER, "CUMBER (was %d) = ", CUMBER);
+				getnum(&WEIGHT, "WEIGHT (was %d) = ", WEIGHT);
+				getnum(&ourclock, "Clock (was %d) = ", ourclock);
+				if (getnum(&junk, "Wizard (was %d, %d) = ", wiz, tempwiz) != -1 && !junk)
+					tempwiz = wiz = 0;
 				printf("\nDONE.\n");
 				return (0);	/* No commands after a SU */
 			} else
