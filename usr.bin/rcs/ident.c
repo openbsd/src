@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.24 2007/02/27 07:59:13 xsa Exp $	*/
+/*	$OpenBSD: ident.c,v 1.25 2007/09/09 17:22:34 ray Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -45,8 +45,10 @@ static void	ident_line(FILE *);
 int
 ident_main(int argc, char **argv)
 {
-	int i, ch;
+	int i, ch, status;
 	FILE *fp;
+
+	status = 0;
 
 	while ((ch = rcs_getopt(argc, argv, "qV")) != -1) {
 		switch(ch) {
@@ -71,15 +73,18 @@ ident_main(int argc, char **argv)
 		for (i = 0; i < argc; i++) {
 			if ((fp = fopen(argv[i], "r")) == NULL) {
 				warn("%s", argv[i]);
+				status = 1;
 				continue;
 			}
 
 			ident_file(argv[i], fp);
 			(void)fclose(fp);
+			if (i != argc - 1)
+				printf("\n");
 		}
 	}
 
-	return (0);
+	return (status);
 }
 
 
