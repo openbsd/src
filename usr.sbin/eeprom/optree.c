@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.1 2007/09/04 23:28:26 fgsch Exp $	*/
+/*	$OpenBSD: optree.c,v 1.2 2007/09/09 14:19:28 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -48,14 +48,19 @@ op_print(struct opiocdesc *opio, int depth)
 		opio->op_buf[opio->op_buflen] = '\0';
 		special = 0;
 
-		for (i = 0; i < opio->op_buflen; i++) {
-			p = &opio->op_buf[i];
-			if ((*p < ' ' || *p > '~') && (*p != '\0' ||
-			    (i + 1 < opio->op_buflen &&
-			    (*++p < ' ' || *p > '~')))) {
-				special = 1;
-				break;
+		if (opio->op_buf[0] != '\0') {
+			for (i = 0; i < opio->op_buflen; i++) {
+				p = &opio->op_buf[i];
+				if ((*p < ' ' || *p > '~') && (*p != '\0' ||
+				    (i + 1 < opio->op_buflen &&
+				    (*++p < ' ' || *p > '~')))) {
+					special = 1;
+					break;
+				}
 			}
+		} else {
+			if (opio->op_buflen > 1)
+				special = 1;
 		}
 
 		if (special) {
@@ -66,7 +71,8 @@ op_print(struct opiocdesc *opio, int depth)
 				printf("%08x", *(int *)(long)&opio->op_buf[i]);
 			}
 			if (i < opio->op_buflen) {
-				printf(".");
+				if (i)
+					printf(".");
 				for (; i < opio->op_buflen; i++) {
 					printf("%02x",
 					    *(u_char *)&opio->op_buf[i]);
