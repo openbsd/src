@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.66 2007/09/08 16:55:05 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.67 2007/09/09 12:01:58 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -691,7 +691,7 @@ again:
 				rw->w_where = 0;
 		}
 	}
-	if (cp)		/* clear the message header */
+	if (cp && w)		/* clear the message header */
 		bzero(cp0, hlen);
 
 	if (cp && vers != RTM_OVERSION) {
