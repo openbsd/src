@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.12 2003/11/03 07:01:33 david Exp $	*/
+/*	$OpenBSD: emul.c,v 1.13 2007/09/09 10:17:33 kettenis Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #include <machine/instr.h>
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#include <sparc64/sparc64/cpuvar.h>
 #include <uvm/uvm_extern.h>
 
 #ifdef DEBUG_EMUL

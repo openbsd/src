@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.19 2007/09/09 08:55:27 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.20 2007/09/09 10:17:33 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -97,8 +97,6 @@ include <machine/mutex.h>
 
 include <machine/bsd_openprom.h>
 include <machine/reg.h>
-
-#include <sparc64/sparc64/cpuvar.h>
 
 ifdef notyet
 include <sparc64/dev/zsreg.h>
