@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.72 2007/08/08 05:51:23 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.73 2007/09/09 02:55:18 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2625,7 +2625,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (error)
 			return(error);
 	}
-	if (r->gain != ~0) {
+	if ((r->gain != ~0) && (r->port != 0)) {
 		au_get_gain(sc, &sc->sc_inports, &gain, &balance);
 		error = au_set_gain(sc, &sc->sc_inports, r->gain, balance);
 		if (error)
@@ -2638,7 +2638,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (error)
 			return(error);
 	}
-	if (r->balance != (u_char)~0) {
+	if ((r->balance != (u_char)~0) && (r->port != 0)) {
 		au_get_gain(sc, &sc->sc_inports, &gain, &balance);
 		error = au_set_gain(sc, &sc->sc_inports, gain, r->balance);
 		if (error)
