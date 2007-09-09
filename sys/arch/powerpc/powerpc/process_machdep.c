@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.12 2007/03/20 20:59:53 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.13 2007/09/09 20:49:18 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -123,6 +123,9 @@ process_write_regs(struct proc *p, struct reg *regs)
 	struct cpu_info *ci = curcpu();
 	struct trapframe *tf = trapframe(p);
 	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	if ((regs->ps ^ tf->srr1) & PSL_USERSTATIC)
+		return EINVAL;
 
 	bcopy(regs->gpr, tf->fixreg, sizeof(regs->gpr));
 
