@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.184 2007/08/04 16:49:04 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.185 2007/09/09 01:37:28 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -161,6 +161,8 @@ uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 uipaq*	at uhub?		# iPAQ serial adapter
 ucom*	at uipaq?
+uchcom*	at uhub?		# WinChipHead CH341/340 serial
+ucom*	at uchcom?
 uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI

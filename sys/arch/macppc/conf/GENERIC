@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.171 2007/08/10 20:48:22 mglocker Exp $g
+#	$OpenBSD: GENERIC,v 1.172 2007/09/09 01:37:28 jsg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -240,6 +240,8 @@ uipaq*	at uhub?		# iPAQ serial adapter
 ucom*	at uipaq?
 umsm*	at uhub?		# Qualcomm MSM EVDO
 ucom*	at umsm?
+uchcom*	at uhub?		# WinChipHead CH341/340 serial
+ucom*	at uchcom?
 uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI

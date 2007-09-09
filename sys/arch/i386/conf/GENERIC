@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.572 2007/09/08 08:45:13 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.573 2007/09/09 01:37:28 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -213,6 +213,8 @@ uipaq*	at uhub?		# iPAQ serial adapter
 ucom*	at uipaq?
 umsm*	at uhub?		# Qualcomm MSM EVDO
 ucom*	at umsm?
+uchcom*	at uhub?		# WinChipHead CH341/340 serial
+ucom*	at uchcom?
 uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI
