@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2007/09/08 17:13:17 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.23 2007/09/09 12:57:40 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -77,8 +77,6 @@ struct cpu_info *cpus = NULL;
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	cpu_model[100];
-
-struct	proc *fpproc;
 
 /* The CPU configuration driver. */
 static void cpu_attach(struct device *, struct device *, void *);

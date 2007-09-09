@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.43 2007/09/09 08:55:26 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.44 2007/09/09 12:57:40 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -128,6 +128,7 @@ extern struct cpu_info *cpus;
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 
 #define curpcb		curcpu()->ci_cpcb
+#define fpproc		curcpu()->ci_fpproc
 
 /*
  * definitions of cpu-dependent requirements
@@ -181,13 +182,6 @@ extern void need_resched(struct cpu_info *);
 #define	need_proftick(p)	aston(p)
 
 void signotify(struct proc *);
-
-/*
- * Only one process may own the FPU state.
- *
- * XXX this must be per-cpu (eventually)
- */
-extern	struct proc *fpproc;	/* FPU owner */
 
 /* machdep.c */
 int	ldcontrolb(caddr_t);

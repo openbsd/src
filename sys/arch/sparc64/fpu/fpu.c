@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.12 2006/06/21 19:24:38 jason Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.13 2007/09/09 12:57:40 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -304,8 +304,8 @@ fpu_regoffset(rx, type)
  * modified to reflect the setting the hardware would have left.
  */
 int
-fpu_execute(fpproc, fe, instr)
-	struct proc *fpproc;
+fpu_execute(p, fe, instr)
+	struct proc *p;
 	struct fpemu *fe;
 	union instr instr;
 {
@@ -339,7 +339,7 @@ fpu_execute(fpproc, fe, instr)
 		case FMVFC3S: case FMVFC3D: case FMVFC3Q:
 		case FMVICS: case FMVICD: case FMVICQ:
 		case FMVXCS: case FMVXCD: case FMVXCQ:
-			return (fpu_insn_fmovcc(fpproc, fs, instr));
+			return (fpu_insn_fmovcc(p, fs, instr));
 
 		case FMOVZS: case FMOVZD: case FMOVZQ:
 		case FMOVLEZS: case FMOVLEZD: case FMOVLEZQ:
@@ -347,7 +347,7 @@ fpu_execute(fpproc, fe, instr)
 		case FMOVNZS: case FMOVNZD: case FMOVNZQ:
 		case FMOVGZS: case FMOVGZD: case FMOVGZQ:
 		case FMOVGEZS: case FMOVGEZD: case FMOVGEZQ:
-			return (fpu_insn_fmovr(fpproc, fs, instr));
+			return (fpu_insn_fmovr(p, fs, instr));
 		}
 		return (NOTFPU);
 	}
@@ -845,8 +845,8 @@ fpu_insn_fsub(fe, instr, rdp, rdtypep, space)
  * Handler for FMOV[SDQ][cond] emulation.
  */
 int
-fpu_insn_fmovcc(fpproc, fs, instr)
-	struct proc *fpproc;
+fpu_insn_fmovcc(p, fs, instr)
+	struct proc *p;
 	struct fpstate64 *fs;
 	union instr instr;
 {
@@ -875,11 +875,11 @@ fpu_insn_fmovcc(fpproc, fs, instr)
 		cond = (fs->fs_fsr >> FSR_FCC3_SHIFT) & FSR_FCC_MASK;
 		break;
 	case 4:
-		cond = (fpproc->p_md.md_tf->tf_tstate >> TSTATE_CCR_SHIFT) &
+		cond = (p->p_md.md_tf->tf_tstate >> TSTATE_CCR_SHIFT) &
 		    PSR_ICC;
 		break;
 	case 6:
-		cond = (fpproc->p_md.md_tf->tf_tstate >>
+		cond = (p->p_md.md_tf->tf_tstate >>
 		    (TSTATE_CCR_SHIFT + XCC_SHIFT)) & PSR_ICC;
 		break;
 	default:
@@ -897,8 +897,8 @@ fpu_insn_fmovcc(fpproc, fs, instr)
  * Handler for FMOVR[icond][SDQ] emulation.
  */
 int
-fpu_insn_fmovr(fpproc, fs, instr)
-	struct proc *fpproc;
+fpu_insn_fmovr(p, fs, instr)
+	struct proc *p;
 	struct fpstate64 *fs;
 	union instr instr;
 {
@@ -917,32 +917,32 @@ fpu_insn_fmovr(fpproc, fs, instr)
 	switch (instr.i_fmovr.i_rcond) {
 	case 1:	/* Z */
 		if (rs1 != 0 &&
-		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] != 0)
+		    (int64_t)p->p_md.md_tf->tf_global[rs1] != 0)
 			return (0);
 		break;
 	case 2: /* LEZ */
 		if (rs1 != 0 &&
-		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] > 0)
+		    (int64_t)p->p_md.md_tf->tf_global[rs1] > 0)
 			return (0);
 		break;
 	case 3: /* LZ */
 		if (rs1 == 0 ||
-		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] >= 0)
+		    (int64_t)p->p_md.md_tf->tf_global[rs1] >= 0)
 			return (0);
 		break;
 	case 5:	/* NZ */
 		if (rs1 == 0 ||
-		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] == 0)
+		    (int64_t)p->p_md.md_tf->tf_global[rs1] == 0)
 			return (0);
 		break;
 	case 6: /* NGZ */
 		if (rs1 == 0 ||
-		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] <= 0)
+		    (int64_t)p->p_md.md_tf->tf_global[rs1] <= 0)
 			return (0);
 		break;
 	case 7: /* NGEZ */
 		if (rs1 != 0 &&
-		    (int64_t)fpproc->p_md.md_tf->tf_global[rs1] < 0)
+		    (int64_t)p->p_md.md_tf->tf_global[rs1] < 0)
 			return (0);
 		break;
 	default:
