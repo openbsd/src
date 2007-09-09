@@ -1,4 +1,4 @@
-/* $OpenBSD: qlireg.h,v 1.6 2007/09/08 02:53:08 davec Exp $ */
+/* $OpenBSD: qlireg.h,v 1.7 2007/09/09 18:02:30 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -321,6 +321,7 @@ struct qli_reg {
 
 /* mailbox commands */
 #define QLI_MBOX_OPC_ABOUT_FIRMWARE			(0x09)
+#define QLI_MBOX_OPC_GET_INITIAL_FW_CB			(0x61)
 #define QLI_MBOX_OPC_GET_FW_STATE			(0x69)
 		/* mbox 1 firmware state */
 #define		QLI_MBOX_STATE_READY			(0x0<<0)
@@ -450,3 +451,180 @@ struct qli_reg {
 #define QLI_NVRAM_EXT_HW_CFG(s) (s->sc_ql4010 ? \
 	QLI_NVRAM_EXT_HW_CFG_4010 : \
 	QLI_NVRAM_EXT_HW_CFG_4022)
+
+/* firmware control block */
+#define QLI_FW_CTRL_BLK_SIZE				(0x400) /* 1k */
+struct qli_cb {
+	u_int8_t		qcb_version;
+#define QLI_QCB_VER_NO_ADDTIIONAL_INFO			(0x00)
+#define QLI_QCB_VER_MIN					(0x01)
+#define QLI_QCB_VER_MAX					(0x02)
+	u_int8_t		qcb_ctrl;
+#define QLI_QCB_CTRL_NEW_CONN_DISABLE			(0x02)
+#define QLI_QCB_CTRL_SECONDARY_ACB			(0x01)
+	u_int16_t		qcb_fw_options;
+#define QLI_QCB_FWOPT_HEARTBEAT_ENABLE			(0x1000)
+#define QLI_QCB_FWOPT_MARKER_DISABLE			(0x0400)
+#define QLI_QCB_FWOPT_PROT_STAT_ALARM_DISABLE		(0x0200)
+#define QLI_QCB_FWOPT_TARGET_ACCEPT_AEN_ENABLE		(0x0100)
+#define QLI_QCB_FWOPT_ACCESS_CTRL_ENABLE		(0x0080)
+#define QLI_QCB_FWOPT_SESSION_MODE			(0x0040)
+#define QLI_QCB_FWOPT_INITIATOR_MODE			(0x0020)
+#define QLI_QCB_FWOPT_TARGET_MODE			(0x0010)
+#define QLI_QCB_FWOPT_FAST_POSTING			(0x0008)
+#define QLI_QCB_FWOPT_AUTO_TARGET_INFO_DISABLE		(0x0004)
+#define QLI_QCB_FWOPT_SENSE_BUFFER_DATA_ENABLE		(0x0002)
+	u_int16_t		qcb_exec_throttle;
+	u_int8_t		qcb_zio_count;
+	u_int8_t		qcb_res0;
+	u_int16_t		qcb_max_eth_payload;
+	u_int16_t		qcb_add_fw_options;
+#define QLI_QCB_ADDFWOPT_AUTOCONNECT_DISABLE		(0x0002)
+#define QLI_QCB_ADDFWOPT_SUSPEND_ON_FW_ERROR		(0x0001)
+	u_int8_t		qcb_heartbeat_intr;
+	u_int8_t		qcb_instance_nr;
+	u_int16_t		qcb_res1;
+	u_int16_t		qcb_req_q_cons_idx;  /* 4010 */
+	u_int16_t		qcb_comp_q_prod_idx; /* 4010 */
+	u_int16_t		qcb_req_q_len;
+	u_int16_t		qcb_comp_q_len;
+	u_int32_t		qcb_req_q_addr_lo;
+	u_int32_t		qcb_req_q_addr_hi;
+	u_int32_t		qcb_comp_q_addr_lo;
+	u_int32_t		qcb_comp_q_addr_hi;
+	u_int32_t		qcb_shadow_reg_addr_lo;
+	u_int32_t		qcb_shadow_reg_addr_hi;
+	u_int16_t		qcb_iscsi_options;
+#define QLI_QCB_ISCSIOPTS_RECV_MARKER_ENABLE		(0x8000)
+#define QLI_QCB_ISCSIOPTS_SEND_MARKER_ENABLE		(0x4000)
+#define QLI_QCB_ISCSIOPTS_HDR_DIGEST_ENABLE		(0x2000)
+#define QLI_QCB_ISCSIOPTS_DATA_DIGEST_ENABLE		(0x1000)
+#define QLI_QCB_ISCSIOPTS_IMMEDIATE_DATA_ENABLE		(0x0800)
+#define QLI_QCB_ISCSIOPTS_INITIAL_R2T_ENABLE		(0x0400)
+#define QLI_QCB_ISCSIOPTS_DATA_SEQ_IN_ORDER		(0x0200)
+#define QLI_QCB_ISCSIOPTS_DATA_PDU_IN_ORDER		(0x0100)
+#define QLI_QCB_ISCSIOPTS_CHAP_AUTH_ENABLE		(0x0080)
+#define QLI_QCB_ISCSIOPTS_SNACK_REQ_ENABLE		(0x0040)
+#define QLI_QCB_ISCSIOPTS_DISCOVERY_LOGOUT_ENABLE	(0x0020)
+#define QLI_QCB_ISCSIOPTS_BIDIR_CHAP_ENABLE		(0x0010)
+	u_int16_t		qcb_tcp_options;
+#define QLI_QCB_TCPOPTS_ISNS_ENABLE			(0x4000)
+#define QLI_QCB_TCPOPTS_SLP_USE_DA_ENABLE		(0x2000)
+#define QLI_QCB_TCPOPTS_AUTO_DISCOVERY_ENABLE		(0x1000)
+#define QLI_QCB_TCPOPTS_SLP_UA_ENABLE			(0x0800)
+#define QLI_QCB_TCPOPTS_SLP_SA_ENABLE			(0x0400)
+#define QLI_QCB_TCPOPTS_DHCP_ENABLE			(0x0200)
+#define QLI_QCB_TCPOPTS_GET_DNS_VIA_DHCP_ENABLE		(0x0100)
+#define QLI_QCB_TCPOPTS_GET_SLP_VIA_DHCP_ENABLE		(0x0080)
+#define QLI_QCB_TCPOPTS_LEARN_ISNS_IPADDR_ENABLE	(0x0040)
+#define QLI_QCB_TCPOPTS_NAGLE_DISABLE			(0x0020)
+#define QLI_QCB_TCPOPTS_TIMER_SCALE_MASK		(0x000e)
+#define QLI_QCB_TCPOPTS_TIME_STAMP_ENABLE		(0x0001)
+	u_int16_t		qcb_ip_options;
+#define QLI_QCB_IPOPTS_IPV4_ENABLE			(0x8000)
+#define QLI_QCB_IPOPTS_IPV4_TOS_ENABLE			(0x4000)
+#define QLI_QCB_IPOPTS_VLAN_TAGGING_ENABLE		(0x2000)
+#define QLI_QCB_IPOPTS_GRAT_ARP_ENABLE			(0x1000)
+#define QLI_QCB_IPOPTS_DHCP_USE_ALT_CLIENT_ID		(0x0800)
+#define QLI_QCB_IPOPTS_DHCP_REQUIRE_VENDOR_ID		(0x0400)
+#define QLI_QCB_IPOPTS_DHCP_USE_VENDOR_ID		(0x0200)
+#define QLI_QCB_IPOPTS_LEARN_IQN			(0x0100)
+#define QLI_QCB_IPOPTS_FRAG_DISABLE			(0x0010)
+#define QLI_QCB_IPOPTS_INCOMMING_FORWARDING_ENABLE	(0x0008)
+#define QLI_QCB_IPOPTS_ARP_REDIRECT_ENABLE		(0x0004)
+#define QLI_QCB_IPOPTS_PAUSE_FRAME_ENABLE		(0x0002)
+#define QLI_QCB_IPOPTS_IPADDR_VALID			(0x0001)
+	u_int16_t		qcb_max_pdu_size;
+	u_int8_t		qcb_tos;
+	u_int8_t		qcb_ttl;
+	u_int8_t		qcb_acb_version;
+#define QLI_QCB_ACBVER_NOT_SUPPORTED			(0x00)
+#define QLI_QCB_ACBVER_SUPPORTED			(0x02)
+	u_int8_t		qcb_res2;
+	u_int16_t		qcb_def_timeout;
+	u_int16_t		qcb_first_burst_size;
+	u_int16_t		qcb_def_time_to_wait;
+	u_int16_t		qcb_def_time_to_retain;
+	u_int16_t		qcb_max_out_r2t;
+	u_int16_t		qcb_keep_alive_timeout;
+	u_int16_t		qcb_port;
+	u_int16_t		max_burst_size;
+	u_int32_t		qcb_res3;
+	u_int32_t		qcb_ip_addr;
+	u_int16_t		qcb_vlan_tag_ctrl;
+	u_int8_t		qcb_ip_addr_state;
+	u_int8_t		qcb_ip_cache_id;
+	u_int8_t		qcb_res4[8];
+	u_int32_t		qcb_subnet_mask;
+	u_int8_t		qcb_res5[12];
+	u_int32_t		qcb_gateway_addr;
+	u_int8_t		qcb_res6[12];
+	u_int32_t		qcb_pri_dns_addr;
+	u_int32_t		qcb_sec_dns_addr;
+	u_int16_t		qcb_min_eport;
+	u_int16_t		qcb_max_eport;
+	u_int8_t		qcb_res7[4];
+	u_int8_t		qcb_iscsi_alias[32];
+	u_int8_t		qcb_res8[24];
+	u_int8_t		qcb_abort_timer;
+	u_int8_t		qcb_tcp_win_scale_factor;
+	u_int8_t		qcb_res9[10];
+	u_int8_t		qcb_dhcp_vendor_id_len;
+	u_int8_t		qcb_dhcp_vendor_id[11];
+	u_int32_t		qcb_isns_addr;
+	u_int16_t		qcb_isns_port;
+	u_int8_t		qcb_res10[14];
+	u_int8_t		qcb_dhcp_client_id_len;
+	u_int8_t		qcb_dhcp_client_id[11];
+	u_int8_t		qcb_iscsi_name[224];
+	u_int8_t		qcb_res11[32];
+	u_int32_t		qcb_cookie;
+#define QLI_QCB_COOKIE				(0x11bead5a)
+	/* ip v6 section */
+	u_int16_t		qcb_ipv6_port;
+	u_int16_t		qcb_ipv6_options;
+#define QLI_QCB_IPV6OPTS_IPV6_ENABLE		(0x8000)
+#define QLI_QCB_IPV6OPTS_VLAN_TAGGING_ENABLE	(0x2000)
+#define QLI_QCB_IPV6OPTS_GRAT_NEIGHBOR_ENABLE	(0x1000)
+#define QLI_QCB_IPV6OPTS_INBOUND_FORW_ENABLE	(0x0008)
+	u_int16_t		qcb_ipv6_add_options;
+#define QLI_QCB_IPV6AOPTS_NEIGHB_DISC_ENABLE	(0x0002)
+#define QLI_QCB_IPV6AOPTS_AUTOCFG_LINK_ENABLE	(0x0001)
+	u_int16_t		qcb_ipv6_tcp_options;
+#define QLI_QCB_IPV6TCPOPTS_DELAYED_ACK_DISABLE	(0x8000)
+#define QLI_QCB_IPV6TCPOPTS_ISNS_ENABLE		(0x4000)
+#define QLI_QCB_IPV6TCPOPTS_TCP_WINDOW_SCALE	(0x0400)
+#define QLI_QCB_IPV6TCPOPTS_NAGLE_DISABLE	(0x0020)
+#define QLI_QCB_IPV6TCPOPTS_TCP_WIN_SCALE_DISA	(0x0010)
+#define QLI_QCB_IPV6TCPOPTS_TIMER_SCALE_MASK	(0x000e)
+#define QLI_QCB_IPV6TCPOPTS_TIME_STAMP_ENABLE	(0x0001)
+	u_int8_t		qcb_ipv6_tcp_recv_scale;
+	u_int8_t		qcb_ipv6_flow_label[3];
+	u_int8_t		qcb_ipv6_def_router_addr[16];
+	u_int8_t		qcb_ipv6_vlan_tci[2];
+	u_int8_t		qcb_ipv6_link_local_addr_state;;
+#define QLI_QCB_IPV6_LLAS_UNCONFIGURED		(0x00)
+#define QLI_QCB_IPV6_LLAS_INVALID		(0x01)
+#define QLI_QCB_IPV6_LLAS_ACQUIRING		(0x02)
+#define QLI_QCB_IPV6_LLAS_TENTATIVE		(0x03)
+#define QLI_QCB_IPV6_LLAS_DEPRECATED		(0x04)
+#define QLI_QCB_IPV6_LLAS_PREFERRED		(0x05)
+#define QLI_QCB_IPV6_LLAS_DISABLING		(0x06)
+	u_int8_t		qcb_ipv6_addr0_state;
+	u_int8_t		qcb_ipv6_addr1_state;
+	u_int8_t		qcb_ipv6_def_router_state;
+	u_int8_t		qcb_ipv6_traf_class;
+	u_int8_t		qcb_ipv6_hop_limit;
+	u_int8_t		qcb_ipv6_iface_id[8];
+	u_int8_t		qcb_ipv6_addr0[16];
+	u_int8_t		qcb_ipv6_addr1[16];
+	u_int32_t		qcb_ipv6_nd_reachable_time;
+	u_int32_t		qcb_ipv6_nd_retransmit_timer;
+	u_int32_t		qcb_ipv6_nd_stale_timeout;
+	u_int8_t		qcb_ipv6_dup_addr_count;
+	u_int8_t		qcb_ipv6_cache_id;
+	u_int8_t		qcb_ipv6_res0[2];
+	u_int8_t		qcb_ipv6_isns_addr1[16];
+	u_int8_t		qcb_ipv6_router_ad_lnk_mtu[4];
+	u_int8_t		qcb_ipv6_res1[140];
+} __packed;

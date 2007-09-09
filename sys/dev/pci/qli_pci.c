@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.8 2007/09/08 02:52:29 davec Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.9 2007/09/09 18:02:30 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -73,6 +73,9 @@ struct qli_softc {
 #define QLI_MBOX_F_PENDING	(0x01)
 #define QLI_MBOX_F_WAKEUP	(0x02)
 #define QLI_MBOX_F_POLL		(0x04)
+
+	/* firmware control block */
+	struct qli_mem		*sc_fw_cb;
 };
 
 /* #define QLI_DEBUG */
@@ -742,10 +745,9 @@ qli_start_firmware(struct qli_softc *sc) {
 				r = QLI_EXT_HW_CFG_DEFAULT_QL4010;
 			else
 				r = QLI_EXT_HW_CFG_DEFAULT_QL4022;
-		} else {
+		} else
 			r = (u_int32_t)qli_read_nvram(sc,
 			    QLI_NVRAM_EXT_HW_CFG(sc));
-		}
 
 		/* upper 16 bits are write mask; enable everything */
 		qli_write(sc, QLI_EXT_HW_CFG(sc), (0xffff << 16 ) | r);
@@ -922,10 +924,28 @@ qli_attach(struct qli_softc *sc)
 		goto done;
 	}
 
-	/* XXX initialize firmware */
+	/* initialize firmware */
+	sc->sc_fw_cb = qli_allocmem(sc, QLI_FW_CTRL_BLK_SIZE);
+	if (sc->sc_fw_cb == NULL) {
+		printf("%s: unable to allocate firmware control block memory\n",
+		    DEVNAME(sc));
+		goto nofwcb;
+	}
+	bzero(mbox, sizeof(mbox));
+	mbox[0] = QLI_MBOX_OPC_GET_INITIAL_FW_CB;
+	mbox[2] = htole32((u_int32_t)QLIMEM_DVA(sc->sc_fw_cb));
+	mbox[3] = htole32((u_int32_t)((u_int64_t)QLIMEM_DVA(sc->sc_fw_cb) >>
+	    32));
+	if (qli_mgmt(sc, 4, mbox)) {
+		printf("%s: get initial firmware control block failed\n",
+		    DEVNAME(sc));
+		goto done;
+	}
 
+#if 0
 	/* enable interrupts */
 	qli_enable_interrupts(sc);
+#endif
 
 #if NBIO > 0
 	if (bio_register(&sc->sc_dev, qli_ioctl) != 0)
@@ -940,6 +960,9 @@ qli_attach(struct qli_softc *sc)
 #endif /* NBIO > 0 */
 
 done:
+	return (rv);
+nofwcb:
+	qli_freemem(sc, sc->sc_fw_cb);
 	return (rv);
 }
 
