@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.81 2007/09/09 18:46:34 otto Exp $
+#	$OpenBSD: Makefile.inc,v 1.82 2007/09/09 19:22:45 otto Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -13,11 +13,15 @@ SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S rfork.S \
 LSRCS+=	Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_rfork.c Lint_sbrk.c \
 	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
-	Lint_sigsuspend.c Lint_syscall.c Lint_crt.c Lint_environ.c
+	Lint_sigsuspend.c Lint_syscall.c Lint_crt.c Lint_environ.c \
+	Lint_setjmp.c Lint_longjmp.c \
+	Lint_sigsetjmp.c Lint_siglongjmp.c
 DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_sbrk.c \
 	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
-	Lint_sigsuspend.c Lint_syscall.c Lint_crt.c Lint_environ.c
+	Lint_sigsuspend.c Lint_syscall.c Lint_crt.c Lint_environ.c \
+	Lint_setjmp.c Lint_longjmp.c \
+	Lint_sigsetjmp.c Lint_siglongjmp.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
