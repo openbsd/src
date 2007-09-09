@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.44 2007/09/09 12:57:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.45 2007/09/09 14:59:37 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -95,6 +95,17 @@
  */
 
 struct cpu_info {
+	/*
+	 * SPARC cpu_info structures live at two VAs: one global
+	 * VA (so each CPU can access any other CPU's cpu_info)
+	 * and an alias VA CPUINFO_VA which is the same on each
+	 * CPU and maps to that CPU's cpu_info.  Since the alias
+	 * CPUINFO_VA is how we locate our cpu_info, we have to
+	 * self-reference the global VA so that we can return it
+	 * in the curcpu() macro.
+	 */
+	struct cpu_info * volatile ci_self;
+
 	/* Most important fields first */
 	struct proc		*ci_curproc;
 	struct pcb		*ci_cpcb;	/* also initial stack */
@@ -103,6 +114,7 @@ struct cpu_info {
 	struct proc		*ci_fpproc;
 	int			ci_number;
 	int			ci_upaid;
+	int			ci_node;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
 	int			ci_want_resched;
@@ -120,6 +132,28 @@ struct cpu_info {
 
 extern struct cpu_info *cpus;
 
+#define curpcb		curcpu()->ci_cpcb
+#define fpproc		curcpu()->ci_fpproc
+
+#ifdef MULTIPROCESSOR
+
+#define	cpu_number()	(curcpu()->ci_number)
+#define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
+
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_number == 0)
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci)					\
+	for (cii = 0, ci = cpus; ci != NULL; ci = ci->ci_next)
+#define CPU_INFO_UNIT(ci)	((ci)->ci_number)
+
+void	cpu_boot_secondary_processors(void);
+
+void	sparc64_send_ipi(int, void (*)(void), u_int64_t, u_int64_t);
+void	sparc64_broadcast_ipi(void (*)(void), u_int64_t, u_int64_t);
+
+#else
+
+#define cpu_number()	0
 #define	curcpu()	((struct cpu_info *)CPUINFO_VA)
 
 #define CPU_IS_PRIMARY(ci)	1
@@ -127,19 +161,13 @@ extern struct cpu_info *cpus;
 #define CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 
-#define curpcb		curcpu()->ci_cpcb
-#define fpproc		curcpu()->ci_fpproc
+#endif
 
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
 #define	cpu_wait(p)	/* nothing */
-#if 1
-#define cpu_number()	0
-#else
-#define	cpu_number()	(curcpu()->ci_number)
-#endif
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
@@ -265,6 +293,10 @@ struct blink_led {
 };
 
 extern void blink_led_register(struct blink_led *);
+
+#ifdef MULTIPROCESSOR
+#include <sys/mplock.h>
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */

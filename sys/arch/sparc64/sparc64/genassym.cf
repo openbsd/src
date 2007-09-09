@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.20 2007/09/09 10:17:33 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.21 2007/09/09 14:59:37 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -144,6 +144,7 @@ member	faults
 
 # CPU info structure
 struct	cpu_info
+member	ci_self
 member	ci_curproc
 member	ci_cpcb
 member	ci_next
