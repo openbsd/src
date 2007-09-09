@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.4 2004/02/28 08:06:47 deraadt Exp $	*/
+/*	$OpenBSD: split.c,v 1.5 2007/09/09 23:25:12 chl Exp $	*/
 /*	$NetBSD: split.c,v 1.2 1995/04/20 22:39:57 cgd Exp $	*/
 
 #include <stdio.h>
@@ -171,7 +171,7 @@ char *argv[];
 		dosplit(argv[1], argv[2]);
 	else if (argc > 1)
 		while (fgets(buf, sizeof(buf), stdin) != NULL) {
-			buf[strlen(buf)-1] = '\0';	/* stomp newline */
+			buf[strcspn(buf, "\n")] = '\0';	/* stomp newline */
 			dosplit(buf, argv[1]);
 		}
 	else

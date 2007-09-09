@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2004/02/28 08:06:46 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2007/09/09 23:25:12 chl Exp $	*/
 /*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
 
 #include <stdio.h>
@@ -147,7 +147,7 @@ FILE *in;
 		line++;
 		if (inbuf[0] == '#' || inbuf[0] == '\n')
 			continue;			/* NOTE CONTINUE */
-		inbuf[strlen(inbuf)-1] = '\0';	/* get rid of stupid \n */
+		inbuf[strcspn(inbuf, "\n")] = '\0';	/* get rid of stupid \n */
 		if (debug)
 			fprintf(stdout, "%d:\n", line);
 		nf = split(inbuf, f, MAXF, "\t\t");
