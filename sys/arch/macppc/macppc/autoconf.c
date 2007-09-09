@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2007/06/01 23:14:06 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2007/09/09 15:24:53 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.33 2007/06/01 23:14:06 deraadt Exp $
+ *      $Id: autoconf.c,v 1.34 2007/09/09 15:24:53 deraadt Exp $
  */
 
 /*
@@ -138,6 +138,7 @@ findtype(char **s)
 		{ "/bcom5704@4",	"bge0", T_IFACE },
 		{ "/bcom5704@4,1",	"bge1", T_IFACE },
 		{ "/ethernet",		"gem0", T_IFACE },
+		{ "/enet",		"mc0", T_IFACE },
 		{ NULL, NULL }
 	};
 	struct devmap *dp = &devmap[0];
