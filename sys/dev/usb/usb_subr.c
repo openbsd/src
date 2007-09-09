@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.58 2007/09/09 01:00:35 fgsch Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.59 2007/09/09 18:36:13 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -68,9 +68,9 @@ extern int usbdebug;
 
 usbd_status	usbd_set_config(usbd_device_handle, int);
 void		usbd_devinfo(usbd_device_handle, int, char *, size_t);
-void		usbd_devinfo_vp(usbd_device_handle, char *, char *,
-			    int);
-char		*usbd_get_string(usbd_device_handle, int, char *);
+void		usbd_devinfo_vp(usbd_device_handle, char *, size_t,
+		    char *, size_t, int);
+char		*usbd_get_string(usbd_device_handle, int, char *, size_t);
 int		usbd_getnewaddr(usbd_bus_handle);
 int		usbd_print(void *, const char *);
 int		usbd_submatch(struct device *, void *, void *);
@@ -158,7 +158,7 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 }
 
 char *
-usbd_get_string(usbd_device_handle dev, int si, char *buf)
+usbd_get_string(usbd_device_handle dev, int si, char *buf, size_t buflen)
 {
 	int swap = dev->quirks->uq_flags & UQ_SWAP_UNICODE;
 	usb_string_descriptor_t us;
@@ -188,7 +188,7 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 		return (0);
 	s = buf;
 	n = size / 2 - 1;
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < n && i < buflen ; i++) {
 		c = UGETW(us.bString[i]);
 		/* Convert from Unicode, handle buggy strings. */
 		if ((c & 0xff00) == 0)
@@ -198,7 +198,8 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 		else
 			*s++ = '?';
 	}
-	*s++ = 0;
+	if (buflen > 0)
+		*s++ = 0;
 	return (buf);
 }
 
@@ -219,10 +220,11 @@ usbd_trim_spaces(char *p)
 }
 
 void
-usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
+usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t vl,
+    char *p, size_t pl, int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	char *vendor = 0, *product = 0;
+	char *vendor = NULL, *product = NULL;
 #ifdef USBVERBOSE
 	const struct usb_known_vendor *ukv;
 	const struct usb_known_product *ukp;
@@ -234,17 +236,14 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 	}
 
 	if (usedev) {
-		vendor = usbd_get_string(dev, udd->iManufacturer, v);
+		vendor = usbd_get_string(dev, udd->iManufacturer, v, vl);
 		usbd_trim_spaces(vendor);
-		product = usbd_get_string(dev, udd->iProduct, p);
+		product = usbd_get_string(dev, udd->iProduct, p, pl);
 		usbd_trim_spaces(product);
-	} else {
-		vendor = NULL;
-		product = NULL;
 	}
 #ifdef USBVERBOSE
 	if (vendor == NULL || product == NULL) {
-		for(ukv = usb_known_vendors;
+		for (ukv = usb_known_vendors;
 		    ukv->vendorname != NULL;
 		    ukv++) {
 			if (ukv->vendor == UGETW(udd->idVendor)) {
@@ -253,7 +252,7 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 			}
 		}
 		if (vendor != NULL) {
-			for(ukp = usb_known_products;
+			for (ukp = usb_known_products;
 			    ukp->productname != NULL;
 			    ukp++) {
 				if (ukp->vendor == UGETW(udd->idVendor) &&
@@ -265,16 +264,20 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 		}
 	}
 #endif
-	if (vendor != NULL && *vendor)
-		strlcpy(v, vendor, USB_MAX_STRING_LEN); /* XXX */
+
+	if (v == vendor)
+		;
+	else if (vendor != NULL && *vendor)
+		strlcpy(v, vendor, vl);
 	else
-		snprintf(v, USB_MAX_STRING_LEN, "vendor 0x%04x", /* XXX */
-		    UGETW(udd->idVendor));
-	if (product != NULL && *product)
-		strlcpy(p, product, USB_MAX_STRING_LEN); /* XXX */
+		snprintf(v, vl, "vendor 0x%04x", UGETW(udd->idVendor));
+
+	if (p == product)
+		;
+	else if (product != NULL && *product)
+		strlcpy(p, product, pl);
 	else
-		snprintf(p, USB_MAX_STRING_LEN, "product 0x%04x", /* XXX */
-		    UGETW(udd->idProduct));
+		snprintf(p, pl, "product 0x%04x", UGETW(udd->idProduct));
 }
 
 int
@@ -299,8 +302,8 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 	char *cp = base;
 	int bcdDevice, bcdUSB;
 
-	usbd_devinfo_vp(dev, vendor, product, 1);
-	snprintf(cp, len, "%s %s", vendor, product);
+	usbd_devinfo_vp(dev, vendor, sizeof vendor, product, sizeof product, 1);
+	snprintf(cp, len, "\"%s %s\"", vendor, product);
 	cp += strlen(cp);
 	if (showclass) {
 		snprintf(cp, base + len - cp, ", class %d/%d",
@@ -1246,7 +1249,8 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	di->udi_bus = dev->bus->bdev.dv_unit;
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
-	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev);
+	usbd_devinfo_vp(dev, di->udi_vendor, sizeof(di->udi_vendor),
+	    di->udi_product, sizeof(di->udi_product), usedev);
 	usbd_printBCD(di->udi_release, sizeof di->udi_release,
 	    UGETW(dev->ddesc.bcdDevice));
 	di->udi_vendorNo = UGETW(dev->ddesc.idVendor);
