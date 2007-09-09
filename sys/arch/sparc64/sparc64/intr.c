@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.26 2007/05/29 18:10:43 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.27 2007/09/09 08:55:27 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -78,8 +78,6 @@ int	intr_list_handler(void *);
  */
 int ignore_stray = 1;
 int straycnt[16];
-
-int handled_intr_level;	/* interrupt level that we're handling now */
 
 void
 strayintr(fp, vectored)
@@ -341,6 +339,7 @@ softintr_schedule(cookie)
 void
 splassert_check(int wantipl, const char *func)
 {
+	struct cpu_info *ci = curcpu();
 	int oldipl;
 
 	__asm __volatile("rdpr %%pil,%0" : "=r" (oldipl));
@@ -349,12 +348,12 @@ splassert_check(int wantipl, const char *func)
 		splassert_fail(wantipl, oldipl, func);
 	}
 
-	if (handled_intr_level > wantipl) {
+	if (ci->ci_handled_intr_level > wantipl) {
 		/*
 		 * XXX - need to show difference between what's blocked and
 		 * what's running.
 		 */
-		splassert_fail(wantipl, handled_intr_level, func);
+		splassert_fail(wantipl, ci->ci_handled_intr_level, func);
 	}
 }
 #endif

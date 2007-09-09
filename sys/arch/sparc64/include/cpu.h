@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.42 2007/09/08 17:13:17 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.43 2007/09/09 08:55:26 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -106,6 +106,7 @@ struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
 	int			ci_want_resched;
+	int			ci_handled_intr_level;
 
 	/* DEBUG/DIAGNOSTIC stuff */
 	u_long			ci_spin_locks;	/* # of spin locks held */
