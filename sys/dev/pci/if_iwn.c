@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.7 2007/09/10 17:55:48 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.8 2007/09/10 18:14:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -1488,6 +1488,21 @@ iwn_notif_intr(struct iwn_softc *sc)
 			iwn_rx_statistics(sc, desc);
 			break;
 
+		case IWN_BEACON_MISSED:
+		{
+			struct iwn_beacon_missed *miss =
+			    (struct iwn_beacon_missed *)(desc + 1);
+			/*
+			 * If more than 5 consecutive beacons are missed,
+			 * reinitialize the sensitivity state machine.
+			 */
+			DPRINTFN(2, ("beacons missed %d/%d\n",
+			    letoh32(miss->consecutive), letoh32(miss->total)));
+			if (ic->ic_state == IEEE80211_S_RUN &&
+			    letoh32(miss->consecutive) > 5)
+				(void)iwn_init_sensitivity(sc);
+			break;
+		}
 		case IWN_UC_READY:
 		{
 			struct iwn_ucode_info *uc =

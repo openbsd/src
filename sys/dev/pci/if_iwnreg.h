@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.4 2007/09/10 17:54:50 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.5 2007/09/10 18:14:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -216,6 +216,7 @@ struct iwn_rx_desc {
 #define IWN_RX_STATISTICS	156
 #define IWN_BEACON_STATISTICS	157
 #define IWN_STATE_CHANGED	161
+#define IWN_BEACON_MISSED	162
 #define IWN_AMPDU_RX_START	192
 #define IWN_AMPDU_RX_DONE	193
 #define IWN_RX_DONE		195
@@ -620,6 +621,14 @@ struct iwn_tx_stat {
 	uint16_t	reserved;
 	uint32_t	power[2];
 	uint32_t	status;
+} __packed;
+
+/* structure for IWN_BEACON_MISSED notification */
+struct iwn_beacon_missed {
+	uint32_t	consecutive;
+	uint32_t	total;
+	uint32_t	expected;
+	uint32_t	received;
 } __packed;
 
 /* structure for IWN_AMPDU_RX_DONE notification */
