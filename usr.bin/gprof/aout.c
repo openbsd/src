@@ -87,7 +87,7 @@ getnfile(const char *filename, char ***defaultEs)
 static void
 getstrtab(FILE *nfile, const char *filename)
 {
-	fseek(nfile, (long)(N_SYMOFF(xbuf) + xbuf.a_syms), 0);
+	fseek(nfile, (long)(N_SYMOFF(xbuf) + xbuf.a_syms), SEEK_SET);
 	if (fread(&ssiz, sizeof (ssiz), 1, nfile) == 0)
 		errx(1, "%s: no string table (old format?)" , filename );
 	strtab = calloc(ssiz, 1);
@@ -109,7 +109,7 @@ getsymtab(FILE *nfile, const char *filename)
 	long i;
 
 	/* pass1 - count symbols */
-	fseek(nfile, (long)N_SYMOFF(xbuf), 0);
+	fseek(nfile, (long)N_SYMOFF(xbuf), SEEK_SET);
 	nname = 0;
 	for (i = xbuf.a_syms; i > 0; i -= sizeof(struct nlist)) {
 		fread(&nbuf, sizeof(nbuf), 1, nfile);
@@ -126,7 +126,7 @@ getsymtab(FILE *nfile, const char *filename)
 		    askfor * sizeof(nltype));
 
 	/* pass2 - read symbols */
-	fseek(nfile, (long)N_SYMOFF(xbuf), 0);
+	fseek(nfile, (long)N_SYMOFF(xbuf), SEEK_SET);
 	npe = nl;
 	nname = 0;
 	for (i = xbuf.a_syms; i > 0; i -= sizeof(struct nlist)) {
@@ -168,7 +168,7 @@ gettextspace(FILE *nfile)
 		  xbuf.a_text);
 		return;
 	}
-	(void)fseek(nfile, N_TXTOFF(xbuf), 0);
+	(void)fseek(nfile, N_TXTOFF(xbuf), SEEK_SET);
 	if (fread(textspace, 1, xbuf.a_text, nfile) != xbuf.a_text ) {
 		warnx("couldn't read text space: can't do -c");
 		free(textspace);

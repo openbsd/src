@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.23 2007/07/03 00:56:23 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.24 2007/09/10 14:29:53 tobias Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.23 2007/07/03 00:56:23 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.24 2007/09/10 14:29:53 tobias Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -869,7 +869,7 @@ repos(int nchar)
 	int i;
 
 	for (i = 0; i < 2; i++)
-		(void)fseek(fp[i], (long)-nchar, 1);
+		(void)fseek(fp[i], (long)-nchar, SEEK_CUR);
 }
 
 /*
@@ -903,7 +903,7 @@ edscript(int n)
 			prange(&de[n].old);
 		else
 			diff_output("%da\n=======\n", de[n].old.to -1);
-		(void)fseek(fp[2], (long)de[n].new.from, 0);
+		(void)fseek(fp[2], (long)de[n].new.from, SEEK_SET);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
 			j = k > BUFSIZ ? BUFSIZ : k;
 			if (fread(block, 1, (size_t)j,

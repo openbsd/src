@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.15 2007/08/31 23:14:21 ray Exp $	*/
+/*	$OpenBSD: edit.c,v 1.16 2007/09/10 14:29:53 tobias Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: edit.c,v 1.15 2007/08/31 23:14:21 ray Exp $";
+static const char rcsid[] = "$OpenBSD: edit.c,v 1.16 2007/09/10 14:29:53 tobias Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ edit1(int *msgvec, int type)
 		(void)ignoresig(SIGINT, &oact, &oset);
 		fp = run_editor(setinput(mp), (off_t)mp->m_size, type, readonly);
 		if (fp != NULL) {
-			(void)fseek(otf, 0L, 2);
+			(void)fseek(otf, 0L, SEEK_END);
 			size = ftell(otf);
 			mp->m_block = blockof(size);
 			mp->m_offset = offsetof(size);

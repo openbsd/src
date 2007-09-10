@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_stdio.c,v 1.9 2005/10/30 19:44:52 kettenis Exp $ */
+/*	$OpenBSD: xdr_stdio.c,v 1.10 2007/09/10 14:29:53 tobias Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -142,7 +142,7 @@ static bool_t
 xdrstdio_setpos(XDR *xdrs, u_int pos)
 { 
 
-	return ((fseek((FILE *)xdrs->x_private, (long)pos, 0) < 0) ?
+	return ((fseek((FILE *)xdrs->x_private, (long)pos, SEEK_SET) < 0) ?
 		FALSE : TRUE);
 }
 

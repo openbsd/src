@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.12 2006/07/26 12:34:41 mglocker Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.13 2007/09/10 14:29:53 tobias Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #endif
 static const char rcsid[] =
-    "$OpenBSD: tftpsubs.c,v 1.12 2006/07/26 12:34:41 mglocker Exp $";
+    "$OpenBSD: tftpsubs.c,v 1.13 2007/09/10 14:29:53 tobias Exp $";
 #endif /* not lint */
 
 /*
@@ -237,7 +237,7 @@ write_behind(FILE *file, int convert)
 		if (prevchar == '\r') {		/* if prev char was cr */
 			if (c == '\n')		/* if have cr,lf then just */
 				/* smash lf on top of the cr */
-				fseek(file, -1, 1);
+				fseek(file, -1, SEEK_CUR);
 			else if (c == '\0')	/* if have cr,nul then */
 				goto skipit;	/* just skip over the putc */
 			/* FALLTHROUGH */

@@ -199,7 +199,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		{
 	case BIO_C_FILE_SEEK:
 	case BIO_CTRL_RESET:
-		ret=(long)fseek(fp,num,0);
+		ret=(long)fseek(fp,num,SEEK_SET);
 		break;
 	case BIO_CTRL_EOF:
 		ret=(long)feof(fp);
