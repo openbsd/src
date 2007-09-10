@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.23 2007/02/12 19:10:08 otto Exp $
+ * $OpenBSD: readlink.c,v 1.24 2007/09/10 07:42:26 sobrado Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -34,6 +34,8 @@
 #include <string.h>
 #include <unistd.h>
 
+static void	usage(void);
+
 int
 main(int argc, char *argv[])
 {
@@ -50,23 +52,19 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		default:
-			(void)fprintf(stderr,
-			    "usage: readlink [-n] [-f] symlink\n");
-			exit(1);
+			usage();
 		}
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1) {
-		fprintf(stderr, "usage: readlink [-n] [-f] symlink\n");
-		exit(1);
-	}
+	if (argc != 1)
+		usage();
 
 	n = strlen(argv[0]);
 	if (n > PATH_MAX - 1) {
 		fprintf(stderr,
-			"readlink: filename longer than PATH_MAX-1 (%d)\n",
-			PATH_MAX - 1);
+		    "readlink: filename longer than PATH_MAX-1 (%d)\n",
+		    PATH_MAX - 1);
 		exit(1);
 	}
 
@@ -83,4 +81,11 @@ main(int argc, char *argv[])
 	if (!nflag)
 		putchar('\n');
 	exit(0);
+}
+
+static void
+usage(void)
+{
+	(void)fprintf(stderr, "usage: readlink [-fn] file\n");
+	exit(1);
 }
