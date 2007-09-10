@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.74 2007/09/10 05:34:32 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.75 2007/09/10 22:24:04 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -263,6 +263,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
+	sc->sc_async_mixer = NULL;
 
 	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
 	if (error) {
