@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.143 2007/09/04 19:07:03 tobias Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.144 2007/09/10 14:06:14 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -208,7 +208,7 @@ struct cvsroot {
 	char   *cr_pass;
 	char   *cr_host;
 	char   *cr_dir;
-	u_int   cr_port;
+	char   *cr_port;
 
 	/* connection data */
 	u_int   cr_flags;

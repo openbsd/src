@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.77 2007/09/07 19:36:05 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.78 2007/09/10 14:06:14 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -232,6 +232,11 @@ cvs_client_connect_to_server(void)
 		if (current_cvsroot->cr_user != NULL) {
 			argv[argc++] = "-l";
 			argv[argc++] = current_cvsroot->cr_user;
+		}
+
+		if (current_cvsroot->cr_port != NULL) {
+			argv[argc++] = "-p";
+			argv[argc++] = current_cvsroot->cr_port;
 		}
 
 		argv[argc++] = current_cvsroot->cr_host;
