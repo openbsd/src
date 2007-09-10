@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.80 2007/09/09 08:55:27 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.81 2007/09/10 21:33:16 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3183,18 +3183,28 @@ interrupt_vector:
 	membar	#Sync
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
 	membar	#Sync			! Should not be needed due to retry
-	sethi	%hi(_C_LABEL(intrlev)), %g3
-	btst	IRSR_BUSY, %g1
-	or	%g3, %lo(_C_LABEL(intrlev)), %g3
-	bz,pn	%icc, 3f		! spurious interrupt
-	 sllx	%g2, 3, %g5	! Calculate entry number
-	cmp	%g2, MAXINTNUM
 
-#ifdef DEBUG
-	tgeu	55
-#endif	/* DEBUG */
+	btst	IRSR_BUSY, %g1
+	bz,pn	%icc, 3f		! Spurious interrupt
+	 cmp	%g2, MAXINTNUM
+#ifdef MULTIPROCESSOR
+	blu,pt	%xcc, Lsoftint_regular
+	 sllx	%g2, 3, %g5		! Calculate entry number
+	mov	IRDR_1H, %g3
+        ldxa    [%g3] ASI_IRDR, %g3     ! Get IPI handler arg0
+	mov	IRDR_2H, %g5
+	jmpl	%g2, %g0
+         ldxa   [%g5] ASI_IRDR, %g5     ! Get IPI handler arg1
+	Debugger()
+	NOTREACHED
+#else
 	bgeu,pn	%xcc, 3f
-	 nop
+	 sllx	%g2, 3, %g5		! Calculate entry number
+#endif
+
+Lsoftint_regular:
+	sethi	%hi(_C_LABEL(intrlev)), %g3
+	or	%g3, %lo(_C_LABEL(intrlev)), %g3
 	ldx	[%g3 + %g5], %g5	! We have a pointer to the handler
 #ifdef DEBUG
 	brnz,pt %g5, 1f
@@ -3284,6 +3294,69 @@ ret_from_intr_vector:
 97:
 	ba,a	ret_from_intr_vector
 	 nop				! XXX spitfire bug?
+
+#ifdef MULTIPROCESSOR
+ENTRY(ipi_tlb_page_demap)
+	rdpr	%pstate, %g1
+	andn	%g1, PSTATE_IE, %g2
+	wrpr	%g2, %pstate				! disable interrupts
+
+	rdpr	%tl, %g2
+	brnz	%g2, 1f
+	 add	%g2, 1, %g4
+	wrpr	%g0, %g4, %tl				! Switch to traplevel > 0
+1:	
+	mov	CTX_PRIMARY, %g4
+	andn	%g3, 0xfff, %g3				! drop unused va bits
+	ldxa	[%g4] ASI_DMMU, %g6			! Save primary context
+	sethi	%hi(KERNBASE), %g7
+	membar	#LoadStore
+	stxa	%g5, [%g4] ASI_DMMU			! Insert context to demap
+	membar	#Sync
+	or	%g3, DEMAP_PAGE_PRIMARY, %g3
+	stxa	%g0, [%g3] ASI_DMMU_DEMAP
+	stxa	%g0, [%g3] ASI_IMMU_DEMAP
+	membar	#Sync
+	flush	%g7
+	stxa	%g6, [%g4] ASI_DMMU
+	membar	#Sync
+	flush	%g7
+
+	wrpr	%g2, %tl
+	wrpr	%g1, %pstate
+	ba,a	ret_from_intr_vector
+	 nop
+
+ENTRY(ipi_tlb_context_demap)
+	rdpr	%pstate, %g1
+	andn	%g1, PSTATE_IE, %g2
+	wrpr	%g2, %pstate				! disable interrupts
+
+	rdpr	%tl, %g2
+	brnz	%g2, 1f
+	 add	%g2, 1, %g4
+	wrpr	%g0, %g4, %tl				! Switch to traplevel > 0
+1:	
+	mov	CTX_PRIMARY, %g4
+	sethi	%hi(KERNBASE), %g7
+	ldxa	[%g4] ASI_DMMU, %g6			! Save primary context
+	membar	#LoadStore
+	stxa	%g3, [%g4] ASI_DMMU			! Insert context to demap
+	membar	#Sync
+	set	DEMAP_CTX_PRIMARY, %g3
+	stxa	%g0, [%g3] ASI_DMMU_DEMAP
+	stxa	%g0, [%g3] ASI_IMMU_DEMAP
+	membar	#Sync
+	flush	%g7
+	stxa	%g6, [%g4] ASI_DMMU
+	membar	#Sync
+	flush	%g7
+	
+	wrpr	%g2, %tl
+	wrpr	%g1, %pstate
+	ba,a	ret_from_intr_vector
+	 nop
+#endif
 
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
