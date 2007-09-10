@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.7 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.8 2007/09/10 19:49:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -99,14 +99,11 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	struct sdmmc_scsi_softc *scbus;
 	struct sdmmc_function *sf;
 
-	MALLOC(scbus, struct sdmmc_scsi_softc *,
-	    sizeof *scbus, M_DEVBUF, M_WAITOK);
-	bzero(scbus, sizeof *scbus);
+	scbus = (struct sdmmc_scsi_softc *)malloc(sizeof *scbus,
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
-	MALLOC(scbus->sc_tgt, struct sdmmc_scsi_target *,
-	    sizeof(*scbus->sc_tgt) * (SDMMC_SCSIID_MAX+1),
-	    M_DEVBUF, M_WAITOK);
-	bzero(scbus->sc_tgt, sizeof(*scbus->sc_tgt) * (SDMMC_SCSIID_MAX+1));
+	scbus->sc_tgt = (struct sdmmc_scsi_target *)malloc(sizeof(*scbus->sc_tgt) *
+	    (SDMMC_SCSIID_MAX+1), M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/*
 	 * Each card that sent us a CID in the identification stage
@@ -178,10 +175,10 @@ sdmmc_scsi_detach(struct sdmmc_softc *sc)
 		config_detach(scbus->sc_child, DETACH_FORCE);
 
 	if (scbus->sc_tgt != NULL)
-		FREE(scbus->sc_tgt, M_DEVBUF);
+		free(scbus->sc_tgt, M_DEVBUF);
 
 	sdmmc_free_ccbs(scbus);
-	FREE(scbus, M_DEVBUF);
+	free(scbus, M_DEVBUF);
 	sc->sc_scsibus = NULL;
 }
 

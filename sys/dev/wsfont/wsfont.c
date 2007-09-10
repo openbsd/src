@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.20 2006/08/06 16:00:46 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.21 2007/09/10 19:49:31 gilles Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -476,7 +476,7 @@ wsfont_add(font, copy)
 		return (-1);
 	}
 	
-	MALLOC(ent, struct font *, sizeof *ent, M_DEVBUF, M_WAITOK);
+	ent = (struct font *)malloc(sizeof *ent, M_DEVBUF, M_WAITOK);
 	
 	ent->lockcount = 0;
 	ent->flg = 0;
@@ -489,12 +489,13 @@ wsfont_add(font, copy)
 		ent->font = font;
 		ent->flg = WSFONT_STATIC;
 	} else {
-		MALLOC(ent->font, struct wsdisplay_font *, sizeof *ent->font, 
+		ent->font = (struct wsdisplay_font *)malloc(sizeof *ent->font,
 		    M_DEVBUF, M_WAITOK);
+
 		memcpy(ent->font, font, sizeof(*ent->font));
 		
 		size = font->fontheight * font->numchars * font->stride;
-		MALLOC(ent->font->data, void *, size, M_DEVBUF, M_WAITOK);
+		ent->font->data = (void *)malloc(size, M_DEVBUF, M_WAITOK);
 		memcpy(ent->font->data, font->data, size);
 		ent->flg = 0;
 	}
@@ -530,8 +531,8 @@ wsfont_remove(cookie)
 	
 	/* Don't free statically allocated font data */
 	if ((ent->flg & WSFONT_STATIC) != 0) {
-		FREE(ent->font->data, M_DEVBUF);
-		FREE(ent->font, M_DEVBUF);
+		free(ent->font->data, M_DEVBUF);
+		free(ent->font, M_DEVBUF);
 	}
 		
 	/* Remove from list, free entry */	
@@ -543,7 +544,7 @@ wsfont_remove(cookie)
 	if (ent->next)
 		ent->next->prev = ent->prev;	
 			
-	FREE(ent, M_DEVBUF);
+	free(ent, M_DEVBUF);
 	splx(s);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.44 2007/03/15 10:22:30 art Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.45 2007/09/10 19:49:31 gilles Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -494,7 +494,7 @@ systracef_close(fp, p)
 		vrele(fst->fd_rdir);
 	rw_exit_write(&fst->lock);
 
-	FREE(fp->f_data, M_XDATA);
+	free(fp->f_data, M_XDATA);
 	fp->f_data = NULL;
 
 	return (0);
@@ -562,10 +562,8 @@ systraceioctl(dev, cmd, data, flag, p)
 
 	switch (cmd) {
 	case STRIOCCLONE:
-		MALLOC(fst, struct fsystrace *, sizeof(struct fsystrace),
-		    M_XDATA, M_WAITOK);
-
-		memset(fst, 0, sizeof(struct fsystrace));
+		fst = (struct fsystrace *)malloc(sizeof(struct fsystrace),
+		    M_XDATA, M_WAITOK|M_ZERO);
 		rw_init(&fst->lock, "systrace");
 		TAILQ_INIT(&fst->processes);
 		TAILQ_INIT(&fst->messages);
@@ -578,7 +576,7 @@ systraceioctl(dev, cmd, data, flag, p)
 
 		error = falloc(p, &f, &fd);
 		if (error) {
-			FREE(fst, M_XDATA);
+			free(fst, M_XDATA);
 			return (error);
 		}
 		f->f_flag = FREAD | FWRITE;

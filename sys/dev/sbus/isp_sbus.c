@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.8 2006/06/02 20:00:56 miod Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.9 2007/09/10 19:49:31 gilles Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 
 /*
@@ -380,12 +380,12 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 		return (0);
 
 	n = isp->isp_maxcmds * sizeof (XS_T *);
-	isp->isp_xflist = (XS_T **) malloc(n, M_DEVBUF, M_WAITOK);
+	isp->isp_xflist = (XS_T **) malloc(n, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot alloc xflist array");
 		return (1);
 	}
-	MEMZERO(isp->isp_xflist, n);
+
 	n = sizeof (bus_dmamap_t) * isp->isp_maxcmds;
 	sbc->sbus_dmamap = (bus_dmamap_t *) malloc(n, M_DEVBUF, M_WAITOK);
 	if (sbc->sbus_dmamap == NULL) {
