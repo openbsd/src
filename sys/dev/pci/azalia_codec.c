@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.30 2007/09/06 22:52:05 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.31 2007/09/10 05:26:38 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -825,9 +825,7 @@ azalia_generic_mixer_default(codec_t *this)
 	}
 
 	/*
-	 * For bidirectional pins,
-	 *   Output: lineout, speaker, headphone, spdifout, digitalout, other
-	 *   Input: others
+	 * For bidirectional pins, make the default `output'
 	 */
 	DPRINTF(("%s: process bidirectional pins\n", __func__));
 	for (i = 0; i < this->nmixers; i++) {
@@ -838,18 +836,7 @@ azalia_generic_mixer_default(codec_t *this)
 			continue;
 		mc.dev = i;
 		mc.type = AUDIO_MIXER_ENUM;
-		switch (this->w[m->nid].d.pin.device) {
-		case CORB_CD_LINEOUT:
-		case CORB_CD_SPEAKER:
-		case CORB_CD_HEADPHONE:
-		case CORB_CD_SPDIFOUT:
-		case CORB_CD_DIGITALOUT:
-		case CORB_CD_DEVICE_OTHER:
-			mc.un.ord = 1;
-			break;
-		default:
-			mc.un.ord = 0;
-		}
+		mc.un.ord = 1;
 		azalia_generic_mixer_set(this, m->nid, m->target, &mc);
 	}
 
