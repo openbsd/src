@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.52 2007/07/27 13:59:27 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.53 2007/09/10 10:48:01 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -845,7 +845,7 @@ rundisplay(void)
 			break;
 
 		case CMD_hl:
-			new_message(MT_standout, "Process ID to higlight: ");
+			new_message(MT_standout, "Process ID to highlight: ");
 			if (readline(tempbuf2, sizeof(tempbuf2), No) > 0) {
 				if (tempbuf2[0] == '+' &&
 				    tempbuf2[1] == '\0') {
