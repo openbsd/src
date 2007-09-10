@@ -1,3 +1,4 @@
+/*	$OpenBSD: ipifuncs.c,v 1.2 2007/09/10 21:44:06 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
