@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.32 2007/09/10 05:39:07 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.33 2007/09/10 22:11:17 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1602,7 +1602,6 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 				return err;
 			this->d.audio.bits_rates = result;
 		}
-		this->d.audio.bits_rates = result;
 	} else {
 		this->d.audio.encodings =
 		    codec->w[codec->audiofunc].d.audio.encodings;
