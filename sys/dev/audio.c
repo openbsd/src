@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.73 2007/09/09 02:55:18 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.74 2007/09/10 05:34:32 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -297,10 +297,12 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
 	sc->sc_inports.allports = 0;
+	sc->sc_inports.master = -1;
 	sc->sc_outports.index = -1;
 	sc->sc_outports.nports = 0;
 	sc->sc_outports.isenum = 0;
 	sc->sc_outports.allports = 0;
+	sc->sc_outports.master = -1;
 	sc->sc_monitor_port = -1;
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
