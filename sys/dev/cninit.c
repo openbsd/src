@@ -1,4 +1,4 @@
-/*	$OpenBSD: cninit.c,v 1.6 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: cninit.c,v 1.7 2007/09/10 17:29:00 miod Exp $	*/
 /*	$NetBSD: cninit.c,v 1.2 1995/04/11 22:08:10 pk Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ cnset(dev)
 				cn_tab = cp;
 				cp->cn_dev = dev;
 				/* Turn it on.  */
-				(cp->cn_init)(cp);
+				(*cp->cn_init)(cp);
 				return (0);
 			}
 			break;
