@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.8 2007/09/10 18:14:55 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.9 2007/09/10 20:36:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -1227,13 +1227,14 @@ iwn_rx_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		struct iwn_rx_ampdu *ampdu =
 		    (struct iwn_rx_ampdu *)(desc + 1);
 		head = (caddr_t)(ampdu + 1);
-		tail = (uint32_t *)(head + (len = letoh16(ampdu->len)));
+		len = letoh16(ampdu->len);
 	} else {
 		head = (caddr_t)(stat + 1) + stat->cfg_phy_len;
-		tail = (uint32_t *)(head + (len = letoh16(stat->len)));
+		len = letoh16(stat->len);
 	}
 
 	/* discard Rx frames with bad CRC early */
+	tail = (uint32_t *)(head + len);
 	if ((letoh32(*tail) & IWN_RX_NOERROR) != IWN_RX_NOERROR) {
 		DPRINTFN(2, ("rx flags error %x\n", letoh32(*tail)));
 		ifp->if_ierrors++;
@@ -1626,7 +1627,8 @@ iwn_intr(void *arg)
 		iwn_stop(ifp, 1);
 		return 1;
 	}
-	if (r1 & (IWN_RX_INTR | IWN_SW_RX_INTR))
+	if ((r1 & (IWN_RX_INTR | IWN_SW_RX_INTR)) ||
+	    (r2 & IWN_RX_STATUS_INTR))
 		iwn_notif_intr(sc);
 
 	if (r1 & IWN_ALIVE_INTR)
@@ -3090,7 +3092,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 
 	tx = (struct iwn_cmd_data *)(hdr + 1);
 	memset(tx, 0, sizeof (struct iwn_cmd_data));
-	tx->flags = htole32(IWN_TX_AUTO_SEQ);
+	tx->flags = htole32(IWN_TX_AUTO_SEQ | 0x200);	/* XXX */
 	tx->id = IWN_ID_BROADCAST;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
 	tx->rflags = IWN_RFLAG_ANT_B;
@@ -3128,8 +3130,8 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 
 	frm = (uint8_t *)(wh + 1);
 
-	/* add empty SSID IE (firmware generates it for directed scans) */
-	frm = ieee80211_add_ssid(frm, NULL, 0);
+	/* add SSID IE */
+	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
 
 	mode = ieee80211_chan2mode(ic, ic->ic_ibss_chan);
 	rs = &ic->ic_sup_rates[mode];

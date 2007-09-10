@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.5 2007/09/10 18:14:55 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.6 2007/09/10 20:36:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -146,6 +146,16 @@
 	 IWN_ALIVE_INTR | IWN_WAKEUP_INTR | IWN_SW_RX_INTR |		\
 	 IWN_CT_REACHED | IWN_RF_TOGGLED)
 
+/* possible flags for register IWN_INTR_STATUS */
+#define IWN_STATUS_TXQ(x)	(1 << (x))
+#define IWN_STATUS_RXQ(x)	(1 << ((x) + 16))
+#define IWN_STATUS_PRI		(1 << 30)
+/* shortcuts for the above */
+#define IWN_TX_STATUS_INTR						\
+	(IWN_STATUS_TXQ(0) | IWN_STATUS_TXQ(1) | IWN_STATUS_TXQ(6))
+#define IWN_RX_STATUS_INTR						\
+	(IWN_STATUS_RXQ(0) | IWN_STATUS_RXQ(1) | IWN_STATUS_RXQ(2) |	\
+	 IWN_STATUS_PRI)
 
 /* possible flags for register IWN_TX_STATUS */
 #define IWN_TX_IDLE(qid)	(1 << ((qid) + 24) | 1 << ((qid) + 16))
@@ -496,7 +506,6 @@ struct iwn_scan_hdr {
 	uint32_t	filter;
 
 	/* followed by a struct iwn_cmd_data */
-	/* followed by an 802.11 header */
 	/* followed by an array of 4x struct iwn_scan_essid */
 	/* followed by probe request body */
 	/* followed by nchan x struct iwn_scan_chan */
