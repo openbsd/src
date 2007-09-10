@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.6 2007/09/07 20:02:54 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.7 2007/09/10 17:55:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -2572,8 +2572,7 @@ iwn_get_temperature(struct iwn_softc *sc)
 		return 0;
 
 	/* sign-extend 23-bit R4 value to 32-bit */
-	if (r4 & (1 << 23))
-		r4 |= ~((1 << 23) - 1);
+	r4 = (r4 << 8) >> 8;
 	/* compute temperature */
 	temp = (259 * (r4 - r2)) / (r3 - r1);
 	temp = (temp * 97) / 100 + 8;
@@ -2682,10 +2681,22 @@ iwn_compute_differential_gain(struct iwn_softc *sc,
 void
 iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 {
-#define inc_clip(val, inc, max)	\
-	if (((val) += (inc)) > (max)) (val) = (max)
-#define dec_clip(val, dec, min) \
-	if (((val) -= (dec)) < (min)) (val) = (min)
+#define inc_clip(val, inc, max)			\
+	if ((val) < (max)) {			\
+		if ((val) < (max) - (inc))	\
+			(val) += (inc);		\
+		else				\
+			(val) = (max);		\
+		needs_update = 1;		\
+	}
+#define dec_clip(val, dec, min)			\
+	if ((val) > (min)) {			\
+		if ((val) > (min) + (dec))	\
+			(val) -= (dec);		\
+		else				\
+			(val) = (min);		\
+		needs_update = 1;		\
+	}
 
 	struct iwn_calib_state *calib = &sc->calib;
 	uint32_t val, rxena, fa;
@@ -2708,19 +2719,19 @@ iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 
 	if (fa > 50 * rxena) {
 		/* high false alarm count, decrease sensitivity */
+		DPRINTFN(2, ("OFDM high false alarm count: %u\n", fa));
 		inc_clip(calib->corr_ofdm_x1,     1, 140);
 		inc_clip(calib->corr_ofdm_mrc_x1, 1, 270);
 		inc_clip(calib->corr_ofdm_x4,     1, 120);
 		inc_clip(calib->corr_ofdm_mrc_x4, 1, 210);
-		needs_update = 1;
 
 	} else if (fa < 5 * rxena) {
 		/* low false alarm count, increase sensitivity */
+		DPRINTFN(2, ("OFDM low false alarm count: %u\n", fa));
 		dec_clip(calib->corr_ofdm_x1,     1, 105);
 		dec_clip(calib->corr_ofdm_mrc_x1, 1, 220);
 		dec_clip(calib->corr_ofdm_x4,     1,  85);
 		dec_clip(calib->corr_ofdm_mrc_x4, 1, 170);
-		needs_update = 1;
 	}
 
 	/* compute maximum noise among 3 antennas */
@@ -2772,13 +2783,13 @@ iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 			if (calib->energy_cck > 2)
 				dec_clip(calib->energy_cck, 2, energy_min);
 		}
-		if (calib->corr_cck_x4 < 160)
+		if (calib->corr_cck_x4 < 160) {
 			calib->corr_cck_x4 = 161;
-		else
+			needs_update = 1;
+		} else
 			inc_clip(calib->corr_cck_x4, 3, 200);
 
 		inc_clip(calib->corr_cck_mrc_x4, 3, 400);
-		needs_update = 1;
 
 	} else if (fa < 5 * rxena) {
 		/* low false alarm count, increase sensitivity */
@@ -2792,7 +2803,6 @@ iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 			inc_clip(calib->energy_cck,      2,  97);
 			dec_clip(calib->corr_cck_x4,     3, 125);
 			dec_clip(calib->corr_cck_mrc_x4, 3, 200);
-			needs_update = 1;
 		}
 	} else {
 		/* not worth to increase or decrease sensitivity */
@@ -2803,7 +2813,6 @@ iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 		if (calib->cck_state == IWN_CCK_STATE_HIFA) {
 			/* previous interval had many false alarms */
 			dec_clip(calib->energy_cck, 8, energy_min);
-			needs_update = 1;
 		}
 		calib->cck_state = IWN_CCK_STATE_INIT;
 	}
@@ -2837,7 +2846,10 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 	cmd.corr_barker      = letoh16(190);
 	cmd.corr_barker_mrc  = letoh16(390);
 
-	DPRINTFN(2, ("setting sensitivity\n"));
+	DPRINTFN(2, ("setting sensitivity %d/%d/%d/%d/%d/%d/%d\n",
+	    calib->corr_ofdm_x1, calib->corr_ofdm_mrc_x1, calib->corr_ofdm_x4,
+	    calib->corr_ofdm_mrc_x4, calib->corr_cck_x4,
+	    calib->corr_cck_mrc_x4, calib->energy_cck));
 	return iwn_cmd(sc, IWN_SENSITIVITY, &cmd, sizeof cmd, 1);
 }
 
