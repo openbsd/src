@@ -161,6 +161,7 @@ int pmap_count_res(pmap_t pmap);
 #define	pmap_resident_count(pm)		pmap_count_res((pm))
 #define	pmap_phys_address(x)		(x)
 #define	pmap_update(pm)			/* nothing (yet) */
+#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
 

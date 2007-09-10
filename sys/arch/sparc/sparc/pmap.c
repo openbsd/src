@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.145 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.146 2007/09/10 18:49:45 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6148,6 +6148,25 @@ pmap_prefer(foff, vap)
 	d = foff - va;
 	d &= (m - 1);
 	*vap = va + d;
+}
+
+void
+pmap_remove_holes(struct vm_map *map)
+{
+#if defined(SUN4) || defined(SUN4C)
+	if (mmu_has_hole) {
+		vaddr_t shole, ehole;
+
+		shole = max(vm_map_min(map), (vaddr_t)MMU_HOLE_START);
+		ehole = min(vm_map_max(map), (vaddr_t)MMU_HOLE_END);
+
+		if (ehole <= shole)
+			return;
+
+		uvm_map_reserve(map, ehole - shole, UVM_UNKNOWN_OFFSET,
+		    0, &shole);
+	}
+#endif
 }
 
 void

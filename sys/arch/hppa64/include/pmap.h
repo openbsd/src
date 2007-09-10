@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.2 2007/09/10 18:49:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -83,6 +83,7 @@ extern struct pmap kernel_pmap_store;
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */
+#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 void pmap_bootstrap(vaddr_t);
 boolean_t pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);

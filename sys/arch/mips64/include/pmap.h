@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.12 2007/04/27 18:14:11 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.13 2007/09/10 18:49:45 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -117,6 +117,7 @@ void	pmap_page_cache(vm_page_t, int);
 #define	pmap_collect(x)			do { /* nothing */ } while (0)
 #define pmap_proc_iflush(p,va,len)	do { /* nothing yet (handled in trap now) */ } while (0)
 #define pmap_unuse_final(p)		do { /* nothing yet */ } while (0)
+#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 #endif	/* _KERNEL */
 

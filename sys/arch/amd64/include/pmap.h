@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.16 2007/07/06 11:46:48 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.17 2007/09/10 18:49:44 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -399,6 +399,7 @@ extern pd_entry_t *pdes[];
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */
+#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 
 /*

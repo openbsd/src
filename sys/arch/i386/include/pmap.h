@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.47 2007/05/29 18:18:20 tom Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.48 2007/09/10 18:49:45 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -360,6 +360,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */
+#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 
 /*

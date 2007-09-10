@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.32 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.33 2007/09/10 18:49:42 miod Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 10 2007 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ function initialises the swap sub-system.
 .Ft int
 .Fn uvm_deallocate "vm_map_t map" "vaddr_t start" "vsize_t size"
 .Ft struct vmspace *
-.Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable"
+.Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "boolean_t pageable" "boolean_t remove_holes"
 .Ft void
 .Fn uvmspace_exec "struct proc *p" "vaddr_t start" "vaddr_t end"
 .Ft struct vmspace *
@@ -361,6 +361,12 @@ to
 .Fa max ,
 setting the pageability of the address space to
 .Fa pageable .
+If
+.Fa remove_holes
+is non-zero, hardware
+.Sq holes
+in the virtual address space will be removed from the newly allocated
+address space.
 .Pp
 The
 .Fn uvmspace_exec

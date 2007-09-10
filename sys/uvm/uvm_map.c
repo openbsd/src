@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.97 2007/07/18 17:00:20 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.98 2007/09/10 18:49:45 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3096,13 +3096,14 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
  * - refcnt set to 1, rest must be init'd by caller
  */
 struct vmspace *
-uvmspace_alloc(vaddr_t min, vaddr_t max, int pageable)
+uvmspace_alloc(vaddr_t min, vaddr_t max, boolean_t pageable,
+    boolean_t remove_holes)
 {
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
 	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
-	uvmspace_init(vm, NULL, min, max, pageable);
+	uvmspace_init(vm, NULL, min, max, pageable, remove_holes);
 	UVMHIST_LOG(maphist,"<- done (vm=%p)", vm,0,0,0);
 	return (vm);
 }
@@ -3114,11 +3115,8 @@ uvmspace_alloc(vaddr_t min, vaddr_t max, int pageable)
  * - refcnt set to 1, rest must be init'd by caller
  */
 void
-uvmspace_init(vm, pmap, min, max, pageable)
-	struct vmspace *vm;
-	struct pmap *pmap;
-	vaddr_t min, max;
-	boolean_t pageable;
+uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max,
+    boolean_t pageable, boolean_t remove_holes)
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
@@ -3133,6 +3131,10 @@ uvmspace_init(vm, pmap, min, max, pageable)
 	vm->vm_map.pmap = pmap;
 
 	vm->vm_refcnt = 1;
+
+	if (remove_holes)
+		pmap_remove_holes(&vm->vm_map);
+
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 
@@ -3224,6 +3226,11 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 		uvm_unmap(map, map->min_offset, map->max_offset);
 
 		/*
+		 * but keep MMU holes unavailable
+		 */
+		pmap_remove_holes(map);
+
+		/*
 		 * resize the map
 		 */
 		vm_map_lock(map);
@@ -3244,7 +3251,7 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 		 * for p
 		 */
 		nvm = uvmspace_alloc(start, end,
-			 (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
+			 (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE, TRUE);
 
 		/*
 		 * install new vmspace and drop our ref to the old one.
@@ -3322,7 +3329,7 @@ uvmspace_fork(struct vmspace *vm1)
 	vm_map_lock(old_map);
 
 	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset,
-		      (old_map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
+	    (old_map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE, FALSE);
 	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	(caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */

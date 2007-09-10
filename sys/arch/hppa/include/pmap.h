@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.33 2004/08/06 22:39:12 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.34 2007/09/10 18:49:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -113,6 +113,7 @@ extern struct pdc_hwtlb pdc_hwtlb;
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */
+#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 void pmap_bootstrap(vaddr_t);
 boolean_t pmap_changebit(struct vm_page *, u_int, u_int);

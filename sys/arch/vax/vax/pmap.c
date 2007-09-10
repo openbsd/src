@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2007/05/20 14:14:12 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.41 2007/09/10 18:49:45 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -391,9 +391,9 @@ pmap_create()
 	    (u_long *)&pmap->pm_p0br);
 	if (res)
 		panic("pmap_create");
-	pmap->pm_p0lr = vax_btoc(MAXTSIZ + 40*1024*1024) | AST_PCB;
+	pmap->pm_p0lr = vax_btoc(MAXTSIZ + MAXDSIZ + BRKSIZ) | AST_PCB;
 	(vaddr_t)pmap->pm_p1br = (vaddr_t)pmap->pm_p0br + bytesiz - 0x800000;
-	pmap->pm_p1lr = (0x200000 - vax_btoc(MAXSSIZ));
+	pmap->pm_p1lr = vax_btoc(0x40000000 - MAXSSIZ);
 	pmap->pm_stack = USRSTACK;
 
 #ifdef PMAPDEBUG
@@ -407,6 +407,27 @@ pmap_create()
 	pmap->ref_count = 1;
 
 	return(pmap);
+}
+
+void
+pmap_remove_holes(struct vm_map *map)
+{
+	struct pmap *pmap = map->pmap;
+	vaddr_t shole, ehole;
+
+	if (pmap == pmap_kernel())	/* can of worms */
+		return;
+
+	shole = ((vaddr_t)(pmap->pm_p0lr & 0x3fffff)) << VAX_PGSHIFT;
+	ehole = 0x40000000 +
+	    (((vaddr_t)(pmap->pm_p1lr & 0x3fffff)) << VAX_PGSHIFT);
+	shole = max(vm_map_min(map), shole);
+	ehole = min(vm_map_max(map), ehole);
+
+	if (ehole <= shole)
+		return;
+
+	uvm_map_reserve(map, ehole - shole, UVM_UNKNOWN_OFFSET, 0, &shole);
 }
 
 void

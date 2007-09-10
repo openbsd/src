@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.21 2006/02/07 07:59:23 martin Exp $ */
+/* $OpenBSD: pmap.h,v 1.22 2007/09/10 18:49:44 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -194,6 +194,7 @@ void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
 
 #define pmap_proc_iflush(p, va, len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */
+#define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
 
