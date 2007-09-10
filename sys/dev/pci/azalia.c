@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.30 2007/09/06 22:47:46 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.31 2007/09/10 05:30:14 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1643,6 +1643,30 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	if (err)
 		return err;
 	this->d.pin.cap = result;
+
+	/* input pin */
+	if ((this->d.pin.cap & COP_PINCAP_INPUT) &&
+	    (this->d.pin.cap & COP_PINCAP_OUTPUT) == 0) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err == 0) {
+			result &= ~CORB_PWC_OUTPUT;
+			result |= CORB_PWC_INPUT;
+			codec->comresp(codec, this->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
+		}
+	}
+	/* output pin, or bidirectional pin */
+	if (this->d.pin.cap & COP_PINCAP_OUTPUT) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+		if (err == 0) {
+			result &= ~CORB_PWC_INPUT;
+			result |= CORB_PWC_OUTPUT;
+			codec->comresp(codec, this->nid,
+			    CORB_SET_PIN_WIDGET_CONTROL, result, NULL);
+		}
+	}
 	return 0;
 }
 
