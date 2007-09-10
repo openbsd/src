@@ -54,9 +54,6 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 #include <pwd.h>
-#if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
-# include <malloc.h>
-#endif /* HAVE_MALLOC_H && !STDC_HEADERS */
 #if defined(YYBISON) && defined(HAVE_ALLOCA_H) && !defined(__GNUC__)
 # include <alloca.h>
 #endif /* YYBISON && HAVE_ALLOCA_H && !__GNUC__ */
@@ -198,7 +195,7 @@ static void append		__P((char *, char **, size_t *, size_t *, char *));
 static void expand_ga_list	__P((void));
 static void expand_match_list	__P((void));
 static aliasinfo *find_alias	__P((char *, int));
-static int  more_aliases	__P((void));
+static void more_aliases	__P((void));
        void init_parser		__P((void));
        void yyerror		__P((char *));
 
@@ -964,12 +961,8 @@ add_alias(alias, type, val)
     size_t onaliases;
     char s[512];
 
-    if (naliases >= nslots && !more_aliases()) {
-	(void) snprintf(s, sizeof(s), "Out of memory defining alias `%s'",
-			alias);
-	yyerror(s);
-	return(FALSE);
-    }
+    if (naliases >= nslots)
+	more_aliases();
 
     ai.type = type;
     ai.val = val;
@@ -1013,17 +1006,12 @@ find_alias(alias, type)
 /*
  * Allocates more space for the aliases list.
  */
-static int
+static void
 more_aliases()
 {
 
     nslots += MOREALIASES;
-    if (nslots == MOREALIASES)
-	aliases = (aliasinfo *) malloc(nslots * sizeof(aliasinfo));
-    else
-	aliases = (aliasinfo *) realloc(aliases, nslots * sizeof(aliasinfo));
-
-    return(aliases != NULL);
+    aliases = (aliasinfo *) erealloc3(aliases, nslots, sizeof(aliasinfo));
 }
 
 /*
