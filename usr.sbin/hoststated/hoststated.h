@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.59 2007/09/07 08:20:24 reyk Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.60 2007/09/10 11:59:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -303,6 +303,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_DEMOTE		0x00002000
 #define F_LOOKUP_PATH		0x00004000
 #define F_DEMOTED		0x00008000
+#define F_UDP			0x00010000
 
 struct host_config {
 	objid_t			 id;
@@ -390,6 +391,7 @@ TAILQ_HEAD(servicelist, service);
 
 struct session {
 	objid_t				 id;
+	u_int32_t			 key;
 	objid_t				 relayid;
 	struct ctl_relay_event		 in;
 	struct ctl_relay_event		 out;
@@ -452,7 +454,8 @@ RB_HEAD(proto_tree, protonode);
 
 enum prototype {
 	RELAY_PROTO_TCP		= 0,
-	RELAY_PROTO_HTTP	= 1
+	RELAY_PROTO_HTTP	= 1,
+	RELAY_PROTO_DNS		= 2
 };
 
 #define TCPFLAG_NODELAY		0x01
@@ -472,6 +475,7 @@ enum prototype {
 
 #define SSLCIPHERS_DEFAULT	"HIGH:!ADH"
 
+struct relay;
 struct protocol {
 	objid_t			 id;
 	u_int32_t		 flags;
@@ -493,6 +497,10 @@ struct protocol {
 	struct proto_tree	 response_tree;
 
 	int			(*cmp)(struct session *, struct session *);
+	int			(*validate)(struct relay *,
+				    struct sockaddr_storage *,
+				    u_int8_t *, size_t, u_int32_t *);
+	int			(*request)(struct session *);
 
 	TAILQ_ENTRY(protocol)	 entry;
 };
@@ -701,6 +709,12 @@ int	 relay_session_cmp(struct session *, struct session *);
 
 RB_PROTOTYPE(proto_tree, protonode, nodes, relay_proto_cmp);
 SPLAY_PROTOTYPE(session_tree, session, nodes, relay_session_cmp);
+
+/* relay_udp.c */
+void	 relay_udp_privinit(struct hoststated *, struct relay *);
+int	 relay_udp_bind(struct sockaddr_storage *, in_port_t,
+	    struct protocol *);
+void	 relay_udp_server(int, short, void *);
 
 /* check_icmp.c */
 void	 icmp_init(struct hoststated *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2007/09/07 07:54:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.54 2007/09/10 11:59:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -181,6 +181,8 @@ proto_type	: TCP				{ $$ = RELAY_PROTO_TCP; }
 		| STRING			{
 			if (strcmp("http", $1) == 0) {
 				$$ = RELAY_PROTO_HTTP;
+			} else if (strcmp("dns", $1) == 0) {
+				$$ = RELAY_PROTO_DNS;
 			} else {
 				yyerror("invalid protocol type: %s", $1);
 				free($1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.42 2007/09/07 08:20:24 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.43 2007/09/10 11:59:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -58,6 +58,7 @@ void		 relay_privinit(void);
 void		 relay_protodebug(struct relay *);
 void		 relay_init(void);
 void		 relay_launch(void);
+int		 relay_socket_af(struct sockaddr_storage *, in_port_t);
 int		 relay_socket(struct sockaddr_storage *, in_port_t,
 		    struct protocol *);
 int		 relay_socket_listen(struct sockaddr_storage *, in_port_t,
@@ -108,6 +109,8 @@ int		 relay_bufferevent_write_chunk(struct ctl_relay_event *,
 		    struct evbuffer *, size_t);
 int		 relay_bufferevent_write(struct ctl_relay_event *,
 		    void *, size_t);
+int		 relay_cmp_af(struct sockaddr_storage *,
+		    struct sockaddr_storage *);
 static __inline int
 		 relay_proto_cmp(struct protonode *, struct protonode *);
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
@@ -287,6 +290,9 @@ relay_protodebug(struct relay *rlay)
 	case RELAY_PROTO_HTTP:
 		fprintf(stderr, "http\n");
 		break;
+	case RELAY_PROTO_DNS:
+		fprintf(stderr, "dns\n");
+		break;
 	}
 
 	name = "request";
@@ -366,12 +372,27 @@ relay_privinit(void)
 		if (debug)
 			relay_protodebug(rlay);
 
+		switch (rlay->proto->type) {
+		case RELAY_PROTO_DNS:
+			relay_udp_privinit(env, rlay);
+			break;
+		case RELAY_PROTO_TCP:
+		case RELAY_PROTO_HTTP:
+			/* Use defaults */
+			break;
+		}
+
 		if ((rlay->conf.flags & F_SSL) &&
 		    (rlay->ctx = relay_ssl_ctx_create(rlay)) == NULL)
 			fatal("relay_launch: failed to create SSL context");
 
-		if ((rlay->s = relay_socket_listen(&rlay->conf.ss,
-		    rlay->conf.port, rlay->proto)) == -1)
+		if (rlay->conf.flags & F_UDP)
+			rlay->s = relay_udp_bind(&rlay->conf.ss,
+			    rlay->conf.port, rlay->proto);
+		else
+			rlay->s = relay_socket_listen(&rlay->conf.ss,
+			    rlay->conf.port, rlay->proto);
+		if (rlay->s == -1)
 			fatal("relay_launch: failed to listen");
 	}
 }
@@ -486,25 +507,27 @@ void
 relay_launch(void)
 {
 	struct relay	*rlay;
+	void		(*callback)(int, short, void *);
 
 	TAILQ_FOREACH(rlay, &env->relays, entry) {
 		log_debug("relay_launch: running relay %s", rlay->conf.name);
 
 		rlay->up = HOST_UP;
 
+		if (rlay->conf.flags & F_UDP)
+			callback = relay_udp_server;
+		else
+			callback = relay_accept;
+
 		event_set(&rlay->ev, rlay->s, EV_READ|EV_PERSIST,
-		    relay_accept, rlay);
+		    callback, rlay);
 		event_add(&rlay->ev, NULL);
 	}
 }
 
 int
-relay_socket(struct sockaddr_storage *ss, in_port_t port,
-    struct protocol *proto)
+relay_socket_af(struct sockaddr_storage *ss, in_port_t port)
 {
-	int s = -1, val;
-	struct linger lng;
-
 	switch (ss->ss_family) {
 	case AF_INET:
 		((struct sockaddr_in *)ss)->sin_port = port;
@@ -516,7 +539,22 @@ relay_socket(struct sockaddr_storage *ss, in_port_t port,
 		((struct sockaddr_in6 *)ss)->sin6_len =
 		    sizeof(struct sockaddr_in6);
 		break;
+	default:
+		return (-1);
 	}
+
+	return (0);
+}
+
+int
+relay_socket(struct sockaddr_storage *ss, in_port_t port,
+    struct protocol *proto)
+{
+	int s = -1, val;
+	struct linger lng;
+
+	if (relay_socket_af(ss, port) == -1)
+		goto bad;
 
 	if ((s = socket(ss->ss_family, SOCK_STREAM, IPPROTO_TCP)) == -1)
 		goto bad;
@@ -1646,17 +1684,29 @@ relay_natlook(int fd, short event, void *arg)
 void
 relay_session(struct session *con)
 {
-	struct relay	*rlay = (struct relay *)con->relay;
+	struct relay		*rlay = (struct relay *)con->relay;
+	struct ctl_relay_event	*in = &con->in, *out = &con->out;
 
-	if (bcmp(&rlay->conf.ss, &con->out.ss, sizeof(con->out.ss)) == 0 &&
-	    con->out.port == rlay->conf.port) {
+	if (bcmp(&rlay->conf.ss, &out->ss, sizeof(out->ss)) == 0 &&
+	    out->port == rlay->conf.port) {
 		log_debug("relay_session: session %d: looping",
 		    con->id);
 		relay_close(con, "session aborted");
 		return;
 	}
 
-	if ((rlay->conf.flags & F_SSL) && (con->in.ssl == NULL)) {
+	if (rlay->conf.flags & F_UDP) {
+		/*
+		 * Call the UDP protocol-specific handler
+		 */
+		if (rlay->proto->request == NULL)
+			fatalx("invalide UDP session");
+		if ((*rlay->proto->request)(con) == -1)
+			relay_close(con, "session failed");
+		return;
+	}
+
+	if ((rlay->conf.flags & F_SSL) && (in->ssl == NULL)) {
 		relay_ssl_transaction(con);
 		return;
 	}
@@ -2354,6 +2404,36 @@ relay_bufferevent_write(struct ctl_relay_event *cre, void *data, size_t size)
 	if (cre->bev == NULL)
 		return (evbuffer_add(cre->output, data, size));
 	return (bufferevent_write(cre->bev, data, size));
+}
+
+int
+relay_cmp_af(struct sockaddr_storage *a, struct sockaddr_storage *b)
+{
+	struct sockaddr_in ia, ib;
+	struct sockaddr_in6 ia6, ib6;
+
+	switch (a->ss_family) {
+	case AF_INET:
+		bcopy(a, &ia, sizeof(struct sockaddr_in));
+		bcopy(b, &ib, sizeof(struct sockaddr_in));
+
+		return (memcmp(&ia.sin_addr, &ib.sin_addr,
+		    sizeof(ia.sin_addr)) +
+		    memcmp(&ia.sin_port, &ib.sin_port,
+		    sizeof(ia.sin_port)));
+		break;
+	case AF_INET6:
+		bcopy(a, &ia6, sizeof(struct sockaddr_in6));
+		bcopy(b, &ib6, sizeof(struct sockaddr_in6));
+
+		return (memcmp(&ia6.sin6_addr, &ib6.sin6_addr,
+		    sizeof(ia6.sin6_addr)) +
+		    memcmp(&ia6.sin6_port, &ib6.sin6_port,
+		    sizeof(ia6.sin6_port)));
+		break;
+	default:
+		return (-1);
+	}
 }
 
 static __inline int
