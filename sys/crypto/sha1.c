@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.7 2007/07/20 19:54:01 otto Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.8 2007/09/10 22:19:42 henric Exp $	*/
 
 /*
  * SHA-1 in C
@@ -47,7 +47,7 @@
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
 void
-SHA1Transform(u_int32_t state[5], unsigned char buffer[SHA1_BLOCK_LENGTH])
+SHA1Transform(u_int32_t state[5], const unsigned char buffer[SHA1_BLOCK_LENGTH])
 {
     u_int32_t a, b, c, d, e;
     typedef union {
@@ -121,7 +121,7 @@ SHA1Init(SHA1_CTX *context)
 /* Run your data through this. */
 
 void
-SHA1Update(SHA1_CTX *context, unsigned char *data, unsigned int len)
+SHA1Update(SHA1_CTX *context, const unsigned char *data, unsigned int len)
 {
     unsigned int i;
     unsigned int j;

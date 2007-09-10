@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.16 2005/05/25 05:47:53 markus Exp $	*/
+/*	$OpenBSD: xform.h,v 1.17 2007/09/10 22:19:42 henric Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -38,7 +38,7 @@ struct auth_hash {
 	u_int16_t authsize;
 	u_int16_t ctxsize;
 	void (*Init) (void *);
-	int  (*Update) (void *, u_int8_t *, u_int16_t);
+	int  (*Update) (void *, const u_int8_t *, u_int16_t);
 	void (*Final) (u_int8_t *, void *);
 };
 

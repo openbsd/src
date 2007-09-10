@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.h,v 1.11 2007/09/10 22:19:42 henric Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -57,8 +57,8 @@ struct swcr_data {
 };
 
 #ifdef _KERNEL
-extern u_int8_t hmac_ipad_buffer[64];
-extern u_int8_t hmac_opad_buffer[64];
+extern const u_int8_t hmac_ipad_buffer[64];
+extern const u_int8_t hmac_opad_buffer[64];
 
 int	swcr_encdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
 int	swcr_authcompute(struct cryptop *, struct cryptodesc *, struct swcr_data *,

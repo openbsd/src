@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.31 2007/05/27 05:43:17 tedu Exp $	*/
+/*	$OpenBSD: xform.c,v 1.32 2007/09/10 22:19:42 henric Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -95,12 +95,12 @@ void null_decrypt(caddr_t, u_int8_t *);
 void aes_ctr_reinit(caddr_t, u_int8_t *);
 void aes_ctr_crypt(caddr_t, u_int8_t *);
 
-int MD5Update_int(void *, u_int8_t *, u_int16_t);
-int SHA1Update_int(void *, u_int8_t *, u_int16_t);
-int RMD160Update_int(void *, u_int8_t *, u_int16_t);
-int SHA256_Update_int(void *, u_int8_t *, u_int16_t);
-int SHA384_Update_int(void *, u_int8_t *, u_int16_t);
-int SHA512_Update_int(void *, u_int8_t *, u_int16_t);
+int MD5Update_int(void *, const u_int8_t *, u_int16_t);
+int SHA1Update_int(void *, const u_int8_t *, u_int16_t);
+int RMD160Update_int(void *, const u_int8_t *, u_int16_t);
+int SHA256_Update_int(void *, const u_int8_t *, u_int16_t);
+int SHA384_Update_int(void *, const u_int8_t *, u_int16_t);
+int SHA512_Update_int(void *, const u_int8_t *, u_int16_t);
 
 u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
@@ -584,42 +584,42 @@ aes_ctr_zerokey(u_int8_t **sched)
  */
 
 int
-RMD160Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+RMD160Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	RMD160Update(ctx, buf, len);
 	return 0;
 }
 
 int
-MD5Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+MD5Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	MD5Update(ctx, buf, len);
 	return 0;
 }
 
 int
-SHA1Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+SHA1Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	SHA1Update(ctx, buf, len);
 	return 0;
 }
 
 int
-SHA256_Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+SHA256_Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	SHA256_Update(ctx, buf, len);
 	return 0;
 }
 
 int
-SHA384_Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+SHA384_Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	SHA384_Update(ctx, buf, len);
 	return 0;
 }
 
 int
-SHA512_Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+SHA512_Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 {
 	SHA512_Update(ctx, buf, len);
 	return 0;
