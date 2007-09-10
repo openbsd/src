@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.53 2007/09/07 19:05:05 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.54 2007/09/10 20:34:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -131,9 +131,6 @@ int		wpi_set_txpower(struct wpi_softc *,
 		    struct ieee80211_channel *, int);
 int		wpi_get_power_index(struct wpi_softc *,
 		    struct wpi_power_group *, struct ieee80211_channel *, int);
-#ifdef notyet
-int		wpi_setup_beacon(struct wpi_softc *, struct ieee80211_node *);
-#endif
 int		wpi_auth(struct wpi_softc *);
 int		wpi_scan(struct wpi_softc *, uint16_t);
 int		wpi_config(struct wpi_softc *);
@@ -1565,12 +1562,14 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	struct wpi_cmd_data *tx;
 	struct ieee80211_frame *wh;
 	struct mbuf *mnew;
+	u_int hdrlen;
 	int i, rate, error, ovhd = 0;
 
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
 
 	wh = mtod(m0, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
 
 	/* pickup a rate */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
@@ -1675,21 +1674,17 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	} else
 		tx->timeout = htole16(0);
 
+	tx->len = htole16(m0->m_pkthdr.len);
 	tx->rate = wpi_plcp_signal(rate);
-
-	/* be very persistant at sending frames out */
 	tx->rts_ntries = 7;
 	tx->data_ntries = 15;
-
 	tx->ofdm_mask = 0xff;
 	tx->cck_mask = 0x0f;
 	tx->lifetime = htole32(WPI_LIFETIME_INFINITE);
 
-	tx->len = htole16(m0->m_pkthdr.len);
-
-	/* save and trim IEEE802.11 header */
-	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (caddr_t)&tx->wh);
-	m_adj(m0, sizeof (struct ieee80211_frame));
+	/* copy and trim IEEE802.11 header */
+	memcpy((uint8_t *)(tx + 1), wh, hdrlen);
+	m_adj(m0, hdrlen);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1743,7 +1738,8 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	    (1 + data->map->dm_nsegs) << 24);
 	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
 	    ring->cur * sizeof (struct wpi_tx_cmd));
-	desc->segs[0].len  = htole32(4 + sizeof (struct wpi_cmd_data));
+	desc->segs[0].len  = htole32(4 + sizeof (struct wpi_cmd_data) +
+	    ((hdrlen + 3) & ~3));
 	for (i = 1; i <= data->map->dm_nsegs; i++) {
 		desc->segs[i].addr =
 		    htole32(data->map->dm_segs[i - 1].ds_addr);
@@ -2266,81 +2262,6 @@ wpi_get_power_index(struct wpi_softc *sc, struct wpi_power_group *group,
 #undef fdivround
 }
 
-/*
- * Build a beacon frame that the firmware will broadcast periodically in
- * IBSS or HostAP modes.
- */
-#ifdef notyet
-int
-wpi_setup_beacon(struct wpi_softc *sc, struct ieee80211_node *ni)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct wpi_tx_ring *ring = &sc->cmdq;
-	struct wpi_tx_desc *desc;
-	struct wpi_tx_data *data;
-	struct wpi_tx_cmd *cmd;
-	struct wpi_cmd_beacon *bcn;
-	struct mbuf *m0;
-	int error;
-
-	desc = &ring->desc[ring->cur];
-	data = &ring->data[ring->cur];
-
-	m0 = ieee80211_beacon_alloc(ic, ni);
-	if (m0 == NULL) {
-		printf("%s: could not allocate beacon frame\n",
-		    sc->sc_dev.dv_xname);
-		return ENOMEM;
-	}
-
-	cmd = &ring->cmd[ring->cur];
-	cmd->code = WPI_CMD_SET_BEACON;
-	cmd->flags = 0;
-	cmd->qid = ring->qid;
-	cmd->idx = ring->cur;
-
-	bcn = (struct wpi_cmd_beacon *)cmd->data;
-	memset(bcn, 0, sizeof (struct wpi_cmd_beacon));
-	bcn->id = WPI_ID_BROADCAST;
-	bcn->ofdm_mask = 0xff;
-	bcn->cck_mask = 0x0f;
-	bcn->lifetime = htole32(WPI_LIFETIME_INFINITE);
-	bcn->len = htole16(m0->m_pkthdr.len);
-	bcn->rate = (ic->ic_curmode == IEEE80211_MODE_11A) ?
-	    wpi_plcp_signal(12) : wpi_plcp_signal(2);
-	bcn->flags = htole32(WPI_TX_AUTO_SEQ | WPI_TX_INSERT_TSTAMP);
-
-	/* save and trim IEEE802.11 header */
-	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (caddr_t)&bcn->wh);
-	m_adj(m0, sizeof (struct ieee80211_frame));
-
-	/* assume beacon frame is contiguous */
-	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(m0, void *),
-	    m0->m_pkthdr.len, NULL, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not map beacon\n", sc->sc_dev.dv_xname);
-		m_freem(m0);
-		return error;
-	}
-
-	data->m = m0;
-
-	/* first scatter/gather segment is used by the beacon command */
-	desc->flags = htole32(WPI_PAD32(m0->m_pkthdr.len) << 28 | 2 << 24);
-	desc->segs[0].addr = htole32(ring->cmd_dma.paddr +
-	    ring->cur * sizeof (struct wpi_tx_cmd));
-	desc->segs[0].len  = htole32(4 + sizeof (struct wpi_cmd_beacon));
-	desc->segs[1].addr = htole32(data->map->dm_segs[0].ds_addr);
-	desc->segs[1].len  = htole32(data->map->dm_segs[0].ds_len);
-
-	/* kick cmd ring */
-	ring->cur = (ring->cur + 1) % WPI_CMD_RING_COUNT;
-	WPI_WRITE(sc, WPI_TX_WIDX, ring->qid << 8 | ring->cur);
-
-	return 0;
-}
-#endif
-
 int
 wpi_auth(struct wpi_softc *sc)
 {
@@ -2418,6 +2339,8 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	struct wpi_tx_data *data;
 	struct wpi_tx_cmd *cmd;
 	struct wpi_scan_hdr *hdr;
+	struct wpi_cmd_data *tx;
+	struct wpi_scan_essid *essid;
 	struct wpi_scan_chan *chan;
 	struct ieee80211_frame *wh;
 	struct ieee80211_rateset *rs;
@@ -2452,9 +2375,6 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 
 	hdr = (struct wpi_scan_hdr *)cmd->data;
 	memset(hdr, 0, sizeof (struct wpi_scan_hdr));
-	hdr->txflags = htole32(WPI_TX_AUTO_SEQ);
-	hdr->id = WPI_ID_BROADCAST;
-	hdr->lifetime = htole32(WPI_LIFETIME_INFINITE);
 	/*
 	 * Move to the next channel if no packets are received within 5 msecs
 	 * after sending the probe request (this helps to reduce the duration
@@ -2463,26 +2383,32 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	hdr->quiet = htole16(5);	/* timeout in milliseconds */
 	hdr->plcp_threshold = htole16(1);	/* min # of packets */
 
+	tx = (struct wpi_cmd_data *)(hdr + 1);
+	tx->flags = htole32(WPI_TX_AUTO_SEQ);
+	tx->id = WPI_ID_BROADCAST;
+	tx->lifetime = htole32(WPI_LIFETIME_INFINITE);
+
 	if (flags & IEEE80211_CHAN_A) {
 		hdr->crc_threshold = htole16(1);
 		/* send probe requests at 6Mbps */
-		hdr->rate = wpi_plcp_signal(12);
+		tx->rate = wpi_ridx_to_plcp[WPI_OFDM6];
 	} else {
 		hdr->flags = htole32(WPI_CONFIG_24GHZ | WPI_CONFIG_AUTO);
 		/* send probe requests at 1Mbps */
-		hdr->rate = wpi_plcp_signal(2);
+		tx->rate = wpi_ridx_to_plcp[WPI_CCK1];
 	}
 
-	/* for directed scans, firmware inserts the essid IE itself */
-	hdr->essid[0].id  = IEEE80211_ELEMID_SSID;
-	hdr->essid[0].len = ic->ic_des_esslen;
-	memcpy(hdr->essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
+	essid = (struct wpi_scan_essid *)(tx + 1);
+	memset(essid, 0, 4 * sizeof (struct wpi_scan_essid));
+	essid[0].id  = IEEE80211_ELEMID_SSID;
+	essid[0].len = ic->ic_des_esslen;
+	memcpy(essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
 
 	/*
 	 * Build a probe request frame.  Most of the following code is a
 	 * copy & paste of what is done in net80211.
 	 */
-	wh = (struct ieee80211_frame *)(hdr + 1);
+	wh = (struct ieee80211_frame *)&essid[4];
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
 	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
 	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
@@ -2494,9 +2420,8 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 
 	frm = (uint8_t *)(wh + 1);
 
-	/* add empty essid IE (firmware generates it for directed scans) */
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = 0;
+	/* add SSID IE */
+	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
 
 	mode = ieee80211_chan2mode(ic, ic->ic_ibss_chan);
 	rs = &ic->ic_sup_rates[mode];
@@ -2509,7 +2434,7 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 		frm = ieee80211_add_xrates(frm, rs);
 
 	/* setup length of probe request */
-	hdr->paylen = htole16(frm - (uint8_t *)wh);
+	tx->len = htole16(frm - (uint8_t *)wh);
 
 	chan = (struct wpi_scan_chan *)frm;
 	for (c  = &ic->ic_channels[1];
@@ -2845,6 +2770,17 @@ wpi_init(struct ifnet *ifp)
 
 	if ((error = wpi_load_firmware(sc)) != 0) {
 		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
+		goto fail1;
+	}
+
+	/* check that the radio is not disabled by RF switch */
+	wpi_mem_lock(sc);
+	tmp = wpi_mem_read(sc, WPI_MEM_RFKILL);
+	wpi_mem_unlock(sc);
+	if (!(tmp & 1)) {
+		printf("%s: radio is disabled by hardware switch\n",
+		    sc->sc_dev.dv_xname);
+		error = EPERM;	/* XXX ;-) */
 		goto fail1;
 	}
 
