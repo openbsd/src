@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.3 2007/09/07 19:32:09 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.4 2007/09/10 17:54:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -25,7 +25,6 @@
 
 /*
  * Rings must be aligned on a 16K boundary.
- * I had a hard time figuring this out.
  */
 #define IWN_RING_DMA_ALIGN	0x4000
 
@@ -160,6 +159,9 @@
 /* possible flags for register IWN_MEM_POWER */
 #define IWN_POWER_RESET	(1 << 26)
 
+/* possible flags for register IWN_MEM_TEXT_SIZE */
+#define IWN_FW_UPDATED	(1 << 31)
+
 /* possible flags for device-specific PCI register 0xe8 */
 #define IWN_DIS_NOSNOOP	(1 << 11)
 
@@ -223,56 +225,11 @@ struct iwn_rx_desc {
 	uint8_t		qid;
 } __packed;
 
-/* structure for IWN_TX_DONE notification */
-struct iwn_tx_stat {
-	uint8_t		nframes;
-	uint8_t		nkill;
-	uint8_t		nrts;
-	uint8_t		ntries;
-	uint8_t		rate;
-	uint8_t		rflags;
-	uint16_t	xrflags;
-	uint16_t	duration;
-	uint16_t	reserved;
-	uint32_t	power[2];
-	uint32_t	status;
-} __packed;
-
-/* structure for IWN_AMPDU_RX_DONE notification */
-struct iwn_rx_ampdu {
-	uint16_t	len;
-	uint16_t	reserved;
-} __packed;
-
-/* structure for IWN_RX_DONE and IWN_AMPDU_RX_START notifications */
+/* possible Rx status flags */
 #define IWN_RX_NO_CRC_ERR	(1 << 0)
 #define IWN_RX_NO_OVFL_ERR	(1 << 1)
 /* shortcut for the above */
 #define IWN_RX_NOERROR	(IWN_RX_NO_CRC_ERR | IWN_RX_NO_OVFL_ERR)
-
-struct iwn_rx_stat {
-	uint8_t		phy_len;
-	uint8_t		cfg_phy_len;
-#define IWN_STAT_MAXLEN	20
-
-	uint8_t		id;
-	uint8_t		reserved1;
-	uint64_t	tstamp;
-	uint32_t	beacon;
-	uint16_t	flags;
-	uint16_t	chan;
-	uint16_t	antenna;
-	uint16_t	agc;
-	uint8_t		rssi[6];
-#define IWN_RSSI_TO_DBM	44
-
-	uint8_t		reserved2[22];
-	uint8_t		rate;
-	uint8_t		rflags;
-	uint16_t	xrflags;
-	uint16_t	len;
-	uint16_t	reserve3;
-} __packed;
 
 struct iwn_tx_cmd {
 	uint8_t	code;
@@ -299,7 +256,7 @@ struct iwn_tx_cmd {
 	uint8_t	data[136];
 } __packed;
 
-/* structure for IWN_CMD_CONFIGURE */
+/* structure for command IWN_CMD_CONFIGURE */
 struct iwn_config {
 	uint8_t		myaddr[IEEE80211_ADDR_LEN];
 	uint16_t	reserved1;
@@ -379,7 +336,7 @@ struct iwn_cmd_tsf {
 	uint16_t	reserved;
 } __packed;
 
-/* structure for IWN_CMD_ADD_NODE */
+/* structure for command IWN_CMD_ADD_NODE */
 struct iwn_node_info {
 	uint8_t		control;
 #define IWN_NODE_UPDATE		(1 << 0)
@@ -464,7 +421,7 @@ struct iwn_cmd_data {
 	uint16_t	txop;
 } __packed;
 
-/* structure for IWN_CMD_MRR_NODE_SETUP */
+/* structure for command IWN_CMD_MRR_NODE_SETUP */
 #define IWN_MAX_TX_RETRIES	16
 struct iwn_cmd_mrr {
 	uint8_t		id;
@@ -492,7 +449,7 @@ struct iwn_cmd_mrr {
 	uint32_t	reserved3;
 } __packed;
 
-/* structure for IWN_CMD_SET_LED */
+/* structure for command IWN_CMD_SET_LED */
 struct iwn_cmd_led {
 	uint32_t	unit;	/* multiplier (in usecs) */
 	uint8_t		which;
@@ -504,7 +461,7 @@ struct iwn_cmd_led {
 	uint8_t		reserved;
 } __packed;
 
-/* structure for IWN_CMD_SET_POWER_MODE */
+/* structure for command IWN_CMD_SET_POWER_MODE */
 struct iwn_power {
 	uint16_t	flags;
 #define IWN_POWER_CAM	0	/* constantly awake mode */
@@ -556,7 +513,7 @@ struct iwn_scan_chan {
 	uint16_t	passive;	/* msecs */
 } __packed;
 
-/* structure for IWN_CMD_TXPOWER */
+/* structure for command IWN_CMD_TXPOWER */
 #define IWN_RIDX_MAX	32
 struct iwn_cmd_txpower {
 	uint8_t	band;
@@ -569,7 +526,7 @@ struct iwn_cmd_txpower {
 	}	power[IWN_RIDX_MAX + 1];
 } __packed;
 
-/* structure for IWN_CMD_BLUETOOTH */
+/* structure for command IWN_CMD_BLUETOOTH */
 struct iwn_bluetooth {
 	uint8_t		flags;
 	uint8_t		lead;
@@ -579,7 +536,7 @@ struct iwn_bluetooth {
 	uint32_t	cts;
 } __packed;
 
-/* structure for IWN_CMD_SET_CRITICAL_TEMP */
+/* structure for command IWN_CMD_SET_CRITICAL_TEMP */
 struct iwn_critical_temp {
 	uint32_t	reserved;
 	uint32_t	tempM;
@@ -648,6 +605,52 @@ struct iwn_ucode_info {
 		int32_t	chan40MHz;
 	} __packed	temp[4];
 	int32_t		atten[IWN_NATTEN_GROUPS][IWN_NTXCHAINS];
+} __packed;
+
+/* structure for IWN_TX_DONE notification */
+struct iwn_tx_stat {
+	uint8_t		nframes;
+	uint8_t		nkill;
+	uint8_t		nrts;
+	uint8_t		ntries;
+	uint8_t		rate;
+	uint8_t		rflags;
+	uint16_t	xrflags;
+	uint16_t	duration;
+	uint16_t	reserved;
+	uint32_t	power[2];
+	uint32_t	status;
+} __packed;
+
+/* structure for IWN_AMPDU_RX_DONE notification */
+struct iwn_rx_ampdu {
+	uint16_t	len;
+	uint16_t	reserved;
+} __packed;
+
+/* structure for IWN_RX_DONE and IWN_AMPDU_RX_START notifications */
+struct iwn_rx_stat {
+	uint8_t		phy_len;
+	uint8_t		cfg_phy_len;
+#define IWN_STAT_MAXLEN	20
+
+	uint8_t		id;
+	uint8_t		reserved1;
+	uint64_t	tstamp;
+	uint32_t	beacon;
+	uint16_t	flags;
+	uint16_t	chan;
+	uint16_t	antenna;
+	uint16_t	agc;
+	uint8_t		rssi[6];
+#define IWN_RSSI_TO_DBM	44
+
+	uint8_t		reserved2[22];
+	uint8_t		rate;
+	uint8_t		rflags;
+	uint16_t	xrflags;
+	uint16_t	len;
+	uint16_t	reserve3;
 } __packed;
 
 /* structure for IWN_START_SCAN notification */
@@ -802,8 +805,6 @@ struct iwn_firmware_hdr {
 #define IWN_FW_INIT_DATA_MAXSZ	(40 * 1024)
 #define IWN_FW_BOOT_TEXT_MAXSZ	1024
 
-/* possible flags for register IWN_MEM_TEXT_SIZE */
-#define IWN_FW_UPDATED	(1 << 31)
 
 /*
  * Offsets into EEPROM.
