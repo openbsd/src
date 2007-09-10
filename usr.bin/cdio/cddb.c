@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.13 2007/09/02 15:19:31 deraadt Exp $ */
+/* $OpenBSD: cddb.c,v 1.14 2007/09/10 16:31:35 cloder Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -345,7 +345,7 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 		if (!line)
 			goto end2;
 		if (strcmp(line, ".") == 0)
-			goto end;
+			break;
 		if (strncmp(line, "TTITLE", 6) != 0)
 			continue;
 		line += 6;
