@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.11 2007/07/23 02:03:42 deanna Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.12 2007/09/10 05:34:21 deanna Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -348,6 +348,9 @@
 #define		CORB_PS_RIGHT		0x1
 #define CORB_GET_EAPD_BTL_ENABLE	0xf0c
 #define CORB_SET_EAPD_BTL_ENABLE	0x70c
+#define		CORB_EAPD_BTL		0x01
+#define		CORB_EAPD_EAPD		0x02
+#define		CORB_EAPD_LRSWAP	0x04
 #define CORB_GET_GPI_DATA		0xf10
 #define CORB_SET_GPI_DATA		0x710
 #define CORB_GET_GPI_WAKE_ENABLE_MASK	0xf11
@@ -510,6 +513,7 @@ typedef struct {
 #define MI_TARGET_DAC		0x104
 #define MI_TARGET_ADC		0x105
 #define MI_TARGET_VOLUME	0x106
+#define MI_TARGET_EAPD		0x107
 } mixer_item_t;
 
 #define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \

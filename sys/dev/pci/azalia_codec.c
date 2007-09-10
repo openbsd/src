@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.31 2007/09/10 05:26:38 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.32 2007/09/10 05:34:21 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -690,6 +690,25 @@ azalia_generic_mixer_init(codec_t *this)
 			this->nmixers++;
 		}
 
+		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
+		    w->d.pin.cap & COP_PINCAP_EAPD) {
+			MIXER_REG_PROLOG;
+			DPRINTF(("%s: eapd %s\n", __func__, w->name));
+			snprintf(d->label.name, sizeof(d->label.name),
+			    "%s.eapd", w->name);
+			d->type = AUDIO_MIXER_ENUM;
+			d->mixer_class = AZ_CLASS_OUTPUT;
+			m->target = MI_TARGET_EAPD;
+			d->un.e.num_mem = 2;
+			d->un.e.member[0].ord = 0;
+			strlcpy(d->un.e.member[0].label.name, AudioNoff,
+			    MAX_AUDIO_DEV_LEN);
+			d->un.e.member[1].ord = 1;
+			strlcpy(d->un.e.member[1].label.name, AudioNon,
+			    MAX_AUDIO_DEV_LEN);
+			this->nmixers++;
+		}
+
 		/* volume knob */
 		if (w->type == COP_AWTYPE_VOLUME_KNOB &&
 		    w->d.volume.cap & COP_VKCAP_DELTA) {
@@ -1013,6 +1032,15 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target, mixer_ctrl_
 		mc->un.value.num_channels = 1;
 	}
 
+	/* EAPD */
+	else if (target == MI_TARGET_EAPD) {
+		err = this->comresp(this, nid,
+		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		if (err)
+			return err;
+		mc->un.ord = result & CORB_EAPD_EAPD ? 1 : 0;
+	}
+
 	else {
 		printf("%s: internal error in %s: target=%x\n",
 		    XNAME(this), __func__, target);
@@ -1267,6 +1295,26 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_
 		if (err)
 			return err;
 	}
+
+	/* EAPD */
+	else if (target == MI_TARGET_EAPD) {
+		if (mc->un.ord >= 2)
+			return EINVAL;
+		err = this->comresp(this, nid,
+		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		if (err)
+			return err;
+		result &= 0xff;
+		if (mc->un.ord == 0) {
+			result &= ~CORB_EAPD_EAPD;
+		} else {
+			result |= CORB_EAPD_EAPD;
+		}
+		err = this->comresp(this, nid,
+		    CORB_SET_EAPD_BTL_ENABLE, result, &result);
+		if (err)
+			return err;
+	} 
 
 	else {
 		printf("%s: internal error in %s: target=%x\n",
