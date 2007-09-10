@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.31 2007/09/10 05:30:14 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.32 2007/09/10 05:39:07 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1268,6 +1268,15 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	}
 	rvariation = group->nconv * nbits;
 
+	if (bits_rates & COP_PCM_R441)
+		this->rate = 44100;
+	else if (bits_rates & COP_PCM_R480)
+		this->rate = 48000;
+	else {
+		printf("%s: %s/%d invalid PCM format: 0x%8.8x\n",
+		    XNAME(this->az), __FILE__, __LINE__, bits_rates);
+		return -1;
+	}
 	if (this->formats != NULL)
 		free(this->formats, M_DEVBUF);
 	this->nformats = 0;
@@ -2010,7 +2019,7 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			r->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			r->precision = 16;
 			r->channels = 2;
-			r->sample_rate = 44100;
+			r->sample_rate = codec->rate;
 		}
 		for (i = 0; i < codec->nformats; i++) {
 			if (r->encoding != codec->formats[i].encoding)
@@ -2043,7 +2052,7 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 			p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			p->precision = 16;
 			p->channels = 2;
-			p->sample_rate = 44100;
+			p->sample_rate = codec->rate;
 		}
 		for (i = 0; i < codec->nformats; i++) {
 			if (p->encoding != codec->formats[i].encoding)
