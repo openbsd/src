@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.33 2007/09/10 22:11:17 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.34 2007/09/10 22:37:08 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -788,14 +788,13 @@ azalia_init_rirb(azalia_t *az)
 	az->unsolq_wp = 0;
 	az->unsolq_kick = FALSE;
 	az->unsolq = malloc(sizeof(rirb_entry_t) * UNSOLQ_SIZE,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (az->unsolq == NULL) {
 		DPRINTF(("%s: can't allocate unsolicited response queue.\n",
 		    XNAME(az)));
 		azalia_free_dmamem(az, &az->rirb_dma);
 		return ENOMEM;
 	}
-	bzero(az->unsolq, sizeof(rirb_entry_t) * UNSOLQ_SIZE);
 
 	/* reset the write pointer */
 	rirbwp = AZ_READ_2(az, RIRBWP);
@@ -1134,12 +1133,11 @@ azalia_codec_init(codec_t *this)
 		return -1;
 	}
 	this->wend = this->wstart + COP_NSUBNODES(result);
-	this->w = malloc(sizeof(widget_t) * this->wend, M_DEVBUF, M_NOWAIT);
+	this->w = malloc(sizeof(widget_t) * this->wend, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->w == NULL) {
 		printf("%s: out of memory\n", XNAME(this->az));
 		return ENOMEM;
 	}
-	bzero(this->w, sizeof(widget_t) * this->wend);
 
 	/* query the base parameters */
 	this->comresp(this, this->audiofunc, CORB_GET_PARAMETER,
@@ -1281,14 +1279,12 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		free(this->formats, M_DEVBUF);
 	this->nformats = 0;
 	this->formats = malloc(sizeof(struct audio_format) *
-	    (pvariation + rvariation), M_DEVBUF, M_NOWAIT);
+	    (pvariation + rvariation), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->formats == NULL) {
 		printf("%s: out of memory in %s\n",
 		    XNAME(this->az), __func__);
 		return ENOMEM;
 	}
-	bzero(this->formats, sizeof(struct audio_format) *
-	    (pvariation + rvariation));
 
 	/* register formats for playback */
 	group = &this->dacs.groups[this->dacs.cur];

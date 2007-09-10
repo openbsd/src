@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.32 2007/09/10 05:34:21 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.33 2007/09/10 22:37:08 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -393,12 +393,11 @@ azalia_generic_mixer_init(codec_t *this)
 	this->maxmixers = 10;
 	this->nmixers = 0;
 	this->mixers = malloc(sizeof(mixer_item_t) * this->maxmixers,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
 
 	/* register classes */
 	DPRINTF(("%s: register classes\n", __func__));
@@ -786,12 +785,11 @@ azalia_generic_mixer_ensure_capacity(codec_t *this, size_t newsize)
 	newmax = this->maxmixers + 10;
 	if (newmax < newsize)
 		newmax = newsize;
-	newbuf = malloc(sizeof(mixer_item_t) * newmax, M_DEVBUF, M_NOWAIT);
+	newbuf = malloc(sizeof(mixer_item_t) * newmax, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (newbuf == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(newbuf, sizeof(mixer_item_t) * newmax);
 	bcopy(this->mixers, newbuf, this->maxmixers * sizeof(mixer_item_t));
 	free(this->mixers, M_DEVBUF);
 	this->mixers = newbuf;
@@ -1611,12 +1609,11 @@ azalia_alc260_mixer_init(codec_t *this)
 		mi = alc260_mixer_items;
 	}
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(this->mixers, sizeof(mixer_item_t) * this->nmixers);
 	memcpy(this->mixers, mi, sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
@@ -1862,12 +1859,11 @@ azalia_alc882_mixer_init(codec_t *this)
 
 	this->nmixers = sizeof(alc882_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
 	memcpy(this->mixers, alc882_mixer_items,
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
@@ -2128,12 +2124,11 @@ azalia_alc883_mixer_init(codec_t *this)
 
 	this->nmixers = sizeof(alc883_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
 	memcpy(this->mixers, alc883_mixer_items,
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
@@ -2282,12 +2277,11 @@ azalia_cmi9880_mixer_init(codec_t *this)
 
 	this->nmixers = sizeof(cmi9880_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
 	memcpy(this->mixers, cmi9880_mixer_items,
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
@@ -2413,12 +2407,11 @@ azalia_stac9200_mixer_init(codec_t *this)
 
 	this->nmixers = sizeof(stac9200_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
 	memcpy(this->mixers, stac9200_mixer_items,
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
@@ -2532,12 +2525,11 @@ azalia_stac9221_apple_mixer_init(codec_t *this)
 
 	this->nmixers = sizeof(stac9221_apple_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
 	memcpy(this->mixers, stac9221_apple_mixer_items,
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
@@ -2703,12 +2695,11 @@ azalia_stac7661_mixer_init(codec_t *this)
 
 	this->nmixers = sizeof(stac7661_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (this->mixers == NULL) {
 		printf("%s: out of memory in %s\n", XNAME(this), __func__);
 		return ENOMEM;
 	}
-	bzero(this->mixers, sizeof(mixer_item_t) * this->maxmixers);
 	memcpy(this->mixers, stac7661_mixer_items,
 	    sizeof(mixer_item_t) * this->nmixers);
 	azalia_generic_mixer_fix_indexes(this);
