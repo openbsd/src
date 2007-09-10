@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.9 2007/09/07 15:00:19 art Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.10 2007/09/10 23:04:46 henric Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -191,7 +191,6 @@ struct cfdriver glxsb_cd = {
 #define	GLXSB_SID(crd,ses)		(((crd) << 28) | ((ses) & 0x0fffffff))
 
 static struct glxsb_softc *glxsb_sc;
-extern int i386_has_xcrypt;
 
 int glxsb_crypto_setup(struct glxsb_softc *);
 int glxsb_crypto_newsession(uint32_t *, struct cryptoini *);
