@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.78 2007/06/22 13:59:12 thib Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.79 2007/09/10 20:59:00 thib Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -926,7 +926,6 @@ ffs_dirpref(struct inode *pip)
 	avgifree = fs->fs_cstotal.cs_nifree / fs->fs_ncg;
 	avgbfree = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
 	avgndir = fs->fs_cstotal.cs_ndir / fs->fs_ncg;
-#if 1
 
 	/*
 	 * Force allocation in another cg if creating a first level dir.
@@ -953,33 +952,25 @@ ffs_dirpref(struct inode *pip)
 		goto end;
 	} else
 		prefcg = ino_to_cg(fs, pip->i_number);
-#else
-	prefcg = ino_to_cg(fs, pip->i_number);
-#endif
 
 	/*
 	 * Count various limits which used for
 	 * optimal allocation of a directory inode.
 	 */
-#if 1
 	maxndir = min(avgndir + fs->fs_ipg / 16, fs->fs_ipg);
-	minifree = avgifree - fs->fs_ipg / 4;
-	if (minifree < 0)
-		minifree = 0;
-	minbfree = avgbfree - fs->fs_fpg / fs->fs_frag / 4;
-	if (minbfree < 0)
-		minbfree = 0;
-#else
-	maxndir = avgndir + (fs->fs_ipg - avgndir) / 16;
-	minifree = avgifree * 3 / 4;
-	minbfree = avgbfree * 3 / 4;
-#endif
+	minifree = avgifree - (avgifree / 4);
+	if (minifree < 1)
+		minifree = 1;
+	minbfree = avgbfree - (avgbfree / 4);
+	if (minbfree < 1)
+		minbfree = 1;
+
 	cgsize = fs->fs_fsize * fs->fs_fpg;
 	dirsize = fs->fs_avgfilesize * fs->fs_avgfpdir;
 	curdirsize = avgndir ? (cgsize - avgbfree * fs->fs_bsize) / avgndir : 0;
 	if (dirsize < curdirsize)
 		dirsize = curdirsize;
-	maxcontigdirs = min(cgsize / dirsize, 255);
+	maxcontigdirs = min(avgbfree * fs->fs_bsize  / dirsize, 255);
 	if (fs->fs_avgfpdir > 0)
 		maxcontigdirs = min(maxcontigdirs,
 				    fs->fs_ipg / fs->fs_avgfpdir);
