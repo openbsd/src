@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.131 2007/09/07 23:30:30 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.132 2007/09/10 10:29:12 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -184,6 +184,16 @@ main(int argc, char **argv)
 	else if (!S_ISDIR(st.st_mode))
 		fatal("`%s' is not valid temporary directory", cvs_tmpdir);
 
+	cmdp = cvs_findcmd(cvs_command);
+	if (cmdp == NULL) {
+		fprintf(stderr, "Unknown command: `%s'\n\n", cvs_command);
+		fprintf(stderr, "CVS commands are:\n");
+		for (i = 0; cvs_cdt[i] != NULL; i++)
+			fprintf(stderr, "\t%-16s%s\n",
+			    cvs_cdt[i]->cmd_name, cvs_cdt[i]->cmd_descr);
+		exit(1);
+	}
+
 	if (cvs_readrc == 1 && cvs_homedir != NULL) {
 		cvs_read_rcfile();
 
@@ -205,16 +215,6 @@ main(int argc, char **argv)
 	signal(SIGABRT, sighandler);
 	signal(SIGALRM, sighandler);
 	signal(SIGPIPE, sighandler);
-
-	cmdp = cvs_findcmd(cvs_command);
-	if (cmdp == NULL) {
-		fprintf(stderr, "Unknown command: `%s'\n\n", cvs_command);
-		fprintf(stderr, "CVS commands are:\n");
-		for (i = 0; cvs_cdt[i] != NULL; i++)
-			fprintf(stderr, "\t%-16s%s\n",
-			    cvs_cdt[i]->cmd_name, cvs_cdt[i]->cmd_descr);
-		exit(1);
-	}
 
 	cvs_cmdop = cmdp->cmd_op;
 
