@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.42 2007/09/10 14:06:14 joris Exp $	*/
+/*	$OpenBSD: root.c,v 1.43 2007/09/10 19:11:08 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -133,12 +133,10 @@ cvsroot_parse(const char *str)
 	pp = strchr(sp, ':');
 	if (pp != NULL) {
 		*(pp++) = '\0';
-
-		i = strtonum(pp, 1, 65535, &errstr);
+		root->cr_port = strtonum(pp, 1, 65535, &errstr);
 		if (errstr != NULL)
 			fatal("port specification in CVSROOT is %s", errstr);
 
-		root->cr_port = pp;
 	}
 
 	root->cr_host = sp;
