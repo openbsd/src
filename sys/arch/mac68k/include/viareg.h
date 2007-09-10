@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.18 2006/01/13 21:02:01 miod Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.19 2007/09/10 20:29:48 miod Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -213,7 +213,7 @@ typedef SLIST_HEAD(, via2hand)	via2hand_t;
 void	via_init(void);
 void	via_powerdown(void);
 void	via_set_modem(int);
-void	add_nubus_intr(int, int (*)(void *), void *, const char *);
+void	add_nubus_intr(int, int, int (*)(void *), void *, const char *);
 void	enable_nubus_intr(void);
 void	via1_register_irq(int, int (*)(void *), void *, const char *);
 int	via2_register_irq(struct via2hand *, const char *);

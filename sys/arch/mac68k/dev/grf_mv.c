@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.33 2007/01/12 13:52:07 martin Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.34 2007/09/10 20:29:46 miod Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -235,17 +235,17 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 	case NUBUS_DRHW_PVC:
 		sc->cli_offset = 0xa0000;
 		sc->cli_value = 0;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write1, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_WVC:
 		sc->cli_offset = 0xa00000;
 		sc->cli_value = 0;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write1, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_COLORMAX:
-		add_nubus_intr(na->slot, grfmv_intr_cmax, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_cmax, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_SE30:
@@ -254,48 +254,48 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 	case NUBUS_DRHW_MDC:
 		sc->cli_offset = 0x200148;
 		sc->cli_value = 1;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write4, sc,
 		    sc->sc_dev.dv_xname);
 
 		/* Enable interrupts; to disable, write 0x7 to this location */
 		bus_space_write_4(sc->sc_tag, sc->sc_regh, 0x20013C, 5);
 		break;
 	case NUBUS_DRHW_CB264:
-		add_nubus_intr(na->slot, grfmv_intr_cb264, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_cb264, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_CB364:
-		add_nubus_intr(na->slot, grfmv_intr_cb364, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_cb364, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RPC8:
 		sc->cli_offset = 0xfdff8f;
 		sc->cli_value = 0xff;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write1, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RPC8XJ:
 		sc->cli_value = 0x66;
-		add_nubus_intr(na->slot, grfmv_intr_radius, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_radius, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RPC24X:
 	case NUBUS_DRHW_BOOGIE:
 		sc->cli_value = 0x64;
-		add_nubus_intr(na->slot, grfmv_intr_radius, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_radius, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RPC24XP:
-		add_nubus_intr(na->slot, grfmv_intr_radius24, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_radius24, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RADGSC:
-		add_nubus_intr(na->slot, grfmv_intr_radius_gsc, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_radius_gsc, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RDCGX:
 	case NUBUS_DRHW_MPGX:
-		add_nubus_intr(na->slot, grfmv_intr_radius_gx, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_radius_gx, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_FIILX:
@@ -303,34 +303,34 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 	case NUBUS_DRHW_FUTURASX:
 		sc->cli_offset = 0xf05000;
 		sc->cli_value = 0x80;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write1, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_SAM768:
-		add_nubus_intr(na->slot, grfmv_intr_cti, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_cti, sc,
 		sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_SUPRGFX:
-		add_nubus_intr(na->slot, grfmv_intr_supermacgfx, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_supermacgfx, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_SPECTRM8:
 		sc->cli_offset = 0x0de178;
 		sc->cli_value = 0x80;
-		add_nubus_intr(na->slot, grfmv_intr_generic_or4, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_or4, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_LAPIS:
-		add_nubus_intr(na->slot, grfmv_intr_lapis, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_lapis, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RELAX200:
-		add_nubus_intr(na->slot, grfmv_intr_relax_200, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_relax_200, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_BAER:
 	case NUBUS_DRHW_FORMAC:
-		add_nubus_intr(na->slot, grfmv_intr_formac, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_formac, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_ROPS24LXI:
@@ -339,41 +339,41 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 	case NUBUS_DRHW_THUNDER24:
 		sc->cli_offset = 0xfb0010;
 		sc->cli_value = 0x00;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write4, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_ROPSPPGT:
 		sc->cli_offset = 0xf50010;
 		sc->cli_value = 0x02;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write4, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_VIMAGE:
-		add_nubus_intr(na->slot, grfmv_intr_vimage, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_vimage, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_GVIMAGE:
-		add_nubus_intr(na->slot, grfmv_intr_gvimage, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_gvimage, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_MC2124NB:
 		sc->cli_offset = 0xfd1000;
 		sc->cli_value = 0x00;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write4, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_MICRON:
 		sc->cli_offset = 0xa00014;
 		sc->cli_value = 0;
-		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_generic_write4, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_MVC:
-		add_nubus_intr(na->slot, grfmv_intr_mvc, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_mvc, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_VILTRO340:
-		add_nubus_intr(na->slot, grfmv_intr_viltro_340, sc,
+		add_nubus_intr(na->slot, IPL_TTY, grfmv_intr_viltro_340, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	default:

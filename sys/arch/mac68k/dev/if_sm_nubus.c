@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_nubus.c,v 1.1 2006/01/29 15:58:20 martin Exp $	*/
+/*	$OpenBSD: if_sm_nubus.c,v 1.2 2007/09/10 20:29:46 miod Exp $	*/
 /*	$NetBSD: if_sm_nubus.c,v 1.2 2000/08/01 13:08:39 briggs Exp $	*/
 
 /*
@@ -161,5 +161,6 @@ sm_nubus_attach(parent, self, aux)
 
 	smc91cxx_attach(smc, myaddr);
 
-	add_nubus_intr(na->slot, smc91cxx_intr, smc, smc->sc_dev.dv_xname);
+	add_nubus_intr(na->slot, IPL_NET, smc91cxx_intr, smc,
+	    smc->sc_dev.dv_xname);
 }

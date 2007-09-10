@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.30 2007/07/29 21:25:23 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.31 2007/09/10 20:29:50 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -167,7 +167,7 @@ via_init()
 		nubus_intr.vh_fn = rbv_nubus_intr;
 		via2_register_irq(&nubus_intr, NULL);
 		/* XXX necessary? */
-		add_nubus_intr(0, slot_ignore, (void *)0, "dummy");
+		add_nubus_intr(0, IPL_NONE, slot_ignore, (void *)0, "dummy");
 	}
 }
 
@@ -298,7 +298,7 @@ rbv_intr(void *arg)
 int nubus_intr_mask = 0;
 
 void
-add_nubus_intr(int slot, int (*func)(void *), void *client_data,
+add_nubus_intr(int slot, int ipl, int (*func)(void *), void *client_data,
     const char *name)
 {
 	struct intrhand *ih;
@@ -328,10 +328,10 @@ add_nubus_intr(int slot, int (*func)(void *), void *client_data,
 
 	ih->ih_fn = func;
 	ih->ih_arg = client_data;
-	ih->ih_ipl = slot + 9;
+	ih->ih_ipl = ipl;
 	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl, &evcount_intr);
 
-	nubus_intr_mask |= (1 << slot);
+	nubus_intr_mask |= 1 << slot;
 
 	splx(s);
 }
@@ -354,6 +354,7 @@ oss_intr(void *arg)
 	struct intrhand *ih;
 	u_int8_t intbits, bitnum;
 	u_int mask;
+	int s;
 
 	intbits = via2_reg(vIFR + rIFR);
 
@@ -365,8 +366,10 @@ oss_intr(void *arg)
 	for (bitnum = 0, ih = slotintrs; ; bitnum++, ih++) {
 		if (intbits & mask) {
 			if (ih->ih_fn != NULL) {
+				s = _splraise(IPLTOPSL(ih->ih_ipl));
 				if ((*ih->ih_fn)(ih->ih_arg) != 0)
 					ih->ih_count.ec_count++;
+				splx(s);
 			}
 			via2_reg(rIFR) = mask;
 		}
@@ -384,7 +387,7 @@ via2_nubus_intr(void *bitarg)
 {
 	struct intrhand *ih;
 	u_int8_t i, intbits, mask;
-	int rv = 0;
+	int s, rv = 0;
 
 	via2_reg(vIFR) = V2IF_SLOTINT;
 	while ((intbits = (~via2_reg(vBufA)) & nubus_intr_mask)) {
@@ -392,10 +395,12 @@ via2_nubus_intr(void *bitarg)
 		    i--, ih--, mask >>= 1) {
 			if (intbits & mask) {
 				if (ih->ih_fn != NULL) {
+					s = _splraise(IPLTOPSL(ih->ih_ipl));
 					if ((*ih->ih_fn)(ih->ih_arg) != 0) {
 						ih->ih_count.ec_count++;
 						rv = 1;
 					}
+					splx(s);
 				}
 			}
 		}
@@ -410,7 +415,7 @@ rbv_nubus_intr(void *bitarg)
 {
 	struct intrhand *ih;
 	u_int8_t i, intbits, mask;
-	int rv = 0;
+	int s, rv = 0;
 
 	via2_reg(rIFR) = 0x80 | V2IF_SLOTINT;
 	while ((intbits = (~via2_reg(rBufA)) & via2_reg(rSlotInt))) {
@@ -418,10 +423,12 @@ rbv_nubus_intr(void *bitarg)
 		    i--, ih--, mask >>= 1) {
 			if (intbits & mask) {
 				if (ih->ih_fn != NULL) {
+					s = _splraise(IPLTOPSL(ih->ih_ipl));
 					if ((*ih->ih_fn)(ih->ih_arg) != 0) {
 						ih->ih_count.ec_count++;
 						rv = 1;
 					}
+					splx(s);
 				}
 			}
 		}
