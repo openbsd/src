@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1258 2007/09/03 01:42:01 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1259 2007/09/11 07:59:05 martin Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4630,6 +4630,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_INIC950,
 	    "INIC-950",
+	},
+	{
+	    PCI_VENDOR_INNOTEK, PCI_PRODUCT_INNOTEK_VBGA,
+	    "VirtualBox Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_INNOTEK, PCI_PRODUCT_INNOTEK_VBGS,
+	    "VirtualBox Guest Service",
 	},
 	{
 	    PCI_VENDOR_INPROCOMM, PCI_PRODUCT_INPROCOMM_IPN2120,
@@ -14874,6 +14882,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_INTEL,
 	    "Intel",
+	},
+	{
+	    PCI_VENDOR_INNOTEK,
+	    "InnoTek",
 	},
 	{
 	    PCI_VENDOR_WINBOND2,

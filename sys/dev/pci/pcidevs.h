@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1258 2007/09/03 01:42:01 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1259 2007/09/11 07:59:05 martin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -315,6 +315,7 @@
 #define	PCI_VENDOR_DCI	0x6666		/* Decision Computer Inc */
 #define	PCI_VENDOR_QUANCOM	0x8008		/* Quancom Informationssysteme */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
+#define	PCI_VENDOR_INNOTEK	0x80ee		/* InnoTek */
 #define	PCI_VENDOR_WINBOND2	0x8c4a		/* Winbond */
 #define	PCI_VENDOR_KTI	0x8e2e		/* KTI */
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
@@ -1694,6 +1695,10 @@
 #define	PCI_PRODUCT_INITIO_INIC940	0x9400		/* INIC-940 */
 #define	PCI_PRODUCT_INITIO_INIC941	0x9401		/* INIC-941 */
 #define	PCI_PRODUCT_INITIO_INIC950	0x9500		/* INIC-950 */
+
+/* InnoTek Systemberatung GmbH */
+#define	PCI_PRODUCT_INNOTEK_VBGA	0xbeef		/* VirtualBox Graphics Adapter */
+#define	PCI_PRODUCT_INNOTEK_VBGS	0xcafe		/* VirtualBox Guest Service */
 
 /* INPROCOMM products */
 #define	PCI_PRODUCT_INPROCOMM_IPN2120	0x2120		/* IPN2120 */
