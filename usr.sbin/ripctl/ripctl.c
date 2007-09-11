@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.3 2007/05/30 03:45:46 henning Exp $
+/*	$OpenBSD: ripctl.c,v 1.4 2007/09/11 17:29:05 henning Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -49,7 +49,7 @@ int		 show_fib_msg(struct imsg *);
 void		 show_interface_head(void);
 int		 show_fib_interface_msg(struct imsg *);
 const char	*get_media_descr(int);
-void		 print_baudrate(u_long);
+void		 print_baudrate(u_int64_t);
 
 struct imsgbuf	*ibuf;
 
@@ -522,14 +522,14 @@ get_linkstate(int media_type, int link_state)
 }
 
 void
-print_baudrate(u_long baudrate)
+print_baudrate(u_int64_t baudrate)
 {
 	if (baudrate > IF_Gbps(1))
-		printf("%lu GBit/s", baudrate / IF_Gbps(1));
+		printf("%llu GBit/s", baudrate / IF_Gbps(1));
 	else if (baudrate > IF_Mbps(1))
-		printf("%lu MBit/s", baudrate / IF_Mbps(1));
+		printf("%llu MBit/s", baudrate / IF_Mbps(1));
 	else if (baudrate > IF_Kbps(1))
-		printf("%lu KBit/s", baudrate / IF_Kbps(1));
+		printf("%llu KBit/s", baudrate / IF_Kbps(1));
 	else
-		printf("%lu Bit/s", baudrate);
+		printf("%llu Bit/s", baudrate);
 }
