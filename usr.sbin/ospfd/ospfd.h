@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.68 2007/06/19 16:45:15 reyk Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.69 2007/09/11 16:02:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -342,7 +342,7 @@ struct iface {
 	struct nbr		*self;
 	struct area		*area;
 
-	u_int32_t		 baudrate;
+	u_int64_t		 baudrate;
 	u_int32_t		 dead_interval;
 	u_int32_t		 ls_ack_cnt;
 	u_int32_t		 crypt_seq_num;
@@ -438,7 +438,7 @@ struct kif_addr {
 
 struct kif {
 	char			 ifname[IF_NAMESIZE];
-	u_long			 baudrate;
+	u_int64_t		 baudrate;
 	int			 flags;
 	int			 mtu;
 	u_short			 ifindex;
@@ -472,7 +472,7 @@ struct ctl_iface {
 	struct in_addr		 bdr_addr;
 	time_t			 hello_timer;
 	time_t			 uptime;
-	u_int32_t		 baudrate;
+	u_int64_t		 baudrate;
 	u_int32_t		 dead_interval;
 	unsigned int		 ifindex;
 	int			 state;

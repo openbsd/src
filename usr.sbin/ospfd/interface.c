@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.59 2007/05/29 22:08:25 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.60 2007/09/11 16:02:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -198,6 +198,7 @@ if_new(struct kif *kif, struct kif_addr *ka)
 	iface->flags = kif->flags;
 	iface->linkstate = kif->link_state;
 	iface->media_type = kif->media_type;
+	iface->baudrate = kif->baudrate;
 
 	/* set address, mask and p2p addr */
 	iface->addr = ka->addr;
