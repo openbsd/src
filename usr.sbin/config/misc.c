@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.6 2006/12/06 05:05:16 ray Exp $	*/
+/*	$OpenBSD: misc.c,v 1.7 2007/09/11 16:30:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -26,7 +26,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: misc.c,v 1.6 2006/12/06 05:05:16 ray Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.7 2007/09/11 16:30:59 gilles Exp $";
 #endif
 
 #include <sys/types.h>
@@ -48,8 +48,7 @@ ask_cmd(cmd_t *cmd)
 	/* Get input */
 	if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
 		errx(1, "eof");
-	if ((cp = strchr(lbuf, '\n')) != NULL)
-		*cp = '\0';
+	lbuf[strcspn(lbuf, "\n")] = '\0';
 	if (verbose)
 		printf("%s\n", lbuf);
 

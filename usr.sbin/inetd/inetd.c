@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.123 2005/04/02 18:10:52 otto Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.124 2007/09/11 16:30:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.123 2005/04/02 18:10:52 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.124 2007/09/11 16:30:59 gilles Exp $";
 #endif /* not lint */
 
 /*
@@ -1494,13 +1494,9 @@ again:
 char *
 nextline(FILE *fd)
 {
-	char *cp;
-
 	if (fgets(line, sizeof (line), fd) == NULL)
 		return (NULL);
-	cp = strchr(line, '\n');
-	if (cp)
-		*cp = '\0';
+	line[strcspn(line, "\n")] = '\0';
 	return (line);
 }
 

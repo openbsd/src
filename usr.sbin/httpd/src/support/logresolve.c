@@ -244,13 +244,9 @@ static void stats (FILE *output)
 
 static int getline (char *s, int n)
 {
-    char *cp;
-
     if (!fgets(s, n, stdin))
 	return (0);
-    cp = strchr(s, '\n');
-    if (cp)
-	*cp = '\0';
+    s[strcspn(s, "\n")] = '\0';
     return (1);
 }
 

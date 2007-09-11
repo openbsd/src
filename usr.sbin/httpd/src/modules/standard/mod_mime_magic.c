@@ -933,11 +933,9 @@ static int apprentice(server_rec *s, pool *p)
     /* parse it */
     for (lineno = 1; fgets(line, sizeof(line), f) != NULL; lineno++) {
 	int ws_offset;
-	char *pl;
 
 	/* delete newline */
-	if ((pl = strchr(line, '\n')) != NULL)
-	    *pl = '\0';
+	line[strcspn(line, "\n")] = '\0';
 
 	/* skip leading whitespace */
 	ws_offset = 0;
@@ -1676,7 +1674,7 @@ static int match(request_rec *r, unsigned char *s, int nbytes)
 
 static void mprint(request_rec *r, union VALUETYPE *p, struct magic *m)
 {
-    char *pp, *rt;
+    char *pp;
     unsigned long v;
 
     switch (m->type) {
@@ -1710,8 +1708,7 @@ static void mprint(request_rec *r, union VALUETYPE *p, struct magic *m)
     case LEDATE:
 	/* XXX: not multithread safe */
 	pp = ctime((time_t *) & p->l);
-	if ((rt = strchr(pp, '\n')) != NULL)
-	    *rt = '\0';
+	pp[strcspn(pp, "\n")] = '\0';
 	(void) magic_rsl_printf(r, m->desc, pp);
 	return;
     default:
@@ -1730,8 +1727,6 @@ static void mprint(request_rec *r, union VALUETYPE *p, struct magic *m)
  */
 static int mconvert(request_rec *r, union VALUETYPE *p, struct magic *m)
 {
-    char *rt;
-
     switch (m->type) {
     case BYTE:
     case SHORT:
@@ -1741,8 +1736,7 @@ static int mconvert(request_rec *r, union VALUETYPE *p, struct magic *m)
     case STRING:
 	/* Null terminate and eat the return */
 	p->s[sizeof(p->s) - 1] = '\0';
-	if ((rt = strchr(p->s, '\n')) != NULL)
-	    *rt = '\0';
+	p->s[strcspn(p->s, "\n")] = '\0';
 	return 1;
     case BESHORT:
 	p->h = (short) ((p->hs[0] << 8) | (p->hs[1]));

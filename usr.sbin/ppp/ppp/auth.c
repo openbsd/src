@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: auth.c,v 1.20 2006/11/02 18:27:29 ray Exp $
+ * $OpenBSD: auth.c,v 1.21 2007/09/11 16:30:59 gilles Exp $
  */
 
 #include <sys/param.h>
@@ -124,13 +124,10 @@ auth_SetPhoneList(const char *name, char *phone, int phonelen)
 again:
     lineno = 0;
     while (fgets(buff, sizeof buff, fp)) {
-      char *p;
-
       lineno++;
       if (buff[0] == '#')
         continue;
-      if ((p = strchr(buff, '\n')) != NULL)
-	*p = '\0';
+      buff[strcspn(buff, "\n")] = '\0';
       memset(vector, '\0', sizeof vector);
       if ((n = MakeArgs(buff, vector, VECSIZE(vector), PARSE_REDUCE)) < 0)
         log_Printf(LogWARN, "%s: %d: Invalid line\n", SECRETFILE, lineno);
@@ -188,13 +185,10 @@ auth_Select(struct bundle *bundle, const char *name)
 again:
     lineno = 0;
     while (fgets(buff, sizeof buff, fp)) {
-      char *p;
-
       lineno++;
       if (buff[0] == '#')
         continue;
-      if ((p = strchr(buff, '\n')) != NULL)
-	*p = '\0';
+      buff[strcspn(buff, "\n")] = '\0';
       memset(vector, '\0', sizeof vector);
       if ((n = MakeArgs(buff, vector, VECSIZE(vector), PARSE_REDUCE)) < 0)
         log_Printf(LogWARN, "%s: %d: Invalid line\n", SECRETFILE, lineno);
@@ -259,13 +253,10 @@ again:
   lineno = 0;
   if (fp != NULL) {
     while (fgets(buff, sizeof buff, fp)) {
-      char *p;
-
       lineno++;
       if (buff[0] == '#')
         continue;
-      if ((p = strchr(buff, '\n')) != NULL)
-	*p = '\0';
+      buff[strcspn(buff, "\n")] = '\0';
       memset(vector, '\0', sizeof vector);
       if ((n = MakeArgs(buff, vector, VECSIZE(vector), PARSE_REDUCE)) < 0)
         log_Printf(LogWARN, "%s: %d: Invalid line\n", SECRETFILE, lineno);
@@ -317,14 +308,11 @@ auth_GetSecret(struct bundle *bundle, const char *name, int len,
 again:
   lineno = 0;
   while (fgets(buff, sizeof buff, fp)) {
-    char *p;
-
     lineno++;
     if (buff[0] == '#')
       continue;
     /* Trim the '\n' */
-    if ((p = strchr(buff, '\n')) != NULL)
-      *p = '\0';
+    buff[strcspn(buff, "\n")] = '\0';
     memset(vector, '\0', sizeof vector);
     if ((n = MakeArgs(buff, vector, VECSIZE(vector), PARSE_REDUCE)) < 0)
       log_Printf(LogWARN, "%s: %d: Invalid line\n", SECRETFILE, lineno);
