@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.75 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.76 2007/09/11 13:41:52 blambert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -201,7 +201,8 @@ nfs_null(vp, cred, procp)
 	
 	nfsm_reqhead(vp, NFSPROC_NULL, 0);
 	nfsm_request(vp, NFSPROC_NULL, procp, cred);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	return (error);
 }
 
@@ -284,7 +285,8 @@ nfs_access(v)
 			if ((rmode & mode) != mode)
 				error = EACCES;
 		}
-		nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 		return (error);
 	} else
 		return (nfsspec_access(ap));
@@ -453,7 +455,8 @@ nfs_getattr(v)
 	nfsm_request(vp, NFSPROC_GETATTR, ap->a_p, ap->a_cred);
 	if (!error)
 		nfsm_loadattr(vp, ap->a_vap);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	return (error);
 }
 
@@ -586,7 +589,8 @@ nfs_setattrrpc(vp, vap, cred, procp)
 		nfsm_wcc_data(vp, wccflag);
 	} else
 		nfsm_loadattr(vp, (struct vattr *)0);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	return (error);
 }
 
@@ -814,12 +818,13 @@ dorpc:
 		cache_enter(dvp, newvp, cnp);
 	}
 	*vpp = newvp;
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	if (error) {
 		/*
 		 * We get here only because of errors returned by
 		 * the RPC. Otherwise we'll have returned above
-		 * (the nfsm_* macros will jump to nfsm_reqdone
+		 * (the nfsm_* macros will jump to nfsmout
 		 * on error).
 		 */
 		if (error == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
@@ -907,7 +912,8 @@ nfs_readlinkrpc(vp, uiop, cred)
 		nfsm_strsiz(len, NFS_MAXPATHLEN);
 		nfsm_mtouio(uiop, len);
 	}
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	return (error);
 }
 
@@ -1158,7 +1164,8 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	}
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	if (error) {
 		if (newvp)
 			vrele(newvp);
@@ -1275,7 +1282,8 @@ again:
 	}
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	if (error) {
 		if (v3 && (fmode & O_EXCL) && error == NFSERR_NOTSUPP) {
 			fmode &= ~O_EXCL;
@@ -1410,7 +1418,8 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 	nfsm_request(dvp, NFSPROC_REMOVE, proc, cred);
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
@@ -1533,7 +1542,8 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 		nfsm_wcc_data(fdvp, fwccflag);
 		nfsm_wcc_data(tdvp, twccflag);
 	}
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	VTONFS(fdvp)->n_flag |= NMODIFIED;
 	VTONFS(tdvp)->n_flag |= NMODIFIED;
 	if (!fwccflag)
@@ -1590,7 +1600,8 @@ nfs_link(v)
 		nfsm_postop_attr(vp, attrflag);
 		nfsm_wcc_data(dvp, wccflag);
 	}
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!attrflag)
@@ -1654,7 +1665,8 @@ nfs_symlink(v)
 			nfsm_mtofh(dvp, newvp, v3, gotvp);
 		nfsm_wcc_data(dvp, wccflag);
 	}
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	if (newvp)
 		vrele(newvp);
 	pool_put(&namei_pool, cnp->cn_pnbuf);
@@ -1717,7 +1729,8 @@ nfs_mkdir(v)
 		nfsm_mtofh(dvp, newvp, v3, gotvp);
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
@@ -1783,7 +1796,8 @@ nfs_rmdir(v)
 	nfsm_request(dvp, NFSPROC_RMDIR, cnp->cn_proc, cnp->cn_cred);
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
@@ -2511,7 +2525,8 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 		} else
 			nfsm_loadattr(newvp, (struct vattr *)0);
 	}
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	if (npp && *npp == NULL) {
 		if (error) {
 			if (newvp)
@@ -2560,7 +2575,8 @@ nfs_commit(vp, offset, cnt, procp)
 			error = NFSERR_STALEWRITEVERF;
 		}
 	}
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	return (error);
 }
 

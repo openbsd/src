@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.66 2007/06/20 15:00:43 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.67 2007/09/11 13:41:52 blambert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -169,7 +169,8 @@ nfs_statfs(mp, sbp, p)
 		    &sbp->mount_info.nfs_args, sizeof(struct nfs_args));
 	}
 	strncpy(&sbp->f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	vrele(vp);
 	crfree(cred);
 	return (error);
@@ -231,7 +232,8 @@ nfs_fsinfo(nmp, vp, cred, p)
 		}
 		nmp->nm_flag |= NFSMNT_GOTFSINFO;
 	}
-	nfsm_reqdone;
+	m_freem(mrep);
+nfsmout: 
 	return (error);
 }
 

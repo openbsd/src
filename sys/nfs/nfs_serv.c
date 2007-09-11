@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.40 2006/04/02 18:35:11 otto Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.41 2007/09/11 13:41:52 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -151,7 +151,8 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	nfsm_srvpostop_attr(getret, &va);
 	nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 	*tl = txdr_unsigned(nfsmode);
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -196,7 +197,8 @@ nfsrv_getattr(nfsd, slp, procp, mrq)
 		return (0);
 	nfsm_build(fp, struct nfs_fattr *, NFSX_FATTR(nfsd->nd_flag & ND_NFSV3));
 	nfsm_srvfillattr(&va, fp);
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -327,7 +329,8 @@ out:
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 		nfsm_srvfillattr(&va, fp);
 	}
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -401,7 +404,8 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 		nfsm_srvfillattr(&va, fp);
 	}
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -501,7 +505,8 @@ out:
 	nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 	*tl = txdr_unsigned(len);
 	mb->m_next = mp3;
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -667,7 +672,8 @@ nfsrv_read(nfsd, slp, procp, mrq)
 			*tl++ = nfs_false;
 	}
 	*tl = txdr_unsigned(cnt);
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -850,7 +856,8 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 		nfsm_srvfillattr(&va, fp);
 	}
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -1689,7 +1696,8 @@ out:
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		return (0);
 	}
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -1965,7 +1973,8 @@ out1:
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		return (0);
 	}
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -2312,7 +2321,8 @@ out:
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		return (0);
 	}
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -2612,7 +2622,8 @@ again:
 		mp->m_len += bp - bpos;
 	FREE((caddr_t)rbuf, M_TEMP);
 	FREE((caddr_t)cookies, M_TEMP);
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 int
@@ -2930,7 +2941,8 @@ invalid:
 		mp->m_len += bp - bpos;
 	FREE((caddr_t)cookies, M_TEMP);
 	FREE((caddr_t)rbuf, M_TEMP);
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -2989,7 +3001,8 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 		*tl = txdr_unsigned(boottime.tv_usec);
 	} else
 		return (0);
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -3065,7 +3078,8 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 		sfp->sf_bfree = txdr_unsigned(sf->f_bfree);
 		sfp->sf_bavail = txdr_unsigned(sf->f_bavail);
 	}
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -3133,7 +3147,8 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	sip->fs_properties = txdr_unsigned(NFSV3FSINFO_LINK |
 		NFSV3FSINFO_SYMLINK | NFSV3FSINFO_HOMOGENEOUS |
 		NFSV3FSINFO_CANSETTIME);
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*
@@ -3200,7 +3215,8 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 	 */
 	pc->pc_caseinsensitive = nfs_false;
 	pc->pc_casepreserving = nfs_true;
-	nfsm_srvdone;
+nfsmout:
+	return(error);
 }
 
 /*

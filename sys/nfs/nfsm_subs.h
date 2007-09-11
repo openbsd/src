@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.16 2006/04/02 18:35:11 otto Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.17 2007/09/11 13:41:52 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -330,9 +330,6 @@
 #define	nfsm_reqhead(v,a,s) \
 		mb = mreq = nfsm_reqh((v),(a),(s),&bpos)
 
-#define nfsm_reqdone	m_freem(mrep); \
-		nfsmout: 
-
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
 
 #define	nfsm_request(v, t, p, c)	\
@@ -361,10 +358,6 @@
 			m_freem(mreq); \
 			goto nfsmout; \
 		}
-
-#define	nfsm_srvdone \
-		nfsmout: \
-		return(error)
 
 #define	nfsm_reply(s) \
 		{ \
