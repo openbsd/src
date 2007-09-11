@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.52 2007/09/05 20:27:04 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.53 2007/09/11 16:14:41 mk Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.52 2007/09/05 20:27:04 claudio Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.53 2007/09/11 16:14:41 mk Exp $";
 #endif
 #endif /* not lint */
 
@@ -329,14 +329,14 @@ intpr(int interval, u_long ifnetaddr)
 #define	MAXIF	100
 struct	iftot {
 	char	ift_name[IFNAMSIZ];	/* interface name */
-	u_long	ift_ip;			/* input packets */
-	u_long	ift_ib;			/* input bytes */
-	u_long	ift_ie;			/* input errors */
-	u_long	ift_op;			/* output packets */
-	u_long	ift_ob;			/* output bytes */
-	u_long	ift_oe;			/* output errors */
-	u_long	ift_co;			/* collisions */
-	u_long	ift_dr;			/* drops */
+	u_int64_t ift_ip;		/* input packets */
+	u_int64_t ift_ib;		/* input bytes */
+	u_int64_t ift_ie;		/* input errors */
+	u_int64_t ift_op;		/* output packets */
+	u_int64_t ift_ob;		/* output bytes */
+	u_int64_t ift_oe;		/* output errors */
+	u_int64_t ift_co;		/* collisions */
+	u_int64_t ift_dr;		/* drops */
 } iftot[MAXIF];
 
 volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
@@ -462,18 +462,18 @@ loop:
 		}
 		if (ip == interesting) {
 			if (bflag)
-				printf("%10lu %8.8s %10lu %5.5s",
+				printf("%10llu %8.8s %10llu %5.5s",
 				    ifnet.if_ibytes - ip->ift_ib, " ",
 				    ifnet.if_obytes - ip->ift_ob, " ");
 			else
-				printf("%8lu %5lu %8lu %5lu %5lu",
+				printf("%8llu %5llu %8llu %5llu %5llu",
 				    ifnet.if_ipackets - ip->ift_ip,
 				    ifnet.if_ierrors - ip->ift_ie,
 				    ifnet.if_opackets - ip->ift_op,
 				    ifnet.if_oerrors - ip->ift_oe,
 				    ifnet.if_collisions - ip->ift_co);
 			if (dflag)
-				printf(" %5lu",
+				printf(" %5llu",
 				    ifnet.if_snd.ifq_drops - ip->ift_dr);
 		}
 		ip->ift_ip = ifnet.if_ipackets;
@@ -496,18 +496,18 @@ loop:
 	}
 	if (lastif - iftot > 0) {
 		if (bflag)
-			printf("  %10lu %8.8s %10lu %5.5s",
+			printf("  %10llu %8.8s %10llu %5.5s",
 			    sum->ift_ib - total->ift_ib, " ",
 			    sum->ift_ob - total->ift_ob, " ");
 		else
-			printf("  %8lu %5lu %8lu %5lu %5lu",
+			printf("  %8llu %5llu %8llu %5llu %5llu",
 			    sum->ift_ip - total->ift_ip,
 			    sum->ift_ie - total->ift_ie,
 			    sum->ift_op - total->ift_op,
 			    sum->ift_oe - total->ift_oe,
 			    sum->ift_co - total->ift_co);
 		if (dflag)
-			printf(" %5lu", sum->ift_dr - total->ift_dr);
+			printf(" %5llu", sum->ift_dr - total->ift_dr);
 	}
 	*total = *sum;
 	putchar('\n');
