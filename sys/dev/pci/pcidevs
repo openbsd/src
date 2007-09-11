@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1258 2007/09/03 01:42:01 marco Exp $
+$OpenBSD: pcidevs,v 1.1259 2007/09/11 07:59:05 martin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -310,6 +310,7 @@ vendor	C4T		0x6374	c't Magazin
 vendor	DCI		0x6666  Decision Computer Inc
 vendor	QUANCOM		0x8008	Quancom Informationssysteme
 vendor	INTEL		0x8086	Intel
+vendor	INNOTEK		0x80ee	InnoTek
 vendor	WINBOND2	0x8c4a	Winbond
 vendor	KTI		0x8e2e	KTI
 vendor	ADP		0x9004	Adaptec
@@ -1689,6 +1690,10 @@ product INITIO INIC1060		0x1060	INIC-1060 (A100U2W)
 product INITIO INIC940		0x9400	INIC-940
 product INITIO INIC941		0x9401	INIC-941
 product INITIO INIC950		0x9500	INIC-950
+
+/* InnoTek Systemberatung GmbH */
+product INNOTEK VBGA		0xbeef	VirtualBox Graphics Adapter
+product INNOTEK VBGS		0xcafe	VirtualBox Guest Service
 
 /* INPROCOMM products */
 product INPROCOMM IPN2120	0x2120	IPN2120
