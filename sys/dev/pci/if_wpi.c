@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.54 2007/09/10 20:34:43 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.55 2007/09/11 18:06:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -2384,6 +2384,7 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 	hdr->plcp_threshold = htole16(1);	/* min # of packets */
 
 	tx = (struct wpi_cmd_data *)(hdr + 1);
+	memset(tx, 0, sizeof (struct wpi_cmd_data));
 	tx->flags = htole32(WPI_TX_AUTO_SEQ);
 	tx->id = WPI_ID_BROADCAST;
 	tx->lifetime = htole32(WPI_LIFETIME_INFINITE);
