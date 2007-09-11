@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.9 2007/09/10 20:36:49 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.10 2007/09/11 18:53:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -134,7 +134,7 @@ int		iwn_cmd(struct iwn_softc *, int, const void *, int, int);
 int		iwn_setup_node_mrr(struct iwn_softc *, uint8_t, int);
 int		iwn_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    const struct ieee80211_key *);
-void		iwn_edcaupdate(struct ieee80211com *);
+void		iwn_updateedca(struct ieee80211com *);
 void		iwn_set_led(struct iwn_softc *, uint8_t, uint8_t, uint8_t);
 int		iwn_set_critical_temp(struct iwn_softc *);
 void		iwn_enable_tsf(struct iwn_softc *, struct ieee80211_node *);
@@ -324,6 +324,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_node_alloc = iwn_node_alloc;
 	ic->ic_newassoc = iwn_newassoc;
 	ic->ic_set_key = iwn_set_key;
+	ic->ic_updateedca = iwn_updateedca;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
@@ -2283,7 +2284,7 @@ iwn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 
 void
-iwn_edcaupdate(struct ieee80211com *ic)
+iwn_updateedca(struct ieee80211com *ic)
 {
 #define IWN_EXP2(x)	((1 << (x)) - 1)	/* CWmin = 2^ECWmin - 1 */
 	struct iwn_softc *sc = ic->ic_softc;
