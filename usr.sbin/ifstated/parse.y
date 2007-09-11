@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2006/10/25 18:57:34 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2007/09/11 23:30:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -72,7 +72,6 @@ struct sym {
 void			 link_states(struct ifsd_action *);
 int			 symset(const char *, const char *, int);
 char			*symget(const char *);
-int			 atoul(char *, u_long *);
 void			 set_expression_depth(struct ifsd_expression *, int);
 void			 init_state(struct ifsd_state *);
 struct ifsd_ifstate	*new_ifstate(u_short, int);
@@ -80,7 +79,7 @@ struct ifsd_external	*new_external(char *, u_int32_t);
 
 typedef struct {
 	union {
-		u_int32_t	 number;
+		int64_t		 number;
 		char		*string;
 		struct in_addr	 addr;
 		u_short		 interface;
@@ -102,7 +101,7 @@ typedef struct {
 %left	UNARY
 %token	ERROR
 %token	<v.string>	STRING
-%type	<v.number>	number
+%token	<v.number>	NUMBER
 %type	<v.string>	string
 %type	<v.interface>	interface
 %type	<v.ifstate>	if_test
@@ -117,19 +116,6 @@ grammar		: /* empty */
 		| grammar action '\n'
 		| grammar state '\n'
 		| grammar error '\n'		{ errors++; }
-		;
-
-number		: STRING			{
-			u_long	ulval;
-
-			if (atoul($1, &ulval) == -1) {
-				yyerror("%s is not a number", $1);
-				free($1);
-				YYERROR;
-			} else
-				$$ = ulval;
-			free($1);
-		}
 		;
 
 string		: string STRING				{
@@ -270,7 +256,12 @@ if_test		: interface '.' LINK '.' UP		{
 		}
 		;
 
-ext_test	: STRING EVERY number {
+ext_test	: STRING EVERY NUMBER {
+			if ($3 <= 0) {
+				yyerror("invalid interval: %d", $3);
+				free($1);
+				YYERROR;
+			}
 			$$ = new_external($1, $3);
 			free($1);
 		}
@@ -573,6 +564,42 @@ top:
 		return (STRING);
 	}
 
+#define allowed_to_end_number(x) \
+	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc(fin)) != EOF && isdigit(c));
+		lungetc(c);
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = strtonum(buf, LLONG_MIN,
+			    LLONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
+	}
+
 #define allowed_in_string(x) \
 	(isalnum(x) || (ispunct(x) && x != '(' && x != ')' && \
 	x != '{' && x != '}' && \
@@ -779,22 +806,6 @@ symget(const char *nam)
 			return (sym->val);
 		}
 	return (NULL);
-}
-
-int
-atoul(char *s, u_long *ulvalp)
-{
-	u_long	 ulval;
-	char	*ep;
-
-	errno = 0;
-	ulval = strtoul(s, &ep, 0);
-	if (s[0] == '\0' || *ep != '\0')
-		return (-1);
-	if (errno == ERANGE && ulval == ULONG_MAX)
-		return (-1);
-	*ulvalp = ulval;
-	return (0);
 }
 
 void
