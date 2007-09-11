@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.57 2007/09/10 19:49:31 gilles Exp $ */
+/* $OpenBSD: wskbd.c,v 1.58 2007/09/11 13:39:34 gilles Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -385,7 +385,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		sc->id = &wskbd_console_data;
 	} else {
 		sc->id = malloc(sizeof(struct wskbd_internal),
-		    M_DEVBUF, M_WAITOK|M_ZERO);
+		    M_DEVBUF, M_WAITOK | M_ZERO);
 		sc->id->t_keymap = ap->keymap;
 		wskbd_update_layout(sc->id, ap->keymap->layout);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.8 2007/09/10 19:49:31 gilles Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.9 2007/09/11 13:39:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -100,10 +100,10 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	struct sdmmc_function *sf;
 
 	scbus = (struct sdmmc_scsi_softc *)malloc(sizeof *scbus,
-	    M_DEVBUF, M_WAITOK|M_ZERO);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	scbus->sc_tgt = (struct sdmmc_scsi_target *)malloc(sizeof(*scbus->sc_tgt) *
-	    (SDMMC_SCSIID_MAX+1), M_DEVBUF, M_WAITOK|M_ZERO);
+	    (SDMMC_SCSIID_MAX+1), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/*
 	 * Each card that sent us a CID in the identification stage

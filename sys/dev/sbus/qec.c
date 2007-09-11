@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.11 2007/09/10 19:49:31 gilles Exp $	*/
+/*	$OpenBSD: qec.c,v 1.12 2007/09/11 13:39:34 gilles Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -192,7 +192,7 @@ qecattach(parent, self, aux)
 	}
 
 	/* Allocate a bus tag */
-	sbt = malloc(sizeof(*sbt), M_DEVBUF, M_NOWAIT|M_ZERO);
+	sbt = malloc(sizeof(*sbt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sbt == NULL) {
 		printf("%s: attach: out of memory\n", self->dv_xname);
 		return;

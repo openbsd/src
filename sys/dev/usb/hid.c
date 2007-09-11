@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.19 2007/09/09 01:00:35 fgsch Exp $ */
+/*	$OpenBSD: hid.c,v 1.20 2007/09/11 13:39:34 gilles Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -95,7 +95,7 @@ hid_start_parse(void *d, int len, enum hid_kind kind)
 {
 	struct hid_data *s;
 
-	s = malloc(sizeof *s, M_TEMP, M_WAITOK|M_ZERO);
+	s = malloc(sizeof *s, M_TEMP, M_WAITOK | M_ZERO);
 	if (s == NULL)
 		panic("hid_start_parse");
 

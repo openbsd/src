@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.14 2007/09/07 18:21:40 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.15 2007/09/11 13:39:34 gilles Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -845,7 +845,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		}
 		if (state->pf == NULL) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
-			    M_NOWAIT|M_ZERO);
+			    M_NOWAIT | M_ZERO);
 			if (state->pf == NULL)
 				panic("pcmcia_parse_cis_tuple");
 			state->pf->number = state->count++;
@@ -885,7 +885,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			}
 			if (state->pf == NULL) {
 				state->pf = malloc(sizeof(*state->pf),
-				    M_DEVBUF, M_NOWAIT|M_ZERO);
+				    M_DEVBUF, M_NOWAIT | M_ZERO);
 				if (state->pf == NULL)
 					panic("pcmcia_parse_cis_tuple");
 				state->pf->number = state->count++;

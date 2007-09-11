@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.34 2007/09/07 18:21:40 fgsch Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.35 2007/09/11 13:39:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -249,7 +249,7 @@ xe_pcmcia_attach(parent, self, aux)
 
 	/* Fake a cfe. */
 	SIMPLEQ_FIRST(&pa->pf->cfe_head) = cfe = (struct pcmcia_config_entry *)
-	    malloc(sizeof *cfe, M_DEVBUF, M_NOWAIT|M_ZERO);
+	    malloc(sizeof *cfe, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!cfe) {
 		printf(": function enable failed\n");
 		return;

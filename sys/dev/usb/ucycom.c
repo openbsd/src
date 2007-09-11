@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.12 2007/09/10 16:29:28 fgsch Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.13 2007/09/11 13:39:34 gilles Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ ucycom_open(void *addr, int portno)
 		return (EIO);
 
 	/* Allocate an output report buffer */
-	sc->sc_obuf = malloc(sc->sc_olen, M_USBDEV, M_WAITOK|M_ZERO);
+	sc->sc_obuf = malloc(sc->sc_olen, M_USBDEV, M_WAITOK | M_ZERO);
 
 	/* Allocate an input report buffer */
 	sc->sc_ibuf = malloc(sc->sc_ilen, M_USBDEV, M_WAITOK);

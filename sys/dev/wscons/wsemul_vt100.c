@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.19 2007/09/10 19:49:31 gilles Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.20 2007/09/11 13:39:34 gilles Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -214,7 +214,7 @@ wsemul_vt100_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 	edp->cbcookie = cbcookie;
 
 	edp->tabs = malloc(edp->ncols, M_DEVBUF, M_NOWAIT);
-	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT|M_ZERO);
+	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT | M_ZERO);
 	edp->dw = 0;
 	edp->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
 	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);

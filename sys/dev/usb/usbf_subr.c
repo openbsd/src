@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.11 2007/09/09 01:00:35 fgsch Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.12 2007/09/11 13:39:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -151,7 +151,7 @@ usbf_new_device(struct device *parent, usbf_bus_handle bus, int depth,
 	KASSERT(up->device == NULL);
 #endif
 
-	dev = malloc(sizeof(*dev), M_USB, M_NOWAIT|M_ZERO);
+	dev = malloc(sizeof(*dev), M_USB, M_NOWAIT | M_ZERO);
 	if (dev == NULL)
 		return USBF_NOMEM;
 
@@ -396,11 +396,11 @@ usbf_add_config(usbf_device_handle dev, usbf_config_handle *ucp)
 	struct usbf_config *uc;
 	usb_config_descriptor_t *cd;
 
-	uc = malloc(sizeof *uc, M_USB, M_NOWAIT|M_ZERO);
+	uc = malloc(sizeof *uc, M_USB, M_NOWAIT | M_ZERO);
 	if (uc == NULL)
 		return USBF_NOMEM;
 
-	cd = malloc(sizeof *cd, M_USB, M_NOWAIT|M_ZERO);
+	cd = malloc(sizeof *cd, M_USB, M_NOWAIT | M_ZERO);
 	if (cd == NULL) {
 		free(uc, M_USB);
 		return USBF_NOMEM;
@@ -472,11 +472,11 @@ usbf_add_interface(usbf_config_handle uc, u_int8_t bInterfaceClass,
 	if (uc->uc_closed)
 		return USBF_INVAL;
 
-	ui = malloc(sizeof *ui, M_USB, M_NOWAIT|M_ZERO);
+	ui = malloc(sizeof *ui, M_USB, M_NOWAIT | M_ZERO);
 	if (ui == NULL)
 		return USBF_NOMEM;
 
-	id = malloc(sizeof *id, M_USB, M_NOWAIT|M_ZERO);
+	id = malloc(sizeof *id, M_USB, M_NOWAIT | M_ZERO);
 	if (id == NULL) {
 		free(ui, M_USB);
 		return USBF_NOMEM;
@@ -513,11 +513,11 @@ usbf_add_endpoint(usbf_interface_handle ui, u_int8_t bEndpointAddress,
 	if (ui->config->uc_closed)
 		return USBF_INVAL;
 
-	ue = malloc(sizeof *ue, M_USB, M_NOWAIT|M_ZERO);
+	ue = malloc(sizeof *ue, M_USB, M_NOWAIT | M_ZERO);
 	if (ue == NULL)
 		return USBF_NOMEM;
 
-	ed = malloc(sizeof *ed, M_USB, M_NOWAIT|M_ZERO);
+	ed = malloc(sizeof *ed, M_USB, M_NOWAIT | M_ZERO);
 	if (ed == NULL) {
 		free(ue, M_USB);
 		return USBF_NOMEM;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.80 2007/09/08 17:59:23 gilles Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.81 2007/09/11 13:39:33 gilles Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ vndattach(int num)
 	if (num <= 0)
 		return;
 	size = num * sizeof(struct vnd_softc);
-	mem = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
+	mem = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (mem == NULL) {
 		printf("WARNING: no memory for vnode disks\n");
 		return;
