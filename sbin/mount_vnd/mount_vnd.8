@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_vnd.8,v 1.8 2007/06/01 01:22:26 grunk Exp $
+.\"	$OpenBSD: mount_vnd.8,v 1.9 2007/09/11 07:36:37 aanriot Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -49,7 +49,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2007 $
+.Dd $Mdocdate: September 11 2007 $
 .Dt MOUNT_VND 8
 .Os
 .Sh NAME
@@ -113,6 +113,22 @@ infrastructure, so that an
 file can be configured to a device
 .Ar node
 while booting.
+.Pp
+For
+.Xr fstab 5
+lines with type
+.Dq ffs ,
+the
+.Dq noauto
+option must be set to prevent a
+.Xr mount 8
+of the FFS partitions
+before the necessary vnd devices are configured.
+Also, the
+.Dq fs_passno
+field has to be set to 0 to prevent
+.Xr fsck 8
+from checking the file system for the same reasons.
 .Pp
 .Nm mount_vnd
 is invoked by
@@ -220,6 +236,14 @@ Encryption key:
 # mount /dev/svnd0c /mnt
 .Ed
 .Pp
+An equivalent
+.Xr fstab 5
+entry is:
+.Bd -literal -offset indent
+/tmp/cryptimg /dev/svnd0c vnd rw,noauto,-k       0 0
+/dev/svnd0c   /mnt        ffs rw,noauto          0 0
+.Ed
+.Pp
 Same as above, but now configure the vnode using PKCS #5 PBKDF2 and
 a salt file with 20000 rounds:
 .Bd -literal -offset indent
@@ -229,43 +253,18 @@ Salt file: /tmp/cryptsalt
 # mount /dev/svnd0c /mnt
 .Ed
 .Pp
+An equivalent
+.Xr fstab 5
+entry is:
+.Bd -literal -offset indent
+/tmp/cryptimg /dev/svnd0c vnd rw,noauto,-K=20000 0 0
+/dev/svnd0c   /mnt        ffs rw,noauto          0 0
+.Ed
+.Pp
 Unmount the file system and unconfigure the vnode device:
 .Bd -literal -offset indent
 # umount /mnt
 # vnconfig -u svnd0
-.Ed
-.Pp
-Some possible vnd configurations for
-.Pa /etc/fstab
-are listed below.
-.Pp
-For lines with type
-.Dq ffs ,
-the
-.Dq noauto
-option must be set to prevent a
-.Xr mount 8
-of the FFS partitions
-before the necessary vnd devices are configured.
-Also, the
-.Dq fs_passno
-field has to be set to 0 to prevent
-.Xr fsck 8
-from checking the file system for the same reasons.
-.Bd -literal -offset indent
-/home/img0 /dev/svnd0c vnd rw,noauto      0 0
-/dev/svnd0a /home/mnt0 ffs rw,noauto,sync 0 0
-
-/home/img1 /dev/svnd1c vnd rw,noauto,-k                0 0
-/dev/svnd1a /home/mnt1 ffs rw,sync,noauto,nodev,nosuid 0 0
-
-/home/img2 /dev/svnd2c vnd rw,noauto,-K=20000          0 0
-/dev/svnd2a /home/mnt2 ffs rw,sync,noauto,nodev,nosuid 0 0
-
-/home/img3 /dev/svnd3c vnd rw,noauto,-K=20000,-S=/home/img3.salt 0 0
-/dev/svnd3a /home/mnt3 ffs rw,noauto                             0 0
-/dev/svnd3d /home/mnt4 ffs rw,noauto                             0 0
-/dev/svnd3e /home/mnt5 ffs rw,noauto                             0 0
 .Ed
 .Pp
 A sample of commands to put in
