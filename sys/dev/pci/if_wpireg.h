@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.19 2007/09/10 20:53:22 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.20 2007/09/11 18:52:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,12 +18,12 @@
  */
 
 #define WPI_TX_RING_COUNT	256
-#define WPI_CMD_RING_COUNT	256
 #define WPI_RX_RING_COUNT	64
+
+#define WPI_NTXQUEUES		16
 
 /*
  * Rings must be aligned on a 16K boundary.
- * I had a hard time figuring this out.
  */
 #define WPI_RING_DMA_ALIGN	0x4000
 
@@ -211,42 +211,11 @@ struct wpi_rx_desc {
 	uint8_t		qid;
 } __packed;
 
-struct wpi_rx_stat {
-	uint8_t		len;
-#define WPI_STAT_MAXLEN	20
-
-	uint8_t		id;
-	uint8_t		rssi;	/* received signal strength */
-#define WPI_RSSI_OFFSET	95
-
-	uint8_t		agc;	/* access gain control */
-	uint16_t	signal;
-	uint16_t	noise;
-} __packed;
-
-struct wpi_rx_head {
-	uint16_t	chan;
-	uint16_t	flags;
-	uint8_t		reserved;
-	uint8_t		rate;
-	uint16_t	len;
-} __packed;
-
-struct wpi_rx_tail {
-	uint32_t	flags;
-#define WPI_RX_NO_CRC_ERR	(1 << 0)
-#define WPI_RX_NO_OVFL_ERR	(1 << 1)
-/* shortcut for the above */
-#define WPI_RX_NOERROR		(WPI_RX_NO_CRC_ERR | WPI_RX_NO_OVFL_ERR)
-
-	uint64_t	tstamp;
-	uint32_t	tbeacon;
-} __packed;
-
 struct wpi_tx_cmd {
 	uint8_t	code;
 #define WPI_CMD_CONFIGURE	 16
 #define WPI_CMD_ASSOCIATE	 17
+#define WPI_CMD_EDCA_PARAMS	 19
 #define WPI_CMD_TSF		 20
 #define WPI_CMD_ADD_NODE	 24
 #define WPI_CMD_TX_DATA		 28
@@ -254,7 +223,6 @@ struct wpi_tx_cmd {
 #define WPI_CMD_SET_LED		 72
 #define WPI_CMD_SET_POWER_MODE	119
 #define WPI_CMD_SCAN		128
-#define WPI_CMD_SET_BEACON	145
 #define WPI_CMD_TXPOWER		151
 #define WPI_CMD_BLUETOOTH	155
 
@@ -264,7 +232,7 @@ struct wpi_tx_cmd {
 	uint8_t	data[124];
 } __packed;
 
-/* structure for WPI_CMD_CONFIGURE */
+/* structure for command WPI_CMD_CONFIGURE */
 struct wpi_config {
 	uint8_t		myaddr[IEEE80211_ADDR_LEN];
 	uint16_t	reserved1;
@@ -312,6 +280,21 @@ struct wpi_assoc {
 	uint16_t	reserved;
 } __packed;
 
+/* structure for command WPI_CMD_EDCA_PARAMS */
+struct wpi_edca_params {
+	uint32_t	flags;
+#define WPI_EDCA_UPDATE	(1 << 0)
+#define WPI_EDCA_TXOP	(1 << 4)
+
+	struct {
+		uint16_t	cwmin;
+		uint16_t	cwmax;
+		uint8_t		aifsn;
+		uint8_t		reserved;
+		uint16_t	txoplimit;
+	} __packed	ac[EDCA_NUM_AC];
+} __packed;
+
 /* structure for command WPI_CMD_TSF */
 struct wpi_cmd_tsf {
 	uint64_t	tstamp;
@@ -322,13 +305,13 @@ struct wpi_cmd_tsf {
 	uint16_t	reserved;
 } __packed;
 
-/* structure for WPI_CMD_ADD_NODE */
+/* structure for command WPI_CMD_ADD_NODE */
 struct wpi_node_info {
 	uint8_t		control;
 #define WPI_NODE_UPDATE		(1 << 0)
 
 	uint8_t		reserved1[3];
-	uint8_t		bssid[IEEE80211_ADDR_LEN];
+	uint8_t		macaddr[IEEE80211_ADDR_LEN];
 	uint16_t	reserved2;
 	uint8_t		id;
 #define WPI_ID_BSS		0
@@ -396,25 +379,7 @@ struct wpi_cmd_data {
 	uint16_t	txop;
 } __packed;
 
-/* structure for command WPI_CMD_SET_BEACON */
-struct wpi_cmd_beacon {
-	uint16_t	len;
-	uint16_t	reserved1;
-	uint32_t	flags;	/* same as wpi_cmd_data */
-	uint8_t		rate;
-	uint8_t		id;
-	uint8_t		reserved2[30];
-	uint32_t	lifetime;
-	uint8_t		ofdm_mask;
-	uint8_t		cck_mask;
-	uint16_t	reserved3[3];
-	uint16_t	tim;
-	uint8_t		timsz;
-	uint8_t		reserved4;
-	struct		ieee80211_frame wh;
-} __packed;
-
-/* structure for WPI_CMD_MRR_SETUP */
+/* structure for command WPI_CMD_MRR_SETUP */
 struct wpi_mrr_setup {
 	uint32_t	which;
 #define WPI_MRR_CTL	0
@@ -434,7 +399,7 @@ struct wpi_mrr_setup {
 	} __packed	rates[WPI_CCK11 + 1];
 } __packed;
 
-/* structure for WPI_CMD_SET_LED */
+/* structure for command WPI_CMD_SET_LED */
 struct wpi_cmd_led {
 	uint32_t	unit;	/* multiplier (in usecs) */
 	uint8_t		which;
@@ -446,7 +411,7 @@ struct wpi_cmd_led {
 	uint8_t		reserved;
 } __packed;
 
-/* structure for WPI_CMD_SET_POWER_MODE */
+/* structure for command WPI_CMD_SET_POWER_MODE */
 struct wpi_power {
 	uint32_t	flags;
 #define WPI_POWER_CAM	0	/* constantly awake mode */
@@ -494,7 +459,7 @@ struct wpi_scan_chan {
 	uint16_t	passive;	/* msecs */
 } __packed;
 
-/* structure for WPI_CMD_TXPOWER */
+/* structure for command WPI_CMD_TXPOWER */
 struct wpi_cmd_txpower {
 	uint8_t		band;
 #define WPI_BAND_5GHZ	0
@@ -510,7 +475,7 @@ struct wpi_cmd_txpower {
 	} __packed	rates[WPI_CCK11 + 1];
 } __packed;
 
-/* structure for WPI_CMD_BLUETOOTH */
+/* structure for command WPI_CMD_BLUETOOTH */
 struct wpi_bluetooth {
 	uint8_t		flags;
 	uint8_t		lead;
@@ -520,6 +485,39 @@ struct wpi_bluetooth {
 	uint32_t	cts;
 } __packed;
 
+
+/* structures for WPI_RX_DONE notification */
+struct wpi_rx_stat {
+	uint8_t		len;
+#define WPI_STAT_MAXLEN	20
+
+	uint8_t		id;
+	uint8_t		rssi;	/* received signal strength */
+#define WPI_RSSI_OFFSET	95
+
+	uint8_t		agc;	/* access gain control */
+	uint16_t	signal;
+	uint16_t	noise;
+} __packed;
+
+struct wpi_rx_head {
+	uint16_t	chan;
+	uint16_t	flags;
+	uint8_t		reserved;
+	uint8_t		rate;
+	uint16_t	len;
+} __packed;
+
+struct wpi_rx_tail {
+	uint32_t	flags;
+#define WPI_RX_NO_CRC_ERR	(1 << 0)
+#define WPI_RX_NO_OVFL_ERR	(1 << 1)
+/* shortcut for the above */
+#define WPI_RX_NOERROR		(WPI_RX_NO_CRC_ERR | WPI_RX_NO_OVFL_ERR)
+
+	uint64_t	tstamp;
+	uint32_t	tbeacon;
+} __packed;
 
 /* structure for WPI_UC_READY notification */
 struct wpi_ucode_info {
