@@ -1,4 +1,4 @@
-/* $OpenBSD: sshpty.c,v 1.27 2007/09/11 04:36:29 stevesk Exp $ */
+/* $OpenBSD: sshpty.c,v 1.28 2007/09/11 23:49:09 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -29,11 +29,6 @@
 
 #include "sshpty.h"
 #include "log.h"
-
-/* Pty allocated with _getpty gets broken if we do I_PUSH:es to it. */
-#if defined(HAVE__GETPTY) || defined(HAVE_OPENPTY)
-#undef HAVE_DEV_PTMX
-#endif
 
 #ifndef O_NOCTTY
 #define O_NOCTTY 0
