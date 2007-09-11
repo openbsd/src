@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.rumors.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.rumors.c,v 1.6 2007/09/11 15:21:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.rumors.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.rumors.c,v 1.6 2007/09/11 15:21:05 gilles Exp $";
 #endif /* not lint */
 
 #include	<stdio.h>
@@ -105,10 +105,9 @@ static void
 outline(FILE *rumf)
 {
 	char line[COLNO];
-	char *ep;
 
 	if(!fgets(line, sizeof(line), rumf)) return;
-	if((ep = strchr(line, '\n')) != 0) *ep = 0;
+	line[strcspn(line, "\n")] = '\0';
 	pline("This cookie has a scrap of paper inside! It reads: ");
 	pline(line);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.8 2007/03/02 04:32:32 ray Exp $	*/
+/*	$OpenBSD: monop.c,v 1.9 2007/09/11 15:21:05 gilles Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: monop.c,v 1.8 2007/03/02 04:32:32 ray Exp $";
+static const char rcsid[] = "$OpenBSD: monop.c,v 1.9 2007/09/11 15:21:05 gilles Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,6 @@ main(ac, av)
 static void
 getplayers()
 {
-	char	*sp;
 	int	i, j;
 	char	buf[257];
 
@@ -111,8 +110,7 @@ blew_it:
 				printf("user closed input stream, quitting...\n");
 				exit(0);
 			}
-			if ((sp = strchr(buf, '\n')) != NULL)
-				*sp = '\0';
+			buf[strcspn(buf, "\n")] = '\0';
 		} while (strlen(buf) == 0);
 		if ((name_list[i] = play[i].name = strdup(buf)) == NULL)
 			err(1, NULL);

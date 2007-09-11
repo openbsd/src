@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.16 2007/02/18 20:16:04 ray Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.17 2007/09/11 15:25:14 gilles Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -333,10 +333,8 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 	    "Can't find block design file name in config file\n"))
     return(EINVAL);
   bdfile = rf_find_non_white(buf);
-  if ((p = strchr(bdfile, '\n')) != NULL) {
-    /* strip newline char */
-    *p = '\0';
-  }
+  bdfile[strcspn(bdfile, "\n")] = '\0';
+
   /* open bd file, check validity of configuration */
   if ((fp = fopen(bdfile,"r"))==NULL) {
     RF_ERRORMSG1("RAID: config error: Can't open layout table file %s\n",bdfile);
@@ -360,10 +358,7 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 		    "Can't find sparemap file name in config file\n"))
       return(EINVAL);
     smname = rf_find_non_white(smbuf);
-    if ((p = strchr(smname, '\n')) != NULL) {
-      /* strip newline char */
-      *p = '\0';
-    }
+    smname[strcspn(smname, "\n")] = '\0';
 	} else {
     smbuf[0] = '\0';
     smname = smbuf;
@@ -520,8 +515,7 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 	if (rf_get_next_nonblank_line(buf, 1024, fp,
 	    "Invalid sparemap file:  can't find header line\n"))
     return(NULL);
-  if ((p = strchr(buf, '\n')) != NULL)
-    *p = '\0';
+  buf[strcspn(buf, "\n")] = '\0';
 
 	snprintf(targString, sizeof targString, "fdisk %d\n", req->fcol);
 	snprintf(errString, sizeof errString,
