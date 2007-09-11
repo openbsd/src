@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.5 2007/01/08 13:01:10 claudio Exp $ */
+/*	$OpenBSD: ripd.h,v 1.6 2007/09/11 17:26:22 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -215,7 +215,7 @@ struct iface {
 
 	time_t			 uptime;
 	u_long			 mtu;
-	u_long			 baudrate;
+	u_long			 baudrate;	/* XXX u_int64_t */
 	int			 fd; /* XXX */
 	int			 state;
 	u_short			 ifindex;
@@ -294,7 +294,7 @@ struct kroute {
 
 struct kif {
 	char		 ifname[IF_NAMESIZE];
-	u_long		 baudrate;
+	u_int64_t	 baudrate;
 	int		 flags;
 	int		 mtu;
 	u_short		 ifindex;
@@ -312,7 +312,7 @@ struct ctl_iface {
 	time_t			 uptime;
 	time_t			 report_timer;
 
-	u_int32_t		 baudrate;
+	u_int32_t		 baudrate;	/* XXX 32bit only? */
 
 	unsigned int		 ifindex;
 	int			 state;
