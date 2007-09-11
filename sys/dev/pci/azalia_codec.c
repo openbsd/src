@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.34 2007/09/11 05:14:42 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.35 2007/09/11 05:17:47 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2549,25 +2549,6 @@ azalia_stac9221_apple_mixer_init(codec_t *this)
 	azalia_generic_mixer_set(this, 0x0c, MI_TARGET_PINDIR, &mc); /* speaker */
 	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc); /* line out */
 	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc); /* another line out */
-
-	/* max all volumes except master */
-	mc.type = AUDIO_MIXER_VALUE;
-	mc.un.value.num_channels = 2;
-	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x02, MI_TARGET_OUTAMP);
-	mc.un.value.level[1] = mc.un.value.level[0];
-	azalia_generic_mixer_set(this, 0x02, MI_TARGET_OUTAMP, &mc);
-
-	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x03, MI_TARGET_OUTAMP);
-	mc.un.value.level[1] = mc.un.value.level[0];
-	azalia_generic_mixer_set(this, 0x03, MI_TARGET_OUTAMP, &mc);
-
-	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x04, MI_TARGET_OUTAMP);
-	mc.un.value.level[1] = mc.un.value.level[0];
-	azalia_generic_mixer_set(this, 0x04, MI_TARGET_OUTAMP, &mc);
-
-	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x05, MI_TARGET_OUTAMP);
-	mc.un.value.level[1] = mc.un.value.level[0];
-	azalia_generic_mixer_set(this, 0x05, MI_TARGET_OUTAMP, &mc);
 
 	azalia_stac9221_gpio_unmute(this, 0);
 	azalia_stac9221_gpio_unmute(this, 1);
