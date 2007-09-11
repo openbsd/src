@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.32 2007/09/09 12:36:38 chl Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.33 2007/09/11 18:22:42 cloder Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.32 2007/09/09 12:36:38 chl Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.33 2007/09/11 18:22:42 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,6 @@ bool	printing = NO;
 bool	mailing = NO;
 bool	quitit = NO;
 bool	sending = NO;
-bool	intrpflg = NO;
 bool	restricted = NO;
 int	uid;
 int	msg;
@@ -137,6 +136,7 @@ int	nlines;
 int	Lpp = 0;
 time_t	t;
 time_t	keep;
+volatile sig_atomic_t	intrpflg = 0;
 
 void prmesg(int);
 void onintr(int);
@@ -588,7 +588,7 @@ cmnd:
 			prevmsg = msg;
 		}
 
-		printf("--%s--\n", sep);
+		printf("--%s--\n", (intrpflg ? "Interrupt" : sep));
 		sep = "-";
 		if (msg >= nextmsg) {
 			nextmsg = msg + 1;
@@ -689,10 +689,9 @@ onintr(int signo)
 		write(STDOUT_FILENO, "\n", 1);
 		if (hdrs)
 			_exit(0);
-		sep = "Interrupt";
 		if (newmsg)
 			fseeko(newmsg, (off_t)0, SEEK_END);
-		intrpflg = YES;
+		intrpflg = 1;
 	}
 	errno = save_errno;
 }
@@ -752,7 +751,7 @@ ask(char *prompt)
 
 	printf("%s ", prompt);
 	fflush(stdout);
-	intrpflg = NO;
+	intrpflg = 0;
 	if (fgets(inbuf, sizeof inbuf, stdin) == NULL)
 		errx(1, "could not read input");
 	inbuf[strcspn(inbuf, "\n")] = '\0';
