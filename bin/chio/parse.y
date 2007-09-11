@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2007/09/11 22:16:15 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2007/09/11 23:06:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -296,7 +296,7 @@ yylex(void)
 	}
 
 #define allowed_to_end_number(x) \
-	(isspace(x) || c == ')' || c ==',' || c == '/' || c == '}')
+	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}')
 
 	if (c == '-' || isdigit(c)) {
 		do {
