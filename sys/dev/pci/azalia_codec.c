@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.33 2007/09/10 22:37:08 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.34 2007/09/11 05:14:42 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -107,6 +107,8 @@ int	azalia_stac9200_mixer_init(codec_t *);
 int	azalia_stac9200_unsol_event(codec_t *, int);
 int	azalia_stac9221_apple_mixer_init(codec_t *);
 int	azalia_stac9221_apple_init_dacgroup(codec_t *);
+int	azalia_stac9221_apple_set_port(codec_t *, mixer_ctrl_t *);
+int	azalia_stac9221_apple_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_stac9221_apple_unsol_event(codec_t *, int);
 int	azalia_stac9221_gpio_unmute(codec_t *, int);
 int	azalia_stac7661_init_dacgroup(codec_t *);
@@ -176,6 +178,8 @@ azalia_codec_init_vtbl(codec_t *this)
 			    azalia_stac9221_apple_init_dacgroup;
 			this->mixer_init =
 			    azalia_stac9221_apple_mixer_init;
+			this->set_port = azalia_stac9221_apple_set_port;
+			this->get_port = azalia_stac9221_apple_get_port;
 			this->unsol_event = azalia_stac9221_apple_unsol_event;
 		}
 		break;
@@ -2493,6 +2497,11 @@ static const mixer_item_t stac9221_apple_mixer_items[] = {
 	{{AZ_CLASS_INPUT, {AudioCinputs}, AUDIO_MIXER_CLASS, AZ_CLASS_INPUT, 0, 0}, 0},
 	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
 	{{AZ_CLASS_RECORD, {AudioCrecord}, AUDIO_MIXER_CLASS, AZ_CLASS_RECORD, 0, 0}, 0},
+#define APPLE_TARGET_MASTER -1
+	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  4, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x02, APPLE_TARGET_MASTER},
+	{{0, {AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 3, ENUM_OFFON}, 0x02, APPLE_TARGET_MASTER},
 
 	{{0, {AudioNheadphone}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
 	  0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x02, MI_TARGET_OUTAMP},
@@ -2513,9 +2522,6 @@ static const mixer_item_t stac9221_apple_mixer_items[] = {
           0, 0, .un.v={{""}, 2, MIXER_DELTA(15)}}, 0x05, MI_TARGET_OUTAMP},
         {{0, {"line2.mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
           0, 0, ENUM_OFFON}, 0x05, MI_TARGET_OUTAMP},
-
-	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	  0, 0, .un.v={{""}, 1, MIXER_DELTA(15)}}, 0x16, MI_TARGET_VOLUME},
 };
 
 int
@@ -2578,6 +2584,50 @@ azalia_stac9221_apple_mixer_init(codec_t *this)
         azalia_stac9221_apple_unsol_event(this, APPLE_EVENT_HP);
 
 	return 0;
+}
+
+int
+azalia_stac9221_apple_set_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+	int err;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	if (mc->type != m->devinfo.type)
+		return EINVAL;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if (m->target == APPLE_TARGET_MASTER) {
+		err = azalia_generic_mixer_set(this, 0x02,
+		    MI_TARGET_OUTAMP, mc);
+		err = azalia_generic_mixer_set(this, 0x03,
+		    MI_TARGET_OUTAMP, mc);
+		err = azalia_generic_mixer_set(this, 0x04,
+		    MI_TARGET_OUTAMP, mc);
+		err = azalia_generic_mixer_set(this, 0x05,
+		    MI_TARGET_OUTAMP, mc);
+		return err;
+	}
+	return azalia_generic_mixer_set(this, m->nid, m->target, mc);
+}
+
+int
+azalia_stac9221_apple_get_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	mc->type = m->devinfo.type;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if (m->target == APPLE_TARGET_MASTER)
+		return azalia_generic_mixer_get(this, m->nid,
+		    MI_TARGET_OUTAMP, mc);
+	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
 }
 
 int
