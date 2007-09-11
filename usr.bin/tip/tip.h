@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.30 2007/06/25 15:57:28 jmc Exp $	*/
+/*	$OpenBSD: tip.h,v 1.31 2007/09/11 18:20:21 cloder Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -247,11 +247,10 @@ pid_t	tipin_pid;		/* pid of tipin */
 pid_t	tipout_pid;		/* pid of tipout */
 uid_t	uid, euid;		/* real and effective user id's */
 gid_t	gid, egid;		/* real and effective group id's */
-int	stop;			/* stop transfer session flag */
-int	quit;			/* same; but on other end */
-int	intflag;		/* recognized interrupt */
-int	stoprompt;		/* for interrupting a prompt session */
-int	timedout;		/* ~> transfer timedout */
+volatile sig_atomic_t stop;	/* stop transfer session flag */
+volatile sig_atomic_t quit;	/* same; but on other end */
+volatile sig_atomic_t stoprompt;/* for interrupting a prompt session */
+volatile sig_atomic_t timedout;	/* ~> transfer timedout */
 int	cumode;			/* simulating the "cu" program */
 int	bits8;			/* terminal is 8-bit mode */
 #define STRIP_PAR	(bits8 ? 0377 : 0177)
