@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.126 2007/08/06 19:16:06 sobrado Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.127 2007/09/11 17:08:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -67,7 +67,7 @@ void		 show_interface_head(void);
 int		 ift2ifm(int);
 const char *	 get_media_descr(int);
 const char *	 get_linkstate(int, int);
-void		 print_baudrate(u_long);
+void		 print_baudrate(u_int64_t);
 int		 show_interface_msg(struct imsg *);
 void		 show_rib_summary_head(void);
 void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
@@ -972,16 +972,16 @@ get_linkstate(int media_type, int link_state)
 }
 
 void
-print_baudrate(u_long baudrate)
+print_baudrate(u_int64_t baudrate)
 {
 	if (baudrate > IF_Gbps(1))
-		printf("%lu GBit/s", baudrate / IF_Gbps(1));
+		printf("%llu GBit/s", baudrate / IF_Gbps(1));
 	else if (baudrate > IF_Mbps(1))
-		printf("%lu MBit/s", baudrate / IF_Mbps(1));
+		printf("%llu MBit/s", baudrate / IF_Mbps(1));
 	else if (baudrate > IF_Kbps(1))
-		printf("%lu KBit/s", baudrate / IF_Kbps(1));
+		printf("%llu KBit/s", baudrate / IF_Kbps(1));
 	else
-		printf("%lu Bit/s", baudrate);
+		printf("%llu Bit/s", baudrate);
 }
 
 int
