@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.2 2006/11/28 19:21:15 reyk Exp $ */
+/*	$OpenBSD: interface.c,v 1.3 2007/09/11 18:05:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -406,6 +406,7 @@ if_new(struct kif *kif)
 	iface->flags = kif->flags;
 	iface->linkstate = kif->link_state;
 	iface->media_type = kif->media_type;
+	iface->baudrate = kif->baudrate;
 
 	/* get address */
 	if (ioctl(s, SIOCGIFADDR, ifr) < 0)
