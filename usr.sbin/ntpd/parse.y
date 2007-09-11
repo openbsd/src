@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2006/10/03 00:49:09 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.31 2007/09/11 23:33:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,11 +51,16 @@ int	 lungetc(int);
 int	 findeol(void);
 int	 yylex(void);
 
+struct opts {
+	int		weight;
+} opts;
+
 typedef struct {
 	union {
-		u_int32_t		 number;
+		int64_t		 	number;
 		char			*string;
 		struct ntp_addr_wrap	*addr;
+		struct opts		opts;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -66,8 +71,11 @@ typedef struct {
 %token	SERVER SERVERS SENSOR WEIGHT
 %token	ERROR
 %token	<v.string>		STRING
+%token	<v.number>		NUMBER
 %type	<v.addr>		address
-%type	<v.number>		number weight
+%type	<v.opts>		server_opts server_opts_l server_opt
+%type	<v.opts>		sensor_opts sensor_opts_l sensor_opt
+%type	<v.opts>		weight
 %%
 
 grammar		: /* empty */
@@ -108,7 +116,7 @@ conf_main	: LISTEN ON address	{
 			free($3->name);
 			free($3);
 		}
-		| SERVERS address weight	{
+		| SERVERS address server_opts	{
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
 
@@ -130,7 +138,7 @@ conf_main	: LISTEN ON address	{
 					next = NULL;
 
 				p = new_peer();
-				p->weight = $3;
+				p->weight = $3.weight;
 				p->addr = h;
 				p->addr_head.a = h;
 				p->addr_head.pool = 1;
@@ -147,7 +155,7 @@ conf_main	: LISTEN ON address	{
 			free($2->name);
 			free($2);
 		}
-		| SERVER address weight	{
+		| SERVER address server_opts {
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
 
@@ -168,7 +176,7 @@ conf_main	: LISTEN ON address	{
 				p->addr = h;
 			}
 
-			p->weight = $3;
+			p->weight = $3.weight;
 			p->addr_head.a = p->addr;
 			p->addr_head.pool = 0;
 			p->addr_head.name = strdup($2->name);
@@ -180,11 +188,11 @@ conf_main	: LISTEN ON address	{
 			free($2->name);
 			free($2);
 		}
-		| SENSOR STRING	weight {
+		| SENSOR STRING	sensor_opts {
 			struct ntp_conf_sensor	*s;
 
 			s = new_sensor($2);
-			s->weight = $3;
+			s->weight = $3.weight;
 			free($2);
 			TAILQ_INSERT_TAIL(&conf->ntp_conf_sensors, s, entry);
 		}
@@ -205,28 +213,34 @@ address		: STRING		{
 		}
 		;
 
-number		: STRING			{
-			u_long		 ulval;
-			const char	*errstr;
-
-			ulval = strtonum($1, 0, INT_MAX, &errstr);
-			if (errstr) {
-				yyerror("\"%s\" invalid: %s", $1, errstr);
-				free($1);
-				YYERROR;
-			} else
-				$$ = ulval;
-			free($1);
-		}
+server_opts	:	{ bzero(&opts, sizeof opts); }
+		  server_opts_l
+			{ $$ = opts; }
+		|	{ bzero(&opts, sizeof opts); $$ = opts; }
+		;
+server_opts_l	: server_opts_l server_opt
+		| server_opt
+		;
+server_opt	: weight
 		;
 
-weight		: /* empty */	{ $$ = 1; }
-		| WEIGHT number	{
+sensor_opts	:	{ bzero(&opts, sizeof opts); }
+		  sensor_opts_l
+			{ $$ = opts; }
+		|	{ bzero(&opts, sizeof opts); $$ = opts; }
+		;
+sensor_opts_l	: sensor_opts_l sensor_opt
+		| sensor_opt
+		;
+sensor_opt	: weight
+		;
+
+weight		: WEIGHT NUMBER	{
 			if ($2 < 1 || $2 > 10) {
 				yyerror("weight must be between 1 and 10");
 				YYERROR;
 			}
-			$$ = $2;
+			opts.weight = $2;
 		}
 		;
 
@@ -408,6 +422,42 @@ yylex(void)
 		if (yylval.v.string == NULL)
 			fatal("yylex: strdup");
 		return (STRING);
+	}
+
+#define allowed_to_end_number(x) \
+	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc(fin)) != EOF && isdigit(c));
+		lungetc(c);
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = strtonum(buf, LLONG_MIN,
+			    LLONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
 	}
 
 #define allowed_in_string(x) \
