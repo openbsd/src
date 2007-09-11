@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.13 2007/09/07 15:00:19 art Exp $	*/
+/*	$OpenBSD: via.c,v 1.14 2007/09/11 01:12:44 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -89,8 +89,8 @@ struct viac3_softc {
 static struct viac3_softc *vc3_sc;
 extern int i386_has_xcrypt;
 
-extern u_int8_t hmac_ipad_buffer[64];
-extern u_int8_t hmac_opad_buffer[64];
+extern const u_int8_t hmac_ipad_buffer[64];
+extern const u_int8_t hmac_opad_buffer[64];
 
 void viac3_crypto_setup(void);
 int viac3_crypto_newsession(u_int32_t *, struct cryptoini *);
