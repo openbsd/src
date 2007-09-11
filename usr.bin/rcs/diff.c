@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.24 2007/07/03 00:56:23 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.25 2007/09/11 15:47:17 gilles Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1155,7 +1155,6 @@ match_function(const long *f, int pos, FILE *fp)
 	unsigned char buf[FUNCTION_CONTEXT_SIZE];
 	size_t nc;
 	int last = lastline;
-	char *p;
 	char *state = NULL;
 
 	lastline = pos;
@@ -1167,9 +1166,9 @@ match_function(const long *f, int pos, FILE *fp)
 		nc = fread(buf, 1, nc, fp);
 		if (nc > 0) {
 			buf[nc] = '\0';
-			p = strchr((const char *)buf, '\n');
-			if (p != NULL)
-				*p = '\0';
+
+			buf[strcspn(buf, "\n")] = '\0';
+
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
 				if (begins_with(buf, "private:")) {
 					if (!state)

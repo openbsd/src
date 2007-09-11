@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.14 2006/01/23 17:29:22 millert Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.15 2007/09/11 15:47:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -276,9 +276,7 @@ init(argc, argv)
 		if ((f = fopen(buf, "r")) == NULL)
 			quit(1, "supscan: Unable to open %s\n", buf);
 		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-			q = strchr(p, '\n');
-			if (q)
-				*q = '\0';
+			p[strcspn(p, "\n")] = '\0';
 			if (strchr("#;:", *p))
 				continue;
 			collname = nxtarg(&p, " \t=");
@@ -298,9 +296,7 @@ init(argc, argv)
 		if ((f = fopen(filename, "r")) == NULL)
 			quit(1, "supscan: Unable to open %s\n", filename);
 		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-			q = strchr(p, '\n');
-			if (q)
-				*q = '\0';
+			p[strcspn(p, "\n")] = '\0';
 			if (strchr("#;:",*p))
 				continue;
 			q = nxtarg(&p, " \t=");
@@ -329,9 +325,7 @@ getscancoll(filename, collname, basedir)
 	if (basedir == NULL) {
 		if ((f = fopen(filename, "r")) != NULL) {
 			while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-				q = strchr(p, '\n');
-				if (q)
-					*q = '\0';
+				p[strcspn(p, "\n")] = '\0';
 				if (strchr("#;:", *p))
 					continue;
 				q = nxtarg(&p, " \t=");
@@ -359,9 +353,7 @@ getscancoll(filename, collname, basedir)
 	(void) snprintf(buf, sizeof buf, FILEPREFIX, collname);
 	if ((f = fopen(buf, "r")) != NULL) {
 		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-			q = strchr(p, '\n');
-			if (q)
-				*q = '\0';
+			p[strcspn(p, "\n")] = '\0';
 			if (strchr("#;:", *p))
 				continue;
 			prefix = strdup(p);

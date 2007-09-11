@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcname.c,v 1.7 2001/05/04 22:16:16 millert Exp $	*/
+/*	$OpenBSD: supcname.c,v 1.8 2007/09/11 15:47:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -83,8 +83,7 @@ getnams()
 	if (f == NULL)
 		logquit (1, "Can't open %s", buf);
 	while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-		if ((q = strchr(p, '\n')) != NULL)
-			*q = '\0';
+		p[strcspn(p, "\n")] = '\0';
 		if (strchr("#;:", *p))
 			continue;
 		q = nxtarg(&p, "= \t");

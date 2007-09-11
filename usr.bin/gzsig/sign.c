@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.7 2006/04/17 09:36:56 moritz Exp $ */
+/* $OpenBSD: sign.c,v 1.8 2007/09/11 15:47:17 gilles Exp $ */
 
 /*
  * sign.c
@@ -200,8 +200,7 @@ sign_passwd_cb(char *buf, int size, int rwflag, void *u)
 		if (fgets(buf, size, f) == NULL)
 			err(1, "fgets(%.64s)", passphrase_file);
 		fclose(f);
-		if ((p = strchr(buf, '\n')) != NULL)
-			*p = '\0';
+		buf[strcspn(buf, "\n")] = '\0';
 	} else {
 		p = getpass("Enter passphrase: ");
 		if (strlcpy(buf, p, size) >= size)

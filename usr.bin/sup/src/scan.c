@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.15 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: scan.c,v 1.16 2007/09/11 15:47:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -302,9 +302,7 @@ getrelease (release)
 				rewound = TRUE;
 				continue;
 			}
-			q = strchr(p, '\n');
-			if (q)
-				*q = '\0';
+			p[strcspn(p, "\n")] = '\0';
 			if (strchr("#;:", *p))
 				continue;
 			q = nxtarg(&p, " \t");
@@ -350,9 +348,7 @@ makescanlists()
 	f = fopen(buf, "r");
 	if (f != NULL) {
 		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-			q = strchr(p,'\n');
-			if (q)
-				*q = '\0';
+			p[strcspn(p, "\n")] = '\0';
 			if (strchr("#;:", *p))
 				continue;
 			q = nxtarg(&p, " \t");
@@ -479,8 +475,7 @@ readlistfile(fname)
 		goaway("Can't read list file %s", fname);
 	cdprefix(prefix);
 	while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-		if ((q = strchr(p, '\n')) != NULL)
-			*q = '\0';
+		p[strcspn(p, "\n")] = '\0';
 		if (strchr("#;:", *p))
 			continue;
 		q = nxtarg (&p, " \t");
@@ -869,8 +864,9 @@ int getscanfile(scanfile)
 		(void) fclose(f);
 		return (FALSE);
 	}
-	if ((q = strchr(p,'\n')) != NULL)
-		*q = '\0';
+
+	p[strcspn(p, "\n")] = '\0';
+
 	if (*p++ != 'V') {
 		(void) fclose(f);
 		return (FALSE);
@@ -887,9 +883,7 @@ int getscanfile(scanfile)
 	}
 	notwanted = FALSE;
 	while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
-		q = strchr(p, '\n');
-		if (q)
-			*q = '\0';
+		p[strcspn(p, "\n")] = '\0';
 		ts.Tflags = 0;
 		if (*p == 'X') {
 			if (notwanted)

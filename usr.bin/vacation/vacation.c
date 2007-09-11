@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.29 2007/03/21 03:31:19 tedu Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.30 2007/09/11 15:47:17 gilles Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.29 2007/03/21 03:31:19 tedu Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.30 2007/09/11 15:47:17 gilles Exp $";
 #endif /* not lint */
 
 /*
@@ -235,8 +235,7 @@ readheaders(void)
 					;
 				*p = '\0';
 				(void)strlcpy(from, buf + 5, sizeof(from));
-				if ((p = strchr(from, '\n')))
-					*p = '\0';
+				from[strcspn(from, "\n")] = '\0';
 				if (junkmail())
 					exit(0);
 			}
@@ -265,8 +264,7 @@ readheaders(void)
 				    "Return-Path %s exceeds limits", p);
 				exit(1);
 			}
-			if ((p = strchr(from, '\n')))
-				*p = '\0';
+			from[strcspn(from, "\n")] = '\0';
 			if (junkmail())
 				exit(0);
 			break;
@@ -296,8 +294,7 @@ readheaders(void)
 				    "Subject %s exceeds limits", p);
 				exit(1);
 			}
-			if ((p = strchr(subj, '\n')))
-				*p = '\0';
+			subj[strcspn(subj, "\n")] = '\0';
 			break;
 		case 'C':		/* "Cc:" */
 		case 'c':

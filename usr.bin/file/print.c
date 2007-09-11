@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.11 2004/05/19 02:32:35 tedu Exp $ */
+/*	$OpenBSD: print.c,v 1.12 2007/09/11 15:47:17 gilles Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -42,7 +42,7 @@
 #include <time.h>
 
 #ifndef lint
-FILE_RCSID("@(#)$Id: print.c,v 1.11 2004/05/19 02:32:35 tedu Exp $")
+FILE_RCSID("@(#)$Id: print.c,v 1.12 2007/09/11 15:47:17 gilles Exp $")
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -181,7 +181,6 @@ file_fmttime(uint32_t v, int local)
 		pp = asctime(tm);
 	}
 
-	if ((rt = strchr(pp, '\n')) != NULL)
-		*rt = '\0';
+	pp[strcspn(pp, "\n")] = '\0';
 	return pp;
 }

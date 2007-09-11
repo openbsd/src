@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.69 2007/06/09 05:16:21 ray Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.70 2007/09/11 15:47:17 gilles Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.69 2007/06/09 05:16:21 ray Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.70 2007/09/11 15:47:17 gilles Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1300,7 +1300,6 @@ match_function(const long *f, int pos, FILE *file)
 	unsigned char buf[FUNCTION_CONTEXT_SIZE];
 	size_t nc;
 	int last = lastline;
-	char *p;
 	char *state = NULL;
 
 	lastline = pos;
@@ -1312,9 +1311,8 @@ match_function(const long *f, int pos, FILE *file)
 		nc = fread(buf, 1, nc, file);
 		if (nc > 0) {
 			buf[nc] = '\0';
-			p = strchr(buf, '\n');
-			if (p != NULL)
-				*p = '\0';
+			buf[strcspn(buf, "\n")] = '\0';
+
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
 				if (begins_with(buf, "private:")) {
 					if (!state)

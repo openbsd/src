@@ -1,4 +1,4 @@
-/*	$OpenBSD: disks.c,v 1.16 2007/03/20 03:56:13 tedu Exp $	*/
+/*	$OpenBSD: disks.c,v 1.17 2007/09/11 15:47:17 gilles Exp $	*/
 /*	$NetBSD: disks.c,v 1.4 1996/05/10 23:16:33 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: disks.c,v 1.16 2007/03/20 03:56:13 tedu Exp $";
+static char rcsid[] = "$OpenBSD: disks.c,v 1.17 2007/09/11 15:47:17 gilles Exp $";
 #endif /* not lint */
 
 #include <string.h>
@@ -74,9 +74,8 @@ dkselect(char *args, int truefalse, int selections[])
 	char *cp;
 	int i;
 
-	cp = strchr(args, '\n');
-	if (cp)
-		*cp = '\0';
+	args[strcspn(args, "\n")] = '\0';
+
 	for (;;) {
 		for (cp = args; isspace(*cp); cp++)
 			;

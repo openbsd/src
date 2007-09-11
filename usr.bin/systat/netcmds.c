@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcmds.c,v 1.18 2007/08/09 02:38:09 ray Exp $	*/
+/*	$OpenBSD: netcmds.c,v 1.19 2007/09/11 15:47:17 gilles Exp $	*/
 /*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netcmds.c,v 1.18 2007/08/09 02:38:09 ray Exp $";
+static char rcsid[] = "$OpenBSD: netcmds.c,v 1.19 2007/09/11 15:47:17 gilles Exp $";
 #endif /* not lint */
 
 /*
@@ -129,9 +129,8 @@ changeitems(char *args, int onoff)
 	struct servent *sp;
 	struct addrinfo hints, *res0, *res;
 
-	cp = strchr(args, '\n');
-	if (cp)
-		*cp = '\0';
+	args[strcspn(args, "\n")] = '\0';
+
 	for (;;args = cp) {
 		for (cp = args; isspace(*cp); cp++)
 			;
