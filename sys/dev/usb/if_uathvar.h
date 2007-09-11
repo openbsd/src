@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uathvar.h,v 1.5 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: if_uathvar.h,v 1.6 2007/09/11 19:53:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -23,8 +23,6 @@
 /* XXX ehci will panic on abort_pipe if set to anything > 1 */
 #define UATH_RX_DATA_LIST_COUNT	1	/* 128 */
 #define UATH_RX_CMD_LIST_COUNT	1	/* 30 */
-
-#define UATH_RX_DATA_POOL_COUNT	(UATH_RX_DATA_LIST_COUNT + 24)
 
 #define UATH_DATA_TIMEOUT	10000
 #define UATH_CMD_TIMEOUT	1000
@@ -61,10 +59,10 @@ struct uath_tx_data {
 };
 
 struct uath_rx_data {
-	struct uath_softc		*sc;
-	usbd_xfer_handle		xfer;
-	uint8_t				*buf;
-	SLIST_ENTRY(uath_rx_data)	next;
+	struct uath_softc	*sc;
+	usbd_xfer_handle	xfer;
+	uint8_t			*buf;
+	struct mbuf		*m;
 };
 
 struct uath_tx_cmd {
@@ -92,7 +90,6 @@ struct uath_wme_settings {
 
 /* condvars */
 #define UATH_COND_INIT(sc)	((caddr_t)sc + 1)
-#define UATH_COND_NOREF(sc)	((caddr_t)sc + 2)
 
 /* flags for sending firmware commands */
 #define UATH_CMD_FLAG_ASYNC	(1 << 0)
@@ -106,16 +103,12 @@ struct uath_softc {
 					    enum ieee80211_state, int);
 
 	struct uath_tx_data		tx_data[UATH_TX_DATA_LIST_COUNT];
-	struct uath_rx_data		rx_data[UATH_RX_DATA_POOL_COUNT];
+	struct uath_rx_data		rx_data[UATH_RX_DATA_LIST_COUNT];
 
 	struct uath_tx_cmd		tx_cmd[UATH_TX_CMD_LIST_COUNT];
 	struct uath_rx_cmd		rx_cmd[UATH_RX_CMD_LIST_COUNT];
 
-	SLIST_HEAD(, uath_rx_data)	rx_freelist;
-
 	int				sc_flags;
-	int				sc_dying;
-	int				sc_refcnt;
 
 	int				data_idx;
 	int				cmd_idx;
