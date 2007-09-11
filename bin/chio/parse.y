@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2007/06/01 06:48:34 cnst Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2007/09/11 22:16:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -58,7 +58,7 @@ int	 yylex(void);
 
 typedef struct {
 	union {
-		u_int32_t		 number;
+		int64_t			 number;
 		char			*string;
 	} v;
 	int lineno;
@@ -70,6 +70,7 @@ typedef struct {
 %token	DRIVE
 %token	ERROR
 %token	<v.string>		STRING
+%token	<v.number>		NUMBER
 %%
 
 grammar		: /* empty */
@@ -292,6 +293,42 @@ yylex(void)
 		if (yylval.v.string == NULL)
 			err(1, "yylex: strdup");
 		return (STRING);
+	}
+
+#define allowed_to_end_number(x) \
+	(isspace(x) || c == ')' || c ==',' || c == '/' || c == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc(fin)) != EOF && isdigit(c));
+		lungetc(c);
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = strtonum(buf, LLONG_MIN,
+			    LLONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
 	}
 
 #define allowed_in_string(x) \
