@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4.c,v 1.2 2007/07/24 19:35:20 damien Exp $	*/
+/*	$OpenBSD: arc4.c,v 1.3 2007/09/11 12:07:05 djm Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -36,7 +36,7 @@ rc4_keysetup(struct rc4_ctx *ctx, u_char *key, u_int32_t klen)
 	for (i = 0; i < RC4STATE; i++)
 		ctx->state[i] = i;
 	for (i = 0; i < RC4STATE; i++) {
-		y = (key[x] + ctx->state[i] + y) % RC4STATE;
+		y = (key[x] + ctx->state[i] + y) & (RC4STATE - 1);
 		RC4SWAP(i, y);
 		x = (x + 1) % klen;
 	}
@@ -50,11 +50,25 @@ rc4_crypt(struct rc4_ctx *ctx, u_char *src, u_char *dst,
 	u_int32_t i;
 
 	for (i = 0; i < len; i++) {
-		ctx->x = (ctx->x + 1) % RC4STATE;
-		ctx->y = (ctx->state[ctx->x] + ctx->y) % RC4STATE;
+		ctx->x = (ctx->x + 1) & (RC4STATE - 1);
+		ctx->y = (ctx->state[ctx->x] + ctx->y) & (RC4STATE - 1);
 		RC4SWAP(ctx->x, ctx->y);
 		dst[i] = src[i] ^ ctx->state[
-		   (ctx->state[ctx->x] + ctx->state[ctx->y]) % RC4STATE];
+		   (ctx->state[ctx->x] + ctx->state[ctx->y]) & (RC4STATE - 1)];
+	}
+}
+
+void
+rc4_getbytes(struct rc4_ctx *ctx, u_char *dst, u_int32_t len)
+{
+	u_int32_t i;
+
+	for (i = 0; i < len; i++) {
+		ctx->x = (ctx->x + 1) & (RC4STATE - 1);
+		ctx->y = (ctx->state[ctx->x] + ctx->y) & (RC4STATE - 1);
+		RC4SWAP(ctx->x, ctx->y);
+		dst[i] = ctx->state[
+		   (ctx->state[ctx->x] + ctx->state[ctx->y]) & (RC4STATE - 1)];
 	}
 }
 
@@ -62,8 +76,8 @@ void
 rc4_skip(struct rc4_ctx *ctx, u_int32_t len)
 {
 	for (; len > 0; len--) {
-		ctx->x = (ctx->x + 1) % RC4STATE;
-		ctx->y = (ctx->state[ctx->x] + ctx->y) % RC4STATE;
+		ctx->x = (ctx->x + 1) & (RC4STATE - 1);
+		ctx->y = (ctx->state[ctx->x] + ctx->y) & (RC4STATE - 1);
 		RC4SWAP(ctx->x, ctx->y);
 	}
 }

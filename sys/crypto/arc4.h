@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4.h,v 1.2 2007/07/24 19:35:20 damien Exp $	*/
+/*	$OpenBSD: arc4.h,v 1.3 2007/09/11 12:07:05 djm Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -23,6 +23,11 @@ struct rc4_ctx {
 	u_int8_t state[RC4STATE];
 };
 
-void	rc4_keysetup(struct rc4_ctx *, u_char *, u_int32_t);
-void	rc4_crypt(struct rc4_ctx *, u_char *, u_char *, u_int32_t);
+void	rc4_keysetup(struct rc4_ctx *, u_char *, u_int32_t)
+    __attribute__((__bounded__(__buffer__,2,3)));
+void	rc4_crypt(struct rc4_ctx *, u_char *, u_char *, u_int32_t)
+    __attribute__((__bounded__(__buffer__,2,4)))
+    __attribute__((__bounded__(__buffer__,3,4)));
+void	rc4_getbytes(struct rc4_ctx *, u_char *, u_int32_t)
+    __attribute__((__bounded__(__buffer__,2,3)));
 void	rc4_skip(struct rc4_ctx *, u_int32_t);
