@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1259 2007/09/11 07:59:05 martin Exp $
+$OpenBSD: pcidevs,v 1.1260 2007/09/11 09:56:40 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3356,6 +3356,7 @@ product PLATFORM ES1849		0x0100	ES1849
 product PLX 1076		0x1076	I/O 1076
 product PLX 1077		0x1077	I/O 1077
 product PLX 8532_PCIE		0x8532	8532 PCIE
+product PLX 9016		0x9016	I/O 9016
 product PLX 9050		0x9050	I/O 9050
 product PLX 9080		0x9080	I/O 9080
 product	PLX CRONYX_OMEGA	0xc001	Cronyx Omega
