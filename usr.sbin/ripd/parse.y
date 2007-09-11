@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2007/01/15 18:23:43 michele Exp $ */
+/*	$OpenBSD: parse.y,v 1.7 2007/09/11 22:15:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -86,7 +86,7 @@ struct iface		*conf_get_if(struct kif *);
 
 typedef struct {
 	union {
-		u_int32_t	 number;
+		int64_t		 number;
 		char		*string;
 	} v;
 	int lineno;
@@ -101,7 +101,8 @@ typedef struct {
 %token	YES NO
 %token  ERROR
 %token  <v.string>	STRING
-%type   <v.number>	number yesno no
+%token  <v.number>	NUMBER
+%type   <v.number>	yesno no
 %type   <v.string>	string
 
 %%
@@ -111,21 +112,6 @@ grammar		: /* empty */
 		| grammar conf_main '\n'
 		| grammar varset '\n'
 		| grammar interface '\n'
-		;
-
-number		: STRING {
-			u_int32_t	 uval;
-			const char	*errstr;
-
-			uval = strtonum($1, 0, UINT_MAX, &errstr);
-			if (errstr) {
-				yyerror("number %s is %s", $1, errstr);
-				free($1);
-				YYERROR;
-			} else
-				$$ = uval;
-			free($1);
-		}
 		;
 
 string		: string STRING {
@@ -239,7 +225,7 @@ conf_main	: SPLIT_HORIZON STRING {
 		| defaults
 		;
 
-authmd		: AUTHMD number STRING {
+authmd		: AUTHMD NUMBER STRING {
 			if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
 				yyerror("auth-md key-id out of range "
 				    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
@@ -257,7 +243,7 @@ authmd		: AUTHMD number STRING {
 			free($3);
 		}
 
-authmdkeyid	: AUTHMDKEYID number {
+authmdkeyid	: AUTHMDKEYID NUMBER {
 			if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
 				yyerror("auth-md-keyid out of range "
 				    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
@@ -298,7 +284,7 @@ authkey		: AUTHKEY STRING {
 		}
 		;
 
-defaults	: COST number {
+defaults	: COST NUMBER {
 			if ($2 < 1 || $2 > INFINITY) {
 				yyerror("cost out of range (%d-%d)", 1,
 				    INFINITY);
@@ -571,6 +557,42 @@ top:
 		if (yylval.v.string == NULL)
 			errx(1, "yylex: strdup");
 		return (STRING);
+	}
+
+#define allowed_to_end_number(x) \
+	(isspace(x) || c == ')' || c ==',' || c == '/' || c == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc(fin)) != EOF && isdigit(c));
+		lungetc(c);
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = strtonum(buf, LLONG_MIN,
+			    LLONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
 	}
 
 #define allowed_in_string(x) \

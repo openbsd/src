@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2007/03/21 19:33:48 michele Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2007/09/11 22:15:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -92,7 +92,7 @@ struct iface		*new_group(void);
 
 typedef struct {
 	union {
-		u_int32_t	 number;
+		int64_t		 number;
 		char		*string;
 	} v;
 	int lineno;
@@ -109,7 +109,8 @@ typedef struct {
 %token	IGMPVERSION
 %token	ERROR
 %token	<v.string>	STRING
-%type	<v.number>	number yesno
+%token	<v.number>	NUMBER
+%type	<v.number>	yesno
 %type	<v.string>	string
 
 %%
@@ -121,21 +122,6 @@ grammar		: /* empty */
 		| grammar interface '\n'
 		| grammar group '\n'
 		| grammar error '\n'		{ errors++; }
-		;
-
-number		: STRING {
-			u_int32_t	 uval;
-			const char	*errstr;
-
-			uval = strtonum($1, 0, UINT_MAX, &errstr);
-			if (errstr) {
-				yyerror("number %s is %s", $1, errstr);
-				free($1);
-				YYERROR;
-			} else
-				$$ = uval;
-			free($1);
-		}
 		;
 
 string		: string STRING	{
@@ -183,7 +169,7 @@ conf_main	: FIBUPDATE yesno {
 		| defaults
 		;
 
-defaults	: LASTMEMBERQUERYCNT number {
+defaults	: LASTMEMBERQUERYCNT NUMBER {
 			if ($2 < MIN_LAST_MEMBER_QUERY_CNT ||
 			     $2 > MAX_LAST_MEMBER_QUERY_CNT) {
 				yyerror("last-member-query-count out of "
@@ -194,7 +180,7 @@ defaults	: LASTMEMBERQUERYCNT number {
 			}
 			defs->last_member_query_cnt = $2;
 		}
-		| LASTMEMBERQUERYINTERVAL number {
+		| LASTMEMBERQUERYINTERVAL NUMBER {
 			if ($2 < MIN_LAST_MEMBER_QUERY_INTERVAL ||
 			     $2 > MAX_LAST_MEMBER_QUERY_INTERVAL) {
 				yyerror("last-member-query-interval out of "
@@ -205,7 +191,7 @@ defaults	: LASTMEMBERQUERYCNT number {
 			}
 			defs->last_member_query_interval = $2;
 		}
-		| METRIC number {
+		| METRIC NUMBER {
 			if ($2 < MIN_METRIC || $2 > MAX_METRIC) {
 				yyerror("metric out of range (%d-%d)",
 				    MIN_METRIC, MAX_METRIC);
@@ -213,7 +199,7 @@ defaults	: LASTMEMBERQUERYCNT number {
 			}
 			defs->metric = $2;
 		}
-		| QUERYINTERVAL number {
+		| QUERYINTERVAL NUMBER {
 			if ($2 < MIN_QUERY_INTERVAL ||
 			     $2 > MAX_QUERY_INTERVAL) {
 				yyerror("query-interval out of range (%d-%d)",
@@ -222,7 +208,7 @@ defaults	: LASTMEMBERQUERYCNT number {
 			}
 			defs->query_interval = $2;
 		}
-		| QUERYRESPINTERVAL number {
+		| QUERYRESPINTERVAL NUMBER {
 			if ($2 < MIN_QUERY_RESP_INTERVAL ||
 			     $2 > MAX_QUERY_RESP_INTERVAL) {
 				yyerror("query-response-interval out of "
@@ -233,7 +219,7 @@ defaults	: LASTMEMBERQUERYCNT number {
 			}
 			defs->query_resp_interval = $2;
 		}
-		| ROBUSTNESS number {
+		| ROBUSTNESS NUMBER {
 			if ($2 < MIN_ROBUSTNESS || $2 > MAX_ROBUSTNESS) {
 				yyerror("robustness out of range (%d-%d)",
 				    MIN_ROBUSTNESS, MAX_ROBUSTNESS);
@@ -241,7 +227,7 @@ defaults	: LASTMEMBERQUERYCNT number {
 			}
 			defs->robustness = $2;
 		}
-		| STARTUPQUERYCNT number {
+		| STARTUPQUERYCNT NUMBER {
 			if ($2 < MIN_STARTUP_QUERY_CNT ||
 			     $2 > MAX_STARTUP_QUERY_CNT) {
 				yyerror("startup-query-count out of "
@@ -252,7 +238,7 @@ defaults	: LASTMEMBERQUERYCNT number {
 			}
 			defs->startup_query_cnt = $2;
 		}
-		| STARTUPQUERYINTERVAL number {
+		| STARTUPQUERYINTERVAL NUMBER {
 			if ($2 < MIN_STARTUP_QUERY_INTERVAL ||
 			     $2 > MAX_STARTUP_QUERY_INTERVAL) {
 				yyerror("startup-query-interval out of "
@@ -263,7 +249,7 @@ defaults	: LASTMEMBERQUERYCNT number {
 			}
 			defs->startup_query_interval = $2;
 		}
-		| IGMPVERSION number {
+		| IGMPVERSION NUMBER {
 			if ($2 < MIN_IGMP_VERSION ||
 			     $2 > MAX_IGMP_VERSION) {
 				yyerror("igmp-version out of range (%d-%d)",
@@ -564,6 +550,42 @@ top:
 		if (yylval.v.string == NULL)
 			errx(1, "yylex: strdup");
 		return (STRING);
+	}
+
+#define allowed_to_end_number(x) \
+	(isspace(x) || c == ')' || c ==',' || c == '/' || c == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc(fin)) != EOF && isdigit(c));
+		lungetc(c);
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = strtonum(buf, LLONG_MIN,
+			    LLONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
 	}
 
 #define allowed_in_string(x) \
