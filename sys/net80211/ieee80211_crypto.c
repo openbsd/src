@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.35 2007/08/29 19:54:46 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.36 2007/09/11 19:03:33 damien Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -721,7 +721,7 @@ ieee80211_hmac_sha1_v(const struct vector *vec, int vcnt, const u_int8_t *key,
 
 	if (key_len > SHA1_BLOCK_LENGTH) {
 		SHA1Init(&ctx);
-		SHA1Update(&ctx, (u_int8_t *)key, key_len);
+		SHA1Update(&ctx, key, key_len);
 		SHA1Final(tk, &ctx);
 
 		key = tk;
@@ -736,7 +736,7 @@ ieee80211_hmac_sha1_v(const struct vector *vec, int vcnt, const u_int8_t *key,
 	SHA1Init(&ctx);
 	SHA1Update(&ctx, k_pad, SHA1_BLOCK_LENGTH);
 	for (i = 0; i < vcnt; i++)
-		SHA1Update(&ctx, (u_int8_t *)vec[i].base, vec[i].len);
+		SHA1Update(&ctx, vec[i].base, vec[i].len);
 	SHA1Final(digest, &ctx);
 
 	bzero(k_pad, sizeof k_pad);
