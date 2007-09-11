@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.37 2007/05/30 02:21:08 henning Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.38 2007/09/11 16:01:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -66,7 +66,7 @@ int		 show_fib_msg(struct imsg *);
 void		 show_interface_head(void);
 const char *	 get_media_descr(int);
 const char *	 get_linkstate(int, int);
-void		 print_baudrate(u_long);
+void		 print_baudrate(u_int64_t);
 int		 show_fib_interface_msg(struct imsg *);
 
 struct imsgbuf	*ibuf;
@@ -1205,16 +1205,16 @@ get_linkstate(int media_type, int link_state)
 }
 
 void
-print_baudrate(u_long baudrate)
+print_baudrate(u_int64_t baudrate)
 {
 	if (baudrate > IF_Gbps(1))
-		printf("%lu GBit/s", baudrate / IF_Gbps(1));
+		printf("%llu GBit/s", baudrate / IF_Gbps(1));
 	else if (baudrate > IF_Mbps(1))
-		printf("%lu MBit/s", baudrate / IF_Mbps(1));
+		printf("%llu MBit/s", baudrate / IF_Mbps(1));
 	else if (baudrate > IF_Kbps(1))
-		printf("%lu KBit/s", baudrate / IF_Kbps(1));
+		printf("%llu KBit/s", baudrate / IF_Kbps(1));
 	else
-		printf("%lu Bit/s", baudrate);
+		printf("%llu Bit/s", baudrate);
 }
 
 int
