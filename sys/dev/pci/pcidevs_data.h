@@ -10624,6 +10624,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8532 PCIE",
 	},
 	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9016,
+	    "I/O 9016",
+	},
+	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
 	    "I/O 9050",
 	},
