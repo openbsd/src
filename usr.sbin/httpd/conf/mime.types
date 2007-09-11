@@ -345,6 +345,7 @@ application/whoispp-response
 application/wita
 application/wordperfect5.1
 application/x-bcpio		bcpio
+application/x-bittorrent	torrent
 application/x-cdlink		vcd
 application/x-chess-pgn		pgn
 application/x-compress
