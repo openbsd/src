@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ospfd.8,v 1.14 2007/05/31 19:20:26 jmc Exp $
+.\"	$OpenBSD: ospfd.8,v 1.15 2007/09/11 10:16:44 norby Exp $
 .\"
-.\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
+.\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 11 2007 $
 .Dt OSPFD 8
 .Os
 .Sh NAME
@@ -29,7 +29,88 @@
 is an Open Shortest Path First
 .Pq OSPF
 daemon which manages routing tables.
-Its main purpose is to keep AS internal routing tables in sync.
+This implementation supports OSPF version 2, thus it is only capable of
+maintaining IPv4 routing tables.
+.Pp
+OSPF is an interior gateway protocol designed to superceed RIP.
+The OSPF daemon maintains a Link State Database
+.Pq LSDB
+consisting of routers and networks.
+.Pp
+Dijkstra's shortest path first algorithm is used to compute the Route
+Information Base using the LSDB as input.
+The Forwarding Information Base a.k.a. the kernel route table is updated
+with information from the RIB.
+.Pp
+OSPF routers communicate via two multicast groups 224.0.0.5 all Shortest
+Path First routers and 224.0.0.6 all Designated Routers.
+The IP protocol number 89 is reserved for OSPF, furthermore OSPF packets
+omit the use of TCP and UDP.
+.Pp
+OSPF has several advantages over RIP, e.g. every router has a complete
+network topology.
+Response to changes in the network are faster.
+Futhermore fail detection is much improved.
+.Pp
+All routers in a OSPF network spend most of their time keeping each others
+LSDB's in sync.
+All routers must have the same information in the LSDB at all times.
+Every time the LSDB is updated the RIB is updated, if needed the FIB is
+also updated.
+.Pp
+OSPF aware routers discover each other via OSPF hello packets.
+.Pp
+In a multiaccess network e.g. ethernet it is unfeasable for all routers
+to syncronize with all other routers in the network.
+In such networks a Designated Router
+.Pq DR
+and a Backup Designated Router
+.Pq BDR
+is elected.
+The DRs responsibility is to syncronize with all routers, the BDR will
+not do much until the DR fails.
+The first router in a network is automatically elected DR, the second
+router BDR.
+All routers have a FULL adjacency with the DR and the BDR.
+A router not elected either DR or BDR will have 2-WAY adjacency with all
+routers but the DR and BDR.
+Routers that form 2-WAY adjacency recognize that they know each other.
+In case a DR or BDR should fail another router is elected and all routers
+changes state on the newly elected router and syncronize to it.
+.Pp
+When routers are connected via point to point links, the DR and BDR
+election is skipped since only two routers are connected.
+.Pp
+To limit the impact changes in the network has on the LSDB it is possible
+to segement OSPF network into areas.
+Area 0.0.0.0 a.k.a. the backbone area must always be present. 
+Routers can be configured as Area Border Router
+.Pq ABR ,
+being part of multiple areas.
+Every area must have direct access to the backbone area.
+ABRs not directly connected to the backbone area need to establish a
+virtual link to a router in the backbone area.
+Virtual links are currently not available in
+.Nm .
+.Pp
+AS Border Routers
+.Pq ASBR
+are connected to an OSPF network and other external networks, BGP, RIP
+or statically routed.
+.Pp
+.Nm
+is usually started at boot time, and can be enabled by
+setting the following in
+.Pa /etc/rc.conf.local :
+.Pp
+.Dl ospfd_flags=\&"\&"
+.Pp
+See
+.Xr rc 8
+and
+.Xr rc.conf 8
+for more information on the boot process
+and enabling daemons.
 .Pp
 A running
 .Nm
