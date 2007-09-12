@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2007/07/11 14:10:25 pyr Exp $ */
+/*	$OpenBSD: parse.y,v 1.51 2007/09/12 09:59:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -96,7 +96,7 @@ struct iface		*conf_get_if(struct kif *, struct kif_addr *);
 
 typedef struct {
 	union {
-		u_int32_t	 number;
+		int64_t		 number;
 		char		*string;
 	} v;
 	int lineno;
@@ -115,7 +115,8 @@ typedef struct {
 %token	DEMOTE
 %token	ERROR
 %token	<v.string>	STRING
-%type	<v.number>	number yesno no optlist, optlist_l option demotecount
+%token	<v.number>	NUMBER
+%type	<v.number>	yesno no optlist, optlist_l option demotecount
 %type	<v.string>	string
 
 %%
@@ -126,21 +127,6 @@ grammar		: /* empty */
 		| grammar varset '\n'
 		| grammar area '\n'
 		| grammar error '\n'		{ errors++; }
-		;
-
-number		: STRING {
-			u_int32_t	 uval;
-			const char	*errstr;
-
-			uval = strtonum($1, 0, UINT_MAX, &errstr);
-			if (errstr) {
-				yyerror("number %s is %s", $1, errstr);
-				free($1);
-				YYERROR;
-			} else
-				$$ = uval;
-			free($1);
-		}
 		;
 
 string		: string STRING	{
@@ -186,6 +172,27 @@ conf_main	: ROUTERID STRING {
 				conf->flags |= OSPFD_FLAG_NO_FIB_UPDATE;
 			else
 				conf->flags &= ~OSPFD_FLAG_NO_FIB_UPDATE;
+		}
+		| no REDISTRIBUTE NUMBER '/' NUMBER optlist {
+			struct redistribute	*r;
+
+			if ((r = calloc(1, sizeof(*r))) == NULL)
+				fatal(NULL);
+			r->type = REDIST_ADDR;
+			if ($3 < 0 || $3 > 255 || $5 < 1 || $5 > 32) {
+				yyerror("bad network: %llu/%llu", $3, $5);
+				free(r);
+				YYERROR;
+			}
+			r->addr.s_addr = htonl($3 << IN_CLASSA_NSHIFT);
+			r->mask.s_addr = prefixlen2mask($5);
+
+			if ($1)
+				r->type |= REDIST_NO;
+			r->metric = $6;
+
+			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
+			conf->redistribute |= REDISTRIBUTE_ON;
 		}
 		| no REDISTRIBUTE STRING optlist {
 			struct redistribute	*r;
@@ -239,8 +246,8 @@ conf_main	: ROUTERID STRING {
 			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
 			conf->redistribute |= REDISTRIBUTE_ON;
 		}
-		| RTLABEL STRING EXTTAG number {
-			if (!$4) {
+		| RTLABEL STRING EXTTAG NUMBER {
+			if ($4 < 0 || $4 > UINT_MAX) {
 				yyerror("invalid external route tag");
 				free($2);
 				YYERROR;
@@ -251,7 +258,7 @@ conf_main	: ROUTERID STRING {
 		| RFC1583COMPAT yesno {
 			conf->rfc1583compat = $2;
 		}
-		| SPFDELAY number {
+		| SPFDELAY NUMBER {
 			if ($2 < MIN_SPF_DELAY || $2 > MAX_SPF_DELAY) {
 				yyerror("spf-delay out of range "
 				    "(%d-%d)", MIN_SPF_DELAY,
@@ -260,7 +267,7 @@ conf_main	: ROUTERID STRING {
 			}
 			conf->spf_delay = $2;
 		}
-		| SPFHOLDTIME number {
+		| SPFHOLDTIME NUMBER {
 			if ($2 < MIN_SPF_HOLDTIME || $2 > MAX_SPF_HOLDTIME) {
 				yyerror("spf-holdtime out of range "
 				    "(%d-%d)", MIN_SPF_HOLDTIME,
@@ -306,14 +313,14 @@ optlist_l	: optlist_l comma option {
 		| option { $$ = $1; }
 		;
 
-option		: METRIC number {
+option		: METRIC NUMBER {
 			if ($2 == 0 || $2 > MAX_METRIC) {
 				yyerror("invalid redistribute metric");
 				YYERROR;
 			}
 			$$ = $2;
 		}
-		| TYPE number {
+		| TYPE NUMBER {
 			switch ($2) {
 			case 1:
 				$$ = 0;
@@ -322,13 +329,13 @@ option		: METRIC number {
 				$$ = LSA_ASEXT_E_FLAG;
 				break;
 			default:
-				yyerror("illegal external type %u", $2);
+				yyerror("only external type 1 and 2 allowed");
 				YYERROR;
 			}
 		}
 		;
 
-authmd		: AUTHMD number STRING {
+authmd		: AUTHMD NUMBER STRING {
 			if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
 				yyerror("auth-md key-id out of range "
 				    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
@@ -346,7 +353,7 @@ authmd		: AUTHMD number STRING {
 			free($3);
 		}
 
-authmdkeyid	: AUTHMDKEYID number {
+authmdkeyid	: AUTHMDKEYID NUMBER {
 			if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
 				yyerror("auth-md-keyid out of range "
 				    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
@@ -387,7 +394,7 @@ authkey		: AUTHKEY STRING {
 		}
 		;
 
-defaults	: METRIC number {
+defaults	: METRIC NUMBER {
 			if ($2 < MIN_METRIC || $2 > MAX_METRIC) {
 				yyerror("metric out of range (%d-%d)",
 				    MIN_METRIC, MAX_METRIC);
@@ -395,7 +402,7 @@ defaults	: METRIC number {
 			}
 			defs->metric = $2;
 		}
-		| ROUTERPRIORITY number {
+		| ROUTERPRIORITY NUMBER {
 			if ($2 < MIN_PRIORITY || $2 > MAX_PRIORITY) {
 				yyerror("router-priority out of range (%d-%d)",
 				    MIN_PRIORITY, MAX_PRIORITY);
@@ -403,7 +410,7 @@ defaults	: METRIC number {
 			}
 			defs->priority = $2;
 		}
-		| ROUTERDEADTIME number {
+		| ROUTERDEADTIME NUMBER {
 			if ($2 < MIN_RTR_DEAD_TIME || $2 > MAX_RTR_DEAD_TIME) {
 				yyerror("router-dead-time out of range (%d-%d)",
 				    MIN_RTR_DEAD_TIME, MAX_RTR_DEAD_TIME);
@@ -411,7 +418,7 @@ defaults	: METRIC number {
 			}
 			defs->dead_interval = $2;
 		}
-		| TRANSMITDELAY number {
+		| TRANSMITDELAY NUMBER {
 			if ($2 < MIN_TRANSMIT_DELAY ||
 			    $2 > MAX_TRANSMIT_DELAY) {
 				yyerror("transmit-delay out of range (%d-%d)",
@@ -420,7 +427,7 @@ defaults	: METRIC number {
 			}
 			defs->transmit_delay = $2;
 		}
-		| HELLOINTERVAL number {
+		| HELLOINTERVAL NUMBER {
 			if ($2 < MIN_HELLO_INTERVAL ||
 			    $2 > MAX_HELLO_INTERVAL) {
 				yyerror("hello-interval out of range (%d-%d)",
@@ -429,7 +436,7 @@ defaults	: METRIC number {
 			}
 			defs->hello_interval = $2;
 		}
-		| RETRANSMITINTERVAL number {
+		| RETRANSMITINTERVAL NUMBER {
 			if ($2 < MIN_RXMT_INTERVAL || $2 > MAX_RXMT_INTERVAL) {
 				yyerror("retransmit-interval out of range "
 				    "(%d-%d)", MIN_RXMT_INTERVAL,
@@ -475,7 +482,7 @@ area		: AREA STRING {
 		}
 		;
 
-demotecount	: number	{ $$ = $1; }
+demotecount	: NUMBER	{ $$ = $1; }
 		| /*empty*/	{ $$ = 1; }
 		;
 
@@ -485,8 +492,8 @@ areaopts_l	: areaopts_l areaoptsl nl
 
 areaoptsl	: interface
 		| DEMOTE STRING	demotecount {
-			if ($3 > 255) {
-				yyerror("demote count too big: max 255");
+			if ($3 < 1 || $3 > 255) {
+				yyerror("demote count out of range (1-255)");
 				free($2);
 				YYERROR;
 			}
@@ -825,6 +832,40 @@ top:
 		if (yylval.v.string == NULL)
 			errx(1, "yylex: strdup");
 		return (STRING);
+	}
+
+#define allowed_to_end_number(x) \
+	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc(fin)) != EOF && isdigit(c));
+		lungetc(c);
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = strtonum(buf, LLONG_MIN, LLONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s", buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
 	}
 
 #define allowed_in_string(x) \
