@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.3 2007/09/12 15:04:07 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.4 2007/09/12 20:30:09 mglocker Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -6444,6 +6444,8 @@ bwi_intr(void *xsc)
 	uint32_t intr_status;
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
 	int i, txrx_error;
+
+	return (0);
 
 	/*
 	 * Get interrupt status
