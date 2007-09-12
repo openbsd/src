@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.33 2007/08/04 02:58:02 ckuethe Exp $ */
+/*	$OpenBSD: sensors.c,v 1.34 2007/09/12 21:08:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -121,13 +121,15 @@ sensor_add(int sensordev, char *dxname)
 
 	s->next = getmonotime();
 	s->weight = cs->weight;
+	s->correction = cs->correction;
 	if ((s->device = strdup(dxname)) == NULL)
 		fatal("sensor_add strdup");
 	s->sensordevid = sensordev;
 
 	TAILQ_INSERT_TAIL(&conf->ntp_sensors, s, entry);
 
-	log_debug("sensor %s added", s->device);
+	log_debug("sensor %s added (weight %d, correction %.6f)",
+	    s->device, s->weight, s->correction / 1e6);
 }
 
 void
@@ -176,7 +178,8 @@ sensor_query(struct ntp_sensor *s)
 	 * sensor.value = TS - TD in ns
 	 * if value is positive, system time is ahead
 	 */
-	s->offsets[s->shift].offset = (sensor.value / -1e9) - getoffset();
+	s->offsets[s->shift].offset = (sensor.value / -1e9) - getoffset() +
+	    (s->correction / 1e6);
 	s->offsets[s->shift].rcvd = sensor.tv.tv_sec;
 	s->offsets[s->shift].good = 1;
 

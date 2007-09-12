@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2007/09/12 18:32:54 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.33 2007/09/12 21:08:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,7 @@ int	 yylex(void);
 
 struct opts {
 	int		weight;
+	int		correction;
 } opts;
 
 typedef struct {
@@ -68,13 +69,14 @@ typedef struct {
 %}
 
 %token	LISTEN ON
-%token	SERVER SERVERS SENSOR WEIGHT
+%token	SERVER SERVERS SENSOR CORRECTION WEIGHT
 %token	ERROR
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.addr>		address
 %type	<v.opts>		server_opts server_opts_l server_opt
 %type	<v.opts>		sensor_opts sensor_opts_l sensor_opt
+%type	<v.opts>		correction
 %type	<v.opts>		weight
 %%
 
@@ -193,6 +195,7 @@ conf_main	: LISTEN ON address	{
 
 			s = new_sensor($2);
 			s->weight = $3.weight;
+			s->correction = $3.correction;
 			free($2);
 			TAILQ_INSERT_TAIL(&conf->ntp_conf_sensors, s, entry);
 		}
@@ -232,7 +235,18 @@ sensor_opts	:	{ bzero(&opts, sizeof opts); opts.weight = 1; }
 sensor_opts_l	: sensor_opts_l sensor_opt
 		| sensor_opt
 		;
-sensor_opt	: weight
+sensor_opt	: correction
+		| weight
+		;
+
+correction	: CORRECTION NUMBER {
+			if ($2 < -127000000 || $2 > 127000000) {
+				yyerror("correction must be between "
+				    "-127000000 and 127000000 microseconds");
+				YYERROR;
+			}
+			opts.correction = $2;
+		}
 		;
 
 weight		: WEIGHT NUMBER	{
@@ -278,6 +292,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "correction",		CORRECTION},
 		{ "listen",		LISTEN},
 		{ "on",			ON},
 		{ "sensor",		SENSOR},
