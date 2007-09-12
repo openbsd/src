@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2007/09/09 23:25:12 chl Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2007/09/12 19:32:35 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
 
 #include <stdio.h>
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	err = regcomp(&re, argv[optind++], copts);
 	if (err) {
 		len = regerror(err, &re, erbuf, sizeof(erbuf));
-		fprintf(stderr, "error %s, %d/%d `%s'\n",
+		fprintf(stderr, "error %s, %zu/%zu `%s'\n",
 			eprint(err), len, sizeof(erbuf), erbuf);
 		exit(status);
 	}
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 	err = regexec(&re, argv[optind], (size_t)NS, subs, eopts);
 	if (err) {
 		len = regerror(err, &re, erbuf, sizeof(erbuf));
-		fprintf(stderr, "error %s, %d/%d `%s'\n",
+		fprintf(stderr, "error %s, %zu/%zu `%s'\n",
 			eprint(err), len, sizeof(erbuf), erbuf);
 		exit(status);
 	}
@@ -235,7 +235,7 @@ int opts;			/* may not match f1 */
 	if (err != 0 && (!opt('C', f1) || err != efind(f2))) {
 		/* unexpected error or wrong error */
 		len = regerror(err, &re, erbuf, sizeof(erbuf));
-		fprintf(stderr, "%d: %s error %s, %d/%d `%s'\n",
+		fprintf(stderr, "%d: %s error %s, %d/%zu `%s'\n",
 					line, type, eprint(err), len,
 					sizeof(erbuf), erbuf);
 		status = 1;
@@ -266,7 +266,7 @@ int opts;			/* may not match f1 */
 	if (err != 0 && (f3 != NULL || err != REG_NOMATCH)) {
 		/* unexpected error or wrong error */
 		len = regerror(err, &re, erbuf, sizeof(erbuf));
-		fprintf(stderr, "%d: %s exec error %s, %d/%d `%s'\n",
+		fprintf(stderr, "%d: %s exec error %s, %d/%zu `%s'\n",
 					line, type, eprint(err), len,
 					sizeof(erbuf), erbuf);
 		status = 1;
