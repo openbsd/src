@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2007/09/11 23:06:37 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.7 2007/09/12 02:07:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -171,7 +171,7 @@ conf_main	: FIBUPDATE yesno {
 
 defaults	: LASTMEMBERQUERYCNT NUMBER {
 			if ($2 < MIN_LAST_MEMBER_QUERY_CNT ||
-			     $2 > MAX_LAST_MEMBER_QUERY_CNT) {
+			    $2 > MAX_LAST_MEMBER_QUERY_CNT) {
 				yyerror("last-member-query-count out of "
 				    "range (%d-%d)",
 				    MIN_LAST_MEMBER_QUERY_CNT,
@@ -182,7 +182,7 @@ defaults	: LASTMEMBERQUERYCNT NUMBER {
 		}
 		| LASTMEMBERQUERYINTERVAL NUMBER {
 			if ($2 < MIN_LAST_MEMBER_QUERY_INTERVAL ||
-			     $2 > MAX_LAST_MEMBER_QUERY_INTERVAL) {
+			    $2 > MAX_LAST_MEMBER_QUERY_INTERVAL) {
 				yyerror("last-member-query-interval out of "
 				    "range (%d-%d)",
 				    MIN_LAST_MEMBER_QUERY_INTERVAL,
@@ -201,7 +201,7 @@ defaults	: LASTMEMBERQUERYCNT NUMBER {
 		}
 		| QUERYINTERVAL NUMBER {
 			if ($2 < MIN_QUERY_INTERVAL ||
-			     $2 > MAX_QUERY_INTERVAL) {
+			    $2 > MAX_QUERY_INTERVAL) {
 				yyerror("query-interval out of range (%d-%d)",
 				    MIN_QUERY_INTERVAL, MAX_QUERY_INTERVAL);
 				YYERROR;
@@ -210,7 +210,7 @@ defaults	: LASTMEMBERQUERYCNT NUMBER {
 		}
 		| QUERYRESPINTERVAL NUMBER {
 			if ($2 < MIN_QUERY_RESP_INTERVAL ||
-			     $2 > MAX_QUERY_RESP_INTERVAL) {
+			    $2 > MAX_QUERY_RESP_INTERVAL) {
 				yyerror("query-response-interval out of "
 				    "range (%d-%d)",
 				    MIN_QUERY_RESP_INTERVAL,
@@ -229,7 +229,7 @@ defaults	: LASTMEMBERQUERYCNT NUMBER {
 		}
 		| STARTUPQUERYCNT NUMBER {
 			if ($2 < MIN_STARTUP_QUERY_CNT ||
-			     $2 > MAX_STARTUP_QUERY_CNT) {
+			    $2 > MAX_STARTUP_QUERY_CNT) {
 				yyerror("startup-query-count out of "
 				    "range (%d-%d)",
 				    MIN_STARTUP_QUERY_CNT,
@@ -240,7 +240,7 @@ defaults	: LASTMEMBERQUERYCNT NUMBER {
 		}
 		| STARTUPQUERYINTERVAL NUMBER {
 			if ($2 < MIN_STARTUP_QUERY_INTERVAL ||
-			     $2 > MAX_STARTUP_QUERY_INTERVAL) {
+			    $2 > MAX_STARTUP_QUERY_INTERVAL) {
 				yyerror("startup-query-interval out of "
 				    "range (%d-%d)",
 				    MIN_STARTUP_QUERY_INTERVAL,
@@ -251,7 +251,7 @@ defaults	: LASTMEMBERQUERYCNT NUMBER {
 		}
 		| IGMPVERSION NUMBER {
 			if ($2 < MIN_IGMP_VERSION ||
-			     $2 > MAX_IGMP_VERSION) {
+			    $2 > MAX_IGMP_VERSION) {
 				yyerror("igmp-version out of range (%d-%d)",
 				    MIN_IGMP_VERSION, MAX_IGMP_VERSION);
 				YYERROR;
