@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.244 2007/09/06 16:37:03 damien Exp $
+#	$OpenBSD: files.pci,v 1.245 2007/09/12 12:59:55 mglocker Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -658,6 +658,12 @@ file	dev/pci/if_pgt_pci.c		pgt_pci
 #
 attach	malo at pci with malo_pci
 file	dev/pci/if_malo_pci.c		malo_pci
+
+#
+# Broadcom AirForce
+#
+attach	bwi at pci with bwi_pci
+file	dev/pci/if_bwi_pci.c		bwi_pci
 
 # Sangoma PCI card
 device	san: ifnet, ifmedia, sppp

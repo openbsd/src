@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.409 2007/07/18 18:17:09 damien Exp $
+#	$OpenBSD: files,v 1.410 2007/09/12 12:59:55 mglocker Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -389,6 +389,10 @@ file	dev/ic/aic6915.c		sf
 # Marvell Libertas Open
 device	malo: ether, ifnet, ifmedia, firmload, wlan
 file	dev/ic/malo.c			malo
+
+# Broadcom AirForce
+device	bwi: ether, ifnet, ifmedia, firmload, wlan
+file	dev/ic/bwi.c			bwi
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have

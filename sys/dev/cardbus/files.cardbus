@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.25 2007/04/05 16:25:25 mglocker Exp $
+#	$OpenBSD: files.cardbus,v 1.26 2007/09/12 12:59:55 mglocker Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -117,3 +117,9 @@ file	dev/cardbus/uhci_cardbus.c		uhci_cardbus
 #
 attach	malo at cardbus with malo_cardbus
 file	dev/cardbus/if_malo_cardbus.c		malo_cardbus
+
+#
+# Broadcom AirForce
+#
+attach	bwi at cardbus with bwi_cardbus
+file	dev/cardbus/if_bwi_cardbus.c		bwi_cardbus
