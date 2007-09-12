@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.2 2007/09/12 14:19:42 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.3 2007/09/12 15:04:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -5373,6 +5373,8 @@ bwi_attach(struct bwi_softc *sc)
 	struct bwi_phy *phy;
 	int i, error;
 
+	printf("\n");
+
 	timeout_set(&sc->sc_scan_ch, bwi_next_scan, sc);
 	timeout_set(&sc->sc_calib_ch, bwi_calibrate, sc);
 
@@ -5511,6 +5513,7 @@ bwi_attach(struct bwi_softc *sc)
 
 	ic->ic_updateslot = bwi_updateslot;
 
+	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 
 	sc->sc_newstate = ic->ic_newstate;
@@ -5525,7 +5528,6 @@ bwi_attach(struct bwi_softc *sc)
 
 	return 0;
 fail:
-	bwi_detach(sc);
 	return error;
 }
 
