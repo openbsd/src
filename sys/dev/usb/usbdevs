@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.293 2007/09/08 19:36:42 fkr Exp $
+$OpenBSD: usbdevs,v 1.294 2007/09/12 18:05:12 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -386,6 +386,7 @@ vendor HAL		0x0b41	HAL Corporation
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics
+vendor SMART		0x0b8c	Smart Technologies
 vendor ASIX		0x0b95	ASIX Electronics
 vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
@@ -2116,6 +2117,9 @@ product SITECOMEU WL113		0x9071	WL-113
 product SITECOMEU ZD1211B	0x9075	ZD1211B
 product SITECOMEU WL172		0x90ac	WL-172
 product SITECOMEU WL113R2	0x9712	WL-113 rev 2
+
+/* Smart Technologies products */
+product SMART PL2303		0x2303	Serial
 
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink Ethernet
