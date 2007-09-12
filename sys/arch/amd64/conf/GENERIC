@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.195 2007/09/09 01:37:28 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.196 2007/09/12 18:18:27 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -531,6 +531,7 @@ owid*	at onewire?		# ID
 owsbm*	at onewire?		# Smart Battery Monitor
 owtemp* at onewire?		# Temperature
 
+pseudo-device	pctr		1
 pseudo-device	nvram		1
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver

@@ -1,0 +1,506 @@
+.\"	$OpenBSD: pctr.4,v 1.1 2007/09/12 18:18:27 deraadt Exp $
+.\"
+.\" Pentium performance counter driver for OpenBSD.
+.\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
+.\"
+.\" Modification and redistribution in source and binary forms is
+.\" permitted provided that due credit is given to the author and the
+.\" OpenBSD project by leaving this copyright notice intact.
+.\"
+.Dd $Mdocdate: September 12 2007 $
+.Dt PCTR 4 amd64
+.Os
+.Sh NAME
+.Nm pctr
+.Nd driver for CPU performance counters
+.Sh SYNOPSIS
+.Cd "pseudo-device pctr 1"
+.Sh DESCRIPTION
+The
+.Nm
+device provides access to the performance counters on Intel brand processors,
+and to the TSC on others.
+.Pp
+Intel processors have two 40-bit performance
+counters which can be programmed to count events such as cache misses,
+branch target buffer hits, TLB misses, dual-issues, interrupts,
+pipeline flushes, and more.
+.Pp
+There is one
+.Em ioctl
+call to read the status of all counters, and one
+.Em ioctl
+call to program the function of each counter.
+All require the following includes:
+.Bd -literal -offset indent
+#include <sys/types.h>
+#include <machine/cpu.h>
+#include <machine/pctr.h>
+.Ed
+.Pp
+The current state of all counters can be read with the
+.Dv PCIOCRD
+.Em ioctl ,
+which takes an argument of type
+.Dv "struct pctrst" :
+.Bd -literal -offset indent
+#define PCTR_NUM 2
+struct pctrst {
+	u_int pctr_fn[PCTR_NUM];
+	pctrval pctr_tsc;
+	pctrval pctr_hwc[PCTR_NUM];
+	pctrval pctr_idl;
+};
+.Ed
+.Pp
+In this structure,
+.Dv ctr_fn
+contains the functions of the two counters, as previously set by the
+.Dv PCIOCS0
+and
+.Dv PCIOCS1
+ioctls (see below).
+.Dv pctr_hwc
+contains the actual value of the two hardware counters.
+.Dv pctr_tsc
+is a free-running, 64-bit cycle counter.
+Finally,
+.Dv pctr_idl
+is a 64-bit count of idle-loop iterations.
+.Pp
+The functions of the two counters can be programmed with ioctls
+.Dv PCIOCS0
+and
+.Dv PCIOCS1 ,
+which require a writeable file descriptor and take an argument of type
+.Dv "unsigned int" . \&
+The meaning of this integer is dependent on the particular CPU.
+.\" The
+.\" following procedure can be used to determine which counters are
+.\" available on a given CPU:
+.\" .Bd -literal -offset indent
+.\" ctrval id = __cpuid();
+.\" if (__hasp5ctr(id)) {
+.\"	/* The machine has Pentium counters */
+.\" } else if (__hasp6ctr(id)) {
+.\"	/* The machine has Pentium Pro counters */
+.\" } else if (__hastsc(id)) {
+.\"	/* The machine just has a time stamp counter */
+.\" } else {
+.\"	/* No counters at all */
+.\"}
+.\" .Ed
+.Ss Time stamp counter
+The time stamp counter is available on all machines with Pentium and
+Pentium Pro counters, as well as on some 486s and non-intel CPUs.
+It is set to zero at boot time, and then increments with each cycle.
+Because the counter is 64-bits wide, it does not overflow.
+.Pp
+The time stamp counter can be read directly from user-mode using
+the
+.Fn rdtsc
+macro, which returns a 64-bit value of type
+.Dv pctrval .
+The following example illustrates a simple use of
+.Dv rdtsc
+to measure the execution time of a hypothetical subroutine called
+.Fn functionx :
+.Bd -literal -offset indent
+void
+time_functionx(void)
+{
+	pctrval tsc;
+
+	tsc = rdtsc();
+	functionx();
+	tsc = rdtsc() - tsc;
+	printf ("Functionx took %qd cycles.\en", tsc);
+}
+.Ed
+.Pp
+The value of the time stamp counter is also returned by the
+.Dv PCIOCRD
+.Em ioctl ,
+so that one can get an exact timestamp on readings of the hardware
+event counters.
+.Ss Pentium counters
+The Pentium counters are programmed with a 9 bit function.
+The top three bits contain the following flags:
+.Bl -tag -width P5CTR_C
+.It Dv P5CTR_K
+Enables counting of events that occur in kernel mode.
+.It Dv P5CTR_U
+Enables counting of events that occur in user mode.
+You must set at least one of
+.Dv P5CTR_U
+and
+.Dv P5CTR_K
+to count anything.
+.It Dv P5CTR_C
+When this flag is set, the counter attempts to count the number of
+cycles spent servicing a particular event, rather than simply the
+number of occurrences of that event.
+.El
+.Pp
+The bottom 6 bits set the particular event counted.
+Here is the event type of each permissible value for the bottom 6 bits of the
+counter function:
+.Pp
+.Bl -tag -width 0x00 -compact -offset indent
+.It 0x00
+Data read
+.It 0x01
+Data write
+.It 0x02
+Data TLB miss
+.It 0x03
+Data read miss
+.It 0x04
+Data write miss
+.It 0x05
+Write (hit) to M or E state lines
+.It 0x06
+Data cache lines written back
+.It 0x07
+Data cache snoops
+.It 0x08
+Data cache snoop hits
+.It 0x09
+Memory accesses in both pipes
+.It 0x0a
+Bank conflicts
+.It 0x0b
+Misaligned data memory references
+.It 0x0c
+Code read
+.It 0x0d
+Code TLB miss
+.It 0x0e
+Code cache miss
+.It 0x0f
+Any segment register load
+.It 0x12
+Branches
+.It 0x13
+BTB hits
+.It 0x14
+Taken branch or BTB hit
+.It 0x15
+Pipeline flushes
+.It 0x16
+Instructions executed
+.It 0x17
+Instructions executed in the V-pipe
+.It 0x18
+Bus utilization (clocks)
+.It 0x19
+Pipeline stalled by write backup
+.It 0x1a
+Pipeline stalled by data memory read
+.It 0x1b
+Pipeline stalled by write to E or M line
+.It 0x1c
+Locked bus cycle
+.It 0x1d
+I/O read or write cycle
+.It 0x1e
+Non-cacheable memory references
+.It 0x1f
+AGI (Address Generation Interlock)
+.It 0x22
+Floating-point operations
+.It 0x23
+Breakpoint 0 match
+.It 0x24
+Breakpoint 1 match
+.It 0x25
+Breakpoint 2 match
+.It 0x26
+Breakpoint 3 match
+.It 0x27
+Hardware interrupts
+.It 0x28
+Data read or data write
+.It 0x29
+Data read miss or data write miss
+.El
+.Ss Pentium Pro counters
+The Pentium Pro counter functions contain several parts.
+The most significant byte (an 8-bit integer shifted left by
+.Dv P6CTR_CM_SHIFT )
+contains a
+.Em "counter mask" . \&
+If non-zero, this sets a threshold for the number of times an event
+must occur in one cycle for the counter to be incremented.
+The
+.Em "counter mask"
+can therefore be used to count cycles in which an event
+occurs at least some number of times.
+The next byte contains several flags:
+.Bl -tag -width P6CTR_EN
+.It Dv P6CTR_U
+Enables counting of events that occur in user mode.
+.It Dv P6CTR_K
+Enables counting of events that occur in kernel mode.
+You must set at least one of
+.Dv P6CTR_K
+and
+.Dv P6CTR_U
+to count anything.
+.It Dv P6CTR_E
+Counts edges rather than cycles.
+For some functions this allows you
+to get an estimate of the number of events rather than the number of
+cycles occupied by those events.
+.It Dv P6CTR_EN
+Enable counters.
+This bit must be set in the function for counter 0
+in order for either of the counters to be enabled.
+This bit should probably be set in counter 1 as well.
+.It Dv P6CTR_I
+Inverts the sense of the
+.Em "counter mask" . \&
+When this bit is set, the counter only increments on cycles in which
+there are no
+.Em more
+events than specified in the
+.Em "counter mask" .
+.El
+.Pp
+The next byte, also known as the
+.Em "unit mask" ,
+contains flags specific to the event being counted.
+For events dealing with the L2 cache, the following flags are valid:
+.Bl -tag -width P6CTR_UM_M
+.It Dv P6CTR_UM_M
+Count events involving modified cache lines.
+.It Dv P6CTR_UM_E
+Count events involving exclusive cache lines.
+.It Dv P6CTR_UM_S
+Count events involving shared cache lines.
+.It Dv P6CTR_UM_I
+Count events involving invalid cache lines.
+.El
+To measure all L2 cache activity, all these bits should be set.
+They can be set with the macro
+.Dv P6CTR_UM_MESI
+which contains the bitwise or of all of the above.
+.Pp
+For event types dealing with bus transactions, there is another flag
+that can be set in the
+.Em "unit mask" :
+.Bl -tag -width P6CTR_UM_A
+.It Dv P6CTR_UM_A
+Count all appropriate bus events, not just those initiated by the
+processor.
+.El
+.Pp
+Finally, the least significant byte of the counter function is the
+event type to count.
+The following values are available:
+.Pp
+.Bl -tag -width 0x00 -compact
+.It 0x03 LD_BLOCKS
+Number of store buffer blocks.
+.It 0x04 SB_DRAINS
+Number of store buffer drain cycles.
+.It 0x05 MISALIGN_MEM_REF
+Number of misaligned data memory references.
+.It 0x06 SEGMENT_REG_LOADS
+Number of segment register loads.
+.It 0x10 FP_COMP_OPS_EXE  (ctr0 only)
+Number of computational floating-point operations executed.
+.It 0x11 FP_ASSIST  (ctr1 only)
+Number of floating-point exception cases handled by microcode.
+.It 0x12 MUL  (ctr1 only)
+Number of multiplies.
+.It 0x13 DIV  (ctr1 only)
+Number of divides.
+.It 0x14 CYCLES_DIV_BUSY  (ctr0 only)
+Number of cycles during which the divider is busy.
+.It 0x21 L2_ADS
+Number of L2 address strobes.
+.It 0x22 L2_DBUS_BUSY
+Number of cycles during which the data bus was busy.
+.It 0x23 L2_DBUS_BUSY_RD
+Number of cycles during which the data bus was busy transferring data
+from L2 to the processor.
+.It 0x24 L2_LINES_IN
+Number of lines allocated in the L2.
+.It 0x25 L2_M_LINES_INM
+Number of modified lines allocated in the L2.
+.It 0x26 L2_LINES_OUT
+Number of lines removed from the L2 for any reason.
+.It 0x27 L2_M_LINES_OUTM
+Number of modified lines removed from the L2 for any reason.
+.It 0x28 L2_IFETCH/mesi
+Number of L2 instruction fetches.
+.It 0x29 L2_LD/mesi
+Number of L2 data loads.
+.It 0x2a L2_ST/mesi
+Number of L2 data stores.
+.It 0x2e L2_RQSTS/mesi
+Number of L2 requests.
+.It 0x43 DATA_MEM_REFS
+All memory references, both cacheable and non-cacheable.
+.It 0x45 DCU_LINES_IN
+Total lines allocated in the DCU.
+.It 0x46 DCU_M_LINES_IN
+Number of M state lines allocated in the DCU.
+.It 0x47 DCU_M_LINES_OUT
+Number of M state lines evicted from the DCU.
+This includes evictions via snoop HITM, intervention or replacement.
+.It 0x48 DCU_MISS_OUTSTANDING
+Weighted number of cycles while a DCU miss is outstanding.
+.It 0x60 BUS_REQ_OUTSTANDING
+Number of bus requests outstanding.
+.It 0x61 BUS_BNR_DRV
+Number of bus clock cycles during which the processor is driving the
+BNR pin.
+.It 0x62 BUS_DRDY_CLOCKS/a
+Number of clocks during which DRDY is asserted.
+.It 0x63 BUS_LOCK_CLOCKS/a
+Number of clocks during which LOCK is asserted.
+.It 0x64 BUS_DATA_RCV
+Number of bus clock cycles during which the processor is receiving
+data.
+.It 0x65 BUS_TRAN_BRD/a
+Number of burst read transactions.
+.It 0x66 BUS_TRAN_RFO/a
+Number of read for ownership transactions.
+.It 0x67 BUS_TRANS_WB/a
+Number of write back transactions.
+.It 0x68 BUS_TRAN_IFETCH/a
+Number of instruction fetch transactions.
+.It 0x69 BUS_TRAN_INVAL/a
+Number of invalidate transactions.
+.It 0x6a BUS_TRAN_PWR/a
+Number of partial write transactions.
+.It 0x6b BUS_TRANS_P/a
+Number of partial transactions.
+.It 0x6c BUS_TRANS_IO/a
+Number of I/O transactions.
+.It 0x6d BUS_TRAN_DEF/a
+Number of deferred transactions.
+.It 0x6e BUS_TRAN_BURST/a
+Number of burst transactions.
+.It 0x6f BUS_TRAN_MEM/a
+Number of memory transactions.
+.It 0x70 BUS_TRAN_ANY/a
+Number of all transactions.
+.It 0x79 CPU_CLK_UNHALTED
+Number of cycles during which the processor is not halted.
+.It 0x7a BUS_HIT_DRV
+Number of bus clock cycles during which the processor is driving the
+HIT pin.
+.It 0x7b BUS_HITM_DRV
+Number of bus clock cycles during which the processor is driving the
+HITM pin.
+.It 0x7e BUS_SNOOP_STALL
+Number of clock cycles during which the bus is snoop stalled.
+.It 0x80 IFU_IFETCH
+Number of instruction fetches, both cacheable and non-cacheable.
+.It 0x81 IFU_IFETCH_MISS
+Number of instruction fetch misses.
+.It 0x85 ITLB_MISS
+Number of ITLB misses.
+.It 0x86 IFU_MEM_STALL
+Number of cycles that the instruction fetch pipe stage is stalled,
+including cache misses, ITLB misses, ITLB faults, and victim cache
+evictions.
+.It 0x87 ILD_STALL
+Number of cycles that the instruction length decoder is stalled.
+.It 0xa2 RESOURCE_STALLS
+Number of cycles during which there are resource-related stalls.
+.It 0xc0 INST_RETIRED
+Number of instructions retired.
+.It 0xc1 FLOPS  (ctr0 only)
+Number of computational floating-point operations retired.
+.It 0xc2 UOPS_RETIRED
+Number of UOPs retired.
+.It 0xc4 BR_INST_RETIRED
+Number of branch instructions retired.
+.It 0xc5 BR_MISS_PRED_RETIRED
+Number of mispredicted branches retired.
+.It 0xc6 CYCLES_INT_MASKED
+Number of processor cycles for which interrupts are disabled.
+.It 0xc7 CYCLES_INT_PENDING_AND_MASKED
+Number of processor cycles for which interrupts are disabled and
+interrupts are pending.
+.It 0xc8 HW_INT_RX
+Number of hardware interrupts received.
+.It 0xc9 BR_TAKEN_RETIRED
+Number of taken branches retired.
+.It 0xca BR_MISS_PRED_TAKEN_RET
+Number of taken mispredicted branches retired.
+.It 0xd0 INST_DECODER
+Number of instructions decoded.
+.It 0xd2 PARTIAL_RAT_STALLS
+Number of cycles or events for partial stalls.
+.It 0xe0 BR_INST_DECODED
+Number of branch instructions decoded.
+.It 0xe2 BTB_MISSES
+Number of branches that miss the BTB.
+.It 0xe4 BR_BOGUS
+Number of bogus branches.
+.It 0xe6 BACLEARS
+Number of times BACLEAR is asserted.
+.El
+.Pp
+Events marked /mesi require the
+.Dv P6CTR_UM_[MESI]
+bits in the
+.Em "unit mask" . \&
+Events marked /a can take the
+.Dv P6CTR_UM_A
+bit.
+.Pp
+Unlike the Pentium counters, the Pentium Pro counters can be read
+directly from user-mode without need to invoke the kernel.
+The macro
+.Fn rdpmc ctr
+takes 0 or 1 as an argument to specify a counter, and returns that
+counter's 40-bit value (which will be of type
+.Dv pctrval ) .
+This is generally preferable to making a system call as it introduces
+less distortion in measurements.
+However, you should be aware of the possibility of an interrupt between
+invocations of
+.Fn rdpmc
+and/or
+.Fn rdtsc .
+.Sh FILES
+.Bl -tag -width /dev/pctr -compact
+.It Pa /dev/pctr
+.El
+.Sh ERRORS
+.Bl -tag -width "[ENODEV]"
+.It Bq Er ENODEV
+An attempt was made to set the counter functions on a CPU that does
+not support counters.
+.It Bq Er EINVAL
+An invalid counter function was provided as an argument to the
+.Dv PCIOCS0
+or
+.Dv PCIOCS1
+.Em ioctl .
+.It Bq Er EPERM
+An attempt was made to set the counter functions, but the device was
+not open for writing.
+.El
+.Sh SEE ALSO
+.Xr pctr 1 ,
+.Xr ioctl 2
+.Sh HISTORY
+A
+.Nm
+device first appeared in
+.Ox 2.0 .
+.Sh AUTHORS
+The
+.Nm
+device was written by
+.An David Mazieres Aq dm@lcs.mit.edu .
+.Sh BUGS
+Not all counter functions are completely accurate.
+Some of the functions don't seem to make any sense at all.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.22 2007/05/27 08:58:31 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.23 2007/09/12 18:18:27 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -866,6 +866,9 @@ idle_zero:
 	cmpl	$0,_C_LABEL(whichqs)(%rip)
 	jnz	idle_exit
 idle_loop:
+#if NPCTR > 0
+	incq	_C_LABEL(pctr_idlcnt)
+#endif
 	/* Try to zero some pages. */
 	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO(%rip),%ecx
 	testl	%ecx,%ecx
