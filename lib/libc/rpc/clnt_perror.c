@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_perror.c,v 1.19 2006/09/17 17:00:38 thib Exp $ */
+/*	$OpenBSD: clnt_perror.c,v 1.20 2007/09/12 08:16:02 moritz Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -75,11 +75,9 @@ clnt_sperror(CLIENT *rpch, char *s)
 	if (ret == -1)
 		ret = 0;
 	else if (ret >= len)
-		ret = len;
+		goto truncated;
 	str += ret;
 	len -= ret;
-	if (str > strstart + CLNT_PERROR_BUFLEN)
-		goto truncated;
 
 	switch (e.re_status) {
 	case RPC_SUCCESS:
@@ -99,12 +97,17 @@ clnt_sperror(CLIENT *rpch, char *s)
 
 	case RPC_CANTSEND:
 	case RPC_CANTRECV:
-		snprintf(str, len, "; errno = %s", strerror(e.re_errno));
+		ret = snprintf(str, len, "; errno = %s", strerror(e.re_errno));
+		if (ret == -1 || ret >= len)
+			goto truncated;
 		break;
 
 	case RPC_VERSMISMATCH:
-		snprintf(str, len, "; low version = %u, high version = %u",
+		ret = snprintf(str, len,
+		    "; low version = %u, high version = %u",
 		    e.re_vers.low, e.re_vers.high);
+		if (ret == -1 || ret >= len)
+			goto truncated;
 		break;
 
 	case RPC_AUTHERROR:
@@ -112,33 +115,40 @@ clnt_sperror(CLIENT *rpch, char *s)
 		if (ret == -1)
 			ret = 0;
 		else if (ret >= len)
-			ret = len;
+			goto truncated;
 		str += ret;
 		len -= ret;
-		if (str > strstart + CLNT_PERROR_BUFLEN)
-			goto truncated;
 		err = auth_errmsg(e.re_why);
 		if (err != NULL) {
-			snprintf(str, len, "%s", err);
+			ret = snprintf(str, len, "%s", err);
+			if (ret == -1 || ret >= len)
+				goto truncated;
 		} else {
-			snprintf(str, len,
+			ret = snprintf(str, len,
 			    "(unknown authentication error - %d)",
 			    (int) e.re_why);
+			if (ret == -1 || ret >= len)
+				goto truncated;
 		}
 		break;
 
 	case RPC_PROGVERSMISMATCH:
-		snprintf(str, len, "; low version = %u, high version = %u",
+		ret = snprintf(str, len,
+		    "; low version = %u, high version = %u",
 		    e.re_vers.low, e.re_vers.high);
+		if (ret == -1 || ret >= len)
+			goto truncated;
 		break;
 
 	default:	/* unknown */
-		snprintf(str, len, "; s1 = %u, s2 = %u",
+		ret = snprintf(str, len, "; s1 = %u, s2 = %u",
 		    e.re_lb.s1, e.re_lb.s2);
+		if (ret == -1 || ret >= len)
+			goto truncated;
 		break;
 	}
-	strstart[CLNT_PERROR_BUFLEN-2] = '\0';
-	strlcat(strstart, "\n", CLNT_PERROR_BUFLEN);
+	if (strlcat(strstart, "\n", CLNT_PERROR_BUFLEN) >= CLNT_PERROR_BUFLEN)
+		goto truncated;
 	return (strstart);
 
 truncated:
