@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2007/09/11 23:33:37 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.32 2007/09/12 18:32:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,7 +213,7 @@ address		: STRING		{
 		}
 		;
 
-server_opts	:	{ bzero(&opts, sizeof opts); }
+server_opts	:	{ bzero(&opts, sizeof opts); opts.weight = 1; }
 		  server_opts_l
 			{ $$ = opts; }
 		|	{ bzero(&opts, sizeof opts); $$ = opts; }
@@ -224,7 +224,7 @@ server_opts_l	: server_opts_l server_opt
 server_opt	: weight
 		;
 
-sensor_opts	:	{ bzero(&opts, sizeof opts); }
+sensor_opts	:	{ bzero(&opts, sizeof opts); opts.weight = 1; }
 		  sensor_opts_l
 			{ $$ = opts; }
 		|	{ bzero(&opts, sizeof opts); $$ = opts; }
