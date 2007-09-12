@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2007/02/09 17:55:49 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2007/09/12 09:07:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -52,6 +52,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #include "hostapd.h"
 
@@ -102,7 +103,7 @@ typedef struct {
 		} authalg;
 		struct in_addr		in;
 		char			*string;
-		long			val;
+		int64_t			number;
 		u_int16_t		reason;
 		enum hostapd_op		op;
 		struct timeval		timeout;
@@ -153,8 +154,7 @@ struct hostapd_ieee80211_frame *frame_ieee80211;
 %token	ADDRESS PORT ON NOTIFY TTL INCLUDE ROUTE ROAMING RSSI TXRATE FREQ
 %token	HOPPER DELAY
 %token	<v.string>	STRING
-%token	<v.val>		VALUE
-%type	<v.val>		number
+%token	<v.number>	NUMBER
 %type	<v.in>		ipv4addr
 %type	<v.reflladdr>	refaddr, lladdr, randaddr, frmactionaddr, frmmatchaddr
 %type	<v.reason>	frmreason_l
@@ -162,10 +162,10 @@ struct hostapd_ieee80211_frame *frame_ieee80211;
 %type	<v.string>	string
 %type	<v.authalg>	authalg
 %type	<v.op>		unaryop
-%type	<v.val>		percent
-%type	<v.val>		txrate
-%type	<v.val>		freq
-%type	<v.val>		not
+%type	<v.number>	percent
+%type	<v.number>	txrate
+%type	<v.number>	freq
+%type	<v.number>	not
 %type	<v.timeout>	timeout
 
 %%
@@ -272,15 +272,23 @@ iappmodeaddr	: /* empty */
 		;
 
 iappmodeport	: /* empty */
-		| PORT number
+		| PORT NUMBER
 		{
+			if ($2 < 0 || $2 > UINT16_MAX) {
+				yyerror("port out of range: %lld", $2);
+				YYERROR;
+			}
 			hostapd_cfg.c_iapp.i_addr.sin_port = htons($2);
 		}
 		;
 
 iappmodettl	: /* empty */
-		| TTL number
+		| TTL NUMBER
 		{
+			if ($2 < 1 || $2 > UINT8_MAX) {
+				yyerror("ttl out of range: %lld", $2);
+				YYERROR;
+			}
 			hostapd_cfg.c_iapp.i_ttl = $2;
 		}
 		;
@@ -476,19 +484,34 @@ frmaction	: frmactiontype frmactiondir frmactionfrom frmactionto frmactionbssid
 		;
 
 limit		: /* empty */
-		| LIMIT number SEC
+		| LIMIT NUMBER SEC
 		{
+			if ($2 < 0 || $2 > LONG_MAX) {
+				yyerror("limit out of range: %lld sec", $2);
+				YYERROR;
+			}
 			frame.f_limit.tv_sec = $2;
 		}
-		| LIMIT number USEC
+		| LIMIT NUMBER USEC
 		{
+			if ($2 < 0 || $2 > LONG_MAX) {
+				yyerror("limit out of range: %lld usec", $2);
+				YYERROR;
+			}
 			frame.f_limit.tv_usec = $2;
 		}
 		;
 
 rate		: /* empty */
-		| RATE number '/' number SEC
+		| RATE NUMBER '/' NUMBER SEC
 		{
+			if (($2 < 1 || $2 > LONG_MAX) ||
+			    ($4 < 1 || $4 > LONG_MAX)) {
+				yyerror("rate out of range: %lld/%lld sec",
+				    $2, $4);
+				YYERROR;
+			}
+
 			if (!($2 && $4)) {
 				yyerror("invalid rate");
 				YYERROR;
@@ -985,7 +1008,7 @@ tableaddrentry	: lladdr
 		;
 
 tableaddropt	: /* empty */
-		| assign ipv4addr ipnetmask
+		| assign ipv4addr ipv4netmask
 		{
 			entry->e_flags |= HOSTAPD_ENTRY_F_INADDR;
 			entry->e_inaddr.in_af = AF_INET;
@@ -1013,12 +1036,16 @@ ipv4addr	: STRING
 		}
 		;
 
-ipnetmask	: /* empty */
+ipv4netmask	: /* empty */
 		{
 			entry->e_inaddr.in_netmask = -1;
 		}
-		| '/' number
+		| '/' NUMBER
 		{
+			if ($2 < 0 || $2 > 32) {
+				yyerror("netmask out of range: %lld", $2);
+				YYERROR;
+			}
 			entry->e_inaddr.in_netmask = $2;
 		}
 		;
@@ -1042,19 +1069,6 @@ lladdr		: STRING
 randaddr	: RANDOM
 		{
 			$$.flags |= HOSTAPD_ACTION_F_REF_RANDOM;
-		}
-		;
-
-number		: STRING
-		{
-			const char *errstr;
-			$$ = strtonum($1, 0, LONG_MAX, &errstr);
-			if (errstr) {
-				yyerror("invalid number: %s", $1);
-				free($1);
-				YYERROR;
-			}
-			free($1);
 		}
 		;
 
@@ -1188,8 +1202,12 @@ freq		: STRING
 		}
 		;
 
-timeout		: number
+timeout		: NUMBER
 		{
+			if ($1 < 1 || $1 > LONG_MAX) {
+				yyerror("timeout out of range: %lld", $1);
+				YYERROR;
+			}
 			$$.tv_sec = $1 / 1000;
 			$$.tv_usec = ($1 % 1000) * 1000;
 		}
@@ -1471,6 +1489,40 @@ top:
 		if (yylval.v.string == NULL)
 			hostapd_fatal("yylex: strdup");
 		return (STRING);
+	}
+
+#define allowed_to_end_number(x) \
+	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc()) != EOF && isdigit(c));
+		lungetc(c);
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = strtonum(buf, LLONG_MIN, LLONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s", buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
 	}
 
 #define allowed_in_string(x) \
