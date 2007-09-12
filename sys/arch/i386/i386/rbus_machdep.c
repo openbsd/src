@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.19 2007/09/01 15:14:44 martin Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.20 2007/09/12 13:56:40 chl Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 		start = ex->ex_start;
 
 		/* XXX: unfortunately, iomem_ex cannot be used for the
-		 * dynamic bus_space allocatoin.  There are some
+		 * dynamic bus_space allocation.  There are some
 		 * hidden memory (or some obstacles which do not
 		 * recognised by the kernel) in the region governed by
 		 * iomem_ex.  So I decide to use only very high

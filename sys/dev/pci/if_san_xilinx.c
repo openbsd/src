@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.18 2006/04/20 20:31:12 miod Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.19 2007/09/12 13:56:40 chl Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -1066,7 +1066,7 @@ xilinx_chip_configure(sdla_t *card)
 	    card->devname);
 
 	if (sdla_te_config(card)) {
-		log(LOG_INFO, "%s: Failed %s configuratoin!\n", card->devname,
+		log(LOG_INFO, "%s: Failed %s configuration!\n", card->devname,
 		    IS_T1(&card->fe_te.te_cfg)?"T1":"E1");
 		return (EINVAL);
 	}

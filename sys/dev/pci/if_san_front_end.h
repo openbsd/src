@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_front_end.h,v 1.4 2004/12/07 06:10:24 mcbride Exp $	*/
+/*	$OpenBSD: if_san_front_end.h,v 1.5 2007/09/12 13:56:40 chl Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -64,7 +64,7 @@
 #define A105_ADPTR_1_CHN_T3E3		0x0082	/* 1 Channel T3/E3 */
 
 #define OPERATE_T1E1_AS_SERIAL		0x8000  /* For bitstreaming only 
-						 * Allow the applicatoin to 
+						 * Allow the application to 
 						 * E1 front end */
 
 #define SDLA_ADPTR_DECODE(adapter_type)			\
