@@ -1,4 +1,5 @@
-/*	$OpenBSD: bwireg.h,v 1.1 2007/09/12 13:13:12 jsg Exp $	*/
+/*	$OpenBSD: bwireg.h,v 1.2 2007/09/12 22:22:05 mglocker Exp $	*/
+
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 

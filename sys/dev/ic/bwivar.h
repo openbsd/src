@@ -1,4 +1,5 @@
-/*	$OpenBSD: bwivar.h,v 1.1 2007/09/12 13:13:12 jsg Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.2 2007/09/12 22:22:05 mglocker Exp $	*/
+
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -430,87 +431,86 @@ enum bwi_bus_space {
 };
 
 struct bwi_softc {
-	struct ieee80211com	sc_ic;
-	uint32_t		sc_flags;	/* BWI_F_ */
-	struct device		sc_dev;
+	struct ieee80211com	 sc_ic;
+	uint32_t		 sc_flags;	/* BWI_F_ */
+	struct device		 sc_dev;
 
-	uint32_t		sc_cap;		/* BWI_CAP_ */
-	uint16_t		sc_bbp_id;	/* BWI_BBPID_ */
-	uint8_t			sc_bbp_rev;
-	uint8_t			sc_bbp_pkg;
+	uint32_t		 sc_cap;	/* BWI_CAP_ */
+	uint16_t		 sc_bbp_id;	/* BWI_BBPID_ */
+	uint8_t			 sc_bbp_rev;
+	uint8_t			 sc_bbp_pkg;
 
-	uint8_t			sc_pci_revid;
-	uint16_t		sc_pci_subvid;
-	uint16_t		sc_pci_subdid;
+	uint8_t			 sc_pci_revid;
+	uint16_t		 sc_pci_subvid;
+	uint16_t		 sc_pci_subdid;
 
-	uint16_t		sc_card_flags;	/* BWI_CARD_F_ */
-	uint16_t		sc_pwron_delay;
-	int			sc_locale;
+	uint16_t		 sc_card_flags;	/* BWI_CARD_F_ */
+	uint16_t		 sc_pwron_delay;
+	int			 sc_locale;
 
-	int			sc_irq_rid;
+	int			 sc_irq_rid;
 	struct resource		*sc_irq_res;
 	void			*sc_irq_handle;
 
-	int			sc_mem_rid;
+	int			 sc_mem_rid;
 	struct resource		*sc_mem_res;
-	bus_dma_tag_t		sc_dmat;
-	bus_space_tag_t		sc_mem_bt;
-	bus_space_handle_t	sc_mem_bh;
+	bus_dma_tag_t		 sc_dmat;
+	bus_space_tag_t		 sc_mem_bt;
+	bus_space_handle_t	 sc_mem_bh;
 
-	struct timeout		sc_scan_ch;
-	struct timeout		sc_calib_ch;
+	struct timeout		 sc_scan_ch;
+	struct timeout		 sc_calib_ch;
 
 	struct bwi_regwin	*sc_cur_regwin;
-	struct bwi_regwin	sc_com_regwin;
-	struct bwi_regwin	sc_bus_regwin;
+	struct bwi_regwin	 sc_com_regwin;
+	struct bwi_regwin	 sc_bus_regwin;
 
-	int			sc_nmac;
-	struct bwi_mac		sc_mac[BWI_MAC_MAX];
+	int			 sc_nmac;
+	struct bwi_mac		 sc_mac[BWI_MAC_MAX];
+ 
+	enum bwi_bus_space	 sc_bus_space;
+	bus_dma_tag_t		 sc_parent_dtag;
 
-	enum bwi_bus_space	sc_bus_space;
-	bus_dma_tag_t		sc_parent_dtag;
+	bus_dma_tag_t		 sc_buf_dtag;
+	struct bwi_txbuf_data	 sc_tx_bdata[BWI_TX_NRING];
+	struct bwi_rxbuf_data	 sc_rx_bdata;
 
-	bus_dma_tag_t		sc_buf_dtag;
-	struct bwi_txbuf_data	sc_tx_bdata[BWI_TX_NRING];
-	struct bwi_rxbuf_data	sc_rx_bdata;
-
-	bus_dma_tag_t		sc_txring_dtag;
-	struct bwi_ring_data	sc_tx_rdata[BWI_TX_NRING];
-	bus_dma_tag_t		sc_rxring_dtag;
-	struct bwi_ring_data	sc_rx_rdata;
+	bus_dma_tag_t		 sc_txring_dtag;
+	struct bwi_ring_data	 sc_tx_rdata[BWI_TX_NRING];
+	bus_dma_tag_t		 sc_rxring_dtag;
+	struct bwi_ring_data	 sc_rx_rdata;
 
 	struct bwi_txstats_data	*sc_txstats;
 
-	int			sc_tx_timer;
+	int			 sc_tx_timer;
 
-	int			(*sc_newstate)
-				(struct ieee80211com *,
-				 enum ieee80211_state, int);
+	int			 (*sc_newstate)
+				 (struct ieee80211com *,
+				     enum ieee80211_state, int);
 
-	int			(*sc_init_tx_ring)(struct bwi_softc *, int);
-	void			(*sc_free_tx_ring)(struct bwi_softc *, int);
+	int			 (*sc_init_tx_ring)(struct bwi_softc *, int);
+	void			 (*sc_free_tx_ring)(struct bwi_softc *, int);
 
-	int			(*sc_init_rx_ring)(struct bwi_softc *);
-	void			(*sc_free_rx_ring)(struct bwi_softc *);
+	int			 (*sc_init_rx_ring)(struct bwi_softc *);
+	void			 (*sc_free_rx_ring)(struct bwi_softc *);
 
-	int			(*sc_init_txstats)(struct bwi_softc *);
-	void			(*sc_free_txstats)(struct bwi_softc *);
+	int			 (*sc_init_txstats)(struct bwi_softc *);
+	void			 (*sc_free_txstats)(struct bwi_softc *);
 
-	void			(*sc_setup_rxdesc)
-				(struct bwi_softc *, int, bus_addr_t, int);
-	void			(*sc_rxeof)(struct bwi_softc *);
+	void			 (*sc_setup_rxdesc)
+				 (struct bwi_softc *, int, bus_addr_t, int);
+	void			 (*sc_rxeof)(struct bwi_softc *);
 
-	void			(*sc_setup_txdesc)
-				(struct bwi_softc *, struct bwi_ring_data *,
-				 int, bus_addr_t, int);
-	void			(*sc_start_tx)
-				(struct bwi_softc *, uint32_t, int);
+	void			 (*sc_setup_txdesc)
+				 (struct bwi_softc *, struct bwi_ring_data *,
+				     int, bus_addr_t, int);
+	void			 (*sc_start_tx)
+				 (struct bwi_softc *, uint32_t, int);
 
-	void			(*sc_txeof_status)(struct bwi_softc *);
+	void			 (*sc_txeof_status)(struct bwi_softc *);
 
-	int			(*sc_enable)(struct bwi_softc *); 
-	void			(*sc_disable)(struct bwi_softc *);
-
+	int			 (*sc_enable)(struct bwi_softc *); 
+	void			 (*sc_disable)(struct bwi_softc *);
 
 	/* Sysctl variables */
 	int			sc_fw_version;	/* BWI_FW_VERSION[34] */
@@ -522,12 +522,12 @@ struct bwi_softc {
 
 uint16_t	bwi_read_sprom(struct bwi_softc *, uint16_t);
 int		bwi_regwin_switch(struct bwi_softc *, struct bwi_regwin *,
-				  struct bwi_regwin **);
+		    struct bwi_regwin **);
 int		bwi_regwin_is_enabled(struct bwi_softc *, struct bwi_regwin *);
 void		bwi_regwin_enable(struct bwi_softc *, struct bwi_regwin *,
-				  uint32_t);
+		    uint32_t);
 void		bwi_regwin_disable(struct bwi_softc *, struct bwi_regwin *,
-				   uint32_t);
+		    uint32_t);
 int		bwi_bus_init(struct bwi_softc *, struct bwi_mac *);
 uint8_t		bwi_rate2plcp(uint8_t);	/* XXX belongs to 802.11 */
 
@@ -549,21 +549,19 @@ int		bwi_mac_stop(struct bwi_mac *);
 void		bwi_mac_shutdown(struct bwi_mac *);
 void		bwi_mac_updateslot(struct bwi_mac *, int);
 void		bwi_mac_set_promisc(struct bwi_mac *, int);
-
 void		bwi_mac_calibrate_txpower(struct bwi_mac *);
 void		bwi_mac_set_tpctl_11bg(struct bwi_mac *,
-				       const struct bwi_tpctl *);
+		    const struct bwi_tpctl *);
 void		bwi_mac_init_tpctl_11bg(struct bwi_mac *);
 void		bwi_mac_dummy_xmit(struct bwi_mac *);
 void		bwi_mac_reset_hwkeys(struct bwi_mac *);
 int		bwi_mac_config_ps(struct bwi_mac *);
-
 uint16_t	bwi_memobj_read_2(struct bwi_mac *, uint16_t, uint16_t);
 uint32_t	bwi_memobj_read_4(struct bwi_mac *, uint16_t, uint16_t);
 void		bwi_memobj_write_2(struct bwi_mac *, uint16_t, uint16_t,
-				   uint16_t);
+		    uint16_t);
 void		bwi_memobj_write_4(struct bwi_mac *, uint16_t, uint16_t,
-				   uint32_t);
+		    uint32_t);
 void		bwi_tmplt_write_4(struct bwi_mac *, uint32_t, uint32_t);
 void		bwi_hostflags_write(struct bwi_mac *, uint64_t);
 uint64_t	bwi_hostflags_read(struct bwi_mac *);
@@ -607,14 +605,11 @@ struct bwi_gains {
 
 int		bwi_phy_attach(struct bwi_mac *);
 void		bwi_phy_clear_state(struct bwi_phy *);
-
 int		bwi_phy_calibrate(struct bwi_mac *);
 void		bwi_phy_set_bbp_atten(struct bwi_mac *, uint16_t);
-
 void		bwi_set_gains(struct bwi_mac *, const struct bwi_gains *);
 int16_t		bwi_nrssi_read(struct bwi_mac *, uint16_t);
 void		bwi_nrssi_write(struct bwi_mac *, uint16_t, int16_t);
-
 uint16_t	bwi_phy_read(struct bwi_mac *, uint16_t);
 void		bwi_phy_write(struct bwi_mac *, uint16_t, uint16_t);
 
@@ -636,7 +631,6 @@ bwi_phy_init(struct bwi_mac *_mac)
 
 int		bwi_rf_attach(struct bwi_mac *);
 void		bwi_rf_clear_state(struct bwi_rf *);
-
 int		bwi_rf_map_txpower(struct bwi_mac *);
 void		bwi_rf_lo_adjust(struct bwi_mac *, const struct bwi_tpctl *);
 void		bwi_rf_set_chan(struct bwi_mac *, u_int, int);
@@ -646,11 +640,9 @@ void		bwi_rf_init_bcm2050(struct bwi_mac *);
 void		bwi_rf_lo_update(struct bwi_mac *);
 void		bwi_rf_init_hw_nrssi_table(struct bwi_mac *, uint16_t);
 void		bwi_rf_set_ant_mode(struct bwi_mac *, int);
-
 void		bwi_rf_clear_tssi(struct bwi_mac *);
 int		bwi_rf_get_latest_tssi(struct bwi_mac *, int8_t[], uint16_t);
 int		bwi_rf_tssi2dbm(struct bwi_mac *, int8_t, int8_t *);
-
 void		bwi_rf_write(struct bwi_mac *, uint16_t, uint16_t);
 uint16_t	bwi_rf_read(struct bwi_mac *, uint16_t);
 
