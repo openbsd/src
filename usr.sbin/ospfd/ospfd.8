@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.15 2007/09/11 10:16:44 norby Exp $
+.\"	$OpenBSD: ospfd.8,v 1.16 2007/09/12 09:40:19 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2007 $
+.Dd $Mdocdate: September 12 2007 $
 .Dt OSPFD 8
 .Os
 .Sh NAME
@@ -42,32 +42,32 @@ Information Base using the LSDB as input.
 The Forwarding Information Base a.k.a. the kernel route table is updated
 with information from the RIB.
 .Pp
-OSPF routers communicate via two multicast groups 224.0.0.5 all Shortest
+OSPF routers communicate via two multicast groups: 224.0.0.5 all Shortest
 Path First routers and 224.0.0.6 all Designated Routers.
 The IP protocol number 89 is reserved for OSPF, furthermore OSPF packets
 omit the use of TCP and UDP.
 .Pp
-OSPF has several advantages over RIP, e.g. every router has a complete
-network topology.
+OSPF has several advantages over RIP.
+For example every router has a complete network topology.
 Response to changes in the network are faster.
 Futhermore fail detection is much improved.
 .Pp
-All routers in a OSPF network spend most of their time keeping each others
-LSDB's in sync.
+All routers in an OSPF network spend most of their time keeping each others
+LSDBs in sync.
 All routers must have the same information in the LSDB at all times.
-Every time the LSDB is updated the RIB is updated, if needed the FIB is
+Every time the LSDB is updated the RIB is updated; if needed the FIB is
 also updated.
 .Pp
 OSPF aware routers discover each other via OSPF hello packets.
 .Pp
-In a multiaccess network e.g. ethernet it is unfeasable for all routers
+In a multiaccess network such as Ethernet it is unfeasible for all routers
 to syncronize with all other routers in the network.
 In such networks a Designated Router
 .Pq DR
 and a Backup Designated Router
 .Pq BDR
 is elected.
-The DRs responsibility is to syncronize with all routers, the BDR will
+The DR's responsibility is to syncronize with all routers; the BDR will
 not do much until the DR fails.
 The first router in a network is automatically elected DR, the second
 router BDR.
@@ -76,14 +76,14 @@ A router not elected either DR or BDR will have 2-WAY adjacency with all
 routers but the DR and BDR.
 Routers that form 2-WAY adjacency recognize that they know each other.
 In case a DR or BDR should fail another router is elected and all routers
-changes state on the newly elected router and syncronize to it.
+change state on the newly elected router and syncronize to it.
 .Pp
 When routers are connected via point to point links, the DR and BDR
 election is skipped since only two routers are connected.
 .Pp
-To limit the impact changes in the network has on the LSDB it is possible
+To limit the impact changes in the network have on the LSDB it is possible
 to segement OSPF network into areas.
-Area 0.0.0.0 a.k.a. the backbone area must always be present. 
+Area 0.0.0.0 a.k.a. the backbone area must always be present.
 Routers can be configured as Area Border Router
 .Pq ABR ,
 being part of multiple areas.
@@ -95,7 +95,7 @@ Virtual links are currently not available in
 .Pp
 AS Border Routers
 .Pq ASBR
-are connected to an OSPF network and other external networks, BGP, RIP
+are connected to an OSPF network and other external networks, BGP, RIP,
 or statically routed.
 .Pp
 .Nm
