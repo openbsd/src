@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.521 2007/09/12 15:58:40 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.522 2007/09/12 18:49:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -199,12 +199,12 @@ struct filter_opts {
 	char			*tag;
 	char			*match_tag;
 	u_int8_t		 match_tag_not;
-	int			 rtableid;
+	u_int			 rtableid;
 } filter_opts;
 
 struct antispoof_opts {
 	char			*label;
-	int			 rtableid;
+	u_int			 rtableid;
 } antispoof_opts;
 
 struct scrub_opts {
@@ -218,7 +218,7 @@ struct scrub_opts {
 	int			fragcache;
 	int			randomid;
 	int			reassemble_tcp;
-	int			rtableid;
+	u_int			rtableid;
 } scrub_opts;
 
 struct queue_opts {
@@ -330,7 +330,7 @@ typedef struct {
 		int64_t		 	 number;
 		int			 i;
 		char			*string;
-		int			 rtableid;
+		u_int			 rtableid;
 		struct {
 			u_int8_t	 b1;
 			u_int8_t	 b2;
@@ -1023,6 +1023,10 @@ scrub_opt	: NODF	{
 			scrub_opts.randomid = 1;
 		}
 		| RTABLE NUMBER				{
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("invalid rtable id");
+				YYERROR;
+			}
 			scrub_opts.rtableid = $2;
 		}
 		;
