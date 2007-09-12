@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.68 2007/09/01 10:26:25 mglocker Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.69 2007/09/12 19:49:29 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -98,7 +98,6 @@
 #include <dev/pci/pcidevs.h>
 
 #define VR_USEIOSPACE
-#undef VR_USESWSHIFT
 
 #include <dev/pci/if_vrreg.h>
 
@@ -127,8 +126,6 @@ void vr_shutdown(void *);
 int vr_ifmedia_upd(struct ifnet *);
 void vr_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-void vr_mii_sync(struct vr_softc *);
-void vr_mii_send(struct vr_softc *, u_int32_t, int);
 int vr_mii_readreg(struct vr_softc *, struct vr_mii_frame *);
 int vr_mii_writereg(struct vr_softc *, struct vr_mii_frame *);
 int vr_miibus_readreg(struct device *, int, int);
@@ -183,142 +180,11 @@ const struct pci_matchid vr_devices[] = {
 	CSR_WRITE_1(sc, VR_MIICMD,			\
 		CSR_READ_1(sc, VR_MIICMD) & ~(x))
 
-#ifdef VR_USESWSHIFT
-/*
- * Sync the PHYs by setting data bit and strobing the clock 32 times.
- */
-void
-vr_mii_sync(struct vr_softc *sc)
-{
-	int			i;
-
-	SIO_SET(VR_MIICMD_DIR|VR_MIICMD_DATAIN);
-
-	for (i = 0; i < 32; i++) {
-		SIO_SET(VR_MIICMD_CLK);
-		DELAY(1);
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
-	}
-}
-
-/*
- * Clock a series of bits through the MII.
- */
-void
-vr_mii_send(struct vr_softc *sc, u_int32_t bits, int cnt)
-{
-	int			i;
-
-	SIO_CLR(VR_MIICMD_CLK);
-
-	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
-		if (bits & i) {
-			SIO_SET(VR_MIICMD_DATAIN);
-		} else {
-			SIO_CLR(VR_MIICMD_DATAIN);
-		}
-		DELAY(1);
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
-		SIO_SET(VR_MIICMD_CLK);
-	}
-}
-#endif
-
 /*
  * Read an PHY register through the MII.
  */
 int
 vr_mii_readreg(struct vr_softc *sc, struct vr_mii_frame *frame)
-#ifdef VR_USESWSHIFT
-{
-	int			i, ack, s;
-
-	s = splnet();
-
-	/*
-	 * Set up frame for RX.
-	 */
-	frame->mii_stdelim = VR_MII_STARTDELIM;
-	frame->mii_opcode = VR_MII_READOP;
-	frame->mii_turnaround = 0;
-	frame->mii_data = 0;
-	
-	CSR_WRITE_1(sc, VR_MIICMD, 0);
-	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-
-	/*
- 	 * Turn on data xmit.
-	 */
-	SIO_SET(VR_MIICMD_DIR);
-
-	vr_mii_sync(sc);
-
-	/*
-	 * Send command/address info.
-	 */
-	vr_mii_send(sc, frame->mii_stdelim, 2);
-	vr_mii_send(sc, frame->mii_opcode, 2);
-	vr_mii_send(sc, frame->mii_phyaddr, 5);
-	vr_mii_send(sc, frame->mii_regaddr, 5);
-
-	/* Idle bit */
-	SIO_CLR((VR_MIICMD_CLK|VR_MIICMD_DATAIN));
-	DELAY(1);
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-
-	/* Turn off xmit. */
-	SIO_CLR(VR_MIICMD_DIR);
-
-	/* Check for ack */
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-	ack = CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAOUT;
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-
-	/*
-	 * Now try reading data bits. If the ack failed, we still
-	 * need to clock through 16 cycles to keep the PHY(s) in sync.
-	 */
-	if (ack) {
-		for(i = 0; i < 16; i++) {
-			SIO_CLR(VR_MIICMD_CLK);
-			DELAY(1);
-			SIO_SET(VR_MIICMD_CLK);
-			DELAY(1);
-		}
-		goto fail;
-	}
-
-	for (i = 0x8000; i; i >>= 1) {
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
-		if (!ack) {
-			if (CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAOUT)
-				frame->mii_data |= i;
-			DELAY(1);
-		}
-		SIO_SET(VR_MIICMD_CLK);
-		DELAY(1);
-	}
-
-fail:
-
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-
-	splx(s);
-
-	if (ack)
-		return(1);
-	return(0);
-}
-#else  
 {
 	int			s, i;
 
@@ -343,62 +209,13 @@ fail:
 	splx(s);
 
 	return(0);
-}      
-#endif         
-
+}
 
 /*
  * Write to a PHY register through the MII.
  */
 int
 vr_mii_writereg(struct vr_softc *sc, struct vr_mii_frame *frame)
-#ifdef VR_USESWSHIFT
-{
-	int			s;
-
-	s = splnet();
-
-	CSR_WRITE_1(sc, VR_MIICMD, 0);
-	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-
-	/*
-	 * Set up frame for TX.
-	 */
-
-	frame->mii_stdelim = VR_MII_STARTDELIM;
-	frame->mii_opcode = VR_MII_WRITEOP;
-	frame->mii_turnaround = VR_MII_TURNAROUND;
-	
-	/*
- 	 * Turn on data output.
-	 */
-	SIO_SET(VR_MIICMD_DIR);
-
-	vr_mii_sync(sc);
-
-	vr_mii_send(sc, frame->mii_stdelim, 2);
-	vr_mii_send(sc, frame->mii_opcode, 2);
-	vr_mii_send(sc, frame->mii_phyaddr, 5);
-	vr_mii_send(sc, frame->mii_regaddr, 5);
-	vr_mii_send(sc, frame->mii_turnaround, 2);
-	vr_mii_send(sc, frame->mii_data, 16);
-
-	/* Idle bit. */
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-
-	/*
-	 * Turn off xmit.
-	 */
-	SIO_CLR(VR_MIICMD_DIR);
-
-	splx(s);
-
-	return(0);
-}
-#else  
 {      
 	int			s, i;
 
@@ -424,7 +241,6 @@ vr_mii_writereg(struct vr_softc *sc, struct vr_mii_frame *frame)
 
 	return(0);
 }
-#endif                 
 
 int
 vr_miibus_readreg(struct device *dev, int phy, int reg)
