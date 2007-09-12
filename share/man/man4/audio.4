@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.42 2007/08/08 05:51:23 jakemsr Exp $
+.\"	$OpenBSD: audio.4,v 1.43 2007/09/12 06:12:23 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 8 2007 $
+.Dd $Mdocdate: September 12 2007 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -197,9 +197,11 @@ buffers, resets error counters, and restarts recording and playback as
 appropriate for the current sampling mode.
 .Pp
 .It Dv AUDIO_RERROR Fa "int *"
-This command fetches the count of dropped input samples into its
+.It Dv AUDIO_PERROR Fa "int *"
+These commands fetch the count of dropped input or output samples into
+the
 .Vt int *
-argument.
+argument, repectively.
 There is no information regarding when in the sample stream
 they were dropped.
 .Pp
