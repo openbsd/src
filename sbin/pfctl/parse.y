@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.520 2007/08/30 09:28:49 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.521 2007/09/12 15:58:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -327,7 +327,7 @@ struct loadanchors {
 
 typedef struct {
 	union {
-		u_int32_t		 number;
+		int64_t		 	 number;
 		int			 i;
 		char			*string;
 		int			 rtableid;
@@ -419,6 +419,7 @@ typedef struct {
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY ROUTE
 %token	<v.string>		STRING
+%token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
@@ -430,9 +431,11 @@ typedef struct {
 %type	<v.range>		port rport
 %type	<v.hashkey>		hashkey
 %type	<v.proto>		proto proto_list proto_item
+%type	<v.number>		protoval
 %type	<v.icmp>		icmpspec
 %type	<v.icmp>		icmp_list icmp_item
 %type	<v.icmp>		icmp6_list icmp6_item
+%type	<v.number>		reticmpspec reticmp6spec
 %type	<v.fromto>		fromto
 %type	<v.peer>		ipportspec from to
 %type	<v.host>		ipspec xhost host dynaddr host_list
@@ -545,7 +548,7 @@ option		: SET OPTIMIZATION STRING		{
 			free($3);
 		}
 		| SET HOSTID number {
-			if ($3 == 0) {
+			if ($3 == 0 || $3 > UINT_MAX) {
 				yyerror("hostid must be non-zero");
 				YYERROR;
 			}
@@ -966,24 +969,24 @@ scrub_opt	: NODF	{
 			}
 			scrub_opts.nodf = 1;
 		}
-		| MINTTL number {
+		| MINTTL NUMBER {
 			if (scrub_opts.marker & SOM_MINTTL) {
 				yyerror("min-ttl cannot be respecified");
 				YYERROR;
 			}
-			if ($2 > 255) {
+			if ($2 < 0 || $2 > 255) {
 				yyerror("illegal min-ttl value %d", $2);
 				YYERROR;
 			}
 			scrub_opts.marker |= SOM_MINTTL;
 			scrub_opts.minttl = $2;
 		}
-		| MAXMSS number {
+		| MAXMSS NUMBER {
 			if (scrub_opts.marker & SOM_MAXMSS) {
 				yyerror("max-mss cannot be respecified");
 				YYERROR;
 			}
-			if ($2 > 65535) {
+			if ($2 < 0 || $2 > 65535) {
 				yyerror("illegal max-mss value %d", $2);
 				YYERROR;
 			}
@@ -1019,11 +1022,7 @@ scrub_opt	: NODF	{
 			}
 			scrub_opts.randomid = 1;
 		}
-		| RTABLE number				{
-			if ($2 > RT_TABLEID_MAX || $2 < 0) {
-				yyerror("invalid rtable id");
-				YYERROR;
-			}
+		| RTABLE NUMBER				{
 			scrub_opts.rtableid = $2;
 		}
 		;
@@ -1162,8 +1161,8 @@ antispoof_opt	: label	{
 			}
 			antispoof_opts.label = $1;
 		}
-		| RTABLE number				{
-			if ($2 > RT_TABLEID_MAX || $2 < 0) {
+		| RTABLE NUMBER				{
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
 			}
@@ -1380,24 +1379,24 @@ queue_opt	: BANDWIDTH bandwidth	{
 			queue_opts.marker |= QOM_BWSPEC;
 			queue_opts.queue_bwspec = $2;
 		}
-		| PRIORITY number	{
+		| PRIORITY NUMBER	{
 			if (queue_opts.marker & QOM_PRIORITY) {
 				yyerror("priority cannot be respecified");
 				YYERROR;
 			}
-			if ($2 > 255) {
+			if ($2 < 0 || $2 > 255) {
 				yyerror("priority out of range: max 255");
 				YYERROR;
 			}
 			queue_opts.marker |= QOM_PRIORITY;
 			queue_opts.priority = $2;
 		}
-		| QLIMIT number	{
+		| QLIMIT NUMBER	{
 			if (queue_opts.marker & QOM_QLIMIT) {
 				yyerror("qlimit cannot be respecified");
 				YYERROR;
 			}
-			if ($2 > 65535) {
+			if ($2 < 0 || $2 > 65535) {
 				yyerror("qlimit out of range: max 65535");
 				YYERROR;
 			}
@@ -1412,12 +1411,12 @@ queue_opt	: BANDWIDTH bandwidth	{
 			queue_opts.marker |= QOM_SCHEDULER;
 			queue_opts.scheduler = $1;
 		}
-		| TBRSIZE number	{
+		| TBRSIZE NUMBER	{
 			if (queue_opts.marker & QOM_TBRSIZE) {
 				yyerror("tbrsize cannot be respecified");
 				YYERROR;
 			}
-			if ($2 > 65535) {
+			if ($2 < 0 || $2 > 65535) {
 				yyerror("tbrsize too big: max 65535");
 				YYERROR;
 			}
@@ -1459,6 +1458,14 @@ bandwidth	: STRING {
 			}
 			free($1);
 			$$.bw_absolute = (u_int32_t)bps;
+		}
+		| NUMBER {
+			if ($1 < 0 || $1 > UINT_MAX) {
+				yyerror("bandwidth number too big");
+				YYERROR;
+			}
+			$$.bw_percent = 0;
+			$$.bw_absolute = $1;
 		}
 		;
 
@@ -1556,8 +1563,12 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.linkshare.m2 = $2;
 			hfsc_opts.linkshare.used = 1;
 		}
-		| LINKSHARE '(' bandwidth comma number comma bandwidth ')'
+		| LINKSHARE '(' bandwidth comma NUMBER comma bandwidth ')'
 		    {
+			if ($5 < 0 || $5 > INT_MAX) {
+				yyerror("timing in curve out of range");
+				YYERROR;
+			}
 			if (hfsc_opts.linkshare.used) {
 				yyerror("linkshare already specified");
 				YYERROR;
@@ -1575,8 +1586,12 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.realtime.m2 = $2;
 			hfsc_opts.realtime.used = 1;
 		}
-		| REALTIME '(' bandwidth comma number comma bandwidth ')'
+		| REALTIME '(' bandwidth comma NUMBER comma bandwidth ')'
 		    {
+			if ($5 < 0 || $5 > INT_MAX) {
+				yyerror("timing in curve out of range");
+				YYERROR;
+			}
 			if (hfsc_opts.realtime.used) {
 				yyerror("realtime already specified");
 				YYERROR;
@@ -1594,8 +1609,12 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.upperlimit.m2 = $2;
 			hfsc_opts.upperlimit.used = 1;
 		}
-		| UPPERLIMIT '(' bandwidth comma number comma bandwidth ')'
+		| UPPERLIMIT '(' bandwidth comma NUMBER comma bandwidth ')'
 		    {
+			if ($5 < 0 || $5 > INT_MAX) {
+				yyerror("timing in curve out of range");
+				YYERROR;
+			}
 			if (hfsc_opts.upperlimit.used) {
 				yyerror("upperlimit already specified");
 				YYERROR;
@@ -2139,8 +2158,8 @@ filter_opt	: USER uids {
 			filter_opts.prob = (u_int32_t)p;
 			free($2);
 		}
-		| RTABLE number				{
-			if ($2 > RT_TABLEID_MAX || $2 < 0) {
+		| RTABLE NUMBER				{
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
 			}
@@ -2167,8 +2186,8 @@ blockspec	: /* empty */		{
 			$$.w = 0;
 			$$.w2 = 0;
 		}
-		| RETURNRST '(' TTL number ')'	{
-			if ($4 > 255) {
+		| RETURNRST '(' TTL NUMBER ')'	{
+			if ($4 < 0 || $4 > 255) {
 				yyerror("illegal ttl value %d", $4);
 				YYERROR;
 			}
@@ -2186,39 +2205,63 @@ blockspec	: /* empty */		{
 			$$.w = returnicmpdefault;
 			$$.w2 = returnicmp6default;
 		}
-		| RETURNICMP '(' STRING ')'	{
+		| RETURNICMP '(' reticmpspec ')'	{
 			$$.b2 = PFRULE_RETURNICMP;
-			if (!($$.w = parseicmpspec($3, AF_INET))) {
-				free($3);
-				YYERROR;
-			}
-			free($3);
-			$$.w2 = returnicmp6default;
+			$$.w = $3;
+			$$.w2 = returnicmpdefault;
 		}
-		| RETURNICMP6 '(' STRING ')'	{
+		| RETURNICMP6 '(' reticmp6spec ')'	{
 			$$.b2 = PFRULE_RETURNICMP;
 			$$.w = returnicmpdefault;
-			if (!($$.w2 = parseicmpspec($3, AF_INET6))) {
-				free($3);
-				YYERROR;
-			}
-			free($3);
+			$$.w2 = $3;
 		}
-		| RETURNICMP '(' STRING comma STRING ')' {
+		| RETURNICMP '(' reticmpspec comma reticmp6spec ')' {
 			$$.b2 = PFRULE_RETURNICMP;
-			if (!($$.w = parseicmpspec($3, AF_INET)) ||
-			    !($$.w2 = parseicmpspec($5, AF_INET6))) {
-				free($3);
-				free($5);
-				YYERROR;
-			}
-			free($3);
-			free($5);
+			$$.w = $3;
+			$$.w2 = $5;
 		}
 		| RETURN {
 			$$.b2 = PFRULE_RETURN;
 			$$.w = returnicmpdefault;
 			$$.w2 = returnicmp6default;
+		}
+		;
+
+reticmpspec	: STRING			{
+			if (!($$ = parseicmpspec($1, AF_INET))) {
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		| NUMBER			{
+			u_int8_t		icmptype;
+
+			if ($1 < 0 || $1 > 255) {
+				yyerror("invalid icmp code %lu", $1);
+				YYERROR;
+			}
+			icmptype = returnicmpdefault >> 8;
+			$$ = (icmptype << 8 | $1);
+		}
+		;
+
+reticmp6spec	: STRING			{
+			if (!($$ = parseicmpspec($1, AF_INET6))) {
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		| NUMBER			{
+			u_int8_t		icmptype;
+
+			if ($1 < 0 || $1 > 255) {
+				yyerror("invalid icmp code %lu", $1);
+				YYERROR;
+			}
+			icmptype = returnicmp6default >> 8;
+			$$ = (icmptype << 8 | $1);
 		}
 		;
 
@@ -2336,29 +2379,10 @@ proto_list	: proto_item			{ $$ = $1; }
 		}
 		;
 
-proto_item	: STRING			{
+proto_item	: protoval			{
 			u_int8_t	pr;
-			u_long		ulval;
 
-			if (atoul($1, &ulval) == 0) {
-				if (ulval > 255) {
-					yyerror("protocol outside range");
-					free($1);
-					YYERROR;
-				}
-				pr = (u_int8_t)ulval;
-			} else {
-				struct protoent	*p;
-
-				p = getprotobyname($1);
-				if (p == NULL) {
-					yyerror("unknown protocol %s", $1);
-					free($1);
-					YYERROR;
-				}
-				pr = p->p_proto;
-			}
-			free($1);
+			pr = (u_int8_t)$1;
 			if (pr == 0) {
 				yyerror("proto 0 cannot be used");
 				YYERROR;
@@ -2369,6 +2393,26 @@ proto_item	: STRING			{
 			$$->proto = pr;
 			$$->next = NULL;
 			$$->tail = $$;
+		}
+		;
+
+protoval	: STRING			{
+			struct protoent	*p;
+
+			p = getprotobyname($1);
+			if (p == NULL) {
+				yyerror("unknown protocol %s", $1);
+				free($1);
+				YYERROR;
+			}
+			$$ = p->p_proto;
+			free($1);
+		}
+		| NUMBER			{
+			if ($1 < 0 || $1 > 255) {
+				yyerror("protocol outside range");
+				YYERROR;
+			}
 		}
 		;
 
@@ -2532,10 +2576,10 @@ host		: STRING			{
 			free($1);
 			free($3);
 		}
-		| STRING '/' number		{
+		| STRING '/' NUMBER		{
 			char	*buf;
 
-			if (asprintf(&buf, "%s/%u", $1, $3) == -1)
+			if (asprintf(&buf, "%s/%lld", $1, $3) == -1)
 				err(1, "host: asprintf");
 			free($1);
 			if (($$ = host(buf)) == NULL)	{
@@ -2546,10 +2590,28 @@ host		: STRING			{
 			}
 			free(buf);
 		}
+		| NUMBER '/' NUMBER		{
+			char	*buf;
+
+			/* ie. for 10/8 parsing */
+			if (asprintf(&buf, "%lld/%lld", $1, $3) == -1)
+				err(1, "host: asprintf");
+			if (($$ = host(buf)) == NULL)	{
+				/* error. "any" is handled elsewhere */
+				free(buf);
+				yyerror("could not parse host specification");
+				YYERROR;
+			}
+			free(buf);
+		}
 		| dynaddr
-		| dynaddr '/' number		{
+		| dynaddr '/' NUMBER		{
 			struct node_host	*n;
 
+			if ($3 < 0 || $3 > 128) {
+				yyerror("bit number too big");
+				YYERROR;
+			}
 			$$ = $1;
 			for (n = $1; n != NULL; n = n->next)
 				set_ipmask(n, $3);
@@ -2594,7 +2656,8 @@ host		: STRING			{
 		}
 		;
 
-number		: STRING			{
+number		: NUMBER
+		| STRING		{
 			u_long	ulval;
 
 			if (atoul($1, &ulval) == -1) {
@@ -2742,6 +2805,14 @@ port		: STRING			{
 			}
 			free($1);
 		}
+		| NUMBER			{
+			if ($1 < 0 || $1 > 65535) {
+				yyerror("illegal port value %lu", $1);
+				YYERROR;
+			}
+			$$.a = ntohs($1);
+			$$.b = $$.t = 0;
+		}
 		;
 
 uids		: uid_item			{ $$ = $1; }
@@ -2799,30 +2870,26 @@ uid_item	: uid				{
 		;
 
 uid		: STRING			{
-			u_long	ulval;
+			if (!strcmp($1, "unknown"))
+				$$ = UID_MAX;
+			else {
+				struct passwd	*pw;
 
-			if (atoul($1, &ulval) == -1) {
-				if (!strcmp($1, "unknown"))
-					$$ = UID_MAX;
-				else {
-					struct passwd	*pw;
-
-					if ((pw = getpwnam($1)) == NULL) {
-						yyerror("unknown user %s", $1);
-						free($1);
-						YYERROR;
-					}
-					$$ = pw->pw_uid;
-				}
-			} else {
-				if (ulval >= UID_MAX) {
+				if ((pw = getpwnam($1)) == NULL) {
+					yyerror("unknown user %s", $1);
 					free($1);
-					yyerror("illegal uid value %lu", ulval);
 					YYERROR;
 				}
-				$$ = ulval;
+				$$ = pw->pw_uid;
 			}
 			free($1);
+		}
+		| NUMBER			{
+			if ($1 < 0 || $1 >= UID_MAX) {
+				yyerror("illegal uid value %lu", $1);
+				YYERROR;
+			}
+			$$ = $1;
 		}
 		;
 
@@ -2881,30 +2948,26 @@ gid_item	: gid				{
 		;
 
 gid		: STRING			{
-			u_long	ulval;
+			if (!strcmp($1, "unknown"))
+				$$ = GID_MAX;
+			else {
+				struct group	*grp;
 
-			if (atoul($1, &ulval) == -1) {
-				if (!strcmp($1, "unknown"))
-					$$ = GID_MAX;
-				else {
-					struct group	*grp;
-
-					if ((grp = getgrnam($1)) == NULL) {
-						yyerror("unknown group %s", $1);
-						free($1);
-						YYERROR;
-					}
-					$$ = grp->gr_gid;
-				}
-			} else {
-				if (ulval >= GID_MAX) {
-					yyerror("illegal gid value %lu", ulval);
+				if ((grp = getgrnam($1)) == NULL) {
+					yyerror("unknown group %s", $1);
 					free($1);
 					YYERROR;
 				}
-				$$ = ulval;
+				$$ = grp->gr_gid;
 			}
 			free($1);
+		}
+		| NUMBER			{
+			if ($1 < 0 || $1 >= GID_MAX) {
+				yyerror("illegal gid value %lu", $1);
+				YYERROR;
+			}
+			$$ = $1;
 		}
 		;
 
@@ -2960,29 +3023,33 @@ icmp_item	: icmptype		{
 		}
 		| icmptype CODE STRING	{
 			const struct icmpcodeent	*p;
-			u_long				 ulval;
 
-			if (atoul($3, &ulval) == 0) {
-				if (ulval > 255) {
-					free($3);
-					yyerror("illegal icmp-code %lu", ulval);
-					YYERROR;
-				}
-			} else {
-				if ((p = geticmpcodebyname($1-1, $3,
-				    AF_INET)) == NULL) {
-					yyerror("unknown icmp-code %s", $3);
-					free($3);
-					YYERROR;
-				}
-				ulval = p->code;
+			if ((p = geticmpcodebyname($1-1, $3, AF_INET)) == NULL) {
+				yyerror("unknown icmp-code %s", $3);
+				free($3);
+				YYERROR;
 			}
+
 			free($3);
 			$$ = calloc(1, sizeof(struct node_icmp));
 			if ($$ == NULL)
 				err(1, "icmp_item: calloc");
 			$$->type = $1;
-			$$->code = ulval + 1;
+			$$->code = p->code + 1;
+			$$->proto = IPPROTO_ICMP;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| icmptype CODE NUMBER	{
+			if ($3 < 0 || $3 > 255) {
+				yyerror("illegal icmp-code %lu", $3);
+				YYERROR;
+			}
+			$$ = calloc(1, sizeof(struct node_icmp));
+			if ($$ == NULL)
+				err(1, "icmp_item: calloc");
+			$$->type = $1;
+			$$->code = $3 + 1;
 			$$->proto = IPPROTO_ICMP;
 			$$->next = NULL;
 			$$->tail = $$;
@@ -3001,30 +3068,33 @@ icmp6_item	: icmp6type		{
 		}
 		| icmp6type CODE STRING	{
 			const struct icmpcodeent	*p;
-			u_long				 ulval;
 
-			if (atoul($3, &ulval) == 0) {
-				if (ulval > 255) {
-					yyerror("illegal icmp6-code %lu",
-					    ulval);
-					free($3);
-					YYERROR;
-				}
-			} else {
-				if ((p = geticmpcodebyname($1-1, $3,
-				    AF_INET6)) == NULL) {
-					yyerror("unknown icmp6-code %s", $3);
-					free($3);
-					YYERROR;
-				}
-				ulval = p->code;
+			if ((p = geticmpcodebyname($1-1, $3, AF_INET6)) == NULL) {
+				yyerror("unknown icmp6-code %s", $3);
+				free($3);
+				YYERROR;
 			}
 			free($3);
+
 			$$ = calloc(1, sizeof(struct node_icmp));
 			if ($$ == NULL)
 				err(1, "icmp_item: calloc");
 			$$->type = $1;
-			$$->code = ulval + 1;
+			$$->code = p->code + 1;
+			$$->proto = IPPROTO_ICMPV6;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| icmp6type CODE NUMBER	{
+			if ($3 < 0 || $3 > 255) {
+				yyerror("illegal icmp-code %lu", $3);
+				YYERROR;
+			}
+			$$ = calloc(1, sizeof(struct node_icmp));
+			if ($$ == NULL)
+				err(1, "icmp_item: calloc");
+			$$->type = $1;
+			$$->code = $3 + 1;
 			$$->proto = IPPROTO_ICMPV6;
 			$$->next = NULL;
 			$$->tail = $$;
@@ -3033,50 +3103,42 @@ icmp6_item	: icmp6type		{
 
 icmptype	: STRING			{
 			const struct icmptypeent	*p;
-			u_long				 ulval;
 
-			if (atoul($1, &ulval) == 0) {
-				if (ulval > 255) {
-					yyerror("illegal icmp-type %lu", ulval);
-					free($1);
-					YYERROR;
-				}
-				$$ = ulval + 1;
-			} else {
-				if ((p = geticmptypebyname($1, AF_INET)) ==
-				    NULL) {
-					yyerror("unknown icmp-type %s", $1);
-					free($1);
-					YYERROR;
-				}
-				$$ = p->type + 1;
+			if ((p = geticmptypebyname($1, AF_INET)) == NULL) {
+				yyerror("unknown icmp-type %s", $1);
+				free($1);
+				YYERROR;
 			}
+			$$ = p->type + 1;
 			free($1);
+		}
+		| NUMBER			{
+			if ($1 < 0 || $1 > 255) {
+				yyerror("illegal icmp-type %lu", $1);
+				YYERROR;
+			}
+			$$ = $1 + 1;
 		}
 		;
 
 icmp6type	: STRING			{
 			const struct icmptypeent	*p;
-			u_long				 ulval;
 
-			if (atoul($1, &ulval) == 0) {
-				if (ulval > 255) {
-					yyerror("illegal icmp6-type %lu",
-					    ulval);
-					free($1);
-					YYERROR;
-				}
-				$$ = ulval + 1;
-			} else {
-				if ((p = geticmptypebyname($1, AF_INET6)) ==
-				    NULL) {
-					yyerror("unknown icmp6-type %s", $1);
-					free($1);
-					YYERROR;
-				}
-				$$ = p->type + 1;
+			if ((p = geticmptypebyname($1, AF_INET6)) ==
+			    NULL) {
+				yyerror("unknown icmp6-type %s", $1);
+				free($1);
+				YYERROR;
 			}
+			$$ = p->type + 1;
 			free($1);
+		}
+		| NUMBER			{
+			if ($1 < 0 || $1 > 255) {
+				yyerror("illegal icmp6-type %lu", $1);
+				YYERROR;
+			}
+			$$ = $1 + 1;
 		}
 		;
 
@@ -3090,13 +3152,20 @@ tos		: TOS STRING			{
 			else if ($2[0] == '0' && $2[1] == 'x')
 				$$ = strtoul($2, NULL, 16);
 			else
-				$$ = strtoul($2, NULL, 10);
+				$$ = 0;		/* flag bad argument */
 			if (!$$ || $$ > 255) {
 				yyerror("illegal tos value %s", $2);
 				free($2);
 				YYERROR;
 			}
 			free($2);
+		}
+		| TOS NUMBER			{
+			$$ = $2;
+			if (!$$ || $$ > 255) {
+				yyerror("illegal tos value %s", $2);
+				YYERROR;
+			}
 		}
 		;
 
@@ -3150,7 +3219,11 @@ state_opt_list	: state_opt_item		{ $$ = $1; }
 		}
 		;
 
-state_opt_item	: MAXIMUM number		{
+state_opt_item	: MAXIMUM NUMBER		{
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("only positive values permitted");
+				YYERROR;
+			}
 			$$ = calloc(1, sizeof(struct node_state_opt));
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
@@ -3167,7 +3240,11 @@ state_opt_item	: MAXIMUM number		{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| MAXSRCSTATES number			{
+		| MAXSRCSTATES NUMBER			{
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("only positive values permitted");
+				YYERROR;
+			}
 			$$ = calloc(1, sizeof(struct node_state_opt));
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
@@ -3176,7 +3253,11 @@ state_opt_item	: MAXIMUM number		{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| MAXSRCCONN number			{
+		| MAXSRCCONN NUMBER			{
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("only positive values permitted");
+				YYERROR;
+			}
 			$$ = calloc(1, sizeof(struct node_state_opt));
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
@@ -3185,7 +3266,12 @@ state_opt_item	: MAXIMUM number		{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| MAXSRCCONNRATE number '/' number	{
+		| MAXSRCCONNRATE NUMBER '/' NUMBER	{
+			if ($2 < 0 || $2 > UINT_MAX ||
+			    $4 < 0 || $4 > UINT_MAX) {
+				yyerror("only positive values permitted");
+				YYERROR;
+			}
 			$$ = calloc(1, sizeof(struct node_state_opt));
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
@@ -3213,7 +3299,11 @@ state_opt_item	: MAXIMUM number		{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| MAXSRCNODES number			{
+		| MAXSRCNODES NUMBER			{
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("only positive values permitted");
+				YYERROR;
+			}
 			$$ = calloc(1, sizeof(struct node_state_opt));
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
@@ -3240,9 +3330,13 @@ state_opt_item	: MAXIMUM number		{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| STRING number			{
+		| STRING NUMBER			{
 			int	i;
 
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("only positive values permitted");
+				YYERROR;
+			}
 			for (i = 0; pf_timeouts[i].name &&
 			    strcmp(pf_timeouts[i].name, $1); ++i)
 				;	/* nothing */
@@ -3318,6 +3412,14 @@ rport		: STRING			{
 				$$.t = 0;
 			}
 			free($1);
+		}
+		| NUMBER			{
+			if ($1 < 0 || $1 > 65535) {
+				yyerror("illegal port value %ld", $1);
+				YYERROR;
+			}
+			$$.a = ntohs($1);
+			$$.b = $$.t = 0;
 		}
 		;
 
@@ -3845,8 +3947,8 @@ tagged		: /* empty */		{ $$.neg = 0; $$.name = NULL; }
 		;
 
 rtable		: /* empty */		{ $$ = -1; }
-		| RTABLE number		{
-			if ($2 > RT_TABLEID_MAX || $2 < 0) {
+		| RTABLE NUMBER		{
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
 			}
@@ -3921,10 +4023,14 @@ route		: /* empty */			{
 		}
 		;
 
-timeout_spec	: STRING number
+timeout_spec	: STRING NUMBER
 		{
 			if (check_rulestate(PFCTL_STATE_OPTION)) {
 				free($1);
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("only positive values permitted");
 				YYERROR;
 			}
 			if (pfctl_set_timeout(pf, $1, $2, 0) != 0) {
@@ -3940,10 +4046,14 @@ timeout_list	: timeout_list comma timeout_spec
 		| timeout_spec
 		;
 
-limit_spec	: STRING number
+limit_spec	: STRING NUMBER
 		{
 			if (check_rulestate(PFCTL_STATE_OPTION)) {
 				free($1);
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("only positive values permitted");
 				YYERROR;
 			}
 			if (pfctl_set_limit(pf, $1, $2) != 0) {
@@ -5194,6 +5304,43 @@ top:
 			return (ARROW);
 		lungetc(next);
 		break;
+	}
+
+#define allowed_to_end_number(x) \
+	(isspace(x) || x == ')' || x ==',' || x == '/' || x == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc(fin)) != EOF && isdigit(c));
+		lungetc(c);
+
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = strtonum(buf, LLONG_MIN,
+			    LLONG_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
 	}
 
 #define allowed_in_string(x) \
