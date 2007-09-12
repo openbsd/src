@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.81 2007/09/11 13:39:33 gilles Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.82 2007/09/12 18:45:14 mk Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1189,7 +1189,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		free(ccddevs[unit].ccd_vpp, M_DEVBUF);
 		bcopy(&ccd, &ccddevs[unit], sizeof(ccd));
 
-		/* Detatch the disk. */
+		/* Detach the disk. */
 		disk_detach(&cs->sc_dkdev);
 
 		/* This must be atomic. */

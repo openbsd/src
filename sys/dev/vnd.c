@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.81 2007/09/11 13:39:33 gilles Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.82 2007/09/12 18:45:14 mk Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -838,7 +838,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			free(vnd->sc_keyctx, M_DEVBUF);
 		}
 
-		/* Detatch the disk. */
+		/* Detach the disk. */
 		disk_detach(&vnd->sc_dk);
 
 		/* This must be atomic. */

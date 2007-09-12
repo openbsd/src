@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.42 2007/06/14 10:11:15 mbalmer Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.43 2007/09/12 18:45:14 mk Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -422,7 +422,7 @@ wi_usb_detach(struct device *self, int flags)
 	/* tasks? */
 
 	s = splusb();
-	/* detatch wi */
+	/* detach wi */
 
 	if (!(wsc->wi_flags & WI_FLAGS_ATTACHED)) {
 		printf("%s: already detached\n", sc->wi_usb_dev.dv_xname);
