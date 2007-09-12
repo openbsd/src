@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.71 2007/09/07 19:05:05 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.72 2007/09/12 00:42:04 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -998,6 +998,9 @@ nfe_start(struct ifnet *ifp)
 	struct nfe_softc *sc = ifp->if_softc;
 	int old = sc->txq.cur;
 	struct mbuf *m0;
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m0);
