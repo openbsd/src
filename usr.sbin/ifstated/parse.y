@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2007/09/11 23:30:30 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2007/09/12 02:09:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -257,7 +257,7 @@ if_test		: interface '.' LINK '.' UP		{
 		;
 
 ext_test	: STRING EVERY NUMBER {
-			if ($3 <= 0) {
+			if ($3 <= 0 || $3 > UINT_MAX) {
 				yyerror("invalid interval: %d", $3);
 				free($1);
 				YYERROR;
