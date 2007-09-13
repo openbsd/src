@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.34 2007/09/07 16:30:25 chl Exp $	*/
+/*	$OpenBSD: tape.c,v 1.35 2007/09/13 09:19:56 chl Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.34 2007/09/07 16:30:25 chl Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.35 2007/09/13 09:19:56 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -290,6 +290,7 @@ getvol(long nextvol)
 	union u_spcl tmpspcl;
 #	define tmpbuf tmpspcl.s_spcl
 	char buf[TP_BSIZE];
+	const char *errstr;
 
 	if (nextvol == 1) {
 		tapesread = 0;
@@ -337,12 +338,12 @@ again:
 			if (fgets(buf, sizeof buf, terminal) == NULL ||
 			    feof(terminal))
 				exit(1);
-		} while (buf[0] == '\n');
-		newvol = atoi(buf);
-		if (newvol <= 0) {
-			fprintf(stderr,
-			    "Volume numbers are positive numerics\n");
-		}
+			buf[strcspn(buf, "\n")] = '\0';
+
+			newvol = strtonum(buf, 1, INT_MAX, &errstr);
+			if (errstr)
+				fprintf(stderr, "Volume number %s: %s\n", errstr, buf);
+		} while (errstr);
 	}
 	if (newvol == volno) {
 		tapesread |= 1 << volno;
