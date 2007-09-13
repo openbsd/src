@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.6 2007/09/13 08:28:37 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.7 2007/09/13 12:31:47 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -93,8 +93,6 @@ int bwi_debug = 1;
 #include <dev/pci/pcidevs.h>
 
 #define pci_get_device(dev)			(0)
-#define pci_write_config(dev, reg, val, width)
-#define pci_read_config(dev, reg, width)	(0)
 #define pci_get_revid(dev)			(0)
 
 /*
@@ -5491,6 +5489,8 @@ bwi_attach(struct bwi_softc *sc)
 		goto fail;
 	}
 
+	printf("YEAH\n");
+
 	return 0;
 fail:
 	return error;
@@ -5558,13 +5558,13 @@ back:
 int
 bwi_power_off(struct bwi_softc *sc, int with_pll)
 {
-	printf("%s\n", __func__);
-#if 0
 	uint32_t gpio_out, gpio_en;
 
-	pci_read_config(sc->sc_dev, BWI_PCIR_GPIO_IN, 4); /* dummy read */
-	gpio_out = pci_read_config(sc->sc_dev, BWI_PCIR_GPIO_OUT, 4);
-	gpio_en = pci_read_config(sc->sc_dev, BWI_PCIR_GPIO_ENABLE, 4);
+	printf("%s\n", __func__);
+
+	(sc->sc_conf_read)(sc, BWI_PCIR_GPIO_IN); /* dummy read */
+	gpio_out = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_OUT);
+	gpio_en = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_ENABLE);
 
 	gpio_out &= ~BWI_PCIM_GPIO_PWR_ON;
 	gpio_en |= BWI_PCIM_GPIO_PWR_ON;
@@ -5573,11 +5573,10 @@ bwi_power_off(struct bwi_softc *sc, int with_pll)
 		gpio_en |= BWI_PCIM_GPIO_PLL_PWR_OFF;
 	}
 
-	pci_write_config(sc->sc_dev, BWI_PCIR_GPIO_OUT, gpio_out, 4);
-	pci_write_config(sc->sc_dev, BWI_PCIR_GPIO_ENABLE, gpio_en, 4);
-	return 0;
-#endif
-	return (1);
+	(sc->sc_conf_write)(sc, BWI_PCIR_GPIO_OUT, gpio_out);
+	(sc->sc_conf_write)(sc, BWI_PCIR_GPIO_ENABLE, gpio_en);
+
+	return (0);
 }
 
 int
@@ -5615,8 +5614,8 @@ bwi_regwin_select(struct bwi_softc *sc, int id)
 
 #define RETRY_MAX	50
 	for (i = 0; i < RETRY_MAX; ++i) {
-		pci_write_config(sc->sc_dev, BWI_PCIR_SEL_REGWIN, win, 4);
-		if (pci_read_config(sc->sc_dev, BWI_PCIR_SEL_REGWIN, 4) == win)
+		(sc->sc_conf_write)(sc, BWI_PCIR_SEL_REGWIN, win);
+		if ((sc->sc_conf_read)(sc, BWI_PCIR_SEL_REGWIN) == win)
 			return 0;
 		DELAY(10);
 	}
@@ -5817,9 +5816,9 @@ bwi_bus_init(struct bwi_softc *sc, struct bwi_mac *mac)
 		if (error)
 			return error;
 
-		val = pci_read_config(sc->sc_dev, BWI_PCIR_INTCTL, 4);
+		val = (sc->sc_conf_read)(sc, BWI_PCIR_INTCTL);
 		val |= mac_mask << 8;
-		pci_write_config(sc->sc_dev, BWI_PCIR_INTCTL, val, 4);
+		(sc->sc_conf_write)(sc, BWI_PCIR_INTCTL, val);
 	}
 
 	if (sc->sc_flags & BWI_F_BUS_INITED)
@@ -5930,7 +5929,7 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 	src = -1;
 	div = 0;
 	if (com->rw_rev < 6) {
-		val = pci_read_config(sc->sc_dev, BWI_PCIR_GPIO_OUT, 4);
+		val = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_OUT);
 		if (val & BWI_PCIM_GPIO_OUT_CLKSRC) {
 			src = BWI_CLKSRC_PCI;
 			div = 64;

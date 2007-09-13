@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.2 2007/09/13 08:28:37 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.3 2007/09/13 12:31:47 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -108,6 +108,7 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
+	psc->psc_pcitag = pa->pa_tag;
 
 	/* map control / status registers */
 	error = pci_mapreg_map(pa, BWI_PCI_BAR0,
