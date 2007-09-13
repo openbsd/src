@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.3 2007/09/13 08:28:37 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.4 2007/09/13 14:48:29 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -381,7 +381,6 @@ struct bwi_rf {
 #define BWI_ANT_MODE_UNKN	2
 #define BWI_ANT_MODE_AUTO	3
 
-struct bwi_softc;
 struct fw_image;
 
 struct bwi_mac {
@@ -431,9 +430,9 @@ enum bwi_bus_space {
 };
 
 struct bwi_softc {
+	struct device		 sc_dev;
 	struct ieee80211com	 sc_ic;
 	uint32_t		 sc_flags;	/* BWI_F_ */
-	struct device		 sc_dev;
 
 	uint32_t		 sc_cap;	/* BWI_CAP_ */
 	uint16_t		 sc_bbp_id;	/* BWI_BBPID_ */
