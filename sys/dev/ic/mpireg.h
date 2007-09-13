@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.31 2006/09/21 08:35:39 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.32 2007/09/13 01:16:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -1248,6 +1248,26 @@ struct mpi_cfg_fc_port_pg0 {
 	u_int8_t		max_hard_aliases_supported;
 	u_int8_t		num_current_aliases;
 	u_int8_t		reserved2;
+} __packed;
+
+struct mpi_cfg_fc_port_pg1 {
+	struct mpi_cfg_hdr	config_header;
+
+	u_int32_t		flags;
+
+	u_int64_t		noseepromwwnn;
+
+	u_int64_t		noseepromwwpn;
+
+	u_int8_t		hard_alpa;
+	u_int8_t		link_config;
+	u_int8_t		topology_config;
+	u_int8_t		alt_connector;
+
+	u_int8_t		num_req_aliases;
+	u_int8_t		rr_tov;
+	u_int8_t		initiator_dev_to;
+	u_int8_t		initiator_lo_pend_to;
 } __packed;
 
 struct mpi_cfg_fc_device_pg0 {
