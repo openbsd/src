@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.19 2007/08/22 21:04:30 ckuethe Exp $
+.\" $OpenBSD: ntpd.8,v 1.20 2007/09/13 14:34:36 pyr Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2007 $
+.Dd $Mdocdate: September 13 2007 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm ntpd
 .Bk -words
-.Op Fl dSsv
+.Op Fl dnSsv
 .Op Fl f Ar file
 .Ek
 .Sh DESCRIPTION
@@ -89,6 +89,9 @@ Use
 as the configuration file,
 instead of the default
 .Pa /etc/ntpd.conf .
+.It Fl n
+Configtest mode.
+Only check the configuration file for validity.
 .It Fl S
 Do not set the time immediately at startup.
 This is the default.

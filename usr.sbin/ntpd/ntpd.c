@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.50 2007/08/22 21:04:30 ckuethe Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.51 2007/09/13 14:34:36 pyr Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,13 +96,16 @@ main(int argc, char *argv[])
 	log_init(1);		/* log to stderr until daemonized */
 	res_init();		/* XXX */
 
-	while ((ch = getopt(argc, argv, "df:sSv")) != -1) {
+	while ((ch = getopt(argc, argv, "df:nsSv")) != -1) {
 		switch (ch) {
 		case 'd':
 			lconf.debug = 1;
 			break;
 		case 'f':
 			conffile = optarg;
+			break;
+		case 'n':
+			lconf.noaction = 1;
 			break;
 		case 's':
 			lconf.settime = 1;
@@ -121,6 +124,11 @@ main(int argc, char *argv[])
 
 	if (parse_config(conffile, &lconf))
 		exit(1);
+
+	if (lconf.noaction) {
+		fprintf(stderr, "configuration OK\n");
+		exit(0);
+	}
 
 	if (geteuid()) {
 		fprintf(stderr, "ntpd: need root privileges\n");
