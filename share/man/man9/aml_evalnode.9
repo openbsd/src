@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aml_evalnode.9,v 1.5 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: aml_evalnode.9,v 1.6 2007/09/13 03:44:21 weingart Exp $
 .\"
 .\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 13 2007 $
 .Dt AML_EVALNODE 9
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 "struct aml_value *res"
 .Ft int
 .Fn "aml_find_node" "struct aml_node *node" "const char *name" \
-"void (*cbproc)(struct aml_node *, void *arg)" "void *arg"
+"int (*cbproc)(struct aml_node *, void *arg)" "void *arg"
 .Ft void
 .Fn "aml_freevalue" "struct aml_value *val"
 .Ft int64_t
@@ -108,7 +108,8 @@ parameter is called with the node and
 as the first and second parameters, respectively.
 The function specified as the
 .Pa cbproc
-parameter does not return any value.
+parameter returns a value that specifies if the tree walk
+should be terminated (!0) or continued (0) with the children.
 .Fn aml_find_node
 always returns 0.
 .Pp
