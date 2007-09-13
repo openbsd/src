@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_print.c,v 1.10 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_print.c,v 1.11 2007/09/13 17:14:17 miod Exp $	*/
 /*	$NetBSD: db_print.c,v 1.5 1996/02/05 01:57:11 christos Exp $	*/
 
 /* 
@@ -53,15 +53,18 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	struct db_variable *regp;
 	db_expr_t	value, offset;
 	char *		name;
+	char		tmpfmt[24];
 
 	for (regp = db_regs; regp < db_eregs; regp++) {
 	    db_read_variable(regp, &value);
-	    db_printf("%-12s%#*ln", regp->name, sizeof(long) * 3, (long)value);
+	    db_printf("%-12s%s", regp->name, db_format(tmpfmt, sizeof tmpfmt,
+	      (long)value, DB_FORMAT_N, 1, sizeof(long) * 3));
 	    db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
 	    if (name != 0 && offset <= db_maxoff && offset != value) {
 		db_printf("\t%s", name);
 		if (offset != 0)
-		    db_printf("+%#lr", (long)offset);
+		    db_printf("+%s", db_format(tmpfmt, sizeof tmpfmt,
+		      (long)offset, DB_FORMAT_R, 1, 0));
 	    }
 	    db_printf("\n");
 	}

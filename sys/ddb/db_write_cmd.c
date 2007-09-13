@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_write_cmd.c,v 1.8 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_write_cmd.c,v 1.9 2007/09/13 17:14:17 miod Exp $	*/
 /*	$NetBSD: db_write_cmd.c,v 1.6 1996/02/05 01:57:25 christos Exp $	*/
 
 /* 
@@ -57,6 +57,7 @@ db_write_cmd(db_expr_t	address, boolean_t have_addr, db_expr_t count,
 	db_expr_t	new_value;
 	int		size;
 	boolean_t	wrote_one = FALSE;
+	char		tmpfmt[24];
 
 	addr = (db_addr_t) address;
 
@@ -80,7 +81,10 @@ db_write_cmd(db_expr_t	address, boolean_t have_addr, db_expr_t count,
 	while (db_expression(&new_value)) {
 	    old_value = db_get_value(addr, size, FALSE);
 	    db_printsym(addr, DB_STGY_ANY, db_printf);
-	    db_printf("\t\t%#8n\t=\t%#8n\n", old_value, new_value);
+	    db_printf("\t\t%s\t", db_format(tmpfmt, sizeof tmpfmt,
+	      old_value, DB_FORMAT_N, 0, 8));
+	    db_printf("=\t%s\n",  db_format(tmpfmt, sizeof tmpfmt,
+	      new_value, DB_FORMAT_N, 0, 8));
 	    db_put_value(addr, size, new_value);
 	    addr += size;
 

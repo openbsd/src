@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.14 2007/09/01 11:54:03 miod Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.15 2007/09/13 17:14:17 miod Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 	int		size;
 	int		width;
 	char *		fp;
+	char		tmpfmt[24];
 
 	while (--count >= 0) {
 		fp = fmt;
@@ -113,7 +114,9 @@ db_examine(db_addr_t addr, char *fmt, int count)
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*lr", width, (long)value);
+				db_format(tmpfmt, sizeof tmpfmt,
+				    (long)value, DB_FORMAT_R, 0, width);
+				db_printf("%-*s", width, tmpfmt);
 				break;
 			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
@@ -123,7 +126,9 @@ db_examine(db_addr_t addr, char *fmt, int count)
 			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*lz", width, (long)value);
+				db_format(tmpfmt, sizeof tmpfmt,
+				    (long)value, DB_FORMAT_Z, 0, width);
+				db_printf("%-*s", width, tmpfmt);
 				break;
 			case 'd':	/* signed decimal */
 				value = db_get_value(addr, size, TRUE);
