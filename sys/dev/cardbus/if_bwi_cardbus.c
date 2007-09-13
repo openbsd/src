@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.1 2007/09/12 12:59:55 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.2 2007/09/13 08:28:37 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -47,25 +47,28 @@
 #include <dev/ic/bwivar.h>
 
 struct bwi_cardbus_softc {
-	struct bwi_softc	 sc_bwi;
+	struct bwi_softc	 csc_bwi;
 
 	/* cardbus specific goo */
-	cardbus_devfunc_t	 sc_ct;
-	cardbustag_t		 sc_tag;
-	void			*sc_ih;
+	cardbus_devfunc_t	 csc_ct;
+	cardbustag_t		 csc_tag;
+	void			*csc_ih;
 
-	bus_size_t		 sc_mapsize;
-	pcireg_t		 sc_bar_val;
-	int			 sc_intrline;
+	bus_size_t		 csc_mapsize;
+	pcireg_t		 csc_bar_val;
+	int			 csc_intrline;
 };
 
-int	bwi_cardbus_match(struct device *parent, void *match, void *aux);
-void	bwi_cardbus_attach(struct device *parent, struct device *self,
-	    void *aux);
-int	bwi_cardbus_detach(struct device *self, int flags);
-void	bwi_cardbus_setup(struct bwi_cardbus_softc *csc);
-int	bwi_cardbus_enable(struct bwi_softc *sc);
-void	bwi_cardbus_disable(struct bwi_softc *sc);
+int		bwi_cardbus_match(struct device *parent, void *match,
+		    void *aux);
+void		bwi_cardbus_attach(struct device *parent, struct device *self,
+		    void *aux);
+int		bwi_cardbus_detach(struct device *self, int flags);
+void		bwi_cardbus_setup(struct bwi_cardbus_softc *csc);
+int		bwi_cardbus_enable(struct bwi_softc *sc);
+void		bwi_cardbus_disable(struct bwi_softc *sc);
+void		bwi_cardbus_conf_write(void *, uint32_t, uint32_t);
+uint32_t	bwi_cardbus_conf_read(void *, uint32_t);
 
 struct cfattach bwi_cardbus_ca = {
 	sizeof (struct bwi_cardbus_softc), bwi_cardbus_match,
@@ -98,15 +101,15 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
 	struct cardbus_attach_args *ca = aux;
-	struct bwi_softc *sc = &csc->sc_bwi;
+	struct bwi_softc *sc = &csc->csc_bwi;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t base;
 	int error;
 
 	sc->sc_dmat = ca->ca_dmat;
-	csc->sc_ct = ct;
-	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
+	csc->csc_ct = ct;
+	csc->csc_tag = ca->ca_tag;
+	csc->csc_intrline = ca->ca_intrline;
 
 	/* power management hooks */
 	sc->sc_enable = bwi_cardbus_enable;
@@ -116,17 +119,21 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* map control/status registers */
 	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
 	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_mem_bt,
-	    &sc->sc_mem_bh, &base, &csc->sc_mapsize);
+	    &sc->sc_mem_bh, &base, &csc->csc_mapsize);
 	if (error != 0) {
 		printf(": could not map memory space\n");
 		return;
 	}
-	csc->sc_bar_val = base | CARDBUS_MAPREG_TYPE_MEM;
+	csc->csc_bar_val = base | CARDBUS_MAPREG_TYPE_MEM;
 
 	/* set up the PCI configuration registers */
 	bwi_cardbus_setup(csc);
 
-	printf(": irq %d", csc->sc_intrline);
+	printf(": irq %d", csc->csc_intrline);
+
+	/* we need to access Cardbus config space from the driver */
+	sc->sc_conf_read = bwi_cardbus_conf_read;
+	sc->sc_conf_write = bwi_cardbus_conf_write;
 
 	error = bwi_attach(sc);
 	if (error != 0)
@@ -139,8 +146,8 @@ int
 bwi_cardbus_detach(struct device *self, int flags)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
-	struct bwi_softc *sc = &csc->sc_bwi;
-	cardbus_devfunc_t ct = csc->sc_ct;
+	struct bwi_softc *sc = &csc->csc_bwi;
+	cardbus_devfunc_t ct = csc->csc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
@@ -150,14 +157,14 @@ bwi_cardbus_detach(struct device *self, int flags)
 		return (error);
 
 	/* unhook the interrupt handler */
-	if (csc->sc_ih != NULL) {
-		cardbus_intr_disestablish(cc, cf, csc->sc_ih);
-		csc->sc_ih = NULL;
+	if (csc->csc_ih != NULL) {
+		cardbus_intr_disestablish(cc, cf, csc->csc_ih);
+		csc->csc_ih = NULL;
 	}
 
 	/* release bus space and close window */
 	Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->sc_mem_bt,
-	    sc->sc_mem_bh, csc->sc_mapsize);
+	    sc->sc_mem_bh, csc->csc_mapsize);
 
 	return (0);
 }
@@ -165,24 +172,24 @@ bwi_cardbus_detach(struct device *self, int flags)
 void
 bwi_cardbus_setup(struct bwi_cardbus_softc *csc)
 {
-	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_devfunc_t ct = csc->csc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
 	/* program the BAR */
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BASE0_REG,
-	    csc->sc_bar_val);
+	cardbus_conf_write(cc, cf, csc->csc_tag, CARDBUS_BASE0_REG,
+	    csc->csc_bar_val);
 
 	/* make sure the right access type is on the cardbus bridge */
 	(*cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
 	(*cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* enable the appropriate bits in the PCI CSR */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
+	reg = cardbus_conf_read(cc, cf, csc->csc_tag,
 	    CARDBUS_COMMAND_STATUS_REG);
 	reg |= CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
+	cardbus_conf_write(cc, cf, csc->csc_tag, CARDBUS_COMMAND_STATUS_REG,
 	    reg);
 }
 
@@ -190,7 +197,7 @@ int
 bwi_cardbus_enable(struct bwi_softc *sc)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)sc;
-	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_devfunc_t ct = csc->csc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
@@ -201,11 +208,11 @@ bwi_cardbus_enable(struct bwi_softc *sc)
 	bwi_cardbus_setup(csc);
 
 	/* map and establish the interrupt handler */
-	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
+	csc->csc_ih = cardbus_intr_establish(cc, cf, csc->csc_intrline, IPL_NET,
 	    bwi_intr, sc, sc->sc_dev.dv_xname);
-	if (csc->sc_ih == NULL) {
+	if (csc->csc_ih == NULL) {
 		printf("%s: could not establish interrupt at %d\n",
-		    sc->sc_dev.dv_xname, csc->sc_intrline);
+		    sc->sc_dev.dv_xname, csc->csc_intrline);
 		Cardbus_function_disable(ct);
 		return (1);
 	}
@@ -217,14 +224,30 @@ void
 bwi_cardbus_disable(struct bwi_softc *sc)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)sc;
-	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_devfunc_t ct = csc->csc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */
-	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
-	csc->sc_ih = NULL;
+	cardbus_intr_disestablish(cc, cf, csc->csc_ih);
+	csc->csc_ih = NULL;
 
 	/* power down the socket */
 	Cardbus_function_disable(ct);
+}
+
+void
+bwi_cardbus_conf_write(void *self, uint32_t reg, uint32_t val)
+{
+	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
+
+	Cardbus_conf_write(csc->csc_ct, csc->csc_tag, reg, val);
+}
+
+uint32_t
+bwi_cardbus_conf_read(void *self, uint32_t reg)
+{
+	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
+
+	return (Cardbus_conf_read(csc->csc_ct, csc->csc_tag, reg));
 }

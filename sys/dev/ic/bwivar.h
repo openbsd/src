@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.2 2007/09/12 22:22:05 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.3 2007/09/13 08:28:37 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -511,6 +511,9 @@ struct bwi_softc {
 
 	int			 (*sc_enable)(struct bwi_softc *); 
 	void			 (*sc_disable)(struct bwi_softc *);
+
+	void			 (*sc_conf_write)(void *, uint32_t, uint32_t);
+	uint32_t		 (*sc_conf_read)(void *, uint32_t);
 
 	/* Sysctl variables */
 	int			sc_fw_version;	/* BWI_FW_VERSION[34] */

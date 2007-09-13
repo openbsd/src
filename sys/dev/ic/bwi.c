@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.5 2007/09/12 22:22:05 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.6 2007/09/13 08:28:37 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -5517,17 +5517,17 @@ bwi_detach(void *arg)
 void
 bwi_power_on(struct bwi_softc *sc, int with_pll)
 {
-	printf("%s\n", __func__);
-#if 0
 	uint32_t gpio_in, gpio_out, gpio_en;
 	uint16_t status;
 
-	gpio_in = pci_read_config(sc->sc_dev, BWI_PCIR_GPIO_IN, 4);
+	printf("%s\n", __func__);
+
+	gpio_in = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_IN);
 	if (gpio_in & BWI_PCIM_GPIO_PWR_ON)
 		goto back;
 
-	gpio_out = pci_read_config(sc->sc_dev, BWI_PCIR_GPIO_OUT, 4);
-	gpio_en = pci_read_config(sc->sc_dev, BWI_PCIR_GPIO_ENABLE, 4);
+	gpio_out = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_OUT);
+	gpio_en = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_ENABLE);
 
 	gpio_out |= BWI_PCIM_GPIO_PWR_ON;
 	gpio_en |= BWI_PCIM_GPIO_PWR_ON;
@@ -5537,23 +5537,22 @@ bwi_power_on(struct bwi_softc *sc, int with_pll)
 		gpio_en |= BWI_PCIM_GPIO_PLL_PWR_OFF;
 	}
 
-	pci_write_config(sc->sc_dev, BWI_PCIR_GPIO_OUT, gpio_out, 4);
-	pci_write_config(sc->sc_dev, BWI_PCIR_GPIO_ENABLE, gpio_en, 4);
+	(sc->sc_conf_write)(sc, BWI_PCIR_GPIO_OUT, gpio_out);
+	(sc->sc_conf_write)(sc, BWI_PCIR_GPIO_ENABLE, gpio_en);
 	DELAY(1000);
 
 	if (with_pll) {
 		/* Turn on PLL */
 		gpio_out &= ~BWI_PCIM_GPIO_PLL_PWR_OFF;
-		pci_write_config(sc->sc_dev, BWI_PCIR_GPIO_OUT, gpio_out, 4);
+		(sc->sc_conf_write)(sc, BWI_PCIR_GPIO_OUT, gpio_out);
 		DELAY(5000);
 	}
 
 back:
 	/* Clear "Signaled Target Abort" */
-	status = pci_read_config(sc->sc_dev, PCIR_STATUS, 2);
-	status &= ~PCIM_STATUS_STABORT;
-	pci_write_config(sc->sc_dev, PCIR_STATUS, status, 2);
-#endif
+	status = (sc->sc_conf_read)(sc, PCI_COMMAND_STATUS_REG);
+	status &= ~PCI_STATUS_TARGET_TARGET_ABORT;
+	(sc->sc_conf_write)(sc, PCI_COMMAND_STATUS_REG, status);
 }
 
 int
