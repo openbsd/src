@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.15 2007/09/03 08:52:03 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.16 2007/09/13 16:51:19 brad Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ cmpci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih=pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, cmpci_intr, sc,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, cmpci_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": failed to establish interrupt");
