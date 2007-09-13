@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.8 2007/09/13 12:33:18 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.9 2007/09/13 18:40:24 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -5503,6 +5503,7 @@ bwi_detach(void *arg)
 
 	bwi_stop(sc);
 	ieee80211_ifdetach(ifp);
+	if_detach(ifp);
 
 	for (i = 0; i < sc->sc_nmac; ++i)
 		bwi_mac_detach(&sc->sc_mac[i]);
