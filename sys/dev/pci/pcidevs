@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1262 2007/09/13 03:01:33 brad Exp $
+$OpenBSD: pcidevs,v 1.1263 2007/09/13 03:27:49 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3186,6 +3186,7 @@ product NVIDIA MCP77_HDA_1	0x0774	MCP77 HD Audio
 product NVIDIA MCP77_HDA_2	0x0775	MCP77 HD Audio
 product NVIDIA MCP77_HDA_3	0x0776	MCP77 HD Audio
 product NVIDIA MCP77_HDA_4	0x0777	MCP77 HD Audio
+product NVIDIA MCP73_SMB	0x07d8	MCP73 SMBus
 product NVIDIA MCP73_LAN1	0x07dc	MCP73 LAN
 product NVIDIA MCP73_LAN2	0x07dd	MCP73 LAN
 product NVIDIA MCP73_LAN3	0x07de	MCP73 LAN
