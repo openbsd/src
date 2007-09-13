@@ -1,4 +1,4 @@
-/* $OpenBSD: deflate.c,v 1.4 2005/03/24 11:43:40 hshoexer Exp $ */
+/* $OpenBSD: deflate.c,v 1.5 2007/09/13 21:26:41 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -69,8 +69,7 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 	zbuf.avail_in = size;	/* Total length of data to be processed */
 
 	if (comp == 0) {
-		MALLOC(buf[i].out, u_int8_t *, (u_long) size, M_CRYPTO_DATA, 
-		    M_NOWAIT);
+		buf[i].out = malloc((u_long)size, M_CRYPTO_DATA, M_NOWAIT);
 		if (buf[i].out == NULL)
 			goto bad;
 		buf[i].size = size;
@@ -83,9 +82,7 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 	 	 * decompression. If it's not sufficient, it will need to be
 	 	 * updated while the decompression is going on
 	 	 */
-
-		MALLOC(buf[i].out, u_int8_t *, (u_long) (size * 4), 
-		    M_CRYPTO_DATA, M_NOWAIT);
+		buf[i].out = malloc((u_long)(size * 4), M_CRYPTO_DATA, M_NOWAIT);
 		if (buf[i].out == NULL)
 			goto bad;
 		buf[i].size = size * 4;
@@ -111,8 +108,8 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 			goto end;
 		else if (zbuf.avail_out == 0 && i < (ZBUF - 1)) {
 			/* we need more output space, allocate size */
-			MALLOC(buf[i].out, u_int8_t *, (u_long) size,
-			    M_CRYPTO_DATA, M_NOWAIT);
+			buf[i].out = malloc((u_long)size, M_CRYPTO_DATA,
+			    M_NOWAIT);
 			if (buf[i].out == NULL)
 				goto bad;
 			zbuf.next_out = buf[i].out;
@@ -127,7 +124,7 @@ deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 end:
 	result = count = zbuf.total_out;
 
-	MALLOC(*out, u_int8_t *, (u_long) result, M_CRYPTO_DATA, M_NOWAIT);
+	*out = malloc((u_long)result, M_CRYPTO_DATA, M_NOWAIT);
 	if (*out == NULL)
 		goto bad;
 	if (comp)
@@ -139,13 +136,13 @@ end:
 		if (count > buf[j].size) {
 			bcopy(buf[j].out, *out, buf[j].size);
 			*out += buf[j].size;
-			FREE(buf[j].out, M_CRYPTO_DATA);
+			free(buf[j].out, M_CRYPTO_DATA);
 			count -= buf[j].size;
 		} else {
 			/* it should be the last buffer */
 			bcopy(buf[j].out, *out, count);
 			*out += count;
-			FREE(buf[j].out, M_CRYPTO_DATA);
+			free(buf[j].out, M_CRYPTO_DATA);
 			count = 0;
 		}
 	}
@@ -155,7 +152,7 @@ end:
 bad:
 	*out = NULL;
 	for (j = 0; buf[j].flag != 0; j++)
-		FREE(buf[j].out, M_CRYPTO_DATA);
+		free(buf[j].out, M_CRYPTO_DATA);
 	if (comp)
 		inflateEnd(&zbuf);
 	else
