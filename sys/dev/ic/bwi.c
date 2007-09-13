@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.7 2007/09/13 12:31:47 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.8 2007/09/13 12:33:18 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -5488,8 +5488,6 @@ bwi_attach(struct bwi_softc *sc)
 		ieee80211_ifdetach(ifp);
 		goto fail;
 	}
-
-	printf("YEAH\n");
 
 	return 0;
 fail:
