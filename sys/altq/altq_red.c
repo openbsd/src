@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.c,v 1.13 2007/05/28 17:16:38 henning Exp $	*/
+/*	$OpenBSD: altq_red.c,v 1.14 2007/09/13 20:40:02 chl Exp $	*/
 /*	$KAME: altq_red.c,v 1.10 2002/04/03 05:38:51 kjc Exp $	*/
 
 /*
@@ -162,10 +162,9 @@ red_alloc(int weight, int inv_pmax, int th_min, int th_max, int flags,
 	int	 w, i;
 	int	 npkts_per_sec;
 
-	MALLOC(rp, red_t *, sizeof(red_t), M_DEVBUF, M_WAITOK);
+	rp = malloc(sizeof(red_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (rp == NULL)
 		return (NULL);
-	bzero(rp, sizeof(red_t));
 
 	rp->red_avg = 0;
 	rp->red_idle = 1;
@@ -244,7 +243,7 @@ void
 red_destroy(red_t *rp)
 {
 	wtab_destroy(rp->red_wtab);
-	FREE(rp, M_DEVBUF);
+	free(rp, M_DEVBUF);
 }
 
 void
@@ -534,10 +533,9 @@ wtab_alloc(int weight)
 			return (w);
 		}
 
-	MALLOC(w, struct wtab *, sizeof(struct wtab), M_DEVBUF, M_WAITOK);
+	w = malloc(sizeof(struct wtab), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (w == NULL)
 		panic("wtab_alloc: malloc failed!");
-	bzero(w, sizeof(struct wtab));
 	w->w_weight = weight;
 	w->w_refcount = 1;
 	w->w_next = wtab_list;
@@ -570,7 +568,7 @@ wtab_destroy(struct wtab *w)
 			break;
 		}
 
-	FREE(w, M_DEVBUF);
+	free(w, M_DEVBUF);
 	return (0);
 }
 

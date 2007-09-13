@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cdnr.c,v 1.7 2002/12/16 17:27:20 henning Exp $	*/
+/*	$OpenBSD: altq_cdnr.c,v 1.8 2007/09/13 20:40:02 chl Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -284,10 +284,9 @@ cdnr_cballoc(top, type, input_func)
 		return (NULL);
 	}
 
-	MALLOC(cb, struct cdnr_block *, size, M_DEVBUF, M_WAITOK);
+	cb = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cb == NULL)
 		return (NULL);
-	bzero(cb, size);
 
 	cb->cb_len = size;
 	cb->cb_type = type;
@@ -326,7 +325,7 @@ cdnr_cbdestroy(cblock)
 	if (cb->cb_top != cblock)
 		LIST_REMOVE(cb, cb_next);
 
-	FREE(cb, M_DEVBUF);
+	free(cb, M_DEVBUF);
 }
 
 /*

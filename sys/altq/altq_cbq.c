@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.22 2007/05/28 17:16:38 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.23 2007/09/13 20:40:02 chl Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -214,10 +214,9 @@ cbq_add_altq(struct pf_altq *a)
 		return (ENODEV);
 
 	/* allocate and initialize cbq_state_t */
-	MALLOC(cbqp, cbq_state_t *, sizeof(cbq_state_t), M_DEVBUF, M_WAITOK);
+	cbqp = malloc(sizeof(cbq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cbqp == NULL)
 		return (ENOMEM);
-	bzero(cbqp, sizeof(cbq_state_t));
 	CALLOUT_INIT(&cbqp->cbq_callout);
 	cbqp->cbq_qlen = 0;
 	cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
@@ -245,7 +244,7 @@ cbq_remove_altq(struct pf_altq *a)
 		cbq_class_destroy(cbqp, cbqp->ifnp.root_);
 
 	/* deallocate cbq_state_t */
-	FREE(cbqp, M_DEVBUF);
+	free(cbqp, M_DEVBUF);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.12 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.13 2007/09/13 20:40:02 chl Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -200,19 +200,15 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	}
 #endif
 
-	MALLOC(cl, struct rm_class *, sizeof(struct rm_class),
-	       M_DEVBUF, M_WAITOK);
+	cl = malloc(sizeof(struct rm_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl == NULL)
 		return (NULL);
-	bzero(cl, sizeof(struct rm_class));
 	CALLOUT_INIT(&cl->callout_);
-	MALLOC(cl->q_, class_queue_t *, sizeof(class_queue_t),
-	       M_DEVBUF, M_WAITOK);
+	cl->q_ = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl->q_ == NULL) {
-		FREE(cl, M_DEVBUF);
+		free(cl, M_DEVBUF);
 		return (NULL);
 	}
-	bzero(cl->q_, sizeof(class_queue_t));
 
 	/*
 	 * Class initialization.
@@ -620,8 +616,8 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
 			red_destroy(cl->red_);
 #endif
 	}
-	FREE(cl->q_, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->q_, M_DEVBUF);
+	free(cl, M_DEVBUF);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.21 2006/12/20 17:50:40 gwk Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.22 2007/09/13 20:40:02 chl Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -275,15 +275,13 @@ tbr_set(ifq, profile)
 		if ((tbr = ifq->altq_tbr) == NULL)
 			return (ENOENT);
 		ifq->altq_tbr = NULL;
-		FREE(tbr, M_DEVBUF);
+		free(tbr, M_DEVBUF);
 		return (0);
 	}
 
-	MALLOC(tbr, struct tb_regulator *, sizeof(struct tb_regulator),
-	       M_DEVBUF, M_WAITOK);
+	tbr = malloc(sizeof(struct tb_regulator), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (tbr == NULL)
 		return (ENOMEM);
-	bzero(tbr, sizeof(struct tb_regulator));
 
 	tbr->tbr_rate = TBR_SCALE(profile->rate / 8) / machclk_freq;
 	tbr->tbr_depth = TBR_SCALE(profile->depth);
@@ -299,7 +297,7 @@ tbr_set(ifq, profile)
 	ifq->altq_tbr = tbr;	/* set the new tbr */
 
 	if (otbr != NULL)
-		FREE(otbr, M_DEVBUF);
+		free(otbr, M_DEVBUF);
 	else {
 		if (tbr_timer == 0) {
 			CALLOUT_RESET(&tbr_callout, 1, tbr_timeout, (void *)0);

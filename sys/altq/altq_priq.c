@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.20 2007/05/28 17:16:38 henning Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.21 2007/09/13 20:40:02 chl Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -93,11 +93,9 @@ priq_add_altq(struct pf_altq *a)
 	if (!ALTQ_IS_READY(&ifp->if_snd))
 		return (ENODEV);
 
-	MALLOC(pif, struct priq_if *, sizeof(struct priq_if),
-	    M_DEVBUF, M_WAITOK);
+	pif = malloc(sizeof(struct priq_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pif == NULL)
 		return (ENOMEM);
-	bzero(pif, sizeof(struct priq_if));
 	pif->pif_bandwidth = a->ifbandwidth;
 	pif->pif_maxpri = -1;
 	pif->pif_ifq = &ifp->if_snd;
@@ -119,7 +117,7 @@ priq_remove_altq(struct pf_altq *a)
 
 	(void)priq_clear_interface(pif);
 
-	FREE(pif, M_DEVBUF);
+	free(pif, M_DEVBUF);
 	return (0);
 }
 
@@ -266,17 +264,15 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 			red_destroy(cl->cl_red);
 #endif
 	} else {
-		MALLOC(cl, struct priq_class *, sizeof(struct priq_class),
-		       M_DEVBUF, M_WAITOK);
+		cl = malloc(sizeof(struct priq_class), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl == NULL)
 			return (NULL);
-		bzero(cl, sizeof(struct priq_class));
 
-		MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
+		cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_q == NULL)
 			goto err_ret;
-		bzero(cl->cl_q, sizeof(class_queue_t));
 	}
 
 	pif->pif_classes[pri] = cl;
@@ -343,8 +339,8 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 #endif
 	}
 	if (cl->cl_q != NULL)
-		FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+		free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (NULL);
 }
 
@@ -382,8 +378,8 @@ priq_class_destroy(struct priq_class *cl)
 			red_destroy(cl->cl_red);
 #endif
 	}
-	FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (0);
 }
 
