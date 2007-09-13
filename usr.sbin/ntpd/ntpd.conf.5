@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.17 2007/09/12 21:08:45 ckuethe Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.18 2007/09/13 05:17:24 ckuethe Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2007 $
+.Dd $Mdocdate: September 13 2007 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@ sensor udcf0
 An optional correction in microseconds can be given to compensate
 for the sensor's offset.
 The maximum correction is 127 seconds.
-For example, if your DCF77 receiver is lagging 15 ms behind
+For example, if a DCF77 receiver is lagging 15 ms behind
 actual time:
 .Bd -literal -offset indent
 sensor udcf0 correction 15000
