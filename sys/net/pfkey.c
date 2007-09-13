@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.16 2004/11/26 18:02:22 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.17 2007/09/13 21:00:14 hshoexer Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -201,9 +201,8 @@ pfkey_attach(struct socket *socket, struct mbuf *proto)
 	int s;
 
 	if (!(socket->so_pcb = malloc(sizeof(struct rawcb),
-	    M_PCB, M_DONTWAIT)))
+	    M_PCB, M_DONTWAIT | M_ZERO)))
 		return (ENOMEM);
-	bzero(socket->so_pcb, sizeof(struct rawcb));
 
 	s = splnet();
 	rval = raw_usrreq(socket, PRU_ATTACH, NULL, proto, NULL);

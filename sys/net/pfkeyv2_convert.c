@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.29 2006/11/24 13:52:14 reyk Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.30 2007/09/13 21:00:14 hshoexer Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -727,9 +727,8 @@ import_auth(struct tdb *tdb, struct sadb_x_cred *sadb_auth, int dstauth)
 	else
 		ipr = &tdb->tdb_local_auth;
 
-	MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_auth) -
-	    sizeof(struct sadb_x_cred) + sizeof(struct ipsec_ref),
-	    M_CREDENTIALS, M_WAITOK);
+	*ipr = malloc(EXTLEN(sadb_auth) - sizeof(struct sadb_x_cred) +
+	    sizeof(struct ipsec_ref), M_CREDENTIALS, M_WAITOK);
 	(*ipr)->ref_len = EXTLEN(sadb_auth) - sizeof(struct sadb_x_cred);
 
 	switch (sadb_auth->sadb_x_cred_type) {
@@ -740,7 +739,7 @@ import_auth(struct tdb *tdb, struct sadb_x_cred *sadb_auth, int dstauth)
 		(*ipr)->ref_type = IPSP_AUTH_RSA;
 		break;
 	default:
-		FREE(*ipr, M_CREDENTIALS);
+		free(*ipr, M_CREDENTIALS);
 		*ipr = NULL;
 		return;
 	}
@@ -766,9 +765,8 @@ import_credentials(struct tdb *tdb, struct sadb_x_cred *sadb_cred, int dstcred)
 	else
 		ipr = &tdb->tdb_local_cred;
 
-	MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_cred) -
-	    sizeof(struct sadb_x_cred) + sizeof(struct ipsec_ref),
-	    M_CREDENTIALS, M_WAITOK);
+	*ipr = malloc(EXTLEN(sadb_cred) - sizeof(struct sadb_x_cred) +
+	    sizeof(struct ipsec_ref), M_CREDENTIALS, M_WAITOK);
 	(*ipr)->ref_len = EXTLEN(sadb_cred) - sizeof(struct sadb_x_cred);
 
 	switch (sadb_cred->sadb_x_cred_type) {
@@ -779,7 +777,7 @@ import_credentials(struct tdb *tdb, struct sadb_x_cred *sadb_cred, int dstcred)
 		(*ipr)->ref_type = IPSP_CRED_KEYNOTE;
 		break;
 	default:
-		FREE(*ipr, M_CREDENTIALS);
+		free(*ipr, M_CREDENTIALS);
 		*ipr = NULL;
 		return;
 	}
@@ -805,9 +803,8 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 	else
 		ipr = &tdb->tdb_dstid;
 
-	MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_ident) -
-	    sizeof(struct sadb_ident) + sizeof(struct ipsec_ref),
-	    M_CREDENTIALS, M_WAITOK);
+	*ipr = malloc(EXTLEN(sadb_ident) - sizeof(struct sadb_ident) +
+	    sizeof(struct ipsec_ref), M_CREDENTIALS, M_WAITOK);
 	(*ipr)->ref_len = EXTLEN(sadb_ident) - sizeof(struct sadb_ident);
 
 	switch (sadb_ident->sadb_ident_type) {
@@ -824,7 +821,7 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 		(*ipr)->ref_type = IPSP_IDENTITY_CONNECTION;
 		break;
 	default:
-		FREE(*ipr, M_CREDENTIALS);
+		free(*ipr, M_CREDENTIALS);
 		*ipr = NULL;
 		return;
 	}
