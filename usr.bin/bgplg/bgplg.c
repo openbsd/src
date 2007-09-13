@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.5 2007/04/13 15:31:02 claudio Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.6 2007/09/13 23:32:39 cloder Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -364,7 +364,7 @@ main(void)
  err:
 	fflush(stdout);
 
-	if (argv != NULL);
+	if (argv != NULL)
 		free(argv);
 
 	printf("</pre>\n");
