@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1263 2007/09/13 03:27:49 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1264 2007/09/13 16:55:06 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1848,8 +1848,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP600 PCI",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SMB_600,
-	    "IXP600 SMBus",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SMB_X00,
+	    "IXPX00 SMBus",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_EHCI_600,
