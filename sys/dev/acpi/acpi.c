@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.88 2007/04/17 16:07:45 mk Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.89 2007/09/13 03:43:22 weingart Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -59,12 +59,13 @@ int	acpi_print(void *, const char *);
 
 void	acpi_map_pmregs(struct acpi_softc *);
 
-void	acpi_founddock(struct aml_node *, void *);
-void	acpi_foundpss(struct aml_node *, void *);
-void	acpi_foundhid(struct aml_node *, void *);
-void	acpi_foundec(struct aml_node *, void *);
-void	acpi_foundtmp(struct aml_node *, void *);
-void	acpi_inidev(struct aml_node *, void *);
+int	acpi_founddock(struct aml_node *, void *);
+int	acpi_foundpss(struct aml_node *, void *);
+int	acpi_foundhid(struct aml_node *, void *);
+int	acpi_foundec(struct aml_node *, void *);
+int	acpi_foundtmp(struct aml_node *, void *);
+int	acpi_foundprt(struct aml_node *, void *);
+int	acpi_inidev(struct aml_node *, void *);
 
 int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
 void	acpi_load_table(paddr_t, size_t, acpi_qhead_t *);
@@ -73,8 +74,6 @@ void	acpi_load_dsdt(paddr_t, struct acpi_q **);
 void	acpi_init_states(struct acpi_softc *);
 void	acpi_init_gpes(struct acpi_softc *);
 void	acpi_init_pm(struct acpi_softc *);
-
-void	acpi_foundprt(struct aml_node *, void *);
 
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
@@ -250,30 +249,47 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 	return (0);
 }
 
-void
+int
 acpi_inidev(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct aml_value	res;
+	int st = 0;
+
+	/* Default value */
+	st = STA_PRESENT|STA_ENABLED;
+	st |= STA_SHOW_UI|STA_DEV_OK;
+	st |= STA_BATTERY;
 
 	/*
-	 * XXX per the ACPI spec 6.5.1 only run _INI when device is there
-	 * or when there is no _STA.
-	 * The tricky bit is that the parent can have a _STA that is disabled
-	 * and the children do not have a _STA.  In that case the _INI will
-	 * execute!  This needs to be fixed.
+	 * Per the ACPI spec 6.5.1, only run _INI when device is there or
+	 * when there is no _STA.  We terminate the tree walk (with return 1)
+	 * early if necessary.
 	 */
 
+	/* Evaluate _STA to decide _INI fate and walk fate */
 	memset(&res, 0, sizeof res);
-	if (aml_evalname(sc, node, "_STA", 0, NULL, &res)) 
-		res.v_integer = STA_PRESENT; /* no _STA, fake it */
-
-	if (res.v_integer & STA_PRESENT)
-		aml_evalnode(sc, node, 0, NULL, NULL);
+	if (! aml_evalname(sc, node, "_STA", 0, NULL, &res))
+		st = (int)aml_val2int(&res);
 	aml_freevalue(&res);
+
+	/* Evaluate _INI if we are present */
+	if (st & STA_PRESENT)
+		aml_evalnode(sc, node, 0, NULL, NULL);
+
+	/* If we are functioning, we walk/search our children */
+	if(st & STA_DEV_OK)
+		return 0;
+
+	/* If we are not enabled, or not present, terminate search */
+	if (!(st & (STA_PRESENT|STA_ENABLED)))
+		return 1;
+
+	/* Default just continue search */
+	return 0;
 }
 
-void
+int
 acpi_foundprt(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -291,6 +307,8 @@ acpi_foundprt(struct aml_node *node, void *arg)
 	aaa.aaa_name = "acpiprt";
 
 	config_found(self, &aaa, acpi_print);
+
+	return 0;
 }
 
 int
@@ -1616,7 +1634,7 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 	    sc->sc_pmregs[reg].name, sc->sc_pmregs[reg].addr, offset, regval);
 }
 
-void
+int
 acpi_foundec(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -1626,7 +1644,7 @@ acpi_foundec(struct aml_node *node, void *arg)
 	struct acpi_attach_args	aaa;
 
 	if (aml_evalnode(sc, node, 0, NULL, &res) != 0)
-		return;
+		return 0;
 
 	switch (res.type) {
 	case AML_OBJTYPE_STRING:
@@ -1641,7 +1659,7 @@ acpi_foundec(struct aml_node *node, void *arg)
 	}
 
 	if (strcmp(dev, ACPI_DEV_ECD))
-		return;
+		return 0;
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;
@@ -1651,9 +1669,11 @@ acpi_foundec(struct aml_node *node, void *arg)
 	aaa.aaa_name = "acpiec";
 	config_found(self, &aaa, acpi_print);
 	aml_freevalue(&res);
+
+	return 0;
 }
 
-void
+int
 acpi_foundhid(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -1664,7 +1684,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
 	if (aml_evalnode(sc, node, 0, NULL, &res) != 0)
-		return;
+		return 0;
 
 	switch (res.type) {
 	case AML_OBJTYPE_STRING:
@@ -1697,9 +1717,11 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);
 	aml_freevalue(&res);
+
+	return 0;
 }
 
-void
+int
 acpi_founddock(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -1717,5 +1739,7 @@ acpi_founddock(struct aml_node *node, void *arg)
 	aaa.aaa_name = "acpidock";
 
 	config_found(self, &aaa, acpi_print);
+
+	return 0;
 }
 #endif /* SMALL_KERNEL */

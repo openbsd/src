@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.28 2007/04/11 02:51:11 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.29 2007/09/13 03:43:22 weingart Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -64,7 +64,7 @@ void			aml_walkroot(void);
 void			aml_walktree(struct aml_node *);
 
 int			aml_find_node(struct aml_node *, const char *,
-			    void (*)(struct aml_node *, void *), void *);
+			    int (*)(struct aml_node *, void *), void *);
 int			acpi_parse_aml(struct acpi_softc *, u_int8_t *,
 			    u_int32_t);
 int			aml_eval_object(struct acpi_softc *, struct aml_node *,

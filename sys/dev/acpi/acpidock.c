@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.25 2007/04/23 19:29:03 mk Exp $ */
+/* $OpenBSD: acpidock.c,v 1.26 2007/09/13 03:43:22 weingart Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -52,7 +52,7 @@ int	acpidock_eject(struct acpidock_softc *, struct aml_node *);
 int	acpidock_notify(struct aml_node *, int, void *);
 int	acpidock_status(struct acpidock_softc *);
 
-void	acpidock_foundejd(struct aml_node *, void *);
+int	acpidock_foundejd(struct aml_node *, void *);
 
 int
 acpidock_match(struct device *parent, void *match, void *aux)
@@ -266,7 +266,7 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 	return (0);
 }
 
-void
+int
 acpidock_foundejd(struct aml_node *node, void *arg)
 {
 	struct acpidock_softc *sc = (struct acpidock_softc *)arg;
@@ -292,4 +292,6 @@ acpidock_foundejd(struct aml_node *node, void *arg)
 	}
 
 	aml_freevalue(&res);
+
+	return 0;
 }

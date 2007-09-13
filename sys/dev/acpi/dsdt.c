@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.88 2007/09/08 21:19:52 gwk Exp $ */
+/* $OpenBSD: dsdt.c,v 1.89 2007/09/13 03:43:22 weingart Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2123,21 +2123,24 @@ aml_walkroot(void)
 
 int
 aml_find_node(struct aml_node *node, const char *name,
-    void (*cbproc)(struct aml_node *, void *arg), void *arg)
+    int (*cbproc)(struct aml_node *, void *arg), void *arg)
 {
 	const char *nn;
+	int st = 0;
 
 	while (node) {
 		if ((nn = node->name) != NULL) {
 			if (*nn == AMLOP_ROOTCHAR) nn++;
 			while (*nn == AMLOP_PARENTPREFIX) nn++;
 			if (!strcmp(name, nn))
-				cbproc(node, arg);
+				st = cbproc(node, arg);
 		}
-		aml_find_node(node->child, name, cbproc, arg);
+		/* Only recurse if cbproc() wants us to */
+		if (!st)
+			aml_find_node(node->child, name, cbproc, arg);
 		node = node->sibling;
 	}
-	return (0);
+	return st;
 }
 
 /*
