@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.89 2007/09/13 03:43:22 weingart Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.90 2007/09/13 20:35:47 mk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -268,8 +268,7 @@ acpi_inidev(struct aml_node *node, void *arg)
 	 */
 
 	/* Evaluate _STA to decide _INI fate and walk fate */
-	memset(&res, 0, sizeof res);
-	if (! aml_evalname(sc, node, "_STA", 0, NULL, &res))
+	if (!aml_evalname(sc, node, "_STA", 0, NULL, &res))
 		st = (int)aml_val2int(&res);
 	aml_freevalue(&res);
 
