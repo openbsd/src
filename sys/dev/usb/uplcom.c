@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.44 2007/09/12 18:06:11 deraadt Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.45 2007/09/13 02:02:20 deraadt Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -281,12 +281,21 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	 * The Linux driver suggest this will only be true for the HX
 	 * variants. The datasheets disagree.
 	 */
-	if (ddesc->bMaxPacketSize == 0x40) {
-		DPRINTF(("%s: Assuming HX variant\n", sc->sc_dev.dv_xname));
+	if (ddesc->bDeviceClass == 0x02)
+		sc->sc_type_hx = 0;
+	else if (ddesc->bMaxPacketSize == 0x40)
 		sc->sc_type_hx = 1;
-	} else
+	else
 		sc->sc_type_hx = 0;
 
+#ifdef USB_DEBUG
+	/* print the chip type */
+	if (sc->sc_type_hx == TYPE_PL2303X) {
+		DPRINTF(("uplcom_attach: chiptype 2303X\n"));
+	} else {
+		DPRINTF(("uplcom_attach: chiptype 2303\n"));
+	}
+#endif
 	/* get the (first/common) interface */
 	err = usbd_device2interface_handle(dev, UPLCOM_IFACE_INDEX,
 							&sc->sc_iface);
