@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.21 2007/09/04 19:07:04 tobias Exp $	*/
+/*	$OpenBSD: util.h,v 1.22 2007/09/13 13:10:57 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -45,9 +45,11 @@ void	  cvs_freeargv(char **, int);
 u_int	  cvs_revision_select(RCSFILE *, char *);
 
 struct cvs_line {
+	struct rcs_delta	*l_delta;
 	u_char			*l_line;
 	size_t			 l_len;
 	int			 l_lineno;
+	int			 l_lineno_orig;
 	int			 l_needsfree;
 	TAILQ_ENTRY(cvs_line)	 l_list;
 };

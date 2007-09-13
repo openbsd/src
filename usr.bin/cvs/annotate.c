@@ -1,6 +1,7 @@
-/*	$OpenBSD: annotate.c,v 1.37 2007/02/22 06:42:09 otto Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.38 2007/09/13 13:10:57 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
+ * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +18,10 @@
 
 #include <sys/param.h>
 #include <sys/dirent.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "cvs.h"
@@ -108,15 +113,68 @@ cvs_annotate(int argc, char **argv)
 void
 cvs_annotate_local(struct cvs_file *cf)
 {
+	int i;
+	char date[10], rnum[13], *p;
+	RCSNUM *crev;
+	struct cvs_line **alines;
+
 	cvs_log(LP_TRACE, "cvs_annotate_local(%s)", cf->file_path);
 
 	cvs_file_classify(cf, NULL);
 
-	if (cf->file_status == FILE_UNKNOWN ||
-	    cf->file_status == FILE_UNLINK)
+	if (cf->file_status == FILE_UNKNOWN || cf->file_status == FILE_UNLINK ||
+	    cf->file_type != CVS_FILE)
 		return;
 
-	cvs_printf("Annotations for %s", cf->file_name);
-	cvs_printf("\n***************\n");
-	cvs_printf("no code yet\n");
+	if (rev == NULL)
+		rcs_rev_getlines(cf->file_rcs, cf->file_rcsrev, &alines);
+	else {
+		crev = rcsnum_parse(rev);
+
+		if (rcsnum_cmp(crev, cf->file_rcsrev, 0) < 0) {
+			if (!force_head) {
+				/* Stick at weird GNU cvs, ignore error. */
+				rcsnum_free(crev);
+				return;
+			}
+			rcsnum_cpy(cf->file_rcsrev, crev, 0);
+		}
+		rcs_rev_getlines(cf->file_rcs, crev, &alines);
+		rcsnum_free(crev);
+	}
+
+	/* Stick at weird GNU cvs, ignore error. */
+	if (alines == NULL)
+		return;
+
+	cvs_log(LP_RCS, "Annotations for %s", cf->file_path);
+	cvs_log(LP_RCS, "***************");
+
+	for (i = 0; alines[i] != NULL; i++) {
+		rcsnum_tostr(alines[i]->l_delta->rd_num, rnum, sizeof(rnum));
+		strftime(date, sizeof(date), "%d-%b-%y",
+		    &(alines[i]->l_delta->rd_date));
+		if (alines[i]->l_len &&
+		    alines[i]->l_line[alines[i]->l_len - 1] == '\n')
+			alines[i]->l_line[alines[i]->l_len - 1] = '\0';
+		else {
+			p = xmalloc(alines[i]->l_len + 1);
+			memcpy(p, alines[i]->l_line, alines[i]->l_len);
+			p[alines[i]->l_len] = '\0';
+
+			if (alines[i]->l_needsfree)
+				xfree(alines[i]->l_line);
+			alines[i]->l_line = p;
+			alines[i]->l_len++;
+			alines[i]->l_needsfree = 1;
+		}
+		cvs_printf("%-12.12s (%-8.8s %s): %s\n", rnum,
+		    alines[i]->l_delta->rd_author, date, alines[i]->l_line);
+
+		if (alines[i]->l_needsfree)
+			xfree(alines[i]->l_line);
+		xfree(alines[i]);
+	}
+
+	xfree(alines);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.77 2007/06/01 17:47:47 niallo Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.78 2007/09/13 13:10:57 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -215,6 +215,7 @@ typedef struct rcs_file {
 } RCSFILE;
 
 extern int rcs_errno;
+struct cvs_line;
 struct cvs_lines;
 
 RCSFILE			*rcs_open(const char *, int, int, ...);
@@ -260,7 +261,8 @@ const char		*rcs_errstr(int);
 void			 rcs_write(RCSFILE *);
 void			 rcs_rev_write_stmp(RCSFILE *,  RCSNUM *, char *, int);
 void			 rcs_rev_write_fd(RCSFILE *, RCSNUM *, int, int);
-struct cvs_lines	*rcs_rev_getlines(RCSFILE *, RCSNUM *);
+struct cvs_lines	*rcs_rev_getlines(RCSFILE *, RCSNUM *,
+			     struct cvs_line ***);
 BUF			*rcs_rev_getbuf(RCSFILE *, RCSNUM *, int);
 
 int	rcs_kflag_get(const char *);

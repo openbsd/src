@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.217 2007/09/07 23:05:04 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.218 2007/09/13 13:10:57 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -72,6 +72,10 @@
 
 #define RCS_NOSCOL	0x01	/* no terminating semi-colon */
 #define RCS_VOPT	0x02	/* value is optional */
+
+#define ANNOTATE_NEVER	0
+#define ANNOTATE_NOW	1
+#define ANNOTATE_LATER	2
 
 /* opaque parse data */
 struct rcs_pdata {
@@ -219,7 +223,8 @@ static const char *rcs_errstrs[] = {
 
 int rcs_errno = RCS_ERR_NOERR;
 
-int		rcs_patch_lines(struct cvs_lines *, struct cvs_lines *);
+int		rcs_patch_lines(struct cvs_lines *, struct cvs_lines *,
+		    struct cvs_line **, struct rcs_delta *);
 static void	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
@@ -1022,7 +1027,8 @@ rcs_tag_resolve(RCSFILE *file, const char *tag)
 }
 
 int
-rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
+rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines,
+    struct cvs_line **alines, struct rcs_delta *rdp)
 {
 	u_char op;
 	char *ep;
@@ -1075,7 +1081,12 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 			for (i = 0; (i < nbln) && (dlp != NULL); i++) {
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);
-				xfree(dlp);
+				if (alines != NULL && dlp->l_line != NULL) {
+					dlp->l_delta = rdp;
+					alines[dlp->l_lineno_orig - 1] =
+						dlp;
+				} else
+					xfree(dlp);
 				dlp = ndlp;
 				/* last line is gone - reset dlp */
 				if (dlp == NULL) {
@@ -1091,6 +1102,12 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 				if (lp == NULL)
 					fatal("truncated RCS patch");
 				TAILQ_REMOVE(&(plines->l_lines), lp, l_list);
+				if (alines != NULL) {
+					if (lp->l_needsfree == 1)
+						xfree(lp->l_line);
+					lp->l_line = NULL;
+					lp->l_needsfree = 0;
+				}
 				TAILQ_INSERT_AFTER(&(dlines->l_lines), dlp,
 				    lp, l_list);
 				dlp = lp;
@@ -2623,14 +2640,15 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
  * return it as a pointer to a struct cvs_lines.
  */
 struct cvs_lines *
-rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev)
+rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
 {
 	size_t plen;
-	int i, done, nextroot;
+	int annotate, done, i, nextroot;
 	RCSNUM *tnum, *bnum;
 	struct rcs_branch *brp;
-	struct rcs_delta *hrdp, *trdp, *rdp;
+	struct rcs_delta *hrdp, *prdp, *rdp, *trdp;
 	u_char *patch;
+	struct cvs_line *line, *nline;
 	struct cvs_lines *dlines, *plines;
 
 	if ((hrdp = rcs_findrev(rfp, rfp->rf_head)) == NULL)
@@ -2648,14 +2666,43 @@ rcs_rev_getlines(RCSFILE *rfp, RCSNUM *frev)
 		bnum = tnum;
 	}
 
+	if (alines != NULL) {
+		/* start with annotate first at requested revision */
+		annotate = ANNOTATE_LATER;
+		*alines = NULL;
+	} else
+		annotate = ANNOTATE_NEVER;
+
 	dlines = cvs_splitlines(hrdp->rd_text, hrdp->rd_tlen);
 
 	done = 0;
 
 	rdp = hrdp;
-	if (!rcsnum_differ(rdp->rd_num, bnum))
-		goto next;
+	if (!rcsnum_differ(rdp->rd_num, bnum)) {
+		if (annotate == ANNOTATE_LATER) {
+			/* found requested revision for annotate */
+			i = 0;
+			TAILQ_FOREACH(line, &(dlines->l_lines), l_list) {
+				line->l_lineno_orig = line->l_lineno;
+				i++;
+			}
 
+			*alines = xcalloc(i + 1, sizeof(struct cvs_line *));
+			(*alines)[i] = NULL;
+			annotate = ANNOTATE_NOW;
+
+			/* annotate down to 1.1 from where we are */
+			if (bnum == tnum)
+				bnum = rcsnum_alloc();
+			bnum = rcsnum_parse("1.1");
+			if (!rcsnum_differ(rdp->rd_num, bnum)) {
+				goto next;
+			}
+		} else
+			goto next;
+	}
+
+	prdp = hrdp;
 	if ((rdp = rcs_findrev(rfp, hrdp->rd_next)) == NULL)
 		goto done;
 
@@ -2680,12 +2727,37 @@ again:
 		plen = rdp->rd_tlen;
 		patch = rdp->rd_text;
 		plines = cvs_splitlines(patch, plen);
-		rcs_patch_lines(dlines, plines);
+		if (annotate == ANNOTATE_NOW)
+			rcs_patch_lines(dlines, plines, *alines, prdp);
+		else
+			rcs_patch_lines(dlines, plines, NULL, NULL);
 		cvs_freelines(plines);
 
-		if (!rcsnum_differ(rdp->rd_num, bnum))
-			break;
+		if (!rcsnum_differ(rdp->rd_num, bnum)) {
+			if (annotate != ANNOTATE_LATER)
+				break;
 
+			/* found requested revision for annotate */
+			i = 0;
+			TAILQ_FOREACH(line, &(dlines->l_lines), l_list) {
+				line->l_lineno_orig = line->l_lineno;
+				i++;
+			}
+
+			*alines = xcalloc(i + 1, sizeof(struct cvs_line *));
+			(*alines)[i] = NULL;
+			annotate = ANNOTATE_NOW;
+
+			/* annotate down to 1.1 from where we are */
+			if (bnum == tnum)
+				bnum = rcsnum_alloc();
+			bnum = rcsnum_parse("1.1");
+
+			if (!rcsnum_differ(rdp->rd_num, bnum))
+				break;
+		}
+
+		prdp = rdp;
 		rdp = trdp;
 	}
 
@@ -2705,8 +2777,18 @@ next:
 				break;
 		}
 
-		if (brp == NULL)
+		if (brp == NULL) {
+			if (annotate != ANNOTATE_NEVER) {
+				if (*alines != NULL)
+					xfree(*alines);
+				*alines = NULL;
+				cvs_freelines(dlines);
+				if (bnum != tnum)
+					rcsnum_free(bnum);
+				return (NULL);
+			}
 			fatal("expected branch not found on branch list");
+		}
 
 		if ((rdp = rcs_findrev(rfp, brp->rb_num)) == NULL)
 			fatal("rcs_rev_getlines: failed to get delta for target rev");
@@ -2714,6 +2796,25 @@ next:
 		goto again;
 	}
 done:
+	/* put remaining lines of 1.1 into annotate buffer */
+	if (annotate == ANNOTATE_NOW) {
+		for (line = TAILQ_FIRST(&(dlines->l_lines));
+		    line != NULL; line = nline) {
+			nline = TAILQ_NEXT(line, l_list);
+			TAILQ_REMOVE(&(dlines->l_lines), line, l_list);
+			if (line->l_line == NULL) {
+				xfree(line);
+				continue;
+			}
+
+			line->l_delta = rdp;
+			(*alines)[line->l_lineno_orig - 1] = line;
+		}
+
+		cvs_freelines(dlines);
+		dlines = NULL;
+	}
+
 	if (bnum != tnum)
 		rcsnum_free(bnum);
 
@@ -2738,7 +2839,7 @@ rcs_rev_getbuf(RCSFILE *rfp, RCSNUM *rev, int mode)
 	BUF *bp;
 
 	expand = 0;
-	lines = rcs_rev_getlines(rfp, rev);
+	lines = rcs_rev_getlines(rfp, rev, NULL);
 	bp = cvs_buf_alloc(1024, BUF_AUTOEXT);
 
 	if (!(mode & RCS_KWEXP_NONE)) {
@@ -2785,7 +2886,7 @@ rcs_rev_write_fd(RCSFILE *rfp, RCSNUM *rev, int fd, int mode)
 	extern int print_stdout;
 
 	expand = 0;
-	lines = rcs_rev_getlines(rfp, rev);
+	lines = rcs_rev_getlines(rfp, rev, NULL);
 
 	if (!(mode & RCS_KWEXP_NONE)) {
 		if (rfp->rf_expand != NULL)
