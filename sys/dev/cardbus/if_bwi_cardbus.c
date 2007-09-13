@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.2 2007/09/13 08:28:37 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.3 2007/09/13 09:09:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -59,14 +59,12 @@ struct bwi_cardbus_softc {
 	int			 csc_intrline;
 };
 
-int		bwi_cardbus_match(struct device *parent, void *match,
-		    void *aux);
-void		bwi_cardbus_attach(struct device *parent, struct device *self,
-		    void *aux);
-int		bwi_cardbus_detach(struct device *self, int flags);
-void		bwi_cardbus_setup(struct bwi_cardbus_softc *csc);
-int		bwi_cardbus_enable(struct bwi_softc *sc);
-void		bwi_cardbus_disable(struct bwi_softc *sc);
+int		bwi_cardbus_match(struct device *, void *, void*);
+void		bwi_cardbus_attach(struct device *, struct device *, void *);
+int		bwi_cardbus_detach(struct device *, int);
+void		bwi_cardbus_setup(struct bwi_cardbus_softc *);
+int		bwi_cardbus_enable(struct bwi_softc *);
+void		bwi_cardbus_disable(struct bwi_softc *);
 void		bwi_cardbus_conf_write(void *, uint32_t, uint32_t);
 uint32_t	bwi_cardbus_conf_read(void *, uint32_t);
 
