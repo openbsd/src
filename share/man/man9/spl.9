@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.22 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: spl.9,v 1.23 2007/09/14 16:16:08 mk Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 14 2007 $
 .Dt SPL 9
 .Os
 .Sh NAME
@@ -112,20 +112,18 @@ must block everything that
 .Fn splstatclock
 does.
 Code running at or above this level may not call
-.Fn sleep ,
-.Fn tsleep ,
+.Xr tsleep 9
 or
-.Fn wakeup ,
+.Xr wakeup 9 ,
 nor may it post signals.
 Note that "running" means invoked by an interrupt handler that
 operates at this level or higher.
 Kernel code that operates in the context of a process and has called
 .Fn splhigh
 for blocking purposes can use
-.Fn sleep ,
-.Fn tsleep ,
+.Xr tsleep 9
 or
-.Fn wakeup .
+.Xr wakeup 9 .
 .It Fn splclock
 blocks the hardware clock interrupt.
 It is used by

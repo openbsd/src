@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.129 2007/06/16 13:21:44 damien Exp $
+#	$OpenBSD: Makefile,v 1.130 2007/09/14 16:16:08 mk Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -22,7 +22,7 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 rwlock.9 \
 	sensor_attach.9 \
-	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
+	shutdownhook_establish.9 tsleep.9 spl.9 startuphook_establish.9 \
 	style.9 syscall.9 systrace.9 sysctl_int.9 \
 	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 vfs_busy.9 \
 	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
@@ -268,7 +268,7 @@ MLINKS+=sensor_attach.9 sensordev_install.9 \
 	sensor_attach.9 sensor_task_register.9 \
 	sensor_attach.9 sensor_task_unregister.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
-MLINKS+=sleep.9 tsleep.9 sleep.9 wakeup.9
+MLINKS+=tsleep.9 wakeup.9
 MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 	spl.9 splhigh.9 spl.9 spllowersoftclock.9 \
 	spl.9 splnet.9 spl.9 splsched.9 spl.9 splserial.9 spl.9 splsoftclock.9 \

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.9,v 1.6 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: tsleep.9,v 1.1 2007/09/14 16:16:08 mk Exp $
 .\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,11 +35,10 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
-.Dt SLEEP 9
+.Dd $Mdocdate: September 14 2007 $
+.Dt TSLEEP 9
 .Os
 .Sh NAME
-.Nm sleep ,
 .Nm tsleep ,
 .Nm wakeup
 .Nd process context sleep and wakeup
@@ -49,15 +48,11 @@
 .Ft int
 .Fn "tsleep" "void *ident" "int priority" "const char *wmesg" "int timo"
 .Ft void
-.Fn "sleep" "void *ident" "int priority"
-.Ft void
 .Fn "wakeup" "void *ident"
 .Sh DESCRIPTION
 These functions implement voluntary context switching.
 .Fn tsleep
-and
-.Fn sleep
-are used throughout the kernel whenever processing in the current context
+is used throughout the kernel whenever processing in the current context
 can not continue for any of the following reasons:
 .Bl -bullet -offset indent
 .It
@@ -133,21 +128,13 @@ will return
 .El
 .Pp
 The
-.Fn sleep
-function puts the process in an uninterruptible sleep.
-It is functionally equivalent to:
-.Bd -literal -offset indent
-tsleep(ident, priority & PRIMASK, 0, 0)
-.Ed
-.Pp
-The
 .Fn wakeup
 function will mark all processes which are currently sleeping on the identifier
 .Fa ident
 as runnable.
 Eventually, each of the processes will resume execution in the kernel
 context, causing a return from
-.Fn [t]sleep .
+.Fn tsleep .
 Note that processes returning from sleep should always re-evaluate the
 conditions that blocked them, since a call to
 .Fn wakeup
