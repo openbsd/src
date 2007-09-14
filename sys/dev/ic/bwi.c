@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.13 2007/09/14 13:08:31 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.14 2007/09/14 20:26:04 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -143,10 +143,14 @@ void		 bwi_mac_setup_tpctl(struct bwi_mac *);
 void		 bwi_mac_dummy_xmit(struct bwi_mac *);
 void		 bwi_mac_init_tpctl_11bg(struct bwi_mac *);
 void		 bwi_mac_detach(struct bwi_mac *);
+#if 0
 int		 bwi_fwimage_is_valid(struct bwi_softc *,
 		     const struct fw_image *, uint8_t);
 int		 bwi_mac_fw_alloc(struct bwi_mac *);
 void		 bwi_mac_fw_free(struct bwi_mac *);
+#endif
+int		 bwi_get_firmware(const char *, const uint8_t *, size_t,
+		     size_t *, size_t *);
 int		 bwi_mac_fw_load(struct bwi_mac *);
 int		 bwi_mac_gpio_init(struct bwi_mac *);
 int		 bwi_mac_gpio_fini(struct bwi_mac *);
@@ -999,9 +1003,11 @@ bwi_mac_init(struct bwi_mac *mac)
 	/*
 	 * Load and initialize firmwares
 	 */
+#if 0
 	error = bwi_mac_fw_alloc(mac);
 	if (error)
 		return (error);
+#endif
 
 	error = bwi_mac_fw_load(mac);
 	if (error)
@@ -1010,6 +1016,8 @@ bwi_mac_init(struct bwi_mac *mac)
 	error = bwi_mac_gpio_init(mac);
 	if (error)
 		return (error);
+
+	return (0);
 
 	error = bwi_mac_fw_init(mac);
 	if (error)
@@ -1494,15 +1502,14 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 void
 bwi_mac_detach(struct bwi_mac *mac)
 {
-	bwi_mac_fw_free(mac);
+	//bwi_mac_fw_free(mac);
 }
 
+#if 0
 int
 bwi_fwimage_is_valid(struct bwi_softc *sc, const struct fw_image *fw,
     uint8_t fw_type)
 {
-	DPRINTF(1, "%s\n", __func__);
-#if 0
 	const struct bwi_fwhdr *hdr;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
@@ -1544,18 +1551,13 @@ bwi_fwimage_is_valid(struct bwi_softc *sc, const struct fw_image *fw,
 	}
 
 	return (1);
-#endif
-	return (0);
 }
+#endif
 
-/*
- * XXX Error cleanup
- */
+#if 0
 int
 bwi_mac_fw_alloc(struct bwi_mac *mac)
 {
-	DPRINTF(1, "%s\n", __func__);
-#if 0
 	struct bwi_softc *sc = mac->mac_sc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	char fwname[64];
@@ -1646,15 +1648,13 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 	}
 back:
 	return (0);
-#endif
-	return (0);
 }
+#endif
 
+#if 0
 void
 bwi_mac_fw_free(struct bwi_mac *mac)
 {
-	printf("%s\n", __func__);
-#if 0
 	if (mac->mac_ucode != NULL) {
 		firmware_image_unload(mac->mac_ucode);
 		mac->mac_ucode = NULL;
@@ -1674,30 +1674,97 @@ bwi_mac_fw_free(struct bwi_mac *mac)
 		firmware_image_unload(mac->mac_iv_ext);
 		mac->mac_iv_ext = NULL;
 	}
+}
 #endif
+
+int
+bwi_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,
+    size_t *size, size_t *offset)
+{
+	int i, nfiles, off = 0, ret = 1;
+	struct fwheader *h;
+
+	if ((h = malloc(sizeof(struct fwheader), M_DEVBUF, M_NOWAIT)) == NULL)
+		return (ret);
+
+	/* get number of firmware files */
+	bcopy(ucode, &nfiles, sizeof(nfiles));
+	nfiles = ntohl(nfiles);
+	off += sizeof(nfiles);
+
+	/* parse header and search the firmware */
+	for (i = 0; i < nfiles && off < size_ucode; i++) {
+		bzero(h, sizeof(struct fwheader));
+		bcopy(ucode + off, h, sizeof(struct fwheader));
+		off += sizeof(struct fwheader);
+
+		if (strcmp(name, h->filename) == 0) {
+			ret = 0;
+			*size = ntohl(h->filesize);
+			*offset = ntohl(h->fileoffset);
+			break;
+		}
+	}
+
+	free(h, M_DEVBUF);
+
+	return (ret);
 }
 
 int
 bwi_mac_fw_load(struct bwi_mac *mac)
 {
-	DPRINTF(1, "%s\n", __func__);
-#ifdef notyet
 	struct bwi_softc *sc = mac->mac_sc;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	const uint32_t *fw;
+	char *name = "bwi-airforce";
+	char filename[64];
+	uint8_t *ucode;
 	uint16_t fw_rev;
-	int fw_len, i;
+	uint32_t *fw;
+	size_t size_ucode, size_fw, size_pcm, off_fw, off_pcm;
+	int fw_len, i, error = 0;
 
 	/*
-	 * Load ucode image
+	 * Load FW file
 	 */
-	fw = (const uint32_t *)
-	     ((const uint8_t *)mac->mac_ucode->fw_image + BWI_FWHDR_SZ);
-	fw_len = (mac->mac_ucode->fw_imglen - BWI_FWHDR_SZ) / sizeof(uint32_t);
+	if ((error = loadfirmware(name, &ucode, &size_ucode)) != 0) {
+		printf("%s: error %d, could not read microcode %s!\n",
+		    sc->sc_dev.dv_xname, error, name);
+		return (EIO);
+	}
+	DPRINTF(1, "%s: successfully read %s\n", sc->sc_dev.dv_xname, name);
+
+	/*
+	 * Get FW file offset
+	 */
+	snprintf(filename, sizeof(filename), "bcm43xx_microcode%d.fw",
+	    mac->mac_rev >= 5 ? 5 : mac->mac_rev);
+	if (bwi_get_firmware(filename, ucode, size_ucode, &size_fw, &off_fw)
+	    != 0) {
+		printf("%s: get offset for firmware file %s failed!\n",
+		    sc->sc_dev.dv_xname, filename);
+		goto error;
+        }
+
+	/*
+	 * Get PCM file offset
+	 */
+	snprintf(filename, sizeof(filename), "bcm43xx_pcm%d.fw",
+	    mac->mac_rev < 5 ? 4 : 5);
+	if (bwi_get_firmware(filename, ucode, size_ucode, &size_pcm, &off_pcm)
+	    != 0) {
+		printf("%s: get offset for firmware file %s failed!\n",
+		    sc->sc_dev.dv_xname, filename);
+		goto error;
+	}
+
+	/*
+	 * Load FW image
+	 */
+	fw = (uint32_t *)(ucode + off_fw);
+	fw_len = size_fw / sizeof(uint32_t);
 
 	CSR_WRITE_4(sc, BWI_MOBJ_CTRL,
-	    BWI_MOBJ_CTRL_VAL(
-	    BWI_FW_UCODE_MOBJ | BWI_WR_MOBJ_AUTOINC, 0));
+	    BWI_MOBJ_CTRL_VAL(BWI_FW_UCODE_MOBJ | BWI_WR_MOBJ_AUTOINC, 0));
 	for (i = 0; i < fw_len; ++i) {
 		CSR_WRITE_4(sc, BWI_MOBJ_DATA, betoh32(fw[i]));
 		DELAY(10);
@@ -1706,9 +1773,8 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	/*
 	 * Load PCM image
 	 */
-	fw = (const uint32_t *)
-	     ((const uint8_t *)mac->mac_pcm->fw_image + BWI_FWHDR_SZ);
-	fw_len = (mac->mac_pcm->fw_imglen - BWI_FWHDR_SZ) / sizeof(uint32_t);
+	fw = (uint32_t *)(ucode + off_pcm);
+	fw_len = size_pcm / sizeof(uint32_t);
 
 	CSR_WRITE_4(sc, BWI_MOBJ_CTRL,
 	    BWI_MOBJ_CTRL_VAL(BWI_FW_PCM_MOBJ, 0x01ea));
@@ -1737,9 +1803,10 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 		DELAY(10);
 	}
 	if (i == NRETRY) {
-		DPRINTF(1, "%s: firmware (ucode&pcm) loading timed out\n",
+		DPRINTF(1, "%s: firmware (fw & pcm) loading timed out\n",
 		    sc->sc_dev.dv_xname);
-		return (ETIMEDOUT);
+		error = ETIMEDOUT;
+		goto error;
 	}
 #undef NRETRY
 
@@ -1749,15 +1816,17 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	if (fw_rev > BWI_FW_VERSION3_REVMAX) {
 		DPRINTF(1, "firmware version 4 is not supported yet\n",
 		    sc->sc_dev.dv_xname);
-		return (ENODEV);
+		error = ENODEV;
+		goto error;
 	}
 
-	DPRINTF(1, "firmware rev 0x%04x, patch level 0x%04x\n",
-	    sc->sc_dev.dc_xname, fw_rev, MOBJ_READ_2(mac, BWI_COMM_MOBJ,
-	    BWI_COMM_MOBJ_FWPATCHLV));
-	return (0);
-#endif
-	return (0);
+	DPRINTF(1, "%s: firmware rev 0x%04x, patch level 0x%04x\n",
+	    sc->sc_dev.dv_xname, fw_rev,
+	    MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWPATCHLV));
+
+error:
+	free(ucode, M_DEVBUF);
+	return (error);
 }
 
 int

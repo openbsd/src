@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.5 2007/09/14 13:00:41 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.6 2007/09/14 20:26:04 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -81,6 +81,12 @@
 	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) & ~(bits))
 #define CSR_CLRBITS_2(sc, reg, bits)	\
 	CSR_WRITE_2((sc), (reg), CSR_READ_2((sc), (reg)) & ~(bits))
+
+struct fwheader {
+	char	filename[64];
+	int	filesize;
+	int	fileoffset;
+};
 
 struct bwi_desc32 {
 	/* Little endian */
