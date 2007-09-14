@@ -57,7 +57,7 @@
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libssl.so.11.0
-./usr/lib/libstdc++.so.41.0
+./usr/lib/libstdc++.so.43.0
 ./usr/lib/libtermcap.so.10.0
 ./usr/lib/libtermlib.so.10.0
 ./usr/lib/libusbhid.so.3.0
