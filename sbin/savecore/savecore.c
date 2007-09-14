@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.43 2007/09/11 15:25:14 gilles Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.44 2007/09/14 14:29:20 chl Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.43 2007/09/11 15:25:14 gilles Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.44 2007/09/14 14:29:20 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -312,8 +312,6 @@ check_kmem(void)
 	core_vers[sizeof(core_vers) - 1] = '\0';
 
 	if (strcmp(vers, core_vers) && kernel == 0) {
-		char *p;
-
 		vers[strcspn(vers, "\n")] = '\0';
 		core_vers[strcspn(core_vers, "\n")] = '\0';
 

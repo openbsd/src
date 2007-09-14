@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.17 2007/09/11 15:25:14 gilles Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.18 2007/09/14 14:29:20 chl Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -489,7 +489,7 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 {
 	int i, j, numFound, linecount, tableNum, tupleNum,
 	    spareDisk, spareBlkOffset;
-  char buf[1024], targString[100], errString[100], *p;
+  char buf[1024], targString[100], errString[100];
   RF_SpareTableEntry_t **table;
   FILE *fp;
 

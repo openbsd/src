@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.30 2007/09/11 15:47:17 gilles Exp $	*/
+/*	$OpenBSD: tset.c,v 1.31 2007/09/14 14:29:20 chl Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -182,7 +182,6 @@ static const char *
 askuser(const char *dflt)
 {
     static char answer[256];
-    char *p;
 
     /* We can get recalled; if so, don't continue uselessly. */
     if (feof(stdin) || ferror(stdin)) {

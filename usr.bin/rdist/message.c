@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.16 2007/09/11 15:47:17 gilles Exp $	*/
+/*	$OpenBSD: message.c,v 1.17 2007/09/14 14:29:20 chl Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: message.c,v 1.5 1999/11/01 00:21:39 christos Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) =
-"$OpenBSD: message.c,v 1.16 2007/09/11 15:47:17 gilles Exp $";
+"$OpenBSD: message.c,v 1.17 2007/09/14 14:29:20 chl Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -510,7 +510,6 @@ static void
 _message(int flags, char *msgbuf)
 {
 	int i, x;
-	char *cp;
 	static char mbuf[2048];
 
 	if (msgbuf && *msgbuf) {

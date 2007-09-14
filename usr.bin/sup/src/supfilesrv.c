@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.37 2007/09/11 15:47:17 gilles Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.38 2007/09/14 14:29:20 chl Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -547,7 +547,7 @@ init(argc, argv)
 	int i;
 	int x;
 	char *clienthost, *clientuser;
-	char *p, *q;
+	char *p;
 	char buf[STRINGLENGTH];
 	int maxsleep;
 	FILE *f;
@@ -1055,7 +1055,7 @@ void
 docrypt()
 {
 	int x;
-	char *p,*q;
+	char *p;
 	char buf[STRINGLENGTH];
 	FILE *f;
 	struct stat sbuf;
