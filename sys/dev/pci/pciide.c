@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.272 2007/07/02 14:01:14 dlg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.273 2007/09/14 23:18:25 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -926,6 +926,14 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  nforce_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP67_IDE,
+	  0,
+	  nforce_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP73_IDE,
+	  0,
+	  nforce_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP77_IDE,
 	  0,
 	  nforce_chip_map
 	},
