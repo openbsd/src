@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1265 2007/09/13 19:07:07 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1266 2007/09/14 23:13:02 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7566,6 +7566,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C033,
 	    "Yukon 88EC033",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8048,
+	    "Yukon 88E8048",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
