@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.12 2007/09/14 13:00:41 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.13 2007/09/14 13:08:31 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -496,11 +496,6 @@ static const struct {
 
 static const uint8_t bwi_zero_addr[IEEE80211_ADDR_LEN];
 
-static const struct ieee80211_rateset bwi_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };
-static const struct ieee80211_rateset bwi_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
-
 /* CODE */
 
 int
@@ -707,7 +702,8 @@ bwi_attach(struct bwi_softc *sc)
 	    phy->phy_mode == IEEE80211_MODE_11G) {
 	    	uint16_t chan_flags;
 
-		ic->ic_sup_rates[IEEE80211_MODE_11B] = bwi_rateset_11b;
+		ic->ic_sup_rates[IEEE80211_MODE_11B] =
+		    ieee80211_std_rateset_11b;
 
 		if (phy->phy_mode == IEEE80211_MODE_11B) {
 			chan_flags = IEEE80211_CHAN_B;
@@ -718,7 +714,8 @@ bwi_attach(struct bwi_softc *sc)
 			    IEEE80211_CHAN_DYN |
 			    IEEE80211_CHAN_2GHZ;
 			ic->ic_phytype = IEEE80211_T_OFDM;
-			ic->ic_sup_rates[IEEE80211_MODE_11G] = bwi_rateset_11g;
+			ic->ic_sup_rates[IEEE80211_MODE_11G] =
+			    ieee80211_std_rateset_11g;
 		}
 
 		/* XXX depend on locale */
