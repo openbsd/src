@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.10 2007/09/13 20:37:19 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.11 2007/09/14 09:29:00 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -526,7 +526,7 @@ bwi_memobj_read_4(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0)
 
 void
 bwi_memobj_write_2(struct bwi_mac *mac, uint16_t obj_id, uint16_t ofs0,
-		   uint16_t v)
+    uint16_t v)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 	uint32_t data_reg;
@@ -867,7 +867,6 @@ bwi_mac_test(struct bwi_mac *mac)
 
 #define TEST_VAL1	0xaa5555aa
 #define TEST_VAL2	0x55aaaa55
-
 	/* Save it for later restoring */
 	orig_val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 
@@ -903,7 +902,6 @@ bwi_mac_test(struct bwi_mac *mac)
 		    sc->sc_dev.dv_xname, __func__, val);
 		return (ENXIO);
 	}
-
 #undef TEST_VAL2
 #undef TEST_VAL1
 
@@ -1014,16 +1012,16 @@ void
 bwi_mac_dummy_xmit(struct bwi_mac *mac)
 {
 #define PACKET_LEN	5
-	static const uint32_t	packet_11a[PACKET_LEN] =
-	{ 0x000201cc, 0x00d40000, 0x00000000, 0x01000000, 0x00000000 };
-	static const uint32_t	packet_11bg[PACKET_LEN] =
-	{ 0x000b846e, 0x00d40000, 0x00000000, 0x01000000, 0x00000000 };
-
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
 	const uint32_t *packet;
 	uint16_t val_50c;
 	int wait_max, i;
+
+	static const uint32_t	packet_11a[PACKET_LEN] =
+	    { 0x000201cc, 0x00d40000, 0x00000000, 0x01000000, 0x00000000 };
+	static const uint32_t	packet_11bg[PACKET_LEN] =
+	    { 0x000b846e, 0x00d40000, 0x00000000, 0x01000000, 0x00000000 };
 
 	if (mac->mac_phy.phy_mode == IEEE80211_MODE_11A) {
 		wait_max = 30;
@@ -1152,7 +1150,7 @@ int
 bwi_fwimage_is_valid(struct bwi_softc *sc, const struct fw_image *fw,
     uint8_t fw_type)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	const struct bwi_fwhdr *hdr;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1205,7 +1203,7 @@ bwi_fwimage_is_valid(struct bwi_softc *sc, const struct fw_image *fw,
 int
 bwi_mac_fw_alloc(struct bwi_mac *mac)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_softc *sc = mac->mac_sc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1296,7 +1294,7 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 			return EINVAL;
 	}
 back:
-	return 0;
+	return (0);
 #endif
 	return (0);
 }
@@ -1331,7 +1329,7 @@ bwi_mac_fw_free(struct bwi_mac *mac)
 int
 bwi_mac_fw_load(struct bwi_mac *mac)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #ifdef notyet
 	struct bwi_softc *sc = mac->mac_sc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1466,7 +1464,7 @@ bwi_mac_gpio_fini(struct bwi_mac *mac)
 int
 bwi_mac_fw_load_iv(struct bwi_mac *mac, const struct fw_image *fw)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_softc *sc = mac->mac_sc;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1636,9 +1634,8 @@ bwi_mac_opmode_init(struct bwi_mac *mac)
 			pre_tbtt = 100;
 		else
 			pre_tbtt = 50;
-	} else {
+	} else
 		pre_tbtt = 2;
-	}
 	CSR_WRITE_2(sc, BWI_MAC_PRE_TBTT, pre_tbtt);
 }
 
@@ -1740,7 +1737,7 @@ bwi_mac_set_retry_lim(struct bwi_mac *mac, const struct bwi_retry_lim *lim)
 void
 bwi_mac_set_ackrates(struct bwi_mac *mac, const struct ieee80211_rateset *rs)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 
 	int i;
@@ -1938,7 +1935,7 @@ bwi_mac_get_property(struct bwi_mac *mac)
 void
 bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	uint16_t slot_time;
 
@@ -2638,9 +2635,8 @@ bwi_phy_init_11b_rev5(struct bwi_mac *mac)
 		PHY_WRITE(mac, 0x22, 0x1bc3);
 		PHY_WRITE(mac, 0x23, 0x6f9);
 		PHY_WRITE(mac, 0x24, 0x37e);
-	} else {
+	} else
 		PHY_WRITE(mac, 0x26, 0xcc00);
-	}
 	PHY_WRITE(mac, 0x30, 0xc6);
 
 	CSR_WRITE_2(sc, BWI_BPHY_CTRL, BWI_BPHY_CTRL_INIT);
@@ -2821,9 +2817,8 @@ bwi_phy_init_11b_rev6(struct bwi_mac *mac)
 			bwi_rf_set_nrssi_thr(mac);
 		}
 		bwi_mac_init_tpctl_11bg(mac);
-	} else {
+	} else
 		CSR_WRITE_2(sc, BWI_BBP_ATTEN, 0);
-	}
 }
 
 #define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
@@ -3306,16 +3301,6 @@ bwi_rf_get_gains(struct bwi_mac *mac)
 {
 #define SAVE_PHY_MAX	15
 #define SAVE_RF_MAX	3
-
-	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
-	{ 0x52, 0x43, 0x7a };
-	static const uint16_t save_phy_regs[SAVE_PHY_MAX] = {
-		0x0429, 0x0001, 0x0811, 0x0812,
-		0x0814, 0x0815, 0x005a, 0x0059,
-		0x0058, 0x000a, 0x0003, 0x080f,
-		0x0810, 0x002b, 0x0015
-	};
-
 	struct bwi_softc *sc;
 	struct bwi_phy *phy = &mac->mac_phy;
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -3323,6 +3308,15 @@ bwi_rf_get_gains(struct bwi_mac *mac)
 	uint16_t save_rf[SAVE_RF_MAX];
 	uint16_t trsw;
 	int i, j, loop1_max, loop1, loop2;
+
+	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
+	    { 0x52, 0x43, 0x7a };
+	static const uint16_t save_phy_regs[SAVE_PHY_MAX] = {
+	    0x0429, 0x0001, 0x0811, 0x0812,
+	    0x0814, 0x0815, 0x005a, 0x0059,
+	    0x0058, 0x000a, 0x0003, 0x080f,
+	    0x0810, 0x002b, 0x0015
+	};
 
 	sc = mac->mac_sc;
 
@@ -3687,14 +3681,6 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 #define SAVE_RF_MAX		3
 #define SAVE_PHY_COMM_MAX	4
 #define SAVE_PHY_11G_MAX	6
-
-	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
-	{ 0x0043, 0x0051, 0x0052 };
-	static const uint16_t save_phy_regs_comm[SAVE_PHY_COMM_MAX] =
-	{ 0x0015, 0x005a, 0x0059, 0x0058 };
-	static const uint16_t save_phy_regs_11g[SAVE_PHY_11G_MAX] =
-	{ 0x0811, 0x0812, 0x0814, 0x0815, 0x0429, 0x0802 };
-
 	uint16_t save_rf[SAVE_RF_MAX];
 	uint16_t save_phy_comm[SAVE_PHY_COMM_MAX];
 	uint16_t save_phy_11g[SAVE_PHY_11G_MAX];
@@ -3707,6 +3693,13 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 	struct bwi_phy *phy = &mac->mac_phy;
 	struct bwi_rf *rf = &mac->mac_rf;
 	int i;
+
+	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
+	    { 0x0043, 0x0051, 0x0052 };
+	static const uint16_t save_phy_regs_comm[SAVE_PHY_COMM_MAX] =
+	    { 0x0015, 0x005a, 0x0059, 0x0058 };
+	static const uint16_t save_phy_regs_11g[SAVE_PHY_11G_MAX] =
+	    { 0x0811, 0x0812, 0x0814, 0x0815, 0x0429, 0x0802 };
 
 	/*
 	 * Save registers for later restoring
@@ -3725,7 +3718,7 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 	} else if ((phy->phy_flags & BWI_PHY_F_LINKED) || phy->phy_rev >= 2) {
 		for (i = 0; i < SAVE_PHY_11G_MAX; ++i) {
 			save_phy_11g[i] =
-				PHY_READ(mac, save_phy_regs_11g[i]);
+			    PHY_READ(mac, save_phy_regs_11g[i]);
 		}
 
 		PHY_SETBITS(mac, 0x814, 0x3);
@@ -3787,9 +3780,9 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 	PHY_WRITE(mac, 0x15, 0xbfa0);
 
 	RF_SETBITS(mac, 0x51, 0x4);
-	if (rf->rf_rev == 8) {
+	if (rf->rf_rev == 8)
 		RF_WRITE(mac, 0x43, 0x1f);
-	} else {
+	else {
 		RF_WRITE(mac, 0x52, 0);
 		RF_FILT_SETBITS(mac, 0x43, 0xfff0, 0x9);
 	}
@@ -3946,13 +3939,14 @@ bwi_rf_init_bcm2050(struct bwi_mac *mac)
 uint16_t
 bwi_rf_calibval(struct bwi_mac *mac)
 {
+	uint16_t val, calib;
+	int idx;
+
 	/* http://bcm-specs.sipsolutions.net/RCCTable */
 	static const uint16_t rf_calibvals[] = {
 		0x2, 0x3, 0x1, 0xf, 0x6, 0x7, 0x5, 0xf,
 		0xa, 0xb, 0x9, 0xf, 0xe, 0xf, 0xd, 0xf
 	};
-	uint16_t val, calib;
-	int idx;
 
 	val = RF_READ(mac, BWI_RFR_BBP_ATTEN);
 	idx = __SHIFTOUT(val, BWI_RFR_BBP_ATTEN_CALIB_IDX);
@@ -3994,7 +3988,7 @@ bwi_rf_calc_txpower(int8_t *txpwr, uint8_t idx, const int16_t pa_params[])
 		int32_t q, d;
 
 		q = _bwi_adjust_devide(
-			f * 4096 - _bwi_adjust_devide(m2 * f, 16) * f, 2048);
+		    f * 4096 - _bwi_adjust_devide(m2 * f, 16) * f, 2048);
 		d = abs(q - f);
 		f = q;
 
@@ -4032,10 +4026,10 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	val = bwi_read_sprom(sc, BWI_SPROM_MAX_TXPWR);
 	if (phy->phy_mode == IEEE80211_MODE_11A) {
 		rf->rf_txpower_max = __SHIFTOUT(val,
-				     BWI_SPROM_MAX_TXPWR_MASK_11A);
+		    BWI_SPROM_MAX_TXPWR_MASK_11A);
 	} else {
 		rf->rf_txpower_max = __SHIFTOUT(val,
-				     BWI_SPROM_MAX_TXPWR_MASK_11BG);
+		    BWI_SPROM_MAX_TXPWR_MASK_11BG);
 
 		if ((sc->sc_card_flags & BWI_CARD_F_PA_GPIO9) &&
 		    phy->phy_mode == IEEE80211_MODE_11G)
@@ -4093,7 +4087,6 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 
 #define IS_VALID_PA_PARAM(p)	((p) != 0 && (p) != -1)
 #define N(arr)	(int)(sizeof(arr) / sizeof(arr[0]))
-
 	/*
 	 * Extract PA parameters
 	 */
@@ -4132,7 +4125,6 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			goto back;
 		}
 	}
-
 #undef N
 
 	/*
@@ -4272,9 +4264,8 @@ bwi_rf_lo_update(struct bwi_mac *mac)
 		PHY_WRITE(mac, 0x812, (devi_ctrl << 8) | 0xa2);
 		DELAY(2);
 		PHY_WRITE(mac, 0x812, (devi_ctrl << 8) | 0xa3);
-	} else {
+	} else
 		PHY_WRITE(mac, 0x15, devi_ctrl | 0xefa0);
-	}
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		tpctl = NULL;
@@ -4380,18 +4371,17 @@ _bwi_rf_lo_update(struct bwi_mac *mac, uint16_t orig_rf7a)
 {
 #define RF_ATTEN_LISTSZ	14
 #define BBP_ATTEN_MAX	4	/* half */
-
-	static const int rf_atten_list[RF_ATTEN_LISTSZ] =
-	{ 3, 1, 5, 7, 9, 2, 0, 4, 6, 8, 1, 2, 3, 4 };
-	static const int rf_atten_init_list[RF_ATTEN_LISTSZ] =
-        { 0, 3, 1, 5, 7, 3, 2, 0, 4, 6, -1, -1, -1, -1 };
-	static const int rf_lo_measure_order[RF_ATTEN_LISTSZ] =
-	{ 3, 1, 5, 7, 9, 2, 0, 4, 6, 8, 10, 11, 12, 13 };
-
 	struct ifnet *ifp = &mac->mac_sc->sc_ic.ic_if;
 	struct bwi_rf_lo lo_save, *lo;
 	uint8_t devi_ctrl = 0;
 	int idx, adj_rf7a = 0;
+
+	static const int rf_atten_list[RF_ATTEN_LISTSZ] =
+	    { 3, 1, 5, 7, 9, 2, 0, 4, 6, 8, 1, 2, 3, 4 };
+	static const int rf_atten_init_list[RF_ATTEN_LISTSZ] =
+            { 0, 3, 1, 5, 7, 3, 2, 0, 4, 6, -1, -1, -1, -1 };
+	static const int rf_lo_measure_order[RF_ATTEN_LISTSZ] =
+	    { 3, 1, 5, 7, 9, 2, 0, 4, 6, 8, 10, 11, 12, 13 };
 
 	bzero(&lo_save, sizeof(lo_save));
 	for (idx = 0; idx < RF_ATTEN_LISTSZ; ++idx) {
@@ -4475,7 +4465,7 @@ _bwi_rf_lo_update(struct bwi_mac *mac, uint16_t orig_rf7a)
 
 void
 bwi_rf_lo_measure(struct bwi_mac *mac, const struct bwi_rf_lo *src_lo,
-	struct bwi_rf_lo *dst_lo, uint8_t devi_ctrl)
+    struct bwi_rf_lo *dst_lo, uint8_t devi_ctrl)
 {
 #define LO_ADJUST_MIN	1
 #define LO_ADJUST_MAX	8
@@ -4567,12 +4557,6 @@ bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *mac)
 {
 #define SAVE_RF_MAX	3
 #define SAVE_PHY_MAX	8
-
-	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
-	{ 0x7a, 0x52, 0x43 };
-	static const uint16_t save_phy_regs[SAVE_PHY_MAX] =
-	{ 0x30, 0x26, 0x15, 0x2a, 0x20, 0x5a, 0x59, 0x58 };
-
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
 	struct bwi_phy *phy = &mac->mac_phy;
@@ -4581,6 +4565,11 @@ bwi_rf_calc_nrssi_slope_11b(struct bwi_mac *mac)
 	uint16_t ant_div, bbp_atten, chan_ex;
 	int16_t nrssi[2];
 	int i;
+
+	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
+	    { 0x7a, 0x52, 0x43 };
+	static const uint16_t save_phy_regs[SAVE_PHY_MAX] =
+	    { 0x30, 0x26, 0x15, 0x2a, 0x20, 0x5a, 0x59, 0x58 };
 
 	/*
 	 * Save RF/PHY registers for later restoration
@@ -4681,9 +4670,15 @@ bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 #define SAVE_RF_MAX		2
 #define SAVE_PHY_COMM_MAX	10
 #define SAVE_PHY6_MAX		8
+	struct bwi_phy *phy = &mac->mac_phy;
+	uint16_t save_rf[SAVE_RF_MAX];
+	uint16_t save_phy_comm[SAVE_PHY_COMM_MAX];
+	uint16_t save_phy6[SAVE_PHY6_MAX];
+	uint16_t rf7b = 0xffff;
+	int16_t nrssi;
+	int i, phy6_idx = 0;
 
-	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
-	{ 0x7a, 0x43 };
+	static const uint16_t save_rf_regs[SAVE_RF_MAX] = { 0x7a, 0x43 };
 	static const uint16_t save_phy_comm_regs[SAVE_PHY_COMM_MAX] = {
 		0x0001, 0x0811, 0x0812, 0x0814,
 		0x0815, 0x005a, 0x0059, 0x0058,
@@ -4693,14 +4688,6 @@ bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 		0x002e, 0x002f, 0x080f, 0x0810,
 		0x0801, 0x0060, 0x0014, 0x0478
 	};
-
-	struct bwi_phy *phy = &mac->mac_phy;
-	uint16_t save_rf[SAVE_RF_MAX];
-	uint16_t save_phy_comm[SAVE_PHY_COMM_MAX];
-	uint16_t save_phy6[SAVE_PHY6_MAX];
-	uint16_t rf7b = 0xffff;
-	int16_t nrssi;
-	int i, phy6_idx = 0;
 
 	for (i = 0; i < SAVE_PHY_COMM_MAX; ++i)
 		save_phy_comm[i] = PHY_READ(mac, save_phy_comm_regs[i]);
@@ -4798,7 +4785,7 @@ bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 	if (phy->phy_rev >= 6) {
 		for (phy6_idx = 0; phy6_idx < 4; ++phy6_idx) {
 			PHY_WRITE(mac, save_phy6_regs[phy6_idx],
-				  save_phy6[phy6_idx]);
+			    save_phy6[phy6_idx]);
 		}
 	}
 
@@ -4817,7 +4804,7 @@ bwi_rf_set_nrssi_ofs_11g(struct bwi_mac *mac)
 	if (phy->phy_rev >= 6) {
 		for (; phy6_idx < SAVE_PHY6_MAX; ++phy6_idx) {
 			PHY_WRITE(mac, save_phy6_regs[phy6_idx],
-				  save_phy6[phy6_idx]);
+			    save_phy6[phy6_idx]);
 		}
 	}
 
@@ -4836,16 +4823,6 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 #define SAVE_RF_MAX		3
 #define SAVE_PHY_COMM_MAX	4
 #define SAVE_PHY3_MAX		8
-
-	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
-	{ 0x7a, 0x52, 0x43 };
-	static const uint16_t save_phy_comm_regs[SAVE_PHY_COMM_MAX] =
-	{ 0x15, 0x5a, 0x59, 0x58 };
-	static const uint16_t save_phy3_regs[SAVE_PHY3_MAX] = {
-		0x002e, 0x002f, 0x080f, 0x0810,
-		0x0801, 0x0060, 0x0014, 0x0478
-	};
-
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_phy *phy = &mac->mac_phy;
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -4856,6 +4833,15 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 	struct bwi_gains gains;
 	int16_t nrssi[2];
 	int i, phy3_idx = 0;
+
+	static const uint16_t save_rf_regs[SAVE_RF_MAX] =
+	    { 0x7a, 0x52, 0x43 };
+	static const uint16_t save_phy_comm_regs[SAVE_PHY_COMM_MAX] =
+	    { 0x15, 0x5a, 0x59, 0x58 };
+	static const uint16_t save_phy3_regs[SAVE_PHY3_MAX] = {
+		0x002e, 0x002f, 0x080f, 0x0810,
+		0x0801, 0x0060, 0x0014, 0x0478
+	};
 
 	if (rf->rf_rev >= 9)
 		return;
@@ -4890,9 +4876,8 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 		    phy->phy_rev == 7) {
 			PHY_SETBITS(mac, 0x478, 0x100);
 			PHY_SETBITS(mac, 0x810, 0x40);
-		} else if (phy->phy_rev == 3 || phy->phy_rev == 5) {
+		} else if (phy->phy_rev == 3 || phy->phy_rev == 5)
 			PHY_CLRBITS(mac, 0x810, 0x40);
-		}
 
 		PHY_SETBITS(mac, 0x60, 0x40);
 		PHY_SETBITS(mac, 0x14, 0x200);
@@ -4997,7 +4982,7 @@ bwi_rf_calc_nrssi_slope_11g(struct bwi_mac *mac)
 	if (phy->phy_rev >= 3) {
 		for (; phy3_idx < SAVE_PHY3_MAX; ++phy3_idx) {
 			PHY_WRITE(mac, save_phy3_regs[phy3_idx],
-				  save_phy3[phy3_idx]);
+			    save_phy3[phy3_idx]);
 		}
 	}
 
@@ -5139,11 +5124,9 @@ bwi_rf_set_nrssi_thr_11g(struct bwi_mac *mac)
 
 #define NRSSI_THR1_MASK	__BITS(5, 0)
 #define NRSSI_THR2_MASK	__BITS(11, 6)
-
 	thr = __SHIFTIN((uint32_t)thr1, NRSSI_THR1_MASK) |
-	      __SHIFTIN((uint32_t)thr2, NRSSI_THR2_MASK);
+	    __SHIFTIN((uint32_t)thr2, NRSSI_THR2_MASK);
 	PHY_FILT_SETBITS(mac, BWI_PHYR_NRSSI_THR_11G, 0xf000, thr);
-
 #undef NRSSI_THR1_MASK
 #undef NRSSI_THR2_MASK
 }
@@ -5159,7 +5142,7 @@ bwi_rf_clear_tssi(struct bwi_mac *mac)
 		int i;
 
 		val = __SHIFTIN(BWI_INVALID_TSSI, BWI_LO_TSSI_MASK) |
-		      __SHIFTIN(BWI_INVALID_TSSI, BWI_HI_TSSI_MASK);
+		    __SHIFTIN(BWI_INVALID_TSSI, BWI_HI_TSSI_MASK);
 
 		for (i = 0; i < 2; ++i) {
 			MOBJ_WRITE_2(mac, BWI_COMM_MOBJ,
@@ -5331,7 +5314,6 @@ bwi_rf_tssi2dbm(struct bwi_mac *mac, int8_t tssi, int8_t *txpwr)
 	else if (pwr_idx >= BWI_TSSI_MAX)
 		pwr_idx = BWI_TSSI_MAX - 1;
 #endif
-
 	*txpwr = rf->rf_txpower_map[pwr_idx];
 
 	return (0);
@@ -5356,10 +5338,10 @@ bwi_setup_desc32(struct bwi_softc *sc, struct bwi_desc32 *desc_array,
 	addr_hi = __SHIFTOUT(paddr, BWI_DESC32_A_FUNC_MASK);
 
 	addr = __SHIFTIN(addr_lo, BWI_DESC32_A_ADDR_MASK) |
-	       __SHIFTIN(BWI_DESC32_A_FUNC_TXRX, BWI_DESC32_A_FUNC_MASK);
+	    __SHIFTIN(BWI_DESC32_A_FUNC_TXRX, BWI_DESC32_A_FUNC_MASK);
 
 	ctrl = __SHIFTIN(buf_len, BWI_DESC32_C_BUFLEN_MASK) |
-	       __SHIFTIN(addr_hi, BWI_DESC32_C_ADDRHI_MASK);
+	     __SHIFTIN(addr_hi, BWI_DESC32_C_ADDRHI_MASK);
 	if (desc_idx == ndesc - 1)
 		ctrl |= BWI_DESC32_C_EOR;
 	if (tx) {
@@ -5462,7 +5444,7 @@ bwi_attach(struct bwi_softc *sc)
 
 	/* Get locale */
 	sc->sc_locale = __SHIFTOUT(bwi_read_sprom(sc, BWI_SPROM_CARD_INFO),
-				   BWI_SPROM_CARD_INFO_LOCALE);
+	    BWI_SPROM_CARD_INFO_LOCALE);
 	DPRINTF(1, "%s: locale: %d\n", sc->sc_dev.dv_xname, sc->sc_locale);
 
 	/*
@@ -5479,12 +5461,11 @@ bwi_attach(struct bwi_softc *sc)
 			ic->ic_phytype = IEEE80211_T_DS;
 		} else {
 			chan_flags = IEEE80211_CHAN_CCK |
-				     IEEE80211_CHAN_OFDM |
-				     IEEE80211_CHAN_DYN |
-				     IEEE80211_CHAN_2GHZ;
+			    IEEE80211_CHAN_OFDM |
+			    IEEE80211_CHAN_DYN |
+			    IEEE80211_CHAN_2GHZ;
 			ic->ic_phytype = IEEE80211_T_OFDM;
-			ic->ic_sup_rates[IEEE80211_MODE_11G] =
-				bwi_rateset_11g;
+			ic->ic_sup_rates[IEEE80211_MODE_11G] = bwi_rateset_11g;
 		}
 
 		/* XXX depend on locale */
@@ -5507,9 +5488,8 @@ bwi_attach(struct bwi_softc *sc)
 		/* TODO:11A */
 		error = ENXIO;
 		goto fail;
-	} else {
+	} else
 		panic("unknown phymode %d\n", phy->phy_mode);
-	}
 
 	sc->sc_fw_version = BWI_FW_VERSION3;
 	sc->sc_dwell_time = 200;
@@ -5566,7 +5546,7 @@ bwi_power_on(struct bwi_softc *sc, int with_pll)
 	uint32_t gpio_in, gpio_out, gpio_en;
 	uint16_t status;
 
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 
 	gpio_in = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_IN);
 	if (gpio_in & BWI_PCIM_GPIO_PWR_ON)
@@ -5735,7 +5715,7 @@ bwi_bbp_attach(struct bwi_softc *sc)
 		}
 
 		info = __SHIFTIN(revid, BWI_INFO_BBPREV_MASK) |
-		       __SHIFTIN(0, BWI_INFO_BBPPKG_MASK);
+		    __SHIFTIN(0, BWI_INFO_BBPPKG_MASK);
 	}
 
 	/*
@@ -5764,7 +5744,6 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	sc->sc_bbp_pkg = __SHIFTOUT(info, BWI_INFO_BBPPKG_MASK);
 	DPRINTF(1, "%s: BBP id 0x%04x, BBP rev 0x%x, BBP pkg %d\n",
 	    sc->sc_dev.dv_xname, sc->sc_bbp_id, sc->sc_bbp_rev, sc->sc_bbp_pkg);
-
 	DPRINTF(1, "%s: nregwin %d, cap 0x%08x\n",
 	    sc->sc_dev.dv_xname, nregwin, sc->sc_cap);
 
@@ -5890,8 +5869,10 @@ bwi_bus_init(struct bwi_softc *sc, struct bwi_mac *mac)
 			 * Set service timeout and request timeout
 			 */
 			CSR_SETBITS_4(sc, BWI_CONF_LO,
-			__SHIFTIN(BWI_CONF_LO_SERVTO, BWI_CONF_LO_SERVTO_MASK) |
-			__SHIFTIN(BWI_CONF_LO_REQTO, BWI_CONF_LO_REQTO_MASK));
+			    __SHIFTIN(BWI_CONF_LO_SERVTO,
+			    BWI_CONF_LO_SERVTO_MASK) |
+			    __SHIFTIN(BWI_CONF_LO_REQTO,
+			    BWI_CONF_LO_REQTO_MASK));
 
 			/*
 			 * If there is common regwin, we switch to that regwin
@@ -5941,8 +5922,8 @@ bwi_get_card_flags(struct bwi_softc *sc)
 	    sc->sc_pci_revid > 0x40)
 		sc->sc_card_flags |= BWI_CARD_F_PA_GPIO9;
 
-	DPRINTF(1, "%s: card flags 0x%04x\n", sc->sc_dev.dv_xname,
-	    sc->sc_card_flags);
+	DPRINTF(1, "%s: card flags 0x%04x\n",
+	    sc->sc_dev.dv_xname, sc->sc_card_flags);
 }
 
 void
@@ -5989,9 +5970,9 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 		val = CSR_READ_4(sc, BWI_CLOCK_CTRL);
 
 		src = __SHIFTOUT(val, BWI_CLOCK_CTRL_CLKSRC);
-		if (src == BWI_CLKSRC_LP_OSC) {
+		if (src == BWI_CLKSRC_LP_OSC)
 			div = 1;
-		} else {
+		else {
 			div = (__SHIFTOUT(val, BWI_CLOCK_CTRL_FDIV) + 1) << 2;
 
 			/* Unknown source */
@@ -6015,8 +5996,8 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 	freq->clkfreq_min = bwi_clkfreq[src].freq_min / div;
 	freq->clkfreq_max = bwi_clkfreq[src].freq_max / div;
 
-	DPRINTF(1, "%s: clkfreq min %u, max %u\n", sc->sc_dev.dv_xname,
-		freq->clkfreq_min, freq->clkfreq_max);
+	DPRINTF(1, "%s: clkfreq min %u, max %u\n",
+	    sc->sc_dev.dv_xname, freq->clkfreq_min, freq->clkfreq_max);
 }
 
 int
@@ -6098,9 +6079,9 @@ bwi_set_clock_delay(struct bwi_softc *sc)
 	}
 
 	if (sc->sc_cap & BWI_CAP_CLKMODE) {
-		if (com->rw_rev >= 10) {
+		if (com->rw_rev >= 10)
 			CSR_FILT_SETBITS_4(sc, BWI_CLOCK_INFO, 0xffff, 0x40000);
-		} else {
+		else {
 			struct bwi_clock_freq freq;
 
 			bwi_get_clock_freq(sc, &freq);
@@ -6278,8 +6259,7 @@ bwi_start(struct ifnet *ifp)
 	struct bwi_txbuf_data *tbd = &sc->sc_tx_bdata[BWI_TX_DATA_RING];
 	int trans, idx;
 
-	if ((ifp->if_flags & IFF_OACTIVE) ||
-	    (ifp->if_flags & IFF_RUNNING) == 0)
+	if ((ifp->if_flags & IFF_OACTIVE) || (ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	trans = 0;
@@ -6328,22 +6308,18 @@ bwi_start(struct ifnet *ifp)
 			}
 
 			/* TODO: PS */
-
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-
 			m = ieee80211_encap(ifp, m, &ni);
 			if (m == NULL)
 				continue;
 		}
-
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
 			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
-
 		wh = mtod(m, struct ieee80211_frame *);
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 			m = ieee80211_wep_crypt(ifp, m, 1);
@@ -6397,10 +6373,10 @@ bwi_watchdog(struct ifnet *ifp)
 			    sc->sc_dev.dv_xname);
 			ifp->if_oerrors++;
 			/* TODO */
-		} else {
+		} else
 			ifp->if_timer = 1;
-		}
 	}
+
 	ieee80211_watchdog(ifp);
 }
 
@@ -6591,9 +6567,8 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* Initial TX power calibration */
 		bwi_mac_calibrate_txpower(mac);
-	} else {
+	} else
 		bwi_set_bssid(sc, bwi_zero_addr);
-	}
 
 back:
 	error = sc->sc_newstate(ic, nstate, arg);
@@ -6627,7 +6602,7 @@ bwi_media_change(struct ifnet *ifp)
 int
 bwi_dma_alloc(struct bwi_softc *sc)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	int error, i, has_txstats;
 	bus_addr_t lowaddr = 0;
@@ -6712,7 +6687,6 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	}
 
 #define TXRX_CTRL(idx)	(BWI_TXRX_CTRL_BASE + (idx) * txrx_ctrl_step)
-
 	/*
 	 * Create TX ring DMA stuffs
 	 */
@@ -6729,8 +6703,7 @@ bwi_dma_alloc(struct bwi_softc *sc)
 
 	for (i = 0; i < BWI_TX_NRING; ++i) {
 		error = bwi_dma_ring_alloc(sc, sc->sc_txring_dtag,
-					   &sc->sc_tx_rdata[i], tx_ring_sz,
-					   TXRX_CTRL(i));
+		    &sc->sc_tx_rdata[i], tx_ring_sz, TXRX_CTRL(i));
 		if (error) {
 			DPRINTF(1, "%s: %dth TX ring DMA alloc failed\n",
 			    sc->sc_dev.dv_xname, i);
@@ -6768,10 +6741,9 @@ bwi_dma_alloc(struct bwi_softc *sc)
 			return (error);
 		}
 	}
-
 #undef TXRX_CTRL
 
-	return bwi_dma_mbuf_create(sc);
+	return (bwi_dma_mbuf_create(sc));
 #endif
 	return (0);
 }
@@ -6779,7 +6751,7 @@ bwi_dma_alloc(struct bwi_softc *sc)
 void
 bwi_dma_free(struct bwi_softc *sc)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	if (sc->sc_txring_dtag != NULL) {
 		int i;
@@ -6819,16 +6791,14 @@ bwi_dma_free(struct bwi_softc *sc)
 
 int
 bwi_dma_ring_alloc(struct bwi_softc *sc, bus_dma_tag_t dtag,
-		   struct bwi_ring_data *rd, bus_size_t size,
-		   uint32_t txrx_ctrl)
+    struct bwi_ring_data *rd, bus_size_t size, uint32_t txrx_ctrl)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	int error;
 
 	error = bus_dmamem_alloc(dtag, &rd->rdata_desc,
-				 BUS_DMA_WAITOK | BUS_DMA_ZERO,
-				 &rd->rdata_dmap);
+	    BUS_DMA_WAITOK | BUS_DMA_ZERO, &rd->rdata_dmap);
 	if (error) {
 		DPRINTF(1, "%s: can't allocate DMA mem\n", sc->sc_dev.dv_xname);
 		return (error);
@@ -6852,9 +6822,9 @@ bwi_dma_ring_alloc(struct bwi_softc *sc, bus_dma_tag_t dtag,
 
 int
 bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
-		      bus_size_t desc_sz)
+    bus_size_t desc_sz)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_txstats_data *st;
 	bus_size_t dma_size;
@@ -6945,7 +6915,8 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	}
 
 	st->stats_ctrl_base = ctrl_base;
-	return 0;
+
+	return (0);
 #endif
 	return (0);
 }
@@ -6953,7 +6924,7 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 void
 bwi_dma_txstats_free(struct bwi_softc *sc)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_txstats_data *st;
 
@@ -6988,7 +6959,7 @@ bwi_dma_ring_addr(void *arg, bus_dma_segment_t *seg, int nseg, int error)
 int
 bwi_dma_mbuf_create(struct bwi_softc *sc)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
 	int i, j, k, ntx, error;
@@ -7021,11 +6992,10 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 			if (error) {
 				DPRINTF(sc, "%s: can't create %dth tbd, %dth "
 				    "DMA map\n", sc->sc_dev.dv_xname), i, j);
-
 				ntx = i;
 				for (k = 0; k < j; ++k) {
 					bus_dmamap_destroy(sc->sc_buf_dtag,
-						tbd->tbd_buf[k].tb_dmap);
+					    tbd->tbd_buf[k].tb_dmap);
 				}
 				goto fail;
 			}
@@ -7036,8 +7006,7 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 	/*
 	 * Create RX mbuf DMA map and a spare DMA map
 	 */
-	error = bus_dmamap_create(sc->sc_buf_dtag, 0,
-				  &rbd->rbd_tmp_dmap);
+	error = bus_dmamap_create(sc->sc_buf_dtag, 0, &rbd->rbd_tmp_dmap);
 	if (error) {
 		DPRINTF(1, "%s: can't create spare RX buf DMA map\n",
 		    sc->sc_dev.dv_xname);
@@ -7064,7 +7033,8 @@ bwi_dma_mbuf_create(struct bwi_softc *sc)
 	return 0;
 fail:
 	bwi_dma_mbuf_destroy(sc, ntx, 0);
-	return error;
+
+	return (error);
 #endif
 	return (1);
 }
@@ -7072,7 +7042,7 @@ fail:
 void
 bwi_dma_mbuf_destroy(struct bwi_softc *sc, int ntx, int nrx)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	int i, j;
 
@@ -7132,7 +7102,7 @@ bwi_disable_intrs(struct bwi_softc *sc, uint32_t disable_intrs)
 int
 bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_ring_data *rd;
 	struct bwi_txbuf_data *tbd;
@@ -7161,14 +7131,14 @@ bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	      BWI_TXRX32_CTRL_ENABLE;
 	CSR_WRITE_4(sc, rd->rdata_txrx_ctrl + BWI_TX32_CTRL, val);
 
-	return 0;
+	return (0);
 #endif
 	return (1);
 }
 
 void
 bwi_init_rxdesc_ring32(struct bwi_softc *sc, uint32_t ctrl_base,
-		       bus_addr_t paddr, int hdr_size, int ndesc)
+    bus_addr_t paddr, int hdr_size, int ndesc)
 {
 	uint32_t val, addr_hi, addr_lo;
 
@@ -7192,7 +7162,7 @@ bwi_init_rxdesc_ring32(struct bwi_softc *sc, uint32_t ctrl_base,
 int
 bwi_init_rx_ring32(struct bwi_softc *sc)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 	int i, error;
@@ -7208,11 +7178,11 @@ bwi_init_rx_ring32(struct bwi_softc *sc)
 		}
 	}
 	bus_dmamap_sync(sc->sc_rxring_dtag, rd->rdata_dmap,
-			BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE);
 
 	bwi_init_rxdesc_ring32(sc, rd->rdata_txrx_ctrl, rd->rdata_paddr,
-			       sizeof(struct bwi_rxbuf_hdr), BWI_RX_NDESC);
-	return 0;
+	    sizeof(struct bwi_rxbuf_hdr), BWI_RX_NDESC);
+	return (0);
 #endif
 	return (1);
 }
@@ -7220,7 +7190,7 @@ bwi_init_rx_ring32(struct bwi_softc *sc)
 int
 bwi_init_txstats32(struct bwi_softc *sc)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_txstats_data *st = sc->sc_txstats;
 	bus_addr_t stats_paddr;
@@ -7238,11 +7208,12 @@ bwi_init_txstats32(struct bwi_softc *sc)
 		stats_paddr += sizeof(struct bwi_txstats);
 	}
 	bus_dmamap_sync(st->stats_ring_dtag, st->stats_ring_dmap,
-			BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE);
 
 	bwi_init_rxdesc_ring32(sc, st->stats_ctrl_base,
-			       st->stats_ring_paddr, 0, BWI_TXSTATS_NDESC);
-	return 0;
+	    st->stats_ring_paddr, 0, BWI_TXSTATS_NDESC);
+
+	return (0);
 #endif
 	return (1);
 }
@@ -7290,21 +7261,21 @@ bwi_init_txstats64(struct bwi_softc *sc)
 
 void
 bwi_setup_rx_desc64(struct bwi_softc *sc, int buf_idx, bus_addr_t paddr,
-		    int buf_len)
+    int buf_len)
 {
 	/* TODO:64 */
 }
 
 void
 bwi_setup_tx_desc64(struct bwi_softc *sc, struct bwi_ring_data *rd,
-		    int buf_idx, bus_addr_t paddr, int buf_len)
+    int buf_idx, bus_addr_t paddr, int buf_len)
 {
 	/* TODO:64 */
 }
 
 void
 bwi_dma_buf_addr(void *arg, bus_dma_segment_t *seg, int nseg,
-		 bus_size_t mapsz, int error)
+    bus_size_t mapsz, int error)
 {
         if (!error) {
 		KASSERT(nseg == 1, ("too many segments(%d)\n", nseg));
@@ -7315,7 +7286,7 @@ bwi_dma_buf_addr(void *arg, bus_dma_segment_t *seg, int nseg,
 int
 bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
 	struct bwi_rxbuf *rxbuf = &rbd->rbd_buf[buf_idx];
@@ -7393,7 +7364,7 @@ back:
 
 void
 bwi_set_addr_filter(struct bwi_softc *sc, uint16_t addr_ofs,
-		    const uint8_t *addr)
+    const uint8_t *addr)
 {
 	int i;
 
@@ -7404,7 +7375,7 @@ bwi_set_addr_filter(struct bwi_softc *sc, uint16_t addr_ofs,
 		uint16_t addr_val;
 
 		addr_val = (uint16_t)addr[i * 2] |
-			   (((uint16_t)addr[(i * 2) + 1]) << 8);
+		    (((uint16_t)addr[(i * 2) + 1]) << 8);
 		CSR_WRITE_2(sc, BWI_ADDR_FILTER_DATA, addr_val);
 	}
 }
@@ -7443,7 +7414,7 @@ bwi_next_scan(void *xsc)
 void
 bwi_rxeof(struct bwi_softc *sc, int end_idx)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
@@ -7502,7 +7473,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		ni = ieee80211_find_rxnode(ic, wh);
 
 		ieee80211_input(ic, m, ni, hdr->rxh_rssi,
-				letoh16(hdr->rxh_tsf));
+		    letoh16(hdr->rxh_tsf));
 
 		ieee80211_free_node(ni);
 next:
@@ -7511,7 +7482,7 @@ next:
 
 	rbd->rbd_idx = idx;
 	bus_dmamap_sync(sc->sc_rxring_dtag, rd->rdata_dmap,
-			BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE);
 #endif
 }
 
@@ -7593,7 +7564,7 @@ bwi_free_rx_ring32(struct bwi_softc *sc)
 void
 bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 {
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 #if 0
 	struct bwi_ring_data *rd;
 	struct bwi_txbuf_data *tbd;
@@ -7605,7 +7576,6 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	tbd = &sc->sc_tx_bdata[ring_idx];
 
 #define NRETRY 10
-
 	for (i = 0; i < NRETRY; ++i) {
 		val = CSR_READ_4(sc, rd->rdata_txrx_ctrl + BWI_TX32_STATUS);
 		state = __SHIFTOUT(val, BWI_TX32_STATUS_STATE_MASK);
@@ -7633,7 +7603,6 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	if (i == NRETRY)
 		DPRINTF(1, "%s: reset TX ring (%d) timed out\n",
 		    sc->sc_dev.dv_xname, ring_idx);
-
 #undef NRETRY
 
 	DELAY(1000);
@@ -7766,7 +7735,7 @@ bwi_plcp_header(void *plcp, int pkt_len, uint8_t rate)
 
 int
 bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
-	  struct ieee80211_node *ni)
+    struct ieee80211_node *ni)
 {
 	printf("%s\n", __func__);
 #if 0
@@ -7853,20 +7822,20 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 
 		ack_rate = ieee80211_ack_rate(ni, rate_fb);
 		dur = ieee80211_txtime(ni,
-		sizeof(struct ieee80211_frame_ack) + IEEE80211_CRC_LEN,
-		ack_rate, ic->ic_flags & ~IEEE80211_F_SHPREAMBLE);
+		    sizeof(struct ieee80211_frame_ack) + IEEE80211_CRC_LEN,
+		    ack_rate, ic->ic_flags & ~IEEE80211_F_SHPREAMBLE);
 
 		hdr->txh_fb_duration = htole16(dur);
 	}
 
 	hdr->txh_id = __SHIFTIN(BWI_TX_DATA_RING, BWI_TXH_ID_RING_MASK) |
-		      __SHIFTIN(idx, BWI_TXH_ID_IDX_MASK);
+	    __SHIFTIN(idx, BWI_TXH_ID_IDX_MASK);
 
 	bwi_plcp_header(hdr->txh_plcp, pkt_len, rate);
 	bwi_plcp_header(hdr->txh_fb_plcp, pkt_len, rate_fb);
 
 	phy_ctrl = __SHIFTIN(mac->mac_rf.rf_ant_mode,
-			     BWI_TXH_PHY_C_ANTMODE_MASK);
+	    BWI_TXH_PHY_C_ANTMODE_MASK);
 	if (ieee80211_rate2modtype(rate) == IEEE80211_MODTYPE_OFDM)
 		phy_ctrl |= BWI_TXH_PHY_C_OFDM;
 	else if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) && rate != (2 * 1))
@@ -7887,7 +7856,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 
 	/* DMA load */
 	error = bus_dmamap_load_mbuf(sc->sc_buf_dtag, tb->tb_dmap, m,
-				     bwi_dma_buf_addr, &paddr, BUS_DMA_NOWAIT);
+	    bwi_dma_buf_addr, &paddr, BUS_DMA_NOWAIT);
 	if (error && error != EFBIG) {
 		DPRINTF(1, "%s: can't load TX buffer (1) %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -7908,8 +7877,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		}
 
 		error = bus_dmamap_load_mbuf(sc->sc_buf_dtag, tb->tb_dmap, m,
-					     bwi_dma_buf_addr, &paddr,
-					     BUS_DMA_NOWAIT);
+		    bwi_dma_buf_addr, &paddr, BUS_DMA_NOWAIT);
 		if (error) {
 			DPRINTF(1, "%s: can't load TX buffer (2) %d\n",
 			    sc->sc_dev.dv_xname, error);
@@ -8191,8 +8159,8 @@ bwi_regwin_is_enabled(struct bwi_softc *sc, struct bwi_regwin *rw)
 	val = CSR_READ_4(sc, BWI_STATE_LO);
 
 	if ((val & (BWI_STATE_LO_CLOCK |
-		    BWI_STATE_LO_RESET |
-		    disable_bits)) == BWI_STATE_LO_CLOCK) {
+	    BWI_STATE_LO_RESET |
+	    disable_bits)) == BWI_STATE_LO_CLOCK) {
 		DPRINTF(1, "%s: %s is enabled\n", sc->sc_dev.dv_xname,
 		    bwi_regwin_name(rw));
 		return (1);
@@ -8261,8 +8229,8 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 	 * Reset and disable regwin with gated clock
 	 */
 	state_lo = BWI_STATE_LO_RESET | disable_bits |
-		   BWI_STATE_LO_CLOCK | BWI_STATE_LO_GATED_CLOCK |
-		   __SHIFTIN(flags, BWI_STATE_LO_FLAGS_MASK);
+	    BWI_STATE_LO_CLOCK | BWI_STATE_LO_GATED_CLOCK |
+	    __SHIFTIN(flags, BWI_STATE_LO_FLAGS_MASK);
 	CSR_WRITE_4(sc, BWI_STATE_LO, state_lo);
 
 	/* Flush pending bus write */
