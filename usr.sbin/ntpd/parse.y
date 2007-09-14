@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2007/09/14 03:07:11 ckuethe Exp $ */
+/*	$OpenBSD: parse.y,v 1.35 2007/09/14 06:29:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,6 +55,7 @@ struct opts {
 	int		weight;
 	int		correction;
 } opts;
+void		opts_default(void);
 
 typedef struct {
 	union {
@@ -216,10 +217,10 @@ address		: STRING		{
 		}
 		;
 
-server_opts	:	{ bzero(&opts, sizeof opts); opts.weight = 1; }
+server_opts	:	{ opts_default(); }
 		  server_opts_l
 			{ $$ = opts; }
-		|	{ bzero(&opts, sizeof opts); opts.weight = 1; $$ = opts; }
+		|	{ opts_default(); $$ = opts; }
 		;
 server_opts_l	: server_opts_l server_opt
 		| server_opt
@@ -227,10 +228,10 @@ server_opts_l	: server_opts_l server_opt
 server_opt	: weight
 		;
 
-sensor_opts	:	{ bzero(&opts, sizeof opts); opts.weight = 1; }
+sensor_opts	:	{ opts_default(); }
 		  sensor_opts_l
 			{ $$ = opts; }
-		|	{ bzero(&opts, sizeof opts); opts.weight = 1; $$ = opts; }
+		|	{ opts_default(); $$ = opts; }
 		;
 sensor_opts_l	: sensor_opts_l sensor_opt
 		| sensor_opt
@@ -259,6 +260,13 @@ weight		: WEIGHT NUMBER	{
 		;
 
 %%
+
+void
+opts_default(void)
+{
+	bzero(&opts, sizeof opts);
+	opts.weight = 1;
+}
 
 struct keywords {
 	const char	*k_name;
