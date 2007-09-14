@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.20 2007/03/05 11:13:10 reyk Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.21 2007/09/14 22:53:24 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -233,9 +233,11 @@
 #define BNX_CHIP_ID_5706_A0			0x57060000
 #define BNX_CHIP_ID_5706_A1			0x57060010
 #define BNX_CHIP_ID_5706_A2			0x57060020
+#define BNX_CHIP_ID_5706_A3			0x57060030
 #define BNX_CHIP_ID_5708_A0			0x57080000
 #define BNX_CHIP_ID_5708_B0			0x57081000
 #define BNX_CHIP_ID_5708_B1			0x57081010
+#define BNX_CHIP_ID_5708_B2			0x57081020
 
 #define BNX_CHIP_BOND_ID(sc)		(((sc)->bnx_chipid) & 0xf)
 
