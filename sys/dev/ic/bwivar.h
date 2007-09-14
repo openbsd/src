@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.4 2007/09/13 14:48:29 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.5 2007/09/14 13:00:41 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -522,51 +522,7 @@ struct bwi_softc {
 #define BWI_F_BUS_INITED	0x1
 #define BWI_F_PROMISC		0x2
 
-uint16_t	bwi_read_sprom(struct bwi_softc *, uint16_t);
-int		bwi_regwin_switch(struct bwi_softc *, struct bwi_regwin *,
-		    struct bwi_regwin **);
-int		bwi_regwin_is_enabled(struct bwi_softc *, struct bwi_regwin *);
-void		bwi_regwin_enable(struct bwi_softc *, struct bwi_regwin *,
-		    uint32_t);
-void		bwi_regwin_disable(struct bwi_softc *, struct bwi_regwin *,
-		    uint32_t);
-int		bwi_bus_init(struct bwi_softc *, struct bwi_mac *);
-uint8_t		bwi_rate2plcp(uint8_t);	/* XXX belongs to 802.11 */
-
 #define abs(a)	__builtin_abs(a)
-
-int		bwi_intr(void *);
-int		bwi_attach(struct bwi_softc *);
-int		bwi_detach(void *);
-
-/* MAC */
-
-int		bwi_mac_attach(struct bwi_softc *, int, uint8_t);
-int		bwi_mac_lateattach(struct bwi_mac *);
-void		bwi_mac_detach(struct bwi_mac *);
-int		bwi_mac_init(struct bwi_mac *);
-void		bwi_mac_reset(struct bwi_mac *, int);
-int		bwi_mac_start(struct bwi_mac *);
-int		bwi_mac_stop(struct bwi_mac *);
-void		bwi_mac_shutdown(struct bwi_mac *);
-void		bwi_mac_updateslot(struct bwi_mac *, int);
-void		bwi_mac_set_promisc(struct bwi_mac *, int);
-void		bwi_mac_calibrate_txpower(struct bwi_mac *);
-void		bwi_mac_set_tpctl_11bg(struct bwi_mac *,
-		    const struct bwi_tpctl *);
-void		bwi_mac_init_tpctl_11bg(struct bwi_mac *);
-void		bwi_mac_dummy_xmit(struct bwi_mac *);
-void		bwi_mac_reset_hwkeys(struct bwi_mac *);
-int		bwi_mac_config_ps(struct bwi_mac *);
-uint16_t	bwi_memobj_read_2(struct bwi_mac *, uint16_t, uint16_t);
-uint32_t	bwi_memobj_read_4(struct bwi_mac *, uint16_t, uint16_t);
-void		bwi_memobj_write_2(struct bwi_mac *, uint16_t, uint16_t,
-		    uint16_t);
-void		bwi_memobj_write_4(struct bwi_mac *, uint16_t, uint16_t,
-		    uint32_t);
-void		bwi_tmplt_write_4(struct bwi_mac *, uint32_t, uint32_t);
-void		bwi_hostflags_write(struct bwi_mac *, uint64_t);
-uint64_t	bwi_hostflags_read(struct bwi_mac *);
 
 #define MOBJ_WRITE_2(mac, objid, ofs, val)	\
 	bwi_memobj_write_2((mac), (objid), (ofs), (val))
@@ -605,16 +561,6 @@ struct bwi_gains {
 	int16_t	phy_gain;
 };
 
-int		bwi_phy_attach(struct bwi_mac *);
-void		bwi_phy_clear_state(struct bwi_phy *);
-int		bwi_phy_calibrate(struct bwi_mac *);
-void		bwi_phy_set_bbp_atten(struct bwi_mac *, uint16_t);
-void		bwi_set_gains(struct bwi_mac *, const struct bwi_gains *);
-int16_t		bwi_nrssi_read(struct bwi_mac *, uint16_t);
-void		bwi_nrssi_write(struct bwi_mac *, uint16_t, int16_t);
-uint16_t	bwi_phy_read(struct bwi_mac *, uint16_t);
-void		bwi_phy_write(struct bwi_mac *, uint16_t, uint16_t);
-
 static __inline void
 bwi_phy_init(struct bwi_mac *_mac)
 {
@@ -630,23 +576,6 @@ bwi_phy_init(struct bwi_mac *_mac)
 	PHY_WRITE((mac), (ctrl), PHY_READ((mac), (ctrl)) & ~(bits))
 #define PHY_FILT_SETBITS(mac, ctrl, filt, bits)	\
 	PHY_WRITE((mac), (ctrl), (PHY_READ((mac), (ctrl)) & (filt)) | (bits))
-
-int		bwi_rf_attach(struct bwi_mac *);
-void		bwi_rf_clear_state(struct bwi_rf *);
-int		bwi_rf_map_txpower(struct bwi_mac *);
-void		bwi_rf_lo_adjust(struct bwi_mac *, const struct bwi_tpctl *);
-void		bwi_rf_set_chan(struct bwi_mac *, u_int, int);
-void		bwi_rf_get_gains(struct bwi_mac *);
-void		bwi_rf_init(struct bwi_mac *);
-void		bwi_rf_init_bcm2050(struct bwi_mac *);
-void		bwi_rf_lo_update(struct bwi_mac *);
-void		bwi_rf_init_hw_nrssi_table(struct bwi_mac *, uint16_t);
-void		bwi_rf_set_ant_mode(struct bwi_mac *, int);
-void		bwi_rf_clear_tssi(struct bwi_mac *);
-int		bwi_rf_get_latest_tssi(struct bwi_mac *, int8_t[], uint16_t);
-int		bwi_rf_tssi2dbm(struct bwi_mac *, int8_t, int8_t *);
-void		bwi_rf_write(struct bwi_mac *, uint16_t, uint16_t);
-uint16_t	bwi_rf_read(struct bwi_mac *, uint16_t);
 
 static __inline void
 bwi_rf_off(struct bwi_mac *_mac)
@@ -692,3 +621,7 @@ bwi_rf_set_nrssi_thr(struct bwi_mac *_mac)
 	RF_WRITE((mac), (ofs), (RF_READ((mac), (ofs)) & (filt)) | (bits))
 
 #endif	/* !_IF_BWIVAR_H */
+
+int		bwi_intr(void *);
+int		bwi_attach(struct bwi_softc *);
+int		bwi_detach(void *);
