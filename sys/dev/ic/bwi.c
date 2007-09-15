@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.18 2007/09/15 09:08:53 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.19 2007/09/15 11:00:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -1601,7 +1601,7 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
 			idx = 5;
 		} else {
-			DPRINTF(1, "%s: no suitible IV for MAC rev %d\n",
+			DPRINTF(1, "%s: no suitable IV for MAC rev %d\n",
 			    sc->sc_dev.dv_xname, mac->mac_rev);
 			return (ENODEV);
 		}
@@ -1628,7 +1628,7 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
 			idx = 5;
 		} else {
-			DPRINTF(1, "%s: no suitible ExtIV for MAC rev %d\n",
+			DPRINTF(1, "%s: no suitable ExtIV for MAC rev %d\n",
 			    sc->sc_dev.dv_xname, mac->mac_rev);
 			return (ENODEV);
 		}
