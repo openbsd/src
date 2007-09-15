@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: config.h,v 1.3 2007/09/15 21:49:33 ray Exp $	*/
 
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
