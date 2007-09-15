@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.14 2007/09/14 20:26:04 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.15 2007/09/15 05:47:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -72,6 +72,8 @@
 
 #include <dev/ic/bwireg.h>
 #include <dev/ic/bwivar.h>
+
+#define BWI_DEBUG
 
 #ifdef BWI_DEBUG
 int bwi_debug = 1;
