@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.20 2007/09/15 11:55:55 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.21 2007/09/15 12:17:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7214,8 +7214,6 @@ bwi_disable_intrs(struct bwi_softc *sc, uint32_t disable_intrs)
 int
 bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 {
-	DPRINTF(1, "%s\n", __func__);
-#if 0
 	struct bwi_ring_data *rd;
 	struct bwi_txbuf_data *tbd;
 	uint32_t val, addr_hi, addr_lo;
@@ -7228,8 +7226,8 @@ bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	tbd->tbd_used = 0;
 
 	bzero(rd->rdata_desc, sizeof(struct bwi_desc32) * BWI_TX_NDESC);
-	bus_dmamap_sync(sc->sc_txring_dtag, rd->rdata_dmap,
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
+	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	addr_lo = __SHIFTOUT(rd->rdata_paddr, BWI_TXRX32_RINGINFO_ADDR_MASK);
 	addr_hi = __SHIFTOUT(rd->rdata_paddr, BWI_TXRX32_RINGINFO_FUNC_MASK);
@@ -7244,8 +7242,6 @@ bwi_init_tx_ring32(struct bwi_softc *sc, int ring_idx)
 	CSR_WRITE_4(sc, rd->rdata_txrx_ctrl + BWI_TX32_CTRL, val);
 
 	return (0);
-#endif
-	return (1);
 }
 
 void
@@ -7274,8 +7270,6 @@ bwi_init_rxdesc_ring32(struct bwi_softc *sc, uint32_t ctrl_base,
 int
 bwi_init_rx_ring32(struct bwi_softc *sc)
 {
-	DPRINTF(1, "%s\n", __func__);
-#if 0
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 	int i, error;
 
@@ -7289,27 +7283,24 @@ bwi_init_rx_ring32(struct bwi_softc *sc)
 			return (error);
 		}
 	}
-	bus_dmamap_sync(sc->sc_rxring_dtag, rd->rdata_dmap,
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
+	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	bwi_init_rxdesc_ring32(sc, rd->rdata_txrx_ctrl, rd->rdata_paddr,
 	    sizeof(struct bwi_rxbuf_hdr), BWI_RX_NDESC);
 	return (0);
-#endif
-	return (1);
 }
 
 int
 bwi_init_txstats32(struct bwi_softc *sc)
 {
-	DPRINTF(1, "%s\n", __func__);
-#if 0
 	struct bwi_txstats_data *st = sc->sc_txstats;
 	bus_addr_t stats_paddr;
 	int i;
 
 	bzero(st->stats, BWI_TXSTATS_NDESC * sizeof(struct bwi_txstats));
-	bus_dmamap_sync(st->stats_dtag, st->stats_dmap, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, st->stats_dmap, 0,
+	    st->stats_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	st->stats_idx = 0;
 
@@ -7319,15 +7310,13 @@ bwi_init_txstats32(struct bwi_softc *sc)
 				 stats_paddr, sizeof(struct bwi_txstats), 0);
 		stats_paddr += sizeof(struct bwi_txstats);
 	}
-	bus_dmamap_sync(st->stats_ring_dtag, st->stats_ring_dmap,
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, st->stats_ring_dmap, 0,
+	    st->stats_ring_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	bwi_init_rxdesc_ring32(sc, st->stats_ctrl_base,
 	    st->stats_ring_paddr, 0, BWI_TXSTATS_NDESC);
 
 	return (0);
-#endif
-	return (1);
 }
 
 void
@@ -7451,7 +7440,8 @@ back:
 	 */
 	hdr = mtod(rxbuf->rb_mbuf, struct bwi_rxbuf_hdr *);
 	bzero(hdr, sizeof(*hdr));
-	bus_dmamap_sync(sc->sc_buf_dtag, rxbuf->rb_dmap, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, rxbuf->rb_dmap, 0,
+	    rxbuf->rb_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Setup RX buf descriptor
@@ -7535,8 +7525,8 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		int buflen, wh_ofs, hdr_extra;
 
 		m = rb->rb_mbuf;
-		bus_dmamap_sync(sc->sc_buf_dtag, rb->rb_dmap,
-				BUS_DMASYNC_POSTREAD);
+		bus_dmamap_sync(sc->sc_dmat, rb->rb_dmap, 0,
+		    rb->rb_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		if (bwi_newbuf(sc, idx, 0)) {
 			ifp->if_ierrors++;
@@ -7582,8 +7572,8 @@ next:
 	}
 
 	rbd->rbd_idx = idx;
-	bus_dmamap_sync(sc->sc_rxring_dtag, rd->rdata_dmap,
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
+	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 #endif
 }
 
@@ -7987,7 +7977,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	}
 	error = 0;
 
-	bus_dmamap_sync(sc->sc_buf_dtag, tb->tb_dmap, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, tb->tb_dmap, 0,
+	    tb->tb_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	tb->tb_mbuf = m;
 	tb->tb_ni = ni;
@@ -8007,8 +7998,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 
 	/* Setup TX descriptor */
 	sc->sc_setup_txdesc(sc, rd, idx, paddr, m->m_pkthdr.len);
-	bus_dmamap_sync(sc->sc_txring_dtag, rd->rdata_dmap,
-			BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
+	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* Kick start */
 	sc->sc_start_tx(sc, rd->rdata_txrx_ctrl, idx);
@@ -8109,12 +8100,11 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 void
 bwi_txeof_status(struct bwi_softc *sc, int end_idx)
 {
-	printf("%s\n", __func__);
-#if 0
 	struct bwi_txstats_data *st = sc->sc_txstats;
 	int idx;
 
-	bus_dmamap_sync(st->stats_dtag, st->stats_dmap, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, st->stats_dmap, 0,
+	    st->stats_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 	idx = st->stats_idx;
 	while (idx != end_idx) {
@@ -8122,7 +8112,6 @@ bwi_txeof_status(struct bwi_softc *sc, int end_idx)
 		idx = (idx + 1) % BWI_TXSTATS_NDESC;
 	}
 	st->stats_idx = idx;
-#endif
 }
 
 void
