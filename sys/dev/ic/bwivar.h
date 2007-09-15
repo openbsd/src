@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.7 2007/09/15 07:20:51 jsg Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.8 2007/09/15 13:38:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -180,6 +180,7 @@ struct bwi_txstats {
 
 struct bwi_ring_data {
 	uint32_t		rdata_txrx_ctrl;
+	bus_dma_segment_t	rdata_seg;
 	bus_dmamap_t		rdata_dmap;
 	bus_addr_t		rdata_paddr;
 	void			*rdata_desc;
@@ -212,12 +213,12 @@ struct bwi_rxbuf_data {
 };
 
 struct bwi_txstats_data {
-	bus_dma_tag_t		stats_ring_dtag;
+	bus_dma_segment_t	stats_ring_seg;
 	bus_dmamap_t		stats_ring_dmap;
 	bus_addr_t		stats_ring_paddr;
 	void			*stats_ring;
 
-	bus_dma_tag_t		stats_dtag;
+	bus_dma_segment_t	stats_seg;
 	bus_dmamap_t		stats_dmap;
 	bus_addr_t		stats_paddr;
 	struct bwi_txstats	*stats;
@@ -475,15 +476,11 @@ struct bwi_softc {
 	struct bwi_mac		 sc_mac[BWI_MAC_MAX];
  
 	enum bwi_bus_space	 sc_bus_space;
-	bus_dma_tag_t		 sc_parent_dtag;
 
-	bus_dma_tag_t		 sc_buf_dtag;
 	struct bwi_txbuf_data	 sc_tx_bdata[BWI_TX_NRING];
 	struct bwi_rxbuf_data	 sc_rx_bdata;
 
-	bus_dma_tag_t		 sc_txring_dtag;
 	struct bwi_ring_data	 sc_tx_rdata[BWI_TX_NRING];
-	bus_dma_tag_t		 sc_rxring_dtag;
 	struct bwi_ring_data	 sc_rx_rdata;
 
 	struct bwi_txstats_data	*sc_txstats;
