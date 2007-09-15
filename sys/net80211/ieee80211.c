@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.24 2007/07/03 20:25:32 damien Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.25 2007/09/15 14:55:30 krw Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -851,7 +851,7 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate,
 		{  72 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM36 },
 		{  96 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM48 },
 		{ 108 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM54 },
-		/* NB: OFDM72 doesn't realy exist so we don't handle it */
+		/* NB: OFDM72 doesn't really exist so we don't handle it */
 	};
 	u_int mask, i;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 2007/03/15 10:22:29 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 2007/09/15 14:55:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -531,7 +531,7 @@ if (kdb_trap (type, va, frame))
 
 	/*
 	 * in case we were interrupted from the syscall gate page
-	 * treat this as we were not realy running user code no more
+	 * treat this as we were not really running user code no more
 	 * for weird things start to happen on return to the userland
 	 * and also see a note in locore.S:TLABEL(all)
 	 */
