@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.19 2007/09/15 11:00:24 brad Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.20 2007/09/15 11:55:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -305,8 +305,6 @@ void		 bwi_setup_rx_desc64(struct bwi_softc *, int, bus_addr_t, int)
 		     __unused;
 void		 bwi_setup_tx_desc64(struct bwi_softc *, struct bwi_ring_data *,
 		     int, bus_addr_t, int) __unused;
-void		 bwi_dma_buf_addr(void *, bus_dma_segment_t *, int,
-		     bus_size_t, int) __unused;
 int		 bwi_newbuf(struct bwi_softc *, int, int) __unused;
 void		 bwi_set_addr_filter(struct bwi_softc *, uint16_t,
 		     const uint8_t *);
@@ -7387,16 +7385,6 @@ bwi_setup_tx_desc64(struct bwi_softc *sc, struct bwi_ring_data *rd,
 	/* TODO:64 */
 }
 
-void
-bwi_dma_buf_addr(void *arg, bus_dma_segment_t *seg, int nseg,
-    bus_size_t mapsz, int error)
-{
-        if (!error) {
-		KASSERT(nseg == 1, ("too many segments(%d)\n", nseg));
-		*((bus_addr_t *)arg) = seg->ds_addr;
-	}
-}
-
 int
 bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 {
@@ -7431,8 +7419,7 @@ bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 	/*
 	 * Try to load RX buf into temporary DMA map
 	 */
-	error = bus_dmamap_load_mbuf(sc->sc_buf_dtag, rbd->rbd_tmp_dmap, m,
-	    bwi_dma_buf_addr, &paddr,
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, rbd->rbd_tmp_dmap, m,
 	    init ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT);
 	if (error) {
 		m_freem(m);
@@ -7969,8 +7956,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	wh = NULL;
 
 	/* DMA load */
-	error = bus_dmamap_load_mbuf(sc->sc_buf_dtag, tb->tb_dmap, m,
-	    bwi_dma_buf_addr, &paddr, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
+	    BUS_DMA_NOWAIT);
 	if (error && error != EFBIG) {
 		DPRINTF(1, "%s: can't load TX buffer (1) %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -7990,8 +7977,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 			m = m_new;
 		}
 
-		error = bus_dmamap_load_mbuf(sc->sc_buf_dtag, tb->tb_dmap, m,
-		    bwi_dma_buf_addr, &paddr, BUS_DMA_NOWAIT);
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
+		    BUS_DMA_NOWAIT);
 		if (error) {
 			DPRINTF(1, "%s: can't load TX buffer (2) %d\n",
 			    sc->sc_dev.dv_xname, error);
