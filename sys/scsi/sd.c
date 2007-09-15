@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.136 2007/06/23 19:19:49 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.137 2007/09/15 19:22:18 bluhm Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -257,6 +257,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 int
 sdactivate(struct device *self, enum devact act)
 {
+	struct sd_softc *sd = (struct sd_softc *)self;
 	int rv = 0;
 
 	switch (act) {
@@ -264,9 +265,8 @@ sdactivate(struct device *self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVATE.
-		 */
+		sd->flags |= SDF_DYING;
+		sd_kill_buffers(sd);
 		break;
 	}
 
@@ -320,6 +320,10 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	sd = sdlookup(unit);
 	if (sd == NULL)
 		return (ENXIO);
+	if (sd->flags & SDF_DYING) {
+		device_unref(&sd->sc_dev);
+		return (ENXIO);
+	}
 
 	sc_link = sd->sc_link;
 	SC_DEBUG(sc_link, SDEV_DB1,
@@ -443,7 +447,11 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	sd = sdlookup(DISKUNIT(dev));
 	if (sd == NULL)
-		return ENXIO;
+		return (ENXIO);
+	if (sd->flags & SDF_DYING) {
+		device_unref(&sd->sc_dev);
+		return (ENXIO);
+	}
 
 	if ((error = sdlock(sd)) != 0) {
 		device_unref(&sd->sc_dev);
@@ -496,6 +504,10 @@ sdstrategy(struct buf *bp)
 
 	sd = sdlookup(DISKUNIT(bp->b_dev));
 	if (sd == NULL) {
+		bp->b_error = ENXIO;
+		goto bad;
+	}
+	if (sd->flags & SDF_DYING) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -597,6 +609,9 @@ sdstart(void *v)
 	daddr64_t blkno;
 	int nblks, cmdlen, error;
 	struct partition *p;
+
+	if (sd->flags & SDF_DYING)
+		return;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart\n"));
 
@@ -827,7 +842,11 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	sd = sdlookup(DISKUNIT(dev));
 	if (sd == NULL)
-		return ENXIO;
+		return (ENXIO);
+	if (sd->flags & SDF_DYING) {
+		device_unref(&sd->sc_dev);
+		return (ENXIO);
+	}
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx\n", cmd));
 
@@ -1140,6 +1159,10 @@ sdsize(dev_t dev)
 	sd = sdlookup(DISKUNIT(dev));
 	if (sd == NULL)
 		return -1;
+	if (sd->flags & SDF_DYING) {
+		size = -1;
+		goto exit;
+	}
 
 	part = DISKPART(dev);
 	omask = sd->sc_dk.dk_openmask & (1 << part);

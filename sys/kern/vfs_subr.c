@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.156 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.157 2007/09/15 19:22:18 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1006,8 +1006,6 @@ vgonel(struct vnode *vp, struct proc *p)
 {
 	struct vnode *vq;
 	struct vnode *vx;
-	struct mount *mp;
-	int flags;
 
 	/*
 	 * If a vgone (or vclean) is already in progress,
@@ -1061,20 +1059,6 @@ vgonel(struct vnode *vp, struct proc *p)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
 		}
-
-		/*
-		 * If we have a mount point associated with the vnode, we must
-		 * flush it out now, as to not leave a dangling zombie mount
-		 * point laying around in VFS.
-		 */
-		mp = vp->v_specmountpoint;
-		if (mp != NULL) {
-			if (!vfs_busy(mp, VB_WRITE|VB_WAIT)) {
-				flags = MNT_FORCE | MNT_DOOMED;
-				dounmount(mp, flags, p, NULL);
-			}
-		}
-
 		FREE(vp->v_specinfo, M_VNODE);
 		vp->v_specinfo = NULL;
 	}

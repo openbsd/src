@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.52 2007/06/14 10:11:16 mbalmer Exp $ */
+/*	$OpenBSD: umass.c,v 1.53 2007/09/15 19:22:18 bluhm Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -668,6 +668,15 @@ umass_detach(struct device *self, int flags)
 #endif
 		/* Wait for processes to go away. */
 		usb_detach_wait(&sc->sc_dev);
+	}
+
+	/* Free the buffers via callback. */
+	if (sc->transfer_state != TSTATE_IDLE && sc->transfer_priv) {
+		sc->transfer_state = TSTATE_IDLE;
+		sc->transfer_cb(sc, sc->transfer_priv,
+				sc->transfer_datalen,
+				STATUS_WIRE_FAILED);
+		sc->transfer_priv = NULL;
 	}
 	splx(s);
 
