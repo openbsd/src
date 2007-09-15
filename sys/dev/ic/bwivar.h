@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.8 2007/09/15 13:38:22 jsg Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.9 2007/09/15 22:47:14 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -256,11 +256,9 @@ struct bwi_fwhdr {
 
 struct bwi_fw_iv {
 	/* Big endian */
-	uint16_t		iv_ofs;
-	union {
-		uint32_t	val32;
-		uint16_t	val16;
-	} 			iv_val;
+	uint16_t		offset;
+	uint16_t		size;
+	uint32_t		val;
 } __packed;
 
 #define BWI_FW_IV_OFS_MASK	__BITS(14, 0)
