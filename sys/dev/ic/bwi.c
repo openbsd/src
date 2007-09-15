@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.17 2007/09/15 08:55:29 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.18 2007/09/15 09:08:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6889,32 +6889,27 @@ bwi_dma_free(struct bwi_softc *sc)
 			struct bwi_ring_data *rd = &sc->sc_tx_rdata[i];
 
 			if (rd->rdata_desc != NULL) {
-				bus_dmamap_unload(sc->sc_txring_dtag,
+				bus_dmamap_unload(sc->sc_dmat,
 				    rd->rdata_dmap);
 				bus_dmamem_free(sc->sc_txring_dtag,
 				    rd->rdata_desc,
 				    rd->rdata_dmap);
 			}
 		}
-		bus_dma_tag_destroy(sc->sc_txring_dtag);
 	}
 
 	if (sc->sc_rxring_dtag != NULL) {
 		struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 
 		if (rd->rdata_desc != NULL) {
-			bus_dmamap_unload(sc->sc_rxring_dtag, rd->rdata_dmap);
+			bus_dmamap_unload(sc->sc_dmat, rd->rdata_dmap);
 			bus_dmamem_free(sc->sc_rxring_dtag, rd->rdata_desc,
 			    rd->rdata_dmap);
 		}
-		bus_dma_tag_destroy(sc->sc_rxring_dtag);
 	}
 
 	bwi_dma_txstats_free(sc);
 	bwi_dma_mbuf_destroy(sc, BWI_TX_NRING, 1);
-
-	if (sc->sc_parent_dtag != NULL)
-		bus_dma_tag_destroy(sc->sc_parent_dtag);
 #endif
 }
 
@@ -6984,7 +6979,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	if (error) {
 		DPRINTF(1, "%s: can't allocate txstats ring DMA mem\n",
 		    sc->sc_dev.dv_xname);
-		bus_dma_tag_destroy(st->stats_ring_dtag);
 		st->stats_ring_dtag = NULL;
 		return (error);
 	}
@@ -6996,7 +6990,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(st->stats_ring_dtag, st->stats_ring,
 		    st->stats_ring_dmap);
-		bus_dma_tag_destroy(st->stats_ring_dtag);
 		st->stats_ring_dtag = NULL;
 		return (error);
 	}
@@ -7024,7 +7017,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	if (error) {
 		DPRINTF(1, "%s: can't allocate txstats DMA mem\n",
 		    sc->sc_dev.dv_xname);
-		bus_dma_tag_destroy(st->stats_dtag);
 		st->stats_dtag = NULL;
 		return (error);
 	}
@@ -7035,7 +7027,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		DRPINTF(1, "%s: can't load txstats DMA mem\n",
 		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(st->stats_dtag, st->stats, st->stats_dmap);
-		bus_dma_tag_destroy(st->stats_dtag);
 		st->stats_dtag = NULL;
 		return (error);
 	}
@@ -7059,16 +7050,14 @@ bwi_dma_txstats_free(struct bwi_softc *sc)
 	st = sc->sc_txstats;
 
 	if (st->stats_ring_dtag != NULL) {
-		bus_dmamap_unload(st->stats_ring_dtag, st->stats_ring_dmap);
+		bus_dmamap_unload(sc->sc_dmat, st->stats_ring_dmap);
 		bus_dmamem_free(st->stats_ring_dtag, st->stats_ring,
 		    st->stats_ring_dmap);
-		bus_dma_tag_destroy(st->stats_ring_dtag);
 	}
 
 	if (st->stats_dtag != NULL) {
-		bus_dmamap_unload(st->stats_dtag, st->stats_dmap);
+		bus_dmamap_unload(sc->sc_dmat, st->stats_dmap);
 		bus_dmamem_free(st->stats_dtag, st->stats, st->stats_dmap);
-		bus_dma_tag_destroy(st->stats_dtag);
 	}
 
 	kfree(st, M_DEVBUF);
@@ -7182,7 +7171,7 @@ bwi_dma_mbuf_destroy(struct bwi_softc *sc, int ntx, int nrx)
 			struct bwi_txbuf *tb = &tbd->tbd_buf[j];
 
 			if (tb->tb_mbuf != NULL) {
-				bus_dmamap_unload(sc->sc_buf_dtag,
+				bus_dmamap_unload(sc->sc_dmat,
 				    tb->tb_dmap);
 				m_freem(tb->tb_mbuf);
 			}
@@ -7200,7 +7189,7 @@ bwi_dma_mbuf_destroy(struct bwi_softc *sc, int ntx, int nrx)
 			struct bwi_rxbuf *rb = &rbd->rbd_buf[j];
 
 			if (rb->rb_mbuf != NULL) {
-				bus_dmamap_unload(sc->sc_buf_dtag,
+				bus_dmamap_unload(sc->sc_dmat,
 						  rb->rb_dmap);
 				m_freem(rb->rb_mbuf);
 			}
@@ -7208,7 +7197,6 @@ bwi_dma_mbuf_destroy(struct bwi_softc *sc, int ntx, int nrx)
 		}
 	}
 
-	bus_dma_tag_destroy(sc->sc_buf_dtag);
 	sc->sc_buf_dtag = NULL;
 #endif
 }
@@ -7459,7 +7447,7 @@ bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 	}
 
 	if (!init)
-		bus_dmamap_unload(sc->sc_buf_dtag, rxbuf->rb_dmap);
+		bus_dmamap_unload(sc->sc_dmat, rxbuf->rb_dmap);
 	rxbuf->rb_mbuf = m;
 	rxbuf->rb_paddr = paddr;
 
@@ -7680,7 +7668,7 @@ bwi_free_rx_ring32(struct bwi_softc *sc)
 		struct bwi_rxbuf *rb = &rbd->rbd_buf[i];
 
 		if (rb->rb_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_buf_dtag, rb->rb_dmap);
+			bus_dmamap_unload(sc->sc_dmat, rb->rb_dmap);
 			m_freem(rb->rb_mbuf);
 			rb->rb_mbuf = NULL;
 		}
@@ -7739,7 +7727,7 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 		struct bwi_txbuf *tb = &tbd->tbd_buf[i];
 
 		if (tb->tb_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_buf_dtag, tb->tb_dmap);
+			bus_dmamap_unload(sc->sc_dmat, tb->tb_dmap);
 			m_freem(tb->tb_mbuf);
 			tb->tb_mbuf = NULL;
 		}
@@ -8116,7 +8104,7 @@ _bwi_txeof(struct bwi_softc *sc, uint16_t tx_id)
 
 	tb = &tbd->tbd_buf[buf_idx];
 
-	bus_dmamap_unload(sc->sc_buf_dtag, tb->tb_dmap);
+	bus_dmamap_unload(sc->sc_dmat, tb->tb_dmap);
 	m_freem(tb->tb_mbuf);
 	tb->tb_mbuf = NULL;
 
