@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.22 2007/09/15 13:38:22 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.23 2007/09/15 15:08:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6727,10 +6727,7 @@ bwi_media_change(struct ifnet *ifp)
 int
 bwi_dma_alloc(struct bwi_softc *sc)
 {
-	DPRINTF(1, "%s\n", __func__);
-#if 0
 	int error, i, has_txstats;
-	bus_addr_t lowaddr = 0;
 	bus_size_t tx_ring_sz, rx_ring_sz, desc_sz = 0;
 	uint32_t txrx_ctrl_step = 0;
 
@@ -6745,10 +6742,6 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	switch (sc->sc_bus_space) {
 	case BWI_BUS_SPACE_30BIT:
 	case BWI_BUS_SPACE_32BIT:
-		if (sc->sc_bus_space == BWI_BUS_SPACE_30BIT)
-			lowaddr = BWI_BUS_SPACE_MAXADDR;
-		else
-			lowaddr = BUS_SPACE_MAXADDR_32BIT;
 		desc_sz = sizeof(struct bwi_desc32);
 		txrx_ctrl_step = 0x20;
 
@@ -6768,7 +6761,6 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		break;
 
 	case BWI_BUS_SPACE_64BIT:
-		lowaddr = BUS_SPACE_MAXADDR;	/* XXX */
 		desc_sz = sizeof(struct bwi_desc64);
 		txrx_ctrl_step = 0x40;
 
@@ -6788,7 +6780,6 @@ bwi_dma_alloc(struct bwi_softc *sc)
 		break;
 	}
 
-	KKASSERT(lowaddr != 0);
 	KKASSERT(desc_sz != 0);
 	KKASSERT(txrx_ctrl_step != 0);
 
@@ -6800,7 +6791,16 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	 * Create TX ring DMA stuffs
 	 */
 
+
 	for (i = 0; i < BWI_TX_NRING; ++i) {
+		error = bus_dmamap_create(sc->sc_dmat, tx_ring_sz, 1,
+		    tx_ring_sz, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_tx_rdata[i].rdata_dmap);
+		if (error) {
+			DPRINTF(1, "%s: %dth TX ring DMA create failed\n",
+			    sc->sc_dev.dv_xname, i);
+			return (error);
+		}
 		error = bwi_dma_ring_alloc(sc,
 		    &sc->sc_tx_rdata[i], tx_ring_sz, TXRX_CTRL(i));
 		if (error) {
@@ -6813,6 +6813,15 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	/*
 	 * Create RX ring DMA stuffs
 	 */
+
+	error = bus_dmamap_create(sc->sc_dmat, rx_ring_sz, 1,
+	    rx_ring_sz, 0, BUS_DMA_NOWAIT,
+	    &sc->sc_rx_rdata.rdata_dmap);
+	if (error) {
+		DPRINTF(1, "%s: RX ring DMA create failed\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 
 	error = bwi_dma_ring_alloc(sc, &sc->sc_rx_rdata,
 	    rx_ring_sz, TXRX_CTRL(0));
@@ -6833,8 +6842,6 @@ bwi_dma_alloc(struct bwi_softc *sc)
 #undef TXRX_CTRL
 
 	return (bwi_dma_mbuf_create(sc));
-#endif
-	return (0);
 }
 
 void
@@ -6893,6 +6900,7 @@ bwi_dma_ring_alloc(struct bwi_softc *sc,
 		return (error);
 	}
 
+	rd->rdata_paddr = rd->rdata_dmap->dm_segs[0].ds_addr;
 	rd->rdata_txrx_ctrl = txrx_ctrl;
 
 	return (0);
@@ -6913,6 +6921,14 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 	 * Create TX stats descriptor DMA stuffs
 	 */
 	dma_size = roundup(desc_sz * BWI_TXSTATS_NDESC, BWI_RING_ALIGN);
+
+	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
+	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
+	if (error) {
+		DPRINTF(1, "%s: can't create txstats ring DMA mem\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_RING_ALIGN, 0,
 	     &st->stats_ring_seg, 1, &nsegs, BUS_DMA_NOWAIT);
@@ -6939,12 +6955,22 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
+	bzero(&st->stats_ring, dma_size);
+	st->stats_ring_paddr = st->stats_ring_dmap->dm_segs[0].ds_addr;
+
 	/*
 	 * Create TX stats DMA stuffs
 	 */
 	dma_size = roundup(sizeof(struct bwi_txstats) * BWI_TXSTATS_NDESC,
 	    BWI_ALIGN);
 
+	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
+	    BUS_DMA_NOWAIT, &st->stats_dmap);
+	if (error) {
+		DPRINTF(1, "%s: can't create txstats ring DMA mem\n",
+		    sc->sc_dev.dv_xname);
+		return (error);
+	}
 	error = bus_dmamem_alloc(sc->sc_dmat, dma_size, BWI_ALIGN, 0,
 	    &st->stats_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
@@ -6970,6 +6996,8 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
+	bzero(&st->stats, dma_size);
+	st->stats_paddr = st->stats_dmap->dm_segs[0].ds_addr;
 	st->stats_ctrl_base = ctrl_base;
 
 	return (0);
