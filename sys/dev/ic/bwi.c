@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.16 2007/09/15 07:20:51 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.17 2007/09/15 08:55:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6933,8 +6933,8 @@ bwi_dma_ring_alloc(struct bwi_softc *sc, bus_dma_tag_t dtag,
 		return (error);
 	}
 
-	error = bus_dmamap_load(dtag, rd->rdata_dmap, rd->rdata_desc, size,
-	    bwi_dma_ring_addr, &rd->rdata_paddr, BUS_DMA_WAITOK);
+	error = bus_dmamap_load(sc->sc_dmat, rd->rdata_dmap, rd->rdata_desc,
+	    size, NULL, BUS_DMA_WAITOK);
 	if (error) {
 		DPRINTF(1, "%s: can't load DMA mem\n", sc->sc_dev.dv_xname);
 		bus_dmamem_free(dtag, rd->rdata_desc, rd->rdata_dmap);
@@ -6989,10 +6989,8 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
-	error = bus_dmamap_load(st->stats_ring_dtag, st->stats_ring_dmap,
-	    st->stats_ring, dma_size,
-	    bwi_dma_ring_addr, &st->stats_ring_paddr,
-	    BUS_DMA_WAITOK);
+	error = bus_dmamap_load(sc->sc_dmat, st->stats_ring_dmap,
+	    st->stats_ring, dma_size, NULL, BUS_DMA_WAITOK);
 	if (error) {
 		DPRINTF(1, "%s: can't load txstats ring DMA mem\n",
 		    sc->sc_dev.dv_xname);
@@ -7031,9 +7029,8 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 		return (error);
 	}
 
-	error = bus_dmamap_load(st->stats_dtag, st->stats_dmap, st->stats,
-	    dma_size, bwi_dma_ring_addr, &st->stats_paddr,
-	    BUS_DMA_WAITOK);
+	error = bus_dmamap_load(sc->sc_dmat, st->stats_dmap, st->stats,
+	    dma_size, NULL, BUS_DMA_WAITOK);
 	if (error) {
 		DRPINTF(1, "%s: can't load txstats DMA mem\n",
 		    sc->sc_dev.dv_xname);
