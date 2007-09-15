@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2007/09/15 21:41:00 otto Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/09/15 21:45:21 otto Exp $
 #
 # Makefile for the cpp part of pcc.
 #
@@ -8,6 +8,7 @@ BINDIR=		${PREFIX}/libexec
 MANDIR=		${PREFIX}/share/man/man
 TARGOS=		openbsd
 TARGMACH=	x86
+CLEANFILES=	external.h external.c mkext cgram.h
 
 CFLAGS+=	-DPCC_DEBUG -DGCC_COMPAT
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Werror
