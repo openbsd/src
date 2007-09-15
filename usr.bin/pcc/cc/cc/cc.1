@@ -1,0 +1,179 @@
+.\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
+.\" 
+.\" Permission to use, copy, modify, and/or distribute this software for any 
+.\" purpose with or without fee is hereby granted, provided that the above 
+.\" copyright notice and this permission notice appear in all copies.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR AND CONTRIBUTORS DISCLAIM 
+.\" ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED 
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL AUTHOR AND 
+.\" CONTRIBUTORS BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL 
+.\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR 
+.\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS 
+.\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF 
+.\" THIS SOFTWARE.
+.\"
+.Dd September 14, 2007
+.Dt cc 1
+.Os
+.Sh NAME
+.Nm cc
+.Nd front-end to the C compiler
+.Sh SYNOPSIS
+.Nm
+.Op Fl TODO
+.Op infile...
+.Pp
+.Sh DESCRIPTION
+The
+.Nm
+utility provides a front-end to the PCC C compiler.
+Multiple files may be given on the command line.
+Unrecognized options are all sent directly to
+.Xr ld 1 .
+.Pp
+.\" Brief description of its syntax:
+Filenames that end with
+.Sy .c
+are passed via
+.Xr cpp 1 ->
+.Xr ccom 1 ->
+.Xr as 1 ->
+.Xr ld 1 .
+.Pp
+Filenames that end with
+.Sy .s
+are passed via
+.Xr as 1 ->
+.Xr ld 1 .
+.Pp
+Filenames that end with
+.Sy .o
+are passed directly to
+.Xr ld 1 .
+.Pp
+.\" TODO: document when -D__ASSEMBLER__ ??
+.\" TODO:  document __PCC__, __PCC_MINOR__, and __PCC_MINORMINOR__
+.\"
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl B Ar prefix
+Define alternate prefix path for
+.Xr cpp 1 ,
+.Xr ccom 1 ,
+.Xr as 1 ,
+or
+.Xr ld 1
+executables.
+.\" TODO: provide an example of -B
+.It Fl c
+Only compile or assemble and then stop.
+Do not link.
+Note: cannot be combined with
+.Fl o
+if multiple files are given.
+.It Fl d
+Sent to assembler. TODO?
+.It Fl E
+Stop after preprocessing with
+.Xr cpp 1 .
+Do not compile, assemble, or link.
+.It Fl fPIC
+Generate PIC code.
+See
+.Fl k
+option.
+.\" other -f GCC compatibility flags are ignored for now
+.It Fl g
+Send
+.Fl g
+flag to
+.Xr ccom 1
+to create debug output.
+.It Fl include Ar path
+.\" TODO
+.It Fl isystem Ar path
+.\" TODO
+.It Fl k
+Tells C compiler to generate PIC code
+and tells assembler that PIC code has been generated.
+.It Fl L
+.\" TODO
+.It Fl M
+Pass
+.Fl M
+flag to
+.Xr cpp 1
+to generate dependencies for
+.Xr make 1 .
+.It Fl nostdinc
+.\" TODO
+.It Fl nostdlib
+.\" TODO
+.\" implies -nostartfiles ??
+.It Fl nostartfiles
+.\" TODO
+.It Fl o Ar outfile
+Save result to
+.Ar outfile .
+.It Fl P
+TODO: what is this?
+.It Fl pg
+Not implemented.
+.It Fl O
+.\" TODO: sets -xtemps for ccom??
+Note: this is unset if
+.Fl g
+option is set.
+.It Fl pthread
+Defines
+.Sy _PTHREADS
+preprocessor directive for
+.Xr cpp 1 .
+Uses
+.Sy -lpthread
+for
+.Xr ld 1 linker.
+.It Fl static
+Do not use dynamic linkage.
+By default, it will link using the dynamic linker options
+and/or shared objects for the platform.
+.It Fl S
+Stop after compilation by
+.Xr ccom 1 .
+Do not assemble and do not link.
+Note: cannot be combined with
+.Fl o
+if multiple files are given.
+.It Fl t
+Passes
+.Fl t
+to
+.Xr cpp 1
+for traditional C preprocessor syntax.
+.It Fl v
+Outputs the version of
+.Nm
+and shows what commands will be ran with their command line arguments.
+.It Fl x
+TODO
+.It Fl X
+TODO
+.It Fl Wl Ar flags
+Options for the linker
+.\" what is ignored? llist?
+.\" TODO: DIUC options?
+.El
+.Sh SEE ALSO
+.Xr as 1 ,
+.Xr ccom 1 ,
+.Xr cpp 1
+.Sh HISTORY
+The
+.Nm
+command comes from the original Portable C Compiler by S. C.
+Johnson, written in the late 70's.
+.Pp
+This product includes software developed or owned by Caldera
+International, Inc.
+

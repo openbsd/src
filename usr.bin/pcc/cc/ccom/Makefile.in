@@ -1,0 +1,107 @@
+#	$Id: Makefile.in,v 1.1.1.1 2007/09/15 18:12:32 otto Exp $
+#
+# Makefile.in for ccom
+#
+XFL=-DPCC_DEBUG -DGCC_COMPAT \
+	-Wall -Wmissing-prototypes -Wstrict-prototypes -Werror
+
+CC = @CC@
+CFLAGS = @CFLAGS@ $(XFL) -I. -I${MIPDIR} -I$(MDIR) -Dmach_${TARGMACH} \
+	-I../../os/${TARGOS}
+CPPFLAGS = @CPPFLAGS@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+YACC = @YACC@
+TARGOS = @targos@
+TARGMACH = @targmach@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libexecdir = @libexecdir@
+strip = @strip@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+MDIR=../../arch/$(TARGMACH)
+MIPDIR=../../mip
+
+OBJS1=optim.o pftn.o scan.o trees.o cgram.o inline.o symtabs.o \
+	gcc_compat.o init.o local.o code.o stabs.o
+
+OBJS2=match.o reader.o optim2.o regs.o local2.o order.o table.o
+
+OBJS=$(OBJS1) $(OBJS2) common.o main.o external.o
+
+DEST=ccom
+
+all: ${DEST}
+
+${DEST}: $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@
+
+.c.o:
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+local.o: $(MDIR)/local.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/local.c
+
+local2.o: $(MDIR)/local2.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/local2.c
+
+code.o: $(MDIR)/code.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/code.c
+
+order.o: $(MDIR)/order.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/order.c
+
+table.o: $(MDIR)/table.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MDIR)/table.c
+
+match.o: $(MIPDIR)/match.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/match.c
+
+reader.o: $(MIPDIR)/reader.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/reader.c
+
+optim2.o: $(MIPDIR)/optim2.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/optim2.c
+
+regs.o: $(MIPDIR)/regs.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/regs.c
+
+common.o: $(MIPDIR)/common.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/common.c
+
+external.h external.c: ${MIPDIR}/mkext.c $(MDIR)/table.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -DMKEXT -o mkext ${MIPDIR}/mkext.c \
+	$(MDIR)/table.c ${MIPDIR}/common.c
+	./mkext
+
+trees.c: pass2.h
+
+pass2.h: external.h
+
+cgram.c: cgram.y
+	$(YACC) $(YFLAGS) -d $<
+	mv y.tab.c cgram.c
+	mv y.tab.h cgram.h
+
+scan.c: scan.l cgram.c
+	$(LEX) $(LFLAGS) $<
+	mv lex.yy.c scan.c
+
+optim2.o reader.o: external.h
+
+install:
+	test -z "${DESTDIR}$(libexecdir)" || mkdir -p "${DESTDIR}$(libexecdir)"
+	${INSTALL_PROGRAM} ${DEST} ${DESTDIR}${libexecdir}
+	@if [ ${strip} = yes ]; then			\
+		strip ${DESTDIR}${libexecdir}/${DEST} ;		\
+		echo strip ${DESTDIR}${libexecdir}/${DEST} ;	\
+	fi
+
+clean:
+	/bin/rm -f $(OBJS) ccom scan.c cgram.[ch] mkext external.[ch]
+
+distclean: clean
+	/bin/rm -f Makefile

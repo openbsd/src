@@ -1,0 +1,79 @@
+#	$Id: Makefile.in,v 1.1.1.1 2007/09/15 18:12:32 otto Exp $
+#
+# Makefile.in for cpp
+#
+XFL=-DCPP_DEBUG -Wall -Wmissing-prototypes -Wstrict-prototypes -Werror
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+strip = @strip@
+CC = @CC@
+CFLAGS = @CFLAGS@ $(XFL)
+CPPFLAGS = @CPPFLAGS@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+YACC = @YACC@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+OBJS=cpp.o cpy.o scanner.o
+HEADERS=cpp.h
+DEST=cpp
+
+all: ${DEST}
+
+${DEST}: $(OBJS) $(HEADERS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@
+
+.c.o:
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $<
+
+.l.o:
+	$(LEX) $(LFLAGS) $<
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ lex.yy.c
+
+.y.o:
+	$(YACC) -d $(YFLAGS) $<
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ y.tab.c
+
+$(OBJS): $(HEADERS)
+
+cpp.o: cpy.o
+
+test:
+	./cpp < tests/test1 > tests/run1
+	cmp tests/run1 tests/res1
+	./cpp < tests/test2 > tests/run2
+	cmp tests/run2 tests/res2
+	./cpp < tests/test3 > tests/run3
+	cmp tests/run3 tests/res3
+	./cpp < tests/test4 > tests/run4
+	cmp tests/run4 tests/res4
+	./cpp < tests/test5 > tests/run5
+	cmp tests/run5 tests/res5
+	./cpp < tests/test6 > tests/run6
+	cmp tests/run6 tests/res6
+	./cpp < tests/test7 > tests/run7
+	cmp tests/run7 tests/res7
+	./cpp < tests/test8 > tests/run8
+	cmp tests/run8 tests/res8
+	./cpp < tests/test9 > tests/run9
+	cmp tests/run9 tests/res9
+
+
+install:
+	test -z "${DESTDIR}$(libexecdir)" || mkdir -p "${DESTDIR}$(libexecdir)"
+	${INSTALL_PROGRAM} ${DEST} ${DESTDIR}${libexecdir}
+	@if [ ${strip} = yes ]; then		\
+		strip ${DESTDIR}${libexecdir}/${DEST} ;	\
+		echo strip ${DESTDIR}${libexecdir}/${DEST} ;	\
+	fi
+
+clean:
+	/bin/rm -f $(OBJS) cpp lex.yy.c y.tab.[ch] tests/run*
+
+distclean: clean
+	/bin/rm -f Makefile

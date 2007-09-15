@@ -1,0 +1,36 @@
+#	$Id: Makefile.in,v 1.1.1.1 2007/09/15 18:12:35 otto Exp $
+#
+# Makefile.in for top-level of pcc.
+#
+
+@SET_MAKE@
+CC=@CC@
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@
+CPPFLAGS=@CPPFLAGS@
+YACC=@YACC@
+LEX=@LEX@
+
+SUBDIR=cc cpp ccom
+
+all: ${SUBDIR}
+
+install:
+	cd cc && ${MAKE} install
+	cd cpp && ${MAKE} install
+	cd ccom && ${MAKE} install
+
+clean:
+	cd cc && ${MAKE} clean
+	cd cpp && ${MAKE} clean
+	cd ccom && ${MAKE} clean
+
+distclean:
+	cd cc && ${MAKE} distclean
+	cd cpp && ${MAKE} distclean
+	cd ccom && ${MAKE} distclean
+	/bin/rm -rf Makefile config.log stamp-h1 config.status \
+	configure.lineno config.h autom4te.cache
+
+${SUBDIR}:
+	cd $@; $(MAKE) all $(MFLAGS)

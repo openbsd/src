@@ -1,0 +1,95 @@
+#	$Id: Makefile.in,v 1.1.1.1 2007/09/15 18:12:35 otto Exp $
+#
+# Makefile for the Fortran 77 command
+#  Running on the @targmach@
+#  Generating code for the @targmach@
+#  Using the Johnson C compiler's second pass (binary version)
+
+TARGOS = @targos@
+TARGMACH = @targmach@
+MDIR=../arch/$(TARGMACH)
+YFLAGS=-d
+
+COMPFLGS = -O -DFORTRAN -DTARGET=@targmach@ -DFAMILY=SCJ -DHERE=VAX -DOUTPUT=BINARY -DPOLISH=POSTFIX -I../os/${TARGOS} -I../arch/${TARGMACH} -I. -Wall -Wmissing-prototypes -Wstrict-prototypes
+FILES = Makefile defs.h defines.h ftypes.h scjdefs tokens fio.h\
+	driver.c \
+	main.c proc.c init.c\
+	gram.head gram.dcl gram.expr gram.exec gram.io\
+	lex.c equiv.c data.c expr.c exec.c intr.c\
+	io.c misc.c error.c put.c putscjb.c f77md.c f77md2.c 
+
+
+OBJECTS = main.o init.o proc.o gram.o lex.o \
+	  equiv.o data.o expr.o exec.o intr.o io.o misc.o error.o\
+	  put.o putscjb.o f77md.o f77md2.o
+
+compiler: f77 f77pass1
+
+f77 : f77.o f77md.o
+	$(CC) f77.o f77md.o -o f77
+	@size f77
+
+f77pass1 : $(OBJECTS)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o f77pass1
+	@size f77pass1
+
+gram.c:	gram.head gram.dcl gram.expr gram.exec gram.io tokdefs
+	( sed <tokdefs "s/#define/%token/" ;\
+		cat gram.head gram.dcl gram.expr gram.exec gram.io ) >gram.in
+	$(YACC) $(YFLAGS) gram.in
+	mv y.tab.c gram.c
+	mv y.tab.h gram.h
+	rm gram.in
+
+tokdefs: tokens
+	grep -n . <tokens | sed "s/\([^:]*\):\(.*\)/#define \2 \1/" >tokdefs
+
+lex.o : tokdefs
+driver.o $(OBJECTS)  : defs.h defines.h ftypes.h
+
+fio.h :# /usr/sif/fort/libI77/fio.h
+#	@echo "***Warning : /usr/sif/fort/libI77/fio.h has changed***"
+
+archall:
+	ar rc ../fortarch $(FILES)
+
+arch :  ../fortarch
+
+../fortarch:  $(FILES)
+	@ar uv ../fortarch $?
+	@wc ../fortarch
+
+
+printall:
+	pr $(FILES) | $P
+	touch print
+
+print:	$(FILES)
+	pr $? | $P
+	touch print
+
+lint:
+	@echo "nohup lint -p ... >Lintout&"
+	@nohup lint -p error.c exec.c intr.c expr.c gram.c init.c io.c\
+		lex.c main.c proc.c misc.c put.c putscjb.c vax.c vaxx.c\
+		equiv.c data.c -lS >Lintout&
+
+clean:
+	-rm -f gram.c *.o f77 f77pass1
+	du
+
+install: 
+	install -s f77 $(DESTDIR)/usr/bin
+	install -s f77pass1 $(DESTDIR)/usr/lib
+
+src : $(FILES) vaxdefs
+	cp $? /usr/src/cmd/f77
+	touch src
+.c.o :
+	cc -c $(CFLAGS) $(COMPFLGS) $*.c
+
+f77md.o: $(MDIR)/f77md.c
+	$(CC) -c $(CFLAGS) $(COMPFLGS) -o $@ $(MDIR)/f77md.c
+
+f77md2.o: $(MDIR)/f77md2.c
+	$(CC) -c $(CFLAGS) $(COMPFLGS) -o $@ $(MDIR)/f77md2.c

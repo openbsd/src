@@ -1,0 +1,120 @@
+Calling conventions, stack frame and zero page:
+
+The variables that normally are placed on the stack or in registers in C
+are instead allocated in the zero page and saved on a (fictive) stack
+when calling functions.  Some locations have predefined functions though.
+Arrays allocated as automatics are stored on the stack with a pointer
+in zero page to its destination.
+
+0-7	Unused
+10	Stack pointer
+11	Frame pointer
+12-14	Unused
+15	Used by prolog
+16	Prolog address, written in crt0
+17	Epilog address, written in crt0
+20-27	Auto-increment, scratch
+30-37	Auto-decrement, scratch
+40-47	Unused
+50-57	Scratch/Arguments
+60-77	Permanent, save before use.
+100-377	Addresses for subroutines, written by the assembler
+
+The normal registers (AC0-AC3) are all considered scratch registers.
+
+Register classes are assigned as:
+	AC0-AC3: AREGs.
+	AC2-AC3: BREGs.
+	50-77:	 CREGs.
+	...and eventually register pairs as DREGs.
+
+In byte code the low half of a word is the first byte (little-endian).
+This is bit 8-15 in Nova syntax.
+
+The stack is growing towards lower adresses (as opposed to the Eclipse stack).
+Stack layout:
+
+	! arg1	!
+	! arg0	!
+ fp ->	! old pc!
+	! old fp!
+ pc ->	! saved !
+
+A reference to a struct member in assembler, a = b->c; b is in ZP 50
++ is zeropage-addressing
+* is fp-adressing
+
+# offset 0
++	lda 0,@50	# load value from indirect ZP 50 into ac0
+*	lda 2,,3	# load value from (ac3) into ac2
+*	lda 0,,2	# load value from (ac2) into ac0
+
+# offset 12
++	lda 2,50	# load value from ZP 50 into ac2
++	lda 0,12,2	# load value from (ac2+12) into ac0
+*	lda 2,,3	# load value from (ac3) into ac2
+*	lda 0,12,2	# load value from 12(ac2) into ac0
+
+# offset 517
++	lda 2,50	# load value from ZP 50 into ac2
++	lda 0,.L42-.,1	# load offset from .L42 PC-indexed
++	addz 0,2,skp	# add offset to ac2 and skip
++.L42:	.word 517	# offset value
++	lda 0,,2	# load value from (ac2) into ac0
+
+The prolog/epilog implementation; it is implemented as subroutines.
+
+.L42:	.word 13	# number of words to save
+func:
+	sta 3,@40	# save return address on stack
+	lda 2,.L42-.,1	# get save word count
+	jsr @45		# go to prolog
+	...
+	lda 2,.L42-.,1	# get restore word count
+	jmp @46		# jump to epilog
+
+# words to save in 2, return address in 3
+prolog:
+	sta 2,45	# save # of words to move at scratch
+	lda 0,41	# get old fp
+	lda 1,40	# get sp
+	sta 1,41	# save new fp
+	dsz 40		# decrement stack, will never be 0
+	sta 0,@40	# save old fp
+	dsz 40
+
+	lda 0,off57	# fetch address of regs to save - 1
+	sta 0,20	# store address at autoincr
+1:	lda 0,@20	# get word to copy
+	sta 0,@40	# push on stack
+	dsz 40		# manually decrement sp
+	dsz 45		# copied all words?
+	jmp 1b,1	# no, continue
+	jmp 0,3		# return
+
+epilog:
+	sta 2,45	# save # of words to move at scratch
+
+	lda 3,off57	# fetch address of regs to save
+	sta 3,20	# store at autoincr
+	lda 3,41	# fetch fp
+	sta 3,30	# store at autodecr
+	lda 3,@30	# get old fp
+
+1:	lda 2,@30	# fetch word from stack
+	sta 2,@20	# store at orig place
+	dsz 45		# enough?
+	jmp 1b,1	# no, continue
+
+	lda 2,41	# get new fp
+	sta 2,40	# restore stack
+	sta 3,41	# restore old fp
+	jmp @40		# Return
+
+Assembler syntax and functions.
+
+The assembler syntax mimics the DG assembler.
+Load and store to addresses is written "lda 0,foo" to load from address foo.
+If foo is not in zero page then the assembler will put the lda in the
+text area close to the instruction and do an indirect pc-relative load.
+

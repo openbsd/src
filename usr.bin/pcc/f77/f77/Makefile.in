@@ -1,0 +1,42 @@
+#	$Id: Makefile.in,v 1.1.1.1 2007/09/15 18:12:35 otto Exp $
+#
+# Makefile.in for the cc part of pcc.
+#
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+strip = @strip@
+CC = @CC@
+TARGOS = @targos@
+TARGMACH = @targmach@
+CFLAGS = @CFLAGS@  -DLIBEXECDIR=\"${libexecdir}\"
+CPPFLAGS = @CPPFLAGS@ -I../os/${TARGOS} -Dmach_${TARGMACH} -Dos_${TARGOS}
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+OBJS=cc.o
+DEST=pcc
+
+all: ${DEST}
+
+${DEST}: $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@
+
+.c.o:
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $<
+
+install:
+	${INSTALL_PROGRAM} ${DEST} ${bindir}
+	@if [ ${strip} = yes ]; then		\
+		strip ${bindir}/${DEST} ;	\
+		echo strip ${bindir}/${DEST} ;	\
+	fi
+
+clean:
+	/bin/rm -f  $(OBJS) ${DEST}
+
+distclean: clean
+	/bin/rm -f  Makefile
