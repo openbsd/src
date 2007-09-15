@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.35 2007/09/07 11:00:47 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.36 2007/09/15 16:43:51 henning Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -752,8 +752,7 @@ trunk_ether_addmulti(struct trunk_softc *tr, struct ifreq *ifr)
 	if ((error = ether_addmulti(ifr, &tr->tr_ac)) != ENETRESET)
 		return (error);
 
-	if ((mc = (struct trunk_mc *)malloc(sizeof(struct trunk_mc),
-	    M_DEVBUF, M_NOWAIT)) == NULL) {
+	if ((mc = malloc(sizeof(*mc), M_DEVBUF, M_NOWAIT)) == NULL) {
 		error = ENOMEM;
 		goto failed;
 	}
@@ -1318,8 +1317,7 @@ trunk_lb_attach(struct trunk_softc *tr)
 {
 	struct trunk_lb *lb;
 
-	if ((lb = (struct trunk_lb *)malloc(sizeof(struct trunk_lb),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+	if ((lb = malloc(sizeof(*lb), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
 	tr->tr_detach = trunk_lb_detach;

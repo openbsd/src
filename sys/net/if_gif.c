@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.45 2007/05/26 17:13:30 jason Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.46 2007/09/15 16:43:51 henning Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -92,10 +92,9 @@ gif_clone_create(ifc, unit)
 	struct gif_softc *sc;
 	int s;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
 		return (ENOMEM);
-	bzero(sc, sizeof(*sc));
 
 	snprintf(sc->gif_if.if_xname, sizeof sc->gif_if.if_xname,
 	     "%s%d", ifc->ifc_name, unit);
@@ -485,13 +484,13 @@ gif_ioctl(ifp, cmd, data)
 
 		if (sc->gif_psrc)
 			free((caddr_t)sc->gif_psrc, M_IFADDR);
-		sa = (struct sockaddr *)malloc(src->sa_len, M_IFADDR, M_WAITOK);
+		sa = malloc(src->sa_len, M_IFADDR, M_WAITOK);
 		bcopy((caddr_t)src, (caddr_t)sa, src->sa_len);
 		sc->gif_psrc = sa;
 
 		if (sc->gif_pdst)
 			free((caddr_t)sc->gif_pdst, M_IFADDR);
-		sa = (struct sockaddr *)malloc(dst->sa_len, M_IFADDR, M_WAITOK);
+		sa = malloc(dst->sa_len, M_IFADDR, M_WAITOK);
 		bcopy((caddr_t)dst, (caddr_t)sa, dst->sa_len);
 		sc->gif_pdst = sa;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.67 2007/09/09 12:01:58 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.68 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -114,9 +114,8 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int		 s;
 
 	if (req == PRU_ATTACH) {
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
+		rp = malloc(sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
 		so->so_pcb = rp;
-		bzero(so->so_pcb, sizeof(*rp));
 	}
 	if (req == PRU_DETACH && rp) {
 		int af = rp->rcb_proto.sp_protocol;

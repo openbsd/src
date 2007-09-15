@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.49 2007/05/26 17:13:31 jason Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.50 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -233,10 +233,9 @@ ppp_clone_create(ifc, unit)
     struct ppp_softc *sc;
     int s;
 
-    sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+    sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
     if (!sc)
 	return (ENOMEM);
-    bzero(sc, sizeof(*sc));
 
     sc->sc_unit = unit;
     snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "%s%d",
@@ -314,8 +313,7 @@ pppalloc(pid)
     sc->sc_relinq = NULL;
     bzero((char *)&sc->sc_stats, sizeof(sc->sc_stats));
 #ifdef VJC
-    MALLOC(sc->sc_comp, struct slcompress *, sizeof(struct slcompress),
-	   M_DEVBUF, M_NOWAIT);
+    sc->sc_comp = malloc(sizeof(struct slcompress), M_DEVBUF, M_NOWAIT);
     if (sc->sc_comp)
 	sl_compress_init(sc->sc_comp);
 #endif
@@ -380,19 +378,19 @@ pppdealloc(sc)
 #endif /* PPP_COMPRESS */
 #if NBPFILTER > 0
     if (sc->sc_pass_filt.bf_insns != 0) {
-	FREE(sc->sc_pass_filt.bf_insns, M_DEVBUF);
+	free(sc->sc_pass_filt.bf_insns, M_DEVBUF);
 	sc->sc_pass_filt.bf_insns = 0;
 	sc->sc_pass_filt.bf_len = 0;
     }
     if (sc->sc_active_filt.bf_insns != 0) {
-	FREE(sc->sc_active_filt.bf_insns, M_DEVBUF);
+	free(sc->sc_active_filt.bf_insns, M_DEVBUF);
 	sc->sc_active_filt.bf_insns = 0;
 	sc->sc_active_filt.bf_len = 0;
     }
 #endif
 #ifdef VJC
     if (sc->sc_comp != 0) {
-	FREE(sc->sc_comp, M_DEVBUF);
+	free(sc->sc_comp, M_DEVBUF);
 	sc->sc_comp = 0;
     }
 #endif
@@ -583,14 +581,14 @@ pppioctl(sc, cmd, data, flag, p)
 	    return EINVAL;
 	newcodelen = nbp->bf_len * sizeof(struct bpf_insn);
 	if (newcodelen != 0) {
-	    MALLOC(newcode, struct bpf_insn *, newcodelen, M_DEVBUF, M_WAITOK);
+	    newcode = malloc(newcodelen, M_DEVBUF, M_WAITOK);
 	    if ((error = copyin((caddr_t)nbp->bf_insns, (caddr_t)newcode,
 			       newcodelen)) != 0) {
-		FREE(newcode, M_DEVBUF);
+		free(newcode, M_DEVBUF);
 		return error;
 	    }
 	    if (!bpf_validate(newcode, nbp->bf_len)) {
-		FREE(newcode, M_DEVBUF);
+		free(newcode, M_DEVBUF);
 		return EINVAL;
 	    }
 	} else
@@ -602,7 +600,7 @@ pppioctl(sc, cmd, data, flag, p)
 	bp->bf_insns = newcode;
 	splx(s);
 	if (oldcode != 0)
-	    FREE(oldcode, M_DEVBUF);
+	    free(oldcode, M_DEVBUF);
 	break;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.41 2007/06/06 10:04:36 henning Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.42 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -180,10 +180,9 @@ loop_clone_create(ifc, unit)
 {
 	struct ifnet *ifp;
 
-	MALLOC(ifp, struct ifnet *, sizeof(*ifp), M_DEVBUF, M_NOWAIT);
+	ifp = malloc(sizeof(*ifp), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (ifp == NULL)
 		return (ENOMEM);
-	bzero(ifp, sizeof(struct ifnet));
 
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "lo%d", unit);
 	ifp->if_softc = NULL;

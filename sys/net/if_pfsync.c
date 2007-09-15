@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.85 2007/09/03 06:15:06 joel Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.86 2007/09/15 16:43:51 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -125,9 +125,9 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 		return (EINVAL);
 
 	pfsync_sync_ok = 1;
-	if ((pfsyncif = malloc(sizeof(*pfsyncif), M_DEVBUF, M_NOWAIT)) == NULL)
+	if ((pfsyncif = malloc(sizeof(*pfsyncif), M_DEVBUF,
+	    M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
-	bzero(pfsyncif, sizeof(*pfsyncif));
 	pfsyncif->sc_mbuf = NULL;
 	pfsyncif->sc_mbuf_net = NULL;
 	pfsyncif->sc_mbuf_tdb = NULL;

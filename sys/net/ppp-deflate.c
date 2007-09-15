@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp-deflate.c,v 1.7 2002/09/13 00:12:07 deraadt Exp $	*/
+/*	$OpenBSD: ppp-deflate.c,v 1.8 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: ppp-deflate.c,v 1.1 1996/03/15 02:28:09 paulus Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ zalloc(notused, items, size)
 {
     void *ptr;
 
-    MALLOC(ptr, void *, items * size, M_DEVBUF, M_NOWAIT);
+    ptr = malloc(items * size, M_DEVBUF, M_NOWAIT);
     return ptr;
 }
 
@@ -141,7 +141,7 @@ zfree(notused, ptr, nbytes)
     void *ptr;
     u_int nbytes;
 {
-    FREE(ptr, M_DEVBUF);
+    free(ptr, M_DEVBUF);
 }
 
 /*
@@ -165,8 +165,7 @@ z_comp_alloc(options, opt_len)
     if (w_size < DEFLATE_MIN_SIZE || w_size > DEFLATE_MAX_SIZE)
 	return NULL;
 
-    MALLOC(state, struct deflate_state *, sizeof(struct deflate_state),
-	   M_DEVBUF, M_NOWAIT);
+    state = malloc(sizeof(*state), M_DEVBUF, M_NOWAIT);
     if (state == NULL)
 	return NULL;
 
@@ -175,7 +174,7 @@ z_comp_alloc(options, opt_len)
     state->strm.zfree = zfree;
     if (deflateInit2(&state->strm, Z_DEFAULT_COMPRESSION, DEFLATE_METHOD_VAL,
 		     -w_size, 8, Z_DEFAULT_STRATEGY, DEFLATE_OVHD+2) != Z_OK) {
-	FREE(state, M_DEVBUF);
+	free(state, M_DEVBUF);
 	return NULL;
     }
 
@@ -191,7 +190,7 @@ z_comp_free(arg)
     struct deflate_state *state = (struct deflate_state *) arg;
 
     deflateEnd(&state->strm);
-    FREE(state, M_DEVBUF);
+    free(state, M_DEVBUF);
 }
 
 static int
@@ -398,8 +397,7 @@ z_decomp_alloc(options, opt_len)
     if (w_size < DEFLATE_MIN_SIZE || w_size > DEFLATE_MAX_SIZE)
 	return NULL;
 
-    MALLOC(state, struct deflate_state *, sizeof(struct deflate_state),
-	   M_DEVBUF, M_NOWAIT);
+    state = malloc(sizeof(*state), M_DEVBUF, M_NOWAIT);
     if (state == NULL)
 	return NULL;
 
@@ -407,7 +405,7 @@ z_decomp_alloc(options, opt_len)
     state->strm.zalloc = zalloc;
     state->strm.zfree = zfree;
     if (inflateInit2(&state->strm, -w_size) != Z_OK) {
-	FREE(state, M_DEVBUF);
+	free(state, M_DEVBUF);
 	return NULL;
     }
 
@@ -423,7 +421,7 @@ z_decomp_free(arg)
     struct deflate_state *state = (struct deflate_state *) arg;
 
     inflateEnd(&state->strm);
-    FREE(state, M_DEVBUF);
+    free(state, M_DEVBUF);
 }
 
 static int

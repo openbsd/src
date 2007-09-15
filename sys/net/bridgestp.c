@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.26 2007/02/15 12:43:26 reyk Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.27 2007/09/15 16:43:51 henning Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1940,8 +1940,7 @@ bstp_create(struct ifnet *ifp)
 	int s;
 
 	s = splnet();
-	bs = (struct bstp_state *)malloc(sizeof(*bs), M_DEVBUF, M_WAITOK);
-	bzero(bs, sizeof(*bs));
+	bs = malloc(sizeof(*bs), M_DEVBUF, M_WAITOK|M_ZERO);
 	LIST_INIT(&bs->bs_bplist);
 
 	bs->bs_ifp = ifp;
@@ -2005,10 +2004,9 @@ bstp_add(struct bstp_state *bs, struct ifnet *ifp)
 		return (NULL);
 	}
 
-	bp = (struct bstp_port *)malloc(sizeof(*bp), M_DEVBUF, M_NOWAIT);
+	bp = malloc(sizeof(*bp), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (bp == NULL)
 		return (NULL);
-	bzero(bp, sizeof(*bp));
 
 	bp->bp_ifp = ifp;
 	bp->bp_bs = bs;

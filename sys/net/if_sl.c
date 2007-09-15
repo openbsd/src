@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.32 2006/03/25 22:41:47 djm Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.33 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -206,10 +206,9 @@ sl_clone_create(ifc, unit)
 	struct sl_softc *sc;
 	int s;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
 		return (ENOMEM);
-	bzero(sc, sizeof(*sc));
 
 	sc->sc_unit = unit;	/* XXX */
 	snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "%s%d",

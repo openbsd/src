@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.110 2007/06/06 10:04:36 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.111 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1052,7 +1052,7 @@ ether_addmulti(ifr, ac)
 	 * New address or range; malloc a new multicast record
 	 * and link it into the interface's multicast list.
 	 */
-	enm = (struct ether_multi *)malloc(sizeof(*enm), M_IFMADDR, M_NOWAIT);
+	enm = malloc(sizeof(*enm), M_IFMADDR, M_NOWAIT);
 	if (enm == NULL) {
 		splx(s);
 		return (ENOBUFS);

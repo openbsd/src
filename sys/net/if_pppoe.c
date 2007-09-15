@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.12 2007/05/28 06:31:01 mcbride Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.13 2007/09/15 16:43:51 henning Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -225,10 +225,9 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	struct pppoe_softc *sc;
 	int s;
 
-        MALLOC(sc, struct pppoe_softc *, sizeof(*sc), M_DEVBUF, M_WAITOK);
+        sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
         if (sc == NULL)
                 return (ENOMEM);
-        bzero(sc, sizeof(struct pppoe_softc));
 
 	sc->sc_unique = arc4random();
 

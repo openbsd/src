@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.165 2007/07/06 14:00:59 naddy Exp $	*/
+/*	$OpenBSD: if.c,v 1.166 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -234,8 +234,7 @@ if_attachsetup(struct ifnet *ifp)
 		/* grow ifnet_addrs */
 		m = oldlim * sizeof(ifa);
 		n = if_indexlim * sizeof(ifa);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
+		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifnet_addrs) {
 			bcopy((caddr_t)ifnet_addrs, q, m);
 			free((caddr_t)ifnet_addrs, M_IFADDR);
@@ -245,8 +244,7 @@ if_attachsetup(struct ifnet *ifp)
 		/* grow ifindex2ifnet */
 		m = oldlim * sizeof(struct ifnet *);
 		n = if_indexlim * sizeof(struct ifnet *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
+		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifindex2ifnet) {
 			bcopy((caddr_t)ifindex2ifnet, q, m);
 			free((caddr_t)ifindex2ifnet, M_IFADDR);
@@ -311,8 +309,7 @@ if_alloc_sadl(struct ifnet *ifp)
 		socksize = sizeof(*sdl);
 	socksize = ROUNDUP(socksize);
 	ifasize = sizeof(*ifa) + 2 * socksize;
-	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
-	bzero((caddr_t)ifa, ifasize);
+	ifa = malloc(ifasize, M_IFADDR, M_WAITOK|M_ZERO);
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	sdl->sdl_len = socksize;
 	sdl->sdl_family = AF_LINK;
@@ -1592,10 +1589,9 @@ if_detached_watchdog(struct ifnet *ifp)
 struct ifg_group *
 if_creategroup(const char *groupname)
 {
-	struct ifg_group	*ifg = NULL;
+	struct ifg_group	*ifg;
 
-	if ((ifg = (struct ifg_group *)malloc(sizeof(struct ifg_group),
-	    M_TEMP, M_NOWAIT)) == NULL)
+	if ((ifg = malloc(sizeof(*ifg), M_TEMP, M_NOWAIT)) == NULL)
 		return (NULL);
 
 	strlcpy(ifg->ifg_group, groupname, sizeof(ifg->ifg_group));
@@ -1628,12 +1624,10 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 		if (!strcmp(ifgl->ifgl_group->ifg_group, groupname))
 			return (EEXIST);
 
-	if ((ifgl = (struct ifg_list *)malloc(sizeof(struct ifg_list), M_TEMP,
-	    M_NOWAIT)) == NULL)
+	if ((ifgl = malloc(sizeof(*ifgl), M_TEMP, M_NOWAIT)) == NULL)
 		return (ENOMEM);
 
-	if ((ifgm = (struct ifg_member *)malloc(sizeof(struct ifg_member),
-	    M_TEMP, M_NOWAIT)) == NULL) {
+	if ((ifgm = malloc(sizeof(*ifgm), M_TEMP, M_NOWAIT)) == NULL) {
 		free(ifgl, M_TEMP);
 		return (ENOMEM);
 	}

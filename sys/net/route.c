@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.84 2007/06/14 18:31:49 reyk Exp $	*/
+/*	$OpenBSD: route.c,v 1.85 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -175,9 +175,8 @@ rtable_init(struct radix_node_head ***table)
 	struct domain	 *dom;
 
 	if ((p = malloc(sizeof(void *) * (rtafidx_max + 1), M_RTABLE,
-	    M_NOWAIT)) == NULL)
+	    M_NOWAIT|M_ZERO)) == NULL)
 		return (-1);
-	bzero(p, sizeof(void *) * (rtafidx_max + 1));
 
 	/* 2nd pass: attach */
 	for (dom = domains; dom != NULL; dom = dom->dom_next)
@@ -221,9 +220,8 @@ rtable_add(u_int id)	/* must be called at splsoftnet */
 	if (id == 0 || id > rtbl_id_max) {
 		size_t	newlen = sizeof(void *) * (id+1);
 
-		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT)) == NULL)
+		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
 			return (-1);
-		bzero(p, newlen);
 		if (id > 0) {
 			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
 			free(rt_tables, M_RTABLE);
@@ -1315,11 +1313,9 @@ rtlabel_name2id(char *name)
 	if (new_id > LABELID_MAX)
 		return (0);
 
-	label = (struct rt_label *)malloc(sizeof(struct rt_label),
-	    M_TEMP, M_NOWAIT);
+	label = malloc(sizeof(*label), M_TEMP, M_NOWAIT|M_ZERO);
 	if (label == NULL)
 		return (0);
-	bzero(label, sizeof(struct rt_label));
 	strlcpy(label->rtl_name, name, sizeof(label->rtl_name));
 	label->rtl_id = new_id;
 	label->rtl_ref++;

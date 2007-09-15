@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.184 2007/09/01 15:14:44 martin Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.185 2007/09/15 16:43:51 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -379,11 +379,9 @@ tagname2tag(struct pf_tags *head, char *tagname)
 		return (0);
 
 	/* allocate and fill new struct pf_tagname */
-	tag = (struct pf_tagname *)malloc(sizeof(struct pf_tagname),
-	    M_TEMP, M_NOWAIT);
+	tag = malloc(sizeof(*tag), M_TEMP, M_NOWAIT|M_ZERO);
 	if (tag == NULL)
 		return (0);
-	bzero(tag, sizeof(struct pf_tagname));
 	strlcpy(tag->name, tagname, sizeof(tag->name));
 	tag->tag = new_tagid;
 	tag->ref++;
@@ -2547,10 +2545,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			goto fail;
 		}
-		ioe = (struct pfioc_trans_e *)malloc(sizeof(*ioe),
-		    M_TEMP, M_WAITOK);
-		table = (struct pfr_table *)malloc(sizeof(*table),
-		    M_TEMP, M_WAITOK);
+		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
+		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
 				free(table, M_TEMP);
@@ -2616,10 +2612,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			goto fail;
 		}
-		ioe = (struct pfioc_trans_e *)malloc(sizeof(*ioe),
-		    M_TEMP, M_WAITOK);
-		table = (struct pfr_table *)malloc(sizeof(*table),
-		    M_TEMP, M_WAITOK);
+		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
+		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
 				free(table, M_TEMP);
@@ -2680,10 +2674,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			goto fail;
 		}
-		ioe = (struct pfioc_trans_e *)malloc(sizeof(*ioe),
-		    M_TEMP, M_WAITOK);
-		table = (struct pfr_table *)malloc(sizeof(*table),
-		    M_TEMP, M_WAITOK);
+		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
+		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
 		/* first makes sure everything will succeed */
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd-comp.c,v 1.6 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: bsd-comp.c,v 1.7 2007/09/15 16:43:51 henning Exp $	*/
 /*	$NetBSD: bsd-comp.c,v 1.6 1996/10/13 02:10:58 christos Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -346,18 +346,17 @@ bsd_alloc(options, opt_len, decomp)
 
     maxmaxcode = MAXCODE(bits);
     newlen = sizeof(*db) + (hsize-1) * (sizeof(db->dict[0]));
-    MALLOC(db, struct bsd_db *, newlen, M_DEVBUF, M_NOWAIT);
+    db = malloc(newlen, M_DEVBUF, M_NOWAIT|M_ZERO);
     if (!db)
 	return NULL;
-    bzero(db, sizeof(*db) - sizeof(db->dict));
 
     if (!decomp) {
 	db->lens = NULL;
     } else {
-	MALLOC(db->lens, u_int16_t *, (maxmaxcode+1) * sizeof(db->lens[0]),
-	       M_DEVBUF, M_NOWAIT);
+	db->lens = malloc((maxmaxcode+1) * sizeof(db->lens[0]), M_DEVBUF,
+	    M_NOWAIT);
 	if (!db->lens) {
-	    FREE(db, M_DEVBUF);
+	    free(db, M_DEVBUF);
 	    return NULL;
 	}
     }
@@ -378,8 +377,8 @@ bsd_free(state)
     struct bsd_db *db = (struct bsd_db *) state;
 
     if (db->lens)
-	FREE(db->lens, M_DEVBUF);
-    FREE(db, M_DEVBUF);
+	free(db->lens, M_DEVBUF);
+    free(db, M_DEVBUF);
 }
 
 static void *

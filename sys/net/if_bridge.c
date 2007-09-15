@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.164 2007/05/28 17:16:39 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.165 2007/09/15 16:43:51 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -189,10 +189,9 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	int i, s;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
 		return (ENOMEM);
-	bzero(sc, sizeof(*sc));
 
 	sc->sc_stp = bstp_create(&sc->sc_if);
 	if (!sc->sc_stp) {
@@ -374,15 +373,13 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 
-		p = (struct bridge_iflist *)malloc(
-		    sizeof(struct bridge_iflist), M_DEVBUF, M_NOWAIT);
+		p = malloc(sizeof(*p), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (p == NULL) {
 			if (ifs->if_type == IFT_ETHER)
 				ifpromisc(ifs, 0);
 			error = ENOMEM;
 			break;
 		}
-		bzero(p, sizeof(struct bridge_iflist));
 
 		p->ifp = ifs;
 		p->bif_flags = IFBIF_LEARNING | IFBIF_DISCOVER;
@@ -435,13 +432,11 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EBUSY;
 			break;
 		}
-		p = (struct bridge_iflist *)malloc(
-		    sizeof(struct bridge_iflist), M_DEVBUF, M_NOWAIT);
+		p = malloc(sizeof(*p), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (p == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		bzero(p, sizeof(struct bridge_iflist));
 		p->ifp = ifs;
 		p->bif_flags = IFBIF_SPAN;
 		SIMPLEQ_INIT(&p->bif_brlin);
@@ -1688,8 +1683,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 	if (p == LIST_END(&sc->sc_rts[h])) {
 		if (sc->sc_brtcnt >= sc->sc_brtmax)
 			goto done;
-		p = (struct bridge_rtnode *)malloc(
-		    sizeof(struct bridge_rtnode), M_DEVBUF, M_NOWAIT);
+		p = malloc(sizeof(*p), M_DEVBUF, M_NOWAIT);
 		if (p == NULL)
 			goto done;
 
@@ -1728,8 +1722,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 		if (dir > 0) {
 			if (sc->sc_brtcnt >= sc->sc_brtmax)
 				goto done;
-			p = (struct bridge_rtnode *)malloc(
-			    sizeof(struct bridge_rtnode), M_DEVBUF, M_NOWAIT);
+			p = malloc(sizeof(*p), M_DEVBUF, M_NOWAIT);
 			if (p == NULL)
 				goto done;
 
@@ -1750,8 +1743,7 @@ bridge_rtupdate(struct bridge_softc *sc, struct ether_addr *ea,
 		if (p == LIST_END(&sc->sc_rts[h])) {
 			if (sc->sc_brtcnt >= sc->sc_brtmax)
 				goto done;
-			p = (struct bridge_rtnode *)malloc(
-			    sizeof(struct bridge_rtnode), M_DEVBUF, M_NOWAIT);
+			p = malloc(sizeof(*p), M_DEVBUF, M_NOWAIT);
 			if (p == NULL)
 				goto done;
 
@@ -2160,7 +2152,7 @@ bridge_addrule(struct bridge_iflist *bif, struct ifbrlreq *req, int out)
 {
 	struct brl_node *n;
 
-	n = (struct brl_node *)malloc(sizeof(struct brl_node), M_DEVBUF, M_NOWAIT);
+	n = malloc(sizeof(*n), M_DEVBUF, M_NOWAIT);
 	if (n == NULL)
 		return (ENOMEM);
 	bcopy(&req->ifbr_src, &n->brl_src, sizeof(struct ether_addr));
