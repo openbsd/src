@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.98 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.99 2007/09/15 10:10:37 martin Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -855,7 +855,7 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 		uvm_rb_fixup(map, prev_entry);
 		map->size += size;
 		if (p && uobj == NULL)
-			p->p_vmspace->vm_dused += btoc(size);
+			p->p_vmspace->vm_dused += atop(size);
 
 		uvm_tree_sanity(map, "map leave 2");
 
@@ -922,7 +922,7 @@ step3:
 
 	map->size += size;
 	if (p && uobj == NULL)
-		p->p_vmspace->vm_dused += btoc(size);
+		p->p_vmspace->vm_dused += atop(size);
 
 
 	/*
@@ -1437,7 +1437,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		next = entry->next;
 		len = entry->end - entry->start;
 		if (p && entry->object.uvm_obj == NULL)
-			p->p_vmspace->vm_dused -= btoc(len);
+			p->p_vmspace->vm_dused -= atop(len);
 
 		/*
 		 * unwire before removing addresses from the pmap; otherwise

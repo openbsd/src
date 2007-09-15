@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.29 2007/09/01 15:14:44 martin Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.30 2007/09/15 10:10:37 martin Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -144,11 +144,11 @@ uvm_grow(p, sp)
 	 * Really need to check vs limit and increment stack size if ok.
 	 */
 #ifdef MACHINE_STACK_GROWS_UP
-	si = btoc(sp - USRSTACK) - vm->vm_ssize;
+	si = atop(sp - USRSTACK) - vm->vm_ssize;
 #else
-	si = btoc(USRSTACK - sp) - vm->vm_ssize;
+	si = atop(USRSTACK - sp) - vm->vm_ssize;
 #endif
-	if (vm->vm_ssize + si <= btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
+	if (vm->vm_ssize + si <= atop(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		vm->vm_ssize += si;
 }
 

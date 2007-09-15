@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.24 2007/07/25 23:11:52 art Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.25 2007/09/15 10:10:37 martin Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -1554,7 +1554,7 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 			/* meteor_mem structure for SYNC Capture */
 			if (geo->frames > 1) temp += PAGE_SIZE;
 
-			temp = btoc(temp);
+			temp = atop(round_page(temp));
 			if ((int) temp > bktr->alloc_pages
 			    && bktr->video.addr == 0) {
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_misc.c,v 1.17 2004/06/25 16:28:51 deraadt Exp $ */
+/* $OpenBSD: osf1_misc.c,v 1.18 2007/09/15 10:10:37 martin Exp $ */
 /* $NetBSD: osf1_misc.c,v 1.55 2000/06/28 15:39:33 mrg Exp $ */
 
 /*
@@ -132,8 +132,8 @@ osf1_sys_set_program_attributes(p, v, retval)
 	struct osf1_sys_set_program_attributes_args *uap = v;
 	segsz_t tsize, dsize;
 
-	tsize = btoc(SCARG(uap, tsize));
-	dsize = btoc(SCARG(uap, dsize));
+	tsize = atop(SCARG(uap, tsize));
+	dsize = atop(SCARG(uap, dsize));
 
 	if (dsize > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return (ENOMEM);

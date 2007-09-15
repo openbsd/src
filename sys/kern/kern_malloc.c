@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.72 2007/09/07 10:22:15 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.73 2007/09/15 10:10:37 martin Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ malloc(unsigned long size, int type, int flags)
 			allocsize = round_page(size);
 		else
 			allocsize = 1 << indx;
-		npg = btoc(allocsize);
+		npg = atop(round_page(allocsize));
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
 		    (vsize_t)ptoa(npg), 
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |

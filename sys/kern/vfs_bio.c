@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.99 2007/08/07 04:32:45 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.100 2007/09/15 10:10:37 martin Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -180,14 +180,14 @@ bremfree(struct buf *bp)
 		if (dp == &bufqueues[BQUEUES])
 			panic("bremfree: lost tail");
 	}
-	numfreepages -= btoc(bp->b_bufsize);
+	numfreepages -= atop(bp->b_bufsize);
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		int qs = bp->b_bufsize;
 		queue = size2cqueue(&qs);
-		numcleanpages -= btoc(bp->b_bufsize);
-		bqpages[queue] -= btoc(bp->b_bufsize);
+		numcleanpages -= atop(bp->b_bufsize);
+		bqpages[queue] -= atop(bp->b_bufsize);
 	} else
-		numdirtypages -= btoc(bp->b_bufsize);
+		numdirtypages -= atop(bp->b_bufsize);
 	TAILQ_REMOVE(dp, bp, b_freelist);
 }
 
@@ -198,7 +198,7 @@ buf_init(struct buf *bp, int size)
 
 	splassert(IPL_BIO);
 
-	npages = btoc(size);
+	npages = atop(size);
 	bzero((char *)bp, sizeof *bp);
 	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_freelist.tqe_next = NOLIST;
@@ -274,7 +274,7 @@ buf_get(size_t size)
 	size = round_page(size);
 	qs = size;
 	queue = size2cqueue(&qs);
-	npages = btoc(qs);
+	npages = atop(qs);
 
 	if (numbufpages + npages > bufpages)
 		return (NULL);
@@ -323,7 +323,7 @@ buf_put(struct buf *bp)
 
 	if (bp->b_data != NULL) {
 		bremhash(bp);
-		numbufpages -= btoc(bp->b_bufsize);
+		numbufpages -= atop(bp->b_bufsize);
 		uvm_km_free(buf_map, (vaddr_t)bp->b_data, bp->b_bufsize);
 	}
 
@@ -365,8 +365,8 @@ bufinit(void)
 	 */
 	hicleanpages = bufpages / 2;
 	locleanpages = hicleanpages / 2;
-	if (locleanpages < btoc(2 * MAXBSIZE))
-		locleanpages = btoc(2 * MAXBSIZE);
+	if (locleanpages < atop(2 * MAXBSIZE))
+		locleanpages = atop(2 * MAXBSIZE);
 	if (locleanpages > bufpages / 4)
 		locleanpages = bufpages / 4;
 
@@ -782,8 +782,8 @@ brelse(struct buf *bp)
 
 		qs = bp->b_bufsize;
 		queue = size2cqueue(&qs);
-		numcleanpages += btoc(bp->b_bufsize);
-		bqpages[queue] += btoc(bp->b_bufsize);
+		numcleanpages += atop(bp->b_bufsize);
+		bqpages[queue] += atop(bp->b_bufsize);
 		if (maxcleanpages < numcleanpages)
 			maxcleanpages = numcleanpages;
 		binsheadfree(bp, &bufqueues[queue]);
@@ -793,18 +793,18 @@ brelse(struct buf *bp)
 		 * queue, so that it'll stick around for as long as possible.
 		 */
 		int queue, qs;
-		numfreepages += btoc(bp->b_bufsize);
+		numfreepages += atop(bp->b_bufsize);
 		qs = bp->b_bufsize;
 		queue = size2cqueue(&qs);
 
 		if (!ISSET(bp->b_flags, B_DELWRI)) {
-			numcleanpages += btoc(bp->b_bufsize);
-			bqpages[queue] += btoc(bp->b_bufsize);
+			numcleanpages += atop(bp->b_bufsize);
+			bqpages[queue] += atop(bp->b_bufsize);
 			if (maxcleanpages < numcleanpages)
 				maxcleanpages = numcleanpages;
 			bufq = &bufqueues[queue];
 		} else {
-			numdirtypages += btoc(bp->b_bufsize);
+			numdirtypages += atop(bp->b_bufsize);
 			bufq = &bufqueues[BQ_DIRTY];
 		}
 		if (ISSET(bp->b_flags, B_AGE)) {
@@ -1110,8 +1110,8 @@ buf_daemon(struct proc *p)
 			    buf_countdeps(bp, 0, 0)) {
 				SET(bp->b_flags, B_DEFERRED);
 				s = splbio();
-				numfreepages += btoc(bp->b_bufsize);
-				numdirtypages += btoc(bp->b_bufsize);
+				numfreepages += atop(bp->b_bufsize);
+				numdirtypages += atop(bp->b_bufsize);
 				binstailfree(bp, &bufqueues[BQ_DIRTY]);
 				CLR(bp->b_flags, B_BUSY);
 				continue;
@@ -1237,7 +1237,7 @@ vfs_bufstats(void)
 		TAILQ_FOREACH(bp, dp, b_freelist) {
 			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
-			pages += btoc(bp->b_bufsize);
+			pages += atop(bp->b_bufsize);
 		}
 		totals[i] = count;
 		ptotals[i] = pages;
