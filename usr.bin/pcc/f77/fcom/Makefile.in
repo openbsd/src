@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2007/09/15 18:12:35 otto Exp $
+#	$OpenBSD: Makefile.in,v 1.2 2007/09/15 22:04:39 ray Exp $
 #
 # Makefile for the Fortran 77 command
 #  Running on the @targmach@

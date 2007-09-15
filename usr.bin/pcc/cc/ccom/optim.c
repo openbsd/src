@@ -1,4 +1,4 @@
-/*	$Id: optim.c,v 1.1.1.1 2007/09/15 18:12:34 otto Exp $	*/
+/*	$OpenBSD: optim.c,v 1.2 2007/09/15 22:04:38 ray Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
