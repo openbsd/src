@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.48 2007/09/13 21:26:41 hshoexer Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.49 2007/09/15 11:00:51 hshoexer Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -578,7 +578,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 	*sid = i;
 
 	while (cri) {
-		swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
+		*swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
 		    M_NOWAIT | M_ZERO);
 		if (*swd == NULL) {
 			swcr_freesession(i);
