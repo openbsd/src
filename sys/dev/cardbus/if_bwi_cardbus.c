@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.3 2007/09/13 09:09:26 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.4 2007/09/15 07:20:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -101,6 +101,9 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct cardbus_attach_args *ca = aux;
 	struct bwi_softc *sc = &csc->csc_bwi;
 	cardbus_devfunc_t ct = ca->ca_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+	cardbusreg_t reg;
 	bus_addr_t base;
 	int error;
 
@@ -132,6 +135,13 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* we need to access Cardbus config space from the driver */
 	sc->sc_conf_read = bwi_cardbus_conf_read;
 	sc->sc_conf_write = bwi_cardbus_conf_write;
+
+	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_SUBSYS_ID_REG);
+
+	sc->sc_pci_revid = PCI_REVISION(ca->ca_class);
+	sc->sc_pci_did = PCI_PRODUCT(ca->ca_id);
+	sc->sc_pci_subvid = PCI_VENDOR(reg);
+	sc->sc_pci_subdid = PCI_PRODUCT(reg);
 
 	error = bwi_attach(sc);
 	if (error != 0)

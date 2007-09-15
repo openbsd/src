@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.3 2007/09/13 12:31:47 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.4 2007/09/15 07:20:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -104,6 +104,7 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct bwi_softc *sc = &psc->psc_bwi;
 	const char *intrstr = NULL;
 	pci_intr_handle_t ih;
+	pcireg_t reg;
 	int error;
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -141,6 +142,13 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* we need to access PCI config space from the driver */
 	sc->sc_conf_write = bwi_pci_conf_write;
 	sc->sc_conf_read = bwi_pci_conf_read;
+
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	sc->sc_pci_revid = PCI_REVISION(pa->pa_class);
+	sc->sc_pci_did = PCI_PRODUCT(pa->pa_id);
+	sc->sc_pci_subvid = PCI_VENDOR(reg);
+	sc->sc_pci_subdid = PCI_PRODUCT(reg);
 
 	bwi_attach(sc);
 }

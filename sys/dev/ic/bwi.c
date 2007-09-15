@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.15 2007/09/15 05:47:53 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.16 2007/09/15 07:20:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -90,9 +90,6 @@ int bwi_debug = 1;
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#define pci_get_device(dev)			(0)
-#define pci_get_revid(dev)			(0)
 
 /*
  * Contention window (slots).
@@ -2392,7 +2389,7 @@ bwi_mac_attach(struct bwi_softc *sc, int id, uint8_t rev)
 	 * More than one MAC is only supported by BCM4309
 	 */
 	if (sc->sc_nmac != 0 &&
-	    pci_get_device(sc->sc_dev) != PCI_PRODUCT_BROADCOM_BCM4309) {
+	    sc->sc_pci_did != PCI_PRODUCT_BROADCOM_BCM4309) {
 		DPRINTF(1, "%s: ignore second MAC\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
@@ -5935,8 +5932,8 @@ bwi_bbp_attach(struct bwi_softc *sc)
 
 		sc->sc_cap = CSR_READ_4(sc, BWI_CAPABILITY);
 	} else {
-		uint16_t did = pci_get_device(sc->sc_dev);
-		uint8_t revid = pci_get_revid(sc->sc_dev);
+		uint16_t did = sc->sc_pci_did;
+		uint8_t revid = sc->sc_pci_revid;
 
 		for (i = 0; i < N(bwi_bbpid_map); ++i) {
 			if (did >= bwi_bbpid_map[i].did_min &&
