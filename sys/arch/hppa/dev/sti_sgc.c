@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.36 2007/08/23 19:13:28 kettenis Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.37 2007/09/15 14:28:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -117,7 +117,7 @@ sti_sgc_probe(parent, match, aux)
 	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO)
 		return (0);
 
-	/* these need futher checking for the graphics id */
+	/* these need further checking for the graphics id */
 	if (ca->ca_type.iodc_sv_model != HPPA_FIO_GSGC &&
 	    ca->ca_type.iodc_sv_model != HPPA_FIO_SGC)
 		return 0;

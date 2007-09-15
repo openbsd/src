@@ -1,4 +1,4 @@
-/*	$OpenBSD: qv.c,v 1.12 2006/01/17 20:26:16 miod Exp $	*/
+/*	$OpenBSD: qv.c,v 1.13 2007/09/15 14:28:17 krw Exp $	*/
 /*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@
  *      As a further complication this driver is required to function as the
  *      virtual system console. This code runs before and during auto-
  *      configuration and therefore is require to have a second path for setup.
- *      It is futher constrained to have a character output routine that
+ *      It is further constrained to have a character output routine that
  *      is not dependant on the interrupt system.
  *
  */

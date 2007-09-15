@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.101 2007/05/27 15:46:02 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.102 2007/09/15 14:28:17 krw Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -369,7 +369,7 @@ PTED_VALID(struct pte_desc *pted)
  * it is likely that it will be mapped at some point, but would it also
  * make sense to use a tree/table like is use for pmap to store device
  * mappings?
- * Futher notes: It seems that the PV table is only used for pmap_protect
+ * Further notes: It seems that the PV table is only used for pmap_protect
  * and other paging related operations. Given this, it is not necessary
  * to store any pmap_kernel() entries in PV tables and does not make
  * sense to store device mappings in PV either.
