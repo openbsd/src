@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.24 2007/09/15 22:47:14 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.25 2007/09/15 23:36:30 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -1731,7 +1731,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	/*
 	 * Get FW file offset
 	 */
-	snprintf(filename, sizeof(filename), "bcm43xx_microcode%d.fw",
+	snprintf(filename, sizeof(filename), "bwi_microcode%d.fw",
 	    mac->mac_rev >= 5 ? 5 : mac->mac_rev);
 	if (bwi_get_firmware(filename, ucode, size_ucode, &size_fw, &off_fw)
 	    != 0) {
@@ -1743,7 +1743,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	/*
 	 * Get PCM file offset
 	 */
-	snprintf(filename, sizeof(filename), "bcm43xx_pcm%d.fw",
+	snprintf(filename, sizeof(filename), "bwi_pcm%d.fw",
 	    mac->mac_rev < 5 ? 4 : 5);
 	if (bwi_get_firmware(filename, ucode, size_ucode, &size_pcm, &off_pcm)
 	    != 0) {
@@ -1951,7 +1951,7 @@ bwi_mac_fw_init(struct bwi_mac *mac)
 		    sc->sc_dev.dv_xname, mac->mac_rev);
 			return (ENODEV);
 	}
-	snprintf(fwname, sizeof(fwname), "bcm43xx_initval%02d.fw", idx);
+	snprintf(fwname, sizeof(fwname), "bwi_initval%02d.fw", idx);
 
 	DPRINTF(1, "%s: IV image is %s\n", sc->sc_dev.dv_xname, fwname);
 
@@ -1982,7 +1982,7 @@ bwi_mac_fw_init(struct bwi_mac *mac)
 		    sc->sc_dev.dv_xname, mac->mac_rev);
 		return (ENODEV);
 	}
-	snprintf(fwname, sizeof(fwname), "bcm43xx_initval%02d.fw", idx);
+	snprintf(fwname, sizeof(fwname), "bwi_initval%02d.fw", idx);
 
 	DPRINTF(1, "%s: extended IV image is %s\n",
 	    sc->sc_dev.dv_xname, fwname);
