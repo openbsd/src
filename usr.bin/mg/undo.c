@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.43 2006/11/19 16:51:19 deraadt Exp $ */
+/* $OpenBSD: undo.c,v 1.44 2007/09/16 20:34:18 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * Copyright (c) 2005, 2006 Kjell Wooding <kjell@openbsd.org>
@@ -161,7 +161,7 @@ drop_oldest_undo_record(void)
 	return (0);
 }
 
-static __inline__ int
+static int
 lastrectype(void)
 {
 	struct undo_rec *rec;
