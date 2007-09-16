@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.63 2007/09/16 10:39:07 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.64 2007/09/16 10:57:02 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -71,10 +71,6 @@
  *	Job_Empty		Return true if the job table is completely
  *				empty.
  *
- *	Job_ParseShell		Given the line following a .SHELL target, parse
- *				the line as a shell specification. Returns
- *				false if the spec was incorrect.
- *
  *	Job_Finish		Perform any final processing which needs doing.
  *				This includes the execution of any commands
  *				which have been/were attached to the .END
@@ -85,11 +81,6 @@
  *				handle output or do anything for the jobs,
  *				just kills them. It should only be called in
  *				an emergency, as it were.
- *
- *	Job_CheckCommands	Verify that the commands for a target are
- *				ok. Provide them if necessary and possible.
- *
- *	Job_Touch		Update a target without really updating it.
  *
  *	Job_Wait		Wait for all currently-running jobs to finish.
  */
@@ -353,9 +344,7 @@ static Shell	shells[] = {
 };
 static Shell	*commandShell = &shells[DEFSHELL];/* this is the shell to
 						   * which we pass all
-						   * commands in the Makefile.
-						   * It is set by the
-						   * Job_ParseShell function */
+						   * commands in the Makefile*/
 static char	*shellPath = NULL,		  /* full pathname of
 						   * executable image */
 		*shellName = NULL,		  /* last component of shell */
@@ -2251,209 +2240,6 @@ Job_Empty(void)
     } else {
 	return false;
     }
-}
-
-/*-
- *-----------------------------------------------------------------------
- * JobMatchShell --
- *	Find a matching shell in 'shells' given its final component.
- *
- * Results:
- *	A pointer to the Shell structure.
- *-----------------------------------------------------------------------
- */
-static Shell *
-JobMatchShell(char *name)     /* Final component of shell path */
-{
-    Shell	  *sh;	      /* Pointer into shells table */
-    Shell	  *match;     /* Longest-matching shell */
-    char	  *cp1,
-		  *cp2;
-    char	  *eoname;
-
-    eoname = name + strlen(name);
-
-    match = NULL;
-
-    for (sh = shells; sh->name != NULL; sh++) {
-	for (cp1 = eoname - strlen(sh->name), cp2 = sh->name;
-	     *cp1 != '\0' && *cp1 == *cp2;
-	     cp1++, cp2++) {
-		 continue;
-	}
-	if (*cp1 != *cp2) {
-	    continue;
-	} else if (match == NULL || strlen(match->name) < strlen(sh->name)) {
-	   match = sh;
-	}
-    }
-    return match == NULL ? sh : match;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Job_ParseShell --
- *	Parse a shell specification and set up commandShell, shellPath
- *	and shellName appropriately.
- *
- * Results:
- *	false if the specification was incorrect.
- *
- * Side Effects:
- *	commandShell points to a Shell structure (either predefined or
- *	created from the shell spec), shellPath is the full path of the
- *	shell described by commandShell, while shellName is just the
- *	final component of shellPath.
- *
- * Notes:
- *	A shell specification consists of a .SHELL target, with dependency
- *	operator, followed by a series of blank-separated words. Double
- *	quotes can be used to use blanks in words. A backslash escapes
- *	anything (most notably a double-quote and a space) and
- *	provides the functionality it does in C. Each word consists of
- *	keyword and value separated by an equal sign. There should be no
- *	unnecessary spaces in the word. The keywords are as follows:
- *	    name	    Name of shell.
- *	    path	    Location of shell. Overrides "name" if given
- *	    quiet	    Command to turn off echoing.
- *	    echo	    Command to turn echoing on
- *	    filter	    Result of turning off echoing that shouldn't be
- *			    printed.
- *	    echoFlag	    Flag to turn echoing on at the start
- *	    errFlag	    Flag to turn error checking on at the start
- *	    hasErrCtl	    True if shell has error checking control
- *	    check	    Command to turn on error checking if hasErrCtl
- *			    is true or template of command to echo a command
- *			    for which error checking is off if hasErrCtl is
- *			    false.
- *	    ignore	    Command to turn off error checking if hasErrCtl
- *			    is true or template of command to execute a
- *			    command so as to ignore any errors it returns if
- *			    hasErrCtl is false.
- *-----------------------------------------------------------------------
- */
-bool
-Job_ParseShell(const char *line)	/* The shell spec */
-{
-    char	  **words;
-    int 	  wordCount;
-    char	  **argv;
-    int 	  argc;
-    char	  *path;
-    Shell	  newShell;
-    bool	  fullSpec = false;
-
-    while (isspace(*line)) {
-	line++;
-    }
-
-    efree(shellArgv);
-
-    words = brk_string(line, &wordCount, &shellArgv);
-
-    memset(&newShell, 0, sizeof(newShell));
-
-    /*
-     * Parse the specification by keyword
-     */
-    for (path = NULL, argc = wordCount - 1, argv = words;
-	 argc != 0;
-	 argc--, argv++) {
-	     if (strncmp(*argv, "path=", 5) == 0) {
-		 path = &argv[0][5];
-	     } else if (strncmp(*argv, "name=", 5) == 0) {
-		 newShell.name = &argv[0][5];
-	     } else {
-		 if (strncmp(*argv, "quiet=", 6) == 0) {
-		     newShell.echoOff = &argv[0][6];
-		 } else if (strncmp(*argv, "echo=", 5) == 0) {
-		     newShell.echoOn = &argv[0][5];
-		 } else if (strncmp(*argv, "filter=", 7) == 0) {
-		     newShell.noPrint = &argv[0][7];
-		     newShell.noPLen = strlen(newShell.noPrint);
-		 } else if (strncmp(*argv, "echoFlag=", 9) == 0) {
-		     newShell.echo = &argv[0][9];
-		 } else if (strncmp(*argv, "errFlag=", 8) == 0) {
-		     newShell.exit = &argv[0][8];
-		 } else if (strncmp(*argv, "hasErrCtl=", 10) == 0) {
-		     char c = argv[0][10];
-		     newShell.hasErrCtl = !(c != 'Y' && c != 'y' &&
-					   c != 'T' && c != 't');
-		 } else if (strncmp(*argv, "check=", 6) == 0) {
-		     newShell.errCheck = &argv[0][6];
-		 } else if (strncmp(*argv, "ignore=", 7) == 0) {
-		     newShell.ignErr = &argv[0][7];
-		 } else {
-		     Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
-				  *argv);
-		     free(words);
-		     return false;
-		 }
-		 fullSpec = true;
-	     }
-    }
-
-    if (path == NULL) {
-	/*
-	 * If no path was given, the user wants one of the pre-defined shells,
-	 * yes? So we find the one s/he wants with the help of JobMatchShell
-	 * and set things up the right way. shellPath will be set up by
-	 * Job_Init.
-	 */
-	if (newShell.name == NULL) {
-	    Parse_Error(PARSE_FATAL, "Neither path nor name specified");
-	    return false;
-	} else {
-	    commandShell = JobMatchShell(newShell.name);
-	    shellName = newShell.name;
-	}
-    } else {
-	/*
-	 * The user provided a path. If s/he gave nothing else (fullSpec is
-	 * false), try and find a matching shell in the ones we know of.
-	 * Else we just take the specification at its word and copy it
-	 * to a new location. In either case, we need to record the
-	 * path the user gave for the shell.
-	 */
-	shellPath = path;
-	path = strrchr(path, '/');
-	if (path == NULL) {
-	    path = shellPath;
-	} else {
-	    path += 1;
-	}
-	if (newShell.name != NULL) {
-	    shellName = newShell.name;
-	} else {
-	    shellName = path;
-	}
-	if (!fullSpec) {
-	    commandShell = JobMatchShell(shellName);
-	} else {
-	    commandShell = emalloc(sizeof(Shell));
-	    *commandShell = newShell;
-	}
-    }
-
-    if (commandShell->echoOn && commandShell->echoOff) {
-	commandShell->hasEchoCtl = true;
-    }
-
-    if (!commandShell->hasErrCtl) {
-	if (commandShell->errCheck == NULL) {
-	    commandShell->errCheck = "";
-	}
-	if (commandShell->ignErr == NULL) {
-	    commandShell->ignErr = "%s\n";
-	}
-    }
-
-    /*
-     * Do not free up the words themselves, since they might be in use by the
-     * shell specification...
-     */
-    free(words);
-    return true;
 }
 
 /*-

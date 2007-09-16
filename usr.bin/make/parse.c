@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.81 2007/09/16 10:14:26 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.82 2007/09/16 10:57:02 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -136,7 +136,6 @@ typedef enum {
     ExPath,	    /* .PATH */
     Phony,	    /* .PHONY */
     Precious,	    /* .PRECIOUS */
-    ExShell,	    /* .SHELL */
     Silent,	    /* .SILENT */
     SingleShell,    /* .SINGLESHELL */
     Suffixes,	    /* .SUFFIXES */
@@ -194,7 +193,6 @@ static struct {
 { ".PHONY",	  Phony,	OP_PHONY },
 { ".PRECIOUS",	  Precious,	OP_PRECIOUS },
 { ".RECURSIVE",   Attribute,	OP_MAKE },
-{ ".SHELL",	  ExShell,	0 },
 { ".SILENT",	  Silent,	OP_SILENT },
 { ".SINGLESHELL", SingleShell,	0 },
 { ".SUFFIXES",	  Suffixes,	0 },
@@ -940,12 +938,6 @@ ParseDoDependency(char *line)	/* the line to parse */
 	 * get sources won't get anything
 	 */
 	Main_ParseArgLine(line);
-	*line = '\0';
-    } else if (specType == ExShell) {
-	if (!Job_ParseShell(line)) {
-	    Parse_Error(PARSE_FATAL, "improper shell specification");
-	    return;
-	}
 	*line = '\0';
     } else if (specType == NotParallel || specType == SingleShell) {
 	*line = '\0';
