@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.66 2007/09/16 12:09:36 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.67 2007/09/16 12:25:12 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -575,20 +575,20 @@ ArchMTimeMember(
 	/* If not found, get it now.  */
 	if (ar == NULL) {
 		if (!hash) {
-		    /* Quick path:  no need to hash the whole archive, just use
-		     * ArchFindMember to get the member's header and close the
-		     * stream again.  */
-		    struct ar_hdr arHeader;
+			/* Quick path:  no need to hash the whole archive, just
+			 * use ArchFindMember to get the member's header and
+			 * close the stream again.  */
+			struct ar_hdr arHeader;
 
-		    arch = ArchFindMember(archive, member, &arHeader, "r");
+			arch = ArchFindMember(archive, member, &arHeader, "r");
 
-		    if (arch != NULL) {
-			    fclose(arch);
-			    ts_set_from_time_t( 
-			    	(time_t)strtol(arHeader.ar_date, NULL, 10), 
-				result);
-		    }
-		    return result;
+			if (arch != NULL) {
+				fclose(arch);
+				ts_set_from_time_t( 
+				    (time_t)strtol(arHeader.ar_date, NULL, 10), 
+				    result);
+			}
+			return result;
 		}
 		ar = read_archive(archive, end);
 		if (ar != NULL)
@@ -804,24 +804,24 @@ ArchFindMember(
 		    sizeof(arHeaderPtr->ar_size));
 
 #ifdef SVR4ARCHIVES
-		    /* svr4 names are slash terminated. Also svr4 extended AR
-		     * format.
-		     */
-		    if (memberName[0] == '/') {
-			    /* svr4 magic mode.  */
-			    memberName = ArchSVR4Entry(&list, 
-			    	arHeaderPtr->ar_name, size, arch);
-			    if (memberName == NULL)	/* Invalid data */
-				    break;
-			    else if (memberName == svr4list)
-			    	/* List of files entry */
-				    continue;
-			    /* Got the entry.  */
-			    if (strcmp(memberName, member) == 0) {
-				    efree(list.fnametab);
-				    return arch;
-			    }
-		    }
+		/* svr4 names are slash terminated. Also svr4 extended AR
+		 * format.
+		 */
+		if (memberName[0] == '/') {
+			/* svr4 magic mode.  */
+			memberName = ArchSVR4Entry(&list, 
+			    arHeaderPtr->ar_name, size, arch);
+			if (memberName == NULL)	/* Invalid data */
+				break;
+			else if (memberName == svr4list)
+			    /* List of files entry */
+				continue;
+			/* Got the entry.  */
+			if (strcmp(memberName, member) == 0) {
+				efree(list.fnametab);
+				return arch;
+			}
+		}
 #endif
 
 #ifdef AR_EFMT1
@@ -869,8 +869,8 @@ ArchFindMember(
 static void
 ArchTouch(const char *archive, const char *member)
 {
-    FILE *arch;
-    struct ar_hdr arHeader;
+	FILE *arch;
+	struct ar_hdr arHeader;
 
 	arch = ArchFindMember(archive, member, &arHeader, "r+");
 	if (arch != NULL) {
