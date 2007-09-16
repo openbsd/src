@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.64 2007/09/16 11:27:05 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.65 2007/09/16 11:29:34 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -198,24 +198,11 @@ mtime_of_member(struct arch_member *m)
 }
 
 #ifdef CLEANUP
-/*-
- *-----------------------------------------------------------------------
- * ArchFree --
- *	Free memory used by an archive
- *-----------------------------------------------------------------------
- */
 static void
 ArchFree(Arch *a)
 {
-	struct arch_member *mem;
-	unsigned int i;
-
 	/* Free memory from hash entries */
-	for (mem = ohash_first(&a->members, &i); mem != NULL;
-		mem = ohash_next(&a->members, &i))
-		free(mem);
-
-	ohash_delete(&a->members);
+	free_hash(&a->members);
 	free(a);
 }
 #endif
