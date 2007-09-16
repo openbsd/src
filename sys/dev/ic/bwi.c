@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.26 2007/09/16 02:20:35 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.27 2007/09/16 04:38:16 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -320,7 +320,7 @@ uint8_t		 bwi_rate2plcp(uint8_t); /* XXX belongs to 802.11 */
 void		 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
 void		 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
 		     uint8_t);
-void		 bwi_plcp_header(void *, int, uint8_t) __unused;
+void		 bwi_plcp_header(void *, int, uint8_t);
 int		 bwi_encap(struct bwi_softc *, int, struct mbuf *,
 		     struct ieee80211_node *);
 void		 bwi_start_tx32(struct bwi_softc *, uint32_t, int);
@@ -344,6 +344,11 @@ void		 bwi_regwin_disable(struct bwi_softc *, struct bwi_regwin *,
 void		 bwi_set_bssid(struct bwi_softc *, const uint8_t *);
 void		 bwi_updateslot(struct ieee80211com *);
 void		 bwi_calibrate(void *);
+u_int8_t	 bwi_ack_rate(struct ieee80211_node *, u_int8_t);
+u_int16_t	 bwi_txtime(struct ieee80211com *, struct ieee80211_node *,
+		     u_int, u_int8_t, uint32_t);
+enum bwi_modtype	 bwi_rate2modtype(u_int8_t);
+
 
 static const uint8_t bwi_sup_macrev[] = { 2, 4, 5, 6, 7, 9, 10 };
 
@@ -492,6 +497,14 @@ static const struct {
 #undef CLKSRC
 
 static const uint8_t bwi_zero_addr[IEEE80211_ADDR_LEN];
+
+
+enum bwi_modtype {
+	IEEE80211_MODTYPE_DS	= 0,	/* DS/CCK modulation */
+	IEEE80211_MODTYPE_PBCC	= 1,	/* PBCC modulation */
+	IEEE80211_MODTYPE_OFDM	= 2	/* OFDM modulation */
+};
+#define IEEE80211_MODTYPE_CCK   IEEE80211_MODTYPE_DS
 
 /* CODE */
 
@@ -2169,16 +2182,15 @@ void
 bwi_mac_set_ackrates(struct bwi_mac *mac, const struct ieee80211_rateset *rs)
 {
 	DPRINTF(1, "%s\n", __func__);
-#if 0
 
 	int i;
 
 	/* XXX not standard conforming */
 	for (i = 0; i < rs->rs_nrates; ++i) {
-		enum ieee80211_modtype modtype;
+		enum bwi_modtype modtype;
 		uint16_t ofs;
 
-		modtype = ieee80211_rate2modtype(rs->rs_rates[i]);
+		modtype = bwi_rate2modtype(rs->rs_rates[i]);
 		switch (modtype) {
 		case IEEE80211_MODTYPE_DS:
 			ofs = 0x4c0;
@@ -2194,7 +2206,6 @@ bwi_mac_set_ackrates(struct bwi_mac *mac, const struct ieee80211_rateset *rs)
 		MOBJ_WRITE_2(mac, BWI_COMM_MOBJ, ofs + 0x20,
 			     MOBJ_READ_2(mac, BWI_COMM_MOBJ, ofs));
 	}
-#endif
 }
 
 int
@@ -2363,11 +2374,14 @@ bwi_mac_get_property(struct bwi_mac *mac)
 	return (0);
 }
 
+#define IEEE80211_DUR_SLOT	20	/* DS/CCK slottime, ERP long slottime */
+#define IEEE80211_DUR_SHSLOT	9	/* ERP short slottime */
+
 void
 bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 {
 	DPRINTF(1, "%s\n", __func__);
-#if 0
+
 	uint16_t slot_time;
 
 	if (mac->mac_phy.phy_mode == IEEE80211_MODE_11B)
@@ -2381,7 +2395,6 @@ bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 	CSR_WRITE_2(mac->mac_sc, BWI_MAC_SLOTTIME,
 		    slot_time + BWI_MAC_SLOTTIME_ADJUST);
 	MOBJ_WRITE_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_SLOTTIME, slot_time);
-#endif
 }
 
 int
@@ -7323,7 +7336,7 @@ int
 bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 {
 	DPRINTF(1, "%s\n", __func__);
-#if 0
+
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
 	struct bwi_rxbuf *rxbuf = &rbd->rbd_buf[buf_idx];
 	struct bwi_rxbuf_hdr *hdr;
@@ -7334,7 +7347,10 @@ bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 
 	KKASSERT(buf_idx < BWI_RX_NDESC);
 
-	m = m_getcl(init ? MB_WAIT : MB_DONTWAIT, MT_DATA, M_PKTHDR);
+	MGETHDR(m, init ? M_WAITOK : M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (ENOBUFS);
+	MCLGET(m, init ? M_WAITOK : M_DONTWAIT);
 	if (m == NULL) {
 		error = ENOBUFS;
 
@@ -7394,8 +7410,6 @@ back:
 	sc->sc_setup_rxdesc(sc, buf_idx, rxbuf->rb_paddr,
 	    rxbuf->rb_mbuf->m_len - sizeof(*hdr));
 	return error;
-#endif
-	return (0);
 }
 
 void
@@ -7451,7 +7465,7 @@ void
 bwi_rxeof(struct bwi_softc *sc, int end_idx)
 {
 	DPRINTF(1, "%s\n", __func__);
-#if 0
+
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -7462,7 +7476,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 	while (idx != end_idx) {
 		struct bwi_rxbuf *rb = &rbd->rbd_buf[idx];
 		struct bwi_rxbuf_hdr *hdr;
-		struct ieee80211_frame_min *wh;
+		struct ieee80211_frame *wh;
 		struct ieee80211_node *ni;
 		struct mbuf *m;
 		uint8_t plcp_signal;
@@ -7505,10 +7519,10 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 
 		m_adj(m, -IEEE80211_CRC_LEN);
 
-		wh = mtod(m, struct ieee80211_frame_min *);
+		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);
 
-		ieee80211_input(ic, m, ni, hdr->rxh_rssi,
+		ieee80211_input(ifp, m, ni, hdr->rxh_rssi,
 		    letoh16(hdr->rxh_tsf));
 
 		ieee80211_release_node(ic, ni);
@@ -7519,7 +7533,6 @@ next:
 	rbd->rbd_idx = idx;
 	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
 	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
-#endif
 }
 
 void
@@ -7750,21 +7763,173 @@ void
 bwi_plcp_header(void *plcp, int pkt_len, uint8_t rate)
 {
 	printf("%s\n", __func__);
-#if 0
-	enum ieee80211_modtype modtype;
+
+	enum bwi_modtype modtype;
 
 	/*
 	 * Assume caller has zeroed 'plcp'
 	 */
 
-	modtype = ieee80211_rate2modtype(rate);
+	modtype = bwi_rate2modtype(rate);
 	if (modtype == IEEE80211_MODTYPE_OFDM)
 		bwi_ofdm_plcp_header(plcp, pkt_len, rate);
 	else if (modtype == IEEE80211_MODTYPE_DS)
 		bwi_ds_plcp_header(plcp, pkt_len, rate);
 	else
 		panic("unsupport modulation type %u\n", modtype);
-#endif
+}
+
+enum bwi_modtype
+bwi_rate2modtype(u_int8_t rate)
+{
+	rate &= IEEE80211_RATE_VAL;
+
+	if (rate == 44)
+		return IEEE80211_MODTYPE_PBCC;
+	else if (rate == 22 || rate < 12)
+		return IEEE80211_MODTYPE_DS;
+	else
+		return IEEE80211_MODTYPE_OFDM;
+}
+
+u_int8_t
+bwi_ack_rate(struct ieee80211_node *ni, u_int8_t rate)
+{
+	const struct ieee80211_rateset *rs = &ni->ni_rates;
+	u_int8_t ack_rate = 0;
+	enum bwi_modtype modtype;
+	int i;
+
+	rate &= IEEE80211_RATE_VAL;
+
+	modtype = bwi_rate2modtype(rate);
+
+	for (i = 0; i < rs->rs_nrates; ++i) {
+		u_int8_t rate1 = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+		
+		if (rate1 > rate) {
+			if (ack_rate != 0)
+				return ack_rate;
+			else
+				break;
+		}
+
+		if ((rs->rs_rates[i] & IEEE80211_RATE_BASIC) &&
+		    bwi_rate2modtype(rate1) == modtype)
+			ack_rate = rate1;
+	}
+
+	switch (rate) {
+	/* CCK */
+	case 2:
+	case 4:
+	case 11:
+	case 22:
+		ack_rate = rate;
+		break;
+	/* PBCC */
+	case 44:
+		ack_rate = 22;
+		break;
+
+	/* OFDM */
+	case 12:
+	case 18:
+		ack_rate = 12;
+		break;
+	case 24:
+	case 36:
+		ack_rate = 24;
+		break;
+	case 48:
+	case 72:
+	case 96:
+	case 108:
+		ack_rate = 48;
+		break;
+	default:
+		panic("unsupported rate %d\n", rate);
+	}
+	return ack_rate;
+}
+
+#define IEEE80211_OFDM_TXTIME(kbps, frmlen) \
+	(IEEE80211_OFDM_PREAMBLE_TIME + \
+	 IEEE80211_OFDM_SIGNAL_TIME + \
+	(IEEE80211_OFDM_NSYMS((kbps), (frmlen)) * IEEE80211_OFDM_SYM_TIME))
+
+#define IEEE80211_OFDM_SYM_TIME			4
+#define IEEE80211_OFDM_PREAMBLE_TIME		16
+#define IEEE80211_OFDM_SIGNAL_EXT_TIME		6
+#define IEEE80211_OFDM_SIGNAL_TIME		4
+
+#define IEEE80211_OFDM_PLCP_SERVICE_NBITS	16
+#define IEEE80211_OFDM_TAIL_NBITS		6	
+
+#define IEEE80211_OFDM_NBITS(frmlen) \
+	(IEEE80211_OFDM_PLCP_SERVICE_NBITS + \
+	 ((frmlen) * NBBY) + \
+	 IEEE80211_OFDM_TAIL_NBITS)
+
+#define IEEE80211_OFDM_NBITS_PER_SYM(kbps) \
+	(((kbps) * IEEE80211_OFDM_SYM_TIME) / 1000)
+
+#define IEEE80211_OFDM_NSYMS(kbps, frmlen) \
+	howmany(IEEE80211_OFDM_NBITS((frmlen)), \
+		IEEE80211_OFDM_NBITS_PER_SYM((kbps)))
+
+#define IEEE80211_CCK_TXTIME(kbps, frmlen) \
+	(((IEEE80211_CCK_NBITS((frmlen)) * 1000) + (kbps) - 1) / (kbps))
+
+#define IEEE80211_CCK_PREAMBLE_LEN		144
+#define IEEE80211_CCK_PLCP_HDR_TIME		48
+#define IEEE80211_CCK_SHPREAMBLE_LEN		72
+#define IEEE80211_CCK_SHPLCP_HDR_TIME		24
+
+#define IEEE80211_CCK_NBITS(frmlen)		((frmlen) * NBBY)
+
+u_int16_t
+bwi_txtime(struct ieee80211com *ic, struct ieee80211_node *ni, u_int len,
+    u_int8_t rs_rate, uint32_t flags)
+{
+	enum bwi_modtype modtype;
+	u_int16_t txtime;
+	int rate;
+
+	rs_rate &= IEEE80211_RATE_VAL;
+
+	rate = rs_rate * 500;	/* ieee80211 rate -> kbps */
+
+	modtype = bwi_rate2modtype(rs_rate);
+	if (modtype == IEEE80211_MODTYPE_OFDM) {
+		/*
+		 * IEEE Std 802.11a-1999, page 37, equation (29)
+		 * IEEE Std 802.11g-2003, page 44, equation (42)
+		 */
+		txtime = IEEE80211_OFDM_TXTIME(rate, len);
+		if (ic->ic_curmode == IEEE80211_MODE_11G)
+			txtime += IEEE80211_OFDM_SIGNAL_EXT_TIME;
+	} else {
+		/*
+		 * IEEE Std 802.11b-1999, page 28, subclause 18.3.4
+		 * IEEE Std 802.11g-2003, page 45, equation (43)
+		 */
+		if (modtype == IEEE80211_MODTYPE_PBCC)
+			++len;
+		txtime = IEEE80211_CCK_TXTIME(rate, len);
+
+		/*
+		 * Short preamble is not applicable for DS 1Mbits/s
+		 */
+		if (rs_rate != 2 && (flags & IEEE80211_F_SHPREAMBLE)) {
+			txtime += IEEE80211_CCK_SHPREAMBLE_LEN +
+				  IEEE80211_CCK_SHPLCP_HDR_TIME;
+		} else {
+			txtime += IEEE80211_CCK_PREAMBLE_LEN +
+				  IEEE80211_CCK_PLCP_HDR_TIME;
+		}
+	}
+	return txtime;
 }
 
 int
@@ -7772,7 +7937,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
     struct ieee80211_node *ni)
 {
 	printf("%s\n", __func__);
-#if 0
+
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct bwi_ring_data *rd = &sc->sc_tx_rdata[BWI_TX_DATA_RING];
 	struct bwi_txbuf_data *tbd = &sc->sc_tx_bdata[BWI_TX_DATA_RING];
@@ -7803,17 +7968,9 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	 */
 	bzero(tb->tb_rate_idx, sizeof(tb->tb_rate_idx));
 	if (ni != NULL) {
-		if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
-			int idx;
-
-			rate = IEEE80211_RS_RATE(&ni->ni_rates,
-					ic->ic_fixed_rate);
-
-			if (ic->ic_fixed_rate >= 1)
-				idx = ic->ic_fixed_rate - 1;
-			else
-				idx = 0;
-			rate_fb = IEEE80211_RS_RATE(&ni->ni_rates, idx);
+		if (ic->ic_fixed_rate != -1) {
+			rate = ic->ic_sup_rates[ic->ic_curmode].
+			    rs_rates[ic->ic_fixed_rate];
 		} else {
 			/* TODO: TX rate control */
 			rate = rate_fb = (1 * 2);
@@ -7823,8 +7980,10 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		rate = rate_fb = (1 * 2);
 	}
 
+	rate &= IEEE80211_RATE_VAL;
+
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1))
-		rate = rate_fb = ic->ic_mcast_rate;
+		rate = rate_fb = (1 * 2);
 
 	if (rate == 0 || rate_fb == 0) {
 		DPRINTF(1, "%s: invalid rate %u or fallback rate %u",
@@ -7837,7 +7996,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	/*
 	 * Setup the embedded TX header
 	 */
-	M_PREPEND(m, sizeof(*hdr), MB_DONTWAIT);
+	M_PREPEND(m, sizeof(*hdr), M_DONTWAIT);
 	if (m == NULL) {
 		DPRINTF(1, "%s: prepend TX header failed\n",
 		    sc->sc_dev.dv_xname);
@@ -7854,8 +8013,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		uint16_t dur;
 		uint8_t ack_rate;
 
-		ack_rate = ieee80211_ack_rate(ni, rate_fb);
-		dur = ieee80211_txtime(ni,
+		ack_rate = bwi_ack_rate(ni, rate_fb);
+		dur = bwi_txtime(ic, ni,
 		    sizeof(struct ieee80211_frame_ack) + IEEE80211_CRC_LEN,
 		    ack_rate, ic->ic_flags & ~IEEE80211_F_SHPREAMBLE);
 
@@ -7870,7 +8029,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 
 	phy_ctrl = __SHIFTIN(mac->mac_rf.rf_ant_mode,
 	    BWI_TXH_PHY_C_ANTMODE_MASK);
-	if (ieee80211_rate2modtype(rate) == IEEE80211_MODTYPE_OFDM)
+	if (bwi_rate2modtype(rate) == IEEE80211_MODTYPE_OFDM)
 		phy_ctrl |= BWI_TXH_PHY_C_OFDM;
 	else if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) && rate != (2 * 1))
 		phy_ctrl |= BWI_TXH_PHY_C_SHPREAMBLE;
@@ -7878,7 +8037,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	mac_ctrl = BWI_TXH_MAC_C_HWSEQ | BWI_TXH_MAC_C_FIRST_FRAG;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1))
 		mac_ctrl |= BWI_TXH_MAC_C_ACK;
-	if (ieee80211_rate2modtype(rate_fb) == IEEE80211_MODTYPE_OFDM)
+	if (bwi_rate2modtype(rate_fb) == IEEE80211_MODTYPE_OFDM)
 		mac_ctrl |= BWI_TXH_MAC_C_FB_OFDM;
 
 	hdr->txh_mac_ctrl = htole32(mac_ctrl);
@@ -7900,16 +8059,36 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	if (error) {	/* error == EFBIG */
 		struct mbuf *m_new;
 
-		m_new = m_defrag(m, MB_DONTWAIT);
+		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			DPRINTF(1, "%s: can't defrag TX buffer\n",
-			    sc->sc_dev.dv_xname);
+			m_freem(m);
 			error = ENOBUFS;
+			printf("%s: can't defrag TX buffer\n",
+			    sc->sc_dev.dv_xname);
 			goto back;
-		} else {
-			m = m_new;
 		}
 
+		M_DUP_PKTHDR(m_new, m);
+		if (m->m_pkthdr.len > MHLEN) {
+			MCLGET(m_new, M_DONTWAIT);
+			if (!(m_new->m_flags & M_EXT)) {
+				m_freem(m);
+				m_freem(m_new);
+				error = ENOBUFS;
+			}
+		}
+		
+		if (error) {
+			printf("%s: can't defrag TX buffer\n",
+			    sc->sc_dev.dv_xname);
+			goto back;
+		}
+
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(m_new, caddr_t));
+		m_freem(m);
+		m_new->m_len = m_new->m_pkthdr.len;
+		m = m_new;
+		
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 		    BUS_DMA_NOWAIT);
 		if (error) {
@@ -7951,8 +8130,6 @@ back:
 	if (error)
 		m_freem(m);
 	return (error);
-#endif
-	return (1);
 }
 
 void
