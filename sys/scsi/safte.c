@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.38 2007/09/07 16:15:49 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.39 2007/09/16 01:30:24 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -559,7 +559,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	if (slot >= sc->sc_nslots)
 		return (ENODEV);
 
-	op = malloc(sizeof(struct safte_slotop), M_TEMP, M_ZERO);
+	op = malloc(sizeof(*op), M_TEMP, M_ZERO);
 
 	op->opcode = SAFTE_WRITE_SLOTOP;
 	op->slot = slot;

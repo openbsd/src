@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.29 2007/09/07 16:15:49 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.30 2007/09/16 01:30:24 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ si_get(void)
 	struct scsi_ioctl			*si;
 	int					s;
 
-	si = malloc(sizeof(struct scsi_ioctl), M_TEMP, M_WAITOK | M_ZERO);
+	si = malloc(sizeof(*si), M_TEMP, M_WAITOK | M_ZERO);
 	s = splbio();
 	LIST_INSERT_HEAD(&si_head, si, si_list);
 	splx(s);

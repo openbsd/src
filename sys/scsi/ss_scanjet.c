@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.31 2007/06/01 20:59:04 moritz Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.32 2007/09/16 01:30:24 krw Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>

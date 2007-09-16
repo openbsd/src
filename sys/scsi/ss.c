@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.58 2006/12/21 02:05:46 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.59 2007/09/16 01:30:24 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>

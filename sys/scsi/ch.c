@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.33 2007/09/07 16:15:49 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.34 2007/09/16 01:30:24 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ ch_usergetelemstatus(sc, cesr)
 	 * we can allocate enough storage for all of them.  We assume
 	 * that the first one can fit into 1k.
 	 */
-	data = (caddr_t)malloc(1024, M_DEVBUF, M_WAITOK);
+	data = malloc(1024, M_DEVBUF, M_WAITOK);
 	error = ch_getelemstatus(sc, sc->sc_firsts[chet], 1, data, 1024,
 	    want_voltags);
 	if (error)
@@ -586,7 +586,7 @@ ch_usergetelemstatus(sc, cesr)
 	 * device.
 	 */
 	free(data, M_DEVBUF);
-	data = (caddr_t)malloc(size, M_DEVBUF, M_WAITOK);
+	data = malloc(size, M_DEVBUF, M_WAITOK);
 	error = ch_getelemstatus(sc, sc->sc_firsts[chet],
 	    sc->sc_counts[chet], data, size, want_voltags);
 	if (error)

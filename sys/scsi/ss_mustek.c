@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.14 2006/11/28 16:56:50 dlg Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.15 2007/09/16 01:30:24 krw Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>

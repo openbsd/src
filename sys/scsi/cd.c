@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.133 2007/09/07 16:15:48 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.134 2007/09/16 01:30:24 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -930,22 +930,20 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		int len = te->data_len;
 		int ntracks;
 
-		MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP,
-		    M_WAITOK);
-		bzero(toc, sizeof(*toc));
+		toc = malloc(sizeof(*toc), M_TEMP, M_WAITOK | M_ZERO);
 
 		th = &toc->header;
 
 		if (len > sizeof(toc->entries) ||
 		    len < sizeof(struct cd_toc_entry)) {
-			FREE(toc, M_TEMP);
+			free(toc, M_TEMP);
 			error = EINVAL;
 			break;
 		}
 		error = cd_read_toc(cd, te->address_format, te->starting_track,
 		    toc, len + sizeof(struct ioc_toc_header), 0);
 		if (error) {
-			FREE(toc, M_TEMP);
+			free(toc, M_TEMP);
 			break;
 		}
 		if (te->address_format == CD_LBA_FORMAT)
@@ -970,7 +968,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		    sizeof(th->ending_track)));
 
 		error = copyout(toc->entries, te->data, len);
-		FREE(toc, M_TEMP);
+		free(toc, M_TEMP);
 		break;
 	}
 	case CDIOREADMSADDR: {
@@ -983,16 +981,14 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			break;
 		}
 
-		MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP,
-		    M_WAITOK);
-		bzero(toc, sizeof(*toc));
+		toc = malloc(sizeof(*toc), M_TEMP, M_WAITOK | M_ZERO);
 
 		error = cd_read_toc(cd, 0, 0, toc,
 		  sizeof(struct ioc_toc_header) + sizeof(struct cd_toc_entry),
 		  0x40 /* control word for "get MS info" */);
 
 		if (error) {
-			FREE(toc, M_TEMP);
+			free(toc, M_TEMP);
 			break;
 		}
 
@@ -1011,7 +1007,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 		*(int *)addr = (toc->header.len >= 10 && cte->track > 1) ?
 			cte->addr.lba : 0;
-		FREE(toc, M_TEMP);
+		free(toc, M_TEMP);
 		break;
 	}
 	case CDIOCSETPATCH: {
@@ -1157,8 +1153,7 @@ cdgetdisklabel(dev_t dev, struct cd_softc *cd, struct disklabel *lp,
 
 	bzero(lp, sizeof(struct disklabel));
 
-	MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP, M_WAITOK);
-	bzero(toc, sizeof(*toc));
+	toc = malloc(sizeof(*toc), M_TEMP, M_WAITOK | M_ZERO);
 
 	lp->d_secsize = cd->params.blksize;
 	lp->d_ntracks = 1;
@@ -1460,8 +1455,7 @@ cd_play_tracks(struct cd_softc *cd, int strack, int sindex, int etrack,
 	if (strack > etrack)
 		return (EINVAL);
 
-	MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP, M_WAITOK);
-	bzero(toc, sizeof(*toc));
+	toc = malloc(sizeof(*toc), M_TEMP, M_WAITOK | M_ZERO);
 
 	if ((error = cd_load_toc(cd, toc, CD_MSF_FORMAT)) != 0)
 		goto done;
@@ -1500,7 +1494,7 @@ cd_play_tracks(struct cd_softc *cd, int strack, int sindex, int etrack,
 	    endm, ends, endf);
 
 done:
-	FREE(toc, M_TEMP);
+	free(toc, M_TEMP);
 	return (error);
 }
 

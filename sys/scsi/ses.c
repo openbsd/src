@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.46 2007/09/07 16:15:49 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.47 2007/09/16 01:30:24 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -426,8 +426,8 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 			switch (types[i].type) {
 #if NBIO > 0
 			case SES_T_DEVICE:
-				slot = malloc(sizeof(struct ses_slot),
-				    M_DEVBUF, M_NOWAIT | M_ZERO);
+				slot = malloc(sizeof(*slot), M_DEVBUF,
+				    M_NOWAIT | M_ZERO);
 				if (slot == NULL)
 					goto error;
 
@@ -458,7 +458,7 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 				continue;
 			}
 
-			sensor = malloc(sizeof(struct ses_sensor), M_DEVBUF,
+			sensor = malloc(sizeof(*sensor), M_DEVBUF,
 			    M_NOWAIT | M_ZERO);
 			if (sensor == NULL)
 				goto error;
