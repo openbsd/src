@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.43 2007/09/16 14:29:33 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.44 2007/09/16 15:20:48 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -318,12 +318,6 @@ Targ_FindList(Lst nodes, 	/* result list */
 	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_Ignore	--
- *	Return true if should ignore errors when creating gn
- *-----------------------------------------------------------------------
- */
 bool
 Targ_Ignore(GNode *gn)
 {
@@ -333,12 +327,6 @@ Targ_Ignore(GNode *gn)
 		return false;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_Silent	--
- *	Return true if be silent when creating gn
- *-----------------------------------------------------------------------
- */
 bool
 Targ_Silent(GNode *gn)
 {
@@ -348,12 +336,6 @@ Targ_Silent(GNode *gn)
 		return false;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_Precious --
- *	See if the given target is precious
- *-----------------------------------------------------------------------
- */
 bool
 Targ_Precious(GNode *gn)
 {
@@ -444,12 +426,6 @@ Targ_PrintType(int type)
 	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * TargPrintNode --
- *	print the contents of a node
- *-----------------------------------------------------------------------
- */
 static void
 TargPrintNode(GNode *gn, int pass)
 {
@@ -517,12 +493,6 @@ TargPrintNode(GNode *gn, int pass)
 	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * TargPrintOnlySrc --
- *	Print targets that are just a source.
- *-----------------------------------------------------------------------
- */
 static void
 TargPrintOnlySrc(GNode *gn)
 {
@@ -531,12 +501,6 @@ TargPrintOnlySrc(GNode *gn)
 		    gn->path != NULL ? gn->path : gn->name);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_PrintGraph --
- *	print the entire graph.
- *-----------------------------------------------------------------------
- */
 void
 Targ_PrintGraph(int pass)	/* Which pass this is. 1 => no processing
 				 * 2 => processing done */
