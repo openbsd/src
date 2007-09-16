@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.51 2007/09/16 12:30:35 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.52 2007/09/16 14:29:33 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -87,10 +87,6 @@
 
 struct PathEntry {
 	int 	  refCount;	/* Number of paths with this directory */
-#ifdef DEBUG_DIRECTORY_CACHE
-	int 	  hits; 	/* the number of times a file in this
-				 * directory has been found */
-#endif
 	struct ohash   files;	/* Hash table of files in directory */
 	char	  name[1];	/* Name of directory */
 };
@@ -164,15 +160,6 @@ struct PathEntry {
 
 static LIST   theDefaultPath;		/* main search path */
 Lst	      defaultPath= &theDefaultPath;
-
-#ifdef DEBUG_DIRECTORY_CACHE
-/* Variables for gathering statistics on the efficiency of the hashing
- * mechanism.  */
-static int    hits,			/* Found in directory cache */
-	      misses,			/* Sad, but not evil misses */
-	      nearmisses,		/* Found under search path */
-	      bigmisses;		/* Sought by itself */
-#endif
 
 struct PathEntry	  *dot; 	/* contents of current directory */
 
@@ -400,10 +387,6 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 	    find_file_hashi(dot, cp, ename, hv) != NULL) {
 		if (DEBUG(DIR))
 			printf("in '.'\n");
-#ifdef DEBUG_DIRECTORY_CACHE
-		hits++;
-		dot->hits++;
-#endif
 		return Str_dupi(name, ename);
 	}
 
@@ -446,10 +429,6 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 			    ename, '/');
 			if (DEBUG(DIR))
 				printf("returning %s\n", file);
-#ifdef DEBUG_DIRECTORY_CACHE
-			p->hits++;
-			hits++;
-#endif
 			return file;
 		} else if (hasSlash) {
 			/* If the file has a leading path component and that 
@@ -482,9 +461,6 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 	if (!hasSlash) {
 		if (DEBUG(DIR))
 			printf("failed.\n");
-#ifdef DEBUG_DIRECTORY_CACHE
-		misses++;
-#endif
 		return NULL;
 	}
 
@@ -532,9 +508,6 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 					printf("Caching %s for %s\n", 
 					    time_to_string(mtime), file);
 				record_stamp(file, mtime);
-#ifdef DEBUG_DIRECTORY_CACHE
-				nearmisses++;
-#endif
 				return file;
 			} else
 				free(file);
@@ -567,9 +540,6 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 	if (DEBUG(DIR))
 		printf("Looking for \"%s\"...", q);
 
-#ifdef DEBUG_DIRECTORY_CACHE
-	bigmisses++;
-#endif
 	entry = find_stampi(name, ename);
 	if (entry != NULL) {
 		if (DEBUG(DIR))
@@ -607,9 +577,6 @@ DirReaddiri(const char *name, const char *ename)
 		return p;
 
 	p = ohash_create_entry(&dir_info, name, &ename);
-#ifdef DEBUG_DIRECTORY_CACHE
-	p->hits = 0;
-#endif
 	p->refCount = 0;
 	ohash_init(&p->files, 4, &file_info);
 
@@ -761,25 +728,6 @@ Dir_Concat(Lst path1, Lst path2)
 			p->refCount++;
 	}
 }
-
-#ifdef DEBUG_DIRECTORY_CACHE
-void
-Dir_PrintDirectories(void)
-{
-	struct PathEntry		*p;
-	unsigned int	i;
-
-	printf("#*** Directory Cache:\n");
-	printf("# Stats: %d hits %d misses %d near misses %d losers (%d%%)\n",
-	      hits, misses, nearmisses, bigmisses,
-	      (hits+bigmisses+nearmisses ?
-	       hits * 100 / (hits + bigmisses + nearmisses) : 0));
-	printf("# %-20s referenced\thits\n", "directory");
-	for (p = ohash_first(&knownDirectories, &i); p != NULL;
-	    p = ohash_next(&knownDirectories, &i))
-		printf("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
-}
-#endif
 
 static void
 DirPrintDir(void *p)

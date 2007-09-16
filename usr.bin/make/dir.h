@@ -2,7 +2,7 @@
 #define DIR_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.h,v 1.20 2007/09/16 12:30:35 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.21 2007/09/16 14:29:33 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -141,13 +141,6 @@ extern TIMESTAMP Dir_MTime(GNode *);
  */
 extern char *Dir_MakeFlags(const char *, Lst);
 
-
-#ifdef DEBUG_DIRECTORY_CACHE
-/* Dir_PrintDirectories();
- *	Print stats about the directory cache.
- */
-extern void Dir_PrintDirectories(void);
-#endif
 
 /* List of directories to search when looking for targets. */
 extern Lst	defaultPath;	

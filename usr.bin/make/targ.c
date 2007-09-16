@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.42 2007/09/16 14:09:18 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.43 2007/09/16 14:29:33 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -555,9 +555,5 @@ Targ_PrintGraph(int pass)	/* Which pass this is. 1 => no processing
 		    TargPrintOnlySrc(gn);
 	Var_Dump();
 	printf("\n");
-#ifdef DEBUG_DIRECTORY_CACHE
-	Dir_PrintDirectories();
-	printf("\n");
-#endif
 	Suff_PrintAll();
 }
