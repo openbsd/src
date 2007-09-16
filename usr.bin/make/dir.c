@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.49 2007/09/16 12:09:36 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.50 2007/09/16 12:19:15 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
 #include "timestamp.h"
 
 
-typedef struct Path_ {
+struct PathEntry {
 	int 	  refCount;	/* Number of paths with this directory */
 #ifdef DEBUG_DIRECTORY_CACHE
 	int 	  hits; 	/* the number of times a file in this
@@ -93,13 +93,13 @@ typedef struct Path_ {
 #endif
 	struct ohash   files;	/* Hash table of files in directory */
 	char	  name[1];	/* Name of directory */
-} Path;
+};
 
-/*	A search path consists of a Lst of Path structures. A Path structure
- *	has in it the name of the directory and a hash table of all the files
- *	in the directory. This is used to cut down on the number of system
- *	calls necessary to find implicit dependents and their like. Since
- *	these searches are made before any actions are taken, we need not
+/*	A search path consists of a Lst of PathEntry structures. A PathEntry
+ *	structure has in it the name of the directory and a hash table of all
+ *	the files in the directory. This is used to cut down on the number of
+ *	system calls necessary to find implicit dependents and their like.
+ *	Since these searches are made before any actions are taken, we need not
  *	worry about the directory changing due to creation commands. If this
  *	hampers the style of some makefiles, they must be changed.
  *
@@ -126,7 +126,7 @@ typedef struct Path_ {
  *	       that UNIX OS's have taken to allowing more than 20 or 32
  *	       file descriptors for a process, this doesn't seem acceptable
  *	       to me.
- *	    3) record the mtime of the directory in the Path structure and
+ *	    3) record the mtime of the directory in the PathEntry structure and
  *	       verify the directory hasn't changed since the contents were
  *	       hashed. This will catch the creation or deletion of files,
  *	       but not the updating of files. However, since it is the
@@ -174,7 +174,7 @@ static int    hits,			/* Found in directory cache */
 	      bigmisses;		/* Sought by itself */
 #endif
 
-Path	  *dot; 			/* contents of current directory */
+struct PathEntry	  *dot; 	/* contents of current directory */
 
 struct file_stamp {
 	TIMESTAMP mtime;		/* time stamp... */
@@ -193,7 +193,7 @@ static struct ohash mtimes;
 
 /* There are three distinct hash structures:
  * - to collate files's last modification times (global mtimes)
- * - to collate file names (in each Path structure)
+ * - to collate file names (in each PathEntry structure)
  * - to collate known directories (global openDirectories).  */
 static struct ohash_info stamp_info = { 
 	offsetof(struct file_stamp, name), NULL, hash_alloc, hash_free, 
@@ -203,13 +203,15 @@ static struct ohash_info file_info = {
 	0, NULL, hash_alloc, hash_free, element_alloc };
 
 static struct ohash_info dir_info = { 
-	offsetof(Path, name), NULL, hash_alloc, hash_free, element_alloc };
+	offsetof(struct PathEntry, name), NULL, 
+	hash_alloc, hash_free, element_alloc };
 
 /* add_file(path, name): add a file name to a path hash structure. */
-static void add_file(Path *, const char *);
+static void add_file(struct PathEntry *, const char *);
 /* n = find_file_hashi(p, name, end, hv): retrieve name in a path hash
  * 	structure. */
-static char *find_file_hashi(Path *, const char *, const char *, uint32_t);
+static char *find_file_hashi(struct PathEntry *, const char *, const char *, 
+    uint32_t);
 
 /* stamp = find_stampi(name, end): look for (name, end) in the global
  *	cache. */
@@ -220,7 +222,7 @@ static void record_stamp(const char *, TIMESTAMP);
 
 /* p = DirReaddiri(name, end): read an actual directory, caching results
  * 	as we go.  */
-static Path *DirReaddiri(const char *, const char *);
+static struct PathEntry *DirReaddiri(const char *, const char *);
 /* Debugging: show a dir name in a path. */
 static void DirPrintDir(void *);
 
@@ -249,7 +251,7 @@ find_stampi(const char *file, const char *efile)
 }
 
 static void
-add_file(Path *p, const char *file)
+add_file(struct PathEntry *p, const char *file)
 {
 	unsigned int	slot;
 	const char	*end = NULL;
@@ -265,7 +267,8 @@ add_file(Path *p, const char *file)
 }
 
 static char *
-find_file_hashi(Path *p, const char *file, const char *efile, uint32_t hv)
+find_file_hashi(struct PathEntry *p, const char *file, const char *efile, 
+    uint32_t hv)
 {
 	struct ohash 	*h = &p->files;
 
@@ -298,7 +301,7 @@ Dir_Init(void)
 void
 Dir_End(void)
 {
-	struct Path *p;
+	struct PathEntry *p;
 	unsigned int i;
 
 	dot->refCount--;
@@ -315,7 +318,7 @@ Dir_End(void)
 /*-
  *-----------------------------------------------------------------------
  * Dir_MatchFilesi --
- *	Given a pattern and a Path structure, see if any files
+ *	Given a pattern and a PathEntry structure, see if any files
  *	match the pattern and add their names to the 'expansions' list if
  *	any do. This is incomplete -- it doesn't take care of patterns like
  *	src / *src / *.c properly (just *.c on any of the directories), but it
@@ -323,7 +326,8 @@ Dir_End(void)
  *-----------------------------------------------------------------------
  */
 void
-Dir_MatchFilesi(const char *word, const char *eword, Path *p, Lst expansions)
+Dir_MatchFilesi(const char *word, const char *eword, struct PathEntry *p, 
+    Lst expansions)
 {
 	unsigned int search; 	/* Index into the directory's table */
 	const char *entry; 	/* Current entry in the table */
@@ -359,7 +363,7 @@ char *
 Dir_FindFileComplexi(const char *name, const char *ename, Lst path, 
     bool checkCurdirFirst)
 {
-	Path *p;	/* current path member */
+	struct PathEntry *p;	/* current path member */
 	char *p1;	/* pointer into p->name */
 	const char *p2;	/* pointer into name */
 	LstNode ln;	/* a list element */
@@ -409,7 +413,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 	 * If found, we concatenate the directory name and the 
 	 * final component and return the resulting string.  */
 	for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
-		p = (Path *)Lst_Datum(ln);
+		p = (struct PathEntry *)Lst_Datum(ln);
 		if (DEBUG(DIR))
 			printf("%s...", p->name);
 		if (find_file_hashi(p, cp, ename, hv) != NULL) {
@@ -490,7 +494,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 		if (DEBUG(DIR))
 			printf("failed. Trying subdirectories...");
 		for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
-			p = (Path *)Lst_Datum(ln);
+			p = (struct PathEntry *)Lst_Datum(ln);
 			if (p != dot)
 				file = Str_concati(p->name, 
 				    strchr(p->name, '\0'), name, ename, '/');
@@ -588,10 +592,10 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 }
 
 /* Read a directory, either from the disk, or from the cache.  */
-static Path *
+static struct PathEntry *
 DirReaddiri(const char *name, const char *ename)
 {
-	Path *p;
+	struct PathEntry *p;
 	DIR *d;
 	struct dirent *dp;
 	unsigned int slot;
@@ -648,7 +652,7 @@ DirReaddiri(const char *name, const char *ename)
 void
 Dir_AddDiri(Lst path, const char *name, const char *ename)
 {
-	Path	*p;
+	struct PathEntry	*p;
 
 	p = DirReaddiri(name, ename);
 	if (p == NULL)
@@ -667,7 +671,7 @@ Dir_AddDiri(Lst path, const char *name, const char *ename)
  *	Ups the reference count for the directory.
  *
  * Results:
- *	Returns the Path it was given.
+ *	Returns the PathEntry it was given.
  *
  * Side Effects:
  *	The refCount of the path is incremented.
@@ -676,7 +680,7 @@ Dir_AddDiri(Lst path, const char *name, const char *ename)
 void *
 Dir_CopyDir(void *p)
 {
-	((Path *)p)->refCount++;
+	((struct PathEntry *)p)->refCount++;
 	return p;
 }
 
@@ -704,7 +708,7 @@ Dir_MakeFlags(const char *flag, Lst path)
 
 	for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
 		Buf_AddString(&buf, flag);
-		Buf_AddString(&buf, ((Path *)Lst_Datum(ln))->name);
+		Buf_AddString(&buf, ((struct PathEntry *)Lst_Datum(ln))->name);
 		Buf_AddSpace(&buf);
 	}
 
@@ -719,13 +723,13 @@ Dir_MakeFlags(const char *flag, Lst path)
  *
  * Side Effects:
  *	If no other path references this directory (refCount == 0),
- *	the Path and all its data are freed.
+ *	the PathEntry and all its data are freed.
  *-----------------------------------------------------------------------
  */
 void
 Dir_Destroy(void *pp)
 {
-	Path *p = (Path *)pp;
+	struct PathEntry *p = (struct PathEntry *)pp;
 
 	if (--p->refCount == 0) {
 		ohash_remove(&openDirectories, 
@@ -749,10 +753,10 @@ void
 Dir_Concat(Lst path1, Lst path2)
 {
 	LstNode	ln;
-	Path	*p;
+	struct PathEntry	*p;
 
 	for (ln = Lst_First(path2); ln != NULL; ln = Lst_Adv(ln)) {
-		p = (Path *)Lst_Datum(ln);
+		p = (struct PathEntry *)Lst_Datum(ln);
 		if (Lst_AddNew(path1, p))
 			p->refCount++;
 	}
@@ -762,7 +766,7 @@ Dir_Concat(Lst path1, Lst path2)
 void
 Dir_PrintDirectories(void)
 {
-	Path		*p;
+	struct PathEntry		*p;
 	unsigned int	i;
 
 	printf("#*** Directory Cache:\n");
@@ -780,7 +784,7 @@ Dir_PrintDirectories(void)
 static void
 DirPrintDir(void *p)
 {
-	printf("%s ", ((Path *)p)->name);
+	printf("%s ", ((struct PathEntry *)p)->name);
 }
 
 void

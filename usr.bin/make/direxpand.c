@@ -1,4 +1,4 @@
-/*	$OpenBSD: direxpand.c,v 1.1 2007/09/16 10:14:26 espie Exp $ */
+/*	$OpenBSD: direxpand.c,v 1.2 2007/09/16 12:19:15 espie Exp $ */
 /*
  * Copyright (c) 1999,2007 Marc Espie.
  *
@@ -95,7 +95,7 @@ PathMatchFilesi(const char *word, const char *eword, Lst path, Lst expansions)
 	LstNode	ln;		/* Current node */
 
 	for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln))
-		Dir_MatchFilesi(word, eword, (struct Path_ *)Lst_Datum(ln), expansions);
+		Dir_MatchFilesi(word, eword, (struct PathEntry *)Lst_Datum(ln), expansions);
 }
 
 /*-
