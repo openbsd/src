@@ -1,7 +1,7 @@
-/*	$OpenBSD: uts.c,v 1.19 2007/09/06 20:28:56 matthieu Exp $ */
+/*	$OpenBSD: uts.c,v 1.20 2007/09/16 03:19:15 fgsch Exp $ */
 
 /*
- * Copyright (c) 2007 Robert Nagy <robert@openbsd.org> 
+ * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -59,7 +59,7 @@ struct tsscale {
 } def_scale = {
 	67, 1931, 102, 1937, 0, 1024, 768
 };
- 
+
 struct uts_softc {
 	struct device		sc_dev;
 	usbd_device_handle	sc_udev;
@@ -113,21 +113,21 @@ const struct wsmouse_accessops uts_accessops = {
 	uts_disable,
 };
 
-int uts_match(struct device *, void *, void *); 
-void uts_attach(struct device *, struct device *, void *); 
-int uts_detach(struct device *, int); 
-int uts_activate(struct device *, enum devact); 
+int uts_match(struct device *, void *, void *);
+void uts_attach(struct device *, struct device *, void *);
+int uts_detach(struct device *, int);
+int uts_activate(struct device *, enum devact);
 
-struct cfdriver uts_cd = { 
-	NULL, "uts", DV_DULL 
-}; 
+struct cfdriver uts_cd = {
+	NULL, "uts", DV_DULL
+};
 
-const struct cfattach uts_ca = { 
-	sizeof(struct uts_softc), 
-	uts_match, 
-	uts_attach, 
-	uts_detach, 
-	uts_activate, 
+const struct cfattach uts_ca = {
+	sizeof(struct uts_softc),
+	uts_match,
+	uts_attach,
+	uts_detach,
+	uts_activate,
 };
 
 int
@@ -136,10 +136,10 @@ uts_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface == NULL)
-		return UMATCH_NONE;
+		return (UMATCH_NONE);
 
 	return (usb_lookup(uts_devs, uaa->vendor, uaa->product) != NULL) ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -173,7 +173,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	/* Move the device into the configured state. */
 	if (usbd_set_config_index(uaa->device, UTS_CONFIG_INDEX, 1) != 0) {
 		printf("%s: could not set configuartion no\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -182,7 +182,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -190,7 +190,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	/* get the interface */
 	if (usbd_device2interface_handle(uaa->device, 0, &sc->sc_iface) != 0) {
 		printf("%s: failed to get interface\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
@@ -204,7 +204,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
-				sc->sc_dev.dv_xname, i);
+			    sc->sc_dev.dv_xname, i);
 			sc->sc_dying = 1;
 			return;
 		}
@@ -218,13 +218,12 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_intr_number== -1) {
 		printf("%s: Could not find interrupt in\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		sc->sc_dying = 1;
 		return;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   &sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
 
 	a.accessops = &uts_accessops;
 	a.accesscookie = sc;
@@ -251,8 +250,7 @@ uts_detach(struct device *self, int flags)
 		sc->sc_wsmousedev = NULL;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   &sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, &sc->sc_dev);
 
 	return (rv);
 }
@@ -290,15 +288,15 @@ uts_enable(void *v)
 		return (EBUSY);
 
 	if (sc->sc_isize == 0)
-		return 0;
+		return (0);
 	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_intr_number,
-		USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_ibuf,
-		sc->sc_isize, uts_intr, USBD_DEFAULT_INTERVAL);
+	    USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_ibuf,
+	    sc->sc_isize, uts_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		free(sc->sc_ibuf, M_USBDEV);
 		sc->sc_intr_pipe = NULL;
-		return EIO;
+		return (EIO);
 	}
 
 	sc->sc_enabled = 1;
@@ -361,7 +359,7 @@ uts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *l)
 		sc->sc_tsscale.swapxy = wsmc->swapxy;
 		sc->sc_tsscale.resx = wsmc->resx;
 		sc->sc_tsscale.resy = wsmc->resy;
-		sc->sc_rawmode = wsmc->samplelen; 
+		sc->sc_rawmode = wsmc->samplelen;
 		break;
 	case WSMOUSEIO_GCALIBCOORDS:
 		wsmc->minx = sc->sc_tsscale.minx;
@@ -394,7 +392,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 	switch (sc->sc_product) {
 	case USB_PRODUCT_FTDI_ITM_TOUCH:
 		down = (~p[7] & 0x20);
-		x = ((p[0] & 0x1f) << 7) | (p[3] & 0x7f);  
+		x = ((p[0] & 0x1f) << 7) | (p[3] & 0x7f);
 		/* Invert the Y coordinate */
 		y = 0x0fff - abs(((p[1] & 0x1f) << 7) | (p[4] & 0x7f));
 		z = ((p[2] & 0x1) << 7) | (p[5] & 0x7f);
@@ -432,8 +430,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 
 	/* x/y values are not reliable if there is no pressure */
 	if (down) {
-
-		if (sc->sc_tsscale.swapxy && !sc->sc_rawmode) {	
+		if (sc->sc_tsscale.swapxy && !sc->sc_rawmode) {
 			/* Swap X/Y-Axis */
 			tp.y = x;
 			tp.x = y;
@@ -484,16 +481,16 @@ uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 
 	if (len != sc->sc_pkts) {
 		DPRINTF(("%s: bad input length %d != %d\n",
-			sc->sc_dev.dv_xname, len, sc->sc_isize));
+		    sc->sc_dev.dv_xname, len, sc->sc_isize));
 		return;
 	}
 
 	DPRINTF(("%s: tp.down = %d, tp.z = %d, tp.x = %d, tp.y = %d\n",
-		sc->sc_dev.dv_xname, tp.down, tp.z, tp.x, tp.y));
+	    sc->sc_dev.dv_xname, tp.down, tp.z, tp.x, tp.y));
 
 	wsmouse_input(sc->sc_wsmousedev, tp.down, tp.x, tp.y, tp.z, 0,
-		WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		WSMOUSE_INPUT_ABSOLUTE_Z); 
+	    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
+	    WSMOUSE_INPUT_ABSOLUTE_Z);
 	sc->sc_oldy = tp.y;
 	sc->sc_oldx = tp.x;
 
