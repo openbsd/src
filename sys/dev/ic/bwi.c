@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.30 2007/09/16 11:30:53 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.31 2007/09/16 11:52:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8062,6 +8062,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 
 	if (error) {	/* error == EFBIG */
 		struct mbuf *m_new;
+
+		error = 0;
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
