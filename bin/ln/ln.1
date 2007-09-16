@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.24 2007/05/31 19:19:14 jmc Exp $
+.\"	$OpenBSD: ln.1,v 1.25 2007/09/16 18:13:57 sobrado Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ln.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 16 2007 $
 .Dt LN 1
 .Os
 .Sh NAME
@@ -42,12 +42,12 @@
 .Sh SYNOPSIS
 .Nm ln
 .Op Fl fhns
-.Ar sourcefile
-.Op Ar targetfile
+.Ar source
+.Op Ar target
 .Nm ln
 .Op Fl fs
-.Ar sourcefile ...\&
-.Op Ar targetdir
+.Ar source ...\&
+.Op Ar directory
 .Sh DESCRIPTION
 The
 .Nm
@@ -105,21 +105,21 @@ non-existent files.
 Given one or two arguments,
 .Nm
 creates a link to an existing file
-.Ar sourcefile .
+.Ar source .
 If
-.Ar targetfile
+.Ar target
 is given, the link has that name;
-.Ar targetfile
+.Ar target
 may also be a directory in which to place the link.
 Otherwise, it is placed in the current directory.
 If only the directory is specified, the link will be made
 to the last component of
-.Ar sourcefile .
+.Ar source .
 .Pp
 Given more than two arguments,
 .Nm
 makes links in
-.Ar targetdir
+.Ar directory
 to all the named source files.
 The links made will have the same name as the files being linked to.
 .Pp
@@ -208,7 +208,7 @@ utility appeared in
 .At v3 .
 .Sh CAVEATS
 Since the
-.Ar sourcefile
-must have its link count incremented, a hard link cannot be created to a
+.Ar source
+file must have its link count incremented, a hard link cannot be created to a
 file which is flagged immutable or append-only (see
 .Xr chflags 1 ) .

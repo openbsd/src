@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.28 2007/05/31 19:19:14 jmc Exp $
+.\"	$OpenBSD: cp.1,v 1.29 2007/09/16 18:13:57 sobrado Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 16 2007 $
 .Dt CP 1
 .Os
 .Sh NAME
@@ -46,26 +46,27 @@
 .Fl R
 .Op Fl H | L | P
 .Oc
-.Ar source_file target_file
+.Ar source target
 .Nm cp
 .Op Fl fip
 .Oo
 .Fl R
 .Op Fl H | L | P
 .Oc
-.Ar source_file ... target_directory
+.Ar source ... directory
 .Sh DESCRIPTION
 In the first synopsis form, the
 .Nm
 utility copies the contents of the
-.Ar source_file
-to the
-.Ar target_file .
+.Ar source
+file to the
+.Ar target
+file.
 In the second synopsis form,
 the contents of each named
-.Ar source_file
-are copied to the destination
-.Ar target_directory .
+.Ar source
+file are copied to the destination
+.Ar directory .
 The names of the files themselves are not changed.
 If
 .Nm
@@ -117,7 +118,7 @@ the set-user-ID nor set-group-ID bits are preserved in the copy's
 permissions.
 .It Fl R
 If
-.Ar source_file
+.Ar source
 designates a directory,
 .Nm
 copies the directory and the entire subtree connected at that point.
@@ -143,9 +144,10 @@ overwritten if permissions allow, but its mode, user ID, and group
 ID are unchanged.
 .Pp
 In the second synopsis form,
-.Ar target_directory
-must exist unless there is only one named
-.Ar source_file
+the destination specified by the
+.Ar directory
+operand must exist unless there is only one named
+.Ar source
 which is a directory and the
 .Fl R
 flag is specified.
