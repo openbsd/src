@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2007/09/16 10:14:26 espie Exp $
+#	$OpenBSD: Makefile,v 1.45 2007/09/16 10:20:17 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -28,7 +28,8 @@ SRCS+=	lstAddNew.c lstAppend.c lstConcat.c lstConcatDestroy.c \
 CLEANFILES+=generate hashconsts.h generate.o regress.o check
 
 CLEANFILES+=${LIBOBJS} libohash.a
-CLEANFILES+= varhashconsts.h condhashconsts.h generate.o generate
+CLEANFILES+= varhashconsts.h condhashconsts.h nodehashconsts.h 
+CLEANFILES+= generate.o generate
 
 beforedepend: varhashconsts.h condhashconsts.h
 # may need tweaking if you add variable synonyms or change the hash function
@@ -40,6 +41,9 @@ varhashconsts.h: generate
 
 condhashconsts.h: generate
 	${.OBJDIR}/generate 2 ${MAGICCONDSLOTS} >${.TARGET}
+
+nodehashconsts.h: generate
+	${.OBJDIR}/generate 3 0 >${.TARGET}
 
 generate: generate.c stats.c memory.c
 	${HOSTCC} ${LDSTATIC} -o ${.TARGET} ${HOSTCFLAGS} ${.ALLSRC} ${LDADD}

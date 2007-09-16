@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: generate.c,v 1.8 2007/09/03 13:56:56 espie Exp $ */
+/*	$OpenBSD: generate.c,v 1.9 2007/09/16 10:20:17 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -35,6 +35,7 @@
 #include "ohash.h"
 #include "cond_int.h"
 #include "var_int.h"
+#include "node_int.h"
 
 #define M(x)	x, #x
 char *table_var[] = {
@@ -84,10 +85,46 @@ char *table_cond[] = {
 	NULL
 };
 
+char *table_nodes[] = {
+	M(NODE_DEFAULT),
+	M(NODE_EXEC),
+	M(NODE_IGNORE),
+	M(NODE_INCLUDES),
+	M(NODE_INVISIBLE),
+	M(NODE_JOIN),
+	M(NODE_LIBS),
+	M(NODE_MADE),
+	M(NODE_MAIN),
+	M(NODE_MAKE),
+	M(NODE_MAKEFLAGS),
+	M(NODE_MFLAGS),
+	M(NODE_NOTMAIN),
+	M(NODE_NOTPARALLEL),
+	M(NODE_NO_PARALLEL),
+	M(NODE_NULL),
+	M(NODE_OPTIONAL),
+	M(NODE_ORDER),
+	M(NODE_PARALLEL),
+	M(NODE_PATH),
+	M(NODE_PHONY),
+	M(NODE_PRECIOUS),
+	M(NODE_RECURSIVE),
+	M(NODE_SILENT),
+	M(NODE_SINGLESHELL),
+	M(NODE_SUFFIXES),
+	M(NODE_USE),
+	M(NODE_WAIT),
+	M(NODE_BEGIN),
+	M(NODE_END),
+	M(NODE_INTERRUPT),
+	NULL
+};
+
 
 char **table[] = {
 	table_var,
-	table_cond
+	table_cond,
+	table_nodes
 };
 
 int
