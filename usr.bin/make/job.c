@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.64 2007/09/16 10:57:02 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.65 2007/09/16 12:01:11 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -429,7 +429,6 @@ static void JobRestart(Job *);
 static int JobStart(GNode *, int, Job *);
 static char *JobOutput(Job *, char *, char *, int);
 static void JobDoOutput(Job *, bool);
-static Shell *JobMatchShell(char *);
 static void JobInterrupt(int, int);
 static void JobRestartJobs(void);
 

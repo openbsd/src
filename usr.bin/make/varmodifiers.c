@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.20 2007/09/16 09:46:14 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.21 2007/09/16 12:01:11 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1193,7 +1193,7 @@ LoopGrab(const char **s)
 }
 	
 static void *
-get_loop(const char **p, SymTable *ctxt, bool err, int endc)
+get_loop(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 {
     static struct LoopStuff	loop;
     const char *s;
