@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.35 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.36 2007/09/16 09:46:14 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -400,35 +400,6 @@ Make_Update(GNode *cgn)	/* the child node */
      * doesn't exist, make its mtime now.
      */
     if (cgn->made != UPTODATE) {
-#ifndef RECHECK
-	/*
-	 * We can't re-stat the thing, but we can at least take care of rules
-	 * where a target depends on a source that actually creates the
-	 * target, but only if it has changed, e.g.
-	 *
-	 * parse.h : parse.o
-	 *
-	 * parse.o : parse.y
-	 *	yacc -d parse.y
-	 *	cc -c y.tab.c
-	 *	mv y.tab.o parse.o
-	 *	cmp -s y.tab.h parse.h || mv y.tab.h parse.h
-	 *
-	 * In this case, if the definitions produced by yacc haven't changed
-	 * from before, parse.h won't have been updated and cgn->mtime will
-	 * reflect the current modification time for parse.h. This is
-	 * something of a kludge, I admit, but it's a useful one..
-	 * XXX: People like to use a rule like
-	 *
-	 * FRC:
-	 *
-	 * To force things that depend on FRC to be made, so we have to
-	 * check for gn->children being empty as well...
-	 */
-	if (!Lst_IsEmpty(&cgn->commands) || Lst_IsEmpty(&cgn->children)) {
-	    cgn->mtime = now;
-	}
-#else
 	/*
 	 * This is what Make does and it's actually a good thing, as it
 	 * allows rules like
@@ -459,7 +430,6 @@ Make_Update(GNode *cgn)	/* the child node */
 	if (DEBUG(MAKE)) {
 	    printf("update time: %s\n", Targ_FmtTime(cgn->mtime));
 	}
-#endif
     }
 
     for (ln = Lst_First(&cgn->parents); ln != NULL; ln = Lst_Adv(ln)) {
@@ -568,10 +538,6 @@ MakeAddAllSrc(
 	     * the kid and anything that relies on the OODATE variable will
 	     * be hosed.
 	     *
-	     * XXX: This will cause all made children to go in the OODATE
-	     * variable, even if they're not touched, if RECHECK isn't defined,
-	     * since cgn->mtime is set to now in Make_Update. According to
-	     * some people, this is good...
 	     */
 	    Varq_Append(OODATE_INDEX, child, pgn);
 	}

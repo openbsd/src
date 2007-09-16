@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.53 2007/07/30 09:51:53 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.54 2007/09/16 09:46:14 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -444,34 +444,6 @@ CompatMake(void *gnp,	/* The node to make */
 	     * that for .ZEROTIME targets, the timestamping isn't done.
 	     * This is to keep its state from affecting that of its parent.  */
 	    gn->made = MADE;
-#ifndef RECHECK
-	    /* We can't re-stat the thing, but we can at least take care of
-	     * rules where a target depends on a source that actually creates
-	     * the target, but only if it has changed, e.g.
-	     *
-	     * parse.h : parse.o
-	     *
-	     * parse.o : parse.y
-	     *		yacc -d parse.y
-	     *		cc -c y.tab.c
-	     *		mv y.tab.o parse.o
-	     *		cmp -s y.tab.h parse.h || mv y.tab.h parse.h
-	     *
-	     * In this case, if the definitions produced by yacc haven't
-	     * changed from before, parse.h won't have been updated and
-	     * gn->mtime will reflect the current modification time for
-	     * parse.h. This is something of a kludge, I admit, but it's a
-	     * useful one..
-	     *
-	     * XXX: People like to use a rule like
-	     *
-	     * FRC:
-	     *
-	     * To force things that depend on FRC to be made, so we have to
-	     * check for gn->children being empty as well...  */
-	    if (!Lst_IsEmpty(&gn->commands) || Lst_IsEmpty(&gn->children))
-		gn->mtime = now;
-#else
 	    /* This is what Make does and it's actually a good thing, as it
 	     * allows rules like
 	     *
@@ -495,7 +467,6 @@ CompatMake(void *gnp,	/* The node to make */
 		gn->mtime = gn->cmtime;
 	    if (DEBUG(MAKE))
 		printf("update time: %s\n", Targ_FmtTime(gn->mtime));
-#endif
 	    if (!(gn->type & OP_EXEC)) {
 		pgn->childMade = true;
 		Make_TimeStamp(pgn, gn);

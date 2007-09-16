@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: config.h,v 1.14 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.15 2007/09/16 09:46:14 espie Exp $	*/
 /*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
@@ -71,19 +71,8 @@
  * LIBSUFF
  *	Is the suffix used to denote libraries and is used by the Suff module
  *	to find the search path on which to seek any -l<xx> targets.
- *
- * RECHECK
- *	If defined, Make_Update will check a target for its current
- *	modification time after it has been re-made, setting it to the
- *	starting time of the make only if the target still doesn't exist.
- *	Unfortunately, under NFS the modification time often doesn't
- *	get updated in time, so a target will appear to not have been
- *	re-made, causing later targets to appear up-to-date. On systems
- *	that don't have this problem, you should defined this. Under
- *	NFS you probably should not, unless you aren't exporting jobs.
  */
 #define LIBSUFF ".a"
-#define RECHECK
 
 /*
  * SYSVINCLUDE

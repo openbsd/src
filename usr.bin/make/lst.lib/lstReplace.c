@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstReplace.c,v 1.16 2007/07/30 09:51:53 espie Exp $	*/
+/*	$OpenBSD: lstReplace.c,v 1.17 2007/09/16 09:46:14 espie Exp $	*/
 /*	$NetBSD: lstReplace.c,v 1.5 1996/11/06 17:59:51 christos Exp $	*/
 
 /*

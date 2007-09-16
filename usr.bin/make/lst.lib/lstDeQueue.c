@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDeQueue.c,v 1.17 2007/07/30 09:51:53 espie Exp $	*/
+/*	$OpenBSD: lstDeQueue.c,v 1.18 2007/09/16 09:46:14 espie Exp $	*/
 /*	$NetBSD: lstDeQueue.c,v 1.5 1996/11/06 17:59:36 christos Exp $	*/
 
 /*
