@@ -2,7 +2,7 @@
 #define TIMESTAMP_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: timestamp.h,v 1.1 2001/05/23 12:34:51 espie Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.2 2007/09/16 12:09:36 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -101,5 +101,7 @@ extern int set_times(const char *);
 
 extern TIMESTAMP now;		/* The time at the start of this whole
 				 * process */
+extern char *time_to_string(TIMESTAMP t);
+
 
 #endif

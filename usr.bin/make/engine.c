@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.1 2007/09/16 10:39:07 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.2 2007/09/16 12:09:36 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -398,7 +398,7 @@ Make_OODate(GNode *gn)	/* the node to check */
 	(void)Dir_MTime(gn);
 	if (DEBUG(MAKE)) {
 	    if (!is_out_of_date(gn->mtime)) {
-		printf("modified %s...", Targ_FmtTime(gn->mtime));
+		printf("modified %s...", time_to_string(gn->mtime));
 	    } else {
 		printf("non-existent...");
 	    }

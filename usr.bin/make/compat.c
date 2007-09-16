@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.55 2007/09/16 10:39:07 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.56 2007/09/16 12:09:36 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -466,7 +466,7 @@ CompatMake(void *gnp,	/* The node to make */
 	    if (is_strictly_before(gn->mtime, gn->cmtime))
 		gn->mtime = gn->cmtime;
 	    if (DEBUG(MAKE))
-		printf("update time: %s\n", Targ_FmtTime(gn->mtime));
+		printf("update time: %s\n", time_to_string(gn->mtime));
 	    if (!(gn->type & OP_EXEC)) {
 		pgn->childMade = true;
 		Make_TimeStamp(pgn, gn);

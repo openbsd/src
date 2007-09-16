@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.65 2007/09/16 11:29:34 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.66 2007/09/16 12:09:36 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -1035,7 +1035,7 @@ Arch_LibOODate(GNode *gn)
 	if (!is_out_of_date(modTimeTOC)) {
 		if (DEBUG(ARCH) || DEBUG(MAKE))
 			printf("%s modified %s...", RANLIBMAG, 
-			    Targ_FmtTime(modTimeTOC));
+			    time_to_string(modTimeTOC));
 		return is_strictly_before(modTimeTOC, gn->cmtime);
 	}
 	/* A library w/o a table of contents is out-of-date.  */

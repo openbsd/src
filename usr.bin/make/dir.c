@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.48 2007/09/16 10:43:53 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.49 2007/09/16 12:09:36 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -80,7 +80,6 @@
 #include "buf.h"
 #include "gnode.h"
 #include "arch.h"
-#include "targ.h"
 #include "error.h"
 #include "str.h"
 #include "timestamp.h"
@@ -527,7 +526,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 				* needed, we don't have to fetch it again.  */
 				if (DEBUG(DIR))
 					printf("Caching %s for %s\n", 
-					    Targ_FmtTime(mtime), file);
+					    time_to_string(mtime), file);
 				record_stamp(file, mtime);
 #ifdef DEBUG_DIRECTORY_CACHE
 				nearmisses++;
@@ -577,7 +576,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 
 		ts_set_from_stat(stb, mtime);
 		if (DEBUG(DIR))
-			printf("Caching %s for %s\n", Targ_FmtTime(mtime), q);
+			printf("Caching %s for %s\n", time_to_string(mtime), q);
 		record_stamp(q, mtime);
 		return q;
 	} else {
@@ -817,7 +816,7 @@ Dir_MTime(GNode *gn)
 		 * actually go to the file system.	*/
 		if (DEBUG(DIR))
 			printf("Using cached time %s for %s\n",
-			    Targ_FmtTime(entry->mtime), fullName);
+			    time_to_string(entry->mtime), fullName);
 		mtime = entry->mtime;
 		free(entry);
 		ohash_remove(&mtimes, slot);

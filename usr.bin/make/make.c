@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.37 2007/09/16 10:39:07 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.38 2007/09/16 12:09:36 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -77,7 +77,6 @@
 #include "job.h"
 #include "suff.h"
 #include "var.h"
-#include "targ.h"
 #include "error.h"
 #include "make.h"
 #include "gnode.h"
@@ -197,7 +196,7 @@ Make_Update(GNode *cgn)	/* the child node */
 	    cgn->mtime = now;
 	}
 	if (DEBUG(MAKE)) {
-	    printf("update time: %s\n", Targ_FmtTime(cgn->mtime));
+	    printf("update time: %s\n", time_to_string(cgn->mtime));
 	}
     }
 

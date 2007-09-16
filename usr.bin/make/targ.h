@@ -1,7 +1,7 @@
 #ifndef TARG_H
 #define TARG_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.h,v 1.1 2001/05/23 12:34:50 espie Exp $ */
+/*	$OpenBSD: targ.h,v 1.2 2007/09/16 12:09:36 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -57,7 +57,6 @@ extern bool Targ_Silent(GNode *);
 extern bool Targ_Precious(GNode *);
 extern void Targ_SetMain(GNode *);
 extern void Targ_PrintCmd(void *);
-extern char *Targ_FmtTime(TIMESTAMP);
 extern void Targ_PrintType(int);
 extern void Targ_PrintGraph(int);
 
