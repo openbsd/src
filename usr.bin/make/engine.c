@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.2 2007/09/16 12:09:36 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.3 2007/09/16 14:36:57 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -70,53 +70,55 @@ static void MakeAddAllSrc(void *, void *);
  *-----------------------------------------------------------------------
  */
 bool
-Job_CheckCommands(GNode *gn, 		/* The target whose commands need
-				     	 * verifying */
-    void (*abortProc)(char *, ...)) 	/* Function to abort with message */
+Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 {
-    if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands) &&
-	(gn->type & OP_LIB) == 0) {
-	/*
-	 * No commands. Look for .DEFAULT rule from which we might infer
-	 * commands
-	 */
-	if (DEFAULT != NULL && !Lst_IsEmpty(&DEFAULT->commands)) {
-	    /*
-	     * Make only looks for a .DEFAULT if the node was never the
-	     * target of an operator, so that's what we do too. If
-	     * a .DEFAULT was given, we substitute its commands for gn's
-	     * commands and set the IMPSRC variable to be the target's name
-	     * The DEFAULT node acts like a transformation rule, in that
-	     * gn also inherits any attributes or sources attached to
-	     * .DEFAULT itself.
-	     */
-	    Make_HandleUse(DEFAULT, gn);
-	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), gn);
-	} else if (is_out_of_date(Dir_MTime(gn))) {
-	    /*
-	     * The node wasn't the target of an operator we have no .DEFAULT
-	     * rule to go on and the target doesn't already exist. There's
-	     * nothing more we can do for this branch. If the -k flag wasn't
-	     * given, we stop in our tracks, otherwise we just don't update
-	     * this node's parents so they never get examined.
-	     */
-	    static const char msg[] = "make: don't know how to make";
+	if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands) &&
+	    (gn->type & OP_LIB) == 0) {
+		/*
+		 * No commands. Look for .DEFAULT rule from which we might infer
+		 * commands
+		 */
+		if (DEFAULT != NULL && !Lst_IsEmpty(&DEFAULT->commands)) {
+			/*
+			 * Make only looks for a .DEFAULT if the node was never
+			 * the target of an operator, so that's what we do too.
+			 * If a .DEFAULT was given, we substitute its commands
+			 * for gn's commands and set the IMPSRC variable to be
+			 * the target's name The DEFAULT node acts like a
+			 * transformation rule, in that gn also inherits any
+			 * attributes or sources attached to .DEFAULT itself.
+			 */
+			Make_HandleUse(DEFAULT, gn);
+			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), gn);
+		} else if (is_out_of_date(Dir_MTime(gn))) {
+			/*
+			 * The node wasn't the target of an operator we have no
+			 * .DEFAULT rule to go on and the target doesn't
+			 * already exist. There's nothing more we can do for
+			 * this branch. If the -k flag wasn't given, we stop in
+			 * our tracks, otherwise we just don't update this
+			 * node's parents so they never get examined.
+			 */
+			static const char msg[] = 
+			    "make: don't know how to make";
 
-	    if (gn->type & OP_OPTIONAL) {
-		(void)fprintf(stdout, "%s %s(ignored)\n", msg, gn->name);
-		(void)fflush(stdout);
-	    } else if (keepgoing) {
-		(void)fprintf(stdout, "%s %s(continuing)\n", msg, gn->name);
-		(void)fflush(stdout);
-		return false;
-	    } else {
-		(*abortProc)("%s %s. Stop in %s.", msg, gn->name,
-			Var_Value(".CURDIR"));
-		return false;
-	    }
+			if (gn->type & OP_OPTIONAL) {
+				(void)fprintf(stdout, "%s %s(ignored)\n", msg, 
+				    gn->name);
+				(void)fflush(stdout);
+			} else if (keepgoing) {
+				(void)fprintf(stdout, "%s %s(continuing)\n", 
+				    msg, gn->name);
+				(void)fflush(stdout);
+				return false;
+			} else {
+				(*abortProc)("%s %s. Stop in %s.", msg, 
+				    gn->name, Var_Value(".CURDIR"));
+				return false;
+			}
+		}
 	}
-    }
-    return true;
+	return true;
 }
 
 /*-
@@ -131,58 +133,58 @@ Job_CheckCommands(GNode *gn, 		/* The target whose commands need
  *-----------------------------------------------------------------------
  */
 void
-Job_Touch(GNode *gn,		/* the node of the file to touch */
-    bool silent)		/* true if should not print messages */
+Job_Touch(GNode *gn, bool silent)
 {
-    int 	  streamID;	/* ID of stream opened to do the touch */
+	int streamID;	/* ID of stream opened to do the touch */
 
-    if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
-	/*
-	 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual" targets
-	 * and, as such, shouldn't really be created.
-	 */
-	return;
-    }
-
-    if (!silent) {
-	(void)fprintf(stdout, "touch %s\n", gn->name);
-	(void)fflush(stdout);
-    }
-
-    if (noExecute) {
-	return;
-    }
-
-    if (gn->type & OP_ARCHV) {
-	Arch_Touch(gn);
-    } else if (gn->type & OP_LIB) {
-	Arch_TouchLib(gn);
-    } else {
-	const char *file = gn->path != NULL ? gn->path : gn->name;
-
-	if (set_times(file) == -1){
-	    streamID = open(file, O_RDWR | O_CREAT, 0666);
-
-	    if (streamID >= 0) {
-		char	c;
-
+	if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
 		/*
-		 * Read and write a byte to the file to change the
-		 * modification time, then close the file.
+		 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual"
+		 * targets and, as such, shouldn't really be created.
 		 */
-		if (read(streamID, &c, 1) == 1) {
-		    (void)lseek(streamID, 0, SEEK_SET);
-		    (void)write(streamID, &c, 1);
-		}
-
-		(void)close(streamID);
-	    } else {
-		(void)fprintf(stdout, "*** couldn't touch %s: %s",
-			       file, strerror(errno));
-		(void)fflush(stdout);
-	    }
+		return;
 	}
-    }
+
+	if (!silent) {
+		(void)fprintf(stdout, "touch %s\n", gn->name);
+		(void)fflush(stdout);
+	}
+
+	if (noExecute) {
+		return;
+	}
+
+	if (gn->type & OP_ARCHV) {
+		Arch_Touch(gn);
+	} else if (gn->type & OP_LIB) {
+		Arch_TouchLib(gn);
+	} else {
+		const char *file = gn->path != NULL ? gn->path : gn->name;
+
+		if (set_times(file) == -1){
+			streamID = open(file, O_RDWR | O_CREAT, 0666);
+
+			if (streamID >= 0) {
+				char	c;
+
+				/*
+				 * Read and write a byte to the file to change
+				 * the modification time, then close the file.
+				 */
+				if (read(streamID, &c, 1) == 1) {
+					(void)lseek(streamID, 0, SEEK_SET);
+					(void)write(streamID, &c, 1);
+				}
+
+				(void)close(streamID);
+			} else {
+				(void)fprintf(stdout, 
+				    "*** couldn't touch %s: %s", file, 
+				    strerror(errno));
+				(void)fflush(stdout);
+			}
+		}
+	}
 }
 
 /*-
@@ -201,8 +203,8 @@ Make_TimeStamp(
     GNode *pgn, /* the current parent */
     GNode *cgn) /* the child we've just examined */
 {
-    if (is_strictly_before(pgn->cmtime, cgn->mtime))
-	pgn->cmtime = cgn->mtime;
+	if (is_strictly_before(pgn->cmtime, cgn->mtime))
+		pgn->cmtime = cgn->mtime;
 }
 
 /*-
@@ -230,38 +232,40 @@ Make_HandleUse(
     GNode	*cgn,	/* The .USE node */
     GNode	*pgn)	/* The target of the .USE node */
 {
-    GNode	*gn;	/* A child of the .USE node */
-    LstNode	ln;	/* An element in the children list */
+	GNode	*gn;	/* A child of the .USE node */
+	LstNode	ln;	/* An element in the children list */
 
-    if (cgn->type & (OP_USE|OP_TRANSFORM)) {
-	if ((cgn->type & OP_USE) || Lst_IsEmpty(&pgn->commands)) {
-	    /* .USE or transformation and target has no commands -- append
-	     * the child's commands to the parent.  */
-	    Lst_Concat(&pgn->commands, &cgn->commands);
+	if (cgn->type & (OP_USE|OP_TRANSFORM)) {
+		if ((cgn->type & OP_USE) || Lst_IsEmpty(&pgn->commands)) {
+			/* .USE or transformation and target has no commands --
+			 * append the child's commands to the parent.  */
+			Lst_Concat(&pgn->commands, &cgn->commands);
+		}
+
+		for (ln = Lst_First(&cgn->children); ln != NULL; 
+		    ln = Lst_Adv(ln)) {
+			gn = (GNode *)Lst_Datum(ln);
+
+			if (Lst_AddNew(&pgn->children, gn)) {
+				Lst_AtEnd(&gn->parents, pgn);
+				pgn->unmade += 1;
+			}
+		}
+
+		pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM);
+
+		/*
+		 * This child node is now "made", so we decrement the count of
+		 * unmade children in the parent... We also remove the child
+		 * from the parent's list to accurately reflect the number of
+		 * decent children the parent has. This is used by Make_Run to
+		 * decide whether to queue the parent or examine its
+		 * children...
+		 */
+		if (cgn->type & OP_USE) {
+			pgn->unmade--;
+		}
 	}
-
-	for (ln = Lst_First(&cgn->children); ln != NULL; ln = Lst_Adv(ln)) {
-	    gn = (GNode *)Lst_Datum(ln);
-
-	    if (Lst_AddNew(&pgn->children, gn)) {
-		Lst_AtEnd(&gn->parents, pgn);
-		pgn->unmade += 1;
-	    }
-	}
-
-	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM);
-
-	/*
-	 * This child node is now "made", so we decrement the count of
-	 * unmade children in the parent... We also remove the child
-	 * from the parent's list to accurately reflect the number of decent
-	 * children the parent has. This is used by Make_Run to decide
-	 * whether to queue the parent or examine its children...
-	 */
-	if (cgn->type & OP_USE) {
-	    pgn->unmade--;
-	}
-    }
 }
 
 /*-
@@ -287,42 +291,44 @@ MakeAddAllSrc(
     void *pgnp) /* The parent to whose ALLSRC variable it should be */
 			/* added */
 {
-    GNode	*cgn = (GNode *)cgnp;
-    GNode	*pgn = (GNode *)pgnp;
-    if ((cgn->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) == 0) {
-	const char *child;
+	GNode *cgn = (GNode *)cgnp;
+	GNode *pgn = (GNode *)pgnp;
+	if ((cgn->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) == 0) {
+		const char *child;
 
-	if (OP_NOP(cgn->type) ||
-	    (child = Varq_Value(TARGET_INDEX, cgn)) == NULL) {
-	    /*
-	     * this node is only source; use the specific pathname for it
-	     */
-	    child = cgn->path != NULL ? cgn->path : cgn->name;
-	}
+		if (OP_NOP(cgn->type) ||
+		    (child = Varq_Value(TARGET_INDEX, cgn)) == NULL) {
+			/*
+			 * this node is only source; use the specific pathname
+			 * for it
+			 */
+			child = cgn->path != NULL ? cgn->path : cgn->name;
+		}
 
-	Varq_Append(ALLSRC_INDEX, child, pgn);
-	if (pgn->type & OP_JOIN) {
-	    if (cgn->made == MADE) {
-		Varq_Append(OODATE_INDEX, child, pgn);
-	    }
-	} else if (is_strictly_before(pgn->mtime, cgn->mtime) ||
-		   (!is_strictly_before(cgn->mtime, now) && cgn->made == MADE))
-	{
-	    /*
-	     * It goes in the OODATE variable if the parent is younger than the
-	     * child or if the child has been modified more recently than
-	     * the start of the make. This is to keep pmake from getting
-	     * confused if something else updates the parent after the
-	     * make starts (shouldn't happen, I know, but sometimes it
-	     * does). In such a case, if we've updated the kid, the parent
-	     * is likely to have a modification time later than that of
-	     * the kid and anything that relies on the OODATE variable will
-	     * be hosed.
-	     *
-	     */
-	    Varq_Append(OODATE_INDEX, child, pgn);
+		Varq_Append(ALLSRC_INDEX, child, pgn);
+		if (pgn->type & OP_JOIN) {
+			if (cgn->made == MADE) {
+				Varq_Append(OODATE_INDEX, child, pgn);
+			}
+		} else if (is_strictly_before(pgn->mtime, cgn->mtime) ||
+		    (!is_strictly_before(cgn->mtime, now) && 
+		    cgn->made == MADE)) {
+			/*
+			 * It goes in the OODATE variable if the parent is
+			 * younger than the child or if the child has been
+			 * modified more recently than the start of the make.
+			 * This is to keep pmake from getting confused if
+			 * something else updates the parent after the make
+			 * starts (shouldn't happen, I know, but sometimes it
+			 * does). In such a case, if we've updated the kid, the
+			 * parent is likely to have a modification time later
+			 * than that of the kid and anything that relies on the
+			 * OODATE variable will be hosed.
+			 *
+			 */
+			Varq_Append(OODATE_INDEX, child, pgn);
+		}
 	}
-    }
 }
 
 /*-
@@ -347,15 +353,15 @@ MakeAddAllSrc(
 void
 Make_DoAllVar(GNode *gn)
 {
-    Lst_ForEach(&gn->children, MakeAddAllSrc, gn);
+	Lst_ForEach(&gn->children, MakeAddAllSrc, gn);
 
-    if (Varq_Value(OODATE_INDEX, gn) == NULL)
-	Varq_Set(OODATE_INDEX, "", gn);
-    if (Varq_Value(ALLSRC_INDEX, gn) == NULL)
-	Varq_Set(ALLSRC_INDEX, "", gn);
+	if (Varq_Value(OODATE_INDEX, gn) == NULL)
+		Varq_Set(OODATE_INDEX, "", gn);
+	if (Varq_Value(ALLSRC_INDEX, gn) == NULL)
+		Varq_Set(ALLSRC_INDEX, "", gn);
 
-    if (gn->type & OP_JOIN)
-	Varq_Set(TARGET_INDEX, Varq_Value(ALLSRC_INDEX, gn), gn);
+	if (gn->type & OP_JOIN)
+		Varq_Set(TARGET_INDEX, Varq_Value(ALLSRC_INDEX, gn), gn);
 }
 
 /* Wrapper to call Make_TimeStamp from a forEach loop.	*/
@@ -364,7 +370,7 @@ MakeTimeStamp(
     void *pgn,	/* the current parent */
     void *cgn)	/* the child we've just examined */
 {
-    Make_TimeStamp((GNode *)pgn, (GNode *)cgn);
+	Make_TimeStamp((GNode *)pgn, (GNode *)cgn);
 }
 
 /*-
@@ -388,124 +394,125 @@ MakeTimeStamp(
 bool
 Make_OODate(GNode *gn)	/* the node to check */
 {
-    bool	    oodate;
+	bool oodate;
 
-    /*
-     * Certain types of targets needn't even be sought as their datedness
-     * doesn't depend on their modification time...
-     */
-    if ((gn->type & (OP_JOIN|OP_USE|OP_EXEC)) == 0) {
-	(void)Dir_MTime(gn);
-	if (DEBUG(MAKE)) {
-	    if (!is_out_of_date(gn->mtime)) {
-		printf("modified %s...", time_to_string(gn->mtime));
-	    } else {
-		printf("non-existent...");
-	    }
-	}
-    }
-
-    /*
-     * A target is remade in one of the following circumstances:
-     *	its modification time is smaller than that of its youngest child
-     *	    and it would actually be run (has commands or type OP_NOP)
-     *	it's the object of a force operator
-     *	it has no children, was on the lhs of an operator and doesn't exist
-     *	    already.
-     *
-     * Libraries are only considered out-of-date if the archive module says
-     * they are.
-     *
-     * These weird rules are brought to you by Backward-Compatibility and
-     * the strange people who wrote 'Make'.
-     */
-    if (gn->type & OP_USE) {
 	/*
-	 * If the node is a USE node it is *never* out of date
-	 * no matter *what*.
+	 * Certain types of targets needn't even be sought as their datedness
+	 * doesn't depend on their modification time...
 	 */
-	if (DEBUG(MAKE)) {
-	    printf(".USE node...");
-	}
-	oodate = false;
-    } else if ((gn->type & OP_LIB) && Arch_IsLib(gn)) {
-	if (DEBUG(MAKE)) {
-	    printf("library...");
+	if ((gn->type & (OP_JOIN|OP_USE|OP_EXEC)) == 0) {
+		(void)Dir_MTime(gn);
+		if (DEBUG(MAKE)) {
+			if (!is_out_of_date(gn->mtime)) {
+				printf("modified %s...", 
+				    time_to_string(gn->mtime));
+			} else {
+				printf("non-existent...");
+			}
+		}
 	}
 
 	/*
-	 * always out of date if no children and :: target
+	 * A target is remade in one of the following circumstances:
+	 *	its modification time is smaller than that of its youngest child
+	 *	    and it would actually be run (has commands or type OP_NOP)
+	 *	it's the object of a force operator
+	 *	it has no children, was on the lhs of an operator and doesn't
+	 *	exist already.
+	 *
+	 * Libraries are only considered out-of-date if the archive module says
+	 * they are.
+	 *
+	 * These weird rules are brought to you by Backward-Compatibility and
+	 * the strange people who wrote 'Make'.
 	 */
+	if (gn->type & OP_USE) {
+		/*
+		 * If the node is a USE node it is *never* out of date
+		 * no matter *what*.
+		 */
+		if (DEBUG(MAKE)) {
+			printf(".USE node...");
+		}
+		oodate = false;
+	} else if ((gn->type & OP_LIB) && Arch_IsLib(gn)) {
+		if (DEBUG(MAKE)) {
+			printf("library...");
+		}
 
-	oodate = Arch_LibOODate(gn) ||
-	    (is_out_of_date(gn->cmtime) && (gn->type & OP_DOUBLEDEP));
-    } else if (gn->type & OP_JOIN) {
-	/*
-	 * A target with the .JOIN attribute is only considered
-	 * out-of-date if any of its children was out-of-date.
-	 */
-	if (DEBUG(MAKE)) {
-	    printf(".JOIN node...");
-	}
-	oodate = gn->childMade;
-    } else if (gn->type & (OP_FORCE|OP_EXEC|OP_PHONY)) {
-	/*
-	 * A node which is the object of the force (!) operator or which has
-	 * the .EXEC attribute is always considered out-of-date.
-	 */
-	if (DEBUG(MAKE)) {
-	    if (gn->type & OP_FORCE) {
-		printf("! operator...");
-	    } else if (gn->type & OP_PHONY) {
-		printf(".PHONY node...");
-	    } else {
-		printf(".EXEC node...");
-	    }
-	}
-	oodate = true;
-    } else if (is_strictly_before(gn->mtime, gn->cmtime) ||
-	       (is_out_of_date(gn->cmtime) &&
-		(is_out_of_date(gn->mtime) || (gn->type & OP_DOUBLEDEP))))
-    {
-	/*
-	 * A node whose modification time is less than that of its
-	 * youngest child or that has no children (cmtime == OUT_OF_DATE) and
-	 * either doesn't exist (mtime == OUT_OF_DATE) or was the object of a
-	 * :: operator is out-of-date. Why? Because that's the way Make does
-	 * it.
-	 */
-	if (DEBUG(MAKE)) {
-	    if (is_strictly_before(gn->mtime, gn->cmtime)) {
-		printf("modified before source...");
-	    } else if (is_out_of_date(gn->mtime)) {
-		printf("non-existent and no sources...");
-	    } else {
-		printf(":: operator and no sources...");
-	    }
-	}
-	oodate = true;
-    } else {
+		/*
+		 * always out of date if no children and :: target
+		 */
+
+		oodate = Arch_LibOODate(gn) ||
+		    (is_out_of_date(gn->cmtime) && (gn->type & OP_DOUBLEDEP));
+	} else if (gn->type & OP_JOIN) {
+		/*
+		 * A target with the .JOIN attribute is only considered
+		 * out-of-date if any of its children was out-of-date.
+		 */
+		if (DEBUG(MAKE)) {
+			printf(".JOIN node...");
+		}
+		oodate = gn->childMade;
+	} else if (gn->type & (OP_FORCE|OP_EXEC|OP_PHONY)) {
+		/*
+		 * A node which is the object of the force (!) operator or
+		 * which has the .EXEC attribute is always considered
+		 * out-of-date.
+		 */
+		if (DEBUG(MAKE)) {
+			if (gn->type & OP_FORCE) {
+				printf("! operator...");
+			} else if (gn->type & OP_PHONY) {
+				printf(".PHONY node...");
+			} else {
+				printf(".EXEC node...");
+			}
+		}
+		oodate = true;
+	} else if (is_strictly_before(gn->mtime, gn->cmtime) ||
+	    (is_out_of_date(gn->cmtime) &&
+	    (is_out_of_date(gn->mtime) || (gn->type & OP_DOUBLEDEP)))) {
+		/*
+		 * A node whose modification time is less than that of its
+		 * youngest child or that has no children (cmtime ==
+		 * OUT_OF_DATE) and either doesn't exist (mtime == OUT_OF_DATE)
+		 * or was the object of a :: operator is out-of-date. Why?
+		 * Because that's the way Make does it.
+		 */
+		if (DEBUG(MAKE)) {
+			if (is_strictly_before(gn->mtime, gn->cmtime)) {
+				printf("modified before source...");
+			} else if (is_out_of_date(gn->mtime)) {
+				printf("non-existent and no sources...");
+			} else {
+				printf(":: operator and no sources...");
+			}
+		}
+		oodate = true;
+	} else {
 #if 0
-	/* WHY? */
-	if (DEBUG(MAKE)) {
-	    printf("source %smade...", gn->childMade ? "" : "not ");
-	}
-	oodate = gn->childMade;
+		/* WHY? */
+		if (DEBUG(MAKE)) {
+			printf("source %smade...", gn->childMade ? "" : "not ");
+		}
+		oodate = gn->childMade;
 #else
-	oodate = false;
+		oodate = false;
 #endif /* 0 */
-    }
+	}
 
-    /*
-     * If the target isn't out-of-date, the parents need to know its
-     * modification time. Note that targets that appear to be out-of-date
-     * but aren't, because they have no commands and aren't of type OP_NOP,
-     * have their mtime stay below their children's mtime to keep parents from
-     * thinking they're out-of-date.
-     */
-    if (!oodate)
-	Lst_ForEach(&gn->parents, MakeTimeStamp, gn);
+	/*
+	 * If the target isn't out-of-date, the parents need to know its
+	 * modification time. Note that targets that appear to be out-of-date
+	 * but aren't, because they have no commands and aren't of type OP_NOP,
+	 * have their mtime stay below their children's mtime to keep parents
+	 * from thinking they're out-of-date.
+	 */
+	if (!oodate)
+		Lst_ForEach(&gn->parents, MakeTimeStamp, gn);
 
-    return oodate;
+	return oodate;
 }
 
