@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.75 2007/06/06 17:15:14 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.76 2007/09/16 15:54:52 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1400,7 +1400,7 @@ st_mode_select(st, flags)
 	inbuf = malloc(sizeof(*inbuf), M_TEMP, M_NOWAIT);
 	if (inbuf == NULL)
 		return (ENOMEM);
-	outbuf = malloc(sizeof(*outbuf), M_TEMP, M_NOWAIT);
+	outbuf = malloc(sizeof(*outbuf), M_TEMP, M_NOWAIT | M_ZERO);
 	if (outbuf == NULL) {
 		free(inbuf, M_TEMP);
 		return (ENOMEM);
@@ -1426,7 +1426,6 @@ st_mode_select(st, flags)
 		return (0);
 	}
 
-	bzero(outbuf, sizeof(*outbuf));
 	bzero(&general, sizeof(general));
 
 	general.density = st->density;
