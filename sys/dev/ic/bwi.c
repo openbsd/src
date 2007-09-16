@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.28 2007/09/16 09:58:04 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.29 2007/09/16 11:12:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -516,7 +516,7 @@ bwi_intr(void *xsc)
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
 	int i, txrx_error;
 
-	return (0);
+	DPRINTF(2, "%s\n", __func__);
 
 	/*
 	 * Get interrupt status
@@ -1026,8 +1026,6 @@ bwi_mac_init(struct bwi_mac *mac)
 	error = bwi_mac_fw_init(mac);
 	if (error)
 		return (error);
-
-	return (0);
 
 	/*
 	 * Turn on RF
@@ -6378,6 +6376,9 @@ bwi_init(struct ifnet *ifp)
 		DPRINTF(1, "%s: can't stop\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
+
+	if (sc->sc_enable != NULL)
+		(*sc->sc_enable)(sc);
 
 	bwi_bbp_power_on(sc, BWI_CLOCK_MODE_FAST);
 
