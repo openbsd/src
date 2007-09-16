@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.31 2007/09/16 11:52:40 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.32 2007/09/16 12:15:57 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6377,6 +6377,7 @@ bwi_init(struct ifnet *ifp)
 		return (1);
 	}
 
+	/* power on cardbus socket */
 	if (sc->sc_enable != NULL)
 		(*sc->sc_enable)(sc);
 
@@ -6693,6 +6694,10 @@ bwi_stop(struct bwi_softc *sc)
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	/* power off cardbus socket */
+	if (sc->sc_disable)
+		sc->sc_disable(sc);
 
 	return (0);
 }
