@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.29 2007/09/16 11:12:38 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.30 2007/09/16 11:30:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7345,8 +7345,6 @@ bwi_setup_tx_desc64(struct bwi_softc *sc, struct bwi_ring_data *rd,
 int
 bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 {
-	DPRINTF(1, "%s\n", __func__);
-
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
 	struct bwi_rxbuf *rxbuf = &rbd->rbd_buf[buf_idx];
 	struct bwi_rxbuf_hdr *hdr;
@@ -7474,8 +7472,6 @@ bwi_next_scan(void *xsc)
 void
 bwi_rxeof(struct bwi_softc *sc, int end_idx)
 {
-	DPRINTF(1, "%s\n", __func__);
-
 	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
 	struct bwi_rxbuf_data *rbd = &sc->sc_rx_bdata;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -7772,8 +7768,6 @@ bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *plcp, int pkt_len,
 void
 bwi_plcp_header(void *plcp, int pkt_len, uint8_t rate)
 {
-	printf("%s\n", __func__);
-
 	enum bwi_modtype modtype;
 
 	/*
@@ -7946,7 +7940,7 @@ int
 bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
     struct ieee80211_node *ni)
 {
-	printf("%s\n", __func__);
+	DPRINTF(2, "%s\n", __func__);
 
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct bwi_ring_data *rd = &sc->sc_tx_rdata[BWI_TX_DATA_RING];
@@ -8556,7 +8550,7 @@ bwi_updateslot(struct ieee80211com *ic)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	DPRINTF(1, "%s\n", __func__);
+	DPRINTF(2, "%s\n", __func__);
 
 	KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
 	mac = (struct bwi_mac *)sc->sc_cur_regwin;
