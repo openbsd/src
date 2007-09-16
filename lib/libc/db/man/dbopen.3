@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.24 2007/05/31 19:19:27 jmc Exp $
+.\"	$OpenBSD: dbopen.3,v 1.25 2007/09/16 19:40:56 otto Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)dbopen.3	8.5 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 16 2007 $
 .Dt DBOPEN 3
 .Os
 .Sh NAME
@@ -232,6 +232,10 @@ routines return \-1 on error (setting
 0 on success, and 1 if the
 .Fa key
 was not in the file.
+.Pp
+.Fa flags
+is currently unused.
+Specifying anything but 0 will result in an error.
 .It Fa put
 A pointer to a routine to store key/data pairs in the database.
 .Pp
