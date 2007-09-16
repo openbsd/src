@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.32 2007/09/16 12:15:57 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.33 2007/09/16 12:33:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -83,7 +83,7 @@ int bwi_debug = 1;
 #endif
 
 /* XXX temporary porting goop */
-#define KKASSERT(cond) if (!(cond)) panic("bwi KKASSERT!\n")
+#define KKASSERT(cond) if (!(cond)) panic("KKASSERT: %s in %s", #cond, __func__)
 #undef KASSERT
 #define KASSERT(cond, complaint) if (!(cond)) panic complaint
 
