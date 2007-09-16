@@ -2,7 +2,7 @@
 #define MEMORY_H
 
 /* $OpenPackages$ */
-/* $OpenBSD: memory.h,v 1.2 2003/06/03 02:56:12 millert Exp $ */
+/* $OpenBSD: memory.h,v 1.3 2007/09/16 10:43:53 espie Exp $ */
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -53,5 +53,9 @@ extern void esetenv(const char *, const char *);
 extern void *hash_alloc(size_t, void *);
 extern void hash_free(void *, size_t, void *);
 extern void *element_alloc(size_t, void *);
+
+struct ohash;
+/* free_hash(o): free a ohash structure, where each element can be free'd. */
+extern void free_hash(struct ohash *);
 
 #endif	/* MEMORY_H */

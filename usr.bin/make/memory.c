@@ -1,5 +1,5 @@
 /* $OpenPackages$ */
-/* $OpenBSD: memory.c,v 1.3 2004/04/07 13:11:36 espie Exp $ */
+/* $OpenBSD: memory.c,v 1.4 2007/09/16 10:43:53 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,6 +42,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <ohash.h>
 #include "defines.h"
 #include "memory.h"
 
@@ -164,5 +167,16 @@ eunlink(const char *file)
 		return -1;
 	}
 	return unlink(file);
+}
+
+void
+free_hash(struct ohash *h)
+{
+	void *e;
+	unsigned int i;
+
+	for (e = ohash_first(h, &i); e != NULL; e = ohash_next(h, &i))
+		free(e);
+	ohash_delete(h);
 }
 

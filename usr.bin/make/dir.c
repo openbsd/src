@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.47 2007/09/16 10:14:26 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.48 2007/09/16 10:43:53 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -219,9 +219,6 @@ static struct file_stamp *find_stampi(const char *, const char *);
  * 	cache. */
 static void record_stamp(const char *, TIMESTAMP);
 
-/* free_hash(o): free a ohash structure, where each element can be free'd. */
-static void free_hash(struct ohash *);
-
 /* p = DirReaddiri(name, end): read an actual directory, caching results
  * 	as we go.  */
 static Path *DirReaddiri(const char *, const char *);
@@ -274,17 +271,6 @@ find_file_hashi(Path *p, const char *file, const char *efile, uint32_t hv)
 	struct ohash 	*h = &p->files;
 
 	return ohash_find(h, ohash_lookup_interval(h, file, efile, hv));
-}
-
-static void
-free_hash(struct ohash *h)
-{
-	void *e;
-	unsigned int i;
-
-	for (e = ohash_first(h, &i); e != NULL; e = ohash_next(h, &i))
-		free(e);
-	ohash_delete(h);
 }
 
 
