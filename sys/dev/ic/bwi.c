@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.33 2007/09/16 12:33:26 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.34 2007/09/16 19:02:36 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -142,12 +142,6 @@ void		 bwi_mac_setup_tpctl(struct bwi_mac *);
 void		 bwi_mac_dummy_xmit(struct bwi_mac *);
 void		 bwi_mac_init_tpctl_11bg(struct bwi_mac *);
 void		 bwi_mac_detach(struct bwi_mac *);
-#if 0
-int		 bwi_fwimage_is_valid(struct bwi_softc *,
-		     const struct fw_image *, uint8_t);
-int		 bwi_mac_fw_alloc(struct bwi_mac *);
-void		 bwi_mac_fw_free(struct bwi_mac *);
-#endif
 int		 bwi_get_firmware(const char *, const uint8_t *, size_t,
 		     size_t *, size_t *);
 int		 bwi_mac_fw_load(struct bwi_mac *);
@@ -1506,180 +1500,8 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 void
 bwi_mac_detach(struct bwi_mac *mac)
 {
-	//bwi_mac_fw_free(mac);
+
 }
-
-#if 0
-int
-bwi_fwimage_is_valid(struct bwi_softc *sc, const struct fw_image *fw,
-    uint8_t fw_type)
-{
-	const struct bwi_fwhdr *hdr;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-
-	if (fw->fw_imglen < sizeof(*hdr)) {
-		DPRINTF(1, "%s: invalid firmware (%s): invalid size %u\n",
-		    sc->sc_dev.dv_xname, fw->fw_name, fw->fw_imglen);
-		return (0);
-	}
-
-	hdr = (const struct bwi_fwhdr *)fw->fw_image;
-
-	if (fw_type != BWI_FW_T_IV) {
-		/*
-		 * Don't verify IV's size, it has different meaning
-		 */
-		if (betoh32(hdr->fw_size) != fw->fw_imglen - sizeof(*hdr)) {
-			DPRINTF(1, "%s: invalid firmware (%s): size mismatch, "
-			    "fw %u, real %u\n",
-			    sc->sc_dev.dv_xname, fw->fw_name,
-			    betoh32(hdr->fw_size),
-			    fw->fw_imglen - sizeof(*hdr));
-			return (0);
-		}
-	}
-
-	if (hdr->fw_type != fw_type) {
-		DPRINTF(1, "%s: invalid firmware (%s): type mismatch, "
-		    "fw \'%c\', target \'%c\'\n",
-		    fw->fw_name, sc->sc_dev.dv_xname, hdr->fw_type, fw_type);
-		return (0);
-	}
-
-	if (hdr->fw_gen != BWI_FW_GEN_1) {
-		DPRINTF(1, "%s: invalid firmware (%s): wrong generation, "
-		    "fw %d, target %d\n",
-		    sc->sc_dev.dv_xname, fw->fw_name, hdr->fw_gen,
-		    BWI_FW_GEN_1);
-		return (0);
-	}
-
-	return (1);
-}
-#endif
-
-#if 0
-int
-bwi_mac_fw_alloc(struct bwi_mac *mac)
-{
-	struct bwi_softc *sc = mac->mac_sc;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	char fwname[64];
-	int idx;
-
-	if (mac->mac_ucode == NULL) {
-		snprintf(fwname, sizeof(fwname), BWI_FW_UCODE_PATH,
-			  sc->sc_fw_version,
-			  mac->mac_rev >= 5 ? 5 : mac->mac_rev);
-
-		mac->mac_ucode = firmware_image_load(fwname);
-		if (mac->mac_ucode == NULL) {
-			DPRINTF(1, "%s: request firmware %s failed\n",
-			    sc->sc_dev.dv_xname, fwname);
-			return (ENOMEM);
-		}
-
-		if (!bwi_fwimage_is_valid(sc, mac->mac_ucode, BWI_FW_T_UCODE))
-			return EINVAL;
-	}
-
-	if (mac->mac_pcm == NULL) {
-		snprintf(fwname, sizeof(fwname), BWI_FW_PCM_PATH,
-			  sc->sc_fw_version,
-			  mac->mac_rev < 5 ? 4 : 5);
-
-		mac->mac_pcm = firmware_image_load(fwname);
-		if (mac->mac_pcm == NULL) {
-			DPRINTF(1, "%s: request firmware %s failed\n",
-			    sc->sc_dev.dv_xname, fwname);
-			return (ENOMEM);
-		}
-
-		if (!bwi_fwimage_is_valid(sc, mac->mac_pcm, BWI_FW_T_PCM))
-			return EINVAL;
-	}
-
-	if (mac->mac_iv == NULL) {
-		/* TODO: 11A */
-		if (mac->mac_rev == 2 || mac->mac_rev == 4) {
-			idx = 2;
-		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
-			idx = 5;
-		} else {
-			DPRINTF(1, "%s: no suitable IV for MAC rev %d\n",
-			    sc->sc_dev.dv_xname, mac->mac_rev);
-			return (ENODEV);
-		}
-
-		snprintf(fwname, sizeof(fwname), BWI_FW_IV_PATH,
-			  sc->sc_fw_version, idx);
-
-		mac->mac_iv = firmware_image_load(fwname);
-		if (mac->mac_iv == NULL) {
-			DPRINTF(1, "%s: request firmware %s failed\n",
-			    sc->sc_dev.dv_xname, fwname);
-			return (ENOMEM);
-		}
-		if (!bwi_fwimage_is_valid(sc, mac->mac_iv, BWI_FW_T_IV))
-			return EINVAL;
-	}
-
-	if (mac->mac_iv_ext == NULL) {
-		/* TODO: 11A */
-		if (mac->mac_rev == 2 || mac->mac_rev == 4 ||
-		    mac->mac_rev >= 11) {
-			/* No extended IV */
-			goto back;
-		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
-			idx = 5;
-		} else {
-			DPRINTF(1, "%s: no suitable ExtIV for MAC rev %d\n",
-			    sc->sc_dev.dv_xname, mac->mac_rev);
-			return (ENODEV);
-		}
-
-		snprintf(fwname, sizeof(fwname), BWI_FW_IV_EXT_PATH,
-			  sc->sc_fw_version, idx);
-
-		mac->mac_iv_ext = firmware_image_load(fwname);
-		if (mac->mac_iv_ext == NULL) {
-			DPRINTF(1, "%s: request firmware %s failed\n",
-			    sc->sc_dev.dv_xname, fwname);
-			return (ENOMEM);
-		}
-		if (!bwi_fwimage_is_valid(sc, mac->mac_iv_ext, BWI_FW_T_IV))
-			return EINVAL;
-	}
-back:
-	return (0);
-}
-#endif
-
-#if 0
-void
-bwi_mac_fw_free(struct bwi_mac *mac)
-{
-	if (mac->mac_ucode != NULL) {
-		firmware_image_unload(mac->mac_ucode);
-		mac->mac_ucode = NULL;
-	}
-
-	if (mac->mac_pcm != NULL) {
-		firmware_image_unload(mac->mac_pcm);
-		mac->mac_pcm = NULL;
-	}
-
-	if (mac->mac_iv != NULL) {
-		firmware_image_unload(mac->mac_iv);
-		mac->mac_iv = NULL;
-	}
-
-	if (mac->mac_iv_ext != NULL) {
-		firmware_image_unload(mac->mac_iv_ext);
-		mac->mac_iv_ext = NULL;
-	}
-}
-#endif
 
 int
 bwi_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,

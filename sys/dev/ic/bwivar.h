@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.9 2007/09/15 22:47:14 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.10 2007/09/16 19:02:37 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -81,12 +81,6 @@
 	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) & ~(bits))
 #define CSR_CLRBITS_2(sc, reg, bits)	\
 	CSR_WRITE_2((sc), (reg), CSR_READ_2((sc), (reg)) & ~(bits))
-
-struct fwheader {
-	char	filename[64];
-	int	filesize;
-	int	fileoffset;
-};
 
 struct bwi_desc32 {
 	/* Little endian */
@@ -227,32 +221,15 @@ struct bwi_txstats_data {
 	int			stats_idx;
 };
 
-struct bwi_fwhdr {
-	/* Big endian */
-	uint8_t		fw_type;	/* BWI_FW_T_ */
-	uint8_t		fw_gen;		/* BWI_FW_GEN */
-	uint8_t		fw_pad[2];
-	uint32_t	fw_size;
-#define fw_iv_cnt	fw_size
-} __packed;
-
-#define BWI_FWHDR_SZ		sizeof(struct bwi_fwhdr)
-
-#define BWI_FW_T_UCODE		'u'
-#define BWI_FW_T_PCM		'p'
-#define BWI_FW_T_IV		'i'
-
-#define BWI_FW_GEN_1		1
-
 #define BWI_FW_VERSION3		3
 #define BWI_FW_VERSION4		4
 #define BWI_FW_VERSION3_REVMAX	0x128
 
-#define BWI_FW_PATH		"bwi/v%d/"
-#define BWI_FW_UCODE_PATH	BWI_FW_PATH "ucode%d.fw"
-#define BWI_FW_PCM_PATH		BWI_FW_PATH "pcm%d.fw"
-#define BWI_FW_IV_PATH		BWI_FW_PATH "b0g0initvals%d.fw"
-#define BWI_FW_IV_EXT_PATH	BWI_FW_PATH "b0g0bsinitvals%d.fw"
+struct fwheader {
+	char	filename[64];
+	int	filesize;
+	int	fileoffset;
+};
 
 struct bwi_fw_iv {
 	/* Big endian */
@@ -260,9 +237,6 @@ struct bwi_fw_iv {
 	uint16_t		size;
 	uint32_t		val;
 } __packed;
-
-#define BWI_FW_IV_OFS_MASK	__BITS(14, 0)
-#define BWI_FW_IV_IS_32BIT	__BIT(15)
 
 enum bwi_clock_mode {
 	BWI_CLOCK_MODE_SLOW,
