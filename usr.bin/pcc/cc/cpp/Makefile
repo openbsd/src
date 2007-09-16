@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.2 2007/09/15 21:41:00 otto Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/09/16 19:16:59 kjell Exp $
 #
 # Makefile for the cpp part of pcc.
 #
 PROG=   	cpp
 PREFIX=		/usr/local
 BINDIR=		${PREFIX}/libexec
-MANDIR=		${PREFIX}/share/man/man
+MANDIR=		${PREFIX}/man/man
 TARGOS=		openbsd
 TARGMACH=	x86
 
