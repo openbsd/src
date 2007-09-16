@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.21 2007/06/25 19:59:55 otto Exp $	*/
+/*	$OpenBSD: dir.c,v 1.22 2007/09/16 17:42:40 otto Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.21 2007/06/25 19:59:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dir.c,v 1.22 2007/09/16 17:42:40 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -316,7 +316,7 @@ adjust(struct inodesc *idesc, short lcnt)
 				printf(" (ADJUSTED)\n");
 		}
 		if (preen || reply("ADJUST") == 1) {
-			DIP(dp, di_nlink) -= lcnt;
+			DIP_SET(dp, di_nlink, DIP(dp, di_nlink) - lcnt);
 			inodirty();
 		}
 	}
