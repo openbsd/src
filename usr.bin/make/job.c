@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.62 2007/06/12 16:33:27 cnst Exp $	*/
+/*	$OpenBSD: job.c,v 1.63 2007/09/16 10:39:07 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -99,7 +99,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -108,21 +107,18 @@
 #include <unistd.h>
 #include "config.h"
 #include "defines.h"
-#include "dir.h"
 #include "job.h"
+#include "engine.h"
 #include "pathnames.h"
-#include "arch.h"
 #include "var.h"
 #include "targ.h"
 #include "error.h"
-#include "str.h"
 #include "lst.h"
 #include "extern.h"
 #include "gnode.h"
 #include "memory.h"
 #include "make.h"
-#include "timestamp.h"
-#include "main.h"
+#include "str.h"
 
 #define TMPPAT	"/tmp/makeXXXXXXXXXX"
 
@@ -1108,135 +1104,6 @@ JobFinish(Job *job,		/* job to finish */
 	(void)eunlink(tfile);
 	Finish(errors);
     }
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Job_Touch --
- *	Touch the given target. Called by JobStart when the -t flag was
- *	given
- *
- * Side Effects:
- *	The data modification of the file is changed. In addition, if the
- *	file did not exist, it is created.
- *-----------------------------------------------------------------------
- */
-void
-Job_Touch(GNode *gn,		/* the node of the file to touch */
-    bool silent)		/* true if should not print messages */
-{
-    int 	  streamID;	/* ID of stream opened to do the touch */
-
-    if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
-	/*
-	 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual" targets
-	 * and, as such, shouldn't really be created.
-	 */
-	return;
-    }
-
-    if (!silent) {
-	(void)fprintf(stdout, "touch %s\n", gn->name);
-	(void)fflush(stdout);
-    }
-
-    if (noExecute) {
-	return;
-    }
-
-    if (gn->type & OP_ARCHV) {
-	Arch_Touch(gn);
-    } else if (gn->type & OP_LIB) {
-	Arch_TouchLib(gn);
-    } else {
-	const char *file = gn->path != NULL ? gn->path : gn->name;
-
-	if (set_times(file) == -1){
-	    streamID = open(file, O_RDWR | O_CREAT, 0666);
-
-	    if (streamID >= 0) {
-		char	c;
-
-		/*
-		 * Read and write a byte to the file to change the
-		 * modification time, then close the file.
-		 */
-		if (read(streamID, &c, 1) == 1) {
-		    (void)lseek(streamID, 0, SEEK_SET);
-		    (void)write(streamID, &c, 1);
-		}
-
-		(void)close(streamID);
-	    } else {
-		(void)fprintf(stdout, "*** couldn't touch %s: %s",
-			       file, strerror(errno));
-		(void)fflush(stdout);
-	    }
-	}
-    }
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Job_CheckCommands --
- *	Make sure the given node has all the commands it needs.
- *
- * Results:
- *	true if the commands list is/was ok.
- *
- * Side Effects:
- *	The node will have commands from the .DEFAULT rule added to it
- *	if it needs them.
- *-----------------------------------------------------------------------
- */
-bool
-Job_CheckCommands(GNode *gn, 		/* The target whose commands need
-				     	 * verifying */
-    void (*abortProc)(char *, ...)) 	/* Function to abort with message */
-{
-    if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->commands) &&
-	(gn->type & OP_LIB) == 0) {
-	/*
-	 * No commands. Look for .DEFAULT rule from which we might infer
-	 * commands
-	 */
-	if (DEFAULT != NULL && !Lst_IsEmpty(&DEFAULT->commands)) {
-	    /*
-	     * Make only looks for a .DEFAULT if the node was never the
-	     * target of an operator, so that's what we do too. If
-	     * a .DEFAULT was given, we substitute its commands for gn's
-	     * commands and set the IMPSRC variable to be the target's name
-	     * The DEFAULT node acts like a transformation rule, in that
-	     * gn also inherits any attributes or sources attached to
-	     * .DEFAULT itself.
-	     */
-	    Make_HandleUse(DEFAULT, gn);
-	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), gn);
-	} else if (is_out_of_date(Dir_MTime(gn))) {
-	    /*
-	     * The node wasn't the target of an operator we have no .DEFAULT
-	     * rule to go on and the target doesn't already exist. There's
-	     * nothing more we can do for this branch. If the -k flag wasn't
-	     * given, we stop in our tracks, otherwise we just don't update
-	     * this node's parents so they never get examined.
-	     */
-	    static const char msg[] = "make: don't know how to make";
-
-	    if (gn->type & OP_OPTIONAL) {
-		(void)fprintf(stdout, "%s %s(ignored)\n", msg, gn->name);
-		(void)fflush(stdout);
-	    } else if (keepgoing) {
-		(void)fprintf(stdout, "%s %s(continuing)\n", msg, gn->name);
-		(void)fflush(stdout);
-		return false;
-	    } else {
-		(*abortProc)("%s %s. Stop in %s.", msg, gn->name,
-			Var_Value(".CURDIR"));
-		return false;
-	    }
-	}
-    }
-    return true;
 }
 
 /*-

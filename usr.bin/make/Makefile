@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2007/09/16 10:20:17 espie Exp $
+#	$OpenBSD: Makefile,v 1.46 2007/09/16 10:39:07 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -16,7 +16,7 @@ CFLAGS+=${CDEFS}
 HOSTCFLAGS+=${CDEFS}
 
 SRCS=	arch.c buf.c cmd_exec.c compat.c cond.c dir.c direxpand.c \
-	error.c for.c \
+	engine.c error.c for.c \
 	init.c job.c lowparse.c main.c make.c memory.c parse.c \
 	parsevar.c str.c stats.c suff.c targ.c timestamp.c \
 	var.c varmodifiers.c varname.c

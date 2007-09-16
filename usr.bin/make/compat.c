@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.54 2007/09/16 09:46:14 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.55 2007/09/16 10:39:07 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
-#include "job.h"
+#include "engine.h"
 #include "compat.h"
 #include "suff.h"
 #include "var.h"
