@@ -2,7 +2,7 @@
 #define DIR_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.h,v 1.19 2007/09/16 12:19:15 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.20 2007/09/16 12:30:35 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -150,7 +150,7 @@ extern void Dir_PrintDirectories(void);
 #endif
 
 /* List of directories to search when looking for targets. */
-extern Lst	dirSearchPath;	
+extern Lst	defaultPath;	
 
 
 /* communication between dir.c and direxpand.c */

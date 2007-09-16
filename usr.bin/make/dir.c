@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.50 2007/09/16 12:19:15 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.51 2007/09/16 12:30:35 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct PathEntry {
  *	hampers the style of some makefiles, they must be changed.
  *
  *	A list of all previously-read directories is kept in the
- *	openDirectories cache.
+ *	knownDirectories cache.
  *
  *	The need for the caching of whole directories is brought about by
  *	the multi-level transformation code in suff.c, which tends to search
@@ -162,8 +162,8 @@ struct PathEntry {
  *	sense to replace the access() with a stat() and record the mtime
  *	in a cache for when Dir_MTime was actually called.  */
 
-static LIST   thedirSearchPath;		/* main search path */
-Lst	      dirSearchPath= &thedirSearchPath;
+static LIST   theDefaultPath;		/* main search path */
+Lst	      defaultPath= &theDefaultPath;
 
 #ifdef DEBUG_DIRECTORY_CACHE
 /* Variables for gathering statistics on the efficiency of the hashing
@@ -181,7 +181,7 @@ struct file_stamp {
 	char name[1];			/* ...for that file.  */
 };
 
-static struct ohash   openDirectories;	/* cache all open directories */
+static struct ohash   knownDirectories;	/* cache all open directories */
 
 /* Global structure used to cache mtimes.  XXX We don't cache an mtime
  * before a caller actually looks up for the given time, because of the
@@ -194,7 +194,7 @@ static struct ohash mtimes;
 /* There are three distinct hash structures:
  * - to collate files's last modification times (global mtimes)
  * - to collate file names (in each PathEntry structure)
- * - to collate known directories (global openDirectories).  */
+ * - to collate known directories (global knownDirectories).  */
 static struct ohash_info stamp_info = { 
 	offsetof(struct file_stamp, name), NULL, hash_alloc, hash_free, 
 	element_alloc };
@@ -282,8 +282,8 @@ Dir_Init(void)
 {
 	char *dotname = ".";
 
-	Static_Lst_Init(dirSearchPath);
-	ohash_init(&openDirectories, 4, &dir_info);
+	Static_Lst_Init(defaultPath);
+	ohash_init(&knownDirectories, 4, &dir_info);
 	ohash_init(&mtimes, 4, &stamp_info);
 
 
@@ -306,11 +306,11 @@ Dir_End(void)
 
 	dot->refCount--;
 	Dir_Destroy(dot);
-	Lst_Destroy(dirSearchPath, Dir_Destroy);
-	for (p = ohash_first(&openDirectories, &i); p != NULL;
-	    p = ohash_next(&openDirectories, &i))
+	Lst_Destroy(defaultPath, Dir_Destroy);
+	for (p = ohash_first(&knownDirectories, &i); p != NULL;
+	    p = ohash_next(&knownDirectories, &i))
 		Dir_Destroy(p);
-	ohash_delete(&openDirectories);
+	ohash_delete(&knownDirectories);
 	free_hash(&mtimes);
 }
 #endif
@@ -600,8 +600,8 @@ DirReaddiri(const char *name, const char *ename)
 	struct dirent *dp;
 	unsigned int slot;
 
-	slot = ohash_qlookupi(&openDirectories, name, &ename);
-	p = ohash_find(&openDirectories, slot);
+	slot = ohash_qlookupi(&knownDirectories, name, &ename);
+	p = ohash_find(&knownDirectories, slot);
 
 	if (p != NULL)
 		return p;
@@ -632,7 +632,7 @@ DirReaddiri(const char *name, const char *ename)
 	if (DEBUG(DIR))
 		printf("done\n");
 
-	ohash_insert(&openDirectories, slot, p);
+	ohash_insert(&knownDirectories, slot, p);
 	return p;
 }
 
@@ -732,8 +732,8 @@ Dir_Destroy(void *pp)
 	struct PathEntry *p = (struct PathEntry *)pp;
 
 	if (--p->refCount == 0) {
-		ohash_remove(&openDirectories, 
-		    ohash_qlookup(&openDirectories, p->name));
+		ohash_remove(&knownDirectories, 
+		    ohash_qlookup(&knownDirectories, p->name));
 		free_hash(&p->files);
 		free(p);
 	}
@@ -775,8 +775,8 @@ Dir_PrintDirectories(void)
 	      (hits+bigmisses+nearmisses ?
 	       hits * 100 / (hits + bigmisses + nearmisses) : 0));
 	printf("# %-20s referenced\thits\n", "directory");
-	for (p = ohash_first(&openDirectories, &i); p != NULL;
-	    p = ohash_next(&openDirectories, &i))
+	for (p = ohash_first(&knownDirectories, &i); p != NULL;
+	    p = ohash_next(&knownDirectories, &i))
 		printf("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
 }
 #endif
@@ -806,7 +806,7 @@ Dir_MTime(GNode *gn)
 		return Arch_MTime(gn);
 
 	if (gn->path == NULL) {
-		fullName = Dir_FindFile(gn->name, dirSearchPath);
+		fullName = Dir_FindFile(gn->name, defaultPath);
 		if (fullName == NULL)
 			fullName = estrdup(gn->name);
 	} else

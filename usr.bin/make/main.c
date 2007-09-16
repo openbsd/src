@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.78 2007/09/16 10:14:26 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.79 2007/09/16 12:30:35 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -582,7 +582,7 @@ setup_VPATH()
 		char *vpath;
 
 		vpath = Var_Subst("${VPATH}", NULL, false);
-		add_dirpath(dirSearchPath, vpath);
+		add_dirpath(defaultPath, vpath);
 		(void)free(vpath);
 	}
 }
@@ -691,7 +691,7 @@ main(int argc, char **argv)
 	Init();
 
 	if (d.object != d.current)
-		Dir_AddDir(dirSearchPath, d.current);
+		Dir_AddDir(defaultPath, d.current);
 	Var_Set(".CURDIR", d.current);
 	Var_Set(".OBJDIR", d.object);
 

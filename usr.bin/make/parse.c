@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.82 2007/09/16 10:57:02 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.83 2007/09/16 12:30:35 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -737,7 +737,7 @@ ParseDoDependency(char *line)	/* the line to parse */
 
 		/*
 		 * Certain special targets have special semantics:
-		 *	.PATH		Have to set the dirSearchPath
+		 *	.PATH		Have to set the defaultPath
 		 *			variable too
 		 *	.MAIN		Its sources are only used if
 		 *			nothing has been specified to
@@ -766,7 +766,7 @@ ParseDoDependency(char *line)	/* the line to parse */
 		 */
 		switch (specType) {
 		    case ExPath:
-			Lst_AtEnd(&paths, dirSearchPath);
+			Lst_AtEnd(&paths, defaultPath);
 			break;
 		    case Main:
 			if (!Lst_IsEmpty(create)) {
@@ -1157,7 +1157,7 @@ resolve_include_filename(const char *file, bool isSystem)
 			    strchr(file, '\0'), '/');
 			fullname = Dir_FindFile(newName, parseIncPath);
 			if (fullname == NULL)
-				fullname = Dir_FindFile(newName, dirSearchPath);
+				fullname = Dir_FindFile(newName, defaultPath);
 			free(newName);
 			if (fullname)
 				return fullname;
@@ -1170,7 +1170,7 @@ resolve_include_filename(const char *file, bool isSystem)
 	fullname = Dir_FindFile(file, parseIncPath);
 	if (fullname)
 		return fullname;
-	fullname = Dir_FindFile(file, dirSearchPath);
+	fullname = Dir_FindFile(file, defaultPath);
 	if (fullname)
 		return fullname;
 

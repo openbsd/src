@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.67 2007/09/16 12:25:12 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.68 2007/09/16 12:30:35 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -333,7 +333,7 @@ Arch_ParseArchive(char **linePtr,   /* Pointer to start of specification */
 
 			Lst_Init(&members);
 
-			Dir_Expand(memberName, dirSearchPath, &members);
+			Dir_Expand(memberName, defaultPath, &members);
 			while ((member = (char *)Lst_DeQueue(&members)) 
 			    != NULL) {
 				snprintf(nameBuf, MAKE_BSIZE, "%s(%s)", 

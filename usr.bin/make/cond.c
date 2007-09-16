@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.c,v 1.35 2007/07/17 10:54:46 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.36 2007/09/16 12:30:35 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ CondDoExists(struct Name *arg)
     bool result;
     char    *path;
 
-    path = Dir_FindFilei(arg->s, arg->e, dirSearchPath);
+    path = Dir_FindFilei(arg->s, arg->e, defaultPath);
     if (path != NULL) {
 	result = true;
 	free(path);

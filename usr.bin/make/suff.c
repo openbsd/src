@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.63 2007/09/16 10:14:26 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.64 2007/09/16 12:30:35 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -756,7 +756,7 @@ Suff_GetPath(const char *sname)
  *
  * Side Effects:
  *	The searchPath field of all the suffixes is extended by the
- *	directories in dirSearchPath. If paths were specified for the
+ *	directories in defaultPath. If paths were specified for the
  *	".h" suffix, the directories are stuffed into a global variable
  *	called ".INCLUDES" with each directory preceded by a -I. The same
  *	is done for the ".a" suffix, except the variable is called
@@ -784,9 +784,9 @@ Suff_DoPaths(void)
 	    if (s->flags & SUFF_LIBRARY) {
 		Dir_Concat(&inLibs, &s->searchPath);
 	    }
-	    Dir_Concat(&s->searchPath, dirSearchPath);
+	    Dir_Concat(&s->searchPath, defaultPath);
 	} else
-	    Lst_Clone(&s->searchPath, dirSearchPath, Dir_CopyDir);
+	    Lst_Clone(&s->searchPath, defaultPath, Dir_CopyDir);
     }
 
     Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", &inIncludes));
@@ -1256,7 +1256,7 @@ SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
 	path = &s->searchPath;
     } else
 	/* Use default search path.  */
-	path = dirSearchPath;
+	path = defaultPath;
 
     /* Expand the word along the chosen path. */
     Lst_Init(&exp);
@@ -1679,7 +1679,7 @@ sfnd_abort:
 	    (Lst_IsEmpty(&gn->children) && Lst_IsEmpty(&gn->commands)))
 	{
 	    gn->path = Dir_FindFile(gn->name,
-				    (targ == NULL ? dirSearchPath :
+				    (targ == NULL ? defaultPath :
 				     &targ->suff->searchPath));
 	    if (gn->path != NULL) {
 		char *ptr;
@@ -1965,7 +1965,7 @@ Suff_Init(void)
     suffNull->name =	    estrdup("");
     suffNull->nameLen =     0;
     Lst_Init(&suffNull->searchPath);
-    Dir_Concat(&suffNull->searchPath, dirSearchPath);
+    Dir_Concat(&suffNull->searchPath, defaultPath);
     Lst_Init(&suffNull->children);
     Lst_Init(&suffNull->parents);
     Lst_Init(&suffNull->ref);
