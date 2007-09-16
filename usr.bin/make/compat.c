@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.56 2007/09/16 12:09:36 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.57 2007/09/16 14:18:40 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -71,9 +71,9 @@
  * contains any of these characters, it is executed by the shell, not
  * directly by us.  */
 
-static char	    meta[256];
+static char meta[256];
 
-static GNode	    *ENDNode;
+static GNode *ENDNode;
 static void CompatInterrupt(int);
 static int CompatRunCommand(LstNode, void *);
 static void CompatMake(void *, void *);
@@ -84,8 +84,8 @@ static volatile sig_atomic_t interrupted;
 static void 
 CompatInterrupt(int signo)
 {
-    if (interrupted != SIGINT)
-	interrupted = signo;
+	if (interrupted != SIGINT)
+		interrupted = signo;
 }
 
 /*-
@@ -157,200 +157,201 @@ static int
 CompatRunCommand(LstNode cmdNode,/* Command to execute */
     void *gnp)			/* Node from which the command came */
 {
-    char	  *cmdStart;	/* Start of expanded command */
-    char *cp, *bp = NULL;
-    bool	  silent,	/* Don't print command */
-		  doExecute;	/* Execute the command */
-    volatile bool errCheck;	/* Check errors */
-    int 	  reason;	/* Reason for child's death */
-    int 	  status;	/* Description of child's death */
-    pid_t 	  cpid; 	/* Child actually found */
-    pid_t	  stat; 	/* Status of fork */
-    char	  ** volatile av; /* Argument vector for thing to exec */
-    int 	  argc; 	/* Number of arguments in av or 0 if not
+	char *cmdStart;		/* Start of expanded command */
+	char *cp, *bp = NULL;
+	bool silent;		/* Don't print command */
+	bool doExecute;		/* Execute the command */
+	volatile bool errCheck;	/* Check errors */
+	int reason;		/* Reason for child's death */
+	int status;		/* Description of child's death */
+	pid_t cpid; 		/* Child actually found */
+	pid_t stat; 		/* Status of fork */
+	char **volatile av; 	/* Argument vector for thing to exec */
+	int argc; 		/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
-    char	  *cmd = (char *)Lst_Datum(cmdNode);
-    GNode	  *gn = (GNode *)gnp;
-    static char *shargv[4] = { _PATH_BSHELL };
+	char *cmd = (char *)Lst_Datum(cmdNode);
+	GNode *gn = (GNode *)gnp;
+	static char *shargv[4] = { _PATH_BSHELL };
 
-    silent = gn->type & OP_SILENT;
-    errCheck = !(gn->type & OP_IGNORE);
-    doExecute = !noExecute;
+	silent = gn->type & OP_SILENT;
+	errCheck = !(gn->type & OP_IGNORE);
+	doExecute = !noExecute;
 
-    cmdStart = Var_Subst(cmd, &gn->context, false);
+	cmdStart = Var_Subst(cmd, &gn->context, false);
 
-    /* brk_string will return an argv with a NULL in av[0], thus causing
-     * execvp to choke and die horribly. Besides, how can we execute a null
-     * command? In any case, we warn the user that the command expanded to
-     * nothing (is this the right thing to do?).  */
+	/* brk_string will return an argv with a NULL in av[0], thus causing
+	 * execvp to choke and die horribly. Besides, how can we execute a null
+	 * command? In any case, we warn the user that the command expanded to
+	 * nothing (is this the right thing to do?).  */
 
-    if (*cmdStart == '\0') {
-	free(cmdStart);
-	Error("%s expands to empty string", cmd);
-	return 1;
-    } else
-	cmd = cmdStart;
-    Lst_Replace(cmdNode, cmdStart);
-
-    if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
-	Lst_AtEnd(&ENDNode->commands, cmdStart);
-	return 1;
-    } else if (strcmp(cmdStart, "...") == 0) {
-	gn->type |= OP_SAVE_CMDS;
-	return 1;
-    }
-
-    for (;; cmd++) {
-	if (*cmd == '@')
-	    silent = DEBUG(LOUD) ? false : true;
-	else if (*cmd == '-')
-	    errCheck = false;
-	else if (*cmd == '+')
-	    doExecute = true;
-	else
-	    break;
-    }
-
-    while (isspace(*cmd))
-	cmd++;
-
-    /* Search for meta characters in the command. If there are no meta
-     * characters, there's no need to execute a shell to execute the
-     * command.  */
-    for (cp = cmd; !meta[(unsigned char)*cp]; cp++) {
-	continue;
-    }
-
-    /* Print the command before echoing if we're not supposed to be quiet for
-     * this one. We also print the command if -n given.  */
-    if (!silent || noExecute) {
-	printf("%s\n", cmd);
-	fflush(stdout);
-    }
-
-    /* If we're not supposed to execute any commands, this is as far as
-     * we go...  */
-    if (!doExecute)
-	return 1;
-
-    if (*cp != '\0') {
-	/* If *cp isn't the null character, we hit a "meta" character and
-	 * need to pass the command off to the shell. We give the shell the
-	 * -e flag as well as -c if it's supposed to exit when it hits an
-	 * error.  */
-
-	shargv[1] = errCheck ? "-ec" : "-c";
-	shargv[2] = cmd;
-	shargv[3] = NULL;
-	av = shargv;
-	argc = 0;
-    } else {
-	/* No meta-characters, so probably no need to exec a shell.
-	 * Break the command into words to form an argument vector
-	 * we can execute.  */
-	av = brk_string(cmd, &argc, &bp);
-	switch (shellneed(av)) {
-	case -1: /* handled internally */
-		free(bp);
-		free(av);
+	if (*cmdStart == '\0') {
+		free(cmdStart);
+		Error("%s expands to empty string", cmd);
 		return 1;
-	case 1:
+	} else
+		cmd = cmdStart;
+	Lst_Replace(cmdNode, cmdStart);
+
+	if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
+		Lst_AtEnd(&ENDNode->commands, cmdStart);
+		return 1;
+	} else if (strcmp(cmdStart, "...") == 0) {
+		gn->type |= OP_SAVE_CMDS;
+		return 1;
+	}
+
+	for (;; cmd++) {
+		if (*cmd == '@')
+			silent = DEBUG(LOUD) ? false : true;
+		else if (*cmd == '-')
+			errCheck = false;
+		else if (*cmd == '+')
+			doExecute = true;
+		else
+			break;
+	}
+
+	while (isspace(*cmd))
+		cmd++;
+
+	/* Search for meta characters in the command. If there are no meta
+	 * characters, there's no need to execute a shell to execute the
+	 * command.  */
+	for (cp = cmd; !meta[(unsigned char)*cp]; cp++) {
+		continue;
+	}
+
+	/* Print the command before echoing if we're not supposed to be quiet
+	 * for this one. We also print the command if -n given.  */
+	if (!silent || noExecute) {
+		printf("%s\n", cmd);
+		fflush(stdout);
+	}
+
+	/* If we're not supposed to execute any commands, this is as far as
+	 * we go...  */
+	if (!doExecute)
+		return 1;
+
+	if (*cp != '\0') {
+		/* If *cp isn't the null character, we hit a "meta" character
+		 * and need to pass the command off to the shell. We give the
+		 * shell the -e flag as well as -c if it's supposed to exit
+		 * when it hits an error.  */
+
 		shargv[1] = errCheck ? "-ec" : "-c";
 		shargv[2] = cmd;
 		shargv[3] = NULL;
-		free(av);
-		free(bp);
-		bp = NULL;
 		av = shargv;
 		argc = 0;
-		break;
-	default: /* nothing needed */
-		break;
-	}
-    }
-
-    /* Fork and execute the single command. If the fork fails, we abort.  */
-    cpid = fork();
-    if (cpid == -1)
-	Fatal("Could not fork");
-    if (cpid == 0) {
-	    execvp(av[0], av);
-	    if (errno == ENOENT)
-		fprintf(stderr, "%s: not found\n", av[0]);
-	    else
-		perror(av[0]);
-	    _exit(1);
-    }
-    if (bp) {
-	free(av);
-	free(bp);
-    }
-    free(cmdStart);
-    Lst_Replace(cmdNode, NULL);
-
-    /* The child is off and running. Now all we can do is wait...  */
-    while (1) {
-
-	while ((stat = wait(&reason)) != cpid) {
-	    if (stat == -1 && errno != EINTR)
-		break;
-	}
-
-	if (interrupted)
-	    break;
-
-	if (stat != -1) {
-	    if (WIFSTOPPED(reason))
-		status = WSTOPSIG(reason);		/* stopped */
-	    else if (WIFEXITED(reason)) {
-		status = WEXITSTATUS(reason);		/* exited */
-		if (status != 0)
-		    printf("*** Error code %d", status);
-	    } else {
-		status = WTERMSIG(reason);		/* signaled */
-		printf("*** Signal %d", status);
-	    }
-
-
-	    if (!WIFEXITED(reason) || status != 0) {
-		if (errCheck) {
-		    gn->made = ERROR;
-		    if (keepgoing)
-			/* Abort the current target, but let others
-			 * continue.  */
-			printf(" (continuing)\n");
-		} else {
-		    /* Continue executing commands for this target.
-		     * If we return 0, this will happen...  */
-		    printf(" (ignored)\n");
-		    status = 0;
+	} else {
+		/* No meta-characters, so probably no need to exec a shell.
+		 * Break the command into words to form an argument vector
+		 * we can execute.  */
+		av = brk_string(cmd, &argc, &bp);
+		switch (shellneed(av)) {
+		case -1: /* handled internally */
+			free(bp);
+			free(av);
+			return 1;
+		case 1:
+			shargv[1] = errCheck ? "-ec" : "-c";
+			shargv[2] = cmd;
+			shargv[3] = NULL;
+			free(av);
+			free(bp);
+			bp = NULL;
+			av = shargv;
+			argc = 0;
+			break;
+		default: /* nothing needed */
+			break;
 		}
-	    }
-	    return !status;
-	} else
-	    Fatal("error in wait: %d", stat);
-	    /*NOTREACHED*/
-    }
+	}
 
-    /* This is reached only if interrupted */
-    if (!Targ_Precious(gn)) {
-	char	  *file = Varq_Value(TARGET_INDEX, gn);
+	/* Fork and execute the single command. If the fork fails, we abort.  */
+	cpid = fork();
+	if (cpid == -1)
+		Fatal("Could not fork");
+	if (cpid == 0) {
+		execvp(av[0], av);
+		if (errno == ENOENT)
+			fprintf(stderr, "%s: not found\n", av[0]);
+		else
+			perror(av[0]);
+		_exit(1);
+	}
+	if (bp) {
+		free(av);
+		free(bp);
+	}
+	free(cmdStart);
+	Lst_Replace(cmdNode, NULL);
 
-	if (!noExecute && eunlink(file) != -1)
-	    Error("*** %s removed\n", file);
-    }
-    if (interrupted == SIGINT) {
-    	GNode *i = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
-	signal(SIGINT, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-	interrupted = 0;
-	if (i != NULL)
-	    Lst_ForEachNodeWhile(&i->commands, CompatRunCommand, i);
-	exit(SIGINT);
-    }
-    exit(interrupted);
+	/* The child is off and running. Now all we can do is wait...  */
+	while (1) {
+
+		while ((stat = wait(&reason)) != cpid) {
+			if (stat == -1 && errno != EINTR)
+				break;
+		}
+
+		if (interrupted)
+			break;
+
+		if (stat != -1) {
+			if (WIFSTOPPED(reason))
+				status = WSTOPSIG(reason);	/* stopped */
+			else if (WIFEXITED(reason)) {
+				status = WEXITSTATUS(reason);	/* exited */
+				if (status != 0)
+					printf("*** Error code %d", status);
+			} else {
+				status = WTERMSIG(reason);	/* signaled */
+				printf("*** Signal %d", status);
+			}
+
+
+			if (!WIFEXITED(reason) || status != 0) {
+				if (errCheck) {
+					gn->made = ERROR;
+					if (keepgoing)
+						/* Abort the current target,
+						 * but let others continue.  */
+						printf(" (continuing)\n");
+				} else {
+					/* Continue executing commands for this
+					 * target.  If we return 0, this will
+					 * happen...  */
+					printf(" (ignored)\n");
+					status = 0;
+				}
+			}
+			return !status;
+		} else
+			Fatal("error in wait: %d", stat);
+			/*NOTREACHED*/
+	}
+
+	/* This is reached only if interrupted */
+	if (!Targ_Precious(gn)) {
+		char *file = Varq_Value(TARGET_INDEX, gn);
+
+		if (!noExecute && eunlink(file) != -1)
+			Error("*** %s removed\n", file);
+	}
+	if (interrupted == SIGINT) {
+		GNode *i = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
+		signal(SIGINT, SIG_IGN);
+		signal(SIGTERM, SIG_IGN);
+		signal(SIGHUP, SIG_IGN);
+		signal(SIGQUIT, SIG_IGN);
+		interrupted = 0;
+		if (i != NULL)
+			Lst_ForEachNodeWhile(&i->commands, CompatRunCommand, i);
+		exit(SIGINT);
+	}
+	exit(interrupted);
 }
 
 /*-
@@ -366,206 +367,218 @@ static void
 CompatMake(void *gnp,	/* The node to make */
     void *pgnp)		/* Parent to abort if necessary */
 {
-    GNode *gn = (GNode *)gnp;
-    GNode *pgn = (GNode *)pgnp;
+	GNode *gn = (GNode *)gnp;
+	GNode *pgn = (GNode *)pgnp;
 
-    if (pgn->type & OP_MADE) {
-	(void)Dir_MTime(gn);
-	gn->made = UPTODATE;
-    }
-
-    if (gn->type & OP_USE) {
-	Make_HandleUse(gn, pgn);
-    } else if (gn->made == UNMADE) {
-	/* First mark ourselves to be made, then apply whatever transformations
-	 * the suffix module thinks are necessary. Once that's done, we can
-	 * descend and make all our children. If any of them has an error
-	 * but the -k flag was given, our 'make' field will be set false again.
-	 * This is our signal to not attempt to do anything but abort our
-	 * parent as well.  */
-	gn->make = true;
-	gn->made = BEINGMADE;
-	Suff_FindDeps(gn);
-	Lst_ForEach(&gn->children, CompatMake, gn);
-	if (!gn->make) {
-	    gn->made = ABORTED;
-	    pgn->make = false;
-	    return;
+	if (pgn->type & OP_MADE) {
+		(void)Dir_MTime(gn);
+		gn->made = UPTODATE;
 	}
 
-	if (Lst_Member(&gn->iParents, pgn) != NULL) {
-	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
-	}
-
-	/* All the children were made ok. Now cmtime contains the modification
-	 * time of the newest child, we need to find out if we exist and when
-	 * we were modified last. The criteria for datedness are defined by the
-	 * Make_OODate function.  */
-	if (DEBUG(MAKE))
-	    printf("Examining %s...", gn->name);
-	if (! Make_OODate(gn)) {
-	    gn->made = UPTODATE;
-	    if (DEBUG(MAKE))
-		printf("up-to-date.\n");
-	    return;
-	} else if (DEBUG(MAKE))
-	    printf("out-of-date.\n");
-
-	/* If the user is just seeing if something is out-of-date, exit now
-	 * to tell him/her "yes".  */
-	if (queryFlag)
-	    exit(-1);
-
-	/* We need to be re-made. We also have to make sure we've got a $?
-	 * variable. To be nice, we also define the $> variable using
-	 * Make_DoAllVar().  */
-	Make_DoAllVar(gn);
-
-	/* Alter our type to tell if errors should be ignored or things
-	 * should not be printed so CompatRunCommand knows what to do.	*/
-	if (Targ_Ignore(gn))
-	    gn->type |= OP_IGNORE;
-	if (Targ_Silent(gn))
-	    gn->type |= OP_SILENT;
-
-	if (Job_CheckCommands(gn, Fatal)) {
-	    /* Our commands are ok, but we still have to worry about the -t
-	     * flag...	*/
-	    if (!touchFlag)
-		Lst_ForEachNodeWhile(&gn->commands, CompatRunCommand, gn);
-	    else
-		Job_Touch(gn, gn->type & OP_SILENT);
-	} else
-	    gn->made = ERROR;
-
-	if (gn->made != ERROR) {
-	    /* If the node was made successfully, mark it so, update
-	     * its modification time and timestamp all its parents. Note
-	     * that for .ZEROTIME targets, the timestamping isn't done.
-	     * This is to keep its state from affecting that of its parent.  */
-	    gn->made = MADE;
-	    /* This is what Make does and it's actually a good thing, as it
-	     * allows rules like
-	     *
-	     *	cmp -s y.tab.h parse.h || cp y.tab.h parse.h
-	     *
-	     * to function as intended. Unfortunately, thanks to the stateless
-	     * nature of NFS (and the speed of this program), there are times
-	     * when the modification time of a file created on a remote
-	     * machine will not be modified before the stat() implied by
-	     * the Dir_MTime occurs, thus leading us to believe that the file
-	     * is unchanged, wreaking havoc with files that depend on this one.
-	     *
-	     * I have decided it is better to make too much than to make too
-	     * little, so this stuff is commented out unless you're sure it's
-	     * ok.
-	     * -- ardeb 1/12/88
-	     */
-	    if (noExecute || is_out_of_date(Dir_MTime(gn)))
-		gn->mtime = now;
-	    if (is_strictly_before(gn->mtime, gn->cmtime))
-		gn->mtime = gn->cmtime;
-	    if (DEBUG(MAKE))
-		printf("update time: %s\n", time_to_string(gn->mtime));
-	    if (!(gn->type & OP_EXEC)) {
-		pgn->childMade = true;
-		Make_TimeStamp(pgn, gn);
-	    }
-	} else if (keepgoing)
-	    pgn->make = false;
-	else {
-
-	    if (gn->lineno)
-		printf("\n\nStop in %s (line %lu of %s).\n",
-			Var_Value(".CURDIR"),
-			(unsigned long)gn->lineno,
-			gn->fname);
-	    else
-		printf("\n\nStop in %s.\n", Var_Value(".CURDIR"));
-	    exit(1);
-	}
-    } else if (gn->made == ERROR)
-	/* Already had an error when making this beastie. Tell the parent
-	 * to abort.  */
-	pgn->make = false;
-    else {
-	if (Lst_Member(&gn->iParents, pgn) != NULL) {
-	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
-	}
-	switch (gn->made) {
-	    case BEINGMADE:
-		Error("Graph cycles through %s\n", gn->name);
-		gn->made = ERROR;
-		pgn->make = false;
-		break;
-	    case MADE:
-		if ((gn->type & OP_EXEC) == 0) {
-		    pgn->childMade = true;
-		    Make_TimeStamp(pgn, gn);
+	if (gn->type & OP_USE) {
+		Make_HandleUse(gn, pgn);
+	} else if (gn->made == UNMADE) {
+		/* First mark ourselves to be made, then apply whatever
+		 * transformations the suffix module thinks are necessary. Once
+		 * that's done, we can descend and make all our children. If
+		 * any of them has an error but the -k flag was given, our
+		 * 'make' field will be set false again.  This is our signal to
+		 * not attempt to do anything but abort our parent as well.  */
+		gn->make = true;
+		gn->made = BEINGMADE;
+		Suff_FindDeps(gn);
+		Lst_ForEach(&gn->children, CompatMake, gn);
+		if (!gn->make) {
+			gn->made = ABORTED;
+			pgn->make = false;
+			return;
 		}
-		break;
-	    case UPTODATE:
-		if ((gn->type & OP_EXEC) == 0)
-		    Make_TimeStamp(pgn, gn);
-		break;
-	    default:
-		break;
+
+		if (Lst_Member(&gn->iParents, pgn) != NULL) {
+			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), 
+			    pgn);
+		}
+
+		/* All the children were made ok. Now cmtime contains the
+		 * modification time of the newest child, we need to find out
+		 * if we exist and when we were modified last. The criteria for
+		 * datedness are defined by the Make_OODate function.  */
+		if (DEBUG(MAKE))
+			printf("Examining %s...", gn->name);
+		if (! Make_OODate(gn)) {
+			gn->made = UPTODATE;
+			if (DEBUG(MAKE))
+				printf("up-to-date.\n");
+			return;
+		} else if (DEBUG(MAKE))
+			printf("out-of-date.\n");
+
+		/* If the user is just seeing if something is out-of-date, exit
+		 * now to tell him/her "yes".  */
+		if (queryFlag)
+			exit(-1);
+
+		/* We need to be re-made. We also have to make sure we've got a
+		 * $?  variable. To be nice, we also define the $> variable
+		 * using Make_DoAllVar().  */
+		Make_DoAllVar(gn);
+
+		/* Alter our type to tell if errors should be ignored or things
+		 * should not be printed so CompatRunCommand knows what to do.
+		 * */
+		if (Targ_Ignore(gn))
+			gn->type |= OP_IGNORE;
+		if (Targ_Silent(gn))
+			gn->type |= OP_SILENT;
+
+		if (Job_CheckCommands(gn, Fatal)) {
+			/* Our commands are ok, but we still have to worry
+			 * about the -t flag...	*/
+			if (!touchFlag)
+				Lst_ForEachNodeWhile(&gn->commands, 
+				    CompatRunCommand, gn);
+			else
+				Job_Touch(gn, gn->type & OP_SILENT);
+		} else
+			gn->made = ERROR;
+
+		if (gn->made != ERROR) {
+			/* If the node was made successfully, mark it so,
+			 * update its modification time and timestamp all its
+			 * parents. Note that for .ZEROTIME targets, the
+			 * timestamping isn't done.  This is to keep its state
+			 * from affecting that of its parent.  */
+			gn->made = MADE;
+			/* This is what Make does and it's actually a good
+			 * thing, as it allows rules like
+			 *
+			 *	cmp -s y.tab.h parse.h || cp y.tab.h parse.h
+			 *
+			 * to function as intended. Unfortunately, thanks to
+			 * the stateless nature of NFS (and the speed of this
+			 * program), there are times when the modification time
+			 * of a file created on a remote machine will not be
+			 * modified before the stat() implied by the Dir_MTime
+			 * occurs, thus leading us to believe that the file is
+			 * unchanged, wreaking havoc with files that depend on
+			 * this one.
+			 *
+			 * I have decided it is better to make too much than to
+			 * make too little, so this stuff is commented out
+			 * unless you're sure it's ok.  -- ardeb 1/12/88
+			 */
+			if (noExecute || is_out_of_date(Dir_MTime(gn)))
+				gn->mtime = now;
+			if (is_strictly_before(gn->mtime, gn->cmtime))
+				gn->mtime = gn->cmtime;
+			if (DEBUG(MAKE))
+				printf("update time: %s\n", 
+				    time_to_string(gn->mtime));
+			if (!(gn->type & OP_EXEC)) {
+				pgn->childMade = true;
+				Make_TimeStamp(pgn, gn);
+			}
+		} else if (keepgoing)
+			pgn->make = false;
+		else {
+
+			if (gn->lineno)
+				printf("\n\nStop in %s (line %lu of %s).\n",
+				    Var_Value(".CURDIR"),
+				    (unsigned long)gn->lineno,
+				    gn->fname);
+			else
+				printf("\n\nStop in %s.\n", 
+				    Var_Value(".CURDIR"));
+			exit(1);
+		}
+	} else if (gn->made == ERROR)
+		/* Already had an error when making this beastie. Tell the
+		 * parent to abort.  */
+		pgn->make = false;
+	else {
+		if (Lst_Member(&gn->iParents, pgn) != NULL) {
+			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), 
+			    pgn);
+		}
+		switch (gn->made) {
+		case BEINGMADE:
+			Error("Graph cycles through %s\n", gn->name);
+			gn->made = ERROR;
+			pgn->make = false;
+			break;
+		case MADE:
+			if ((gn->type & OP_EXEC) == 0) {
+				pgn->childMade = true;
+				Make_TimeStamp(pgn, gn);
+			}
+			break;
+		case UPTODATE:
+			if ((gn->type & OP_EXEC) == 0)
+				Make_TimeStamp(pgn, gn);
+			break;
+		default:
+			break;
+		}
 	}
-    }
 }
 
 void
 Compat_Run(Lst targs)		/* List of target nodes to re-create */
 {
-    char	  *cp;		/* Pointer to string of shell meta-characters */
-    GNode	  *gn = NULL;	/* Current root target */
-    int 	  errors;   	/* Number of targets not remade due to errors */
+	char *cp;		/* Pointer to string of shell meta-characters */
+	GNode *gn = NULL;	/* Current root target */
+	int errors;   		/* Number of targets not remade due to errors */
 
-    signal(SIGINT, CompatInterrupt);
-    signal(SIGTERM, CompatInterrupt);
-    signal(SIGHUP, CompatInterrupt);
-    signal(SIGQUIT, CompatInterrupt);
+	signal(SIGINT, CompatInterrupt);
+	signal(SIGTERM, CompatInterrupt);
+	signal(SIGHUP, CompatInterrupt);
+	signal(SIGQUIT, CompatInterrupt);
 
-    for (cp = "#=|^(){};&<>*?[]:$`\\\n"; *cp != '\0'; cp++)
-	meta[(unsigned char) *cp] = 1;
-    /* The null character serves as a sentinel in the string.  */
-    meta[0] = 1;
+	for (cp = "#=|^(){};&<>*?[]:$`\\\n"; *cp != '\0'; cp++)
+		meta[(unsigned char) *cp] = 1;
+	/* The null character serves as a sentinel in the string.  */
+	meta[0] = 1;
 
-    ENDNode = Targ_FindNode(".END", TARG_CREATE);
-    /* If the user has defined a .BEGIN target, execute the commands attached
-     * to it.  */
-    if (!queryFlag) {
-	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
-	if (gn != NULL) {
-	    Lst_ForEachNodeWhile(&gn->commands, CompatRunCommand, gn);
-	    if (gn->made == ERROR) {
-		printf("\n\nStop.\n");
-		exit(1);
-	    }
+	ENDNode = Targ_FindNode(".END", TARG_CREATE);
+	/* If the user has defined a .BEGIN target, execute the commands
+	 * attached to it.  */
+	if (!queryFlag) {
+		gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
+		if (gn != NULL) {
+			Lst_ForEachNodeWhile(&gn->commands, CompatRunCommand, 
+			    gn);
+			if (gn->made == ERROR) {
+				printf("\n\nStop.\n");
+				exit(1);
+			}
+		}
 	}
-    }
 
-    /* For each entry in the list of targets to create, call CompatMake on
-     * it to create the thing. CompatMake will leave the 'made' field of gn
-     * in one of several states:
-     *	    UPTODATE	    gn was already up-to-date
-     *	    MADE	    gn was recreated successfully
-     *	    ERROR	    An error occurred while gn was being created
-     *	    ABORTED	    gn was not remade because one of its inferiors
-     *			    could not be made due to errors.  */
-    errors = 0;
-    while ((gn = (GNode *)Lst_DeQueue(targs)) != NULL) {
-	CompatMake(gn, gn);
+	/* For each entry in the list of targets to create, call CompatMake on
+	 * it to create the thing. CompatMake will leave the 'made' field of gn
+	 * in one of several states:
+	 *	    UPTODATE	    gn was already up-to-date
+	 *	    MADE	    gn was recreated successfully
+	 *	    ERROR	    An error occurred while gn was being created
+	 *	    ABORTED	    gn was not remade because one of its 
+	 *			    inferiors could not be made due to errors.
+	 */
+	errors = 0;
+	while ((gn = (GNode *)Lst_DeQueue(targs)) != NULL) {
+		CompatMake(gn, gn);
 
-	if (gn->made == UPTODATE)
-	    printf("`%s' is up to date.\n", gn->name);
-	else if (gn->made == ABORTED) {
-	    printf("`%s' not remade because of errors.\n", gn->name);
-	    errors += 1;
+		if (gn->made == UPTODATE)
+			printf("`%s' is up to date.\n", gn->name);
+		else if (gn->made == ABORTED) {
+			printf("`%s' not remade because of errors.\n", 
+			    gn->name);
+			errors += 1;
+		}
 	}
-    }
 
-    /* If the user has defined a .END target, run its commands.  */
-    if (errors == 0)
-	Lst_ForEachNodeWhile(&ENDNode->commands, CompatRunCommand, ENDNode);
+	/* If the user has defined a .END target, run its commands.  */
+	if (errors == 0)
+		Lst_ForEachNodeWhile(&ENDNode->commands, CompatRunCommand, 
+		    ENDNode);
 }
