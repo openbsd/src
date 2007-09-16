@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: str.c,v 1.22 2007/09/16 15:17:44 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.23 2007/09/16 15:24:53 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -52,29 +52,29 @@ char *
 Str_concati(const char *s1, const char *e1, const char *s2, const char *e2, 
     int sep)
 {
-    size_t len1, len2;
-    char *result;
+	size_t len1, len2;
+	char *result;
 
-    /* get the length of both strings */
-    len1 = e1 - s1;
-    len2 = e2 - s2;
+	/* get the length of both strings */
+	len1 = e1 - s1;
+	len2 = e2 - s2;
 
-    /* space for separator */
-    if (sep)
-	len1++;
-    result = emalloc(len1 + len2 + 1);
+	/* space for separator */
+	if (sep)
+		len1++;
+	result = emalloc(len1 + len2 + 1);
 
-    /* copy first string into place */
-    memcpy(result, s1, len1);
+	/* copy first string into place */
+	memcpy(result, s1, len1);
 
-    /* add separator character */
-    if (sep)
-	result[len1-1] = sep;
+	/* add separator character */
+	if (sep)
+		result[len1-1] = sep;
 
-    /* copy second string plus EOS into place */
-    memcpy(result + len1, s2, len2);
-    result[len1+len2] = '\0';
-    return result;
+	/* copy second string plus EOS into place */
+	memcpy(result + len1, s2, len2);
+	result[len1+len2] = '\0';
+	return result;
 }
 
 /*-
@@ -90,147 +90,147 @@ Str_concati(const char *s1, const char *e1, const char *s2, const char *e2,
 char **
 brk_string(const char *str, int *store_argc, char **buffer)
 {
-    int argc;
-    char ch;
-    char inquote;
-    const char *p;
-    char *start, *t;
-    size_t len;
-    int argmax = 50;
-    size_t curlen = 0;
-    char **argv = emalloc((argmax + 1) * sizeof(char *));
+	int argc;
+	char ch;
+	char inquote;
+	const char *p;
+	char *start, *t;
+	size_t len;
+	int argmax = 50;
+	size_t curlen = 0;
+	char **argv = emalloc((argmax + 1) * sizeof(char *));
 
-    /* skip leading space chars. */
-    for (; *str == ' ' || *str == '\t'; ++str)
-	continue;
-
-    /* allocate room for a copy of the string */
-    if ((len = strlen(str) + 1) > curlen)
-	*buffer = emalloc(curlen = len);
-
-    /*
-     * copy the string; at the same time, parse backslashes,
-     * quotes and build the argument list.
-     */
-    argc = 0;
-    inquote = '\0';
-    for (p = str, start = t = *buffer;; ++p) {
-	switch (ch = *p) {
-	case '"':
-	case '\'':
-	    if (inquote) {
-		if (inquote == ch)
-		    inquote = '\0';
-		else
-		    break;
-	    } else {
-		inquote = ch;
-		/* Don't miss "" or '' */
-		if (start == NULL && p[1] == inquote) {
-		    start = t + 1;
-		    break;
-		}
-	    }
-	    continue;
-	case ' ':
-	case '\t':
-	case '\n':
-	    if (inquote)
-		break;
-	    if (!start)
+	/* skip leading space chars. */
+	for (; *str == ' ' || *str == '\t'; ++str)
 		continue;
-	    /* FALLTHROUGH */
-	case '\0':
-	    /*
-	     * end of a token -- make sure there's enough argv
-	     * space and save off a pointer.
-	     */
-	    if (!start)
-		goto done;
 
-	    *t++ = '\0';
-	    if (argc == argmax) {
-		argmax *= 2;		/* ramp up fast */
+	/* allocate room for a copy of the string */
+	if ((len = strlen(str) + 1) > curlen)
+		*buffer = emalloc(curlen = len);
+
+	/*
+	 * copy the string; at the same time, parse backslashes,
+	 * quotes and build the argument list.
+	 */
+	argc = 0;
+	inquote = '\0';
+	for (p = str, start = t = *buffer;; ++p) {
+		switch (ch = *p) {
+		case '"':
+		case '\'':
+			if (inquote) {
+				if (inquote == ch)
+					inquote = '\0';
+				else
+					break;
+			} else {
+				inquote = ch;
+				/* Don't miss "" or '' */
+				if (start == NULL && p[1] == inquote) {
+					start = t + 1;
+					break;
+				}
+			}
+			continue;
+		case ' ':
+		case '\t':
+		case '\n':
+			if (inquote)
+				break;
+			if (!start)
+				continue;
+			/* FALLTHROUGH */
+		case '\0':
+			/*
+			 * end of a token -- make sure there's enough argv
+			 * space and save off a pointer.
+			 */
+			if (!start)
+				goto done;
+
+			*t++ = '\0';
+			if (argc == argmax) {
+				argmax *= 2;	/* ramp up fast */
 				argv = erealloc(argv, 
 				    (argmax + 1) * sizeof(char *));
-	    }
-	    argv[argc++] = start;
-	    start = NULL;
-	    if (ch == '\n' || ch == '\0')
-		goto done;
-	    continue;
-	case '\\':
-	    switch (ch = *++p) {
-	    case '\0':
-	    case '\n':
-		/* hmmm; fix it up as best we can */
-		ch = '\\';
-		--p;
-		break;
-	    case 'b':
-		ch = '\b';
-		break;
-	    case 'f':
-		ch = '\f';
-		break;
-	    case 'n':
-		ch = '\n';
-		break;
-	    case 'r':
-		ch = '\r';
-		break;
-	    case 't':
-		ch = '\t';
-		break;
-	    }
-		break;
+			}
+			argv[argc++] = start;
+			start = NULL;
+			if (ch == '\n' || ch == '\0')
+				goto done;
+			continue;
+		case '\\':
+			switch (ch = *++p) {
+			case '\0':
+			case '\n':
+				/* hmmm; fix it up as best we can */
+				ch = '\\';
+				--p;
+				break;
+			case 'b':
+				ch = '\b';
+				break;
+			case 'f':
+				ch = '\f';
+				break;
+			case 'n':
+				ch = '\n';
+				break;
+			case 'r':
+				ch = '\r';
+				break;
+			case 't':
+				ch = '\t';
+				break;
+			}
+			    break;
+		}
+		if (!start)
+			start = t;
+		*t++ = ch;
 	}
-	if (!start)
-	    start = t;
-	*t++ = ch;
-    }
     done:
-    argv[argc] = NULL;
-    *store_argc = argc;
-    return argv;
+	    argv[argc] = NULL;
+	    *store_argc = argc;
+	    return argv;
 }
 
 
 const char *
 iterate_words(const char **end)
 {
-    const char	*start, *p;
-    char	state = 0;
-    start = *end;
+	const char	*start, *p;
+	char	state = 0;
+	start = *end;
 
-    while (isspace(*start))
-	start++;
-    if (*start == '\0')
-	return NULL;
+	while (isspace(*start))
+		start++;
+	if (*start == '\0')
+		return NULL;
 
-    for (p = start;; p++)
-	switch(*p) {
+	for (p = start;; p++)
+	    switch(*p) {
 	    case '\\':
-		if (p[1] != '\0')
-		    p++;
-		break;
+		    if (p[1] != '\0')
+			    p++;
+		    break;
 	    case '\'':
 	    case '"':
-		if (state == *p)
-		    state = 0;
-		else if (state == 0)
-		    state = *p;
-		break;
+		    if (state == *p)
+			    state = 0;
+		    else if (state == 0)
+			    state = *p;
+		    break;
 	    case ' ':
 	    case '\t':
-		if (state != 0)
-		    break;
-		/* FALLTHROUGH */
+		    if (state != 0)
+			    break;
+		    /* FALLTHROUGH */
 	    case '\0':
-		*end = p;
-		return start;
+		    *end = p;
+		    return start;
 	    default:
-		break;
+		    break;
 	    }
 }
 
@@ -241,26 +241,26 @@ star_match(const char *string, const char *estring,
 	/* '*' matches any substring.  We handle this by calling ourselves
 	 * recursively for each postfix of string, until either we match or 
 	 * we reach the end of the string.  */
-	    pattern++;
+	pattern++;
 	/* Skip over contiguous  sequences of `?*', so that 
 	 * recursive calls only occur on `real' characters.  */
-	    while (pattern != epattern && 
-	    	(*pattern == '?' || *pattern == '*')) {
+	while (pattern != epattern && 
+		(*pattern == '?' || *pattern == '*')) {
 		if (*pattern == '?') {
-		    if (string == estring)
-			return false;
-		    else
-			string++;
+			if (string == estring)
+				return false;
+			else
+				string++;
 		}
 		pattern++;
-	    }
-	    if (pattern == epattern)
+	}
+	if (pattern == epattern)
 		return true;
-	    for (; string != estring; string++)
+	for (; string != estring; string++)
 		if (Str_Matchi(string, estring, pattern, 
 		    epattern))
-		    return true;
-	    return false;
+			return true;
+	return false;
 }
 
 static bool
@@ -270,35 +270,35 @@ range_match(char c, const char **ppat, const char *epattern)
 		if (c == '[')
 			return true;
 		else 
-			    return false;
-		    }
+			return false;
+	}
 	if (**ppat == '!' || **ppat == '^') {
 		(*ppat)++;
 		return !range_match(c, ppat, epattern);
-		}
-		for (;;) {
+	} 
+	for (;;) {
 		if (**ppat == '\\') {
 			if (++(*ppat) == epattern)
-			    return false;
-		    }
+				return false;
+		}
 		if (**ppat == c)
 			break;
 		if ((*ppat)[1] == '-') {
 			if (*ppat + 2 == epattern)
-			    return false;
+				return false;
 			if (**ppat < c && c <= (*ppat)[2])
-			    break;
+				break;
 			if ((*ppat)[2] <= c && c < **ppat)
-			    break;
+				break;
 			*ppat += 3;
-		    } else
+		} else
 			(*ppat)++;
 		/* The test for ']' is done at the end 
 		 * so that ']' can be used at the 
 		 * start of the range without '\' */
 		if (*ppat == epattern || **ppat == ']')
 			return false;
-		}
+	}
 	/* Found matching character, skip over rest 
 	 * of class.  */
 	while (**ppat != ']') {
@@ -309,7 +309,7 @@ range_match(char c, const char **ppat, const char *epattern)
 		if (*ppat == epattern)
 			break;
 		(*ppat)++;
-	    }
+	}
 	return true;
 }
 
@@ -331,28 +331,28 @@ Str_Matchi(const char *string, const char *estring,
 			if (!range_match(*string, &pattern, epattern))
 				return false;
 
-	}
-	/* '?' matches any single character, so shunt test.  */
-	else if (*pattern != '?') {
+		}
+		/* '?' matches any single character, so shunt test.  */
+		else if (*pattern != '?') {
 			/* If the next pattern character is '\', just strip 
 			 * off the '\' so we do exact matching on the 
 			 * character that follows.  */
-	    if (*pattern == '\\') {
-		if (++pattern == epattern)
-		    return false;
-	    }
-	    /* There's no special character.  Just make sure that
-	     * the next characters of each string match.  */
-	    if (*pattern != *string)
-		return false;
+			if (*pattern == '\\') {
+				if (++pattern == epattern)
+					return false;
+			}
+			/* There's no special character.  Just make sure that
+			 * the next characters of each string match.  */
+			if (*pattern != *string)
+				return false;
+		}
+		pattern++;
+		string++;
 	}
-	pattern++;
-	string++;
-    }
-    if (string == estring)
-	return true;
-    else
-	return false;
+	if (string == estring)
+		return true;
+	else
+		return false;
 }
 
 
@@ -369,42 +369,42 @@ Str_Matchi(const char *string, const char *estring,
 const char *
 Str_SYSVMatch(const char *word, const char *pattern, size_t *len)	
 {
-    const char *p = pattern;
-    const char *w = word;
-    const char *m;
+	const char *p = pattern;
+	const char *w = word;
+	const char *m;
 
-    if (*p == '\0') {
-	/* Null pattern is the whole string.  */
-	*len = strlen(w);
-	return w;
-    }
-
-    if ((m = strchr(p, '%')) != NULL) {
-	/* Check that the prefix matches.  */
-	for (; p != m && *w && *w == *p; w++, p++)
-	     continue;
-
-	if (p != m)
-	    return NULL;	/* No match.  */
-
-	if (*++p == '\0') {
-	    /* No more pattern, return the rest of the string.	*/
-	    *len = strlen(w);
-	    return w;
+	if (*p == '\0') {
+		/* Null pattern is the whole string.  */
+		*len = strlen(w);
+		return w;
 	}
-    }
 
-    m = w;
+	if ((m = strchr(p, '%')) != NULL) {
+		/* Check that the prefix matches.  */
+		for (; p != m && *w && *w == *p; w++, p++)
+			 continue;
 
-    /* Find a matching tail.  */
-    do {
-	if (strcmp(p, w) == 0) {
-	    *len = w - m;
-	    return m;
+		if (p != m)
+			return NULL;	/* No match.  */
+
+		if (*++p == '\0') {
+			/* No more pattern, return the rest of the string. */
+			*len = strlen(w);
+			return w;
+		}
 	}
-    } while (*w++ != '\0');
 
-    return NULL;
+	m = w;
+
+	/* Find a matching tail.  */
+	do {
+		if (strcmp(p, w) == 0) {
+			*len = w - m;
+			return m;
+		}
+	} while (*w++ != '\0');
+
+	return NULL;
 }
 
 
@@ -422,62 +422,62 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *len)
 void
 Str_SYSVSubst(Buffer buf, const char *pat, const char *src, size_t len)
 {
-    const char *m;
+	const char *m;
 
-    if ((m = strchr(pat, '%')) != NULL) {
-	/* Copy the prefix.  */
-	Buf_Addi(buf, pat, m);
-	/* Skip the %.	*/
-	pat = m + 1;
-    }
+	if ((m = strchr(pat, '%')) != NULL) {
+		/* Copy the prefix.  */
+		Buf_Addi(buf, pat, m);
+		/* Skip the %.	*/
+		pat = m + 1;
+	}
 
-    /* Copy the pattern.  */
-    Buf_AddChars(buf, len, src);
+	/* Copy the pattern.  */
+	Buf_AddChars(buf, len, src);
 
-    /* Append the rest.  */
-    Buf_AddString(buf, pat);
+	/* Append the rest.  */
+	Buf_AddString(buf, pat);
 }
 
 char *
 Str_dupi(const char *begin, const char *end)
 {
-    char *s;
+	char *s;
 
-    s = emalloc(end - begin + 1);
-    memcpy(s, begin, end - begin);
-    s[end-begin] = '\0';
-    return s;
+	s = emalloc(end - begin + 1);
+	memcpy(s, begin, end - begin);
+	s[end-begin] = '\0';
+	return s;
 }
 
 char *
 escape_dupi(const char *begin, const char *end, const char *set)
 {
-    char *s, *t;
+	char *s, *t;
 
-    t = s = emalloc(end - begin + 1);
-    while (begin != end) {
-	if (*begin == '\\') {
-	    begin++;
-	    if (begin == end) {
-		*t++ = '\\';
-		break;
-	    }
-	    if (strchr(set, *begin) == NULL)
-		*t++ = '\\';
+	t = s = emalloc(end - begin + 1);
+	while (begin != end) {
+		if (*begin == '\\') {
+			begin++;
+			if (begin == end) {
+				*t++ = '\\';
+				break;
+			}
+			if (strchr(set, *begin) == NULL)
+				*t++ = '\\';
+		}
+		*t++ = *begin++;
 	}
-	*t++ = *begin++;
-    }
-    *t++ = '\0';
-    return s;
+	*t++ = '\0';
+	return s;
 }
 
 char *
 Str_rchri(const char *begin, const char *end, int c)
 {
-    if (begin != end)
-	do {
-	    if (*--end == c)
-		return (char *)end;
-	} while (end != begin);
-    return NULL;
+	if (begin != end)
+		do {
+			if (*--end == c)
+				return (char *)end;
+		} while (end != begin);
+	return NULL;
 }
