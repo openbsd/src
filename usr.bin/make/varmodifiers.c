@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.21 2007/09/16 12:01:11 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.22 2007/09/16 12:02:38 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -103,18 +103,18 @@
 #define VAR_BANG_EQUAL	0x100
 
 typedef struct {
-    char	  *lbuffer; /* left string to free */
-    char	  *lhs;     /* String to match */
-    size_t	  leftLen;  /* Length of string */
-    char	  *rhs;     /* Replacement string (w/ &'s removed) */
-    size_t	  rightLen; /* Length of replacement */
-    int 	  flags;
+	char	  *lbuffer; /* left string to free */
+	char	  *lhs;     /* String to match */
+	size_t	  leftLen;  /* Length of string */
+	char	  *rhs;     /* Replacement string (w/ &'s removed) */
+	size_t	  rightLen; /* Length of replacement */
+	int 	  flags;
 } VarPattern;
 
 struct LoopStuff {
-    struct LoopVar	*var;
-    char	*expand;
-    bool	err;
+	struct LoopVar	*var;
+	char	*expand;
+	bool	err;
 };
 
 static bool VarHead(struct Name *, bool, Buffer, void *);
@@ -134,11 +134,11 @@ static bool VarRESubstitute(struct Name *, bool, Buffer, void *);
 static char *do_regex(const char *, const struct Name *, void *);
 
 typedef struct {
-    regex_t	  re;
-    int 	  nsub;
-    regmatch_t	 *matches;
-    char	 *replace;
-    int 	  flags;
+	regex_t	  re;
+	int 	  nsub;
+	regmatch_t	 *matches;
+	char	 *replace;
+	int 	  flags;
 } VarREPattern;
 #endif
 
@@ -181,73 +181,73 @@ static struct Name dummy;
 static struct Name *dummy_arg = &dummy;
 
 static struct modifier {
-	bool atstart;
-	void * (*getarg)(const char **, SymTable *, bool, int);
-	char * (*apply)(const char *, const struct Name *, void *);
-	bool (*word_apply)(struct Name *, bool, Buffer, void *);
-	void   (*freearg)(void *);
+	    bool atstart;
+	    void * (*getarg)(const char **, SymTable *, bool, int);
+	    char * (*apply)(const char *, const struct Name *, void *);
+	    bool (*word_apply)(struct Name *, bool, Buffer, void *);
+	    void   (*freearg)(void *);
 } *choose_mod[256],
-    match_mod = {false, get_stringarg, NULL, VarMatch, free_stringarg},
-    nomatch_mod = {false, get_stringarg, NULL, VarNoMatch, free_stringarg},
-    subst_mod = {false, get_spatternarg, NULL, VarSubstitute, free_patternarg},
+	match_mod = {false, get_stringarg, NULL, VarMatch, free_stringarg},
+	nomatch_mod = {false, get_stringarg, NULL, VarNoMatch, free_stringarg},
+	subst_mod = {false, get_spatternarg, NULL, VarSubstitute, free_patternarg},
 #ifndef MAKE_BOOTSTRAP
-    resubst_mod = {false, get_patternarg, do_regex, NULL, free_patternarg},
+	resubst_mod = {false, get_patternarg, do_regex, NULL, free_patternarg},
 #endif
-    quote_mod = {false, check_empty, VarQuote, NULL , NULL},
-    tail_mod = {false, check_empty, NULL, VarTail, NULL},
-    head_mod = {false, check_empty, NULL, VarHead, NULL},
-    suffix_mod = {false, check_empty, NULL, VarSuffix, NULL},
-    root_mod = {false, check_empty, NULL, VarRoot, NULL},
-    upper_mod = {false, check_empty, do_upper, NULL, NULL},
-    lower_mod = {false, check_empty, do_lower, NULL, NULL},
-    shcmd_mod = {false, check_shcmd, do_shcmd, NULL, NULL},
-    sysv_mod = {false, get_sysvpattern, NULL, VarSYSVMatch, free_patternarg},
-    uniq_mod = {false, check_empty, NULL, VarUniq, NULL},
-    sort_mod = {false, check_empty, do_sort, NULL, NULL},
-    loop_mod = {false, get_loop, finish_loop, VarLoop, free_looparg},
-    undef_mod = {true, get_value, do_undef, NULL, NULL},
-    def_mod = {true, get_value, do_def, NULL, NULL},
-    label_mod = {true, check_empty, do_label, NULL, NULL},
-    path_mod = {true, check_empty, do_path, NULL, NULL},
-    assign_mod = {true, assign_get_value, do_assign, NULL, free_patternarg},
-    exec_mod = {true, get_cmd, do_exec, NULL, free_patternarg}
+	quote_mod = {false, check_empty, VarQuote, NULL , NULL},
+	tail_mod = {false, check_empty, NULL, VarTail, NULL},
+	head_mod = {false, check_empty, NULL, VarHead, NULL},
+	suffix_mod = {false, check_empty, NULL, VarSuffix, NULL},
+	root_mod = {false, check_empty, NULL, VarRoot, NULL},
+	upper_mod = {false, check_empty, do_upper, NULL, NULL},
+	lower_mod = {false, check_empty, do_lower, NULL, NULL},
+	shcmd_mod = {false, check_shcmd, do_shcmd, NULL, NULL},
+	sysv_mod = {false, get_sysvpattern, NULL, VarSYSVMatch, free_patternarg},
+	uniq_mod = {false, check_empty, NULL, VarUniq, NULL},
+	sort_mod = {false, check_empty, do_sort, NULL, NULL},
+	loop_mod = {false, get_loop, finish_loop, VarLoop, free_looparg},
+	undef_mod = {true, get_value, do_undef, NULL, NULL},
+	def_mod = {true, get_value, do_def, NULL, NULL},
+	label_mod = {true, check_empty, do_label, NULL, NULL},
+	path_mod = {true, check_empty, do_path, NULL, NULL},
+	assign_mod = {true, assign_get_value, do_assign, NULL, free_patternarg},
+	exec_mod = {true, get_cmd, do_exec, NULL, free_patternarg}
 ;
 
 void
 VarModifiers_Init()
 {
-    choose_mod['M'] = &match_mod;
-    choose_mod['N'] = &nomatch_mod;
-    choose_mod['S'] = &subst_mod;
+	choose_mod['M'] = &match_mod;
+	choose_mod['N'] = &nomatch_mod;
+	choose_mod['S'] = &subst_mod;
 #ifndef MAKE_BOOTSTRAP
-    choose_mod['C'] = &resubst_mod;
+	choose_mod['C'] = &resubst_mod;
 #endif
-    choose_mod['Q'] = &quote_mod;
-    choose_mod['T'] = &tail_mod;
-    choose_mod['H'] = &head_mod;
-    choose_mod['E'] = &suffix_mod;
-    choose_mod['R'] = &root_mod;
-    if (FEATURES(FEATURE_UPPERLOWER)) {
-	choose_mod['U'] = &upper_mod;
-	choose_mod['L'] = &lower_mod;
-    }
-    if (FEATURES(FEATURE_SUNSHCMD))
-	choose_mod['s'] = &shcmd_mod;
-    if (FEATURES(FEATURE_UNIQ))
-    	choose_mod['u'] = &uniq_mod;
-    if (FEATURES(FEATURE_SORT))
-    	choose_mod['O'] = &sort_mod;
-    if (FEATURES(FEATURE_ODE)) {
-    	choose_mod['@'] = &loop_mod;
-	choose_mod['D'] = &def_mod;
-	choose_mod['U'] = &undef_mod;
-	choose_mod['L'] = &label_mod;
-	choose_mod['P'] = &path_mod;	
-    }
-    if (FEATURES(FEATURE_ASSIGN))
-    	choose_mod[':'] = &assign_mod;
-    if (FEATURES(FEATURE_EXECMOD))
-    	choose_mod['!'] = &exec_mod;
+	choose_mod['Q'] = &quote_mod;
+	choose_mod['T'] = &tail_mod;
+	choose_mod['H'] = &head_mod;
+	choose_mod['E'] = &suffix_mod;
+	choose_mod['R'] = &root_mod;
+	if (FEATURES(FEATURE_UPPERLOWER)) {
+		choose_mod['U'] = &upper_mod;
+		choose_mod['L'] = &lower_mod;
+	}
+	if (FEATURES(FEATURE_SUNSHCMD))
+		choose_mod['s'] = &shcmd_mod;
+	if (FEATURES(FEATURE_UNIQ))
+		choose_mod['u'] = &uniq_mod;
+	if (FEATURES(FEATURE_SORT))
+		choose_mod['O'] = &sort_mod;
+	if (FEATURES(FEATURE_ODE)) {
+		choose_mod['@'] = &loop_mod;
+		choose_mod['D'] = &def_mod;
+		choose_mod['U'] = &undef_mod;
+		choose_mod['L'] = &label_mod;
+		choose_mod['P'] = &path_mod;	
+	}
+	if (FEATURES(FEATURE_ASSIGN))
+		choose_mod[':'] = &assign_mod;
+	if (FEATURES(FEATURE_EXECMOD))
+		choose_mod['!'] = &exec_mod;
 }
 
 /* All modifiers handle addSpace (need to add a space before placing the
@@ -264,21 +264,21 @@ VarModifiers_Init()
 static bool
 VarHead(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 {
-    const char	*slash;
+	const char	*slash;
 
-    slash = Str_rchri(word->s, word->e, '/');
-    if (slash != NULL) {
-	if (addSpace)
-	    Buf_AddSpace(buf);
-	Buf_Addi(buf, word->s, slash);
-    } else {
-	/* If no directory part, give . (q.v. the POSIX standard).  */
-	if (addSpace)
-	    Buf_AddString(buf, " .");
-	else
-	    Buf_AddChar(buf, '.');
-    }
-    return true;
+	slash = Str_rchri(word->s, word->e, '/');
+	if (slash != NULL) {
+		if (addSpace)
+			Buf_AddSpace(buf);
+		Buf_Addi(buf, word->s, slash);
+	} else {
+		/* If no directory part, give . (q.v. the POSIX standard).  */
+		if (addSpace)
+			Buf_AddString(buf, " .");
+		else
+			Buf_AddChar(buf, '.');
+	}
+	return true;
 }
 
 /*-
@@ -291,16 +291,16 @@ VarHead(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 static bool
 VarTail(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 {
-    const char	*slash;
+	const char	*slash;
 
-    if (addSpace)
-	Buf_AddSpace(buf);
-    slash = Str_rchri(word->s, word->e, '/');
-    if (slash != NULL)
-	Buf_Addi(buf, slash+1, word->e);
-    else
-	Buf_Addi(buf, word->s, word->e);
-    return true;
+	if (addSpace)
+		Buf_AddSpace(buf);
+	slash = Str_rchri(word->s, word->e, '/');
+	if (slash != NULL)
+		Buf_Addi(buf, slash+1, word->e);
+	else
+		Buf_Addi(buf, word->s, word->e);
+	return true;
 }
 
 /*-
@@ -312,16 +312,16 @@ VarTail(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 static bool
 VarSuffix(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 {
-    const char	*dot;
+	const char	*dot;
 
-    dot = Str_rchri(word->s, word->e, '.');
-    if (dot != NULL) {
-	if (addSpace)
-	    Buf_AddSpace(buf);
-	Buf_Addi(buf, dot+1, word->e);
-	addSpace = true;
-    }
-    return addSpace;
+	dot = Str_rchri(word->s, word->e, '.');
+	if (dot != NULL) {
+		if (addSpace)
+			Buf_AddSpace(buf);
+		Buf_Addi(buf, dot+1, word->e);
+		addSpace = true;
+	}
+	return addSpace;
 }
 
 /*-
@@ -334,16 +334,16 @@ VarSuffix(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 static bool
 VarRoot(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
 {
-    const char	*dot;
+	const char	*dot;
 
-    if (addSpace)
-	Buf_AddSpace(buf);
-    dot = Str_rchri(word->s, word->e, '.');
-    if (dot != NULL)
-	Buf_Addi(buf, word->s, dot);
-    else
-	Buf_Addi(buf, word->s, word->e);
-    return true;
+	if (addSpace)
+		Buf_AddSpace(buf);
+	dot = Str_rchri(word->s, word->e, '.');
+	if (dot != NULL)
+		Buf_Addi(buf, word->s, dot);
+	else
+		Buf_Addi(buf, word->s, word->e);
+	return true;
 }
 
 /*-
@@ -356,15 +356,15 @@ static bool
 VarMatch(struct Name *word, bool addSpace, Buffer buf, 
     void *pattern) /* Pattern the word must match */
 {
-    const char *pat = (const char *)pattern;
+	const char *pat = (const char *)pattern;
 
-    if (Str_Matchi(word->s, word->e, pat, strchr(pat, '\0'))) {
-	if (addSpace)
-	    Buf_AddSpace(buf);
-	Buf_Addi(buf, word->s, word->e);
-	return true;
-    } else
-	return addSpace;
+	if (Str_Matchi(word->s, word->e, pat, strchr(pat, '\0'))) {
+		if (addSpace)
+			Buf_AddSpace(buf);
+		Buf_Addi(buf, word->s, word->e);
+		return true;
+	} else
+		return addSpace;
 }
 
 /*-
@@ -377,44 +377,44 @@ static bool
 VarNoMatch(struct Name *word, bool addSpace, Buffer buf, 
     void *pattern) /* Pattern the word must not match */
 {
-    const char *pat = (const char *)pattern;
+	const char *pat = (const char *)pattern;
 
-    if (!Str_Matchi(word->s, word->e, pat, strchr(pat, '\0'))) {
-	if (addSpace)
-	    Buf_AddSpace(buf);
-	Buf_Addi(buf, word->s, word->e);
-	return true;
-    } else
-	return addSpace;
+	if (!Str_Matchi(word->s, word->e, pat, strchr(pat, '\0'))) {
+		if (addSpace)
+			Buf_AddSpace(buf);
+		Buf_Addi(buf, word->s, word->e);
+		return true;
+	} else
+		return addSpace;
 }
 
 static bool
 VarUniq(struct Name *word, bool addSpace, Buffer buf, void *lastp)
 {
-    struct Name *last = (struct Name *)lastp;
+	struct Name *last = (struct Name *)lastp;
 
-    	/* does not match */
-    if (last->s == NULL || last->e - last->s != word->e - word->s || 
-    	strncmp(word->s, last->s, word->e - word->s) != 0) {
-	if (addSpace)
-	    Buf_AddSpace(buf);
-	Buf_Addi(buf, word->s, word->e);
-	addSpace = true;
-    }
-    last->s = word->s;
-    last->e = word->e;
-    return addSpace;
+	/* does not match */
+	if (last->s == NULL || last->e - last->s != word->e - word->s || 
+	    strncmp(word->s, last->s, word->e - word->s) != 0) {
+		if (addSpace)
+			Buf_AddSpace(buf);
+		Buf_Addi(buf, word->s, word->e);
+		addSpace = true;
+	}
+	last->s = word->s;
+	last->e = word->e;
+	return addSpace;
 }
 
 static bool
 VarLoop(struct Name *word, bool addSpace, Buffer buf, void *vp)
 {
-    struct LoopStuff *v = (struct LoopStuff *)vp;
+	struct LoopStuff *v = (struct LoopStuff *)vp;
 
-    if (addSpace)
-    	Buf_AddSpace(buf);
-    Var_SubstVar(buf, v->expand, v->var, word->s);
-    return true;
+	if (addSpace)
+		Buf_AddSpace(buf);
+	Var_SubstVar(buf, v->expand, v->var, word->s);
+	return true;
 }
 
 static char *
@@ -455,129 +455,129 @@ NameCompare(const void *ap, const void *bp)
 static char *
 do_sort(const char *s, const struct Name *dummy UNUSED, void *arg UNUSED)
 {
-    struct Name *t;
-    unsigned long n, i, j;
-    const char *start, *end;
+	struct Name *t;
+	unsigned long n, i, j;
+	const char *start, *end;
 
-    n = 1024;	/* start at 1024 words */
-    t = (struct Name *)emalloc(sizeof(struct Name) * n);
-    start = s;
-    end = start;
+	n = 1024;	/* start at 1024 words */
+	t = (struct Name *)emalloc(sizeof(struct Name) * n);
+	start = s;
+	end = start;
 
-    for (i = 0;; i++) {
-    	if (i == n) {
-		n *= 2;
-		t = (struct Name *)erealloc(t, sizeof(struct Name) * n);
+	for (i = 0;; i++) {
+		if (i == n) {
+			n *= 2;
+			t = (struct Name *)erealloc(t, sizeof(struct Name) * n);
+		}
+		start = iterate_words(&end);
+		if (start == NULL)
+			break;
+		t[i].s = start;
+		t[i].e = end;
 	}
-	start = iterate_words(&end);
-	if (start == NULL)
-	    break;
-	t[i].s = start;
-	t[i].e = end;
-    }
-    if (i > 0) {
-    	BUFFER buf;
+	if (i > 0) {
+		BUFFER buf;
 
-    	Buf_Init(&buf, end - s);
-	qsort(t, i, sizeof(struct Name), NameCompare);
-	Buf_Addi(&buf, t[0].s, t[0].e);
-	for (j = 1; j < i; j++) {
-		Buf_AddSpace(&buf);
-		Buf_Addi(&buf, t[j].s, t[j].e);
+		Buf_Init(&buf, end - s);
+		qsort(t, i, sizeof(struct Name), NameCompare);
+		Buf_Addi(&buf, t[0].s, t[0].e);
+		for (j = 1; j < i; j++) {
+			Buf_AddSpace(&buf);
+			Buf_Addi(&buf, t[j].s, t[j].e);
+		}
+		free(t);
+		return Buf_Retrieve(&buf);
+	} else {
+		free(t);
+		return "";
 	}
-	free(t);
-	return Buf_Retrieve(&buf);
-    } else {
-    	free(t);
-    	return "";
-    }
 }
 
 static char *
 do_label(const char *s UNUSED, const struct Name *n, void *arg UNUSED)
 {
-    return Str_dupi(n->s, n->e);
+	return Str_dupi(n->s, n->e);
 }
 
 static char *
 do_path(const char *s UNUSED, const struct Name *n, void *arg UNUSED)
 {
-    GNode *gn;
+	GNode *gn;
 
-    gn = Targ_FindNodei(n->s, n->e, TARG_NOCREATE);
-    if (gn == NULL)
-    	return Str_dupi(n->s, n->e);
-    else
-	return strdup(gn->path);
+	gn = Targ_FindNodei(n->s, n->e, TARG_NOCREATE);
+	if (gn == NULL)
+		return Str_dupi(n->s, n->e);
+	else
+		return strdup(gn->path);
 }
 
 static char *
 do_def(const char *s, const struct Name *n UNUSED, void *arg)
 {
-    VarPattern *v = (VarPattern *)arg;
-    if (s == NULL) {
-    	free_patternarg(v);
-	return NULL;
-    } else
-    	return v->lbuffer;
+	VarPattern *v = (VarPattern *)arg;
+	if (s == NULL) {
+		free_patternarg(v);
+		return NULL;
+	} else
+		return v->lbuffer;
 }
 
 static char *
 do_undef(const char *s, const struct Name *n UNUSED, void *arg)
 {
-    VarPattern *v = (VarPattern *)arg;
-    if (s != NULL) {
-    	free_patternarg(v);
-	return NULL;
-    } else
-    	return v->lbuffer;
+	VarPattern *v = (VarPattern *)arg;
+	if (s != NULL) {
+		free_patternarg(v);
+		return NULL;
+	} else
+		return v->lbuffer;
 }
 
 static char *
 do_assign(const char *s, const struct Name *n, void *arg)
 {
-    VarPattern *v = (VarPattern *)arg;
-    char *msg;
-    char *result;
+	VarPattern *v = (VarPattern *)arg;
+	char *msg;
+	char *result;
 
-    switch (v->flags) {
-    case VAR_EQUAL:
-    	Var_Seti(n->s, n->e, v->lbuffer);
-	break;
-    case VAR_MAY_EQUAL:
-    	if (s == NULL)
-	    Var_Seti(n->s, n->e, v->lbuffer);
-	break;
-    case VAR_ADD_EQUAL:
-    	if (s == NULL)
-	    Var_Seti(n->s, n->e, v->lbuffer);
-	else
-	    Var_Appendi(n->s, n->e, v->lbuffer);
-	break;
-    case VAR_BANG_EQUAL:
-    	result = Cmd_Exec(v->lbuffer, &msg);
-	if (result != NULL) {
-		Var_Seti(n->s, n->e, result);
-		free(result);
-	} else
-		Error(msg, v->lbuffer);
-	break;
+	switch (v->flags) {
+	case VAR_EQUAL:
+		Var_Seti(n->s, n->e, v->lbuffer);
+		break;
+	case VAR_MAY_EQUAL:
+		if (s == NULL)
+			Var_Seti(n->s, n->e, v->lbuffer);
+		break;
+	case VAR_ADD_EQUAL:
+		if (s == NULL)
+			Var_Seti(n->s, n->e, v->lbuffer);
+		else
+			Var_Appendi(n->s, n->e, v->lbuffer);
+		break;
+	case VAR_BANG_EQUAL:
+		result = Cmd_Exec(v->lbuffer, &msg);
+		if (result != NULL) {
+			Var_Seti(n->s, n->e, result);
+			free(result);
+		} else
+			Error(msg, v->lbuffer);
+		break;
 
-    }
-    return NULL;
+	}
+	return NULL;
 }
 
 static char *
 do_exec(const char *s UNUSED, const struct Name *n UNUSED, void *arg)
 {
-    VarPattern *v = (VarPattern *)arg;
-    char *msg;
-    char *result;
+	VarPattern *v = (VarPattern *)arg;
+	char *msg;
+	char *result;
 
-    result = Cmd_Exec(v->lbuffer, &msg);
-    if (result == NULL)
-	Error(msg, v->lbuffer);
-    return result;
+	result = Cmd_Exec(v->lbuffer, &msg);
+	if (result == NULL)
+		Error(msg, v->lbuffer);
+	return result;
 }
 
 /*-
@@ -588,69 +588,68 @@ do_exec(const char *s UNUSED, const struct Name *n UNUSED, void *arg)
  *-----------------------------------------------------------------------
  */
 static bool
-VarSYSVMatch(struct Name *word, bool addSpace, Buffer buf, 
-    void *patp) /* Pattern the word must match */
+VarSYSVMatch(struct Name *word, bool addSpace, Buffer buf, void *patp)
 {
-    size_t	len;
-    const char	*ptr;
-    VarPattern	*pat = (VarPattern *)patp;
+	size_t	len;
+	const char	*ptr;
+	VarPattern	*pat = (VarPattern *)patp;
 
-    if (*word->s != '\0') {
-	    if (addSpace)
-		Buf_AddSpace(buf);
-	    if ((ptr = Str_SYSVMatch(word->s, pat->lhs, &len)) != NULL)
-		Str_SYSVSubst(buf, pat->rhs, ptr, len);
-	    else
-		Buf_Addi(buf, word->s, word->e);
-	    return true;
-    } else
-	return addSpace;
+	if (*word->s != '\0') {
+		if (addSpace)
+			Buf_AddSpace(buf);
+		if ((ptr = Str_SYSVMatch(word->s, pat->lhs, &len)) != NULL)
+			Str_SYSVSubst(buf, pat->rhs, ptr, len);
+		else
+			Buf_Addi(buf, word->s, word->e);
+		return true;
+	} else
+		return addSpace;
 }
 
 void *
 get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED, 
     int endc)
 {
-    VarPattern		*pattern;
-    const char		*cp, *cp2;
-    int cnt = 0;
-    char startc = endc == ')' ? '(' : '{';
+	VarPattern		*pattern;
+	const char		*cp, *cp2;
+	int cnt = 0;
+	char startc = endc == ')' ? '(' : '{';
 
-    for (cp = *p;; cp++) {
-    	if (*cp == '=' && cnt == 0)
-	    break;
-	if (*cp == '\0')
-	    return NULL;
-	if (*cp == startc)
-	    cnt++;
-	else if (*cp == endc) {
-	    cnt--;
-	    if (cnt < 0)
-	    	return NULL;
+	for (cp = *p;; cp++) {
+		if (*cp == '=' && cnt == 0)
+			break;
+		if (*cp == '\0')
+			return NULL;
+		if (*cp == startc)
+			cnt++;
+		else if (*cp == endc) {
+			cnt--;
+			if (cnt < 0)
+				return NULL;
+		}
 	}
-    }
-    for (cp2 = cp+1;; cp2++) {
-    	if ((*cp2 == ':' || *cp2 == endc) && cnt == 0)
-	    break;
-	if (*cp2 == '\0')
-	    return NULL;
-	if (*cp2 == startc)
-	    cnt++;
-	else if (*cp2 == endc) {
-	    cnt--;
-	    if (cnt < 0)
-	    	return NULL;
+	for (cp2 = cp+1;; cp2++) {
+		if ((*cp2 == ':' || *cp2 == endc) && cnt == 0)
+			break;
+		if (*cp2 == '\0')
+			return NULL;
+		if (*cp2 == startc)
+			cnt++;
+		else if (*cp2 == endc) {
+			cnt--;
+			if (cnt < 0)
+				return NULL;
+		}
 	}
-    }
-	
-    pattern = (VarPattern *)emalloc(sizeof(VarPattern));
-    pattern->lbuffer = pattern->lhs = Str_dupi(*p, cp);
-    pattern->leftLen = cp - *p;
-    pattern->rhs = Str_dupi(cp+1, cp2);
-    pattern->rightLen = cp2 - (cp+1);
-    pattern->flags = 0;
-    *p = cp2;
-    return pattern;
+	    
+	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+	pattern->lbuffer = pattern->lhs = Str_dupi(*p, cp);
+	pattern->leftLen = cp - *p;
+	pattern->rhs = Str_dupi(cp+1, cp2);
+	pattern->rightLen = cp2 - (cp+1);
+	pattern->flags = 0;
+	*p = cp2;
+	return pattern;
 }
 
 
@@ -794,14 +793,14 @@ VarSubstitute(struct Name *word, bool addSpace, Buffer buf,
 static void
 VarREError(int err, regex_t *pat, const char *str)
 {
-    char	*errbuf;
-    int 	errlen;
+	char	*errbuf;
+	int 	errlen;
 
-    errlen = regerror(err, pat, 0, 0);
-    errbuf = emalloc(errlen);
-    regerror(err, pat, errbuf, errlen);
-    Error("%s: %s", str, errbuf);
-    free(errbuf);
+	errlen = regerror(err, pat, 0, 0);
+	errbuf = emalloc(errlen);
+	regerror(err, pat, errbuf, errlen);
+	Error("%s: %s", str, errbuf);
+	free(errbuf);
 }
 
 /*-
@@ -814,103 +813,107 @@ VarREError(int err, regex_t *pat, const char *str)
 static bool
 VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 {
-    VarREPattern	*pat;
-    int 		xrv;
-    const char		*wp;
-    char		*rp;
-    int 		added;
+	VarREPattern	*pat;
+	int 		xrv;
+	const char		*wp;
+	char		*rp;
+	int 		added;
 
 #define MAYBE_ADD_SPACE()		\
 	if (addSpace && !added) 	\
-	    Buf_AddSpace(buf);		\
+		Buf_AddSpace(buf);	\
 	added = 1
 
-    added = 0;
-    wp = word->s;
-    pat = patternp;
+	added = 0;
+	wp = word->s;
+	pat = patternp;
 
-    if ((pat->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) ==
-	(VAR_SUB_ONE|VAR_SUB_MATCHED))
-	xrv = REG_NOMATCH;
-    else {
-    tryagain:
-	xrv = regexec(&pat->re, wp, pat->nsub, pat->matches, 0);
-    }
-
-    switch (xrv) {
-    case 0:
-	pat->flags |= VAR_SUB_MATCHED;
-	if (pat->matches[0].rm_so > 0) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddChars(buf, pat->matches[0].rm_so, wp);
+	if ((pat->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) ==
+	    (VAR_SUB_ONE|VAR_SUB_MATCHED))
+		xrv = REG_NOMATCH;
+	else {
+	tryagain:
+		xrv = regexec(&pat->re, wp, pat->nsub, pat->matches, 0);
 	}
 
-	for (rp = pat->replace; *rp; rp++) {
-	    if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
-		MAYBE_ADD_SPACE();
-		Buf_AddChar(buf,rp[1]);
-		rp++;
-	    }
-	    else if (*rp == '&' || (*rp == '\\' && isdigit(rp[1]))) {
-		int n;
-		const char *subbuf;
-		int sublen;
-		char errstr[3];
-
-		if (*rp == '&') {
-		    n = 0;
-		    errstr[0] = '&';
-		    errstr[1] = '\0';
-		} else {
-		    n = rp[1] - '0';
-		    errstr[0] = '\\';
-		    errstr[1] = rp[1];
-		    errstr[2] = '\0';
-		    rp++;
+	switch (xrv) {
+	case 0:
+		pat->flags |= VAR_SUB_MATCHED;
+		if (pat->matches[0].rm_so > 0) {
+			MAYBE_ADD_SPACE();
+			Buf_AddChars(buf, pat->matches[0].rm_so, wp);
 		}
 
-		if (n > pat->nsub) {
-		    Error("No subexpression %s", &errstr[0]);
-		    subbuf = "";
-		    sublen = 0;
-		} else if (pat->matches[n].rm_so == -1 &&
-			   pat->matches[n].rm_eo == -1) {
-		    Error("No match for subexpression %s", &errstr[0]);
-		    subbuf = "";
-		    sublen = 0;
-		} else {
-		    subbuf = wp + pat->matches[n].rm_so;
-		    sublen = pat->matches[n].rm_eo - pat->matches[n].rm_so;
-		}
+		for (rp = pat->replace; *rp; rp++) {
+			if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
+				MAYBE_ADD_SPACE();
+				Buf_AddChar(buf,rp[1]);
+				rp++;
+			}
+			else if (*rp == '&' || 
+			    (*rp == '\\' && isdigit(rp[1]))) {
+				int n;
+				const char *subbuf;
+				int sublen;
+				char errstr[3];
 
-		if (sublen > 0) {
-		    MAYBE_ADD_SPACE();
-		    Buf_AddChars(buf, sublen, subbuf);
+				if (*rp == '&') {
+					n = 0;
+					errstr[0] = '&';
+					errstr[1] = '\0';
+				} else {
+					n = rp[1] - '0';
+					errstr[0] = '\\';
+					errstr[1] = rp[1];
+					errstr[2] = '\0';
+					rp++;
+				}
+
+				if (n > pat->nsub) {
+					Error("No subexpression %s", 
+					    &errstr[0]);
+					subbuf = "";
+					sublen = 0;
+				} else if (pat->matches[n].rm_so == -1 &&
+				    pat->matches[n].rm_eo == -1) {
+					Error("No match for subexpression %s", 
+					    &errstr[0]);
+					subbuf = "";
+					sublen = 0;
+				} else {
+					subbuf = wp + pat->matches[n].rm_so;
+					sublen = pat->matches[n].rm_eo - 
+					    pat->matches[n].rm_so;
+				}
+
+				if (sublen > 0) {
+					MAYBE_ADD_SPACE();
+					Buf_AddChars(buf, sublen, subbuf);
+				}
+			} else {
+				MAYBE_ADD_SPACE();
+				Buf_AddChar(buf, *rp);
+			}
 		}
-	    } else {
-		MAYBE_ADD_SPACE();
-		Buf_AddChar(buf, *rp);
-	    }
+		wp += pat->matches[0].rm_eo;
+		if (pat->flags & VAR_SUB_GLOBAL)
+			goto tryagain;
+		if (*wp) {
+			MAYBE_ADD_SPACE();
+			Buf_AddString(buf, wp);
+		}
+		break;
+	default:
+		VarREError(xrv, &pat->re, "Unexpected regex error");
+	       /* fall through */
+	case REG_NOMATCH:
+		if (*wp) {
+			MAYBE_ADD_SPACE();
+			Buf_AddString(buf, wp);
+		}
+		break;
 	}
-	wp += pat->matches[0].rm_eo;
-	if (pat->flags & VAR_SUB_GLOBAL)
-	    goto tryagain;
-	if (*wp) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddString(buf, wp);
-	}
-	break;
-    default:
-	VarREError(xrv, &pat->re, "Unexpected regex error");
-       /* fall through */
-    case REG_NOMATCH:
-	if (*wp) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddString(buf, wp);
-	}
-	break;
-    }
-    return addSpace||added;
+	return addSpace||added;
 }
 #endif
 
@@ -930,26 +933,26 @@ VarModify(char *str, 		/* String whose words should be trimmed */
     bool (*modProc)(struct Name *, bool, Buffer, void *), 
     void *datum)		/* Datum to pass it */
 {
-    BUFFER	  buf;		/* Buffer for the new string */
-    bool	  addSpace;	/* true if need to add a space to the
-				 * buffer before adding the trimmed
-				 * word */
-    struct Name	  word;
+	BUFFER	  buf;		/* Buffer for the new string */
+	bool	  addSpace;	/* true if need to add a space to the
+				     * buffer before adding the trimmed
+				     * word */
+	struct Name	  word;
 
-    Buf_Init(&buf, 0);
-    addSpace = false;
+	Buf_Init(&buf, 0);
+	addSpace = false;
 
-    word.e = str;
+	word.e = str;
 
-    while ((word.s = iterate_words(&word.e)) != NULL) {
-    	char termc;
+	while ((word.s = iterate_words(&word.e)) != NULL) {
+		char termc;
 
-	termc = *word.e;
-	*((char *)(word.e)) = '\0';
-	addSpace = (*modProc)(&word, addSpace, &buf, datum);
-	*((char *)(word.e)) = termc;
-    }
-    return Buf_Retrieve(&buf);
+		termc = *word.e;
+		*((char *)(word.e)) = '\0';
+		addSpace = (*modProc)(&word, addSpace, &buf, datum);
+		*((char *)(word.e)) = termc;
+	}
+	return Buf_Retrieve(&buf);
 }
 
 /*-
@@ -972,60 +975,62 @@ static char *
 VarGetPattern(SymTable *ctxt, int err, const char **tstr, int delim1, 
     int delim2, size_t *length, VarPattern *pattern)
 {
-    const char	*cp;
-    char	*result;
-    BUFFER	buf;
-    size_t	junk;
+	const char	*cp;
+	char	*result;
+	BUFFER	buf;
+	size_t	junk;
 
-    Buf_Init(&buf, 0);
-    if (length == NULL)
-	length = &junk;
+	Buf_Init(&buf, 0);
+	if (length == NULL)
+		length = &junk;
 
 #define IS_A_MATCH(cp, delim1, delim2) \
-    (cp[0] == '\\' && (cp[1] == delim1 || cp[1] == delim2 || \
-     cp[1] == '\\' || cp[1] == '$' || (pattern && cp[1] == '&')))
+	(cp[0] == '\\' && (cp[1] == delim1 || cp[1] == delim2 || \
+	 cp[1] == '\\' || cp[1] == '$' || (pattern && cp[1] == '&')))
 
-    /*
-     * Skim through until the matching delimiter is found;
-     * pick up variable substitutions on the way. Also allow
-     * backslashes to quote the delimiter, $, and \, but don't
-     * touch other backslashes.
-     */
-    for (cp = *tstr; *cp != '\0' && *cp != delim1 && *cp != delim2; cp++) {
-	if (IS_A_MATCH(cp, delim1, delim2)) {
-	    Buf_AddChar(&buf, cp[1]);
-	    cp++;
-	} else if (*cp == '$') {
-		/* Allowed at end of pattern */
-	    if (cp[1] == delim1 || cp[1] == delim2)
-		Buf_AddChar(&buf, *cp);
-	    else {
-		size_t len;
+	/*
+	 * Skim through until the matching delimiter is found;
+	 * pick up variable substitutions on the way. Also allow
+	 * backslashes to quote the delimiter, $, and \, but don't
+	 * touch other backslashes.
+	 */
+	for (cp = *tstr; *cp != '\0' && *cp != delim1 && *cp != delim2; cp++) {
+		if (IS_A_MATCH(cp, delim1, delim2)) {
+			Buf_AddChar(&buf, cp[1]);
+			cp++;
+		} else if (*cp == '$') {
+			/* Allowed at end of pattern */
+			if (cp[1] == delim1 || cp[1] == delim2)
+				Buf_AddChar(&buf, *cp);
+			else {
+				size_t len;
 
-		/* If unescaped dollar sign not before the delimiter,
-		 * assume it's a variable substitution and recurse.  */
-		(void)Var_ParseBuffer(&buf, cp, ctxt, err, &len);
-		cp += len - 1;
-	    }
-	} else if (pattern && *cp == '&')
-	    Buf_AddChars(&buf, pattern->leftLen, pattern->lhs);
-	else
-	    Buf_AddChar(&buf, *cp);
-    }
+				/* If unescaped dollar sign not before the
+				 * delimiter, assume it's a variable
+				 * substitution and recurse.  */
+				(void)Var_ParseBuffer(&buf, cp, ctxt, err, 
+				    &len);
+				cp += len - 1;
+			}
+		} else if (pattern && *cp == '&')
+			Buf_AddChars(&buf, pattern->leftLen, pattern->lhs);
+		else
+			Buf_AddChar(&buf, *cp);
+	}
 
-    *length = Buf_Size(&buf);
-    result = Buf_Retrieve(&buf);
+	*length = Buf_Size(&buf);
+	result = Buf_Retrieve(&buf);
 
-    if (*cp != delim1 && *cp != delim2) {
-	*tstr = cp;
-	*length = 0;
-	free(result);
-	return NULL;
-    }
-    else {
-	*tstr = ++cp;
-	return result;
-    }
+	if (*cp != delim1 && *cp != delim2) {
+		*tstr = cp;
+		*length = 0;
+		free(result);
+		return NULL;
+	}
+	else {
+		*tstr = ++cp;
+		return result;
+	}
 }
 
 /*-
@@ -1041,332 +1046,332 @@ static char *
 VarQuote(const char *str, const struct Name *n UNUSED, void *dummy UNUSED)
 {
 
-    BUFFER	  buf;
-    /* This should cover most shells :-( */
-    static char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
+	BUFFER	  buf;
+	/* This should cover most shells :-( */
+	static char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
 
-    Buf_Init(&buf, MAKE_BSIZE);
-    for (; *str; str++) {
-	if (strchr(meta, *str) != NULL)
-	    Buf_AddChar(&buf, '\\');
-	Buf_AddChar(&buf, *str);
-    }
-    return Buf_Retrieve(&buf);
+	Buf_Init(&buf, MAKE_BSIZE);
+	for (; *str; str++) {
+		if (strchr(meta, *str) != NULL)
+			Buf_AddChar(&buf, '\\');
+		Buf_AddChar(&buf, *str);
+	}
+	return Buf_Retrieve(&buf);
 }
 
 static void *
 check_empty(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
 {
-    dummy_arg->s = NULL;
-    if ((*p)[1] == endc || (*p)[1] == ':') {
-	(*p)++;
-	return dummy_arg;
-    } else
-	return NULL;
+	dummy_arg->s = NULL;
+	if ((*p)[1] == endc || (*p)[1] == ':') {
+		(*p)++;
+		return dummy_arg;
+	} else
+		return NULL;
 }
 
 static void *
 check_shcmd(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
 {
-    if ((*p)[1] == 'h' && ((*p)[2] == endc || (*p)[2] == ':')) {
-	(*p)+=2;
-	return dummy_arg;
-    } else
-	return NULL;
+	if ((*p)[1] == 'h' && ((*p)[2] == endc || (*p)[2] == ':')) {
+		(*p)+=2;
+		return dummy_arg;
+	} else
+		return NULL;
 }
 
 
 static char *
 do_shcmd(const char *s, const struct Name *n UNUSED, void *arg UNUSED)
 {
-    char	*err;
-    char	*t;
+	char *err;
+	char *t;
 
-    t = Cmd_Exec(s, &err);
-    if (err)
-	Error(err, s);
-    return t;
+	t = Cmd_Exec(s, &err);
+	if (err)
+		Error(err, s);
+	return t;
 }
 
 static void *
 get_stringarg(const char **p, SymTable *ctxt UNUSED, bool b UNUSED, int endc)
 {
-    const char	*cp;
-    char	*s;
+	const char *cp;
+	char *s;
 
-    for (cp = *p + 1; *cp != ':' && *cp != endc; cp++) {
-	if (*cp == '\\') {
-	    if (cp[1] == ':' || cp[1] == endc || cp[1] == '\\')
-		cp++;
-	} else if (*cp == '\0')
-	    return NULL;
-    }
-    s = escape_dupi(*p+1, cp, ":)}");
-    *p = cp;
-    return s;
+	for (cp = *p + 1; *cp != ':' && *cp != endc; cp++) {
+		if (*cp == '\\') {
+			if (cp[1] == ':' || cp[1] == endc || cp[1] == '\\')
+				cp++;
+		} else if (*cp == '\0')
+			return NULL;
+	}
+	s = escape_dupi(*p+1, cp, ":)}");
+	*p = cp;
+	return s;
 }
 
 static void
 free_stringarg(void *arg)
 {
-    free(arg);
+	free(arg);
 }
 
 static char *
 do_upper(const char *s, const struct Name *n UNUSED, void *arg UNUSED)
 {
-    size_t	len, i;
-    char	*t;
+	size_t len, i;
+	char *t;
 
-    len = strlen(s);
-    t = emalloc(len+1);
-    for (i = 0; i < len; i++)
-	t[i] = toupper(s[i]);
-    t[len] = '\0';
-    return t;
+	len = strlen(s);
+	t = emalloc(len+1);
+	for (i = 0; i < len; i++)
+		t[i] = toupper(s[i]);
+	t[len] = '\0';
+	return t;
 }
 
 static char *
 do_lower(const char *s, const struct Name *n UNUSED, void *arg UNUSED)
 {
-    size_t	len, i;
-    char	*t;
+	size_t	len, i;
+	char	*t;
 
-    len = strlen(s);
-    t = emalloc(len+1);
-    for (i = 0; i < len; i++)
-	t[i] = tolower(s[i]);
-    t[len] = '\0';
-    return t;
+	len = strlen(s);
+	t = emalloc(len+1);
+	for (i = 0; i < len; i++)
+		t[i] = tolower(s[i]);
+	t[len] = '\0';
+	return t;
 }
 
 static void *
 get_patternarg(const char **p, SymTable *ctxt, bool err, int endc)
 {
-    return common_get_patternarg(p, ctxt, err, endc, false);
+	return common_get_patternarg(p, ctxt, err, endc, false);
 }
 
 /* Extract anchors */
 static void *
 get_spatternarg(const char **p, SymTable *ctxt, bool err, int endc)
 {
-    VarPattern *pattern;
+	VarPattern *pattern;
 
-    pattern = common_get_patternarg(p, ctxt, err, endc, true);
-    if (pattern != NULL && pattern->leftLen > 0) {
-	if (pattern->lhs[pattern->leftLen-1] == '$') {
-		pattern->leftLen--;
-		pattern->flags |= VAR_MATCH_END;
-	}
-    	if (pattern->lhs[0] == '^') {
-		pattern->lhs++;
-		pattern->leftLen--;
-		pattern->flags |= VAR_MATCH_START;
+	pattern = common_get_patternarg(p, ctxt, err, endc, true);
+	if (pattern != NULL && pattern->leftLen > 0) {
+		if (pattern->lhs[pattern->leftLen-1] == '$') {
+			    pattern->leftLen--;
+			    pattern->flags |= VAR_MATCH_END;
 		}
-    }
-    return pattern;
+		if (pattern->lhs[0] == '^') {
+			    pattern->lhs++;
+			    pattern->leftLen--;
+			    pattern->flags |= VAR_MATCH_START;
+		}
+	}
+	return pattern;
 }
 
 static void
 free_looparg(void *arg)
 {
-    struct LoopStuff *l = (struct LoopStuff *)arg;
+	struct LoopStuff *l = (struct LoopStuff *)arg;
 
-    Var_DeleteLoopVar(l->var);
-    free(l->expand);
+	Var_DeleteLoopVar(l->var);
+	free(l->expand);
 }
 
 static char *
 LoopGrab(const char **s)
 {
-    const char *p, *start;
+	const char *p, *start;
 
-    start = *s;
-    for (p = start; *p != '@'; p++) {
-    	if (*p == '\\')
-	    p++;
-    	if (*p == 0)
-		return NULL;
-    }
-    *s = p+1;
-    return escape_dupi(start, p, "@\\");
+	start = *s;
+	for (p = start; *p != '@'; p++) {
+		if (*p == '\\')
+			p++;
+		if (*p == 0)
+			return NULL;
+	}
+	*s = p+1;
+	return escape_dupi(start, p, "@\\");
 }
 	
 static void *
 get_loop(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 {
-    static struct LoopStuff	loop;
-    const char *s;
-    const char *var;
+	static struct LoopStuff loop;
+	const char *s;
+	const char *var;
 
-    s = *p +1;
+	s = *p +1;
 
-    loop.var = NULL;
-    loop.expand = NULL;
-    loop.err = err;
-    var = LoopGrab(&s);
-    if (var != NULL) {
-    	loop.expand = LoopGrab(&s);
-	if (*s == endc || *s == ':') {
-	    *p = s;
-	    loop.var = Var_NewLoopVar(var, NULL);
-	    return &loop;
+	loop.var = NULL;
+	loop.expand = NULL;
+	loop.err = err;
+	var = LoopGrab(&s);
+	if (var != NULL) {
+		loop.expand = LoopGrab(&s);
+		if (*s == endc || *s == ':') {
+			*p = s;
+			loop.var = Var_NewLoopVar(var, NULL);
+			return &loop;
+		}
 	}
-    }
-    free_looparg(&loop);
-    return NULL;
+	free_looparg(&loop);
+	return NULL;
 }
 
 static void *
 common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc, 
     bool dosubst)
 {
-    VarPattern *pattern;
-    char	delim;
-    const char	*s;
+	VarPattern *pattern;
+	char delim;
+	const char *s;
 
-    pattern = (VarPattern *)emalloc(sizeof(VarPattern));
-    pattern->flags = 0;
-    s = *p;
+	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+	pattern->flags = 0;
+	s = *p;
 
-    delim = s[1];
-    if (delim == '\0')
-	return NULL;
-    s += 2;
+	delim = s[1];
+	if (delim == '\0')
+		return NULL;
+	s += 2;
 
-    pattern->rhs = NULL;
-    pattern->lhs = VarGetPattern(ctxt, err, &s, delim, delim,
-	&pattern->leftLen, NULL);
-    pattern->lbuffer = pattern->lhs;
-    if (pattern->lhs != NULL) {
-	pattern->rhs = VarGetPattern(ctxt, err, &s, delim, delim,
-	    &pattern->rightLen, dosubst ? pattern: NULL);
-	if (pattern->rhs != NULL) {
-	    /* Check for global substitution. If 'g' after the final
-	     * delimiter, substitution is global and is marked that
-	     * way.  */
-	    for (;; s++) {
-		switch (*s) {
-		case 'g':
-		    pattern->flags |= VAR_SUB_GLOBAL;
-		    continue;
-		case '1':
-		    pattern->flags |= VAR_SUB_ONE;
-		    continue;
+	pattern->rhs = NULL;
+	pattern->lhs = VarGetPattern(ctxt, err, &s, delim, delim, 
+	    &pattern->leftLen, NULL);
+	pattern->lbuffer = pattern->lhs;
+	if (pattern->lhs != NULL) {
+		pattern->rhs = VarGetPattern(ctxt, err, &s, delim, delim,
+		    &pattern->rightLen, dosubst ? pattern: NULL);
+		if (pattern->rhs != NULL) {
+			/* Check for global substitution. If 'g' after the
+			 * final delimiter, substitution is global and is
+			 * marked that way.  */
+			for (;; s++) {
+				switch (*s) {
+				case 'g':
+					pattern->flags |= VAR_SUB_GLOBAL;
+					continue;
+				case '1':
+					pattern->flags |= VAR_SUB_ONE;
+					continue;
+				}
+				break;
+			}
+			if (*s == endc || *s == ':') {
+				*p = s;
+				return pattern;
+			}
 		}
-		break;
-	    }
-	    if (*s == endc || *s == ':') {
-		*p = s;
-		return pattern;
-	    }
 	}
-    }
-    free_patternarg(pattern);
-    return NULL;
+	free_patternarg(pattern);
+	return NULL;
 }
 
 static void *
 assign_get_value(const char **p, SymTable *ctxt, bool err, int endc)
 {
-    const char *s;
-    int flags;
-    VarPattern *arg;
+	const char *s;
+	int flags;
+	VarPattern *arg;
 
-    s = *p + 1;
-    if (s[0] == '=')
-    	flags = VAR_EQUAL;
-    else if (s[0] == '?' && s[1] == '=')
-    	flags = VAR_MAY_EQUAL;
-    else if (s[0] == '+' && s[1] == '=')
-    	flags = VAR_ADD_EQUAL;
-    else if (s[0] == '!' && s[1] == '=')
-    	flags = VAR_BANG_EQUAL;
-    else
-    	return NULL;
+	s = *p + 1;
+	if (s[0] == '=')
+		flags = VAR_EQUAL;
+	else if (s[0] == '?' && s[1] == '=')
+		flags = VAR_MAY_EQUAL;
+	else if (s[0] == '+' && s[1] == '=')
+		flags = VAR_ADD_EQUAL;
+	else if (s[0] == '!' && s[1] == '=')
+		flags = VAR_BANG_EQUAL;
+	else
+		return NULL;
 
-    arg = get_value(&s, ctxt, err, endc);
-    if (arg != NULL) {
-    	*p = s;
-	arg->flags = flags;
-    } 
-    return arg;
+	arg = get_value(&s, ctxt, err, endc);
+	if (arg != NULL) {
+		*p = s;
+		arg->flags = flags;
+	} 
+	return arg;
 }
 
 static void *
 get_value(const char **p, SymTable *ctxt, bool err, int endc)
 {
-    VarPattern *pattern;
-    const char *s;
+	VarPattern *pattern;
+	const char *s;
 
-    pattern = (VarPattern *)emalloc(sizeof(VarPattern));
-    s = *p + 1;
-    pattern->rhs = NULL;
-    pattern->lbuffer = VarGetPattern(ctxt, err, &s, ':', endc,
-    	&pattern->leftLen, NULL);
-    if (s[-1] == endc || s[-1] == ':') {
-    	*p = s-1;
-	return pattern;
-    }
-    free_patternarg(pattern);
-    return NULL;
+	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+	s = *p + 1;
+	pattern->rhs = NULL;
+	pattern->lbuffer = VarGetPattern(ctxt, err, &s, ':', endc,
+	    &pattern->leftLen, NULL);
+	if (s[-1] == endc || s[-1] == ':') {
+		*p = s-1;
+		return pattern;
+	}
+	free_patternarg(pattern);
+	return NULL;
 }
 
 static void *
 get_cmd(const char **p, SymTable *ctxt, bool err, int endc UNUSED)
 {
-    VarPattern *pattern;
-    const char *s;
+	VarPattern *pattern;
+	const char *s;
 
-    pattern = (VarPattern *)emalloc(sizeof(VarPattern));
-    s = *p + 1;
-    pattern->rhs = NULL;
-    pattern->lbuffer = VarGetPattern(ctxt, err, &s, '!', '!',
-    	&pattern->leftLen, NULL);
-    if (s[-1] == '!') {
-    	*p = s-1;
-	return pattern;
-    }
-    free_patternarg(pattern);
-    return NULL;
+	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+	s = *p + 1;
+	pattern->rhs = NULL;
+	pattern->lbuffer = VarGetPattern(ctxt, err, &s, '!', '!',
+	    &pattern->leftLen, NULL);
+	if (s[-1] == '!') {
+		*p = s-1;
+		return pattern;
+	}
+	free_patternarg(pattern);
+	return NULL;
 }
 
 static void
 free_patternarg(void *p)
 {
-    VarPattern *vp = (VarPattern *)p;
+	VarPattern *vp = (VarPattern *)p;
 
-    free(vp->lbuffer);
-    free(vp->rhs);
-    free(vp);
+	free(vp->lbuffer);
+	free(vp->rhs);
+	free(vp);
 }
 
 #ifndef MAKE_BOOTSTRAP
 static char *
 do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 {
-    VarREPattern p2;
-    VarPattern	*p = (VarPattern *)arg;
-    int 	error;
-    char	*result;
+	VarREPattern p2;
+	VarPattern *p = (VarPattern *)arg;
+	int error;
+	char *result;
 
-    error = regcomp(&p2.re, p->lhs, REG_EXTENDED);
-    if (error) {
-	VarREError(error, &p2.re, "RE substitution error");
-	return var_Error;
-    }
-    p2.nsub = p2.re.re_nsub + 1;
-    p2.replace = p->rhs;
-    p2.flags = p->flags;
-    if (p2.nsub < 1)
-	p2.nsub = 1;
-    if (p2.nsub > 10)
-	p2.nsub = 10;
-    p2.matches = emalloc(p2.nsub * sizeof(regmatch_t));
-    result = VarModify((char *)s, VarRESubstitute, &p2);
-    regfree(&p2.re);
-    free(p2.matches);
-    return result;
+	error = regcomp(&p2.re, p->lhs, REG_EXTENDED);
+	if (error) {
+		VarREError(error, &p2.re, "RE substitution error");
+		return var_Error;
+	}
+	p2.nsub = p2.re.re_nsub + 1;
+	p2.replace = p->rhs;
+	p2.flags = p->flags;
+	if (p2.nsub < 1)
+		p2.nsub = 1;
+	if (p2.nsub > 10)
+		p2.nsub = 10;
+	p2.matches = emalloc(p2.nsub * sizeof(regmatch_t));
+	result = VarModify((char *)s, VarRESubstitute, &p2);
+	regfree(&p2.re);
+	free(p2.matches);
+	return result;
 }
 #endif
 
@@ -1374,106 +1379,110 @@ char *
 VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt, 
     bool err, bool *freePtr, const char **pscan, int paren)
 {
-    const char	*tstr;
-    bool	atstart;    /* Some ODE modifiers only make sense at start */
-    char endc = paren == '(' ? ')' : '}';
-    const char *start = *pscan;
+	const char *tstr;
+	bool atstart;    /* Some ODE modifiers only make sense at start */
+	char endc = paren == '(' ? ')' : '}';
+	const char *start = *pscan;
 
-    tstr = start;
-    /*
-     * Now we need to apply any modifiers the user wants applied.
-     * These are:
-     *		  :M<pattern>	words which match the given <pattern>.
-     *				<pattern> is of the standard file
-     *				wildcarding form.
-     *		  :S<d><pat1><d><pat2><d>[g]
-     *				Substitute <pat2> for <pat1> in the value
-     *		  :C<d><pat1><d><pat2><d>[g]
-     *				Substitute <pat2> for regex <pat1> in the value
-     *		  :H		Substitute the head of each word
-     *		  :T		Substitute the tail of each word
-     *		  :E		Substitute the extension (minus '.') of
-     *				each word
-     *		  :R		Substitute the root of each word
-     *				(pathname minus the suffix).
-     *		  :lhs=rhs	Like :S, but the rhs goes to the end of
-     *				the invocation.
-     */
-    
-    atstart = true;
-    while (*tstr != endc && *tstr != '\0') {
-	struct modifier *mod;
-	void		*arg;
-	char		*newStr;
+	tstr = start;
+	/*
+	 * Now we need to apply any modifiers the user wants applied.
+	 * These are:
+	 *		  :M<pattern>	words which match the given <pattern>.
+	 *				<pattern> is of the standard file
+	 *				wildcarding form.
+	 *		  :S<d><pat1><d><pat2><d>[g]
+	 *				Substitute <pat2> for <pat1> in the
+	 *				value
+	 *		  :C<d><pat1><d><pat2><d>[g]
+	 *				Substitute <pat2> for regex <pat1> in
+	 *				the value
+	 *		  :H		Substitute the head of each word
+	 *		  :T		Substitute the tail of each word
+	 *		  :E		Substitute the extension (minus '.') of
+	 *				each word
+	 *		  :R		Substitute the root of each word
+	 *				(pathname minus the suffix).
+	 *		  :lhs=rhs	Like :S, but the rhs goes to the end of
+	 *				the invocation.
+	 */
+	
+	atstart = true;
+	while (*tstr != endc && *tstr != '\0') {
+		struct modifier *mod;
+		void *arg;
+		char *newStr;
 
-	tstr++;
-	if (DEBUG(VAR))
-	    printf("Applying :%c to \"%s\"\n", *tstr, str);
-
-	mod = choose_mod[*tstr];
-	arg = NULL;
-
-	if (mod != NULL && (!mod->atstart || atstart))
-	    arg = mod->getarg(&tstr, ctxt, err, endc);
-	if (FEATURES(FEATURE_SYSVVARSUB) && arg == NULL) {
-	    mod = &sysv_mod;
-	    arg = mod->getarg(&tstr, ctxt, err, endc);
-	}
-	atstart = false;
-	if (arg != NULL) {
-	    if (str != NULL || (mod->atstart && name != NULL)) {
-		if (mod->word_apply != NULL) {
-		    newStr = VarModify(str, mod->word_apply, arg);
-		    if (mod->apply != NULL) {
-		    	char *newStr2;
-
-		    	newStr2 = mod->apply(newStr, name, arg);
-			free(newStr);
-			newStr = newStr2;
-		    }
-		} else
-		    newStr = mod->apply(str, name, arg);
-		if (*freePtr)
-		    free(str);
-		str = newStr;
-		if (str != var_Error)
-		    *freePtr = true;
-		else
-		    *freePtr = false;
-	    }
-	    if (mod->freearg != NULL)
-		mod->freearg(arg);
-	} else {
-	    Error("Bad modifier: %s\n", tstr);
-	    /* Try skipping to end of var... */
-	    for (tstr++; *tstr != endc && *tstr != '\0';)
 		tstr++;
-	    if (str != NULL && *freePtr)
-		free(str);
-	    str = var_Error;
-	    *freePtr = false;
-	    break;
-	}
-	if (DEBUG(VAR))
-	    printf("Result is \"%s\"\n", str);
-    }
-    if (*tstr == '\0')
-	Error("Unclosed variable specification");
-    else
-    	tstr++;
+		if (DEBUG(VAR))
+			printf("Applying :%c to \"%s\"\n", *tstr, str);
 
-    *pscan = tstr;
-    return str;
+		mod = choose_mod[*tstr];
+		arg = NULL;
+
+		if (mod != NULL && (!mod->atstart || atstart))
+			arg = mod->getarg(&tstr, ctxt, err, endc);
+		if (FEATURES(FEATURE_SYSVVARSUB) && arg == NULL) {
+			mod = &sysv_mod;
+			arg = mod->getarg(&tstr, ctxt, err, endc);
+		}
+		atstart = false;
+		if (arg != NULL) {
+			if (str != NULL || (mod->atstart && name != NULL)) {
+				if (mod->word_apply != NULL) {
+					newStr = VarModify(str, 
+					    mod->word_apply, arg);
+					if (mod->apply != NULL) {
+						char *newStr2;
+
+						newStr2 = mod->apply(newStr, 
+						    name, arg);
+						free(newStr);
+						newStr = newStr2;
+					}
+				} else
+					newStr = mod->apply(str, name, arg);
+				if (*freePtr)
+					free(str);
+				str = newStr;
+				if (str != var_Error)
+					*freePtr = true;
+				else
+					*freePtr = false;
+			}
+			if (mod->freearg != NULL)
+				mod->freearg(arg);
+		} else {
+			Error("Bad modifier: %s\n", tstr);
+			/* Try skipping to end of var... */
+			for (tstr++; *tstr != endc && *tstr != '\0';)
+				tstr++;
+			if (str != NULL && *freePtr)
+				free(str);
+			str = var_Error;
+			*freePtr = false;
+			break;
+		}
+		if (DEBUG(VAR))
+			printf("Result is \"%s\"\n", str);
+	}
+	if (*tstr == '\0')
+		Error("Unclosed variable specification");
+	else
+		tstr++;
+
+	*pscan = tstr;
+	return str;
 }
 
 char *
 Var_GetHead(char *s)
 {
-    return VarModify(s, VarHead, NULL);
+	return VarModify(s, VarHead, NULL);
 }
 
 char *
 Var_GetTail(char *s)
 {
-    return VarModify(s, VarTail, NULL);
+	return VarModify(s, VarTail, NULL);
 }
