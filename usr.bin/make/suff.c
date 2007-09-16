@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.61 2007/09/16 09:46:14 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.62 2007/09/16 09:49:24 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -777,16 +777,12 @@ Suff_DoPaths(void)
     for (ln = Lst_First(&sufflist); ln != NULL; ln = Lst_Adv(ln)) {
 	s = (Suff *)Lst_Datum(ln);
 	if (!Lst_IsEmpty(&s->searchPath)) {
-#ifdef INCLUDES
 	    if (s->flags & SUFF_INCLUDE) {
 		Dir_Concat(&inIncludes, &s->searchPath);
 	    }
-#endif /* INCLUDES */
-#ifdef LIBRARIES
 	    if (s->flags & SUFF_LIBRARY) {
 		Dir_Concat(&inLibs, &s->searchPath);
 	    }
-#endif /* LIBRARIES */
 	    Dir_Concat(&s->searchPath, dirSearchPath);
 	} else
 	    Lst_Clone(&s->searchPath, dirSearchPath, Dir_CopyDir);

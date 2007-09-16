@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: config.h,v 1.15 2007/09/16 09:46:14 espie Exp $	*/
+/*	$OpenBSD: config.h,v 1.16 2007/09/16 09:49:24 espie Exp $	*/
 /*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
@@ -54,18 +54,6 @@
  */
 #define DEFMAXJOBS	4
 #define DEFMAXLOCAL	1
-
-/*
- * INCLUDES
- * LIBRARIES
- *	These control the handling of the .INCLUDES and .LIBS variables.
- *	If INCLUDES is defined, the .INCLUDES variable will be filled
- *	from the search paths of those suffixes which are marked by
- *	.INCLUDES dependency lines. Similarly for LIBRARIES and .LIBS
- *	See suff.c for more details.
- */
-#define INCLUDES
-#define LIBRARIES
 
 /*
  * LIBSUFF
