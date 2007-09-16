@@ -1,4 +1,4 @@
-/*	$OpenBSD: regs.c,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: regs.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -752,11 +752,15 @@ argswalk(NODE *p)
 static void
 setlive(NODE *p, int set, REGW *rv)
 {
-	if (rv != NULL)
-		return set ? LIVEADDR(rv) : LIVEDELR(rv);
+	if (rv != NULL) {
+		set ? LIVEADDR(rv) : LIVEDELR(rv);
+		return;
+	}
 
-	if (p->n_regw != NULL)
-		return set ? LIVEADDR(p->n_regw) : LIVEDELR(p->n_regw);
+	if (p->n_regw != NULL) {
+		set ? LIVEADDR(p->n_regw) : LIVEDELR(p->n_regw);
+		return;
+	}
 
 	switch (optype(p->n_op)) {
 	case LTYPE:
@@ -783,8 +787,10 @@ setlive(NODE *p, int set, REGW *rv)
 static void
 addedge_r(NODE *p, REGW *w)
 {
-	if (p->n_regw != NULL)
-		return AddEdge(p->n_regw, w);
+	if (p->n_regw != NULL) {
+		AddEdge(p->n_regw, w);
+		return;
+	}
 
 	if (optype(p->n_op) == BITYPE)
 		addedge_r(p->n_right, w);

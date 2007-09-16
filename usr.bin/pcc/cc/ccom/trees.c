@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: trees.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -730,10 +730,14 @@ chkpun(NODE *p)
 		/* return of void allowed but nothing else */
 		if (t1 == VOID && t2 == VOID)
 			return;
-		if (t1 == VOID)
-			return werror("returning value from void function");
-		if (t2 == VOID)
-			return uerror("using void value");
+		if (t1 == VOID) {
+			werror("returning value from void function");
+			return;
+		}
+		if (t2 == VOID) {
+			uerror("using void value");
+			return;
+		}
 	case COLON:
 		if (t1 == VOID && t2 == VOID)
 			return;

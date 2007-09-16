@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1347,7 +1347,10 @@ dynalloc(struct symtab *p, int *poff)
 			pol = buildtree(MUL, pol, n);
 	}
 	/* Create stack gap */
-	spalloc(tn, pol, tsize(t, 0, p->ssue));
+	if (pol == NIL)
+		uerror("aggregate dynamic array not allowed");
+	else
+		spalloc(tn, pol, tsize(t, 0, p->ssue));
 	arrstkp = 0;
 }
 

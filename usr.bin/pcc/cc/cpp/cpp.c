@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -104,8 +104,8 @@ int dflag;	/* debug printouts */
 #endif
 
 int ofd;
-static usch outbuf[CPPBUF];
-static int obufp, istty;
+usch outbuf[CPPBUF];
+int obufp, istty;
 int Cflag, Mflag;
 usch *Mfile;
 struct initar *initar;
@@ -483,9 +483,10 @@ include()
 		return;
 	osp = stringbuf;
 	slow = 1;
-	if (yylex() != WSPACE)
-		goto bad;
-again:	if ((c = yylex()) != STRING && c != '<' && c != IDENT)
+again:
+	if ((c = yylex()) == WSPACE)
+		c = yylex();
+	if (c != STRING && c != '<' && c != IDENT)
 		goto bad;
 
 	if (c == IDENT) {
@@ -817,7 +818,7 @@ struct recur *rp;
 				gotwarn++;
 				if (rp == NULL)
 					goto noid;
-			} else if (c == WSPACE)
+			} else if (c == WSPACE || c == '\n')
 				ws = 1;
 		} while (c == WSPACE || c == '\n' || c == WARN);
 
@@ -1333,7 +1334,8 @@ getsymtab(usch *str)
 {
 	struct symtab *sp = malloc(sizeof(struct symtab));
 
-	sp->namep = savstr(str), savch('\0');
+	sp->namep = savstr(str);
+	savch('\0');
 	sp->value = NULL;
 	sp->file = ifiles ? ifiles->orgfn : (usch *)"<initial>";
 	sp->line = ifiles ? ifiles->lineno : 0;

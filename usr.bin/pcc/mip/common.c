@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: common.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -461,7 +461,7 @@ struct b {
 };
 
 #define ALIGNMENT ((int)&((struct b *)0)->a2)
-#define	ROUNDUP(x) ((x) + (sizeof(ALIGNMENT)-1)) & ~(sizeof(ALIGNMENT)-1)
+#define	ROUNDUP(x) ((x) + ((ALIGNMENT)-1)) & ~((ALIGNMENT)-1)
 
 static char *allocpole;
 static int allocleft;
