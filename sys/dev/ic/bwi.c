@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.25 2007/09/15 23:36:30 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.26 2007/09/16 02:20:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -279,45 +279,43 @@ int		 bwi_media_change(struct ifnet *);
 int		 bwi_dma_alloc(struct bwi_softc *);
 void		 bwi_dma_free(struct bwi_softc *);
 int		 bwi_dma_ring_alloc(struct bwi_softc *,
-		     struct bwi_ring_data *, bus_size_t, uint32_t) __unused;
-int		 bwi_dma_txstats_alloc(struct bwi_softc *, uint32_t, bus_size_t)
-		     __unused;
-void		 bwi_dma_txstats_free(struct bwi_softc *) __unused;
-int		 bwi_dma_mbuf_create(struct bwi_softc *) __unused;
-void		 bwi_dma_mbuf_destroy(struct bwi_softc *, int, int) __unused;
+		     struct bwi_ring_data *, bus_size_t, uint32_t);
+int		 bwi_dma_txstats_alloc(struct bwi_softc *, uint32_t,
+		     bus_size_t);
+void		 bwi_dma_txstats_free(struct bwi_softc *);
+int		 bwi_dma_mbuf_create(struct bwi_softc *);
+void		 bwi_dma_mbuf_destroy(struct bwi_softc *, int, int);
 void		 bwi_enable_intrs(struct bwi_softc *, uint32_t);
 void		 bwi_disable_intrs(struct bwi_softc *, uint32_t);
-int		 bwi_init_tx_ring32(struct bwi_softc *, int) __unused;
+int		 bwi_init_tx_ring32(struct bwi_softc *, int);
 void		 bwi_init_rxdesc_ring32(struct bwi_softc *, uint32_t,
-		     bus_addr_t, int, int) __unused;
-int		 bwi_init_rx_ring32(struct bwi_softc *) __unused;
-int		 bwi_init_txstats32(struct bwi_softc *) __unused;
-void		 bwi_setup_rx_desc32(struct bwi_softc *, int, bus_addr_t, int)
-		     __unused;
+		     bus_addr_t, int, int);
+int		 bwi_init_rx_ring32(struct bwi_softc *);
+int		 bwi_init_txstats32(struct bwi_softc *);
+void		 bwi_setup_rx_desc32(struct bwi_softc *, int, bus_addr_t, int);
 void		 bwi_setup_tx_desc32(struct bwi_softc *, struct bwi_ring_data *,
-		     int, bus_addr_t, int) __unused;
-int		 bwi_init_tx_ring64(struct bwi_softc *, int) __unused;
-int		 bwi_init_rx_ring64(struct bwi_softc *) __unused;
-int		 bwi_init_txstats64(struct bwi_softc *) __unused;
-void		 bwi_setup_rx_desc64(struct bwi_softc *, int, bus_addr_t, int)
-		     __unused;
+		     int, bus_addr_t, int);
+int		 bwi_init_tx_ring64(struct bwi_softc *, int);
+int		 bwi_init_rx_ring64(struct bwi_softc *);
+int		 bwi_init_txstats64(struct bwi_softc *);
+void		 bwi_setup_rx_desc64(struct bwi_softc *, int, bus_addr_t, int);
 void		 bwi_setup_tx_desc64(struct bwi_softc *, struct bwi_ring_data *,
-		     int, bus_addr_t, int) __unused;
-int		 bwi_newbuf(struct bwi_softc *, int, int) __unused;
+		     int, bus_addr_t, int);
+int		 bwi_newbuf(struct bwi_softc *, int, int);
 void		 bwi_set_addr_filter(struct bwi_softc *, uint16_t,
 		     const uint8_t *);
 int		 bwi_set_chan(struct bwi_softc *, u_int8_t);
 void		 bwi_next_scan(void *);
-void		 bwi_rxeof(struct bwi_softc *, int) __unused;
-void		 bwi_rxeof32(struct bwi_softc *) __unused;
-void		 bwi_rxeof64(struct bwi_softc *) __unused;
+void		 bwi_rxeof(struct bwi_softc *, int);
+void		 bwi_rxeof32(struct bwi_softc *);
+void		 bwi_rxeof64(struct bwi_softc *);
 void		 bwi_reset_rx_ring32(struct bwi_softc *, uint32_t);
-void		 bwi_free_txstats32(struct bwi_softc *) __unused;
-void		 bwi_free_rx_ring32(struct bwi_softc *) __unused;
-void		 bwi_free_tx_ring32(struct bwi_softc *, int) __unused;
-void		 bwi_free_txstats64(struct bwi_softc *) __unused;
-void		 bwi_free_rx_ring64(struct bwi_softc *) __unused;
-void		 bwi_free_tx_ring64(struct bwi_softc *, int) __unused;
+void		 bwi_free_txstats32(struct bwi_softc *);
+void		 bwi_free_rx_ring32(struct bwi_softc *);
+void		 bwi_free_tx_ring32(struct bwi_softc *, int);
+void		 bwi_free_txstats64(struct bwi_softc *);
+void		 bwi_free_rx_ring64(struct bwi_softc *);
+void		 bwi_free_tx_ring64(struct bwi_softc *, int);
 uint8_t		 bwi_rate2plcp(uint8_t); /* XXX belongs to 802.11 */
 void		 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
 void		 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
@@ -325,10 +323,10 @@ void		 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
 void		 bwi_plcp_header(void *, int, uint8_t) __unused;
 int		 bwi_encap(struct bwi_softc *, int, struct mbuf *,
 		     struct ieee80211_node *);
-void		 bwi_start_tx32(struct bwi_softc *, uint32_t, int) __unused;
-void		 bwi_start_tx64(struct bwi_softc *, uint32_t, int) __unused;
-void		 bwi_txeof_status32(struct bwi_softc *) __unused;
-void		 bwi_txeof_status64(struct bwi_softc *) __unused;
+void		 bwi_start_tx32(struct bwi_softc *, uint32_t, int);
+void		 bwi_start_tx64(struct bwi_softc *, uint32_t, int);
+void		 bwi_txeof_status32(struct bwi_softc *);
+void		 bwi_txeof_status64(struct bwi_softc *);
 void		 _bwi_txeof(struct bwi_softc *, uint16_t);
 void		 bwi_txeof_status(struct bwi_softc *, int);
 void		 bwi_txeof(struct bwi_softc *);
@@ -336,7 +334,7 @@ int		 bwi_bbp_power_on(struct bwi_softc *, enum bwi_clock_mode);
 void		 bwi_bbp_power_off(struct bwi_softc *);
 int		 bwi_get_pwron_delay(struct bwi_softc *sc);
 int		 bwi_bus_attach(struct bwi_softc *);
-const char 	*bwi_regwin_name(const struct bwi_regwin *) __unused;
+const char 	*bwi_regwin_name(const struct bwi_regwin *);
 int		 bwi_regwin_is_enabled(struct bwi_softc *, struct bwi_regwin *);
 uint32_t	 bwi_regwin_disable_bits(struct bwi_softc *);
 void		 bwi_regwin_enable(struct bwi_softc *, struct bwi_regwin *,
