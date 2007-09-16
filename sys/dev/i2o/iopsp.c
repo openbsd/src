@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.9 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.10 2007/09/16 01:04:18 krw Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -208,8 +208,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	 * purposes only.
 	 */
 	size = sc->sc_link.adapter_buswidth * sizeof(struct iopsp_target);
-	sc->sc_targetmap = malloc(size, M_DEVBUF, M_NOWAIT);
-	bzero(sc->sc_targetmap, size);
+	sc->sc_targetmap = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
 #endif
 
  	/* Build the two maps, and attach to scsi. */
@@ -260,9 +259,8 @@ iopsp_reconfig(struct device *dv)
 	 * and we never address that here).
 	 */
 	size = sc->sc_link.adapter_buswidth * IOPSP_MAX_LUN * sizeof(u_short);
-	if (!(tidmap = malloc(size, M_DEVBUF, M_NOWAIT)))
+	if (!(tidmap = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO)))
 		return (ENOMEM);
-	bzero(tidmap, size);
 
 #ifdef I2OVERBOSE
 	for (i = 0; i < sc->sc_link.adapter_buswidth; i++)

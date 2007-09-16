@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.29 2006/11/29 12:24:17 miod Exp $	*/
+/*	$OpenBSD: iop.c,v 1.30 2007/09/16 01:04:18 krw Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -353,14 +353,13 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		sc->sc_maxib = IOP_MAX_INBOUND;
 
 	/* Allocate message wrappers. */
-	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT);
+	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!im) {
 		printf("%s: couldn't allocate message", sc->sc_dv.dv_xname);
 		goto bail_out;
 	}
 	state++;
 
-	bzero(im, sizeof(*im) * sc->sc_maxib);
 	sc->sc_ims = im;
 	SLIST_INIT(&sc->sc_im_freelist);
 
@@ -467,11 +466,10 @@ iop_config_interrupts(struct device *self)
 		i = sizeof(struct i2o_systab_entry) * (niop - 1) +
 		    sizeof(struct i2o_systab);
 		iop_systab_size = i;
-		iop_systab = malloc(i, M_DEVBUF, M_NOWAIT);
+		iop_systab = malloc(i, M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (!iop_systab)
 			return;
 
-		bzero(iop_systab, i);
 		iop_systab->numentries = niop;
 		iop_systab->version = I2O_VERSION_11;
 
@@ -682,12 +680,11 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 	if (sc->sc_tidmap != NULL)
 		free(sc->sc_tidmap, M_DEVBUF);
 	sc->sc_tidmap = malloc(sc->sc_nlctent * sizeof(struct iop_tidmap),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!sc->sc_tidmap) {
 		DPRINTF(("iop_reconfigure: out of memory\n"));
 		return (ENOMEM);
 	}
-	bzero(sc->sc_tidmap, sc->sc_nlctent * sizeof(struct iop_tidmap));
 
 	/* Allow 1 queued command per device while we're configuring. */
 	iop_adjqparam(sc, 1);
