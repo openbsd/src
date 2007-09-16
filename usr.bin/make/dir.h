@@ -2,7 +2,7 @@
 #define DIR_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.h,v 1.17 2007/01/18 17:49:51 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.18 2007/09/16 10:14:26 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -102,19 +102,6 @@ extern void Dir_PrintPath(Lst);
  * Handling file names, and looking them up in paths
  */
 
-/* boolean = Dir_HasWildcardsi(name, end)
- *	Returns true if (name, end) needs to be wildcard-expanded.
- */
-extern bool Dir_HasWildcardsi(const char *, const char *);
-#define Dir_HasWildcards(n) Dir_HasWildcardsi(n, strchr(n, '\0'))
-
-/* Dir_Expandi(pattern, endp, path, expansions);
- *	Expand (pattern, endp) to Lst of names matching on the search path.
- *	Put result in expansions.
- */
-extern void Dir_Expandi(const char *, const char *, Lst, Lst);
-#define Dir_Expand(n, l1, l2) Dir_Expandi(n, strchr(n, '\0'), l1, l2)
-
 /* fullname = Dir_FindFileComplexi(name, end, path, checkCurdirFirst)
  *	Searches for a file (name, end) on a given search path.  If it exists, 
  *	return the fullname of the file, otherwise NULL.
@@ -165,4 +152,11 @@ extern void Dir_PrintDirectories(void);
 /* List of directories to search when looking for targets. */
 extern Lst	dirSearchPath;	
 
+
+/* communication between dir.c and direxpand.c */
+struct Path_;
+extern struct Path_ *dot;
+/* Handles wildcard expansion on a given directory. */
+extern  void Dir_MatchFilesi(const char *, const char *, struct Path_ *, 
+    Lst);
 #endif /* DIR_H */

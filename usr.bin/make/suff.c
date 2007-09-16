@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.62 2007/09/16 09:49:24 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.63 2007/09/16 10:14:26 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -94,6 +94,7 @@
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
+#include "direxpand.h"
 #include "arch.h"
 #include "suff.h"
 #include "var.h"

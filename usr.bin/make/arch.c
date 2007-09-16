@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.62 2007/09/16 09:49:24 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.63 2007/09/16 10:14:26 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
+#include "direxpand.h"
 #include "arch.h"
 #include "var.h"
 #include "targ.h"

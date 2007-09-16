@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.80 2007/08/05 11:00:58 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.81 2007/09/16 10:14:26 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
+#include "direxpand.h"
 #include "job.h"
 #include "buf.h"
 #include "for.h"
