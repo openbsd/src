@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.27 2007/09/16 04:38:16 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.28 2007/09/16 09:58:04 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -1733,7 +1733,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	 * Load FW file
 	 */
 	if ((error = loadfirmware(name, &ucode, &size_ucode)) != 0) {
-		printf("%s: error %d, could not read microcode %s!\n",
+		printf("%s: error %d, could not read firmware %s!\n",
 		    sc->sc_dev.dv_xname, error, name);
 		return (EIO);
 	}
@@ -1744,11 +1744,11 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	 */
 	snprintf(filename, sizeof(filename), "bwi_microcode%d.fw",
 	    mac->mac_rev >= 5 ? 5 : mac->mac_rev);
-	if (bwi_get_firmware(filename, ucode, size_ucode, &size_fw, &off_fw)
-	    != 0) {
+	if (bwi_get_firmware(filename, ucode, size_ucode, &size_fw, &off_fw)) {
 		printf("%s: get offset for firmware file %s failed!\n",
 		    sc->sc_dev.dv_xname, filename);
-		goto error;
+		error = ENOMEM;
+		goto out;
         }
 
 	/*
@@ -1756,11 +1756,12 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	 */
 	snprintf(filename, sizeof(filename), "bwi_pcm%d.fw",
 	    mac->mac_rev < 5 ? 4 : 5);
-	if (bwi_get_firmware(filename, ucode, size_ucode, &size_pcm, &off_pcm)
-	    != 0) {
+	if (bwi_get_firmware(filename, ucode, size_ucode, &size_pcm,
+	    &off_pcm)) {
 		printf("%s: get offset for firmware file %s failed!\n",
 		    sc->sc_dev.dv_xname, filename);
-		goto error;
+		error = ENOMEM;
+		goto out;
 	}
 
 	/*
@@ -1812,7 +1813,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 		DPRINTF(1, "%s: firmware (fw & pcm) loading timed out\n",
 		    sc->sc_dev.dv_xname);
 		error = ETIMEDOUT;
-		goto error;
+		goto out;
 	}
 #undef NRETRY
 
@@ -1823,14 +1824,14 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 		DPRINTF(1, "firmware version 4 is not supported yet\n",
 		    sc->sc_dev.dv_xname);
 		error = ENODEV;
-		goto error;
+		goto out;
 	}
 
 	DPRINTF(1, "%s: firmware rev 0x%04x, patch level 0x%04x\n",
 	    sc->sc_dev.dv_xname, fw_rev,
 	    MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWPATCHLV));
 
-error:
+out:
 	free(ucode, M_DEVBUF);
 	return (error);
 }
@@ -1894,38 +1895,44 @@ bwi_mac_fw_load_iv(struct bwi_mac *mac, uint8_t *fw_image, int fw_len)
 	const struct bwi_fw_iv *iv;
 	uint16_t offset, size;
 	uint32_t val;
-	int len, i;
+	int iv_len, i, error = 0;
 
 	/* Get the number of IVs in the IV image */
-	len = fw_len / sizeof(struct bwi_fw_iv);
-	DPRINTF(1, "%s: IV count %d\n", sc->sc_dev.dv_xname, len);
+	iv_len = fw_len / sizeof(struct bwi_fw_iv);
+	DPRINTF(1, "%s: IV count %d\n", sc->sc_dev.dv_xname, iv_len);
 
 	/* Locate the first IV */
 	iv = (const struct bwi_fw_iv *)fw_image;
 
-	for (i = 0; i < len; i++, iv++) {
+	for (i = 0; i < iv_len; i++, iv++) {
 		offset = betoh16(iv->offset);
 		size = betoh16(iv->size);
 		val = betoh32(iv->val);
 
-		if (offset >= 0x1000)
+		if (offset >= 0x1000) {
+			error = ENODEV;
 			goto error;
+		}
 
 		if (size == sizeof(uint16_t)) {
-			if (val & 0xffff0000)
+			if (val & 0xffff0000) {
+				error = ENODEV;
 				goto error;
+			}
 			CSR_WRITE_2(sc, offset, (uint16_t)val);
 		} else if (size == sizeof(uint32_t))
 			CSR_WRITE_4(sc, offset, val);
-		else
+		else {
+			error = ENODEV;
 			goto error;
+		}
 	}
 
-	return (0);
+	return (error);
 
 error:
 	printf("%s: bad IV format!\n", sc->sc_dev.dv_xname);
-	return (1);
+	return (error);
 }
 
 int
@@ -1936,13 +1943,13 @@ bwi_mac_fw_init(struct bwi_mac *mac)
 	char fwname[64];
 	uint8_t *ucode;
 	size_t size_ucode, size_iv, off_iv;
-	int idx, error;
+	int idx, error = 0;
 
 	/*
 	 * Load FW file
 	 */
 	if ((error = loadfirmware(name, &ucode, &size_ucode)) != 0) {
-		printf("%s: error %d, could not read microcode %s!\n",
+		printf("%s: error %d, could not read firmware %s!\n",
 		    sc->sc_dev.dv_xname, error, name);
 		return (EIO);
 	}
@@ -1953,11 +1960,11 @@ bwi_mac_fw_init(struct bwi_mac *mac)
 	 *
 	 * TODO: 11A
 	 */
-	if (mac->mac_rev == 2 || mac->mac_rev == 4) {
+	if (mac->mac_rev == 2 || mac->mac_rev == 4)
 		idx = 2;
-	} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
+	else if (mac->mac_rev >= 5 && mac->mac_rev <= 10)
 		idx = 5;
-	} else {
+	else {
 		printf("%s: no suitable IV for MAC rev %d\n",
 		    sc->sc_dev.dv_xname, mac->mac_rev);
 			return (ENODEV);
@@ -1969,13 +1976,14 @@ bwi_mac_fw_init(struct bwi_mac *mac)
 	if (bwi_get_firmware(fwname, ucode, size_ucode, &size_iv, &off_iv)) {
 		printf("%s: IV image %s not found!\n",
 		    sc->sc_dev.dv_xname, fwname);
-		return (ENOMEM);
+		error = ENOMEM;
+		goto out;
 	}
 
 	error = bwi_mac_fw_load_iv(mac, (ucode + off_iv), size_iv);
 	if (error) {
 		printf("%s: load IV failed!\n", sc->sc_dev.dv_xname);
-		return (error);
+		goto out;
 	}
 
 	/*
@@ -1983,15 +1991,16 @@ bwi_mac_fw_init(struct bwi_mac *mac)
 	 *
 	 * TODO: 11A
 	 */
-	if (mac->mac_rev == 2 || mac->mac_rev == 4 || mac->mac_rev >= 11) {
+	if (mac->mac_rev == 2 || mac->mac_rev == 4 || mac->mac_rev >= 11)
 		/* No extended IV */
-		goto back;
-	} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
+		goto out;
+	else if (mac->mac_rev >= 5 && mac->mac_rev <= 10)
 		idx = 5;
-	} else {
+	else {
 		printf("%s: no suitable extended IV for MAC rev %d\n",
 		    sc->sc_dev.dv_xname, mac->mac_rev);
-		return (ENODEV);
+		error = ENODEV;
+		goto out;
 	}
 	snprintf(fwname, sizeof(fwname), "bwi_initval%02d.fw", idx);
 
@@ -2001,16 +2010,16 @@ bwi_mac_fw_init(struct bwi_mac *mac)
 	if (bwi_get_firmware(fwname, ucode, size_ucode, &size_iv, &off_iv)) {
 		printf("%s: extended IV image %s not found!\n",
 		    sc->sc_dev.dv_xname, fwname);
-		return (ENOMEM);
+		error = ENOMEM;
+		goto out;
 	}
 
 	error = bwi_mac_fw_load_iv(mac, (ucode + off_iv), size_iv);
 	if (error)
 		printf("%s: load extended IV failed!\n", sc->sc_dev.dv_xname);
 
-back:
+out:
 	free(ucode, M_DEVBUF);
-
 	return (error);
 }
 
