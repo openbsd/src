@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.13 2006/01/26 16:51:00 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.14 2007/09/17 17:34:22 brad Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -262,7 +262,8 @@ art_ifm_change(struct ifnet *ifp)
 	struct channel_softc	*cc = ifp->if_softc;
 	struct art_softc	*ac = (struct art_softc *)cc->cc_parent;
 	struct ifmedia		*ifm = &ac->art_ifm;
-	int			 rv, s, baudrate;
+	u_int64_t		baudrate;
+	int			rv, s;
 
 	ACCOOM_PRINTF(2, ("%s: art_ifm_change %08x\n", ifp->if_xname,
 	    ifm->ifm_media));
@@ -318,7 +319,7 @@ art_ifm_change(struct ifnet *ifp)
 	if (baudrate != ifp->if_baudrate) {
 		ifp->if_baudrate = baudrate;
 		s = splsoftnet();
-		if_link_state_change(ifp), baudrate;
+		if_link_state_change(ifp);
 		splx(s);
 	}
 

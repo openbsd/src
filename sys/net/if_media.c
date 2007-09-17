@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.16 2005/07/28 02:15:15 brad Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.17 2007/09/17 17:34:22 brad Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -403,7 +403,7 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 struct ifmedia_baudrate ifmedia_baudrate_descriptions[] =
     IFM_BAUDRATE_DESCRIPTIONS;
 
-int
+u_int64_t
 ifmedia_baudrate(int mword)
 {
 	int i;

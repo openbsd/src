@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.32 2007/02/10 22:36:18 kettenis Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.33 2007/09/17 17:34:22 brad Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -362,7 +362,8 @@ mii_phy_statusmsg(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
-	int baudrate, link_state, announce = 0;
+	u_int64_t baudrate;
+	int link_state, announce = 0;
 
 	if (mii->mii_media_status & IFM_AVALID) {
 		if (mii->mii_media_status & IFM_ACTIVE) {
