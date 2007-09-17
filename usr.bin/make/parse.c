@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.90 2007/09/17 11:14:37 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.91 2007/09/17 11:32:25 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -218,7 +218,6 @@ static bool handle_poison(const char *);
 static bool handle_for_loop(Buffer, const char *);
 static bool handle_undef(const char *);
 #define ParseReadLoopLine(linebuf) Parse_ReadUnparsedLine(linebuf, "for loop")
-static void ParseFinishDependency(void);
 static bool handle_bsd_command(Buffer, Buffer, const char *);
 static char *strip_comments(Buffer, const char *);
 static char *resolve_include_filename(const char *, bool);
@@ -227,8 +226,9 @@ static bool lookup_bsd_include(const char *);
 static void lookup_sysv_style_include(const char *, const char *, bool);
 static void lookup_sysv_include(const char *, const char *);
 static void lookup_conditional_include(const char *, const char *);
-
-static void ParseDoCommands(const char *);
+static bool parse_as_special_line(Buffer, Buffer, const char *);
+static void parse_target_line(struct growableArray *, const char *,
+    const char *);
 
 /*-
  *----------------------------------------------------------------------
@@ -1121,6 +1121,40 @@ ParseHasCommands(void *gnp)	    /* Node to examine */
 
 
 
+/* Strip comments from line. Build a copy in buffer if necessary, */
+static char *
+strip_comments(Buffer copy, const char *line)
+{
+	const char *comment;
+	const char *p;
+
+	comment = strchr(line, '#');
+	assert(comment != line);
+	if (comment == NULL)
+		return (char *)line;
+	else {
+		Buf_Reset(copy);
+
+		for (p = line; *p != '\0'; p++) {
+			if (*p == '\\') {
+				if (p[1] == '#') {
+					Buf_Addi(copy, line, p);
+					Buf_AddChar(copy, '#');
+					line = p+2;
+				}
+				if (p[1] != '\0')
+					p++;
+			} else if (*p == '#')
+				break;
+		}
+		Buf_Addi(copy, line, p);
+		Buf_KillTrailingSpaces(copy);
+		return Buf_Retrieve(copy);
+	}
+}
+
+
+
 /***
  *** Support for various include constructs
  ***/
@@ -1290,6 +1324,14 @@ lookup_conditional_include(const char *file, const char *directive)
 }
 
 
+/***
+ ***   BSD-specific . constructs
+ ***   They all follow the same pattern:
+ ***    if the syntax matches BSD stuff, then we're committed to handle
+ ***   them and report fatal errors (like, include file not existing)
+ ***    otherwise, we return false, and hope somebody else will handle it.
+ ***/
+
 static bool
 handle_poison(const char *line)
 {
@@ -1357,45 +1399,12 @@ handle_poison(const char *line)
 	}
 }
 
-
-/* Strip comments from the line. Build a copy in buffer if necessary, */
-static char *
-strip_comments(Buffer copy, const char *line)
-{
-	const char *comment;
-	const char *p;
-
-	comment = strchr(line, '#');
-	assert(comment != line);
-	if (comment == NULL)
-		return (char *)line;
-	else {
-		Buf_Reset(copy);
-
-		for (p = line; *p != '\0'; p++) {
-			if (*p == '\\') {
-				if (p[1] == '#') {
-					Buf_Addi(copy, line, p);
-					Buf_AddChar(copy, '#');
-					line = p+2;
-				}
-				if (p[1] != '\0')
-					p++;
-			} else if (*p == '#')
-				break;
-		}
-		Buf_Addi(copy, line, p);
-		Buf_KillTrailingSpaces(copy);
-		return Buf_Retrieve(copy);
-	}
-}
-
 static bool
 handle_for_loop(Buffer linebuf, const char *line)
 {
 	For *loop;
 
-	loop = For_Eval(line+3);
+	loop = For_Eval(line);
 	if (loop != NULL) {
 		bool ok;
 		do {
@@ -1435,8 +1444,7 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 	while (isspace(*line))
 		line++;
 
-	/* The line might be a conditional. Ask the conditional module
-	 * about it and act accordingly.  */
+	/* delegate basic classification to the conditional module */
 	switch (Cond_Eval(line)) {
 	case COND_SKIP:
 		/* Skip to next conditional that evaluates to COND_PARSE.  */
@@ -1452,11 +1460,11 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 	case COND_PARSE:
 		return true;
 	case COND_ISFOR:
-		return handle_for_loop(linebuf, line);
+		return handle_for_loop(linebuf, line + 3);
 	case COND_ISINCLUDE:
 		return lookup_bsd_include(line + 7);
 	case COND_ISPOISON:
-		return handle_poison(line+6);
+		return handle_poison(line + 6);
 	case COND_ISUNDEF:
 		return handle_undef(line + 5);
 	default:
@@ -1466,146 +1474,156 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 	return false;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ParseFinishDependency --
- *	Handle the end of a dependency group.
- *
- * Side Effects:
- *	'targets' list destroyed.
- *
- *-----------------------------------------------------------------------
- */
+/***
+ *** handle a group of commands
+ ***/
+
 static void
-ParseFinishDependency(void)
+finish_commands(struct growableArray *targets)
 {
-	Array_Every(&gtargets, Suff_EndTransform);
-	Array_Every(&gtargets, ParseHasCommands);
-	Array_Reset(&gtargets);
+	Array_Every(targets, Suff_EndTransform);
+	Array_Every(targets, ParseHasCommands);
+	Array_Reset(targets);
 }
 
 static void
-ParseDoCommands(const char *line)
+parse_commands(struct growableArray *targets, const char *line)
 {
 	/* add the command to the list of
 	 * commands of all targets in the dependency spec */
 	char *cmd = estrdup(line);
 
-	Array_ForEach(&gtargets, ParseAddCmd, cmd);
+	Array_ForEach(targets, ParseAddCmd, cmd);
 #ifdef CLEANUP
 	Lst_AtEnd(&targCmds, cmd);
 #endif
 }
 
-void
-Parse_File(
-    const char	  *name,	/* the name of the file being read */
-    FILE	  *stream)	/* Stream open to makefile to parse */
+static bool
+parse_as_special_line(Buffer buf, Buffer copy, const char *line)
 {
-    char	  *cp,		/* pointer into the line */
-		  *line;	/* the line we're working on */
-    bool	  inDependency; /* true if currently in a dependency
-				 * line or its commands */
-
-    BUFFER	  buf;
-    BUFFER	  copy;
-
-    Buf_Init(&buf, MAKE_BSIZE);
-    Buf_Init(&copy, MAKE_BSIZE);
-    inDependency = false;
-    Parse_FromFile(name, stream);
-
-    do {
-	while ((line = Parse_ReadNormalLine(&buf)) != NULL) {
-	    if (*line == '\t') {
-		if (inDependency)
-		    ParseDoCommands(line+1);
-		else
-		    Parse_Error(PARSE_FATAL,
-			"Unassociated shell command \"%s\"",
-			 line);
-	    } else {
-		char *stripped;
-		stripped = strip_comments(&copy, line);
-		if (*stripped == '.' && handle_bsd_command(&buf, &copy,
-		    stripped+1))
-			;
-		else if (FEATURES(FEATURE_SYSVINCLUDE) &&
-		    strncmp(stripped, "include", 7) == 0 &&
-		    isspace(stripped[7]) &&
-		    strchr(stripped, ':') == NULL) {
-		    /* It's an S3/S5-style "include".  */
-			lookup_sysv_include(stripped + 7, "include");
-		} else if (FEATURES(FEATURE_CONDINCLUDE) &&
-		    strncmp(stripped, "sinclude", 8) == 0 &&
-		    isspace(stripped[8]) &&
-		    strchr(stripped, ':') == NULL) {
-		    	lookup_conditional_include(stripped+8, "sinclude");
-		} else if (FEATURES(FEATURE_CONDINCLUDE) &&
-		    strncmp(stripped, "-include", 8) == 0 &&
-		    isspace(stripped[8]) &&
-		    strchr(stripped, ':') == NULL) {
-		    	lookup_conditional_include(stripped+8, "-include");
-		} else {
-		    char *dep;
-
-		    if (inDependency)
-			ParseFinishDependency();
-		    if (Parse_As_Var_Assignment(stripped))
-			inDependency = false;
-		    else {
-			size_t pos;
-			char *end;
-
-			/* Need a new list for the target nodes.  */
-			Array_Reset(&gtargets);
-			inDependency = true;
-
-			dep = NULL;
-			/* First we need to find eventual dependencies */
-			pos = strcspn(stripped, ":!");
-			/* go over :!, and find ;  */
-			if (stripped[pos] != '\0' &&
-			    (end = strchr(stripped+pos+1, ';')) != NULL) {
-				if (line != stripped)
-				    /* find matching ; in original... The
-				     * original might be slightly longer.  */
-				    dep = strchr(line+(end-stripped), ';');
-				else
-				    dep = end;
-				/* kill end of line. */
-				*end = '\0';
-			}
-			/* We now know it's a dependency line so it needs to
-			 * have all variables expanded before being parsed.
-			 * Tell the variable module to complain if some
-			 * variable is undefined... */
-			cp = Var_Subst(stripped, NULL, true);
-			ParseDoDependency(cp);
-			free(cp);
-
-			/* Parse dependency if it's not empty. */
-			if (dep != NULL) {
-			    do {
-				dep++;
-			    } while (isspace(*dep));
-			    if (*dep != '\0')
-				ParseDoCommands(dep);
-			}
-		    }
-		}
-	    }
+	if (*line == '.' && handle_bsd_command(buf, copy, line+1))
+		return true;
+	if (FEATURES(FEATURE_SYSVINCLUDE) &&
+	    strncmp(line, "include", 7) == 0 &&
+	    isspace(line[7]) &&
+	    strchr(line, ':') == NULL) {
+	    /* It's an S3/S5-style "include".  */
+		lookup_sysv_include(line + 7, "include");
+		return true;
 	}
-    } while (Parse_NextFile());
+	if (FEATURES(FEATURE_CONDINCLUDE) &&
+	    strncmp(line, "sinclude", 8) == 0 &&
+	    isspace(line[8]) &&
+	    strchr(line, ':') == NULL) {
+		lookup_conditional_include(line+8, "sinclude");
+		return true;
+	}
+	if (FEATURES(FEATURE_CONDINCLUDE) &&
+	    strncmp(line, "-include", 8) == 0 &&
+	    isspace(line[8]) &&
+	    strchr(line, ':') == NULL) {
+		lookup_conditional_include(line+8, "-include");
+		return true;
+	}
+	return false;
+}
 
-    if (inDependency)
-	ParseFinishDependency();
-    /* Make sure conditionals are clean.  */
-    Cond_End();
+static void
+parse_target_line(struct growableArray *targets, const char *line,
+    const char *stripped)
+{
+	size_t pos;
+	char *end;
+	char *cp;
+	char *dep;
 
-    Parse_ReportErrors();
-    Buf_Destroy(&buf);
-    Buf_Destroy(&copy);
+	/* let's start a new set of commands */
+	Array_Reset(targets);
+
+	/* XXX this is a dirty heuristic to handle target: dep ; commands */
+	dep = NULL;
+	/* First we need to find eventual dependencies */
+	pos = strcspn(stripped, ":!");
+	/* go over :!, and find ;  */
+	if (stripped[pos] != '\0' &&
+	    (end = strchr(stripped+pos+1, ';')) != NULL) {
+		if (line != stripped)
+			/* find matching ; in original... The
+			 * original might be slightly longer.  */
+			dep = strchr(line+(end-stripped), ';');
+		else
+			dep = end;
+		/* kill end of line. */
+		*end = '\0';
+	}
+	/* We now know it's a dependency line so it needs to
+	 * have all variables expanded before being parsed.
+	 */
+	cp = Var_Subst(stripped, NULL, false);
+	ParseDoDependency(cp);
+	free(cp);
+
+	/* Parse dependency if it's not empty. */
+	if (dep != NULL) {
+		do {
+			dep++;
+		} while (isspace(*dep));
+		if (*dep != '\0')
+			parse_commands(targets, dep);
+	}
+}
+
+void
+Parse_File(const char *filename, FILE *stream)
+{
+	char *line;
+	bool expectingCommands = false;
+
+	/* somewhat permanent spaces to shave time */
+	BUFFER buf;
+	BUFFER copy;
+
+	Buf_Init(&buf, MAKE_BSIZE);
+	Buf_Init(&copy, MAKE_BSIZE);
+
+	Parse_FromFile(filename, stream);
+	do {
+		while ((line = Parse_ReadNormalLine(&buf)) != NULL) {
+			if (*line == '\t') {
+				if (expectingCommands)
+					parse_commands(&gtargets, line+1);
+				else
+					Parse_Error(PARSE_FATAL,
+					    "Unassociated shell command \"%s\"",
+					     line);
+			} else {
+				const char *stripped = strip_comments(&copy,
+				    line);
+				if (!parse_as_special_line(&buf, &copy,
+				    stripped)) {
+					if (expectingCommands)
+						finish_commands(&gtargets);
+					if (Parse_As_Var_Assignment(stripped))
+						expectingCommands = false;
+					else {
+						parse_target_line(&gtargets,
+						    line, stripped);
+						expectingCommands = true;
+					}
+				}
+			}
+		}
+	} while (Parse_NextFile());
+
+	if (expectingCommands)
+		finish_commands(&gtargets);
+	/* Make sure conditionals are clean.  */
+	Cond_End();
+
+	Parse_ReportErrors();
+	Buf_Destroy(&buf);
+	Buf_Destroy(&copy);
 }
 
 void
