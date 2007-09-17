@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.50 2007/08/31 08:38:08 thib Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.51 2007/09/17 20:29:55 thib Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1766,8 +1766,7 @@ uvn_io(uvn, pps, npages, flags, rw)
  */
 
 boolean_t
-uvm_vnp_uncache(vp)
-	struct vnode *vp;
+uvm_vnp_uncache(struct vnode *vp)
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
 
@@ -1802,36 +1801,14 @@ uvm_vnp_uncache(vp)
 	uvn->u_obj.uo_refs++;		/* value is now 1 */
 	simple_unlock(&uvn->u_obj.vmobjlock);
 
-
-#ifdef DEBUG
+#ifdef VFSDEBUG
 	/*
 	 * carry over sanity check from old vnode pager: the vnode should
 	 * be VOP_LOCK'd, and we confirm it here.
 	 */
-	if (!VOP_ISLOCKED(vp)) {
-		boolean_t is_ok_anyway = FALSE;
-#if defined(NFSCLIENT)
-		extern int (**nfsv2_vnodeop_p)(void *);
-		extern int (**spec_nfsv2nodeop_p)(void *);
-#if defined(FIFO)
-		extern int (**fifo_nfsv2nodeop_p)(void *);
-#endif	/* defined(FIFO) */
-
-		/* vnode is NOT VOP_LOCKed: some vnode types _never_ lock */
-		if (vp->v_op == nfsv2_vnodeop_p ||
-		    vp->v_op == spec_nfsv2nodeop_p) {
-			is_ok_anyway = TRUE;
-		}
-#if defined(FIFO)
-		if (vp->v_op == fifo_nfsv2nodeop_p) {
-			is_ok_anyway = TRUE;
-		}
-#endif	/* defined(FIFO) */
-#endif	/* defined(NFSSERVER) || defined(NFSCLIENT) */
-		if (!is_ok_anyway)
-			panic("uvm_vnp_uncache: vnode not locked!");
-	}
-#endif	/* DEBUG */
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("uvm_vnp_uncache: vnode not locked!");
+#endif	/* VFSDEBUG */
 
 	/*
 	 * now drop our reference to the vnode.   if we have the sole
