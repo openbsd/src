@@ -2,7 +2,7 @@
 #define _MAKE_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.h,v 1.33 2003/06/03 02:56:12 millert Exp $ */
+/*	$OpenBSD: make.h,v 1.34 2007/09/17 11:43:12 espie Exp $ */
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -41,11 +41,7 @@
  *	from: @(#)make.h	8.3 (Berkeley) 6/13/95
  */
 
-extern void Make_TimeStamp(GNode *, GNode *);
-extern bool Make_OODate(GNode *);
-extern void Make_HandleUse(GNode *, GNode *);
 extern void Make_Update(GNode *);
-extern void Make_DoAllVar(GNode *);
 extern bool Make_Run(Lst);
 
 #endif /* _MAKE_H_ */

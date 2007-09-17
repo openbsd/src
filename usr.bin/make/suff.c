@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.68 2007/09/17 10:12:35 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.69 2007/09/17 11:43:12 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -104,8 +104,8 @@
 #include "lst.h"
 #include "memory.h"
 #include "gnode.h"
-#include "make.h"
 #include "stats.h"
+#include "engine.h"
 
 static LIST	 sufflist;	/* Lst of suffixes */
 #ifdef CLEANUP
