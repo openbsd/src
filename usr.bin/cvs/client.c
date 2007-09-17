@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.79 2007/09/10 19:11:08 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.80 2007/09/17 18:36:54 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -580,7 +580,7 @@ cvs_client_e(char *data)
 	if (data == NULL)
 		fatal("Missing argument for E");
 
-	cvs_printf("%s\n", data);
+	fprintf(stderr, "%s\n", data);
 }
 
 void
@@ -589,7 +589,7 @@ cvs_client_m(char *data)
 	if (data == NULL)
 		fatal("Missing argument for M");
 
-	cvs_printf("%s\n", data);
+	puts(data);
 }
 
 void
