@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.74 2007/09/17 10:37:08 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.75 2007/09/17 11:48:13 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -653,9 +653,8 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 			 * is?
 			 */
 			if (!(job->flags & JOB_SILENT) && !shutUp) {
-				DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
-				DBPRINTF(job, "%s\n", SHELL_ERROR_OFF);
-				DBPRINTF(job, "%s\n", SHELL_ECHO_ON);
+				DBPRINTF(job, "%s; %s; %s\n", SHELL_ECHO_OFF,
+				    SHELL_ERROR_OFF, SHELL_ECHO_ON);
 			} else {
 				DBPRINTF(job, "%s\n", SHELL_ERROR_OFF);
 			}
