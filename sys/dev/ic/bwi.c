@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.36 2007/09/17 13:58:10 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.37 2007/09/17 14:26:51 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -1225,7 +1225,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	MOBJ_WRITE_4(mac, BWI_COMM_MOBJ, 0, TEST_VAL1);
 	val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 	if (val != TEST_VAL1) {
-		DPRINTF(1, "TEST1 failed\n", sc->sc_dev.dv_xname);
+		DPRINTF(1, "%s: TEST1 failed\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
 
@@ -1233,7 +1233,7 @@ bwi_mac_test(struct bwi_mac *mac)
 	MOBJ_WRITE_4(mac, BWI_COMM_MOBJ, 0, TEST_VAL2);
 	val = MOBJ_READ_4(mac, BWI_COMM_MOBJ, 0);
 	if (val != TEST_VAL2) {
-		DPRINTF(1, "TEST2 failed\n", sc->sc_dev.dv_xname);
+		DPRINTF(1, "%s: TEST2 failed\n", sc->sc_dev.dv_xname);
 		return (ENXIO);
 	}
 
@@ -1249,7 +1249,7 @@ bwi_mac_test(struct bwi_mac *mac)
 
 	val = CSR_READ_4(sc, BWI_MAC_INTR_STATUS);
 	if (val != 0) {
-		DPRINTF(1, "%s failed, intr status %08x\n",
+		DPRINTF(1, "%s: %s failed, intr status %08x\n",
 		    sc->sc_dev.dv_xname, __func__, val);
 		return (ENXIO);
 	}
@@ -1635,7 +1635,7 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 
 	fw_rev = MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWREV);
 	if (fw_rev > BWI_FW_VERSION3_REVMAX) {
-		DPRINTF(1, "firmware version 4 is not supported yet\n",
+		DPRINTF(1, "%s: firmware version 4 is not supported yet\n",
 		    sc->sc_dev.dv_xname);
 		error = ENODEV;
 		goto out;
@@ -4308,8 +4308,8 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 		    sc->sc_dev.dv_xname);
 		rf->rf_txpower_max = 74;
 	}
-	DPRINTF(1, "%s: max txpower from sprom: %d dBm\n", sc->sc_dev.dv_xname,
-	    rf->rf_txpower_max);
+	DPRINTF(1, "%s: max txpower from sprom: %d dBm\n",
+	    sc->sc_dev.dv_xname, rf->rf_txpower_max);
 
 	/*
 	 * Find out region/domain max TX power, which is adjusted
@@ -4338,8 +4338,8 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	 */
 	if (rf->rf_txpower_max > reg_txpower_max)
 		rf->rf_txpower_max = reg_txpower_max;
-	DPRINTF(1, "%s: max txpower %d dBm\n", sc->sc_dev.dv_xname,
-	    rf->rf_txpower_max);
+	DPRINTF(1, "%s: max txpower %d dBm\n",
+	    sc->sc_dev.dv_xname, rf->rf_txpower_max);
 
 	/*
 	 * Create TSSI to TX power mapping
@@ -4434,8 +4434,8 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 	}
 	printf("\n");
 back:
-	DPRINTF(1, "%s: idle tssi0: %d\n", sc->sc_dev.dv_xname,
-	    rf->rf_idle_tssi0);
+	DPRINTF(1, "%s: idle tssi0: %d\n",
+	    sc->sc_dev.dv_xname, rf->rf_idle_tssi0);
 
 	return (error);
 }
@@ -6072,9 +6072,10 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 	KKASSERT(src >= 0 && src < BWI_CLKSRC_MAX);
 	KKASSERT(div != 0);
 
-	DPRINTF(1, "%s: clksrc %s\n", sc->sc_dev.dv_xname,
-		src == BWI_CLKSRC_PCI ? "PCI" :
-		(src == BWI_CLKSRC_LP_OSC ? "LP_OSC" : "CS_OSC"));
+	DPRINTF(1, "%s: clksrc %s\n",
+	    sc->sc_dev.dv_xname,
+	    src == BWI_CLKSRC_PCI ? "PCI" :
+	    (src == BWI_CLKSRC_LP_OSC ? "LP_OSC" : "CS_OSC"));
 
 	freq->clkfreq_min = bwi_clkfreq[src].freq_min / div;
 	freq->clkfreq_max = bwi_clkfreq[src].freq_max / div;
@@ -6695,7 +6696,7 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	if (has_txstats) {
 		error = bwi_dma_txstats_alloc(sc, TXRX_CTRL(3), desc_sz);
 		if (error) {
-			DPRINTF(1, "TX stats DMA alloc failed\n",
+			DPRINTF(1, "%s: TX stats DMA alloc failed\n",
 			    sc->sc_dev.dv_xname);
 			return (error);
 		}
@@ -8126,8 +8127,8 @@ bwi_get_pwron_delay(struct bwi_softc *sc)
 
 	val = CSR_READ_4(sc, BWI_PLL_ON_DELAY);
 	sc->sc_pwron_delay = howmany((val + 2) * 1000000, freq.clkfreq_min);
-	DPRINTF(1, "%s: power on delay %u\n", sc->sc_dev.dv_xname,
-	    sc->sc_pwron_delay);
+	DPRINTF(1, "%s: power on delay %u\n",
+	    sc->sc_dev.dv_xname, sc->sc_pwron_delay);
 
 	return (bwi_regwin_switch(sc, old, NULL));
 }
@@ -8199,12 +8200,12 @@ bwi_regwin_is_enabled(struct bwi_softc *sc, struct bwi_regwin *rw)
 	if ((val & (BWI_STATE_LO_CLOCK |
 	    BWI_STATE_LO_RESET |
 	    disable_bits)) == BWI_STATE_LO_CLOCK) {
-		DPRINTF(1, "%s: %s is enabled\n", sc->sc_dev.dv_xname,
-		    bwi_regwin_name(rw));
+		DPRINTF(1, "%s: %s is enabled\n",
+		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
 		return (1);
 	} else {
-		DPRINTF(1, "%s: %s is disabled\n", sc->sc_dev.dv_xname,
-		    bwi_regwin_name(rw));
+		DPRINTF(1, "%s: %s is disabled\n",
+		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
 		return (0);
 	}
 }
@@ -8221,8 +8222,8 @@ bwi_regwin_disable(struct bwi_softc *sc, struct bwi_regwin *rw, uint32_t flags)
 	 * If current regwin is in 'reset' state, it was already disabled.
 	 */
 	if (state_lo & BWI_STATE_LO_RESET) {
-		DPRINTF(1, "%s: %s was already disabled\n", sc->sc_dev.dv_xname,
-		    bwi_regwin_name(rw));
+		DPRINTF(1, "%s: %s was already disabled\n",
+		    sc->sc_dev.dv_xname, bwi_regwin_name(rw));
 		return;
 	}
 
