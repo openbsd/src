@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.89 2007/08/30 16:40:26 ckuethe Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.90 2007/09/17 12:31:59 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.86 2007/08/30 16:40:10 ckuethe Exp 
+ *	OpenBSD: miidevs,v 1.87 2007/09/17 12:31:22 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -56,6 +56,7 @@
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_ASIX	0x000ec6	/* ASIX Electronics */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
 #define	MII_OUI_CENIX	0x000749	/* CENiX Inc. */
 #define	MII_OUI_CICADA	0x0003f1	/* Cicada Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
@@ -193,6 +194,8 @@
 #define	MII_STR_BROADCOM_BCM5220	"BCM5220 10/100 PHY"
 #define	MII_MODEL_BROADCOM_BCM4401	0x0036
 #define	MII_STR_BROADCOM_BCM4401	"BCM4401 10/100baseTX PHY"
+#define	MII_MODEL_BROADCOM2_BCM5906	0x0004
+#define	MII_STR_BROADCOM2_BCM5906	"BCM5906 10/100baseTX PHY"
 
 /* Cicada Semiconductor PHYs (now owned by Vitesse) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
