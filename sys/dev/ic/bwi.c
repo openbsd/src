@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.37 2007/09/17 14:26:51 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.38 2007/09/17 20:43:18 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -506,11 +506,15 @@ int
 bwi_intr(void *xsc)
 {
 	struct bwi_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t intr_status;
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
 	int i, txrx_error;
 
 	DPRINTF(2, "%s\n", __func__);
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return (0);
 
 	/*
 	 * Get interrupt status
