@@ -1,0 +1,29 @@
+# $OpenBSD: mk27,v 1.1 2007/09/17 13:58:38 espie Exp $
+
+# test for .BEGIN/.END extensions
+
+.BEGIN:
+	@echo "begin"
+
+
+.END:
+	@echo "end"
+
+
+all:	a b
+
+a:
+	@echo "a"
+
+b:
+	@echo "b"
+
+c:
+	sleep 10
+
+.INTERRUPT:
+	@echo "Interrupted!!!"
+
+.PHONY: a b all c
+	
+
