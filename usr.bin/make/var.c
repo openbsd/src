@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.79 2007/09/17 09:45:37 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.80 2007/09/17 10:39:33 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -437,7 +437,7 @@ delete_var(Var *v)
 void
 SymTable_Init(SymTable *ctxt)
 {
-	static SymTable sym_template;	
+	static SymTable sym_template;
 	memcpy(ctxt, &sym_template, sizeof(*ctxt));
 }
 
@@ -639,7 +639,7 @@ Var_Deletei(const char *name, const char *ename)
 	}
 	slot = ohash_lookup_interval(&global_variables, name, ename, k);
 	v = ohash_find(&global_variables, slot);
-	
+
 	if (v == NULL)
 		return;
 
@@ -861,7 +861,7 @@ Var_ParseSkip(const char **pstr, SymTable *ctxt)
 	bool result;
 	bool has_modifier;
 	const char *tstr = str;
-	
+
 	has_modifier = parse_base_variable_name(&tstr, &name, ctxt);
 	VarName_Free(&name);
 	result = true;
@@ -1148,7 +1148,7 @@ Var_NewLoopVar(const char *name, const char *ename)
 	k = ohash_interval(name, &ename);
 
 	l->me = find_global_var_without_env(name, ename, k);
-	l->old = *(l->me);			
+	l->old = *(l->me);
 	l->me->flags = VAR_SEEN_ENV | VAR_DUMMY;
 	return l;
 }
@@ -1219,7 +1219,7 @@ Var_SubstVar(Buffer buf,	/* To store result */
 			}
 			if (*p == ':') {
 				bool doFree;	/* should val be freed ? */
-				char *newval;	
+				char *newval;
 				struct Name name;
 
 				doFree = false;
