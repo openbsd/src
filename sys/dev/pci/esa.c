@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.11 2006/01/25 23:54:21 brad Exp $	*/
+/*	$OpenBSD: esa.c,v 1.12 2007/09/17 00:50:46 krw Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1072,7 +1072,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	/* create suspend save area */
 	len = sizeof(u_int16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
-	sc->savemem = (u_int16_t *)malloc(len, M_DEVBUF, M_NOWAIT);
+	sc->savemem = malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->savemem == NULL) {
 		printf("%s: unable to allocate suspend buffer\n",
 		    sc->sc_dev.dv_xname);
@@ -1080,7 +1080,6 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
-        bzero(sc->savemem, len);
 
 	/*
 	 * Every card I've seen has had their channels swapped with respect

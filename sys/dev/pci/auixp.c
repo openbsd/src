@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.10 2007/05/26 00:36:03 krw Exp $ */
+/* $OpenBSD: auixp.c,v 1.11 2007/09/17 00:50:46 krw Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -781,10 +781,9 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 
 	/* allocate keeper of dma area */
 	*dmap = NULL;
-	dma = malloc(sizeof(*dma), M_DEVBUF, M_NOWAIT);
+	dma = malloc(sizeof(*dma), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!dma)
 		return ENOMEM;
-	bzero(dma, sizeof(*dma));
 
 	/* allocate for daisychain of IXP hardware-dma descriptors */
 	error = auixp_allocmem(sc, DMA_DESC_CHAIN * sizeof(atiixp_dma_desc_t),
