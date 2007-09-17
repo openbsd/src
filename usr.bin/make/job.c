@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.69 2007/09/17 10:17:26 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.70 2007/09/17 10:22:30 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -109,7 +109,6 @@
 #include "gnode.h"
 #include "memory.h"
 #include "make.h"
-#include "str.h"
 
 #define TMPPAT	"/tmp/makeXXXXXXXXXX"
 
@@ -345,10 +344,15 @@ static Shell	shells[] = {
 static Shell	*commandShell = &shells[DEFSHELL];/* this is the shell to
 						   * which we pass all
 						   * commands in the Makefile*/
-static char	*shellPath = NULL,		  /* full pathname of
-						   * executable image */
-		*shellName = NULL;		  /* last component of shell */
+#define SHELL_ECHO_OFF	"set -"
+#define SHELL_ECHO_ON	"set -v"
+#define SHELL_ERROR_ON	"set -e"
+#define SHELL_ERROR_OFF	"set +e"
+#define SHELL_ECHO_FLAG "v"
+#define SHELL_ERROR_FLAG "e"
 
+static const char *shellPath = _PATH_BSHELL;
+static const char *shellName = "sh";
 
 static int	maxJobs;	/* The most children we can run at once */
 static int	maxLocal;	/* The most local ones we can have */
@@ -1274,7 +1278,7 @@ JobMakeArgv(Job *job, char **argv)
 	int argc;
 	static char args[10];	/* For merged arguments */
 
-	argv[0] = shellName;
+	argv[0] = (char *)shellName;
 	argc = 1;
 
 	if ((commandShell->exit && *commandShell->exit != '-') ||
@@ -2166,19 +2170,6 @@ Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
 		targFmt = "";
 	} else {
 		targFmt = TARG_FMT;
-	}
-
-	if (shellPath == NULL) {
-		/*
-		 * The user didn't specify a shell to use, so we are using the
-		 * default one... Both the absolute path and the last component
-		 * must be set. The last component is taken from the 'name'
-		 * field of the default shell description pointed-to by
-		 * commandShell.  All default shells are located in
-		 * _PATH_DEFSHELLDIR.
-		 */
-		shellName = commandShell->name;
-		shellPath = Str_concat(_PATH_DEFSHELLDIR, shellName, '/');
 	}
 
 	if (commandShell->exit == NULL) {
