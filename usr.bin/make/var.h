@@ -101,7 +101,7 @@ extern char *Var_Parse(const char *, SymTable *, bool, size_t *,
 	bool *);
 /* Note that var_Error is an instance of the empty string "", so that
  * callers who don't care don't need to. */
-extern char	var_Error[];	
+extern char	var_Error[];
 
 /* ok = Var_ParseSkip(&varspec, ctxt, &ok);
  *	Parses a variable specification and returns true if the varspec

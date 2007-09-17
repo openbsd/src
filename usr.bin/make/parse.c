@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.87 2007/09/17 09:44:20 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.88 2007/09/17 09:45:37 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1616,7 +1616,7 @@ Parse_Init(void)
 	Static_Lst_Init(sysIncPath);
 	Array_Init(&gsources, SOURCES_SIZE);
 	Array_Init(&gtargets, TARGETS_SIZE);
-	
+
 	LowParse_Init();
 #ifdef CLEANUP
 	Static_Lst_Init(&targCmds);

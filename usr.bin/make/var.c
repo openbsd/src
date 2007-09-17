@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.78 2007/09/17 09:44:20 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.79 2007/09/17 09:45:37 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ typedef struct Var_ {
 #define VAR_FROM_ENV	8	/* Special source: environment */
 #define VAR_SEEN_ENV	16	/* No need to go look up environment again */
 #define VAR_SHELL	32	/* Magic behavior */
-				
+
 #define POISONS (POISON_NORMAL | POISON_EMPTY | POISON_NOT_DEFINED)
 				/* Defined in var.h */
 	char name[1];		/* the variable's name */
