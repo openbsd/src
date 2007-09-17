@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.75 2007/09/10 22:24:04 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.76 2007/09/17 13:33:29 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -178,6 +178,8 @@ void	au_get_gain(struct audio_softc *, struct au_mixer_ports *,
 int	au_set_port(struct audio_softc *, struct au_mixer_ports *,
 			 u_int);
 int	au_get_port(struct audio_softc *, struct au_mixer_ports *);
+int	au_set_mute(struct audio_softc *, struct au_mixer_ports *, u_char);
+int	au_get_mute(struct audio_softc *, struct au_mixer_ports *, u_char *);
 int	au_get_lr_value(struct audio_softc *, mixer_ctrl_t *,
 			     int *, int *r);
 int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *,
@@ -2233,6 +2235,74 @@ au_set_lr_value(struct audio_softc *sc, mixer_ctrl_t *ct, int l, int r)
 	ct->un.value.num_channels = 1;
 	ct->un.value.level[AUDIO_MIXER_LEVEL_MONO] = (l+r)/2;
 	return sc->hw_if->set_port(sc->hw_hdl, ct);
+}
+
+int
+au_get_mute(struct audio_softc *sc, struct au_mixer_ports *ports, u_char *mute)
+{
+	mixer_devinfo_t mi;
+	mixer_ctrl_t ct;
+	int error;
+
+	 /* if no master, silently ignore request */
+	if (ports->master == -1)
+		return 0;
+
+	mi.index = ports->master;
+	error = sc->hw_if->query_devinfo(sc->hw_hdl, &mi);
+	if (error != 0)
+		return error;
+
+	/* master mute control should be the next device, if it exists */
+	if (mi.next < 0)
+		return 0;
+
+	ct.dev = mi.next;
+	ct.type = AUDIO_MIXER_ENUM;
+	error = sc->hw_if->get_port(sc->hw_hdl, &ct);
+	if (error != 0)
+		return error;
+
+	*mute = ct.un.ord;
+
+	return error;
+}
+
+int
+au_set_mute(struct audio_softc *sc, struct au_mixer_ports *ports, u_char mute)
+{
+	mixer_devinfo_t mi;
+	mixer_ctrl_t ct;
+	int error;
+
+	 /* if no master, silently ignore request */
+	if (ports->master == -1)
+		return 0;
+
+	mi.index = ports->master;
+	error = sc->hw_if->query_devinfo(sc->hw_hdl, &mi);
+	if (error != 0)
+		return error;
+
+	/* master mute control should be the next device, if it exists */
+	if (mi.next < 0)
+		return 0;
+
+	ct.dev = mi.next;
+	ct.type = AUDIO_MIXER_ENUM;
+	error = sc->hw_if->get_port(sc->hw_hdl, &ct);
+	if (error != 0)
+		return error;
+
+	DPRINTF(("au_set_mute: mute (old): %d, mute (new): %d\n",
+	    ct.un.ord, mute));
+
+	ct.un.ord = mute;
+	error = sc->hw_if->set_port(sc->hw_hdl, &ct);
+
+	if (!error)
+		mixer_signal(sc);
+	return error;
 }
 
 int
