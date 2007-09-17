@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.86 2007/08/30 16:40:10 ckuethe Exp $
+$OpenBSD: miidevs,v 1.87 2007/09/17 12:31:22 kettenis Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -49,6 +49,7 @@ oui ALTIMA			0x0010a9	Altima Communications
 oui AMD				0x00001a	Advanced Micro Devices
 oui ASIX			0x000ec6	ASIX Electronics
 oui BROADCOM			0x001018	Broadcom Corporation
+oui BROADCOM2			0x000af7	Broadcom Corporation
 oui CENIX			0x000749	CENiX Inc.
 oui CICADA			0x0003f1	Cicada Semiconductor
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
@@ -151,6 +152,7 @@ model BROADCOM BCM5214		0x0028 BCM5214 Quad 10/100 PHY
 model BROADCOM BCM5222		0x0032 BCM5222 Dual 10/100 PHY
 model BROADCOM BCM5220		0x0033 BCM5220 10/100 PHY
 model BROADCOM BCM4401		0x0036 BCM4401 10/100baseTX PHY
+model BROADCOM2 BCM5906		0x0004 BCM5906 10/100baseTX PHY
 
 /* Cicada Semiconductor PHYs (now owned by Vitesse) */
 model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY
