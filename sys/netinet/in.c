@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.49 2007/07/20 19:00:35 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.50 2007/09/17 09:33:57 markus Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -452,6 +452,8 @@ cleanup:
 			in_delmulti(ia->ia_allhosts);
 			ia->ia_allhosts = NULL;
 		}
+		/* remove backpointer, since ifp may die before ia */
+		ia->ia_ifp = NULL;
 		IFAFREE((&ia->ia_ifa));
 		dohooks(ifp->if_addrhooks, 0);
 		splx(s);
