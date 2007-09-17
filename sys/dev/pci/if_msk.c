@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.56 2007/06/27 19:15:47 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.57 2007/09/17 08:46:52 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -164,7 +164,6 @@ int msk_miibus_readreg(struct device *, int, int);
 void msk_miibus_writereg(struct device *, int, int, int);
 void msk_miibus_statchg(struct device *);
 
-void msk_setfilt(struct sk_if_softc *, caddr_t, int);
 void msk_setmulti(struct sk_if_softc *);
 void msk_setpromisc(struct sk_if_softc *);
 void msk_tick(void *);
@@ -350,16 +349,6 @@ msk_miibus_statchg(struct device *dev)
 
 	DPRINTFN(9, ("msk_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
-}
-
-void
-msk_setfilt(struct sk_if_softc *sc_if, caddr_t addr, int slot)
-{
-	int base = XM_RXFILT_ENTRY(slot);
-
-	SK_XM_WRITE_2(sc_if, base, *(u_int16_t *)(&addr[0]));
-	SK_XM_WRITE_2(sc_if, base + 2, *(u_int16_t *)(&addr[2]));
-	SK_XM_WRITE_2(sc_if, base + 4, *(u_int16_t *)(&addr[4]));
 }
 
 void
