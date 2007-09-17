@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.71 2007/09/17 10:28:48 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.72 2007/09/17 10:31:13 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -727,8 +727,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 		cmd++;
 
 	if (shutUp) {
-		if (!(job->flags & JOB_SILENT) && !noSpecials &&
-		    commandShell->hasEchoCtl) {
+		if (!(job->flags & JOB_SILENT) && !noSpecials) {
 			DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
 		} else {
 			shutUp = false;
@@ -737,52 +736,21 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 
 	if (errOff) {
 		if ( !(job->flags & JOB_IGNERR) && !noSpecials) {
-			if (commandShell->hasErrCtl) {
-				/*
-				 * we don't want the error-control commands
-				 * showing up either, so we turn off echoing
-				 * while executing them. We could put another
-				 * field in the shell structure to tell
-				 * JobDoOutput to look for this string too, but
-				 * why make it any more complex than it already
-				 * is?
-				 */
-				if (!(job->flags & JOB_SILENT) && !shutUp &&
-				    commandShell->hasEchoCtl) {
-					DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
-					DBPRINTF(job, "%s\n", SHELL_ERROR_OFF);
-					DBPRINTF(job, "%s\n", SHELL_ECHO_ON);
-				} else {
-					DBPRINTF(job, "%s\n", SHELL_ERROR_OFF);
-				}
-			} else if (commandShell->ignErr &&
-			    (*commandShell->ignErr != '\0')) {
-				/*
-				 * The shell has no error control, so we need
-				 * to be weird to get it to ignore any errors
-				 * from the command.  If echoing is turned on,
-				 * we turn it off and use the errCheck template
-				 * to echo the command. Leave echoing off so
-				 * the user doesn't see the weirdness we go
-				 * through to ignore errors. Set cmdTemplate to
-				 * use the weirdness instead of the simple
-				 * "%s\n" template.
-				 */
-				if (!(job->flags & JOB_SILENT) && !shutUp &&
-				    commandShell->hasEchoCtl) {
-					DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
-					DBPRINTF(job, SHELL_ERROR_ON, cmd);
-					shutUp = true;
-				}
-				cmdTemplate = SHELL_ERROR_OFF;
-				/*
-				 * The error ignoration (hee hee) is already
-				 * taken care of by the ignErr template, so
-				 * pretend error checking is still on.
-				 */
-				errOff = false;
+			/*
+			 * we don't want the error-control commands
+			 * showing up either, so we turn off echoing
+			 * while executing them. We could put another
+			 * field in the shell structure to tell
+			 * JobDoOutput to look for this string too, but
+			 * why make it any more complex than it already
+			 * is?
+			 */
+			if (!(job->flags & JOB_SILENT) && !shutUp) {
+				DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
+				DBPRINTF(job, "%s\n", SHELL_ERROR_OFF);
+				DBPRINTF(job, "%s\n", SHELL_ECHO_ON);
 			} else {
-				errOff = false;
+				DBPRINTF(job, "%s\n", SHELL_ERROR_OFF);
 			}
 		} else {
 			errOff = false;
@@ -797,8 +765,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 		 * echoOff command. Otherwise we issue it and pretend it was on
 		 * for the whole command...
 		 */
-		if (!shutUp && !(job->flags & JOB_SILENT) &&
-		    commandShell->hasEchoCtl){
+		if (!shutUp && !(job->flags & JOB_SILENT)) {
 			DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
 			shutUp = true;
 		}
