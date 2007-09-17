@@ -1,4 +1,4 @@
-/*	$OpenBSD: varname.h,v 1.2 2002/06/05 21:34:18 espie Exp $	*/
+/*	$OpenBSD: varname.h,v 1.3 2007/09/17 09:28:36 espie Exp $	*/
 #ifndef VARNAME_H
 #define VARNAME_H
 /*
@@ -48,7 +48,7 @@ struct Name {
  *	differing modules have different requirements wrt variable spec
  *	endings). Returns the position where the variable spec finally
  *	ends. Name result might be a copy, or not. */
-extern const char *VarName_Get(const char *, struct Name *, SymTable *, 
+extern const char *VarName_Get(const char *, struct Name *, SymTable *,
     bool, const char *(*)(const char *));
 /* VarName_Free(name);
  *	Frees a variable name filled by VarName_Get(). */

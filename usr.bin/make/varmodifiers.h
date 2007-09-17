@@ -2,7 +2,7 @@
 #define VARMODIFIERS_H
 
 /* $OpenPackages$ */
-/* $OpenBSD: varmodifiers.h,v 1.9 2007/09/16 09:46:14 espie Exp $ */
+/* $OpenBSD: varmodifiers.h,v 1.10 2007/09/17 09:28:36 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -39,8 +39,8 @@ extern void VarModifiers_Init(void);
 
 /* result = VarModifiers_Apply(val, name, ctxt, undef_is_bad,
  *   &should_free, &modstart, paren);
- *	Applies variable modifiers starting at modstart (including :), 
- *	using parenthesis paren, to value val.  
+ *	Applies variable modifiers starting at modstart (including :),
+ *	using parenthesis paren, to value val.
  *	Variables in spec are taken from context ctxt.
  *	If undef_is_bad, error occurs if undefined variables are mentioned.
  *	modstart is advanced past the end of the spec.
@@ -49,7 +49,7 @@ extern void VarModifiers_Init(void);
  *
  *	If both val and name are NULL, VarModifiers_Apply just parses the
  *	modifiers specification, as it can't apply it to anything. */
-extern char *VarModifiers_Apply(char *, const struct Name *, SymTable *, 
+extern char *VarModifiers_Apply(char *, const struct Name *, SymTable *,
 	bool, bool *, const char **, int);
 
 /* Direct interface to specific modifiers used under special circumstances. */

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.66 2007/09/17 09:16:58 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.67 2007/09/17 09:28:36 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ transform_find_by_name(const char *name)
 static int
 SuffSuffIsPrefix(void *s, const void *str)
 {
-	return SuffStrIsPrefix(((Suff *)s)->name, 
+	return SuffStrIsPrefix(((Suff *)s)->name,
 	    (const char *)str) == NULL ? 1 : 0;
 }
 
@@ -463,7 +463,7 @@ SuffParseTransform(
 		if (srcLn == NULL)
 			srcLn = Lst_FindConst(&sufflist, SuffSuffIsPrefix, str);
 		else
-			srcLn = Lst_FindFromConst(Lst_Succ(srcLn), 
+			srcLn = Lst_FindFromConst(Lst_Succ(srcLn),
 			    SuffSuffIsPrefix, str);
 		if (srcLn == NULL) {
 			/*
@@ -1037,7 +1037,7 @@ SuffFindThem(
 			break;
 		}
 
-		if ((ptr = Dir_FindFile(s->file, &s->suff->searchPath)) 
+		if ((ptr = Dir_FindFile(s->file, &s->suff->searchPath))
 		    != NULL) {
 			rs = s;
 #ifdef DEBUG_SRC
@@ -1116,7 +1116,7 @@ SuffFindCmds(
 				 */
 				suff = (Suff *)Lst_Datum(ln2);
 
-				if (Lst_Member(&suff->parents, targ->suff) 
+				if (Lst_Member(&suff->parents, targ->suff)
 				    != NULL) {
 					/*
 					 * Hot Damn! Create a new Src structure
@@ -1404,7 +1404,7 @@ SuffApplyTransform(
 	gn = (GNode *)Lst_Datum(ln);
 
 	if (DEBUG(SUFF))
-		printf("\tapplying %s -> %s to \"%s\"\n", s->name, t->name, 
+		printf("\tapplying %s -> %s to \"%s\"\n", s->name, t->name,
 		    tGn->name);
 
 	/* Record last child for expansion purposes.  */
@@ -1692,7 +1692,7 @@ sfnd_abort:
 		 * the node is only a source (not on the lhs of a dependency
 		 * operator or [XXX] it has neither children or commands).  */
 		if (OP_NOP(gn->type) ||
-		    (Lst_IsEmpty(&gn->children) && 
+		    (Lst_IsEmpty(&gn->children) &&
 		    Lst_IsEmpty(&gn->commands))) {
 			gn->path = Dir_FindFile(gn->name,
 			    (targ == NULL ? defaultPath :
@@ -1705,7 +1705,7 @@ sfnd_abort:
 					/* Suffix known for the thing -- trim
 					 * the suffix off the path to form the
 					 * proper .PREFIX variable.  */
-					int savep = strlen(gn->path) - 
+					int savep = strlen(gn->path) -
 					    targ->suff->nameLen;
 					char savec;
 
@@ -1714,7 +1714,7 @@ sfnd_abort:
 					savec = gn->path[savep];
 					gn->path[savep] = '\0';
 
-					if ((ptr = strrchr(gn->path, '/')) 
+					if ((ptr = strrchr(gn->path, '/'))
 					    != NULL)
 						ptr++;
 					else
@@ -1728,7 +1728,7 @@ sfnd_abort:
 					 * the target has no known suffix.  */
 					gn->suffix = NULL;
 
-					if ((ptr = strrchr(gn->path, '/')) 
+					if ((ptr = strrchr(gn->path, '/'))
 					    != NULL)
 						ptr++;
 					else
@@ -1797,7 +1797,7 @@ sfnd_abort:
 			targ->node = Targ_FindNode(targ->file, TARG_CREATE);
 		}
 
-		SuffApplyTransform(targ->node, src->node, targ->suff, 
+		SuffApplyTransform(targ->node, src->node, targ->suff,
 		    src->suff);
 
 		if (targ->node != gn) {
@@ -1950,7 +1950,7 @@ Suff_SetNull(const char *name)
 		 */
 		suffNull = s;
 	} else {
-		Parse_Error(PARSE_WARNING, 
+		Parse_Error(PARSE_WARNING,
 		    "Desired null suffix %s not defined.", name);
 	}
 }

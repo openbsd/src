@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.19 2007/05/17 03:37:31 ray Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.20 2007/09/17 09:28:36 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -65,10 +65,10 @@ typedef struct {
 
 static IFile	*current;	/* IFile being parsed. */
 
-static LIST	input_stack;	/* Stack of IFiles waiting to be parsed 
+static LIST	input_stack;	/* Stack of IFiles waiting to be parsed
 				 * (includes and loop reparses) */
 
-/* IFile ctors. 
+/* IFile ctors.
  *
  * obj = new_ifile(filename, filehandle);
  *	Create input object from filename, filehandle. */
@@ -81,7 +81,7 @@ static IFile *new_istring(char *, const char *, unsigned long);
 static void free_ifile(IFile *);
 
 
-/* Handling basic character reading. 
+/* Handling basic character reading.
  * c = ParseReadc();
  *	New character c from current input stream, or EOF at end of stream. */
 #define ParseReadc()	current->ptr < current->end ? *current->ptr++ : newline()
@@ -385,7 +385,7 @@ ParseSkipEmptyLines(Buffer linebuf)
 
 /* Parse_ReadNormalLine removes beginning and trailing blanks (but keeps
  * the first tab), handles escaped newlines, and skips over uninteresting
- * lines.  
+ * lines.
  *
  * The line number is incremented, which implies that continuation
  * lines are numbered with the last line number (we could do better, at a

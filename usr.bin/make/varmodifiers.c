@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.22 2007/09/16 12:02:38 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.23 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ VarRoot(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
  *-----------------------------------------------------------------------
  */
 static bool
-VarMatch(struct Name *word, bool addSpace, Buffer buf, 
+VarMatch(struct Name *word, bool addSpace, Buffer buf,
     void *pattern) /* Pattern the word must match */
 {
 	const char *pat = (const char *)pattern;
@@ -374,7 +374,7 @@ VarMatch(struct Name *word, bool addSpace, Buffer buf,
  *-----------------------------------------------------------------------
  */
 static bool
-VarNoMatch(struct Name *word, bool addSpace, Buffer buf, 
+VarNoMatch(struct Name *word, bool addSpace, Buffer buf,
     void *pattern) /* Pattern the word must not match */
 {
 	const char *pat = (const char *)pattern;
@@ -394,7 +394,7 @@ VarUniq(struct Name *word, bool addSpace, Buffer buf, void *lastp)
 	struct Name *last = (struct Name *)lastp;
 
 	/* does not match */
-	if (last->s == NULL || last->e - last->s != word->e - word->s || 
+	if (last->s == NULL || last->e - last->s != word->e - word->s ||
 	    strncmp(word->s, last->s, word->e - word->s) != 0) {
 		if (addSpace)
 			Buf_AddSpace(buf);
@@ -607,7 +607,7 @@ VarSYSVMatch(struct Name *word, bool addSpace, Buffer buf, void *patp)
 }
 
 void *
-get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED, 
+get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED,
     int endc)
 {
 	VarPattern		*pattern;
@@ -641,7 +641,7 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED,
 				return NULL;
 		}
 	}
-	    
+
 	pattern = (VarPattern *)emalloc(sizeof(VarPattern));
 	pattern->lbuffer = pattern->lhs = Str_dupi(*p, cp);
 	pattern->leftLen = cp - *p;
@@ -661,7 +661,7 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED,
  *-----------------------------------------------------------------------
  */
 static bool
-VarSubstitute(struct Name *word, bool addSpace, Buffer buf, 
+VarSubstitute(struct Name *word, bool addSpace, Buffer buf,
     void *patternp) /* Pattern for substitution */
 {
     size_t	wordLen;    /* Length of word */
@@ -850,7 +850,7 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 				Buf_AddChar(buf,rp[1]);
 				rp++;
 			}
-			else if (*rp == '&' || 
+			else if (*rp == '&' ||
 			    (*rp == '\\' && isdigit(rp[1]))) {
 				int n;
 				const char *subbuf;
@@ -870,19 +870,19 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 				}
 
 				if (n > pat->nsub) {
-					Error("No subexpression %s", 
+					Error("No subexpression %s",
 					    &errstr[0]);
 					subbuf = "";
 					sublen = 0;
 				} else if (pat->matches[n].rm_so == -1 &&
 				    pat->matches[n].rm_eo == -1) {
-					Error("No match for subexpression %s", 
+					Error("No match for subexpression %s",
 					    &errstr[0]);
 					subbuf = "";
 					sublen = 0;
 				} else {
 					subbuf = wp + pat->matches[n].rm_so;
-					sublen = pat->matches[n].rm_eo - 
+					sublen = pat->matches[n].rm_eo -
 					    pat->matches[n].rm_so;
 				}
 
@@ -930,7 +930,7 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
 static char *
 VarModify(char *str, 		/* String whose words should be trimmed */
 				/* Function to use to modify them */
-    bool (*modProc)(struct Name *, bool, Buffer, void *), 
+    bool (*modProc)(struct Name *, bool, Buffer, void *),
     void *datum)		/* Datum to pass it */
 {
 	BUFFER	  buf;		/* Buffer for the new string */
@@ -972,7 +972,7 @@ VarModify(char *str, 		/* String whose words should be trimmed */
  *-----------------------------------------------------------------------
  */
 static char *
-VarGetPattern(SymTable *ctxt, int err, const char **tstr, int delim1, 
+VarGetPattern(SymTable *ctxt, int err, const char **tstr, int delim1,
     int delim2, size_t *length, VarPattern *pattern)
 {
 	const char	*cp;
@@ -1008,7 +1008,7 @@ VarGetPattern(SymTable *ctxt, int err, const char **tstr, int delim1,
 				/* If unescaped dollar sign not before the
 				 * delimiter, assume it's a variable
 				 * substitution and recurse.  */
-				(void)Var_ParseBuffer(&buf, cp, ctxt, err, 
+				(void)Var_ParseBuffer(&buf, cp, ctxt, err,
 				    &len);
 				cp += len - 1;
 			}
@@ -1223,7 +1223,7 @@ get_loop(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 }
 
 static void *
-common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc, 
+common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc,
     bool dosubst)
 {
 	VarPattern *pattern;
@@ -1240,7 +1240,7 @@ common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc,
 	s += 2;
 
 	pattern->rhs = NULL;
-	pattern->lhs = VarGetPattern(ctxt, err, &s, delim, delim, 
+	pattern->lhs = VarGetPattern(ctxt, err, &s, delim, delim,
 	    &pattern->leftLen, NULL);
 	pattern->lbuffer = pattern->lhs;
 	if (pattern->lhs != NULL) {
@@ -1294,7 +1294,7 @@ assign_get_value(const char **p, SymTable *ctxt, bool err, int endc)
 	if (arg != NULL) {
 		*p = s;
 		arg->flags = flags;
-	} 
+	}
 	return arg;
 }
 
@@ -1376,7 +1376,7 @@ do_regex(const char *s, const struct Name *n UNUSED, void *arg)
 #endif
 
 char *
-VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt, 
+VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
     bool err, bool *freePtr, const char **pscan, int paren)
 {
 	const char *tstr;
@@ -1430,12 +1430,12 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 		if (arg != NULL) {
 			if (str != NULL || (mod->atstart && name != NULL)) {
 				if (mod->word_apply != NULL) {
-					newStr = VarModify(str, 
+					newStr = VarModify(str,
 					    mod->word_apply, arg);
 					if (mod->apply != NULL) {
 						char *newStr2;
 
-						newStr2 = mod->apply(newStr, 
+						newStr2 = mod->apply(newStr,
 						    name, arg);
 						free(newStr);
 						newStr = newStr2;

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: util.c,v 1.22 2007/09/17 08:36:57 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ getwd(pathname)
 
     /* find the inode of root */
     if (stat("/", &st_root) == -1) {
-	(void)snprintf(pathname, MAXPATHLEN, 
+	(void)snprintf(pathname, MAXPATHLEN,
 	    "getwd: Cannot stat \"/\" (%s)", strerror(errno));
 	return NULL;
     }
@@ -263,7 +263,7 @@ getwd(pathname)
 	    for (d = readdir(dp); d != NULL; d = readdir(dp)) {
 		if (ISDOT(d->d_name) || ISDOTDOT(d->d_name))
 		    continue;
-		(void)strlcpy(cur_name_add, d->d_name, 
+		(void)strlcpy(cur_name_add, d->d_name,
 		    sizeof(nextpathbuf) MAXPATHLEN - (MAXPATHLEN - 1));
 		if (lstat(nextpathptr, &st_next) == -1) {
 		    (void)snprintf(pathname, MAXPATHLEN,

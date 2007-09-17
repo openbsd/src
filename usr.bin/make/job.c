@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.67 2007/09/17 08:36:57 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.68 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -539,7 +539,7 @@ JobCondPassSig(void *jobp,	/* Job to biff */
 /*-
  *-----------------------------------------------------------------------
  * JobPassSig --
- *	Pass a signal to all local jobs if USE_PGRP is defined, 
+ *	Pass a signal to all local jobs if USE_PGRP is defined,
  *	then die ourselves.
  *
  * Side Effects:
@@ -787,7 +787,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 		 * echoOff command. Otherwise we issue it and pretend it was on
 		 * for the whole command...
 		 */
-		if (!shutUp && !(job->flags & JOB_SILENT) && 
+		if (!shutUp && !(job->flags & JOB_SILENT) &&
 		    commandShell->hasEchoCtl){
 			DBPRINTF("%s\n", commandShell->echoOff);
 			shutUp = true;
@@ -930,7 +930,7 @@ JobFinish(Job *job,		/* job to finish */
 
 		if (WIFEXITED(*status)) {
 			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "Process %ld exited.\n", 
+				(void)fprintf(stdout, "Process %ld exited.\n",
 				    (long)job->pid);
 				(void)fflush(stdout);
 			}
@@ -941,7 +941,7 @@ JobFinish(Job *job,		/* job to finish */
 				}
 				(void)fprintf(out, "*** Error code %d%s\n",
 				    WEXITSTATUS(*status),
-				    (job->flags & JOB_IGNERR) ? "(ignored)" : 
+				    (job->flags & JOB_IGNERR) ? "(ignored)" :
 				    "");
 
 				if (job->flags & JOB_IGNERR) {
@@ -952,12 +952,12 @@ JobFinish(Job *job,		/* job to finish */
 					MESSAGE(out, job->node);
 					lastNode = job->node;
 				}
-				(void)fprintf(out, 
+				(void)fprintf(out,
 				    "*** Completed successfully\n");
 			}
 		} else if (WIFSTOPPED(*status)) {
 			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "Process %ld stopped.\n", 
+				(void)fprintf(stdout, "Process %ld stopped.\n",
 				    (long)job->pid);
 				(void)fflush(stdout);
 			}
@@ -1016,7 +1016,7 @@ JobFinish(Job *job,		/* job to finish */
 			if (nJobs == maxJobs) {
 				jobFull = true;
 				if (DEBUG(JOB)) {
-					(void)fprintf(stdout, 
+					(void)fprintf(stdout,
 					    "Job queue is full.\n");
 					(void)fflush(stdout);
 				}
@@ -1028,7 +1028,7 @@ JobFinish(Job *job,		/* job to finish */
 				MESSAGE(out, job->node);
 				lastNode = job->node;
 			}
-			(void)fprintf(out, "*** Signal %d\n", 
+			(void)fprintf(out, "*** Signal %d\n",
 			    WTERMSIG(*status));
 		}
 
@@ -1218,10 +1218,10 @@ JobExec(Job *job, char **argv)
 				int bytes, obytes;
 				char *tmp;
 
-				bytes = howmany(job->inPipe+1, NFDBITS) * 
+				bytes = howmany(job->inPipe+1, NFDBITS) *
 				    sizeof(fd_mask);
-				obytes = outputsn ? 
-				    howmany(outputsn+1, NFDBITS) * 
+				obytes = outputsn ?
+				    howmany(outputsn+1, NFDBITS) *
 				    sizeof(fd_mask) : 0;
 
 				if (bytes != obytes) {
@@ -1330,7 +1330,7 @@ JobRestart(Job *job)
 		JobMakeArgv(job, argv);
 
 		if (DEBUG(JOB)) {
-			(void)fprintf(stdout, "Restarting %s...", 
+			(void)fprintf(stdout, "Restarting %s...",
 			    job->node->name);
 			(void)fflush(stdout);
 		}
@@ -1563,7 +1563,7 @@ JobStart(GNode	  *gn,	      /* target to create */
 			 * sanity
 			 */
 			numCommands = 0;
-			Lst_ForEachNodeWhile(&gn->commands, JobPrintCommand, 
+			Lst_ForEachNodeWhile(&gn->commands, JobPrintCommand,
 			    job);
 
 			/*
@@ -1593,7 +1593,7 @@ JobStart(GNode	  *gn,	      /* target to create */
 		 * good.
 		 */
 		if (cmdsOK) {
-			Lst_ForEachNodeWhile(&gn->commands, JobPrintCommand, 
+			Lst_ForEachNodeWhile(&gn->commands, JobPrintCommand,
 			    job);
 		}
 		/*
@@ -1633,7 +1633,7 @@ JobStart(GNode	  *gn,	      /* target to create */
 		 */
 		if (cmdsOK) {
 			if (aborting == 0) {
-				Lst_ForEachFrom(job->tailCmds, JobSaveCommand, 
+				Lst_ForEachFrom(job->tailCmds, JobSaveCommand,
 				    job->node);
 				Make_Update(job->node);
 			}
@@ -1671,10 +1671,10 @@ JobStart(GNode	  *gn,	      /* target to create */
 		} else {
 			(void)fprintf(stdout, "Remaking `%s'\n", gn->name);
 			(void)fflush(stdout);
-			(void)strlcpy(job->outFile, TMPPAT, 
+			(void)strlcpy(job->outFile, TMPPAT,
 			    sizeof(job->outFile));
 			if ((job->outFd = mkstemp(job->outFile)) == -1)
-				Punt("Cannot create temp file: %s", 
+				Punt("Cannot create temp file: %s",
 				    strerror(errno));
 			(void)fcntl(job->outFd, F_SETFD, 1);
 		}
@@ -1711,7 +1711,7 @@ JobStart(GNode	  *gn,	      /* target to create */
 			 */
 			jobFull = true;
 			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, 
+				(void)fprintf(stdout,
 				    "Local job queue is full.\n");
 				(void)fflush(stdout);
 			}
@@ -1753,7 +1753,7 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 				 * non-printable command....
 				 */
 				cp++;
-				while (*cp == ' ' || *cp == '\t' || 
+				while (*cp == ' ' || *cp == '\t' ||
 				    *cp == '\n') {
 					cp++;
 				}
@@ -1885,7 +1885,7 @@ end_loop:
 			if (i >= job->curPos) {
 				char *cp;
 
-				cp = JobOutput(job, job->outBuf, 
+				cp = JobOutput(job, job->outBuf,
 				    &job->outBuf[i], false);
 
 				/*
@@ -1898,14 +1898,14 @@ end_loop:
 						MESSAGE(stdout, job->node);
 						lastNode = job->node;
 					}
-					(void)fprintf(stdout, "%s%s", cp, 
+					(void)fprintf(stdout, "%s%s", cp,
 					    gotNL ? "\n" : "");
 					(void)fflush(stdout);
 				}
 			}
 			if (i < max - 1) {
 				/* shift the remaining characters down */
-				(void)memcpy(job->outBuf, &job->outBuf[i + 1], 
+				(void)memcpy(job->outBuf, &job->outBuf[i + 1],
 				    max - (i + 1));
 				job->curPos = max - (i + 1);
 
@@ -1943,7 +1943,7 @@ end_loop:
 		 */
 		oFILE = fopen(job->outFile, "r");
 		if (oFILE != NULL) {
-			(void)fprintf(stdout, "Results of making %s:\n", 
+			(void)fprintf(stdout, "Results of making %s:\n",
 			    job->node->name);
 			(void)fflush(stdout);
 			while (fgets(inLine, sizeof(inLine), oFILE) != NULL) {
@@ -2008,7 +2008,7 @@ Job_CatchChildren(bool block)	/* true if should block on the wait. */
 	    (block?0:WNOHANG)|WUNTRACED)) > 0) {
 		HandleSigs();
 		if (DEBUG(JOB)) {
-			(void)fprintf(stdout, 
+			(void)fprintf(stdout,
 			    "Process %ld exited or stopped.\n", (long)pid);
 			(void)fflush(stdout);
 		}
@@ -2017,7 +2017,7 @@ Job_CatchChildren(bool block)	/* true if should block on the wait. */
 		jnode = Lst_Find(&jobs, JobCmpPid, &pid);
 
 		if (jnode == NULL) {
-			if (WIFSIGNALED(status) && 
+			if (WIFSIGNALED(status) &&
 			    (WTERMSIG(status) == SIGCONT)) {
 				jnode = Lst_Find(&stoppedJobs, JobCmpPid, &pid);
 				if (jnode == NULL) {
@@ -2035,7 +2035,7 @@ Job_CatchChildren(bool block)	/* true if should block on the wait. */
 			Lst_Remove(&jobs, jnode);
 			nJobs--;
 			if (jobFull && DEBUG(JOB)) {
-				(void)fprintf(stdout, 
+				(void)fprintf(stdout,
 				    "Job queue is no longer full.\n");
 				(void)fflush(stdout);
 			}
@@ -2086,7 +2086,7 @@ Job_CatchOutput(void)
 			return;
 		} else {
 			HandleSigs();
-			for (ln = Lst_First(&jobs); nfds && ln != NULL; 
+			for (ln = Lst_First(&jobs); nfds && ln != NULL;
 			    ln = Lst_Adv(ln)) {
 				job = (Job *)Lst_Datum(ln);
 				if (FD_ISSET(job->inPipe, readfdsp)) {

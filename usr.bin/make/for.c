@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: for.c,v 1.38 2007/09/16 09:46:14 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.39 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -210,7 +210,7 @@ For_Accumulate(For *arg, const char *line)
 		if (strncmp(ptr, "endfor", 6) == 0 &&
 		    (isspace(ptr[6]) || !ptr[6])) {
 			if (DEBUG(FOR))
-				(void)fprintf(stderr, "For: end for %lu\n", 
+				(void)fprintf(stderr, "For: end for %lu\n",
 				    arg->level);
 			/* If matching endfor, don't add line to buffer.  */
 			if (--arg->level == 0)
@@ -220,7 +220,7 @@ For_Accumulate(For *arg, const char *line)
 		     isspace(ptr[3])) {
 			arg->level++;
 			if (DEBUG(FOR))
-				(void)fprintf(stderr, "For: new loop %lu\n", 
+				(void)fprintf(stderr, "For: new loop %lu\n",
 				    arg->level);
 		}
 	}
@@ -247,7 +247,7 @@ ForExec(void *valuep, void *argp)
 	}
 
 	if (DEBUG(FOR))
-		(void)fprintf(stderr, "--- %s = %s\n", 
+		(void)fprintf(stderr, "--- %s = %s\n",
 		    (char *)Lst_Datum(arg->var), value);
 	Buf_Init(&buf, arg->guess);
 	Var_SubstVar(&buf, arg->text, Lst_Datum(arg->var), value);

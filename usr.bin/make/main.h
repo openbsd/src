@@ -1,7 +1,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.h,v 1.1 2001/05/23 12:34:46 espie Exp $ */
+/*	$OpenBSD: main.h,v 1.2 2007/09/17 09:28:36 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -35,9 +35,9 @@
  *	were given at make's invocation. Used to implement .MFLAGS. */
 extern void Main_ParseArgLine(const char *);
 
-/* List of target names given on the command line. Needed to resolve 
+/* List of target names given on the command line. Needed to resolve
  * .if make(...) statements. */
-extern Lst	create; 
+extern Lst	create;
 
 extern GNode	*DEFAULT;	/* .DEFAULT rule */
 

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.84 2007/09/17 08:36:57 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.85 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1142,7 +1142,7 @@ resolve_include_filename(const char *file, bool isSystem)
 
 	/* Handle non-system non-absolute files... */
 	if (!isSystem && file[0] != '/') {
-		/* ... by looking first under the same directory as the 
+		/* ... by looking first under the same directory as the
 		 * current file */
 		char *slash;
 		const char *fname;
@@ -1153,7 +1153,7 @@ resolve_include_filename(const char *file, bool isSystem)
 		if (slash != NULL) {
 			char *newName;
 
-			newName = Str_concati(fname, slash, file, 
+			newName = Str_concati(fname, slash, file,
 			    strchr(file, '\0'), '/');
 			fullname = Dir_FindFile(newName, parseIncPath);
 			if (fullname == NULL)
@@ -1183,7 +1183,7 @@ resolve_include_filename(const char *file, bool isSystem)
 }
 
 static void
-handle_include_file(const char *name, const char *ename, bool isSystem, 
+handle_include_file(const char *name, const char *ename, bool isSystem,
     bool errIfNotFound)
 {
 	char *file;
@@ -1214,7 +1214,7 @@ handle_include_file(const char *name, const char *ename, bool isSystem,
 static bool
 lookup_bsd_include(const char *file)
 {
-	char endc; 
+	char endc;
 	const char *efile;
 	bool isSystem;
 
@@ -1249,7 +1249,7 @@ lookup_bsd_include(const char *file)
 
 
 static void
-lookup_sysv_style_include(const char *file, const char *directive, 
+lookup_sysv_style_include(const char *file, const char *directive,
     bool errIfMissing)
 {
 	const char *efile;
@@ -1344,7 +1344,7 @@ handle_poison(const char *line)
 		break;
 	}
 	if ((*p != '\0' && *p != '#') || type == POISON_INVALID) {
-		Parse_Error(PARSE_WARNING, "Invalid syntax for .poison: %s", 
+		Parse_Error(PARSE_WARNING, "Invalid syntax for .poison: %s",
 		    line);
 		return false;
 	} else {
@@ -1447,13 +1447,13 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 		/* FALLTHROUGH */
 	case COND_PARSE:
 		return true;
-	case COND_ISFOR: 
+	case COND_ISFOR:
 		return handle_for_loop(linebuf, line);
 	case COND_ISINCLUDE:
 		return lookup_bsd_include(line + 7);
 	case COND_ISPOISON:
 		return handle_poison(line+6);
-	case COND_ISUNDEF: 
+	case COND_ISUNDEF:
 		return handle_undef(line + 5);
 	default:
 		break;
@@ -1523,22 +1523,22 @@ Parse_File(
 	    } else {
 		char *stripped;
 		stripped = strip_comments(&copy, line);
-		if (*stripped == '.' && handle_bsd_command(&buf, &copy, 
+		if (*stripped == '.' && handle_bsd_command(&buf, &copy,
 		    stripped+1))
 			;
-		else if (FEATURES(FEATURE_SYSVINCLUDE) && 
+		else if (FEATURES(FEATURE_SYSVINCLUDE) &&
 		    strncmp(stripped, "include", 7) == 0 &&
 		    isspace(stripped[7]) &&
 		    strchr(stripped, ':') == NULL) {
 		    /* It's an S3/S5-style "include".  */
 			lookup_sysv_include(stripped + 7, "include");
 		} else if (FEATURES(FEATURE_CONDINCLUDE) &&
-		    strncmp(stripped, "sinclude", 8) == 0 && 
+		    strncmp(stripped, "sinclude", 8) == 0 &&
 		    isspace(stripped[8]) &&
 		    strchr(stripped, ':') == NULL) {
 		    	lookup_conditional_include(stripped+8, "sinclude");
 		} else if (FEATURES(FEATURE_CONDINCLUDE) &&
-		    strncmp(stripped, "-include", 8) == 0 && 
+		    strncmp(stripped, "-include", 8) == 0 &&
 		    isspace(stripped[8]) &&
 		    strchr(stripped, ':') == NULL) {
 		    	lookup_conditional_include(stripped+8, "-include");

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.44 2007/09/16 15:20:48 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.45 2007/09/17 09:28:36 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ TargFreeGN(void *gnp)
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_FindNodei(const char *name, const char *ename, 
+Targ_FindNodei(const char *name, const char *ename,
     int flags)			/* flags governing events when target not
 				 * found */
 {
@@ -417,9 +417,9 @@ Targ_PrintType(int type)
 		PRINTBIT(NOTMAIN);
 		PRINTDBIT(LIB);
 		/*XXX: MEMBER is defined, so CONCAT(OP_,MEMBER) gives OP_"%" */
-		case OP_MEMBER: 
-			if (DEBUG(TARG)) 
-				printf(".MEMBER "); 
+		case OP_MEMBER:
+			if (DEBUG(TARG))
+				printf(".MEMBER ");
 			break;
 		PRINTDBIT(ARCHV);
 		}

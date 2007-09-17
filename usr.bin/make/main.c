@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.79 2007/09/16 12:30:35 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.80 2007/09/17 09:28:36 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ add_dirpath(Lst l, const char *n)
 }
 
 /*
- * Get the name of this type of MACHINE from utsname so we can share an 
+ * Get the name of this type of MACHINE from utsname so we can share an
  * executable for similar machines. (i.e. m68k: amiga hp300, mac68k, sun3, ...)
  *
  * Note that both MACHINE and MACHINE_ARCH are decided at
@@ -480,7 +480,7 @@ figure_out_CURDIR()
 		exit(2);
 	}
 
-	/* ...but we can use the alias $PWD if we can prove it is the same 
+	/* ...but we can use the alias $PWD if we can prove it is the same
 	 * directory */
 	if ((dir = getenv("PWD")) != NULL) {
 		if (stat(dir, &sb) == 0 && sa.st_ino == sb.st_ino &&
@@ -768,16 +768,16 @@ main(int argc, char **argv)
 	if (!Lst_IsEmpty(&varstoprint)) {
 		LstNode ln;
 
-		for (ln = Lst_First(&varstoprint); ln != NULL; 
+		for (ln = Lst_First(&varstoprint); ln != NULL;
 		    ln = Lst_Adv(ln)) {
 			char *value = Var_Value((char *)Lst_Datum(ln));
 
 			printf("%s\n", value ? value : "");
 		}
 	} else {
-		/* Have now read the entire graph and need to make a list 
-		 * of targets to create. If none was given on the command 
-		 * line, we consult the parsing module to find the main 
+		/* Have now read the entire graph and need to make a list
+		 * of targets to create. If none was given on the command
+		 * line, we consult the parsing module to find the main
 		 * target(s) to create.  */
 		if (Lst_IsEmpty(create))
 			Parse_MainName(&targs);
@@ -785,14 +785,14 @@ main(int argc, char **argv)
 			Targ_FindList(&targs, create);
 
 		if (compatMake)
-			/* Compat_Init will take care of creating all the 
+			/* Compat_Init will take care of creating all the
 			 * targets as well as initializing the module.  */
 			Compat_Run(&targs);
 		else {
-			/* Initialize job module before traversing the graph, 
-			 * now that any .BEGIN and .END targets have been 
-			 * read. This is done only if the -q flag wasn't given 
-			 * (to prevent the .BEGIN from being executed should 
+			/* Initialize job module before traversing the graph,
+			 * now that any .BEGIN and .END targets have been
+			 * read. This is done only if the -q flag wasn't given
+			 * (to prevent the .BEGIN from being executed should
 			 * it exist).  */
 			if (!queryFlag) {
 				if (maxLocal == -1)

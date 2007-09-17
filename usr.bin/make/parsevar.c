@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.9 2007/09/16 09:46:14 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.10 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -104,12 +104,12 @@ parse_variable_assignment(const char *line, int ctxt)
 		case '?':
 			if (type & (VAR_OPT|VAR_APPEND))
 				type = VAR_INVALID;
-			else 
+			else
 				type |= VAR_OPT;
 			break;
 
 		case ':':
-			if (FEATURES(FEATURE_SUNSHCMD) && 
+			if (FEATURES(FEATURE_SUNSHCMD) &&
 			    strncmp(arg, "sh", 2) == 0) {
 				type = VAR_SHELL;
 				arg += 2;
@@ -169,11 +169,11 @@ parse_variable_assignment(const char *line, int ctxt)
 		/*
 		 * Allow variables in the old value to be undefined, but leave
 		 * their invocation alone -- this is done by forcing
-		 * errorIsOkay to be false.  
-		 * XXX: This can cause recursive variables, but that's not 
+		 * errorIsOkay to be false.
+		 * XXX: This can cause recursive variables, but that's not
 		 * hard to do, and this allows someone to do something like
 		 *
-		 *  CFLAGS = $(.INCLUDES) 
+		 *  CFLAGS = $(.INCLUDES)
 		 *  CFLAGS := -I.. $(CFLAGS)
 		 *
 		 * And not get an error.

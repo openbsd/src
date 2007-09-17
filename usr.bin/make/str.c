@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: str.c,v 1.23 2007/09/16 15:24:53 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.24 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ static bool range_match(char, const char **, const char *);
 static bool star_match(const char *, const char *, const char *, const char *);
 
 char *
-Str_concati(const char *s1, const char *e1, const char *s2, const char *e2, 
+Str_concati(const char *s1, const char *e1, const char *s2, const char *e2,
     int sep)
 {
 	size_t len1, len2;
@@ -151,7 +151,7 @@ brk_string(const char *str, int *store_argc, char **buffer)
 			*t++ = '\0';
 			if (argc == argmax) {
 				argmax *= 2;	/* ramp up fast */
-				argv = erealloc(argv, 
+				argv = erealloc(argv,
 				    (argmax + 1) * sizeof(char *));
 			}
 			argv[argc++] = start;
@@ -235,16 +235,16 @@ iterate_words(const char **end)
 }
 
 static bool
-star_match(const char *string, const char *estring, 
+star_match(const char *string, const char *estring,
     const char *pattern, const char *epattern)
 {
 	/* '*' matches any substring.  We handle this by calling ourselves
-	 * recursively for each postfix of string, until either we match or 
+	 * recursively for each postfix of string, until either we match or
 	 * we reach the end of the string.  */
 	pattern++;
-	/* Skip over contiguous  sequences of `?*', so that 
+	/* Skip over contiguous  sequences of `?*', so that
 	 * recursive calls only occur on `real' characters.  */
-	while (pattern != epattern && 
+	while (pattern != epattern &&
 		(*pattern == '?' || *pattern == '*')) {
 		if (*pattern == '?') {
 			if (string == estring)
@@ -257,7 +257,7 @@ star_match(const char *string, const char *estring,
 	if (pattern == epattern)
 		return true;
 	for (; string != estring; string++)
-		if (Str_Matchi(string, estring, pattern, 
+		if (Str_Matchi(string, estring, pattern,
 		    epattern))
 			return true;
 	return false;
@@ -269,13 +269,13 @@ range_match(char c, const char **ppat, const char *epattern)
 	if (*ppat == epattern) {
 		if (c == '[')
 			return true;
-		else 
+		else
 			return false;
 	}
 	if (**ppat == '!' || **ppat == '^') {
 		(*ppat)++;
 		return !range_match(c, ppat, epattern);
-	} 
+	}
 	for (;;) {
 		if (**ppat == '\\') {
 			if (++(*ppat) == epattern)
@@ -293,18 +293,18 @@ range_match(char c, const char **ppat, const char *epattern)
 			*ppat += 3;
 		} else
 			(*ppat)++;
-		/* The test for ']' is done at the end 
-		 * so that ']' can be used at the 
+		/* The test for ']' is done at the end
+		 * so that ']' can be used at the
 		 * start of the range without '\' */
 		if (*ppat == epattern || **ppat == ']')
 			return false;
 	}
-	/* Found matching character, skip over rest 
+	/* Found matching character, skip over rest
 	 * of class.  */
 	while (**ppat != ']') {
 		if (**ppat == '\\')
 			(*ppat)++;
-		/* A non-terminated character class 
+		/* A non-terminated character class
 		 * is ok. */
 		if (*ppat == epattern)
 			break;
@@ -314,7 +314,7 @@ range_match(char c, const char **ppat, const char *epattern)
 }
 
 bool
-Str_Matchi(const char *string, const char *estring, 
+Str_Matchi(const char *string, const char *estring,
     const char *pattern, const char *epattern)
 {
 	while (pattern != epattern) {
@@ -334,8 +334,8 @@ Str_Matchi(const char *string, const char *estring,
 		}
 		/* '?' matches any single character, so shunt test.  */
 		else if (*pattern != '?') {
-			/* If the next pattern character is '\', just strip 
-			 * off the '\' so we do exact matching on the 
+			/* If the next pattern character is '\', just strip
+			 * off the '\' so we do exact matching on the
 			 * character that follows.  */
 			if (*pattern == '\\') {
 				if (++pattern == epattern)

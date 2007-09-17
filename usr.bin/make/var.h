@@ -104,7 +104,7 @@ extern char *Var_Parse(const char *, SymTable *, bool, size_t *,
 extern char	var_Error[];	
 
 /* ok = Var_ParseSkip(&varspec, ctxt, &ok);
- *	Parses a variable specification and returns true if the varspec 
+ *	Parses a variable specification and returns true if the varspec
  *	is correct. Advances pointer past specification.  */
 extern bool Var_ParseSkip(const char **, SymTable *);
 

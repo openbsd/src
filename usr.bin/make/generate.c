@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: generate.c,v 1.9 2007/09/16 10:20:17 espie Exp $ */
+/*	$OpenBSD: generate.c,v 1.10 2007/09/17 09:28:36 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	} else
 		occupied = NULL;
 
-	printf("/* File created by generate %d %d, do not edit */\n", 
+	printf("/* File created by generate %d %d, do not edit */\n",
 	    tn, slots);
 	for (i = 0; t[i] != NULL; i++) {
 		e = NULL;
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 		if (slots) {
 			h = v % slots;
 			if (occupied[h]) {
-				fprintf(stderr, 
+				fprintf(stderr,
 				    "Collision: %s / %s (%d)\n", occupied[h],
 				    t[i], h);
 				exit(1);

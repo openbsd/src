@@ -1,4 +1,4 @@
-/*	$OpenBSD: direxpand.c,v 1.2 2007/09/16 12:19:15 espie Exp $ */
+/*	$OpenBSD: direxpand.c,v 1.3 2007/09/17 09:28:36 espie Exp $ */
 /*
  * Copyright (c) 1999,2007 Marc Espie.
  *
@@ -135,15 +135,15 @@ DirExpandWildi(const char *word, const char *eword, Lst path, Lst expansions)
 			if (slash != word) {
 				char	*dirpath;
 
-				/* If the glob isn't in the first component, 
-				 * try and find all the components up to 
+				/* If the glob isn't in the first component,
+				 * try and find all the components up to
 				 * the one with a wildcard.  */
 				dirpath = Dir_FindFilei(word, slash+1, path);
-				/* dirpath is null if we can't find the 
-				 * leading component 
-				 * XXX: Dir_FindFile won't find internal 
-				 * components.  i.e. if the path contains 
-				 * ../Etc/Object and we're looking for Etc, 
+				/* dirpath is null if we can't find the
+				 * leading component
+				 * XXX: Dir_FindFile won't find internal
+				 * components.  i.e. if the path contains
+				 * ../Etc/Object and we're looking for Etc,
 				 * it won't be found. */
 				if (dirpath != NULL) {
 					char *dp;
@@ -155,7 +155,7 @@ DirExpandWildi(const char *word, const char *eword, Lst path, Lst expansions)
 
 					Lst_Init(&temp);
 					Dir_AddDiri(&temp, dirpath, dp);
-					PathMatchFilesi(slash+1, eword, &temp, 
+					PathMatchFilesi(slash+1, eword, &temp,
 					    expansions);
 					Lst_Destroy(&temp, NOFREE);
 				}
@@ -207,7 +207,7 @@ DirExpandCurlyi(const char *word, const char *eword, Lst path, Lst expansions)
 		int bracelevel; /* Keep track of nested braces. If we hit
 				 * the right brace with bracelevel == 0,
 				 * this is the end of the clause. */
-		size_t endLen;  /* The length of the ending non-curlied 
+		size_t endLen;  /* The length of the ending non-curlied
 				 * part of the current expansion */
 
 		/* End case: no curly left to expand */
@@ -219,11 +219,11 @@ DirExpandCurlyi(const char *word, const char *eword, Lst path, Lst expansions)
 			} else
 				Lst_AtEnd(expansions, toexpand);
 			continue;
-		} 
+		}
 
 		start = brace+1;
 
-		/* Find the end of the brace clause first, being wary of 
+		/* Find the end of the brace clause first, being wary of
 		 * nested brace clauses.  */
 		for (end = start, bracelevel = 0;; end++) {
 			if (*end == '{')
@@ -240,10 +240,10 @@ DirExpandCurlyi(const char *word, const char *eword, Lst path, Lst expansions)
 		for (;;) {
 			char *file;	/* To hold current expansion */
 			const char *cp;	/* Current position in brace clause */
-		    
+
 			/* Find the end of the current expansion */
-			for (bracelevel = 0, cp = start; 
-			    bracelevel != 0 || (*cp != '}' && *cp != ','); 
+			for (bracelevel = 0, cp = start;
+			    bracelevel != 0 || (*cp != '}' && *cp != ',');
 			    cp++) {
 				if (*cp == '{')
 					bracelevel++;
@@ -252,13 +252,13 @@ DirExpandCurlyi(const char *word, const char *eword, Lst path, Lst expansions)
 			}
 
 			/* Build the current combination and enqueue it.  */
-			file = emalloc((brace - toexpand) + (cp - start) + 
+			file = emalloc((brace - toexpand) + (cp - start) +
 			    endLen + 1);
 			if (brace != toexpand)
 				memcpy(file, toexpand, brace-toexpand);
 			if (cp != start)
 				memcpy(file+(brace-toexpand), start, cp-start);
-			memcpy(file+(brace-toexpand)+(cp-start), end, 
+			memcpy(file+(brace-toexpand)+(cp-start), end,
 			    endLen + 1);
 			Lst_EnQueue(&curled, file);
 			if (*cp == '}')

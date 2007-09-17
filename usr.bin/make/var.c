@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.76 2007/09/16 12:01:11 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.77 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -697,14 +697,14 @@ var_set_append(const char *name, const char *ename, const char *val, int ctxt,
 }
 
 void
-Var_Seti_with_ctxt(const char *name, const char *ename, const char *val, 
+Var_Seti_with_ctxt(const char *name, const char *ename, const char *val,
     int ctxt)
 {
 	var_set_append(name, ename, val, ctxt, false);
 }
 
 void
-Var_Appendi_with_ctxt(const char *name, const char *ename, const char *val, 
+Var_Appendi_with_ctxt(const char *name, const char *ename, const char *val,
     int ctxt)
 {
 	var_set_append(name, ename, val, ctxt, true);
@@ -824,7 +824,7 @@ find_pos(int c)
 	}
 }
 
-static bool 
+static bool
 parse_base_variable_name(const char **pstr, struct Name *name, SymTable *ctxt)
 {
 	const char *str = *pstr;
@@ -900,14 +900,14 @@ Var_ParseBuffer(Buffer buf, const char *str, SymTable *ctxt, bool err,
 static Var *call_trace[MAX_DEPTH];
 static int current_depth = 0;
 
-static void 
+static void
 push_used(Var *v)
 {
 	if (v->flags & VAR_IN_USE) {
 		int i;
 		fprintf(stderr, "Problem with variable expansion chain: ");
-		for (i = 0; 
-		    i < (current_depth > MAX_DEPTH ? MAX_DEPTH : current_depth); 
+		for (i = 0;
+		    i < (current_depth > MAX_DEPTH ? MAX_DEPTH : current_depth);
 		    i++)
 			fprintf(stderr, "%s -> ", call_trace[i]->name);
 		fprintf(stderr, "%s\n", v->name);
@@ -1105,8 +1105,8 @@ Var_Subst(const char *str,	/* the string in which to substitute */
 
 static BUFFER subst_buffer;
 
-/* we would like to subst on intervals, but it's complicated, so we cheat 
- * by storing the interval in a static buffer. 
+/* we would like to subst on intervals, but it's complicated, so we cheat
+ * by storing the interval in a static buffer.
  */
 char *
 Var_Substi(const char *str, const char *estr, SymTable *ctxt, bool undefErr)
@@ -1229,7 +1229,7 @@ Var_SubstVar(Buffer buf,	/* To store result */
 				/* val won't be freed since !doFree, but
 				 * VarModifiers_Apply doesn't know that,
 				 * hence the cast. */
-				newval = VarModifiers_Apply((char *)val, 
+				newval = VarModifiers_Apply((char *)val,
 				    &name, NULL, false, &doFree, &p, paren);
 				Buf_AddString(buf, newval);
 				if (doFree)

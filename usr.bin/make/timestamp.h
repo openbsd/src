@@ -2,7 +2,7 @@
 #define TIMESTAMP_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: timestamp.h,v 1.2 2007/09/16 12:09:36 espie Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.3 2007/09/17 09:28:36 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -43,7 +43,7 @@
  * ts_set_from_now(n):		grab current date.
  */
 
-/* sysresult = set_times(name):	set modification times on a file. 
+/* sysresult = set_times(name):	set modification times on a file.
  * 				system call results.
  */
 

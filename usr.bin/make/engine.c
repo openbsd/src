@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.4 2007/09/17 08:36:57 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.5 2007/09/17 09:28:36 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -99,20 +99,20 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 			 * our tracks, otherwise we just don't update this
 			 * node's parents so they never get examined.
 			 */
-			static const char msg[] = 
+			static const char msg[] =
 			    "make: don't know how to make";
 
 			if (gn->type & OP_OPTIONAL) {
-				(void)fprintf(stdout, "%s %s(ignored)\n", msg, 
+				(void)fprintf(stdout, "%s %s(ignored)\n", msg,
 				    gn->name);
 				(void)fflush(stdout);
 			} else if (keepgoing) {
-				(void)fprintf(stdout, "%s %s(continuing)\n", 
+				(void)fprintf(stdout, "%s %s(continuing)\n",
 				    msg, gn->name);
 				(void)fflush(stdout);
 				return false;
 			} else {
-				(*abortProc)("%s %s. Stop in %s.", msg, 
+				(*abortProc)("%s %s. Stop in %s.", msg,
 				    gn->name, Var_Value(".CURDIR"));
 				return false;
 			}
@@ -178,8 +178,8 @@ Job_Touch(GNode *gn, bool silent)
 
 				(void)close(streamID);
 			} else {
-				(void)fprintf(stdout, 
-				    "*** couldn't touch %s: %s", file, 
+				(void)fprintf(stdout,
+				    "*** couldn't touch %s: %s", file,
 				    strerror(errno));
 				(void)fflush(stdout);
 			}
@@ -242,7 +242,7 @@ Make_HandleUse(
 			Lst_Concat(&pgn->commands, &cgn->commands);
 		}
 
-		for (ln = Lst_First(&cgn->children); ln != NULL; 
+		for (ln = Lst_First(&cgn->children); ln != NULL;
 		    ln = Lst_Adv(ln)) {
 			gn = (GNode *)Lst_Datum(ln);
 
@@ -311,7 +311,7 @@ MakeAddAllSrc(
 				Varq_Append(OODATE_INDEX, child, pgn);
 			}
 		} else if (is_strictly_before(pgn->mtime, cgn->mtime) ||
-		    (!is_strictly_before(cgn->mtime, now) && 
+		    (!is_strictly_before(cgn->mtime, now) &&
 		    cgn->made == MADE)) {
 			/*
 			 * It goes in the OODATE variable if the parent is
@@ -404,7 +404,7 @@ Make_OODate(GNode *gn)	/* the node to check */
 		(void)Dir_MTime(gn);
 		if (DEBUG(MAKE)) {
 			if (!is_out_of_date(gn->mtime)) {
-				printf("modified %s...", 
+				printf("modified %s...",
 				    time_to_string(gn->mtime));
 			} else {
 				printf("non-existent...");

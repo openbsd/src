@@ -1,7 +1,7 @@
 #ifndef ARCH_H
 #define ARCH_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.h,v 1.1 2001/05/23 12:34:40 espie Exp $ */
+/*	$OpenBSD: arch.h,v 1.2 2007/09/17 09:28:36 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -47,16 +47,16 @@ extern void Arch_End(void);
 
 /* ok = Arch_ParseArchive(&begin, nodeLst, ctxt);
  *	Given an archive specification, add list of corresponding GNodes to
- *	nodeLst, one for each member in the spec.  
+ *	nodeLst, one for each member in the spec.
  *	false is returned if the specification is invalid for some reason.
  *	Side-effect: begin is bumped to the end of the specification.  */
 extern bool Arch_ParseArchive(char **, Lst, SymTable *);
 /* Arch_Touch(node);
- *	Alter the modification time of the archive member described by node 
+ *	Alter the modification time of the archive member described by node
  *	to the current time.  */
 extern void Arch_Touch(GNode *);
 /* Arch_TouchLib(node);
- *	Update the modification time of the library described by node. 
+ *	Update the modification time of the library described by node.
  *	This is distinct from Arch_Touch, as it also updates the mtime
  *	of the library's table of contents.  */
 extern void Arch_TouchLib(GNode *);
@@ -66,7 +66,7 @@ extern void Arch_TouchLib(GNode *);
  *	The time is also stored in the member's GNode.  */
 extern TIMESTAMP Arch_MTime(GNode *);
 /* stamp = Arch_MemMTime(node);		
- *	Find the modification time of a member of an archive and returns it. 
+ *	Find the modification time of a member of an archive and returns it.
  *	To use when the member only exists within the archive.  */
 extern TIMESTAMP Arch_MemMTime(GNode *);
 /* Arch_FindLib(node, path);

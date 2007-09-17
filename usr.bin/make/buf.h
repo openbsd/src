@@ -2,7 +2,7 @@
 #define _BUF_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: buf.h,v 1.16 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: buf.h,v 1.17 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $ */
 
 /*
@@ -102,7 +102,7 @@ extern void Buf_AddChars(Buffer, size_t, const char *);
  *	Doesn't include the null-terminating char.  */
 #define Buf_Size(bp)	((size_t)((bp)->inPtr - (bp)->buffer))
 /* Buf_Init(buf, init);
- *	Initializes a buffer, to hold approximately init chars. 
+ *	Initializes a buffer, to hold approximately init chars.
  *	Set init to 0 if you have no idea.  */
 extern void Buf_Init(Buffer, size_t);
 /* Buf_Destroy(buf);
@@ -111,7 +111,7 @@ extern void Buf_Init(Buffer, size_t);
 /* str = Buf_Retrieve(buf);
  *	Retrieves data from a buffer, as a NULL terminated string.  */
 #define Buf_Retrieve(bp)	(*(bp)->inPtr = '\0', (bp)->buffer)
-/* Buf_AddChar(buf, c); 
+/* Buf_AddChar(buf, c);
  *	Adds a single char to buffer.	*/
 #define Buf_AddChar(bp, byte)			\
 do {						\

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.52 2007/09/16 14:29:33 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.53 2007/09/17 09:28:36 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -175,29 +175,29 @@ static struct ohash   knownDirectories;	/* cache all open directories */
  * possibility a caller might update the file and invalidate the cache
  * entry, and we don't look up in this cache except as a last resort.
  */
-static struct ohash mtimes;  
+static struct ohash mtimes;
 
 
 /* There are three distinct hash structures:
  * - to collate files's last modification times (global mtimes)
  * - to collate file names (in each PathEntry structure)
  * - to collate known directories (global knownDirectories).  */
-static struct ohash_info stamp_info = { 
-	offsetof(struct file_stamp, name), NULL, hash_alloc, hash_free, 
+static struct ohash_info stamp_info = {
+	offsetof(struct file_stamp, name), NULL, hash_alloc, hash_free,
 	element_alloc };
 
-static struct ohash_info file_info = { 
+static struct ohash_info file_info = {
 	0, NULL, hash_alloc, hash_free, element_alloc };
 
-static struct ohash_info dir_info = { 
-	offsetof(struct PathEntry, name), NULL, 
+static struct ohash_info dir_info = {
+	offsetof(struct PathEntry, name), NULL,
 	hash_alloc, hash_free, element_alloc };
 
 /* add_file(path, name): add a file name to a path hash structure. */
 static void add_file(struct PathEntry *, const char *);
 /* n = find_file_hashi(p, name, end, hv): retrieve name in a path hash
  * 	structure. */
-static char *find_file_hashi(struct PathEntry *, const char *, const char *, 
+static char *find_file_hashi(struct PathEntry *, const char *, const char *,
     uint32_t);
 
 /* stamp = find_stampi(name, end): look for (name, end) in the global
@@ -254,7 +254,7 @@ add_file(struct PathEntry *p, const char *file)
 }
 
 static char *
-find_file_hashi(struct PathEntry *p, const char *file, const char *efile, 
+find_file_hashi(struct PathEntry *p, const char *file, const char *efile,
     uint32_t hv)
 {
 	struct ohash 	*h = &p->files;
@@ -279,7 +279,7 @@ Dir_Init(void)
 	if (!dot)
 		Fatal("Can't access current directory");
 
-	/* We always need to have dot around, so we increment its reference 
+	/* We always need to have dot around, so we increment its reference
 	 * count to make sure it won't be destroyed.  */
 	dot->refCount++;
 }
@@ -313,7 +313,7 @@ Dir_End(void)
  *-----------------------------------------------------------------------
  */
 void
-Dir_MatchFilesi(const char *word, const char *eword, struct PathEntry *p, 
+Dir_MatchFilesi(const char *word, const char *eword, struct PathEntry *p,
     Lst expansions)
 {
 	unsigned int search; 	/* Index into the directory's table */
@@ -331,8 +331,8 @@ Dir_MatchFilesi(const char *word, const char *eword, struct PathEntry *p,
 		if (*word != '.' && *entry == '.')
 			continue;
 		if (Str_Matchi(entry, strchr(entry, '\0'), word, eword))
-			Lst_AtEnd(expansions, 
-			    isDot ? estrdup(entry) : 
+			Lst_AtEnd(expansions,
+			    isDot ? estrdup(entry) :
 			    Str_concat(p->name, entry, '/'));
 	}
 }
@@ -344,10 +344,10 @@ Dir_MatchFilesi(const char *word, const char *eword, struct PathEntry *p,
  *	[ dir1/.../dirn/file ] which exists below one of the directories
  *	already on the search path), its directory is added to the end
  *	of the path on the assumption that there will be more files in
- *	that directory later on. 
+ *	that directory later on.
  */
 char *
-Dir_FindFileComplexi(const char *name, const char *ename, Lst path, 
+Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
     bool checkCurdirFirst)
 {
 	struct PathEntry *p;	/* current path member */
@@ -359,7 +359,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 	const char *cp;	/* index of first slash, if any */
 	bool hasSlash;
 	struct stat stb;/* Buffer for stat, if necessary */
-	struct file_stamp *entry; 
+	struct file_stamp *entry;
 			/* Entry for mtimes table */
 	uint32_t hv;	/* hash value for last component in file name */
 	char *q;	/* Str_dupi(name, ename) */
@@ -379,10 +379,10 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 
 	if (DEBUG(DIR))
 		printf("Searching for %s...", name);
-	/* Unless checkCurDirFirst is false, we always look for 
-	 * the file in the current directory before anywhere else 
+	/* Unless checkCurDirFirst is false, we always look for
+	 * the file in the current directory before anywhere else
 	 * and we always return exactly what the caller specified. */
-	if (checkCurdirFirst && 
+	if (checkCurdirFirst &&
 	    (!hasSlash || (cp - name == 2 && *name == '.')) &&
 	    find_file_hashi(dot, cp, ename, hv) != NULL) {
 		if (DEBUG(DIR))
@@ -390,10 +390,10 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 		return Str_dupi(name, ename);
 	}
 
-	/* Then, we look through all the directories on path, seeking one 
+	/* Then, we look through all the directories on path, seeking one
 	 * containing the final component of name and whose final
-	 * component(s) match name's initial component(s). 
-	 * If found, we concatenate the directory name and the 
+	 * component(s) match name's initial component(s).
+	 * If found, we concatenate the directory name and the
 	 * final component and return the resulting string.  */
 	for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
 		p = (struct PathEntry *)Lst_Datum(ln);
@@ -403,39 +403,39 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 			if (DEBUG(DIR))
 				printf("here...");
 			if (hasSlash) {
-				/* If the name had a slash, its initial 
-				 * components and p's final components must 
-				 * match. This is false if a mismatch is 
-				 * encountered before all of the initial 
-				 * components have been checked (p2 > name at 
-				 * the end of the loop), or we matched only 
-				 * part of one of the components of p along 
+				/* If the name had a slash, its initial
+				 * components and p's final components must
+				 * match. This is false if a mismatch is
+				 * encountered before all of the initial
+				 * components have been checked (p2 > name at
+				 * the end of the loop), or we matched only
+				 * part of one of the components of p along
 				 * with all the rest of them (*p1 != '/').  */
 				p1 = p->name + strlen(p->name) - 1;
 				p2 = cp - 2;
-				while (p2 >= name && p1 >= p->name && 
+				while (p2 >= name && p1 >= p->name &&
 				    *p1 == *p2) {
 					p1--;
 					p2--;
 				}
-				if (p2 >= name || 
+				if (p2 >= name ||
 				    (p1 >= p->name && *p1 != '/')) {
 					if (DEBUG(DIR))
 						printf("component mismatch -- continuing...");
 					continue;
 				}
 			}
-			file = Str_concati(p->name, strchr(p->name, '\0'), cp, 
+			file = Str_concati(p->name, strchr(p->name, '\0'), cp,
 			    ename, '/');
 			if (DEBUG(DIR))
 				printf("returning %s\n", file);
 			return file;
 		} else if (hasSlash) {
-			/* If the file has a leading path component and that 
-			 * component exactly matches the entire name of the 
-			 * current search directory, we assume the file 
+			/* If the file has a leading path component and that
+			 * component exactly matches the entire name of the
+			 * current search directory, we assume the file
 			 * doesn't exist and return NULL.  */
-			for (p1 = p->name, p2 = name; *p1 && *p1 == *p2; 
+			for (p1 = p->name, p2 = name; *p1 && *p1 == *p2;
 			    p1++, p2++)
 				continue;
 			if (*p1 == '\0' && p2 == cp - 1) {
@@ -448,15 +448,15 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 
 	/* We didn't find the file on any existing member of the path.
 	 * If the name doesn't contain a slash, end of story.
-	 * If it does contain a slash, however, it could be in a subdirectory 
-	 * of one of the members of the search path. (eg., for path=/usr/include 
-	 * and name=sys/types.h, the above search fails to turn up types.h 
+	 * If it does contain a slash, however, it could be in a subdirectory
+	 * of one of the members of the search path. (eg., for path=/usr/include
+	 * and name=sys/types.h, the above search fails to turn up types.h
 	 * in /usr/include, even though /usr/include/sys/types.h exists).
 	 *
 	 * We only perform this look-up for non-absolute file names.
 	 *
 	 * Whenever we score a hit, we assume there will be more matches from
-	 * that directory, and append all but the last component of the 
+	 * that directory, and append all but the last component of the
 	 * resulting name onto the search path. */
 	if (!hasSlash) {
 		if (DEBUG(DIR))
@@ -472,10 +472,10 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 		for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
 			p = (struct PathEntry *)Lst_Datum(ln);
 			if (p != dot)
-				file = Str_concati(p->name, 
+				file = Str_concati(p->name,
 				    strchr(p->name, '\0'), name, ename, '/');
 			else {
-				/* Checking in dot -- DON'T put a leading 
+				/* Checking in dot -- DON'T put a leading
 				* ./ on the thing.  */
 				file = Str_dupi(name, ename);
 				checkedDot = true;
@@ -490,22 +490,22 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 				if (DEBUG(DIR))
 					printf("got it.\n");
 
-				/* We've found another directory to search. 
-				 * We know there is a slash in 'file'. We 
-				 * call Dir_AddDiri to add the new directory 
-				 * onto the existing search path. Once that's 
-				 * done, we return the file name, knowing that 
-				 * should a file in this directory ever be 
-				 * referenced again in such a manner, we will 
-				 * find it without having to do numerous 
+				/* We've found another directory to search.
+				 * We know there is a slash in 'file'. We
+				 * call Dir_AddDiri to add the new directory
+				 * onto the existing search path. Once that's
+				 * done, we return the file name, knowing that
+				 * should a file in this directory ever be
+				 * referenced again in such a manner, we will
+				 * find it without having to do numerous
 				 * access calls.  */
 				temp = strrchr(file, '/');
 				Dir_AddDiri(path, file, temp);
 
-				/* Save the modification time so if it's 
+				/* Save the modification time so if it's
 				* needed, we don't have to fetch it again.  */
 				if (DEBUG(DIR))
-					printf("Caching %s for %s\n", 
+					printf("Caching %s for %s\n",
 					    time_to_string(mtime), file);
 				record_stamp(file, mtime);
 				return file;
@@ -517,7 +517,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 			printf("failed. ");
 
 		if (checkedDot) {
-			/* Already checked by the given name, since . was in 
+			/* Already checked by the given name, since . was in
 			 * the path, so no point in proceeding...  */
 			if (DEBUG(DIR))
 				printf("Checked . already, returning NULL\n");
@@ -589,8 +589,8 @@ DirReaddiri(const char *name, const char *ename)
 		return NULL;
 
 	while ((dp = readdir(d)) != NULL) {
-		if (dp->d_name[0] == '.' && 
-		    (dp->d_name[1] == '\0' || 
+		if (dp->d_name[0] == '.' &&
+		    (dp->d_name[1] == '\0' ||
 			(dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 			continue;
 		add_file(p, dp->d_name);
@@ -699,7 +699,7 @@ Dir_Destroy(void *pp)
 	struct PathEntry *p = (struct PathEntry *)pp;
 
 	if (--p->refCount == 0) {
-		ohash_remove(&knownDirectories, 
+		ohash_remove(&knownDirectories,
 		    ohash_qlookup(&knownDirectories, p->name));
 		free_hash(&p->files);
 		free(p);
@@ -764,7 +764,7 @@ Dir_MTime(GNode *gn)
 	entry = ohash_find(&mtimes, slot);
 	if (entry != NULL) {
 		/* Only do this once -- the second time folks are checking to
-		 * see if the file was actually updated, so we need to 
+		 * see if the file was actually updated, so we need to
 		 * actually go to the file system.	*/
 		if (DEBUG(DIR))
 			printf("Using cached time %s for %s\n",

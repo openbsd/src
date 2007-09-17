@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.58 2007/09/17 08:36:57 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.59 2007/09/17 09:28:36 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static int shellneed(char **);
 
 static volatile sig_atomic_t interrupted;
 
-static void 
+static void
 CompatInterrupt(int signo)
 {
 	if (interrupted != SIGINT)
@@ -395,7 +395,7 @@ CompatMake(void *gnp,	/* The node to make */
 		}
 
 		if (Lst_Member(&gn->iParents, pgn) != NULL) {
-			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), 
+			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn),
 			    pgn);
 		}
 
@@ -435,7 +435,7 @@ CompatMake(void *gnp,	/* The node to make */
 			/* Our commands are ok, but we still have to worry
 			 * about the -t flag...	*/
 			if (!touchFlag)
-				Lst_ForEachNodeWhile(&gn->commands, 
+				Lst_ForEachNodeWhile(&gn->commands,
 				    CompatRunCommand, gn);
 			else
 				Job_Touch(gn, gn->type & OP_SILENT);
@@ -472,7 +472,7 @@ CompatMake(void *gnp,	/* The node to make */
 			if (is_strictly_before(gn->mtime, gn->cmtime))
 				gn->mtime = gn->cmtime;
 			if (DEBUG(MAKE))
-				printf("update time: %s\n", 
+				printf("update time: %s\n",
 				    time_to_string(gn->mtime));
 			if (!(gn->type & OP_EXEC)) {
 				pgn->childMade = true;
@@ -488,7 +488,7 @@ CompatMake(void *gnp,	/* The node to make */
 				    (unsigned long)gn->lineno,
 				    gn->fname);
 			else
-				printf("\n\nStop in %s.\n", 
+				printf("\n\nStop in %s.\n",
 				    Var_Value(".CURDIR"));
 			exit(1);
 		}
@@ -498,7 +498,7 @@ CompatMake(void *gnp,	/* The node to make */
 		pgn->make = false;
 	else {
 		if (Lst_Member(&gn->iParents, pgn) != NULL) {
-			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), 
+			Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn),
 			    pgn);
 		}
 		switch (gn->made) {
@@ -546,7 +546,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	if (!queryFlag) {
 		gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
 		if (gn != NULL) {
-			Lst_ForEachNodeWhile(&gn->commands, CompatRunCommand, 
+			Lst_ForEachNodeWhile(&gn->commands, CompatRunCommand,
 			    gn);
 			if (gn->made == ERROR) {
 				printf("\n\nStop.\n");
@@ -561,7 +561,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	 *	    UPTODATE	    gn was already up-to-date
 	 *	    MADE	    gn was recreated successfully
 	 *	    ERROR	    An error occurred while gn was being created
-	 *	    ABORTED	    gn was not remade because one of its 
+	 *	    ABORTED	    gn was not remade because one of its
 	 *			    inferiors could not be made due to errors.
 	 */
 	errors = 0;
@@ -571,7 +571,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 		if (gn->made == UPTODATE)
 			printf("`%s' is up to date.\n", gn->name);
 		else if (gn->made == ABORTED) {
-			printf("`%s' not remade because of errors.\n", 
+			printf("`%s' not remade because of errors.\n",
 			    gn->name);
 			errors++;
 		}
@@ -579,6 +579,6 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 
 	/* If the user has defined a .END target, run its commands.  */
 	if (errors == 0)
-		Lst_ForEachNodeWhile(&ENDNode->commands, CompatRunCommand, 
+		Lst_ForEachNodeWhile(&ENDNode->commands, CompatRunCommand,
 		    ENDNode);
 }
