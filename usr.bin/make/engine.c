@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.7 2007/09/17 12:10:35 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.8 2007/09/17 12:19:11 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -208,8 +208,8 @@ Job_Touch(GNode *gn, bool silent)
 void
 Make_TimeStamp(GNode *parent, GNode *child)
 {
-    if (is_strictly_before(parent->cmtime, child->mtime))
-	    parent->cmtime = child->mtime;
+	if (is_strictly_before(parent->cmtime, child->mtime))
+		parent->cmtime = child->mtime;
 }
 
 /*-
