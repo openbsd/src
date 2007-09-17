@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.85 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.86 2007/09/17 09:38:49 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -282,11 +282,11 @@ ParseLinkSrc(
     GNode		*pgn,	/* The parent node */
     GNode		*cgn)	/* The child node */
 {
-    if (Lst_AddNew(&pgn->children, cgn)) {
-	if (specType == Not)
-	    Lst_AtEnd(&cgn->parents, pgn);
-	pgn->unmade++;
-    }
+	if (Lst_AddNew(&pgn->children, cgn)) {
+		if (specType == Not)
+			Lst_AtEnd(&cgn->parents, pgn);
+		pgn->unmade++;
+	}
 }
 
 /*-
@@ -307,52 +307,53 @@ ParseDoOp(
     GNode	   *gn,	/* The node to which the operator is to be applied */
     int	   	   op)	/* The operator to apply */
 {
-    /*
-     * If the dependency mask of the operator and the node don't match and
-     * the node has actually had an operator applied to it before, and
-     * the operator actually has some dependency information in it, complain.
-     */
-    if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
-	!OP_NOP(gn->type) && !OP_NOP(op)) {
-	Parse_Error(PARSE_FATAL, "Inconsistent operator for %s", gn->name);
-	return 0;
-    }
+	/*
+	 * If the dependency mask of the operator and the node don't match and
+	 * the node has actually had an operator applied to it before, and
+	 * the operator actually has some dependency information in it, complain.
+	 */
+	if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
+		!OP_NOP(gn->type) && !OP_NOP(op)) {
+		Parse_Error(PARSE_FATAL, 
+		    "Inconsistent operator for %s", gn->name);
+		return 0;
+	}
 
-    if (op == OP_DOUBLEDEP && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
-	/* If the node was the object of a :: operator, we need to create a
-	 * new instance of it for the children and commands on this dependency
-	 * line. The new instance is placed on the 'cohorts' list of the
-	 * initial one (note the initial one is not on its own cohorts list)
-	 * and the new instance is linked to all parents of the initial
-	 * instance.  */
-	GNode		*cohort;
-	LstNode 	ln;
-	unsigned int i;
+	if (op == OP_DOUBLEDEP && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
+		/* If the node was the object of a :: operator, we need to
+		 * create a new instance of it for the children and commands on
+		 * this dependency line. The new instance is placed on the
+		 * 'cohorts' list of the initial one (note the initial one is
+		 * not on its own cohorts list) and the new instance is linked
+		 * to all parents of the initial instance.  */
+		GNode		*cohort;
+		LstNode 	ln;
+		unsigned int i;
 
-	cohort = Targ_NewGN(gn->name);
-	/* Duplicate links to parents so graph traversal is simple. Perhaps
-	 * some type bits should be duplicated?
-	 *
-	 * Make the cohort invisible as well to avoid duplicating it into
-	 * other variables. True, parents of this target won't tend to do
-	 * anything with their local variables, but better safe than
-	 * sorry.  */
-	for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln))
-	    ParseLinkSrc((GNode *)Lst_Datum(ln), cohort);
-	cohort->type = OP_DOUBLEDEP|OP_INVISIBLE;
-	Lst_AtEnd(&gn->cohorts, cohort);
+		cohort = Targ_NewGN(gn->name);
+		/* Duplicate links to parents so graph traversal is simple.
+		 * Perhaps some type bits should be duplicated?
+		 *
+		 * Make the cohort invisible as well to avoid duplicating it
+		 * into other variables. True, parents of this target won't
+		 * tend to do anything with their local variables, but better
+		 * safe than sorry.  */
+		for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln))
+			ParseLinkSrc((GNode *)Lst_Datum(ln), cohort);
+		cohort->type = OP_DOUBLEDEP|OP_INVISIBLE;
+		Lst_AtEnd(&gn->cohorts, cohort);
 
-	/* Replace the node in the targets list with the new copy */
-	for (i = 0; i < gtargets.n; i++)
-	    if (gtargets.a[i] == gn)
-		break;
-	gtargets.a[i] = cohort;
-	gn = cohort;
-    }
-    /* We don't want to nuke any previous flags (whatever they were) so we
-     * just OR the new operator into the old.  */
-    gn->type |= op;
-    return 1;
+		/* Replace the node in the targets list with the new copy */
+		for (i = 0; i < gtargets.n; i++)
+			if (gtargets.a[i] == gn)
+				break;
+		gtargets.a[i] = cohort;
+		gn = cohort;
+	}
+	/* We don't want to nuke any previous flags (whatever they were) so we
+	 * just OR the new operator into the old.  */
+	gn->type |= op;
+	return 1;
 }
 
 /*-
@@ -374,16 +375,16 @@ ParseDoOp(
 static int
 ParseAddDep(GNode *p, GNode *s)
 {
-    if (p->order < s->order) {
-	/* XXX: This can cause loops, and loops can cause unmade targets,
-	 * but checking is tedious, and the debugging output can show the
-	 * problem.  */
-	Lst_AtEnd(&p->successors, s);
-	Lst_AtEnd(&s->preds, p);
-	return 1;
-    }
-    else
-	return 0;
+	if (p->order < s->order) {
+		/* XXX: This can cause loops, and loops can cause unmade
+		 * targets, but checking is tedious, and the debugging output
+		 * can show the problem.  */
+		Lst_AtEnd(&p->successors, s);
+		Lst_AtEnd(&s->preds, p);
+		return 1;
+	}
+	else
+		return 0;
 }
 
 
@@ -406,96 +407,99 @@ ParseDoSrc(
     int 	tOp,	/* operator (if any) from special targets */
     const char	*src)	/* name of the source to handle */
 {
-    GNode	*gn = NULL;
+	GNode	*gn = NULL;
 
-    if (*src == '.' && isupper(src[1])) {
-	int keywd = ParseFindKeyword(src);
-	if (keywd != -1) {
-	    int op = parseKeywords[keywd].op;
-	    if (op != 0) {
-	    	Array_Find(&gtargets, ParseDoOp, op);
-		return;
-	    }
-	    if (parseKeywords[keywd].spec == Wait) {
-		waiting++;
-		return;
-	    }
-	}
-    }
-
-    switch (specType) {
-    case Main:
-	/*
-	 * If we have noted the existence of a .MAIN, it means we need
-	 * to add the sources of said target to the list of things
-	 * to create. The string 'src' is likely to be freed, so we
-	 * must make a new copy of it. Note that this will only be
-	 * invoked if the user didn't specify a target on the command
-	 * line. This is to allow #ifmake's to succeed, or something...
-	 */
-	Lst_AtEnd(create, estrdup(src));
-	/*
-	 * Add the name to the .TARGETS variable as well, so the user can
-	 * employ that, if desired.
-	 */
-	Var_Append(".TARGETS", src);
-	return;
-
-    case Order:
-	/*
-	 * Create proper predecessor/successor links between the previous
-	 * source and the current one.
-	 */
-	gn = Targ_FindNode(src, TARG_CREATE);
-	if (predecessor != NULL) {
-	    Lst_AtEnd(&predecessor->successors, gn);
-	    Lst_AtEnd(&gn->preds, predecessor);
-	}
-	/*
-	 * The current source now becomes the predecessor for the next one.
-	 */
-	predecessor = gn;
-	break;
-
-    default:
-	/*
-	 * If the source is not an attribute, we need to find/create
-	 * a node for it. After that we can apply any operator to it
-	 * from a special target or link it to its parents, as
-	 * appropriate.
-	 *
-	 * In the case of a source that was the object of a :: operator,
-	 * the attribute is applied to all of its instances (as kept in
-	 * the 'cohorts' list of the node) or all the cohorts are linked
-	 * to all the targets.
-	 */
-	gn = Targ_FindNode(src, TARG_CREATE);
-	if (tOp) {
-	    gn->type |= tOp;
-	} else {
-	    Array_ForEach(&gtargets, ParseLinkSrc, gn);
-	}
-	if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
-	    GNode	*cohort;
-	    LstNode	ln;
-
-	    for (ln=Lst_First(&gn->cohorts); ln != NULL; ln = Lst_Adv(ln)){
-		cohort = (GNode *)Lst_Datum(ln);
-		if (tOp) {
-		    cohort->type |= tOp;
-		} else {
-		    Array_ForEach(&gtargets, ParseLinkSrc, cohort);
+	if (*src == '.' && isupper(src[1])) {
+		int keywd = ParseFindKeyword(src);
+		if (keywd != -1) {
+			int op = parseKeywords[keywd].op;
+			if (op != 0) {
+				Array_Find(&gtargets, ParseDoOp, op);
+				return;
+			}
+			if (parseKeywords[keywd].spec == Wait) {
+				waiting++;
+				return;
+			}
 		}
-	    }
 	}
-	break;
-    }
 
-    gn->order = waiting;
-    Array_AtEnd(&gsources, gn);
-    if (waiting) {
-    	Array_Find(&gsources, ParseAddDep, gn);
-    }
+	switch (specType) {
+	case Main:
+		/*
+		 * If we have noted the existence of a .MAIN, it means we need
+		 * to add the sources of said target to the list of things
+		 * to create. The string 'src' is likely to be freed, so we
+		 * must make a new copy of it. Note that this will only be
+		 * invoked if the user didn't specify a target on the command
+		 * line. This is to allow #ifmake's to succeed, or something...
+		 */
+		Lst_AtEnd(create, estrdup(src));
+		/*
+		 * Add the name to the .TARGETS variable as well, so the user
+		 * can employ that, if desired.
+		 */
+		Var_Append(".TARGETS", src);
+		return;
+
+	case Order:
+		/*
+		 * Create proper predecessor/successor links between the
+		 * previous source and the current one.
+		 */
+		gn = Targ_FindNode(src, TARG_CREATE);
+		if (predecessor != NULL) {
+			Lst_AtEnd(&predecessor->successors, gn);
+			Lst_AtEnd(&gn->preds, predecessor);
+		}
+		/*
+		 * The current source now becomes the predecessor for the next
+		 * one.
+		 */
+		predecessor = gn;
+		break;
+
+	default:
+		/*
+		 * If the source is not an attribute, we need to find/create
+		 * a node for it. After that we can apply any operator to it
+		 * from a special target or link it to its parents, as
+		 * appropriate.
+		 *
+		 * In the case of a source that was the object of a :: operator,
+		 * the attribute is applied to all of its instances (as kept in
+		 * the 'cohorts' list of the node) or all the cohorts are linked
+		 * to all the targets.
+		 */
+		gn = Targ_FindNode(src, TARG_CREATE);
+		if (tOp) {
+			gn->type |= tOp;
+		} else {
+			Array_ForEach(&gtargets, ParseLinkSrc, gn);
+		}
+		if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
+			GNode	*cohort;
+			LstNode	ln;
+
+			for (ln=Lst_First(&gn->cohorts); ln != NULL; 
+			    ln = Lst_Adv(ln)){
+				cohort = (GNode *)Lst_Datum(ln);
+				if (tOp) {
+					cohort->type |= tOp;
+				} else {
+					Array_ForEach(&gtargets, ParseLinkSrc, 
+					    cohort);
+				}
+			}
+		}
+		break;
+	}
+
+	gn->order = waiting;
+	Array_AtEnd(&gsources, gn);
+	if (waiting) {
+		Array_Find(&gsources, ParseAddDep, gn);
+	}
 }
 
 /*-
@@ -517,14 +521,14 @@ ParseFindMain(
     void *gnp,	    /* Node to examine */
     void *dummy 	UNUSED)
 {
-    GNode	  *gn = (GNode *)gnp;
-    if ((gn->type & OP_NOTARGET) == 0) {
-	mainNode = gn;
-	Targ_SetMain(gn);
-	return 0;
-    } else {
-	return 1;
-    }
+	GNode	  *gn = (GNode *)gnp;
+	if ((gn->type & OP_NOTARGET) == 0) {
+		mainNode = gn;
+		Targ_SetMain(gn);
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 /*-
@@ -539,7 +543,7 @@ ParseFindMain(
 static void
 ParseAddDir(void *path, void *name)
 {
-    Dir_AddDir((Lst)path, (char *)name);
+	Dir_AddDir((Lst)path, (char *)name);
 }
 
 /*-
@@ -551,10 +555,10 @@ ParseAddDir(void *path, void *name)
 static void
 ParseClearPath(void *p)
 {
-    Lst 	path = (Lst)p;
+	Lst 	path = (Lst)p;
 
-    Lst_Destroy(path, Dir_Destroy);
-    Lst_Init(path);
+	Lst_Destroy(path, Dir_Destroy);
+	Lst_Init(path);
 }
 
 static void
@@ -1083,15 +1087,15 @@ ParseAddCmd(
     void *gnp,	/* the node to which the command is to be added */
     void *cmd)	/* the command to add */
 {
-    GNode *gn = (GNode *)gnp;
-    /* if target already supplied, ignore commands */
-    if (!(gn->type & OP_HAS_COMMANDS)) {
-	Lst_AtEnd(&gn->commands, cmd);
-	if (!gn->lineno) {
-	    gn->lineno = Parse_Getlineno();
-	    gn->fname = Parse_Getfilename();
+	GNode *gn = (GNode *)gnp;
+	/* if target already supplied, ignore commands */
+	if (!(gn->type & OP_HAS_COMMANDS)) {
+		Lst_AtEnd(&gn->commands, cmd);
+		if (!gn->lineno) {
+			gn->lineno = Parse_Getlineno();
+			gn->fname = Parse_Getfilename();
+		}
 	}
-    }
 }
 
 /*-
@@ -1109,10 +1113,10 @@ ParseAddCmd(
 static void
 ParseHasCommands(void *gnp)	    /* Node to examine */
 {
-    GNode *gn = (GNode *)gnp;
-    if (!Lst_IsEmpty(&gn->commands)) {
-	gn->type |= OP_HAS_COMMANDS;
-    }
+	GNode *gn = (GNode *)gnp;
+	if (!Lst_IsEmpty(&gn->commands)) {
+		gn->type |= OP_HAS_COMMANDS;
+	}
 }
 
 
@@ -1475,21 +1479,21 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 static void
 ParseFinishDependency(void)
 {
-    Array_Every(&gtargets, Suff_EndTransform);
-    Array_Every(&gtargets, ParseHasCommands);
-    Array_Reset(&gtargets);
+	Array_Every(&gtargets, Suff_EndTransform);
+	Array_Every(&gtargets, ParseHasCommands);
+	Array_Reset(&gtargets);
 }
 
 static void
 ParseDoCommands(const char *line)
 {
-    /* add the command to the list of
-     * commands of all targets in the dependency spec */
-    char *cmd = estrdup(line);
+	/* add the command to the list of
+	 * commands of all targets in the dependency spec */
+	char *cmd = estrdup(line);
 
-    Array_ForEach(&gtargets, ParseAddCmd, cmd);
+	Array_ForEach(&gtargets, ParseAddCmd, cmd);
 #ifdef CLEANUP
-    Lst_AtEnd(&targCmds, cmd);
+	Lst_AtEnd(&targCmds, cmd);
 #endif
 }
 
@@ -1635,14 +1639,14 @@ void
 Parse_MainName(Lst listmain)	/* result list */
 {
 
-    if (mainNode == NULL) {
-	Punt("no target to make.");
-	/*NOTREACHED*/
-    } else if (mainNode->type & OP_DOUBLEDEP) {
-	Lst_AtEnd(listmain, mainNode);
-	Lst_Concat(listmain, &mainNode->cohorts);
-    }
-    else
-	Lst_AtEnd(listmain, mainNode);
+	if (mainNode == NULL) {
+		Punt("no target to make.");
+		/*NOTREACHED*/
+	} else if (mainNode->type & OP_DOUBLEDEP) {
+		Lst_AtEnd(listmain, mainNode);
+		Lst_Concat(listmain, &mainNode->cohorts);
+	}
+	else
+		Lst_AtEnd(listmain, mainNode);
 }
 
