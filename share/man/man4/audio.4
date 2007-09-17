@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.43 2007/09/12 06:12:23 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.44 2007/09/17 13:46:11 jakemsr Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 12 2007 $
+.Dd $Mdocdate: September 17 2007 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -311,7 +311,8 @@ typedef struct audio_info {
 	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
-	u_int	_ispare1;
+	u_char	output_muted;	/* toggle play mute */
+	u_char	cspare[3];
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02

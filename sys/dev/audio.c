@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.77 2007/09/17 13:35:46 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.78 2007/09/17 13:46:11 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2723,6 +2723,12 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			return(error);
 	}
 
+	if (ai->output_muted != (u_char)~0) {
+		error = au_set_mute(sc, &sc->sc_outports, ai->output_muted);
+		if (error)
+			return(error);
+	}
+
 	if (ai->monitor_gain != ~0 &&
 	    sc->sc_monitor_port != -1) {
 		mixer_ctrl_t ct;
@@ -2876,6 +2882,8 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 				ct.un.value.level[AUDIO_MIXER_LEVEL_MONO];
 	} else
 		ai->monitor_gain = 0;
+
+	au_get_mute(sc, &sc->sc_outports, &ai->output_muted);
 
 	p->seek = sc->sc_pr.used / sc->sc_pparams.factor;
 	r->seek = sc->sc_rr.used / sc->sc_rparams.factor;

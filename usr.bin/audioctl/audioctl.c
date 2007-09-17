@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.13 2007/08/06 19:16:06 sobrado Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.14 2007/09/17 13:46:11 jakemsr Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ struct field {
 	{ "blocksize",		&info.blocksize,	UINT,	0 },
 	{ "hiwat",		&info.hiwat,		UINT,	0 },
 	{ "lowat",		&info.lowat,		UINT,	0 },
+	{ "output_muted",	&info.output_muted,	UCHAR,	0 },
 	{ "monitor_gain",	&info.monitor_gain,	UINT,	0 },
 	{ "mode",		&info.mode,		P_R,	READONLY },
 	{ "play.rate",		&info.play.sample_rate,	UINT,	0 },

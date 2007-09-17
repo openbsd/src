@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.16 2005/12/14 13:59:04 fgsch Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.17 2007/09/17 13:46:11 jakemsr Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -74,7 +74,8 @@ struct audio_info {
 	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
-	u_int	_ispare1;
+	u_char	output_muted;	/* toggle play mute */
+	u_char	cspare[3];
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
