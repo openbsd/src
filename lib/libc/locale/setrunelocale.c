@@ -1,4 +1,4 @@
-/*	$OpenBSD: setrunelocale.c,v 1.2 2005/10/20 09:09:49 otto Exp $ */
+/*	$OpenBSD: setrunelocale.c,v 1.3 2007/09/17 07:07:23 moritz Exp $ */
 /*	$NetBSD: setrunelocale.c,v 1.14 2003/08/07 16:43:07 agc Exp $	*/
 
 /*-
@@ -181,14 +181,17 @@ _xpg4_setrunelocale(const char *encoding)
 {
 	char path[PATH_MAX];
 	_RuneLocale *rl;
-	int error;
+	int error, len;
 
 	if (!strcmp(encoding, "C") || !strcmp(encoding, "POSIX")) {
 		rl = &_DefaultRuneLocale;
 		goto found;
 	}
 
-	snprintf(path, sizeof(path), "%s/%s/LC_CTYPE", _PathLocale, encoding);
+	len = snprintf(path, sizeof(path),
+	    "%s/%s/LC_CTYPE", _PathLocale, encoding);
+	if (len < 0 || len >= sizeof(path))
+		return ENAMETOOLONG;
 
 	error = _newrunelocale(path);
 	if (error)

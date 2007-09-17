@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.17 2005/08/05 13:03:00 espie Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.18 2007/09/17 07:07:23 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -832,13 +832,18 @@ static int
 open_temp(HTAB *hashp)
 {
 	sigset_t set, oset;
+	int len;
 	char *envtmp = NULL;
 	char path[MAXPATHLEN];
-	
+
 	if (issetugid() == 0)
 		envtmp = getenv("TMPDIR");
-	(void)snprintf(path,
+	len = snprintf(path,
 	    sizeof(path), "%s/_hash.XXXXXX", envtmp ? envtmp : "/tmp");
+	if (len < 0 || len >= sizeof(path)) {
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
 
 	/* Block signals; make sure file goes away at process exit. */
 	(void)sigfillset(&set);

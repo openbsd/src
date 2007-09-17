@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.15 2007/09/06 08:26:12 moritz Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.16 2007/09/17 07:07:23 moritz Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -226,6 +226,7 @@ static int
 load_locale_sub(int category, const char *locname, int isspecial)
 {
 	char name[PATH_MAX];
+	int len;
 
 	/* check for the default locales */
 	if (!strcmp(new_categories[category], "C") ||
@@ -238,8 +239,10 @@ load_locale_sub(int category, const char *locname, int isspecial)
 	if (strchr(locname, '/') != NULL)
 		return -1;
 
-	(void)snprintf(name, sizeof(name), "%s/%s/%s",
+	len = snprintf(name, sizeof(name), "%s/%s/%s",
 		       _PathLocale, locname, categories[category]);
+	if (len < 0 || len >= sizeof(name))
+		return -1;
 
 	switch (category) {
 	case LC_CTYPE:

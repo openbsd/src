@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.15 2005/12/19 17:07:43 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.16 2007/09/17 07:07:23 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -172,7 +172,7 @@ auth_cat(char *file)
 int
 auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 {
-	int close_on_exit, close_lc_on_exit;
+	int close_on_exit, close_lc_on_exit, len;
 	struct passwd *pwd;
 	char *approve, *s, path[MAXPATHLEN];
 
@@ -227,7 +227,15 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		if (strncmp(type, "approve-", 8) == 0)
 			type += 8;
 
-		snprintf(path, sizeof(path), "approve-%s", type);
+		len = snprintf(path, sizeof(path), "approve-%s", type);
+		if (len < 0 || len >= sizeof(path)) {
+			if (close_lc_on_exit)
+				login_close(lc);
+			syslog(LOG_ERR, "approval path too long %.*s...",
+			    MAXPATHLEN, type);
+			_warnx("approval script path too long");
+			return (0);
+		}
 	}
 
 	if ((approve = login_getcapstr(lc, s = path, NULL, NULL)) == NULL)
@@ -415,6 +423,7 @@ auth_userresponse(auth_session_t *as, char *response, int more)
 {
 	char path[MAXPATHLEN];
 	char *style, *name, *challenge, *class;
+	int len;
 
 	if (as == NULL)
 		return (0);
@@ -427,6 +436,14 @@ auth_userresponse(auth_session_t *as, char *response, int more)
 			return (auth_close(as));
 		return(0);
 	}
+
+	len = snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", style);
+	if (len < 0 || len >= sizeof(path)) {
+		if (more == 0)
+			return (auth_close(as));
+		return (0);
+	}
+
 	challenge = auth_getitem(as, AUTHV_CHALLENGE);
 	class = auth_getitem(as, AUTHV_CLASS);
 
@@ -438,8 +455,6 @@ auth_userresponse(auth_session_t *as, char *response, int more)
 		auth_setdata(as, response, strlen(response) + 1);
 	else
 		auth_setdata(as, "", 1);
-
-	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", style);
 
 	auth_call(as, path, style, "-s", "response", name, class, (char *)NULL);
 

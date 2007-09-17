@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.27 2007/09/02 15:19:16 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.28 2007/09/17 07:07:23 moritz Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -509,6 +509,7 @@ gsetrl(login_cap_t *lc, int what, char *name, int type)
 	char name_cur[32];
 	char name_max[32];
     	char *v;
+	int len;
 
 	/*
 	 * If we have no capabilities then there is nothing to do and
@@ -517,8 +518,16 @@ gsetrl(login_cap_t *lc, int what, char *name, int type)
 	if (lc->lc_cap == NULL)
 		return (0);
 
-	snprintf(name_cur, sizeof name_cur, "%s-cur", name);
-	snprintf(name_max, sizeof name_max, "%s-max", name);
+	len = snprintf(name_cur, sizeof name_cur, "%s-cur", name);
+	if (len < 0 || len >= sizeof name_cur) {
+		syslog(LOG_ERR, "current resource limit name too large");
+		return (-1);
+	}
+	len = snprintf(name_max, sizeof name_max, "%s-max", name);
+	if (len < 0 || len >= sizeof name_max) {
+		syslog(LOG_ERR, "max resource limit name too large");
+		return (-1);
+	}
 
 	if (getrlimit(what, &r)) {
 		syslog(LOG_ERR, "getting resource limit: %m");

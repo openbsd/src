@@ -382,10 +382,14 @@ again:
 		(void)fclose(hostf);
 	}
 	if (first == 1 && (__check_rhosts_file || superuser)) {
+		int len;
+
 		first = 0;
 		if ((pwd = getpwnam(luser)) == NULL)
 			return (-1);
-		snprintf(pbuf, sizeof pbuf, "%s/.rhosts", pwd->pw_dir);
+		len = snprintf(pbuf, sizeof pbuf, "%s/.rhosts", pwd->pw_dir);
+		if (len < 0 || len >= sizeof pbuf)
+			return (-1);
 
 		/*
 		 * Change effective uid while opening .rhosts.  If root and

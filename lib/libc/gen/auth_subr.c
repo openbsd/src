@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.30 2004/12/02 20:38:36 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.31 2007/09/17 07:07:23 moritz Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -305,8 +305,13 @@ char *
 auth_challenge(auth_session_t *as)
 {
 	char path[MAXPATHLEN];
+	int len;
 
 	if (as == NULL || as->style == NULL || as->name == NULL)
+		return (NULL);
+
+	len = snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", as->style);
+	if (len < 0 || len >= sizeof(path))
 		return (NULL);
 
 	as->state = 0;
@@ -316,7 +321,6 @@ auth_challenge(auth_session_t *as)
 		as->challenge = NULL;
 	}
 
-	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", as->style);
 	auth_call(as, path, as->style, "-s", "challenge", as->name,
 	    as->class, (char *)NULL);
 	if (as->state & AUTH_CHALLENGE)
@@ -518,14 +522,20 @@ int
 auth_setoption(auth_session_t *as, char *n, char *v)
 {
 	struct authopts *opt;
-	int i = strlen(n) + strlen(v) + 2;
+	size_t len = strlen(n) + strlen(v) + 2;
+	int ret;
 
-	if ((opt = malloc(sizeof(*opt) + i)) == NULL)
+	if ((opt = malloc(sizeof(*opt) + len)) == NULL)
 		return (-1);
 
 	opt->opt = (char *)(opt + 1);
 
-	snprintf(opt->opt, i, "%s=%s", n, v);
+	ret = snprintf(opt->opt, len, "%s=%s", n, v);
+	if (ret < 0 || ret >= len) {
+		free(opt);
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
 	opt->next = as->optlist;
 	as->optlist = opt;
 	return(0);

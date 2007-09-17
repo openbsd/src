@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.21 2005/08/08 08:05:33 espie Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.22 2007/09/17 07:07:23 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -189,8 +189,10 @@ _dbm_open(file, suff, flags, mode)
 {
 	HASHINFO info;
 	char path[MAXPATHLEN];
+	int len;
 
-	if (strlen(file) + strlen(suff) > sizeof(path) - 1) {
+	len = snprintf(path, sizeof path, "%s%s", file, suff);
+	if (len < 0 || len >= sizeof path) {
 		errno = ENAMETOOLONG;
 		return (NULL);
 	}
@@ -205,7 +207,6 @@ _dbm_open(file, suff, flags, mode)
 	info.cachesize = 0;
 	info.hash = NULL;
 	info.lorder = 0;
-	snprintf(path, sizeof path, "%s%s", file, suff);
 	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.13 2005/08/05 13:02:59 espie Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.14 2007/09/17 07:07:23 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -91,7 +91,7 @@ __bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
 	DB *dbp;
 	pgno_t ncache;
 	ssize_t nr;
-	int machine_lorder;
+	int machine_lorder, saved_errno;
 
 	t = NULL;
 
@@ -322,13 +322,15 @@ einval:	errno = EINVAL;
 eftype:	errno = EFTYPE;
 	goto err;
 
-err:	if (t) {
+err:	saved_errno = errno;
+	if (t) {
 		if (t->bt_dbp)
 			free(t->bt_dbp);
 		if (t->bt_fd != -1)
 			(void)close(t->bt_fd);
 		free(t);
 	}
+	errno = saved_errno;
 	return (NULL);
 }
 
@@ -385,14 +387,18 @@ static int
 tmp(void)
 {
 	sigset_t set, oset;
-	int fd;
+	int fd, len;
 	char *envtmp = NULL;
 	char path[MAXPATHLEN];
 
 	if (issetugid() == 0)
 		envtmp = getenv("TMPDIR");
-	(void)snprintf(path,
+	len = snprintf(path,
 	    sizeof(path), "%s/bt.XXXXXX", envtmp ? envtmp : "/tmp");
+	if (len < 0 || len >= sizeof(path)) {
+		errno = ENAMETOOLONG;
+		return(-1);
+	}
 
 	(void)sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);

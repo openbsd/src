@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.15 2005/08/05 13:02:16 espie Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.16 2007/09/17 07:07:23 moritz Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -106,8 +106,13 @@ _yp_dobind(const char *dom, struct dom_binding **ypdb)
 	}
 again:
 	if (ysd->dom_vers == 0) {
-		(void) snprintf(path, sizeof(path), "%s/%s.%d",
+		r = snprintf(path, sizeof(path), "%s/%s.%d",
 		    BINDINGDIR, dom, 2);
+		if (r < 0 || r >= sizeof(path)) {
+			if (new)
+				free(ysd);
+			return YPERR_BADARGS;
+		}
 		if ((fd = open(path, O_RDONLY)) == -1) {
 			/*
 			 * no binding file, YP is dead, or not yet fully

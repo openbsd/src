@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.16 2005/08/08 08:05:38 espie Exp $ */
+/*	$OpenBSD: strftime.c,v 1.17 2007/09/17 07:07:23 moritz Exp $ */
 #include "private.h"
 
 /*
@@ -660,6 +660,7 @@ _loc P((void))
 
 	int			fd;
 	int			oldsun;	/* "...ain't got nothin' to do..." */
+	int			len;
 	char *			lbuf;
 	char *			nlbuf;
 	char *			name;
@@ -699,16 +700,20 @@ _loc P((void))
 		((sizeof locale_home) + namesize + (sizeof lc_time)))
 			goto no_locale;
 	oldsun = 0;
-	(void) snprintf(filename, sizeof filename, "%s/%s/%s", locale_home,
+	len = snprintf(filename, sizeof filename, "%s/%s/%s", locale_home,
 	    name, lc_time);
+	if (len < 0 || len >= sizeof filename)
+		goto no_locale;
 	fd = open(filename, O_RDONLY);
 	if (fd < 0) {
 		/*
 		** Old Sun systems have a different naming and data convention.
 		*/
 		oldsun = 1;
-		(void) snprintf(filename, sizeof filename, "%s/%s/%s",
+		len = snprintf(filename, sizeof filename, "%s/%s/%s",
 			locale_home, lc_time, name);
+		if (len < 0 || len >= sizeof filename)
+			goto no_locale;
 		fd = open(filename, O_RDONLY);
 		if (fd < 0)
 			goto no_locale;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.20 2007/09/05 08:12:15 moritz Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.21 2007/09/17 07:07:23 moritz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -505,8 +505,16 @@ char *
 _ng_makekey(const char *s1, const char *s2, size_t len)
 {
 	char *buf = malloc(len);
-	if (buf != NULL)
-		(void) snprintf(buf, len, "%s.%s", _NG_STAR(s1), _NG_STAR(s2));
+	int ret;
+
+	if (buf == NULL)
+		return NULL;
+	ret = snprintf(buf, len, "%s.%s", _NG_STAR(s1), _NG_STAR(s2));
+	if (ret < 0 || ret >= len) {
+		free(buf);
+		return NULL;
+	}
+
 	return buf;
 }
 
