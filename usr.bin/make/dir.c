@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.53 2007/09/17 09:28:36 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.54 2007/09/17 12:04:29 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 	LstNode ln;	/* a list element */
 	char *file;	/* the current filename to check */
 	char *temp;	/* index into file */
-	const char *cp;	/* index of first slash, if any */
+	const char *basename;
 	bool hasSlash;
 	struct stat stb;/* Buffer for stat, if necessary */
 	struct file_stamp *entry;
@@ -366,16 +366,16 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 
 	/* Find the final component of the name and note whether name has a
 	 * slash in it */
-	cp = Str_rchri(name, ename, '/');
-	if (cp) {
+	basename = Str_rchri(name, ename, '/');
+	if (basename) {
 		hasSlash = true;
-		cp++;
+		basename++;
 	} else {
 		hasSlash = false;
-		cp = name;
+		basename = name;
 	}
 
-	hv = ohash_interval(cp, &ename);
+	hv = ohash_interval(basename, &ename);
 
 	if (DEBUG(DIR))
 		printf("Searching for %s...", name);
@@ -383,8 +383,8 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 	 * the file in the current directory before anywhere else
 	 * and we always return exactly what the caller specified. */
 	if (checkCurdirFirst &&
-	    (!hasSlash || (cp - name == 2 && *name == '.')) &&
-	    find_file_hashi(dot, cp, ename, hv) != NULL) {
+	    (!hasSlash || (basename - name == 2 && *name == '.')) &&
+	    find_file_hashi(dot, basename, ename, hv) != NULL) {
 		if (DEBUG(DIR))
 			printf("in '.'\n");
 		return Str_dupi(name, ename);
@@ -399,7 +399,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 		p = (struct PathEntry *)Lst_Datum(ln);
 		if (DEBUG(DIR))
 			printf("%s...", p->name);
-		if (find_file_hashi(p, cp, ename, hv) != NULL) {
+		if (find_file_hashi(p, basename, ename, hv) != NULL) {
 			if (DEBUG(DIR))
 				printf("here...");
 			if (hasSlash) {
@@ -412,7 +412,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 				 * part of one of the components of p along
 				 * with all the rest of them (*p1 != '/').  */
 				p1 = p->name + strlen(p->name) - 1;
-				p2 = cp - 2;
+				p2 = basename - 2;
 				while (p2 >= name && p1 >= p->name &&
 				    *p1 == *p2) {
 					p1--;
@@ -425,8 +425,8 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 					continue;
 				}
 			}
-			file = Str_concati(p->name, strchr(p->name, '\0'), cp,
-			    ename, '/');
+			file = Str_concati(p->name, strchr(p->name, '\0'), 
+			    basename, ename, '/');
 			if (DEBUG(DIR))
 				printf("returning %s\n", file);
 			return file;
@@ -438,7 +438,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 			for (p1 = p->name, p2 = name; *p1 && *p1 == *p2;
 			    p1++, p2++)
 				continue;
-			if (*p1 == '\0' && p2 == cp - 1) {
+			if (*p1 == '\0' && p2 == basename - 1) {
 				if (DEBUG(DIR))
 					printf("has to be here but isn't -- returning NULL\n");
 				return NULL;
