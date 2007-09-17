@@ -1,7 +1,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.h,v 1.2 2007/09/17 09:28:36 espie Exp $ */
+/*	$OpenBSD: main.h,v 1.3 2007/09/17 12:42:09 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -38,7 +38,5 @@ extern void Main_ParseArgLine(const char *);
 /* List of target names given on the command line. Needed to resolve
  * .if make(...) statements. */
 extern Lst	create;
-
-extern GNode	*DEFAULT;	/* .DEFAULT rule */
 
 #endif

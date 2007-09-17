@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2007/09/16 10:39:07 espie Exp $
+#	$OpenBSD: Makefile,v 1.47 2007/09/17 12:42:09 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -15,9 +15,8 @@ CDEFS+=-DHAS_EXTENDED_GETCWD
 CFLAGS+=${CDEFS}
 HOSTCFLAGS+=${CDEFS}
 
-SRCS=	arch.c buf.c cmd_exec.c compat.c cond.c dir.c direxpand.c \
-	engine.c error.c for.c \
-	init.c job.c lowparse.c main.c make.c memory.c parse.c \
+SRCS=	arch.c buf.c cmd_exec.c compat.c cond.c dir.c direxpand.c engine.c \
+	error.c for.c init.c job.c lowparse.c main.c make.c memory.c parse.c \
 	parsevar.c str.c stats.c suff.c targ.c timestamp.c \
 	var.c varmodifiers.c varname.c
 SRCS+=	lstAddNew.c lstAppend.c lstConcat.c lstConcatDestroy.c \
@@ -28,10 +27,9 @@ SRCS+=	lstAddNew.c lstAppend.c lstConcat.c lstConcatDestroy.c \
 CLEANFILES+=generate hashconsts.h generate.o regress.o check
 
 CLEANFILES+=${LIBOBJS} libohash.a
-CLEANFILES+= varhashconsts.h condhashconsts.h nodehashconsts.h 
-CLEANFILES+= generate.o generate
+CLEANFILES+= varhashconsts.h condhashconsts.h generate.o generate
 
-beforedepend: varhashconsts.h condhashconsts.h
+beforedepend: varhashconsts.h condhashconsts.h nodehashconsts.h
 # may need tweaking if you add variable synonyms or change the hash function
 MAGICVARSLOTS=77
 MAGICCONDSLOTS=65
@@ -57,8 +55,10 @@ regress: check
 # kludge for people who forget to make depend
 var.o: varhashconsts.h
 cond.o: condhashconsts.h
+targ.o parse.o: nodehashconsts.h
 var.ln: varhashconsts.h
 cond.ln: condhashconsts.h
+targ.ln parse.ln: nodehashconsts.h
 
 .if make(install)
 SUBDIR+= PSD.doc

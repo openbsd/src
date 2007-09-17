@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.82 2007/09/17 12:01:17 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.83 2007/09/17 12:42:09 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -75,22 +75,16 @@
 # endif
 #endif
 
-#ifndef DEFMAXLOCAL
-#define DEFMAXLOCAL DEFMAXJOBS
-#endif	/* DEFMAXLOCAL */
-
 #define MAKEFLAGS	".MAKEFLAGS"
 
 static LIST		to_create; 	/* Targets to be made */
 Lst create = &to_create;
-GNode			*DEFAULT;	/* .DEFAULT node */
 bool 		allPrecious;	/* .PRECIOUS given on line by itself */
 
 static bool		noBuiltins;	/* -r flag */
 static LIST		makefiles;	/* ordered list of makefiles to read */
 static LIST		varstoprint;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
-static int		maxLocal;	/* -L argument */
 bool 		compatMake;	/* -B argument */
 int 		debug;		/* -d flag */
 bool 		noExecute;	/* -n flag */
@@ -301,7 +295,6 @@ MainParseArgs(int argc, char **argv)
 					optarg);
 				usage();
 			}
-			maxLocal = maxJobs;
 			record_option(c, optarg);
 			break;
 		}
@@ -677,8 +670,7 @@ main(int argc, char **argv)
 	touchFlag = false;		/* Actually update targets */
 	debug = 0;			/* No debug verbosity, please. */
 
-	maxLocal = DEFMAXLOCAL; 	/* Set default local max concurrency */
-	maxJobs = maxLocal;
+	maxJobs = DEFMAXJOBS; 	/* Set default local max concurrency */
 	compatMake = false;		/* No compat mode */
 
 
@@ -716,8 +708,6 @@ main(int argc, char **argv)
 	Var_AddCmdline(MAKEFLAGS);
 
 
-	DEFAULT = NULL;
-
 	/*
 	 * Set up the .TARGETS variable to contain the list of targets to be
 	 * created. If none specified, make the variable empty -- the parser
@@ -753,9 +743,7 @@ main(int argc, char **argv)
 
 	setup_VPATH();
 
-	/* Now that all search paths have been read for suffixes et al, it's
-	 * time to add the default search path to their lists...  */
-	Suff_DoPaths();
+	process_suffixes_after_makefile_is_read();
 
 	/* Print the initial graph, if the user requested it.  */
 	if (DEBUG(GRAPH1))
@@ -792,9 +780,7 @@ main(int argc, char **argv)
 			 * (to prevent the .BEGIN from being executed should
 			 * it exist).  */
 			if (!queryFlag) {
-				if (maxLocal == -1)
-					maxLocal = maxJobs;
-				Job_Init(maxJobs, maxLocal);
+				Job_Init(maxJobs);
 			}
 
 			/* Traverse the graph, checking on all the targets.  */

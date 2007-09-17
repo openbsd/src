@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.77 2007/09/17 12:03:40 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.78 2007/09/17 12:42:09 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -48,8 +48,6 @@
  *				frequently to keep the whole make going at
  *				a decent clip, since job table entries aren't
  *				removed until their process is caught this way.
- *				Its single argument is true if the function
- *				should block waiting for a child to terminate.
  *
  *	Job_CatchOutput 	Print any output our children have produced.
  *				Should also be called fairly frequently to
@@ -132,11 +130,11 @@
  *	   commands.
  *	4) An FILE* for writing out the commands. This is only
  *	   used before the job is actually started.
- *	5) Things used for handling the shell's output. 
+ *	5) Things used for handling the shell's output.
  *	   the output is being caught via a pipe and
  *	   the descriptors of our pipe, an array in which output is line
  *	   buffered and the current position in that buffer are all
- *	   maintained for each job. 
+ *	   maintained for each job.
  *	6) An identifier provided by and for the exclusive use of the
  *	   Rmt module.
  *	7) A word of flags which determine how the module handles errors,
@@ -162,17 +160,17 @@ typedef struct Job_ {
     short	flags;	    /* Flags to control treatment of job */
 #define JOB_IGNERR	0x001	/* Ignore non-zero exits */
 #define JOB_SILENT	0x002	/* no output */
-#define JOB_SPECIAL	0x004	/* Target is a special one. i.e. run it locally
-				 * if we can't export it and maxLocal is 0 */
-#define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing
-				 * commands */
+#define JOB_SPECIAL	0x004	/* Target is a special one. i.e., always run */
+				/* it even when the table is full */
+#define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing */
+				/* commands */
 #define JOB_FIRST	0x020	/* Job is first job for the node */
 #define JOB_RESTART	0x080	/* Job needs to be completely restarted */
-#define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
-				 * for some reason */
-#define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
-				 * Used to avoid infinite recursion between
-				 * JobFinish and JobRestart */
+#define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped, */
+				/* for some reason */
+#define JOB_CONTINUING	0x200	/* We are in the process of resuming this job */
+				/* Used to avoid infinite recursion between */
+				/* JobFinish and JobRestart */
     int 	inPipe;		/* Input side of pipe associated
 				 * with job's output channel */
     int 	outPipe;	/* Output side of pipe associated with
@@ -182,6 +180,7 @@ typedef struct Job_ {
 				 * job, line by line */
     int 	curPos;		/* Current position in op_outBuf */
 } Job;
+
 
 /*
  * error handling variables
@@ -198,13 +197,6 @@ static int	aborting = 0;	    /* why is the make aborting? */
  */
 #define FILENO(a) ((unsigned) fileno(a))
 
-/*
- * post-make command processing. The node postCommands is really just the
- * .END target but we keep it around to avoid having to search for it
- * all the time.
- */
-static GNode	  *postCommands;    /* node containing commands to execute when
-				     * everything else is done */
 static int	  numCommands;	    /* The number of commands actually printed
 				     * for a target. Should this number be
 				     * 0, no shell will be executed. */
@@ -235,16 +227,11 @@ static char	tfile[sizeof(TMPPAT)];
 static const char *shellPath = _PATH_BSHELL;
 static const char *shellName = "sh";
 
+
 static int	maxJobs;	/* The most children we can run at once */
-static int	maxLocal;	/* The most local ones we can have */
 static int	nJobs = 0;	/* The number of children currently running */
-static int	nLocal; 	/* The number of local children */
 static LIST	jobs;		/* The structures that describe them */
-static bool	jobFull;	/* Flag to tell when the job table is full. It
-				 * is set true when (1) the total number of
-				 * running jobs equals the maximum allowed or
-				 * (2) a job can only be run locally, but
-				 * nLocal equals maxLocal */
+static bool	jobFull;	/* Flag to tell when the job table is full. */
 static fd_set	*outputsp;	/* Set of descriptors of pipes connected to
 				 * the output channels of children */
 static int	outputsn;
@@ -539,7 +526,7 @@ DBPRINTF(Job *job, const char *fmt, ...)
  *	If the command is just "..." we take all future commands for this
  *	job to be commands to be executed once the entire graph has been
  *	made and return non-zero to signal that the end of the commands
- *	was reached. These commands are later attached to the postCommands
+ *	was reached. These commands are later attached to the end_node
  *	node and executed by Job_End when all things are done.
  *	This function is called from JobStart via Lst_Find
  *
@@ -555,20 +542,20 @@ DBPRINTF(Job *job, const char *fmt, ...)
  *-----------------------------------------------------------------------
  */
 static int
-JobPrintCommand(LstNode cmdNode,    /* command string to print */
-    void *jobp)			    /* job for which to print it */
+JobPrintCommand(LstNode cmdNode,	/* command string to print */
+    void *jobp)			    	/* job for which to print it */
 {
-	bool noSpecials;	/* true if we shouldn't worry about
-			 	 * inserting special commands into
-				 * the input stream. */
-	bool shutUp = false;   	/* true if we put a no echo command
-				 * into the command file */
-	bool errOff = false;   	/* true if we turned error checking
-				 * off before printing the command
-				 * and need to turn it back on */
-	char *cmdTemplate;     	/* Template to use when printing the
-				 * command */
-	char *cmdStart;	    	/* Start of expanded command */
+	bool noSpecials;	    	/* true if we shouldn't worry about
+					 * inserting special commands into
+					 * the input stream. */
+	bool shutUp = false;   		/* true if we put a no echo command
+					 * into the command file */
+	bool errOff = false;   		/* true if we turned error checking
+					 * off before printing the command
+					 * and need to turn it back on */
+	char *cmdTemplate;     		/* Template to use when printing the
+					 * command */
+	char *cmdStart;	    		/* Start of expanded command */
 	char *cmd = (char *)Lst_Datum(cmdNode);
 	Job *job = (Job *)jobp;
 
@@ -582,6 +569,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 		}
 		return 1;
 	}
+
 
 	numCommands++;
 
@@ -618,13 +606,12 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 	if (errOff) {
 		if ( !(job->flags & JOB_IGNERR) && !noSpecials) {
 			/*
-			 * we don't want the error-control commands
-			 * showing up either, so we turn off echoing
-			 * while executing them. We could put another
-			 * field in the shell structure to tell
-			 * JobDoOutput to look for this string too, but
-			 * why make it any more complex than it already
-			 * is?
+			 * we don't want the error-control commands showing
+			 * up either, so we turn off echoing while executing
+			 * them. We could put another field in the shell
+			 * structure to tell JobDoOutput to look for this
+			 * string too, but why make it any more complex than
+			 * it already is?
 			 */
 			if (!(job->flags & JOB_SILENT) && !shutUp) {
 				DBPRINTF(job, "%s; %s; %s\n", SHELL_ECHO_OFF,
@@ -664,7 +651,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
  *	Callback function for JobFinish...
  *
  * Side Effects:
- *	The command is tacked onto the end of postCommands's commands list.
+ *	The command is tacked onto the end of end_node's commands list.
  *-----------------------------------------------------------------------
  */
 static void
@@ -674,7 +661,7 @@ JobSaveCommand(void *cmd, void *gn)
 	char *result;
 
 	result = Var_Subst((char *)cmd, &g->context, false);
-	Lst_AtEnd(&postCommands->commands, result);
+	Lst_AtEnd(&end_node->commands, result);
 }
 
 
@@ -710,7 +697,7 @@ JobClose(Job *job)
  *
  * Side Effects:
  *	Some nodes may be put on the toBeMade queue.
- *	Final commands for the job are placed on postCommands.
+ *	Final commands for the job are placed on end_node.
  *
  *	If we got an error and are aborting (aborting == ABORT_ERROR) and
  *	the job list is now empty, we are done for the day.
@@ -723,7 +710,7 @@ static void
 JobFinish(Job *job,		/* job to finish */
     int *status)		/* sub-why job went away */
 {
-	bool done;
+	bool	 done;
 
 	if ((WIFEXITED(*status) &&
 	     WEXITSTATUS(*status) != 0 && !(job->flags & JOB_IGNERR)) ||
@@ -773,8 +760,8 @@ JobFinish(Job *job,		/* job to finish */
 
 		if (WIFEXITED(*status)) {
 			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "Process %ld exited.\n",
-				    (long)job->pid);
+				(void)fprintf(stdout,
+				    "Process %ld exited.\n", (long)job->pid);
 				(void)fflush(stdout);
 			}
 			if (WEXITSTATUS(*status) != 0) {
@@ -800,8 +787,8 @@ JobFinish(Job *job,		/* job to finish */
 			}
 		} else if (WIFSTOPPED(*status)) {
 			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "Process %ld stopped.\n",
-				    (long)job->pid);
+				(void)fprintf(stdout,
+				    "Process %ld stopped.\n", (long)job->pid);
 				(void)fflush(stdout);
 			}
 			if (job->node != lastNode) {
@@ -831,7 +818,7 @@ JobFinish(Job *job,		/* job to finish */
 			if (!(job->flags & JOB_CONTINUING)) {
 				if (DEBUG(JOB)) {
 					(void)fprintf(stdout,
-				"Warning: process %ld was not continuing.\n",
+					    "Warning: process %ld was not continuing.\n",
 					    (long)job->pid);
 					(void)fflush(stdout);
 				}
@@ -855,7 +842,6 @@ JobFinish(Job *job,		/* job to finish */
 				    (long)job->pid);
 				(void)fflush(stdout);
 			}
-			nLocal++;
 			if (nJobs == maxJobs) {
 				jobFull = true;
 				if (DEBUG(JOB)) {
@@ -964,7 +950,7 @@ JobExec(Job *job, char **argv)
 	pid_t cpid; 	/* ID of new child */
 
 	if (DEBUG(JOB)) {
-		int	  i;
+		int i;
 
 		(void)fprintf(stdout, "Running %s\n", job->node->name);
 		(void)fprintf(stdout, "\tCommand: ");
@@ -1003,8 +989,8 @@ JobExec(Job *job, char **argv)
 		(void)lseek(0, 0, SEEK_SET);
 
 		/*
-		 * Set up the child's output to be routed through the
-		 * pipe we've created for it.
+		 * Set up the child's output to be routed through the pipe
+		 * we've created for it.
 		 */
 		if (dup2(job->outPipe, 1) == -1)
 			Punt("Cannot dup2: %s", strerror(errno));
@@ -1069,7 +1055,6 @@ JobExec(Job *job, char **argv)
 			FD_SET(job->inPipe, outputsp);
 		}
 
-		nLocal++;
 		/*
 		 * XXX: Used to not happen if REMOTE. Why?
 		 */
@@ -1111,7 +1096,7 @@ JobMakeArgv(Job *job, char **argv)
 	if (args[1]) {
 		argv[argc] = args;
 		argc++;
- 	}
+	}
 	argv[argc] = NULL;
 }
 
@@ -1146,7 +1131,7 @@ JobRestart(Job *job)
 			    job->node->name);
 			(void)fflush(stdout);
 		}
-		if (nLocal >= maxLocal && !(job->flags & JOB_SPECIAL)) {
+		if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL)) {
 			/*
 			 * Can't be exported and not allowed to run locally --
 			 * put it back on the hold queue and mark the table
@@ -1182,13 +1167,10 @@ JobRestart(Job *job)
 		       (void)fprintf(stdout, "Resuming %s...", job->node->name);
 		       (void)fflush(stdout);
 		}
-		if ((nLocal < maxLocal ||
-		    ((job->flags & JOB_SPECIAL) &&
-		     maxLocal == 0)
-		   ) && nJobs != maxJobs) {
+		if (nJobs != maxJobs || (job->flags & JOB_SPECIAL)) {
 			/*
-			 * If we haven't reached the concurrency limit already
-			 * (or maxLocal is 0), it's ok to resume the job.
+			 * If we haven't reached the concurrency limit already,
+			 * it's ok to resume the job.
 			 */
 			bool error;
 			int status;
@@ -1253,17 +1235,17 @@ JobRestart(Job *job)
  *-----------------------------------------------------------------------
  */
 static int
-JobStart(GNode	  *gn,	      /* target to create */
-    int 	   flags,      /* flags for the job to override normal ones.
-			       * e.g. JOB_SPECIAL or JOB_IGNDOTS */
-    Job 	  *previous)  /* The previous Job structure for this node,
-			       * if any. */
+JobStart(GNode *gn,	      	/* target to create */
+    int flags,      		/* flags for the job to override normal ones.
+			       	 * e.g. JOB_SPECIAL or JOB_IGNDOTS */
+    Job *previous)  		/* The previous Job structure for this node,
+			         * if any. */
 {
-	Job *job;	/* new job descriptor */
-	char *argv[4];  /* Argument vector to shell */
-	bool cmdsOK;    /* true if the nodes commands were all right */
-	bool local;     /* Set true if the job was run locally */
-	bool noExec;    /* Set true if we decide not to run the job */
+	Job *job;       	/* new job descriptor */
+	char *argv[4];   	/* Argument vector to shell */
+	bool cmdsOK;     	/* true if the nodes commands were all right */
+	bool local;      	/* Set true if the job was run locally */
+	bool noExec;     	/* Set true if we decide not to run the job */
 
 	if (previous != NULL) {
 		previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT);
@@ -1483,18 +1465,9 @@ JobStart(GNode	  *gn,	      /* target to create */
 
 	local = true;
 
-	if (local && nLocal >= maxLocal &&
-	    !(job->flags & JOB_SPECIAL) &&
-	    maxLocal != 0
-	    ) {
-		/*
-		 * The job can only be run locally, but we've hit the limit of
-		 * local concurrency, so put the job on hold until some other
-		 * job finishes. Note that the special jobs (.BEGIN, .INTERRUPT
-		 * and .END) may be run locally even when the local limit has
-		 * been reached (e.g. when maxLocal == 0), though they will be
-		 * exported if at all possible. In addition, any target marked
-		 * with .NOEXPORT will be run locally if maxLocal is 0.
+	if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL)) {
+		/* we've hit the limit of concurrency, so put the job on hold
+		 * until some other job finishes.
 		 */
 		jobFull = true;
 
@@ -1504,20 +1477,6 @@ JobStart(GNode	  *gn,	      /* target to create */
 		}
 		job->flags |= JOB_RESTART;
 		Lst_AtEnd(&stoppedJobs, job);
-	} else {
-		if (nLocal >= maxLocal && local) {
-			/*
-			 * If we're running this job locally as a special case
-			 * (see above), at least say the table is full.
-			 */
-			jobFull = true;
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout,
-				    "Local job queue is full.\n");
-				(void)fflush(stdout);
-			}
-		}
-		JobExec(job, argv);
 	}
 	return JOB_RUNNING;
 }
@@ -1536,11 +1495,10 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 				lastNode = job->node;
 			}
 			/*
-			 * The only way there wouldn't be a newline
-			 * after this line is if it were the last in
-			 * the buffer.  however, since the
-			 * non-printable comes after it, there must be
-			 * a newline, so we don't print one.
+			 * The only way there wouldn't be a newline after
+			 * this line is if it were the last in the buffer.
+			 * however, since the non-printable comes after it,
+			 * there must be a newline, so we don't print one.
 			 */
 			(void)fprintf(stdout, "%s", cp);
 			(void)fflush(stdout);
@@ -1548,13 +1506,12 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 		cp = ecp + strlen(SHELL_ECHO_OFF);
 		if (cp != endp) {
 			/*
-			 * Still more to print, look again after
-			 * skipping the whitespace following the
-			 * non-printable command....
+			 * Still more to print, look again after skipping
+			 * the whitespace following the non-printable
+			 * command....
 			 */
 			cp++;
-			while (*cp == ' ' || *cp == '\t' ||
-			    *cp == '\n') {
+			while (*cp == ' ' || *cp == '\t' || *cp == '\n') {
 				cp++;
 			}
 			ecp = strstr(cp, SHELL_ECHO_OFF);
@@ -1594,12 +1551,12 @@ JobDoOutput(Job *job,   	/* the job whose output needs printing */
     bool finish)	  	/* true if this is the last time we'll be
 				 * called for this job */
 {
-	bool gotNL = false;	/* true if got a newline */
+	bool gotNL = false;  	/* true if got a newline */
 	bool fbuf; 	  	/* true if our buffer filled up */
 	int nr;		  	/* number of bytes read */
 	int i;		  	/* auxiliary index into outBuf */
-	int max;		/* limit for i (end of current data) */
-	int nRead;	 	/* (Temporary) number of bytes read */
+	int max;	  	/* limit for i (end of current data) */
+	int nRead;	  	/* (Temporary) number of bytes read */
 
 	/*
 	 * Read as many bytes as will fit in the buffer.
@@ -1620,10 +1577,10 @@ end_loop:
 	}
 
 	/*
-	 * If we hit the end-of-file (the job is dead), we must flush
-	 * its remaining output, so pretend we read a newline if
-	 * there's any output remaining in the buffer.  Also clear the
-	 * 'finish' flag so we stop looping.
+	 * If we hit the end-of-file (the job is dead), we must flush its
+	 * remaining output, so pretend we read a newline if there's any
+	 * output remaining in the buffer.
+	 * Also clear the 'finish' flag so we stop looping.
 	 */
 	if (nr == 0 && job->curPos != 0) {
 		job->outBuf[job->curPos] = '\n';
@@ -1634,9 +1591,9 @@ end_loop:
 	}
 
 	/*
-	 * Look for the last newline in the bytes we just got. If there
-	 * is one, break out of the loop with 'i' as its index and
-	 * gotNL set true.
+	 * Look for the last newline in the bytes we just got. If there is
+	 * one, break out of the loop with 'i' as its index and gotNL set
+	 * true.
 	 */
 	max = job->curPos + nr;
 	for (i = job->curPos + nr - 1; i >= job->curPos; i--) {
@@ -1655,8 +1612,8 @@ end_loop:
 		job->curPos += nr;
 		if (job->curPos == JOB_BUFSIZE) {
 			/*
-			 * If we've run out of buffer space, we have no
-			 * choice but to print the stuff. sigh.
+			 * If we've run out of buffer space, we have no choice
+			 * but to print the stuff. sigh.
 			 */
 			fbuf = true;
 			i = job->curPos;
@@ -1664,28 +1621,26 @@ end_loop:
 	}
 	if (gotNL || fbuf) {
 		/*
-		 * Need to send the output to the screen. Null
-		 * terminate it first, overwriting the newline
-		 * character if there was one.  So long as the line
-		 * isn't one we should filter (according to the shell
-		 * description), we print the line, preceded by a
-		 * target banner if this target isn't the same as the
-		 * one for which we last printed something.  The rest
-		 * of the data in the buffer are then shifted down to
-		 * the start of the buffer and curPos is set
-		 * accordingly.
+		 * Need to send the output to the screen. Null terminate it
+		 * first, overwriting the newline character if there was one.
+		 * So long as the line isn't one we should filter (according
+		 * to the shell description), we print the line, preceded
+		 * by a target banner if this target isn't the same as the
+		 * one for which we last printed something.
+		 * The rest of the data in the buffer are then shifted down
+		 * to the start of the buffer and curPos is set accordingly.
 		 */
 		job->outBuf[i] = '\0';
 		if (i >= job->curPos) {
 			char *cp;
 
-			cp = JobOutput(job, job->outBuf,
-			    &job->outBuf[i], false);
+			cp = JobOutput(job, job->outBuf, &job->outBuf[i],
+			    false);
 
 			/*
-			 * There's still more in that thar buffer. This
-			 * time, though, we know there's no newline at
-			 * the end, so we add one of our own free will.
+			 * There's still more in that thar buffer. This time,
+			 * though, we know there's no newline at the end, so we
+			 * add one of our own free will.
 			 */
 			if (*cp != '\0') {
 				if (job->node != lastNode) {
@@ -1705,21 +1660,20 @@ end_loop:
 
 		} else {
 			/*
-			 * We have written everything out, so we just
-			 * start over from the start of the buffer. No
-			 * copying.  No nothing.
+			 * We have written everything out, so we just start over
+			 * from the start of the buffer. No copying. No nothing.
 			 */
 			job->curPos = 0;
 		}
 	}
 	if (finish) {
 		/*
-		 * If the finish flag is true, we must loop until we
-		 * hit end-of-file on the pipe. This is guaranteed to
-		 * happen eventually since the other end of the pipe is
-		 * now closed (we closed it explicitly and the child
-		 * has exited). When we do get an EOF, finish will be
-		 * set false and we'll fall through and out.
+		 * If the finish flag is true, we must loop until we hit
+		 * end-of-file on the pipe. This is guaranteed to happen
+		 * eventually since the other end of the pipe is now closed
+		 * (we closed it explicitly and the child has exited). When
+		 * we do get an EOF, finish will be set false and we'll fall
+		 * through and out.
 		 */
 		goto end_loop;
 	}
@@ -1743,15 +1697,15 @@ end_loop:
 void
 Job_CatchChildren()
 {
-	pid_t pid;		/* pid of dead child */
-	Job *job; 		/* job descriptor for dead child */
-	LstNode jnode;		/* list element for finding job */
-	int status;		/* Exit/termination status */
+	pid_t pid;	/* pid of dead child */
+	Job *job; 	/* job descriptor for dead child */
+	LstNode jnode;	/* list element for finding job */
+	int status;	/* Exit/termination status */
 
 	/*
 	 * Don't even bother if we know there's no one around.
 	 */
-	if (nLocal == 0) {
+	if (nJobs == 0) {
 		return;
 	}
 
@@ -1790,7 +1744,6 @@ Job_CatchChildren()
 				(void)fflush(stdout);
 			}
 			jobFull = false;
-			nLocal--;
 		}
 
 		JobFinish(job, &status);
@@ -1820,7 +1773,6 @@ Job_CatchOutput(void)
 
 	int count = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
 	fd_set *readfdsp = malloc(count);
-
 	(void)fflush(stdout);
 	if (readfdsp == NULL)
 		return;
@@ -1874,12 +1826,8 @@ Job_Make(GNode *gn)
  *-----------------------------------------------------------------------
  */
 void
-Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
-			     * running at one time */
-    int 	  maxlocal) /* the greatest number of local jobs which may
-			     * be running at once. */
+Job_Init(int maxproc)
 {
-	GNode *begin;     /* node for commands to do at the very start */
 	int tfd;
 
 	(void)strlcpy(tfile, TMPPAT, sizeof(tfile));
@@ -1891,9 +1839,6 @@ Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
 	Static_Lst_Init(&jobs);
 	Static_Lst_Init(&stoppedJobs);
 	maxJobs =	  maxproc;
-	maxLocal =	  maxlocal;
-	nJobs =	  0;
-	nLocal =	  0;
 	jobFull =	  false;
 
 	aborting =	  0;
@@ -1948,16 +1893,13 @@ Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
 	}
 #endif
 
-	begin = Targ_FindNode(".BEGIN", TARG_NOCREATE);
-
-	if (begin != NULL) {
-		JobStart(begin, JOB_SPECIAL, (Job *)0);
+	if ((begin_node->type & OP_DUMMY) == 0) {
+		JobStart(begin_node, JOB_SPECIAL, (Job *)0);
 		while (nJobs) {
 			Job_CatchOutput();
 			Job_CatchChildren();
 		}
 	}
-	postCommands = Targ_FindNode(".END", TARG_CREATE);
 }
 
 /*-
@@ -2026,8 +1968,7 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
     int signo)			/* signal received */
 {
 	LstNode ln;		/* element in job table */
-	Job  *job; 		/* job descriptor in that element */
-	GNode *interrupt;	/* the node describing the .INTERRUPT target */
+	Job *job; 		/* job descriptor in that element */
 
 	aborting = ABORT_INTERRUPT;
 
@@ -2053,11 +1994,10 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 	}
 
 	if (runINTERRUPT && !touchFlag) {
-		interrupt = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
-		if (interrupt != NULL) {
+		if ((interrupt_node->type & OP_DUMMY) == 0) {
 			ignoreErrors = false;
 
-			JobStart(interrupt, JOB_IGNDOTS, (Job *)0);
+			JobStart(interrupt_node, JOB_IGNDOTS, (Job *)0);
 			while (nJobs) {
 				Job_CatchOutput();
 				Job_CatchChildren();
@@ -2085,11 +2025,11 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 int
 Job_Finish(void)
 {
-	if (postCommands != NULL && !Lst_IsEmpty(&postCommands->commands)) {
+	if (end_node != NULL && !Lst_IsEmpty(&end_node->commands)) {
 		if (errors) {
 			Error("Errors reported so .END ignored");
 		} else {
-			JobStart(postCommands, JOB_SPECIAL | JOB_IGNDOTS, NULL);
+			JobStart(end_node, JOB_SPECIAL | JOB_IGNDOTS, NULL);
 
 			while (nJobs) {
 				Job_CatchOutput();
@@ -2101,20 +2041,10 @@ Job_Finish(void)
 	return errors;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_End --
- *	Cleanup any memory used by the jobs module
- *
- * Side Effects:
- *	Memory is freed
- *-----------------------------------------------------------------------
- */
 #ifdef CLEANUP
 void
 Job_End(void)
 {
-	efree(shellArgv);
 }
 #endif
 

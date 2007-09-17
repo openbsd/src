@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.4 2001/11/23 23:42:45 deraadt Exp $ */
+/*	$OpenBSD: gnode.h,v 1.5 2007/09/17 12:42:09 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -67,61 +67,78 @@ struct Suff_;
  *	17) a Lst of strings that are commands to be given to a shell
  *	   to create this target.
  */
+
+#define UNMADE		0
+#define BEINGMADE	1
+#define MADE		2
+#define	UPTODATE	3
+#define ERROR		4
+#define ABORTED		5
+#define CYCLE		6
+#define ENDCYCLE	7
+#define NOSUCHNODE	8
+
+#define SPECIAL_NONE	0
+#define	SPECIAL_PATH		21
+#define SPECIAL_MASK		63
+#define SPECIAL_TARGET		64
+#define SPECIAL_SOURCE		128
+#define SPECIAL_TARGETSOURCE	(SPECIAL_TARGET|SPECIAL_SOURCE)
+
 struct GNode_ {
-    char	    *path;	/* The full pathname of the file */
-    int 	    type;	/* Its type (see the OP flags, below) */
-    int 	    order;	/* Its wait weight */
+    int special_op;	/* special op to apply */
+    unsigned char special;/* type of special node */
+    char make;		/* true if this target needs to be remade */
+    char childMade;	/* true if one of this target's children was
+			 * made */
+    char made;		/* Set to reflect the state of processing
+			 * on this node:
+			 *  UNMADE - Not examined yet
+			 *  BEINGMADE - Target is already being made.
+			 *	Indicates a cycle in the graph. (compat
+			 *	mode only)
+			 *  MADE - Was out-of-date and has been made
+			 *  UPTODATE - Was already up-to-date
+			 *  ERROR - An error occurred while it was being
+			 *	made (used only in compat mode)
+			 *  ABORTED - The target was aborted due to
+			 *	an error making an inferior (compat).
+			 *  CYCLE - Marked as potentially being part of
+			 *	a graph cycle. If we come back to a
+			 *	node marked this way, it is printed
+			 *	and 'made' is changed to ENDCYCLE.
+			 *  ENDCYCLE - the cycle has been completely
+			 *	printed. Go back and unmark all its
+			 *	members.
+			 */
+    char *path;		/* The full pathname of the file */
+    int type;		/* Its type (see the OP flags, below) */
+    int order;		/* Its wait weight */
 
-    bool	    make;	/* true if this target needs to be remade */
-    enum {
-	UNMADE, BEINGMADE, MADE, UPTODATE, ERROR, ABORTED,
-	CYCLE, ENDCYCLE
-    }		    made;	/* Set to reflect the state of processing
-				 * on this node:
-				 *  UNMADE - Not examined yet
-				 *  BEINGMADE - Target is already being made.
-				 *	Indicates a cycle in the graph. (compat
-				 *	mode only)
-				 *  MADE - Was out-of-date and has been made
-				 *  UPTODATE - Was already up-to-date
-				 *  ERROR - An error occurred while it was being
-				 *	made (used only in compat mode)
-				 *  ABORTED - The target was aborted due to
-				 *	an error making an inferior (compat).
-				 *  CYCLE - Marked as potentially being part of
-				 *	a graph cycle. If we come back to a
-				 *	node marked this way, it is printed
-				 *	and 'made' is changed to ENDCYCLE.
-				 *  ENDCYCLE - the cycle has been completely
-				 *	printed. Go back and unmark all its
-				 *	members.
-				 */
-    bool	    childMade;	/* true if one of this target's children was
-				 * made */
-    int 	    unmade;	/* The number of unmade children */
+    int unmade;		/* The number of unmade children */
 
-    TIMESTAMP	    mtime;	/* Its modification time */
-    TIMESTAMP	    cmtime;	/* The modification time of its youngest
-				 * child */
+    TIMESTAMP mtime;	/* Its modification time */
+    TIMESTAMP cmtime;	/* The modification time of its youngest
+			 * child */
 
-    LIST	    iParents;	/* Links to parents for which this is an
-				 * implied source, if any */
-    LIST	    cohorts;	/* Other nodes for the :: operator */
-    LIST	    parents;	/* Nodes that depend on this one */
-    LIST	    children;	/* Nodes on which this one depends */
-    LIST	    successors; /* Nodes that must be made after this one */
-    LIST	    preds;	/* Nodes that must be made before this one */
+    LIST iParents;	/* Links to parents for which this is an
+			 * implied source, if any */
+    LIST cohorts;	/* Other nodes for the :: operator */
+    LIST parents;	/* Nodes that depend on this one */
+    LIST children;	/* Nodes on which this one depends */
+    LIST successors; 	/* Nodes that must be made after this one */
+    LIST preds;		/* Nodes that must be made before this one */
 
-    SymTable	    context;	/* The local variables */
-    unsigned long   lineno;	/* First line number of commands.  */
-    const char *    fname;	/* File name of commands.  */
-    LIST	    commands;	/* Creation commands */
-    LstNode	    current;	/* Current command, for job */
+    SymTable context;	/* The local variables */
+    unsigned long lineno;/* First line number of commands.  */
+    const char *fname;	/* File name of commands.  */
+    LIST commands;	/* Creation commands */
+    LstNode current;	/* Current command, for job */
 
-    struct Suff_    *suffix;	/* Suffix for the node (determined by
-				 * Suff_FindDeps and opaque to everyone
-				 * but the Suff module) */
-    char      name[1];		/* The target's name */
+    struct Suff_ *suffix;/* Suffix for the node (determined by
+			 * Suff_FindDeps and opaque to everyone
+			 * but the Suff module) */
+    char name[1];	/* The target's name */
 };
 
 /*
@@ -151,7 +168,7 @@ struct GNode_ {
 #define OP_PRECIOUS	0x00000080  /* Don't remove the target when
 				     * interrupted */
 #define OP_SILENT	0x00000100  /* Don't echo commands when executed */
-#define OP_MAKE 	0x00000200  /* Target is a recurrsive make so its
+#define OP_MAKE 	0x00000200  /* Target is a recursive make so its
 				     * commands should always be executed when
 				     * it is out of date, regardless of the
 				     * state of the -n or -t flags */
@@ -166,6 +183,10 @@ struct GNode_ {
 				     * target' processing in parse.c */
 #define OP_PHONY	0x00010000  /* Not a file target; run always */
 #define OP_NOPATH	0x00020000  /* Don't search for file in the path */
+#define OP_NODEFAULT	0x00040000  /* Special node that never needs */
+				    /* DEFAULT commands applied */
+#define OP_DUMMY	0x00080000  /* node was created by default, but it */
+				    /* does not really exist. */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER	0x40000000  /* Target is a member of an archive */

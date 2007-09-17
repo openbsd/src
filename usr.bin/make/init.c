@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: init.c,v 1.3 2006/05/06 10:52:34 espie Exp $ */
+/*	$OpenBSD: init.c,v 1.4 2007/09/17 12:42:09 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -44,6 +44,7 @@ Init(void)
 {
 	Init_Timestamp();
 	Init_Stats();
+	Targ_Init();
 	Dir_Init();		/* Initialize directory structures so -I flags
 				 * can be processed correctly */
 	Parse_Init();		/* Need to initialize the paths of #include
@@ -51,7 +52,6 @@ Init(void)
 	Var_Init();		/* As well as the lists of variables for
 				 * parsing arguments */
 	Arch_Init();
-	Targ_Init();
 	Suff_Init();
 }
 

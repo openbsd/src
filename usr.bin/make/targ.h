@@ -1,7 +1,7 @@
 #ifndef TARG_H
 #define TARG_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.h,v 1.2 2007/09/16 12:09:36 espie Exp $ */
+/*	$OpenBSD: targ.h,v 1.3 2007/09/17 12:42:09 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -51,14 +51,32 @@ extern GNode *Targ_NewGNi(const char *, const char *);
 #define Targ_NewGN(n)	Targ_NewGNi(n, NULL);
 extern GNode *Targ_FindNodei(const char *, const char *, int);
 #define Targ_FindNode(n, i)	Targ_FindNodei(n, NULL, i)
+
+
+
+/* set of helpers for constant nodes */
+extern GNode *Targ_FindNodeih(const char *, const char *, uint32_t, int);
+
+extern inline GNode *
+Targ_FindNodeh(const char *, size_t, uint32_t, int);
+extern inline GNode *
+Targ_FindNodeh(const char *name, size_t n, uint32_t hv, int flags)
+{
+	return Targ_FindNodeih(name, name + n - 1, hv, flags);
+}
+#define Targ_FindConstantNode(n, f) Targ_FindNodeh(n, sizeof(n), K_##n, f)
+
 extern void Targ_FindList(Lst, Lst);
 extern bool Targ_Ignore(GNode *);
 extern bool Targ_Silent(GNode *);
 extern bool Targ_Precious(GNode *);
-extern void Targ_SetMain(GNode *);
 extern void Targ_PrintCmd(void *);
 extern void Targ_PrintType(int);
 extern void Targ_PrintGraph(int);
 
+extern GNode *begin_node, *end_node, *interrupt_node, *DEFAULT;
+struct ohash_info;
+
+extern struct ohash_info gnode_info;
 
 #endif

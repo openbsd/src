@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.91 2007/09/17 11:32:25 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.92 2007/09/17 12:42:09 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -91,8 +91,13 @@
 #include "parsevar.h"
 #include "stats.h"
 #include "garray.h"
+#include "node_int.h"
+#include "nodehashconsts.h"
 
 
+/* gsources and gtargets should be local to some functions, but they're
+ * set as persistent arrays for performance reasons.
+ */
 static struct growableArray gsources, gtargets;
 #define SOURCES_SIZE	128
 #define TARGETS_SIZE	32
@@ -110,40 +115,13 @@ static GNode	    *mainNode;	/* The main target to create. This is the
 				 * first target on the first dependency
 				 * line in the first makefile */
 /*-
- * specType contains the SPECial TYPE of the current target. It is
- * Not if the target is unspecial. If it *is* special, however, the children
- * are linked as children of the parent but not vice versa. This variable is
- * set in ParseDoDependency
+ * specType contains the special TYPE of the current target. It is
+ * SPECIAL_NONE if the target is unspecial. If it *is* special, however,
+ * the children are linked as children of the parent but not vice versa.
+ * This variable is set in ParseDoDependency
  */
-typedef enum {
-    Begin,	    /* .BEGIN */
-    Default,	    /* .DEFAULT */
-    End,	    /* .END */
-    Ignore,	    /* .IGNORE */
-    Includes,	    /* .INCLUDES */
-    Interrupt,	    /* .INTERRUPT */
-    Libs,	    /* .LIBS */
-    MFlags,	    /* .MFLAGS or .MAKEFLAGS */
-    Main,	    /* .MAIN and we don't have anything user-specified to
-		     * make */
-    NoExport,	    /* .NOEXPORT */
-    NoPath,	    /* .NOPATH */
-    Not,	    /* Not special */
-    NotParallel,    /* .NOTPARALELL */
-    Null,	    /* .NULL */
-    Order,	    /* .ORDER */
-    Parallel,	    /* .PARALLEL */
-    ExPath,	    /* .PATH */
-    Phony,	    /* .PHONY */
-    Precious,	    /* .PRECIOUS */
-    Silent,	    /* .SILENT */
-    SingleShell,    /* .SINGLESHELL */
-    Suffixes,	    /* .SUFFIXES */
-    Wait,	    /* .WAIT */
-    Attribute	    /* Generic attribute */
-} ParseSpecial;
 
-static ParseSpecial specType;
+static int specType;
 static int waiting;
 
 /*
@@ -152,66 +130,18 @@ static int waiting;
  */
 static GNode	*predecessor;
 
-/*
- * The parseKeywords table is searched using binary search when deciding
- * if a target or source is special. The 'spec' field is the ParseSpecial
- * type of the keyword ("Not" if the keyword isn't special as a target) while
- * the 'op' field is the operator to apply to the list of targets if the
- * keyword is used as a source ("0" if the keyword isn't special as a source)
- */
-static struct {
-    char	  *name;	/* Name of keyword */
-    ParseSpecial  spec; 	/* Type when used as a target */
-    int 	  op;		/* Operator when used as a source */
-} parseKeywords[] = {
-{ ".BEGIN",	  Begin,	0 },
-{ ".DEFAULT",	  Default,	0 },
-{ ".END",	  End,		0 },
-{ ".EXEC",	  Attribute,	OP_EXEC },
-{ ".IGNORE",	  Ignore,	OP_IGNORE },
-{ ".INCLUDES",	  Includes,	0 },
-{ ".INTERRUPT",   Interrupt,	0 },
-{ ".INVISIBLE",   Attribute,	OP_INVISIBLE },
-{ ".JOIN",	  Attribute,	OP_JOIN },
-{ ".LIBS",	  Libs, 	0 },
-{ ".MADE",	  Attribute,	OP_MADE },
-{ ".MAIN",	  Main, 	0 },
-{ ".MAKE",	  Attribute,	OP_MAKE },
-{ ".MAKEFLAGS",   MFlags,	0 },
-{ ".MFLAGS",	  MFlags,	0 },
-#if 0	/* basic scaffolding for NOPATH, not working yet */
-{ ".NOPATH",	  NoPath,	OP_NOPATH },
-#endif
-{ ".NOTMAIN",	  Attribute,	OP_NOTMAIN },
-{ ".NOTPARALLEL", NotParallel,	0 },
-{ ".NO_PARALLEL", NotParallel,	0 },
-{ ".NULL",	  Null, 	0 },
-{ ".OPTIONAL",	  Attribute,	OP_OPTIONAL },
-{ ".ORDER",	  Order,	0 },
-{ ".PARALLEL",	  Parallel,	0 },
-{ ".PATH",	  ExPath,	0 },
-{ ".PHONY",	  Phony,	OP_PHONY },
-{ ".PRECIOUS",	  Precious,	OP_PRECIOUS },
-{ ".RECURSIVE",   Attribute,	OP_MAKE },
-{ ".SILENT",	  Silent,	OP_SILENT },
-{ ".SINGLESHELL", SingleShell,	0 },
-{ ".SUFFIXES",	  Suffixes,	0 },
-{ ".USE",	  Attribute,	OP_USE },
-{ ".WAIT",	  Wait, 	0 },
-};
-
-static int ParseFindKeyword(const char *);
 static void ParseLinkSrc(GNode *, GNode *);
-static int ParseDoOp(GNode *, int);
+static int ParseDoOp(GNode **, int);
 static int ParseAddDep(GNode *, GNode *);
-static void ParseDoSrc(int, const char *);
+static void ParseDoSrc(struct growableArray *, struct growableArray *, int,
+    const char *, const char *);
 static int ParseFindMain(void *, void *);
-static void ParseAddDir(void *, void *);
 static void ParseClearPath(void *);
 
-static void add_target_node(const char *);
-static void add_target_nodes(const char *);
-static void ParseDoDependency(char *);
+static void add_target_node(const char *, const char *);
+static void add_target_nodes(const char *, const char *);
+static void apply_op(struct growableArray *, int, GNode *);
+static void ParseDoDependency(const char *);
 static void ParseAddCmd(void *, void *);
 static void ParseHasCommands(void *);
 static bool handle_poison(const char *);
@@ -227,43 +157,100 @@ static void lookup_sysv_style_include(const char *, const char *, bool);
 static void lookup_sysv_include(const char *, const char *);
 static void lookup_conditional_include(const char *, const char *);
 static bool parse_as_special_line(Buffer, Buffer, const char *);
+
+static const char *parse_do_targets(Lst, int *, const char *);
 static void parse_target_line(struct growableArray *, const char *,
     const char *);
 
-/*-
- *----------------------------------------------------------------------
- * ParseFindKeyword --
- *	Look in the table of keywords for one matching the given string.
- *
- * Results:
- *	The index of the keyword, or -1 if it isn't there.
- *----------------------------------------------------------------------
- */
-static int
-ParseFindKeyword(const char *str)	/* keyword to look up */
+static void finish_commands(struct growableArray *);
+static void parse_commands(struct growableArray *, const char *);
+static void create_special_nodes(void);
+static bool found_delimiter(const char *);
+static int handle_special_targets(Lst);
+
+#define	SPECIAL_EXEC		4
+#define SPECIAL_IGNORE		5
+#define SPECIAL_INCLUDES	6
+#define	SPECIAL_INVISIBLE	8
+#define SPECIAL_JOIN		9
+#define SPECIAL_LIBS		10
+#define SPECIAL_MADE		11
+#define SPECIAL_MAIN		12
+#define SPECIAL_MAKE		13
+#define SPECIAL_MFLAGS		14
+#define	SPECIAL_NOTMAIN		15
+#define	SPECIAL_NOTPARALLEL	16
+#define	SPECIAL_NULL		17
+#define	SPECIAL_OPTIONAL	18
+#define SPECIAL_ORDER		19
+#define SPECIAL_PARALLEL	20
+#define SPECIAL_PHONY		22
+#define SPECIAL_PRECIOUS	23
+#define SPECIAL_SILENT		25
+#define SPECIAL_SINGLESHELL	26
+#define SPECIAL_SUFFIXES	27
+#define	SPECIAL_USE		28
+#define SPECIAL_WAIT		29
+#define SPECIAL_NOPATH		30
+#define SPECIAL_ERROR		31
+
+
+#define P(k) k, sizeof(k), K_##k
+
+static struct {
+	const char *keyword;
+	size_t sz;
+	uint32_t hv;
+	int type;
+	int special_op;
+} specials[] = {
+    { P(NODE_EXEC),	SPECIAL_EXEC | SPECIAL_TARGETSOURCE,	OP_EXEC, },
+    { P(NODE_IGNORE),	SPECIAL_IGNORE | SPECIAL_TARGETSOURCE, 	OP_IGNORE, },
+    { P(NODE_INCLUDES),	SPECIAL_INCLUDES | SPECIAL_TARGET,	0, },
+    { P(NODE_INVISIBLE),SPECIAL_INVISIBLE | SPECIAL_TARGETSOURCE,OP_INVISIBLE, },
+    { P(NODE_JOIN),	SPECIAL_JOIN | SPECIAL_TARGETSOURCE,	OP_JOIN, },
+    { P(NODE_LIBS),	SPECIAL_LIBS | SPECIAL_TARGET,		0, },
+    { P(NODE_MADE),	SPECIAL_MADE | SPECIAL_TARGETSOURCE,	OP_MADE, },
+    { P(NODE_MAIN),	SPECIAL_MAIN | SPECIAL_TARGET,		0, },
+    { P(NODE_MAKE),	SPECIAL_MAKE | SPECIAL_TARGETSOURCE,	OP_MAKE, },
+    { P(NODE_MAKEFLAGS),	SPECIAL_MFLAGS | SPECIAL_TARGET,	0, },
+    { P(NODE_MFLAGS),	SPECIAL_MFLAGS | SPECIAL_TARGET,	0, },
+    { P(NODE_NOTMAIN),	SPECIAL_NOTMAIN | SPECIAL_TARGETSOURCE,	OP_NOTMAIN, },
+    { P(NODE_NOTPARALLEL),SPECIAL_NOTPARALLEL | SPECIAL_TARGET,	0, },
+    { P(NODE_NO_PARALLEL),SPECIAL_NOTPARALLEL | SPECIAL_TARGET,	0, },
+    { P(NODE_NULL),	SPECIAL_NULL | SPECIAL_TARGET,		0, },
+    { P(NODE_OPTIONAL),	SPECIAL_OPTIONAL | SPECIAL_TARGETSOURCE,OP_OPTIONAL, },
+    { P(NODE_ORDER),	SPECIAL_ORDER | SPECIAL_TARGET,		0, },
+    { P(NODE_PARALLEL),	SPECIAL_PARALLEL | SPECIAL_TARGET,	0, },
+    { P(NODE_PATH),	SPECIAL_PATH | SPECIAL_TARGET,		0, },
+    { P(NODE_PHONY),	SPECIAL_PHONY | SPECIAL_TARGETSOURCE,	OP_PHONY, },
+    { P(NODE_PRECIOUS),	SPECIAL_PRECIOUS | SPECIAL_TARGETSOURCE,OP_PRECIOUS, },
+    { P(NODE_RECURSIVE),SPECIAL_MAKE | SPECIAL_TARGETSOURCE,	OP_MAKE, },
+    { P(NODE_SILENT),	SPECIAL_SILENT | SPECIAL_TARGETSOURCE,	OP_SILENT, },
+    { P(NODE_SINGLESHELL),SPECIAL_SINGLESHELL | SPECIAL_TARGET,	0, },
+    { P(NODE_SUFFIXES),	SPECIAL_SUFFIXES | SPECIAL_TARGET,	0, },
+    { P(NODE_USE),	SPECIAL_USE | SPECIAL_TARGETSOURCE,	OP_USE, },
+    { P(NODE_WAIT),	SPECIAL_WAIT | SPECIAL_TARGETSOURCE,	0 },
+#if 0
+	{ P(NODE_NOPATH),	SPECIAL_NOPATH, },
+#endif
+};
+
+#undef P
+
+static void
+create_special_nodes()
 {
-    int 	    start,
-		    end,
-		    cur;
-    int 	    diff;
+	unsigned int i;
 
-    start = 0;
-    end = (sizeof(parseKeywords)/sizeof(parseKeywords[0])) - 1;
-
-    do {
-	cur = start + (end - start) / 2;
-	diff = strcmp(str, parseKeywords[cur].name);
-
-	if (diff == 0) {
-	    return cur;
-	} else if (diff < 0) {
-	    end = cur - 1;
-	} else {
-	    start = cur + 1;
+	for (i = 0; i < sizeof(specials)/sizeof(specials[0]); i++) {
+		GNode *gn = Targ_FindNodeh(specials[i].keyword,
+		    specials[i].sz, specials[i].hv, TARG_CREATE);
+		gn->special = specials[i].type;
+		gn->special_op = specials[i].special_op;
 	}
-    } while (start <= end);
-    return -1;
 }
+
 /*-
  *---------------------------------------------------------------------
  * ParseLinkSrc  --
@@ -282,18 +269,18 @@ ParseLinkSrc(
     GNode		*pgn,	/* The parent node */
     GNode		*cgn)	/* The child node */
 {
-	if (Lst_AddNew(&pgn->children, cgn)) {
-		if (specType == Not)
-			Lst_AtEnd(&cgn->parents, pgn);
-		pgn->unmade++;
-	}
+    if (Lst_AddNew(&pgn->children, cgn)) {
+	if (specType == SPECIAL_NONE)
+	    Lst_AtEnd(&cgn->parents, pgn);
+	pgn->unmade++;
+    }
 }
 
 /*-
  *---------------------------------------------------------------------
  * ParseDoOp  --
  *	Apply the parsed operator to the given target node. Used in a
- *	Lst_Find call by ParseDoDependency once all targets have
+ *	Array_Find call by ParseDoDependency once all targets have
  *	been found and their operator parsed. If the previous and new
  *	operators are incompatible, a major error is taken.
  *
@@ -304,56 +291,52 @@ ParseLinkSrc(
  */
 static int
 ParseDoOp(
-    GNode	   *gn,	/* The node to which the operator is to be applied */
+    GNode	   **gnp,
     int	   	   op)	/* The operator to apply */
 {
-	/*
-	 * If the dependency mask of the operator and the node don't match and
-	 * the node has actually had an operator applied to it before, and
-	 * the operator actually has some dependency information in it, complain.
-	 */
-	if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
-		!OP_NOP(gn->type) && !OP_NOP(op)) {
-		Parse_Error(PARSE_FATAL, 
-		    "Inconsistent operator for %s", gn->name);
-		return 0;
-	}
+    GNode *gn = *gnp;
+    /*
+     * If the dependency mask of the operator and the node don't match and
+     * the node has actually had an operator applied to it before, and
+     * the operator actually has some dependency information in it, complain.
+     */
+    if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
+	!OP_NOP(gn->type) && !OP_NOP(op)) {
+	Parse_Error(PARSE_FATAL, "Inconsistent operator for %s", gn->name);
+	return 0;
+    }
 
-	if (op == OP_DOUBLEDEP && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
-		/* If the node was the object of a :: operator, we need to
-		 * create a new instance of it for the children and commands on
-		 * this dependency line. The new instance is placed on the
-		 * 'cohorts' list of the initial one (note the initial one is
-		 * not on its own cohorts list) and the new instance is linked
-		 * to all parents of the initial instance.  */
-		GNode		*cohort;
-		LstNode 	ln;
-		unsigned int i;
+    if (op == OP_DOUBLEDEP && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
+	/* If the node was the object of a :: operator, we need to create a
+	 * new instance of it for the children and commands on this dependency
+	 * line. The new instance is placed on the 'cohorts' list of the
+	 * initial one (note the initial one is not on its own cohorts list)
+	 * and the new instance is linked to all parents of the initial
+	 * instance.  */
+	GNode		*cohort;
+	LstNode 	ln;
 
-		cohort = Targ_NewGN(gn->name);
-		/* Duplicate links to parents so graph traversal is simple.
-		 * Perhaps some type bits should be duplicated?
-		 *
-		 * Make the cohort invisible as well to avoid duplicating it
-		 * into other variables. True, parents of this target won't
-		 * tend to do anything with their local variables, but better
-		 * safe than sorry.  */
-		for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln))
-			ParseLinkSrc((GNode *)Lst_Datum(ln), cohort);
-		cohort->type = OP_DOUBLEDEP|OP_INVISIBLE;
-		Lst_AtEnd(&gn->cohorts, cohort);
+	cohort = Targ_NewGN(gn->name);
+	/* Duplicate links to parents so graph traversal is simple. Perhaps
+	 * some type bits should be duplicated?
+	 *
+	 * Make the cohort invisible as well to avoid duplicating it into
+	 * other variables. True, parents of this target won't tend to do
+	 * anything with their local variables, but better safe than
+	 * sorry.  */
+	for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln))
+	    ParseLinkSrc((GNode *)Lst_Datum(ln), cohort);
+	cohort->type = OP_DOUBLEDEP|OP_INVISIBLE;
+	Lst_AtEnd(&gn->cohorts, cohort);
 
-		/* Replace the node in the targets list with the new copy */
-		for (i = 0; i < gtargets.n; i++)
-			if (gtargets.a[i] == gn)
-				break;
-		gtargets.a[i] = cohort;
-		gn = cohort;
-	}
-	/* We don't want to nuke any previous flags (whatever they were) so we
-	 * just OR the new operator into the old.  */
-	gn->type |= op;
-	return 1;
+	/* Replace the node in the targets list with the new copy */
+	*gnp = cohort;
+	gn = cohort;
+    }
+    /* We don't want to nuke any previous flags (whatever they were) so we
+     * just OR the new operator into the old.  */
+    gn->type |= op;
+    return 1;
 }
 
 /*-
@@ -375,18 +358,26 @@ ParseDoOp(
 static int
 ParseAddDep(GNode *p, GNode *s)
 {
-	if (p->order < s->order) {
-		/* XXX: This can cause loops, and loops can cause unmade
-		 * targets, but checking is tedious, and the debugging output
-		 * can show the problem.  */
-		Lst_AtEnd(&p->successors, s);
-		Lst_AtEnd(&s->preds, p);
-		return 1;
-	}
-	else
-		return 0;
+    if (p->order < s->order) {
+	/* XXX: This can cause loops, and loops can cause unmade targets,
+	 * but checking is tedious, and the debugging output can show the
+	 * problem.  */
+	Lst_AtEnd(&p->successors, s);
+	Lst_AtEnd(&s->preds, p);
+	return 1;
+    }
+    else
+	return 0;
 }
 
+static void
+apply_op(struct growableArray *targets, int op, GNode *gn)
+{
+	if (op)
+		gn->type |= op;
+	else
+		Array_ForEach(targets, ParseLinkSrc, gn);
+}
 
 /*-
  *---------------------------------------------------------------------
@@ -404,102 +395,77 @@ ParseAddDep(GNode *p, GNode *s)
  */
 static void
 ParseDoSrc(
+    struct growableArray *targets,
+    struct growableArray *sources,
     int 	tOp,	/* operator (if any) from special targets */
-    const char	*src)	/* name of the source to handle */
+    const char	*src,	/* name of the source to handle */
+    const char *esrc)
 {
-	GNode	*gn = NULL;
-
-	if (*src == '.' && isupper(src[1])) {
-		int keywd = ParseFindKeyword(src);
-		if (keywd != -1) {
-			int op = parseKeywords[keywd].op;
-			if (op != 0) {
-				Array_Find(&gtargets, ParseDoOp, op);
-				return;
-			}
-			if (parseKeywords[keywd].spec == Wait) {
-				waiting++;
-				return;
-			}
+	GNode *gn = Targ_FindNodei(src, esrc, TARG_CREATE);
+	if ((gn->special & SPECIAL_SOURCE) != 0) {
+		if (gn->special_op) {
+			Array_FindP(targets, ParseDoOp, gn->special_op);
+			return;
+		} else {
+			assert((gn->special & SPECIAL_MASK) == SPECIAL_WAIT);
+			waiting++;
+			return;
 		}
 	}
 
 	switch (specType) {
-	case Main:
+	case SPECIAL_MAIN:
 		/*
 		 * If we have noted the existence of a .MAIN, it means we need
 		 * to add the sources of said target to the list of things
-		 * to create. The string 'src' is likely to be freed, so we
-		 * must make a new copy of it. Note that this will only be
-		 * invoked if the user didn't specify a target on the command
-		 * line. This is to allow #ifmake's to succeed, or something...
+		 * to create.  Note that this will only be invoked if the user
+		 * didn't specify a target on the command line. This is to
+		 * allow #ifmake's to succeed, or something...
 		 */
-		Lst_AtEnd(create, estrdup(src));
+		Lst_AtEnd(create, gn->name);
 		/*
 		 * Add the name to the .TARGETS variable as well, so the user
 		 * can employ that, if desired.
 		 */
-		Var_Append(".TARGETS", src);
+		Var_Append(".TARGETS", gn->name);
 		return;
 
-	case Order:
+	case SPECIAL_ORDER:
 		/*
 		 * Create proper predecessor/successor links between the
 		 * previous source and the current one.
 		 */
-		gn = Targ_FindNode(src, TARG_CREATE);
 		if (predecessor != NULL) {
 			Lst_AtEnd(&predecessor->successors, gn);
 			Lst_AtEnd(&gn->preds, predecessor);
 		}
-		/*
-		 * The current source now becomes the predecessor for the next
-		 * one.
-		 */
 		predecessor = gn;
 		break;
 
 	default:
 		/*
-		 * If the source is not an attribute, we need to find/create
-		 * a node for it. After that we can apply any operator to it
-		 * from a special target or link it to its parents, as
-		 * appropriate.
-		 *
 		 * In the case of a source that was the object of a :: operator,
 		 * the attribute is applied to all of its instances (as kept in
 		 * the 'cohorts' list of the node) or all the cohorts are linked
 		 * to all the targets.
 		 */
-		gn = Targ_FindNode(src, TARG_CREATE);
-		if (tOp) {
-			gn->type |= tOp;
-		} else {
-			Array_ForEach(&gtargets, ParseLinkSrc, gn);
-		}
+		apply_op(targets, tOp, gn);
 		if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
-			GNode	*cohort;
 			LstNode	ln;
 
-			for (ln=Lst_First(&gn->cohorts); ln != NULL; 
+			for (ln=Lst_First(&gn->cohorts); ln != NULL;
 			    ln = Lst_Adv(ln)){
-				cohort = (GNode *)Lst_Datum(ln);
-				if (tOp) {
-					cohort->type |= tOp;
-				} else {
-					Array_ForEach(&gtargets, ParseLinkSrc, 
-					    cohort);
-				}
+			    	apply_op(targets, tOp,
+				    (GNode *)Lst_Datum(ln));
 			}
 		}
 		break;
 	}
 
 	gn->order = waiting;
-	Array_AtEnd(&gsources, gn);
-	if (waiting) {
-		Array_Find(&gsources, ParseAddDep, gn);
-	}
+	Array_AtEnd(sources, gn);
+	if (waiting)
+		Array_Find(sources, ParseAddDep, gn);
 }
 
 /*-
@@ -513,7 +479,7 @@ ParseDoSrc(
  *	1 if main not found yet, 0 if it is.
  *
  * Side Effects:
- *	mainNode is changed and Targ_SetMain is called.
+ *	mainNode is changed and.
  *-----------------------------------------------------------------------
  */
 static int
@@ -521,29 +487,13 @@ ParseFindMain(
     void *gnp,	    /* Node to examine */
     void *dummy 	UNUSED)
 {
-	GNode	  *gn = (GNode *)gnp;
-	if ((gn->type & OP_NOTARGET) == 0) {
-		mainNode = gn;
-		Targ_SetMain(gn);
-		return 0;
-	} else {
-		return 1;
-	}
-}
-
-/*-
- *-----------------------------------------------------------------------
- * ParseAddDir --
- *	Front-end for Dir_AddDir to make sure Lst_ForEach keeps going
- *
- * Side Effects:
- *	See Dir_AddDir.
- *-----------------------------------------------------------------------
- */
-static void
-ParseAddDir(void *path, void *name)
-{
-	Dir_AddDir((Lst)path, (char *)name);
+    GNode	  *gn = (GNode *)gnp;
+    if ((gn->type & OP_NOTARGET) == 0 && gn->special == SPECIAL_NONE) {
+	mainNode = gn;
+	return 0;
+    } else {
+	return 1;
+    }
 }
 
 /*-
@@ -555,31 +505,33 @@ ParseAddDir(void *path, void *name)
 static void
 ParseClearPath(void *p)
 {
-	Lst 	path = (Lst)p;
+    Lst 	path = (Lst)p;
 
-	Lst_Destroy(path, Dir_Destroy);
-	Lst_Init(path);
+    Lst_Destroy(path, Dir_Destroy);
+    Lst_Init(path);
 }
 
 static void
-add_target_node(const char *line)
+add_target_node(const char *line, const char *end)
 {
 	GNode *gn;
 
-	if (!Suff_IsTransform(line))
-		gn = Targ_FindNode(line, TARG_CREATE);
-	else
-		gn = Suff_AddTransform(line);
+	gn = Suff_ParseAsTransform(line, end);
+
+	if (gn == NULL) {
+		gn = Targ_FindNodei(line, end, TARG_CREATE);
+		gn->type &= ~OP_DUMMY;
+	}
 
 	if (gn != NULL)
 		Array_AtEnd(&gtargets, gn);
 }
 
 static void
-add_target_nodes(const char *line)
+add_target_nodes(const char *line, const char *end)
 {
 
-	if (Dir_HasWildcards(line)) {
+	if (Dir_HasWildcardsi(line, end)) {
 		/*
 		 * Targets are to be sought only in the current directory,
 		 * so create an empty path for the thing. Note we need to
@@ -592,14 +544,201 @@ add_target_nodes(const char *line)
 
 		Lst_Init(&emptyPath);
 		Lst_Init(&curTargs);
-		Dir_Expand(line, &emptyPath, &curTargs);
+		Dir_Expandi(line, end, &emptyPath, &curTargs);
 		Lst_Destroy(&emptyPath, Dir_Destroy);
 		while ((targName = (char *)Lst_DeQueue(&curTargs)) != NULL) {
-			add_target_node(targName);
+			add_target_node(targName, targName + strlen(targName));
 		}
 		Lst_Destroy(&curTargs, NOFREE);
 	} else {
-		add_target_node(line);
+		add_target_node(line, end);
+	}
+}
+
+/* special target line check: a proper delimiter is a ':' or '!', but
+ * we don't want to end a target on such a character if there is a better
+ * match later on.
+ * By "better" I mean one that is followed by whitespace. This allows the
+ * user to have targets like:
+ *    fie::fi:fo: fum
+ * where "fie::fi:fo" is the target.  In real life this is used for perl5
+ * library man pages where "::" separates an object from its class.  Ie:
+ * "File::Spec::Unix".
+ * This behaviour is also consistent with other versions of make.
+ */
+static bool
+found_delimiter(const char *s)
+{
+	if (*s == '!' || *s == ':') {
+		const char *p = s + 1;
+
+		if (*s == ':' && *p == ':')
+			p++;
+
+		/* Found the best match already. */
+		if (isspace(*p) || *p == '\0')
+			return true;
+
+		do {
+			p += strcspn(p, "!:");
+			if (*p == '\0')
+			    break;
+			p++;
+		} while (!isspace(*p));
+
+		/* No better match later on... */
+		if (*p == '\0')
+			return true;
+	}
+	return false;
+}
+
+static const char *
+parse_do_targets(Lst paths, int *op, const char *line)
+{
+	const char *cp;
+
+	do {
+		for (cp = line; *cp && !isspace(*cp) && *cp != '(';) {
+			if (*cp == '$')
+				/* Must be a dynamic source (would have been
+				 * expanded otherwise), so call the Var module
+				 * to parse the puppy so we can safely advance
+				 * beyond it...There should be no errors in
+				 * this, as they would have been discovered in
+				 * the initial Var_Subst and we wouldn't be
+				 * here.  */
+				Var_ParseSkip(&cp, NULL);
+			else {
+				if (found_delimiter(cp))
+					break;
+				cp++;
+			}
+		}
+
+		if (*cp == '(') {
+			LIST temp;
+			Lst_Init(&temp);
+			/* Archives must be handled specially to make sure the
+			 * OP_ARCHV flag is set in their 'type' field, for one
+			 * thing, and because things like "archive(file1.o
+			 * file2.o file3.o)" are permissible.
+			 * Arch_ParseArchive will set 'line' to be the first
+			 * non-blank after the archive-spec. It creates/finds
+			 * nodes for the members and places them on the given
+			 * list, returning true if all went well and false if
+			 * there was an error in the specification. On error,
+			 * line should remain untouched.  */
+			if (!Arch_ParseArchive(&line, &temp, NULL)) {
+				Parse_Error(PARSE_FATAL,
+				     "Error in archive specification: \"%s\"",
+				     line);
+				return NULL;
+			} else {
+				AppendList2Array(&temp, &gtargets);
+				Lst_Destroy(&temp, NOFREE);
+				cp = line;
+				continue;
+			}
+		}
+		if (*cp == '\0') {
+			/* Ending a dependency line without an operator is a
+			 * Bozo no-no */
+			Parse_Error(PARSE_FATAL, "Need an operator");
+			return NULL;
+		}
+		/*
+		 * Have word in line. Get or create its nodes and stick it at
+		 * the end of the targets list
+		 */
+	    	if (*line != '\0')
+			add_target_nodes(line, cp);
+
+		while (isspace(*cp))
+			cp++;
+		line = cp;
+	} while (*line != '!' && *line != ':' && *line);
+	*op = handle_special_targets(paths);
+	return cp;
+}
+
+static void
+dump_targets()
+{
+	size_t i;
+	for (i = 0; i < gtargets.n; i++)
+		fprintf(stderr, "%s", gtargets.a[i]->name);
+	fprintf(stderr, "\n");
+}
+
+static int
+handle_special_targets(Lst paths)
+{
+	size_t i;
+	int seen_path = 0;
+	int seen_special = 0;
+	int seen_normal = 0;
+	int type;
+
+	for (i = 0; i < gtargets.n; i++) {
+		type = gtargets.a[i]->special;
+		if ((type & SPECIAL_MASK) == SPECIAL_PATH) {
+			seen_path++;
+			Lst_AtEnd(paths, find_suffix_path(gtargets.a[i]));
+		} else if ((type & SPECIAL_TARGET) != 0)
+			seen_special++;
+		else
+			seen_normal++;
+	}
+	if ((seen_path != 0) + (seen_special != 0) + (seen_normal != 0) > 1) {
+		Parse_Error(PARSE_FATAL, "Wrong mix of special targets");
+		dump_targets();
+		specType = SPECIAL_ERROR;
+		return 0;
+	}
+	if (seen_normal != 0) {
+		specType = SPECIAL_NONE;
+		return 0;
+	}
+	else if (seen_path != 0) {
+		specType = SPECIAL_PATH;
+		return 0;
+	} else if (seen_special == 0) {
+		specType = SPECIAL_NONE;
+		return 0;
+	} else if (seen_special != 1) {
+		Parse_Error(PARSE_FATAL, "Mixing special targets is not allowed");
+		dump_targets();
+		return 0;
+	} else if (seen_special == 1) {
+		specType = gtargets.a[0]->special & SPECIAL_MASK;
+		switch (specType) {
+		case SPECIAL_MAIN:
+			if (!Lst_IsEmpty(create)) {
+				specType = SPECIAL_NONE;
+			}
+			break;
+		case SPECIAL_NOTPARALLEL:
+		{
+			extern int  maxJobs;
+
+			maxJobs = 1;
+			break;
+		}
+		case SPECIAL_SINGLESHELL:
+			compatMake = 1;
+			break;
+		case SPECIAL_ORDER:
+			predecessor = NULL;
+			break;
+		default:
+			break;
+		}
+		return gtargets.a[0]->special_op;
+	} else {
+		/* we're allowed to have 0 target */
+		specType = SPECIAL_NONE;
+		return 0;
 	}
 }
 
@@ -635,444 +774,215 @@ add_target_nodes(const char *line)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoDependency(char *line)	/* the line to parse */
+ParseDoDependency(const char *line)	/* the line to parse */
 {
-    char	   *cp; 	/* our current position */
-    GNode	   *gn; 	/* a general purpose temporary node */
-    int 	    op; 	/* the operator on the line */
-    char	    savec;	/* a place to save a character */
-    LIST	    paths;	/* List of search paths to alter when parsing
-				 * a list of .PATH targets */
-    int 	    tOp;	/* operator from special target */
-    tOp = 0;
+	const char *cp; 	/* our current position */
+	int op; 		/* the operator on the line */
+	LIST paths;		/* List of search paths to alter when parsing
+			 	* a list of .PATH targets */
+	int tOp;		/* operator from special target */
 
-    specType = Not;
-    waiting = 0;
-    Lst_Init(&paths);
 
-    Array_Reset(&gsources);
+	waiting = 0;
+	Lst_Init(&paths);
 
-    do {
-	for (cp = line; *cp && !isspace(*cp) && *cp != '(';)
-	    if (*cp == '$')
-		/* Must be a dynamic source (would have been expanded
-		 * otherwise), so call the Var module to parse the puppy
-		 * so we can safely advance beyond it...There should be
-		 * no errors in this, as they would have been discovered
-		 * in the initial Var_Subst and we wouldn't be here.  */
-		Var_ParseSkip(&cp, NULL);
-	    else {
-		/* We don't want to end a word on ':' or '!' if there is a
-		 * better match later on in the string.  By "better" I mean
-		 * one that is followed by whitespace.	This allows the user
-		 * to have targets like:
-		 *    fie::fi:fo: fum
-		 * where "fie::fi:fo" is the target.  In real life this is used
-		 * for perl5 library man pages where "::" separates an object
-		 * from its class.  Ie: "File::Spec::Unix".  This behaviour
-		 * is also consistent with other versions of make.  */
-		if (*cp == '!' || *cp == ':') {
-		    char *p = cp + 1;
+	Array_Reset(&gsources);
 
-		    if (*cp == ':' && *p == ':')
-			p++;
-
-		    /* Found the best match already. */
-		    if (isspace(*p) || *p == '\0')
-			break;
-
-		    do {
-			p += strcspn(p, "!:");
-			if (*p == '\0')
-			    break;
-			p++;
-		    } while (!isspace(*p));
-
-		    /* No better match later on... */
-		    if (*p == '\0')
-			break;
-
-		}
-		cp++;
-	    }
-	if (*cp == '(') {
-	    LIST temp;
-	    Lst_Init(&temp);
-	    /* Archives must be handled specially to make sure the OP_ARCHV
-	     * flag is set in their 'type' field, for one thing, and because
-	     * things like "archive(file1.o file2.o file3.o)" are permissible.
-	     * Arch_ParseArchive will set 'line' to be the first non-blank
-	     * after the archive-spec. It creates/finds nodes for the members
-	     * and places them on the given list, returning true if all
-	     * went well and false if there was an error in the
-	     * specification. On error, line should remain untouched.  */
-	    if (!Arch_ParseArchive(&line, &temp, NULL)) {
-		Parse_Error(PARSE_FATAL,
-			     "Error in archive specification: \"%s\"", line);
+	cp = parse_do_targets(&paths, &tOp, line);
+	if (cp == NULL || specType == SPECIAL_ERROR)
 		return;
-	    } else {
-	    	AppendList2Array(&temp, &gtargets);
-		Lst_Destroy(&temp, NOFREE);
-		continue;
-	    }
-	}
-	savec = *cp;
 
-	if (*cp == '\0') {
-	    /* Ending a dependency line without an operator is a Bozo no-no */
-	    Parse_Error(PARSE_FATAL, "Need an operator");
-	    return;
-	}
-	*cp = '\0';
-	/* Have a word in line. See if it's a special target and set
-	 * specType to match it.  */
-	if (*line == '.' && isupper(line[1])) {
-	    /* See if the target is a special target that must have it
-	     * or its sources handled specially.  */
-	    int keywd = ParseFindKeyword(line);
-	    if (keywd != -1) {
-		if (specType == ExPath && parseKeywords[keywd].spec != ExPath) {
-		    Parse_Error(PARSE_FATAL, "Mismatched special targets");
-		    return;
-		}
-
-		specType = parseKeywords[keywd].spec;
-		tOp = parseKeywords[keywd].op;
-
-		/*
-		 * Certain special targets have special semantics:
-		 *	.PATH		Have to set the defaultPath
-		 *			variable too
-		 *	.MAIN		Its sources are only used if
-		 *			nothing has been specified to
-		 *			create.
-		 *	.DEFAULT	Need to create a node to hang
-		 *			commands on, but we don't want
-		 *			it in the graph, nor do we want
-		 *			it to be the Main Target, so we
-		 *			create it, set OP_NOTMAIN and
-		 *			add it to the list, setting
-		 *			DEFAULT to the new node for
-		 *			later use. We claim the node is
-		 *			A transformation rule to make
-		 *			life easier later, when we'll
-		 *			use Make_HandleUse to actually
-		 *			apply the .DEFAULT commands.
-		 *	.PHONY		The list of targets
-		 *	.NOPATH 	Don't search for file in the path
-		 *	.BEGIN
-		 *	.END
-		 *	.INTERRUPT	Are not to be considered the
-		 *			main target.
-		 *	.NOTPARALLEL	Make only one target at a time.
-		 *	.SINGLESHELL	Create a shell for each command.
-		 *	.ORDER		Must set initial predecessor to NULL
-		 */
-		switch (specType) {
-		    case ExPath:
-			Lst_AtEnd(&paths, defaultPath);
-			break;
-		    case Main:
-			if (!Lst_IsEmpty(create)) {
-			    specType = Not;
-			}
-			break;
-		    case Begin:
-		    case End:
-		    case Interrupt:
-			gn = Targ_FindNode(line, TARG_CREATE);
-			gn->type |= OP_NOTMAIN;
-			Array_AtEnd(&gtargets, gn);
-			break;
-		    case Default:
-			gn = Targ_NewGN(".DEFAULT");
-			gn->type |= OP_NOTMAIN|OP_TRANSFORM;
-			Array_AtEnd(&gtargets, gn);
-			DEFAULT = gn;
-			break;
-		    case NotParallel:
-		    {
-			extern int  maxJobs;
-
-			maxJobs = 1;
-			break;
-		    }
-		    case SingleShell:
-			compatMake = 1;
-			break;
-		    case Order:
-			predecessor = NULL;
-			break;
-		    default:
-			break;
-		}
-	    } else if (strncmp(line, ".PATH", 5) == 0) {
-		/*
-		 * .PATH<suffix> has to be handled specially.
-		 * Call on the suffix module to give us a path to
-		 * modify.
-		 */
-		Lst	path;
-
-		specType = ExPath;
-		path = Suff_GetPath(&line[5]);
-		if (path == NULL) {
-		    Parse_Error(PARSE_FATAL,
-				 "Suffix '%s' not defined (yet)",
-				 &line[5]);
-		    return;
+	/* Have now parsed all the target names. Must parse the operator next.
+	 * The result is left in op .  */
+	if (*cp == '!') {
+		op = OP_FORCE;
+	} else if (*cp == ':') {
+		if (cp[1] == ':') {
+			op = OP_DOUBLEDEP;
+			cp++;
 		} else {
-		    Lst_AtEnd(&paths, path);
+			op = OP_DEPENDS;
 		}
-	    }
-	}
-
-	/*
-	 * Have word in line. Get or create its node and stick it at
-	 * the end of the targets list
-	 */
-	if (specType == Not && *line != '\0') {
-	    add_target_nodes(line);
-	} else if (specType == ExPath && *line != '.' && *line != '\0')
-	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
-
-	*cp = savec;
-	/*
-	 * If it is a special type and not .PATH, it's the only target we
-	 * allow on this line...
-	 */
-	if (specType != Not && specType != ExPath) {
-	    bool warn = false;
-
-	    while (*cp != '!' && *cp != ':' && *cp) {
-		if (*cp != ' ' && *cp != '\t') {
-		    warn = true;
-		}
-		cp++;
-	    }
-	    if (warn) {
-		Parse_Error(PARSE_WARNING, "Extra target ignored");
-	    }
 	} else {
-	    while (isspace(*cp)) {
-		cp++;
-	    }
+		Parse_Error(PARSE_FATAL, "Missing dependency operator");
+		return;
 	}
+
+	cp++;			/* Advance beyond operator */
+
+	Array_FindP(&gtargets, ParseDoOp, op);
+
+	/*
+	 * Get to the first source
+	 */
+	while (isspace(*cp))
+		cp++;
 	line = cp;
-    } while (*line != '!' && *line != ':' && *line);
 
-    if (!Array_IsEmpty(&gtargets)) {
-	switch (specType) {
-	    default:
-		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
-		break;
-	    case Default:
-	    case Begin:
-	    case End:
-	    case Interrupt:
-		/* These four create nodes on which to hang commands, so
-		 * targets shouldn't be empty...  */
-	    case Not:
-		/* Nothing special here -- targets can be empty if it wants.  */
-		break;
-	}
-    }
-
-    /* Have now parsed all the target names. Must parse the operator next. The
-     * result is left in op .  */
-    if (*cp == '!') {
-	op = OP_FORCE;
-    } else if (*cp == ':') {
-	if (cp[1] == ':') {
-	    op = OP_DOUBLEDEP;
-	    cp++;
-	} else {
-	    op = OP_DEPENDS;
-	}
-    } else {
-	Parse_Error(PARSE_FATAL, "Missing dependency operator");
-	return;
-    }
-
-    cp++;			/* Advance beyond operator */
-
-    Array_Find(&gtargets, ParseDoOp, op);
-
-    /*
-     * Get to the first source
-     */
-    while (isspace(*cp)) {
-	cp++;
-    }
-    line = cp;
-
-    /*
-     * Several special targets take different actions if present with no
-     * sources:
-     *	a .SUFFIXES line with no sources clears out all old suffixes
-     *	a .PRECIOUS line makes all targets precious
-     *	a .IGNORE line ignores errors for all targets
-     *	a .SILENT line creates silence when making all targets
-     *	a .PATH removes all directories from the search path(s).
-     */
-    if (!*line) {
-	switch (specType) {
-	    case Suffixes:
-		Suff_ClearSuffixes();
-		break;
-	    case Precious:
-		allPrecious = true;
-		break;
-	    case Ignore:
-		ignoreErrors = true;
-		break;
-	    case Silent:
-		beSilent = true;
-		break;
-	    case ExPath:
-		Lst_Every(&paths, ParseClearPath);
-		break;
-	    default:
-		break;
-	}
-    } else if (specType == MFlags) {
 	/*
-	 * Call on functions in main.c to deal with these arguments and
-	 * set the initial character to a null-character so the loop to
-	 * get sources won't get anything
+	 * Several special targets take different actions if present with no
+	 * sources:
+	 *	a .SUFFIXES line with no sources clears out all old suffixes
+	 *	a .PRECIOUS line makes all targets precious
+	 *	a .IGNORE line ignores errors for all targets
+	 *	a .SILENT line creates silence when making all targets
+	 *	a .PATH removes all directories from the search path(s).
 	 */
-	Main_ParseArgLine(line);
-	*line = '\0';
-    } else if (specType == NotParallel || specType == SingleShell) {
-	*line = '\0';
-    }
-
-    /*
-     * NOW GO FOR THE SOURCES
-     */
-    if (specType == Suffixes || specType == ExPath ||
-	specType == Includes || specType == Libs ||
-	specType == Null) {
-	while (*line) {
-	    /*
-	     * If the target was one that doesn't take files as its sources
-	     * but takes something like suffixes, we take each
-	     * space-separated word on the line as a something and deal
-	     * with it accordingly.
-	     *
-	     * If the target was .SUFFIXES, we take each source as a
-	     * suffix and add it to the list of suffixes maintained by the
-	     * Suff module.
-	     *
-	     * If the target was a .PATH, we add the source as a directory
-	     * to search on the search path.
-	     *
-	     * If it was .INCLUDES, the source is taken to be the suffix of
-	     * files which will be #included and whose search path should
-	     * be present in the .INCLUDES variable.
-	     *
-	     * If it was .LIBS, the source is taken to be the suffix of
-	     * files which are considered libraries and whose search path
-	     * should be present in the .LIBS variable.
-	     *
-	     * If it was .NULL, the source is the suffix to use when a file
-	     * has no valid suffix.
-	     */
-	    char  savec;
-	    while (*cp && !isspace(*cp)) {
-		cp++;
-	    }
-	    savec = *cp;
-	    *cp = '\0';
-	    switch (specType) {
-		case Suffixes:
-		    Suff_AddSuffix(line);
-		    break;
-		case ExPath:
-		    Lst_ForEach(&paths, ParseAddDir, line);
-		    break;
-		case Includes:
-		    Suff_AddInclude(line);
-		    break;
-		case Libs:
-		    Suff_AddLib(line);
-		    break;
-		case Null:
-		    Suff_SetNull(line);
-		    break;
+	if (!*line) {
+		switch (specType) {
+		case SPECIAL_SUFFIXES:
+			Suff_ClearSuffixes();
+			break;
+		case SPECIAL_PRECIOUS:
+			allPrecious = true;
+			break;
+		case SPECIAL_IGNORE:
+			ignoreErrors = true;
+			break;
+		case SPECIAL_SILENT:
+			beSilent = true;
+			break;
+		case SPECIAL_PATH:
+			Lst_Every(&paths, ParseClearPath);
+			break;
 		default:
-		    break;
-	    }
-	    *cp = savec;
-	    if (savec != '\0') {
-		cp++;
-	    }
-	    while (isspace(*cp)) {
-		cp++;
-	    }
-	    line = cp;
+			break;
+		}
+	} else if (specType == SPECIAL_MFLAGS) {
+		/*Call on functions in main.c to deal with these arguments */
+		Main_ParseArgLine(line);
+		return;
+	} else if (specType == SPECIAL_NOTPARALLEL ||
+	    specType == SPECIAL_SINGLESHELL) {
+		return;
 	}
-	Lst_Destroy(&paths, NOFREE);
-    } else {
-	while (*line) {
-	    /*
-	     * The targets take real sources, so we must beware of archive
-	     * specifications (i.e. things with left parentheses in them)
-	     * and handle them accordingly.
-	     */
-	    while (*cp && !isspace(*cp)) {
-		if (*cp == '(' && cp > line && cp[-1] != '$') {
+
+	/*
+	 * NOW GO FOR THE SOURCES
+	 */
+	if (specType == SPECIAL_SUFFIXES || specType == SPECIAL_PATH ||
+	    specType == SPECIAL_INCLUDES || specType == SPECIAL_LIBS ||
+	    specType == SPECIAL_NULL) {
+		while (*line) {
 		    /*
-		     * Only stop for a left parenthesis if it isn't at the
-		     * start of a word (that'll be for variable changes
-		     * later) and isn't preceded by a dollar sign (a dynamic
-		     * source).
+		     * If the target was one that doesn't take files as its
+		     * sources but takes something like suffixes, we take each
+		     * space-separated word on the line as a something and deal
+		     * with it accordingly.
+		     *
+		     * If the target was .SUFFIXES, we take each source as a
+		     * suffix and add it to the list of suffixes maintained by
+		     * the Suff module.
+		     *
+		     * If the target was a .PATH, we add the source as a
+		     * directory to search on the search path.
+		     *
+		     * If it was .INCLUDES, the source is taken to be the
+		     * suffix of files which will be #included and whose search
+		     * path should be present in the .INCLUDES variable.
+		     *
+		     * If it was .LIBS, the source is taken to be the suffix of
+		     * files which are considered libraries and whose search
+		     * path should be present in the .LIBS variable.
+		     *
+		     * If it was .NULL, the source is the suffix to use when a
+		     * file has no valid suffix.
 		     */
-		    break;
-		} else {
-		    cp++;
+		    while (*cp && !isspace(*cp))
+			    cp++;
+		    switch (specType) {
+		    case SPECIAL_SUFFIXES:
+			    Suff_AddSuffixi(line, cp);
+			    break;
+		    case SPECIAL_PATH:
+			    {
+			    LstNode ln;
+
+			    for (ln = Lst_First(&paths); ln != NULL;
+			    	ln = Lst_Adv(ln))
+				    Dir_AddDiri((Lst)Lst_Datum(ln), line, cp);
+			    break;
+			    }
+		    case SPECIAL_INCLUDES:
+			    Suff_AddIncludei(line, cp);
+			    break;
+		    case SPECIAL_LIBS:
+			    Suff_AddLibi(line, cp);
+			    break;
+		    case SPECIAL_NULL:
+			    Suff_SetNulli(line, cp);
+			    break;
+		    default:
+			    break;
+		    }
+		    if (*cp != '\0')
+			cp++;
+		    while (isspace(*cp))
+			cp++;
+		    line = cp;
 		}
-	    }
+		Lst_Destroy(&paths, NOFREE);
+	} else {
+		while (*line) {
+			/*
+			 * The targets take real sources, so we must beware of
+			 * archive specifications (i.e. things with left
+			 * parentheses in them) and handle them accordingly.
+			 */
+			while (*cp && !isspace(*cp)) {
+				if (*cp == '(' && cp > line && cp[-1] != '$') {
+					/*
+					 * Only stop for a left parenthesis if
+					 * it isn't at the start of a word
+					 * (that'll be for variable changes
+					 * later) and isn't preceded by a
+					 * dollar sign (a dynamic source).
+					 */
+					break;
+				} else {
+					cp++;
+				}
+			}
 
-	    if (*cp == '(') {
-		GNode	  *gn;
-		LIST	  sources; /* list of archive source names after
-				    * expansion */
+			if (*cp == '(') {
+				GNode *gn;
+				LIST sources;	/* list of archive source
+						 * names after expansion */
 
-		Lst_Init(&sources);
-		if (!Arch_ParseArchive(&line, &sources, NULL)) {
-		    Parse_Error(PARSE_FATAL,
-				 "Error in source archive spec \"%s\"", line);
-		    return;
+				Lst_Init(&sources);
+				if (!Arch_ParseArchive(&line, &sources, NULL)) {
+					Parse_Error(PARSE_FATAL,
+					    "Error in source archive spec \"%s\"",
+					    line);
+					return;
+				}
+
+				while ((gn = (GNode *)Lst_DeQueue(&sources)) !=
+				    NULL)
+					ParseDoSrc(&gtargets, &gsources, tOp,
+					    gn->name, NULL);
+				cp = line;
+			} else {
+				const char *endSrc = cp;
+
+				ParseDoSrc(&gtargets, &gsources, tOp, line,
+				    endSrc);
+				if (*cp)
+					cp++;
+			}
+			while (isspace(*cp))
+				cp++;
+			line = cp;
 		}
-
-		while ((gn = (GNode *)Lst_DeQueue(&sources)) != NULL)
-		    ParseDoSrc(tOp, gn->name);
-		cp = line;
-	    } else {
-		if (*cp) {
-		    *cp = '\0';
-		    cp++;
-		}
-
-		ParseDoSrc(tOp, line);
-	    }
-	    while (isspace(*cp)) {
-		cp++;
-	    }
-	    line = cp;
 	}
-    }
 
-    if (mainNode == NULL) {
-	/* If we have yet to decide on a main target to make, in the
-	 * absence of any user input, we want the first target on
-	 * the first dependency line that is actually a real target
-	 * (i.e. isn't a .USE or .EXEC rule) to be made.  */
-	Array_Find(&gtargets, ParseFindMain, NULL);
-    }
-
-    /* Finally, destroy the list of sources.  */
+	if (mainNode == NULL) {
+		/* If we have yet to decide on a main target to make, in the
+		 * absence of any user input, we want the first target on
+		 * the first dependency line that is actually a real target
+		 * (i.e. isn't a .USE or .EXEC rule) to be made.  */
+		Array_Find(&gtargets, ParseFindMain, NULL);
+	}
 }
 
 /*-
@@ -1114,11 +1024,9 @@ static void
 ParseHasCommands(void *gnp)	    /* Node to examine */
 {
 	GNode *gn = (GNode *)gnp;
-	if (!Lst_IsEmpty(&gn->commands)) {
+	if (!Lst_IsEmpty(&gn->commands))
 		gn->type |= OP_HAS_COMMANDS;
-	}
 }
-
 
 
 /* Strip comments from line. Build a copy in buffer if necessary, */
@@ -1399,6 +1307,7 @@ handle_poison(const char *line)
 	}
 }
 
+
 static bool
 handle_for_loop(Buffer linebuf, const char *line)
 {
@@ -1436,6 +1345,7 @@ handle_undef(const char *line)
 	return true;
 }
 
+/* global hub for the construct */
 static bool
 handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 {
@@ -1481,7 +1391,6 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 static void
 finish_commands(struct growableArray *targets)
 {
-	Array_Every(targets, Suff_EndTransform);
 	Array_Every(targets, ParseHasCommands);
 	Array_Reset(targets);
 }
@@ -1632,8 +1541,9 @@ Parse_Init(void)
 	mainNode = NULL;
 	Static_Lst_Init(userIncludePath);
 	Static_Lst_Init(systemIncludePath);
-	Array_Init(&gsources, SOURCES_SIZE);
 	Array_Init(&gtargets, TARGETS_SIZE);
+    	Array_Init(&gsources, SOURCES_SIZE);
+	create_special_nodes();
 
 	LowParse_Init();
 #ifdef CLEANUP
@@ -1657,14 +1567,14 @@ void
 Parse_MainName(Lst listmain)	/* result list */
 {
 
-	if (mainNode == NULL) {
-		Punt("no target to make.");
-		/*NOTREACHED*/
-	} else if (mainNode->type & OP_DOUBLEDEP) {
-		Lst_AtEnd(listmain, mainNode);
-		Lst_Concat(listmain, &mainNode->cohorts);
-	}
-	else
-		Lst_AtEnd(listmain, mainNode);
+    if (mainNode == NULL) {
+	Punt("no target to make.");
+	/*NOTREACHED*/
+    } else if (mainNode->type & OP_DOUBLEDEP) {
+	Lst_AtEnd(listmain, mainNode);
+	Lst_Concat(listmain, &mainNode->cohorts);
+    }
+    else
+	Lst_AtEnd(listmain, mainNode);
 }
 
