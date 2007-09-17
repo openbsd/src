@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.70 2007/09/17 10:22:30 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.71 2007/09/17 10:28:48 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -729,7 +729,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 	if (shutUp) {
 		if (!(job->flags & JOB_SILENT) && !noSpecials &&
 		    commandShell->hasEchoCtl) {
-			DBPRINTF(job, "%s\n", commandShell->echoOff);
+			DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
 		} else {
 			shutUp = false;
 		}
@@ -749,11 +749,11 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 				 */
 				if (!(job->flags & JOB_SILENT) && !shutUp &&
 				    commandShell->hasEchoCtl) {
-					DBPRINTF(job, "%s\n", commandShell->echoOff);
-					DBPRINTF(job, "%s\n", commandShell->ignErr);
-					DBPRINTF(job, "%s\n", commandShell->echoOn);
+					DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
+					DBPRINTF(job, "%s\n", SHELL_ERROR_OFF);
+					DBPRINTF(job, "%s\n", SHELL_ECHO_ON);
 				} else {
-					DBPRINTF(job, "%s\n", commandShell->ignErr);
+					DBPRINTF(job, "%s\n", SHELL_ERROR_OFF);
 				}
 			} else if (commandShell->ignErr &&
 			    (*commandShell->ignErr != '\0')) {
@@ -770,11 +770,11 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 				 */
 				if (!(job->flags & JOB_SILENT) && !shutUp &&
 				    commandShell->hasEchoCtl) {
-					DBPRINTF(job, "%s\n", commandShell->echoOff);
-					DBPRINTF(job, commandShell->errCheck, cmd);
+					DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
+					DBPRINTF(job, SHELL_ERROR_ON, cmd);
 					shutUp = true;
 				}
-				cmdTemplate = commandShell->ignErr;
+				cmdTemplate = SHELL_ERROR_OFF;
 				/*
 				 * The error ignoration (hee hee) is already
 				 * taken care of by the ignErr template, so
@@ -799,13 +799,13 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 		 */
 		if (!shutUp && !(job->flags & JOB_SILENT) &&
 		    commandShell->hasEchoCtl){
-			DBPRINTF(job, "%s\n", commandShell->echoOff);
+			DBPRINTF(job, "%s\n", SHELL_ECHO_OFF);
 			shutUp = true;
 		}
-		DBPRINTF(job, "%s\n", commandShell->errCheck);
+		DBPRINTF(job, "%s\n", SHELL_ERROR_ON);
 	}
 	if (shutUp) {
-		DBPRINTF(job, "%s\n", commandShell->echoOn);
+		DBPRINTF(job, "%s\n", SHELL_ECHO_ON);
 	}
 	return 1;
 }
