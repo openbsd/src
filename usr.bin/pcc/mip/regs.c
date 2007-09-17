@@ -1,4 +1,4 @@
-/*	$OpenBSD: regs.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
+/*	$OpenBSD: regs.c,v 1.4 2007/09/17 09:46:45 otto Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -28,6 +28,7 @@
 
 #include "pass2.h"
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #define	MAXLOOP	20 /* Max number of allocation loops XXX 3 should be enough */
@@ -542,7 +543,7 @@ adjSet(REGW *u, REGW *v)
 	}
 	if (u > v)
 		t = v, v = u, u = t;
-	w = edgehash[((int)u+(int)v) & 255];
+	w = edgehash[((intptr_t)u+(intptr_t)v) & 255];
 	for (; w; w = w->next) {
 		if (u == w->u && v == w->v)
 			return 1;
@@ -560,7 +561,7 @@ adjSetadd(REGW *u, REGW *v)
 
 	if (u > v)
 		t = v, v = u, u = t;
-	x = ((int)u+(int)v) & 255;
+	x = ((intptr_t)u+(intptr_t)v) & 255;
 	w = tmpalloc(sizeof(struct AdjSet));
 	w->u = u, w->v = v;
 	w->next = edgehash[x];
