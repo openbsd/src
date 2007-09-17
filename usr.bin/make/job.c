@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.73 2007/09/17 10:33:28 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.74 2007/09/17 10:37:08 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -209,58 +209,6 @@ typedef struct Job_ {
 #define outFile 	output.o_file.of_outFile
 #define outFd		output.o_file.of_outFd
 
-
-/*-
- * Shell Specifications:
- * Each shell type has associated with it the following information:
- *	1) The string which must match the last character of the shell name
- *	   for the shell to be considered of this type. The longest match
- *	   wins.
- *	2) A command to issue to turn off echoing of command lines
- *	3) A command to issue to turn echoing back on again
- *	4) What the shell prints, and its length, when given the echo-off
- *	   command. This line will not be printed when received from the shell
- *	5) A boolean to tell if the shell has the ability to control
- *	   error checking for individual commands.
- *	6) The string to turn this checking on.
- *	7) The string to turn it off.
- *	8) The command-flag to give to cause the shell to start echoing
- *	   commands right away.
- *	9) The command-flag to cause the shell to Lib_Exit when an error is
- *	   detected in one of the commands.
- *
- * Some special stuff goes on if a shell doesn't have error control. In such
- * a case, errCheck becomes a printf template for echoing the command,
- * should echoing be on and ignErr becomes another printf template for
- * executing the command while ignoring the return status. If either of these
- * strings is empty when hasErrCtl is false, the command will be executed
- * anyway as is and if it causes an error, so be it.
- */
-typedef struct Shell_ {
-    char	  *name;	/* the name of the shell. For Bourne and C
-				 * shells, this is used only to find the
-				 * shell description when used as the single
-				 * source of a .SHELL target. For user-defined
-				 * shells, this is the full path of the shell.
-				 */
-    bool	  hasEchoCtl;	/* True if both echoOff and echoOn defined */
-    char	  *echoOff;	/* command to turn off echo */
-    char	  *echoOn;	/* command to turn it back on again */
-    char	  *noPrint;	/* command to skip when printing output from
-				 * shell. This is usually the command which
-				 * was executed to turn off echoing */
-    int 	  noPLen;	/* length of noPrint command */
-    bool	  hasErrCtl;	/* set if can control error checking for
-				 * individual commands */
-    char	  *errCheck;	/* string to turn error checking on */
-    char	  *ignErr;	/* string to turn off error checking */
-    /*
-     * command-line flags
-     */
-    char	  *echo;	/* echo commands */
-    char	  *exit;	/* exit on error */
-}		Shell;
-
 /*
  * error handling variables
  */
@@ -303,47 +251,6 @@ static int	  numCommands;	    /* The number of commands actually printed
 static char	tfile[sizeof(TMPPAT)];
 
 
-/*
- * Descriptions for various shells.
- */
-static Shell	shells[] = {
-    /*
-     * CSH description. The csh can do echo control by playing
-     * with the setting of the 'echo' shell variable. Sadly,
-     * however, it is unable to do error control nicely.
-     */
-{
-    "csh",
-    true, "unset verbose", "set verbose", "unset verbose", 10,
-    false, "echo \"%s\"\n", "csh -c \"%s || exit 0\"",
-    "v", "e",
-},
-    /*
-     * SH description. Echo control is also possible and, under
-     * sun UNIX anyway, one can even control error checking.
-     */
-{
-    "sh",
-    true, "set -", "set -v", "set -", 5,
-    true, "set -e", "set +e",
-#ifdef OLDBOURNESHELL
-    false, "echo \"%s\"\n", "sh -c '%s || exit 0'\n",
-#endif
-    "v", "e",
-},
-    /*
-     * UNKNOWN.
-     */
-{
-    (char *)0,
-    false, (char *)0, (char *)0, (char *)0, 0,
-    false, (char *)0, (char *)0,
-    (char *)0, (char *)0,
-}
-};
-static Shell	*commandShell = &shells[DEFSHELL];/* this is the shell to
-						   * which we pass all
-						   * commands in the Makefile*/
 #define SHELL_ECHO_OFF	"set -"
 #define SHELL_ECHO_ON	"set -v"
 #define SHELL_ERROR_ON	"set -e"
@@ -1682,41 +1589,39 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 {
 	char *ecp;
 
-	if (commandShell->noPrint) {
-		ecp = strstr(cp, commandShell->noPrint);
-		while (ecp != NULL) {
-			if (cp != ecp) {
-				*ecp = '\0';
-				if (msg && job->node != lastNode) {
-					MESSAGE(stdout, job->node);
-					lastNode = job->node;
-				}
-				/*
-				 * The only way there wouldn't be a newline
-				 * after this line is if it were the last in
-				 * the buffer.  however, since the
-				 * non-printable comes after it, there must be
-				 * a newline, so we don't print one.
-				 */
-				(void)fprintf(stdout, "%s", cp);
-				(void)fflush(stdout);
+	ecp = strstr(cp, SHELL_ECHO_OFF);
+	while (ecp != NULL) {
+		if (cp != ecp) {
+			*ecp = '\0';
+			if (msg && job->node != lastNode) {
+				MESSAGE(stdout, job->node);
+				lastNode = job->node;
 			}
-			cp = ecp + commandShell->noPLen;
-			if (cp != endp) {
-				/*
-				 * Still more to print, look again after
-				 * skipping the whitespace following the
-				 * non-printable command....
-				 */
+			/*
+			 * The only way there wouldn't be a newline
+			 * after this line is if it were the last in
+			 * the buffer.  however, since the
+			 * non-printable comes after it, there must be
+			 * a newline, so we don't print one.
+			 */
+			(void)fprintf(stdout, "%s", cp);
+			(void)fflush(stdout);
+		}
+		cp = ecp + strlen(SHELL_ECHO_OFF);
+		if (cp != endp) {
+			/*
+			 * Still more to print, look again after
+			 * skipping the whitespace following the
+			 * non-printable command....
+			 */
+			cp++;
+			while (*cp == ' ' || *cp == '\t' ||
+			    *cp == '\n') {
 				cp++;
-				while (*cp == ' ' || *cp == '\t' ||
-				    *cp == '\n') {
-					cp++;
-				}
-				ecp = strstr(cp, commandShell->noPrint);
-			} else {
-				return cp;
 			}
+			ecp = strstr(cp, SHELL_ECHO_OFF);
+		} else {
+			return cp;
 		}
 	}
 	return cp;
@@ -2116,13 +2021,6 @@ Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
 		targFmt = "";
 	} else {
 		targFmt = TARG_FMT;
-	}
-
-	if (commandShell->exit == NULL) {
-		commandShell->exit = "";
-	}
-	if (commandShell->echo == NULL) {
-		commandShell->echo = "";
 	}
 
 	/*
