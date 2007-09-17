@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.5 2007/09/17 09:28:36 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.6 2007/09/17 12:07:22 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -55,6 +55,7 @@
 
 static void MakeTimeStamp(void *, void *);
 static void MakeAddAllSrc(void *, void *);
+static int rewrite_time(const char *);
 
 /*-
  *-----------------------------------------------------------------------
@@ -121,6 +122,29 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 	return true;
 }
 
+/* touch files the hard way, by writing stuff to them */
+static int
+rewrite_time(const char *name)
+{
+	int fd;
+	char c;
+
+	fd = open(name, O_RDWR | O_CREAT, 0666);
+	if (fd < 0)
+		return -1;
+	/*
+	 * Read and write a byte to the file to change
+	 * the modification time.
+	 */
+	if (read(fd, &c, 1) == 1) {
+		(void)lseek(fd, 0, SEEK_SET);
+		(void)write(fd, &c, 1);
+	}
+
+	(void)close(fd);
+	return 0;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Job_Touch --
@@ -135,8 +159,6 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 void
 Job_Touch(GNode *gn, bool silent)
 {
-	int streamID;	/* ID of stream opened to do the touch */
-
 	if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
 		/*
 		 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual"
@@ -162,22 +184,7 @@ Job_Touch(GNode *gn, bool silent)
 		const char *file = gn->path != NULL ? gn->path : gn->name;
 
 		if (set_times(file) == -1){
-			streamID = open(file, O_RDWR | O_CREAT, 0666);
-
-			if (streamID >= 0) {
-				char	c;
-
-				/*
-				 * Read and write a byte to the file to change
-				 * the modification time, then close the file.
-				 */
-				if (read(streamID, &c, 1) == 1) {
-					(void)lseek(streamID, 0, SEEK_SET);
-					(void)write(streamID, &c, 1);
-				}
-
-				(void)close(streamID);
-			} else {
+			if (rewrite_time(file) == -1) {
 				(void)fprintf(stdout,
 				    "*** couldn't touch %s: %s", file,
 				    strerror(errno));
