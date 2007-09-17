@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.66 2007/09/16 15:12:12 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.67 2007/09/17 08:36:57 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -692,7 +692,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
    (void)fprintf(job->cmdFILE, fmt, arg);	\
    (void)fflush(job->cmdFILE);
 
-	numCommands += 1;
+	numCommands++;
 
 	/* For debugging, we replace each command with the result of expanding
 	 * the variables in the command.  */
@@ -1005,14 +1005,14 @@ JobFinish(Job *job,		/* job to finish */
 			}
 			job->flags &= ~JOB_CONTINUING;
 			Lst_AtEnd(&jobs, job);
-			nJobs += 1;
+			nJobs++;
 			if (DEBUG(JOB)) {
 				(void)fprintf(stdout,
 				    "Process %ld is continuing locally.\n",
 				    (long)job->pid);
 				(void)fflush(stdout);
 			}
-			nLocal += 1;
+			nLocal++;
 			if (nJobs == maxJobs) {
 				jobFull = true;
 				if (DEBUG(JOB)) {
@@ -1077,7 +1077,7 @@ JobFinish(Job *job,		/* job to finish */
 		Make_Update(job->node);
 		free(job);
 	} else if (*status != 0) {
-		errors += 1;
+		errors++;
 		free(job);
 	}
 
@@ -1236,7 +1236,7 @@ JobExec(Job *job, char **argv)
 			FD_SET(job->inPipe, outputsp);
 		}
 
-		nLocal += 1;
+		nLocal++;
 		/*
 		 * XXX: Used to not happen if REMOTE. Why?
 		 */
@@ -1249,7 +1249,7 @@ JobExec(Job *job, char **argv)
 	/*
 	 * Now the job is actually running, add it to the table.
 	 */
-	nJobs += 1;
+	nJobs++;
 	Lst_AtEnd(&jobs, job);
 	if (nJobs == maxJobs) {
 		jobFull = true;
@@ -2033,14 +2033,14 @@ Job_CatchChildren(bool block)	/* true if should block on the wait. */
 		} else {
 			job = (Job *)Lst_Datum(jnode);
 			Lst_Remove(&jobs, jnode);
-			nJobs -= 1;
+			nJobs--;
 			if (jobFull && DEBUG(JOB)) {
 				(void)fprintf(stdout, 
 				    "Job queue is no longer full.\n");
 				(void)fflush(stdout);
 			}
 			jobFull = false;
-			nLocal -= 1;
+			nLocal--;
 		}
 
 		JobFinish(job, &status);
@@ -2091,7 +2091,7 @@ Job_CatchOutput(void)
 				job = (Job *)Lst_Datum(ln);
 				if (FD_ISSET(job->inPipe, readfdsp)) {
 					JobDoOutput(job, false);
-					nfds -= 1;
+					nfds--;
 				}
 			}
 		}

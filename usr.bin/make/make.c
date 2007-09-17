@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.38 2007/09/16 12:09:36 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.39 2007/09/17 08:36:57 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ Make_Update(GNode *cgn)	/* the child node */
     for (ln = Lst_First(&cgn->parents); ln != NULL; ln = Lst_Adv(ln)) {
 	pgn = (GNode *)Lst_Datum(ln);
 	if (pgn->make) {
-	    pgn->unmade -= 1;
+	    pgn->unmade--;
 
 	    if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
 		if (cgn->made == MADE) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.3 2007/09/16 14:36:57 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.4 2007/09/17 08:36:57 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -248,7 +248,7 @@ Make_HandleUse(
 
 			if (Lst_AddNew(&pgn->children, gn)) {
 				Lst_AtEnd(&gn->parents, pgn);
-				pgn->unmade += 1;
+				pgn->unmade++;
 			}
 		}
 

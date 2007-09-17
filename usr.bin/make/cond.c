@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.c,v 1.36 2007/09/16 12:30:35 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.37 2007/09/17 08:36:57 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -996,7 +996,7 @@ Cond_Eval(const char *line)
 	 * so we return COND_PARSE, unless this endif isn't paired with
 	 * a decent if.  */
 	    if (skipIfLevel != 0) {
-		skipIfLevel -= 1;
+		skipIfLevel--;
 		return COND_SKIP;
 	    } else {
 		if (condTop == MAXIF) {
@@ -1004,7 +1004,7 @@ Cond_Eval(const char *line)
 		    return COND_INVALID;
 		} else {
 		    skipLine = false;
-		    condTop += 1;
+		    condTop++;
 		    return COND_PARSE;
 		}
 	    }
@@ -1055,7 +1055,7 @@ Cond_Eval(const char *line)
     } else if (skipLine) {
 	/* Don't even try to evaluate a conditional that's not an else if
 	 * we're skipping things...  */
-	skipIfLevel += 1;
+	skipIfLevel++;
 	return COND_SKIP;
     }
 
@@ -1096,7 +1096,7 @@ Cond_Eval(const char *line)
     }
     
     if (!ifp->isElse)
-	condTop -= 1;
+	condTop--;
     else if (skipIfLevel != 0 || condStack[condTop].value) {
 	/* If this is an else-type conditional, it should only take effect
 	 * if its corresponding if was evaluated and false. If its if was

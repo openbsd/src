@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.64 2007/09/16 12:30:35 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.65 2007/09/17 08:36:57 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -885,7 +885,7 @@ SuffAddSrc(
 	s2->node =	NULL;
 	s2->suff =	s;
 	s2->children =	0;
-	targ->children += 1;
+	targ->children++;
 	Lst_AtEnd(ls->l, s2);
 #ifdef DEBUG_SRC
 	Lst_Init(&s2->cp);
@@ -902,7 +902,7 @@ SuffAddSrc(
     s2->node =	    NULL;
     s2->suff =	    s;
     s2->children =  0;
-    targ->children += 1;
+    targ->children++;
     Lst_AtEnd(ls->l, s2);
 #ifdef DEBUG_SRC
     Lst_Init(&s2->cp);
@@ -1124,7 +1124,7 @@ SuffFindCmds(
 		    ret->parent = targ;
 		    ret->node = s;
 		    ret->children = 0;
-		    targ->children += 1;
+		    targ->children++;
 #ifdef DEBUG_SRC
 		    Lst_Init(&ret->cp);
 		    printf("3 add %x %x\n", targ, ret);

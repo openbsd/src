@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: util.c,v 1.21 2003/06/25 15:11:06 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2007/09/17 08:36:57 espie Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ strstr(string, substring)
 	 * substring.
 	 */
 
-	for (b = substring; *string != 0; string += 1) {
+	for (b = substring; *string != 0; string++) {
 		if (*string != *b)
 			continue;
 		a = string;

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.57 2007/09/16 14:18:40 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.58 2007/09/17 08:36:57 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -573,7 +573,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 		else if (gn->made == ABORTED) {
 			printf("`%s' not remade because of errors.\n", 
 			    gn->name);
-			errors += 1;
+			errors++;
 		}
 	}
 
