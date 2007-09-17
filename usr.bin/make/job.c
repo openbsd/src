@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.72 2007/09/17 10:31:13 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.73 2007/09/17 10:33:28 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1248,35 +1248,14 @@ JobMakeArgv(Job *job, char **argv)
 	argv[0] = (char *)shellName;
 	argc = 1;
 
-	if ((commandShell->exit && *commandShell->exit != '-') ||
-	    (commandShell->echo && *commandShell->echo != '-')) {
-		/*
-		 * At least one of the flags doesn't have a minus before it, so
-		 * merge them together. Have to do this because the
-		 * *(&(@*#*&#$# Bourne shell thinks its second argument is a
-		 * file to source.  Grrrr. Note the ten-character limitation on
-		 * the combined arguments.
-		 */
-		(void)snprintf(args, sizeof(args), "-%s%s",
-		    ((job->flags & JOB_IGNERR) ? "" :
-		    (commandShell->exit ? commandShell->exit : "")),
-		    ((job->flags & JOB_SILENT) ? "" :
-		    (commandShell->echo ? commandShell->echo : "")));
+	(void)snprintf(args, sizeof(args), "-%s%s",
+	    (job->flags & JOB_IGNERR) ? "" : SHELL_ERROR_FLAG,
+	    (job->flags & JOB_SILENT) ? "" : SHELL_ECHO_FLAG);
 
-		if (args[1]) {
-			argv[argc] = args;
-			argc++;
-		}
-	} else {
-		if (!(job->flags & JOB_IGNERR) && commandShell->exit) {
-			argv[argc] = commandShell->exit;
-			argc++;
-		}
-		if (!(job->flags & JOB_SILENT) && commandShell->echo) {
-			argv[argc] = commandShell->echo;
-			argc++;
-		}
-	}
+	if (args[1]) {
+		argv[argc] = args;
+		argc++;
+ 	}
 	argv[argc] = NULL;
 }
 
