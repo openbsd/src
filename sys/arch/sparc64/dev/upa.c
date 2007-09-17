@@ -1,4 +1,4 @@
-/*	$OpenBSD: upa.c,v 1.5 2007/03/05 18:58:30 kettenis Exp $	*/
+/*	$OpenBSD: upa.c,v 1.6 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -163,11 +163,10 @@ upa_alloc_bus_tag(struct upa_softc *sc)
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bt == NULL)
 		panic("upa: couldn't alloc bus tag");
 
-	bzero(bt, sizeof *bt);
 	snprintf(bt->name, sizeof(bt->name), "%s",
 			sc->sc_dev.dv_xname);
 	bt->cookie = sc;

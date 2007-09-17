@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_socket.c,v 1.3 2007/06/02 01:46:01 uwe Exp $	*/
+/*	$OpenBSD: hci_socket.c,v 1.4 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: hci_socket.c,v 1.10 2007/03/31 18:17:13 plunky Exp $	*/
 
 /*-
@@ -350,10 +350,9 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		if (err)
 			return err;
 
-		pcb = malloc(sizeof *pcb, M_PCB, M_NOWAIT);
+		pcb = malloc(sizeof *pcb, M_PCB, M_NOWAIT | M_ZERO);
 		if (pcb == NULL)
 			return ENOMEM;
-		bzero(pcb, sizeof *pcb);
 
 		up->so_pcb = pcb;
 		pcb->hp_socket = up;

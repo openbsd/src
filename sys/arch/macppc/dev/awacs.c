@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.19 2007/04/22 22:31:14 deraadt Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.20 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -990,10 +990,9 @@ awacs_allocm(void *h, int dir, size_t size, int type, int flags)
 	if (size > AWACS_DMALIST_MAX * AWACS_DMASEG_MAX)
 		return (NULL);
 
-	p = malloc(sizeof(*p), type, flags);
+	p = malloc(sizeof(*p), type, flags | M_ZERO);
 	if (!p)
 		return (NULL);
-	bzero(p, sizeof(*p));
 
 	/* convert to the bus.h style, not used otherwise */
 	if (flags & M_NOWAIT)

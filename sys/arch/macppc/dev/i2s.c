@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.8 2007/04/22 22:31:14 deraadt Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.9 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -1188,10 +1188,9 @@ i2s_allocm(void *h, int dir, size_t size, int type, int flags)
 	if (size > I2S_DMALIST_MAX * I2S_DMASEG_MAX)
 		return (NULL);
 
-	p = malloc(sizeof(*p), type, flags);
+	p = malloc(sizeof(*p), type, flags | M_ZERO);
 	if (!p)
 		return (NULL);
-	bzero(p, sizeof(*p));
 
 	/* convert to the bus.h style, not used otherwise */
 	if (flags & M_NOWAIT)

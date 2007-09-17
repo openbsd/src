@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.9 2007/06/02 01:48:37 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -611,11 +611,10 @@ sdmmc_intr_establish(struct device *sdmmc, int (*fun)(void *),
 	if (sc->sct->card_intr_mask == NULL)
 		return NULL;
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK | M_CANFAIL);
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
 	if (ih == NULL)
 		return NULL;
 
-	bzero(ih, sizeof *ih);
 	ih->ih_name = malloc(strlen(name), M_DEVBUF, M_WAITOK | M_CANFAIL);
 	if (ih->ih_name == NULL) {
 		free(ih, M_DEVBUF);

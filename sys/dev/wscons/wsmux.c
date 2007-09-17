@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.20 2007/05/14 09:03:34 tedu Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.21 2007/09/17 01:33:33 krw Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -589,10 +589,9 @@ wsmux_create(const char *name, int unit)
 	struct wsmux_softc *sc;
 
 	DPRINTF(("wsmux_create: allocating\n"));
-	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT);
+	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc == NULL)
 		return (NULL);
-	bzero(sc, sizeof *sc);
 	CIRCLEQ_INIT(&sc->sc_cld);
 	snprintf(sc->sc_base.me_dv.dv_xname, sizeof sc->sc_base.me_dv.dv_xname,
 		 "%s%d", name, unit);

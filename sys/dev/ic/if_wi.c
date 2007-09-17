@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.137 2006/11/26 19:46:28 deraadt Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.138 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.137 2006/11/26 19:46:28 deraadt Exp $";
+	"$OpenBSD: if_wi.c,v 1.138 2007/09/17 01:33:33 krw Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1644,8 +1644,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
 		break;
 	case SIOCGWAVELAN:
-		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		error = copyin(ifr->ifr_data, wreq, sizeof(*wreq));
 		if (error)
 			break;
@@ -1702,8 +1701,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSWAVELAN:
 		if ((error = suser(curproc, 0)) != 0)
 			break;
-		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		error = copyin(ifr->ifr_data, wreq, sizeof(*wreq));
 		if (error)
 			break;
@@ -1770,8 +1768,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCGPRISM2DEBUG:
-		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		error = copyin(ifr->ifr_data, wreq, sizeof(*wreq));
 		if (error)
 			break;
@@ -1787,8 +1784,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSPRISM2DEBUG:
 		if ((error = suser(curproc, 0)) != 0)
 			break;
-		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		error = copyin(ifr->ifr_data, wreq, sizeof(*wreq));
 		if (error)
 			break;
@@ -1800,16 +1796,15 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = copyout(&sc->wi_net_name, ifr->ifr_data,
 			    sizeof(sc->wi_net_name));
 		} else {
-			wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-			bzero(wreq, sizeof(*wreq));
+			wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK|M_ZERO);
 			wreq->wi_type = WI_RID_CURRENT_SSID;
 			wreq->wi_len = WI_MAX_DATALEN;
 			if (wi_read_record(sc, (struct wi_ltv_gen *)wreq) ||
 			    letoh16(wreq->wi_val[0]) > IEEE80211_NWID_LEN)
 				error = EINVAL;
 			else {
-				nwidp = malloc(sizeof *nwidp, M_DEVBUF, M_WAITOK);
-				bzero(nwidp, sizeof(*nwidp));
+				nwidp = malloc(sizeof *nwidp, M_DEVBUF,
+				    M_WAITOK | M_ZERO);
 				wi_set_ssid(nwidp, (u_int8_t *)&wreq->wi_val[1],
 				    letoh16(wreq->wi_val[0]));
 				error = copyout(nwidp, ifr->ifr_data,
@@ -1868,8 +1863,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		wreq->wi_type = WI_RID_OWN_CHNL;
 		wreq->wi_val[0] =
 		    htole16(((struct ieee80211chanreq *)data)->i_channel);
@@ -1878,8 +1872,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			wi_init(sc);
 		break;
 	case SIOCG80211CHANNEL:
-		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		wreq->wi_type = WI_RID_CURRENT_CHAN;
 		wreq->wi_len = WI_MAX_DATALEN;
 		if (wi_read_record(sc, (struct wi_ltv_gen *)wreq)) {
@@ -1891,8 +1884,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCG80211BSSID:
 		bssid = (struct ieee80211_bssid *)data;
-		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		wreq->wi_type = WI_RID_CURRENT_BSSID;
 		wreq->wi_len = WI_MAX_DATALEN;
 		if (wi_read_record(sc, (struct wi_ltv_gen *)wreq)) {
@@ -1914,8 +1906,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			wi_cmd(sc, WI_CMD_INQUIRE,
 			    WI_INFO_SCAN_RESULTS, 0, 0);
 		} else {
-			wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-			bzero(wreq, sizeof(*wreq));
+			wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK|M_ZERO);
 			wreq->wi_len = 3;
 			wreq->wi_type = WI_RID_SCAN_REQ;
 			wreq->wi_val[0] = 0x3FFF;
@@ -1951,8 +1942,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = wihap_ioctl(sc, command, data);
 			break;
 		}
-		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		wreq->wi_len = WI_MAX_DATALEN;
 		wreq->wi_type = WI_RID_SCAN_RES;
 		if (sc->sc_firmware_type == WI_LUCENT) {
@@ -2026,8 +2016,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			break;
 		ifr->ifr_flags = 0;
 		if (sc->wi_flags & WI_FLAGS_HAS_ENH_SECURITY) {
-			wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK);
-			bzero(wreq, sizeof(*wreq));
+			wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK|M_ZERO);
 			wreq->wi_len = WI_MAX_DATALEN;
 			wreq->wi_type = WI_RID_ENH_SECURITY;
 			if (wi_read_record(sc, (struct wi_ltv_gen *)wreq)) {

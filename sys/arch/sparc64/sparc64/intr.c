@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.27 2007/09/09 08:55:27 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.28 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -308,8 +308,7 @@ softintr_establish(level, fun, arg)
 {
 	struct intrhand *ih;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
-	bzero(ih, sizeof(*ih));
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_ZERO);
 	ih->ih_fun = (int (*)(void *))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.19 2007/09/12 13:56:40 chl Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.20 2007/09/17 01:33:33 krw Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -2390,11 +2390,10 @@ aft_alloc_rx_buffers(xilinx_softc_t *sc)
 	SIMPLEQ_INIT(&sc->wp_rx_complete_list);
 
 	/* allocate receive buffers in one cluster */
-	buf = malloc(sizeof(*buf) * MAX_RX_BUF, M_DEVBUF, M_NOWAIT);
+	buf = malloc(sizeof(*buf) * MAX_RX_BUF, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (buf == NULL)
 		return (1);
 
-	bzero(buf, sizeof(*buf) * MAX_RX_BUF);
 	sc->wp_rx_buffers = buf;
 	sc->wp_rx_buffer_last = buf;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.47 2007/03/21 17:29:32 thib Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.48 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -302,8 +302,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
 	b710 = (struct byte_bpb710 *)bsp->bs710.bsPBP;
 
-	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK);
-	bzero((caddr_t)pmp, sizeof *pmp);
+	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK | M_ZERO);
 	pmp->pm_mountp = mp;
 
 	/*

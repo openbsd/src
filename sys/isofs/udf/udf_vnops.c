@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.27 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.28 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -617,8 +617,7 @@ udf_getfid(struct udf_dirstream *ds)
 		 * File ID descriptors can only be at most one
 		 * logical sector in size.
 		 */
-		ds->buf = malloc(ds->ump->um_bsize, M_UDFFID, M_WAITOK);
-		bzero(ds->buf, ds->ump->um_bsize);
+		ds->buf = malloc(ds->ump->um_bsize, M_UDFFID, M_WAITOK|M_ZERO);
 		bcopy(fid, ds->buf, frag_size);
 
 		/* Reduce all of the casting magic */

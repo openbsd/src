@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.34 2007/09/10 20:29:46 miod Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.35 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -195,8 +195,7 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 
 	load_image_data((caddr_t)&image_store, &image);
 
-	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
-	bzero(dc, sizeof(*dc));
+	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK | M_ZERO);
 	
 	dc->dc_vaddr = (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_handle);
 	dc->dc_paddr = sc->sc_basepa;

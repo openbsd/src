@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_link.c,v 1.5 2007/07/22 21:05:00 gwk Exp $	*/
+/*	$OpenBSD: hci_link.c,v 1.6 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: hci_link.c,v 1.11 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -888,10 +888,9 @@ hci_link_alloc(struct hci_unit *unit)
 
 	KASSERT(unit != NULL);
 
-	link = malloc(sizeof *link, M_BLUETOOTH, M_NOWAIT);
+	link = malloc(sizeof *link, M_BLUETOOTH, M_NOWAIT | M_ZERO);
 	if (link == NULL)
 		return NULL;
-	bzero(link, sizeof *link);
 
 	link->hl_unit = unit;
 	link->hl_state = HCI_LINK_CLOSED;

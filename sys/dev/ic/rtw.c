@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.61 2007/06/07 20:20:15 damien Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.62 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -664,14 +664,12 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 
 	RTW_WRITE8(regs, RTW_9346CR, ecr);
 
-	sr->sr_content = malloc(sr->sr_size, M_DEVBUF, M_NOWAIT);
+	sr->sr_content = malloc(sr->sr_size, M_DEVBUF, M_NOWAIT | M_ZERO);
 
 	if (sr->sr_content == NULL) {
 		printf("%s: unable to allocate SROM buffer\n", dvname);
 		return ENOMEM;
 	}
-
-	bzero(sr->sr_content, sr->sr_size);
 
 	/* RTL8180 has a single 8-bit register for controlling the
 	 * 93cx6 SROM.  There is no "ready" bit. The RTL8180

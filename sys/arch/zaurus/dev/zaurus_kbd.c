@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.29 2007/09/17 01:33:33 krw Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -204,12 +204,10 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	} /* XXX */
 
 	sc->sc_okeystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
-	    M_DEVBUF, M_NOWAIT);
-	bzero(sc->sc_okeystate, (sc->sc_nsense * sc->sc_nstrobe));
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 
 	sc->sc_keystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
-	    M_DEVBUF, M_NOWAIT);
-	bzero(sc->sc_keystate, (sc->sc_nsense * sc->sc_nstrobe));
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 
 	/* set all the strobe bits */
 	for (i = 0; i < sc->sc_nstrobe; i++) {

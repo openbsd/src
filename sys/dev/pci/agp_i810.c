@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.15 2007/08/04 19:40:25 reyk Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.16 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -680,8 +680,7 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 		}
 	}
 
-	mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK);
-	bzero(mem, sizeof *mem);
+	mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK | M_ZERO);
 	mem->am_id = sc->sc_nextid++;
 	mem->am_size = size;
 	mem->am_type = type;

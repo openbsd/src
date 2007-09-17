@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.41 2006/03/13 22:35:17 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.42 2007/09/17 01:33:32 krw Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -175,8 +175,7 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 	sc->card_id = 0;
 	sc->sc_tag = oa->oa_tag;
 
-	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
-	bzero(dc, sizeof(*dc));
+	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK | M_ZERO);
 
         switch (current_mac_model->class) {
 	case MACH_CLASSQ2:

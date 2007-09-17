@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.13 2007/05/01 19:44:56 kettenis Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.14 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -167,11 +167,10 @@ fhc_alloc_bus_tag(struct fhc_softc *sc)
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bt == NULL)
 		panic("fhc: couldn't alloc bus tag");
 
-	bzero(bt, sizeof(*bt));
 	snprintf(bt->name, sizeof(bt->name), "%s", sc->sc_dv.dv_xname);
 	bt->cookie = sc;
 	bt->parent = sc->sc_bt;

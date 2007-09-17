@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfcomm_session.c,v 1.1 2007/06/01 02:46:12 uwe Exp $	*/
+/*	$OpenBSD: rfcomm_session.c,v 1.2 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: rfcomm_session.c,v 1.9 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -174,10 +174,9 @@ rfcomm_session_alloc(struct rfcomm_session_list *list,
 	struct rfcomm_session *rs;
 	int err;
 
-	rs = malloc(sizeof(*rs), M_BLUETOOTH, M_NOWAIT);
+	rs = malloc(sizeof(*rs), M_BLUETOOTH, M_NOWAIT | M_ZERO);
 	if (rs == NULL)
 		return NULL;
-	bzero(rs, sizeof *rs);
 
 	rs->rs_state = RFCOMM_SESSION_CLOSED;
 

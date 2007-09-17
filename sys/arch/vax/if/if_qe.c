@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.20 2006/04/16 00:46:32 pascoe Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.21 2007/09/17 01:33:33 krw Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -143,9 +143,8 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	struct	qe_ring *rp;
 	int error;
 
-	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK);
+	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK | M_ZERO);
 	bzero(sc, sizeof(struct qe_softc));
-	bzero(ring, PROBESIZE);
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_dmat = ua->ua_dmat;

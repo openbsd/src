@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.6 2007/08/04 19:40:25 reyk Exp $ */
+/* $OpenBSD: agp.c,v 1.7 2007/09/17 01:33:33 krw Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -372,10 +372,9 @@ agp_alloc_gatt(struct vga_pci_softc *sc)
 	struct agp_gatt *gatt;
 	int nseg;
 
-	gatt = malloc(sizeof(*gatt), M_DEVBUF, M_NOWAIT);
+	gatt = malloc(sizeof(*gatt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!gatt)
 		return (NULL);
-	bzero(gatt, sizeof(*gatt));
 	gatt->ag_entries = entries;
 
 	if (agp_alloc_dmamem(sc->sc_dmat, entries * sizeof(u_int32_t),
@@ -474,10 +473,9 @@ agp_generic_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 		return 0;
 	}
 
-	mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK);
+	mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (mem == NULL)
 		return NULL;
-	bzero(mem, sizeof *mem);
 
 	if (bus_dmamap_create(sc->sc_dmat, size, size / PAGE_SIZE + 1,
 	    size, 0, BUS_DMA_NOWAIT, &mem->am_dmamap) != 0) {

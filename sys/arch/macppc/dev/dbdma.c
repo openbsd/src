@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.c,v 1.8 2006/01/13 19:25:44 miod Exp $	*/
+/*	$OpenBSD: dbdma.c,v 1.9 2007/09/17 01:33:33 krw Exp $	*/
 /*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -119,10 +119,9 @@ dbdma_alloc(bus_dma_tag_t dmat, int size)
 	dbdma_t dt;
 	int error;
 
-	dt = malloc(sizeof *dt, M_DEVBUF, M_NOWAIT);
+	dt = malloc(sizeof *dt, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!dt)
 		return (dt);
-	bzero(dt, sizeof *dt);
 
 	dt->d_size = size *= sizeof(dbdma_command_t);
 	dt->d_dmat = dmat;

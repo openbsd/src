@@ -1,4 +1,4 @@
-/*	$OpenBSD: central.c,v 1.4 2004/09/27 17:28:03 jason Exp $	*/
+/*	$OpenBSD: central.c,v 1.5 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -150,11 +150,10 @@ central_alloc_bus_tag(struct central_softc *sc)
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bt == NULL)
 		panic("central: couldn't alloc bus tag");
 
-	bzero(bt, sizeof(*bt));
 	snprintf(bt->name, sizeof(bt->name), "%s", sc->sc_dv.dv_xname);
 	bt->cookie = sc;
 	bt->parent = sc->sc_bt;
