@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.20 2007/05/27 21:44:23 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.21 2007/09/17 15:34:38 chl Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -301,12 +301,11 @@ amdgart_probe(struct pcibus_attach_args *pba)
 		goto err;
 	}
 
-	scrib = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
+	scrib = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (scrib == NULL) {
 		printf("\nGART: didn't get scribble page");
 		goto err;
 	}
-	bzero(scrib, PAGE_SIZE);
 
 	for (count = 0, dev = 24; dev < 32; dev++) {
 		for (func = 0; func < 8; func++) {

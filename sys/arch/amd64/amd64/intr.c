@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.14 2007/05/10 17:59:23 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.15 2007/09/17 15:34:38 chl Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -223,13 +223,12 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 
 	isp = ci->ci_isources[slot];
 	if (isp == NULL) {
-		MALLOC(isp, struct intrsource *, sizeof (struct intrsource),
-		    M_DEVBUF, M_NOWAIT);
+		isp = malloc(sizeof (struct intrsource), M_DEVBUF,
+		    M_NOWAIT|M_ZERO);
 		if (isp == NULL) {
 			simple_unlock(&ci->ci_slock);
 			return ENOMEM;
 		}
-		memset(isp, 0, sizeof(struct intrsource));
 		snprintf(isp->is_evname, sizeof (isp->is_evname),
 		    "pin %d", pin);
 		ci->ci_isources[slot] = isp;
@@ -273,12 +272,10 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 		slot = legacy_irq;
 		isp = ci->ci_isources[slot];
 		if (isp == NULL) {
-			MALLOC(isp, struct intrsource *,
-			    sizeof (struct intrsource), M_DEVBUF,
-			     M_NOWAIT);
+			isp = malloc(sizeof (struct intrsource), M_DEVBUF,
+			     M_NOWAIT|M_ZERO);
 			if (isp == NULL)
 				return ENOMEM;
-			memset(isp, 0, sizeof(struct intrsource));
 			snprintf(isp->is_evname, sizeof (isp->is_evname),
 			    "pin %d", pin);
 
@@ -334,7 +331,7 @@ found:
 		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
 		if (idtvec == 0) {
 			simple_lock(&ci->ci_slock);
-			FREE(ci->ci_isources[slot], M_DEVBUF);
+			free(ci->ci_isources[slot], M_DEVBUF);
 			ci->ci_isources[slot] = NULL;
 			simple_unlock(&ci->ci_slock);
 			return EBUSY;
@@ -520,7 +517,7 @@ intr_disestablish(struct intrhand *ih)
 #endif
 
 	if (source->is_handlers == NULL) {
-		FREE(source, M_DEVBUF);
+		free(source, M_DEVBUF);
 		ci->ci_isources[ih->ih_slot] = NULL;
 		if (pic != &i8259_pic)
 			idt_vec_free(idtvec);
@@ -560,33 +557,27 @@ cpu_intr_init(struct cpu_info *ci)
 	int i;
 #endif
 
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
-	memset(isp, 0, sizeof(struct intrsource));
 	isp->is_recurse = Xsoftclock;
 	isp->is_resume = Xsoftclock;
 	fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
 	isp->is_handlers = &fake_softclock_intrhand;
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_CLOCK] = isp;
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
-	memset(isp, 0, sizeof(struct intrsource));
 	isp->is_recurse = Xsoftnet;
 	isp->is_resume = Xsoftnet;
 	fake_softnet_intrhand.ih_level = IPL_SOFTNET;
 	isp->is_handlers = &fake_softnet_intrhand;
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_NET] = isp;
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
-	memset(isp, 0, sizeof(struct intrsource));
 	isp->is_recurse = Xsoftserial;
 	isp->is_resume = Xsoftserial;
 	fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
@@ -594,11 +585,9 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_pic = &softintr_pic;
 	ci->ci_isources[SIR_SERIAL] = isp;
 #if NLAPIC > 0
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
-	memset(isp, 0, sizeof(struct intrsource));
 	isp->is_recurse = Xrecurse_lapic_ltimer;
 	isp->is_resume = Xresume_lapic_ltimer;
 	fake_timer_intrhand.ih_level = IPL_CLOCK;
@@ -606,11 +595,9 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_TIMER] = isp;
 #ifdef MULTIPROCESSOR
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK);
+	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (isp == NULL)
 		panic("can't allocate fixed interrupt source");
-	memset(isp, 0, sizeof(struct intrsource));
 	isp->is_recurse = Xrecurse_lapic_ipi;
 	isp->is_resume = Xresume_lapic_ipi;
 	fake_ipi_intrhand.ih_level = IPL_IPI;

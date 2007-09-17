@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2007/01/15 23:19:05 jsg Exp $ */
+/*	$OpenBSD: mem.c,v 1.7 2007/09/17 15:34:38 chl Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -162,11 +162,9 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zeropage == NULL) {
+			if (zeropage == NULL)
 				zeropage = (caddr_t)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(zeropage, PAGE_SIZE);
-			}
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK|M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			continue;

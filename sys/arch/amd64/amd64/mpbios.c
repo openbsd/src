@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.9 2007/01/15 23:19:05 jsg Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.10 2007/09/17 15:34:38 chl Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -589,8 +589,7 @@ mpbios_scan(struct device *self)
 		}
 
 		mp_busses = malloc(sizeof(struct mp_bus)*mp_nbus,
-		    M_DEVBUF, M_NOWAIT);
-		memset(mp_busses, 0, sizeof(struct mp_bus) * mp_nbus);
+		    M_DEVBUF, M_NOWAIT|M_ZERO);
 		mp_intrs = malloc(sizeof(struct mp_intr_map)*intr_cnt,
 		    M_DEVBUF, M_NOWAIT);
 

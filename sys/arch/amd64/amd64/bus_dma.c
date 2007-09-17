@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.9 2007/09/03 01:09:09 krw Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.10 2007/09/17 15:34:38 chl Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -153,10 +153,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	mapsize = sizeof(struct x86_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	if ((mapstore = malloc(mapsize, M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	    (flags & BUS_DMA_NOWAIT) ?
+	        (M_NOWAIT|M_ZERO) : (M_WAITOK|M_ZERO))) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
 	map = (struct x86_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;

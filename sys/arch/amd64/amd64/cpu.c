@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 2007/08/02 16:40:27 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.14 2007/09/17 15:34:38 chl Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -244,8 +244,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
-		memset(ci, 0, sizeof(*ci));
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK|M_ZERO);
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
