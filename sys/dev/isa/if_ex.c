@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.16 2007/06/06 09:44:30 henning Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.17 2007/09/17 01:20:03 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -105,9 +105,6 @@ struct ex_softc {
 	void *sc_ih;		/* Device interrupt handler */
 };
 
-/* static struct ex_softc ex_sc[NEX]; XXX would it be better to malloc(3) 
-					the memory? */
-
 static char irq2eemap[] = { -1, -1, 0, 1, -1, 2, -1, -1, -1, 0, 3, 4, -1, -1, 
 			    -1, -1 };
 static u_char ee2irqmap[] = { 9, 3, 5, 10, 11, 0, 0, 0 };
@@ -149,12 +146,9 @@ struct cfdriver ex_cd = {
 	sc->sc_iot, sc->sc_ioh, (offset), (addr), (count))
 #define ISA_PUT_2_MULTI(offset, addr, count) bus_space_write_multi_2( \
 	sc->sc_iot, sc->sc_ioh, (offset), (addr), (count))
-	
 
 static int 
-look_for_card(ia, sc)
-	struct isa_attach_args *ia;
-	struct ex_softc *sc;
+look_for_card(struct isa_attach_args *ia, struct ex_softc *sc)
 {
 	int count1, count2;
 
@@ -173,11 +167,8 @@ look_for_card(ia, sc)
 		return(0);
 }
 
-
 int 
-ex_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ex_probe(struct device *parent, void *match, void *aux)
 {
 	struct ex_softc *sc = match;
 	struct isa_attach_args *ia = aux;
@@ -256,11 +247,8 @@ ex_probe(parent, match, aux)
 	return(1);
 }
 
-
 void
-ex_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ex_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ex_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -305,10 +293,8 @@ ex_attach(parent, self, aux)
 	DODEBUG(Start_End, printf("ex_attach: finish\n"););
 }
 
-
 void 
-ex_init(sc)
-	struct ex_softc *sc;
+ex_init(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int s, i;
@@ -395,16 +381,14 @@ ex_init(sc)
 	DODEBUG(Start_End, printf("ex_init: finish\n"););
 }
 
-
 void 
-ex_start(ifp)
-	struct ifnet *ifp;
+ex_start(struct ifnet *ifp)
 {
-	register struct ex_softc *sc = ifp->if_softc;
+	struct ex_softc *sc = ifp->if_softc;
 	int i, s, len, data_len, avail, dest, next;
 	unsigned char tmp16[2];
 	struct mbuf *opkt;
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	DODEBUG(Start_End, printf("ex_start: start\n"););
 
@@ -555,10 +539,8 @@ ex_start(ifp)
 	DODEBUG(Start_End, printf("ex_start: finish\n"););
 }
 
-
 void 
-ex_stop(sc)
-	struct ex_softc *sc;
+ex_stop(struct ex_softc *sc)
 {
 	DODEBUG(Start_End, printf("ex_stop: start\n"););
 
@@ -587,8 +569,7 @@ ex_stop(sc)
 
 
 int 
-exintr(arg)
-	void *arg;
+exintr(void *arg)
 {
 	struct ex_softc *sc = arg;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
@@ -633,12 +614,10 @@ exintr(arg)
 	return handled;
 }
 
-
 void 
-ex_tx_intr(sc)
-	struct ex_softc *sc;
+ex_tx_intr(struct ex_softc *sc)
 {
-	register struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int tx_status;
 
 	DODEBUG(Start_End, printf("ex_tx_intr: start\n"););
@@ -669,14 +648,12 @@ ex_tx_intr(sc)
 	DODEBUG(Start_End, printf("ex_tx_intr: finish\n"););
 }
 
-
 void 
-ex_rx_intr(sc)
-	struct ex_softc *sc;
+ex_rx_intr(struct ex_softc *sc)
 {
-	register struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int rx_status, pkt_len, QQQ;
-	register struct mbuf *m, *ipkt;
+	struct mbuf *m, *ipkt;
 
 	DODEBUG(Start_End, printf("ex_rx_intr: start\n"););
 	/*
@@ -767,14 +744,10 @@ ex_rx_intr(sc)
 	DODEBUG(Start_End, printf("ex_rx_intr: finish\n"););
 }	
 
-
 int 
-ex_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	register struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ex_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error = 0;
@@ -819,12 +792,6 @@ ex_ioctl(ifp, cmd, data)
     else
       ex_init(sc);
     break;
-#ifdef NODEF
-  case SIOCGHWADDR:
-    DODEBUG(Start_End, printf("SIOCGHWADDR"););
-    bcopy((caddr_t) sc->sc_addr, (caddr_t) &ifr->ifr_data, sizeof(sc->sc_addr));
-    break;
-#endif
   case SIOCSIFMTU:
     DODEBUG(Start_End, printf("SIOCSIFMTU"););
     if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
@@ -851,10 +818,8 @@ ex_ioctl(ifp, cmd, data)
   return(error);
 }
 
-
 void 
-ex_reset(sc)
-	struct ex_softc *sc;
+ex_reset(struct ex_softc *sc)
 {
 	int s;
 
@@ -868,10 +833,8 @@ ex_reset(sc)
 	DODEBUG(Start_End, printf("ex_reset: finish\n"););
 }
 
-
 void 
-ex_watchdog(ifp)
-	struct ifnet *ifp;
+ex_watchdog(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 
@@ -886,11 +849,8 @@ ex_watchdog(ifp)
 	DODEBUG(Start_End, printf("ex_watchdog: finish\n"););
 }
 
-
 static u_short 
-eeprom_read(sc, location)
-	struct ex_softc *sc;
-	int location;
+eeprom_read(struct ex_softc *sc, int location)
 {
 	int i;
 	u_short data = 0;
