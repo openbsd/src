@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.4 2007/09/17 07:40:06 otto Exp $	*/
+/*	$Id: cc.c,v 1.5 2007/09/17 18:29:20 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -371,6 +371,8 @@ main(int argc, char *argv[])
 			av[na++] = "-D_PTHREADS";
 		if (Mflag)
 			av[na++] = "-M";
+		if (dflag)
+			av[na++] = alist;
 		for (j = 0; cppadd[j]; j++)
 			av[na++] = cppadd[j];
 		for (j = 0; cppmdadd[j]; j++)
