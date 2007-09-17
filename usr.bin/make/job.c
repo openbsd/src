@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.76 2007/09/17 12:01:16 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.77 2007/09/17 12:03:40 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1818,9 +1818,10 @@ Job_CatchOutput(void)
 	LstNode ln;
 	Job *job;
 
-	(void)fflush(stdout);
 	int count = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
 	fd_set *readfdsp = malloc(count);
+
+	(void)fflush(stdout);
 	if (readfdsp == NULL)
 		return;
 
