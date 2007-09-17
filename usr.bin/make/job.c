@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.68 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.69 2007/09/17 10:17:26 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <stddef.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -347,8 +347,7 @@ static Shell	*commandShell = &shells[DEFSHELL];/* this is the shell to
 						   * commands in the Makefile*/
 static char	*shellPath = NULL,		  /* full pathname of
 						   * executable image */
-		*shellName = NULL,		  /* last component of shell */
-		*shellArgv = NULL;		  /* Custom shell args */
+		*shellName = NULL;		  /* last component of shell */
 
 
 static int	maxJobs;	/* The most children we can run at once */
@@ -431,6 +430,7 @@ static char *JobOutput(Job *, char *, char *, int);
 static void JobDoOutput(Job *, bool);
 static void JobInterrupt(int, int);
 static void JobRestartJobs(void);
+static void DBPRINTF(Job *, const char *, ...);
 
 static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
     got_SIGTERM;
@@ -629,6 +629,19 @@ JobCmpPid(void *job,	/* job to examine */
 	return *(pid_t *)pid - ((Job *)job)->pid;
 }
 
+static void
+DBPRINTF(Job *job, const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	if (DEBUG(JOB)) {
+		(void)vfprintf(stdout, fmt, va);
+		fflush(stdout);
+	}
+	vfprintf(job->cmdFILE, fmt, va);
+	va_end(va);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * JobPrintCommand  --
@@ -685,13 +698,6 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 		return 1;
 	}
 
-#define DBPRINTF(fmt, arg) if (DEBUG(JOB)) {	\
-	(void)fprintf(stdout, fmt, arg);	\
-	(void)fflush(stdout);			\
-    }						\
-   (void)fprintf(job->cmdFILE, fmt, arg);	\
-   (void)fflush(job->cmdFILE);
-
 	numCommands++;
 
 	/* For debugging, we replace each command with the result of expanding
@@ -719,7 +725,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 	if (shutUp) {
 		if (!(job->flags & JOB_SILENT) && !noSpecials &&
 		    commandShell->hasEchoCtl) {
-			DBPRINTF("%s\n", commandShell->echoOff);
+			DBPRINTF(job, "%s\n", commandShell->echoOff);
 		} else {
 			shutUp = false;
 		}
@@ -739,11 +745,11 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 				 */
 				if (!(job->flags & JOB_SILENT) && !shutUp &&
 				    commandShell->hasEchoCtl) {
-					DBPRINTF("%s\n", commandShell->echoOff);
-					DBPRINTF("%s\n", commandShell->ignErr);
-					DBPRINTF("%s\n", commandShell->echoOn);
+					DBPRINTF(job, "%s\n", commandShell->echoOff);
+					DBPRINTF(job, "%s\n", commandShell->ignErr);
+					DBPRINTF(job, "%s\n", commandShell->echoOn);
 				} else {
-					DBPRINTF("%s\n", commandShell->ignErr);
+					DBPRINTF(job, "%s\n", commandShell->ignErr);
 				}
 			} else if (commandShell->ignErr &&
 			    (*commandShell->ignErr != '\0')) {
@@ -760,8 +766,8 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 				 */
 				if (!(job->flags & JOB_SILENT) && !shutUp &&
 				    commandShell->hasEchoCtl) {
-					DBPRINTF("%s\n", commandShell->echoOff);
-					DBPRINTF(commandShell->errCheck, cmd);
+					DBPRINTF(job, "%s\n", commandShell->echoOff);
+					DBPRINTF(job, commandShell->errCheck, cmd);
 					shutUp = true;
 				}
 				cmdTemplate = commandShell->ignErr;
@@ -779,7 +785,7 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 		}
 	}
 
-	DBPRINTF(cmdTemplate, cmd);
+	DBPRINTF(job, cmdTemplate, cmd);
 
 	if (errOff) {
 		/*
@@ -789,13 +795,13 @@ JobPrintCommand(LstNode cmdNode,    /* command string to print */
 		 */
 		if (!shutUp && !(job->flags & JOB_SILENT) &&
 		    commandShell->hasEchoCtl){
-			DBPRINTF("%s\n", commandShell->echoOff);
+			DBPRINTF(job, "%s\n", commandShell->echoOff);
 			shutUp = true;
 		}
-		DBPRINTF("%s\n", commandShell->errCheck);
+		DBPRINTF(job, "%s\n", commandShell->errCheck);
 	}
 	if (shutUp) {
-		DBPRINTF("%s\n", commandShell->echoOn);
+		DBPRINTF(job, "%s\n", commandShell->echoOn);
 	}
 	return 1;
 }
