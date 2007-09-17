@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.6 2007/09/17 12:07:22 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.7 2007/09/17 12:10:35 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -161,7 +161,7 @@ Job_Touch(GNode *gn, bool silent)
 {
 	if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
 		/*
-		 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual"
+		 * .JOIN, .USE and .OPTIONAL targets are "virtual"
 		 * targets and, as such, shouldn't really be created.
 		 */
 		return;
@@ -206,12 +206,10 @@ Job_Touch(GNode *gn, bool silent)
  *-----------------------------------------------------------------------
  */
 void
-Make_TimeStamp(
-    GNode *pgn, /* the current parent */
-    GNode *cgn) /* the child we've just examined */
+Make_TimeStamp(GNode *parent, GNode *child)
 {
-	if (is_strictly_before(pgn->cmtime, cgn->mtime))
-		pgn->cmtime = cgn->mtime;
+    if (is_strictly_before(parent->cmtime, child->mtime))
+	    parent->cmtime = child->mtime;
 }
 
 /*-
