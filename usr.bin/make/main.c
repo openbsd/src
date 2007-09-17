@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.81 2007/09/17 11:11:30 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.82 2007/09/17 12:01:17 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -97,7 +97,6 @@ bool 		noExecute;	/* -n flag */
 bool 		keepgoing;	/* -k flag */
 bool 		queryFlag;	/* -q flag */
 bool 		touchFlag;	/* -t flag */
-bool 		usePipes;	/* !-P flag */
 bool 		ignoreErrors;	/* -i flag */
 bool 		beSilent;	/* -s flag */
 
@@ -148,8 +147,7 @@ posixParseOptLetter(int c)
 		compatMake = true;
 		return;	/* XXX don't pass to submakes. */
 	case 'P':
-		usePipes = false;
-		break;
+		break;	/* old option */
 	case 'S':
 		keepgoing = false;
 		break;
@@ -677,7 +675,6 @@ main(int argc, char **argv)
 	queryFlag = false;		/* This is not just a check-run */
 	noBuiltins = false;		/* Read the built-in rules */
 	touchFlag = false;		/* Actually update targets */
-	usePipes = true;		/* Catch child output in pipes */
 	debug = 0;			/* No debug verbosity, please. */
 
 	maxLocal = DEFMAXLOCAL; 	/* Set default local max concurrency */

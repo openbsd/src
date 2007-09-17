@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.75 2007/09/17 11:48:13 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.76 2007/09/17 12:01:16 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -132,14 +132,11 @@
  *	   commands.
  *	4) An FILE* for writing out the commands. This is only
  *	   used before the job is actually started.
- *	5) A union of things used for handling the shell's output. Different
- *	   parts of the union are used based on the value of the usePipes
- *	   flag. If it is true, the output is being caught via a pipe and
+ *	5) Things used for handling the shell's output. 
+ *	   the output is being caught via a pipe and
  *	   the descriptors of our pipe, an array in which output is line
  *	   buffered and the current position in that buffer are all
- *	   maintained for each job. If, on the other hand, usePipes is false,
- *	   the output is routed to a temporary file and all that is kept
- *	   is the name of the file and the descriptor open to the file.
+ *	   maintained for each job. 
  *	6) An identifier provided by and for the exclusive use of the
  *	   Rmt module.
  *	7) A word of flags which determine how the module handles errors,
@@ -176,38 +173,15 @@ typedef struct Job_ {
 #define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
 				 * Used to avoid infinite recursion between
 				 * JobFinish and JobRestart */
-    union {
-	struct {
-	    int 	op_inPipe;	/* Input side of pipe associated
-					 * with job's output channel */
-	    int 	op_outPipe;	/* Output side of pipe associated with
-					 * job's output channel */
-	    char	op_outBuf[JOB_BUFSIZE + 1];
-					/* Buffer for storing the output of the
-					 * job, line by line */
-	    int 	op_curPos;	/* Current position in op_outBuf */
-	}	    o_pipe;	    /* data used when catching the output via
-				     * a pipe */
-	struct {
-	    char	of_outFile[sizeof(TMPPAT)];
-					/* Name of file to which shell output
-					 * was rerouted */
-	    int 	of_outFd;	/* Stream open to the output
-					 * file. Used to funnel all
-					 * from a single job to one file
-					 * while still allowing
-					 * multiple shell invocations */
-	}	    o_file;	    /* Data used when catching the output in
-				     * a temporary file */
-    }		output;     /* Data for tracking a shell's output */
+    int 	inPipe;		/* Input side of pipe associated
+				 * with job's output channel */
+    int 	outPipe;	/* Output side of pipe associated with
+				 * job's output channel */
+    char	outBuf[JOB_BUFSIZE + 1];
+				/* Buffer for storing the output of the
+				 * job, line by line */
+    int 	curPos;		/* Current position in op_outBuf */
 } Job;
-
-#define outPipe 	output.o_pipe.op_outPipe
-#define inPipe		output.o_pipe.op_inPipe
-#define outBuf		output.o_pipe.op_outBuf
-#define curPos		output.o_pipe.op_curPos
-#define outFile 	output.o_file.of_outFile
-#define outFd		output.o_file.of_outFd
 
 /*
  * error handling variables
@@ -716,17 +690,12 @@ JobSaveCommand(void *cmd, void *gn)
 static void
 JobClose(Job *job)
 {
-	if (usePipes) {
-		FD_CLR(job->inPipe, outputsp);
-		if (job->outPipe != job->inPipe) {
-		       (void)close(job->outPipe);
-		}
-		JobDoOutput(job, true);
-		(void)close(job->inPipe);
-	} else {
-		(void)close(job->outFd);
-		JobDoOutput(job, true);
+	FD_CLR(job->inPipe, outputsp);
+	if (job->outPipe != job->inPipe) {
+	       (void)close(job->outPipe);
 	}
+	JobDoOutput(job, true);
+	(void)close(job->inPipe);
 }
 
 /*-
@@ -800,16 +769,7 @@ JobFinish(Job *job,		/* job to finish */
 	    DEBUG(JOB)) {
 		FILE *out;
 
-		if (compatMake && !usePipes && (job->flags & JOB_IGNERR)) {
-			/*
-			 * If output is going to a file and this job is ignoring
-			 * errors, arrange to have the exit status sent to the
-			 * output file as well.
-			 */
-			out = fdopen(job->outFd, "w");
-		} else {
-			out = stdout;
-		}
+		out = stdout;
 
 		if (WIFEXITED(*status)) {
 			if (DEBUG(JOB)) {
@@ -818,7 +778,7 @@ JobFinish(Job *job,		/* job to finish */
 				(void)fflush(stdout);
 			}
 			if (WEXITSTATUS(*status) != 0) {
-				if (usePipes && job->node != lastNode) {
+				if (job->node != lastNode) {
 					MESSAGE(out, job->node);
 					lastNode = job->node;
 				}
@@ -831,7 +791,7 @@ JobFinish(Job *job,		/* job to finish */
 					*status = 0;
 				}
 			} else if (DEBUG(JOB)) {
-				if (usePipes && job->node != lastNode) {
+				if (job->node != lastNode) {
 					MESSAGE(out, job->node);
 					lastNode = job->node;
 				}
@@ -844,7 +804,7 @@ JobFinish(Job *job,		/* job to finish */
 				    (long)job->pid);
 				(void)fflush(stdout);
 			}
-			if (usePipes && job->node != lastNode) {
+			if (job->node != lastNode) {
 				MESSAGE(out, job->node);
 				lastNode = job->node;
 			}
@@ -862,7 +822,7 @@ JobFinish(Job *job,		/* job to finish */
 			 * child.
 			 */
 			if (job->flags & (JOB_RESUME|JOB_RESTART)) {
-				if (usePipes && job->node != lastNode) {
+				if (job->node != lastNode) {
 					MESSAGE(out, job->node);
 					lastNode = job->node;
 				}
@@ -907,7 +867,7 @@ JobFinish(Job *job,		/* job to finish */
 			(void)fflush(out);
 			return;
 		} else {
-			if (usePipes && job->node != lastNode) {
+			if (job->node != lastNode) {
 				MESSAGE(out, job->node);
 				lastNode = job->node;
 			}
@@ -1042,22 +1002,12 @@ JobExec(Job *job, char **argv)
 		(void)fcntl(0, F_SETFD, 0);
 		(void)lseek(0, 0, SEEK_SET);
 
-		if (usePipes) {
-			/*
-			 * Set up the child's output to be routed through the
-			 * pipe we've created for it.
-			 */
-			if (dup2(job->outPipe, 1) == -1)
-				Punt("Cannot dup2: %s", strerror(errno));
-		} else {
-			/*
-			 * We're capturing output in a file, so we duplicate the
-			 * descriptor to the temporary file into the standard
-			 * output.
-			 */
-			if (dup2(job->outFd, 1) == -1)
-				Punt("Cannot dup2: %s", strerror(errno));
-		}
+		/*
+		 * Set up the child's output to be routed through the
+		 * pipe we've created for it.
+		 */
+		if (dup2(job->outPipe, 1) == -1)
+			Punt("Cannot dup2: %s", strerror(errno));
 		/*
 		 * The output channels are marked close on exec. This bit was
 		 * duplicated by the dup2 (on some systems), so we have to
@@ -1089,7 +1039,7 @@ JobExec(Job *job, char **argv)
 	} else {
 		job->pid = cpid;
 
-		if (usePipes && (job->flags & JOB_FIRST) ) {
+		if (job->flags & JOB_FIRST) {
 			/*
 			 * The first time a job is run for a node, we set the
 			 * current position in the buffer to the beginning and
@@ -1522,24 +1472,13 @@ JobStart(GNode	  *gn,	      /* target to create */
 	 * starting a job and then set up its temporary-file name.
 	 */
 	if (!compatMake || (job->flags & JOB_FIRST)) {
-		if (usePipes) {
-			int fd[2];
-			if (pipe(fd) == -1)
-				Punt("Cannot create pipe: %s", strerror(errno));
-			job->inPipe = fd[0];
-			job->outPipe = fd[1];
-			(void)fcntl(job->inPipe, F_SETFD, 1);
-			(void)fcntl(job->outPipe, F_SETFD, 1);
-		} else {
-			(void)fprintf(stdout, "Remaking `%s'\n", gn->name);
-			(void)fflush(stdout);
-			(void)strlcpy(job->outFile, TMPPAT,
-			    sizeof(job->outFile));
-			if ((job->outFd = mkstemp(job->outFile)) == -1)
-				Punt("Cannot create temp file: %s",
-				    strerror(errno));
-			(void)fcntl(job->outFd, F_SETFD, 1);
-		}
+		int fd[2];
+		if (pipe(fd) == -1)
+			Punt("Cannot create pipe: %s", strerror(errno));
+		job->inPipe = fd[0];
+		job->outPipe = fd[1];
+		(void)fcntl(job->inPipe, F_SETFD, 1);
+		(void)fcntl(job->outPipe, F_SETFD, 1);
 	}
 
 	local = true;
@@ -1662,175 +1601,127 @@ JobDoOutput(Job *job,   	/* the job whose output needs printing */
 	int max;		/* limit for i (end of current data) */
 	int nRead;	 	/* (Temporary) number of bytes read */
 
-	FILE *oFILE;	  	/* Stream pointer to shell's output file */
-	char inLine[132];
-
-
-	if (usePipes) {
-		/*
-		 * Read as many bytes as will fit in the buffer.
-		 */
+	/*
+	 * Read as many bytes as will fit in the buffer.
+	 */
 end_loop:
-		gotNL = false;
-		fbuf = false;
+	gotNL = false;
+	fbuf = false;
 
-		nRead = read(job->inPipe, &job->outBuf[job->curPos],
-		    JOB_BUFSIZE - job->curPos);
-		if (nRead == -1) {
-			if (DEBUG(JOB)) {
-				perror("JobDoOutput(piperead)");
-			}
-			nr = 0;
-		} else {
-			nr = nRead;
+	nRead = read(job->inPipe, &job->outBuf[job->curPos],
+	    JOB_BUFSIZE - job->curPos);
+	if (nRead == -1) {
+		if (DEBUG(JOB)) {
+			perror("JobDoOutput(piperead)");
 		}
-
-		/*
-		 * If we hit the end-of-file (the job is dead), we must flush
-		 * its remaining output, so pretend we read a newline if
-		 * there's any output remaining in the buffer.  Also clear the
-		 * 'finish' flag so we stop looping.
-		 */
-		if (nr == 0 && job->curPos != 0) {
-			job->outBuf[job->curPos] = '\n';
-			nr = 1;
-			finish = false;
-		} else if (nr == 0) {
-			finish = false;
-		}
-
-		/*
-		 * Look for the last newline in the bytes we just got. If there
-		 * is one, break out of the loop with 'i' as its index and
-		 * gotNL set true.
-		 */
-		max = job->curPos + nr;
-		for (i = job->curPos + nr - 1; i >= job->curPos; i--) {
-			if (job->outBuf[i] == '\n') {
-				gotNL = true;
-				break;
-			} else if (job->outBuf[i] == '\0') {
-				/*
-				 * Why?
-				 */
-				job->outBuf[i] = ' ';
-			}
-		}
-
-		if (!gotNL) {
-			job->curPos += nr;
-			if (job->curPos == JOB_BUFSIZE) {
-				/*
-				 * If we've run out of buffer space, we have no
-				 * choice but to print the stuff. sigh.
-				 */
-				fbuf = true;
-				i = job->curPos;
-			}
-		}
-		if (gotNL || fbuf) {
-			/*
-			 * Need to send the output to the screen. Null
-			 * terminate it first, overwriting the newline
-			 * character if there was one.  So long as the line
-			 * isn't one we should filter (according to the shell
-			 * description), we print the line, preceded by a
-			 * target banner if this target isn't the same as the
-			 * one for which we last printed something.  The rest
-			 * of the data in the buffer are then shifted down to
-			 * the start of the buffer and curPos is set
-			 * accordingly.
-			 */
-			job->outBuf[i] = '\0';
-			if (i >= job->curPos) {
-				char *cp;
-
-				cp = JobOutput(job, job->outBuf,
-				    &job->outBuf[i], false);
-
-				/*
-				 * There's still more in that thar buffer. This
-				 * time, though, we know there's no newline at
-				 * the end, so we add one of our own free will.
-				 */
-				if (*cp != '\0') {
-					if (job->node != lastNode) {
-						MESSAGE(stdout, job->node);
-						lastNode = job->node;
-					}
-					(void)fprintf(stdout, "%s%s", cp,
-					    gotNL ? "\n" : "");
-					(void)fflush(stdout);
-				}
-			}
-			if (i < max - 1) {
-				/* shift the remaining characters down */
-				(void)memcpy(job->outBuf, &job->outBuf[i + 1],
-				    max - (i + 1));
-				job->curPos = max - (i + 1);
-
-			} else {
-				/*
-				 * We have written everything out, so we just
-				 * start over from the start of the buffer. No
-				 * copying.  No nothing.
-				 */
-				job->curPos = 0;
-			}
-		}
-		if (finish) {
-			/*
-			 * If the finish flag is true, we must loop until we
-			 * hit end-of-file on the pipe. This is guaranteed to
-			 * happen eventually since the other end of the pipe is
-			 * now closed (we closed it explicitly and the child
-			 * has exited). When we do get an EOF, finish will be
-			 * set false and we'll fall through and out.
-			 */
-			goto end_loop;
-		}
+		nr = 0;
 	} else {
-		/*
-		 * We've been called to retrieve the output of the job from the
-		 * temporary file where it's been squirreled away. This
-		 * consists of opening the file, reading the output line by
-		 * line, being sure not to print the noPrint line for the shell
-		 * we used, then close and remove the temporary file. Very
-		 * simple.
-		 *
-		 * Change to read in blocks and do FindSubString type things as
-		 * for pipes? That would allow for "@echo -n..."
-		 */
-		oFILE = fopen(job->outFile, "r");
-		if (oFILE != NULL) {
-			(void)fprintf(stdout, "Results of making %s:\n",
-			    job->node->name);
-			(void)fflush(stdout);
-			while (fgets(inLine, sizeof(inLine), oFILE) != NULL) {
-				char *cp, *endp, *oendp;
+		nr = nRead;
+	}
 
-				cp = inLine;
-				oendp = endp = inLine + strlen(inLine);
-				if (endp != inLine && endp[-1] == '\n') {
-					*--endp = '\0';
-				}
-				cp = JobOutput(job, inLine, endp, false);
+	/*
+	 * If we hit the end-of-file (the job is dead), we must flush
+	 * its remaining output, so pretend we read a newline if
+	 * there's any output remaining in the buffer.  Also clear the
+	 * 'finish' flag so we stop looping.
+	 */
+	if (nr == 0 && job->curPos != 0) {
+		job->outBuf[job->curPos] = '\n';
+		nr = 1;
+		finish = false;
+	} else if (nr == 0) {
+		finish = false;
+	}
 
-				/*
-				 * There's still more in that thar buffer. This
-				 * time, though, we know there's no newline at
-				 * the end, so we add one of our own free will.
-				 */
-				(void)fprintf(stdout, "%s", cp);
-				(void)fflush(stdout);
-				if (endp != oendp) {
-					(void)fprintf(stdout, "\n");
-					(void)fflush(stdout);
-				}
-			}
-			(void)fclose(oFILE);
-			(void)eunlink(job->outFile);
+	/*
+	 * Look for the last newline in the bytes we just got. If there
+	 * is one, break out of the loop with 'i' as its index and
+	 * gotNL set true.
+	 */
+	max = job->curPos + nr;
+	for (i = job->curPos + nr - 1; i >= job->curPos; i--) {
+		if (job->outBuf[i] == '\n') {
+			gotNL = true;
+			break;
+		} else if (job->outBuf[i] == '\0') {
+			/*
+			 * Why?
+			 */
+			job->outBuf[i] = ' ';
 		}
+	}
+
+	if (!gotNL) {
+		job->curPos += nr;
+		if (job->curPos == JOB_BUFSIZE) {
+			/*
+			 * If we've run out of buffer space, we have no
+			 * choice but to print the stuff. sigh.
+			 */
+			fbuf = true;
+			i = job->curPos;
+		}
+	}
+	if (gotNL || fbuf) {
+		/*
+		 * Need to send the output to the screen. Null
+		 * terminate it first, overwriting the newline
+		 * character if there was one.  So long as the line
+		 * isn't one we should filter (according to the shell
+		 * description), we print the line, preceded by a
+		 * target banner if this target isn't the same as the
+		 * one for which we last printed something.  The rest
+		 * of the data in the buffer are then shifted down to
+		 * the start of the buffer and curPos is set
+		 * accordingly.
+		 */
+		job->outBuf[i] = '\0';
+		if (i >= job->curPos) {
+			char *cp;
+
+			cp = JobOutput(job, job->outBuf,
+			    &job->outBuf[i], false);
+
+			/*
+			 * There's still more in that thar buffer. This
+			 * time, though, we know there's no newline at
+			 * the end, so we add one of our own free will.
+			 */
+			if (*cp != '\0') {
+				if (job->node != lastNode) {
+					MESSAGE(stdout, job->node);
+					lastNode = job->node;
+				}
+				(void)fprintf(stdout, "%s%s", cp,
+				    gotNL ? "\n" : "");
+				(void)fflush(stdout);
+			}
+		}
+		if (i < max - 1) {
+			/* shift the remaining characters down */
+			(void)memcpy(job->outBuf, &job->outBuf[i + 1],
+			    max - (i + 1));
+			job->curPos = max - (i + 1);
+
+		} else {
+			/*
+			 * We have written everything out, so we just
+			 * start over from the start of the buffer. No
+			 * copying.  No nothing.
+			 */
+			job->curPos = 0;
+		}
+	}
+	if (finish) {
+		/*
+		 * If the finish flag is true, we must loop until we
+		 * hit end-of-file on the pipe. This is guaranteed to
+		 * happen eventually since the other end of the pipe is
+		 * now closed (we closed it explicitly and the child
+		 * has exited). When we do get an EOF, finish will be
+		 * set false and we'll fall through and out.
+		 */
+		goto end_loop;
 	}
 }
 
@@ -1850,7 +1741,7 @@ end_loop:
  *-----------------------------------------------------------------------
  */
 void
-Job_CatchChildren(bool block)	/* true if should block on the wait. */
+Job_CatchChildren()
 {
 	pid_t pid;		/* pid of dead child */
 	Job *job; 		/* job descriptor for dead child */
@@ -1864,8 +1755,7 @@ Job_CatchChildren(bool block)	/* true if should block on the wait. */
 		return;
 	}
 
-	while ((pid = waitpid((pid_t) -1, &status,
-	    (block?0:WNOHANG)|WUNTRACED)) > 0) {
+	while ((pid = waitpid((pid_t) -1, &status, WNOHANG|WUNTRACED)) > 0) {
 		HandleSigs();
 		if (DEBUG(JOB)) {
 			(void)fprintf(stdout,
@@ -1929,34 +1819,32 @@ Job_CatchOutput(void)
 	Job *job;
 
 	(void)fflush(stdout);
-	if (usePipes) {
-		int count = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
-		fd_set *readfdsp = malloc(count);
-		if (readfdsp == NULL)
-			return;
+	int count = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
+	fd_set *readfdsp = malloc(count);
+	if (readfdsp == NULL)
+		return;
 
-		memcpy(readfdsp, outputsp, count);
-		timeout.tv_sec = SEL_SEC;
-		timeout.tv_usec = SEL_USEC;
+	memcpy(readfdsp, outputsp, count);
+	timeout.tv_sec = SEL_SEC;
+	timeout.tv_usec = SEL_USEC;
 
-		if ((nfds = select(outputsn+1, readfdsp, (fd_set *) 0,
-		    (fd_set *) 0, &timeout)) <= 0) {
-			HandleSigs();
-			free(readfdsp);
-			return;
-		} else {
-			HandleSigs();
-			for (ln = Lst_First(&jobs); nfds && ln != NULL;
-			    ln = Lst_Adv(ln)) {
-				job = (Job *)Lst_Datum(ln);
-				if (FD_ISSET(job->inPipe, readfdsp)) {
-					JobDoOutput(job, false);
-					nfds--;
-				}
+	if ((nfds = select(outputsn+1, readfdsp, (fd_set *) 0,
+	    (fd_set *) 0, &timeout)) <= 0) {
+		HandleSigs();
+		free(readfdsp);
+		return;
+	} else {
+		HandleSigs();
+		for (ln = Lst_First(&jobs); nfds && ln != NULL;
+		    ln = Lst_Adv(ln)) {
+			job = (Job *)Lst_Datum(ln);
+			if (FD_ISSET(job->inPipe, readfdsp)) {
+				JobDoOutput(job, false);
+				nfds--;
 			}
 		}
-		free(readfdsp);
 	}
+	free(readfdsp);
 }
 
 /*-
@@ -2065,7 +1953,7 @@ Job_Init(int 	  maxproc,  /* the greatest number of jobs which may be
 		JobStart(begin, JOB_SPECIAL, (Job *)0);
 		while (nJobs) {
 			Job_CatchOutput();
-			Job_CatchChildren(!usePipes);
+			Job_CatchChildren();
 		}
 	}
 	postCommands = Targ_FindNode(".END", TARG_CREATE);
@@ -2171,7 +2059,7 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 			JobStart(interrupt, JOB_IGNDOTS, (Job *)0);
 			while (nJobs) {
 				Job_CatchOutput();
-				Job_CatchChildren(!usePipes);
+				Job_CatchChildren();
 			}
 		}
 	}
@@ -2204,7 +2092,7 @@ Job_Finish(void)
 
 			while (nJobs) {
 				Job_CatchOutput();
-				Job_CatchChildren(!usePipes);
+				Job_CatchChildren();
 			}
 		}
 	}
@@ -2246,7 +2134,7 @@ Job_Wait(void)
 	aborting = ABORT_WAIT;
 	while (nJobs != 0) {
 		Job_CatchOutput();
-		Job_CatchChildren(!usePipes);
+		Job_CatchChildren();
 	}
 	aborting = 0;
 }

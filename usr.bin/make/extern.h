@@ -2,7 +2,7 @@
 #define EXTERN_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: extern.h,v 1.39 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.40 2007/09/17 12:01:16 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -51,10 +51,6 @@ extern bool	keepgoing;	/* True if should continue on unaffected
 				 * in one portion */
 extern bool	touchFlag;	/* true if targets should just be 'touched'
 				 * if out of date. Set by the -t flag */
-extern bool	usePipes;	/* true if should capture the output of
-				 * subshells by means of pipes. Otherwise it
-				 * is routed to temporary files from which it
-				 * is retrieved when the shell exits */
 extern bool	queryFlag;	/* true if we aren't supposed to really make
 				 * anything, just see if the targets are out-
 				 * of-date */

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.41 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.42 2007/09/17 12:01:17 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -455,7 +455,7 @@ Make_Run(Lst targs)		/* the initial list of targets */
 	 */
 	while (!Job_Empty()) {
 		Job_CatchOutput();
-		Job_CatchChildren(!usePipes);
+		Job_CatchChildren();
 		(void)MakeStartJobs();
 	}
 
