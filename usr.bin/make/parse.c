@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.89 2007/09/17 11:11:30 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.90 2007/09/17 11:14:37 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1551,7 +1551,7 @@ Parse_File(
 
 		    if (inDependency)
 			ParseFinishDependency();
-		    if (Parse_DoVar(stripped))
+		    if (Parse_As_Var_Assignment(stripped))
 			inDependency = false;
 		    else {
 			size_t pos;

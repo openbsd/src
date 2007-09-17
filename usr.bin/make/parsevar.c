@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.11 2007/09/17 09:44:20 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.12 2007/09/17 11:14:38 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ parse_variable_assignment(const char *line, int ctxt)
 }
 
 bool
-Parse_DoVar(const char *line)
+Parse_As_Var_Assignment(const char *line)
 {
 	return parse_variable_assignment(line, VAR_GLOBAL);
 }
