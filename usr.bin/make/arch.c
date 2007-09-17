@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.70 2007/09/17 10:06:44 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.71 2007/09/17 12:50:59 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -165,7 +165,6 @@ static void ArchTouch(const char *, const char *);
 static bool parse_archive(Buffer, const char **, Lst, SymTable *);
 static void add_archive_node(Lst, const char *);
 
-#ifdef SVR4ARCHIVES
 struct SVR4namelist {
 	char *fnametab;		/* Extended name table strings */
 	size_t fnamesize;	/* Size of the string table */
@@ -174,7 +173,6 @@ struct SVR4namelist {
 static const char *svr4list = "Archive list";
 
 static char *ArchSVR4Entry(struct SVR4namelist *, const char *, size_t, FILE *);
-#endif
 
 static struct arch_member *
 new_arch_member(struct ar_hdr *hdr, const char *name)
@@ -393,11 +391,9 @@ read_archive(const char *archive, const char *earchive)
 	FILE *arch;       /* Stream to archive */
 	char magic[SARMAG];
 	Arch *ar;
-#ifdef SVR4ARCHIVES
 	struct SVR4namelist list;
 
 	list.fnametab = NULL;
-#endif
 
 	/* When we encounter an archive for the first time, we read its
 	 * whole contents, to place it in the cache.  */
@@ -428,9 +424,7 @@ read_archive(const char *archive, const char *earchive)
 
 		/*  Whole archive read ok.  */
 		if (n == 0 && feof(arch)) {
-#ifdef SVR4ARCHIVES
 			efree(list.fnametab);
-#endif
 			fclose(arch);
 			return ar;
 		}
@@ -514,9 +508,7 @@ read_archive(const char *archive, const char *earchive)
 
 	fclose(arch);
 	ohash_delete(&ar->members);
-#ifdef SVR4ARCHIVES
 	efree(list.fnametab);
-#endif
 	free(ar);
 	return NULL;
 }
@@ -730,11 +722,9 @@ ArchFindMember(
 	char	  *cp;
 	char	  magic[SARMAG];
 	size_t	  length;
-#ifdef SVR4ARCHIVES
 	struct SVR4namelist list;
 
 	list.fnametab = NULL;
-#endif
 
 	arch = fopen(archive, mode);
 	if (arch == NULL)
@@ -785,9 +775,7 @@ ArchFindMember(
 #endif
 			if (length == sizeof(arHeaderPtr->ar_name) ||
 			    memberName[length] == ' ') {
-#ifdef SVR4ARCHIVES
 				efree(list.fnametab);
-#endif
 				return arch;
 			}
 		}
@@ -837,9 +825,7 @@ ArchFindMember(
 				printf("ArchFind: Extended format entry for %s\n", ename);
 			/* Found as extended name.	*/
 			if (strcmp(ename, member) == 0) {
-#ifdef SVR4ARCHIVES
 				efree(list.fnametab);
-#endif
 				return arch;
 			}
 		}
