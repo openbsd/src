@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
+/*	$Id: cpp.c,v 1.4 2007/09/17 07:40:06 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -186,7 +186,9 @@ main(int argc, char **argv)
 		case 'i': /* include */
 		case 'U': /* undef */
 		case 'D': /* define something */
-			it = malloc(sizeof(struct initar));
+			/* XXX should not need malloc() here */
+			if ((it = malloc(sizeof(struct initar))) == NULL)
+				error("couldn't apply -%c %s", ch, optarg);
 			it->type = ch;
 			it->str = optarg;
 			it->next = initar;
@@ -223,7 +225,8 @@ main(int argc, char **argv)
 
 		case 'S':
 		case 'I':
-			w = calloc(sizeof(struct incs), 1);
+			if ((w = calloc(sizeof(struct incs), 1)) == NULL)
+				error("couldn't apply -%c %s", ch, optarg);
 			w->dir = (usch *)optarg;
 			w2 = incdir[ch == 'I' ? INCINC : SYSINC];
 			if (w2 != NULL) {
@@ -1324,8 +1327,6 @@ struct tree {
 static struct tree *sympole;
 static int numsyms;
 
-#define getree() malloc(sizeof(struct tree))
-
 /*
  * Allocate a symtab struct and store the string.
  */
@@ -1334,6 +1335,8 @@ getsymtab(usch *str)
 {
 	struct symtab *sp = malloc(sizeof(struct symtab));
 
+	if (sp == NULL)
+		error("getsymtab: couldn't allocate symtab");
 	sp->namep = savstr(str);
 	savch('\0');
 	sp->value = NULL;
@@ -1407,7 +1410,8 @@ lookup(usch *key, int enterf)
 		ix >>= 1, cix++;
 
 	/* Create new node */
-	new = getree();
+	if ((new = malloc(sizeof *new)) == NULL)
+		error("getree: couldn't allocate tree");
 	bit = P_BIT(key, cix);
 	new->bitno = cix | (bit ? RIGHT_IS_LEAF : LEFT_IS_LEAF);
 	new->lr[bit] = (struct tree *)getsymtab(key);
