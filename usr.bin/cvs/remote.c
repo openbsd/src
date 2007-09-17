@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.16 2007/09/02 11:11:12 tobias Exp $	*/
+/*	$OpenBSD: remote.c,v 1.17 2007/09/17 10:07:21 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "atomicio.h"
 #include "cvs.h"
 #include "remote.h"
 
@@ -56,6 +57,7 @@ void
 cvs_remote_output(const char *data)
 {
 	FILE *out;
+	size_t len;
 	char nl = '\n';
 
 	if (cvs_server_active)
@@ -67,8 +69,10 @@ cvs_remote_output(const char *data)
 	fputs("\n", out);
 
 	if (cvs_server_active == 0 && cvs_client_inlog_fd != -1) {
-		(void)write(cvs_client_inlog_fd, data, strlen(data));
-		(void)write(cvs_client_inlog_fd, &nl, 1);
+		len = strlen(data);
+		if (atomicio(vwrite, cvs_client_inlog_fd, data, len) != len ||
+		    atomicio(vwrite, cvs_client_inlog_fd, &nl, 1) != 1)
+			fatal("failed to write to log file");
 	}
 }
 
@@ -108,8 +112,10 @@ cvs_remote_input(void)
 	}
 
 	if (cvs_server_active == 0 && cvs_client_outlog_fd != -1) {
-		(void)write(cvs_client_outlog_fd, data, strlen(data));
-		(void)write(cvs_client_outlog_fd, &nl, 1);
+		len = strlen(data);
+		if (atomicio(vwrite, cvs_client_outlog_fd, data, len) != len ||
+		    atomicio(vwrite, cvs_client_outlog_fd, &nl, 1) != 1)
+			fatal("failed to write to log file");
 	}
 
 	return (ldata);
@@ -120,7 +126,7 @@ cvs_remote_receive_file(int fd, size_t len)
 {
 	FILE *in;
 	char data[MAXBSIZE];
-	size_t nread, nwrite, nleft, toread;
+	size_t nread, nleft, toread;
 
 	if (cvs_server_active)
 		in = stdin;
@@ -136,13 +142,13 @@ cvs_remote_receive_file(int fd, size_t len)
 		if (nread == 0)
 			fatal("error receiving file");
 
-		nwrite = write(fd, data, nread);
-		if (nwrite != nread)
+		if (atomicio(vwrite, fd, data, nread) != nread)
 			fatal("failed to write %zu bytes", nread);
 
-		if (cvs_server_active == 0 &&
-		    cvs_client_outlog_fd != -1)
-			(void)write(cvs_client_outlog_fd, data, nread);
+		if (cvs_server_active == 0 && cvs_client_outlog_fd != -1 &&
+		    atomicio(vwrite, cvs_client_outlog_fd, data, nread)
+		    != nread)
+			fatal("failed to write to log file");
 
 		nleft -= nread;
 	}
@@ -184,8 +190,9 @@ cvs_remote_send_file(const char *path)
 		if (rw != ret)
 			fatal("failed to write %zu bytes", ret);
 
-		if (cvs_server_active == 0 && cvs_client_inlog_fd != -1)
-			(void)write(cvs_client_inlog_fd, data, ret);
+		if (cvs_server_active == 0 && cvs_client_inlog_fd != -1 &&
+		    atomicio(vwrite, cvs_client_inlog_fd, data, ret) != ret)
+			fatal("failed to write to log file");
 
 		total += ret;
 	}

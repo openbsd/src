@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.196 2007/09/09 20:24:06 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.197 2007/09/17 10:07:21 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "atomicio.h"
 #include "cvs.h"
 
 #define CVS_IGN_STATIC	0x01	/* pattern is static, no need to glob */
@@ -935,9 +936,7 @@ cvs_file_copy(const char *from, const char *to)
 	mtime = st.st_mtimespec.tv_sec;
 
 	if (S_ISREG(st.st_mode)) {
-		size_t sz;
-		ssize_t nw;
-		char *p, *buf;
+		char *p;
 		int saved_errno;
 
 		if (st.st_size > (off_t)SIZE_MAX) {
@@ -959,18 +958,11 @@ cvs_file_copy(const char *from, const char *to)
 
 		madvise(p, st.st_size, MADV_SEQUENTIAL);
 
-		sz = st.st_size;
-		buf = p;
-
-		while (sz > 0) {
-			if ((nw = write(dst, p, sz)) == -1) {
-				saved_errno = errno;
-				(void)unlink(to);
-				fatal("cvs_file_copy: `%s': %s",
-				    from, strerror(saved_errno));
-			}
-			buf += nw;
-			sz -= nw;
+		if (atomicio(vwrite, dst, p, st.st_size) != st.st_size) {
+			saved_errno = errno;
+			(void)unlink(to);
+			fatal("cvs_file_copy: `%s': %s", from,
+			    strerror(saved_errno));
 		}
 
 		(void)munmap(p, st.st_size);

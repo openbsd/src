@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.64 2007/08/29 21:15:06 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.65 2007/09/17 10:07:21 tobias Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "atomicio.h"
 #include "cvs.h"
 #include "buf.h"
 
@@ -93,9 +94,6 @@ cvs_buf_load(const char *path, u_int flags)
 BUF *
 cvs_buf_load_fd(int fd, u_int flags)
 {
-	ssize_t ret;
-	size_t len;
-	u_char *bp;
 	struct stat st;
 	BUF *buf;
 
@@ -106,16 +104,9 @@ cvs_buf_load_fd(int fd, u_int flags)
 		fatal("cvs_buf_load_fd: lseek: %s", strerror(errno));
 
 	buf = cvs_buf_alloc(st.st_size, flags);
-	for (bp = buf->cb_buf; ; bp += (size_t)ret) {
-		len = SIZE_LEFT(buf);
-		ret = read(fd, bp, len);
-		if (ret == -1)
-			fatal("cvs_buf_load_fd: read: %s", strerror(errno));
-		else if (ret == 0)
-			break;
-
-		buf->cb_len += (size_t)ret;
-	}
+	if (atomicio(read, fd, buf->cb_buf, buf->cb_size) != buf->cb_size)
+		fatal("cvs_buf_load_fd: read: %s", strerror(errno));
+	buf->cb_len = buf->cb_size;
 
 	return (buf);
 }
@@ -275,25 +266,8 @@ cvs_buf_len(BUF *b)
 int
 cvs_buf_write_fd(BUF *b, int fd)
 {
-	u_char *bp;
-	size_t len;
-	ssize_t ret;
-
-	len = b->cb_len;
-	bp = b->cb_buf;
-
-	do {
-		ret = write(fd, bp, len);
-		if (ret == -1) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-			return (-1);
-		}
-
-		len -= (size_t)ret;
-		bp += (size_t)ret;
-	} while (len > 0);
-
+	if (atomicio(vwrite, fd, b->cb_buf, b->cb_len) != b->cb_len)
+		return (-1);
 	return (0);
 }
 
