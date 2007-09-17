@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.88 2007/09/17 09:45:37 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.89 2007/09/17 11:11:30 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -97,10 +97,10 @@ static struct growableArray gsources, gtargets;
 #define SOURCES_SIZE	128
 #define TARGETS_SIZE	32
 
-static LIST	theParseIncPath;/* list of directories for "..." includes */
+static LIST	theUserIncPath;/* list of directories for "..." includes */
 static LIST	theSysIncPath;	/* list of directories for <...> includes */
-Lst sysIncPath = &theSysIncPath;
-Lst parseIncPath = &theParseIncPath;
+Lst systemIncludePath = &theSysIncPath;
+Lst userIncludePath = &theUserIncPath;
 
 #ifdef CLEANUP
 static LIST	    targCmds;	/* command lines for targets */
@@ -1129,7 +1129,7 @@ ParseHasCommands(void *gnp)	    /* Node to examine */
 void
 Parse_AddIncludeDir(const char	*dir)
 {
-	Dir_AddDir(parseIncPath, dir);
+	Dir_AddDir(userIncludePath, dir);
 }
 
 static char *
@@ -1139,7 +1139,7 @@ resolve_include_filename(const char *file, bool isSystem)
 
 	/* Look up system files on the system path first */
 	if (isSystem) {
-		fullname = Dir_FindFileNoDot(file, sysIncPath);
+		fullname = Dir_FindFileNoDot(file, systemIncludePath);
 		if (fullname)
 			return fullname;
 	}
@@ -1159,7 +1159,7 @@ resolve_include_filename(const char *file, bool isSystem)
 
 			newName = Str_concati(fname, slash, file,
 			    strchr(file, '\0'), '/');
-			fullname = Dir_FindFile(newName, parseIncPath);
+			fullname = Dir_FindFile(newName, userIncludePath);
 			if (fullname == NULL)
 				fullname = Dir_FindFile(newName, defaultPath);
 			free(newName);
@@ -1171,7 +1171,7 @@ resolve_include_filename(const char *file, bool isSystem)
 	/* Now look first on the -I search path, then on the .PATH
 	 * search path, if not found in a -I directory.
 	 * XXX: Suffix specific?  */
-	fullname = Dir_FindFile(file, parseIncPath);
+	fullname = Dir_FindFile(file, userIncludePath);
 	if (fullname)
 		return fullname;
 	fullname = Dir_FindFile(file, defaultPath);
@@ -1183,7 +1183,7 @@ resolve_include_filename(const char *file, bool isSystem)
 	if (isSystem)
 		return NULL;
 	else
-		return Dir_FindFile(file, sysIncPath);
+		return Dir_FindFile(file, systemIncludePath);
 }
 
 static void
@@ -1612,8 +1612,8 @@ void
 Parse_Init(void)
 {
 	mainNode = NULL;
-	Static_Lst_Init(parseIncPath);
-	Static_Lst_Init(sysIncPath);
+	Static_Lst_Init(userIncludePath);
+	Static_Lst_Init(systemIncludePath);
 	Array_Init(&gsources, SOURCES_SIZE);
 	Array_Init(&gtargets, TARGETS_SIZE);
 
@@ -1628,8 +1628,8 @@ void
 Parse_End(void)
 {
 	Lst_Destroy(&targCmds, (SimpleProc)free);
-	Lst_Destroy(sysIncPath, Dir_Destroy);
-	Lst_Destroy(parseIncPath, Dir_Destroy);
+	Lst_Destroy(systemIncludePath, Dir_Destroy);
+	Lst_Destroy(userIncludePath, Dir_Destroy);
 	LowParse_End();
 }
 #endif

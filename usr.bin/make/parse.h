@@ -1,7 +1,7 @@
 #ifndef PARSE_H
 #define PARSE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.h,v 1.2 2004/04/07 13:11:36 espie Exp $ */
+/*	$OpenBSD: parse.h,v 1.3 2007/09/17 11:11:30 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -38,8 +38,8 @@ extern void Parse_End(void);
 #define Parse_End()
 #endif
 
-extern Lst	sysIncPath;	/* The system include<> path.  */
-extern Lst	parseIncPath;	/* The user   include"" path.  */
+extern Lst	systemIncludePath;
+extern Lst	userIncludePath;
 
 /* Parse_File(filename, filehandle);
  *	Parses stream filehandle, use filename when reporting error

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.80 2007/09/17 09:28:36 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.81 2007/09/17 11:11:30 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ MainParseArgs(int argc, char **argv)
 			break;
 		}
 		case 'm':
-			Dir_AddDir(sysIncPath, optarg);
+			Dir_AddDir(systemIncludePath, optarg);
 			record_option(c, optarg);
 			break;
 		case -1:
@@ -608,7 +608,7 @@ read_all_make_rules(bool noBuiltins, Lst makefiles, struct dirs *d)
 		LIST sysMkPath; 		/* Path of sys.mk */
 
 		Lst_Init(&sysMkPath);
-		Dir_Expand(_PATH_DEFSYSMK, sysIncPath, &sysMkPath);
+		Dir_Expand(_PATH_DEFSYSMK, systemIncludePath, &sysMkPath);
 		if (Lst_IsEmpty(&sysMkPath))
 			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
 
@@ -743,8 +743,8 @@ main(int argc, char **argv)
 	 * add the directories from the DEFSYSPATH (more than one may be given
 	 * as dir1:...:dirn) to the system include path.
 	 */
-	if (Lst_IsEmpty(sysIncPath))
-	    add_dirpath(sysIncPath, syspath);
+	if (Lst_IsEmpty(systemIncludePath))
+	    add_dirpath(systemIncludePath, syspath);
 
 	read_all_make_rules(noBuiltins, &makefiles, &d);
 
@@ -863,9 +863,9 @@ ReadMakefile(void *p, void *q)
 			}
 		}
 		/* look in -I and system include directories. */
-		name = Dir_FindFile(fname, parseIncPath);
+		name = Dir_FindFile(fname, userIncludePath);
 		if (!name)
-			name = Dir_FindFile(fname, sysIncPath);
+			name = Dir_FindFile(fname, systemIncludePath);
 		if (!name || !(stream = fopen(name, "r")))
 			return false;
 		fname = name;
