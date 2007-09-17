@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parsevar.c,v 1.10 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.11 2007/09/17 09:44:20 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ parse_variable_assignment(const char *line, int ctxt)
 #define VAR_APPEND	2
 #define VAR_SHELL	4
 #define VAR_OPT		8
-	int type;	
+	int type;
 	struct Name name;
 
 	arg = VarName_Get(line, &name, NULL, true,

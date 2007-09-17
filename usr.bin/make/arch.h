@@ -1,7 +1,7 @@
 #ifndef ARCH_H
 #define ARCH_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.h,v 1.2 2007/09/17 09:28:36 espie Exp $ */
+/*	$OpenBSD: arch.h,v 1.3 2007/09/17 09:44:20 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -60,12 +60,12 @@ extern void Arch_Touch(GNode *);
  *	This is distinct from Arch_Touch, as it also updates the mtime
  *	of the library's table of contents.  */
 extern void Arch_TouchLib(GNode *);
-/* stamp = Arch_MTime(node);		
+/* stamp = Arch_MTime(node);
  *	Find the modification time of a member of an archive *in the
  *	archive*, and returns it.
  *	The time is also stored in the member's GNode.  */
 extern TIMESTAMP Arch_MTime(GNode *);
-/* stamp = Arch_MemMTime(node);		
+/* stamp = Arch_MemMTime(node);
  *	Find the modification time of a member of an archive and returns it.
  *	To use when the member only exists within the archive.  */
 extern TIMESTAMP Arch_MemMTime(GNode *);

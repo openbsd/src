@@ -2,7 +2,7 @@
 #define DIR_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.h,v 1.22 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.23 2007/09/17 09:44:20 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -143,7 +143,7 @@ extern char *Dir_MakeFlags(const char *, Lst);
 
 
 /* List of directories to search when looking for targets. */
-extern Lst	defaultPath;	
+extern Lst	defaultPath;
 
 
 /* communication between dir.c and direxpand.c */

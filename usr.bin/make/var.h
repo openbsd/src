@@ -58,7 +58,7 @@ extern void Var_Appendi_with_ctxt(const char *, const char *,
 	const char *, int);
 #define Var_Append(n, v)	Var_Appendi_with_ctxt(n, NULL, v, VAR_GLOBAL)
 #define Var_Appendi(n, e, v) 	Var_Appendi_with_ctxt(n, e, v, VAR_GLOBAL)
-	
+
 /* Var_Deletei(name, end);
  *	Deletes a global variable. */
 extern void Var_Deletei(const char *, const char *);

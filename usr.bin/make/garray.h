@@ -2,7 +2,7 @@
 #define GARRAY_H
 
 /* $OpenPackages$ */
-/* $OpenBSD: garray.h,v 1.1 2001/06/12 22:44:21 espie Exp $ */
+/* $OpenBSD: garray.h,v 1.2 2007/09/17 09:44:20 espie Exp $ */
 /* Growable array implementation */
 
 /*
@@ -42,7 +42,7 @@ do {								\
 	for (ln = Lst_First((l1)); ln != NULL; ln = Lst_Adv(ln))\
 		Array_AtEnd((l2), Lst_Datum(ln));		\
 } while (0)
-		
+
 #ifdef STATS_GROW
 #define MAY_INCREASE_STATS	STAT_GROWARRAY++
 #else

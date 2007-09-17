@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.86 2007/09/17 09:38:49 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.87 2007/09/17 09:44:20 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1136,7 +1136,7 @@ static char *
 resolve_include_filename(const char *file, bool isSystem)
 {
 	char *fullname;
-	
+
 	/* Look up system files on the system path first */
 	if (isSystem) {
 		fullname = Dir_FindFileNoDot(file, sysIncPath);

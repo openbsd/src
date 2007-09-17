@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.77 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.78 2007/09/17 09:44:20 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ char	var_Error[] = "";
  * identical string instances...
  */
 static char	varNoError[] = "";
-bool		errorIsOkay;	
+bool		errorIsOkay;
 static bool	checkEnvFirst;	/* true if environment should be searched for
 				 * variables before the global context */
 

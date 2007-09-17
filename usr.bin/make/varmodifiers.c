@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.23 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.24 2007/09/17 09:44:20 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ VarModifiers_Init()
 		choose_mod['D'] = &def_mod;
 		choose_mod['U'] = &undef_mod;
 		choose_mod['L'] = &label_mod;
-		choose_mod['P'] = &path_mod;	
+		choose_mod['P'] = &path_mod;
 	}
 	if (FEATURES(FEATURE_ASSIGN))
 		choose_mod[':'] = &assign_mod;
@@ -431,7 +431,7 @@ NameCompare(const void *ap, const void *bp)
 	struct Name *a, *b;
 	size_t n, m;
 	int c;
-	
+
 	a = (struct Name *)ap;
 	b = (struct Name *)bp;
 	n = a->e - a->s;
@@ -1196,7 +1196,7 @@ LoopGrab(const char **s)
 	*s = p+1;
 	return escape_dupi(start, p, "@\\");
 }
-	
+
 static void *
 get_loop(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 {
@@ -1406,7 +1406,7 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 	 *		  :lhs=rhs	Like :S, but the rhs goes to the end of
 	 *				the invocation.
 	 */
-	
+
 	atstart = true;
 	while (*tstr != endc && *tstr != '\0') {
 		struct modifier *mod;

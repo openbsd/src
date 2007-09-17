@@ -2,7 +2,7 @@
 #define TIMESTAMP_H
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: timestamp.h,v 1.3 2007/09/17 09:28:36 espie Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.4 2007/09/17 09:44:20 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -36,7 +36,7 @@
  * ts_set_out_of_date(t):	set up t so that it is out-of-date.
  * b = is_out_of_date(t):	check whether t is out-of-date.
  * ts_set_from_stat(s, t):	grab date out of stat(2) buffer.
- * b = is_strictly_before(t1, t2):	
+ * b = is_strictly_before(t1, t2):
  *				check whether t1 is before t2.
  * stamp = timestamp2time_t(t):	extract time_t from timestamp.
  * ts_set_from_time_t(d, t):	create timestamp from time_t.
