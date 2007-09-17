@@ -1,4 +1,4 @@
-/*	$OpenBSD: tempnam.c,v 1.14 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: tempnam.c,v 1.15 2007/09/17 15:12:44 moritz Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,14 +53,15 @@ tempnam(const char *dir, const char *pfx)
 	if (!pfx)
 		pfx = "tmp.";
 
-	if (issetugid() == 0 && (f = getenv("TMPDIR"))) {
+	if (issetugid() == 0 && (f = getenv("TMPDIR")) && *f != '\0') {
 		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if ((f = _mktemp(name)))
 			return(f);
 	}
 
-	if ((f = (char *)dir)) {
+	if (dir != NULL) {
+		f = *dir ? (char *)dir : ".";
 		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if ((f = _mktemp(name)))
