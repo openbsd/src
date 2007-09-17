@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_map.c,v 1.7 2006/07/31 11:06:27 mickey Exp $	*/
+/*	$OpenBSD: cardbus_map.c,v 1.8 2007/09/17 20:29:47 miod Exp $	*/
 /*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
@@ -52,15 +52,19 @@
 #define STATIC
 #define DPRINTF(a) printf a
 #else
+#ifdef DDB
+#define STATIC
+#else
 #define STATIC static
+#endif
 #define DPRINTF(a)
 #endif
 
 
-static int cardbus_io_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
+STATIC int cardbus_io_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
 	       cardbustag_t, int, cardbusreg_t, bus_addr_t *, bus_size_t *,
 	       int *);
-static int cardbus_mem_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
+STATIC int cardbus_mem_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
 	       cardbustag_t, int, cardbusreg_t, bus_addr_t *, bus_size_t *,
 	       int *);
 
@@ -87,13 +91,13 @@ cardbus_mapreg_probe(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 }
 
 /*
- * static int cardbus_io_find(cardbus_chipset_tag_t cc,
+ * STATIC int cardbus_io_find(cardbus_chipset_tag_t cc,
  *			      cardbus_function_tag_t cf, cardbustag_t tag,
  *			      int reg, cardbusreg_t type, bus_addr_t *basep,
  *			      bus_size_t *sizep, int *flagsp)
  * This code is stolen from sys/dev/pci_map.c.
  */
-static int
+STATIC int
 cardbus_io_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
     cardbustag_t tag, int reg, cardbusreg_t type, bus_addr_t *basep,
     bus_size_t *sizep, int *flagsp)
@@ -147,13 +151,13 @@ cardbus_io_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 }
 
 /*
- * static int cardbus_mem_find(cardbus_chipset_tag_t cc,
+ * STATIC int cardbus_mem_find(cardbus_chipset_tag_t cc,
  *			       cardbus_function_tag_t cf, cardbustag_t tag,
  *			       int reg, cardbusreg_t type, bus_addr_t *basep,
  *			       bus_size_t *sizep, int *flagsp)
  * This code is stolen from sys/dev/pci_map.c.
  */
-static int
+STATIC int
 cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
     cardbustag_t tag, int reg, cardbusreg_t type, bus_addr_t *basep,
     bus_size_t *sizep, int *flagsp)
