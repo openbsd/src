@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.114 2007/05/31 19:19:44 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.115 2007/09/17 15:53:00 sthen Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 17 2007 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -810,10 +810,6 @@ and is specified as follows:
 .Bd -literal -offset -indent
 authkey file "filename"
 .Ed
-.Pp
-It is also possible to specify two values separated by a colon.
-.Xr ipsecctl 8
-will then generate the matching incoming SA using the second value specified.
 .It Ic enckey Ar keyspec
 The encryption key is defined similarly to
 .Ic authkey .
@@ -845,6 +841,14 @@ is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
 The encryption key is defined similarly to
 .Ic authkey .
 .El
+.Pp
+Since an SA is directional, a second SA is normally configured in the
+reverse direction.
+This is done by adding a second, colon-separated, value to
+.Ic spi ,
+.Ic authkey ,
+and
+.Ic enckey .
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr enc 4 ,
