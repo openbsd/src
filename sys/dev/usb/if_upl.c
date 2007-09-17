@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.38 2007/06/14 10:11:15 mbalmer Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.39 2007/09/17 01:40:38 fgsch Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@
 #include <sys/timeout.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 

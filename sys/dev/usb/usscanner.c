@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.22 2007/06/14 10:11:16 mbalmer Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.23 2007/09/17 01:40:38 fgsch Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/buf.h>

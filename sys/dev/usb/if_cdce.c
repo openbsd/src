@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.37 2007/09/11 21:17:37 winiger Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.38 2007/09/17 01:40:38 fgsch Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -46,7 +46,6 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
