@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.67 2007/09/17 09:28:36 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.68 2007/09/17 10:12:35 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1177,7 +1177,7 @@ SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
 		 * on the Arch module to find the nodes for us, expanding
 		 * variables in the parent's context.
 		 */
-		char	*sacrifice = cp;
+		const char	*sacrifice = cp;
 
 		(void)Arch_ParseArchive(&sacrifice, &members, &pgn->context);
 	} else {

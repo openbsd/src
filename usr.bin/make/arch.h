@@ -1,7 +1,7 @@
 #ifndef ARCH_H
 #define ARCH_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.h,v 1.3 2007/09/17 09:44:20 espie Exp $ */
+/*	$OpenBSD: arch.h,v 1.4 2007/09/17 10:12:35 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -50,7 +50,7 @@ extern void Arch_End(void);
  *	nodeLst, one for each member in the spec.
  *	false is returned if the specification is invalid for some reason.
  *	Side-effect: begin is bumped to the end of the specification.  */
-extern bool Arch_ParseArchive(char **, Lst, SymTable *);
+extern bool Arch_ParseArchive(const char **, Lst, SymTable *);
 /* Arch_Touch(node);
  *	Alter the modification time of the archive member described by node
  *	to the current time.  */
