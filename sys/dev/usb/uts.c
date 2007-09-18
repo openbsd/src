@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.20 2007/09/16 03:19:15 fgsch Exp $ */
+/*	$OpenBSD: uts.c,v 1.21 2007/09/18 19:44:40 miod Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -101,7 +101,7 @@ const struct usb_devno uts_devs[] = {
 };
 
 void uts_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-struct uts_pos uts_get_pos(usbd_private_handle addr, struct uts_pos tp);
+void uts_get_pos(usbd_private_handle addr, struct uts_pos *tp);
 
 int	uts_enable(void *);
 void	uts_disable(void *);
@@ -382,8 +382,8 @@ uts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *l)
 	return (error);
 }
 
-struct uts_pos
-uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
+void
+uts_get_pos(usbd_private_handle addr, struct uts_pos *tp)
 {
 	struct uts_softc *sc = addr;
 	u_char *p = sc->sc_ibuf;
@@ -432,28 +432,27 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos tp)
 	if (down) {
 		if (sc->sc_tsscale.swapxy && !sc->sc_rawmode) {
 			/* Swap X/Y-Axis */
-			tp.y = x;
-			tp.x = y;
+			tp->y = x;
+			tp->x = y;
 		} else {
-			tp.x = x;
-			tp.y = y;
+			tp->x = x;
+			tp->y = y;
 		}
 		if (!sc->sc_rawmode) {
 			/* Scale down to the screen resolution. */
-			tp.x = ((tp.x - sc->sc_tsscale.minx) *
+			tp->x = ((tp->x - sc->sc_tsscale.minx) *
 			    sc->sc_tsscale.resx) /
 			    (sc->sc_tsscale.maxx - sc->sc_tsscale.minx);
-			tp.y = ((tp.y - sc->sc_tsscale.miny) *
+			tp->y = ((tp->y - sc->sc_tsscale.miny) *
 			    sc->sc_tsscale.resy) /
 			    (sc->sc_tsscale.maxy - sc->sc_tsscale.miny);
 		}
 	} else {
-		tp.x = sc->sc_oldx;
-		tp.y = sc->sc_oldy;
+		tp->x = sc->sc_oldx;
+		tp->y = sc->sc_oldy;
 	}
-	tp.z = z;
-	tp.down = down;
-	return (tp);
+	tp->z = z;
+	tp->down = down;
 }
 
 void
@@ -464,24 +463,26 @@ uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	int s;
 	struct uts_pos tp;
 
-	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
-
-	s = spltty();
-
 	if (status == USBD_CANCELLED)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		printf("%s: status %d\n", sc->sc_dev.dv_xname, status);
-		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
+		if (status == USBD_STALLED)
+			usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
 
-	tp = uts_get_pos(sc, tp);
+	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
+
+	s = spltty();
+
+	uts_get_pos(sc, &tp);
 
 	if (len != sc->sc_pkts) {
 		DPRINTF(("%s: bad input length %d != %d\n",
 		    sc->sc_dev.dv_xname, len, sc->sc_isize));
+		splx(s);
 		return;
 	}
 
