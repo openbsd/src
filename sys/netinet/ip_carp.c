@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.148 2007/09/03 06:10:54 joel Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.149 2007/09/18 09:18:04 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1426,10 +1426,10 @@ carp_iamatch(struct in_ifaddr *ia, u_char *src,
 
 	if (carp_opts[CARPCTL_ARPBALANCE]) {
 		/*
-		 * We use the source ip to decide which virtual host should
-		 * handle the request. If we're master of that virtual host,
-		 * then we respond, otherwise, just drop the arp packet on
-		 * the floor.
+		 * We use the source MAC address to decide which virtual host
+		 * should handle the request. If we're master of that virtual
+		 * host, then we respond, otherwise, just drop the arp packet
+		 * on the floor.
 		 */
 
 		/* Count the eligible carp interfaces with this address */
