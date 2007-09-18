@@ -1,4 +1,4 @@
-/*	$OpenBSD: thmc50.c,v 1.1 2007/09/09 15:59:47 deraadt Exp $	*/
+/*	$OpenBSD: thmc50.c,v 1.2 2007/09/18 09:55:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Theo de Raadt
@@ -127,7 +127,7 @@ thmc_refresh(void *arg)
 		sc->sc_sensor[THMC_TEMP0].value = 273150000 + 1000000 * sdata;
 		sc->sc_sensor[THMC_TEMP0].flags &= ~SENSOR_FINVALID;
 	} else
-		sc->sc_sensor[THMC_TEMP0].flags &= ~SENSOR_FINVALID;
+		sc->sc_sensor[THMC_TEMP0].flags |= SENSOR_FINVALID;
 
 	cmd = THMC50_TEMP1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -135,7 +135,7 @@ thmc_refresh(void *arg)
 		sc->sc_sensor[THMC_TEMP1].value = 273150000 + 1000000 * sdata;
 		sc->sc_sensor[THMC_TEMP1].flags &= ~SENSOR_FINVALID;
 	} else
-		sc->sc_sensor[THMC_TEMP1].flags &= ~SENSOR_FINVALID;
+		sc->sc_sensor[THMC_TEMP1].flags |= SENSOR_FINVALID;
 
 	if (sc->sc_sensor[THMC_TEMP2].type > 0) { 
 		cmd = THMC50_TEMP2;
@@ -144,7 +144,7 @@ thmc_refresh(void *arg)
 			sc->sc_sensor[THMC_TEMP2].value = 273150000 + 1000000 * sdata;
 			sc->sc_sensor[THMC_TEMP2].flags &= ~SENSOR_FINVALID;
 		} else
-			sc->sc_sensor[THMC_TEMP2].flags &= ~SENSOR_FINVALID;
+			sc->sc_sensor[THMC_TEMP2].flags |= SENSOR_FINVALID;
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
