@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.25 2007/06/26 10:30:05 tom Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.26 2007/09/18 19:55:16 otto Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 #define	__const		const		/* define reserved names to standard */
 #define	__signed	signed
 #define	__volatile	volatile
-#if defined(__cplusplus)
+#if defined(__cplusplus) || defined(__PCC__)
 #define	__inline	inline		/* convert to C++ keyword */
 #else
 #if !defined(__GNUC__) && !defined(lint)
