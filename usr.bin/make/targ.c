@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.47 2007/09/17 14:05:34 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.48 2007/09/18 08:51:23 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -133,6 +133,8 @@ static void TargPrintNode(GNode *, int);
 static LIST allTargets;
 static void TargFreeGN(void *);
 #endif
+#define Targ_FindConstantNode(n, f) Targ_FindNodeh(n, sizeof(n), K_##n, f)
+
 
 GNode *begin_node, *end_node, *interrupt_node, *DEFAULT;
 

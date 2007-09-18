@@ -1,7 +1,7 @@
 #ifndef TARG_H
 #define TARG_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.h,v 1.3 2007/09/17 12:42:09 espie Exp $ */
+/*	$OpenBSD: targ.h,v 1.4 2007/09/18 08:51:23 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -64,8 +64,6 @@ Targ_FindNodeh(const char *name, size_t n, uint32_t hv, int flags)
 {
 	return Targ_FindNodeih(name, name + n - 1, hv, flags);
 }
-#define Targ_FindConstantNode(n, f) Targ_FindNodeh(n, sizeof(n), K_##n, f)
-
 extern void Targ_FindList(Lst, Lst);
 extern bool Targ_Ignore(GNode *);
 extern bool Targ_Silent(GNode *);
