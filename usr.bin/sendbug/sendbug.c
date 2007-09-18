@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.50 2007/07/31 03:44:21 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.51 2007/09/18 00:38:58 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -27,6 +27,7 @@
 #include "atomicio.h"
 
 #define _PATH_DMESG "/var/run/dmesg.boot"
+#define DMESG_START "OpenBSD "
 
 int	checkfile(const char *);
 void	dmesg(FILE *);
@@ -191,14 +192,14 @@ dmesg(FILE *fp)
 	    "<dmesg is attached.>\n"
 	    "<Feel free to delete or use the -D flag if it contains "
 	    "sensitive information.>\n", fp);
-	/* Find last line starting with "OpenBSD". */
+	/* Find last dmesg. */
 	for (;;) {
 		off_t o;
 
 		o = ftello(dfp);
 		if (fgets(buf, sizeof(buf), dfp) == NULL)
 			break;
-		if (!strncmp("OpenBSD ", buf, sizeof("OpenBSD ") - 1))
+		if (!strncmp(DMESG_START, buf, sizeof(DMESG_START) - 1))
 			offset = o;
 	}
 	if (offset != -1) {
@@ -414,10 +415,10 @@ init(void)
 int
 send_file(const char *file, int dst)
 {
-	int blank = 0;
 	size_t len;
 	char *buf;
 	FILE *fp;
+	int blank = 0, dmesg_line = 0;
 
 	if ((fp = fopen(file, "r")) == NULL)
 		return (-1);
@@ -426,14 +427,21 @@ send_file(const char *file, int dst)
 		if (len >= sizeof("SENDBUG") - 1 &&
 		    memcmp(buf, "SENDBUG", sizeof("SENDBUG") - 1) == 0)
 			continue;
-		if (len == 1 && buf[0] == '\n')
+		/* Are we done with the headers? */
+		if (!blank && len == 1 && buf[0] == '\n')
 			blank = 1;
-		/* Skip comments, but only if we encountered a blank line. */
+		/* Have we reached the dmesg? */
+		if (blank && !dmesg_line &&
+		    len >= sizeof(DMESG_START) - 1 &&
+		    memcmp(buf, DMESG_START, sizeof(DMESG_START) - 1) == 0)
+			dmesg_line = 1;
+		/* Skip comments between headers and dmesg. */
 		while (len) {
 			char *sp = NULL, *ep = NULL;
 			size_t copylen;
 
-			if (blank && (sp = memchr(buf, '<', len)) != NULL)
+			if (blank && !dmesg_line &&
+			    (sp = memchr(buf, '<', len)) != NULL)
 				ep = memchr(sp, '>', len - (sp - buf + 1));
 			/* Length of string before comment. */
 			if (ep)
