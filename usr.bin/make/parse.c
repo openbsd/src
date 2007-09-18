@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.93 2007/09/18 08:24:56 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.94 2007/09/18 08:46:10 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -266,15 +266,13 @@ create_special_nodes()
  *---------------------------------------------------------------------
  */
 static void
-ParseLinkSrc(
-    GNode		*pgn,	/* The parent node */
-    GNode		*cgn)	/* The child node */
+ParseLinkSrc(GNode *pgn, GNode *cgn)
 {
-    if (Lst_AddNew(&pgn->children, cgn)) {
-	if (specType == SPECIAL_NONE)
-	    Lst_AtEnd(&cgn->parents, pgn);
-	pgn->unmade++;
-    }
+	if (Lst_AddNew(&pgn->children, cgn)) {
+		if (specType == SPECIAL_NONE)
+			Lst_AtEnd(&cgn->parents, pgn);
+		pgn->unmade++;
+	}
 }
 
 /*-
@@ -291,53 +289,52 @@ ParseLinkSrc(
  *---------------------------------------------------------------------
  */
 static int
-ParseDoOp(
-    GNode	   **gnp,
-    int	   	   op)	/* The operator to apply */
+ParseDoOp(GNode **gnp, int op)
 {
-    GNode *gn = *gnp;
-    /*
-     * If the dependency mask of the operator and the node don't match and
-     * the node has actually had an operator applied to it before, and
-     * the operator actually has some dependency information in it, complain.
-     */
-    if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
-	!OP_NOP(gn->type) && !OP_NOP(op)) {
-	Parse_Error(PARSE_FATAL, "Inconsistent operator for %s", gn->name);
-	return 0;
-    }
+	GNode *gn = *gnp;
+	/*
+	 * If the dependency mask of the operator and the node don't match and
+	 * the node has actually had an operator applied to it before, and the
+	 * operator actually has some dependency information in it, complain.
+	 */
+	if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
+	    !OP_NOP(gn->type) && !OP_NOP(op)) {
+		Parse_Error(PARSE_FATAL, "Inconsistent operator for %s", 
+		    gn->name);
+		return 0;
+	}
 
-    if (op == OP_DOUBLEDEP && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
-	/* If the node was the object of a :: operator, we need to create a
-	 * new instance of it for the children and commands on this dependency
-	 * line. The new instance is placed on the 'cohorts' list of the
-	 * initial one (note the initial one is not on its own cohorts list)
-	 * and the new instance is linked to all parents of the initial
-	 * instance.  */
-	GNode		*cohort;
-	LstNode 	ln;
+	if (op == OP_DOUBLEDEP && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
+		/* If the node was the object of a :: operator, we need to
+		 * create a new instance of it for the children and commands on
+		 * this dependency line. The new instance is placed on the
+		 * 'cohorts' list of the initial one (note the initial one is
+		 * not on its own cohorts list) and the new instance is linked
+		 * to all parents of the initial instance.  */
+		GNode *cohort;
+		LstNode ln;
 
-	cohort = Targ_NewGN(gn->name);
-	/* Duplicate links to parents so graph traversal is simple. Perhaps
-	 * some type bits should be duplicated?
-	 *
-	 * Make the cohort invisible as well to avoid duplicating it into
-	 * other variables. True, parents of this target won't tend to do
-	 * anything with their local variables, but better safe than
-	 * sorry.  */
-	for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln))
-	    ParseLinkSrc((GNode *)Lst_Datum(ln), cohort);
-	cohort->type = OP_DOUBLEDEP|OP_INVISIBLE;
-	Lst_AtEnd(&gn->cohorts, cohort);
+		cohort = Targ_NewGN(gn->name);
+		/* Duplicate links to parents so graph traversal is simple.
+		 * Perhaps some type bits should be duplicated?
+		 *
+		 * Make the cohort invisible as well to avoid duplicating it
+		 * into other variables. True, parents of this target won't
+		 * tend to do anything with their local variables, but better
+		 * safe than sorry.  */
+		for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln))
+			ParseLinkSrc((GNode *)Lst_Datum(ln), cohort);
+		cohort->type = OP_DOUBLEDEP|OP_INVISIBLE;
+		Lst_AtEnd(&gn->cohorts, cohort);
 
-	/* Replace the node in the targets list with the new copy */
-	*gnp = cohort;
-	gn = cohort;
-    }
-    /* We don't want to nuke any previous flags (whatever they were) so we
-     * just OR the new operator into the old.  */
-    gn->type |= op;
-    return 1;
+		/* Replace the node in the targets list with the new copy */
+		*gnp = cohort;
+		gn = cohort;
+	}
+	/* We don't want to nuke any previous flags (whatever they were) so we
+	 * just OR the new operator into the old.  */
+	gn->type |= op;
+	return 1;
 }
 
 /*-
@@ -359,16 +356,15 @@ ParseDoOp(
 static int
 ParseAddDep(GNode *p, GNode *s)
 {
-    if (p->order < s->order) {
-	/* XXX: This can cause loops, and loops can cause unmade targets,
-	 * but checking is tedious, and the debugging output can show the
-	 * problem.  */
-	Lst_AtEnd(&p->successors, s);
-	Lst_AtEnd(&s->preds, p);
-	return 1;
-    }
-    else
-	return 0;
+	if (p->order < s->order) {
+		/* XXX: This can cause loops, and loops can cause unmade
+		 * targets, but checking is tedious, and the debugging output
+		 * can show the problem.  */
+		Lst_AtEnd(&p->successors, s);
+		Lst_AtEnd(&s->preds, p);
+		return 1;
+	} else
+		return 0;
 }
 
 static void
@@ -484,17 +480,15 @@ ParseDoSrc(
  *-----------------------------------------------------------------------
  */
 static int
-ParseFindMain(
-    void *gnp,	    /* Node to examine */
-    void *dummy 	UNUSED)
+ParseFindMain(void *gnp, void *dummy UNUSED)
 {
-    GNode	  *gn = (GNode *)gnp;
-    if ((gn->type & OP_NOTARGET) == 0 && gn->special == SPECIAL_NONE) {
-	mainNode = gn;
-	return 0;
-    } else {
-	return 1;
-    }
+	GNode *gn = (GNode *)gnp;
+	if ((gn->type & OP_NOTARGET) == 0 && gn->special == SPECIAL_NONE) {
+		mainNode = gn;
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 /*-
@@ -506,10 +500,10 @@ ParseFindMain(
 static void
 ParseClearPath(void *p)
 {
-    Lst 	path = (Lst)p;
+	Lst path = (Lst)p;
 
-    Lst_Destroy(path, Dir_Destroy);
-    Lst_Init(path);
+	Lst_Destroy(path, Dir_Destroy);
+	Lst_Init(path);
 }
 
 static void
@@ -708,7 +702,8 @@ handle_special_targets(Lst paths)
 		specType = SPECIAL_NONE;
 		return 0;
 	} else if (seen_special != 1) {
-		Parse_Error(PARSE_FATAL, "Mixing special targets is not allowed");
+		Parse_Error(PARSE_FATAL, 
+		    "Mixing special targets is not allowed");
 		dump_targets();
 		return 0;
 	} else if (seen_special == 1) {
@@ -994,9 +989,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
  *	A new element is added to the commands list of the node.
  */
 static void
-ParseAddCmd(
-    void *gnp,	/* the node to which the command is to be added */
-    void *cmd)	/* the command to add */
+ParseAddCmd(void *gnp, void *cmd)
 {
 	GNode *gn = (GNode *)gnp;
 	/* if target already supplied, ignore commands */
@@ -1567,15 +1560,13 @@ Parse_End(void)
 void
 Parse_MainName(Lst listmain)	/* result list */
 {
-
-    if (mainNode == NULL) {
-	Punt("no target to make.");
-	/*NOTREACHED*/
-    } else if (mainNode->type & OP_DOUBLEDEP) {
-	Lst_AtEnd(listmain, mainNode);
-	Lst_Concat(listmain, &mainNode->cohorts);
-    }
-    else
-	Lst_AtEnd(listmain, mainNode);
+	if (mainNode == NULL) {
+		Punt("no target to make.");
+		/*NOTREACHED*/
+	} else if (mainNode->type & OP_DOUBLEDEP) {
+		Lst_AtEnd(listmain, mainNode);
+		Lst_Concat(listmain, &mainNode->cohorts);
+	}
+	else
+		Lst_AtEnd(listmain, mainNode);
 }
-
