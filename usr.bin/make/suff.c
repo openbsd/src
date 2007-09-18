@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.70 2007/09/17 12:42:09 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.71 2007/09/18 08:31:15 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1922,7 +1922,7 @@ Suff_End(void)
 	if (emptySuff)
 		SuffFree(emptySuff);
 	Lst_Destroy(&srclist, NOFREE);
-	ohash_delete(&transforms):
+	ohash_delete(&transforms);
 }
 #endif
 
