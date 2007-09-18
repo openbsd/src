@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.87 2007/09/07 10:22:15 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.88 2007/09/18 08:13:49 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -397,43 +397,9 @@ struct kmembuckets {
 /*
  * Macro versions for the usual cases of malloc/free
  */
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(_LKM) || defined(SMALL_KERNEL)
 #define	MALLOC(space, cast, size, type, flags) \
 	(space) = (cast)malloc((u_long)(size), type, flags)
 #define	FREE(addr, type) free((caddr_t)(addr), type)
-
-#else /* do not collect statistics */
-#define	MALLOC(space, cast, size, type, flags) do { \
-	u_long kbp_size = (u_long)(size); \
-	struct kmembuckets *kbp = &bucket[BUCKETINDX(kbp_size)]; \
-	int __s = splvm(); \
-	if (kbp->kb_next == NULL) { \
-		(space) = (cast)malloc(kbp_size, type, flags); \
-	} else { \
-		(space) = (cast)kbp->kb_next; \
-		kbp->kb_next = *(caddr_t *)(space); \
-	} \
-	splx(__s); \
-} while (0)
-
-#define	FREE(addr, type) do { \
-	struct kmembuckets *kbp; \
-	struct kmemusage *kup = btokup(addr); \
-	int __s = splvm(); \
-	if (1 << kup->ku_indx > MAXALLOCSAVE) { \
-		free((caddr_t)(addr), type); \
-	} else { \
-		kbp = &bucket[kup->ku_indx]; \
-		if (kbp->kb_next == NULL) \
-			kbp->kb_next = (caddr_t)(addr); \
-		else \
-			*(caddr_t *)(kbp->kb_last) = (caddr_t)(addr); \
-		*(caddr_t *)(addr) = NULL; \
-		kbp->kb_last = (caddr_t)(addr); \
-	} \
-	splx(__s); \
-} while(0)
-#endif /* do not collect statistics */
 
 extern struct kmemstats kmemstats[];
 extern struct kmemusage *kmemusage;
