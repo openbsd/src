@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.4 2007/09/17 07:40:06 otto Exp $	*/
+/*	$OpenBSD: common.c,v 1.5 2007/09/18 07:22:01 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -136,6 +136,7 @@ werror(char *s, ...)
 	fprintf(stderr, "warning: ");
 	vfprintf(stderr, s, ap);
 	fprintf(stderr, "\n");
+	va_end(ap);
 }
 
 #ifndef MKEXT
