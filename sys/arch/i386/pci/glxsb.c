@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.10 2007/09/10 23:04:46 henric Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.11 2007/09/18 22:02:18 djm Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -379,7 +379,7 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 				return (EINVAL);
 			}
 
-			get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
+			arc4random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
 			ses->ses_klen = c->cri_klen;
 
 			/* Copy the key (Geode LX wants the primary key only) */

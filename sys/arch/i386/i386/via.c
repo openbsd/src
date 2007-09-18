@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.14 2007/09/11 01:12:44 deraadt Exp $	*/
+/*	$OpenBSD: via.c,v 1.15 2007/09/18 22:02:18 djm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -194,7 +194,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			cw0 |= C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_SW |
 			    C3_CRYPT_CWLO_NORMAL;
 
-			get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
+			arc4random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
 			ses->ses_klen = c->cri_klen;
 			ses->ses_cw0 = cw0;
 

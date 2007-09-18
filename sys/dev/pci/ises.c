@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.31 2006/06/29 21:34:51 deraadt Exp $	*/
+/*	$OpenBSD: ises.c,v 1.32 2007/09/18 22:02:18 djm Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -1014,7 +1014,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	if (enc) {
 		/* get an IV, network byte order */
 		/* XXX switch to using builtin HRNG ! */
-		get_random_bytes(ses->sccr, sizeof(ses->sccr));
+		arc4random_bytes(ses->sccr, sizeof(ses->sccr));
 
 		/* crypto key */
 		if (enc->cri_alg == CRYPTO_DES_CBC) {

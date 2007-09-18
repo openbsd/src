@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.99 2007/09/01 18:49:28 henning Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.100 2007/09/18 22:02:18 djm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1218,7 +1218,7 @@ tcp_rndiss_encrypt(val)
 void
 tcp_rndiss_init()
 {
-	get_random_bytes(tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox));
+	arc4random_bytes(tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox));
 
 	tcp_rndiss_reseed = time_second + TCP_RNDISS_OUT;
 	tcp_rndiss_msb = tcp_rndiss_msb == 0x8000 ? 0 : 0x8000;
