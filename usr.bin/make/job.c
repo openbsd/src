@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.78 2007/09/17 12:42:09 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.79 2007/09/18 07:45:25 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -160,17 +160,17 @@ typedef struct Job_ {
     short	flags;	    /* Flags to control treatment of job */
 #define JOB_IGNERR	0x001	/* Ignore non-zero exits */
 #define JOB_SILENT	0x002	/* no output */
-#define JOB_SPECIAL	0x004	/* Target is a special one. i.e., always run */
-				/* it even when the table is full */
-#define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing */
-				/* commands */
+#define JOB_SPECIAL	0x004	/* Target is a special one. i.e. run it locally
+				 * if we can't export it and maxLocal is 0 */
+#define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing
+				 * commands */
 #define JOB_FIRST	0x020	/* Job is first job for the node */
 #define JOB_RESTART	0x080	/* Job needs to be completely restarted */
-#define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped, */
-				/* for some reason */
-#define JOB_CONTINUING	0x200	/* We are in the process of resuming this job */
-				/* Used to avoid infinite recursion between */
-				/* JobFinish and JobRestart */
+#define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
+				 * for some reason */
+#define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
+				 * Used to avoid infinite recursion between
+				 * JobFinish and JobRestart */
     int 	inPipe;		/* Input side of pipe associated
 				 * with job's output channel */
     int 	outPipe;	/* Output side of pipe associated with
@@ -229,9 +229,15 @@ static const char *shellName = "sh";
 
 
 static int	maxJobs;	/* The most children we can run at once */
+static int	maxLocal;	/* The most local ones we can have */
 static int	nJobs = 0;	/* The number of children currently running */
+static int	nLocal; 	/* The number of local children */
 static LIST	jobs;		/* The structures that describe them */
-static bool	jobFull;	/* Flag to tell when the job table is full. */
+static bool	jobFull;	/* Flag to tell when the job table is full. It
+				 * is set true when (1) the total number of
+				 * running jobs equals the maximum allowed or
+				 * (2) a job can only be run locally, but
+				 * nLocal equals maxLocal */
 static fd_set	*outputsp;	/* Set of descriptors of pipes connected to
 				 * the output channels of children */
 static int	outputsn;
@@ -842,6 +848,7 @@ JobFinish(Job *job,		/* job to finish */
 				    (long)job->pid);
 				(void)fflush(stdout);
 			}
+			nLocal++;
 			if (nJobs == maxJobs) {
 				jobFull = true;
 				if (DEBUG(JOB)) {
@@ -1064,6 +1071,7 @@ JobExec(Job *job, char **argv)
 		}
 	}
 
+	nLocal += 1;
 	/*
 	 * Now the job is actually running, add it to the table.
 	 */
@@ -1131,31 +1139,30 @@ JobRestart(Job *job)
 			    job->node->name);
 			(void)fflush(stdout);
 		}
-		if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL)) {
-			/*
-			 * Can't be exported and not allowed to run locally --
-			 * put it back on the hold queue and mark the table
-			 * full
-			 */
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "holding\n");
-				(void)fflush(stdout);
-			}
-			Lst_AtFront(&stoppedJobs, job);
-			jobFull = true;
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "Job queue is full.\n");
-				(void)fflush(stdout);
-			}
-			return;
+		if (nLocal >= maxLocal && !(job->flags & JOB_SPECIAL)) {
+		    /*
+		     * Can't be exported and not allowed to run locally -- put
+		     * it back on the hold queue and mark the table full
+		     */
+		    if (DEBUG(JOB)) {
+			(void)fprintf(stdout, "holding\n");
+			(void)fflush(stdout);
+		    }
+		    Lst_AtFront(&stoppedJobs, job);
+		    jobFull = true;
+		    if (DEBUG(JOB)) {
+			(void)fprintf(stdout, "Job queue is full.\n");
+			(void)fflush(stdout);
+		    }
+		    return;
 		} else {
-			/*
-			 * Job may be run locally.
-			 */
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "running locally\n");
-				(void)fflush(stdout);
-			}
+		    /*
+		     * Job may be run locally.
+		     */
+		    if (DEBUG(JOB)) {
+			(void)fprintf(stdout, "running locally\n");
+			(void)fflush(stdout);
+		    }
 		}
 		JobExec(job, argv);
 	} else {
@@ -1167,10 +1174,11 @@ JobRestart(Job *job)
 		       (void)fprintf(stdout, "Resuming %s...", job->node->name);
 		       (void)fflush(stdout);
 		}
-		if (nJobs != maxJobs || (job->flags & JOB_SPECIAL)) {
+		if ((nLocal < maxLocal || ((job->flags & JOB_SPECIAL) &&
+		    maxLocal == 0)) && nJobs != maxJobs) {
 			/*
-			 * If we haven't reached the concurrency limit already,
-			 * it's ok to resume the job.
+			 * If we haven't reached the concurrency limit already
+			 * (or maxLocal is 0), it's ok to resume the job.
 			 */
 			bool error;
 			int status;
@@ -1465,9 +1473,16 @@ JobStart(GNode *gn,	      	/* target to create */
 
 	local = true;
 
-	if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL)) {
-		/* we've hit the limit of concurrency, so put the job on hold
-		 * until some other job finishes.
+	if (local && nLocal >= maxLocal && !(job->flags & JOB_SPECIAL) &&
+	    maxLocal != 0) {
+		/*
+		 * The job can only be run locally, but we've hit the limit of
+		 * local concurrency, so put the job on hold until some other
+		 * job finishes. Note that the special jobs (.BEGIN, .INTERRUPT
+		 * and .END) may be run locally even when the local limit has
+		 * been reached (e.g. when maxLocal == 0), though they will be
+		 * exported if at all possible. In addition, any target marked
+		 * with .NOEXPORT will be run locally if maxLocal is 0.
 		 */
 		jobFull = true;
 
@@ -1477,6 +1492,20 @@ JobStart(GNode *gn,	      	/* target to create */
 		}
 		job->flags |= JOB_RESTART;
 		Lst_AtEnd(&stoppedJobs, job);
+	} else {
+		if (nLocal >= maxLocal && local) {
+			/*
+			 * If we're running this job locally as a special case
+			 * (see above), at least say the table is full.
+			 */
+			jobFull = true;
+			if (DEBUG(JOB)) {
+				(void)fprintf(stdout, 
+				    "Local job queue is full.\n");
+				(void)fflush(stdout);
+			}
+		}
+		JobExec(job, argv);
 	}
 	return JOB_RUNNING;
 }
@@ -1705,7 +1734,7 @@ Job_CatchChildren()
 	/*
 	 * Don't even bother if we know there's no one around.
 	 */
-	if (nJobs == 0) {
+	if (nLocal == 0) {
 		return;
 	}
 
@@ -1744,6 +1773,7 @@ Job_CatchChildren()
 				(void)fflush(stdout);
 			}
 			jobFull = false;
+			nLocal--;
 		}
 
 		JobFinish(job, &status);
@@ -1826,7 +1856,7 @@ Job_Make(GNode *gn)
  *-----------------------------------------------------------------------
  */
 void
-Job_Init(int maxproc)
+Job_Init(int maxproc, int maxlocal)
 {
 	int tfd;
 
@@ -1839,6 +1869,9 @@ Job_Init(int maxproc)
 	Static_Lst_Init(&jobs);
 	Static_Lst_Init(&stoppedJobs);
 	maxJobs =	  maxproc;
+	maxLocal =	  maxlocal;
+	nJobs =	  	  0;
+	nLocal =	  0;
 	jobFull =	  false;
 
 	aborting =	  0;
