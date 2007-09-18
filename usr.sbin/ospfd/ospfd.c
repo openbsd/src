@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.48 2007/07/25 19:11:27 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.49 2007/09/18 16:59:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -652,11 +652,15 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 	struct area		*a, *xa, *na;
 	struct iface		*iface;
 	struct redistribute	*r;
+	int			 rchange = 0;
 
 	/* change of rtr_id needs a restart */
 	conf->flags = xconf->flags;
 	conf->spf_delay = xconf->spf_delay;
 	conf->spf_hold_time = xconf->spf_hold_time;
+	if ((conf->redistribute & REDISTRIBUTE_ON) !=
+	    (xconf->redistribute & REDISTRIBUTE_ON))
+		rchange = 1;
 	conf->redistribute = xconf->redistribute;
 	conf->rfc1583compat = xconf->rfc1583compat;
 
@@ -735,7 +739,7 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 					}
 				}
 			}
-			if (a->dirty) {
+			if (a->dirty || rchange) {
 				a->dirty = 0;
 				orig_rtr_lsa(a);
 			}
