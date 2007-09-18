@@ -1,4 +1,4 @@
-/*	$Id: cc.c,v 1.5 2007/09/17 18:29:20 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.6 2007/09/18 07:16:01 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
