@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.53 2007/09/10 10:48:01 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.54 2007/09/18 11:15:25 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -459,8 +459,7 @@ restart:
 				    &pid);
 				i_process(i, s, pid == hlpid);
 			}
-		} else
-			i = 0;
+		}
 
 		/* do end-screen processing */
 		u_endscreen();
