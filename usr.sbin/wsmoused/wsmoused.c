@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.21 2007/04/10 22:37:17 miod Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.22 2007/09/18 20:19:20 otto Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -82,17 +82,17 @@ int identify = FALSE;
 char *pidfile = "/var/run/wsmoused.pid";
 
 mouse_t mouse = {
-	flags : 0,
-	portname : NULL,
-	proto : P_UNKNOWN,
-	baudrate : 1200,
-	old_baudrate : 1200,
-	rate : MOUSE_RATE_UNKNOWN,
-	resolution : MOUSE_RES_UNKNOWN,
-	zmap : 0,
-	wmode : 0,
-	mfd : -1,
-	clickthreshold : 500,	/* 0.5 sec */
+	.flags = 0,
+	.portname = NULL,
+	.proto = P_UNKNOWN,
+	.baudrate = 1200,
+	.old_baudrate = 1200,
+	.rate = MOUSE_RATE_UNKNOWN,
+	.resolution = MOUSE_RES_UNKNOWN,
+	.zmap = 0,
+	.wmode = 0,
+	.mfd = -1,
+	.clickthreshold = 500,	/* 0.5 sec */
 };
 
 /* identify the type of a wsmouse supported mouse */
