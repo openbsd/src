@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.92 2007/09/17 12:42:09 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.93 2007/09/18 08:24:56 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -167,6 +167,7 @@ static void parse_commands(struct growableArray *, const char *);
 static void create_special_nodes(void);
 static bool found_delimiter(const char *);
 static int handle_special_targets(Lst);
+static void dump_targets(void);
 
 #define	SPECIAL_EXEC		4
 #define SPECIAL_IGNORE		5
