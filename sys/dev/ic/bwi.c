@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.38 2007/09/17 20:43:18 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.39 2007/09/18 17:35:38 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -144,10 +144,14 @@ void		 bwi_mac_init_tpctl_11bg(struct bwi_mac *);
 void		 bwi_mac_detach(struct bwi_mac *);
 int		 bwi_get_firmware(const char *, const uint8_t *, size_t,
 		     size_t *, size_t *);
+int		 bwi_fwimage_is_valid(struct bwi_softc *, uint8_t *,
+		    size_t fw_len, char *, uint8_t);
+int		 bwi_mac_fw_alloc(struct bwi_mac *);
+void		 bwi_mac_fw_free(struct bwi_mac *);
 int		 bwi_mac_fw_load(struct bwi_mac *);
 int		 bwi_mac_gpio_init(struct bwi_mac *);
 int		 bwi_mac_gpio_fini(struct bwi_mac *);
-int		 bwi_mac_fw_load_iv(struct bwi_mac *, uint8_t *, int);
+int		 bwi_mac_fw_load_iv(struct bwi_mac *, uint8_t *, size_t);
 int		 bwi_mac_fw_init(struct bwi_mac *);
 void		 bwi_mac_opmode_init(struct bwi_mac *);
 void		 bwi_mac_hostflags_init(struct bwi_mac *);
@@ -1007,6 +1011,10 @@ bwi_mac_init(struct bwi_mac *mac)
 	/*
 	 * Load and initialize firmwares
 	 */
+	error = bwi_mac_fw_alloc(mac);
+	if (error)
+		return (error);
+
 	error = bwi_mac_fw_load(mac);
 	if (error)
 		return (error);
@@ -1498,7 +1506,7 @@ bwi_mac_init_tpctl_11bg(struct bwi_mac *mac)
 void
 bwi_mac_detach(struct bwi_mac *mac)
 {
-
+	bwi_mac_fw_free(mac);
 }
 
 int
@@ -1536,57 +1544,195 @@ bwi_get_firmware(const char *name, const uint8_t *ucode, size_t size_ucode,
 }
 
 int
+bwi_fwimage_is_valid(struct bwi_softc *sc, uint8_t *fw, size_t fw_len,
+    char *fw_name, uint8_t fw_type)
+{
+	const struct bwi_fwhdr *hdr;
+
+	if (fw_len < sizeof(*hdr)) {
+		printf("invalid firmware (%s): invalid size %u\n",
+		    fw_name, fw_len);
+		return (1);
+	}
+
+	hdr = (const struct bwi_fwhdr *)fw;
+
+	if (fw_type != BWI_FW_T_IV) {
+		/*
+		 * Don't verify IV's size, it has different meaning
+		 */
+		if (betoh32(hdr->fw_size) != fw_len - sizeof(*hdr)) {
+			printf("invalid firmware (%s): size mismatch, "
+			    "fw %u, real %u\n",
+			    fw_name, betoh32(hdr->fw_size),
+			    fw_len - sizeof(*hdr));
+			return (1);
+		}
+	}
+
+	if (hdr->fw_type != fw_type) {
+		printf("invalid firmware (%s): type mismatch, "
+		    "fw \'%c\', target \'%c\'\n",
+		    fw_name, hdr->fw_type, fw_type);
+		return (1);
+	}
+
+	if (hdr->fw_gen != BWI_FW_GEN_1) {
+		printf("invalid firmware (%s): wrong generation, "
+		    "fw %d, target %d\n",
+		    fw_name, hdr->fw_gen, BWI_FW_GEN_1);
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+bwi_mac_fw_alloc(struct bwi_mac *mac)
+{
+	struct bwi_softc *sc = mac->mac_sc;
+	char fwname[64];
+	int idx, error;
+
+	if (mac->mac_ucode == NULL) {
+		snprintf(fwname, sizeof(fwname), "ucode%d.fw",
+		    mac->mac_rev >= 5 ? 5 : mac->mac_rev);
+
+		error = loadfirmware(fwname, &mac->mac_ucode,
+		    &mac->mac_ucode_size);
+		if (error != 0) {
+			printf("%s: error %d, could not read firmware %s!\n",
+			    sc->sc_dev.dv_xname, error, fwname);
+			return (ENOMEM);
+		}
+		DPRINTF(1, "%s: loaded firmware file %s\n",
+		    sc->sc_dev.dv_xname, fwname);
+
+		if (bwi_fwimage_is_valid(sc, mac->mac_ucode,
+		    mac->mac_ucode_size, fwname, BWI_FW_T_UCODE))
+			return (EINVAL);
+	}
+
+	if (mac->mac_pcm == NULL) {
+		snprintf(fwname, sizeof(fwname), "pcm%d.fw",
+		    mac->mac_rev < 5 ? 4 : 5);
+
+		error = loadfirmware(fwname, &mac->mac_pcm,
+		    &mac->mac_pcm_size);
+		if (error != 0) {
+			printf("%s: error %d, could not read firmware %s!\n",
+			    sc->sc_dev.dv_xname, error, fwname);
+			return (ENOMEM);
+		}
+		DPRINTF(1, "%s: loaded firmware file %s\n",
+		    sc->sc_dev.dv_xname, fwname);
+
+		if (bwi_fwimage_is_valid(sc, mac->mac_pcm,
+		    mac->mac_pcm_size, fwname, BWI_FW_T_PCM))
+			return (EINVAL);
+	}
+
+	if (mac->mac_iv == NULL) {
+		/* TODO: 11A */
+		if (mac->mac_rev == 2 || mac->mac_rev == 4) {
+			idx = 2;
+		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
+			idx = 5;
+		} else {
+			DPRINTF(1, "%s: no suitable IV for MAC rev %d\n",
+			    sc->sc_dev.dv_xname, mac->mac_rev);
+			return (ENODEV);
+		}
+
+		snprintf(fwname, sizeof(fwname), "b0g0initvals%d.fw", idx);
+
+		error = loadfirmware(fwname, &mac->mac_iv,
+		    &mac->mac_iv_size);
+		if (error != 0) {
+			printf("%s: error %d, could not read firmware %s!\n",
+			    sc->sc_dev.dv_xname, error, fwname);
+			return (ENOMEM);
+		}
+		DPRINTF(1, "%s: loaded firmware file %s\n",
+		    sc->sc_dev.dv_xname, fwname);
+
+		if (bwi_fwimage_is_valid(sc, mac->mac_iv,
+		    mac->mac_iv_size, fwname, BWI_FW_T_IV))
+			return (EINVAL);
+	}
+
+	if (mac->mac_iv_ext == NULL) {
+		/* TODO: 11A */
+		if (mac->mac_rev == 2 || mac->mac_rev == 4 ||
+		    mac->mac_rev >= 11) {
+			/* No extended IV */
+			goto back;
+		} else if (mac->mac_rev >= 5 && mac->mac_rev <= 10) {
+			idx = 5;
+		} else {
+			printf("%s: no suitable ExtIV for MAC rev %d\n",
+			    sc->sc_dev.dv_xname, mac->mac_rev);
+			return (ENODEV);
+		}
+
+		snprintf(fwname, sizeof(fwname), "b0g0bsinitvals%d.fw", idx);
+
+		error = loadfirmware(fwname, &mac->mac_iv_ext,
+		    &mac->mac_iv_ext_size);
+		if (error != 0) {
+			printf("%s: error %d, could not read firmware %s!\n",
+			    sc->sc_dev.dv_xname, error, fwname);
+			return (ENOMEM);
+		}
+		DPRINTF(1, "%s: loaded firmware file %s\n",
+		    sc->sc_dev.dv_xname, fwname);
+
+		if (bwi_fwimage_is_valid(sc, mac->mac_iv_ext,
+		    mac->mac_iv_ext_size, fwname, BWI_FW_T_IV))
+			return (EINVAL);
+	}
+
+back:
+	return (0);
+}
+
+void
+bwi_mac_fw_free(struct bwi_mac *mac)
+{
+	if (mac->mac_ucode != NULL) {
+		free(mac->mac_ucode, M_DEVBUF);
+		mac->mac_ucode = NULL;
+	}
+
+	if (mac->mac_pcm != NULL) {
+		free(mac->mac_pcm, M_DEVBUF);
+		mac->mac_pcm = NULL;
+	}
+
+	if (mac->mac_iv != NULL) {
+		free(mac->mac_iv, M_DEVBUF);
+		mac->mac_iv = NULL;
+	}
+
+	if (mac->mac_iv_ext != NULL) {
+		free(mac->mac_iv_ext, M_DEVBUF);
+		mac->mac_iv_ext = NULL;
+	}
+}
+
+int
 bwi_mac_fw_load(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
-	char *name = "bwi-airforce";
-	char filename[64];
-	uint8_t *ucode;
 	uint16_t fw_rev;
-	uint32_t *fw;
-	size_t size_ucode, size_fw, size_pcm, off_fw, off_pcm;
+	const uint32_t *fw;
 	int fw_len, i, error = 0;
-
-	/*
-	 * Load FW file
-	 */
-	if ((error = loadfirmware(name, &ucode, &size_ucode)) != 0) {
-		printf("%s: error %d, could not read firmware %s!\n",
-		    sc->sc_dev.dv_xname, error, name);
-		return (EIO);
-	}
-	DPRINTF(1, "%s: successfully read %s\n", sc->sc_dev.dv_xname, name);
-
-	/*
-	 * Get FW file offset
-	 */
-	snprintf(filename, sizeof(filename), "bwi_microcode%d.fw",
-	    mac->mac_rev >= 5 ? 5 : mac->mac_rev);
-	if (bwi_get_firmware(filename, ucode, size_ucode, &size_fw, &off_fw)) {
-		printf("%s: get offset for firmware file %s failed!\n",
-		    sc->sc_dev.dv_xname, filename);
-		error = ENOMEM;
-		goto out;
-        }
-
-	/*
-	 * Get PCM file offset
-	 */
-	snprintf(filename, sizeof(filename), "bwi_pcm%d.fw",
-	    mac->mac_rev < 5 ? 4 : 5);
-	if (bwi_get_firmware(filename, ucode, size_ucode, &size_pcm,
-	    &off_pcm)) {
-		printf("%s: get offset for firmware file %s failed!\n",
-		    sc->sc_dev.dv_xname, filename);
-		error = ENOMEM;
-		goto out;
-	}
 
 	/*
 	 * Load FW image
 	 */
-	fw = (uint32_t *)(ucode + off_fw);
-	fw_len = size_fw / sizeof(uint32_t);
+	fw = (const uint32_t *)(mac->mac_ucode + BWI_FWHDR_SZ);
+	fw_len = (mac->mac_ucode_size - BWI_FWHDR_SZ) / sizeof(uint32_t);
 
 	CSR_WRITE_4(sc, BWI_MOBJ_CTRL,
 	    BWI_MOBJ_CTRL_VAL(BWI_FW_UCODE_MOBJ | BWI_WR_MOBJ_AUTOINC, 0));
@@ -1598,8 +1744,8 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	/*
 	 * Load PCM image
 	 */
-	fw = (uint32_t *)(ucode + off_pcm);
-	fw_len = size_pcm / sizeof(uint32_t);
+	fw = (const uint32_t *)(mac->mac_pcm + BWI_FWHDR_SZ);
+	fw_len = (mac->mac_pcm_size - BWI_FWHDR_SZ) / sizeof(uint32_t);
 
 	CSR_WRITE_4(sc, BWI_MOBJ_CTRL,
 	    BWI_MOBJ_CTRL_VAL(BWI_FW_PCM_MOBJ, 0x01ea));
@@ -1650,7 +1796,6 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 	    MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWPATCHLV));
 
 out:
-	free(ucode, M_DEVBUF);
 	return (error);
 }
 
@@ -1707,138 +1852,104 @@ bwi_mac_gpio_fini(struct bwi_mac *mac)
 }
 
 int
-bwi_mac_fw_load_iv(struct bwi_mac *mac, uint8_t *fw_image, int fw_len)
+bwi_mac_fw_load_iv(struct bwi_mac *mac, uint8_t *fw, size_t fw_len)
 {
 	struct bwi_softc *sc = mac->mac_sc;
+	const struct bwi_fwhdr *hdr;
 	const struct bwi_fw_iv *iv;
-	uint16_t offset, size;
-	uint32_t val;
-	int iv_len, i, error = 0;
+	int n, i, iv_img_size;
 
 	/* Get the number of IVs in the IV image */
-	iv_len = fw_len / sizeof(struct bwi_fw_iv);
-	DPRINTF(1, "%s: IV count %d\n", sc->sc_dev.dv_xname, iv_len);
+	hdr = (const struct bwi_fwhdr *)fw;
+	n = betoh32(hdr->fw_iv_cnt);
+	DPRINTF(1, "%s: IV count %d\n", sc->sc_dev.dv_xname, n);
+
+	/* Calculate the IV image size, for later sanity check */
+	iv_img_size = fw_len - sizeof(*hdr);
 
 	/* Locate the first IV */
-	iv = (const struct bwi_fw_iv *)fw_image;
+	iv = (const struct bwi_fw_iv *)(fw + sizeof(*hdr));
 
-	for (i = 0; i < iv_len; i++, iv++) {
-		offset = betoh16(iv->offset);
-		size = betoh16(iv->size);
-		val = betoh32(iv->val);
+	for (i = 0; i < n; ++i) {
+		uint16_t iv_ofs, ofs;
+		int sz = 0;
 
-		if (offset >= 0x1000) {
-			error = ENODEV;
-			goto error;
+		if (iv_img_size < sizeof(iv->iv_ofs)) {
+			printf("%s: invalid IV image, ofs\n",
+			    sc->sc_dev.dv_xname);
+			return (EINVAL);
+		}
+		iv_img_size -= sizeof(iv->iv_ofs);
+		sz += sizeof(iv->iv_ofs);
+
+		iv_ofs = betoh16(iv->iv_ofs);
+
+		ofs = __SHIFTOUT(iv_ofs, BWI_FW_IV_OFS_MASK);
+		if (ofs >= 0x1000) {
+			printf("%s: invalid ofs (0x%04x) for %dth iv\n",
+			    sc->sc_dev.dv_xname, ofs, i);
+			return (EINVAL);
 		}
 
-		if (size == sizeof(uint16_t)) {
-			if (val & 0xffff0000) {
-				error = ENODEV;
-				goto error;
+		if (iv_ofs & BWI_FW_IV_IS_32BIT) {
+			uint32_t val32;
+
+			if (iv_img_size < sizeof(iv->iv_val.val32)) {
+				printf("%s: invalid IV image, val32\n",
+				    sc->sc_dev.dv_xname);
+				return (EINVAL);
 			}
-			CSR_WRITE_2(sc, offset, (uint16_t)val);
-		} else if (size == sizeof(uint32_t))
-			CSR_WRITE_4(sc, offset, val);
-		else {
-			error = ENODEV;
-			goto error;
+			iv_img_size -= sizeof(iv->iv_val.val32);
+			sz += sizeof(iv->iv_val.val32);
+
+			val32 = betoh32(iv->iv_val.val32);
+			CSR_WRITE_4(sc, ofs, val32);
+		} else {
+			uint16_t val16;
+
+			if (iv_img_size < sizeof(iv->iv_val.val16)) {
+				printf("%s: invalid IV image, val16\n",
+				    sc->sc_dev.dv_xname);
+				return (EINVAL);
+			}
+			iv_img_size -= sizeof(iv->iv_val.val16);
+			sz += sizeof(iv->iv_val.val16);
+
+			val16 = betoh16(iv->iv_val.val16);
+			CSR_WRITE_2(sc, ofs, val16);
 		}
+
+		iv = (const struct bwi_fw_iv *)((const uint8_t *)iv + sz);
 	}
 
-	return (error);
+	if (iv_img_size != 0) {
+		printf("%s: invalid IV image, size left %d\n",
+		    sc->sc_dev.dv_xname, iv_img_size);
+		return (EINVAL);
+	}
 
-error:
-	printf("%s: bad IV format!\n", sc->sc_dev.dv_xname);
-	return (error);
+	return (0);
 }
 
 int
 bwi_mac_fw_init(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
-	char *name = "bwi-airforce";
-	char fwname[64];
-	uint8_t *ucode;
-	size_t size_ucode, size_iv, off_iv;
-	int idx, error = 0;
+	int error;
 
-	/*
-	 * Load FW file
-	 */
-	if ((error = loadfirmware(name, &ucode, &size_ucode)) != 0) {
-		printf("%s: error %d, could not read firmware %s!\n",
-		    sc->sc_dev.dv_xname, error, name);
-		return (EIO);
-	}
-	DPRINTF(1, "%s: successfully read %s\n", sc->sc_dev.dv_xname, name);
-
-	/*
-	 * Load IV
-	 *
-	 * TODO: 11A
-	 */
-	if (mac->mac_rev == 2 || mac->mac_rev == 4)
-		idx = 2;
-	else if (mac->mac_rev >= 5 && mac->mac_rev <= 10)
-		idx = 5;
-	else {
-		printf("%s: no suitable IV for MAC rev %d\n",
-		    sc->sc_dev.dv_xname, mac->mac_rev);
-		error = ENODEV;
-		goto out;
-	}
-	snprintf(fwname, sizeof(fwname), "bwi_initval%02d.fw", idx);
-
-	DPRINTF(1, "%s: IV image is %s\n", sc->sc_dev.dv_xname, fwname);
-
-	if (bwi_get_firmware(fwname, ucode, size_ucode, &size_iv, &off_iv)) {
-		printf("%s: IV image %s not found!\n",
-		    sc->sc_dev.dv_xname, fwname);
-		error = ENOMEM;
-		goto out;
-	}
-
-	error = bwi_mac_fw_load_iv(mac, (ucode + off_iv), size_iv);
+	error = bwi_mac_fw_load_iv(mac, mac->mac_iv, mac->mac_iv_size);
 	if (error) {
-		printf("%s: load IV failed!\n", sc->sc_dev.dv_xname);
-		goto out;
+		printf("%s: load IV failed\n", sc->sc_dev.dv_xname);
+		return (error);
 	}
 
-	/*
-	 * Load extended IV
-	 *
-	 * TODO: 11A
-	 */
-	if (mac->mac_rev == 2 || mac->mac_rev == 4 || mac->mac_rev >= 11)
-		/* No extended IV */
-		goto out;
-	else if (mac->mac_rev >= 5 && mac->mac_rev <= 10)
-		idx = 5;
-	else {
-		printf("%s: no suitable extended IV for MAC rev %d\n",
-		    sc->sc_dev.dv_xname, mac->mac_rev);
-		error = ENODEV;
-		goto out;
-	}
-	snprintf(fwname, sizeof(fwname), "bwi_initval%02d.fw", idx);
-
-	DPRINTF(1, "%s: extended IV image is %s\n",
-	    sc->sc_dev.dv_xname, fwname);
-
-	if (bwi_get_firmware(fwname, ucode, size_ucode, &size_iv, &off_iv)) {
-		printf("%s: extended IV image %s not found!\n",
-		    sc->sc_dev.dv_xname, fwname);
-		error = ENOMEM;
-		goto out;
+	if (mac->mac_iv_ext != NULL) {
+		error = bwi_mac_fw_load_iv(mac, mac->mac_iv_ext,
+		    mac->mac_iv_ext_size);
+		if (error)
+			printf("%s: load ExtIV failed\n", sc->sc_dev.dv_xname);
 	}
 
-	error = bwi_mac_fw_load_iv(mac, (ucode + off_iv), size_iv);
-	if (error)
-		printf("%s: load extended IV failed!\n", sc->sc_dev.dv_xname);
-
-out:
-	free(ucode, M_DEVBUF);
 	return (error);
 }
 

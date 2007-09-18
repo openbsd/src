@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.10 2007/09/16 19:02:37 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.11 2007/09/18 17:35:38 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -221,9 +221,25 @@ struct bwi_txstats_data {
 	int			stats_idx;
 };
 
+struct bwi_fwhdr {
+	/* Big endian */
+	uint8_t		fw_type;	/* BWI_FW_T_ */
+	uint8_t		fw_gen;		/* BWI_FW_GEN */
+	uint8_t		fw_pad[2];
+	uint32_t	fw_size;
+#define fw_iv_cnt	fw_size
+} __packed;
+
+#define BWI_FWHDR_SZ		sizeof(struct bwi_fwhdr)
 #define BWI_FW_VERSION3		3
 #define BWI_FW_VERSION4		4
 #define BWI_FW_VERSION3_REVMAX	0x128
+#define BWI_FW_T_UCODE          'u'
+#define BWI_FW_T_PCM            'p'
+#define BWI_FW_T_IV             'i'
+#define BWI_FW_GEN_1            1
+#define BWI_FW_IV_OFS_MASK	__BITS(14, 0)
+#define BWI_FW_IV_IS_32BIT	__BIT(15)
 
 struct fwheader {
 	char	filename[64];
@@ -233,9 +249,11 @@ struct fwheader {
 
 struct bwi_fw_iv {
 	/* Big endian */
-	uint16_t		offset;
-	uint16_t		size;
-	uint32_t		val;
+	uint16_t		iv_ofs;
+	union {
+		uint32_t	val32;
+		uint16_t	val16;
+	}			iv_val;
 } __packed;
 
 enum bwi_clock_mode {
@@ -377,10 +395,14 @@ struct bwi_mac {
 	struct bwi_tpctl	mac_tpctl;	/* TX power control */
 	uint32_t		mac_flags;	/* BWI_MAC_F_ */
 
-	struct fw_image		*mac_ucode;
-	struct fw_image		*mac_pcm;
-	struct fw_image		*mac_iv;
-	struct fw_image		*mac_iv_ext;
+	uint8_t			*mac_ucode;
+	size_t			 mac_ucode_size;
+	uint8_t			*mac_pcm;
+	size_t			 mac_pcm_size;
+	uint8_t			*mac_iv;
+	size_t			 mac_iv_size;
+	uint8_t			*mac_iv_ext;
+	size_t			 mac_iv_ext_size;
 };
 
 #define BWI_MAC_F_BSWAP		0x1
