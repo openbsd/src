@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.79 2007/09/18 07:45:25 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.80 2007/09/18 08:27:22 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1140,29 +1140,30 @@ JobRestart(Job *job)
 			(void)fflush(stdout);
 		}
 		if (nLocal >= maxLocal && !(job->flags & JOB_SPECIAL)) {
-		    /*
-		     * Can't be exported and not allowed to run locally -- put
-		     * it back on the hold queue and mark the table full
-		     */
-		    if (DEBUG(JOB)) {
-			(void)fprintf(stdout, "holding\n");
-			(void)fflush(stdout);
-		    }
-		    Lst_AtFront(&stoppedJobs, job);
-		    jobFull = true;
-		    if (DEBUG(JOB)) {
-			(void)fprintf(stdout, "Job queue is full.\n");
-			(void)fflush(stdout);
-		    }
-		    return;
+			/*
+			 * Can't be exported and not allowed to run locally --
+			 * put it back on the hold queue and mark the table
+			 * full
+			 */
+			if (DEBUG(JOB)) {
+				(void)fprintf(stdout, "holding\n");
+				(void)fflush(stdout);
+			}
+			Lst_AtFront(&stoppedJobs, job);
+			jobFull = true;
+			if (DEBUG(JOB)) {
+				(void)fprintf(stdout, "Job queue is full.\n");
+				(void)fflush(stdout);
+			}
+			return;
 		} else {
-		    /*
-		     * Job may be run locally.
-		     */
-		    if (DEBUG(JOB)) {
-			(void)fprintf(stdout, "running locally\n");
-			(void)fflush(stdout);
-		    }
+			/*
+			 * Job may be run locally.
+			 */
+			if (DEBUG(JOB)) {
+				(void)fprintf(stdout, "running locally\n");
+				(void)fflush(stdout);
+			}
 		}
 		JobExec(job, argv);
 	} else {
