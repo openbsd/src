@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.71 2007/09/18 08:31:15 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.72 2007/09/18 09:15:04 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -73,28 +73,6 @@
  *				if the target had no implicit sources.
  */
 
-/* The suffix specifications are *really weird*
- * Here is how it works:
- * - each time you encounter a .SUFFIX: .s1 .s2 .s3
- * you add the suffixes to the list of known suffixes, keeping it ordered.
- * - when you see a
- * .s1.s2:
- * line, you match it against the known suffixes at this point, and it
- * is tagged as a transform rule.
- * - when you encounter a .SUFFIX:
- * you reset the list of suffixes to empty, but you keep all the transforms
- * around.
- * - at the end of all Makefiles, you match recognized transforms against
- * suffixes existing at this point.
- *
- * The description of SusV3 is really sketchy, but this is how make works,
- * gmake works that way as well.
- *
- * The only difference is that gmake keeps its transform rules on the main
- * target list, so if you define two suffixes and a transform, then resets
- * the suffix and define a normal rule with the same name, you'll override
- * the transform.
- */
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,34 +97,59 @@
 #include "make.h"
 #include "stats.h"
 
-static struct ohash suffixes;	/* hash of suffixes */
-size_t    maxLen;		/* optimization: remember longest suffix */
-static LIST	 srclist;	/* Lst of sources */
+/* XXX the suffixes hash is stored using a specific hash function, suitable
+ * for looking up suffixes in reverse.
+ */
+static struct ohash suffixes;
+
+/* We remember the longest suffix, so we don't need to look beyond that.  */
+size_t maxLen;	
+static LIST srclist;
+
+/* Transforms (.c.o) are stored in another hash, independently from suffixes.
+ * When make sees a target, it checks whether it's currently parsable as a
+ * transform (according to the active suffixes). If yes, it's stored as a
+ * new transform.
+ *
+ * XXX
+ * But transforms DO NOT have a canonical decomposition as a set of suffixes,
+ * and will be used as necessary later, when looking up implicit rules for
+ * actual targets.
+ *
+ * For instance, a transform .a.b.c  can be parsed as .a -> .b.c if suffixes
+ * .a and .b.c are active, and then LATER, reused as .a.b -> .c if suffixes
+ * .a.b and .c are active.
+ */
 static struct ohash transforms;
 
-static int	  sNum = 0;	/* Counter for assigning suffix numbers */
+/* conflicts between suffixes are solved by suffix declaration order. */
+static int order = 0;
 
 /*
  * Structure describing an individual suffix.
  */
 typedef struct Suff_ {
-	size_t nameLen;		/* Length of the suffix */
-	short flags; 		/* Type of suffix */
-#define SUFF_INCLUDE	  0x01	/* One which is #include'd */
-#define SUFF_LIBRARY	  0x02	/* One which contains a library */
-#define SUFF_NULL	  0x04	/* The empty suffix */
-#define SUFF_EXISTS	  0x08	/* So that we don't have to destroy them */
+	size_t nameLen;		/* optimisation: strlen(name) */
+	short flags;
+#define SUFF_INCLUDE	  0x01	/* suffix marked with .INCLUDES keyword */
+#define SUFF_LIBRARY	  0x02	/* suffix marked with .LIBS keyword */
+#define SUFF_NULL	  0x04	/* The empty suffix (normally '', */
+				/* but see .EMPTY keyword) */
+#define SUFF_ACTIVE	  0x08	/* We never destroy suffixes and rules, */
+				/* we just deactivate them. */
 #define SUFF_PATH	  0x10	/* False suffix: actually, the path keyword */
 	LIST searchPath;	/* The path along which files of this suffix
 			     	 * may be found */
-	int sNum;		/* The suffix number */
-	LIST parents;		/* Suffixes we have a transformation to */
-	LIST children;		/* Suffixes we have a transformation from */
-	char name[1]; 		/* The suffix itself */
+	int order;		/* order of declaration for conflict 
+				 * resolution. */
+	LIST parents;		/* List of Suff we have a transformation to */
+	LIST children;		/* List of Suff we have a transformation from */
+	char name[1];
 } Suff;
 
 static struct ohash_info suff_info = {
-	offsetof(struct Suff_, name), NULL, hash_alloc, hash_free, element_alloc
+	offsetof(struct Suff_, name), NULL, 
+	hash_alloc, hash_free, element_alloc
 };
 
 /*
@@ -227,17 +230,15 @@ static void special_path_hack(void);
 static void PrintAddr(void *);
 #endif
 
-/* we usually look at suffixes `backwards', which makes it necessary for
- * us to have a specific hash function that proceeds backwards.
- */
-
-
+/* hash functions for the suffixes hash */
+/* add one char to the hash */
 static void
 reverse_hash_add_char(uint32_t *pk, const char *s)
 {
 	*pk =  ((*pk << 2) | (*pk >> 30)) ^ *s;
 }
 
+/* build a full hash from end to start */
 static uint32_t
 reverse_hashi(const char *s, const char **e)
 {
@@ -378,19 +379,19 @@ SuffInsert(Lst l, Suff *s)
 
 	for (ln = Lst_First(l); ln != NULL; ln = Lst_Adv(ln)) {
 		s2 = (Suff *)Lst_Datum(ln);
-		if (s2->sNum >= s->sNum)
+		if (s2->order >= s->order)
 			break;
 	}
 
 	if (DEBUG(SUFF))
-		printf("inserting %s(%d)...", s->name, s->sNum);
+		printf("inserting %s(%d)...", s->name, s->order);
 	if (ln == NULL) {
 		if (DEBUG(SUFF))
 			printf("at end of list\n");
 		Lst_AtEnd(l, s);
-	} else if (s2->sNum != s->sNum) {
+	} else if (s2->order != s->order) {
 		if (DEBUG(SUFF))
-			printf("before %s(%d)\n", s2->name, s2->sNum);
+			printf("before %s(%d)\n", s2->name, s2->order);
 		Lst_Insert(l, ln, s);
 	} else if (DEBUG(SUFF)) {
 		printf("already there\n");
@@ -415,9 +416,9 @@ clear_suffixes(void)
 
 	for (s = ohash_first(&suffixes, &i); s != NULL;
 	    s = ohash_next(&suffixes, &i))
-		s->flags &= ~SUFF_EXISTS;
+		s->flags &= ~SUFF_ACTIVE;
 
-	sNum = 0;
+	order = 0;
 	maxLen = 0;
 	suffNull = emptySuff;
 }
@@ -463,17 +464,17 @@ parse_transformi(const char *str, const char *e, Suff **srcPtr, Suff **targPtr)
 		/* no double suffix in there */
 		if (p - str <= (ptrdiff_t)maxLen) {
 			target = ohash_find(&suffixes, slot);
-			if (target != NULL && (target->flags & SUFF_EXISTS)) {
+			if (target != NULL && (target->flags & SUFF_ACTIVE)) {
 				src = find_suffi(str, p);
 				if (src != NULL &&
-				    (src->flags & (SUFF_EXISTS | SUFF_PATH))) {
+				    (src->flags & (SUFF_ACTIVE | SUFF_PATH))) {
 				/* XXX even if we find a set of suffixes, we
 				 * have to keep going to find the best one,
 				 * namely, the one whose src appears first in
 				 * .SUFFIXES
 				 */
 					if (best_src == NULL ||
-					    src->sNum < best_src->sNum) {
+					    src->order < best_src->order) {
 						best_src = src;
 						best_target = target;
 					}
@@ -491,7 +492,7 @@ parse_transformi(const char *str, const char *e, Suff **srcPtr, Suff **targPtr)
 		 * we find one.  */
 		slot = ohash_lookup_interval(&suffixes, p, e, hv);
 		src = ohash_find(&suffixes, slot);
-		if (src != NULL && (src->flags & (SUFF_EXISTS | SUFF_PATH))) {
+		if (src != NULL && (src->flags & (SUFF_ACTIVE | SUFF_PATH))) {
 			best_src = src;
 			best_target = suffNull;
 		}
@@ -529,7 +530,7 @@ find_best_suffix(const char *s, const char *e)
 		slot = ohash_lookup_interval(&suffixes, p, e, hv);
 		suff = ohash_find(&suffixes, slot);
 		if (suff != NULL)
-			if (best == NULL || suff->sNum < best->sNum)
+			if (best == NULL || suff->order < best->order)
 				best = suff;
 		if (e - p >= (ptrdiff_t)maxLen)
 			break;
@@ -586,9 +587,9 @@ Suff_ParseAsTransform(const char *line, const char *end)
 static void
 make_suffix_known(Suff *s)
 {
-	if ((s->flags & SUFF_EXISTS) == 0) {
-		s->sNum = sNum++;
-		s->flags |= SUFF_EXISTS;
+	if ((s->flags & SUFF_ACTIVE) == 0) {
+		s->order = order++;
+		s->flags |= SUFF_ACTIVE;
 		if (s->nameLen > maxLen)
 			maxLen = s->nameLen;
 	}
@@ -1490,7 +1491,7 @@ record_possible_suffixes(GNode *gn, Lst srcs, Lst targs)
 	while (p != s) {
 		slot = ohash_lookup_interval(&suffixes, p, e, hv);
 		suff = ohash_find(&suffixes, slot);
-		if (suff != NULL && (suff->flags & SUFF_EXISTS))
+		if (suff != NULL && (suff->flags & SUFF_ACTIVE))
 			record_possible_suffix(suff, gn, e, srcs, targs);
 		if (e - p >= (ptrdiff_t)maxLen)
 			break;
@@ -1897,7 +1898,7 @@ Suff_Init(void)
 	make_suffix_known(emptySuff);
 	Dir_Concat(&emptySuff->searchPath, defaultPath);
 	ohash_init(&suffixes, 4, &suff_info);
-	sNum = 0;
+	order = 0;
 	clear_suffixes();
 	special_path_hack();
 
