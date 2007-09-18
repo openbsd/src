@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.149 2007/09/18 09:18:04 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.150 2007/09/18 18:56:02 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -846,6 +846,10 @@ carp_clone_create(ifc, unit)
 #ifdef INET6
 	sc->sc_im6o.im6o_multicast_hlim = CARP_DFLTTL;
 #endif /* INET6 */
+	sc->sc_imo.imo_membership = (struct in_multi **)malloc(
+	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
+	    M_WAITOK|M_ZERO);
+	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 
 	timeout_set(&sc->sc_ad_tmo, carp_send_ad, sc);
 	timeout_set(&sc->sc_md_tmo, carp_master_down, sc);
@@ -879,10 +883,13 @@ carp_clone_create(ifc, unit)
 int
 carp_clone_destroy(struct ifnet *ifp)
 {
-	carpdetach(ifp->if_softc);
+	struct carp_softc *sc = ifp->if_softc;
+
+	carpdetach(sc);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	free(ifp->if_softc, M_DEVBUF);
+	free(sc->sc_imo.imo_membership, M_IPMOPTS);
+	free(sc, M_DEVBUF);
 
 	return (0);
 }

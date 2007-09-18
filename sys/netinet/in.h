@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.73 2006/10/11 09:34:51 henning Exp $	*/
+/*	$OpenBSD: in.h,v 1.74 2007/09/18 18:56:02 markus Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -290,7 +290,13 @@ struct ip_opts {
  */
 #define	IP_DEFAULT_MULTICAST_TTL  1	/* normally limit m'casts to 1 hop  */
 #define	IP_DEFAULT_MULTICAST_LOOP 1	/* normally hear sends if a member  */
-#define	IP_MAX_MEMBERSHIPS	20	/* per socket; must fit in one mbuf */
+/*
+ * The imo_membership vector for each socket starts at IP_MIN_MEMBERSHIPS
+ * and is dynamically allocated at run-time, bounded by IP_MAX_MEMBERSHIPS,
+ * and is reallocated when needed, sized according to a power-of-two increment.
+ */
+#define	IP_MIN_MEMBERSHIPS	15
+#define	IP_MAX_MEMBERSHIPS	4095
 
 /*
  * Argument structure for IP_ADD_MEMBERSHIP and IP_DROP_MEMBERSHIP.

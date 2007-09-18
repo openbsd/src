@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.86 2007/09/15 16:43:51 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.87 2007/09/18 18:56:02 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -141,6 +141,10 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	pfsyncif->sc_ureq_sent = 0;
 	pfsyncif->sc_bulk_send_next = NULL;
 	pfsyncif->sc_bulk_terminator = NULL;
+	pfsyncif->sc_imo.imo_membership = (struct in_multi **)malloc(
+	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
+	    M_WAITOK|M_ZERO);
+	pfsyncif->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	ifp = &pfsyncif->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "pfsync%d", unit);
 	ifp->if_softc = pfsyncif;
@@ -176,6 +180,7 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	bpfdetach(ifp);
 #endif
 	if_detach(ifp);
+	free(pfsyncif->sc_imo.imo_membership, M_IPMOPTS);
 	free(pfsyncif, M_DEVBUF);
 	pfsyncif = NULL;
 	return (0);

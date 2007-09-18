@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.36 2006/05/29 20:42:27 claudio Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.37 2007/09/18 18:56:02 markus Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -96,7 +96,8 @@ struct ip_moptions {
 	u_int8_t  imo_multicast_ttl;	/* TTL for outgoing multicasts */
 	u_int8_t  imo_multicast_loop;	/* 1 => hear sends if a member */
 	u_int16_t imo_num_memberships;	/* no. memberships this socket */
-	struct	  in_multi *imo_membership[IP_MAX_MEMBERSHIPS];
+	u_int16_t imo_max_memberships;	/* max memberships this socket */
+	struct	  in_multi **imo_membership; /* group memberships */
 };
 
 struct	ipstat {
