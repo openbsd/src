@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.15 2006/03/25 22:41:46 djm Exp $ */
+/*	$OpenBSD: musycc.c,v 1.16 2007/09/18 00:46:41 krw Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -1653,10 +1653,9 @@ musycc_channel_create(const char *name, u_int8_t locked)
 {
 	struct channel_softc	*cc;
 
-	cc = malloc(sizeof(*cc), M_DEVBUF, M_NOWAIT);
+	cc = malloc(sizeof(*cc), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!cc)
 		return (NULL);
-	bzero(cc, sizeof(*cc));
 
 	cc->cc_state = CHAN_FLOAT;
 	cc->cc_locked = locked;

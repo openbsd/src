@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.44 2007/08/28 18:34:38 deraadt Exp $  */
+/*	$OpenBSD: pgt.c,v 1.45 2007/09/18 00:46:41 krw Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1812,9 +1812,8 @@ pgt_ieee80211_node_alloc(struct ieee80211com *ic)
 {
 	struct pgt_ieee80211_node *pin;
 
-	pin = malloc(sizeof(*pin), M_DEVBUF, M_NOWAIT);
+	pin = malloc(sizeof(*pin), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (pin != NULL) {
-		bzero(pin, sizeof *pin);
 		pin->pin_dot1x_auth = PIN_DOT1X_UNAUTHORIZED;
 	}
 	return (struct ieee80211_node *)pin;
@@ -2284,8 +2283,7 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 	case SIOCG80211ALLNODES: {
 		struct ieee80211_nodereq *nr = NULL;
 		na = (struct ieee80211_nodereq_all *)req;
-		wreq = malloc(sizeof(*wreq), M_DEVBUF, M_WAITOK);
-		bzero(wreq, sizeof(*wreq));
+		wreq = malloc(sizeof(*wreq), M_DEVBUF, M_WAITOK | M_ZERO);
 
 		maxscan = PGT_OBJ_BSSLIST_NBSS;
 		pob = malloc(sizeof(*pob) +

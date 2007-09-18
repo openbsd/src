@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.17 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.18 2007/09/18 00:46:41 krw Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -373,11 +373,10 @@ _ebus_alloc_bus_tag(struct ebus_softc *sc, const char *name,
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bt == NULL)
 		panic("could not allocate ebus bus tag");
 
-	bzero(bt, sizeof *bt);
 	snprintf(bt->name, sizeof(bt->name), "%s_%s",
 		sc->sc_dev.dv_xname, name);
 	bt->cookie = sc;

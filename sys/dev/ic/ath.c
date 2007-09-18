@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.66 2007/07/18 18:10:31 damien Exp $  */
+/*      $OpenBSD: ath.c,v 1.67 2007/09/18 00:46:41 krw Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1613,14 +1613,13 @@ ath_desc_alloc(struct ath_softc *sc)
 
 	/* allocate buffers */
 	bsize = sizeof(struct ath_buf) * (ATH_TXBUF + ATH_RXBUF + 1);
-	bf = malloc(bsize, M_DEVBUF, M_NOWAIT);
+	bf = malloc(bsize, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bf == NULL) {
 		printf("%s: unable to allocate Tx/Rx buffers\n",
 		    sc->sc_dev.dv_xname);
 		error = ENOMEM;
 		goto fail3;
 	}
-	bzero(bf, bsize);
 	sc->sc_bufptr = bf;
 
 	TAILQ_INIT(&sc->sc_rxbuf);

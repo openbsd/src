@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.48 2007/08/25 19:25:31 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.49 2007/09/18 00:46:41 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -533,11 +533,10 @@ schizo_alloc_bus_tag(struct schizo_pbm *pbm, const char *name, int ss,
 	struct schizo_softc *sc = pbm->sp_sc;
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bt == NULL)
 		panic("schizo: could not allocate bus tag");
 
-	bzero(bt, sizeof *bt);
 	snprintf(bt->name, sizeof(bt->name), "%s-pbm_%s(%d/%2.2x)",
 	    sc->sc_dv.dv_xname, name, ss, asi);
 

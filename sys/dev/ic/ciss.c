@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.28 2007/09/18 00:46:41 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -350,12 +350,11 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	if (!(sc->sc_lds = malloc(sc->maxunits * sizeof(*sc->sc_lds),
-	    M_DEVBUF, M_NOWAIT))) {
+	    M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		bus_dmamem_free(sc->dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->dmat, sc->cmdmap);
 		return -1;
 	}
-	bzero(sc->sc_lds, sc->maxunits * sizeof(*sc->sc_lds));
 
 	sc->sc_flush = CISS_FLUSH_ENABLE;
 	if (!(sc->sc_sh = shutdownhook_establish(ciss_shutdown, sc))) {
@@ -422,9 +421,8 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_flags |= CISS_BIO;
 #ifndef SMALL_KERNEL
 	sc->sensors = malloc(sizeof(struct ksensor) * sc->maxunits,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sensors) {
-		bzero(sc->sensors, sizeof(struct ksensor) * sc->maxunits);
 		strlcpy(sc->sensordev.xname, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensordev.xname));
 		for (i = 0; i < sc->maxunits;

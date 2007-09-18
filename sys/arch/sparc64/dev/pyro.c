@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.7 2007/04/03 19:59:01 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.8 2007/09/18 00:46:41 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -299,11 +299,10 @@ _pyro_alloc_bus_tag(struct pyro_pbm *pbm, const char *name, int ss,
 	struct pyro_softc *sc = pbm->pp_sc;
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bt == NULL)
 		panic("pyro: could not allocate bus tag");
 
-	bzero(bt, sizeof *bt);
 	snprintf(bt->name, sizeof(bt->name), "%s-pbm_%s(%d/%2.2x)",
 	    sc->sc_dv.dv_xname, name, ss, asi);
 
