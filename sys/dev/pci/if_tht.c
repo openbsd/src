@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.108 2007/07/22 03:54:15 dlg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.109 2007/09/19 12:00:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1837,8 +1837,7 @@ tht_dmamem_alloc(struct tht_softc *sc, bus_size_t size, bus_size_t align)
 	struct tht_dmamem		*tdm;
 	int				nsegs;
 
-	tdm = malloc(sizeof(struct tht_dmamem), M_DEVBUF, M_WAITOK);
-	bzero(tdm, sizeof(struct tht_dmamem));
+	tdm = malloc(sizeof(struct tht_dmamem), M_DEVBUF, M_WAITOK | M_ZERO);
 	tdm->tdm_size = size;
 
 	if (bus_dmamap_create(dmat, size, 1, size, 0,
@@ -1894,8 +1893,7 @@ tht_pkt_alloc(struct tht_softc *sc, struct tht_pkt_list *tpl, int npkts,
 	int				i;
 
 	tpl->tpl_pkts = malloc(sizeof(struct tht_pkt) * npkts, M_DEVBUF,
-	    M_WAITOK);
-	bzero(tpl->tpl_pkts, sizeof(struct tht_pkt) * npkts);
+	    M_WAITOK | M_ZERO);
 
 	TAILQ_INIT(&tpl->tpl_free);
 	TAILQ_INIT(&tpl->tpl_used);
