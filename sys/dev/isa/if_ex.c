@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.18 2007/09/19 03:55:05 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.19 2007/09/19 04:52:15 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -385,14 +385,12 @@ void
 ex_start(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
-	int i, s, len, data_len, avail, dest, next;
+	int i, len, data_len, avail, dest, next;
 	unsigned char tmp16[2];
 	struct mbuf *opkt;
 	struct mbuf *m;
 
 	DODEBUG(Start_End, printf("ex_start: start\n"););
-
-	s = splnet();
 
 	/*
  	 * Main loop: send outgoing packets to network card until there are no
@@ -533,8 +531,6 @@ ex_start(struct ifnet *ifp)
 			DODEBUG(Status, printf("OACTIVE start\n"););
 		}
 	}
-
-	splx(s);
 
 	DODEBUG(Start_End, printf("ex_start: finish\n"););
 }
