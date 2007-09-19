@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.41 2007/06/14 10:11:15 mbalmer Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.42 2007/09/19 12:39:21 pyr Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -177,6 +177,7 @@ uftdi_match(struct device *parent, void *match, void *aux)
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_632 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_633 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_634 ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA_635 ||
 	     uaa->product == USB_PRODUCT_FTDI_MJS_SIRIUS_PC))
 		return (UMATCH_VENDOR_PRODUCT);
 	if (uaa->vendor == USB_VENDOR_SIIG2 &&
@@ -264,6 +265,7 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 		case USB_PRODUCT_FTDI_LCD_CFA_632:
 		case USB_PRODUCT_FTDI_LCD_CFA_633:
 		case USB_PRODUCT_FTDI_LCD_CFA_634:
+		case USB_PRODUCT_FTDI_LCD_CFA_635:
 		case USB_PRODUCT_FTDI_MHAM_KW:
 		case USB_PRODUCT_FTDI_MHAM_YS:
 		case USB_PRODUCT_FTDI_MHAM_Y6:
