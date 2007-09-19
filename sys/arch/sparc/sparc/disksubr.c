@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.70 2007/07/01 19:06:58 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.71 2007/09/19 23:47:50 tsi Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -238,6 +238,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 {
 	struct partition *npp;
 	struct sun_dkpart *spp;
+	struct sun_partinfo *ppp;
 	int i, secpercyl;
 	u_short cksum = 0, *sp1, *sp2;
 
@@ -334,13 +335,67 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 				npp->p_cpg = 16;
 			}
 		}
-		if (sl->sl_xpmag == SL_XPMAGTYP)
+		if (sl->sl_xpmag == SL_XPMAGTYP) {
 			for (i = 0; i < MAXPARTITIONS; i++) {
 				npp = &lp->d_partitions[i];
 				npp->p_fstype = sl->sl_types[i];
 				npp->p_fragblock = sl->sl_fragblock[i];
 				npp->p_cpg = sl->sl_cpg[i];
 			}
+		}
+	} else if (sl->sl_nparts <= 8) {
+		/*
+		 * A more traditional Sun label.  Recognise certain filesystem
+		 * types from it, if they are available.
+		 */
+		if ((i = sl->sl_nparts) == 0) {
+			for (i = 8;  i-- > 0; ) {
+				npp = &lp->d_partitions[i];
+				if (npp->p_size == 0)
+					continue;
+
+				ppp = &sl->sl_ipart[i];
+				if ((ppp->spi_tag == 0) && (ppp->spi_flag == 0))
+					continue;
+
+				i = 8;
+				break;
+			}
+		}
+
+		while (i-- > 0) {
+			npp = &lp->d_partitions[i];
+			if (npp->p_size == 0)
+				continue;
+
+			ppp = &sl->sl_ipart[i];
+			switch (ppp->spi_tag) {
+			case SPTAG_EMPTY:
+			case SPTAG_BOOT:
+			case SPTAG_WHOLE_DISK:
+				npp->p_fstype = FS_UNUSED;
+				break;
+			case SPTAG_SUNOS_SWAP:
+			case SPTAG_LINUX_SWAP:
+				npp->p_fstype = FS_UNUSED;	/* FS_SWAP? */
+				break;
+			case SPTAG_SUNOS_ROOT:
+			case SPTAG_SUNOS_USR:
+			case SPTAG_SUNOS_VAR:
+			case SPTAG_SUNOS_HOME:
+				npp->p_fstype = FS_BSDFFS;
+				npp->p_fragblock =
+				    DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
+				npp->p_cpg = 16;
+				break;
+			case SPTAG_LINUX_EXT2:
+				npp->p_fstype = FS_EXT2FS;
+				break;
+			default:
+				npp->p_fstype = FS_UNUSED;
+				break;
+			}
+		}
 	}
 
 	lp->d_checksum = 0;
