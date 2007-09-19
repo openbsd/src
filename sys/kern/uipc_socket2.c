@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.42 2007/02/26 23:53:33 kurt Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.43 2007/09/19 15:08:29 blambert Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/event.h>
+#include <sys/pool.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers
@@ -56,6 +57,8 @@ const char	netio[] = "netio";
 const char	netlck[] = "netlck";
 
 u_long	sb_max = SB_MAX;		/* patchable */
+
+extern struct pool mclpool;
 
 /*
  * Procedures to manipulate state flags of socket
