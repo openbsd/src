@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.17 2007/09/17 01:20:03 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.18 2007/09/19 03:55:05 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -109,20 +109,20 @@ static char irq2eemap[] = { -1, -1, 0, 1, -1, 2, -1, -1, -1, 0, 3, 4, -1, -1,
 			    -1, -1 };
 static u_char ee2irqmap[] = { 9, 3, 5, 10, 11, 0, 0, 0 };
 
-static int ex_probe(struct device *, void *, void *);
-static void ex_attach(struct device *, struct device *, void *);
-static void ex_init(struct ex_softc *);
-static void ex_start(struct ifnet *);
-static void ex_stop(struct ex_softc *);
-static int ex_ioctl(struct ifnet *, u_long, caddr_t);
-static void ex_reset(struct ex_softc *);
-static void ex_watchdog(struct ifnet *);
+int ex_probe(struct device *, void *, void *);
+void ex_attach(struct device *, struct device *, void *);
+void ex_init(struct ex_softc *);
+void ex_start(struct ifnet *);
+void ex_stop(struct ex_softc *);
+int ex_ioctl(struct ifnet *, u_long, caddr_t);
+void ex_reset(struct ex_softc *);
+void ex_watchdog(struct ifnet *);
 
-static u_short eeprom_read(struct ex_softc *, int);
-static int look_for_card(struct isa_attach_args *, struct ex_softc *sc);
-static int exintr(void *);
-static void ex_tx_intr(struct ex_softc *);
-static void ex_rx_intr(struct ex_softc *);
+u_short eeprom_read(struct ex_softc *, int);
+int look_for_card(struct isa_attach_args *, struct ex_softc *sc);
+int exintr(void *);
+void ex_tx_intr(struct ex_softc *);
+void ex_rx_intr(struct ex_softc *);
 
 
 struct cfattach ex_ca = {
@@ -147,7 +147,7 @@ struct cfdriver ex_cd = {
 #define ISA_PUT_2_MULTI(offset, addr, count) bus_space_write_multi_2( \
 	sc->sc_iot, sc->sc_ioh, (offset), (addr), (count))
 
-static int 
+int 
 look_for_card(struct isa_attach_args *ia, struct ex_softc *sc)
 {
 	int count1, count2;
@@ -849,7 +849,7 @@ ex_watchdog(struct ifnet *ifp)
 	DODEBUG(Start_End, printf("ex_watchdog: finish\n"););
 }
 
-static u_short 
+u_short 
 eeprom_read(struct ex_softc *sc, int location)
 {
 	int i;
