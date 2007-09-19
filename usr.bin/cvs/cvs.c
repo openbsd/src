@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.133 2007/09/19 11:53:27 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.134 2007/09/19 12:14:21 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -434,8 +434,13 @@ cvs_read_rcfile(void)
 		while (*p == ' ')
 			p++;
 
-		/* allow comments */
-		if (*p == '#')
+		/*
+		 * Allow comments.
+		 * GNU cvs stops parsing a line if it encounters a \t
+		 * in front of a command, stick at this behaviour for
+		 * compatibility.
+		 */
+		if (*p == '#' || *p == '\t')
 			continue;
 
 		lp = strchr(p, ' ');
