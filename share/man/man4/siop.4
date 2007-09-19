@@ -1,4 +1,4 @@
-.\"	$OpenBSD: siop.4,v 1.15 2007/08/24 13:52:24 kettenis Exp $
+.\"	$OpenBSD: siop.4,v 1.16 2007/09/19 02:28:18 brad Exp $
 .\"	$NetBSD: siop.4,v 1.3 2000/10/23 16:38:10 bouyer Exp $
 .\"
 .\" Copyright (c) 2000 Manuel Bouyer.
@@ -30,7 +30,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 24 2007 $
+.Dd $Mdocdate: September 19 2007 $
 .Dt SIOP 4
 .Os
 .Sh NAME
@@ -38,6 +38,12 @@
 .Nd LSI/Symbios Logic/NCR 53c8xx SCSI interface
 .Sh SYNOPSIS
 .Cd "siop* at pci?"
+.Pp
+.Cd "# hppa"
+.Cd "siop* at mainbus? irq 3"
+.Cd "siop* at phatomas? irq 3"
+.Cd "siop* at uturn? irq 3"
+.Pp
 .Cd "scsibus* at siop?"
 .Sh DESCRIPTION
 The
