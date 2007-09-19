@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.294 2007/09/12 18:05:12 deraadt Exp $
+$OpenBSD: usbdevs,v 1.295 2007/09/19 12:34:56 pyr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1157,6 +1157,7 @@ product FTDI LCD_CFA_631	0xfc0c  Crystalfontz CFA-631 LCD
 product FTDI LCD_CFA_632	0xfc08  Crystalfontz CFA-632 LCD
 product FTDI LCD_CFA_633	0xfc0b  Crystalfontz CFA-633 LCD
 product FTDI LCD_CFA_634	0xfc09  Crystalfontz CFA-634 LCD
+product FTDI LCD_CFA_635	0xfc0d  Crystalfontz CFA-635 LCD
 product FTDI SEMC_DSS20		0xfc82	SEMC DSS-20 SyncStation
 
 /* Fuji photo products */
