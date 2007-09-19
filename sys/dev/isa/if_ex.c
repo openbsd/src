@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.21 2007/09/19 05:29:47 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.22 2007/09/19 06:14:24 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -766,16 +766,6 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
       break;
     }
     break;
-  case SIOCGIFADDR:
-    {
-      struct sockaddr *sa;
-
-      DODEBUG(Start_End, printf("SIOCGIFADDR"););
-      sa = (struct sockaddr *) &ifr->ifr_data;
-      bcopy((caddr_t) sc->arpcom.ac_enaddr, (caddr_t) sa->sa_data, 
-	    ETHER_ADDR_LEN);
-    }
-  break;
   case SIOCSIFFLAGS:
     DODEBUG(Start_End, printf("SIOCSIFFLAGS"););
     if ((ifp->if_flags & IFF_UP) == 0 && ifp->if_flags & IFF_RUNNING) {
@@ -802,7 +792,7 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
     break;
   default:
     DODEBUG(Start_End, printf("unknown"););
-    error = EINVAL;
+    error = ENOTTY;
   }
 
   splx(s);
