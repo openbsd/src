@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.197 2007/08/30 12:24:28 dhartmei Exp $
+# $OpenBSD: Makefile,v 1.198 2007/09/19 22:45:04 mpf Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -202,9 +202,9 @@ pfi${n}-update:
 
 pfi:            ${PFI_TARGETS}
 pfi-update:     ${PFI_UPDATES}
-# REGRESS_TARGETS+=pfi
-# REGRESS_ROOT_TARGETS+=pfi
-# UPDATE_TARGETS+=pfi-update
+REGRESS_TARGETS+=pfi
+REGRESS_ROOT_TARGETS+=pfi
+UPDATE_TARGETS+=pfi-update
 
 .for n in ${PFOPT}
 PFOPT_TARGETS+=pfopt${n}
