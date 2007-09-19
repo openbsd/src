@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.9 2007/09/19 16:08:33 todd Exp $	*/
+/*	$OpenBSD: cc.c,v 1.10 2007/09/19 21:42:06 todd Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -121,7 +121,7 @@ int	nostdinc, nostdlib;
 int	onlyas;
 int	pthreads;
 
-char	*pass0 = LIBEXECDIR "/ccom";
+char	*pass0;
 char	*passp = LIBEXECDIR "/cpp";
 char	*Bflag;
 char *cppadd[] = CPPADD;
@@ -365,6 +365,7 @@ main(int argc, char *argv[])
 		signal(SIGINT, idexit);
 	if (signal(SIGTERM, SIG_IGN) != SIG_IGN)	/* terminate */
 		signal(SIGTERM, idexit);
+	asprintf(&pass0, "%s%s%s", LIBEXECDIR, "/ccom_", mach);
 	pvt = pv;
 	for (i=0; i<nc; i++) {
 		/*
