@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.117 2007/09/19 11:53:27 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.118 2007/09/19 12:04:38 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -228,7 +228,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 {
 	u_int i;
 	int argc, error;
-	char qbuf[128], *linebuf, *lp, *cp, *arg;
+	char *linebuf, *lp, *cp;
 
 	linebuf = xstrdup(line);
 
@@ -238,47 +238,18 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 	/* build the argument vector */
 	error = 0;
 	for (lp = linebuf; lp != NULL;) {
-		if (*lp == '"') {
-			/* double-quoted string */
-			lp++;
-			i = 0;
-			memset(qbuf, 0, sizeof(qbuf));
-			while (*lp != '"') {
-				if (*lp == '\\')
-					lp++;
-				if (*lp == '\0') {
-					cvs_log(LP_ERR, "no terminating quote");
-					error++;
-					break;
-				}
-
-				qbuf[i++] = *lp++;
-				if (i == sizeof(qbuf) - 1) {
-					error++;
-					break;
-				}
-			}
-			if (error)
-				break;
-			lp++;
-
-			arg = qbuf;
-		} else {
-			cp = strsep(&lp, " \t");
-			if (cp == NULL)
-				break;
-			else if (*cp == '\0')
-				continue;
-
-			arg = cp;
-		}
+		cp = strsep(&lp, " \t");
+		if (cp == NULL)
+			break;
+		else if (*cp == '\0')
+			continue;
 
 		if (argc == argvlen) {
 			error++;
 			break;
 		}
 
-		argv[argc] = xstrdup(arg);
+		argv[argc] = xstrdup(cp);
 		argc++;
 	}
 
