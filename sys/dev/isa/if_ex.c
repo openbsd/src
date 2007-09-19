@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.22 2007/09/19 06:14:24 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.23 2007/09/19 06:28:38 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -748,6 +748,11 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	DODEBUG(Start_End, printf("ex_ioctl: start "););
 
 	s = splnet();
+
+	if ((error = ether_ioctl(ifp, &sc->arpcom, cmd, data)) > 0) {
+		splx(s);
+		return (error);
+	}
 
 	switch(cmd) {
 		case SIOCSIFADDR:
