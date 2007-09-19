@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.7 2007/09/19 15:00:01 todd Exp $	*/
+/*	$OpenBSD: cc.c,v 1.8 2007/09/19 15:21:07 todd Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -129,7 +129,13 @@ char *dynlinker[] = DYNLINKER;
 char *crt0file = CRT0FILE;
 char *startfiles[] = STARTFILES;
 char *endfiles[] = ENDFILES;
-char *cppmdadd[] = CPPMDADD;
+char *mach = DEFMACH;
+struct cppmd {
+	char *mach;
+	char *cppmdadd[MAXCPPMDARGS];
+};
+
+struct cppmd cppmds[] = CPPMDADDS;
 #ifdef LIBCLIBS
 char *libclibs[] = LIBCLIBS;
 #else
@@ -145,7 +151,7 @@ main(int argc, char *argv[])
 	char *t, *u;
 	char *assource;
 	char **pv, *ptemp[MAXOPT], **pvt;
-	int nc, nl, i, j, c, nxo, na;
+	int nc, nl, i, j, k, c, nxo, na;
 
 	i = nc = nl = nxo = 0;
 	pv = ptemp;
@@ -157,6 +163,20 @@ main(int argc, char *argv[])
 
 		case 'B': /* other search paths for binaries */
 			Bflag = &argv[i][2];
+			break;
+
+		case 'b':
+			if (strncmp(argv[i+1], "?", 1) == 0) {
+				/* show machine targets */
+				printf("Available machine targets:");
+				for (j=0; cppmds[j].mach; j++)
+					printf(" %s",cppmds[j].mach);
+				printf("\n");
+				exit(0);
+			}
+			for (j=0; cppmds[j].mach; j++)
+				if (strcmp(argv[i+1],cppmds[j].mach) == 0)
+					mach = cppmds[j].mach;
 			break;
 
 		case 'X':
@@ -377,8 +397,13 @@ main(int argc, char *argv[])
 			av[na++] = alist;
 		for (j = 0; cppadd[j]; j++)
 			av[na++] = cppadd[j];
-		for (j = 0; cppmdadd[j]; j++)
-			av[na++] = cppmdadd[j];
+		for (k = 0; cppmds[k].mach; k++) {
+			if (strcmp(cppmds[k].mach, mach) != 0)
+				continue;
+			for (j = 0; cppmds[k].cppmdadd[j]; j++)
+				av[na++] = cppmds[k].cppmdadd[j];
+			break;
+		}
 		if (tflag)
 			av[na++] = "-t";
 		for(pv=ptemp; pv <pvt; pv++)

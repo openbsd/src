@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccconfig.h,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: ccconfig.h,v 1.3 2007/09/19 15:21:07 todd Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -38,10 +38,9 @@
 #define STARTFILES { "/usr/lib/crti.o", "/usr/lib/crtbegin.o", NULL }
 #define	ENDFILES { "/usr/lib/crtend.o", "/usr/lib/crtn.o", NULL }
 
-#if defined(mach_x86)
-#define	CPPMDADD { "-D__i386__", NULL, }
-#else
-#error defines for arch missing
-#endif
+#define CPPMDADDS { \
+	{ "x86", { "-D__i386__", NULL, } }, \
+	{ NULL }, \
+}
 
 #define	STABS

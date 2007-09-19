@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccconfig.h,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: ccconfig.h,v 1.3 2007/09/19 15:21:07 todd Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -32,16 +32,35 @@
  */
 
 /* common cpp predefines */
-#define	CPPADD	{ "-D__OpenBSD__", "-D__ELF__", NULL, }
+#define	CPPADD	{ "-D__OpenBSD__", "-D__unix__", "-D__inline__=inline", NULL }
 #define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.so", NULL }
 #define CRT0FILE "/usr/lib/crt0.o"
 #define STARTFILES { "/usr/lib/crtbegin.o", NULL }
 #define	ENDFILES { "/usr/lib/crtend.o", NULL }
 
-#if defined(mach_x86)
-#define	CPPMDADD { "-D__i386__", NULL, }
-#else
-#error defines for arch missing
-#endif
+#define CPPMDADDS { \
+	{ "x86", { "-D__i386__", "-D__i386", "-D__ELF__", \
+		NULL } }, \
+	{ "alpha", { "-D__alpha", "-D__alpha_ev4__", "-D__alpha__", \
+		"-D__ELF__", NULL } }, \
+	{ "amd64", { "-D__x86_64", "-D__athlon", "-D__amd64__", \
+		"-D__athlon__", "-D__ELF__", NULL } }, \
+	{ "arm", { "-D__arm__", "-D__ELF__", NULL } }, \
+	{ "hppa", { "-D__hppa", "-D__hppa__", "-D_PA_RISC_1", "-D__ELF__", \
+		NULL } }, \
+	{ "m68k", { "-D__m68k__", "-D__mc68000__", "-D__mc68020__", \
+		NULL } }, \
+	{ "powerpc", { "-D__powerpc__", "-D_ARCH_PPC", "-D__PPC", \
+		"-D__powerpc", "-D__PPC__", "-D__ELF__", NULL } }, \
+	{ "mips64", { "-D__mips64", "-D__mips64__", "-D_R4000", "-D_mips", \
+		"-D_mips_r64", "-D__mips__", "-D__ELF__", NULL } }, \
+	{ "sh", { "-D__SH4__", "-D__sh__", NULL } }, \
+	{ "sparc", { "-D__sparc__", "-D__ELF__", NULL } }, \
+	{ "sparc64", { "-D__sparc", "-D__sparc__", "-D__sparc64__", \
+		"-D__sparcv9__", "-D__sparc_v9__", "-D__ELF__", NULL } }, \
+	{ "vax", { "-D__vax__", NULL } }, \
+	{ NULL }, \
+}
+#define MAXCPPMDARGS 8
 
 #define	STABS

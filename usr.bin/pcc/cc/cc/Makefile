@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2007/09/17 07:20:49 todd Exp $
+#	$OpenBSD: Makefile,v 1.5 2007/09/19 15:21:07 todd Exp $
 #
 # Makefile for the cc part of pcc.
 #
@@ -11,6 +11,6 @@ TARGMACH=	x86
 
 CFLAGS+=	-DLIBEXECDIR=\"${PREFIX}/libexec\"
 CPPFLAGS+=	-I${.CURDIR}/../.. -I${.CURDIR}/../../os/${TARGOS}
-CPPFLAGS+=	-Dmach_${TARGMACH}
+CPPFLAGS+=	-DDEFMACH=\"${TARGMACH}\"
 
 .include <bsd.prog.mk>

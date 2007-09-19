@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccconfig.h,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: ccconfig.h,v 1.3 2007/09/19 15:21:07 todd Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -42,9 +42,11 @@
 #define STARTFILES { NULL }
 #define	ENDFILES { NULL }
 
-#if defined(mach_m16c)
-#define	CPPMDADD { "-D__m16c__", NULL, }
-#elif defined(mach_nova)
-#define	CPPMDADD { "-D__nova__", NULL, }
-#endif
 
+#define CPPMDADDS { \
+	{ "m16c", { "-D__m16c__", NULL, } }, \
+	{ "nova", { "-D__nova__", NULL, } }, \
+	{ NULL },
+}
+
+#define MAXCPPMDARGS 2
