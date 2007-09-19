@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.97 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.98 2007/09/19 02:32:57 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -158,7 +158,6 @@ void tulip_21040_auibnc_only_media_probe(tulip_softc_t * const sc);
 void tulip_21040_auibnc_only_media_select(tulip_softc_t * const sc);
 
 void tulip_21041_mediainfo_init(tulip_softc_t * const sc);
-void tulip_21041_media_noprobe(tulip_softc_t * const sc);
 void tulip_21041_media_probe(tulip_softc_t * const sc);
 void tulip_21041_media_poll(tulip_softc_t * const sc, const tulip_mediapoll_event_t event);
 
@@ -945,15 +944,6 @@ tulip_21041_mediainfo_init(tulip_softc_t * const sc)
 }
 
 void
-tulip_21041_media_noprobe(tulip_softc_t * const sc)
-{
-    sc->tulip_if.if_baudrate = 10000000;
-    sc->tulip_cmdmode |= TULIP_CMD_CAPTREFFCT|TULIP_CMD_ENHCAPTEFFCT
-	|TULIP_CMD_THRSHLD160|TULIP_CMD_BACKOFFCTR;
-    sc->tulip_intrmask |= TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
-}
-
-void
 tulip_21041_media_probe(tulip_softc_t * const sc)
 {
     sc->tulip_if.if_baudrate = 10000000;
@@ -1108,13 +1098,6 @@ tulip_21041_media_poll(tulip_softc_t * const sc, const tulip_mediapoll_event_t e
 static const tulip_boardsw_t tulip_21041_boardsw = {
     TULIP_21041_GENERIC,
     tulip_21041_media_probe,
-    tulip_media_select,
-    tulip_21041_media_poll
-};
-
-static const tulip_boardsw_t tulip_21041np_boardsw = {
-    TULIP_21041_GENERIC,
-    tulip_21041_media_noprobe,
     tulip_media_select,
     tulip_21041_media_poll
 };
