@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.19 2007/09/19 04:52:15 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.20 2007/09/19 05:09:09 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -35,8 +35,6 @@
  * 30-Oct-1996: first beta version. Inet and BPF supported, but no multicast.
  */
 
-#include "ex.h"
-#if NEX > 0
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -880,5 +878,3 @@ eeprom_read(struct ex_softc *sc, int location)
 	BANK_SEL(Bank0_Sel);
 	return(data);
 }
-
-#endif /* NEX > 0 */
