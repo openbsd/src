@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.36 2007/09/19 04:25:52 miod Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.37 2007/09/19 21:54:22 martin Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ typedef void (*tuple_decode_func)(u_int8_t *, int, void *);
 STATIC int decode_tuples(u_int8_t *, int, tuple_decode_func, void *);
 STATIC void parse_tuple(u_int8_t *, int, void *);
 #ifdef CARDBUS_DEBUG
-STATIC void print_tuple(u_int8_t *, int, void *);
+static void print_tuple(u_int8_t *, int, void *);
 #endif
 
 STATIC int cardbus_read_tuples(struct cardbus_attach_args *,
