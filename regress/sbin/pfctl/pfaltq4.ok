@@ -1,12 +1,12 @@
-queue root_lo0 bandwidth 10Mb priority 0 cbq( wrr root ) {bloody, germans}
+queue root_lo0 on lo0 bandwidth 10Mb priority 0 cbq( wrr root ) {bloody, germans}
   [ qid=1 ifname=lo0 ifbandwidth=10Mb ]
-queue  bloody bandwidth 5Mb cbq( default ) 
+queue  bloody on lo0 bandwidth 5Mb cbq( default ) 
   [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
-queue  germans bandwidth 5Mb 
+queue  germans on lo0 bandwidth 5Mb 
   [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
-queue root_tun1000000 bandwidth 10Mb priority 0 cbq( wrr root ) {bloody, toads}
+queue root_tun1000000 on tun1000000 bandwidth 10Mb priority 0 cbq( wrr root ) {bloody, toads}
   [ qid=2 ifname=tun1000000 ifbandwidth=10Mb ]
-queue  bloody bandwidth 5Mb cbq( default ) 
+queue  bloody on tun1000000 bandwidth 5Mb cbq( default ) 
   [ qid=3 ifname=tun1000000 ifbandwidth=10Mb ]
-queue  toads bandwidth 5Mb 
+queue  toads on tun1000000 bandwidth 5Mb 
   [ qid=5 ifname=tun1000000 ifbandwidth=10Mb ]

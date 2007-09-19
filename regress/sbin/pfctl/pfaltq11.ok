@@ -1,28 +1,28 @@
-queue root_lo0 bandwidth 10Mb priority 0 {eins, zwei, drei}
+queue root_lo0 on lo0 bandwidth 10Mb priority 0 {eins, zwei, drei}
   [ qid=1 ifname=lo0 ifbandwidth=10Mb ]
-queue  eins bandwidth 1Mb hfsc( default ) 
+queue  eins on lo0 bandwidth 1Mb hfsc( default ) 
   [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
-queue  zwei bandwidth 8Mb {sub2, sub3}
+queue  zwei on lo0 bandwidth 8Mb {sub2, sub3}
   [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
-queue   sub2 bandwidth 4Mb 
+queue   sub2 on lo0 bandwidth 4Mb 
   [ qid=5 ifname=lo0 ifbandwidth=10Mb ]
-queue   sub3 bandwidth 4Mb 
+queue   sub3 on lo0 bandwidth 4Mb 
   [ qid=6 ifname=lo0 ifbandwidth=10Mb ]
-queue  drei bandwidth 1Mb {subseven}
+queue  drei on lo0 bandwidth 1Mb {subseven}
   [ qid=7 ifname=lo0 ifbandwidth=10Mb ]
-queue   subseven bandwidth 900Kb 
+queue   subseven on lo0 bandwidth 900Kb 
   [ qid=10 ifname=lo0 ifbandwidth=10Mb ]
-queue root_tun1000000 bandwidth 33.60Kb priority 0 {zwei, vier, fuenf}
+queue root_tun1000000 on tun1000000 bandwidth 33.60Kb priority 0 {zwei, vier, fuenf}
   [ qid=2 ifname=tun1000000 ifbandwidth=33.60Kb ]
-queue  zwei bandwidth 26.88Kb {sub2, sub3}
+queue  zwei on tun1000000 bandwidth 26.88Kb {sub2, sub3}
   [ qid=4 ifname=tun1000000 ifbandwidth=33.60Kb ]
-queue   sub2 bandwidth 13.40Kb 
+queue   sub2 on tun1000000 bandwidth 13.40Kb 
   [ qid=5 ifname=tun1000000 ifbandwidth=33.60Kb ]
-queue   sub3 bandwidth 13.40Kb 
+queue   sub3 on tun1000000 bandwidth 13.40Kb 
   [ qid=6 ifname=tun1000000 ifbandwidth=33.60Kb ]
-queue  vier bandwidth 3.36Kb hfsc( default ) 
+queue  vier on tun1000000 bandwidth 3.36Kb hfsc( default ) 
   [ qid=8 ifname=tun1000000 ifbandwidth=33.60Kb ]
-queue  fuenf bandwidth 1.68Kb {subseven}
+queue  fuenf on tun1000000 bandwidth 1.68Kb {subseven}
   [ qid=9 ifname=tun1000000 ifbandwidth=33.60Kb ]
-queue   subseven bandwidth 1.44Kb 
+queue   subseven on tun1000000 bandwidth 1.44Kb 
   [ qid=10 ifname=tun1000000 ifbandwidth=33.60Kb ]

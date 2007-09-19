@@ -1,20 +1,20 @@
-queue root_lo0 bandwidth 10Mb priority 0 cbq( wrr root ) {one, two}
+queue root_lo0 on lo0 bandwidth 10Mb priority 0 cbq( wrr root ) {one, two}
   [ qid=1 ifname=lo0 ifbandwidth=10Mb ]
-queue  one bandwidth 1Mb cbq( default ) 
+queue  one on lo0 bandwidth 1Mb cbq( default ) 
   [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
-queue  two bandwidth 9Mb {three, four}
+queue  two on lo0 bandwidth 9Mb {three, four}
   [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
-queue   three bandwidth 4.50Mb 
+queue   three on lo0 bandwidth 4.50Mb 
   [ qid=5 ifname=lo0 ifbandwidth=10Mb ]
-queue   four bandwidth 3.60Mb 
+queue   four on lo0 bandwidth 3.60Mb 
   [ qid=6 ifname=lo0 ifbandwidth=10Mb ]
-queue root_tun1000000 bandwidth 10Mb priority 0 cbq( wrr root ) {one, two}
+queue root_tun1000000 on tun1000000 bandwidth 10Mb priority 0 cbq( wrr root ) {one, two}
   [ qid=2 ifname=tun1000000 ifbandwidth=10Mb ]
-queue  one bandwidth 1Mb cbq( default ) 
+queue  one on tun1000000 bandwidth 1Mb cbq( default ) 
   [ qid=3 ifname=tun1000000 ifbandwidth=10Mb ]
-queue  two bandwidth 9Mb {three, four}
+queue  two on tun1000000 bandwidth 9Mb {three, four}
   [ qid=4 ifname=tun1000000 ifbandwidth=10Mb ]
-queue   three bandwidth 4.50Mb 
+queue   three on tun1000000 bandwidth 4.50Mb 
   [ qid=5 ifname=tun1000000 ifbandwidth=10Mb ]
-queue   four bandwidth 3.60Mb 
+queue   four on tun1000000 bandwidth 3.60Mb 
   [ qid=6 ifname=tun1000000 ifbandwidth=10Mb ]
