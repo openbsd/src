@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.25 2007/09/17 17:34:22 brad Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.26 2007/09/19 03:50:25 brad Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -533,9 +533,9 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_1000_T,		IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
-	{ IFM_ETHER|IFM_10G_LR,		IF_Mbps(1000) },		\
-	{ IFM_ETHER|IFM_10G_SR,		IF_Mbps(1000) },		\
-	{ IFM_ETHER|IFM_10G_CX4,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_10G_LR,		IF_Gbps(10) },			\
+	{ IFM_ETHER|IFM_10G_SR,		IF_Gbps(10) },			\
+	{ IFM_ETHER|IFM_10G_CX4,	IF_Gbps(10) },			\
 									\
 	{ IFM_FDDI|IFM_FDDI_SMF,	IF_Mbps(100) },			\
 	{ IFM_FDDI|IFM_FDDI_MMF,	IF_Mbps(100) },			\
