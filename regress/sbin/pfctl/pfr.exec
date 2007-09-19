@@ -6,8 +6,8 @@ pfctl -a $A -Fr 2>/dev/null
 pfctl -a $A -Fn 2>/dev/null
 KT_A=`vmstat -m | awk '/pfrktable/{print $3}'`
 KT_R=`vmstat -m | awk '/pfrktable/{print $5}'`
-KE_A=`vmstat -m | awk '/pfrkentry/{print $3}'`
-KE_R=`vmstat -m | awk '/pfrkentry/{print $5}'`
+KE_A=`vmstat -m | awk '/pfrkentry /{print $3}'`
+KE_R=`vmstat -m | awk '/pfrkentry /{print $5}'`
 echo "# create"
 echo "table <regress> persist" | pfctl -a $A -Tl -f - 2>&1 || exit 1
 for LINE in `sed -e "s/ /_/g" $1`; do 
@@ -81,8 +81,8 @@ pfctl -a $A -Fn 2>&1
 let KT_A=`vmstat -m | awk '/pfrktable/{print $3}'`-$KT_A
 let KT_R=`vmstat -m | awk '/pfrktable/{print $5}'`-$KT_R
 let KT_L=$KT_A-$KT_R
-let KE_A=`vmstat -m | awk '/pfrkentry/{print $3}'`-$KE_A
-let KE_R=`vmstat -m | awk '/pfrkentry/{print $5}'`-$KE_R
+let KE_A=`vmstat -m | awk '/pfrkentry /{print $3}'`-$KE_A
+let KE_R=`vmstat -m | awk '/pfrkentry /{print $5}'`-$KE_R
 let KE_L=$KE_A-$KE_R
 echo "ktable: $KT_A allocated, $KT_R released, $KT_L leaked."
 echo "kentry: $KE_A allocated, $KE_R released, $KE_L leaked."
