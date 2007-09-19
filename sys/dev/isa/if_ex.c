@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.24 2007/09/19 06:44:57 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.25 2007/09/19 07:11:18 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -671,7 +671,7 @@ ex_rx_intr(struct ex_softc *sc)
 				ipkt->m_pkthdr.len = pkt_len;
 				ipkt->m_len = MHLEN;
 				while (pkt_len > 0) {
-					if (pkt_len > MINCLSIZE) {
+					if (pkt_len >= MINCLSIZE) {
 						MCLGET(m, M_DONTWAIT);
 						if (m->m_flags & M_EXT)
 							m->m_len = MCLBYTES;
