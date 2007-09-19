@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.132 2007/09/10 10:29:12 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.133 2007/09/19 11:53:27 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -394,7 +394,7 @@ cvs_getopt(int argc, char **argv)
 static void
 cvs_read_rcfile(void)
 {
-	char rcpath[MAXPATHLEN], linebuf[128], *lp, *p;
+	char rcpath[MAXPATHLEN], *buf, *lbuf, *lp, *p;
 	int i, linenum;
 	size_t len;
 	struct cvs_cmd *cmdp;
@@ -416,19 +416,21 @@ cvs_read_rcfile(void)
 		return;
 	}
 
-	while (fgets(linebuf, (int)sizeof(linebuf), fp) != NULL) {
-		linenum++;
-		if ((len = strlen(linebuf)) == 0)
-			continue;
-		if (linebuf[len - 1] != '\n') {
-			cvs_log(LP_ERR, "line too long in `%s:%d'", rcpath,
-				linenum);
-			break;
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &len)) != NULL) {
+		if (buf[len - 1] == '\n') {
+			buf[len - 1] = '\0';
+		} else {
+			lbuf = xmalloc(len + 1);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
 		}
-		linebuf[--len] = '\0';
+
+		linenum++;
 
 		/* skip any whitespaces */
-		p = linebuf;
+		p = buf;
 		while (*p == ' ')
 			p++;
 
@@ -462,6 +464,8 @@ cvs_read_rcfile(void)
 			cmdp->cmd_defargs = xstrdup(lp);
 		}
 	}
+	if (lbuf != NULL)
+		xfree(lbuf);
 
 	if (ferror(fp)) {
 		cvs_log(LP_NOTICE, "failed to read line from `%s'", rcpath);

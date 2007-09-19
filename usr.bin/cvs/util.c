@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.116 2007/09/09 20:24:06 tobias Exp $	*/
+/*	$OpenBSD: util.c,v 1.117 2007/09/19 11:53:27 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -226,14 +226,11 @@ cvs_cksum(const char *file, char *dst, size_t len)
 int
 cvs_getargv(const char *line, char **argv, int argvlen)
 {
-	size_t l;
 	u_int i;
 	int argc, error;
-	char linebuf[256], qbuf[128], *lp, *cp, *arg;
+	char qbuf[128], *linebuf, *lp, *cp, *arg;
 
-	l = strlcpy(linebuf, line, sizeof(linebuf));
-	if (l >= sizeof(linebuf))
-		fatal("cvs_getargv: string truncation");
+	linebuf = xstrdup(line);
 
 	memset(argv, 0, argvlen * sizeof(char *));
 	argc = 0;
@@ -292,6 +289,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 		argc = -1;
 	}
 
+	xfree(linebuf);
 	return (argc);
 }
 
