@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.137 2007/09/19 13:36:32 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.138 2007/09/19 13:49:55 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -450,8 +450,7 @@ cvs_read_rcfile(void)
 
 		pos = strcspn(p, " \t");
 		if (pos == strlen(p)) {
-			/* ignore lines with no arguments */
-			continue;
+			lp = NULL;
 		} else {
 			lp = p + pos;
 			*lp = '\0';
@@ -464,11 +463,12 @@ cvs_read_rcfile(void)
 			 * getopt() does not like starting at index 0 for
 			 * argument processing.
 			 */
-			*lp = ' ';
-			cvs_defargs = xstrdup(p);
+			if (lp != NULL) {
+				*lp = ' ';
+				cvs_defargs = xstrdup(p);
+			}
 			cvs_parsed = 1;
 		} else {
-			lp++;
 			tcmdp = cvs_findcmd(p);
 			if (tcmdp == NULL && verbosity == 2)
 				cvs_log(LP_NOTICE,
@@ -478,7 +478,10 @@ cvs_read_rcfile(void)
 			if (tcmdp != cmdp || cmd_parsed)
 				continue;
 
-			cmdp->cmd_defargs = xstrdup(lp);
+			if (lp != NULL) {
+				lp++;
+				cmdp->cmd_defargs = xstrdup(lp);
+			}
 			cmd_parsed = 1;
 		}
 	}
