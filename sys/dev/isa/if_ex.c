@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.25 2007/09/19 07:11:18 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.26 2007/09/19 07:29:04 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -120,7 +120,6 @@ int ex_look_for_card(struct isa_attach_args *, struct ex_softc *sc);
 int ex_intr(void *);
 void ex_tx_intr(struct ex_softc *);
 void ex_rx_intr(struct ex_softc *);
-
 
 struct cfattach ex_ca = {
 	sizeof(struct ex_softc), ex_probe, ex_attach
@@ -251,15 +250,8 @@ ex_attach(struct device *parent, struct device *self, void *aux)
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 
-	/* struct ifaddr *ifa; 	XXX what are these for? */
-	/* struct sockaddr_dl *sdl; */
-
 	DODEBUG(Start_End, printf("ex_attach: start\n"););
 
-	/*
-	 * Initialize the ifnet structure.
-
-	 */
 	ifp->if_softc = sc;
 	bcopy(self->dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_start = ex_start;
@@ -269,9 +261,6 @@ ex_attach(struct device *parent, struct device *self, void *aux)
 						       | IFF_MULTICAST */
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/*
-	 * Attach the interface.
-	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	printf(": address %s, connecter ", 
