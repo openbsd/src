@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.20 2007/09/19 05:09:09 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.21 2007/09/19 05:29:47 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -62,8 +62,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/if_exreg.h>
 
-
-#ifdef EXDEBUG
+#ifdef EX_DEBUG
 #define Start_End 1
 #define Rcvd_Pkts 2
 #define Sent_Pkts 4
@@ -74,7 +73,6 @@ static int exintr_count = 0;
 #else
 #define DODEBUG(level, action)
 #endif
-
 
 #define Conn_BNC 1
 #define Conn_TPE 2
@@ -116,9 +114,10 @@ int ex_ioctl(struct ifnet *, u_long, caddr_t);
 void ex_reset(struct ex_softc *);
 void ex_watchdog(struct ifnet *);
 
-u_short eeprom_read(struct ex_softc *, int);
-int look_for_card(struct isa_attach_args *, struct ex_softc *sc);
-int exintr(void *);
+u_short ex_eeprom_read(struct ex_softc *, int);
+int ex_look_for_card(struct isa_attach_args *, struct ex_softc *sc);
+
+int ex_intr(void *);
 void ex_tx_intr(struct ex_softc *);
 void ex_rx_intr(struct ex_softc *);
 
@@ -146,7 +145,7 @@ struct cfdriver ex_cd = {
 	sc->sc_iot, sc->sc_ioh, (offset), (addr), (count))
 
 int 
-look_for_card(struct isa_attach_args *ia, struct ex_softc *sc)
+ex_look_for_card(struct isa_attach_args *ia, struct ex_softc *sc)
 {
 	int count1, count2;
 
@@ -181,7 +180,7 @@ ex_probe(struct device *parent, void *match, void *aux)
 		    &sc->sc_ioh))
 			return(0);
 
-		if (!look_for_card(ia, sc)) {
+		if (!ex_look_for_card(ia, sc)) {
 			bus_space_unmap(sc->sc_iot, sc->sc_ioh, EX_IOSIZE);
 			return(0); 
 		}
@@ -205,16 +204,16 @@ ex_probe(struct device *parent, void *match, void *aux)
 	 *	- Connector type.
 	 */
 	sc->iobase = ia->ia_iobase;
-	eaddr_tmp = eeprom_read(sc, EE_Eth_Addr_Lo);
+	eaddr_tmp = ex_eeprom_read(sc, EE_Eth_Addr_Lo);
 	sc->arpcom.ac_enaddr[5] = eaddr_tmp & 0xff;
 	sc->arpcom.ac_enaddr[4] = eaddr_tmp >> 8;
-	eaddr_tmp = eeprom_read(sc, EE_Eth_Addr_Mid);
+	eaddr_tmp = ex_eeprom_read(sc, EE_Eth_Addr_Mid);
 	sc->arpcom.ac_enaddr[3] = eaddr_tmp & 0xff;
 	sc->arpcom.ac_enaddr[2] = eaddr_tmp >> 8;
-	eaddr_tmp = eeprom_read(sc, EE_Eth_Addr_Hi);
+	eaddr_tmp = ex_eeprom_read(sc, EE_Eth_Addr_Hi);
 	sc->arpcom.ac_enaddr[1] = eaddr_tmp & 0xff;
 	sc->arpcom.ac_enaddr[0] = eaddr_tmp >> 8;
-	tmp = eeprom_read(sc, EE_IRQ_No) & IRQ_No_Mask;
+	tmp = ex_eeprom_read(sc, EE_IRQ_No) & IRQ_No_Mask;
 	if (ia->ia_irq > 0) {
 		if (ee2irqmap[tmp] != ia->ia_irq)
 			printf("ex: WARING: board's EEPROM is configured for IRQ %d, using %d\n", ee2irqmap[tmp], ia->ia_irq);
@@ -285,7 +284,7 @@ ex_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, exintr, sc, self->dv_xname);
+	    IPL_NET, ex_intr, sc, self->dv_xname);
 	ex_init(sc);
 
 	DODEBUG(Start_End, printf("ex_attach: finish\n"););
@@ -563,7 +562,7 @@ ex_stop(struct ex_softc *sc)
 
 
 int 
-exintr(void *arg)
+ex_intr(void *arg)
 {
 	struct ex_softc *sc = arg;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
@@ -572,7 +571,7 @@ exintr(void *arg)
 
 	DODEBUG(Start_End, printf("exintr: start\n"););
 
-#ifdef EXDEBUG
+#ifdef EX_DEBUG
 	if (++exintr_count != 1)
 		printf("WARNING: nested interrupt (%d). Mail the author.\n", 
 	 	    exintr_count);
@@ -600,7 +599,7 @@ exintr(void *arg)
 
 	if (send_pkts && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		ex_start(ifp);
-#ifdef EXDEBUG
+#ifdef EX_DEBUG
 	exintr_count--;
 #endif
 	DODEBUG(Start_End, printf("exintr: finish\n"););
@@ -708,7 +707,7 @@ ex_rx_intr(struct ex_softc *sc)
 					m->m_len = MLEN;
 				}
 			}
-#ifdef EXDEBUG
+#ifdef EX_DEBUG
 			if (debug_mask & Rcvd_Pkts) {
 				if ((eh->ether_dhost[5] != 0xff) || 
 				    (eh->ether_dhost[0] != 0xff)) {
@@ -844,7 +843,7 @@ ex_watchdog(struct ifnet *ifp)
 }
 
 u_short 
-eeprom_read(struct ex_softc *sc, int location)
+ex_eeprom_read(struct ex_softc *sc, int location)
 {
 	int i;
 	u_short data = 0;
