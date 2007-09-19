@@ -5,10 +5,8 @@ regress
 -pa---	regress	regress
 # pass kill 
 1 table deleted.
-# pass list 
-pfctl: Anchor or Ruleset does not exist.
-# pass list -v
-pfctl: Anchor or Ruleset does not exist.
+# pass show 
+pfctl: Table does not exist.
 # pass rule pass in from <regress> to any
 # pass list 
 # pass list -v
@@ -18,15 +16,11 @@ pfctl: Anchor or Ruleset does not exist.
 ----r-	regress	regress
 # pass rule 
 # pass list 
-pfctl: Anchor or Ruleset does not exist.
 # pass list -v
-pfctl: Anchor or Ruleset does not exist.
 # pass kill 
 0 table deleted.
-# pass list 
-pfctl: Anchor or Ruleset does not exist.
-# pass list -v
-pfctl: Anchor or Ruleset does not exist.
+# pass show 
+pfctl: Table does not exist.
 # pass rule pass in from <regress> to any
 # pass list 
 # pass list -v
