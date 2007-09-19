@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.6 2007/09/18 07:16:01 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.7 2007/09/19 15:00:01 todd Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -109,7 +109,9 @@ int	vflag;
 int	tflag;
 int	Eflag;
 int	Oflag;
-int	kflag;	/* generate PIC code */
+int	kflag;	/* generate PIC/pic code */
+#define F_PIC	1
+#define F_pic	2
 int	Mflag;	/* dependencies only */
 int	pgflag;
 int	exfail;
@@ -175,7 +177,9 @@ main(int argc, char *argv[])
 
 		case 'f': /* GCC compatibility flags */
 			if (strcmp(argv[i], "-fPIC") == 0)
-				kflag++;
+				kflag = F_PIC;
+			if (strcmp(argv[i], "-fpic") == 0)
+				kflag = F_pic;
 			/* silently ignore the rest */
 			break;
 
@@ -195,7 +199,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'k': /* generate PIC code */
-			kflag++;
+			kflag = F_pic;
 			break;
 
 		case 'n': /* handle -n flags */
@@ -215,8 +219,6 @@ main(int argc, char *argv[])
 				pgflag++;
 			else if (strcmp(argv[i], "-pthread") == 0)
 				pthreads++;
-			else if (strcmp(argv[i], "-pipe") == 0)
-				/* NOTHING YET */;
 			else
 				errorx(1, "unknown option %s", argv[i]);
 			break;
