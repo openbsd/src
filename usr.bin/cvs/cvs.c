@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.136 2007/09/19 12:48:41 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.137 2007/09/19 13:36:32 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -395,9 +395,9 @@ static void
 cvs_read_rcfile(void)
 {
 	char rcpath[MAXPATHLEN], *buf, *lbuf, *lp, *p;
-	int i, linenum;
+	int cmd_parsed, cvs_parsed, i, linenum;
 	size_t len, pos;
-	struct cvs_cmd *cmdp;
+	struct cvs_cmd *cmdp, *tcmdp;
 	FILE *fp;
 
 	linenum = 0;
@@ -416,6 +416,11 @@ cvs_read_rcfile(void)
 		return;
 	}
 
+	cmdp = cvs_findcmd(cvs_command);
+	if (cmdp == NULL)
+		fatal("unknown command `%s'", cvs_command);
+
+	cmd_parsed = cvs_parsed = 0;
 	lbuf = NULL;
 	while ((buf = fgetln(fp, &len)) != NULL) {
 		if (buf[len - 1] == '\n') {
@@ -452,7 +457,7 @@ cvs_read_rcfile(void)
 			*lp = '\0';
 		}
 
-		if (strcmp(p, "cvs") == 0) {
+		if (strcmp(p, "cvs") == 0 && !cvs_parsed) {
 			/*
 			 * Global default options.  In the case of cvs only,
 			 * we keep the 'cvs' string as first argument because
@@ -461,18 +466,20 @@ cvs_read_rcfile(void)
 			 */
 			*lp = ' ';
 			cvs_defargs = xstrdup(p);
+			cvs_parsed = 1;
 		} else {
 			lp++;
-			cmdp = cvs_findcmd(p);
-			if (cmdp == NULL) {
-				if (verbosity == 2)
-					cvs_log(LP_NOTICE,
-					    "unknown command `%s' in `%s:%d'",
-					    p, rcpath, linenum);
+			tcmdp = cvs_findcmd(p);
+			if (tcmdp == NULL && verbosity == 2)
+				cvs_log(LP_NOTICE,
+				    "unknown command `%s' in `%s:%d'",
+				    p, rcpath, linenum);
+
+			if (tcmdp != cmdp || cmd_parsed)
 				continue;
-			}
 
 			cmdp->cmd_defargs = xstrdup(lp);
+			cmd_parsed = 1;
 		}
 	}
 	if (lbuf != NULL)
