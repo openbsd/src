@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.23 2007/09/19 06:28:38 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.24 2007/09/19 06:44:57 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -755,55 +755,54 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	switch(cmd) {
-		case SIOCSIFADDR:
-			DODEBUG(Start_End, printf("SIOCSIFADDR"););
-			ifp->if_flags |= IFF_UP;
-    
-			switch(ifa->ifa_addr->sa_family) {
+	case SIOCSIFADDR:
+		DODEBUG(Start_End, printf("SIOCSIFADDR"););
+		ifp->if_flags |= IFF_UP;
+
+		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
-				case AF_INET:
-					ex_init(sc);
-					arp_ifinit((struct arpcom *) ifp, ifa);
-					break;
+			case AF_INET:
+				ex_init(sc);
+				arp_ifinit((struct arpcom *) ifp, ifa);
+				break;
 #endif
-    default:
-      ex_init(sc);
-      break;
-    }
-    break;
-  case SIOCSIFFLAGS:
-    DODEBUG(Start_End, printf("SIOCSIFFLAGS"););
-    if ((ifp->if_flags & IFF_UP) == 0 && ifp->if_flags & IFF_RUNNING) {
-      ifp->if_flags &= ~IFF_RUNNING;
-      ex_stop(sc);
-    }
-    else
-      ex_init(sc);
-    break;
-  case SIOCSIFMTU:
-    DODEBUG(Start_End, printf("SIOCSIFMTU"););
-    if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
-      error = EINVAL;
-    } else if (ifp->if_mtu != ifr->ifr_mtu) {
-      ifp->if_mtu = ifr->ifr_mtu;
-    }
-    break;
-  case SIOCADDMULTI:
-    DODEBUG(Start_End, printf("SIOCADDMULTI"););
-  case SIOCDELMULTI:
-    DODEBUG(Start_End, printf("SIOCDELMULTI"););
-    /* XXX Support not done yet. */
-    error = EINVAL;
-    break;
-  default:
-    DODEBUG(Start_End, printf("unknown"););
-    error = ENOTTY;
-  }
+			default:
+				ex_init(sc);
+				break;
+		}
+		break;
+	case SIOCSIFFLAGS:
+		DODEBUG(Start_End, printf("SIOCSIFFLAGS"););
+		if ((ifp->if_flags & IFF_UP) == 0 && ifp->if_flags & IFF_RUNNING) {
+			ifp->if_flags &= ~IFF_RUNNING;
+			ex_stop(sc);
+		} else
+			ex_init(sc);
+		break;
+	case SIOCSIFMTU:
+		DODEBUG(Start_End, printf("SIOCSIFMTU"););
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		else if (ifp->if_mtu != ifr->ifr_mtu)
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
+	case SIOCADDMULTI:
+		DODEBUG(Start_End, printf("SIOCADDMULTI"););
+	case SIOCDELMULTI:
+		DODEBUG(Start_End, printf("SIOCDELMULTI"););
+		/* XXX Support not done yet. */
+		error = EINVAL;
+		break;
+	default:
+		DODEBUG(Start_End, printf("unknown"););
+		error = ENOTTY;
+		break;
+	}
 
-  splx(s);
+	splx(s);
 
-  DODEBUG(Start_End, printf("\nex_ioctl: finish\n"););
-  return(error);
+	DODEBUG(Start_End, printf("\nex_ioctl: finish\n"););
+	return(error);
 }
 
 void 
