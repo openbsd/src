@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.135 2007/09/19 12:26:16 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.136 2007/09/19 12:48:41 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -465,9 +465,10 @@ cvs_read_rcfile(void)
 			lp++;
 			cmdp = cvs_findcmd(p);
 			if (cmdp == NULL) {
-				cvs_log(LP_NOTICE,
-				    "unknown command `%s' in `%s:%d'",
-				    p, rcpath, linenum);
+				if (verbosity == 2)
+					cvs_log(LP_NOTICE,
+					    "unknown command `%s' in `%s:%d'",
+					    p, rcpath, linenum);
 				continue;
 			}
 
