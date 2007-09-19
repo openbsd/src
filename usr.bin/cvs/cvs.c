@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.134 2007/09/19 12:14:21 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.135 2007/09/19 12:26:16 tobias Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -396,7 +396,7 @@ cvs_read_rcfile(void)
 {
 	char rcpath[MAXPATHLEN], *buf, *lbuf, *lp, *p;
 	int i, linenum;
-	size_t len;
+	size_t len, pos;
 	struct cvs_cmd *cmdp;
 	FILE *fp;
 
@@ -443,10 +443,15 @@ cvs_read_rcfile(void)
 		if (*p == '#' || *p == '\t')
 			continue;
 
-		lp = strchr(p, ' ');
-		if (lp == NULL)
-			continue;	/* ignore lines with no arguments */
-		*lp = '\0';
+		pos = strcspn(p, " \t");
+		if (pos == strlen(p)) {
+			/* ignore lines with no arguments */
+			continue;
+		} else {
+			lp = p + pos;
+			*lp = '\0';
+		}
+
 		if (strcmp(p, "cvs") == 0) {
 			/*
 			 * Global default options.  In the case of cvs only,
