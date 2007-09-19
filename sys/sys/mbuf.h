@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.92 2007/07/20 09:59:19 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.93 2007/09/19 18:19:10 blambert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -32,9 +32,7 @@
  *	@(#)mbuf.h	8.5 (Berkeley) 2/19/95
  */
 
-#ifndef _SYS_MALLOC_H_
 #include <sys/malloc.h>
-#endif
 #include <sys/pool.h>
 #include <sys/queue.h>
 
@@ -197,10 +195,10 @@ struct mbuf {
  * prevents a section of code from from being interrupted by network
  * drivers.
  */
-#define	MBUFLOCK(code) do {\
-	int ms = splvm(); \
-	  { code } \
-	  splx(ms); \
+#define	MBUFLOCK(code) do {						\
+	int ms = splvm();						\
+	{ code }							\
+	splx(ms);							\
 } while(/* CONSTCOND */ 0)
 
 /*
@@ -236,14 +234,15 @@ struct mbuf {
 #define MCLREFDEBUGO(m, file, line)
 #endif
 
-#define	MCLBUFREF(p)
 #define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
+
 #define	_MCLDEREFERENCE(m)	do {					\
 		(m)->m_ext.ext_nextref->m_ext.ext_prevref =		\
 			(m)->m_ext.ext_prevref;				\
 		(m)->m_ext.ext_prevref->m_ext.ext_nextref =		\
 			(m)->m_ext.ext_nextref;				\
 	} while (/* CONSTCOND */ 0)
+
 #define	_MCLADDREFERENCE(o, n)	do {					\
 		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
 		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
@@ -252,6 +251,7 @@ struct mbuf {
 		(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);	\
 		MCLREFDEBUGN((n), __FILE__, __LINE__);			\
 	} while (/* CONSTCOND */ 0)
+
 #define	MCLINITREFERENCE(m)	do {					\
 		(m)->m_ext.ext_prevref = (m);				\
 		(m)->m_ext.ext_nextref = (m);				\
@@ -264,40 +264,42 @@ struct mbuf {
 /*
  * Macros for mbuf external storage.
  *
- * MCLGET allocates and adds an mbuf cluster to a normal mbuf;
- * the flag M_EXT is set upon success.
- *
  * MEXTMALLOC allocates external storage and adds it to
  * a normal mbuf; the flag M_EXT is set upon success.
  *
  * MEXTADD adds pre-allocated external storage to
- * a normal mbuf; the flag M_EXT is set upon success.
+ * a normal mbuf; the flag M_EXT is set.
+ *
+ * MCLGET allocates and adds an mbuf cluster to a normal mbuf;
+ * the flag M_EXT is set upon success.
  */
-#define	MEXTMALLOC(m, size, how) do { \
-	(m)->m_ext.ext_buf = \
-	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how)); \
-	if ((m)->m_ext.ext_buf != NULL) { \
-		(m)->m_data = (m)->m_ext.ext_buf; \
-		(m)->m_flags |= M_EXT; \
-		(m)->m_flags &= ~M_CLUSTER; \
-		(m)->m_ext.ext_size = (size); \
-		(m)->m_ext.ext_free = NULL; \
-		(m)->m_ext.ext_arg = NULL; \
-		(m)->m_ext.ext_type = mbtypes[(m)->m_type]; \
-		MCLINITREFERENCE(m); \
-	} \
+#define	MEXTMALLOC(m, size, how) do {					\
+	(m)->m_ext.ext_buf =						\
+	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how));	\
+	if ((m)->m_ext.ext_buf != NULL) {				\
+		(m)->m_data = (m)->m_ext.ext_buf;			\
+		(m)->m_flags |= M_EXT;					\
+		(m)->m_flags &= ~M_CLUSTER;				\
+		(m)->m_ext.ext_size = (size);				\
+		(m)->m_ext.ext_free = NULL;				\
+		(m)->m_ext.ext_arg = NULL;				\
+		(m)->m_ext.ext_type = mbtypes[(m)->m_type];		\
+		MCLINITREFERENCE(m);					\
+	}								\
 } while (/* CONSTCOND */ 0)
 
-#define	MEXTADD(m, buf, size, type, free, arg) do { \
-	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf); \
-	(m)->m_flags |= M_EXT; \
-	(m)->m_flags &= ~M_CLUSTER; \
-	(m)->m_ext.ext_size = (size); \
-	(m)->m_ext.ext_free = (free); \
-	(m)->m_ext.ext_arg = (arg); \
-	(m)->m_ext.ext_type = (type); \
-	MCLINITREFERENCE(m); \
+#define	MEXTADD(m, buf, size, type, free, arg) do {			\
+	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
+	(m)->m_flags |= M_EXT;						\
+	(m)->m_flags &= ~M_CLUSTER;					\
+	(m)->m_ext.ext_size = (size);					\
+	(m)->m_ext.ext_free = (free);					\
+	(m)->m_ext.ext_arg = (arg);					\
+	(m)->m_ext.ext_type = (type);					\
+	MCLINITREFERENCE(m);						\
 } while (/* CONSTCOND */ 0)
+
+#define MCLGET(m, how) m_clget((m), (how))
 
 /*
  * Reset the data pointer on an mbuf.
@@ -312,8 +314,6 @@ do {									\
 		(m)->m_data = (m)->m_dat;				\
 } while (/* CONSTCOND */ 0)
 
-#define MCLGET(m, how) m_clget(m, how)
-
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
  * Free a single mbuf and associated external storage.
@@ -325,39 +325,39 @@ do {									\
  * Move just m_pkthdr from from to to,
  * remove M_PKTHDR and clean the tag for from.
  */
-#define M_MOVE_HDR(to, from) { \
-	(to)->m_pkthdr = (from)->m_pkthdr; \
-	(from)->m_flags &= ~M_PKTHDR; \
-	SLIST_INIT(&(from)->m_pkthdr.tags); \
+#define M_MOVE_HDR(to, from) {						\
+	(to)->m_pkthdr = (from)->m_pkthdr;				\
+	(from)->m_flags &= ~M_PKTHDR;					\
+	SLIST_INIT(&(from)->m_pkthdr.tags);				\
 }
 
 /*
  * Duplicate just m_pkthdr from from to to.
  */
-#define M_DUP_HDR(to, from) { \
-	(to)->m_pkthdr = (from)->m_pkthdr; \
-	SLIST_INIT(&(to)->m_pkthdr.tags); \
-	m_tag_copy_chain((to), (from)); \
+#define M_DUP_HDR(to, from) {						\
+	(to)->m_pkthdr = (from)->m_pkthdr;				\
+	SLIST_INIT(&(to)->m_pkthdr.tags);				\
+	m_tag_copy_chain((to), (from));					\
 }
 
 /*
  * Duplicate mbuf pkthdr from from to to.
  * from must have M_PKTHDR set, and to must be empty.
  */
-#define M_DUP_PKTHDR(to, from) { \
-	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
-	M_DUP_HDR((to), (from)); \
-	(to)->m_data = (to)->m_pktdat; \
+#define M_DUP_PKTHDR(to, from) {					\
+	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
+	M_DUP_HDR((to), (from));					\
+	(to)->m_data = (to)->m_pktdat;					\
 }
 
 /*
  * MOVE mbuf pkthdr from from to to.
  * from must have M_PKTHDR set, and to must be empty.
  */
-#define	M_MOVE_PKTHDR(to, from) { \
-	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
-	M_MOVE_HDR((to), (from)); \
-	(to)->m_data = (to)->m_pktdat; \
+#define	M_MOVE_PKTHDR(to, from) {					\
+	(to)->m_flags = (from)->m_flags & M_COPYFLAGS;			\
+	M_MOVE_HDR((to), (from));					\
+	(to)->m_data = (to)->m_pktdat;					\
 }
 
 /*
@@ -378,17 +378,17 @@ do {									\
  * non-cluster external storage and for clusters that are being
  * referenced by more than one mbuf.
  */
-#define	M_READONLY(m) \
-	(((m)->m_flags & M_EXT) != 0 &&	\
+#define	M_READONLY(m)							\
+	(((m)->m_flags & M_EXT) != 0 &&					\
 	  (((m)->m_flags & M_CLUSTER) == 0 || MCLISREFERENCED(m)))
 
 /*
  * Compute the amount of space available
  * before the current start of data in an mbuf.
  */
-#define	_M_LEADINGSPACE(m) \
-	((m)->m_flags & M_EXT ? (m)->m_data - (m)->m_ext.ext_buf : \
-	 (m)->m_flags & M_PKTHDR ? (m)->m_data - (m)->m_pktdat : \
+#define	_M_LEADINGSPACE(m)						\
+	((m)->m_flags & M_EXT ? (m)->m_data - (m)->m_ext.ext_buf :	\
+	 (m)->m_flags & M_PKTHDR ? (m)->m_data - (m)->m_pktdat :	\
 	 (m)->m_data - (m)->m_dat)
 
 #define	M_LEADINGSPACE(m)	\
@@ -398,9 +398,9 @@ do {									\
  * Compute the amount of space available
  * after the end of data in an mbuf.
  */
-#define	_M_TRAILINGSPACE(m) \
-	((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf + (m)->m_ext.ext_size - \
-	    ((m)->m_data + (m)->m_len) : \
+#define	_M_TRAILINGSPACE(m)						\
+	((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf +			\
+	    (m)->m_ext.ext_size - ((m)->m_data + (m)->m_len) :		\
 	    &(m)->m_dat[MLEN] - ((m)->m_data + (m)->m_len))
 
 #define	M_TRAILINGSPACE(m)	\
@@ -412,20 +412,23 @@ do {									\
  * If how is M_DONTWAIT and allocation fails, the original mbuf chain
  * is freed and m is set to NULL.
  */
-#define	M_PREPEND(m, plen, how) { \
-	if (M_LEADINGSPACE(m) >= (plen)) { \
-		(m)->m_data -= (plen); \
-		(m)->m_len += (plen); \
-	} else \
-		(m) = m_prepend((m), (plen), (how)); \
-	if ((m) && (m)->m_flags & M_PKTHDR) \
-		(m)->m_pkthdr.len += (plen); \
+#define	M_PREPEND(m, plen, how) {					\
+	if (M_LEADINGSPACE(m) >= (plen)) {				\
+		(m)->m_data -= (plen);					\
+		(m)->m_len += (plen);					\
+	} else								\
+		(m) = m_prepend((m), (plen), (how));			\
+	if ((m) && (m)->m_flags & M_PKTHDR)				\
+		(m)->m_pkthdr.len += (plen);				\
 }
 
 /* change mbuf to new type */
-#define MCHTYPE(m, t) { \
-	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;); \
-	(m)->m_type = t;\
+#define MCHTYPE(m, t) {							\
+	MBUFLOCK(							\
+		mbstat.m_mtypes[(m)->m_type]--;				\
+		mbstat.m_mtypes[t]++;					\
+	);								\
+	(m)->m_type = t;						\
 }
 
 /* length to m_copy to copy all */
@@ -460,8 +463,6 @@ extern	int max_protohdr;		/* largest protocol header */
 extern	int max_hdr;			/* largest link+protocol header */
 extern	int max_datalen;		/* MHLEN - max_hdr */
 extern	int mbtypes[];			/* XXX */
-extern struct pool mbpool;
-extern struct pool mclpool;
 
 void	mbinit(void);
 struct	mbuf *m_copym2(struct mbuf *, int, int, int);
@@ -479,7 +480,6 @@ struct  mbuf *m_inject(struct mbuf *, int, int, int);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);
 void	m_clget(struct mbuf *, int);
 void	m_adj(struct mbuf *, int);
-int	m_clalloc(int, int);
 void	m_copyback(struct mbuf *, int, int, const void *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
