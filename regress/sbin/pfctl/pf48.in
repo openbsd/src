@@ -1,5 +1,5 @@
 table < regress > { 1.2.3.4 !5.6.7.8 10/8 lo0 }
-table <regress.1> const { ::1 fe80::/64 localhost }
+table <regress.1> const { ::1 fe80::/64 }
 table <regress.a> { 1.2.3.4 !5.6.7.8 } { ::1 ::2 ::3 } file "/dev/null" const { 4.3.2.1 }
 scrub in from { <regress.1> !<regress.2> } to any
 scrub out from any to { !<regress.1>, <regress.2> }
