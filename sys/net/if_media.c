@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.17 2007/09/17 17:34:22 brad Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.18 2007/09/19 08:45:54 brad Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -202,9 +202,8 @@ ifmedia_set(struct ifmedia *ifm, int target)
 		if (match == NULL) {
 			ifmedia_add(ifm, target, 0, NULL);
 			match = ifmedia_match(ifm, target, ifm->ifm_mask);
-			if (match == NULL) {
+			if (match == NULL)
 				panic("ifmedia_set failed");
-			}
 		}
 	}
 	ifm->ifm_cur = match;
@@ -248,8 +247,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		if (match == NULL) {
 #ifdef IFMEDIA_DEBUG
 			if (ifmedia_debug) {
-				printf(
-				    "ifmedia_ioctl: no media found for 0x%x\n", 
+				printf("ifmedia_ioctl: no media found for 0x%x\n",
 				    newmedia);
 			}
 #endif
@@ -265,7 +263,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		if ((IFM_SUBTYPE(newmedia) != IFM_AUTO) &&
 		    (newmedia == ifm->ifm_media) &&
 		    (match == ifm->ifm_cur))
-			return 0;
+			return (0);
 
 		/*
 		 * We found a match, now make the driver switch to it.
@@ -319,8 +317,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		if (ifmr->ifm_count != 0) {
 			size_t count;
 			size_t minwords = nwords > (size_t)ifmr->ifm_count 
-			    ? (size_t)ifmr->ifm_count
-			    : nwords;
+			    ? (size_t)ifmr->ifm_count : nwords;
 			int *kptr = (int *)malloc(minwords * sizeof(int),
  			    M_TEMP, M_WAITOK);
 			/*
@@ -374,7 +371,7 @@ ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
 		}
 	}
 
-	return match;
+	return (match);
 }
 
 /*
