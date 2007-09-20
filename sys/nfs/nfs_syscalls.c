@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.55 2007/06/25 20:40:00 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.56 2007/09/20 12:54:31 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -253,9 +253,8 @@ nfssvc_addsock(fp, mynam)
 	if (tslp)
 		slp = tslp;
 	else {
-		slp = (struct nfssvc_sock *)
-			malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-		bzero((caddr_t)slp, sizeof (struct nfssvc_sock));
+		slp = malloc(sizeof(struct nfssvc_sock), M_NFSSVC,
+		    M_WAITOK|M_ZERO);
 		TAILQ_INIT(&slp->ns_uidlruhead);
 		TAILQ_INSERT_TAIL(&nfssvc_sockhead, slp, ns_chain);
 	}
@@ -299,10 +298,9 @@ nfssvc_nfsd(nsd, argp, p)
 	writes_todo = 0;
 #endif
 	s = splsoftnet();
-	if (nfsd == (struct nfsd *)0) {
-		nsd->nsd_nfsd = nfsd = (struct nfsd *)
-			malloc(sizeof (struct nfsd), M_NFSD, M_WAITOK);
-		bzero((caddr_t)nfsd, sizeof (struct nfsd));
+	if (nfsd == NULL) {
+		nsd->nsd_nfsd = nfsd = malloc(sizeof(struct nfsd), M_NFSD,
+		    M_WAITOK|M_ZERO);
 		nfsd->nfsd_procp = p;
 		TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
 		nfs_numnfsd++;
@@ -504,7 +502,7 @@ nfssvc_nfsd(nsd, argp, p)
 			break;
 		    };
 		    if (nd) {
-			FREE((caddr_t)nd, M_NFSRVDESC);
+		    	free(nd, M_NFSRVDESC);
 			nd = NULL;
 		    }
 
@@ -642,9 +640,8 @@ nfsrv_init(terminating)
 	TAILQ_INIT(&nfsd_head);
 	nfsd_head_flag &= ~NFSD_CHECKSLP;
 
-	nfs_udpsock = (struct nfssvc_sock *)
-	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-	bzero((caddr_t)nfs_udpsock, sizeof (struct nfssvc_sock));
+	nfs_udpsock =  malloc(sizeof(struct nfssvc_sock), M_NFSSVC,
+	    M_WAITOK|M_ZERO);
 	TAILQ_INIT(&nfs_udpsock->ns_uidlruhead);
 	TAILQ_INSERT_HEAD(&nfssvc_sockhead, nfs_udpsock, ns_chain);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.61 2007/04/19 14:46:44 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.62 2007/09/20 12:54:31 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/time.h>
 

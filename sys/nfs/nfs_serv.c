@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.41 2007/09/11 13:41:52 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.42 2007/09/20 12:54:31 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -618,8 +618,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 				m2 = m;
 			}
 		}
-		MALLOC(iv, struct iovec *, i * sizeof (struct iovec),
-		       M_TEMP, M_WAITOK);
+		iv = malloc(i * sizeof(struct iovec), M_TEMP, M_WAITOK);
 		uiop->uio_iov = iv2 = iv;
 		m = mb;
 		left = len;
@@ -645,7 +644,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		uiop->uio_segflg = UIO_SYSSPACE;
 		error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
 		off = uiop->uio_offset;
-		FREE((caddr_t)iv2, M_TEMP);
+		free(iv2, M_TEMP);
 		if (error || (getret = VOP_GETATTR(vp, &va, cred, procp)) != 0){
 			if (!error)
 				error = getret;
@@ -793,8 +792,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	}
 
 	if (len > 0) {
-	    MALLOC(ivp, struct iovec *, cnt * sizeof (struct iovec), M_TEMP,
-		M_WAITOK);
+	    ivp = malloc(cnt * sizeof(struct iovec), M_TEMP, M_WAITOK);
 	    uiop->uio_iov = iv = ivp;
 	    uiop->uio_iovcnt = cnt;
 	    mp = mrep;
@@ -827,7 +825,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	    uiop->uio_offset = off;
 	    error = VOP_WRITE(vp, uiop, ioflags, cred);
 	    nfsstats.srvvop_writes++;
-	    FREE((caddr_t)iv, M_TEMP);
+	    free(iv, M_TEMP);
 	}
 	aftat_ret = VOP_GETATTR(vp, &va, cred, procp);
 	vput(vp);
@@ -1074,8 +1072,7 @@ loop1:
 			mp = mp->m_next;
 		    }
 		    uiop->uio_iovcnt = i;
-		    MALLOC(iov, struct iovec *, i * sizeof (struct iovec), 
-			M_TEMP, M_WAITOK);
+		    iov = malloc(i * sizeof(struct iovec), M_TEMP, M_WAITOK);
 		    uiop->uio_iov = ivp = iov;
 		    mp = mrep;
 		    while (mp) {
@@ -1090,7 +1087,7 @@ loop1:
 			error = VOP_WRITE(vp, uiop, ioflags, cred);
 			nfsstats.srvvop_writes++;
 		    }
-		    FREE((caddr_t)iov, M_TEMP);
+		    free(iov, M_TEMP);
 		}
 		m_freem(mrep);
 		if (vp) {
@@ -2031,7 +2028,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	if (v3)
 		nfsm_srvsattr(&va);
 	nfsm_strsiz(len2, NFS_MAXPATHLEN);
-	MALLOC(pathcp, caddr_t, len2 + 1, M_TEMP, M_WAITOK);
+	pathcp = malloc(len2 + 1, M_TEMP, M_WAITOK);
 	iv.iov_base = pathcp;
 	iv.iov_len = len2;
 	io.uio_resid = len2;
@@ -2085,7 +2082,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	}
 out:
 	if (pathcp)
-		FREE(pathcp, M_TEMP);
+		free(pathcp, M_TEMP);
 	if (dirp) {
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, procp);
 		vrele(dirp);
@@ -2114,7 +2111,7 @@ nfsmout:
 	if (nd.ni_vp)
 		vrele(nd.ni_vp);
 	if (pathcp)
-		FREE(pathcp, M_TEMP);
+		free(pathcp, M_TEMP);
 	return (error);
 }
 
@@ -2442,7 +2439,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		return (0);
 	}
 	VOP_UNLOCK(vp, 0, procp);
-	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
+	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2502,8 +2499,8 @@ again:
 				nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			FREE((caddr_t)rbuf, M_TEMP);
-			FREE((caddr_t)cookies, M_TEMP);
+			free(rbuf, M_TEMP);
+			free(cookies, M_TEMP);
 			return (0);
 		}
 	}
@@ -2620,8 +2617,8 @@ again:
 			mp->m_len = bp - mtod(mp, caddr_t);
 	} else
 		mp->m_len += bp - bpos;
-	FREE((caddr_t)rbuf, M_TEMP);
-	FREE((caddr_t)cookies, M_TEMP);
+	free(rbuf, M_TEMP);
+	free(cookies, M_TEMP);
 nfsmout:
 	return(error);
 }
@@ -2702,7 +2699,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	}
 	VOP_UNLOCK(vp, 0, procp);
 
-	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
+	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2758,8 +2755,8 @@ again:
 			tl += 2;
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			FREE((caddr_t)cookies, M_TEMP);
-			FREE((caddr_t)rbuf, M_TEMP);
+			free(cookies, M_TEMP);
+			free(rbuf, M_TEMP);
 			return (0);
 		}
 	}
@@ -2939,8 +2936,8 @@ invalid:
 			mp->m_len = bp - mtod(mp, caddr_t);
 	} else
 		mp->m_len += bp - bpos;
-	FREE((caddr_t)cookies, M_TEMP);
-	FREE((caddr_t)rbuf, M_TEMP);
+	free(cookies, M_TEMP);
+	free(rbuf, M_TEMP);
 nfsmout:
 	return(error);
 }

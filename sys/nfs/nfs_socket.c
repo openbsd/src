@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.49 2007/06/25 20:40:00 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.50 2007/09/20 12:54:31 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -2070,8 +2070,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 		nam->m_next = NULL;
 	} else
 		nam = NULL;
-	MALLOC(nd, struct nfsrv_descript *, sizeof (struct nfsrv_descript),
-		M_NFSRVDESC, M_WAITOK);
+	nd = malloc(sizeof(struct nfsrv_descript), M_NFSRVDESC, M_WAITOK);
 	nfs_realign(&m, 10 * NFSX_UNSIGNED);
 	nd->nd_md = nd->nd_mrep = m;
 	nd->nd_nam2 = nam;
@@ -2079,7 +2078,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 	error = nfs_getreq(nd, nfsd, TRUE);
 	if (error) {
 		m_freem(nam);
-		free((caddr_t)nd, M_NFSRVDESC);
+		free(nd, M_NFSRVDESC);
 		return (error);
 	}
 	*ndp = nd;

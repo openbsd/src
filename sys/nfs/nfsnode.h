@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.26 2007/06/21 22:59:49 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.27 2007/09/20 12:54:31 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ struct nfsdmap {
  * An nfsnode is 'named' by its file handle. (nget/nfs_node.c)
  * If this structure exceeds 256 bytes (it is currently 256 using 4.4BSD-Lite
  * type definitions), file handles of > 32 bytes should probably be split out
- * into a separate MALLOC()'d data structure. (Reduce the size of nfsfh_t by
+ * into a separate malloc()'d data structure. (Reduce the size of nfsfh_t by
  * changing the definition in sys/mount.h of NFS_SMALLFH.)
  * NB: Hopefully the current order of the fields is such that everything will
  *     be well aligned and, therefore, tightly packed.

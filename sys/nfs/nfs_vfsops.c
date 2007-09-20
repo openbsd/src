@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.67 2007/09/11 13:41:52 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.68 2007/09/20 12:54:31 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -673,9 +673,8 @@ mountnfs(argp, mp, nam, pth, hst)
 		m_freem(nam);
 		return (0);
 	} else {
-		MALLOC(nmp, struct nfsmount *, sizeof (struct nfsmount),
-		    M_NFSMNT, M_WAITOK);
-		bzero((caddr_t)nmp, sizeof (struct nfsmount));
+		nmp = malloc(sizeof(struct nfsmount), M_NFSMNT,
+		    M_WAITOK|M_ZERO);
 		mp->mnt_data = (qaddr_t)nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 	}

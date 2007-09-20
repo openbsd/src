@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.76 2007/09/11 13:41:52 blambert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.77 2007/09/20 12:54:31 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1889,8 +1889,8 @@ nfs_readdir(v)
 	if (ap->a_cookies) {
 		ncookies = uio->uio_resid / 20;
 
-		MALLOC(cookies, u_long *, sizeof(*cookies) * ncookies,
-		       M_TEMP, M_WAITOK);
+		cookies = malloc(sizeof(*cookies) * ncookies, M_TEMP,
+		    M_WAITOK);
 		*ap->a_ncookies = ncookies;
 		*ap->a_cookies = cookies;
 	}
@@ -1900,9 +1900,7 @@ nfs_readdir(v)
 
 	cnt = 5;
 
-	MALLOC(data, void *, NFS_DIRBLKSIZ, M_TEMP, 
-	    M_WAITOK);
-
+	data = malloc(NFS_DIRBLKSIZ, M_TEMP, M_WAITOK);
 	do {
 		struct nfs_dirent *ndp = data;
 
@@ -1957,13 +1955,13 @@ nfs_readdir(v)
 			ndp = (struct nfs_dirent *)((u_int8_t *)ndp + reclen);
 		}
 	} while (!error && !done && !eof && cnt--);
-	
-	FREE(data, M_TEMP);
+
+	free(data, M_TEMP);
 	data = NULL;
 	
 	if (ap->a_cookies) {
 		if (error) {
-			FREE(*ap->a_cookies, M_TEMP); 
+			free(*ap->a_cookies, M_TEMP);
 			*ap->a_cookies = NULL;
 			*ap->a_ncookies = 0;
 		} else {
@@ -2415,8 +2413,7 @@ nfs_sillyrename(dvp, vp, cnp)
 
 	cache_purge(dvp);
 	np = VTONFS(vp);
-	MALLOC(sp, struct sillyrename *, sizeof (struct sillyrename),
-		M_NFSREQ, M_WAITOK);
+	sp = malloc(sizeof(struct sillyrename), M_NFSREQ, M_WAITOK);
 	sp->s_cred = crdup(cnp->cn_cred);
 	sp->s_dvp = dvp;
 	VREF(dvp);
@@ -2454,7 +2451,7 @@ nfs_sillyrename(dvp, vp, cnp)
 bad:
 	vrele(sp->s_dvp);
 	crfree(sp->s_cred);
-	FREE((caddr_t)sp, M_NFSREQ);
+	free(sp, M_NFSREQ);
 	return (error);
 }
 
