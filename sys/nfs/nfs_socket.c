@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.50 2007/09/20 12:54:31 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.51 2007/09/20 15:30:41 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/syslog.h>
 #include <sys/tprintf.h>
 #include <sys/namei.h>
+#include <sys/pool.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
