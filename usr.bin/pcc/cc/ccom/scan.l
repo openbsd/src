@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
+/*	$OpenBSD: scan.l,v 1.4 2007/09/20 13:39:39 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -73,6 +73,8 @@ void yyset_out (FILE *  out_str );
 int yyget_debug  (void);
 void yyset_debug (int  bdebug );
 int yylex_destroy  (void);
+extern int yyget_lineno (void);
+extern void yyset_lineno (int);
 #endif
 
 %}

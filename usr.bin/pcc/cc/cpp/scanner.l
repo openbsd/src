@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.4 2007/09/17 18:29:20 otto Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.5 2007/09/20 13:39:39 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -54,6 +54,9 @@ static void elifstmt(void);
 static void storepb(void);
 void  include(void);
 void  define(void);
+
+extern int yyget_lineno (void);
+extern void yyset_lineno (int);
 
 static int inch(void);
 
