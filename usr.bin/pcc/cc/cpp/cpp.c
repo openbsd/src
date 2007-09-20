@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.6 2007/09/18 07:16:01 otto Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.7 2007/09/20 19:34:40 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -448,7 +448,7 @@ include()
 	struct incs *w;
 	struct symtab *nl;
 	usch *osp;
-	usch *fn;
+	usch *fn, *safefn;
 	int i, c, it;
 
 	if (flslvl)
@@ -482,6 +482,7 @@ again:
 		if (c != '\n')
 			goto bad;
 		it = SYSINC;
+		safefn = fn;
 	} else {
 		usch *nm = stringbuf;
 
@@ -497,6 +498,7 @@ again:
 			else
 				stringbuf++;
 		}
+		safefn = stringbuf;
 		savstr(fn); savch(0);
 		while ((c = yylex()) == WSPACE)
 			;
@@ -505,7 +507,7 @@ again:
 		slow = 0;
 		if (pushfile(nm) == 0)
 			return;
-		stringbuf = nm;
+		/* XXX may loose stringbuf space */
 	}
 
 	/* create search path and try to open file */
@@ -515,13 +517,13 @@ again:
 			usch *nm = stringbuf;
 
 			savstr(w->dir); savch('/');
-			savstr(fn); savch(0);
+			savstr(safefn); savch(0);
 			if (pushfile(nm) == 0)
 				return;
 			stringbuf = nm;
 		}
 	}
-	error("cannot find '%s'", fn);
+	error("cannot find '%s'", safefn);
 	/* error() do not return */
 
 bad:	error("bad include");
