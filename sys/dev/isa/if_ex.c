@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.26 2007/09/19 07:29:04 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.27 2007/09/20 05:48:46 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -129,8 +129,6 @@ struct cfdriver ex_cd = {
 	NULL, "ex", DV_IFNET
 };
 
-#define BANK_SEL(X) bus_space_write_1(sc->sc_iot, sc->sc_ioh, CMD_REG, \
-	(X))
 #define ISA_GET(offset) bus_space_read_1(sc->sc_iot, sc->sc_ioh, (offset))
 #define ISA_PUT(offset, value) bus_space_write_1(sc->sc_iot, sc->sc_ioh, \
  	(offset), (value))	
@@ -226,7 +224,7 @@ ex_probe(struct device *parent, void *match, void *aux)
 		printf("ex: invalid IRQ.\n");
 		return(0);
 	}
-	BANK_SEL(Bank2_Sel);
+	ISA_PUT(CMD_REG, Bank2_Sel);
 	tmp = ISA_GET(REG3);
 	if (tmp & TPE_bit)
 		sc->connector = Conn_TPE;
@@ -237,7 +235,7 @@ ex_probe(struct device *parent, void *match, void *aux)
 	sc->mem_size = CARD_RAM_SIZE;	/* XXX This should be read from the card
 					       itself. */
 
-	BANK_SEL(Bank0_Sel);
+	ISA_PUT(CMD_REG, Bank0_Sel);
 
 	DODEBUG(Start_End, printf("ex_probe: finish\n"););
 	return(1);
@@ -296,7 +294,7 @@ ex_init(struct ex_softc *sc)
 	/*
 	 * Load the ethernet address into the card.
 	 */
-	BANK_SEL(Bank2_Sel);
+	ISA_PUT(CMD_REG, Bank2_Sel);
 	temp_reg = ISA_GET(EEPROM_REG);
 	if (temp_reg & Trnoff_Enable)
 		ISA_PUT(EEPROM_REG, temp_reg & ~Trnoff_Enable);
@@ -313,7 +311,7 @@ ex_init(struct ex_softc *sc)
 	    Disc_Bad_Fr);
 	ISA_PUT(REG2, ISA_GET(REG2) | No_SA_Ins | RX_CRC_InMem);
 	ISA_PUT(REG3, (ISA_GET(REG3) & 0x3f));
-	BANK_SEL(Bank1_Sel);
+	ISA_PUT(CMD_REG, Bank1_Sel);
 	ISA_PUT(INT_NO_REG, (ISA_GET(INT_NO_REG) & 0xf8) | 
 	    irq2eemap[sc->irq_no]);
 
@@ -337,7 +335,7 @@ ex_init(struct ex_softc *sc)
 	 * Enable receive and transmit interrupts, and clear any pending int.
 	 */
 	ISA_PUT(REG1, ISA_GET(REG1) | TriST_INT);
-	BANK_SEL(Bank0_Sel);
+	ISA_PUT(CMD_REG, Bank0_Sel);
 	ISA_PUT(MASK_REG, All_Int & ~(Rx_Int | Tx_Int));
 	ISA_PUT(STATUS_REG, All_Int);
 
@@ -533,9 +531,9 @@ ex_stop(struct ex_softc *sc)
 	 * - Mask and clear all interrupts.
   	 * - Reset the 82595.
 	 */
-	BANK_SEL(Bank1_Sel);
+	ISA_PUT(CMD_REG, Bank1_Sel);
 	ISA_PUT(REG1, ISA_GET(REG1) & ~TriST_INT);
-	BANK_SEL(Bank0_Sel);
+	ISA_PUT(CMD_REG, Bank0_Sel);
 	ISA_PUT(CMD_REG, Rcv_Stop);
 	sc->tx_head = sc->tx_tail = sc->tx_lower_limit;
 	sc->tx_last = 0; /* XXX I think these two lines are not necessary, 
@@ -833,7 +831,7 @@ ex_eeprom_read(struct ex_softc *sc, int location)
 	int read_cmd = location | EE_READ_CMD;
 	short ctrl_val = EECS;
 
-	BANK_SEL(Bank2_Sel);
+	ISA_PUT(CMD_REG, Bank2_Sel);
 	ISA_PUT(EEPROM_REG, EECS);
 	for (i = 8; i >= 0; i--) {
 		short outval = (read_cmd & (1 << i)) ? ctrl_val | EEDI : 
@@ -857,6 +855,6 @@ ex_eeprom_read(struct ex_softc *sc, int location)
 	delay(3);
 	ISA_PUT(EEPROM_REG, ctrl_val);
 	delay(2);
-	BANK_SEL(Bank0_Sel);
+	ISA_PUT(CMD_REG, Bank0_Sel);
 	return(data);
 }
