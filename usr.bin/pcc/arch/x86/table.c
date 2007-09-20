@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.2 2007/09/15 22:04:38 ray Exp $	*/
+/*	$OpenBSD: table.c,v 1.3 2007/09/20 19:29:29 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -561,7 +561,7 @@ struct optab table[] = {
 		0,	RLEFT,
 		"	faddp\n", },
 
-{ PLUS,		INAREG,
+{ PLUS,		INAREG|FOREFF,
 	SAREG|SNAME|SOREG,	TWORD|TPOINT,
 	SONE,	TANY,
 		0,	RLEFT,
@@ -573,7 +573,7 @@ struct optab table[] = {
 		NAREG|NASL,	RESC1,
 		"	leal CR(AL),A1\n", },
 
-{ PLUS,		INCH,
+{ PLUS,		INCH|FOREFF,
 	SHCH|SNAME|SOREG,	TCHAR|TUCHAR,
 	SONE,	TANY,
 		0,	RLEFT,
@@ -585,6 +585,17 @@ struct optab table[] = {
 		NAREG|NASL|NASR,	RESC1,
 		"	leal (AL,AR),A1\n", },
 
+{ MINUS,	INAREG|FOREFF,
+	SAREG|SNAME|SOREG,	TWORD|TPOINT,
+	SONE,			TANY,
+		0,	RLEFT,
+		"	decl AL\n", },
+
+{ MINUS,	INCH|FOREFF,
+	SHCH|SNAME|SOREG,	TCHAR|TUCHAR,
+	SONE,	TANY,
+		0,	RLEFT,
+		"	decb AL\n", },
 
 /* address as register offset, negative */
 { MINUS,	INAREG,
