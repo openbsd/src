@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.12 2007/09/05 11:09:08 jsg Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.13 2007/09/20 08:46:16 brad Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -268,7 +268,7 @@ rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	printf(" irq %d\n", csc->sc_intrline);
+	printf(": irq %d\n", csc->sc_intrline);
 	    
 	/*
 	 * Finish off the attach.
