@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.80 2007/06/09 11:16:54 espie Exp $
+# $OpenBSD: Update.pm,v 1.81 2007/09/20 09:01:34 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -133,7 +133,7 @@ sub process_package
 			return;
 		}
 		if (defined $found && $found eq  $l[0] && 
-		    !$plist->uses_old_libs) {
+		    !$plist->uses_old_libs && !$state->{forced}->{installed}) {
 				my $msg = "No need to update $pkgname";
 				$state->progress->message($msg);
 				print "$msg\n" if $state->{beverbose};
