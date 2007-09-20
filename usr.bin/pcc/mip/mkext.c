@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkext.c,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: mkext.c,v 1.3 2007/09/20 13:40:32 otto Exp $	*/
 /*
  * Generate defines for the needed hardops.
  */
@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-int chkop[MAXOP];
+int chkop[DSIZE];
 
 void mktables(void);
 
@@ -144,7 +144,7 @@ main(int argc, char *argv[])
 				rval++;
 			}
 		}
-		if (q->rewrite & (RESC1|RESC2|RESC1) && q->visit & FOREFF)
+		if (q->rewrite & (RESC1|RESC2|RESC3) && q->visit & FOREFF)
 			compl(q, "FOREFF may cause reclaim of wrong class");
 	}
 
