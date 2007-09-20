@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.35 2007/09/11 05:17:47 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.36 2007/09/20 17:41:32 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -100,6 +100,10 @@ int	azalia_alc883_init_dacgroup(codec_t *);
 int	azalia_alc883_mixer_init(codec_t *);
 int	azalia_ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
 int	azalia_ad1981hd_mixer_init(codec_t *);
+int	azalia_ad1984_init_dacgroup(codec_t *);
+int	azalia_ad1984_mixer_init(codec_t *);
+int	azalia_ad1984_set_port(codec_t *, mixer_ctrl_t *);
+int	azalia_ad1984_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_cmi9880_init_dacgroup(codec_t *);
 int	azalia_cmi9880_mixer_init(codec_t *);
 int	azalia_stac9221_init_dacgroup(codec_t *);
@@ -164,6 +168,14 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x11d41983:
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
 		this->name = "Analog Devices AD1983";
+		break;
+	case 0x11d41984:
+		/* http://www.analog.com/en/prod/0,2877,AD1984,00.html */
+		this->name = "Analog Devices AD1984";
+		this->init_dacgroup = azalia_ad1984_init_dacgroup;
+		this->mixer_init = azalia_ad1984_mixer_init;
+		this->get_port = azalia_ad1984_get_port;
+		this->set_port = azalia_ad1984_set_port;
 		break;
 	case 0x434d4980:
 		this->name = "CMedia CMI9880";
@@ -2229,6 +2241,143 @@ azalia_ad1981hd_mixer_init(codec_t *this)
 		azalia_generic_mixer_set(this, 0x09, MI_TARGET_PINDIR, &mc);
 	}
 	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Analog Devices AD1984
+ * ---------------------------------------------------------------- */
+
+int
+azalia_ad1984_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 1,
+		{{2, {0x03, 0x04}}}};
+
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{1, {0x05}},
+		 {1, {0x06}}}};
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+static const mixer_item_t ad1984_mixer_items[] = {
+	{{AZ_CLASS_INPUT, {AudioCinputs}, AUDIO_MIXER_CLASS, AZ_CLASS_INPUT, 0, 0}, 0},
+	{{AZ_CLASS_OUTPUT, {AudioCoutputs}, AUDIO_MIXER_CLASS, AZ_CLASS_OUTPUT, 0, 0}, 0},
+	{{AZ_CLASS_RECORD, {AudioCrecord}, AUDIO_MIXER_CLASS, AZ_CLASS_RECORD, 0, 0}, 0},
+#define AD1984_DAC_HP        0x03
+#define AD1984_DAC_SPEAKER   0x04
+#define AD1984_TARGET_MASTER -1
+#define AD1984_TARGET_MASTER_MUTE -2
+	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  4, 0, .un.v={{""}, 2, MIXER_DELTA(39)}}, 0x03, AD1984_TARGET_MASTER},
+	{{0, {AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 3, ENUM_OFFON}, 0x11, AD1984_TARGET_MASTER_MUTE},
+	{{0, {AudioNheadphone}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(39)}}, 0x03, MI_TARGET_OUTAMP},
+	{{0, {AudioNheadphone"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x11, MI_TARGET_OUTAMP},
+	{{0, {AudioNheadphone".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x11, MI_TARGET_PINBOOST},
+	{{0, {AudioNspeaker}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 2, MIXER_DELTA(39)}}, 0x04, MI_TARGET_OUTAMP},
+	{{0, {AudioNspeaker"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x12, MI_TARGET_OUTAMP},
+	{{0, {AudioNspeaker".boost"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x12, MI_TARGET_PINBOOST},
+	{{0, {AudioNmono}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{""}, 1, MIXER_DELTA(31)}}, 0x13, MI_TARGET_OUTAMP},
+	{{0, {AudioNmono"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x13, MI_TARGET_OUTAMP}
+};
+
+int
+azalia_ad1984_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+
+	this->nmixers = sizeof(ad1984_mixer_items) / sizeof(mixer_item_t);
+	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (this->mixers == NULL) {
+		printf("%s: out of memory in %s\n", XNAME(this), __func__);
+		return ENOMEM;
+	}
+	memcpy(this->mixers, ad1984_mixer_items,
+	    sizeof(mixer_item_t) * this->nmixers);
+	azalia_generic_mixer_fix_indexes(this);
+	azalia_generic_mixer_default(this);
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
+	mc.un.ord = 0;		/* pindir: input */
+	azalia_generic_mixer_set(this, 0x1c, MI_TARGET_PINDIR, &mc); /* mic */
+	mc.un.ord = 1;		/* enable */
+	azalia_generic_mixer_set(this, 0x12, MI_TARGET_EAPD, &mc);
+	azalia_generic_mixer_set(this, 0x13, MI_TARGET_EAPD, &mc);
+
+	mc.un.ord = 0;          /* unmute */
+	azalia_generic_mixer_set(this, 0x07, MI_TARGET_INAMP(0), &mc);
+	azalia_generic_mixer_set(this, 0x07, MI_TARGET_INAMP(1), &mc);
+	azalia_generic_mixer_set(this, 0x0a, MI_TARGET_INAMP(0), &mc);
+	azalia_generic_mixer_set(this, 0x0a, MI_TARGET_INAMP(1), &mc);
+	azalia_generic_mixer_set(this, 0x0b, MI_TARGET_INAMP(0), &mc);
+	azalia_generic_mixer_set(this, 0x0b, MI_TARGET_INAMP(1), &mc);
+	azalia_generic_mixer_set(this, 0x1e, MI_TARGET_INAMP(0), &mc);
+	azalia_generic_mixer_set(this, 0x1e, MI_TARGET_INAMP(1), &mc);
+	azalia_generic_mixer_set(this, 0x24, MI_TARGET_INAMP(0), &mc);
+	azalia_generic_mixer_set(this, 0x24, MI_TARGET_INAMP(1), &mc);
+
+	return 0;
+}
+
+int
+azalia_ad1984_set_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+	int err;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	if (mc->type != m->devinfo.type)
+		return EINVAL;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if (m->target == AD1984_TARGET_MASTER) {
+		err = azalia_generic_mixer_set(this, AD1984_DAC_HP,
+		    MI_TARGET_OUTAMP, mc);
+		err = azalia_generic_mixer_set(this, AD1984_DAC_SPEAKER,
+		    MI_TARGET_OUTAMP, mc);
+		return err;
+	}
+	if (m->target == AD1984_TARGET_MASTER_MUTE) {
+		err = azalia_generic_mixer_set(this, 0x11, MI_TARGET_OUTAMP, mc);
+		err = azalia_generic_mixer_set(this, 0x12, MI_TARGET_OUTAMP, mc);
+		err = azalia_generic_mixer_set(this, 0x13, MI_TARGET_OUTAMP, mc);
+		return err;
+	}
+	return azalia_generic_mixer_set(this, m->nid, m->target, mc);
+}
+
+int
+azalia_ad1984_get_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	mc->type = m->devinfo.type;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if (m->target == AD1984_TARGET_MASTER || 
+	    m->target == AD1984_TARGET_MASTER_MUTE)
+		return azalia_generic_mixer_get(this, m->nid,
+		    MI_TARGET_OUTAMP, mc);
+	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
 }
 
 /* ----------------------------------------------------------------
