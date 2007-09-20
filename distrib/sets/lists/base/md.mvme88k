@@ -2184,6 +2184,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/zlib.ph
+./usr/libdata/perl5/site_perl/mvme88k-openbsd/dev/ic/bwireg.ph
+./usr/libdata/perl5/site_perl/mvme88k-openbsd/dev/ic/bwivar.ph
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/mdec/bootsd
 ./usr/mdec/bootst

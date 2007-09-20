@@ -6007,7 +6007,6 @@
 ./usr/share/man/cat9/simple_lock_try.0
 ./usr/share/man/cat9/simple_unlock.0
 ./usr/share/man/cat9/skpc.0
-./usr/share/man/cat9/sleep.0
 ./usr/share/man/cat9/snprintf.0
 ./usr/share/man/cat9/spl.0
 ./usr/share/man/cat9/spl0.0

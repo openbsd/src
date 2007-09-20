@@ -686,6 +686,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/param.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pcb.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pci_machdep.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pctr.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pic.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pmap.ph
@@ -887,6 +888,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bt485reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bt485var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bt8xx.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bwireg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/bwivar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/cacreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/cacvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/cd1190reg.ph

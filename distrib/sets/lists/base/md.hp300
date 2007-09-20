@@ -574,6 +574,8 @@
 ./usr/libdata/perl5/m68k-openbsd/5.8.8/threads
 ./usr/libdata/perl5/m68k-openbsd/5.8.8/threads.pm
 ./usr/libdata/perl5/m68k-openbsd/5.8.8/threads/shared.pm
+./usr/libdata/perl5/site_perl/hp300-openbsd/dev/ic/bwireg.ph
+./usr/libdata/perl5/site_perl/hp300-openbsd/dev/ic/bwivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd
 ./usr/libdata/perl5/site_perl/m68k-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/a.out.ph

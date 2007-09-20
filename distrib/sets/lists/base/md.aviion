@@ -503,6 +503,8 @@
 ./usr/libdata/perl5/m88k-openbsd/5.8.8/threads
 ./usr/libdata/perl5/m88k-openbsd/5.8.8/threads.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.8/threads/shared.pm
+./usr/libdata/perl5/site_perl/aviion-openbsd/dev/ic/bwireg.ph
+./usr/libdata/perl5/site_perl/aviion-openbsd/dev/ic/bwivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd
 ./usr/libdata/perl5/site_perl/m88k-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/a.out.ph
