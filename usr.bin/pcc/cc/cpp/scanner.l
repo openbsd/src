@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.5 2007/09/20 13:39:39 otto Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.6 2007/09/21 08:15:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -380,9 +380,11 @@ prinit(struct initar *it, struct includ *ic)
 	default:
 		error("prinit");
 	}
-	strcat((char *)ic->buffer, pre);
-	strcat((char *)ic->buffer, it->str);
-	strcat((char *)ic->buffer, post);
+	strlcat((char *)ic->buffer, pre, CPPBUF+1);
+	strlcat((char *)ic->buffer, it->str, CPPBUF+1);
+	if (strlcat((char *)ic->buffer, post, CPPBUF+1) >= CPPBUF+1)
+		error("line exceeds buffer size");
+
 	ic->lineno--;
 	while (*ic->maxread)
 		ic->maxread++;

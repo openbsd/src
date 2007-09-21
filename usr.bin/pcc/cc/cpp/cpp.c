@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.7 2007/09/20 19:34:40 otto Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.8 2007/09/21 08:15:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -427,7 +427,9 @@ line()
 		llen = c;
 	}
 	yytext[strlen(yytext)-1] = 0;
-	strcpy((char *)lbuf, &yytext[1]);
+	if (strlcpy((char *)lbuf, &yytext[1], SBSIZE) >= SBSIZE)
+		error("line exceeded buffer size");
+		
 	ifiles->fname = lbuf;
 	if (yylex() != '\n')
 		goto bad;
@@ -549,6 +551,7 @@ define()
 	int c, i, redef;
 	int mkstr = 0, narg = -1;
 	int ellips = 0;
+	size_t len;
 
 	if (flslvl)
 		return;
@@ -577,8 +580,9 @@ define()
 				break;
 			}
 			if (c == IDENT) {
-				args[narg] = alloca(strlen(yytext)+1);
-				strcpy((char *)args[narg], yytext);
+				len = strlen(yytext);
+				args[narg] = alloca(len+1);
+				strlcpy((char *)args[narg], yytext, len+1);
 				narg++;
 				if ((c = definp()) == ',')
 					continue;
@@ -947,7 +951,7 @@ expmac(struct recur *rp)
 			stksv = NULL;
 			if ((c = yylex()) == WSPACE) {
 				stksv = alloca(yyleng+1);
-				strcpy((char *)stksv, yytext);
+				strlcpy((char *)stksv, yytext, yyleng+1);
 				c = yylex();
 			}
 			/* only valid for expansion if fun macro */
