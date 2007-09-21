@@ -1,4 +1,4 @@
-/*	$OpenBSD: tempnam.c,v 1.15 2007/09/17 15:12:44 moritz Exp $ */
+/*	$OpenBSD: tempnam.c,v 1.16 2007/09/21 12:06:38 moritz Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@ extern char *_mktemp(char *);
 char *
 tempnam(const char *dir, const char *pfx)
 {
-	int sverrno;
+	int sverrno, len;
 	char *f, *name;
 
 	if (!(name = malloc(MAXPATHLEN)))
@@ -54,27 +54,43 @@ tempnam(const char *dir, const char *pfx)
 		pfx = "tmp.";
 
 	if (issetugid() == 0 && (f = getenv("TMPDIR")) && *f != '\0') {
-		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
-		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
+		len = snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
+		    f[strlen(f) - 1] == '/' ? "" : "/", pfx);
+		if (len < 0 || len >= MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			return(NULL);
+		}
 		if ((f = _mktemp(name)))
 			return(f);
 	}
 
 	if (dir != NULL) {
 		f = *dir ? (char *)dir : ".";
-		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
-		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
+		len = snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXXXXX", f,
+		    f[strlen(f) - 1] == '/' ? "" : "/", pfx);
+		if (len < 0 || len >= MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			return(NULL);
+		}
 		if ((f = _mktemp(name)))
 			return(f);
 	}
 
 	f = P_tmpdir;
-	(void)snprintf(name, MAXPATHLEN, "%s%sXXXXXXXXX", f, pfx);
+	len = snprintf(name, MAXPATHLEN, "%s%sXXXXXXXXX", f, pfx);
+	if (len < 0 || len >= MAXPATHLEN) {
+		errno = ENAMETOOLONG;
+		return(NULL);
+	}
 	if ((f = _mktemp(name)))
 		return(f);
 
 	f = _PATH_TMP;
-	(void)snprintf(name, MAXPATHLEN, "%s%sXXXXXXXXX", f, pfx);
+	len = snprintf(name, MAXPATHLEN, "%s%sXXXXXXXXX", f, pfx);
+	if (len < 0 || len >= MAXPATHLEN) {
+		errno = ENAMETOOLONG;
+		return(NULL);
+	}
 	if ((f = _mktemp(name)))
 		return(f);
 
