@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-chall.c,v 1.32 2007/01/03 03:01:40 stevesk Exp $ */
+/* $OpenBSD: auth2-chall.c,v 1.33 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -43,22 +43,10 @@ static int auth2_challenge_start(Authctxt *);
 static int send_userauth_info_request(Authctxt *);
 static void input_userauth_info_response(int, u_int32_t, void *);
 
-#ifdef BSD_AUTH
 extern KbdintDevice bsdauth_device;
-#else
-#ifdef SKEY
-extern KbdintDevice skey_device;
-#endif
-#endif
 
 KbdintDevice *devices[] = {
-#ifdef BSD_AUTH
 	&bsdauth_device,
-#else
-#ifdef SKEY
-	&skey_device,
-#endif
-#endif
 	NULL
 };
 
@@ -319,19 +307,7 @@ input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 void
 privsep_challenge_enable(void)
 {
-#ifdef BSD_AUTH
 	extern KbdintDevice mm_bsdauth_device;
-#else
-#ifdef SKEY
-	extern KbdintDevice mm_skey_device;
-#endif
-#endif
 	/* As long as SSHv1 has devices[0] hard coded this is fine */
-#ifdef BSD_AUTH
 	devices[0] = &mm_bsdauth_device;
-#else
-#ifdef SKEY
-	devices[0] = &mm_skey_device;
-#endif
-#endif
 }

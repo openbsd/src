@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-passwd.c,v 1.42 2007/08/23 02:55:51 djm Exp $ */
+/* $OpenBSD: auth-passwd.c,v 1.43 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -95,7 +95,6 @@ auth_password(Authctxt *authctxt, const char *password)
 	return (sys_auth_passwd(authctxt, password) && ok);
 }
 
-#ifdef BSD_AUTH
 static void
 warn_expiry(Authctxt *authctxt, auth_session_t *as)
 {
@@ -152,26 +151,3 @@ sys_auth_passwd(Authctxt *authctxt, const char *password)
 		return (auth_close(as));
 	}
 }
-#else
-int
-sys_auth_passwd(Authctxt *authctxt, const char *password)
-{
-	struct passwd *pw = authctxt->pw;
-	char *encrypted_password;
-
-	/* Check for users with no password. */
-	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
-		return (1);
-
-	/* Encrypt the candidate password using the proper salt. */
-	encrypted_password = crypt(password,
-	    (pw->pw_passwd[0] && pw->pw_passwd[1]) ?
-	    pw->pw_passwd : "xx");
-
-	/*
-	 * Authentication is accepted if the encrypted passwords
-	 * are identical.
-	 */
-	return (strcmp(encrypted_password, pw->pw_passwd) == 0);
-}
-#endif

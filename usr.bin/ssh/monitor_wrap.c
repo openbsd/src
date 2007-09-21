@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_wrap.c,v 1.58 2007/09/04 03:21:03 djm Exp $ */
+/* $OpenBSD: monitor_wrap.c,v 1.59 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -805,66 +805,6 @@ mm_bsdauth_respond(void *ctx, u_int numresponses, char **responses)
 	return ((authok == 0) ? -1 : 0);
 }
 
-#ifdef SKEY
-int
-mm_skey_query(void *ctx, char **name, char **infotxt,
-   u_int *numprompts, char ***prompts, u_int **echo_on)
-{
-	Buffer m;
-	u_int success;
-	char *challenge;
-
-	debug3("%s: entering", __func__);
-
-	buffer_init(&m);
-	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_SKEYQUERY, &m);
-
-	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_SKEYQUERY,
-	    &m);
-	success = buffer_get_int(&m);
-	if (success == 0) {
-		debug3("%s: no challenge", __func__);
-		buffer_free(&m);
-		return (-1);
-	}
-
-	/* Get the challenge, and format the response */
-	challenge  = buffer_get_string(&m, NULL);
-	buffer_free(&m);
-
-	debug3("%s: received challenge: %s", __func__, challenge);
-
-	mm_chall_setup(name, infotxt, numprompts, prompts, echo_on);
-
-	xasprintf(*prompts, "%s%s", challenge, SKEY_PROMPT);
-	xfree(challenge);
-
-	return (0);
-}
-
-int
-mm_skey_respond(void *ctx, u_int numresponses, char **responses)
-{
-	Buffer m;
-	int authok;
-
-	debug3("%s: entering", __func__);
-	if (numresponses != 1)
-		return (-1);
-
-	buffer_init(&m);
-	buffer_put_cstring(&m, responses[0]);
-	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_SKEYRESPOND, &m);
-
-	mm_request_receive_expect(pmonitor->m_recvfd,
-	    MONITOR_ANS_SKEYRESPOND, &m);
-
-	authok = buffer_get_int(&m);
-	buffer_free(&m);
-
-	return ((authok == 0) ? -1 : 0);
-}
-#endif /* SKEY */
 
 void
 mm_ssh1_session_id(u_char session_id[16])

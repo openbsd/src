@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-bsdauth.c,v 1.10 2006/08/03 03:34:41 deraadt Exp $ */
+/* $OpenBSD: auth-bsdauth.c,v 1.11 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,6 @@
 
 #include <sys/types.h>
 
-#ifdef BSD_AUTH
 #include "xmalloc.h"
 #include "key.h"
 #include "hostfile.h"
@@ -131,4 +130,3 @@ KbdintDevice mm_bsdauth_device = {
 	mm_bsdauth_respond,
 	bsdauth_free_ctx
 };
-#endif

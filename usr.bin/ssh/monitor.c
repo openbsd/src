@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.92 2007/09/04 03:21:03 djm Exp $ */
+/* $OpenBSD: monitor.c,v 1.93 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -41,9 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef SKEY
-#include <skey.h>
-#endif
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -180,14 +177,8 @@ struct mon_table mon_dispatch_proto20[] = {
     {MONITOR_REQ_AUTHSERV, MON_ONCE, mm_answer_authserv},
     {MONITOR_REQ_AUTH2_READ_BANNER, MON_ONCE, mm_answer_auth2_read_banner},
     {MONITOR_REQ_AUTHPASSWORD, MON_AUTH, mm_answer_authpassword},
-#ifdef BSD_AUTH
     {MONITOR_REQ_BSDAUTHQUERY, MON_ISAUTH, mm_answer_bsdauthquery},
     {MONITOR_REQ_BSDAUTHRESPOND, MON_AUTH, mm_answer_bsdauthrespond},
-#endif
-#ifdef SKEY
-    {MONITOR_REQ_SKEYQUERY, MON_ISAUTH, mm_answer_skeyquery},
-    {MONITOR_REQ_SKEYRESPOND, MON_AUTH, mm_answer_skeyrespond},
-#endif
     {MONITOR_REQ_KEYALLOWED, MON_ISAUTH, mm_answer_keyallowed},
     {MONITOR_REQ_KEYVERIFY, MON_AUTH, mm_answer_keyverify},
 #ifdef GSSAPI
@@ -217,14 +208,8 @@ struct mon_table mon_dispatch_proto15[] = {
     {MONITOR_REQ_KEYALLOWED, MON_ISAUTH|MON_ALOG, mm_answer_keyallowed},
     {MONITOR_REQ_RSACHALLENGE, MON_ONCE, mm_answer_rsa_challenge},
     {MONITOR_REQ_RSARESPONSE, MON_ONCE|MON_AUTHDECIDE, mm_answer_rsa_response},
-#ifdef BSD_AUTH
     {MONITOR_REQ_BSDAUTHQUERY, MON_ISAUTH, mm_answer_bsdauthquery},
     {MONITOR_REQ_BSDAUTHRESPOND, MON_AUTH, mm_answer_bsdauthrespond},
-#endif
-#ifdef SKEY
-    {MONITOR_REQ_SKEYQUERY, MON_ISAUTH, mm_answer_skeyquery},
-    {MONITOR_REQ_SKEYRESPOND, MON_AUTH, mm_answer_skeyrespond},
-#endif
     {0, 0, NULL}
 };
 
@@ -656,7 +641,6 @@ mm_answer_authpassword(int sock, Buffer *m)
 	return (authenticated);
 }
 
-#ifdef BSD_AUTH
 int
 mm_answer_bsdauthquery(int sock, Buffer *m)
 {
@@ -713,55 +697,7 @@ mm_answer_bsdauthrespond(int sock, Buffer *m)
 
 	return (authok != 0);
 }
-#endif
 
-#ifdef SKEY
-int
-mm_answer_skeyquery(int sock, Buffer *m)
-{
-	struct skey skey;
-	char challenge[1024];
-	u_int success;
-
-	success = skeychallenge(&skey, authctxt->user, challenge) < 0 ? 0 : 1;
-
-	buffer_clear(m);
-	buffer_put_int(m, success);
-	if (success)
-		buffer_put_cstring(m, challenge);
-
-	debug3("%s: sending challenge success: %u", __func__, success);
-	mm_request_send(sock, MONITOR_ANS_SKEYQUERY, m);
-
-	return (0);
-}
-
-int
-mm_answer_skeyrespond(int sock, Buffer *m)
-{
-	char *response;
-	int authok;
-
-	response = buffer_get_string(m, NULL);
-
-	authok = (options.challenge_response_authentication &&
-	    authctxt->valid &&
-	    skey_haskey(authctxt->pw->pw_name) == 0 &&
-	    skey_passcheck(authctxt->pw->pw_name, response) != -1);
-
-	xfree(response);
-
-	buffer_clear(m);
-	buffer_put_int(m, authok);
-
-	debug3("%s: sending authenticated: %d", __func__, authok);
-	mm_request_send(sock, MONITOR_ANS_SKEYRESPOND, m);
-
-	auth_method = "skey";
-
-	return (authok != 0);
-}
-#endif
 
 static void
 mm_append_debug(Buffer *m)

@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.c,v 1.77 2007/08/23 02:55:51 djm Exp $ */
+/* $OpenBSD: auth.c,v 1.78 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -383,9 +383,7 @@ struct passwd *
 getpwnamallow(const char *user)
 {
 	extern login_cap_t *lc;
-#ifdef BSD_AUTH
 	auth_session_t *as;
-#endif
 	struct passwd *pw;
 
 	parse_server_match_config(&options, user,
@@ -403,7 +401,6 @@ getpwnamallow(const char *user)
 		debug("unable to get login class: %s", user);
 		return (NULL);
 	}
-#ifdef BSD_AUTH
 	if ((as = auth_open()) == NULL || auth_setpwd(as, pw) != 0 ||
 	    auth_approval(as, lc, pw->pw_name, "ssh") <= 0) {
 		debug("Approval failure for %s", user);
@@ -411,7 +408,6 @@ getpwnamallow(const char *user)
 	}
 	if (as != NULL)
 		auth_close(as);
-#endif
 	if (pw != NULL)
 		return (pwcopy(pw));
 	return (NULL);

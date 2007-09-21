@@ -1,4 +1,4 @@
-/* $OpenBSD: auth1.c,v 1.70 2006/08/03 03:34:41 deraadt Exp $ */
+/* $OpenBSD: auth1.c,v 1.71 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -275,12 +275,10 @@ do_authloop(Authctxt *authctxt)
 		if (authenticated == -1)
 			continue; /* "postponed" */
 
-#ifdef BSD_AUTH
 		if (authctxt->as) {
 			auth_close(authctxt->as);
 			authctxt->as = NULL;
 		}
-#endif
 		if (!authctxt->valid && authenticated)
 			fatal("INTERNAL ERROR: authenticated invalid user %s",
 			    authctxt->user);
