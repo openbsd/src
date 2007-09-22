@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.22 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.23 2007/09/22 16:21:32 krw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,12 +154,9 @@ mmrw(dev, uio, flags)
 				 * and EFAULT for writes.
 				 */
 				if (uio->uio_rw == UIO_READ) {
-					if (zeropage == NULL) {
-						zeropage = (caddr_t)
-						    malloc(PAGE_SIZE, M_TEMP,
-						    M_WAITOK);
-						bzero(zeropage, PAGE_SIZE);
-					}
+					if (zeropage == NULL)
+						zeropage = malloc(PAGE_SIZE,
+						    M_TEMP, M_WAITOK | M_ZERO);
 					c = min(c, NBPG - (int)v);
 					v = (vaddr_t)zeropage;
 				} else
@@ -183,11 +180,9 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zeropage == NULL) {
-				zeropage = (caddr_t)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(zeropage, PAGE_SIZE);
-			}
+			if (zeropage == NULL)
+				zeropage = malloc(PAGE_SIZE, M_TEMP,
+				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			continue;

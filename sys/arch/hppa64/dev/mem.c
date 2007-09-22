@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2005/11/28 20:13:08 martin Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 2007/09/22 16:21:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -224,10 +224,9 @@ mmrw(dev, uio, flags)
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
 			 */
-			if (zeropage == NULL) {
-				zeropage = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				bzero(zeropage, PAGE_SIZE);
-			}
+			if (zeropage == NULL)
+				zeropage = malloc(PAGE_SIZE, M_TEMP,
+				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			break;

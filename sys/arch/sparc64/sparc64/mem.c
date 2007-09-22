@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.9 2007/01/12 22:09:08 kettenis Exp $	*/
+/*	$OpenBSD: mem.c,v 1.10 2007/09/22 16:21:32 krw Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -170,11 +170,9 @@ mmrw(dev, uio, flags)
 				uio->uio_resid = 0;
 				return(0);
 			}
-			if (zeropage == NULL) {
-				zeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(zeropage, NBPG);
-			}
+			if (zeropage == NULL)
+				zeropage = malloc(NBPG, M_TEMP,
+				    M_WAITOK | M_ZERO);
 			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			break;
