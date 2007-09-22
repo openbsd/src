@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.2 2007/09/15 22:04:38 ray Exp $	*/
+/*	$OpenBSD: init.c,v 1.3 2007/09/22 14:36:18 otto Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -386,8 +386,12 @@ findoff(void)
 				t = DECREF(t);
 			o = ISPTR(t) ? SZPOINT(t) : is->in_sym->ssue->suesize;
 			off += o * acalc(is, 1);
-			while (is->in_prev && ISARY(is->in_prev->in_t))
+			while (is->in_prev && ISARY(is->in_prev->in_t)) {
+				if (is->in_prev->in_prev &&
+				    is->in_prev->in_prev->in_t == STRTY)
+					off += is->in_sym->soffset;
 				is = is->in_prev;
+			}
 		}
 	}
 	if (idebug>1) {
