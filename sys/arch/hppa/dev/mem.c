@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.28 2006/05/29 08:09:16 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.29 2007/09/22 09:57:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -345,12 +345,12 @@ mmrw(dev, uio, flags)
 
 			/* If the address isn't in RAM, bail. */
 			v = uio->uio_offset;
-			if (btoc(v) > physmem) {
+			if (atop(v) > physmem) {
 				error = EFAULT;
 				/* this will break us out of the loop */
 				continue;
 			}
-			c = ctob(physmem) - v;
+			c = ptoa(physmem) - v;
 			c = min(c, uio->uio_resid);
 			error = uiomove((caddr_t)v, c, uio);
 			break;
@@ -359,7 +359,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			if (btoc(v) > physmem && !uvm_kernacc((caddr_t)v,
+			if (atop(v) > physmem && !uvm_kernacc((caddr_t)v,
 			    c, (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE)) {
 				error = EFAULT;
 				/* this will break us out of the loop */
@@ -412,8 +412,8 @@ mmmmap(dev, off, prot)
 	 * Allow access only in RAM.
 	 */
 #if 0
-	if (off < ctob(firstusablepage) ||
-	    off >= ctob(lastusablepage + 1))
+	if (off < ptoa(firstusablepage) ||
+	    off >= ptoa(lastusablepage + 1))
 		return (-1);
 #endif
 	return (atop(off));

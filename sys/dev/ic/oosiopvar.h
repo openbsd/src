@@ -1,4 +1,4 @@
-/* $OpenBSD: oosiopvar.h,v 1.2 2004/03/14 12:23:49 miod Exp $ */
+/* $OpenBSD: oosiopvar.h,v 1.3 2007/09/22 09:57:40 martin Exp $ */
 /* $NetBSD: oosiopvar.h,v 1.2 2003/05/03 18:11:23 wiz Exp $ */
 
 /*
@@ -27,10 +27,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <uvm/uvm_extern.h>
+
 #define	OOSIOP_NTGT	8		/* Max targets */
 #define	OOSIOP_NCB	32		/* Initial command buffers */
-#define	OOSIOP_NSG	(MIN(btoc(MAXPHYS) + 1, 32)) /* Max S/G operation */
-#define	OOSIOP_MAX_XFER	ctob(OOSIOP_NSG - 1)
+#define	OOSIOP_NSG	(MIN(atop(MAXPHYS) + 1, 32)) /* Max S/G operation */
+#define	OOSIOP_MAX_XFER	ptoa(OOSIOP_NSG - 1)
 
 struct oosiop_xfer {
 	/* script for scatter/gather DMA (move*nsg+jump) */

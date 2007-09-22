@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.130 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.131 2007/09/22 09:57:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -540,7 +540,7 @@ pmap_bootstrap(vstart)
 	if (nkpdes < 4)
 		nkpdes = 4;		/* ... but no less than four */
 	nkpdes += HPPA_IOLEN / PDE_SIZE; /* ... and io space too */
-	npdes = nkpdes + (physmem + btoc(PDE_SIZE) - 1) / btoc(PDE_SIZE);
+	npdes = nkpdes + (physmem + atop(PDE_SIZE) - 1) / atop(PDE_SIZE);
 
 	/* map the pdes */
 	for (va = 0; npdes--; va += PDE_SIZE, addr += PAGE_SIZE) {

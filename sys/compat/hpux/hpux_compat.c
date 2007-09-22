@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.28 2004/07/09 21:33:44 mickey Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.29 2007/09/22 09:57:40 martin Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -489,7 +489,7 @@ hpux_sys_ulimit(p, v, retval)
 
 	case 3:
 		limp = &p->p_rlimit[RLIMIT_DATA];
-		*retval = ctob(p->p_vmspace->vm_tsize) + limp->rlim_max;
+		*retval = ptoa(p->p_vmspace->vm_tsize) + limp->rlim_max;
 		break;
 
 	default:
