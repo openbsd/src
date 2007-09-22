@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.219 2007/09/17 10:07:21 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.220 2007/09/22 15:41:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2594,9 +2594,13 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 	if (rev == NULL)
 		return (NULL);
 
-	/* If this isn't a branch revision, we have a problem */
+	/*
+	 * If it was not a branch, thats ok the symbolic
+	 * name refered to a revision, so return the resolved
+	 * revision for the given name.
+	 */
 	if (!RCSNUM_ISBRANCH(rev))
-		fatal("rcs_translate_tag: tag `%s' is not a branch", revstr);
+		return (rev);
 
 	brev = rcsnum_alloc();
 	rcsnum_cpy(rev, brev, rev->rn_len - 1);
