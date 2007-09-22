@@ -891,6 +891,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/bt485reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/bt485var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/bt8xx.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/bwireg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/bwivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/cacreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/cacvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/cd1190reg.ph
@@ -2302,8 +2304,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zlib.ph
-./usr/libdata/perl5/site_perl/armish-openbsd/dev/ic/bwireg.ph
-./usr/libdata/perl5/site_perl/armish-openbsd/dev/ic/bwivar.ph
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/arm-openbsd

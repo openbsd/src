@@ -610,8 +610,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/com_right.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/hdb-private.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/kadm5/private.ph
-./usr/libdata/perl5/site_perl/mvmeppc-openbsd/dev/ic/bwireg.ph
-./usr/libdata/perl5/site_perl/mvmeppc-openbsd/dev/ic/bwivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/a.out.ph
@@ -806,6 +804,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/bt485reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/bt485var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/bt8xx.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/bwireg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/bwivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/cacreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/cacvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/cd1190reg.ph
