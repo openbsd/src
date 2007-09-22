@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.25 2007/08/30 11:07:18 joris Exp $	*/
+/*	$OpenBSD: remote.h,v 1.26 2007/09/22 15:57:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -43,6 +43,9 @@ extern int server_response;
 
 #define SERVER_OK	0
 #define SERVER_ERROR	1
+
+#define CVS_SERVER_UNCHANGED	"d[o.o]b"
+#define CVS_SERVER_UPTODATE	(time_t)-2
 
 void	cvs_client_connect_to_server(void);
 void	cvs_client_disconnect(void);

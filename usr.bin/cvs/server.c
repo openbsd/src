@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.70 2007/09/07 19:18:41 tobias Exp $	*/
+/*	$OpenBSD: server.c,v 1.71 2007/09/22 15:57:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -417,37 +417,34 @@ cvs_server_useunchanged(char *data)
 void
 cvs_server_unchanged(char *data)
 {
-	int fd;
 	char fpath[MAXPATHLEN];
 	CVSENTRIES *entlist;
 	struct cvs_ent *ent;
-	struct timeval tv[2];
+	char sticky[CVS_ENT_MAXLINELEN];
+	char rev[CVS_REV_BUFSZ], entry[CVS_ENT_MAXLINELEN];
 
 	if (data == NULL)
 		fatal("Missing argument for Unchanged");
 
 	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", server_currentdir, data);
 
-	if ((fd = open(fpath, O_RDWR | O_CREAT | O_TRUNC)) == -1)
-		fatal("cvs_server_unchanged: %s: %s", fpath, strerror(errno));
-
 	entlist = cvs_ent_open(server_currentdir);
 	ent = cvs_ent_get(entlist, data);
 	if (ent == NULL)
 		fatal("received Unchanged request for non-existing file");
-	cvs_ent_close(entlist, ENT_NOSYNC);
 
-	tv[0].tv_sec = ent->ce_mtime;
-	tv[0].tv_usec = 0;
-	tv[1] = tv[0];
-	if (futimes(fd, tv) == -1)
-		fatal("cvs_server_unchanged: failed to set modified time");
+	sticky[0] = '\0';
+	if (ent->ce_tag != NULL)
+		(void)xsnprintf(sticky, sizeof(sticky), "T%s", ent->ce_tag);
 
-	if (fchmod(fd, 0600) == -1)
-		fatal("cvs_server_unchanged: failed to set mode");
+	rcsnum_tostr(ent->ce_rev, rev, sizeof(rev));
+	(void)xsnprintf(entry, sizeof(entry), "/%s/%s/%s/%s/%s",
+	    ent->ce_name, rev, CVS_SERVER_UNCHANGED, ent->ce_opts ?
+	    ent->ce_opts : "", sticky);
 
 	cvs_ent_free(ent);
-	(void)close(fd);
+	cvs_ent_add(entlist, entry);
+	cvs_ent_close(entlist, ENT_SYNC);
 }
 
 void

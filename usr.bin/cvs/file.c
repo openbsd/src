@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.197 2007/09/17 10:07:21 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.198 2007/09/22 15:57:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -38,6 +38,7 @@
 
 #include "atomicio.h"
 #include "cvs.h"
+#include "remote.h"
 
 #define CVS_IGN_STATIC	0x01	/* pattern is static, no need to glob */
 
@@ -559,13 +560,15 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	size_t len;
 	struct stat st;
 	BUF *b1, *b2;
+	int server_has_file;
 	int rflags, ismodified, rcsdead;
 	CVSENTRIES *entlist = NULL;
 	const char *state;
 	char repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
 	char r1[CVS_REV_BUFSZ], r2[CVS_REV_BUFSZ];
 
-	cvs_log(LP_TRACE, "cvs_file_classify(%s)", cf->file_path);
+	cvs_log(LP_TRACE, "cvs_file_classify(%s, %s)", cf->file_path,
+	    (tag != NULL) ? tag : "none");
 
 	if (!strcmp(cf->file_path, ".")) {
 		cf->file_status = FILE_UPTODATE;
@@ -679,6 +682,13 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 			ismodified = 1;
 	}
 
+	server_has_file = 0;
+	if (cvs_server_active == 1 && cf->file_ent != NULL &&
+	    cf->file_ent->ce_mtime == CVS_SERVER_UPTODATE) {
+		server_has_file = 1;
+		ismodified = 0;
+	}
+
 	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL) {
 		b1 = rcs_rev_getbuf(cf->file_rcs, cf->file_rcsrev, 0);
 		if (b1 == NULL)
@@ -768,7 +778,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	} else if (cf->file_ent->ce_status == CVS_ENT_REG) {
 		if (cf->file_rcs == NULL || rcsdead == 1 ||
 		    (reset_stickies == 1 && cf->in_attic == 1)) {
-			if (cf->fd == -1) {
+			if (cf->fd == -1 && server_has_file == 0) {
 				cvs_log(LP_NOTICE,
 				    "warning: %s's entry exists but"
 				    " there is no longer a file"
@@ -794,7 +804,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 				}
 			}
 		} else {
-			if (cf->fd == -1) {
+			if (cf->fd == -1 && server_has_file == 0) {
 				if (cvs_cmdop != CVS_OP_REMOVE) {
 					cvs_log(LP_NOTICE,
 					    "warning: %s was lost",

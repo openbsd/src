@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.80 2007/09/04 19:07:04 tobias Exp $	*/
+/*	$OpenBSD: entries.c,v 1.81 2007/09/22 15:57:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include "cvs.h"
+#include "remote.h"
 
 #define CVS_ENTRIES_NFIELDS	6
 #define CVS_ENTRIES_DELIM	'/'
@@ -154,9 +155,13 @@ cvs_ent_parse(const char *entry)
 		if (fields[3][0] == '\0' ||
 		    strncmp(fields[3], CVS_DATE_DUMMY, sizeof(CVS_DATE_DUMMY) - 1) == 0 ||
 		    strncmp(fields[3], "Initial ", 8) == 0 ||
-		    strncmp(fields[3], "Result of merge", 15) == 0)
+		    strncmp(fields[3], "Result of merge", 15) == 0) {
 			ent->ce_mtime = CVS_DATE_DMSEC;
-		else {
+		} else if (cvs_server_active == 1 &&
+		    strncmp(fields[3], CVS_SERVER_UNCHANGED,
+		    strlen(CVS_SERVER_UNCHANGED)) == 0) {
+			ent->ce_mtime = CVS_SERVER_UPTODATE;
+		} else {
 			/* Date field can be a '+=' with remote to indicate
 			 * conflict.  In this case do nothing. */
 			if (strptime(fields[3], "%a %b %d %T %Y", &t) != NULL) {
