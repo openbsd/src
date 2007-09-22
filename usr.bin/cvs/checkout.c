@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.102 2007/09/09 20:24:06 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.103 2007/09/22 15:30:29 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -163,7 +163,12 @@ checkout_check_repository(int argc, char **argv)
 
 		cr.enterdir = NULL;
 		cr.leavedir = NULL;
-		cr.fileproc = NULL;
+		if (print_stdout)
+			cr.fileproc = NULL;
+		else
+			cr.fileproc = cvs_client_sendfile;
+
+		flags &= ~CR_REPO;
 		cr.flags = flags;
 
 		cvs_file_run(argc, argv, &cr);
