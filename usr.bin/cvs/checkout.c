@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.103 2007/09/22 15:30:29 tobias Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.104 2007/09/22 16:01:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -71,6 +71,8 @@ cvs_checkout(int argc, char **argv)
 			break;
 		case 'l':
 			flags &= ~CR_RECURSE_DIRS;
+			break;
+		case 'N':
 			break;
 		case 'P':
 			prune_dirs = 1;
@@ -184,6 +186,8 @@ checkout_check_repository(int argc, char **argv)
 		return;
 	}
 
+	cvs_directory_tag = cvs_specified_tag;
+
 	for (i = 0; i < argc; i++) {
 		(void)xsnprintf(repo, sizeof(repo), "%s/%s",
 		    current_cvsroot->cr_dir, argv[i]);
@@ -258,7 +262,9 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 
 	exists = 0;
 	tosend = NULL;
-	rcsnum_tostr(rnum, rev, sizeof(rev));
+
+	if (!(co_flags & CO_REMOVE))
+		rcsnum_tostr(rnum, rev, sizeof(rev));
 
 	cvs_log(LP_TRACE, "cvs_checkout_file(%s, %s, %d) -> %s",
 	    cf->file_path, rev, co_flags,
@@ -320,9 +326,9 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 	}
 
 	if (co_flags & CO_SETSTICKY)
-		if (cvs_specified_tag != NULL)
+		if (cvs_directory_tag != NULL)
 			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
-			    cvs_specified_tag);
+			    cvs_directory_tag);
 		else
 			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
 			    rev);

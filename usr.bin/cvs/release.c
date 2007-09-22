@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.34 2007/06/26 18:02:43 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.35 2007/09/22 16:01:22 joris Exp $	*/
 /*-
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -107,7 +107,7 @@ cvs_release_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_release_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL);
+	cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cvs_server_active == 1) {
 		cvs_history_add(CVS_HISTORY_RELEASE, cf, NULL);
@@ -179,7 +179,7 @@ release_check_files(struct cvs_file *cf)
 {
 	cvs_log(LP_TRACE, "release_check_files(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL);
+	cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cf->file_status == FILE_MERGE ||
 	    cf->file_status == FILE_ADDED ||

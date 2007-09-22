@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.76 2007/07/03 12:29:52 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.77 2007/09/22 16:01:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -124,7 +124,7 @@ cvs_status_local(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_status_local(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL);
+	cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1)
@@ -141,7 +141,7 @@ cvs_status_local(struct cvs_file *cf)
 
 	if (cf->file_status == FILE_LOST ||
 	    cf->file_status == FILE_UNKNOWN ||
-	    (cf->file_rcs != NULL && cf->in_attic == 1)) {
+	    (cf->file_rcs != NULL && cf->in_attic == 1 && cf->fd == -1)) {
 		(void)xsnprintf(buf, sizeof(buf), "no file %s\t",
 		    cf->file_name);
 	} else

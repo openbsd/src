@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.81 2007/09/22 15:57:24 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.82 2007/09/22 16:01:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -418,6 +418,7 @@ cvs_write_tagfile(const char *dir, char *tag, char *date, int nb)
 {
 	FILE *fp;
 	char tagpath[MAXPATHLEN];
+	char sticky[CVS_REV_BUFSZ];
 	int i;
 
 	if (cvs_noexec == 1)
@@ -437,13 +438,21 @@ cvs_write_tagfile(const char *dir, char *tag, char *date, int nb)
 		}
 
 		if (tag != NULL) {
-			if (nb != 0)
-				(void)fprintf(fp, "N%s\n", tag);
-			else
-				(void)fprintf(fp, "T%s\n", tag);
-		} else
-			(void)fprintf(fp, "D%s\n", date);
+			if (nb != 0) {
+				(void)xsnprintf(sticky, sizeof(sticky),
+				    "N%s", tag);
+			} else {
+				(void)xsnprintf(sticky, sizeof(sticky),
+				    "T%s", tag);
+			}
+		} else {
+			(void)xsnprintf(sticky, sizeof(sticky), "D%s", date);
+		}
 
+		if (cvs_server_active == 1)
+			cvs_server_set_sticky(dir, sticky);
+
+		(void)fprintf(fp, "%s\n", sticky);
 		(void)fclose(fp);
 	} else {
 		(void)cvs_unlink(tagpath);

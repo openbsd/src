@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.109 2007/08/30 11:07:18 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.110 2007/09/22 16:01:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -157,7 +157,7 @@ cvs_commit_check_files(struct cvs_file *cf)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL)
 		cvs_remote_classify_file(cf);
 	else
-		cvs_file_classify(cf, NULL);
+		cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1)
@@ -192,17 +192,17 @@ cvs_commit_check_files(struct cvs_file *cf)
 	if (cf->file_status == FILE_ADDED ||
 	    cf->file_status == FILE_REMOVED ||
 	    cf->file_status == FILE_MODIFIED)
-		cvs_file_get(cf->file_path, &files_affected);
+		cvs_file_get(cf->file_path, 0, &files_affected);
 
 	switch (cf->file_status) {
 	case FILE_ADDED:
-		cvs_file_get(cf->file_path, &files_added);
+		cvs_file_get(cf->file_path, 0, &files_added);
 		break;
 	case FILE_REMOVED:
-		cvs_file_get(cf->file_path, &files_removed);
+		cvs_file_get(cf->file_path, 0, &files_removed);
 		break;
 	case FILE_MODIFIED:
-		cvs_file_get(cf->file_path, &files_modified);
+		cvs_file_get(cf->file_path, 0, &files_modified);
 		break;
 	}
 }
@@ -219,7 +219,7 @@ cvs_commit_local(struct cvs_file *cf)
 	char attic[MAXPATHLEN], repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
 
 	cvs_log(LP_TRACE, "cvs_commit_local(%s)", cf->file_path);
-	cvs_file_classify(cf, NULL);
+	cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cvs_noexec == 1)
 		return;

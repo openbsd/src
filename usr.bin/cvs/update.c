@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.109 2007/09/07 23:59:01 tobias Exp $	*/
+/*	$OpenBSD: update.c,v 1.110 2007/09/22 16:01:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -121,6 +121,10 @@ cvs_update(int argc, char **argv)
 		if (print_stdout)
 			cvs_client_send_request("Argument -p");
 
+		if (cvs_specified_tag != NULL)
+			cvs_client_send_request("Argument -r%s",
+			    cvs_specified_tag);
+
 		cr.enterdir = NULL;
 		cr.leavedir = NULL;
 		cr.fileproc = cvs_client_sendfile;
@@ -151,7 +155,7 @@ cvs_update_enterdir(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_update_enterdir(%s)", cf->file_path);
 
-	cvs_file_classify(cf, NULL);
+	cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cf->file_status == DIR_CREATE && build_dirs == 1) {
 		cvs_mkpath(cf->file_path, cvs_specified_tag);
@@ -176,9 +180,6 @@ cvs_update_enterdir(struct cvs_file *cf)
 		if (cvs_specified_tag != NULL)
 			cvs_write_tagfile(cf->file_path,
 				    cvs_specified_tag, NULL, 0);
-
-		cvs_parse_tagfile(cf->file_path,
-		    &cvs_specified_tag, NULL, NULL);
 	}
 }
 
@@ -303,7 +304,7 @@ cvs_update_local(struct cvs_file *cf)
 	}
 
 	flags = 0;
-	cvs_file_classify(cf, cvs_specified_tag);
+	cvs_file_classify(cf, cvs_directory_tag);
 
 	if ((cf->file_status == FILE_UPTODATE ||
 	    cf->file_status == FILE_MODIFIED) && cf->file_ent != NULL &&
@@ -312,6 +313,7 @@ cvs_update_local(struct cvs_file *cf)
 			cf->file_status = FILE_MERGE;
 		else
 			cf->file_status = FILE_CHECKOUT;
+
 		cf->file_rcsrev = rcs_head_get(cf->file_rcs);
 
 		/* might be a bit overkill */
@@ -358,7 +360,9 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_LOST:
 	case FILE_CHECKOUT:
 	case FILE_PATCH:
-		if (cvs_specified_tag != NULL)
+		if (cvs_directory_tag != NULL ||
+		    (((cf->file_ent != NULL) && cf->file_ent->ce_tag != NULL) &&
+		    (reset_stickies != 1)))
 			flags = CO_SETSTICKY;
 
 		cvs_checkout_file(cf, cf->file_rcsrev, flags);
@@ -387,6 +391,13 @@ cvs_update_local(struct cvs_file *cf)
 		cvs_ent_remove(entlist, cf->file_name);
 		cvs_ent_close(entlist, ENT_SYNC);
 		cvs_history_add(CVS_HISTORY_UPDATE_REMOVE, cf, NULL);
+		break;
+	case FILE_UPTODATE:
+		if (cvs_cmdop != CVS_OP_UPDATE)
+			break;
+
+		if (cvs_directory_tag != NULL && cf->file_rcs->rf_dead != 1)
+			cvs_checkout_file(cf, cf->file_rcsrev, CO_SETSTICKY);
 		break;
 	default:
 		break;

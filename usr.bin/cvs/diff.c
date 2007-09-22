@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.120 2007/06/28 21:38:09 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.121 2007/09/22 16:01:22 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -173,7 +173,7 @@ cvs_diff_local(struct cvs_file *cf)
 		return;
 	}
 
-	cvs_file_classify(cf, NULL);
+	cvs_file_classify(cf, cvs_directory_tag);
 
 	if (cf->file_status == FILE_LOST) {
 		cvs_log(LP_ERR, "cannot find file %s", cf->file_path);
@@ -196,10 +196,11 @@ cvs_diff_local(struct cvs_file *cf)
 
 	if (rev1 != NULL)
 		if ((diff_rev1 = rcs_translate_tag(rev1, cf->file_rcs)) == NULL)
-			fatal("cvs_diff_local: could not translate tag `%s'", rev1);
+			return;
+
 	if (rev2 != NULL)
 		if ((diff_rev2 = rcs_translate_tag(rev2, cf->file_rcs)) == NULL)
-			fatal("cvs_diff_local: could not translate tag `%s'", rev2);
+			return;
 
 	diff_file = cf->file_path;
 	cvs_printf("Index: %s\n%s\nRCS file: %s\n", cf->file_path,
@@ -236,17 +237,23 @@ cvs_diff_local(struct cvs_file *cf)
 		cvs_printf("Retrieving revision %s\n", rbuf);
 		rcs_rev_write_stmp(cf->file_rcs, diff_rev2, p2, 0);
 	} else if (cf->file_status != FILE_REMOVED) {
-		if (fstat(cf->fd, &st) == -1)
-			fatal("fstat failed %s", strerror(errno));
-		if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
-			fatal("failed to load %s", cf->file_path);
+		if (cvs_server_active == 1 &&
+		    cf->file_status != FILE_MODIFIED) {
+			rcs_rev_write_stmp(cf->file_rcs,
+			    cf->file_rcsrev, p2, 0);
+		} else {
+			if (fstat(cf->fd, &st) == -1)
+				fatal("fstat failed %s", strerror(errno));
+			if ((b1 = cvs_buf_load_fd(cf->fd, BUF_AUTOEXT)) == NULL)
+				fatal("failed to load %s", cf->file_path);
 
-		tv2[0].tv_sec = st.st_mtime;
-		tv2[0].tv_usec = 0;
-		tv2[1] = tv2[0];
+			tv2[0].tv_sec = st.st_mtime;
+			tv2[0].tv_usec = 0;
+			tv2[1] = tv2[0];
 
-		cvs_buf_write_stmp(b1, p2, tv2);
-		cvs_buf_free(b1);
+			cvs_buf_write_stmp(b1, p2, tv2);
+			cvs_buf_free(b1);
+		}
 	}
 
 	cvs_printf("%s", diffargs);
