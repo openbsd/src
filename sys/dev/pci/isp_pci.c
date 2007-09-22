@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.39 2007/02/28 19:40:38 kettenis Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.40 2007/09/22 16:03:23 krw Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -467,50 +467,48 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP) {
 		isp->isp_mdvec = &mdvec;
 		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
-		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(sizeof(sdparam), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (sdparam));
 	}
 #endif
 #ifndef	ISP_DISABLE_1080_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP1080) {
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1080;
-		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(sizeof(sdparam), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
 	if (pa->pa_id == PCI_QLOGIC_ISP1240) {
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1240;
-		isp->isp_param = malloc(2 * sizeof (sdparam),
-		    M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(2 * sizeof(sdparam), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
 	if (pa->pa_id == PCI_QLOGIC_ISP1280) {
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1280;
-		isp->isp_param = malloc(2 * sizeof (sdparam),
-		    M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(2 * sizeof(sdparam),
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
@@ -519,25 +517,24 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP10160) {
 		isp->isp_mdvec = &mdvec_12160;
 		isp->isp_type = ISP_HA_SCSI_10160;
-		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(sizeof(sdparam), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
 	if (pa->pa_id == PCI_QLOGIC_ISP12160) {
 		isp->isp_mdvec = &mdvec_12160;
 		isp->isp_type = ISP_HA_SCSI_12160;
-		isp->isp_param = malloc(2 * sizeof (sdparam),
-		    M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(2 * sizeof(sdparam),
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, 2 * sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
@@ -546,12 +543,12 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP2100) {
 		isp->isp_mdvec = &mdvec_2100;
 		isp->isp_type = ISP_HA_FC_2100;
-		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(sizeof(fcparam), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (fcparam));
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2100_OFF;
 		if (rev < 3) {
@@ -569,12 +566,12 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP2200) {
 		isp->isp_mdvec = &mdvec_2200;
 		isp->isp_type = ISP_HA_FC_2200;
-		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(sizeof(fcparam), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (fcparam));
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2100_OFF;
 		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
@@ -602,12 +599,12 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			isp->isp_type = ISP_HA_FC_2312;
 			isp->isp_port = pa->pa_function;
 		}
-		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
+		isp->isp_param = malloc(sizeof(fcparam), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (fcparam));
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2300_OFF;
 		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
@@ -968,12 +965,11 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 		return (0);
 
 	len = isp->isp_maxcmds * sizeof (XS_T *);
-	isp->isp_xflist = (XS_T **) malloc(len, M_DEVBUF, M_WAITOK);
+	isp->isp_xflist = malloc(len, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot malloc xflist array");
 		return (1);
 	}
-	bzero(isp->isp_xflist, len);
 	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
 	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_WAITOK);
 	if (pcs->pci_xfer_dmap == NULL) {
