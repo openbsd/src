@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.5 2007/09/18 07:22:01 otto Exp $	*/
+/*	$OpenBSD: common.c,v 1.6 2007/09/22 14:50:44 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -462,7 +462,7 @@ struct b {
 };
 
 #define ALIGNMENT ((int)&((struct b *)0)->a2)
-#define	ROUNDUP(x) ((x) + ((ALIGNMENT)-1)) & ~((ALIGNMENT)-1)
+#define	ROUNDUP(x) (((x) + ((ALIGNMENT)-1)) & ~((ALIGNMENT)-1))
 
 static char *allocpole;
 static int allocleft;
@@ -514,10 +514,16 @@ tmpalloc(int size)
 {
 	void *rv;
 
-	if (size > MEMCHUNKSZ) {
+	if (size > MEMCHUNKSZ / 2) {
+		size += ROUNDUP(sizeof(char *));
 		if ((rv = malloc(size)) == NULL)
 			cerror("tmpalloc: out of memory");
 	//	cerror("tmpalloc %d", size);
+		/* link in before current chunk XXX */
+		*(char **)rv = *(char **)tmppole;
+		*(char **)tmppole = rv;
+		tmpallocsize += size;
+		return (char *)rv + ROUNDUP(sizeof(char *));
 	}
 	if (size <= 0)
 		cerror("tmpalloc2");
@@ -527,7 +533,7 @@ tmpalloc(int size)
 		if ((tmppole = malloc(MEMCHUNKSZ)) == NULL)
 			cerror("tmpalloc: out of memory");
 //fprintf(stderr, "allocating tmp\n");
-		tmpleft = MEMCHUNKSZ - (ROUNDUP(sizeof(char *)));
+		tmpleft = MEMCHUNKSZ - ROUNDUP(sizeof(char *));
 		*(char **)tmppole = tmplink;
 		tmplink = tmppole;
 	}
@@ -596,7 +602,7 @@ tmpfree()
 	if (f == NULL)
 		return;
 	if (*(char **)f == NULL) {
-		tmpleft = MEMCHUNKSZ - (ROUNDUP(sizeof(char *)));
+		tmpleft = MEMCHUNKSZ - ROUNDUP(sizeof(char *));
 		return;
 	}
 	while (f != NULL) {
