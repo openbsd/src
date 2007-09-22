@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.81 2007/09/10 21:33:16 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.82 2007/09/22 20:04:51 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3504,8 +3504,16 @@ sparc_intr_retry:
 	casxa	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
 	bne,pn	%icc, 1b
-	 add	%sp, CC64FSZ+BIAS, %o2	! tf = %sp + CC64FSZ + BIAS
+	 nop
+
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(sparc64_intlock)
+	 add	%sp, CC64FSZ+BIAS, %o0	! tf = %sp + CC64FSZ + BIAS
+#endif
+	
 2:
+	add	%sp, CC64FSZ+BIAS, %o2	! tf = %sp + CC64FSZ + BIAS
+	
 	ldx	[%l2 + IH_PEND], %l7	! Load next pending
 	ldx	[%l2 + IH_FUN], %o4	! ih->ih_fun
 	ldx	[%l2 + IH_ARG], %o0	! ih->ih_arg
@@ -3543,6 +3551,11 @@ sparc_intr_retry:
 0:
 	brnz,pn	%l7, 2b			! 'Nother?
 	 mov	%l7, %l2
+
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(sparc64_intunlock)
+	 add	%sp, CC64FSZ+BIAS, %o0	! tf = %sp + CC64FSZ + BIAS
+#endif
 
 intrcmplt:
 	/*
