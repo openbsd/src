@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.28 2007/09/16 18:13:57 sobrado Exp $	*/
+/*	$OpenBSD: utils.c,v 1.29 2007/09/22 21:10:49 sobrado Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.28 2007/09/16 18:13:57 sobrado Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.29 2007/09/22 21:10:49 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ setfile(struct stat *fs, int fd)
 		fs->st_mode &= ~(S_ISTXT | S_ISUID | S_ISGID);
 	}
 	if (fd ? fchmod(fd, fs->st_mode) : chmod(to.p_path, fs->st_mode)) {
-		warn("chown: %s", to.p_path);
+		warn("chmod: %s", to.p_path);
 		rval = 1;
 	}
 
