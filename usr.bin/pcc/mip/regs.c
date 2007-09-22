@@ -1,4 +1,4 @@
-/*	$OpenBSD: regs.c,v 1.5 2007/09/21 07:48:13 otto Exp $	*/
+/*	$OpenBSD: regs.c,v 1.6 2007/09/22 14:42:26 otto Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -290,6 +290,7 @@ nsucomp(NODE *p)
 	w->r_class = TCLASS(p->n_su);
 	if (w->r_class == 0)
 		w->r_class = gclass(p->n_type);
+	w->r_nclass[0] = o == LTYPE; /* XXX store leaf info here */
 	SETNUM(w);
 	if (w->r_class)
 		DLIST_INSERT_BEFORE(&initial, w, link);
@@ -1679,6 +1680,16 @@ SelectSpill(void)
 
 	if (w == &spillWorklist) {
 		/* no heuristics, just fetch first element */
+		/* but not if leaf */
+		DLIST_FOREACH(w, &spillWorklist, link) {
+			if (w->r_nclass[0] == 0)
+				break;
+		}
+	}
+
+	if (w == &spillWorklist) {
+		/* Eh, only leaves :-/ Try anyway */
+		/* May not be useable */
 		w = DLIST_NEXT(&spillWorklist, link);
 	}
  
@@ -1848,6 +1859,7 @@ static void
 shorttemp(NODE *p)
 {
 	struct interpass *nip;
+	struct optab *q;
 	REGW *w;
 	NODE *l, *r;
 	int off;
@@ -1863,12 +1875,35 @@ shorttemp(NODE *p)
 			break;
 		}
 		RDEBUG(("rewriting node %d\n", ASGNUM(w)));
+
 		off = BITOOR(freetemp(szty(p->n_type)));
 		l = mklnode(OREG, off, FPREG, p->n_type);
 		r = talloc();
-		*r = *p;
-		nip = ipnode(mkbinode(ASSIGN, l, r, p->n_type));
-		*p = *l;
+		/*
+		 * If this is a binode which reclaim a leg, and it had
+		 * to walk down the other leg first, then it must be
+		 * split below this node instead.
+		 */
+		q = &table[TBLIDX(p->n_su)];
+		if (optype(p->n_op) == BITYPE &&
+		    (q->rewrite & RLEFT && (p->n_su & DORIGHT) == 0) &&
+		    (TBLIDX(p->n_right->n_su) != 0)) {
+			*r = *l;
+			nip = ipnode(mkbinode(ASSIGN, l,
+			    p->n_left, p->n_type));
+			p->n_left = r;
+		} else if (optype(p->n_op) == BITYPE &&
+		    (q->rewrite & RRIGHT && (p->n_su & DORIGHT) != 0) &&
+		    (TBLIDX(p->n_left->n_su) != 0)) {
+			*r = *l;
+			nip = ipnode(mkbinode(ASSIGN, l,
+			    p->n_right, p->n_type));
+			p->n_right = r;
+		} else {
+			*r = *p;
+			nip = ipnode(mkbinode(ASSIGN, l, r, p->n_type));
+			*p = *l;
+		}
 		DLIST_INSERT_BEFORE(cip, nip, qelem);
 		DLIST_REMOVE(w, link);
 		break;
