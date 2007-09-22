@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.295 2007/09/19 12:34:56 pyr Exp $
+$OpenBSD: usbdevs,v 1.296 2007/09/22 06:03:29 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1959,22 +1959,22 @@ product RIM PEARL_DUAL		0x0004	RIM Mass Storage Device
 product RIM PEARL		0x0006	Blackberry pearl
 
 /* Roland products */
-product ROLAND UA100            0x0000  UA-100 Audio I/F
-product ROLAND UM4              0x0002  UM-4 MIDI I/F
-product ROLAND SC8850           0x0003  SC-8850 MIDI Synth
-product ROLAND U8               0x0004  U-8 Audio I/F
-product ROLAND UM2              0x0005  UM-2 MIDI I/F
-product ROLAND SC8820           0x0007  SC-8820 MIDI Synth
-product ROLAND PC300            0x0008  PC-300 MIDI Keyboard
-product ROLAND UM1              0x0009  UM-1 MIDI I/F
-product ROLAND SK500            0x000b  SK-500 MIDI Keyboard
-product ROLAND SCD70            0x000c  SC-D70 MIDI Synth
-product ROLAND UM880N           0x0014  UM-880 MIDI I/F 
-product ROLAND SD90             0x0016  SD-90 MIDI Synth
-product ROLAND UM550            0x0023  UM-550 MIDI I/F
-product ROLAND SD20             0x0027  SD-20 MIDI Synth
-product ROLAND SD80             0x0029  SD-80 MIDI Synth
-product ROLAND UA700            0x002b  UA-700 Audio I/F
+product ROLAND UA100		0x0000	UA-100 Audio I/F
+product ROLAND UM4		0x0002	UM-4 MIDI I/F
+product ROLAND SC8850		0x0003	SC-8850 MIDI Synth
+product ROLAND U8		0x0004	U-8 Audio I/F
+product ROLAND UM2		0x0005	UM-2 MIDI I/F
+product ROLAND SC8820		0x0007	SC-8820 MIDI Synth
+product ROLAND PC300		0x0008	PC-300 MIDI Keyboard
+product ROLAND UM1		0x0009	UM-1 MIDI I/F
+product ROLAND SK500		0x000b	SK-500 MIDI Keyboard
+product ROLAND SCD70		0x000c	SC-D70 MIDI Synth
+product ROLAND UM880N		0x0014	UM-880 MIDI I/F 
+product ROLAND SD90		0x0016	SD-90 MIDI Synth
+product ROLAND UM550		0x0023	UM-550 MIDI I/F
+product ROLAND SD20		0x0027	SD-20 MIDI Synth
+product ROLAND SD80		0x0029	SD-80 MIDI Synth
+product ROLAND UA700		0x002b	UA-700 Audio I/F
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	Gamepad 203USB
