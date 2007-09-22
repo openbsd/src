@@ -219,6 +219,8 @@
 ./usr/include/dev/ic/bt485reg.h
 ./usr/include/dev/ic/bt485var.h
 ./usr/include/dev/ic/bt8xx.h
+./usr/include/dev/ic/bwireg.h
+./usr/include/dev/ic/bwivar.h
 ./usr/include/dev/ic/cacreg.h
 ./usr/include/dev/ic/cacvar.h
 ./usr/include/dev/ic/cd1190reg.h
