@@ -1,4 +1,4 @@
-/*	$OpenBSD: asl_dump.c,v 1.3 2005/07/21 16:38:55 fgsch Exp $	*/
+/*	$OpenBSD: asl_dump.c,v 1.4 2007/09/22 19:42:19 otto Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asl_dump.c,v 1.3 2005/07/21 16:38:55 fgsch Exp $
+ *	$Id: asl_dump.c,v 1.4 2007/09/22 19:42:19 otto Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.5 2001/10/23 14:53:58 takawata Exp $
  */
 
@@ -781,7 +781,10 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 	switch (opcode) {
 	case '\\':
 	case '^':
-	case 'A' ... 'Z':
+	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
+	case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
+	case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
+	case 'V': case 'W': case 'X': case 'Y': case 'Z':
 	case '_':
 	case '.':
 	case '/':
@@ -993,10 +996,23 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 			errx(1, "strange opcode 0x5b, 0x%x", opcode);
 		}
 		break;
-	case 0x68 ... 0x6e:	/* ArgN */
+	case 0x68:
+	case 0x69:
+	case 0x6a:
+	case 0x6b:
+	case 0x6c:
+	case 0x6d:
+	case 0x6e:	/* ArgN */
 		printf("Arg%d", opcode - 0x68);
 		break;
-	case 0x60 ... 0x67:
+	case 0x60:
+	case 0x61:
+	case 0x62:
+	case 0x63:
+	case 0x64:
+	case 0x65:
+	case 0x66:
+	case 0x67:
 		printf("Local%d", opcode - 0x60);
 		break;
 	case 0x70:		/* StoreOp */
