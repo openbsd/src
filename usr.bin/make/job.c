@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.85 2007/09/23 12:49:04 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.86 2007/09/23 12:51:59 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ static void JobFinish(Job *, int *);
 static void JobExec(Job *, char **);
 static void JobMakeArgv(Job *, char **);
 static void JobRestart(Job *);
-static int JobStart(GNode *, int, Job *);
+static int JobStart(GNode *, int);
 static char *JobOutput(Job *, char *, char *, int);
 static void JobDoOutput(Job *, bool);
 static void JobInterrupt(int, int);
@@ -1179,26 +1179,19 @@ JobRestart(Job *job)
  */
 static int
 JobStart(GNode *gn,	      	/* target to create */
-    int flags,      		/* flags for the job to override normal ones.
-			       	 * e.g. JOB_SPECIAL or JOB_IGNDOTS */
-    Job *previous)  		/* The previous Job structure for this node,
-			         * if any. */
+    int flags)      		/* flags for the job to override normal ones.
+			       	 * e.g. JOB_SPECIAL */
 {
 	Job *job;       	/* new job descriptor */
 	char *argv[4];   	/* Argument vector to shell */
 	bool cmdsOK;     	/* true if the nodes commands were all right */
 	bool noExec;     	/* Set true if we decide not to run the job */
 
-	if (previous != NULL) {
-		previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT);
-		job = previous;
-	} else {
-		job = emalloc(sizeof(Job));
-		if (job == NULL) {
-			Punt("JobStart out of memory");
-		}
-		flags |= JOB_FIRST;
+	job = emalloc(sizeof(Job));
+	if (job == NULL) {
+		Punt("JobStart out of memory");
 	}
+	flags |= JOB_FIRST;
 
 	job->node = gn;
 	job->tailCmds = NULL;
@@ -1717,7 +1710,7 @@ Job_CatchOutput(void)
 void
 Job_Make(GNode *gn)
 {
-	(void)JobStart(gn, 0, NULL);
+	(void)JobStart(gn, 0);
 }
 
 /*-
@@ -1799,7 +1792,7 @@ Job_Init(int maxproc)
 #endif
 
 	if ((begin_node->type & OP_DUMMY) == 0) {
-		JobStart(begin_node, JOB_SPECIAL, (Job *)0);
+		JobStart(begin_node, JOB_SPECIAL);
 		while (nJobs) {
 			Job_CatchOutput();
 			Job_CatchChildren();
@@ -1898,7 +1891,7 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 		if ((interrupt_node->type & OP_DUMMY) == 0) {
 			ignoreErrors = false;
 
-			JobStart(interrupt_node, JOB_IGNDOTS, (Job *)0);
+			JobStart(interrupt_node, JOB_IGNDOTS);
 			while (nJobs) {
 				Job_CatchOutput();
 				Job_CatchChildren();
@@ -1930,7 +1923,7 @@ Job_Finish(void)
 		if (errors) {
 			Error("Errors reported so .END ignored");
 		} else {
-			JobStart(end_node, JOB_SPECIAL | JOB_IGNDOTS, NULL);
+			JobStart(end_node, JOB_SPECIAL | JOB_IGNDOTS);
 
 			while (nJobs) {
 				Job_CatchOutput();
