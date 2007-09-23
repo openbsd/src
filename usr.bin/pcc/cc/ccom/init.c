@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 2007/09/22 14:36:18 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 2007/09/23 18:34:38 otto Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -854,6 +854,8 @@ asginit(NODE *p)
 		/* HACKHACKHACK */
 		struct instk *is = pstk;
 
+		if (pstk == NULL)
+			stkpush();
 		while (ISSOU(pstk->in_t) || ISARY(pstk->in_t))
 			stkpush();
 		if (pstk->in_prev && 
