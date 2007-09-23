@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.80 2007/09/18 08:27:22 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.81 2007/09/23 09:39:18 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -190,12 +190,6 @@ static int	aborting = 0;	    /* why is the make aborting? */
 #define ABORT_ERROR	1	    /* Because of an error */
 #define ABORT_INTERRUPT 2	    /* Because it was interrupted */
 #define ABORT_WAIT	3	    /* Waiting for jobs to finish */
-
-/*
- * XXX: Avoid SunOS bug... FILENO() is fp->_file, and file
- * is a char! So when we go above 127 we turn negative!
- */
-#define FILENO(a) ((unsigned) fileno(a))
 
 static int	  numCommands;	    /* The number of commands actually printed
 				     * for a target. Should this number be
@@ -990,7 +984,7 @@ JobExec(Job *job, char **argv)
 		 * marked close-on-exec, we must clear that bit in the new
 		 * input.
 		 */
-		if (dup2(FILENO(job->cmdFILE), 0) == -1)
+		if (dup2(fileno(job->cmdFILE), 0) == -1)
 			Punt("Cannot dup2: %s", strerror(errno));
 		(void)fcntl(0, F_SETFD, 0);
 		(void)lseek(0, 0, SEEK_SET);
@@ -1313,7 +1307,7 @@ JobStart(GNode *gn,	      	/* target to create */
 		if (job->cmdFILE == NULL) {
 			Punt("Could not open %s", tfile);
 		}
-		(void)fcntl(FILENO(job->cmdFILE), F_SETFD, 1);
+		(void)fcntl(fileno(job->cmdFILE), F_SETFD, 1);
 		/*
 		 * Send the commands to the command file, flush all its buffers
 		 * then rewind and remove the thing.
