@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.86 2007/09/23 12:51:59 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.87 2007/09/23 12:53:21 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -163,7 +163,6 @@ typedef struct Job_ {
 #define JOB_SPECIAL	0x004	/* Target is a special one. */
 #define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing
 				 * commands */
-#define JOB_FIRST	0x020	/* Job is first job for the node */
 #define JOB_RESTART	0x080	/* Job needs to be completely restarted */
 #define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
 				 * for some reason */
@@ -930,8 +929,7 @@ JobExec(Job *job, char **argv)
 	 * banner with their name in it never appears). This is an attempt to
 	 * provide that feedback, even if nothing follows it.
 	 */
-	if (lastNode != job->node && (job->flags & JOB_FIRST) &&
-	    !(job->flags & JOB_SILENT)) {
+	if (lastNode != job->node && !(job->flags & JOB_SILENT)) {
 		MESSAGE(stdout, job->node);
 		lastNode = job->node;
 	}
@@ -988,35 +986,31 @@ JobExec(Job *job, char **argv)
 	} else {
 		job->pid = cpid;
 
-		if (job->flags & JOB_FIRST) {
-			/*
-			 * The first time a job is run for a node, we set the
-			 * current position in the buffer to the beginning and
-			 * mark another stream to watch in the outputs mask
-			 */
-			job->curPos = 0;
+		/* we set the current position in the buffer to the beginning
+		 * and mark another stream to watch in the outputs mask
+		 */
+		job->curPos = 0;
 
-			if (outputsp == NULL || job->inPipe > outputsn) {
-				int bytes, obytes;
-				char *tmp;
+		if (outputsp == NULL || job->inPipe > outputsn) {
+			int bytes, obytes;
+			char *tmp;
 
-				bytes = howmany(job->inPipe+1, NFDBITS) *
-				    sizeof(fd_mask);
-				obytes = outputsn ?
-				    howmany(outputsn+1, NFDBITS) *
-				    sizeof(fd_mask) : 0;
+			bytes = howmany(job->inPipe+1, NFDBITS) *
+			    sizeof(fd_mask);
+			obytes = outputsn ?
+			    howmany(outputsn+1, NFDBITS) *
+			    sizeof(fd_mask) : 0;
 
-				if (bytes != obytes) {
-					tmp = realloc(outputsp, bytes);
-					if (tmp == NULL)
-						return;
-					memset(tmp + obytes, 0, bytes - obytes);
-					outputsp = (fd_set *)tmp;
-				}
-				outputsn = job->inPipe;
+			if (bytes != obytes) {
+				tmp = realloc(outputsp, bytes);
+				if (tmp == NULL)
+					return;
+				memset(tmp + obytes, 0, bytes - obytes);
+				outputsp = (fd_set *)tmp;
 			}
-			FD_SET(job->inPipe, outputsp);
+			outputsn = job->inPipe;
 		}
+		FD_SET(job->inPipe, outputsp);
 
 		/*
 		 * XXX: Used to not happen if REMOTE. Why?
@@ -1186,12 +1180,12 @@ JobStart(GNode *gn,	      	/* target to create */
 	char *argv[4];   	/* Argument vector to shell */
 	bool cmdsOK;     	/* true if the nodes commands were all right */
 	bool noExec;     	/* Set true if we decide not to run the job */
+	int fd[2];
 
 	job = emalloc(sizeof(Job));
 	if (job == NULL) {
 		Punt("JobStart out of memory");
 	}
-	flags |= JOB_FIRST;
 
 	job->node = gn;
 	job->tailCmds = NULL;
@@ -1201,24 +1195,19 @@ JobStart(GNode *gn,	      	/* target to create */
 	 * ones and the node's attributes... Any flags supplied by the caller
 	 * are also added to the field.
 	 */
-	job->flags = 0;
+	job->flags = flags;
 	if (Targ_Ignore(gn)) {
 		job->flags |= JOB_IGNERR;
 	}
 	if (Targ_Silent(gn)) {
 		job->flags |= JOB_SILENT;
 	}
-	job->flags |= flags;
 
 	/*
 	 * Check the commands now so any attributes from .DEFAULT have a chance
 	 * to migrate to the node
 	 */
-	if (job->flags & JOB_FIRST) {
-		cmdsOK = Job_CheckCommands(gn, Error);
-	} else {
-		cmdsOK = true;
-	}
+	cmdsOK = Job_CheckCommands(gn, Error);
 
 	/*
 	 * If the -n flag wasn't given, we open up OUR (not the child's)
@@ -1295,7 +1284,7 @@ JobStart(GNode *gn,	      	/* target to create */
 		 * does no harm to keep working up the graph.
 		 */
 		job->cmdFILE = stdout;
-		Job_Touch(gn, job->flags&JOB_SILENT);
+		Job_Touch(gn, job->flags & JOB_SILENT);
 		noExec = true;
 	}
 
@@ -1346,15 +1335,12 @@ JobStart(GNode *gn,	      	/* target to create */
 	 * get the shell's output. If we're using files, print out that we're
 	 * starting a job and then set up its temporary-file name.
 	 */
-	if (job->flags & JOB_FIRST) {
-		int fd[2];
-		if (pipe(fd) == -1)
-			Punt("Cannot create pipe: %s", strerror(errno));
-		job->inPipe = fd[0];
-		job->outPipe = fd[1];
-		(void)fcntl(job->inPipe, F_SETFD, 1);
-		(void)fcntl(job->outPipe, F_SETFD, 1);
-	}
+	if (pipe(fd) == -1)
+		Punt("Cannot create pipe: %s", strerror(errno));
+	job->inPipe = fd[0];
+	job->outPipe = fd[1];
+	(void)fcntl(job->inPipe, F_SETFD, 1);
+	(void)fcntl(job->outPipe, F_SETFD, 1);
 
 	if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL) &&
 	    maxJobs != 0) {
