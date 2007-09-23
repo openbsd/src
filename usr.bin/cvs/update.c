@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.110 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.111 2007/09/23 10:49:49 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -396,7 +396,8 @@ cvs_update_local(struct cvs_file *cf)
 		if (cvs_cmdop != CVS_OP_UPDATE)
 			break;
 
-		if (cvs_directory_tag != NULL && cf->file_rcs->rf_dead != 1)
+		if (cvs_directory_tag != NULL && cf->file_rcs->rf_dead != 1 &&
+		    (cf->file_flags & FILE_HAS_TAG))
 			cvs_checkout_file(cf, cf->file_rcsrev, CO_SETSTICKY);
 		break;
 	default:
