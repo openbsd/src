@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.4 2007/09/23 20:13:28 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -2046,7 +2046,8 @@ doacall(NODE *f, NODE *a)
 	if (ddebug) {
 		printf("doacall.\n");
 		fwalk(f, eprint, 0);
-		fwalk(a, eprint, 0);
+		if (a)
+			fwalk(a, eprint, 0);
 	}
 #endif
 
