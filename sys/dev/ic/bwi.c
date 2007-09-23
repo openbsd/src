@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.40 2007/09/23 13:44:39 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.41 2007/09/23 14:12:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8064,6 +8064,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 #endif
 
 	/* Setup TX descriptor */
+	paddr = tb->tb_dmap->dm_segs[0].ds_addr;
 	sc->sc_setup_txdesc(sc, rd, idx, paddr, m->m_pkthdr.len);
 	bus_dmamap_sync(sc->sc_dmat, rd->rdata_dmap, 0,
 	    rd->rdata_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
