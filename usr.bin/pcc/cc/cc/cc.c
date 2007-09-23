@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.10 2007/09/19 21:42:06 todd Exp $	*/
+/*	$OpenBSD: cc.c,v 1.11 2007/09/23 18:36:30 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -38,6 +38,7 @@
  *
  * Brief description of its syntax:
  * - Files that end with .c are passed via cpp->ccom->as->ld
+ * - Files that end with .i are passed via ccom->as->ld
  * - Files that end with .s are passed as->ld
  * - Files that end with .o are passed directly to ld
  * - Multiple files may be given on the command line.
@@ -320,7 +321,7 @@ main(int argc, char *argv[])
 			t = argv[i];
 			if (*argv[i] == '-' && argv[i][1] == 'L')
 				;
-			else if((c=getsuf(t))=='c' || c=='S' ||
+			else if((c=getsuf(t))=='c' || c=='S' || c=='i' ||
 			    c=='s'|| Eflag) {
 				clist[nc++] = t;
 				if (nc>=MAXFIL)
@@ -349,6 +350,16 @@ main(int argc, char *argv[])
 		errorx(8, "-o given with -c || -S and more than one file");
 	if (outfile && clist[0] && strcmp(outfile, clist[0]) == 0)
 		errorx(8, "output file will be clobbered");
+#if 0
+	for(i=0, j=0; i<nc; i++) {
+		if((c=getsuf(clist[i]))=='c' || c=='S') {
+			j++;
+			break;
+		}
+	}
+	if (j==0 && Eflag)
+		errorx(8, "no file to be preprocessed");
+#endif
 
 	if (gflag) Oflag = 0;
 #if 0
@@ -375,7 +386,11 @@ main(int argc, char *argv[])
 			printf("%s:\n", clist[i]);
 		onlyas = 0;
 		assource = tmp3;
-		if (getsuf(clist[i])=='s') {
+		if (getsuf(clist[i])=='i') {
+			if(Eflag)
+				continue;
+			goto com;
+		} else if (getsuf(clist[i])=='s') {
 			assource = clist[i];
 			onlyas = 1;
 			goto assemble;
@@ -427,6 +442,7 @@ main(int argc, char *argv[])
 		/*
 		 * C compiler
 		 */
+	com:
 		na = 0;
 		av[na++]= "ccom";
 		if (gflag)
