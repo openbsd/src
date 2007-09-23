@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.94 2007/09/18 08:46:10 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.95 2007/09/23 09:47:56 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -157,6 +157,7 @@ static void lookup_sysv_style_include(const char *, const char *, bool);
 static void lookup_sysv_include(const char *, const char *);
 static void lookup_conditional_include(const char *, const char *);
 static bool parse_as_special_line(Buffer, Buffer, const char *);
+static int parse_operator(const char **);
 
 static const char *parse_do_targets(Lst, int *, const char *);
 static void parse_target_line(struct growableArray *, const char *,
@@ -738,6 +739,35 @@ handle_special_targets(Lst paths)
 	}
 }
 
+static int
+parse_operator(const char **pos)
+{
+	const char *cp = *pos;
+	int op = OP_ERROR;
+
+	if (*cp == '!') {
+		op = OP_FORCE;
+	} else if (*cp == ':') {
+		if (cp[1] == ':') {
+			op = OP_DOUBLEDEP;
+			cp++;
+		} else {
+			op = OP_DEPENDS;
+		}
+	} else {
+		Parse_Error(PARSE_FATAL, "Missing dependency operator");
+		return OP_ERROR;
+	}
+
+	cp++;			/* Advance beyond operator */
+
+	/* Get to the first source */
+	while (isspace(*cp))
+		cp++;
+	*pos = cp;
+	return op;
+}
+
 /*-
  *---------------------------------------------------------------------
  * ParseDoDependency  --
@@ -788,31 +818,12 @@ ParseDoDependency(const char *line)	/* the line to parse */
 	if (cp == NULL || specType == SPECIAL_ERROR)
 		return;
 
-	/* Have now parsed all the target names. Must parse the operator next.
-	 * The result is left in op .  */
-	if (*cp == '!') {
-		op = OP_FORCE;
-	} else if (*cp == ':') {
-		if (cp[1] == ':') {
-			op = OP_DOUBLEDEP;
-			cp++;
-		} else {
-			op = OP_DEPENDS;
-		}
-	} else {
-		Parse_Error(PARSE_FATAL, "Missing dependency operator");
+	op = parse_operator(&cp);
+	if (op == OP_ERROR)
 		return;
-	}
-
-	cp++;			/* Advance beyond operator */
 
 	Array_FindP(&gtargets, ParseDoOp, op);
 
-	/*
-	 * Get to the first source
-	 */
-	while (isspace(*cp))
-		cp++;
 	line = cp;
 
 	/*
