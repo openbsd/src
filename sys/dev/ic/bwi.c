@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.41 2007/09/23 14:12:18 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.42 2007/09/23 21:45:37 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -5741,8 +5741,7 @@ bwi_setup_desc32(struct bwi_softc *sc, struct bwi_desc32 *desc_array,
 void
 bwi_power_on(struct bwi_softc *sc, int with_pll)
 {
-	uint32_t gpio_in, gpio_out, gpio_en;
-	uint16_t status;
+	uint32_t gpio_in, gpio_out, gpio_en, status;
 
 	DPRINTF(1, "%s\n", __func__);
 
