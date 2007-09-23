@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.84 2007/09/23 09:46:08 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.85 2007/09/23 12:49:04 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -854,34 +854,7 @@ JobFinish(Job *job,		/* job to finish */
 		(void)fflush(out);
 	}
 
-	/*
-	 * Now handle the -B-mode stuff. If the beast still isn't finished,
-	 * try and restart the job on the next command. If JobStart says it's
-	 * ok, it's ok. If there's an error, this puppy is done.
-	 */
-	if (compatMake && WIFEXITED(*status) && job->node->current != NULL) {
-		switch (JobStart(job->node, job->flags & JOB_IGNDOTS, job)) {
-		case JOB_RUNNING:
-			done = false;
-			break;
-		case JOB_ERROR:
-			done = true;
-			W_SETEXITSTATUS(status, 1);
-			break;
-		case JOB_FINISHED:
-			/*
-			 * If we got back a JOB_FINISHED code, JobStart has
-			 * already called Make_Update and freed the job
-			 * descriptor. We set done to false here to avoid fake
-			 * cycles and double frees.  JobStart needs to do the
-			 * update so we can proceed up the graph when given the
-			 * -n flag..
-			 */
-			done = false;
-			break;
-		}
-	} else
-		done = true;
+	done = true;
 
 	if (done &&
 	    aborting != ABORT_ERROR &&
@@ -1248,7 +1221,7 @@ JobStart(GNode *gn,	      	/* target to create */
 	 * Check the commands now so any attributes from .DEFAULT have a chance
 	 * to migrate to the node
 	 */
-	if (!compatMake && job->flags & JOB_FIRST) {
+	if (job->flags & JOB_FIRST) {
 		cmdsOK = Job_CheckCommands(gn, Error);
 	} else {
 		cmdsOK = true;
@@ -1281,62 +1254,20 @@ JobStart(GNode *gn,	      	/* target to create */
 		noExec = false;
 
 		/*
-		 * used to be backwards; replace when start doing multiple
-		 * commands per shell.
+		 * We can do all the commands at once. hooray for
+		 * sanity
 		 */
-		if (compatMake) {
-			/*
-			 * Be compatible: If this is the first time for this
-			 * node, verify its commands are ok and open the
-			 * commands list for sequential access by later
-			 * invocations of JobStart.  Once that is done, we take
-			 * the next command off the list and print it to the
-			 * command file. If the command was an ellipsis, note
-			 * that there's nothing more to execute.
-			 */
-			if ((job->flags&JOB_FIRST))
-				gn->current = Lst_First(&gn->commands);
-			else
-				gn->current = Lst_Succ(gn->current);
+		numCommands = 0;
+		Lst_ForEachNodeWhile(&gn->commands, JobPrintCommand,
+		    job);
 
-			if (gn->current == NULL ||
-			    !JobPrintCommand(gn->current, job)) {
-				noExec = true;
-				gn->current = NULL;
-			}
-			if (noExec && !(job->flags & JOB_FIRST)) {
-				/*
-				 * If we're not going to execute anything, the
-				 * job is done and we need to close down the
-				 * various file descriptors we've opened for
-				 * output, then call JobDoOutput to catch the
-				 * final characters or send the file to the
-				 * screen... Note that the i/o streams are only
-				 * open if this isn't the first job.  Note also
-				 * that this could not be done in
-				 * Job_CatchChildren b/c it wasn't clear if
-				 * there were more commands to execute or
-				 * not...
-				 */
-				JobClose(job);
-			}
-		} else {
-			/*
-			 * We can do all the commands at once. hooray for
-			 * sanity
-			 */
-			numCommands = 0;
-			Lst_ForEachNodeWhile(&gn->commands, JobPrintCommand,
-			    job);
-
-			/*
-			 * If we didn't print out any commands to the shell
-			 * script, there's not much point in executing the
-			 * shell, is there?
-			 */
-			if (numCommands == 0) {
-				noExec = true;
-			}
+		/*
+		 * If we didn't print out any commands to the shell
+		 * script, there's not much point in executing the
+		 * shell, is there?
+		 */
+		if (numCommands == 0) {
+			noExec = true;
 		}
 	} else if (noExecute) {
 		/*
@@ -1422,7 +1353,7 @@ JobStart(GNode *gn,	      	/* target to create */
 	 * get the shell's output. If we're using files, print out that we're
 	 * starting a job and then set up its temporary-file name.
 	 */
-	if (!compatMake || (job->flags & JOB_FIRST)) {
+	if (job->flags & JOB_FIRST) {
 		int fd[2];
 		if (pipe(fd) == -1)
 			Punt("Cannot create pipe: %s", strerror(errno));
