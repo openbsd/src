@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.43 2007/09/23 22:02:33 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.44 2007/09/23 22:10:53 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -1541,8 +1541,8 @@ bwi_fwimage_is_valid(struct bwi_softc *sc, uint8_t *fw, size_t fw_len,
 	const struct bwi_fwhdr *hdr;
 
 	if (fw_len < sizeof(*hdr)) {
-		printf("invalid firmware (%s): invalid size %u\n",
-		    fw_name, fw_len);
+		printf("%s: invalid firmware (%s): invalid size %u\n",
+		    sc->sc_dev.dv_xname, fw_name, fw_len);
 		return (1);
 	}
 
@@ -1553,25 +1553,27 @@ bwi_fwimage_is_valid(struct bwi_softc *sc, uint8_t *fw, size_t fw_len,
 		 * Don't verify IV's size, it has different meaning
 		 */
 		if (betoh32(hdr->fw_size) != fw_len - sizeof(*hdr)) {
-			printf("invalid firmware (%s): size mismatch, "
+			printf("%s: invalid firmware (%s): size mismatch, "
 			    "fw %u, real %u\n",
-			    fw_name, betoh32(hdr->fw_size),
+			    sc->sc_dev.dv_xname,
+			    fw_name,
+			    betoh32(hdr->fw_size),
 			    fw_len - sizeof(*hdr));
 			return (1);
 		}
 	}
 
 	if (hdr->fw_type != fw_type) {
-		printf("invalid firmware (%s): type mismatch, "
+		printf("%s: invalid firmware (%s): type mismatch, "
 		    "fw \'%c\', target \'%c\'\n",
-		    fw_name, hdr->fw_type, fw_type);
+		    sc->sc_dev.dv_xname, fw_name, hdr->fw_type, fw_type);
 		return (1);
 	}
 
 	if (hdr->fw_gen != BWI_FW_GEN_1) {
-		printf("invalid firmware (%s): wrong generation, "
+		printf("%s: invalid firmware (%s): wrong generation, "
 		    "fw %d, target %d\n",
-		    fw_name, hdr->fw_gen, BWI_FW_GEN_1);
+		    sc->sc_dev.dv_xname, fw_name, hdr->fw_gen, BWI_FW_GEN_1);
 		return (1);
 	}
 
@@ -6757,8 +6759,6 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	/*
 	 * Create TX ring DMA stuffs
 	 */
-
-
 	for (i = 0; i < BWI_TX_NRING; ++i) {
 		error = bus_dmamap_create(sc->sc_dmat, tx_ring_sz, 1,
 		    tx_ring_sz, 0, BUS_DMA_NOWAIT,
@@ -6780,7 +6780,6 @@ bwi_dma_alloc(struct bwi_softc *sc)
 	/*
 	 * Create RX ring DMA stuffs
 	 */
-
 	error = bus_dmamap_create(sc->sc_dmat, rx_ring_sz, 1,
 	    rx_ring_sz, 0, BUS_DMA_NOWAIT,
 	    &sc->sc_rx_rdata.rdata_dmap);
