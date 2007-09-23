@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.48 2007/06/17 20:15:25 jasper Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.49 2007/09/23 20:15:07 millert Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -300,11 +300,13 @@ ext2fs_setattr(void *v)
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 			(error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
-		if (vap->va_atime.tv_sec != VNOVAL)
-			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
-				ip->i_flag |= IN_ACCESS;
 		if (vap->va_mtime.tv_sec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		if (vap->va_atime.tv_sec != VNOVAL) {
+			if (!(vp->v_mount->mnt_flag & MNT_NOATIME) ||
+			    (ip->i_flag & (IN_CHANGE | IN_UPDATE)))
+				ip->i_flag |= IN_ACCESS;
+		}
 		error = ext2fs_update(ip, &vap->va_atime, &vap->va_mtime, 1);
 		if (error)
 			return (error);

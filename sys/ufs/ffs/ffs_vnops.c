@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.45 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.46 2007/09/23 20:15:07 millert Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -249,7 +249,10 @@ ffs_read(void *v)
 	}
 	if (bp != NULL)
 		brelse(bp);
-	ip->i_flag |= IN_ACCESS;
+	if (!(vp->v_mount->mnt_flag & MNT_NOATIME) ||
+	    (ip->i_flag & (IN_CHANGE | IN_UPDATE))) {
+		ip->i_flag |= IN_ACCESS;
+	}
 	return (error);
 }
 
