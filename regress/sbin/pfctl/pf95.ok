@@ -1,0 +1,12 @@
+set require-order no
+myports = "55 66"
+altq on lo0 priq bandwidth 10Mb tbrsize 1824 queue { 80 }
+queue 80 priority 2 priq( default ) 
+table <444> { 1.2.3.4 }
+pass in proto tcp from any to any port = 55 flags S/SA keep state
+pass in proto tcp from any to any port = 66 flags S/SA keep state
+pass in on lo1000000 inet proto tcp from any to 10.0.0.1 port = www flags S/SA modulate state (source-track rule, max-src-conn 100, max-src-conn-rate 10/5, overload <444> flush, src.track 5)
+pass in on lo0 inet from 1.2.3.4 to any flags S/SA keep state label "88"
+pass in on lo0 inet from 1.2.3.4 to any flags S/SA keep state tag 57
+pass in on lo0 inet from 1.2.3.4 to any flags S/SA keep state tagged 57
+anchor "23" on lo0 all

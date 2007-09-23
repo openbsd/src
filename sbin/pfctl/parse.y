@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.522 2007/09/12 18:49:03 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.523 2007/09/23 20:59:59 mpf Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -447,7 +447,7 @@ typedef struct {
 %type	<v.gid>			gids gid_list gid_item
 %type	<v.route>		route
 %type	<v.redirection>		redirection redirpool
-%type	<v.string>		label string tag anchorname
+%type	<v.string>		label string strings tag anchorname
 %type	<v.keep_state>		keep
 %type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>		logquick quick log logopts logopt
@@ -627,16 +627,25 @@ option		: SET OPTIMIZATION STRING		{
 		}
 		;
 
-string		: string STRING				{
+strings		: strings string			{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
 				err(1, "string: asprintf");
 			free($1);
 			free($2);
 		}
-		| STRING
+		| string
 		;
 
-varset		: STRING '=' string		{
+string		: STRING
+		| NUMBER				{
+			if (asprintf(&$$, "%lld", $1) == -1) {
+				yyerror("string: asprintf");
+				YYERROR;
+			}
+		}
+		;
+
+varset		: STRING '=' strings		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
@@ -646,7 +655,7 @@ varset		: STRING '=' string		{
 		}
 		;
 
-anchorname	: STRING			{ $$ = $1; }
+anchorname	: string			{ $$ = $1; }
 		| /* empty */			{ $$ = NULL; }
 		;
 
@@ -1279,7 +1288,7 @@ table_opt	: STRING		{
 			    entries);
 			table_opts.init_addr = 1;
 		}
-		| FILENAME STRING	{
+		| FILENAME string	{
 			struct node_tinit	*ti;
 
 			if (!(ti = calloc(1, sizeof(*ti))))
@@ -1315,7 +1324,7 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 		}
 		;
 
-queuespec	: QUEUE STRING interface queue_opts qassign {
+queuespec	: QUEUE string interface queue_opts qassign {
 			struct pf_altq	a;
 
 			if (check_rulestate(PFCTL_STATE_QUEUE)) {
@@ -1659,7 +1668,7 @@ qassign_list	: qassign_item			{ $$ = $1; }
 		}
 		;
 
-qassign_item	: STRING			{
+qassign_item	: string			{
 			$$ = calloc(1, sizeof(struct node_queue));
 			if ($$ == NULL)
 				err(1, "qassign_item: calloc");
@@ -2620,7 +2629,7 @@ host		: STRING			{
 			for (n = $1; n != NULL; n = n->next)
 				set_ipmask(n, $3);
 		}
-		| '<' STRING '>'	{
+		| '<' string '>'	{
 			if (strlen($2) >= PF_TABLE_NAME_SIZE) {
 				yyerror("table name '%s' too long", $2);
 				free($2);
@@ -3285,7 +3294,7 @@ state_opt_item	: MAXIMUM NUMBER		{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| OVERLOAD '<' STRING '>' flush		{
+		| OVERLOAD '<' string '>' flush		{
 			if (strlen($3) >= PF_TABLE_NAME_SIZE) {
 				yyerror("table name '%s' too long", $3);
 				free($3);
@@ -3366,18 +3375,18 @@ state_opt_item	: MAXIMUM NUMBER		{
 		}
 		;
 
-label		: LABEL STRING			{
+label		: LABEL string			{
 			$$ = $2;
 		}
 		;
 
-qname		: QUEUE STRING				{
+qname		: QUEUE string				{
 			$$.qname = $2;
 		}
-		| QUEUE '(' STRING ')'			{
+		| QUEUE '(' string ')'			{
 			$$.qname = $3;
 		}
-		| QUEUE '(' STRING comma STRING ')'	{
+		| QUEUE '(' string comma string ')'	{
 			$$.qname = $3;
 			$$.pqname = $5;
 		}
@@ -3943,7 +3952,7 @@ binatrule	: no BINAT natpasslog interface af proto FROM host TO ipspec tag
 		;
 
 tag		: /* empty */		{ $$ = NULL; }
-		| TAG STRING		{ $$ = $2; }
+		| TAG string		{ $$ = $2; }
 		;
 
 tagged		: /* empty */		{ $$.neg = 0; $$.name = NULL; }
