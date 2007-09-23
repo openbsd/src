@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tutorial.ms,v 1.11 2007/09/16 10:57:03 espie Exp $
+.\"	$OpenBSD: tutorial.ms,v 1.12 2007/09/23 09:49:18 espie Exp $
 .\"	$NetBSD: tutorial.ms,v 1.3 1996/03/06 00:15:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
@@ -1379,9 +1379,6 @@ Debugging of makefiles is best accomplished using the
 and
 .B "\-d m"
 flags.
-.xH 2 Exercises
-.ce
-\s+4\fBTBA\fP\s0
 .xH 1 Short-cuts and Other Nice Things
 .LP
 Based on what I've told you so far, you may have gotten the impression
@@ -1835,18 +1832,6 @@ to the target of the transformation rule when the rule is applied.
 .Ix 0 ref source
 .Ix 0 ref target
 .nr pw 12
-.IP .DONTCARE \n(pw
-.Ix 0 def attributes .DONTCARE
-.Ix 0 def .DONTCARE
-If a target is marked with this attribute and Make can't figure out
-how to create it, it will ignore this fact and assume the file isn't
-really needed or actually exists and Make just can't find it. This may prove
-wrong, but the error will be noted later on, not when Make tries to create
-the target so marked. This attribute also prevents Make from
-attempting to touch the target if it is given the
-.B \-t
-flag.
-.Ix 0 ref flags -t
 .IP .EXEC \n(pw
 .Ix 0 def attributes .EXEC
 .Ix 0 def .EXEC
@@ -1902,25 +1887,6 @@ as a source. This is because none of the other targets can be made
 until
 .CW init
 has been made, thus they depend on it.
-.IP .EXPORT \n(pw
-.Ix 0 def attributes .EXPORT
-.Ix 0 def .EXPORT
-This is used to mark those targets whose creation should be sent to
-another machine if at all possible. This may be used by some
-exportation schemes if the exportation is expensive. You should ask
-your system administrator if it is necessary.
-.IP .EXPORTSAME \n(pw
-.Ix 0 def attributes .EXPORTSAME
-.Ix 0 def .EXPORTSAME
-Tells the export system that the job should be exported to a machine
-of the same architecture as the current one. Certain operations (e.g.
-running text through
-.CW nroff )
-can be performed the same on any architecture (CPU and
-operating system type), while others (e.g. compiling a program with
-.CW cc )
-must be performed on a machine with the same architecture. Not all
-export systems will support this attribute.
 .IP .IGNORE \n(pw
 .Ix 0 def attributes .IGNORE
 .Ix 0 def .IGNORE attribute
@@ -2033,17 +1999,6 @@ and have it descend the directory tree (if your makefiles are set up
 correctly), printing what it would have executed if you hadn't
 included the
 .B \-n
-flag.
-.IP .NOEXPORT \n(pw
-.Ix 0 def attributes .NOEXPORT
-.Ix 0 def .NOEXPORT attribute
-If possible, Make will attempt to export the creation of all targets to
-another machine (this depends on how Make was configured). Sometimes,
-the creation is so simple, it is pointless to send it to another
-machine. If you give the target the
-.CW .NOEXPORT
-attribute, it will be run locally, even if you've given Make the
-.B "\-L 0"
 flag.
 .IP .NOTMAIN \n(pw
 .Ix 0 def attributes .NOTMAIN
@@ -2170,10 +2125,6 @@ function of being a place on which Make can hang commands you put off
 to the end. Thus the script for this target will be executed before
 any of the commands you save with the ``.\|.\|.''.
 .Ix 0 ref ...
-.IP .EXPORT \n(pw
-The sources for this target are passed to the exportation system compiled
-into Make. Some systems will use these sources to configure
-themselves. You should ask your system administrator about this.
 .IP .IGNORE \n(pw
 .Ix 0 def .IGNORE target
 .Ix 0 ref .IGNORE attribute
@@ -2515,17 +2466,6 @@ How can you still use transformation rules to make your life easier
 (Hint: assume the error-checking versions have
 .CW ec
 tacked onto their prefix)?
-.IP (3.2)
-Assume, for a moment or two, you want to perform a sort of
-``indirection'' by placing the name of a variable into another one,
-then you want to get the value of the first by expanding the second
-somehow. Unfortunately, Make doesn't allow constructs like
-.DS I
-$($(FOO))
-.DE
-What do you do? Hint: no further variable expansion is performed after
-modifiers are applied, thus if you cause a $ to occur in the
-expansion, that's what will be in the result.
 .xH 1 Make for Gods
 .LP
 This chapter is devoted to those facilities in Make that allow you to
