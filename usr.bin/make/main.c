@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.84 2007/09/18 07:45:25 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.85 2007/09/23 09:44:39 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -75,9 +75,6 @@
 # endif
 #endif
 
-#ifndef DEFMAXLOCAL
-#define DEFMAXLOCAL DEFMAXJOBS
-#endif	/* DEFMAXLOCAL */
 
 #define MAKEFLAGS	".MAKEFLAGS"
 
@@ -89,7 +86,6 @@ static bool		noBuiltins;	/* -r flag */
 static LIST		makefiles;	/* ordered list of makefiles to read */
 static LIST		varstoprint;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
-static int		maxLocal;	/* -L argument */
 bool 		compatMake;	/* -B argument */
 int 		debug;		/* -d flag */
 bool 		noExecute;	/* -n flag */
@@ -300,7 +296,6 @@ MainParseArgs(int argc, char **argv)
 					optarg);
 				usage();
 			}
-			maxLocal = maxJobs;
 			record_option(c, optarg);
 			break;
 		}
@@ -676,8 +671,7 @@ main(int argc, char **argv)
 	touchFlag = false;		/* Actually update targets */
 	debug = 0;			/* No debug verbosity, please. */
 
-	maxLocal = DEFMAXLOCAL; 	/* Set default local max concurrency */
-	maxJobs = maxLocal;
+	maxJobs = DEFMAXJOBS;
 	compatMake = false;		/* No compat mode */
 
 
@@ -786,11 +780,8 @@ main(int argc, char **argv)
 			 * read. This is done only if the -q flag wasn't given
 			 * (to prevent the .BEGIN from being executed should
 			 * it exist).  */
-			if (!queryFlag) {
-				if (maxLocal == -1)
-					maxLocal = maxJobs;
-				Job_Init(maxJobs, maxLocal);
-			}
+			if (!queryFlag)
+				Job_Init(maxJobs);
 
 			/* Traverse the graph, checking on all the targets.  */
 			outOfDate = Make_Run(&targs);
