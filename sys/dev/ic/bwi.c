@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.39 2007/09/18 17:35:38 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.40 2007/09/23 13:44:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7332,7 +7332,6 @@ bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 	if (!init)
 		bus_dmamap_unload(sc->sc_dmat, rxbuf->rb_dmap);
 	rxbuf->rb_mbuf = m;
-	rxbuf->rb_paddr = paddr;
 
 	/*
 	 * Swap RX buf's DMA map with the loaded temporary one
@@ -7340,6 +7339,8 @@ bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 	map = rxbuf->rb_dmap;
 	rxbuf->rb_dmap = rbd->rbd_tmp_dmap;
 	rbd->rbd_tmp_dmap = map;
+	paddr = rxbuf->rb_dmap->dm_segs[0].ds_addr;
+	rxbuf->rb_paddr = paddr;
 
 back:
 	/*
