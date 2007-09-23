@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.104 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.105 2007/09/23 11:19:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -249,7 +249,7 @@ checkout_repository(const char *repobase, const char *wdbase)
 }
 
 void
-cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
+cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 {
 	int kflag, oflags, exists;
 	time_t rcstime;
@@ -326,9 +326,9 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, int co_flags)
 	}
 
 	if (co_flags & CO_SETSTICKY)
-		if (cvs_directory_tag != NULL)
+		if (tag != NULL)
 			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
-			    cvs_directory_tag);
+			    tag);
 		else
 			(void)xsnprintf(stickytag, sizeof(stickytag), "T%s",
 			    rev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.111 2007/09/23 10:49:49 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.112 2007/09/23 11:19:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -287,6 +287,7 @@ cvs_update_leavedir(struct cvs_file *cf)
 void
 cvs_update_local(struct cvs_file *cf)
 {
+	char *tag;
 	int ret, flags;
 	CVSENTRIES *entlist;
 	char rbuf[CVS_REV_BUFSZ];
@@ -304,7 +305,15 @@ cvs_update_local(struct cvs_file *cf)
 	}
 
 	flags = 0;
-	cvs_file_classify(cf, cvs_directory_tag);
+	if (cvs_specified_tag != NULL)
+		tag = cvs_specified_tag;
+	else
+		tag = cvs_directory_tag;
+
+	cvs_file_classify(cf, tag);
+
+	if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
+		tag = cf->file_ent->ce_tag;
 
 	if ((cf->file_status == FILE_UPTODATE ||
 	    cf->file_status == FILE_MODIFIED) && cf->file_ent != NULL &&
@@ -330,7 +339,7 @@ cvs_update_local(struct cvs_file *cf)
 			cvs_log(LP_RCS, "VERS: %s", rbuf);
 			cvs_log(LP_RCS, "***************");
 		}
-		cvs_checkout_file(cf, cf->file_rcsrev, CO_DUMP);
+		cvs_checkout_file(cf, cf->file_rcsrev, tag, CO_DUMP);
 		return;
 	}
 
@@ -360,17 +369,17 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_LOST:
 	case FILE_CHECKOUT:
 	case FILE_PATCH:
-		if (cvs_directory_tag != NULL ||
+		if ((tag != NULL && reset_stickies != 1) ||
 		    (((cf->file_ent != NULL) && cf->file_ent->ce_tag != NULL) &&
 		    (reset_stickies != 1)))
 			flags = CO_SETSTICKY;
 
-		cvs_checkout_file(cf, cf->file_rcsrev, flags);
+		cvs_checkout_file(cf, cf->file_rcsrev, tag, flags);
 		cvs_printf("U %s\n", cf->file_path);
 		cvs_history_add(CVS_HISTORY_UPDATE_CO, cf, NULL);
 		break;
 	case FILE_MERGE:
-		cvs_checkout_file(cf, cf->file_rcsrev, CO_MERGE);
+		cvs_checkout_file(cf, cf->file_rcsrev, tag, CO_MERGE);
 
 		if (diff3_conflicts != 0) {
 			cvs_printf("C %s\n", cf->file_path);
@@ -385,7 +394,7 @@ cvs_update_local(struct cvs_file *cf)
 	case FILE_UNLINK:
 		(void)unlink(cf->file_path);
 		if (cvs_server_active == 1)
-			cvs_checkout_file(cf, cf->file_rcsrev, CO_REMOVE);
+			cvs_checkout_file(cf, cf->file_rcsrev, tag, CO_REMOVE);
 	case FILE_REMOVE_ENTRY:
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_remove(entlist, cf->file_name);
@@ -396,9 +405,10 @@ cvs_update_local(struct cvs_file *cf)
 		if (cvs_cmdop != CVS_OP_UPDATE)
 			break;
 
-		if (cvs_directory_tag != NULL && cf->file_rcs->rf_dead != 1 &&
+		if (tag != NULL && cf->file_rcs->rf_dead != 1 &&
 		    (cf->file_flags & FILE_HAS_TAG))
-			cvs_checkout_file(cf, cf->file_rcsrev, CO_SETSTICKY);
+			cvs_checkout_file(cf, cf->file_rcsrev,
+			    tag, CO_SETSTICKY);
 		break;
 	default:
 		break;

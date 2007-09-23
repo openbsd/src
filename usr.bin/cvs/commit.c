@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.110 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.111 2007/09/23 11:19:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -359,7 +359,7 @@ cvs_commit_local(struct cvs_file *cf)
 	cf->fd = -1;
 
 	if (cf->file_status != FILE_REMOVED) {
-		cvs_checkout_file(cf, cf->file_rcs->rf_head, CO_COMMIT);
+		cvs_checkout_file(cf, cf->file_rcs->rf_head, NULL, CO_COMMIT);
 	} else {
 		entlist = cvs_ent_open(cf->file_wd);
 		cvs_ent_remove(entlist, cf->file_name);

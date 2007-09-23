@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.200 2007/09/23 10:49:49 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.201 2007/09/23 11:19:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -617,6 +617,9 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		    cf->file_type != CVS_FILE)
 			fatal("%s is supposed to be a file, but it is not",
 			    cf->file_path);
+
+		if (cf->file_ent->ce_tag != NULL)
+			tag = cf->file_ent->ce_tag;
 	}
 
 	if (cf->file_type == CVS_DIR) {

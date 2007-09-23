@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.81 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.82 2007/09/23 11:19:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -278,7 +278,7 @@ add_file(struct cvs_file *cf)
 
 			/* Restore the file. */
 			head = rcs_head_get(cf->file_rcs);
-			cvs_checkout_file(cf, head, 0);
+			cvs_checkout_file(cf, head, NULL, 0);
 			rcsnum_free(head);
 
 			cvs_printf("U %s\n", cf->file_path);
