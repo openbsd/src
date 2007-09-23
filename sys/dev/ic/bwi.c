@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.44 2007/09/23 22:10:53 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.45 2007/09/23 22:59:44 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6688,7 +6688,7 @@ bwi_media_change(struct ifnet *ifp)
 		return (error);
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
-		bwi_init(ifp->if_softc);
+		bwi_init(ifp);
 
 	return (0);
 }
