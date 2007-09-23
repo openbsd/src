@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.42 2007/09/23 21:45:37 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.43 2007/09/23 22:02:33 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -515,8 +515,6 @@ bwi_intr(void *xsc)
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
 	int i, txrx_error;
 
-	DPRINTF(2, "%s\n", __func__);
-
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return (0);
 
@@ -526,18 +524,16 @@ bwi_intr(void *xsc)
 	intr_status = CSR_READ_4(sc, BWI_MAC_INTR_STATUS);
 	if (intr_status == 0xffffffff)	/* Not for us */
 		return (0);
-#if 0
-	DPRINTF(1, "%s: intr status 0x%08x\n",
-	    sc->sc_dev.dv_xname, intr_status);
-#endif
+
 	intr_status &= CSR_READ_4(sc, BWI_MAC_INTR_MASK);
 	if (intr_status == 0)		/* Nothing is interesting */
 		return (1);
 
+	DPRINTF(2, "%s: intr status 0x%08x\n",
+	    sc->sc_dev.dv_xname, intr_status);
+
 	txrx_error = 0;
-#if 0
-	DPRINTF(1, "%s: TX/RX intr", sc->sc_dev.dv_xname);
-#endif
+
 	for (i = 0; i < BWI_TXRX_NRING; ++i) {
 		uint32_t mask;
 
@@ -547,19 +543,14 @@ bwi_intr(void *xsc)
 			mask = BWI_TXRX_TX_INTRS;
 
 		txrx_intr_status[i] =
-		CSR_READ_4(sc, BWI_TXRX_INTR_STATUS(i)) & mask;
-#if 0
-		printf(", %d 0x%08x", i, txrx_intr_status[i]);
-#endif
+		    CSR_READ_4(sc, BWI_TXRX_INTR_STATUS(i)) & mask;
+
 		if (txrx_intr_status[i] & BWI_TXRX_INTR_ERROR) {
 			DPRINTF(1, "%s: intr fatal TX/RX (%d) error 0x%08x\n",
 			    sc->sc_dev.dv_xname, i, txrx_intr_status[i]);
 			txrx_error = 1;
 		}
 	}
-#if 0
-	printf("\n");
-#endif
 
 	/*
 	 * Acknowledge interrupt
@@ -5783,7 +5774,7 @@ bwi_power_off(struct bwi_softc *sc, int with_pll)
 {
 	uint32_t gpio_out, gpio_en;
 
-	printf("%s\n", __func__);
+	DPRINTF(1, "%s\n", __func__);
 
 	(sc->sc_conf_read)(sc, BWI_PCIR_GPIO_IN); /* dummy read */
 	gpio_out = (sc->sc_conf_read)(sc, BWI_PCIR_GPIO_OUT);
