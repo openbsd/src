@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.87 2007/09/23 12:53:21 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.88 2007/09/23 14:58:50 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -108,8 +108,6 @@
 #include "memory.h"
 #include "make.h"
 
-#define TMPPAT	"/tmp/makeXXXXXXXXXX"
-
 /*
  * The SEL_ constants determine the maximum amount of time spent in select
  * before coming out to see if a child has finished. SEL_SEC is the number of
@@ -201,14 +199,6 @@ static int	  numCommands;	    /* The number of commands actually printed
 #define JOB_FINISHED	2	/* The job is already finished */
 #define JOB_STOPPED	3	/* The job is stopped */
 
-/*
- * tfile is the name of a file into which all shell commands are put. It is
- * used over by removing it before the child shell is executed. The XXXXXXXXXX
- * in the string are replaced by mkstemp(3).
- */
-static char	tfile[sizeof(TMPPAT)];
-
-
 #define SHELL_ECHO_OFF	"set -"
 #define SHELL_ECHO_ON	"set -v"
 #define SHELL_ERROR_ON	"set -e"
@@ -297,6 +287,7 @@ static void JobInterrupt(int, int);
 static void JobRestartJobs(void);
 static void DBPRINTF(Job *, const char *, ...);
 static void debug_printf(const char *, ...);
+static FILE *new_command_file(void);
 
 static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
     got_SIGTERM;
@@ -304,6 +295,25 @@ static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
 static volatile sig_atomic_t got_SIGTSTP, got_SIGTTOU, got_SIGTTIN,
     got_SIGWINCH;
 #endif
+
+#define TMPPAT	"/tmp/makeXXXXXXXXXX"
+
+static FILE *
+new_command_file()
+{
+	int fd;
+	FILE *f;
+	char tmp[] = TMPPAT;
+
+	fd = mkstemp(tmp);
+	if (fd == -1)
+		return NULL;
+	f = fdopen(fd, "w");
+	if (f == NULL)
+		close(fd);
+	eunlink(tmp);
+	return f;
+}
 
 static void
 SigHandler(int sig)
@@ -890,7 +900,6 @@ JobFinish(Job *job,		/* job to finish */
 		/*
 		 * If we are aborting and the job table is now empty, we finish.
 		 */
-		(void)eunlink(tfile);
 		Finish(errors);
 	}
 }
@@ -1224,9 +1233,9 @@ JobStart(GNode *gn,	      	/* target to create */
 			DieHorribly();
 		}
 
-		job->cmdFILE = fopen(tfile, "w+");
+		job->cmdFILE = new_command_file();
 		if (job->cmdFILE == NULL) {
-			Punt("Could not open %s", tfile);
+			Punt("Error creating command file");
 		}
 		(void)fcntl(fileno(job->cmdFILE), F_SETFD, 1);
 		/*
@@ -1296,7 +1305,6 @@ JobStart(GNode *gn,	      	/* target to create */
 		 * Unlink and close the command file if we opened one
 		 */
 		if (job->cmdFILE != stdout) {
-			(void)eunlink(tfile);
 			if (job->cmdFILE != NULL)
 				(void)fclose(job->cmdFILE);
 		} else {
@@ -1321,7 +1329,6 @@ JobStart(GNode *gn,	      	/* target to create */
 		}
 	} else {
 		(void)fflush(job->cmdFILE);
-		(void)eunlink(tfile);
 	}
 
 	/*
@@ -1711,14 +1718,6 @@ Job_Make(GNode *gn)
 void
 Job_Init(int maxproc)
 {
-	int tfd;
-
-	(void)strlcpy(tfile, TMPPAT, sizeof(tfile));
-	if ((tfd = mkstemp(tfile)) == -1)
-		Punt("Cannot create temp file: %s", strerror(errno));
-	else
-		(void)close(tfd);
-
 	Static_Lst_Init(&jobs);
 	Static_Lst_Init(&stoppedJobs);
 	maxJobs =	  maxproc;
@@ -1884,7 +1883,6 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 			}
 		}
 	}
-	(void)eunlink(tfile);
 	exit(signo);
 }
 
@@ -1897,9 +1895,6 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
  * Results:
  *	Number of errors reported.
  *
- * Side Effects:
- *	The process' temporary file (tfile) is removed if it still
- *	existed.
  *-----------------------------------------------------------------------
  */
 int
@@ -1917,7 +1912,6 @@ Job_Finish(void)
 			}
 		}
 	}
-	(void)eunlink(tfile);
 	return errors;
 }
 
@@ -1988,7 +1982,6 @@ Job_AbortAll(void)
 	 */
 	while (waitpid(-1, &foo, WNOHANG) > 0)
 		continue;
-	(void)eunlink(tfile);
 }
 
 /*-
