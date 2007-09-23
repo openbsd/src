@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.83 2007/09/23 09:44:39 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.84 2007/09/23 09:46:08 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -297,6 +297,7 @@ static void JobDoOutput(Job *, bool);
 static void JobInterrupt(int, int);
 static void JobRestartJobs(void);
 static void DBPRINTF(Job *, const char *, ...);
+static void debug_printf(const char *, ...);
 
 static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
     got_SIGTERM;
@@ -508,6 +509,19 @@ DBPRINTF(Job *job, const char *fmt, ...)
 	va_end(va);
 }
 
+static void
+debug_printf(const char *fmt, ...)
+{
+	if (DEBUG(JOB)) {
+		va_list va;
+
+		va_start(va, fmt);
+		(void)vfprintf(stdout, fmt, va);
+		fflush(stdout);
+		va_end(va);
+	}
+}
+	
 /*-
  *-----------------------------------------------------------------------
  * JobPrintCommand  --
@@ -753,11 +767,7 @@ JobFinish(Job *job,		/* job to finish */
 		out = stdout;
 
 		if (WIFEXITED(*status)) {
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout,
-				    "Process %ld exited.\n", (long)job->pid);
-				(void)fflush(stdout);
-			}
+			debug_printf("Process %ld exited.\n", (long)job->pid);
 			if (WEXITSTATUS(*status) != 0) {
 				if (job->node != lastNode) {
 					MESSAGE(out, job->node);
@@ -780,11 +790,7 @@ JobFinish(Job *job,		/* job to finish */
 				    "*** Completed successfully\n");
 			}
 		} else if (WIFSTOPPED(*status)) {
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout,
-				    "Process %ld stopped.\n", (long)job->pid);
-				(void)fflush(stdout);
-			}
+			debug_printf("Process %ld stopped.\n", (long)job->pid);
 			if (job->node != lastNode) {
 				MESSAGE(out, job->node);
 				lastNode = job->node;
@@ -810,12 +816,10 @@ JobFinish(Job *job,		/* job to finish */
 				(void)fprintf(out, "*** Continued\n");
 			}
 			if (!(job->flags & JOB_CONTINUING)) {
-				if (DEBUG(JOB)) {
-					(void)fprintf(stdout,
-					    "Warning: process %ld was not continuing.\n",
-					    (long)job->pid);
-					(void)fflush(stdout);
-				}
+				debug_printf(
+				    "Warning: "
+				    "process %ld was not continuing.\n",
+				    (long)job->pid);
 #if 0
 				/*
 				 * We don't really want to restart a job from
@@ -830,19 +834,11 @@ JobFinish(Job *job,		/* job to finish */
 			job->flags &= ~JOB_CONTINUING;
 			Lst_AtEnd(&jobs, job);
 			nJobs++;
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout,
-				    "Process %ld is continuing locally.\n",
-				    (long)job->pid);
-				(void)fflush(stdout);
-			}
+			debug_printf("Process %ld is continuing locally.\n",
+			    (long)job->pid);
 			if (nJobs == maxJobs) {
 				jobFull = true;
-				if (DEBUG(JOB)) {
-					(void)fprintf(stdout,
-					    "Job queue is full.\n");
-					(void)fflush(stdout);
-				}
+				debug_printf("Job queue is full.\n");
 			}
 			(void)fflush(out);
 			return;
@@ -1131,25 +1127,16 @@ JobRestart(Job *job)
 			 * put it back on the hold queue and mark the table
 			 * full
 			 */
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "holding\n");
-				(void)fflush(stdout);
-			}
+			debug_printf("holding\n");
 			Lst_AtFront(&stoppedJobs, job);
 			jobFull = true;
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "Job queue is full.\n");
-				(void)fflush(stdout);
-			}
+			debug_printf("Job queue is full.\n");
 			return;
 		} else {
 			/*
 			 * Job may be run locally.
 			 */
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "running locally\n");
-				(void)fflush(stdout);
-			}
+			debug_printf("running locally\n");
 		}
 		JobExec(job, argv);
 	} else {
@@ -1157,10 +1144,7 @@ JobRestart(Job *job)
 		 * The job has stopped and needs to be restarted. Why it
 		 * stopped, we don't know...
 		 */
-		if (DEBUG(JOB)) {
-		       (void)fprintf(stdout, "Resuming %s...", job->node->name);
-		       (void)fflush(stdout);
-		}
+		debug_printf("Resuming %s...", job->node->name);
 		if ((nJobs < maxJobs || ((job->flags & JOB_SPECIAL) &&
 		    maxJobs == 0)) && nJobs != maxJobs) {
 			/*
@@ -1183,10 +1167,7 @@ JobRestart(Job *job)
 				JobFinish(job, &status);
 
 				job->flags &= ~(JOB_RESUME|JOB_CONTINUING);
-				if (DEBUG(JOB)) {
-				       (void)fprintf(stdout, "done\n");
-				       (void)fflush(stdout);
-				}
+				debug_printf("done\n");
 			} else {
 				Error("couldn't resume %s: %s",
 				    job->node->name, strerror(errno));
@@ -1199,16 +1180,10 @@ JobRestart(Job *job)
 			 * Job cannot be restarted. Mark the table as full and
 			 * place the job back on the list of stopped jobs.
 			 */
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "table full\n");
-				(void)fflush(stdout);
-			}
+			debug_printf("table full\n");
 			Lst_AtFront(&stoppedJobs, job);
 			jobFull = true;
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, "Job queue is full.\n");
-				(void)fflush(stdout);
-			}
+			debug_printf("Job queue is full.\n");
 		}
 	}
 }
@@ -1470,10 +1445,7 @@ JobStart(GNode *gn,	      	/* target to create */
 		 */
 		jobFull = true;
 
-		if (DEBUG(JOB)) {
-		       (void)fprintf(stdout, "Can only run job locally.\n");
-		       (void)fflush(stdout);
-		}
+		debug_printf("Can only run job locally.\n");
 		job->flags |= JOB_RESTART;
 		Lst_AtEnd(&stoppedJobs, job);
 	} else {
@@ -1483,11 +1455,7 @@ JobStart(GNode *gn,	      	/* target to create */
 			 * (see above), at least say the table is full.
 			 */
 			jobFull = true;
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout, 
-				    "Local job queue is full.\n");
-				(void)fflush(stdout);
-			}
+			debug_printf("Local job queue is full.\n");
 		}
 		JobExec(job, argv);
 	}
@@ -1724,12 +1692,7 @@ Job_CatchChildren()
 
 	while ((pid = waitpid((pid_t) -1, &status, WNOHANG|WUNTRACED)) > 0) {
 		HandleSigs();
-		if (DEBUG(JOB)) {
-			(void)fprintf(stdout,
-			    "Process %ld exited or stopped.\n", (long)pid);
-			(void)fflush(stdout);
-		}
-
+		debug_printf("Process %ld exited or stopped.\n", (long)pid);
 
 		jnode = Lst_Find(&jobs, JobCmpPid, &pid);
 
@@ -1751,11 +1714,8 @@ Job_CatchChildren()
 			job = (Job *)Lst_Datum(jnode);
 			Lst_Remove(&jobs, jnode);
 			nJobs--;
-			if (jobFull && DEBUG(JOB)) {
-				(void)fprintf(stdout,
-				    "Job queue is no longer full.\n");
-				(void)fflush(stdout);
-			}
+			if (jobFull)
+				debug_printf("Job queue is no longer full.\n");
 			jobFull = false;
 		}
 
@@ -1997,12 +1957,8 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 			}
 		}
 		if (job->pid) {
-			if (DEBUG(JOB)) {
-				(void)fprintf(stdout,
-				    "JobInterrupt passing signal to child %ld.\n",
-				    (long)job->pid);
-				(void)fflush(stdout);
-			}
+			debug_printf("JobInterrupt passing signal to "
+			    "child %ld.\n", (long)job->pid);
 			KILL(job->pid, signo);
 		}
 	}
@@ -2142,11 +2098,8 @@ JobRestartJobs(void)
 	Job *job;
 
 	while (!jobFull && (job = (Job *)Lst_DeQueue(&stoppedJobs)) != NULL) {
-		if (DEBUG(JOB)) {
-			(void)fprintf(stdout,
-			    "Job queue is not full. Restarting a stopped job.\n");
-			(void)fflush(stdout);
-		}
+		debug_printf("Job queue is not full. "
+		    "Restarting a stopped job.\n");
 		JobRestart(job);
 	}
 }
