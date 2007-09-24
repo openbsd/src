@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.112 2007/09/24 13:44:20 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.113 2007/09/24 13:56:09 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -264,7 +264,7 @@ cvs_commit_local(struct cvs_file *cf)
 	int onbranch, isnew, histtype;
 	RCSNUM *nrev, *crev, *rrev, *brev;
 	int openflags, rcsflags;
-	char foo[24], rbuf[24], nbuf[24];
+	char rbuf[24], nbuf[24];
 	CVSENTRIES *entlist;
 	char attic[MAXPATHLEN], repo[MAXPATHLEN], rcsfile[MAXPATHLEN];
 
