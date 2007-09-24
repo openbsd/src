@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.150 2007/09/18 18:56:02 markus Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.151 2007/09/24 11:17:20 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1874,7 +1874,12 @@ carp_addr_updated(void *v)
 		mc_addr.s_addr = INADDR_CARP_GROUP;
 		IN_LOOKUP_MULTI(mc_addr, &sc->sc_if, inm);
 		if (inm == NULL) {
+			struct in_multi **imm = sc->sc_imo.imo_membership;
+			u_int16_t maxmem = sc->sc_imo.imo_max_memberships;
+
 			bzero(&sc->sc_imo, sizeof(sc->sc_imo));
+			sc->sc_imo.imo_membership = imm;
+			sc->sc_imo.imo_max_memberships = maxmem;
 
 			if (sc->sc_carpdev != NULL && sc->sc_naddrs > 0)
 				carp_join_multicast(sc);
@@ -1961,17 +1966,15 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 int
 carp_join_multicast(struct carp_softc *sc)
 {
-	struct ip_moptions *imo = &sc->sc_imo, tmpimo;
+	struct ip_moptions *imo = &sc->sc_imo;
+	struct in_multi *imm;
 	struct in_addr addr;
 
-	bzero(&tmpimo, sizeof(tmpimo));
 	addr.s_addr = INADDR_CARP_GROUP;
-	if ((tmpimo.imo_membership[0] =
-	    in_addmulti(&addr, &sc->sc_if)) == NULL) {
+	if ((imm = in_addmulti(&addr, &sc->sc_if)) == NULL)
 		return (ENOBUFS);
-	}
 
-	imo->imo_membership[0] = tmpimo.imo_membership[0];
+	imo->imo_membership[0] = imm;
 	imo->imo_num_memberships = 1;
 	imo->imo_multicast_ifp = &sc->sc_if;
 	imo->imo_multicast_ttl = CARP_DFLTTL;
