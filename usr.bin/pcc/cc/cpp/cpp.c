@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.8 2007/09/21 08:15:36 gilles Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.9 2007/09/24 16:04:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -176,7 +176,7 @@ main(int argc, char **argv)
 	struct symtab *nl;
 	register int ch;
 
-	while ((ch = getopt(argc, argv, "CD:I:MS:U:d:i:tv")) != -1)
+	while ((ch = getopt(argc, argv, "CD:I:MS:U:d:i:tvV")) != -1)
 		switch (ch) {
 		case 'C': /* Do not discard comments */
 			Cflag++;
@@ -213,10 +213,13 @@ main(int argc, char **argv)
 			break;
 
 #ifdef CPP_DEBUG
-		case 'v':
+		case 'V':
 			dflag++;
 			break;
 #endif
+		case 'v':
+			printf("cpp: %s\n", VERSSTR);
+			break;
 		case 'd':
 			if (optarg[0] == 'M') {
 				dMflag = 1;

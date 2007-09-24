@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2007/09/15 22:04:38 ray Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 2007/09/24 16:04:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
 
 	prgname = argv[0];
 
-	while ((ch = getopt(argc, argv, "VlwX:Z:W:sOT:gx:k")) != -1)
+	while ((ch = getopt(argc, argv, "VlwX:Z:W:sOT:gx:kv")) != -1)
 		switch (ch) {
 #if !defined(MULTIPASS) || defined(PASS1)
 		case 'X':
@@ -218,6 +218,9 @@ main(int argc, char *argv[])
 				xdeljumps++;
 			else
 				usage();
+			break;
+		case 'v':
+			printf("ccom: %s\n", VERSSTR);
 			break;
 
 		case '?':

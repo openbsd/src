@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.11 2007/09/23 18:36:30 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.12 2007/09/24 16:04:01 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -402,6 +402,8 @@ main(int argc, char *argv[])
 			tmp4 = setsuf(clist[i], 'i');
 		na = 0;
 		av[na++] = "cpp";
+		if (vflag)
+			av[na++] = "-v";
 		av[na++] = "-D__PCC__=" MKS(PCC_MAJOR);
 		av[na++] = "-D__PCC_MINOR__=" MKS(PCC_MINOR);
 		av[na++] = "-D__PCC_MINORMINOR__=" MKS(PCC_MINORMINOR);
@@ -445,6 +447,8 @@ main(int argc, char *argv[])
 	com:
 		na = 0;
 		av[na++]= "ccom";
+		if (vflag)
+			av[na++] = "-v";
 		if (gflag)
 			av[na++] = "-g";
 		if (kflag)
@@ -489,6 +493,8 @@ main(int argc, char *argv[])
 	assemble:
 		na = 0;
 		av[na++] = "as";
+		if (vflag)
+			av[na++] = "-v";
 		if (kflag)
 			av[na++] = "-k";
 		av[na++] = "-o";
@@ -519,6 +525,8 @@ nocom:
 	if (cflag==0 && nl!=0) {
 		j = 0;
 		av[j++] = "ld";
+		if (vflag)
+			av[j++] = "-v";
 		av[j++] = "-X";
 		av[j++] = "-d";
 		av[j++] = "-e";

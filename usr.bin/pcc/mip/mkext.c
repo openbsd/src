@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkext.c,v 1.3 2007/09/20 13:40:32 otto Exp $	*/
+/*	$OpenBSD: mkext.c,v 1.4 2007/09/24 16:04:01 otto Exp $	*/
 /*
  * Generate defines for the needed hardops.
  */
@@ -221,6 +221,11 @@ main(int argc, char *argv[])
 	if (breg > mx) mx = breg;
 	if (creg > mx) mx = creg;
 	if (dreg > mx) mx = dreg;
+	if (mx > (sizeof(int)*8)-1) {
+		printf("too many regs in a class, use two classes instead\n");
+		printf("%d > %zu\n", mx, (sizeof(int)*8)-1);
+		rval++;
+	}
 	fprintf(fc, "static int rmap[NUMCLASS][%d] = {\n", mx);
 	for (j = 0; j < NUMCLASS; j++) {
 		int cl = (1 << (j+1));
