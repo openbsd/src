@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.11 2007/09/18 17:35:38 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.12 2007/09/24 19:51:18 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -430,6 +430,39 @@ enum bwi_bus_space {
 	BWI_BUS_SPACE_64BIT
 };
 
+#define BWI_TX_RADIOTAP_PRESENT 		\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |	\
+	 (1 << IEEE80211_RADIOTAP_RATE) |	\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct bwi_tx_radiotap_hdr {
+	struct ieee80211_radiotap_header wt_ihdr;
+	uint8_t		wt_flags;
+	uint8_t		wt_rate;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
+};
+
+#define BWI_RX_RADIOTAP_PRESENT				\
+	((1 << IEEE80211_RADIOTAP_TSFT) |		\
+	 (1 << IEEE80211_RADIOTAP_FLAGS) |		\
+	 (1 << IEEE80211_RADIOTAP_RATE) |		\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |		\
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) |	\
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
+
+struct bwi_rx_radiotap_hdr {
+	struct ieee80211_radiotap_header wr_ihdr;
+	uint64_t	wr_tsf;
+	uint8_t		wr_flags;
+	uint8_t		wr_rate;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	int8_t		wr_antsignal;
+	int8_t		wr_antnoise;
+	/* TODO: sq */
+};
+
 struct bwi_softc {
 	struct device		 sc_dev;
 	struct ieee80211com	 sc_ic;
@@ -515,6 +548,24 @@ struct bwi_softc {
 	/* Sysctl variables */
 	int			sc_fw_version;	/* BWI_FW_VERSION[34] */
 	int			sc_dwell_time;	/* milliseconds */
+
+#if NBPFILTER > 0
+        caddr_t                 sc_drvbpf;
+ 
+        union {
+                struct bwi_rx_radiotap_hdr th;
+                uint8_t pad[64];
+        }                       sc_rxtapu;
+#define sc_rxtap                sc_rxtapu.th
+        int                     sc_rxtap_len;
+ 
+        union {
+                struct bwi_tx_radiotap_hdr th;
+                uint8_t pad[64];
+        }                       sc_txtapu;
+#define sc_txtap                sc_txtapu.th
+        int                     sc_txtap_len;
+#endif
 };
 
 #define BWI_F_BUS_INITED	0x1

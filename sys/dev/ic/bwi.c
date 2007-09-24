@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.45 2007/09/23 22:59:44 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.46 2007/09/24 19:51:18 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -768,6 +768,19 @@ bwi_attach(struct bwi_softc *sc)
 		ieee80211_ifdetach(ifp);
 		goto fail;
 	}
+
+#if NBPFILTER > 0
+	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64);
+
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(BWI_RX_RADIOTAP_PRESENT);
+
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(BWI_TX_RADIOTAP_PRESENT);
+#endif
 
 	return (0);
 fail:
@@ -7376,8 +7389,6 @@ bwi_set_chan(struct bwi_softc *sc, u_int8_t chan)
 
 	bwi_rf_set_chan(mac, chan, 0);
 
-	/* TODO: radio tap */
-
 	return (0);
 }
 
@@ -7449,7 +7460,32 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		m->m_len = m->m_pkthdr.len = buflen + sizeof(*hdr);
 		m_adj(m, sizeof(*hdr) + wh_ofs);
 
-		/* TODO: radio tap */
+#if NBPFILTER > 0
+		/* RX radio tap */
+		if (sc->sc_drvbpf != NULL) {
+			struct mbuf mb;
+			struct bwi_rx_radiotap_hdr *tap = &sc->sc_rxtap;
+
+			/* TODO: calculate rate and signal */
+			tap->wr_tsf = hdr->rxh_tsf;
+			tap->wr_flags = 0;
+			tap->wr_rate = 0;
+			tap->wr_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->wr_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+			tap->wr_antsignal = 0;
+			tap->wr_antnoise = 0;
+
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = sc->sc_rxtap_len;
+			mb.m_next = m;
+			mb.m_nextpkt = NULL;
+			mb.m_type = 0;
+			mb.m_flags = 0;
+			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+		}
+#endif
 
 		m_adj(m, -IEEE80211_CRC_LEN);
 
@@ -7923,7 +7959,28 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		rate = rate_fb = (1 * 2); /* Force 1Mbytes/s */
 	}
 
-	/* TODO: radio tap */
+#if NBPFILTER > 0
+	/* TX radio tap */
+	if (sc->sc_drvbpf != NULL) {
+		struct mbuf mb;
+		struct bwi_tx_radiotap_hdr *tap = &sc->sc_txtap;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rate;
+		tap->wt_chan_freq =
+		    htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wt_chan_flags =
+		    htole16(ic->ic_bss->ni_chan->ic_flags);
+
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+	}
+#endif
 
 	/*
 	 * Setup the embedded TX header
