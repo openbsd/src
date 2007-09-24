@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 2007/09/23 18:34:38 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 2007/09/24 15:57:09 otto Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -282,10 +282,14 @@ stkpush(void)
 		is->in_df = sp->sdf;
 	} else if (ISSOU(t)) {
 		sq = *pstk->in_xp;
-		is->in_xp = ISSOU(sq->stype) ? sq->ssue->suelem : 0;
-		is->in_t = sq->stype;
-		is->in_sym = sq;
-		is->in_df = sq->sdf;
+		if (sq == NULL) {
+			uerror("excess of initializing elements");
+		} else {
+			is->in_xp = ISSOU(sq->stype) ? sq->ssue->suelem : 0;
+			is->in_t = sq->stype;
+			is->in_sym = sq;
+			is->in_df = sq->sdf;
+		}
 	} else if (ISARY(t)) {
 		is->in_xp = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->suelem : 0;
 		is->in_t = DECREF(t);
