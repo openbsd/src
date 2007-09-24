@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.2 2007/09/15 22:04:38 ray Exp $	*/
+/*	$OpenBSD: local.c,v 1.3 2007/09/24 17:56:17 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -495,7 +495,7 @@ infld(CONSZ off, int fsz, CONSZ val)
 	if (idebug)
 		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
 		    off, fsz, val, inbits);
-	val &= (1 << fsz)-1;
+	val &= ((CONSZ)1 << fsz)-1;
 	while (fsz + inbits >= SZCHAR) {
 		inval |= (val << inbits);
 		printf("\t.byte %d\n", inval & 255);

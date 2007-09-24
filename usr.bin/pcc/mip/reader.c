@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.3 2007/09/22 14:41:41 otto Exp $	*/
+/*	$OpenBSD: reader.c,v 1.4 2007/09/24 17:56:17 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -785,18 +785,27 @@ ffld(NODE *p, int down, int *down1, int *down2 )
 
 		/* make & mask part */
 
-		p->n_left->n_type = ty;
+		if (ISUNSIGNED(ty)) {
 
-		p->n_op = AND;
-		p->n_right = mklnode(ICON, (1 << s)-1, 0, ty);
+			p->n_left->n_type = ty;
+			p->n_op = AND;
+			p->n_right = mklnode(ICON, ((CONSZ)1 << s)-1, 0, ty);
 
-		/* now, if a shift is needed, do it */
-
-		if( o != 0 ){
-			shp = mkbinode(RS, p->n_left,
-			    mklnode(ICON, o, 0, INT), ty);
-			p->n_left = shp;
-			/* whew! */
+			/* now, if a shift is needed, do it */
+			if( o != 0 ){
+				shp = mkbinode(RS, p->n_left,
+				    mklnode(ICON, o, 0, INT), ty);
+				p->n_left = shp;
+				/* whew! */
+			}
+		} else {
+			/* must sign-extend, assume RS will do */
+			/* if not, arch must use rewfld() */
+			p->n_left->n_type = INT; /* Ok? */
+			p->n_op = RS;
+			p->n_right = mklnode(ICON, SZINT-s, 0, INT);
+			p->n_left = mkbinode(LS, p->n_left, 
+			    mklnode(ICON, SZINT-s-o, 0, INT), INT);
 		}
 	}
 }
