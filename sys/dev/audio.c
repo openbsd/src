@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.79 2007/09/24 19:23:41 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.80 2007/09/24 19:45:03 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2298,7 +2298,7 @@ au_set_mute(struct audio_softc *sc, struct au_mixer_ports *ports, u_char mute)
 	DPRINTF(("au_set_mute: mute (old): %d, mute (new): %d\n",
 	    ct.un.ord, mute));
 
-	ct.un.ord = mute;
+	ct.un.ord = (mute != 0 ? 1 : 0);
 	error = sc->hw_if->set_port(sc->hw_hdl, &ct);
 
 	if (!error)
