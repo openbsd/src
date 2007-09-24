@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.201 2007/09/23 11:19:24 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.202 2007/09/24 13:44:20 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -711,7 +711,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		ismodified = 0;
 	}
 
-	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL) {
+	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL &&
+	    !RCSNUM_ISBRANCH(cf->file_rcsrev)) {
 		b1 = rcs_rev_getbuf(cf->file_rcs, cf->file_rcsrev, 0);
 		if (b1 == NULL)
 			fatal("failed to get HEAD revision for comparison");
@@ -728,7 +729,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cvs_buf_free(b2);
 	}
 
-	if (cf->file_rcs != NULL && cf->file_rcsrev != NULL) {
+	if (cf->file_rcs != NULL && cf->file_rcsrev != NULL &&
+	    !RCSNUM_ISBRANCH(cf->file_rcsrev)) {
 		state = rcs_state_get(cf->file_rcs, cf->file_rcsrev);
 		if (state == NULL)
 			fatal("failed to get state for HEAD for %s",

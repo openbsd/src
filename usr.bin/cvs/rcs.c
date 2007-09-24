@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.221 2007/09/24 11:18:43 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.222 2007/09/24 13:44:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1135,6 +1135,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
     const char *username)
 {
 	time_t now;
+	RCSNUM *root;
 	struct passwd *pw;
 	struct rcs_branch *brp;
 	struct rcs_delta *ordp, *rdp;
@@ -1188,12 +1189,20 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 
 	if (!(rf->rf_flags & RCS_CREATE)) {
 		if (RCSNUM_ISBRANCHREV(rev)) {
+			root = rcsnum_branch_root(rev);
 			brp = xmalloc(sizeof(*brp));
 			brp->rb_num = rcsnum_alloc();
 			rcsnum_cpy(rdp->rd_num, brp->rb_num, 0);
-			TAILQ_INSERT_TAIL(&(rdp->rd_branches), brp, rb_list);
+			if ((ordp = rcs_findrev(rf, root)) == NULL)
+				fatal("root node not found");
+			if (TAILQ_EMPTY(&(ordp->rd_branches))) {
+				TAILQ_INSERT_TAIL(&(ordp->rd_branches),
+			    brp, rb_list);
+			}
+
 			ordp = TAILQ_PREV(rdp, rcs_dlist, rd_list);
-			rcsnum_cpy(rdp->rd_num, ordp->rd_next, 0);
+			if (RCSNUM_ISBRANCHREV(ordp->rd_num))
+				rcsnum_cpy(rdp->rd_num, ordp->rd_next, 0);
 		} else {
 			ordp = TAILQ_NEXT(rdp, rd_list);
 			rcsnum_cpy(ordp->rd_num, rdp->rd_next, 0);
@@ -2572,7 +2581,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 
 	/* More likely we will be passed a symbol */
 	rev = rcs_sym_getrev(rfp, revstr);
-	
+
 	if (rev == NULL)
 		return (NULL);
 
