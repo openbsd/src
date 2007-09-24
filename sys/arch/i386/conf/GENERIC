@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.575 2007/09/09 15:59:47 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.576 2007/09/24 20:42:23 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -549,6 +549,8 @@ ath*	at pci?				# Atheros AR5k (802.11a/b/g)
 ath*	at cardbus?			# Atheros AR5k (802.11a/b/g)
 atw*	at pci?				# ADMtek ADM8211 (802.11)
 atw*	at cardbus?			# ADMtek ADM8211 (802.11)
+bwi*	at pci?				# Broadcom AirForce (802.11b/g)
+bwi*	at cardbus?			# Broadcom AirForce (802.11b/g)
 wi*	at pci?				# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
