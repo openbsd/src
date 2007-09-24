@@ -1,4 +1,4 @@
-$OpenBSD: POSIX,v 1.3 1999/06/06 07:03:01 pjanzen Exp $
+$OpenBSD: POSIX,v 1.4 2007/09/24 19:56:34 jmc Exp $
 $NetBSD: POSIX,v 1.9 1995/03/21 09:04:32 cgd Exp $
 
 This version of ed(1) is not strictly POSIX compliant, as described in
@@ -78,7 +78,7 @@ DEVIATIONS
 2) Since the behavior of `u' (undo) within a `g' (global) command list is
    not specified by POSIX, it follows the behavior of the SunOS ed:
    undo forces a global command list to be executed only once, rather than
-   for each line matching a global pattern.  In addtion, each instance of
+   for each line matching a global pattern.  In addition, each instance of
    `u' within a global command undoes all previous commands (including
    undo's) in the command list.  This seems the best way, since the
    alternatives are either too complicated to implement or too confusing

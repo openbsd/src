@@ -15,7 +15,7 @@ lint1 keeps a symbol table for the current context, which always
 includes global symbols for the current translation unit, as well as
 locals (inside a function definition). When it parses a function
 definition, it pushes a symbol table context onto the stack, and
-then pops it off when it when the function definition ends.
+then pops it off when the function definition ends.
 
 lint1 does the vast majority of its checks one expression at a time.
 It uses the symbol table (which contains types of symbols) and almost
@@ -27,4 +27,4 @@ of enclosing control blocks (loops, switch statements, etc). When lint1
 is finished parsing an expression, you will not see any more warnings
 regarding that expression.
 
-$OpenBSD: README,v 1.1 2006/04/26 16:33:38 cloder Exp $
+$OpenBSD: README,v 1.2 2007/09/24 19:56:34 jmc Exp $
