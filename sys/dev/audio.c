@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.78 2007/09/17 13:46:11 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.79 2007/09/24 19:23:41 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -2242,6 +2242,8 @@ au_get_mute(struct audio_softc *sc, struct au_mixer_ports *ports, u_char *mute)
 	mixer_devinfo_t mi;
 	mixer_ctrl_t ct;
 	int error;
+
+	*mute = 0;
 
 	 /* if no master, silently ignore request */
 	if (ports->master == -1)
