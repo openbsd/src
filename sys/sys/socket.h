@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.53 2006/03/31 17:30:39 claudio Exp $	*/
+/*	$OpenBSD: socket.h,v 1.54 2007/09/24 22:03:02 henning Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -289,10 +289,11 @@ struct sockcred {
 /*
  * PF_ROUTE - Routing table
  *
- * Three additional levels are defined:
+ * Four additional levels are defined:
  *	Fourth: address family, 0 is wildcard
  *	Fifth: type of info, defined below
  *	Sixth: flag(s) to mask with for NET_RT_FLAGS
+ *	Seventh: routing table to use (facultative, defaults to 0)
  */
 #define NET_RT_DUMP	1		/* dump; may limit to a.f. */
 #define NET_RT_FLAGS	2		/* by flags, e.g. RESOLVING */
