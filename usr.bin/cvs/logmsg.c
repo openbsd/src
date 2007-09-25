@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.44 2007/09/04 17:57:41 tobias Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.45 2007/09/25 10:04:47 chl Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <paths.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -99,7 +100,7 @@ cvs_logmsg_create(struct cvs_flisthead *added, struct cvs_flisthead *removed,
 
 	(void)xasprintf(&fpath, "%s/cvsXXXXXXXXXX", cvs_tmpdir);
 
-	if ((fd = mkstemp(fpath)) == NULL)
+	if ((fd = mkstemp(fpath)) == -1)
 		fatal("cvs_logmsg_create: mkstemp %s", strerror(errno));
 
 	cvs_worklist_add(fpath, &temp_files);
