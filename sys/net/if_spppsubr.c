@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.57 2007/09/05 21:01:49 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.58 2007/09/25 23:52:27 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1580,12 +1580,50 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		break;
 	case CODE_REJ:
 	case PROTO_REJ:
+	    {
+		int catastrophic = 0;
+		const struct cp *upper = NULL;
+		int i;
+		u_int16_t proto;
+
+		if (len < 2) {
+			if (debug)
+				log(LOG_DEBUG, SPP_FMT "invalid proto-rej length\n",
+				       SPP_ARGS(ifp));
+			++ifp->if_ierrors;
+			break;
+		}
+
+		proto = ntohs(*((u_int16_t *)p));
+		for (i = 0; i < IDX_COUNT; i++) {
+			if (cps[i]->proto == proto) {
+				upper = cps[i];
+				break;
+			}
+		}
+		if (upper == NULL)
+			catastrophic++;
+
+		if (catastrophic || debug)
+			log(catastrophic? LOG_INFO: LOG_DEBUG,
+			    SPP_FMT "%s: RXJ%c (%s) for proto 0x%x (%s/%s)\n",
+			    SPP_ARGS(ifp), cp->name, catastrophic ? '-' : '+',
+			    sppp_cp_type_name(h->type), proto,
+			    upper ? upper->name : "unknown",
+			    upper ? sppp_state_name(sp->state[upper->protoidx]) : "?");
+
+		/*
+		 * if we got RXJ+ against conf-req, the peer does not implement
+		 * this particular protocol type.  terminate the protocol.
+		 */
+		if (upper) {
+			if (sp->state[upper->protoidx] == STATE_REQ_SENT) {
+				upper->Close(sp);
+				break;
+			}
+		}
+
 		/* XXX catastrophic rejects (RXJ-) aren't handled yet. */
-		log(LOG_INFO,
-		    SPP_FMT "%s: ignoring RXJ (%s) for proto 0x%x, "
-		    "danger will robinson\n",
-		    SPP_ARGS(ifp), cp->name,
-		    sppp_cp_type_name(h->type), ntohs(*((u_short *)p)));
 		switch (sp->state[cp->protoidx]) {
 		case STATE_CLOSED:
 		case STATE_STOPPED:
@@ -1606,6 +1644,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			++ifp->if_ierrors;
 		}
 		break;
+	    }
 	case DISC_REQ:
 		if (cp->proto != PPP_LCP)
 			goto illegal;
