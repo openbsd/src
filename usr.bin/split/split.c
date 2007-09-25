@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.14 2007/09/05 21:07:53 millert Exp $	*/
+/*	$OpenBSD: split.c,v 1.15 2007/09/25 11:20:34 chl Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #else
-static char rcsid[] = "$OpenBSD: split.c,v 1.14 2007/09/05 21:07:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: split.c,v 1.15 2007/09/25 11:20:34 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -243,6 +243,9 @@ split2(void)
 	/* Process input one line at a time */
 	while (fgets(bfr, sizeof(bfr), infp) != NULL) {
 		const int len = strlen(bfr);
+
+		if (len == 0)
+			continue;
 
 		/* If line is too long to deal with, just write it out */
 		if (bfr[len - 1] != '\n')

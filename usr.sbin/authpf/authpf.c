@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.104 2007/02/24 17:35:08 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.105 2007/09/25 11:20:34 chl Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -349,6 +349,8 @@ read_config(FILE *f)
 		}
 		i++;
 		len = strlen(buf);
+		if (len == 0)
+			continue;
 		if (buf[len - 1] != '\n' && !feof(f)) {
 			syslog(LOG_ERR, "line %d too long in %s", i,
 			    PATH_CONFFILE);

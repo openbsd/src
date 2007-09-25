@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib.c,v 1.8 2003/04/04 20:25:06 deraadt Exp $
+ *	$OpenBSD: radlib.c,v 1.9 2007/09/25 11:20:34 chl Exp $
  */
 
 #include <sys/types.h>
@@ -320,7 +320,8 @@ rad_config(struct rad_handle *h, const char *path)
 
 		linenum++;
 		len = strlen(buf);
-		/* We know len > 0, else fgets would have returned NULL. */
+		if (len == 0)
+			continue;
 		if (buf[len - 1] != '\n') {
 			if (len == sizeof buf - 1)
 				generr(h, "%s:%d: line too long", path,
