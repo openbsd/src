@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.24 2007/05/31 19:19:39 jmc Exp $
+.\"	$OpenBSD: identd.8,v 1.25 2007/09/25 13:37:01 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
 .\" This software has been released into the public domain.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 25 2007 $
 .Dt IDENTD 8
 .Os
 .Sh NAME
@@ -183,7 +183,7 @@ check for a file
 .Pa .ident
 in the user's home directory.
 If this file is accessible, return
-the contents of the file
+at most 20 characters of the first line of the file
 instead of the normal USERID response.
 .It Fl m
 Allow multiple requests to be processed per session.
