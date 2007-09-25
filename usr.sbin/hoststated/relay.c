@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.43 2007/09/10 11:59:22 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.44 2007/09/25 08:24:26 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -2012,6 +2012,7 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 SSL_CTX *
 relay_ssl_ctx_create(struct relay *rlay)
 {
+	int fd;
 	struct protocol *proto = rlay->proto;
 	SSL_CTX *ctx;
 	char certfile[PATH_MAX], hbuf[128];
@@ -2053,8 +2054,10 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if (snprintf(certfile, sizeof(certfile),
 	    "/etc/ssl/%s.crt", hbuf) == -1)
 		goto err;
+	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
+		goto err;
 	log_debug("relay_ssl_ctx_create: using certificate %s", certfile);
-	if (!SSL_CTX_use_certificate_chain_file(ctx, certfile))
+	if (!ssl_ctx_use_certificate_chain(ctx, fd))
 		goto err;
 
 	/* Load the private key */
@@ -2062,8 +2065,10 @@ relay_ssl_ctx_create(struct relay *rlay)
 	    "/etc/ssl/private/%s.key", hbuf) == -1) {
 		goto err;
 	}
+	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
+		goto err;
 	log_debug("relay_ssl_ctx_create: using private key %s", certfile);
-	if (!SSL_CTX_use_PrivateKey_file(ctx, certfile,  SSL_FILETYPE_PEM))
+	if (!ssl_ctx_use_private_key(ctx, fd,  SSL_FILETYPE_PEM))
 		goto err;
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;

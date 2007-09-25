@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.60 2007/09/10 11:59:22 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.61 2007/09/25 08:24:26 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -734,6 +734,10 @@ void	 ssl_init(struct hoststated *);
 void	 ssl_transaction(struct ctl_tcp_event *);
 SSL_CTX	*ssl_ctx_create(struct hoststated *);
 void	 ssl_error(const char *, const char *);
+
+/* ssl_privsep.c */
+int	 ssl_ctx_use_private_key(SSL_CTX *, int, int);
+int	 ssl_ctx_use_certificate_chain(SSL_CTX *, int);
 
 /* hoststated.c */
 struct host	*host_find(struct hoststated *, objid_t);
