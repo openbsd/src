@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.111 2007/09/05 20:30:21 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.112 2007/09/25 08:57:47 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ void
 flushroutes(int argc, char **argv)
 {
 	size_t needed;
-	int mib[6], rlen, seqno;
+	int mib[7], rlen, seqno;
 	char *buf = NULL, *next, *lim = NULL;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
@@ -240,12 +240,13 @@ flushroutes(int argc, char **argv)
 	mib[3] = 0;		/* wildcard address family */
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;		/* no flags */
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	mib[6] = tableid;
+	if (sysctl(mib, 7, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed) {
 		if ((buf = malloc(needed)) == NULL)
 			err(1, "malloc");
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		if (sysctl(mib, 7, buf, &needed, NULL, 0) < 0)
 			err(1, "actual retrieval of routing table");
 		lim = buf + needed;
 	}
@@ -273,6 +274,7 @@ flushroutes(int argc, char **argv)
 			continue;
 		rtm->rtm_type = RTM_DELETE;
 		rtm->rtm_seq = seqno;
+		rtm->rtm_tableid = tableid;
 		rlen = write(s, next, rtm->rtm_msglen);
 		if (rlen < (int)rtm->rtm_msglen) {
 			warn("write to routing socket");
