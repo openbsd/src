@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 2007/09/24 15:57:09 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.6 2007/09/25 05:51:44 otto Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -263,6 +263,7 @@ stkpush(void)
 	if (idebug) {
 		printf("stkpush: '%s' %s ", sp->sname, scnames(sp->sclass));
 		tprint(stdout, t, 0);
+		printf("\n");
 	}
 #endif
 
@@ -301,7 +302,7 @@ stkpush(void)
 		if (ISARY(is->in_t))
 			is->in_df = pstk->in_df+1;
 	} else
-		cerror("onstk");
+		uerror("too many left braces");
 	is->in_prev = pstk;
 	pstk = is;
 
@@ -896,7 +897,7 @@ prtstk(struct instk *in)
 		printf("%p) '%s' ", in, in->in_sym->sname);
 		tprint(stdout, in->in_t, 0);
 		printf(" %s ", scnames(in->in_sym->sclass));
-		if (in->in_df && in->in_df->ddim)
+		if (ISARY(in->in_t) && in->in_df->ddim)
 		    printf("arydim=%d ", in->in_df->ddim);
 		printf("ninit=%d ", in->in_n);
 		if (BTYPE(in->in_t) == STRTY || ISARY(in->in_t))
