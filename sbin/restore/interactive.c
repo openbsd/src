@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.24 2007/09/02 15:19:25 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.25 2007/09/25 09:51:48 chl Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: interactive.c,v 1.24 2007/09/02 15:19:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: interactive.c,v 1.25 2007/09/25 09:51:48 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -327,13 +327,13 @@ getcmd(char *curdir, char *cmd, size_t cmdlen, char *name, size_t namelen,
 	do {
 		(void)fprintf(stderr, "%s > ", __progname);
 		(void)fflush(stderr);
-		(void)fgets(input, BUFSIZ, terminal);
-	} while (!feof(terminal) && input[0] == '\n');
-	if (feof(terminal)) {
-		(void)strlcpy(cmd, "quit", cmdlen);
-		return;
-	}
-	for (cp = &input[strlen(input) - 2]; *cp == ' ' || *cp == '\t'; cp--)
+		if (fgets(input, sizeof input, terminal) == NULL) {
+			(void)strlcpy(cmd, "quit", cmdlen);
+			return;
+		}
+	} while (input[0] == '\n' || input[0] == '\0');
+	for (cp = &input[strlen(input) - 1];
+	     cp >= input && (*cp == ' ' || *cp == '\t' || *cp == '\n'); cp--)
 		/* trim off trailing white space and newline */;
 	*++cp = '\0';
 	/*
