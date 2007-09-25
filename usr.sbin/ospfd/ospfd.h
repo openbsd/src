@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.69 2007/09/11 16:02:55 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.70 2007/09/25 11:25:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -600,7 +600,7 @@ u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 /* kroute.c */
 int		 kif_init(void);
 int		 kr_init(int);
-int		 kr_change(struct kroute *);
+int		 kr_change(struct kroute *, int);
 int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);

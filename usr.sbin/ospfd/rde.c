@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.69 2007/07/25 19:11:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.70 2007/09/25 11:25:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -717,23 +717,31 @@ rde_router_id(void)
 void
 rde_send_change_kroute(struct rt_node *r)
 {
+	int			 krcount = 0;
 	struct kroute	 	 kr;
 	struct rt_nexthop	*rn;
+	struct buf		*wbuf;
+
+	if ((wbuf = imsg_create(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0,
+	    sizeof(kr))) == NULL) {
+		return;
+	}
 
 	TAILQ_FOREACH(rn, &r->nexthop, entry) {
-		if (!rn->invalid)
-			break;
+		if (rn->invalid)
+			continue;
+		krcount++;
+
+		bzero(&kr, sizeof(kr));
+		kr.prefix.s_addr = r->prefix.s_addr;
+		kr.nexthop.s_addr = rn->nexthop.s_addr;
+		kr.prefixlen = r->prefixlen;
+		kr.ext_tag = r->ext_tag;
+		imsg_add(wbuf, &kr, sizeof(kr));
 	}
-	if (!rn)
+	if (krcount == 0)
 		fatalx("rde_send_change_kroute: no valid nexthop found");
-
-	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->prefix.s_addr;
-	kr.nexthop.s_addr = rn->nexthop.s_addr;
-	kr.prefixlen = r->prefixlen;
-	kr.ext_tag = r->ext_tag;
-
-	imsg_compose(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0, &kr, sizeof(kr));
+	imsg_close(ibuf_main, wbuf);
 }
 
 void
