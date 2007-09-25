@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.25 2007/09/25 13:37:01 jmc Exp $
+.\"	$OpenBSD: identd.8,v 1.26 2007/09/25 14:21:30 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -36,33 +36,67 @@
 .Sh SYNOPSIS
 .Nm identd
 .Bk -words
-.Op Fl i | w | b
-.Op Fl t Ar seconds
-.Op Fl u Ar uid
-.Op Fl g Ar gid
-.Op Fl p Ar port
+.Op Fl dehlmNnoUv
+.Op Fl b | i | w
 .Op Fl a Ar address
 .Op Fl c Ar charset
-.Op Fl noelvmNUdh
+.Op Fl g Ar gid
+.Op Fl p Ar port
+.Op Fl t Ar seconds
+.Op Fl u Ar uid
 .Ek
 .Sh DESCRIPTION
 .Nm
-is a server which implements the
-.Tn TCP/IP
-proposed standard
-.Tn IDENT
-user identification protocol as specified in the
-.Tn RFC 1413
-document.
+is a server which implements the TCP/IP proposed standard
+IDENT user identification protocol
+as specified in the RFC 1413 document.
 .Pp
 .Nm
-operates by looking up specific
-.Tn TCP/IP
+operates by looking up specific TCP/IP
 connections and returning the user name of the
 process owning the connection.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar address
+Specify a local IP address in dotted quad format
+to bind the listen socket to if running as a stand-alone daemon.
+By default the daemon listens on all local IP addresses.
+.It Fl b
+Specify operation as a stand-alone daemon.
+.It Fl c Ar charset
+Specify an optional character set designator to be included in replies.
+.Ar charset
+should be a valid character set as described in the
+MIME RFC in upper case characters.
+.It Fl d
+This flag enables some debugging code that normally should NOT
+be enabled since that breaks the protocol and may reveal information
+that should not be available to outsiders.
+.It Fl e
+Always return
+.Dq UNKNOWN-ERROR
+instead of the
+.Dq NO-USER
+or
+.Dq INVALID-PORT
+errors.
+.It Fl g Ar gid
+Specify a group ID number or group name which the
+.Nm
+server should
+switch to after binding itself to the
+TCP/IP port if running as a stand-alone daemon.
+.It Fl H
+Hide information about non existing users (e.g., connections through NAT) as
+well as existing users.
+Implies
+.Fl h .
+.It Fl h
+Hide the actual information about the user by providing an opaque
+token instead.
+This token is entered into the local system logs
+so that the administrator can later discover who the real user was.
 .It Fl i
 Tells
 .Nm identd
@@ -77,6 +111,67 @@ start one
 .Nm
 daemon for each connection request.
 This is the default mode of operation.
+.It Fl l
+Use
+.Xr syslogd 8
+for logging purposes.
+.It Fl m
+Allow multiple requests to be processed per session.
+Each request is specified one per line and the responses will be returned
+one per line.
+The connection will not be closed until the client closes its end of
+the connection.
+PLEASE NOTE THAT THIS MODE VIOLATES THE PROTOCOL SPECIFICATION AS
+IT CURRENTLY STANDS.
+.It Fl N
+When replying with a user name or ID, first
+check for a file
+.Pa .noident
+in the user's home directory.
+If this file is accessible, return
+.Dq HIDDEN-USER
+instead of the normal USERID response.
+.It Fl n
+Always return UID numbers instead of usernames.
+.It Fl o
+Do not reveal operating system type;
+always return
+.Dq OTHER
+instead.
+.It Fl p Ar port
+Specify an alternative port number or service name
+on which to listen when running as a stand-alone daemon.
+Default is "auth" (113).
+.It Fl t Ar seconds
+Specifies an idle timeout in seconds where a daemon running in
+"wait" mode will timeout and exit.
+The default is no timeout.
+.It Fl U
+When replying with a user name or ID, first
+check for a file
+.Pa .ident
+in the user's home directory.
+If this file is accessible, return
+at most 20 characters of the first line of the file
+instead of the normal USERID response.
+.It Fl u Ar uid
+Specify a user ID number or user name which the
+.Nm identd
+server should
+switch to after binding itself to the
+TCP/IP port if running as a stand-alone daemon.
+.Nm
+runs as user
+.Qq _identd
+by default and falls back to
+.Qq nobody
+if the
+.Qq _identd
+user does not exist.
+.It Fl v
+Log every request to syslog if
+.Fl l
+above is specified.
 .It Fl w
 Tells
 .Nm identd
@@ -94,109 +189,6 @@ Previous versions listed this as the preferred mode of
 operation due to the initial overhead of parsing the kernel nlist.
 This version does not use kmem or nlist parsing, so this reasoning
 is no longer valid.
-.It Fl b
-Specify operation as a stand-alone daemon.
-.It Fl h
-Hide the actual information about the user by providing an opaque
-token instead.
-This token is entered into the local system logs
-so that the administrator can later discover who the real user was.
-.It Fl H
-Hide information about non existing users (e.g., connections through NAT) as
-well as existing users.
-Implies
-.Fl h .
-.It Fl t Ar seconds
-Specifies an idle timeout in seconds where a daemon running in
-"wait" mode will timeout and exit.
-The default is no timeout.
-.It Fl u Ar uid
-Specify a user ID number or user name which the
-.Nm identd
-server should
-switch to after binding itself to the
-.Tn TCP/IP
-port if running as a stand-alone daemon.
-.Nm
-runs as user
-.Qq _identd
-by default and falls back to
-.Qq nobody
-if the
-.Qq _identd
-user does not exist.
-.It Fl g Ar gid
-Specify a group ID number or group name which the
-.Nm
-server should
-switch to after binding itself to the
-.Tn TCP/IP
-port if running as a stand-alone daemon.
-.It Fl p Ar port
-Specify an alternative port number or service name
-on which to listen when running as a stand-alone daemon.
-Default is "auth" (113).
-.It Fl a Ar address
-Specify a local IP address in dotted quad format
-to bind the listen socket to if running as a stand-alone daemon.
-By default the daemon listens on all local IP addresses.
-.It Fl l
-Use
-.Xr syslogd 8
-for logging purposes.
-.It Fl v
-Log every request to syslog if
-.Fl l
-above is specified.
-.It Fl o
-Do not reveal operating system type;
-always return
-.Dq OTHER
-instead.
-.It Fl e
-Always return
-.Dq UNKNOWN-ERROR
-instead of the
-.Dq NO-USER
-or
-.Dq INVALID-PORT
-errors.
-.It Fl c Ar charset
-Specify an optional character set designator to be included in replies.
-.Ar charset
-should be a valid character set as described in the
-.Tn MIME RFC
-in upper case characters.
-.It Fl n
-Always return uid numbers instead of usernames.
-.It Fl N
-When replying with a user name or ID, first
-check for a file
-.Pa .noident
-in the user's home directory.
-If this file is accessible, return
-.Dq HIDDEN-USER
-instead of the normal USERID response.
-.It Fl U
-When replying with a user name or ID, first
-check for a file
-.Pa .ident
-in the user's home directory.
-If this file is accessible, return
-at most 20 characters of the first line of the file
-instead of the normal USERID response.
-.It Fl m
-Allow multiple requests to be processed per session.
-Each request is specified one per line and the responses will be returned
-one per line.
-The connection will not be closed until the client closes its end of
-the connection.
-PLEASE NOTE THAT THIS MODE VIOLATES THE PROTOCOL SPECIFICATION AS
-IT CURRENTLY STANDS.
-.It Fl d
-This flag enables some debugging code that normally should NOT
-be enabled since that breaks the protocol and may reveal information
-that should not be available to outsiders.
 .El
 .Sh SEE ALSO
 .Xr inetd.conf 5

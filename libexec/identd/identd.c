@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.44 2007/08/26 07:38:38 ray Exp $	*/
+/*	$OpenBSD: identd.c,v 1.45 2007/09/25 14:21:30 jmc Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -65,8 +65,8 @@ void
 usage(void)
 {
 	syslog(LOG_ERR,
-	    "%s [-i | -w | -b] [-t seconds] [-u uid] [-g gid] [-p port] "
-	    "[-a address] [-c charset] [-noelvmNUdh]", __progname);
+	    "usage: %s [-dehlmNnoUv] [-b | -i | -w] [-a address] [-c charset] "
+	    "[-g gid] [-p port] [-t seconds] [-u uid]", __progname);
 	exit(2);
 }
 
