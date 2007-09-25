@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.82 2007/09/22 16:01:22 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.83 2007/09/25 11:10:28 chl Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "cvs.h"
