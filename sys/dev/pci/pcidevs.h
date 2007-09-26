@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1267 2007/09/17 01:13:23 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1268 2007/09/26 06:02:26 deanna Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -316,6 +316,7 @@
 #define	PCI_VENDOR_QUANCOM	0x8008		/* Quancom Informationssysteme */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_INNOTEK	0x80ee		/* InnoTek */
+#define	PCI_VENDOR_SIGMATEL	0x8384		/* Sigmatel */
 #define	PCI_VENDOR_WINBOND2	0x8c4a		/* Winbond */
 #define	PCI_VENDOR_KTI	0x8e2e		/* KTI */
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */

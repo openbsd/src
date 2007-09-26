@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1267 2007/09/17 01:13:23 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1268 2007/09/26 06:02:26 deanna Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -14930,6 +14930,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_INNOTEK,
 	    "InnoTek",
+	},
+	{
+	    PCI_VENDOR_SIGMATEL,
+	    "Sigmatel",
 	},
 	{
 	    PCI_VENDOR_WINBOND2,
