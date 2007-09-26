@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.36 2007/09/20 17:41:32 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.37 2007/09/26 06:00:27 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2844,6 +2844,10 @@ static const mixer_item_t stac7661_mixer_items[] = {
 #define STAC7661_DAC_SPEAKER   0x05
 #define STAC7661_TARGET_MASTER -1
 
+	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  4, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x02, STAC7661_TARGET_MASTER},
+	{{0, {AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 3, ENUM_OFFON}, 0x02, STAC7661_TARGET_MASTER},
 	{{0, {AudioNvolume"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_RECORD, 0, 0,
 	    ENUM_OFFON}, 0x09, MI_TARGET_INAMP(0)},
 	{{0, {AudioNvolume}, AUDIO_MIXER_VALUE, AZ_CLASS_RECORD, 0, 0,
@@ -2852,12 +2856,8 @@ static const mixer_item_t stac7661_mixer_items[] = {
 	  0, 0, .un.e={3, {{{AudioNmicrophone}, 1}, {{AudioNmicrophone"2"}, 2},
 			   {{AudioNdac}, 3}}}},
 	 0x15, MI_TARGET_CONNLIST},
-	{{0, {AudioNmaster}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	  0, 0, .un.v={{""}, 2, MIXER_DELTA(127)}}, 0x02, STAC7661_TARGET_MASTER},
-	{{0, {AudioNmaster"."AudioNmute}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
-	  0, 0, ENUM_OFFON}, 0x02, STAC7661_TARGET_MASTER},
-	{{0, {AudioNvolume".knob"}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
-	  0, 0, .un.v={{""}, 1, MIXER_DELTA(15)}}, 0x17, MI_TARGET_VOLUME},
+	{{0, {AudioNmicrophone}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  .un.v={{""}, 2, MIXER_DELTA(4)}}, 0x15, MI_TARGET_OUTAMP},
 	{{0, {AudioNheadphone".mute"}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	    0, 0, ENUM_OFFON}, 0x02, MI_TARGET_OUTAMP},
 	{{0, {AudioNheadphone}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
@@ -2887,18 +2887,12 @@ azalia_stac7661_mixer_init(codec_t *this)
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
 	mc.un.ord = 1;
-	azalia_generic_mixer_set(this, 0x0a, MI_TARGET_PINDIR, &mc); /* headphones */
-	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc); /* speaker */
 	azalia_generic_mixer_set(this, 0x09, MI_TARGET_INAMP(0), &mc); /* mute input */
 	mc.un.ord = 0;
 	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc); /* mic */
 	azalia_generic_mixer_set(this, 0x14, MI_TARGET_PINDIR, &mc); /* internal mic */
 	mc.un.ord = 2;          /* select internal mic for recording */
 	azalia_generic_mixer_set(this, 0x15, MI_TARGET_CONNLIST, &mc);
-	mc.type = AUDIO_MIXER_VALUE;
-	mc.un.value.num_channels = 1;
-	mc.un.value.level[0] = azalia_generic_mixer_max(this, 0x17, MI_TARGET_VOLUME);
-	azalia_generic_mixer_set(this, 0x17, MI_TARGET_VOLUME, &mc);
 
 	return 0;
 }
