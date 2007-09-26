@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.15 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.16 2007/09/26 18:49:03 pyr Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -34,13 +34,8 @@ static const char rcsid[] =
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#ifdef __FreeBSD__
-#include <sys/diskslice.h>
-#endif
 #include <sys/disklabel.h>
-#ifndef __FreeBSD__
 #include <sys/ioctl.h>
-#endif
 #include <sys/mount.h>
 
 #include <ctype.h>
@@ -52,9 +47,7 @@ static const char rcsid[] =
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef __OpenBSD__
 #include <util.h>
-#endif
 
 #define MAXU16	  0xffff	/* maximum unsigned 16-bit quantity */
 #define BPN	  4		/* bits per nibble */
@@ -225,7 +218,7 @@ static u_int argtou(const char *, u_int, u_int, const char *);
 static int oklabel(const char *);
 static void mklabel(u_int8_t *, const char *);
 static void setstr(u_int8_t *, const char *, size_t);
-static void usage(void);
+static __dead void usage(void);
 
 /*
  * Construct a FAT12, FAT16, or FAT32 file system.
@@ -251,13 +244,8 @@ main(int argc, char *argv[])
     struct bsx *bsx;
     struct de *de;
     u_int8_t *img;
-#ifdef __FreeBSD__
-    const char *fname, *dtype, *bname;
-#endif
-#ifdef __OpenBSD__
     const char *dtype, *bname;
     char *sname, *fname;
-#endif
     ssize_t n;
     time_t now;
     u_int fat, bss, rds, cls, dir, lsn, x, x1, x2;
@@ -352,25 +340,9 @@ main(int argc, char *argv[])
     argv += optind;
     if (argc < 1 || argc > 2)
 	usage();
-#ifdef __FreeBSD__
-    fname = *argv++;
-    if (!strchr(fname, '/')) {
-	snprintf(buf, sizeof(buf), "%sr%s", _PATH_DEV, fname);
-	if (stat(buf, &sb))
-	    snprintf(buf, sizeof(buf), "%s%s", _PATH_DEV, fname);
-	if (!(fname = strdup(buf)))
-	    err(1, NULL);
-    }
-#endif
-#ifdef __OpenBSD__
     sname = *argv++;
-#endif
     dtype = *argv;
-#ifdef __FreeBSD__
-    if ((fd = open(fname, opt_N ? O_RDONLY : O_RDWR)) == -1 ||
-#else
     if ((fd = opendev(sname, opt_N ? O_RDONLY : O_RDWR, 0, &fname)) == -1 ||
-#endif
 	fstat(fd, &sb))
 	err(1, "%s", fname);
     if (!opt_N)
@@ -736,12 +708,6 @@ static void
 getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 	    struct bpb *bpb)
 {
-#ifdef __FreeBSD__
-    struct diskslices ds;
-    int slice = -1;
-    char *s;
-    int fd1, e;
-#endif
     struct disklabel dl, *lp;
     const char *s1, *s2;
     int part, i;
@@ -756,84 +722,11 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
     else
 	while (isdigit(*++s2));
     s1 = s2;
-#ifdef __FreeBSD__
-    if (s2 && *s2 == 's') {
-	slice = strtol(s2 + 1, &s, 10);
-	if (slice < 1 || slice > MAX_SLICES - BASE_SLICE)
-	    s2 = NULL;
-	else {
-	    slice = BASE_SLICE + slice - 1;
-	    s2 = s;
-	}
-    }
-#endif
     if (s2 && *s2 >= 'a' && *s2 <= 'a' + MAXPARTITIONS - 1) {
-#ifdef __FreeBSD__
-	if (slice == -1)
-	    slice = COMPATIBILITY_SLICE;
-#endif
 	part = *s2++ - 'a';
     }
     if (!s2 || (*s2 && *s2 != '.'))
 	errx(1, "%s: can't figure out partition info", fname);
-#ifdef __FreeBSD__
-    if (slice != -1 && (!oflag || (!bpb->bsec && part == -1))) {
-	if (ioctl(fd, DIOCGSLICEINFO, &ds) == -1) {
-	    warn("ioctl (GSLICEINFO)");
-	    errx(1, "%s: can't get slice info", fname);
-	}
-	if (slice >= ds.dss_nslices || !ds.dss_slices[slice].ds_size)
-	    errx(1, "%s: slice is unavailable", fname);
-	if (!oflag)
-	    bpb->hid = ds.dss_slices[slice].ds_offset;
-	if (!bpb->bsec && part == -1)
-	    bpb->bsec = ds.dss_slices[slice].ds_size;
-    }
-    if (((slice == -1 || part != -1) &&
-	 ((!oflag && part != -1) || !bpb->bsec)) ||
-	!bpb->bps || !bpb->spt || !bpb->hds) {
-	lp = &dl;
-	i = ioctl(fd, DIOCGDINFO, lp);
-	if (i == -1 && slice != -1 && part == -1) {
-	    e = errno;
-	    if (!(s = strdup(fname)))
-		err(1, NULL);
-	    s[s1 - fname] = 0;
-	    if ((fd1 = open(s, O_RDONLY)) != -1) {
-		i = ioctl(fd1, DIOCGDINFO, lp);
-		close(fd1);
-	    }
-	    free(s);
-	    errno = e;
-	}
-	if (i == -1) {
-	    if (!dtype) {
-		warn("ioctl (GDINFO)");
-		errx(1, "%s: can't read disk label; "
-		     "disk type must be specified", fname);
-	    } else if (!(lp = getdiskbyname(dtype)))
-		errx(1, "%s: unknown disk type", dtype);
-	}
-	if (slice == -1 || part != -1) {
-	    if (part == -1)
-		part = RAW_PART;
-	    if (part >= lp->d_npartitions ||
-		!lp->d_partitions[part].p_size)
-		errx(1, "%s: partition is unavailable", fname);
-	    if (!oflag && part != -1)
-		bpb->hid += lp->d_partitions[part].p_offset;
-	    if (!bpb->bsec)
-		bpb->bsec = lp->d_partitions[part].p_size;
-	}
-	if (!bpb->bps)
-	    bpb->bps = ckgeom(fname, lp->d_secsize, "bytes/sector");
-	if (!bpb->spt)
-	    bpb->spt = ckgeom(fname, lp->d_nsectors, "sectors/track");
-	if (!bpb->hds)
-	    bpb->hds = ckgeom(fname, lp->d_ntracks, "drive heads");
-    }
-#endif
-#ifdef __OpenBSD__
     if ((((!oflag && part != -1) || !bpb->bsec)) ||
 	!bpb->bps || !bpb->spt || !bpb->hds) {
 	lp = &dl;
@@ -866,7 +759,6 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 	    bpb->spt = 63;
 	}
     }
-#endif
 }
 
 /*
@@ -969,33 +861,17 @@ setstr(u_int8_t *dest, const char *src, size_t len)
 /*
  * Print usage message.
  */
-static void
+static __dead void
 usage(void)
 {
-    fprintf(stderr,
-	    "usage: newfs_msdos [ -options ] special [disktype]\n");
-    fprintf(stderr, "where the options are:\n");
-    fprintf(stderr, "\t-N don't create file system: "
-	    "just print out parameters\n");
-    fprintf(stderr, "\t-B get bootstrap from file\n");
-    fprintf(stderr, "\t-F FAT type (12, 16, or 32)\n");
-    fprintf(stderr, "\t-I volume ID\n");
-    fprintf(stderr, "\t-L volume label\n");
-    fprintf(stderr, "\t-O OEM string\n");
-    fprintf(stderr, "\t-S bytes/sector\n");
-    fprintf(stderr, "\t-a sectors/FAT\n");
-    fprintf(stderr, "\t-b block size\n");
-    fprintf(stderr, "\t-c sectors/cluster\n");
-    fprintf(stderr, "\t-e root directory entries\n");
-    fprintf(stderr, "\t-f standard format\n");
-    fprintf(stderr, "\t-h drive heads\n");
-    fprintf(stderr, "\t-i file system info sector\n");
-    fprintf(stderr, "\t-k backup boot sector\n");
-    fprintf(stderr, "\t-m media descriptor\n");
-    fprintf(stderr, "\t-n number of FATs\n");
-    fprintf(stderr, "\t-o hidden sectors\n");
-    fprintf(stderr, "\t-r reserved sectors\n");
-    fprintf(stderr, "\t-s file system size (sectors)\n");
-    fprintf(stderr, "\t-u sectors/track\n");
-    exit(1);
+	extern const char	*__progname;
+
+	fprintf(stderr, "usage: %s "
+	    "[-N] [-B boot] [-F FAT-type] [-I volid] [-L label] [-O OEM]\n"
+	    "\t[-S sector-size] [-a FAT-size] [-b block-size]\n"
+	    "\t[-c cluster-size] [-e dirents] [-f format] [-h heads]\n"
+	    "\t[-i info] [-k backup] [-m media] [-n FATs] [-o hidden]\n"
+	    "\t[-r reserved] [-s total] [-u track-size] special [disktype]\n",
+	    __progname);
+	exit(1);
 }
