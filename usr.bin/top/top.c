@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.54 2007/09/18 11:15:25 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.55 2007/09/26 11:06:41 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -153,15 +153,14 @@ parseargs(int ac, char **av)
 			break;
 
 		case 'p': {	/* display only process id */
-			unsigned long long num;
 			const char *errstr;
 
-			num = strtonum(optarg, 0, INT_MAX, &errstr);
-			if (errstr != NULL || !find_pid(num)) {
+			i = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL || !find_pid(i)) {
 				fprintf(stderr, "%s: unknown pid\n", optarg);
 				exit(1);
 			}
-			ps.pid = (pid_t)num;
+			ps.pid = (pid_t)i;
 			ps.system = Yes;
 			break;
 		}
