@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.6 2007/09/21 08:15:36 gilles Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.7 2007/09/26 12:46:47 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -799,10 +799,16 @@ undefstmt(void)
 static void
 pragmastmt(void)
 {
+	int c;
+
 	slow = 1;
 	if (yylex() != WSPACE)
 		error("bad pragma");
-	while (yylex() != '\n')  /* no pragma support */
-		;
+	putstr((usch *)"#pragma ");
+	do {
+		putch(c = input());	/* Do arg expansion instead? */
+	} while (c && c != '\n');
+	ifiles->lineno++;
+	prtline();
 	slow = 0;
 }

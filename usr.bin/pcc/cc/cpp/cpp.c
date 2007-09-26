@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.9 2007/09/24 16:04:01 otto Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.10 2007/09/26 12:46:47 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -126,6 +126,7 @@ struct incs {
 
 static struct symtab *filloc;
 static struct symtab *linloc;
+static struct symtab *pragloc;
 int	trulvl;
 int	flslvl;
 int	elflvl;
@@ -242,7 +243,9 @@ main(int argc, char **argv)
 
 	filloc = lookup((usch *)"__FILE__", ENTER);
 	linloc = lookup((usch *)"__LINE__", ENTER);
+	pragloc = lookup((usch *)"_Pragma", ENTER);
 	filloc->value = linloc->value = (usch *)""; /* Just something */
+	pragloc->value = (usch *)"";
 
 	if (tflag == 0) {
 		time_t t = time(NULL);
@@ -759,6 +762,51 @@ savch(c)
 }
 
 /*
+ * convert _Pragma to #pragma for output.
+ */
+static void
+pragoper(void)
+{
+	usch *opb;
+	int t;
+
+	slow = 1;
+	putstr((usch *)"\n#pragma ");
+	if ((t = yylex()) == WSPACE)
+		t = yylex();
+	if (t != '(')
+		goto bad;
+	if ((t = yylex()) == WSPACE)
+		t = yylex();
+	opb = stringbuf;
+	while (t != ')') {
+		savstr((usch *)yytext);
+		t = yylex();
+	}
+	savch(0);
+	cunput(WARN);
+	unpstr(opb);
+	stringbuf = opb;
+	expmac(NULL);
+	while (stringbuf > opb)
+		cunput(*--stringbuf);
+	if ((t = yylex()) != STRING)
+		goto bad;
+	opb = (usch *)yytext;
+	if (*opb++ == 'L')
+		opb++;
+	while ((t = *opb++) != '\"') {
+		if (t == '\\' && (*opb == '\"' || *opb == '\\'))
+			t = *opb++;
+		putch(t);
+	}
+	putch('\n');
+	prtline();
+	return;
+bad:	error("bad pragma operator");
+}
+
+/*
  * substitute namep for sp->value.
  */
 int
@@ -779,6 +827,9 @@ struct recur *rp;
 		return 1;
 	} else if (sp == linloc) {
 		(void)sheap("%d", ifiles->lineno);
+		return 1;
+	} else if (sp == pragloc) {
+		pragoper();
 		return 1;
 	}
 	vp = sp->value;
