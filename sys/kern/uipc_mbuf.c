@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.85 2007/07/20 09:59:19 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.86 2007/09/26 13:05:52 henning Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -186,6 +186,8 @@ m_gethdr(int nowait, int type)
 	if (m) {
 		m->m_type = type;
 		mbstat.m_mtypes[type]++;
+
+		/* keep in sync with m_inithdr */
 		m->m_next = (struct mbuf *)NULL;
 		m->m_nextpkt = (struct mbuf *)NULL;
 		m->m_data = m->m_pktdat;
@@ -201,6 +203,27 @@ m_gethdr(int nowait, int type)
 		m->m_pkthdr.pf.routed = 0;
 	}
 	splx(s);
+	return (m);
+}
+
+struct mbuf *
+m_inithdr(struct mbuf *m)
+{
+	/* keep in sync with m_gethdr */
+	m->m_next = (struct mbuf *)NULL;
+	m->m_nextpkt = (struct mbuf *)NULL;
+	m->m_data = m->m_pktdat;
+	m->m_flags = M_PKTHDR;
+	m->m_pkthdr.rcvif = NULL;
+	SLIST_INIT(&m->m_pkthdr.tags);
+	m->m_pkthdr.csum_flags = 0;
+	m->m_pkthdr.pf.hdr = NULL;
+	m->m_pkthdr.pf.rtableid = 0;
+	m->m_pkthdr.pf.qid = 0;
+	m->m_pkthdr.pf.tag = 0;
+	m->m_pkthdr.pf.flags = 0;
+	m->m_pkthdr.pf.routed = 0;
+
 	return (m);
 }
 
