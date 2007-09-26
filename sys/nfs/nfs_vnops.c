@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.77 2007/09/20 12:54:31 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.78 2007/09/26 16:00:55 blambert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1034,7 +1034,11 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 			*tl = x;        /* size of this write */
 
 		}
-		nfsm_uiotom(uiop, len);
+		if ((t1 = nfsm_uiotombuf(uiop, &mb, len, &bpos)) != 0) {
+			error = t1;
+			m_freem(mreq);
+			goto nfsmout;
+		}
 		nfsm_request(vp, NFSPROC_WRITE, uiop->uio_procp,
 		    VTONFS(vp)->n_wcred);
 		if (v3) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.17 2007/09/11 13:41:52 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.18 2007/09/26 16:00:55 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -317,13 +317,6 @@
 		   (t1 = nfsm_mbuftouio(&md,(p),(s),&dpos)) != 0) { \
 			error = t1; \
 			m_freem(mrep); \
-			goto nfsmout; \
-		}
-
-#define nfsm_uiotom(p,s) \
-		if ((t1 = nfsm_uiotombuf((p),&mb,(s),&bpos)) != 0) { \
-			error = t1; \
-			m_freem(mreq); \
 			goto nfsmout; \
 		}
 
