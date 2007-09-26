@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.69 2007/01/19 01:33:44 krw Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.70 2007/09/26 13:09:59 henning Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1389,10 +1389,7 @@ epget(sc, totlen)
 			timeout_add(&sc->sc_epmbuffill_tmo, 1);
 		/* Convert one of our saved mbuf's. */
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-		m->m_data = m->m_pktdat;
-		m->m_flags = M_PKTHDR;
-		m_tag_init(m);
-		m->m_pkthdr.csum_flags = 0;
+		m = m_inithdr(m);
 	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
