@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.45 2007/09/25 14:21:30 jmc Exp $	*/
+/*	$OpenBSD: identd.c,v 1.46 2007/09/26 02:46:29 ray Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -157,6 +157,7 @@ main(int argc, char *argv[])
 	gid_t   set_gid = 0;
 	extern char *optarg;
 	socklen_t len;
+	const char *errstr;
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 
@@ -192,7 +193,9 @@ main(int argc, char *argv[])
 			background_flag = 0;
 			break;
 		case 't':
-			timeout = atoi(optarg);
+			timeout = strtonum(optarg, 0, 100000000, &errstr);
+			if (errstr)
+				error("timeout is %s: %s", errstr, optarg);
 			break;
 		case 'p':
 			portno = optarg;
@@ -482,12 +485,12 @@ error(char *fmt, ...)
 	
 	if (syslog_flag) {
 		va_copy(ap2, ap);
-		syslog(LOG_ERR, fmt, ap2);
+		vsyslog(LOG_ERR, fmt, ap2);
 		va_end(ap2);
 	}
 	if (debug_flag) {
 		fprintf(stderr, "%d , %d : ERROR : X-DBG : ", lport, fport);
-		fprintf(stderr, fmt, ap);
+		vfprintf(stderr, fmt, ap);
 		perror(": ");
 	} else
 		printf("%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
