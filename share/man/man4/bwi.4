@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.11 2007/09/24 20:05:07 mglocker Exp $
+.\" $OpenBSD: bwi.4,v 1.12 2007/09/26 09:24:07 mglocker Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 24 2007 $
+.Dd $Mdocdate: September 26 2007 $
 .Os
 .Dt BWI 4
 .Sh NAME
@@ -51,12 +51,12 @@ This mode is the default.
 .\" .It Host AP
 .\" In this mode the driver acts as an access point (base station)
 .\" for other cards.
-.\" .It monitor mode
-.\" In this mode the driver is able to receive packets without
-.\" associating with an access point.
-.\" This disables the internal receive filter and enables the card to
-.\" capture packets from networks which it wouldn't normally have access to,
-.\" or to scan for access points.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
 .El
 .Pp
 .\" .Nm
@@ -137,12 +137,12 @@ The
 driver supports the following media options:
 .Pp
 .Bl -tag -width monitor -compact
-.It Cm hostap
-Select Host AP operation.
-.It Cm ibss
-Select IBSS operation.
-.\".It Cm monitor
-.\"Select monitor mode.
+.\".It Cm hostap
+.\"Select Host AP operation.
+.\".It Cm ibss
+.\"Select IBSS operation.
+.It Cm monitor
+Select monitor mode.
 .El
 .It Fl mediaopt Ar opts
 Disable the specified media options on the driver and return it to the
