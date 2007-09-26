@@ -1,21 +1,12 @@
-/* should not issue: init004.c, line 17: warning: illegal pointer combination */
 
-struct ops;
+enum foo {aap};
 
-typedef enum  { aap} Linetype;
-
-typedef Linetype eval_fn(const struct ops *, int *, const char **);
-
-static eval_fn eval_table, eval_unary;
+enum foo eval_table(void);
 
 static const struct ops {
-        eval_fn *inner;
-        struct op {
-                const char *str;
-                int (*fn)(int, int);
-        } op[5];
+        enum foo (*afrunc)(void);
 } eval_ops[] = {
-        { eval_table, { { "||", 0 } } },
+        { eval_table },
 };
 
 
