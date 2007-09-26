@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1267 2007/09/17 01:13:23 brad Exp $
+$OpenBSD: pcidevs,v 1.1268 2007/09/26 06:02:26 deanna Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -311,6 +311,7 @@ vendor	DCI		0x6666  Decision Computer Inc
 vendor	QUANCOM		0x8008	Quancom Informationssysteme
 vendor	INTEL		0x8086	Intel
 vendor	INNOTEK		0x80ee	InnoTek
+vendor	SIGMATEL	0x8384	Sigmatel
 vendor	WINBOND2	0x8c4a	Winbond
 vendor	KTI		0x8e2e	KTI
 vendor	ADP		0x9004	Adaptec
