@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.34 2007/09/07 08:20:24 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.35 2007/09/27 07:32:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -846,9 +846,6 @@ pfe_sync(void)
 			control_imsg_forward(&imsg);
 		}
 
-		service->table->conf.flags &= ~(F_CHANGED);
-		service->backup->conf.flags &= ~(F_CHANGED);
-
 		if (service->conf.flags & F_DOWN) {
 			if (service->conf.flags & F_ACTIVE_RULESET) {
 				flush_table(env, service);
@@ -874,6 +871,14 @@ pfe_sync(void)
 	}
 
 	TAILQ_FOREACH(table, env->tables, entry) {
+		/*
+		 * clean up change flag.
+		 */
+		table->conf.flags &= ~(F_CHANGED);
+		
+		/*
+		 * handle demotion.
+		 */
 		if ((table->conf.flags & F_DEMOTE) == 0)
 			continue;
 		demote.level = 0;
