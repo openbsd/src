@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.185 2007/09/15 16:43:51 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.186 2007/09/27 22:24:05 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1733,7 +1733,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCGETSTATUS: {
 		struct pf_status *s = (struct pf_status *)addr;
 		bcopy(&pf_status, s, sizeof(struct pf_status));
-		pfi_fill_oldstatus(s);
+		pfi_update_status(s->ifname, s);
 		break;
 	}
 
@@ -1742,10 +1742,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pi->ifname[0] == 0) {
 			bzero(pf_status.ifname, IFNAMSIZ);
-			break;
-		}
-		if (ifunit(pi->ifname) == NULL) {
-			error = EINVAL;
 			break;
 		}
 		strlcpy(pf_status.ifname, pi->ifname, IFNAMSIZ);
@@ -1758,7 +1754,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bzero(pf_status.scounters, sizeof(pf_status.scounters));
 		pf_status.since = time_second;
 		if (*pf_status.ifname)
-			pfi_clr_istats(pf_status.ifname);
+			pfi_update_status(pf_status.ifname, NULL);
 		break;
 	}
 

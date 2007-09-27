@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.523 2007/09/23 20:59:59 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.524 2007/09/27 22:24:05 mpf Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -447,7 +447,7 @@ typedef struct {
 %type	<v.gid>			gids gid_list gid_item
 %type	<v.route>		route
 %type	<v.redirection>		redirection redirpool
-%type	<v.string>		label string strings tag anchorname
+%type	<v.string>		label string strings stringall tag anchorname
 %type	<v.keep_state>		keep
 %type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>		logquick quick log logopts logopt
@@ -535,7 +535,7 @@ option		: SET OPTIMIZATION STRING		{
 		| SET TIMEOUT '{' timeout_list '}'
 		| SET LIMIT limit_spec
 		| SET LIMIT '{' limit_list '}'
-		| SET LOGINTERFACE STRING		{
+		| SET LOGINTERFACE stringall		{
 			if (check_rulestate(PFCTL_STATE_OPTION)) {
 				free($3);
 				YYERROR;
@@ -623,6 +623,14 @@ option		: SET OPTIMIZATION STRING		{
 			if (expand_skip_interface($3) != 0) {
 				yyerror("error setting skip interface(s)");
 				YYERROR;
+			}
+		}
+		;
+
+stringall	: STRING	{ $$ = $1; }
+		| ALL		{
+			if (($$ = strdup("all")) == NULL) {
+				err(1, "stringall: strdup");
 			}
 		}
 		;
