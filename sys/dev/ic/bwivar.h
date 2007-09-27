@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.13 2007/09/27 05:58:57 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.14 2007/09/27 09:19:21 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -57,19 +57,19 @@
 #define BWI_SHRETRY_FB		3
 #define BWI_LGRETRY_FB		2
 
-#define CSR_READ_4(sc, reg)		\
+#define CSR_READ_4(sc, reg)			\
 	bus_space_read_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
-#define CSR_READ_2(sc, reg)		\
+#define CSR_READ_2(sc, reg)			\
 	bus_space_read_2((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg))
 
-#define CSR_WRITE_4(sc, reg, val)	\
+#define CSR_WRITE_4(sc, reg, val)		\
 	bus_space_write_4((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg), (val))
-#define CSR_WRITE_2(sc, reg, val)	\
+#define CSR_WRITE_2(sc, reg, val)		\
 	bus_space_write_2((sc)->sc_mem_bt, (sc)->sc_mem_bh, (reg), (val))
 
-#define CSR_SETBITS_4(sc, reg, bits)	\
+#define CSR_SETBITS_4(sc, reg, bits)		\
 	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) | (bits))
-#define CSR_SETBITS_2(sc, reg, bits)	\
+#define CSR_SETBITS_2(sc, reg, bits)		\
 	CSR_WRITE_2((sc), (reg), CSR_READ_2((sc), (reg)) | (bits))
 
 #define CSR_FILT_SETBITS_4(sc, reg, filt, bits) \
@@ -77,9 +77,9 @@
 #define CSR_FILT_SETBITS_2(sc, reg, filt, bits)	\
 	CSR_WRITE_2((sc), (reg), (CSR_READ_2((sc), (reg)) & (filt)) | (bits))
 
-#define CSR_CLRBITS_4(sc, reg, bits)	\
+#define CSR_CLRBITS_4(sc, reg, bits)		\
 	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) & ~(bits))
-#define CSR_CLRBITS_2(sc, reg, bits)	\
+#define CSR_CLRBITS_2(sc, reg, bits)		\
 	CSR_WRITE_2((sc), (reg), CSR_READ_2((sc), (reg)) & ~(bits))
 
 struct bwi_desc32 {
@@ -169,23 +169,23 @@ struct bwi_txstats {
 	uint8_t		txs_pad2[2];
 	uint16_t	txs_seq;
 	uint16_t	txs_unknown;
-	uint8_t		txs_pad3[2];		/* Padded to 16bytes */
+	uint8_t		txs_pad3[2];	/* Padded to 16bytes */
 } __packed;
 
 struct bwi_ring_data {
-	uint32_t		rdata_txrx_ctrl;
-	bus_dma_segment_t	rdata_seg;
-	bus_dmamap_t		rdata_dmap;
-	bus_addr_t		rdata_paddr;
+	uint32_t		 rdata_txrx_ctrl;
+	bus_dma_segment_t	 rdata_seg;
+	bus_dmamap_t		 rdata_dmap;
+	bus_addr_t		 rdata_paddr;
 	void			*rdata_desc;
 };
 
 struct bwi_txbuf {
 	struct mbuf		*tb_mbuf;
-	bus_dmamap_t		tb_dmap;
+	bus_dmamap_t		 tb_dmap;
 
 	struct ieee80211_node	*tb_ni;
-	int			tb_rate_idx[2];
+	int			 tb_rate_idx[2];
 };
 
 struct bwi_txbuf_data {
@@ -196,8 +196,8 @@ struct bwi_txbuf_data {
 
 struct bwi_rxbuf {
 	struct mbuf		*rb_mbuf;
-	bus_addr_t		rb_paddr;
-	bus_dmamap_t		rb_dmap;
+	bus_addr_t		 rb_paddr;
+	bus_dmamap_t		 rb_dmap;
 };
 
 struct bwi_rxbuf_data {
@@ -207,18 +207,18 @@ struct bwi_rxbuf_data {
 };
 
 struct bwi_txstats_data {
-	bus_dma_segment_t	stats_ring_seg;
-	bus_dmamap_t		stats_ring_dmap;
-	bus_addr_t		stats_ring_paddr;
+	bus_dma_segment_t	 stats_ring_seg;
+	bus_dmamap_t		 stats_ring_dmap;
+	bus_addr_t		 stats_ring_paddr;
 	void			*stats_ring;
 
-	bus_dma_segment_t	stats_seg;
-	bus_dmamap_t		stats_dmap;
-	bus_addr_t		stats_paddr;
+	bus_dma_segment_t	 stats_seg;
+	bus_dmamap_t		 stats_dmap;
+	bus_addr_t		 stats_paddr;
 	struct bwi_txstats	*stats;
 
-	uint32_t		stats_ctrl_base;
-	int			stats_idx;
+	uint32_t		 stats_ctrl_base;
+	int			 stats_idx;
 };
 
 struct bwi_fwhdr {
@@ -280,9 +280,9 @@ do {						\
 } while (0)
 
 #define BWI_REGWIN_EXIST(rw)	((rw)->rw_flags & BWI_REGWIN_F_EXIST)
-#define BWI_GPIO_REGWIN(sc) \
-	(BWI_REGWIN_EXIST(&(sc)->sc_com_regwin) ? \
-		&(sc)->sc_com_regwin : &(sc)->sc_bus_regwin)
+#define BWI_GPIO_REGWIN(sc)				\
+	(BWI_REGWIN_EXIST(&(sc)->sc_com_regwin) ?	\
+	&(sc)->sc_com_regwin : &(sc)->sc_bus_regwin)
 
 struct bwi_mac;
 
@@ -381,19 +381,18 @@ struct bwi_rf {
 struct fw_image;
 
 struct bwi_mac {
-	struct bwi_regwin	mac_regwin;	/* MUST be first field */
-#define mac_rw_flags	mac_regwin.rw_flags
-#define mac_type	mac_regwin.rw_type
-#define mac_id		mac_regwin.rw_id
-#define mac_rev		mac_regwin.rw_rev
-
+	struct bwi_regwin	 mac_regwin;	/* MUST be first field */
+#define mac_rw_flags		 mac_regwin.rw_flags
+#define mac_type		 mac_regwin.rw_type
+#define mac_id			 mac_regwin.rw_id
+#define mac_rev			 mac_regwin.rw_rev
 	struct bwi_softc	*mac_sc;
 
-	struct bwi_phy		mac_phy;	/* PHY I/F */
-	struct bwi_rf		mac_rf;		/* RF I/F */
+	struct bwi_phy		 mac_phy;	/* PHY I/F */
+	struct bwi_rf		 mac_rf;	/* RF I/F */
 
-	struct bwi_tpctl	mac_tpctl;	/* TX power control */
-	uint32_t		mac_flags;	/* BWI_MAC_F_ */
+	struct bwi_tpctl	 mac_tpctl;	/* TX power control */
+	uint32_t		 mac_flags;	/* BWI_MAC_F_ */
 
 	uint8_t			*mac_ucode;
 	size_t			 mac_ucode_size;
@@ -416,9 +415,7 @@ struct bwi_mac {
 #define BWI_CREATE_MAC(mac, sc, id, rev)	\
 do {						\
 	BWI_CREATE_REGWIN(&(mac)->mac_regwin,	\
-			  (id),			\
-			  BWI_REGWIN_T_MAC,	\
-			  (rev));		\
+	    (id), BWI_REGWIN_T_MAC, (rev));	\
 	(mac)->mac_sc = (sc);			\
 } while (0)
 
@@ -546,25 +543,25 @@ struct bwi_softc {
 	uint32_t		 (*sc_conf_read)(void *, uint32_t);
 
 	/* Sysctl variables */
-	int			sc_fw_version;	/* BWI_FW_VERSION[34] */
-	int			sc_dwell_time;	/* milliseconds */
+	int			 sc_fw_version;	/* BWI_FW_VERSION[34] */
+	int			 sc_dwell_time;	/* milliseconds */
 
 #if NBPFILTER > 0
-        caddr_t                 sc_drvbpf;
+        caddr_t                  sc_drvbpf;
  
         union {
                 struct bwi_rx_radiotap_hdr th;
                 uint8_t pad[64];
-        }                       sc_rxtapu;
-#define sc_rxtap                sc_rxtapu.th
-        int                     sc_rxtap_len;
+        }                        sc_rxtapu;
+#define sc_rxtap                 sc_rxtapu.th
+        int                      sc_rxtap_len;
  
         union {
                 struct bwi_tx_radiotap_hdr th;
                 uint8_t pad[64];
-        }                       sc_txtapu;
-#define sc_txtap                sc_txtapu.th
-        int                     sc_txtap_len;
+        }                        sc_txtapu;
+#define sc_txtap                 sc_txtapu.th
+        int                      sc_txtap_len;
 #endif
 };
 
@@ -573,33 +570,33 @@ struct bwi_softc {
 
 #define abs(a)	__builtin_abs(a)
 
-#define MOBJ_WRITE_2(mac, objid, ofs, val)	\
+#define MOBJ_WRITE_2(mac, objid, ofs, val)			\
 	bwi_memobj_write_2((mac), (objid), (ofs), (val))
-#define MOBJ_WRITE_4(mac, objid, ofs, val)	\
+#define MOBJ_WRITE_4(mac, objid, ofs, val)			\
 	bwi_memobj_write_4((mac), (objid), (ofs), (val))
-#define MOBJ_READ_2(mac, objid, ofs)		\
+#define MOBJ_READ_2(mac, objid, ofs)				\
 	bwi_memobj_read_2((mac), (objid), (ofs))
-#define MOBJ_READ_4(mac, objid, ofs)		\
+#define MOBJ_READ_4(mac, objid, ofs)				\
 	bwi_memobj_read_4((mac), (objid), (ofs))
 
-#define MOBJ_SETBITS_4(mac, objid, ofs, bits)	\
-	MOBJ_WRITE_4((mac), (objid), (ofs),	\
-		     MOBJ_READ_4((mac), (objid), (ofs)) | (bits))
-#define MOBJ_CLRBITS_4(mac, objid, ofs, bits)	\
-	MOBJ_WRITE_4((mac), (objid), (ofs),	\
-		     MOBJ_READ_4((mac), (objid), (ofs)) & ~(bits))
+#define MOBJ_SETBITS_4(mac, objid, ofs, bits)			\
+	MOBJ_WRITE_4((mac), (objid), (ofs),			\
+	MOBJ_READ_4((mac), (objid), (ofs)) | (bits))
+#define MOBJ_CLRBITS_4(mac, objid, ofs, bits)			\
+	MOBJ_WRITE_4((mac), (objid), (ofs),			\
+	MOBJ_READ_4((mac), (objid), (ofs)) & ~(bits))
 
-#define MOBJ_FILT_SETBITS_2(mac, objid, ofs, filt, bits) \
-	MOBJ_WRITE_2((mac), (objid), (ofs),	\
-		     (MOBJ_READ_2((mac), (objid), (ofs)) & (filt)) | (bits))
+#define MOBJ_FILT_SETBITS_2(mac, objid, ofs, filt, bits)	\
+	MOBJ_WRITE_2((mac), (objid), (ofs),			\
+	(MOBJ_READ_2((mac), (objid), (ofs)) & (filt)) | (bits))
 
 #define TMPLT_WRITE_4(mac, ofs, val)	bwi_tmplt_write_4((mac), (ofs), (val))
 
 #define HFLAGS_WRITE(mac, flags)	bwi_hostflags_write((mac), (flags))
 #define HFLAGS_READ(mac)		bwi_hostflags_read((mac))
-#define HFLAGS_CLRBITS(mac, bits)	\
+#define HFLAGS_CLRBITS(mac, bits)				\
 	HFLAGS_WRITE((mac), HFLAGS_READ((mac)) | (bits))
-#define HFLAGS_SETBITS(mac, bits)	\
+#define HFLAGS_SETBITS(mac, bits)				\
 	HFLAGS_WRITE((mac), HFLAGS_READ((mac)) & ~(bits))
 
 /* PHY */

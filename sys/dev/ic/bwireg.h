@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwireg.h,v 1.3 2007/09/27 05:58:57 mglocker Exp $	*/
+/*	$OpenBSD: bwireg.h,v 1.4 2007/09/27 09:19:21 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -75,7 +75,6 @@
 #define BWI_CONF_LO_SERVTO		2
 #define BWI_CONF_LO_REQTO_MASK		0x00000070	/* request timeout */
 #define BWI_CONF_LO_REQTO		3
-
 
 #define BWI_ID_LO			0xff8
 #define BWI_ID_LO_BUSREV_MASK		0xf0000000
@@ -181,6 +180,7 @@
 #define BWI_MOBJ_CTRL_VAL(objid, ofs)	((objid) << 16 | (ofs))
 #define BWI_MOBJ_DATA			0x164
 #define BWI_MOBJ_DATA_UNALIGN		0x166
+
 /*
  * Memory object IDs
  */
@@ -272,7 +272,7 @@
 #define BWI_PHYINFO_TYPE_11N		5
 #define BWI_PHYINFO_VER_MASK		0xf000
 
-#define BWI_RF_ANTDIV			0x3e2	/* Antenna Diversity?? */
+#define BWI_RF_ANTDIV			0x3e2	/* Antenna Diversity ?? */
 
 #define BWI_PHY_MAGIC_REG1		0x3e4
 #define BWI_PHY_MAGIC_REG1_VAL1		0x3000
@@ -352,11 +352,11 @@
 #define BWI_PCI_SUBDEVICE_BU4306	0x416
 #define BWI_PCI_SUBDEVICE_BCM4309G	0x421
 
-#define BWI_IS_BRCM_BU4306(sc) \
-	((sc)->sc_pci_subvid == PCI_VENDOR_BROADCOM && \
+#define BWI_IS_BRCM_BU4306(sc)					\
+	((sc)->sc_pci_subvid == PCI_VENDOR_BROADCOM &&		\
 	 (sc)->sc_pci_subdid == BWI_PCI_SUBDEVICE_BU4306)
-#define BWI_IS_BRCM_BCM4309G(sc) \
-	((sc)->sc_pci_subvid == PCI_VENDOR_BROADCOM && \
+#define BWI_IS_BRCM_BCM4309G(sc)				\
+	((sc)->sc_pci_subvid == PCI_VENDOR_BROADCOM &&		\
 	 (sc)->sc_pci_subdid == BWI_PCI_SUBDEVICE_BCM4309G)
 
 /*
@@ -385,7 +385,7 @@
  * SPROM card flags
  */
 #define BWI_CARD_F_PA_GPIO9		(1 << 1)	/* GPIO 9 controls PA */
-#define BWI_CARD_F_SW_NRSSI		(1 << 3)	
+#define BWI_CARD_F_SW_NRSSI		(1 << 3)
 #define BWI_CARD_F_NO_SLOWCLK		(1 << 5)	/* no slow clock */
 #define BWI_CARD_F_EXT_LNA		(1 << 12)	/* external LNA */
 #define BWI_CARD_F_ALT_IQ		(1 << 15)	/* alternate I/Q */
@@ -415,19 +415,19 @@
 #define BWI_INTR_TBTT			(1 << 2)
 #define BWI_INTR_EO_ATIM		(1 << 5)	/* End of ATIM */
 #define BWI_INTR_PMQ			(1 << 6)	/* XXX?? */
-#define BWI_INTR_MAC_TXERR		(1 << 9)	
+#define BWI_INTR_MAC_TXERR		(1 << 9)
 #define BWI_INTR_PHY_TXERR		(1 << 11)
 #define BWI_INTR_TIMER1			(1 << 14)
 #define BWI_INTR_RX_DONE		(1 << 15)
 #define BWI_INTR_TX_FIFO		(1 << 16)	/* XXX?? */
-#define BWI_INTR_NOISE			(1 << 18)	
+#define BWI_INTR_NOISE			(1 << 18)
 #define BWI_INTR_RF_DISABLED		(1 << 28)
 #define BWI_INTR_TX_DONE		(1 << 29)
 
-#define BWI_INIT_INTRS \
-	(BWI_INTR_READY | BWI_INTR_BEACON | BWI_INTR_TBTT | \
-	 BWI_INTR_EO_ATIM | BWI_INTR_PMQ | BWI_INTR_MAC_TXERR | \
-	 BWI_INTR_PHY_TXERR | BWI_INTR_RX_DONE | BWI_INTR_TX_FIFO | \
+#define BWI_INIT_INTRS							\
+	(BWI_INTR_READY | BWI_INTR_BEACON | BWI_INTR_TBTT |		\
+	 BWI_INTR_EO_ATIM | BWI_INTR_PMQ | BWI_INTR_MAC_TXERR |		\
+	 BWI_INTR_PHY_TXERR | BWI_INTR_RX_DONE | BWI_INTR_TX_FIFO |	\
 	 BWI_INTR_NOISE | BWI_INTR_RF_DISABLED | BWI_INTR_TX_DONE)
 #define BWI_ALL_INTRS			0xffffffff
 
@@ -463,7 +463,7 @@
  * http://bcm-specs.sipsolutions.net/APHYSetup/FineFrequency
  * G PHY
  */
-#define BWI_PHY_FREQ_11G_REV1 \
+#define BWI_PHY_FREQ_11G_REV1						\
 	0x0089,	0x02e9,	0x0409,	0x04e9,	0x05a9,	0x0669,	0x0709,	0x0789,	\
 	0x0829,	0x08a9,	0x0929,	0x0989,	0x0a09,	0x0a69,	0x0ac9,	0x0b29,	\
 	0x0ba9,	0x0be9,	0x0c49,	0x0ca9,	0x0d09,	0x0d69,	0x0da9,	0x0e09,	\
@@ -511,7 +511,7 @@
  * http://bcm-specs.sipsolutions.net/APHYSetup/rotor_table
  * G PHY Revision 1
  */
-#define BWI_PHY_ROTOR_11G_REV1 \
+#define BWI_PHY_ROTOR_11G_REV1				\
 	0xfeb93ffd, 0xfec63ffd, 0xfed23ffd, 0xfedf3ffd,	\
 	0xfeec3ffe, 0xfef83ffe, 0xff053ffe, 0xff113ffe,	\
 	0xff1e3ffe, 0xff2a3fff, 0xff373fff, 0xff443fff,	\
@@ -531,19 +531,19 @@
  * http://bcm-specs.sipsolutions.net/APHYSetup/noise_scale_table
  */
 /* G PHY Revision [0,2] */
-#define BWI_PHY_NOISE_SCALE_11G_REV2 \
+#define BWI_PHY_NOISE_SCALE_11G_REV2					\
 	0x6c77,	0x5162,	0x3b40,	0x3335,	0x2f2d,	0x2a2a,	0x2527,	0x1f21,	\
 	0x1a1d,	0x1719,	0x1616,	0x1414,	0x1414,	0x1400,	0x1414,	0x1614,	\
 	0x1716,	0x1a19,	0x1f1d,	0x2521,	0x2a27,	0x2f2a,	0x332d,	0x3b35,	\
 	0x5140,	0x6c62,	0x0077
 /* G PHY Revsion 7 */
-#define BWI_PHY_NOISE_SCALE_11G_REV7 \
+#define BWI_PHY_NOISE_SCALE_11G_REV7					\
 	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	\
 	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa400,	0xa4a4,	0xa4a4,	\
 	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	0xa4a4,	\
 	0xa4a4,	0xa4a4,	0x00a4
 /* G PHY generic */
-#define BWI_PHY_NOISE_SCALE_11G \
+#define BWI_PHY_NOISE_SCALE_11G						\
 	0xd8dd,	0xcbd4,	0xbcc0,	0xb6b7,	0xb2b0,	0xadad,	0xa7a9,	0x9fa1,	\
 	0x969b,	0x9195,	0x8f8f,	0x8a8a,	0x8a8a,	0x8a00,	0x8a8a,	0x8f8a,	\
 	0x918f,	0x9695,	0x9f9b,	0xa7a1,	0xada9,	0xb2ad,	0xb6b0,	0xbcb7,	\
@@ -553,7 +553,7 @@
  * http://bcm-specs.sipsolutions.net/APHYSetup/sigma_square_table
  */
 /* G PHY Revision 2 */
-#define BWI_PHY_SIGMA_SQ_11G_REV2 \
+#define BWI_PHY_SIGMA_SQ_11G_REV2					\
 	0x007a,	0x0075,	0x0071,	0x006c,	0x0067,	0x0063,	0x005e,	0x0059,	\
 	0x0054,	0x0050,	0x004b,	0x0046,	0x0042,	0x003d,	0x003d,	0x003d,	\
 	0x003d,	0x003d,	0x003d,	0x003d,	0x003d,	0x003d,	0x003d,	0x003d,	\
@@ -562,7 +562,7 @@
 	0x0042,	0x0046,	0x004b,	0x0050,	0x0054,	0x0059,	0x005e,	0x0063,	\
 	0x0067,	0x006c,	0x0071,	0x0075,	0x007a
 /* G PHY Revision (2,7] */
-#define BWI_PHY_SIGMA_SQ_11G_REV7 \
+#define BWI_PHY_SIGMA_SQ_11G_REV7					\
 	0x00de,	0x00dc,	0x00da,	0x00d8,	0x00d6,	0x00d4,	0x00d2,	0x00cf,	\
 	0x00cd,	0x00ca,	0x00c7,	0x00c4,	0x00c1,	0x00be,	0x00be,	0x00be,	\
 	0x00be,	0x00be,	0x00be,	0x00be,	0x00be,	0x00be,	0x00be,	0x00be,	\
@@ -575,7 +575,7 @@
  * http://bcm-specs.sipsolutions.net/APHYSetup/retard_table
  * G PHY
  */
-#define BWI_PHY_DELAY_11G_REV1 \
+#define BWI_PHY_DELAY_11G_REV1				\
 	0xdb93cb87, 0xd666cf64, 0xd1fdd358, 0xcda6d826,	\
 	0xca38dd9f, 0xc729e2b4, 0xc469e88e, 0xc26aee2b,	\
 	0xc0def46c, 0xc073fa62, 0xc01d00d5, 0xc0760743,	\
@@ -609,7 +609,7 @@
  * http://bcm-specs.sipsolutions.net/TSSI_to_DBM_Table
  * B PHY
  */
-#define BWI_TXPOWER_MAP_11B \
+#define BWI_TXPOWER_MAP_11B						\
 	0x4d,	0x4c,	0x4b,	0x4a,	0x4a,	0x49,	0x48,	0x47,	\
 	0x47,	0x46,	0x45,	0x45,	0x44,	0x43,	0x42,	0x42,	\
 	0x41,	0x40,	0x3f,	0x3e,	0x3d,	0x3c,	0x3b,	0x3a,	\
@@ -622,7 +622,7 @@
  * http://bcm-specs.sipsolutions.net/TSSI_to_DBM_Table
  * G PHY
  */
-#define BWI_TXPOWER_MAP_11G \
+#define BWI_TXPOWER_MAP_11G						\
 	77,	77,	77,	76,	76,	76,	75,	75,	\
 	74,	74,	73,	73,	73,	72,	72,	71,	\
 	71,	70,	70,	69,	68,	68,	67,	67,	\

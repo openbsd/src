@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.47 2007/09/27 05:58:57 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.48 2007/09/27 09:19:21 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -398,7 +398,7 @@ static const uint32_t	bwi_phy_delay_11g_rev1[] =
 /* RF */
 #define RF_LO_WRITE(mac, lo)	bwi_rf_lo_write((mac), (lo))
 
-#define BWI_RF_2GHZ_CHAN(chan)			\
+#define BWI_RF_2GHZ_CHAN(chan) \
 	(ieee80211_ieee2mhz((chan), IEEE80211_CHAN_2GHZ) - 2400)
 
 #define BWI_DEFAULT_IDLE_TSSI	52
@@ -3928,7 +3928,6 @@ bwi_rf_lo_find(struct bwi_mac *mac, const struct bwi_tpctl *tpctl)
 #define MAP_MAX	10
 		static const uint16_t map[MAP_MAX] =
 		{ 11, 10, 11, 12, 13, 12, 13, 12, 13, 12 };
-
 #if 0
 		KKASSERT(rf_atten < MAP_MAX);
 		rf_atten = map[rf_atten];
@@ -7821,9 +7820,9 @@ bwi_ack_rate(struct ieee80211_node *ni, u_int8_t rate)
 	return ack_rate;
 }
 
-#define IEEE80211_OFDM_TXTIME(kbps, frmlen) \
-	(IEEE80211_OFDM_PREAMBLE_TIME + \
-	 IEEE80211_OFDM_SIGNAL_TIME + \
+#define IEEE80211_OFDM_TXTIME(kbps, frmlen)	\
+	(IEEE80211_OFDM_PREAMBLE_TIME +		\
+	 IEEE80211_OFDM_SIGNAL_TIME +		\
 	(IEEE80211_OFDM_NSYMS((kbps), (frmlen)) * IEEE80211_OFDM_SYM_TIME))
 
 #define IEEE80211_OFDM_SYM_TIME			4
@@ -7834,19 +7833,19 @@ bwi_ack_rate(struct ieee80211_node *ni, u_int8_t rate)
 #define IEEE80211_OFDM_PLCP_SERVICE_NBITS	16
 #define IEEE80211_OFDM_TAIL_NBITS		6	
 
-#define IEEE80211_OFDM_NBITS(frmlen) \
-	(IEEE80211_OFDM_PLCP_SERVICE_NBITS + \
-	 ((frmlen) * NBBY) + \
+#define IEEE80211_OFDM_NBITS(frmlen)		\
+	(IEEE80211_OFDM_PLCP_SERVICE_NBITS +	\
+	 ((frmlen) * NBBY) +			\
 	 IEEE80211_OFDM_TAIL_NBITS)
 
-#define IEEE80211_OFDM_NBITS_PER_SYM(kbps) \
+#define IEEE80211_OFDM_NBITS_PER_SYM(kbps)	\
 	(((kbps) * IEEE80211_OFDM_SYM_TIME) / 1000)
 
-#define IEEE80211_OFDM_NSYMS(kbps, frmlen) \
-	howmany(IEEE80211_OFDM_NBITS((frmlen)), \
-		IEEE80211_OFDM_NBITS_PER_SYM((kbps)))
+#define IEEE80211_OFDM_NSYMS(kbps, frmlen)	\
+	howmany(IEEE80211_OFDM_NBITS((frmlen)),	\
+	IEEE80211_OFDM_NBITS_PER_SYM((kbps)))
 
-#define IEEE80211_CCK_TXTIME(kbps, frmlen) \
+#define IEEE80211_CCK_TXTIME(kbps, frmlen)	\
 	(((IEEE80211_CCK_NBITS((frmlen)) * 1000) + (kbps) - 1) / (kbps))
 
 #define IEEE80211_CCK_PREAMBLE_LEN		144
