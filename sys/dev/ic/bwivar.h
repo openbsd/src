@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.14 2007/09/27 09:19:21 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.15 2007/09/27 22:10:25 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -460,6 +460,11 @@ struct bwi_rx_radiotap_hdr {
 	/* TODO: sq */
 };
 
+struct bwi_node {
+	struct ieee80211_node		ni;
+	struct ieee80211_amrr_node	amn;
+};
+
 struct bwi_softc {
 	struct device		 sc_dev;
 	struct ieee80211com	 sc_ic;
@@ -491,6 +496,9 @@ struct bwi_softc {
 
 	struct timeout		 sc_scan_ch;
 	struct timeout		 sc_calib_ch;
+	struct timeout		 sc_amrr_ch;
+
+	struct ieee80211_amrr	 sc_amrr;
 
 	struct bwi_regwin	*sc_cur_regwin;
 	struct bwi_regwin	 sc_com_regwin;

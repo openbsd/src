@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.48 2007/09/27 09:19:21 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.49 2007/09/27 22:10:25 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -68,6 +68,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/bwireg.h>
@@ -274,6 +275,10 @@ void		 bwi_watchdog(struct ifnet *);
 int		 bwi_stop(struct bwi_softc *);
 int		 bwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int		 bwi_media_change(struct ifnet *);
+void		 bwi_iter_func(void *, struct ieee80211_node *);
+void		 bwi_amrr_timeout(void *);
+void		 bwi_newassoc(struct ieee80211com *, struct ieee80211_node *,
+		     int);
 int		 bwi_dma_alloc(struct bwi_softc *);
 void		 bwi_dma_free(struct bwi_softc *);
 int		 bwi_dma_ring_alloc(struct bwi_softc *,
@@ -617,6 +622,11 @@ bwi_attach(struct bwi_softc *sc)
 
 	printf("\n");
 
+	/* AMRR rate control */
+	sc->sc_amrr.amrr_min_success_threshold = 1;
+	sc->sc_amrr.amrr_max_success_threshold = 15;
+	timeout_set(&sc->sc_amrr_ch, bwi_amrr_timeout, sc);
+
 	timeout_set(&sc->sc_scan_ch, bwi_next_scan, sc);
 	timeout_set(&sc->sc_calib_ch, bwi_calibrate, sc);
 
@@ -761,6 +771,7 @@ bwi_attach(struct bwi_softc *sc)
 
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bwi_newstate;
+	ic->ic_newassoc = bwi_newassoc;
 
 	ieee80211_media_init(ifp, bwi_media_change, ieee80211_media_status);
 
@@ -6646,6 +6657,7 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 	uint8_t chan;
 
+	timeout_del(&sc->sc_amrr_ch);
 	timeout_del(&sc->sc_scan_ch);
 	timeout_del(&sc->sc_calib_ch);
 
@@ -6685,6 +6697,12 @@ back:
 	} else if (nstate == IEEE80211_S_RUN) {
 		/* XXX 15 seconds */
 		timeout_add(&sc->sc_calib_ch, hz * 15);
+
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+			/* start automatic rate control timer */
+			if (ic->ic_fixed_rate == -1)
+				timeout_add(&sc->sc_amrr_ch, hz / 2);
+		}
 	}
 
 	return (error);
@@ -6703,6 +6721,46 @@ bwi_media_change(struct ifnet *ifp)
 		bwi_init(ifp);
 
 	return (0);
+}
+
+void
+bwi_iter_func(void *arg, struct ieee80211_node *ni)
+{
+	struct bwi_softc *sc = arg;
+	struct bwi_node *bn = (struct bwi_node *)ni;
+
+	ieee80211_amrr_choose(&sc->sc_amrr, ni, &bn->amn);
+}
+
+void
+bwi_amrr_timeout(void *arg)
+{
+	struct bwi_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		bwi_iter_func(sc, ic->ic_bss);
+	else
+		ieee80211_iterate_nodes(ic, bwi_iter_func, sc);
+
+	timeout_add(&sc->sc_amrr_ch, hz / 2);
+}
+
+void
+bwi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
+{
+	struct bwi_softc *sc = ic->ic_if.if_softc;
+	int i;
+
+	DPRINTF(1, "%s\n", __func__);
+
+	ieee80211_amrr_node_init(&sc->sc_amrr, &((struct bwi_node *)ni)->amn);
+
+	/* set rate to some reasonable initial value */
+	for (i = ni->ni_rates.rs_nrates - 1;
+	    i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72; i--);
+
+	ni->ni_txrate = i;
 }
 
 int
@@ -7939,8 +7997,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 			rate = ic->ic_sup_rates[ic->ic_curmode].
 			    rs_rates[ic->ic_fixed_rate];
 		} else {
-			/* TODO: TX rate control */
-			rate = rate_fb = (1 * 2);
+			/* AMRR rate control */
+			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 		}
 	} else {
 		/* Fixed at 1Mbytes/s for mgt frames */
