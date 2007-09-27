@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.45 2007/09/27 13:34:22 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.46 2007/09/27 13:50:40 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -90,6 +90,7 @@ void		 relay_read_httpchunks(struct bufferevent *, void *);
 char		*relay_expand_http(struct ctl_relay_event *, char *,
 		    char *, size_t);
 
+int		 relay_ssl_ctx_init(struct relay *);
 SSL_CTX		*relay_ssl_ctx_create(struct relay *);
 void		 relay_ssl_transaction(struct session *);
 void		 relay_ssl_accept(int, short, void *);
@@ -383,8 +384,8 @@ relay_privinit(void)
 		}
 
 		if ((rlay->conf.flags & F_SSL) &&
-		    (rlay->ctx = relay_ssl_ctx_create(rlay)) == NULL)
-			fatal("relay_launch: failed to create SSL context");
+		    relay_ssl_ctx_init(rlay) == -1)
+			fatal("relay_launch: could not open certificates");
 
 		if (rlay->conf.flags & F_UDP)
 			rlay->s = relay_udp_bind(&rlay->conf.ss,
@@ -405,6 +406,9 @@ relay_init(void)
 	struct timeval	 tv;
 
 	TAILQ_FOREACH(rlay, &env->relays, entry) {
+		if ((rlay->ctx = relay_ssl_ctx_create(rlay)) == NULL)
+			fatal("relay_init: failed to create SSL context");
+
 		if (rlay->dsttable != NULL) {
 			switch (rlay->conf.dstmode) {
 			case RELAY_DSTMODE_ROUNDROBIN:
@@ -2009,13 +2013,38 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 	imsg_event_add(ibuf);
 }
 
+int
+relay_ssl_ctx_init(struct relay *rlay)
+{
+	char	certfile[PATH_MAX];
+	char	hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+
+	if (print_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)
+		return -1;
+
+	if (snprintf(certfile, sizeof(certfile),
+	    "/etc/ssl/%s.crt", hbuf) == -1)
+		return -1;
+	if ((rlay->cert_fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
+		return -1;
+	log_debug("relay_ssl_ctx_init: using certificate %s", certfile);
+
+	if (snprintf(certfile, sizeof(certfile),
+	    "/etc/ssl/private/%s.key", hbuf) == -1)
+		return -1;
+	if ((rlay->key_fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
+		return -1;
+	log_debug("relay_ssl_ctx_init: using private key %s", certfile);
+
+	return (0);
+}
+
 SSL_CTX *
 relay_ssl_ctx_create(struct relay *rlay)
 {
-	int fd;
 	struct protocol *proto = rlay->proto;
 	SSL_CTX *ctx;
-	char certfile[PATH_MAX], hbuf[128];
+	const char *ssl_action = "NO ACTION";
 
 	ctx = SSL_CTX_new(SSLv23_method());
 	if (ctx == NULL)
@@ -2047,28 +2076,12 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if (!SSL_CTX_set_cipher_list(ctx, proto->sslciphers))
 		goto err;
 
-	if (print_host(&rlay->conf.ss, hbuf, sizeof(hbuf)) == NULL)
+	log_debug("relay_ssl_ctx_create: loading certificate");
+	if (!ssl_ctx_use_certificate_chain(ctx, rlay->cert_fd))
 		goto err;
 
-	/* Load the certificate */
-	if (snprintf(certfile, sizeof(certfile),
-	    "/etc/ssl/%s.crt", hbuf) == -1)
-		goto err;
-	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
-		goto err;
-	log_debug("relay_ssl_ctx_create: using certificate %s", certfile);
-	if (!ssl_ctx_use_certificate_chain(ctx, fd))
-		goto err;
-
-	/* Load the private key */
-	if (snprintf(certfile, sizeof(certfile),
-	    "/etc/ssl/private/%s.key", hbuf) == -1) {
-		goto err;
-	}
-	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
-		goto err;
-	log_debug("relay_ssl_ctx_create: using private key %s", certfile);
-	if (!ssl_ctx_use_private_key(ctx, fd))
+	log_debug("relay_ssl_ctx_create: loading private key");
+	if (!ssl_ctx_use_private_key(ctx, rlay->key_fd))
 		goto err;
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
@@ -2083,6 +2096,7 @@ relay_ssl_ctx_create(struct relay *rlay)
  err:
 	if (ctx != NULL)
 		SSL_CTX_free(ctx);
+	log_debug("last SSL action: %s", ssl_action);
 	ssl_error(rlay->conf.name, "relay_ssl_ctx_create");
 	return (NULL);
 }
