@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.12 2007/09/26 09:24:07 mglocker Exp $
+.\" $OpenBSD: bwi.4,v 1.13 2007/09/27 06:06:27 mglocker Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2007 $
+.Dd $Mdocdate: September 27 2007 $
 .Os
 .Dt BWI 4
 .Sh NAME
@@ -248,14 +248,14 @@ using WEP key
 channel 11, obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
-.Ed
-.Pp
-The following
-.Xr hostname.if 5
-example creates a host-based access point on boot:
-.Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
-	mediaopt hostap nwid my_net chan 11
+.\".Ed
+.\".Pp
+.\"The following
+.\".Xr hostname.if 5
+.\"example creates a host-based access point on boot:
+.\".Bd -literal -offset indent
+.\"inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
+.\"	mediaopt hostap nwid my_net chan 11
 .Ed
 .Pp
 Configure bwi0 for WEP, using hex key
@@ -283,7 +283,7 @@ Join an existing BSS network,
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
-.Xr hostapd 8 ,
+.\".Xr hostapd 8 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
