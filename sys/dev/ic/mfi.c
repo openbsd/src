@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.73 2007/06/24 05:34:35 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.74 2007/09/27 08:45:19 chl Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -162,8 +162,7 @@ mfi_init_ccb(struct mfi_softc *sc)
 	DNPRINTF(MFI_D_CCB, "%s: mfi_init_ccb\n", DEVNAME(sc));
 
 	sc->sc_ccb = malloc(sizeof(struct mfi_ccb) * sc->sc_max_cmds,
-	    M_DEVBUF, M_WAITOK);
-	memset(sc->sc_ccb, 0, sizeof(struct mfi_ccb) * sc->sc_max_cmds);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	for (i = 0; i < sc->sc_max_cmds; i++) {
 		ccb = &sc->sc_ccb[i];
@@ -250,11 +249,10 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 	DNPRINTF(MFI_D_MEM, "%s: mfi_allocmem: %d\n", DEVNAME(sc),
 	    size);
 
-	mm = malloc(sizeof(struct mfi_mem), M_DEVBUF, M_NOWAIT);
+	mm = malloc(sizeof(struct mfi_mem), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (mm == NULL)
 		return (NULL);
 
-	memset(mm, 0, sizeof(struct mfi_mem));
 	mm->am_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
@@ -1410,8 +1408,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	free(cfg, M_DEVBUF);
 
 	/* memory for read config */
-	cfg = malloc(size, M_DEVBUF, M_WAITOK);
-	memset(cfg, 0, size);
+	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
 		goto freeme;
 
@@ -1704,8 +1701,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	free(cfg, M_DEVBUF);
 
 	/* memory for read config */
-	cfg = malloc(size, M_DEVBUF, M_WAITOK);
-	memset(cfg, 0, size);
+	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
 		goto freeme;
 
@@ -1794,10 +1790,9 @@ mfi_create_sensors(struct mfi_softc *sc)
 		return (1);
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_ld_cnt,
-	    M_DEVBUF, M_WAITOK);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
-	bzero(sc->sc_sensors, sizeof(struct ksensor) * sc->sc_ld_cnt);	
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
