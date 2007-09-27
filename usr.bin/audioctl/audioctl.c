@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.14 2007/09/17 13:46:11 jakemsr Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.15 2007/09/27 21:55:54 sobrado Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ struct field *
 findfield(char *name)
 {
 	int i;
-	for(i = 0; fields[i].name; i++)
+	for (i = 0; fields[i].name; i++)
 		if (strcmp(fields[i].name, name) == 0)
 			return &fields[i];
 	return (0);
@@ -195,7 +195,7 @@ prfield(struct field *p, const char *sep)
 
 	if (sep)
 		fprintf(out, "%s%s", p->name, sep);
-	switch(p->format) {
+	switch (p->format) {
 	case STRING:
 		fprintf(out, "%s", (char*)p->valp);
 		break;
@@ -229,7 +229,7 @@ prfield(struct field *p, const char *sep)
 		break;
 	case ENC:
 		v = *(u_int*)p->valp;
-		for(i = 0; encs[i].ename; i++)
+		for (i = 0; encs[i].ename; i++)
 			if (encs[i].eno == v)
 				break;
 		if (encs[i].ename)
@@ -257,7 +257,7 @@ rdfield(struct field *p, char *q)
 	int i;
 	u_int u;
 
-	switch(p->format) {
+	switch (p->format) {
 	case UINT:
 		if (sscanf(q, "%u", (unsigned int *)p->valp) != 1)
 			warnx("Bad number %s", q);
@@ -274,7 +274,7 @@ rdfield(struct field *p, char *q)
 			warnx("Bad number %s", q);
 		break;
 	case ENC:
-		for(i = 0; encs[i].ename; i++)
+		for (i = 0; encs[i].ename; i++)
 			if (strcmp(encs[i].ename, q) == 0)
 				break;
 		if (encs[i].ename)
@@ -295,7 +295,7 @@ getinfo(int fd)
 
 	if (ioctl(fd, AUDIO_GETDEV, &adev) < 0)
 		err(1, "AUDIO_GETDEV");
-	for(;;) {
+	for (;;) {
 		audio_encoding_t enc;
 		enc.index = i++;
 		if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
@@ -323,10 +323,10 @@ usage(void)
 	extern char *__progname;		/* from crt0.o */
 
 	fprintf(stderr,
-	    "usage: %s [-f file] [-n] -a\n"
-	    "       %s [-f file] [-n] name ...\n"
-	    "       %s [-f file] [-n] name=value ...\n", __progname,
-		__progname, __progname);
+	    "usage: %s [-n] [-f file] -a\n"
+	    "       %s [-n] [-f file] name ...\n"
+	    "       %s [-n] [-f file] name=value ...\n",
+	    __progname, __progname, __progname);
 
 	exit(1);
 }
@@ -345,7 +345,7 @@ main(int argc, char **argv)
 		file = "/dev/audioctl";
     
 	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			aflag++;
 			break;

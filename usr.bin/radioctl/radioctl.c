@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.13 2006/02/05 23:52:58 jakemsr Exp $ */
+/* $OpenBSD: radioctl.c,v 1.14 2007/09/27 21:55:54 sobrado Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -192,11 +192,11 @@ main(int argc, char **argv)
 		print_vars(silent, show_choices);
 	else if (argc > 0 && !show_vars) {
 		if (mode == O_RDWR) {
-			for(; argc--; argv++)
+			for (; argc--; argv++)
 				if (parse_opt(*argv, &opt))
 					do_ioctls(rd, &opt, silent);
 		} else {
-			for(; argc--; argv++)
+			for (; argc--; argv++)
 				if (parse_opt(*argv, &opt)) {
 					show_verbose(varname[opt.option],
 					    silent);
@@ -217,9 +217,9 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-f file] [-nv] variable ...\n"
-	    "       %s [-f file] [-n] variable=value ...\n"
-	    "       %s [-f file] [-nv] -a\n",
+	    "usage: %s [-nv] [-f file] -a\n"
+	    "       %s [-nv] [-f file] name\n"
+	    "       %s [-n] [-f file] name=value\n",
 	    __progname, __progname, __progname);
 	exit(1);
 }
