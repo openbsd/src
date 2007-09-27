@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.h,v 1.61 2007/09/25 08:24:26 pyr Exp $	*/
+/*	$OpenBSD: hoststated.h,v 1.62 2007/09/27 13:34:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -524,6 +524,9 @@ struct relay_config {
 
 struct relay {
 	TAILQ_ENTRY(relay)	 entry;
+	int			 cert_fd;
+	int			 key_fd;
+
 	struct relay_config	 conf;
 	int			 up;
 	struct protocol		*proto;
@@ -736,7 +739,7 @@ SSL_CTX	*ssl_ctx_create(struct hoststated *);
 void	 ssl_error(const char *, const char *);
 
 /* ssl_privsep.c */
-int	 ssl_ctx_use_private_key(SSL_CTX *, int, int);
+int	 ssl_ctx_use_private_key(SSL_CTX *, int);
 int	 ssl_ctx_use_certificate_chain(SSL_CTX *, int);
 
 /* hoststated.c */

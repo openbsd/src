@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.44 2007/09/25 08:24:26 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.45 2007/09/27 13:34:22 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -2068,7 +2068,7 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
 		goto err;
 	log_debug("relay_ssl_ctx_create: using private key %s", certfile);
-	if (!ssl_ctx_use_private_key(ctx, fd,  SSL_FILETYPE_PEM))
+	if (!ssl_ctx_use_private_key(ctx, fd))
 		goto err;
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;

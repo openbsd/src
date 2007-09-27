@@ -60,6 +60,7 @@
  * Adapted from openssl's ssl_rsa.c by Pierre-Yves Ritschard .
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
@@ -69,13 +70,12 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-int	 ssl_ctx_use_private_key(SSL_CTX *, int, int);
+int	 ssl_ctx_use_private_key(SSL_CTX *, int);
 int	 ssl_ctx_use_certificate_chain(SSL_CTX *, int);
 
 int
-ssl_ctx_use_private_key(SSL_CTX *ctx, int fd, int type)
+ssl_ctx_use_private_key(SSL_CTX *ctx, int fd)
 {
-	int 		 j;
 	int		 ret;
 	FILE		*fp;
 	BIO		*in;
@@ -83,6 +83,9 @@ ssl_ctx_use_private_key(SSL_CTX *ctx, int fd, int type)
 
 	ret = 0;
 	pkey = NULL;
+	if (lseek(fd, 0, SEEK_SET) == -1)
+		return (ret);
+
 	if ((fp = fdopen(fd, "r")) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_SYS_LIB);
 		return (ret);
@@ -92,18 +95,13 @@ ssl_ctx_use_private_key(SSL_CTX *ctx, int fd, int type)
 		goto end;
 	}
 
-	if (type == SSL_FILETYPE_PEM) {
-		j = ERR_R_PEM_LIB;
-		pkey = PEM_read_bio_PrivateKey(in, NULL,
-		    ctx->default_passwd_callback,
-		    ctx->default_passwd_callback_userdata);
-	} else {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE,
-		    SSL_R_BAD_SSL_FILETYPE);
-		goto end;
-	}
+	pkey = PEM_read_bio_PrivateKey(in, NULL,
+	    ctx->default_passwd_callback,
+	    ctx->default_passwd_callback_userdata);
+
 	if (pkey == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, j);
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE,
+		     ERR_R_PEM_LIB);
 		goto end;
 	}
 	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
@@ -125,6 +123,9 @@ ssl_ctx_use_certificate_chain(SSL_CTX *ctx, int fd)
 
 	ret = 0;
 	x = NULL;
+	if (lseek(fd, 0, SEEK_SET) == -1)
+		return (ret);
+
 	if ((fp = fdopen(fd, "r")) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_SYS_LIB);
 		return (ret);
