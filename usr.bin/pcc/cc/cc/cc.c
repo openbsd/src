@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.12 2007/09/24 16:04:01 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.13 2007/09/27 20:00:23 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -346,8 +346,8 @@ main(int argc, char *argv[])
 	/* Sanity checking */
 	if (nc == 0 && nl == 0)
 		errorx(8, "no input files");
-	if (outfile && (cflag || sflag) && nc > 1)
-		errorx(8, "-o given with -c || -S and more than one file");
+	if (outfile && (cflag || sflag || Eflag) && nc > 1)
+		errorx(8, "-o given with -c || -E || -S and more than one file");
 	if (outfile && clist[0] && strcmp(outfile, clist[0]) == 0)
 		errorx(8, "output file will be clobbered");
 #if 0
@@ -433,6 +433,8 @@ main(int argc, char *argv[])
 		av[na++] = clist[i];
 		if (!Eflag && !Mflag)
 			av[na++] = tmp4;
+		if (Eflag && outfile)
+			 av[na++] = outfile;
 		av[na++]=0;
 		if (callsys(passp, av))
 			{exfail++; eflag++;}
