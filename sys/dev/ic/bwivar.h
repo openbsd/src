@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.12 2007/09/24 19:51:18 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.13 2007/09/27 05:58:57 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -89,15 +89,15 @@ struct bwi_desc32 {
 } __packed;
 
 #define BWI_DESC32_A_FUNC_TXRX		0x1
-#define BWI_DESC32_A_FUNC_MASK		__BITS(31, 30)
-#define BWI_DESC32_A_ADDR_MASK		__BITS(29, 0)
+#define BWI_DESC32_A_FUNC_MASK		0xc0000000
+#define BWI_DESC32_A_ADDR_MASK		0x3fffffff
 
-#define BWI_DESC32_C_BUFLEN_MASK	__BITS(12, 0)
-#define BWI_DESC32_C_ADDRHI_MASK	__BITS(17, 16)
-#define BWI_DESC32_C_EOR		__BIT(28)
-#define BWI_DESC32_C_INTR		__BIT(29)
-#define BWI_DESC32_C_FRAME_END		__BIT(30)
-#define BWI_DESC32_C_FRAME_START	__BIT(31)
+#define BWI_DESC32_C_BUFLEN_MASK	0x00001fff
+#define BWI_DESC32_C_ADDRHI_MASK	0x00030000
+#define BWI_DESC32_C_EOR		(1 << 28)
+#define BWI_DESC32_C_INTR		(1 << 29)
+#define BWI_DESC32_C_FRAME_END		(1 << 30)
+#define BWI_DESC32_C_FRAME_START	(1 << 31)
 
 struct bwi_desc64 {
 	/* Little endian */
@@ -121,7 +121,7 @@ struct bwi_rxbuf_hdr {
 	uint8_t		rxh_pad3[14];	/* Padded to 30bytes */
 } __packed;
 
-#define BWI_RXH_F2_TYPE2FRAME	__BIT(2)
+#define BWI_RXH_F2_TYPE2FRAME	(1 << 2)
 
 struct bwi_txbuf_hdr {
 	/* Little endian */
@@ -148,17 +148,17 @@ struct bwi_txbuf_hdr {
 	uint8_t		txh_plcp[6];
 } __packed;
 
-#define BWI_TXH_ID_RING_MASK		__BITS(15, 13)
-#define BWI_TXH_ID_IDX_MASK		__BITS(12, 0)
+#define BWI_TXH_ID_RING_MASK		0xe000
+#define BWI_TXH_ID_IDX_MASK		0x1fff
 
-#define BWI_TXH_PHY_C_OFDM		__BIT(0)
-#define BWI_TXH_PHY_C_SHPREAMBLE	__BIT(4)
-#define BWI_TXH_PHY_C_ANTMODE_MASK	__BITS(9, 8)
+#define BWI_TXH_PHY_C_OFDM		(1 << 0)
+#define BWI_TXH_PHY_C_SHPREAMBLE	(1 << 4)
+#define BWI_TXH_PHY_C_ANTMODE_MASK	0x0300
 
-#define BWI_TXH_MAC_C_ACK		__BIT(0)
-#define BWI_TXH_MAC_C_FIRST_FRAG	__BIT(3)
-#define BWI_TXH_MAC_C_HWSEQ		__BIT(4)
-#define BWI_TXH_MAC_C_FB_OFDM		__BIT(8)
+#define BWI_TXH_MAC_C_ACK		(1 << 0)
+#define BWI_TXH_MAC_C_FIRST_FRAG	(1 << 3)
+#define BWI_TXH_MAC_C_HWSEQ		(1 << 4)
+#define BWI_TXH_MAC_C_FB_OFDM		(1 << 8)
 
 struct bwi_txstats {
 	/* Little endian */
@@ -238,8 +238,8 @@ struct bwi_fwhdr {
 #define BWI_FW_T_PCM            'p'
 #define BWI_FW_T_IV             'i'
 #define BWI_FW_GEN_1            1
-#define BWI_FW_IV_OFS_MASK	__BITS(14, 0)
-#define BWI_FW_IV_IS_32BIT	__BIT(15)
+#define BWI_FW_IV_OFS_MASK	0x7fff
+#define BWI_FW_IV_IS_32BIT	(1 << 15)
 
 struct fwheader {
 	char	filename[64];

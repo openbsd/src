@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwireg.h,v 1.2 2007/09/12 22:22:05 mglocker Exp $	*/
+/*	$OpenBSD: bwireg.h,v 1.3 2007/09/27 05:58:57 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -43,42 +43,42 @@
  * Registers for all of the register windows
  */
 #define BWI_FLAGS			0xf18
-#define BWI_FLAGS_INTR_MASK		__BITS(5, 0)
+#define BWI_FLAGS_INTR_MASK		0x0000003f
 
 #define BWI_IMSTATE			0xf90
-#define BWI_IMSTATE_INBAND_ERR		__BIT(17)
-#define BWI_IMSTATE_TIMEOUT		__BIT(18)
+#define BWI_IMSTATE_INBAND_ERR		(1 << 17)
+#define BWI_IMSTATE_TIMEOUT		(1 << 18)
 
 #define BWI_INTRVEC			0xf94
 
 #define BWI_STATE_LO			0xf98
-#define BWI_STATE_LO_RESET		__BIT(0)
-#define BWI_STATE_LO_DISABLE1		__BIT(1)
-#define BWI_STATE_LO_DISABLE2		__BIT(2)
-#define BWI_STATE_LO_CLOCK		__BIT(16)
-#define BWI_STATE_LO_GATED_CLOCK	__BIT(17)
-#define BWI_STATE_LO_FLAG_PHYCLKEN	__BIT(0)
-#define BWI_STATE_LO_FLAG_PHYRST	__BIT(1)
-#define BWI_STATE_LO_FLAG_PHYLNK	__BIT(11)
-#define BWI_STATE_LO_FLAGS_MASK		__BITS(29, 18)
+#define BWI_STATE_LO_RESET		(1 << 0)
+#define BWI_STATE_LO_DISABLE1		(1 << 1)
+#define BWI_STATE_LO_DISABLE2		(1 << 2)
+#define BWI_STATE_LO_CLOCK		(1 << 16)
+#define BWI_STATE_LO_GATED_CLOCK	(1 << 17)
+#define BWI_STATE_LO_FLAG_PHYCLKEN	(1 << 0)
+#define BWI_STATE_LO_FLAG_PHYRST	(1 << 1)
+#define BWI_STATE_LO_FLAG_PHYLNK	(1 << 11)
+#define BWI_STATE_LO_FLAGS_MASK		0x3ffc0000
 
 #define BWI_STATE_HI			0xf9c
-#define BWI_STATE_HI_SERROR		__BIT(0)
-#define BWI_STATE_HI_BUSY		__BIT(2)
+#define BWI_STATE_HI_SERROR		(1 << 0)
+#define BWI_STATE_HI_BUSY		(1 << 2)
 #define BWI_STATE_HI_FLAG_MAGIC1	0x1
 #define BWI_STATE_HI_FLAG_MAGIC2	0x2
 #define BWI_STATE_HI_FLAG_64BIT		0x1000
-#define BWI_STATE_HI_FLAGS_MASK		__BITS(28, 16)
+#define BWI_STATE_HI_FLAGS_MASK		0x1fff0000
 
 #define BWI_CONF_LO			0xfa8
-#define BWI_CONF_LO_SERVTO_MASK		__BITS(2, 0)	/* service timeout */
+#define BWI_CONF_LO_SERVTO_MASK		0x00000007	/* service timeout */
 #define BWI_CONF_LO_SERVTO		2
-#define BWI_CONF_LO_REQTO_MASK		__BITS(6, 4)	/* request timeout */
+#define BWI_CONF_LO_REQTO_MASK		0x00000070	/* request timeout */
 #define BWI_CONF_LO_REQTO		3
 
 
 #define BWI_ID_LO			0xff8
-#define BWI_ID_LO_BUSREV_MASK		__BITS(31, 28)
+#define BWI_ID_LO_BUSREV_MASK		0xf0000000
 /* Bus revision */
 #define BWI_BUSREV_0			0
 #define BWI_BUSREV_1			1
@@ -86,19 +86,19 @@
 #define BWI_ID_HI			0xffc
 #define BWI_ID_HI_REGWIN_REV(v)		(((v) & 0xf) | (((v) & 0x7000) >> 8))
 #define BWI_ID_HI_REGWIN_TYPE(v)	(((v) & 0x8ff0) >> 4)
-#define BWI_ID_HI_REGWIN_VENDOR_MASK	__BITS(31, 16)
+#define BWI_ID_HI_REGWIN_VENDOR_MASK	0xffff0000
 
 /*
  * Registers for common register window
  */
 #define BWI_INFO			0x0
-#define BWI_INFO_BBPID_MASK		__BITS(15, 0)
-#define BWI_INFO_BBPREV_MASK		__BITS(19, 16)
-#define BWI_INFO_BBPPKG_MASK		__BITS(23, 20)
-#define BWI_INFO_NREGWIN_MASK		__BITS(27, 24)
+#define BWI_INFO_BBPID_MASK		0x0000ffff
+#define BWI_INFO_BBPREV_MASK		0x000f0000
+#define BWI_INFO_BBPPKG_MASK		0x00f00000
+#define BWI_INFO_NREGWIN_MASK		0x0f000000
 
 #define BWI_CAPABILITY			0x4
-#define BWI_CAP_CLKMODE			__BIT(18)
+#define BWI_CAP_CLKMODE			(1 << 18)
 
 #define BWI_CONTROL			0x28
 #define BWI_CONTROL_MAGIC0		0x3a4
@@ -107,11 +107,11 @@
 #define BWI_FREQ_SEL_DELAY		0xb4
 
 #define BWI_CLOCK_CTRL			0xb8
-#define BWI_CLOCK_CTRL_CLKSRC		__BITS(2, 0)
-#define BWI_CLOCK_CTRL_SLOW		__BIT(11)
-#define BWI_CLOCK_CTRL_IGNPLL		__BIT(12)
-#define BWI_CLOCK_CTRL_NODYN		__BIT(13)
-#define BWI_CLOCK_CTRL_FDIV		__BITS(31, 16)	/* freq divisor */
+#define BWI_CLOCK_CTRL_CLKSRC		(7 << 0)
+#define BWI_CLOCK_CTRL_SLOW		(1 << 11)
+#define BWI_CLOCK_CTRL_IGNPLL		(1 << 12)
+#define BWI_CLOCK_CTRL_NODYN		(1 << 13)
+#define BWI_CLOCK_CTRL_FDIV		(0xffff << 16)	/* freq divisor */
 
 /* Possible values for BWI_CLOCK_CTRL_CLKSRC */
 #define BWI_CLKSRC_LP_OSC		0	/* Low power oscillator */
@@ -127,7 +127,7 @@
 #define BWI_CLKSRC_PCI_FMAX		34000000
 
 #define BWI_CLOCK_INFO			0xc0
-#define BWI_CLOCK_INFO_FDIV		__BITS(31, 16)	/* freq divisor */
+#define BWI_CLOCK_INFO_FDIV		(0xffff << 16)	/* freq divisor */
 
 /*
  * Registers for bus register window
@@ -138,9 +138,9 @@
 #define BWI_BUS_DATA			0x54
 
 #define BWI_BUS_CONFIG			0x108
-#define BWI_BUS_CONFIG_PREFETCH		__BIT(2)
-#define BWI_BUS_CONFIG_BURST		__BIT(3)
-#define BWI_BUS_CONFIG_MRM		__BIT(5)
+#define BWI_BUS_CONFIG_PREFETCH		(1 << 2)
+#define BWI_BUS_CONFIG_BURST		(1 << 3)
+#define BWI_BUS_CONFIG_MRM		(1 << 5)
 
 /*
  * Register for MAC
@@ -151,23 +151,23 @@
 #define BWI_TXRX_INTR_MASK(i)		(BWI_TXRX_INTR_MASK_BASE + ((i) * 8))
 
 #define BWI_MAC_STATUS			0x120
-#define BWI_MAC_STATUS_ENABLE		__BIT(0)
-#define BWI_MAC_STATUS_UCODE_START	__BIT(1)
-#define BWI_MAC_STATUS_UCODE_JUMP0	__BIT(2)
-#define BWI_MAC_STATUS_IHREN		__BIT(10)
-#define BWI_MAC_STATUS_GPOSEL_MASK	__BITS(15, 14)
-#define BWI_MAC_STATUS_BSWAP		__BIT(16)
-#define BWI_MAC_STATUS_INFRA		__BIT(17)
-#define BWI_MAC_STATUS_OPMODE_HOSTAP	__BIT(18)
-#define BWI_MAC_STATUS_RFLOCK		__BIT(19)
-#define BWI_MAC_STATUS_PASS_BCN		__BIT(20)
-#define BWI_MAC_STATUS_PASS_BADPLCP	__BIT(21)
-#define BWI_MAC_STATUS_PASS_CTL		__BIT(22)
-#define BWI_MAC_STATUS_PASS_BADFCS	__BIT(23)
-#define BWI_MAC_STATUS_PROMISC		__BIT(24)
-#define BWI_MAC_STATUS_HW_PS		__BIT(25)
-#define BWI_MAC_STATUS_WAKEUP		__BIT(26)
-#define BWI_MAC_STATUS_PHYLNK		__BIT(31)
+#define BWI_MAC_STATUS_ENABLE		(1 << 0)
+#define BWI_MAC_STATUS_UCODE_START	(1 << 1)
+#define BWI_MAC_STATUS_UCODE_JUMP0	(1 << 2)
+#define BWI_MAC_STATUS_IHREN		(1 << 10)
+#define BWI_MAC_STATUS_GPOSEL_MASK	(3 << 14)
+#define BWI_MAC_STATUS_BSWAP		(1 << 16)
+#define BWI_MAC_STATUS_INFRA		(1 << 17)
+#define BWI_MAC_STATUS_OPMODE_HOSTAP	(1 << 18)
+#define BWI_MAC_STATUS_RFLOCK		(1 << 19)
+#define BWI_MAC_STATUS_PASS_BCN		(1 << 20)
+#define BWI_MAC_STATUS_PASS_BADPLCP	(1 << 21)
+#define BWI_MAC_STATUS_PASS_CTL		(1 << 22)
+#define BWI_MAC_STATUS_PASS_BADFCS	(1 << 23)
+#define BWI_MAC_STATUS_PROMISC		(1 << 24)
+#define BWI_MAC_STATUS_HW_PS		(1 << 25)
+#define BWI_MAC_STATUS_WAKEUP		(1 << 26)
+#define BWI_MAC_STATUS_PHYLNK		(1 << 31)
 
 #define BWI_MAC_INTR_STATUS		0x128
 #define BWI_MAC_INTR_MASK		0x12c
@@ -218,8 +218,8 @@
 #define BWI_HFLAG_NOT_JAPAN		0x80ULL
 #define BWI_HFLAG_MAGIC1		0x200ULL
 #define BWI_UCODE_STATE_PS		4
-#define BWI_LO_TSSI_MASK		__BITS(7, 0)
-#define BWI_HI_TSSI_MASK		__BITS(15, 8)
+#define BWI_LO_TSSI_MASK		0x00ff
+#define BWI_HI_TSSI_MASK		0xff00
 #define BWI_INVALID_TSSI		0x7f
 /* 802.11 object */
 #define BWI_80211_MOBJ			0x2
@@ -233,8 +233,8 @@
 #define BWI_PKEY_ADDR_MOBJ		0x4
 
 #define BWI_TXSTATUS_0			0x170
-#define BWI_TXSTATUS_0_MORE		__BIT(0)
-#define BWI_TXSTATUS_0_TXID_MASK	__BITS(31, 16)
+#define BWI_TXSTATUS_0_MORE		(1 << 0)
+#define BWI_TXSTATUS_0_TXID_MASK	0xffff0000
 #define BWI_TXSTATUS_0_INFO(st)		(((st) & 0xfff0) | (((st) & 0xf) >> 1))
 #define BWI_TXSTATUS_1			0x174
 
@@ -243,34 +243,34 @@
 #define BWI_TX32_RINGINFO		0x4
 #define BWI_TX32_INDEX			0x8
 #define BWI_TX32_STATUS			0xc
-#define BWI_TX32_STATUS_STATE_MASK	__BITS(15, 12)
+#define BWI_TX32_STATUS_STATE_MASK	0xf000
 #define BWI_TX32_STATUS_STATE_DISABLED	0
 #define BWI_TX32_STATUS_STATE_IDLE	2
 #define BWI_TX32_STATUS_STATE_STOPPED	3
 #define BWI_RX32_CTRL			0x10
-#define BWI_RX32_CTRL_HDRSZ_MASK	__BITS(7, 1)
+#define BWI_RX32_CTRL_HDRSZ_MASK	0x00fe
 #define BWI_RX32_RINGINFO		0x14
 #define BWI_RX32_INDEX			0x18
 #define BWI_RX32_STATUS			0x1c
-#define BWI_RX32_STATUS_INDEX_MASK	__BITS(11, 0)
-#define BWI_RX32_STATUS_STATE_MASK	__BITS(15, 12)
+#define BWI_RX32_STATUS_INDEX_MASK	0x0fff
+#define BWI_RX32_STATUS_STATE_MASK	0xf000
 #define BWI_RX32_STATUS_STATE_DISABLED	0
 /* Shared by 32bit TX/RX CTRL */
-#define BWI_TXRX32_CTRL_ENABLE		__BIT(0)
-#define BWI_TXRX32_CTRL_ADDRHI_MASK	__BITS(17, 16)
+#define BWI_TXRX32_CTRL_ENABLE		(1 << 0)
+#define BWI_TXRX32_CTRL_ADDRHI_MASK	0x00030000
 /* Shared by 32bit TX/RX RINGINFO */
 #define BWI_TXRX32_RINGINFO_FUNC_TXRX	0x1
-#define BWI_TXRX32_RINGINFO_FUNC_MASK	__BITS(31, 30)
-#define BWI_TXRX32_RINGINFO_ADDR_MASK	__BITS(29, 0)
+#define BWI_TXRX32_RINGINFO_FUNC_MASK	0xc0000000
+#define BWI_TXRX32_RINGINFO_ADDR_MASK	0x3fffffff
 
 #define BWI_PHYINFO			0x3e0
-#define BWI_PHYINFO_REV_MASK		__BITS(3, 0)
-#define BWI_PHYINFO_TYPE_MASK		__BITS(11, 8)
+#define BWI_PHYINFO_REV_MASK		0x000f
+#define BWI_PHYINFO_TYPE_MASK		0x0f00
 #define BWI_PHYINFO_TYPE_11A		0
 #define BWI_PHYINFO_TYPE_11B		1
 #define BWI_PHYINFO_TYPE_11G		2
 #define BWI_PHYINFO_TYPE_11N		5
-#define BWI_PHYINFO_VER_MASK		__BITS(15, 12)
+#define BWI_PHYINFO_VER_MASK		0xf000
 
 #define BWI_RF_ANTDIV			0x3e2	/* Antenna Diversity?? */
 
@@ -297,13 +297,13 @@
 #define BWI_RF_DATA_HI			0x3f8
 #define BWI_RF_DATA_LO			0x3fa
 /* Values read from BWI_RF_DATA_{HI,LO} after BWI_RF_CTRL_RFINFO */
-#define BWI_RFINFO_MANUFACT_MASK	__BITS(11, 0)
+#define BWI_RFINFO_MANUFACT_MASK	0x0fff
 #define BWI_RF_MANUFACT_BCM		0x17f		/* XXX */
-#define BWI_RFINFO_TYPE_MASK		__BITS(27, 12)
+#define BWI_RFINFO_TYPE_MASK		0x0ffff000
 #define BWI_RF_T_BCM2050		0x2050
 #define BWI_RF_T_BCM2053		0x2053
 #define BWI_RF_T_BCM2060		0x2060
-#define BWI_RFINFO_REV_MASK		__BITS(31, 28)
+#define BWI_RFINFO_REV_MASK		0xf0000000
 
 #define BWI_PHY_CTRL			0x3fc
 #define BWI_PHY_DATA			0x3fe
@@ -339,11 +339,11 @@
 #define BWI_PCIM_REGWIN(id)		(((id) * 0x1000) + 0x18000000)
 #define BWI_PCIR_GPIO_IN		0xb0
 #define BWI_PCIR_GPIO_OUT		0xb4
-#define BWI_PCIM_GPIO_OUT_CLKSRC	__BIT(4)
+#define BWI_PCIM_GPIO_OUT_CLKSRC	(1 << 4)
 #define BWI_PCIR_GPIO_ENABLE		0xb8
 /* Register values for BWI_PCIR_GPIO_{IN,OUT,ENABLE} */
-#define BWI_PCIM_GPIO_PWR_ON		__BIT(6)
-#define BWI_PCIM_GPIO_PLL_PWR_OFF	__BIT(7)
+#define BWI_PCIM_GPIO_PWR_ON		(1 << 6)
+#define BWI_PCIM_GPIO_PLL_PWR_OFF	(1 << 7)
 #define BWI_PCIR_INTCTL			0x94
 
 /*
@@ -366,29 +366,29 @@
 #define BWI_SPROM_11BG_EADDR		0x48
 #define BWI_SPROM_11A_EADDR		0x54
 #define BWI_SPROM_CARD_INFO		0x5c
-#define BWI_SPROM_CARD_INFO_LOCALE	__BITS(11, 8)
+#define BWI_SPROM_CARD_INFO_LOCALE	(0x0f << 8)
 #define BWI_SPROM_LOCALE_JAPAN		5
 #define BWI_SPROM_PA_PARAM_11BG		0x5e
 #define BWI_SPROM_MAX_TXPWR		0x68
-#define BWI_SPROM_MAX_TXPWR_MASK_11BG	__BITS(7, 0)	/* XXX */
-#define BWI_SPROM_MAX_TXPWR_MASK_11A	__BITS(15, 8)	/* XXX */
+#define BWI_SPROM_MAX_TXPWR_MASK_11BG	0x00ff		/* XXX */
+#define BWI_SPROM_MAX_TXPWR_MASK_11A	0xff00		/* XXX */
 #define BWI_SPROM_PA_PARAM_11A		0x6a
 #define BWI_SPROM_IDLE_TSSI		0x70
-#define BWI_SPROM_IDLE_TSSI_MASK_11BG	__BITS(7, 0)	/* XXX */
-#define BWI_SPROM_IDLE_TSSI_MASK_11A	__BITS(15, 8)	/* XXX */
+#define BWI_SPROM_IDLE_TSSI_MASK_11BG	0x00ff		/* XXX */
+#define BWI_SPROM_IDLE_TSSI_MASK_11A	0xff00		/* XXX */
 #define BWI_SPROM_CARD_FLAGS		0x72
 #define BWI_SPROM_ANT_GAIN		0x74
-#define BWI_SPROM_ANT_GAIN_MASK_11A	__BITS(7, 0)
-#define BWI_SPROM_ANT_GAIN_MASK_11BG	__BITS(15, 8)
+#define BWI_SPROM_ANT_GAIN_MASK_11A	0x00ff
+#define BWI_SPROM_ANT_GAIN_MASK_11BG	0xff00
 
 /*
  * SPROM card flags
  */
-#define BWI_CARD_F_PA_GPIO9		__BIT(1)	/* GPIO 9 controls PA */
-#define BWI_CARD_F_SW_NRSSI		__BIT(3)
-#define BWI_CARD_F_NO_SLOWCLK		__BIT(5)	/* no slow clock */
-#define BWI_CARD_F_EXT_LNA		__BIT(12)	/* external LNA */
-#define BWI_CARD_F_ALT_IQ		__BIT(15)	/* alternate I/Q */
+#define BWI_CARD_F_PA_GPIO9		(1 << 1)	/* GPIO 9 controls PA */
+#define BWI_CARD_F_SW_NRSSI		(1 << 3)	
+#define BWI_CARD_F_NO_SLOWCLK		(1 << 5)	/* no slow clock */
+#define BWI_CARD_F_EXT_LNA		(1 << 12)	/* external LNA */
+#define BWI_CARD_F_ALT_IQ		(1 << 15)	/* alternate I/Q */
 
 /*
  * BBP IDs
@@ -410,19 +410,19 @@
 /*
  * MAC interrupts
  */
-#define BWI_INTR_READY			__BIT(0)
-#define BWI_INTR_BEACON			__BIT(1)
-#define BWI_INTR_TBTT			__BIT(2)
-#define BWI_INTR_EO_ATIM		__BIT(5)	/* End of ATIM */
-#define BWI_INTR_PMQ			__BIT(6)	/* XXX?? */
-#define BWI_INTR_MAC_TXERR		__BIT(9)
-#define BWI_INTR_PHY_TXERR		__BIT(11)
-#define BWI_INTR_TIMER1			__BIT(14)
-#define BWI_INTR_RX_DONE		__BIT(15)
-#define BWI_INTR_TX_FIFO		__BIT(16)	/* XXX?? */
-#define BWI_INTR_NOISE			__BIT(18)
-#define BWI_INTR_RF_DISABLED		__BIT(28)
-#define BWI_INTR_TX_DONE		__BIT(29)
+#define BWI_INTR_READY			(1 << 0)
+#define BWI_INTR_BEACON			(1 << 1)
+#define BWI_INTR_TBTT			(1 << 2)
+#define BWI_INTR_EO_ATIM		(1 << 5)	/* End of ATIM */
+#define BWI_INTR_PMQ			(1 << 6)	/* XXX?? */
+#define BWI_INTR_MAC_TXERR		(1 << 9)	
+#define BWI_INTR_PHY_TXERR		(1 << 11)
+#define BWI_INTR_TIMER1			(1 << 14)
+#define BWI_INTR_RX_DONE		(1 << 15)
+#define BWI_INTR_TX_FIFO		(1 << 16)	/* XXX?? */
+#define BWI_INTR_NOISE			(1 << 18)	
+#define BWI_INTR_RF_DISABLED		(1 << 28)
+#define BWI_INTR_TX_DONE		(1 << 29)
 
 #define BWI_INIT_INTRS \
 	(BWI_INTR_READY | BWI_INTR_BEACON | BWI_INTR_TBTT | \
@@ -434,8 +434,9 @@
 /*
  * TX/RX interrupts
  */
-#define BWI_TXRX_INTR_ERROR		(__BIT(15) | __BIT(14) | __BITS(12, 10))
-#define BWI_TXRX_INTR_RX		__BIT(16)
+#define BWI_TXRX_INTR_ERROR		((1 << 15) | (1 << 14) | (1 << 12) | \
+					 (1 << 11) | (1 << 10))
+#define BWI_TXRX_INTR_RX		(1 << 16)
 #define BWI_TXRX_TX_INTRS		BWI_TXRX_INTR_ERROR
 #define BWI_TXRX_RX_INTRS		(BWI_TXRX_INTR_ERROR | BWI_TXRX_INTR_RX)
 #define BWI_TXRX_IS_RX(i)		((i) % 3 == 0)
@@ -595,11 +596,11 @@
 #define BWI_RFR_ATTEN			0x43
 
 #define BWI_RFR_TXPWR			0x52
-#define BWI_RFR_TXPWR1_MASK		__BITS(6, 4)
+#define BWI_RFR_TXPWR1_MASK		0x0070
 
 #define BWI_RFR_BBP_ATTEN		0x60
-#define BWI_RFR_BBP_ATTEN_CALIB_BIT	__BIT(0)
-#define BWI_RFR_BBP_ATTEN_CALIB_IDX	__BITS(4, 1)
+#define BWI_RFR_BBP_ATTEN_CALIB_BIT	(1 << 0)
+#define BWI_RFR_BBP_ATTEN_CALIB_IDX	(0x0f << 1)
 
 /*
  * TSSI -- TX power maps
@@ -630,14 +631,6 @@
 	52,	50,	49,	47,	45,	43,	40,	37,	\
 	33,	28,	22,	14,	5,	-7,	-20,	-20,	\
 	-20,	-20,	-20,	-20,	-20,	-20,	-20,	-20
-
-/* horrible bit macros that need to die */
-/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
-#define	__BIT(__n) (((__n) == 32) ? 0 : ((uint32_t)1 << (__n)))
-
-/* __BITS(m, n): bits m through n, m < n. */
-#define	__BITS(__m, __n)	\
-	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
 
 /* Find least significant bit that is set */
 #define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))

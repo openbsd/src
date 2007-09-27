@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.46 2007/09/24 19:51:18 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.47 2007/09/27 05:58:57 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -2754,7 +2754,7 @@ void
 bwi_phy_set_bbp_atten(struct bwi_mac *mac, uint16_t bbp_atten)
 {
 	struct bwi_phy *phy = &mac->mac_phy;
-	uint16_t mask = __BITS(3, 0);
+	uint16_t mask = 0x000f;
 
 	if (phy->phy_version == 0) {
 		CSR_FILT_SETBITS_2(mac->mac_sc, BWI_BBP_ATTEN, ~mask,
@@ -3492,7 +3492,7 @@ bwi_nrssi_11g(struct bwi_mac *mac)
 {
 	int16_t val;
 
-#define NRSSI_11G_MASK		__BITS(13, 8)
+#define NRSSI_11G_MASK		0x3f00
 	val = (int16_t)__SHIFTOUT(PHY_READ(mac, 0x47f), NRSSI_11G_MASK);
 	if (val >= 32)
 		val -= 64;
@@ -5511,8 +5511,8 @@ bwi_rf_set_nrssi_thr_11g(struct bwi_mac *mac)
 		thr2 = _nrssi_threshold(&mac->mac_rf, 0xe);
 	}
 
-#define NRSSI_THR1_MASK	__BITS(5, 0)
-#define NRSSI_THR2_MASK	__BITS(11, 6)
+#define NRSSI_THR1_MASK		0x003f
+#define NRSSI_THR2_MASK		0x0fc0
 	thr = __SHIFTIN((uint32_t)thr1, NRSSI_THR1_MASK) |
 	    __SHIFTIN((uint32_t)thr2, NRSSI_THR2_MASK);
 	PHY_FILT_SETBITS(mac, BWI_PHYR_NRSSI_THR_11G, 0xf000, thr);
@@ -7691,8 +7691,8 @@ void
 bwi_ofdm_plcp_header(uint32_t *plcp0, int pkt_len, uint8_t rate)
 {
 /* XXX does not belong here */
-#define IEEE80211_OFDM_PLCP_SIG_MASK	__BITS(3, 0)
-#define IEEE80211_OFDM_PLCP_LEN_MASK	__BITS(16, 5)
+#define IEEE80211_OFDM_PLCP_SIG_MASK	0x0000000f
+#define IEEE80211_OFDM_PLCP_LEN_MASK	0x0001ffe0
 
 	uint32_t plcp;
 
