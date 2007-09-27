@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.15 2007/09/27 22:10:25 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.16 2007/09/27 22:17:32 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -635,7 +635,7 @@ static __inline void
 bwi_rf_off(struct bwi_mac *_mac)
 {
 	_mac->mac_rf.rf_off(_mac);
-	/* TODO:LED */
+	/* TODO: LED */
 
 	_mac->mac_rf.rf_flags &= ~BWI_RF_F_ON;
 }

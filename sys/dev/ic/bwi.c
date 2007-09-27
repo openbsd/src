@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.49 2007/09/27 22:10:25 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.50 2007/09/27 22:17:32 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -603,7 +603,7 @@ bwi_intr(void *xsc)
 	if (intr_status & BWI_INTR_TX_DONE)
 		bwi_txeof(sc);
 
-	/* TODO:LED */
+	/* TODO: LED */
 
 	/* Re-enable interrupts */
 	bwi_enable_intrs(sc, BWI_INIT_INTRS);
@@ -748,7 +748,7 @@ bwi_attach(struct bwi_softc *sc)
 			}
 		}
 	} else if (phy->phy_mode == IEEE80211_MODE_11A) {
-		/* TODO:11A */
+		/* TODO: 11A */
 		error = ENXIO;
 		goto fail;
 	} else
@@ -1825,7 +1825,7 @@ bwi_mac_gpio_init(struct bwi_mac *mac)
 	int error;
 
 	CSR_CLRBITS_4(sc, BWI_MAC_STATUS, BWI_MAC_STATUS_GPOSEL_MASK);
-	/* TODO:LED */
+	/* TODO: LED */
 
 	CSR_SETBITS_2(sc, BWI_MAC_GPIO_MASK, 0xf);
 
@@ -2267,7 +2267,7 @@ bwi_mac_shutdown(struct bwi_mac *mac)
 
 	bwi_rf_off(mac);
 
-	/* TODO:LED */
+	/* TODO: LED */
 
 	bwi_mac_gpio_fini(mac);
 
@@ -2843,7 +2843,7 @@ bwi_nrssi_read(struct bwi_mac *mac, uint16_t ofs)
 void
 bwi_phy_init_11a(struct bwi_mac *mac)
 {
-	/* TODO:11A */
+	/* TODO: 11A */
 }
 
 void
@@ -2966,7 +2966,7 @@ bwi_phy_init_11b_rev2(struct bwi_mac *mac)
 
 	sc = mac->mac_sc;
 
-	/* TODO:11B */
+	/* TODO: 11B */
 	DPRINTF(1, "%s: %s is not implemented yet\n",
 	    sc->sc_dev.dv_xname, __func__);
 }
@@ -2978,7 +2978,7 @@ bwi_phy_init_11b_rev4(struct bwi_mac *mac)
 
 	sc = mac->mac_sc;
 
-	/* TODO:11B */
+	/* TODO: 11B */
 	DPRINTF(1, "%s: %s is not implemented yet\n",
 	    sc->sc_dev.dv_xname, __func__);
 }
@@ -5535,7 +5535,7 @@ bwi_rf_clear_tssi(struct bwi_mac *mac)
 {
 	/* XXX use function pointer */
 	if (mac->mac_phy.phy_mode == IEEE80211_MODE_11A) {
-		/* TODO:11A */
+		/* TODO: 11A */
 	} else {
 		uint16_t val;
 		int i;
@@ -5582,7 +5582,7 @@ bwi_rf_clear_state(struct bwi_rf *rf)
 void
 bwi_rf_on_11a(struct bwi_mac *mac)
 {
-	/* TODO:11A */
+	/* TODO: 11A */
 }
 
 void
@@ -5630,7 +5630,7 @@ bwi_rf_set_ant_mode(struct bwi_mac *mac, int ant_mode)
 			PHY_CLRBITS(mac, 0x42b, 0x100);
 
 		if (phy->phy_mode == IEEE80211_MODE_11A) {
-			/* TODO:11A */
+			/* TODO: 11A */
 		} else {	/* 11g */
 			if (ant_mode == BWI_ANT_MODE_AUTO)
 				PHY_SETBITS(mac, 0x48c, 0x2000);
@@ -6115,7 +6115,7 @@ bwi_bus_init(struct bwi_softc *sc, struct bwi_mac *mac)
 			CSR_SETBITS_4(sc, BWI_BUS_CONFIG, BWI_BUS_CONFIG_MRM);
 		}
 	} else {
-		/* TODO:PCIE */
+		/* TODO: PCIE */
 	}
 
 	sc->sc_flags |= BWI_F_BUS_INITED;
@@ -7307,21 +7307,21 @@ bwi_setup_tx_desc32(struct bwi_softc *sc, struct bwi_ring_data *rd,
 int
 bwi_init_tx_ring64(struct bwi_softc *sc, int ring_idx)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 	return (EOPNOTSUPP);
 }
 
 int
 bwi_init_rx_ring64(struct bwi_softc *sc)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 	return (EOPNOTSUPP);
 }
 
 int
 bwi_init_txstats64(struct bwi_softc *sc)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 	return (EOPNOTSUPP);
 }
 
@@ -7329,14 +7329,14 @@ void
 bwi_setup_rx_desc64(struct bwi_softc *sc, int buf_idx, bus_addr_t paddr,
     int buf_len)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 }
 
 void
 bwi_setup_tx_desc64(struct bwi_softc *sc, struct bwi_ring_data *rd,
     int buf_idx, bus_addr_t paddr, int buf_len)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 }
 
 int
@@ -7583,7 +7583,7 @@ bwi_rxeof32(struct bwi_softc *sc)
 void
 bwi_rxeof64(struct bwi_softc *sc)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 }
 
 void
@@ -7702,19 +7702,19 @@ bwi_free_tx_ring32(struct bwi_softc *sc, int ring_idx)
 void
 bwi_free_txstats64(struct bwi_softc *sc)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 }
 
 void
 bwi_free_rx_ring64(struct bwi_softc *sc)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 }
 
 void
 bwi_free_tx_ring64(struct bwi_softc *sc, int ring_idx)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 }
 
 /* XXX does not belong here */
@@ -8192,7 +8192,7 @@ bwi_start_tx32(struct bwi_softc *sc, uint32_t tx_ctrl, int idx)
 void
 bwi_start_tx64(struct bwi_softc *sc, uint32_t tx_ctrl, int idx)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 }
 
 void
@@ -8220,7 +8220,7 @@ bwi_txeof_status32(struct bwi_softc *sc)
 void
 bwi_txeof_status64(struct bwi_softc *sc)
 {
-	/* TODO:64 */
+	/* TODO: 64 */
 }
 
 void
