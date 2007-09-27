@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2007/04/14 21:44:06 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2007/09/27 17:08:58 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.19 2007/04/14 21:44:06 sobrado Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.20 2007/09/27 17:08:58 sobrado Exp $";
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -208,8 +208,8 @@ main(argc, argv)
 		docmdargs(argc, argv);
 	else {
 		if (fin == NULL) {
-			if(distfile == NULL) {
-				if((fin = fopen("distfile","r")) == NULL)
+			if (distfile == NULL) {
+				if ((fin = fopen("distfile","r")) == NULL)
 					fin = fopen("Distfile", "r");
 			} else
 				fin = fopen(distfile, "r");
