@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstab.c,v 1.15 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: fstab.c,v 1.16 2007/09/27 14:07:23 blambert Exp $ */
 /*
  * Copyright (c) 1980, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,9 +53,9 @@ fstabscan(void)
 #define	MAXLINELENGTH	1024
 	static char line[MAXLINELENGTH];
 	char subline[MAXLINELENGTH];
-	char *endp, *last;
+	const char *errstr;
+	char *last;
 	int typexx;
-	long l;
 
 	for (;;) {
 		if (!(cp = fgets(line, sizeof(line), _fs_fp)))
@@ -75,18 +75,17 @@ fstabscan(void)
 				    strcmp(_fs_fstab.fs_type, FSTAB_SW) ?
 				    "ufs" : "swap";
 				if ((cp = strtok_r((char *)NULL, ":\n", &last))) {
-					l = strtol(cp, &endp, 10);
-					if (endp == cp || *endp != '\0' ||
-					    l < 0 || l >= INT_MAX)
+					_fs_fstab.fs_freq = strtonum(cp, 0,
+					    INT_MAX, &errstr);
+					if (errstr)
 						goto bad;
-					_fs_fstab.fs_freq = l;
 					if ((cp = strtok_r((char *)NULL,
 					    ":\n", &last))) {
-						l = strtol(cp, &endp, 10);
-						if (endp == cp || *endp != '\0'
-						    || l < 0 || l >= INT_MAX)
+						_fs_fstab.fs_passno =
+						    strtonum(cp, 0, INT_MAX,
+						    &errstr);
+						if (errstr)
 							goto bad;
-						_fs_fstab.fs_passno = l;
 						return(1);
 					}
 				}
@@ -105,17 +104,14 @@ fstabscan(void)
 		_fs_fstab.fs_freq = 0;
 		_fs_fstab.fs_passno = 0;
 		if ((cp = strtok_r((char *)NULL, " \t\n", &last)) != NULL) {
-			l = strtol(cp, &endp, 10);
-			if (endp == cp || *endp != '\0' || l < 0 ||
-			    l >= INT_MAX)
+			_fs_fstab.fs_freq = strtonum(cp, 0, INT_MAX, &errstr);
+			if (errstr)
 				goto bad;
-			_fs_fstab.fs_freq = l;
 			if ((cp = strtok_r((char *)NULL, " \t\n", &last)) != NULL) {
-				l = strtol(cp, &endp, 10);
-				if (endp == cp || *endp != '\0' || l < 0 ||
-				    l >= INT_MAX)
+				_fs_fstab.fs_passno = strtonum(cp, 0, INT_MAX,
+				    &errstr);
+				if (errstr)
 					goto bad;
-				_fs_fstab.fs_passno = l;
 			}
 		}
 		strlcpy(subline, _fs_fstab.fs_mntops, sizeof subline);
