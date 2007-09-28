@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.52 2007/09/25 18:11:47 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.53 2007/09/28 07:55:15 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -473,14 +473,6 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 }
-
-/*
- * Macros to help sync OpenBSD to NetBSD
- */
-#define hw_channels channels
-#define hw_sample_rate sample_rate
-#define hw_precision precision
-#define hw_encoding encoding
 
 int
 uaudio_activate(struct device *self, enum devact act)
