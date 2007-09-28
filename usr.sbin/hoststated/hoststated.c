@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.40 2007/09/28 13:29:56 pyr Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.41 2007/09/28 20:23:38 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -473,7 +473,8 @@ purge_config(struct hoststated *env, u_int8_t what)
 		while ((rly = TAILQ_FIRST(&env->relays)) != NULL) {
 			TAILQ_REMOVE(&env->relays, rly, entry);
 			while ((sess = SPLAY_ROOT(&rly->sessions)) != NULL) {
-				SPLAY_REMOVE(session_tree, &rly->sessions, sess);
+				SPLAY_REMOVE(session_tree,
+				    &rly->sessions, sess);
 				free(sess);
 			}
 			if (rly->bev != NULL)
