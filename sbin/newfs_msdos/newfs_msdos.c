@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.16 2007/09/26 18:49:03 pyr Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.17 2007/09/28 09:57:01 jmc Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -867,11 +867,12 @@ usage(void)
 	extern const char	*__progname;
 
 	fprintf(stderr, "usage: %s "
-	    "[-N] [-B boot] [-F FAT-type] [-I volid] [-L label] [-O OEM]\n"
-	    "\t[-S sector-size] [-a FAT-size] [-b block-size]\n"
-	    "\t[-c cluster-size] [-e dirents] [-f format] [-h heads]\n"
-	    "\t[-i info] [-k backup] [-m media] [-n FATs] [-o hidden]\n"
-	    "\t[-r reserved] [-s total] [-u track-size] special [disktype]\n",
+	    "[-N] [-a FAT-size] [-B boot] [-b block-size]\n"
+	    "\t[-c cluster-size] [-e dirents] [-F FAT-type] [-f format]\n"
+	    "\t[-h heads] [-I volid] [-i info] [-k backup] [-L label]\n"
+	    "\t[-m media] [-n FATs] [-O OEM] [-o hidden] [-r reserved]\n"
+	    "\t[-S sector-size] [-s total] [-u track-size] special\n"
+	    "\t[disktype]\n",
 	    __progname);
 	exit(1);
 }

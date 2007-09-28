@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_msdos.8,v 1.21 2007/05/31 19:19:46 jmc Exp $
+.\"	$OpenBSD: newfs_msdos.8,v 1.22 2007/09/28 09:57:01 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/sbin/newfs_msdos/newfs_msdos.8,v 1.6 1999/08/28 00:13:52 peter Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 28 2007 $
 .Dt NEWFS_MSDOS 8
 .Os
 .Sh NAME
@@ -37,24 +37,24 @@
 .Nm newfs_msdos
 .Bk -words
 .Op Fl N
-.Op Fl B Ar boot
-.Op Fl F Ar FAT-type
-.Op Fl I Ar volid
-.Op Fl L Ar label
-.Op Fl O Ar OEM
-.Op Fl S Ar sector-size
 .Op Fl a Ar FAT-size
+.Op Fl B Ar boot
 .Op Fl b Ar block-size
 .Op Fl c Ar cluster-size
 .Op Fl e Ar dirents
+.Op Fl F Ar FAT-type
 .Op Fl f Ar format
 .Op Fl h Ar heads
+.Op Fl I Ar volid
 .Op Fl i Ar info
 .Op Fl k Ar backup
+.Op Fl L Ar label
 .Op Fl m Ar media
 .Op Fl n Ar FATs
+.Op Fl O Ar OEM
 .Op Fl o Ar hidden
 .Op Fl r Ar reserved
+.Op Fl S Ar sector-size
 .Op Fl s Ar total
 .Op Fl u Ar track-size
 .Ar special
@@ -73,27 +73,10 @@ to determine geometry, if required.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl N
-Don't create a file system: just print out parameters.
-.It Fl B Ar boot
-Get bootstrap from file.
-.It Fl F Ar FAT-type
-FAT type (one of 12, 16, or 32).
-.It Fl I Ar volid
-Volume ID.
-.It Fl L Ar label
-Volume label (up to 11 characters).
-The label should consist of
-only those characters permitted in regular DOS (8+3) filenames.
-.It Fl O Ar OEM
-OEM string (up to 8 characters).
-The default is
-"BSD  4.4".
-.It Fl S Ar sector-size
-Number of bytes per sector.
-Acceptable values are powers of 2 in the range 128 through 32768.
 .It Fl a Ar FAT-size
 Number of sectors per FAT.
+.It Fl B Ar boot
+Get bootstrap from file.
 .It Fl b Ar block-size
 File system block size (bytes per cluster).
 This should resolve to an acceptable number of sectors per cluster (see below).
@@ -102,6 +85,8 @@ Sectors per cluster.
 Acceptable values are powers of 2 in the range 1 through 128.
 .It Fl e Ar dirents
 Number of root directory entries (FAT12 and FAT16 only).
+.It Fl F Ar FAT-type
+FAT type (one of 12, 16, or 32).
 .It Fl f Ar format
 Specify a standard (floppy disk) format.
 The eight standard formats
@@ -109,22 +94,37 @@ are (capacities in kilobytes): 160, 180, 320, 360, 720, 1200, 1440,
 2880.
 .It Fl h Ar heads
 Number of drive heads.
+.It Fl I Ar volid
+Volume ID.
 .It Fl i Ar info
 Location of the file system info sector (FAT32 only).
 A value of 0xffff signifies no info sector.
 .It Fl k Ar backup
 Location of the backup boot sector (FAT32 only).
 A value of 0xffff signifies no backup sector.
+.It Fl L Ar label
+Volume label (up to 11 characters).
+The label should consist of
+only those characters permitted in regular DOS (8+3) filenames.
 .It Fl m Ar media
 Media descriptor (acceptable range 0xf0 to 0xff).
+.It Fl N
+Don't create a file system: just print out parameters.
 .It Fl n Ar FATs
 Number of FATs.
 Acceptable values are 1 to 16 inclusive.
 The default is 2.
+.It Fl O Ar OEM
+OEM string (up to 8 characters).
+The default is
+"BSD  4.4".
 .It Fl o Ar hidden
 Number of hidden sectors.
 .It Fl r Ar reserved
 Number of reserved sectors.
+.It Fl S Ar sector-size
+Number of bytes per sector.
+Acceptable values are powers of 2 in the range 128 through 32768.
 .It Fl s Ar total
 File system size.
 .It Fl u Ar track-size
