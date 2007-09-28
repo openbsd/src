@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.44 2007/09/17 13:46:11 jakemsr Exp $
+.\"	$OpenBSD: audio.4,v 1.45 2007/09/28 00:52:51 jakemsr Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 17 2007 $
+.Dd $Mdocdate: September 28 2007 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -118,8 +118,9 @@ concurrently without interference.
 If a full-duplex capable
 .Nm audio
 device is opened for both reading and writing,
-it will start in half-duplex play mode; full-duplex mode has to be set
-explicitly.
+it will start in half-duplex play mode with recording paused.
+For proper full-duplex operation, after the device is opened for reading
+and writing, full-duplex mode must be set and then recording must be unpaused.
 On either type of device, if the playback mode is paused then silence is
 played instead of the provided samples and, if recording is paused, then
 the process blocks in
