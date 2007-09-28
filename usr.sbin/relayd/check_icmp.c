@@ -1,7 +1,7 @@
-/*	$OpenBSD: check_icmp.c,v 1.18 2007/07/16 21:15:36 pyr Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.19 2007/09/28 13:29:56 pyr Exp $	*/
 
 /*
- * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
+ * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

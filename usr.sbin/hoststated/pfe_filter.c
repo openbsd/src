@@ -1,7 +1,7 @@
-/*	$OpenBSD: pfe_filter.c,v 1.17 2007/05/31 03:24:05 pyr Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.18 2007/09/28 13:29:56 pyr Exp $	*/
 
 /*
- * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
+ * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

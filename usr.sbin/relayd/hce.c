@@ -1,7 +1,7 @@
-/*	$OpenBSD: hce.c,v 1.29 2007/06/19 13:06:00 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.30 2007/09/28 13:29:56 pyr Exp $	*/
 
 /*
- * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@spootnik.org>
+ * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

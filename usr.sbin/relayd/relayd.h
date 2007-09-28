@@ -1,7 +1,7 @@
-/*	$OpenBSD: relayd.h,v 1.63 2007/09/28 13:05:28 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.64 2007/09/28 13:29:56 pyr Exp $	*/
 
 /*
- * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
+ * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
