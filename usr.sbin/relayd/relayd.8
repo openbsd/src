@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.9 2007/05/31 19:20:24 jmc Exp $
+.\"	$OpenBSD: relayd.8,v 1.10 2007/09/28 18:08:00 pyr Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 28 2007 $
 .Dt HOSTSTATED 8
 .Os
 .Sh NAME
@@ -29,42 +29,67 @@
 .Op Fl f Ar file
 .Sh DESCRIPTION
 .Nm
-is the host status daemon for server load balancing.
-Its main purpose is to keep
+is a host status daemon for server load-balancing.
+It monitors groups of hosts for availability,
+which is determined by checking for a specific service
+common to a host group.
+When availability is confirmed, Layer 3 and/or Layer 7
+load-balancing services are set up by
+.Nm .
+.Pp
+Layer 3 load-balancing happens at the packet level; to configure
+it,
+.Nm
+communicates with
+.Xr pf 4 .
+To allow
+.Nm
+to properly set up
 .Xr pf 4
-tables up to date
-as well as any related pf rdr rules.
-To communicate with pf,
-.Nm
-uses the anchor facility.
-To enable
-.Nm
-to install rulesets through the anchor,
-the following line is required in the NAT section of
+rules, the following line is required in the NAT section of
 .Xr pf.conf 5 :
 .Bd -literal -offset indent
 rdr-anchor "hoststated/*"
 .Ed
 .Pp
+Layer 7 load-balancing happens at the application level and is
+handled by
 .Nm
-manipulates three data types: services, tables, and hosts.
-Each service represents a
-.Xr pf 4
-rdr rule.
-A service contains at least one table and one virtual IP which are
-used to create the proper rule.
-Each table contains at least one host, and is mapped to a pf table.
-Additionally a table can be backed up i.e. its content will be swapped
-by the content of another table when it is empty.
-This can be used to serve static content when a dynamic service goes down.
-See
-.Xr hoststated.conf 5
-for a more detailed explanation of how to configure
-.Nm .
+itself.
 .Pp
+.Nm
+works in terms of the following
+.Em entities :
+relays, protocols, services, and tables.
+A
+.Em relay
+represents a Layer 7 load-balancing instance.
+Each instance translates to a listening TCP or UDP port.
+A
+.Em protocol
+defines which actions, if any, must be taken on the
+packet payload as data crosses a relay.
+A
+.Em service
+represents a Layer 3 load-balancing instance.
+Each instance translates to a
+.Xr pf 4
+rdr rule being added.
+A
+.Em table
+represents a group of hosts which can be checked for
+availability using the same method.
+Each table contains at least one host.
+If a table is used in a Layer 3 load-balancing instance, it
+will be mapped to a
+.Xr pf 4
+table containing only hosts which are up.
+.Pp
+All these entities can be configured in
+.Xr hoststated.conf 5
+and
 .Xr hoststatectl 8
-can be used to enable or disable hosts, tables, and services as well
-as showing the current status of each object.
+can be used to alter or report the status of each entity.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
