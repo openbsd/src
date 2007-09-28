@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.62 2007/09/27 13:34:21 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.63 2007/09/28 13:05:28 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -524,8 +524,10 @@ struct relay_config {
 
 struct relay {
 	TAILQ_ENTRY(relay)	 entry;
-	int			 cert_fd;
-	int			 key_fd;
+	char			*ssl_cert;
+	off_t			 ssl_cert_len;
+	char			*ssl_key;
+	off_t			 ssl_key_len;
 
 	struct relay_config	 conf;
 	int			 up;
@@ -739,8 +741,8 @@ SSL_CTX	*ssl_ctx_create(struct hoststated *);
 void	 ssl_error(const char *, const char *);
 
 /* ssl_privsep.c */
-int	 ssl_ctx_use_private_key(SSL_CTX *, int);
-int	 ssl_ctx_use_certificate_chain(SSL_CTX *, int);
+int	 ssl_ctx_use_private_key(SSL_CTX *, char *, off_t);
+int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
 
 /* hoststated.c */
 struct host	*host_find(struct hoststated *, objid_t);

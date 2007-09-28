@@ -70,29 +70,21 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
-int	 ssl_ctx_use_private_key(SSL_CTX *, int);
-int	 ssl_ctx_use_certificate_chain(SSL_CTX *, int);
+int	 ssl_ctx_use_private_key(SSL_CTX *, char *, off_t);
+int	 ssl_ctx_use_certificate_chain(SSL_CTX *, char *, off_t);
 
 int
-ssl_ctx_use_private_key(SSL_CTX *ctx, int fd)
+ssl_ctx_use_private_key(SSL_CTX *ctx, char *buf, off_t len)
 {
 	int		 ret;
-	FILE		*fp;
 	BIO		*in;
 	EVP_PKEY	*pkey;
 
 	ret = 0;
-	pkey = NULL;
-	if (lseek(fd, 0, SEEK_SET) == -1)
-		return (ret);
 
-	if ((fp = fdopen(fd, "r")) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_SYS_LIB);
-		return (ret);
-	}
-	if ((in = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
+	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_BUF_LIB);
-		goto end;
+		return 0;
 	}
 
 	pkey = PEM_read_bio_PrivateKey(in, NULL,
@@ -100,8 +92,7 @@ ssl_ctx_use_private_key(SSL_CTX *ctx, int fd)
 	    ctx->default_passwd_callback_userdata);
 
 	if (pkey == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE,
-		     ERR_R_PEM_LIB);
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_PEM_LIB);
 		goto end;
 	}
 	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
@@ -109,75 +100,65 @@ ssl_ctx_use_private_key(SSL_CTX *ctx, int fd)
 end:
 	if (in != NULL)
 		BIO_free(in);
-	return(ret);
+	return ret;
 }
 
 
 int
-ssl_ctx_use_certificate_chain(SSL_CTX *ctx, int fd)
+ssl_ctx_use_certificate_chain(SSL_CTX *ctx, char *buf, off_t len)
 {
-	int	 ret;
-	BIO	*in;
-	X509	*x;
-	FILE	*fp;
+	int		 ret;
+	BIO		*in;
+	X509		*x;
+	X509		*ca;
+	unsigned long	 err;
 
 	ret = 0;
-	x = NULL;
-	if (lseek(fd, 0, SEEK_SET) == -1)
-		return (ret);
+	x = ca = NULL;
 
-	if ((fp = fdopen(fd, "r")) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_SYS_LIB);
-		return (ret);
-	}
-	if ((in = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
+	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_BUF_LIB);
 		goto end;
 	}
 
-	x = PEM_read_bio_X509(in, NULL,
+	if ((x = PEM_read_bio_X509(in, NULL,
 	    ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata);
-	if (x == NULL) {
+	    ctx->default_passwd_callback_userdata)) == NULL) {
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE, ERR_R_PEM_LIB);
 		goto end;
 	}
 
-	ret = SSL_CTX_use_certificate(ctx, x);
-	if (ERR_peek_error() != 0)
-		ret = 0;
-	if (ret) {
-		/* If we could set up our certificate, now proceed to
-		 * the CA certificates.
-		 */
-		X509		*ca;
-		int		 r;
-		unsigned long	 err;
-		
-		if (ctx->extra_certs != NULL) {
-			sk_X509_pop_free(ctx->extra_certs, X509_free);
-			ctx->extra_certs = NULL;
-		}
+	if (!SSL_CTX_use_certificate(ctx, x) || ERR_peek_error() != 0)
+		goto end;
 
-		while ((ca = PEM_read_bio_X509(in, NULL,
-		    ctx->default_passwd_callback,
-		    ctx->default_passwd_callback_userdata)) != NULL) {
-			r = SSL_CTX_add_extra_chain_cert(ctx, ca);
-			if (!r) {
-				X509_free(ca);
-				ret = 0;
-				goto end;
-			}
-		}
-		err = ERR_peek_last_error();
-		if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
-		    ERR_GET_REASON(err) == PEM_R_NO_START_LINE)
-			ERR_clear_error();
-		else 
-			ret = 0;
+	/* If we could set up our certificate, now proceed to
+	 * the CA certificates.
+	 */
+		
+	if (ctx->extra_certs != NULL) {
+		sk_X509_pop_free(ctx->extra_certs, X509_free);
+		ctx->extra_certs = NULL;
 	}
 
+	while ((ca = PEM_read_bio_X509(in, NULL,
+	    ctx->default_passwd_callback,
+	    ctx->default_passwd_callback_userdata)) != NULL) {
+
+		if (!SSL_CTX_add_extra_chain_cert(ctx, ca))
+			goto end;
+	}
+
+	err = ERR_peek_last_error();
+	if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
+	    ERR_GET_REASON(err) == PEM_R_NO_START_LINE)
+		ERR_clear_error();
+	else
+		goto end;
+
+	ret = 1;
 end:
+	if (ca != NULL)
+		X509_free(ca);
 	if (x != NULL)
 		X509_free(x);
 	if (in != NULL)

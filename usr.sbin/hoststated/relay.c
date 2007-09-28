@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.46 2007/09/27 13:50:40 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.47 2007/09/28 13:05:28 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/queue.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -2016,6 +2017,8 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 int
 relay_ssl_ctx_init(struct relay *rlay)
 {
+	int	fd;
+	off_t	len;
 	char	certfile[PATH_MAX];
 	char	hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 
@@ -2025,15 +2028,29 @@ relay_ssl_ctx_init(struct relay *rlay)
 	if (snprintf(certfile, sizeof(certfile),
 	    "/etc/ssl/%s.crt", hbuf) == -1)
 		return -1;
-	if ((rlay->cert_fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
+	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
 		return -1;
+	if ((len = lseek(fd, 0, SEEK_END)) == -1)
+		return -1;
+	if ((rlay->ssl_cert = mmap(NULL, len, PROT_READ, MAP_FILE|MAP_PRIVATE,
+	    fd, 0)) == MAP_FAILED)
+		return -1;
+	rlay->ssl_cert_len = len;
+	close(fd);
 	log_debug("relay_ssl_ctx_init: using certificate %s", certfile);
 
 	if (snprintf(certfile, sizeof(certfile),
 	    "/etc/ssl/private/%s.key", hbuf) == -1)
 		return -1;
-	if ((rlay->key_fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
+	if ((fd = open(certfile, O_RDONLY|O_NONBLOCK)) == -1)
 		return -1;
+	if ((len = lseek(fd, 0, SEEK_END)) == -1)
+		return -1;
+	if ((rlay->ssl_key = mmap(NULL, len, PROT_READ, MAP_FILE|MAP_PRIVATE,
+	    fd, 0)) == MAP_FAILED)
+		return -1;
+	rlay->ssl_key_len = len;
+	close(fd);
 	log_debug("relay_ssl_ctx_init: using private key %s", certfile);
 
 	return (0);
@@ -2077,12 +2094,15 @@ relay_ssl_ctx_create(struct relay *rlay)
 		goto err;
 
 	log_debug("relay_ssl_ctx_create: loading certificate");
-	if (!ssl_ctx_use_certificate_chain(ctx, rlay->cert_fd))
+	if (!ssl_ctx_use_certificate_chain(ctx,
+	    rlay->ssl_cert, rlay->ssl_cert_len))
 		goto err;
+	munmap(rlay->ssl_cert, rlay->ssl_cert_len);
 
 	log_debug("relay_ssl_ctx_create: loading private key");
-	if (!ssl_ctx_use_private_key(ctx, rlay->key_fd))
+	if (!ssl_ctx_use_private_key(ctx, rlay->ssl_key, rlay->ssl_key_len))
 		goto err;
+	munmap(rlay->ssl_key, rlay->ssl_key_len);
 	if (!SSL_CTX_check_private_key(ctx))
 		goto err;
 
