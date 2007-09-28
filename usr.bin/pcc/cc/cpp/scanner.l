@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.7 2007/09/26 12:46:47 otto Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.8 2007/09/28 17:59:45 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -203,7 +203,7 @@ L?'(\\.|[^\\'])+'	{	if (YYSTATE)
 <CONTR>"define"		{ contr = 0; BEGIN DEF; define(); BEGIN 0; }
 <CONTR>"undef"		{ contr = 0; if (slow) return IDENT; undefstmt(); }
 <CONTR>"line"		{ contr = 0; storepb(); BEGIN 0; line(); }
-<CONTR>"pragma"		{ contr = 0; pragmastmt(); }
+<CONTR>"pragma"		{ contr = 0; pragmastmt(); BEGIN 0; }
 <CONTR>"elif"		{ contr = 0; storepb(); BEGIN IFR; elifstmt(); BEGIN 0; }
 
 
