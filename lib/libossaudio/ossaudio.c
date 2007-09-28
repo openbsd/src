@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.9 2006/02/13 12:01:11 espie Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.10 2007/09/28 01:15:15 jakemsr Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -376,43 +376,39 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETPROPS, &idata);
 		if (retval < 0)
 			return retval;
-		idat = DSP_CAP_TRIGGER; /* pretend we have trigger */
+		idat = DSP_CAP_TRIGGER;
 		if (idata & AUDIO_PROP_FULLDUPLEX)
 			idat |= DSP_CAP_DUPLEX;
 		if (idata & AUDIO_PROP_MMAP)
 			idat |= DSP_CAP_MMAP;
 		INTARG = idat;
 		break;
-#if 0
+	case SNDCTL_DSP_SETTRIGGER:
+		idat = INTARG;
+		AUDIO_INITINFO(&tmpinfo);
+		tmpinfo.mode = 0;
+		if (idat & PCM_ENABLE_OUTPUT) {
+			tmpinfo.mode |= (AUMODE_PLAY | AUMODE_PLAY_ALL);
+			tmpinfo.play.pause = 0;
+		} else
+			tmpinfo.play.pause = 1;
+		if (idat & PCM_ENABLE_INPUT) {
+			tmpinfo.mode |= AUMODE_RECORD;
+			tmpinfo.record.pause = 0;
+		} else
+			tmpinfo.record.pause = 1;
+		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		if (retval < 0)
+			return retval;
+		/* FALLTHRU */
 	case SNDCTL_DSP_GETTRIGGER:
 		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		idat = (tmpinfo.play.pause ? 0 : PCM_ENABLE_OUTPUT) |
 		       (tmpinfo.record.pause ? 0 : PCM_ENABLE_INPUT);
-		retval = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (retval < 0)
-			return retval;
+		INTARG = idat;
 		break;
-	case SNDCTL_DSP_SETTRIGGER:
-		AUDIO_INITINFO(&tmpinfo);
-		retval = copyin(SCARG(uap, data), &idat, sizeof idat);
-		if (retval < 0)
-			return retval;
-		tmpinfo.play.pause = (idat & PCM_ENABLE_OUTPUT) == 0;
-		tmpinfo.record.pause = (idat & PCM_ENABLE_INPUT) == 0;
-		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		retval = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (retval < 0)
-			return retval;
-		break;
-#else
-	case SNDCTL_DSP_GETTRIGGER:
-	case SNDCTL_DSP_SETTRIGGER:
-		/* XXX Do nothing for now. */
-		INTARG = PCM_ENABLE_OUTPUT;
-		break;
-#endif
 	case SNDCTL_DSP_GETIPTR:
 		retval = ioctl(fd, AUDIO_GETIOFFS, &tmpoffs);
 		if (retval < 0)
