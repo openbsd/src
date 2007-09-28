@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.13 2007/09/27 20:00:23 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.14 2007/09/28 08:48:58 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -76,7 +76,7 @@
 
 #define SBSIZE 10000
 #define MAXINC 100
-#define MAXFIL 100
+#define MAXFIL 10000
 #define MAXLIB 10000
 #define MAXAV  10000
 #define MAXOPT 100
