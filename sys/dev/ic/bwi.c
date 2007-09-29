@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.50 2007/09/27 22:17:32 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.51 2007/09/29 22:27:59 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7998,7 +7998,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 			    rs_rates[ic->ic_fixed_rate];
 		} else {
 			/* AMRR rate control */
-			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+			rate = rate_fb = ni->ni_rates.rs_rates[ni->ni_txrate];
 		}
 	} else {
 		/* Fixed at 1Mbytes/s for mgt frames */
@@ -8303,7 +8303,7 @@ bwi_txeof(struct bwi_softc *sc)
 		if (tx_info & 0x30) /* XXX */
 			continue;
 
-		_bwi_txeof(sc, tx_id);
+		_bwi_txeof(sc, letoh16(tx_id));
 	}
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
