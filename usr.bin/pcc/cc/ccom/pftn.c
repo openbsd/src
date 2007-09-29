@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.4 2007/09/23 20:13:28 otto Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.5 2007/09/29 13:57:14 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -2512,6 +2512,9 @@ getsymtab(char *name, int flags)
 	s->sflags = flags & SMASK;
 	s->soffset = 0;
 	s->slevel = blevel;
+	s->sdf = NULL;
+	s->ssue = NULL;
+	s->suse = 0;
 	return s;
 }
 
