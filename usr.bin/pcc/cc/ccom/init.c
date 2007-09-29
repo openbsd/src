@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 2007/09/29 13:57:14 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.8 2007/09/29 15:19:13 otto Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -944,7 +944,10 @@ simpleinit(struct symtab *sp, NODE *p)
 		spname = sp;
 		p = optim(buildtree(ASSIGN, buildtree(NAME, NIL, NIL), p));
 		setscl(sp);
-		ninval(0, p->n_right->n_sue->suesize, p->n_right);
+		if (p->n_right->n_op != ICON && p->n_right->n_op != FCON)
+			uerror("initializer element is not a constant");
+		else
+			ninval(0, p->n_right->n_sue->suesize, p->n_right);
 		tfree(p);
 		break;
 
