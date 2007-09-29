@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.88 2007/09/23 14:58:50 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.89 2007/09/29 09:02:05 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1423,18 +1423,11 @@ JobOutput(Job *job, char *cp, char *endp, int msg)
 /*-
  *-----------------------------------------------------------------------
  * JobDoOutput	--
- *	This function is called at different times depending on
- *	whether the user has specified that output is to be collected
- *	via pipes or temporary files. In the former case, we are called
- *	whenever there is something to read on the pipe. We collect more
- *	output from the given job and store it in the job's outBuf. If
- *	this makes up a line, we print it tagged by the job's identifier,
- *	as necessary.
- *	If output has been collected in a temporary file, we open the
- *	file and read it line by line, transfering it to our own
- *	output channel until the file is empty. At which point we
- *	remove the temporary file.
- *	In both cases, however, we keep our figurative eye out for the
+ *	This functions is called whenever there is something to read on the
+ *	pipe. We collect more output from the given job and store it in the
+ *	job's outBuf. If this makes up a line, we print it tagged by the job's
+ *	identifier, as necessary.
+ *	We also keep our figurative eye out for the
  *	'noPrint' line for the shell from which the output came. If
  *	we recognize a line, we don't print it. If the command is not
  *	alone on the line (the character after it is not \0 or \n), we
@@ -1500,7 +1493,7 @@ end_loop:
 			break;
 		} else if (job->outBuf[i] == '\0') {
 			/*
-			 * Why?
+			 * To be fixed: don't use printf, it stops at NUL bytes.
 			 */
 			job->outBuf[i] = ' ';
 		}
