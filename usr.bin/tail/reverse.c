@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.17 2006/03/24 17:10:02 kjell Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.18 2007/09/29 12:31:28 otto Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -37,19 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.17 2006/03/24 17:10:02 kjell Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.18 2007/09/29 12:31:28 otto Exp $";
 #endif /* not lint */
 
-#include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 
 #include <err.h>
-#include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "extern.h"
