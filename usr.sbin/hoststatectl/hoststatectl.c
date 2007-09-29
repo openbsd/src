@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststatectl.c,v 1.23 2007/09/28 13:29:56 pyr Exp $	*/
+/*	$OpenBSD: hoststatectl.c,v 1.24 2007/09/29 16:23:06 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -63,7 +63,7 @@ void		 monitor_id(struct imsg *);
 int		 monitor(struct imsg *);
 
 struct imsgname imsgs[] = {
-	{ IMSG_HOST_STATUS,		"host_status",		monitor_host_status },
+	{ IMSG_HOST_STATUS,		"host_status",	monitor_host_status },
 	{ IMSG_CTL_SERVICE_DISABLE,	"ctl_disable_service",	monitor_id },
 	{ IMSG_CTL_SERVICE_ENABLE,	"ctl_service_enable",	monitor_id },
 	{ IMSG_CTL_TABLE_DISABLE,	"ctl_table_disable",	monitor_id },
