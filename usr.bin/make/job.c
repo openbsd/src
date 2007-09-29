@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.89 2007/09/29 09:02:05 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.90 2007/09/29 09:47:23 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1237,7 +1237,7 @@ JobStart(GNode *gn,	      	/* target to create */
 		if (job->cmdFILE == NULL) {
 			Punt("Error creating command file");
 		}
-		(void)fcntl(fileno(job->cmdFILE), F_SETFD, 1);
+		(void)fcntl(fileno(job->cmdFILE), F_SETFD, FD_CLOEXEC);
 		/*
 		 * Send the commands to the command file, flush all its buffers
 		 * then rewind and remove the thing.
@@ -1337,17 +1337,14 @@ JobStart(GNode *gn,	      	/* target to create */
 	 */
 	JobMakeArgv(job, argv);
 
-	/*
-	 * If we're using pipes to catch output, create the pipe by which we'll
-	 * get the shell's output. If we're using files, print out that we're
-	 * starting a job and then set up its temporary-file name.
+	/* Create the pipe by which we'll get the shell's output. 
 	 */
 	if (pipe(fd) == -1)
 		Punt("Cannot create pipe: %s", strerror(errno));
 	job->inPipe = fd[0];
 	job->outPipe = fd[1];
-	(void)fcntl(job->inPipe, F_SETFD, 1);
-	(void)fcntl(job->outPipe, F_SETFD, 1);
+	(void)fcntl(job->inPipe, F_SETFD, FD_CLOEXEC);
+	(void)fcntl(job->outPipe, F_SETFD, FD_CLOEXEC);
 
 	if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL) &&
 	    maxJobs != 0) {
