@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.9 2007/09/09 18:02:30 marco Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.10 2007/09/29 16:03:43 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -76,6 +76,12 @@ struct qli_softc {
 
 	/* firmware control block */
 	struct qli_mem		*sc_fw_cb;
+
+	/* queues */
+	unsigned int		sc_queues_len;
+	struct qli_mem		*sc_queues;
+	bus_addr_t		sc_request_dva;
+	struct qli_queue_entry	*sc_request_ring;
 };
 
 /* #define QLI_DEBUG */
@@ -123,6 +129,8 @@ struct qli_mem {
 #define QLIMEM_MAP(_am)		((_am)->am_map)
 #define QLIMEM_DVA(_am)		((_am)->am_map->dm_segs[0].ds_addr)
 #define QLIMEM_KVA(_am)		((void *)(_am)->am_kva)
+#define QLIMEM_ALIGN		(MAX(QLI_REQUESTQ_DEPTH, QLI_RESPONSEQ_DEPTH) *\
+				    sizeof(struct qli_queue_entry))
 
 struct qli_mem	*qli_allocmem(struct qli_softc *, size_t);
 void		qli_freemem(struct qli_softc *, struct qli_mem *);
@@ -887,6 +895,7 @@ qli_attach(struct qli_softc *sc)
 	/* struct scsibus_attach_args saa; */
 	int			rv = 1;
 	u_int32_t		f, mbox[QLI_MBOX_SIZE];
+	unsigned int		align;
 
 	DNPRINTF(QLI_D_MISC, "%s: qli_attach\n", DEVNAME(sc));
 
@@ -929,18 +938,40 @@ qli_attach(struct qli_softc *sc)
 	if (sc->sc_fw_cb == NULL) {
 		printf("%s: unable to allocate firmware control block memory\n",
 		    DEVNAME(sc));
-		goto nofwcb;
+		goto done;
 	}
 	bzero(mbox, sizeof(mbox));
 	mbox[0] = QLI_MBOX_OPC_GET_INITIAL_FW_CB;
-	mbox[2] = htole32((u_int32_t)QLIMEM_DVA(sc->sc_fw_cb));
-	mbox[3] = htole32((u_int32_t)((u_int64_t)QLIMEM_DVA(sc->sc_fw_cb) >>
-	    32));
+	mbox[2] = (u_int32_t)QLIMEM_DVA(sc->sc_fw_cb);
+	mbox[3] = (u_int32_t)((u_int64_t)QLIMEM_DVA(sc->sc_fw_cb) >> 32);
 	if (qli_mgmt(sc, 4, mbox)) {
 		printf("%s: get initial firmware control block failed\n",
 		    DEVNAME(sc));
-		goto done;
+		goto nofwcb;
 	}
+
+	/* setup queues & shadow registers */
+	sc->sc_queues_len = (QLI_REQUESTQ_DEPTH * QLI_QUEUE_SIZE) + 
+	    (QLI_RESPONSEQ_DEPTH * QLI_QUEUE_SIZE) +
+	    sizeof(struct qli_shadow_regs) +
+	    QLIMEM_ALIGN + PAGE_SIZE - 1;
+	sc->sc_queues_len &= ~(PAGE_SIZE - 1);
+
+	sc->sc_queues = qli_allocmem(sc, sc->sc_queues_len);
+	if (sc->sc_queues == NULL) {
+		printf("%s: unable to allocate firmware control block memory\n",
+		    DEVNAME(sc));
+		goto nofwcb;
+	}
+
+	if (QLIMEM_DVA(sc->sc_queues) & (QLIMEM_ALIGN - 1))
+		align = QLIMEM_ALIGN -
+		    (QLIMEM_DVA(sc->sc_queues) & (QLIMEM_ALIGN - 1));
+	else
+		align = 0;
+
+	sc->sc_request_dva = QLIMEM_DVA(sc->sc_queues) + align;
+	sc->sc_request_ring = QLIMEM_KVA(sc->sc_queues) + align;
 
 #if 0
 	/* enable interrupts */
@@ -961,6 +992,8 @@ qli_attach(struct qli_softc *sc)
 
 done:
 	return (rv);
+/* noqueues: */
+	qli_freemem(sc, sc->sc_queues);
 nofwcb:
 	qli_freemem(sc, sc->sc_fw_cb);
 	return (rv);

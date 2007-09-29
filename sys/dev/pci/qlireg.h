@@ -1,4 +1,4 @@
-/* $OpenBSD: qlireg.h,v 1.7 2007/09/09 18:02:30 marco Exp $ */
+/* $OpenBSD: qlireg.h,v 1.8 2007/09/29 16:03:43 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -321,6 +321,7 @@ struct qli_reg {
 
 /* mailbox commands */
 #define QLI_MBOX_OPC_ABOUT_FIRMWARE			(0x09)
+#define QLI_MBOX_OPC_GET_FW_STATUS			(0x1f)
 #define QLI_MBOX_OPC_GET_INITIAL_FW_CB			(0x61)
 #define QLI_MBOX_OPC_GET_FW_STATE			(0x69)
 		/* mbox 1 firmware state */
@@ -627,4 +628,20 @@ struct qli_cb {
 	u_int8_t		qcb_ipv6_isns_addr1[16];
 	u_int8_t		qcb_ipv6_router_ad_lnk_mtu[4];
 	u_int8_t		qcb_ipv6_res1[140];
+} __packed;
+
+/* queues */
+#define QLI_REQUESTQ_DEPTH			(1024)
+#define QLI_QUEUE_SIZE				(64)
+#define QLI_RESPONSEQ_DEPTH			(64)
+
+struct qli_queue_entry {
+	u_int8_t		qqe_data[60];
+	u_int32_t		qqe_signature;
+} __packed;
+
+/* shadow regs */
+struct qli_shadow_regs {
+	u_int32_t		qsr_req_q;
+	u_int32_t		qsr_resp_q;
 } __packed;
