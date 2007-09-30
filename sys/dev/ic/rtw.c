@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.62 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.63 2007/09/30 11:33:14 kettenis Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1333,7 +1333,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			mb.m_flags = 0;
 			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_IN);
 		}
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		ieee80211_input(&sc->sc_if, m, ni, rssi, htsftl);
 		ieee80211_release_node(&sc->sc_ic, ni);
@@ -3261,7 +3261,7 @@ rtw_start(struct ifnet *ifp)
 			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_OUT);
 
 		}
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		for (i = 0, lastdesc = desc = ts->ts_first;
 		     i < dmamap->dm_nsegs;

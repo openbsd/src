@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.69 2007/04/19 19:00:01 kettenis Exp $	*/
+/*	$OpenBSD: gem.c,v 1.70 2007/09/30 11:33:14 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -984,7 +984,7 @@ gem_rint(struct gem_softc *sc)
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		/* Pass it on. */
 		ether_input_mbuf(ifp, m);

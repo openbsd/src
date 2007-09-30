@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.54 2007/07/18 18:22:26 damien Exp $	*/
+/*	$OpenBSD: atw.c,v 1.55 2007/09/30 11:33:14 kettenis Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3222,7 +3222,7 @@ atw_rxintr(struct atw_softc *sc)
 			mb.m_flags = 0;
 			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_IN);
  		}
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);

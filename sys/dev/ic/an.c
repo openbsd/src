@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.53 2007/01/03 18:16:43 claudio Exp $	*/
+/*	$OpenBSD: an.c,v 1.54 2007/09/30 11:33:14 kettenis Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -471,7 +471,7 @@ an_rxeof(struct an_softc *sc)
 		mb.m_flags = 0;
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 	wh = mtod(m, struct ieee80211_frame *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
