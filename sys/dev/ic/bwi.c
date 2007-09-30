@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.52 2007/09/30 17:11:58 kettenis Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.53 2007/09/30 22:12:43 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -532,7 +532,7 @@ bwi_intr(void *xsc)
 
 	intr_status &= CSR_READ_4(sc, BWI_MAC_INTR_MASK);
 	if (intr_status == 0)		/* Nothing is interesting */
-		return (1);
+		return (0);
 
 	DPRINTF(2, "%s: intr status 0x%08x\n",
 	    sc->sc_dev.dv_xname, intr_status);
