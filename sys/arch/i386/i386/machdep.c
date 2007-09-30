@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.407 2007/09/07 15:00:19 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.408 2007/09/30 17:50:20 gwk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1308,6 +1308,7 @@ void
 amd_family6_setup(struct cpu_info *ci)
 {
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
+	int family = (ci->ci_signature >> 8) & 15;
 	extern void (*pagezero)(void *, size_t);
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
@@ -1318,6 +1319,10 @@ amd_family6_setup(struct cpu_info *ci)
 		pagezero = i686_pagezero;
 
 	setperf_setup = amd_family6_setperf_setup;
+
+	if (family == 0xf) {
+		amd64_errata(ci);
+	}
 #endif
 }
 
@@ -1868,8 +1873,6 @@ identifycpu(struct cpu_info *ci)
 	} else
 		i386_use_fxsave = 0;
 
-	if (vendor == CPUVENDOR_AMD)
-		amd64_errata(ci);
 #endif /* I686_CPU */
 }
 
