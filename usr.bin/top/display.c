@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.28 2007/07/27 14:01:16 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.29 2007/09/30 13:26:39 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -69,7 +69,6 @@
 FILE           *debug;
 #endif
 
-static pid_t    lmpid = 0;
 static int      display_width = MAX_COLS;
 
 static char    *cpustates_tag(int);
@@ -235,8 +234,6 @@ i_loadave(pid_t mpid, double *avenrun)
 
 	for (i = 0; i < 3; i++)
 		printwp("%c %5.2f", i == 0 ? ':' : ',', avenrun[i]);
-
-	lmpid = mpid;
 }
 
 /*
