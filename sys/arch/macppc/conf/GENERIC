@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.172 2007/09/09 01:37:28 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.173 2007/09/30 10:16:56 jsg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -88,6 +88,8 @@ mskc*		at pci?		# Marvell Yukon-2
 msk*		at mskc?	#  each port of above
 an*		at pci?		# Cisco/Aironet
 atw*		at pci?		# ADMtek ADM8211 (802.11)
+bwi*		at pci?		# Broadcom AirForce (802.11b/g)
+bwi*		at cardbus?	# Broadcom AirForce (802.11b/g)
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 ral*		at pci?		# Ralink RT2500/RT2501/RT2600
 rtw*		at pci?		# Realtek 8180
