@@ -1,7 +1,7 @@
-/*	$OpenBSD: mbg.c,v 1.13 2007/03/22 16:55:31 deraadt Exp $ */
+/*	$OpenBSD: mbg.c,v 1.14 2007/09/30 19:58:43 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
+ * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -53,12 +53,20 @@ struct mbg_time {
 	u_int8_t		min;
 	u_int8_t		hour;
 	u_int8_t		mday;
-	u_int8_t		wday;
+	u_int8_t		wday;	/* 1 (monday) - 7 (sunday) */
 	u_int8_t		mon;
-	u_int8_t		year;
+	u_int8_t		year;	/* 0 - 99 */
 	u_int8_t		status;
 	u_int8_t		signal;
 	int8_t			utc_off;
+};
+
+struct mbg_time_hr {
+	u_int32_t		sec;		/* seconds since the epoch */
+	u_int32_t		frac;		/* fractions of second */
+	int32_t			utc_off;	/* UTC offset in seconds */
+	u_int16_t		status;
+	u_int8_t		signal;
 };
 
 /* mbg_time.status bits */
@@ -90,7 +98,7 @@ struct mbg_time {
 /* commands */
 #define MBG_GET_TIME		0x00
 #define MBG_GET_SYNC_TIME	0x02
-#define MBG_GET_HR_TIME		0x03
+#define MBG_GET_TIME_HR		0x03
 #define MBG_GET_FW_ID_1		0x40
 #define MBG_GET_FW_ID_2		0x41
 #define MBG_GET_SERNUM		0x42
@@ -101,10 +109,13 @@ struct mbg_time {
 #define MBG_BUSY		0x01
 #define MBG_SIG_BIAS		55
 #define MBG_SIG_MAX		68
+#define NSECPERSEC		1000000000LL	/* nanoseconds per second */
+#define HRDIVISOR		0x100000000LL	/ for hi-res timestamp */
 
 int	mbg_probe(struct device *, void *, void *);
 void	mbg_attach(struct device *, struct device *, void *);
 void	mbg_task(void *);
+void	mbg_task_hr(void *);
 int	mbg_read_amcc_s5933(struct mbg_softc *, int cmd, char *buf, size_t len,
 	    struct timespec *tstamp);
 int	mbg_read_asic(struct mbg_softc *, int cmd, char *buf, size_t len,
@@ -154,14 +165,36 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		desc = "Radio clock";
 	strlcpy(sc->sc_timedelta.desc, desc, sizeof(sc->sc_timedelta.desc));
 
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+
+	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
+	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
+	sc->sc_timedelta.value = 0LL;
+	sc->sc_timedelta.flags = 0;
+	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
+
+	sc->sc_signal.type = SENSOR_PERCENT;
+	sc->sc_signal.status = SENSOR_S_UNKNOWN;
+	sc->sc_signal.value = 0LL;
+	sc->sc_signal.flags = 0;
+	strlcpy(sc->sc_signal.desc, "Signal strength",
+	    sizeof(sc->sc_signal.desc));
+	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
+	sensordev_install(&sc->sc_sensordev);
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_MEINBERG_PCI32:
 		sc->sc_read = mbg_read_amcc_s5933;
+		sensor_task_register(sc, mbg_task, 10);
 		break;
 	case PCI_PRODUCT_MEINBERG_PCI511:
-		/* FALLTHROUGH */
+		sc->sc_read = mbg_read_asic;
+		sensor_task_register(sc, mbg_task, 10);
+		break;
 	case PCI_PRODUCT_MEINBERG_GPS170:
 		sc->sc_read = mbg_read_asic;
+		sensor_task_register(sc, mbg_task_hr, 1);
 		break;
 	default:
 		/* this can not normally happen, but then there is murphy */
@@ -190,26 +223,6 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 			printf("invalid\n");
 		sc->sc_status = tframe.status;
 	}
-
-	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensordev.xname));
-
-	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
-	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
-	sc->sc_timedelta.value = 0LL;
-	sc->sc_timedelta.flags = 0;
-	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
-
-	sc->sc_signal.type = SENSOR_PERCENT;
-	sc->sc_signal.status = SENSOR_S_UNKNOWN;
-	sc->sc_signal.value = 0LL;
-	sc->sc_signal.flags = 0;
-	strlcpy(sc->sc_signal.desc, "Signal strength",
-	    sizeof(sc->sc_signal.desc));
-	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
-
-	sensor_task_register(sc, mbg_task, 10);
-	sensordev_install(&sc->sc_sensordev);
 }
 
 void
@@ -242,6 +255,58 @@ mbg_task(void *arg)
 
 	sc->sc_timedelta.value = (int64_t)((tstamp.tv_sec - trecv) * 100
 	    - tframe.hundreds) * 10000000LL + tstamp.tv_nsec;
+	sc->sc_timedelta.status = SENSOR_S_OK;
+	sc->sc_timedelta.tv.tv_sec = tstamp.tv_sec;
+	sc->sc_timedelta.tv.tv_usec = tstamp.tv_nsec / 1000;
+
+	signal = tframe.signal - MBG_SIG_BIAS;
+	if (signal < 0)
+		signal = 0;
+	else if (signal > MBG_SIG_MAX)
+		signal = MBG_SIG_MAX;
+
+	sc->sc_signal.value = signal * 100000 / MBG_SIG_MAX;
+	sc->sc_signal.status = SENSOR_S_OK;
+	sc->sc_signal.tv.tv_sec = sc->sc_timedelta.tv.tv_sec;
+	sc->sc_signal.tv.tv_usec = sc->sc_timedelta.tv.tv_usec;
+
+	if (tframe.status != sc->sc_status) {
+		if (tframe.status & MBG_SYNC)
+			log(LOG_INFO, "%s: clock is synchronized",
+			    sc->sc_dev.dv_xname);
+		else if (tframe.status & MBG_FREERUN)
+			log(LOG_INFO, "%s: clock is free running on xtal",
+			    sc->sc_dev.dv_xname);
+		sc->sc_status = tframe.status;
+	}
+}
+
+void
+mbg_task_hr(void *arg)
+{
+	struct mbg_softc *sc = (struct mbg_softc *)arg;
+	struct mbg_time_hr tframe;
+	struct timespec tstamp;
+	int64_t tlocal, trecv;
+	int signal;
+
+	if (sc->sc_read(sc, MBG_GET_TIME_HR, (char *)&tframe, sizeof(tframe),
+	    &tstamp)) {
+		log(LOG_ERR, "%s: error reading hi-res time\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	if (tframe.status & MBG_INVALID) {
+		log(LOG_INFO, "%s: invalid time, battery was disconnected\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	tlocal = tstamp.tv_sec * NSECPERSEC + tstamp.tv_nsec;
+	trecv = tframe.sec * NSECPERSEC + (tframe.frac * NSECPERSEC >> 32);
+
+	sc->sc_timedelta.value = tlocal - trecv;
+
 	sc->sc_timedelta.status = SENSOR_S_OK;
 	sc->sc_timedelta.tv.tv_sec = tstamp.tv_sec;
 	sc->sc_timedelta.tv.tv_usec = tstamp.tv_nsec / 1000;
