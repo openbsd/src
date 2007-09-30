@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.82 2007/09/22 20:04:51 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.83 2007/09/30 21:34:20 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3158,11 +3158,6 @@ return_from_syscall:
  * and invokes the interrupt handler.
  */
 
-	.data
-	.globl	intrpending
-intrpending:
-	.space	16 * 8 * 8
-
 #ifdef DEBUG
 #define INTRDEBUG_VECTOR	0x1
 #define INTRDEBUG_LEVEL		0x2
@@ -3230,10 +3225,10 @@ setup_sparcintr:
 	membar #LoadLoad | #LoadStore
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
-	sethi	%hi(intrpending), %g1
+	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %g1
 	mov	8, %g7			! Number of slots to search
 	sll	%g6, 3+3, %g3	! Find start of table for this IPL
-	or	%g1, %lo(intrpending), %g1
+	or	%g1, %lo(CPUINFO_VA+CI_INTRPENDING), %g1
 	 add	%g1, %g3, %g1
 1:
 	ldx	[%g1], %g3		! Load list head
@@ -3489,8 +3484,8 @@ sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	sll	%l6, 3+3, %l2
-	sethi	%hi(intrpending), %l4
-	or	%l4, %lo(intrpending), %l4
+	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %l4
+	or	%l4, %lo(CPUINFO_VA+CI_INTRPENDING), %l4
 	mov	8, %l7
 	add	%l2, %l4, %l4
 
@@ -9203,7 +9198,7 @@ ENTRY(send_softint)
 1:
 	brz,pn	%o2, 1f
 	 mov	8, %o4			! Number of slots to search
-	set	intrpending, %o3
+	set	CPUINFO_VA+CI_INTRPENDING, %o3
 
 	ldstub	[%o2 + IH_BUSY], %o5
 	membar #LoadLoad | #LoadStore
