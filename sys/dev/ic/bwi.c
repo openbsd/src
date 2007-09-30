@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.53 2007/09/30 22:12:43 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.54 2007/09/30 22:28:45 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -2769,14 +2769,14 @@ bwi_phy_set_bbp_atten(struct bwi_mac *mac, uint16_t bbp_atten)
 
 	if (phy->phy_version == 0) {
 		CSR_FILT_SETBITS_2(mac->mac_sc, BWI_BBP_ATTEN, ~mask,
-				   __SHIFTIN(bbp_atten, mask));
+		    __SHIFTIN(bbp_atten, mask));
 	} else {
 		if (phy->phy_version > 1)
 			mask <<= 2;
 		else
 			mask <<= 3;
 		PHY_FILT_SETBITS(mac, BWI_PHYR_BBP_ATTEN, ~mask,
-				 __SHIFTIN(bbp_atten, mask));
+		    __SHIFTIN(bbp_atten, mask));
 	}
 }
 
