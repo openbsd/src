@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.10 2007/06/19 16:45:15 reyk Exp $ */
+/*	$OpenBSD: printconf.c,v 1.11 2007/09/30 13:28:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -113,7 +113,7 @@ print_iface(struct iface *iface)
 {
 	struct auth_md	*md;
 
-	printf("\tinterface %s {\n", iface->name);
+	printf("\tinterface %s:%s {\n", iface->name, inet_ntoa(iface->addr));
 
 	printf("\t\thello-interval %d\n", iface->hello_interval);
 	printf("\t\tmetric %d\n", iface->metric);
