@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.55 2007/10/01 11:27:11 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.56 2007/10/01 12:44:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -73,8 +73,6 @@
 
 #include <dev/ic/bwireg.h>
 #include <dev/ic/bwivar.h>
-
-#define BWI_DEBUG
 
 #ifdef BWI_DEBUG
 int bwi_debug = 1;
@@ -4561,10 +4559,10 @@ bwi_rf_map_txpower(struct bwi_mac *mac)
 			break;
 		}
 		if (i != 0 && i % 8 == 0)
-			printf("\n");
-		printf("%d ", rf->rf_txpower_map0[i]);
+			DPRINTF(1, "\n");
+		DPRINTF(1, "%d ", rf->rf_txpower_map0[i]);
 	}
-	printf("\n");
+	DPRINTF(1, "\n");
 back:
 	DPRINTF(1, "%s: idle tssi0: %d\n",
 	    sc->sc_dev.dv_xname, rf->rf_idle_tssi0);
