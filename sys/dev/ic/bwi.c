@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.57 2007/10/01 12:58:41 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.58 2007/10/01 14:37:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7969,7 +7969,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	struct bwi_mac *mac;
 	struct bwi_txbuf_hdr *hdr;
 	struct ieee80211_frame *wh;
-	uint8_t rate, rate_fb;
+	uint8_t rate;
 	uint32_t mac_ctrl;
 	uint16_t phy_ctrl;
 	bus_addr_t paddr;
@@ -7997,22 +7997,22 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 			    rs_rates[ic->ic_fixed_rate];
 		} else {
 			/* AMRR rate control */
-			rate = rate_fb = ni->ni_rates.rs_rates[ni->ni_txrate];
+			rate = ni->ni_rates.rs_rates[ni->ni_txrate];
 		}
 	} else {
 		/* Fixed at 1Mbytes/s for mgt frames */
-		rate = rate_fb = (1 * 2);
+		rate = (1 * 2);
 	}
 
 	rate &= IEEE80211_RATE_VAL;
 
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1))
-		rate = rate_fb = (1 * 2);
+		rate = (1 * 2);
 
-	if (rate == 0 || rate_fb == 0) {
-		DPRINTF(1, "%s: invalid rate %u or fallback rate %u",
-		    sc->sc_dev.dv_xname, rate, rate_fb);
-		rate = rate_fb = (1 * 2); /* Force 1Mbytes/s */
+	if (rate == 0) {
+		DPRINTF(1, "%s: invalid rate %u or fallback rate",
+		    sc->sc_dev.dv_xname, rate);
+		rate = (1 * 2); /* Force 1Mbytes/s */
 	}
 
 #if NBPFILTER > 0
@@ -8058,7 +8058,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		uint16_t dur;
 		uint8_t ack_rate;
 
-		ack_rate = bwi_ack_rate(ni, rate_fb);
+		ack_rate = bwi_ack_rate(ni, rate);
 		dur = bwi_txtime(ic, ni,
 		    sizeof(struct ieee80211_frame_ack) + IEEE80211_CRC_LEN,
 		    ack_rate, ic->ic_flags & ~IEEE80211_F_SHPREAMBLE);
@@ -8070,7 +8070,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	    __SHIFTIN(idx, BWI_TXH_ID_IDX_MASK);
 
 	bwi_plcp_header(hdr->txh_plcp, pkt_len, rate);
-	bwi_plcp_header(hdr->txh_fb_plcp, pkt_len, rate_fb);
+	bwi_plcp_header(hdr->txh_fb_plcp, pkt_len, rate);
 
 	phy_ctrl = __SHIFTIN(mac->mac_rf.rf_ant_mode,
 	    BWI_TXH_PHY_C_ANTMODE_MASK);
@@ -8082,7 +8082,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	mac_ctrl = BWI_TXH_MAC_C_HWSEQ | BWI_TXH_MAC_C_FIRST_FRAG;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1))
 		mac_ctrl |= BWI_TXH_MAC_C_ACK;
-	if (bwi_rate2modtype(rate_fb) == IEEE80211_MODTYPE_OFDM)
+	if (bwi_rate2modtype(rate) == IEEE80211_MODTYPE_OFDM)
 		mac_ctrl |= BWI_TXH_MAC_C_FB_OFDM;
 
 	hdr->txh_mac_ctrl = htole32(mac_ctrl);
