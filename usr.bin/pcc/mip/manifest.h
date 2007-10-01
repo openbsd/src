@@ -1,4 +1,4 @@
-/*	$OpenBSD: manifest.h,v 1.2 2007/09/15 22:04:39 ray Exp $	*/
+/*	$OpenBSD: manifest.h,v 1.3 2007/10/01 18:51:02 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -191,6 +191,7 @@ void yyaccpt(void);
 #define	DLIST_NEXT(h,f)		(h)->f.q_forw
 #define	DLIST_PREV(h,f)		(h)->f.q_back
 #define DLIST_ISEMPTY(h,f)	((h)->f.q_forw == (h))
+#define DLIST_ENDMARK(h)	(h)
 #define	DLIST_FOREACH(v,h,f) \
 	for ((v) = (h)->f.q_forw; (v) != (h); (v) = (v)->f.q_forw)
 #define	DLIST_FOREACH_REVERSE(v,h,f) \
@@ -310,6 +311,7 @@ void pass2_compile(struct interpass *);
 
 /* node routines */
 NODE *nfree(NODE *);
+NODE *tcopy(NODE *);
 void fwalk(NODE *t, void (*f)(NODE *, int, int *, int *), int down);
 
 extern	int nerrors;		/* number of errors seen so far */

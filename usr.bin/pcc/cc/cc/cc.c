@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.14 2007/09/28 08:48:58 ragge Exp $	*/
+/*	$OpenBSD: cc.c,v 1.15 2007/10/01 18:51:02 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -100,6 +100,7 @@ char	*llist[MAXLIB];
 char	alist[20];
 char	*xlist[100];
 int	xnum;
+int	Cflag;
 int	dflag;
 int	pflag;
 int	sflag;
@@ -283,16 +284,18 @@ main(int argc, char *argv[])
 			}
 			break;
 #endif
+		case 'C':
+			Cflag = 1;
+			break;
 		case 'D':
 		case 'I':
 		case 'U':
-		case 'C':
 			*pv++ = argv[i];
 			if (argv[i][2] == 0)
 				*pv++ = argv[++i];
 			if (pv >= ptemp+MAXOPT)
 				{
-				error("Too many DIUC options");
+				error("Too many DIU options");
 				--pv;
 				}
 			break;
@@ -411,6 +414,8 @@ main(int argc, char *argv[])
 			av[na++] = "-D__ASSEMBLER__";
 		if (pthreads)
 			av[na++] = "-D_PTHREADS";
+		if (Cflag)
+			av[na++] = "-C";
 		if (Mflag)
 			av[na++] = "-M";
 		if (dflag)
@@ -457,6 +462,7 @@ main(int argc, char *argv[])
 			av[na++] = "-k";
 		if (Oflag) {
 			av[na++] = "-xtemps";
+			av[na++] = "-xdeljumps";
 		}
 		for (j = 0; j < xnum; j++)
 			av[na++] = xlist[j];

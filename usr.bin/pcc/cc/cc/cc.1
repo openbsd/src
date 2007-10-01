@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cc.1,v 1.3 2007/09/27 19:56:48 otto Exp $
+.\"	$OpenBSD: cc.1,v 1.4 2007/10/01 18:51:02 otto Exp $
 ."\
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\" 
@@ -23,7 +23,7 @@
 .Nd front-end to the C compiler
 .Sh SYNOPSIS
 .Nm
-.Op Fl cdEgkLMPOStvxX
+.Op Fl CcdEgkLMPOStvxX
 .Op Fl B Ar prefix
 .Op Fl fPIC
 .Op Fl include Ar path
@@ -86,6 +86,8 @@ or
 .Xr ld 1
 executables.
 .\" TODO: provide an example of -B
+.lt Fl C
+Do not discard comments in the preprocessor.
 .It Fl c
 Only compile or assemble and then stop.
 Do not link.
