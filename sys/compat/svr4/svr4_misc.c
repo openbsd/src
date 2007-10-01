@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.48 2007/09/01 15:14:44 martin Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.49 2007/10/01 12:10:55 martin Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -693,11 +693,11 @@ svr4_sys_break(p, v, retval)
 			uprintf("sbrk: grow failed, return = %d\n", error);
 			return error;
 		}
-		vm->vm_dsize += btoc(diff);
+		vm->vm_dsize += atop(diff);
 	} else if (diff < 0) {
 		diff = -diff;
 		uvm_deallocate(&vm->vm_map, new, diff);
-		vm->vm_dsize -= btoc(diff);
+		vm->vm_dsize -= atop(diff);
 	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.16 2005/12/10 11:45:43 miod Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.17 2007/10/01 12:10:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -132,7 +132,7 @@ typedef struct pci_attach_args * ahd_dev_softc_t;
  * multiple of 16 which should align us on even the largest of cacheline
  * boundaries. 
  */
-#define AHD_NSEG (roundup(btoc(MAXPHYS) + 1, 16))
+#define AHD_NSEG (roundup(atop(MAXPHYS) + 1, 16))
 
 /* This driver supports target mode */
 // #define AHD_TARGET_MODE 1
