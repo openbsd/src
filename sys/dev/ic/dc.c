@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.97 2007/05/08 00:04:47 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.98 2007/10/01 04:03:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1475,10 +1475,9 @@ dc_decode_leaf_sia(sc, l)
 {
 	struct dc_mediainfo *m;
 
-	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	m = malloc(sizeof(*m), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (m == NULL)
 		return;
-	bzero(m, sizeof(struct dc_mediainfo));
 	switch (l->dc_sia_code & ~DC_SIA_CODE_EXT) {
 	case DC_SIA_CODE_10BT:
 		m->dc_media = IFM_10_T;
@@ -1524,10 +1523,9 @@ dc_decode_leaf_sym(sc, l)
 {
 	struct dc_mediainfo *m;
 
-	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	m = malloc(sizeof(*m), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (m == NULL)
 		return;
-	bzero(m, sizeof(struct dc_mediainfo));
 	if (l->dc_sym_code == DC_SYM_CODE_100BT)
 		m->dc_media = IFM_100_TX;
 
@@ -1551,10 +1549,9 @@ dc_decode_leaf_mii(sc, l)
 	u_int8_t *p;
 	struct dc_mediainfo *m;
 
-	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	m = malloc(sizeof(*m), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (m == NULL)
 		return;
-	bzero(m, sizeof(struct dc_mediainfo));
 	/* We abuse IFM_AUTO to represent MII. */
 	m->dc_media = IFM_AUTO;
 	m->dc_gp_len = l->dc_gpr_len;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.5 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.6 2007/10/01 04:03:51 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -270,12 +270,11 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 	/*
 	 * Allocate oosiop_cb.
 	 */
-	cb = malloc(sizeof(struct oosiop_cb) * ncb, M_DEVBUF, M_NOWAIT);
+	cb = malloc(sizeof(*cb) * ncb, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (cb == NULL) {
 		printf(": failed to allocate cb memory\n");
 		return (ENOMEM);
 	}
-	bzero(cb, sizeof(struct oosiop_cb) * ncb);
 
 	/*
 	 * Allocate DMA-safe memory for the oosiop_xfer and map it.

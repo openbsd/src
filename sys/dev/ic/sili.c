@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.33 2007/04/22 00:06:51 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.34 2007/10/01 04:03:51 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -402,8 +402,7 @@ sili_ports_alloc(struct sili_softc *sc)
 	int				i;
 
 	sc->sc_ports = malloc(sizeof(struct sili_port) * sc->sc_nports,
-	    M_DEVBUF, M_WAITOK);
-	bzero(sc->sc_ports, sizeof(struct sili_port) * sc->sc_nports);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	for (i = 0; i < sc->sc_nports; i++) {
 		sp = &sc->sc_ports[i];
@@ -556,8 +555,7 @@ sili_dmamem_alloc(struct sili_softc *sc, bus_size_t size, bus_size_t align)
 	struct sili_dmamem		*sdm;
 	int				nsegs;
 
-	sdm = malloc(sizeof(struct sili_dmamem), M_DEVBUF, M_WAITOK);
-	bzero(sdm, sizeof(struct sili_dmamem));
+	sdm = malloc(sizeof(*sdm), M_DEVBUF, M_WAITOK | M_ZERO);
 	sdm->sdm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,

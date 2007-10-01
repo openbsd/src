@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.23 2006/11/28 23:59:45 dlg Exp $	*/
+/*	$OpenBSD: cac.c,v 1.24 2007/10/01 04:03:51 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -225,13 +225,12 @@ cac_init(struct cac_softc *sc, int startfw)
 
 	sc->sc_nunits = cinfo.num_drvs;
 	sc->sc_dinfos = malloc(cinfo.num_drvs * sizeof(struct cac_drive_info),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_dinfos == NULL) {
 		printf("%s: cannot allocate memory for drive_info\n",
 		    sc->sc_dv.dv_xname);
 		return (-1);
 	}
-	bzero(sc->sc_dinfos, cinfo.num_drvs * sizeof(struct cac_drive_info));
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &cac_switch;

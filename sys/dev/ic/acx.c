@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.77 2007/08/28 18:34:38 deraadt Exp $ */
+/*	$OpenBSD: acx.c,v 1.78 2007/10/01 04:03:51 krw Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1708,11 +1708,9 @@ acx_node_alloc(struct ieee80211com *ic)
 {
 	struct acx_node *wn;
 
-	wn = malloc(sizeof(struct acx_node), M_DEVBUF, M_NOWAIT);
+	wn = malloc(sizeof(*wn), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (wn == NULL)
 		return (NULL);
-
-	bzero(wn, sizeof(struct acx_node));
 
 	return ((struct ieee80211_node *)wn);
 }

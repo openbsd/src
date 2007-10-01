@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.55 2007/06/17 13:59:08 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.56 2007/10/01 04:03:51 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -132,13 +132,12 @@ sti_attach_common(sc, codebase)
 	struct sti_screen *scr;
 	int rc;
 
-	scr = malloc(sizeof(struct sti_screen), M_DEVBUF, M_NOWAIT);
+	scr = malloc(sizeof(*scr), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (scr == NULL) {
 		printf("cannot allocate screen data\n");
 		return (ENOMEM);
 	}
 
-	bzero(scr, sizeof(struct sti_screen));
 	sc->sc_scr = scr;
 	scr->scr_main = sc;
 

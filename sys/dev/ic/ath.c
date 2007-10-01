@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.67 2007/09/18 00:46:41 krw Exp $  */
+/*      $OpenBSD: ath.c,v 1.68 2007/10/01 04:03:51 krw Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1727,11 +1727,11 @@ ath_desc_free(struct ath_softc *sc)
 struct ieee80211_node *
 ath_node_alloc(struct ieee80211com *ic)
 {
-	struct ath_node *an =
-		malloc(sizeof(struct ath_node), M_DEVBUF, M_NOWAIT);
+	struct ath_node *an;
+	
+	an = malloc(sizeof(*an), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (an) {
 		int i;
-		bzero(an, sizeof(struct ath_node));
 		for (i = 0; i < ATH_RHIST_SIZE; i++)
 			an->an_rx_hist[i].arh_ticks = ATH_RHIST_NOTIME;
 		an->an_rx_hist_next = ATH_RHIST_SIZE-1;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.96 2007/05/08 16:07:03 deraadt Exp $     */
+/*      $OpenBSD: wdc.c,v 1.97 2007/10/01 04:03:51 krw Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -2119,8 +2119,7 @@ wdc_ioctl_get()
 	struct wdc_ioctl *wi;
 	int s;
 
-	wi = malloc(sizeof(struct wdc_ioctl), M_TEMP, M_WAITOK);
-	bzero(wi, sizeof (struct wdc_ioctl));
+	wi = malloc(sizeof(*wi), M_TEMP, M_WAITOK | M_ZERO);
 	s = splbio();
 	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.63 2007/07/27 01:48:04 ian Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.64 2007/10/01 04:03:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -714,10 +714,8 @@ ac97_attach(struct ac97_host_if *host_if)
 
 	initfunc = NULL;
 
-	if (!(as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_NOWAIT)))
+	if (!(as = malloc(sizeof(*as), M_DEVBUF, M_NOWAIT | M_ZERO)))
 		return (ENOMEM);
-
-	bzero(as, sizeof(*as));
 
 	as->codec_if.vtbl = &ac97civ;
 	as->host_if = host_if;

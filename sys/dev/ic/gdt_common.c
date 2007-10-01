@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.39 2007/04/28 00:35:16 deraadt Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.40 2007/10/01 04:03:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -491,10 +491,9 @@ gdt_attach(gdt)
 	config_found(&gdt->sc_dev, &saa, scsiprint);
 
 	gdt->sc_raw_link = malloc(gdt->sc_bus_cnt * sizeof (struct scsi_link),
-				  M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (gdt->sc_raw_link == NULL)
 		panic("gdt_attach");
-	bzero(gdt->sc_raw_link, gdt->sc_bus_cnt * sizeof (struct scsi_link));
 
 	for (i = 0; i < gdt->sc_bus_cnt; i++) {
 		/* Fill in the prototype scsi_link. */
