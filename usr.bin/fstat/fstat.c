@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.59 2007/09/02 15:19:32 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.60 2007/10/01 22:06:02 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.59 2007/09/02 15:19:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.60 2007/10/01 22:06:02 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -183,7 +183,7 @@ main(int argc, char *argv[])
 	nlistf = memf = NULL;
 	oflg = 0;
 	while ((ch = getopt(argc, argv, "fnop:su:vN:M:")) != -1)
-		switch((char)ch) {
+		switch ((char)ch) {
 		case 'f':
 			fsflg = 1;
 			break;
@@ -266,10 +266,10 @@ main(int argc, char *argv[])
 		errx(1, "%s", kvm_geterr(kd));
 	if (nflg)
 		printf("%s",
-"USER     CMD          PID   FD  DEV      INUM       MODE R/W    DV|SZ");
+"USER     CMD          PID   FD  DEV      INUM       MODE R/W    SZ|DV");
 	else
 		printf("%s",
-"USER     CMD          PID   FD MOUNT        INUM MODE       R/W    DV|SZ");
+"USER     CMD          PID   FD MOUNT        INUM MODE       R/W    SZ|DV");
 	if (oflg)
 		printf("%s", ":OFFSET  ");
 	if (checkfile && fsflg == 0)
@@ -291,7 +291,7 @@ pid_t	Pid;
 
 #define PREFIX(i) do { \
 	printf("%-8.8s %-10s %5ld", Uname, Comm, (long)Pid); \
-	switch(i) { \
+	switch (i) { \
 	case TEXT: \
 		printf(" text"); \
 		break; \
@@ -876,7 +876,7 @@ socktrans(struct socket *sock, int i, struct file *fp)
 	 * The idea is not to duplicate netstat, but to make available enough
 	 * information for further analysis.
 	 */
-	switch(dom.dom_family) {
+	switch (dom.dom_family) {
 	case AF_INET:
 		getinetproto(proto.pr_protocol);
 		if (proto.pr_protocol == IPPROTO_TCP) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.37 2007/05/31 19:20:10 jmc Exp $
+.\"	$OpenBSD: fstat.1,v 1.38 2007/10/01 22:06:02 sobrado Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 1 2007 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -153,6 +153,16 @@ using a symbolic format (see
 .Xr strmode 3 ) ;
 otherwise, the mode is printed
 as an octal number.
+.It Li R/W
+This column describes the access mode that the file allows.
+The letter
+.Sq r
+indicates open for reading;
+the letter
+.Sq w
+indicates open for writing.
+This field is useful when trying to find the processes that are
+preventing a file system from being downgraded to read-only.
 .It Li SZ\&|DV
 If the file is not a character or block special file, prints the size of
 the file in bytes.
@@ -165,16 +175,6 @@ If that cannot be located, or the
 .Fl n
 flag is specified, prints the major/minor device
 number that the special device refers to.
-.It Li R/W
-This column describes the access mode that the file allows.
-The letter
-.Sq r
-indicates open for reading;
-the letter
-.Sq w
-indicates open for writing.
-This field is useful when trying to find the processes that are
-preventing a file system from being downgraded to read-only.
 .It Li NAME
 If filename arguments are specified and the
 .Fl f
