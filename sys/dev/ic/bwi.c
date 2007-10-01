@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.58 2007/10/01 14:37:51 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.59 2007/10/01 19:48:10 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6653,6 +6653,7 @@ int
 bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct bwi_softc *sc = ic->ic_if.if_softc;
+	struct ieee80211_node *ni;
 	int error;
 	uint8_t chan;
 
@@ -6677,6 +6678,8 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	} else if (nstate == IEEE80211_S_RUN) {
 		struct bwi_mac *mac;
 
+		ni = ic->ic_bss;
+
 		bwi_set_bssid(sc, ic->ic_bss->ni_bssid);
 
 		KKASSERT(sc->sc_cur_regwin->rw_type == BWI_REGWIN_T_MAC);
@@ -6684,6 +6687,17 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* Initial TX power calibration */
 		bwi_mac_calibrate_txpower(mac);
+
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			/* fake a join to init the tx rate */
+			bwi_newassoc(ic, ni, 1);
+		}
+
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+			/* start automatic rate control timer */
+			if (ic->ic_fixed_rate == -1)
+				timeout_add(&sc->sc_amrr_ch, hz / 2);
+		}
 	} else
 		bwi_set_bssid(sc, bwi_zero_addr);
 
@@ -6696,12 +6710,6 @@ back:
 	} else if (nstate == IEEE80211_S_RUN) {
 		/* XXX 15 seconds */
 		timeout_add(&sc->sc_calib_ch, hz * 15);
-
-		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			/* start automatic rate control timer */
-			if (ic->ic_fixed_rate == -1)
-				timeout_add(&sc->sc_amrr_ch, hz / 2);
-		}
 	}
 
 	return (error);
@@ -6757,7 +6765,8 @@ bwi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 
 	/* set rate to some reasonable initial value */
 	for (i = ni->ni_rates.rs_nrates - 1;
-	    i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72; i--);
+	    i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
+	    i--);
 
 	ni->ni_txrate = i;
 }
