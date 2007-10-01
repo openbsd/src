@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.56 2007/10/01 12:44:33 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.57 2007/10/01 12:58:41 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -619,8 +619,6 @@ bwi_attach(struct bwi_softc *sc)
 	struct bwi_phy *phy;
 	int i, error;
 
-	printf("\n");
-
 	/* AMRR rate control */
 	sc->sc_amrr.amrr_min_success_threshold = 1;
 	sc->sc_amrr.amrr_max_success_threshold = 15;
@@ -752,6 +750,8 @@ bwi_attach(struct bwi_softc *sc)
 		goto fail;
 	} else
 		panic("unknown phymode %d\n", phy->phy_mode);
+
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	sc->sc_fw_version = BWI_FW_VERSION3;
 	sc->sc_dwell_time = 200;
