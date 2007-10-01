@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2007/09/28 13:29:56 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.56 2007/10/01 12:34:02 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -261,7 +261,7 @@ main		: INTERVAL number	{ conf->interval.tv_sec = $2; }
 			}
 			free($2);
 			if (carp_demote_init(conf->demote_group, 1) == -1) {
-				yyerror("yyparse: error initializing group '%s'",
+				yyerror("yyparse: error initializing group %s",
 				    conf->demote_group);
 				YYERROR;
 			}
