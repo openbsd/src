@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2007/10/01 12:34:02 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.57 2007/10/01 19:12:33 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -95,7 +95,7 @@ struct table	*table_inherit(const char *, in_port_t);
 
 typedef struct {
 	union {
-		u_int32_t	 number;
+		int32_t		 number;
 		char		*string;
 		struct host	*host;
 		struct timeval	 tv;
@@ -115,8 +115,9 @@ typedef struct {
 %token	LOG UPDATES ALL DEMOTE NODELAY SACK SOCKET BUFFER URL RETRY IP
 %token	ERROR
 %token	<v.string>	STRING
+%token  <v.number>	NUMBER
 %type	<v.string>	interface hostname
-%type	<v.number>	number port http_type loglevel sslcache optssl dstport
+%type	<v.number>	port http_type loglevel sslcache optssl dstport
 %type	<v.number>	proto_type dstmode docheck retry log flag direction
 %type	<v.host>	host
 %type	<v.tv>		timeout
@@ -132,20 +133,6 @@ grammar		: /* empty */
 		| grammar relay '\n'
 		| grammar proto '\n'
 		| grammar error '\n'		{ errors++; }
-		;
-
-number		: STRING	{
-			const char	*estr;
-
-			$$ = strtonum($1, 0, UINT_MAX, &estr);
-			if (estr) {
-				yyerror("cannot parse number %s : %s",
-				    $1, estr);
-				free($1);
-				YYERROR;
-			}
-			free($1);
-		}
 		;
 
 optssl		: /*empty*/	{ $$ = 0; }
@@ -193,26 +180,23 @@ proto_type	: TCP				{ $$ = RELAY_PROTO_TCP; }
 		;
 
 port		: PORT STRING {
-			const char	*estr;
 			struct servent	*servent;
 
-			$$ = strtonum($2, 1, USHRT_MAX, &estr);
-                        if (estr) {
-				if (errno == ERANGE) {
-					yyerror("port %s is out of range", $2);
-					free($2);
-					YYERROR;
-				}
-				servent = getservbyname($2, "tcp");
-				if (servent == NULL) {
-					yyerror("port %s is invalid", $2);
-					free($2);
-					YYERROR;
-				}
-				$$ = servent->s_port;
-			} else
-				$$ = htons($$);
+			servent = getservbyname($2, "tcp");
+			if (servent == NULL) {
+				yyerror("port %s is invalid", $2);
+				free($2);
+				YYERROR;
+			}
+			$$ = servent->s_port;
 			free($2);
+		}
+		| PORT NUMBER {
+			if ($2 <= 0 || $2 >= USHRT_MAX) {
+				yyerror("invalid port: %d", $2);
+				YYERROR;
+			}
+			$$ = htons($2);
 		}
 		;
 
@@ -237,12 +221,17 @@ sendbuf		: NOTHING		{
 		}
 		;
 
-main		: INTERVAL number	{ conf->interval.tv_sec = $2; }
+main		: INTERVAL NUMBER	{
+			if ((conf->interval.tv_sec = $2) < 0) {
+				yyerror("invalid interval: %d", $2);
+				YYERROR;
+			}
+		}
 		| LOG loglevel		{ conf->opts |= $2; }
 		| TIMEOUT timeout	{
 			bcopy(&$2, &conf->timeout, sizeof(struct timeval));
 		}
-		| PREFORK number	{
+		| PREFORK NUMBER	{
 			if ($2 <= 0 || $2 > RELAY_MAXPROC) {
 				yyerror("invalid number of preforked "
 				    "relays: %d", $2);
@@ -471,13 +460,18 @@ tableoptsl	: host			{
 			conf->flags |= F_SSL;
 			table->conf.flags |= F_SSL;
 		}
-		| CHECK http_type STRING hostname CODE number {
+		| CHECK http_type STRING hostname CODE NUMBER {
 			if ($2) {
 				conf->flags |= F_SSL;
 				table->conf.flags |= F_SSL;
 			}
 			table->conf.check = CHECK_HTTP_CODE;
-			table->conf.retcode = $6;
+			if ((table->conf.retcode = $6) <= 0) {
+				yyerror("invalid HTTP code: %d", $6);
+				free($3);
+				free($4);
+				YYERROR;
+			}
 			if (asprintf(&table->sendbuf,
 			    "HEAD %s HTTP/1.0\r\n%s\r\n", $3, $4) == -1)
 				fatal("asprintf");
@@ -708,18 +702,26 @@ tcpflags	: SACK 			{ proto->tcpflags |= TCPFLAG_SACK; }
 		| NO SACK		{ proto->tcpflags |= TCPFLAG_NSACK; }
 		| NODELAY		{ proto->tcpflags |= TCPFLAG_NODELAY; }
 		| NO NODELAY		{ proto->tcpflags |= TCPFLAG_NNODELAY; }
-		| BACKLOG number	{
-			if ($2 > RELAY_MAX_SESSIONS) {
+		| BACKLOG NUMBER	{
+			if ($2 < 0 || $2 > RELAY_MAX_SESSIONS) {
 				yyerror("invalid backlog: %d", $2);
 				YYERROR;
 			}
 			proto->tcpbacklog = $2;
 		}
-		| SOCKET BUFFER number	{
+		| SOCKET BUFFER NUMBER	{
 			proto->tcpflags |= TCPFLAG_BUFSIZ;
-			proto->tcpbufsiz = $3;
+			if ((proto->tcpbufsiz = $3) < 0) {
+				yyerror("invalid socket buffer size: %d", $3);
+				YYERROR;
+			}
 		}
-		| IP STRING number	{
+		| IP STRING NUMBER	{
+			if ($3 < 0) {
+				yyerror("invalid ttl: %d", $3);
+				free($2);
+				YYERROR;
+			}
 			if (strcasecmp("ttl", $2) == 0) {
 				proto->tcpflags |= TCPFLAG_IPTTL;
 				proto->tcpipttl = $3;
@@ -855,7 +857,13 @@ nodetype	: HEADER			{ node.type = NODE_TYPE_HEADER; }
 		}
 		;
 
-sslcache	: number			{ $$ = $1; }
+sslcache	: NUMBER			{
+			if ($1 < 0) {
+				yyerror("invalid sslcache value: %d", $1);
+				YYERROR;
+			}
+			$$ = $1;
+		}
 		| DISABLE			{ $$ = -2; }
 		;
 
@@ -1030,7 +1038,12 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			rlay->conf.flags |= F_NATLOOK;
 			rlay->conf.dstretry = $3;
 		}
-		| TIMEOUT number	{ rlay->conf.timeout.tv_sec = $2; }
+		| TIMEOUT NUMBER	{
+			if ((rlay->conf.timeout.tv_sec = $2) < 0) {
+				yyerror("invalid timeout: %d", $2);
+				YYERROR;
+			}
+		}
 		| DISABLE		{ rlay->conf.flags |= F_DISABLE; }
 		;
 
@@ -1089,11 +1102,20 @@ host		: HOST STRING retry {
 		;
 
 retry		: /* nothing */		{ $$ = 0; }
-		| RETRY number		{ $$ = $2; }
+		| RETRY NUMBER		{
+			if (($$ = $2) < 0) {
+				yyerror("invalid retry value: %d\n", $2);
+				YYERROR;
+			}
+		}
 		;
 
-timeout		: number
+timeout		: NUMBER
 		{
+			if ($1 < 0) {
+				yyerror("invalid timeout: %d\n", $1);
+				YYERROR;
+			}
 			$$.tv_sec = $1 / 1000;
 			$$.tv_usec = ($1 % 1000) * 1000;
 		}
@@ -1389,6 +1411,40 @@ top:
 		if (yylval.v.string == NULL)
 			errx(1, "yylex: strdup");
 		return (STRING);
+	}
+
+#define allowed_to_end_number(x) \
+	(isspace(x) || c == ')' || c ==',' || c == '/' || c == '}')
+
+	if (c == '-' || isdigit(c)) {
+		do {
+			*p++ = c;
+			if ((unsigned)(p-buf) >= sizeof(buf)) {
+				yyerror("string too long");
+				return (findeol());
+			}
+		} while ((c = lgetc(fin, &keep)) != EOF && isdigit(c));
+		lungetc(c);
+		if (p == buf + 1 && buf[0] == '-')
+			goto nodigits;
+		if (c == EOF || allowed_to_end_number(c)) {
+			const char *errstr = NULL;
+
+			*p = '\0';
+			yylval.v.number = (int)strtonum(buf, -INT_MAX, INT_MAX, &errstr);
+			if (errstr) {
+				yyerror("\"%s\" invalid number: %s", buf, errstr);
+				return (findeol());
+			}
+			return (NUMBER);
+		} else {
+nodigits:
+			while (p > buf + 1)
+				lungetc(*--p);
+			c = *--p;
+			if (c == '-')
+				return (c);
+		}
 	}
 
 #define allowed_in_string(x) \
