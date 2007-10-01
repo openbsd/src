@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.16 2007/09/27 22:17:32 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.17 2007/10/01 11:27:11 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -344,7 +344,7 @@ struct bwi_rf {
 	uint16_t		rf_rx_gain;	/* TRSW RX gain */
 
 	uint16_t		rf_calib;	/* RF calibration value */
-	u_int			rf_curchan;	/* current channel */
+	uint			rf_curchan;	/* current channel */
 
 	uint16_t		rf_ctrl_rd;
 	int			rf_ctrl_adj;

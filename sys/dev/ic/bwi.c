@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.54 2007/09/30 22:28:45 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.55 2007/10/01 11:27:11 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -112,8 +112,8 @@ struct bwi_retry_lim {
 };
 
 struct bwi_clock_freq {
-	u_int		clkfreq_min;
-	u_int		clkfreq_max;
+	uint		clkfreq_min;
+	uint		clkfreq_max;
 };
 
 /* XXX does not belong here */
@@ -201,13 +201,13 @@ int		 bwi_rf_lo_isused(struct bwi_mac *, const struct bwi_rf_lo *);
 void		 bwi_rf_write(struct bwi_mac *, uint16_t, uint16_t);
 uint16_t	 bwi_rf_read(struct bwi_mac *, uint16_t);
 int		 bwi_rf_attach(struct bwi_mac *);
-void		 bwi_rf_set_chan(struct bwi_mac *, u_int, int);
+void		 bwi_rf_set_chan(struct bwi_mac *, uint, int);
 void		 bwi_rf_get_gains(struct bwi_mac *);
 void		 bwi_rf_init(struct bwi_mac *);
 void		 bwi_rf_off_11a(struct bwi_mac *);
 void		 bwi_rf_off_11bg(struct bwi_mac *);
 void		 bwi_rf_off_11g_rev5(struct bwi_mac *);
-void		 bwi_rf_work_around(struct bwi_mac *, u_int);
+void		 bwi_rf_work_around(struct bwi_mac *, uint);
 struct bwi_rf_lo
 		*bwi_rf_lo_find(struct bwi_mac *, const struct bwi_tpctl *);
 void		 bwi_rf_lo_adjust(struct bwi_mac *, const struct bwi_tpctl *);
@@ -235,7 +235,7 @@ void		 bwi_rf_off_11g_rev5(struct bwi_mac *);
 int		 bwi_rf_attach(struct bwi_mac *);
 int		 bwi_rf_map_txpower(struct bwi_mac *);
 void		 bwi_rf_lo_adjust(struct bwi_mac *, const struct bwi_tpctl *);
-void		 bwi_rf_set_chan(struct bwi_mac *, u_int, int);
+void		 bwi_rf_set_chan(struct bwi_mac *, uint, int);
 void		 bwi_rf_get_gains(struct bwi_mac *);
 void		 bwi_rf_init(struct bwi_mac *);
 void		 bwi_rf_init_bcm2050(struct bwi_mac *);
@@ -307,7 +307,7 @@ void		 bwi_setup_tx_desc64(struct bwi_softc *, struct bwi_ring_data *,
 int		 bwi_newbuf(struct bwi_softc *, int, int);
 void		 bwi_set_addr_filter(struct bwi_softc *, uint16_t,
 		     const uint8_t *);
-int		 bwi_set_chan(struct bwi_softc *, u_int8_t);
+int		 bwi_set_chan(struct bwi_softc *, uint8_t);
 void		 bwi_next_scan(void *);
 void		 bwi_rxeof(struct bwi_softc *, int);
 void		 bwi_rxeof32(struct bwi_softc *);
@@ -347,10 +347,11 @@ void		 bwi_regwin_disable(struct bwi_softc *, struct bwi_regwin *,
 void		 bwi_set_bssid(struct bwi_softc *, const uint8_t *);
 void		 bwi_updateslot(struct ieee80211com *);
 void		 bwi_calibrate(void *);
-u_int8_t	 bwi_ack_rate(struct ieee80211_node *, u_int8_t);
-u_int16_t	 bwi_txtime(struct ieee80211com *, struct ieee80211_node *,
-		     u_int, u_int8_t, uint32_t);
-enum bwi_modtype	 bwi_rate2modtype(u_int8_t);
+uint8_t		 bwi_ack_rate(struct ieee80211_node *, uint8_t);
+uint16_t	 bwi_txtime(struct ieee80211com *, struct ieee80211_node *,
+		     uint, uint8_t, uint32_t);
+enum bwi_modtype
+		 bwi_rate2modtype(uint8_t);
 
 
 static const uint8_t bwi_sup_macrev[] = { 2, 4, 5, 6, 7, 9, 10 };
@@ -489,8 +490,8 @@ static const struct {
 }
 
 static const struct {
-	u_int	freq_min;
-	u_int	freq_max;
+	uint	freq_min;
+	uint	freq_max;
 } bwi_clkfreq[BWI_CLKSRC_MAX] = {
 	CLKSRC(LP_OSC),
 	CLKSRC(CS_OSC),
@@ -2989,7 +2990,7 @@ bwi_phy_init_11b_rev5(struct bwi_mac *mac)
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
 	struct bwi_phy *phy = &mac->mac_phy;
-	u_int orig_chan;
+	uint orig_chan;
 
 	if (phy->phy_version == 1)
 		RF_SETBITS(mac, 0x7a, 0x50);
@@ -3091,7 +3092,7 @@ bwi_phy_init_11b_rev6(struct bwi_mac *mac)
 	struct bwi_rf *rf = &mac->mac_rf;
 	struct bwi_phy *phy = &mac->mac_phy;
 	uint16_t val, ofs;
-	u_int orig_chan;
+	uint orig_chan;
 
 	PHY_WRITE(mac, 0x3e, 0x817a);
 	RF_SETBITS(mac, 0x7a, 0x58);
@@ -3666,7 +3667,7 @@ bwi_rf_attach(struct bwi_mac *mac)
 }
 
 void
-bwi_rf_set_chan(struct bwi_mac *mac, u_int chan, int work_around)
+bwi_rf_set_chan(struct bwi_mac *mac, uint chan, int work_around)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 
@@ -3892,7 +3893,7 @@ bwi_rf_off_11g_rev5(struct bwi_mac *mac)
 }
 
 void
-bwi_rf_work_around(struct bwi_mac *mac, u_int chan)
+bwi_rf_work_around(struct bwi_mac *mac, uint chan)
 {
 	struct bwi_softc *sc = mac->mac_sc;
 	struct bwi_rf *rf = &mac->mac_rf;
@@ -4582,7 +4583,7 @@ bwi_rf_lo_update(struct bwi_mac *mac)
 	struct rf_saveregs regs;
 	uint16_t ant_div, chan_ex;
 	uint8_t devi_ctrl;
-	u_int orig_chan;
+	uint orig_chan;
 
 	/*
 	 * Save RF/PHY registers for later restoration
@@ -6155,7 +6156,7 @@ bwi_get_clock_freq(struct bwi_softc *sc, struct bwi_clock_freq *freq)
 {
 	struct bwi_regwin *com;
 	uint32_t val;
-	u_int div;
+	uint div;
 	int src;
 
 	bzero(freq, sizeof(*freq));
@@ -7437,7 +7438,7 @@ bwi_set_addr_filter(struct bwi_softc *sc, uint16_t addr_ofs,
 }
 
 int
-bwi_set_chan(struct bwi_softc *sc, u_int8_t chan)
+bwi_set_chan(struct bwi_softc *sc, uint8_t chan)
 {
 	struct bwi_mac *mac;
 
@@ -7805,7 +7806,7 @@ bwi_plcp_header(void *plcp, int pkt_len, uint8_t rate)
 }
 
 enum bwi_modtype
-bwi_rate2modtype(u_int8_t rate)
+bwi_rate2modtype(uint8_t rate)
 {
 	rate &= IEEE80211_RATE_VAL;
 
@@ -7817,11 +7818,11 @@ bwi_rate2modtype(u_int8_t rate)
 		return IEEE80211_MODTYPE_OFDM;
 }
 
-u_int8_t
-bwi_ack_rate(struct ieee80211_node *ni, u_int8_t rate)
+uint8_t
+bwi_ack_rate(struct ieee80211_node *ni, uint8_t rate)
 {
 	const struct ieee80211_rateset *rs = &ni->ni_rates;
-	u_int8_t ack_rate = 0;
+	uint8_t ack_rate = 0;
 	enum bwi_modtype modtype;
 	int i;
 
@@ -7830,7 +7831,7 @@ bwi_ack_rate(struct ieee80211_node *ni, u_int8_t rate)
 	modtype = bwi_rate2modtype(rate);
 
 	for (i = 0; i < rs->rs_nrates; ++i) {
-		u_int8_t rate1 = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+		uint8_t rate1 = rs->rs_rates[i] & IEEE80211_RATE_VAL;
 		
 		if (rate1 > rate) {
 			if (ack_rate != 0)
@@ -7913,12 +7914,12 @@ bwi_ack_rate(struct ieee80211_node *ni, u_int8_t rate)
 
 #define IEEE80211_CCK_NBITS(frmlen)		((frmlen) * NBBY)
 
-u_int16_t
-bwi_txtime(struct ieee80211com *ic, struct ieee80211_node *ni, u_int len,
-    u_int8_t rs_rate, uint32_t flags)
+uint16_t
+bwi_txtime(struct ieee80211com *ic, struct ieee80211_node *ni, uint len,
+    uint8_t rs_rate, uint32_t flags)
 {
 	enum bwi_modtype modtype;
-	u_int16_t txtime;
+	uint16_t txtime;
 	int rate;
 
 	rs_rate &= IEEE80211_RATE_VAL;
