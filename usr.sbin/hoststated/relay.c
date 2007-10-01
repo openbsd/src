@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.47 2007/09/28 13:05:28 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.48 2007/10/01 13:57:29 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -2061,7 +2061,6 @@ relay_ssl_ctx_create(struct relay *rlay)
 {
 	struct protocol *proto = rlay->proto;
 	SSL_CTX *ctx;
-	const char *ssl_action = "NO ACTION";
 
 	ctx = SSL_CTX_new(SSLv23_method());
 	if (ctx == NULL)
@@ -2116,7 +2115,6 @@ relay_ssl_ctx_create(struct relay *rlay)
  err:
 	if (ctx != NULL)
 		SSL_CTX_free(ctx);
-	log_debug("last SSL action: %s", ssl_action);
 	ssl_error(rlay->conf.name, "relay_ssl_ctx_create");
 	return (NULL);
 }
