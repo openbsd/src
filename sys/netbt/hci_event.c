@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_event.c,v 1.5 2007/06/19 08:12:35 uwe Exp $	*/
+/*	$OpenBSD: hci_event.c,v 1.6 2007/10/01 16:39:30 krw Exp $	*/
 /*	$NetBSD: hci_event.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -434,13 +434,12 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 
 		memo = hci_memo_find(unit, &bdaddr);
 		if (memo == NULL) {
-			memo = malloc(sizeof(struct hci_memo),
-				M_BLUETOOTH, M_NOWAIT);
+			memo = malloc(sizeof(*memo), M_BLUETOOTH,
+			    M_NOWAIT | M_ZERO);
 			if (memo == NULL) {
 				DPRINTFN(0, "out of memo memory!\n");
 				break;
 			}
-			bzero(memo, sizeof *memo);
 
 			LIST_INSERT_HEAD(&unit->hci_memos, memo, next);
 		}

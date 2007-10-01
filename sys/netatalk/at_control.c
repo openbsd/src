@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.10 2007/04/10 17:47:55 miod Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.11 2007/10/01 16:39:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -167,8 +167,7 @@ at_control( cmd, data, ifp, p )
 	    panic( "at_control" );
 
 	if ( aa == (struct at_ifaddr *) 0 ) {
-	    aa0 = malloc(sizeof(struct at_ifaddr), M_IFADDR, M_WAITOK);
-	    bzero(aa0, sizeof(struct at_ifaddr));
+	    aa0 = malloc(sizeof(*aa0), M_IFADDR, M_WAITOK | M_ZERO);
 
 	    if (( aa = at_ifaddr ) != NULL ) {
 		/*

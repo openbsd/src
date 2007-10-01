@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.28 2007/08/03 18:41:44 millert Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.29 2007/10/01 16:39:30 krw Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -834,8 +834,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	    numdquot < MAXQUOTAS * desiredvnodes)
 		desireddquot += DQUOTINC;
 	if (numdquot < desireddquot) {
-		dq = (struct dquot *)malloc(sizeof *dq, M_DQUOT, M_WAITOK);
-		bzero((char *)dq, sizeof *dq);
+		dq = malloc(sizeof *dq, M_DQUOT, M_WAITOK | M_ZERO);
 		numdquot++;
 	} else {
 		if ((dq = TAILQ_FIRST(&dqfreelist)) == NULL) {

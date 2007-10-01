@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfcomm_upper.c,v 1.2 2007/06/26 10:30:05 tom Exp $	*/
+/*	$OpenBSD: rfcomm_upper.c,v 1.3 2007/10/01 16:39:30 krw Exp $	*/
 /*	$NetBSD: rfcomm_upper.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
 
 /*-
@@ -69,10 +69,9 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 	KASSERT(proto != NULL);
 	KASSERT(upper != NULL);
 
-	dlc = malloc(sizeof(struct rfcomm_dlc), M_BLUETOOTH, M_NOWAIT);
+	dlc = malloc(sizeof(*dlc), M_BLUETOOTH, M_NOWAIT | M_ZERO);
 	if (dlc == NULL)
 		return ENOMEM;
-	bzero(dlc, sizeof *dlc);
 
 	dlc->rd_state = RFCOMM_DLC_CLOSED;
 	dlc->rd_mtu = rfcomm_mtu_default;

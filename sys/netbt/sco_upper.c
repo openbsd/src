@@ -1,4 +1,4 @@
-/*	$OpenBSD: sco_upper.c,v 1.1 2007/06/01 02:46:12 uwe Exp $	*/
+/*	$OpenBSD: sco_upper.c,v 1.2 2007/10/01 16:39:30 krw Exp $	*/
 /*	$NetBSD: sco_upper.c,v 1.6 2007/03/30 20:47:03 plunky Exp $	*/
 
 /*-
@@ -66,10 +66,9 @@ sco_attach(struct sco_pcb **handle,
 	KASSERT(proto != NULL);
 	KASSERT(upper != NULL);
 
-	pcb = malloc(sizeof(struct sco_pcb), M_BLUETOOTH, M_NOWAIT);
+	pcb = malloc(sizeof(*pcb), M_BLUETOOTH, M_NOWAIT | M_ZERO);
 	if (pcb == NULL)
 		return ENOMEM;
-	bzero(pcb, sizeof *pcb);
 
 	pcb->sp_proto = proto;
 	pcb->sp_upper = upper;

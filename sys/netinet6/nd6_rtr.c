@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.43 2007/05/28 23:07:13 pyr Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.44 2007/10/01 16:39:30 krw Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -782,12 +782,11 @@ defrtrlist_update(new)
 		return (NULL);
 	}
 
-	n = (struct nd_defrouter *)malloc(sizeof(*n), M_IP6NDP, M_NOWAIT);
+	n = malloc(sizeof(*n), M_IP6NDP, M_NOWAIT | M_ZERO);
 	if (n == NULL) {
 		splx(s);
 		return (NULL);
 	}
-	bzero(n, sizeof(*n));
 	*n = *new;
 
 insert:
@@ -838,10 +837,9 @@ pfxrtr_add(pr, dr)
 {
 	struct nd_pfxrouter *new;
 
-	new = (struct nd_pfxrouter *)malloc(sizeof(*new), M_IP6NDP, M_NOWAIT);
+	new = malloc(sizeof(*new), M_IP6NDP, M_NOWAIT | M_ZERO);
 	if (new == NULL)
 		return;
-	bzero(new, sizeof(*new));
 	new->router = dr;
 
 	LIST_INSERT_HEAD(&pr->ndpr_advrtrs, new, pfr_entry);
@@ -883,10 +881,9 @@ nd6_prelist_add(pr, dr, newp)
 	struct nd_prefix *new = NULL;
 	int i, s;
 
-	new = (struct nd_prefix *)malloc(sizeof(*new), M_IP6NDP, M_NOWAIT);
+	new = malloc(sizeof(*new), M_IP6NDP, M_NOWAIT | M_ZERO);
 	if (new == NULL)
 		return ENOMEM;
-	bzero(new, sizeof(*new));
 	*new = *pr;
 	if (newp != NULL)
 		*newp = new;

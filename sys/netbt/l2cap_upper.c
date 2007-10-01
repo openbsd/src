@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_upper.c,v 1.1 2007/06/01 02:46:11 uwe Exp $	*/
+/*	$OpenBSD: l2cap_upper.c,v 1.2 2007/10/01 16:39:30 krw Exp $	*/
 /*	$NetBSD: l2cap_upper.c,v 1.8 2007/04/29 20:23:36 msaitoh Exp $	*/
 
 /*-
@@ -67,11 +67,9 @@ l2cap_attach(struct l2cap_channel **handle,
 	KASSERT(proto != NULL);
 	KASSERT(upper != NULL);
 
-	chan = malloc(sizeof(struct l2cap_channel), M_BLUETOOTH,
-			M_NOWAIT);
+	chan = malloc(sizeof(*chan), M_BLUETOOTH, M_NOWAIT | M_ZERO);
 	if (chan == NULL)
 		return ENOMEM;
-	bzero(chan, sizeof *chan);
 
 	chan->lc_proto = proto;
 	chan->lc_upper = upper;
