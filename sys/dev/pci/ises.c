@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.32 2007/09/18 22:02:18 djm Exp $	*/
+/*	$OpenBSD: ises.c,v 1.33 2007/10/01 15:34:48 krw Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -540,14 +540,12 @@ ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data,
 		return (EAGAIN); /* XXX ENOMEM ? */
 	}
 
-	cq = (struct ises_cmd *) 
-	    malloc(sizeof (struct ises_cmd), M_DEVBUF, M_NOWAIT);
+	cq = malloc(sizeof(*cq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (cq == NULL) {
 		splx(s);
 		isesstats.nomem++;
 		return (ENOMEM);
 	}
-	bzero(cq, sizeof (struct ises_cmd));
 	cq->cmd_code = code;
 	cq->cmd_cb = callback;
 	cq->cmd_session = sc->sc_cursession;
@@ -1171,10 +1169,9 @@ ises_process(struct cryptop *crp)
 	}
 	splx(s);
 
-	q = (struct ises_q *)malloc(sizeof(struct ises_q), M_DEVBUF, M_NOWAIT);
+	q = malloc(sizeof(*q), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (q == NULL)
 		goto memerr;
-	bzero(q, sizeof(struct ises_q));
 
 	q->q_sesn = ISES_SESSION(crp->crp_sid);
 	ses = &sc->sc_sessions[q->q_sesn];

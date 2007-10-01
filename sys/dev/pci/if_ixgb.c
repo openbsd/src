@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.37 2007/09/19 03:50:24 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.38 2007/10/01 15:34:48 krw Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1154,16 +1154,12 @@ ixgb_dma_free(struct ixgb_softc *sc, struct ixgb_dma_alloc *dma)
 int
 ixgb_allocate_transmit_structures(struct ixgb_softc *sc)
 {
-	if (!(sc->tx_buffer_area =
-	      (struct ixgb_buffer *) malloc(sizeof(struct ixgb_buffer) *
-					    sc->num_tx_desc, M_DEVBUF,
-					    M_NOWAIT))) {
+	if (!(sc->tx_buffer_area = malloc(sizeof(struct ixgb_buffer) *
+	    sc->num_tx_desc, M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate tx_buffer memory\n",
 		       sc->sc_dv.dv_xname);
 		return (ENOMEM);
 	}
-	bzero(sc->tx_buffer_area,
-	      sizeof(struct ixgb_buffer) * sc->num_tx_desc);
 
 	return (0);
 }
@@ -1525,17 +1521,12 @@ ixgb_allocate_receive_structures(struct ixgb_softc *sc)
 	int             i, error;
 	struct ixgb_buffer *rx_buffer;
 
-	if (!(sc->rx_buffer_area =
-	      (struct ixgb_buffer *) malloc(sizeof(struct ixgb_buffer) *
-					    sc->num_rx_desc, M_DEVBUF,
-					    M_NOWAIT))) {
+	if (!(sc->rx_buffer_area = malloc(sizeof(struct ixgb_buffer) *
+	    sc->num_rx_desc, M_DEVBUF, M_NOWAIT | M_ZERO))) {
 		printf("%s: Unable to allocate rx_buffer memory\n",
 		       sc->sc_dv.dv_xname);
 		return (ENOMEM);
 	}
-
-	bzero(sc->rx_buffer_area,
-	      sizeof(struct ixgb_buffer) * sc->num_rx_desc);
 
 	sc->rxtag = sc->osdep.ixgb_pa.pa_dmat;
 

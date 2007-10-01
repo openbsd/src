@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.139 2007/09/18 22:02:18 djm Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.140 2007/10/01 15:34:48 krw Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1805,12 +1805,11 @@ ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp)
 	int err = 0, s;
 	u_int nbits, normbits, mbits, shiftbits, ebits;
 
-	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
+	me = malloc(sizeof *me, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (me == NULL) {
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(me, sizeof *me);
 	me->me_krp = krp;
 	me->me_q.q_type = UBS_CTXOP_MODEXP;
 
@@ -2004,12 +2003,11 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp)
 	int err = 0, s;
 	u_int nbits, normbits, mbits, shiftbits, ebits;
 
-	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
+	me = malloc(sizeof *me, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (me == NULL) {
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(me, sizeof *me);
 	me->me_krp = krp;
 	me->me_q.q_type = UBS_CTXOP_MODEXP;
 
@@ -2234,10 +2232,9 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp)
 		goto errout;
 	}
 
-	rp = (struct ubsec_q2_rsapriv *)malloc(sizeof *rp, M_DEVBUF, M_NOWAIT);
+	rp = malloc(sizeof *rp, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (rp == NULL)
 		return (ENOMEM);
-	bzero(rp, sizeof *rp);
 	rp->rpr_krp = krp;
 	rp->rpr_q.q_type = UBS_CTXOP_RSAPRIV;
 

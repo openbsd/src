@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.11 2006/04/20 20:31:12 miod Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.12 2007/10/01 15:34:48 krw Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -396,11 +396,9 @@ sdla_save_hw_probe(sdlahw_t *hw, int port)
 {
 	sdla_hw_probe_t *tmp_hw_probe;
 
-	tmp_hw_probe = malloc(sizeof(sdla_hw_probe_t), M_DEVBUF, M_NOWAIT);
+	tmp_hw_probe = malloc(sizeof(*tmp_hw_probe), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (tmp_hw_probe == NULL)
 		return;
-
-	bzero(tmp_hw_probe, sizeof(sdla_hw_probe_t));
 
 	snprintf(tmp_hw_probe->hw_info, sizeof(tmp_hw_probe->hw_info),
 		"%s : SLOT=%d : BUS=%d : IRQ=%d : CPU=%c : PORT=%s",
@@ -581,11 +579,9 @@ sdla_card_register(u_int16_t atype, int slot_no, int bus_no)
 	if (new_hwcard)
 		return (new_hwcard);
 
-	new_hwcard = malloc(sizeof(sdlahw_card_t), M_DEVBUF, M_NOWAIT);
+	new_hwcard = malloc(sizeof(*new_hwcard), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!new_hwcard)
 		return (NULL);
-
-	bzero(new_hwcard, sizeof(sdlahw_card_t));
 
 	new_hwcard->atype	= atype;
 	new_hwcard->slot_no	= slot_no;
@@ -667,11 +663,9 @@ sdla_hw_register(sdlahw_card_t *card, int cpu_no, int irq, void *dev)
 	if (new_hw)
 		return (new_hw);
 
-	new_hw = malloc(sizeof(sdlahw_t), M_DEVBUF, M_NOWAIT);
+	new_hw = malloc(sizeof(*new_hw), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!new_hw)
 		return (NULL);
-
-	bzero(new_hw, sizeof(sdlahw_t));
 
 	new_hw->cpu_no	= cpu_no;
 	new_hw->irq	= irq;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.128 2007/07/03 22:33:20 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.129 2007/10/01 15:34:48 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -824,13 +824,12 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 	struct ahci_cmd_table		*table;
 	int				i, rc = ENOMEM;
 
-	ap = malloc(sizeof(struct ahci_port), M_DEVBUF, M_NOWAIT);
+	ap = malloc(sizeof(*ap), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ap == NULL) {
 		printf("%s: unable to allocate memory for port %d\n",
 		    DEVNAME(sc), port);
 		goto reterr;
 	}
-	bzero(ap, sizeof(struct ahci_port));
 
 #ifdef AHCI_DEBUG
 	snprintf(ap->ap_name, sizeof(ap->ap_name), "%s.%d",
@@ -899,13 +898,12 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 
 	/* Allocate a CCB for each command slot */
 	ap->ap_ccbs = malloc(sizeof(struct ahci_ccb) * sc->sc_ncmds, M_DEVBUF,
-	    M_NOWAIT);
+	    M_NOWAIT | M_ZERO);
 	if (ap->ap_ccbs == NULL) {
 		printf("%s: unable to allocate command list for port %d\n",
 		    DEVNAME(sc), port);
 		goto freeport;
 	}
-	bzero(ap->ap_ccbs, sizeof(struct ahci_ccb) * sc->sc_ncmds);
 
 	/* Command List Structures and Command Tables */
 	ap->ap_dmamem_cmd_list = ahci_dmamem_alloc(sc,
@@ -2030,11 +2028,10 @@ ahci_dmamem_alloc(struct ahci_softc *sc, size_t size)
 	struct ahci_dmamem		*adm;
 	int				nsegs;
 
-	adm = malloc(sizeof(struct ahci_dmamem), M_DEVBUF, M_NOWAIT);
+	adm = malloc(sizeof(*adm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (adm == NULL)
 		return (NULL);
 
-	bzero(adm, sizeof(struct ahci_dmamem));
 	adm->adm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,

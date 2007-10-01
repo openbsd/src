@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.23 2007/09/10 19:49:31 gilles Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.24 2007/10/01 15:34:48 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -155,12 +155,10 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 
 	/* Allocate one more host structure. */
 	sc->sc_nhosts++;
-	hp = (struct sdhc_host *)malloc(sizeof(struct sdhc_host),
-	    M_DEVBUF, M_WAITOK);
+	hp = malloc(sizeof(*hp), M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_host[sc->sc_nhosts - 1] = hp;
 
 	/* Fill in the new host structure. */
-	bzero(hp, sizeof(struct sdhc_host));
 	hp->sc = sc;
 	hp->iot = iot;
 	hp->ioh = ioh;

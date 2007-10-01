@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.51 2007/08/27 01:11:11 dlg Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.52 2007/10/01 15:34:48 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1932,11 +1932,8 @@ nxe_pkt_alloc(struct nxe_softc *sc, u_int npkts, int nsegs)
 	struct nxe_pkt			*pkt;
 	int				i;
 
-	npl = malloc(sizeof(struct nxe_pkt_list), M_DEVBUF, M_WAITOK);
-	bzero(npl, sizeof(struct nxe_pkt_list));
-
-	pkt = malloc(sizeof(struct nxe_pkt) * npkts, M_DEVBUF, M_WAITOK);
-	bzero(pkt, sizeof(struct nxe_pkt) * npkts);
+	npl = malloc(sizeof(*npl), M_DEVBUF, M_WAITOK | M_ZERO);
+	pkt = malloc(sizeof(*pkt) * npkts, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	npl->npl_pkts = pkt;
 	TAILQ_INIT(&npl->npl_free);
@@ -2004,8 +2001,7 @@ nxe_dmamem_alloc(struct nxe_softc *sc, bus_size_t size, bus_size_t align)
 	struct nxe_dmamem		*ndm;
 	int				nsegs;
 
-	ndm = malloc(sizeof(struct nxe_dmamem), M_DEVBUF, M_WAITOK);
-	bzero(ndm, sizeof(struct nxe_dmamem));
+	ndm = malloc(sizeof(*ndm), M_DEVBUF, M_WAITOK | M_ZERO);
 	ndm->ndm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,

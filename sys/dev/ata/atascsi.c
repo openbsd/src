@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.41 2007/04/22 05:11:45 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.42 2007/10/01 15:34:48 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -99,8 +99,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	struct atascsi			*as;
 	int				i;
 
-	as = malloc(sizeof(struct atascsi), M_DEVBUF, M_WAITOK);
-	bzero(as, sizeof(struct atascsi));
+	as = malloc(sizeof(*as), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	as->as_dev = self;
 	as->as_cookie = aaa->aaa_cookie;
@@ -123,8 +122,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 		as->as_link.openings--;
 
 	as->as_ports = malloc(sizeof(struct ata_port *) * aaa->aaa_nports,
-	    M_DEVBUF, M_WAITOK);
-	bzero(as->as_ports, sizeof(struct ata_port *) * aaa->aaa_nports);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* fill in the port array with the type of devices there */
 	for (i = 0; i < as->as_link.adapter_buswidth; i++)
@@ -168,8 +166,7 @@ atascsi_probe(struct atascsi *as, int port)
 		return (ENODEV);
 	}
 
-	ap = malloc(sizeof(struct ata_port), M_DEVBUF, M_WAITOK);
-	bzero(ap, sizeof(struct ata_port));
+	ap = malloc(sizeof(*ap), M_DEVBUF, M_WAITOK | M_ZERO);
 	ap->ap_as = as;
 	ap->ap_port = port;
 	ap->ap_type = type;
@@ -211,7 +208,8 @@ ata_setup_identify(struct ata_port *ap, int nosleep)
 	if (xa == NULL)
 		return (NULL);
 
-	xa->data = malloc(512, M_TEMP, nosleep ? M_NOWAIT : M_WAITOK);
+	xa->data = malloc(512, M_TEMP, nosleep ? (M_NOWAIT | M_ZERO) :
+	    (M_WAITOK | M_ZERO));
 	if (xa->data == NULL) {
 		s = splbio();
 		xa->state = ATA_S_ERROR;
@@ -219,7 +217,6 @@ ata_setup_identify(struct ata_port *ap, int nosleep)
 		splx(s);
 		return (NULL);
 	}
-	bzero(xa->data, 512);
 	xa->datalen = 512;
 
 	xa->fis->flags = ATA_H2D_FLAGS_CMD;

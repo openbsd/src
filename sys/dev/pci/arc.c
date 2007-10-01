@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.65 2007/07/11 19:01:30 otto Exp $ */
+/*	$OpenBSD: arc.c,v 1.66 2007/10/01 15:34:48 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1550,8 +1550,7 @@ arc_create_sensors(void *xsc, void *arg)
 	sc->sc_nsensors = bi.bi_novol;
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nsensors,
-	    M_DEVBUF, M_WAITOK);
-	bzero(sc->sc_sensors, sizeof(struct ksensor) * sc->sc_nsensors);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
@@ -1724,11 +1723,10 @@ arc_dmamem_alloc(struct arc_softc *sc, size_t size)
 	struct arc_dmamem		*adm;
 	int				nsegs;
 
-	adm = malloc(sizeof(struct arc_dmamem), M_DEVBUF, M_NOWAIT);
+	adm = malloc(sizeof(*adm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (adm == NULL)
 		return (NULL);
 
-	bzero(adm, sizeof(struct arc_dmamem));
 	adm->adm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
@@ -1783,8 +1781,7 @@ arc_alloc_ccbs(struct arc_softc *sc)
 	TAILQ_INIT(&sc->sc_ccb_free);
 
 	sc->sc_ccbs = malloc(sizeof(struct arc_ccb) * sc->sc_req_count,
-	    M_DEVBUF, M_WAITOK);
-	bzero(sc->sc_ccbs, sizeof(struct arc_ccb) * sc->sc_req_count);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->sc_requests = arc_dmamem_alloc(sc,
 	    ARC_MAX_IOCMDLEN * sc->sc_req_count);

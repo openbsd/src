@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.11 2005/11/08 20:23:42 canacar Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.12 2007/10/01 15:34:48 krw Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -144,13 +144,12 @@ san_dev_attach(void *hw, u_int8_t *devname, int namelen)
 	wanpipe_common_t	*common = NULL;
 	int			err = 0;
 
-	card=malloc(sizeof(sdla_t), M_DEVBUF, M_NOWAIT);
+	card = malloc(sizeof(*card), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!card) {
 		log(LOG_INFO, "%s: Failed allocate new card!\n",
 				san_drvname);
 		return (EINVAL);
 	}
-	bzero(card, sizeof(sdla_t));
 	card->magic = WANPIPE_MAGIC;
 	wanpipe_generic_name(card, card->devname, sizeof(card->devname));
 	strlcpy(devname, card->devname, namelen);
