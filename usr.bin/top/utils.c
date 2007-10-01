@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.20 2007/07/27 13:57:50 deraadt Exp $	 */
+/* $OpenBSD: utils.c,v 1.21 2007/10/01 09:15:44 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -207,11 +207,11 @@ argparse(char *line, int *cntp)
 
 /*
  * percentages(cnt, out, new, old, diffs) - calculate percentage change
- * between array "old" and "new", putting the percentages i "out".
+ * between array "old" and "new", putting the percentages in "out".
  * "cnt" is size of each array and "diffs" is used for scratch space.
  * The array "old" is updated on each call.
  * The routine assumes modulo arithmetic.  This function is especially
- * useful on BSD mchines for calculating cpu state percentages.
+ * useful on BSD machines for calculating cpu state percentages.
  */
 int
 percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
