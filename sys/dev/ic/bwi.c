@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.59 2007/10/01 19:48:10 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.60 2007/10/01 20:48:37 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6705,8 +6705,7 @@ back:
 	error = sc->sc_newstate(ic, nstate, arg);
 
 	if (nstate == IEEE80211_S_SCAN) {
-		timeout_add(&sc->sc_scan_ch,
-			      (sc->sc_dwell_time * hz) / 1000);
+		timeout_add(&sc->sc_scan_ch, (sc->sc_dwell_time * hz) / 1000);
 	} else if (nstate == IEEE80211_S_RUN) {
 		/* XXX 15 seconds */
 		timeout_add(&sc->sc_calib_ch, hz * 15);
