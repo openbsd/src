@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgram.y,v 1.2 2007/09/15 22:04:38 ray Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.3 2007/10/01 18:51:57 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -882,6 +882,10 @@ nocon_e:	{ $<intval>$=instruct; instruct=0; } e %prec ',' {
 
 elist:		   e %prec ','
 		|  elist  ','  e { $$ = buildtree(CM, $1, $3); }
+		|  elist  ','  cast_type { /* hack for stdarg */
+			$3->n_op = TYPE;
+			$$ = buildtree(CM, $1, $3);
+		}
 		;
 
 /*

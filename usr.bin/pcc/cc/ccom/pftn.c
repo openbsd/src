@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.5 2007/09/29 13:57:14 otto Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.6 2007/10/01 18:51:57 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1975,18 +1975,11 @@ builtin_alloca(NODE *f, NODE *a)
 	if (xnobuiltins)
 		return NULL;
 #endif
-
-	if (f->n_op != NAME)
-		return NULL; /* not direct call */
 	sp = f->n_sp;
-
-	/* XXX - strcmp is bad, use pointer comparision, redo someday */
-	if (strcmp(sp->sname, "__builtin_alloca")) /* use GCC name */
-		return NULL; /* not alloca */
 
 	if (a == NULL || a->n_op == CM) {
 		uerror("wrong arg count for alloca");
-		return NULL;
+		return bcon(0);
 	}
 	t = tempnode(0, VOID|PTR, 0, MKSUE(INT) /* XXX */);
 	u = tempnode(t->n_lval, VOID|PTR, 0, MKSUE(INT) /* XXX */);
@@ -1994,6 +1987,122 @@ builtin_alloca(NODE *f, NODE *a)
 	tfree(f);
 	return u;
 }
+
+#ifndef TARGET_STDARGS
+static NODE *
+builtin_stdarg_start(NODE *f, NODE *a)
+{
+	NODE *p, *q;
+	int sz;
+
+	/* check num args and type */
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
+	    !ISPTR(a->n_left->n_type))
+		goto bad;
+
+	/* must first deal with argument size; use int size */
+	p = a->n_right;
+	if (p->n_type < INT) {
+		sz = SZINT/tsize(p->n_type, p->n_df, p->n_sue);
+	} else
+		sz = 1;
+
+	/* do the real job */
+	p = buildtree(ADDROF, p, NIL); /* address of last arg */
+#ifdef BACKAUTO
+	p = optim(buildtree(PLUS, p, bcon(sz))); /* add one to it (next arg) */
+#else
+	p = optim(buildtree(MINUS, p, bcon(sz))); /* add one to it (next arg) */
+#endif
+	q = block(NAME, NIL, NIL, PTR+VOID, 0, 0); /* create cast node */
+	q = buildtree(CAST, q, p); /* cast to void * (for assignment) */
+	p = q->n_right;
+	nfree(q->n_left);
+	nfree(q);
+	p = buildtree(ASSIGN, a->n_left, p); /* assign to ap */
+	tfree(f);
+	nfree(a);
+	return p;
+bad:
+	uerror("bad argument to __builtin_stdarg_start");
+	return bcon(0);
+}
+
+static NODE *
+builtin_va_arg(NODE *f, NODE *a)
+{
+	NODE *p, *q, *r;
+	int sz, nodnum;
+
+	/* check num args and type */
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM ||
+	    !ISPTR(a->n_left->n_type) || a->n_right->n_op != TYPE)
+		goto bad;
+
+	/* create a copy to a temp node of current ap */
+	p = tcopy(a->n_left);
+	q = tempnode(0, p->n_type, p->n_df, p->n_sue);
+	nodnum = q->n_lval;
+	ecomp(buildtree(ASSIGN, q, p)); /* done! */
+
+	r = a->n_right;
+	sz = tsize(r->n_type, r->n_df, r->n_sue)/SZCHAR;
+	/* add one to ap */
+#ifdef BACKAUTO
+	ecomp(buildtree(PLUSEQ, a->n_left, bcon(sz)));
+#else
+	/* XXX fix this; wrong order */
+	ecomp(buildtree(MINUSEQ, a->n_left, bcon(sz)));
+#endif
+
+	nfree(a->n_right);
+	nfree(a);
+	nfree(f);
+	r = tempnode(nodnum, INCREF(r->n_type), r->n_df, r->n_sue);
+	return buildtree(UMUL, r, NIL);
+bad:
+	uerror("bad argument to __builtin_va_arg");
+	return bcon(0);
+
+}
+
+static NODE *
+builtin_va_end(NODE *f, NODE *a)
+{
+	tfree(f);
+	tfree(a);
+	return bcon(0); /* nothing */
+}
+
+static NODE *
+builtin_va_copy(NODE *f, NODE *a)
+{
+	if (a == NULL || a->n_op != CM || a->n_left->n_op == CM)
+		goto bad;
+	tfree(f);
+	f = buildtree(ASSIGN, a->n_left, a->n_right);
+	nfree(a);
+	return f;
+
+bad:
+	uerror("bad argument to __builtin_va_copy");
+	return bcon(0);
+}
+#endif /* TARGET_STDARGS */
+
+static struct bitable {
+	char *name;
+	NODE *(*fun)(NODE *f, NODE *a);
+} bitable[] = {
+	{ "__builtin_alloca", builtin_alloca },
+	{ "__builtin_stdarg_start", builtin_stdarg_start },
+	{ "__builtin_va_arg", builtin_va_arg },
+	{ "__builtin_va_end", builtin_va_end },
+	{ "__builtin_va_copy", builtin_va_copy },
+#ifdef TARGET_BUILTINS
+	TARGET_BUILTINS
+#endif
+};
 #endif
 
 #ifdef PCC_DEBUG
@@ -2054,7 +2163,7 @@ doacall(NODE *f, NODE *a)
 	/* First let MD code do something */
 	calldec(f, a);
 /* XXX XXX hack */
-	if ((f->n_op == CALL || f->n_op == CALL) &&
+	if ((f->n_op == CALL) &&
 	    f->n_left->n_op == ADDROF &&
 	    f->n_left->n_left->n_op == NAME &&
 	    (f->n_left->n_left->n_type & 0x7e0) == 0x4c0)
@@ -2062,9 +2171,16 @@ doacall(NODE *f, NODE *a)
 /* XXX XXX hack */
 
 #ifndef NO_C_BUILTINS
-	/* check for alloca */
-	if ((w = builtin_alloca(f, a)))
-		return w;
+	/* check for builtins. function pointers are not allowed */
+	if (f->n_op == NAME &&
+	    f->n_sp->sname[0] == '_' && f->n_sp->sname[1] == '_') {
+		int i;
+
+		for (i = 0; i < sizeof(bitable)/sizeof(bitable[0]); i++) {
+			if (strcmp(bitable[i].name, f->n_sp->sname) == 0)
+				return (*bitable[i].fun)(f, a);
+		}
+	}
 #endif
 	/*
 	 * Do some basic checks.
@@ -2081,11 +2197,15 @@ doacall(NODE *f, NODE *a)
 		if (a == NULL)
 			goto build;
 		for (w = a; w->n_op == CM; w = w->n_left) {
+			if (w->n_right->n_op == TYPE)
+				uerror("type is not an argument");
 			if (w->n_right->n_type != FLOAT)
 				continue;
 			w->n_right = argcast(w->n_right, DOUBLE,
 			    NULL, MKSUE(DOUBLE));
 		}
+		if (a->n_op == TYPE)
+			uerror("type is not an argument");
 		if (a->n_type == FLOAT) {
 			MKTY(a, DOUBLE, 0, 0);
 		}
