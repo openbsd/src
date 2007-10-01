@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.57 2007/07/25 19:11:27 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.58 2007/10/01 08:35:12 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1068,7 +1068,7 @@ ospfe_demote_area(struct area *area, int active)
 		return;
 
 	bzero(&dmsg, sizeof(dmsg));
-	strlcpy(dmsg.demote_group, area->demote_group,  
+	strlcpy(dmsg.demote_group, area->demote_group,
 	sizeof(dmsg.demote_group));
 	dmsg.level = area->demote_level;
 	if (active)
@@ -1087,7 +1087,7 @@ ospfe_demote_iface(struct iface *iface, int active)
 		return;
 
 	bzero(&dmsg, sizeof(dmsg));
-	strlcpy(dmsg.demote_group, iface->demote_group,  
+	strlcpy(dmsg.demote_group, iface->demote_group,
 	sizeof(dmsg.demote_group));
 	if (active)
 		dmsg.level = -1;

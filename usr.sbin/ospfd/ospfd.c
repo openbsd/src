@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.50 2007/09/25 11:25:41 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.51 2007/10/01 08:35:12 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -770,8 +770,9 @@ merge_interfaces(struct area *a, struct area *xa)
 	for (i = LIST_FIRST(&a->iface_list); i != NULL; i = ni) {
 		ni = LIST_NEXT(i, entry);
 		if (iface_lookup(xa, i) == NULL) {
-			log_debug("merge_config: proc %d area %s removing interface %s",
-			    ospfd_process, inet_ntoa(a->id), i->name);
+			log_debug("merge_config: proc %d area %s removing "
+			    "interface %s", ospfd_process, inet_ntoa(a->id),
+			    i->name);
 			if (ospfd_process == PROC_OSPF_ENGINE)
 				if_fsm(i, IF_EVT_DOWN);
 			LIST_REMOVE(i, entry);
@@ -783,8 +784,9 @@ merge_interfaces(struct area *a, struct area *xa)
 		ni = LIST_NEXT(xi, entry);
 		if ((i = iface_lookup(a, xi)) == NULL) {
 			/* new interface but delay initialisation */
-			log_debug("merge_config: proc %d area %s adding interface %s",
-			    ospfd_process, inet_ntoa(a->id), xi->name);
+			log_debug("merge_config: proc %d area %s adding "
+			    "interface %s", ospfd_process, inet_ntoa(a->id),
+			    xi->name);
 			LIST_REMOVE(xi, entry);
 			LIST_INSERT_HEAD(&a->iface_list, xi, entry);
 			xi->area = a;

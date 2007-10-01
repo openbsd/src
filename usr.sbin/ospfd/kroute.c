@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.53 2007/09/25 11:25:41 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.54 2007/10/01 08:35:12 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -88,7 +88,7 @@ int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
-void		if_newaddr(u_short, struct sockaddr_in *, struct sockaddr_in *, 
+void		if_newaddr(u_short, struct sockaddr_in *, struct sockaddr_in *,
 		    struct sockaddr_in *);
 void		if_announce(void *);
 
@@ -679,7 +679,7 @@ kroute_remove(struct kroute_node *kr)
 			    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
 			return (-1);
 		}
-	       	if (kr->next != NULL) {
+		if (kr->next != NULL) {
 			if (RB_INSERT(kroute_tree, &krt, kr->next) != NULL) {
 				log_warnx("kroute_remove failed to add %s/%u",
 				    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
@@ -968,16 +968,17 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 }
 
 void
-if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask, 
+if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
     struct sockaddr_in *brd)
-{   
+{
 	struct kif_node *kif;
 	struct kif_addr *ka;
-		     
+
 	if (ifa == NULL || ifa->sin_family != AF_INET)
 		return;
 	if ((kif = kif_find(ifindex)) == NULL) {
-		log_warnx("if_newaddr: corresponding if %i not found", ifindex);		return;
+		log_warnx("if_newaddr: corresponding if %i not found", ifindex);
+		return;
 	}
 	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
 		fatal("if_newaddr");
@@ -1506,7 +1507,7 @@ add:
 				    " not found");
 				return (-1);
 			}
-			/* 
+			/*
 			 * last route is getting removed request the
 			 * ospf route from the RDE to insert instead
 			 */

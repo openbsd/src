@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.70 2007/09/25 11:25:41 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.71 2007/10/01 08:35:12 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -718,7 +718,7 @@ void
 rde_send_change_kroute(struct rt_node *r)
 {
 	int			 krcount = 0;
-	struct kroute	 	 kr;
+	struct kroute		 kr;
 	struct rt_nexthop	*rn;
 	struct buf		*wbuf;
 
@@ -1046,7 +1046,7 @@ rde_asext_get(struct rroute *rr)
 struct lsa *
 rde_asext_put(struct rroute *rr)
 {
-	/* 
+	/*
 	 * just try to remove the LSA. If the prefix is announced as
 	 * stub net LSA lsa_find() will fail later and nothing will happen.
 	 */
@@ -1099,7 +1099,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 	if (v == NULL)
 		v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
 
-	/* suppressed/deleted routes are not found in the second lsa_find */ 
+	/* suppressed/deleted routes are not found in the second lsa_find */
 	if (v)
 		v->cost = rte->cost;
 }
