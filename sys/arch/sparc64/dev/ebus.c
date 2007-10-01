@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.18 2007/09/18 00:46:41 krw Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.19 2007/10/01 16:11:19 krw Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -395,12 +395,10 @@ ebus_alloc_dma_tag(struct ebus_softc *sc, bus_dma_tag_t pdt)
 {
 	bus_dma_tag_t dt;
 
-	dt = (bus_dma_tag_t)
-		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
+	dt = malloc(sizeof(*dt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dt == NULL)
 		panic("could not allocate ebus dma tag");
 
-	bzero(dt, sizeof *dt);
 	dt->_cookie = sc;
 	dt->_parent = pdt;
 	sc->sc_dmatag = dt;

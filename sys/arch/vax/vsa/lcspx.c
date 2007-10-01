@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.11 2006/11/29 12:13:54 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.12 2007/10/01 16:11:19 krw Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -232,12 +232,11 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 		ss = &lcspx_consscr;
 		sc->sc_nscreens = 1;
 	} else {
-		ss = malloc(sizeof(struct lcspx_screen), M_DEVBUF, M_NOWAIT);
+		ss = malloc(sizeof(*ss), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ss == NULL) {
 			printf(": can not allocate memory\n");
 			return;
 		}
-		bzero(ss, sizeof(struct lcspx_screen));
 
 		ss->ss_addr = (caddr_t)vax_map_physmem(LCSPX_FB_ADDR,
 		    LCSPX_FBSIZE / VAX_NBPG);

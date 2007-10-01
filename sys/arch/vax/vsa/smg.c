@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.19 2006/11/29 19:08:22 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.20 2007/10/01 16:11:19 krw Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -283,12 +283,11 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 		scr = &smg_consscr;
 		sc->sc_nscreens = 1;
 	} else {
-		scr = malloc(sizeof(struct smg_screen), M_DEVBUF, M_NOWAIT);
+		scr = malloc(sizeof(*scr), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (scr == NULL) {
 			printf(": can not allocate memory\n");
 			return;
 		}
-		bzero(scr, sizeof(struct smg_screen));
 
 		scr->ss_addr =
 		    (caddr_t)vax_map_physmem(SMADDR, SMSIZE / VAX_NBPG);

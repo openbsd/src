@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcg.c,v 1.10 2006/11/29 12:13:54 miod Exp $	*/
+/*	$OpenBSD: lcg.c,v 1.11 2007/10/01 16:11:19 krw Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -247,12 +247,11 @@ lcg_attach(struct device *parent, struct device *self, void *aux)
 		ss = &lcg_consscr;
 		sc->sc_nscreens = 1;
 	} else {
-		ss = malloc(sizeof(struct lcg_screen), M_DEVBUF, M_NOWAIT);
+		ss = malloc(sizeof(*ss), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ss == NULL) {
 			printf(": can not allocate memory\n");
 			return;
 		}
-		bzero(ss, sizeof(struct lcg_screen));
 
 		ss->ss_cfg = cfg;
 		ss->ss_depth = lcg_probe_screen(ss->ss_cfg,

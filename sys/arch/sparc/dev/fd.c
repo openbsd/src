@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.54 2007/06/20 18:15:47 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.55 2007/10/01 16:11:19 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1889,11 +1889,10 @@ fdformat(dev, finfo, p)
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
+	bp = malloc(sizeof(*bp), M_TEMP, M_NOWAIT | M_ZERO);
 	if (bp == 0)
 		return (ENOBUFS);
 
-	bzero((void *)bp, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.41 2007/07/01 19:06:57 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.42 2007/10/01 16:11:19 krw Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -427,11 +427,10 @@ xdcattach(parent, self, aux)
 	/* Setup device view of DVMA address */
 	xdc->dvmaiopb = (struct xd_iopb *) ((u_long) xdc->iopbase - DVMA_BASE);
 
-	xdc->reqs = (struct xd_iorq *)
-	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq), M_DEVBUF, M_NOWAIT);
+	xdc->reqs = malloc(XDC_MAXIOPB * sizeof(struct xd_iorq), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (xdc->reqs == NULL)
 		panic("xdc malloc");
-	bzero(xdc->reqs, XDC_MAXIOPB * sizeof(struct xd_iorq));
 
 	/* init free list, iorq to iopb pointers, and non-zero fields in the
 	 * iopb which never change. */

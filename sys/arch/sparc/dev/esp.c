@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.24 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: esp.c,v 1.25 2007/10/01 16:11:19 krw Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -282,12 +282,11 @@ espattach(parent, self, aux)
 		 * Allocate a softc for the DMA companion, which will not
 		 * get a regular attachment.
 		 */
-		dsc = malloc(sizeof(struct dma_softc), M_DEVBUF, M_NOWAIT);
+		dsc = malloc(sizeof(*dsc), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (dsc == NULL) {
 			printf(": could not allocate dma softc\n");
 			return;
 		}
-		bzero(dsc, sizeof(struct dma_softc));
 		strlcpy(dsc->sc_dev.dv_xname, sc->sc_dev.dv_xname,
 		    sizeof(dsc->sc_dev.dv_xname));
 		esc->sc_dma = dsc;

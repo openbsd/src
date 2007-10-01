@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.38 2007/07/01 19:06:57 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.39 2007/10/01 16:11:19 krw Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -378,11 +378,10 @@ xycattach(parent, self, aux)
 	xyc->iopbase = tmp;
 	xyc->iopbase = dtmp; /* XXX TMP HACK */
 	xyc->dvmaiopb = (struct xy_iopb *) ((u_long)dtmp - DVMA_BASE);
-	xyc->reqs = (struct xy_iorq *)
-	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF, M_NOWAIT);
+	xyc->reqs = malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (xyc->reqs == NULL)
 		panic("xyc malloc");
-	bzero(xyc->reqs, XYC_MAXIOPB * sizeof(struct xy_iorq));
 
 	/*
 	 * init iorq to iopb pointers, and non-zero fields in the
