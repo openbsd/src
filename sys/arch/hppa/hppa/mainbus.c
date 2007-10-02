@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.66 2007/07/15 20:11:12 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.67 2007/10/02 00:59:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -614,12 +614,11 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments,
 
 	mapsize = sizeof(struct hppa_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	map = malloc(mapsize, M_DEVBUF,
-		(flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+	map = malloc(mapsize, M_DEVBUF, (flags & BUS_DMA_NOWAIT) ?
+	    (M_NOWAIT | M_ZERO) : (M_WAITOK | M_ZERO));
 	if (!map)
 		return (ENOMEM);
 
-	bzero(map, mapsize);
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
