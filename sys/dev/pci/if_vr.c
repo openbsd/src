@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.69 2007/09/12 19:49:29 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.70 2007/10/02 07:22:18 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -516,7 +516,9 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	 * shuts down. Be sure to kick it in the head to wake it
 	 * up again.
 	 */
-	VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag,
+	    PCI_CAP_PWRMGMT, NULL, NULL))
+		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
 
 	/* Reset the adapter. */
 	vr_reset(sc);
