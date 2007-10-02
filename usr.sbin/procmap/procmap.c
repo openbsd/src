@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.26 2007/09/02 15:19:40 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.27 2007/10/02 14:50:49 kettenis Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -185,7 +185,7 @@ struct nlist nl[] = {
 };
 
 void load_symbols(kvm_t *);
-void process_map(kvm_t *, pid_t, struct kinfo_proc *);
+void process_map(kvm_t *, pid_t, struct kinfo_proc2 *);
 size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct kbit *, int);
 char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	    struct kbit *, struct kbit *);
@@ -199,7 +199,7 @@ int
 main(int argc, char *argv[])
 {
 	char errbuf[_POSIX2_LINE_MAX], *kmem = NULL, *kernel = NULL;
-	struct kinfo_proc *kproc;
+	struct kinfo_proc2 *kproc;
 	int many, ch, rc;
 	kvm_t *kd;
 	pid_t pid = -1;
@@ -297,7 +297,8 @@ main(int argc, char *argv[])
 		if (pid == 0)
 			kproc = NULL;
 		else {
-			kproc = kvm_getprocs(kd, KERN_PROC_PID, pid, &rc);
+			kproc = kvm_getproc2(kd, KERN_PROC_PID, pid,
+			    sizeof(struct kinfo_proc2), &rc);
 			if (kproc == NULL || rc == 0) {
 				errno = ESRCH;
 				warn("%d", pid);
@@ -327,7 +328,7 @@ main(int argc, char *argv[])
 }
 
 void
-process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc)
+process_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
 {
 	struct kbit kbit[4], *vmspace, *vm_map, *header, *vm_map_entry;
 	struct vm_map_entry *last;
@@ -341,7 +342,7 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc)
 			warnx("kernel map is restricted");
 			return;
 		}
-		if (uid != proc->kp_eproc.e_ucred.cr_uid) {
+		if (uid != proc->p_uid) {
 			warnx("other users' process maps are restricted");
 			return;
 		}
@@ -358,7 +359,7 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc)
 	A(vm_map_entry) = 0;
 
 	if (pid > 0) {
-		A(vmspace) = (u_long)proc->kp_proc.p_vmspace;
+		A(vmspace) = (u_long)proc->p_vmspace;
 		S(vmspace) = sizeof(struct vmspace);
 		KDEREF(kd, vmspace);
 		thing = "proc->p_vmspace.vm_map";
