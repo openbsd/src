@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.57 2007/10/01 19:12:33 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.58 2007/10/02 07:21:04 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -848,9 +848,13 @@ marked		: /* empty */
 		| MARKED			{ node.flags |= PNFLAG_MARK; }
 		;
 
-nodetype	: HEADER			{ node.type = NODE_TYPE_HEADER; }
+nodetype	: HEADER			{
+			node.type = NODE_TYPE_HEADER;
+		}
 		| URL				{ node.type = NODE_TYPE_URL; }
-		| COOKIE			{ node.type = NODE_TYPE_COOKIE; }
+		| COOKIE			{
+			node.type = NODE_TYPE_COOKIE;
+		}
 		| PATH				{
 				proto->flags |= F_LOOKUP_PATH;
 				node.type = NODE_TYPE_PATH;
@@ -1431,9 +1435,11 @@ top:
 			const char *errstr = NULL;
 
 			*p = '\0';
-			yylval.v.number = (int)strtonum(buf, -INT_MAX, INT_MAX, &errstr);
+			yylval.v.number = (int)strtonum(buf, -INT_MAX,
+			    INT_MAX, &errstr);
 			if (errstr) {
-				yyerror("\"%s\" invalid number: %s", buf, errstr);
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
 				return (findeol());
 			}
 			return (NUMBER);
