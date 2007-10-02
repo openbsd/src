@@ -1,4 +1,4 @@
-/*	$OpenBSD: rewinddir.c,v 1.7 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: rewinddir.c,v 1.8 2007/10/02 16:14:58 kurt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,12 +31,16 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#include "thread_private.h"
+
 void __seekdir(DIR *, long);
+long __telldir_unlocked(DIR *);
 
 void
 rewinddir(DIR *dirp)
 {
-
+	_MUTEX_LOCK(&dirp->dd_lock);
 	__seekdir(dirp, dirp->dd_rewind);
-	dirp->dd_rewind = telldir(dirp);
+	dirp->dd_rewind = _telldir_unlocked(dirp);
+	_MUTEX_UNLOCK(&dirp->dd_lock);
 }
