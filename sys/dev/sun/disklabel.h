@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.5 2007/09/19 23:47:50 tsi Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 2007/10/02 03:26:59 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 1998/08/22 14:55:28 mrg Exp $ */
 
 /*
@@ -80,57 +80,17 @@ struct sun_partinfo {
 
 struct sun_disklabel {			/* total size = 512 bytes */
 	char		sl_text[128];
-	union {
-		/* Sun standard fields, also used on Linux */
-		struct {
-			/* label version */
-			u_int	sli_version;
-			/* short volume name */
-			char	sli_volume[8];
-			/* partition count */
-			u_short	sli_nparts;
-			struct sun_partinfo sli_part[8];
-			char	sli_xxx1[292 - sizeof(u_int) -
-					 (sizeof(char) * 8) - sizeof(u_short) -
-					 (sizeof(struct sun_partinfo) * 8)];
-		} i;
-		/* BSD-specific extensions */
-		struct {
-			/* additive cksum, [xl_xpmag,sl_xx1) */
-			u_int		slx_xpsum;
-			/* "extended" magic number */
-			u_int		slx_xpmag;
-			/* "extended" partitions, i through p */
-			struct sun_dkpart slx_xpart[SUNXPART];
-			u_char		slx_types[MAXPARTITIONS];
-			u_int8_t	slx_fragblock[MAXPARTITIONS];
-			u_int16_t	slx_cpg[MAXPARTITIONS];
-			char		slx_xxx1[292 - sizeof(u_int) -
-						 sizeof(u_int) -
-						 (sizeof(struct sun_dkpart) *
-						  SUNXPART) -
-						 (sizeof(u_char) *
-						  MAXPARTITIONS) -
-						 (sizeof(u_int8_t) *
-						  MAXPARTITIONS) -
-						 (sizeof(u_int16_t) *
-						  MAXPARTITIONS)];
-		} x;
-	} u;
-/* Compatibility */
-#define sl_xpsum	u.x.slx_xpsum
-#define sl_xpmag	u.x.slx_xpmag
-#define sl_xpart	u.x.slx_xpart
-#define sl_types	u.x.slx_types
-#define sl_fragblock	u.x.slx_fragblock
-#define sl_cpg		u.x.slx_cpg
-#define sl_xxx1		u.x.slx_xxx1
-/* Convenience */
-#define sl_version	u.i.sli_version
-#define sl_volume	u.i.sli_volume
-#define sl_nparts	u.i.sli_nparts
-#define sl_ipart	u.i.sli_part
-#define sl_xxx1i	u.i.sli_xxx1
+	u_int		sl_xpsum;	/* additive cksum, [xl_xpmag,sl_xx1) */
+	u_int		sl_xpmag;	/* "extended" magic number */
+	struct sun_dkpart sl_xpart[SUNXPART];	/* "extended" partitions i..p */
+	u_char		sl_types[MAXPARTITIONS];
+	u_int8_t	sl_fragblock[MAXPARTITIONS];
+	u_int16_t	sl_cpg[MAXPARTITIONS];
+	char		sl_xxx1[292 - sizeof(u_int) - sizeof(u_int) -
+			    (sizeof(struct sun_dkpart) * SUNXPART) -
+			    sizeof(u_char) * MAXPARTITIONS -
+			    sizeof(u_int8_t) * MAXPARTITIONS -
+			    sizeof(u_int16_t) * MAXPARTITIONS];
 	u_short sl_rpm;			/* rotational speed */
 	u_short	sl_pcylinders;		/* number of physical cyls */
 #define	sl_pcyl	sl_pcylinders		/* XXX: old sun3 */
@@ -145,4 +105,14 @@ struct sun_disklabel {			/* total size = 512 bytes */
 	struct sun_dkpart sl_part[8];	/* partition layout */
 	u_short	sl_magic;		/* == SUN_DKMAGIC */
 	u_short	sl_cksum;		/* xor checksum of all shorts */
+};
+
+/* Sun standard fields, also used on Linux. */
+struct sun_preamble {
+	char	sl_text[128];
+	u_int	sl_version;	/* label version */
+	char	sl_volume[8];	/* short volume name */
+	u_short	sl_nparts;	/* partition count */
+
+	struct sun_partinfo sl_part[8];
 };
