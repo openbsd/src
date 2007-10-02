@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.13 2007/09/27 06:06:27 mglocker Exp $
+.\" $OpenBSD: bwi.4,v 1.14 2007/10/02 17:45:46 mglocker Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2007 $
+.Dd $Mdocdate: October 2 2007 $
 .Os
 .Dt BWI 4
 .Sh NAME
@@ -229,9 +229,11 @@ The following cards are among those supported by the
 .Nm
 driver:
 .Pp
-.Bl -column -compact "Microcom Travelcard" "MALO111" "CardBus" "a/b/g" -offset 6n
+.Bl -column -compact "Apple Airport Extreme" "BCM4306" "CardBus" "a/b/g" -offset 6n
 .Em "Card	Chip	Bus	Standard"
 ASUS WL-138g	BCM4318	PCI	b/g
+Apple Airport Extreme	BCM4306	PCI	b/g
+Apple Airport Extreme	BCM4318	PCI	b/g
 Buffalo WLI-CB-G54	BCM4306	CardBus	b/g
 Compaq R4035 onboard	BCM4306	PCI	b/g
 HP nx6125	BCM4319	PCI	b/g
