@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.57 2007/09/17 08:46:52 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.58 2007/10/02 07:35:55 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -200,6 +200,8 @@ const struct pci_matchid mskc_devices[] = {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8038 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8039 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8040 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8048 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8050 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8053 },
@@ -947,6 +949,7 @@ msk_probe(struct device *parent, void *match, void *aux)
 	case SK_YUKON_EX:
 	case SK_YUKON_EC:
 	case SK_YUKON_FE:
+	case SK_YUKON_FE_P:
 		return (1);
 	}
 
@@ -1062,7 +1065,8 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = msk_start;
 	ifp->if_watchdog = msk_watchdog;
 	ifp->if_baudrate = 1000000000;
-	if (sc->sk_type != SK_YUKON_FE)
+	if (sc->sk_type != SK_YUKON_FE &&
+	    sc->sk_type != SK_YUKON_FE_P)
 		ifp->if_hardmtu = SK_JUMBO_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, MSK_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -1290,6 +1294,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case SK_YUKON_FE:
 		sc->sk_name = "Yukon-2 FE";
+		break;
+	case SK_YUKON_FE_P:
+		sc->sk_name = "Yukon-2 FE+";
 		break;
 	default:
 		sc->sk_name = "Yukon (Unknown)";
@@ -1884,7 +1891,8 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	      YU_SMR_MFL_VLAN |
 	      YU_SMR_IPG_DATA(0x1e);
 
-	if (sc->sk_type != SK_YUKON_FE)
+	if (sc->sk_type != SK_YUKON_FE &&
+	    sc->sk_type != SK_YUKON_FE_P)
 		reg |= YU_SMR_MFL_JUMBO;
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMR, reg);
