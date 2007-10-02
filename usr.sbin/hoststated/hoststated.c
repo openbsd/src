@@ -1,4 +1,4 @@
-/*	$OpenBSD: hoststated.c,v 1.41 2007/09/28 20:23:38 pyr Exp $	*/
+/*	$OpenBSD: hoststated.c,v 1.42 2007/10/02 21:04:13 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -848,4 +848,32 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 	free(tmp);
 
 	return (0);
+}
+
+void
+translate_string(char *str)
+{
+	char	*reader;
+	char	*writer;
+
+	reader = writer = str;
+
+	while (*reader) {
+		if (*reader == '\\') {
+			reader++;
+			switch (*reader) {
+			case 'n':
+				*writer++ = '\n';
+				break;
+			case 'r':
+				*writer++ = '\r';
+				break;
+			default:
+				*writer++ = *reader;
+			}
+		} else
+			*writer++ = *reader;
+		reader++;
+	}
+	*writer = '\0';
 }

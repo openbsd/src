@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.58 2007/10/02 07:21:04 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.59 2007/10/02 21:04:13 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -67,7 +67,7 @@ int	 yyerror(const char *, ...);
 int	 yyparse(void);
 int	 kw_cmp(const void *, const void *);
 int	 lookup(char *);
-int	 lgetc(FILE *, int *);
+int	 lgetc(FILE *, int);
 int	 lungetc(int);
 int	 findeol(void);
 int	 yylex(void);
@@ -517,6 +517,7 @@ tableoptsl	: host			{
 				free($5);
 				YYERROR;
 			}
+			translate_string(table->conf.exbuf);
 			free($5);
 		}
 		| CHECK SCRIPT STRING {
@@ -1257,11 +1258,10 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(FILE *f, int *keep)
+lgetc(FILE *f, int inquot)
 {
 	int	c, next;
 
-	*keep = 0;
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
 		if (parseindex >= 0) {
@@ -1276,17 +1276,14 @@ lgetc(FILE *f, int *keep)
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
 
+	if (inquot) {
+		c = getc(f);
+		return (c);
+	}
+
 	while ((c = getc(f)) == '\\') {
 		next = getc(f);
-		if (next == 'n') {
-			*keep = 1;
-			c = '\n';
-			break;
-		} else if (next == 'r') {
-			*keep = 1;
-			c = '\r';
-			break;
-		} else if (next != '\n') {
+		if (next != '\n') {
 			c = next;
 			break;
 		}
@@ -1325,15 +1322,14 @@ int
 findeol(void)
 {
 	int	c;
-	int	k;
 
 	parsebuf = NULL;
 	pushback_index = 0;
 
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc(fin, &k);
-		if (c == '\n' && k == 0) {
+		c = lgetc(fin, 0);
+		if (c == '\n') {
 			lineno++;
 			break;
 		}
@@ -1348,24 +1344,21 @@ yylex(void)
 {
 	char	 buf[8096];
 	char	*p, *val;
-	int	 endc, c;
+	int	 endc, next, c;
 	int	 token;
-	int	 keep;
 
 top:
 	p = buf;
-	while ((c = lgetc(fin, &keep)) == ' ')
+	while ((c = lgetc(fin, 0)) == ' ')
 		; /* nothing */
 
 	yylval.lineno = lineno;
 	if (c == '#')
-		do {
-			while ((c = lgetc(fin, &keep)) != '\n' && c != EOF)
-				; /* nothing */
-		} while (keep == 1);
+		while ((c = lgetc(fin, 0)) != '\n' && c != EOF)
+			; /* nothing */
 	if (c == '$' && parsebuf == NULL) {
 		while (1) {
-			if ((c = lgetc(fin, &keep)) == EOF)
+			if ((c = lgetc(fin, 0)) == EOF)
 				return (0);
 
 			if (p + 1 >= buf + sizeof(buf) - 1) {
@@ -1395,13 +1388,19 @@ top:
 	case '"':
 		endc = c;
 		while (1) {
-			if ((c = lgetc(fin, &keep)) == EOF)
+			if ((c = lgetc(fin, 1)) == EOF)
 				return (0);
-			if (c == endc) {
+			if (c == '\\') {
+				next = lgetc(fin, 1);
+				if (next == endc)
+					c = next;
+				else
+					lungetc(next);
+			} else if (c == endc) {
 				*p = '\0';
 				break;
 			}
-			if (c == '\n' && keep == 0) {
+			if (c == '\n') {
 				lineno++;
 				continue;
 			}
@@ -1427,7 +1426,7 @@ top:
 				yyerror("string too long");
 				return (findeol());
 			}
-		} while ((c = lgetc(fin, &keep)) != EOF && isdigit(c));
+		} while ((c = lgetc(fin, 0)) != EOF && isdigit(c));
 		lungetc(c);
 		if (p == buf + 1 && buf[0] == '-')
 			goto nodigits;
@@ -1466,7 +1465,7 @@ nodigits:
 				yyerror("string too long");
 				return (findeol());
 			}
-		} while ((c = lgetc(fin, &keep)) != EOF &&
+		} while ((c = lgetc(fin, 0)) != EOF &&
 		    (allowed_in_string(c)));
 		lungetc(c);
 		*p = '\0';
