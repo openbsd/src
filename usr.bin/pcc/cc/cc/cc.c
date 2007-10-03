@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.15 2007/10/01 18:51:02 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.16 2007/10/03 08:10:38 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 		case 'n': /* handle -n flags */
 			if (strcmp(argv[i], "-nostdinc") == 0)
 				nostdinc++;
-			if (strcmp(argv[i], "-nostdlib") == 0) {
+			else if (strcmp(argv[i], "-nostdlib") == 0) {
 				nostdlib++;
 				nostartfiles++;
 			} else if (strcmp(argv[i], "-nostartfiles") == 0)
@@ -559,6 +559,8 @@ nocom:
 			if (j >= MAXAV)
 				error("Too many ld options");
 		}
+		if (gflag)
+			av[j++] = "-g";
 #if 0
 		if (gflag)
 			av[j++] = "-lg";
