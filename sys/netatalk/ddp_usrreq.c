@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_usrreq.c,v 1.8 2007/05/26 12:09:40 claudio Exp $	*/
+/*	$OpenBSD: ddp_usrreq.c,v 1.9 2007/10/03 10:52:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -469,11 +469,10 @@ at_pcballoc( so )
 {
     struct ddpcb	*ddp;
 
-    MALLOC( ddp, struct ddpcb *, sizeof( *ddp ), M_PCB, M_NOWAIT );
+    ddp = malloc(sizeof(*ddp), M_PCB, M_NOWAIT | M_ZERO);
     if ( ddp == NULL ) {
 	return (ENOBUFS);
     }
-    bzero( ddp, sizeof( *ddp ));
 
     ddp->ddp_lsat.sat_port = ATADDR_ANYPORT;
 

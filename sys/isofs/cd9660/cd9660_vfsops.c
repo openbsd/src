@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.46 2007/06/08 05:35:32 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.47 2007/10/03 10:52:11 krw Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -765,9 +765,7 @@ retry:
 		*vpp = NULLVP;
 		return (error);
 	}
-	MALLOC(ip, struct iso_node *, sizeof(struct iso_node), M_ISOFSNODE,
-	    M_WAITOK);
-	bzero((caddr_t)ip, sizeof(struct iso_node));
+	ip = malloc(sizeof(*ip), M_ISOFSNODE, M_WAITOK | M_ZERO);
 	lockinit(&ip->i_lock, PINOD, "isoinode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;

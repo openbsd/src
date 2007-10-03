@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.100 2006/12/15 09:32:30 otto Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.101 2007/10/03 10:52:11 krw Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -408,11 +408,9 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	/* Get IPsec-specific opaque pointer */
 	if (esph == NULL || mtag != NULL)
-		MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
-		    M_XDATA, M_NOWAIT);
+		tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
 	else
-		MALLOC(tc, struct tdb_crypto *,
-		    sizeof(struct tdb_crypto) + alen, M_XDATA, M_NOWAIT);
+		tc = malloc(sizeof(*tc) + alen, M_XDATA, M_NOWAIT | M_ZERO);
 	if (tc == NULL)	{
 		m_freem(m);
 		crypto_freereq(crp);
@@ -421,7 +419,6 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		return ENOBUFS;
 	}
 
-	bzero(tc, sizeof(struct tdb_crypto));
 	tc->tc_ptr = (caddr_t) mtag;
 
 	if (esph) {
@@ -961,8 +958,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		crda = crp->crp_desc;
 
 	/* IPsec-specific opaque crypto info. */
-	MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
-	    M_XDATA, M_NOWAIT);
+	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
 	if (tc == NULL) {
 		m_freem(m);
 		crypto_freereq(crp);
@@ -971,7 +967,6 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		return ENOBUFS;
 	}
 
-	bzero(tc, sizeof(struct tdb_crypto));
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.11 2007/06/02 01:02:56 deraadt Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.12 2007/10/03 10:52:11 krw Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -435,10 +435,8 @@ ntfs_ntlookup(
 		}
 	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE | LK_SLEEPFAIL, NULL));
 
-	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
-	       M_NTFSNTNODE, M_WAITOK);
+	ip = malloc(sizeof(*ip), M_NTFSNTNODE, M_WAITOK | M_ZERO);
 	ddprintf(("ntfs_ntlookup: allocating ntnode: %d: %p\n", ino, ip));
-	bzero((caddr_t) ip, sizeof(struct ntnode));
 
 	/* Generic initialization */
 	ip->i_devvp = ntmp->ntm_devvp;
@@ -584,9 +582,7 @@ ntfs_attrtontvattr(
 	error = 0;
 	*rvapp = NULL;
 
-	MALLOC(vap, struct ntvattr *, sizeof(struct ntvattr),
-		M_NTFSNTVATTR, M_WAITOK);
-	bzero(vap, sizeof(struct ntvattr));
+	vap = malloc(sizeof(*vap), M_NTFSNTVATTR, M_WAITOK | M_ZERO);
 	vap->va_ip = NULL;
 	vap->va_flag = rap->a_hdr.a_flag;
 	vap->va_type = rap->a_hdr.a_type;
@@ -794,8 +790,7 @@ ntfs_fget(
 	if (*fpp)
 		return (0);
 
-	MALLOC(fp, struct fnode *, sizeof(struct fnode), M_NTFSFNODE, M_WAITOK);
-	bzero(fp, sizeof(struct fnode));
+	fp = malloc(sizeof(*fp), M_NTFSFNODE, M_WAITOK | M_ZERO);
 	dprintf(("ntfs_fget: allocating fnode: %p\n",fp));
 
 	fp->f_ip = ip;

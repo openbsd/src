@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.20 2006/03/25 22:41:48 djm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.21 2007/10/03 10:52:11 krw Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -163,8 +163,7 @@ ipcomp_input(m, tdb, skip, protoff)
 		return ENOBUFS;
 	}
 	/* Get IPsec-specific opaque pointer */
-	MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
-	    M_XDATA, M_NOWAIT);
+	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
 	if (tc == NULL) {
 		m_freem(m);
 		crypto_freereq(crp);
@@ -172,7 +171,6 @@ ipcomp_input(m, tdb, skip, protoff)
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
-	bzero(tc, sizeof(struct tdb_crypto));
 	crdc = crp->crp_desc;
 
 	crdc->crd_skip = skip + hlen;
@@ -515,8 +513,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	crdc->crd_alg = ipcompx->type;
 
 	/* IPsec-specific opaque crypto info */
-	MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
-	    M_XDATA, M_NOWAIT);
+	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
 	if (tc == NULL) {
 		m_freem(m);
 		crypto_freereq(crp);
@@ -524,7 +521,6 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
-	bzero(tc, sizeof(struct tdb_crypto));
 
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;

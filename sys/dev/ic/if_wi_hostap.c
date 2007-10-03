@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.37 2006/11/26 19:46:28 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.38 2007/10/03 10:52:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -461,12 +461,9 @@ wihap_sta_alloc(struct wi_softc *sc, u_int8_t *addr)
 	int i, hash = sta_hash_func(addr);
 
 	/* Allocate structure. */
-	MALLOC(sta, struct wihap_sta_info *, sizeof(struct wihap_sta_info),
-	    M_DEVBUF, M_NOWAIT);
+	sta = malloc(sizeof(*sta), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sta == NULL)
 		return (NULL);
-
-	bzero(sta, sizeof(struct wihap_sta_info));
 
 	/* Allocate an ASID. */
 	i=hash<<4;

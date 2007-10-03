@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.4 2007/06/20 18:15:46 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.5 2007/10/03 10:52:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -622,12 +622,10 @@ zflash_safe_start(struct zflash_softc *sc, dev_t dev)
 	if (DL_GETPOFFSET(&lp->d_partitions[part]) % blksect)
 		return EIO;
 
-	MALLOC(sp, struct zflash_safe *, sizeof(struct zflash_safe),
-	    M_DEVBUF, M_NOWAIT);
+	sp = malloc(sizeof(*sp), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sp == NULL)
 		return ENOMEM;
 
-	bzero(sp, sizeof(struct zflash_safe));
 	sp->sp_dev = dev;
 
 	sp->sp_pblks = DL_GETPSIZE(&lp->d_partitions[part]) / blksect;
