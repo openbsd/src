@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audiotest_rw.1,v 1.4 2007/07/06 15:56:15 jmc Exp $
+.\"	$OpenBSD: audiotest_rw.1,v 1.5 2007/10/03 21:49:13 jakemsr Exp $
 .\"
 .\" Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 6 2007 $
+.Dd $Mdocdate: October 3 2007 $
 .Dt AUDIOTEST_RW 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm audiotest_rw
 .Bk -words
-.Op Fl dpsv
+.Op Fl dnpsv
 .Op Fl b Ar buffersize
 .Op Fl c Ar channels
 .Op Fl e Ar encoding
@@ -157,6 +157,15 @@ The file from which raw (headerless) audio data will be read.
 .It Fl l Ar loops
 The number of times to read and/or write.
 It defaults to 64.
+.It Fl n
+Use information about the play and record buffers as reported by the
+.Dv AUDIO_GETPRINFO
+and
+.Dv AUDIO_GETRRINFO
+ioctls to wait until data may be read without blocking on each
+.Xr read 2
+and to wait until data may be written without blocking on each
+.Xr write 2 .
 .It Fl o Ar output
 The file to which raw (headerless) audio data will be written.
 .It Fl p

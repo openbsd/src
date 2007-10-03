@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.80 2007/09/24 19:45:03 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.81 2007/10/03 21:49:13 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ int	audio_blk_ms = AUDIO_BLK_MS;
 
 int	audiosetinfo(struct audio_softc *, struct audio_info *);
 int	audiogetinfo(struct audio_softc *, struct audio_info *);
-
+int	audiogetbufinfo(struct audio_softc *, struct audio_bufinfo *, int);
 int	audio_open(dev_t, struct audio_softc *, int, int, struct proc *);
 int	audio_close(dev_t, int, int, struct proc *);
 int	audio_read(dev_t, struct uio *, int);
@@ -1729,6 +1729,18 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		*(int *)addr = hw->get_props(sc->hw_hdl);
 		break;
 
+	case AUDIO_GETPRINFO:
+		DPRINTF(("AUDIO_GETPRINFO\n"));
+		error = audiogetbufinfo(sc, (struct audio_bufinfo *)addr,
+		    AUMODE_PLAY);
+		break;
+
+	case AUDIO_GETRRINFO:
+		DPRINTF(("AUDIO_GETRRINFO\n"));
+		error = audiogetbufinfo(sc, (struct audio_bufinfo *)addr,
+		    AUMODE_RECORD);
+		break;
+
 	default:
 		DPRINTF(("audio_ioctl: unknown ioctl\n"));
 		error = ENOTTY;
@@ -2923,6 +2935,35 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 
 	return (0);
 }
+
+int
+audiogetbufinfo(struct audio_softc *sc, struct audio_bufinfo *info, int mode)
+{
+	struct audio_ringbuffer *buf;
+	int factor;
+
+	factor = 1;
+	if (mode == AUMODE_PLAY) {
+		buf = &sc->sc_pr;
+		factor = sc->sc_pparams.factor;
+	} else {
+		buf = &sc->sc_rr;
+		factor = sc->sc_rparams.factor;
+	}
+
+	info->seek = buf->used / factor;
+	info->blksize = buf->blksize / factor;
+	if (buf->blksize != 0) {
+		info->hiwat = buf->usedhigh / buf->blksize;
+		info->lowat = buf->usedlow / buf->blksize;
+	} else {
+		info->hiwat = 0;
+		info->lowat = 0;
+	}
+
+	return (0);
+}
+
 
 /*
  * Mixer driver
