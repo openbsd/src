@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.22 2007/10/03 14:35:48 weingart Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.23 2007/10/03 14:52:31 weingart Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -33,7 +33,7 @@
 #ifndef lint
 static const char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 static const char cvsid[] =
-	"$OpenBSD: rpc_main.c,v 1.22 2007/10/03 14:35:48 weingart Exp $";
+	"$OpenBSD: rpc_main.c,v 1.23 2007/10/03 14:52:31 weingart Exp $";
 #endif
 
 /*
@@ -124,10 +124,6 @@ int Cflag = 0;	/* ANSI C syntax */
 static int allfiles;	/* generate all files */
 int tirpcflag = 0;	/* generating code for tirpc, by default */
 
-#ifdef __MSDOS__
-static char    *dos_cppfile = NULL;
-#endif
-
 static void c_output(char *, char *, int, char *);
 static void h_output(char *, char *, int, char *);
 static void s_output(int, char **, char *, char *, int, char *, int, int);
@@ -202,12 +198,6 @@ main(int argc, char *argv[])
 			clnt_output(cmd.infile, "-DRPC_CLIENT", EXTEND, "_client.c");
 		}
 	}
-#ifdef __MSDOS__
-	if (dos_cppfile != NULL) {
-		(void) fclose(fin);
-		(void) unlink(dos_cppfile);
-	}
-#endif
 	exit(nonfatalerrors);
 	/* NOTREACHED */
 }
@@ -319,47 +309,6 @@ open_input(char *infile, char *define)
 	int             pd[2];
 
 	infilename = (infile == NULL) ? "<stdin>" : infile;
-#ifdef __MSDOS__
-#define	DOSCPP	"\\prog\\bc31\\bin\\cpp.exe"
-	{
-		int             retval;
-		char            drive[MAXDRIVE], dir[MAXDIR], name[MAXFILE],
-		                ext[MAXEXT];
-		char            cppfile[MAXPATH];
-		char           *cpp;
-
-		if ((cpp = searchpath("cpp.exe")) == NULL &&
-		    (cpp = getenv("RPCGENCPP")) == NULL)
-			cpp = DOSCPP;
-
-		putarg(0, cpp);
-		putarg(1, "-P-");
-		putarg(2, CPPFLAGS);
-		addarg(define);
-		addarg(infile);
-		addarg(NULL);
-
-		retval = spawnvp(P_WAIT, arglist[0], arglist);
-		if (retval != 0) {
-			fprintf(stderr, "%s: C PreProcessor failed\n", cmdname);
-			crash();
-		}
-		fnsplit(infile, drive, dir, name, ext);
-		fnmerge(cppfile, drive, dir, name, ".i");
-
-		fin = fopen(cppfile, "r");
-		if (fin == NULL) {
-			fprintf(stderr, "%s: ", cmdname);
-			perror(cppfile);
-			crash();
-		}
-		dos_cppfile = strdup(cppfile);
-		if (dos_cppfile == NULL) {
-			fprintf(stderr, "%s: out of memory\n", cmdname);
-			crash();
-		}
-	}
-#else
 	(void) pipe(pd);
 	switch (fork()) {
 	case 0:
@@ -381,7 +330,6 @@ open_input(char *infile, char *define)
 	}
 	(void) close(pd[1]);
 	fin = fdopen(pd[0], "r");
-#endif
 	if (fin == NULL) {
 		fprintf(stderr, "%s: ", cmdname);
 		perror(infilename);
@@ -594,6 +542,7 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	} else
 		fprintf(fout, "#include <rpc/rpc.h>\n");
 
+	fprintf(fout, "#include <unistd.h>\n");
 	fprintf(fout, "#include <stdio.h>\n");
 	fprintf(fout, "#include <stdlib.h>/* getenv, exit */\n");
 	if (Cflag) {
