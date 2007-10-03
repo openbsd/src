@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.13 2004/07/02 16:29:55 niklas Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.14 2007/10/03 07:51:26 kettenis Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -77,6 +77,8 @@ struct pcb {
 	struct	cpu_info *pcb_fpcpu;	/* cpu holding our fpu state */
 	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 	u_char	pcb_iomap_pad;	/* required; must be 0xff, says intel */
+	int	pcb_flags;
+#define PCB_SAVECTX	0x00000001
 };
 
 /*    

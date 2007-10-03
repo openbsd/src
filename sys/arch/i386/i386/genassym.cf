@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.26 2007/04/03 10:14:47 art Exp $
+#	$OpenBSD: genassym.cf,v 1.27 2007/10/03 07:51:26 kettenis Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -115,6 +115,8 @@ member	pcb_ldt
 member	pcb_ldt_sel
 member	pcb_onfault
 member	pcb_fpcpu
+member	pcb_flags
+export	PCB_SAVECTX
 
 # frame definitions
 struct	trapframe

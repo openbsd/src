@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.114 2007/05/29 23:02:02 tom Exp $	*/
+/*	$OpenBSD: locore.s,v 1.115 2007/10/03 07:51:26 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1769,6 +1769,10 @@ ENTRY(savectx)
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)
 	movl	%ebp,PCB_EBP(%edx)
+
+	movl	PCB_FLAGS(%edx),%ecx
+	orl	$PCB_SAVECTX,%ecx
+	movl	%ecx,PCB_FLAGS(%edx)
 
 	ret
 
