@@ -1,4 +1,6 @@
-.\"	$OpenBSD: cc.1,v 1.4 2007/10/01 18:51:02 otto Exp $
+.\"	$Id: cc.1,v 1.5 2007/10/03 08:05:03 otto Exp $
+.\"	$NetBSD$
+.\"	$OpenBSD: cc.1,v 1.5 2007/10/03 08:05:03 otto Exp $
 ."\
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\" 
@@ -23,20 +25,24 @@
 .Nd front-end to the C compiler
 .Sh SYNOPSIS
 .Nm
-.Op Fl CcdEgkLMPOStvxX
-.Op Fl B Ar prefix
+.Op Fl cEgkLMPOStvxX
 .Op Fl fPIC
-.Op Fl include Ar path
-.Op Fl isystem Ar path
+.Op Fl fpic
+.Op Fl nostartfiles
 .Op Fl nostdinc
 .Op Fl nostdlib
-.Op Fl nostartfiles
-.Op Fl o Ar outfile
 .Op Fl pg
 .Op Fl pthread
 .Op Fl static
+.Op Fl B Ar prefix
+.Op Fl D Ar macro[=value]
+.Op Fl d Ar option
+.Op Fl I Ar directory
+.Op Fl include Ar path
+.Op Fl isystem Ar path
+.Op Fl o Ar outfile
 .Op Fl Wl Ar flags
-.Op Ar infile ...
+.Op Ar
 .Pp
 .Sh DESCRIPTION
 The
@@ -86,8 +92,10 @@ or
 .Xr ld 1
 executables.
 .\" TODO: provide an example of -B
-.lt Fl C
-Do not discard comments in the preprocessor.
+.It Fl C
+Passed to the
+.Xr cpp 1
+preprocessor to not discard comments.
 .It Fl c
 Only compile or assemble and then stop.
 Do not link.
@@ -100,27 +108,30 @@ option is used.
 Note: cannot be combined with
 .Fl o
 if multiple files are given.
-.It Fl d Ar option
-Passed to the
-.Xr as 1
-assembler.
-.\" TODO: what is as -dfoo for?
 .It Fl D Ar macro[=value]
 Passed to the
 .Xr cpp 1
 preprocessor to define
 .Ar macro .
+.It Fl d Ar option
+Passed to the
+.Xr as 1
+assembler.
+.\" TODO: what is as -dfoo for?
 .It Fl E
 Stop after preprocessing with
 .Xr cpp 1 .
 Do not compile, assemble, or link.
+Output is sent to standard output unless the
+.Fl o
+option is used.
+.It Fl fPIC
+Generate PIC code.
+.\" TODO: document about avoiding machine-specific maximum size?
 .It Fl fpic
 Tells C compiler to generate PIC code
 and tells assembler that PIC code has been generated.
 .\" TODO: document difference between PIC and pic
-.It Fl fPIC
-Generate PIC code.
-.\" TODO: document about avoiding machine-specific maximum size?
 .\" other -f GCC compatibility flags are ignored for now
 .It Fl g
 Send
@@ -131,19 +142,27 @@ to create debug output.
 This unsets the
 .Fl O
 option.
-.It Fl include Ar path
-.\" TODO
+.It Fl I Ar path
+Passed to the
+.Xr cpp 1
+preprocessor to add header search directory to override system defaults.
+.It Fl include Ar file
+Tells the
+.Xr cpp 1  
+preprocessor to include the
+.Ar file
+during preprocessing.
 .It Fl isystem Ar path
-.\" TODO
+Defines
+.Ar path
+as a system header directory for the
+.Xr cpp 1
+preprocessor.
 .It Fl k
 Generate PIC code.
 See
 .Fl fpic
 option.
-.It Fl I Ar path
-Passed to the
-.Xr cpp 1
-preprocessor to add header search directory to override system defaults.
 .It Fl L
 .\" TODO
 .It Fl M
@@ -153,13 +172,24 @@ flag to
 .Xr cpp 1
 to generate dependencies for
 .Xr make 1 .
+.It Fl nostartfiles
+.\" TODO
 .It Fl nostdinc
 .\" TODO
 .It Fl nostdlib
 .\" TODO
 .\" implies -nostartfiles ??
-.It Fl nostartfiles
-.\" TODO
+.It Fl O
+Enable optimizations.
+Currently passes
+.Fl xdeljumps
+and
+.Fl xtemps
+to
+.Xr ccom 1 .
+Note: this is unset if
+.Fl g
+option is set.
 .It Fl o Ar outfile
 Save result to
 .Ar outfile .
@@ -168,15 +198,6 @@ TODO: what is this?
 .\" TODO: Looks like it does cpp only, but I couldn't get it to work for me.
 .It Fl pg
 Not implemented.
-.It Fl O
-Enable optimizations.
-Currently passes
-.Fl xtemps
-to
-.Xr ccom 1 .
-Note: this is unset if
-.Fl g
-option is set.
 .It Fl pthread
 Defines
 .Sy _PTHREADS
@@ -186,10 +207,6 @@ Uses
 .Sy -lpthread
 for
 .Xr ld 1 linker.
-.It Fl static
-Do not use dynamic linkage.
-By default, it will link using the dynamic linker options
-and/or shared objects for the platform.
 .It Fl S
 Stop after compilation by
 .Xr ccom 1 .
@@ -203,6 +220,10 @@ option is used.
 Note: cannot be combined with
 .Fl o
 if multiple files are given.
+.It Fl static
+Do not use dynamic linkage.
+By default, it will link using the dynamic linker options
+and/or shared objects for the platform.
 .It Fl t
 Passes
 .Fl t
@@ -210,20 +231,20 @@ to
 .Xr cpp 1
 for traditional C preprocessor syntax.
 .It Fl U Ar macro
-Passed to the 
+Passes to the 
 .Xr cpp 1
 preprocessor to remove the initial macro definition.
 .It Fl v
 Outputs the version of
 .Nm
 and shows what commands will be ran with their command line arguments.
-.It Fl x
-TODO
-.It Fl X
-TODO
 .It Fl Wl Ar flags
 Options for the linker
 .\" what is ignored? llist?
+.It Fl X
+TODO
+.It Fl x
+TODO
 .El
 .Sh Predefined Macros  
 A few

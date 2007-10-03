@@ -1,4 +1,6 @@
-.\"	$OpenBSD: cpp.1,v 1.3 2007/09/27 19:56:48 otto Exp $
+.\"	$Id: cpp.1,v 1.4 2007/10/03 08:05:04 otto Exp $
+.\"	$NetBSD$
+.\"	$OpenBSD: cpp.1,v 1.4 2007/10/03 08:05:04 otto Exp $
 ."\
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\" 
@@ -24,11 +26,12 @@
 .Sh SYNOPSIS
 .Nm
 .\" TODO also document -Dvar and below without spaces?
-.Op Fl Cdt
-.Op Fl D Ar var=val
-.Op Fl U Ar var
+.Op Fl CdMt
+.Op Fl D Ar macro[=value]
 .Op Fl I Ar path
+.Op Fl i Ar file
 .Op Fl S Ar path
+.Op Fl U Ar macro
 .Op Ar infile | -
 .Op Ar outfile
 .Pp
@@ -64,14 +67,6 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl C
 Do not discard comments.
-.It Fl dM
-Print list of
-.Dq #define
-statements to standard output for all defined macros other than
-builtin macros (see below).
-The normal results of preprocessing are not outputted.
-.\" TODO this doesn't show predefined macros
-.\" other -d options are ignored
 .It Fl D Ar macro[=value]
 Fake a definition at the beginning by using
 .Do #define
@@ -80,28 +75,36 @@ If
 .Ar value
 is not set on command-line, then defines as 1.
 .\" TODO: show example
-.It Fl i Ar file
-Include a file at the beginning by using
-.Do #include
-.Ar file Dc .
-.\" Note: I did not use the .In macro above
-.It Fl I Ar directory
+.It Fl dM
+Print list of
+.Dq #define
+statements to standard output for all defined macros other than
+builtin macros (see below).
+The normal results of preprocessing are not outputted.
+.\" TODO this doesn't show predefined macros
+.\" other -d options are ignored
+.It Fl I Ar path
 Add
-.Ar directory
-to the list of system directories containing needed header files.
+.Ar path
+to the list of directories containing needed header files.
 This may be used to override system include directories
 (see
 .Fl S
 option).
 .Fl I
 may be specified multiple times.
+.It Fl i Ar file
+Include a file at the beginning by using
+.Do #include
+.Ar file Dc .
+.\" Note: I did not use the .In macro above
 .It Fl M
 Generate dependencies for
 .Xr make 1 .
 .\" TODO: explain and show example?
-.It Fl S Ar directory
+.It Fl S Ar path
 Add
-.Ar directory
+.Ar path
 to the list of system directories containing needed header files.
 .Fl S
 may be specified multiple times.
@@ -124,10 +127,12 @@ Undefine a macro at the beginning by using
 .Do #undef
 .Ar macro Dc .
 .It Fl v
+Display version.
+.It Fl V
 Verbose debugging output.
-.Fl v
+.Fl V
 can be repeated for further details.
-.\" -v only available if cpp source built with CPP_DEBUG, which is the default.
+.\" -V only available if cpp source built with CPP_DEBUG, which is the default.
 .It Fl ?
 Show command line usage for
 .Nm .
