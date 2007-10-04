@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.30 2007/09/16 01:04:18 krw Exp $	*/
+/*	$OpenBSD: iop.c,v 1.31 2007/10/04 19:32:03 gilles Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -2208,7 +2208,7 @@ iop_print_ident(struct iop_softc *sc, int tid)
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_device_identity di;
-	} __attribute__ ((__packed__)) p;
+	} __packed p;
 	char buf[32];
 	int rv;
 

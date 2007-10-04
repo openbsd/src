@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2o.h,v 1.7 2004/04/12 22:12:32 jmc Exp $	*/
+/*	$OpenBSD: i2o.h,v 1.8 2007/10/04 19:32:03 gilles Exp $	*/
 /*	$NetBSD: i2o.h,v 1.3 2001/03/20 13:01:48 ad Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ struct i2o_msg {
 
 	/* Message payload */
 
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_MSGFLAGS_STATICMF		0x0100
 #define	I2O_MSGFLAGS_64BIT		0x0200
@@ -208,7 +208,7 @@ struct i2o_reply {
 
 	/* Reply payload */
 
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Fault notification reply, returned when a message frame can not be
@@ -239,7 +239,7 @@ struct i2o_hrt_entry {
 	u_int8_t	busnumber;
 	u_int8_t	bustype;
 	u_int8_t	businfo[8];
-} __attribute__ ((__packed__));
+} __packed;
 
 struct i2o_hrt {
 	u_int16_t	numentries;
@@ -247,7 +247,7 @@ struct i2o_hrt {
 	u_int8_t	hrtversion;
 	u_int32_t	changeindicator;
 	struct i2o_hrt_entry	entry[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Logical configuration table entry.  Bitfields are broken down as follows:
@@ -272,7 +272,7 @@ struct i2o_lct_entry {
 	u_int32_t	usertid;
 	u_int8_t	identitytag[8];
 	u_int32_t	eventcaps;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Logical configuration table header.
@@ -283,7 +283,7 @@ struct i2o_lct {
 	u_int32_t	iopflags;
 	u_int32_t	changeindicator;
 	struct i2o_lct_entry	entry[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * IOP system table.  Bitfields are broken down as follows:
@@ -308,7 +308,7 @@ struct i2o_systab_entry {
 	u_int32_t	iopcaps;
 	u_int32_t	inboundmsgportaddresslow;
 	u_int32_t	inboundmsgportaddresshigh;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct i2o_systab {
 	u_int8_t	numentries;
@@ -317,7 +317,7 @@ struct i2o_systab {
 	u_int32_t	changeindicator;
 	u_int32_t	reserved1[2];
 	struct	i2o_systab_entry entry[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * IOP status record.  Bitfields are broken down as follows:
@@ -354,7 +354,7 @@ struct i2o_status {
 	u_int32_t	currentpriviobase;
 	u_int8_t	reserved2[3];
 	u_int8_t	syncbyte;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_IOP_STATE_INITIALIZING		0x01
 #define	I2O_IOP_STATE_RESET			0x02
@@ -376,7 +376,7 @@ struct i2o_exec_status_get {
 	u_int32_t	addrlow;
 	u_int32_t	addrhigh;
 	u_int32_t	length;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_EXEC_OUTBOUND_INIT		0xa1
 struct i2o_exec_outbound_init {
@@ -386,7 +386,7 @@ struct i2o_exec_outbound_init {
 	u_int32_t	msgtctx;
 	u_int32_t	pagesize;
 	u_int32_t	flags;		/* init code, outbound msg size */
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_EXEC_OUTBOUND_INIT_IN_PROGRESS	1
 #define	I2O_EXEC_OUTBOUND_INIT_REJECTED		2
@@ -401,7 +401,7 @@ struct i2o_exec_lct_notify {
 	u_int32_t	msgtctx;
 	u_int32_t	classid;
 	u_int32_t	changeindicator;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_EXEC_SYS_TAB_SET		0xa3
 struct i2o_exec_sys_tab_set {
@@ -411,7 +411,7 @@ struct i2o_exec_sys_tab_set {
 	u_int32_t	msgtctx;
 	u_int32_t	iopid;
 	u_int32_t	segnumber;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_EXEC_HRT_GET		0xa8
 struct i2o_exec_hrt_get {
@@ -419,7 +419,7 @@ struct i2o_exec_hrt_get {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_EXEC_IOP_RESET		0xbd
 struct i2o_exec_iop_reset {
@@ -428,7 +428,7 @@ struct i2o_exec_iop_reset {
 	u_int32_t	reserved[4];
 	u_int32_t	statuslow;
 	u_int32_t	statushigh;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_RESET_IN_PROGRESS		0x01
 #define	I2O_RESET_REJECTED		0x02
@@ -450,7 +450,7 @@ struct i2o_hba_bus_scan {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * ================= HBA class parameter groups =================
@@ -462,7 +462,7 @@ struct i2o_param_hba_ctlr_info {
 	u_int8_t	busstate;
 	u_int16_t	reserved;
 	u_int8_t	busname[12];
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_HBA_BUS_GENERIC		0x00
 #define	I2O_HBA_BUS_SCSI		0x01
@@ -503,7 +503,7 @@ struct i2o_param_hba_scsi_port_info {
 	u_int8_t	reserved1;
 	u_int16_t	reserved2;
 	u_int32_t	maxnumberofdevices;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_PARAM_HBA_SCSI_CTLR_INFO	0x0200
 struct i2o_param_hba_scsi_ctlr_info {
@@ -521,7 +521,7 @@ struct i2o_param_hba_scsi_ctlr_info {
 	u_int8_t	maxoffset;
 	u_int8_t	maxdatawidth;
 	u_int64_t	maxsyncrate;
-} __attribute__ ((__packed__));
+} __packed;
 
 
 /*
@@ -536,7 +536,7 @@ struct i2o_util_abort {
 	u_int32_t	msgtctx;
 	u_int32_t	flags;		/* abort type and function type */
 	u_int32_t	tctxabort;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_UTIL_ABORT_EXACT		0x00000000
 #define	I2O_UTIL_ABORT_FUNCTION		0x00010000
@@ -551,7 +551,7 @@ struct i2o_util_abort_reply {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	count;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_UTIL_PARAMS_SET		0x05 
 #define	I2O_UTIL_PARAMS_GET		0x06
@@ -561,7 +561,7 @@ struct i2o_util_params_op {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	flags;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_PARAMS_OP_FIELD_GET		1
 #define	I2O_PARAMS_OP_LIST_GET		2
@@ -577,25 +577,25 @@ struct i2o_util_params_op {
 struct i2o_param_op_list_header {
 	u_int16_t	count;
 	u_int16_t	reserved;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct i2o_param_op_all_template {
 	u_int16_t	operation;
 	u_int16_t	group;
 	u_int16_t	fieldcount;
 	u_int16_t	fields[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 struct i2o_param_op_results {
 	u_int16_t	count;
 	u_int16_t	reserved;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct i2o_param_read_results {
 	u_int16_t	blocksize;
 	u_int8_t	blockstatus;
 	u_int8_t	errorinfosize;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct i2o_param_table_results {
 	u_int16_t	blocksize;
@@ -603,7 +603,7 @@ struct i2o_param_table_results {
 	u_int8_t	errorinfosize;
 	u_int16_t	rowcount;
 	u_int16_t	moreflag;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_UTIL_CLAIM			0x09
 struct i2o_util_claim {
@@ -612,7 +612,7 @@ struct i2o_util_claim {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	flags;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_UTIL_CLAIM_RESET_SENSITIVE		0x00000002
 #define	I2O_UTIL_CLAIM_STATE_SENSITIVE		0x00000004
@@ -632,7 +632,7 @@ struct i2o_util_claim_release {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	flags;		/* User flags as per I2O_UTIL_CLAIM */
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_UTIL_CLAIM_RELEASE_CONDITIONAL	0x00000001
 
@@ -643,7 +643,7 @@ struct i2o_util_config_dialog {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	pageno;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_UTIL_EVENT_REGISTER		0x13
 struct i2o_util_event_register {
@@ -652,7 +652,7 @@ struct i2o_util_event_register {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	eventmask;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct i2o_util_event_register_reply {
 	u_int32_t	msgflags;
@@ -661,7 +661,7 @@ struct i2o_util_event_register_reply {
 	u_int32_t	msgtctx;
 	u_int32_t	event;
 	u_int32_t	eventdata[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Generic events. */
 #define	I2O_EVENT_GEN_DEVICE_STATE		0x00400000
@@ -708,7 +708,7 @@ struct i2o_param_device_identity {
 	u_int8_t	revlevel[8];
 	u_int8_t	snformat;
 	u_int8_t	serialnumber[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_PARAM_DDM_IDENTITY		0xf101
 struct i2o_param_ddm_identity {
@@ -717,7 +717,7 @@ struct i2o_param_ddm_identity {
 	u_int8_t	revlevel[8];
 	u_int8_t	snformat;
 	u_int8_t	serialnumber[12];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * ================= Block storage class messages =================
@@ -733,7 +733,7 @@ struct i2o_rbs_block_read {
 	u_int32_t	datasize;
 	u_int32_t	lowoffset;
 	u_int32_t	highoffset;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_RBS_BLOCK_READ_NO_RETRY	0x01
 #define	I2O_RBS_BLOCK_READ_SOLO		0x02
@@ -751,7 +751,7 @@ struct i2o_rbs_block_write {
 	u_int32_t	datasize;
 	u_int32_t	lowoffset;
 	u_int32_t	highoffset;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_RBS_BLOCK_WRITE_NO_RETRY	0x01
 #define	I2O_RBS_BLOCK_WRITE_SOLO	0x02
@@ -766,7 +766,7 @@ struct i2o_rbs_cache_flush {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	flags;		/* flags, time multipler */
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_RBS_MEDIA_MOUNT		0x41
 struct i2o_rbs_media_mount {
@@ -776,7 +776,7 @@ struct i2o_rbs_media_mount {
 	u_int32_t	msgtctx;
 	u_int32_t	mediaid;
 	u_int32_t	loadflags;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_RBS_MEDIA_EJECT             0x43
 struct i2o_rbs_media_eject {
@@ -785,7 +785,7 @@ struct i2o_rbs_media_eject {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	mediaid;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_RBS_MEDIA_LOCK		0x49
 struct i2o_rbs_media_lock {
@@ -794,7 +794,7 @@ struct i2o_rbs_media_lock {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	mediaid;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_RBS_MEDIA_UNLOCK		0x4b
 struct i2o_rbs_media_unlock {
@@ -803,7 +803,7 @@ struct i2o_rbs_media_unlock {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	mediaid;
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Standard RBS reply frame. */
 struct i2o_rbs_reply {
@@ -816,7 +816,7 @@ struct i2o_rbs_reply {
 	u_int8_t	reqstatus;
 	u_int32_t	transfercount;
 	u_int64_t	offset;		/* Error replies only */
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * ================= Block storage class parameter groups =================
@@ -831,7 +831,7 @@ struct i2o_param_rbs_device_info {
 	u_int64_t	capacity;
 	u_int32_t	capabilities;
 	u_int32_t	state;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_RBS_TYPE_DIRECT		0x00
 #define	I2O_RBS_TYPE_WORM		0x04
@@ -875,7 +875,7 @@ struct i2o_param_rbs_operation {
 	u_int32_t	timeoutbase;
 	u_int32_t	orderedreqdepth;
 	u_int32_t	atomicwritesize;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_PARAM_RBS_CACHE_CONTROL	0x0003
 struct i2o_param_rbs_cache_control {
@@ -886,7 +886,7 @@ struct i2o_param_rbs_cache_control {
 	u_int8_t	readpolicy;
 	u_int8_t	errorcorrection;
 	u_int8_t	reserved;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * ================= SCSI peripheral class messages =================
@@ -898,7 +898,7 @@ struct i2o_scsi_device_reset {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_SCSI_SCB_EXEC		0x81
 struct i2o_scsi_scb_exec {
@@ -909,7 +909,7 @@ struct i2o_scsi_scb_exec {
 	u_int32_t	flags;		/* CDB length and flags */
 	u_int8_t	cdb[16];
 	u_int32_t	datalen;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_SCB_FLAG_SENSE_DATA_IN_MESSAGE  0x00200000
 #define	I2O_SCB_FLAG_SENSE_DATA_IN_BUFFER   0x00600000
@@ -928,7 +928,7 @@ struct i2o_scsi_scb_abort {
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
 	u_int32_t	tctxabort;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct i2o_scsi_reply {
 	u_int32_t	msgflags;
@@ -942,7 +942,7 @@ struct i2o_scsi_reply {
 	u_int32_t	datalen;
 	u_int32_t	senselen;
 	u_int8_t	sense[40];
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	I2O_SCSI_DSC_SUCCESS                0x00
 #define	I2O_SCSI_DSC_REQUEST_ABORTED        0x02
@@ -999,7 +999,7 @@ struct i2o_param_scsi_device_info {
 	u_int8_t	negdatawidth;
 	u_int8_t	reserved2;
 	u_int64_t	negsyncrate;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * ================= LAN class messages =================
