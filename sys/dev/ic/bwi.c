@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.60 2007/10/01 20:48:37 mglocker Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.61 2007/10/04 05:44:42 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -1607,20 +1607,30 @@ int
 bwi_mac_fw_alloc(struct bwi_mac *mac)
 {
 	struct bwi_softc *sc = mac->mac_sc;
+	char *name = "bwi-airforce";
+	size_t offset;
 	char fwname[64];
 	int idx, error;
+
+	error = loadfirmware(name, &mac->mac_fw, &mac->mac_fw_size);
+	if (error != 0) {
+		printf("%s: error %d, could not read firmware %s\n",
+		    sc->sc_dev.dv_xname, error, name);
+		return (EIO);
+	}
 
 	if (mac->mac_ucode == NULL) {
 		snprintf(fwname, sizeof(fwname), "ucode%d.fw",
 		    mac->mac_rev >= 5 ? 5 : mac->mac_rev);
 
-		error = loadfirmware(fwname, &mac->mac_ucode,
-		    &mac->mac_ucode_size);
+		error = bwi_get_firmware(fwname, mac->mac_fw, mac->mac_fw_size,
+		    &mac->mac_ucode_size, &offset);
 		if (error != 0) {
 			printf("%s: error %d, could not read firmware %s!\n",
 			    sc->sc_dev.dv_xname, error, fwname);
 			return (ENOMEM);
 		}
+		mac->mac_ucode = (mac->mac_fw + offset);
 		DPRINTF(1, "%s: loaded firmware file %s\n",
 		    sc->sc_dev.dv_xname, fwname);
 
@@ -1633,13 +1643,14 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 		snprintf(fwname, sizeof(fwname), "pcm%d.fw",
 		    mac->mac_rev < 5 ? 4 : 5);
 
-		error = loadfirmware(fwname, &mac->mac_pcm,
-		    &mac->mac_pcm_size);
+		error = bwi_get_firmware(fwname, mac->mac_fw, mac->mac_fw_size,
+		    &mac->mac_pcm_size, &offset);
 		if (error != 0) {
 			printf("%s: error %d, could not read firmware %s!\n",
 			    sc->sc_dev.dv_xname, error, fwname);
 			return (ENOMEM);
 		}
+		mac->mac_pcm = (mac->mac_fw + offset);
 		DPRINTF(1, "%s: loaded firmware file %s\n",
 		    sc->sc_dev.dv_xname, fwname);
 
@@ -1662,13 +1673,14 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 
 		snprintf(fwname, sizeof(fwname), "b0g0initvals%d.fw", idx);
 
-		error = loadfirmware(fwname, &mac->mac_iv,
-		    &mac->mac_iv_size);
+		error = bwi_get_firmware(fwname, mac->mac_fw, mac->mac_fw_size,
+		    &mac->mac_iv_size, &offset);
 		if (error != 0) {
 			printf("%s: error %d, could not read firmware %s!\n",
 			    sc->sc_dev.dv_xname, error, fwname);
 			return (ENOMEM);
 		}
+		mac->mac_iv = (mac->mac_fw + offset);
 		DPRINTF(1, "%s: loaded firmware file %s\n",
 		    sc->sc_dev.dv_xname, fwname);
 
@@ -1693,13 +1705,14 @@ bwi_mac_fw_alloc(struct bwi_mac *mac)
 
 		snprintf(fwname, sizeof(fwname), "b0g0bsinitvals%d.fw", idx);
 
-		error = loadfirmware(fwname, &mac->mac_iv_ext,
-		    &mac->mac_iv_ext_size);
+		error = bwi_get_firmware(fwname, mac->mac_fw, mac->mac_fw_size,
+		    &mac->mac_iv_ext_size, &offset);
 		if (error != 0) {
 			printf("%s: error %d, could not read firmware %s!\n",
 			    sc->sc_dev.dv_xname, error, fwname);
 			return (ENOMEM);
 		}
+		mac->mac_iv_ext = (mac->mac_fw + offset);
 		DPRINTF(1, "%s: loaded firmware file %s\n",
 		    sc->sc_dev.dv_xname, fwname);
 
@@ -1715,24 +1728,9 @@ back:
 void
 bwi_mac_fw_free(struct bwi_mac *mac)
 {
-	if (mac->mac_ucode != NULL) {
-		free(mac->mac_ucode, M_DEVBUF);
-		mac->mac_ucode = NULL;
-	}
-
-	if (mac->mac_pcm != NULL) {
-		free(mac->mac_pcm, M_DEVBUF);
-		mac->mac_pcm = NULL;
-	}
-
-	if (mac->mac_iv != NULL) {
-		free(mac->mac_iv, M_DEVBUF);
-		mac->mac_iv = NULL;
-	}
-
-	if (mac->mac_iv_ext != NULL) {
-		free(mac->mac_iv_ext, M_DEVBUF);
-		mac->mac_iv_ext = NULL;
+	if (mac->mac_fw != NULL) {
+		free(mac->mac_fw, M_DEVBUF);
+		mac->mac_fw = NULL;
 	}
 }
 
