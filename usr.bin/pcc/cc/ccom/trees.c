@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.4 2007/10/04 05:47:07 otto Exp $	*/
+/*	$Id: trees.c,v 1.5 2007/10/04 19:31:40 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -72,6 +72,7 @@
 # include <stdarg.h>
 
 static void chkpun(NODE *p);
+static int chkenum(int, int, NODE *p);
 static int opact(NODE *p);
 static int moditype(TWORD);
 static NODE *strargs(NODE *);
@@ -756,25 +757,15 @@ chkpun(NODE *p)
 	if (BTYPE(t2) == VOID && (t1 & TMASK))
 		return;
 
-#ifdef notdef
-	/* C99 says that enums always should be handled as ints */
 	/* check for enumerations */
-	if (t1==ENUMTY || t2==ENUMTY) {
-		if( clogop( p->n_op ) && p->n_op != EQ && p->n_op != NE ) {
-			werror( "comparison of enums" );
-			return;
-			}
-		if (t1==ENUMTY && t2==ENUMTY) {
-			if (p->n_left->n_sue!=p->n_right->n_sue)
-				werror("enumeration type clash, "
-				    "operator %s", copst(p->n_op));
+	if (t1 == ENUMTY || t2 == ENUMTY) {
+		if (clogop(p->n_op) && p->n_op != EQ && p->n_op != NE) {
+			werror("comparison of enums");
 			return;
 		}
-		if ((t1 == ENUMTY && t2 <= BTMASK) ||
-		    (t2 == ENUMTY && t1 <= BTMASK))
+		if (chkenum(t1, t2, p))
 			return;
 	}
-#endif
 
 	if (ISPTR(t1) || ISARY(t1))
 		q = p->n_right;
@@ -812,6 +803,9 @@ chkpun(NODE *p)
 				}
 				++d1;
 				++d2;
+			} else if (t1 == ENUMTY || t2 == ENUMTY) {
+				chkenum(t1, t2, p);
+				return;
 			} else
 				break;
 			t1 = DECREF(t1);
@@ -819,6 +813,22 @@ chkpun(NODE *p)
 		}
 		werror("illegal pointer combination");
 	}
+}
+
+static int
+chkenum(int t1, int t2, NODE *p)
+{
+	if (t1 == ENUMTY && t2 == ENUMTY) {
+		if (p->n_left->n_sue != p->n_right->n_sue)
+		werror("enumeration type clash, operator %s", copst(p->n_op));
+			return 1;
+	}
+	if ((t1 == ENUMTY && !(t2 >= CHAR && t2 <= UNSIGNED)) ||
+	    (t2 == ENUMTY && !(t1 >= CHAR && t1 <= UNSIGNED))) {
+		werror("illegal combination of enum and non-integer type");
+		return 1;
+	}
+	return 0;
 }
 
 NODE *
