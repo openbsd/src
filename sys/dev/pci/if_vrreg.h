@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.18 2007/09/01 10:26:25 mglocker Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.19 2007/10/04 00:15:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -332,13 +332,9 @@
 struct vr_desc {
 	u_int32_t		vr_status;
 	u_int32_t		vr_ctl;
-	u_int32_t		vr_ptr1;
-	u_int32_t		vr_ptr2;
+	u_int32_t		vr_data;
+	u_int32_t		vr_next;
 };
-
-#define vr_data		vr_ptr1
-#define vr_next		vr_ptr2
-
 
 #define VR_RXSTAT_RXERR		0x00000001
 #define VR_RXSTAT_CRCERR	0x00000002
