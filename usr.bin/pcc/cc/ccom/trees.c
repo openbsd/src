@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.3 2007/09/16 18:52:52 otto Exp $	*/
+/*	$OpenBSD: trees.c,v 1.4 2007/10/04 05:47:07 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -743,8 +743,10 @@ chkpun(NODE *p)
 			return;
 		break;
 	default:
-		if ((t1 == VOID && t2 != VOID) || (t1 != VOID && t2 == VOID))
-			return uerror("value of void expression used");
+		if ((t1 == VOID && t2 != VOID) || (t1 != VOID && t2 == VOID)) {
+			uerror("value of void expression used");
+			return;
+		}
 		break;
 	}
 
