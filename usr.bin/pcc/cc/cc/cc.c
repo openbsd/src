@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.17 2007/10/04 06:30:10 gilles Exp $	*/
+/*	$OpenBSD: cc.c,v 1.18 2007/10/04 07:05:01 gilles Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -306,7 +306,7 @@ main(int argc, char *argv[])
 				
 			case 'd':
 				dflag++;
-				strncpy(alist, argv[i], 19);
+				strlcpy(alist, argv[i], sizeof (alist));
 				break;
 			case 'v':
 				printf("%s\n", VERSSTR);
