@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.9 2007/06/27 18:15:25 canacar Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.10 2007/10/04 18:38:29 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -186,6 +186,16 @@ ip6_print(register const u_char *bp, register int length)
 		case IPPROTO_NONE:
 			(void)printf("no next header");
 			goto end;
+
+#ifndef IPPROTO_CARP  
+#define IPPROTO_CARP 112
+#endif
+		case IPPROTO_CARP:
+			if (packettype == PT_VRRP)
+				vrrp_print(cp, len, ip6->ip6_hlim);
+			else
+				carp_print(cp, len, ip6->ip6_hlim);
+			break;
 
 		default:
 			(void)printf("ip-proto-%d %d", ip6->ip6_nxt, len);
