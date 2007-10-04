@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.19 2007/10/04 00:15:28 brad Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.20 2007/10/04 01:29:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -583,7 +583,3 @@ struct vr_softc {
 #define VR_PSTATE_D3		0x0003
 #define VR_PME_EN		0x0010
 #define VR_PME_STATUS		0x8000
-
-#ifndef ETHER_CRC_LEN
-#define ETHER_CRC_LEN 4
-#endif
