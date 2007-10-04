@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkext.c,v 1.4 2007/09/24 16:04:01 otto Exp $	*/
+/*	$OpenBSD: mkext.c,v 1.5 2007/10/04 05:49:16 otto Exp $	*/
 /*
  * Generate defines for the needed hardops.
  */
@@ -118,11 +118,14 @@ main(int argc, char *argv[])
 	}
 	fprintf(fh, "#define NUMBITS %d\n", bitsz);
 	fprintf(fh, "#define BITSET(arr, bit) "
-	     "(arr[bit/NUMBITS] |= (1 << (bit & (NUMBITS-1))))\n");
+	     "(arr[bit/NUMBITS] |= ((%s)1 << (bit & (NUMBITS-1))))\n",
+	     bitary);
 	fprintf(fh, "#define BITCLEAR(arr, bit) "
-	     "(arr[bit/NUMBITS] &= ~(1 << (bit & (NUMBITS-1))))\n");
+	     "(arr[bit/NUMBITS] &= ~((%s)1 << (bit & (NUMBITS-1))))\n",
+	     bitary);
 	fprintf(fh, "#define TESTBIT(arr, bit) "
-	     "(arr[bit/NUMBITS] & (1 << (bit & (NUMBITS-1))))\n");
+	     "(arr[bit/NUMBITS] & ((%s)1 << (bit & (NUMBITS-1))))\n",
+	     bitary);
 	fprintf(fh, "typedef %s bittype;\n", bitary);
 
 	/* register class definitions, used by graph-coloring */
