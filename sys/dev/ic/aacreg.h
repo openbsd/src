@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacreg.h,v 1.8 2006/04/22 02:36:26 brad Exp $	*/
+/*	$OpenBSD: aacreg.h,v 1.9 2007/10/04 19:33:11 gilles Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -87,7 +87,7 @@
 struct aac_queue_entry {
 	u_int32_t	aq_fib_size;	/* FIB size in bytes */
 	u_int32_t	aq_fib_addr;	/* receiver-space address of the FIB */
-} __attribute__ ((__packed__));
+} __packed;
 
 #define AAC_PRODUCER_INDEX	0
 #define AAC_CONSUMER_INDEX	1
@@ -109,7 +109,7 @@ struct aac_queue_table {
 	struct aac_queue_entry qt_HostHighRespQueue[AAC_HOST_HIGH_RESP_ENTRIES];
 	struct aac_queue_entry qt_AdapNormRespQueue[AAC_ADAP_NORM_RESP_ENTRIES];
 	struct aac_queue_entry qt_AdapHighRespQueue[AAC_ADAP_HIGH_RESP_ENTRIES];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Queue names
@@ -133,7 +133,7 @@ struct aac_queue_table {
 struct aac_fib_list_entry {
 	u_int32_t	Flink;
 	u_int32_t	Blink;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * FIB (FSA Interface Block?); this is the datastructure passed between the host
@@ -156,14 +156,14 @@ struct aac_fib_header {
 		} _s;
 		struct aac_fib_list_entry FibLinks;
 	} _u;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define AAC_FIB_DATASIZE	(512 - sizeof(struct aac_fib_header))
 
 struct aac_fib {
 	struct aac_fib_header	Header;
 	u_int8_t			data[AAC_FIB_DATASIZE];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * FIB commands
@@ -287,7 +287,7 @@ struct aac_adapter_init {
 #define	AAC_PAGE_SIZE				4096
 	u_int32_t	HostPhysMemPages;
 	u_int32_t	HostElapsedSeconds;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Shared data types
@@ -342,17 +342,17 @@ typedef enum {
 struct aac_sg_entry {
 	u_int32_t	SgAddress;
 	u_int32_t	SgByteCount;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_sg_entry64 {
 	u_int64_t	SgAddress;
 	u_int32_t	SgByteCount;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_sg_table {
 	u_int32_t		SgCount;
 	struct aac_sg_entry	SgEntry[0];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Host-side scatter/gather list for 64-bit commands.
@@ -360,7 +360,7 @@ struct aac_sg_table {
 struct aac_sg_table64 {
 	u_int32_t	SgCount;
 	struct aac_sg_entry64	SgEntry64[0];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Container creation data
@@ -376,7 +376,7 @@ struct aac_container_creation {
 	u_int32_t	Minute:6;	/* 0-59 */
 	u_int32_t	Second:6;	/* 0-59 */
 	u_int64_t	ViaAdapterSerialNumber;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Revision number handling
@@ -405,7 +405,7 @@ struct FsaRevision {
 		u_int32_t	ul;
 	} external;
 	u_int32_t	buildNumber;
-}  __attribute__ ((__packed__));
+}  __packed;
 
 /*
  * Adapter Information
@@ -528,7 +528,7 @@ struct aac_adapter_info {
 	u_int32_t		SupportedOptions; /* supported features of this
 						   * controller */
 	AAC_OemFlavor	OemVariant;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Monitor/Kernel interface.
@@ -611,7 +611,7 @@ struct aac_nvramdevinfo {
 	u_int32_t	NV_NDirty;	/* count of dirty NVRAM buffers */
 	u_int32_t	NV_NActive;	/* count of NVRAM buffers being
 					 * written */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_nvraminfo {
 	AAC_NVSTATUS		NV_Status;	/* nvram subsystem status */
@@ -631,7 +631,7 @@ struct aac_nvraminfo {
 	u_int32_t		NV_BattNeedsReconditioning;	/* boolean */
 	u_int32_t		NV_TotalSize;	/* size of all non-volatile
 						 * memories in bytes */
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Data types relating to adapter-initiated FIBs
@@ -692,7 +692,7 @@ typedef enum {
 struct aac_AifContainers {
 	u_int32_t	src;		/* from/master */
 	u_int32_t	dst;		/* to/slave */
-} __attribute__ ((__packed__));
+} __packed;
 
 union aac_AifJobClient {
 	struct aac_AifContainers	container;	/* For Container and
@@ -708,7 +708,7 @@ struct aac_AifJobDesc {
 	AAC_AifJobType		type;		/* Operation that is being
 						 * performed */
 	union aac_AifJobClient	client;		/* Details */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifJobProgressReport {
 	struct aac_AifJobDesc	jd;
@@ -717,7 +717,7 @@ struct aac_AifJobProgressReport {
 	u_int32_t		currentTick;
 	u_int32_t		jobSpecificData1;
 	u_int32_t		jobSpecificData2;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Event Notification
@@ -753,46 +753,46 @@ typedef enum {
 
 struct aac_AifEnsGeneric {
 	char	text[132];		/* Generic text */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifEnsDeviceFailure {
 	u_int32_t	deviceHandle;	/* SCSI device handle */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifEnsMirrorFailover {
 	u_int32_t	container;	/* Container with failed element */
 	u_int32_t	failedSlice;	/* Old slice which failed */
 	u_int32_t	creatingSlice;	/* New slice used for auto-create */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifEnsContainerChange {
 	u_int32_t	container[2];	/* container that changed, -1 if no
 					 * container */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifEnsContainerEvent {
 	u_int32_t	container;	/* container number  */
 	u_int32_t	eventType;	/* event type */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifEnsEnclosureEvent {
 	u_int32_t	empID;		/* enclosure management proc number  */
 	u_int32_t	unitID;		/* unitId, fan id, power supply id,
 					 * slot id, tempsensor id.  */
 	u_int32_t	eventType;	/* event type */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifEnsBatteryEvent {
 	AAC_NVBATT_TRANSITION	transition_type;	/* eg from low to ok */
 	AAC_NVBATTSTATUS	current_state;		/* current batt state */
 	AAC_NVBATTSTATUS	prior_state;		/* prev batt state */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifEnsDiskSetEvent {
 	u_int32_t	eventType;
 	u_int64_t	DsNum;
 	u_int64_t	CreatorId;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef enum {
 	CLUSTER_NULL_EVENT = 0,
@@ -806,7 +806,7 @@ typedef enum {
 
 struct aac_AifEnsClusterEvent {
 	AAC_ClusterAifEvent	eventType;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_AifEventNotify {
 	AAC_AifEventNotifyType	type;
@@ -822,7 +822,7 @@ struct aac_AifEventNotify {
 /*		struct aac_AifEnsSMARTEvent		ES;*/
 		struct aac_AifEnsClusterEvent		ECLE;
 	} data;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Adapter Initiated FIB command structures. Start with the adapter
@@ -860,7 +860,7 @@ struct aac_aif_command {
 		u_int8_t			AR[AAC_AIF_REPORT_MAX_SIZE];
 		u_int8_t			data[AAC_FIB_DATASIZE - 8];
 	} data;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Filesystem commands/data
@@ -998,20 +998,20 @@ struct aac_mntobj {
 		u_int32_t	pad[8];
 	} ObjExtension;
 	u_int32_t			AlterEgoId;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_mntinfo {
 	u_int32_t		Command;
 	u_int32_t		MntType;
 	u_int32_t		MntCount;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_mntinforesp {
 	u_int32_t		Status;
 	u_int32_t		MntType;
 	u_int32_t		MntRespCount;
 	struct aac_mntobj	MntTable[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Container shutdown command.
@@ -1019,7 +1019,7 @@ struct aac_mntinforesp {
 struct aac_closecommand {
 	u_int32_t	Command;
 	u_int32_t	ContainerId;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Container Config Command
@@ -1029,13 +1029,13 @@ struct aac_ctcfg {
 	u_int32_t		Command;
 	u_int32_t		cmd;
 	u_int32_t		param;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_ctcfg_resp {
 	u_int32_t		Status;
 	u_int32_t		resp;
 	u_int32_t		param;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * 'Ioctl' commads
@@ -1053,7 +1053,7 @@ struct aac_getbusinf {
 	u_int32_t		TargetsPerBus;
 	u_int8_t		InitiatorBusId[AAC_SCSI_MAX_PORTS];
 	u_int8_t		BusValid[AAC_SCSI_MAX_PORTS];
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_vmioctl {
 	u_int32_t		Command;
@@ -1062,7 +1062,7 @@ struct aac_vmioctl {
 	u_int32_t		ObjId;
 	u_int32_t		IoctlCmd;
 	u_int32_t		IoctlBuf[1];	/* Placeholder? */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_vmi_businf_resp {
 	u_int32_t		Status;
@@ -1071,7 +1071,7 @@ struct aac_vmi_businf_resp {
 	u_int32_t		ObjId;
 	u_int32_t		IoctlCmd;
 	struct aac_getbusinf	BusInf;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define AAC_BTL_TO_HANDLE(b, t, l) \
     (((b & 0x3f) << 7) | ((l & 0x7) << 4) | (t & 0xf))
@@ -1150,7 +1150,7 @@ struct aac_blockread {
 	u_int32_t		BlockNumber;
 	u_int32_t		ByteCount;
 	struct aac_sg_table	SgMap;		/* variable size */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_blockread64 {
 	u_int32_t		Command;
@@ -1160,12 +1160,12 @@ struct aac_blockread64 {
 	u_int16_t		Pad;
 	u_int16_t		Flags;
 	struct aac_sg_table64	SgMap64;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_blockread_response {
 	u_int32_t		Status;
 	u_int32_t		ByteCount;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_blockwrite {
 	u_int32_t		Command;	/* not FSACommand! */
@@ -1174,7 +1174,7 @@ struct aac_blockwrite {
 	u_int32_t		ByteCount;
 	u_int32_t		Stable;
 	struct aac_sg_table	SgMap;		/* variable size */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_blockwrite64 {
 	u_int32_t		Command;	/* not FSACommand! */
@@ -1184,13 +1184,13 @@ struct aac_blockwrite64 {
 	u_int16_t		Pad;
 	u_int16_t		Flags;
 	struct aac_sg_table64	SgMap64;	/* variable size */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct aac_blockwrite_response {
 	u_int32_t		Status;
 	u_int32_t		ByteCount;
 	u_int32_t		Committed;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Container shutdown command.

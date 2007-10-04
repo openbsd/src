@@ -1,4 +1,4 @@
-/*	$OpenBSD: anreg.h,v 1.10 2006/01/09 21:19:47 jsg Exp $	*/
+/*	$OpenBSD: anreg.h,v 1.11 2007/10/04 19:33:11 gilles Exp $	*/
 /*	$NetBSD: anreg.h,v 1.11 2005/01/15 11:01:46 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -257,7 +257,7 @@ struct an_rid_genconfig {
 	u_int8_t		an_magic_packet_ctl;	/* 0x99 */
 	u_int16_t		an_rsvd9;
 	u_int16_t               an_spare[24];
-} __attribute__((__packed__));
+} __packed;
 
 #define AN_OPMODE_IBSS_ADHOC			0x0000
 #define AN_OPMODE_INFRASTRUCTURE_STATION	0x0001
@@ -331,7 +331,7 @@ struct an_rid_ssidlist {
 		u_int16_t	an_ssid_len;
 		char		an_ssid[32];
 	} __attribute__((__packed__)) an_entry[3];	/* 25 for fwver.5 */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Valid AP list.
@@ -342,7 +342,7 @@ struct an_rid_aplist {
 	u_int8_t		an_ap2[8];
 	u_int8_t		an_ap3[8];
 	u_int8_t		an_ap4[8];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Driver name.
@@ -350,7 +350,7 @@ struct an_rid_aplist {
 #define AN_RID_DRVNAME		0xFF13
 struct an_rid_drvname {
 	u_int8_t		an_drvname[16];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Frame encapsulation.
@@ -361,8 +361,8 @@ struct an_rid_encap {
 	struct an_rid_encap_entry {
 		u_int16_t	an_ethertype;
 		u_int16_t	an_action;
-	} __attribute__((__packed__)) an_entry[AN_ENCAP_NENTS];
-} __attribute__((__packed__));
+	} __packed an_entry[AN_ENCAP_NENTS];
+} __packed;
 
 #define AN_ENCAP_ACTION_RX	0x0001
 #define AN_ENCAP_ACTION_TX	0x0002
@@ -410,7 +410,7 @@ struct an_rid_caps {
 	/* extended capabilities */
 	u_int16_t		an_ext_softcaps;	/* 0x82 */
 	u_int16_t		an_spare[34];
-} __attribute__((__packed__));
+} __packed;
 
 #define	AN_REGDOMAIN_USA	0
 #define	AN_REGDOMAIN_EUROPE	1
@@ -436,7 +436,7 @@ struct an_rid_caps {
 struct an_rid_apinfo {
 	u_int16_t		an_tim_addr;
 	u_int16_t		an_airo_addr;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Radio info (read only).
@@ -487,7 +487,7 @@ struct an_rid_status {
 	u_int16_t		an_avg_noise_prev_min;	/* 0x7C */
 	u_int16_t		an_max_noise_prev_min;	/* 0x7E */
 	u_int16_t		an_spare[11];
-} __attribute__((__packed__));
+} __packed;
 
 #define AN_STATUS_OPMODE_CONFIGURED		0x0001
 #define AN_STATUS_OPMODE_MAC_ENABLED		0x0002
@@ -610,7 +610,7 @@ struct an_rid_stats {
 	u_int32_t		an_uptime_secs;		/* 0x17C */
 	u_int32_t		an_lostsync_better_ap;	/* 0x180 */
 	u_int32_t		an_rsvd[10];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Volatile WEP Key
@@ -621,7 +621,7 @@ struct an_rid_wepkey {
 	u_int8_t		an_mac_addr[6];		/* 0x04 */
 	u_int16_t		an_key_len;		/* 0x0A */
 	u_int8_t		an_key[16];		/* 0x0C */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Persistent WEP Key
@@ -636,7 +636,7 @@ struct an_rid_wepkey {
 struct an_rid_leapkey {
 	u_int16_t		an_key_len;		/* 0x02 */
 	u_int8_t		an_key[32];		/* 0x04 */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * MIC
@@ -648,7 +648,7 @@ struct an_rid_mic {
 	u_int8_t		an_mic_mcast[16];	/* 0x06 */
 	u_int16_t		an_mic_ucast_valid;	/* 0x16 */
 	u_int8_t		an_mic_ucast[16];	/* 0x18 */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Receive frame structure.
@@ -666,7 +666,7 @@ struct an_rxframe {
 	u_int8_t		an_plcp_hdr[4];		/* 0x10 */
 	struct ieee80211_frame_addr4	an_whdr;
 	u_int16_t		an_gaplen;		/* 0x32 */
-} __attribute__((__packed__));
+} __packed;
 #define AN_RXGAP_MAX	8
 
 /*
@@ -686,7 +686,7 @@ struct an_txframe {
 	u_int8_t		an_rsvd0[2];		/* 0x12 */
 	struct ieee80211_frame_addr4	an_whdr;
 	u_int16_t		an_gaplen;		/* 0x32 */
-} __attribute__((__packed__));
+} __packed;
 
 #define	AN_TXGAP_802_3	0
 #define	AN_TXGAP_802_11	6
@@ -696,7 +696,7 @@ struct an_802_3_hdr {
 	u_int16_t		an_802_3_payload_len;
 	u_int8_t		an_dst_addr[6];
 	u_int8_t		an_src_addr[6];
-} __attribute__((__packed__));
+} __packed;
 
 #define AN_TXSTAT_EXCESS_RETRY	0x0002
 #define AN_TXSTAT_LIFE_EXCEEDED	0x0004
