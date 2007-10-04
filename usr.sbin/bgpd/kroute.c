@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.154 2007/05/11 11:27:59 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.155 2007/10/04 11:43:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -236,6 +236,10 @@ kr_change(struct kroute_label *kl)
 		rtlabel_unref(kr->r.labelid);
 	kl->kr.labelid = rtlabel_name2id(kl->label);
 
+	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
+	if (kl->kr.flags & (F_BLACKHOLE|F_REJECT))
+		kl->kr.nexthop.s_addr = htonl(INADDR_LOOPBACK);
+
 	if (send_rtmsg(kr_state.fd, action, &kl->kr) == -1)
 		return (-1);
 
@@ -301,6 +305,7 @@ kr6_change(struct kroute6_label *kl)
 {
 	struct kroute6_node	*kr6;
 	int			 action = RTM_ADD;
+	struct in6_addr		 lo6 = IN6ADDR_LOOPBACK_INIT;
 
 	if ((kr6 = kroute6_find(&kl->kr.prefix, kl->kr.prefixlen)) != NULL) {
 		if (kr6->r.flags & F_BGPD_INSERTED)
@@ -316,6 +321,10 @@ kr6_change(struct kroute6_label *kl)
 	if (kr6)
 		rtlabel_unref(kr6->r.labelid);
 	kl->kr.labelid = rtlabel_name2id(kl->label);
+
+	/* for blackhole and reject routes nexthop needs to be ::1 */
+	if (kl->kr.flags & (F_BLACKHOLE|F_REJECT))
+		bcopy(&lo6, &kl->kr.nexthop, sizeof(kl->kr.nexthop));
 
 	if (send_rt6msg(kr_state.fd, action, &kl->kr) == -1)
 		return (-1);
