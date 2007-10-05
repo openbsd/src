@@ -1,8 +1,16 @@
 # 1 "skip001.c"
-# 1 "<built-in>"
-# 1 "<command line>"
+
+
+
+
+
+
+
+
 # 1 "skip001.c"
 
-# 1 "subdir/include.h" 1
+
+# 1 "subdir/include.h"
 line from include.h
-# 3 "skip001.c" 2
+# 3 "skip001.c"
+
