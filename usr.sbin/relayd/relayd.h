@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.65 2007/10/02 21:04:13 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.66 2007/10/05 15:50:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -148,7 +148,7 @@ enum imsg_type {
 };
 
 struct imsg_hdr {
-	enum imsg_type	 type;
+	u_int16_t	 type;
 	u_int16_t	 len;
 	u_int32_t	 peerid;
 	pid_t		 pid;
