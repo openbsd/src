@@ -12,6 +12,8 @@ int main()
 {
 	int b = 0;
 	a() + ++b;
-	printf("%d\n", b);
-	return 0;
+	if (b == 1)
+		exit(0);
+	else
+		exit(1);
 }
