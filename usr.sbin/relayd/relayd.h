@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.66 2007/10/05 15:50:12 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.67 2007/10/05 17:32:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -524,12 +524,8 @@ struct relay_config {
 
 struct relay {
 	TAILQ_ENTRY(relay)	 entry;
-	char			*ssl_cert;
-	off_t			 ssl_cert_len;
-	char			*ssl_key;
-	off_t			 ssl_key_len;
-
 	struct relay_config	 conf;
+
 	int			 up;
 	struct protocol		*proto;
 	int			 s;
@@ -544,7 +540,12 @@ struct relay {
 	int			 dstnhosts;
 
 	struct event		 ev;
-	SSL_CTX			*ctx;
+
+	SSL_CTX			*ssl_ctx;
+	char			*ssl_cert;
+	off_t			 ssl_cert_len;
+	char			*ssl_key;
+	off_t			 ssl_key_len;
 
 	struct ctl_stats	 stats[RELAY_MAXPROC + 1];
 
