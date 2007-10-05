@@ -1,4 +1,4 @@
-# 1 "skip001.c"
+# 1 "/usr/src/regress/usr.bin/pcc/cc/cpp/skip001.c"
 
 
 
@@ -7,10 +7,10 @@
 
 
 
-# 1 "skip001.c"
+# 1 "/usr/src/regress/usr.bin/pcc/cc/cpp/skip001.c"
 
 
-# 1 "subdir/include.h"
+# 1 "/usr/src/regress/usr.bin/pcc/cc/cpp/subdir/include.h"
 line from include.h
-# 3 "skip001.c"
+# 3 "/usr/src/regress/usr.bin/pcc/cc/cpp/skip001.c"
 
