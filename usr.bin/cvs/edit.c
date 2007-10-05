@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.38 2007/09/24 22:06:28 joris Exp $	*/
+/*	$OpenBSD: edit.c,v 1.39 2007/10/05 19:28:23 gilles Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -425,7 +425,6 @@ cvs_base_handle(struct cvs_file *cf, int flags)
 {
 	FILE *fp, *tfp;
 	RCSNUM *ba_rev;
-	size_t len;
 	int i;
 	char *dp, *sp;
 	char buf[MAXPATHLEN], *fields[2], rbuf[CVS_REV_BUFSZ];
@@ -449,9 +448,7 @@ cvs_base_handle(struct cvs_file *cf, int flags)
 
 	if (fp != NULL) {
 		while(fgets(buf, sizeof(buf), fp)) {
-			len = strlen(buf);
-			if (len > 0 && buf[len - 1] == '\n')
-				buf[len - 1] = '\0';
+			buf[strcspn(buf, "\n")] = '\0';
 
 			if (buf[0] != 'B')
 				continue;

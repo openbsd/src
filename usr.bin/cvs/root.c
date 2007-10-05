@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.43 2007/09/10 19:11:08 joris Exp $	*/
+/*	$OpenBSD: root.c,v 1.44 2007/10/05 19:28:23 gilles Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -165,7 +165,6 @@ cvsroot_parse(const char *str)
 struct cvsroot *
 cvsroot_get(const char *dir)
 {
-	size_t len;
 	char rootpath[MAXPATHLEN], *rootstr, line[128];
 	FILE *fp;
 
@@ -195,11 +194,9 @@ cvsroot_get(const char *dir)
 
 	(void)fclose(fp);
 
-	len = strlen(line);
-	if (len == 0)
+	line[strcspn(line, "\n")] = '\0';
+	if (line[0] == '\0')
 		cvs_log(LP_ERR, "empty %s file", CVS_PATH_ROOTSPEC);
-	else if (line[len - 1] == '\n')
-		line[--len] = '\0';
 
 	return cvsroot_parse(line);
 }

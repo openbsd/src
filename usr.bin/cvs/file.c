@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.202 2007/09/24 13:44:20 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.203 2007/10/05 19:28:23 gilles Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -83,7 +83,6 @@ cvs_file_init(void)
 {
 	int i;
 	FILE *ifp;
-	size_t len;
 	char path[MAXPATHLEN], buf[MAXNAMLEN];
 
 	TAILQ_INIT(&cvs_ign_pats);
@@ -106,11 +105,9 @@ cvs_file_init(void)
 			    "failed to open user's cvsignore file `%s'", path);
 	} else {
 		while (fgets(buf, MAXNAMLEN, ifp) != NULL) {
-			len = strlen(buf);
-			if (len == 0)
+			buf[strcspn(buf, "\n")] = '\0';
+			if (buf[0] == '\0')
 				continue;
-			if (buf[len - 1] == '\n')
-				buf[len - 1] = '\0';
 
 			cvs_file_ignore(buf, &cvs_ign_pats);
 		}
@@ -351,7 +348,6 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	int l, type;
 	FILE *fp;
 	int nbytes;
-	size_t len;
 	long base;
 	size_t bufsize;
 	struct stat st;
@@ -396,11 +392,9 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 
 	if ((fp = fopen(fpath, "r")) != NULL) {
 		while (fgets(fpath, MAXPATHLEN, fp) != NULL) {
-			len = strlen(fpath);
-			if (len == 0)
+			fpath[strcspn(fpath, "\n")] = '\0';
+			if (fpath[0] == '\0')
 				continue;
-			if (fpath[len - 1] == '\n')
-				fpath[len - 1] = '\0';
 
 			cvs_file_ignore(fpath, &dir_ign_pats);
 		}
@@ -439,7 +433,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
-			len = xsnprintf(fpath, MAXPATHLEN, "%s/%s",
+			(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s",
 			    cf->file_path, dp->d_name);
 
 			/*

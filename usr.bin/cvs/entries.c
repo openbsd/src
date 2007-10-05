@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.83 2007/09/25 11:10:28 chl Exp $	*/
+/*	$OpenBSD: entries.c,v 1.84 2007/10/05 19:28:23 gilles Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -32,7 +32,6 @@ CVSENTRIES *
 cvs_ent_open(const char *dir)
 {
 	FILE *fp;
-	size_t len;
 	CVSENTRIES *ep;
 	char *p, buf[MAXPATHLEN];
 	struct cvs_ent *ent;
@@ -58,9 +57,7 @@ cvs_ent_open(const char *dir)
 
 	if ((fp = fopen(ep->cef_path, "r")) != NULL) {
 		while (fgets(buf, sizeof(buf), fp)) {
-			len = strlen(buf);
-			if (len > 0 && buf[len - 1] == '\n')
-				buf[len - 1] = '\0';
+			buf[strcspn(buf, "\n")] = '\0';
 
 			if (buf[0] == 'D' && buf[1] == '\0')
 				break;
@@ -75,9 +72,7 @@ cvs_ent_open(const char *dir)
 
 	if ((fp = fopen(ep->cef_lpath, "r")) != NULL) {
 		while (fgets(buf, sizeof(buf), fp)) {
-			len = strlen(buf);
-			if (len > 0 && buf[len - 1] == '\n')
-				buf[len - 1] = '\0';
+			buf[strcspn(buf, "\n")] = '\0';
 
 			p = &buf[1];
 
