@@ -2,7 +2,7 @@
  * learn, from V7 UNIX: one of the earliest Computer Based Training (CBT)
  * programs still in existence.
  *
- * $OpenBSD: learn.c,v 1.10 2003/11/09 20:13:57 otto Exp $
+ * $OpenBSD: learn.c,v 1.11 2007/10/05 14:19:05 chl Exp $
  */
 
 /****************************************************************
@@ -298,10 +298,7 @@ pgets(char *s, int len, int prompt, FILE *f)
 void
 trim(char *s)
 {
-	while (*s)
-		s++;
-	if (*--s == '\n')
-		*s=0;
+	s[strcspn(s, "\n")] = '\0';
 }
 
 scopy(fi, fo)	/* copy fi to fo until a line with # */
@@ -409,7 +406,8 @@ retry:
 			wrong > 1 ? "still " : "");
 		fflush(stdout);
 		for(;;) {
-			fgets(tbuff, sizeof tbuff, stdin);
+			if (fgets(tbuff, sizeof tbuff, stdin) == NULL)
+				errx(1, "could not read input");
 			trim(tbuff);
 			if (tbuff[0] == 'y') {
 				printf("Try the problem again.\n");
@@ -767,14 +765,16 @@ char *argv[];
 		printf("type 'return'; otherwise type the name of\n");
 		printf("the course you want, followed by 'return'.\n");
 		fflush(stdout);
-		fgets(sname=subname, sizeof subname, stdin);
+		if (fgets(sname=subname, sizeof subname, stdin) == NULL)
+			errx(1, "could not read input");
 		trim(sname);
 		if (sname[0] == '\0') {
 			list("Xinfo");
 			do {
 				printf("\nWhich subject?  ");
 				fflush(stdout);
-				fgets(sname=subname, sizeof subname, stdin);
+				if (fgets(sname=subname, sizeof subname, stdin) == NULL)
+					errx(1, "could not read input");
 				trim(sname);
 			} while (sname[0] == '\0');
 		}
@@ -786,7 +786,8 @@ char *argv[];
 		printf("the last lesson number the computer printed.\n");
 		printf("To start at the beginning, just hit return.\n");
 		fflush(stdout);
-		fgets(ans2, sizeof ans2, stdin);
+		if (fgets(ans2, sizeof ans2, stdin) == NULL)
+			errx(1, "could not read input");
 		trim(ans2);
 		if (ans2[0]==0)
 			strlcpy(ans2,"0", sizeof ans2);
@@ -844,7 +845,8 @@ selunit()
 	while (ask) {
 		printf("What lesson? ");
 		fflush(stdout);
-		fgets(dobuff, sizeof dobuff, stdin);
+		if (fgets(dobuff, sizeof dobuff, stdin) == NULL)
+			errx(1, "could not read input");
 		trim(dobuff);
 		if (strcmp(dobuff, "bye") == 0)
 			wrapup(0);
@@ -865,7 +867,7 @@ retry:
 			err(1, "%s", fnam);
 			wrapup(1);
 		}
-		while (fgets(zb, 200, f)) {
+		while (fgets(zb, sizeof zb, f)) {
 			trim(zb);
 			if (strcmp(zb, "#next")==0)
 				break;
