@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.48 2007/10/01 13:57:29 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.49 2007/10/05 15:46:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -407,7 +407,8 @@ relay_init(void)
 	struct timeval	 tv;
 
 	TAILQ_FOREACH(rlay, &env->relays, entry) {
-		if ((rlay->ctx = relay_ssl_ctx_create(rlay)) == NULL)
+		if ((rlay->conf.flags & F_SSL) &&
+		    (rlay->ctx = relay_ssl_ctx_create(rlay)) == NULL)
 			fatal("relay_init: failed to create SSL context");
 
 		if (rlay->dsttable != NULL) {
