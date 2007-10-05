@@ -1,4 +1,4 @@
-/*	$OpenBSD: anreg.h,v 1.11 2007/10/04 19:33:11 gilles Exp $	*/
+/*	$OpenBSD: anreg.h,v 1.12 2007/10/05 23:23:55 jsg Exp $	*/
 /*	$NetBSD: anreg.h,v 1.11 2005/01/15 11:01:46 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -330,7 +330,7 @@ struct an_rid_ssidlist {
 	struct an_rid_ssid_entry {
 		u_int16_t	an_ssid_len;
 		char		an_ssid[32];
-	} __attribute__((__packed__)) an_entry[3];	/* 25 for fwver.5 */
+	} __packed an_entry[3];	/* 25 for fwver.5 */
 } __packed;
 
 /*
