@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.15 2007/07/23 17:28:25 kettenis Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.16 2007/10/05 16:46:30 thib Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -166,21 +166,19 @@ ufsdirhash_build(struct inode *ip)
 	 * Use non-blocking mallocs so that we will revert to a linear
 	 * lookup on failure rather than potentially blocking forever.
 	 */
-	MALLOC(dh, struct dirhash *, sizeof *dh, M_DIRHASH, M_NOWAIT);
+	dh = malloc(sizeof(*dh), M_DIRHASH, M_NOWAIT|M_ZERO);
 	if (dh == NULL) {
 		DIRHASHLIST_LOCK();
 		ufs_dirhashmem -= memreqd;
 		DIRHASHLIST_UNLOCK();
 		return (-1);
 	}
-	memset(dh, 0, sizeof *dh);
 	dh->dh_hash = malloc(narrays * sizeof(dh->dh_hash[0]),
-	    M_DIRHASH, M_NOWAIT);
+	    M_DIRHASH, M_NOWAIT|M_ZERO);
 	dh->dh_blkfree = malloc(nblocks * sizeof(dh->dh_blkfree[0]),
 	    M_DIRHASH, M_NOWAIT);
 	if (dh->dh_hash == NULL || dh->dh_blkfree == NULL)
 		goto fail;
-	memset(dh->dh_hash, 0, narrays * sizeof(dh->dh_hash[0]));
 	for (i = 0; i < narrays; i++) {
 		if ((dh->dh_hash[i] = DIRHASH_BLKALLOC()) == NULL)
 			goto fail;
@@ -251,7 +249,7 @@ fail:
 	}
 	if (dh->dh_blkfree != NULL)
 		free(dh->dh_blkfree, M_DIRHASH);
-	FREE(dh, M_DIRHASH);
+	free(dh, M_DIRHASH);
 	ip->i_dirhash = NULL;
 	DIRHASHLIST_LOCK();
 	ufs_dirhashmem -= memreqd;
@@ -289,7 +287,7 @@ ufsdirhash_free(struct inode *ip)
 		    dh->dh_narrays * DH_NBLKOFF * sizeof(**dh->dh_hash) +
 		    dh->dh_nblk * sizeof(*dh->dh_blkfree);
 	}
-	FREE(dh, M_DIRHASH);
+	free(dh, M_DIRHASH);
 	ip->i_dirhash = NULL;
 
 	DIRHASHLIST_LOCK();
