@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.8 2007/09/29 15:19:13 otto Exp $	*/
+/*	$OpenBSD: init.c,v 1.9 2007/10/05 12:48:29 otto Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -185,16 +185,19 @@ getll(void)
 /*
  * Return structure containing off bitnumber.
  * Allocate more entries, if needed.
- * This is not bright implemented.
  */
 static struct llist *
 setll(OFFSZ off)
 {
-	struct llist *ll;
+	struct llist *ll = NULL;
 
 	/* Ensure that we have enough entries */
 	while (off >= basesz * numents)
-		(void)getll();
+		 ll = getll();
+
+	if (ll != NULL && ll->begsz <= off && ll->begsz + basesz > off)
+		return ll;
+
 	SLIST_FOREACH(ll, &lpole, next)
 		if (ll->begsz <= off && ll->begsz + basesz > off)
 			break;
