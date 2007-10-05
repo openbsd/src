@@ -1,4 +1,4 @@
-/* should not issue: darray001.c, line 5: compiler error: bad conversion */
+/* should not issue: darray001.c, line 6: compiler error: bad conversion */
 /* From TAKAHASHI Tamotsu */
 int main(void) {
         int n=1;
