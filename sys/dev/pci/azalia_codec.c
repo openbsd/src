@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.37 2007/09/26 06:00:27 deanna Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.38 2007/10/05 03:33:23 deanna Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ int	azalia_stac9221_apple_init_dacgroup(codec_t *);
 int	azalia_stac9221_apple_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_stac9221_apple_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_stac9221_apple_unsol_event(codec_t *, int);
-int	azalia_stac9221_gpio_unmute(codec_t *, int);
+int	azalia_gpio_unmute(codec_t *, int);
 int	azalia_stac7661_init_dacgroup(codec_t *);
 int	azalia_stac7661_mixer_init(codec_t *);
 int	azalia_stac7661_set_port(codec_t *, mixer_ctrl_t *);
@@ -182,10 +182,11 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->init_dacgroup = azalia_cmi9880_init_dacgroup;
 		this->mixer_init = azalia_cmi9880_mixer_init;
 		break;
+#define STAC9221_APPLE_ID 0x76808384
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
 		this->init_dacgroup = azalia_stac9221_init_dacgroup;
-		if (this->subid == 0x76808384) {
+		if (this->subid == STAC9221_APPLE_ID) {
 			this->init_dacgroup =
 			    azalia_stac9221_apple_init_dacgroup;
 			this->mixer_init =
@@ -2136,6 +2137,7 @@ static const mixer_item_t alc883_mixer_items[] = {
 int
 azalia_alc883_mixer_init(codec_t *this)
 {
+#define ALC883_ACER_ID	0x00981025
 	mixer_ctrl_t mc;
 
 	this->nmixers = sizeof(alc883_mixer_items) / sizeof(mixer_item_t);
@@ -2150,6 +2152,10 @@ azalia_alc883_mixer_init(codec_t *this)
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
 
+	if (this->subid == ALC883_ACER_ID) {
+		azalia_gpio_unmute(this, 0);
+		azalia_gpio_unmute(this, 1);
+	}
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
 	mc.un.ord = 1;		/* pindir: output */
@@ -2699,8 +2705,8 @@ azalia_stac9221_apple_mixer_init(codec_t *this)
 	azalia_generic_mixer_set(this, 0x0d, MI_TARGET_PINDIR, &mc); /* line out */
 	azalia_generic_mixer_set(this, 0x0f, MI_TARGET_PINDIR, &mc); /* another line out */
 
-	azalia_stac9221_gpio_unmute(this, 0);
-	azalia_stac9221_gpio_unmute(this, 1);
+	azalia_gpio_unmute(this, 0);
+	azalia_gpio_unmute(this, 1);
 
 #define APPLE_EVENT_HP         1
 #define APPLE_NID_HP           0x0a
@@ -2793,7 +2799,7 @@ azalia_stac9221_apple_unsol_event(codec_t *this, int tag)
 }
 
 int
-azalia_stac9221_gpio_unmute(codec_t *this, int pin)
+azalia_gpio_unmute(codec_t *this, int pin)
 {
 	uint32_t data, mask, dir;
 
@@ -2805,7 +2811,9 @@ azalia_stac9221_gpio_unmute(codec_t *this, int pin)
 	mask |= 1 << pin;
 	dir |= 1 << pin;
 
-	this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
+	if (this->subid == STAC9221_APPLE_ID)
+		this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
+
 	this->comresp(this, this->audiofunc, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
 	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DIRECTION, dir, NULL);
 	DELAY(1000);
