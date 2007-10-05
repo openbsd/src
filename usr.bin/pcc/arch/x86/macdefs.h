@@ -1,4 +1,4 @@
-/*	$OpenBSD: macdefs.h,v 1.2 2007/09/15 22:04:38 ray Exp $	*/
+/*	$OpenBSD: macdefs.h,v 1.3 2007/10/05 15:58:23 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -77,7 +77,7 @@
 #define	MIN_SHORT	-32768
 #define	MAX_SHORT	32767
 #define	MAX_USHORT	65535
-#define	MIN_INT		-1
+#define	MIN_INT		(-0x7fffffff-1)
 #define	MAX_INT		0x7fffffff
 #define	MAX_UNSIGNED	0xffffffff
 #define	MIN_LONG	MIN_INT
