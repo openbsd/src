@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephyreg.h,v 1.5 2006/11/28 18:29:29 brad Exp $	*/
+/*	$OpenBSD: eephyreg.h,v 1.6 2007/10/05 10:26:27 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -313,8 +313,11 @@
 
 /* The following register is found only on the 88E1011 Alaska PHY */
 #define E1000_ESSR			0x1B	/* Extended PHY specific sts */
+#define E1000_ESSR_DIS_FC		0x8000
 #define E1000_ESSR_FIBER_LINK		0x2000
+#define E1000_ESSR_HWCFG_MODE		0x000f
 #define E1000_ESSR_GMII_COPPER		0x000f
 #define E1000_ESSR_GMII_FIBER		0x0007
 #define E1000_ESSR_TBI_COPPER		0x000d
 #define E1000_ESSR_TBI_FIBER		0x0005
+#define E1000_ESSR_RGMII_COPPER		0x000b

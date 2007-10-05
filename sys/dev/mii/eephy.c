@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.40 2007/02/11 21:29:24 kettenis Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.41 2007/10/05 10:26:27 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -147,6 +147,26 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX No loopback support yet, although the hardware can do it. */
 	sc->mii_flags |= MIIF_NOLOOP;
+
+	/* Switch to copper-only mode if necessary. */
+	if (sc->mii_model == MII_MODEL_MARVELL_E1111 &&
+	    (sc->mii_flags & MIIF_HAVEFIBER) == 0) {
+		/*
+		 * The onboard 88E1111 PHYs on the Sun X4100 M2 come
+		 * up with fiber/copper auto-selection enabled, even
+		 * though the machine only has copper ports.  This
+		 * makes the chip autoselect to 1000baseX, and makes
+		 * it impossible to select any other media.  So
+		 * disable fiber/copper autoselection.
+		 */
+		reg = PHY_READ(sc, E1000_ESSR);
+		if ((reg & E1000_ESSR_HWCFG_MODE) == E1000_ESSR_GMII_COPPER) {
+			reg |= E1000_ESSR_DIS_FC;
+			PHY_WRITE(sc, E1000_ESSR, reg);
+
+			PHY_RESET(sc);
+		}
+	}
 
 	/* Switch to fiber-only mode if necessary. */
 	if (sc->mii_model == MII_MODEL_MARVELL_E1112 &&
