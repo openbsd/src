@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.8 2007/04/18 21:08:35 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.9 2007/10/06 14:50:22 jsg Exp $	*/
 
 /*
  *
@@ -1188,7 +1188,7 @@ cas_rint(struct cas_softc *sc)
 				 */
 				if (ifp->if_bpf)
 					bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 				ifp->if_ipackets++;
 				ether_input_mbuf(ifp, m);
@@ -1225,7 +1225,7 @@ cas_rint(struct cas_softc *sc)
 				 */
 				if (ifp->if_bpf)
 					bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 				ifp->if_ipackets++;
 				ether_input_mbuf(ifp, m);
