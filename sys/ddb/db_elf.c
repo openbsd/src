@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.7 2006/03/13 06:23:20 jsg Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.8 2007/10/06 19:49:52 kettenis Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	char *errstr = "";
 
 	if (ALIGNED_POINTER(symtab, long) == 0) {
-		printf("[ %s symbol table has bad start address %p ]\n",
+		db_printf("[ %s symbol table has bad start address %p ]\n",
 		    name, symtab);
 		return (FALSE);
 	}
@@ -211,7 +211,7 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	 */
 	if (db_add_symbol_table((char *)symtab_start,
 	    (char *)symtab_end, name, (char *)symtab) != -1) {
-		printf("[ using %lu bytes of %s ELF symbol table ]\n",
+		db_printf("[ using %lu bytes of %s ELF symbol table ]\n",
 		    (u_long)roundup(((char *)esymtab - (char *)symtab), 
 				    sizeof(u_long)), name);
 		return (TRUE);
@@ -220,7 +220,7 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	return (FALSE);
 
  badheader:
-	printf("[ %s ELF symbol table not valid: %s ]\n", name, errstr);
+	db_printf("[ %s ELF symbol table not valid: %s ]\n", name, errstr);
 	return (FALSE);
 }
 
