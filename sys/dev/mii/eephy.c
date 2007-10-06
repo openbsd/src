@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.41 2007/10/05 10:26:27 kettenis Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.42 2007/10/06 12:32:09 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -160,7 +160,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 		 * disable fiber/copper autoselection.
 		 */
 		reg = PHY_READ(sc, E1000_ESSR);
-		if ((reg & E1000_ESSR_HWCFG_MODE) == E1000_ESSR_GMII_COPPER) {
+		if ((reg & E1000_ESSR_HWCFG_MODE) == E1000_ESSR_RGMII_COPPER) {
 			reg |= E1000_ESSR_DIS_FC;
 			PHY_WRITE(sc, E1000_ESSR, reg);
 
