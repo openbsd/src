@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.c,v 1.4 2007/10/05 15:58:23 ragge Exp $	*/
+/*	$OpenBSD: local.c,v 1.5 2007/10/06 13:17:44 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -45,6 +45,7 @@ toolarge(TWORD t, CONSZ con)
 #define	UCHK(i)	case i: if (ucon > MAX_##i) return 1; break
 	SCHK(INT);
 	SCHK(SHORT);
+	case BOOL:
 	SCHK(CHAR);
 	UCHK(UNSIGNED);
 	UCHK(USHORT);
