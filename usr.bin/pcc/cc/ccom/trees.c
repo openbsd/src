@@ -1,4 +1,4 @@
-/*	$Id: trees.c,v 1.5 2007/10/04 19:31:40 otto Exp $	*/
+/*	$Id: trees.c,v 1.6 2007/10/06 14:34:45 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1610,6 +1610,9 @@ doszof(NODE *p)
 	union dimfun *df;
 	TWORD ty;
 	NODE *rv;
+
+	if (p->n_op == FLD)
+		uerror("can't apply sizeof to bit-field");
 
 	/*
 	 * Arrays may be dynamic, may need to make computations.
