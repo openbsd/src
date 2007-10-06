@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.38 2007/10/03 10:52:11 krw Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.39 2007/10/06 02:18:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -294,11 +294,11 @@ wihap_shutdown(struct wi_softc *sc)
 	    sta != TAILQ_END(&whi->sta_list); sta = next) {
 		timeout_del(&sta->tmo);
 		if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
-			printf("wihap_shutdown: FREE(sta=%p)\n", sta);
+			printf("wihap_shutdown: free(sta=%p)\n", sta);
 		next = TAILQ_NEXT(sta, list);
 		if (sta->challenge)
 			FREE(sta->challenge, M_TEMP);
-		FREE(sta, M_DEVBUF);
+		free(sta, M_DEVBUF);
 	}
 	TAILQ_INIT(&whi->sta_list);
 
@@ -444,7 +444,7 @@ wihap_sta_delete(struct wihap_sta_info *sta)
 	LIST_REMOVE(sta, hash);
 	if (sta->challenge)
 		FREE(sta->challenge, M_TEMP);
-	FREE(sta, M_DEVBUF);
+	free(sta, M_DEVBUF);
 	whi->n_stations--;
 }
 

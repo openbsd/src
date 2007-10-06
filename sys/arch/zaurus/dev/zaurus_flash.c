@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.5 2007/10/03 10:52:11 krw Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.6 2007/10/06 02:18:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -749,7 +749,7 @@ zflash_safe_stop(struct zflash_softc *sc, dev_t dev)
 	sp = sc->sc_safe[part];
 	free(sp->sp_phyuse, M_DEVBUF);
 	free(sp->sp_logmap, M_DEVBUF);
-	FREE(sp, M_DEVBUF);
+	free(sp, M_DEVBUF);
 	sc->sc_safe[part] = NULL;
 }
 

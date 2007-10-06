@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.24 2007/10/03 10:52:11 krw Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.25 2007/10/06 02:18:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -393,7 +393,7 @@ bail:
 		free(ump->um_hashtbl, M_UDFMOUNT);
 
 	if (ump != NULL) {
-		FREE(ump, M_UDFMOUNT);
+		free(ump, M_UDFMOUNT);
 		mp->mnt_data = NULL;
 		mp->mnt_flag &= ~MNT_LOCAL;
 	}
@@ -439,7 +439,7 @@ udf_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if (ump->um_hashtbl != NULL)
 		free(ump->um_hashtbl, M_UDFMOUNT);
 
-	FREE(ump, M_UDFMOUNT);
+	free(ump, M_UDFMOUNT);
 
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.65 2007/10/03 10:52:11 krw Exp $	*/
+/*	$OpenBSD: vs.c,v 1.66 2007/10/06 02:18:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -973,7 +973,7 @@ vs_dealloc_scatter_gather(M328_SG sg)
 			vs_dealloc_scatter_gather(sg->down[i]);
 		}
 	}
-	FREE(sg, M_DEVBUF);
+	free(sg, M_DEVBUF);
 }
 
 void

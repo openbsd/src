@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.12 2007/10/03 10:52:11 krw Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.13 2007/10/06 02:18:39 krw Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -513,7 +513,7 @@ ntfs_ntput(
 	}
 
 	vrele(ip->i_devvp);
-	FREE(ip, M_NTFSNTNODE);
+	free(ip, M_NTFSNTNODE);
 }
 
 /*
@@ -563,7 +563,7 @@ ntfs_freentvattr(vap)
 		if (vap->va_datap)
 			free(vap->va_datap, M_NTFSRDATA);
 	}
-	FREE(vap, M_NTFSNTVATTR);
+	free(vap, M_NTFSNTVATTR);
 }
 
 /*
@@ -626,7 +626,7 @@ ntfs_attrtontvattr(
 	ddprintf((", len: %d", vap->va_datalen));
 
 	if (error)
-		FREE(vap, M_NTFSNTVATTR);
+		free(vap, M_NTFSNTVATTR);
 	else
 		*rvapp = vap;
 
@@ -826,7 +826,7 @@ ntfs_frele(
 		FREE(fp->f_attrname, M_TEMP);
 	if (fp->f_dirblbuf)
 		FREE(fp->f_dirblbuf, M_NTFSDIR);
-	FREE(fp, M_NTFSFNODE);
+	free(fp, M_NTFSFNODE);
 	ntfs_ntrele(ip);
 }
 

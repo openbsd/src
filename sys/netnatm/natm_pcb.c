@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm_pcb.c,v 1.8 2007/10/03 10:52:11 krw Exp $	*/
+/*	$OpenBSD: natm_pcb.c,v 1.9 2007/10/06 02:18:39 krw Exp $	*/
 
 /*
  *
@@ -94,7 +94,7 @@ int op;
     if (npcb->npcb_inq) {
       npcb->npcb_flags = NPCB_DRAIN;	/* flag for distruction */
     } else {
-      FREE(npcb, M_PCB);		/* kill it! */
+      free(npcb, M_PCB);		/* kill it! */
     }
   }
 

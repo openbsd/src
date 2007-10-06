@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.101 2007/10/03 10:52:11 krw Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.102 2007/10/06 02:18:38 krw Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -511,7 +511,7 @@ esp_input_cb(void *op)
 	m = (struct mbuf *) crp->crp_buf;
 	if (m == NULL) {
 		/* Shouldn't happen... */
-		FREE(tc, M_XDATA);
+		free(tc, M_XDATA);
 		crypto_freereq(crp);
 		espstat.esps_crypto++;
 		DPRINTF(("esp_input_cb(): bogus returned buffer from crypto\n"));
@@ -522,7 +522,7 @@ esp_input_cb(void *op)
 
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
-		FREE(tc, M_XDATA);
+		free(tc, M_XDATA);
 		espstat.esps_notdb++;
 		DPRINTF(("esp_input_cb(): TDB is expired while in crypto"));
 		error = EPERM;
@@ -540,7 +540,7 @@ esp_input_cb(void *op)
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-		FREE(tc, M_XDATA);
+		free(tc, M_XDATA);
 		espstat.esps_noxform++;
 		DPRINTF(("esp_input_cb(): crypto error %d\n", crp->crp_etype));
 		error = crp->crp_etype;
@@ -562,7 +562,7 @@ esp_input_cb(void *op)
 
 			/* Verify authenticator */
 			if (bcmp(ptr, aalg, esph->authsize)) {
-				FREE(tc, M_XDATA);
+				free(tc, M_XDATA);
 				DPRINTF(("esp_input_cb(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 				espstat.esps_badauth++;
 				error = EACCES;
@@ -573,7 +573,7 @@ esp_input_cb(void *op)
 		/* Remove trailing authenticator */
 		m_adj(m, -(esph->authsize));
 	}
-	FREE(tc, M_XDATA);
+	free(tc, M_XDATA);
 
 	/* Replay window checking, if appropriate */
 	if ((tdb->tdb_wnd > 0) && (!(tdb->tdb_flags & TDBF_NOREPLAY))) {
@@ -1014,7 +1014,7 @@ esp_output_cb(void *op)
 	m = (struct mbuf *) crp->crp_buf;
 	if (m == NULL) {
 		/* Shouldn't happen... */
-		FREE(tc, M_XDATA);
+		free(tc, M_XDATA);
 		crypto_freereq(crp);
 		espstat.esps_crypto++;
 		DPRINTF(("esp_output_cb(): bogus returned buffer from "
@@ -1027,7 +1027,7 @@ esp_output_cb(void *op)
 
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
 	if (tdb == NULL) {
-		FREE(tc, M_XDATA);
+		free(tc, M_XDATA);
 		espstat.esps_notdb++;
 		DPRINTF(("esp_output_cb(): TDB is expired while in crypto\n"));
 		error = EPERM;
@@ -1043,14 +1043,14 @@ esp_output_cb(void *op)
 			splx(s);
 			return crypto_dispatch(crp);
 		}
-		FREE(tc, M_XDATA);
+		free(tc, M_XDATA);
 		espstat.esps_noxform++;
 		DPRINTF(("esp_output_cb(): crypto error %d\n",
 		    crp->crp_etype));
 		error = crp->crp_etype;
 		goto baddone;
 	}
-	FREE(tc, M_XDATA);
+	free(tc, M_XDATA);
 
 	/* Release crypto descriptors. */
 	crypto_freereq(crp);
