@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.52 2007/06/20 18:15:45 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.53 2007/10/06 14:25:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -243,7 +243,7 @@ done:
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 {
-	int error = EIO, partoff = -1, cyl = 0;
+	int error = EIO, partoff = -1;
 	struct disklabel *dlp;
 	struct buf *bp = NULL;
 
