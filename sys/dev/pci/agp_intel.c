@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.4 2007/08/04 19:40:25 reyk Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.5 2007/10/06 23:50:54 krw Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -82,12 +82,11 @@ agp_intel_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 	struct agp_gatt *gatt;
 	pcireg_t reg;
 
-	isc = malloc(sizeof *isc, M_DEVBUF, M_NOWAIT);
+	isc = malloc(sizeof *isc, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (isc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
 		return (ENOMEM);
 	}
-	memset(isc, 0, sizeof *isc);
 
 	sc->sc_methods = &agp_intel_methods;
 	sc->sc_chipc = isc;

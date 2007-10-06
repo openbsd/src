@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.16 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.17 2007/10/06 23:50:54 krw Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -116,12 +116,11 @@ agp_i810_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 	int error;
 	u_int memtype = 0;
 
-	isc = malloc(sizeof *isc, M_DEVBUF, M_NOWAIT);
+	isc = malloc(sizeof *isc, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (isc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
 		return (ENOMEM);
 	}
-	memset(isc, 0, sizeof *isc);
 	sc->sc_chipc = isc;
 	sc->sc_methods = &agp_i810_methods;
 	memcpy(&isc->bridge_pa, pchb_pa, sizeof *pchb_pa);

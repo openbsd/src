@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.60 2007/09/11 13:39:34 gilles Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.61 2007/10/06 23:50:55 krw Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -976,10 +976,9 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 		return (USBD_NO_ADDR);
 	}
 
-	dev = malloc(sizeof *dev, M_USB, M_NOWAIT);
+	dev = malloc(sizeof *dev, M_USB, M_NOWAIT | M_ZERO);
 	if (dev == NULL)
 		return (USBD_NOMEM);
-	memset(dev, 0, sizeof *dev);
 
 	dev->bus = bus;
 

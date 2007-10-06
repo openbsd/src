@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.3 2007/08/04 19:40:25 reyk Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.4 2007/10/06 23:50:54 krw Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -80,12 +80,11 @@ agp_via_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
 	struct agp_via_softc *asc;
 	struct agp_gatt *gatt;
 
-	asc = malloc(sizeof *asc, M_DEVBUF, M_NOWAIT);
+	asc = malloc(sizeof *asc, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (asc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
 		return (ENOMEM);
 	}
-	memset(asc, 0, sizeof *asc);
 	sc->sc_chipc = asc;
 	sc->sc_methods = &agp_via_methods;
 

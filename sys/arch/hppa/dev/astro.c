@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.7 2007/07/01 12:53:52 kettenis Exp $	*/
+/*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -589,11 +589,9 @@ iommu_iomap_create(int n)
 		n = 16;
 
 	ims = malloc(sizeof(*ims) + (n - 1) * sizeof(ims->ims_map.ipm_map[0]),
-		M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ims == NULL)
 		return (NULL);
-
-	memset(ims, 0, sizeof *ims);
 
 	/* Initialize the map. */
 	ims->ims_map.ipm_maxpage = n;

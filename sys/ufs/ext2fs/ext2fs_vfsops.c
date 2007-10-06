@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.48 2007/06/17 20:15:25 jasper Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.49 2007/10/06 23:50:55 krw Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -522,10 +522,9 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	error = ext2fs_checksb(fs, ronly);
 	if (error)
 		goto out;
-	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	memset((caddr_t)ump, 0, sizeof *ump);
-	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
-	memset((caddr_t)ump->um_e2fs, 0, sizeof(struct m_ext2fs));
+	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
+	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT,
+	    M_WAITOK | M_ZERO);
 	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
 	brelse(bp);
 	bp = NULL;

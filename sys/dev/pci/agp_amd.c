@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.3 2007/08/04 19:40:25 reyk Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.4 2007/10/06 23:50:54 krw Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 
@@ -162,13 +162,12 @@ agp_amd_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	pcireg_t reg;
 	int error;
 
-	asc = malloc(sizeof *asc, M_DEVBUF, M_NOWAIT);
+	asc = malloc(sizeof *asc, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (asc == NULL) {
 		printf(": can't allocate softc\n");
 		/* agp_generic_detach(sc) */
 		return (ENOMEM);
 	}
-	memset(asc, 0, sizeof *asc);
 
 	error = pci_mapreg_map(pchb_pa, AGP_AMD751_REGISTERS,
 	     PCI_MAPREG_TYPE_MEM,0, &asc->iot, &asc->ioh, NULL, NULL, 0);

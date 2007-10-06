@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.14 2007/09/05 23:36:12 jakemsr Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.15 2007/10/06 23:50:54 krw Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -1041,9 +1041,8 @@ midiseq_open(int unit, int flags)
 		return (0);
 	sc = midi_cd.cd_devs[unit];
 	sc->seqopen = 1;
-	md = malloc(sizeof *md, M_DEVBUF, M_WAITOK);
+	md = malloc(sizeof *md, M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->seq_md = md;
-	memset(md, 0, sizeof *md);
 	md->msc = sc;
 	midi_getinfo(makedev(0, unit), &mi);
 	md->unit = unit;
