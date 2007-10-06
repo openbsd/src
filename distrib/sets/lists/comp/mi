@@ -5831,6 +5831,12 @@
 ./usr/share/man/cat9/ieee80211_watchdog.0
 ./usr/share/man/cat9/ieee80211_wep_crypt.0
 ./usr/share/man/cat9/iic.0
+./usr/share/man/cat9/iic_acquire_bus.0
+./usr/share/man/cat9/iic_exec.0
+./usr/share/man/cat9/iic_release_bus.0
+./usr/share/man/cat9/iic_smbus_read_byte.0
+./usr/share/man/cat9/iic_smbus_receive_byte.0
+./usr/share/man/cat9/iic_smbus_write_byte.0
 ./usr/share/man/cat9/imax.0
 ./usr/share/man/cat9/imin.0
 ./usr/share/man/cat9/incore.0
