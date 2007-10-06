@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.27 2007/09/20 05:48:46 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.28 2007/10/06 06:35:57 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -129,17 +129,19 @@ struct cfdriver ex_cd = {
 	NULL, "ex", DV_IFNET
 };
 
-#define ISA_GET(offset) bus_space_read_1(sc->sc_iot, sc->sc_ioh, (offset))
-#define ISA_PUT(offset, value) bus_space_write_1(sc->sc_iot, sc->sc_ioh, \
- 	(offset), (value))	
-#define ISA_GET_2(offset) bus_space_read_2(sc->sc_iot, sc->sc_ioh, \
-	(offset))
-#define ISA_PUT_2(offset, value) bus_space_write_2(sc->sc_iot, sc->sc_ioh, \
-	(offset), (value))
-#define ISA_GET_2_MULTI(offset, addr, count) bus_space_read_multi_2( \
-	sc->sc_iot, sc->sc_ioh, (offset), (addr), (count))
-#define ISA_PUT_2_MULTI(offset, addr, count) bus_space_write_multi_2( \
-	sc->sc_iot, sc->sc_ioh, (offset), (addr), (count))
+#define CSR_READ_1(sc, off) \
+	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (off))
+#define CSR_READ_2(sc, off) \
+	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (off))
+#define CSR_READ_MULTI_2(sc, off, addr, count) \
+	bus_space_read_multi_2((sc)->sc_iot, (sc)->sc_ioh, (off), (addr), (count))
+
+#define CSR_WRITE_1(sc, off, value) \
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (off), (value))
+#define CSR_WRITE_2(sc, off, value) \
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (off), (value))
+#define CSR_WRITE_MULTI_2(sc, off, addr, count) \
+	bus_space_write_multi_2((sc)->sc_iot, (sc)->sc_ioh, (off), (addr), (count))
 
 int 
 ex_look_for_card(struct isa_attach_args *ia, struct ex_softc *sc)
@@ -150,11 +152,11 @@ ex_look_for_card(struct isa_attach_args *ia, struct ex_softc *sc)
 	 * Check for the i82595 signature, and check that the round robin
 	 * counter actually advances.
 	 */
-	if (((count1 = ISA_GET(ID_REG)) & Id_Mask) != Id_Sig)
+	if (((count1 = CSR_READ_1(sc, ID_REG)) & Id_Mask) != Id_Sig)
 		return(0);
-	count2 = ISA_GET(ID_REG);
-	count2 = ISA_GET(ID_REG);
-	count2 = ISA_GET(ID_REG);
+	count2 = CSR_READ_1(sc, ID_REG);
+	count2 = CSR_READ_1(sc, ID_REG);
+	count2 = CSR_READ_1(sc, ID_REG);
 	if ((count2 & Counter_bits) == ((count1 + 0xc0) & Counter_bits))
 		return(1);
 	else
@@ -189,7 +191,7 @@ ex_probe(struct device *parent, void *match, void *aux)
 	/*
 	 * Reset the card.
 	 */
-	ISA_PUT(CMD_REG, Reset_CMD);
+	CSR_WRITE_1(sc, CMD_REG, Reset_CMD);
 	delay(200);
 
 	/*
@@ -224,8 +226,8 @@ ex_probe(struct device *parent, void *match, void *aux)
 		printf("ex: invalid IRQ.\n");
 		return(0);
 	}
-	ISA_PUT(CMD_REG, Bank2_Sel);
-	tmp = ISA_GET(REG3);
+	CSR_WRITE_1(sc, CMD_REG, Bank2_Sel);
+	tmp = CSR_READ_1(sc, REG3);
 	if (tmp & TPE_bit)
 		sc->connector = Conn_TPE;
 	else if (tmp & BNC_bit)
@@ -235,7 +237,7 @@ ex_probe(struct device *parent, void *match, void *aux)
 	sc->mem_size = CARD_RAM_SIZE;	/* XXX This should be read from the card
 					       itself. */
 
-	ISA_PUT(CMD_REG, Bank0_Sel);
+	CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
 
 	DODEBUG(Start_End, printf("ex_probe: finish\n"););
 	return(1);
@@ -294,12 +296,12 @@ ex_init(struct ex_softc *sc)
 	/*
 	 * Load the ethernet address into the card.
 	 */
-	ISA_PUT(CMD_REG, Bank2_Sel);
-	temp_reg = ISA_GET(EEPROM_REG);
+	CSR_WRITE_1(sc, CMD_REG, Bank2_Sel);
+	temp_reg = CSR_READ_1(sc, EEPROM_REG);
 	if (temp_reg & Trnoff_Enable)
-		ISA_PUT(EEPROM_REG, temp_reg & ~Trnoff_Enable);
+		CSR_WRITE_1(sc, EEPROM_REG, temp_reg & ~Trnoff_Enable);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		ISA_PUT(I_ADDR_REG0 + i, sc->arpcom.ac_enaddr[i]);
+		CSR_WRITE_1(sc, I_ADDR_REG0 + i, sc->arpcom.ac_enaddr[i]);
 	/*
 	 * - Setup transmit chaining and discard bad received frames.
 	 * - Match broadcast.
@@ -307,12 +309,13 @@ ex_init(struct ex_softc *sc)
 	 * - Set receiving mode.
 	 * - Set IRQ number.
 	 */
-	ISA_PUT(REG1, ISA_GET(REG1) | Tx_Chn_Int_Md | Tx_Chn_ErStp | 
-	    Disc_Bad_Fr);
-	ISA_PUT(REG2, ISA_GET(REG2) | No_SA_Ins | RX_CRC_InMem);
-	ISA_PUT(REG3, (ISA_GET(REG3) & 0x3f));
-	ISA_PUT(CMD_REG, Bank1_Sel);
-	ISA_PUT(INT_NO_REG, (ISA_GET(INT_NO_REG) & 0xf8) | 
+	CSR_WRITE_1(sc, REG1, CSR_READ_1(sc, REG1) | Tx_Chn_Int_Md |
+	    Tx_Chn_ErStp | Disc_Bad_Fr);
+	CSR_WRITE_1(sc, REG2, CSR_READ_1(sc, REG2) | No_SA_Ins |
+	    RX_CRC_InMem);
+	CSR_WRITE_1(sc, REG3, (CSR_READ_1(sc, REG3) & 0x3f));
+	CSR_WRITE_1(sc, CMD_REG, Bank1_Sel);
+	CSR_WRITE_1(sc, INT_NO_REG, (CSR_READ_1(sc, INT_NO_REG) & 0xf8) | 
 	    irq2eemap[sc->irq_no]);
 
 	/*
@@ -326,26 +329,26 @@ ex_init(struct ex_softc *sc)
 	sc->rx_upper_limit = sc->rx_mem_size - 2;
 	sc->tx_lower_limit = sc->rx_mem_size;
 	sc->tx_upper_limit = sc->mem_size - 2;
- 	ISA_PUT(RCV_LOWER_LIMIT_REG, sc->rx_lower_limit >> 8);
-        ISA_PUT(RCV_UPPER_LIMIT_REG, sc->rx_upper_limit >> 8);
-        ISA_PUT(XMT_LOWER_LIMIT_REG, sc->tx_lower_limit >> 8);
-	ISA_PUT(XMT_UPPER_LIMIT_REG, sc->tx_upper_limit >> 8);
-	
+ 	CSR_WRITE_1(sc, RCV_LOWER_LIMIT_REG, sc->rx_lower_limit >> 8);
+	CSR_WRITE_1(sc, RCV_UPPER_LIMIT_REG, sc->rx_upper_limit >> 8);
+	CSR_WRITE_1(sc, XMT_LOWER_LIMIT_REG, sc->tx_lower_limit >> 8);
+	CSR_WRITE_1(sc, XMT_UPPER_LIMIT_REG, sc->tx_upper_limit >> 8);
+
 	/*
 	 * Enable receive and transmit interrupts, and clear any pending int.
 	 */
-	ISA_PUT(REG1, ISA_GET(REG1) | TriST_INT);
-	ISA_PUT(CMD_REG, Bank0_Sel);
-	ISA_PUT(MASK_REG, All_Int & ~(Rx_Int | Tx_Int));
-	ISA_PUT(STATUS_REG, All_Int);
+	CSR_WRITE_1(sc, REG1, CSR_READ_1(sc, REG1) | TriST_INT);
+	CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
+	CSR_WRITE_1(sc, MASK_REG, All_Int & ~(Rx_Int | Tx_Int));
+	CSR_WRITE_1(sc, STATUS_REG, All_Int);
 
 	/*
 	 * Initialize receive and transmit ring buffers.
 	 */
-	ISA_PUT_2(RCV_BAR, sc->rx_lower_limit);
+	CSR_WRITE_2(sc, RCV_BAR, sc->rx_lower_limit);
 	sc->rx_head = sc->rx_lower_limit;
-	ISA_PUT_2(RCV_STOP_REG, sc->rx_upper_limit | 0xfe);
-	ISA_PUT_2(XMT_BAR, sc->tx_lower_limit);
+	CSR_WRITE_2(sc, RCV_STOP_REG, sc->rx_upper_limit | 0xfe);
+	CSR_WRITE_2(sc, XMT_BAR, sc->tx_lower_limit);
 	sc->tx_head = sc->tx_tail = sc->tx_lower_limit;
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -355,9 +358,9 @@ ex_init(struct ex_softc *sc)
 	/*
 	 * Final reset of the board, and enable operation.
 	 */
-	ISA_PUT(CMD_REG, Sel_Reset_CMD);
+	CSR_WRITE_1(sc, CMD_REG, Sel_Reset_CMD);
 	delay(2);
-	ISA_PUT(CMD_REG, Rcv_Enable_CMD);
+	CSR_WRITE_1(sc, CMD_REG, Rcv_Enable_CMD);
 
 	ex_start(ifp);
 	splx(s);
@@ -415,7 +418,7 @@ ex_start(struct ifnet *ifp)
 			 * routines. XXX Is this necessary with splnet() 
 			 * enabled?
 			 */
-			ISA_WRITE(MASK_REG, All_Int);
+			CSR_WRITE_2(sc, MASK_REG, All_Int);
 #endif
 
       			/* 
@@ -436,11 +439,11 @@ ex_start(struct ifnet *ifp)
 
 			/* Build the packet frame in the card's ring buffer. */
 			DODEBUG(Sent_Pkts, printf("2. dest=%d, next=%d. ", dest, next););
-			ISA_PUT_2(HOST_ADDR_REG, dest);
-			ISA_PUT_2(IO_PORT_REG, Transmit_CMD);
-			ISA_PUT_2(IO_PORT_REG, 0);
-			ISA_PUT_2(IO_PORT_REG, next);
-			ISA_PUT_2(IO_PORT_REG, data_len);
+			CSR_WRITE_2(sc, HOST_ADDR_REG, dest);
+			CSR_WRITE_2(sc, IO_PORT_REG, Transmit_CMD);
+			CSR_WRITE_2(sc, IO_PORT_REG, 0);
+			CSR_WRITE_2(sc, IO_PORT_REG, next);
+			CSR_WRITE_2(sc, IO_PORT_REG, data_len);
 
 			/*
  			 * Output the packet data to the card. Ensure all 
@@ -452,16 +455,16 @@ ex_start(struct ifnet *ifp)
 				DODEBUG(Sent_Pkts, printf("[%d]", m->m_len););
 				if (i) {
 					tmp16[1] = *(mtod(m, caddr_t));
-					ISA_PUT_2_MULTI(IO_PORT_REG, tmp16, 1);
+					CSR_WRITE_MULTI_2(sc, IO_PORT_REG, tmp16, 1);
 				}
-				ISA_PUT_2_MULTI(IO_PORT_REG, mtod(m, caddr_t) 
+				CSR_WRITE_MULTI_2(sc, IO_PORT_REG, mtod(m, caddr_t) 
 				    + i, (m->m_len - i) / 2);
 				if ((i = (m->m_len - i) & 1))
 					tmp16[0] = *(mtod(m, caddr_t) + 
 					    m->m_len - 1);
 			}
 			if (i)
-				ISA_PUT_2_MULTI(IO_PORT_REG, tmp16, 1);
+				CSR_WRITE_MULTI_2(sc, IO_PORT_REG, tmp16, 1);
 
       			/*
 			 * If there were other frames chained, update the 
@@ -469,16 +472,16 @@ ex_start(struct ifnet *ifp)
 			 */
 			if (sc->tx_head != sc->tx_tail) {
 				if (sc->tx_tail != dest) {
-					ISA_PUT_2(HOST_ADDR_REG, 
+					CSR_WRITE_2(sc, HOST_ADDR_REG, 
 					    sc->tx_last + XMT_Chain_Point);
-					ISA_PUT_2(IO_PORT_REG, dest);
+					CSR_WRITE_2(sc, IO_PORT_REG, dest);
 				}
-				ISA_PUT_2(HOST_ADDR_REG, sc->tx_last + 
+				CSR_WRITE_2(sc, HOST_ADDR_REG, sc->tx_last + 
 				    XMT_Byte_Count);
-				i = ISA_GET_2(IO_PORT_REG);
-				ISA_PUT_2(HOST_ADDR_REG, sc->tx_last + 
+				i = CSR_READ_2(sc, IO_PORT_REG);
+				CSR_WRITE_2(sc, HOST_ADDR_REG, sc->tx_last + 
 				    XMT_Byte_Count);
-				ISA_PUT_2(IO_PORT_REG, i | Ch_bit);
+				CSR_WRITE_2(sc, IO_PORT_REG, i | Ch_bit);
       			}
 
       			/*
@@ -487,17 +490,17 @@ ex_start(struct ifnet *ifp)
 			 * -Enable receive and transmit interrupts.
 			 * -Send Transmit or Resume_XMT command, as appropriate.
 			 */
-			ISA_GET_2(IO_PORT_REG);
+			CSR_READ_2(sc, IO_PORT_REG);
 #ifdef EX_PSA_INTR
-			ISA_PUT_2(MASK_REG, All_Int & ~(Rx_Int | Tx_Int));
+			CSR_WRITE_2(sc, MASK_REG, All_Int & ~(Rx_Int | Tx_Int));
 #endif
 			if (sc->tx_head == sc->tx_tail) {
-				ISA_PUT_2(XMT_BAR, dest);
-				ISA_PUT(CMD_REG, Transmit_CMD);
+				CSR_WRITE_2(sc, XMT_BAR, dest);
+				CSR_WRITE_1(sc, CMD_REG, Transmit_CMD);
 				sc->tx_head = dest;
 				DODEBUG(Sent_Pkts, printf("Transmit\n"););
 			} else {
-				ISA_PUT(CMD_REG, Resume_XMT_List_CMD);
+				CSR_WRITE_1(sc, CMD_REG, Resume_XMT_List_CMD);
 				DODEBUG(Sent_Pkts, printf("Resume\n"););
 			}
 			sc->tx_last = dest;
@@ -531,17 +534,17 @@ ex_stop(struct ex_softc *sc)
 	 * - Mask and clear all interrupts.
   	 * - Reset the 82595.
 	 */
-	ISA_PUT(CMD_REG, Bank1_Sel);
-	ISA_PUT(REG1, ISA_GET(REG1) & ~TriST_INT);
-	ISA_PUT(CMD_REG, Bank0_Sel);
-	ISA_PUT(CMD_REG, Rcv_Stop);
+	CSR_WRITE_1(sc, CMD_REG, Bank1_Sel);
+	CSR_WRITE_1(sc, REG1, CSR_READ_1(sc, REG1) & ~TriST_INT);
+	CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
+	CSR_WRITE_1(sc, CMD_REG, Rcv_Stop);
 	sc->tx_head = sc->tx_tail = sc->tx_lower_limit;
 	sc->tx_last = 0; /* XXX I think these two lines are not necessary, 
 				because ex_init will always be called again 
 				to reinit the interface. */
-	ISA_PUT(MASK_REG, All_Int);
-	ISA_PUT(STATUS_REG, All_Int);
-	ISA_PUT(CMD_REG, Reset_CMD);
+	CSR_WRITE_1(sc, MASK_REG, All_Int);
+	CSR_WRITE_1(sc, STATUS_REG, All_Int);
+	CSR_WRITE_1(sc, CMD_REG, Reset_CMD);
 	delay(200);
 
 	DODEBUG(Start_End, printf("ex_stop: finish\n"););
@@ -565,13 +568,13 @@ ex_intr(void *arg)
 #endif
 
 	send_pkts = 0;
-	while ((int_status = ISA_GET(STATUS_REG)) & (Tx_Int | Rx_Int)) {
+	while ((int_status = CSR_READ_1(sc, STATUS_REG)) & (Tx_Int | Rx_Int)) {
 		if (int_status & Rx_Int) {
-			ISA_PUT(STATUS_REG, Rx_Int);
+			CSR_WRITE_1(sc, STATUS_REG, Rx_Int);
 			handled = 1;
 			ex_rx_intr(sc);
 		} else if (int_status & Tx_Int) {
-			ISA_PUT(STATUS_REG, Tx_Int);
+			CSR_WRITE_1(sc, STATUS_REG, Tx_Int);
 			handled = 1;
 			ex_tx_intr(sc);
 			send_pkts = 1;
@@ -609,11 +612,11 @@ ex_tx_intr(struct ex_softc *sc)
 	 */
 	ifp->if_timer = 0;
 	while (sc->tx_head != sc->tx_tail) {
-		ISA_PUT_2(HOST_ADDR_REG, sc->tx_head);
-		if (! ISA_GET_2(IO_PORT_REG) & Done_bit)
+		CSR_WRITE_2(sc, HOST_ADDR_REG, sc->tx_head);
+		if (!CSR_READ_2(sc, IO_PORT_REG) & Done_bit)
 			break;
-		tx_status = ISA_GET_2(IO_PORT_REG);
-		sc->tx_head = ISA_GET_2(IO_PORT_REG);
+		tx_status = CSR_READ_2(sc, IO_PORT_REG);
+		sc->tx_head = CSR_READ_2(sc, IO_PORT_REG);
 		if (tx_status & TX_OK_bit)
 			ifp->if_opackets++;
 		else
@@ -643,11 +646,11 @@ ex_rx_intr(struct ex_softc *sc)
 	 * - If packet bad, just discard it, and update statistics.
 	 * Finally, advance receive stop limit in card's memory to new location.
 	 */
-	ISA_PUT_2(HOST_ADDR_REG, sc->rx_head);
-	while (ISA_GET_2(IO_PORT_REG) == RCV_Done) {
-		rx_status = ISA_GET_2(IO_PORT_REG);
-		sc->rx_head = ISA_GET_2(IO_PORT_REG);
-		QQQ = pkt_len = ISA_GET_2(IO_PORT_REG);
+	CSR_WRITE_2(sc, HOST_ADDR_REG, sc->rx_head);
+	while (CSR_READ_2(sc, IO_PORT_REG) == RCV_Done) {
+		rx_status = CSR_READ_2(sc, IO_PORT_REG);
+		sc->rx_head = CSR_READ_2(sc, IO_PORT_REG);
+		QQQ = pkt_len = CSR_READ_2(sc, IO_PORT_REG);
 		if (rx_status & RCV_OK_bit) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			ipkt = m;
@@ -675,12 +678,12 @@ ex_rx_intr(struct ex_softc *sc)
 					 * for the last one in an odd-length 
 					 * packet.
 					 */
-					ISA_GET_2_MULTI(IO_PORT_REG,
+					CSR_READ_MULTI_2(sc, IO_PORT_REG,
 					    mtod(m, caddr_t), m->m_len / 2);
 					if (m->m_len & 1)
 						*(mtod(m, caddr_t) + 
 						    m->m_len - 1) = 
-						    ISA_GET(IO_PORT_REG);
+						    CSR_READ_1(sc, IO_PORT_REG);
 					pkt_len -= m->m_len;
 					if (pkt_len > 0) {
 						MGET(m->m_next, M_DONTWAIT, 
@@ -713,13 +716,13 @@ ex_rx_intr(struct ex_softc *sc)
       		}
     	} else
       		ifp->if_ierrors++;
-		ISA_PUT_2(HOST_ADDR_REG, sc->rx_head);
+		CSR_WRITE_2(sc, HOST_ADDR_REG, sc->rx_head);
 		rx_another: ;
   	}
 	if (sc->rx_head < sc->rx_lower_limit + 2)
-		ISA_PUT_2(RCV_STOP_REG, sc->rx_upper_limit);
+		CSR_WRITE_2(sc, RCV_STOP_REG, sc->rx_upper_limit);
 	else
-		ISA_PUT_2(RCV_STOP_REG, sc->rx_head - 2);
+		CSR_WRITE_2(sc, RCV_STOP_REG, sc->rx_head - 2);
 
 	DODEBUG(Start_End, printf("ex_rx_intr: finish\n"););
 }	
@@ -831,30 +834,30 @@ ex_eeprom_read(struct ex_softc *sc, int location)
 	int read_cmd = location | EE_READ_CMD;
 	short ctrl_val = EECS;
 
-	ISA_PUT(CMD_REG, Bank2_Sel);
-	ISA_PUT(EEPROM_REG, EECS);
+	CSR_WRITE_1(sc, CMD_REG, Bank2_Sel);
+	CSR_WRITE_1(sc, EEPROM_REG, EECS);
 	for (i = 8; i >= 0; i--) {
 		short outval = (read_cmd & (1 << i)) ? ctrl_val | EEDI : 
 		    ctrl_val;
-		ISA_PUT(EEPROM_REG, outval);
-		ISA_PUT(EEPROM_REG, outval | EESK);
+		CSR_WRITE_1(sc, EEPROM_REG, outval);
+		CSR_WRITE_1(sc, EEPROM_REG, outval | EESK);
 		delay(3);
-		ISA_PUT(EEPROM_REG, outval);
+		CSR_WRITE_1(sc, EEPROM_REG, outval);
 		delay(2);
 	}
-	ISA_PUT(EEPROM_REG, ctrl_val);
+	CSR_WRITE_1(sc, EEPROM_REG, ctrl_val);
 	for (i = 16; i > 0; i--) {
-		ISA_PUT(EEPROM_REG, ctrl_val | EESK);
+		CSR_WRITE_1(sc, EEPROM_REG, ctrl_val | EESK);
 		delay(3);
-		data = (data << 1) | ((ISA_GET(EEPROM_REG) & EEDO) ? 1 : 0);
-		ISA_PUT(EEPROM_REG, ctrl_val);
+		data = (data << 1) | ((CSR_READ_1(sc, EEPROM_REG) & EEDO) ? 1 : 0);
+		CSR_WRITE_1(sc, EEPROM_REG, ctrl_val);
 		delay(2);
 	}
 	ctrl_val &= ~EECS;
-	ISA_PUT(EEPROM_REG, ctrl_val | EESK);
+	CSR_WRITE_1(sc, EEPROM_REG, ctrl_val | EESK);
 	delay(3);
-	ISA_PUT(EEPROM_REG, ctrl_val);
+	CSR_WRITE_1(sc, EEPROM_REG, ctrl_val);
 	delay(2);
-	ISA_PUT(CMD_REG, Bank0_Sel);
+	CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
 	return(data);
 }
