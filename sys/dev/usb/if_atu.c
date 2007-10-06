@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.87 2007/09/17 01:40:38 fgsch Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.88 2007/10/06 16:01:17 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1757,7 +1757,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		mb.m_flags = 0;
 		bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_IN);
 	}
-#endif /* NPBFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
