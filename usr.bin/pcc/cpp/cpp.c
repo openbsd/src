@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.2 2007/10/07 19:26:27 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -79,10 +79,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <ctype.h>
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
 #include "cpp.h"
 #include "y.tab.h"

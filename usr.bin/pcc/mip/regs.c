@@ -1,4 +1,4 @@
-/*	$OpenBSD: regs.c,v 1.8 2007/10/03 08:15:29 otto Exp $	*/
+/*	$OpenBSD: regs.c,v 1.9 2007/10/07 19:26:27 otto Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -31,9 +31,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
 
 #define	MAXLOOP	20 /* Max number of allocation loops XXX 3 should be enough */
