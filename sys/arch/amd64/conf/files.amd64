@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.34 2007/09/12 18:18:27 deraadt Exp $
+#	$OpenBSD: files.amd64,v 1.35 2007/10/07 18:41:07 mbalmer Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -127,7 +127,12 @@ include	"dev/pcmcia/files.pcmcia"
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/amd64/pci/pcib.c			pcib
+file	arch/amd64/pci/pcib.c			pcib | amdpcib
+
+# AMD 8111 LPC bridge
+device	amdpcib: isabus
+attach	amdpcib at pci
+file	dev/pci/amdpcib.c			amdpcib
 
 device	aapic
 attach	aapic at pci

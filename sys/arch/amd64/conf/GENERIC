@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.198 2007/09/30 10:16:56 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.199 2007/10/07 18:41:07 mbalmer Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,6 +35,7 @@ bios0	at mainbus?
 cpu0	at mainbus?
 isa0	at mainbus0
 isa0	at pcib?
+isa0	at amdpcib?
 pci*	at mainbus0
 
 #option		ACPIVERBOSE
@@ -62,6 +63,7 @@ ppb*	at pci?			# PCI-PCI bridges
 pci*	at ppb?
 pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
+amdpcib* at pci?		# AMD 8111 LPC bridge
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290

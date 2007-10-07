@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.165 2007/10/07 13:41:48 mbalmer Exp $
+#	$OpenBSD: files.i386,v 1.166 2007/10/07 18:41:07 mbalmer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -140,7 +140,7 @@ file	arch/i386/pci/glxpcib.c		glxpcib
 # PCI-ISA bridge chipsets
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib | glxpcib | piixpcib
+file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib | glxpcib | piixpcib | amdpcib
 
 # Intel ICHx/ICHx-M LPC bridges
 device	ichpcib: isabus
@@ -156,6 +156,11 @@ file	arch/i386/pci/piixpcib.c	piixpcib
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
 file	arch/i386/pci/gscpcib.c		gscpcib
+
+# AMD 8111 LPC bridge
+device	amdpcib: isabus
+attach	amdpcib at pci
+file	dev/pci/amdpcib.c		amdpcib
 
 device	hme: ether, ifnet, mii, ifmedia
 file	dev/ic/hme.c			hme

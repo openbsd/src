@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.1 2007/10/07 13:41:48 mbalmer Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.2 2007/10/07 18:41:07 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -34,9 +34,9 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define	AMD5536_REV	0x51400017
+#define	AMD5536_REV		0x51400017
 #define	AMD5536_REV_MASK	0xff
-#define	AMD5536_TMC	0x51400050
+#define	AMD5536_TMC		0x51400050
 
 #define	MSR_LBAR_MFGPT		0x5140000d
 #define	AMD5536_MFGPT0_CMP1	0x00000000
@@ -125,7 +125,9 @@ struct cfattach glxpcib_ca = {
 void	pcibattach(struct device *parent, struct device *self, void *aux);
 
 u_int	glxpcib_get_timecount(struct timecounter *tc);
+#ifndef SMALL_KERNEL
 int     glxpcib_wdogctl_cb(void *, int);
+#endif
 
 const struct pci_matchid glxpcib_devices[] = {
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_CS5536_PCIB }
@@ -146,8 +148,10 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct glxpcib_softc *sc = (struct glxpcib_softc *)self;
 	struct timecounter *tc = &sc->sc_timecounter;
+#ifndef SMALL_KERNEL
 	struct pci_attach_args *pa = aux;
 	u_int64_t wa;
+#endif
 
 	tc->tc_get_timecount = glxpcib_get_timecount;
 	tc->tc_counter_mask = 0xffffffff;
@@ -161,6 +165,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	    (int)rdmsr(AMD5536_REV) & AMD5536_REV_MASK,
 	    tc->tc_frequency);
 
+#ifndef SMALL_KERNEL
 	sc->sc_iot = pa->pa_iot;
 	wa = rdmsr(MSR_LBAR_MFGPT);
 	if (wa & 0x100000000ULL &&
@@ -174,7 +179,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 
 		printf(", watchdog");
 	}
-
+#endif
 	pcibattach(parent, self, aux);
 }
 
@@ -184,6 +189,7 @@ glxpcib_get_timecount(struct timecounter *tc)
         return rdmsr(AMD5536_TMC);
 }
 
+#ifndef SMALL_KERNEL
 int
 glxpcib_wdogctl_cb(void *v, int period)
 {
@@ -206,3 +212,4 @@ glxpcib_wdogctl_cb(void *v, int period)
 
 	return (period);
 }
+#endif

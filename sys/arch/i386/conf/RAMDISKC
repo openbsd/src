@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.77 2007/07/21 01:19:52 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.78 2007/10/07 18:41:07 mbalmer Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -59,6 +59,8 @@ isa0	at mainbus0
 isa0	at pcib?
 isa0	at ichpcib?
 isa0	at gscpcib?
+isa0	at glxpcib?
+isa0	at amdpcib?
 #eisa0	at mainbus0
 pci*	at mainbus0
 
@@ -72,7 +74,9 @@ pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
 ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
 gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
+amdpcib* at pci?		# AMD 8111 LPC bridge
 geodesc* at pci?		# Geode SC1100/SCx200 IAOC
+glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
 
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
