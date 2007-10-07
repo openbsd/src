@@ -1,0 +1,37 @@
+.\"     $OpenBSD: amdpcib.4,v 1.1 2007/10/07 16:00:05 mbalmer Exp $
+.\"
+.\" Marc Balmer, 2007. Public Domain.
+.\"
+.Dd $Mdocdate: October 7 2007 $
+.Dt AMDPCIB 4 i386
+.Os
+.Sh NAME
+.Nm amdpcib
+.Nd AMD8111 series LPC bridge and timecounter
+.Sh SYNOPSIS
+.Cd "amdpcib* at pci?"
+.Cd "isa* at amdpcib?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the AMD8111 HPET.
+Besides the core
+.Xr pcib 4
+functionality, the
+.Nm
+driver implements a 32/64-bit 14.3 MHz (or in fact variable) timecounter.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr pci 4 ,
+.Xr pcib 4 ,
+.Xr watchdog 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.3 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Michael Shalayeff.
