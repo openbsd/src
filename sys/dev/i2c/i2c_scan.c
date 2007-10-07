@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.100 2007/09/05 17:22:08 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.101 2007/10/07 14:26:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -30,7 +30,12 @@
 #undef I2C_DEBUG
 #define I2C_VERBOSE
 
-void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
+#define MAX_IGNORE 8
+u_int8_t ignore_addrs[MAX_IGNORE];
+
+struct iicprobelist {
+	u_int8_t start, end;
+};
 
 /*
  * Addresses at which to probe for sensors.  Skip address 0x4f, since
@@ -38,17 +43,33 @@ void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
  * few chips can actually sit at that address, and vendors seem to
  * place those at other addresses, so this isn't a big loss.
  */
-struct {
-	u_int8_t start, end;
-} probe_addrs[] = {
+struct iicprobelist probe_addrs_sensor[] = {
 	{ 0x18, 0x18 },
 	{ 0x1a, 0x1a },
 	{ 0x20, 0x2f },
-	{ 0x48, 0x4e }
+	{ 0x48, 0x4e },
+	{ 0, 0 }
 };
 
-#define MAX_IGNORE 8
-u_int8_t ignore_addrs[MAX_IGNORE];
+/*
+ * Addresses at which to probe for eeprom devices.
+ */
+struct iicprobelist probe_addrs_eeprom[] = {
+	{ 0x50, 0x57 },
+	{ 0, 0 }
+};
+
+char 	*iic_probe_sensor(struct device *, struct i2cbus_attach_args *, u_int8_t);
+char	*iic_probe_eeprom(struct device *, struct i2cbus_attach_args *, u_int8_t);
+
+static struct {
+	struct iicprobelist *pl;
+	char	*(*probe)(struct device *, struct i2cbus_attach_args *, u_int8_t);
+} probes[] = {
+	{ probe_addrs_sensor, iic_probe_sensor },
+	{ probe_addrs_eeprom, iic_probe_eeprom },
+	{ NULL, NULL }
+};
 
 /*
  * Some Maxim 1617 clones MAY NOT even read cmd 0xfc!  When it is
@@ -419,18 +440,16 @@ iic_dump(struct device *dv, u_int8_t addr, char *name)
 }
 #endif /* defined(I2C_DEBUG) || defined(I2C_VERBOSE) */
 
-void
-iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
+char *
+iic_probe_sensor(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 {
-	struct i2c_attach_args ia;
 	char *name = NULL;
 	int i;
 
 	for (i = 0; i < sizeof(ignore_addrs); i++)
 		if (ignore_addrs[i] == addr)
-			return;
+			return (NULL);
 
-	iicprobeinit(iba, addr);
 	skip_fc = 0;
 
 	/*
@@ -845,45 +864,70 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		name = "unknown";
 #endif
 
-	if (name) {
-		memset(&ia, 0, sizeof(ia));
-		ia.ia_tag = iba->iba_tag;
-		ia.ia_addr = addr;
-		ia.ia_size = 1;
-		ia.ia_name = name;
-		if (config_found(self, &ia, iic_print))
-			return;
-	}
+	if (name)
+		return (name);
 
 #if defined(I2C_VERBOSE) && !defined(I2C_DEBUG)
 	iic_dump(self, addr, name);
 #endif /* defined(I2C_VERBOSE) && !defined(I2C_DEBUG) */
+	return (NULL);
+}
+
+char *
+iic_probe_eeprom(struct device *self, struct i2cbus_attach_args *iba,
+    u_int8_t addr)
+{
+	int reg, csum = 0;
+	char *name = NULL;
+
+	/* only check SPD memory EEPROMs for now */
+	for (reg = 0; reg < 0x3f; reg++)
+		csum += iicprobe(reg);
+
+	if (iicprobe(0x3f) == (csum & 0xff))
+		name = "spd";
+	return (name);
 }
 
 void
 iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 {
 	i2c_tag_t ic = iba->iba_tag;
+	struct i2c_attach_args ia;
+	struct iicprobelist *pl;
 	u_int8_t cmd = 0, addr;
-	int i;
+	char *name;
+	int i, j;
 
 	bzero(ignore_addrs, sizeof(ignore_addrs));
-	for (i = 0; i < sizeof(probe_addrs)/sizeof(probe_addrs[0]); i++) {
-		for (addr = probe_addrs[i].start; addr <= probe_addrs[i].end;
-		    addr++) {
-			/* Perform RECEIVE BYTE command */
-			iic_acquire_bus(ic, 0);
-			if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
-			    &cmd, 1, NULL, 0, 0) == 0) {
-				iic_release_bus(ic, 0);
 
-				/* Some device exists, so go scope it out */
-				iic_probe(self, iba, addr);
-
+	for (i = 0; probes[i].probe; i++) {
+		pl = probes[i].pl;
+		for (j = 0; pl[j].start && pl[j].end; j++) {
+			for (addr = pl[j].start; addr <= pl[j].end; addr++) {
+				/* Perform RECEIVE BYTE command */
 				iic_acquire_bus(ic, 0);
+				if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
+				    &cmd, 1, NULL, 0, 0) == 0) {
+					iic_release_bus(ic, 0);
 
+					/* Some device exists */
+					iicprobeinit(iba, addr);
+					name = (*probes[i].probe)(self,
+					    iba, addr);
+
+					if (name) {
+						memset(&ia, 0, sizeof(ia));
+						ia.ia_tag = iba->iba_tag;
+						ia.ia_addr = addr;
+						ia.ia_size = 1;
+						ia.ia_name = name;
+						(void) config_found(self,
+						    &ia, iic_print);
+					}
+				} else
+					iic_release_bus(ic, 0);
 			}
-			iic_release_bus(ic, 0);
 		}
 	}
 }
