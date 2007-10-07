@@ -126,8 +126,8 @@ Verifying password - Master key:
 @end example
 
 If you want to generate a random master key you can use the
---random-key to kstash. This will make sure you have a good key
-on which attackers can't do a dictionary attack.
+@kbd{--random-key} flag to kstash. This will make sure you have a good
+key on which attackers can't do a dictionary attack.
 
 If you have a master key, make sure you make a backup of your master
 key file; without it backups of the database are of no use.
