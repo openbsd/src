@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.h,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: pass1.h,v 1.2 2007/10/07 18:34:41 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -231,7 +231,7 @@ extern	NODE
 	*buildtree(int, NODE *l, NODE *r),
 	*mkty(unsigned, union dimfun *, struct suedef *),
 	*rstruct(char *, int),
-	*dclstruct(struct rstack *),
+	*dclstruct(struct rstack *, int),
 	*strend(char *),
 	*wstrend(char *),
 	*tymerge(NODE *typ, NODE *idp),

@@ -1,4 +1,4 @@
-/*	$Id: trees.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: trees.c,v 1.2 2007/10/07 18:34:41 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -867,6 +867,21 @@ stref(NODE *p)
 
 	off = s->soffset;
 	dsc = s->sclass;
+
+#ifndef CAN_UNALIGN
+	/*
+	 * If its a packed struct, and the target cannot do unaligned
+	 * accesses, then split it up in two bitfield operations.
+	 * LHS and RHS accesses are different, so must delay
+	 * it until we know.  Do the bitfield construct here though.
+	 */
+	if ((dsc & FIELD) == 0 && (off % talign(s->stype, s->ssue))) {
+//		int sz = tsize(s->stype, s->sdf, s->ssue);
+//		int al = talign(s->stype, s->ssue);
+//		int sz1 = al - (off % al);
+		
+	}
+#endif
 
 	if (dsc & FIELD) {  /* make fields look like ints */
 		off = (off/ALINT)*ALINT;
