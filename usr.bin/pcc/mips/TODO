@@ -1,0 +1,9 @@
+$OpenBSD: TODO,v 1.1 2007/10/07 17:58:51 otto Exp $
+
+* Look at long long support for the new register allocator.
+
+* Add floating point support.
+
+* Add support for struct/union arguments and return values.
+
+* See if the workaround for the function arguments can be removed/rewritten.

@@ -1,7 +1,16 @@
-#	$OpenBSD: Makefile,v 1.2 2007/09/15 21:48:06 ray Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/10/07 17:58:50 otto Exp $
 #
-# Makefile for top-level of pcc/cc.
+# Makefile for the cc part of pcc.
 #
-SUBDIR=cc ccom cpp
+PROG=   	cc
+PREFIX=		/usr/local
+BINDIR=		${PREFIX}/bin
+MANDIR=		${PREFIX}/man/man
+TARGOS=		openbsd
+TARGMACH=	x86
 
-.include <bsd.subdir.mk>
+CFLAGS+=	-DLIBEXECDIR=\"${PREFIX}/libexec\"
+CPPFLAGS+=	-I${.CURDIR}/..
+CPPFLAGS+=	-DDEFMACH=\"${TARGMACH}\"
+
+.include <bsd.prog.mk>
