@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.1 2007/10/07 17:58:50 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.2 2007/10/07 18:39:03 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -467,7 +467,10 @@ main(int argc, char *argv[])
 		}
 		for (j = 0; j < xnum; j++)
 			av[na++] = xlist[j];
-		av[na++] = tmp4;
+		if (getsuf(clist[i])=='i')
+			av[na++] = clist[i];
+		else
+			av[na++] = tmp4; /* created by cpp */
 		if (pflag || exfail)
 			{
 			cflag++;
