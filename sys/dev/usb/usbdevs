@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.296 2007/09/22 06:03:29 fkr Exp $
+$OpenBSD: usbdevs,v 1.297 2007/10/07 22:06:56 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2090,6 +2090,7 @@ product SILABS POLOLU		0x803b	Pololu Serial
 product SILABS ARGUSISP		0x8066	Argussoft ISP
 product SILABS CRUMB128		0x807a	Crumb128
 product SILABS DEGREECONT	0x80ca	Degree Controls
+product SILABS TRAQMATE		0x80ed	Track Systems Traqmate
 product SILABS SUNNTO		0x80f6	Suunto sports
 product SILABS DESKTOPMOBILE	0x813d	Burnside Desktop mobile
 product SILABS IPLINK1220	0x815e	IP-Link 1220
