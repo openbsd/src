@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.11 2006/12/26 18:22:30 moritz Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.12 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.11 2006/12/26 18:22:30 moritz Exp $ (XXX)";
+    "@(#) $Id: print-ipsec.c,v 1.12 2007/10/07 16:41:05 deraadt Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>

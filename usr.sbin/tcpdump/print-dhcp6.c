@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.5 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.6 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-dhcp6.c,v 1.5 2002/02/19 19:39:40 millert Exp $";
+    "@(#) $Id: print-dhcp6.c,v 1.6 2007/10/07 16:41:05 deraadt Exp $";
 #endif
 
 #ifdef INET6

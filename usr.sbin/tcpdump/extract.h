@@ -1,4 +1,4 @@
-/*	$OpenBSD: extract.h,v 1.8 2004/02/02 09:43:27 otto Exp $	*/
+/*	$OpenBSD: extract.h,v 1.9 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $TCPDUMP: /tcpdump/master/tcpdump/extract.h,v 1.17 2001/09/17 21:57:52 fenner Exp $ (LBL)
+ * @(#) $Id: extract.h,v 1.9 2007/10/07 16:41:05 deraadt Exp $ (LBL)
  */
 
 /* Network to host order macros */

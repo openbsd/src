@@ -1,6 +1,6 @@
-/*	$OpenBSD: ntp.h,v 1.6 2000/10/03 14:31:56 ho Exp $	*/
+/*	$OpenBSD: ntp.h,v 1.7 2007/10/07 16:41:05 deraadt Exp $	*/
 
-/* $Header: /home/cvs/src/usr.sbin/tcpdump/ntp.h,v 1.6 2000/10/03 14:31:56 ho Exp $ */
+/* $Id: ntp.h,v 1.7 2007/10/07 16:41:05 deraadt Exp $ */
 
 /*
  * Based on ntp.h from the U of MD implementation

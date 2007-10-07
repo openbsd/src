@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udpencap.c,v 1.3 2004/06/23 05:21:18 markus Exp $	*/
+/*	$OpenBSD: print-udpencap.c,v 1.4 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udpencap.c,v 1.3 2004/06/23 05:21:18 markus Exp $ (XXX)";
+    "@(#) $Id: print-udpencap.c,v 1.4 2007/10/07 16:41:05 deraadt Exp $ (XXX)";
 #endif
 
 #include <sys/types.h>

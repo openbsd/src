@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-vrrp.c,v 1.1 2000/12/07 21:52:38 mickey Exp $	*/
+/*	$OpenBSD: print-vrrp.c,v 1.2 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 William C. Fenner.
@@ -30,7 +30,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-vrrp.c,v 1.1 2000/12/07 21:52:38 mickey Exp $";
+    "@(#) $Id: print-vrrp.c,v 1.2 2007/10/07 16:41:05 deraadt Exp $";
 #endif
 
 #ifdef HAVE_CONFIG_H

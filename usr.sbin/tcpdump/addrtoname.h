@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.h,v 1.10 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: addrtoname.h,v 1.11 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.h,v 1.10 2004/01/28 19:44:55 canacar Exp $ (LBL)
+ * @(#) $Id: addrtoname.h,v 1.11 2007/10/07 16:41:05 deraadt Exp $ (LBL)
  */
 
 #ifndef BYTE_ORDER

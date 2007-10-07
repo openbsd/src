@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.3 2000/10/03 14:31:55 ho Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.4 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.h,v 1.3 2000/10/03 14:31:55 ho Exp $ (LBL)
+ * @(#) $Id: machdep.h,v 1.4 2007/10/07 16:41:05 deraadt Exp $ (LBL)
  */
 #ifndef tcpdump_machdep_h
 #define tcpdump_machdep_h

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.25 2006/12/13 05:10:15 itojun Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.26 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.25 2006/12/13 05:10:15 itojun Exp $ (LBL)";
+    "@(#) $Id: print-tcp.c,v 1.26 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

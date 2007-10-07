@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-isoclns.c,v 1.10 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-isoclns.c,v 1.11 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-isoclns.c,v 1.10 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Id: print-isoclns.c,v 1.11 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>

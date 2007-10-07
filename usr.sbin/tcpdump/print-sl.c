@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.12 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.13 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sl.c,v 1.12 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Id: print-sl.c,v 1.13 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_NET_SLIP_H

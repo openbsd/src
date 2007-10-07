@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc.h,v 1.7 2000/10/03 14:31:55 ho Exp $	*/
+/*	$OpenBSD: llc.h,v 1.8 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/llc.h,v 1.7 2000/10/03 14:31:55 ho Exp $ (LBL)
+ * @(#) $Id: llc.h,v 1.8 2007/10/07 16:41:05 deraadt Exp $ (LBL)
  */
 
 /*

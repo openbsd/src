@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmt2local.c,v 1.3 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: gmt2local.c,v 1.4 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/gmt2local.c,v 1.3 2004/01/28 19:44:55 canacar Exp $ (LBL)";
+    "@(#) $Id: gmt2local.c,v 1.4 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>

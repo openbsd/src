@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.17 2005/11/23 22:33:11 cloder Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.18 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.17 2005/11/23 22:33:11 cloder Exp $ (LBL)";
+    "@(#) $Id: print-pflog.c,v 1.18 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

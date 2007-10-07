@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-krb.c,v 1.6 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-krb.c,v 1.7 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-krb.c,v 1.6 2000/10/03 14:31:57 ho Exp $";
+    "@(#) $Id: print-krb.c,v 1.7 2007/10/07 16:41:05 deraadt Exp $";
 #endif
 
 #include <sys/param.h>

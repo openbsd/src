@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-smb.c,v 1.2 2001/01/03 18:41:00 mickey Exp $	*/
+/*	$OpenBSD: print-smb.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
    Copyright (C) Andrew Tridgell 1995-1999
@@ -13,7 +13,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-     "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-smb.c,v 1.2 2001/01/03 18:41:00 mickey Exp $";
+     "@(#) $Id: print-smb.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $";
 #endif
 
 #include <stdio.h>

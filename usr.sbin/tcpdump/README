@@ -1,4 +1,4 @@
-@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/README,v 1.7 2004/06/14 13:33:41 otto Exp $ (LBL)
+@(#) $Id: README,v 1.8 2007/10/07 16:41:05 deraadt Exp $ (LBL)
 
 TCPDUMP 3.4
 Lawrence Berkeley National Laboratory

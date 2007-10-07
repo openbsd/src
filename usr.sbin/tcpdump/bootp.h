@@ -1,6 +1,6 @@
-/*	$OpenBSD: bootp.h,v 1.7 2000/10/03 14:31:54 ho Exp $	*/
+/*	$OpenBSD: bootp.h,v 1.8 2007/10/07 16:41:05 deraadt Exp $	*/
 
-/* @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/bootp.h,v 1.7 2000/10/03 14:31:54 ho Exp $ (LBL) */
+/* @(#) $Id: bootp.h,v 1.8 2007/10/07 16:41:05 deraadt Exp $ (LBL) */
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
  *

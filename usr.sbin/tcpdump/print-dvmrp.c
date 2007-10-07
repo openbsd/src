@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dvmrp.c,v 1.4 2000/10/03 14:31:56 ho Exp $	*/
+/*	$OpenBSD: print-dvmrp.c,v 1.5 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-dvmrp.c,v 1.4 2000/10/03 14:31:56 ho Exp $ (LBL)";
+    "@(#) $Id: print-dvmrp.c,v 1.5 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

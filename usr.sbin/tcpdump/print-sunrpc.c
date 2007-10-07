@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sunrpc.c,v 1.15 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: print-sunrpc.c,v 1.16 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.15 2004/01/28 19:44:55 canacar Exp $ (LBL)";
+    "@(#) $Id: print-sunrpc.c,v 1.16 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.55 2007/08/28 12:52:06 markus Exp $	*/
+/*	$OpenBSD: interface.h,v 1.56 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.55 2007/08/28 12:52:06 markus Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.56 2007/10/07 16:41:05 deraadt Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h

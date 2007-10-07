@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertype.h,v 1.12 2007/07/21 08:29:29 damien Exp $	*/
+/*	$OpenBSD: ethertype.h,v 1.13 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/ethertype.h,v 1.12 2007/07/21 08:29:29 damien Exp $ (LBL)
+ * @(#) $Id: ethertype.h,v 1.13 2007/10/07 16:41:05 deraadt Exp $ (LBL)
  */
 
 /*

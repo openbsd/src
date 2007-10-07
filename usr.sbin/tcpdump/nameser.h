@@ -1,4 +1,4 @@
-/* @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/nameser.h,v 1.4 2004/01/18 15:33:30 otto Exp $ (LBL) */
+/* @(#) $Id: nameser.h,v 1.5 2007/10/07 16:41:05 deraadt Exp $ (LBL) */
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

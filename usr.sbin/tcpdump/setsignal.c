@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsignal.c,v 1.2 2000/10/03 14:31:59 ho Exp $	*/
+/*	$OpenBSD: setsignal.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/setsignal.c,v 1.2 2000/10/03 14:31:59 ho Exp $ (LBL)";
+    "@(#) $Id: setsignal.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
