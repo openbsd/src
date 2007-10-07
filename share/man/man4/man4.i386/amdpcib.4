@@ -1,4 +1,4 @@
-.\"     $OpenBSD: amdpcib.4,v 1.2 2007/10/07 17:32:52 mbalmer Exp $
+.\"     $OpenBSD: amdpcib.4,v 1.3 2007/10/07 19:51:20 jmc Exp $
 .\"
 .\" Marc Balmer, 2007. Public Domain.
 .\"
@@ -7,14 +7,14 @@
 .Os
 .Sh NAME
 .Nm amdpcib
-.Nd AMD8111 series LPC bridge and timecounter
+.Nd AMD-8111 series LPC bridge and timecounter
 .Sh SYNOPSIS
 .Cd "amdpcib* at pci?"
 .Cd "isa* at amdpcib?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the AMD8111 LPC bridge and implements a
+driver provides support for the AMD-8111 LPC bridge and implements a
 32/64-bit 14.3 MHz (or variable) timecounter using the HPET timer.
 .Sh SEE ALSO
 .Xr intro 4 ,
