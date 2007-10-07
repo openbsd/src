@@ -1,0 +1,38 @@
+.\"     $OpenBSD: glxpcib.4,v 1.1 2007/10/07 13:41:48 mbalmer Exp $
+.\"
+.\" Michael Shalayeff, 2007. Public Domain.
+.\"
+.Dd $Mdocdate: October 7 2007 $
+.Dt GLXPCIB 4 i386
+.Os
+.Sh NAME
+.Nm glxpcib
+.Nd AMD CS5536 PCI-ISA bridge, timecounter, and watchdog timer
+.Sh SYNOPSIS
+.Cd "glxpcib* at pci?"
+.Cd "isa* at glxpcib?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the AMD Geode CS5536 Companion chip.
+This device contains a number of components, including a PCI-ISA bridge.
+Besides the core
+.Xr pcib 4
+functionality, the
+.Nm
+driver implements a 32-bit 3.5 MHz timecounter and a watchdog timer device.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr pci 4 ,
+.Xr pcib 4 ,
+.Xr watchdog 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.3 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Michael Shalayeff.

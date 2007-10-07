@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.578 2007/09/30 10:16:56 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.579 2007/10/07 13:41:48 mbalmer Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -54,6 +54,7 @@ isa0	at pcib?
 isa0	at ichpcib?
 isa0	at piixpcib?
 isa0	at gscpcib?
+isa0	at glxpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
 
@@ -85,6 +86,7 @@ ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
 piixpcib* at pci?		# Intel PIIX4 PCI-ISA bridge
 gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
 gpio*	at gscpcib?
+glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
 
 # power management and other environmental stuff
 elansc*	at pci?			# AMD Elan SC520 System Controller
