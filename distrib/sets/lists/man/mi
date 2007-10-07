@@ -169,7 +169,6 @@
 ./usr/share/man/cat1/htpasswd.0
 ./usr/share/man/cat1/i386
 ./usr/share/man/cat1/i386/fdformat.0
-./usr/share/man/cat1/i386/pctr.0
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
@@ -280,6 +279,7 @@
 ./usr/share/man/cat1/paste.0
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pax.0
+./usr/share/man/cat1/pctr.0
 ./usr/share/man/cat1/perl.0
 ./usr/share/man/cat1/perl5004delta.0
 ./usr/share/man/cat1/perl5005delta.0
@@ -1029,6 +1029,7 @@
 ./usr/share/man/cat4/alpha/tsc.0
 ./usr/share/man/cat4/alpha/tsp.0
 ./usr/share/man/cat4/amd64
+./usr/share/man/cat4/amd64/amdpcib.0
 ./usr/share/man/cat4/amd64/autoconf.0
 ./usr/share/man/cat4/amd64/bios.0
 ./usr/share/man/cat4/amd64/cpu.0
@@ -1217,6 +1218,7 @@
 ./usr/share/man/cat4/hppa64
 ./usr/share/man/cat4/hsq.0
 ./usr/share/man/cat4/i386
+./usr/share/man/cat4/i386/amdpcib.0
 ./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/autoconf.0
 ./usr/share/man/cat4/i386/bios.0
@@ -1224,6 +1226,7 @@
 ./usr/share/man/cat4/i386/elansc.0
 ./usr/share/man/cat4/i386/esm.0
 ./usr/share/man/cat4/i386/geodesc.0
+./usr/share/man/cat4/i386/glxpcib.0
 ./usr/share/man/cat4/i386/glxsb.0
 ./usr/share/man/cat4/i386/gscpcib.0
 ./usr/share/man/cat4/i386/gscpm.0
@@ -1636,6 +1639,7 @@
 ./usr/share/man/cat4/sparc64/zskbd.0
 ./usr/share/man/cat4/sparc64/zstty.0
 ./usr/share/man/cat4/sparc64/zx.0
+./usr/share/man/cat4/spdmem.0
 ./usr/share/man/cat4/speaker.0
 ./usr/share/man/cat4/spkr.0
 ./usr/share/man/cat4/sppp.0
