@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.230 2007/10/07 16:21:50 mbalmer Exp $
+.\"	$OpenBSD: pci.4,v 1.231 2007/10/07 19:35:50 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -379,13 +379,13 @@ VIA VT82C686A/VT8231 hardware monitor
 ICS PCI-WDT500/501 watchdog timer device
 .El
 .Ss Miscellaneous devices
-.Bl -tag -width 10n -offset ind -compact
+.Bl -tag -width "piixpcib(4)" -offset ind -compact
 .It Xr alipm 4
 Acer Labs M7101 SMBus controller
 .It Xr amdiic 4
 AMD-8111 SMBus controller
 .It Xr amdpcib 4
-AMD8111 HPET timecounter
+AMD8111 series LPC bridge and timecounter
 .It Xr amdpm 4
 AMD-756/766/768/8111 Power Management and SMBus controller
 .It Xr bktr 4
@@ -407,6 +407,8 @@ Intel ICH SMBus controller
 NVIDIA nForce2/3/4 SMBus controller
 .It Xr ohci 4
 USB Open Host Controller Interface
+.It Xr pcib 4
+PCI-ISA bridge
 .It Xr pcic 4
 .Tn PCI
 .Tn PCMCIA
