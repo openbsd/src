@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.40 2007/09/09 15:59:47 deraadt Exp $
+# $OpenBSD: files.i2c,v 1.41 2007/10/07 14:57:16 jsg Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -137,3 +137,8 @@ file	dev/i2c/asc7621.c			adl
 device	thmc
 attach	thmc at i2c
 file	dev/i2c/thmc50.c			thmc
+
+# SPD Memory EEPROM
+device	spdmem
+attach	spdmem at i2c
+file	dev/i2c/spdmem.c			spdmem
