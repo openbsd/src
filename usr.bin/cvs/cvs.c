@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.138 2007/09/19 13:49:55 tobias Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.139 2007/10/07 18:14:09 chl Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -357,7 +357,6 @@ cvs_getopt(int argc, char **argv)
 			printf("%s\n", CVS_VERSION);
 			exit(0);
 			/* NOTREACHED */
-			break;
 		case 'w':
 			cvs_readonly = 0;
 			break;
