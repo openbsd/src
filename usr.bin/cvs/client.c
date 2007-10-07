@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.81 2007/09/22 15:30:29 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.82 2007/10/07 18:12:48 chl Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -413,7 +413,7 @@ cvs_client_senddir(const char *dir)
 	if (tag != NULL || date != NULL) {
 		char buf[128];
 
-		if (tag != NULL && nb != NULL) {
+		if (tag != NULL && nb != 0) {
 			if (strlcpy(buf, "N", sizeof(buf)) >= sizeof(buf))
 				fatal("cvs_client_senddir: truncation");
 		} else if (tag != NULL) {
