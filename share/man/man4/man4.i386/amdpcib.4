@@ -1,4 +1,4 @@
-.\"     $OpenBSD: amdpcib.4,v 1.1 2007/10/07 16:00:05 mbalmer Exp $
+.\"     $OpenBSD: amdpcib.4,v 1.2 2007/10/07 17:32:52 mbalmer Exp $
 .\"
 .\" Marc Balmer, 2007. Public Domain.
 .\"
@@ -14,12 +14,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the AMD8111 HPET.
-Besides the core
-.Xr pcib 4
-functionality, the
-.Nm
-driver implements a 32/64-bit 14.3 MHz (or in fact variable) timecounter.
+driver provides support for the AMD8111 LPC bridge and implements a
+32/64-bit 14.3 MHz (or variable) timecounter using the HPET timer.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,
