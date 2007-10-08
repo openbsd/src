@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.26 2007/05/31 19:19:27 jmc Exp $
+.\" $OpenBSD: crypt.3,v 1.27 2007/10/08 11:55:27 pyr Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 8 2007 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -265,6 +265,13 @@ specifies perturbations to the
 .Tn DES
 E-box output as described above.
 .Pp
+The
+.Fn crypt ,
+.Fn setkey ,
+and
+.Fn des_setkey
+functions all manipulate the same key space.
+.Sh RETURN VALUES
 The function
 .Fn crypt
 returns a pointer to the encrypted value on success, and
@@ -277,13 +284,6 @@ The functions
 and
 .Fn des_cipher
 return 0 on success and 1 on failure.
-.Pp
-The
-.Fn crypt ,
-.Fn setkey ,
-and
-.Fn des_setkey
-functions all manipulate the same key space.
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr passwd 1 ,
