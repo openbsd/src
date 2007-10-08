@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.10 2007/09/29 16:03:43 marco Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.11 2007/10/08 04:15:15 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -302,11 +302,10 @@ qli_allocmem(struct qli_softc *sc, size_t size)
 	DNPRINTF(QLI_D_MEM, "%s: qli_allocmem: %d\n", DEVNAME(sc),
 	    size);
 
-	mm = malloc(sizeof(struct qli_mem), M_DEVBUF, M_NOWAIT);
+	mm = malloc(sizeof(*mm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (mm == NULL)
 		return (NULL);
 
-	memset(mm, 0, sizeof(struct qli_mem));
 	mm->am_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,

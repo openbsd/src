@@ -931,12 +931,11 @@ xfs_symlink_common(struct vnode *dvp,
 
     NNPFSDEB(XDEBVNOPS, ("xfs_symlink: %s\n", name));
 
-    msg = malloc(sizeof(struct xfs_message_symlink), M_TEMP, M_WAITOK);
+    msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK | M_ZERO);
     if (msg == NULL) {
         error = ENOMEM;
 	goto done;
     }
-    memset(msg, 0, sizeof(*msg));
 
     msg->header.opcode = NNPFS_MSG_SYMLINK;
     msg->parent_handle = xn->handle;

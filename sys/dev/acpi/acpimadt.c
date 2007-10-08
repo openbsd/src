@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpimadt.c,v 1.10 2007/02/21 19:17:23 kettenis Exp $	*/
+/*	$OpenBSD: acpimadt.c,v 1.11 2007/10/08 04:15:15 krw Exp $	*/
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -237,11 +237,10 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			pin = entry->madt_override.global_int;
 			apic = ioapic_find_bybase(pin);
 
-			map = malloc(sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
+			map = malloc(sizeof(*map), M_DEVBUF, M_NOWAIT | M_ZERO);
 			if (map == NULL)
 				return;
 
-			memset(map, 0, sizeof *map);
 			map->ioapic = apic;
 			map->ioapic_pin = pin - apic->sc_apic_vecbase;
 			map->bus_pin = entry->madt_override.source;
@@ -293,11 +292,10 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 		if (apic->sc_pins[pin].ip_map != NULL)
 			continue;
 
-		map = malloc(sizeof (struct mp_intr_map), M_DEVBUF, M_NOWAIT);
+		map = malloc(sizeof(*map), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (map == NULL)
 			return;
 
-		memset(map, 0, sizeof *map);
 		map->ioapic = apic;
 		map->ioapic_pin = pin;
 		map->bus_pin = pin;

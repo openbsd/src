@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.59 2007/08/31 18:44:50 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.60 2007/10/08 04:15:15 krw Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1484,12 +1484,10 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 		return 0;
 	}
 	for (idx = 0; idx < count; idx++) {
-		psensor = malloc(sizeof(struct ipmi_sensor), M_DEVBUF,
-		    M_NOWAIT|M_CANFAIL);
+		psensor = malloc(sizeof(*psensor), M_DEVBUF,
+		    M_NOWAIT | M_CANFAIL | M_ZERO);
 		if (psensor == NULL)
 			break;
-
-		memset(psensor, 0, sizeof(struct ipmi_sensor));
 
 		/* Initialize BSD Sensor info */
 		psensor->i_sdr = psdr;

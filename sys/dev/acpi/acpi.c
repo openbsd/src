@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.90 2007/09/13 20:35:47 mk Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.91 2007/10/08 04:15:15 krw Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -391,13 +391,12 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_powerbtn = 0;
 	sc->sc_sleepbtn = 0;
 
-	sc->sc_note = malloc(sizeof(struct klist), M_DEVBUF, M_NOWAIT);
+	sc->sc_note = malloc(sizeof(struct klist), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_note == NULL) {
 		printf(": can't allocate memory\n");
 		acpi_unmap(&handle);
 		return;
 	}
-	memset(sc->sc_note, 0, sizeof(struct klist));
 
 	if (acpi_loadtables(sc, rsdp)) {
 		printf(": can't load tables\n");
@@ -595,15 +594,12 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sc->sc_bat);
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
 		if (!strncmp(dev->dv_xname, "acpiac", strlen("acpiac"))) {
-			ac = malloc(sizeof(struct acpi_ac), M_DEVBUF, M_WAITOK);
-			memset(ac, 0, sizeof(struct acpi_ac));
+			ac = malloc(sizeof(*ac), M_DEVBUF, M_WAITOK | M_ZERO);
 			ac->aac_softc = (struct acpiac_softc *)dev;
 			SLIST_INSERT_HEAD(&sc->sc_ac, ac, aac_link);
 		}
 		if (!strncmp(dev->dv_xname, "acpibat", strlen("acpibat"))) {
-			bat = malloc(sizeof(struct acpi_bat), M_DEVBUF,
-			    M_WAITOK);
-			memset(bat, 0, sizeof(struct acpi_bat));
+			bat = malloc(sizeof(*bat), M_DEVBUF, M_WAITOK | M_ZERO);
 			bat->aba_softc = (struct acpibat_softc *)dev;
 			SLIST_INSERT_HEAD(&sc->sc_bat, bat, aba_link);
 		}
@@ -1074,8 +1070,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 
 	/* Allocate GPE table */
 	sc->gpe_table = malloc(sc->sc_lastgpe * sizeof(struct gpe_block),
-	    M_DEVBUF, M_WAITOK);
-	memset(sc->gpe_table, 0, sc->sc_lastgpe * sizeof(struct gpe_block));
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	ngpe = 0;
 

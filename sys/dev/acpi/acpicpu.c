@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.26 2007/06/15 22:37:40 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.27 2007/10/08 04:15:15 krw Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -181,8 +181,7 @@ acpicpu_add_cstate(struct acpicpu_softc *sc, int type,
 		break;
 	}
 
-	cx = malloc(sizeof(struct acpi_cstate), M_DEVBUF, M_WAITOK);
-	memset(cx, 0, sizeof(struct acpi_cstate));
+	cx = malloc(sizeof(*cx), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	cx->type = type;
 	cx->power = power;
@@ -455,9 +454,7 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 		free(sc->sc_pss, M_DEVBUF);
 
 	sc->sc_pss = malloc(res.length * sizeof *sc->sc_pss, M_DEVBUF,
-	    M_WAITOK);
-
-	memset(sc->sc_pss, 0, res.length * sizeof *sc->sc_pss);
+	    M_WAITOK | M_ZERO);
 
 	for (i = 0; i < res.length; i++) {
 		sc->sc_pss[i].pss_core_freq = aml_val2int(

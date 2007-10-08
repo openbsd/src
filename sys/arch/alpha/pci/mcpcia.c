@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia.c,v 1.1 2007/03/16 21:22:27 robert Exp $ */
+/* $OpenBSD: mcpcia.c,v 1.2 2007/10/08 04:15:15 krw Exp $ */
 /* $NetBSD: mcpcia.c,v 1.20 2007/03/04 05:59:11 christos Exp $ */
 
 /*-
@@ -179,8 +179,7 @@ mcpciaattach(parent, self, aux)
 	    ma->ma_gid == mcpcia_console_configuration.cc_gid)
 		ccp = &mcpcia_console_configuration;
 	else {
-		ccp = malloc(sizeof(struct mcpcia_config), M_DEVBUF, M_WAITOK);
-		memset(ccp, 0, sizeof(struct mcpcia_config));
+		ccp = malloc(sizeof(*ccp), M_DEVBUF, M_WAITOK | M_ZERO);
 
 		ccp->cc_mid = ma->ma_mid;
 		ccp->cc_gid = ma->ma_gid;
