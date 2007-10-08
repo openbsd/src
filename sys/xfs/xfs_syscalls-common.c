@@ -496,12 +496,11 @@ remote_pioctl (d_thread_t *p,
     struct xfs_message_pioctl *msg = NULL;
     struct xfs_message_wakeup_data *msg2;
 
-    msg = malloc(sizeof(struct xfs_message_symlink), M_TEMP, M_WAITOK);
+    msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK | M_ZERO);
     if (msg == NULL) {
         error = ENOMEM;
 	goto done;
     }
-    memset(msg, 0, sizeof(*msg));
 
     if (vp != NULL) {
 	struct xfs_node *xn;
