@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.75 2007/08/02 03:21:59 david Exp $
+#	$OpenBSD: special,v 1.76 2007/10/08 12:16:35 norby Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -65,6 +65,7 @@ moduli		type=file mode=0644 uname=root gname=wheel
 netstart	type=file mode=0644 uname=root gname=wheel
 ntpd.conf	type=file mode=0644 uname=root gname=wheel
 ospfd.conf	type=file mode=0600 uname=root gname=wheel
+ospf6d.conf	type=file mode=0600 uname=root gname=wheel
 passwd		type=file mode=0644 uname=root gname=wheel
 pf.conf		type=file mode=0600 uname=root gname=wheel optional
 printcap	type=file mode=0644 uname=root gname=wheel
