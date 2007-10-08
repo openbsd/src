@@ -1,7 +1,7 @@
 #ifndef _NB_RUNETYPE_H_
 #define _NB_RUNETYPE_H_
 
-/* $OpenBSD: runetype.h,v 1.4 2005/08/08 05:53:01 espie Exp $ */
+/* $OpenBSD: runetype.h,v 1.5 2007/10/08 08:17:15 gilles Exp $ */
 /*	$NetBSD: runetype.h,v 1.18 2003/08/07 16:43:04 agc Exp $	*/
 /*-
  * Copyright (c) 1993
@@ -84,12 +84,12 @@ typedef struct {
 	int32_t		fre_min;	/* First rune of the range */
 	int32_t		fre_max;	/* Last rune (inclusive) of the range */
 	int32_t		fre_map;	/* What first maps to in maps */
-} __attribute__((__packed__)) _FileRuneEntry;
+} __packed _FileRuneEntry;
 
 
 typedef struct {
 	uint32_t	frr_nranges;	/* Number of ranges stored */
-} __attribute__((__packed__)) _FileRuneRange;
+} __packed _FileRuneRange;
 
 
 typedef struct {
@@ -114,7 +114,7 @@ typedef struct {
 	int32_t		frl_variable_len;/* how long that data is */
 
 	/* variable size data follows */
-} __attribute__((__packed__)) _FileRuneLocale;
+} __packed _FileRuneLocale;
 
 
 /*

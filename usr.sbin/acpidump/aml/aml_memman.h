@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_memman.h,v 1.2 2006/02/06 21:46:40 jmc Exp $	*/
+/*	$OpenBSD: aml_memman.h,v 1.3 2007/10/08 08:20:49 gilles Exp $	*/
 /*-
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_memman.h,v 1.2 2006/02/06 21:46:40 jmc Exp $
+ *	$Id: aml_memman.h,v 1.3 2007/10/08 08:20:49 gilles Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_memman.h,v 1.1 2000/08/24 09:33:08 takawata Exp $
  */
 
@@ -47,7 +47,7 @@ struct	memman_block {
 	unsigned int	available;	/* number of available chunks */
 	unsigned int	allocated_mem;	/* block + misc (in bytes) */
 
-}__attribute__((packed));
+} __packed;
 
 LIST_HEAD(memman_block_list, memman_block);
 
@@ -56,7 +56,7 @@ struct	memman_node {
 	LIST_ENTRY(memman_node)	links;
 	void	*node;
 	struct	memman_block *memblock;
-}__attribute__((packed));
+} __packed;
 
 LIST_HEAD(memman_node_list, memman_node);
 
@@ -87,7 +87,7 @@ struct	memman_flexmem_info {
 	LIST_ENTRY(memman_flexmem_info) links;
 	void	*addr;
 	size_t	mem_size;
-}__attribute__((packed));
+} __packed;
 
 LIST_HEAD(memman_flexmem_info_list, memman_flexmem_info);
 

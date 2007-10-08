@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.h,v 1.2 2005/06/04 02:25:53 cloder Exp $	*/
+/*	$OpenBSD: acpidump.h,v 1.3 2007/10/08 08:20:49 gilles Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpidump.h,v 1.2 2005/06/04 02:25:53 cloder Exp $
+ *	$Id: acpidump.h,v 1.3 2007/10/08 08:20:49 gilles Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.h,v 1.2 2000/11/08 02:37:00 iwasaki Exp $
  */
 
@@ -48,7 +48,7 @@ struct ACPIgas {
 	u_int8_t	register_bit_offset;
 	u_int8_t	res;
 	u_int64_t	address;
-} __attribute__((packed));
+} __packed;
 
 /* Root System Description Pointer */
 struct ACPIrsdp {
@@ -57,7 +57,7 @@ struct ACPIrsdp {
 	u_char		oem[6];
 	u_char		res;
 	u_int32_t	addr;
-} __attribute__((packed));
+} __packed;
 
 /* System Description Table */
 struct ACPIsdt {
@@ -72,7 +72,7 @@ struct ACPIsdt {
 	u_int32_t	crerev;
 #define SIZEOF_SDT_HDR 36	/* struct size except body */
 	u_int32_t	body[1];/* This member should be casted */
-} __attribute__((packed));
+} __packed;
 
 /* Fixed ACPI Description Table (body) */
 struct FACPbody {
@@ -139,7 +139,7 @@ struct FACPbody {
 	struct ACPIgas	x_pm_tmr_blk;
 	struct ACPIgas	x_gpe0_blk;
 	struct ACPIgas	x_gpe1_blk;
-} __attribute__((packed));
+} __packed;
 
 /* Firmware ACPI Control Structure */
 struct FACS {
@@ -158,7 +158,7 @@ struct FACS {
 	u_int32_t	flags;		/* bit field */
 #define ACPI_FACS_FLAG_S4BIOS_F	1	/* Supports S4BIOS_SEQ */
 	char		reserved[40];
-} __attribute__((packed));
+} __packed;
 
 void		*acpi_map_physical(vm_offset_t, size_t);
 struct ACPIrsdp	*acpi_find_rsd_ptr(void);

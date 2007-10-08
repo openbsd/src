@@ -1,4 +1,4 @@
-/*      $OpenBSD: test-11.c,v 1.2 2005/12/03 01:04:06 cloder Exp $	*/
+/*      $OpenBSD: test-11.c,v 1.3 2007/10/08 08:18:35 gilles Exp $	*/
 
 /*
  * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
@@ -78,8 +78,8 @@ foo9(void)
  */
 typedef
 struct mystruct {
-	unsigned char	c_data[128]	__attribute__((__packed__));
-	unsigned int	u_data[128]	__attribute__((__packed__));
+	unsigned char	c_data[128]	__packed;
+	unsigned int	u_data[128]	__packed;
 } mystruct_t;
 
 
@@ -88,7 +88,7 @@ struct mystruct {
  */
 struct mystruct2 {
 	unsigned char	c_data[128];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * A typedef with an attribute after the typename.
