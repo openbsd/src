@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.20 2007/07/28 11:24:06 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.21 2007/10/08 17:31:24 mglocker Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -86,6 +86,7 @@ const char * const ieee80211_phymode_name[] = {
 };
 
 int ieee80211_newstate(struct ieee80211com *, enum ieee80211_state, int);
+void ieee80211_set_link_state(struct ieee80211com *, int);
 
 void
 ieee80211_proto_attach(struct ifnet *ifp)
@@ -370,6 +371,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	    ieee80211_state_name[ostate], ieee80211_state_name[nstate]));
 	ic->ic_state = nstate;			/* state transition */
 	ni = ic->ic_bss;			/* NB: no reference held */
+	if (ostate == IEEE80211_S_RUN)
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		switch (ostate) {
@@ -537,6 +540,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 		}
 		break;
 	case IEEE80211_S_RUN:
+		ieee80211_set_link_state(ic, LINK_STATE_UP);
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_AUTH:
@@ -577,4 +581,85 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 		break;
 	}
 	return 0;
+}
+
+void
+ieee80211_set_link_state(struct ieee80211com *ic, int nstate)
+{
+	struct ifnet *ifp = &ic->ic_if;
+
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_AHDEMO:
+		/* FALLTHROUGH */
+	case IEEE80211_M_STA:
+		if (ifp->if_link_state != nstate) {
+			if (nstate == LINK_STATE_UP) {
+				/* Change link state to UP. */
+				ifp->if_link_state = LINK_STATE_UP;
+				if_link_state_change(ifp);
+				if (ifp->if_flags & IFF_DEBUG) {
+					printf("%s: set STA link state UP\n",
+					    ifp->if_xname);
+				}
+			}
+
+			if (nstate == LINK_STATE_DOWN) {
+				/* Change link state to DOWN. */
+				ifp->if_link_state = LINK_STATE_DOWN;
+				if_link_state_change(ifp);
+				if (ifp->if_flags & IFF_DEBUG) {
+					printf("%s: set STA link state DOWN\n",
+					    ifp->if_xname);
+				}
+			}
+
+			if (nstate == LINK_STATE_UNKNOWN) {
+				/* Change link state to UNKNOWN. */
+				ifp->if_link_state = LINK_STATE_UNKNOWN;
+				if_link_state_change(ifp);
+				if (ifp->if_flags & IFF_DEBUG) {
+					printf("%s: set STA link state UNKNOWN\n",
+					    ifp->if_xname);
+				}
+			}
+		}
+		break;
+	case IEEE80211_M_IBSS:
+		/* Always change link state to UNKNOWN in IBSS mode. */
+		if (ifp->if_link_state != LINK_STATE_UNKNOWN) {
+			ifp->if_link_state = LINK_STATE_UNKNOWN;
+			if_link_state_change(ifp); 
+			if (ifp->if_flags & IFF_DEBUG) {
+				printf("%s: set IBSS link state UNKNOWN\n",
+				    ifp->if_xname);
+			}
+		}
+		break;
+	case IEEE80211_M_HOSTAP:
+		/* Always change link state to UNKNOWN in HOSTAP mode. */
+		if (ifp->if_link_state != LINK_STATE_UNKNOWN) {
+			ifp->if_link_state = LINK_STATE_UNKNOWN;
+			if_link_state_change(ifp);
+			if (ifp->if_flags & IFF_DEBUG) {
+				printf("%s: set HOSTAP link state UNKNOWN\n",
+				    ifp->if_xname);
+			}
+		}
+		break;
+	case IEEE80211_M_MONITOR:
+		/* Always change link state to DOWN in MONITOR mode. */
+		if (ifp->if_link_state != LINK_STATE_DOWN) {
+			ifp->if_link_state = LINK_STATE_DOWN;
+			if_link_state_change(ifp);
+			if (ifp->if_flags & IFF_DEBUG) {
+				printf("%s: set MONITOR link state DOWN\n",
+				    ifp->if_xname);
+			}
+		}
+		break;
+	default:
+		printf("%s: can't set link state (unknown mediaopt)!\n",
+		    ifp->if_xname);
+		break;
+	}
 }
