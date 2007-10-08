@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_maloreg.h,v 1.14 2007/08/09 14:50:06 mglocker Exp $ */
+/*	$OpenBSD: if_maloreg.h,v 1.15 2007/10/08 22:08:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -62,6 +62,7 @@
 #define MALO_CMD_TXPOWER		0x001e
 #define MALO_CMD_ANTENNA		0x0020
 #define MALO_CMD_MACCTRL		0x0028
+#define MALO_CMD_MACADDR		0x004d
 #define MALO_CMD_ASSOC			0x0050
 #define MALO_CMD_80211D			0x005b
 #define MALO_CMD_BGSCAN_CONFIG		0x006b

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.24 2007/08/09 21:24:02 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.25 2007/10/08 22:08:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -158,6 +158,11 @@ struct malo_cmd_body_antenna {
 struct malo_cmd_body_macctrl {
 	uint16_t	action;
 	uint16_t	reserved;
+} __packed;
+
+struct malo_cmd_body_macaddr {
+	uint16_t	action;
+	uint8_t		macaddr[ETHER_ADDR_LEN];
 } __packed;
 
 struct malo_cmd_body_assoc {

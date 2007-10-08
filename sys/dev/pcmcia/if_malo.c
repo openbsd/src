@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.56 2007/08/28 18:34:38 deraadt Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.57 2007/10/08 22:08:12 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -35,6 +35,7 @@
 #endif
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
 
@@ -108,6 +109,7 @@ int	cmalo_cmd_set_channel(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_txpower(struct malo_softc *, int16_t);
 int	cmalo_cmd_set_antenna(struct malo_softc *, uint16_t);
 int	cmalo_cmd_set_macctrl(struct malo_softc *);
+int	cmalo_cmd_set_macaddr(struct malo_softc *, uint8_t *);
 int	cmalo_cmd_set_assoc(struct malo_softc *);
 int	cmalo_cmd_rsp_assoc(struct malo_softc *);
 int	cmalo_cmd_set_80211d(struct malo_softc *);
@@ -647,6 +649,9 @@ cmalo_init(struct ifnet *ifp)
 	if (cmalo_cmd_set_snmp(sc, MALO_OID_SHORTRETRY) != 0)
 		return (EIO);
 	if (cmalo_cmd_set_snmp(sc, MALO_OID_FRAGTRESH) != 0)
+		return (EIO);
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	if (cmalo_cmd_set_macaddr(sc, ic->ic_myaddr) != 0)
 		return (EIO);
 	if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
 		if (cmalo_wep(sc) != 0)
@@ -1659,6 +1664,35 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 }
 
 int
+cmalo_cmd_set_macaddr(struct malo_softc *sc, uint8_t *macaddr)
+{
+	struct malo_cmd_header *hdr = sc->sc_cmd;
+	struct malo_cmd_body_macaddr *body;
+	uint16_t psize;
+
+	bzero(sc->sc_cmd, MALO_CMD_BUFFER_SIZE);
+	psize = sizeof(*hdr) + sizeof(*body);
+
+	hdr->cmd = htole16(MALO_CMD_MACADDR);
+	hdr->size = htole16(sizeof(*body));
+	hdr->seqnum = htole16(1);
+	hdr->result = 0;
+	body = (struct malo_cmd_body_macaddr *)(hdr + 1);
+
+	body->action = htole16(1);
+	bcopy(macaddr, body->macaddr, ETHER_ADDR_LEN);
+
+	/* process command request */
+	if (cmalo_cmd_request(sc, psize, 0) != 0)
+		return (EIO);
+
+	/* process command repsonse */
+	cmalo_cmd_response(sc);
+
+	return (0);
+}
+
+int
 cmalo_cmd_set_assoc(struct malo_softc *sc)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
@@ -2019,6 +2053,11 @@ cmalo_cmd_response(struct malo_softc *sc)
 	case MALO_CMD_MACCTRL:
 		/* do nothing */
 		DPRINTF(1, "%s: got macctrl cmd response\n",
+		    sc->sc_dev.dv_xname);
+		break;
+	case MALO_CMD_MACADDR:
+		/* do nothing */
+		DPRINTF(1, "%s: got macaddr cmd response\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case MALO_CMD_ASSOC:
