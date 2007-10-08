@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.83 2007/05/28 22:16:31 cnst Exp $
+dnl	$OpenBSD: hardware,v 1.84 2007/10/08 08:38:37 mbalmer Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -570,7 +570,7 @@ Supported devices {:-include-:}:
 		Meinberg Funkuhren radio clocks, including:
 			PCI32 DCF77 time signal station receiver card
 			PCI511 DCF77 time signal station receiver card
-			GPS170 GPS receiver card
+			GPS170PCI GPS receiver card
 
 	Cryptography Accelerators
 		Hifn 6500 (lofn)
