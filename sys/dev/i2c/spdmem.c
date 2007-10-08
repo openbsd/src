@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.4 2007/10/08 03:10:58 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.5 2007/10/08 05:11:14 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -97,6 +97,12 @@
 #define SPDMEM_SDR_BANKS		0x02
 #define SPDMEM_SDR_BANKS_PER_CHIP	0x0e
 #define SPDMEM_SDR_SUPERSET		0x1d
+
+#define SPDMEM_SDR_FREQUENCY		126
+#define SPDMEM_SDR_CAS			127
+#define SPDMEM_SDR_FREQ_66		0x66
+#define SPDMEM_SDR_FREQ_100		0x64
+#define SPDMEM_SDR_FREQ_133		0x85
 
 /* Dual Data Rate SDRAM */
 #define SPDMEM_DDR_ROWS			0x00
@@ -344,13 +350,32 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 				bits -= 8;
 			ddr_type_string = "PC";
 		}
-		d_clk /= cycle_time;
-		if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM)
-			d_clk = (d_clk + 1) / 2;
-		p_clk = d_clk * bits / 8;
-		if ((p_clk % 100) >= 50)
-			p_clk += 50;
-		p_clk -= p_clk % 100;
+
+		if (s->sm_type == SPDMEM_MEMTYPE_SDRAM) {
+			p_clk = 66;
+			if (s->sm_len >= 128) {
+				switch(spdmem_read(sc, SPDMEM_SDR_FREQUENCY)) {
+				case SPDMEM_SDR_FREQ_100:
+					p_clk = 100;
+					break;
+				case SPDMEM_SDR_FREQ_133:
+					p_clk = 133;
+					break;
+				case SPDMEM_SDR_FREQ_66:
+				default:
+					p_clk = 66;
+					break;
+				}
+			} 
+		} else {
+			d_clk /= cycle_time;
+			if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM)
+				d_clk = (d_clk + 1) / 2;
+			p_clk = d_clk * bits / 8;
+			if ((p_clk % 100) >= 50)
+				p_clk += 50;
+			p_clk -= p_clk % 100;
+		}
 		printf(" %s%d", ddr_type_string, p_clk);
 	}
 
