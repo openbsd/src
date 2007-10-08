@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.6 2007/10/08 05:39:19 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.7 2007/10/08 06:20:21 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -97,6 +97,7 @@
 #define SPDMEM_SDR_BANKS		0x02
 #define SPDMEM_SDR_CYCLE		0x06
 #define SPDMEM_SDR_BANKS_PER_CHIP	0x0e
+#define SPDMEM_SDR_MOD_ATTRIB		0x12
 #define SPDMEM_SDR_SUPERSET		0x1d
 
 #define SPDMEM_SDR_FREQUENCY		126
@@ -104,6 +105,8 @@
 #define SPDMEM_SDR_FREQ_66		0x66
 #define SPDMEM_SDR_FREQ_100		0x64
 #define SPDMEM_SDR_FREQ_133		0x85
+#define SPDMEM_SDR_CAS2			(1 << 1)
+#define SPDMEM_SDR_CAS3			(1 << 2)
 
 /* Dual Data Rate SDRAM */
 #define SPDMEM_DDR_ROWS			0x00
@@ -299,7 +302,8 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	printf(" %s", type);
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 
-	if (((s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) && 
+	if (((s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM ||
+	      s->sm_type == SPDMEM_MEMTYPE_SDRAM) && 
 	     (s->sm_data[SPDMEM_DDR_MOD_ATTRIB] & SPDMEM_DDR_ATTRIB_REG)) ||
 	    ((s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) &&
 	     (s->sm_data[SPDMEM_DDR2_DIMMTYPE] & SPDMEM_DDR2_TYPE_REGMASK)))
@@ -382,7 +386,17 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		printf(" %s%d", ddr_type_string, p_clk);
 	}
 
-	if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
+	/* Print CAS latency */
+	switch (s->sm_type) {
+	case SPDMEM_MEMTYPE_SDRAM:
+		if (s->sm_len < 128)
+			break;
+		if (spdmem_read(sc, SPDMEM_SDR_CAS) & SPDMEM_SDR_CAS2)
+			printf("CL2");
+		else if (spdmem_read(sc, SPDMEM_SDR_CAS) & SPDMEM_SDR_CAS3)
+			printf("CL3");
+		break;
+	case SPDMEM_MEMTYPE_DDRSDRAM:
 		for (i = 6; i >= 0; i--) {
 			if (s->sm_data[SPDMEM_DDR_CAS] & (1 << i)) {
 				cl = ((i * 10) / 2) + 10;
@@ -390,13 +404,15 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 				break;
 			}
 		}
-	} else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
+		break;
+	case SPDMEM_MEMTYPE_DDR2SDRAM:
 		for (i = 5; i >= 2; i--) {
 			if (s->sm_data[SPDMEM_DDR_CAS] & (i << i)) {
 				printf("CL%d", i);
 				break;
 			}
 		}
+		break;
 	}
 
 	printf("\n");
