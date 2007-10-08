@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: log.c,v 1.2 2007/10/08 20:28:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -192,16 +192,20 @@ log_in6addr(const struct in6_addr *addr)
 	return (log_sockaddr((struct sockaddr *)&sa_in6));
 }
 
+#define NUM_LOGS	4
 const char *
 log_sockaddr(struct sockaddr *sa)
 {
-	static char	buf[NI_MAXHOST];
+	static char	buf[NUM_LOGS][NI_MAXHOST];
+	static int	round = 0;
 
-	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0,
+	round = (round + 1) % NUM_LOGS;
+
+	if (getnameinfo(sa, sa->sa_len, buf[round], NI_MAXHOST, NULL, 0,
 	    NI_NUMERICHOST))
 		return ("(unknown)");
 	else
-		return (buf);
+		return (buf[round]);
 }
 
 /* names */
