@@ -1,8 +1,8 @@
-.\"     $OpenBSD: glxpcib.4,v 1.1 2007/10/07 13:41:48 mbalmer Exp $
+.\"     $OpenBSD: glxpcib.4,v 1.2 2007/10/08 12:48:21 jmc Exp $
 .\"
 .\" Michael Shalayeff, 2007. Public Domain.
 .\"
-.Dd $Mdocdate: October 7 2007 $
+.Dd $Mdocdate: October 8 2007 $
 .Dt GLXPCIB 4 i386
 .Os
 .Sh NAME
@@ -16,9 +16,7 @@ The
 .Nm
 driver provides support for the AMD Geode CS5536 Companion chip.
 This device contains a number of components, including a PCI-ISA bridge.
-Besides the core
-.Xr pcib 4
-functionality, the
+Besides the core functionality, the
 .Nm
 driver implements a 32-bit 3.5 MHz timecounter and a watchdog timer device.
 .Sh SEE ALSO

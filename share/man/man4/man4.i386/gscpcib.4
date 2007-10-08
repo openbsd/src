@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gscpcib.4,v 1.6 2007/05/31 19:19:54 jmc Exp $
+.\"	$OpenBSD: gscpcib.4,v 1.7 2007/10/08 12:48:21 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 8 2007 $
 .Dt GSCPCIB 4 i386
 .Os
 .Sh NAME
@@ -34,9 +34,7 @@ bridge.
 This device is a
 .Tn PCI-ISA
 bridge, but with some additional sub-devices.
-Besides the core
-.Xr pcib 4
-functionality, the
+Besides the core functionality, the
 .Nm
 driver provides support for the
 .Tn GPIO
@@ -54,7 +52,6 @@ program provides a convenient way to manipulate these pins from userland.
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr pci 4 ,
-.Xr pcib 4 ,
 .Xr gpioctl 8
 .Sh HISTORY
 The

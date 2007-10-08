@@ -1,4 +1,4 @@
-.\"	$OpenBSD: piixpcib.4,v 1.3 2007/05/31 19:19:55 jmc Exp $
+.\"	$OpenBSD: piixpcib.4,v 1.4 2007/10/08 12:48:21 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Stefan Sperling <stsp@stsp.in-berlin.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 8 2007 $
 .Dt PIIXPCIB 4 i386
 .Os
 .Sh NAME
@@ -32,9 +32,7 @@ and
 .Tn 82440MX
 PIIX4 ISA bridges.
 .Pp
-Besides the core
-.Xr pcib 4
-functionality, the
+Besides the core functionality, the
 .Nm
 driver provides support for the first generation of Intel's SpeedStep
 technology present in some Pentium III CPUs.
@@ -55,7 +53,6 @@ and into high power state if it is greater than 50.
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr pci 4 ,
-.Xr pcib 4 ,
 .Xr apmd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
