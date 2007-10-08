@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 2007/10/08 14:55:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -72,10 +72,12 @@ usage(void)
 static void
 segvcatch(int a)
 {
-	fprintf(stderr, "%sinternal compiler error: %s, line %d\n",
+	char buf[1024];
+
+	snprintf(buf, sizeof buf, "%sinternal compiler error: %s, line %d\n",
 	    nerrors ? "" : "major ", ftitle, lineno);
-	fflush(stderr);
-	exit(1);
+	write(STDERR_FILENO, buf, strlen(buf));
+	_exit(1);
 }
 
 /*

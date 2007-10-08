@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.3 2007/10/08 12:02:12 stefan Exp $	*/
+/*	$OpenBSD: cc.c,v 1.4 2007/10/08 14:55:13 deraadt Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -610,6 +610,8 @@ dexit(int eval)
 			cunlink(tmp3);
 		cunlink(tmp4);
 	}
+	if (eval == 100)
+		_exit(eval);
 	exit(eval);
 }
 
