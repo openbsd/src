@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.14 2007/09/30 19:58:43 mbalmer Exp $ */
+/*	$OpenBSD: mbg.c,v 1.15 2007/10/08 09:23:01 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -130,7 +130,7 @@ struct cfdriver mbg_cd = {
 };
 
 const struct pci_matchid mbg_devices[] = {
-	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_GPS170 },
+	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_GPS170PCI },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32 },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI511 }
 };
@@ -192,7 +192,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_read = mbg_read_asic;
 		sensor_task_register(sc, mbg_task, 10);
 		break;
-	case PCI_PRODUCT_MEINBERG_GPS170:
+	case PCI_PRODUCT_MEINBERG_GPS170PCI:
 		sc->sc_read = mbg_read_asic;
 		sensor_task_register(sc, mbg_task_hr, 1);
 		break;
