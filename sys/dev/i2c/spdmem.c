@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.5 2007/10/08 05:11:14 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.6 2007/10/08 05:39:19 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -95,6 +95,7 @@
 #define SPDMEM_SDR_ROWS			0x00
 #define SPDMEM_SDR_COLS			0x01
 #define SPDMEM_SDR_BANKS		0x02
+#define SPDMEM_SDR_CYCLE		0x06
 #define SPDMEM_SDR_BANKS_PER_CHIP	0x0e
 #define SPDMEM_SDR_SUPERSET		0x1d
 
@@ -356,10 +357,12 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 			if (s->sm_len >= 128) {
 				switch(spdmem_read(sc, SPDMEM_SDR_FREQUENCY)) {
 				case SPDMEM_SDR_FREQ_100:
-					p_clk = 100;
-					break;
 				case SPDMEM_SDR_FREQ_133:
-					p_clk = 133;
+					/* We need to check ns to decide here */
+					if (s->sm_data[SPDMEM_SDR_CYCLE] < 0x80)
+						p_clk = 133;
+					else
+						p_clk = 100;
 					break;
 				case SPDMEM_SDR_FREQ_66:
 				default:
