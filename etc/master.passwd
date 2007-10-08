@@ -36,4 +36,5 @@ _hostapd:*:86:86::0:0:HostAP Daemon:/var/empty:/sbin/nologin
 _dvmrpd:*:87:87::0:0:DVMRP Daemon:/var/empty:/sbin/nologin
 _ripd:*:88:88::0:0:RIP Daemon:/var/empty:/sbin/nologin
 _hoststated:*:89:89::0:0:HostState Daemon:/var/empty:/sbin/nologin
+_ospf6d:*:90:90::0:0:OSPF6 Daemon:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin

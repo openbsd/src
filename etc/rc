@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.304 2007/04/25 14:12:05 espie Exp $
+#	$OpenBSD: rc,v 1.305 2007/10/08 11:29:58 norby Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -574,6 +574,10 @@ fi
 
 if [ X"${ospfd_flags}" != X"NO" ]; then
 	echo -n ' ospfd';		/usr/sbin/ospfd $ospfd_flags
+fi
+
+if [ X"${ospf6d_flags}" != X"NO" ]; then
+	echo -n ' ospf6d';		/usr/sbin/ospf6d $ospf6d_flags
 fi
 
 if [ X"${bgpd_flags}" != X"NO" ]; then
