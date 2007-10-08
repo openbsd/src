@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.2 2007/10/07 16:40:52 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.3 2007/10/08 01:40:09 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -108,7 +108,10 @@
 #define SPDMEM_DDR_REFRESH		0x09
 #define SPDMEM_DDR_BANKS_PER_CHIP	0x0e
 #define SPDMEM_DDR_CAS			0x0f
+#define SPDMEM_DDR_MOD_ATTRIB		0x12
 #define SPDMEM_DDR_SUPERSET		0x1d
+
+#define SPDMEM_DDR_ATTRIB_REG		(1 << 1)
 
 /* Dual Data Rate 2 SDRAM */
 #define SPDMEM_DDR2_ROWS		0x00
@@ -118,6 +121,9 @@
 #define SPDMEM_DDR2_VOLTAGE		0x05
 #define SPDMEM_DDR2_CYCLE		0x06
 #define SPDMEM_DDR2_BANKS_PER_CHIP	0x0e
+#define SPDMEM_DDR2_DIMMTYPE		0x11
+
+#define SPDMEM_DDR2_TYPE_REGMASK	((1 << 4) | (1 << 0))
 
 /* Direct Rambus DRAM */
 #define SPDMEM_RDR_ROWS_COLS		0x00
@@ -284,6 +290,12 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(" %s", type);
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
+
+	if (((s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) && 
+	     (s->sm_data[SPDMEM_DDR_MOD_ATTRIB] & SPDMEM_DDR_ATTRIB_REG)) ||
+	    ((s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) &&
+	     (s->sm_data[SPDMEM_DDR2_DIMMTYPE] & SPDMEM_DDR2_TYPE_REGMASK)))
+		printf(" registered");
 
 	if ((s->sm_type == SPDMEM_MEMTYPE_SDRAM ||
 	     s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM ||
