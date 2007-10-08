@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.173 2007/09/30 10:16:56 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.174 2007/10/08 12:56:37 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -310,6 +310,7 @@ maxds*		at iic?
 fcu*		at iic?
 adt*		at iic?
 asms*		at iic?
+spdmem*		at iic?
 
 # CardBus bus support
 cardbus*	at cardslot?

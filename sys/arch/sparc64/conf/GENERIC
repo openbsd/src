@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.185 2007/09/09 01:37:28 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.186 2007/10/08 12:56:37 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -384,6 +384,7 @@ lmtemp*	at iic?				# NS LM75/LM77 temperature sensor
 maxds*	at iic?				# Maxim DS1631
 maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 pcfadc*	at iic?				# Philips PCF8591
+spdmem* at iic?				# SPD memory eeproms
 
 # Framebuffers
 agten*		at sbus?		# Fujitsu AG-10e framebuffer

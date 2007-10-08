@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.17 2007/09/09 01:37:28 jsg Exp $ 
+# $OpenBSD: GENERIC,v 1.18 2007/10/08 12:56:37 deraadt Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -49,6 +49,7 @@ ricohrtc0	at iic? addr 0x32	# Ricoh RTC
 pcaled0		at iic? addr 0x60	# led controller
 gpio*		at pcaled0
 fintek0		at iic?	flags 0x0001	# temp/fan controller
+spdmem*		at iic?			# SPD memory eeproms
 
 #iopwdog*	at iopxs?	# Watchdog timer
 pci0		at iopxs? bus ?	# PCI/PCI-X support

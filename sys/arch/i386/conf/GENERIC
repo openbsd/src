@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.580 2007/10/07 18:41:07 mbalmer Exp $
+#	$OpenBSD: GENERIC,v 1.581 2007/10/08 12:56:37 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -150,6 +150,7 @@ asbtm*	at iic?				# Asus ASB100
 wbenv*	at iic?				# Winbond W83L784R/W83L785R/W83L785TS-L
 glenv*	at iic?				# Genesys Logic GL518SM
 thmc*	at iic?				# TI TMHC50 / Analog ADM1022
+spdmem*	at iic?				# SPD memory eeproms
 
 #isagpio0 at isa? port 0x78		# ISA I/O mapped as GPIO
 #isagpio1 at isa? port 0x80
