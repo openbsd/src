@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.2 2007/10/07 18:39:03 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.3 2007/10/08 12:02:12 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -74,8 +74,6 @@
  */
 #define	STDINC	  "/usr/include"
 
-#define SBSIZE 10000
-#define MAXINC 100
 #define MAXFIL 10000
 #define MAXLIB 10000
 #define MAXAV  10000
@@ -761,9 +759,9 @@ char *f;
 }
 
 char *
-gettmp()
+gettmp(void)
 {
-	char *sfn = strdup("/tmp/ctm.XXXXXX");
+	char *sfn = copy("/tmp/ctm.XXXXXX");
 	int fd = -1;
 
 	if ((fd = mkstemp(sfn)) == -1) {
