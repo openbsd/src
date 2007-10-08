@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1269 2007/10/02 07:02:06 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1270 2007/10/08 09:20:57 mbalmer Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2553,7 +2553,7 @@
 /* Meinberg Funkuhren */
 #define	PCI_PRODUCT_MEINBERG_PCI32	0x0101		/* PCI32 */
 #define	PCI_PRODUCT_MEINBERG_PCI511	0x0104		/* PCI511 */
-#define	PCI_PRODUCT_MEINBERG_GPS170	0x0204		/* GPS170 */
+#define	PCI_PRODUCT_MEINBERG_GPS170PCI	0x0204		/* GPS170PCI */
 
 /* Mentor */
 #define	PCI_PRODUCT_MENTOR_PCI0660	0x0660		/* PCI */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1269 2007/10/02 07:02:06 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1270 2007/10/08 09:20:57 mbalmer Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7828,8 +7828,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI511",
 	},
 	{
-	    PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_GPS170,
-	    "GPS170",
+	    PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_GPS170PCI,
+	    "GPS170PCI",
 	},
 	{
 	    PCI_VENDOR_MENTOR, PCI_PRODUCT_MENTOR_PCI0660,
