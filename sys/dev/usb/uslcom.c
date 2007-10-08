@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.13 2007/06/14 10:11:16 mbalmer Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.14 2007/10/08 03:08:49 jcs Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -360,6 +360,7 @@ uslcom_param(void *vsc, int portno, struct termios *t)
 	case 38400:
 	case 57600:
 	case 115200:
+	case 230400:
 	case 460800:
 	case 921600:
 		req.bmRequestType = USLCOM_WRITE;
