@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.14 2007/10/08 03:08:49 jcs Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.15 2007/10/08 03:10:42 jcs Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -125,6 +125,7 @@ static const struct usb_devno uslcom_devs[] = {
 	{ USB_VENDOR_SILABS,		USB_PRODUCT_SILABS_CP210X_1 },
 	{ USB_VENDOR_SILABS,		USB_PRODUCT_SILABS_CP210X_2 },
 	{ USB_VENDOR_SILABS,		USB_PRODUCT_SILABS_SUNNTO },
+	{ USB_VENDOR_SILABS,		USB_PRODUCT_SILABS_TRAQMATE },
 	{ USB_VENDOR_SILABS2,		USB_PRODUCT_SILABS2_DCU11CLONE },
 	{ USB_VENDOR_USI,		USB_PRODUCT_USI_MC60 }
 };
