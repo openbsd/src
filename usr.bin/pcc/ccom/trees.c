@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.3 2007/10/08 18:22:12 otto Exp $	*/
+/*	$OpenBSD: trees.c,v 1.4 2007/10/08 18:26:29 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1625,6 +1625,9 @@ doszof(NODE *p)
 	union dimfun *df;
 	TWORD ty;
 	NODE *rv;
+
+	if (p->n_op == FLD)
+		uerror("can't apply sizeof to bit-field");
 
 	/*
 	 * Arrays may be dynamic, may need to make computations.
