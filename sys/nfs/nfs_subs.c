@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.63 2007/10/07 16:30:26 miod Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.64 2007/10/08 17:39:52 deraadt Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ int nfsv2_procid[NFS_NPROCS] = {
  * Use NFSERR_IO as the catch all for ones not specifically defined in
  * RFC 1094.
  */
-static u_char nfsrv_v2errmap[ELAST] = {
+static u_char nfsrv_v2errmap[] = {
   NFSERR_PERM,	NFSERR_NOENT,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
   NFSERR_NXIO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
   NFSERR_IO,	NFSERR_IO,	NFSERR_ACCES,	NFSERR_IO,	NFSERR_IO,
@@ -186,11 +186,8 @@ static u_char nfsrv_v2errmap[ELAST] = {
   NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
   NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
   NFSERR_IO,	NFSERR_IO,	NFSERR_NAMETOL,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_NOTEMPTY, NFSERR_IO,	NFSERR_IO,	NFSERR_DQUOT,	NFSERR_STALE,
-  NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO
+  NFSERR_NOTEMPTY, NFSERR_IO,	NFSERR_IO,	NFSERR_DQUOT,	NFSERR_STALE
+  /* Everything after this maps to NFSERR_IO, so far */
 };
 
 /*
@@ -1928,7 +1925,7 @@ nfsrv_errmap(nd, err)
 	    } else
 		return (err & 0xffff);
 	}
-	if (err <= ELAST)
+	if (err <= sizeof(nfsrv_v2errmap)/sizeof(nfsrv_v2errmap[0]))
 		return ((int)nfsrv_v2errmap[err - 1]);
 	return (NFSERR_IO);
 }
