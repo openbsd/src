@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.16 2007/10/05 16:46:30 thib Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.17 2007/10/08 19:26:48 krw Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -176,7 +176,7 @@ ufsdirhash_build(struct inode *ip)
 	dh->dh_hash = malloc(narrays * sizeof(dh->dh_hash[0]),
 	    M_DIRHASH, M_NOWAIT|M_ZERO);
 	dh->dh_blkfree = malloc(nblocks * sizeof(dh->dh_blkfree[0]),
-	    M_DIRHASH, M_NOWAIT);
+	    M_DIRHASH, M_NOWAIT | M_ZERO);
 	if (dh->dh_hash == NULL || dh->dh_blkfree == NULL)
 		goto fail;
 	for (i = 0; i < narrays; i++) {
