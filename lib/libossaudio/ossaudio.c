@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.10 2007/09/28 01:15:15 jakemsr Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.11 2007/10/08 01:00:13 jakemsr Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -97,6 +97,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	struct audio_buf_info bufinfo;
 	struct count_info cntinfo;
 	struct audio_encoding tmpenc;
+	struct audio_bufinfo tmpab;
 	u_int u;
 	int idat, idata;
 	int retval;
@@ -343,27 +344,23 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_GETOSPACE:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETPRINFO, &tmpab);
 		if (retval < 0)
 			return retval;
-		setblocksize(fd, &tmpinfo);
-		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat -
-			(tmpinfo.play.seek + tmpinfo.blocksize - 1)/tmpinfo.blocksize;
-		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.play.seek;
+		bufinfo.fragsize = tmpab.blksize;
+		bufinfo.fragstotal = tmpab.hiwat;
+		bufinfo.bytes = tmpab.hiwat * tmpab.blksize - tmpab.seek;
+		bufinfo.fragments = bufinfo.bytes / tmpab.blksize;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_GETISPACE:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETRRINFO, &tmpab);
 		if (retval < 0)
 			return retval;
-		setblocksize(fd, &tmpinfo);
-		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat -
-			(tmpinfo.record.seek + tmpinfo.blocksize - 1)/tmpinfo.blocksize;
-		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.record.seek;
+		bufinfo.fragsize = tmpab.blksize;
+		bufinfo.fragstotal = tmpab.hiwat;
+		bufinfo.bytes = tmpab.seek;
+		bufinfo.fragments = bufinfo.bytes / tmpab.blksize;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_NONBLOCK:
