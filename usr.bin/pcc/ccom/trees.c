@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.2 2007/10/07 18:34:41 otto Exp $	*/
+/*	$OpenBSD: trees.c,v 1.3 2007/10/08 18:22:12 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1626,9 +1626,6 @@ doszof(NODE *p)
 	TWORD ty;
 	NODE *rv;
 
-	if (p->n_op == FLD)
-		uerror("can't apply sizeof to bit-field");
-
 	/*
 	 * Arrays may be dynamic, may need to make computations.
 	 */
@@ -1665,7 +1662,8 @@ eprint(NODE *p, int down, int *a, int *b)
 	printf("%p) %s, ", p, copst(p->n_op));
 	if (ty == LTYPE) {
 		printf(CONFMT, p->n_lval);
-		printf(", %d, ", p->n_rval);
+		printf(", %d, ", (p->n_op != NAME && p->n_op != ICON) ?
+		    p->n_rval : 0);
 	}
 	tprint(stdout, p->n_type, p->n_qual);
 	printf( ", %p, %p\n", p->n_df, p->n_sue );
@@ -1693,6 +1691,7 @@ prtdcon(NODE *p)
 	p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
 	p->n_sp->sclass = ILABEL;
 	p->n_sp->soffset = i;
+	p->n_sp->sflags = 0;
 }
 
 extern int negrel[];
