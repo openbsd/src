@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.46 2007/10/03 21:49:12 jakemsr Exp $
+.\"	$OpenBSD: audio.4,v 1.47 2007/10/08 00:46:49 jakemsr Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 3 2007 $
+.Dd $Mdocdate: October 8 2007 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -317,6 +317,8 @@ typedef struct audio_bufinfo {
 .Pp
 This information is mostly useful in input or output loops to determine
 how much data to read or write, respectively.
+Note, these ioctls were added to aid in porting third party applications
+and libraries, and should not be used in new code.
 .Pp
 .It Dv AUDIO_GETINFO Fa "audio_info_t *"
 .It Dv AUDIO_SETINFO Fa "audio_info_t *"
