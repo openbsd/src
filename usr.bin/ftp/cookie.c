@@ -1,4 +1,4 @@
-/* $OpenBSD: cookie.c,v 1.1 2007/06/13 13:52:26 pyr Exp $	*/
+/* $OpenBSD: cookie.c,v 1.2 2007/10/08 18:39:37 pyr Exp $	*/
 /*
  * Copyright (c) 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -85,10 +85,7 @@ cookie_load(void)
 			lbuf[len] = '\0';
 			line = lbuf;
 		}
-		if (len > 0 && line[len - 1] == '\r') {
-			line[len - 1] = '\0';
-			--len;
-		}
+		line[strcspn(line, "\r")] = '\0';
 
 		line += strspn(line, " \t");
 		if ((*line == '#') || (*line == '\0')) {
