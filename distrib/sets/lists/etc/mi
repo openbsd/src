@@ -82,6 +82,7 @@
 ./etc/networks
 ./etc/newsyslog.conf
 ./etc/ntpd.conf
+./etc/ospf6d.conf
 ./etc/ospfd.conf
 ./etc/passwd
 ./etc/pf.conf
