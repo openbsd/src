@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.49 2007/09/18 00:46:41 krw Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.50 2007/10/08 18:30:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -163,10 +163,9 @@ schizo_init(struct schizo_softc *sc, int busa)
 	int *busranges = NULL, nranges;
 	u_int64_t match, reg;
 
-	pbm = (struct schizo_pbm *)malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT);
+	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (pbm == NULL)
 		panic("schizo: can't alloc schizo pbm");
-	bzero(pbm, sizeof(*pbm));
 
 	pbm->sp_sc = sc;
 	pbm->sp_bus_a = busa;

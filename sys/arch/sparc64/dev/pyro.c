@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.8 2007/09/18 00:46:41 krw Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.9 2007/10/08 18:30:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -141,10 +141,9 @@ pyro_init(struct pyro_softc *sc, int busa)
 	struct pcibus_attach_args pba;
 	int *busranges = NULL, nranges;
 
-	pbm = (struct pyro_pbm *)malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT);
+	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (pbm == NULL)
 		panic("pyro: can't alloc pyro pbm");
-	bzero(pbm, sizeof(*pbm));
 
 	pbm->pp_sc = sc;
 	pbm->pp_bus_a = busa;
