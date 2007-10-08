@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.71 2007/09/01 11:54:49 miod Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.72 2007/10/08 04:15:10 ray Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -633,6 +633,7 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 #define	SHORTINT	0x040		/* short integer */
 #define	ZEROPAD		0x080		/* zero (as opposed to blank) pad */
 #define FPT		0x100		/* Floating point number */
+#define SIZEINT		0x200		/* (signed) size_t */
 
 	/*
 	 * To extend shorts properly, we need both signed and unsigned
@@ -641,11 +642,13 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 #define	SARG() \
 	(flags&QUADINT ? va_arg(ap, quad_t) : \
 	    flags&LONGINT ? va_arg(ap, long) : \
+	    flags&SIZEINT ? va_arg(ap, ssize_t) : \
 	    flags&SHORTINT ? (long)(short)va_arg(ap, int) : \
 	    (long)va_arg(ap, int))
 #define	UARG() \
 	(flags&QUADINT ? va_arg(ap, u_quad_t) : \
 	    flags&LONGINT ? va_arg(ap, u_long) : \
+	    flags&SIZEINT ? va_arg(ap, size_t) : \
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
 
@@ -833,6 +836,9 @@ reswitch:	switch (ch) {
 		case 'q':
 			flags |= QUADINT;
 			goto rflag;
+		case 'z':
+			flags |= SIZEINT;
+			goto rflag;
 		case 'c':
 			*(cp = buf) = va_arg(ap, int);
 			size = 1;
@@ -857,6 +863,8 @@ reswitch:	switch (ch) {
 				*va_arg(ap, long *) = ret;
 			else if (flags & SHORTINT)
 				*va_arg(ap, short *) = ret;
+			else if (flags & SIZEINT)
+				*va_arg(ap, ssize_t *) = ret;
 			else
 				*va_arg(ap, int *) = ret;
 			continue;	/* no output */
