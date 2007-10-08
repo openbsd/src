@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.581 2007/10/08 12:56:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.582 2007/10/08 13:08:13 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -51,6 +51,7 @@ esm0	at mainbus? 		# Dell Embedded Server Management
 
 isa0	at mainbus0
 isa0	at pcib?
+isa0	at amdpcib?
 isa0	at ichpcib?
 isa0	at piixpcib?
 isa0	at gscpcib?
