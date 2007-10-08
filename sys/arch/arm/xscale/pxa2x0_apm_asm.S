@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.2 2006/10/19 10:55:56 tom Exp $	*/
+/*	$OpenBSD: pxa2x0_apm_asm.S,v 1.3 2007/10/08 20:18:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -376,6 +376,7 @@ pxa2x0_cpu_resume_virt:
 /*
  * Saved processor state
  */
+	.align	5
 sleepdata:
 	.word	0		/* =pxa2x0_cpu_resume_virt */
 	.word	0		/* MMU control */
