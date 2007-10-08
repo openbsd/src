@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.18 2007/07/01 19:07:45 miod Exp $	*/
+/*	$OpenBSD: obio.c,v 1.19 2007/10/08 17:48:06 krw Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -297,11 +297,10 @@ vmesattach(parent, self, args)
 	printf("\n");
 
 	if (vmeints == NULL) {
-		vmeints = (struct intrhand **)malloc(256 *
-		    sizeof(struct intrhand *), M_TEMP, M_NOWAIT);
+		vmeints = malloc(256 * sizeof(struct intrhand *), M_TEMP,
+		    M_NOWAIT | M_ZERO);
 		if (vmeints == NULL)
 			panic("vmesattach: can't allocate intrhand");
-		bzero(vmeints, 256 * sizeof(struct intrhand *));
 	}
 	(void)config_search(vmes_scan, self, args);
 	bus_untmp();
@@ -320,11 +319,10 @@ vmelattach(parent, self, args)
 	printf("\n");
 
 	if (vmeints == NULL) {
-		vmeints = (struct intrhand **)malloc(256 *
-		    sizeof(struct intrhand *), M_TEMP, M_NOWAIT);
+		vmeints = malloc(256 * sizeof(struct intrhand *), M_TEMP,
+		    M_NOWAIT | M_ZERO);
 		if (vmeints == NULL)
 			panic("vmelattach: can't allocate intrhand");
-		bzero(vmeints, 256 * sizeof(struct intrhand *));
 	}
 	(void)config_search(vmel_scan, self, args);
 	bus_untmp();
@@ -628,11 +626,9 @@ vmeintr_establish(vec, level, ih, ipl_block, name)
 		if (ihs->ih_fun == vmeintr)
 			return;
 
-	ihs = (struct intrhand *)malloc(sizeof(struct intrhand),
-	    M_TEMP, M_NOWAIT);
+	ihs = malloc(sizeof(*ihs), M_TEMP, M_NOWAIT | M_ZERO);
 	if (ihs == NULL)
 		panic("vme_addirq");
-	bzero(ihs, sizeof *ihs);
 	ihs->ih_fun = vmeintr;
 	ihs->ih_arg = (void *)level;
 	intr_establish(level, ihs, ipl_block, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.97 2007/10/02 00:59:12 krw Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.98 2007/10/08 17:48:06 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1809,11 +1809,9 @@ bus_intr_allocate(bus_space_tag_t t, int (*handler)(void *), void *arg,
 {
 	struct intrhand *ih;
 
-	ih = (struct intrhand *)malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ih == NULL)
 		return (NULL);
-
-	memset(ih, 0, sizeof(struct intrhand));
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp.c,v 1.9 2005/11/24 04:53:56 brad Exp $	*/
+/*	$OpenBSD: mscp.c,v 1.10 2007/10/08 17:48:06 krw Exp $	*/
 /*	$NetBSD: mscp.c,v 1.16 2001/11/13 07:38:28 lukem Exp $	*/
 
 /*
@@ -180,11 +180,9 @@ loop:
 	 */
 	if (mp->mscp_unit >= mi->mi_driveno) { /* Must expand drive table */
 		int tmpno = ((mp->mscp_unit + 32) & 0xffe0) * sizeof(void *);
-		struct device **tmp = (struct device **)
-		    malloc(tmpno, M_DEVBUF, M_NOWAIT);
+		struct device **tmp = malloc(tmpno, M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (tmp == NULL)
 			panic("mscp_dorsp");
-		bzero(tmp, tmpno);
 		if (mi->mi_driveno) {
 			bcopy(mi->mi_dp, tmp, mi->mi_driveno);
 			free(mi->mi_dp, mi->mi_driveno);

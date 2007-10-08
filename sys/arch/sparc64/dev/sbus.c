@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.28 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.29 2007/10/08 17:48:06 krw Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -356,11 +356,9 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 	iommu_init(name, &sc->sc_is, 0, -1);
 
 	/* Enable the over temp intr */
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ih == NULL)
 		panic("couldn't malloc intrhand");
-	memset(ih, 0, sizeof(struct intrhand));
 	ih->ih_map = &sysio->therm_int_map;
 	ih->ih_clr = NULL; /* &sysio->therm_clr_int; */
 	ih->ih_fun = sbus_overtemp;
