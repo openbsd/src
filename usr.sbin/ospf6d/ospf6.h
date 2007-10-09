@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.2 2007/10/09 06:12:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -46,7 +46,7 @@
 
 #define DEFAULT_RTR_DEAD_TIME	40
 #define MIN_RTR_DEAD_TIME	2
-#define MAX_RTR_DEAD_TIME	2147483647
+#define MAX_RTR_DEAD_TIME	65535
 
 #define DEFAULT_RXMT_INTERVAL	5
 #define MIN_RXMT_INTERVAL	5
