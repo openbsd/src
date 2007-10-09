@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.94 2007/10/09 09:34:05 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.95 2007/10/09 09:35:43 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ static const char *shellName = "sh";
 
 static int	maxJobs;	/* The most children we can run at once */
 static int	nJobs;		/* The number of children currently running */
-static LIST	jobs;		/* The structures that describe them */
+static LIST	runningJobs;	/* The structures that describe them */
 static bool	jobFull;	/* Flag to tell when the job table is full. It
 				 * is set true when nJobs equals maxJobs */
 static fd_set	*outputsp;	/* Set of descriptors of pipes connected to
@@ -439,7 +439,7 @@ handle_signal(int signo) /* The signal number we've received */
 		(void)fprintf(stdout, "handle_signal(%d) called.\n", signo);
 		(void)fflush(stdout);
 	}
-	Lst_ForEach(&jobs, pass_signal_to_job, &signo);
+	Lst_ForEach(&runningJobs, pass_signal_to_job, &signo);
 
 	/*
 	 * Deal with proper cleanup based on the signal received. We only run
@@ -486,7 +486,7 @@ handle_signal(int signo) /* The signal number we've received */
 	(void)KILL(getpid(), signo);
 
 	signo = SIGCONT;
-	Lst_ForEach(&jobs, pass_signal_to_job, &signo);
+	Lst_ForEach(&runningJobs, pass_signal_to_job, &signo);
 
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 	sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -848,7 +848,7 @@ JobFinish(Job *job,		/* job to finish */
 #endif
 			}
 			job->flags &= ~JOB_CONTINUING;
-			Lst_AtEnd(&jobs, job);
+			Lst_AtEnd(&runningJobs, job);
 			nJobs++;
 			debug_printf("Process %ld is continuing locally.\n",
 			    (long)job->pid);
@@ -1043,7 +1043,7 @@ JobExec(Job *job, char **argv)
 	 * Now the job is actually running, add it to the table.
 	 */
 	nJobs++;
-	Lst_AtEnd(&jobs, job);
+	Lst_AtEnd(&runningJobs, job);
 	if (nJobs == maxJobs) {
 		jobFull = true;
 	}
@@ -1610,7 +1610,7 @@ Job_CatchChildren()
 		handle_all_signals();
 		debug_printf("Process %ld exited or stopped.\n", (long)pid);
 
-		jnode = Lst_Find(&jobs, JobCmpPid, &pid);
+		jnode = Lst_Find(&runningJobs, JobCmpPid, &pid);
 
 		if (jnode == NULL) {
 			if (WIFSIGNALED(status) &&
@@ -1628,7 +1628,7 @@ Job_CatchChildren()
 			}
 		} else {
 			job = (Job *)Lst_Datum(jnode);
-			Lst_Remove(&jobs, jnode);
+			Lst_Remove(&runningJobs, jnode);
 			nJobs--;
 			if (jobFull)
 				debug_printf("Job queue is no longer full.\n");
@@ -1674,7 +1674,7 @@ Job_CatchOutput(void)
 	nfds = select(outputsn+1, readfdsp, NULL, NULL, &timeout);
 	handle_all_signals();
 	if (nfds > 0) {
-		for (ln = Lst_First(&jobs); nfds && ln != NULL;
+		for (ln = Lst_First(&runningJobs); nfds && ln != NULL;
 		    ln = Lst_Adv(ln)) {
 			job = (Job *)Lst_Datum(ln);
 			if (FD_ISSET(job->inPipe, readfdsp)) {
@@ -1747,7 +1747,7 @@ setup_all_signals()
 void
 Job_Init(int maxproc)
 {
-	Static_Lst_Init(&jobs);
+	Static_Lst_Init(&runningJobs);
 	Static_Lst_Init(&stoppedJobs);
 	maxJobs =	  maxproc;
 	nJobs =	  	  0;
@@ -1847,7 +1847,7 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 
 	aborting = ABORT_INTERRUPT;
 
-	for (ln = Lst_First(&jobs); ln != NULL; ln = Lst_Adv(ln)) {
+	for (ln = Lst_First(&runningJobs); ln != NULL; ln = Lst_Adv(ln)) {
 		job = (Job *)Lst_Datum(ln);
 
 		if (!Targ_Precious(job->node)) {
@@ -1957,7 +1957,8 @@ Job_AbortAll(void)
 	aborting = ABORT_ERROR;
 
 	if (nJobs) {
-		for (ln = Lst_First(&jobs); ln != NULL; ln = Lst_Adv(ln)) {
+		for (ln = Lst_First(&runningJobs); ln != NULL; 
+		    ln = Lst_Adv(ln)) {
 			job = (Job *)Lst_Datum(ln);
 
 			/*
