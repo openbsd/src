@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.2 2007/10/09 06:17:40 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.3 2007/10/09 06:33:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -739,7 +739,6 @@ if_set_mcast(struct iface *iface)
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
-		log_debug("if_set_mcast: iface %s", iface->name);
 		if (setsockopt(iface->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
 		    &iface->ifindex, sizeof(iface->ifindex)) < 0) {
 			log_debug("if_set_mcast: error setting "
