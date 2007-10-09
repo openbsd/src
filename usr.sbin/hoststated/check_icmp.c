@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.19 2007/09/28 13:29:56 pyr Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.20 2007/10/09 05:38:58 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -147,9 +147,10 @@ icmp_checks_timeout(struct ctl_icmp_event *cie, const char *msg)
 			if (((struct sockaddr *)&host->conf.ss)->sa_family !=
 			    cie->af)
 				continue;
-			if (!(host->flags & F_CHECK_DONE))
+			if (!(host->flags & F_CHECK_DONE)) {
 				host->up = HOST_DOWN;
-			hce_notify_done(host, msg);
+				hce_notify_done(host, msg);
+			}
 		}
 	}
 }
