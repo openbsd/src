@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.60 2007/10/09 20:37:32 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.61 2007/10/09 20:41:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1968,8 +1968,6 @@ cmalo_cmd_set_rate(struct malo_softc *sc, int rate)
  		body->hwauto = 0;
 		body->ratebitmap = htole16(cmalo_rate2bitmap(rate));
 	}
-
-	printf("rate=0x%04x\n", body->ratebitmap);
 
 	/* process command request */
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
