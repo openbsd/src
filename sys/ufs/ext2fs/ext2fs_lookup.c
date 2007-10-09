@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.23 2007/06/17 20:15:25 jasper Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.24 2007/10/09 00:38:59 krw Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -160,13 +160,12 @@ ext2fs_readdir(void *v)
 	auio.uio_segflg = UIO_SYSSPACE;
 	aiov.iov_len = e2fs_count;
 	auio.uio_resid = e2fs_count;
-	MALLOC(dirbuf, caddr_t, e2fs_count, M_TEMP, M_WAITOK);
+	dirbuf = malloc(e2fs_count, M_TEMP, M_WAITOK | M_ZERO);
 	if (ap->a_ncookies) {
 		nc = ncookies = e2fs_count / 16;
 		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
-	memset(dirbuf, 0, e2fs_count);
 	aiov.iov_base = dirbuf;
 
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
@@ -199,7 +198,7 @@ ext2fs_readdir(void *v)
 		/* we need to correct uio_offset */
 		uio->uio_offset = off;
 	}
-	FREE(dirbuf, M_TEMP);
+	free(dirbuf, M_TEMP);
 	*ap->a_eofflag = ext2fs_size(VTOI(ap->a_vp)) <= uio->uio_offset;
 	if (ap->a_ncookies) {
 		if (error) {
