@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.273 2007/09/14 23:18:25 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.274 2007/10/09 23:26:05 krw Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3804,10 +3804,8 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_satalink *sl = sc->sc_cookie;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(struct pciide_satalink), M_DEVBUF,
-	    M_NOWAIT);
+	sc->sc_cookie = malloc(sizeof(*sl), M_DEVBUF, M_NOWAIT | M_ZERO);
 	sl = sc->sc_cookie;
-	bzero(sl, sizeof(*sl));
 
 #define	SII3112_RESET_BITS						\
 	(SCS_CMD_PBM_RESET | SCS_CMD_ARB_RESET |			\
@@ -4082,10 +4080,8 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_satalink *sl = sc->sc_cookie;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(struct pciide_satalink), M_DEVBUF,
-	    M_NOWAIT);
+	sc->sc_cookie = malloc(sizeof(*sl), M_DEVBUF, M_NOWAIT | M_ZERO);
 	sl = sc->sc_cookie;
-	bzero(sl, sizeof(*sl));
 
 #define	SII3114_RESET_BITS						\
 	(SCS_CMD_PBM_RESET | SCS_CMD_ARB_RESET |			\
@@ -4415,9 +4411,8 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_cy *cy;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(struct pciide_cy), M_DEVBUF, M_NOWAIT);
+	sc->sc_cookie = malloc(sizeof(*cy), M_DEVBUF, M_NOWAIT | M_ZERO);
 	cy = sc->sc_cookie;
-	bzero(cy, sizeof(*cy));
 
 	/*
 	 * this chip has 2 PCI IDE functions, one for primary and one for
@@ -4672,9 +4667,8 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_sis *sis;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(struct pciide_sis), M_DEVBUF, M_NOWAIT);
+	sc->sc_cookie = malloc(sizeof(*sis), M_DEVBUF, M_NOWAIT | M_ZERO);
 	sis = sc->sc_cookie;
-	bzero(sis, sizeof(*sis));
 
 	/* Find PCI bridge (dev 0 func 0 on the same bus) */
 	br_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 0, 0);
@@ -6345,10 +6339,8 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	const char *intrstr;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(struct pciide_pdcsata), M_DEVBUF,
-	    M_NOWAIT);
+	sc->sc_cookie = malloc(sizeof(*ps), M_DEVBUF, M_NOWAIT | M_ZERO);
 	ps = sc->sc_cookie;
-	bzero(ps, sizeof(*ps));
 
 	/*
 	 * Promise SATA controllers have 3 or 4 channels,
@@ -7272,10 +7264,8 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_svwsata *ss;
 
 	/* Allocate memory for private data */
-	sc->sc_cookie = malloc(sizeof(struct pciide_svwsata), M_DEVBUF,
-	    M_NOWAIT);
+	sc->sc_cookie = malloc(sizeof(*ss), M_DEVBUF, M_NOWAIT | M_ZERO);
 	ss = sc->sc_cookie;
-	bzero(ss, sizeof(*ss));
 
 	/* The 4-port version has a dummy second function. */
 	if (pci_conf_read(sc->sc_pc, sc->sc_tag,
