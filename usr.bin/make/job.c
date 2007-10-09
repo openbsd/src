@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.97 2007/10/09 09:40:26 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.98 2007/10/09 09:41:24 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -276,6 +276,7 @@ static void debug_printf(const char *, ...);
 static FILE *new_command_file(void);
 static void setup_signal(int);
 static void setup_all_signals(void);
+static Job *prepare_job(GNode *, int);
 static void start_queued_job(Job *);
 
 static volatile sig_atomic_t got_signal;
@@ -1171,27 +1172,12 @@ JobRestart(Job *job)
 	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobStart  --
- *	Start a target-creation process going for the target described
- *	by the graph node gn.
- *
- * Side Effects:
- *	A new Job node is created and added to the list of running
- *	jobs. PMake is forked and a child shell created.
- *-----------------------------------------------------------------------
- */
-static void
-JobStart(GNode *gn,	      	/* target to create */
-    int flags)      		/* flags for the job to override normal ones.
-			       	 * e.g. JOB_SPECIAL */
+static Job *
+prepare_job(GNode *gn, int flags)
 {
 	Job *job;       	/* new job descriptor */
-	char *argv[4];   	/* Argument vector to shell */
 	bool cmdsOK;     	/* true if the nodes commands were all right */
 	bool noExec;     	/* Set true if we decide not to run the job */
-	int fd[2];
 
 	job = emalloc(sizeof(Job));
 	if (job == NULL) {
@@ -1324,15 +1310,39 @@ JobStart(GNode *gn,	      	/* target to create */
 				Make_Update(job->node);
 			}
 			free(job);
-			return;
+			return NULL;
 		} else {
 			free(job);
-			return;
+			return NULL;
 		}
 	} else {
 		(void)fflush(job->cmdFILE);
+		return job;
 	}
+}
 
+/*-
+ *-----------------------------------------------------------------------
+ * JobStart  --
+ *	Start a target-creation process going for the target described
+ *	by the graph node gn.
+ *
+ * Side Effects:
+ *	A new Job node is created and added to the list of running
+ *	jobs. PMake is forked and a child shell created.
+ *-----------------------------------------------------------------------
+ */
+static void
+JobStart(GNode *gn,	      	/* target to create */
+    int flags)      		/* flags for the job to override normal ones.
+			       	 * e.g. JOB_SPECIAL */
+{
+	Job *job;
+	char *argv[4];   	/* Argument vector to shell */
+	int fd[2];
+	job = prepare_job(gn, flags);
+	if (!job)
+		return;
 	/* Create the pipe by which we'll get the shell's output. 
 	 */
 	if (pipe(fd) == -1)
