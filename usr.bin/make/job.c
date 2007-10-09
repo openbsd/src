@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.92 2007/10/06 19:34:32 cnst Exp $	*/
+/*	$OpenBSD: job.c,v 1.93 2007/10/09 09:32:03 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -123,19 +123,14 @@
  * Each job has several things associated with it:
  *	1) The process id of the child shell
  *	2) The graph node describing the target being made by this job
- *	3) A LstNode for the first command to be saved after the job
- *	   completes. This is NULL if there was no "..." in the job's
- *	   commands.
- *	4) An FILE* for writing out the commands. This is only
+ *	3) An FILE* for writing out the commands. This is only
  *	   used before the job is actually started.
- *	5) Things used for handling the shell's output.
+ *	4) Things used for handling the shell's output.
  *	   the output is being caught via a pipe and
  *	   the descriptors of our pipe, an array in which output is line
  *	   buffered and the current position in that buffer are all
  *	   maintained for each job.
- *	6) An identifier provided by and for the exclusive use of the
- *	   Rmt module.
- *	7) A word of flags which determine how the module handles errors,
+ *	5) A word of flags which determine how the module handles errors,
  *	   echoing, etc. for the job
  *
  * The job "table" is kept as a linked Lst in 'jobs', with the number of
@@ -268,10 +263,10 @@ static LIST	stoppedJobs;	/* Lst of Job structures describing
 #define W_SETEXITSTATUS(st, val) W_SETMASKED(st, val, WEXITSTATUS)
 
 
-static void JobCondPassSig(void *, void *);
+static void pass_signal_to_job(void *, void *);
 static void SigHandler(int);
-static void HandleSigs(void);
-static void JobPassSig(int);
+static void handle_all_signals(void);
+static void handle_signal(int);
 static int JobCmpPid(void *, void *);
 static int JobPrintCommand(LstNode, void *);
 static void JobSaveCommand(void *, void *);
@@ -288,13 +283,13 @@ static void JobRestartJobs(void);
 static void DBPRINTF(Job *, const char *, ...);
 static void debug_printf(const char *, ...);
 static FILE *new_command_file(void);
+static void setup_signal(int);
+
+static volatile sig_atomic_t got_signal;
 
 static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
-    got_SIGTERM;
-#if defined(USE_PGRP)
-static volatile sig_atomic_t got_SIGTSTP, got_SIGTTOU, got_SIGTTIN,
-    got_SIGWINCH;
-#endif
+    got_SIGTERM, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGWINCH;
+
 
 #define TMPPAT	"/tmp/makeXXXXXXXXXX"
 
@@ -321,70 +316,81 @@ SigHandler(int sig)
 	switch(sig) {
 	case SIGINT:
 		got_SIGINT++;
+		got_signal = 1;
 		break;
 	case SIGHUP:
 		got_SIGHUP++;
+		got_signal = 1;
 		break;
 	case SIGQUIT:
 		got_SIGQUIT++;
+		got_signal = 1;
 		break;
 	case SIGTERM:
 		got_SIGTERM++;
+		got_signal = 1;
 		break;
-#if defined(USE_PGRGP)
+#ifdef USE_PGRP
 	case SIGTSTP:
 		got_SIGTSTP++;
+		got_signal = 1;
 		break;
 	case SIGTTOU:
 		got_SIGTTOU++;
+		got_signal = 1;
 		break;
 	case SIGTTIN:
 		got_SIGTTIN++;
+		got_signal = 1;
 		break;
 	case SIGWINCH:
 		got_SIGWINCH++;
+		got_signal = 1;
 		break;
 #endif
 	}
 }
 
 static void
-HandleSigs()
+handle_all_signals()
 {
+	if (got_signal)
+		got_signal = 0;
+	else
+		return;
+
 	if (got_SIGINT) {
 		got_SIGINT=0;
-		JobPassSig(SIGINT);
+		handle_signal(SIGINT);
 	}
 	if (got_SIGHUP) {
 		got_SIGHUP=0;
-		JobPassSig(SIGHUP);
+		handle_signal(SIGHUP);
 	}
 	if (got_SIGQUIT) {
 		got_SIGQUIT=0;
-		JobPassSig(SIGQUIT);
+		handle_signal(SIGQUIT);
 	}
 	if (got_SIGTERM) {
 		got_SIGTERM=0;
-		JobPassSig(SIGTERM);
+		handle_signal(SIGTERM);
 	}
-#if defined(USE_PGRP)
 	if (got_SIGTSTP) {
 		got_SIGTSTP=0;
-		JobPassSig(SIGTSTP);
+		handle_signal(SIGTSTP);
 	}
 	if (got_SIGTTOU) {
 		got_SIGTTOU=0;
-		JobPassSig(SIGTTOU);
+		handle_signal(SIGTTOU);
 	}
 	if (got_SIGTTIN) {
 		got_SIGTTIN=0;
-		JobPassSig(SIGTTIN);
+		handle_signal(SIGTTIN);
 	}
 	if (got_SIGWINCH) {
 		got_SIGWINCH=0;
-		JobPassSig(SIGWINCH);
+		handle_signal(SIGWINCH);
 	}
-#endif
 }
 
 /*-
@@ -398,14 +404,14 @@ HandleSigs()
  *-----------------------------------------------------------------------
  */
 static void
-JobCondPassSig(void *jobp,	/* Job to biff */
+pass_signal_to_job(void *jobp,	/* Job to biff */
     void *signop)		/* Signal to send it */
 {
 	Job *job = (Job *)jobp;
 	int signo = *(int *)signop;
 	if (DEBUG(JOB)) {
 		(void)fprintf(stdout,
-		    "JobCondPassSig passing signal %d to child %ld.\n",
+		    "pass_signal_to_job passing signal %d to child %ld.\n",
 		    signo, (long)job->pid);
 		(void)fflush(stdout);
 	}
@@ -423,16 +429,16 @@ JobCondPassSig(void *jobp,	/* Job to biff */
  *-----------------------------------------------------------------------
  */
 static void
-JobPassSig(int signo) /* The signal number we've received */
+handle_signal(int signo) /* The signal number we've received */
 {
 	sigset_t nmask, omask;
 	struct sigaction act;
 
 	if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "JobPassSig(%d) called.\n", signo);
+		(void)fprintf(stdout, "handle_signal(%d) called.\n", signo);
 		(void)fflush(stdout);
 	}
-	Lst_ForEach(&jobs, JobCondPassSig, &signo);
+	Lst_ForEach(&jobs, pass_signal_to_job, &signo);
 
 	/*
 	 * Deal with proper cleanup based on the signal received. We only run
@@ -470,7 +476,7 @@ JobPassSig(int signo) /* The signal number we've received */
 
 	if (DEBUG(JOB)) {
 		(void)fprintf(stdout,
-		    "JobPassSig passing signal to self, mask = %x.\n",
+		    "handle_signal passing signal to self, mask = %x.\n",
 		    ~0 & ~(1 << (signo-1)));
 		(void)fflush(stdout);
 	}
@@ -479,7 +485,7 @@ JobPassSig(int signo) /* The signal number we've received */
 	(void)KILL(getpid(), signo);
 
 	signo = SIGCONT;
-	Lst_ForEach(&jobs, JobCondPassSig, &signo);
+	Lst_ForEach(&jobs, pass_signal_to_job, &signo);
 
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 	sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -1594,7 +1600,7 @@ Job_CatchChildren()
 	}
 
 	while ((pid = waitpid((pid_t) -1, &status, WNOHANG|WUNTRACED)) > 0) {
-		HandleSigs();
+		handle_all_signals();
 		debug_printf("Process %ld exited or stopped.\n", (long)pid);
 
 		jnode = Lst_Find(&jobs, JobCmpPid, &pid);
@@ -1659,7 +1665,7 @@ Job_CatchOutput(void)
 	timeout.tv_usec = SEL_USEC;
 
 	nfds = select(outputsn+1, readfdsp, NULL, NULL, &timeout);
-	HandleSigs();
+	handle_all_signals();
 	if (nfds > 0) {
 		for (ln = Lst_First(&jobs); nfds && ln != NULL;
 		    ln = Lst_Adv(ln)) {
@@ -1687,6 +1693,14 @@ void
 Job_Make(GNode *gn)
 {
 	(void)JobStart(gn, 0);
+}
+
+static void
+setup_signal(int sig)
+{
+	if (signal(sig, SIG_IGN) != SIG_IGN) {
+		(void)signal(sig, SigHandler);
+	}
 }
 
 /*-
@@ -1726,18 +1740,10 @@ Job_Init(int maxproc)
 	 * Catch the four signals that POSIX specifies if they aren't ignored.
 	 * JobPassSig will take care of calling JobInterrupt if appropriate.
 	 */
-	if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
-		(void)signal(SIGINT, SigHandler);
-	}
-	if (signal(SIGHUP, SIG_IGN) != SIG_IGN) {
-		(void)signal(SIGHUP, SigHandler);
-	}
-	if (signal(SIGQUIT, SIG_IGN) != SIG_IGN) {
-		(void)signal(SIGQUIT, SigHandler);
-	}
-	if (signal(SIGTERM, SIG_IGN) != SIG_IGN) {
-		(void)signal(SIGTERM, SigHandler);
-	}
+	setup_signal(SIGINT);
+	setup_signal(SIGHUP);
+	setup_signal(SIGQUIT);
+	setup_signal(SIGTERM);
 	/*
 	 * There are additional signals that need to be caught and passed if
 	 * either the export system wants to be told directly of signals or if
@@ -1745,18 +1751,10 @@ Job_Init(int maxproc)
 	 * signals from the terminal driver as we own the terminal)
 	 */
 #if defined(USE_PGRP)
-	if (signal(SIGTSTP, SIG_IGN) != SIG_IGN) {
-		(void)signal(SIGTSTP, SigHandler);
-	}
-	if (signal(SIGTTOU, SIG_IGN) != SIG_IGN) {
-		(void)signal(SIGTTOU, SigHandler);
-	}
-	if (signal(SIGTTIN, SIG_IGN) != SIG_IGN) {
-		(void)signal(SIGTTIN, SigHandler);
-	}
-	if (signal(SIGWINCH, SIG_IGN) != SIG_IGN) {
-		(void)signal(SIGWINCH, SigHandler);
-	}
+	setup_signal(SIGTSTP);
+	setup_signal(SIGTTOU);
+	setup_signal(SIGTTIN);
+	setup_signal(SIGWINCH);
 #endif
 
 	if ((begin_node->type & OP_DUMMY) == 0) {
