@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.8 2006/12/15 14:09:13 stevesk Exp $	*/
+/*	$OpenBSD: options.c,v 1.9 2007/10/09 03:17:34 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -224,9 +224,12 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	    inpacket &&
 	    inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].data &&
 	    (inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].len >=
-	    sizeof(u_int16_t)))
+	    sizeof(u_int16_t))) {
 		mms = getUShort(
 		    inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].data);
+		if (mms < 576)
+			mms = 576;	/* mms must be >= minimum IP MTU */
+	}
 
 	if (mms)
 		main_buffer_size = mms - DHCP_FIXED_LEN;
