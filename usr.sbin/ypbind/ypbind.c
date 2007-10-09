@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.56 2007/02/18 23:27:06 jmc Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.57 2007/10/09 14:40:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.56 2007/02/18 23:27:06 jmc Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.57 2007/10/09 14:40:15 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -396,7 +396,7 @@ main(int argc, char *argv[])
 	}
 #else
 	if ((lockfd = open(YPBINDLOCK, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1) {
-		fprintf(stderr, "ypbind: cannot create %s\n", YPBINDLOCK);
+		fprintf(stderr, "ypbind: cannot create %s.\n", YPBINDLOCK);
 		exit(1);
 	}
 	flock(lockfd, LOCK_SH);
@@ -409,25 +409,25 @@ main(int argc, char *argv[])
 
 	udptransp = svcudp_create(RPC_ANYSOCK);
 	if (udptransp == NULL) {
-		fprintf(stderr, "cannot create udp service.");
+		fprintf(stderr, "cannot create udp service.\n");
 		exit(1);
 	}
 	if (!svc_register(udptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
 	    IPPROTO_UDP)) {
 		fprintf(stderr,
-		    "unable to register (YPBINDPROG, YPBINDVERS, udp).");
+		    "unable to register (YPBINDPROG, YPBINDVERS, udp).\n");
 		exit(1);
 	}
 
 	tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0);
 	if (tcptransp == NULL) {
-		fprintf(stderr, "cannot create tcp service.");
+		fprintf(stderr, "cannot create tcp service.\n");
 		exit(1);
 	}
 	if (!svc_register(tcptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
 	    IPPROTO_TCP)) {
 		fprintf(stderr,
-		    "unable to register (YPBINDPROG, YPBINDVERS, tcp).");
+		    "unable to register (YPBINDPROG, YPBINDVERS, tcp).\n");
 		exit(1);
 	}
 
@@ -452,7 +452,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		if ((ludptransp = svcudp_create(lsock)) == NULL) {
-			fprintf(stderr, "cannot create udp service.");
+			fprintf(stderr, "cannot create udp service.\n");
 			exit(1);
 		}
 
@@ -476,7 +476,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		if ((ltcptransp = svctcp_create(lsock, 0, 0)) == NULL) {
-			fprintf(stderr, "cannot create tcp service.");
+			fprintf(stderr, "cannot create tcp service.\n");
 			exit(1);
 		}
 	}
