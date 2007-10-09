@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.101 2007/10/07 14:26:41 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.102 2007/10/09 16:57:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -19,6 +19,8 @@
 /*
  * I2C bus scanning.
  */
+
+#include "ipmi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,12 +64,14 @@ struct iicprobelist probe_addrs_eeprom[] = {
 char 	*iic_probe_sensor(struct device *, struct i2cbus_attach_args *, u_int8_t);
 char	*iic_probe_eeprom(struct device *, struct i2cbus_attach_args *, u_int8_t);
 
+#define PFLAG_SENSOR	1
 static struct {
 	struct iicprobelist *pl;
 	char	*(*probe)(struct device *, struct i2cbus_attach_args *, u_int8_t);
+	int	flags;
 } probes[] = {
-	{ probe_addrs_sensor, iic_probe_sensor },
-	{ probe_addrs_eeprom, iic_probe_eeprom },
+	{ probe_addrs_sensor, iic_probe_sensor, PFLAG_SENSOR },
+	{ probe_addrs_eeprom, iic_probe_eeprom, 0 },
 	{ NULL, NULL }
 };
 
@@ -902,6 +906,15 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 	bzero(ignore_addrs, sizeof(ignore_addrs));
 
 	for (i = 0; probes[i].probe; i++) {
+#if NIPMI > 0
+		extern int ipmi_enabled;
+
+		if ((probes[i].flags & PFLAG_SENSOR) && ipmi_enabled) {
+			printf("%s: skipping sensors to avoid ipmi0 interactions\n",
+			    self->dv_xname);
+			continue;
+		}
+#endif
 		pl = probes[i].pl;
 		for (j = 0; pl[j].start && pl[j].end; j++) {
 			for (addr = pl[j].start; addr <= pl[j].end; addr++) {

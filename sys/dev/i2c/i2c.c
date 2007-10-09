@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.14 2006/02/26 20:24:46 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.15 2007/10/09 16:57:47 deraadt Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -47,8 +47,6 @@
 
 #define IICCF_ADDR	0
 #define IICCF_SIZE	1
-
-#include "ipmi.h"
 
 struct iic_softc {
 	struct device sc_dev;
@@ -129,15 +127,6 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	struct i2cbus_attach_args *iba = aux;
 
 	sc->sc_tag = iba->iba_tag;
-
-#if NIPMI > 0
-	extern int ipmi_enabled;
-
-	if (ipmi_enabled) {
-		printf(": disabled to avoid ipmi0 interactions\n");
-		return;
-	}
-#endif
 
 	printf("\n");
 
