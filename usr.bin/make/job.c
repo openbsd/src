@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.96 2007/10/09 09:39:21 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.97 2007/10/09 09:40:26 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -186,14 +186,6 @@ static int	  numCommands;	    /* The number of commands actually printed
 				     * for a target. Should this number be
 				     * 0, no shell will be executed. */
 
-/*
- * Return values from JobStart.
- */
-#define JOB_RUNNING	0	/* Job is running */
-#define JOB_ERROR	1	/* Error in starting the job */
-#define JOB_FINISHED	2	/* The job is already finished */
-#define JOB_STOPPED	3	/* The job is stopped */
-
 #define SHELL_ECHO_OFF	"set -"
 #define SHELL_ECHO_ON	"set -v"
 #define SHELL_ERROR_ON	"set -e"
@@ -274,7 +266,7 @@ static void JobFinish(Job *, int *);
 static void JobExec(Job *, char **);
 static void JobMakeArgv(Job *, char **);
 static void JobRestart(Job *);
-static int JobStart(GNode *, int);
+static void JobStart(GNode *, int);
 static char *JobOutput(Job *, char *, char *, int);
 static void JobDoOutput(Job *, bool);
 static void JobInterrupt(int, int);
@@ -1185,17 +1177,12 @@ JobRestart(Job *job)
  *	Start a target-creation process going for the target described
  *	by the graph node gn.
  *
- * Results:
- *	JOB_ERROR if there was an error in the commands, JOB_FINISHED
- *	if there isn't actually anything left to do for the job and
- *	JOB_RUNNING if the job has been started.
- *
  * Side Effects:
  *	A new Job node is created and added to the list of running
  *	jobs. PMake is forked and a child shell created.
  *-----------------------------------------------------------------------
  */
-static int
+static void
 JobStart(GNode *gn,	      	/* target to create */
     int flags)      		/* flags for the job to override normal ones.
 			       	 * e.g. JOB_SPECIAL */
@@ -1337,10 +1324,10 @@ JobStart(GNode *gn,	      	/* target to create */
 				Make_Update(job->node);
 			}
 			free(job);
-			return JOB_FINISHED;
+			return;
 		} else {
 			free(job);
-			return JOB_ERROR;
+			return;
 		}
 	} else {
 		(void)fflush(job->cmdFILE);
@@ -1388,7 +1375,6 @@ JobStart(GNode *gn,	      	/* target to create */
 		}
 		JobExec(job, argv);
 	}
-	return JOB_RUNNING;
 }
 
 static char *
