@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.120 2007/10/05 19:28:23 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.121 2007/10/09 12:14:09 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -484,7 +484,7 @@ cvs_get_repository_name(const char *dir, char *dst, size_t len)
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s",
 	    dir, CVS_PATH_REPOSITORY);
 
-	if ((fp = fopen(fpath, "r")) != NULL) {
+	if (cvs_cmdop != CVS_OP_IMPORT && (fp = fopen(fpath, "r")) != NULL) {
 		if ((fgets(dst, len, fp)) == NULL)
 			fatal("cvs_get_repository_name: bad repository file");
 
