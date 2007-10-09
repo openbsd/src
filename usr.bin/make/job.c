@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.98 2007/10/09 09:41:24 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.99 2007/10/09 09:41:51 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1309,12 +1309,9 @@ prepare_job(GNode *gn, int flags)
 				    job->node);
 				Make_Update(job->node);
 			}
-			free(job);
-			return NULL;
-		} else {
-			free(job);
-			return NULL;
 		}
+		free(job);
+		return NULL;
 	} else {
 		(void)fflush(job->cmdFILE);
 		return job;
