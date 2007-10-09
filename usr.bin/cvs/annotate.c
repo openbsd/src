@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.42 2007/10/09 12:25:27 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.43 2007/10/09 12:59:53 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -28,6 +28,8 @@
 #include "remote.h"
 
 void	cvs_annotate_local(struct cvs_file *);
+
+extern char	*cvs_specified_tag;
 
 static int	 force_head = 0;
 
@@ -115,7 +117,7 @@ cvs_annotate_local(struct cvs_file *cf)
 {
 	int i;
 	char date[10], rnum[13], *p;
-	RCSNUM *rev;
+	RCSNUM *bnum, *rev;
 	struct cvs_line *line;
 	struct cvs_line **alines;
 
@@ -127,29 +129,44 @@ cvs_annotate_local(struct cvs_file *cf)
 	    cf->file_type != CVS_FILE)
 		return;
 
-	if (cvs_specified_tag == NULL)
-		rcs_rev_getlines(cf->file_rcs, cf->file_rcs->rf_head, &alines);
-	else {
+	if (cvs_specified_tag != NULL) {
 		if ((rev = rcs_translate_tag(cvs_specified_tag,
 		    cf->file_rcs)) == NULL) {
 			if (!force_head)
 				/* Stick at weird GNU cvs, ignore error. */
 				return;
+
 			rev = rcsnum_alloc();
 			rcsnum_cpy(cf->file_rcs->rf_head, rev, 0);
 		}
 
-		/* rcs_translate_tag may give back an unavailable revision. */
-		if (rcs_findrev(cf->file_rcs, rev) == NULL) {
-			if (!force_head) {
-				/* Stick at weird GNU cvs, ignore error. */
-				rcsnum_free(rev);
-				return;
-			}
-			rcsnum_cpy(cf->file_rcs->rf_head, rev, 0);
+		/*
+		 * If this is a revision in a branch, we have to go first
+		 * from HEAD to branch, then down to 1.1. After that, take
+		 * annotated branch and go up to branch revision. This must
+		 * be done this way due to different handling of "a" and
+		 * "d" in rcs file for annotation.
+		 */
+		if (!RCSNUM_ISBRANCHREV(rev)) {
+			bnum = rev;
+		} else {
+			bnum = rcsnum_alloc();
+			rcsnum_cpy(rev, bnum, 2);
 		}
-		rcs_rev_getlines(cf->file_rcs, rev, &alines);
+
+		rcs_rev_getlines(cf->file_rcs, bnum, &alines);
+
+		/*
+		 * Go into branch and receive annotations for branch revision,
+		 * with inverted "a" and "d" meaning.
+		 */
+		if (bnum != rev) {
+			rcs_annotate_getlines(cf->file_rcs, rev, &alines);
+			rcsnum_free(bnum);
+		}
 		rcsnum_free(rev);
+	} else {
+		rcs_rev_getlines(cf->file_rcs, cf->file_rcs->rf_head, &alines);
 	}
 
 	/* Stick at weird GNU cvs, ignore error. */

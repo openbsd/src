@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.224 2007/10/09 12:18:53 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.225 2007/10/09 12:59:53 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1091,6 +1091,7 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines,
 					lp->l_line = NULL;
 					lp->l_needsfree = 0;
 				}
+				lp->l_delta = rdp;
 				TAILQ_INSERT_AFTER(&(dlines->l_lines), dlp,
 				    lp, l_list);
 				dlp = lp;
@@ -2800,7 +2801,7 @@ next:
 		goto again;
 	}
 done:
-	/* put remaining lines of 1.1 into annotate buffer */
+	/* put remaining lines into annotate buffer */
 	if (annotate == ANNOTATE_NOW) {
 		for (line = TAILQ_FIRST(&(dlines->l_lines));
 		    line != NULL; line = nline) {
@@ -2823,6 +2824,118 @@ done:
 		rcsnum_free(bnum);
 
 	return (dlines);
+}
+
+void
+rcs_annotate_getlines(RCSFILE *rfp, RCSNUM *frev, struct cvs_line ***alines)
+{
+	size_t plen;
+	int i, nextroot;
+	RCSNUM *bnum;
+	struct rcs_branch *brp;
+	struct rcs_delta *rdp, *trdp;
+	u_char *patch;
+	struct cvs_line *line;
+	struct cvs_lines *dlines, *plines;
+
+	if (!RCSNUM_ISBRANCHREV(frev))
+		fatal("rcs_annotate_getlines: branch revision expected");
+
+	/* revision on branch, get the branch root */
+	nextroot = 2;
+	bnum = rcsnum_alloc();
+	rcsnum_cpy(frev, bnum, nextroot);
+
+	/*
+	 * Going from HEAD to 1.1 enables the use of an array, which is
+	 * much faster. Unfortunately this is not possible with branch
+	 * revisions, so copy over our alines (array) into dlines (tailq).
+	 */
+	dlines = xcalloc(1, sizeof(*dlines));
+	TAILQ_INIT(&(dlines->l_lines));
+	line = xcalloc(1, sizeof(*line));
+	TAILQ_INSERT_TAIL(&(dlines->l_lines), line, l_list);
+
+	for (i = 0; (*alines)[i] != NULL; i++) {
+		line = (*alines)[i];
+		line->l_lineno = i + 1;
+		TAILQ_INSERT_TAIL(&(dlines->l_lines), line, l_list);
+	}
+
+	rdp = rcs_findrev(rfp, bnum);
+	if (rdp == NULL)
+		fatal("failed to grab branch root revision");
+
+	do {
+		nextroot += 2;
+		rcsnum_cpy(frev, bnum, nextroot);
+
+		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
+			for (i = 0; i < nextroot - 1; i++)
+				if (brp->rb_num->rn_id[i] != bnum->rn_id[i])
+					break;
+			if (i == nextroot - 1)
+				break;
+		}
+
+		if (brp == NULL)
+			fatal("expected branch not found on branch list");
+
+		if ((rdp = rcs_findrev(rfp, brp->rb_num)) == NULL)
+			fatal("failed to get delta for target rev");
+
+		for (;;) {
+			if (rdp->rd_next->rn_len != 0) {
+				trdp = rcs_findrev(rfp, rdp->rd_next);
+				if (trdp == NULL)
+					fatal("failed to grab next revision");
+			}
+
+			if (rdp->rd_tlen == 0) {
+				rcs_parse_deltatexts(rfp, rdp->rd_num);
+				if (rdp->rd_tlen == 0) {
+					if (!rcsnum_differ(rdp->rd_num, bnum))
+						break;
+					rdp = trdp;
+					continue;
+				}
+			}
+
+			plen = rdp->rd_tlen;
+			patch = rdp->rd_text;
+			plines = cvs_splitlines(patch, plen);
+			rcs_patch_lines(dlines, plines, NULL, rdp);
+			cvs_freelines(plines);
+
+			if (!rcsnum_differ(rdp->rd_num, bnum))
+				break;
+
+			rdp = trdp;
+		}
+	} while (rcsnum_differ(rdp->rd_num, frev));
+
+	if (bnum != frev)
+		rcsnum_free(bnum);
+
+	/*
+	 * All lines have been parsed, now they must be copied over
+	 * into alines (array) again.
+	 */
+	xfree(*alines);
+
+	i = 0;
+	TAILQ_FOREACH(line, &(dlines->l_lines), l_list) {
+		if (line->l_line != NULL)
+			i++;
+	}
+	*alines = xmalloc((i + 1) * sizeof(struct cvs_line *));
+	(*alines)[i] = NULL;
+
+	i = 0;
+	TAILQ_FOREACH(line, &(dlines->l_lines), l_list) {
+		if (line->l_line != NULL)
+			(*alines)[i++] = line;
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.79 2007/09/24 13:44:20 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.80 2007/10/09 12:59:53 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -262,6 +262,8 @@ void			 rcs_write(RCSFILE *);
 void			 rcs_rev_write_stmp(RCSFILE *,  RCSNUM *, char *, int);
 void			 rcs_rev_write_fd(RCSFILE *, RCSNUM *, int, int);
 struct cvs_lines	*rcs_rev_getlines(RCSFILE *, RCSNUM *,
+			     struct cvs_line ***);
+void			 rcs_annotate_getlines(RCSFILE *, RCSNUM *,
 			     struct cvs_line ***);
 BUF			*rcs_rev_getbuf(RCSFILE *, RCSNUM *, int);
 
