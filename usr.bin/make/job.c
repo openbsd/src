@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.95 2007/10/09 09:35:43 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.96 2007/10/09 09:39:21 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -225,12 +225,11 @@ static char	*targFmt;	/* Format string to use to head output from a
 
 /*
  * When JobStart attempts to run a job but isn't allowed to,
- * the job is placed on the stoppedJobs queue to be run
+ * the job is placed on the queuedJobs queue to be run
  * when the next job finishes.
  */
-static LIST	stoppedJobs;	/* Lst of Job structures describing
-				 * jobs that were stopped due to concurrency
-				 * limits or migration home */
+static LIST	stoppedJobs;	
+static LIST	queuedJobs;
 
 
 #if defined(USE_PGRP) && defined(SYSV)
@@ -285,6 +284,7 @@ static void debug_printf(const char *, ...);
 static FILE *new_command_file(void);
 static void setup_signal(int);
 static void setup_all_signals(void);
+static void start_queued_job(Job *);
 
 static volatile sig_atomic_t got_signal;
 
@@ -1075,6 +1075,47 @@ JobMakeArgv(Job *job, char **argv)
 	argv[argc] = NULL;
 }
 
+static void
+start_queued_job(Job *job)
+{
+	/*
+	 * Set up the control arguments to the shell. This is based on
+	 * the flags set earlier for this job. If the JOB_IGNERR flag
+	 * is clear, the 'exit' flag of the commandShell is used to
+	 * cause it to exit upon receiving an error. If the JOB_SILENT
+	 * flag is clear, the 'echo' flag of the commandShell is used
+	 * to get it to start echoing as soon as it starts processing
+	 * commands.
+	 */
+	char *argv[4];
+
+	JobMakeArgv(job, argv);
+
+	if (DEBUG(JOB)) {
+		(void)fprintf(stdout, "Restarting %s...",
+		    job->node->name);
+		(void)fflush(stdout);
+	}
+	if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL)) {
+		/*
+		 * Can't be exported and not allowed to run locally --
+		 * put it back on the hold queue and mark the table
+		 * full
+		 */
+		debug_printf("holding\n");
+		Lst_AtFront(&stoppedJobs, job);
+		jobFull = true;
+		debug_printf("Job queue is full.\n");
+		return;
+	} else {
+		/*
+		 * Job may be run locally.
+		 */
+		debug_printf("running locally\n");
+	}
+	JobExec(job, argv);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * JobRestart --
@@ -1088,42 +1129,7 @@ static void
 JobRestart(Job *job)
 {
 	if (job->flags & JOB_RESTART) {
-		/*
-		 * Set up the control arguments to the shell. This is based on
-		 * the flags set earlier for this job. If the JOB_IGNERR flag
-		 * is clear, the 'exit' flag of the commandShell is used to
-		 * cause it to exit upon receiving an error. If the JOB_SILENT
-		 * flag is clear, the 'echo' flag of the commandShell is used
-		 * to get it to start echoing as soon as it starts processing
-		 * commands.
-		 */
-		char *argv[4];
-
-		JobMakeArgv(job, argv);
-
-		if (DEBUG(JOB)) {
-			(void)fprintf(stdout, "Restarting %s...",
-			    job->node->name);
-			(void)fflush(stdout);
-		}
-		if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL)) {
-			/*
-			 * Can't be exported and not allowed to run locally --
-			 * put it back on the hold queue and mark the table
-			 * full
-			 */
-			debug_printf("holding\n");
-			Lst_AtFront(&stoppedJobs, job);
-			jobFull = true;
-			debug_printf("Job queue is full.\n");
-			return;
-		} else {
-			/*
-			 * Job may be run locally.
-			 */
-			debug_printf("running locally\n");
-		}
-		JobExec(job, argv);
+		start_queued_job(job);
 	} else {
 		/*
 		 * The job has stopped and needs to be restarted. Why it
@@ -1340,12 +1346,6 @@ JobStart(GNode *gn,	      	/* target to create */
 		(void)fflush(job->cmdFILE);
 	}
 
-	/*
-	 * Set up the control arguments to the shell. This is based on the flags
-	 * set earlier for this job.
-	 */
-	JobMakeArgv(job, argv);
-
 	/* Create the pipe by which we'll get the shell's output. 
 	 */
 	if (pipe(fd) == -1)
@@ -1354,6 +1354,12 @@ JobStart(GNode *gn,	      	/* target to create */
 	job->outPipe = fd[1];
 	(void)fcntl(job->inPipe, F_SETFD, FD_CLOEXEC);
 	(void)fcntl(job->outPipe, F_SETFD, FD_CLOEXEC);
+
+	/*
+	 * Set up the control arguments to the shell. This is based on the flags
+	 * set earlier for this job.
+	 */
+	JobMakeArgv(job, argv);
 
 	if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL) &&
 	    maxJobs != 0) {
@@ -1749,6 +1755,7 @@ Job_Init(int maxproc)
 {
 	Static_Lst_Init(&runningJobs);
 	Static_Lst_Init(&stoppedJobs);
+	Static_Lst_Init(&queuedJobs);
 	maxJobs =	  maxproc;
 	nJobs =	  	  0;
 	jobFull =	  false;
