@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malovar.h,v 1.26 2007/10/09 08:24:17 mglocker Exp $ */
+/*	$OpenBSD: if_malovar.h,v 1.27 2007/10/09 20:37:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -207,6 +207,19 @@ struct malo_cmd_body_bgscan_query {
 	uint8_t		flush;
 } __packed;
 
+#define MALO_RATE_BITMAP_DS1	(1 << 0)
+#define MALO_RATE_BITMAP_DS2	(1 << 1)
+#define MALO_RATE_BITMAP_DS5	(1 << 2)
+#define MALO_RATE_BITMAP_DS11	(1 << 3)
+#define MALO_RATE_BITMAP_OFDM6	(1 << 5)
+#define MALO_RATE_BITMAP_OFDM9	(1 << 6)
+#define MALO_RATE_BITMAP_OFDM12	(1 << 7)
+#define MALO_RATE_BITMAP_OFDM18	(1 << 8)
+#define MALO_RATE_BITMAP_OFDM24	(1 << 9)
+#define MALO_RATE_BITMAP_OFDM36	(1 << 10)
+#define MALO_RATE_BITMAP_OFDM48	(1 << 11)
+#define MALO_RATE_BITMAP_OFDM54	(1 << 12)
+#define MALO_RATE_BITMAP_AUTO	0x1fef
 struct malo_cmd_body_rate {
 	uint16_t	action;
 	uint16_t	hwauto;

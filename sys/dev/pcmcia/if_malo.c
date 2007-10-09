@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.59 2007/10/09 08:24:17 mglocker Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.60 2007/10/09 20:37:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -94,6 +94,7 @@ void	cmalo_event(struct malo_softc *);
 void	cmalo_select_network(struct malo_softc *);
 void	cmalo_reflect_network(struct malo_softc *);
 int	cmalo_wep(struct malo_softc *);
+int	cmalo_rate2bitmap(int);
 
 void	cmalo_hexdump(void *, int);
 int	cmalo_cmd_get_hwspec(struct malo_softc *);
@@ -117,7 +118,7 @@ int	cmalo_cmd_rsp_assoc(struct malo_softc *);
 int	cmalo_cmd_set_80211d(struct malo_softc *);
 int	cmalo_cmd_set_bgscan_config(struct malo_softc *);
 int	cmalo_cmd_set_bgscan_query(struct malo_softc *);
-int	cmalo_cmd_set_rate(struct malo_softc *);
+int	cmalo_cmd_set_rate(struct malo_softc *, int);
 int	cmalo_cmd_request(struct malo_softc *, uint16_t, int);
 int	cmalo_cmd_response(struct malo_softc *);
 
@@ -318,8 +319,8 @@ cmalo_attach(void *arg)
 		ic->ic_channels[i].ic_freq =
 		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_2GHZ);
 		ic->ic_channels[i].ic_flags =
-		    IEEE80211_CHAN_B |
-		    IEEE80211_CHAN_G;
+		    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
+		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
 	/* attach interface */
@@ -665,7 +666,7 @@ cmalo_init(struct ifnet *ifp)
 		return (EIO);
 	if (cmalo_cmd_set_channel(sc, sc->sc_curchan) != 0)
 		return (EIO);
-	if (cmalo_cmd_set_rate(sc) != 0)
+	if (cmalo_cmd_set_rate(sc, ic->ic_fixed_rate) != 0)
 		return (EIO);
 	if (cmalo_cmd_set_snmp(sc, MALO_OID_RTSTRESH) != 0)
 		return (EIO);
@@ -1146,6 +1147,31 @@ cmalo_wep(struct malo_softc *sc)
 	}
 
 	return (0);
+}
+
+int
+cmalo_rate2bitmap(int rate)
+{
+	switch (rate) {
+	/* CCK rates */
+	case  0:	return (MALO_RATE_BITMAP_DS1);
+	case  1:	return (MALO_RATE_BITMAP_DS2);
+	case  2:	return (MALO_RATE_BITMAP_DS5);
+	case  3:	return (MALO_RATE_BITMAP_DS11);
+
+	/* OFDM rates */
+	case  4:	return (MALO_RATE_BITMAP_OFDM6);
+	case  5:	return (MALO_RATE_BITMAP_OFDM9);
+	case  6:	return (MALO_RATE_BITMAP_OFDM12);
+	case  7:	return (MALO_RATE_BITMAP_OFDM18);
+	case  8:	return (MALO_RATE_BITMAP_OFDM24);
+	case  9:	return (MALO_RATE_BITMAP_OFDM36);
+	case 10:	return (MALO_RATE_BITMAP_OFDM48);
+	case 11:	return (MALO_RATE_BITMAP_OFDM54);
+
+	/* unknown rate: should not happen */
+	default:	return (0);
+	}
 }
 
 void
@@ -1919,7 +1945,7 @@ cmalo_cmd_set_bgscan_query(struct malo_softc *sc)
 }
 
 int
-cmalo_cmd_set_rate(struct malo_softc *sc)
+cmalo_cmd_set_rate(struct malo_softc *sc, int rate)
 {
 	struct malo_cmd_header *hdr = sc->sc_cmd;
 	struct malo_cmd_body_rate *body;
@@ -1935,8 +1961,15 @@ cmalo_cmd_set_rate(struct malo_softc *sc)
 	body = (struct malo_cmd_body_rate *)(hdr + 1);
 
 	body->action = htole16(1);
-	body->hwauto = htole16(1);
-	body->ratebitmap = htole16(0x1fff);
+	if (rate == -1) {
+ 		body->hwauto = htole16(1);
+		body->ratebitmap = htole16(MALO_RATE_BITMAP_AUTO);
+	} else {
+ 		body->hwauto = 0;
+		body->ratebitmap = htole16(cmalo_rate2bitmap(rate));
+	}
+
+	printf("rate=0x%04x\n", body->ratebitmap);
 
 	/* process command request */
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
