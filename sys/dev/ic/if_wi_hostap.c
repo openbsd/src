@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.39 2007/10/06 02:18:38 krw Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.40 2007/10/09 17:06:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -297,7 +297,7 @@ wihap_shutdown(struct wi_softc *sc)
 			printf("wihap_shutdown: free(sta=%p)\n", sta);
 		next = TAILQ_NEXT(sta, list);
 		if (sta->challenge)
-			FREE(sta->challenge, M_TEMP);
+			free(sta->challenge, M_TEMP);
 		free(sta, M_DEVBUF);
 	}
 	TAILQ_INIT(&whi->sta_list);
@@ -443,7 +443,7 @@ wihap_sta_delete(struct wihap_sta_info *sta)
 	TAILQ_REMOVE(&whi->sta_list, sta, list);
 	LIST_REMOVE(sta, hash);
 	if (sta->challenge)
-		FREE(sta->challenge, M_TEMP);
+		free(sta->challenge, M_TEMP);
 	free(sta, M_DEVBUF);
 	whi->n_stations--;
 }
@@ -643,8 +643,7 @@ wihap_auth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 		case 1:
 			/* Create a challenge frame. */
 			if (!sta->challenge) {
-				MALLOC(sta->challenge, u_int32_t *, 128,
-				       M_TEMP, M_NOWAIT);
+				sta->challenge = malloc(128, M_TEMP, M_NOWAIT);
 				if (!sta->challenge)
 					return;
 			}
@@ -671,7 +670,7 @@ wihap_auth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 				}
 
 			sta->flags |= WI_SIFLAGS_AUTHEN;
-			FREE(sta->challenge, M_TEMP);
+			free(sta->challenge, M_TEMP);
 			sta->challenge = NULL;
 			challenge_len = 0;
 			break;

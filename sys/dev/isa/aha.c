@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.57 2007/08/15 02:04:30 krw Exp $	*/
+/*	$OpenBSD: aha.c,v 1.58 2007/10/09 17:06:18 gilles Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -669,7 +669,7 @@ aha_get_ccb(sc, flags)
 			break;
 		}
 		if (sc->sc_numccbs < AHA_CCB_MAX) {
-			MALLOC(ccb, struct aha_ccb *, sizeof *ccb, M_DEVBUF,
+			ccb = malloc(sizeof *ccb, M_DEVBUF,
 			    (flags & SCSI_NOSLEEP) ? M_NOWAIT : M_WAITOK);
 			if (ccb == NULL) {
 				printf("%s: can't malloc ccb\n",
@@ -680,7 +680,7 @@ aha_get_ccb(sc, flags)
 				sc->sc_numccbs++;
 				break;
 			}
-			FREE(ccb, M_DEVBUF);
+			free(ccb, M_DEVBUF);
 			ccb = NULL;
 		}
 		if (flags & SCSI_NOSLEEP)
