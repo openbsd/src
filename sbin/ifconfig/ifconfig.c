@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.187 2007/09/02 15:19:23 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.188 2007/10/09 21:41:54 joel Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2936,7 +2936,7 @@ setcarp_vhid(const char *val, int d)
 	struct carpreq carpr;
 	int vhid;
 
-	vhid = strtonum(val, 0, 255, &errmsg);
+	vhid = strtonum(val, 1, 255, &errmsg);
 	if (errmsg)
 		errx(1, "vhid %s: %s", val, errmsg);
 
