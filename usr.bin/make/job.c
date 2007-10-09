@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.93 2007/10/09 09:32:03 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.94 2007/10/09 09:34:05 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -284,6 +284,7 @@ static void DBPRINTF(Job *, const char *, ...);
 static void debug_printf(const char *, ...);
 static FILE *new_command_file(void);
 static void setup_signal(int);
+static void setup_all_signals(void);
 
 static volatile sig_atomic_t got_signal;
 
@@ -420,7 +421,7 @@ pass_signal_to_job(void *jobp,	/* Job to biff */
 
 /*-
  *-----------------------------------------------------------------------
- * JobPassSig --
+ * handle_signal --
  *	Pass a signal to all local jobs if USE_PGRP is defined,
  *	then die ourselves.
  *
@@ -925,6 +926,7 @@ static void
 JobExec(Job *job, char **argv)
 {
 	pid_t cpid; 	/* ID of new child */
+	static int signals_caught = 0;
 
 	if (DEBUG(JOB)) {
 		int i;
@@ -947,6 +949,11 @@ JobExec(Job *job, char **argv)
 	if (lastNode != job->node && !(job->flags & JOB_SILENT)) {
 		MESSAGE(stdout, job->node);
 		lastNode = job->node;
+	}
+
+	if (!signals_caught) {
+		signals_caught = 1;
+		setup_all_signals();
 	}
 
 	if ((cpid = fork()) == -1) {
@@ -1703,6 +1710,31 @@ setup_signal(int sig)
 	}
 }
 
+static void
+setup_all_signals()
+{
+	/*
+	 * Catch the four signals that POSIX specifies if they aren't ignored.
+	 * handle_signal will take care of calling JobInterrupt if appropriate.
+	 */
+	setup_signal(SIGINT);
+	setup_signal(SIGHUP);
+	setup_signal(SIGQUIT);
+	setup_signal(SIGTERM);
+	/*
+	 * There are additional signals that need to be caught and passed if
+	 * either the export system wants to be told directly of signals or if
+	 * we're giving each job its own process group (since then it won't get
+	 * signals from the terminal driver as we own the terminal)
+	 */
+#if defined(USE_PGRP)
+	setup_signal(SIGTSTP);
+	setup_signal(SIGTTOU);
+	setup_signal(SIGTTIN);
+	setup_signal(SIGWINCH);
+#endif
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Job_Init --
@@ -1735,27 +1767,6 @@ Job_Init(int maxproc)
 	} else {
 		targFmt = TARG_FMT;
 	}
-
-	/*
-	 * Catch the four signals that POSIX specifies if they aren't ignored.
-	 * JobPassSig will take care of calling JobInterrupt if appropriate.
-	 */
-	setup_signal(SIGINT);
-	setup_signal(SIGHUP);
-	setup_signal(SIGQUIT);
-	setup_signal(SIGTERM);
-	/*
-	 * There are additional signals that need to be caught and passed if
-	 * either the export system wants to be told directly of signals or if
-	 * we're giving each job its own process group (since then it won't get
-	 * signals from the terminal driver as we own the terminal)
-	 */
-#if defined(USE_PGRP)
-	setup_signal(SIGTSTP);
-	setup_signal(SIGTTOU);
-	setup_signal(SIGTTIN);
-	setup_signal(SIGWINCH);
-#endif
 
 	if ((begin_node->type & OP_DUMMY) == 0) {
 		JobStart(begin_node, JOB_SPECIAL);
