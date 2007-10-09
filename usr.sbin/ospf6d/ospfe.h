@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.2 2007/10/09 06:17:40 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.3 2007/10/09 06:26:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -105,7 +105,7 @@ void	 stop_db_tx_timer(struct nbr *);
 
 /* hello.c */
 int	 send_hello(struct iface *);
-void	 recv_hello(struct iface *,  struct in6_addr, u_int32_t,
+void	 recv_hello(struct iface *,  struct in6_addr *, u_int32_t,
 	     char *, u_int16_t);
 
 /* ospfe.c */

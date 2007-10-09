@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: hello.c,v 1.2 2007/10/09 06:26:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -121,7 +121,7 @@ fail:
 }
 
 void
-recv_hello(struct iface *iface, struct in6_addr src, u_int32_t rtr_id,
+recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
     char *buf, u_int16_t len)
 {
 	struct hello_hdr	 hello;
@@ -157,7 +157,7 @@ XXX
 		return;
 	}
 
-	if (ntohl(hello.rtr_dead_interval) != iface->dead_interval) {
+	if (ntohs(hello.rtr_dead_interval) != iface->dead_interval) {
 		log_warnx("recv_hello: invalid router-dead-interval %d, "
 		    "interface %s", ntohl(hello.rtr_dead_interval),
 		    iface->name);
@@ -190,7 +190,7 @@ XXX
 			if (nbr == iface->self)
 				continue;
 //XXX			if (nbr->addr.s_addr == src.s_addr)
-			if (IN6_ARE_ADDR_EQUAL(&nbr->addr, &src))
+			if (IN6_ARE_ADDR_EQUAL(&nbr->addr, src))
 				break;
 		}
 		break;
@@ -209,7 +209,7 @@ XXX
 
 	/* actually the neighbor address shouldn't be stored on virtual links */
 //XXX	nbr->addr.s_addr = src.s_addr;
-	nbr->addr = src;
+	nbr->addr = *src;
 	nbr->options = hello.opts3;	/* XXX */
 
 	nbr_fsm(nbr, NBR_EVT_HELLO_RCVD);

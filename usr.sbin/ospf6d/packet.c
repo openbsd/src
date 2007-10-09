@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.2 2007/10/09 06:26:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -38,9 +38,10 @@
 #include "ospfe.h"
 
 int		 ip_hdr_sanity_check(const struct ip6_hdr *, u_int16_t);
-int		 ospf_hdr_sanity_check(const struct ip6_hdr *,
-		    struct ospf_hdr *, u_int16_t, const struct iface *);
-struct iface	*find_iface(struct ospfd_conf *, unsigned int, struct in6_addr);
+int		 ospf_hdr_sanity_check(struct ospf_hdr *, u_int16_t,
+		    const struct iface *, struct in6_addr *);
+struct iface	*find_iface(struct ospfd_conf *, unsigned int,
+		    struct in6_addr *);
 
 int
 gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
@@ -71,8 +72,7 @@ upd_ospf_hdr(struct buf *buf, struct iface *iface)
 	if (buf->wpos > USHRT_MAX)
 		fatalx("upd_ospf_hdr: resulting ospf packet too big");
 	ospf_hdr->len = htons((u_int16_t)buf->wpos);
-
-		ospf_hdr->chksum = in_cksum(buf->buf, buf->wpos);	/* XXX */
+	ospf_hdr->chksum = 0; /* calculated via IPV6_CHECKSUM */
 
 	return (0);
 }
@@ -101,10 +101,8 @@ send_packet(struct iface *iface, void *pkt, size_t len,
 			return (-1);
 		}
 
-
-	log_debug("send_packet: iface %d addr %s", iface->ifindex,
-	    log_in6addr(&iface->addr));
-	log_debug("send_packet: dest %s", log_in6addr(&dst->sin6_addr));
+	log_debug("send_packet: iface %d addr %s dest %s", iface->ifindex,
+	    log_in6addr(&iface->addr), log_in6addr(&dst->sin6_addr));
 	if (sendmsg(iface->fd, &msg, MSG_DONTROUTE) == -1) {
 		log_warn("send_packet: error sending packet on interface %s",
 		    iface->name);
@@ -117,11 +115,11 @@ send_packet(struct iface *iface, void *pkt, size_t len,
 void
 recv_packet(int fd, short event, void *bula)
 {
-	char			 cbuf[CMSG_SPACE(sizeof(struct sockaddr_dl))];
+	char			 cbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 	struct msghdr		 msg;
 	struct iovec		 iov;
-	struct ip6_hdr		 ip_hdr;
-	struct in6_addr		 addr;
+	struct in6_addr		 addr, dest;
+	struct sockaddr_in6	 src;
 	struct ospfd_conf	*xconf = bula;
 	struct ospf_hdr		*ospf_hdr;
 	struct iface		*iface;
@@ -140,6 +138,8 @@ recv_packet(int fd, short event, void *bula)
 	bzero(&msg, sizeof(msg));
 	iov.iov_base = buf = pkt_ptr;
 	iov.iov_len = READ_BUF_SIZE;
+	msg.msg_name = &src;
+	msg.msg_namelen = sizeof(src);
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = cbuf;
@@ -154,32 +154,20 @@ recv_packet(int fd, short event, void *bula)
 	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
 	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
 		if (cmsg->cmsg_level == IPPROTO_IPV6 &&
-		    cmsg->cmsg_type == IP_RECVIF) {
-			ifindex = ((struct sockaddr_dl *)
-			    CMSG_DATA(cmsg))->sdl_index;
+		    cmsg->cmsg_type == IPV6_PKTINFO) {
+			ifindex = ((struct in6_pktinfo *)
+			    CMSG_DATA(cmsg))->ipi6_ifindex;
+			dest = ((struct in6_pktinfo *)
+			    CMSG_DATA(cmsg))->ipi6_addr;
 			break;
 		}
 	}
 
-	len = (u_int16_t)r;
-
-	/* IP header sanity checks */
-	if (len < sizeof(ip_hdr)) {
-		log_warnx("recv_packet: bad packet size");
-		return;
-	}
-	memcpy(&ip_hdr, buf, sizeof(ip_hdr));
-	if ((l = ip_hdr_sanity_check(&ip_hdr, len)) == -1)
-		return;
-	buf += l;
-	len -= l;
-
 	/* find a matching interface */
-	if ((iface = find_iface(xconf, ifindex, ip_hdr.ip6_src)) == NULL) {
+	if ((iface = find_iface(xconf, ifindex, &src.sin6_addr)) == NULL) {
 		/* XXX add a counter here */
 		return;
 	}
-#if 1
 	/*
 	 * Packet needs to be sent to AllSPFRouters or AllDRouters
 	 * or to the address of the interface itself.
@@ -187,19 +175,19 @@ recv_packet(int fd, short event, void *bula)
 	 */
 	inet_pton(AF_INET6, AllSPFRouters, &addr);
 
-	if (!IN6_ARE_ADDR_EQUAL(&ip_hdr.ip6_dst, &addr)) {
+	if (!IN6_ARE_ADDR_EQUAL(&dest, &addr)) {
 		inet_pton(AF_INET6, AllDRouters, &addr);
-		if (!IN6_ARE_ADDR_EQUAL(&ip_hdr.ip6_dst, &addr)) {
-			if (!IN6_ARE_ADDR_EQUAL(&ip_hdr.ip6_dst,
-			     &iface->addr)) {
+		if (!IN6_ARE_ADDR_EQUAL(&dest, &addr)) {
+			if (!IN6_ARE_ADDR_EQUAL(&dest, &iface->addr)) {
 				log_debug("recv_packet: packet sent to wrong "
 				    "address %s, interface %s",
-				    log_in6addr(&ip_hdr.ip6_dst), iface->name);
+				    log_in6addr(&dest), iface->name);
 				return;
 			}
 		}
 	}
-#endif
+
+	len = (u_int16_t)r;
 	/* OSPF header sanity checks */
 	if (len < sizeof(*ospf_hdr)) {
 		log_debug("recv_packet: bad packet size");
@@ -207,18 +195,12 @@ recv_packet(int fd, short event, void *bula)
 	}
 	ospf_hdr = (struct ospf_hdr *)buf;
 
-	if ((l = ospf_hdr_sanity_check(&ip_hdr, ospf_hdr, len, iface)) == -1)
+	if ((l = ospf_hdr_sanity_check(ospf_hdr, len, iface, &dest)) == -1)
 		return;
 
 	nbr = nbr_find_id(iface, ospf_hdr->rtr_id);
 	if (ospf_hdr->type != PACKET_TYPE_HELLO && nbr == NULL) {
 		log_debug("recv_packet: unknown neighbor ID");
-		return;
-	}
-
-	if (in_cksum(buf, len)) {
-		log_warnx("recv_packet: invalid checksum, "
-		    "interface %s", iface->name);
 		return;
 	}
 
@@ -229,13 +211,13 @@ recv_packet(int fd, short event, void *bula)
 	switch (ospf_hdr->type) {
 	case PACKET_TYPE_HELLO:
 		inet_pton(AF_INET6, AllDRouters, &addr);
-		if (IN6_ARE_ADDR_EQUAL(&ip_hdr.ip6_dst, &addr)) {
+		if (IN6_ARE_ADDR_EQUAL(&dest, &addr)) {
 			log_debug("recv_packet: invalid destination IP "
 			     "address");
 			break;
 		}
 
-		recv_hello(iface, ip_hdr.ip6_src, ospf_hdr->rtr_id, buf, len);
+		recv_hello(iface, &src.sin6_addr, ospf_hdr->rtr_id, buf, len);
 		break;
 	case PACKET_TYPE_DD:
 		recv_db_description(nbr, buf, len);
@@ -256,25 +238,8 @@ recv_packet(int fd, short event, void *bula)
 }
 
 int
-ip_hdr_sanity_check(const struct ip6_hdr *ip_hdr, u_int16_t len)
-{
-	if (ntohs(ip_hdr->ip6_plen) != len) {
-		log_debug("recv_packet: invalid IP packet length %u",
-		    ntohs(ip_hdr->ip6_plen));
-		return (-1);
-	}
-
-	if (ip_hdr->ip6_nxt != IPPROTO_OSPF)
-		/* this is enforced by the socket itself */
-		fatalx("recv_packet: invalid IP proto");
-
-//XXX	return (ip_hdr->ip_hl << 2);
-	return (sizeof(struct ip6_hdr));
-}
-
-int
-ospf_hdr_sanity_check(const struct ip6_hdr *ip_hdr, struct ospf_hdr *ospf_hdr,
-    u_int16_t len, const struct iface *iface)
+ospf_hdr_sanity_check(struct ospf_hdr *ospf_hdr, u_int16_t len,
+    const struct iface *iface, struct in6_addr *dst)
 {
 	struct in6_addr		 addr;
 	struct in_addr		 id;
@@ -311,7 +276,7 @@ ospf_hdr_sanity_check(const struct ip6_hdr *ip_hdr, struct ospf_hdr *ospf_hdr,
 	if (iface->type == IF_TYPE_BROADCAST || iface->type == IF_TYPE_NBMA) {
 		if (inet_pton(AF_INET6, AllDRouters, &addr) == 0)
 			fatalx("recv_packet: inet_pton");
-		if (IN6_ARE_ADDR_EQUAL(&ip_hdr->ip6_dst, &addr) &&
+		if (IN6_ARE_ADDR_EQUAL(dst, &addr) &&
 		    (iface->state & IF_STA_DRORBDR) == 0) {
 			log_debug("recv_packet: invalid destination IP in "
 			    "state %s, interface %s",
@@ -324,38 +289,32 @@ ospf_hdr_sanity_check(const struct ip6_hdr *ip_hdr, struct ospf_hdr *ospf_hdr,
 }
 
 struct iface *
-find_iface(struct ospfd_conf *xconf, unsigned int ifindex, struct in6_addr src)
+find_iface(struct ospfd_conf *xconf, unsigned int ifindex, struct in6_addr *src)
 {
-	struct area	*area = NULL;
-	struct iface	*iface = NULL;
+	struct area	*area;
+	struct iface	*iface, *match = NULL;
 
-	/* returned interface needs to be active */
+	/*
+	 * Returned interface needs to be active.
+	 * Virtual-Links have higher precedence so the full interface
+	 * list needs to be scanned for possible matches.
+	 */
 	LIST_FOREACH(area, &xconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			switch (iface->type) {
 			case IF_TYPE_VIRTUALLINK:
-				if (IN6_ARE_ADDR_EQUAL(&src, &iface->dst) &&
-				    !iface->passive)
-					return (iface);
-				break;
-			case IF_TYPE_POINTOPOINT:
-				if (ifindex == iface->ifindex &&
-				    IN6_ARE_ADDR_EQUAL(&iface->dst, &src) &&
+				if (IN6_ARE_ADDR_EQUAL(src, &iface->dst) &&
 				    !iface->passive)
 					return (iface);
 				break;
 			default:
-#if 0
 				if (ifindex == iface->ifindex &&
-				    (iface->addr.s_addr & iface->mask.s_addr) ==
-				    (src.s_addr & iface->mask.s_addr) &&
 				    !iface->passive)
-					return (iface);
-#endif
+					match = iface;
 				break;
 			}
 		}
 	}
 
-	return (NULL);
+	return (match);
 }
