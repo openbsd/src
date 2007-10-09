@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.2 2007/10/09 06:17:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -100,10 +100,10 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	/* set some defaults */
 	if (if_set_mcast_loop(xconf->ospf_socket) == -1)
 		fatal("if_set_mcast_loop");
-	if (if_set_ip_hdrincl(xconf->ospf_socket) == -1)
-		fatal("if_set_ip_hdrincl");
-	if (if_set_recvif(xconf->ospf_socket, 1) == -1)
-		fatal("if_set_recvif");
+	if (if_set_ipv6_checksum(xconf->ospf_socket) == -1)
+		fatal("if_set_ipv6_checksum");
+	if (if_set_ipv6_pktinfo(xconf->ospf_socket, 1) == -1)
+		fatal("if_set_ipv6_pktinfo");
 	if_set_recvbuf(xconf->ospf_socket);
 
 	oeconf = xconf;
@@ -183,7 +183,6 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 		ospfe_demote_area(area, 0);
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			if_init(xconf, iface);
-			log_debug("fire up the barbeque on %s", iface->name);
 			if (if_fsm(iface, IF_EVT_UP)) {
 				log_debug("error starting interface %s",
 				    iface->name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.2 2007/10/09 06:17:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -27,6 +27,7 @@
 #include <net/if_types.h>
 #include <ctype.h>
 #include <err.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -654,19 +655,6 @@ if_to_ctl(struct iface *iface)
 }
 
 /* misc */
-int
-if_set_recvif(int fd, int enable)
-{
-#if 0
-	if (setsockopt(fd, IPPROTO_IPV6, IP_RECVIF, &enable,
-	    sizeof(enable)) < 0) {
-		log_warn("if_set_recvif: error setting IP_RECVIF");
-		return (-1);
-	}
-#endif
-	return (0);
-}
-
 void
 if_set_recvbuf(int fd)
 {
@@ -788,16 +776,27 @@ if_set_mcast_loop(int fd)
 }
 
 int
-if_set_ip_hdrincl(int fd)
+if_set_ipv6_pktinfo(int fd, int enable)
 {
-#if 0
-	int	hincl = 1;
-
-	if (setsockopt(fd, IPPROTO_IPV6, IP_HDRINCL, &hincl,
-	     sizeof(hincl)) < 0) {
-		log_warn("if_set_ip_hdrincl: error setting IP_HDRINCL");
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &enable,
+	    sizeof(enable)) < 0) {
+		log_warn("if_set_ipv6_pktinfo: error setting IPV6_PKTINFO");
 		return (-1);
 	}
-#endif
+
+	return (0);
+}
+
+int
+if_set_ipv6_checksum(int fd)
+{
+	int	offset = offsetof(struct ospf_hdr, chksum);
+
+	log_debug("if_set_ipv6_checksum setting cksum offset to %i", offset);
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_CHECKSUM, &offset,
+	     sizeof(offset)) < 0) {
+		log_warn("if_set_ipv6_checksum: error setting IPV6_CHECKSUM");
+		return (-1);
+	}
 	return (0);
 }

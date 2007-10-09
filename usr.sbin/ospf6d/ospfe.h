@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.2 2007/10/09 06:17:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -140,10 +140,10 @@ struct ctl_iface	*if_to_ctl(struct iface *);
 int	 if_join_group(struct iface *, struct in6_addr *);
 int	 if_leave_group(struct iface *, struct in6_addr *);
 int	 if_set_mcast(struct iface *);
-int	 if_set_recvif(int, int);
 void	 if_set_recvbuf(int);
 int	 if_set_mcast_loop(int);
-int	 if_set_ip_hdrincl(int);
+int	 if_set_ipv6_pktinfo(int, int);
+int	 if_set_ipv6_checksum(int);
 
 /* lsack.c */
 int	 delay_lsa_ack(struct iface *, struct lsa_hdr *);
