@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2007/10/08 10:44:50 norby Exp $
+#	$OpenBSD: Makefile,v 1.2 2007/10/09 06:28:45 claudio Exp $
 
 
 PROG=	ospf6d
 SRCS=	area.c buffer.c carp.c control.c database.c hello.c \
-	imsg.c in_cksum.c interface.c iso_cksum.c kroute.c lsack.c \
+	imsg.c interface.c iso_cksum.c kroute.c lsack.c \
 	lsreq.c lsupdate.c log.c neighbor.c ospf6d.c ospfe.c packet.c \
 	parse.y printconf.c rde.c rde_lsdb.c rde_spf.c name2id.c
 
