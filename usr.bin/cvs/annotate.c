@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.41 2007/10/09 12:24:13 tobias Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.42 2007/10/09 12:25:27 tobias Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -130,9 +130,17 @@ cvs_annotate_local(struct cvs_file *cf)
 	if (cvs_specified_tag == NULL)
 		rcs_rev_getlines(cf->file_rcs, cf->file_rcs->rf_head, &alines);
 	else {
-		rev = rcsnum_parse(cvs_specified_tag);
+		if ((rev = rcs_translate_tag(cvs_specified_tag,
+		    cf->file_rcs)) == NULL) {
+			if (!force_head)
+				/* Stick at weird GNU cvs, ignore error. */
+				return;
+			rev = rcsnum_alloc();
+			rcsnum_cpy(cf->file_rcs->rf_head, rev, 0);
+		}
 
-		if (rcsnum_cmp(rev, cf->file_rcs->rf_head, 0) < 0) {
+		/* rcs_translate_tag may give back an unavailable revision. */
+		if (rcs_findrev(cf->file_rcs, rev) == NULL) {
 			if (!force_head) {
 				/* Stick at weird GNU cvs, ignore error. */
 				rcsnum_free(rev);
