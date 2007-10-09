@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.223 2007/10/09 12:16:29 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.224 2007/10/09 12:18:53 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2591,10 +2591,15 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 	/*
 	 * If it was not a branch, thats ok the symbolic
 	 * name refered to a revision, so return the resolved
-	 * revision for the given name.
+	 * revision for the given name if it is not newer than HEAD.
 	 */
-	if (!RCSNUM_ISBRANCH(rev))
+	if (!RCSNUM_ISBRANCH(rev)) {
+		if (rcsnum_cmp(rev, rfp->rf_head, 0) < 0) {
+			rcsnum_free(rev);
+			return NULL;
+		}
 		return (rev);
+	}
 
 	brev = rcsnum_alloc();
 	rcsnum_cpy(rev, brev, rev->rn_len - 1);
