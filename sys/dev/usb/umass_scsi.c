@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.18 2007/06/13 10:33:52 mbalmer Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.19 2007/10/09 23:03:30 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -155,9 +155,7 @@ umass_scsi_setup(struct umass_softc *sc)
 {
 	struct umass_scsi_softc *scbus;
 
-	scbus = malloc(sizeof(struct umass_scsi_softc), M_DEVBUF, M_WAITOK);
-	memset(&scbus->sc_link, 0, sizeof(struct scsi_link));
-	memset(&scbus->sc_adapter, 0, sizeof(struct scsi_adapter));
+	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->bus = (struct umassbus_softc *)scbus;
 
