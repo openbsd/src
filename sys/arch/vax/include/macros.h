@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.14 2006/11/06 21:31:36 miod Exp $ */
+/*	$OpenBSD: macros.h,v 1.15 2007/10/10 15:53:53 art Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -232,15 +232,10 @@ skpc(int mask, size_t size, u_char *cp)
 	return	ret;
 }
 
-#define setrunqueue(p)	\
-	__asm__ __volatile("movl %0,r0;jsb Setrq":: "g"(p):"r0","r1","r2");
-
-#define remrunqueue(p)	\
-	__asm__ __volatile("movl %0,r0;jsb Remrq":: "g"(p):"r0","r1","r2");
-
-#define cpu_switch(p) \
-	__asm__ __volatile("movl %0,r0;movpsl -(sp);jsb Swtch" \
-	    ::"g"(p):"r0","r1","r2","r3");
+#define	cpu_switchto(o, n) \
+	__asm__ __volatile__( \
+	    "movl %0,r0; movl %1, r1; movpsl -(sp); jsb __cpu_switchto" \
+	    :: "g"(o), "g"(n) : "r0", "r1");
 
 /*
  * Interlock instructions. Used both in multiprocessor environments to

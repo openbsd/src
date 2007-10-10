@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.43 2007/05/23 23:40:21 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.44 2007/10/10 15:53:52 art Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -676,7 +676,7 @@ void
 cpu_hatch(void)
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
-	int scratch, i;
+	int scratch, i, s;
 
         /* Initialize timebase. */
         __asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
@@ -759,5 +759,12 @@ cpu_hatch(void)
 
 	curcpu()->ci_ipending = 0;
 	curcpu()->ci_cpl = 0;
+
+	s = splhigh();
+	microuptime(&curcpu()->ci_schedstate.spc_runtime);
+	splx(s);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
 }
 #endif

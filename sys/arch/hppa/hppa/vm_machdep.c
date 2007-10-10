@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.61 2007/06/20 17:29:34 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.62 2007/10/10 15:53:51 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -160,12 +160,11 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_sp = (register_t)stack;
 
 	/*
-	 * Build stack frames for the cpu_switch & co.
+	 * Build stack frames for the cpu_switchto & co.
 	 */
 	osp = sp + HPPA_FRAME_SIZE;
 	*(register_t*)(osp - HPPA_FRAME_SIZE) = 0;
 	*(register_t*)(osp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
-	*(register_t*)(osp + HPPA_FRAME_SL) = 0;	/* cpl */
 	*(register_t*)(osp) = (osp - HPPA_FRAME_SIZE);
 
 	sp = osp + HPPA_FRAME_SIZE + 20*4; /* frame + calee-save registers */
@@ -187,8 +186,8 @@ cpu_exit(p)
 		fpu_curpcb = 0;
 	}
 
-	exit2(p);
-	cpu_switch(p);
+	pmap_deactivate(p);
+	sched_exit(p);
 }
 
 void

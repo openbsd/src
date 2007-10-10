@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.6 2007/03/02 06:11:54 miod Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.7 2007/10/10 15:53:52 art Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -180,27 +180,26 @@
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * LINTSTUB: Func: void cpu_switch(struct proc *p, struct proc *XXX_IGNORED)
- *	Find a runnable proc and switch to it.  Wait if necessary.
+ * LINTSTUB: Func: void cpu_switchto(struct proc *old, struct proc *new)
+ *	Switch proc contexts.
  */
-ENTRY(cpu_switch)
-	/* Save current proc's context to switchframe */
+ENTRY(cpu_switchto)
+	mov	r4,	r0
+	cmp/eq	#0,	r0
+	bt	1f
+
+	/* Save old proc's context to switchframe */
 	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1
 	SAVEPCB(r1)
 	add	#PCB_FP, r1
 	SAVEFP(r1, r8, r9)
 
-.L_find_and_switch:
-	/* Search next proc. cpu_switch_search may or may not sleep. */
-	mov.l	.L_cpu_switch_search, r0
+1:
+	mov.l	.L_cpu_switch_prepare, r0
 	jsr	@r0
-	 mov	r4,	r8	/* save old proc */
-
-	/* Skip context switch if same proc. */
-	cmp/eq	r8,	r0
-	bt/s	1f
-	 mov	r0,	r4	/* new proc */
+	 mov	r5,	r8	/* save new proc */
+	mov	r8,	r4
 
 	/* Setup kernel stack */
 	mov.l	.L_SF,	r0
@@ -224,7 +223,7 @@ ENTRY(cpu_switch)
 	/* Now OK to use kernel stack. */
 
 	/* Restore new proc's context from switchframe */
-1:	mov.l	.L_SF,	r0
+	mov.l	.L_SF,	r0
 	mov.l	@(r0, r4), r1
 	add	#4,	r1		/* r15 already restored */
 	mov.l	@r1+,	r14
@@ -248,48 +247,8 @@ ENTRY(cpu_switch)
 	 nop
 	.align	2
 .L_SF:			.long	(P_MD_PCB)
-.L_cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
+.L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
 FUNC_SYMBOL(switch_resume)
-
-
-/*
- * LINTSTUB: Func: void switch_exit(struct proc *p, void (*exit_func)(struct proc *))
- *	Called only from cpu_exit(p).  Before we call exit_func to
- *	free proc's resources (including kernel stack) we need to
- *	switch to the proc0's kernel stack.  Then we jump into the
- *	middle of cpu_switch to find and switch to a new proc.
- */
-ALTENTRY(switch_exit)
-	mov.l	.L_switch_exit_proc0_pcb, r1
-	mov.l	.L_switch_exit_curpcb, r0
-	mov.l	@r1, r1
-	mov.l	r1, @r0			/* curpcb = proc0.p_md.md_pcb */
-
-	mov.l	@(SF_R7_BANK, r1), r0	/* stack top */
-	mov.l	@(SF_R6_BANK, r1), r2	/* current frame */
-	mov.l	@(SF_R15, r1), r3	/* current stack */
-
-	/* switch to proc0's kernel stack */
-	__EXCEPTION_BLOCK(r1, r6)
-	ldc	r0, r7_bank
-	ldc	r2, r6_bank
-	mov	r3, r15
-	__EXCEPTION_UNBLOCK(r0, r1)
-
-	/* safe to call (*exit_func)(p); now */
-	jsr	@r5
-	 nop			/* proc is already in r4 */
-
-	/* proceed to cpu_switch */
-	bra	.L_find_and_switch
-	 mov	#0, r4		/* no "previous" proc */
-
-	.align 2
-.L_switch_exit_proc0_pcb:
-	.long	_C_LABEL(proc0) + P_MD_PCB
-.L_switch_exit_curpcb:
-	.long	_C_LABEL(curpcb)
-
 
 #ifdef SH3
 /*

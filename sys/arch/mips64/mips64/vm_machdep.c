@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2007/09/03 17:35:51 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2007/10/10 15:53:52 art Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -134,9 +134,9 @@ cpu_exit(p)
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;
 
-	(void) splhigh();
-	switch_exit(p);
-	/* NOTREACHED */
+	(void)splhigh();
+	pmap_deactivate(p);
+	sched_exit(p);
 }
 
 /*

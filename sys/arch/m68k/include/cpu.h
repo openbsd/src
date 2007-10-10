@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.17 2007/05/22 10:31:08 martin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.18 2007/10/10 15:53:52 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+#include <sys/queue.h>
 #include <sys/sched.h>
 
 struct cpu_info {
@@ -268,6 +269,9 @@ int	cachectl(struct proc *, int, vaddr_t, int);
  * This is used during profiling to integrate system time.
  */
 #define	PROC_PC(p)	(((struct trapframe *)((p)->p_md.md_regs))->tf_pc)
+
+#define	cpu_idle_enter()	do { /* nothing */ } while (0)
+#define	cpu_idle_leave()	do { /* nothing */ } while (0)
 
 #endif /* _KERNEL */
 

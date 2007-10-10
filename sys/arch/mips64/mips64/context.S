@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.13 2007/07/16 20:22:18 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.14 2007/10/10 15:53:52 art Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -69,92 +69,11 @@ LEAF(savectx, 0)
 	move	v0, zero
 END(savectx)
 
-/*
- * The following primitives manipulate the run queues.  _whichqs tells which
- * of the 32 queues _qs have processes in them.  Setrunqueue puts processes
- * into queues, Remrq removes them from queues.  The running process is on
- * no queue, other processes are on a queue related to p->p_priority, divided
- * by 4 actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
- */
-/*
- * setrunqueue(p)
- *	proc *p;
- *
- * Call should be made at splclock(), and p->p_stat should be SRUN.
- */
-NON_LEAF(setrunqueue, FRAMESZ(CF_SZ), ra)
-	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
-	PTR_L	t0, P_BACK(a0)		## firewall: p->p_back must be 0
-	bne	t0, zero, 1f		##
-	lbu	t0, P_PRIORITY(a0)	# put on p->p_priority / 4 queue
-	li	t1, 1			# compute corresponding bit
-	srl	t0, t0, 2		# compute index into 'whichqs'
-	sll	t1, t1, t0
-	lw	t2, whichqs		# set corresponding bit
-	sll	t0, t0, LOGREGSZ+1	# compute index into 'qs'
-	or	t2, t2, t1
-	sw	t2, whichqs
-	LA	t1, qs
-	PTR_ADDU t0, t0, t1		# t0 = qp = &qs[pri >> 2]
-	PTR_L	t1, P_BACK(t0)		# t1 = qp->ph_rlink
-	PTR_S	t0, P_FORW(a0)		# p->p_forw = qp
-	PTR_S	t1, P_BACK(a0)		# p->p_back = qp->ph_rlink
-	PTR_S	a0, P_FORW(t1)		# p->p_back->p_forw = p;
-	j	ra
-	PTR_S	a0, P_BACK(t0)		# qp->ph_rlink = p
-
-1:
+NON_LEAF(cpu_idle_enter, FRAMESZ(CF_SZ), ra)
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
 	PTR_S	ra, CF_RA_OFFS(sp)
-	PANIC("setrunqueue")
-	jr	ra
-	nop
-END(setrunqueue)
-
-/*
- * Remrq(p)
- *
- * Call should be made at splclock().
- */
-NON_LEAF(remrunqueue, FRAMESZ(CF_SZ), ra)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
-	lbu	t0, P_PRIORITY(a0)	# get from p->p_priority / 4 queue
-	li	t1, 1			# compute corresponding bit
-	srl	t0, t0, 2		# compute index into 'whichqs'
-	lw	t2, whichqs		# check corresponding bit
-	sll	t1, t1, t0
-	and	v0, t2, t1
-	beqz	v0, 2f			# oops! queue is empty!
-	PTR_L	v0, P_BACK(a0)		# v0 = p->p_back
 
-	PTR_L	v1, P_FORW(a0)		# v1 = p->p_forw
-	PTR_SLL	t0, t0, LOGREGSZ+1	# compute index into 'qs'
-	PTR_S	v1, P_FORW(v0)		# p->p_back->p_forw = p->p_forw;
-	PTR_S	v0, P_BACK(v1)		# p->p_forw->p_back = p->r_rlink
-	LA	v0, qs
-	PTR_ADDU t0, t0, v0		# t0 = qp = &qs[pri >> 2]
-	PTR_L	v0, P_FORW(t0)		# check if queue empty
-	bne	v0, t0, 1f		# No. qp->ph_link != qp
-	xor	t2, t2, t1		# clear corresponding bit in 'whichqs'
-	sw	t2, whichqs
-1:
-	j	ra
-	PTR_S	zero, P_BACK(a0)	# for firewall checking
-
-2:
-	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
-	PTR_S	ra, CF_RA_OFFS(sp)
-	PANIC("remrunqueue empty")
-	jr	ra
-	nop
-END(remrunqueue)
-
-/*
- *   Idle, this is where we spend time when nothing to do.
- */
-LEAF(idle, 0)
-_idle:
 	sw	zero, cpl		# lower to spl0
 	lw	t0, ipending
 	beqz	t0, 1f
@@ -175,63 +94,57 @@ _idle:
 	jal	updateimask		# Make sure SR imask is updated
 	xor	a0, a0
 
-	li	t1,1
 #if defined(TGT_CP7000) || defined(TGT_CP7000G)
 	PTR_L	t2, misc_h		# if non zero, do Ocelot LEDs.
 	beqz	t2, 1f
 	li	t0, 0x40
 	sb	t0, 0x0d(t2)
-#endif
 1:
-	lw	t0, whichqs		# look for non-empty queue
-	beq	t0, zero, 1b
-	nop
+#endif
+
+	PTR_L	ra, CF_RA_OFFS(sp)
+	j	ra
+	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
+END(cpu_idle_enter)
+
+LEAF(cpu_idle_leave, 0)
 #if defined(TGT_CP7000) || defined(TGT_CP7000G)
-	beqz	t2, sw1
+	PTR_L	t2, misc_h		# if non zero, do Ocelot LEDs.
+	beqz	t2, 1f
 	li	t0, 0x40
 	sb	t0, 0x0c(t2)
+1:
 #endif
-	b	sw1			# Hey, time to do some work!
-	nop
-	jr	ra			# DDB trace
-	nop
-	.globl e_idle
-e_idle:
-END(idle)
 
-/*
- * switch_exit(p)
- *
- * At exit of a process, do a cpu_switch for the last time.
- * All interrupts should be blocked at this point.
- */
-LEAF(switch_exit, 0)
-	mfc0	v0, COP_0_STATUS_REG
-	li	v1, ~SR_INT_ENAB
-	and	v0, v0, v1
-	mtc0	v0, COP_0_STATUS_REG
+	mfc0	a0, COP_0_STATUS_REG	# disable interrupts
+	li	a1, ~SR_INT_ENAB
+	and	a0, a0, a1
+	mtc0	a0, COP_0_STATUS_REG
 	ITLBNOPFIX
-	LA	sp, idle_stack - FRAMESZ(CF_SZ)
-	jal	exit2
-	nop
 
-	PTR_S	zero, curproc
-	b	sw0
+	j	ra
 	nop
-	jr	ra			# DDB trace
+END(cpu_idle_leave)
+
+LEAF(cpu_idle_cycle, 0)
+	j	ra
 	nop
-END(switch_exit)
+END(cpu_idle_cycle)
 
 /*
- * cpu_switch()
- * Find the highest priority process and resume it.
+ * cpu_switchto(struct proc *oldproc, struct proc *newproc)
  */
-NON_LEAF(cpu_switch, FRAMESZ(CF_SZ), ra)
+NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	PTR_L	t3, curprocpaddr
 	REG_S	sp, PCB_CONTEXT+8*REGSZ(t3)	# save old sp
+
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
 	REG_S	ra, CF_RA_OFFS(sp)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
+
+	beqz	a0, 1f
+	nop
+
 	lw	t0, cpl
 	REG_S	t0, PCB_CONTEXT+13*REGSZ(t3)
 	REG_S	s0, PCB_CONTEXT+0*REGSZ(t3)	# do a 'savectx()'
@@ -249,59 +162,23 @@ NON_LEAF(cpu_switch, FRAMESZ(CF_SZ), ra)
 	REG_S	t0, PCB_CONTEXT+11*REGSZ(t3)
 	REG_S	t1, PCB_CONTEXT+12*REGSZ(t3)
 
-sw0:
-#	lw	t2, cnt+V_SWTCH			# for statistics
-	lw	t1, whichqs			# look for non-empty queue
-#	addu	t2, t2, 1
-#	sw	t2, cnt+V_SWTCH
-	beq	t1, zero, _idle			# if none, idle
-	nop
-sw1:
-	mfc0	v0, COP_0_STATUS_REG
+1:
+	/*
+	 * Disable interrupts
+	 */
+	mfc0	v0, COP_0_STATUS_REG	# disable interrupts
 	li	v1, ~SR_INT_ENAB
 	and	v0, v0, v1
 	mtc0	v0, COP_0_STATUS_REG
 	ITLBNOPFIX
-	lw	t0, whichqs			# look for non-empty queue
-	li	t2, -1				# t2 = lowest bit set
-	beq	t0, zero, _idle			# if none, idle
-	move	t3, t0				# t3 = saved whichqs
-1:
-	addu	t2, t2, 1
-	and	t1, t0, 1			# bit set?
-	beq	t1, zero, 1b
-	srl	t0, t0, 1			# try next bit
-/*
- * Remove process from queue.
- */
-	PTR_SLL	t0, t2, LOGREGSZ+1
-	LA	t1, qs
-	PTR_ADDU t0, t0, t1			# t0 = qp = &qs[highbit]
-	PTR_L	a0, P_FORW(t0)			# a0 = p = highest pri process
-	PTR_L	v0, P_FORW(a0)			# v0 = p->p_forw
-	beq	t0, a0, 4f			# make sure something in queue
-	PTR_S	v0, P_FORW(t0)			# qp->ph_link = p->p_forw;
-	PTR_S	t0, P_BACK(v0)			# p->p_forw->p_back = qp
-	bne	v0, t0, 2f			# queue still not empty
-	PTR_S	zero, P_BACK(a0)		## for firewall checking
-	li	v1, 1				# compute bit in 'whichqs'
-	sll	v1, v1, t2
-	xor	t3, t3, v1			# clear bit in 'whichqs'
-	sw	t3, whichqs
-2:
-/*
- * Switch to new context.
- */
-	sw	zero, want_resched
-	jal	pmap_activate			# v0 = TLB PID
-	move	s0, a0				# BDSLOT: save p
 
-/*
- * We need to wire the process kernel stack mapping so there
- * will be no tlb misses in exception handlers. This is done
- * by invalidating any tlb entries mapping the U-area and
- * put valid mappings in tlb entries 0 and 1.
- */
+	/*
+	 * Switch to new context
+ 	*/
+	move	s0, a1				# save p
+	sw	zero, want_resched
+	jal	pmap_activate
+	move	a0, s0
 
 	PTR_L	t3, P_ADDR(s0)			# get uarea pointer.
 	PTR_S	s0, curproc			# set curproc
@@ -309,6 +186,13 @@ sw1:
 
 	li	t1, SONPROC
 	sb	t1, P_STAT(s0)			# set to onproc.
+
+	/*
+	 * We need to wire the process kernel stack mapping so there
+	 * will be no tlb misses in exception handlers. This is done
+	 * by invalidating any tlb entries mapping the U-area and
+	 * put valid mappings in tlb entries 0 and 1.
+	 */
 
 	or	v0, t3
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
@@ -399,9 +283,10 @@ ctx2:
 
 ctx3:
 
-/*
- * Restore registers and return.
- */
+	/*
+	 * Restore registers and return.
+	 */
+
 	REG_L	a0, PCB_CONTEXT+13*REGSZ(t3)
 	REG_L	s0, PCB_CONTEXT+0*REGSZ(t3)
 	REG_L	s1, PCB_CONTEXT+1*REGSZ(t3)
@@ -428,6 +313,4 @@ ctx3:
 	ITLBNOPFIX
 	j	ra
 	nop
-4:
-	PANIC("cpu_switch")			# nothing in queue
-END(cpu_switch)
+END(cpu_switchto)

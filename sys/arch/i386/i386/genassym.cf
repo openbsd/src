@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.27 2007/10/03 07:51:26 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.28 2007/10/10 15:53:51 art Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -88,8 +88,6 @@ export	VM_MAXUSER_ADDRESS
 # proc fields and values
 struct	proc
 member	p_addr
-member	p_back
-member	p_forw
 member	p_priority
 member	p_stat
 member	p_wchan

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 2007/05/27 20:59:25 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 2007/10/10 15:53:51 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -169,12 +169,8 @@ cpu_exit(struct proc *p)
 	if (p->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(p);
 
-	/*
-	 * No need to do user LDT cleanup here; it's handled in
-	 * pmap_destroy().
-	 */
-
-	switch_exit(p, exit2);
+	pmap_deactivate(p);
+	sched_exit(p);
 }
 
 /*

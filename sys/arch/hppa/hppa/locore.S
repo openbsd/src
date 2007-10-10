@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.155 2007/07/20 22:09:23 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.156 2007/10/10 15:53:51 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2771,171 +2771,23 @@ $spstrcpy_exit
 	copy	r0, ret0
 EXIT(spstrcpy)
 
-	.import	whichqs, data
-	.import	qs, data
 /*
- * setrunqueue(struct proc *p);
- * Insert a process on the appropriate queue.  Should be called at splclock().
+ * int cpu_switchto(struct proc *old, struct proc *new)
+ * Switch from "old" proc to "new".
  */
 	.align	32
-ENTRY(setrunqueue,0)
-#ifdef DIAGNOSTIC
-	ldw	P_BACK(arg0), t1
-	comb,<>,n r0, t1, Lsetrunqueue_panic
-	ldw	P_WCHAN(arg0), t1
-	comb,<>,n r0, t1, Lsetrunqueue_panic
-	ldb	P_STAT(arg0), t1
-	comib,=,n SRUN, t1, Lsetrunqueue_ok
-Lsetrunqueue_panic
-	copy	arg0, arg1
-	ldil	L%panic, r1
-	ldil	L%Lsrqpstr, arg0
-	ldo	R%panic(r1), r1
-	ldo	R%Lsrqpstr(arg0), arg0
-	.call
-	blr	%r0, rp
-	bv,n	%r0(r1)
-	nop
-Lsrqpstr
-	.asciz	"setrunqueue(%p)"
-	.align	8
-Lsetrunqueue_ok
-#endif
-
-	ldb	P_PRIORITY(arg0), t2
-	ldil	L%qs, t4
-	extru	t2, 29, 5, t1
-	ldo	R%qs(t4), t4
-	sh3add	t1, t4, t4
-	ldil	L%whichqs, arg3
-	ldw	P_BACK(t4), t2
-	stw	t4, P_FORW(arg0)
-	stw	arg0, P_BACK(t4)
-	ldw	R%whichqs(arg3), t3
-	stw	arg0, P_FORW(t2)
-	mtctl	t1, sar
-	stw	t2, P_BACK(arg0)
-	vdepi	1, 1, t3
-	bv	0(rp)
-	stw	t3, R%whichqs(arg3)
-EXIT(setrunqueue)
-
-/*
- * remrunqueue(struct proc *p);
- * Remove a process from its queue.  Should be called at splclock().
- */
-	.align	32
-ENTRY(remrunqueue,0)
-	ldb	P_PRIORITY(arg0), t2
-	extru	t2, 29, 5, arg2
-	ldil	L%whichqs, t2
-	mtsar	arg2
-	ldw	R%whichqs(t2), t3
-
-#ifdef DIAGNOSTIC
-	bvb,<,n	t3, remrunqueue_ok
-
-Lremrunqueue_panic
-	copy	arg0, arg1
-	ldil	L%panic, r1
-	ldil	L%Lrrqpstr, arg0
-	ldo	R%panic(r1), r1
-	ldo	R%Lrrqpstr(arg0), arg0
-	.call
-	blr	%r0, rp
-	bv,n	%r0(r1)
-	nop
-
-Lrrqpstr
-	.asciz	"remrunqueue(%p), bit=%x"
-	.align	8
-remrunqueue_ok
-#endif
-	ldw	P_BACK(arg0), t4
-	stw	r0, P_BACK(arg0)
-	ldw	P_FORW(arg0), arg0
-	stw	arg0, P_FORW(t4)
-	vdepi	0, 1, t3
-	sub,<>	t4, arg0, r0
-	stw	t3, R%whichqs(t2)
-	bv	0(rp)
-	stw	t4, P_BACK(arg0)
-EXIT(remrunqueue)
-
-/*
- * cpu_switch()
- * Find the highest priority process and resume it.
- */
-	.align	32
-ENTRY(cpu_switch,128)
-	ldil	L%cpl, t1
-	ldw	R%cpl(t1), ret0
+ENTRY(cpu_switchto,128)
 	copy	r3, r1
 	stw	rp, HPPA_FRAME_CRP(sp)
 	copy	sp, r3
-	stw	ret0, HPPA_FRAME_SL(sp)
 	stwm	r1, HPPA_FRAME_SIZE+20*4(sp)
 
-	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
-	 */
-	ldil	L%curproc, t1
-	ldw	R%curproc(t1), arg2
-	b	switch_search
-	stw	r0, R%curproc(t1)
-	/* remain on the old (curproc)'s stack until we have a better choice */
-
-cpu_idle
-	copy	r0, arg0
-	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SPLLOWER
-	.import uvm, data
-	ldil	L%(uvm + PAGE_IDLE_ZERO), t3
-	ldw	R%(uvm + PAGE_IDLE_ZERO)(t3), t4
-	sub,<>	r0, t4, r0
-	b	cpu_loop
-
-	stw	arg2, 4(r3)
-	ldil	L%uvm_pageidlezero, t1
-	ldo	R%uvm_pageidlezero(t1), t2
-	.call
-	ble	0(sr0, t2)
-	copy	r31, rp
-
-	ldw	HPPA_FRAME_SL(r3), ret0
-	ldw	4(r3), arg2
-
-cpu_loop
-	ldil	L%cpl, arg0
-	stw	ret0, R%cpl(arg0)
-
-switch_search
-	/*
-	 * t1:   &whichqs
-	 * arg2: old curproc
-	 *
-	 */
-	ldil	L%whichqs, t1
-	ldw	R%whichqs(t1), t3
-	comb,=,n r0, t3, cpu_idle
-	copy	r0, arg0
-
-	ldi	0, t4
-getbit
-	mtsar	t4
-	bvb,>=,n t3, getbit
-	ldo	1(t4), t4
-
-	ldil	L%qs, t2
-	ldo	R%qs(t2), t2
-	sh3add	t4, t2, t2
-
-	ldw	P_FORW(t2), arg1
 #ifdef DIAGNOSTIC
-	comb,<>	t2, arg1, link_ok
+	b	kstack_check
 	nop
 switch_error
-	copy	t4, arg1
-	copy	t2, arg2
+	copy	arg1, arg2
+	copy	arg0, arg1
 	ldil	L%panic, r1
 	ldil	L%Lcspstr, arg0
 	ldo	R%panic(r1), r1
@@ -2945,61 +2797,48 @@ switch_error
 	bv,n	%r0(r1)
 	nop
 Lcspstr
-	.asciz	"cpu_switch: bit=%x, q/p=%p"
+	.asciz	"cpu_switch:old=%p, new=%p"
 	.align	8
-link_ok
+kstack_check
+	ldw	P_WCHAN(arg1), t1
+	comb,<>,n r0, t1, switch_error
+	nop
+	ldb	P_STAT(arg1), t1
+	comib,<>,n SRUN, t1, switch_error
+	nop
+	/*
+	 * The new process' kernel stack must be reasonable.
+	 */
+	ldw     P_ADDR(arg1), arg2
+	ldw	U_PCB+PCB_KSP(arg2), t1
+	ldo     NBPG(arg2), arg2
+	comb,>>,n arg2, t1, switch_error
+	nop
+	sub     t1, arg2, t1
+	ldil    L%USPACE, arg2
+	ldo     R%USPACE(arg2), arg2
+	comb,<<=,n arg2, t1, switch_error
+	nop
+kstack_ok
 #endif
 	ldil	L%want_resched, t4
 	stw	r0, R%want_resched(t4)
 
-	ldw	P_FORW(arg1), arg0
-	stw	arg0, P_FORW(t2)
-	stw	t2, P_BACK(arg0)
-	stw	r0, P_BACK(arg1)
-
-	vdepi	0, 1, t3
-	sub,<>	t2, arg0, r0
-	stw	t3, R%whichqs(t1)
-
-	/* don't need &whichqs (t1) starting here */
-#ifdef DIAGNOSTIC
-	ldw	P_WCHAN(arg1), t1
-	comb,<>,n r0, t1, switch_error
-	copy	arg1, t2
-	ldb	P_STAT(arg1), t1
-	comib,<>,n SRUN, t1, switch_error
-	copy	arg1, t2
-	/*
-	 * Either we must be switching to the same process, or
-	 * the new process' kernel stack must be reasonable.
-	 */
-	comb,=,n arg1, arg2, kstack_ok
-	ldw     P_ADDR(arg1), arg0
-	ldw	U_PCB+PCB_KSP(arg0), t1
-	ldo     NBPG(arg0), arg0
-	comb,>>,n arg0, t1, switch_error
-	copy    arg1, t2
-	sub     t1, arg0, t1
-	ldil    L%USPACE, arg0
-	ldo     R%USPACE(arg0), arg0
-	comb,<<=,n arg0, t1, switch_error
-	copy    arg1, t2
-kstack_ok
-#endif
+	/* Record new proc. */
 	ldi	SONPROC, t1
 	stb	t1, P_STAT(arg1)
-	/* Skip context switch if same process. */
-	comb,=,n arg1, arg2, switch_return
+	ldil	L%curproc, t1
+	stw	arg1, R%curproc(t1)
 
 	/* If old process exited, don't bother. */
-	comb,=,n r0, arg2, switch_exited
+	comb,=,n r0, arg0, switch_exited
 
 	/*
 	 * 2. save old proc context
 	 *
-	 * arg2: old proc
+	 * arg0: old proc
 	 */
-	ldw	P_ADDR(arg2), t1
+	ldw	P_ADDR(arg0), t1
 	/* save callee-save registers */
 	stw	r4,   1*4(r3)
 	stw	sp, U_PCB+PCB_KSP(t1)
@@ -3021,13 +2860,14 @@ kstack_ok
 	stw	r0, HPPA_FRAME_ARG(1)(sp)	/* say no trampoline */
 	sync
 
-	/* don't need old curproc (arg2) starting from here */
+	/* don't need old curproc (arg0) starting from here */
 switch_exited
 	/*
 	 * 3. restore new proc context
 	 *
 	 * arg1: new proc
 	 */
+	/* XXX disable interrupts? */
 	ldw	P_ADDR(arg1), t2
 	ldw	P_MD_REGS(arg1), t1
 	ldw	U_PCB+PCB_KSP(t2), sp
@@ -3036,11 +2876,12 @@ switch_exited
 	ldw	TF_CR9(t1), t3
 	mtctl	t2, cr30
 	mtctl	t3, pidr2
+	/* XXX enable interrupts? */
 	ldo	-(HPPA_FRAME_SIZE+20*4)(sp), r3
 	ldw	HPPA_FRAME_ARG(0)(sp), arg0
 	ldw	HPPA_FRAME_ARG(1)(sp), t4 /* in case we're on trampoline */
 	sub,=	r0, t4, r0
-	b	switch_gonnajump
+	b	switch_return
 	ldw	 1*4(r3), r4
 	ldw	 2*4(r3), r5
 	ldw	 3*4(r3), r6
@@ -3056,21 +2897,31 @@ switch_exited
 	ldw	13*4(r3), r16
 	ldw	14*4(r3), r17
 	ldw	15*4(r3), r18
-switch_gonnajump
-	ldw	HPPA_FRAME_SL(r3), ret0
-	ldil	L%cpl, t1
-	stw	ret0, R%cpl(t1)
-	sync
 
 switch_return
-	ldil	L%curproc, t1
-	stw	arg1, R%curproc(t1)
 	ldw	HPPA_FRAME_CRP(r3), rp
 	bv	0(rp)
 	ldwm	-(HPPA_FRAME_SIZE+20*4)(sp), r3
-EXIT(cpu_switch)
+EXIT(cpu_switchto)
+
+LEAF_ENTRY(cpu_idle_enter)
+	bv	0(rp)
+	nop
+EXIT(cpu_idle_enter)
+
+LEAF_ENTRY(cpu_idle_cycle)
+	bv	0(rp)
+	nop
+EXIT(cpu_idle_cycle)
+
+LEAF_ENTRY(cpu_idle_leave)
+	bv	0(rp)
+	nop
+EXIT(cpu_idle_leave)
 
 ENTRY(switch_trampoline,0)
+	ldil	L%cpl, t1
+	stw	r0, R%cpl(t1)
 	.call
 	blr	r0, rp
 	bv,n	r0(t4)

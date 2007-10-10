@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.112 2007/09/15 10:10:37 martin Exp $ */
+/* $OpenBSD: machdep.c,v 1.113 2007/10/10 15:53:51 art Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1871,66 +1871,6 @@ spl0()
 	}
 
 	return (alpha_pal_swpipl(ALPHA_PSL_IPL_0));
-}
-
-/*
- * The following primitives manipulate the run queues.  _whichqs tells which
- * of the 32 queues _qs have processes in them.  Setrunqueue puts processes
- * into queues, Remrunqueue removes them from queues.  The running process is
- * on no queue, other processes are on a queue related to p->p_priority,
- * divided by 4 actually to shrink the 0-127 range of priorities into the 32
- * available queues.
- */
-/*
- * setrunqueue(p)
- *	proc *p;
- *
- * Call should be made at splclock(), and p->p_stat should be SRUN.
- */
-
-/* XXXART - grmble */
-#define sched_qs qs
-#define sched_whichqs whichqs
-
-void
-setrunqueue(p)
-	struct proc *p;
-{
-	int bit;
-
-	/* firewall: p->p_back must be NULL */
-	if (p->p_back != NULL)
-		panic("setrunqueue");
-
-	bit = p->p_priority >> 2;
-	sched_whichqs |= (1 << bit);
-	p->p_forw = (struct proc *)&sched_qs[bit];
-	p->p_back = sched_qs[bit].ph_rlink;
-	p->p_back->p_forw = p;
-	sched_qs[bit].ph_rlink = p;
-}
-
-/*
- * remrunqueue(p)
- *
- * Call should be made at splclock().
- */
-void
-remrunqueue(p)
-	struct proc *p;
-{
-	int bit;
-
-	bit = p->p_priority >> 2;
-	if ((sched_whichqs & (1 << bit)) == 0)
-		panic("remrunqueue");
-
-	p->p_back->p_forw = p->p_forw;
-	p->p_forw->p_back = p->p_back;
-	p->p_back = NULL;	/* for firewall checking. */
-
-	if ((struct proc *)&sched_qs[bit] == sched_qs[bit].ph_link)
-		sched_whichqs &= ~(1 << bit);
 }
 
 /*

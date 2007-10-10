@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.22 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.23 2007/10/10 15:53:53 art Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -109,8 +109,10 @@ uvm_loadav(avg)
 				continue;
 		/* FALLTHROUGH */
 		case SRUN:
-		case SIDL:
 		case SONPROC:
+			if (p == p->p_cpu->ci_schedstate.spc_idleproc)
+				continue;
+		case SIDL:
 			nrun++;
 		}
 	}

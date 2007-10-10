@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.34 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.35 2007/10/10 15:53:51 art Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.34 2007/06/18 21:51:15 pedro Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.35 2007/10/10 15:53:51 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -477,8 +477,6 @@ kvm_getproc2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		kp2p = &kp2;
 		for (i = 0; i < nprocs; i++, kp++) {
 			memset(kp2p, 0, sizeof(kp2));
-			kp2p->p_forw = PTRTOINT64(kp->kp_proc.p_forw);
-			kp2p->p_back = PTRTOINT64(kp->kp_proc.p_back);
 			kp2p->p_paddr = PTRTOINT64(kp->kp_eproc.e_paddr);
 
 			kp2p->p_addr = PTRTOINT64(kp->kp_proc.p_addr);

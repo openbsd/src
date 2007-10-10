@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.35 2007/10/07 18:41:07 mbalmer Exp $
+#	$OpenBSD: files.amd64,v 1.36 2007/10/10 15:53:51 art Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -18,7 +18,6 @@ file	arch/amd64/amd64/syscall.c
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/vm_machdep.c
 file	arch/amd64/amd64/fpu.c
-file	arch/amd64/amd64/Locore.c
 file	arch/amd64/amd64/softintr.c
 file	arch/amd64/amd64/i8259.c
 file	arch/amd64/amd64/cacheinfo.c

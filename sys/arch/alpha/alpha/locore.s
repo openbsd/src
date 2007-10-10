@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.30 2007/05/28 23:10:10 beck Exp $ */
+/* $OpenBSD: locore.s,v 1.31 2007/10/10 15:53:51 art Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -716,123 +716,38 @@ LEAF(savectx, 1)
 
 /**************************************************************************/
 
-IMPORT(whichqs, 4)
-
 /*
- * When no processes are on the runq, cpu_switch branches to idle
- * to wait for something to come ready.
- * Note: this is really a part of cpu_switch() but defined here for kernel
- * profiling.
+ * cpu_switchto(struct proc *old, struct proc *new)
+ * Switch from "old" proc to "new".
  */
-LEAF(idle, 0)
-	br	pv, 1f
-1:	LDGP(pv)
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	stq	zero, 0(v0)			/* curproc <- NULL for stats */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	CALL(sched_unlock_idle)			/* release sched_lock */
-#endif
-	mov	zero, a0			/* enable all interrupts */
-	call_pal PAL_OSF1_swpipl
-2:	ldl	t0, whichqs			/* look for non-empty queue */
-	beq	t0, 2b
-	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
-	call_pal PAL_OSF1_swpipl
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	CALL(sched_lock_idle)			/* acquire sched_lock */
-#endif
-	jmp	zero, cpu_switch_queuescan	/* jump back into the fire */
-	END(idle)
-
-/*
- * cpu_switch()
- * Find the highest priority process and resume it.
- */
-LEAF(cpu_switch, 0)
+LEAF(cpu_switchto, 2)
 	LDGP(pv)
+
+	/*
+	 * Don't bother saving the old context if oldproc is NULL.
+	 */
+	beq	a0, 1f
+
 	/*
 	 * do an inline savectx(), to save old context
-	 * Note: GET_CURPROC clobbers v0, t0, t8...t11.
 	 */
-	GET_CURPROC
-	ldq	a0, 0(v0)
-	ldq	a1, P_ADDR(a0)
-	/* NOTE: ksp is stored by the swpctx */
-	stq	s0, U_PCB_CONTEXT+(0 * 8)(a1)	/* store s0 - s6 */
-	stq	s1, U_PCB_CONTEXT+(1 * 8)(a1)
-	stq	s2, U_PCB_CONTEXT+(2 * 8)(a1)
-	stq	s3, U_PCB_CONTEXT+(3 * 8)(a1)
-	stq	s4, U_PCB_CONTEXT+(4 * 8)(a1)
-	stq	s5, U_PCB_CONTEXT+(5 * 8)(a1)
-	stq	s6, U_PCB_CONTEXT+(6 * 8)(a1)
-	stq	ra, U_PCB_CONTEXT+(7 * 8)(a1)	/* store ra */
 	call_pal PAL_OSF1_rdps			/* NOTE: doesn't kill a0 */
-	stq	v0, U_PCB_CONTEXT+(8 * 8)(a1)	/* store ps, for ipl */
+	ldq	t0, P_ADDR(a0)
+	/* NOTE: ksp is stored by the swpctx */
+	stq	s0, U_PCB_CONTEXT+(0 * 8)(t0)	/* store s0 - s6 */
+	stq	s1, U_PCB_CONTEXT+(1 * 8)(t0)
+	stq	s2, U_PCB_CONTEXT+(2 * 8)(t0)
+	stq	s3, U_PCB_CONTEXT+(3 * 8)(t0)
+	stq	s4, U_PCB_CONTEXT+(4 * 8)(t0)
+	stq	s5, U_PCB_CONTEXT+(5 * 8)(t0)
+	stq	s6, U_PCB_CONTEXT+(6 * 8)(t0)
+	stq	ra, U_PCB_CONTEXT+(7 * 8)(t0)	/* store ra */
+	stq	v0, U_PCB_CONTEXT+(8 * 8)(t0)	/* store ps, for ipl */
 
-	mov	a0, s0				/* save old curproc */
-	mov	a1, s1				/* save old U-area */
- 
-cpu_switch_queuescan:
-	br	pv, 1f
-1:	LDGP(pv)
-	ldl	t0, whichqs		/* look for non-empty queue */
-	beq	t0, idle			/* and if none, go idle */
-	mov	t0, t3				/* t3 = saved whichqs */
-	mov	zero, t2			/* t2 = lowest bit set */
-	blbs	t0, 3f				/* if low bit set, done! */
-
-2:	srl	t0, 1, t0			/* try next bit */
-	addq	t2, 1, t2
-	blbc	t0, 2b				/* if clear, try again */
-
-3:	/*
-	 * Remove process from queue
-	 */
-	lda	t1, qs				/* get queues */
-	sll	t2, 4, t0			/* queue head is 16 bytes */
-	addq	t1, t0, t0			/* t0 = qp = &qs[firstbit] */
-
-	ldq	t4, PH_LINK(t0)			/* t4 = p = highest pri proc */
-	bne	t4, 4f				/* make sure p != NULL */
-	PANIC("cpu_switch",Lcpu_switch_pmsg)	/* nothing in queue! */
-
-4:
-	ldq	t5, P_FORW(t4)			/* t5 = p->p_forw */
-	stq	t5, PH_LINK(t0)			/* qp->ph_link = p->p_forw */
-	stq	t0, P_BACK(t5)			/* p->p_forw->p_back = qp */
-	stq	zero, P_BACK(t4)		/* firewall: p->p_back = NULL */
-	cmpeq	t0, t5, t0			/* see if queue is empty */
-	beq	t0, 5f				/* nope, it's not! */
-
-	ldiq	t0, 1				/* compute bit in whichqs */
-	sll	t0, t2, t0
-	xor	t3, t0, t3			/* clear bit in whichqs */
-	stl	t3, whichqs
-
-5:
-	mov	t4, s2				/* save new proc */
+1:
+	mov	a0, s0				/* save old proc */
+	mov	a1, s2				/* save new proc */
 	ldq	s3, P_MD_PCBPADDR(s2)		/* save new pcbpaddr */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	CALL(sched_unlock_idle)
-#endif
-
-	/*
-	 * Check to see if we're switching to ourself.  If we are,
-	 * don't bother loading the new context.
-	 *
-	 * Note that even if we re-enter cpu_switch() from idle(),
-	 * s0 will still contain the old curproc value because any
-	 * users of that register between then and now must have
-	 * saved it.  Also note that switch_exit() ensures that
-	 * s0 is clear before jumping here to find a new process.
-	 */
-	cmpeq	s0, s2, t0			/* oldproc == newproc? */
-	bne	t0, 7f				/* Yes!  Skip! */
 
 	/*
 	 * Deactivate the old address space before activating the
@@ -842,18 +757,18 @@ cpu_switch_queuescan:
 	 * do this after we activate, then we might end up
 	 * incorrectly marking the pmap inactive!
 	 *
-	 * We don't deactivate if we came here from switch_exit
+	 * We don't deactivate if we came here from sched_exit
 	 * (old pmap no longer exists; vmspace has been freed).
 	 * oldproc will be NULL in this case.  We have actually
 	 * taken care of calling pmap_deactivate() in cpu_exit(),
 	 * before the vmspace went away.
 	 */
-	beq	s0, 6f
+	beq	s0, 2f
 
 	mov	s0, a0				/* pmap_deactivate(oldproc) */
 	CALL(pmap_deactivate)
 
-6:	/*
+2:	/*
 	 * Activate the new process's address space and perform
 	 * the actual context swap.
 	 */
@@ -864,7 +779,7 @@ cpu_switch_queuescan:
 	mov	s3, a0				/* swap the context */
 	SWITCH_CONTEXT
 
-7:	/*
+	/*
 	 * Now that the switch is done, update curproc and other
 	 * globals.  We must do this even if switching to ourselves
 	 * because we might have re-entered cpu_switch() from idle(),
@@ -911,7 +826,7 @@ EXPORT(__bwx_switch1)
 
 	ldiq	v0, 1				/* possible ret to savectx() */
 	RET
-	END(cpu_switch)
+	END(cpu_switchto)
 
 #ifndef SMALL_KERNEL
 	/*
@@ -925,6 +840,18 @@ EXPORT(__bwx_switch2)
 	stb	t0, P_STAT(s2)
 EXPORT(__bwx_switch3)
 #endif
+
+LEAF(cpu_idle_enter, 0)
+	RET
+	END(cpu_idle_enter)
+
+LEAF(cpu_idle_cycle, 0)
+	RET
+	END(cpu_idle_cycle)
+
+LEAF(cpu_idle_leave, 0)
+	RET
+	END(cpu_idle_leave)
 
 /*
  * switch_trampoline()
@@ -944,46 +871,6 @@ LEAF(switch_trampoline, 0)
 	mov	s2, a0
 	jmp	zero, (pv)
 	END(switch_trampoline)
-
-/*
- * switch_exit(struct proc *p)
- * Make a the named process exit.  Partially switch to our idle thread
- * (we don't update curproc or restore registers), and jump into the middle
- * of cpu_switch to switch into a few process.  The process reaper will
- * free the dead process's VM resources.  MUST BE CALLED AT SPLHIGH.
- */
-LEAF(switch_exit, 1)
-	LDGP(pv)
-
-	/* save the exiting proc pointer */
-	mov	a0, s2
-
-	/* Switch to our idle stack. */
-	GET_IDLE_PCB(a0)			/* clobbers v0, t0, t8-t11 */
-	SWITCH_CONTEXT
-
-	/*
-	 * Now running as idle thread, except for the value of 'curproc' and
-	 * the saved regs.
-	 */
-
-	/* Schedule the vmspace and stack to be freed. */
-	mov	s2, a0
-	CALL(exit2)
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	CALL(sched_lock_idle)			/* acquire sched_lock */
-#endif
-
-	/*
-	 * Now jump back into the middle of cpu_switch().  Note that
-	 * we must clear s0 to guarantee that the check for switching
-	 * to ourselves in cpu_switch() will fail.  This is safe since
-	 * s0 will be restored when a new process is resumed.
-	 */
-	mov	zero, s0
-	jmp	zero, cpu_switch_queuescan
-	END(switch_exit)
 
 /**************************************************************************/
 

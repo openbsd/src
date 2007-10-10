@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.25 2007/05/16 05:19:13 miod Exp $      */
+/*      $OpenBSD: cpu.h,v 1.26 2007/10/10 15:53:53 art Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -128,6 +128,10 @@ extern	int     want_resched;   /* resched() was called */
  * through trap, marking the proc as needing a profiling tick.
  */
 #define need_proftick(p) mtpr(AST_OK,PR_ASTLVL)
+
+#define	cpu_idle_enter()	do { /* nothing */ } while (0)
+#define	cpu_idle_cycle()	do { /* nothing */ } while (0)
+#define	cpu_idle_leave()	do { /* nothing */ } while (0)
 
 /*
  * This defines the I/O device register space size in pages.

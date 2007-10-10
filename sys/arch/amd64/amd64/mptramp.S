@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.3 2005/07/26 08:38:29 art Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.4 2007/10/10 15:53:51 art Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -235,5 +235,4 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movl    PCB_CR0(%rsi),%eax
 	movq    %rax,%cr0
 	call	_C_LABEL(cpu_hatch)
-	xorq	%r13,%r13
-	jmp	_C_LABEL(mpidle)
+	/* NOTREACHED */

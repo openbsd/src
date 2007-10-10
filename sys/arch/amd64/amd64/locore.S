@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.23 2007/09/12 18:18:27 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.24 2007/10/10 15:53:51 art Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -723,12 +723,7 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-	.globl	_C_LABEL(whichqs),_C_LABEL(qs)
 	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
-
-#if NAPM > 0
-	.globl _C_LABEL(apm_cpu_idle),_C_LABEL(apm_cpu_busy)
-#endif
 
 #ifdef DIAGNOSTIC
 NENTRY(switch_error1)
@@ -749,12 +744,10 @@ NENTRY(switch_error3)
 #endif /* DIAGNOSTIC */
 
 /*
- * int cpu_switch(struct proc *)
- * Find a runnable process and switch to it.  Wait if necessary.  If the new
- * proc is the same as the old one, we short-circuit the context save and
- * restore.
+ * int cpu_switchto(struct proc *old, struct proc *new)
+ * Switch from "old" proc to "new".
  */
-ENTRY(cpu_switch)
+ENTRY(cpu_switchto)
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
@@ -762,163 +755,12 @@ ENTRY(cpu_switch)
 	pushq	%r14
 	pushq	%r15
 
-	movq	%rdi,%r13
+	movq	%rdi, %r13
+	movq	%rsi, %r12
 
-	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
-	 * This also insures that schedcpu() will move the old proc to
-	 * the correct queue if it happens to get called from the spllower()
-	 * below and changes the priority.  (See corresponding comment in
-	 * userret()).
-	 */
-	movq	$0,CPUVAR(CURPROC)
-
-
-	/*
-	 * First phase: find new proc.
-	 *
-	 * Registers:
-	 *   %rax - queue head, scratch, then zero
-	 *   %r8 - queue number
-	 *   %ecx - cached value of whichqs
-	 *   %rdx - next process in queue
-	 *   %r13 - old proc
-	 *   %r12 - new proc
-	 */
-
-	/* Look for new proc. */
-	cli				# splhigh doesn't do a cli
-	movl	_C_LABEL(whichqs)(%rip),%ecx
-	bsfl	%ecx,%r8d		# find a full q
-	jnz	switch_dequeue
-
-	/*
-	 * idling: save old context
-	 *
-	 * Registers:
-	 * %rax, %rcx - scratch
-	 * %r13 - old proc, then old pcb
-	 * %r12 - idle pcb
-	 */
-
-	/* old proc still in %rdi */
-	call	_C_LABEL(pmap_deactivate)
-
-	movq	P_ADDR(%r13),%r13
-
-	/* Save stack pointers */
-
-	movq	%rsp,PCB_RSP(%r13)
-	movq	%rbp,PCB_RBP(%r13)
-
-	/* Find idle PCB for this CPU */
-#ifndef MULTIPROCESSOR
-	leaq	_C_LABEL(proc0)(%rip),%rcx
-	movq	P_ADDR(%rcx),%r12
-	movl	P_MD_TSS_SEL(%rcx),%edx
-#else
-	movq	CPUVAR(IDLE_PCB),%r12
-	movl	CPUVAR(IDLE_TSS_SEL),%edx
-#endif
-	movq	$0,CPUVAR(CURPROC)
-
-	/* Restore the idle context (avoid interrupts) */
-	cli
-
-	/* Restore stack pointers. */
-	movq	PCB_RSP(%r12),%rsp
-	movq	PCB_RBP(%r12),%rbp
-
-	/* Switch address space. */
-	movq	PCB_CR3(%r12),%rcx
-	movq	%rcx,%cr3
-
-#ifdef MULTIPROCESSOR
-	movq	CPUVAR(GDT),%rax
-#else
-	movq	_C_LABEL(gdtstore)(%rip),%rax
-#endif
-
-	/* Switch TSS. Reset "task busy" flag before */
-	andl	$~0x0200,4(%rax,%rdx, 1)
-	ltr	%dx
-
-	/* Restore cr0 (including FPU state). */
-	movl	PCB_CR0(%r12),%ecx
-	movq	%rcx,%cr0
-
-	SET_CURPCB(%r12)
-
-	xorq	%r13,%r13
-	sti
-idle_unlock:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
-	call	_C_LABEL(sched_unlock_idle)
-#endif
-	/* Interrupts are okay again. */
-	movl	$IPL_NONE,%edi
-	call	_C_LABEL(Xspllower)
-	jmp	idle_start
-idle_zero:
-	sti
-	call	_C_LABEL(uvm_pageidlezero)
-	cli
-	cmpl	$0,_C_LABEL(whichqs)(%rip)
-	jnz	idle_exit
-idle_loop:
-#if NPCTR > 0
-	incq	_C_LABEL(pctr_idlcnt)
-#endif
-	/* Try to zero some pages. */
-	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO(%rip),%ecx
-	testl	%ecx,%ecx
-	jnz	idle_zero
-	sti
-	hlt
-NENTRY(mpidle)
-idle_start:
-	cli
-	cmpl	$0,_C_LABEL(whichqs)(%rip)
-	jz	idle_loop
-idle_exit:
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-	sti
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
-	call	_C_LABEL(sched_lock_idle)
-#endif
-switch_search:
-	movl	_C_LABEL(whichqs)(%rip),%ecx
-	bsfl	%ecx,%r8d
-	jz	idle_unlock
-
-switch_dequeue:
-
-	sti
-	movq	%r8,%r9
-
-	shlq	$4, %r9
-	leaq	_C_LABEL(qs)(%rip),%rax
-	addq	%r9,%rax
-	/* movq	(%rax),%rax */
-
-	movq	P_FORW(%rax),%r12	# unlink from front of process q
-#ifdef	DIAGNOSTIC
-	cmpq	%r12,%rax		# linked to self (i.e. nothing queued)?
-	je	_C_LABEL(switch_error1)	# not possible
-#endif /* DIAGNOSTIC */
-	movq	P_FORW(%r12),%rdx
-	movq	%rdx,P_FORW(%rax)
-	movq	%rax,P_BACK(%rdx)
-
-	cmpq	%rdx,%rax		# q empty?
-	jne	3f
-
-	btrl	%r8d,%ecx		# yes, clear to indicate empty
-	movl	%ecx,_C_LABEL(whichqs)(%rip) # update q status
-
-3:	/* We just did it. */
 	xorq	%rax,%rax
 	movl	%eax,CPUVAR(RESCHED)
+
 switch_resume:
 #ifdef DIAGNOSTIC
 	cmpq	%rax,P_WCHAN(%r12)
@@ -927,24 +769,16 @@ switch_resume:
 	jne	_C_LABEL(switch_error3)
 #endif
 
-	/* Isolate proc.  XXX Is this necessary? */
-	movq	%rax,P_BACK(%r12)
-
 	/* Record new proc. */
 	movb	$SONPROC,P_STAT(%r12)	# p->p_stat = SONPROC
 	SET_CURPROC(%r12,%rcx)
-
-	/* Skip context switch if same proc. */
-	xorl	%ebx,%ebx
-	cmpq	%r12,%r13
-	je	switch_return
 
 	/* If old proc exited, don't bother. */
 	testq	%r13,%r13
 	jz	switch_exited
 
 	/*
-	 * Second phase: save old context.
+	 * Save old context.
 	 *
 	 * Registers:
 	 *   %rax, %rcx - scratch
@@ -963,7 +797,7 @@ switch_resume:
 
 switch_exited:
 	/*
-	 * Third phase: restore saved context.
+	 * Restore saved context.
 	 *
 	 * Registers:
 	 *   %rax, %rcx, %rdx - scratch
@@ -1020,15 +854,13 @@ switch_restored:
 	sti
 
 switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
-	call	_C_LABEL(sched_unlock_idle)
-#endif
 
+#if 0
+	/* Violation of lock ordering, since we're holding the sched_lock */
 	movl	$IPL_NONE,%edi
 	call	_C_LABEL(Xspllower)
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-
-	movl	%ebx,%eax
+#endif
 
 	popq	%r15
 	popq	%r14
@@ -1038,87 +870,16 @@ switch_return:
 	popq	%rbx
 	ret
 
-ENTRY(cpu_switchto)
-	pushq	%rbx
-	pushq	%rbp
-	pushq	%r12
-	pushq	%r13
-	pushq	%r14
-	pushq	%r15
+ENTRY(cpu_idle_enter)
+	ret
 
-	movq	%rdi,%r13
-	movq	%rsi,%r12
+ENTRY(cpu_idle_cycle)
+	hlt
+	ret
 
-	movq	$0,CPUVAR(CURPROC)
+ENTRY(cpu_idle_leave)
+	ret
 
-	xorq	%rax,%rax
-	jmp	switch_resume
-
-
-/*
- * void switch_exit(struct proc *l, void (*exit)(struct proc *));
- * Switch to proc0's saved context and deallocate the address space and kernel
- * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
- */
-	.globl	_C_LABEL(proc0)
-ENTRY(switch_exit)
-#ifdef MULTIPROCESSOR
-	movq	CPUVAR(IDLE_PCB),%r8
-	movl	CPUVAR(IDLE_TSS_SEL),%edx
-#else
-	leaq	_C_LABEL(proc0)(%rip),%r9
-	movq	P_ADDR(%r9),%r8
-	movl	P_MD_TSS_SEL(%r9),%edx
-#endif
-
-	/* In case we fault... */
-	movq	$0,CPUVAR(CURPROC)
-
-	cli
-
-	/* Restore stack pointers. */
-	movq	PCB_RSP(%r8),%rsp
-	movq	PCB_RBP(%r8),%rbp
-
-	/* Load TSS info. */
-#ifdef MULTIPROCESSOR
-	movq	CPUVAR(GDT),%rax
-#else
-	movq	_C_LABEL(gdtstore)(%rip),%rax
-#endif
-
-	/* Switch address space. */
-	movq	PCB_CR3(%r8),%rcx
-	movq	%rcx,%cr3
-
-	/* Switch TSS. */
-	andl	$~0x0200,4-SEL_KPL(%rax,%rdx,1)
-	ltr	%dx
-
-	/* We're always in the kernel, so we don't need the LDT. */
-
-	/* Restore cr0 (including FPU state). */
-	movl	PCB_CR0(%r8),%ecx
-	movq	%rcx,%cr0
-
-	/* Record new pcb. */
-	SET_CURPCB(%r8)
-
-	/* Interrupts are okay again. */
-	sti
-
-	/*
-	 * Schedule the dead process's vmspace and stack to be freed.
-	 * {lpw_}exit2(l). Function still in %rsi (2nd arg), proc in
-	 * %rdi (first arg).
-	 */
-
-	call	*%rsi
-
-	/* Jump into cpu_switch() with the right state. */
-	xorq	%r13,%r13
-	movq	%r13, CPUVAR(CURPROC)
-	jmp	switch_search
 
 /*
  * savectx(struct pcb *pcb);

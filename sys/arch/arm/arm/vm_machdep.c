@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 2007/05/27 20:59:25 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 2007/10/10 15:53:51 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -73,8 +73,6 @@ extern pv_addr_t systempage;
 int process_read_regs	(struct proc *p, struct reg *regs);
 int process_read_fpregs	(struct proc *p, struct fpreg *regs);
 
-void	switch_exit	(struct proc *p, struct proc *p0,
-			     void (*)(struct proc *));
 extern void proc_trampoline	(void);
 
 /*
@@ -84,23 +82,6 @@ extern void proc_trampoline	(void);
  *		 on forking and check the pattern on exit, reporting
  *		 the amount of stack used.
  */
-
-#if 0
-void
-cpu_proc_fork(p1, p2)
-	struct proc *p1, *p2;
-{
-
-#if defined(PERFCTRS)
-	if (PMC_ENABLED(p1))
-		pmc_md_fork(p1, p2);
-	else {
-		p2->p_md.pmc_enabled = 0;
-		p2->p_md.pmc_state = NULL;
-	}
-#endif
-}
-#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -201,27 +182,14 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
 }
 
-#if 0
-void
-cpu_setfunc(struct proc *p, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct trapframe *tf = pcb->pcb_tf;
-	struct switchframe *sf = (struct switchframe *)tf - 1;
-
-	sf->sf_r4 = (u_int)func;
-	sf->sf_r5 = (u_int)arg;
-	sf->sf_pc = (u_int)proc_trampoline;
-	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
-}
-#endif
-
-
 void
 cpu_exit(struct proc *p)
 {
+#if 0
 	pmap_update(p->p_vmspace->vm_map.pmap); /* XXX DSR help stability */
-	switch_exit(p, &proc0, exit2);
+#endif
+	pmap_deactivate(p);
+	sched_exit(p);
 }
 
 /*

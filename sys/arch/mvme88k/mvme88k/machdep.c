@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.192 2007/06/06 17:15:12 deraadt Exp $	*/
+/* $OpenBSD: machdep.c,v 1.193 2007/10/10 15:53:52 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -719,19 +719,18 @@ void
 secondary_main()
 {
 	struct cpu_info *ci = curcpu();
+	int s;
 
 	cpu_configuration_print(0);
+	sched_init_cpu(ci);
 	ncpus++;
 	__cpu_simple_unlock(&cpu_mutex);
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
 
-	/*
-	 * Upon return, the secondary cpu bootstrap code in locore will
-	 * enter the idle loop, waiting for some food to process on this
-	 * processor.
-	 */
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
 }
 
 #endif	/* MULTIPROCESSOR */

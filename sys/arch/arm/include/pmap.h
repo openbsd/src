@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.8 2007/09/10 18:49:44 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.9 2007/10/10 15:53:51 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -241,12 +241,13 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_is_referenced(pg)	\
 	(((pg)->mdpage.pvh_attrs & PVF_REF) != 0)
 
-#define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
+#define	pmap_deactivate(p)		do { /* nothing */ } while (0)
+#define	pmap_copy(dp, sp, da, l, sa)	do { /* nothing */ } while (0)
 
 #define pmap_phys_address(ppn)		(ptoa(ppn))
 
-#define pmap_proc_iflush(p, va, len)	/* nothing */
-#define pmap_unuse_final(p)		/* nothing */
+#define pmap_proc_iflush(p, va, len)	do { /* nothing */ } while (0)
+#define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
 /*

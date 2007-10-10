@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.72 2007/05/29 09:54:01 sobrado Exp $	*/
+/*	$OpenBSD: locore.s,v 1.73 2007/10/10 15:53:52 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4383,290 +4383,52 @@ ENTRY(write_user_windows)
 	.comm	_C_LABEL(masterpaddr), 4
 
 /*
- * Switch statistics (for later tweaking):
- *	nswitchdiff = p1 => p2 (i.e., chose different process)
- *	nswitchexit = number of calls to switchexit()
- *	_cnt.v_swtch = total calls to swtch+swtchexit
+ * cpu_switchto(struct proc *oldproc, struct proc *newproc)
  */
-	.comm	_C_LABEL(nswitchdiff), 4
-	.comm	_C_LABEL(nswitchexit), 4
-
-/*
- * REGISTER USAGE IN cpu_switch AND switchexit:
- * This is split into two phases, more or less
- * `before we locate a new proc' and `after'.
- * Some values are the same in both phases.
- * Note that the %o0-registers are not preserved across
- * the psr change when entering a new process, since this
- * usually changes the CWP field (hence heavy usage of %g's).
- *
- *	%g1 = oldpsr (excluding ipl bits)
- *	%g2 = %hi(_C_LABEL(whichqs)); newpsr
- *	%g3 = p
- *	%g4 = lastproc
- *	%g5 = <free>; newpcb
- *	%g6 = %hi(_C_LABEL(cpcb))
- *	%g7 = %hi(_C_LABEL(curproc))
- *	%o0 = tmp 1
- *	%o1 = tmp 2
- *	%o2 = tmp 3
- *	%o3 = tmp 4; whichqs; vm
- *	%o4 = tmp 4; which; sswap
- *	%o5 = tmp 5; q; <free>
- */
-
-/*
- * switchexit is called only from cpu_exit() before the current process
- * has freed its kernel stack; we must free it.  (curproc is already NULL.)
- *
- * We lay the process to rest by changing to the `idle' kernel stack,
- * and note that the `last loaded process' is nonexistent.
- */
-ENTRY(switchexit)
-	mov	%o0, %g2		! save proc for exit2() call
-
-	/*
-	 * Change pcb to idle u. area, i.e., set %sp to top of stack
-	 * and %psr to PSR_S|PSR_ET, and set cpcb to point to _idle_u.
-	 * Once we have left the old stack, we can call kmem_free to
-	 * destroy it.  Call it any sooner and the register windows
-	 * go bye-bye.
-	 */
-	set	_C_LABEL(idle_u), %g5
-	sethi	%hi(_C_LABEL(cpcb)), %g6
-	mov	1, %g7
-	wr	%g0, PSR_S, %psr	! change to window 0, traps off
-	wr	%g0, 2, %wim		! and make window 1 the trap window
-	st	%g5, [%g6 + %lo(_C_LABEL(cpcb))]	! cpcb = &idle_u
-	st	%g7, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
-	set	_C_LABEL(idle_u) + USPACE-CCFSZ, %sp	! set new %sp
-#ifdef DEBUG
-	set	_C_LABEL(idle_u), %l6
-	SET_SP_REDZONE(%l6, %l5)
-#endif
-	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
-	call    _C_LABEL(exit2)			! exit2(p)
-	 mov    %g2, %o0
-
-	/*
-	 * Now fall through to `the last switch'.  %g6 was set to
-	 * %hi(_C_LABEL(cpcb)), but may have been clobbered in kmem_free,
-	 * so all the registers described below will be set here.
-	 *
-	 * REGISTER USAGE AT THIS POINT:
-	 *	%g1 = oldpsr (excluding ipl bits)
-	 *	%g2 = %hi(_C_LABEL(whichqs))
-	 *	%g4 = lastproc
-	 *	%g6 = %hi(_C_LABEL(cpcb))
-	 *	%g7 = %hi(_C_LABEL(curproc))
-	 *	%o0 = tmp 1
-	 *	%o1 = tmp 2
-	 *	%o3 = whichqs
-	 */
-
-	INCR(_C_LABEL(nswitchexit))		! nswitchexit++;
-	INCR(_C_LABEL(uvmexp)+V_SWTCH)		! cnt.v_switch++;
-
-	mov	PSR_S|PSR_ET, %g1	! oldpsr = PSR_S | PSR_ET;
-	sethi	%hi(_C_LABEL(whichqs)), %g2
-	clr	%g4			! lastproc = NULL;
+ENTRY(cpu_switchto)
 	sethi	%hi(_C_LABEL(cpcb)), %g6
 	sethi	%hi(_C_LABEL(curproc)), %g7
-	/* FALLTHROUGH */
-
-/*
- * When no processes are on the runq, switch
- * idles here waiting for something to come ready.
- * The registers are set up as noted above.
- */
-	.globl	idle
-idle:
-	st	%g0, [%g7 + %lo(_C_LABEL(curproc))] ! curproc = NULL;
-	wr	%g1, 0, %psr		! (void) spl0();
-1:					! spin reading _whichqs until nonzero
-	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
-	tst	%o3
-	bnz,a	Lsw_scan
-	 wr	%g1, IPL_CLOCK << 8, %psr	! (void) splclock();
-	b,a	1b
-
-Lsw_panic_rq:
-	sethi	%hi(1f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(1f), %o0, %o0
-Lsw_panic_wchan:
-	sethi	%hi(2f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(2f), %o0, %o0
-Lsw_panic_srun:
-	sethi	%hi(3f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(3f), %o0, %o0
-1:	.asciz	"switch rq"
-2:	.asciz	"switch wchan"
-3:	.asciz	"switch SRUN"
-	_ALIGN
-
-/*
- * cpu_switch() picks a process to run and runs it, saving the current
- * one away.  On the assumption that (since most workstations are
- * single user machines) the chances are quite good that the new
- * process will turn out to be the current process, we defer saving
- * it here until we have found someone to load.  If that someone
- * is the current process we avoid both store and load.
- *
- * cpu_switch() is always entered at splstatclock or splhigh.
- *
- * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
- * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
- */
-	.globl	_C_LABEL(time)
-ENTRY(cpu_switch)
-	/*
-	 * REGISTER USAGE AT THIS POINT:
-	 *	%g1 = oldpsr (excluding ipl bits)
-	 *	%g2 = %hi(_C_LABEL(whichqs))
-	 *	%g3 = p
-	 *	%g4 = lastproc
-	 *	%g5 = tmp 0
-	 *	%g6 = %hi(_C_LABEL(cpcb))
-	 *	%g7 = %hi(_C_LABEL(curproc))
-	 *	%o0 = tmp 1
-	 *	%o1 = tmp 2
-	 *	%o2 = tmp 3
-	 *	%o3 = tmp 4, then at Lsw_scan, whichqs
-	 *	%o4 = tmp 5, then at Lsw_scan, which
-	 *	%o5 = tmp 6, then at Lsw_scan, q
-	 */
-	sethi	%hi(_C_LABEL(whichqs)), %g2	! set up addr regs
-	sethi	%hi(_C_LABEL(cpcb)), %g6
-	ld	[%g6 + %lo(_C_LABEL(cpcb))], %o0
-	std	%o6, [%o0 + PCB_SP]	! cpcb->pcb_<sp,pc> = <sp,pc>;
+	ld	[%g6 + %lo(_C_LABEL(cpcb))], %o2
+	std	%o6, [%o2 + PCB_SP]	! cpcb->pcb_<sp,pc> = <sp,pc>;
 	rd	%psr, %g1		! oldpsr = %psr;
-	sethi	%hi(_C_LABEL(curproc)), %g7
-	ld	[%g7 + %lo(_C_LABEL(curproc))], %g4	! lastproc = curproc;
-	st	%g1, [%o0 + PCB_PSR]	! cpcb->pcb_psr = oldpsr;
+	st	%g1, [%o2 + PCB_PSR]	! cpcb->pcb_psr = oldpsr;
 	andn	%g1, PSR_PIL, %g1	! oldpsr &= ~PSR_PIL;
 
 	/*
-	 * In all the fiddling we did to get this far, the thing we are
-	 * waiting for might have come ready, so let interrupts in briefly
-	 * before checking for other processes.  Note that we still have
-	 * curproc set---we have to fix this or we can get in trouble with
-	 * the run queues below.
-	 */
-	st	%g0, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = NULL;
-	wr	%g1, 0, %psr			! (void) spl0();
-	nop; nop; nop				! paranoia
-	wr	%g1, IPL_CLOCK << 8 , %psr	! (void) splclock();
-
-Lsw_scan:
-	nop; nop; nop				! paranoia
-	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
-
-	/*
-	 * Optimized inline expansion of `which = ffs(whichqs) - 1';
-	 * branches to idle if ffs(whichqs) was 0.
-	 */
-	set	ffstab, %o2
-	andcc	%o3, 0xff, %o1		! byte 0 zero?
-	bz,a	1f			! yes, try byte 1
-	 srl	%o3, 8, %o0
-	b	2f			! ffs = ffstab[byte0]; which = ffs - 1;
-	 ldsb	[%o2 + %o1], %o0
-1:	andcc	%o0, 0xff, %o1		! byte 1 zero?
-	bz,a	1f			! yes, try byte 2
-	 srl	%o0, 8, %o0
-	ldsb	[%o2 + %o1], %o0	! which = ffstab[byte1] + 7;
-	b	3f
-	 add	%o0, 7, %o4
-1:	andcc	%o0, 0xff, %o1		! byte 2 zero?
-	bz,a	1f			! yes, try byte 3
-	 srl	%o0, 8, %o0
-	ldsb	[%o2 + %o1], %o0	! which = ffstab[byte2] + 15;
-	b	3f
-	 add	%o0, 15, %o4
-1:	ldsb	[%o2 + %o0], %o0	! ffs = ffstab[byte3] + 24
-	addcc	%o0, 24, %o0		! (note that ffstab[0] == -24)
-	bz	idle			! if answer was 0, go idle
-	 EMPTY
-2:	sub	%o0, 1, %o4		! which = ffs(whichqs) - 1
-3:	/* end optimized inline expansion */
-
-	/*
-	 * We found a nonempty run queue.  Take its first process.
-	 */
-	set	_C_LABEL(qs), %o5		! q = &qs[which];
-	sll	%o4, 3, %o0
-	add	%o0, %o5, %o5
-	ld	[%o5], %g3		! p = q->ph_link;
-	cmp	%g3, %o5		! if (p == q)
-	be	Lsw_panic_rq		!	panic("switch rq");
-	 EMPTY
-	ld	[%g3], %o0		! tmp0 = p->p_forw;
-	st	%o0, [%o5]		! q->ph_link = tmp0;
-	st	%o5, [%o0 + 4]		! tmp0->p_back = q;
-	cmp	%o0, %o5		! if (tmp0 == q)
-	bne	1f
-	 EMPTY
-	mov	1, %o1			!	whichqs &= ~(1 << which);
-	sll	%o1, %o4, %o1
-	andn	%o3, %o1, %o3
-	st	%o3, [%g2 + %lo(_C_LABEL(whichqs))]
-1:
-	/*
-	 * PHASE TWO: NEW REGISTER USAGE:
+	 * REGISTER USAGE:
 	 *	%g1 = oldpsr (excluding ipl bits)
 	 *	%g2 = newpsr
-	 *	%g3 = p
-	 *	%g4 = lastproc
 	 *	%g5 = newpcb
 	 *	%g6 = %hi(_C_LABEL(cpcb))
 	 *	%g7 = %hi(_C_LABEL(curproc))
-	 *	%o0 = tmp 1
-	 *	%o1 = tmp 2
+	 *	%o0 = oldproc
+	 *	%o1 = newproc
 	 *	%o2 = tmp 3
 	 *	%o3 = vm
 	 *	%o4 = sswap
 	 *	%o5 = <free>
 	 */
 
-	/* firewalls */
-	ld	[%g3 + P_WCHAN], %o0	! if (p->p_wchan)
-	tst	%o0
-	bne	Lsw_panic_wchan		!	panic("switch wchan");
-	 EMPTY
-	ldsb	[%g3 + P_STAT], %o0	! if (p->p_stat != SRUN)
-	cmp	%o0, SRUN
-	bne	Lsw_panic_srun		!	panic("switch SRUN");
-	 EMPTY
-
 	/*
-	 * Committed to running process p.
-	 * It may be the same as the one we were running before.
+	 * Committed to running process p (in o1).
 	 */
+	mov	%o1, %g3
+
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
 	stb	%o0, [%g3 + P_STAT]
 	sethi	%hi(_C_LABEL(want_resched)), %o0
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
 	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;
-	st	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
 	st	%g3, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = p;
 
-	cmp	%g3, %g4		! p == lastproc?
-	be,a	Lsw_sameproc		! yes, go return 0
-	 wr	%g2, 0, %psr		! (after restoring ipl)
-
 	/*
-	 * Not the old process.  Save the old process, if any;
-	 * then load p.
+	 * Save the old process, if any; then load p.
 	 */
-	tst	%g4
+	tst	%o0
 	be,a	Lsw_load		! if no old process, go load
 	 wr	%g1, (IPL_CLOCK << 8) | PSR_ET, %psr
 
-	INCR(_C_LABEL(nswitchdiff))		! clobbers %o0,%o1
 	/*
 	 * save: write back all windows (including the current one).
 	 * XXX	crude; knows nwindows <= 8
@@ -4773,16 +4535,17 @@ Lsw_havectx:
 	 sta	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_map.pmap->pm_ctxnum);
 #endif
 
-Lsw_sameproc:
-	/*
-	 * We are resuming the process that was running at the
-	 * call to switch().  Just set psr ipl and return.
-	 */
-!	wr	%g2, 0 %psr		! %psr = newpsr; (done earlier)
-	nop
+ENTRY(cpu_idle_enter)
 	retl
 	 nop
 
+ENTRY(cpu_idle_cycle)
+	retl
+	 nop
+
+ENTRY(cpu_idle_leave)
+	retl
+	 nop
 
 /*
  * Snapshot the current process so that stack frames are up to date.

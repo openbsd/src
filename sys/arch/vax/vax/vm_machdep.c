@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.34 2007/06/20 17:29:36 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.35 2007/10/10 15:53:53 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -58,6 +58,16 @@
 
 #include <sys/syscallargs.h>
 
+void
+cpu_exit(struct proc *p)
+{
+	int s;
+	s = splhigh();	/* splclock(); */
+
+	pmap_deactivate(p);
+	sched_exit(p);
+}
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -109,13 +119,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_addr->u_pcb.framep = tf;
 	bcopy(p1->p_addr->u_pcb.framep, tf, sizeof(*tf));
-
-	/*
-	 * Activate address space for the new process.	The PTEs have
-	 * already been allocated by way of pmap_create().
-	 * This writes the page table registers to the PCB.
-	 */
-	pmap_activate(p2);
 
 	/* Mark guard page invalid in kernel stack */
 	*kvtopte((u_int)p2->p_addr + REDZONEADDR) &= ~PG_V;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.25 2007/05/29 18:18:20 tom Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.26 2007/10/10 15:53:51 art Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -295,6 +295,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		cpu_alloc_ldt(ci);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
 		identifycpu(ci);
+		sched_init_cpu(ci);
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ncpus++;
@@ -463,6 +464,9 @@ cpu_hatch(void *v)
 		    ci->ci_dev.dv_xname, ci->ci_cpuid);
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
 }
 
 void

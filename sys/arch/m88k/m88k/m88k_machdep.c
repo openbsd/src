@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.21 2007/05/29 18:10:42 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.22 2007/10/10 15:53:52 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -200,50 +200,6 @@ copystr(fromaddr, toaddr, maxlength, lencopied)
 		*lencopied = tally;
 
 	return (ENAMETOOLONG);
-}
-
-void
-setrunqueue(p)
-	struct proc *p;
-{
-	struct prochd *q;
-	struct proc *oldlast;
-	int which = p->p_priority >> 2;
-
-#ifdef DIAGNOSTIC
-	if (p->p_back != NULL)
-		panic("setrunqueue %p", p);
-#endif
-	q = &qs[which];
-	whichqs |= 1 << which;
-	p->p_forw = (struct proc *)q;
-	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
-}
-
-/*
- * Remove process p from its run queue, which should be the one
- * indicated by its priority.  Calls should be made at splstatclock().
- */
-void
-remrunqueue(vp)
-	struct proc *vp;
-{
-	struct proc *p = vp;
-	int which = p->p_priority >> 2;
-	struct prochd *q;
-
-#ifdef DIAGNOSTIC
-	if ((whichqs & (1 << which)) == 0)
-		panic("remrq %p", p);
-#endif
-	p->p_forw->p_back = p->p_back;
-	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
-	q = &qs[which];
-	if (q->ph_link == (struct proc *)q)
-		whichqs &= ~(1 << which);
 }
 
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.12 2007/05/18 16:10:15 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.13 2007/10/10 15:53:53 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -56,9 +56,6 @@
 
 int	lbolt;			/* once a second sleep address */
 int	rrticks_init;		/* # of hardclock ticks per roundrobin() */
-
-int whichqs;			/* Bit mask summary of non-empty Q's. */
-struct prochd qs[NQS];
 
 struct SIMPLELOCK sched_lock;
 
@@ -359,29 +356,26 @@ preempt(struct proc *newp)
 	SCHED_UNLOCK(s);
 }
 
-
-/*
- * Must be called at splstatclock() or higher.
- */
 void
 mi_switch(void)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	struct proc *p = curproc;
+	struct proc *nextproc;
 	struct rlimit *rlim;
 	struct timeval tv;
-#if defined(MULTIPROCESSOR)
+#ifdef MULTIPROCESSOR
 	int hold_count;
 	int sched_count;
 #endif
-	struct schedstate_percpu *spc = &p->p_cpu->ci_schedstate;
+
+	KASSERT(p->p_stat != SONPROC);
 
 	SCHED_ASSERT_LOCKED();
 
-#if defined(MULTIPROCESSOR)
+#ifdef MULTIPROCESSOR
 	/*
 	 * Release the kernel_lock, as we are about to yield the CPU.
-	 * The scheduler lock is still held until cpu_switch()
-	 * selects a new process and removes it from the run queue.
 	 */
 	sched_count = __mp_release_all_but_one(&sched_lock);
 	if (p->p_flag & P_BIGLOCK)
@@ -391,7 +385,6 @@ mi_switch(void)
 	/*
 	 * Compute the amount of time during which the current
 	 * process was running, and add that to its total so far.
-	 * XXX - use microuptime here to avoid strangeness.
 	 */
 	microuptime(&tv);
 	if (timercmp(&tv, &spc->spc_runtime, <)) {
@@ -427,16 +420,27 @@ mi_switch(void)
 	 */
 	spc->spc_schedflags &= ~SPCF_SWITCHCLEAR;
 
-	/*
-	 * Pick a new current process and record its start time.
-	 */
-	uvmexp.swtch++;
-	cpu_switch(p);
+	nextproc = sched_chooseproc();
+
+	if (p != nextproc) {
+		uvmexp.swtch++;
+		cpu_switchto(p, nextproc);
+	} else {
+		p->p_stat = SONPROC;
+	}
+
+	SCHED_ASSERT_LOCKED();
 
 	/*
-	 * Make sure that MD code released the scheduler lock before
-	 * resuming us.
+	 * To preserve lock ordering, we need to release the sched lock
+	 * and grab it after we grab the big lock.
+	 * In the future, when the sched lock isn't recursive, we'll
+	 * just release it here.
 	 */
+#ifdef MULTIPROCESSOR
+	__mp_unlock(&sched_lock);
+#endif
+
 	SCHED_ASSERT_UNLOCKED();
 
 	/*
@@ -444,11 +448,11 @@ mi_switch(void)
 	 * be running on a new CPU now, so don't use the cache'd
 	 * schedstate_percpu pointer.
 	 */
-	KDASSERT(p->p_cpu != NULL);
-	KDASSERT(p->p_cpu == curcpu());
+	KASSERT(p->p_cpu == curcpu());
+
 	microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
 
-#if defined(MULTIPROCESSOR)
+#ifdef MULTIPROCESSOR
 	/*
 	 * Reacquire the kernel_lock now.  We do this after we've
 	 * released the scheduler lock to avoid deadlock, and before
@@ -458,20 +462,6 @@ mi_switch(void)
 		__mp_acquire_count(&kernel_lock, hold_count);
 	__mp_acquire_count(&sched_lock, sched_count + 1);
 #endif
-}
-
-/*
- * Initialize the (doubly-linked) run queues
- * to be empty.
- */
-void
-rqinit(void)
-{
-	int i;
-
-	for (i = 0; i < NQS; i++)
-		qs[i].ph_link = qs[i].ph_rlink = (struct proc *)&qs[i];
-	SIMPLE_LOCK_INIT(&sched_lock);
 }
 
 static __inline void

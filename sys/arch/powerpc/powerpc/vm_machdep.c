@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.44 2007/06/20 17:29:36 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.45 2007/10/10 15:53:52 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	sf->sp = (int)cf;
 	sf->user_sr = pmap_kernel()->pm_sr[PPC_USER_SR]; /* just in case */
 	pcb->pcb_sp = (int)stktop2;
-	pcb->pcb_spl = 0;
 }
 
 /*
@@ -155,8 +154,8 @@ cpu_exit(struct proc *p)
 		pool_put(&ppc_vecpl, pcb->pcb_vr);
 #endif /* ALTIVEC */
 	
-	(void)splsched();
-	switchexit(p);
+	pmap_deactivate(p);
+	sched_exit(p);
 }
 
 /*

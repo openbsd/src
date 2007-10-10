@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.14 2007/03/22 19:26:28 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.15 2007/10/10 15:53:52 art Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -61,7 +61,6 @@ define	SFRAMELEN	roundup(sizeof(struct switchframe), 16)
 struct	pcb
 member	PCB_PMR		pcb_pmreal
 member	pcb_sp
-member	pcb_spl
 member	PCB_FAULT	pcb_onfault
 
 struct	pmap
@@ -70,8 +69,6 @@ member	PM_USRSR	pm_sr[PPC_USER_SR]
 member	PM_KERNELSR	pm_sr[PPC_KERNEL_SR]
 
 struct	proc
-member	p_forw
-member	p_back
 member	p_addr
 member	p_stat
 member	p_cpu

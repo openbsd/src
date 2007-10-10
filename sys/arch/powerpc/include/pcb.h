@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.10 2007/03/20 20:59:53 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.11 2007/10/10 15:53:52 art Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@ struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
 	struct pmap *pcb_pmreal; /* real address of above */
 	register_t pcb_sp;	/* saved SP */
-	int pcb_spl;		/* saved SPL */
 	faultbuf *pcb_onfault;	/* For use during copyin/copyout */
 	int pcb_flags;
 #define	PCB_FPU		1	/* Process had FPU initialized */

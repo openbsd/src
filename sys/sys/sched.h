@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.16 2007/05/18 14:41:55 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.17 2007/10/10 15:53:53 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -76,6 +76,8 @@
 #ifndef	_SYS_SCHED_H_
 #define	_SYS_SCHED_H_
 
+#include <sys/queue.h>
+
 /*
  * Posix defines a <sched.h> which may want to include <sys/sched.h>
  */
@@ -105,6 +107,11 @@ struct schedstate_percpu {
 	int spc_rrticks;		/* ticks until roundrobin() */
 	int spc_pscnt;			/* prof/stat counter */
 	int spc_psdiv;			/* prof/stat divisor */	
+	struct proc *spc_idleproc;	/* idle proc for this cpu */
+#ifdef notyet
+	struct proc *spc_reaper;	/* dead proc reaper */
+#endif
+	LIST_HEAD(,proc) spc_deadproc;
 };
 
 #ifdef	_KERNEL
@@ -114,6 +121,8 @@ struct schedstate_percpu {
 #define SPCF_SHOULDYIELD        0x0002  /* process should yield the CPU */
 #define SPCF_SWITCHCLEAR        (SPCF_SEENRR|SPCF_SHOULDYIELD)
 
+
+#define	NQS	32			/* 32 run queues. */
 #define	PPQ	(128 / NQS)		/* priorities per queue */
 #define NICE_WEIGHT 2			/* priorities per nice level */
 #define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
@@ -126,7 +135,21 @@ void schedclock(struct proc *);
 struct cpu_info;
 void roundrobin(struct cpu_info *);
 
-#define sched_is_idle() (whichqs == 0)
+void sched_init_cpu(struct cpu_info *);
+void sched_exit(struct proc *);
+void mi_switch(void);
+void cpu_switchto(struct proc *, struct proc *);
+struct proc *sched_chooseproc(void);
+void cpu_idle_enter(void);
+void cpu_idle_cycle(void);
+void cpu_idle_leave(void);
+
+extern volatile int sched_whichqs;
+#define sched_is_idle()	(sched_whichqs == 0)
+
+void sched_init_runqueues(void);
+void setrunqueue(struct proc *);
+void remrunqueue(struct proc *);
 
 /* Inherit the parent's scheduler history */
 #define scheduler_fork_hook(parent, child) do {				\

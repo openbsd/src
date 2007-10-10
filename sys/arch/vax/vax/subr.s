@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.26 2007/05/16 05:19:15 miod Exp $     */
+/*	$OpenBSD: subr.s,v 1.27 2007/10/10 15:53:53 art Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -240,114 +240,37 @@ ENTRY(longjmp, 0)
 #endif 
 
 #
-# setrunqueue/remrunqueue fast variants.
-#
-
-JSBENTRY(Setrq)
-#ifdef DIAGNOSTIC
-	tstl	4(r0)	# Check that process actually are off the queue
-	beql	1f
-	pushab	setrq
-	calls	$1,_panic
-setrq:	.asciz	"setrunqueue"
-#endif
-1:	extzv	$2,$6,P_PRIORITY(r0),r1 # get priority
-	movaq	_qs[r1],r2		# get address of queue
-	insque	(r0),*4(r2)		# put proc last in queue
-	bbss	r1,_whichqs,1f		# set queue bit.
-1:	rsb
-
-JSBENTRY(Remrq)
-	extzv	$2,$6,P_PRIORITY(r0),r1
-#ifdef DIAGNOSTIC
-	bbs	r1,_whichqs,1f
-	pushab	remrq
-	calls	$1,_panic
-remrq:	.asciz	"remrunqueue"
-#endif
-1:	remque	(r0),r2
-	bneq	1f		# Not last process on queue
-	bbsc	r1,_whichqs,1f
-1:	clrl	4(r0)		# saftey belt
-	rsb
-
-#
-# Idle loop. Here we could do something fun, maybe, like calculating
-# pi or something.
-#
-idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
-1:	tstl	_whichqs		# Anything ready to run?
-	beql	1b			# no, continue to loop
-	brb	Swtch			# Yes, goto switch again.
-
-#
-# cpu_switch, cpu_exit and the idle loop implemented in assembler 
-# for efficiency. r0 contains pointer to last process.
+# void
+# cpu_switchto(struct proc *oldproc = r0, struct proc *newproc = r1);
 #
 
 #define CURPROC _cpu_info_store + CI_CURPROC
 
-JSBENTRY(Swtch)
-	clrl	CURPROC			# Stop process accounting
-#bpt
-	mtpr	$0x1f,$PR_IPL		# block all interrupts
-	ffs	$0,$32,_whichqs,r3	# Search for bit set
-	beql	idle			# no bit set, go to idle loop
+JSBENTRY(__cpu_switchto)
+	svpctx
 
-	movaq	_qs[r3],r1		# get address of queue head
-	remque	*(r1),r2		# remove proc pointed to by queue head
-#ifdef DIAGNOSTIC
-	bvc	1f			# check if something on queue
-	pushab	noque
-	calls	$1,_panic
-noque:	.asciz	"swtch"
-#endif
-1:	bneq	2f			# more processes on queue?
-	bbsc	r3,_whichqs,2f		# no, clear bit in whichqs
-2:	clrl	4(r2)			# clear proc backpointer
-	clrl	_want_resched		# we are now changing process
-	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC
-	movl	r2,CURPROC		# set new process running
-	cmpl	r0,r2			# Same process?
-	bneq	1f			# No, continue
-	rsb
-xxd:	
-1:	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
+	movb	$SONPROC,P_STAT(r1)	# p->p_stat = SONPROC
+	movl	r1, CURPROC		# set new process running
+
+	movl	P_ADDR(r1),r0		# Get pointer to new pcb.
 	addl3	r0,$IFTRAP,pcbtrap	# Save for copy* functions.
 
-#
-# Nice routine to get physical from virtual addresses.
-#
+	# inline kvtophys
 	extzv	$9,$21,r0,r1		# extract offset
 	movl	*_Sysmap[r1],r2		# get pte
 	ashl	$9,r2,r3		# shift to get phys address.
 
 #
 # Do the actual process switch. pc + psl are already on stack, from
-# the calling routine.
+# the beginning of this routine.
 #
-	svpctx
 	mtpr	r3,$PR_PCBB
+
+	pushl	CURPROC
+	calls	$1, _C_LABEL(pmap_activate)
+
 	ldpctx
 	rei
-
-#
-# the last routine called by a process.
-#
-
-ENTRY(cpu_exit,0)
-	movl	4(ap),r6	# Process pointer in r6
-	mtpr	$0x18,$PR_IPL	# Block almost everything
-	addl3	$512,_scratch,sp # Change stack, and schedule it to be freed
-
-	pushl	r6		
-	calls	$1,_exit2
-
-	clrl	r0		# No process to switch from
-	bicl3	$0xc0000000,_scratch,r1
-	mtpr	r1,$PR_PCBB
-	brw	Swtch
-
 
 #
 # copy/fetch/store routines. 

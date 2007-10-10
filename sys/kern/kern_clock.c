@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.64 2007/05/16 17:27:30 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.65 2007/10/10 15:53:53 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -546,7 +546,7 @@ statclock(struct clockframe *frame)
 			if (p != NULL)
 				p->p_iticks++;
 			spc->spc_cp_time[CP_INTR]++;
-		} else if (p != NULL) {
+		} else if (p != NULL && p != spc->spc_idleproc) {
 			p->p_sticks++;
 			spc->spc_cp_time[CP_SYS]++;
 		} else

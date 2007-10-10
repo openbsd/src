@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.71 2007/04/12 22:14:15 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.72 2007/10/10 15:53:53 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -315,16 +315,8 @@ exit1(struct proc *p, int rv, int flags)
 	sigactsfree(p);
 
 	/*
-	 * Clear curproc after we've done all operations
-	 * that could block, and before tearing down the rest
-	 * of the process state that might be used from clock, etc.
-	 * Also, can't clear curproc while we're still runnable,
-	 * as we're not on a run queue (we are current, just not
-	 * a proper proc any longer!).
-	 *
-	 * Other substructures are freed from wait().
+	 * Other substructures are freed from reaper and wait().
 	 */
-	curproc = NULL;
 
 	/*
 	 * If emulation has process exit hook, call it now.
@@ -373,15 +365,11 @@ struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
 void
 exit2(struct proc *p)
 {
-	int s;
-
 	mtx_enter(&deadproc_mutex);
 	LIST_INSERT_HEAD(&deadproc, p, p_hash);
 	mtx_leave(&deadproc_mutex);
 
 	wakeup(&deadproc);
-
-	SCHED_LOCK(s);
 }
 
 /*
@@ -395,6 +383,8 @@ reaper(void)
 	struct proc *p;
 
 	KERNEL_PROC_UNLOCK(curproc);
+
+	SCHED_ASSERT_UNLOCKED();
 
 	for (;;) {
 		mtx_enter(&deadproc_mutex);

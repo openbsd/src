@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.45 2007/10/10 15:53:52 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -85,6 +85,7 @@
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/kcore.h>
+#include <machine/lock.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/m88100.h>
@@ -105,6 +106,7 @@
 
 caddr_t	allocsys(caddr_t);
 void	consinit(void);
+void	cpu_boot_secondary_processors(void);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(void);
@@ -182,6 +184,8 @@ int physmem;	  /* available physical memory, in pages */
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
+
+__cpu_simple_lock_t cpu_mutex = __SIMPLELOCK_UNLOCKED;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -756,6 +760,16 @@ abort:
 #ifdef MULTIPROCESSOR
 
 /*
+ * Release the cpu_mutex; secondary processors will now have their
+ * chance to initialize.
+ */
+void
+cpu_boot_secondary_processors()
+{
+	__cpu_simple_unlock(&cpu_mutex);
+}
+
+/*
  * Secondary CPU early initialization routine.
  * Determine CPU number and set it, then allocate the idle pcb (and stack).
  *
@@ -793,17 +807,18 @@ void
 secondary_main()
 {
 	struct cpu_info *ci = curcpu();
+	int s;
 
 	cpu_configuration_print(0);
+	sched_init_cpu(ci);
 	ncpus++;
+	__cpu_simple_unlock(&cpu_mutex);
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
+	ci->ci_curproc = NULL;
 
-	/*
-	 * Upon return, the secondary cpu bootstrap code in locore will
-	 * enter the idle loop, waiting for some food to process on this
-	 * processor.
-	 */
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
 }
 
 #endif	/* MULTIPROCESSOR */
@@ -966,7 +981,6 @@ luna88k_bootstrap()
 	cpuid_t cpu;
 	extern void m8820x_initialize_cpu(cpuid_t);
 	extern void m8820x_set_sapr(cpuid_t, apr_t);
-	extern void cpu_boot_secondary_processors(void);
 
 	cmmu = &cmmu8820x;
 

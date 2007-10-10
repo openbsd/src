@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.12 2007/09/03 01:15:50 krw Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.13 2007/10/10 15:53:52 art Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -221,7 +221,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	extern char edata[];
 	extern char k_intr[];
 	extern char k_general[];
-	extern char idle[];
 	struct trap_frame *regs = &ddb_regs;
 
 	/* get initial values from the exception frame */
@@ -396,14 +395,10 @@ loop:
 	}
 
 done:
-	if (symname == NULL) {
-		if (subr == (long)idle)
-			(*pr)("idle ");
-		else
-			(*pr)("%p ", subr);
-	} else {
+	if (symname == NULL)
+		(*pr)("%p ", subr);
+	else
 		(*pr)("%s+%p ", symname, diff);
-	}
 	(*pr)("(%llx,%llx,%llx,%llx) sp %llx ra %llx, sz %d\n", a0, a1, a2, a3, sp, ra, stksize);
 
 	if (subr == (long)k_intr || subr == (long)k_general) {

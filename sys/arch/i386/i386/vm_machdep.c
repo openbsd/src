@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.52 2007/05/27 20:59:25 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.53 2007/10/10 15:53:51 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -126,7 +126,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		tf->tf_esp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_ppl = 0;
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
@@ -151,7 +150,7 @@ cpu_exit(struct proc *p)
 #endif
 
 	pmap_deactivate(p);
-	switch_exit(p);
+	sched_exit(p);
 }
 
 void

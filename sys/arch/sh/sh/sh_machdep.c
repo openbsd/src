@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.16 2007/06/06 17:15:12 deraadt Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.17 2007/10/10 15:53:52 art Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -714,45 +714,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 #endif
 
 	rval[1] = 0;
-}
-
-void
-setrunqueue(struct proc *p)
-{
-	int whichq = p->p_priority / PPQ;
-	struct prochd *q;
-	struct proc *prev;
-
-#ifdef DIAGNOSTIC
-	if (p->p_back != NULL || p->p_wchan != NULL || p->p_stat != SRUN)
-		panic("setrunqueue");
-#endif
-	q = &qs[whichq];
-	prev = q->ph_rlink;
-	p->p_forw = (struct proc *)q;
-	q->ph_rlink = p;
-	prev->p_forw = p;
-	p->p_back = prev;
-	whichqs |= 1 << whichq;
-}
-
-void
-remrunqueue(struct proc *p)
-{
-	struct proc *prev, *next;
-	int whichq = p->p_priority / PPQ;
-
-#ifdef DIAGNOSTIC
-       if (((whichqs & (1 << whichq)) == 0))
-		panic("remrunqueue: bit %d not set", whichq);
-#endif
-	prev = p->p_back;
-	p->p_back = NULL;
-	next = p->p_forw;
-	prev->p_forw = next;
-	next->p_back = prev;
-	if (prev == next)
-		whichqs &= ~(1 << whichq);
 }
 
 /*

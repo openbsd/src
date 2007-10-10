@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.58 2007/05/15 13:46:22 martin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.59 2007/10/10 15:53:52 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -954,52 +954,18 @@ Ldorte:
  */
 #include <m68k/m68k/support.s>
 
-/*
- * Use common m68k process manipulation routines.
- */
-#include <m68k/m68k/proc_subr.s>
-
 	.data
 GLOBAL(curpcb)
 	.long	0
 
 ASBSS(nullpcb,SIZEOF_PCB)
 
-/*
- * At exit of a process, do a switch for the last time.
- * Switch to a safe stack and PCB, and select a new process to run.  The
- * old stack and u-area will be freed by the reaper.
- */
-ENTRY(switch_exit)
-	movl	sp@(4),a0
-	/* save state into garbage pcb */
-	movl	#_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
-	lea	_ASM_LABEL(tmpstk),sp	| goto a tmp stack
-
-	/* Schedule the vmspace and stack to be freed. */
-	movl	a0,sp@-			| exit2(p)
-	jbsr	_C_LABEL(exit2)
-	lea	sp@(4),sp		| pop args
-
-	jra	_C_LABEL(cpu_switch)
-
-/*
- * When no processes are on the runq, Swtch branches to Idle
- * to wait for something to come ready.
- */
-ASENTRY_NOPROFILE(Idle)
+ENTRY_NOPROFILE(cpu_idle_cycle)
 	stop	#PSL_LOWIPL
-	movw	#PSL_HIGHIPL,sr
-	movl	_C_LABEL(whichqs),d0
-	jeq	_ASM_LABEL(Idle)
-	jra	Lsw1
-
-Lbadsw:
-	PANIC("switch")
-	/*NOTREACHED*/
+	rts
 
 /*
- * cpu_switch()
+ * cpu_switchto(struct proc *oldproc, struct proc *newproc)
  *
  * NOTE: On the mc68851 (318/319/330) we attempt to avoid flushing the
  * entire ATC.  The effort involved in selective flushing may not be
@@ -1009,55 +975,15 @@ Lbadsw:
  * user's PTEs have been changed (formerly denoted by the SPTECHG p_flag
  * bit).  For now, we just always flush the full ATC.
  */
-ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),a0	| current pcb
-	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
-#ifdef notyet
-	movl	CURPROC,sp@-		| remember last proc running
-#endif
-	clrl	CURPROC
+ENTRY(cpu_switchto)
+	movl	sp@(4), d0		| oldproc
+	beq	Lswnofpsave		| is NULL, don't save anything
 
-	/*
-	 * Find the highest-priority queue that isn't empty,
-	 * then take the first proc from that queue.
-	 */
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
-	movl	_C_LABEL(whichqs),d0
-	jeq	_ASM_LABEL(Idle)
-Lsw1:
-	movl	d0,d1
-	negl	d0
-	andl	d1,d0
-	bfffo	d0{#0:#32},d1
-	eorib	#31,d1
-
-	movl	d1,d0
-	lslb	#3,d1			| convert queue number to index
-	addl	#_C_LABEL(qs),d1	| locate queue (q)
-	movl	d1,a1
-	movl	a1@(P_FORW),a0		| p = q->p_forw
-	cmpal	d1,a0			| anyone on queue?
-	jeq	Lbadsw			| no, panic
-	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
-	movl	a0@(P_FORW),a1		| n = p->p_forw
-	movl	d1,a1@(P_BACK)		| n->p_back = q
-	cmpal	d1,a1			| anyone left on queue?
-	jne	Lsw2			| yes, skip
-	movl	_C_LABEL(whichqs),d1
-	bclr	d0,d1			| no, clear bit
-	movl	d1,_C_LABEL(whichqs)
-Lsw2:
-	movl	a0,CURPROC
-	clrl	_C_LABEL(want_resched)
-#ifdef notyet
-	movl	sp@+,a1
-	cmpl	a0,a1			| switching to same proc?
-	jeq	Lswdone			| yes, skip save and restore
-#endif
 	/*
 	 * Save state of previous process in its pcb.
 	 */
 	movl	_C_LABEL(curpcb),a1
+	movw	sr, a1@(PCB_PS)		| save sr before switching context
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
@@ -1070,16 +996,12 @@ Lsw2:
 	jeq	Lswnofpsave		| yes, all done
 	fmovem	fp0-fp7,a2@(FPF_REGS)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a2@(FPF_FPCR)	| save FP control registers
-Lswnofpsave:
 
-#ifdef DIAGNOSTIC
-	tstl	a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,a0@(P_STAT)
-	jne	Lbadsw
-#endif
+Lswnofpsave:
+	movl	sp@(8), a0		| newproc
+
+	movl	a0, CURPROC
 	movb	#SONPROC,a0@(P_STAT)
-	clrl	a0@(P_BACK)		| clear back link
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
 

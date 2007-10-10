@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2007/01/12 21:41:53 aoyama Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 2007/10/10 15:53:52 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -150,8 +150,8 @@ ASLOCAL(main_start)
 	 * Now we will compete with the other processors to see which one
 	 * will be elected as the main one.
 	 */
-	or.u	r11, r0,  hi16(_ASM_LABEL(cpu_mutex))
-	or	r11, r11, lo16(_ASM_LABEL(cpu_mutex))
+	or.u	r11, r0,  hi16(_C_LABEL(cpu_mutex))
+	or	r11, r11, lo16(_C_LABEL(cpu_mutex))
 1:
 	FLUSH_PIPELINE
 	or	r22, r0,  1
@@ -282,15 +282,6 @@ ASLOCAL(secondary_init)
 	bsr.n	_C_LABEL(secondary_pre_main)	/* set cpu number */
 	 or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
-	/*
-	 * Release cpu_mutex; we have a race with other secondary CPUs here
-	 * because the stack has not been switched yet. However, since our
-	 * interrupts are disabled, the worst we can get is an NMI, and, oh
-	 * well, it means we're in deep trouble anyway.
-	 */
-	or.u	r10, r0, hi16(_ASM_LABEL(cpu_mutex))
-	st	r0, r10, lo16(_ASM_LABEL(cpu_mutex))
-
 	ldcr	r2, CPU
 1:
 	ld	r3, r2, CI_CURPCB
@@ -299,13 +290,6 @@ ASLOCAL(secondary_init)
 	br.n	_C_LABEL(secondary_main)
 	 add	r31, r3, USIZE 		/* switch to idle stack */
 
-	/*
-	 * At this point, the CPU has been correctly initialized and has
-	 * identified itself on the console.
-	 * All it needs now is to jump to the idle loop and wait for work to
-	 * be offered.
-	 */
-	br	_ASM_LABEL(cpu_switch_search)
 #else
 
 	/*
@@ -314,15 +298,6 @@ ASLOCAL(secondary_init)
 1:	br	1b
 
 #endif	/* MULTIPROCESSOR */
-
-	/*
-	 * Release the cpu_mutex; secondary processors will now have their
-	 * chance to initialize.
-	 */
-GLOBAL(cpu_boot_secondary_processors)
-	or.u	r2,  r0,  hi16(_ASM_LABEL(cpu_mutex))
-	jmp.n	r1
-	 st	r0,  r2,  lo16(_ASM_LABEL(cpu_mutex))
 
 /*
  * void delay(int count)
@@ -382,10 +357,6 @@ GLOBAL(proc0paddr)
 
 /* The first processor that XMEMs this becomes the master */
 ASLOCAL(master_mpu)
-	word 0
-
-/* XMEM spin lock -- controls access to master_mpu */
-ASLOCAL(cpu_mutex)
 	word 0
 
 #if defined(DDB) || NKSYMS > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.14 2007/09/17 15:34:38 chl Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.15 2007/10/10 15:53:51 art Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -345,6 +345,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
+		sched_init_cpu(ci);
 		cpu_start_secondary(ci);
 		ncpus++;
 		if (ci->ci_flags & CPUF_PRESENT) {
@@ -540,6 +541,9 @@ cpu_hatch(void *v)
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
 }
 
 #if defined(DDB)

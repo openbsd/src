@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.49 2006/05/08 14:03:35 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.50 2007/10/10 15:53:52 art Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -345,14 +345,6 @@ GLOBAL(secondary_start)
 	ld	r3, r2, CI_IDLE_PCB
 	bsr.n	_C_LABEL(secondary_main)
 	 addu	r31, r3, USIZE			/* switch to idle stack */
-
-	/*
-	 * At this point, the CPU has been correctly initialized and has
-	 * identified itself on the console.
-	 * All it needs now is to jump to the idle loop and wait for work to
-	 * be offered.
-	 */
-	br	_ASM_LABEL(cpu_switch_idle)
 
 #endif	/* MULTIPROCESSOR */
 

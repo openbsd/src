@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.157 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.158 2007/10/10 15:53:53 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1280,9 +1280,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dused;
 		ki->p_vm_ssize = vm->vm_ssize;
-
-		ki->p_forw = PTRTOINT64(p->p_forw);
-		ki->p_back = PTRTOINT64(p->p_back);
+		ki->p_forw = ki->p_back = 0;
 		ki->p_addr = PTRTOINT64(p->p_addr);
 		ki->p_stat = p->p_stat;
 		ki->p_swtime = p->p_swtime;

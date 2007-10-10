@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2007/05/28 23:10:10 beck Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2007/10/10 15:53:51 art Exp $
 
 # Copyright (c) 1994, 1995 Gordon W. Ross
 # Copyright (c) 1993 Adam Glass
@@ -103,17 +103,12 @@ export	ALPHA_PTE_KW
 
 # Important offsets into the proc struct & associated constants
 struct	proc
-member	p_forw
-member	p_back
 member	p_addr
 member	p_vmspace
 member	p_stat
 member	P_MD_FLAGS	p_md.md_flags
 member	P_MD_PCBPADDR	p_md.md_pcbpaddr
 member	p_cpu
-struct	prochd
-member	ph_link
-member	ph_rlink
 
 export	SONPROC
 

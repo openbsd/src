@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2007/06/20 17:29:36 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2007/10/10 15:53:52 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -136,20 +136,17 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call switch_exit, which switches to a temporary
- * pcb and stack and never returns.  We block memory allocation
- * until switch_exit has made things safe again.
+ *
+ * Block context switches and then call switch_exit() which will
+ * switch to another process thus we never return.
  */
 void
 cpu_exit(struct proc *p)
 {
-	splhigh();
+	(void)splhigh();
 
 	pmap_deactivate(p);
-	switch_exit(p);
-	/* NOTREACHED */
+	sched_exit(p);
 }
 
 /*

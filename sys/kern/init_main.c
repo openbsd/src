@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.144 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.145 2007/10/10 15:53:53 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -327,7 +327,9 @@ main(void *framep)
 	(void)chgproccnt(0, 1);
 
 	/* Initialize run queues */
-	rqinit();
+	sched_init_runqueues();
+	sleep_queue_init();
+	sched_init_cpu(curcpu());
 
 	/* Initialize work queues */
 	workq_init();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.100 2007/07/25 23:11:53 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.101 2007/10/10 15:53:53 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -148,8 +148,7 @@ struct process;
 #endif
 
 struct proc {
-	struct	proc *p_forw;		/* Doubly-linked run/sleep queue. */
-	struct	proc *p_back;
+	TAILQ_ENTRY(proc) p_runq;
 	LIST_ENTRY(proc) p_list;	/* List of all processes. */
 
 	struct	process *p_p;		/* The process of this thread. */
@@ -401,14 +400,6 @@ extern struct pool ucred_pool;		/* memory pool for ucreds */
 extern struct pool session_pool;	/* memory pool for sessions */
 extern struct pool pcred_pool;		/* memory pool for pcreds */
 
-#define	NQS	32			/* 32 run queues. */
-extern int whichqs;			/* Bit mask summary of non-empty Q's. */
-struct	prochd {
-	struct	proc *ph_link;		/* Linked list of running processes. */
-	struct	proc *ph_rlink;
-};
-extern struct prochd qs[NQS];
-
 struct simplelock;
 
 struct proc *pfind(pid_t);	/* Find process by id. */
@@ -423,17 +414,10 @@ int	inferior(struct proc *p);
 int	leavepgrp(struct proc *p);
 void	yield(void);
 void	preempt(struct proc *);
-void	mi_switch(void);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
-#if !defined(remrunqueue)
-void	remrunqueue(struct proc *);
-#endif
 void	resetpriority(struct proc *);
 void	setrunnable(struct proc *);
-#if !defined(setrunqueue)
-void	setrunqueue(struct proc *);
-#endif
 void	unsleep(struct proc *);
 void    wakeup_n(void *chan, int);
 void    wakeup(void *chan);
@@ -441,17 +425,13 @@ void    wakeup(void *chan);
 void	reaper(void);
 void	exit1(struct proc *, int, int);
 void	exit2(struct proc *);
+void	cpu_exit(struct proc *);
 int	fork1(struct proc *, int, int, void *, size_t, void (*)(void *),
 	    void *, register_t *, struct proc **);
-void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
-#if !defined(cpu_switch)
-void	cpu_switch(struct proc *);
-#endif
 #if !defined(cpu_wait)
 void	cpu_wait(struct proc *);
 #endif
-void	cpu_exit(struct proc *);
 
 void	child_return(void *);
 
@@ -471,6 +451,7 @@ void	sleep_setup_signal(struct sleep_state *, int);
 void	sleep_finish(struct sleep_state *, int);
 int	sleep_finish_timeout(struct sleep_state *);
 int	sleep_finish_signal(struct sleep_state *);
+void	sleep_queue_init(void);
 
 int	tsleep(void *, int, const char *, int);
 #define ltsleep(c, p, w, t, l) tsleep(c, p, w, t)

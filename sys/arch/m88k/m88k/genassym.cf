@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2007/05/12 19:59:52 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2007/10/10 15:53:52 art Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.8 2007/05/12 19:59:52 miod Exp $
+#	$Id: genassym.cf,v 1.9 2007/10/10 15:53:52 art Exp $
 #
 
 include <sys/param.h>
@@ -49,15 +49,11 @@ include <sys/user.h>
 
 # proc fields and values
 struct	proc
-member	p_forw
-member	p_back
 member	p_addr
 member	p_stat
-member	p_wchan
 member	p_cpu
 member	P_ASTPENDING	p_md.md_astpending
 
-export	SRUN
 export	SONPROC
 
 # cpu fields

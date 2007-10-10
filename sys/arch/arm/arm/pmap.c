@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2007/05/18 14:41:55 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2007/10/10 15:53:51 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3100,11 +3100,6 @@ pmap_activate(struct proc *p)
 }
 
 void
-pmap_deactivate(struct proc *p)
-{
-}
-
-void
 pmap_update(pmap_t pm)
 {
 
@@ -3211,7 +3206,7 @@ pmap_destroy(pmap_t pm)
 		pmap_update(pm);
 
 		/*
-		 * Make sure cpu_switch(), et al, DTRT. This is safe to do
+		 * Make sure cpu_switchto(), et al, DTRT. This is safe to do
 		 * since this process has no remaining mappings of its own.
 		 */
 		curpcb->pcb_pl1vec = pcb->pcb_pl1vec;
