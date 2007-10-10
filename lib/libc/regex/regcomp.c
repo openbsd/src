@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.17 2007/09/02 15:19:17 deraadt Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.18 2007/10/10 21:23:44 chl Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -639,7 +639,10 @@ p_bracket(struct parse *p)
 		return;
 	}
 
-	cs = allocset(p);
+	if ((cs = allocset(p)) == NULL) {
+		/* allocset did set error status in p */
+		return;
+	}
 
 	if (EAT('^'))
 		invert++;	/* make note to invert set at end */
@@ -1026,64 +1029,46 @@ allocset(struct parse *p)
 	int i;
 
 	if (no >= p->ncsalloc) {	/* need another column of space */
+		void *ptr;
+
 		p->ncsalloc += CHAR_BIT;
 		nc = p->ncsalloc;
 		assert(nc % CHAR_BIT == 0);
 		nbytes = nc / CHAR_BIT * css;
-		if (p->g->sets == NULL)
-			p->g->sets = (cset *)calloc(nc, sizeof(cset));
-		else {
-			cset *ptr;
-			ptr = (cset *)realloc((char *)p->g->sets,
-			    nc * sizeof(cset));
-			if (ptr == NULL) {
-				free(p->g->sets);
-				p->g->sets = NULL;
-			} else
-				p->g->sets = ptr;
-		}
-		if (p->g->sets == NULL)
+
+		ptr = (cset *)realloc((char *)p->g->sets, nc * sizeof(cset));
+		if (ptr == NULL)
 			goto nomem;
+		p->g->sets = ptr;
 
-		if (p->g->setbits == NULL)
-			p->g->setbits = (uch *)malloc(nbytes);
-		else {
-			uch *ptr;
+		ptr = (uch *)realloc((char *)p->g->setbits, nbytes);
+		if (ptr == NULL)
+			goto nomem;
+		p->g->setbits = ptr;
 
-			ptr = (uch *)realloc((char *)p->g->setbits, nbytes);
-			if (ptr == NULL) {
-				free(p->g->setbits);
-				p->g->setbits = NULL;
-			} else {
-				p->g->setbits = ptr;
+		for (i = 0; i < no; i++)
+			p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
 
-				for (i = 0; i < no; i++)
-					p->g->sets[i].ptr = p->g->setbits +
-					    css*(i/CHAR_BIT);
-			}
-		}
-
-		if (p->g->sets == NULL || p->g->setbits == NULL) {
-nomem:
-			no = 0;
-			SETERROR(REG_ESPACE);
-			/* caller's responsibility not to do set ops */
-		} else
-			(void) memset((char *)p->g->setbits + (nbytes - css),
-			    0, css);
+		(void) memset((char *)p->g->setbits + (nbytes - css), 0, css);
 	}
 
-	assert(p->g->sets != NULL);	/* xxx */
-	if (p->g->sets != NULL && p->g->setbits != NULL) {
-		cs = &p->g->sets[no];
-		cs->ptr = p->g->setbits + css*((no)/CHAR_BIT);
-	}
+	cs = &p->g->sets[no];
+	cs->ptr = p->g->setbits + css*((no)/CHAR_BIT);
 	cs->mask = 1 << ((no) % CHAR_BIT);
 	cs->hash = 0;
 	cs->smultis = 0;
 	cs->multis = NULL;
 
 	return(cs);
+nomem:
+	free(p->g->sets);
+	p->g->sets = NULL;
+	free(p->g->setbits);
+	p->g->setbits = NULL;
+
+	SETERROR(REG_ESPACE);
+	/* caller's responsibility not to do set ops */
+	return(NULL);
 }
 
 /*
@@ -1181,10 +1166,7 @@ mcadd( struct parse *p, cset *cs, char *cp)
 	void *np;
 
 	cs->smultis += strlen(cp) + 1;
-	if (cs->multis == NULL)
-		np = malloc(cs->smultis);
-	else
-		np = realloc(cs->multis, cs->smultis);
+	np = realloc(cs->multis, cs->smultis);
 	if (np == NULL) {
 		if (cs->multis)
 			free(cs->multis);
@@ -1427,8 +1409,8 @@ static void
 findmust(struct parse *p, struct re_guts *g)
 {
 	sop *scan;
-	sop *start;
-	sop *newstart;
+	sop *start;    /* start initialized in the default case, after that */
+	sop *newstart; /* newstart was initialized in the OCHAR case */
 	sopno newlen;
 	sop s;
 	char *cp;
