@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.299 2007/10/10 01:36:16 deraadt Exp $
+$OpenBSD: usbdevs,v 1.300 2007/10/10 01:38:42 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -813,8 +813,8 @@ product BALTECH CARDREADER	0x9999	Card reader
 /*product BELKIN F5U111		0x????	F5U111 Ethernet */
 product BELKIN2 F5U002		0x0002	F5U002 Parallel
 product BELKIN F5D6050		0x0050	F5D6050 802.11b Wireless adapter
-product BELKIN FBT001V		0x0081	FBT001v2 Bluetooth
-product BELKIN FBT003V		0x0084	FBT003v2 Bluetooth
+product BELKIN FBT001V		0x0081	Bluetooth
+product BELKIN FBT003V		0x0084	Bluetooth
 product BELKIN F5U103		0x0103	F5U103 Serial
 product BELKIN F5U109		0x0109	F5U109 Serial
 product BELKIN SCSI		0x0115	SCSI
@@ -986,9 +986,9 @@ product DAVICOM WK668		0x0668	HenTong WK-668
 
 /* Dell products */
 product DELL AXIM		0x4005	Axim X51v
-product DELL BC02		0x8000	BC02 Bluetooth
+product DELL BC02		0x8000	Bluetooth
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
-product DELL BLUETOOTH350	0x8103	Bluetooth 350
+product DELL BLUETOOTH350	0x8103	Bluetooth
 product DELL W5500		0x8115	W5500 HSDPA 
 
 /* DeLorme products */
@@ -1140,7 +1140,7 @@ product FTDI SERIAL_2232C	0x6010	2232C Serial
 product FTDI SERIAL_2232L	0xcff8	2232L Serial
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial
-product FTDI MJS_SIRIUS_PC	0xca81	MJS Sirius To PC Interface
+product FTDI MJS_SIRIUS_PC	0xca81	MJS Sirius To PC
 product FTDI SERIAL_232BM	0xee18	FT232BM Serial
 product FTDI MHAM_KW		0xeee8	KW
 product FTDI MHAM_YS		0xeee9	YS
@@ -1556,7 +1556,7 @@ product MACALLY MOUSE1		0x0101	mouse
 /* MCT Corp. */
 product MCT HUB0100		0x0100	Hub
 product MCT DU_H3SP_USB232	0x0200	D-Link DU-H3SP BAY Hub
-product MCT USB232		0x0210	RS232 Interface
+product MCT USB232		0x0210	RS232
 product MCT SITECOM_USB232	0x0230	Sitecom RS232
 product MCT ML_4500		0x0302	ML-4500
 
@@ -1599,7 +1599,7 @@ product MSI RT2573_1		0x6874	RT2573
 product MSI RT2573_2		0x6877	RT2573
 product MSI RT2573_3		0xa861	RT2573
 product MSI RT2573_4		0xa874	RT2573
-product MSI BLUETOOTH_2		0xa970	Bluetooth2
+product MSI BLUETOOTH_2		0xa970	Bluetooth
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
@@ -1789,10 +1789,10 @@ product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card
 product ONSPEC2 8IN2		0xb012	8In2
 
 /* OQO */
-product OQO WIFI01		0x0002	model 01 WiFi interface
-product OQO BT01		0x0003	model 01 Bluetooth interface
+product OQO WIFI01		0x0002	model 01 WiFi
+product OQO BT01		0x0003	model 01 Bluetooth
 product OQO ETHER01PLUS		0x7720	model 01+ Ethernet
-product OQO ETHER01		0x8150	model 01 Ethernet interface
+product OQO ETHER01		0x8150	model 01 Ethernet
 
 /* Ours Technology Inc. */
 product OTI SOLID		0x6803	Solid state disk
@@ -1904,14 +1904,14 @@ product PRIMAX MOUSEINABOX	0x4d02	Mouse-in-a-Box
 product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
 
 /* Prolific products */
-product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
-product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
+product PROLIFIC PL2301		0x0000	PL2301 Host-Host
+product PROLIFIC PL2302		0x0001	PL2302 Host-Host
 product PROLIFIC RSAQ2		0x04bb	PL2303 Serial
 product PROLIFIC PL2303		0x2303	PL2303 Serial
 product PROLIFIC2 PL2303	0x2303	PL2303 Serial
 product PROLIFIC PL2305		0x2305	Parallel printer
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
-product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
+product PROLIFIC PL2501		0x2501	PL2501 Host-Host
 product PROLIFIC PL2303X	0xaaa0	PL2303 Serial
 product PROLIFIC PL2303X2	0xaaa2	PL2303 Serial
 
@@ -2151,15 +2151,15 @@ product SONY NWMS7		0x0025	Memorystick NW-MS7
 product SONY DRIVEV2		0x002b	Harddrive V2
 product SONY MSACUS1		0x002d	Memorystick MSAC-US1
 product SONY HANDYCAM		0x002e	Handycam
-product SONY MSC		0x0032	Sony MSC Memorystick Slot
+product SONY MSC		0x0032	Sony MSC Memorystick
 product SONY CLIE_35		0x0038	Clie v3.5
 product SONY PS2KEYBOARD	0x005c	PlayStation2 keyboard
 product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
 product SONY PS2MOUSE		0x0061	PlayStation2 mouse
 product SONY CLIE_40		0x0066	Clie v4.0
-product SONY CLIE_40_MS		0x006d	Clie v4.0 Memory Stick slot
+product SONY CLIE_40_MS		0x006d	Clie v4.0 Memory Stick
 product SONY CLIE_S360		0x0095	Sony Clie s360
-product SONY CLIE_41_MS		0x0099	Clie v4.1 Memory Stick slot
+product SONY CLIE_41_MS		0x0099	Clie v4.1 Memory Stick
 product SONY CLIE_41		0x009a	Clie v4.1
 product SONY CLIE_NX60		0x00da	Sony Clie nx60
 product SONY CLIE_TJ25		0x0169	Sony Clie tj25
