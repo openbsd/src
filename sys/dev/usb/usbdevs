@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.298 2007/10/10 01:22:30 deraadt Exp $
+$OpenBSD: usbdevs,v 1.299 2007/10/10 01:36:16 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -719,7 +719,7 @@ product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE ADB		0x1000	ADB device
 product APPLE SPEAKERS		0x1101	Speakers
 product APPLE BLUETOOTH		0x8300	Bluetooth
-product APPLE BLUETOOTH		0x8205	Bluetooth
+product APPLE BLUETOOTH2	0x8205	Bluetooth
 
 /* Araneus Information Systems products */
 product ARANEUS ALEA		0x0001	True Random Number Generator
