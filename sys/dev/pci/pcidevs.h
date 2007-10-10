@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1271 2007/10/10 00:44:16 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1272 2007/10/10 01:00:44 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2555,6 +2555,9 @@
 #define	PCI_PRODUCT_MEINBERG_PCI32	0x0101		/* PCI32 */
 #define	PCI_PRODUCT_MEINBERG_PCI511	0x0104		/* PCI511 */
 #define	PCI_PRODUCT_MEINBERG_GPS170PCI	0x0204		/* GPS170PCI */
+
+/* Mellanox */
+#define	PCI_PRODUCT_MELLANOX_CONNECTX_EN	0x6368		/* ConnectX EN */
 
 /* Mentor */
 #define	PCI_PRODUCT_MENTOR_PCI0660	0x0660		/* PCI */
