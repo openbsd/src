@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.2 2007/10/10 14:09:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -33,7 +33,7 @@ extern struct imsgbuf		*ibuf_rde;
 int
 send_ls_req(struct nbr *nbr)
 {
-	struct sockaddr_in6	 dst;
+	struct in6_addr		 dst;
 	struct ls_req_hdr	 ls_req_hdr;
 	struct lsa_entry	*le, *nle;
 	struct buf		*buf;
@@ -42,21 +42,15 @@ send_ls_req(struct nbr *nbr)
 	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_ls_req");
 
-	/* set destination */
-	dst.sin6_family = AF_INET6;
-	dst.sin6_len = sizeof(struct sockaddr_in6);
-
 	switch (nbr->iface->type) {
 	case IF_TYPE_POINTOPOINT:
-//XXX		inet_aton(AllSPFRouters, &dst.sin_addr);
-		inet_pton(AF_INET6, AllSPFRouters, &dst.sin6_addr);
+		inet_pton(AF_INET6, AllSPFRouters, &dst);
 		break;
 	case IF_TYPE_BROADCAST:
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_VIRTUALLINK:
-//XXX		dst.sin_addr.s_addr = nbr->addr.s_addr;
-		dst.sin6_addr = nbr->addr;
+		dst = nbr->addr;
 		break;
 	default:
 		fatalx("send_ls_req: unknown interface type");

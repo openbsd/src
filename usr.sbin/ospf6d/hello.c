@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.3 2007/10/10 13:36:01 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.4 2007/10/10 14:09:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -38,19 +38,16 @@ extern struct ospfd_conf	*oeconf;
 int
 send_hello(struct iface *iface)
 {
-	struct sockaddr_in6	 dst;
+	struct in6_addr		 dst;
 	struct hello_hdr	 hello;
 	struct nbr		*nbr;
 	struct buf		*buf;
 	int			 ret;
 
-	dst.sin6_family = AF_INET6;
-	dst.sin6_len = sizeof(struct sockaddr_in6);
-
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
-		inet_pton(AF_INET6, AllSPFRouters, &dst.sin6_addr);
+		inet_pton(AF_INET6, AllSPFRouters, &dst);
 		break;
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:
@@ -58,7 +55,7 @@ send_hello(struct iface *iface)
 		    if_type_name(iface->type), iface->name);
 		return (-1);
 	case IF_TYPE_VIRTUALLINK:
-		dst.sin6_addr = iface->dst;
+		dst = iface->dst;
 		break;
 	default:
 		fatalx("send_hello: unknown interface type");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: lsack.c,v 1.2 2007/10/10 14:09:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -37,17 +37,12 @@ void	 start_ls_ack_tx_timer_now(struct iface *);
 int
 send_ls_ack(struct iface *iface, struct in6_addr addr, void *data, size_t len)
 {
-	struct sockaddr_in6	 dst;
-	struct buf		*buf;
-	int			 ret;
+	struct buf	*buf;
+	int		 ret;
 
 	/* XXX READ_BUF_SIZE */
 	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
 		fatal("send_ls_ack");
-
-	dst.sin6_family = AF_INET6;
-	dst.sin6_len = sizeof(struct sockaddr_in6);
-	dst.sin6_addr = addr;	/* XXX */
 
 	/* OSPF header */
 	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_LS_ACK))
@@ -61,7 +56,7 @@ send_ls_ack(struct iface *iface, struct in6_addr addr, void *data, size_t len)
 	if (upd_ospf_hdr(buf, iface))
 		goto fail;
 
-	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
+	ret = send_packet(iface, buf->buf, buf->wpos, &addr);
 
 	buf_free(buf);
 	return (ret);

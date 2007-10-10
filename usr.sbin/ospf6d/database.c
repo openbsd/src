@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: database.c,v 1.2 2007/10/10 14:09:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -40,7 +40,7 @@ void	db_sum_list_next(struct nbr *);
 int
 send_db_description(struct nbr *nbr)
 {
-	struct sockaddr_in6	 dst;
+	struct in6_addr		 dst;
 	struct db_dscrp_hdr	 dd_hdr;
 	struct lsa_entry	*le, *nle;
 	struct buf		*buf;
@@ -113,17 +113,13 @@ send_db_description(struct nbr *nbr)
 		fatalx("send_db_description: unknown neighbor state");
 	}
 
-	/* set destination */
-	dst.sin6_family = AF_INET6;
-	dst.sin6_len = sizeof(struct sockaddr_in6);
-
 	switch (nbr->iface->type) {
 	case IF_TYPE_POINTOPOINT:
-		inet_pton(AF_INET6, AllSPFRouters, &dst.sin6_addr);
+		inet_pton(AF_INET6, AllSPFRouters, &dst);
 		dd_hdr.iface_mtu = htons(nbr->iface->mtu);
 		break;
 	case IF_TYPE_BROADCAST:
-		dst.sin6_addr = nbr->addr;
+		dst = nbr->addr;
 		dd_hdr.iface_mtu = htons(nbr->iface->mtu);
 		break;
 	case IF_TYPE_NBMA:
@@ -131,7 +127,7 @@ send_db_description(struct nbr *nbr)
 		/* XXX not supported */
 		break;
 	case IF_TYPE_VIRTUALLINK:
-		dst.sin6_addr = nbr->iface->dst;
+		dst = nbr->iface->dst;
 		dd_hdr.iface_mtu = 0;
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.2 2007/10/10 14:09:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -200,7 +200,6 @@ int
 send_ls_update(struct buf *buf, struct iface *iface, struct in6_addr addr,
     u_int32_t nlsa)
 {
-	struct sockaddr_in6	 dst;
 	int			 ret;
 
 	nlsa = htonl(nlsa);
@@ -210,12 +209,7 @@ send_ls_update(struct buf *buf, struct iface *iface, struct in6_addr addr,
 	if (upd_ospf_hdr(buf, iface))
 		goto fail;
 
-	/* set destination */
-	dst.sin6_family = AF_INET6;
-	dst.sin6_len = sizeof(struct sockaddr_in6);
-	dst.sin6_addr = addr;
-
-	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
+	ret = send_packet(iface, buf->buf, buf->wpos, &addr);
 
 	buf_free(buf);
 	return (ret);

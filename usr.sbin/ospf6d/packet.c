@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.2 2007/10/09 06:26:47 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.3 2007/10/10 14:09:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -80,21 +80,23 @@ upd_ospf_hdr(struct buf *buf, struct iface *iface)
 /* send and receive packets */
 int
 send_packet(struct iface *iface, void *pkt, size_t len,
-    struct sockaddr_in6 *dst)
+    struct in6_addr *dst)
 {
-	struct msghdr		 msg;
-	struct iovec		 iov[1];
+	struct sockaddr_in6	 sa6;
+
 	/* setup buffer */
-	bzero(&msg, sizeof(msg));
-	iov[0].iov_base = pkt;
-	iov[0].iov_len = len;
-	msg.msg_name = dst;
-	msg.msg_namelen = sizeof(*dst);
-	msg.msg_iov = iov;
-	msg.msg_iovlen = 1;
+	bzero(&sa6, sizeof(sa6));
+
+	sa6.sin6_family = AF_INET6;
+	sa6.sin6_len = sizeof(sa6);
+	sa6.sin6_addr = *dst;
+
+	/* don't we all love link local scope and all the needed hacks for it */
+	if (IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MC_LINKLOCAL(dst))
+		sa6.sin6_scope_id = iface->ifindex;
 
 	/* set outgoing interface for multicast traffic */
-	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
+	if (IN6_IS_ADDR_MULTICAST(dst))
 		if (if_set_mcast(iface) == -1) {
 			log_warn("send_packet: error setting multicast "
 			    "interface, %s", iface->name);
@@ -102,8 +104,9 @@ send_packet(struct iface *iface, void *pkt, size_t len,
 		}
 
 	log_debug("send_packet: iface %d addr %s dest %s", iface->ifindex,
-	    log_in6addr(&iface->addr), log_in6addr(&dst->sin6_addr));
-	if (sendmsg(iface->fd, &msg, MSG_DONTROUTE) == -1) {
+	    log_in6addr(&iface->addr), log_sockaddr((void *)&sa6));
+	if (sendto(iface->fd, pkt, len, MSG_DONTROUTE, (struct sockaddr *)&sa6,
+	    sizeof(sa6)) == -1) {
 		log_warn("send_packet: error sending packet on interface %s",
 		    iface->name);
 		return (-1);
