@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.13 2007/09/10 05:39:07 deanna Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.14 2007/10/10 03:39:21 deanna Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -277,6 +277,11 @@
 #define		COP_SUPPORTED_POWER_STATES	0x0f
 #define		COP_PROCESSING_CAPABILITIES	0x10
 #define		COP_GPIO_COUNT			0x11
+#define			COP_GPIO_GPIOS(x)	(x & 0xff)
+#define			COP_GPIO_GPOS(x)	((x >> 8) & 0xff)
+#define			COP_GPIO_GPIS(x)	((x >> 16) & 0xff)
+#define			COP_GPIO_UNSOL		0x40000000
+#define			COP_GPIO_WAKE		0x80000000
 #define		COP_OUTPUT_AMPCAP		0x12
 #define		COP_VOLUME_KNOB_CAPABILITIES	0x13
 #define			COP_VKCAP_DELTA		0x00000080
@@ -408,6 +413,20 @@
 #define			CORB_CD_WHITE	0xe
 #define			CORB_CD_COLOR_OTHER	0xf
 #define		CORB_CD_CONNECTION_MASK	0x000f0000
+#define		CORB_CD_CONNECTION(x)	((x >> 16) & 0xf)
+#define			CORB_CD_CONN_UNKNOWN	0x0
+#define			CORB_CD_18		0x1
+#define			CORB_CD_14		0x2
+#define			CORB_CD_ATAPI		0x3
+#define			CORB_CD_RCA		0x4
+#define			CORB_CD_OPTICAL		0x5
+#define			CORB_CD_OTHER_DIG	0x6
+#define			CORB_CD_OTHER_ANALOG	0x7
+#define			CORB_CD_DIN		0x8
+#define			CORB_CD_XLF		0x9
+#define			CORB_CD_RJ11		0xa
+#define			CORB_CD_CONN_COMB	0xb
+#define			CORB_CD_CONN_OTHER	0xf
 #define		CORB_CD_DEVICE(x)	((x >> 20) & 0xf)
 #define			CORB_CD_LINEOUT		0x0
 #define			CORB_CD_SPEAKER		0x1
@@ -425,7 +444,28 @@
 #define			CORB_CD_DIGITALIN	0xd
 #define			CORB_CD_DEVICE_OTHER	0xf
 #define		CORB_CD_LOCATION_MASK	0x3f000000
+#define		CORB_CD_LOC_GEO(x)	((x >> 24) & 0xf)
+#define			CORB_CD_LOC_GEO_NA	0x0
+#define			CORB_CD_REAR		0x1
+#define			CORB_CD_FRONT		0x2
+#define			CORB_CD_LEFT		0x3
+#define			CORB_CD_RIGHT		0x4
+#define			CORB_CD_TOP		0x5
+#define			CORB_CD_BOTTOM		0x6
+#define			CORB_CD_LOC_SPEC0	0x7
+#define			CORB_CD_LOC_SPEC1	0x8
+#define			CORB_CD_LOC_SPEC2	0x9
+#define		CORB_CD_LOC_CHASS(x)	((x >> 28) & 0x3)
+#define			CORB_CD_EXTERNAL	0x0
+#define			CORB_CD_INTERNAL	0x1
+#define			CORB_CD_SEPARATE	0x2
+#define			CORB_CD_LOC_OTHER	0x3
 #define		CORB_CD_PORT_MASK	0xc0000000
+#define		CORB_CD_PORT(x)		((x >> 30) & 0x3)
+#define			CORB_CD_JACK		0x0
+#define			CORB_CD_NONE		0x1
+#define			CORB_CD_FIXED		0x2
+#define			CORB_CD_BOTH		0x3
 #define CORB_GET_STRIPE_CONTROL		0xf24
 #define CORB_SET_STRIPE_CONTROL		0x720	/* XXX typo in the spec? */
 #define CORB_EXECUTE_FUNCTION_RESET	0x7ff

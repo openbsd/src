@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.34 2007/09/10 22:37:08 deanna Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.35 2007/10/10 03:39:21 deanna Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -334,6 +334,18 @@ static const char *pin_devices[16] = {
 	"SPDIF-out", "digital-out", "modem-line", "modem-handset",
 	"line-in", AudioNaux, AudioNmicrophone, "telephony",
 	"SPDIF-in", "digital-in", "dev0e", "other"};
+static const char *pin_conn[4] = {
+	"jack", "none", "fixed", "combined"};
+static const char *pin_conntype[16] = {
+	"unknown", "1/8", "1/4", "atapi", "rca", "optical",
+	"digital", "analog", "din", "xlr", "rj-11", "combination",
+	"con0c", "con0d", "con0e", "other"};
+static const char *pin_geo[15] = {
+	"n/a", "rear", "front", "left",
+	"right", "top", "bottom", "spec0", "spec1", "spec2",
+	"loc0a", "loc0b", "loc0c", "loc0d", "loc0f"};
+static const char *pin_chass[4] = {
+	"external", "internal", "separate", "other"};
 #endif
 
 /* ================================================================
@@ -1162,6 +1174,12 @@ azalia_codec_init(codec_t *this)
 	DPRINTF(("\toutamp: mute=%u size=%u steps=%u offset=%u\n",
 	    (result & COP_AMPCAP_MUTE) != 0, COP_AMPCAP_STEPSIZE(result),
 	    COP_AMPCAP_NUMSTEPS(result), COP_AMPCAP_OFFSET(result)));
+	this->comresp(this, this->audiofunc, CORB_GET_PARAMETER,
+	    COP_GPIO_COUNT, &result);
+	DPRINTF(("\tgpio: wake=%u unsol=%u gpis=%u gpos=%u gpios=%u\n",
+	    (result & COP_GPIO_WAKE) != 0, (result & COP_GPIO_UNSOL) != 0,
+	    COP_GPIO_GPIS(result), COP_GPIO_GPOS(result),
+	    COP_GPIO_GPIOS(result)));
 #endif
 
 	strlcpy(this->w[CORB_NID_ROOT].name, "root",
@@ -1544,11 +1562,13 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 			    COP_INPUT_AMPCAP, &this->inamp_cap);
 		else
 			this->inamp_cap = codec->w[codec->audiofunc].inamp_cap;
-		DPRINTF(("\tinamp: mute=%u size=%u steps=%u offset=%u\n",
-		    (this->inamp_cap & COP_AMPCAP_MUTE) != 0,
-		    COP_AMPCAP_STEPSIZE(this->inamp_cap),
-		    COP_AMPCAP_NUMSTEPS(this->inamp_cap),
-		    COP_AMPCAP_OFFSET(this->inamp_cap)));
+		if ((this->widgetcap & COP_AWCAP_AMPOV) ||
+		    (this->nid == codec->audiofunc))
+			DPRINTF(("\tinamp: mute=%u size=%u steps=%u offset=%u\n",
+			    (this->inamp_cap & COP_AMPCAP_MUTE) != 0,
+			    COP_AMPCAP_STEPSIZE(this->inamp_cap),
+			    COP_AMPCAP_NUMSTEPS(this->inamp_cap),
+			    COP_AMPCAP_OFFSET(this->inamp_cap)));
 	}
 	if (this->widgetcap & COP_AWCAP_OUTAMP) {
 		if (this->widgetcap & COP_AWCAP_AMPOV)
@@ -1556,11 +1576,13 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 			    COP_OUTPUT_AMPCAP, &this->outamp_cap);
 		else
 			this->outamp_cap = codec->w[codec->audiofunc].outamp_cap;
-		DPRINTF(("\toutamp: mute=%u size=%u steps=%u offset=%u\n",
-		    (this->outamp_cap & COP_AMPCAP_MUTE) != 0,
-		    COP_AMPCAP_STEPSIZE(this->outamp_cap),
-		    COP_AMPCAP_NUMSTEPS(this->outamp_cap),
-		    COP_AMPCAP_OFFSET(this->outamp_cap)));
+		if ((this->widgetcap & COP_AWCAP_AMPOV) ||
+		    (this->nid == codec->audiofunc))
+			DPRINTF(("\toutamp: mute=%u size=%u steps=%u offset=%u\n",
+			    (this->outamp_cap & COP_AMPCAP_MUTE) != 0,
+			    COP_AMPCAP_STEPSIZE(this->outamp_cap),
+			    COP_AMPCAP_NUMSTEPS(this->outamp_cap),
+			    COP_AMPCAP_OFFSET(this->outamp_cap)));
 	}
 	if (codec->init_widget != NULL)
 		codec->init_widget(codec, this, nid);
@@ -1605,7 +1627,8 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 		    codec->w[codec->audiofunc].d.audio.bits_rates;
 	}
 #ifdef AZALIA_DEBUG
-	azalia_widget_print_audio(this, "\t");
+	if (this->widgetcap & COP_AWCAP_FORMATOV)
+		azalia_widget_print_audio(this, "\t");
 #endif
 	return 0;
 }
@@ -1674,16 +1697,44 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	return 0;
 }
 
-#define	PINCAP_BITS	"\20\021EAPD\07BALANCE\06INPUT" \
+#define	PINCAP_BITS	"\20\021EAPD\16VREF100\15VREF80" \
+    "\13VREFGND\12VREF50\11VREFHIZ\07BALANCE\06INPUT" \
     "\05OUTPUT\04HEADPHONE\03PRESENCE\02TRIGGER\01IMPEDANCE"
 
 int
 azalia_widget_print_pin(const widget_t *this)
 {
-	DPRINTF(("\tpin config; device=%s color=%s assoc=%d seq=%d",
-	    pin_devices[this->d.pin.device], pin_colors[this->d.pin.color],
-	    this->d.pin.association, this->d.pin.sequence));
-	DPRINTF((" cap=%b\n", this->d.pin.cap, PINCAP_BITS));
+	DPRINTF(("\tcap=%b\n", this->d.pin.cap, PINCAP_BITS));
+	DPRINTF(("\t[%2.2d/%2.2d] ", CORB_CD_ASSOCIATION(this->d.pin.config),
+	    CORB_CD_SEQUENCE(this->d.pin.config)));
+	DPRINTF(("color=%s ", pin_colors[CORB_CD_COLOR(this->d.pin.config)]));
+	DPRINTF(("device=%s ", pin_devices[CORB_CD_DEVICE(this->d.pin.config)]));
+	DPRINTF(("conn=%s ", pin_conn[CORB_CD_PORT(this->d.pin.config)]));
+	DPRINTF(("conntype=%s\n", pin_conntype[CORB_CD_CONNECTION(this->d.pin.config)]));
+	DPRINTF(("\tlocation=%s ", pin_geo[CORB_CD_LOC_GEO(this->d.pin.config)]));
+	DPRINTF(("chassis=%s ", pin_chass[CORB_CD_LOC_CHASS(this->d.pin.config)]));
+	DPRINTF(("special="));
+	if (CORB_CD_LOC_GEO(this->d.pin.config) == CORB_CD_LOC_SPEC0) {
+		if (CORB_CD_LOC_CHASS(this->d.pin.config) == CORB_CD_EXTERNAL)
+			DPRINTF(("rear-panel"));
+		else if (CORB_CD_LOC_CHASS(this->d.pin.config) == CORB_CD_INTERNAL)
+			DPRINTF(("riser"));
+		else if (CORB_CD_LOC_CHASS(this->d.pin.config) == CORB_CD_LOC_OTHER)
+			DPRINTF(("mobile-lid-internal"));
+	} else if (CORB_CD_LOC_GEO(this->d.pin.config) == CORB_CD_LOC_SPEC1) {
+		if (CORB_CD_LOC_CHASS(this->d.pin.config) == CORB_CD_EXTERNAL)
+			DPRINTF(("drive-bay"));
+		else if (CORB_CD_LOC_CHASS(this->d.pin.config) == CORB_CD_INTERNAL)
+			DPRINTF(("hdmi"));
+		else if (CORB_CD_LOC_CHASS(this->d.pin.config) == CORB_CD_LOC_OTHER)
+			DPRINTF(("mobile-lid-external"));
+	} else if (CORB_CD_LOC_GEO(this->d.pin.config) == CORB_CD_LOC_SPEC2) {
+		if (CORB_CD_LOC_CHASS(this->d.pin.config) == CORB_CD_INTERNAL)
+			DPRINTF(("atapi"));
+	} else
+		DPRINTF(("none"));
+	DPRINTF(("\n"));
+
 	return 0;
 }
 
