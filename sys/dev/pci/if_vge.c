@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.33 2007/05/01 11:28:06 canacar Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.34 2007/10/10 12:46:44 kettenis Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -833,14 +833,16 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 			m_freem(m_new);
 			return (ENOBUFS);
 		}
+
+		m = m_new;
 	} else
-		m_new->m_data = m_new->m_ext.ext_buf;
+		m->m_data = m->m_ext.ext_buf;
 
-	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
 	/* Fix-up alignment so payload is doubleword-aligned */
-	/* XXX m_adj(m_new, ETHER_ALIGN); */
+	/* XXX m_adj(m, ETHER_ALIGN); */
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, rxmap, m_new, BUS_DMA_NOWAIT))
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, rxmap, m, BUS_DMA_NOWAIT))
 		return (ENOBUFS);
 
 	if (rxmap->dm_nsegs > 1)
@@ -877,7 +879,7 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 		sc->vge_rx_consumed = 0;
 	}
 
-	sc->vge_ldata.vge_rx_mbuf[idx] = m_new;
+	sc->vge_ldata.vge_rx_mbuf[idx] = m;
 
 	bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
 	    rxmap->dm_mapsize, BUS_DMASYNC_PREREAD);
