@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.2 2007/10/09 06:26:47 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.3 2007/10/10 13:36:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -79,8 +79,7 @@ send_hello(struct iface *iface)
 	/* XXX options */
 	hello.opts1 = 0;
 	hello.opts2 = 0;
-	hello.opts3 = 0;
-	hello.opts3 |= OSPF_OPTION_R;	/* XXX */
+	hello.opts3 = OSPF_OPTION_V6 | OSPF_OPTION_E | OSPF_OPTION_R; /* XXX */
 
 	hello.hello_interval = htons(iface->hello_interval);
 	hello.rtr_dead_interval = htons(iface->dead_interval);
