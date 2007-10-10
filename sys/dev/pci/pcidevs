@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1270 2007/10/08 09:20:57 mbalmer Exp $
+$OpenBSD: pcidevs,v 1.1271 2007/10/10 00:44:16 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -258,6 +258,7 @@ vendor	SYBA		0x1592	Syba
 vendor	BLUESTEEL	0x15ab	Bluesteel
 vendor	VMWARE		0x15ad	VMware
 vendor	ZOLTRIX		0x15b0	Zoltrix
+vendor	MELLANOX	0x15b3	Mellanox
 vendor	AGILENT		0x15bc	Agilent
 vendor	QUICKNET	0x15e2	Quicknet Technologies
 vendor	NDC		0x15e8	National Datacomm
