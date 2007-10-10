@@ -5709,6 +5709,7 @@
 ./usr/share/man/cat9/copyoutstr.0
 ./usr/share/man/cat9/copystr.0
 ./usr/share/man/cat9/cpu_switch.0
+./usr/share/man/cat9/cpu_switchto.0
 ./usr/share/man/cat9/crypto.0
 ./usr/share/man/cat9/crypto_dispatch.0
 ./usr/share/man/cat9/crypto_done.0
@@ -5722,7 +5723,6 @@
 ./usr/share/man/cat9/crypto_register.0
 ./usr/share/man/cat9/crypto_unregister.0
 ./usr/share/man/cat9/ctlname.0
-./usr/share/man/cat9/ctxsw.0
 ./usr/share/man/cat9/db_printf.0
 ./usr/share/man/cat9/delay.0
 ./usr/share/man/cat9/disk.0
@@ -5905,6 +5905,7 @@
 ./usr/share/man/cat9/md5.0
 ./usr/share/man/cat9/memchr.0
 ./usr/share/man/cat9/memcmp.0
+./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/microtime.0
 ./usr/share/man/cat9/microuptime.0
