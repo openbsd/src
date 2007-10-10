@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.33 2007/10/10 15:53:52 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.34 2007/10/10 15:56:20 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -220,11 +220,13 @@ _ENTRY(_C_LABEL(cpu_idle_enter))
 	blr
 
 _ENTRY(_C_LABEL(cpu_idle_cycle))
+#if 0
 	/* low power mode */
 	mfmsr	%r3
 	oris	%r3, %r3, PSL_POW@h
 	mtmsr	%r3
 	isync
+#endif
 	blr
 
 _ENTRY(_C_LABEL(cpu_idle_leave))
