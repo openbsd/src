@@ -1168,36 +1168,33 @@ int SSL_set_cipher_list(SSL *s,const char *str)
 /* works well for SSLv2, not so good for SSLv3 */
 char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 	{
-	char *p;
+	char *end;
 	STACK_OF(SSL_CIPHER) *sk;
 	SSL_CIPHER *c;
+	size_t curlen = 0;
 	int i;
 
 	if ((s->session == NULL) || (s->session->ciphers == NULL) ||
 		(len < 2))
 		return(NULL);
 
-	p=buf;
 	sk=s->session->ciphers;
+	buf[0] = '\0';
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
-		int n;
-
 		c=sk_SSL_CIPHER_value(sk,i);
-		n=strlen(c->name);
-		if (n+1 > len)
+		end = buf + curlen;
+		if (strlcat(buf, c->name, len) >= len ||
+		    (curlen = strlcat(buf, ":", len)) >= len)
 			{
-			if (p != buf)
-				--p;
-			*p='\0';
-			return buf;
+			/* remove truncated cipher from list */
+			*end = '\0';
+			break;
 			}
-		strcpy(p,c->name);
-		p+=n;
-		*(p++)=':';
-		len-=n+1;
 		}
-	p[-1]='\0';
+	/* remove trailing colon */
+	if ((end = strrchr(buf, ':')) != NULL)
+		*end = '\0';
 	return(buf);
 	}
 
