@@ -33,6 +33,11 @@ rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ta=4.2BSD:oa#0:pa#8192:fa#512:ba#4096:\
 	:ob#0:pb#0:oc#0:pc#8192:
 
+cdroot|cdramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#16:nt#320:ns#128:\
+	:ta=4.2BSD:oa#0:pa#655360:fa#512:ba#4096:\
+	:ob#0:pb#0:oc#0:pc#655360:
+
 # Seagate ST31200N
 ST31200N-MBR:\
 	:ty=winchester:ns#84:nt#9:nc#2700:\
