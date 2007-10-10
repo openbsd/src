@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.132 2007/10/10 16:21:29 art Exp $
+#	$OpenBSD: Makefile,v 1.133 2007/10/10 16:26:23 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	boot.9 \
-	buffercache.9 bus_dma.9 bus_space.9 copy.9 crypto.9 ctxsw.9 delay.9 \
+	buffercache.9 bus_dma.9 bus_space.9 copy.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dohooks.9 dopowerhooks.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	evcount.9 file.9 \
@@ -16,7 +16,7 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	ieee80211_radiotap.9 \
 	iic.9 intro.9 inittodr.9 \
 	kern.9 knote.9 kthread.9 ktrace.9 loadfirmware.9 lock.9 log.9 \
-	malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
+	malloc.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 microtime.9 \
 	mountroothook_establish.9 mutex.9 namei.9 \
 	panic.9 pci_conf_read.9 pci_intr_map.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
@@ -112,7 +112,7 @@ MLINKS+=crypto.9 crypto_register.9 \
 	crypto.9 crypto_kdispatch.9 \
 	crypto.9 crypto_getreq.9 \
 	crypto.9 crypto_freereq.9
-MLINKS+=ctxsw.9 cpu_switchto.9 ctxsw.9 mi_switch.9
+MLINKS+=mi_switch.9 cpu_switchto.9
 MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detatch.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9
 MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
