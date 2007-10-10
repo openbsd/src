@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.85 2007/06/26 13:39:02 tom Exp $	*/
+/*	$OpenBSD: trap.c,v 1.86 2007/10/10 04:36:11 ray Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -581,11 +581,11 @@ syscall(struct trapframe frame)
 	struct sysent *callp;
 	struct proc *p;
 	int orig_error, error, opc, nsys;
-	size_t argsize;
 	register_t code, args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int ocpl = lapic_tpr;
 #endif
+	short argsize;
 
 	uvmexp.syscalls++;
 #ifdef DIAGNOSTIC
