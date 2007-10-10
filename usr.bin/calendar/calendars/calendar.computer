@@ -1,7 +1,7 @@
 /*
  * Computer
  *
- * $OpenBSD: calendar.computer,v 1.12 2006/10/13 12:10:20 mickey Exp $
+ * $OpenBSD: calendar.computer,v 1.13 2007/10/10 17:23:26 deraadt Exp $
  */
 
 #ifndef _calendar_computer_
@@ -60,6 +60,7 @@
 07/08	Bell Telephone Co. formed (predecessor of AT&T), 1877
 07/08	CDC incorporated, 1957
 07/09	Unix billennium begins at 01:46:40 UTC, 2001
+07/22	Berkeley rescinded the 3rd term of BSD license, 1999
 08/14	First Unix-based mallet created, 1954
 08/14	IBM PC announced, 1981
 08/17	MD5 collision found by Chinese researchers, 2004
