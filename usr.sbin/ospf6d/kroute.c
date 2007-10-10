@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: kroute.c,v 1.2 2007/10/10 14:06:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -914,6 +914,14 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
 		fatal("if_newaddr");
 	ka->addr = ifa->sin6_addr;
+
+	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
+	if (IN6_IS_ADDR_LINKLOCAL(&ka->addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&ka->addr)) {
+		ka->addr.s6_addr[2] = 0;
+		ka->addr.s6_addr[3] = 0;
+	}
+
 	if (mask)
 		ka->mask = mask->sin6_addr;
 	else
