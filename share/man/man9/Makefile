@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.131 2007/10/02 17:29:44 cnst Exp $
+#	$OpenBSD: Makefile,v 1.132 2007/10/10 16:21:29 art Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -112,7 +112,7 @@ MLINKS+=crypto.9 crypto_register.9 \
 	crypto.9 crypto_kdispatch.9 \
 	crypto.9 crypto_getreq.9 \
 	crypto.9 crypto_freereq.9
-MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
+MLINKS+=ctxsw.9 cpu_switchto.9 ctxsw.9 mi_switch.9
 MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detatch.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9
 MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
