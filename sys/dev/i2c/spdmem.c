@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.7 2007/10/08 06:20:21 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.8 2007/10/10 16:04:17 deraadt Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -231,6 +231,8 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
+	printf(": ");
+
 	/* All SPD have at least 64 bytes of data including checksum */
 	for (i = 0; i < 64; i++) {
 		((uint8_t *)s)[i] = spdmem_read(sc, i);
@@ -278,7 +280,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	if (IS_RAMBUS_TYPE) {
 		rows = s->sm_data[SPDMEM_RDR_ROWS_COLS] & 0x0f;
 		cols = s->sm_data[SPDMEM_RDR_ROWS_COLS] >> 4;
-		printf(": %dMB", 1 << (rows + cols - 13));
+		printf("%dMB", 1 << (rows + cols - 13));
 	} else if (s->sm_type == SPDMEM_MEMTYPE_SDRAM ||
 	    s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
 		rows = s->sm_data[SPDMEM_SDR_ROWS] & 0x0f;
@@ -296,7 +298,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	if (!(IS_RAMBUS_TYPE) && num_banks <= 8 && per_chip <= 8 &&
 	    dimm_size > 0 && dimm_size <= 12) {
 		dimm_size = (1 << dimm_size) * num_banks * per_chip;
-		printf(": %dMB", dimm_size);
+		printf("%dMB", dimm_size);
 	}
 
 	printf(" %s", type);
