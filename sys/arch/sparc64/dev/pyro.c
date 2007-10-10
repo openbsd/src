@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.9 2007/10/08 18:30:13 krw Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.10 2007/10/10 11:31:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -322,12 +322,10 @@ pyro_alloc_dma_tag(struct pyro_pbm *pbm)
 	struct pyro_softc *sc = pbm->pp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmat;
 
-	dt = (bus_dma_tag_t)malloc(sizeof(struct sparc_bus_dma_tag),
-	    M_DEVBUF, M_NOWAIT);
+	dt = malloc(sizeof(*dt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dt == NULL)
 		panic("pyro: could not alloc dma tag");
 
-	bzero(dt, sizeof(*dt));
 	dt->_cookie = pbm;
 	dt->_parent = pdt;
 	dt->_dmamap_create	= pyro_dmamap_create;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.50 2007/10/08 18:30:13 krw Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.51 2007/10/10 11:31:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -556,12 +556,10 @@ schizo_alloc_dma_tag(struct schizo_pbm *pbm)
 	struct schizo_softc *sc = pbm->sp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmat;
 
-	dt = (bus_dma_tag_t)malloc(sizeof(struct sparc_bus_dma_tag),
-	    M_DEVBUF, M_NOWAIT);
+	dt = malloc(sizeof(*dt), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dt == NULL)
 		panic("schizo: could not alloc dma tag");
 
-	bzero(dt, sizeof(*dt));
 	dt->_cookie = pbm;
 	dt->_parent = pdt;
 	dt->_dmamap_create	= schizo_dmamap_create;
