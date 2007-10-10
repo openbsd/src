@@ -5708,7 +5708,6 @@
 ./usr/share/man/cat9/copyout.0
 ./usr/share/man/cat9/copyoutstr.0
 ./usr/share/man/cat9/copystr.0
-./usr/share/man/cat9/cpu_switch.0
 ./usr/share/man/cat9/cpu_switchto.0
 ./usr/share/man/cat9/crypto.0
 ./usr/share/man/cat9/crypto_dispatch.0
@@ -5905,7 +5904,6 @@
 ./usr/share/man/cat9/md5.0
 ./usr/share/man/cat9/memchr.0
 ./usr/share/man/cat9/memcmp.0
-./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/microtime.0
 ./usr/share/man/cat9/microuptime.0
