@@ -10412,6 +10412,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "OXCB950",
 	},
 	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXMPCI954,
+	    "OXmPCI954",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXMPCI954D,
+	    "OXmPCI954 Disabled",
+	},
+	{
 	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41098,
 	    "Exsys EX-41098",
 	},

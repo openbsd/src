@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.48 2007/06/08 12:44:41 mbalmer Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.49 2007/10/11 17:35:57 sthen Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -855,6 +855,17 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+	    },
+	},
+
+	/* Commell MP-954GPS, GPS and 2 COM */
+	{   /* "Oxford Semiconductor OX16mPCI954 UARTs", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXMPCI954,	0, 0 },
+	    {   0xffff, 0xffff,						0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ*4 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ*4 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ*4 },
 	    },
 	},
 
