@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.6 2007/10/11 19:21:25 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.7 2007/10/11 20:41:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -135,17 +135,6 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 	memcpy(&hello, buf, sizeof(hello));
 	buf += sizeof(hello);
 	len -= sizeof(hello);
-
-#if 0
-XXX
-	if (iface->type != IF_TYPE_POINTOPOINT &&
-	    iface->type != IF_TYPE_VIRTUALLINK)
-		if (hello.mask != iface->mask.s_addr) {
-			log_warnx("recv_hello: invalid netmask, interface %s",
-			    iface->name);
-			return;
-		}
-#endif
 
 	if (ntohs(hello.hello_interval) != iface->hello_interval) {
 		log_warnx("recv_hello: invalid hello-interval %d, "
