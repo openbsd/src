@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.60 2007/09/07 19:05:05 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.61 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -279,14 +279,9 @@ zyd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zyd_softc *sc = (struct zyd_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	char *devinfop;
 	usb_device_descriptor_t* ddesc;
 
 	sc->sc_udev = uaa->device;
-
-	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->mac_rev = zyd_lookup(uaa->vendor, uaa->product)->rev;
 

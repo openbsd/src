@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.34 2007/06/18 09:55:58 mbalmer Exp $ */
+/*	$OpenBSD: umodem.c,v 1.35 2007/10/11 18:33:15 deraadt Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -212,22 +212,17 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 	const usb_cdc_union_descriptor_t *uniond;
 	const usb_descriptor_t *desc;
 	usbd_desc_iter_t iter;
-	char *devinfop;
 	usbd_status err;
 	int current_iface_no = -1;
 	int i;
 	struct ucom_attach_args uca;
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n");
-
 	sc->sc_udev = dev;
 	sc->sc_ctl_iface = uaa->iface;
 
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
-	printf("%s: %s, iclass %d/%d\n", sc->sc_dev.dv_xname,
-	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
-	usbd_devinfo_free(devinfop);
+	//printf("%s: iclass %d/%d\n", sc->sc_dev.dv_xname,
+	//    id->bInterfaceClass, id->bInterfaceSubClass);
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
 
 	/* Get the data interface no. and capabilities */

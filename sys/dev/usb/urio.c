@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.32 2007/06/14 10:11:16 mbalmer Exp $	*/
+/*	$OpenBSD: urio.c,v 1.33 2007/10/11 18:33:15 deraadt Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -141,17 +141,12 @@ urio_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg	*uaa = aux;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
-	char			*devinfop;
 	usbd_status		err;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t		epcount;
 	int			i;
 
 	DPRINTFN(10,("urio_attach: sc=%p\n", sc));
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, URIO_CONFIG_NO, 1);
 	if (err) {

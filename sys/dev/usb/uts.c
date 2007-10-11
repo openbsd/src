@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.21 2007/09/18 19:44:40 miod Exp $ */
+/*	$OpenBSD: uts.c,v 1.22 2007/10/11 18:33:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -151,7 +151,6 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct wsmousedev_attach_args a;
-	char *devinfop;
 	int i, found;
 
 	sc->sc_udev = uaa->device;
@@ -163,12 +162,6 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Copy the default scalue values to each softc */
 	bcopy(&def_scale, &sc->sc_tsscale, sizeof(sc->sc_tsscale));
-
-	/* Display device info string */
-	printf("\n");
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	/* Move the device into the configured state. */
 	if (usbd_set_config_index(uaa->device, UTS_CONFIG_INDEX, 1) != 0) {

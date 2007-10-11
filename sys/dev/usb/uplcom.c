@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.46 2007/09/14 14:37:40 deraadt Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.47 2007/10/11 18:33:15 deraadt Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -229,16 +229,10 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	usb_device_descriptor_t *ddesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-
-	char *devinfop;
 	char *devname = sc->sc_dev.dv_xname;
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", devname, devinfop);
-	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
 
@@ -252,7 +246,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UPLCOM_CONFIG_INDEX, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
+		printf("%s: failed to set configuration, err=%s\n",
 			devname, usbd_errstr(err));
 		sc->sc_dying = 1;
 		return;

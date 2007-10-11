@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.65 2007/09/07 19:05:05 damien Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.66 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -268,15 +268,10 @@ rum_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status error;
-	char *devinfop;
 	int i, ntries;
 	uint32_t tmp;
 
 	sc->sc_udev = uaa->device;
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_no(sc->sc_udev, RT2573_CONFIG_NO, 0) != 0) {
 		printf("%s: could not set configuration no\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.29 2007/09/11 13:39:34 gilles Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.30 2007/10/11 18:33:15 deraadt Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -144,16 +144,13 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	void *desc;
 	const void *descptr;
 	usbd_status err;
-	char *devinfop;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s, iclass %d/%d\n", sc->sc_dev.dv_xname,
-	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
-	usbd_devinfo_free(devinfop);
+	printf("%s: iclass %d/%d\n", sc->sc_dev.dv_xname,
+	    id->bInterfaceClass, id->bInterfaceSubClass);
 
 	(void)usbd_set_idle(iface, 0, 0);
 #if 0

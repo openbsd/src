@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.55 2007/06/14 10:11:15 mbalmer Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.56 2007/10/11 18:33:14 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -524,15 +524,10 @@ kue_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct kue_softc	*sc = (struct kue_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
-	char			*devinfop;
 	usbd_device_handle	dev = uaa->device;
 	usbd_status		err;
 
 	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", sc->kue_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
 	if (err) {

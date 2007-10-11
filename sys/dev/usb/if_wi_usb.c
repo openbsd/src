@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.43 2007/09/12 18:45:14 mk Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.44 2007/10/11 18:33:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -301,7 +301,6 @@ wi_usb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wi_usb_softc	*sc = (struct wi_usb_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
-	char			*devinfop;
 /*	int			s; */
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
@@ -314,14 +313,9 @@ wi_usb_attach(struct device *parent, struct device *self, void *aux)
 
 	err = usbd_set_config_no(dev, WI_USB_CONFIG_NO, 1);
 	if (err) {
-		printf("%s: setting config no failed\n",
-		    sc->wi_usb_dev.dv_xname);
+		printf("%s: setting config no failed\n", sc->wi_usb_dev.dv_xname);
 		return;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", sc->wi_usb_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	/* XXX - any tasks? */
 

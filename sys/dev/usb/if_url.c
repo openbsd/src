@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.48 2007/06/14 10:11:15 mbalmer Exp $ */
+/*	$OpenBSD: if_url.c,v 1.49 2007/10/11 18:33:14 deraadt Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -196,16 +196,11 @@ url_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char *devinfop;
 	char *devname = sc->sc_dev.dv_xname;
 	struct ifnet *ifp;
 	struct mii_data *mii;
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, s;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", devname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, URL_CONFIG_NO, 1);

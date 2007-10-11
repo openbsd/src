@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.23 2007/10/06 23:50:55 krw Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.24 2007/10/11 18:33:15 deraadt Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -182,14 +182,9 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status err;
 	struct umidi_softc *sc = (struct umidi_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	char *devinfop;
 	int i;
 
 	DPRINTFN(1,("umidi_attach\n"));
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_iface = uaa->iface;
 	sc->sc_udev = uaa->device;

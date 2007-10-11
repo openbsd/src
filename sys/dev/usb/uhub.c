@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.47 2007/06/14 10:11:16 mbalmer Exp $ */
+/*	$OpenBSD: uhub.c,v 1.48 2007/10/11 18:33:15 deraadt Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -132,7 +132,6 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
-	char *devinfop;
 	usbd_status err;
 	struct usbd_hub *hub = NULL;
 	usb_device_request_t req;
@@ -144,10 +143,6 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf(": %s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {

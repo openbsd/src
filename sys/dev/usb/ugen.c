@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.50 2007/06/29 13:31:42 henning Exp $ */
+/*	$OpenBSD: ugen.c,v 1.51 2007/10/11 18:33:15 deraadt Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -179,13 +179,8 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 	struct ugen_softc *sc = (struct ugen_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle udev;
-	char *devinfop;
 	usbd_status err;
 	int conf;
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = udev = uaa->device;
 

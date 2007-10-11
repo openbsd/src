@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.42 2007/09/19 12:39:21 pyr Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.43 2007/10/11 18:33:15 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -210,7 +210,6 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char *devinfop;
 	char *devname = sc->sc_dev.dv_xname;
 	int i;
 	usbd_status err;
@@ -222,23 +221,19 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 		/* Move the device into the configured state. */
 		err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
 		if (err) {
-			printf("\n%s: failed to set configuration, err=%s\n",
-			       devname, usbd_errstr(err));
+			printf("%s: failed to set configuration, err=%s\n",
+			    sc->sc_dev.dv_xname, usbd_errstr(err));
 			goto bad;
 		}
 
 		err = usbd_device2interface_handle(dev, UFTDI_IFACE_INDEX, &iface);
 		if (err) {
-			printf("\n%s: failed to get interface, err=%s\n",
-			       devname, usbd_errstr(err));
+			printf("%s: failed to get interface, err=%s\n",
+			    sc->sc_dev.dv_xname, usbd_errstr(err));
 			goto bad;
 		}
 	} else
 		iface = uaa->iface;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", devname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
 

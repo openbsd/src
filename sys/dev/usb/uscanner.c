@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.35 2007/06/14 10:11:16 mbalmer Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.36 2007/10/11 18:33:15 deraadt Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -274,13 +274,8 @@ uscanner_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id = 0;
 	usb_endpoint_descriptor_t *ed, *ed_bulkin = NULL, *ed_bulkout = NULL;
-	char *devinfop;
 	int i;
 	usbd_status err;
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev_flags = uscanner_lookup(uaa->vendor, uaa->product)->flags;
 

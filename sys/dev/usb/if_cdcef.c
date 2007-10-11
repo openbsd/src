@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcef.c,v 1.17 2007/06/14 06:55:10 mbalmer Exp $	*/
+/*	$OpenBSD: if_cdcef.c,v 1.18 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -142,7 +142,6 @@ cdcef_attach(struct device *parent, struct device *self, void *aux)
 	struct cdcef_softc *sc = (struct cdcef_softc *)self;
 	struct usbf_attach_arg *uaa = aux;
 	usbf_device_handle dev = uaa->device;
-	char *devinfop;
 	struct ifnet *ifp;
 	usbf_status err;
 	usb_cdc_union_descriptor_t udesc;
@@ -154,10 +153,6 @@ cdcef_attach(struct device *parent, struct device *self, void *aux)
 	usbf_devinfo_setup(dev, UDCLASS_IN_INTERFACE, 0, 0, CDCEF_VENDOR_ID,
 	    CDCEF_PRODUCT_ID, CDCEF_DEVICE_CODE, CDCEF_VENDOR_STRING,
 	    CDCEF_PRODUCT_STRING, CDCEF_SERIAL_STRING);
-
-	devinfop = usbf_devinfo_alloc(dev);
-	printf(": %s\n", devinfop);
-	usbf_devinfo_free(devinfop);
 
 	/* Fill in the fields needed by the parent device. */
 	sc->sc_dev.methods = &cdcef_methods;

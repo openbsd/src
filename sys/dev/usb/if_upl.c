@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.39 2007/09/17 01:40:38 fgsch Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.40 2007/10/11 18:33:14 deraadt Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -235,7 +235,6 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct upl_softc	*sc = (struct upl_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
-	char			*devinfop;
 	int			s;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
@@ -246,10 +245,6 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	int			i;
 
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 1);
 	if (err) {

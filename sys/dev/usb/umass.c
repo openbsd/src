@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.53 2007/09/15 19:22:18 bluhm Exp $ */
+/*	$OpenBSD: umass.c,v 1.54 2007/10/11 18:33:15 deraadt Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -317,13 +317,8 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	const char *sWire, *sCommand;
-	char *devinfop;
 	usbd_status err;
 	int i, bno, error;
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = uaa->iface;

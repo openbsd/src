@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.62 2007/10/11 18:30:50 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.63 2007/10/11 18:33:15 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -313,7 +313,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 	}
 	bcdUSB = UGETW(udd->bcdUSB);
 	bcdDevice = UGETW(udd->bcdDevice);
-	snprintf(cp, base + len - cp, ", rev ");
+	snprintf(cp, base + len - cp, " rev ");
 	cp += strlen(cp);
 	usbd_printBCD(cp, base + len - cp, bcdUSB);
 	cp += strlen(cp);
@@ -321,7 +321,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 	cp += strlen(cp);
 	usbd_printBCD(cp, base + len - cp, bcdDevice);
 	cp += strlen(cp);
-	snprintf(cp, base + len - cp, ", addr %d", dev->address);
+	snprintf(cp, base + len - cp, " addr %d", dev->address);
 }
 
 char *
@@ -1173,14 +1173,17 @@ int
 usbd_print(void *aux, const char *pnp)
 {
 	struct usb_attach_arg *uaa = aux;
-	char devinfo[1024];
+	char *devinfop;
+
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 
 	DPRINTFN(15, ("usbd_print dev=%p\n", uaa->device));
 	if (pnp) {
-		if (!uaa->usegeneric)
+		if (!uaa->usegeneric) {
+			usbd_devinfo_free(devinfop);
 			return (QUIET);
-		usbd_devinfo(uaa->device, 1, devinfo, sizeof devinfo);
-		printf("%s, %s", devinfo, pnp);
+		}
+		printf("%s, %s", devinfop, pnp);
 	}
 	if (uaa->port != 0)
 		printf(" port %d", uaa->port);
@@ -1188,19 +1191,10 @@ usbd_print(void *aux, const char *pnp)
 		printf(" configuration %d", uaa->configno);
 	if (uaa->ifaceno != UHUB_UNK_INTERFACE)
 		printf(" interface %d", uaa->ifaceno);
-#if 0
-	/*
-	 * It gets very crowded with these locators on the attach line.
-	 * They are not really needed since they are printed in the clear
-	 * by each driver.
-	 */
-	if (uaa->vendor != UHUB_UNK_VENDOR)
-		printf(" vendor 0x%04x", uaa->vendor);
-	if (uaa->product != UHUB_UNK_PRODUCT)
-		printf(" product 0x%04x", uaa->product);
-	if (uaa->release != UHUB_UNK_RELEASE)
-		printf(" release 0x%04x", uaa->release);
-#endif
+
+	/* Display device info string */
+	printf(" %s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 	return (UNCONF);
 }
 

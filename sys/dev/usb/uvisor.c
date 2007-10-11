@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.35 2007/06/14 10:11:16 mbalmer Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.36 2007/10/11 18:33:15 deraadt Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -244,8 +244,6 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 	struct uvisor_connection_info coninfo;
 	struct uvisor_palm_connection_info palmconinfo;
 	usb_endpoint_descriptor_t *ed;
-	char *devinfop;
-	char *devname = sc->sc_dev.dv_xname;
 	int i, j, hasin, hasout, port;
 	usbd_status err;
 	struct ucom_attach_args uca;
@@ -255,21 +253,17 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UVISOR_CONFIG_INDEX, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
-		       devname, usbd_errstr(err));
+		printf(": failed to set configuration, err=%s\n",
+		    usbd_errstr(err));
 		goto bad;
 	}
 
 	err = usbd_device2interface_handle(dev, UVISOR_IFACE_INDEX, &iface);
 	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
-		       devname, usbd_errstr(err));
+		printf(": failed to get interface, err=%s\n",
+		    usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", devname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uvisor_lookup(uaa->vendor, uaa->product)->uv_flags;
 	sc->sc_vendor = uaa->vendor;

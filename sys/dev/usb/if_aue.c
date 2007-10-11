@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.66 2007/09/17 01:40:38 fgsch Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.67 2007/10/11 18:33:13 deraadt Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -714,7 +714,6 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aue_softc	*sc = (struct aue_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
-	char			*devinfop;
 	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	struct ifnet		*ifp;
@@ -727,10 +726,6 @@ aue_attach(struct device *parent, struct device *self, void *aux)
 	int			i;
 
 	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->aue_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 1);
 	if (err) {

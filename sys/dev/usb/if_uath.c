@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.30 2007/09/11 19:53:58 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.31 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -253,16 +253,11 @@ uath_attach(struct device *parent, struct device *self, void *aux)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	usbd_status error;
-	char *devinfop;
 	int i;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_uhub = uaa->device->myhub;
 	sc->sc_port = uaa->port;
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uath_lookup(uaa->vendor, uaa->product)->flags;
 

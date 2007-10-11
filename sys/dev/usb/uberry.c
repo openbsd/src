@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.14 2007/09/17 01:40:38 fgsch Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.15 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -93,15 +93,10 @@ uberry_attach(struct device *parent, struct device *self, void *aux)
 	struct uberry_softc *sc = (struct uberry_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	usb_device_descriptor_t *dd;
-	char *devinfop;
 
 	sc->sc_udev = uaa->device;
 
 	dd = usbd_get_device_descriptor(uaa->device);
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	/* Enable configuration, to keep it connected... */
 	if (usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1) != 0) {

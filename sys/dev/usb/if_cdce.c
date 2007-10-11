@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.38 2007/09/17 01:40:38 fgsch Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.39 2007/10/11 18:33:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -158,7 +158,6 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cdce_softc		*sc = (struct cdce_softc *)self;
 	struct usb_attach_arg		*uaa = aux;
-	char				*devinfop;
 	int				 s;
 	struct ifnet			*ifp;
 	usbd_device_handle		 dev = uaa->device;
@@ -175,10 +174,6 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	int				 i, j, numalts, len;
 	int				 ctl_ifcno = -1;
 	int				 data_ifcno = -1;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", sc->cdce_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->cdce_udev = uaa->device;
 	sc->cdce_ctl_iface = uaa->iface;

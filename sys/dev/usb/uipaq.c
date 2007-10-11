@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.13 2007/09/02 04:20:25 jsg Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.14 2007/10/11 18:33:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -172,7 +172,6 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char *devinfop;
 	char *devname = sc->sc_dev.dv_xname;
 	int i;
 	usbd_status err;
@@ -183,21 +182,17 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UIPAQ_CONFIG_NO, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
-		    devname, usbd_errstr(err));
+		printf(": failed to set configuration, err=%s\n",
+		    usbd_errstr(err));
 		goto bad;
 	}
 
 	err = usbd_device2interface_handle(dev, UIPAQ_IFACE_INDEX, &iface);
 	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
-		    devname, usbd_errstr(err));
+		printf(": failed to get interface, err=%s\n",
+		    usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", devname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uipaq_lookup(uaa->vendor, uaa->product)->uv_flags;
 

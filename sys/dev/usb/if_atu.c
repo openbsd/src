@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.88 2007/10/06 16:01:17 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.89 2007/10/11 18:33:13 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1254,17 +1254,12 @@ atu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atu_softc		*sc = (struct atu_softc *)self;
 	struct usb_attach_arg		*uaa = aux;
-	char				*devinfop;
 	usbd_status			err;
 	usbd_device_handle		dev = uaa->device;
 	u_int8_t			mode, channel;
 	int i;
 
 	sc->sc_state = ATU_S_UNCONFIG;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s", sc->atu_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, ATU_CONFIG_NO, 1);
 	if (err) {
@@ -1312,8 +1307,6 @@ atu_attach(struct device *parent, struct device *self, void *aux)
 	if (err || (mode != MODE_NETCARD && mode != MODE_NOFLASHNETCARD)) {
 		DPRINTF(("%s: starting internal firmware download\n",
 		    sc->atu_dev.dv_xname));
-
-		printf("\n");
 
 		if (rootvp == NULL)
 			mountroothook_establish(atu_internal_firmware, sc);
@@ -1407,7 +1400,7 @@ atu_complete_attach(struct atu_softc *sc)
 	/* read device config & get MAC address */
 	err = atu_get_card_config(sc);
 	if (err) {
-		printf("\n%s: could not get card cfg!\n",
+		printf("%s: could not get card cfg!\n",
 		    sc->atu_dev.dv_xname);
 		return;
 	}
@@ -1427,7 +1420,8 @@ atu_complete_attach(struct atu_softc *sc)
 #endif /* ATU_DEBUG */
 
 	/* Show the world our MAC address */
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
+	printf("%s: address %s\n", sc->atu_dev.dv_xname,
+	    ether_sprintf(ic->ic_myaddr));
 
 	sc->atu_cdata.atu_tx_inuse = 0;
 

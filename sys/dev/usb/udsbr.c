@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.18 2007/06/14 10:11:15 mbalmer Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.19 2007/10/11 18:33:14 deraadt Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -139,14 +139,9 @@ udsbr_attach(struct device *parent, struct device *self, void *aux)
 	struct udsbr_softc	*sc = (struct udsbr_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
 	usbd_device_handle	dev = uaa->device;
-	char			*devinfop;
 	usbd_status		err;
 
 	DPRINTFN(10,("udsbr_attach: sc=%p\n", sc));
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
 	if (err) {

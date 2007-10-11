@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.16 2007/06/19 23:59:27 jcs Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.17 2007/10/11 18:33:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -115,14 +115,10 @@ umsm_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status error;
-	char *devinfop;
 	int i;
 
 	bzero(&uca, sizeof(uca));
 	sc->sc_udev = uaa->device;
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_index(sc->sc_udev, UMSM_CONFIG_NO, 1) != 0) {
 		printf("%s: could not set configuration no\n",

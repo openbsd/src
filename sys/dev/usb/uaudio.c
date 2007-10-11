@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.53 2007/09/28 07:55:15 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.54 2007/10/11 18:33:14 deraadt Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -403,13 +403,8 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 	usb_config_descriptor_t *cdesc;
-	char *devinfop;
 	usbd_status err;
 	int i, j, found;
-
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf(": %s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
 

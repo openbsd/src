@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.32 2007/06/14 10:11:16 mbalmer Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.33 2007/10/11 18:33:15 deraadt Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -176,17 +176,14 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id, *iend;
 	usb_config_descriptor_t *cdesc;
 	usbd_status err;
-	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t epcount;
 	int i, altno;
 
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s, iclass %d/%d\n", sc->sc_dev.dv_xname,
-	       devinfop, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
-	usbd_devinfo_free(devinfop);
+	//printf("%s: iclass %d/%d\n", sc->sc_dev.dv_xname,
+	//    ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
 
 	/* XXX
 	 * Stepping through the alternate settings needs to be abstracted out.

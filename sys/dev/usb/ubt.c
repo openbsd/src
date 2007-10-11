@@ -1,4 +1,4 @@
-/* $OpenBSD: ubt.c,v 1.8 2007/06/14 10:11:15 mbalmer Exp $ */
+/* $OpenBSD: ubt.c,v 1.9 2007/10/11 18:33:14 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -307,17 +307,12 @@ ubt_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	usb_config_descriptor_t *cd;
 	usb_endpoint_descriptor_t *ed;
-	char *devinfop;
 	int err;
 	uint8_t count, i;
 
 	DPRINTFN(50, "ubt_attach: sc=%p\n", sc);
 
 	sc->sc_udev = uaa->device;
-
-	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	/*
 	 * Move the device into the configured state

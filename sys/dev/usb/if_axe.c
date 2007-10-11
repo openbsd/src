@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.78 2007/06/14 10:11:15 mbalmer Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.79 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -583,21 +583,16 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct mii_data	*mii;
 	u_char eaddr[ETHER_ADDR_LEN];
-	char *devinfop;
 	char *devname = sc->axe_dev.dv_xname;
 	struct ifnet *ifp;
 	int i, s;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n");
 
 	sc->axe_unit = self->dv_unit; /*device_get_unit(self);*/
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
-		printf("axe%d: getting interface handle failed\n",
-		    sc->axe_unit);
-		usbd_devinfo_free(devinfop);
+		printf("%s: getting interface handle failed\n",
+		    sc->axe_dev.dv_xname);
 		return;
 	}
 
@@ -609,9 +604,8 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {
-		printf("axe%d: getting interface handle failed\n",
-		    sc->axe_unit);
-		usbd_devinfo_free(devinfop);
+		printf("%s: getting interface handle failed\n",
+		    sc->axe_dev.dv_xname);
 		return;
 	}
 
@@ -620,9 +614,6 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	sc->axe_vendor = uaa->vendor;
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
-
-	printf("%s: %s", sc->axe_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	/* decide on what our bufsize will be */
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
@@ -635,7 +626,7 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->axe_iface, i);
 		if (!ed) {
-			printf(" couldn't get ep %d\n", i);
+			printf(", couldn't get ep %d\n", i);
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&

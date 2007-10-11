@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.22 2007/09/07 19:05:05 damien Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.23 2007/10/11 18:33:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -175,11 +175,9 @@ ueagle_attach(struct device *parent, struct device *self, void *aux)
 	struct ueagle_softc *sc = (struct ueagle_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct ifnet *ifp = &sc->sc_if;
-	char *devinfop;
 	uint8_t addr[ETHER_ADDR_LEN];
 
 	sc->sc_udev = uaa->device;
-	printf("\n");
 
 	/*
 	 * Pre-firmware modems must be flashed and reset first.  They will
@@ -196,10 +194,6 @@ ueagle_attach(struct device *parent, struct device *self, void *aux)
 		/* processing of pre-firmware modems ends here */
 		return;
 	}
-
-	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	printf("%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_no(sc->sc_udev, UEAGLE_CONFIG_NO, 0) != 0) {
 		printf("%s: could not set configuration no\n",

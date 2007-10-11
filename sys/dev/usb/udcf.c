@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.38 2007/06/14 10:11:15 mbalmer Exp $ */
+/*	$OpenBSD: udcf.c,v 1.39 2007/10/11 18:33:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -171,7 +171,6 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	usbd_device_handle		 dev = uaa->device;
 	usbd_interface_handle		 iface;
 	struct timeval			 t;
-	char				*devinfop;
 	usb_interface_descriptor_t	*id;
 	usbd_status			 err;
 	usb_device_request_t		 req;
@@ -179,20 +178,16 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 	int				 actlen;
 
 	if ((err = usbd_set_config_index(dev, 0, 1))) {
-		DPRINTF(("\n%s: failed to set configuration, err=%s\n",
+		DPRINTF(("%s: failed to set configuration, err=%s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err)));
 		goto fishy;
 	}
 
 	if ((err = usbd_device2interface_handle(dev, 0, &iface))) {
-		DPRINTF(("\n%s: failed to get interface, err=%s\n",
+		DPRINTF(("%s: failed to get interface, err=%s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err)));
 		goto fishy;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
 

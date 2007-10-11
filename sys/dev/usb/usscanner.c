@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.23 2007/09/17 01:40:38 fgsch Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.24 2007/10/11 18:33:15 deraadt Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -211,17 +211,12 @@ usscanner_attach(struct device *parent, struct device *self, void *aux)
 	struct scsibus_attach_args saa;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
-	char			*devinfop;
 	usbd_status		err;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t		epcount;
 	int			i;
 
 	DPRINTFN(10,("usscanner_attach: sc=%p\n", sc));
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s\n", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, USSCANNER_CONFIG_NO, 1);
 	if (err) {

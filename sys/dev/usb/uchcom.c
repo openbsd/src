@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.3 2007/09/09 06:22:05 jsg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.4 2007/10/11 18:33:14 deraadt Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -267,12 +267,7 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	struct ucom_attach_args uca;
 	usbd_device_handle dev = uaa->device;
-	char *devinfop;
 	struct uchcom_endpoints endpoints;
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	printf("\n%s: %s", sc->sc_dev.dv_xname, devinfop);
-	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
 	sc->sc_dying = 0;
@@ -286,10 +281,10 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (uaa->release) {
 	case UCHCOM_REV_CH340:
-		printf(": CH340\n");
+		printf("%s: CH340\n", sc->sc_dev.dv_xname);
 		break;
 	default:
-		printf(": CH341\n");
+		printf("%s: CH341\n", sc->sc_dev.dv_xname);
 		break;
 	}
 
