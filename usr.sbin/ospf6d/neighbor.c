@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.2 2007/10/11 18:43:42 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.3 2007/10/11 20:20:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -595,7 +595,6 @@ nbr_act_delete(struct nbr *nbr)
 	/* clear dr and bdr */
 	nbr->dr.s_addr = 0;
 	nbr->bdr.s_addr = 0;
-	nbr->crypt_seq_num = 0;
 
 	/* schedule kill timer */
 	timerclear(&tv);

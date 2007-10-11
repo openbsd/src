@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.6 2007/10/11 19:06:41 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.7 2007/10/11 20:20:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -82,7 +82,6 @@ struct nbr {
 	u_int32_t		 peerid;	/* unique ID in DB */
 	u_int32_t		 ls_req_cnt;
 	u_int32_t		 ls_ret_cnt;
-	u_int32_t		 crypt_seq_num;
 	u_int32_t		 options;
 	u_int32_t		 last_rx_options;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.5 2007/10/11 19:10:55 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.6 2007/10/11 20:20:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -327,7 +327,6 @@ struct iface {
 
 	u_int64_t		 baudrate;
 	u_int32_t		 ls_ack_cnt;
-	u_int32_t		 crypt_seq_num;
 	time_t			 uptime;
 	unsigned int		 ifindex;
 	int			 fd;
