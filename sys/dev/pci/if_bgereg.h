@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.72 2007/02/10 01:23:19 krw Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.73 2007/10/11 19:44:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2212,8 +2212,8 @@ struct bge_gib {
  * boundary.
  */
 
-#define BGE_JUMBO_FRAMELEN	9018
-#define BGE_JUMBO_MTU		(BGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+#define BGE_JUMBO_FRAMELEN	9022
+#define BGE_JUMBO_MTU		(BGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN - ETHER_VLAN_ENCAP_LEN)
 #define BGE_PAGE_SIZE		PAGE_SIZE
 
 /*
