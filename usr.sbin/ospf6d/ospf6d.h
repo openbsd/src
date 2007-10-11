@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.3 2007/10/11 19:02:47 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.4 2007/10/11 19:06:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -384,6 +384,7 @@ struct ospfd_conf {
 #define OSPFD_OPT_FORCE_DEMOTE	0x00000010
 	u_int32_t		spf_delay;
 	u_int32_t		spf_hold_time;
+	u_int32_t		options; /* OSPF options */
 	time_t			uptime;
 	int			spf_state;
 	int			ospf_socket;
