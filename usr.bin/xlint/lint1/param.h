@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.14 2006/04/03 13:55:02 espie Exp $	*/
+/*	$OpenBSD: param.h,v 1.15 2007/10/11 07:30:07 otto Exp $	*/
 /*	$NetBSD: param.h,v 1.6 1996/04/01 21:47:57 mark Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
  */
 #define WCHAR	INT
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(__PCC__)
 #ifndef lint
 #ifndef QUAD_MAX	/* necessary for mkdep */
 #define QUAD_MAX	LONG_MAX
