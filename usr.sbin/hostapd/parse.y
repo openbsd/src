@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2007/09/12 09:07:38 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2007/10/11 14:39:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -82,7 +82,7 @@ int		 yyerror(const char *, ...);
 int		 yyparse(void);
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
-int		 lgetc(void);
+int		 lgetc(int);
 int		 lungetc(int);
 int		 findeol(void);
 int		 yylex(void);
@@ -1331,7 +1331,7 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(void)
+lgetc(int inquot)
 {
 	int	c, next;
 	struct file *pfile;
@@ -1349,6 +1349,11 @@ lgetc(void)
 
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
+
+	if (inquot) {
+		c = getc(file->stream);
+		return (c);
+	}
 
 	while ((c = getc(file->stream)) == '\\') {
 		next = getc(file->stream);
@@ -1409,7 +1414,7 @@ findeol(void)
 
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc();
+		c = lgetc(0);
 		if (c == '\n') {
 			file->lineno++;
 			break;
@@ -1430,16 +1435,16 @@ yylex(void)
 
 top:
 	p = buf;
-	while ((c = lgetc()) == ' ')
+	while ((c = lgetc(0)) == ' ')
 		; /* nothing */
 
 	yylval.lineno = file->lineno;
 	if (c == '#')
-		while ((c = lgetc()) != '\n' && c != EOF)
+		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
 	if (c == '$' && parsebuf == NULL) {
 		while (1) {
-			if ((c = lgetc()) == EOF)
+			if ((c = lgetc(0)) == EOF)
 				return (0);
 
 			if (p + 1 >= buf + sizeof(buf) - 1) {
@@ -1469,7 +1474,7 @@ top:
 	case '"':
 		endc = c;
 		while (1) {
-			if ((c = lgetc()) == EOF)
+			if ((c = lgetc(1)) == EOF)
 				return (0);
 			if (c == endc) {
 				*p = '\0';
@@ -1501,7 +1506,7 @@ top:
 				yyerror("string too long");
 				return (findeol());
 			}
-		} while ((c = lgetc()) != EOF && isdigit(c));
+		} while ((c = lgetc(0)) != EOF && isdigit(c));
 		lungetc(c);
 		if (p == buf + 1 && buf[0] == '-')
 			goto nodigits;
@@ -1509,9 +1514,11 @@ top:
 			const char *errstr = NULL;
 
 			*p = '\0';
-			yylval.v.number = strtonum(buf, LLONG_MIN, LLONG_MAX, &errstr);
+			yylval.v.number = strtonum(buf, LLONG_MIN,
+			    LLONG_MAX, &errstr);
 			if (errstr) {
-				yyerror("\"%s\" invalid number: %s", buf, errstr);
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
 				return (findeol());
 			}
 			return (NUMBER);
@@ -1538,7 +1545,7 @@ nodigits:
 				yyerror("string too long");
 				return (findeol());
 			}
-		} while ((c = lgetc()) != EOF && (allowed_in_string(c)));
+		} while ((c = lgetc(0)) != EOF && (allowed_in_string(c)));
 		lungetc(c);
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
@@ -1707,7 +1714,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 		next = TAILQ_NEXT(sym, entry);
 		if (!sym->used)
 			hostapd_log(HOSTAPD_LOG_VERBOSE,
-			    "warning: macro \"%s\" not used", sym->nam);
+			    "warning: macro '%s' not used", sym->nam);
 		if (!sym->persist) {
 			free(sym->nam);
 			free(sym->val);

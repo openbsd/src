@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.208 2007/09/13 20:39:58 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.209 2007/10/11 14:39:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,7 +65,7 @@ int	 yyerror(const char *, ...);
 int	 yyparse(void);
 int	 kw_cmp(const void *, const void *);
 int	 lookup(char *);
-int	 lgetc(void);
+int	 lgetc(int);
 int	 lungetc(int);
 int	 findeol(void);
 int	 yylex(void);
@@ -1861,10 +1861,11 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(void)
+lgetc(int inquot)
 {
-	int		 c, next;
+	FILE *f = file->stream;
 	struct file	*prevfile;
+	int		c, next;
 
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
@@ -1880,8 +1881,13 @@ lgetc(void)
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
 
-	while ((c = getc(file->stream)) == '\\') {
-		next = getc(file->stream);
+	if (inquot) {
+		c = getc(f);
+		return (c);
+	}
+
+	while ((c = getc(f)) == '\\') {
+		next = getc(f);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -1892,9 +1898,9 @@ lgetc(void)
 	if (c == '\t' || c == ' ') {
 		/* Compress blanks to a single space. */
 		do {
-			c = getc(file->stream);
+			c = getc(f);
 		} while (c == '\t' || c == ' ');
-		ungetc(c, file->stream);
+		ungetc(c, f);
 		c = ' ';
 	}
 
@@ -1902,11 +1908,12 @@ lgetc(void)
 	    (prevfile = TAILQ_PREV(file, files, entry)) != NULL) {
 		prevfile->errors += file->errors;
 		TAILQ_REMOVE(&files, file, entry);
-		fclose(file->stream);
+		fclose(f);
 		free(file->name);
 		free(file);
 		file = prevfile;
-		c = getc(file->stream);
+		f = file->stream;
+		c = getc(f);
 	}
 
 	return (c);
@@ -1938,7 +1945,7 @@ findeol(void)
 
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc();
+		c = lgetc(0);
 		if (c == '\n') {
 			file->lineno++;
 			break;
@@ -1954,21 +1961,21 @@ yylex(void)
 {
 	char	 buf[8096];
 	char	*p, *val;
-	int	 endc, c;
+	int	 endc, next, c;
 	int	 token;
 
 top:
 	p = buf;
-	while ((c = lgetc()) == ' ')
+	while ((c = lgetc(0)) == ' ')
 		; /* nothing */
 
 	yylval.lineno = file->lineno;
 	if (c == '#')
-		while ((c = lgetc()) != '\n' && c != EOF)
+		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
 	if (c == '$' && parsebuf == NULL) {
 		while (1) {
-			if ((c = lgetc()) == EOF)
+			if ((c = lgetc(0)) == EOF)
 				return (0);
 
 			if (p + 1 >= buf + sizeof(buf) - 1) {
@@ -1985,7 +1992,7 @@ top:
 		}
 		val = symget(buf);
 		if (val == NULL) {
-			yyerror("macro \"%s\" not defined", buf);
+			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
 		parsebuf = val;
@@ -1998,15 +2005,21 @@ top:
 	case '"':
 		endc = c;
 		while (1) {
-			if ((c = lgetc()) == EOF)
+			if ((c = lgetc(1)) == EOF)
 				return (0);
-			if (c == endc) {
-				*p = '\0';
-				break;
-			}
 			if (c == '\n') {
 				file->lineno++;
 				continue;
+			} else if (c == '\\') {
+				if ((next = lgetc(1)) == EOF)
+					return (0);
+				if (next == endc)
+					c = next;
+				else
+					lungetc(next);
+			} else if (c == endc) {
+				*p = '\0';
+				break;
 			}
 			if (p + 1 >= buf + sizeof(buf) - 1) {
 				yyerror("string too long");
@@ -2030,7 +2043,7 @@ top:
 				yyerror("string too long");
 				return (findeol());
 			}
-		} while ((c = lgetc()) != EOF && isdigit(c));
+		} while ((c = lgetc(0)) != EOF && isdigit(c));
 		lungetc(c);
 		if (p == buf + 1 && buf[0] == '-')
 			goto nodigits;
@@ -2038,9 +2051,11 @@ top:
 			const char *errstr = NULL;
 
 			*p = '\0';
-			yylval.v.number = strtonum(buf, LLONG_MIN, LLONG_MAX, &errstr);
+			yylval.v.number = strtonum(buf, LLONG_MIN,
+			    LLONG_MAX, &errstr);
 			if (errstr) {
-				yyerror("\"%s\" invalid number: %s", buf, errstr);
+				yyerror("\"%s\" invalid number: %s",
+				    buf, errstr);
 				return (findeol());
 			}
 			return (NUMBER);
@@ -2067,7 +2082,7 @@ nodigits:
 				yyerror("string too long");
 				return (findeol());
 			}
-		} while ((c = lgetc()) != EOF && (allowed_in_string(c)));
+		} while ((c = lgetc(0)) != EOF && (allowed_in_string(c)));
 		lungetc(c);
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
