@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.71 2007/10/01 08:35:12 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.72 2007/10/11 12:19:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -60,7 +60,7 @@ struct lsa	*rde_asext_get(struct rroute *);
 struct lsa	*rde_asext_put(struct rroute *);
 
 struct lsa	*orig_asext_lsa(struct rroute *, u_int16_t);
-struct lsa	*orig_sum_lsa(struct rt_node *, u_int8_t, int);
+struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
 
 struct ospfd_conf	*rdeconf = NULL, *nconf = NULL;
 struct imsgbuf		*ibuf_ospfe;
@@ -1093,7 +1093,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 
 	/* update lsa but only if it was changed */
 	v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
-	lsa = orig_sum_lsa(rte, type, rte->invalid);
+	lsa = orig_sum_lsa(rte, area, type, rte->invalid);
 	lsa_merge(rde_nbr_self(area), lsa, v);
 
 	if (v == NULL)
@@ -1123,7 +1123,7 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 
 	/* LSA header */
 	lsa->hdr.age = htons(age);
-	lsa->hdr.opts = rdeconf->options;	/* XXX not updated */
+	lsa->hdr.opts = area_ospf_options(NULL);
 	lsa->hdr.type = LSA_TYPE_EXTERNAL;
 	lsa->hdr.adv_rtr = rdeconf->rtr_id.s_addr;
 	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);
@@ -1158,7 +1158,7 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 }
 
 struct lsa *
-orig_sum_lsa(struct rt_node *rte, u_int8_t type, int invalid)
+orig_sum_lsa(struct rt_node *rte, struct area *area, u_int8_t type, int invalid)
 {
 	struct lsa	*lsa;
 	u_int16_t	 len;
@@ -1169,7 +1169,7 @@ orig_sum_lsa(struct rt_node *rte, u_int8_t type, int invalid)
 
 	/* LSA header */
 	lsa->hdr.age = htons(invalid ? MAX_AGE : DEFAULT_AGE);
-	lsa->hdr.opts = rdeconf->options;	/* XXX not updated */
+	lsa->hdr.opts = area_ospf_options(area);
 	lsa->hdr.type = type;
 	lsa->hdr.adv_rtr = rdeconf->rtr_id.s_addr;
 	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);

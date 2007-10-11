@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.70 2007/09/25 11:25:41 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.71 2007/10/11 12:19:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -407,7 +407,6 @@ struct ospfd_conf {
 	int			spf_state;
 	int			ospf_socket;
 	int			flags;
-	int			options; /* OSPF options */
 	u_int8_t		rfc1583compat;
 	u_int8_t		border;
 	u_int8_t		redistribute;
@@ -555,6 +554,7 @@ int		 area_del(struct area *);
 struct area	*area_find(struct ospfd_conf *, struct in_addr);
 void		 area_track(struct area *, int);
 int		 area_border_router(struct ospfd_conf *);
+u_int8_t	 area_ospf_options(struct area *);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);

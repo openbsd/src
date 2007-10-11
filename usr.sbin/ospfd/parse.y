@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.52 2007/10/01 08:35:12 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.53 2007/10/11 12:19:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -918,7 +918,6 @@ parse_config(char *filename, int opts)
 	defs->metric = DEFAULT_METRIC;
 	defs->priority = DEFAULT_PRIORITY;
 
-	conf->options = OSPF_OPTION_E;
 	conf->spf_delay = DEFAULT_SPF_DELAY;
 	conf->spf_hold_time = DEFAULT_SPF_HOLDTIME;
 	conf->spf_state = SPF_IDLE;

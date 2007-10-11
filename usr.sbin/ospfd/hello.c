@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.13 2006/03/09 14:16:34 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.14 2007/10/11 12:19:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -75,7 +75,7 @@ send_hello(struct iface *iface)
 	/* hello header */
 	hello.mask = iface->mask.s_addr;
 	hello.hello_interval = htons(iface->hello_interval);
-	hello.opts = oeconf->options;
+	hello.opts = area_ospf_options(iface->area);
 	hello.rtr_priority = iface->priority;
 	hello.rtr_dead_interval = htonl(iface->dead_interval);
 

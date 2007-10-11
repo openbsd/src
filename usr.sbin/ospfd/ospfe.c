@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.58 2007/10/01 08:35:12 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.59 2007/10/11 12:19:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -895,7 +895,7 @@ orig_rtr_lsa(struct area *area)
 	 * Set the E bit as soon as an as-ext lsa may be redistributed, only
 	 * setting it in case we redistribute something is not worth the fuss.
 	 */
-	if (oeconf->redistribute && (oeconf->options & OSPF_OPTION_E))
+	if (oeconf->redistribute && !area->stub)
 		lsa_rtr.flags |= OSPF_RTR_E;
 
 	border = (area_border_router(oeconf) != 0);
@@ -918,7 +918,7 @@ orig_rtr_lsa(struct area *area)
 
 	/* LSA header */
 	lsa_hdr.age = htons(DEFAULT_AGE);
-	lsa_hdr.opts = oeconf->options;		/* XXX */
+	lsa_hdr.opts = area_ospf_options(area);
 	lsa_hdr.type = LSA_TYPE_ROUTER;
 	lsa_hdr.ls_id = oeconf->rtr_id.s_addr;
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
@@ -982,7 +982,7 @@ orig_net_lsa(struct iface *iface)
 	else
 		lsa_hdr.age = htons(MAX_AGE);
 
-	lsa_hdr.opts = oeconf->options;		/* XXX */
+	lsa_hdr.opts = area_ospf_options(iface->area);
 	lsa_hdr.type = LSA_TYPE_NETWORK;
 	lsa_hdr.ls_id = iface->addr.s_addr;
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
