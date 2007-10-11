@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.38 2007/09/11 16:01:22 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.39 2007/10/11 12:03:37 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -295,8 +295,7 @@ show_summary_msg(struct imsg *imsg)
 	case IMSG_CTL_SHOW_SUM:
 		sum = imsg->data;
 		printf("Router ID: %s\n", inet_ntoa(sum->rtr_id));
-		printf("Uptime: %s\n", sum->uptime == 0 ? "00:00:00" :
-		    fmt_timeframe_core(sum->uptime));
+		printf("Uptime: %s\n", fmt_timeframe_core(sum->uptime));
 		printf("RFC1583 compatibility flag is ");
 		if (sum->rfc1583compat)
 			printf("enabled\n");
@@ -362,12 +361,10 @@ show_interface_msg(struct imsg *imsg)
 			err(1, NULL);
 		printf("%-11s %-18s %-6s %-10s %-10s %s %3d %3d\n",
 		    iface->name, netid, if_state_name(iface->state),
-		    iface->hello_timer < 0 ? "stopped" :
 		    fmt_timeframe_core(iface->hello_timer),
 		    get_linkstate(get_ifms_type(iface->mediatype),
-		    iface->linkstate), iface->uptime == 0 ? "00:00:00" :
-		    fmt_timeframe_core(iface->uptime), iface->nbr_cnt,
-		    iface->adj_cnt);
+		    iface->linkstate), fmt_timeframe_core(iface->uptime),
+		    iface->nbr_cnt, iface->adj_cnt);
 		free(netid);
 		break;
 	case IMSG_CTL_END:
@@ -421,8 +418,7 @@ show_interface_detail_msg(struct imsg *imsg)
 		else
 			printf("    Hello timer due in %s\n",
 			    fmt_timeframe_core(iface->hello_timer));
-		printf("    Uptime %s\n", iface->uptime == 0 ?
-		    "00:00:00" : fmt_timeframe_core(iface->uptime));
+		printf("    Uptime %s\n", fmt_timeframe_core(iface->uptime));
 		printf("  Neighbor count is %d, adjacent neighbor count is "
 		    "%d\n", iface->nbr_cnt, iface->adj_cnt);
 		if (iface->auth_type > 0) {
@@ -482,7 +478,7 @@ fmt_timeframe_core(time_t t)
 	unsigned	 sec, min, hrs, day, week;
 
 	if (t == 0)
-		return ("Stopped");
+		return ("00:00:00");
 
 	buf = tfbuf[idx++];
 	if (idx == TF_BUFS)
