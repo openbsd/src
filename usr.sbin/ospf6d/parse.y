@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2007/10/11 19:02:47 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2007/10/11 21:29:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -446,32 +446,14 @@ areaoptsl	: interface
 interface	: INTERFACE STRING	{
 			struct kif	*kif;
 			struct kif_addr	*ka = NULL;
-			char		*s;
-			struct in6_addr	 addr;
 
-			s = strchr($2, ':');
-			if (s) {
-				*s++ = '\0';
-				if (inet_pton(AF_INET6, s, &addr) == 0) {
-					yyerror(
-					    "error parsing interface address");
-					free($2);
-					YYERROR;
-				}
-			} else
-				bzero(&addr, sizeof(addr));
-
-			if ((kif = kif_findname($2, &addr, &ka)) == NULL) {
+			if ((kif = kif_findname($2, &ka)) == NULL) {
 				yyerror("unknown interface %s", $2);
 				free($2);
 				YYERROR;
 			}
 			if (ka == NULL) {
-				if (s)
-					yyerror("address %s not configured on "
-					    "interface %s", s, $2);
-				else
-					yyerror("unnumbered interface %s", $2);
+				yyerror("unnumbered interface %s", $2);
 				free($2);
 				YYERROR;
 			}

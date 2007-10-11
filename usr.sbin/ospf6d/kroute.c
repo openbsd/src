@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.2 2007/10/10 14:06:03 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.3 2007/10/11 21:29:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -658,7 +658,7 @@ kif_find(u_short ifindex)
 }
 
 struct kif *
-kif_findname(char *ifname, struct in6_addr *addr, struct kif_addr **kap)
+kif_findname(char *ifname, struct kif_addr **kap)
 {
 	struct kif_node	*kif;
 	struct kif_addr	*ka;
@@ -666,12 +666,6 @@ kif_findname(char *ifname, struct in6_addr *addr, struct kif_addr **kap)
 	RB_FOREACH(kif, kif_tree, &kit)
 		if (!strcmp(ifname, kif->k.ifname)) {
 			ka = TAILQ_FIRST(&kif->addrs);
-			if (!IN6_IS_ADDR_UNSPECIFIED(addr)) {
-				TAILQ_FOREACH(ka, &kif->addrs, entry) {
-					if (IN6_ARE_ADDR_EQUAL(addr, &ka->addr))
-						break;
-				}
-			}
 			if (kap != NULL)
 				*kap = ka;
 			return (&kif->k);
