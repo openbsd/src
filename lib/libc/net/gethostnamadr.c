@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.71 2007/05/16 04:14:23 ray Exp $ */
+/*	$OpenBSD: gethostnamadr.c,v 1.72 2007/10/11 18:36:41 jakob Exp $ */
 /*-
  * Copyright (c) 1985, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -238,7 +238,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 		cp += INT16SZ;			/* len */
 		if (cp >= eom)
 			break;
-		if (type == T_SIG) {
+		if (type == T_SIG || type == T_RRSIG) {
 			/* XXX - ignore signatures as we don't use them yet */
 			cp += n;
 			continue;

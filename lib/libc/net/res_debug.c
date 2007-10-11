@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.21 2005/08/06 20:30:04 espie Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.22 2007/10/11 18:36:41 jakob Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -751,6 +751,7 @@ __p_rr(const u_char *cp, const u_char *msg, FILE *file)
 		break;
 
 	case T_SIG:
+	case T_RRSIG:
 	        type = _getshort((u_char*)cp);
 		cp += INT16SZ;
 		fprintf(file, " %s", p_type(type));
