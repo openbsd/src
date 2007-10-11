@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.8 2007/10/10 16:04:17 deraadt Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.9 2007/10/11 06:04:57 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -385,7 +385,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 				p_clk += 50;
 			p_clk -= p_clk % 100;
 		}
-		printf(" %s%d", ddr_type_string, p_clk);
+		printf(" %s-%d", ddr_type_string, p_clk);
 	}
 
 	/* Print CAS latency */
