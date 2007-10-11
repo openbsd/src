@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.33 2007/06/18 11:37:04 mbalmer Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.34 2007/10/11 18:30:50 deraadt Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -45,6 +45,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -72,9 +73,13 @@ usbd_status usbd_open_pipe_ival(usbd_interface_handle, u_int8_t, u_int8_t,
 
 int usbd_nbuses = 0;
 
+struct rwlock usbpalock;
+
 void
 usbd_init(void)
 {
+	if (usbd_nbuses == 0)
+		rw_init(&usbpalock, "usbpalock");
 	usbd_nbuses++;
 }
 

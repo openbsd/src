@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.61 2007/10/06 23:50:55 krw Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.62 2007/10/11 18:30:50 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -46,6 +46,7 @@
 #include <sys/device.h>
 #include <sys/selinfo.h>
 #include <sys/proc.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -833,6 +834,9 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 	usbd_status err;
 	struct device *dv;
 	usbd_interface_handle *ifaces;
+	extern struct rwlock usbpalock;
+
+	rw_enter_write(&usbpalock);
 
 	uaa.device = dev;
 	uaa.iface = NULL;
@@ -847,15 +851,18 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 	uaa.release = UGETW(dd->bcdDevice);
 
 	/* First try with device specific drivers. */
-	DPRINTF(("usbd_probe_and_attach: trying device specific drivers\n"));
+	DPRINTF(("usbd_probe_and_attach trying device specific drivers\n"));
 	dv = config_found_sm(parent, &uaa, usbd_print, usbd_submatch);
 	if (dv) {
 		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
-		if (dev->subdevs == NULL)
-			return (USBD_NOMEM);
+		if (dev->subdevs == NULL) {
+			err = USBD_NOMEM;
+			goto fail;
+		}
 		dev->subdevs[0] = dv;
 		dev->subdevs[1] = 0;
-		return (USBD_NORMAL_COMPLETION);
+		err = USBD_NORMAL_COMPLETION;
+		goto fail;
 	}
 
 	DPRINTF(("usbd_probe_and_attach: no device specific driver found\n"));
@@ -877,14 +884,16 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 			    parent->dv_xname, port, addr);
 #endif
 
- 			return (err);
+ 			goto fail;
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		uaa.configno = dev->cdesc->bConfigurationValue;
 		ifaces = malloc(nifaces * sizeof(usbd_interface_handle),
 		    M_USB, M_NOWAIT);
-		if (ifaces == NULL)
-			return (USBD_NOMEM);
+		if (ifaces == NULL) {
+			err = USBD_NOMEM;
+			goto fail;
+		}
 		for (i = 0; i < nifaces; i++)
 			ifaces[i] = &dev->ifaces[i];
 		uaa.ifaces = ifaces;
@@ -893,7 +902,8 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 		dev->subdevs = malloc(len, M_USB, M_NOWAIT | M_ZERO);
 		if (dev->subdevs == NULL) {
 			free(ifaces, M_USB);
-			return (USBD_NOMEM);
+			err = USBD_NOMEM;
+			goto fail;
 		}
 
 		found = 0;
@@ -912,7 +922,8 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 		}
 		free(ifaces, M_USB);
 		if (found != 0) {
-			return (USBD_NORMAL_COMPLETION);
+			err = USBD_NORMAL_COMPLETION;
+			goto fail;
 		}
 		free(dev->subdevs, M_USB);
 		dev->subdevs = 0;
@@ -932,11 +943,14 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 	dv = config_found_sm(parent, &uaa, usbd_print, usbd_submatch);
 	if (dv != NULL) {
 		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
-		if (dev->subdevs == 0)
-			return (USBD_NOMEM);
+		if (dev->subdevs == 0) {
+			err = USBD_NOMEM;
+			goto fail;
+		}
 		dev->subdevs[0] = dv;
 		dev->subdevs[1] = 0;
-		return (USBD_NORMAL_COMPLETION);
+		err = USBD_NORMAL_COMPLETION;
+		goto fail;
 	}
 
 	/*
@@ -945,7 +959,10 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 	 * fully operational and not harming anyone.
 	 */
 	DPRINTF(("usbd_probe_and_attach: generic attach failed\n"));
- 	return (USBD_NORMAL_COMPLETION);
+ 	err = USBD_NORMAL_COMPLETION;
+fail:
+	rw_exit_write(&usbpalock);
+	return (err);
 }
 
 
