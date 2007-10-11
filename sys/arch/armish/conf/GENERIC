@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.18 2007/10/08 12:56:37 deraadt Exp $ 
+# $OpenBSD: GENERIC,v 1.19 2007/10/11 17:28:31 sthen Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -36,6 +36,10 @@ obio0		at mainbus?
 
 # On-board 16550 UART
 com0		at obio? addr 0xfe800000 xint 3
+
+puc*	at pci?			# PCI "universal" communication device
+com*	at puc?
+lpt*	at puc?
 
 # i80321 I/O Processor peripheral support
 iopxs0	at mainbus?
