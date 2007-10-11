@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.13 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.14 2007/10/11 10:34:08 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -295,20 +295,6 @@ updatepri(struct proc *p)
 	}
 	resetpriority(p);
 }
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-void
-sched_unlock_idle(void)
-{
-	SIMPLE_UNLOCK(&sched_lock);
-}
-
-void
-sched_lock_idle(void)
-{
-	SIMPLE_LOCK(&sched_lock);
-}
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
 
 /*
  * General yield call.  Puts the current process back on its run queue and

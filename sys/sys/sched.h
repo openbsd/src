@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.17 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.18 2007/10/11 10:34:08 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -190,10 +190,6 @@ do {									\
 	__mp_unlock(&sched_lock);					\
 	splx(s);							\
 } while (/* CONSTCOND */ 0)
-
-
-void	sched_lock_idle(void);
-void	sched_unlock_idle(void);
 
 #else /* ! MULTIPROCESSOR || LOCKDEBUG */
 
