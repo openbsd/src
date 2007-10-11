@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.4 2007/10/11 20:20:44 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.5 2007/10/11 21:25:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -200,7 +200,6 @@ if_new(struct kif *kif, struct kif_addr *ka)
 
 	/* set address, mask and p2p addr */
 	iface->addr = ka->addr;
-	iface->mask = ka->mask;
 	if (kif->flags & IFF_POINTOPOINT) {
 		iface->dst = ka->dstbrd;
 	}
@@ -593,7 +592,6 @@ if_to_ctl(struct iface *iface)
 
 	memcpy(ictl.name, iface->name, sizeof(ictl.name));
 	memcpy(&ictl.addr, &iface->addr, sizeof(ictl.addr));
-	memcpy(&ictl.mask, &iface->mask, sizeof(ictl.mask));
 	ictl.rtr_id.s_addr = ospfe_router_id();
 	memcpy(&ictl.area, &iface->area->id, sizeof(ictl.area));
 	if (iface->dr) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.2 2007/10/11 19:02:47 claudio Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.3 2007/10/11 21:25:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -781,7 +781,6 @@ merge_interfaces(struct area *a, struct area *xa)
 		    ospfd_process, inet_ntoa(a->id), i->name);
 		i->addr = xi->addr;
 		i->dst = xi->dst;
-		i->mask = xi->mask;
 		i->abr_id = xi->abr_id;
 		i->baudrate = xi->baudrate;
 		i->dead_interval = xi->dead_interval;
