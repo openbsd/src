@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.2 2007/10/11 19:02:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.3 2007/10/11 20:01:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -293,7 +293,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				break;
 
-			lsa_snap(nbr->area, imsg.hdr.peerid);
+//XXX needs work
+//XXX			lsa_snap(nbr->area, imsg.hdr.peerid);
 
 			imsg_compose(ibuf_ospfe, IMSG_DB_END, imsg.hdr.peerid,
 			    0, NULL, 0);
@@ -304,6 +305,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				break;
 
 			buf = imsg.data;
+#if 0	/* XXX does not work yet */
 			for (l = imsg.hdr.len - IMSG_HEADER_SIZE;
 			    l >= sizeof(lsa_hdr); l -= sizeof(lsa_hdr)) {
 				memcpy(&lsa_hdr, buf, sizeof(lsa_hdr));
@@ -331,6 +333,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				log_warnx("rde_dispatch_imsg: peerid %lu, "
 				    "trailing garbage in Database Description "
 				    "packet", imsg.hdr.peerid);
+#endif
 
 			imsg_compose(ibuf_ospfe, IMSG_DD_END, imsg.hdr.peerid,
 			    0, NULL, 0);

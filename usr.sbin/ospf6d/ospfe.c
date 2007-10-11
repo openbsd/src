@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.3 2007/10/11 19:02:47 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.4 2007/10/11 20:01:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -690,6 +690,7 @@ orig_rtr_lsa_all(struct area *area)
 void
 orig_rtr_lsa(struct area *area)
 {
+#if 0 /* XXX needs work */
 	struct lsa_hdr		 lsa_hdr;
 	struct lsa_rtr		 lsa_rtr;
 	struct lsa_rtr_link	 rtr_link;
@@ -935,11 +936,13 @@ XXX*/
 		    inet_ntoa(area->id));
 
 	buf_free(buf);
+#endif
 }
 
 void
 orig_net_lsa(struct iface *iface)
 {
+#if 0	/* XXX needs work */
 	struct lsa_hdr		 lsa_hdr;
 	struct nbr		*nbr;
 	struct buf		*buf;
@@ -994,6 +997,7 @@ orig_net_lsa(struct iface *iface)
 	    buf->buf, buf->wpos);
 
 	buf_free(buf);
+#endif
 }
 
 u_int32_t
