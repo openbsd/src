@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.2 2007/10/10 14:09:25 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.3 2007/10/11 18:43:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,6 +45,7 @@ send_db_description(struct nbr *nbr)
 	struct lsa_entry	*le, *nle;
 	struct buf		*buf;
 	int			 ret = 0;
+	u_int8_t		 bits = 0;
 
 	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_db_description");
@@ -69,23 +70,24 @@ send_db_description(struct nbr *nbr)
 		ret = -1;
 		goto done;
 	case NBR_STA_XSTRT:
-		nbr->options |= OSPF_DBD_MS | OSPF_DBD_M | OSPF_DBD_I;
+		bits |= OSPF_DBD_MS | OSPF_DBD_M | OSPF_DBD_I;
+		nbr->dd_more = 1;
 		break;
 	case NBR_STA_XCHNG:
-		if (nbr->master) {
-			/* master */
-			nbr->options |= OSPF_DBD_MS;
+		if (nbr->dd_master)
+			bits |= OSPF_DBD_MS;
+		else
+			bits &= ~OSPF_DBD_MS;
+
+		if (TAILQ_EMPTY(&nbr->db_sum_list)) {
+			bits &= ~OSPF_DBD_M;
+			nbr->dd_more = 0;
 		} else {
-			/* slave */
-			nbr->options &= ~OSPF_DBD_MS;
+			bits |= OSPF_DBD_M;
+			nbr->dd_more = 1;
 		}
 
-		if (TAILQ_EMPTY(&nbr->db_sum_list))
-			nbr->options &= ~OSPF_DBD_M;
-		else
-			nbr->options |= OSPF_DBD_M;
-
-		nbr->options &= ~OSPF_DBD_I;
+		bits &= ~OSPF_DBD_I;
 
 		/* build LSA list, keep space for a possible md5 sum */
 		for (le = TAILQ_FIRST(&nbr->db_sum_list); le != NULL &&
@@ -98,16 +100,14 @@ send_db_description(struct nbr *nbr)
 		break;
 	case NBR_STA_LOAD:
 	case NBR_STA_FULL:
-		if (nbr->master) {
-			/* master */
-			nbr->options |= OSPF_DBD_MS;
-		} else {
-			/* slave */
-			nbr->options &= ~OSPF_DBD_MS;
-		}
-		nbr->options &= ~OSPF_DBD_M;
-		nbr->options &= ~OSPF_DBD_I;
+		if (nbr->dd_master)
+			bits |= OSPF_DBD_MS;
+		else
+			bits &= ~OSPF_DBD_MS;
+		bits &= ~OSPF_DBD_M;
+		bits &= ~OSPF_DBD_I;
 
+		nbr->dd_more = 0;
 		break;
 	default:
 		fatalx("send_db_description: unknown neighbor state");
@@ -135,7 +135,7 @@ send_db_description(struct nbr *nbr)
 	}
 
 	dd_hdr.opts = oeconf->options;
-	dd_hdr.bits = nbr->options;
+	dd_hdr.bits = bits;
 	dd_hdr.dd_seq_num = htonl(nbr->dd_seq_num);
 
 	memcpy(buf_seek(buf, sizeof(struct ospf_hdr), sizeof(dd_hdr)),
@@ -181,7 +181,8 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 
 	if (nbr->last_rx_options == dd_hdr.opts &&
 	    nbr->last_rx_bits == dd_hdr.bits &&
-	    ntohl(dd_hdr.dd_seq_num) == nbr->dd_seq_num - nbr->master ? 1 : 0) {
+	    ntohl(dd_hdr.dd_seq_num) == nbr->dd_seq_num - nbr->dd_master ?
+	    1 : 0) {
 			log_debug("recv_db_description: dupe");
 			dupe = 1;
 	}
@@ -213,7 +214,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 			if ((ntohl(nbr->id.s_addr)) >
 			    ntohl(ospfe_router_id())) {
 				/* slave */
-				nbr->master = 0;
+				nbr->dd_master = 0;
 				nbr->dd_seq_num = ntohl(dd_hdr.dd_seq_num);
 
 				/* event negotiation done */
@@ -251,7 +252,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 	case NBR_STA_LOAD:
 	case NBR_STA_FULL:
 		if (dd_hdr.bits & OSPF_DBD_I ||
-		    !(dd_hdr.bits & OSPF_DBD_MS) == !nbr->master) {
+		    !(dd_hdr.bits & OSPF_DBD_MS) == !nbr->dd_master) {
 			log_warnx("recv_db_description: seq num mismatch, "
 			    "bad flags");
 			nbr_fsm(nbr, NBR_EVT_SEQ_NUM_MIS);
@@ -266,7 +267,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 		}
 
 		if (dupe) {
-			if (!nbr->master)
+			if (!nbr->dd_master)
 				/* retransmit */
 				start_db_tx_timer(nbr);
 			return;
@@ -281,7 +282,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 		}
 
 		/* sanity check dd seq number */
-		if (nbr->master) {
+		if (nbr->dd_master) {
 			/* master */
 			if (ntohl(dd_hdr.dd_seq_num) != nbr->dd_seq_num) {
 				log_warnx("recv_db_description: invalid "
@@ -316,7 +317,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 
 		if (!(dd_hdr.bits & OSPF_DBD_M) &&
 		    TAILQ_EMPTY(&nbr->db_sum_list))
-			if (!nbr->master || !(nbr->options & OSPF_DBD_M))
+			if (!nbr->dd_master || !nbr->dd_more)
 				nbr_fsm(nbr, NBR_EVT_XCHNG_DONE);
 		break;
 	default:
@@ -386,7 +387,7 @@ db_tx_timer(int fd, short event, void *arg)
 	}
 
 	/* reschedule db_tx_timer but only in master mode */
-	if (nbr->master) {
+	if (nbr->dd_master) {
 		timerclear(&tv);
 		tv.tv_sec = nbr->iface->rxmt_interval;
 		if (evtimer_add(&nbr->db_tx_timer, &tv) == -1)
