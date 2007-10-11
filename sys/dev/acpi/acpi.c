@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.91 2007/10/08 04:15:15 krw Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.92 2007/10/11 16:48:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -295,18 +295,41 @@ acpi_foundprt(struct aml_node *node, void *arg)
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
 	struct acpi_attach_args	aaa;
+	struct aml_value	res;
+	int st = 0;
 
 	dnprintf(10, "found prt entry: %s\n", node->parent->name);
 
-	memset(&aaa, 0, sizeof(aaa));
-	aaa.aaa_iot = sc->sc_iot;
-	aaa.aaa_memt = sc->sc_memt;
-	aaa.aaa_node = node;
-	aaa.aaa_dev = dev;
-	aaa.aaa_name = "acpiprt";
+	/* Default value */
+	st = STA_PRESENT|STA_ENABLED;
+	st |= STA_SHOW_UI|STA_DEV_OK;
+	st |= STA_BATTERY;
 
-	config_found(self, &aaa, acpi_print);
+	/* Evaluate _STA to decide _PRT fate and walk fate */
+	if (!aml_evalname(sc, node, "_STA", 0, NULL, &res))
+		st = (int)aml_val2int(&res);
+	aml_freevalue(&res);
 
+	if (st & STA_PRESENT) {
+		memset(&aaa, 0, sizeof(aaa));
+		aaa.aaa_iot = sc->sc_iot;
+		aaa.aaa_memt = sc->sc_memt;
+		aaa.aaa_node = node;
+		aaa.aaa_dev = dev;
+		aaa.aaa_name = "acpiprt";
+
+		config_found(self, &aaa, acpi_print);
+	}
+
+	/* If we are functioning, we walk/search our children */
+	if(st & STA_DEV_OK)
+		return 0;
+
+	/* If we are not enabled, or not present, terminate search */
+	if (!(st & (STA_PRESENT|STA_ENABLED)))
+		return 1;
+
+	/* Default just continue search */
 	return 0;
 }
 
