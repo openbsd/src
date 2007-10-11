@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.2 2007/10/09 06:17:40 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.3 2007/10/11 19:02:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -892,7 +892,7 @@ XXX*/
 	 * Set the E bit as soon as an as-ext lsa may be redistributed, only
 	 * setting it in case we redistribute something is not worth the fuss.
 	 */
-	if (oeconf->redistribute && (oeconf->options & OSPF_OPTION_E))
+	if (oeconf->redistribute && !area->stub)
 		lsa_rtr.flags |= OSPF_RTR_E;
 
 	border = (area_border_router(oeconf) != 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.4 2007/10/10 14:09:25 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.5 2007/10/11 19:02:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -43,6 +43,7 @@ send_hello(struct iface *iface)
 	struct nbr		*nbr;
 	struct buf		*buf;
 	int			 ret;
+	u_int32_t		 opts;
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
@@ -73,10 +74,10 @@ send_hello(struct iface *iface)
 	hello.iface_id = iface->ifindex;
 	hello.rtr_priority = iface->priority;
 
-	/* XXX options */
-	hello.opts1 = 0;
-	hello.opts2 = 0;
-	hello.opts3 = OSPF_OPTION_V6 | OSPF_OPTION_E | OSPF_OPTION_R; /* XXX */
+	opts = area_ospf_options(iface->area);
+	hello.opts1 = (opts >> 16) & 0xff;
+	hello.opts2 = (opts >> 8) & 0xff;
+	hello.opts3 = opts & 0xff;
 
 	hello.hello_interval = htons(iface->hello_interval);
 	hello.rtr_dead_interval = htons(iface->dead_interval);
@@ -204,9 +205,8 @@ XXX
 	}
 
 	/* actually the neighbor address shouldn't be stored on virtual links */
-//XXX	nbr->addr.s_addr = src.s_addr;
 	nbr->addr = *src;
-	nbr->options = hello.opts3;	/* XXX */
+	nbr->options = (hello.opts1 << 16) | (hello.opts2 << 8) | hello.opts3;
 
 	nbr_fsm(nbr, NBR_EVT_HELLO_RCVD);
 

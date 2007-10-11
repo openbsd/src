@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.2 2007/10/09 06:12:04 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.3 2007/10/11 19:02:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -388,7 +388,6 @@ struct ospfd_conf {
 	int			spf_state;
 	int			ospf_socket;
 	int			flags;
-	int			options; /* OSPF options */
 	u_int8_t		border;
 	u_int8_t		redistribute;
 };
@@ -484,10 +483,10 @@ struct ctl_nbr {
 	u_int32_t		 ls_req_lst_cnt;
 	u_int32_t		 ls_retrans_lst_cnt;
 	u_int32_t		 state_chng_cnt;
+	u_int32_t		 options;
 	int			 nbr_state;
 	int			 iface_state;
 	u_int8_t		 priority;
-	u_int8_t		 options;
 };
 
 struct ctl_rt {
@@ -532,6 +531,7 @@ int		 area_del(struct area *);
 struct area	*area_find(struct ospfd_conf *, struct in_addr);
 void		 area_track(struct area *, int);
 int		 area_border_router(struct ospfd_conf *);
+u_int32_t	 area_ospf_options(struct area *);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);

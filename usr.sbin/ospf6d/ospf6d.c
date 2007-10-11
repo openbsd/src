@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.1 2007/10/08 10:44:50 norby Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.2 2007/10/11 19:02:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -529,10 +529,6 @@ int
 ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 {
 	struct redistribute	*r;
-
-	/* stub area router? */
-	if ((ospfd_conf->options & OSPF_OPTION_E) == 0)
-		return (0);
 
 	/* only allow 0.0.0.0/0 via REDISTRIBUTE_DEFAULT */
 	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
