@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.5 2007/10/11 19:02:47 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.6 2007/10/11 19:21:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -74,7 +74,7 @@ send_hello(struct iface *iface)
 	hello.iface_id = iface->ifindex;
 	hello.rtr_priority = iface->priority;
 
-	opts = area_ospf_options(iface->area);
+	opts = ntohl(area_ospf_options(iface->area));
 	hello.opts1 = (opts >> 16) & 0xff;
 	hello.opts2 = (opts >> 8) & 0xff;
 	hello.opts3 = opts & 0xff;
