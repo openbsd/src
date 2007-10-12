@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.1 2007/10/12 08:22:53 norby Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.2 2007/10/12 09:23:37 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -128,9 +128,9 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, NULL, 0);
 		break;
 	case SHOW_IFACE:
-		printf("%-11s %-18s %-6s %-10s %-10s %-8s %3s %3s\n",
+		printf("%-11s %-29s %-6s %-10s %-10s %-8s\n",
 		    "Interface", "Address", "State", "HelloTimer", "Linkstate",
-		    "Uptime", "nc", "ac");
+		    "Uptime");
 	case SHOW_IFACE_DTAIL:
 		if (*res->ifname) {
 			ifidx = if_nametoindex(res->ifname);
@@ -354,13 +354,11 @@ show_interface_msg(struct imsg *imsg)
 
 		if (asprintf(&netid, "%s", log_in6addr(&iface->addr)) == -1)
 			err(1, NULL);
-		printf("%-11s %-18s %-6s %-10s %-10s %s %3d %3d\n",
+		printf("%-11s %-29s %-6s %-10s %-10s %s\n",
 		    iface->name, netid, if_state_name(iface->state),
 		    fmt_timeframe_core(iface->hello_timer),
 		    get_linkstate(get_ifms_type(iface->mediatype),
-		    iface->linkstate), fmt_timeframe_core(iface->uptime),
-		    iface->nbr_cnt,
-		    iface->adj_cnt);
+		    iface->linkstate), fmt_timeframe_core(iface->uptime));
 		free(netid);
 		break;
 	case IMSG_CTL_END:
