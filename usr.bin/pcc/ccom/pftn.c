@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.2 2007/10/07 18:34:41 otto Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.3 2007/10/12 17:03:14 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -2046,7 +2046,7 @@ bad:
 static NODE *
 builtin_va_arg(NODE *f, NODE *a)
 {
-	NODE *p, *q, *r;
+	NODE *p, *q, *r, *rv;
 	int sz, nodnum;
 
 	/* check num args and type */
@@ -2058,15 +2058,15 @@ builtin_va_arg(NODE *f, NODE *a)
 	p = tcopy(a->n_left);
 	q = tempnode(0, p->n_type, p->n_df, p->n_sue);
 	nodnum = q->n_lval;
-	ecomp(buildtree(ASSIGN, q, p)); /* done! */
+	rv = buildtree(ASSIGN, q, p);
 
 	r = a->n_right;
 	sz = tsize(r->n_type, r->n_df, r->n_sue)/SZCHAR;
 	/* add one to ap */
 #ifdef BACKAUTO
-	ecomp(buildtree(PLUSEQ, a->n_left, bcon(sz)));
+	rv = buildtree(COMOP, rv , buildtree(PLUSEQ, a->n_left, bcon(sz)));
 #else
-	/* XXX fix this; wrong order */
+#error fix wrong eval order in builtin_va_arg
 	ecomp(buildtree(MINUSEQ, a->n_left, bcon(sz)));
 #endif
 
@@ -2074,7 +2074,7 @@ builtin_va_arg(NODE *f, NODE *a)
 	nfree(a);
 	nfree(f);
 	r = tempnode(nodnum, INCREF(r->n_type), r->n_df, r->n_sue);
-	return buildtree(UMUL, r, NIL);
+	return buildtree(COMOP, rv, buildtree(UMUL, r, NIL));
 bad:
 	uerror("bad argument to __builtin_va_arg");
 	return bcon(0);
