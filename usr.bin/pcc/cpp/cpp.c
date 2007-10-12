@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.3 2007/10/12 18:14:14 stefan Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.4 2007/10/12 21:40:49 stefan Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -728,7 +728,7 @@ bad:	error("bad define");
 }
 
 void
-warning(usch *s)
+xwarning(usch *s)
 {
 	usch *t;
 	usch *sb = stringbuf;
