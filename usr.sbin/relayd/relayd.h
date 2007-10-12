@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.67 2007/10/05 17:32:13 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.68 2007/10/12 12:50:59 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -648,8 +648,8 @@ void	log_warn(const char *, ...);
 void	log_warnx(const char *, ...);
 void	log_info(const char *, ...);
 void	log_debug(const char *, ...);
-void	fatal(const char *);
-void	fatalx(const char *);
+__dead void fatal(const char *);
+__dead void fatalx(const char *);
 const char *host_status(enum host_status);
 const char *table_check(enum table_check);
 const char *print_availability(u_long, u_long);
