@@ -1,0 +1,75 @@
+OSPF6CTL(8)             OpenBSD System Manager's Manual            OSPF6CTL(8)
+
+NNAAMMEE
+     oossppff66ccttll - control the Open Shortest Path First daemon
+
+SSYYNNOOPPSSIISS
+     oossppff66ccttll _c_o_m_m_a_n_d [_a_r_g_u_m_e_n_t_s _._._.]
+
+DDEESSCCRRIIPPTTIIOONN
+     The oossppff66ccttll program controls the ospf6d(8) daemon.
+
+     The following commands are available:
+
+     ffiibb ccoouuppllee
+             Insert the learned routes into the Forwarding Information Base
+             a.k.a. the kernel routing table.
+
+     ffiibb ddeeccoouuppllee
+             Remove the learned routes from the Forwarding Information Base
+             a.k.a. the kernel routing table.  Decoupling the FIB from an OSPF
+             router may create routing loops and could cause major routing is-
+             sues in the complete OSPF cloud.  Only routers with just one link
+             to the OSPF cloud can safely decouple the FIB.
+
+     rreellooaadd  Reload the configuration file.
+
+     sshhooww ddaattaabbaassee [_f_i_l_t_e_r]
+             Show the link state database.  _f_i_l_t_e_r can be any one of the fol-
+             lowing:
+
+             aarreeaa _I_D            Show only LSAs from the specified area _I_D.
+             aassbbrr               Show only ASBR LSAs.
+             eexxtteerrnnaall           Show only AS-External LSAs.
+             nneettwwoorrkk            Show only Network LSAs.
+             rroouutteerr             Show only Router LSAs.
+             sseellff--oorriiggiinnaatteedd    Show only self-originated LSAs.
+             ssuummmmaarryy            Show only Summary LSAs.
+
+     sshhooww ffiibb [_d_e_s_t_i_n_a_t_i_o_n | _f_i_l_t_e_r]
+             Show the Forwarding Information Base.  _d_e_s_t_i_n_a_t_i_o_n can be speci-
+             fied to show the route matching a destination IP address.  _f_i_l_t_e_r
+             can be any of the following:
+
+             ccoonnnneecctteedd               Show only connected routes.
+             iinntteerrffaaccee [_i_n_t_e_r_f_a_c_e]   Show only interfaces or the specified
+                                     _i_n_t_e_r_f_a_c_e.
+             oossppff                    Show only OSPF routes.
+             ssttaattiicc                  Show only static routes.
+
+             ccoonnnneecctteedd, oossppff and ssttaattiicc may be specified together.
+
+     sshhooww iinntteerrffaacceess [_i_n_t_e_r_f_a_c_e]
+             Show details for all interfaces or the specified _i_n_t_e_r_f_a_c_e.
+
+     sshhooww nneeiigghhbboorr [ddeettaaiill]
+             Show neighbors.  ddeettaaiill can be specified for additional detail.
+
+     sshhooww rriibb [ddeettaaiill]
+             Show the Routing Information Base.  ddeettaaiill can be specified for
+             additional detail.
+
+     sshhooww ssuummmmaarryy
+             Show summary information.
+
+FFIILLEESS
+     /var/run/ospf6d.sock    Unix-domain socket used for communication with
+                             ospf6d(8).
+
+SSEEEE AALLSSOO
+     ospf6d.conf(5), ospf6d(8)
+
+HHIISSTTOORRYY
+     The oossppff66ccttll program first appeared in OpenBSD 4.2.
+
+OpenBSD 4.2                     August 3, 2007                               2
