@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.2 2007/10/12 07:22:44 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -39,6 +39,7 @@
 
 %{
 static long long cvtdig(int rad);
+static unsigned long long cvtdigu(int rad);
 static int charcon(void);
 static void elsestmt(void);
 static void ifdefstmt(void);
@@ -161,26 +162,39 @@ WS	[\t ]
 <IFR>{WS}+		{ ; }
 <IFR>{L}({L}|{D})*	{
 				if (gotdef) {
-					yylval.val =
+					yylval.val.type = 0;
+					yylval.val.v.val =
 					    lookup((usch *)yytext, FIND) != 0;
 					gotdef = 0;
 					return IDENT;
 				}
-				yylval.val = 0;
+				yylval.val.type = 0;
+				yylval.val.v.val = 0;
 				return NUMBER;
 			}
 
 [1-9][0-9]*		{ if (slow && !YYSTATE) return IDENT; scale = 10; goto num; }
 
 0[xX]{H}+{IS}?		{	scale = 16;
-			num:	if (YYSTATE)
-					yylval.val = cvtdig(scale);
+			num:	if (YYSTATE) {
+					yylval.val.type =
+					    strrchr(yytext, 'U') != NULL ||
+					    strrchr(yytext, 'u') != NULL;
+					if (yylval.val.type)
+						yylval.val.v.uval =
+						    cvtdigu(scale);
+					else
+						yylval.val.v.val =
+						    cvtdig(scale);
+				}
 				PRTOUT(NUMBER);
 			}
 0{D}+{IS}?		{ scale = 8; goto num; }
 {D}+{IS}?		{ scale = 10; goto num; }
-L?'(\\.|[^\\'])+'	{	if (YYSTATE)
-					yylval.val = charcon();
+L?'(\\.|[^\\'])+'	{	if (YYSTATE) {
+					yylval.val.type = 0;
+					yylval.val.v.val = charcon();
+				}
 				PRTOUT(NUMBER);
 			}
 
@@ -489,12 +503,31 @@ dig2num(int c)
 
 /*
  * Convert some string numbers to long long.
- * Do not care about UL trailers, should we?
  */
 static long long
 cvtdig(int rad)
 {
 	long long rv = 0;
+	char *y = yytext;
+	int c;
+
+	c = *y++;
+	if (rad == 16)
+		y++;
+	while (isxdigit(c)) {
+		rv = rv * rad + dig2num(c);
+		c = *y++;
+	}
+	return rv;
+}
+
+/*
+ * Convert some string numbers to unsigned long long.
+ */
+static unsigned long long
+cvtdigu(int rad)
+{
+	unsigned long long rv = 0;
 	char *y = yytext;
 	int c;
 
