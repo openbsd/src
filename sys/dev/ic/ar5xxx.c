@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.44 2007/09/11 13:39:33 gilles Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.45 2007/10/12 15:34:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -270,9 +270,16 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 	/* Get rate tables */
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_11A)
 		ar5k_rt_copy(&hal->ah_rt_11a, &ar5k_rt_11a);
-	if (hal->ah_capabilities.cap_mode & HAL_MODE_11B)
+	if (hal->ah_capabilities.cap_mode & HAL_MODE_11B) {
 		ar5k_rt_copy(&hal->ah_rt_11b, &ar5k_rt_11b);
-	if (hal->ah_capabilities.cap_mode & HAL_MODE_11G)
+		/*
+		 * XXX Workaround for AR24xx/AR54xx and newer chipsets
+		 * XXX to limit 11b operation to 1-2Mbit/s. This
+		 * XXX needs to be fixed but allows basic operation for now.
+		 */
+		if (hal->ah_single_chip == AH_TRUE)
+			hal->ah_rt_11b.rateCount = 2;
+	} if (hal->ah_capabilities.cap_mode & HAL_MODE_11G)
 		ar5k_rt_copy(&hal->ah_rt_11g, &ar5k_rt_11g);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_TURBO)
 		ar5k_rt_copy(&hal->ah_rt_turbo, &ar5k_rt_turbo);
@@ -1255,12 +1262,26 @@ ar5k_ar5112_channel(struct ath_hal *hal, HAL_CHANNEL *channel)
 	u_int16_t c;
 
 	data = data0 = data1 = data2 = 0;
-	c = channel->c_channel;
+	c = channel->c_channel + hal->ah_chanoff;
 
 	/*
 	 * Set the channel on the AR5112 or newer
 	 */
 	if (c < 4800) {
+		/*
+		 * XXX Workaround for AR24xx/AR54xx and newer chipsets to
+		 * XXX set the 2GHz channels correctly.
+		 * XXX This needs to be replaced with a true algorithm
+		 * XXX after figuring out how to calculate the Atheros
+		 * XXX channel for these chipsets.
+		 */
+		if (hal->ah_single_chip == AH_TRUE) {
+			c += c < 2427 ? -45 :		/* channel 1-3 */
+			    (c < 2447 ? -40 :		/* channel 4-7 */
+			    (c < 2462 ? -35 :		/* channel 8-10 */
+			    (c < 2477 ? -30 : -25)));	/* channel 11-13 */
+		}
+
 		if (!((c - 2224) % 5)) {
 			data0 = ((2 * (c - 704)) - 3040) / 10;
 			data1 = 1;

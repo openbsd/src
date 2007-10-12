@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.41 2007/05/09 16:41:14 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.42 2007/10/12 15:34:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1109,6 +1109,8 @@ struct ath_hal {
 	HAL_BOOL		ah_running;
 	HAL_BOOL		ah_single_chip;
 	HAL_RFGAIN		ah_rf_gain;
+
+	int			ah_chanoff;
 
 	HAL_RATE_TABLE		ah_rt_11a;
 	HAL_RATE_TABLE		ah_rt_11b;
