@@ -42,4 +42,6 @@ int     sign_passwd_cb(char *buf, int size, int rwflag, void *u);
 void	sign_usage(void);
 void	verify_usage(void);
 
+extern char *__progname;		/* from crt0.o */
+
 #endif /* EXTERN_H */
