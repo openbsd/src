@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.2 2007/10/12 09:23:37 norby Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.3 2007/10/12 09:29:45 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -382,7 +382,7 @@ show_interface_detail_msg(struct imsg *imsg)
 		printf("\n");
 		printf("Interface %s, line protocol is %s\n",
 		    iface->name, print_link(iface->flags));
-		printf("  Internet address %s/ ",
+		printf("  Internet address %s ",
 		    log_in6addr(&iface->addr));
 		printf("Area %s\n", inet_ntoa(iface->area));
 		printf("  Linkstate %s\n",
@@ -394,12 +394,14 @@ show_interface_detail_msg(struct imsg *imsg)
 		printf("  Transmit delay is %d sec(s), state %s, priority %d\n",
 		    iface->transmit_delay, if_state_name(iface->state),
 		    iface->priority);
-		printf("  Designated Router (ID) %s, ",
+		printf("  Designated Router (ID) %s\n",
 		    inet_ntoa(iface->dr_id));
-		printf("interface address %s\n", log_in6addr(&iface->dr_addr));
-		printf("  Backup Designated Router (ID) %s, ",
+		printf("    Interface address %s\n",
+		    log_in6addr(&iface->dr_addr));
+		printf("  Backup Designated Router (ID) %s\n",
 		    inet_ntoa(iface->bdr_id));
-		printf("interface address %s\n", log_in6addr(&iface->bdr_addr));
+		printf("    Interface address %s\n",
+		    log_in6addr(&iface->bdr_addr));
 		printf("  Timer intervals configured, "
 		    "hello %d, dead %d, wait %d, retransmit %d\n",
 		     iface->hello_interval, iface->dead_interval,
