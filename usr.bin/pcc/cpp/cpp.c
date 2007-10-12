@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.2 2007/10/07 19:26:27 otto Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.3 2007/10/12 18:14:14 stefan Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -725,6 +725,23 @@ id:			savstr((usch *)yytext);
 	return;
 
 bad:	error("bad define");
+}
+
+void
+warning(usch *s)
+{
+	usch *t;
+	usch *sb = stringbuf;
+
+	flbuf();
+	savch(0);
+	if (ifiles != NULL) {
+		t = sheap("%s:%d: warning: ", ifiles->fname, ifiles->lineno);
+		write (2, t, strlen((char *)t));
+	}
+	write (2, s, strlen((char *)s));
+	write (2, "\n", 1);
+	stringbuf = sb;
 }
 
 void

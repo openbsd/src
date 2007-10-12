@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpy.y,v 1.2 2007/10/12 07:22:44 otto Exp $	*/
+/*	$OpenBSD: cpy.y,v 1.3 2007/10/12 18:14:14 stefan Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -275,6 +275,18 @@ eval(struct nd *tree)
 	l = eval(tree->nd_left);
 	r = eval(tree->nd_right);
 	t = l.type || r.type;
+	if (tree->op == '/' || tree->op == '%') {
+		if ((t && r.v.uval == 0) || (!t && r.v.val == 0)) {
+			warning(tree->op == '/' ? "division by zero" :
+		                "modulus by zero");
+			if (t)
+				ret.v.uval = 0;
+			else
+				ret.v.val = 0;
+			ret.type = t;
+			goto out;
+		}
+	}
 	switch (tree->op) {
 		EVALBIN(EQ, ==, t, l, r, 0);
 		EVALBIN(NE, !=, t, l, r, 0);
@@ -285,7 +297,6 @@ eval(struct nd *tree)
 		EVALBIN('+', +, t, l, r, t);
 		EVALBIN('-', -, t, l, r, t);
 		EVALBIN('*', *, t, l, r, t);
-		// XXX check /,% by zero
 		EVALBIN('/', /, t, l, r, t);
 		EVALBIN('%', %, t, l, r, t);
 		EVALBIN('&', &, t, l, r, t);
