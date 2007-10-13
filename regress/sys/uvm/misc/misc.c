@@ -55,6 +55,8 @@
 #include <unistd.h>
 #include <string.h>	/* for memset declaration (?) */
 
+#include <machine/vmparam.h>	/* SHMMAXPGS */
+
 int	main(int, char *[]);
 void	usage(void);
 
@@ -149,6 +151,8 @@ main(argc, argv)
 	 */
 
 	npgs = 128;
+	if (npgs > SHMMAXPGS)
+		npgs = SHMMAXPGS;
 
 	printf(">>> MAPPING %d PAGE ANONYMOUS REGION <<<\n", npgs);
 
