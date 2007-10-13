@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.2 2007/06/12 15:16:10 msf Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.3 2007/10/13 17:50:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -79,8 +79,11 @@ script_done(struct hoststated *env, struct ctl_script *scr)
 void
 script_sig_alarm(int sig)
 {
+	int save_errno = errno;
+
 	if (child != -1)
 		kill(child, SIGKILL);
+	errno = save_errno;
 }
 
 int
