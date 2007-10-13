@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.209 2007/10/11 14:39:17 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.210 2007/10/13 16:35:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,11 +22,13 @@
 %{
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -37,6 +39,37 @@
 #include "bgpd.h"
 #include "mrt.h"
 #include "session.h"
+
+TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
+static struct file {
+	TAILQ_ENTRY(file)	 entry;
+	FILE			*stream;
+	char			*name;
+	int			 lineno;
+	int			 errors;
+} *file;
+struct file	*pushfile(const char *, int);
+int		 popfile(void);
+int		 check_file_secrecy(int, const char *);
+int		 yyparse(void);
+int		 yylex(void);
+int		 yyerror(const char *, ...);
+int		 kw_cmp(const void *, const void *);
+int		 lookup(char *);
+int		 lgetc(int);
+int		 lungetc(int);
+int		 findeol(void);
+
+TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
+struct sym {
+	TAILQ_ENTRY(sym)	 entry;
+	int			 used;
+	int			 persist;
+	char			*nam;
+	char			*val;
+};
+int		 symset(const char *, const char *, int);
+char		*symget(const char *);
 
 static struct bgpd_config	*conf;
 static struct mrt_head		*mrtconf;
@@ -51,24 +84,6 @@ static struct filter_rule	*curpeer_filter[2];
 static struct filter_rule	*curgroup_filter[2];
 static struct listen_addrs	*listen_addrs;
 static u_int32_t		 id;
-
-TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
-static struct file {
-	TAILQ_ENTRY(file)	 entry;
-	FILE			*stream;
-	char			*name;
-	int			 lineno;
-	int			 errors;
-}				*file;
-
-int	 yyerror(const char *, ...);
-int	 yyparse(void);
-int	 kw_cmp(const void *, const void *);
-int	 lookup(char *);
-int	 lgetc(int);
-int	 lungetc(int);
-int	 findeol(void);
-int	 yylex(void);
 
 struct filter_peers_l {
 	struct filter_peers_l	*next;
@@ -92,7 +107,6 @@ struct filter_match_l {
 	sa_family_t		 af;
 } fmopts;
 
-struct file	*include_file(const char *);
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
@@ -109,19 +123,8 @@ void		 move_filterset(struct filter_set_head *,
 		    struct filter_set_head *);
 struct filter_rule	*get_rule(enum action_types);
 
-TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
-struct sym {
-	TAILQ_ENTRY(sym)	 entry;
-	int			 used;
-	int			 persist;
-	char			*nam;
-	char			*val;
-};
-
-int	 symset(const char *, const char *, int);
-char	*symget(const char *);
-int	 getcommunity(char *);
-int	 parsecommunity(char *, int *, int *);
+int		 getcommunity(char *);
+int		 parsecommunity(char *, int *, int *);
 
 typedef struct {
 	union {
@@ -287,7 +290,7 @@ varset		: STRING '=' string		{
 include		: INCLUDE STRING		{
 			struct file	*nfile;
 
-			if ((nfile = include_file($2)) == NULL) {
+			if ((nfile = pushfile($2, 1)) == NULL) {
 				yyerror("failed to include file %s", $2);
 				free($2);
 				YYERROR;
@@ -1861,10 +1864,8 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(int inquot)
+lgetc(int quotec)
 {
-	FILE *f = file->stream;
-	struct file	*prevfile;
 	int		c, next;
 
 	if (parsebuf) {
@@ -1881,13 +1882,18 @@ lgetc(int inquot)
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
 
-	if (inquot) {
-		c = getc(f);
+	if (quotec) {
+		if ((c = getc(file->stream)) == EOF) {
+			yyerror("reached end of file while parsing quoted string");
+			if (popfile() == EOF)
+				return (EOF);
+			return (quotec);
+		}
 		return (c);
 	}
 
-	while ((c = getc(f)) == '\\') {
-		next = getc(f);
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
@@ -1898,24 +1904,17 @@ lgetc(int inquot)
 	if (c == '\t' || c == ' ') {
 		/* Compress blanks to a single space. */
 		do {
-			c = getc(f);
+			c = getc(file->stream);
 		} while (c == '\t' || c == ' ');
-		ungetc(c, f);
+		ungetc(c, file->stream);
 		c = ' ';
 	}
 
-	while (c == EOF &&
-	    (prevfile = TAILQ_PREV(file, files, entry)) != NULL) {
-		prevfile->errors += file->errors;
-		TAILQ_REMOVE(&files, file, entry);
-		fclose(f);
-		free(file->name);
-		free(file);
-		file = prevfile;
-		f = file->stream;
-		c = getc(f);
+	while (c == EOF) {
+		if (popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
 	}
-
 	return (c);
 }
 
@@ -1961,7 +1960,7 @@ yylex(void)
 {
 	char	 buf[8096];
 	char	*p, *val;
-	int	 endc, next, c;
+	int	 quotec, next, c;
 	int	 token;
 
 top:
@@ -2003,21 +2002,21 @@ top:
 	switch (c) {
 	case '\'':
 	case '"':
-		endc = c;
+		quotec = c;
 		while (1) {
-			if ((c = lgetc(1)) == EOF)
+			if ((c = lgetc(quotec)) == EOF)
 				return (0);
 			if (c == '\n') {
 				file->lineno++;
 				continue;
 			} else if (c == '\\') {
-				if ((next = lgetc(1)) == EOF)
+				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == endc)
+				if (next == quotec)
 					c = next;
 				else
 					lungetc(next);
-			} else if (c == endc) {
+			} else if (c == quotec) {
 				*p = '\0';
 				break;
 			}
@@ -2099,31 +2098,66 @@ nodigits:
 	return (c);
 }
 
+int
+check_file_secrecy(int fd, const char *fname)
+{
+	struct stat	st;
+
+	if (fstat(fd, &st)) {
+		log_warn("cannot stat %s", fname);
+		return (-1);
+	}
+	if (st.st_uid != 0 && st.st_uid != getuid()) {
+		log_warnx("%s: owner not root or current user", fname);
+		return (-1);
+	}
+	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
+		log_warnx("%s: group/world readable/writeable", fname);
+		return (-1);
+	}
+	return (0);
+}
+
 struct file *
-include_file(const char *name)
+pushfile(const char *name, int secret)
 {
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
 	    (nfile->name = strdup(name)) == NULL)
 		return (NULL);
-
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s", nfile->name);
+		free(nfile->name);
+		free(nfile);
 		return (NULL);
 	}
-
-	if (check_file_secrecy(fileno(nfile->stream), nfile->name)) {
+	if (secret &&
+	    check_file_secrecy(fileno(nfile->stream), nfile->name)) {
 		fclose(nfile->stream);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
 	}
-
 	nfile->lineno = 1;
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
-
 	return (nfile);
+}
+
+int
+popfile(void)
+{
+	struct file	*prev;
+
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+		prev->errors += file->errors;
+		TAILQ_REMOVE(&files, file, entry);
+		fclose(file->stream);
+		free(file->name);
+		free(file);
+		file = prev;
+		return (0);
+	}
+	return (EOF);
 }
 
 int
@@ -2138,13 +2172,16 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct filter_rule	*r;
 	int			 errors = 0;
 
-	if ((file = include_file(filename)) == NULL) {
+	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
+		fatal(NULL);
+	conf->opts = xconf->opts;
+
+	if ((file = pushfile(filename, 1)) == NULL) {
+		free(conf);
 		log_warnx("cannot open the main config file!");
 		return (-1);
 	}
 
-	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
-		fatal(NULL);
 	if ((mrtconf = calloc(1, sizeof(struct mrt_head))) == NULL)
 		fatal(NULL);
 	if ((listen_addrs = calloc(1, sizeof(struct listen_addrs))) == NULL)
@@ -2166,7 +2203,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	curpeer = NULL;
 	curgroup = NULL;
 	id = 1;
-	conf->opts = xconf->opts;
 
 	/* network list is always empty in the parent */
 	netconf = nc;
@@ -2176,6 +2212,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 
 	yyparse();
 	errors = file->errors;
+	popfile();
 
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
@@ -2257,11 +2294,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	free(filter_l);
 	free(peerfilter_l);
 	free(groupfilter_l);
-
-	TAILQ_REMOVE(&files, file, entry);
-	fclose(file->stream);
-	free(file->name);
-	free(file);
 
 	return (errors ? -1 : 0);
 }

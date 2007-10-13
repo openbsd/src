@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.49 2007/01/31 13:04:21 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.50 2007/10/13 16:35:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -151,29 +151,6 @@ get_bgpid(void)
 	freeifaddrs(ifap);
 
 	return (ip);
-}
-
-int
-check_file_secrecy(int fd, const char *fname)
-{
-	struct stat	st;
-
-	if (fstat(fd, &st)) {
-		log_warn("cannot stat %s", fname);
-		return (-1);
-	}
-
-	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_warnx("%s: owner not root or current user", fname);
-		return (-1);
-	}
-
-	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_warnx("%s: group/world readable/writeable", fname);
-		return (-1);
-	}
-
-	return (0);
 }
 
 int

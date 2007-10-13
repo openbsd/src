@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.3 2007/01/24 10:14:17 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.4 2007/10/13 16:35:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -54,7 +54,6 @@ void		 main_sig_handler(int, short, void *);
 void		 ripd_shutdown(void);
 void		 main_dispatch_ripe(int, short, void *);
 void		 main_dispatch_rde(int, short, void *);
-int		 check_file_secrecy(int, const char *);
 void		 ripd_redistribute_default(int);
 
 int     pipe_parent2ripe[2];
@@ -445,29 +444,6 @@ void
 main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	imsg_compose(ibuf_rde, type, 0, pid, data, datalen);
-}
-
-int
-check_file_secrecy(int fd, const char *fname)
-{
-	struct stat     st;
-
-	if (fstat(fd, &st)) {
-		log_warn("cannot stat %s", fname);
-		return (-1);
-	}
-
-	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_warnx("%s: owner not root or current user", fname);
-		return (-1);
-	}
-
-	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_warnx("%s: group/world readable/writeable", fname);
-		return (-1);
-	}
-
-	return (0);
 }
 
 int

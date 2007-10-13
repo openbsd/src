@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.219 2007/09/11 17:07:59 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.220 2007/10/13 16:35:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -738,7 +738,6 @@ void		 fatalx(const char *) __dead;
 int	 cmdline_symset(char *);
 
 /* config.c */
-int	 check_file_secrecy(int, const char *);
 int	 host(const char *, struct bgpd_addr *, u_int8_t *);
 
 /* imsg.c */

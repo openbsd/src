@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2007/10/11 14:39:17 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2007/10/13 16:35:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -53,21 +53,29 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <err.h>
 
 #include "hostapd.h"
 
-extern struct hostapd_config hostapd_cfg;
-static int errors = 0;
-
-TAILQ_HEAD(filehead, file)	 filehead = TAILQ_HEAD_INITIALIZER(filehead);
-struct file {
+TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
+static struct file {
 	TAILQ_ENTRY(file)	 entry;
-
-	char			*name;
 	FILE			*stream;
+	char			*name;
 	int			 lineno;
-};
-static struct file *file;
+	int			 errors;
+} *file;
+struct file	*pushfile(const char *, int);
+int		 popfile(void);
+int		 check_file_secrecy(int, const char *);
+int		 yyparse(void);
+int		 yylex(void);
+int		 yyerror(const char *, ...);
+int		 kw_cmp(const void *, const void *);
+int		 lookup(char *);
+int		 lgetc(int);
+int		 lungetc(int);
+int		 findeol(void);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -77,18 +85,10 @@ struct sym {
 	char			*nam;
 	char			*val;
 };
-
-int		 yyerror(const char *, ...);
-int		 yyparse(void);
-int		 kw_cmp(const void *, const void *);
-int		 lookup(char *);
-int		 lgetc(int);
-int		 lungetc(int);
-int		 findeol(void);
-int		 yylex(void);
 int		 symset(const char *, const char *, int);
 char		*symget(const char *);
-struct file	*hostapd_add_file(struct hostapd_config *, const char *);
+
+extern struct hostapd_config hostapd_cfg;
 
 typedef struct {
 	union {
@@ -181,7 +181,7 @@ grammar		: /* empty */
 		| grammar option '\n'
 		| grammar event '\n'
 		| grammar varset '\n'
-		| grammar error '\n'		{ errors++; }
+		| grammar error '\n'		{ file->errors++; }
 		;
 
 include		: INCLUDE STRING
@@ -189,7 +189,7 @@ include		: INCLUDE STRING
 			struct file *nfile;
 
 			if ((nfile =
-			    hostapd_add_file(&hostapd_cfg, $2)) == NULL) {
+			    pushfile($2, 1)) == NULL) {
 				yyerror("failed to include file %s", $2);
 				free($2);
 				YYERROR;
@@ -1331,10 +1331,9 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(int inquot)
+lgetc(int quotec)
 {
-	int	c, next;
-	struct file *pfile;
+	int		c, next;
 
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
@@ -1350,8 +1349,13 @@ lgetc(int inquot)
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
 
-	if (inquot) {
-		c = getc(file->stream);
+	if (quotec) {
+		if ((c = getc(file->stream)) == EOF) {
+			yyerror("reached end of file while parsing quoted string");
+			if (popfile() == EOF)
+				return (EOF);
+			return (quotec);
+		}
 		return (c);
 	}
 
@@ -1369,22 +1373,15 @@ lgetc(int inquot)
 		do {
 			c = getc(file->stream);
 		} while (c == '\t' || c == ' ');
-		if (ungetc(c, file->stream) == EOF)
-			hostapd_fatal("lgetc: ungetc");
+		ungetc(c, file->stream);
 		c = ' ';
 	}
 
-	while (c == EOF &&
-	    (pfile = TAILQ_PREV(file, filehead, entry)) != NULL) {
-		fclose(file->stream);
-		free(file->name);
-		TAILQ_REMOVE(&filehead, file, entry);
-		free(file);
-
-		file = pfile;
+	while (c == EOF) {
+		if (popfile() == EOF)
+			return (EOF);
 		c = getc(file->stream);
 	}
-
 	return (c);
 }
 
@@ -1430,7 +1427,7 @@ yylex(void)
 {
 	char	 buf[8096];
 	char	*p, *val;
-	int	 endc, c;
+	int	 quotec, next, c;
 	int	 token;
 
 top:
@@ -1472,17 +1469,23 @@ top:
 	switch (c) {
 	case '\'':
 	case '"':
-		endc = c;
+		quotec = c;
 		while (1) {
-			if ((c = lgetc(1)) == EOF)
+			if ((c = lgetc(quotec)) == EOF)
 				return (0);
-			if (c == endc) {
-				*p = '\0';
-				break;
-			}
 			if (c == '\n') {
 				file->lineno++;
 				continue;
+			} else if (c == '\\') {
+				if ((next = lgetc(quotec)) == EOF)
+					return (0);
+				if (next == quotec)
+					c = next;
+				else
+					lungetc(next);
+			} else if (c == quotec) {
+				*p = '\0';
+				break;
 			}
 			if (p + 1 >= buf + sizeof(buf) - 1) {
 				yyerror("string too long");
@@ -1640,50 +1643,75 @@ symget(const char *nam)
 	return (NULL);
 }
 
-struct file *
-hostapd_add_file(struct hostapd_config *cfg, const char *name)
+int
+check_file_secrecy(int fd, const char *fname)
 {
-	struct file *nfile = NULL;
+	struct stat	st;
 
-	if ((nfile = calloc(1, sizeof(struct file))) == NULL)
+	if (fstat(fd, &st)) {
+		warn("cannot stat %s", fname);
+		return (-1);
+	}
+	if (st.st_uid != 0 && st.st_uid != getuid()) {
+		warnx("%s: owner not root or current user", fname);
+		return (-1);
+	}
+	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
+		warnx("%s: group/world readable/writeable", fname);
+		return (-1);
+	}
+	return (0);
+}
+
+struct file *
+pushfile(const char *name, int secret)
+{
+	struct file	*nfile;
+
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
+	    (nfile->name = strdup(name)) == NULL)
 		return (NULL);
-
-	if ((nfile->name = strdup(name)) == NULL)
-		goto err;
-
-	if ((nfile->stream = fopen(name, "rb")) == NULL) {
-		hostapd_log(HOSTAPD_LOG, "failed to open %s", name);
-		goto err;
-	}
-
-	if (hostapd_check_file_secrecy(fileno(nfile->stream), name)) {
-		hostapd_log(HOSTAPD_LOG, "invalid permissions for %s", name);
-		goto err;
-	}
-
-	nfile->lineno = 1;
-	TAILQ_INSERT_TAIL(&filehead, nfile, entry);
-
-	return (nfile);
-
- err:
-	if (nfile->name != NULL)
+	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
 		free(nfile->name);
-	if (nfile->stream != NULL)
+		free(nfile);
+		return (NULL);
+	} else if (secret &&
+	    check_file_secrecy(fileno(nfile->stream), nfile->name)) {
 		fclose(nfile->stream);
-	free(nfile);
+		free(nfile->name);
+		free(nfile);
+		return (NULL);
+	}
+	nfile->lineno = 1;
+	TAILQ_INSERT_TAIL(&files, nfile, entry);
+	return (nfile);
+}
 
-	return (NULL);
+int
+popfile(void)
+{
+	struct file	*prev;
+
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+		prev->errors += file->errors;
+		TAILQ_REMOVE(&files, file, entry);
+		fclose(file->stream);
+		free(file->name);
+		free(file);
+		file = prev;
+		return (0);
+	}
+	return (EOF);
 }
 
 int
 hostapd_parse_file(struct hostapd_config *cfg)
 {
 	struct sym *sym, *next;
-	struct file *nfile;
+	int errors = 0;
 	int ret;
 
-	if ((file = hostapd_add_file(cfg, cfg->c_config)) == NULL)
+	if ((file = pushfile(cfg->c_config, 1)) == NULL)
 		hostapd_fatal("failed to open the main config file: %s\n",
 		    cfg->c_config);
 
@@ -1697,17 +1725,9 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	cfg->c_apme_hopdelay.tv_sec = HOSTAPD_HOPPER_MDELAY / 1000;
 	cfg->c_apme_hopdelay.tv_usec = (HOSTAPD_HOPPER_MDELAY % 1000) * 1000;
 
-	errors = 0;
-
 	ret = yyparse();
-
-	for (file = TAILQ_FIRST(&filehead); file != NULL; file = nfile) {
-		nfile = TAILQ_NEXT(file, entry);
-		fclose(file->stream);
-		free(file->name);
-		TAILQ_REMOVE(&filehead, file, entry);
-		free(file);
-	}
+	errors = file->errors;
+	popfile();
 
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
@@ -1729,10 +1749,10 @@ hostapd_parse_file(struct hostapd_config *cfg)
 int
 yyerror(const char *fmt, ...)
 {
-	va_list ap;
-	char *nfmt;
+	va_list		 ap;
+	char		*nfmt;
 
-	errors = 1;
+	file->errors++;
 
 	va_start(ap, fmt);
 	if (asprintf(&nfmt, "%s:%d: %s\n", file->name, yylval.lineno,

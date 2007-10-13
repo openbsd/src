@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.54 2007/03/16 20:51:01 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.55 2007/10/13 16:35:18 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -219,7 +219,7 @@ struct ipsecctl {
 	struct ipsec_group_queue group_queue;
 };
 
-int	parse_rules(FILE *, struct ipsecctl *);
+int	parse_rules(const char *, struct ipsecctl *);
 int	cmdline_symset(char *);
 int	ipsecctl_add_rule(struct ipsecctl *, struct ipsec_rule *);
 void	ipsecctl_free_rule(struct ipsec_rule *);

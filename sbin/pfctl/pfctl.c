@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.268 2007/06/30 18:25:08 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.269 2007/10/13 16:35:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -118,8 +118,6 @@ int		 altqsupport;
 int		 dev = -1;
 int		 first_title = 1;
 int		 labels = 0;
-
-const char	*infile;
 
 #define INDENT(d, o)	do {						\
 				if (o) {				\
@@ -1337,7 +1335,7 @@ pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 }
 
 int
-pfctl_rules(int dev, char *filename, FILE *fin, int opts, int optimize,
+pfctl_rules(int dev, char *filename, int opts, int optimize,
     char *anchorname, struct pfr_buffer *trans)
 {
 #define ERR(x) do { warn(x); goto _error; } while(0)
@@ -1373,7 +1371,6 @@ pfctl_rules(int dev, char *filename, FILE *fin, int opts, int optimize,
 	if (strlcpy(trs.pfrt_anchor, anchorname,
 	    sizeof(trs.pfrt_anchor)) >= sizeof(trs.pfrt_anchor))
 		ERRX("pfctl_rules: strlcpy");
-	infile = filename;
 	pf.dev = dev;
 	pf.opts = opts;
 	pf.optimize = optimize;
@@ -1417,7 +1414,7 @@ pfctl_rules(int dev, char *filename, FILE *fin, int opts, int optimize,
 			    pfctl_get_ticket(t, PF_RULESET_TABLE, anchorname);
 	}
 
-	if (parse_rules(fin, &pf) < 0) {
+	if (parse_config(filename, &pf) < 0) {
 		if ((opts & PF_OPT_NOACTION) == 0)
 			ERRX("Syntax error in config file: "
 			    "pf rules not loaded");
@@ -1443,11 +1440,6 @@ pfctl_rules(int dev, char *filename, FILE *fin, int opts, int optimize,
 		if (check_commit_altq(dev, opts) != 0)
 			ERRX("errors in altq config");
 
-	if (fin != stdin) {
-		fclose(fin);
-		fin = NULL;
-	}
-
 	/* process "load anchor" directives */
 	if (!anchorname[0])
 		if (pfctl_load_anchors(dev, &pf, t) == -1)
@@ -1469,8 +1461,6 @@ _error:
 				err(1, "DIOCXROLLBACK");
 		exit(1);
 	} else {		/* sub ruleset */
-		if (fin != NULL && fin != stdin)
-			fclose(fin);
 		return (-1);
 	}
 
@@ -1957,7 +1947,6 @@ main(int argc, char *argv[])
 	int	 optimize = PF_OPTIMIZE_BASIC;
 	char	 anchorname[MAXPATHLEN];
 	char	*path;
-	FILE	*fin = NULL;
 
 	if (argc < 2)
 		usage();
@@ -2292,15 +2281,6 @@ main(int argc, char *argv[])
 		}
 	}
 
- 	if (rulesopt != NULL) {
-		if (strcmp(rulesopt, "-") == 0) {
-			fin = stdin;
-			rulesopt = "stdin";
-		} else {
-			if ((fin = pfctl_fopen(rulesopt, "r")) == NULL)
-				err(1, "%s", rulesopt);
-		}
-	}
 	if ((rulesopt != NULL) && (loadopt & PFCTL_FLAG_OPTION) &&
 	    !anchorname[0])
 		if (pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET))
@@ -2315,7 +2295,7 @@ main(int argc, char *argv[])
 		if (anchorname[0] == '_' || strstr(anchorname, "/_") != NULL)
 			errx(1, "anchor names beginning with '_' cannot "
 			    "be modified from the command line");
-		if (pfctl_rules(dev, rulesopt, fin, opts, optimize,
+		if (pfctl_rules(dev, rulesopt, opts, optimize,
 		    anchorname, NULL))
 			error = 1;
 		else if (!(opts & PF_OPT_NOACTION) &&

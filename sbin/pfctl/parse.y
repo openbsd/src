@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.526 2007/10/11 14:39:16 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.527 2007/10/13 16:35:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -29,6 +29,7 @@
 %{
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -43,6 +44,7 @@
 #include <altq/altq_hfsc.h>
 
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <netdb.h>
 #include <stdarg.h>
@@ -60,10 +62,7 @@
 #include "pfctl.h"
 
 static struct pfctl	*pf = NULL;
-static FILE		*fin = NULL;
 static int		 debug = 0;
-static int		 lineno = 1;
-static int		 errors = 0;
 static int		 rulestate = 0;
 static u_int16_t	 returnicmpdefault =
 			    (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
@@ -72,6 +71,39 @@ static u_int16_t	 returnicmp6default =
 static int		 blockpolicy = PFRULE_DROP;
 static int		 require_order = 1;
 static int		 default_statelock;
+
+TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
+static struct file {
+	TAILQ_ENTRY(file)	 entry;
+	FILE			*stream;
+	char			*name;
+	int			 lineno;
+	int			 errors;
+} *file;
+struct file	*pushfile(const char *, int);
+int		 popfile(void);
+int		 check_file_secrecy(int, const char *);
+int		 yyparse(void);
+int		 yylex(void);
+int		 yyerror(const char *, ...);
+int		 kw_cmp(const void *, const void *);
+int		 lookup(char *);
+int		 lgetc(int);
+int		 lungetc(int);
+int		 findeol(void);
+
+TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
+struct sym {
+	TAILQ_ENTRY(sym)	 entry;
+	int			 used;
+	int			 persist;
+	char			*nam;
+	char			*val;
+};
+int		 symset(const char *, const char *, int);
+char		*symget(const char *);
+
+int		 atoul(char *, u_long *);
 
 enum {
 	PFCTL_STATE_NONE,
@@ -255,60 +287,41 @@ struct pool_opts {
 
 struct node_hfsc_opts	hfsc_opts;
 
-int	yyerror(const char *, ...);
-int	disallow_table(struct node_host *, const char *);
-int	disallow_urpf_failed(struct node_host *, const char *);
-int	disallow_alias(struct node_host *, const char *);
-int	rule_consistent(struct pf_rule *, int);
-int	filter_consistent(struct pf_rule *, int);
-int	nat_consistent(struct pf_rule *);
-int	rdr_consistent(struct pf_rule *);
-int	process_tabledef(char *, struct table_opts *);
-int	yyparse(void);
-void	expand_label_str(char *, size_t, const char *, const char *);
-void	expand_label_if(const char *, char *, size_t, const char *);
-void	expand_label_addr(const char *, char *, size_t, u_int8_t,
-	    struct node_host *);
-void	expand_label_port(const char *, char *, size_t, struct node_port *);
-void	expand_label_proto(const char *, char *, size_t, u_int8_t);
-void	expand_label_nr(const char *, char *, size_t);
-void	expand_label(char *, size_t, const char *, u_int8_t, struct node_host *,
-	    struct node_port *, struct node_host *, struct node_port *,
-	    u_int8_t);
-void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
-	    struct node_proto *, struct node_os*, struct node_host *,
-	    struct node_port *, struct node_host *, struct node_port *,
-	    struct node_uid *, struct node_gid *, struct node_icmp *,
-	    const char *);
-int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
-	    struct node_queue_bw bwspec, struct node_queue_opt *);
-int	expand_queue(struct pf_altq *, struct node_if *, struct node_queue *,
-	    struct node_queue_bw, struct node_queue_opt *);
-int	expand_skip_interface(struct node_if *);
+int		 disallow_table(struct node_host *, const char *);
+int		 disallow_urpf_failed(struct node_host *, const char *);
+int		 disallow_alias(struct node_host *, const char *);
+int		 rule_consistent(struct pf_rule *, int);
+int		 filter_consistent(struct pf_rule *, int);
+int		 nat_consistent(struct pf_rule *);
+int		 rdr_consistent(struct pf_rule *);
+int		 process_tabledef(char *, struct table_opts *);
+void		 expand_label_str(char *, size_t, const char *, const char *);
+void		 expand_label_if(const char *, char *, size_t, const char *);
+void		 expand_label_addr(const char *, char *, size_t, u_int8_t,
+		    struct node_host *);
+void		 expand_label_port(const char *, char *, size_t,
+		    struct node_port *);
+void		 expand_label_proto(const char *, char *, size_t, u_int8_t);
+void		 expand_label_nr(const char *, char *, size_t);
+void		 expand_label(char *, size_t, const char *, u_int8_t,
+		    struct node_host *, struct node_port *, struct node_host *,
+		    struct node_port *, u_int8_t);
+void		 expand_rule(struct pf_rule *, struct node_if *,
+		    struct node_host *, struct node_proto *, struct node_os *,
+		    struct node_host *, struct node_port *, struct node_host *,
+		    struct node_port *, struct node_uid *, struct node_gid *,
+		    struct node_icmp *, const char *);
+int		 expand_altq(struct pf_altq *, struct node_if *,
+		    struct node_queue *, struct node_queue_bw bwspec,
+		    struct node_queue_opt *);
+int		 expand_queue(struct pf_altq *, struct node_if *,
+		    struct node_queue *, struct node_queue_bw,
+		    struct node_queue_opt *);
+int		 expand_skip_interface(struct node_if *);
 
 int	 check_rulestate(int);
-int	 kw_cmp(const void *, const void *);
-int	 lookup(char *);
-int	 lgetc(int);
-int	 lungetc(int);
-int	 findeol(void);
-int	 yylex(void);
-int	 atoul(char *, u_long *);
 int	 getservice(char *);
 int	 rule_label(struct pf_rule *, char *);
-
-TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
-struct sym {
-	TAILQ_ENTRY(sym)	 entries;
-	int			 used;
-	int			 persist;
-	char			*nam;
-	char			*val;
-};
-
-
-int	 symset(const char *, const char *, int);
-char	*symget(const char *);
 
 void	 mv_rules(struct pf_ruleset *, struct pf_ruleset *);
 void	 decide_address_family(struct node_host *, sa_family_t *);
@@ -484,7 +497,7 @@ ruleset		: /* empty */
 		| ruleset antispoof '\n'
 		| ruleset tabledef '\n'
 		| '{' fakeanchor '}' '\n';
-		| ruleset error '\n'		{ errors++; }
+		| ruleset error '\n'		{ file->errors++; }
 		;
 
 /*
@@ -4113,11 +4126,10 @@ int
 yyerror(const char *fmt, ...)
 {
 	va_list		 ap;
-	extern char	*infile;
 
-	errors = 1;
+	file->errors++;
 	va_start(ap, fmt);
-	fprintf(stderr, "%s:%d: ", infile, yylval.lineno);
+	fprintf(stderr, "%s:%d: ", file->name, yylval.lineno);
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
@@ -5149,10 +5161,9 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(int inquot)
+lgetc(int quotec)
 {
-	int	c, next;
-	FILE *f = fin;
+	int		c, next;
 
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
@@ -5168,29 +5179,39 @@ lgetc(int inquot)
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
 
-	if (inquot) {
-		c = getc(f);
+	if (quotec) {
+		if ((c = getc(file->stream)) == EOF) {
+			yyerror("reached end of file while parsing quoted string");
+			if (popfile() == EOF)
+				return (EOF);
+			return (quotec);
+		}
 		return (c);
 	}
 
-	while ((c = getc(f)) == '\\') {
-		next = getc(f);
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
 		}
-		yylval.lineno = lineno;
-		lineno++;
+		yylval.lineno = file->lineno;
+		file->lineno++;
 	}
 	if (c == '\t' || c == ' ') {
 		/* Compress blanks to a single space. */
 		do {
-			c = getc(f);
+			c = getc(file->stream);
 		} while (c == '\t' || c == ' ');
-		ungetc(c, f);
+		ungetc(c, file->stream);
 		c = ' ';
 	}
 
+	while (c == EOF) {
+		if (popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
+	}
 	return (c);
 }
 
@@ -5222,7 +5243,7 @@ findeol(void)
 	while (1) {
 		c = lgetc(0);
 		if (c == '\n') {
-			lineno++;
+			file->lineno++;
 			break;
 		}
 		if (c == EOF)
@@ -5236,7 +5257,7 @@ yylex(void)
 {
 	char	 buf[8096];
 	char	*p, *val;
-	int	 endc, next, c;
+	int	 quotec, next, c;
 	int	 token;
 
 top:
@@ -5244,7 +5265,7 @@ top:
 	while ((c = lgetc(0)) == ' ')
 		; /* nothing */
 
-	yylval.lineno = lineno;
+	yylval.lineno = file->lineno;
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
@@ -5278,21 +5299,21 @@ top:
 	switch (c) {
 	case '\'':
 	case '"':
-		endc = c;
+		quotec = c;
 		while (1) {
-			if ((c = lgetc(1)) == EOF)
+			if ((c = lgetc(quotec)) == EOF)
 				return (0);
 			if (c == '\n') {
-				lineno++;
+				file->lineno++;
 				continue;
 			} else if (c == '\\') {
-				if ((next = lgetc(1)) == EOF)
+				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == endc)
+				if (next == quotec)
 					c = next;
 				else
 					lungetc(next);
-			} else if (c == endc) {
+			} else if (c == quotec) {
 				*p = '\0';
 				break;
 			}
@@ -5388,8 +5409,8 @@ nodigits:
 		return (token);
 	}
 	if (c == '\n') {
-		yylval.lineno = lineno;
-		lineno++;
+		yylval.lineno = file->lineno;
+		file->lineno++;
 	}
 	if (c == EOF)
 		return (0);
@@ -5397,13 +5418,80 @@ nodigits:
 }
 
 int
-parse_rules(FILE *input, struct pfctl *xpf)
+check_file_secrecy(int fd, const char *fname)
 {
-	struct sym	*sym, *next;
+	struct stat	st;
 
-	fin = input;
+	if (fstat(fd, &st)) {
+		warn("cannot stat %s", fname);
+		return (-1);
+	}
+	if (st.st_uid != 0 && st.st_uid != getuid()) {
+		warnx("%s: owner not root or current user", fname);
+		return (-1);
+	}
+	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
+		warnx("%s: group/world readable/writeable", fname);
+		return (-1);
+	}
+	return (0);
+}
+
+struct file *
+pushfile(const char *name, int secret)
+{
+	struct file	*nfile;
+
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
+	    (nfile->name = strdup(name)) == NULL)
+		return (NULL);
+	if (TAILQ_FIRST(&files) == NULL && strcmp(nfile->name, "-") == 0) {
+		nfile->stream = stdin;
+		free(nfile->name);
+		if ((nfile->name = strdup("stdin")) == NULL) {
+			free(nfile);
+			return (NULL);
+		}
+	} else if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
+		free(nfile->name);
+		free(nfile);
+		return (NULL);
+	} else if (secret &&
+	    check_file_secrecy(fileno(nfile->stream), nfile->name)) {
+		fclose(nfile->stream);
+		free(nfile->name);
+		free(nfile);
+		return (NULL);
+	}
+	nfile->lineno = 1;
+	TAILQ_INSERT_TAIL(&files, nfile, entry);
+	return (nfile);
+}
+
+int
+popfile(void)
+{
+	struct file	*prev;
+
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+		prev->errors += file->errors;
+		TAILQ_REMOVE(&files, file, entry);
+		fclose(file->stream);
+		free(file->name);
+		free(file);
+		file = prev;
+		return (0);
+	}
+	return (EOF);
+}
+
+int
+parse_config(char *filename, struct pfctl *xpf)
+{
+	int		 errors = 0;
+	struct sym	*sym;
+
 	pf = xpf;
-	lineno = 1;
 	errors = 0;
 	rulestate = PFCTL_STATE_NONE;
 	returnicmpdefault = (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
@@ -5412,34 +5500,36 @@ parse_rules(FILE *input, struct pfctl *xpf)
 	blockpolicy = PFRULE_DROP;
 	require_order = 1;
 
+	if ((file = pushfile(filename, 1)) == NULL) {
+		warn("cannot open the main config file!");
+		return (-1);
+	}
+
 	yyparse();
+	errors = file->errors;
+	popfile();
 
 	/* Free macros and check which have not been used. */
-	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
-		next = TAILQ_NEXT(sym, entries);
+	while ((sym = TAILQ_FIRST(&symhead))) {
 		if ((pf->opts & PF_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
 		free(sym->nam);
 		free(sym->val);
-		TAILQ_REMOVE(&symhead, sym, entries);
+		TAILQ_REMOVE(&symhead, sym, entry);
 		free(sym);
 	}
 
 	return (errors ? -1 : 0);
 }
 
-/*
- * Over-designed efficiency is a French and German concept, so how about
- * we wait until they discover this ugliness and make it all fancy.
- */
 int
 symset(const char *nam, const char *val, int persist)
 {
 	struct sym	*sym;
 
 	for (sym = TAILQ_FIRST(&symhead); sym && strcmp(nam, sym->nam);
-	    sym = TAILQ_NEXT(sym, entries))
+	    sym = TAILQ_NEXT(sym, entry))
 		;	/* nothing */
 
 	if (sym != NULL) {
@@ -5448,7 +5538,7 @@ symset(const char *nam, const char *val, int persist)
 		else {
 			free(sym->nam);
 			free(sym->val);
-			TAILQ_REMOVE(&symhead, sym, entries);
+			TAILQ_REMOVE(&symhead, sym, entry);
 			free(sym);
 		}
 	}
@@ -5468,7 +5558,7 @@ symset(const char *nam, const char *val, int persist)
 	}
 	sym->used = 0;
 	sym->persist = persist;
-	TAILQ_INSERT_TAIL(&symhead, sym, entries);
+	TAILQ_INSERT_TAIL(&symhead, sym, entry);
 	return (0);
 }
 
@@ -5497,7 +5587,7 @@ symget(const char *nam)
 {
 	struct sym	*sym;
 
-	TAILQ_FOREACH(sym, &symhead, entries)
+	TAILQ_FOREACH(sym, &symhead, entry)
 		if (strcmp(nam, sym->nam) == 0) {
 			sym->used = 1;
 			return (sym->val);
@@ -5683,17 +5773,12 @@ int
 pfctl_load_anchors(int dev, struct pfctl *pf, struct pfr_buffer *trans)
 {
 	struct loadanchors	*la;
-	FILE			*fin;
 
 	TAILQ_FOREACH(la, &loadanchorshead, entries) {
 		if (pf->opts & PF_OPT_VERBOSE)
 			fprintf(stderr, "\nLoading anchor %s from %s\n",
 			    la->anchorname, la->filename);
-		if ((fin = pfctl_fopen(la->filename, "r")) == NULL) {
-			warn("%s", la->filename);
-			continue;
-		}
-		if (pfctl_rules(dev, la->filename, fin, pf->opts, pf->optimize,
+		if (pfctl_rules(dev, la->filename, pf->opts, pf->optimize,
 		    la->anchorname, trans) == -1)
 			return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.68 2007/08/21 18:44:52 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.69 2007/10/13 16:35:18 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -62,7 +62,6 @@ const char	*ipsecctl_lookup_option(char *, const char **);
 static int	 unmask(struct ipsec_addr *, sa_family_t);
 int		 sacompare(const void *, const void *);
 
-const char	*infile;	/* Used by parse.y */
 const char	*showopt;
 
 int		 first_title = 1;
@@ -98,7 +97,6 @@ sacompare(const void *va, const void *vb)
 int
 ipsecctl_rules(char *filename, int opts)
 {
-	FILE		*fin;
 	struct ipsecctl	 ipsec;
 	int		 action, error = 0;
 
@@ -107,18 +105,7 @@ ipsecctl_rules(char *filename, int opts)
 	TAILQ_INIT(&ipsec.rule_queue);
 	TAILQ_INIT(&ipsec.group_queue);
 
-	if (strcmp(filename, "-") == 0) {
-		fin = stdin;
-		infile = "stdin";
-	} else {
-		if ((fin = ipsecctl_fopen(filename, "r")) == NULL) {
-			warn("%s", filename);
-			return (1);
-		}
-		infile = filename;
-	}
-
-	if (parse_rules(fin, &ipsec) < 0) {
+	if (parse_rules(filename, &ipsec) < 0) {
 		warnx("Syntax error in config file: ipsec rules not loaded");
 		error = 1;
 	} else {
@@ -129,11 +116,6 @@ ipsecctl_rules(char *filename, int opts)
 
 		if ((opts & IPSECCTL_OPT_NOACTION) == 0)
 			error = ipsecctl_commit(action, &ipsec);
-	}
-
-	if (fin != stdin) {
-		fclose(fin);
-		fin = NULL;
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.3 2007/10/11 21:25:37 claudio Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.4 2007/10/13 16:35:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -55,7 +55,6 @@ int		check_child(pid_t, const char *);
 void	main_dispatch_ospfe(int, short, void *);
 void	main_dispatch_rde(int, short, void *);
 
-int	check_file_secrecy(int, const char *);
 void	ospf_redistribute_default(int);
 
 int	ospf_reload(void);
@@ -487,29 +486,6 @@ void
 main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	imsg_compose(ibuf_rde, type, 0, pid, data, datalen);
-}
-
-int
-check_file_secrecy(int fd, const char *fname)
-{
-	struct stat	st;
-
-	if (fstat(fd, &st)) {
-		warn("cannot stat %s", fname);
-		return (-1);
-	}
-
-	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		warnx("%s: owner not root or current user", fname);
-		return (-1);
-	}
-
-	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		warnx("%s: group/world readable/writeable", fname);
-		return (-1);
-	}
-
-	return (0);
 }
 
 /* this needs to be added here so that ospfctl can be used without libevent */

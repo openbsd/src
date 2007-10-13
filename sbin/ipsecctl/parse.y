@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.127 2007/10/11 14:39:16 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.128 2007/10/13 16:35:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,12 +47,41 @@
 
 #include "ipsecctl.h"
 
+TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
+static struct file {
+	TAILQ_ENTRY(file)	 entry;
+	FILE			*stream;
+	char			*name;
+	int			 lineno;
+	int			 errors;
+} *file;
+struct file	*pushfile(const char *, int);
+int		 popfile(void);
+int		 check_file_secrecy(int, const char *);
+int		 yyparse(void);
+int		 yylex(void);
+int		 yyerror(const char *, ...);
+int		 kw_cmp(const void *, const void *);
+int		 lookup(char *);
+int		 lgetc(int);
+int		 lungetc(int);
+int		 findeol(void);
+
+TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
+struct sym {
+	TAILQ_ENTRY(sym)	 entry;
+	int			 used;
+	int			 persist;
+	char			*nam;
+	char			*val;
+};
+int		 symset(const char *, const char *, int);
+char		*symget(const char *);
+int		 cmdline_symset(char *);
+
 #define KEYSIZE_LIMIT	1024
 
 static struct ipsecctl	*ipsec = NULL;
-static FILE		*fin = NULL;
-static int		 lineno = 1;
-static int		 errors = 0;
 static int		 debug = 0;
 
 const struct ipsec_xf authxfs[] = {
@@ -110,27 +139,6 @@ const struct ipsec_xf groupxfs[] = {
 	{ NULL,			0,			0,	0 },
 };
 
-int			 yyerror(const char *, ...);
-int			 yyparse(void);
-int			 kw_cmp(const void *, const void *);
-int			 lookup(char *);
-int			 lgetc(int);
-int			 lungetc(int);
-int			 findeol(void);
-int			 yylex(void);
-
-TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
-struct sym {
-	TAILQ_ENTRY(sym)	 entries;
-	int		 used;
-	int		 persist;
-	char		*nam;
-	char		*val;
-};
-
-int			 symset(const char *, const char *, int);
-int			 cmdline_symset(char *);
-char			*symget(const char *);
 int			 atoul(char *, u_long *);
 int			 atospi(char *, u_int32_t *);
 u_int8_t		 x2i(unsigned char *);
@@ -271,7 +279,7 @@ grammar		: /* empty */
 		| grammar sarule '\n'
 		| grammar tcpmd5rule '\n'
 		| grammar varset '\n'
-		| grammar error '\n'		{ errors++; }
+		| grammar error '\n'		{ file->errors++; }
 		;
 
 comma		: ','
@@ -823,11 +831,10 @@ int
 yyerror(const char *fmt, ...)
 {
 	va_list		 ap;
-	extern const char *infile;
 
-	errors = 1;
+	file->errors++;
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: %d: ", infile, yylval.lineno);
+	fprintf(stderr, "%s: %d: ", file->name, yylval.lineno);
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
@@ -915,10 +922,9 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(int inquot)
+lgetc(int quotec)
 {
-	int	c, next;
-	FILE *f = fin;
+	int		c, next;
 
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
@@ -934,29 +940,39 @@ lgetc(int inquot)
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
 
-	if (inquot) {
-		c = getc(f);
+	if (quotec) {
+		if ((c = getc(file->stream)) == EOF) {
+			yyerror("reached end of file while parsing quoted string");
+			if (popfile() == EOF)
+				return (EOF);
+			return (quotec);
+		}
 		return (c);
 	}
 
-	while ((c = getc(f)) == '\\') {
-		next = getc(f);
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			c = next;
 			break;
 		}
-		yylval.lineno = lineno;
-		lineno++;
+		yylval.lineno = file->lineno;
+		file->lineno++;
 	}
 	if (c == '\t' || c == ' ') {
 		/* Compress blanks to a single space. */
 		do {
-			c = getc(f);
+			c = getc(file->stream);
 		} while (c == '\t' || c == ' ');
-		ungetc(c, f);
+		ungetc(c, file->stream);
 		c = ' ';
 	}
 
+	while (c == EOF) {
+		if (popfile() == EOF)
+			return (EOF);
+		c = getc(file->stream);
+	}
 	return (c);
 }
 
@@ -988,7 +1004,7 @@ findeol(void)
 	while (1) {
 		c = lgetc(0);
 		if (c == '\n') {
-			lineno++;
+			file->lineno++;
 			break;
 		}
 		if (c == EOF)
@@ -1002,7 +1018,7 @@ yylex(void)
 {
 	char	 buf[8096];
 	char	*p, *val;
-	int	 endc, next, c;
+	int	 quotec, next, c;
 	int	 token;
 
 top:
@@ -1010,7 +1026,7 @@ top:
 	while ((c = lgetc(0)) == ' ')
 		; /* nothing */
 
-	yylval.lineno = lineno;
+	yylval.lineno = file->lineno;
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
@@ -1044,21 +1060,21 @@ top:
 	switch (c) {
 	case '\'':
 	case '"':
-		endc = c;
+		quotec = c;
 		while (1) {
-			if ((c = lgetc(1)) == EOF)
+			if ((c = lgetc(quotec)) == EOF)
 				return (0);
 			if (c == '\n') {
-				lineno++;
+				file->lineno++;
 				continue;
 			} else if (c == '\\') {
-				if ((next = lgetc(1)) == EOF)
+				if ((next = lgetc(quotec)) == EOF)
 					return (0);
-				if (next == endc)
+				if (next == quotec)
 					c = next;
 				else
 					lungetc(next);
-			} else if (c == endc) {
+			} else if (c == quotec) {
 				*p = '\0';
 				break;
 			}
@@ -1132,8 +1148,8 @@ nodigits:
 		return (token);
 	}
 	if (c == '\n') {
-		yylval.lineno = lineno;
-		lineno++;
+		yylval.lineno = file->lineno;
+		file->lineno++;
 	}
 	if (c == EOF)
 		return (0);
@@ -1141,25 +1157,98 @@ nodigits:
 }
 
 int
-parse_rules(FILE *input, struct ipsecctl *ipsecx)
+check_file_secrecy(int fd, const char *fname)
+{
+	struct stat	st;
+
+	if (fstat(fd, &st)) {
+		warn("cannot stat %s", fname);
+		return (-1);
+	}
+	if (st.st_uid != 0 && st.st_uid != getuid()) {
+		warnx("%s: owner not root or current user", fname);
+		return (-1);
+	}
+	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
+		warnx("%s: group/world readable/writeable", fname);
+		return (-1);
+	}
+	return (0);
+}
+
+struct file *
+pushfile(const char *name, int secret)
+{
+	struct file	*nfile;
+
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
+	    (nfile->name = strdup(name)) == NULL)
+		return (NULL);
+	if (TAILQ_FIRST(&files) == NULL && strcmp(nfile->name, "-") == 0) {
+		nfile->stream = stdin;
+		free(nfile->name);
+		if ((nfile->name = strdup("stdin")) == NULL) {
+			free(nfile);
+			return (NULL);
+		}
+	} else if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
+		free(nfile->name);
+		free(nfile);
+		return (NULL);
+	} else if (secret &&
+	    check_file_secrecy(fileno(nfile->stream), nfile->name)) {
+		fclose(nfile->stream);
+		free(nfile->name);
+		free(nfile);
+		return (NULL);
+	}
+	nfile->lineno = 1;
+	TAILQ_INSERT_TAIL(&files, nfile, entry);
+	return (nfile);
+}
+
+int
+popfile(void)
+{
+	struct file	*prev;
+
+	if ((prev = TAILQ_PREV(file, files, entry)) != NULL) {
+		prev->errors += file->errors;
+		TAILQ_REMOVE(&files, file, entry);
+		fclose(file->stream);
+		free(file->name);
+		free(file);
+		file = prev;
+		return (0);
+	}
+	return (EOF);
+}
+
+int
+parse_rules(const char *filename, struct ipsecctl *ipsecx)
 {
 	struct sym	*sym;
+	int		 errors = 0;
 
 	ipsec = ipsecx;
-	fin = input;
-	lineno = 1;
-	errors = 0;
+
+	if ((file = pushfile(filename, 1)) == NULL) {
+		warn("cannot open the main config file!");
+		return (-1);
+	}
 
 	yyparse();
+	errors = file->errors;
+	popfile();
 
 	/* Free macros and check which have not been used. */
 	while ((sym = TAILQ_FIRST(&symhead))) {
 		if ((ipsec->opts & IPSECCTL_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
-		TAILQ_REMOVE(&symhead, sym, entries);
 		free(sym->nam);
 		free(sym->val);
+		TAILQ_REMOVE(&symhead, sym, entry);
 		free(sym);
 	}
 
@@ -1172,16 +1261,16 @@ symset(const char *nam, const char *val, int persist)
 	struct sym	*sym;
 
 	for (sym = TAILQ_FIRST(&symhead); sym && strcmp(nam, sym->nam);
-	    sym = TAILQ_NEXT(sym, entries))
+	    sym = TAILQ_NEXT(sym, entry))
 		;	/* nothing */
 
 	if (sym != NULL) {
 		if (sym->persist == 1)
 			return (0);
 		else {
-			TAILQ_REMOVE(&symhead, sym, entries);
 			free(sym->nam);
 			free(sym->val);
+			TAILQ_REMOVE(&symhead, sym, entry);
 			free(sym);
 		}
 	}
@@ -1201,7 +1290,7 @@ symset(const char *nam, const char *val, int persist)
 	}
 	sym->used = 0;
 	sym->persist = persist;
-	TAILQ_INSERT_TAIL(&symhead, sym, entries);
+	TAILQ_INSERT_TAIL(&symhead, sym, entry);
 	return (0);
 }
 
@@ -1232,7 +1321,7 @@ symget(const char *nam)
 {
 	struct sym	*sym;
 
-	TAILQ_FOREACH(sym, &symhead, entries)
+	TAILQ_FOREACH(sym, &symhead, entry)
 		if (strcmp(nam, sym->nam) == 0) {
 			sym->used = 1;
 			return (sym->val);

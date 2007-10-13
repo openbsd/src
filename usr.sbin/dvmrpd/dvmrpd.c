@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.3 2007/01/24 09:57:51 norby Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.4 2007/10/13 16:35:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -58,8 +58,6 @@ void	main_dispatch_dvmrpe(int, short, void *);
 void	main_dispatch_rde(int, short, void *);
 void	main_imsg_compose_dvmrpe(int, pid_t, void *, u_int16_t);
 void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
-
-int	check_file_secrecy(int, const char *);
 
 int	pipe_parent2dvmrpe[2];
 int	pipe_parent2rde[2];
@@ -461,29 +459,6 @@ void
 main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	imsg_compose(ibuf_rde, type, 0, pid, data, datalen);
-}
-
-int
-check_file_secrecy(int fd, const char *fname)
-{
-	struct stat	st;
-
-	if (fstat(fd, &st)) {
-		log_warn("cannot stat %s", fname);
-		return (-1);
-	}
-
-	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_warnx("%s: owner not root or current user", fname);
-		return (-1);
-	}
-
-	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_warnx("%s: group/world readable/writeable", fname);
-		return (-1);
-	}
-
-	return (0);
 }
 
 /* this needs to be added here so that dvmrpctl can be used without libevent */
