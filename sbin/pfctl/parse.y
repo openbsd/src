@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.527 2007/10/13 16:35:18 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.528 2007/10/13 21:49:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -340,7 +340,7 @@ struct loadanchors {
 
 typedef struct {
 	union {
-		int64_t		 	 number;
+		int64_t			 number;
 		int			 i;
 		char			*string;
 		u_int			 rtableid;
@@ -423,7 +423,7 @@ typedef struct {
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
-%token	ANTISPOOF FOR
+%token	ANTISPOOF FOR INCLUDE
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT RTABLE
@@ -483,6 +483,7 @@ typedef struct {
 %%
 
 ruleset		: /* empty */
+		| ruleset include '\n'
 		| ruleset '\n'
 		| ruleset option '\n'
 		| ruleset scrubrule '\n'
@@ -498,6 +499,21 @@ ruleset		: /* empty */
 		| ruleset tabledef '\n'
 		| '{' fakeanchor '}' '\n';
 		| ruleset error '\n'		{ file->errors++; }
+		;
+
+include		: INCLUDE STRING		{
+			struct file	*nfile;
+
+			if ((nfile = pushfile($2, 1)) == NULL) {
+				yyerror("failed to include file %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			file = nfile;
+			lungetc('\n');
+		}
 		;
 
 /*
@@ -5060,6 +5076,7 @@ lookup(char *s)
 		{ "icmp6-type",		ICMP6TYPE},
 		{ "if-bound",		IFBOUND},
 		{ "in",			IN},
+		{ "include",		INCLUDE},
 		{ "inet",		INET},
 		{ "inet6",		INET6},
 		{ "keep",		KEEP},
