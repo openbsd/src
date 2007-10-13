@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.27 2007/10/10 15:53:52 art Exp $ */
+/*	$OpenBSD: macebus.c,v 1.28 2007/10/13 06:25:48 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -177,7 +177,7 @@ macebusscan(struct device *parent, void *child, void *args)
 
 	lba.ca_bus = &lbus;
 
-	/* Fill in what is needed for probing */
+	/* Fill in members needed for probing. */
 	lba.ca_bus->ab_type = BUS_LOCAL;
 	lba.ca_bus->ab_matchname = NULL;
 	lba.ca_name = cf->cf_driver->cd_name;
@@ -272,7 +272,6 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 
 	/* DEBUG: Set up a handler called when clock interrupts go off. */
 	set_intr(INTPRI_MACEAUX, CR_INT_5, macebus_aux);
-
 
 	while ((dev = config_search(macebusscan, self, aux)) != NULL) {
 		struct cfdata *cf;
@@ -370,7 +369,7 @@ mace_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 
 	bpa = t->bus_base + offs;
 
-	/* Handle special mapping separately */
+	/* Handle special mapping separately. */
 	if (bpa >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
 	    (bpa + size) < (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE)) {
 		*bshp = PHYS_TO_XKPHYS(bpa, CCA_NC);
@@ -399,7 +398,7 @@ mace_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	bus_addr_t sva, paddr;
 	bus_size_t off, len;
 
-	/* should this verify that the proper size is freed? */
+	/* Should this verify that the proper size is freed? */
 	sva = trunc_page(bsh);
 	off = bsh - sva;
 	len = size+off;
@@ -495,7 +494,7 @@ macebus_intr_establish(void *icp, u_long irq, int type, int level,
 	}
 	irq -= 1;	/* Adjust for 1 being first (0 is no int) */
 
-	/* no point in sleeping unless someone can free memory. */
+	/* No point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
 		panic("intr_establish: can't malloc handler info");
@@ -631,7 +630,7 @@ macebus_do_pending_int(int newcpl)
 	struct trap_frame cf;
 	static volatile int processing;
 
-	/* Don't recurse... but change the mask */
+	/* Don't recurse... but change the mask. */
 	if (processing) {
 		__asm__ (" .set noreorder\n");
 		cpl = newcpl;
@@ -646,15 +645,15 @@ macebus_do_pending_int(int newcpl)
 	cf.sr = 0;
 	cf.cpl = cpl;
 
-	/* Hard mask current cpl so we don't get any new pendings */
+	/* Hard mask current cpl so we don't get any new pendings. */
 	hw_setintrmask(cpl);
 
-	/* Get what interrupt we should process */
+	/* Find out what interrupts we should process. */
 	hwpend = ipending & ~newcpl;
 	hwpend &= ~SINT_ALLMASK;
 	atomic_clearbits_int(&ipending, hwpend);
 
-	/* Enable all non pending non masked hardware interrupts */
+	/* Enable all non-pending non-masked hardware interrupts. */
 	__asm__ (" .set noreorder\n");
 	cpl = (cpl & SINT_ALLMASK) | (newcpl & ~SINT_ALLMASK) | hwpend;
 	__asm__ (" sync\n .set reorder\n");
@@ -673,7 +672,7 @@ macebus_do_pending_int(int newcpl)
 		}
 	}
 
-	/* Enable all processed pending hardware interrupts */
+	/* Enable all processed pending hardware interrupts. */
 	__asm__ (" .set noreorder\n");
 	cpl &= ~hwpend;
 	__asm__ (" sync\n .set reorder\n");
@@ -715,7 +714,7 @@ macebus_do_pending_int(int newcpl)
 	cpl = newcpl;
 	__asm__ (" sync\n .set reorder\n");
 	hw_setintrmask(newcpl);
-	/* If we still have softints pending trigg processing */
+	/* If we still have softints pending trigger processing. */
 	if (ipending & SINT_ALLMASK & ~newcpl)
 		setsoftintr0();
 #endif
@@ -739,7 +738,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 	isastat = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT);
 	caught = 0;
 
-	/* Mask off masked interrupts and save them as pending */
+	/* Mask off masked interrupts and save them as pending. */
 	if (intstat & cf->cpl) {
 		atomic_setbits_int(&ipending, intstat & cf->cpl);
 		mask = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK);
@@ -748,7 +747,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 		caught++;
 	}
 
-	/* Scan all unmasked. Scan the first 16 for now */
+	/* Scan all unmasked. Scan the first 16 for now. */
 	pending = intstat & ~cf->cpl;
 	atomic_clearbits_int(&ipending, pending);
 
@@ -770,7 +769,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 	if (caught)
 		return CR_INT_0;
 
-	return 0;  /* Non found here */
+	return 0;  /* Not found here. */
 }
 
 
@@ -787,7 +786,7 @@ macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
 
 	/* GREEN - Idle */
 	/* AMBER - System mode */
-	/* RED   - User Mode */
+	/* RED   - User mode */
 	if (cf->sr & SR_KSU_USER) {
 		mask &= ~MACE_ISA_MISC_RLED_OFF;
 	} else if (curproc == NULL ||
@@ -802,5 +801,5 @@ macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
 		maceticks = 0;
 	}
 
-	return 0; /* Real clock int handler registers */
+	return 0; /* Real clock int handler registers. */
 }
