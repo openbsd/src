@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2007/10/10 12:04:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2007/10/13 21:27:20 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -56,7 +56,7 @@ ${CDROM}:
 	    seek=`cat ${.OBJDIR}/volhdr | grep 'Volume Header' | awk '{print $$3}'`
 
 install:
-	cp ${CDROM} ${DESTDIR}/snapshot
+	cp ${CDROM} ${RELDIR}/
 
 unconfig:
 	-umount /mnt
