@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.88 2007/08/31 22:06:02 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.89 2007/10/13 16:12:29 fgsch Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -452,7 +452,6 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 		fxp_read_eeprom(sc, &data, 10, 1);
 		if (data & 0x02) {			/* STB enable */
 			u_int16_t cksum;
-			int i;
 
 			printf("%s: Disabling dynamic standby mode in EEPROM",
 			    sc->sc_dev.dv_xname);

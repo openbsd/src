@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.68 2007/10/01 04:03:51 krw Exp $  */
+/*      $OpenBSD: ath.c,v 1.69 2007/10/13 16:12:29 fgsch Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1119,8 +1119,6 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error == ENETRESET) {
 			if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
 			    (IFF_RUNNING|IFF_UP)) {
-				struct ieee80211com *ic = &sc->sc_ic;
-
 				if (ic->ic_opmode != IEEE80211_M_MONITOR)
 					ath_init(ifp);	/* XXX lose error */
 				else
