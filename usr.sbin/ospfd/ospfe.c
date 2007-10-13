@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.59 2007/10/11 12:19:31 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.60 2007/10/13 13:21:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1008,7 +1008,7 @@ ospfe_router_id(void)
 }
 
 void
-ospfe_fip_update(int type)
+ospfe_fib_update(int type)
 {
 	int	old = oe_nofib;
 
