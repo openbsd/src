@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2007/10/13 07:18:32 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -310,10 +310,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 /*
  * cpu_exit is called as the last action during exit.
  *
- * We clean up a little and then call switchexit() with the old proc
- * as an argument.  switchexit() switches to the idle context, schedules
- * the old vmspace and stack to be freed, then selects a new process to
- * run.
+ * We clean up a little and then call sched_exit() with the old proc
+ * as an argument.  sched_exit() schedules the old vmspace and stack
+ * to be freed, then selects a new process to run.
  */
 void
 cpu_exit(struct proc *p)

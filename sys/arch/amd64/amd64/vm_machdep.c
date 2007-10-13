@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2007/10/13 07:18:32 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -154,9 +154,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 /*
  * cpu_exit is called as the last action during exit.
  *
- * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's context, and finally
- * jumps into switch() to wait for another process to wake up.
+ * We clean up a little and then call sched_exit() with the old proc as an
+ * argument.
  */
 void
 cpu_exit(struct proc *p)
