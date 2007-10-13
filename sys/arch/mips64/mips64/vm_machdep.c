@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2007/10/10 15:53:52 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2007/10/13 07:18:01 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -123,7 +123,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 /*
  * cpu_exit is called as the last action during exit.
- * release adress space and machine dependent resources.
  */
 void
 cpu_exit(p)
@@ -134,7 +133,6 @@ cpu_exit(p)
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;
 
-	(void)splhigh();
 	pmap_deactivate(p);
 	sched_exit(p);
 }

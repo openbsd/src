@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2007/10/10 15:53:52 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2007/10/13 07:18:01 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -136,15 +136,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 /*
  * cpu_exit is called as the last action during exit.
- *
- * Block context switches and then call switch_exit() which will
- * switch to another process thus we never return.
  */
 void
 cpu_exit(struct proc *p)
 {
-	(void)splhigh();
-
 	pmap_deactivate(p);
 	sched_exit(p);
 }
