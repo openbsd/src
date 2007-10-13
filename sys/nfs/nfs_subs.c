@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.64 2007/10/08 17:39:52 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.65 2007/10/13 17:38:43 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ u_int32_t nfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
 static u_int32_t nfs_xid = 0;
-static u_int32_t nfs_xid_touched = 0;
 nfstype nfsv2_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFNON,
 		      NFCHR, NFNON };
 nfstype nfsv3_type[9] = { NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFSOCK,
@@ -555,158 +554,104 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 
 /*
  * Build the RPC header and fill in the authorization info.
- * The authorization string argument is only used when the credentials
- * come from outside of the kernel.
- * Returns the head of the mbuf list.
+ * Right now we are pretty centric around RPCAUTH_UNIX, in the
+ * future, this function will need some love to be able to handle
+ * other authorization methods, such as Kerberos.
  */
-struct mbuf *
-nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
-	verf_str, mrest, mrest_len, mbp, xidp)
-	struct ucred *cr;
-	int nmflag;
-	int procid;
-	int auth_type;
-	int auth_len;
-	char *auth_str;
-	int verf_len;
-	char *verf_str;
-	struct mbuf *mrest;
-	int mrest_len;
-	struct mbuf **mbp;
-	u_int32_t *xidp;
+void
+nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
+    struct mbuf *mrest, int mrest_len)
 {
-	struct mbuf *mb;
-	u_int32_t *tl;
-	caddr_t bpos;
-	int i;
-	struct mbuf *mreq, *mb2;
-	int siz, grpsiz, authsiz;
+	struct mbuf	*mb, *mb2;
+	u_int32_t	*tl;
+	u_int32_t	xid;
+	caddr_t		bpos;
+	int		i, authsiz, auth_len, ngroups;
 
-	authsiz = nfsm_rndup(auth_len);
+	KASSERT(auth_type == RPCAUTH_UNIX);
+
+	/*
+	 * RPCAUTH_UNIX fits in an hdr mbuf, in the future other
+	 * authorization methods need to figure out there own sizes
+	 * and allocate and chain mbuf's accorindgly.
+	 */
 	MGETHDR(mb, M_WAIT, MT_DATA);
-	if ((authsiz + 10 * NFSX_UNSIGNED) >= MINCLSIZE) {
-		MCLGET(mb, M_WAIT);
-	} else if ((authsiz + 10 * NFSX_UNSIGNED) < MHLEN) {
-		MH_ALIGN(mb, authsiz + 10 * NFSX_UNSIGNED);
-	} else {
-		MH_ALIGN(mb, 8 * NFSX_UNSIGNED);
-	}
-	mb->m_len = 0;
-	mreq = mb;
-	bpos = mtod(mb, caddr_t);
 
 	/*
-	 * First the RPC header.
+	 * We need to start out by finding how big the authorization cred
+	 * and verifer are for the auth_type, to be able to correctly
+	 * align the mbuf header/chain.
 	 */
-	nfsm_build(tl, u_int32_t *, 8 * NFSX_UNSIGNED);
-
-	/* Get a new (non-zero) xid */
-
-	if ((nfs_xid == 0) && (nfs_xid_touched == 0)) {
-		nfs_xid = arc4random();
-		nfs_xid_touched = 1;
-	} else {
-		while ((*xidp = arc4random() % 256) == 0)
-			;
-		nfs_xid += *xidp;
-	}
-	    
-	*tl++ = *xidp = txdr_unsigned(nfs_xid);
-	*tl++ = rpc_call;
-	*tl++ = rpc_vers;
-	*tl++ = txdr_unsigned(NFS_PROG);
-	if (nmflag & NFSMNT_NFSV3)
-		*tl++ = txdr_unsigned(NFS_VER3);
-	else
-		*tl++ = txdr_unsigned(NFS_VER2);
-	if (nmflag & NFSMNT_NFSV3)
-		*tl++ = txdr_unsigned(procid);
-	else
-		*tl++ = txdr_unsigned(nfsv2_procid[procid]);
-
-	/*
-	 * And then the authorization cred.
-	 */
-	*tl++ = txdr_unsigned(auth_type);
-	*tl = txdr_unsigned(authsiz);
 	switch (auth_type) {
 	case RPCAUTH_UNIX:
-		nfsm_build(tl, u_int32_t *, auth_len);
-		*tl++ = 0;		/* stamp ?? */
+		/*
+		 * In the RPCAUTH_UNIX case, the size is the static
+		 * part as shown in RFC1831 + the number of groups,
+		 * RPCAUTH_UNIX has a zero verifer.
+		 */
+		if (cr->cr_ngroups > req->r_nmp->nm_numgrps)
+			ngroups = req->r_nmp->nm_numgrps;
+		else
+			ngroups = cr->cr_ngroups;
+
+		auth_len = (ngroups << 2) + 5 * NFSX_UNSIGNED;
+		authsiz = nfsm_rndup(auth_len);
+		/* The authorization size + the size of the static part */
+		MH_ALIGN(mb, authsiz + 10 * NFSX_UNSIGNED);
+		break;
+	}
+
+	mb->m_len = 0;
+	bpos = mtod(mb, caddr_t);
+
+	/* First the RPC header. */
+	nfsm_build(tl, u_int32_t *, 6 * NFSX_UNSIGNED);
+
+	/* Get a new (non-zero) xid */
+	do {
+		while ((xid = arc4random() % 256) == 0)
+			;
+		nfs_xid += xid;
+	} while (nfs_xid == 0);
+
+
+	*tl++ = req->r_xid = txdr_unsigned(nfs_xid);
+	*tl++ = rpc_call;
+	*tl++ = rpc_vers;
+	*tl++ = nfs_prog;
+	if (ISSET(req->r_nmp->nm_flag, NFSMNT_NFSV3)) {
+		*tl++ = txdr_unsigned(NFS_VER3);
+		*tl = txdr_unsigned(req->r_procnum);
+	} else {
+		*tl++ = txdr_unsigned(NFS_VER2);
+		*tl = txdr_unsigned(nfsv2_procid[req->r_procnum]);
+	}
+
+	/* The Authorization cred and its verifier */
+	switch (auth_type) {
+	case RPCAUTH_UNIX:
+		nfsm_build(tl, u_int32_t *, auth_len + 4 * NFSX_UNSIGNED);
+		*tl++ = txdr_unsigned(RPCAUTH_UNIX);
+		*tl++ = txdr_unsigned(authsiz);
+
+		/* The authorization cred */
+		*tl++ = 0;		/* stamp */
 		*tl++ = 0;		/* NULL hostname */
 		*tl++ = txdr_unsigned(cr->cr_uid);
 		*tl++ = txdr_unsigned(cr->cr_gid);
-		grpsiz = (auth_len >> 2) - 5;
-		*tl++ = txdr_unsigned(grpsiz);
-		for (i = 0; i < grpsiz; i++)
+		*tl++ = txdr_unsigned(ngroups);
+		for (i = 0; i < ngroups; i++)
 			*tl++ = txdr_unsigned(cr->cr_groups[i]);
-		break;
-	case RPCAUTH_KERB4:
-		siz = auth_len;
-		while (siz > 0) {
-			if (M_TRAILINGSPACE(mb) == 0) {
-				MGET(mb2, M_WAIT, MT_DATA);
-				if (siz >= MINCLSIZE)
-					MCLGET(mb2, M_WAIT);
-				mb->m_next = mb2;
-				mb = mb2;
-				mb->m_len = 0;
-				bpos = mtod(mb, caddr_t);
-			}
-			i = min(siz, M_TRAILINGSPACE(mb));
-			bcopy(auth_str, bpos, i);
-			mb->m_len += i;
-			auth_str += i;
-			bpos += i;
-			siz -= i;
-		}
-		if ((siz = (nfsm_rndup(auth_len) - auth_len)) > 0) {
-			for (i = 0; i < siz; i++)
-				*bpos++ = '\0';
-			mb->m_len += siz;
-		}
-		break;
-	};
-
-	/*
-	 * And the verifier...
-	 */
-	nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-	if (verf_str) {
-		*tl++ = txdr_unsigned(RPCAUTH_KERB4);
-		*tl = txdr_unsigned(verf_len);
-		siz = verf_len;
-		while (siz > 0) {
-			if (M_TRAILINGSPACE(mb) == 0) {
-				MGET(mb2, M_WAIT, MT_DATA);
-				if (siz >= MINCLSIZE)
-					MCLGET(mb2, M_WAIT);
-				mb->m_next = mb2;
-				mb = mb2;
-				mb->m_len = 0;
-				bpos = mtod(mb, caddr_t);
-			}
-			i = min(siz, M_TRAILINGSPACE(mb));
-			bcopy(verf_str, bpos, i);
-			mb->m_len += i;
-			verf_str += i;
-			bpos += i;
-			siz -= i;
-		}
-		if ((siz = (nfsm_rndup(verf_len) - verf_len)) > 0) {
-			for (i = 0; i < siz; i++)
-				*bpos++ = '\0';
-			mb->m_len += siz;
-		}
-	} else {
+		/* The authorization verifier */
 		*tl++ = txdr_unsigned(RPCAUTH_NULL);
 		*tl = 0;
+		break;
 	}
+
 	mb->m_next = mrest;
-	mreq->m_pkthdr.len = authsiz + 10 * NFSX_UNSIGNED + mrest_len;
-	mreq->m_pkthdr.rcvif = (struct ifnet *)0;
-	*mbp = mb;
-	return (mreq);
+	mb->m_pkthdr.len = authsiz + 10 * NFSX_UNSIGNED + mrest_len;
+	mb->m_pkthdr.rcvif = NULL;
+	req->r_mreq = mb;
 }
 
 /*

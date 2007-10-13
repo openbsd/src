@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.28 2007/06/21 22:59:49 thib Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.29 2007/10/13 17:38:43 thib Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -238,9 +238,8 @@ void nfsrv_cleancache(void);
 
 /* nfs_subs.c */
 struct mbuf *nfsm_reqh(struct vnode *, u_long, int, caddr_t *);
-struct mbuf *nfsm_rpchead(struct ucred *, int, int, int, int, char *, int,
-			       char *, struct mbuf *, int, struct mbuf **,
-			       u_int32_t *);
+void nfsm_rpchead(struct nfsreq *, struct ucred *, int, struct mbuf *, int);
+
 int nfsm_mbuftouio(struct mbuf **, struct uio *, int, caddr_t *);
 int nfsm_uiotombuf(struct uio *, struct mbuf **, int, caddr_t *);
 int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
