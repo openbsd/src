@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.2 2005/08/01 12:10:26 miod Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.3 2007/10/13 19:26:57 kettenis Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -37,20 +37,20 @@ dnl
 dnl
 dnl
 define(`STWS',`ifelse($5, `u',dnl
-`ifelse($1, `1', `vshd	$4, %r`$1', %r31
+`ifelse($1, `22', `vshd	$4, %r`$1', %r31
 	stbys,B,m %r31, F`'4($2, $3)',
-`0', `0', `vshd	%r`'decr($1), %r`$1', %r31
+`0', `0', `vshd	%r`'incr($1), %r`$1', %r31
 	stws,M	%r31, F`'4($2, $3)')',dnl
 `0', `0',
-`ifelse($1, `1',
+`ifelse($1, `22',
 `stbys,B`'ifelse(B, `b', `,m ', `0', `0', `	')`'%r`$1', F`'4($2, $3)',
 `0', `0', `stws,M	%r`$1', F`'4($2, $3)')')')dnl
-define(`STWSS', `ifelse(`$3', `19', `dnl',
-`0', `0', `STWSS($1, $2, eval($3 - 1), $4, $5)')
+define(`STWSS', `ifelse(`$3', `22', `dnl',
+`0', `0', `STWSS($1, $2, eval($3 + 1), $4, $5)')
 	STWS($3, $1, $2, $4, $5)dnl
 ')dnl
-define(`LDWSS', `ifelse(`$3', `19', `dnl',
-`0', `0', `LDWSS($1, $2, eval($3 - 1))')
+define(`LDWSS', `ifelse(`$3', `22', `dnl',
+`0', `0', `LDWSS($1, $2, eval($3 + 1))')
 	ldws,M	F`'4($1, $2), %r`'$3`'dnl
 ')dnl
 dnl
@@ -62,13 +62,13 @@ L($1, `loop16'`$7')
 	ldw	F 32($2, $3), %r0
 ifelse(F, `-', `dnl
 	addi	F`'4, $5, $5', `0', `0', `dnl')
-LDWSS($2, $3, 22)
-STWSS($4, $5, 21, `%ret1', $7)
+LDWSS($2, $3, 19)
+STWSS($4, $5, 20, `%ret1', $7)
 ifelse($7, `u', `dnl
-	STWS(4, $4, $5, `%ret1', $7)', $7, `a', `dnl')
+	STWS(19, $4, $5, `%ret1', $7)', $7, `a', `dnl')
 	addib,>= -16, $6, L($1, `loop16'`$7')
 ifelse($7, `a', `dnl
-	STWS(4, $4, $5, `%ret1', $7)dnl
+	STWS(19, $4, $5, `%ret1', $7)dnl
 ', $7, `u', `dnl
 	copy	%r19, %ret1')')dnl
 dnl
