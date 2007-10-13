@@ -1,0 +1,9 @@
+stdin:4: syntax error
+stdin:5: macro 'myports' not defined
+stdin:5: syntax error
+stdin:8: syntax error
+stdin:21: syntax error
+stdin:22: syntax error
+stdin:23: syntax error
+set require-order no
+table <444> { 1.2.3.4 }
