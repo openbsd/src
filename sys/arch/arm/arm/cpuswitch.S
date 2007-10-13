@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.8 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.9 2007/10/13 12:46:17 miod Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -160,15 +160,7 @@ _C_LABEL(curpcb):
  * Idle loop, exercised while waiting for a process to wake up.
  */
 ENTRY(cpu_idle_enter)
-	stmfd	sp!, {lr}
-
-	IRQenable			/* Enable interrupts */
-
-	/* Drop to spl0 (returns the current spl level in r0). */
-	mov	r0, #(IPL_NONE)
-	bl	_C_LABEL(_spllower)
-
-	ldmfd	sp!, {pc}
+	mov	pc, lr
 
 ENTRY(cpu_idle_cycle)
 	stmfd	sp!, {r6, lr}
@@ -181,7 +173,7 @@ ENTRY(cpu_idle_cycle)
 	ldrne	r6, [r6, #(CF_SLEEP)]
 
 	teq	r6, #0			/* Powersave idle? */
-	beq	1f			/* Nope. Just continue. */
+	beq	.Lidle_return		/* Nope. Just continue. */
 
 	/*
 	 * Before going into powersave idle mode, disable interrupts.
@@ -191,15 +183,11 @@ ENTRY(cpu_idle_cycle)
 	mov	pc, r6			/* If so, do powersave idle */
 	IRQenableALL
 
-1:	ldmfd	sp!, {r6, pc}
+.Lidle_return:
+	ldmfd	sp!, {r6, pc}
 
 ENTRY(cpu_idle_leave)
-	stmfd	sp!, {lr}
-
-	mov	r0, #(IPL_SCHED)
-	bl	_C_LABEL(_splraise)
-
-	ldmfd	sp!, {pc}
+	mov	pc, lr
 
 
 /*
@@ -252,7 +240,7 @@ ENTRY(cpu_switchto)
 	teq	r0, #0x00000000
 	beq	.Lswitch_exited
 
-	/* Stage two : Save old context */
+	/* Stage two: Save old context */
 
 	/* Save all the registers in the old proc's pcb */
 #ifndef __XSCALE__
@@ -304,7 +292,7 @@ ENTRY(cpu_switchto)
 
 	/* What else needs to be saved  Only FPA stuff when that is supported */
 
-	/* Third phase : restore saved context */
+	/* Third phase: restore saved context */
 
 	/*
 	 * Get the new L1 table pointer into r11.  If we're switching to

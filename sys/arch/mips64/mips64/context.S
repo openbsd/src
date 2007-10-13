@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.14 2007/10/10 15:53:52 art Exp $ */
+/*	$OpenBSD: context.S,v 1.15 2007/10/13 12:46:18 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -69,31 +69,7 @@ LEAF(savectx, 0)
 	move	v0, zero
 END(savectx)
 
-NON_LEAF(cpu_idle_enter, FRAMESZ(CF_SZ), ra)
-	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
-	PTR_S	ra, CF_RA_OFFS(sp)
-	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
-
-	sw	zero, cpl		# lower to spl0
-	lw	t0, ipending
-	beqz	t0, 1f
-	nop
-	jal	setsoftintr0
-	nop
-1:
-	mfc0	a0, COP_0_STATUS_REG	# ... and enable interrupts
-	li	a1, SR_INT_ENAB
-	or	a0, a0, a1
-	mtc0	a0, COP_0_STATUS_REG
-	ITLBNOPFIX
-
-#ifdef IMASK_EXTERNAL
-	jal	hw_setintrmask
-	xor	a0, a0
-#endif
-	jal	updateimask		# Make sure SR imask is updated
-	xor	a0, a0
-
+LEAF(cpu_idle_enter, 0)
 #if defined(TGT_CP7000) || defined(TGT_CP7000G)
 	PTR_L	t2, misc_h		# if non zero, do Ocelot LEDs.
 	beqz	t2, 1f
@@ -102,9 +78,8 @@ NON_LEAF(cpu_idle_enter, FRAMESZ(CF_SZ), ra)
 1:
 #endif
 
-	PTR_L	ra, CF_RA_OFFS(sp)
 	j	ra
-	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
+	nop
 END(cpu_idle_enter)
 
 LEAF(cpu_idle_leave, 0)
@@ -115,12 +90,6 @@ LEAF(cpu_idle_leave, 0)
 	sb	t0, 0x0c(t2)
 1:
 #endif
-
-	mfc0	a0, COP_0_STATUS_REG	# disable interrupts
-	li	a1, ~SR_INT_ENAB
-	and	a0, a0, a1
-	mtc0	a0, COP_0_STATUS_REG
-	ITLBNOPFIX
 
 	j	ra
 	nop
