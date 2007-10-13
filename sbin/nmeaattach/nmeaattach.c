@@ -1,4 +1,4 @@
-/*	$OpenBSD: nmeaattach.c,v 1.8 2007/04/18 13:50:38 mbalmer Exp $	*/
+/*	$OpenBSD: nmeaattach.c,v 1.9 2007/10/13 16:28:24 mbalmer Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -141,8 +141,7 @@ main(int argc, char *argv[])
 		warn("TIOCSDTR");
 	if (ioctl(fd, TIOCSETD, &nmeadisc) < 0)
 		err(1, "TIOCSETD");
-	if ((tstamps.ts_set || tstamps.ts_clr) &&
-	    ioctl(fd, TIOCSTSTAMP, &tstamps) < 0)
+	if (ioctl(fd, TIOCSTSTAMP, &tstamps) < 0)
 		err(1, "TIOCSTSTAMP");
 
 	if (!nodaemon && daemon(0, 0))
