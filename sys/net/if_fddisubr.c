@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.52 2007/06/06 10:04:36 henning Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.53 2007/10/13 14:21:01 fgsch Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -237,12 +237,10 @@ fddi_output(ifp0, m0, dst, rt0)
 #endif
 
 	case pseudo_AF_HDRCMPLT:
-	{
-		struct fddi_header *fh = (struct fddi_header *)dst->sa_data;
+		fh = (struct fddi_header *)dst->sa_data;
 		hdrcmplt = 1;
 		bcopy((caddr_t)fh->fddi_shost, (caddr_t)esrc, sizeof (esrc));
 		/* FALLTHROUGH */
-	}
 
 	case AF_UNSPEC:
 	{
