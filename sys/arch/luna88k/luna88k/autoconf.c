@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2007/06/15 01:19:08 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 2007/10/13 12:55:21 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -78,9 +78,6 @@ cpu_configure()
 
 	/*
 	 * Turn external interrupts on.
-	 *
-	 * XXX We have a race here. If we enable interrupts after setroot(),
-	 * the kernel dies.
 	 */
 	set_psr(get_psr() & ~PSR_IND);
 	spl0();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2007/10/10 15:53:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2007/10/13 12:55:21 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -816,6 +816,9 @@ secondary_main()
 
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
+
+	set_psr(get_psr() & ~PSR_IND);
+	spl0();
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());
