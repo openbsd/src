@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.24 2007/05/18 16:35:54 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.25 2007/10/13 12:54:03 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2332,8 +2332,12 @@ ENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
 	bsr	_C_LABEL(proc_trampoline_mp)
 #endif
-	ld	r1, r31, 0		/* load func */
-	ld	r2, r31, 4 		/* load proc pointer */
+
+	bsr.n	_C_LABEL(setipl)	/* setipl(IPL_NONE) */
+	 or	r2,  r0,  r0
+
+	ld	r1,  r31, 0		/* load func */
+	ld	r2,  r31, 4 		/* load proc pointer */
 	jsr.n	r1
 	 addu	r31, r31, 8		/* release ksigframe */
 	ld	r1,  r31, 0		/* load pc */
