@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2007/10/13 21:27:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2007/10/13 21:45:01 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -28,7 +28,7 @@ ${CDROM}:
 	objcopy -Sg -R .comment ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
 	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD} > ${.OBJDIR}/bsd
-	dd if=/dev/zero of=${.OBJDIR}/${FFS} bs=10m count=32
+	dd if=/dev/zero of=${.OBJDIR}/${FFS} bs=2048b count=224
 	vnconfig -v -c svnd0 ${.OBJDIR}/${FFS}
 	disklabel -w svnd0 cdroot "OpenBSD/sgi     "
 	newfs /dev/rsvnd0a
