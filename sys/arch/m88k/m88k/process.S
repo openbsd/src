@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.17 2007/10/10 15:53:52 art Exp $	*/
+/*	$OpenBSD: process.S,v 1.18 2007/10/13 12:54:45 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -34,30 +34,6 @@
 #include <machine/asm.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
-
-/*
- * void cpu_idle_enter()
- *
- * Enable all interrupts and lower spl. This actually enables interrupts
- * in the psr; bootstrap of secondary processors depends on this.
- */
-ENTRY(cpu_idle_enter)
-	ldcr	r2, PSR
-	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r2, PSR
-	FLUSH_PIPELINE
-
-	br.n	_C_LABEL(setipl)
-	 or	r2, r0, IPL_NONE
-
-/*
- * void cpu_idle_leave()
- *
- * Raise ipl to IPL_SCHED, but do not attempt to disable interrupts.
- */
-ENTRY(cpu_idle_leave)
-	br.n	_C_LABEL(setipl)
-	 or	r2, r0, IPL_SCHED
 
 /*
  * void cpu_switchto(struct proc *oldproc, struct proc *newproc)
