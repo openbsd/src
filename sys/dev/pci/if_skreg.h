@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.45 2007/10/02 07:35:55 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.46 2007/10/13 11:55:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1459,6 +1459,8 @@
 #define SK_PCI_PWRMGMTCTRL	0x004C /* 16 bits */
 #define SK_PCI_PME_EVENT	0x004F
 
+#define SK_Y2_REG1_PHY1_PWRD	0x04000000
+#define SK_Y2_REG1_PHY2_PWRD	0x08000000
 #define SK_Y2_REG1_PHY1_COMA	0x10000000
 #define SK_Y2_REG1_PHY2_COMA	0x20000000
 
