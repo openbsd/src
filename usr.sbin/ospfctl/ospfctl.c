@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.39 2007/10/11 12:03:37 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.40 2007/10/14 01:28:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -130,6 +130,7 @@ main(int argc, char *argv[])
 		printf("%-11s %-18s %-6s %-10s %-10s %-8s %3s %3s\n",
 		    "Interface", "Address", "State", "HelloTimer", "Linkstate",
 		    "Uptime", "nc", "ac");
+		/*FALLTHROUGH*/
 	case SHOW_IFACE_DTAIL:
 		if (*res->ifname) {
 			ifidx = if_nametoindex(res->ifname);
@@ -142,6 +143,7 @@ main(int argc, char *argv[])
 	case SHOW_NBR:
 		printf("%-15s %-3s %-12s %-8s %-15s %-9s %s\n", "ID", "Pri",
 		    "State", "DeadTime", "Address", "Iface","Uptime");
+		/*FALLTHROUGH*/
 	case SHOW_NBR_DTAIL:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, NULL, 0);
 		break;
@@ -173,6 +175,7 @@ main(int argc, char *argv[])
 	case SHOW_RIB:
 		printf("%-20s %-17s %-12s %-9s %-7s %-8s\n", "Destination",
 		    "Nexthop", "Path Type", "Type", "Cost", "Uptime");
+		/*FALLTHROUGH*/
 	case SHOW_RIB_DTAIL:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, NULL, 0);
 		break;

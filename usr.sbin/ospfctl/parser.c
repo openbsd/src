@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.14 2007/02/01 13:09:42 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.15 2007/10/14 01:28:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -265,6 +265,7 @@ show_valid_args(const struct token table[])
 			break;
 		case IFNAME:
 			fprintf(stderr, "  <interface>\n");
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -309,12 +310,9 @@ parse_prefix(const char *word, struct in_addr *addr, u_int8_t *prefixlen)
 		addr->s_addr = ina.s_addr & htonl(prefixlen2mask(bits));
 		*prefixlen = bits;
 		return (1);
-	} else {
-		*prefixlen = 32;
-		return (parse_addr(word, addr));
 	}
-
-	return (0);
+	*prefixlen = 32;
+	return (parse_addr(word, addr));
 }
 
 /* XXX local copy from kroute.c, should go to shared file */
