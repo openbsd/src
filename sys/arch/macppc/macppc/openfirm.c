@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.8 2004/02/16 04:57:50 drahn Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.9 2007/10/14 17:26:59 kettenis Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -105,6 +105,30 @@ OF_parent(int phandle)
 	if (openfirmware(&args) == -1)
 		return 0;
 	return args.parent;
+}
+
+int
+OF_getproplen(int handle, char *prop)
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		char *prop;
+		int size;
+	} args = {
+		"getproplen",
+		2,
+		1,
+	};
+
+	ofw_stack();
+	args.phandle = handle;
+	args.prop = prop;
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.size;
 }
 
 int

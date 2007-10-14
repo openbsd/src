@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.9 2004/01/11 16:20:01 drahn Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.10 2007/10/14 17:26:59 kettenis Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ int OF_peer(int phandle);
 int OF_child(int phandle);
 int OF_parent(int phandle);
 int OF_instance_to_package(int ihandle);
+int OF_getproplen(int handle, char *prop);
 int OF_getprop(int handle, char *prop, void *buf, int buflen);
 int OF_setprop(int, char *, const void *, int);
 int OF_nextprop(int, char *, void *);
