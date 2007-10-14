@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.15 2007/01/12 16:31:21 martin Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.16 2007/10/14 15:12:59 krw Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ ether_cmp(one, two)
 	diff |= *a++ - *b++;
 #else
 	/*
-	 * Most modern CPUs do better with a single expresion.
+	 * Most modern CPUs do better with a single expression.
 	 * Note that short-cut evaluation is NOT helpful here,
 	 * because it just makes the code longer, not faster!
 	 */

@@ -74,7 +74,7 @@
  *  identify the module to SCCS `what' and RCS `ident' commands
  */
 static char const sccsid[] = "@(#) mod_ssl/" MOD_SSL_VERSION " >";
-static char const rcsid[]  = "$Id: mod_ssl.c,v 1.9 2003/11/17 18:57:05 henning Exp $";
+static char const rcsid[]  = "$Id: mod_ssl.c,v 1.10 2007/10/14 15:12:59 krw Exp $";
 
 /*
  *  the table of configuration directives we provide
@@ -199,7 +199,7 @@ static command_rec ssl_config_cmds[] = {
                "Require the SSL protocol for the per-directory context "
                "(no arguments)")
     AP_DIR_CMD(Require, AUTHCFG, RAW_ARGS,
-               "Require a boolean expresion to evaluate to true for granting access"
+               "Require a boolean expression to evaluate to true for granting access"
                "(arbitrary complex boolean expression - see manual)")
 
     AP_END_CMD
