@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.200 2007/10/08 12:56:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.201 2007/10/14 17:39:46 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -108,6 +108,7 @@ lmn*	at iic?			# National Semiconductor LM93
 maxds*	at iic?			# Maxim DS1631
 maxtmp*	at iic?			# Maxim MAX6642/MAX6690
 spdmem*	at iic?			# SPD memory eeproms
+wbng*	at iic?			# Winbond W83793G
 
 #option PCMCIAVERBOSE
 
