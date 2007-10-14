@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.99 2007/10/09 09:41:51 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.100 2007/10/14 09:02:10 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -593,7 +593,6 @@ JobPrintCommand(LstNode cmdNode,	/* command string to print */
 	/* For debugging, we replace each command with the result of expanding
 	 * the variables in the command.  */
 	cmdStart = cmd = Var_Subst(cmd, &job->node->context, false);
-	Lst_Replace(cmdNode, cmdStart);
 
 	cmdTemplate = "%s\n";
 

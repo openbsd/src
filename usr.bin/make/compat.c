@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.60 2007/09/17 12:42:09 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.61 2007/10/14 09:02:10 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -205,7 +205,6 @@ CompatRunCommand(LstNode cmdNode,	/* Command to execute */
 		return 1;
 	} else
 		cmd = cmdStart;
-	Lst_Replace(cmdNode, cmdStart);
 
 	if ((gn->type & OP_SAVE_CMDS) && (gn != end_node)) {
 		Lst_AtEnd(&end_node->commands, cmdStart);
@@ -250,7 +249,6 @@ CompatRunCommand(LstNode cmdNode,	/* Command to execute */
 		break;
 	}
 	free(cmdStart);
-	Lst_Replace(cmdNode, NULL);
 
 	/* The child is off and running. Now all we can do is wait...  */
 	while (1) {
