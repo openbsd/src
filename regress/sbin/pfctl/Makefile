@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.200 2007/10/13 16:54:43 deraadt Exp $
+# $OpenBSD: Makefile,v 1.201 2007/10/14 21:52:14 deraadt Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -14,7 +14,7 @@
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
 PFTESTS+=51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73
-PFTESTS+=74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94
+PFTESTS+=74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95
 PFFAIL=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 23 24 25 27
 PFFAIL+=28 29 30 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53
 PFSIMPLE=1 2
@@ -98,9 +98,13 @@ selfpf${n}:
 pf:		${PF_TARGETS}
 selfpf:		${SELFPF_TARGETS}
 pf-update:	${PF_UPDATES}
-REGRESS_TARGETS+=pf
+REGRESS_TARGETS+=pf-include-setup pf
 REGRESS_TARGETS+=selfpf
 UPDATE_TARGETS+=pf-update
+
+pf-include-setup:
+	cp ${.CURDIR}/pf95.include ${.OBJDIR}
+	chmod og-rwx ${.OBJDIR}/pf95.include
 
 .for n in ${PFSIMPLE}
 PFSIMPLE_TARGETS+=pfsimple${n}
