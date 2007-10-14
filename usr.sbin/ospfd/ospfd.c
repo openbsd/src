@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.53 2007/10/13 16:35:22 deraadt Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.54 2007/10/14 19:35:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -549,7 +549,7 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			    (r->addr.s_addr & r->mask.s_addr) &&
 			    kr->prefixlen >= mask2prefixlen(r->mask.s_addr)) {
 				*metric = r->metric;
-				return (r->type & REDIST_NO? 0 : 1);
+				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
 		}
