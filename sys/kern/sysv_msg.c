@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.19 2005/12/13 10:33:14 jsg Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.20 2007/10/14 23:08:04 fgsch Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -34,14 +34,6 @@
 #define	DPRINTF(x)	printf x
 #else
 #define	DPRINTF(x)
-#endif
-
-/* XXX - OpenBSD doesn't have EIDRM or ENOMSG */
-#ifndef	EIDRM
-#define	EIDRM	EINVAL
-#endif
-#ifndef	ENOMSG
-#define	ENOMSG	EAGAIN
 #endif
 
 int nfree_msgmaps;		/* # of free map entries */
