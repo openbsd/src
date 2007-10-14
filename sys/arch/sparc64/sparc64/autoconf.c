@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.69 2007/08/07 21:20:54 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.70 2007/10/14 18:31:29 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -694,7 +694,7 @@ extern bus_space_tag_t mainbus_space_tag;
 	}
 
 	{
-		/* XXX - what to do on multiprocessor machines? */
+		int found = 0;
 
 		for (node = OF_child(node); node; node = OF_peer(node)) {
 			if (OF_getprop(node, "device_type", 
@@ -707,10 +707,11 @@ extern bus_space_tag_t mainbus_space_tag;
 				ma.ma_node = node;
 				ma.ma_name = "cpu";
 				config_found(dev, (void *)&ma, mbprint);
-				break;
+				found++;
 			}
 		}
-		if (node == 0)
+
+		if (!found)
 			panic("None of the CPUs found");
 	}
 
