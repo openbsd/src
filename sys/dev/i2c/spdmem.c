@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.10 2007/10/13 19:07:05 cnst Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.11 2007/10/14 22:31:33 deraadt Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -344,7 +344,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 			bits = s->sm_data[SPDMEM_DDR2_DATAWIDTH];
 			if ((config & 0x03) != 0)
 				bits -= 8;
-			ddr_type_string = "PC2";
+			ddr_type_string = "PC2-";
 			break;
 		case SPDMEM_MEMTYPE_DDRSDRAM:
 			/* DDR uses dual-pumped clock */
@@ -385,7 +385,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 				p_clk += 50;
 			p_clk -= p_clk % 100;
 		}
-		printf(" %s-%d", ddr_type_string, p_clk);
+		printf(" %s%d", ddr_type_string, p_clk);
 	}
 
 	/* Print CAS latency */
