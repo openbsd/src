@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.56 2007/06/08 22:57:43 jasper Exp $
+#	$OpenBSD: files.macppc,v 1.57 2007/10/14 17:29:04 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -276,6 +276,9 @@ include "dev/bluetooth/files.bluetooth"
 #
 include "dev/i2c/files.i2c"
 file	arch/macppc/dev/maci2c.c			i2cbus
+
+device	mem: i2c
+attach	mem at mainbus
 
 #
 # Machine-independent GPIO drivers

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.174 2007/10/08 12:56:37 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.175 2007/10/14 17:29:04 kettenis Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -31,6 +31,7 @@ config		bsd	swap generic
 
 mainbus0	at root
 cpu*		at mainbus0
+mem*		at mainbus0
 
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 memc*		at mainbus0
@@ -310,7 +311,7 @@ maxds*		at iic?
 fcu*		at iic?
 adt*		at iic?
 asms*		at iic?
-spdmem*		at iic?
+spdmem*		at mem?
 
 # CardBus bus support
 cardbus*	at cardslot?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.14 2007/09/22 16:21:32 krw Exp $	*/
+/*	$OpenBSD: mem.c,v 1.15 2007/10/14 17:29:04 kettenis Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -60,6 +60,133 @@
 static int ap_open_count = 0;
 extern int allowaperture;
 #endif
+
+#ifndef SMALL_KERNEL
+
+/* 
+ * The EEPROMs for Serial Presence Detect don't show up in the
+ * OpenFirmware tree, but their contents are available through the
+ * "dimm-info" property of the "/memory" node.  To make the
+ * information available, we fake up an I2C bus with EEPROMs
+ * containing the appropriate slices of the "dimm-info" property.
+ */
+
+#include <machine/autoconf.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/ofw/openfirm.h>
+
+struct mem_softc {
+	struct device sc_dev;
+
+	uint8_t *sc_buf;
+	int sc_len;
+};
+
+/* Size of a single SPD entry in "dimm-info" property. */
+#define SPD_SIZE	128
+
+int	mem_match(struct device *, void *, void *);
+void	mem_attach(struct device *, struct device *, void *);
+
+struct cfdriver mem_cd = {
+	NULL, "mem", DV_DULL
+};
+
+struct cfattach mem_ca = {
+	sizeof(struct mem_softc), mem_match, mem_attach
+};
+
+int	mem_i2c_acquire_bus(void *, int);
+void	mem_i2c_release_bus(void *, int);
+int	mem_i2c_exec(void *, i2c_op_t, i2c_addr_t,
+	    const void *, size_t, void *, size_t, int);
+
+int
+mem_match(struct device *parent, void *cf, void *aux)
+{
+	struct confargs *ca = aux;
+
+	if (strcmp(ca->ca_name, "mem") == 0)
+		return (1);
+	return (0);
+}
+
+void
+mem_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct mem_softc *sc = (struct mem_softc *)self;
+	struct confargs *ca = aux;
+	struct i2c_controller ic;
+	struct i2c_attach_args ia;
+
+	sc->sc_len = OF_getproplen(ca->ca_node, "dimm-info");
+	if (sc->sc_len > 0) {
+		sc->sc_buf = malloc(sc->sc_len, M_DEVBUF, M_NOWAIT);
+		if (sc->sc_buf == NULL) {
+			printf("%s: can't allocate memory\n");
+			return;
+		}
+	}
+
+	printf("\n");
+
+	if (sc->sc_len > 0) {
+		OF_getprop(ca->ca_node, "dimm-info", sc->sc_buf, sc->sc_len);
+
+		memset(&ic, 0, sizeof ic);
+		ic.ic_cookie = sc;
+		ic.ic_acquire_bus = mem_i2c_acquire_bus;
+		ic.ic_release_bus = mem_i2c_release_bus;
+		ic.ic_exec = mem_i2c_exec;
+
+		memset(&ia, 0, sizeof ia);
+		ia.ia_tag = &ic;
+		ia.ia_name = "spd";
+		ia.ia_addr = 0;
+		while (ia.ia_addr * SPD_SIZE < sc->sc_len) {
+			/* Skip entries that have not been filled in. */
+			if (sc->sc_buf[ia.ia_addr * SPD_SIZE] != 0)
+				config_found(self, &ia, NULL);
+			ia.ia_addr++;
+		}
+
+		/* No need to keep the "dimm-info" contents around. */
+		free(sc->sc_buf, M_DEVBUF);
+		sc->sc_len = -1;
+	}
+}
+
+int
+mem_i2c_acquire_bus(void *cookie, int flags)
+{
+	return (0);
+}
+
+void
+mem_i2c_release_bus(void *cookie, int flags)
+{
+}
+
+int
+mem_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
+    const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
+{
+	struct mem_softc *sc = cookie;
+	size_t off;
+
+	if (op != I2C_OP_READ_WITH_STOP || cmdlen != 1)
+		return (EINVAL);
+
+	off = addr * SPD_SIZE + *(uint8_t *)cmdbuf;
+	if (off + len > sc->sc_len)
+		return (EIO);
+
+	memcpy(buf, &sc->sc_buf[off], len);
+	return (0);
+}
+
+#endif /* SMALL_KERNEL */
 
 /*ARGSUSED*/
 int
