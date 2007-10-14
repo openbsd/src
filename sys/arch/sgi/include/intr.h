@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2007/06/20 16:50:41 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.19 2007/10/14 18:52:11 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,7 +41,7 @@
  *  The IMASK_EXTERNAL define is used to select whether the CPU
  *  interrupt mask should be controlled by the cpl mask value
  *  or not. If the mask is external, the CPU mask is never changed
- *  from the value it gets when interrupt dispatchers are registred.
+ *  from the value it gets when interrupt dispatchers are registered.
  *  When an external masking register is used dedicated interrupt
  *  handlers must be written as well as ipending handlers.
  */

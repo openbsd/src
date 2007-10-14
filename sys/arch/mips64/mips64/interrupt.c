@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.31 2007/07/16 20:20:08 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.32 2007/10/14 18:52:10 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -89,7 +89,7 @@ int netisr;
  *  Basically there are <n> interrupt inputs to the processor and
  *  typically the HW designer ties these interrupts to various
  *  sources in the HW. The low level code does not deal with interrupts
- *  in more than it dispatches handling to the code that has registred
+ *  in more than it dispatches handling to the code that has registered
  *  an interrupt handler for that particular interrupt. More than one
  *  handler can register to an interrupt input and one handler may register
  *  for more than one interrupt input. A handler is only called once even
@@ -132,7 +132,7 @@ void softintr(void);
  * Handle an interrupt. Both kernel and user mode is handled here.
  *
  * The interrupt handler is called with the CR_INT bits set that
- * was given when the handlers was registred that needs servicing.
+ * was given when the handlers was registered that needs servicing.
  * The handler should return a similar word with a mask indicating
  * which CR_INT bits that has been served.
  */
