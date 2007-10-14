@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83793g.c,v 1.1 2007/10/14 14:10:07 cnst Exp $	*/
+/*	$OpenBSD: w83793g.c,v 1.2 2007/10/14 15:31:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
