@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.61 2007/10/11 18:33:14 deraadt Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.62 2007/10/14 08:31:55 fkr Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -98,6 +98,7 @@ static const struct zyd_type {
 	ZYD_ZD1211_DEV(ASUS,		WL159G),
 	ZYD_ZD1211_DEV(CYBERTAN,	TG54USB),
 	ZYD_ZD1211_DEV(DRAYTEK,		VIGOR550),
+	ZYD_ZD1211_DEV(PLANEX2,		GWUS54GD),
 	ZYD_ZD1211_DEV(PLANEX2,		GWUS54GZL),
 	ZYD_ZD1211_DEV(PLANEX3,		GWUS54MINI),
 	ZYD_ZD1211_DEV(SAGEM,		XG760A),
