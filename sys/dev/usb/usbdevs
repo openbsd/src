@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.301 2007/10/13 11:43:34 mbalmer Exp $
+$OpenBSD: usbdevs,v 1.302 2007/10/14 08:29:17 fkr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1868,6 +1868,7 @@ product PLANEX3 GWUS54MINI	0xab13	GW-US54Mini
 product PLANEX2 GWUS54MINI2	0xab50	GW-US54Mini2
 product PLANEX2 GWUS54SG	0xc002	GW-US54SG
 product PLANEX2 GWUS54GZL	0xc007	GW-US54GZL
+product PLANEX2 GWUS54GD	0xed01	GW-US54GD
 product PLANEX2 GWUSMM		0xed02	GW-USMM
 
 /* Plantronics products */
