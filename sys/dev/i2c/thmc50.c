@@ -1,4 +1,4 @@
-/*	$OpenBSD: thmc50.c,v 1.2 2007/09/18 09:55:31 kettenis Exp $	*/
+/*	$OpenBSD: thmc50.c,v 1.3 2007/10/14 14:01:22 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Theo de Raadt
@@ -77,6 +77,8 @@ thmc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+
+	printf(": %s", ia->ia_name);
 
 	/* Initialize sensor data. */
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
