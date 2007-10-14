@@ -1,4 +1,4 @@
-/*	$OpenBSD: local2.c,v 1.1 2007/10/07 17:58:52 otto Exp $	*/
+/*	$OpenBSD: local2.c,v 1.2 2007/10/14 19:58:00 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 # include "pass2.h"
 # include <ctype.h>
@@ -1045,6 +1044,18 @@ special(NODE *p, int shape)
 	case SPCON:
 		if (o != ICON || p->n_name[0] ||
 		    p->n_lval < 0 || p->n_lval > 0x7fffffff)
+			break;
+		return SRDIR;
+	case SMIXOR:
+		return tshape(p, SZERO);
+	case SMILWXOR:
+		if (o != ICON || p->n_name[0] ||
+		    p->n_lval == 0 || p->n_lval & 0xffffffff)
+			break;
+		return SRDIR;
+	case SMIHWXOR:
+		if (o != ICON || p->n_name[0] ||
+		     p->n_lval == 0 || (p->n_lval >> 32) != 0)
 			break;
 		return SRDIR;
 	}

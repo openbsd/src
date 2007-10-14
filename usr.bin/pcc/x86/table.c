@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.1 2007/10/07 17:58:52 otto Exp $	*/
+/*	$OpenBSD: table.c,v 1.2 2007/10/14 19:58:00 stefan Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -794,17 +794,41 @@ struct optab table[] = {
 /*
  * The next rules takes care of assignments. "=".
  */
-{ ASSIGN,	FOREFF,
-	SHLL|SNAME|SOREG,	TLL,
-	SCON,		TANY,
-		0,	0,
-		"	movl AR,AL\n	movl UR,UL\n", },
+{ ASSIGN,	FORCC|FOREFF|INLL,
+	SHLL,		TLL,
+	SMIXOR,		TANY,
+		0,	RDEST,
+		"	xorl AL,AL\n	xorl UL,UL\n", },
+
+{ ASSIGN,	FORCC|FOREFF|INLL,
+	SHLL,		TLL,
+	SMILWXOR,	TANY,
+		0,	RDEST,
+		"	xorl AL,AL\n	movl UR,UL\n", },
+
+{ ASSIGN,	FORCC|FOREFF|INLL,
+	SHLL,		TLL,
+	SMIHWXOR,	TANY,
+		0,	RDEST,
+		"	movl AR,AL\n	xorl UL,UL\n", },
 
 { ASSIGN,	FOREFF|INLL,
 	SHLL,		TLL,
 	SCON,		TANY,
 		0,	RDEST,
 		"	movl AR,AL\n	movl UR,UL\n", },
+
+{ ASSIGN,	FOREFF,
+	SHLL|SNAME|SOREG,	TLL,
+	SCON,		TANY,
+		0,	0,
+		"	movl AR,AL\n	movl UR,UL\n", },
+
+{ ASSIGN,	FORCC|FOREFF|INAREG,
+	SAREG,	TWORD|TPOINT,
+	SMIXOR,		TANY,
+		0,	RDEST,
+		"	xorl AL,AL\n", },
 
 { ASSIGN,	FOREFF,
 	SAREG|SNAME|SOREG,	TWORD|TPOINT,
@@ -817,6 +841,12 @@ struct optab table[] = {
 	SCON,		TANY,
 		0,	RDEST,
 		"	movl AR,AL\n", },
+
+{ ASSIGN,	FORCC|FOREFF|INAREG,
+	SAREG,	TSHORT|TUSHORT,
+	SMIXOR,		TANY,
+		0,	RDEST,
+		"	xorw AL,AL\n", },
 
 { ASSIGN,	FOREFF,
 	SAREG|SNAME|SOREG,	TSHORT|TUSHORT,
@@ -1252,11 +1282,35 @@ struct optab table[] = {
 /*
  * Convert LTYPE to reg.
  */
+{ OPLTYPE,	FORCC|INLL,
+	SCREG,	TLL,
+	SMIXOR,	TANY,
+		NCREG,	RESC1,
+		"	xorl U1,U1\n	xorl A1,A1\n", },
+
+{ OPLTYPE,	FORCC|INLL,
+	SCREG,	TLL,
+	SMILWXOR,	TANY,
+		NCREG,	RESC1,
+		"	movl UL,U1\n	xorl A1,A1\n", },
+
+{ OPLTYPE,	FORCC|INLL,
+	SCREG,	TLL,
+	SMIHWXOR,	TANY,
+		NCREG,	RESC1,
+		"	xorl U1,U1\n	movl AL,A1\n", },
+
 { OPLTYPE,	INLL,
 	SANY,	TANY,
 	SCREG|SCON|SOREG|SNAME,	TLL,
 		NCREG,	RESC1,
 		"	movl UL,U1\n	movl AL,A1\n", },
+
+{ OPLTYPE,	FORCC|INAREG,
+	SAREG,	TWORD|TPOINT,
+	SMIXOR,	TANY,
+		NAREG|NASL,	RESC1,
+		"	xorl A1,A1\n", },
 
 { OPLTYPE,	INAREG,
 	SANY,	TANY,
@@ -1269,6 +1323,12 @@ struct optab table[] = {
 	SBREG|SOREG|SNAME|SCON,	TCHAR|TUCHAR,
 		NBREG,	RESC1,
 		"	movb AL,A1\n", },
+
+{ OPLTYPE,	FORCC|INAREG,
+	SAREG,	TSHORT|TUSHORT,
+	SMIXOR,	TANY,
+		NAREG,	RESC1,
+		"	xorw A1,A1\n", },
 
 { OPLTYPE,	INAREG,
 	SANY,	TANY,
