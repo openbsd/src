@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.78 2007/10/01 04:03:51 krw Exp $ */
+/*	$OpenBSD: acx.c,v 1.79 2007/10/14 11:36:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2344,6 +2344,7 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct acx_tmplt_probe_req req;
 	struct ieee80211_frame *wh;
+	struct ieee80211_rateset *rs;
 	uint8_t *frm;
 	int len;
 
@@ -2359,8 +2360,10 @@ acx_set_probe_req_tmplt(struct acx_softc *sc, const char *ssid, int ssid_len)
 
 	frm = req.data.u_data.var;
 	frm = ieee80211_add_ssid(frm, ssid, ssid_len);
-	frm = ieee80211_add_rates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
-	frm = ieee80211_add_xrates(frm, &ic->ic_sup_rates[sc->chip_phymode]);
+	rs = &ic->ic_sup_rates[sc->chip_phymode];
+	frm = ieee80211_add_rates(frm, rs);
+	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
+		frm = ieee80211_add_xrates(frm, rs);
 	len = frm - req.data.u_data.var;
 
 	return (acx_set_tmplt(sc, ACXCMD_TMPLT_PROBE_REQ, &req,
