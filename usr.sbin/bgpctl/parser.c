@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.46 2007/05/31 04:21:43 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.47 2007/10/14 22:12:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -544,6 +544,7 @@ show_valid_args(const struct token table[])
 			break;
 		case FAMILY:
 			fprintf(stderr, "  [ inet | inet6 | IPv4 | IPv6 ]\n");
+			break;
 		case ENDTOKEN:
 			break;
 		}
