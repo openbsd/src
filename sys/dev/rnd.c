@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.84 2007/10/15 01:01:47 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.85 2007/10/15 23:20:56 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -916,7 +916,7 @@ extract_entropy(u_int8_t *buf, int nbytes)
 
 	/* Wipe data from memory */
 	bzero(&tmp, sizeof(tmp));
-	bzero(&buffer, sizeof(buffer));
+	bzero(buffer, sizeof(buffer));
 }
 
 /*
