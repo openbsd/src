@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwi2c.c,v 1.6 2007/10/08 03:10:58 jsg Exp $	*/
+/*	$OpenBSD: ofwi2c.c,v 1.7 2007/10/15 18:43:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -82,6 +82,18 @@ ofwiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 
 		if (strncmp(ia.ia_name, "i2c-", strlen("i2c-")) == 0)
 			ia.ia_name += strlen("i2c-");
+
+		/* Skip non-SPD EEPROMs.  */
+		if (strcmp(ia.ia_name, "at24c64") == 0 ||
+		    strcmp(ia.ia_name, "at34c02") == 0) {
+			if (OF_getprop(node, "name", name, sizeof(name)) == -1)
+				continue;
+			if (strcmp(name, "dimm") == 0 ||
+			    strcmp(name, "dimm-spd") == 0)
+				ia.ia_name = "spd";
+			else
+				continue;
+		}
 
 		config_found(self, &ia, iic_print);
 	}
