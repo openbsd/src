@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.33 2007/09/07 19:05:05 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.34 2007/10/15 01:37:49 fgsch Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1751,7 +1751,6 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 	if (needrts || needcts) {
 		struct mbuf *mprot;
 		int protrate, ackrate;
-		uint16_t dur;
 
 		protrate = 2;	/* XXX */
 		ackrate  = rt2560_ack_rate(ic, rate);

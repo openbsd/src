@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.34 2007/08/06 08:28:09 tom Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.35 2007/10/15 01:37:49 fgsch Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -2603,7 +2603,6 @@ msgin:
 /*			DELAY(1); */
 		}
 		if (sc->sc_features & NCR_F_DMASELECT) {
-			size_t size;
 			/* setup DMA transfer for command */
 			size = ecb->clen;
 			sc->sc_cmdlen = size;
