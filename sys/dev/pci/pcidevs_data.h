@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1276 2007/10/15 02:06:57 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1277 2007/10/15 04:50:53 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6632,8 +6632,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801HBM IDE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IH_LPC,
+	    "82810IH LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IO_LPC,
+	    "82801IO LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IR_LPC,
 	    "82801IR LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IB_LPC,
+	    "82801IB LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_1,
