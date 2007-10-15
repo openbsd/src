@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2007/10/07 18:34:41 otto Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2007/10/15 01:05:25 deraadt Exp $
 #
 # Makefile for the ccom part of pcc.
 #
@@ -33,10 +33,9 @@ cgram.c: cgram.y
 	mv y.tab.h cgram.h
 
 mkext: mkext.c table.c common.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DMKEXT -o mkext 		\
-		${.CURDIR}/../../mip/mkext.c			\
-		${.CURDIR}/../../${TARGMACH}/table.c		\
-		${.CURDIR}/../../mip/common.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DMKEXT -o mkext \
+	    ${.CURDIR}/../../mip/mkext.c ${.CURDIR}/../../${TARGMACH}/table.c \
+	    ${.CURDIR}/../../mip/common.c
 
 external.h external.c: mkext
 	./mkext
