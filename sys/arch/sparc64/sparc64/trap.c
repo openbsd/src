@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2007/09/22 20:04:51 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2007/10/15 09:24:31 fgsch Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -539,6 +539,7 @@ badtrap:
 	case T_INST_EXCEPT:
 	case T_TEXTFAULT:
 	case T_PRIVINST:
+	case T_PRIVACT:
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code? */
 		KERNEL_PROC_UNLOCK(p);
