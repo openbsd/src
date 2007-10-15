@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.83 2007/10/09 17:05:19 gilles Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.84 2007/10/15 01:01:47 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -237,6 +237,7 @@
 #undef RNDEBUG
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
@@ -249,6 +250,7 @@
 #include <sys/poll.h>
 
 #include <crypto/md5.h>
+#include <crypto/arc4.h>
 
 #include <dev/rndvar.h>
 #include <dev/rndioctl.h>
@@ -259,6 +261,19 @@ int	rnd_debug = 0x0000;
 #define	RD_OUTPUT	0x00f0	/* output data */
 #define	RD_WAIT		0x0100	/* sleep/wakeup for good data */
 #endif
+
+/*
+ * Maximum number of bytes to serve directly from the main arc4random
+ * pool. Larger requests are served from discrete arc4 instances keyed
+ * from the main pool.
+ */
+#define ARC4_MAIN_MAX_BYTES	2048
+
+/*
+ * Key size (in bytes) for arc4 instances setup to serve requests larger
+ * than ARC4_MAIN_MAX_BYTES.
+ */
+#define ARC4_SUB_KEY_BYTES	(256 / 8)
 
 /*
  * The pool is stirred with a primitive polynomial of degree 128
@@ -380,13 +395,6 @@ struct timer_rand_state {
 	u_int	max_entropy : 1;
 };
 
-struct arc4_stream {
-	u_int8_t s[256];
-	u_int	cnt;
-	u_int8_t i;
-	u_int8_t j;
-};
-
 struct rand_event {
 	struct timer_rand_state *re_state;
 	u_int re_nbits;
@@ -396,7 +404,8 @@ struct rand_event {
 
 struct timeout rnd_timeout, arc4_timeout;
 struct random_bucket random_state;
-struct arc4_stream arc4random_state;
+struct rc4_ctx arc4random_state;
+u_long arc4random_count = 0;
 struct timer_rand_state rnd_states[RND_SRC_NUM];
 struct rand_event rnd_event_space[QEVLEN];
 struct rand_event *rnd_event_head = rnd_event_space;
@@ -474,56 +483,15 @@ void dequeue_randomness(void *);
 static void add_entropy_words(const u_int32_t *, u_int n);
 void extract_entropy(u_int8_t *, int);
 
-static u_int8_t arc4_getbyte(void);
 void arc4_stir(void);
 void arc4_reinit(void *v);
 void arc4maybeinit(void);
-
-/* Arcfour random stream generator.  This code is derived from section
- * 17.1 of Applied Cryptography, second edition, which describes a
- * stream cipher allegedly compatible with RSA Labs "RC4" cipher (the
- * actual description of which is a trade secret).  The same algorithm
- * is used as a stream cipher called "arcfour" in Tatu Ylonen's ssh
- * package.
- *
- * The initialization function here has been modified to not discard
- * the old state, and its input always includes the time of day in
- * microseconds.  Moreover, bytes from the stream may at any point be
- * diverted to multiple processes or even kernel functions desiring
- * random numbers.  This increases the strength of the random stream,
- * but makes it impossible to use this code for encryption, since there
- * is no way to ever reproduce the same stream of random bytes.
- *
- * RC4 is a registered trademark of RSA Laboratories.
- */
-
-static u_int8_t
-arc4_getbyte(void)
-{
-	u_int8_t si, sj, ret;
-	int s;
-
-	s = splhigh();
-	rndstats.arc4_reads++;
-	arc4random_state.cnt++;
-	arc4random_state.i++;
-	si = arc4random_state.s[arc4random_state.i];
-	arc4random_state.j += si;
-	sj = arc4random_state.s[arc4random_state.j];
-	arc4random_state.s[arc4random_state.i] = sj;
-	arc4random_state.s[arc4random_state.j] = si;
-	ret = arc4random_state.s[(si + sj) & 0xff];
-	splx(s);
-	return (ret);
-}
 
 void
 arc4_stir(void)
 {
 	u_int8_t buf[256];
-	u_int8_t si;
-	int n, s;
-	int len;
+	int s, len;
 
 	nanotime((struct timespec *) buf);
 	len = random_state.entropy_count / 8; /* XXX maybe a half? */
@@ -533,28 +501,21 @@ arc4_stir(void)
 	len += sizeof(struct timeval);
 
 	s = splhigh();
-	arc4random_state.i--;
-	for (n = 0; n < 256; n++) {
-		arc4random_state.i++;
-		si = arc4random_state.s[arc4random_state.i];
-		arc4random_state.j += si + buf[n % len];
-		arc4random_state.s[arc4random_state.i] =
-		    arc4random_state.s[arc4random_state.j];
-		arc4random_state.s[arc4random_state.j] = si;
-	}
-	arc4random_state.j = arc4random_state.i;
-	arc4random_state.cnt = 0;
+	if (rndstats.arc4_nstirs > 0)
+		rc4_crypt(&arc4random_state, buf, buf, sizeof(buf));
+
+	rc4_keysetup(&arc4random_state, buf, sizeof(buf));
+	arc4random_count = 0;
 	rndstats.arc4_stirs += len;
 	rndstats.arc4_nstirs++;
-	splx(s);
 
 	/*
 	 * Throw away the first N words of output, as suggested in the
 	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
 	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
-	for (n = 0; n < 256 * 4; n++)
-		arc4_getbyte();
+	rc4_skip(&arc4random_state, 256 * 4);
+	splx(s);
 }
 
 void
@@ -587,27 +548,61 @@ arc4_reinit(void *v)
 u_int32_t
 arc4random(void)
 {
+	int s;
+	u_int32_t ret;
+
 	arc4maybeinit();
-	return ((arc4_getbyte() << 24) | (arc4_getbyte() << 16)
-		| (arc4_getbyte() << 8) | arc4_getbyte());
+	s = splhigh();
+	rc4_getbytes(&arc4random_state, (u_char*)&ret, sizeof(ret));
+	rndstats.arc4_reads += sizeof(ret);
+	arc4random_count += sizeof(ret);
+	splx(s);
+	return ret;
+}
+
+static void
+arc4random_bytes_large(void *buf, size_t n)
+{
+	int s;
+	u_char lbuf[ARC4_SUB_KEY_BYTES];
+	struct rc4_ctx lctx;
+
+	s = splhigh();
+	rc4_getbytes(&arc4random_state, lbuf, sizeof(lbuf));
+	rndstats.arc4_reads += n;
+	arc4random_count += sizeof(lbuf);
+	splx(s);
+
+	rc4_keysetup(&lctx, lbuf, sizeof(lbuf));
+       	rc4_skip(&lctx, 256 * 4);
+	rc4_getbytes(&lctx, (u_char*)buf, n);
+	bzero(lbuf, sizeof(lbuf));
+	bzero(&lctx, sizeof(lctx));
 }
 
 void
 arc4random_bytes(void *buf, size_t n)
 {
-	u_int8_t *cp = buf;
-	u_int8_t *end = cp + n;
+	int s;
 
 	arc4maybeinit();
-	while (cp < end)
-		*cp++ = arc4_getbyte();
+
+	/* Satisfy large requests via an independent ARC4 instance */
+	if (n > ARC4_MAIN_MAX_BYTES) {
+		arc4random_bytes_large(buf, n);
+		return;
+	}
+
+	s = splhigh();
+	rc4_getbytes(&arc4random_state, (u_char*)buf, n);
+	rndstats.arc4_reads += n;
+	arc4random_count += n;
+	splx(s);
 }
 
 void
 randomattach(void)
 {
-	int i;
-
 	if (rnd_attached) {
 #ifdef RNDEBUG
 		printf("random: second attach\n");
@@ -627,8 +622,7 @@ randomattach(void)
 	bzero(&rndstats, sizeof(rndstats));
 	bzero(&rnd_event_space, sizeof(rnd_event_space));
 
-	for (i = 0; i < 256; i++)
-		arc4random_state.s[i] = i;
+	bzero(&arc4random_state, sizeof(arc4random_state));
 	arc4_reinit(NULL);
 
 	rnd_attached = 1;
@@ -998,14 +992,8 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 				buf[i] = random() << 16 | (random() & 0xFFFF);
 			break;
 		case RND_ARND:
-		{
-			u_int8_t *cp = (u_int8_t *) buf;
-			u_int8_t *end = cp + n;
-			arc4maybeinit();
-			while (cp < end)
-				*cp++ = arc4_getbyte();
+			arc4random_bytes(buf, n);
 			break;
-		}
 		default:
 			ret = ENXIO;
 		}
