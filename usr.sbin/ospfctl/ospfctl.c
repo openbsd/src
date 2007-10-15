@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.40 2007/10/14 01:28:08 deraadt Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.41 2007/10/15 02:16:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -478,7 +478,7 @@ fmt_timeframe_core(time_t t)
 	char		*buf;
 	static char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
 	static int	 idx = 0;
-	unsigned	 sec, min, hrs, day, week;
+	unsigned int	 sec, min, hrs, day, week;
 
 	if (t == 0)
 		return ("00:00:00");

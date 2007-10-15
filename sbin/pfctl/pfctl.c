@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.269 2007/10/13 16:35:18 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.270 2007/10/15 02:16:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -953,7 +953,7 @@ pfctl_show_src_nodes(int dev, int opts)
 	struct pfioc_src_nodes psn;
 	struct pf_src_node *p;
 	char *inbuf = NULL, *newinbuf = NULL;
-	unsigned len = 0;
+	unsigned int len = 0;
 	int i;
 
 	memset(&psn, 0, sizeof(psn));
@@ -998,7 +998,7 @@ pfctl_show_states(int dev, const char *iface, int opts)
 	struct pfioc_states ps;
 	struct pfsync_state *p;
 	char *inbuf = NULL, *newinbuf = NULL;
-	unsigned len = 0;
+	unsigned int len = 0;
 	int i, dotitle = (opts & PF_OPT_SHOWALL);
 
 	memset(&ps, 0, sizeof(ps));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.127 2007/09/11 17:08:49 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.128 2007/10/15 02:16:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -724,7 +724,7 @@ fmt_timeframe_core(time_t t)
 	char		*buf;
 	static char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
 	static int	 idx = 0;
-	unsigned	 sec, min, hrs, day, week;
+	unsigned int	 sec, min, hrs, day, week;
 
 	buf = tfbuf[idx++];
 	if (idx == TF_BUFS)

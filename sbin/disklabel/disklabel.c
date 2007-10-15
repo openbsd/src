@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.118 2007/06/25 22:53:45 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.119 2007/10/15 02:16:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.118 2007/06/25 22:53:45 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.119 2007/10/15 02:16:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1490,7 +1490,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if ('a' <= *cp && *cp <= 'z' && cp[1] == '\0') {
-			unsigned part = *cp - 'a';
+			unsigned int part = *cp - 'a';
 
 			if (part >= lp->d_npartitions) {
 				if (part >= MAXPARTITIONS) {

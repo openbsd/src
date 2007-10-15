@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.4 2007/09/11 17:29:05 henning Exp $
+/*	$OpenBSD: ripctl.c,v 1.5 2007/10/15 02:16:35 deraadt Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -239,7 +239,7 @@ fmt_timeframe_core(time_t t)
 	char		*buf;
 	static char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
 	static int	 idx = 0;
-	unsigned	 sec, min, hrs, day, week;
+	unsigned int	 sec, min, hrs, day, week;
 
 	if (t == 0)
 		return ("Stopped");

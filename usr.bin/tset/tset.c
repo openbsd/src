@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.31 2007/09/14 14:29:20 chl Exp $	*/
+/*	$OpenBSD: tset.c,v 1.32 2007/10/15 02:16:35 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -961,9 +961,9 @@ set_tabs(void)
  */
 #ifdef TERMIOS
 static void
-report(const char *name, int which, unsigned def)
+report(const char *name, int which, unsigned int def)
 {
-    unsigned older, newer;
+    unsigned int older, newer;
     char *p;
 
     newer = mode.c_cc[which];

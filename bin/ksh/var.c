@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.33 2007/08/02 11:05:54 fgsch Exp $	*/
+/*	$OpenBSD: var.c,v 1.34 2007/10/15 02:16:35 deraadt Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -159,7 +159,7 @@ global(const char *n)
 	struct block *l = e->loc;
 	struct tbl *vp;
 	int c;
-	unsigned h;
+	unsigned int h;
 	bool	 array;
 	int	 val;
 
@@ -240,7 +240,7 @@ local(const char *n, bool copy)
 {
 	struct block *l = e->loc;
 	struct tbl *vp;
-	unsigned h;
+	unsigned int h;
 	bool	 array;
 	int	 val;
 
@@ -842,7 +842,7 @@ makenv(void)
 			    (vp->flag&(ISSET|EXPORT)) == (ISSET|EXPORT)) {
 				struct block *l2;
 				struct tbl *vp2;
-				unsigned h = hash(vp->name);
+				unsigned int h = hash(vp->name);
 
 				/* unexport any redefined instances */
 				for (l2 = l->next; l2 != NULL; l2 = l2->next) {
