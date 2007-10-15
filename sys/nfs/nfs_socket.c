@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.52 2007/10/13 17:38:43 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.53 2007/10/15 21:09:44 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -837,7 +837,7 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	int i;
 	struct nfsmount *nmp;
 	struct mbuf *md;
-	time_t reqtime, waituntil;
+	time_t waituntil;
 	caddr_t dpos, cp2;
 	int t1, s, error = 0, mrest_len;
 	int trylater_delay;
@@ -893,9 +893,6 @@ tryagain:
 	 */
 	s = splsoftnet();
 	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
-
-	/* Get send time for nqnfs */
-	reqtime = time_second;
 
 	/*
 	 * If backing off another request or avoiding congestion, don't
