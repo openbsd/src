@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccconfig.h,v 1.1 2007/10/07 17:58:50 otto Exp $	*/
+/*	$OpenBSD: ccconfig.h,v 1.2 2007/10/15 09:46:30 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -32,7 +32,7 @@
  */
 
 /* common cpp predefines */
-#define	CPPADD	{ "-D__OpenBSD__", "-D__unix__", "-D__inline__=inline", NULL }
+#define	CPPADD	{ "-D__OpenBSD__", "-D__unix__", NULL }
 #define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.so", NULL }
 #define CRT0FILE "/usr/lib/crt0.o"
 #define STARTFILES { "/usr/lib/crtbegin.o", NULL }
