@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.52 2007/10/01 15:34:48 krw Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.53 2007/10/15 11:24:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1056,6 +1056,13 @@ nxe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+
+	case SIOCADDMULTI:
+		error = ether_addmulti(ifr, &sc->sc_ac);
+		break;
+	case SIOCDELMULTI:
+		error = ether_delmulti(ifr, &sc->sc_ac);
 		break;
 
 	default:
