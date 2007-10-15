@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.87 2007/09/13 14:34:36 pyr Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.88 2007/10/15 06:59:32 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,6 +61,7 @@
 #define	LOG_NEGLIGEE		32	/* negligible drift to not log (ms) */
 #define	FREQUENCY_SAMPLES	8	/* samples for est. of permanent drift */
 #define	MAX_FREQUENCY_ADJUST	128e-5	/* max correction per iteration */
+#define REPORT_INTERVAL		(24*60*60) /* interval between status reports */
 
 
 #define	SENSOR_DATA_MAXAGE	(15*60)
