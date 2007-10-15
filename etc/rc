@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.305 2007/10/08 11:29:58 norby Exp $
+#	$OpenBSD: rc,v 1.306 2007/10/15 20:58:10 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -226,8 +226,8 @@ if [ X"${pf}" != X"NO" ]; then
 	*[1-9]*)
 		# don't kill NFS
 		RULES="scrub in all no-df\n$RULES"
-		RULES="$RULES\npass in proto udp from any port { 111, 2049 } to any"
-		RULES="$RULES\npass out proto udp from any to any port { 111, 2049 }"
+		RULES="$RULES\npass in proto { tcp, udp } from any port { 111, 2049 } to any"
+		RULES="$RULES\npass out proto { tcp, udp } from any to any port { 111, 2049 }"
 		;;
 	esac
 	echo $RULES | pfctl -f -
