@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.11 2007/10/14 22:31:33 deraadt Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.12 2007/10/15 18:47:24 kettenis Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -208,8 +208,7 @@ spdmem_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	
-	if (strcmp(ia->ia_name, "spd") == 0 ||
-	    strcmp(ia->ia_name, "at34c02") == 0)
+	if (strcmp(ia->ia_name, "spd") == 0)
 		return (1);
 	return (0);
 }
