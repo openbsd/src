@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.39 2007/05/23 01:32:25 ray Exp $ */
+/* 	$OpenBSD: isp.c,v 1.40 2007/10/16 23:41:42 fgsch Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -3498,8 +3498,8 @@ again:
 		if (mbox & 0x4000) {
 			isp->isp_intmboxc++;
 			if (isp->isp_mboxbsy) {
-				int i = 0, obits = isp->isp_obits;
-				isp->isp_mboxtmp[i++] = mbox;
+				int obits = isp->isp_obits;
+				isp->isp_mboxtmp[0] = mbox;
 				for (i = 1; i < MAX_MAILBOX; i++) {
 					if ((obits & (1 << i)) == 0) {
 						continue;
