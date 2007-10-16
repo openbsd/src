@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.98 2007/10/08 17:48:06 krw Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.99 2007/10/16 20:33:27 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -385,10 +385,7 @@ setregs(p, pack, stack, retval)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (p == fpproc) {
-			savefpstate(fs);
-			fpproc = NULL;
-		}
+		save_and_clear_fpstate(p);
 		free((void *)fs, M_SUBPROC);
 		p->p_md.md_fpstate = NULL;
 	}
