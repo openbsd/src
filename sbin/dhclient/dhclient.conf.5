@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.13 2007/05/31 19:19:43 jmc Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.14 2007/10/16 05:03:23 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 16 2007 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -345,19 +345,6 @@ or, in the case of predefined leases declared in
 .Nm dhclient.conf ,
 the value that the user wishes the client configuration script to use if the
 predefined lease is used.
-.It Ic script Ar \&"script-name\&" ;
-The
-.Ic script
-statement is used to specify the pathname of the DHCP client configuration
-script.
-This script is used by the DHCP client to set each interface's initial
-configuration prior to requesting an address, to test the address once it
-has been offered, and to set the interface's final configuration once a
-lease has been acquired.
-If no lease is acquired, the script is used to test predefined leases, if
-any, and also called once if no valid lease can be identified.
-For more information, see
-.Xr dhclient.leases 5 .
 .It Ic medium Ar \&"media setup\&" ;
 The
 .Ic medium
@@ -485,6 +472,19 @@ lease database and will record the media type used to acquire the address.
 Whenever the client tries to renew the lease, it will use that same media type.
 The lease must expire before the client will go back to cycling through media
 types.
+.It Ic script Ar \&"script-name\&" ;
+The
+.Ic script
+statement is used to specify the pathname of the DHCP client configuration
+script.
+This script is used by the DHCP client to set each interface's initial
+configuration prior to requesting an address, to test the address once it
+has been offered, and to set the interface's final configuration once a
+lease has been acquired.
+If no lease is acquired, the script is used to test predefined leases, if
+any, and also called once if no valid lease can be identified.
+For more information, see
+.Xr dhclient.leases 5 .
 .El
 .Sh EXAMPLES
 The following configuration file is used on a laptop
