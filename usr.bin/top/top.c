@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.57 2007/10/04 07:47:53 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.58 2007/10/16 07:33:08 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -337,10 +337,8 @@ main(int argc, char *argv[])
 	header_text = format_header(uname_field);
 
 	/* initialize display interface */
-	if ((max_topn = display_init(&statics)) == -1) {
-		warnx("can't allocate sufficient memory");
-		exit(4);
-	}
+	max_topn = display_init(&statics);
+
 	/* print warning if user requested more processes than we can display */
 	if (topn > max_topn) {
 		warnx("warning: this terminal can only display %d processes",

@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.29 2007/09/30 13:26:39 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.30 2007/10/16 07:33:08 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -135,6 +135,10 @@ display_resize(void)
 	/* if operating in "dumb" mode, we only need one line */
 	display_lines = smart_terminal ? screen_length - Header_lines : 1;
 
+	y_idlecursor = y_message = 3 + ncpu;
+	if (screen_length <= y_message)
+		y_idlecursor = y_message = screen_length - 1;
+
 	/*
 	 * we don't want more than MAX_COLS columns, since the
 	 * machine-dependent modules make static allocations based on
@@ -168,9 +172,7 @@ display_init(struct statics * statics)
 	}
 
 	y_mem = 2 + ncpu;
-	y_message = 3 + ncpu;
 	y_header = 4 + ncpu;
-	y_idlecursor = 3 + ncpu;
 	y_procs = 5 + ncpu;
 	Header_lines = 5 + ncpu;
 
@@ -178,42 +180,44 @@ display_init(struct statics * statics)
 	display_lines = display_resize();
 
 	/* only do the rest if we need to */
-	if (display_lines > -1) {
-		/* save pointers and allocate space for names */
-		procstate_names = statics->procstate_names;
-		num_procstates = string_count(procstate_names);
-		lprocstates = calloc(num_procstates, sizeof(int));
-		if (lprocstates == NULL)
-			err(1, NULL);
+	/* save pointers and allocate space for names */
+	procstate_names = statics->procstate_names;
+	num_procstates = string_count(procstate_names);
+	lprocstates = calloc(num_procstates, sizeof(int));
+	if (lprocstates == NULL)
+		err(1, NULL);
 
-		cpustate_names = statics->cpustate_names;
-		num_cpustates = string_count(cpustate_names);
-		lcpustates = calloc(ncpu, sizeof(int64_t *));
-		if (lcpustates == NULL)
+	cpustate_names = statics->cpustate_names;
+	num_cpustates = string_count(cpustate_names);
+	lcpustates = calloc(ncpu, sizeof(int64_t *));
+	if (lcpustates == NULL)
+		err(1, NULL);
+	for (cpu = 0; cpu < ncpu; cpu++) {
+		lcpustates[cpu] = calloc(num_cpustates, sizeof(int64_t));
+		if (lcpustates[cpu] == NULL)
 			err(1, NULL);
-		for (cpu = 0; cpu < ncpu; cpu++) {
-			lcpustates[cpu] = calloc(num_cpustates, sizeof(int64_t));
-			if (lcpustates[cpu] == NULL)
-				err(1, NULL);
-		}
-		
-		cpustate_columns = calloc(num_cpustates, sizeof(int));
-		if (cpustate_columns == NULL)
-			err(1, NULL);
+	}
+	
+	cpustate_columns = calloc(num_cpustates, sizeof(int));
+	if (cpustate_columns == NULL)
+		err(1, NULL);
 
-		memory_names = statics->memory_names;
+	memory_names = statics->memory_names;
 
-		/* calculate starting columns where needed */
-		cpustate_total_length = 0;
-		pp = cpustate_names;
-		ip = cpustate_columns;
-		while (*pp != NULL) {
-			if ((i = strlen(*pp++)) > 0) {
-				*ip++ = cpustate_total_length;
-				cpustate_total_length += i + 8;
-			}
+	/* calculate starting columns where needed */
+	cpustate_total_length = 0;
+	pp = cpustate_names;
+	ip = cpustate_columns;
+	while (*pp != NULL) {
+		if ((i = strlen(*pp++)) > 0) {
+			*ip++ = cpustate_total_length;
+			cpustate_total_length += i + 8;
 		}
 	}
+
+	if (display_lines < 0)
+		display_lines = 0;
+
 	/* return number of lines available */
 	return (display_lines);
 }
@@ -221,19 +225,20 @@ display_init(struct statics * statics)
 void
 i_loadave(pid_t mpid, double *avenrun)
 {
-	int i;
+	if (screen_length > 1 || !smart_terminal) {
+		int i;
 
-	move(0, 0);
-	clrtoeol();
+		move(0, 0);
+		clrtoeol();
 
-	/* mpid == -1 implies this system doesn't have an _mpid */
-	if (mpid != -1)
-		printwp("last pid: %5ld;  ", (long) mpid);
+		addstrp("load averages");
+		/* mpid == -1 implies this system doesn't have an _mpid */
+		if (mpid != -1)
+			printwp("last pid: %5ld;  ", (long) mpid);
 
-	addstrp("load averages");
-
-	for (i = 0; i < 3; i++)
-		printwp("%c %5.2f", i == 0 ? ':' : ',', avenrun[i]);
+		for (i = 0; i < 3; i++)
+			printwp("%c %5.2f", i == 0 ? ':' : ',', avenrun[i]);
+	}
 }
 
 /*
@@ -250,22 +255,23 @@ i_loadave(pid_t mpid, double *avenrun)
 void
 i_timeofday(time_t * tod)
 {
-
-	if (smart_terminal) {
-		move(0, screen_width - 8);
-	} else {
-		if (fputs("    ", stdout) == EOF)
-			exit(1);
-	}
+	if (screen_length > 1 || !smart_terminal) {
+		if (smart_terminal) {
+			move(0, screen_width - 8);
+		} else {
+			if (fputs("    ", stdout) == EOF)
+				exit(1);
+		}
 #ifdef DEBUG
-	{
-		char *foo;
-		foo = ctime(tod);
-		addstrp(foo);
-	}
+		{
+			char *foo;
+			foo = ctime(tod);
+			addstrp(foo);
+		}
 #endif
-	printwp("%-8.8s", &(ctime(tod)[11]));
-	putn();
+		printwp("%-8.8s", &(ctime(tod)[11]));
+		putn();
+	}
 }
 
 /*
@@ -277,31 +283,33 @@ i_timeofday(time_t * tod)
 void
 i_procstates(int total, int *brkdn)
 {
-	int i;
-	char procstates_buffer[MAX_COLS];
+	if (screen_length > 2 || !smart_terminal) {
+		int i;
+		char procstates_buffer[MAX_COLS];
 
-	move(1, 0);
-	clrtoeol();
-	/* write current number of processes and remember the value */
-	printwp("%d processes:", total);
+		move(1, 0);
+		clrtoeol();
+		/* write current number of processes and remember the value */
+		printwp("%d processes:", total);
 
-	if (smart_terminal)
-		move(1, 15);
-	else {
-		/* put out enough spaces to get to column 15 */
-		i = digits(total);
-		while (i++ < 4) {
-			if (putchar(' ') == EOF)
-				exit(1);
+		if (smart_terminal)
+			move(1, 15);
+		else {
+			/* put out enough spaces to get to column 15 */
+			i = digits(total);
+			while (i++ < 4) {
+				if (putchar(' ') == EOF)
+					exit(1);
+			}
 		}
+
+		/* format and print the process state summary */
+		summary_format(procstates_buffer, sizeof(procstates_buffer), brkdn,
+		    procstate_names);
+
+		addstrp(procstates_buffer);
+		putn();
 	}
-
-	/* format and print the process state summary */
-	summary_format(procstates_buffer, sizeof(procstates_buffer), brkdn,
-	    procstate_names);
-
-	addstrp(procstates_buffer);
-	putn();
 }
 
 /*
@@ -315,38 +323,41 @@ i_procstates(int total, int *brkdn)
 static char *
 cpustates_tag(int cpu)
 {
-	static char *tag;
-	static int cpulen, old_width;
-	int i;
+	if (screen_length > 3 || !smart_terminal) {
+		static char *tag;
+		static int cpulen, old_width;
+		int i;
 
-	if (cpulen == 0 && ncpu > 1) {
-		/* compute length of the cpu string */
-		for (i = ncpu; i > 0; cpulen++, i /= 10)
-			continue;
-	}
-
-	if (old_width == screen_width) {
-		if (ncpu > 1) {
-			/* just store the cpu number in the tag */
-			i = tag[3 + cpulen];
-			snprintf(tag + 3, cpulen + 1, "%.*d", cpulen, cpu);
-			tag[3 + cpulen] = i;
+		if (cpulen == 0 && ncpu > 1) {
+			/* compute length of the cpu string */
+			for (i = ncpu; i > 0; cpulen++, i /= 10)
+				continue;
 		}
-	} else {
-		/*
-		 * use a long tag if it will fit, otherwise use short one.
-		 */
-		free(tag);
-		if (cpustate_total_length + 10 + cpulen >= screen_width)
-			i = asprintf(&tag, "CPU%.*d: ", cpulen, cpu);
-		else
-			i = asprintf(&tag, "CPU%.*d states: ", cpulen, cpu);
-		if (i == -1)
-			tag = NULL;
-		else
-			old_width = screen_width;
-	}
-	return (tag);
+
+		if (old_width == screen_width) {
+			if (ncpu > 1) {
+				/* just store the cpu number in the tag */
+				i = tag[3 + cpulen];
+				snprintf(tag + 3, cpulen + 1, "%.*d", cpulen, cpu);
+				tag[3 + cpulen] = i;
+			}
+		} else {
+			/*
+			 * use a long tag if it will fit, otherwise use short one.
+			 */
+			free(tag);
+			if (cpustate_total_length + 10 + cpulen >= screen_width)
+				i = asprintf(&tag, "CPU%.*d: ", cpulen, cpu);
+			else
+				i = asprintf(&tag, "CPU%.*d states: ", cpulen, cpu);
+			if (i == -1)
+				tag = NULL;
+			else
+				old_width = screen_width;
+		}
+		return (tag);
+	} else
+		return ('\0');
 }
 
 void
@@ -357,27 +368,30 @@ i_cpustates(int64_t *ostates)
 	char **names = cpustate_names, *thisname;
 
 	for (cpu = 0; cpu < ncpu; cpu++) {
-		move(2 + cpu, 0);
-		clrtoeol();
-		/* print tag and bump lastline */
-		addstrp(cpustates_tag(cpu));
-
 		/* now walk thru the names and print the line */
 		names = cpustate_names;
 		i = 0;
 		states = ostates + (CPUSTATES * cpu);
-		while ((thisname = *names++) != NULL) {
-			if (*thisname != '\0') {
-				/* retrieve the value and remember it */
-				value = *states++;
 
-				/* if percentage is >= 1000, print it as 100% */
-				printwp((value >= 1000 ? "%s%4.0f%% %s" :
-				    "%s%4.1f%% %s"), i++ == 0 ? "" : ", ",
-				    ((float) value) / 10., thisname);
+		if (screen_length > 2 + cpu || !smart_terminal) {
+			move(2 + cpu, 0);
+			clrtoeol();
+			/* print tag and bump lastline */
+			addstrp(cpustates_tag(cpu));
+
+			while ((thisname = *names++) != NULL) {
+				if (*thisname != '\0') {
+					/* retrieve the value and remember it */
+					value = *states++;
+
+					/* if percentage is >= 1000, print it as 100% */
+					printwp((value >= 1000 ? "%s%4.0f%% %s" :
+					    "%s%4.1f%% %s"), i++ == 0 ? "" : ", ",
+					    ((float) value) / 10., thisname);
+				}
 			}
+			putn();
 		}
-		putn();
 	}
 }
 
@@ -390,17 +404,19 @@ i_cpustates(int64_t *ostates)
 void
 i_memory(int *stats)
 {
-	char memory_buffer[MAX_COLS];
+	if (screen_length > y_mem || !smart_terminal) {
+		char memory_buffer[MAX_COLS];
 
-	move(y_mem, 0);
-	clrtoeol();
-	addstrp("Memory: ");
+		move(y_mem, 0);
+		clrtoeol();
+		addstrp("Memory: ");
 
-	/* format and print the memory summary */
-	summary_format(memory_buffer, sizeof(memory_buffer), stats,
-	    memory_names);
-	addstrp(memory_buffer);
-	putn();
+		/* format and print the memory summary */
+		summary_format(memory_buffer, sizeof(memory_buffer), stats,
+		    memory_names);
+		addstrp(memory_buffer);
+		putn();
+	}
 }
 
 /*
@@ -460,7 +476,8 @@ void
 i_header(char *text)
 {
 	header_length = strlen(text);
-	if (header_status == ON) {
+	if (header_status == ON && (screen_length > y_header
+              || !smart_terminal)) {
 		if (!smart_terminal) {
 			putn();
 			if (fputs(text, stdout) == EOF)
