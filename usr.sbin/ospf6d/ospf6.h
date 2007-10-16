@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.4 2007/10/16 13:01:07 norby Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.5 2007/10/16 21:32:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -171,7 +171,7 @@ struct ls_upd_hdr {
 
 #define LINK_TYPE_POINTTOPOINT	1
 #define LINK_TYPE_TRANSIT_NET	2
-#define LINK_TYPE_STUB_NET	3
+#define LINK_TYPE_RESERVED	3
 #define LINK_TYPE_VIRTUAL	4
 
 /* LSA headers */
