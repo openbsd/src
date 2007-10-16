@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.4 2007/05/18 16:34:31 miod Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.5 2007/10/16 04:56:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -72,7 +72,7 @@ enter_again:
 
 enter_failed:	/* the lock is not ours... */
 	ld	r3,  r4,  MTX_WANTIPL
-	bcnd	eq0, r4,  2f
+	bcnd	eq0, r3,  2f
 	bcnd	ne0, r2,  1f		/* splx(oldipl) */
 	bsr.n	_C_LABEL(spl0)
 	 addu	r1,  r1,  2f - . - 4
