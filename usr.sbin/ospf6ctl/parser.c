@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2007/10/14 01:28:06 deraadt Exp $ */
+/*	$OpenBSD: parser.c,v 1.3 2007/10/16 08:43:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -24,6 +24,7 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -272,55 +273,143 @@ show_valid_args(const struct token table[])
 	}
 }
 
+/* XXX shared with parse.y should be merged */
 int
-parse_addr(const char *word, struct in_addr *addr)
+parse_addr(const char *word, struct in6_addr *addr)
 {
-	struct in_addr	ina;
+	struct addrinfo	hints, *r;
 
 	if (word == NULL)
 		return (0);
 
-	bzero(addr, sizeof(struct in_addr));
-	bzero(&ina, sizeof(ina));
-
-	if (inet_pton(AF_INET, word, &ina)) {
-		addr->s_addr = ina.s_addr;
+	bzero(addr, sizeof(struct in6_addr));
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(word, "0", &hints, &r) == 0) {
+		*addr = ((struct sockaddr_in6 *)r->ai_addr)->sin6_addr;
+		/* XXX address scope !!! */
+		/* ((struct sockaddr_in6 *)r->ai_addr)->sin6_scope_id */
+		freeaddrinfo(r);
 		return (1);
 	}
-
 	return (0);
 }
 
+/* XXX shared with parse.y should be merged */
 int
-parse_prefix(const char *word, struct in_addr *addr, u_int8_t *prefixlen)
+parse_prefix(const char *word, struct in6_addr *addr, u_int8_t *prefixlen)
 {
-	struct in_addr	 ina;
-	int		 bits = 32;
+	char		*p, *ps;
+	const char	*errstr;
+	int		 mask;
 
 	if (word == NULL)
 		return (0);
 
-	bzero(addr, sizeof(struct in_addr));
-	bzero(&ina, sizeof(ina));
+	if ((p = strrchr(word, '/')) != NULL) {
+		mask = strtonum(p + 1, 0, 128, &errstr);
+		if (errstr)
+			errx(1, "invalid netmask: %s", errstr);
 
-	if (strrchr(word, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, word,
-		    &ina, sizeof(ina))) == -1)
+		if ((ps = malloc(strlen(word) - strlen(p) + 1)) == NULL)
+			err(1, "parse_prefix: malloc");
+		strlcpy(ps, word, strlen(word) - strlen(p) + 1);
+
+		if (parse_addr(ps, addr) == 0) {
+			free(ps);
 			return (0);
-		addr->s_addr = ina.s_addr & htonl(prefixlen2mask(bits));
-		*prefixlen = bits;
+		}
+
+		inet6applymask(addr, addr, mask);
+		*prefixlen = mask;
 		return (1);
 	}
-	*prefixlen = 32;
+	*prefixlen = 128;
 	return (parse_addr(word, addr));
 }
 
+/* XXX prototype defined in ospfd.h and shared with the kroute.c version */
+u_int8_t
+mask2prefixlen(struct sockaddr_in6 *sa_in6)
+{
+	u_int8_t	l = 0, i, len;
+
+	/*
+	 * sin6_len is the size of the sockaddr so substract the offset of
+	 * the possibly truncated sin6_addr struct.
+	 */
+	len = sa_in6->sin6_len -
+	    (u_int8_t)(&((struct sockaddr_in6 *)NULL)->sin6_addr);
+	for (i = 0; i < len; i++) {
+		/* this "beauty" is adopted from sbin/route/show.c ... */
+		switch (sa_in6->sin6_addr.s6_addr[i]) {
+		case 0xff:
+			l += 8;
+			break;
+		case 0xfe:
+			l += 7;
+			return (l);
+		case 0xfc:
+			l += 6;
+			return (l);
+		case 0xf8:
+			l += 5;
+			return (l);
+		case 0xf0:
+			l += 4;
+			return (l);
+		case 0xe0:
+			l += 3;
+			return (l);
+		case 0xc0:
+			l += 2;
+			return (l);
+		case 0x80:
+			l += 1;
+			return (l);
+		case 0x00:
+			return (l);
+		default:
+			errx(1, "non continguous inet6 netmask");
+		}
+	}
+
+	return (l);
+}
+
 /* XXX local copy from kroute.c, should go to shared file */
-in_addr_t
+struct in6_addr *
 prefixlen2mask(u_int8_t prefixlen)
 {
-	if (prefixlen == 0)
-		return (0);
+	static struct in6_addr	mask;
+	int			i;
 
-	return (0xffffffff << (32 - prefixlen));
+	bzero(&mask, sizeof(mask));
+	for (i = 0; i < prefixlen / 8; i++)
+		mask.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	return (&mask);
+}
+
+/* XXX local copy from kroute.c, should go to shared file */
+void
+inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
+{
+	struct in6_addr	mask;
+	int		i;
+
+	bzero(&mask, sizeof(mask));
+	for (i = 0; i < prefixlen / 8; i++)
+		mask.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	for (i = 0; i < 16; i++)
+		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.6 2007/10/16 08:07:56 norby Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.7 2007/10/16 08:43:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, NULL, 0);
 		break;
 	case SHOW_FIB:
-		if (!res->addr.s_addr)
+		if (IN6_IS_ADDR_UNSPECIFIED(&res->addr))
 			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0,
 			    &res->flags, sizeof(res->flags));
 		else
@@ -513,16 +513,6 @@ log_adv_rtr(u_int32_t adv_rtr)
 		return ("?");
 	else
 		return (buf);
-}
-
-/* prototype defined in ospfd.h and shared with the kroute.c version */
-u_int8_t
-mask2prefixlen(in_addr_t ina)
-{
-	if (ina == 0)
-		return (0);
-	else
-		return (33 - ffs(ntohl(ina)));
 }
 
 void
@@ -911,13 +901,13 @@ show_rib_msg(struct imsg *imsg)
 		rt = imsg->data;
 		switch (rt->d_type) {
 		case DT_NET:
-			if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
+			if (asprintf(&dstnet, "%s/%d", log_in6addr(&rt->prefix),
 			    rt->prefixlen) == -1)
 				err(1, NULL);
 			break;
 		case DT_RTR:
 			if (asprintf(&dstnet, "%s",
-			    inet_ntoa(rt->prefix)) == -1)
+			    log_in6addr(&rt->prefix)) == -1)
 				err(1, NULL);
 			break;
 		default:
@@ -925,7 +915,7 @@ show_rib_msg(struct imsg *imsg)
 		}
 
 		printf("%-20s %-17s %-12s %-9s %-7d %s\n", dstnet,
-		    inet_ntoa(rt->nexthop), path_type_name(rt->p_type),
+		    log_in6addr(&rt->nexthop), path_type_name(rt->p_type),
 		    dst_type_name(rt->d_type), rt->cost,
 		    rt->uptime == 0 ? "-" : fmt_timeframe_core(rt->uptime));
 		free(dstnet);
@@ -1018,7 +1008,8 @@ show_rib_detail_msg(struct imsg *imsg)
 					show_rib_head(rt->area, rt->d_type,
 					     rt->p_type);
 				if (asprintf(&dstnet, "%s/%d",
-				    inet_ntoa(rt->prefix), rt->prefixlen) == -1)
+				    log_in6addr(&rt->prefix),
+				    rt->prefixlen) == -1)
 					err(1, NULL);
 				lasttype = RIB_NET;
 				break;
@@ -1027,14 +1018,15 @@ show_rib_detail_msg(struct imsg *imsg)
 					show_rib_head(rt->area, rt->d_type,
 					     rt->p_type);
 				if (asprintf(&dstnet, "%s",
-				    inet_ntoa(rt->prefix)) == -1)
+				    log_in6addr(&rt->prefix)) == -1)
 					err(1, NULL);
 				lasttype = RIB_RTR;
 				break;
 			default:
 				errx(1, "unknown route type");
 			}
-			printf("%-18s %-15s ", dstnet, inet_ntoa(rt->nexthop));
+			printf("%-18s %-15s ", dstnet,
+			    log_in6addr(&rt->nexthop));
 			printf("%-15s %-12s %-7d", inet_ntoa(rt->adv_rtr),
 			    path_type_name(rt->p_type), rt->cost);
 			free(dstnet);
@@ -1051,10 +1043,11 @@ show_rib_detail_msg(struct imsg *imsg)
 				show_rib_head(rt->area, rt->d_type, rt->p_type);
 
 			if (asprintf(&dstnet, "%s/%d",
-			    inet_ntoa(rt->prefix), rt->prefixlen) == -1)
+			    log_in6addr(&rt->prefix), rt->prefixlen) == -1)
 				err(1, NULL);
 
-			printf("%-18s %-15s ", dstnet, inet_ntoa(rt->nexthop));
+			printf("%-18s %-15s ", dstnet,
+			    log_in6addr(&rt->nexthop));
 			printf("%-15s %-12s %-7d %-7d\n",
 			    inet_ntoa(rt->adv_rtr), path_type_name(rt->p_type),
 			    rt->cost, rt->cost2);
@@ -1113,14 +1106,14 @@ show_fib_msg(struct imsg *imsg)
 			printf(" ");
 
 		printf("     ");
-		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
-		    -1)
+		if (asprintf(&p, "%s/%u", log_in6addr(&k->prefix),
+		    k->prefixlen) == -1)
 			err(1, NULL);
 		printf("%-20s ", p);
 		free(p);
 
-		if (k->nexthop.s_addr)
-			printf("%s", inet_ntoa(k->nexthop));
+		if (!IN6_IS_ADDR_UNSPECIFIED(&k->nexthop))
+			printf("%s", log_in6addr(&k->nexthop));
 		else if (k->flags & F_CONNECTED)
 			printf("link#%u", k->ifindex);
 		printf("\n");
