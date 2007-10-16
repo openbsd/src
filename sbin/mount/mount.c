@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.46 2007/09/02 15:19:24 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.47 2007/10/16 20:19:27 sobrado Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.46 2007/09/02 15:19:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.47 2007/10/16 20:19:27 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -712,11 +712,9 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: mount %s %s\n       mount %s\n       mount %s\n",
-	    "[-dfruvw] [-o options] [-t ffs | external_type]",
-	    "special node",
-	    "[-Aadfruvw] [-t ffs | external_type]",
-	    "[-dfrsuvw] special | node");
+	    "usage: mount [-Aadfruvw] [-t type]\n"
+	    "       mount [-dfrsuvw] special | node\n"
+	    "       mount [-dfruvw] [-o options] [-t type] special node\n");
 	exit(1);
 }
 

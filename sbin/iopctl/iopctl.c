@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopctl.c,v 1.8 2007/10/08 08:19:40 gilles Exp $	*/
+/*	$OpenBSD: iopctl.c,v 1.9 2007/10/16 20:19:27 sobrado Exp $	*/
 /*	$NetBSD: iopctl.c,v 1.12 2002/01/04 10:17:20 ad Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ usage(void)
 {
 	extern const char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-f dev] <command> [target]\n",
+	(void)fprintf(stderr, "usage: %s [-f device] command [tid]\n",
 	    __progname);
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */

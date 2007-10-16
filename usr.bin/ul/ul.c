@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.13 2004/07/06 14:37:59 jaredy Exp $	*/
+/*	$OpenBSD: ul.c,v 1.14 2007/10/16 20:19:27 sobrado Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ul.c,v 1.13 2004/07/06 14:37:59 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: ul.c,v 1.14 2007/10/16 20:19:27 sobrado Exp $";
 #endif /* not lint */
 
 #include <curses.h>
@@ -128,8 +128,8 @@ main(int argc, char *argv[])
 
 		default:
 			fprintf(stderr,
-				"usage: %s [-i] [-t terminal] file...\n",
-				argv[0]);
+			    "usage: %s [-i] [-t terminal] [file ...]\n",
+			    argv[0]);
 			exit(1);
 		}
 

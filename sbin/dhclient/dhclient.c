@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.115 2007/09/02 15:19:23 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.116 2007/10/16 20:19:26 sobrado Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -397,8 +397,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dqu] ", __progname);
-	fprintf(stderr, "[-c conffile] [-l leasefile] interface\n");
+	fprintf(stderr, "usage: %s [-dqu] [-c file] [-l file] interface\n",
+	    __progname);
 	exit(1);
 }
 

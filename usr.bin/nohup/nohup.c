@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.12 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.13 2007/10/16 20:19:27 sobrado Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$OpenBSD: nohup.c,v 1.12 2003/06/03 02:56:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: nohup.c,v 1.13 2007/10/16 20:19:27 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -138,6 +138,6 @@ dupit:
 __dead static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: nohup command\n");
+	(void)fprintf(stderr, "usage: nohup utility [arg ...]\n");
 	exit(EXIT_MISC);
 }
