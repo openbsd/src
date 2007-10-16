@@ -1,7 +1,5 @@
-.\"	$Id: cc.1,v 1.2 2007/10/12 18:10:17 stefan Exp $
-.\"	$NetBSD$
-.\"	$OpenBSD: cc.1,v 1.2 2007/10/12 18:10:17 stefan Exp $
-."\
+.\"	$OpenBSD: cc.1,v 1.3 2007/10/16 13:46:30 stefan Exp $
+.\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any 
@@ -55,7 +53,7 @@ Unrecognized options are all sent directly to
 .Pp
 .\" Brief description of its syntax:
 Filenames that end with
-.Sy .c
+.Sy \&.c
 are passed via
 .Xr cpp 1 ->
 .Xr ccom 1 ->
@@ -63,20 +61,20 @@ are passed via
 .Xr ld 1 .
 .Pp
 Filenames that end with
-.Sy .i
+.Sy \&.i
 are passed via
 .Xr ccom 1 ->
 .Xr as 1 ->
 .Xr ld 1 .
 .Pp
 Filenames that end with
-.Sy .s
+.Sy \&.s
 are passed via
 .Xr as 1 ->
 .Xr ld 1 .
 .Pp
 Filenames that end with
-.Sy .o
+.Sy \&.o
 are passed directly to
 .Xr ld 1 .
 .Pp
@@ -250,7 +248,7 @@ TODO
 A few
 macros are predefined by
 .Nm
-went sent to
+when sent to
 .Xr cpp 1 .
 .Bl -diag
 .\" TODO:
