@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.5 2007/10/15 02:16:35 deraadt Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.6 2007/10/16 08:07:56 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -142,8 +142,8 @@ main(int argc, char *argv[])
 		    &ifidx, sizeof(ifidx));
 		break;
 	case SHOW_NBR:
-		printf("%-15s %-3s %-12s %-8s %-15s %-9s %s\n", "ID", "Pri",
-		    "State", "DeadTime", "Address", "Iface","Uptime");
+		printf("%-15s %-3s %-12s %-9s %-11s %s\n", "ID", "Pri",
+		    "State", "DeadTime", "Iface","Uptime");
 		/*FALLTHROUGH*/
 	case SHOW_NBR_DTAIL:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, NULL, 0);
@@ -832,9 +832,9 @@ show_nbr_msg(struct imsg *imsg)
 		if (asprintf(&state, "%s/%s", nbr_state_name(nbr->nbr_state),
 		    if_state_name(nbr->iface_state)) == -1)
 			err(1, NULL);
-		printf("%-15s %-3d %-12s %-9s", inet_ntoa(nbr->id),
+		printf("%-15s %-3d %-12s %-10s", inet_ntoa(nbr->id),
 		    nbr->priority, state, fmt_timeframe_core(nbr->dead_timer));
-		printf("%-15s %-9s %s\n", log_in6addr(&nbr->addr), nbr->name,
+		printf("%-11s %s\n", nbr->name,
 		    nbr->uptime == 0 ? "-" : fmt_timeframe_core(nbr->uptime));
 		free(state);
 		break;
