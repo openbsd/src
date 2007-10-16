@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.12 2007/10/15 18:47:24 kettenis Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.13 2007/10/16 19:17:21 kettenis Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -130,8 +130,8 @@
 #define SPDMEM_DDR2_DATAWIDTH		0x03
 #define SPDMEM_DDR2_VOLTAGE		0x05
 #define SPDMEM_DDR2_CYCLE		0x06
-#define SPDMEM_DDR2_BANKS_PER_CHIP	0x0e
 #define SPDMEM_DDR2_DIMMTYPE		0x11
+#define SPDMEM_DDR2_RANK_DENSITY	0x1c
 
 #define SPDMEM_DDR2_TYPE_REGMASK	((1 << 4) | (1 << 0))
 
@@ -221,9 +221,9 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	struct spdmem *s = &(sc->sc_spd_data);
 	const char *type;
 	const char *ddr_type_string = NULL;
-	int num_banks = 0;
-	int per_chip = 0;
 	int dimm_size, cycle_time, d_clk, p_clk, bits;
+	int num_banks, per_chip;
+	int num_ranks, density;
 	int i;
 	uint8_t config, rows, cols, cl;
 
@@ -279,25 +279,26 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	if (IS_RAMBUS_TYPE) {
 		rows = s->sm_data[SPDMEM_RDR_ROWS_COLS] & 0x0f;
 		cols = s->sm_data[SPDMEM_RDR_ROWS_COLS] >> 4;
-		printf(" %dMB", 1 << (rows + cols - 13));
+		dimm_size = (1 << (rows + cols - 13));
 	} else if (s->sm_type == SPDMEM_MEMTYPE_SDRAM ||
 	    s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
 		rows = s->sm_data[SPDMEM_SDR_ROWS] & 0x0f;
 		cols = s->sm_data[SPDMEM_SDR_COLS] & 0x0f;
-		dimm_size = rows + cols - 17;
 		num_banks = s->sm_data[SPDMEM_SDR_BANKS];
 		per_chip = s->sm_data[SPDMEM_SDR_BANKS_PER_CHIP];
+		dimm_size = (1 << (rows + cols - 17)) * num_banks * per_chip;
 	} else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		rows = s->sm_data[SPDMEM_DDR2_ROWS] & 0x1f;
-		cols = s->sm_data[SPDMEM_DDR2_COLS] & 0x0f;
-		dimm_size = rows + cols - 17;
-		num_banks = s->sm_data[SPDMEM_DDR_RANKS] + 1;
-		per_chip = s->sm_data[SPDMEM_DDR2_BANKS_PER_CHIP];
+		num_ranks = (s->sm_data[SPDMEM_DDR2_RANKS] & 0x7) + 1;
+		density = (s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0xf0) |
+		    ((s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0x0f) << 8);
+		dimm_size = num_ranks * density * 4;
 	}
-	if (!(IS_RAMBUS_TYPE) && num_banks <= 8 && per_chip <= 8 &&
-	    dimm_size > 0 && dimm_size <= 12) {
-		dimm_size = (1 << dimm_size) * num_banks * per_chip;
-		printf(" %dMB", dimm_size);
+
+	if (dimm_size > 0) {
+		if (dimm_size < 1024)
+			printf(" %dMB", dimm_size);
+		else
+			printf(" %dGB", dimm_size / 1024);
 	}
 
 	printf(" %s", type);
