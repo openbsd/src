@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.2 2007/10/10 14:09:25 claudio Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.3 2007/10/16 20:26:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -65,7 +65,8 @@ send_ls_req(struct nbr *nbr)
 	    buf->wpos + sizeof(struct ls_req_hdr) < buf->max -
 	    MD5_DIGEST_LENGTH; le = nle) {
 		nbr->ls_req = nle = TAILQ_NEXT(le, entry);
-		ls_req_hdr.type = htonl(le->le_lsa->type);
+		ls_req_hdr.zero = 0;
+		ls_req_hdr.type = le->le_lsa->type;
 		ls_req_hdr.ls_id = le->le_lsa->ls_id;
 		ls_req_hdr.adv_rtr = le->le_lsa->adv_rtr;
 		if (buf_add(buf, &ls_req_hdr, sizeof(ls_req_hdr)))
