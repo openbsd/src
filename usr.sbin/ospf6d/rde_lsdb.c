@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.4 2007/10/16 21:02:26 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.5 2007/10/16 21:58:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -492,7 +492,8 @@ lsa_num_links(struct vertex *v)
 {
 	switch (v->type) {
 	case LSA_TYPE_ROUTER:
-		return (ntohs(v->lsa->data.rtr.nlinks));
+		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr)
+		    - sizeof(u_int32_t)) / sizeof(struct lsa_rtr_link));
 	case LSA_TYPE_NETWORK:
 		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr)
 		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link));

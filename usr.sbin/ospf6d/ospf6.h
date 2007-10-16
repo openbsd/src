@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.6 2007/10/16 21:44:41 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.7 2007/10/16 21:58:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -174,11 +174,10 @@ struct ls_upd_hdr {
 #define OSPF_RTR_B		0x01
 #define OSPF_RTR_E		0x02
 #define OSPF_RTR_V		0x04
+#define OSPF_RTR_W		0x08
 
 struct lsa_rtr {
-	u_int8_t		flags;
-	u_int8_t		dummy;
-	u_int16_t		nlinks;
+	u_int32_t		opts;	/* 8bit flags + 24bits options */
 };
 
 struct lsa_rtr_link {
