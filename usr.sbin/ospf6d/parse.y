@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2007/10/16 06:06:49 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.8 2007/10/16 08:41:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <ifaddrs.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -76,7 +77,8 @@ char		*symget(const char *);
 
 void		 clear_config(struct ospfd_conf *xconf);
 u_int32_t	 get_rtr_id(void);
-int		 host(const char *, struct in_addr *, struct in_addr *);
+int	 host(const char *, struct in6_addr *);
+int	 prefix(const char *, struct in6_addr *, u_int8_t *);
 
 static struct ospfd_conf	*conf;
 static int			 errors = 0;
@@ -179,27 +181,6 @@ conf_main	: ROUTERID STRING {
 			else
 				conf->flags &= ~OSPFD_FLAG_NO_FIB_UPDATE;
 		}
-		| no REDISTRIBUTE NUMBER '/' NUMBER optlist {
-			struct redistribute	*r;
-
-			if ((r = calloc(1, sizeof(*r))) == NULL)
-				fatal(NULL);
-			r->type = REDIST_ADDR;
-			if ($3 < 0 || $3 > 255 || $5 < 1 || $5 > 32) {
-				yyerror("bad network: %llu/%llu", $3, $5);
-				free(r);
-				YYERROR;
-			}
-			r->addr.s_addr = htonl($3 << IN_CLASSA_NSHIFT);
-			r->mask.s_addr = prefixlen2mask($5);
-
-			if ($1)
-				r->type |= REDIST_NO;
-			r->metric = $6;
-
-			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
-			conf->redistribute |= REDISTRIBUTE_ON;
-		}
 		| no REDISTRIBUTE STRING optlist {
 			struct redistribute	*r;
 
@@ -218,7 +199,7 @@ conf_main	: ROUTERID STRING {
 					r->type = REDIST_STATIC;
 				else if (!strcmp($3, "connected"))
 					r->type = REDIST_CONNECTED;
-				else if (host($3, &r->addr, &r->mask))
+				else if (prefix($3, &r->addr, &r->prefixlen))
 					r->type = REDIST_ADDR;
 				else {
 					yyerror("unknown redistribute type");
@@ -1107,22 +1088,56 @@ get_rtr_id(void)
 }
 
 int
-host(const char *s, struct in_addr *addr, struct in_addr *mask)
+host(const char *s, struct in6_addr *addr)
 {
-	struct in_addr		 ina;
-	int			 bits = 32;
+	struct addrinfo	hints, *r;
 
-	bzero(&ina, sizeof(struct in_addr));
-	if (strrchr(s, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
-			return (0);
-	} else {
-		if (inet_pton(AF_INET, s, &ina) != 1)
-			return (0);
+	if (s == NULL)
+		return (0);
+
+	bzero(addr, sizeof(struct in6_addr));
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(s, "0", &hints, &r) == 0) {
+		*addr = ((struct sockaddr_in6 *)r->ai_addr)->sin6_addr;
+		/* XXX address scope !!! */
+		/* ((struct sockaddr_in6 *)r->ai_addr)->sin6_scope_id */
+		freeaddrinfo(r);
+		return (1);
 	}
+	return (0);
+}
 
-	addr->s_addr = ina.s_addr;
-	mask->s_addr = prefixlen2mask(bits);
+int
+prefix(const char *s, struct in6_addr *addr, u_int8_t *plen)
+{
+	char		*p, *ps;
+	const char	*errstr;
+	int		 mask;
 
-	return (1);
+	if (s == NULL)
+		return (0);
+
+	if ((p = strrchr(s, '/')) != NULL) {
+		mask = strtonum(p + 1, 0, 128, &errstr);
+		if (errstr)
+			errx(1, "invalid netmask: %s", errstr);
+
+		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
+			err(1, "parse_prefix: malloc");
+		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
+
+		if (host(ps, addr) == 0) {
+			free(ps);
+			return (0);
+		}
+
+		inet6applymask(addr, addr, mask);
+		*plen = mask;
+		return (1);
+	}
+	*plen = 128;
+	return (host(s, addr));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.1 2007/10/08 10:44:51 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.2 2007/10/16 08:41:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -29,7 +29,7 @@
 struct v_nexthop {
 	TAILQ_ENTRY(v_nexthop)	 entry;
 	struct vertex		*prev;
-	struct in_addr		 nexthop;
+	struct in6_addr		 nexthop;
 };
 
 TAILQ_HEAD(v_nexthead, v_nexthop);
@@ -74,7 +74,7 @@ struct rde_nbr {
 
 struct rt_nexthop {
 	TAILQ_ENTRY(rt_nexthop)	entry;
-	struct in_addr		nexthop;
+	struct in6_addr		nexthop;
 	struct in_addr		adv_rtr;
 	time_t			uptime;
 	u_int8_t		connected;
@@ -84,7 +84,7 @@ struct rt_nexthop {
 struct rt_node {
 	RB_ENTRY(rt_node)	entry;
 	TAILQ_HEAD(,rt_nexthop)	nexthop;
-	struct in_addr		prefix;
+	struct in6_addr		prefix;
 	struct in_addr		area;
 	u_int32_t		cost;
 	u_int32_t		cost2;
@@ -155,7 +155,7 @@ void		 start_spf_holdtimer(struct ospfd_conf *);
 
 void		 rt_init(void);
 int		 rt_compare(struct rt_node *, struct rt_node *);
-struct rt_node	*rt_find(in_addr_t, u_int8_t, enum dst_type);
+struct rt_node	*rt_find(struct in6_addr *, u_int8_t, enum dst_type);
 int		 rt_insert(struct rt_node *);
 int		 rt_remove(struct rt_node *);
 void		 rt_clear(void);

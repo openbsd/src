@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.1 2007/10/08 10:44:51 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.2 2007/10/16 08:41:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 #include <err.h>
 #include <stdlib.h>
+#include <strings.h>
 
 #include "ospf6d.h"
 #include "ospf6.h"
@@ -41,10 +42,10 @@ void		 calc_nexthop(struct vertex *, struct vertex *);
 void		 rt_nexthop_clear(struct rt_node *);
 void		 rt_nexthop_add(struct rt_node *, struct v_nexthead *,
 		     struct in_addr);
-void		 rt_update(struct in_addr, u_int8_t, struct v_nexthead *,
+void		 rt_update(struct in6_addr *, u_int8_t, struct v_nexthead *,
 		     u_int32_t, u_int32_t, struct in_addr, struct in_addr,
 		     enum path_type, enum dst_type, u_int8_t, u_int32_t);
-struct rt_node	*rt_lookup(enum dst_type, in_addr_t);
+struct rt_node	*rt_lookup(enum dst_type, struct in6_addr *);
 void		 rt_invalidate(struct area *);
 int		 linked(struct vertex *, struct vertex *);
 
@@ -169,6 +170,7 @@ spf_calc(struct area *area)
 void
 rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 {
+#if 0 /* XXX needs a lot of work */
 	struct vertex		*w;
 	struct v_nexthop	*vn;
 	struct lsa_rtr_link	*rtr_link = NULL;
@@ -265,16 +267,19 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		/* as-external LSA are stored in a different tree */
 		fatalx("rt_calc: invalid LSA type");
 	}
+#endif
 }
 
 void
 asext_calc(struct vertex *v)
 {
+#if 0
 	struct rt_node		*r;
 	struct rt_nexthop	*rn;
 	u_int32_t		 cost2;
 	struct in_addr		 addr, adv_rtr, a;
 	enum path_type		 type;
+#endif
 
 	lsa_age(v);
 	if (ntohs(v->lsa->hdr.age) == MAX_AGE ||
@@ -288,6 +293,7 @@ asext_calc(struct vertex *v)
 		if (v->self)
 			return;
 
+#if 0 /* XXX this will be different for sure */
 		if ((r = rt_lookup(DT_RTR, htonl(v->adv_rtr))) == NULL)
 			return;
 
@@ -330,12 +336,14 @@ asext_calc(struct vertex *v)
 					calc_nexthop_add(v, NULL,
 					    htonl(v->adv_rtr));
 			} else
-				calc_nexthop_add(v, NULL, rn->nexthop.s_addr);
+				calc_nexthop_add(v, NULL, 0
+				    /* XXX rn->nexthop.s_addri */);
 		}
 
 		rt_update(addr, mask2prefixlen(v->lsa->data.asext.mask),
 		    &v->nexthop, v->cost, cost2, a, adv_rtr, type,
 		    DT_NET, 0, ntohl(v->lsa->data.asext.ext_tag));
+#endif
 		break;
 	default:
 		fatalx("asext_calc: invalid LSA type");
@@ -378,7 +386,7 @@ calc_nexthop_add(struct vertex *dst, struct vertex *parent, u_int32_t nexthop)
 		fatal("calc_nexthop_add");
 
 	vn->prev = parent;
-	vn->nexthop.s_addr = nexthop;
+	/* XXX  vn->nexthop.s_addr = nexthop; */
 
 	TAILQ_INSERT_TAIL(&dst->nexthop, vn, entry);
 }
@@ -450,8 +458,8 @@ calc_nexthop(struct vertex *dst, struct vertex *parent)
 						    rtr_link->data);
 				}
 			} else {
-				calc_nexthop_add(dst, parent,
-				    vn->nexthop.s_addr);
+				calc_nexthop_add(dst, parent, 0
+				    /* XXX vn->nexthop.s_addr */);
 			}
 		}
 		return;
@@ -459,7 +467,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent)
 
 	/* case 3 */
 	TAILQ_FOREACH(vn, &parent->nexthop, entry)
-	    calc_nexthop_add(dst, parent, vn->nexthop.s_addr);
+	    calc_nexthop_add(dst, parent, 0 /* XXX vn->nexthop.s_addr */);
 }
 
 /* candidate list */
@@ -654,10 +662,12 @@ rt_init(void)
 int
 rt_compare(struct rt_node *a, struct rt_node *b)
 {
-	if (ntohl(a->prefix.s_addr) < ntohl(b->prefix.s_addr))
-		return (-1);
-	if (ntohl(a->prefix.s_addr) > ntohl(b->prefix.s_addr))
-		return (1);
+	int	i;
+
+	/* XXX maybe a & b need to be switched */
+	i = memcmp(&a->prefix, &b->prefix, sizeof(a->prefix));
+	if (i)
+		return (i);
 	if (a->prefixlen < b->prefixlen)
 		return (-1);
 	if (a->prefixlen > b->prefixlen)
@@ -670,11 +680,11 @@ rt_compare(struct rt_node *a, struct rt_node *b)
 }
 
 struct rt_node *
-rt_find(in_addr_t prefix, u_int8_t prefixlen, enum dst_type d_type)
+rt_find(struct in6_addr *prefix, u_int8_t prefixlen, enum dst_type d_type)
 {
 	struct rt_node	s;
 
-	s.prefix.s_addr = prefix;
+	s.prefix = *prefix;
 	s.prefixlen = prefixlen;
 	s.d_type = d_type;
 
@@ -686,7 +696,7 @@ rt_insert(struct rt_node *r)
 {
 	if (RB_INSERT(rt_tree, &rt, r) != NULL) {
 		log_warnx("rt_insert failed for %s/%u",
-		    inet_ntoa(r->prefix), r->prefixlen);
+		    log_in6addr(&r->prefix), r->prefixlen);
 		free(r);
 		return (-1);
 	}
@@ -699,7 +709,7 @@ rt_remove(struct rt_node *r)
 {
 	if (RB_REMOVE(rt_tree, &rt, r) == NULL) {
 		log_warnx("rt_remove failed for %s/%u",
-		    inet_ntoa(r->prefix), r->prefixlen);
+		    log_in6addr(&r->prefix), r->prefixlen);
 		return (-1);
 	}
 
@@ -766,7 +776,7 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh,
 
 	TAILQ_FOREACH(vn, vnh, entry) {
 		TAILQ_FOREACH(rn, &r->nexthop, entry) {
-			if (rn->nexthop.s_addr != vn->nexthop.s_addr)
+			if (!IN6_ARE_ADDR_EQUAL(&rn->nexthop, &vn->nexthop))
 				continue;
 
 			rn->adv_rtr.s_addr = adv_rtr.s_addr;
@@ -783,7 +793,7 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh,
 			fatal("rt_nexthop_add");
 
 		clock_gettime(CLOCK_MONOTONIC, &now);
-		rn->nexthop.s_addr = vn->nexthop.s_addr;
+		rn->nexthop = vn->nexthop;
 		rn->adv_rtr.s_addr = adv_rtr.s_addr;
 		rn->uptime = now.tv_sec;
 		rn->connected = vn->prev == spf_root;
@@ -845,8 +855,8 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 			if (rn->invalid)
 				continue;
 
-			rtctl.prefix.s_addr = r->prefix.s_addr;
-			rtctl.nexthop.s_addr = rn->nexthop.s_addr;
+			rtctl.prefix = r->prefix;
+			rtctl.nexthop = rn->nexthop;
 			rtctl.area.s_addr = r->area.s_addr;
 			rtctl.adv_rtr.s_addr = rn->adv_rtr.s_addr;
 			rtctl.cost = r->cost;
@@ -864,7 +874,7 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 }
 
 void
-rt_update(struct in_addr prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
+rt_update(struct in6_addr *prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
      u_int32_t cost, u_int32_t cost2, struct in_addr area,
      struct in_addr adv_rtr, enum path_type p_type, enum dst_type d_type,
      u_int8_t flags, u_int32_t tag)
@@ -876,12 +886,12 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
 	if (vnh == NULL || TAILQ_EMPTY(vnh))	/* XXX remove */
 		fatalx("rt_update: invalid nexthop");
 
-	if ((rte = rt_find(prefix.s_addr, prefixlen, d_type)) == NULL) {
+	if ((rte = rt_find(prefix, prefixlen, d_type)) == NULL) {
 		if ((rte = calloc(1, sizeof(struct rt_node))) == NULL)
 			fatal("rt_update");
 
 		TAILQ_INIT(&rte->nexthop);
-		rte->prefix.s_addr = prefix.s_addr;
+		rte->prefix = *prefix;
 		rte->prefixlen = prefixlen;
 		rte->cost = cost;
 		rte->cost2 = cost2;
@@ -954,10 +964,11 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
 }
 
 struct rt_node *
-rt_lookup(enum dst_type type, in_addr_t addr)
+rt_lookup(enum dst_type type, struct in6_addr *addr)
 {
 	struct rt_node	*rn;
-	u_int8_t	 i = 32;
+	struct in6_addr	 ina;
+	u_int8_t	 i = 128;
 
 	if (type == DT_RTR) {
 		rn = rt_find(addr, 32, type);
@@ -968,8 +979,8 @@ rt_lookup(enum dst_type type, in_addr_t addr)
 
 	/* type == DT_NET */
 	do {
-		if ((rn = rt_find(addr & prefixlen2mask(i), i, type)) &&
-		    rn->invalid == 0)
+		inet6applymask(&ina, addr, i);
+		if ((rn = rt_find(&ina, i, type)) && rn->invalid == 0)
 			return (rn);
 	} while (i-- != 0);
 

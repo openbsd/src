@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2007/10/08 10:44:51 norby Exp $ */
+/*	$OpenBSD: printconf.c,v 1.2 2007/10/16 08:41:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -27,6 +27,7 @@
 #include "ospf6.h"
 #include "ospf6d.h"
 #include "ospfe.h"
+#include "log.h"
 
 void	print_mainconf(struct ospfd_conf *);
 const char *print_no(u_int16_t);
@@ -85,8 +86,8 @@ print_redistribute(struct ospfd_conf *conf)
 			break;
 		case REDIST_ADDR:
 			printf("%sredistribute %s/%d\n",
-			    print_no(r->type), inet_ntoa(r->addr),
-			    mask2prefixlen(r->mask.s_addr));
+			    print_no(r->type), log_in6addr(&r->addr),
+			    r->prefixlen);
 			break;
 		}
 	}

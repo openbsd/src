@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.8 2007/10/11 21:29:53 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.9 2007/10/16 08:41:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -359,11 +359,11 @@ enum {
 
 struct redistribute {
 	SIMPLEQ_ENTRY(redistribute)	entry;
-	struct in_addr			addr;
-	struct in_addr			mask;
+	struct in6_addr			addr;
 	u_int32_t			metric;
 	u_int16_t			label;
 	u_int16_t			type;
+	u_int8_t			prefixlen;
 };
 
 struct ospfd_conf {
@@ -392,8 +392,8 @@ struct ospfd_conf {
 
 /* kroute */
 struct kroute {
-	struct in_addr	prefix;
-	struct in_addr	nexthop;
+	struct in6_addr	prefix;
+	struct in6_addr	nexthop;
 	u_int16_t	flags;
 	u_int16_t	rtlabel;
 	u_int32_t	ext_tag;
@@ -488,8 +488,8 @@ struct ctl_nbr {
 };
 
 struct ctl_rt {
-	struct in_addr		 prefix;
-	struct in_addr		 nexthop;
+	struct in6_addr		 prefix;
+	struct in6_addr		 nexthop;
 	struct in_addr		 area;
 	struct in_addr		 adv_rtr;
 	time_t			 uptime;
@@ -586,8 +586,9 @@ void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *, struct kif_addr **);
 void		 kr_reload(void);
 
-u_int8_t	mask2prefixlen(in_addr_t);
-in_addr_t	prefixlen2mask(u_int8_t);
+u_int8_t	 mask2prefixlen(struct sockaddr_in6 *);
+struct in6_addr	*prefixlen2mask(u_int8_t);
+void		inet6applymask(struct in6_addr *, const struct in6_addr *, int);
 
 /* log.h */
 const char	*nbr_state_name(int);

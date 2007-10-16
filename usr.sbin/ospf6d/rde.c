@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.3 2007/10/11 20:01:38 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.4 2007/10/16 08:41:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -643,7 +643,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
 
-			if ((rn = rt_find(kr.prefix.s_addr, kr.prefixlen,
+			if ((rn = rt_find(&kr.prefix, kr.prefixlen,
 			    DT_NET)) != NULL)
 				rde_send_change_kroute(rn);
 			else
@@ -723,8 +723,8 @@ rde_send_change_kroute(struct rt_node *r)
 		fatalx("rde_send_change_kroute: no valid nexthop found");
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->prefix.s_addr;
-	kr.nexthop.s_addr = rn->nexthop.s_addr;
+	kr.prefix = r->prefix;
+	kr.nexthop = rn->nexthop;
 	kr.prefixlen = r->prefixlen;
 	kr.ext_tag = r->ext_tag;
 
@@ -737,7 +737,7 @@ rde_send_delete_kroute(struct rt_node *r)
 	struct kroute	 kr;
 
 	bzero(&kr, sizeof(kr));
-	kr.prefix.s_addr = r->prefix.s_addr;
+	kr.prefix = r->prefix;
 	kr.prefixlen = r->prefixlen;
 
 	imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0, 0, &kr, sizeof(kr));
@@ -1048,7 +1048,7 @@ void
 rde_summary_update(struct rt_node *rte, struct area *area)
 {
 	struct vertex		*v = NULL;
-	struct lsa		*lsa;
+//XXX	struct lsa		*lsa;
 	u_int8_t		 type = 0;
 
 	/* first check if we actually need to announce this route */
@@ -1077,6 +1077,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 	} else
 		fatalx("rde_summary_update: unknown route type");
 
+#if 0 /* XXX a lot todo */
 	/* update lsa but only if it was changed */
 	v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
 	lsa = orig_sum_lsa(rte, area, type, rte->invalid);
@@ -1084,6 +1085,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 
 	if (v == NULL)
 		v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
+#endif
 
 	/* suppressed/deleted routes are not found in the second lsa_find */
 	if (v)
@@ -1097,6 +1099,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 struct lsa *
 orig_asext_lsa(struct rroute *rr, u_int16_t age)
 {
+#if 0 /* XXX a lot todo */
 	struct lsa	*lsa;
 	u_int16_t	 len;
 
@@ -1105,7 +1108,7 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 		fatal("orig_asext_lsa");
 
 	log_debug("orig_asext_lsa: %s/%d age %d",
-	    inet_ntoa(rr->kr.prefix), rr->kr.prefixlen, age);
+	    log_in6addr(&rr->kr.prefix), rr->kr.prefixlen, age);
 
 	/* LSA header */
 	lsa->hdr.age = htons(age);
@@ -1140,11 +1143,14 @@ orig_asext_lsa(struct rroute *rr, u_int16_t age)
 	    htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
 
 	return (lsa);
+#endif
+	return NULL;
 }
 
 struct lsa *
 orig_sum_lsa(struct rt_node *rte, struct area *area, u_int8_t type, int invalid)
 {
+#if 0 /* XXX a lot todo */
 	struct lsa	*lsa;
 	u_int16_t	 len;
 
@@ -1178,4 +1184,6 @@ orig_sum_lsa(struct rt_node *rte, struct area *area, u_int8_t type, int invalid)
 	    htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
 
 	return (lsa);
+#endif
+	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.4 2007/10/13 16:35:22 deraadt Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.5 2007/10/16 08:41:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -505,9 +505,10 @@ int
 ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 {
 	struct redistribute	*r;
+	struct in6_addr		 ina, inb;
 
 	/* only allow 0.0.0.0/0 via REDISTRIBUTE_DEFAULT */
-	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
+	if (IN6_IS_ADDR_UNSPECIFIED(&kr->prefix) && kr->prefixlen == 0)
 		return (0);
 
 	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
@@ -542,11 +543,12 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 		case REDIST_ADDR:
 			if (kr->flags & F_DYNAMIC)
 				continue;
-			if ((kr->prefix.s_addr & r->mask.s_addr) ==
-			    (r->addr.s_addr & r->mask.s_addr) &&
-			    kr->prefixlen >= mask2prefixlen(r->mask.s_addr)) {
+			inet6applymask(&ina, &kr->prefix, kr->prefixlen);
+			inet6applymask(&inb, &r->addr, r->prefixlen);
+			if (IN6_ARE_ADDR_EQUAL(&ina, &inb) &&
+			    kr->prefixlen >= r->prefixlen) {
 				*metric = r->metric;
-				return (r->type & REDIST_NO? 0 : 1);
+				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
 		}
