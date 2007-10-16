@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.3 2007/10/16 12:05:52 norby Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.4 2007/10/16 13:01:07 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -189,11 +189,12 @@ struct lsa_rtr {
 };
 
 struct lsa_rtr_link {
-	u_int32_t		id;
-	u_int32_t		data;
 	u_int8_t		type;
-	u_int8_t		num_tos;
+	u_int8_t		dummy;
 	u_int16_t		metric;
+	u_int32_t		iface_id;
+	u_int32_t		nbr_iface_id;
+	u_int32_t		nbr_rtr_id;
 };
 
 struct lsa_net {

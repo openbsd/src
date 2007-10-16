@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.2 2007/10/16 08:41:56 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.3 2007/10/16 13:01:07 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -87,13 +87,17 @@ spf_calc(struct area *area)
 				case LINK_TYPE_POINTTOPOINT:
 				case LINK_TYPE_VIRTUAL:
 					/* find router LSA */
+#if 0
 					w = lsa_find(area, LSA_TYPE_ROUTER,
 					    rtr_link->id, rtr_link->id);
 					break;
+#endif
 				case LINK_TYPE_TRANSIT_NET:
 					/* find network LSA */
+#if 0
 					w = lsa_find_net(area, rtr_link->id);
 					break;
+#endif
 				default:
 					fatalx("spf_calc: invalid link type");
 				}
@@ -394,6 +398,7 @@ calc_nexthop_add(struct vertex *dst, struct vertex *parent, u_int32_t nexthop)
 void
 calc_nexthop(struct vertex *dst, struct vertex *parent)
 {
+#if 0
 	struct lsa_rtr_link	*rtr_link = NULL;
 	struct v_nexthop	*vn;
 	int			 i;
@@ -468,6 +473,7 @@ calc_nexthop(struct vertex *dst, struct vertex *parent)
 	/* case 3 */
 	TAILQ_FOREACH(vn, &parent->nexthop, entry)
 	    calc_nexthop_add(dst, parent, 0 /* XXX vn->nexthop.s_addr */);
+#endif
 }
 
 /* candidate list */
@@ -1006,9 +1012,6 @@ get_rtr_link(struct vertex *v, int idx)
 		rtr_link = (struct lsa_rtr_link *)(buf + off);
 		if (i == idx)
 			return (rtr_link);
-
-		off += sizeof(struct lsa_rtr_link) +
-		    rtr_link->num_tos * sizeof(u_int32_t);
 	}
 
 	return (NULL);
@@ -1054,14 +1057,18 @@ linked(struct vertex *w, struct vertex *v)
 			rtr_link = get_rtr_link(w, i);
 			switch (v->type) {
 			case LSA_TYPE_ROUTER:
+#if 0
 				if (rtr_link->type == LINK_TYPE_POINTTOPOINT &&
 				    rtr_link->id == htonl(v->ls_id))
 					return (1);
 				break;
+#endif
 			case LSA_TYPE_NETWORK:
+#if 0
 				if (rtr_link->id == htonl(v->ls_id))
 					return (1);
 				break;
+#endif
 			default:
 				fatalx("spf_calc: invalid type");
 			}

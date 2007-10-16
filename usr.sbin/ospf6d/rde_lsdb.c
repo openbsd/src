@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.2 2007/10/16 12:05:52 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.3 2007/10/16 13:01:07 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -265,15 +265,12 @@ lsa_router_check(struct lsa *lsa, u_int16_t len)
 		return (0);
 	}
 
-	nlinks = ntohs(lsa->data.rtr.nlinks);
+	nlinks = (len - off) / 16;		/* XXX way to go ? */
+
 	for (i = 0; i < nlinks; i++) {
 		rtr_link = (struct lsa_rtr_link *)(buf + off);
 		off += sizeof(struct lsa_rtr_link);
-		if (off > len) {
-			log_warnx("lsa_check: invalid LSA router packet");
-			return (0);
-		}
-		off += rtr_link->num_tos * sizeof(u_int32_t);
+
 		if (off > len) {
 			log_warnx("lsa_check: invalid LSA router packet");
 			return (0);

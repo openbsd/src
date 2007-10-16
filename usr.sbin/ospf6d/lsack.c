@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.3 2007/10/16 12:05:52 norby Exp $ */
+/*	$OpenBSD: lsack.c,v 1.4 2007/10/16 13:01:07 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -121,7 +121,7 @@ lsa_hdr_check(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 	}
 
 	/* invalid type */
-	switch (lsa_hdr->type) {
+	switch (ntohs(lsa_hdr->type)) {
 	case LSA_TYPE_LINK:
 	case LSA_TYPE_ROUTER:
 	case LSA_TYPE_NETWORK:
