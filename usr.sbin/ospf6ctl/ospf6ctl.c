@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.8 2007/10/16 12:07:58 norby Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.9 2007/10/16 21:37:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -520,7 +520,7 @@ show_database_head(struct in_addr aid, u_int16_t type)
 {
 	char	*header, *format;
 
-	switch (type) {
+	switch (ntohs(type)) {
 	case LSA_TYPE_LINK:
 		format = "Link Link States";
 		break;
@@ -597,7 +597,7 @@ show_database_msg(struct imsg *imsg)
 char *
 print_ls_type(u_int16_t type)
 {
-	switch (type) {
+	switch (ntohs(type)) {
 	case LSA_TYPE_LINK:
 		return ("Link");
 	case LSA_TYPE_ROUTER:
@@ -624,7 +624,7 @@ show_db_hdr_msg_detail(struct lsa_hdr *lsa)
 //XXX	printf("Options: %s\n", print_ospf_options(lsa->opts));
 	printf("LS Type: %s\n", print_ls_type(lsa->type));
 
-	switch (lsa->type) {
+	switch (ntohs(lsa->type)) {
 	case LSA_TYPE_LINK:
 		printf("Link State ID: %s\n", log_id(lsa->ls_id));
 		break;
@@ -665,8 +665,8 @@ print_rtr_link_type(u_int8_t type)
 		return ("Point-to-Point");
 	case LINK_TYPE_TRANSIT_NET:
 		return ("Transit Network");
-	case LINK_TYPE_STUB_NET:
-		return ("Stub Network");
+	case LINK_TYPE_RESERVED:
+		return ("Reserved");
 	case LINK_TYPE_VIRTUAL:
 		return ("Virtual Link");
 	default:
@@ -690,7 +690,7 @@ int
 show_db_msg_detail(struct imsg *imsg)
 {
 	static struct in_addr	 area_id;
-	static u_int8_t		 lasttype;
+	static u_int16_t	 lasttype;
 	struct in_addr		 addr, data;
 	struct area		*area;
 	struct lsa		*lsa;
@@ -761,32 +761,25 @@ show_db_msg_detail(struct imsg *imsg)
 			printf("    Link connected to: %s\n",
 			    print_rtr_link_type(rtr_link->type));
 
-			addr.s_addr = rtr_link->id;
-			data.s_addr = rtr_link->data;
+			addr.s_addr = rtr_link->nbr_rtr_id;
+			data.s_addr = rtr_link->iface_id;
 
 			switch (rtr_link->type) {
 			case LINK_TYPE_POINTTOPOINT:
 			case LINK_TYPE_VIRTUAL:
-				printf("    Link ID (Neighbors Router ID):"
-				    " %s\n", inet_ntoa(addr));
-				printf("    Link Data (Router Interface "
-				    "address): %s\n", inet_ntoa(data));
+				printf("    Router ID: %s\n", inet_ntoa(addr));
+				printf("    Interface ID: %s\n",
+				    inet_ntoa(data));
 				break;
 			case LINK_TYPE_TRANSIT_NET:
-				printf("    Link ID (Designated Router "
-				    "address): %s\n", inet_ntoa(addr));
-				printf("    Link Data (Router Interface "
-				    "address): %s\n", inet_ntoa(data));
-				break;
-			case LINK_TYPE_STUB_NET:
-				printf("    Link ID (Network ID): %s\n",
+				printf("    Designated Router ID: %s\n",
 				    inet_ntoa(addr));
-				printf("    Link Data (Network Mask): %s\n",
+				printf("    DR Interface ID: %s\n",
 				    inet_ntoa(data));
 				break;
 			default:
-				printf("    Link ID (Unknown): %s\n",
-				    inet_ntoa(addr));
+				printf("    Link ID (Unknown type %d): %s\n",
+				    rtr_link->type, inet_ntoa(addr));
 				printf("    Link Data (Unknown): %s\n",
 				    inet_ntoa(data));
 				break;
@@ -794,8 +787,7 @@ show_db_msg_detail(struct imsg *imsg)
 
 			printf("    Metric: %d\n\n", ntohs(rtr_link->metric));
 
-			off += sizeof(struct lsa_rtr_link) +
-			    rtr_link->num_tos * sizeof(u_int32_t);
+			off += sizeof(struct lsa_rtr_link);
 		}
 
 		lasttype = lsa->hdr.type;
