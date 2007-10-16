@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.22 2007/09/30 21:34:20 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.23 2007/10/16 21:44:25 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -115,6 +115,7 @@ member	p_stat
 member	p_wchan
 member	p_vmspace
 member	p_pid
+member	p_cpu
 member	P_FPSTATE	p_md.md_fpstate
 member	P_MD_ASTPENDING	p_md.md_astpending
 

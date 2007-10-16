@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.85 2007/10/16 19:22:49 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.86 2007/10/16 21:44:25 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5665,9 +5665,11 @@ ENTRY(cpu_switchto)
 	 */
 #if defined(MULTIPROCESSOR)
 	/*
-	 * XXXSMP
 	 * p->p_cpu = curcpu();
 	 */
+	sethi	%hi(CPUINFO_VA+CI_SELF), %o0
+	ldx	[%o0 + %lo(CPUINFO_VA+CI_SELF)], %o0
+	stx	%o0, [%l3 + P_CPU]
 #endif	/* defined(MULTIPROCESSOR) */
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
 	stb	%o0, [%l3 + P_STAT]
