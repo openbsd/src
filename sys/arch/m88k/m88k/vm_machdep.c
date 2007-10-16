@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2007/10/13 07:18:01 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2007/10/16 04:57:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -60,7 +60,6 @@
 #include <machine/cpu.h>
 #include <machine/trap.h>
 
-extern void proc_do_uret(struct proc *);
 extern void savectx(struct pcb *);
 extern void switch_exit(struct proc *);
 
@@ -82,10 +81,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void (*func)(void *);
 	void *arg;
 {
-	struct switchframe *p2sf;
 	struct ksigframe {
 		void (*func)(void *);
-		void *proc;
+		void *arg;
 	} *ksfp;
 	extern void proc_trampoline(void);
 
@@ -103,31 +101,20 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	p2->p_md.md_tf = (struct trapframe *)USER_REGS(p2);
 
 	/*
-	 * Create a switch frame for proc 2
-	 */
-	p2sf = (struct switchframe *)((char *)p2->p_addr + USPACE - 8) - 1;
-
-	p2sf->sf_pc = (u_int)proc_do_uret;
-	p2sf->sf_proc = p2;
-	p2->p_addr->u_pcb.kernel_state.pcb_sp = (u_int)p2sf;
-
-	/*
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
 		USER_REGS(p2)->r[31] = (u_int)stack + stacksize;
 
-	ksfp = (struct ksigframe *)p2->p_addr->u_pcb.kernel_state.pcb_sp - 1;
-
+	ksfp = (struct ksigframe *)((char *)p2->p_addr + USPACE) - 1;
 	ksfp->func = func;
-	ksfp->proc = arg;
+	ksfp->arg = arg;
 
 	/*
 	 * When this process resumes, r31 will be ksfp and
 	 * the process will be at the beginning of proc_trampoline().
 	 * proc_trampoline will execute the function func, pop off
-	 * ksfp frame, and call the function in the switchframe
-	 * now exposed.
+	 * ksfp frame, and resume to userland.
 	 */
 
 	p2->p_addr->u_pcb.kernel_state.pcb_sp = (u_int)ksfp;

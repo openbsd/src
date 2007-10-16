@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2007/10/13 12:54:43 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.25 2007/10/16 04:57:37 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -235,14 +235,6 @@ do {									\
 #define	need_proftick(p)	aston(p)
 
 void	signotify(struct proc *);
-
-/*
- * switchframe - should be double word aligned.
- */
-struct switchframe {
-	u_int	sf_pc;			/* pc */
-	void	*sf_proc;		/* proc pointer */
-};
 
 int	badaddr(vaddr_t addr, int size);
 

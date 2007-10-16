@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.25 2007/10/13 12:54:03 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.26 2007/10/16 04:57:39 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2318,35 +2318,9 @@ ASLOCAL(save_frame)
 	space SIZEOF_EF
 #endif	/* M88110 */
 
-/*
- * void proc_trampoline(void (*func)(void *), void *proc)
-  *
- * When a process setup by cpu_fork() resumes, it will find itself in
- * proc_trampoline, with r31 pointing to a ksigframe. proc_trampoline will
- * load func and proc values from ksigframe, call the function, and on return
- * pop off the ksigframe. Then, it will load pc from the switchframe and
- * jump there (the pc will usually be proc_do_uret).
- */
-
-ENTRY(proc_trampoline)
-#ifdef MULTIPROCESSOR
-	bsr	_C_LABEL(proc_trampoline_mp)
-#endif
-
-	bsr.n	_C_LABEL(setipl)	/* setipl(IPL_NONE) */
-	 or	r2,  r0,  r0
-
-	ld	r1,  r31, 0		/* load func */
-	ld	r2,  r31, 4 		/* load proc pointer */
-	jsr.n	r1
-	 addu	r31, r31, 8		/* release ksigframe */
-	ld	r1,  r31, 0		/* load pc */
-	ld	r2,  r31, 4		/* & proc pointer from switch frame */
-	jsr.n	r1
-	 addu	r31, r31, 8
+	text
 
 #define	FPTR	r14
-
 
 ASLOCAL(check_ast)
 	/*
@@ -2413,17 +2387,39 @@ ASLOCAL(no_softint)
 #endif
 
 /*
- * void proc_do_uret(struct proc *p)
+ * void proc_trampoline(void (*func)(void *), void *proc)
  *
- * This is called as proc_do_uret(proc) from proc_trampoline(). This function
- * loads FPTR with a pointer to the trap frame for the given proc and continues
- * near the end of check_ast, bypassing soft interrupts and AST checks, to
- * load all the registers and do an RTE.
+ * When a process setup by cpu_fork() resumes, it will find itself in
+ * proc_trampoline, with r31 pointing to a ksigframe. proc_trampoline will
+ * load func and proc values from ksigframe, call the function, and on return
+ * pop off the ksigframe. Then, it will return to userland.
  */
 
-ENTRY(proc_do_uret)
+ENTRY(proc_trampoline)
+#ifdef MULTIPROCESSOR
+	bsr	_C_LABEL(proc_trampoline_mp)
+#endif
+
+	bsr.n	_C_LABEL(setipl)	/* setipl(IPL_NONE) */
+	 or	r2,  r0,  r0
+
+	ld	r1,  r31, 0		/* load func */
+	ld	r2,  r31, 4 		/* load arg */
+	jsr.n	r1
+	 addu	r31, r31, 8		/* release ksigframe */
+
+/*
+ * Load FPTR with a pointer to the trap frame for the current proc and
+ * continue near the end of check_ast, bypassing soft interrupts and AST
+ * checks, to load all the registers and do an RTE.
+ */
+
+	ldcr	r3,  CPU
+	ld	r2,  r3,  CI_CURPROC
+
 	ld	FPTR, r2,   P_ADDR		/* p->p_addr */
 	addu	FPTR, FPTR, PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
+
 	/* FALLTHROUGH */
 
 ASLOCAL(no_ast)
