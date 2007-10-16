@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.4 2007/10/08 14:55:13 deraadt Exp $	*/
+/*	$OpenBSD: cc.c,v 1.5 2007/10/16 19:02:09 otto Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -166,7 +166,12 @@ main(int argc, char *argv[])
 				break;
 				
 			case 'b':
-				if (strncmp(argv[i+1], "?", 1) == 0) {
+				t = &argv[i][2];
+				if (*t == '\0' && i + 1 < argc) {
+					t = argv[i+1];
+					i++;
+				}
+				if (strncmp(t, "?", 1) == 0) {
 					/* show machine targets */
 					printf("Available machine targets:");
 					for (j=0; cppmds[j].mach; j++)
@@ -175,8 +180,12 @@ main(int argc, char *argv[])
 					exit(0);
 				}
 				for (j=0; cppmds[j].mach; j++)
-					if (strcmp(argv[i+1],cppmds[j].mach) == 0)
+					if (strcmp(t, cppmds[j].mach) == 0) {
 						mach = cppmds[j].mach;
+						break;
+					}
+				if (cppmds[j].mach == NULL)
+					errorx(1, "unknown target arch %s", t);
 				break;
 				
 			case 'X':
