@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.7 2007/10/11 20:41:28 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.8 2007/10/16 09:00:50 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -175,7 +175,6 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 			if (nbr == iface->self)
 				continue;
-//XXX			if (nbr->addr.s_addr == src.s_addr)
 			if (IN6_ARE_ADDR_EQUAL(&nbr->addr, src))
 				break;
 		}
@@ -226,36 +225,33 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 	}
 
 	if (iface->state & IF_STA_WAITING &&
-//XXX	    hello.d_rtr == nbr->addr.s_addr && hello.bd_rtr == 0)
 	    hello.d_rtr == nbr->id.s_addr && hello.bd_rtr == 0)
 		if_fsm(iface, IF_EVT_BACKUP_SEEN);
 
-//XXX	if (iface->state & IF_STA_WAITING && hello.bd_rtr == nbr->addr.s_addr) {
 	if (iface->state & IF_STA_WAITING && hello.bd_rtr == nbr->id.s_addr) {
 		/*
 		 * In case we see the BDR make sure that the DR is around
 		 * with a bidirectional (2_WAY or better) connection
 		 */
 		LIST_FOREACH(dr, &iface->nbr_list, entry)
-//XXX			if (hello.d_rtr == dr->addr.s_addr &&
 			if (hello.d_rtr == dr->id.s_addr &&
 			    dr->state & NBR_STA_BIDIR)
 				if_fsm(iface, IF_EVT_BACKUP_SEEN);
 	}
-#if 0
-	if ((nbr->addr.s_addr == nbr->dr.s_addr &&
-	    nbr->addr.s_addr != hello.d_rtr) ||
-	    (nbr->addr.s_addr != nbr->dr.s_addr &&
-	    nbr->addr.s_addr == hello.d_rtr))
+
+	if ((nbr->id.s_addr == nbr->dr.s_addr &&
+	    nbr->id.s_addr != hello.d_rtr) ||
+	    (nbr->id.s_addr != nbr->dr.s_addr &&
+	    nbr->id.s_addr == hello.d_rtr))
 		/* neighbor changed from or to DR */
 		nbr_change = 1;
-	if ((nbr->addr.s_addr == nbr->bdr.s_addr &&
-	    nbr->addr.s_addr != hello.bd_rtr) ||
-	    (nbr->addr.s_addr != nbr->bdr.s_addr &&
-	    nbr->addr.s_addr == hello.bd_rtr))
+	if ((nbr->id.s_addr == nbr->bdr.s_addr &&
+	    nbr->id.s_addr != hello.bd_rtr) ||
+	    (nbr->id.s_addr != nbr->bdr.s_addr &&
+	    nbr->id.s_addr == hello.bd_rtr))
 		/* neighbor changed from or to BDR */
 		nbr_change = 1;
-#endif
+
 	nbr->dr.s_addr = hello.d_rtr;
 	nbr->bdr.s_addr = hello.bd_rtr;
 
