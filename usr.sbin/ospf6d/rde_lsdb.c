@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.1 2007/10/08 10:44:51 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.2 2007/10/16 12:05:52 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -185,7 +185,10 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 		return (0);
 	}
 
-	switch (lsa->hdr.type) {
+	switch (ntohs(lsa->hdr.type)) {
+	case LSA_TYPE_LINK:
+			/* XXX */
+		break;
 	case LSA_TYPE_ROUTER:
 		if (!lsa_router_check(lsa, len))
 			return (0);
@@ -197,8 +200,8 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 			return (0);
 		}
 		break;
-	case LSA_TYPE_SUM_NETWORK:
-	case LSA_TYPE_SUM_ROUTER:
+	case LSA_TYPE_INTER_A_PREFIX:
+	case LSA_TYPE_INTER_A_ROUTER:
 		if ((len % sizeof(u_int32_t)) ||
 		    len < sizeof(lsa->hdr) + sizeof(lsa->data.sum)) {
 			log_warnx("lsa_check: bad LSA summary packet");
@@ -209,6 +212,9 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 			log_warnx("lsa_check: bad LSA summary metric");
 			return (0);
 		}
+		break;
+	case LSA_TYPE_INTRA_A_PREFIX:
+		/* XXX */
 		break;
 	case LSA_TYPE_EXTERNAL:
 		if ((len % (3 * sizeof(u_int32_t))) ||
@@ -436,7 +442,7 @@ lsa_age(struct vertex *v)
 }
 
 struct vertex *
-lsa_find(struct area *area, u_int8_t type, u_int32_t ls_id, u_int32_t adv_rtr)
+lsa_find(struct area *area, u_int16_t type, u_int32_t ls_id, u_int32_t adv_rtr)
 {
 	struct vertex	 key;
 	struct vertex	*v;
@@ -555,11 +561,11 @@ lsa_dump(struct lsa_tree *tree, int imsg_type, pid_t pid)
 				break;
 			continue;
 		case IMSG_CTL_SHOW_DB_SUM:
-			if (v->type == LSA_TYPE_SUM_NETWORK)
+			if (v->type == LSA_TYPE_INTER_A_PREFIX)
 				break;
 			continue;
 		case IMSG_CTL_SHOW_DB_ASBR:
-			if (v->type == LSA_TYPE_SUM_ROUTER)
+			if (v->type == LSA_TYPE_INTER_A_ROUTER)
 				break;
 			continue;
 		default:
@@ -700,8 +706,8 @@ lsa_remove_invalid_sums(struct area *area)
 	/* XXX speed me up */
 	for (v = RB_MIN(lsa_tree, tree); v != NULL; v = nv) {
 		nv = RB_NEXT(lsa_tree, tree, v);
-		if ((v->lsa->hdr.type == LSA_TYPE_SUM_NETWORK ||
-		    v->lsa->hdr.type == LSA_TYPE_SUM_ROUTER) &&
+		if ((v->lsa->hdr.type == LSA_TYPE_INTER_A_PREFIX ||
+		    v->lsa->hdr.type == LSA_TYPE_INTER_A_ROUTER) &&
 		    v->self && v->cost == LS_INFINITY &&
 		    v->deleted == 0) {
 			/*

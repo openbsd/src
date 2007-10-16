@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.4 2007/10/16 08:41:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.5 2007/10/16 12:05:52 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1049,7 +1049,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 {
 	struct vertex		*v = NULL;
 //XXX	struct lsa		*lsa;
-	u_int8_t		 type = 0;
+	u_int16_t		 type = 0;
 
 	/* first check if we actually need to announce this route */
 	if (!(rte->d_type == DT_NET || rte->flags & OSPF_RTR_E))
@@ -1071,11 +1071,10 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 	/* TODO intra-area stuff -- condense LSA ??? */
 
 	if (rte->d_type == DT_NET) {
-		type = LSA_TYPE_SUM_NETWORK;
+		type = LSA_TYPE_INTER_A_PREFIX;
 	} else if (rte->d_type == DT_RTR) {
-		type = LSA_TYPE_SUM_ROUTER;
+		type = LSA_TYPE_INTER_A_ROUTER;
 	} else
-		fatalx("rde_summary_update: unknown route type");
 
 #if 0 /* XXX a lot todo */
 	/* update lsa but only if it was changed */

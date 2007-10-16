@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.2 2007/10/10 14:09:25 claudio Exp $ */
+/*	$OpenBSD: lsack.c,v 1.3 2007/10/16 12:05:52 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -122,10 +122,12 @@ lsa_hdr_check(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 
 	/* invalid type */
 	switch (lsa_hdr->type) {
+	case LSA_TYPE_LINK:
 	case LSA_TYPE_ROUTER:
 	case LSA_TYPE_NETWORK:
-	case LSA_TYPE_SUM_NETWORK:
-	case LSA_TYPE_SUM_ROUTER:
+	case LSA_TYPE_INTER_A_PREFIX:
+	case LSA_TYPE_INTER_A_ROUTER:
+	case LSA_TYPE_INTRA_A_PREFIX:
 	case LSA_TYPE_EXTERNAL:
 		break;
 	default:
@@ -168,7 +170,6 @@ ls_ack_list_add(struct iface *iface, struct lsa_hdr *lsa)
 	    ((iface->mtu - PACKET_HDR) / sizeof(struct lsa_hdr))) {
 		start_ls_ack_tx_timer_now(iface);
 	}
-
 }
 
 void

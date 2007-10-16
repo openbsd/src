@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.2 2007/10/09 06:12:04 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.3 2007/10/16 12:05:52 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -161,11 +161,13 @@ struct ls_upd_hdr {
 	u_int32_t		num_lsa;
 };
 
-#define	LSA_TYPE_ROUTER		1
-#define LSA_TYPE_NETWORK	2
-#define LSA_TYPE_SUM_NETWORK	3
-#define LSA_TYPE_SUM_ROUTER	4
-#define	LSA_TYPE_EXTERNAL	5
+#define LSA_TYPE_LINK		0x0008
+#define	LSA_TYPE_ROUTER		0x2001
+#define LSA_TYPE_NETWORK	0x2002
+#define LSA_TYPE_INTER_A_PREFIX	0x2003
+#define LSA_TYPE_INTER_A_ROUTER	0x2004
+#define LSA_TYPE_INTRA_A_PREFIX	0x2009
+#define	LSA_TYPE_EXTERNAL	0x4005
 
 #define LINK_TYPE_POINTTOPOINT	1
 #define LINK_TYPE_TRANSIT_NET	2

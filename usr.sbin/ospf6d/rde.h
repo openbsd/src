@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.2 2007/10/16 08:41:56 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.3 2007/10/16 12:05:52 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -47,7 +47,7 @@ struct vertex {
 	u_int32_t		 peerid;	/* neighbor unique imsg ID */
 	u_int32_t		 ls_id;
 	u_int32_t		 adv_rtr;
-	u_int8_t		 type;
+	u_int16_t		 type;
 	u_int8_t		 flooded;
 	u_int8_t		 deleted;
 	u_int8_t		 self;
@@ -128,7 +128,7 @@ int		 lsa_self(struct rde_nbr *, struct lsa *, struct vertex *);
 int		 lsa_add(struct rde_nbr *, struct lsa *);
 void		 lsa_del(struct rde_nbr *, struct lsa_hdr *);
 void		 lsa_age(struct vertex *);
-struct vertex	*lsa_find(struct area *, u_int8_t, u_int32_t, u_int32_t);
+struct vertex	*lsa_find(struct area *, u_int16_t, u_int32_t, u_int32_t);
 struct vertex	*lsa_find_net(struct area *area, u_int32_t);
 u_int16_t	 lsa_num_links(struct vertex *);
 void		 lsa_snap(struct area *, u_int32_t);
