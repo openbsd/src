@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.5 2007/10/16 21:32:32 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.6 2007/10/16 21:44:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -104,13 +104,6 @@
 #define MAX_SEQ_NUM		0x7fffffff
 
 /* OSPF header */
-struct crypt {
-	u_int16_t		dummy;
-	u_int8_t		keyid;
-	u_int8_t		len;
-	u_int32_t		seq_num;
-};
-
 struct ospf_hdr {
 	u_int8_t		version;
 	u_int8_t		type;
