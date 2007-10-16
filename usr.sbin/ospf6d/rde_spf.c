@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.3 2007/10/16 13:01:07 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.4 2007/10/16 21:36:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -81,9 +81,6 @@ spf_calc(struct area *area)
 			case LSA_TYPE_ROUTER:
 				rtr_link = get_rtr_link(v, i);
 				switch (rtr_link->type) {
-				case LINK_TYPE_STUB_NET:
-					/* skip */
-					continue;
 				case LINK_TYPE_POINTTOPOINT:
 				case LINK_TYPE_VIRTUAL:
 					/* find router LSA */
@@ -193,9 +190,6 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 
 		for (i = 0; i < lsa_num_links(v); i++) {
 			rtr_link = get_rtr_link(v, i);
-			if (rtr_link->type != LINK_TYPE_STUB_NET)
-				continue;
-
 			addr.s_addr = rtr_link->id;
 			adv_rtr.s_addr = htonl(v->adv_rtr);
 
@@ -433,9 +427,6 @@ calc_nexthop(struct vertex *dst, struct vertex *parent)
 						    rtr_link->data);
 					}
 					break;
-				case LINK_TYPE_STUB_NET:
-					break;
-
 				default:
 					fatalx("calc_nexthop: invalid link "
 					    "type");
