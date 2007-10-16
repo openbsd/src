@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.7 2007/10/16 08:43:44 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.8 2007/10/16 12:07:58 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -48,9 +48,9 @@ const char	*fmt_timeframe(time_t t);
 const char	*fmt_timeframe_core(time_t t);
 const char	*log_id(u_int32_t );
 const char	*log_adv_rtr(u_int32_t);
-void		 show_database_head(struct in_addr, u_int8_t);
+void		 show_database_head(struct in_addr, u_int16_t);
 int		 show_database_msg(struct imsg *);
-char		*print_ls_type(u_int8_t);
+char		*print_ls_type(u_int16_t);
 void		 show_db_hdr_msg_detail(struct lsa_hdr *);
 char		*print_rtr_link_type(u_int8_t);
 const char	*print_ospf_flags(u_int8_t);
@@ -516,22 +516,28 @@ log_adv_rtr(u_int32_t adv_rtr)
 }
 
 void
-show_database_head(struct in_addr aid, u_int8_t type)
+show_database_head(struct in_addr aid, u_int16_t type)
 {
 	char	*header, *format;
 
 	switch (type) {
+	case LSA_TYPE_LINK:
+		format = "Link Link States";
+		break;
 	case LSA_TYPE_ROUTER:
 		format = "Router Link States";
 		break;
 	case LSA_TYPE_NETWORK:
 		format = "Net Link States";
 		break;
-	case LSA_TYPE_SUM_NETWORK:
-		format = "Summary Net Link States";
+	case LSA_TYPE_INTER_A_PREFIX:
+		format = "Inter Area Prefix Link States";
 		break;
-	case LSA_TYPE_SUM_ROUTER:
-		format = "Summary Router Link States";
+	case LSA_TYPE_INTER_A_ROUTER:
+		format = "Inter Area Router Link States";
+		break;
+	case LSA_TYPE_INTRA_A_PREFIX:
+		format = "Router Link States";
 		break;
 	case LSA_TYPE_EXTERNAL:
 		format = NULL;
@@ -589,17 +595,21 @@ show_database_msg(struct imsg *imsg)
 }
 
 char *
-print_ls_type(u_int8_t type)
+print_ls_type(u_int16_t type)
 {
 	switch (type) {
+	case LSA_TYPE_LINK:
+		return ("Link");
 	case LSA_TYPE_ROUTER:
 		return ("Router");
 	case LSA_TYPE_NETWORK:
 		return ("Network");
-	case LSA_TYPE_SUM_NETWORK:
-		return ("Summary (Network)");
-	case LSA_TYPE_SUM_ROUTER:
-		return ("Summary (Router)");
+	case LSA_TYPE_INTER_A_PREFIX:
+		return ("Inter Area (Prefix)");
+	case LSA_TYPE_INTER_A_ROUTER:
+		return ("Inter Area (Router)");
+	case LSA_TYPE_INTRA_A_PREFIX:
+		return ("Intra Area (Prefix)");
 	case LSA_TYPE_EXTERNAL:
 		return ("AS External");
 	default:
@@ -615,6 +625,9 @@ show_db_hdr_msg_detail(struct lsa_hdr *lsa)
 	printf("LS Type: %s\n", print_ls_type(lsa->type));
 
 	switch (lsa->type) {
+	case LSA_TYPE_LINK:
+		printf("Link State ID: %s\n", log_id(lsa->ls_id));
+		break;
 	case LSA_TYPE_ROUTER:
 		printf("Link State ID: %s\n", log_id(lsa->ls_id));
 		break;
@@ -622,12 +635,15 @@ show_db_hdr_msg_detail(struct lsa_hdr *lsa)
 		printf("Link State ID: %s (address of Designated Router)\n",
 		    log_id(lsa->ls_id));
 		break;
-	case LSA_TYPE_SUM_NETWORK:
+	case LSA_TYPE_INTER_A_PREFIX:
 		printf("Link State ID: %s (Network ID)\n", log_id(lsa->ls_id));
 		break;
-	case LSA_TYPE_SUM_ROUTER:
+	case LSA_TYPE_INTER_A_ROUTER:
 		printf("Link State ID: %s (ASBR Router ID)\n",
 		    log_id(lsa->ls_id));
+		break;
+	case LSA_TYPE_INTRA_A_PREFIX:
+		printf("Link State ID: %s (Network ID)\n", log_id(lsa->ls_id));
 		break;
 	case LSA_TYPE_EXTERNAL:
 		printf("Link State ID: %s (External Network Number)\n",
