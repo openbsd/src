@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.55 2007/10/15 09:24:31 fgsch Exp $	*/
+/*	$OpenBSD: trap.c,v 1.56 2007/10/16 19:22:49 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -424,9 +424,12 @@ trap(tf, type, pc, tstate)
 
 			if (CLKF_INTR((struct clockframe *)tf) || !curproc)
 				newfpproc = &proc0;
-			else
+			else {
 				newfpproc = curproc;
-
+				/* force other cpus to give up this fpstate */
+				if (newfpproc->p_md.md_fpstate)
+					save_and_clear_fpstate(newfpproc);
+			}
 			if (fpproc != newfpproc) {
 				if (fpproc != NULL) {
 					/* someone else had it, maybe? */
@@ -571,6 +574,8 @@ badtrap:
 			break;
 		}
 		if (fpproc != p) {		/* we do not have it */
+			/* but maybe another CPU has it? */
+			save_and_clear_fpstate(p);
 			if (fpproc != NULL)	/* someone else had it */
 				savefpstate(fpproc->p_md.md_fpstate);
 			loadfpstate(fs);

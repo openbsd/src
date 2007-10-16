@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2007/10/13 07:18:32 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2007/10/16 19:22:49 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -227,11 +227,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	opcb->lastcall = NULL;
 #endif
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
-       	if (p1->p_md.md_fpstate) {
-		if (p1 == fpproc) {
-			savefpstate(p1->p_md.md_fpstate);
-			fpproc = NULL;
-		}
+	if (p1->p_md.md_fpstate) {
+		save_and_clear_fpstate(p1);
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
@@ -308,6 +305,45 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 }
 
 /*
+ * These are the "function" entry points in locore.s to handle IPI's.
+ */
+void	ipi_save_fpstate(void);
+void	ipi_drop_fpstate(void);
+
+void
+save_and_clear_fpstate(struct proc *p)
+{
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+#endif
+
+	if (p == fpproc) {
+		savefpstate(p->p_md.md_fpstate);
+		fpproc = NULL;
+		return;
+	}
+#ifdef MULTIPROCESSOR
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		int spincount = 0;
+
+		if (ci == curcpu())
+			continue;
+		if (ci->ci_fpproc != p)
+			continue;
+		sparc64_send_ipi(ci->ci_upaid, ipi_save_fpstate, 0, 0);
+		while(ci->ci_fpproc == p) {
+			spincount++;
+			if (spincount > 10000000) {
+				panic("ipi_save_fpstate didn't");
+			}
+			sparc_membar(Sync);
+		}
+		break;
+	}
+#endif
+}
+
+/*
  * cpu_exit is called as the last action during exit.
  *
  * We clean up a little and then call sched_exit() with the old proc
@@ -318,13 +354,35 @@ void
 cpu_exit(struct proc *p)
 {
 	register struct fpstate64 *fs;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+	int found = 0;
+#endif
 
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		if (p == fpproc) {
-			savefpstate(fs);
+			clearfpstate();
 			fpproc = NULL;
+#ifdef MULTIPROCESSOR
+			found = 1;
+#endif
 		}
-		free((void *)fs, M_SUBPROC);
+#ifdef MULTIPROCESSOR
+		if (!found) {
+			/* check if anyone else has this proc as fpproc */
+			for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+				if (ci == curcpu())
+					continue;
+				if (ci->ci_fpproc != p)
+					continue;
+				sparc64_send_ipi(ci->ci_upaid,
+				    ipi_drop_fpstate, 0, 0);
+				break;
+			}
+		}
+#endif
+
+		free(fs, M_SUBPROC);
 	}
 
 	pmap_deactivate(p);
@@ -354,10 +412,7 @@ cpu_coredump(p, vp, cred, chdr)
 	md_core.md_tf = *p->p_md.md_tf;
 	md_core.md_wcookie = p->p_addr->u_pcb.pcb_wcookie;
 	if (p->p_md.md_fpstate) {
-		if (p == fpproc) {
-			savefpstate(p->p_md.md_fpstate);
-			fpproc = NULL;
-		}
+		save_and_clear_fpstate(p);
 		md_core.md_fpstate = *p->p_md.md_fpstate;
 	} else
 		bzero((caddr_t)&md_core.md_fpstate, 

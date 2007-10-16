@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.47 2007/10/16 19:13:53 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.48 2007/10/16 19:22:49 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -225,6 +225,7 @@ int	statintr(void *);	/* level 14 (statclock) interrupt code */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);
 void	loadfpstate(struct fpstate64 *);
+void	clearfpstate(void);
 u_int64_t	probeget(paddr_t, int, int);
 #define	 write_all_windows() __asm __volatile("flushw" : : )
 #define	 write_user_windows() __asm __volatile("flushw" : : )
@@ -240,6 +241,8 @@ void	switchtoctx(int);
 /* trap.c */
 void	pmap_unuse_final(struct proc *);
 int	rwindow_save(struct proc *);
+/* vm_machdep.c */
+void	save_and_clear_fpstate(struct proc *);
 /* amd7930intr.s */
 void	amd7930_trap(void);
 /* cons.c */

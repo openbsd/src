@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.84 2007/10/10 15:53:53 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.85 2007/10/16 19:22:49 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3351,6 +3351,34 @@ ENTRY(ipi_tlb_context_demap)
 	wrpr	%g1, %pstate
 	ba,a	ret_from_intr_vector
 	 nop
+
+ENTRY(ipi_save_fpstate)
+	save	%sp, -CC64FSZ, %sp
+	mov	CTX_PRIMARY, %o2
+	ldxa	[%o2] ASI_DMMU, %g7
+	membar	#LoadStore
+	stxa	%g0, [%o2] ASI_DMMU
+	membar	#Sync
+	sethi	%hi(FPPROC), %o0
+	ldx	[%o0 + %lo(FPPROC)], %o0
+	call	savefpstate
+	 ldx	[%o0 + P_FPSTATE], %o0
+	sethi	%hi(FPPROC), %o0
+	stx	%g0, [%o0 + %lo(FPPROC)]	! fpproc = NULL
+	mov	CTX_PRIMARY, %o2
+	stxa	%g7, [%o2] ASI_DMMU
+	membar	#Sync
+	ba	ret_from_intr_vector
+	 restore
+
+ENTRY(ipi_drop_fpstate)
+	rdpr	%pstate, %g1
+	wr	%g0, FPRS_FEF, %fprs
+	or	%g1, PSTATE_PEF, %g1
+	wrpr	%g1, 0, %pstate
+	sethi	%hi(FPPROC), %g1
+	ba	ret_from_intr_vector
+	 stx	%g0, [%g1 + %lo(FPPROC)]	! fpproc = NULL
 #endif
 
 /*
@@ -8550,6 +8578,18 @@ Lback_mopb:
 	retl			!	dst[-1] = b;
 	 stb	%o4, [%o1 - 1]	! }
 
+
+/*
+ * clearfpstate()
+ *
+ * Drops the current fpu state, without saving it.
+ */
+ENTRY(clearfpstate)
+	rdpr	%pstate, %o1		! enable FPU
+	wr	%g0, FPRS_FEF, %fprs
+	or	%o1, PSTATE_PEF, %o1
+	retl
+	 wrpr	%o1, 0, %pstate
 
 /*
  * savefpstate(f) struct fpstate *f;
