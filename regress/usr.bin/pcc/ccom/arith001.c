@@ -1,4 +1,3 @@
-#include <stdio.h>
 main()
 {
          long long foo = 10;
