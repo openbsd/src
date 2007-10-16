@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.9 2007/10/16 21:37:45 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.10 2007/10/16 21:58:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -679,7 +679,8 @@ print_ospf_flags(u_int8_t opts)
 {
 	static char	optbuf[32];
 
-	snprintf(optbuf, sizeof(optbuf), "*|*|*|*|*|%s|%s|%s",
+	snprintf(optbuf, sizeof(optbuf), "*|*|*|*|%s|%s|%s|%s",
+	    opts & OSPF_RTR_W ? "W" : "-",
 	    opts & OSPF_RTR_V ? "V" : "-",
 	    opts & OSPF_RTR_E ? "E" : "-",
 	    opts & OSPF_RTR_B ? "B" : "-");
@@ -749,8 +750,13 @@ show_db_msg_detail(struct imsg *imsg)
 		if (lsa->hdr.type != lasttype)
 			show_database_head(area_id, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
-		printf("Flags: %s\n", print_ospf_flags(lsa->data.rtr.flags));
-		nlinks = ntohs(lsa->data.rtr.nlinks);
+		printf("Flags: %s\n",
+		    print_ospf_flags(ntohl(lsa->data.rtr.opts) >> 24));
+		printf("Options: %s\n",
+		    print_ospf_options(ntohl(lsa->data.rtr.opts)));
+
+		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
+		    - sizeof(u_int32_t)) / sizeof(struct lsa_rtr_link);
 		printf("Number of Links: %d\n\n", nlinks);
 
 		off = sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
