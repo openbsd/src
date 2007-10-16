@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.3 2007/10/16 13:01:07 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.4 2007/10/16 21:02:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -78,7 +78,7 @@ vertex_get(struct lsa *lsa, struct rde_nbr *nbr)
 	v->cost = LS_INFINITY;
 	v->ls_id = ntohl(lsa->hdr.ls_id);
 	v->adv_rtr = ntohl(lsa->hdr.adv_rtr);
-	v->type = lsa->hdr.type;
+	v->type = ntohs(lsa->hdr.type);
 
 	if (!nbr->self)
 		v->flooded = 1; /* XXX fix me */
@@ -187,7 +187,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 
 	switch (ntohs(lsa->hdr.type)) {
 	case LSA_TYPE_LINK:
-			/* XXX */
+		/* XXX */
 		break;
 	case LSA_TYPE_ROUTER:
 		if (!lsa_router_check(lsa, len))
@@ -232,7 +232,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 			return (0);
 		break;
 	default:
-		log_warnx("lsa_check: unknown type %u", lsa->hdr.type);
+		log_warnx("lsa_check: unknown type %u", ntohs(lsa->hdr.type));
 		return (0);
 	}
 
@@ -297,7 +297,7 @@ lsa_self(struct rde_nbr *nbr, struct lsa *new, struct vertex *v)
 	if (rde_router_id() == new->hdr.adv_rtr)
 		goto self;
 
-	if (new->hdr.type == LSA_TYPE_NETWORK)
+	if (ntohs(new->hdr.type) == LSA_TYPE_NETWORK)
 		LIST_FOREACH(iface, &nbr->area->iface_list, entry)
 		    if (iface->addr.s_addr == new->hdr.ls_id)
 			    goto self;
@@ -342,7 +342,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	struct vertex	*new, *old;
 	struct timeval	 tv, now, res;
 
-	if (lsa->hdr.type == LSA_TYPE_EXTERNAL)
+	if (ntohs(lsa->hdr.type) == LSA_TYPE_EXTERNAL)
 		tree = &asext_tree;
 	else
 		tree = &nbr->area->lsa_tree;
@@ -366,14 +366,14 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 			return (1);
 		}
 		if (!lsa_equal(new->lsa, old->lsa)) {
-			if (lsa->hdr.type != LSA_TYPE_EXTERNAL)
+			if (ntohs(lsa->hdr.type) != LSA_TYPE_EXTERNAL)
 				nbr->area->dirty = 1;
 			start_spf_timer();
 		}
 		vertex_free(old);
 		RB_INSERT(lsa_tree, tree, new);
 	} else {
-		if (lsa->hdr.type != LSA_TYPE_EXTERNAL)
+		if (ntohs(lsa->hdr.type) != LSA_TYPE_EXTERNAL)
 			nbr->area->dirty = 1;
 		start_spf_timer();
 	}
@@ -447,7 +447,7 @@ lsa_find(struct area *area, u_int16_t type, u_int32_t ls_id, u_int32_t adv_rtr)
 
 	key.ls_id = ntohl(ls_id);
 	key.adv_rtr = ntohl(adv_rtr);
-	key.type = type;
+	key.type = ntohs(type);
 
 	if (type == LSA_TYPE_EXTERNAL)
 		tree = &asext_tree;
@@ -681,7 +681,7 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	free(v->lsa);
 	v->lsa = lsa;
 	start_spf_timer();
-	if (lsa->hdr.type != LSA_TYPE_EXTERNAL)
+	if (v->type != LSA_TYPE_EXTERNAL)
 		nbr->area->dirty = 1;
 
 	/* set correct timeout for reflooding the LSA */
@@ -703,8 +703,8 @@ lsa_remove_invalid_sums(struct area *area)
 	/* XXX speed me up */
 	for (v = RB_MIN(lsa_tree, tree); v != NULL; v = nv) {
 		nv = RB_NEXT(lsa_tree, tree, v);
-		if ((v->lsa->hdr.type == LSA_TYPE_INTER_A_PREFIX ||
-		    v->lsa->hdr.type == LSA_TYPE_INTER_A_ROUTER) &&
+		if ((v->type == LSA_TYPE_INTER_A_PREFIX ||
+		    v->type == LSA_TYPE_INTER_A_ROUTER) &&
 		    v->self && v->cost == LS_INFINITY &&
 		    v->deleted == 0) {
 			/*
