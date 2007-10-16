@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.46 2007/09/30 21:34:20 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.47 2007/10/16 19:13:53 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -237,8 +237,6 @@ void	copywords(const void *, void *, size_t);
 void	qcopy(const void *, void *, size_t);
 void	qzero(void *, size_t);
 void	switchtoctx(int);
-/* locore2.c */
-void	remrq(struct proc *);
 /* trap.c */
 void	pmap_unuse_final(struct proc *);
 int	rwindow_save(struct proc *);
