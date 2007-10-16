@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoff_machdep.h,v 1.3 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: ecoff_machdep.h,v 1.4 2007/10/16 15:55:33 deraadt Exp $	*/
 /*	$NetBSD: ecoff_machdep.h,v 1.3 1996/05/09 23:47:25 cgd Exp $	*/
 
 /*
@@ -88,14 +88,14 @@ struct ecoff_symhdr {
 struct ecoff_extsym {
 	long		es_value;
 	int		es_strindex;
-	unsigned	es_type:6;
-	unsigned	es_class:5;
-	unsigned	:1;
-	unsigned	es_symauxindex:20;
-	unsigned	es_jmptbl:1;
-	unsigned	es_cmain:1;
-	unsigned	es_weakext:1;
-	unsigned	:29;
+	unsigned int	es_type:6;
+	unsigned int	es_class:5;
+	unsigned int	:1;
+	unsigned int	es_symauxindex:20;
+	unsigned int	es_jmptbl:1;
+	unsigned int	es_cmain:1;
+	unsigned int	es_weakext:1;
+	unsigned int	:29;
 	int		es_indexfld;
 };
 
