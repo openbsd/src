@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.102 2007/10/06 02:18:38 krw Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.103 2007/10/17 20:01:26 hshoexer Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -76,6 +76,7 @@
 
 #include "bpfilter.h"
 
+#define ENCDEBUG
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
 #else
@@ -218,8 +219,8 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	if (tdbp->tdb_encalgxform) {
 		/* Save the raw keys */
 		tdbp->tdb_emxkeylen = ii->ii_enckeylen;
-		MALLOC(tdbp->tdb_emxkey, u_int8_t *, tdbp->tdb_emxkeylen,
-		    M_XDATA, M_WAITOK);
+		tdbp->tdb_emxkey = malloc(tdbp->tdb_emxkeylen, M_XDATA,
+		    M_WAITOK);
 		bcopy(ii->ii_enckey, tdbp->tdb_emxkey, tdbp->tdb_emxkeylen);
 
 		bzero(&crie, sizeof(crie));
@@ -239,7 +240,7 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	if (tdbp->tdb_authalgxform) {
 		/* Save the raw keys */
 		tdbp->tdb_amxkeylen = ii->ii_authkeylen;
-		MALLOC(tdbp->tdb_amxkey, u_int8_t *, tdbp->tdb_amxkeylen, M_XDATA,
+		tdbp->tdb_amxkey = malloc(tdbp->tdb_amxkeylen, M_XDATA,
 		    M_WAITOK);
 		bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
 
@@ -265,13 +266,13 @@ esp_zeroize(struct tdb *tdbp)
 
 	if (tdbp->tdb_amxkey) {
 		bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
-		FREE(tdbp->tdb_amxkey, M_XDATA);
+		free(tdbp->tdb_amxkey, M_XDATA);
 		tdbp->tdb_amxkey = NULL;
 	}
 
 	if (tdbp->tdb_emxkey) {
 		bzero(tdbp->tdb_emxkey, tdbp->tdb_emxkeylen);
-		FREE(tdbp->tdb_emxkey, M_XDATA);
+		free(tdbp->tdb_emxkey, M_XDATA);
 		tdbp->tdb_emxkey = NULL;
 	}
 

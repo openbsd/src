@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.90 2007/10/09 01:30:47 krw Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.91 2007/10/17 20:01:26 hshoexer Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -156,8 +156,7 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	    thash->name));
 
 	tdbp->tdb_amxkeylen = ii->ii_authkeylen;
-	MALLOC(tdbp->tdb_amxkey, u_int8_t *, tdbp->tdb_amxkeylen, M_XDATA,
-	    M_WAITOK);
+	tdbp->tdb_amxkey = malloc(tdbp->tdb_amxkeylen, M_XDATA, M_WAITOK);
 
 	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
 
@@ -180,7 +179,7 @@ ah_zeroize(struct tdb *tdbp)
 
 	if (tdbp->tdb_amxkey) {
 		bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
-		FREE(tdbp->tdb_amxkey, M_XDATA);
+		free(tdbp->tdb_amxkey, M_XDATA);
 		tdbp->tdb_amxkey = NULL;
 	}
 
@@ -375,8 +374,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		/* Let's deal with the remaining headers (if any). */
 		if (skip - sizeof(struct ip6_hdr) > 0) {
 			if (m->m_len <= skip) {
-				MALLOC(ptr, unsigned char *,
-				    skip - sizeof(struct ip6_hdr),
+				ptr = malloc(skip - sizeof(struct ip6_hdr),
 				    M_XDATA, M_NOWAIT);
 				if (ptr == NULL) {
 					DPRINTF(("ah_massage_headers(): failed to allocate memory for IPv6 headers\n"));
@@ -429,7 +427,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 						/* Free, if we allocated. */
 						if (alloc)
-							FREE(ptr, M_XDATA);
+							free(ptr, M_XDATA);
 						return EINVAL;
 					}
 
@@ -450,7 +448,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 						/* Free, if we allocated. */
 						if (alloc)
-							FREE(ptr, M_XDATA);
+							free(ptr, M_XDATA);
 						return EINVAL;
 					}
 				}
@@ -513,7 +511,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				DPRINTF(("ah_massage_headers(): unexpected "
 				    "IPv6 header type %d\n", off));
 				if (alloc)
-					FREE(ptr, M_XDATA);
+					free(ptr, M_XDATA);
 				ahstat.ahs_hdrops++;
 				m_freem(m);
 				return EINVAL;
@@ -524,7 +522,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		if (alloc) {
 			m_copyback(m, sizeof(struct ip6_hdr),
 			    skip - sizeof(struct ip6_hdr), ptr);
-			FREE(ptr, M_XDATA);
+			free(ptr, M_XDATA);
 		}
 
 		break;
