@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.14 2007/10/17 02:09:18 deraadt Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.15 2007/10/17 02:35:25 deraadt Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -280,14 +280,18 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		dimm_size = (1 << (rows + cols - 13));
 	} else if (s->sm_type == SPDMEM_MEMTYPE_SDRAM ||
 	    s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
+		int num_banks, per_chip;
+
+		num_banks = s->sm_data[SPDMEM_SDR_BANKS];
+		per_chip = s->sm_data[SPDMEM_SDR_BANKS_PER_CHIP];
 		rows = s->sm_data[SPDMEM_SDR_ROWS] & 0x0f;
 		cols = s->sm_data[SPDMEM_SDR_COLS] & 0x0f;
-		int num_banks = s->sm_data[SPDMEM_SDR_BANKS];
-		int per_chip = s->sm_data[SPDMEM_SDR_BANKS_PER_CHIP];
 		dimm_size = (1 << (rows + cols - 17)) * num_banks * per_chip;
 	} else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		int num_ranks = (s->sm_data[SPDMEM_DDR2_RANKS] & 0x7) + 1;
-		int density = (s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0xf0) |
+		int num_ranks, density;
+
+		num_ranks = (s->sm_data[SPDMEM_DDR2_RANKS] & 0x7) + 1;
+		density = (s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0xf0) |
 		    ((s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0x0f) << 8);
 		dimm_size = num_ranks * density * 4;
 	}
