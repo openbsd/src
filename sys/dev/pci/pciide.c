@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.274 2007/10/09 23:26:05 krw Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.275 2007/10/17 22:11:52 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -498,6 +498,30 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82801HBM_IDE, /* Intel 82801HBM (ICH8M) IDE */
 	  0,
 	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_1, /* Intel 82801I (ICH9) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_2, /* Intel 82801I (ICH9) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_3, /* Intel 82801I (ICH9) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_4, /* Intel 82801I (ICH9) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_5, /* Intel 82801I (ICH9M) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801I_SATA_6, /* Intel 82801I (ICH9M) SATA */
+	  0,
+	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_6321ESB_SATA, /* Intel 6321ESB SATA */
 	  0,
