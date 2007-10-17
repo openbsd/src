@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.31 2007/10/04 19:32:03 gilles Exp $	*/
+/*	$OpenBSD: iop.c,v 1.32 2007/10/17 15:08:45 deraadt Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -276,59 +276,57 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		iop_ictxhashtbl = hashinit(IOP_ICTXHASH_NBUCKETS, M_DEVBUF,
 		    M_NOWAIT, &iop_ictxhash);
 		if (iop_ictxhashtbl == NULL) {
-			printf("%s: cannot allocate hashtable\n",
-			    sc->sc_dv.dv_xname);
+			printf(": cannot allocate hashtable\n");
 			return;
 		}
 	}
 
 	/* Reset the IOP and request status. */
-	printf("I2O adapter");
 
 	/* Allocate a scratch DMA map for small miscellaneous shared data. */
 	if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_scr_dmamap) != 0) {
-		printf("%s: cannot create scratch dmamap\n",
-		    sc->sc_dv.dv_xname);
+		printf(": cannot create scratch dmamap\n");
 		return;
 	}
 	state++;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    sc->sc_scr_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
-		printf("%s: cannot alloc scratch dmamem\n",
-		    sc->sc_dv.dv_xname);
+		printf(": cannot alloc scratch dmamem\n");
 		goto bail_out;
 	}
 	state++;
 
 	if (bus_dmamem_map(sc->sc_dmat, sc->sc_scr_seg, nsegs, PAGE_SIZE,
 	    &sc->sc_scr, 0)) {
-		printf("%s: cannot map scratch dmamem\n", sc->sc_dv.dv_xname);
+		printf(": cannot map scratch dmamem\n");
 		goto bail_out;
 	}
 	state++;
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_scr_dmamap, sc->sc_scr,
 	    PAGE_SIZE, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: cannot load scratch dmamap\n", sc->sc_dv.dv_xname);
+		printf(": cannot load scratch dmamap\n");
 		goto bail_out;
 	}
 	state++;
 
 	if ((rv = iop_reset(sc)) != 0) {
-		printf("%s: not responding (reset)\n", sc->sc_dv.dv_xname);
+		printf(": not responding (reset)\n");
 		goto bail_out;
 	}
 	if ((rv = iop_status_get(sc, 1)) != 0) {
-		printf("%s: not responding (get status)\n",
-		    sc->sc_dv.dv_xname);
+		printf(": not responding (get status)\n");
 		goto bail_out;
 	}
 	sc->sc_flags |= IOP_HAVESTATUS;
 	iop_strvis(sc, sc->sc_status.productid,
 	    sizeof(sc->sc_status.productid), ident, sizeof(ident));
-	printf(" <%s>\n", ident);
+	printf(": <%s>", ident);
+	if (intrstr != NULL)
+		printf(", %s", intrstr);
+	printf("\n");
 
 #ifdef I2ODEBUG
 	printf("%s: orgid=0x%04x version=%d\n", sc->sc_dv.dv_xname,
@@ -392,10 +390,6 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	/* Ensure interrupts are enabled at the IOP. */
 	mask = iop_inl(sc, IOP_REG_INTR_MASK);
 	iop_outl(sc, IOP_REG_INTR_MASK, mask & ~IOP_INTR_OFIFO);
-
-	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dv.dv_xname,
-		    intrstr);
 
 #ifdef I2ODEBUG
 	printf("%s: queue depths: inbound %d/%d, outbound %d/%d\n",
