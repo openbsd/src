@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.89 2007/10/17 21:23:28 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.90 2007/10/17 21:30:08 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3221,9 +3221,11 @@ Lsoftint_regular:
 	 nop
 
 setup_sparcintr:
+#ifndef MULTIPROCESSOR
 	ldstub  [%g5+IH_BUSY], %g6	! Check if already in use
 	membar #LoadLoad | #LoadStore
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
+#endif
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
 	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %g1
 	mov	8, %g7			! Number of slots to search
