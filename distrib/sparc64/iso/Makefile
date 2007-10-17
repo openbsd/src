@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2007/08/10 12:29:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2007/10/17 21:32:38 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -11,7 +11,7 @@ RELDIR?=	/home/rel-${MACHINE}
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
 		${RELDIR}/man${OSrev}.tgz ${RELDIR}/misc${OSrev}.tgz \
-		${RELDIR}/bsd ${RELDIR}/bsd.rd \
+		${RELDIR}/bsd ${RELDIR}/bsd.mp ${RELDIR}/bsd.rd \
 		${RELDIR}/INSTALL.${MACHINE}
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
