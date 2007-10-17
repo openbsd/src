@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.16 2007/09/10 14:29:53 tobias Exp $	*/
+/*	$OpenBSD: edit.c,v 1.17 2007/10/17 20:02:33 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: edit.c,v 1.16 2007/09/10 14:29:53 tobias Exp $";
+static const char rcsid[] = "$OpenBSD: edit.c,v 1.17 2007/10/17 20:02:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -242,9 +242,9 @@ int
 editit(const char *ed, const char *pathname)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL}, *p;
-	sig_t sighup, sigint, sigquit;
+	sig_t sighup, sigint, sigquit, sigchld;
 	pid_t pid;
-	int saved_errno, st;
+	int saved_errno, st, ret = -1;
 
 	if (ed == NULL)
 		ed = getenv("VISUAL");
@@ -259,6 +259,7 @@ editit(const char *ed, const char *pathname)
 	sighup = signal(SIGHUP, SIG_IGN);
 	sigint = signal(SIGINT, SIG_IGN);
 	sigquit = signal(SIGQUIT, SIG_IGN);
+	sigchld = signal(SIGCHLD, SIG_DFL);
 	if ((pid = fork()) == -1)
 		goto fail;
 	if (pid == 0) {
@@ -268,22 +269,18 @@ editit(const char *ed, const char *pathname)
 	while (waitpid(pid, &st, 0) == -1)
 		if (errno != EINTR)
 			goto fail;
-	free(p);
-	(void)signal(SIGHUP, sighup);
-	(void)signal(SIGINT, sigint);
-	(void)signal(SIGQUIT, sigquit);
-	if (!WIFEXITED(st)) {
+	if (!WIFEXITED(st))
 		errno = EINTR;
-		return (-1);
-	}
-	return (WEXITSTATUS(st));
+	else
+		ret = WEXITSTATUS(st);
 
  fail:
 	saved_errno = errno;
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
+	(void)signal(SIGCHLD, sigchld);
 	free(p);
 	errno = saved_errno;
-	return (-1);
+	return (ret);
 }

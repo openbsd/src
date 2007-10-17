@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.51 2007/09/18 00:38:58 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.52 2007/10/17 20:02:33 deraadt Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -228,9 +228,9 @@ int
 editit(const char *pathname)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL}, *ed, *p;
-	sig_t sighup, sigint, sigquit;
+	sig_t sighup, sigint, sigquit, sigchld;
 	pid_t pid;
-	int saved_errno, st;
+	int saved_errno, st, ret = -1;
 
 	ed = getenv("VISUAL");
 	if (ed == NULL || ed[0] == '\0')
@@ -244,6 +244,7 @@ editit(const char *pathname)
 	sighup = signal(SIGHUP, SIG_IGN);
 	sigint = signal(SIGINT, SIG_IGN);
 	sigquit = signal(SIGQUIT, SIG_IGN);
+	sigchld = signal(SIGCHLD, SIG_DFL);
 	if ((pid = fork()) == -1)
 		goto fail;
 	if (pid == 0) {
@@ -253,24 +254,20 @@ editit(const char *pathname)
 	while (waitpid(pid, &st, 0) == -1)
 		if (errno != EINTR)
 			goto fail;
-	free(p);
-	(void)signal(SIGHUP, sighup);
-	(void)signal(SIGINT, sigint);
-	(void)signal(SIGQUIT, sigquit);
-	if (!WIFEXITED(st)) {
+	if (!WIFEXITED(st))
 		errno = EINTR;
-		return (-1);
-	}
-	return (WEXITSTATUS(st));
+	else
+		ret = WEXITSTATUS(st);
 
  fail:
 	saved_errno = errno;
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
 	(void)signal(SIGQUIT, sigquit);
+	(void)signal(SIGCHLD, sigchld);
 	free(p);
 	errno = saved_errno;
-	return (-1);
+	return (ret);
 }
 
 int
