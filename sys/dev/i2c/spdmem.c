@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.13 2007/10/16 19:17:21 kettenis Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.14 2007/10/17 02:09:18 deraadt Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -170,7 +170,7 @@ struct cfdriver spdmem_cd = {
 
 #define IS_RAMBUS_TYPE (s->sm_len < 4)
 
-static const char* spdmem_basic_types[] = {
+static const char *spdmem_basic_types[] = {
 	"unknown",
 	"FPM",
 	"EDO",
@@ -184,7 +184,7 @@ static const char* spdmem_basic_types[] = {
 	"DDR2 SDRAM FB Probe"
 };
 
-static const char* spdmem_superset_types[] = {
+static const char *spdmem_superset_types[] = {
 	"unknown",
 	"ESDRAM",
 	"DDR ESDRAM",
@@ -192,7 +192,7 @@ static const char* spdmem_superset_types[] = {
 	"PEM SDRAM"
 };
 
-static const char* spdmem_parity_types[] = {
+static const char *spdmem_parity_types[] = {
 	"non-parity",
 	"data parity",
 	"ECC",
@@ -222,8 +222,6 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	const char *type;
 	const char *ddr_type_string = NULL;
 	int dimm_size, cycle_time, d_clk, p_clk, bits;
-	int num_banks, per_chip;
-	int num_ranks, density;
 	int i;
 	uint8_t config, rows, cols, cl;
 
@@ -284,12 +282,12 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	    s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
 		rows = s->sm_data[SPDMEM_SDR_ROWS] & 0x0f;
 		cols = s->sm_data[SPDMEM_SDR_COLS] & 0x0f;
-		num_banks = s->sm_data[SPDMEM_SDR_BANKS];
-		per_chip = s->sm_data[SPDMEM_SDR_BANKS_PER_CHIP];
+		int num_banks = s->sm_data[SPDMEM_SDR_BANKS];
+		int per_chip = s->sm_data[SPDMEM_SDR_BANKS_PER_CHIP];
 		dimm_size = (1 << (rows + cols - 17)) * num_banks * per_chip;
 	} else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		num_ranks = (s->sm_data[SPDMEM_DDR2_RANKS] & 0x7) + 1;
-		density = (s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0xf0) |
+		int num_ranks = (s->sm_data[SPDMEM_DDR2_RANKS] & 0x7) + 1;
+		int density = (s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0xf0) |
 		    ((s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0x0f) << 8);
 		dimm_size = num_ranks * density * 4;
 	}
