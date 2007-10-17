@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83793g.c,v 1.2 2007/10/14 15:31:28 deraadt Exp $	*/
+/*	$OpenBSD: w83793g.c,v 1.3 2007/10/17 16:38:51 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -232,6 +232,7 @@ wbng_refresh_temps(struct wbng_softc *sc)
 			data -= 0x100;
 		low = (tdlow & (0x03 << (i * 2))) >> (i * 2);
 		s[i].value = data * 1000000 + low * 250000 + 273150000;
+		s[i].flags &= ~SENSOR_FINVALID;
 	}
 	s += i;
 
@@ -250,6 +251,7 @@ wbng_refresh_temps(struct wbng_softc *sc)
 		if (data & 0x80)
 			data -= 0x100;
 		s[i].value = data * 1000000 + 273150000;
+		s[i].flags &= ~SENSOR_FINVALID;
 	}
 }
 
