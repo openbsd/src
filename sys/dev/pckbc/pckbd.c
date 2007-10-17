@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.11 2007/10/17 01:32:46 deraadt Exp $ */
+/* $OpenBSD: pckbd.c,v 1.12 2007/10/17 21:54:29 deraadt Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -83,12 +83,7 @@
 
 #include <machine/bus.h>
 
-#ifndef __sparc64__
-#include <dev/isa/isavar.h>		/* XXX XXX XXX */
-#endif
-
 #include <dev/ic/pckbcvar.h>
-
 #include <dev/pckbc/pckbdreg.h>
 #include <dev/pckbc/pckbdvar.h>
 #include <dev/pckbc/wskbdmap_mfii.h>
