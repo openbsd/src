@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.13 2007/10/17 02:30:23 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.14 2007/10/17 11:33:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -288,7 +288,8 @@ pctr_fn2str(u_int32_t sel)
 	case CPU_P6:
 		cfnp = p6fn;
 	case CPU_CORE:
-		cfnp = corefn;
+		if (cpu_type == CPU_CORE)
+			cfnp = corefn;
 		fn = sel & 0xff;
 		if ((ind = pctr_ctrfn_index(cfnp, fn)) < 0)
 			msg = "unknown function";
@@ -312,8 +313,6 @@ pctr_fn2str(u_int32_t sel)
 		    sel & PCTR_X86_K ? 'k' : '-',
 		    sel & PCTR_X86_U ? 'u' : '-',
 		    fn, (sel >> PCTR_X86_UM_SHIFT) & 0xff, th, um, msg);
-		break;
-
 		break;
 	case CPU_AMD:
 		fn = sel & 0xff;
@@ -467,7 +466,8 @@ pctr_set_cntr(void)
 	case CPU_P6:
 		cfnp = p6fn;
 	case CPU_CORE:
-		cfnp = corefn;
+		if (cpu_type == CPU_CORE)
+			cfnp = corefn;
 		if (ctr >= PCTR_INTEL_NUM)
 			return (EX_DATAERR);
 		if (func && (ind = pctr_ctrfn_index(cfnp, func)) < 0)
