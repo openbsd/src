@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.90 2007/10/17 21:30:08 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.91 2007/10/17 21:39:44 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4463,7 +4463,7 @@ dlflush2:
 	ld	[%l1 + CI_UPAID], %l3		! Load UPAID
 	cmp	%l3, %l2			! Does it match?
 	bne,a,pt	%icc, 0b		! no
-	 ld	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
+	 ldx	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
 
 
 	/*
