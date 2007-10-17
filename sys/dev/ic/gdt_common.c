@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.40 2007/10/01 04:03:51 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.41 2007/10/17 03:21:16 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -117,8 +117,7 @@ int	gdt_debug = GDT_DEBUG;
 #endif
 
 int
-gdt_attach(gdt)
-	struct gdt_softc *gdt;
+gdt_attach(struct gdt_softc *sc)
 {
 	struct scsibus_attach_args saa;
 	u_int16_t cdev_cnt;
@@ -127,388 +126,388 @@ gdt_attach(gdt)
 	gdt_polling = 1;
 	gdt_from_wait = 0;
 
-	if (bus_dmamem_alloc(gdt->sc_dmat, GDT_SCRATCH_SZ, PAGE_SIZE, 0,
-	    &gdt->sc_scratch_seg, 1, &nsegs, BUS_DMA_NOWAIT))
-	    panic("%s: bus_dmamem_alloc failed", DEVNAME(gdt));
-	if (bus_dmamem_map(gdt->sc_dmat, &gdt->sc_scratch_seg, 1,
-	    GDT_SCRATCH_SZ, &gdt->sc_scratch, BUS_DMA_NOWAIT))
-	    panic("%s: bus_dmamem_map failed", DEVNAME(gdt));
+	if (bus_dmamem_alloc(sc->sc_dmat, GDT_SCRATCH_SZ, PAGE_SIZE, 0,
+	    &sc->sc_scratch_seg, 1, &nsegs, BUS_DMA_NOWAIT))
+	    panic("%s: bus_dmamem_alloc failed", DEVNAME(sc));
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_scratch_seg, 1,
+	    GDT_SCRATCH_SZ, &sc->sc_scratch, BUS_DMA_NOWAIT))
+	    panic("%s: bus_dmamem_map failed", DEVNAME(sc));
 
-	gdt_clear_events(gdt);
+	gdt_clear_events(sc);
 
-	TAILQ_INIT(&gdt->sc_free_ccb);
-	TAILQ_INIT(&gdt->sc_ccbq);
-	TAILQ_INIT(&gdt->sc_ucmdq);
-	LIST_INIT(&gdt->sc_queue);
+	TAILQ_INIT(&sc->sc_free_ccb);
+	TAILQ_INIT(&sc->sc_ccbq);
+	TAILQ_INIT(&sc->sc_ucmdq);
+	LIST_INIT(&sc->sc_queue);
 
 	/* Initialize the ccbs */
 	for (i = 0; i < GDT_MAXCMDS; i++) {
-		gdt->sc_ccbs[i].gc_cmd_index = i + 2;
-		error = bus_dmamap_create(gdt->sc_dmat,
+		sc->sc_ccbs[i].gc_cmd_index = i + 2;
+		error = bus_dmamap_create(sc->sc_dmat,
 		    (GDT_MAXOFFSETS - 1) << PGSHIFT, GDT_MAXOFFSETS,
 		    (GDT_MAXOFFSETS - 1) << PGSHIFT, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
-		    &gdt->sc_ccbs[i].gc_dmamap_xfer);
+		    &sc->sc_ccbs[i].gc_dmamap_xfer);
 		if (error) {
 			printf("%s: cannot create ccb dmamap (%d)",
-			    DEVNAME(gdt), error);
+			    DEVNAME(sc), error);
 			return (1);
 		}
-		(void)gdt_ccb_set_cmd(gdt->sc_ccbs + i, GDT_GCF_UNUSED);
-		TAILQ_INSERT_TAIL(&gdt->sc_free_ccb, &gdt->sc_ccbs[i],
+		(void)gdt_ccb_set_cmd(sc->sc_ccbs + i, GDT_GCF_UNUSED);
+		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, &sc->sc_ccbs[i],
 		    gc_chain);
 	}
 
 	/* Fill in the prototype scsi_link. */
-	gdt->sc_link.adapter_softc = gdt;
-	gdt->sc_link.adapter = &gdt_switch;
-	gdt->sc_link.device = &gdt_dev;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter = &gdt_switch;
+	sc->sc_link.device = &gdt_dev;
 	/* openings will be filled in later. */
-	gdt->sc_link.adapter_buswidth =
-	    (gdt->sc_class & GDT_FC) ? GDT_MAXID : GDT_MAX_HDRIVES;
-	gdt->sc_link.adapter_target = gdt->sc_link.adapter_buswidth;
+	sc->sc_link.adapter_buswidth =
+	    (sc->sc_class & GDT_FC) ? GDT_MAXID : GDT_MAX_HDRIVES;
+	sc->sc_link.adapter_target = sc->sc_link.adapter_buswidth;
 
-	if (!gdt_internal_cmd(gdt, GDT_SCREENSERVICE, GDT_INIT, 0, 0, 0)) {
+	if (!gdt_internal_cmd(sc, GDT_SCREENSERVICE, GDT_INIT, 0, 0, 0)) {
 		printf("screen service initialization error %d\n",
-		     gdt->sc_status);
+		     sc->sc_status);
 		return (1);
 	}
 
-	if (!gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_INIT, GDT_LINUX_OS, 0,
+	if (!gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_INIT, GDT_LINUX_OS, 0,
 	    0)) {
 		printf("cache service initialization error %d\n",
-		    gdt->sc_status);
+		    sc->sc_status);
 		return (1);
 	}
 
-	cdev_cnt = (u_int16_t)gdt->sc_info;
+	cdev_cnt = (u_int16_t)sc->sc_info;
 
 	/* Detect number of busses */
-	gdt_enc32(gdt->sc_scratch + GDT_IOC_VERSION, GDT_IOC_NEWEST);
-	gdt->sc_scratch[GDT_IOC_LIST_ENTRIES] = GDT_MAXBUS;
-	gdt->sc_scratch[GDT_IOC_FIRST_CHAN] = 0;
-	gdt->sc_scratch[GDT_IOC_LAST_CHAN] = GDT_MAXBUS - 1;
-	gdt_enc32(gdt->sc_scratch + GDT_IOC_LIST_OFFSET, GDT_IOC_HDR_SZ);
-	if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
+	gdt_enc32(sc->sc_scratch + GDT_IOC_VERSION, GDT_IOC_NEWEST);
+	sc->sc_scratch[GDT_IOC_LIST_ENTRIES] = GDT_MAXBUS;
+	sc->sc_scratch[GDT_IOC_FIRST_CHAN] = 0;
+	sc->sc_scratch[GDT_IOC_LAST_CHAN] = GDT_MAXBUS - 1;
+	gdt_enc32(sc->sc_scratch + GDT_IOC_LIST_OFFSET, GDT_IOC_HDR_SZ);
+	if (gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_IOCTL,
 	    GDT_IOCHAN_RAW_DESC, GDT_INVALID_CHANNEL,
 	    GDT_IOC_HDR_SZ + GDT_RAWIOC_SZ)) {
-		gdt->sc_bus_cnt = gdt->sc_scratch[GDT_IOC_CHAN_COUNT];
-		for (i = 0; i < gdt->sc_bus_cnt; i++) {
-			id = gdt->sc_scratch[GDT_IOC_HDR_SZ +
+		sc->sc_bus_cnt = sc->sc_scratch[GDT_IOC_CHAN_COUNT];
+		for (i = 0; i < sc->sc_bus_cnt; i++) {
+			id = sc->sc_scratch[GDT_IOC_HDR_SZ +
 			    i * GDT_RAWIOC_SZ + GDT_RAWIOC_PROC_ID];
-			gdt->sc_bus_id[id] = id < GDT_MAXBUS ? id : 0xff;
+			sc->sc_bus_id[id] = id < GDT_MAXBUS ? id : 0xff;
 		}
 
 	} else {
 		/* New method failed, use fallback. */
-		gdt_enc32(gdt->sc_scratch + GDT_GETCH_CHANNEL_NO, i);
+		gdt_enc32(sc->sc_scratch + GDT_GETCH_CHANNEL_NO, i);
 		for (i = 0; i < GDT_MAXBUS; i++) {
-			if (!gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
+			if (!gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_IOCTL,
 			    GDT_SCSI_CHAN_CNT | GDT_L_CTRL_PATTERN,
 			    GDT_IO_CHANNEL | GDT_INVALID_CHANNEL,
 			    GDT_GETCH_SZ)) {
 				if (i == 0) {
 					printf("cannot get channel count, "
-					    "error %d\n", gdt->sc_status);
+					    "error %d\n", sc->sc_status);
 					return (1);
 				}
 				break;
 			}
-			gdt->sc_bus_id[i] =
-			    (gdt->sc_scratch[GDT_GETCH_SIOP_ID] < GDT_MAXID) ?
-			    gdt->sc_scratch[GDT_GETCH_SIOP_ID] : 0xff;
+			sc->sc_bus_id[i] =
+			    (sc->sc_scratch[GDT_GETCH_SIOP_ID] < GDT_MAXID) ?
+			    sc->sc_scratch[GDT_GETCH_SIOP_ID] : 0xff;
 		}
-		gdt->sc_bus_cnt = i;
+		sc->sc_bus_cnt = i;
 	}
 
 	/* Read cache configuration */
-	if (!gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL, GDT_CACHE_INFO,
+	if (!gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_IOCTL, GDT_CACHE_INFO,
 	    GDT_INVALID_CHANNEL, GDT_CINFO_SZ)) {
-		printf("cannot get cache info, error %d\n", gdt->sc_status);
+		printf("cannot get cache info, error %d\n", sc->sc_status);
 		return (1);
 	}
-	gdt->sc_cpar.cp_version =
-	    gdt_dec32(gdt->sc_scratch + GDT_CPAR_VERSION);
-	gdt->sc_cpar.cp_state = gdt_dec16(gdt->sc_scratch + GDT_CPAR_STATE);
-	gdt->sc_cpar.cp_strategy =
-	    gdt_dec16(gdt->sc_scratch + GDT_CPAR_STRATEGY);
-	gdt->sc_cpar.cp_write_back =
-	    gdt_dec16(gdt->sc_scratch + GDT_CPAR_WRITE_BACK);
-	gdt->sc_cpar.cp_block_size =
-	    gdt_dec16(gdt->sc_scratch + GDT_CPAR_BLOCK_SIZE);
+	sc->sc_cpar.cp_version =
+	    gdt_dec32(sc->sc_scratch + GDT_CPAR_VERSION);
+	sc->sc_cpar.cp_state = gdt_dec16(sc->sc_scratch + GDT_CPAR_STATE);
+	sc->sc_cpar.cp_strategy =
+	    gdt_dec16(sc->sc_scratch + GDT_CPAR_STRATEGY);
+	sc->sc_cpar.cp_write_back =
+	    gdt_dec16(sc->sc_scratch + GDT_CPAR_WRITE_BACK);
+	sc->sc_cpar.cp_block_size =
+	    gdt_dec16(sc->sc_scratch + GDT_CPAR_BLOCK_SIZE);
 
 	/* Read board information and features */
-	gdt->sc_more_proc = 0;
-	if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL, GDT_BOARD_INFO,
+	sc->sc_more_proc = 0;
+	if (gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_IOCTL, GDT_BOARD_INFO,
 	    GDT_INVALID_CHANNEL, GDT_BINFO_SZ)) {
 		/* XXX A lot of these assignments can probably go later */
-		gdt->sc_binfo.bi_ser_no =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_SER_NO);
-		bcopy(gdt->sc_scratch + GDT_BINFO_OEM_ID,
-		    gdt->sc_binfo.bi_oem_id, sizeof gdt->sc_binfo.bi_oem_id);
-		gdt->sc_binfo.bi_ep_flags =
-		    gdt_dec16(gdt->sc_scratch + GDT_BINFO_EP_FLAGS);
-		gdt->sc_binfo.bi_proc_id =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_PROC_ID);
-		gdt->sc_binfo.bi_memsize =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_MEMSIZE);
-		gdt->sc_binfo.bi_mem_banks =
-		    gdt->sc_scratch[GDT_BINFO_MEM_BANKS];
-		gdt->sc_binfo.bi_chan_type =
-		    gdt->sc_scratch[GDT_BINFO_CHAN_TYPE];
-		gdt->sc_binfo.bi_chan_count =
-		    gdt->sc_scratch[GDT_BINFO_CHAN_COUNT];
-		gdt->sc_binfo.bi_rdongle_pres =
-		    gdt->sc_scratch[GDT_BINFO_RDONGLE_PRES];
-		gdt->sc_binfo.bi_epr_fw_ver =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_EPR_FW_VER);
-		gdt->sc_binfo.bi_upd_fw_ver =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_UPD_FW_VER);
-		gdt->sc_binfo.bi_upd_revision =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_UPD_REVISION);
-		bcopy(gdt->sc_scratch + GDT_BINFO_TYPE_STRING,
-		    gdt->sc_binfo.bi_type_string,
-		    sizeof gdt->sc_binfo.bi_type_string);
-		bcopy(gdt->sc_scratch + GDT_BINFO_RAID_STRING,
-		    gdt->sc_binfo.bi_raid_string,
-		    sizeof gdt->sc_binfo.bi_raid_string);
-		gdt->sc_binfo.bi_update_pres =
-		    gdt->sc_scratch[GDT_BINFO_UPDATE_PRES];
-		gdt->sc_binfo.bi_xor_pres =
-		    gdt->sc_scratch[GDT_BINFO_XOR_PRES];
-		gdt->sc_binfo.bi_prom_type =
-		    gdt->sc_scratch[GDT_BINFO_PROM_TYPE];
-		gdt->sc_binfo.bi_prom_count =
-		    gdt->sc_scratch[GDT_BINFO_PROM_COUNT];
-		gdt->sc_binfo.bi_dup_pres =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_DUP_PRES);
-		gdt->sc_binfo.bi_chan_pres =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_CHAN_PRES);
-		gdt->sc_binfo.bi_mem_pres =
-		    gdt_dec32(gdt->sc_scratch + GDT_BINFO_MEM_PRES);
-		gdt->sc_binfo.bi_ft_bus_system =
-		    gdt->sc_scratch[GDT_BINFO_FT_BUS_SYSTEM];
-		gdt->sc_binfo.bi_subtype_valid =
-		    gdt->sc_scratch[GDT_BINFO_SUBTYPE_VALID];
-		gdt->sc_binfo.bi_board_subtype =
-		    gdt->sc_scratch[GDT_BINFO_BOARD_SUBTYPE];
-		gdt->sc_binfo.bi_rampar_pres =
-		    gdt->sc_scratch[GDT_BINFO_RAMPAR_PRES];
+		sc->sc_binfo.bi_ser_no =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_SER_NO);
+		bcopy(sc->sc_scratch + GDT_BINFO_OEM_ID,
+		    sc->sc_binfo.bi_oem_id, sizeof sc->sc_binfo.bi_oem_id);
+		sc->sc_binfo.bi_ep_flags =
+		    gdt_dec16(sc->sc_scratch + GDT_BINFO_EP_FLAGS);
+		sc->sc_binfo.bi_proc_id =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_PROC_ID);
+		sc->sc_binfo.bi_memsize =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_MEMSIZE);
+		sc->sc_binfo.bi_mem_banks =
+		    sc->sc_scratch[GDT_BINFO_MEM_BANKS];
+		sc->sc_binfo.bi_chan_type =
+		    sc->sc_scratch[GDT_BINFO_CHAN_TYPE];
+		sc->sc_binfo.bi_chan_count =
+		    sc->sc_scratch[GDT_BINFO_CHAN_COUNT];
+		sc->sc_binfo.bi_rdongle_pres =
+		    sc->sc_scratch[GDT_BINFO_RDONGLE_PRES];
+		sc->sc_binfo.bi_epr_fw_ver =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_EPR_FW_VER);
+		sc->sc_binfo.bi_upd_fw_ver =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_UPD_FW_VER);
+		sc->sc_binfo.bi_upd_revision =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_UPD_REVISION);
+		bcopy(sc->sc_scratch + GDT_BINFO_TYPE_STRING,
+		    sc->sc_binfo.bi_type_string,
+		    sizeof sc->sc_binfo.bi_type_string);
+		bcopy(sc->sc_scratch + GDT_BINFO_RAID_STRING,
+		    sc->sc_binfo.bi_raid_string,
+		    sizeof sc->sc_binfo.bi_raid_string);
+		sc->sc_binfo.bi_update_pres =
+		    sc->sc_scratch[GDT_BINFO_UPDATE_PRES];
+		sc->sc_binfo.bi_xor_pres =
+		    sc->sc_scratch[GDT_BINFO_XOR_PRES];
+		sc->sc_binfo.bi_prom_type =
+		    sc->sc_scratch[GDT_BINFO_PROM_TYPE];
+		sc->sc_binfo.bi_prom_count =
+		    sc->sc_scratch[GDT_BINFO_PROM_COUNT];
+		sc->sc_binfo.bi_dup_pres =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_DUP_PRES);
+		sc->sc_binfo.bi_chan_pres =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_CHAN_PRES);
+		sc->sc_binfo.bi_mem_pres =
+		    gdt_dec32(sc->sc_scratch + GDT_BINFO_MEM_PRES);
+		sc->sc_binfo.bi_ft_bus_system =
+		    sc->sc_scratch[GDT_BINFO_FT_BUS_SYSTEM];
+		sc->sc_binfo.bi_subtype_valid =
+		    sc->sc_scratch[GDT_BINFO_SUBTYPE_VALID];
+		sc->sc_binfo.bi_board_subtype =
+		    sc->sc_scratch[GDT_BINFO_BOARD_SUBTYPE];
+		sc->sc_binfo.bi_rampar_pres =
+		    sc->sc_scratch[GDT_BINFO_RAMPAR_PRES];
 
-		if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
+		if (gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_IOCTL,
 		    GDT_BOARD_FEATURES, GDT_INVALID_CHANNEL, GDT_BFEAT_SZ)) {
-			gdt->sc_bfeat.bf_chaining =
-			    gdt->sc_scratch[GDT_BFEAT_CHAINING];
-			gdt->sc_bfeat.bf_striping =
-			    gdt->sc_scratch[GDT_BFEAT_STRIPING];
-			gdt->sc_bfeat.bf_mirroring =
-			    gdt->sc_scratch[GDT_BFEAT_MIRRORING];
-			gdt->sc_bfeat.bf_raid =
-			    gdt->sc_scratch[GDT_BFEAT_RAID];
-			gdt->sc_more_proc = 1;
+			sc->sc_bfeat.bf_chaining =
+			    sc->sc_scratch[GDT_BFEAT_CHAINING];
+			sc->sc_bfeat.bf_striping =
+			    sc->sc_scratch[GDT_BFEAT_STRIPING];
+			sc->sc_bfeat.bf_mirroring =
+			    sc->sc_scratch[GDT_BFEAT_MIRRORING];
+			sc->sc_bfeat.bf_raid =
+			    sc->sc_scratch[GDT_BFEAT_RAID];
+			sc->sc_more_proc = 1;
 		}
 	} else {
 		/* XXX Not implemented yet */
 	}
 
 	/* Read more information */
-	if (gdt->sc_more_proc) {
+	if (sc->sc_more_proc) {
 		int bus, j;
 		/* physical drives, channel addresses */
 		/* step 1: get magical bus number from firmware */
-		gdt_enc32(gdt->sc_scratch + GDT_IOC_VERSION, GDT_IOC_NEWEST);
-		gdt->sc_scratch[GDT_IOC_LIST_ENTRIES] = GDT_MAXBUS;
-		gdt->sc_scratch[GDT_IOC_FIRST_CHAN] = 0;
-		gdt->sc_scratch[GDT_IOC_LAST_CHAN] = GDT_MAXBUS - 1;
-		gdt_enc32(gdt->sc_scratch + GDT_IOC_LIST_OFFSET, GDT_IOC_HDR_SZ);
-		if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
+		gdt_enc32(sc->sc_scratch + GDT_IOC_VERSION, GDT_IOC_NEWEST);
+		sc->sc_scratch[GDT_IOC_LIST_ENTRIES] = GDT_MAXBUS;
+		sc->sc_scratch[GDT_IOC_FIRST_CHAN] = 0;
+		sc->sc_scratch[GDT_IOC_LAST_CHAN] = GDT_MAXBUS - 1;
+		gdt_enc32(sc->sc_scratch + GDT_IOC_LIST_OFFSET, GDT_IOC_HDR_SZ);
+		if (gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_IOCTL,
 		    GDT_IOCHAN_DESC, GDT_INVALID_CHANNEL,
 		    GDT_IOC_HDR_SZ + GDT_IOC_SZ * GDT_MAXBUS)) {
 			GDT_DPRINTF(GDT_D_INFO, ("method 1\n"));
-			for (bus = 0; bus < gdt->sc_bus_cnt; bus++) {
-				gdt->sc_raw[bus].ra_address =
-				    gdt_dec32(gdt->sc_scratch +
+			for (bus = 0; bus < sc->sc_bus_cnt; bus++) {
+				sc->sc_raw[bus].ra_address =
+				    gdt_dec32(sc->sc_scratch +
 				    GDT_IOC_HDR_SZ +
 				    GDT_IOC_SZ * bus +
 				    GDT_IOC_ADDRESS);
-				gdt->sc_raw[bus].ra_local_no =
-				    gdt_dec8(gdt->sc_scratch +
+				sc->sc_raw[bus].ra_local_no =
+				    gdt_dec8(sc->sc_scratch +
 				    GDT_IOC_HDR_SZ +
 				    GDT_IOC_SZ * bus +
 				    GDT_IOC_LOCAL_NO);
 				GDT_DPRINTF(GDT_D_INFO, (
 				    "bus: %d address: %x local: %x\n",
 				    bus,
-				    gdt->sc_raw[bus].ra_address,
-				    gdt->sc_raw[bus].ra_local_no));
+				    sc->sc_raw[bus].ra_address,
+				    sc->sc_raw[bus].ra_local_no));
 			}
 		} else {
 			GDT_DPRINTF(GDT_D_INFO, ("method 2\n"));
-			for (bus = 0; bus < gdt->sc_bus_cnt; bus++) {
-				gdt->sc_raw[bus].ra_address = GDT_IO_CHANNEL;
-				gdt->sc_raw[bus].ra_local_no = bus;
+			for (bus = 0; bus < sc->sc_bus_cnt; bus++) {
+				sc->sc_raw[bus].ra_address = GDT_IO_CHANNEL;
+				sc->sc_raw[bus].ra_local_no = bus;
 				GDT_DPRINTF(GDT_D_INFO, (
 				    "bus: %d address: %x local: %x\n",
 				    bus,
-				    gdt->sc_raw[bus].ra_address,
-				    gdt->sc_raw[bus].ra_local_no));
+				    sc->sc_raw[bus].ra_address,
+				    sc->sc_raw[bus].ra_local_no));
 			}
 		}
 		/* step 2: use magical bus number to get nr of phys disks */
-		for (bus = 0; bus < gdt->sc_bus_cnt; bus++) {
-			gdt_enc32(gdt->sc_scratch + GDT_GETCH_CHANNEL_NO,
-			    gdt->sc_raw[bus].ra_local_no);
-			if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL,
+		for (bus = 0; bus < sc->sc_bus_cnt; bus++) {
+			gdt_enc32(sc->sc_scratch + GDT_GETCH_CHANNEL_NO,
+			    sc->sc_raw[bus].ra_local_no);
+			if (gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_IOCTL,
 			    GDT_SCSI_CHAN_CNT | GDT_L_CTRL_PATTERN,
-			    gdt->sc_raw[bus].ra_address | GDT_INVALID_CHANNEL,
+			    sc->sc_raw[bus].ra_address | GDT_INVALID_CHANNEL,
 			    GDT_GETCH_SZ)) {
-				gdt->sc_raw[bus].ra_phys_cnt =
-				    gdt_dec32(gdt->sc_scratch +
+				sc->sc_raw[bus].ra_phys_cnt =
+				    gdt_dec32(sc->sc_scratch +
 				    GDT_GETCH_DRIVE_CNT);
 				GDT_DPRINTF(GDT_D_INFO, ("chan: %d disks: %d\n",
-				    bus, gdt->sc_raw[bus].ra_phys_cnt));
+				    bus, sc->sc_raw[bus].ra_phys_cnt));
 			}
 
 			/* step 3: get scsi disk nr */
-			if (gdt->sc_raw[bus].ra_phys_cnt > 0) {
-				gdt_enc32(gdt->sc_scratch +
+			if (sc->sc_raw[bus].ra_phys_cnt > 0) {
+				gdt_enc32(sc->sc_scratch +
 				    GDT_GETSCSI_CHAN,
-				    gdt->sc_raw[bus].ra_local_no);
-				gdt_enc32(gdt->sc_scratch +
+				    sc->sc_raw[bus].ra_local_no);
+				gdt_enc32(sc->sc_scratch +
 				    GDT_GETSCSI_CNT,
-				    gdt->sc_raw[bus].ra_phys_cnt);
-				if (gdt_internal_cmd(gdt, GDT_CACHESERVICE,
+				    sc->sc_raw[bus].ra_phys_cnt);
+				if (gdt_internal_cmd(sc, GDT_CACHESERVICE,
 				    GDT_IOCTL,
 				    GDT_SCSI_DR_LIST | GDT_L_CTRL_PATTERN,
-				    gdt->sc_raw[bus].ra_address |
+				    sc->sc_raw[bus].ra_address |
 				    GDT_INVALID_CHANNEL,
 				    GDT_GETSCSI_SZ))
 					for (j = 0;
-					    j < gdt->sc_raw[bus].ra_phys_cnt;
+					    j < sc->sc_raw[bus].ra_phys_cnt;
 					    j++) {
-						gdt->sc_raw[bus].ra_id_list[j] =
-						    gdt_dec32(gdt->sc_scratch +
+						sc->sc_raw[bus].ra_id_list[j] =
+						    gdt_dec32(sc->sc_scratch +
 						    GDT_GETSCSI_LIST +
 						    GDT_GETSCSI_LIST_SZ * j);
 						GDT_DPRINTF(GDT_D_INFO,
 						    ("  diskid: %d\n",
-						    gdt->sc_raw[bus].ra_id_list[j]));
+						    sc->sc_raw[bus].ra_id_list[j]));
 					}
 				else
-					gdt->sc_raw[bus].ra_phys_cnt = 0;
+					sc->sc_raw[bus].ra_phys_cnt = 0;
 			}
 			/* add found disks to grand total */
-			gdt->sc_total_disks += gdt->sc_raw[bus].ra_phys_cnt;
+			sc->sc_total_disks += sc->sc_raw[bus].ra_phys_cnt;
 		}
-	} /* if (gdt->sc_more_proc) */
+	} /* if (sc->sc_more_proc) */
 
-	if (!gdt_internal_cmd(gdt, GDT_SCSIRAWSERVICE, GDT_INIT, 0, 0, 0)) {
+	if (!gdt_internal_cmd(sc, GDT_SCSIRAWSERVICE, GDT_INIT, 0, 0, 0)) {
 		printf("raw service initialization error %d\n",
-		    gdt->sc_status);
+		    sc->sc_status);
 		return (1);
 	}
 
 	/* Set/get features raw service (scatter/gather) */
-	gdt->sc_raw_feat = 0;
-	if (gdt_internal_cmd(gdt, GDT_SCSIRAWSERVICE, GDT_SET_FEAT,
+	sc->sc_raw_feat = 0;
+	if (gdt_internal_cmd(sc, GDT_SCSIRAWSERVICE, GDT_SET_FEAT,
 	    GDT_SCATTER_GATHER, 0, 0))
-		if (gdt_internal_cmd(gdt, GDT_SCSIRAWSERVICE, GDT_GET_FEAT, 0,
+		if (gdt_internal_cmd(sc, GDT_SCSIRAWSERVICE, GDT_GET_FEAT, 0,
 		    0, 0))
-			gdt->sc_raw_feat = gdt->sc_info;
+			sc->sc_raw_feat = sc->sc_info;
 
 	/* Set/get features cache service (scatter/gather) */
-	gdt->sc_cache_feat = 0;
-	if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_SET_FEAT, 0,
+	sc->sc_cache_feat = 0;
+	if (gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_SET_FEAT, 0,
 	    GDT_SCATTER_GATHER, 0))
-		if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_GET_FEAT, 0, 0,
+		if (gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_GET_FEAT, 0, 0,
 		    0))
-			gdt->sc_cache_feat = gdt->sc_info;
+			sc->sc_cache_feat = sc->sc_info;
 
 	/* XXX Linux reserve drives here, potentially */
 
-	gdt->sc_ndevs = 0;
+	sc->sc_ndevs = 0;
 	/* Scan for cache devices */
 	for (i = 0; i < cdev_cnt && i < GDT_MAX_HDRIVES; i++)
-		if (gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_INFO, i, 0,
+		if (gdt_internal_cmd(sc, GDT_CACHESERVICE, GDT_INFO, i, 0,
 		    0)) {
-			gdt->sc_hdr[i].hd_present = 1;
-			gdt->sc_hdr[i].hd_size = gdt->sc_info;
+			sc->sc_hdr[i].hd_present = 1;
+			sc->sc_hdr[i].hd_size = sc->sc_info;
 
-			if (gdt->sc_hdr[i].hd_size > 0)
-				gdt->sc_ndevs++;
+			if (sc->sc_hdr[i].hd_size > 0)
+				sc->sc_ndevs++;
 
 			/*
 			 * Evaluate mapping (sectors per head, heads per cyl)
 			 */
-			gdt->sc_hdr[i].hd_size &= ~GDT_SECS32;
-			if (gdt->sc_info2 == 0)
-				gdt_eval_mapping(gdt->sc_hdr[i].hd_size,
+			sc->sc_hdr[i].hd_size &= ~GDT_SECS32;
+			if (sc->sc_info2 == 0)
+				gdt_eval_mapping(sc->sc_hdr[i].hd_size,
 				    &drv_cyls, &drv_hds, &drv_secs);
 			else {
-				drv_hds = gdt->sc_info2 & 0xff;
-				drv_secs = (gdt->sc_info2 >> 8) & 0xff;
-				drv_cyls = gdt->sc_hdr[i].hd_size / drv_hds /
+				drv_hds = sc->sc_info2 & 0xff;
+				drv_secs = (sc->sc_info2 >> 8) & 0xff;
+				drv_cyls = sc->sc_hdr[i].hd_size / drv_hds /
 				    drv_secs;
 			}
-			gdt->sc_hdr[i].hd_heads = drv_hds;
-			gdt->sc_hdr[i].hd_secs = drv_secs;
+			sc->sc_hdr[i].hd_heads = drv_hds;
+			sc->sc_hdr[i].hd_secs = drv_secs;
 			/* Round the size */
-			gdt->sc_hdr[i].hd_size = drv_cyls * drv_hds * drv_secs;
+			sc->sc_hdr[i].hd_size = drv_cyls * drv_hds * drv_secs;
 
-			if (gdt_internal_cmd(gdt, GDT_CACHESERVICE,
+			if (gdt_internal_cmd(sc, GDT_CACHESERVICE,
 			    GDT_DEVTYPE, i, 0, 0))
-				gdt->sc_hdr[i].hd_devtype = gdt->sc_info;
+				sc->sc_hdr[i].hd_devtype = sc->sc_info;
 		}
 
-	if (gdt->sc_ndevs == 0)
-		gdt->sc_link.openings = 0;
+	if (sc->sc_ndevs == 0)
+		sc->sc_link.openings = 0;
 	else
-		gdt->sc_link.openings = (GDT_MAXCMDS - GDT_CMD_RESERVE) /
-		    gdt->sc_ndevs;
+		sc->sc_link.openings = (GDT_MAXCMDS - GDT_CMD_RESERVE) /
+		    sc->sc_ndevs;
 
 	printf("dpmem %llx %d-bus %d cache device%s\n",
-	    (long long)gdt->sc_dpmembase,
-	    gdt->sc_bus_cnt, cdev_cnt, cdev_cnt == 1 ? "" : "s");
+	    (long long)sc->sc_dpmembase,
+	    sc->sc_bus_cnt, cdev_cnt, cdev_cnt == 1 ? "" : "s");
 	printf("%s: ver %x, cache %s, strategy %d, writeback %s, blksz %d\n",
-	    DEVNAME(gdt), gdt->sc_cpar.cp_version,
-	    gdt->sc_cpar.cp_state ? "on" : "off", gdt->sc_cpar.cp_strategy,
-	    gdt->sc_cpar.cp_write_back ? "on" : "off",
-	    gdt->sc_cpar.cp_block_size);
+	    DEVNAME(sc), sc->sc_cpar.cp_version,
+	    sc->sc_cpar.cp_state ? "on" : "off", sc->sc_cpar.cp_strategy,
+	    sc->sc_cpar.cp_write_back ? "on" : "off",
+	    sc->sc_cpar.cp_block_size);
 #if 1
-	printf("%s: raw feat %x cache feat %x\n", DEVNAME(gdt),
-	    gdt->sc_raw_feat, gdt->sc_cache_feat);
+	printf("%s: raw feat %x cache feat %x\n", DEVNAME(sc),
+	    sc->sc_raw_feat, sc->sc_cache_feat);
 #endif
 
 #if NBIO > 0
-	if (bio_register(&gdt->sc_dev, gdt_ioctl) != 0)
-		panic("%s: controller registration failed", DEVNAME(gdt));
+	if (bio_register(&sc->sc_dev, gdt_ioctl) != 0)
+		panic("%s: controller registration failed", DEVNAME(sc));
 #endif
 	gdt_cnt++;
 
 	bzero(&saa, sizeof(saa));
-	saa.saa_sc_link = &gdt->sc_link;
+	saa.saa_sc_link = &sc->sc_link;
 
-	config_found(&gdt->sc_dev, &saa, scsiprint);
+	config_found(&sc->sc_dev, &saa, scsiprint);
 
-	gdt->sc_raw_link = malloc(gdt->sc_bus_cnt * sizeof (struct scsi_link),
+	sc->sc_raw_link = malloc(sc->sc_bus_cnt * sizeof (struct scsi_link),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (gdt->sc_raw_link == NULL)
+	if (sc->sc_raw_link == NULL)
 		panic("gdt_attach");
 
-	for (i = 0; i < gdt->sc_bus_cnt; i++) {
+	for (i = 0; i < sc->sc_bus_cnt; i++) {
 		/* Fill in the prototype scsi_link. */
-		gdt->sc_raw_link[i].adapter_softc = gdt;
-		gdt->sc_raw_link[i].adapter = &gdt_raw_switch;
-		gdt->sc_raw_link[i].adapter_target = 7;
-		gdt->sc_raw_link[i].device = &gdt_dev;
-		gdt->sc_raw_link[i].openings = 4;	/* XXX a guess */
-		gdt->sc_raw_link[i].adapter_buswidth =
-		    (gdt->sc_class & GDT_FC) ? GDT_MAXID : 16;	/* XXX */
+		sc->sc_raw_link[i].adapter_softc = sc;
+		sc->sc_raw_link[i].adapter = &gdt_raw_switch;
+		sc->sc_raw_link[i].adapter_target = 7;
+		sc->sc_raw_link[i].device = &gdt_dev;
+		sc->sc_raw_link[i].openings = 4;	/* XXX a guess */
+		sc->sc_raw_link[i].adapter_buswidth =
+		    (sc->sc_class & GDT_FC) ? GDT_MAXID : 16;	/* XXX */
 
 		bzero(&saa, sizeof(saa));
-		saa.saa_sc_link = &gdt->sc_raw_link[i];
+		saa.saa_sc_link = &sc->sc_raw_link[i];
 
-		config_found(&gdt->sc_dev, &saa, scsiprint);
+		config_found(&sc->sc_dev, &saa, scsiprint);
 	}
 
 	gdt_polling = 0;
@@ -516,9 +515,7 @@ gdt_attach(gdt)
 }
 
 void
-gdt_eval_mapping(size, cyls, heads, secs)
-	u_int32_t size;
-	int *cyls, *heads, *secs;
+gdt_eval_mapping(u_int32_t size, int *cyls, int *heads, int *secs)
 {
 	*cyls = size / GDT_HEADS / GDT_SECS;
 	if (*cyls < GDT_MAXCYLS) {
@@ -545,37 +542,33 @@ gdt_eval_mapping(size, cyls, heads, secs)
  * the freelist at this time.
  */
 void
-gdt_enqueue(gdt, xs, infront)
-	struct gdt_softc *gdt;
-	struct scsi_xfer *xs;
-	int infront;
+gdt_enqueue(struct gdt_softc *sc, struct scsi_xfer *xs, int infront)
 {
-	if (infront || LIST_FIRST(&gdt->sc_queue) == NULL) {
-		if (LIST_FIRST(&gdt->sc_queue) == NULL)
-			gdt->sc_queuelast = xs;
-		LIST_INSERT_HEAD(&gdt->sc_queue, xs, free_list);
+	if (infront || LIST_FIRST(&sc->sc_queue) == NULL) {
+		if (LIST_FIRST(&sc->sc_queue) == NULL)
+			sc->sc_queuelast = xs;
+		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
 		return;
 	}
-	LIST_INSERT_AFTER(gdt->sc_queuelast, xs, free_list);
-	gdt->sc_queuelast = xs;
+	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
+	sc->sc_queuelast = xs;
 }
 
 /*
  * Pull a command off the front of the driver queue.
  */
 struct scsi_xfer *
-gdt_dequeue(gdt)
-	struct gdt_softc *gdt;
+gdt_dequeue(struct gdt_softc *sc)
 {
 	struct scsi_xfer *xs;
 
-	xs = LIST_FIRST(&gdt->sc_queue);
+	xs = LIST_FIRST(&sc->sc_queue);
 	if (xs == NULL)
 		return (NULL);
 	LIST_REMOVE(xs, free_list);
 
-	if (LIST_FIRST(&gdt->sc_queue) == NULL)
-		gdt->sc_queuelast = NULL;
+	if (LIST_FIRST(&sc->sc_queue) == NULL)
+		sc->sc_queuelast = NULL;
 
 	return (xs);
 }
@@ -585,11 +578,10 @@ gdt_dequeue(gdt)
  * XXX Polled operation is not yet complete.  What kind of locking do we need?
  */
 int
-gdt_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+gdt_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct gdt_softc *gdt = link->adapter_softc;
+	struct gdt_softc *sc = link->adapter_softc;
 	u_int8_t target = link->target;
 	struct gdt_ccb *ccb;
 #if 0
@@ -606,7 +598,7 @@ gdt_scsi_cmd(xs)
 
 	xs->error = XS_NOERROR;
 
-	if (target >= GDT_MAX_HDRIVES || !gdt->sc_hdr[target].hd_present ||
+	if (target >= GDT_MAX_HDRIVES || !sc->sc_hdr[target].hd_present ||
 	    link->lun != 0) {
 		/*
 		 * XXX Should be XS_SENSE but that would require setting up a
@@ -623,22 +615,22 @@ gdt_scsi_cmd(xs)
 	s = splbio();
 
 	/* Don't double enqueue if we came from gdt_chain. */
-	if (xs != LIST_FIRST(&gdt->sc_queue))
-		gdt_enqueue(gdt, xs, 0);
+	if (xs != LIST_FIRST(&sc->sc_queue))
+		gdt_enqueue(sc, xs, 0);
 
-	while ((xs = gdt_dequeue(gdt)) != NULL) {
+	while ((xs = gdt_dequeue(sc)) != NULL) {
 		xs->error = XS_NOERROR;
 		ccb = NULL;
 		link = xs->sc_link;
 		target = link->target;
  
 		if (!gdt_polling && !(xs->flags & SCSI_POLL) &&
-		    gdt->sc_test_busy(gdt)) {
+		    sc->sc_test_busy(sc)) {
 			/*
 			 * Put it back in front.  XXX Should we instead
 			 * set xs->error to XS_BUSY?
 			 */
-			gdt_enqueue(gdt, xs, 1);
+			gdt_enqueue(sc, xs, 1);
 			break;
 		}
 
@@ -682,7 +674,7 @@ gdt_scsi_cmd(xs)
 			/*
 			 * A new command chain, start from the beginning.
 			 */
-			gdt->sc_cmd_off = 0;
+			sc->sc_cmd_off = 0;
 
 			if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
 				/* A read or write operation. */
@@ -697,14 +689,14 @@ gdt_scsi_cmd(xs)
 					blockno = _4btol(rwb->addr);
 					blockcnt = _2btol(rwb->length);
 				}
-				if (blockno >= gdt->sc_hdr[target].hd_size ||
+				if (blockno >= sc->sc_hdr[target].hd_size ||
 				    blockno + blockcnt >
-				    gdt->sc_hdr[target].hd_size) {
+				    sc->sc_hdr[target].hd_size) {
 					printf(
 					    "%s: out of bounds %u-%u >= %u\n",
-					    DEVNAME(gdt), blockno,
+					    DEVNAME(sc), blockno,
 					    blockcnt,
-					    gdt->sc_hdr[target].hd_size);
+					    sc->sc_hdr[target].hd_size);
 					/*
 					 * XXX Should be XS_SENSE but that
 					 * would require setting up a faked
@@ -717,7 +709,7 @@ gdt_scsi_cmd(xs)
 				}
 			}
 
-			ccb = gdt_get_ccb(gdt, xs->flags);
+			ccb = gdt_get_ccb(sc, xs->flags);
 			/*
 			 * We are out of commands, try again in a little while.
 			 */
@@ -735,13 +727,13 @@ gdt_scsi_cmd(xs)
 
 			if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
 				xfer = ccb->gc_dmamap_xfer;
-				error = bus_dmamap_load(gdt->sc_dmat, xfer,
+				error = bus_dmamap_load(sc->sc_dmat, xfer,
 				    xs->data, xs->datalen, NULL,
 				    (xs->flags & SCSI_NOSLEEP) ?
 				    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 				if (error) {
 					printf("%s: gdt_scsi_cmd: ",
-					    DEVNAME(gdt));
+					    DEVNAME(sc));
 					if (error == EFBIG)
 						printf(
 						    "more than %d dma segs\n",
@@ -751,26 +743,26 @@ gdt_scsi_cmd(xs)
 						    "loading dma map\n",
 						    error);
 
-					gdt_free_ccb(gdt, ccb);
+					gdt_free_ccb(sc, ccb);
 					xs->error = XS_DRIVER_STUFFUP;
 					xs->flags |= ITSDONE;
 					scsi_done(xs);
 					goto ready;
 				}
-				bus_dmamap_sync(gdt->sc_dmat, xfer, 0,
+				bus_dmamap_sync(sc->sc_dmat, xfer, 0,
 				    xfer->dm_mapsize,
 				    (xs->flags & SCSI_DATA_IN) ?
 				    BUS_DMASYNC_PREREAD :
 				    BUS_DMASYNC_PREWRITE);
 			}
 
-			gdt_enqueue_ccb(gdt, ccb);
+			gdt_enqueue_ccb(sc, ccb);
 			/* XXX what if enqueue did not start a transfer? */
 			if (gdt_polling || (xs->flags & SCSI_POLL)) {
-				if (!gdt_wait(gdt, ccb, ccb->gc_timeout)) {
+				if (!gdt_wait(sc, ccb, ccb->gc_timeout)) {
 					splx(s);
 					printf("%s: command %d timed out\n",
-					    DEVNAME(gdt),
+					    DEVNAME(sc),
 					    ccb->gc_cmd_index);
 					return (TRY_AGAIN_LATER);
 				}
@@ -795,12 +787,11 @@ gdt_scsi_cmd(xs)
 
 /* XXX Currently only for cacheservice, returns 0 if busy */
 int
-gdt_exec_ccb(ccb)
-	struct gdt_ccb *ccb;
+gdt_exec_ccb(struct gdt_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->gc_xs;
 	struct scsi_link *link = xs->sc_link;
-	struct gdt_softc *gdt = link->adapter_softc;
+	struct gdt_softc *sc = link->adapter_softc;
 	u_int8_t target = link->target;
 	u_int32_t sg_canz;
 	bus_dmamap_t xfer;
@@ -813,18 +804,18 @@ gdt_exec_ccb(ccb)
 #endif
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_exec_ccb(%p, %p) ", xs, ccb));
 
-	gdt->sc_cmd_cnt = 0;
+	sc->sc_cmd_cnt = 0;
 
 	/*
 	 * XXX Yeah I know it's an always-true condition, but that may change
 	 * later.
 	 */
-	if (gdt->sc_cmd_cnt == 0)
-		gdt->sc_set_sema0(gdt);
+	if (sc->sc_cmd_cnt == 0)
+		sc->sc_set_sema0(sc);
 
-	gdt_enc32(gdt->sc_cmd + GDT_CMD_COMMANDINDEX, ccb->gc_cmd_index);
-	gdt_enc32(gdt->sc_cmd + GDT_CMD_BOARDNODE, GDT_LOCALBOARD);
-	gdt_enc16(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DEVICENO,
+	gdt_enc32(sc->sc_cmd + GDT_CMD_COMMANDINDEX, ccb->gc_cmd_index);
+	gdt_enc32(sc->sc_cmd + GDT_CMD_BOARDNODE, GDT_LOCALBOARD);
+	gdt_enc16(sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DEVICENO,
 	    target);
 
 	switch (xs->cmd->opcode) {
@@ -835,9 +826,9 @@ gdt_exec_ccb(ccb)
 		} else {
 			GDT_DPRINTF(GDT_D_CMD,
 			    ("SYNCHRONIZE CACHE tgt %d ", target));
-			gdt->sc_cmd[GDT_CMD_OPCODE] = GDT_FLUSH;
+			sc->sc_cmd[GDT_CMD_OPCODE] = GDT_FLUSH;
 		}
-		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKNO,
+		gdt_enc32(sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKNO,
 		    1);
 		sg_canz = 0;
 		break;
@@ -845,33 +836,33 @@ gdt_exec_ccb(ccb)
 	case WRITE_COMMAND:
 	case WRITE_BIG:
 		/* XXX WRITE_THR could be supported too */
-		gdt->sc_cmd[GDT_CMD_OPCODE] = GDT_WRITE;
+		sc->sc_cmd[GDT_CMD_OPCODE] = GDT_WRITE;
 		break;
 
 	case READ_COMMAND:
 	case READ_BIG:
-		gdt->sc_cmd[GDT_CMD_OPCODE] = GDT_READ;
+		sc->sc_cmd[GDT_CMD_OPCODE] = GDT_READ;
 		break;
 	}
 
 	if (xs->cmd->opcode != PREVENT_ALLOW &&
 	    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKNO,
+		gdt_enc32(sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKNO,
 		    ccb->gc_blockno);
-		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKCNT,
+		gdt_enc32(sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKCNT,
 		    ccb->gc_blockcnt);
 
 		xfer = ccb->gc_dmamap_xfer;
-		if (gdt->sc_cache_feat & GDT_SCATTER_GATHER) {
+		if (sc->sc_cache_feat & GDT_SCATTER_GATHER) {
 			gdt_enc32(
-			    gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
+			    sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
 			    0xffffffff);
 			for (i = 0; i < xfer->dm_nsegs; i++) {
-				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+				gdt_enc32(sc->sc_cmd + GDT_CMD_UNION +
 				    GDT_CACHE_SG_LST + i * GDT_SG_SZ +
 				    GDT_SG_PTR,
 				    xfer->dm_segs[i].ds_addr);
-				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+				gdt_enc32(sc->sc_cmd + GDT_CMD_UNION +
 				    GDT_CACHE_SG_LST + i * GDT_SG_SZ +
 				    GDT_SG_LEN,
 				    xfer->dm_segs[i].ds_len);
@@ -882,27 +873,27 @@ gdt_exec_ccb(ccb)
 			}
 			sg_canz = xfer->dm_nsegs;
 			gdt_enc32(
-			    gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_LST +
+			    sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_LST +
 			    sg_canz * GDT_SG_SZ + GDT_SG_LEN, 0);
 		} else {
 			/* XXX Hardly correct */
 			gdt_enc32(
-			    gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
+			    sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
 			    xfer->dm_segs[0].ds_addr);
 			sg_canz = 0;
 		}
 	}
-	gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_CANZ, sg_canz);
+	gdt_enc32(sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_CANZ, sg_canz);
 
-	gdt->sc_cmd_len =
+	sc->sc_cmd_len =
 	    roundup(GDT_CMD_UNION + GDT_CACHE_SG_LST + sg_canz * GDT_SG_SZ,
 	    sizeof (u_int32_t));
 
-	if (gdt->sc_cmd_cnt > 0 &&
-	    gdt->sc_cmd_off + gdt->sc_cmd_len + GDT_DPMEM_COMMAND_OFFSET >
-	    gdt->sc_ic_all_size) {
-		printf("%s: DPMEM overflow\n", DEVNAME(gdt));
-		gdt_free_ccb(gdt, ccb);
+	if (sc->sc_cmd_cnt > 0 &&
+	    sc->sc_cmd_off + sc->sc_cmd_len + GDT_DPMEM_COMMAND_OFFSET >
+	    sc->sc_ic_all_size) {
+		printf("%s: DPMEM overflow\n", DEVNAME(sc));
+		gdt_free_ccb(sc, ccb);
 		xs->error = XS_BUSY;
 #if 1 /* XXX */
 		__level--;
@@ -910,8 +901,8 @@ gdt_exec_ccb(ccb)
 		return (0);
 	}
 
-	gdt->sc_copy_cmd(gdt, ccb);
-	gdt->sc_release_event(gdt, ccb);
+	sc->sc_copy_cmd(sc, ccb);
+	sc->sc_release_event(sc, ccb);
 
 	xs->error = XS_NOERROR;
 	xs->resid = 0;
@@ -922,10 +913,7 @@ gdt_exec_ccb(ccb)
 }
 
 void
-gdt_copy_internal_data(xs, data, size)
-	struct scsi_xfer *xs;
-	u_int8_t *data;
-	size_t size;
+gdt_copy_internal_data(struct scsi_xfer *xs, u_int8_t *data, size_t size)
 {
 	size_t copy_cnt;
 
@@ -941,11 +929,10 @@ gdt_copy_internal_data(xs, data, size)
 
 /* Emulated SCSI operation on cache device */
 void
-gdt_internal_cache_cmd(xs)
-	struct scsi_xfer *xs;
+gdt_internal_cache_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct gdt_softc *gdt = link->adapter_softc;
+	struct gdt_softc *sc = link->adapter_softc;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;
 	struct scsi_read_cap_data rcd;
@@ -976,12 +963,12 @@ gdt_internal_cache_cmd(xs)
 
 	case INQUIRY:
 		GDT_DPRINTF(GDT_D_CMD, ("INQUIRY tgt %d devtype %x ", target,
-		    gdt->sc_hdr[target].hd_devtype));
+		    sc->sc_hdr[target].hd_devtype));
 		bzero(&inq, sizeof inq);
 		inq.device =
-		    (gdt->sc_hdr[target].hd_devtype & 4) ? T_CDROM : T_DIRECT;
+		    (sc->sc_hdr[target].hd_devtype & 4) ? T_CDROM : T_DIRECT;
 		inq.dev_qual2 =
-		    (gdt->sc_hdr[target].hd_devtype & 1) ? SID_REMOVABLE : 0;
+		    (sc->sc_hdr[target].hd_devtype & 1) ? SID_REMOVABLE : 0;
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
@@ -995,7 +982,7 @@ gdt_internal_cache_cmd(xs)
 	case READ_CAPACITY:
 		GDT_DPRINTF(GDT_D_CMD, ("READ CAPACITY tgt %d ", target));
 		bzero(&rcd, sizeof rcd);
-		_lto4b(gdt->sc_hdr[target].hd_size - 1, rcd.addr);
+		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
 		_lto4b(GDT_SECTOR_SIZE, rcd.length);
 		gdt_copy_internal_data(xs, (u_int8_t *)&rcd, sizeof rcd);
 		break;
@@ -1012,11 +999,10 @@ gdt_internal_cache_cmd(xs)
 
 /* Start a raw SCSI operation */
 int
-gdt_raw_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+gdt_raw_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct gdt_softc *gdt = link->adapter_softc;
+	struct gdt_softc *sc = link->adapter_softc;
 	struct gdt_ccb *ccb;
 	int s;
 
@@ -1035,7 +1021,7 @@ gdt_raw_scsi_cmd(xs)
 		return (COMPLETE);
 	}
 
-	if ((ccb = gdt_get_ccb(gdt, xs->flags)) == NULL) {
+	if ((ccb = gdt_get_ccb(sc, xs->flags)) == NULL) {
 		GDT_DPRINTF(GDT_D_CMD, ("no ccb available for %p ", xs));
 		xs->error = XS_DRIVER_STUFFUP;
 		s = splbio();
@@ -1048,7 +1034,7 @@ gdt_raw_scsi_cmd(xs)
 	xs->flags |= ITSDONE;
 	s = splbio();
 	scsi_done(xs);
-	gdt_free_ccb(gdt, ccb);
+	gdt_free_ccb(sc, ccb);
 
 	splx(s);
 
@@ -1056,20 +1042,17 @@ gdt_raw_scsi_cmd(xs)
 }
 
 void
-gdt_clear_events(gdt)
-	struct gdt_softc *gdt;
+gdt_clear_events(struct gdt_softc *sc)
 {
-	GDT_DPRINTF(GDT_D_MISC, ("gdt_clear_events(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_MISC, ("gdt_clear_events(%p) ", sc));
 
 	/* XXX To be implemented */
 }
 
 int
-gdt_async_event(gdt, service)
-	struct gdt_softc *gdt;
-	int service;
+gdt_async_event(struct gdt_softc *sc, int service)
 {
-	GDT_DPRINTF(GDT_D_INTR, ("gdt_async_event(%p, %d) ", gdt, service));
+	GDT_DPRINTF(GDT_D_INTR, ("gdt_async_event(%p, %d) ", sc, service));
 
 	if (service == GDT_SCREENSERVICE) {
 		/* XXX To be implemented */
@@ -1081,21 +1064,18 @@ gdt_async_event(gdt, service)
 }
 
 int
-gdt_sync_event(gdt, service, index, xs)
-	struct gdt_softc *gdt;
-	int service;
-	u_int8_t index;
-	struct scsi_xfer *xs;
+gdt_sync_event(struct gdt_softc *sc, int service, u_int8_t index,
+    struct scsi_xfer *xs)
 {
 	GDT_DPRINTF(GDT_D_INTR,
-	    ("gdt_sync_event(%p, %d, %d, %p) ", gdt, service, index, xs));
+	    ("gdt_sync_event(%p, %d, %d, %p) ", sc, service, index, xs));
 
 	if (service == GDT_SCREENSERVICE) {
 		GDT_DPRINTF(GDT_D_INTR, ("service == GDT_SCREENSERVICE "));
 		/* XXX To be implemented */
 		return (0);
 	} else {
-		switch (gdt->sc_status) {
+		switch (sc->sc_status) {
 		case GDT_S_OK:
 			GDT_DPRINTF(GDT_D_INTR, ("sc_status == GDT_S_OK "));
 			/* XXX To be implemented */
@@ -1106,7 +1086,7 @@ gdt_sync_event(gdt, service, index, xs)
 			return (2);
 		default:
 			GDT_DPRINTF(GDT_D_INTR, ("sc_status is %d ",
-			    gdt->sc_status));
+			    sc->sc_status));
 			/* XXX To be implemented */
 			return (0);
 		}
@@ -1116,10 +1096,9 @@ gdt_sync_event(gdt, service, index, xs)
 }
 
 int
-gdt_intr(arg)
-	void *arg;
+gdt_intr(void *arg)
 {
-	struct gdt_softc *gdt = arg;
+	struct gdt_softc *sc = arg;
 	struct gdt_intr_ctx ctx;
 	int chain = 1;
 	int sync_val = 0;
@@ -1128,7 +1107,7 @@ gdt_intr(arg)
 	struct gdt_ccb *ccb;
 	int s;
 
-	GDT_DPRINTF(GDT_D_INTR, ("gdt_intr(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_INTR, ("gdt_intr(%p) ", sc));
 
 	/* If polling and we were not called from gdt_wait, just return */
 	if (gdt_polling && !gdt_from_wait)
@@ -1137,41 +1116,41 @@ gdt_intr(arg)
 	if (!gdt_polling)
 		s = splbio();
 
-	ctx.istatus = gdt->sc_get_status(gdt);
+	ctx.istatus = sc->sc_get_status(sc);
 	if (!ctx.istatus) {
 		if (!gdt_polling)
 			splx(s);
-		gdt->sc_status = GDT_S_NO_STATUS;
+		sc->sc_status = GDT_S_NO_STATUS;
 		return (0);
 	}
 
 	gdt_wait_index = 0;
 	ctx.service = ctx.info2 = 0;
 
-	gdt->sc_intr(gdt, &ctx);
+	sc->sc_intr(sc, &ctx);
 
-	gdt->sc_status = ctx.cmd_status;
-	gdt->sc_info = ctx.info;
-	gdt->sc_info2 = ctx.info2;
+	sc->sc_status = ctx.cmd_status;
+	sc->sc_info = ctx.info;
+	sc->sc_info2 = ctx.info2;
 
 	if (gdt_from_wait) {
-		gdt_wait_gdt = gdt;
+		gdt_wait_gdt = sc;
 		gdt_wait_index = ctx.istatus;
 	}
 
 	switch (ctx.istatus) {
 	case GDT_ASYNCINDEX:
-		gdt_async_event(gdt, ctx.service);
+		gdt_async_event(sc, ctx.service);
 		goto finish;
 
 	case GDT_SPEZINDEX:
 		printf("%s: uninitialized or unknown service (%d %d)\n",
-		    DEVNAME(gdt), ctx.info, ctx.info2);
+		    DEVNAME(sc), ctx.info, ctx.info2);
 		chain = 0;
 		goto finish;
 	}
 
-	ccb = &gdt->sc_ccbs[ctx.istatus - 2];
+	ccb = &sc->sc_ccbs[ctx.istatus - 2];
 	xs = ccb->gc_xs;
 	if (!gdt_polling)
 		timeout_del(&xs->stimeout);
@@ -1179,13 +1158,13 @@ gdt_intr(arg)
 	prev_cmd = ccb->gc_flags & GDT_GCF_CMD_MASK;
 	if (xs && xs->cmd->opcode != PREVENT_ALLOW &&
 	    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-		bus_dmamap_sync(gdt->sc_dmat, ccb->gc_dmamap_xfer, 0,
+		bus_dmamap_sync(sc->sc_dmat, ccb->gc_dmamap_xfer, 0,
 		    ccb->gc_dmamap_xfer->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(gdt->sc_dmat, ccb->gc_dmamap_xfer);
+		bus_dmamap_unload(sc->sc_dmat, ccb->gc_dmamap_xfer);
 	}
-	gdt_free_ccb(gdt, ccb);
+	gdt_free_ccb(sc, ccb);
 	switch (prev_cmd) {
 	case GDT_GCF_UNUSED:
 		/* XXX Not yet implemented */
@@ -1196,7 +1175,7 @@ gdt_intr(arg)
 		goto finish;
 	}
 
-	sync_val = gdt_sync_event(gdt, ctx.service, ctx.istatus, xs);
+	sync_val = gdt_sync_event(sc, ctx.service, ctx.istatus, xs);
 
  finish:
 	if (!gdt_polling)
@@ -1209,17 +1188,16 @@ gdt_intr(arg)
 		break;
 
 	case 2:
-		gdt_enqueue(gdt, xs, 0);
+		gdt_enqueue(sc, xs, 0);
 	}
 
 	if (chain)
-		gdt_chain(gdt);
+		gdt_chain(sc);
 	return (1);
 }
 
 void
-gdtminphys(bp)
-	struct buf *bp;
+gdtminphys(struct buf *bp)
 {
 	GDT_DPRINTF(GDT_D_MISC, ("gdtminphys(0x%x) ", bp));
 
@@ -1232,19 +1210,16 @@ gdtminphys(bp)
 }
 
 int
-gdt_wait(gdt, ccb, timeout)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
-	int timeout;
+gdt_wait(struct gdt_softc *sc, struct gdt_ccb *ccb, int timeout)
 {
 	int rv = 0;
 
 	GDT_DPRINTF(GDT_D_MISC,
-	    ("gdt_wait(%p, %p, %d) ", gdt, ccb, timeout));
+	    ("gdt_wait(%p, %p, %d) ", sc, ccb, timeout));
 
 	gdt_from_wait = 1;
 	do {
-		if (gdt_intr(gdt) && gdt == gdt_wait_gdt &&
+		if (gdt_intr(sc) && sc == gdt_wait_gdt &&
 		    ccb->gc_cmd_index == gdt_wait_index) {
 			rv = 1;
 			break;
@@ -1253,111 +1228,106 @@ gdt_wait(gdt, ccb, timeout)
 	} while (--timeout);
 	gdt_from_wait = 0;
 
-	while (gdt->sc_test_busy(gdt))
+	while (sc->sc_test_busy(sc))
 		DELAY(0);		/* XXX correct? */
 
 	return (rv);
 }
 
 int
-gdt_internal_cmd(gdt, service, opcode, arg1, arg2, arg3)
-	struct gdt_softc *gdt;
-	u_int8_t service;
-	u_int16_t opcode;
-	u_int32_t arg1, arg2, arg3;
+gdt_internal_cmd(struct gdt_softc *sc, u_int8_t service, u_int16_t opcode,
+    u_int32_t arg1, u_int32_t arg2, u_int32_t arg3)
 {
 	int retries;
 	struct gdt_ccb *ccb;
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_internal_cmd(%p, %d, %d, %d, %d, %d) ",
-	    gdt, service, opcode, arg1, arg2, arg3));
+	    sc, service, opcode, arg1, arg2, arg3));
 
-	bzero(gdt->sc_cmd, GDT_CMD_SZ);
+	bzero(sc->sc_cmd, GDT_CMD_SZ);
 
 	for (retries = GDT_RETRIES; ; ) {
-		ccb = gdt_get_ccb(gdt, SCSI_NOSLEEP);
+		ccb = gdt_get_ccb(sc, SCSI_NOSLEEP);
 		if (ccb == NULL) {
 			printf("%s: no free command index found\n",
-			    DEVNAME(gdt));
+			    DEVNAME(sc));
 			return (0);
 		}
 		ccb->gc_service = service;
 		gdt_ccb_set_cmd(ccb, GDT_GCF_INTERNAL);
 
-		gdt->sc_set_sema0(gdt);
-		gdt_enc32(gdt->sc_cmd + GDT_CMD_COMMANDINDEX,
+		sc->sc_set_sema0(sc);
+		gdt_enc32(sc->sc_cmd + GDT_CMD_COMMANDINDEX,
 		    ccb->gc_cmd_index);
-		gdt_enc16(gdt->sc_cmd + GDT_CMD_OPCODE, opcode);
-		gdt_enc32(gdt->sc_cmd + GDT_CMD_BOARDNODE, GDT_LOCALBOARD);
+		gdt_enc16(sc->sc_cmd + GDT_CMD_OPCODE, opcode);
+		gdt_enc32(sc->sc_cmd + GDT_CMD_BOARDNODE, GDT_LOCALBOARD);
 
 		switch (service) {
 		case GDT_CACHESERVICE:
 			if (opcode == GDT_IOCTL) {
-				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+				gdt_enc32(sc->sc_cmd + GDT_CMD_UNION +
 				    GDT_IOCTL_SUBFUNC, arg1);
-				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+				gdt_enc32(sc->sc_cmd + GDT_CMD_UNION +
 				    GDT_IOCTL_CHANNEL, arg2);
-				gdt_enc16(gdt->sc_cmd + GDT_CMD_UNION +
+				gdt_enc16(sc->sc_cmd + GDT_CMD_UNION +
 				    GDT_IOCTL_PARAM_SIZE, (u_int16_t)arg3);
-				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+				gdt_enc32(sc->sc_cmd + GDT_CMD_UNION +
 				    GDT_IOCTL_P_PARAM,
-				    gdt->sc_scratch_seg.ds_addr);
+				    sc->sc_scratch_seg.ds_addr);
 			} else {
-				gdt_enc16(gdt->sc_cmd + GDT_CMD_UNION +
+				gdt_enc16(sc->sc_cmd + GDT_CMD_UNION +
 				    GDT_CACHE_DEVICENO, (u_int16_t)arg1);
-				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+				gdt_enc32(sc->sc_cmd + GDT_CMD_UNION +
 				    GDT_CACHE_BLOCKNO, arg2);
 			}
 			break;
 
 		case GDT_SCSIRAWSERVICE:
-			gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+			gdt_enc32(sc->sc_cmd + GDT_CMD_UNION +
 			    GDT_RAW_DIRECTION, arg1);
-			gdt->sc_cmd[GDT_CMD_UNION + GDT_RAW_BUS] =
+			sc->sc_cmd[GDT_CMD_UNION + GDT_RAW_BUS] =
 			    (u_int8_t)arg2;
-			gdt->sc_cmd[GDT_CMD_UNION + GDT_RAW_TARGET] =
+			sc->sc_cmd[GDT_CMD_UNION + GDT_RAW_TARGET] =
 			    (u_int8_t)arg3;
-			gdt->sc_cmd[GDT_CMD_UNION + GDT_RAW_LUN] =
+			sc->sc_cmd[GDT_CMD_UNION + GDT_RAW_LUN] =
 			    (u_int8_t)(arg3 >> 8);
 		}
 
-		gdt->sc_cmd_len = GDT_CMD_SZ;
-		gdt->sc_cmd_off = 0;
-		gdt->sc_cmd_cnt = 0;
-		gdt->sc_copy_cmd(gdt, ccb);
-		gdt->sc_release_event(gdt, ccb);
+		sc->sc_cmd_len = GDT_CMD_SZ;
+		sc->sc_cmd_off = 0;
+		sc->sc_cmd_cnt = 0;
+		sc->sc_copy_cmd(sc, ccb);
+		sc->sc_release_event(sc, ccb);
 		DELAY(20);
-		if (!gdt_wait(gdt, ccb, GDT_POLL_TIMEOUT))
+		if (!gdt_wait(sc, ccb, GDT_POLL_TIMEOUT))
 			return (0);
-		if (gdt->sc_status != GDT_S_BSY || --retries == 0)
+		if (sc->sc_status != GDT_S_BSY || --retries == 0)
 			break;
 		DELAY(1);
 	}
-	return (gdt->sc_status == GDT_S_OK);
+	return (sc->sc_status == GDT_S_OK);
 }
 
 struct gdt_ccb *
-gdt_get_ccb(gdt, flags)
-	struct gdt_softc *gdt;
-	int flags;
+gdt_get_ccb(struct gdt_softc *sc, int flags)
 {
 	struct gdt_ccb *ccb;
 	int s;
 
-	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_get_ccb(%p, 0x%x) ", gdt, flags));
+	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_get_ccb(%p, 0x%x) ", sc, flags));
 
 	s = splbio();
 
 	for (;;) {
-		ccb = TAILQ_FIRST(&gdt->sc_free_ccb);
+		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
 		if (ccb != NULL)
 			break;
 		if (flags & SCSI_NOSLEEP)
 			goto bail_out;
-		tsleep(&gdt->sc_free_ccb, PRIBIO, "gdt_ccb", 0);
+		tsleep(&sc->sc_free_ccb, PRIBIO, "gdt_ccb", 0);
 	}
 
-	TAILQ_REMOVE(&gdt->sc_free_ccb, ccb, gc_chain);
+	TAILQ_REMOVE(&sc->sc_free_ccb, ccb, gc_chain);
 
  bail_out:
 	splx(s);
@@ -1365,47 +1335,42 @@ gdt_get_ccb(gdt, flags)
 }
 
 void
-gdt_free_ccb(gdt, ccb)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
+gdt_free_ccb(struct gdt_softc *sc, struct gdt_ccb *ccb)
 {
 	int s;
 
-	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_free_ccb(%p, %p) ", gdt, ccb));
+	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_free_ccb(%p, %p) ", sc, ccb));
 
 	s = splbio();
 
-	TAILQ_INSERT_HEAD(&gdt->sc_free_ccb, ccb, gc_chain);
+	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, gc_chain);
 
 	/* If the free list was empty, wake up potential waiters. */
 	if (TAILQ_NEXT(ccb, gc_chain) == NULL)
-		wakeup(&gdt->sc_free_ccb);
+		wakeup(&sc->sc_free_ccb);
 
 	splx(s);
 }
 
 void
-gdt_enqueue_ccb(gdt, ccb)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
+gdt_enqueue_ccb(struct gdt_softc *sc, struct gdt_ccb *ccb)
 {
-	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_enqueue_ccb(%p, %p) ", gdt, ccb));
+	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_enqueue_ccb(%p, %p) ", sc, ccb));
 
 	timeout_set(&ccb->gc_xs->stimeout, gdt_timeout, ccb);
-	TAILQ_INSERT_TAIL(&gdt->sc_ccbq, ccb, gc_chain);
-	gdt_start_ccbs(gdt);
+	TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, gc_chain);
+	gdt_start_ccbs(sc);
 }
 
 void
-gdt_start_ccbs(gdt)
-	struct gdt_softc *gdt;
+gdt_start_ccbs(struct gdt_softc *sc)
 {
 	struct gdt_ccb *ccb;
 	struct scsi_xfer *xs;
 
-	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_start_ccbs(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_start_ccbs(%p) ", sc));
 
-	while ((ccb = TAILQ_FIRST(&gdt->sc_ccbq)) != NULL) {
+	while ((ccb = TAILQ_FIRST(&sc->sc_ccbq)) != NULL) {
 
 		xs = ccb->gc_xs;
 		if (ccb->gc_flags & GDT_GCF_WATCHDOG)
@@ -1418,7 +1383,7 @@ gdt_start_ccbs(gdt)
 			    (GDT_WATCH_TIMEOUT * hz) / 1000);
 			break;
 		}
-		TAILQ_REMOVE(&gdt->sc_ccbq, ccb, gc_chain);
+		TAILQ_REMOVE(&sc->sc_ccbq, ccb, gc_chain);
 
 		if ((xs->flags & SCSI_POLL) == 0) {
 			timeout_set(&ccb->gc_xs->stimeout, gdt_timeout, ccb);
@@ -1429,22 +1394,20 @@ gdt_start_ccbs(gdt)
 }
 
 void
-gdt_chain(gdt)
-	struct gdt_softc *gdt;
+gdt_chain(struct gdt_softc *sc)
 {
-	GDT_DPRINTF(GDT_D_INTR, ("gdt_chain(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_INTR, ("gdt_chain(%p) ", sc));
 
-	if (LIST_FIRST(&gdt->sc_queue))
-		gdt_scsi_cmd(LIST_FIRST(&gdt->sc_queue));
+	if (LIST_FIRST(&sc->sc_queue))
+		gdt_scsi_cmd(LIST_FIRST(&sc->sc_queue));
 }
 
 void
-gdt_timeout(arg)
-	void *arg;
+gdt_timeout(void *arg)
 {
 	struct gdt_ccb *ccb = arg;
 	struct scsi_link *link = ccb->gc_xs->sc_link;
-	struct gdt_softc *gdt = link->adapter_softc;
+	struct gdt_softc *sc = link->adapter_softc;
 	int s;
 
 	sc_print_addr(link);
@@ -1454,22 +1417,21 @@ gdt_timeout(arg)
 
 	ccb->gc_xs->error = XS_TIMEOUT;
 	s = splbio();
-	gdt_enqueue_ccb(gdt, ccb);
+	gdt_enqueue_ccb(sc, ccb);
 	splx(s);
 }
 
 void
-gdt_watchdog(arg)
-	void *arg;
+gdt_watchdog(void *arg)
 {
 	struct gdt_ccb *ccb = arg;
 	struct scsi_link *link = ccb->gc_xs->sc_link;
-	struct gdt_softc *gdt = link->adapter_softc;
+	struct gdt_softc *sc = link->adapter_softc;
 	int s;
 
 	s = splbio();
 	ccb->gc_flags &= ~GDT_GCF_WATCHDOG;
-	gdt_start_ccbs(gdt);
+	gdt_start_ccbs(sc);
 	splx(s);
 }
 
@@ -1553,10 +1515,7 @@ gdt_ioctl_setstate(struct gdt_softc *sc, struct bioc_setstate *bs)
 
 #if 0
 int
-gdt_ioctl(dev, cmd, addr)
-	struct device *dev;
-	u_long cmd;
-	caddr_t addr;
+gdt_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
 	int error = 0;
 	struct gdt_dummy *dummy;
@@ -1569,15 +1528,15 @@ gdt_ioctl(dev, cmd, addr)
 
 	case GDT_IOCTL_GENERAL: {
 		gdt_ucmd_t *ucmd;
-		struct gdt_softc *gdt = (struct gdt_softc *)dev;
+		struct gdt_softc *sc = (struct gdt_softc *)dev;
 		int s;
 
 		ucmd = (gdt_ucmd_t *)addr;
 		s = splbio();
-		TAILQ_INSERT_TAIL(&gdt->sc_ucmdq, ucmd, links);
+		TAILQ_INSERT_TAIL(&sc->sc_ucmdq, ucmd, links);
 		ucmd->complete_flag = FALSE;
 		splx(s);
-		gdt_chain(gdt);
+		gdt_chain(sc);
 		if (!ucmd->complete_flag)
 			(void)tsleep((void *)ucmd, PCATCH | PRIBIO, "gdtucw",
 			    0);
@@ -1596,15 +1555,15 @@ gdt_ioctl(dev, cmd, addr)
 #ifdef notyet
 	case GDT_IOCTL_CTRTYPE: {
 		gdt_ctrt_t *p;
-		struct gdt_softc *gdt = (struct gdt_softc *)dev;
+		struct gdt_softc *sc = (struct gdt_softc *)dev;
 	    
 		p = (gdt_ctrt_t *)addr;
 		p->oem_id = 0x8000;
 		p->type = 0xfd;
-		p->info = (gdt->sc_bus << 8) | (gdt->sc_slot << 3);
-		p->ext_type = 0x6000 | gdt->sc_subdevice;
-		p->device_id = gdt->sc_device;
-		p->sub_device_id = gdt->sc_subdevice;
+		p->info = (sc->sc_bus << 8) | (sc->sc_slot << 3);
+		p->ext_type = 0x6000 | sc->sc_subdevice;
+		p->device_id = sc->sc_device;
+		p->sub_device_id = sc->sc_subdevice;
 		break;
 	}
 #endif
