@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.9 2007/04/27 09:20:32 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.10 2007/10/17 20:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -856,6 +856,8 @@ fetchtable(void)
 	lim = buf + len;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
 		sa = (struct sockaddr *)(rtm + 1);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
@@ -978,6 +980,8 @@ fetchifs(int ifindex)
 	lim = buf + len;
 	for (next = buf; next < lim; next += ifm.ifm_msglen) {
 		memcpy(&ifm, next, sizeof(ifm));
+		if (ifm.ifm_version != RTM_VERSION)
+			continue;
 		if (ifm.ifm_type != RTM_IFINFO)
 			continue;
 
@@ -1047,6 +1051,8 @@ dispatch_rtmsg(void)
 	lim = buf + n;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
 
 		prefix.s_addr = 0;
 		netmask.s_addr = 0;
