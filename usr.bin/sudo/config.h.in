@@ -483,6 +483,9 @@
    sudo. */
 #undef NO_LECTURE
 
+/* Define to 1 if you don't want to use sudo's PAM session support. */
+#undef NO_PAM_SESSION
+
 /* Define to avoid runing the mailer as root. */
 #undef NO_ROOT_MAILER
 

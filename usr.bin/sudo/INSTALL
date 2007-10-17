@@ -252,6 +252,13 @@ Special features/options:
 	is to compile noexec support if libtool supports building
 	shared objects on your OS.
 
+  --disable-pam-session
+        Disable sudo's PAM session support.  This may be needed on
+        older PAM implementations or on operating systems where
+        opening a PAM session changes the utmp or wtmp files.  If
+        PAM session support is disabled, resource limits may not
+        be updatedin for command being run.
+
   --disable-root-mailer
 	By default sudo will run the mailer as root when tattling
 	on a user so as to prevent that user from killing the mailer.

@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.413.2.23 2007/09/06 16:19:57 millert Exp $
+dnl $Sudo: configure.in,v 1.413.2.24 2007/10/09 00:06:05 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2007 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -1815,6 +1815,19 @@ if test ${with_pam-"no"} != "no"; then
 	AC_DEFINE(HAVE_PAM)
 	AUTH_OBJS="$AUTH_OBJS pam.o";
 	AUTH_EXCL=PAM
+	AC_MSG_CHECKING(whether to use PAM session support)
+	AC_ARG_ENABLE(pam_session,
+	[  --disable-pam-session   Disable PAM session support],
+	    [ case "$enableval" in
+		yes)	AC_MSG_RESULT(yes)
+			;;
+		no)		AC_MSG_RESULT(no)
+			    AC_DEFINE(NO_PAM_SESSION)
+			    ;;
+		*)		AC_MSG_RESULT(no)
+			    AC_MSG_WARN([Ignoring unknown argument to --enable-pam-session: $enableval])
+			    ;;
+	    esac], AC_MSG_RESULT(yes))
     fi
 fi
 

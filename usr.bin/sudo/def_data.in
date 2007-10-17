@@ -101,9 +101,6 @@ set_logname
 stay_setuid
 	T_FLAG
 	"Only set the effective uid to the target user, not the real uid"
-env_reset
-	T_FLAG
-	"Reset the environment to a default set of variables"
 preserve_groups
 	T_FLAG
 	"Don't initialize the group vector to that of the target user"
@@ -173,6 +170,15 @@ noexec
 noexec_file
 	T_STR|T_PATH
 	"File containing dummy exec functions: %s"
+ignore_local_sudoers
+	T_FLAG
+	"If LDAP directory is up, do we ignore local sudoers file"
+setenv
+	T_FLAG
+	"Allow users to set arbitrary environment variables"
+env_reset
+	T_FLAG
+	"Reset the environment to a default set of variables"
 env_check
 	T_LIST|T_BOOL
 	"Environment variables to check for sanity:"
@@ -182,9 +188,3 @@ env_delete
 env_keep
 	T_LIST|T_BOOL
 	"Environment variables to preserve:"
-ignore_local_sudoers
-	T_FLAG
-	"If LDAP directory is up, do we ignore local sudoers file"
-setenv
-	T_FLAG
-	"Allow users to set arbitrary environment variables"

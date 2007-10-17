@@ -102,7 +102,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.30 2007/08/18 12:25:41 millert Exp $";
+__unused __unused static const char rcsid[] = "$Sudo: sudo.c,v 1.369.2.31 2007/09/13 23:06:51 millert Exp $";
 #endif /* lint */
 
 /*
@@ -540,9 +540,9 @@ init_vars(sudo_mode, envp)
     }
 
     if ((p = ttyname(STDIN_FILENO)) || (p = ttyname(STDOUT_FILENO))) {
-	if (strncmp(p, _PATH_DEV, sizeof(_PATH_DEV) - 1) == 0)
-	    p += sizeof(_PATH_DEV) - 1;
-	user_tty = estrdup(p);
+	user_tty = user_ttypath = estrdup(p);
+	if (strncmp(user_tty, _PATH_DEV, sizeof(_PATH_DEV) - 1) == 0)
+	    user_tty += sizeof(_PATH_DEV) - 1;
     } else
 	user_tty = "unknown";
 

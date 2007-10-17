@@ -70,7 +70,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.2 2007/06/12 01:26:35 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.4 2007/10/08 16:01:10 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
@@ -135,6 +135,9 @@ tgetpass(prompt, timeout, flags)
 
     (void) fflush(stdout);
 restart:
+    signo = 0;
+    pass = NULL;
+    save_errno = 0;
     /* Open /dev/tty for reading/writing if possible else use stdin/stderr. */
     if (ISSET(flags, TGP_STDIN) ||
 	(input = output = open(_PATH_TTY, O_RDWR|O_NOCTTY)) == -1) {
@@ -172,17 +175,20 @@ restart:
 	memset(&oterm, 0, sizeof(oterm));
     }
 
-    if (prompt)
-	(void) write(output, prompt, strlen(prompt));
+    /* No output if we are already backgrounded. */
+    if (signo != SIGTTOU && signo != SIGTTIN) {
+	if (prompt)
+	    (void) write(output, prompt, strlen(prompt));
 
-    if (timeout > 0)
-	alarm(timeout);
-    pass = getln(input, buf, sizeof(buf));
-    alarm(0);
-    save_errno = errno;
+	if (timeout > 0)
+	    alarm(timeout);
+	pass = getln(input, buf, sizeof(buf));
+	alarm(0);
+	save_errno = errno;
 
-    if (!ISSET(term.tflags, ECHO))
-	(void) write(output, "\n", 1);
+	if (!ISSET(term.tflags, ECHO))
+	    (void) write(output, "\n", 1);
+    }
 
     /* Restore old tty settings and signals. */
     if (memcmp(&term, &oterm, sizeof(term)) != 0)
@@ -208,12 +214,12 @@ restart:
 	    case SIGTSTP:
 	    case SIGTTIN:
 	    case SIGTTOU:
-		signo = 0;
 		goto restart;
 	}
     }
 
-    errno = save_errno;
+    if (save_errno)
+	errno = save_errno;
     return(pass);
 }
 

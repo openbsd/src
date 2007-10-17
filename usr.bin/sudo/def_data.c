@@ -147,10 +147,6 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"Only set the effective uid to the target user, not the real uid",
 	NULL,
     }, {
-	"env_reset", T_FLAG,
-	"Reset the environment to a default set of variables",
-	NULL,
-    }, {
 	"preserve_groups", T_FLAG,
 	"Don't initialize the group vector to that of the target user",
 	NULL,
@@ -240,6 +236,18 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"File containing dummy exec functions: %s",
 	NULL,
     }, {
+	"ignore_local_sudoers", T_FLAG,
+	"If LDAP directory is up, do we ignore local sudoers file",
+	NULL,
+    }, {
+	"setenv", T_FLAG,
+	"Allow users to set arbitrary environment variables",
+	NULL,
+    }, {
+	"env_reset", T_FLAG,
+	"Reset the environment to a default set of variables",
+	NULL,
+    }, {
 	"env_check", T_LIST|T_BOOL,
 	"Environment variables to check for sanity:",
 	NULL,
@@ -250,14 +258,6 @@ struct sudo_defs_types sudo_defs_table[] = {
     }, {
 	"env_keep", T_LIST|T_BOOL,
 	"Environment variables to preserve:",
-	NULL,
-    }, {
-	"ignore_local_sudoers", T_FLAG,
-	"If LDAP directory is up, do we ignore local sudoers file",
-	NULL,
-    }, {
-	"setenv", T_FLAG,
-	"Allow users to set arbitrary environment variables",
 	NULL,
     }, {
 	NULL, 0, NULL

@@ -1965,3 +1965,13 @@ Sudo 1.6.9p4 released.
 621) Groups and netgroups are now valid in an LDAP sudoRunas statement.
 
 Sudo 1.6.9p5 released.
+
+622) Worked around bugs in the session support of some PAM implementations.
+     The full tty path is now passed to PAM as well.
+
+623) Sudo now only prints the password prompt if the process is in the
+     foreground.
+
+624) inttypes.h is now included when appropriate if it is present.
+
+625) Simplified alias allocation in the parser.

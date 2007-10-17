@@ -46,11 +46,14 @@
 #else
 # include "emul/err.h"
 #endif /* HAVE_ERR_H */
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
 
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: alloc.c,v 1.23.2.3 2007/06/12 01:43:01 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: alloc.c,v 1.23.2.4 2007/09/11 12:20:15 millert Exp $";
 #endif /* lint */
 
 /*
