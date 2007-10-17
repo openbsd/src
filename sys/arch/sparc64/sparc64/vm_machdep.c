@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2007/10/16 19:22:49 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2007/10/17 19:41:36 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -295,10 +295,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #ifdef NOTDEF_DEBUG
 	printf("cpu_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
 	       (struct trapframe *)((int)opcb + USPACE - sizeof(*tf2)), tf2, rp, opcb, npcb);
-	printf("cpu_fork: tstate=%x:%x pc=%x:%x npc=%x:%x rsp=%x\n",
-	       (long)(tf2->tf_tstate>>32), (long)tf2->tf_tstate, 
-	       (long)(tf2->tf_pc>>32), (long)tf2->tf_pc,
-	       (long)(tf2->tf_npc>>32), (long)tf2->tf_npc, 
+	printf("cpu_fork: tstate=%lx pc=%lx npc=%lx rsp=%lx\n",
+	       (long)tf2->tf_tstate, (long)tf2->tf_pc, (long)tf2->tf_npc,
 	       (long)(tf2->tf_out[6]));
 	Debugger();
 #endif
