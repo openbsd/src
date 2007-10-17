@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.1 2007/08/01 12:16:59 kettenis Exp $ */
+/* $OpenBSD: pms.c,v 1.2 2007/10/17 01:32:46 deraadt Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -159,7 +159,7 @@ pmsattach(parent, self, aux)
 
 	/* no interrupts until enabled */
 	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
+	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, NULL, 0);
 	if (res)
 		printf("pmsattach: disable error\n");
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);

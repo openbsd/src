@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.10 2007/10/17 01:16:04 fgsch Exp $ */
+/* $OpenBSD: pckbd.c,v 1.11 2007/10/17 01:32:46 deraadt Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -211,14 +211,14 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 #endif
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = table;
-		if (pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0)) {
+		if (pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, NULL, 0)) {
 #ifdef DEBUG
 			printf("pckbd: table set of %d failed\n", table);
 #endif
 			if (table > 1) {
 				cmd[0] = KBC_RESET;
 				(void)pckbc_poll_cmd(kbctag, kbcslot, cmd,
-				    1, 1, 0, 1);
+				    1, 1, NULL, 1);
 				pckbc_flush(kbctag, kbcslot);
 
 				continue;
@@ -358,7 +358,7 @@ pckbdattach(parent, self, aux)
 		 */
 		cmd[0] = KBC_ENABLE;
 		(void) pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-		    cmd, 1, 0, 0, 0);
+		    cmd, 1, 0, NULL, 0);
 		sc->sc_enabled = 1;
 	} else {
 		sc->id = malloc(sizeof(struct pckbd_internal),
@@ -368,7 +368,7 @@ pckbdattach(parent, self, aux)
 		/* no interrupts until enabled */
 		cmd[0] = KBC_DISABLE;
 		(void) pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-				      cmd, 1, 0, 0, 0);
+				      cmd, 1, 0, NULL, 0);
 		sc->sc_enabled = 0;
 	}
 
@@ -663,7 +663,7 @@ pckbd_cnattach(kbctag, kbcslot)
 
 	/* Just to be sure. */
 	cmd[0] = KBC_ENABLE;
-	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 0, 0, 0);
+	res = pckbc_poll_cmd(kbctag, kbcslot, cmd, 1, 0, NULL, 0);
 #if 0
 	if (res)
 		return (res);

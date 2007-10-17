@@ -1,4 +1,4 @@
-/* $OpenBSD: pms_intelli.c,v 1.1 2007/08/01 12:16:59 kettenis Exp $ */
+/* $OpenBSD: pms_intelli.c,v 1.2 2007/10/17 01:32:46 deraadt Exp $ */
 /* $NetBSD: psm_intelli.c,v 1.8 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -84,7 +84,7 @@ pmsi_setintellimode(tag, slot)
 	cmd[0] = PMS_SET_SAMPLE;
 	for (i = 0; i < 3; i++) {
 		cmd[1] = rates[i];
-		res = pckbc_poll_cmd(tag, slot, cmd, 2, 0, 0, 0);
+		res = pckbc_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
 		if (res)
 			return (res);
 	}
@@ -203,7 +203,7 @@ pmsiattach(parent, self, aux)
 
 	/* no interrupts until enabled */
 	cmd[0] = PMS_DEV_DISABLE;
-	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
+	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, NULL, 0);
 	if (res)
 		printf("pmsiattach: disable error\n");
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
