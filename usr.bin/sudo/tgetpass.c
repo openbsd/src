@@ -70,7 +70,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.4 2007/10/08 16:01:10 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.5 2007/10/17 15:39:43 millert Exp $";
 #endif /* lint */
 
 #ifndef TCSASOFT
@@ -89,26 +89,36 @@ __unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.111.2.4 2007/10/08 1
 #endif
 
 /*
- * Abstract method of getting at the term flags.
+ * QNX 6 (at least) has issues with TCSAFLUSH.
  */
-#undef TERM
-#undef tflags
-#ifdef HAVE_TERMIOS_H
-# define TERM			termios
-# define tflags			c_lflag
-# define term_getattr(f, t)	tcgetattr(f, t)
-# define term_setattr(f, t)	tcsetattr(f, TCSADRAIN|TCSASOFT, t)
-#else
+#ifdef __QNX__
+#undef TCSAFLUSH
+#define	TCSAFLUSH	TCSADRAIN
+#endif
+
+/*
+ * Compat macros for non-termios systems.
+ */
+#ifndef HAVE_TERMIOS_H
 # ifdef HAVE_TERMIO_H
-# define TERM			termio
-# define tflags			c_lflag
-# define term_getattr(f, t)	ioctl(f, TCGETA, t)
-# define term_setattr(f, t)	ioctl(f, TCSETAF, t)
+#  undef termios
+#  define termios		termio
+#  define tcgetattr(f, t)	ioctl(f, TCGETA, t)
+#  define tcsetattr(f, a, t)	ioctl(f, a, t)
+#  undef TCSAFLUSH
+#  define TCSAFLUSH		TCSETAF
+#  undef TCSANOW
+#  define TCSANOW		TCSETA
 # else
-#  define TERM			sgttyb
-#  define tflags		sg_flags
-#  define term_getattr(f, t)	ioctl(f, TIOCGETP, t)
-#  define term_setattr(f, t)	ioctl(f, TIOCSETP, t)
+#  undef termios
+#  define termios		sgttyb
+#  define c_lflag		sg_flags
+#  define tcgetattr(f, t)	ioctl(f, TIOCGETP, t)
+#  define tcsetattr(f, a, t)	ioctl(f, a, t)
+#  undef TCSAFLUSH
+#  define TCSAFLUSH		TIOCSETP
+#  undef TCSANOW
+#  define TCSANOW		TIOCSETN
 # endif /* HAVE_TERMIO_H */
 #endif /* HAVE_TERMIOS_H */
 
@@ -128,7 +138,7 @@ tgetpass(prompt, timeout, flags)
 {
     sigaction_t sa, savealrm, saveint, savehup, savequit, saveterm;
     sigaction_t savetstp, savettin, savettou;
-    struct TERM term, oterm;
+    struct termios term, oterm;
     char *pass;
     static char buf[SUDO_PASS_MAX + 1];
     int input, output, save_errno;
@@ -162,14 +172,14 @@ restart:
     (void) sigaction(SIGTTOU, &sa, &savettou);
 
     /* Turn echo off/on as specified by flags.  */
-    if (term_getattr(input, &oterm) == 0) {
+    if (tcgetattr(input, &oterm) == 0) {
 	(void) memcpy(&term, &oterm, sizeof(term));
 	if (!ISSET(flags, TGP_ECHO))
-	    CLR(term.tflags, (ECHO | ECHONL));
+	    CLR(term.c_lflag, ECHO|ECHONL);
 #ifdef VSTATUS
 	term.c_cc[VSTATUS] = _POSIX_VDISABLE;
 #endif
-	(void) term_setattr(input, &term);
+	(void) tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
     } else {
 	memset(&term, 0, sizeof(term));
 	memset(&oterm, 0, sizeof(oterm));
@@ -186,13 +196,16 @@ restart:
 	alarm(0);
 	save_errno = errno;
 
-	if (!ISSET(term.tflags, ECHO))
+	if (!ISSET(term.c_lflag, ECHO))
 	    (void) write(output, "\n", 1);
     }
 
     /* Restore old tty settings and signals. */
-    if (memcmp(&term, &oterm, sizeof(term)) != 0)
-	(void) term_setattr(input, &oterm);
+    if (memcmp(&term, &oterm, sizeof(term)) != 0) {
+	while (tcsetattr(input, TCSANOW|TCSASOFT, &oterm) == -1 &&
+	    errno == EINTR)
+	    continue;
+    }
     (void) sigaction(SIGALRM, &savealrm, NULL);
     (void) sigaction(SIGINT, &saveint, NULL);
     (void) sigaction(SIGHUP, &savehup, NULL);
