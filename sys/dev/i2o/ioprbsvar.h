@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbsvar.h,v 1.2 2005/09/15 05:33:39 krw Exp $	*/
+/*	$OpenBSD: ioprbsvar.h,v 1.3 2007/10/17 15:07:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -86,11 +86,5 @@ struct ioprbs_softc {
  * Wait this long for a lost interrupt to get detected.
  */
 #define IOPRBS_WATCH_TIMEOUT	10000		/* 10000 * 1ms = 10s */
-
-
-/* XXX These have to become spinlocks in case of SMP */
-#define IOPRBS_LOCK(sc) splbio()
-#define IOPRBS_UNLOCK(sc, lock) splx(lock)
-typedef int ioprbs_lock_t;
 
 #endif	/* !_I2O_IOPRMSVAR_H_ */
