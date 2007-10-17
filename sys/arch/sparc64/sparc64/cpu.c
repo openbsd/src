@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.23 2007/09/09 12:57:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.24 2007/10/17 21:23:28 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -63,6 +63,7 @@
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
+#include <machine/sparc64.h>
 
 #include <sparc64/sparc64/cache.h>
 
@@ -74,9 +75,14 @@ struct cacheinfo cacheinfo = {
 /* Linked list of all CPUs in system. */
 struct cpu_info *cpus = NULL;
 
+struct cpu_info *alloc_cpuinfo(int);
+
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	cpu_model[100];
+
+void cpu_reset_fpustate(void);
+void cpu_hatch(void);
 
 /* The CPU configuration driver. */
 static void cpu_attach(struct device *, struct device *, void *);
@@ -91,6 +97,81 @@ extern struct cfdriver cpu_cd;
 #define	IU_IMPL(v)	((((u_int64_t)(v))&VER_IMPL) >> VER_IMPL_SHIFT)
 #define	IU_VERS(v)	((((u_int64_t)(v))&VER_MASK) >> VER_MASK_SHIFT)
 
+struct cpu_info *
+alloc_cpuinfo(int node)
+{
+	paddr_t pa0, pa;
+	vaddr_t va, va0, kstack;
+	vsize_t sz = 8 * PAGE_SIZE;
+	int portid;
+	struct cpu_info *cpi, *ci;
+	extern paddr_t cpu0paddr;
+
+	portid = getpropint(node, "portid", -1);
+	if (portid == -1)
+		portid = getpropint(node, "upa-portid", -1);
+	if (portid == -1)
+		panic("alloc_cpuinfo: portid");
+
+	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
+		if (cpi->ci_upaid == portid)
+			return cpi;
+
+	va = uvm_km_valloc_align(kernel_map, sz, 8 * PAGE_SIZE);
+	if (va == 0)
+		panic("alloc_cpuinfo: no virtual space");
+	va0 = va;
+
+	pa0 = cpu0paddr;
+	cpu0paddr += sz;
+
+	for (pa = pa0; pa < cpu0paddr; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+
+	pmap_update(pmap_kernel());
+
+	cpi = (struct cpu_info *)(va0 + CPUINFO_VA - INTSTACK);
+
+	memset((void *)va0, 0, sz);
+
+	kstack = uvm_km_alloc (kernel_map, USPACE);
+	if (kstack == 0)
+		panic("alloc_cpuinfo: unable to allocate pcb");
+
+	/*
+	 * Initialize cpuinfo structure.
+	 *
+	 * Arrange pcb, idle stack and interrupt stack in the same
+	 * way as is done for the boot CPU in pmap.c.
+	 */
+	cpi->ci_next = NULL;
+	cpi->ci_curproc = NULL;
+	cpi->ci_number = ncpus++;
+	cpi->ci_upaid = portid;
+	cpi->ci_fpproc = NULL;
+#ifdef MULTIPROCESSOR
+	cpi->ci_spinup = cpu_hatch;				/* XXX */
+#else
+	cpi->ci_spinup = NULL;
+#endif
+
+	cpi->ci_initstack = (void *)(kstack + USPACE);
+	cpi->ci_paddr = pa0;
+	cpi->ci_self = cpi;
+	cpi->ci_node = node;
+	cpi->ci_cpcb = (struct pcb *)kstack;
+
+	sched_init_cpu(cpi);
+
+	/*
+	 * Finally, add itself to the list of active cpus.
+	 */
+	for (ci = cpus; ci->ci_next != NULL; ci = ci->ci_next)
+		;
+	ci->ci_next = cpi;
+	return (cpi);
+}
+
 int
 cpu_match(parent, vcf, aux)
 	struct device *parent;
@@ -101,6 +182,27 @@ cpu_match(parent, vcf, aux)
 	struct cfdata *cf = (struct cfdata *)vcf;
 
 	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+}
+
+void
+cpu_reset_fpustate(void)
+{
+	struct fpstate64 *fpstate;
+	struct fpstate64 fps[2];
+
+	/* This needs to be 64-bit aligned */
+	fpstate = ALIGNFPSTATE(&fps[1]);
+	/*
+	 * Get the FSR and clear any exceptions.  If we do not unload
+	 * the queue here and it is left over from a previous crash, we
+	 * will panic in the first loadfpstate(), due to a sequence error,
+	 * so we need to dump the whole state anyway.
+	 *
+	 * If there is no FPU, trap.c will advance over all the stores,
+	 * so we initialize fs_fsr here.
+	 */
+	fpstate->fs_fsr = 7 << FSR_VER_SHIFT;	/* 7 is reserved for "none" */
+	savefpstate(fpstate);
 }
 
 /*
@@ -119,32 +221,31 @@ cpu_attach(parent, dev, aux)
 	int impl, vers;
 	char *cpuname;
 	struct mainbus_attach_args *ma = aux;
-	struct fpstate64 *fpstate;
-	struct fpstate64 fps[2];
-	char *sep;
+	struct cpu_info *ci;
+	const char *sep;
 	register int i, l;
 	u_int64_t ver;
 	extern u_int64_t cpu_clockrate[];
 
-	/* This needs to be 64-bit aligned */
-	fpstate = ALIGNFPSTATE(&fps[1]);
-	/*
-	 * Get the FSR and clear any exceptions.  If we do not unload
-	 * the queue here and it is left over from a previous crash, we
-	 * will panic in the first loadfpstate(), due to a sequence error,
-	 * so we need to dump the whole state anyway.
-	 *
-	 * If there is no FPU, trap.c will advance over all the stores,
-	 * so we initialize fs_fsr here.
-	 */
-	fpstate->fs_fsr = 7 << FSR_VER_SHIFT;	/* 7 is reserved for "none" */
-	savefpstate(fpstate);
 	ver = getver();
 	impl = IU_IMPL(ver);
 	vers = IU_VERS(ver);
 
 	/* tell them what we have */
 	node = ma->ma_node;
+
+	/*
+	 * Allocate cpu_info structure if needed.
+	 */
+	ci = alloc_cpuinfo(node);
+
+	/*
+	 * Only do this on the boot cpu.  Other cpu's call
+	 * cpu_reset_fpustate() from cpu_hatch() before they
+	 * call into the idle loop.
+	 */
+	if (ci->ci_number == 0)
+		cpu_reset_fpustate();
 
 	clk = getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
@@ -279,6 +380,64 @@ cpu_attach(parent, dev, aux)
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
+
+#ifdef MULTIPROCESSOR
+void cpu_mp_startup(void);
+volatile int cpu_mp_started;
+
+void
+cpu_boot_secondary_processors(void)
+{
+	struct cpu_info *ci;
+	int cpuid, i;
+
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (ci->ci_upaid == CPU_UPAID)
+			continue;
+
+		cpuid = getpropint(ci->ci_node, "cpuid", -1);
+		if (cpuid == -1) {
+			prom_start_cpu(ci->ci_node,
+			    (void *)cpu_mp_startup, ci->ci_paddr);
+		} else {
+			prom_start_cpu_by_cpuid(cpuid,
+			    (void *)cpu_mp_startup, ci->ci_paddr);
+		}
+
+		for (i = 0; i < 2000; i++) {
+			sparc_membar(Sync);
+			if (cpu_mp_started == 1)
+				break;
+			delay(10000);
+		}
+
+		cpu_mp_started = 0;
+		sparc_membar(Sync);
+	}
+}
+
+void
+cpu_hatch(void)
+{
+	int s;
+
+	printf("cpu%d running\n", cpu_number());
+
+	cpu_reset_fpustate();
+	cpu_mp_started = 1;
+	sparc_membar(Sync);
+
+	s = splhigh();
+	microuptime(&curcpu()->ci_schedstate.spc_runtime);
+	splx(s);
+
+	extern long tick_increment;
+	next_tick(tick_increment);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+}
+#endif
 
 void
 need_resched(struct cpu_info *ci)

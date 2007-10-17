@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.88 2007/10/17 20:16:11 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.89 2007/10/17 21:23:28 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4572,6 +4572,392 @@ dlflush2:
 	.asciz	"main() returned\r\n"
 	_ALIGN
 	.text
+
+#ifdef MULTIPROCESSOR
+ENTRY(cpu_mp_startup)
+	mov	%o0, %g2
+	wrpr	%g0, 0, %cleanwin
+	wrpr	%g0, 13, %pil
+	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
+	wr	%o0, FPRS_FEF, %fprs		! Turn on FPU
+
+	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
+
+	flushw
+
+#if 0
+	/*
+	 * Disable the DCACHE entirely for debug.
+	 */
+	ldxa	[%g0] ASI_MCCR, %o1
+	andn	%o1, MCCR_DCACHE_EN, %o1
+	stxa	%o1, [%g0] ASI_MCCR
+	membar	#Sync
+#endif	/* 0 */
+
+	sethi	%hi(KERNBASE), %l0		! Find our xlation
+	sethi	%hi(DATA_START), %l3
+
+	set	_C_LABEL(ktextp), %l2		! Find phys addr
+	ldx	[%l2], %l2			! The following gets ugly:	We need to load the following mask
+	set	_C_LABEL(kdatap), %l5
+	ldx	[%l5], %l5
+
+	set	_C_LABEL(ektext), %l1		! And the ends...
+	ldx	[%l1], %l1
+	set	_C_LABEL(ekdata), %l4
+	ldx	[%l4], %l4
+
+	sethi	%hi(0xe0000000), %o0		! V=1|SZ=11|NFO=0|IE=0
+	sllx	%o0, 32, %o0			! Shift it into place
+
+	sethi	%hi(0x400000), %l6		! Create a 4MB mask
+	add	%l6, -1, %l7
+
+	mov	-1, %o1				! Create a nice mask
+	sllx	%o1, 41, %o1			! Mask off high bits
+	or	%o1, 0xfff, %o1			! We can just load this in 12 (of 13) bits
+
+	andn	%l2, %o1, %l2			! Mask the phys page number
+	andn	%l5, %o1, %l5			! Mask the phys page number
+
+	or	%l2, %o0, %l2			! Now take care of the high bits
+	or	%l5, %o0, %l5			! Now take care of the high bits
+
+	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
+
+#ifdef DEBUG
+	set	1f, %o0		! Debug printf for TEXT page
+	srlx	%l0, 32, %o1
+	srl	%l0, 0, %o2
+	or	%l2, TLB_L|TLB_CP|TLB_CV|TLB_P, %o4	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
+	srlx	%o4, 32, %o3
+	call	_C_LABEL(prom_printf)
+	 srl	%o4, 0, %o4
+
+	set	1f, %o0		! Debug printf for DATA page
+	srlx	%l3, 32, %o1
+	srl	%l3, 0, %o2
+	or	%l5, TLB_L|TLB_CP|TLB_CV|TLB_P|TLB_W, %o4	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
+	srlx	%o4, 32, %o3
+	call	_C_LABEL(prom_printf)
+	 srl	%o4, 0, %o4
+	.data
+1:
+	.asciz	"Setting DTLB entry %08x %08x data %08x %08x\r\n"
+	_ALIGN
+	.text
+#endif	/* DEBUG */
+	mov	%l0, %o0			! Demap all of kernel dmmu text segment
+	mov	%l3, %o1
+	set	0x2000, %o2			! 8K page size
+	add	%l1, %l7, %o5			! Extend to 4MB boundary
+	andn	%o5, %l7, %o5
+0:
+	stxa	%o0, [%o0] ASI_DMMU_DEMAP	! Demap text segment
+	membar	#Sync
+	cmp	%o0, %o5
+	bleu	0b
+	 add	%o0, %o2, %o0
+
+	add	%l4, %l7, %o5			! Extend to 4MB boundary
+	andn	%o5, %l7, %o5
+0:	
+	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! Demap data segment
+	membar	#Sync
+	cmp	%o1, %o5
+	bleu	0b
+	 add	%o1, %o2, %o1
+
+	set	(1<<14)-8, %o0			! Clear out DCACHE
+1:
+dlflush2a:
+	stxa	%g0, [%o0] ASI_DCACHE_TAG	! clear DCACHE line
+	membar	#Sync
+	brnz,pt	%o0, 1b
+	 dec	8, %o0
+
+	/*
+	 * First map data segment into the DMMU.
+	 */
+	set	TLB_TAG_ACCESS, %o0		! Now map it back in with a locked TTE
+	mov	%l3, %o1
+#ifdef NO_VCACHE
+	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=1|G=0
+	or	%l5, TLB_L|TLB_CP|TLB_P|TLB_W, %o2
+#else	/* NO_VCACHE */
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1|G=0
+	or	%l5, TLB_L|TLB_CP|TLB_CV|TLB_P|TLB_W, %o2
+#endif	/* NO_VCACHE */
+	set	1f, %o5
+2:	
+	stxa	%o1, [%o0] ASI_DMMU		! Set VA for DSEG
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%o2, [%g0] ASI_DMMU_DATA_IN	! Store TTE for DSEG
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o5				! Make IMMU see this too
+1:
+	add	%o1, %l6, %o1			! increment VA
+	cmp	%o1, %l4			! Next 4MB mapping....
+	blu,pt	%xcc, 2b
+	 add	%o2, %l6, %o2			! Increment tag
+
+	/*
+	 * Next map the text segment into the DMMU so we can get at RODATA.
+	 */
+	mov	%l0, %o1
+#ifdef NO_VCACHE
+	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=0|G=0
+	or	%l2, TLB_L|TLB_CP|TLB_P, %o2
+#else	/* NO_VCACHE */
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+	or	%l2, TLB_L|TLB_CP|TLB_CV|TLB_P, %o2
+#endif	/* NO_VCACHE */
+2:	
+	stxa	%o1, [%o0] ASI_DMMU		! Set VA for DSEG
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%o2, [%g0] ASI_DMMU_DATA_IN	! Store TTE for DSEG
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o5				! Make IMMU see this too
+	add	%o1, %l6, %o1			! increment VA
+	cmp	%o1, %l1			! Next 4MB mapping....
+	blu,pt	%xcc, 2b
+	 add	%o2, %l6, %o2			! Increment tag
+	
+#ifdef DEBUG
+	set	1f, %o0		! Debug printf
+	srlx	%l0, 32, %o1
+	srl	%l0, 0, %o2
+	or	%l2, TLB_L|TLB_CP|TLB_CV|TLB_P, %o4
+	srlx	%o4, 32, %o3
+	call	_C_LABEL(prom_printf)
+	 srl	%o4, 0, %o4
+	.data
+1:
+	.asciz	"Setting ITLB entry %08x %08x data %08x %08x\r\n"
+	_ALIGN
+	.text
+#endif	/* DEBUG */
+	/*
+	 * Finished the DMMU, now we need to do the IMMU which is more
+	 * difficult because we're execting instructions through the IMMU
+	 * while we're flushing it.  We need to remap the entire kernel
+	 * to a new context, flush the entire context 0 IMMU, map it back
+	 * into context 0, switch to context 0, and flush context 1.
+	 *
+	 * Another interesting issue is that the flush instructions are
+	 * translated through the DMMU, therefore we need to enter the
+	 * mappings both in the IMMU and the DMMU so we can flush them
+	 * correctly.
+	 *
+	 *  Start by mapping in the kernel text as context==1
+	 */
+	set	TLB_TAG_ACCESS, %o0
+	or	%l0, 1, %o1			! Context = 1
+	or	%l2, TLB_CP|TLB_P, %o2		! And low bits:	L=0|CP=1|CV=0|E=0|P=1|G=0
+2:	
+	stxa	%o1, [%o0] ASI_DMMU		! Make DMMU point to it
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%o2, [%g0] ASI_DMMU_DATA_IN	! Store it
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%o1, [%o0] ASI_IMMU		! Make IMMU point to it
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o1-1				! Make IMMU see this too
+	stxa	%o2, [%g0] ASI_IMMU_DATA_IN	! Store it
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o5				! Make IMMU see this too
+	add	%o1, %l6, %o1			! increment VA
+	cmp	%o1, %l1			! Next 4MB mapping....
+	blu,pt	%xcc, 2b
+	 add	%o2, %l6, %o2			! Increment tag
+
+	!!
+	!! Load 1 as primary context
+	!!
+	mov	1, %o0
+	mov	CTX_PRIMARY, %o1
+	stxa	%o0, [%o1] ASI_DMMU
+	wrpr	%g0, 0, %tl			! Make SURE we're nucleus mode
+	membar	#Sync				! This probably should be a flush, but it works
+	flush	%o5				! This should be KERNBASE
+
+	!!
+	!! Demap entire context 0 kernel
+	!!
+	or	%l0, DEMAP_PAGE_NUCLEUS, %o0	! Context = Nucleus
+	add	%l1, %l7, %o1			! Demap all of kernel text seg
+	andn	%o1, %l7, %o1			! rounded up to 4MB.
+	set	0x2000, %o2			! 8K page size
+0:
+	stxa	%o0, [%o0] ASI_IMMU_DEMAP	! Demap it
+	membar	#Sync
+	flush	%o5				! Assume low bits are benign
+	cmp	%o0, %o1
+	bleu,pt	%xcc, 0b			! Next page
+	 add	%o0, %o2, %o0
+
+	or	%l3, DEMAP_PAGE_NUCLEUS, %o0	! Context = Nucleus
+	add	%l4, %l7, %o1			! Demap all of kernel data seg
+	andn	%o1, %l7, %o1			! rounded up to 4MB.
+0:
+	stxa	%o0, [%o0] ASI_IMMU_DEMAP	! Demap it
+	membar	#Sync
+	flush	%o5				! Assume low bits are benign
+	cmp	%o0, %o1
+	bleu,pt	%xcc, 0b			! Next page
+	 add	%o0, %o2, %o0
+
+	!!
+	!!  Now, map in the kernel text as context==0
+	!!
+	set	TLB_TAG_ACCESS, %o0
+	mov	%l0, %o1			! Context = 0
+#ifdef NO_VCACHE
+	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=1|G=0
+	or	%l2, TLB_L|TLB_CP|TLB_P, %o2
+#else	/* NO_VCACHE */
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1|G=0
+	or	%l2, TLB_L|TLB_CP|TLB_CV|TLB_P, %o2
+#endif	/* NO_VCACHE */
+2:	
+	stxa	%o1, [%o0] ASI_IMMU		! Make IMMU point to it
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%o2, [%g0] ASI_IMMU_DATA_IN	! Store it
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o5				! Make IMMU see this too
+	add	%o1, %l6, %o1			! increment VA
+	cmp	%o1, %l1			! Next 4MB mapping....
+	blu,pt	%xcc, 2b
+	 add	%o2, %l6, %o2			! Increment tag
+
+	!!
+	!! Restore 0 as primary context
+	!!
+	mov	CTX_PRIMARY, %o0
+	stxa	%g0, [%o0] ASI_DMMU
+	membar	#Sync					! No real reason for this XXXX
+	flush	%o5
+	
+	!!
+	!! Demap context 1
+	!!
+	mov	1, %o1
+	mov	CTX_SECONDARY, %o0
+	stxa	%o1, [%o0] ASI_DMMU
+	membar	#Sync				! This probably should be a flush, but it works
+	flush	%l0
+	mov	DEMAP_CTX_SECONDARY, %o4
+	stxa	%o4, [%o4] ASI_DMMU_DEMAP
+	membar	#Sync
+	stxa	%o4, [%o4] ASI_IMMU_DEMAP
+	membar	#Sync
+	flush	%l0
+	stxa	%g0, [%o0] ASI_DMMU
+	membar	#Sync
+	flush	%l0
+
+#ifdef DEBUG
+	set	1f, %o0		! Debug printf
+	call	_C_LABEL(prom_printf)
+	.data
+1:
+	.asciz	"Setting CPUINFO mappings...\r\n"
+	_ALIGN
+	.text
+#endif	/* DEBUG */
+	
+	/*
+	 * Get pointer to our cpu_info struct
+	 */
+
+	mov	%g2, %l1			! Load the interrupt stack's PA
+
+	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
+	sllx	%l2, 32, %l2			! Shift it into place
+
+	mov	-1, %l3				! Create a nice mask
+	sllx	%l3, 41, %l4			! Mask off high bits
+	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
+
+	andn	%l1, %l4, %l1			! Mask the phys page number
+
+	or	%l2, %l1, %l1			! Now take care of the high bits
+#ifdef NO_VCACHE
+	or	%l1, TLB_L|TLB_CP|TLB_P|TLB_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
+#else	/* NO_VCACHE */
+	or	%l1, TLB_L|TLB_CP|TLB_CV|TLB_P|TLB_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+#endif	/* NO_VCACHE */
+
+	!!
+	!!  Now, map in the interrupt stack as context==0
+	!!
+	set	TLB_TAG_ACCESS, %l5
+	sethi	%hi(INTSTACK), %l0
+	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o5
+
+	!!
+	!! Set 0 as primary context XXX
+	!!
+	mov	CTX_PRIMARY, %o0
+	stxa	%g0, [%o0] ASI_DMMU
+	flush	%o5
+
+!!! Make sure our stack's OK.
+	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l0
+	ldx	[%l0 + %lo(CPUINFO_VA+CI_INITSTACK)], %l0
+ 	add	%l0, - CC64FSZ - 80, %l0
+	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
+	sub	%l0, BIAS, %l0			! and biased
+	mov	%l0, %sp
+	set	1, %fp
+	clr	%i7
+
+	/*
+	 * Step 7: change the trap base register, and install our TSBs
+	 */
+
+	/* Set the dmmu tsb */
+	sethi	%hi(0x1fff), %l2
+	set	_C_LABEL(tsb_dmmu), %l0
+	ldx	[%l0], %l0
+	set	_C_LABEL(tsbsize), %l1
+	or	%l2, %lo(0x1fff), %l2
+	ld	[%l1], %l1
+	andn	%l0, %l2, %l0			! Mask off size and split bits
+	or	%l0, %l1, %l0			! Make a TSB pointer
+	set	TSB, %l2
+	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
+	membar	#Sync
+
+
+	/* Set the immu tsb */
+	sethi	%hi(0x1fff), %l2
+	set	_C_LABEL(tsb_immu), %l0
+	ldx	[%l0], %l0
+	set	_C_LABEL(tsbsize), %l1
+	or	%l2, %lo(0x1fff), %l2
+	ld	[%l1], %l1
+	andn	%l0, %l2, %l0			! Mask off size and split bits
+	or	%l0, %l1, %l0			! Make a TSB pointer
+	set	TSB, %l2
+	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
+	membar	#Sync				! We may need more membar #Sync in here
+
+	/* Change the trap base register */
+	set	_C_LABEL(trapbase), %l1
+	!call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
+	! mov	%l1, %o0
+	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
+	wrpr	%g0, WSTATE_KERN, %wstate
+
+	call	_C_LABEL(cpu_hatch)
+	 nop
+	NOTREACHED
+#endif
 
 /*
  * openfirmware(cell* param);
@@ -9269,6 +9655,9 @@ _C_LABEL(proc0paddr):
 _C_LABEL(dlflush_start):
 	.xword	dlflush1
 	.xword	dlflush2
+#ifdef MULTIPROCESSOR
+	.xword	dlflush2a
+#endif
 	.xword	dlflush3
 	.xword	dlflush4
 	.xword	dlflush5

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2007/09/09 14:59:37 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2007/10/17 21:23:28 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -560,9 +560,9 @@ pmap_calculate_colors() {
  */
 
 void
-pmap_bootstrap(kernelstart, kernelend, maxctx)
+pmap_bootstrap(kernelstart, kernelend, maxctx, numcpus)
 	u_long kernelstart, kernelend;
-	u_int maxctx;
+	u_int maxctx, numcpus;
 {
 	extern int data_start[], end[];	/* start of data segment */
 	extern int msgbufmapped;
@@ -993,7 +993,7 @@ remap_data:
 	/*
 	 * Allocate a 64KB page for the cpu_info structure now.
 	 */
-	if ((cpu0paddr = prom_alloc_phys(8*NBPG, 8*NBPG)) == 0 ) {
+	if ((cpu0paddr = prom_alloc_phys(numcpus * 8*NBPG, 8*NBPG)) == 0 ) {
 		prom_printf("Cannot allocate new cpu_info\r\n");
 		OF_exit();
 	}
@@ -1406,6 +1406,8 @@ remap_data:
 		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
 		proc0paddr = cpus->ci_cpcb;
+
+		cpu0paddr += 64 * KB;
 
 		/* The rest will be done at CPU attach time. */
 		BDPRINTF(PDB_BOOT1, 

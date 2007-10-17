@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.70 2007/10/14 18:31:29 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.71 2007/10/17 21:23:28 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -111,6 +111,7 @@ static	int mbprint(void *, const char *);
 void	sync_crash(void);
 int	mainbus_match(struct device *, void *, void *);
 static	void mainbus_attach(struct device *, struct device *, void *);
+int	get_ncpus(void);
 
 struct device *booted_device;
 struct	bootpath bootpath[8];
@@ -195,6 +196,46 @@ str2hex(char *str, long *vp)
 	return (str);
 }
 
+int
+get_ncpus(void)
+{
+#ifdef MULTIPROCESSOR
+	int node0, node,ncpus;
+	char buf[32];
+
+	node = findroot();
+
+	ncpus = 0;
+	for (node = OF_child(node), node0 = 0; node; node = OF_peer(node)) {
+		/* 
+		 * UltraSPARC-IV cpus appear as two "cpu" nodes below
+		 * a "cmp" node.  Go down one level, but remember
+		 * where we came from, such that we can go up again
+		 * after we've handled both "cpu" nodes.
+		 */
+		if (OF_getprop(node, "name", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "cmp") == 0) {
+			node0 = node;
+			node = OF_child(node0);
+		}
+
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "cpu") == 0)
+			ncpus++;
+
+		if (node0 && OF_peer(node) == 0) {
+			node = node0;
+			node0 = 0;
+		}
+	}
+
+	return (ncpus);
+#else
+	return (1);
+#endif
+}
 /*
  * locore.s code calls bootstrap() just before calling main().
  *
@@ -215,6 +256,7 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
+	int ncpus;
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
@@ -238,7 +280,8 @@ bootstrap(nctx)
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
 #endif
 
-	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
+	ncpus = get_ncpus();
+	pmap_bootstrap(KERNBASE, (u_long)&end, nctx, ncpus);
 }
 
 void
@@ -619,7 +662,7 @@ extern bus_space_tag_t mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char buf[32], *p;
 	const char *const *ssp, *sp = NULL;
-	int node0, node, rv, len;
+	int node0, node, rv, len, ncpus;
 
 	static const char *const openboot_special[] = {
 		/* ignore these (end with NULL) */
@@ -657,64 +700,48 @@ extern bus_space_tag_t mainbus_space_tag;
 			*p = '\0';
 	}
 
-	/*
-	 * Locate and configure the ``early'' devices.  These must be
-	 * configured before we can do the rest.  For instance, the
-	 * EEPROM contains the Ethernet address for the LANCE chip.
-	 * If the device cannot be located or configured, panic.
-	 */
-
-/*
- * The rest of this routine is for OBP machines exclusively.
- */
-
-	node = findroot();
-
 	/* Establish the first component of the boot path */
 	bootpath_store(1, bootpath);
 
-	/* the first early device to be configured is the cpu */
+	/* We configure the CPUs first. */
 
-	{
+	node = findroot();
+
+	ncpus = 0;
+	for (node = OF_child(node), node0 = 0; node; node = OF_peer(node)) {
 		/* 
 		 * UltraSPARC-IV cpus appear as two "cpu" nodes below
-		 * a "cmp" node.  Lookup the first "cmp" node, such
-		 * that we find the "cpu" node in the code below.
+		 * a "cmp" node.  Go down one level, but remember
+		 * where we came from, such that we can go up again
+		 * after we've handled both "cpu" nodes.
 		 */
-
-		for (node = OF_child(node); node; node = OF_peer(node)) {
-			if (OF_getprop(node, "name", buf, sizeof(buf)) <= 0)
-				continue;
-			if (strcmp(buf, "cmp") == 0)
-				break;
+		if (OF_getprop(node, "name", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "cmp") == 0) {
+			node0 = node;
+			node = OF_child(node0);
 		}
 
-		if (node == 0)
-			node = findroot();
-	}
-
-	{
-		int found = 0;
-
-		for (node = OF_child(node); node; node = OF_peer(node)) {
-			if (OF_getprop(node, "device_type", 
-				buf, sizeof(buf)) <= 0)
-				continue;
-			if (strcmp(buf, "cpu") == 0) {
-				bzero(&ma, sizeof(ma));
-				ma.ma_bustag = mainbus_space_tag;
-				ma.ma_dmatag = &mainbus_dma_tag;
-				ma.ma_node = node;
-				ma.ma_name = "cpu";
-				config_found(dev, (void *)&ma, mbprint);
-				found++;
-			}
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "cpu") == 0) {
+			bzero(&ma, sizeof(ma));
+			ma.ma_bustag = mainbus_space_tag;
+			ma.ma_dmatag = &mainbus_dma_tag;
+			ma.ma_node = node;
+			ma.ma_name = "cpu";
+			config_found(dev, (void *)&ma, mbprint);
+			ncpus++;
 		}
 
-		if (!found)
-			panic("None of the CPUs found");
+		if (node0 && OF_peer(node) == 0) {
+			node = node0;
+			node0 = 0;
+		}
 	}
 
+	if (ncpus == 0)
+		panic("None of the CPUs found");
 
 	node = findroot();	/* re-init root node */
 
