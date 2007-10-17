@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.5 2007/03/31 09:49:20 michele Exp $ */
+/*	$OpenBSD: auth.c,v 1.6 2007/10/17 20:36:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -39,7 +39,7 @@ auth_calc_modulator(struct auth_md  *md)
 {
 	u_int32_t		r;
 	MD5_CTX			md5ctx;
-	char			digest[MD5_DIGEST_LENGTH];
+	u_int8_t		digest[MD5_DIGEST_LENGTH];
 
 	MD5Init(&md5ctx);
 	MD5Update(&md5ctx, (void *)&md->keyid, sizeof(md->keyid));
