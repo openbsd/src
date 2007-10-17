@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.53 2007/10/15 21:09:44 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.54 2007/10/17 17:44:23 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1187,8 +1187,7 @@ nfs_timer(arg)
 #endif
 
 	s = splsoftnet();
-	for (rep = TAILQ_FIRST(&nfs_reqq); rep != NULL;
-	    rep = TAILQ_NEXT(rep, r_chain)) {
+	TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 		nmp = rep->r_nmp;
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM))
 			continue;
@@ -1282,11 +1281,10 @@ nfs_timer(arg)
 	 */
 	getmicrotime(&tv);
 	cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
-	for (slp = TAILQ_FIRST(&nfssvc_sockhead); slp != NULL;
-	    slp = TAILQ_NEXT(slp, ns_chain)) {
-	    if (LIST_FIRST(&slp->ns_tq) &&
-	        LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec)
-		nfsrv_wakenfsd(slp);
+	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
+		if (LIST_FIRST(&slp->ns_tq) &&
+		    LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec)
+			nfsrv_wakenfsd(slp);
 	}
 #endif /* NFSSERVER */
 	splx(s);
