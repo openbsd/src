@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 2007/08/26 18:54:37 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 2007/10/17 02:30:26 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -536,6 +536,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    newp, newlen, p);
 	case CPU_CPUVENDOR:
 		return (sysctl_rdstring(oldp, oldlenp, newp, cpu_vendor));
+	case CPU_CPUID:
+		return (sysctl_rdint(oldp, oldlenp, newp, cpu_id));
 	case CPU_CPUFEATURE:
 		return (sysctl_rdint(oldp, oldlenp, newp, cpu_feature));
 	case CPU_KBDRESET:

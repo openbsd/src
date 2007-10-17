@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.1 2007/09/12 18:18:27 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.2 2007/10/17 02:30:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -35,11 +35,14 @@
 #include <machine/psl.h>
 #include <machine/pctr.h>
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/specialreg.h>
 
-/* Check for Model Specific Registers and RDMSR/WRMSR support */
-#define usepctr		(cpu_feature & CPUID_MSR)
+#define PCTR_AMD_NUM	PCTR_NUM
+#define PCTR_INTEL_NUM	2		/* Intel supports only 2 counters */
+
+#define usetsc		(cpu_feature & CPUID_TSC)
+#define usepctr		((pctr_isamd || pctr_isintel) && \
+			    ((cpu_id >> 8) & 15) >= 6)
 
 u_int64_t		pctr_idlcnt;	/* Gets incremented in locore.S */
 
@@ -47,6 +50,7 @@ int			pctr_isamd;
 int			pctr_isintel;
 
 static void		pctrrd(struct pctrst *);
+static int		pctrsel(int, u_int32_t, u_int32_t);
 
 static void
 pctrrd(struct pctrst *st)
@@ -55,20 +59,12 @@ pctrrd(struct pctrst *st)
 
 	num = pctr_isamd ? PCTR_AMD_NUM : PCTR_INTEL_NUM;
 	reg = pctr_isamd ? MSR_K7_EVNTSEL0 : MSR_EVNTSEL0;
-
 	for (i = 0; i < num; i++)
 		st->pctr_fn[i] = rdmsr(reg + i);
-
-	reg = pctr_isamd ? MSR_K7_PERFCTR0 : MSR_PERFCTR0;
-
 	__asm __volatile("cli");
-
 	st->pctr_tsc = rdtsc();
-
 	for (i = 0; i < num; i++)
-		st->pctr_hwc[i] = rdmsr(reg + i);
-		/*st->pctr_hwc[i] = rdpmc(i);*/
-
+		st->pctr_hwc[i] = rdpmc(i);
 	__asm __volatile("sti");
 }
 
@@ -82,17 +78,22 @@ pctrattach(int num)
 	pctr_isamd = (strcmp(cpu_vendor, "AuthenticAMD") == 0);
 	if (!pctr_isamd)
 		pctr_isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
-	if (!pctr_isintel && !pctr_isamd)
-		return;
 
-	/* Enable RDTSC and RDPMC instructions from user-level. */
 	if (usepctr) {
+		/* Enable RDTSC and RDPMC instructions from user-level. */
 		__asm __volatile("movq %%cr4,%%rax\n"
 				 "\tandq %0,%%rax\n"
 				 "\torq %1,%%rax\n"
 				 "\tmovq %%rax,%%cr4"
 				 :: "i" (~CR4_TSD), "i" (CR4_PCE) : "rax");
 		printf("pctr: user-level performance counters enabled\n");
+	} else if (usetsc) {
+		/* Enable RDTSC instruction from user-level. */
+		__asm __volatile("movq %%cr4,%%rax\n"
+				 "\tandq %0,%%rax\n"
+				 "\tmovq %%rax,%%cr4"
+				 :: "i" (~CR4_TSD) : "rax");
+		printf("pctr: user-level cycle counter enabled\n");
 	}
 }
 
@@ -112,7 +113,7 @@ pctrclose(dev_t dev, int oflags, int devtype, struct proc *p)
 	return (0);
 }
 
-int
+static int
 pctrsel(int fflag, u_int32_t cmd, u_int32_t fn)
 {
 	int msrsel, msrval;
@@ -143,9 +144,8 @@ pctrsel(int fflag, u_int32_t cmd, u_int32_t fn)
 }
 
 int
-pctrioctl(dev_t dev, u_int64_t cmd, caddr_t data, int fflag, struct proc *p)
+pctrioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 {
-
 	switch (cmd) {
 	case PCIOCRD:
 	{
@@ -153,6 +153,8 @@ pctrioctl(dev_t dev, u_int64_t cmd, caddr_t data, int fflag, struct proc *p)
 		
 		if (usepctr)
 			pctrrd(st);
+		else if (usetsc)
+			st->pctr_tsc = rdtsc();
 		st->pctr_idl = pctr_idlcnt;
 		return (0);
 	}
@@ -161,7 +163,7 @@ pctrioctl(dev_t dev, u_int64_t cmd, caddr_t data, int fflag, struct proc *p)
 	case PCIOCS2:
 	case PCIOCS3:
 		if (usepctr)
-			return (pctrsel(fflag, cmd, *(u_int32_t *)data));
+			return (pctrsel(fflag, cmd, *(u_int *)data));
 		return (ENODEV);
 	default:
 		return (EINVAL);

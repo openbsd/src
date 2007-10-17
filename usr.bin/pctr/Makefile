@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 2003/07/19 00:03:52 david Exp $
+#	$OpenBSD: Makefile,v 1.7 2007/10/17 02:30:23 deraadt Exp $
 
 MAN=pctr.1
-MANSUBDIR=i386
 
-.if ${MACHINE} == "i386"
+CFLAGS+=-W -Wall -Werror
+
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 PROG=	pctr
 .else
 NOPROG=

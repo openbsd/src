@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.31 2007/05/29 21:01:56 tedu Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.32 2007/10/17 02:30:25 deraadt Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -245,6 +245,14 @@
 
 /* AMD MSRs */
 #define MSR_K6_EPMR		0xc0000086
+#define MSR_K7_EVNTSEL0		0xc0010000
+#define MSR_K7_EVNTSEL1		0xc0010001
+#define MSR_K7_EVNTSEL2		0xc0010002
+#define MSR_K7_EVNTSEL3		0xc0010003
+#define MSR_K7_PERFCTR0		0xc0010004
+#define MSR_K7_PERFCTR1		0xc0010005
+#define MSR_K7_PERFCTR2		0xc0010006
+#define MSR_K7_PERFCTR3		0xc0010007
 
 /*
  * AMD K8 (Opteron) MSRs.

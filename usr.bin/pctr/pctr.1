@@ -1,4 +1,19 @@
-.\"	$OpenBSD: pctr.1,v 1.8 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: pctr.1,v 1.9 2007/10/17 02:30:23 deraadt Exp $
+.\"
+.\" Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
 .\"
 .\" Copyright (c) 1998, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +38,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 17 2007 $
 .Dt PCTR 1
 .Os
 .Sh NAME
@@ -31,13 +46,17 @@
 .Nd display CPU performance counters
 .Sh SYNOPSIS
 .Nm pctr
-.Op Fl l Ar 5 | 6
+.Op Fl AeEiIklMu
+.Op Fl f Ar funct
+.Op Fl m Ar umask
+.Op Fl t Ar thold
+.Op Fl s Ar ctr
 .Sh DESCRIPTION
 The
 .Nm
 program is a sample implementation of how to access the
 .Xr pctr 4
-pseudo device available on many i386 compatible machines.
+pseudo device available on many i386 and amd64 compatible machines.
 .Pp
 By default, the
 .Nm
@@ -46,26 +65,100 @@ counter registers.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl l Ar 5 | 6
-List all possible vendor specific counters.
-The argument specifies which
-.Dq family
-to display; it defaults to the
-.Dq family
-designation of the current processor.
+.It Fl A
+Some bus events provide specificity between the originating physical processor 
+(a bus agent) versus other agents on the bus.
+Specifying this option allows counting on all bus agents.
+This is supported on Intel processors only.
+.It Fl e
+Enables Edge Detect.
+It is mandatory to enable Edge Detect with certain counter functions.
+.It Fl E
+Enables counting exclusive cache coherency state (supported on Intel
+processors only).
+.It Fl f Ar funct
+Specifies a function number in hexadecimal to program the counter,
+specified by the
+.Fl s
+option.
+.It Fl i
+Invert the result of the threshold comparison, so that both greater than
+and less than comparisons can be made.
+.It Fl I
+Enables counting invalid cache coherency state (supported on Intel
+processors only).
+.It Fl k
+Count events occurred in kernel mode.
+Specification of either
+.Fl k
+or
+.Fl u
+options is mandatory.
+.It Fl l
+List all possible vendor specific counters available on the current processor.
+.It Fl m Ar umask
+Specifies a Unit Mask value for a function, specified by the
+.Fl f
+option.
+.It Fl M
+Enables counting modified cache coherency state (supported on Intel
+processors only).
+.It Fl s Ar ctr
+Program counter number
+.Ar ctr
+with function number specified by the
+.Fl f
+option.
+List of all possible functions, supported on the current processor,
+could be obtained by the
+.Fl l
+option output.
+.It Fl S
+Enables counting shared cache coherency state (supported on Intel
+processors only).
+.It Fl t Ar thold
+Specifies an increment threshold.
+The counter
+.Ar ctr
+will be incremented if number of events occurred during the one cycle is
+greater or equal to
+.Ar thold .
+.It Fl u
+Count events occurred in user mode.
+Specification of either
+.Fl k
+or
+.Fl u
+options is mandatory.
 .El
+.Sh EXAMPLES
+The following command, executed from the command line, will set the first
+performance counter to count the number of cacheable L1 data cache reads
+in user and kernel modes on Intel Core2 Duo processor:
+.Bd -unfilled -offset indent
+# pctr -s 0 -f 40 -uk -MESI
+.Ed
 .Pp
-The
-.Nm
-program exits with a value of 0 on success or 1 on failure.
+To reset the counter run the following command:
+.Bd -unfilled -offset indent
+# pctr -s 0 -f 0
+.Ed
+.Pp
 .Sh SEE ALSO
 .Xr pctr 4
+.Pp
+OS and Kernel Developer's Guide for AMD NPT Family 0Fh Processors.
+.Pp
+Intel 64 and IA-32 Architectures Software Developer's Manual.
+Volume 3B: System Programming Guide, Part 2.
+Appendix A: Performance Monitoring Events.
 .Sh HISTORY
 The
 .Nm
 program appeared in
-.Ox 2.0 .
-.Sh BUGS
-The
-.Nm
-program is still oriented towards Intel brand microprocessors.
+.Ox 2.0
+but was subsequently rewritten in
+.Ox 4.2 .
+.Sh CAVEATS
+It is strongly advised to look through a manual for a particular processor
+before programming a counter and interpreting the results.
