@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.14 2007/10/17 11:33:55 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.15 2007/10/17 14:54:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -280,9 +280,9 @@ pctr_fn2str(u_int32_t sel)
 		else
 			msg = p5fn[ind].name;
 		snprintf(buf, sizeof(buf), "%c%c%c %02x %s",
-		    sel & PCTR_P5_C ? 'c' : '-',
-		    sel & PCTR_P5_U ? 'u' : '-',
-		    sel & PCTR_P5_K ? 'k' : '-',
+		    sel & P5CTR_C ? 'c' : '-',
+		    sel & P5CTR_U ? 'u' : '-',
+		    sel & P5CTR_K ? 'k' : '-',
 		    fn, msg);
 		break;
 	case CPU_P6:
@@ -297,34 +297,34 @@ pctr_fn2str(u_int32_t sel)
 			msg = cfnp[ind].name;
 		if (cfnp[ind].name && cfnp[ind].flags & CFL_MESI)
 			snprintf(um, sizeof (um), "%c%c%c%c",
-			    sel & PCTR_X86_UM_M ? 'M' : '-',
-			    sel & PCTR_X86_UM_E ? 'E' : '-',
-			    sel & PCTR_X86_UM_S ? 'S' : '-',
-			    sel & PCTR_X86_UM_I ? 'I' : '-');
+			    sel & PCTR_UM_M ? 'M' : '-',
+			    sel & PCTR_UM_E ? 'E' : '-',
+			    sel & PCTR_UM_S ? 'S' : '-',
+			    sel & PCTR_UM_I ? 'I' : '-');
 		else if (cfnp[ind].name && cfnp[ind].flags & CFL_SA)
 			snprintf(um, sizeof(um), "%c",
-			    sel & PCTR_X86_UM_A ? 'A' : '-');
-		if (sel >> PCTR_X86_CM_SHIFT)
+			    sel & PCTR_UM_A ? 'A' : '-');
+		if (sel >> PCTR_CM_SHIFT)
 			snprintf(th, sizeof(th), "+%d",
-			    sel >> PCTR_X86_CM_SHIFT);
+			    sel >> PCTR_CM_SHIFT);
 		snprintf(buf, sizeof(buf), "%c%c%c%c %02x %02x %s %s %s",
-		    sel & PCTR_X86_I ? 'i' : '-',
-		    sel & PCTR_X86_E ? 'e' : '-',
-		    sel & PCTR_X86_K ? 'k' : '-',
-		    sel & PCTR_X86_U ? 'u' : '-',
-		    fn, (sel >> PCTR_X86_UM_SHIFT) & 0xff, th, um, msg);
+		    sel & PCTR_I ? 'i' : '-',
+		    sel & PCTR_E ? 'e' : '-',
+		    sel & PCTR_K ? 'k' : '-',
+		    sel & PCTR_U ? 'u' : '-',
+		    fn, (sel >> PCTR_UM_SHIFT) & 0xff, th, um, msg);
 		break;
 	case CPU_AMD:
 		fn = sel & 0xff;
-		if (sel >> PCTR_X86_CM_SHIFT)
+		if (sel >> PCTR_CM_SHIFT)
 			snprintf(th, sizeof(th), "+%d",
-			    sel >> PCTR_X86_CM_SHIFT);
+			    sel >> PCTR_CM_SHIFT);
 		snprintf(buf, sizeof(buf), "%c%c%c%c %02x %02x %s",
-		    sel & PCTR_X86_I ? 'i' : '-',
-		    sel & PCTR_X86_E ? 'e' : '-',
-		    sel & PCTR_X86_K ? 'k' : '-',
-		    sel & PCTR_X86_U ? 'u' : '-',
-		    fn, (sel >> PCTR_X86_UM_SHIFT) & 0xff, th);
+		    sel & PCTR_I ? 'i' : '-',
+		    sel & PCTR_E ? 'e' : '-',
+		    sel & PCTR_K ? 'k' : '-',
+		    sel & PCTR_U ? 'u' : '-',
+		    fn, (sel >> PCTR_UM_SHIFT) & 0xff, th);
 		break;
 	}
 	return (buf);
@@ -455,13 +455,13 @@ pctr_set_cntr(void)
 		if (ctr >= PCTR_INTEL_NUM)
 			return (EX_DATAERR);
 		if (cflag)
-			val |= PCTR_P5_C;
+			val |= P5CTR_C;
 		if (kflag)
-			val |= PCTR_P5_K;
+			val |= P5CTR_K;
 		if (uflag)
-			val |= PCTR_P5_U;
+			val |= P5CTR_U;
 		if (func && (!kflag && !uflag))
-			val |= PCTR_P5_K | PCTR_P5_U;
+			val |= P5CTR_K | P5CTR_U;
 		break;
 	case CPU_P6:
 		cfnp = p6fn;
@@ -473,20 +473,20 @@ pctr_set_cntr(void)
 		if (func && (ind = pctr_ctrfn_index(cfnp, func)) < 0)
 			return (EX_DATAERR);
 		if (func && cfnp[ind].flags & CFL_SA)
-			val |= PCTR_X86_UM_A;
+			val |= PCTR_UM_A;
 		if (Mflag && cfnp[ind].flags & CFL_MESI)
-			val |= PCTR_X86_UM_M;
+			val |= PCTR_UM_M;
 		if (Eflag && cfnp[ind].flags & CFL_MESI)
-			val |= PCTR_X86_UM_E;
+			val |= PCTR_UM_E;
 		if (Sflag && cfnp[ind].flags & CFL_MESI)
-			val |= PCTR_X86_UM_S;
+			val |= PCTR_UM_S;
 		if (Iflag && cfnp[ind].flags & CFL_MESI)
-			val |= PCTR_X86_UM_I;
+			val |= PCTR_UM_I;
 		if (func && (cfnp[ind].flags & CFL_MESI) &&
 		    (!Mflag || !Eflag || !Sflag || !Iflag))
-			val |= PCTR_X86_UM_MESI;
+			val |= PCTR_UM_MESI;
 		if (func && (cfnp[ind].flags & CFL_ED))
-			val |= PCTR_X86_E;
+			val |= PCTR_E;
 	case CPU_AMD:
 		if (cpu_type == CPU_AMD && func &&
 		    ((ind = pctr_ctrfn_index(amdfn, func)) < 0))
@@ -494,19 +494,19 @@ pctr_set_cntr(void)
 		if (ctr >= PCTR_AMD_NUM)
 			return (EX_DATAERR);
 		if (eflag)
-			val |= PCTR_X86_E;
+			val |= PCTR_E;
 		if (iflag)
-			val |= PCTR_X86_I;
+			val |= PCTR_I;
 		if (kflag)
-			val |= PCTR_X86_K;
+			val |= PCTR_K;
 		if (uflag)
-			val |= PCTR_X86_U;
+			val |= PCTR_U;
 		if (func && (!kflag && !uflag))
-			val |= PCTR_X86_K | PCTR_X86_U;
-		val |= masku << PCTR_X86_UM_SHIFT;
-		val |= thold << PCTR_X86_CM_SHIFT;
+			val |= PCTR_K | PCTR_U;
+		val |= masku << PCTR_UM_SHIFT;
+		val |= thold << PCTR_CM_SHIFT;
 		if (func)
-			val |= PCTR_X86_EN;
+			val |= PCTR_EN;
 		break;
 	default:
 		return (EX_UNAVAILABLE);

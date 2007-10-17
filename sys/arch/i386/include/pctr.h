@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.13 2007/10/17 02:30:25 deraadt Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.14 2007/10/17 14:54:32 deraadt Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -21,7 +21,7 @@ typedef u_int64_t	pctrval;
 struct pctrst {
 	u_int pctr_fn[PCTR_NUM];	/* Current settings of counters */
 	pctrval pctr_tsc;		/* Free-running 64-bit cycle counter */
-	pctrval	pctr_hwc[PCTR_NUM];	/* Values of the hardware counters */
+	pctrval pctr_hwc[PCTR_NUM];	/* Values of the hardware counters */
 	pctrval pctr_idl;		/* Iterations of the idle loop */
 };
 
@@ -30,22 +30,22 @@ struct pctrst {
 #define P5CTR_U		0x80		/* Monitor user-level events */
 #define P5CTR_C		0x100		/* count cycles rather than events */
 
-#define P6CTR_U		0x010000	/* Monitor user-level events */
-#define P6CTR_K		0x020000	/* Monitor kernel-level events */
-#define P6CTR_E		0x040000	/* Edge detect */
-#define P6CTR_EN		0x400000	/* Enable counters (counter 0 only) */
-#define P6CTR_I		0x800000	/* Invert counter mask */
+#define PCTR_U		0x010000	/* Monitor user-level events */
+#define PCTR_K		0x020000	/* Monitor kernel-level events */
+#define PCTR_E		0x040000	/* Edge detect */
+#define PCTR_EN		0x400000	/* Enable counters (counter 0 only) */
+#define PCTR_I		0x800000	/* Invert counter mask */
 
 /* Unit Mask bits */
-#define P6CTR_UM_M	0x0800		/* Modified cache lines */
-#define P6CTR_UM_E	0x0400		/* Exclusive cache lines */
-#define P6CTR_UM_S	0x0200		/* Shared cache lines */
-#define P6CTR_UM_I	0x0100		/* Invalid cache lines */
-#define P6CTR_UM_MESI	(P6CTR_UM_M|P6CTR_UM_E|P6CTR_UM_S|P6CTR_UM_I)
-#define P6CTR_UM_A	0x2000		/* Any initiator */
+#define PCTR_UM_M	0x0800		/* Modified cache lines */
+#define PCTR_UM_E	0x0400		/* Exclusive cache lines */
+#define PCTR_UM_S	0x0200		/* Shared cache lines */
+#define PCTR_UM_I	0x0100		/* Invalid cache lines */
+#define PCTR_UM_MESI	(PCTR_UM_M|PCTR_UM_E|PCTR_UM_S|PCTR_UM_I)
+#define PCTR_UM_A	0x2000		/* Any initiator */
 
-#define P6CTR_UM_SHIFT	8		/* Left shift for unit mask */
-#define P6CTR_CM_SHIFT	24		/* Left shift for counter mask */
+#define PCTR_UM_SHIFT	8		/* Left shift for unit mask */
+#define PCTR_CM_SHIFT	24		/* Left shift for counter mask */
 
 /* ioctl to set which counter a device tracks */
 #define PCIOCRD _IOR('c', 1, struct pctrst)	/* Read counter value */
@@ -83,7 +83,7 @@ struct pctrst {
 })
 
 #define wrmsr(msr, v) \
-	__asm __volatile ("wrmsr" :: "A" ((u_quad_t) (v)), "c" (msr));
+	__asm __volatile ("wrmsr" :: "A" ((u_int64_t) (v)), "c" (msr));
 
 void	pctrattach(int);
 int	pctropen(dev_t, int, int, struct proc *);

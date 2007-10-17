@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctrvar.h,v 1.1 2007/10/17 02:30:23 deraadt Exp $	*/
+/*	$OpenBSD: pctrvar.h,v 1.2 2007/10/17 14:54:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -51,27 +51,15 @@
 #define CFL_ED			0x10	/* Edge detect is needed */
 
 /* Pentium defines */
-#define PCTR_P5_K		0x040
-#define PCTR_P5_U		0x080
-#define PCTR_P5_C		0x100
-
-/* AMD & Intel shared defines */
-#define PCTR_X86_U		0x010000
-#define PCTR_X86_K		0x020000
-#define PCTR_X86_E		0x040000
-#define PCTR_X86_EN		0x400000
-#define PCTR_X86_I		0x800000
-#define PCTR_X86_UM_M		0x0800
-#define PCTR_X86_UM_E		0x0400
-#define PCTR_X86_UM_S		0x0200
-#define PCTR_X86_UM_I		0x0100
-#define PCTR_X86_UM_MESI	(PCTR_X86_UM_M | PCTR_X86_UM_E | \
-				    PCTR_X86_UM_S | PCTR_X86_UM_I)
-#define PCTR_X86_UM_A		0x2000
-
-#define PCTR_X86_UM_SHIFT	8
-#define PCTR_X86_CM_SHIFT	24
-
+#ifndef P5CTR_K
+#define P5CTR_K			0x040
+#endif
+#ifndef P5CTR_U
+#define P5CTR_U			0x080
+#endif
+#ifndef P5CTR_C
+#define P5CTR_C			0x100
+#endif
 
 struct ctrfn {
 	u_int32_t	 fn;
