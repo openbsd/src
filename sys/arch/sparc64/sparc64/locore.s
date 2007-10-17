@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.87 2007/10/17 19:25:22 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.88 2007/10/17 20:16:11 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5813,6 +5813,12 @@ ENTRY(snapshot)
  * and when returning a child to user mode after a fork(2).
  */
 ENTRY(proc_trampoline)
+#ifdef MULTIPROCESSOR
+	save	%sp, -CC64FSZ, %sp
+	call	_C_LABEL(proc_trampoline_mp)
+	 nop
+	restore
+#endif
 	wrpr	%g0, 0, %pil		! Reset interrupt level
 	call	%l0			! re-use current frame
 	 mov	%l1, %o0
