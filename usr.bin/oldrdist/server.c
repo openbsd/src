@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.30 2007/02/08 03:19:13 ray Exp $	*/
+/*	$OpenBSD: server.c,v 1.31 2007/10/17 20:10:44 chl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.30 2007/02/08 03:19:13 ray Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.31 2007/10/17 20:10:44 chl Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -1369,8 +1369,10 @@ dospecial(cmd)
 	char *cp, *s;
 	char sbuf[BUFSIZ];
 	pid_t pid, i;
+#if     defined(DIRECT_RCMD)
 	extern uid_t userid;
 	extern gid_t groupid;
+#endif  /* DIRECT_RCMD */
 
 	if (pipe(fd) < 0) {
 		error("%s\n", strerror(errno));

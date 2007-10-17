@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.19 2007/09/06 22:02:03 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.20 2007/10/17 20:10:44 chl Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.19 2007/09/06 22:02:03 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.20 2007/10/17 20:10:44 chl Exp $";
 #endif
 
 #include <stdlib.h>
@@ -586,7 +586,6 @@ if3(int els)
 void
 switch1(tnode_t *tn)
 {
-	tspec_t	t;
 	type_t	*tp;
 
 	if (tn != NULL)

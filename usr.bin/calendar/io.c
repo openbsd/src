@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.33 2006/12/11 20:50:54 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.34 2007/10/17 20:10:44 chl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: io.c,v 1.33 2006/12/11 20:50:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: io.c,v 1.34 2007/10/17 20:10:44 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,6 @@ cal(void)
 	struct event *events, *cur_evt, *ev1, *tmp;
 	char buf[2048 + 1], *prefix = NULL, *p;
 	struct match *m;
-	size_t nlen;
 	FILE *fp;
 
 	events = NULL;

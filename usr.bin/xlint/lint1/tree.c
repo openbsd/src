@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.45 2007/09/08 17:49:19 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.46 2007/10/17 20:10:44 chl Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.45 2007/09/08 17:49:19 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.46 2007/10/17 20:10:44 chl Exp $";
 #endif
 
 #include <stdlib.h>
@@ -736,7 +736,6 @@ typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 		olt = NOTSPEC, ort = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp, *rstp;
 	tnode_t	*tn;
-	int arg = (farg) ? farg->fa_num : 0;
 
 	mp = &modtab[op];
 
@@ -1513,7 +1512,7 @@ static void
 balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 {
 	tspec_t	lt, rt, t;
-	int	i, u;
+	int	i;
 	type_t	*ntp;
 	static	tspec_t	tl[] = {
 		LDOUBLE, DOUBLE, FLOAT, UQUAD, QUAD, ULONG, LONG, UINT, INT,

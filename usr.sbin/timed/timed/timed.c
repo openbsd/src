@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.26 2007/02/19 22:39:57 jmc Exp $	*/
+/*	$OpenBSD: timed.c,v 1.27 2007/10/17 20:10:44 chl Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -132,7 +132,6 @@ main(int argc, char **argv)
 	struct nets *nt;
 	struct sockaddr_in server;
 	u_short port;
-	int inlen = 8192;
 	int ch;
 	struct ifaddrs *ifap, *ifa;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.17 2006/04/22 03:09:15 ray Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.18 2007/10/17 20:10:44 chl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -62,8 +62,9 @@ main(argc, argv)
 	GS *gp;
 	size_t rows, cols;
 	int rval;
-	char *ip_arg, *ttype;
+	char *ttype;
 #ifdef RUNNING_IP
+	char *ip_arg;
 	char **p_av, **t_av;
 #endif
 

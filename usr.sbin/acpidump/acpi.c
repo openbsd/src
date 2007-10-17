@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.4 2007/02/22 19:09:26 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.5 2007/10/17 20:10:44 chl Exp $	*/
 /*-
  * Copyright (c) 1998 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpi.c,v 1.4 2007/02/22 19:09:26 jordan Exp $
+ *	$Id: acpi.c,v 1.5 2007/10/17 20:10:44 chl Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 #include <sys/types.h>
@@ -62,8 +62,6 @@ acpi_trim_string(char *s, size_t length)
 static void
 acpi_print_dsdt_definition(void)
 {
-	int	len;
-	char	*p;
 	char	oemid[6 + 1];
 	char	oemtblid[8 + 1];
 
@@ -104,7 +102,6 @@ acpi_handle_dsdt(struct ACPIsdt *dsdp)
 {
 	u_int8_t       *dp;
 	u_int8_t       *end;
-	extern struct aml_environ	asl_env;
 
 	acpi_print_dsdt(dsdp);
 

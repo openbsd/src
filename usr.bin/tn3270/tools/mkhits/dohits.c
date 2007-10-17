@@ -1,4 +1,4 @@
-/*	$OpenBSD: dohits.c,v 1.9 2007/09/25 11:35:00 chl Exp $	*/
+/*	$OpenBSD: dohits.c,v 1.10 2007/10/17 20:10:44 chl Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dohits.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: dohits.c,v 1.9 2007/09/25 11:35:00 chl Exp $";
+static char rcsid[] = "$OpenBSD: dohits.c,v 1.10 2007/10/17 20:10:44 chl Exp $";
 #endif /* not lint */
 
 /*
@@ -114,7 +114,7 @@ char *file,		/* Name of file to scan for whitespace prefix */
 {
     FILE *ourfile;
     char compare[100];
-    char what[100], value[100];
+    char what[100];
     char line[200];
 
     snprintf(compare, sizeof compare, " %s%%[^,\t \n]", prefix);
@@ -233,11 +233,7 @@ char	*aidfile, *fcnfile;
     unsigned char plain[100], shifted[100], alted[100], shiftalted[100];
     unsigned char line[200];
     int keynumber, scancode;
-    int empty;
-    int i;
     struct hit *hit;
-    struct hits *ph;
-    struct Hits *Ph;
 
     memset((char *)Hits, 0, sizeof Hits);
 

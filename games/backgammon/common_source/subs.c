@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.15 2006/10/31 18:15:15 ray Exp $	*/
+/*	$OpenBSD: subs.c,v 1.16 2007/10/17 20:10:44 chl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subs.c,v 1.15 2006/10/31 18:15:15 ray Exp $";
+static char rcsid[] = "$OpenBSD: subs.c,v 1.16 2007/10/17 20:10:44 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,6 @@ getarg(argc,argv)
 	char  **argv;
 {
 	int     ch;
-	int     j;
 
 	while ((ch = getopt(argc, argv, "bdnrs:w")) != -1)
 		switch((char)ch) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.99 2007/09/07 20:55:26 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.100 2007/10/17 20:10:44 chl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.99 2007/09/07 20:55:26 bluhm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.100 2007/10/17 20:10:44 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,6 @@ int	Startup = 1;		/* startup flag */
 char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	InetInuse = 0;		/* non-zero if INET sockets are being used */
-int	LogPort;		/* port number for INET connections */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
@@ -294,7 +293,7 @@ main(int argc, char *argv[])
 {
 	int ch, i, linesize, fd;
 	struct sockaddr_un fromunix;
-	struct sockaddr_in s_in, frominet;
+	struct sockaddr_in frominet;
 	socklen_t len;
 	char *p, *line;
 	char resolve[MAXHOSTNAMELEN];
