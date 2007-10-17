@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2007/03/19 10:10:29 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.4 2007/10/17 19:57:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -242,11 +242,6 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_KROUTE:
-			c->ibuf.pid = imsg.hdr.pid;
-			ripe_imsg_compose_parent(imsg.hdr.type,
-			    imsg.hdr.pid, imsg.data,
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-			break;
 		case IMSG_CTL_IFINFO:
 			c->ibuf.pid = imsg.hdr.pid;
 			ripe_imsg_compose_parent(imsg.hdr.type,
