@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.86 2007/10/16 21:44:25 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.87 2007/10/17 19:25:22 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4621,10 +4621,10 @@ _C_LABEL(openfirmware):
  *
  */
 	.align 8
-	.globl	_C_LABEL(tlb_flush_pte)
+	.globl	_C_LABEL(sp_tlb_flush_pte)
 	.proc 1
-	FTYPE(tlb_flush_pte)
-_C_LABEL(tlb_flush_pte):
+	FTYPE(sp_tlb_flush_pte)
+_C_LABEL(sp_tlb_flush_pte):
 #ifdef DEBUG
 	set	DATA_START, %o4				! Forget any recent TLB misses
 	stx	%g0, [%o4]
@@ -4702,10 +4702,10 @@ _C_LABEL(tlb_flush_pte):
  *
  */
 	.align 8
-	.globl	_C_LABEL(tlb_flush_ctx)
+	.globl	_C_LABEL(sp_tlb_flush_ctx)
 	.proc 1
-	FTYPE(tlb_flush_ctx)
-_C_LABEL(tlb_flush_ctx):
+	FTYPE(sp_tlb_flush_ctx)
+_C_LABEL(sp_tlb_flush_ctx):
 #ifdef DEBUG
 	set	DATA_START, %o4				! Forget any recent TLB misses
 	stx	%g0, [%o4]
