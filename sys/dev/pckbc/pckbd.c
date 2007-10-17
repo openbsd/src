@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.9 2007/01/30 20:45:05 jcs Exp $ */
+/* $OpenBSD: pckbd.c,v 1.10 2007/10/17 01:16:04 fgsch Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -212,7 +212,6 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = table;
 		if (pckbc_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0)) {
-			u_char cmd[1];
 #ifdef DEBUG
 			printf("pckbd: table set of %d failed\n", table);
 #endif
@@ -232,7 +231,7 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 		 * table it reports it's in.
 		 */
 		if (table == 3) {
-			u_char cmd[1], resp[0];
+			u_char resp[1];
 
 			cmd[0] = KBC_SETTABLE;
 			cmd[1] = 0;
