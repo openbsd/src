@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.2 2005/07/21 16:38:55 fgsch Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.3 2007/10/17 18:58:24 deraadt Exp $	*/
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpidump.c,v 1.2 2005/07/21 16:38:55 fgsch Exp $
+ *	$Id: acpidump.c,v 1.3 2007/10/17 18:58:24 deraadt Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 
@@ -68,35 +68,28 @@ asl_dump_from_devmem()
 }
 
 static void
-usage(const char *progname)
+usage(void)
 {
 
-	printf("usage:\t%s [-o dsdt_file_for_output]\n", progname);
-	printf("\t%s [-f dsdt_file_for_input]\n", progname);
-	printf("\t%s [-h]\n", progname);
+	printf("usage: acpidump [-o dsdt_file_for_output]\n");
+	printf("       acpidump [-f dsdt_file_for_input]\n");
 	exit(1);
 }
 
 int
 main(int argc, char *argv[])
 {
-	char	c, *progname;
+	char	c;
 
-	progname = argv[0];
-	while ((c = getopt(argc, argv, "f:o:h")) != -1) {
+	while ((c = getopt(argc, argv, "f:o:")) != -1) {
 		switch (c) {
 		case 'f':
 			asl_dump_from_file(optarg);
 			return (0);
 		case 'o':
 			aml_dumpfile = optarg;
-			break;
-		case 'h':
-			usage(progname);
-			break;
 		default:
-			argc -= optind;
-			argv += optind;
+			usage();
 		}
 	}
 

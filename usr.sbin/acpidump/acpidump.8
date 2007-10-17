@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.6 2007/05/31 19:20:21 jmc Exp $
+.\"	$OpenBSD: acpidump.8,v 1.7 2007/10/17 18:58:23 deraadt Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,15 +29,13 @@
 .\"
 .\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.9 2001/09/05 19:21:25 dd Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 17 2007 $
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
 .Nm acpidump
 .Nd dump ACPI tables
 .Sh SYNOPSIS
-.Nm
-.Op Fl h
 .Nm
 .Op Fl f Ar dsdt_file_for_input
 .Nm
@@ -116,8 +114,6 @@ The following options are supported by
 Interpret AML data in DSDT from a file specified in
 .Ar dsdt_file_for_input
 and dumps them in ASL to standard output.
-.It Fl h
-Display usage and exit.
 .It Fl o Ar prefix_for_output
 Additionally store ACPI tables from physical memory into files specified by
 .Ar prefix_for_output .
