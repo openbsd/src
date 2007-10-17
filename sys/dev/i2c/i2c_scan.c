@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.103 2007/10/11 20:48:21 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.104 2007/10/17 17:29:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -708,6 +708,18 @@ iic_probe_sensor(struct device *self, struct i2cbus_attach_args *iba, u_int8_t a
 		    (iicprobe(0x02) & 0x2b) == 0 &&
 		    (iicprobe(0x03) & 0x0f) == 0)
 			name = "max6642";
+		break;
+	case 0x55:		/* Texas Instruments */
+		if (addr == 0x4c && iicprobe(0xff) == 0x11 &&
+		    (iicprobe(0x03) & 0x1b) == 0x00 &&
+		    (iicprobe(0x04) & 0xf0) == 0x00 &&
+		    (iicprobe(0x10) & 0x0f) == 0x00 &&
+		    (iicprobe(0x13) & 0x0f) == 0x00 &&
+		    (iicprobe(0x14) & 0x0f) == 0x00 &&
+		    (iicprobe(0x15) & 0x0f) == 0x00 &&
+		    (iicprobe(0x16) & 0x0f) == 0x00 &&
+		    (iicprobe(0x17) & 0x0f) == 0x00)
+			name = "tmp401";
 		break;
 	}
 
