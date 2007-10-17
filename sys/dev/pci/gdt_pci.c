@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.20 2006/02/24 00:04:27 brad Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.21 2007/10/17 02:51:39 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -149,9 +149,7 @@ struct cfattach gdt_pci_ca = {
 };
 
 int
-gdt_pci_probe(parent, match, aux)
-        struct device *parent;
-        void *match, *aux;
+gdt_pci_probe(struct device *parent, void *match, void *aux)
 {
         struct pci_attach_args *pa = aux;
 
@@ -169,12 +167,10 @@ gdt_pci_probe(parent, match, aux)
 }
 
 void
-gdt_pci_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+gdt_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct gdt_softc *gdt = (void *)self;
+	struct gdt_softc *sc = (void *)self;
 	bus_space_tag_t dpmemt, iomemt, iot;
 	bus_space_handle_t dpmemh, iomemh, ioh;
 	bus_addr_t dpmembase, iomembase, iobase;
@@ -192,13 +188,13 @@ gdt_pci_attach(parent, self, aux)
 
 	printf(": ");
 
-	gdt->sc_class = 0;
+	sc->sc_class = 0;
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX) {
 		prod = PCI_PRODUCT(pa->pa_id);
 		switch (prod) {
 		case PCI_PRODUCT_VORTEX_GDT_60x0:
 		case PCI_PRODUCT_VORTEX_GDT_6000B:
-			gdt->sc_class = GDT_PCI;
+			sc->sc_class = GDT_PCI;
 			break;
 
 		case PCI_PRODUCT_VORTEX_GDT_6x10:
@@ -213,7 +209,7 @@ gdt_pci_attach(parent, self, aux)
 		case PCI_PRODUCT_VORTEX_GDT_6x25:
 		case PCI_PRODUCT_VORTEX_GDT_6535:
 		case PCI_PRODUCT_VORTEX_GDT_6555:
-			gdt->sc_class = GDT_PCINEW;
+			sc->sc_class = GDT_PCINEW;
 			break;
 
 		case PCI_PRODUCT_VORTEX_GDT_6x17RP:
@@ -242,26 +238,26 @@ gdt_pci_attach(parent, self, aux)
 		case PCI_PRODUCT_VORTEX_GDT_7x19RN:
 		case PCI_PRODUCT_VORTEX_GDT_7x29RN:
 		case PCI_PRODUCT_VORTEX_GDT_7x43RN:
-			gdt->sc_class = GDT_MPR;
+			sc->sc_class = GDT_MPR;
 		}
 
 		/* If we don't recognize it, determine class heuristically.  */
-		if (gdt->sc_class == 0)
-			gdt->sc_class = prod < 0x100 ? GDT_PCINEW : GDT_MPR;
+		if (sc->sc_class == 0)
+			sc->sc_class = prod < 0x100 ? GDT_PCINEW : GDT_MPR;
 
 		if (prod >= GDT_PCI_PRODUCT_FC)
-			gdt->sc_class |= GDT_FC;
+			sc->sc_class |= GDT_FC;
 
 	} else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
-		gdt->sc_class = GDT_MPR;
+		sc->sc_class = GDT_MPR;
 	}
 
 	if (pci_mapreg_map(pa,
-	    GDT_CLASS(gdt) == GDT_PCINEW ? GDT_PCINEW_DPMEM : GDT_PCI_DPMEM,
+	    GDT_CLASS(sc) == GDT_PCINEW ? GDT_PCINEW_DPMEM : GDT_PCI_DPMEM,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &dpmemt,
 	    &dpmemh, &dpmembase, &dpmemsize, 0)) {
 		if (pci_mapreg_map(pa,
-		    GDT_CLASS(gdt) == GDT_PCINEW ? GDT_PCINEW_DPMEM :
+		    GDT_CLASS(sc) == GDT_PCINEW ? GDT_PCINEW_DPMEM :
 		    GDT_PCI_DPMEM,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT_1M, 0,
 		    &dpmemt,&dpmemh, &dpmembase, &dpmemsize, 0)) {
@@ -270,15 +266,15 @@ gdt_pci_attach(parent, self, aux)
 		}
 	}
 	status |= DPMEM_MAPPED;
-	gdt->sc_dpmemt = dpmemt;
-	gdt->sc_dpmemh = dpmemh;
-	gdt->sc_dpmembase = dpmembase;
-	gdt->sc_dmat = pa->pa_dmat;
+	sc->sc_dpmemt = dpmemt;
+	sc->sc_dpmemh = dpmemh;
+	sc->sc_dpmembase = dpmembase;
+	sc->sc_dmat = pa->pa_dmat;
 
 	/*
 	 * The GDT_PCINEW series also has two other regions to map.
 	 */
-	if (GDT_CLASS(gdt) == GDT_PCINEW) {
+	if (GDT_CLASS(sc) == GDT_PCINEW) {
 		if (pci_mapreg_map(pa, GDT_PCINEW_IOMEM, PCI_MAPREG_TYPE_MEM,
 		    0, &iomemt, &iomemh, &iomembase, &iomemsize, 0)) {
 			printf("cannot map memory mapped I/O ports\n");
@@ -292,12 +288,12 @@ gdt_pci_attach(parent, self, aux)
 			goto bail_out;
 		}
 		status |= IO_MAPPED;
-		gdt->sc_iot = iot;
-		gdt->sc_ioh = ioh;
-		gdt->sc_iobase = iobase;
+		sc->sc_iot = iot;
+		sc->sc_ioh = ioh;
+		sc->sc_iobase = iobase;
 	}
 
-	switch (GDT_CLASS(gdt)) {
+	switch (GDT_CLASS(sc)) {
 	case GDT_PCI:
 		bus_space_set_region_4(dpmemt, dpmemh, 0, 0,
 		    GDT_DPR_IF_SZ >> 2);
@@ -359,14 +355,14 @@ gdt_pci_attach(parent, self, aux)
 		gdth_writeb(0xff, &dp6_ptr->io.irqdel);
 #endif
 
-		gdt->sc_ic_all_size = GDT_DPRAM_SZ;
+		sc->sc_ic_all_size = GDT_DPRAM_SZ;
 
-		gdt->sc_copy_cmd = gdt_pci_copy_cmd;
-		gdt->sc_get_status = gdt_pci_get_status;
-		gdt->sc_intr = gdt_pci_intr;
-		gdt->sc_release_event = gdt_pci_release_event;
-		gdt->sc_set_sema0 = gdt_pci_set_sema0;
-		gdt->sc_test_busy = gdt_pci_test_busy;
+		sc->sc_copy_cmd = gdt_pci_copy_cmd;
+		sc->sc_get_status = gdt_pci_get_status;
+		sc->sc_intr = gdt_pci_intr;
+		sc->sc_release_event = gdt_pci_release_event;
+		sc->sc_set_sema0 = gdt_pci_set_sema0;
+		sc->sc_test_busy = gdt_pci_test_busy;
 
 		break;
 
@@ -434,14 +430,14 @@ gdt_pci_attach(parent, self, aux)
 		gdth_writeb(0, &dp6c_ptr->u.ic.S_Status);
 #endif
 
-		gdt->sc_ic_all_size = GDT_PCINEW_SZ;
+		sc->sc_ic_all_size = GDT_PCINEW_SZ;
 
-		gdt->sc_copy_cmd = gdt_pcinew_copy_cmd;
-		gdt->sc_get_status = gdt_pcinew_get_status;
-		gdt->sc_intr = gdt_pcinew_intr;
-		gdt->sc_release_event = gdt_pcinew_release_event;
-		gdt->sc_set_sema0 = gdt_pcinew_set_sema0;
-		gdt->sc_test_busy = gdt_pcinew_test_busy;
+		sc->sc_copy_cmd = gdt_pcinew_copy_cmd;
+		sc->sc_get_status = gdt_pcinew_get_status;
+		sc->sc_intr = gdt_pcinew_intr;
+		sc->sc_release_event = gdt_pcinew_release_event;
+		sc->sc_set_sema0 = gdt_pcinew_set_sema0;
+		sc->sc_test_busy = gdt_pcinew_test_busy;
 
 		break;
 
@@ -527,14 +523,14 @@ gdt_pci_attach(parent, self, aux)
 		bus_space_write_1(dpmemt, dpmemh, GDT_MPR_IC + GDT_S_STATUS,
 		    0);
 
-		gdt->sc_ic_all_size = GDT_MPR_SZ;
+		sc->sc_ic_all_size = GDT_MPR_SZ;
 
-		gdt->sc_copy_cmd = gdt_mpr_copy_cmd;
-		gdt->sc_get_status = gdt_mpr_get_status;
-		gdt->sc_intr = gdt_mpr_intr;
-		gdt->sc_release_event = gdt_mpr_release_event;
-		gdt->sc_set_sema0 = gdt_mpr_set_sema0;
-		gdt->sc_test_busy = gdt_mpr_test_busy;
+		sc->sc_copy_cmd = gdt_mpr_copy_cmd;
+		sc->sc_get_status = gdt_mpr_get_status;
+		sc->sc_intr = gdt_mpr_intr;
+		sc->sc_release_event = gdt_mpr_release_event;
+		sc->sc_set_sema0 = gdt_mpr_set_sema0;
+		sc->sc_test_busy = gdt_mpr_test_busy;
 	}
 
 	if (pci_intr_map(pa, &ih)) {
@@ -542,9 +538,9 @@ gdt_pci_attach(parent, self, aux)
 		goto bail_out;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	gdt->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, gdt_intr, gdt,
-	    gdt->sc_dev.dv_xname);
-	if (gdt->sc_ih == NULL) {
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, gdt_intr, sc,
+	    sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
 		printf("couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -555,10 +551,10 @@ gdt_pci_attach(parent, self, aux)
 	if (intrstr != NULL)
 		printf("%s ", intrstr);
 
-	if (gdt_attach(gdt))
+	if (gdt_attach(sc))
 		goto bail_out;
 
-	gdt_pci_enable_intr(gdt);
+	gdt_pci_enable_intr(sc);
 
 	return;
 
@@ -570,38 +566,37 @@ gdt_pci_attach(parent, self, aux)
 	if (status & IO_MAPPED)
 		bus_space_unmap(iot, ioh, iosize);
 	if (status & INTR_ESTABLISHED)
-		pci_intr_disestablish(pa->pa_pc, gdt->sc_ih);
+		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 	return;
 }
 
 /* Enable interrupts */
 void
-gdt_pci_enable_intr(gdt)
-	struct gdt_softc *gdt;
+gdt_pci_enable_intr(struct gdt_softc *sc)
 {
-	GDT_DPRINTF(GDT_D_INTR, ("gdt_pci_enable_intr(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_INTR, ("gdt_pci_enable_intr(%p) ", sc));
 
-	switch(GDT_CLASS(gdt)) {
+	switch(GDT_CLASS(sc)) {
 	case GDT_PCI:
-		bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_IRQDEL,
+		bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_IRQDEL,
 		    1);
-		bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh,
+		bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh,
 		    GDT_CMD_INDEX, 0);
-		bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_IRQEN,
+		bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_IRQEN,
 		    1);
 		break;
 
 	case GDT_PCINEW:
-		bus_space_write_1(gdt->sc_iot, gdt->sc_ioh, GDT_EDOOR_REG,
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, GDT_EDOOR_REG,
 		    0xff);
-		bus_space_write_1(gdt->sc_iot, gdt->sc_ioh, GDT_CONTROL1, 3);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, GDT_CONTROL1, 3);
 		break;
 
 	case GDT_MPR:
-		bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh,
+		bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh,
 		    GDT_MPR_EDOOR, 0xff);
-		bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_EDOOR_EN,
-		    bus_space_read_1(gdt->sc_dpmemt, gdt->sc_dpmemh,
+		bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_EDOOR_EN,
+		    bus_space_read_1(sc->sc_dpmemt, sc->sc_dpmemh,
 		    GDT_EDOOR_EN) & ~4);
 		break;
 	}
@@ -612,47 +607,38 @@ gdt_pci_enable_intr(gdt)
  */
 
 void
-gdt_pci_copy_cmd(gdt, ccb)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
+gdt_pci_copy_cmd(struct gdt_softc *sc, struct gdt_ccb *ccb)
 {
 	/* XXX Not yet implemented */
 }
 
 u_int8_t
-gdt_pci_get_status(gdt)
-	struct gdt_softc *gdt;
+gdt_pci_get_status(struct gdt_softc *sc)
 {
 	/* XXX Not yet implemented */
 	return (0);
 }
 
 void
-gdt_pci_intr(gdt, ctx)
-	struct gdt_softc *gdt;
-	struct gdt_intr_ctx *ctx;
+gdt_pci_intr(struct gdt_softc *sc, struct gdt_intr_ctx *ctx)
 {
 	/* XXX Not yet implemented */
 }
 
 void
-gdt_pci_release_event(gdt, ccb)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
+gdt_pci_release_event(struct gdt_softc *sc, struct gdt_ccb *ccb)
 {
 	/* XXX Not yet implemented */
 }
 
 void
-gdt_pci_set_sema0(gdt)
-	struct gdt_softc *gdt;
+gdt_pci_set_sema0(struct gdt_softc *sc)
 {
-	bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_SEMA0, 1);
+	bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_SEMA0, 1);
 }
 
 int
-gdt_pci_test_busy(gdt)
-	struct gdt_softc *gdt;
+gdt_pci_test_busy(struct gdt_softc *sc)
 {
 	/* XXX Not yet implemented */
 	return (0);
@@ -663,47 +649,38 @@ gdt_pci_test_busy(gdt)
  */
 
 void
-gdt_pcinew_copy_cmd(gdt, ccb)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
+gdt_pcinew_copy_cmd(struct gdt_softc *sc, struct gdt_ccb *ccb)
 {
 	/* XXX Not yet implemented */
 }
 
 u_int8_t
-gdt_pcinew_get_status(gdt)
-	struct gdt_softc *gdt;
+gdt_pcinew_get_status(struct gdt_softc *sc)
 {
 	/* XXX Not yet implemented */
 	return (0);
 }
 
 void
-gdt_pcinew_intr(gdt, ctx)
-	struct gdt_softc *gdt;
-	struct gdt_intr_ctx *ctx;
+gdt_pcinew_intr(struct gdt_softc *sc, struct gdt_intr_ctx *ctx)
 {
 	/* XXX Not yet implemented */
 }
 
 void
-gdt_pcinew_release_event(gdt, ccb)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
+gdt_pcinew_release_event(struct gdt_softc *sc, struct gdt_ccb *ccb)
 {
 	/* XXX Not yet implemented */
 }
 
 void
-gdt_pcinew_set_sema0(gdt)
-	struct gdt_softc *gdt;
+gdt_pcinew_set_sema0(struct gdt_softc *sc)
 {
-	bus_space_write_1(gdt->sc_iot, gdt->sc_ioh, GDT_SEMA0_REG, 1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, GDT_SEMA0_REG, 1);
 }
 
 int
-gdt_pcinew_test_busy(gdt)
-	struct gdt_softc *gdt;
+gdt_pcinew_test_busy(struct gdt_softc *sc)
 {
 	/* XXX Not yet implemented */
 	return (0);
@@ -714,94 +691,85 @@ gdt_pcinew_test_busy(gdt)
  */
 
 void
-gdt_mpr_copy_cmd(gdt, ccb)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
+gdt_mpr_copy_cmd(struct gdt_softc *sc, struct gdt_ccb *ccb)
 {
-	u_int16_t cp_count = roundup(gdt->sc_cmd_len, sizeof (u_int32_t));
-	u_int16_t dp_offset = gdt->sc_cmd_off;
-	u_int16_t cmd_no = gdt->sc_cmd_cnt++;
+	u_int16_t cp_count = roundup(sc->sc_cmd_len, sizeof (u_int32_t));
+	u_int16_t dp_offset = sc->sc_cmd_off;
+	u_int16_t cmd_no = sc->sc_cmd_cnt++;
 
-	GDT_DPRINTF(GDT_D_CMD, ("gdt_mpr_copy_cmd(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_CMD, ("gdt_mpr_copy_cmd(%p) ", sc));
 
-	gdt->sc_cmd_off += cp_count;
+	sc->sc_cmd_off += cp_count;
 
-	bus_space_write_2(gdt->sc_dpmemt, gdt->sc_dpmemh,
+	bus_space_write_2(sc->sc_dpmemt, sc->sc_dpmemh,
 	    GDT_MPR_IC + GDT_COMM_QUEUE + cmd_no * GDT_COMM_Q_SZ + GDT_OFFSET,
 	    GDT_DPMEM_COMMAND_OFFSET + dp_offset);
-	bus_space_write_2(gdt->sc_dpmemt, gdt->sc_dpmemh,
+	bus_space_write_2(sc->sc_dpmemt, sc->sc_dpmemh,
 	    GDT_MPR_IC + GDT_COMM_QUEUE + cmd_no * GDT_COMM_Q_SZ + GDT_SERV_ID,
 	    ccb->gc_service);
-	bus_space_write_raw_region_4(gdt->sc_dpmemt, gdt->sc_dpmemh,
-	    GDT_MPR_IC + GDT_DPR_CMD + dp_offset, gdt->sc_cmd, cp_count);
+	bus_space_write_raw_region_4(sc->sc_dpmemt, sc->sc_dpmemh,
+	    GDT_MPR_IC + GDT_DPR_CMD + dp_offset, sc->sc_cmd, cp_count);
 }
 
 u_int8_t
-gdt_mpr_get_status(gdt)
-	struct gdt_softc *gdt;
+gdt_mpr_get_status(struct gdt_softc *sc)
 {
-	GDT_DPRINTF(GDT_D_MISC, ("gdt_mpr_get_status(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_MISC, ("gdt_mpr_get_status(%p) ", sc));
 
-	return bus_space_read_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_MPR_EDOOR);
+	return bus_space_read_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_MPR_EDOOR);
 }
 
 void
-gdt_mpr_intr(gdt, ctx)
-	struct gdt_softc *gdt;
-	struct gdt_intr_ctx *ctx;
+gdt_mpr_intr(struct gdt_softc *sc, struct gdt_intr_ctx *ctx)
 {
-	GDT_DPRINTF(GDT_D_INTR, ("gdt_mpr_intr(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_INTR, ("gdt_mpr_intr(%p) ", sc));
 
 	if (ctx->istatus & 0x80) {		/* error flag */
 		ctx->istatus &= ~0x80;
-		ctx->cmd_status = bus_space_read_2(gdt->sc_dpmemt,
-		    gdt->sc_dpmemh, GDT_MPR_STATUS);
+		ctx->cmd_status = bus_space_read_2(sc->sc_dpmemt,
+		    sc->sc_dpmemh, GDT_MPR_STATUS);
 		if (ctx->istatus == GDT_ASYNCINDEX) {
-			ctx->service = bus_space_read_2(gdt->sc_dpmemt,
-			    gdt->sc_dpmemh, GDT_MPR_SERVICE);
-			ctx->info2 = bus_space_read_4(gdt->sc_dpmemt,
-			    gdt->sc_dpmemh, GDT_MPR_INFO + sizeof (u_int32_t));
+			ctx->service = bus_space_read_2(sc->sc_dpmemt,
+			    sc->sc_dpmemh, GDT_MPR_SERVICE);
+			ctx->info2 = bus_space_read_4(sc->sc_dpmemt,
+			    sc->sc_dpmemh, GDT_MPR_INFO + sizeof (u_int32_t));
 		}
 	} else					/* no error */
 		ctx->cmd_status = GDT_S_OK;
 
 	ctx->info =
-	    bus_space_read_4(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_MPR_INFO);
+	    bus_space_read_4(sc->sc_dpmemt, sc->sc_dpmemh, GDT_MPR_INFO);
 
 	if (gdt_polling)			/* init. -> more info */
-		ctx->info2 = bus_space_read_4(gdt->sc_dpmemt, gdt->sc_dpmemh,
+		ctx->info2 = bus_space_read_4(sc->sc_dpmemt, sc->sc_dpmemh,
 		    GDT_MPR_INFO + sizeof (u_int32_t));
-	bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_MPR_EDOOR, 0xff);
-	bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_MPR_SEMA1, 0);
+	bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_MPR_EDOOR, 0xff);
+	bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_MPR_SEMA1, 0);
 }
 
 void
-gdt_mpr_release_event(gdt, ccb)
-	struct gdt_softc *gdt;
-	struct gdt_ccb *ccb;
+gdt_mpr_release_event(struct gdt_softc *sc, struct gdt_ccb *ccb)
 {
-	GDT_DPRINTF(GDT_D_MISC, ("gdt_mpr_release_event(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_MISC, ("gdt_mpr_release_event(%p) ", sc));
 
-	if (gdt_dec16(gdt->sc_cmd + GDT_CMD_OPCODE) == GDT_INIT)
+	if (gdt_dec16(sc->sc_cmd + GDT_CMD_OPCODE) == GDT_INIT)
 		ccb->gc_service |= 0x80;
-	bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_MPR_LDOOR, 1);
+	bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_MPR_LDOOR, 1);
 }
 
 void
-gdt_mpr_set_sema0(gdt)
-	struct gdt_softc *gdt;
+gdt_mpr_set_sema0(struct gdt_softc *sc)
 {
-	GDT_DPRINTF(GDT_D_MISC, ("gdt_mpr_set_sema0(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_MISC, ("gdt_mpr_set_sema0(%p) ", sc));
 
-	bus_space_write_1(gdt->sc_dpmemt, gdt->sc_dpmemh, GDT_MPR_SEMA0, 1);
+	bus_space_write_1(sc->sc_dpmemt, sc->sc_dpmemh, GDT_MPR_SEMA0, 1);
 }
 
 int
-gdt_mpr_test_busy(gdt)
-	struct gdt_softc *gdt;
+gdt_mpr_test_busy(struct gdt_softc *sc)
 {
-	GDT_DPRINTF(GDT_D_MISC, ("gdt_mpr_test_busy(%p) ", gdt));
+	GDT_DPRINTF(GDT_D_MISC, ("gdt_mpr_test_busy(%p) ", sc));
 
-	return (bus_space_read_1(gdt->sc_dpmemt, gdt->sc_dpmemh,
+	return (bus_space_read_1(sc->sc_dpmemt, sc->sc_dpmemh,
 	    GDT_MPR_SEMA0) & 1);
 }
