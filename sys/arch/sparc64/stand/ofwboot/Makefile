@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2007/05/03 18:38:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2007/10/17 20:45:27 hshoexer Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -36,7 +36,7 @@ RELOC=		800000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c sparc machine
+CLEANFILES+=	sparc machine
 
 CPPFLAGS+=	-I${CURDIR}/../../.. -I${CURDIR}/../../../.. -I${CURDIR} -I.
 CPPFLAGS+=	-DRELOC=0x${RELOC}
