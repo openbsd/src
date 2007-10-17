@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.1,v 1.9 2007/10/17 02:30:23 deraadt Exp $
+.\"	$OpenBSD: pctr.1,v 1.10 2007/10/17 05:29:10 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
 .\"
@@ -46,11 +46,11 @@
 .Nd display CPU performance counters
 .Sh SYNOPSIS
 .Nm pctr
-.Op Fl AeEiIklMu
+.Op Fl AEeIiklMSu
 .Op Fl f Ar funct
 .Op Fl m Ar umask
-.Op Fl t Ar thold
 .Op Fl s Ar ctr
+.Op Fl t Ar thold
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,29 +66,29 @@ counter registers.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-Some bus events provide specificity between the originating physical processor 
-(a bus agent) versus other agents on the bus.
+Some bus events differentiate between the originating physical processor
+(a bus agent) and other agents on the bus.
 Specifying this option allows counting on all bus agents.
 This is supported on Intel processors only.
-.It Fl e
-Enables Edge Detect.
-It is mandatory to enable Edge Detect with certain counter functions.
 .It Fl E
 Enables counting exclusive cache coherency state (supported on Intel
 processors only).
+.It Fl e
+Enables Edge Detect.
+It is mandatory to enable Edge Detect with certain counter functions.
 .It Fl f Ar funct
 Specifies a function number in hexadecimal to program the counter,
 specified by the
 .Fl s
 option.
-.It Fl i
-Invert the result of the threshold comparison, so that both greater than
-and less than comparisons can be made.
 .It Fl I
 Enables counting invalid cache coherency state (supported on Intel
 processors only).
+.It Fl i
+Invert the result of the threshold comparison, so that both greater than
+and less than comparisons can be made.
 .It Fl k
-Count events occurred in kernel mode.
+Count events occurring in kernel mode.
 Specification of either
 .Fl k
 or
@@ -96,21 +96,21 @@ or
 options is mandatory.
 .It Fl l
 List all possible vendor specific counters available on the current processor.
+.It Fl M
+Enables counting modified cache coherency state (supported on Intel
+processors only).
 .It Fl m Ar umask
 Specifies a Unit Mask value for a function, specified by the
 .Fl f
 option.
-.It Fl M
-Enables counting modified cache coherency state (supported on Intel
-processors only).
 .It Fl s Ar ctr
 Program counter number
 .Ar ctr
-with function number specified by the
+with the function number specified by the
 .Fl f
 option.
-List of all possible functions, supported on the current processor,
-could be obtained by the
+A list of all possible functions supported on the current processor
+can be obtained by the
 .Fl l
 option output.
 .It Fl S
@@ -120,11 +120,11 @@ processors only).
 Specifies an increment threshold.
 The counter
 .Ar ctr
-will be incremented if number of events occurred during the one cycle is
+will be incremented if the number of events occurring during one cycle is
 greater or equal to
 .Ar thold .
 .It Fl u
-Count events occurred in user mode.
+Count events occurring in user mode.
 Specification of either
 .Fl k
 or
@@ -134,7 +134,7 @@ options is mandatory.
 .Sh EXAMPLES
 The following command, executed from the command line, will set the first
 performance counter to count the number of cacheable L1 data cache reads
-in user and kernel modes on Intel Core2 Duo processor:
+in user and kernel modes on an Intel Core2 Duo processor:
 .Bd -unfilled -offset indent
 # pctr -s 0 -f 40 -uk -MESI
 .Ed
@@ -143,7 +143,6 @@ To reset the counter run the following command:
 .Bd -unfilled -offset indent
 # pctr -s 0 -f 0
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr pctr 4
 .Pp
@@ -160,5 +159,5 @@ program appeared in
 but was subsequently rewritten in
 .Ox 4.2 .
 .Sh CAVEATS
-It is strongly advised to look through a manual for a particular processor
+It is strongly advised to look through the manual for a particular processor
 before programming a counter and interpreting the results.
