@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83793g.c,v 1.3 2007/10/17 16:38:51 cnst Exp $	*/
+/*	$OpenBSD: w83793g.c,v 1.4 2007/10/18 19:21:52 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -266,7 +266,7 @@ wbng_refresh_fans(struct wbng_softc *sc)
 		uint8_t l = wbng_readreg(sc, WB_FAN_START + i * 2 + 1);
 		uint16_t b = h << 8 | l;
 
-		if (b == 0x0f00 || b == 0x0000) {
+		if (b >= 0x0fff || b == 0x0f00 || b == 0x0000) {
 			s[i].flags |= SENSOR_FINVALID;
 			s[i].value = 0;
 		} else {
