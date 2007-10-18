@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.14 2007/09/03 01:15:50 krw Exp $ */
+/*	$OpenBSD: exception.S,v 1.15 2007/10/18 18:15:40 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -601,16 +601,33 @@ END(u_syscall)
  *	Setup for and return to user.
  */
 LEAF(proc_trampoline, 0)
+	/*
+	 * Enable interrupts, since we want kernel threads to
+	 * start at spl0 and with interrupts enabled, and these
+	 * won't ``return to userland''.
+	 */
 	sw	zero, cpl		# lower to spl0
 	lw	t0, ipending
-	beq	t0, zero, 0f
+	beqz	t0, 1f
 	nop
 
 	jal	setsoftintr0		# process any pending ints
 	nop
-0:
+1:
+#ifdef IMASK_EXTERNAL
+	jal	hw_setintrmask
+	xor	a0, a0
+#endif
+	jal	updateimask		# Make sure SR imask is updated
+	xor	a0, a0
+
+	mfc0	t0, COP_0_STATUS_REG	# enable interrupts
+	ori	t0, SR_INT_ENAB
+	mtc0	t0, COP_0_STATUS_REG
+	ITLBNOPFIX
+
 	jal	s0
-	move	a0,s1			# set up for return to user.
+	move	a0,s1			# invoke callback.
 
 #if 0
 	lw	t0, cpu_is_rm7k
@@ -634,12 +651,10 @@ LEAF(proc_trampoline, 0)
 	ctc0	v0, COP_0_ICR		# enable perfcntr interrupt.
 1:
 #endif
-	mfc0	t0, COP_0_STATUS_REG	# dis int preserve settings.
+
+	mfc0	t0, COP_0_STATUS_REG
 	li	t1, ~SR_INT_ENAB
 	and	t0, t0, t1
-	mtc0	t0, COP_0_STATUS_REG
-	ITLBNOPFIX
-
 	ori	t0, SR_EXL		# restoring to user mode.
 	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	ITLBNOPFIX
