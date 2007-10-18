@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.19 2007/06/18 20:25:55 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.20 2007/10/18 04:32:25 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -49,7 +49,6 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/regnum.h>
-#include <machine/pte.h>
 
 #include "assym.h"
 

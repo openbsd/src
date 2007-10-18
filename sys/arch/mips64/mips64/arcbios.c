@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.9 2007/04/26 17:02:40 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.10 2007/10/18 04:32:25 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -28,7 +28,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/memconf.h>
 #include <machine/param.h>

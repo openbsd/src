@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2007/10/13 07:18:01 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2007/10/18 04:32:25 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -53,7 +53,6 @@
 #include <sys/signalvar.h>
 
 
-#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 

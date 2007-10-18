@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.12 2007/06/21 20:17:12 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.13 2007/10/18 04:32:27 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -41,7 +41,6 @@
 #include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
-#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
 

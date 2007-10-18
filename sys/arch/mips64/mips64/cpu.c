@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.10 2007/05/07 18:42:13 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.11 2007/10/18 04:32:25 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -32,7 +32,6 @@
 #include <sys/user.h>
 #include <sys/device.h>
 
-#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
