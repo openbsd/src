@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.5 2007/04/27 18:15:55 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.6 2007/10/18 04:32:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,13 +54,9 @@ struct tlb_entry {
 	u_int64_t	tlb_lo1;
 };
 
-typedef union pt_entry {
-	unsigned int	pt_entry;	/* for copying, etc. */
-	unsigned int	pt_pte;		/* XXX void */
-} pt_entry_t;	/* Mips page table entry */
-#endif /* _LOCORE */
+typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 
-#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
+#endif /* _LOCORE */
 
 #define PG_RO		0x40000000	/* SW */
 

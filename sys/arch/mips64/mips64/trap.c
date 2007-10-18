@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2007/07/16 20:21:20 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.38 2007/10/18 04:32:08 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -73,7 +73,6 @@
 #include <machine/pio.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/mips_opcode.h>
 #include <machine/frame.h>
@@ -214,13 +213,12 @@ trap(trapframe)
 	case T_TLB_MOD:
 		/* check for kernel address */
 		if (trapframe->badvaddr < 0) {
-			pt_entry_t *pte;
-			unsigned int entry;
+			pt_entry_t *pte, entry;
 			paddr_t pa;
 			vm_page_t pg;
 
 			pte = kvtopte(trapframe->badvaddr);
-			entry = pte->pt_entry;
+			entry = *pte;
 #ifdef DIAGNOSTIC
 			if (!(entry & PG_V) || (entry & PG_M))
 				panic("trap: ktlbmod: invalid pte");
@@ -232,7 +230,7 @@ trap(trapframe)
 				goto kernel_fault;
 			}
 			entry |= PG_M;
-			pte->pt_entry = entry;
+			*pte = entry;
 			tlb_update(trapframe->badvaddr & ~PGOFSET, entry);
 			pa = pfn_to_pad(entry);
 			pg = PHYS_TO_VM_PAGE(pa);
@@ -245,8 +243,7 @@ trap(trapframe)
 
 	case T_TLB_MOD+T_USER:
 	    {
-		pt_entry_t *pte;
-		unsigned int entry;
+		pt_entry_t *pte, entry;
 		paddr_t pa;
 		vm_page_t pg;
 		pmap_t pmap = p->p_vmspace->vm_map.pmap;
@@ -254,7 +251,7 @@ trap(trapframe)
 		if (!(pte = pmap_segmap(pmap, trapframe->badvaddr)))
 			panic("trap: utlbmod: invalid segmap");
 		pte += uvtopte(trapframe->badvaddr);
-		entry = pte->pt_entry;
+		entry = *pte;
 #ifdef DIAGNOSTIC
 		if (!(entry & PG_V) || (entry & PG_M))
 			panic("trap: utlbmod: invalid pte");
@@ -266,7 +263,7 @@ trap(trapframe)
 			goto fault_common;
 		}
 		entry |= PG_M;
-		pte->pt_entry = entry;
+		*pte = entry;
 		tlb_update((trapframe->badvaddr & ~PGOFSET) |
 		    (pmap->pm_tlbpid << VMTLB_PID_SHIFT), entry);
 		pa = pfn_to_pad(entry);

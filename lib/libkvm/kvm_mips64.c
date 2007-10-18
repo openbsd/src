@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.6 2007/05/03 19:33:58 miod Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.7 2007/10/18 04:32:05 miod Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.6 2007/05/03 19:33:58 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.7 2007/10/18 04:32:05 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,7 +117,8 @@ int
 _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	struct vmstate *vm;
-	u_long pte, idx, addr, offset;
+	pt_entry_t pte;
+	u_long idx, addr, offset;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
