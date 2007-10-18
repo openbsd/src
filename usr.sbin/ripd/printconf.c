@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.3 2007/01/08 13:01:10 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.4 2007/10/18 09:42:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -97,6 +97,8 @@ print_redistribute(struct ripd_conf *conf)
 void
 print_iface(struct iface *iface)
 {
+	struct auth_md	*m;
+
 	printf("interface %s {\n", iface->name);
 
 	if (iface->passive)
@@ -112,13 +114,16 @@ print_iface(struct iface *iface)
 		printf("\tauth-key XXXXXX\n");
 		break;
 	case AUTH_CRYPT:
+		printf("\tauth-md-keyid %d\n", iface->auth_keyid);
+		TAILQ_FOREACH(m, &iface->auth_md_list, entry)
+			printf("\tauth-md %d XXXXXX\n", m->keyid);
 		break;
 	default:
 		printf("\tunknown auth type!\n");
 		break;
 	}
 
-	printf("}\n");
+	printf("}\n\n");
 }
 
 void
@@ -126,14 +131,10 @@ print_config(struct ripd_conf *conf)
 {
 	struct iface	*iface;
 
-	printf("\n");
 	print_mainconf(conf);
 	printf("\n");
 
 	LIST_FOREACH(iface, &conf->iface_list, entry) {
-		printf("ooo\n");
 		print_iface(iface);
 	}
-	printf("\n");
-
 }
