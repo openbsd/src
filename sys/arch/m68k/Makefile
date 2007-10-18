@@ -1,11 +1,9 @@
-#	$OpenBSD: Makefile,v 1.9 2005/05/06 11:16:47 pedro Exp $
+#	$OpenBSD: Makefile,v 1.10 2007/10/18 18:08:02 deraadt Exp $
 
 S=${.CURDIR}/../..
 .include "$S/kern/Make.tags.inc"
 
-.if ${MACHINE_ARCH} == "m68k"
 SUBDIR+= 060sp fpsp
-.endif
 
 TM68K=	$S/arch/m68k/tags
 SM68K=	$S/arch/m68k/m68k/*.[ch] \
