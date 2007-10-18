@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2006/04/14 08:28:55 biorn Exp $
+# $OpenBSD: Makefile,v 1.13 2007/10/18 18:20:20 deraadt Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -37,5 +37,8 @@ DPADD+=	${LIBREADLINE} ${LIBCURSES} ${LIBKADM5CLNT} ${LIBKRB5} \
 	${LIBCRYPTO} ${LIBDES}
 LDADD+=	-lreadline -lcurses -lkadm5clnt -lkrb5 \
 	-lcrypto -ldes
+
+CLEANFILES+=	ktutil-commands.c slc slc-lex.o \
+		ktutil-commands.h slc-gram.o
 
 .include <bsd.prog.mk>
