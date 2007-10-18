@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.26 2007/04/10 17:47:55 miod Exp $ */
+/*	$OpenBSD: iha.c,v 1.27 2007/10/18 20:28:26 otto Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -2482,6 +2482,7 @@ iha_done_scb(sc, pScb)
 {
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs = pScb->SCB_Xs;
+	int s;
 
 	if (xs != NULL) {
 		timeout_del(&xs->stimeout);
@@ -2562,7 +2563,9 @@ iha_done_scb(sc, pScb)
 		}
 
 		xs->flags |= ITSDONE;
+		s = splbio();
 		scsi_done(xs);
+		splx(s);
 	}
 	
 	iha_append_free_scb(sc, pScb);
