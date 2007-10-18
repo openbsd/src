@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.10 2007/07/12 17:54:58 xsa Exp $	*/
+/*	$OpenBSD: config.c,v 1.11 2007/10/18 12:13:20 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -74,6 +74,8 @@ cvs_parse_configfile(void)
 		*(val++) = '\0';
 
 		if (!strcmp(opt, "tag")) {
+			if (cvs_tagname != NULL)
+				xfree(cvs_tagname);
 			cvs_tagname = xstrdup(val);
 		} else if (!strcmp(opt, "umask")) {
 			cvs_umask = (int)strtonum(val, 0, INT_MAX, &errstr);
