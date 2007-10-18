@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.7 2007/03/31 09:49:20 michele Exp $ */
+/*	$OpenBSD: message.c,v 1.8 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -41,7 +41,7 @@ void	 delete_entry(struct rip_route *);
 void
 report_timer(int fd, short event, void *arg)
 {
-	struct timeval           tv;
+	struct timeval	 tv;
 
 	ripe_imsg_compose_rde(IMSG_FULL_RESPONSE, 0, 0, NULL, 0);
 
@@ -54,7 +54,7 @@ report_timer(int fd, short event, void *arg)
 int
 start_report_timer(void)
 {
-	struct timeval  tv;
+	struct timeval	 tv;
 
 	timerclear(&tv);
 	tv.tv_sec = KEEPALIVE + arc4random() % OFFSET;
@@ -89,7 +89,7 @@ void
 clear_list(struct packet_head *r_list)
 {
 	struct packet_entry	*re;
- 
+
 	while ((re = TAILQ_FIRST(r_list)) != NULL) {
 		TAILQ_REMOVE(r_list, re, entry);
 		delete_entry(re->rr);
@@ -115,8 +115,8 @@ send_triggered_update(struct iface *iface, struct rip_route *rr)
 	if (iface->passive)
 		return (0);
 
-	if ((buf = buf_open(iface->mtu - sizeof(struct ip)
-	    - sizeof(struct udphdr))) == NULL)
+	if ((buf = buf_open(iface->mtu - sizeof(struct ip) -
+	    sizeof(struct udphdr))) == NULL)
 		fatal("send_triggered_update");
 
 	gen_rip_hdr(buf, COMMAND_RESPONSE);
@@ -175,8 +175,8 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 		return (0);
 
 	while (!TAILQ_EMPTY(r_list)) {
-		if ((buf = buf_open(iface->mtu - sizeof(struct ip)
-		    - sizeof(struct udphdr))) == NULL)
+		if ((buf = buf_open(iface->mtu - sizeof(struct ip) -
+		    sizeof(struct udphdr))) == NULL)
 			fatal("send_request");
 
 		gen_rip_hdr(buf, COMMAND_REQUEST);
@@ -220,7 +220,7 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 int
 send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 {
-	struct buf              *buf;
+	struct buf		*buf;
 	struct iface		*iface;
 	struct packet_entry	*entry;
 	struct sockaddr_in	 dst;
@@ -249,8 +249,8 @@ send_response(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 		return (0);
 
 	while (!TAILQ_EMPTY(r_list)) {
-		if ((buf = buf_open(iface->mtu - sizeof(struct ip)
-		    - sizeof(struct udphdr))) == NULL)
+		if ((buf = buf_open(iface->mtu - sizeof(struct ip) -
+		    sizeof(struct udphdr))) == NULL)
 			fatal("send_response");
 
 		gen_rip_hdr(buf, COMMAND_RESPONSE);
@@ -338,7 +338,7 @@ recv_request(struct iface *i, struct nbr *nbr, char *buf, u_int16_t len)
 
 	l -= RIP_ENTRY_LEN;
 
-        /*
+	/*
 	 * If there is exactly one entry in the request, and it has
 	 * an address family identifier of zero and a metric of
 	 * infinity (i.e., 16), then this is a request to send the

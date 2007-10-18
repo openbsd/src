@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.6 2007/04/09 20:45:52 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.7 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -221,8 +221,9 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_FULL_REQUEST:
 			bzero(&rr, sizeof(rr));
-			/* AFI == 0 && metric == INFINITY request the
-			   whole routing table
+			/*
+			 * AFI == 0 && metric == INFINITY request the
+			 * whole routing table
 			 */
 			rr.metric = INFINITY;
 			rde_imsg_compose_ripe(IMSG_REQUEST_ADD, 0,
@@ -351,7 +352,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 void
 rde_send_change_kroute(struct rt_node *r)
 {
-	struct kroute    kr;
+	struct kroute	 kr;
 
 	bzero(&kr, sizeof(kr));
 	kr.prefix.s_addr = r->prefix.s_addr;
@@ -367,7 +368,7 @@ rde_send_change_kroute(struct rt_node *r)
 void
 rde_send_delete_kroute(struct rt_node *r)
 {
-	struct kroute    kr;
+	struct kroute	 kr;
 
 	bzero(&kr, sizeof(kr));
 	kr.prefix.s_addr = r->prefix.s_addr;
@@ -425,7 +426,7 @@ rde_check_route(struct rip_route *e)
 			rde_send_change_kroute(rn);
 			triggered_update(rn);
 		} else if (e->nexthop.s_addr == rn->nexthop.s_addr &&
-		    metric > rn->metric) { 
+		    metric > rn->metric) {
 				rn->metric = metric;
 				rde_send_change_kroute(rn);
 				triggered_update(rn);

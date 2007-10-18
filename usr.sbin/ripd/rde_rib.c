@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.2 2007/04/09 20:45:52 michele Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.3 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -265,7 +265,7 @@ rt_complete(struct rip_route *rr)
 void
 rt_clear(void)
 {
-	struct rt_node  *r;
+	struct rt_node	*r;
 
 	while ((r = RB_MIN(rt_tree, &rt)) != NULL)
 		rt_remove(r);

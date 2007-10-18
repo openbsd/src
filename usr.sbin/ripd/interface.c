@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.3 2007/09/11 18:05:36 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.4 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -134,7 +134,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 struct iface *
 if_find_index(u_short ifindex)
 {
-	struct iface    *iface;
+	struct iface	 *iface;
 
 	LIST_FOREACH(iface, &conf->iface_list, entry) {
 		if (iface->ifindex == ifindex)
@@ -296,7 +296,7 @@ if_set_mcast(struct iface *iface)
 int
 if_set_mcast_loop(int fd)
 {
-	u_int8_t        loop = 0;
+	u_int8_t	 loop = 0;
 
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP,
 	    (char *)&loop, sizeof(loop)) < 0) {
@@ -310,7 +310,7 @@ if_set_mcast_loop(int fd)
 void
 if_set_recvbuf(int fd)
 {
-	int     bsize;
+	int	 bsize;
 
 	bsize = 65535;
 	while (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bsize,
@@ -343,7 +343,7 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 int
 if_leave_group(struct iface *iface, struct in_addr *addr)
 {
-	struct ip_mreq   mreq;
+	struct ip_mreq	 mreq;
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
@@ -365,10 +365,10 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 struct iface *
 if_new(struct kif *kif)
 {
-	struct sockaddr_in      *sain;
-	struct iface            *iface;
-	struct ifreq            *ifr;
-	int                      s;
+	struct sockaddr_in	*sain;
+	struct iface		*iface;
+	struct ifreq		*ifr;
+	int			s;
 
 	if ((iface = calloc(1, sizeof(*iface))) == NULL)
 		err(1, "if_new: calloc");

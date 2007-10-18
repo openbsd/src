@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.4 2007/10/13 16:35:22 deraadt Exp $ */
+/*	$OpenBSD: ripd.c,v 1.5 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -48,17 +48,17 @@
 #include "control.h"
 #include "rde.h"
 
-__dead void	 usage(void);
-int		 check_child(pid_t, const char *);
-void		 main_sig_handler(int, short, void *);
-void		 ripd_shutdown(void);
-void		 main_dispatch_ripe(int, short, void *);
-void		 main_dispatch_rde(int, short, void *);
-void		 ripd_redistribute_default(int);
+__dead void		 usage(void);
+int			 check_child(pid_t, const char *);
+void			 main_sig_handler(int, short, void *);
+void			 ripd_shutdown(void);
+void			 main_dispatch_ripe(int, short, void *);
+void			 main_dispatch_rde(int, short, void *);
+void			 ripd_redistribute_default(int);
 
-int     pipe_parent2ripe[2];
-int     pipe_parent2rde[2];
-int     pipe_ripe2rde[2];
+int			 pipe_parent2ripe[2];
+int			 pipe_parent2rde[2];
+int			 pipe_ripe2rde[2];
 
 struct ripd_conf	*conf = NULL;
 struct imsgbuf		*ibuf_ripe;
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	/* check for root privileges  */
+	/* check for root privileges */
 	if (geteuid())
 		errx(1, "need root privileges");
 
@@ -323,15 +323,15 @@ check_child(pid_t pid, const char *pname)
 void
 main_dispatch_ripe(int fd, short event, void *bula)
 {
-	struct imsgbuf  *ibuf = bula;
-	struct imsg      imsg;
-	ssize_t          n;
+	struct imsgbuf	*ibuf = bula;
+	struct imsg	 imsg;
+	ssize_t		 n;
 
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
-		if (n == 0)     /* connection closed */
+		if (n == 0)	/* connection closed */
 			fatalx("pipe closed");
 		break;
 	case EV_WRITE:
@@ -386,15 +386,15 @@ main_dispatch_ripe(int fd, short event, void *bula)
 void
 main_dispatch_rde(int fd, short event, void *bula)
 {
-	struct imsgbuf  *ibuf = bula;
-	struct imsg      imsg;
-	ssize_t          n;
+	struct imsgbuf	*ibuf = bula;
+	struct imsg	 imsg;
+	ssize_t		 n;
 
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
-		if (n == 0)     /* connection closed */
+		if (n == 0)	/* connection closed */
 			fatalx("pipe closed");
 		break;
 	case EV_WRITE:

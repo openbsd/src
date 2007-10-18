@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.8 2007/10/18 09:47:57 claudio Exp $ */
+/*	$OpenBSD: ripd.h,v 1.9 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -202,13 +202,13 @@ TAILQ_HEAD(packet_head, packet_entry);
 
 struct iface {
 	LIST_ENTRY(iface)	 entry;
-	LIST_HEAD(, nbr)         nbr_list;
+	LIST_HEAD(, nbr)	 nbr_list;
 	LIST_HEAD(, nbr_failed)	 failed_nbr_list;
-	char                     name[IF_NAMESIZE];
+	char			 name[IF_NAMESIZE];
 	u_int8_t		 auth_key[MAX_SIMPLE_AUTH_LEN];
-	struct in_addr           addr;
-	struct in_addr           dst;
-	struct in_addr           mask;
+	struct in_addr		 addr;
+	struct in_addr		 dst;
+	struct in_addr		 mask;
 	struct packet_head	 rq_list;
 	struct packet_head	 rp_list;
 	struct auth_md_head	 auth_md_list;

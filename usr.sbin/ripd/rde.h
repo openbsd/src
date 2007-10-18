@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.2 2007/04/09 20:45:52 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.3 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -28,12 +28,12 @@
 #include <limits.h>
 
 struct rt_node {
-	RB_ENTRY(rt_node)        entry;
+	RB_ENTRY(rt_node)	 entry;
 	struct event		 timeout_timer;
 	struct event		 garbage_timer;
-	struct in_addr           prefix;
+	struct in_addr		 prefix;
 	struct in_addr		 netmask;
-	struct in_addr           nexthop;
+	struct in_addr		 nexthop;
 	u_short			 ifindex;
 	u_int16_t		 flags;
 	u_int8_t		 metric;
@@ -43,7 +43,7 @@ struct rt_node {
 pid_t		 rde(struct ripd_conf *, int [2], int [2], int [2]);
 void		 rde_send_change_kroute(struct rt_node *);
 void		 rde_send_delete_kroute(struct rt_node *);
-int              rde_imsg_compose_ripe(int, u_int32_t, pid_t, void *,
+int		 rde_imsg_compose_ripe(int, u_int32_t, pid_t, void *,
 		     u_int16_t);
 
 /* rde_rib.c */
@@ -56,7 +56,7 @@ int		 rt_insert(struct rt_node *);
 int		 rt_remove(struct rt_node *);
 void		 rt_complete(struct rip_route *);
 void		 rt_snap(u_int32_t);
-void             rt_clear(void);
+void		 rt_clear(void);
 void		 route_reset_timers(struct rt_node *);
 int		 route_start_timeout(struct rt_node *);
 void		 route_start_garbage(struct rt_node *);

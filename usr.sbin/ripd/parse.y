@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2007/10/18 09:47:57 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.14 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -102,16 +102,16 @@ typedef struct {
 
 %}
 
-%token  SPLIT_HORIZON TRIGGERED_UPDATES FIBUPDATE REDISTRIBUTE
+%token	SPLIT_HORIZON TRIGGERED_UPDATES FIBUPDATE REDISTRIBUTE
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
-%token  INTERFACE RTLABEL
+%token	INTERFACE RTLABEL
 %token	COST PASSIVE
 %token	YES NO
-%token  ERROR
-%token  <v.string>	STRING
-%token  <v.number>	NUMBER
-%type   <v.number>	yesno no
-%type   <v.string>	string
+%token	ERROR
+%token	<v.string>	STRING
+%token	<v.number>	NUMBER
+%type	<v.number>	yesno no
+%type	<v.string>	string
 
 %%
 
@@ -156,7 +156,7 @@ varset		: STRING '=' string {
 conf_main	: SPLIT_HORIZON STRING {
 			/* clean flags first */
 			conf->options &= ~(OPT_SPLIT_HORIZON |
-				    OPT_SPLIT_POISONED);
+			    OPT_SPLIT_POISONED);
 			if (!strcmp($2, "none"))
 				/* nothing */ ;
 			else if (!strcmp($2, "default"))

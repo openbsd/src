@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.7 2007/10/18 09:47:57 claudio Exp $ */
+/*	$OpenBSD: auth.c,v 1.8 2007/10/18 17:00:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -29,13 +29,13 @@
 #include "log.h"
 #include "ripe.h"
 
-u_int32_t	 auth_calc_modulator(struct auth_md  *md);
+u_int32_t	 auth_calc_modulator(struct auth_md *md);
 struct auth_md	*md_list_find(struct auth_md_head *, u_int8_t);
 void		 auth_trailer_header_gen(struct buf *);
 u_int32_t	 auth_get_seq_num(struct auth_md*);
 
 u_int32_t
-auth_calc_modulator(struct auth_md  *md)
+auth_calc_modulator(struct auth_md *md)
 {
 	u_int32_t		r;
 	MD5_CTX			md5ctx;
