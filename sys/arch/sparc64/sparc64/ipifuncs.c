@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.2 2007/09/10 21:44:06 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.3 2007/10/18 20:44:47 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -112,9 +112,13 @@ sparc64_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
 	struct cpu_info *ci;
 
-	for (ci = cpus; ci != NULL; ci = ci->ci_next)
-		if (ci->ci_number != cpu_number())
-			sparc64_send_ipi(ci->ci_upaid, func, arg0, arg1);
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (ci->ci_number == cpu_number())
+			continue;
+		if ((ci->ci_flags & CPUF_RUNNING) == 0)
+			continue;
+		sparc64_send_ipi(ci->ci_upaid, func, arg0, arg1);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.48 2007/10/16 19:22:49 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.49 2007/10/18 20:44:47 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -113,6 +113,7 @@ struct cpu_info {
 
 	struct proc		*ci_fpproc;
 	int			ci_number;
+	int			ci_flags;
 	int			ci_upaid;
 	int			ci_node;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -130,6 +131,8 @@ struct cpu_info {
 	void			*ci_initstack;
 	paddr_t			ci_paddr;	/* Phys addr of this structure. */
 };
+
+#define CPUF_RUNNING	0x0001		/* CPU is running */
 
 extern struct cpu_info *cpus;
 

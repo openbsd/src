@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2007/10/17 21:23:28 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.25 2007/10/18 20:44:47 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -383,7 +383,6 @@ struct cfdriver cpu_cd = {
 
 #ifdef MULTIPROCESSOR
 void cpu_mp_startup(void);
-volatile int cpu_mp_started;
 
 void
 cpu_boot_secondary_processors(void)
@@ -406,13 +405,10 @@ cpu_boot_secondary_processors(void)
 
 		for (i = 0; i < 2000; i++) {
 			sparc_membar(Sync);
-			if (cpu_mp_started == 1)
+			if (ci->ci_flags & CPUF_RUNNING)
 				break;
 			delay(10000);
 		}
-
-		cpu_mp_started = 0;
-		sparc_membar(Sync);
 	}
 }
 
@@ -424,7 +420,7 @@ cpu_hatch(void)
 	printf("cpu%d running\n", cpu_number());
 
 	cpu_reset_fpustate();
-	cpu_mp_started = 1;
+	curcpu()->ci_flags |= CPUF_RUNNING;
 	sparc_membar(Sync);
 
 	s = splhigh();
