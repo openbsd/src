@@ -1644,6 +1644,8 @@
 ./usr/lib/libedit_p.a
 ./usr/lib/libevent.a
 ./usr/lib/libevent_p.a
+./usr/lib/libexpat.a
+./usr/lib/libexpat_p.a
 ./usr/lib/libfl.a
 ./usr/lib/libfl_p.a
 ./usr/lib/libform.a
@@ -1727,6 +1729,7 @@
 ./usr/libdata/lint/llib-ldes.ln
 ./usr/libdata/lint/llib-ledit.ln
 ./usr/libdata/lint/llib-levent.ln
+./usr/libdata/lint/llib-lexpat.ln
 ./usr/libdata/lint/llib-lform.ln
 ./usr/libdata/lint/llib-lgssapi.ln
 ./usr/libdata/lint/llib-lkadm5clnt.ln

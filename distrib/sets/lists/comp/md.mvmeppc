@@ -191,6 +191,7 @@
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit_pic.a
 ./usr/lib/libevent_pic.a
+./usr/lib/libexpat_pic.a
 ./usr/lib/libform_pic.a
 ./usr/lib/libfrtbegin_pic.a
 ./usr/lib/libg2c_pic.a

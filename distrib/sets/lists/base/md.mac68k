@@ -36,6 +36,7 @@
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
 ./usr/lib/libevent.so.1.4
+./usr/lib/libexpat.so.9.0
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.0
 ./usr/lib/libgssapi.so.5.0
