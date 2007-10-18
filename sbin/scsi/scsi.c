@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.24 2007/04/28 01:06:18 ray Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.25 2007/10/18 00:30:32 ray Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -769,7 +769,7 @@ mode_edit(int fd, int page, int edit, int argc, char *argv[])
 		fmt, edit_report, 0);
 
 		fclose(edit_file);
-		if (editit(edit_name) == -1 && errno != SIGCHLD)
+		if (editit(edit_name) == -1 && errno != ECHILD)
 			err(1, "edit %s", edit_name);
 		if ((edit_file = fopen(edit_name, "r")) == NULL)
 			err(1, "open %s", edit_name);
