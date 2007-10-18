@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.73 2007/08/24 15:17:52 kettenis Exp $
+#	$OpenBSD: files.hppa,v 1.74 2007/10/18 17:39:52 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -270,13 +270,13 @@ file	arch/hppa/gsc/harmony.c			harmony
 #file	dev/pci/myri.c				myri
 
 # PS/2 input ports
-#device	gsckbc {[slot = -1]}
+device	gsckbc: pckbcslot
 attach	gsckbc at gsc
 file	arch/hppa/gsc/gsckbc.c			gsckbc
 
 # PS/2 keyboard
 device	gsckbd: wskbddev
-attach	gsckbd at gsckbc
+attach	gsckbd at pckbcslot
 file	arch/hppa/gsc/gsckbd.c			gsckbd	needs-flag
 file	arch/hppa/gsc/gsckbdmap.c		gsckbd
 

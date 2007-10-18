@@ -1,16 +1,16 @@
-# $OpenBSD: files.pckbc,v 1.7 2007/08/01 12:16:59 kettenis Exp $
+# $OpenBSD: files.pckbc,v 1.8 2007/10/18 17:39:54 miod Exp $
 # $NetBSD: files.pckbc,v 1.6 1999/01/23 16:05:56 drochner Exp $
 # devices attached at pckbc, for use with wscons
 
 device	pckbd: wskbddev
-attach	pckbd at pckbc
+attach	pckbd at pckbcslot
 file	dev/pckbc/pckbd.c			pckbd	needs-flag
 file	dev/pckbc/wskbdmap_mfii.c		pckbd
 
 device	pms: wsmousedev
-attach	pms at pckbc, gsckbc
+attach	pms at pckbcslot
 file	dev/pckbc/pms.c				pms
 
 device	pmsi: wsmousedev
-attach	pmsi at pckbc
+attach	pmsi at pckbcslot
 file	dev/pckbc/pms_intelli.c			pmsi
