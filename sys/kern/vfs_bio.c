@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.100 2007/09/15 10:10:37 martin Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.101 2007/10/18 20:26:55 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -1122,10 +1122,10 @@ buf_daemon(struct proc *p)
 			/* Never allow processing to run for more than 1 sec */
 			getmicrouptime(&tv);
 			timersub(&tv, &starttime, &timediff);
+			s = splbio();
 			if (timediff.tv_sec)
 				break;
 
-			s = splbio();
 		}
 	}
 }
