@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.7 2005/12/19 21:37:48 miod Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.8 2007/10/18 18:59:29 jsing Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -119,7 +119,6 @@
 #define	MACE_ISA_RTC_OFFS	(MACE_ISAX_OFFS+0x00020000)
 #define	MACE_ISA_GAME_OFFS	(MACE_ISAX_OFFS+0x00030000)
 
-
 extern bus_space_t macebus_tag;
 
 u_int8_t mace_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -135,5 +134,7 @@ void mace_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int64_t);
 int mace_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 void mace_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 int mace_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
+
+void *macebus_intr_establish(void *, u_long, int, int, int (*)(void *), void *, char *);
 
 #endif	/* _MACEBUS_H_ */

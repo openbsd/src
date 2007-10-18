@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2007/07/17 21:28:48 jakemsr Exp $
+#	$OpenBSD: GENERIC,v 1.22 2007/10/18 18:59:29 jsing Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -51,6 +51,7 @@ macebus0	at mainbus0	# MACE controller localbus.
 clock0		at macebus0
 mec0		at macebus0 sys 0x18 base 0x00280000 irq 4
 mavb0		at macebus0 sys 0x18 base 0x00300000 irq 7
+mkbc0		at macebus0 disable sys 0x18 base 0x00320000 irq 6
 com0		at macebus0 sys 0x18 base 0x00390000 irq 5
 com1		at macebus0 sys 0x18 base 0x00398000 irq 5
 
@@ -109,6 +110,12 @@ audio*		at emu?
 #### WS console
 #wsdisplay*	at vga?
 #wskbd*		at ukbd? mux 1
+
+#### Keyboard and Mouse
+pckbd*		at mkbc?
+pms*		at mkbc?
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
 
 #### SCSI Bus devices
 sd*		at scsibus?

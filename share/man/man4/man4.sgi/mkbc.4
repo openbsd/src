@@ -1,0 +1,44 @@
+.\"
+.\" Copyright (c) 2007 Joel Sing
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 18 2007 $
+.Dt MKBC 4 sgi
+.Os
+.Sh NAME
+.Nm mkbc
+.Nd Moosehead PS/2 Controller
+.Sh SYNOPSIS
+.Cd "mkbc0 at macebus0 sys 0x18 base 0x00320000 irq 6"
+.Cd "pckbd* at mkbc?"
+.Cd "pms* at mkbc?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Moosehead PS/2 Controllers found on SGI
+.Tn O2
+machines.
+.Sh SEE ALSO
+.Xr macebus 4 ,
+.Xr pckbd 4 ,
+.Xr pms 4 ,
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.3 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Joel Sing

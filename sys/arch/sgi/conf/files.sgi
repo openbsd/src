@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.13 2007/06/21 20:17:12 miod Exp $
+#	$OpenBSD: files.sgi,v 1.14 2007/10/18 18:59:29 jsing Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -102,6 +102,12 @@ file	arch/sgi/dev/if_mec.c			mec
 device	mavb: audio
 attach	mavb at macebus
 file	arch/sgi/dev/mavb.c			mavb
+
+# MACE PS/2 Controller
+include	"dev/pckbc/files.pckbc"
+device	mkbc: pckbcslot
+attach	mkbc at macebus
+file	arch/sgi/dev/mkbc.c			mkbc
 
 # Raster operations
 include	"dev/rasops/files.rasops"
