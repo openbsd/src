@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwireg.h,v 1.5 2007/09/30 22:26:10 mglocker Exp $	*/
+/*	$OpenBSD: bwireg.h,v 1.6 2007/10/18 05:56:15 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -314,6 +314,7 @@
 #define BWI_ADDR_FILTER_BSSID		3
 #define BWI_ADDR_FILTER_DATA		0x422
 
+#define BWI_MAC_GPIO_CTRL		0x049c
 #define BWI_MAC_GPIO_MASK		0x049e
 #define BWI_MAC_PRE_TBTT		0x0612
 #define BWI_MAC_SLOTTIME		0x0684
@@ -369,6 +370,12 @@
 #define BWI_SPROM_CARD_INFO_LOCALE	(0x0f << 8)
 #define BWI_SPROM_LOCALE_JAPAN		5
 #define BWI_SPROM_PA_PARAM_11BG		0x5e
+#define BWI_SPROM_GPIO01		0x64
+#define BWI_SPROM_GPIO_0		0x00ff
+#define BWI_SPROM_GPIO_1		0xff00
+#define BWI_SPROM_GPIO23		0x0066
+#define BWI_SPROM_GPIO_2		0x00ff
+#define BWI_SPROM_GPIO_3		0xff00
 #define BWI_SPROM_MAX_TXPWR		0x68
 #define BWI_SPROM_MAX_TXPWR_MASK_11BG	0x00ff		/* XXX */
 #define BWI_SPROM_MAX_TXPWR_MASK_11A	0xff00		/* XXX */
@@ -389,6 +396,24 @@
 #define BWI_CARD_F_NO_SLOWCLK		(1 << 5)	/* no slow clock */
 #define BWI_CARD_F_EXT_LNA		(1 << 12)	/* external LNA */
 #define BWI_CARD_F_ALT_IQ		(1 << 15)	/* alternate I/Q */
+
+/*
+ * PROM GPIO
+ */
+#define BWI_LED_ACT_LOW			(1 << 7)
+#define BWI_LED_ACT_MASK		0x7f
+#define BWI_LED_ACT_OFF			0
+#define BWI_LED_ACT_ON			1
+#define BWI_LED_ACT_ACTIVE		2
+#define BWI_LED_ACT_RFEN		3
+#define BWI_LED_ACT_5GHZ		4
+#define BWI_LED_ACT_2GHZ		5
+#define BWI_LED_ACT_11G			6
+#define BWI_LED_ACT_MID			7
+#define BWI_LED_ACT_FAST		8
+#define BWI_LED_ACT_UNKN		9
+#define BWI_LED_ACT_RUN			10
+#define BWI_LED_ACT_NULL		11
 
 /*
  * BBP IDs

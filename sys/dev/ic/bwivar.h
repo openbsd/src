@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.18 2007/10/04 05:44:43 mglocker Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.19 2007/10/18 05:56:15 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -256,6 +256,13 @@ struct bwi_fw_iv {
 	}			iv_val;
 } __packed;
 
+struct bwi_led {
+	uint8_t			l_flags;	/* BWI_LED_F_ */
+	uint8_t			l_act;		/* BWI_LED_ACT_ */
+};
+
+#define BWI_LED_F_ACTLOW	0x1
+
 enum bwi_clock_mode {
 	BWI_CLOCK_MODE_SLOW,
 	BWI_CLOCK_MODE_FAST,
@@ -422,6 +429,7 @@ do {						\
 } while (0)
 
 #define BWI_MAC_MAX		2
+#define BWI_LED_MAX		4
 
 enum bwi_bus_space {
 	BWI_BUS_SPACE_30BIT = 1,
@@ -508,6 +516,8 @@ struct bwi_softc {
 
 	int			 sc_nmac;
 	struct bwi_mac		 sc_mac[BWI_MAC_MAX];
+
+	struct bwi_led		 sc_leds[BWI_LED_MAX];
  
 	enum bwi_bus_space	 sc_bus_space;
 
