@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2007/10/16 20:01:23 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.66 2007/10/18 20:32:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1508,15 +1508,15 @@ check_file_secrecy(int fd, const char *fname)
 	struct stat	st;
 
 	if (fstat(fd, &st)) {
-		log_warn("cannot stat %s", fname);
+		warn("cannot stat %s", fname);
 		return (-1);
 	}
 	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_warnx("%s: owner not root or current user", fname);
+		warnx("%s: owner not root or current user", fname);
 		return (-1);
 	}
 	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_warnx("%s: group/world readable/writeable", fname);
+		warnx("%s: group/world readable/writeable", fname);
 		return (-1);
 	}
 	return (0);
@@ -1528,9 +1528,12 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL)
+	    (nfile->name = strdup(name)) == NULL) {
+		warn("malloc", nfile->name);
 		return (NULL);
+	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
+		warnx("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1611,7 +1614,6 @@ parse_config(const char *filename, int opts)
 	conf->confpath = filename;
 
 	if ((file = pushfile(filename, 1)) == NULL) {
-		warn("%s", filename);
 		free(conf);
 		return (NULL);
 	}
