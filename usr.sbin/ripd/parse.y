@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2007/10/16 20:01:23 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.13 2007/10/18 09:47:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -74,7 +74,7 @@ int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
 static struct {
-	char			 auth_key[MAX_SIMPLE_AUTH_LEN];
+	u_int8_t		 auth_key[MAX_SIMPLE_AUTH_LEN];
 	struct auth_md_head	 md_list;
 	enum auth_type		 auth_type;
 	u_int8_t		 auth_keyid;
@@ -241,14 +241,12 @@ authmd		: AUTHMD NUMBER STRING {
 				free($3);
 				YYERROR;
 			}
-			if (strlen($3) > MD5_DIGEST_LENGTH) {
+			if (md_list_add(&defs->md_list, $2, $3) == -1) {
 				yyerror("auth-md key length out of range "
-				    "(max length %d)",
-				    MD5_DIGEST_LENGTH);
+				    "(max length %d)", MD5_DIGEST_LENGTH);
 				free($3);
 				YYERROR;
 			}
-			md_list_add(&defs->md_list, $2, $3);
 			free($3);
 		}
 
@@ -287,8 +285,8 @@ authkey		: AUTHKEY STRING {
 				free($2);
 				YYERROR;
 			}
-			strncpy(defs->auth_key, $2,
-			    sizeof(defs->auth_key));
+			bzero(defs->auth_key, MAX_SIMPLE_AUTH_LEN);
+			memcpy(defs->auth_key, $2, strlen($2));
 			free($2);
 		}
 		;

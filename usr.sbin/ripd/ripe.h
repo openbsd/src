@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.6 2007/04/09 20:45:52 michele Exp $ */
+/*	$OpenBSD: ripe.h,v 1.7 2007/10/18 09:47:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -121,7 +121,7 @@ int	 auth_validate(char **, u_int16_t *, struct iface *, struct nbr *,
 	    struct nbr_failed *, u_int32_t *);
 int	 auth_gen(struct buf *, struct iface *);
 int	 auth_add_trailer(struct buf *, struct iface *);
-void	 md_list_add(struct auth_md_head *, u_int8_t, char *);
+int	 md_list_add(struct auth_md_head *, u_int8_t, char *);
 void	 md_list_copy(struct auth_md_head *, struct auth_md_head *);
 void	 md_list_clr(struct auth_md_head *);
 

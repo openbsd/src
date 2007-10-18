@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.7 2007/09/11 18:05:36 claudio Exp $ */
+/*	$OpenBSD: ripd.h,v 1.8 2007/10/18 09:47:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -184,7 +184,7 @@ enum iface_type {
 struct auth_md {
 	TAILQ_ENTRY(auth_md)	 entry;
 	u_int32_t		 seq_modulator;
-	char			 key[MD5_DIGEST_LENGTH];
+	u_int8_t		 key[MD5_DIGEST_LENGTH];
 	u_int8_t		 keyid;
 };
 
@@ -205,7 +205,7 @@ struct iface {
 	LIST_HEAD(, nbr)         nbr_list;
 	LIST_HEAD(, nbr_failed)	 failed_nbr_list;
 	char                     name[IF_NAMESIZE];
-	char			 auth_key[MAX_SIMPLE_AUTH_LEN];
+	u_int8_t		 auth_key[MAX_SIMPLE_AUTH_LEN];
 	struct in_addr           addr;
 	struct in_addr           dst;
 	struct in_addr           mask;

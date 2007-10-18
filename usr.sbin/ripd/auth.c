@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.6 2007/10/17 20:36:27 deraadt Exp $ */
+/*	$OpenBSD: auth.c,v 1.7 2007/10/18 09:47:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -152,8 +152,7 @@ auth_validate(char **buf, u_int16_t *len, struct iface *iface, struct nbr *nbr,
 		bzero(auth_data, MD5_DIGEST_LENGTH);
 
 		/* insert plaintext key */
-		bzero(digest, MD5_DIGEST_LENGTH);
-		strncpy(digest, md->key, MD5_DIGEST_LENGTH);
+		memcpy(digest, md->key, MD5_DIGEST_LENGTH);
 
 		/* calculate MD5 digest */
 		MD5Init(&hash);
@@ -246,8 +245,7 @@ auth_add_trailer(struct buf *buf, struct iface *iface)
 			return (-1);
 	}
 
-	bzero(digest, MD5_DIGEST_LENGTH);
-	strncpy(digest, md->key, MD5_DIGEST_LENGTH);
+	memcpy(digest, md->key, MD5_DIGEST_LENGTH);
 
 	auth_trailer_header_gen(buf);
 
@@ -261,24 +259,30 @@ auth_add_trailer(struct buf *buf, struct iface *iface)
 }
 
 /* md list */
-void
+int
 md_list_add(struct auth_md_head *head, u_int8_t keyid, char *key)
 {
 	struct auth_md	*md;
 
+	if (strlen(key) > MD5_DIGEST_LENGTH)
+		return (-1);
+
 	if ((md = md_list_find(head, keyid)) != NULL) {
 		/* update key */
-		strncpy(md->key, key, sizeof(md->key));
-		return;
+		bzero(md->key, sizeof(md->key));
+		memcpy(md->key, key, strlen(key));
+		return (0);
 	}
 
 	if ((md = calloc(1, sizeof(struct auth_md))) == NULL)
 		fatalx("md_list_add");
 
 	md->keyid = keyid;
-	strncpy(md->key, key, sizeof(md->key));
+	memcpy(md->key, key, strlen(key));
 	md->seq_modulator = auth_calc_modulator(md);
 	TAILQ_INSERT_TAIL(head, md, entry);
+
+	return (0);
 }
 
 void
@@ -293,7 +297,7 @@ md_list_copy(struct auth_md_head *to, struct auth_md_head *from)
 			fatalx("md_list_copy");
 
 		md->keyid = m->keyid;
-		strncpy(md->key, m->key, sizeof(md->key));
+		memcpy(md->key, m->key, sizeof(md->key));
 		md->seq_modulator = m->seq_modulator;
 		TAILQ_INSERT_TAIL(to, md, entry);
 	}
