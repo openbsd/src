@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.28 2007/10/06 06:35:57 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.29 2007/10/18 04:52:37 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -748,18 +748,12 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		DODEBUG(Start_End, printf("SIOCSIFADDR"););
 		ifp->if_flags |= IFF_UP;
-
-		switch(ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			ex_init(sc);
 #ifdef INET
-			case AF_INET:
-				ex_init(sc);
-				arp_ifinit((struct arpcom *) ifp, ifa);
-				break;
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(&sc->arpcom, ifa);
 #endif
-			default:
-				ex_init(sc);
-				break;
-		}
 		break;
 	case SIOCSIFFLAGS:
 		DODEBUG(Start_End, printf("SIOCSIFFLAGS"););
