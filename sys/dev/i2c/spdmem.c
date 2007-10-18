@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.15 2007/10/17 02:35:25 deraadt Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.16 2007/10/18 23:05:20 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -134,6 +134,10 @@
 #define SPDMEM_DDR2_RANK_DENSITY	0x1c
 
 #define SPDMEM_DDR2_TYPE_REGMASK	((1 << 4) | (1 << 0))
+
+static const uint8_t ddr2_cycle_tenths[] = {
+	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 66, 75, 0
+};
 
 /* Direct Rambus DRAM */
 #define SPDMEM_RDR_ROWS_COLS		0x00
@@ -327,8 +331,8 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		cycle_time = (s->sm_data[SPDMEM_DDR_CYCLE] >> 4) * 100 +
 		    (s->sm_data[SPDMEM_DDR_CYCLE] & 0x0f) * 10;
 	else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		cycle_time = (s->sm_data[SPDMEM_DDR_CYCLE] >> 4) * 100 +
-		    (s->sm_data[SPDMEM_DDR_CYCLE] & 0x0f);
+		cycle_time = (s->sm_data[SPDMEM_DDR2_CYCLE] >> 4) * 100 +
+		    ddr2_cycle_tenths[(s->sm_data[SPDMEM_DDR2_CYCLE] & 0x0f)];
 	}
 
 	if (cycle_time != 0) {
