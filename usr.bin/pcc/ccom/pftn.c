@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.3 2007/10/12 17:03:14 otto Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.4 2007/10/18 17:02:11 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -2302,6 +2302,11 @@ incomp:					uerror("incompatible types for arg %d",
 			}
 			goto out;
 		}
+
+		/* XXX should (recusively) check return type and arg list of
+		   func ptr arg XXX */
+		if (ISFTN(DECREF(arrt)) && ISFTN(type))
+			type = INCREF(type);
 
 		/* Hereafter its only pointers (or arrays) left */
 		/* Check for struct/union intermixing with other types */
