@@ -1,3 +1,4 @@
+/*	$OpenBSD: rs5c372.c,v 1.3 2007/10/18 03:59:32 cnst Exp $	*/
 /*	$NetBSD: rs5c372.c,v 1.5 2006/03/29 06:41:24 thorpej Exp $	*/
 
 /*
