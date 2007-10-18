@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2007/10/18 20:49:06 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.68 2007/10/18 20:52:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -884,7 +884,7 @@ sslcache	: NUMBER			{
 relay		: RELAY STRING	{
 			struct relay *r;
 
-			TAILQ_FOREACH(r, conf->relays, entry)
+			TAILQ_FOREACH(r, &conf->relays, entry)
 				if (!strcmp(r->conf.name, $2))
 					break;
 			if (r != NULL) {
@@ -929,11 +929,9 @@ relay		: RELAY STRING	{
 				rlay->proto = &conf->proto_default;
 				rlay->conf.proto = conf->proto_default.id;
 			}
-			if (relay_load_certfile(rlay) == -1)
-				YYERROR;
 			conf->relaycount++;
 			SPLAY_INIT(&rlay->sessions);
-			TAILQ_INSERT_HEAD(conf->relays, rlay, entry);
+			TAILQ_INSERT_HEAD(&conf->relays, rlay, entry);
 		}
 		;
 
@@ -1577,8 +1575,7 @@ parse_config(const char *filename, int opts)
 
 	if ((conf = calloc(1, sizeof(*conf))) == NULL ||
 	    (conf->tables = calloc(1, sizeof(*conf->tables))) == NULL ||
-	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL ||
-	    (conf->relays = calloc(1, sizeof(*conf->relays))) == NULL) {
+	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL) {
 		warn("cannot allocate memory");
 		return (NULL);
 	}
@@ -1588,8 +1585,8 @@ parse_config(const char *filename, int opts)
 
 	TAILQ_INIT(conf->services);
 	TAILQ_INIT(conf->tables);
-	TAILQ_INIT(conf->relays);
 	TAILQ_INIT(&conf->protos);
+	TAILQ_INIT(&conf->relays);
 
 	memset(&conf->empty_table, 0, sizeof(conf->empty_table));
 	conf->empty_table.conf.id = EMPTY_TABLE;
@@ -1642,12 +1639,12 @@ parse_config(const char *filename, int opts)
 		}
 	}
 
-	if (TAILQ_EMPTY(conf->services) && TAILQ_EMPTY(conf->relays)) {
+	if (TAILQ_EMPTY(conf->services) && TAILQ_EMPTY(&conf->relays)) {
 		log_warnx("no services, nothing to do");
 		errors++;
 	}
 
-	if (TAILQ_EMPTY(conf->relays))
+	if (TAILQ_EMPTY(&conf->relays))
 		conf->prefork_relay = 0;
 
 	if (timercmp(&conf->timeout, &conf->interval, >=)) {
