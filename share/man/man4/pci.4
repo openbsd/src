@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.232 2007/10/07 19:51:20 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.233 2007/10/18 22:54:37 deraadt Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 7 2007 $
+.Dd $Mdocdate: October 18 2007 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -44,9 +44,13 @@
 .Cd "pci* at irongate?"
 .Cd "pci* at lca?"
 .Cd "pci* at tsp?"
+.Cd "pci* at mcpcia?"
 .Pp
 .Cd "# amd64, i386"
 .Cd "pci* at mainbus0"
+.Pp
+.Cd "# armish"
+.Cd "pci* at iopxs0"
 .Pp
 .Cd "# hppa"
 .Cd "pci* at dino?"
@@ -58,6 +62,9 @@
 .Cd "# macppc"
 .Cd "pci* at mpcpcibr?"
 .Cd "pci* at ht?"
+.Pp
+.Cd "# sgi"
+.Cd "pci* at macepcibr?"
 .Pp
 .Cd "# sparc64"
 .Cd "pci* at psycho?"
