@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.5 2007/10/16 19:02:09 otto Exp $	*/
+/*	$OpenBSD: cc.c,v 1.6 2007/10/18 17:42:56 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -701,8 +701,10 @@ callsys(char f[], char *v[])
 		if (Bflag) {
 			size_t len = strlen(Bflag) + 8;
 			char *a = malloc(len);
-			if (a == NULL)
-				errorx(1, "callsys: malloc failed\n");
+			if (a == NULL) {
+				error("callsys: malloc failed");
+				exit(1);
+			}
 			if ((s = strrchr(f, '/'))) {
 				strlcpy(a, Bflag, len);
 				strlcat(a, s, len);
