@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.9 2007/10/09 03:17:34 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.10 2007/10/19 15:16:34 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -238,8 +238,8 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	else
 		main_buffer_size = 576 - DHCP_FIXED_LEN;
 
-	if (main_buffer_size > sizeof(buffer))
-		main_buffer_size = sizeof(buffer);
+	if (main_buffer_size > sizeof(outpacket->options))
+		main_buffer_size = sizeof(outpacket->options);
 
 	/* Preload the option priority list with mandatory options. */
 	priority_len = 0;
