@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.81 2007/10/03 21:49:13 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.82 2007/10/19 15:31:02 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1300,7 +1300,7 @@ audio_calc_blksize(struct audio_softc *sc, int mode)
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_params *parm;
 	struct audio_ringbuffer *rb;
-	int bs;
+	int bs, maxbs, fs;
 
 	if (sc->sc_blkset)
 		return;
@@ -1313,9 +1313,12 @@ audio_calc_blksize(struct audio_softc *sc, int mode)
 		rb = &sc->sc_rr;
 	}
 
-	bs = parm->sample_rate * audio_blk_ms / 1000 *
-	     parm->channels * parm->precision / NBBY *
-	     parm->factor;
+	fs = parm->channels * parm->precision / NBBY * parm->factor;
+	bs = parm->sample_rate * audio_blk_ms / 1000 * fs;
+	maxbs = rb->bufsize / 2;
+	if (bs > maxbs)
+		bs = (maxbs / fs) * fs;
+
 	ROUNDSIZE(bs);
 	if (hw->round_blocksize)
 		bs = hw->round_blocksize(sc->hw_hdl, bs);
