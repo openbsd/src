@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.20 2007/09/08 17:48:12 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.21 2007/10/19 15:17:30 kettenis Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ prom_start_cpu(int cpu, void *func, long arg)
 	args.name = ADR2CELL("SUNW,start-cpu");
 	args.nargs = 3;
 	args.nreturns = 0;
-	args.cpu = cpu;
+	args.cpu = HDL2CELL(cpu);
 	args.func = ADR2CELL(func);
 	args.arg = arg;
 
