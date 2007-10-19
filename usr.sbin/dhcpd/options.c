@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.12 2007/10/19 15:34:55 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.13 2007/10/19 15:43:33 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -288,7 +288,13 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	    (main_buffer_size + ((overload & 1) ? DHCP_FILE_LEN : 0)),
 	    terminate);
 
-	/* Put the cookie up front... */
+	/* Initialize the buffers to be used and put the cookie up front. */
+	memset(outpacket->options, DHO_PAD, sizeof(outpacket->options));
+	if (overload & 1)
+		memset(outpacket->file, DHO_PAD, DHCP_FILE_LEN);
+	if (overload & 2)
+		memset(outpacket->sname, DHO_PAD, DHCP_SNAME_LEN);
+
 	memcpy(outpacket->options, DHCP_OPTIONS_COOKIE, 4);
 	mainbufix = 4;
 
@@ -324,8 +330,6 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 				mainbufix = option_size - bufix;
 				if (mainbufix < DHCP_FILE_LEN)
 					outpacket->file[mainbufix++] = (char)DHO_END;
-				while (mainbufix < DHCP_FILE_LEN)
-					outpacket->file[mainbufix++] = DHO_PAD;
 			} else {
 				memcpy(outpacket->file,
 				    &buffer[bufix], DHCP_FILE_LEN);
@@ -339,8 +343,6 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 			mainbufix = option_size - bufix;
 			if (mainbufix < DHCP_SNAME_LEN)
 				outpacket->sname[mainbufix++] = (char)DHO_END;
-			while (mainbufix < DHCP_SNAME_LEN)
-				outpacket->sname[mainbufix++] = DHO_PAD;
 		}
 	}
 	return (length);
