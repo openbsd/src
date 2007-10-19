@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.17 2006/11/29 22:40:13 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.18 2007/10/19 18:11:18 fgsch Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -105,8 +105,8 @@ int kdb_trap(int, int, db_regs_t *);
 
 void db_machine_init(void);
 int db_enter_ddb(void);
-void db_startcpu(int cpu);
-void db_stopcpu(int cpu);
+void db_startcpu(int);
+void db_stopcpu(int);
 void i386_ipi_db(struct cpu_info *);
 
 extern struct mutex ddb_mp_mutex;
