@@ -1545,6 +1545,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/eti.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/evdns.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/event.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/expat.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/expat_external.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/float.ph

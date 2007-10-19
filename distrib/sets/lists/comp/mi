@@ -871,6 +871,8 @@
 ./usr/include/eti.h
 ./usr/include/evdns.h
 ./usr/include/event.h
+./usr/include/expat.h
+./usr/include/expat_external.h
 ./usr/include/f2c.h
 ./usr/include/fcntl.h
 ./usr/include/float.h

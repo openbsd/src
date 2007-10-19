@@ -1466,6 +1466,8 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/eti.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/evdns.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/event.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/expat.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/expat_external.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/float.ph

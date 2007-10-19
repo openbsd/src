@@ -1348,6 +1348,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/eti.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/evdns.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/event.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/expat.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/expat_external.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/float.ph
