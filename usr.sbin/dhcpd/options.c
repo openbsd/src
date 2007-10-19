@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.11 2007/10/19 15:25:07 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.12 2007/10/19 15:34:55 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -338,9 +338,9 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 
 			mainbufix = option_size - bufix;
 			if (mainbufix < DHCP_SNAME_LEN)
-				outpacket->file[mainbufix++] = (char)DHO_END;
+				outpacket->sname[mainbufix++] = (char)DHO_END;
 			while (mainbufix < DHCP_SNAME_LEN)
-				outpacket->file[mainbufix++] = DHO_PAD;
+				outpacket->sname[mainbufix++] = DHO_PAD;
 		}
 	}
 	return (length);
