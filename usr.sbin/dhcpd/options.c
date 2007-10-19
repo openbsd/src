@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.10 2007/10/19 15:16:34 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.11 2007/10/19 15:25:07 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -316,7 +316,7 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 		memcpy(&outpacket->options[mainbufix],
 		    buffer, main_buffer_size - mainbufix);
 		bufix = main_buffer_size - mainbufix;
-		length = DHCP_FIXED_NON_UDP + mainbufix;
+		length = DHCP_FIXED_NON_UDP + main_buffer_size;
 		if (overload & 1) {
 			if (option_size - bufix <= DHCP_FILE_LEN) {
 				memcpy(outpacket->file,
