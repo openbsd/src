@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.69 2007/10/19 12:08:55 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.70 2007/10/19 14:15:14 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -585,7 +585,7 @@ struct hoststated {
 	struct tablelist	*tables;
 	struct servicelist	*services;
 	struct protolist	 protos;
-	struct relaylist	 relays;
+	struct relaylist	*relays;
 	u_int16_t		 prefork_relay;
 	char			 demote_group[IFNAMSIZ];
 	u_int16_t		 id;

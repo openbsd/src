@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.50 2007/10/05 17:32:13 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.51 2007/10/19 14:15:14 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -260,7 +260,7 @@ relay_shutdown(void)
 	struct session	*con;
 
 	struct relay	*rlay;
-	TAILQ_FOREACH(rlay, &env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->relays, entry) {
 		if (rlay->conf.flags & F_DISABLE)
 			continue;
 		close(rlay->s);
@@ -368,7 +368,7 @@ relay_privinit(void)
 	if (env->flags & F_SSL)
 		ssl_init(env);
 
-	TAILQ_FOREACH(rlay, &env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->relays, entry) {
 		log_debug("relay_init: adding relay %s", rlay->conf.name);
 
 		if (debug)
@@ -406,7 +406,7 @@ relay_init(void)
 	struct host	*host;
 	struct timeval	 tv;
 
-	TAILQ_FOREACH(rlay, &env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->relays, entry) {
 		if ((rlay->conf.flags & F_SSL) &&
 		    (rlay->ssl_ctx = relay_ssl_ctx_create(rlay)) == NULL)
 			fatal("relay_init: failed to create SSL context");
@@ -462,7 +462,7 @@ relay_statistics(int fd, short events, void *arg)
 	if (gettimeofday(&tv_now, NULL))
 		fatal("relay_init: gettimeofday");
 
-	TAILQ_FOREACH(rlay, &env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->relays, entry) {
 		bzero(&crs, sizeof(crs));
 		resethour = resetday = 0;
 
@@ -515,7 +515,7 @@ relay_launch(void)
 	struct relay	*rlay;
 	void		(*callback)(int, short, void *);
 
-	TAILQ_FOREACH(rlay, &env->relays, entry) {
+	TAILQ_FOREACH(rlay, env->relays, entry) {
 		log_debug("relay_launch: running relay %s", rlay->conf.name);
 
 		rlay->up = HOST_UP;
@@ -1953,7 +1953,7 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			evtimer_add(&con->ev, &tv);
 			break;
 		case IMSG_CTL_SESSION:
-			TAILQ_FOREACH(rlay, &env->relays, entry)
+			TAILQ_FOREACH(rlay, env->relays, entry)
 				SPLAY_FOREACH(con, session_tree,
 				    &rlay->sessions)
 					imsg_compose(ibuf, IMSG_CTL_SESSION,

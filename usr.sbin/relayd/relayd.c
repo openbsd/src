@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.44 2007/10/12 12:50:59 blambert Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.45 2007/10/19 14:15:14 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -471,8 +471,8 @@ purge_config(struct hoststated *env, u_int8_t what)
 	}
 
 	if (what & PURGE_RELAYS) {
-		while ((rly = TAILQ_FIRST(&env->relays)) != NULL) {
-			TAILQ_REMOVE(&env->relays, rly, entry);
+		while ((rly = TAILQ_FIRST(env->relays)) != NULL) {
+			TAILQ_REMOVE(env->relays, rly, entry);
 			while ((sess = SPLAY_ROOT(&rly->sessions)) != NULL) {
 				SPLAY_REMOVE(session_tree,
 				    &rly->sessions, sess);
@@ -486,6 +486,7 @@ purge_config(struct hoststated *env, u_int8_t what)
 				SSL_CTX_free(rly->ssl_ctx);
 			free(rly);
 		}
+		free(env->relays);
 	}
 
 	if (what & PURGE_PROTOS) {
@@ -733,7 +734,7 @@ relay_find(struct hoststated *env, objid_t id)
 {
 	struct relay	*rlay;
 
-	TAILQ_FOREACH(rlay, &env->relays, entry)
+	TAILQ_FOREACH(rlay, env->relays, entry)
 		if (rlay->conf.id == id)
 			return (rlay);
 	return (NULL);
@@ -745,7 +746,7 @@ session_find(struct hoststated *env, objid_t id)
 	struct relay		*rlay;
 	struct session		*con;
 
-	TAILQ_FOREACH(rlay, &env->relays, entry)
+	TAILQ_FOREACH(rlay, env->relays, entry)
 		SPLAY_FOREACH(con, session_tree, &rlay->sessions)
 			if (con->id == id)
 				return (con);
@@ -792,7 +793,7 @@ relay_findbyname(struct hoststated *env, const char *name)
 {
 	struct relay	*rlay;
 
-	TAILQ_FOREACH(rlay, &env->relays, entry)
+	TAILQ_FOREACH(rlay, env->relays, entry)
 		if (strcmp(rlay->conf.name, name) == 0)
 			return (rlay);
 	return (NULL);
