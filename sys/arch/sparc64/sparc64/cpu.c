@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.25 2007/10/18 20:44:47 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.26 2007/10/19 14:36:01 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -416,8 +416,6 @@ void
 cpu_hatch(void)
 {
 	int s;
-
-	printf("cpu%d running\n", cpu_number());
 
 	cpu_reset_fpustate();
 	curcpu()->ci_flags |= CPUF_RUNNING;
