@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiotest_rw.c,v 1.7 2007/10/03 21:49:13 jakemsr Exp $	*/
+/*	$OpenBSD: audiotest_rw.c,v 1.8 2007/10/19 09:03:05 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
@@ -289,7 +289,7 @@ retry:
 				warn("AUDIO_GETRRINFO");
 				return 0;
 			}
-			if (ab.seek > buffer_size)
+			if (ab.seek >= buffer_size)
 				ret |= 1;
 		}
 		if (mode & AUMODE_PLAY) {
@@ -297,7 +297,7 @@ retry:
 				warn("AUDIO_GETPRINFO");
 				return 0;
 			}
-			if (ab.hiwat * ab.blksize - ab.seek > buffer_size)
+			if (ab.hiwat * ab.blksize - ab.seek >= buffer_size)
 				ret |= 2;
 		}
 		if (ret == 0) {
