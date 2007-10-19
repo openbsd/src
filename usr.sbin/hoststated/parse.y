@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2007/10/19 14:40:51 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.72 2007/10/19 17:33:35 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1533,7 +1533,7 @@ pushfile(const char *name, int secret)
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warnx("%s", nfile->name);
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
