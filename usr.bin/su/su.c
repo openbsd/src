@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.56 2003/11/09 20:13:58 otto Exp $	*/
+/*	$OpenBSD: su.c,v 1.57 2007/10/19 21:03:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.56 2003/11/09 20:13:58 otto Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.57 2007/10/19 21:03:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,12 +250,12 @@ main(int argc, char **argv)
 			if (p && setenv("TERM", p, 1) == -1)
 				auth_err(as, 1, "unable to set environment");
 
-			seteuid(pwd->pw_uid);
 			setegid(pwd->pw_gid);
+			seteuid(pwd->pw_uid);
 			if (chdir(pwd->pw_dir) < 0)
 				auth_err(as, 1, "%s", pwd->pw_dir);
-			seteuid(0);
 			setegid(0);	/* XXX use a saved gid instead? */
+			seteuid(0);
 		} else if (pwd->pw_uid == 0) {
 			if (setusercontext(lc,
 			    pwd, pwd->pw_uid, LOGIN_SETPATH|LOGIN_SETUMASK))
