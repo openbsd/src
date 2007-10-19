@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.45 2007/10/19 14:15:14 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.46 2007/10/19 14:40:51 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -128,6 +128,8 @@ main(int argc, char *argv[])
 	debug = 0;
 	conffile = CONF_FILE;
 
+	log_init(1);	/* log to stderr until daemonized */
+
 	while ((c = getopt(argc, argv, "dD:nf:v")) != -1) {
 		switch (c) {
 		case 'd':
@@ -139,6 +141,7 @@ main(int argc, char *argv[])
 				    optarg);
 			break;
 		case 'n':
+			debug = 1;
 			opts |= HOSTSTATED_OPT_NOACTION;
 			break;
 		case 'f':
@@ -151,8 +154,6 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-
-	log_init(debug);
 
 	if ((env = parse_config(conffile, opts)) == NULL)
 		exit(1);
@@ -170,6 +171,8 @@ main(int argc, char *argv[])
 
 	if (getpwnam(HOSTSTATED_USER) == NULL)
 		errx(1, "unknown user %s", HOSTSTATED_USER);
+
+	log_init(debug);
 
 	if (!debug) {
 		if (daemon(1, 0) == -1)

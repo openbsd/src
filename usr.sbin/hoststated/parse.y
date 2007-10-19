@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.70 2007/10/19 14:15:14 pyr Exp $	*/
+/*	$OpenBSD: parse.y,v 1.71 2007/10/19 14:40:51 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1509,17 +1509,14 @@ check_file_secrecy(int fd, const char *fname)
 
 	if (fstat(fd, &st)) {
 		log_warn("cannot stat %s", fname);
-		warn("cannot stat %s", fname);
 		return (-1);
 	}
 	if (st.st_uid != 0 && st.st_uid != getuid()) {
 		log_warnx("%s: owner not root or current user", fname);
-		warnx("%s: owner not root or current user", fname);
 		return (-1);
 	}
 	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
 		log_warnx("%s: group/world readable/writeable", fname);
-		warnx("%s: group/world readable/writeable", fname);
 		return (-1);
 	}
 	return (0);
@@ -1533,12 +1530,10 @@ pushfile(const char *name, int secret)
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
 	    (nfile->name = strdup(name)) == NULL) {
 		log_warn("malloc");
-		warn("malloc");
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
 		log_warnx("%s", nfile->name);
-		warnx("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1583,7 +1578,6 @@ parse_config(const char *filename, int opts)
 	    (conf->relays = calloc(1, sizeof(*conf->relays))) == NULL ||
 	    (conf->services = calloc(1, sizeof(*conf->services))) == NULL) {
 		log_warn("cannot allocate memory");
-		warn("cannot allocate memory");
 		return (NULL);
 	}
 
