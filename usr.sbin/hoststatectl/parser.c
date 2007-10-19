@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.13 2007/09/28 13:29:56 pyr Exp $	*/
+/*	$OpenBSD: parser.c,v 1.14 2007/10/19 12:08:55 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -66,6 +66,7 @@ static const struct token t_host_id[];
 static const struct token t_main[] = {
 	{KEYWORD,	"monitor",	MONITOR,	NULL},
 	{KEYWORD,	"show",		NULL,		t_show},
+	{KEYWORD,	"poll",		POLL,		NULL},
 	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"stop",		SHUTDOWN,	NULL},
 	{KEYWORD,	"service",	NONE,		t_service},

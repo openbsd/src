@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.18 2007/09/07 08:20:24 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.19 2007/10/19 12:08:55 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@ struct ctl_conn	*control_connbyfd(int);
 void		 control_close(int);
 
 struct imsgbuf	*ibuf_main = NULL;
+struct imsgbuf	*ibuf_hce = NULL;
 
 int
 control_init(void)
@@ -94,10 +95,12 @@ control_init(void)
 }
 
 int
-control_listen(struct hoststated *env, struct imsgbuf *ibuf)
+control_listen(struct hoststated *env, struct imsgbuf *i_main,
+    struct imsgbuf *i_hce)
 {
 
-	ibuf_main = ibuf;
+	ibuf_main = i_main;
+	ibuf_hce = i_hce;
 
 	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
 		log_warn("control_listen: listen");
@@ -315,6 +318,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_SHUTDOWN:
 			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 
 			    0);
+			break;
+		case IMSG_CTL_POLL:
+			imsg_compose(ibuf_hce, IMSG_CTL_POLL, 0, 0,-1, NULL, 0);
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_CTL_RELOAD:
 			if (env->prefork_relay > 0) {

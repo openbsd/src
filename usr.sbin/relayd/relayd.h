@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.68 2007/10/12 12:50:59 blambert Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.69 2007/10/19 12:08:55 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -118,6 +118,7 @@ enum imsg_type {
 	IMSG_CTL_HOST_DISABLE,
 	IMSG_CTL_SHUTDOWN,
 	IMSG_CTL_RELOAD,
+	IMSG_CTL_POLL,
 	IMSG_CTL_NOTIFY,
 	IMSG_CTL_STATISTICS,
 	IMSG_SERVICE_ENABLE,	/* notifies from pfe to hce */
@@ -628,7 +629,7 @@ TAILQ_HEAD(ctl_connlist, ctl_conn);
 
 /* control.c */
 int	control_init(void);
-int	control_listen(struct hoststated *, struct imsgbuf *);
+int	control_listen(struct hoststated *, struct imsgbuf *, struct imsgbuf *);
 void    control_accept(int, short, void *);
 void    control_dispatch_imsg(int, short, void *);
 void	control_imsg_forward(struct imsg *);

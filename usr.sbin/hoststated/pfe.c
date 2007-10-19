@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.36 2007/09/28 13:29:56 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.37 2007/10/19 12:08:55 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -156,7 +156,7 @@ pfe(struct hoststated *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	TAILQ_INIT(&ctl_conns);
 
-	if (control_listen(env, ibuf_main) == -1)
+	if (control_listen(env, ibuf_main, ibuf_hce) == -1)
 		fatalx("pfe: control socket listen failed");
 
 	/* Initial sync */

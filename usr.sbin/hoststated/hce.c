@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.31 2007/10/12 12:50:59 blambert Exp $	*/
+/*	$OpenBSD: hce.c,v 1.32 2007/10/19 12:08:55 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -394,6 +394,10 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 			table->conf.flags &= ~(F_DISABLE);
 			TAILQ_FOREACH(host, &table->hosts, entry)
 				host->up = HOST_UNKNOWN;
+			break;
+		case IMSG_CTL_POLL:
+			evtimer_del(&env->ev);
+			hce_launch_checks(-1, EV_TIMEOUT, env);
 			break;
 		default:
 			log_debug("hce_dispatch_msg: unexpected imsg %d",
