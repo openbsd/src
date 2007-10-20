@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiotest_rw.c,v 1.8 2007/10/19 09:03:05 jakemsr Exp $	*/
+/*	$OpenBSD: audiotest_rw.c,v 1.9 2007/10/20 02:34:54 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
@@ -226,7 +226,7 @@ int ret;
 		sfdsr = NULL;
 		sfdsw = NULL;
 		if (mode & AUMODE_RECORD) {
-			if ((sfdsr = calloc(max + 1, sizeof(fd_mask))) == NULL) {
+			if ((sfdsr = calloc(max + 1, sizeof(fd_set))) == NULL) {
 				warn("fd_set sfdsr");
 				return 0;
 			}
@@ -234,7 +234,7 @@ int ret;
 			FD_SET(audio_fd, sfdsr);
 		}
 		if (mode & AUMODE_PLAY) {
-			if ((sfdsw = calloc(max + 1, sizeof(fd_mask))) == NULL) {
+			if ((sfdsw = calloc(max + 1, sizeof(fd_set))) == NULL) {
 				warn("fd_set sfdsw");
 				return 0;
 			}
