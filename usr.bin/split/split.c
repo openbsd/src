@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.15 2007/09/25 11:20:34 chl Exp $	*/
+/*	$OpenBSD: split.c,v 1.16 2007/10/20 18:08:57 sobrado Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #else
-static char rcsid[] = "$OpenBSD: split.c,v 1.15 2007/09/25 11:20:34 chl Exp $";
+static char rcsid[] = "$OpenBSD: split.c,v 1.16 2007/10/20 18:08:57 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -326,8 +326,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-a suffix_length] "
-	    "[-b byte_count[k|m] | -l line_count | -p pattern] [file [name]]\n",
-	    __progname);
+	(void)fprintf(stderr, "usage: %s [-a suffix_length]\n"
+	    "             [-b byte_count[k|m] | -l line_count | -p pattern] "
+	    "[file [name]]\n", __progname);
 	exit(EX_USAGE);
 }
