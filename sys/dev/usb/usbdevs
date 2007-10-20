@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.302 2007/10/14 08:29:17 fkr Exp $
+$OpenBSD: usbdevs,v 1.303 2007/10/20 01:05:46 beck Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2030,6 +2030,7 @@ product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
 /* ShanTou products */
 product SHANTOU ST268		0x0268	ST268
 product SHANTOU DM9601		0x9601	DM9601
+product SHANTOU ZT6688		0x6688	ZT6688
 
 /* Shark products */
 product SHARK PA		0x0400	Pocket Adapter
