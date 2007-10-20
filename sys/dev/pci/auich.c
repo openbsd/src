@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.65 2007/09/17 00:50:46 krw Exp $	*/
+/*	$OpenBSD: auich.c,v 1.66 2007/10/20 02:40:54 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -148,6 +148,10 @@ struct auich_dmalist {
 
 #define	AUICH_FIXED_RATE 48000
 
+#ifndef BUS_DMA_NOCACHE
+#define BUS_DMA_NOCACHE 0
+#endif
+
 struct auich_dma {
 	bus_dmamap_t map;
 	caddr_t addr;
@@ -156,6 +160,17 @@ struct auich_dma {
 	size_t size;
 	struct auich_dma *next;
 };
+
+struct auich_cdata {
+	struct auich_dmalist ic_dmalist_pcmo[AUICH_DMALIST_MAX];
+	struct auich_dmalist ic_dmalist_pcmi[AUICH_DMALIST_MAX];
+	struct auich_dmalist ic_dmalist_mici[AUICH_DMALIST_MAX];
+};
+
+#define	AUICH_CDOFF(x)		offsetof(struct auich_cdata, x)
+#define	AUICH_PCMO_OFF(x)	AUICH_CDOFF(ic_dmalist_pcmo[(x)])
+#define	AUICH_PCMI_OFF(x)	AUICH_CDOFF(ic_dmalist_pcmi[(x)])
+#define	AUICH_MICI_OFF(x)	AUICH_CDOFF(ic_dmalist_mici[(x)])
 
 struct auich_softc {
 	struct device sc_dev;
@@ -172,38 +187,37 @@ struct auich_softc {
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
 
-	/* dma scatter-gather buffer lists, aligned to 8 bytes */
-	struct auich_dmalist *dmalist_pcmo, *dmap_pcmo;
-	struct auich_dmalist *dmalist_pcmi, *dmap_pcmi;
-	struct auich_dmalist *dmalist_mici, *dmap_mici;
+	/* dma scatter-gather buffer lists */
 
-	bus_dmamap_t dmalist_map;
-	bus_dma_segment_t dmalist_seg[2];
-	caddr_t dmalist_kva;
-	bus_addr_t dmalist_pcmo_pa;
-	bus_addr_t dmalist_pcmi_pa;
-	bus_addr_t dmalist_mici_pa;
+	bus_dmamap_t sc_cddmamap;
+#define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
-	/* i/o buffer pointers */
-	u_int32_t pcmo_start, pcmo_p, pcmo_end;
-	int pcmo_blksize, pcmo_fifoe;
-	u_int32_t pcmi_start, pcmi_p, pcmi_end;
-	int pcmi_blksize, pcmi_fifoe;
-	u_int32_t mici_start, mici_p, mici_end;
-	int mici_blksize, mici_fifoe;
+	struct auich_cdata *sc_cdata;
+
+	struct auich_ring {
+		int qptr;
+		struct auich_dmalist *dmalist;
+
+		uint32_t start, p, end;
+		int blksize;
+
+		void (*intr)(void *);
+		void *arg;
+	} pcmo, pcmi, mici;
+
 	struct auich_dma *sc_dmas;
 
-	void (*sc_pintr)(void *);
-	void *sc_parg;
-
-	void (*sc_rintr)(void *);
-	void *sc_rarg;
+#ifdef AUICH_DEBUG
+	int pcmi_fifoe;
+	int pcmo_fifoe;
+#endif
 
 	void *powerhook;
 	int suspend;
 	u_int16_t ext_ctrl;
 	int sc_sample_size;
 	int sc_sts_reg;
+	int sc_dmamap_flags;
 	int sc_ignore_codecready;
 	int flags;
 	int sc_ac97rate;
@@ -214,7 +228,7 @@ struct auich_softc {
 int auich_debug = 0xfffe;
 #define	AUICH_DEBUG_CODECIO	0x0001
 #define	AUICH_DEBUG_DMA		0x0002
-#define	AUICH_DEBUG_PARAM	0x0004
+#define	AUICH_DEBUG_INTR	0x0004
 #else
 #define	DPRINTF(x,y)	/* nothing */
 #endif
@@ -269,6 +283,7 @@ int auich_query_encoding(void *, struct audio_encoding *);
 int auich_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
 int auich_round_blocksize(void *, int);
+void auich_halt_pipe(struct auich_softc *, int);
 int auich_halt_output(void *);
 int auich_halt_input(void *);
 int auich_getdev(void *, struct audio_device *);
@@ -280,10 +295,15 @@ void auich_freem(void *, void *, int);
 size_t auich_round_buffersize(void *, int, size_t);
 paddr_t auich_mappage(void *, void *, off_t, int);
 int auich_get_props(void *);
+void auich_trigger_pipe(struct auich_softc *, int, struct auich_ring *);
+void auich_intr_pipe(struct auich_softc *, int, struct auich_ring *);
 int auich_trigger_output(void *, void *, void *, int, void (*)(void *),
     void *, struct audio_params *);
 int auich_trigger_input(void *, void *, void *, int, void (*)(void *),
     void *, struct audio_params *);
+int auich_alloc_cdata(struct auich_softc *);
+int auich_allocmem(struct auich_softc *, size_t, size_t, struct auich_dma *);
+int auich_freemem(struct auich_softc *, struct auich_dma *);
 
 void auich_powerhook(int, void *);
 
@@ -352,8 +372,7 @@ auich_attach(parent, self, aux)
 	pcireg_t csr;
 	const char *intrstr;
 	u_int32_t status;
-	bus_size_t dmasz;
-	int i, segs;
+	int i;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA ||
@@ -404,37 +423,6 @@ auich_attach(parent, self, aux)
 	}
 	sc->dmat = pa->pa_dmat;
 
-	/* allocate dma memory */
-	dmasz = AUICH_DMALIST_MAX * 3 * sizeof(struct auich_dma);
-	segs = 1;
-	if (bus_dmamem_alloc(sc->dmat, dmasz, PAGE_SIZE, 0, sc->dmalist_seg,
-	    segs, &segs, BUS_DMA_NOWAIT)) {
-		printf(": failed to alloc dmalist\n");
-		return;
-	}
-	if (bus_dmamem_map(sc->dmat, sc->dmalist_seg, segs, dmasz,
-	    &sc->dmalist_kva, BUS_DMA_NOWAIT)) {
-		printf(": failed to map dmalist\n");
-		bus_dmamem_free(sc->dmat, sc->dmalist_seg, segs);
-		return;
-	}
-	if (bus_dmamap_create(sc->dmat, dmasz, segs, dmasz, 0, BUS_DMA_NOWAIT,
-	    &sc->dmalist_map)) {
-		printf(": failed to create dmalist map\n");
-		bus_dmamem_unmap(sc->dmat, sc->dmalist_kva, dmasz);
-		bus_dmamem_free(sc->dmat, sc->dmalist_seg, segs);
-		return;
-	}
-	if (bus_dmamap_load_raw(sc->dmat, sc->dmalist_map, sc->dmalist_seg,
-	    segs, dmasz, BUS_DMA_NOWAIT)) {
-		printf(": failed to load dmalist map: %d segs %lu size\n",
-		    segs, (u_long)dmasz);
-		bus_dmamap_destroy(sc->dmat, sc->dmalist_map);
-		bus_dmamem_unmap(sc->dmat, sc->dmalist_kva, dmasz);
-		bus_dmamem_free(sc->dmat, sc->dmalist_seg, segs);
-		return;
-	}
-
 	if (pci_intr_map(pa, &ih)) {
 		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
 		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
@@ -480,23 +468,20 @@ auich_attach(parent, self, aux)
 		sc->sc_sample_size = 2;
 	}
 
-	sc->dmalist_pcmo = (struct auich_dmalist *)(sc->dmalist_kva +
-	    (0 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX));
-	sc->dmalist_pcmo_pa = sc->dmalist_map->dm_segs[0].ds_addr +
-	    (0 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX);
+	/* Workaround for a 440MX B-stepping erratum */
+	sc->sc_dmamap_flags = BUS_DMA_COHERENT;
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82440MX_ACA) {
+		sc->sc_dmamap_flags |= BUS_DMA_NOCACHE;
+		printf("%s: DMA bug workaround enabled\n", sc->sc_dev.dv_xname);
+	}
 
-	sc->dmalist_pcmi = (struct auich_dmalist *)(sc->dmalist_kva +
-	    (1 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX));
-	sc->dmalist_pcmi_pa = sc->dmalist_map->dm_segs[0].ds_addr +
-	    (1 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX);
-
-	sc->dmalist_mici = (struct auich_dmalist *)(sc->dmalist_kva +
-	    (2 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX));
-	sc->dmalist_mici_pa = sc->dmalist_map->dm_segs[0].ds_addr +
-	    (2 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX);
+	/* Set up DMA lists. */
+	sc->pcmo.qptr = sc->pcmi.qptr = sc->mici.qptr = 0;
+	auich_alloc_cdata(sc);
 
 	DPRINTF(AUICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
-	    sc->dmalist_pcmo, sc->dmalist_pcmi, sc->dmalist_mici));
+	    sc->pcmo.dmalist, sc->pcmi.dmalist, sc->mici.dmalist));
 
 	/* Reset codec and AC'97 */
 	auich_reset_codec(sc);
@@ -985,6 +970,28 @@ auich_round_blocksize(v, blk)
 	return (blk + 0x3f) & ~0x3f;
 }
 
+
+void
+auich_halt_pipe(struct auich_softc *sc, int pipe)
+{
+	int i;
+	uint32_t status;
+
+	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_CTRL, 0);
+	for (i = 0; i < 100; i++) {
+		status = bus_space_read_4(sc->iot, sc->aud_ioh, pipe + AUICH_STS);
+		if (status & AUICH_DCH)
+			break;
+		DELAY(1);
+	}
+	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_CTRL, AUICH_RR);
+
+	if (i > 0)
+		DPRINTF(AUICH_DEBUG_DMA,
+		    ("auich_halt_pipe: halt took %d cycles\n", i));
+}
+
+
 int
 auich_halt_output(v)
 	void *v;
@@ -994,6 +1001,7 @@ auich_halt_output(v)
 	DPRINTF(AUICH_DEBUG_DMA, ("%s: halt_output\n", sc->sc_dev.dv_xname));
 
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_CTRL, AUICH_RR);
+	sc->pcmo.intr = NULL;
 
 	return 0;
 }
@@ -1011,6 +1019,7 @@ auich_halt_input(v)
 
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL, AUICH_RR);
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_MICI + AUICH_CTRL, AUICH_RR);
+	sc->pcmi.intr = NULL;
 
 	return 0;
 }
@@ -1063,48 +1072,20 @@ auich_allocm(v, direction, size, pool, flags)
 	struct auich_dma *p;
 	int error;
 
-	if (size > AUICH_DMALIST_MAX * AUICH_DMASEG_MAX)
+	/* can only use 1 segment */
+	if (size > AUICH_DMASEG_MAX) {
+		DPRINTF(AUICH_DEBUG_DMA,
+		    ("%s: requested buffer size too large: %d", \
+		    sc->sc_dev.dv_xname, size));
 		return NULL;
+	}
 
 	p = malloc(sizeof(*p), pool, flags | M_ZERO);
 	if (!p)
 		return NULL;
 
-	p->size = size;
-	if ((error = bus_dmamem_alloc(sc->dmat, p->size, NBPG, 0, p->segs,
-	    1, &p->nsegs, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate dma, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
-		free(p, pool);
-		return NULL;
-	}
-
-	if ((error = bus_dmamem_map(sc->dmat, p->segs, p->nsegs, p->size,
-	    &p->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map dma, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
-		bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-		free(p, pool);
-		return NULL;
-	}
-
-	if ((error = bus_dmamap_create(sc->dmat, p->size, 1,
-	    p->size, 0, BUS_DMA_NOWAIT, &p->map)) != 0) {
-		printf("%s: unable to create dma map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
-		bus_dmamem_unmap(sc->dmat, p->addr, size);
-		bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-		free(p, pool);
-		return NULL;
-	}
-
-	if ((error = bus_dmamap_load(sc->dmat, p->map, p->addr, p->size,
-	    NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load dma map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
-		bus_dmamap_destroy(sc->dmat, p->map);
-		bus_dmamem_unmap(sc->dmat, p->addr, size);
-		bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
+	error = auich_allocmem(sc, size, PAGE_SIZE, p);
+	if (error) {
 		free(p, pool);
 		return NULL;
 	}
@@ -1116,25 +1097,20 @@ auich_allocm(v, direction, size, pool, flags)
 }
 
 void
-auich_freem(v, ptr, pool)
-	void *v;
-	void *ptr;
-	int pool;
+auich_freem(void *v, void *ptr, int pool)
 {
-	struct auich_softc *sc = v;
-	struct auich_dma *p;
+	struct auich_softc *sc;
+	struct auich_dma *p, **pp;
 
-	for (p = sc->sc_dmas; p->addr != ptr; p = p->next)
-		if (p->next == NULL) {
-			printf("auich_freem: trying to free not allocated memory");
+	sc = v;
+	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
+		if (p->addr == ptr) {
+			auich_freemem(sc, p);
+			*pp = p->next;
+			free(p, pool);
 			return;
 		}
-
-	bus_dmamap_unload(sc->dmat, p->map);
-	bus_dmamap_destroy(sc->dmat, p->map);
-	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
-	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-	free(p, pool);
+	}
 }
 
 size_t
@@ -1182,15 +1158,15 @@ auich_intr(v)
 	void *v;
 {
 	struct auich_softc *sc = v;
-	int ret = 0, sts, gsts, i;
+	int ret = 0, sts, gsts;
 
-	gsts = bus_space_read_2(sc->iot, sc->aud_ioh, AUICH_GSTS);
-	DPRINTF(AUICH_DEBUG_DMA, ("auich_intr: gsts=%b\n", gsts, AUICH_GSTS_BITS));
+	gsts = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GSTS);
+	DPRINTF(AUICH_DEBUG_INTR, ("auich_intr: gsts=%b\n", gsts, AUICH_GSTS_BITS));
 
 	if (gsts & AUICH_POINT) {
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
 		    AUICH_PCMO + sc->sc_sts_reg);
-		DPRINTF(AUICH_DEBUG_DMA,
+		DPRINTF(AUICH_DEBUG_INTR,
 		    ("auich_intr: osts=%b\n", sts, AUICH_ISTS_BITS));
 
 #ifdef AUICH_DEBUG
@@ -1199,53 +1175,22 @@ auich_intr(v)
 			    sc->sc_dev.dv_xname, ++sc->pcmo_fifoe);
 		}
 #endif
-		i = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_CIV);
-		if (sts & (AUICH_LVBCI | AUICH_CELV)) {
-			struct auich_dmalist *q, *qe;
 
-			q = sc->dmap_pcmo;
-			qe = &sc->dmalist_pcmo[i];
-
-			while (q != qe) {
-
-				q->base = sc->pcmo_p;
-				q->len = (sc->pcmo_blksize /
-				    sc->sc_sample_size) | AUICH_DMAF_IOC;
-				DPRINTF(AUICH_DEBUG_DMA,
-				    ("auich_intr: %p, %p = %x @ %p\n",
-				    qe, q, sc->pcmo_blksize /
-				    sc->sc_sample_size, sc->pcmo_p));
-
-				sc->pcmo_p += sc->pcmo_blksize;
-				if (sc->pcmo_p >= sc->pcmo_end)
-					sc->pcmo_p = sc->pcmo_start;
-
-				if (++q == &sc->dmalist_pcmo[AUICH_DMALIST_MAX])
-					q = sc->dmalist_pcmo;
-			}
-
-			sc->dmap_pcmo = q;
-			bus_space_write_1(sc->iot, sc->aud_ioh,
-			    AUICH_PCMO + AUICH_LVI,
-			    (sc->dmap_pcmo - sc->dmalist_pcmo - 1) &
-			    AUICH_LVI_MASK);
-		}
-
-		if (sts & AUICH_BCIS && sc->sc_pintr)
-			sc->sc_pintr(sc->sc_parg);
+		if (sts & AUICH_BCIS)
+			auich_intr_pipe(sc, AUICH_PCMO, &sc->pcmo);
 
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh,
 		    AUICH_PCMO + sc->sc_sts_reg, sts &
-		    (AUICH_LVBCI | AUICH_CELV | AUICH_BCIS | AUICH_FIFOE));
-		bus_space_write_2(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_POINT);
+		    (AUICH_BCIS | AUICH_FIFOE));
+		bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_POINT);
 		ret++;
 	}
 
 	if (gsts & AUICH_PIINT) {
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
 		    AUICH_PCMI + sc->sc_sts_reg);
-		DPRINTF(AUICH_DEBUG_DMA,
+		DPRINTF(AUICH_DEBUG_INTR,
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 
 #ifdef AUICH_DEBUG
@@ -1254,66 +1199,102 @@ auich_intr(v)
 			    sc->sc_dev.dv_xname, ++sc->pcmi_fifoe);
 		}
 #endif
-		i = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CIV);
-		if (sts & (AUICH_LVBCI | AUICH_CELV)) {
-			struct auich_dmalist *q, *qe;
 
-			q = sc->dmap_pcmi;
-			qe = &sc->dmalist_pcmi[i];
-
-			while (q != qe) {
-
-				q->base = sc->pcmi_p;
-				q->len = (sc->pcmi_blksize /
-				    sc->sc_sample_size) | AUICH_DMAF_IOC;
-				DPRINTF(AUICH_DEBUG_DMA,
-				    ("auich_intr: %p, %p = %x @ %p\n",
-				    qe, q, sc->pcmi_blksize /
-				    sc->sc_sample_size, sc->pcmi_p));
-
-				sc->pcmi_p += sc->pcmi_blksize;
-				if (sc->pcmi_p >= sc->pcmi_end)
-					sc->pcmi_p = sc->pcmi_start;
-
-				if (++q == &sc->dmalist_pcmi[AUICH_DMALIST_MAX])
-					q = sc->dmalist_pcmi;
-			}
-
-			sc->dmap_pcmi = q;
-			bus_space_write_1(sc->iot, sc->aud_ioh,
-			    AUICH_PCMI + AUICH_LVI,
-			    (sc->dmap_pcmi - sc->dmalist_pcmi - 1) &
-			    AUICH_LVI_MASK);
-		}
-
-		if (sts & AUICH_BCIS && sc->sc_rintr)
-			sc->sc_rintr(sc->sc_rarg);
+		if (sts & AUICH_BCIS)
+			auich_intr_pipe(sc, AUICH_PCMI, &sc->pcmi);
 
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh,
 		    AUICH_PCMI + sc->sc_sts_reg, sts &
-		    (AUICH_LVBCI | AUICH_CELV | AUICH_BCIS | AUICH_FIFOE));
-		bus_space_write_2(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_PIINT);
+		    (AUICH_BCIS | AUICH_FIFOE));
+		bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_PIINT);
 		ret++;
 	}
 
-	if (gsts & AUICH_MIINT) {
+	if (gsts & AUICH_MINT) {
 		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
 		    AUICH_MICI + sc->sc_sts_reg);
-		DPRINTF(AUICH_DEBUG_DMA,
+		DPRINTF(AUICH_DEBUG_INTR,
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 #ifdef AUICH_DEBUG
 		if (sts & AUICH_FIFOE)
 			printf("%s: mic fifo overrun\n", sc->sc_dev.dv_xname);
 #endif
 
-		/* TODO mic input dma */
+		if (sts & AUICH_BCIS)
+			auich_intr_pipe(sc, AUICH_MICI, &sc->mici);
 
-		bus_space_write_2(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_MIINT);
+		/* int ack */
+		bus_space_write_2(sc->iot, sc->aud_ioh,
+		    AUICH_MICI + sc->sc_sts_reg,
+		    sts + (AUICH_BCIS | AUICH_FIFOE));
+
+		bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_MINT);
+		ret++;
 	}
 
 	return ret;
 }
+
+
+void
+auich_trigger_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
+{
+	int blksize, qptr;
+	struct auich_dmalist *q;
+
+	blksize = ring->blksize;
+
+	for (qptr = 0; qptr < AUICH_DMALIST_MAX; qptr++) {
+		q = &ring->dmalist[qptr];
+		q->base = ring->p;
+		q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
+
+		ring->p += blksize;
+		if (ring->p >= ring->end)
+			ring->p = ring->start;
+	}
+	ring->qptr = 0;
+
+	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_LVI,
+	    (qptr - 1) & AUICH_LVI_MASK);
+	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_CTRL,
+	    AUICH_IOCE | AUICH_FEIE | AUICH_RPBM);
+}
+
+void
+auich_intr_pipe(struct auich_softc *sc, int pipe, struct auich_ring *ring)
+{
+	int blksize, qptr, nqptr;
+	struct auich_dmalist *q;
+
+	blksize = ring->blksize;
+	qptr = ring->qptr;
+	nqptr = bus_space_read_1(sc->iot, sc->aud_ioh, pipe + AUICH_CIV);
+
+	while (qptr != nqptr) {
+		q = &ring->dmalist[qptr];
+		q->base = ring->p;
+		q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
+
+		DPRINTF(AUICH_DEBUG_INTR,
+		    ("auich_intr: %p, %p = %x @ 0x%x\n",
+		    &ring->dmalist[qptr], q, q->len, q->base));
+
+		ring->p += blksize;
+		if (ring->p >= ring->end)
+			ring->p = ring->start;
+
+		qptr = (qptr + 1) & AUICH_LVI_MASK;
+		if (ring->intr)
+			ring->intr(ring->arg);
+	}
+	ring->qptr = qptr;
+
+	bus_space_write_1(sc->iot, sc->aud_ioh, pipe + AUICH_LVI,
+	    (qptr - 1) & AUICH_LVI_MASK);
+}
+
 
 int
 auich_trigger_output(v, start, end, blksize, intr, arg, param)
@@ -1325,8 +1306,8 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct auich_softc *sc = v;
-	struct auich_dmalist *q;
 	struct auich_dma *p;
+	size_t size;
 
 	DPRINTF(AUICH_DEBUG_DMA,
 	    ("auich_trigger_output(%x, %x, %d, %p, %p, %p)\n",
@@ -1336,32 +1317,24 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 	if (!p)
 		return -1;
 
-	sc->sc_pintr = intr;
-	sc->sc_parg = arg;
+	size = (size_t)((caddr_t)end - (caddr_t)start);
+
+	sc->pcmo.intr = intr;
+	sc->pcmo.arg = arg;
 
 	/*
 	 * The logic behind this is:
 	 * setup one buffer to play, then LVI dump out the rest
 	 * to the scatter-gather chain.
 	 */
-	sc->pcmo_start = p->segs->ds_addr;
-	sc->pcmo_p = sc->pcmo_start + blksize;
-	sc->pcmo_end = sc->pcmo_start + ((char *)end - (char *)start);
-	sc->pcmo_blksize = blksize;
-
-	q = sc->dmap_pcmo = sc->dmalist_pcmo;
-	q->base = sc->pcmo_start;
-	q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
-	if (++q == &sc->dmalist_pcmo[AUICH_DMALIST_MAX])
-		q = sc->dmalist_pcmo;
-	sc->dmap_pcmo = q;
+	sc->pcmo.start = p->segs->ds_addr;
+	sc->pcmo.p = sc->pcmo.start;
+	sc->pcmo.end = sc->pcmo.start + size;
+	sc->pcmo.blksize = blksize;
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_BDBAR,
-	    sc->dmalist_pcmo_pa);
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_CTRL,
-	    AUICH_IOCE | AUICH_FEIE | AUICH_LVBIE | AUICH_RPBM);
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_LVI,
-	    (sc->dmap_pcmo - 1 - sc->dmalist_pcmo) & AUICH_LVI_MASK);
+	    sc->sc_cddma + AUICH_PCMO_OFF(0));
+	auich_trigger_pipe(sc, AUICH_PCMO, &sc->pcmo);
 
 	return 0;
 }
@@ -1376,8 +1349,8 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct auich_softc *sc = v;
-	struct auich_dmalist *q;
 	struct auich_dma *p;
+	size_t size;
 
 	DPRINTF(AUICH_DEBUG_DMA,
 	    ("auich_trigger_input(%x, %x, %d, %p, %p, %p)\n",
@@ -1387,35 +1360,151 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	if (!p)
 		return -1;
 
-	sc->sc_rintr = intr;
-	sc->sc_rarg = arg;
+	size = (size_t)((caddr_t)end - (caddr_t)start);
+
+	sc->pcmi.intr = intr;
+	sc->pcmi.arg = arg;
 
 	/*
 	 * The logic behind this is:
 	 * setup one buffer to play, then LVI dump out the rest
 	 * to the scatter-gather chain.
 	 */
-	sc->pcmi_start = p->segs->ds_addr;
-	sc->pcmi_p = sc->pcmi_start + blksize;
-	sc->pcmi_end = sc->pcmi_start + ((char *)end - (char *)start);
-	sc->pcmi_blksize = blksize;
-
-	q = sc->dmap_pcmi = sc->dmalist_pcmi;
-	q->base = sc->pcmi_start;
-	q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
-	if (++q == &sc->dmalist_pcmi[AUICH_DMALIST_MAX])
-		q = sc->dmalist_pcmi;
-	sc->dmap_pcmi = q;
+	sc->pcmi.start = p->segs->ds_addr;
+	sc->pcmi.p = sc->pcmi.start;
+	sc->pcmi.end = sc->pcmi.start + size;
+	sc->pcmi.blksize = blksize;
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_BDBAR,
-	    sc->dmalist_pcmi_pa);
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL,
-	    AUICH_IOCE | AUICH_FEIE | AUICH_LVBIE | AUICH_RPBM);
-	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_LVI,
-	    (sc->dmap_pcmi - 1 - sc->dmalist_pcmi) & AUICH_LVI_MASK);
+	    sc->sc_cddma + AUICH_PCMI_OFF(0));
+	auich_trigger_pipe(sc, AUICH_PCMI, &sc->pcmi);
 
 	return 0;
 }
+
+
+int
+auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
+    struct auich_dma *p)
+{
+	int error;
+
+	p->size = size;
+	error = bus_dmamem_alloc(sc->dmat, p->size, align, 0, p->segs, 1,
+	    &p->nsegs, BUS_DMA_NOWAIT);
+	if (error) {
+		DPRINTF(AUICH_DEBUG_DMA, 
+		    ("%s: bus_dmamem_alloc failed: error %d\n",
+		    sc->sc_dev.dv_xname, error));
+		return error;
+	}
+
+	error = bus_dmamem_map(sc->dmat, p->segs, 1, p->size, &p->addr,
+	    BUS_DMA_NOWAIT | sc->sc_dmamap_flags);
+	if (error) {
+		DPRINTF(AUICH_DEBUG_DMA, 
+		    ("%s: bus_dmamem_map failed: error %d\n",
+		    sc->sc_dev.dv_xname, error));
+		goto free;
+	}
+
+	error = bus_dmamap_create(sc->dmat, p->size, 1, p->size, 0,
+	    BUS_DMA_NOWAIT, &p->map);
+	if (error) {
+		DPRINTF(AUICH_DEBUG_DMA, 
+		    ("%s: bus_dmamap_create failed: error %d\n",
+		    sc->sc_dev.dv_xname, error));
+		goto unmap;
+	}
+
+	error = bus_dmamap_load(sc->dmat, p->map, p->addr, p->size, NULL,
+	    BUS_DMA_NOWAIT);
+	if (error) {
+		DPRINTF(AUICH_DEBUG_DMA,
+		    ("%s: bus_dmamap_load failed: error %d\n",
+		    sc->sc_dev.dv_xname, error));
+		goto destroy;
+	}
+	return 0;
+
+ destroy:
+	bus_dmamap_destroy(sc->dmat, p->map);
+ unmap:
+	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
+ free:
+	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
+	return error;
+}
+
+
+int
+auich_freemem(struct auich_softc *sc, struct auich_dma *p)
+{
+	bus_dmamap_unload(sc->dmat, p->map);
+	bus_dmamap_destroy(sc->dmat, p->map);
+	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
+	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
+	return 0;
+}
+
+
+
+int
+auich_alloc_cdata(struct auich_softc *sc)
+{
+	bus_dma_segment_t seg;
+	int error, rseg;
+
+	/*
+	 * Allocate the control data structure, and create and load the
+	 * DMA map for it.
+	 */
+	if ((error = bus_dmamem_alloc(sc->dmat, sizeof(struct auich_cdata),
+	    PAGE_SIZE, 0, &seg, 1, &rseg, 0)) != 0) {
+		printf("%s: unable to allocate control data, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_0;
+	}
+
+	if ((error = bus_dmamem_map(sc->dmat, &seg, rseg,
+	    sizeof(struct auich_cdata), (caddr_t *) &sc->sc_cdata,
+	    sc->sc_dmamap_flags)) != 0) {
+		printf("%s: unable to map control data, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_1;
+	}
+
+	if ((error = bus_dmamap_create(sc->dmat, sizeof(struct auich_cdata), 1,
+	    sizeof(struct auich_cdata), 0, 0, &sc->sc_cddmamap)) != 0) {
+		printf("%s: unable to create control data DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_2;
+	}
+
+	if ((error = bus_dmamap_load(sc->dmat, sc->sc_cddmamap, sc->sc_cdata,
+	    sizeof(struct auich_cdata), NULL, 0)) != 0) {
+		printf("%s: unable tp load control data DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_3;
+	}
+
+	sc->pcmo.dmalist = sc->sc_cdata->ic_dmalist_pcmo;
+	sc->pcmi.dmalist = sc->sc_cdata->ic_dmalist_pcmi;
+	sc->mici.dmalist = sc->sc_cdata->ic_dmalist_mici;
+
+	return 0;
+
+ fail_3:
+	bus_dmamap_destroy(sc->dmat, sc->sc_cddmamap);
+ fail_2:
+	bus_dmamem_unmap(sc->dmat, (caddr_t) sc->sc_cdata,
+	    sizeof(struct auich_cdata));
+ fail_1:
+	bus_dmamem_free(sc->dmat, &seg, rseg);
+ fail_0:
+	return error;
+}
+
 
 void
 auich_powerhook(why, self)
@@ -1448,7 +1537,6 @@ auich_powerhook(why, self)
 }
 
 
-
 /* -------------------------------------------------------------------- */
 /* Calibrate card (some boards are overclocked and need scaling) */
 
@@ -1460,7 +1548,6 @@ auich_calibrate(struct auich_softc *sc)
 	u_int32_t wait_us, actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
-	int i;
 
 	ac97rate = AUICH_FIXED_RATE;
 	/*
@@ -1483,10 +1570,9 @@ auich_calibrate(struct auich_softc *sc)
 		return (ac97rate);
 	}
 
-	for (i = 0; i < AUICH_DMALIST_MAX; i++) {
-		sc->dmalist_pcmi[i].base = p->map->dm_segs[0].ds_addr;
-		sc->dmalist_pcmi[i].len = bytes / sc->sc_sample_size;
-	}
+	sc->pcmi.dmalist[0].base = p->map->dm_segs[0].ds_addr;
+	sc->pcmi.dmalist[0].len = bytes / sc->sc_sample_size;
+
 
 	/*
 	 * our data format is stereo, 16 bit so each sample is 4 bytes.
@@ -1504,7 +1590,7 @@ auich_calibrate(struct auich_softc *sc)
 	ociv = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CIV);
 	nciv = ociv;
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_BDBAR,
-	    sc->dmalist_pcmi_pa);
+	    sc->sc_cddma + AUICH_PCMI_OFF(0));
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_LVI,
 			  (0 - 1) & AUICH_LVI_MASK);
 
