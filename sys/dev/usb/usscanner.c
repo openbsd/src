@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.24 2007/10/11 18:33:15 deraadt Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.25 2007/10/20 04:01:39 krw Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -495,7 +495,7 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	sc->sc_state = UAS_IDLE;
 
-	sc->sc_xs->xs_status |= XS_STS_DONE;
+	sc->sc_xs->xs_control |= XS_STS_DONE;
 	s = splbio();
 	scsipi_done(sc->sc_xs);
 	splx(s);
@@ -717,6 +717,7 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct usscanner_softc *sc = sc_link->adapter_softc;
 	usbd_status err;
+	int rslt, s;
 
 #ifdef notyet
 	DPRINTFN(8, ("%s: usscanner_scsi_cmd: %d:%d "
@@ -769,13 +770,16 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 
 	return (SUCCESSFULLY_QUEUED);
 
-
  done:
 	sc->sc_state = UAS_IDLE;
-	xs->xs_status |= XS_STS_DONE;
-	scsipi_done(xs);
+	xs->xs_control |= XS_STS_DONE;
 	if (xs->xs_control & XS_CTL_POLL)
-		return (COMPLETE);
+		rslt = COMPLETE;
 	else
-		return (SUCCESSFULLY_QUEUED);
+		rslt = SUCCESSFULLY_QUEUED;
+	s = splbio();
+	scsipi_done(xs);
+	splx(s);
+
+	return (rslt);
 }
