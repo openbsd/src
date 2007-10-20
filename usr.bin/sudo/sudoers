@@ -1,4 +1,4 @@
-# $OpenBSD: sudoers,v 1.17 2007/10/07 13:02:33 steven Exp $
+# $OpenBSD: sudoers,v 1.18 2007/10/20 10:37:12 henning Exp $
 #
 # sudoers file.
 #
@@ -17,7 +17,7 @@
 Defaults env_keep +="DESTDIR FETCH_CMD FLAVOR FTPMODE GROUP MAKE MULTI_PACKAGES"
 Defaults env_keep +="OKAY_FILES OWNER PKG_DBDIR PKG_DESTDIR PKG_CACHE PKG_PATH"
 Defaults env_keep +="PKG_TMPDIR PORTSDIR RELEASEDIR SUBPACKAGE WRKOBJDIR"
-Defaults env_keep +="SSH_AUTH_SOCK"
+Defaults env_keep +="SSH_AUTH_SOCK EDITOR VISUAL"
 
 # Uncomment to preserve the environment for users in group wheel
 #Defaults:%wheel !env_reset
