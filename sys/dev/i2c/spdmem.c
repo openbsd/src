@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.16 2007/10/18 23:05:20 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.17 2007/10/20 00:42:09 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -136,7 +136,7 @@
 #define SPDMEM_DDR2_TYPE_REGMASK	((1 << 4) | (1 << 0))
 
 static const uint8_t ddr2_cycle_tenths[] = {
-	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 66, 75, 0
+	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 66, 75, 0, 0
 };
 
 /* Direct Rambus DRAM */
@@ -387,8 +387,6 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 			if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM)
 				d_clk = (d_clk + 1) / 2;
 			p_clk = d_clk * bits / 8;
-			if ((p_clk % 100) >= 50)
-				p_clk += 50;
 			p_clk -= p_clk % 100;
 		}
 		printf(" %s%d", ddr_type_string, p_clk);
