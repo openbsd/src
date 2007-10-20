@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.91 2007/10/17 21:39:44 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.92 2007/10/20 16:41:46 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4087,7 +4087,7 @@ dostart:
 	 * so check that %o3 >= 12.
 	 */
 	cmp	%o2, 12
-	blt	1f			! Not enuff args
+	blt	1f			! Not enough args
 	 nop
 	
 	set	0x44444230, %l3

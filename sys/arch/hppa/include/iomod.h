@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.17 2005/04/07 00:21:51 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.18 2007/10/20 16:41:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -376,14 +376,14 @@ struct iomod {
 #define	IO_ERR_DEPEND	 0	/* unspecified error */
 #define	IO_ERR_SPA	 1	/* (module-type specific) */
 #define	IO_ERR_INTERNAL	 2	/* (module-type specific) */
-#define	IO_ERR_MODE	 3	/* invlaid mode or address space mapping */
+#define	IO_ERR_MODE	 3	/* invalid mode or address space mapping */
 #define	IO_ERR_ERROR_M	 4	/* bus error (master detect) */
 #define	IO_ERR_DPARITY_S 5	/* data parity (slave detect) */
 #define	IO_ERR_PROTO_M	 6	/* protocol error (master detect) */
 #define	IO_ERR_ADDRESS	 7	/* no slave acknowledgement in transaction */
 #define	IO_ERR_MORE	 8	/* device transferred more data than expected */
 #define	IO_ERR_LESS	 9	/* device transferred less data than expected */
-#define	IO_ERR_SAPARITY	10	/* slave addrss phase parity */
+#define	IO_ERR_SAPARITY	10	/* slave address phase parity */
 #define	IO_ERR_MAPARITY	11	/* master address phase parity */
 #define	IO_ERR_MDPARITY	12	/* mode phase parity */
 #define	IO_ERR_STPARITY	13	/* status phase parity */
@@ -399,7 +399,7 @@ struct iomod {
 #define	IO_ERR_PROTOCOL	54	/* protocol error (slave detect) */
 #define	IO_ERR_SELFTEST	58	/* (module-type specific) */
 #define	IO_ERR_BUSY	59	/* slave was busy too often or too long */
-#define	IO_ERR_RETRY	60	/* "busied" transaction not retried soon enuf */
+#define	IO_ERR_RETRY	60	/* "busied" transaction not retried soon enough */
 #define	IO_ERR_ACCESS	61	/* illegal register access */
 #define	IO_ERR_IMPROP	62	/* "improper" data written */
 #define	IO_ERR_UNKNOWN	63

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.c,v 1.9 2004/09/19 21:56:18 mickey Exp $	*/
+/*	$OpenBSD: hpux_sig.c,v 1.10 2007/10/20 16:41:43 miod Exp $	*/
 /*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ hpux_sys_sigpause(p, v, retval)
 	return (sys_sigsuspend(p, uap, retval));
 }
 
-/* not totally correct, but close enuf' */
+/* not totally correct, but close enough */
 int
 hpux_sys_kill(p, v, retval)
 	struct proc *p;
