@@ -1,7 +1,8 @@
-/*	$OpenBSD: pcf8591_envctrl.c,v 1.1 2007/10/20 18:54:42 kettenis Exp $ */
+/*	$OpenBSD: pcf8591_envctrl.c,v 1.2 2007/10/20 20:00:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller <djm@openbsd.org>
+ * Copyright (c) 2007 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +38,9 @@ struct ecadc_channel {
 	u_int		chan_num;
 	struct ksensor	chan_sensor;
 	int64_t		chan_factor;
+	int64_t		chan_min;
+	int64_t		chan_warn;
+	int64_t		chan_crit;
 };
 
 struct ecadc_softc {
@@ -78,7 +82,7 @@ ecadc_attach(struct device *parent, struct device *self, void *aux)
 	struct ecadc_softc *sc = (struct ecadc_softc *)self;
 	u_char term[256];
 	u_char *cp, *desc;
-	int64_t num, den;
+	int64_t min, warn, crit, num, den;
 	u_int8_t junk[PCF8591_CHANNELS + 1];
 	struct i2c_attach_args *ia = aux;
 	struct ksensor *sensor;
@@ -102,9 +106,9 @@ ecadc_attach(struct device *parent, struct device *self, void *aux)
 	while (cp < term + tlen) {
 		addr = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
 		chan = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
-		cp += 4;	/* Min */
-		cp += 4;	/* Warning threshold */
-		cp += 4;	/* Shutdown threshold */
+		min = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
+		warn = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
+		crit = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
 		num = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
 		den = cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3]; cp += 4;
 		desc = cp;
@@ -123,6 +127,12 @@ ecadc_attach(struct device *parent, struct device *self, void *aux)
 		else
 			sc->sc_channels[sc->sc_nchan].chan_factor =
 			    (1000000 * num) / den;
+		sc->sc_channels[sc->sc_nchan].chan_min =
+		    273150000 + 1000000 * min;
+		sc->sc_channels[sc->sc_nchan].chan_warn =
+		    273150000 + 1000000 * warn;
+		sc->sc_channels[sc->sc_nchan].chan_crit =
+		    273150000 + 1000000 * crit;
 		sc->sc_nchan++;
 	}
 
@@ -195,5 +205,13 @@ ecadc_refresh(void *arg)
 		else
 			chp->chan_sensor.value = 273150000 +
 			    chp->chan_factor * data[1 + chp->chan_num];
+
+		chp->chan_sensor.status = SENSOR_S_OK;
+		if (chp->chan_sensor.value < chp->chan_min)
+			chp->chan_sensor.status = SENSOR_S_UNKNOWN;
+		if (chp->chan_sensor.value > chp->chan_warn)
+			chp->chan_sensor.status = SENSOR_S_WARN;
+		if (chp->chan_sensor.value > chp->chan_crit)
+			chp->chan_sensor.status = SENSOR_S_CRIT;
 	}
 }
