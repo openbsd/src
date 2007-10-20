@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.54 2007/10/14 19:35:01 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.55 2007/10/20 13:29:44 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -136,6 +136,8 @@ main(int argc, char *argv[])
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
 
+	log_init(1);	/* log to stderr until daemonized */
+
 	while ((ch = getopt(argc, argv, "cdf:nv")) != -1) {
 		switch (ch) {
 		case 'c':
@@ -161,9 +163,6 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
-
-	/* start logging */
-	log_init(debug);
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_INET;
@@ -202,6 +201,8 @@ main(int argc, char *argv[])
 	/* check for ospfd user */
 	if (getpwnam(OSPFD_USER) == NULL)
 		errx(1, "unknown user %s", OSPFD_USER);
+
+	log_init(debug);
 
 	if (!debug)
 		daemon(1, 0);
