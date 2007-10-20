@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.40 2007/09/07 17:58:39 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.41 2007/10/20 22:44:00 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1617,7 +1617,6 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 		if ((ahd->bugs & AHD_CLRLQO_AUTOCLR_BUG) != 0)
 			ahd_outb(ahd, CLRLQOINT1, 0);
 	} else if ((status & SELTO) != 0) {
-		u_int  scbid;
 
 		/* Stop the selection */
 		ahd_outb(ahd, SCSISEQ0, 0);
@@ -1727,10 +1726,6 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 		switch (busfreetime) {
 		case BUSFREE_DFF0:
 		case BUSFREE_DFF1:
-		{
-			u_int	scbid;
-			struct	scb *scb;
-
 			mode = busfreetime == BUSFREE_DFF0
 			     ? AHD_MODE_DFF0 : AHD_MODE_DFF1;
 			ahd_set_modes(ahd, mode, mode);
@@ -1745,7 +1740,6 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 				packetized = (scb->flags & SCB_PACKETIZED) != 0;
 			clear_fifo = 1;
 			break;
-		}
 		case BUSFREE_LQO:
 			clear_fifo = 0;
 			packetized = 1;

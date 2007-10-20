@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.77 2007/09/07 17:58:39 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.78 2007/10/20 22:44:00 fgsch Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.77 2007/09/07 17:58:39 krw Exp $
+ * $Id: aic7xxx.c,v 1.78 2007/10/20 22:44:00 fgsch Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -463,6 +463,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 {
 	struct scb *scb;
 	struct ahc_devinfo devinfo;
+	u_int scb_index;
 	
 	ahc_fetch_devinfo(ahc, &devinfo);
 
@@ -476,7 +477,6 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 	switch (intstat & SEQINT_MASK) {
 	case BAD_STATUS:
 	{
-		u_int  scb_index;
 		struct hardware_scb *hscb;
 
 		/*
@@ -744,8 +744,6 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		 * loop.
 		 */
 		if (ahc->msg_type == MSG_TYPE_NONE) {
-			struct scb *scb;
-			u_int scb_index;
 			u_int bus_phase;
 
 			bus_phase = ahc_inb(ahc, SCSISIGI) & PHASE_MASK;
@@ -848,9 +846,6 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 				ahc_outb(ahc, SXFRCTL1,
 					 ahc_inb(ahc, SXFRCTL1) & ~BITBUCKET);
 				if (wait == 0) {
-					struct	scb *scb;
-					u_int	scb_index;
-
 					ahc_print_devinfo(ahc, &devinfo);
 					printf("Unable to clear parity error.  "
 					       "Resetting bus.\n");
@@ -4070,8 +4065,6 @@ ahc_reset(struct ahc_softc *ahc, int reinit)
 	ahc_pause(ahc);
 	sxfrctl1_b = 0;
 	if ((ahc->chip & AHC_CHIPID_MASK) == AHC_AIC7770) {
-		u_int sblkctl;
-
 		/*
 		 * Save channel B's settings in case this chip
 		 * is setup for TWIN channel operation.
@@ -4133,8 +4126,6 @@ ahc_reset(struct ahc_softc *ahc, int reinit)
 	 * by turning it on.
 	 */
 	if ((ahc->features & AHC_TWIN) != 0) {
-		u_int sblkctl;
-
 		sblkctl = ahc_inb(ahc, SBLKCTL);
 		ahc_outb(ahc, SBLKCTL, sblkctl | SELBUSB);
 		ahc_outb(ahc, SXFRCTL1, sxfrctl1_b);
@@ -5936,8 +5927,6 @@ ahc_reset_channel(struct ahc_softc *ahc, char channel, int initiate_reset)
 		if (ahc->enabled_targets[target] == NULL)
 			continue;
 		for (initiator = 0; initiator <= max_scsiid; initiator++) {
-			struct ahc_devinfo devinfo;
-
 			ahc_compile_devinfo(&devinfo, target, initiator,
 					    CAM_LUN_WILDCARD,
 					    channel, ROLE_UNKNOWN);

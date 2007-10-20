@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.51 2007/10/11 18:33:15 deraadt Exp $ */
+/*	$OpenBSD: ugen.c,v 1.52 2007/10/20 22:44:01 fgsch Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1206,7 +1206,6 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		struct iovec iov;
 		struct uio uio;
 		void *ptr = 0;
-		usbd_status err;
 		int error = 0;
 
 		if (!(flag & FWRITE))
