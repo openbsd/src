@@ -1,5 +1,21 @@
-/*	$OpenBSD: spdmem.c,v 1.19 2007/10/20 02:39:56 deraadt Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.20 2007/10/20 08:33:37 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
+
+/*
+ * Copyright (c) 2007 Jonathan Gray <jsg@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -167,6 +183,9 @@ int		 spdmem_match(struct device *, void *, void *);
 void		 spdmem_attach(struct device *, struct device *, void *);
 uint8_t		 spdmem_read(struct spdmem_softc *, uint8_t);
 void		 spdmem_hexdump(struct spdmem_softc *, int, int);
+void		 spdmem_sdram_decode(struct spdmem_softc *, struct spdmem *);
+void		 spdmem_ddr_decode(struct spdmem_softc *, struct spdmem *);
+void		 spdmem_ddr2_decode(struct spdmem_softc *, struct spdmem *);
 
 struct cfattach spdmem_ca = {
 	sizeof(struct spdmem_softc), spdmem_match, spdmem_attach
@@ -222,87 +241,27 @@ spdmem_match(struct device *parent, void *match, void *aux)
 }
 
 void
-spdmem_attach(struct device *parent, struct device *self, void *aux)
+spdmem_sdram_decode(struct spdmem_softc *sc, struct spdmem *s)
 {
-	struct spdmem_softc *sc = (struct spdmem_softc *)self;
-	struct i2c_attach_args *ia = aux;
-	struct spdmem *s = &(sc->sc_spd_data);
 	const char *type;
-	const char *ddr_type_string = NULL;
 	int dimm_size, cycle_time, d_clk, p_clk, bits;
-	int i;
-	uint8_t config, rows, cols, cl;
+	int num_banks, per_chip;
+	uint8_t config, rows, cols;
 
-	sc->sc_tag = ia->ia_tag;
-	sc->sc_addr = ia->ia_addr;
+	type = spdmem_basic_types[s->sm_type];
 
-	printf(":");
-
-	/* All SPD have at least 64 bytes of data including checksum */
-	for (i = 0; i < 64; i++) {
-		((uint8_t *)s)[i] = spdmem_read(sc, i);
-	}
-
-#if 0
-	for (i = 0; i < 64;  i += 16) {
-		int j;
-		printf("\n%s: 0x%02x:", self->dv_xname, i);
-		for (j = 0; j < 16; j++)
-			printf(" %02x", ((uint8_t *)s)[i + j]);
-	}
-	printf("\n%s", self->dv_xname);
-#endif
-
-	/*
-	 * Decode and print SPD contents
-	 */
-	if (IS_RAMBUS_TYPE)
-		type = "Rambus";
-	else {
-		if (s->sm_type <= 10)
-			type = spdmem_basic_types[s->sm_type];
-		else
-			type = "unknown";
-
-		if (s->sm_type == SPDMEM_MEMTYPE_EDO &&
-		    s->sm_data[SPDMEM_FPM_SUPERSET] == SPDMEM_SUPERSET_EDO_PEM)
-			type = spdmem_superset_types[SPDMEM_SUPERSET_EDO_PEM];
-		if (s->sm_type == SPDMEM_MEMTYPE_SDRAM &&
-		    s->sm_data[SPDMEM_SDR_SUPERSET] == SPDMEM_SUPERSET_SDR_PEM)
-			type = spdmem_superset_types[SPDMEM_SUPERSET_SDR_PEM];
-		if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM &&
-		    s->sm_data[SPDMEM_DDR_SUPERSET] ==
-		    SPDMEM_SUPERSET_DDR_ESDRAM)
-			type =
-			    spdmem_superset_types[SPDMEM_SUPERSET_DDR_ESDRAM];
-		if (s->sm_type == SPDMEM_MEMTYPE_SDRAM &&
-		    s->sm_data[SPDMEM_SDR_SUPERSET] == SPDMEM_SUPERSET_ESDRAM) {
-			type = spdmem_superset_types[SPDMEM_SUPERSET_ESDRAM];
-		}
-	}
+	if (s->sm_data[SPDMEM_SDR_SUPERSET] == SPDMEM_SUPERSET_SDR_PEM)
+		type = spdmem_superset_types[SPDMEM_SUPERSET_SDR_PEM];
+	if (s->sm_data[SPDMEM_SDR_SUPERSET] == SPDMEM_SUPERSET_ESDRAM)
+		type = spdmem_superset_types[SPDMEM_SUPERSET_ESDRAM];
 
 	dimm_size = 0;
-	if (IS_RAMBUS_TYPE) {
-		rows = s->sm_data[SPDMEM_RDR_ROWS_COLS] & 0x0f;
-		cols = s->sm_data[SPDMEM_RDR_ROWS_COLS] >> 4;
-		dimm_size = (1 << (rows + cols - 13));
-	} else if (s->sm_type == SPDMEM_MEMTYPE_SDRAM ||
-	    s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM) {
-		int num_banks, per_chip;
 
-		num_banks = s->sm_data[SPDMEM_SDR_BANKS];
-		per_chip = s->sm_data[SPDMEM_SDR_BANKS_PER_CHIP];
-		rows = s->sm_data[SPDMEM_SDR_ROWS] & 0x0f;
-		cols = s->sm_data[SPDMEM_SDR_COLS] & 0x0f;
-		dimm_size = (1 << (rows + cols - 17)) * num_banks * per_chip;
-	} else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		int num_ranks, density;
-
-		num_ranks = (s->sm_data[SPDMEM_DDR2_RANKS] & 0x7) + 1;
-		density = (s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0xf0) |
-		    ((s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0x0f) << 8);
-		dimm_size = num_ranks * density * 4;
-	}
+	num_banks = s->sm_data[SPDMEM_SDR_BANKS];
+	per_chip = s->sm_data[SPDMEM_SDR_BANKS_PER_CHIP];
+	rows = s->sm_data[SPDMEM_SDR_ROWS] & 0x0f;
+	cols = s->sm_data[SPDMEM_SDR_COLS] & 0x0f;
+	dimm_size = (1 << (rows + cols - 17)) * num_banks * per_chip;
 
 	if (dimm_size > 0) {
 		if (dimm_size < 1024)
@@ -314,30 +273,16 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	printf(" %s", type);
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 
-	if (((s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM ||
-	      s->sm_type == SPDMEM_MEMTYPE_SDRAM) && 
-	     (s->sm_data[SPDMEM_DDR_MOD_ATTRIB] & SPDMEM_DDR_ATTRIB_REG)) ||
-	    ((s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) &&
-	     (s->sm_data[SPDMEM_DDR2_DIMMTYPE] & SPDMEM_DDR2_TYPE_REGMASK)))
+	if (s->sm_data[SPDMEM_DDR_MOD_ATTRIB] & SPDMEM_DDR_ATTRIB_REG)
 		printf(" registered");
 
-	if ((s->sm_type == SPDMEM_MEMTYPE_SDRAM ||
-	     s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM ||
-	     s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM ) &&
-	    s->sm_data[SPDMEM_FPM_CONFIG] < 8)
+	if (s->sm_data[SPDMEM_FPM_CONFIG] < 8)
 		printf(" %s",
 		    spdmem_parity_types[s->sm_data[SPDMEM_FPM_CONFIG]]);
 
 	/* cycle_time is expressed in units of 0.01 ns */
-	cycle_time = 0;
-	if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM ||
-	    s->sm_type == SPDMEM_MEMTYPE_SDRAM)
-		cycle_time = (s->sm_data[SPDMEM_DDR_CYCLE] >> 4) * 100 +
-		    (s->sm_data[SPDMEM_DDR_CYCLE] & 0x0f) * 10;
-	else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		cycle_time = (s->sm_data[SPDMEM_DDR2_CYCLE] >> 4) * 100 +
-		    ddr2_cycle_tenths[(s->sm_data[SPDMEM_DDR2_CYCLE] & 0x0f)];
-	}
+	cycle_time = (s->sm_data[SPDMEM_DDR_CYCLE] >> 4) * 100 +
+	    (s->sm_data[SPDMEM_DDR_CYCLE] & 0x0f) * 10;
 
 	if (cycle_time != 0) {
 		/*
@@ -347,102 +292,238 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		d_clk = 100 * 1000;
 		config = s->sm_data[SPDMEM_FPM_CONFIG];
-		switch (s->sm_type) {
-		case SPDMEM_MEMTYPE_DDR2SDRAM:
-			/* DDR2 uses quad-pumped clock */
-			d_clk *= 4;
-			bits = s->sm_data[SPDMEM_DDR2_DATAWIDTH];
-			if ((config & 0x03) != 0)
-				bits -= 8;
-			ddr_type_string = "PC2-";
-			break;
-		case SPDMEM_MEMTYPE_DDRSDRAM:
-			/* DDR uses dual-pumped clock */
-			d_clk *= 2;
-			/* FALLTHROUGH */
-		default:	/* SPDMEM_MEMTYPE_SDRAM */
-			bits = s->sm_data[SPDMEM_DDR_DATAWIDTH] |
-			    (s->sm_data[SPDMEM_DDR_DATAWIDTH + 1] << 8);
-			if (config == 1 || config == 2)
-				bits -= 8;
-			ddr_type_string = "PC";
-		}
+		bits = s->sm_data[SPDMEM_DDR_DATAWIDTH] |
+		    (s->sm_data[SPDMEM_DDR_DATAWIDTH + 1] << 8);
+		if (config == 1 || config == 2)
+			bits -= 8;
 
-		if (s->sm_type == SPDMEM_MEMTYPE_SDRAM) {
-			p_clk = 66;
-			if (s->sm_len >= 128) {
-				switch (spdmem_read(sc, SPDMEM_SDR_FREQUENCY)) {
-				case SPDMEM_SDR_FREQ_100:
-				case SPDMEM_SDR_FREQ_133:
-					/* We need to check ns to decide here */
-					if (s->sm_data[SPDMEM_SDR_CYCLE] < 0x80)
-						p_clk = 133;
-					else
-						p_clk = 100;
-					break;
-				case SPDMEM_SDR_FREQ_66:
-				default:
-					p_clk = 66;
-					break;
-				}
-			} 
-		} else {
-			d_clk /= cycle_time;
-			if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM)
-				d_clk = (d_clk + 1) / 2;
-			p_clk = d_clk * bits / 8;
-			if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM &&
-			    (p_clk % 100) >= 50)
-				p_clk += 50;
-			p_clk -= p_clk % 100;
+		p_clk = 66;
+		if (s->sm_len >= 128) {
+			switch (spdmem_read(sc, SPDMEM_SDR_FREQUENCY)) {
+			case SPDMEM_SDR_FREQ_100:
+			case SPDMEM_SDR_FREQ_133:
+				/* We need to check ns to decide here */
+				if (s->sm_data[SPDMEM_SDR_CYCLE] < 0x80)
+					p_clk = 133;
+				else
+					p_clk = 100;
+				break;
+			case SPDMEM_SDR_FREQ_66:
+			default:
+				p_clk = 66;
+				break;
+			}
 		}
-		printf(" %s%d", ddr_type_string, p_clk);
+		printf(" PC%d", p_clk);
 	}
 
 	/* Print CAS latency */
-	switch (s->sm_type) {
-	case SPDMEM_MEMTYPE_SDRAM:
-		if (s->sm_len < 128)
-			break;
-		if (spdmem_read(sc, SPDMEM_SDR_CAS) & SPDMEM_SDR_CAS2)
-			printf("CL2");
-		else if (spdmem_read(sc, SPDMEM_SDR_CAS) & SPDMEM_SDR_CAS3)
-			printf("CL3");
-		break;
-	case SPDMEM_MEMTYPE_DDRSDRAM:
-		for (i = 6; i >= 0; i--) {
-			if (s->sm_data[SPDMEM_DDR_CAS] & (1 << i)) {
-				cl = ((i * 10) / 2) + 10;
-				printf("CL%d.%d", cl / 10, cl % 10);
-				break;
-			}
-		}
-		break;
-	case SPDMEM_MEMTYPE_DDR2SDRAM:
-		for (i = 5; i >= 2; i--) {
-			if (s->sm_data[SPDMEM_DDR_CAS] & (i << i)) {
-				printf("CL%d", i);
-				break;
-			}
-		}
-		break;
+	if (s->sm_len < 128)
+		return;
+	if (spdmem_read(sc, SPDMEM_SDR_CAS) & SPDMEM_SDR_CAS2)
+		printf("CL2");
+	else if (spdmem_read(sc, SPDMEM_SDR_CAS) & SPDMEM_SDR_CAS3)
+		printf("CL3");
+}
+
+void
+spdmem_ddr_decode(struct spdmem_softc *sc, struct spdmem *s)
+{
+	const char *type;
+	int dimm_size, cycle_time, d_clk, p_clk, bits;
+	int i, num_banks, per_chip;
+	uint8_t config, rows, cols, cl;
+
+	type = spdmem_basic_types[s->sm_type];
+
+	if (s->sm_data[SPDMEM_DDR_SUPERSET] == SPDMEM_SUPERSET_DDR_ESDRAM)
+		type = spdmem_superset_types[SPDMEM_SUPERSET_DDR_ESDRAM];
+
+	dimm_size = 0;
+
+	num_banks = s->sm_data[SPDMEM_SDR_BANKS];
+	per_chip = s->sm_data[SPDMEM_SDR_BANKS_PER_CHIP];
+	rows = s->sm_data[SPDMEM_SDR_ROWS] & 0x0f;
+	cols = s->sm_data[SPDMEM_SDR_COLS] & 0x0f;
+	dimm_size = (1 << (rows + cols - 17)) * num_banks * per_chip;
+
+	if (dimm_size > 0) {
+		if (dimm_size < 1024)
+			printf(" %dMB", dimm_size);
+		else
+			printf(" %dGB", dimm_size / 1024);
 	}
 
-	if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
-		switch (s->sm_data[SPDMEM_DDR2_DIMMTYPE]) {
-		case SPDMEM_DDR2_SODIMM:
-			printf(" SO-DIMM");
-			break;
-		case SPDMEM_DDR2_MICRO_DIMM:
-			printf(" Micro-DIMM");
-			break;
-		case SPDMEM_DDR2_MINI_RDIMM:
-		case SPDMEM_DDR2_MINI_UDIMM:
-			printf(" Mini-DIMM");
+	printf(" %s", type);
+	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
+
+	if (s->sm_data[SPDMEM_DDR_MOD_ATTRIB] & SPDMEM_DDR_ATTRIB_REG)
+		printf(" registered");
+
+	if (s->sm_data[SPDMEM_FPM_CONFIG] < 8)
+		printf(" %s",
+		    spdmem_parity_types[s->sm_data[SPDMEM_FPM_CONFIG]]);
+
+	/* cycle_time is expressed in units of 0.01 ns */
+	cycle_time = (s->sm_data[SPDMEM_DDR_CYCLE] >> 4) * 100 +
+	    (s->sm_data[SPDMEM_DDR_CYCLE] & 0x0f) * 10;
+
+	if (cycle_time != 0) {
+		/*
+		 * cycle time is scaled by a factor of 100 to avoid using
+		 * floating point.  Calculate memory speed as the number
+		 * of cycles per microsecond.
+		 * DDR2 uses dual-pumped clock
+		 */
+		d_clk = 100 * 1000 * 2;
+		config = s->sm_data[SPDMEM_FPM_CONFIG];
+		bits = s->sm_data[SPDMEM_DDR_DATAWIDTH] |
+		    (s->sm_data[SPDMEM_DDR_DATAWIDTH + 1] << 8);
+		if (config == 1 || config == 2)
+			bits -= 8;
+
+		d_clk /= cycle_time;
+		p_clk = d_clk * bits / 8;
+		if ((p_clk % 100) >= 50)
+			p_clk += 50;
+		p_clk -= p_clk % 100;
+		printf(" PC%d", p_clk);
+	}
+
+	/* Print CAS latency */
+	for (i = 6; i >= 0; i--) {
+		if (s->sm_data[SPDMEM_DDR_CAS] & (1 << i)) {
+			cl = ((i * 10) / 2) + 10;
+			printf("CL%d.%d", cl / 10, cl % 10);
 			break;
 		}
 	}
-		
+}
+
+void
+spdmem_ddr2_decode(struct spdmem_softc *sc, struct spdmem *s)
+{
+	const char *type;
+	int dimm_size, cycle_time, d_clk, p_clk, bits;
+	int i, num_ranks, density;
+	uint8_t config;
+
+	type = spdmem_basic_types[s->sm_type];
+
+	dimm_size = 0;
+
+	num_ranks = (s->sm_data[SPDMEM_DDR2_RANKS] & 0x7) + 1;
+	density = (s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0xf0) |
+	    ((s->sm_data[SPDMEM_DDR2_RANK_DENSITY] & 0x0f) << 8);
+	dimm_size = num_ranks * density * 4;
+
+	if (dimm_size > 0) {
+		if (dimm_size < 1024)
+			printf(" %dMB", dimm_size);
+		else
+			printf(" %dGB", dimm_size / 1024);
+	}
+
+	printf(" %s", type);
+	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
+
+	if (s->sm_data[SPDMEM_DDR2_DIMMTYPE] & SPDMEM_DDR2_TYPE_REGMASK)
+		printf(" registered");
+
+	if (s->sm_data[SPDMEM_FPM_CONFIG] < 8)
+		printf(" %s",
+		    spdmem_parity_types[s->sm_data[SPDMEM_FPM_CONFIG]]);
+
+	/* cycle_time is expressed in units of 0.01 ns */
+	cycle_time = (s->sm_data[SPDMEM_DDR2_CYCLE] >> 4) * 100 +
+	    ddr2_cycle_tenths[(s->sm_data[SPDMEM_DDR2_CYCLE] & 0x0f)];
+
+	if (cycle_time != 0) {
+		/*
+		 * cycle time is scaled by a factor of 100 to avoid using
+		 * floating point.  Calculate memory speed as the number
+		 * of cycles per microsecond.
+		 * DDR2 uses quad-pumped clock
+		 */
+		d_clk = 100 * 1000 * 4;
+		config = s->sm_data[SPDMEM_FPM_CONFIG];
+		bits = s->sm_data[SPDMEM_DDR2_DATAWIDTH];
+		if ((config & 0x03) != 0)
+			bits -= 8;
+		d_clk /= cycle_time;
+		d_clk = (d_clk + 1) / 2;
+		p_clk = d_clk * bits / 8;
+		p_clk -= p_clk % 100;
+		printf(" PC2-%d", p_clk);
+	}
+
+	/* Print CAS latency */
+	for (i = 5; i >= 2; i--) {
+		if (s->sm_data[SPDMEM_DDR_CAS] & (i << i)) {
+			printf("CL%d", i);
+			break;
+		}
+	}
+
+	switch (s->sm_data[SPDMEM_DDR2_DIMMTYPE]) {
+	case SPDMEM_DDR2_SODIMM:
+		printf(" SO-DIMM");
+		break;
+	case SPDMEM_DDR2_MICRO_DIMM:
+		printf(" Micro-DIMM");
+		break;
+	case SPDMEM_DDR2_MINI_RDIMM:
+	case SPDMEM_DDR2_MINI_UDIMM:
+		printf(" Mini-DIMM");
+		break;
+	}
+}
+
+void
+spdmem_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct spdmem_softc *sc = (struct spdmem_softc *)self;
+	struct i2c_attach_args *ia = aux;
+	struct spdmem *s = &(sc->sc_spd_data);
+	int i;
+
+	sc->sc_tag = ia->ia_tag;
+	sc->sc_addr = ia->ia_addr;
+
+	printf(":");
+
+	/* All SPD have at least 64 bytes of data including checksum */
+	for (i = 0; i < 64; i++) {
+		((uint8_t *)s)[i] = spdmem_read(sc, i);
+	}
+
+	/*
+	 * Decode and print SPD contents
+	 */
+	if (s->sm_len < 4)
+		printf(" no decode method for Rambus memory");
+	else {
+		switch(s->sm_type) {
+		case SPDMEM_MEMTYPE_EDO:
+		case SPDMEM_MEMTYPE_SDRAM:
+			spdmem_sdram_decode(sc, s);
+			break;
+		case SPDMEM_MEMTYPE_DDRSDRAM:
+			spdmem_ddr_decode(sc, s);
+			break;
+		case SPDMEM_MEMTYPE_DDR2SDRAM:
+			spdmem_ddr2_decode(sc, s);
+			break;
+		default:
+			if (s->sm_type <= 10)
+				printf(" no decode method for %s memory",
+				    spdmem_basic_types[s->sm_type]);
+			else
+				printf(" unknown memory type %d", s->sm_type);
+			break;
+		}
+	}
+
 	printf("\n");
 }
 
