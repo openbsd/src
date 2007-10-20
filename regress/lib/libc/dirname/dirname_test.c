@@ -69,7 +69,7 @@ main(void)
 
 	/* Case 4 */
 	strlcpy(path, "/", sizeof(path));		/* reset path */
-	for (i = 0; i <= MAXPATHLEN; i += sizeof(dir))
+	for (i = 0; i <= MAXPATHLEN; i += strlen(dir))
 		strlcat(path, dir, sizeof(path));
 	strlcat(path, fname, sizeof(path));
 	str = dirname(path);
