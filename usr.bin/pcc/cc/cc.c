@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.6 2007/10/18 17:42:56 stefan Exp $	*/
+/*	$OpenBSD: cc.c,v 1.7 2007/10/20 09:04:42 stefan Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -50,19 +50,18 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <stdio.h>
 #include <ctype.h>
-#include <signal.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <libgen.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <libgen.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "../config.h"
-
 #include "ccconfig.h"
 /* C command */
 
@@ -81,15 +80,15 @@
 char	*tmp3;
 char	*tmp4;
 char	*outfile;
-char *copy(char *as),*setsuf(char *as, char ch);
-int getsuf(char []);
+char *copy(char *),*setsuf(char *, char);
+int getsuf(char *);
 int main(int, char *[]);
 void error(char *, ...);
-void errorx(int eval, char *, ...);
+void errorx(int, char *, ...);
 int nodup(char **, char *);
 int callsys(char [], char *[]);
 int cunlink(char *);
-void dexit(int eval);
+void dexit(int);
 void idexit(int);
 char *gettmp();
 char	*av[MAXAV];
@@ -662,8 +661,7 @@ errorx(int eval, char *s, ...)
 }
 
 int
-getsuf(as)
-char as[];
+getsuf(char *as)
 {
 	register char *s;
 
@@ -742,8 +740,7 @@ copy(char *as)
 }
 
 int
-nodup(l, os)
-char **l, *os;
+nodup(char **l, char *os)
 {
 	register char *t, *s;
 	register int c;
@@ -763,8 +760,7 @@ char **l, *os;
 }
 
 int
-cunlink(f)
-char *f;
+cunlink(char *f)
 {
 	if (f==0 || Xflag)
 		return(0);
