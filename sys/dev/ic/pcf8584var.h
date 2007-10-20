@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584var.h,v 1.4 2007/05/21 03:11:11 jsg Exp $ */
+/*	$OpenBSD: pcf8584var.h,v 1.5 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -39,6 +39,12 @@ struct pcfiic_softc {
 #define PCF_CLOCK_6		0x14 /* 6 MHz */
 #define PCF_CLOCK_8		0x18 /* 8 MHz */
 #define PCF_CLOCK_12		0x1c /* 12 MHz */
+
+/* SCL frequency settings */
+#define PCF_FREQ_90		0x00 /* 90 kHz */
+#define PCF_FREQ_45		0x01 /* 45 kHz */
+#define PCF_FREQ_11		0x02 /* 11 kHz */
+#define PCF_FREQ_1_5		0x03 /* 1.5 kHz */
 
 void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t, u_int8_t, int,
 	    void (*)(struct device *, struct i2cbus_attach_args *, void *),

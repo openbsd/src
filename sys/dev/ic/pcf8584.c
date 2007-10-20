@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584.c,v 1.8 2007/05/21 03:11:11 jsg Exp $ */
+/*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -59,11 +59,6 @@
 #define PCF_STAT_BER		(1<<4)
 #define PCF_STAT_STS		(1<<5)
 #define PCF_STAT_PIN		(1<<7)
-
-#define PCF_FREQ_90		0x00 /* 90 kHz */
-#define PCF_FREQ_45		0x01 /* 45 kHz */
-#define PCF_FREQ_11		0x02 /* 11 kHz */
-#define PCF_FREQ_1_5		0x03 /* 1.5 kHz */
 
 struct cfdriver pcfiic_cd = {
 	NULL, "pcfiic", DV_DULL
