@@ -1,0 +1,22 @@
+macdefs.h		; machine-dependent definitions
+code.c			; machine-dependent code for prologs, switches (pass 1)
+local.c			; machine-dependent code for prologs, switches (pass 1)
+local2.c		; misc routines and tables of register names (pass 2)
+order.c			; machine-dependent code-generation strategy (pass 2)
+table.c			; code templates (pass 2)
+
+On OS X, binaries are not ELF and all binaries are compiled PIC.  To use pcc
+on OS X while linking against the system libraries, use the -k option.
+
+Current issues:
+
+- no floating point
+- mod/div on longlong not supported
+- problems with static variables with PIC
+- the stack frame is always 200 bytes - need to calculate size and patch
+  OREGs to temporaries and arguments
+- function arguments are always saved to the stack
+- permanent registers >R13 are not saved
+- structure arguments don't work
+- return of structure doesn't work
+- no built-in vararg support
