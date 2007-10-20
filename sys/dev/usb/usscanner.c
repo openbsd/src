@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.25 2007/10/20 04:01:39 krw Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.26 2007/10/20 04:37:54 krw Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -717,7 +717,7 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct usscanner_softc *sc = sc_link->adapter_softc;
 	usbd_status err;
-	int rslt, s;
+	int s;
 
 #ifdef notyet
 	DPRINTFN(8, ("%s: usscanner_scsi_cmd: %d:%d "
@@ -773,13 +773,9 @@ usscanner_scsipi_cmd(struct scsipi_xfer *xs)
  done:
 	sc->sc_state = UAS_IDLE;
 	xs->xs_control |= XS_STS_DONE;
-	if (xs->xs_control & XS_CTL_POLL)
-		rslt = COMPLETE;
-	else
-		rslt = SUCCESSFULLY_QUEUED;
 	s = splbio();
 	scsipi_done(xs);
 	splx(s);
 
-	return (rslt);
+	return (COMPLETE);
 }

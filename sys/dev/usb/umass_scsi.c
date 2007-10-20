@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.20 2007/10/20 03:37:05 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.21 2007/10/20 04:37:54 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	struct umass_softc *sc = sc_link->adapter_softc;
 
 	struct scsi_generic *cmd;
-	int cmdlen, dir, rslt, s;
+	int cmdlen, dir, s;
 
 #ifdef UMASS_DEBUG
 	microtime(&sc->tv);
@@ -277,16 +277,10 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	/* Return if command finishes early. */
  done:
 	xs->flags |= ITSDONE;
-	if (xs->flags & SCSI_POLL)
-		rslt = COMPLETE;
-	else
-		rslt = SUCCESSFULLY_QUEUED;
-	
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-
-	return (rslt);
+	return (COMPLETE);
 }
 
 void
