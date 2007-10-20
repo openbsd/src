@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.15 2007/10/20 13:26:50 pyr Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -679,9 +679,12 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL)
+	    (nfile->name = strdup(name)) == NULL) {
+		log_warn("malloc");
 		return (NULL);
+	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -731,7 +734,6 @@ parse_config(char *filename, int opts)
 	SIMPLEQ_INIT(&conf->redist_list);
 
 	if ((file = pushfile(filename, !(conf->opts & RIPD_OPT_NOACTION))) == NULL) {
-		warn("%s", filename);
 		free(conf);
 		return (NULL);
 	}

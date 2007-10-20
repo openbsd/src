@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.4 2007/10/13 16:35:20 deraadt Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.5 2007/10/20 13:26:50 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -128,8 +128,7 @@ main(int argc, char *argv[])
 	conffile = CONF_FILE;
 	dvmrpd_process = PROC_MAIN;
 
-	/* start logging */
-	log_init(1);
+	log_init(1);	/* log to stderr until daemonized */
 
 	while ((ch = getopt(argc, argv, "df:nv")) != -1) {
 		switch (ch) {
@@ -191,6 +190,9 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", DVMRPD_USER);
 
 	endpwent();
+
+	/* start logging */
+	log_init(1);
 
 	if (!debug)
 		daemon(1, 0);

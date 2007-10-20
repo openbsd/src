@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.5 2007/10/18 17:00:59 deraadt Exp $ */
+/*	$OpenBSD: ripd.c,v 1.6 2007/10/20 13:26:50 pyr Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -128,6 +128,8 @@ main(int argc, char *argv[])
 	conffile = CONF_FILE;
 	ripd_process = PROC_MAIN;
 
+	log_init(1);	/* log to stderr until daemonized */
+
 	while ((ch = getopt(argc, argv, "df:nv")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -149,9 +151,6 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
-
-	/* start logging */
-	log_init(debug);
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_INET;
@@ -186,6 +185,8 @@ main(int argc, char *argv[])
 	/* check for ripd user */
 	if (getpwnam(RIPD_USER) == NULL)
 		errx(1, "unknown user %s", RIPD_USER);
+
+	log_init(debug);
 
 	if (!debug)
 		daemon(1, 0);
