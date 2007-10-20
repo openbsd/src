@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.17 2007/10/20 00:42:09 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.18 2007/10/20 01:22:20 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -134,6 +134,10 @@
 #define SPDMEM_DDR2_RANK_DENSITY	0x1c
 
 #define SPDMEM_DDR2_TYPE_REGMASK	((1 << 4) | (1 << 0))
+#define SPDMEM_DDR2_SODIMM		(1 << 2)
+#define SPDMEM_DDR2_MICRO_DIMM		(1 << 3)
+#define SPDMEM_DDR2_MINI_RDIMM		(1 << 4)
+#define SPDMEM_DDR2_MINI_UDIMM		(1 << 5)
 
 static const uint8_t ddr2_cycle_tenths[] = {
 	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 66, 75, 0, 0
@@ -421,6 +425,21 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
+	if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
+		switch (s->sm_data[SPDMEM_DDR2_DIMMTYPE]) {
+		case SPDMEM_DDR2_SODIMM:
+			printf(" SO-DIMM");
+			break;
+		case SPDMEM_DDR2_MICRO_DIMM:
+			printf(" Micro-DIMM");
+			break;
+		case SPDMEM_DDR2_MINI_RDIMM:
+		case SPDMEM_DDR2_MINI_UDIMM:
+			printf(" Mini-DIMM");
+			break;
+		}
+	}
+		
 	printf("\n");
 }
 
