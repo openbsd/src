@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.14 2007/07/31 21:34:39 cnst Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.15 2007/10/20 22:06:43 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -51,7 +51,6 @@ struct pcagpio_softc {
 
 int	pcagpio_match(struct device *, void *, void *);
 void	pcagpio_attach(struct device *, struct device *, void *);
-int	pcagpio_check(struct i2c_attach_args *, u_int8_t *, u_int8_t *);
 void	pcagpio_refresh(void *);
 
 int     pcagpio_gpio_pin_read(void *, int);
