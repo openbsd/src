@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcc_compat.c,v 1.2 2007/10/07 18:36:58 otto Exp $	*/
+/*      $OpenBSD: gcc_compat.c,v 1.3 2007/10/20 18:24:11 otto Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -119,11 +119,11 @@ gcc_findname(struct symtab *sp)
 	struct ren *w;
 
 	if ((sp->sflags & SRENAME) == 0)
-		return exname(sp->sname);
+		return sp->sname;
 
 	for (w = renp; w; w = w->next) {
 		if (w->old == sp->sname)
-			return exname(w->new);
+			return w->new;
 	}
 	cerror("gcc_findname %s", sp->sname);
 	return NULL;

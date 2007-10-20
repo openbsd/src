@@ -1,4 +1,4 @@
-/*	$OpenBSD: trees.c,v 1.4 2007/10/08 18:26:29 otto Exp $	*/
+/*	$OpenBSD: trees.c,v 1.5 2007/10/20 18:24:11 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -2200,7 +2200,7 @@ p2tree(NODE *p)
 #ifdef GCC_COMPAT
 				p->n_name = gcc_findname(q);
 #else
-				p->n_name = exname(q->sname);
+				p->n_name = q->sname;
 #endif
 			}
 		} else

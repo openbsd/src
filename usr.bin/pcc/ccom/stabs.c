@@ -1,4 +1,4 @@
-/*	$OpenBSD: stabs.c,v 1.1 2007/10/07 17:58:51 otto Exp $	*/
+/*	$OpenBSD: stabs.c,v 1.2 2007/10/20 18:24:11 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -183,7 +183,7 @@ findtype(TWORD t, union dimfun *df, struct suedef *sue)
 void
 stabs_line(int line)
 {
-	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s", N_SLINE, line, stablbl, curfun);
+	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s", N_SLINE, line, stablbl, exname(curfun));
 	cprint(1, STABLBL ":", stablbl++);
 }
 
@@ -194,7 +194,7 @@ void
 stabs_lbrac(int blklvl)
 {
 	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s",
-	    N_LBRAC, blklvl, stablbl, curfun);
+	    N_LBRAC, blklvl, stablbl, exname(curfun));
 	cprint(1, STABLBL ":", stablbl++);
 }
 
@@ -205,7 +205,7 @@ void
 stabs_rbrac(int blklvl)
 {
 	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s\n",
-	    N_RBRAC, blklvl, stablbl, curfun);
+	    N_RBRAC, blklvl, stablbl, exname(curfun));
 	cprint(1, STABLBL ":", stablbl++);
 }
 
