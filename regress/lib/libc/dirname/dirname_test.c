@@ -30,7 +30,7 @@ main(void)
 	strlcat(path, fname, sizeof(path));
 	str = dirname(path);
 	if (strcmp(str, dname) != 0)
-		goto fail;
+		errx(1, "0: dirname(%s) = %s != %s", path, str, dname);
 
 	/*
 	 * There are four states that require special handling:
@@ -52,20 +52,20 @@ main(void)
 	/* Case 1 */
 	str = dirname(NULL);
 	if (strcmp(str, ".") != 0)
-		goto fail;
+		errx(1, "1: dirname(NULL) = %s != .", str);
 
 	/* Case 2 */
 	strlcpy(path, "", sizeof(path));
 	str = dirname(path);
 	if (strcmp(str, ".") != 0)
-		goto fail;
+		errx(1, "2: dirname(%s) = %s != .", path, str);
 
 	/* Case 3 */
 	for (i = 0; i < MAXPATHLEN - 1; i++)
 		strlcat(path, "/", sizeof(path));	/* path cleared above */
 	str = dirname(path);
 	if (strcmp(str, "/") != 0)
-		goto fail;
+		errx(1, "3: dirname(%s) = %s != /", path, str);
 
 	/* Case 4 */
 	strlcpy(path, "/", sizeof(path));		/* reset path */
@@ -73,10 +73,10 @@ main(void)
 		strlcat(path, dir, sizeof(path));
 	strlcat(path, fname, sizeof(path));
 	str = dirname(path);
-	if (str != NULL || errno != ENAMETOOLONG)
-		goto fail;
+	if (str != NULL)
+		errx(1, "4: dirname(%s) = %s != NULL", path, str);
+	if (errno != ENAMETOOLONG)
+		errx(1, "4: dirname(%s) sets errno to %d", path, errno);
 
 	return (0);
-fail:
-	return (1);
 }
