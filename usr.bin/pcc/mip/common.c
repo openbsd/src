@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.6 2007/09/22 14:50:44 otto Exp $	*/
+/*	$OpenBSD: common.c,v 1.7 2007/10/20 18:11:51 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -461,7 +461,7 @@ struct b {
 	} a2;
 };
 
-#define ALIGNMENT ((int)&((struct b *)0)->a2)
+#define ALIGNMENT ((long)&((struct b *)0)->a2)
 #define	ROUNDUP(x) (((x) + ((ALIGNMENT)-1)) & ~((ALIGNMENT)-1))
 
 static char *allocpole;
@@ -514,11 +514,10 @@ tmpalloc(int size)
 {
 	void *rv;
 
-	if (size > MEMCHUNKSZ / 2) {
+	if (size > MEMCHUNKSZ/2) {
 		size += ROUNDUP(sizeof(char *));
 		if ((rv = malloc(size)) == NULL)
 			cerror("tmpalloc: out of memory");
-	//	cerror("tmpalloc %d", size);
 		/* link in before current chunk XXX */
 		*(char **)rv = *(char **)tmppole;
 		*(char **)tmppole = rv;

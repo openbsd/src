@@ -1,4 +1,4 @@
-/*	$OpenBSD: regs.c,v 1.9 2007/10/07 19:26:27 otto Exp $	*/
+/*	$OpenBSD: regs.c,v 1.10 2007/10/20 18:11:51 otto Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -30,8 +30,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
-
 
 #define	MAXLOOP	20 /* Max number of allocation loops XXX 3 should be enough */
 
@@ -296,7 +294,7 @@ nsucomp(NODE *p)
 	SETNUM(w);
 	if (w->r_class)
 		DLIST_INSERT_BEFORE(&initial, w, link);
-	UDEBUG(("Adding short %d calss %d\n", w->nodnum, w->r_class));
+	UDEBUG(("Adding short %d class %d\n", w->nodnum, w->r_class));
 	w++;
 	ADCL(nareg, CLASSA);
 	ADCL(nbreg, CLASSB);
@@ -2235,7 +2233,7 @@ onlyperm: /* XXX - should not have to redo all */
 		case SMALL:
 			optimize(ipole);
 			if (beenhere++ == MAXLOOP)
-					comperr("beenhere");
+				comperr("beenhere");
 			goto recalc;
 		}
 	}
