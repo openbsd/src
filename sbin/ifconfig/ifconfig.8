@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.149 2007/09/03 01:24:22 krw Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.150 2007/10/20 15:12:51 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: September 3 2007 $
+.Dd $Mdocdate: October 20 2007 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -229,6 +229,10 @@ existing (egress, carp, etc.) or user-defined groups.
 Some interfaces belong to specific groups by default:
 .Pp
 .Bl -dash -width Ds -compact
+.It
+All interfaces are members of the
+.Em all
+interface group.
 .It
 Cloned interfaces are members of their interface family group.
 For example, a PPP interface such as
