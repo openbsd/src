@@ -1,6 +1,4 @@
-.\"	$Id: ccom.1,v 1.1 2007/10/07 17:58:51 otto Exp $
-.\"	$NetBSD$
-.\"	$OpenBSD: ccom.1,v 1.1 2007/10/07 17:58:51 otto Exp $
+.\"	$OpenBSD: ccom.1,v 1.2 2007/10/20 18:23:35 otto Exp $
 ."\
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\" Permission to use, copy, modify, and/or distribute this software for any 
@@ -52,6 +50,8 @@ The options are as follows:
 .It Fl g
 Enable debugging.
 .\" built into binary, explain stabs?
+.It Fl k
+Generate PIC code.
 .It Fl s
 Print statistics to standard error when complete.
 This includes:
@@ -99,6 +99,14 @@ flags gives more output)
 Pass1 trees at exit
 .It Sy i
 Initializations
+.It Sy n
+Memory allocations
+.It Sy o
+Turn off optimisations
+.It Sy p
+Prototypes
+.It Sy s
+Inlining
 .It Sy t
 Type conversions
 .It Sy x
@@ -126,10 +134,16 @@ Code generator (pass2) specific debugging where
 .Ar flags 
 is one or more of the following:
 .Bl -tag -width Ds
+.It Sy b
+Basic block and SSA building
+.It Sy c
+Code printout
 .It Sy e
 Trees when entering pass2
 .It Sy f
 Instruction matcher, may provide much output
+.It Sy n
+Memory allocation
 .It Sy o
 Instruction generator
 .It Sy r
