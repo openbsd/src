@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftn.c,v 1.4 2007/10/18 17:02:11 otto Exp $	*/
+/*	$OpenBSD: pftn.c,v 1.5 2007/10/20 09:58:00 otto Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1890,8 +1890,10 @@ arglist(NODE *n)
 	if (k > num)
 		cerror("arglist: k%d > num%d", k, num);
 	tfree(n);
+#ifdef PCC_DEBUG
 	if (pdebug)
 		alprint(al, 0);
+#endif
 	return al;
 }
 
@@ -2110,10 +2112,12 @@ static struct bitable {
 	NODE *(*fun)(NODE *f, NODE *a);
 } bitable[] = {
 	{ "__builtin_alloca", builtin_alloca },
+#ifndef TARGET_STDARGS
 	{ "__builtin_stdarg_start", builtin_stdarg_start },
 	{ "__builtin_va_arg", builtin_va_arg },
 	{ "__builtin_va_end", builtin_va_end },
 	{ "__builtin_va_copy", builtin_va_copy },
+#endif
 #ifdef TARGET_BUILTINS
 	TARGET_BUILTINS
 #endif
@@ -2134,16 +2138,18 @@ alprint(union arglist *al, int in)
 			printf("  ");
 		printf("arg %d: ", i++);
 		tprint(stdout, al->type, 0);
-		if (BTYPE(al->type) == STRTY ||
+		if (ISARY(al->type)) {
+			printf(" dim %d\n", al->df->ddim);
+		} else if (BTYPE(al->type) == STRTY ||
 		    BTYPE(al->type) == UNIONTY || BTYPE(al->type) == ENUMTY) {
 			al++;
-			printf("dim %d\n", al->df->ddim);
-		}
-		printf("\n");
-		if (ISFTN(DECREF(al->type))) {
+			printf(" (size %d align %d)", al->sue->suesize,
+			    al->sue->suealign);
+		} else if (ISFTN(DECREF(al->type))) {
 			al++;
 			alprint(al->df->dfun, in+1);
 		}
+		printf("\n");
 	}
 	if (in == 0)
 		printf("end arglist\n");
