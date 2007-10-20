@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2007/10/16 20:01:23 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.40 2007/10/20 14:24:02 pyr Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -548,9 +548,12 @@ pushfile(const char *name)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL)
+	    (nfile->name = strdup(name)) == NULL) {
+		log_warn("malloc");
 		return (NULL);
+	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -588,7 +591,6 @@ parse_config(const char *filename, struct ntpd_conf *xconf)
 	TAILQ_INIT(&conf->ntp_conf_sensors);
 
 	if ((file = pushfile(filename)) == NULL) {
-		log_warn("%s", filename);
 		return (-1);
 	}
 

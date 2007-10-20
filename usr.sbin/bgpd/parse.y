@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.212 2007/10/16 20:01:23 mpf Exp $ */
+/*	$OpenBSD: parse.y,v 1.213 2007/10/20 14:24:02 pyr Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2126,9 +2126,12 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL)
+	    (nfile->name = strdup(name)) == NULL) {
+		log_warn("malloc");
 		return (NULL);
+	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
+		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -2180,7 +2183,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 
 	if ((file = pushfile(filename, 1)) == NULL) {
 		free(conf);
-		log_warnx("cannot open the main config file!");
 		return (-1);
 	}
 
