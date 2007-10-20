@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.18 2007/10/20 01:22:20 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.19 2007/10/20 02:39:56 deraadt Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -247,7 +247,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < 64;  i += 16) {
 		int j;
 		printf("\n%s: 0x%02x:", self->dv_xname, i);
-		for(j = 0; j < 16; j++)
+		for (j = 0; j < 16; j++)
 			printf(" %02x", ((uint8_t *)s)[i + j]);
 	}
 	printf("\n%s", self->dv_xname);
@@ -371,7 +371,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		if (s->sm_type == SPDMEM_MEMTYPE_SDRAM) {
 			p_clk = 66;
 			if (s->sm_len >= 128) {
-				switch(spdmem_read(sc, SPDMEM_SDR_FREQUENCY)) {
+				switch (spdmem_read(sc, SPDMEM_SDR_FREQUENCY)) {
 				case SPDMEM_SDR_FREQ_100:
 				case SPDMEM_SDR_FREQ_133:
 					/* We need to check ns to decide here */
@@ -391,6 +391,9 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 			if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM)
 				d_clk = (d_clk + 1) / 2;
 			p_clk = d_clk * bits / 8;
+			if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM &&
+			    (p_clk % 100) >= 50)
+				p_clk += 50;
 			p_clk -= p_clk % 100;
 		}
 		printf(" %s%d", ddr_type_string, p_clk);
@@ -470,7 +473,7 @@ spdmem_hexdump(struct spdmem_softc *sc, int start, int size)
 	for (i = 0; i < size ; i += 16) {
 		int j;
 		printf("\n0x%02x:", start + i);
-		for(j = 0; j < 16; j++)
+		for (j = 0; j < 16; j++)
 			printf(" %02x", ((uint8_t *)data)[i + j]);
 	}
 	printf("\n");
