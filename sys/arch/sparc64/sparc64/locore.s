@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.93 2007/10/20 16:54:52 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.94 2007/10/20 21:08:31 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3176,8 +3176,6 @@ interrupt_vector:
 	mov	IRDR_0H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
 	membar	#Sync
-	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
-	membar	#Sync			! Should not be needed due to retry
 
 	btst	IRSR_BUSY, %g1
 	bz,pn	%icc, 3f		! Spurious interrupt
@@ -3186,10 +3184,15 @@ interrupt_vector:
 	blu,pt	%xcc, Lsoftint_regular
 	 sllx	%g2, 3, %g5		! Calculate entry number
 	mov	IRDR_1H, %g3
-        ldxa    [%g3] ASI_IRDR, %g3     ! Get IPI handler arg0
+	ldxa	[%g3] ASI_IRDR, %g3     ! Get IPI handler arg0
 	mov	IRDR_2H, %g5
+	ldxa	[%g5] ASI_IRDR, %g5     ! Get IPI handler arg1
+
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
+
 	jmpl	%g2, %g0
-         ldxa   [%g5] ASI_IRDR, %g5     ! Get IPI handler arg1
+	 nop
 	Debugger()
 	NOTREACHED
 #else
@@ -3198,6 +3201,9 @@ interrupt_vector:
 #endif
 
 Lsoftint_regular:
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
+
 	sethi	%hi(_C_LABEL(intrlev)), %g3
 	or	%g3, %lo(_C_LABEL(intrlev)), %g3
 	ldx	[%g3 + %g5], %g5	! We have a pointer to the handler
