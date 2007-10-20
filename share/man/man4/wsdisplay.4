@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.42 2007/05/31 19:19:53 jmc Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.43 2007/10/20 16:10:03 jsing Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 20 2007 $
 .Dt WSDISPLAY 4
 .Os
 .Sh NAME
@@ -248,7 +248,7 @@ and
 members count the number of pixels right and down, respectively, from
 the top-left corner of the display to the hot spot of the cursor.
 This call is not available on displays without a hardware cursor.
-.It Dv WSDISPLAYOP_SCURPOS Pq Li "struct wsdisplay_curpos"
+.It Dv WSDISPLAYIO_SCURPOS Pq Li "struct wsdisplay_curpos"
 Set the current cursor position.
 The argument structure, and its semantics,
 are the same as for
