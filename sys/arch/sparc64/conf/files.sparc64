@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.90 2007/10/10 15:53:53 art Exp $
+#	$OpenBSD: files.sparc64,v 1.91 2007/10/20 18:54:42 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -300,6 +300,11 @@ file	arch/sparc64/sparc64/rbus_machdep.c	cardbus
 device	pcfadc
 attach	pcfadc at i2c
 file	arch/sparc64/dev/pcf8591_ofw.c		pcfadc
+
+# PCF8591 ADC I2C Sensor (envctrl, so sparc64 only)
+device	ecadc
+attach	ecadc at i2c
+file	arch/sparc64/dev/pcf8591_envctrl.c	ecadc
 
 #
 # Machine-independent GPIO drivers

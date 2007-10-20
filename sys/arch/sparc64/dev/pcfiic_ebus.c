@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcfiic_ebus.c,v 1.7 2007/05/21 03:11:11 jsg Exp $ */
+/*	$OpenBSD: pcfiic_ebus.c,v 1.8 2007/10/20 18:54:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -54,11 +54,16 @@ struct cfattach pcfiic_ebus_ca = {
 	sizeof(struct pcfiic_ebus_softc), pcfiic_ebus_match, pcfiic_ebus_attach
 };
 
+void	envctrltwo_scan(struct device *, struct i2cbus_attach_args *, void *);
+
 int
 pcfiic_ebus_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args		*ea = aux;
 	char				compat[32];
+
+	if (strcmp(ea->ea_name, "SUNW,envctrltwo") == 0)
+		return (1);
 
 	if (strcmp(ea->ea_name, "i2c") != 0)
 		return (0);
@@ -66,8 +71,8 @@ pcfiic_ebus_match(struct device *parent, void *match, void *aux)
 	if (OF_getprop(ea->ea_node, "compatible", compat, sizeof(compat)) == -1)
 		return (0);
 
-	if (strcmp(compat, "i2cpcf,8584") ||
-	    strcmp(compat, "SUNW,bbc-i2c"))
+	if (strcmp(compat, "i2cpcf,8584") == 0 ||
+	    strcmp(compat, "SUNW,bbc-i2c") == 0)
 		return (1);
 
 	return (0);
@@ -157,6 +162,29 @@ fail:
 	if (esc->esc_ih == NULL)
 		sc->sc_poll = 1;
 
-	pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), clock, swapregs,
-	    ofwiic_scan, &ea->ea_node);
+	if (strcmp(ea->ea_name, "SUNW,envctrltwo") == 0)
+		pcfiic_attach(sc, 0x55, PCF_CLOCK_12 | PCF_FREQ_45, 0,
+		    envctrltwo_scan, &ea->ea_node);
+	else
+		pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), clock, swapregs,
+		    ofwiic_scan, &ea->ea_node);
+}
+
+void
+envctrltwo_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
+{
+	extern int iic_print(void *, const char *);
+	struct i2c_attach_args ia;
+
+	memset(&ia, 0, sizeof(ia));
+	ia.ia_tag = iba->iba_tag;
+	ia.ia_cookie = aux;
+
+	ia.ia_addr = 0x4a;
+	ia.ia_name = "ecadc";
+	config_found(self, &ia, iic_print);
+
+	ia.ia_addr = 0x4f;
+	ia.ia_name = "ecadc";
+	config_found(self, &ia, iic_print);
 }
