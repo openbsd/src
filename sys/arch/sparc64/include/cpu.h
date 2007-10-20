@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.49 2007/10/18 20:44:47 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.50 2007/10/20 16:54:49 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -154,6 +154,8 @@ void	cpu_boot_secondary_processors(void);
 
 void	sparc64_send_ipi(int, void (*)(void), u_int64_t, u_int64_t);
 void	sparc64_broadcast_ipi(void (*)(void), u_int64_t, u_int64_t);
+
+void	smp_signotify(struct proc *);
 
 #else
 

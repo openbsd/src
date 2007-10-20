@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.92 2007/10/20 16:41:46 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.93 2007/10/20 16:54:52 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3381,6 +3381,10 @@ ENTRY(ipi_drop_fpstate)
 	sethi	%hi(FPPROC), %g1
 	ba	ret_from_intr_vector
 	 stx	%g0, [%g1 + %lo(FPPROC)]	! fpproc = NULL
+
+ENTRY(ipi_softint)
+	ba	ret_from_intr_vector
+	 wr	%g3, 0, SET_SOFTINT
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2007/10/16 20:33:27 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.100 2007/10/20 16:54:52 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -677,7 +677,9 @@ signotify(struct proc *p)
 {
 	aston(p);
 #ifdef MULTIPROCESSOR
-	/* XXX Send IPI if necessary. */
+	/* Send IPI if necessary. */
+	if (p->p_cpu != curcpu() && p->p_cpu != NULL)
+		smp_signotify(p);
 #endif
 }
 

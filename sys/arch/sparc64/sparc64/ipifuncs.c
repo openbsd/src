@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.3 2007/10/18 20:44:47 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.4 2007/10/20 16:54:52 miod Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -36,7 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
@@ -54,6 +54,7 @@ extern int db_active;
  */
 void	ipi_tlb_page_demap(void);
 void	ipi_tlb_context_demap(void);
+void	ipi_softint(void);
 
 /*
  * Send an interprocessor interrupt.
@@ -141,4 +142,13 @@ smp_tlb_flush_ctx(int ctx)
 		return;
 
 	sparc64_broadcast_ipi(ipi_tlb_context_demap, ctx, 0);
+}
+
+void
+smp_signotify(struct proc *p)
+{
+	if (db_active)
+		return;
+
+	sparc64_send_ipi(p->p_cpu->ci_upaid, ipi_softint, 1 << IPL_NONE, 0UL);
 }
