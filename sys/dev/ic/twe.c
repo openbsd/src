@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.27 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: twe.c,v 1.28 2007/10/20 16:10:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -922,13 +922,14 @@ twe_scsi_cmd(xs)
 		if ((error = twe_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
 		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), wait))) {
 
-			TWE_UNLOCK(sc, lock);
 			TWE_DPRINTF(TWE_D_CMD, ("failed %p ", xs));
 			if (xs->flags & SCSI_POLL) {
+				TWE_UNLOCK(sc, lock);
 				return (TRY_AGAIN_LATER);
 			} else {
 				xs->error = XS_DRIVER_STUFFUP;
 				scsi_done(xs);
+				TWE_UNLOCK(sc, lock);
 				return (COMPLETE);
 			}
 		}

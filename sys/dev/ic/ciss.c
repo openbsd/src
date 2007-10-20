@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.28 2007/09/18 00:46:41 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.29 2007/10/20 16:10:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -830,6 +830,7 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 
 	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_raw_cmd "));
 
+	lock = CISS_LOCK(sc);
 	if (xs->cmdlen > CISS_MAX_CDB) {
 		CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
 		bzero(&xs->sense, sizeof(xs->sense));
@@ -838,10 +839,10 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
 		scsi_done(xs);
+		CISS_UNLOCK(sc, lock);
 		return (COMPLETE);
 	}
 
-	lock = CISS_LOCK(sc);
 	error = 0;
 	xs->error = XS_NOERROR;
 
@@ -890,6 +891,7 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 
 	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_cmd "));
 
+	lock = CISS_LOCK(sc);
 	if (xs->cmdlen > CISS_MAX_CDB) {
 		CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
 		bzero(&xs->sense, sizeof(xs->sense));
@@ -898,10 +900,10 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
 		scsi_done(xs);
+		CISS_UNLOCK(sc, lock);
 		return (COMPLETE);
 	}
 
-	lock = CISS_LOCK(sc);
 	error = 0;
 	xs->error = XS_NOERROR;
 
