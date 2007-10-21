@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.6 2007/09/27 22:10:25 mglocker Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.7 2007/10/21 09:53:26 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -100,8 +100,6 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct cardbus_attach_args *ca = aux;
 	struct bwi_softc *sc = &csc->csc_bwi;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t reg;
 	bus_addr_t base;
 	int error;
@@ -135,7 +133,7 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_conf_read = bwi_cardbus_conf_read;
 	sc->sc_conf_write = bwi_cardbus_conf_write;
 
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_SUBSYS_ID_REG);
+	reg = (sc->sc_conf_read)(sc, PCI_SUBSYS_ID_REG);
 
 	sc->sc_pci_revid = PCI_REVISION(ca->ca_class);
 	sc->sc_pci_did = PCI_PRODUCT(ca->ca_id);
@@ -247,14 +245,20 @@ void
 bwi_cardbus_conf_write(void *self, uint32_t reg, uint32_t val)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
+	cardbus_devfunc_t ct = csc->csc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
 
-	Cardbus_conf_write(csc->csc_ct, csc->csc_tag, reg, val);
+	cardbus_conf_write(cc, cf, csc->csc_tag, reg, val);
 }
 
 uint32_t
 bwi_cardbus_conf_read(void *self, uint32_t reg)
 {
 	struct bwi_cardbus_softc *csc = (struct bwi_cardbus_softc *)self;
+	cardbus_devfunc_t ct = csc->csc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
 
-	return (Cardbus_conf_read(csc->csc_ct, csc->csc_tag, reg));
+	return (cardbus_conf_read(cc, cf, csc->csc_tag, reg));
 }
