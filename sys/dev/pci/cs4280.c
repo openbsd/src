@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.26 2007/08/01 21:37:21 miod Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.27 2007/10/21 12:43:25 fgsch Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -604,6 +604,8 @@ cs4280_attach(parent, self, aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	u_int32_t mem;
+	pcireg_t pmode;                                                         
+	int pmreg;
     
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, CSCC_PCI_BA0, 
@@ -620,6 +622,16 @@ cs4280_attach(parent, self, aux)
 	}
 
 	sc->sc_dmatag = pa->pa_dmat;
+
+	/* Get out of power save mode if needed. */
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
+		if ((pmode & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
+			    (pmode & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
+		}
+	}
 
 	/* LATENCY_TIMER setting */
 	mem = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
