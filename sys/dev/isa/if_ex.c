@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.29 2007/10/18 04:52:37 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.30 2007/10/21 00:55:55 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -46,6 +46,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_media.h> 
 
 #ifdef INET
 #include <netinet/in.h>
@@ -74,14 +75,10 @@ static int exintr_count = 0;
 #define DODEBUG(level, action)
 #endif
 
-#define Conn_BNC 1
-#define Conn_TPE 2
-#define Conn_AUI 3
-
 struct ex_softc {
   	struct arpcom arpcom;	/* Ethernet common data */
+	struct ifmedia ifmedia;
 	int iobase;		/* I/O base address. */
-	u_short connector;	/* Connector type. */
 	u_short irq_no; 	/* IRQ number. */
 	u_int mem_size;		/* Total memory size, in bytes. */
 	u_int rx_mem_size;	/* Rx memory size (by default, first 3/4 of 
@@ -113,6 +110,10 @@ void ex_stop(struct ex_softc *);
 int ex_ioctl(struct ifnet *, u_long, caddr_t);
 void ex_reset(struct ex_softc *);
 void ex_watchdog(struct ifnet *);
+int ex_get_media(struct ex_softc *);
+
+int ex_ifmedia_upd(struct ifnet *);
+void ex_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 u_short ex_eeprom_read(struct ex_softc *, int);
 int ex_look_for_card(struct isa_attach_args *, struct ex_softc *sc);
@@ -200,7 +201,6 @@ ex_probe(struct device *parent, void *match, void *aux)
 	 *	- Hardware Ethernet address.
 	 *	- IRQ number (if not supplied in config file, read it from 
 	 *	  EEPROM).
-	 *	- Connector type.
 	 */
 	sc->iobase = ia->ia_iobase;
 	eaddr_tmp = ex_eeprom_read(sc, EE_Eth_Addr_Lo);
@@ -226,18 +226,9 @@ ex_probe(struct device *parent, void *match, void *aux)
 		printf("ex: invalid IRQ.\n");
 		return(0);
 	}
-	CSR_WRITE_1(sc, CMD_REG, Bank2_Sel);
-	tmp = CSR_READ_1(sc, REG3);
-	if (tmp & TPE_bit)
-		sc->connector = Conn_TPE;
-	else if (tmp & BNC_bit)
-		sc->connector = Conn_BNC;
-	else
-		sc->connector = Conn_AUI;
+
 	sc->mem_size = CARD_RAM_SIZE;	/* XXX This should be read from the card
 					       itself. */
-
-	CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
 
 	DODEBUG(Start_End, printf("ex_probe: finish\n"););
 	return(1);
@@ -249,6 +240,8 @@ ex_attach(struct device *parent, struct device *self, void *aux)
 	struct ex_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifmedia *ifm;
+	int temp;
 
 	DODEBUG(Start_End, printf("ex_attach: start\n"););
 
@@ -261,16 +254,28 @@ ex_attach(struct device *parent, struct device *self, void *aux)
 						       | IFF_MULTICAST */
 	IFQ_SET_READY(&ifp->if_snd);
 
+	ifmedia_init(&sc->ifmedia, 0, ex_ifmedia_upd, ex_ifmedia_sts);
+
+	temp = ex_eeprom_read(sc, EE_W5);
+	if (temp & EE_W5_PORT_TPE)
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
+	if (temp & EE_W5_PORT_BNC)
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_2, 0, NULL);
+	if (temp & EE_W5_PORT_AUI)
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
+
+	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_NONE, 0, NULL);
+	ifmedia_set(&sc->ifmedia, ex_get_media(sc));
+
+	ifm = &sc->ifmedia;
+	ifm->ifm_media = ifm->ifm_cur->ifm_media;
+	ex_ifmedia_upd(ifp);
+
 	if_attach(ifp);
 	ether_ifattach(ifp);
-	printf(": address %s, connecter ", 
+	printf(": address %s\n",
 	    ether_sprintf(sc->arpcom.ac_enaddr));
-	switch(sc->connector) {
-		case Conn_TPE: printf("TPE\n"); break;
-		case Conn_BNC: printf("BNC\n"); break;
-		case Conn_AUI: printf("AUI\n"); break;
-		default: printf("???\n");
-	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, ex_intr, sc, self->dv_xname);
@@ -777,6 +782,10 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* XXX Support not done yet. */
 		error = EINVAL;
 		break;
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, cmd);
+		break;
 	default:
 		DODEBUG(Start_End, printf("unknown"););
 		error = ENOTTY;
@@ -818,6 +827,48 @@ ex_watchdog(struct ifnet *ifp)
 	ex_start(ifp);
 
 	DODEBUG(Start_End, printf("ex_watchdog: finish\n"););
+}
+
+int
+ex_get_media(struct ex_softc *sc)
+{
+	int	current, media;
+
+	media = ex_eeprom_read(sc, EE_W5);
+
+	CSR_WRITE_1(sc, CMD_REG, Bank2_Sel);
+	current = CSR_READ_1(sc, REG3);
+	CSR_WRITE_1(sc, CMD_REG, Bank0_Sel);
+
+	if ((current & TPE_bit) && (media & EE_W5_PORT_TPE))
+		return(IFM_ETHER|IFM_10_T);
+	if ((current & BNC_bit) && (media & EE_W5_PORT_BNC))
+		return(IFM_ETHER|IFM_10_2);
+
+	if (media & EE_W5_PORT_AUI)
+		return (IFM_ETHER|IFM_10_5);
+
+	return (IFM_ETHER|IFM_AUTO);
+}
+
+int
+ex_ifmedia_upd (struct ifnet *ifp)
+{
+	struct ex_softc *sc = ifp->if_softc;
+
+	if (IFM_TYPE(sc->ifmedia.ifm_media) != IFM_ETHER)
+		return (EINVAL);
+
+	return (0);
+}
+
+void
+ex_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct ex_softc *sc = ifp->if_softc;
+
+	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+	ifmr->ifm_active = ex_get_media(sc);
 }
 
 u_short 
